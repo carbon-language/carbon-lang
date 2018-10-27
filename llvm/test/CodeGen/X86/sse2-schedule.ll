@@ -14,8 +14,8 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -print-schedule -mcpu=skylake -mattr=-avx2 | FileCheck %s --check-prefixes=CHECK,SKYLAKE
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -print-schedule -mcpu=skx -mattr=-sse3 | FileCheck %s --check-prefixes=CHECK,SKX-SSE
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -print-schedule -mcpu=skx -mattr=-avx2 | FileCheck %s --check-prefixes=CHECK,SKX
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -print-schedule -mcpu=x86-64 -mattr=-sse3 | FileCheck %s --check-prefixes=CHECK,BDVER2-SSE
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -print-schedule -mcpu=x86-64 -mattr=+avx,+xop -mattr=-avx2 | FileCheck %s --check-prefixes=CHECK,BDVER2
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -print-schedule -mcpu=bdver2 -mattr=-sse3 | FileCheck %s --check-prefixes=CHECK,BDVER2-SSE
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -print-schedule -mcpu=bdver2 -mattr=-avx2 | FileCheck %s --check-prefixes=CHECK,BDVER2
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -print-schedule -mcpu=btver2 -mattr=-sse3 | FileCheck %s --check-prefixes=CHECK,BTVER2-SSE
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -print-schedule -mcpu=btver2 -mattr=-avx2 | FileCheck %s --check-prefixes=CHECK,BTVER2
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -print-schedule -mcpu=znver1 -mattr=-sse3 | FileCheck %s --check-prefixes=CHECK,ZNVER1-SSE
@@ -102,15 +102,15 @@ define <2 x double> @test_addpd(<2 x double> %a0, <2 x double> %a1, <2 x double>
 ;
 ; BDVER2-SSE-LABEL: test_addpd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    addpd (%rdi), %xmm0 # sched: [9:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    addpd (%rdi), %xmm0 # sched: [10:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_addpd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    vaddpd (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    vaddpd (%rdi), %xmm0, %xmm0 # sched: [10:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_addpd:
 ; BTVER2-SSE:       # %bb.0:
@@ -222,15 +222,15 @@ define double @test_addsd(double %a0, double %a1, double *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_addsd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    addsd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    addsd (%rdi), %xmm0 # sched: [9:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    addsd %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    addsd (%rdi), %xmm0 # sched: [10:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_addsd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vaddsd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    vaddsd (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vaddsd %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    vaddsd (%rdi), %xmm0, %xmm0 # sched: [10:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_addsd:
 ; BTVER2-SSE:       # %bb.0:
@@ -355,17 +355,17 @@ define <2 x double> @test_andpd(<2 x double> %a0, <2 x double> %a1, <2 x double>
 ;
 ; BDVER2-SSE-LABEL: test_andpd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    andpd %xmm1, %xmm0 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    andpd (%rdi), %xmm0 # sched: [7:1.00]
-; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    andpd %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    andpd (%rdi), %xmm0 # sched: [7:0.50]
+; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_andpd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vandpd %xmm1, %xmm0, %xmm0 # sched: [1:1.00]
-; BDVER2-NEXT:    vandpd (%rdi), %xmm0, %xmm0 # sched: [7:1.00]
-; BDVER2-NEXT:    vaddpd %xmm0, %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vandpd %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    vandpd (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
+; BDVER2-NEXT:    vaddpd %xmm0, %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_andpd:
 ; BTVER2-SSE:       # %bb.0:
@@ -499,17 +499,17 @@ define <2 x double> @test_andnotpd(<2 x double> %a0, <2 x double> %a1, <2 x doub
 ;
 ; BDVER2-SSE-LABEL: test_andnotpd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    andnpd %xmm1, %xmm0 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    andnpd (%rdi), %xmm0 # sched: [7:1.00]
-; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    andnpd %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    andnpd (%rdi), %xmm0 # sched: [7:0.50]
+; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_andnotpd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vandnpd %xmm1, %xmm0, %xmm0 # sched: [1:1.00]
-; BDVER2-NEXT:    vandnpd (%rdi), %xmm0, %xmm0 # sched: [7:1.00]
-; BDVER2-NEXT:    vaddpd %xmm0, %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vandnpd %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    vandnpd (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
+; BDVER2-NEXT:    vaddpd %xmm0, %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_andnotpd:
 ; BTVER2-SSE:       # %bb.0:
@@ -625,13 +625,13 @@ define void @test_clflush(i8* %p){
 ;
 ; BDVER2-SSE-LABEL: test_clflush:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    clflush (%rdi) # sched: [5:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    clflush (%rdi) # sched: [5:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_clflush:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    clflush (%rdi) # sched: [5:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    clflush (%rdi) # sched: [5:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_clflush:
 ; BTVER2-SSE:       # %bb.0:
@@ -751,17 +751,17 @@ define <2 x double> @test_cmppd(<2 x double> %a0, <2 x double> %a1, <2 x double>
 ;
 ; BDVER2-SSE-LABEL: test_cmppd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    cmpeqpd %xmm0, %xmm1 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    cmpeqpd (%rdi), %xmm0 # sched: [9:1.00]
-; BDVER2-SSE-NEXT:    orpd %xmm1, %xmm0 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    cmpeqpd %xmm0, %xmm1 # sched: [2:1.00]
+; BDVER2-SSE-NEXT:    cmpeqpd (%rdi), %xmm0 # sched: [7:1.00]
+; BDVER2-SSE-NEXT:    orpd %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_cmppd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vcmpeqpd %xmm1, %xmm0, %xmm1 # sched: [3:1.00]
-; BDVER2-NEXT:    vcmpeqpd (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
-; BDVER2-NEXT:    vorpd %xmm0, %xmm1, %xmm0 # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vcmpeqpd %xmm1, %xmm0, %xmm1 # sched: [2:1.00]
+; BDVER2-NEXT:    vcmpeqpd (%rdi), %xmm0, %xmm0 # sched: [7:1.00]
+; BDVER2-NEXT:    vorpd %xmm0, %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_cmppd:
 ; BTVER2-SSE:       # %bb.0:
@@ -880,15 +880,15 @@ define double @test_cmpsd(double %a0, double %a1, double *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_cmpsd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    cmpeqsd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    cmpeqsd (%rdi), %xmm0 # sched: [9:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    cmpeqsd %xmm1, %xmm0 # sched: [2:1.00]
+; BDVER2-SSE-NEXT:    cmpeqsd (%rdi), %xmm0 # sched: [7:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_cmpsd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vcmpeqsd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    vcmpeqsd (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vcmpeqsd %xmm1, %xmm0, %xmm0 # sched: [2:1.00]
+; BDVER2-NEXT:    vcmpeqsd (%rdi), %xmm0, %xmm0 # sched: [7:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_cmpsd:
 ; BTVER2-SSE:       # %bb.0:
@@ -1109,31 +1109,31 @@ define i32 @test_comisd(<2 x double> %a0, <2 x double> %a1, <2 x double> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_comisd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    comisd %xmm1, %xmm0 # sched: [2:1.00]
+; BDVER2-SSE-NEXT:    comisd %xmm1, %xmm0 # sched: [1:1.00]
 ; BDVER2-SSE-NEXT:    setnp %al # sched: [1:0.50]
 ; BDVER2-SSE-NEXT:    sete %cl # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    andb %al, %cl # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    comisd (%rdi), %xmm0 # sched: [8:1.00]
+; BDVER2-SSE-NEXT:    andb %al, %cl # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    comisd (%rdi), %xmm0 # sched: [6:1.00]
 ; BDVER2-SSE-NEXT:    setnp %al # sched: [1:0.50]
 ; BDVER2-SSE-NEXT:    sete %dl # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    andb %al, %dl # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    orb %cl, %dl # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    movzbl %dl, %eax # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    andb %al, %dl # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    orb %cl, %dl # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    movzbl %dl, %eax # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_comisd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vcomisd %xmm1, %xmm0 # sched: [2:1.00]
+; BDVER2-NEXT:    vcomisd %xmm1, %xmm0 # sched: [1:1.00]
 ; BDVER2-NEXT:    setnp %al # sched: [1:0.50]
 ; BDVER2-NEXT:    sete %cl # sched: [1:0.50]
-; BDVER2-NEXT:    andb %al, %cl # sched: [1:0.33]
-; BDVER2-NEXT:    vcomisd (%rdi), %xmm0 # sched: [8:1.00]
+; BDVER2-NEXT:    andb %al, %cl # sched: [1:0.50]
+; BDVER2-NEXT:    vcomisd (%rdi), %xmm0 # sched: [6:1.00]
 ; BDVER2-NEXT:    setnp %al # sched: [1:0.50]
 ; BDVER2-NEXT:    sete %dl # sched: [1:0.50]
-; BDVER2-NEXT:    andb %al, %dl # sched: [1:0.33]
-; BDVER2-NEXT:    orb %cl, %dl # sched: [1:0.33]
-; BDVER2-NEXT:    movzbl %dl, %eax # sched: [1:0.33]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    andb %al, %dl # sched: [1:0.50]
+; BDVER2-NEXT:    orb %cl, %dl # sched: [1:0.50]
+; BDVER2-NEXT:    movzbl %dl, %eax # sched: [1:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_comisd:
 ; BTVER2-SSE:       # %bb.0:
@@ -1294,17 +1294,17 @@ define <2 x double> @test_cvtdq2pd(<4 x i32> %a0, <4 x i32> *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_cvtdq2pd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    cvtdq2pd %xmm0, %xmm1 # sched: [4:1.00]
-; BDVER2-SSE-NEXT:    cvtdq2pd (%rdi), %xmm0 # sched: [10:1.00]
-; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    cvtdq2pd %xmm0, %xmm1 # sched: [8:1.00]
+; BDVER2-SSE-NEXT:    cvtdq2pd (%rdi), %xmm0 # sched: [13:1.00]
+; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_cvtdq2pd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vcvtdq2pd %xmm0, %xmm0 # sched: [4:1.00]
-; BDVER2-NEXT:    vcvtdq2pd (%rdi), %xmm1 # sched: [10:1.00]
-; BDVER2-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vcvtdq2pd (%rdi), %xmm1 # sched: [13:1.00]
+; BDVER2-NEXT:    vcvtdq2pd %xmm0, %xmm0 # sched: [8:1.00]
+; BDVER2-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_cvtdq2pd:
 ; BTVER2-SSE:       # %bb.0:
@@ -1437,17 +1437,17 @@ define <4 x float> @test_cvtdq2ps(<4 x i32> %a0, <4 x i32> *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_cvtdq2ps:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    cvtdq2ps %xmm0, %xmm1 # sched: [3:1.00]
+; BDVER2-SSE-NEXT:    cvtdq2ps %xmm0, %xmm1 # sched: [4:1.00]
 ; BDVER2-SSE-NEXT:    cvtdq2ps (%rdi), %xmm0 # sched: [9:1.00]
-; BDVER2-SSE-NEXT:    addps %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    addps %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_cvtdq2ps:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vcvtdq2ps %xmm0, %xmm0 # sched: [3:1.00]
 ; BDVER2-NEXT:    vcvtdq2ps (%rdi), %xmm1 # sched: [9:1.00]
-; BDVER2-NEXT:    vaddps %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vcvtdq2ps %xmm0, %xmm0 # sched: [4:1.00]
+; BDVER2-NEXT:    vaddps %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_cvtdq2ps:
 ; BTVER2-SSE:       # %bb.0:
@@ -1579,17 +1579,17 @@ define <4 x i32> @test_cvtpd2dq(<2 x double> %a0, <2 x double> *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_cvtpd2dq:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    cvtpd2dq %xmm0, %xmm1 # sched: [4:1.00]
-; BDVER2-SSE-NEXT:    cvtpd2dq (%rdi), %xmm0 # sched: [10:1.00]
-; BDVER2-SSE-NEXT:    paddd %xmm1, %xmm0 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    cvtpd2dq %xmm0, %xmm1 # sched: [8:1.00]
+; BDVER2-SSE-NEXT:    cvtpd2dq (%rdi), %xmm0 # sched: [13:1.00]
+; BDVER2-SSE-NEXT:    paddd %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_cvtpd2dq:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vcvtpd2dq %xmm0, %xmm0 # sched: [4:1.00]
-; BDVER2-NEXT:    vcvtpd2dqx (%rdi), %xmm1 # sched: [10:1.00]
-; BDVER2-NEXT:    vpaddd %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vcvtpd2dqx (%rdi), %xmm1 # sched: [13:1.00]
+; BDVER2-NEXT:    vcvtpd2dq %xmm0, %xmm0 # sched: [8:1.00]
+; BDVER2-NEXT:    vpaddd %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_cvtpd2dq:
 ; BTVER2-SSE:       # %bb.0:
@@ -1722,17 +1722,17 @@ define <4 x float> @test_cvtpd2ps(<2 x double> %a0, <2 x double> *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_cvtpd2ps:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    cvtpd2ps %xmm0, %xmm1 # sched: [4:1.00]
-; BDVER2-SSE-NEXT:    cvtpd2ps (%rdi), %xmm0 # sched: [10:1.00]
-; BDVER2-SSE-NEXT:    addps %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    cvtpd2ps %xmm0, %xmm1 # sched: [8:1.00]
+; BDVER2-SSE-NEXT:    cvtpd2ps (%rdi), %xmm0 # sched: [13:1.00]
+; BDVER2-SSE-NEXT:    addps %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_cvtpd2ps:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vcvtpd2ps %xmm0, %xmm0 # sched: [4:1.00]
-; BDVER2-NEXT:    vcvtpd2psx (%rdi), %xmm1 # sched: [10:1.00]
-; BDVER2-NEXT:    vaddps %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vcvtpd2psx (%rdi), %xmm1 # sched: [13:1.00]
+; BDVER2-NEXT:    vcvtpd2ps %xmm0, %xmm0 # sched: [8:1.00]
+; BDVER2-NEXT:    vaddps %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_cvtpd2ps:
 ; BTVER2-SSE:       # %bb.0:
@@ -1864,17 +1864,17 @@ define <4 x i32> @test_cvtps2dq(<4 x float> %a0, <4 x float> *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_cvtps2dq:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    cvtps2dq %xmm0, %xmm1 # sched: [3:1.00]
+; BDVER2-SSE-NEXT:    cvtps2dq %xmm0, %xmm1 # sched: [4:1.00]
 ; BDVER2-SSE-NEXT:    cvtps2dq (%rdi), %xmm0 # sched: [9:1.00]
-; BDVER2-SSE-NEXT:    paddd %xmm1, %xmm0 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    paddd %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_cvtps2dq:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vcvtps2dq %xmm0, %xmm0 # sched: [3:1.00]
 ; BDVER2-NEXT:    vcvtps2dq (%rdi), %xmm1 # sched: [9:1.00]
-; BDVER2-NEXT:    vpaddd %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vcvtps2dq %xmm0, %xmm0 # sched: [4:1.00]
+; BDVER2-NEXT:    vpaddd %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_cvtps2dq:
 ; BTVER2-SSE:       # %bb.0:
@@ -2006,17 +2006,17 @@ define <2 x double> @test_cvtps2pd(<4 x float> %a0, <4 x float> *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_cvtps2pd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    cvtps2pd %xmm0, %xmm1 # sched: [2:1.00]
-; BDVER2-SSE-NEXT:    cvtps2pd (%rdi), %xmm0 # sched: [7:1.00]
-; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    cvtps2pd %xmm0, %xmm1 # sched: [8:1.00]
+; BDVER2-SSE-NEXT:    cvtps2pd (%rdi), %xmm0 # sched: [13:1.00]
+; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_cvtps2pd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vcvtps2pd %xmm0, %xmm0 # sched: [2:1.00]
-; BDVER2-NEXT:    vcvtps2pd (%rdi), %xmm1 # sched: [7:1.00]
-; BDVER2-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vcvtps2pd (%rdi), %xmm1 # sched: [13:1.00]
+; BDVER2-NEXT:    vcvtps2pd %xmm0, %xmm0 # sched: [8:1.00]
+; BDVER2-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_cvtps2pd:
 ; BTVER2-SSE:       # %bb.0:
@@ -2148,17 +2148,17 @@ define i32 @test_cvtsd2si(double %a0, double *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_cvtsd2si:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    cvtsd2si %xmm0, %ecx # sched: [5:1.00]
-; BDVER2-SSE-NEXT:    cvtsd2si (%rdi), %eax # sched: [9:1.00]
-; BDVER2-SSE-NEXT:    addl %ecx, %eax # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    cvtsd2si (%rdi), %eax # sched: [18:1.00]
+; BDVER2-SSE-NEXT:    cvtsd2si %xmm0, %ecx # sched: [13:1.00]
+; BDVER2-SSE-NEXT:    addl %ecx, %eax # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_cvtsd2si:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vcvtsd2si %xmm0, %ecx # sched: [5:1.00]
-; BDVER2-NEXT:    vcvtsd2si (%rdi), %eax # sched: [10:1.00]
-; BDVER2-NEXT:    addl %ecx, %eax # sched: [1:0.33]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vcvtsd2si (%rdi), %eax # sched: [18:1.00]
+; BDVER2-NEXT:    vcvtsd2si %xmm0, %ecx # sched: [13:1.00]
+; BDVER2-NEXT:    addl %ecx, %eax # sched: [1:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_cvtsd2si:
 ; BTVER2-SSE:       # %bb.0:
@@ -2291,17 +2291,17 @@ define i64 @test_cvtsd2siq(double %a0, double *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_cvtsd2siq:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    cvtsd2si %xmm0, %rcx # sched: [5:1.00]
-; BDVER2-SSE-NEXT:    cvtsd2si (%rdi), %rax # sched: [9:1.00]
-; BDVER2-SSE-NEXT:    addq %rcx, %rax # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    cvtsd2si (%rdi), %rax # sched: [18:1.00]
+; BDVER2-SSE-NEXT:    cvtsd2si %xmm0, %rcx # sched: [13:1.00]
+; BDVER2-SSE-NEXT:    addq %rcx, %rax # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_cvtsd2siq:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vcvtsd2si %xmm0, %rcx # sched: [5:1.00]
-; BDVER2-NEXT:    vcvtsd2si (%rdi), %rax # sched: [10:1.00]
-; BDVER2-NEXT:    addq %rcx, %rax # sched: [1:0.33]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vcvtsd2si (%rdi), %rax # sched: [18:1.00]
+; BDVER2-NEXT:    vcvtsd2si %xmm0, %rcx # sched: [13:1.00]
+; BDVER2-NEXT:    addq %rcx, %rax # sched: [1:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_cvtsd2siq:
 ; BTVER2-SSE:       # %bb.0:
@@ -2449,18 +2449,18 @@ define float @test_cvtsd2ss(double %a0, double *%a1) {
 ; BDVER2-SSE-LABEL: test_cvtsd2ss:
 ; BDVER2-SSE:       # %bb.0:
 ; BDVER2-SSE-NEXT:    cvtsd2ss %xmm0, %xmm1 # sched: [4:1.00]
-; BDVER2-SSE-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero sched: [6:0.50]
+; BDVER2-SSE-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero sched: [5:0.50]
 ; BDVER2-SSE-NEXT:    cvtsd2ss %xmm0, %xmm0 # sched: [4:1.00]
-; BDVER2-SSE-NEXT:    addss %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    addss %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_cvtsd2ss:
 ; BDVER2:       # %bb.0:
+; BDVER2-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero sched: [5:0.50]
 ; BDVER2-NEXT:    vcvtsd2ss %xmm0, %xmm0, %xmm0 # sched: [4:1.00]
-; BDVER2-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero sched: [6:0.50]
 ; BDVER2-NEXT:    vcvtsd2ss %xmm1, %xmm1, %xmm1 # sched: [4:1.00]
-; BDVER2-NEXT:    vaddss %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vaddss %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_cvtsd2ss:
 ; BTVER2-SSE:       # %bb.0:
@@ -2594,17 +2594,17 @@ define double @test_cvtsi2sd(i32 %a0, i32 *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_cvtsi2sd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    cvtsi2sdl %edi, %xmm1 # sched: [4:1.00]
 ; BDVER2-SSE-NEXT:    cvtsi2sdl (%rsi), %xmm0 # sched: [9:1.00]
-; BDVER2-SSE-NEXT:    addsd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    cvtsi2sdl %edi, %xmm1 # sched: [4:1.00]
+; BDVER2-SSE-NEXT:    addsd %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_cvtsi2sd:
 ; BDVER2:       # %bb.0:
 ; BDVER2-NEXT:    vcvtsi2sdl %edi, %xmm0, %xmm0 # sched: [4:1.00]
 ; BDVER2-NEXT:    vcvtsi2sdl (%rsi), %xmm1, %xmm1 # sched: [9:1.00]
-; BDVER2-NEXT:    vaddsd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vaddsd %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_cvtsi2sd:
 ; BTVER2-SSE:       # %bb.0:
@@ -2734,17 +2734,17 @@ define double @test_cvtsi2sdq(i64 %a0, i64 *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_cvtsi2sdq:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    cvtsi2sdq %rdi, %xmm1 # sched: [4:1.00]
+; BDVER2-SSE-NEXT:    cvtsi2sdq %rdi, %xmm1 # sched: [13:1.00]
 ; BDVER2-SSE-NEXT:    cvtsi2sdq (%rsi), %xmm0 # sched: [9:1.00]
-; BDVER2-SSE-NEXT:    addsd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    addsd %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_cvtsi2sdq:
 ; BDVER2:       # %bb.0:
 ; BDVER2-NEXT:    vcvtsi2sdq %rdi, %xmm0, %xmm0 # sched: [4:1.00]
 ; BDVER2-NEXT:    vcvtsi2sdq (%rsi), %xmm1, %xmm1 # sched: [9:1.00]
-; BDVER2-NEXT:    vaddsd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vaddsd %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_cvtsi2sdq:
 ; BTVER2-SSE:       # %bb.0:
@@ -2890,19 +2890,19 @@ define double @test_cvtss2sd(float %a0, float *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_cvtss2sd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    cvtss2sd %xmm0, %xmm1 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero sched: [6:0.50]
-; BDVER2-SSE-NEXT:    cvtss2sd %xmm0, %xmm0 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    addsd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    cvtss2sd %xmm0, %xmm1 # sched: [4:1.00]
+; BDVER2-SSE-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero sched: [5:0.50]
+; BDVER2-SSE-NEXT:    cvtss2sd %xmm0, %xmm0 # sched: [4:1.00]
+; BDVER2-SSE-NEXT:    addsd %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_cvtss2sd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vcvtss2sd %xmm0, %xmm0, %xmm0 # sched: [1:1.00]
-; BDVER2-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero sched: [6:0.50]
-; BDVER2-NEXT:    vcvtss2sd %xmm1, %xmm1, %xmm1 # sched: [1:1.00]
-; BDVER2-NEXT:    vaddsd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero sched: [5:0.50]
+; BDVER2-NEXT:    vcvtss2sd %xmm0, %xmm0, %xmm0 # sched: [4:1.00]
+; BDVER2-NEXT:    vcvtss2sd %xmm1, %xmm1, %xmm1 # sched: [4:1.00]
+; BDVER2-NEXT:    vaddsd %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_cvtss2sd:
 ; BTVER2-SSE:       # %bb.0:
@@ -3038,17 +3038,17 @@ define <4 x i32> @test_cvttpd2dq(<2 x double> %a0, <2 x double> *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_cvttpd2dq:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    cvttpd2dq %xmm0, %xmm1 # sched: [4:1.00]
-; BDVER2-SSE-NEXT:    cvttpd2dq (%rdi), %xmm0 # sched: [10:1.00]
-; BDVER2-SSE-NEXT:    paddd %xmm1, %xmm0 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    cvttpd2dq %xmm0, %xmm1 # sched: [8:1.00]
+; BDVER2-SSE-NEXT:    cvttpd2dq (%rdi), %xmm0 # sched: [13:1.00]
+; BDVER2-SSE-NEXT:    paddd %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_cvttpd2dq:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vcvttpd2dq %xmm0, %xmm0 # sched: [4:1.00]
-; BDVER2-NEXT:    vcvttpd2dqx (%rdi), %xmm1 # sched: [10:1.00]
-; BDVER2-NEXT:    vpaddd %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vcvttpd2dqx (%rdi), %xmm1 # sched: [13:1.00]
+; BDVER2-NEXT:    vcvttpd2dq %xmm0, %xmm0 # sched: [8:1.00]
+; BDVER2-NEXT:    vpaddd %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_cvttpd2dq:
 ; BTVER2-SSE:       # %bb.0:
@@ -3181,17 +3181,17 @@ define <4 x i32> @test_cvttps2dq(<4 x float> %a0, <4 x float> *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_cvttps2dq:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    cvttps2dq %xmm0, %xmm1 # sched: [3:1.00]
+; BDVER2-SSE-NEXT:    cvttps2dq %xmm0, %xmm1 # sched: [4:1.00]
 ; BDVER2-SSE-NEXT:    cvttps2dq (%rdi), %xmm0 # sched: [9:1.00]
-; BDVER2-SSE-NEXT:    paddd %xmm1, %xmm0 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    paddd %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_cvttps2dq:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vcvttps2dq %xmm0, %xmm0 # sched: [3:1.00]
 ; BDVER2-NEXT:    vcvttps2dq (%rdi), %xmm1 # sched: [9:1.00]
-; BDVER2-NEXT:    vpaddd %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vcvttps2dq %xmm0, %xmm0 # sched: [4:1.00]
+; BDVER2-NEXT:    vpaddd %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_cvttps2dq:
 ; BTVER2-SSE:       # %bb.0:
@@ -3321,17 +3321,17 @@ define i32 @test_cvttsd2si(double %a0, double *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_cvttsd2si:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    cvttsd2si %xmm0, %ecx # sched: [5:1.00]
-; BDVER2-SSE-NEXT:    cvttsd2si (%rdi), %eax # sched: [9:1.00]
-; BDVER2-SSE-NEXT:    addl %ecx, %eax # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    cvttsd2si (%rdi), %eax # sched: [18:1.00]
+; BDVER2-SSE-NEXT:    cvttsd2si %xmm0, %ecx # sched: [13:1.00]
+; BDVER2-SSE-NEXT:    addl %ecx, %eax # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_cvttsd2si:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vcvttsd2si %xmm0, %ecx # sched: [5:1.00]
-; BDVER2-NEXT:    vcvttsd2si (%rdi), %eax # sched: [10:1.00]
-; BDVER2-NEXT:    addl %ecx, %eax # sched: [1:0.33]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vcvttsd2si (%rdi), %eax # sched: [18:1.00]
+; BDVER2-NEXT:    vcvttsd2si %xmm0, %ecx # sched: [13:1.00]
+; BDVER2-NEXT:    addl %ecx, %eax # sched: [1:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_cvttsd2si:
 ; BTVER2-SSE:       # %bb.0:
@@ -3461,17 +3461,17 @@ define i64 @test_cvttsd2siq(double %a0, double *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_cvttsd2siq:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    cvttsd2si %xmm0, %rcx # sched: [5:1.00]
-; BDVER2-SSE-NEXT:    cvttsd2si (%rdi), %rax # sched: [9:1.00]
-; BDVER2-SSE-NEXT:    addq %rcx, %rax # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    cvttsd2si (%rdi), %rax # sched: [18:1.00]
+; BDVER2-SSE-NEXT:    cvttsd2si %xmm0, %rcx # sched: [13:1.00]
+; BDVER2-SSE-NEXT:    addq %rcx, %rax # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_cvttsd2siq:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vcvttsd2si %xmm0, %rcx # sched: [5:1.00]
-; BDVER2-NEXT:    vcvttsd2si (%rdi), %rax # sched: [10:1.00]
-; BDVER2-NEXT:    addq %rcx, %rax # sched: [1:0.33]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vcvttsd2si (%rdi), %rax # sched: [18:1.00]
+; BDVER2-NEXT:    vcvttsd2si %xmm0, %rcx # sched: [13:1.00]
+; BDVER2-NEXT:    addq %rcx, %rax # sched: [1:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_cvttsd2siq:
 ; BTVER2-SSE:       # %bb.0:
@@ -3588,15 +3588,15 @@ define <2 x double> @test_divpd(<2 x double> %a0, <2 x double> %a1, <2 x double>
 ;
 ; BDVER2-SSE-LABEL: test_divpd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    divpd %xmm1, %xmm0 # sched: [22:22.00]
-; BDVER2-SSE-NEXT:    divpd (%rdi), %xmm0 # sched: [28:22.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    divpd %xmm1, %xmm0 # sched: [9:9.50]
+; BDVER2-SSE-NEXT:    divpd (%rdi), %xmm0 # sched: [14:9.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_divpd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vdivpd %xmm1, %xmm0, %xmm0 # sched: [22:22.00]
-; BDVER2-NEXT:    vdivpd (%rdi), %xmm0, %xmm0 # sched: [28:22.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vdivpd %xmm1, %xmm0, %xmm0 # sched: [9:9.50]
+; BDVER2-NEXT:    vdivpd (%rdi), %xmm0, %xmm0 # sched: [14:9.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_divpd:
 ; BTVER2-SSE:       # %bb.0:
@@ -3708,15 +3708,15 @@ define double @test_divsd(double %a0, double %a1, double *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_divsd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    divsd %xmm1, %xmm0 # sched: [22:22.00]
-; BDVER2-SSE-NEXT:    divsd (%rdi), %xmm0 # sched: [28:22.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    divsd %xmm1, %xmm0 # sched: [9:9.50]
+; BDVER2-SSE-NEXT:    divsd (%rdi), %xmm0 # sched: [14:9.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_divsd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vdivsd %xmm1, %xmm0, %xmm0 # sched: [22:22.00]
-; BDVER2-NEXT:    vdivsd (%rdi), %xmm0, %xmm0 # sched: [28:22.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vdivsd %xmm1, %xmm0, %xmm0 # sched: [9:9.50]
+; BDVER2-NEXT:    vdivsd (%rdi), %xmm0, %xmm0 # sched: [14:9.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_divsd:
 ; BTVER2-SSE:       # %bb.0:
@@ -3821,13 +3821,13 @@ define void @test_lfence() {
 ;
 ; BDVER2-SSE-LABEL: test_lfence:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    lfence # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    lfence # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_lfence:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    lfence # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    lfence # sched: [1:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_lfence:
 ; BTVER2-SSE:       # %bb.0:
@@ -3927,13 +3927,13 @@ define void @test_mfence() {
 ;
 ; BDVER2-SSE-LABEL: test_mfence:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    mfence # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    mfence # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_mfence:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    mfence # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    mfence # sched: [1:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_mfence:
 ; BTVER2-SSE:       # %bb.0:
@@ -4032,12 +4032,12 @@ define void @test_maskmovdqu(<16 x i8> %a0, <16 x i8> %a1, i8* %a2) {
 ; BDVER2-SSE-LABEL: test_maskmovdqu:
 ; BDVER2-SSE:       # %bb.0:
 ; BDVER2-SSE-NEXT:    maskmovdqu %xmm1, %xmm0 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_maskmovdqu:
 ; BDVER2:       # %bb.0:
 ; BDVER2-NEXT:    vmaskmovdqu %xmm1, %xmm0 # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_maskmovdqu:
 ; BTVER2-SSE:       # %bb.0:
@@ -4144,15 +4144,15 @@ define <2 x double> @test_maxpd(<2 x double> %a0, <2 x double> %a1, <2 x double>
 ;
 ; BDVER2-SSE-LABEL: test_maxpd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    maxpd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    maxpd (%rdi), %xmm0 # sched: [9:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    maxpd %xmm1, %xmm0 # sched: [2:1.00]
+; BDVER2-SSE-NEXT:    maxpd (%rdi), %xmm0 # sched: [7:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_maxpd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vmaxpd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    vmaxpd (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vmaxpd %xmm1, %xmm0, %xmm0 # sched: [2:1.00]
+; BDVER2-NEXT:    vmaxpd (%rdi), %xmm0, %xmm0 # sched: [7:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_maxpd:
 ; BTVER2-SSE:       # %bb.0:
@@ -4265,15 +4265,15 @@ define <2 x double> @test_maxsd(<2 x double> %a0, <2 x double> %a1, <2 x double>
 ;
 ; BDVER2-SSE-LABEL: test_maxsd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    maxsd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    maxsd (%rdi), %xmm0 # sched: [9:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    maxsd %xmm1, %xmm0 # sched: [2:1.00]
+; BDVER2-SSE-NEXT:    maxsd (%rdi), %xmm0 # sched: [7:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_maxsd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vmaxsd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    vmaxsd (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vmaxsd %xmm1, %xmm0, %xmm0 # sched: [2:1.00]
+; BDVER2-NEXT:    vmaxsd (%rdi), %xmm0, %xmm0 # sched: [7:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_maxsd:
 ; BTVER2-SSE:       # %bb.0:
@@ -4386,15 +4386,15 @@ define <2 x double> @test_minpd(<2 x double> %a0, <2 x double> %a1, <2 x double>
 ;
 ; BDVER2-SSE-LABEL: test_minpd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    minpd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    minpd (%rdi), %xmm0 # sched: [9:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    minpd %xmm1, %xmm0 # sched: [2:1.00]
+; BDVER2-SSE-NEXT:    minpd (%rdi), %xmm0 # sched: [7:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_minpd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vminpd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    vminpd (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vminpd %xmm1, %xmm0, %xmm0 # sched: [2:1.00]
+; BDVER2-NEXT:    vminpd (%rdi), %xmm0, %xmm0 # sched: [7:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_minpd:
 ; BTVER2-SSE:       # %bb.0:
@@ -4507,15 +4507,15 @@ define <2 x double> @test_minsd(<2 x double> %a0, <2 x double> %a1, <2 x double>
 ;
 ; BDVER2-SSE-LABEL: test_minsd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    minsd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    minsd (%rdi), %xmm0 # sched: [9:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    minsd %xmm1, %xmm0 # sched: [2:1.00]
+; BDVER2-SSE-NEXT:    minsd (%rdi), %xmm0 # sched: [7:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_minsd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vminsd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    vminsd (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vminsd %xmm1, %xmm0, %xmm0 # sched: [2:1.00]
+; BDVER2-NEXT:    vminsd (%rdi), %xmm0, %xmm0 # sched: [7:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_minsd:
 ; BTVER2-SSE:       # %bb.0:
@@ -4641,17 +4641,17 @@ define void @test_movapd(<2 x double> *%a0, <2 x double> *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_movapd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    movapd (%rdi), %xmm0 # sched: [6:0.50]
-; BDVER2-SSE-NEXT:    addpd %xmm0, %xmm0 # sched: [3:1.00]
+; BDVER2-SSE-NEXT:    movapd (%rdi), %xmm0 # sched: [5:0.50]
+; BDVER2-SSE-NEXT:    addpd %xmm0, %xmm0 # sched: [5:1.00]
 ; BDVER2-SSE-NEXT:    movapd %xmm0, (%rsi) # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_movapd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vmovapd (%rdi), %xmm0 # sched: [6:0.50]
-; BDVER2-NEXT:    vaddpd %xmm0, %xmm0, %xmm0 # sched: [3:1.00]
+; BDVER2-NEXT:    vmovapd (%rdi), %xmm0 # sched: [5:0.50]
+; BDVER2-NEXT:    vaddpd %xmm0, %xmm0, %xmm0 # sched: [5:1.00]
 ; BDVER2-NEXT:    vmovapd %xmm0, (%rsi) # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_movapd:
 ; BTVER2-SSE:       # %bb.0:
@@ -4780,17 +4780,17 @@ define void @test_movdqa(<2 x i64> *%a0, <2 x i64> *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_movdqa:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    movdqa (%rdi), %xmm0 # sched: [6:0.50]
-; BDVER2-SSE-NEXT:    paddq %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    movdqa (%rdi), %xmm0 # sched: [5:0.50]
+; BDVER2-SSE-NEXT:    paddq %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    movdqa %xmm0, (%rsi) # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_movdqa:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vmovdqa (%rdi), %xmm0 # sched: [6:0.50]
-; BDVER2-NEXT:    vpaddq %xmm0, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vmovdqa (%rdi), %xmm0 # sched: [5:0.50]
+; BDVER2-NEXT:    vpaddq %xmm0, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vmovdqa %xmm0, (%rsi) # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_movdqa:
 ; BTVER2-SSE:       # %bb.0:
@@ -4919,17 +4919,17 @@ define void @test_movdqu(<2 x i64> *%a0, <2 x i64> *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_movdqu:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    movdqu (%rdi), %xmm0 # sched: [6:0.50]
-; BDVER2-SSE-NEXT:    paddq %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    movdqu (%rdi), %xmm0 # sched: [5:0.50]
+; BDVER2-SSE-NEXT:    paddq %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    movdqu %xmm0, (%rsi) # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_movdqu:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vmovdqu (%rdi), %xmm0 # sched: [6:0.50]
-; BDVER2-NEXT:    vpaddq %xmm0, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vmovdqu (%rdi), %xmm0 # sched: [5:0.50]
+; BDVER2-NEXT:    vpaddq %xmm0, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vmovdqu %xmm0, (%rsi) # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_movdqu:
 ; BTVER2-SSE:       # %bb.0:
@@ -5097,23 +5097,23 @@ define i32 @test_movd(<4 x i32> %a0, i32 %a1, i32 *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_movd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    movd %edi, %xmm1 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    movd {{.*#+}} xmm2 = mem[0],zero,zero,zero sched: [6:0.50]
-; BDVER2-SSE-NEXT:    paddd %xmm0, %xmm1 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    paddd %xmm0, %xmm2 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    movd %xmm2, %eax # sched: [2:1.00]
-; BDVER2-SSE-NEXT:    movd %xmm1, (%rsi) # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    movd {{.*#+}} xmm2 = mem[0],zero,zero,zero sched: [5:0.50]
+; BDVER2-SSE-NEXT:    movd %edi, %xmm1 # sched: [10:0.50]
+; BDVER2-SSE-NEXT:    paddd %xmm0, %xmm2 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    movd %xmm2, %eax # sched: [10:1.00]
+; BDVER2-SSE-NEXT:    paddd %xmm0, %xmm1 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    movd %xmm1, (%rsi) # sched: [2:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_movd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vmovd %edi, %xmm1 # sched: [1:1.00]
-; BDVER2-NEXT:    vmovd {{.*#+}} xmm2 = mem[0],zero,zero,zero sched: [6:0.50]
-; BDVER2-NEXT:    vpaddd %xmm1, %xmm0, %xmm1 # sched: [1:0.50]
-; BDVER2-NEXT:    vpaddd %xmm2, %xmm0, %xmm0 # sched: [1:0.50]
-; BDVER2-NEXT:    vmovd %xmm0, %eax # sched: [2:1.00]
-; BDVER2-NEXT:    vmovd %xmm1, (%rsi) # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vmovd %edi, %xmm1 # sched: [10:0.50]
+; BDVER2-NEXT:    vmovd {{.*#+}} xmm2 = mem[0],zero,zero,zero sched: [5:0.50]
+; BDVER2-NEXT:    vpaddd %xmm1, %xmm0, %xmm1 # sched: [2:0.50]
+; BDVER2-NEXT:    vpaddd %xmm2, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    vmovd %xmm0, %eax # sched: [10:1.00]
+; BDVER2-NEXT:    vmovd %xmm1, (%rsi) # sched: [2:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_movd:
 ; BTVER2-SSE:       # %bb.0:
@@ -5298,23 +5298,23 @@ define i64 @test_movd_64(<2 x i64> %a0, i64 %a1, i64 *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_movd_64:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    movq %rdi, %xmm1 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    movq {{.*#+}} xmm2 = mem[0],zero sched: [6:0.50]
-; BDVER2-SSE-NEXT:    paddq %xmm0, %xmm1 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    paddq %xmm0, %xmm2 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    movq %xmm2, %rax # sched: [2:1.00]
-; BDVER2-SSE-NEXT:    movq %xmm1, (%rsi) # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    movq {{.*#+}} xmm2 = mem[0],zero sched: [5:0.50]
+; BDVER2-SSE-NEXT:    movq %rdi, %xmm1 # sched: [10:0.50]
+; BDVER2-SSE-NEXT:    paddq %xmm0, %xmm2 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    movq %xmm2, %rax # sched: [10:1.00]
+; BDVER2-SSE-NEXT:    paddq %xmm0, %xmm1 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    movq %xmm1, (%rsi) # sched: [2:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_movd_64:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vmovq %rdi, %xmm1 # sched: [1:1.00]
-; BDVER2-NEXT:    vmovq {{.*#+}} xmm2 = mem[0],zero sched: [6:0.50]
-; BDVER2-NEXT:    vpaddq %xmm1, %xmm0, %xmm1 # sched: [1:0.50]
-; BDVER2-NEXT:    vpaddq %xmm2, %xmm0, %xmm0 # sched: [1:0.50]
-; BDVER2-NEXT:    vmovq %xmm0, %rax # sched: [2:1.00]
-; BDVER2-NEXT:    vmovq %xmm1, (%rsi) # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vmovq %rdi, %xmm1 # sched: [10:0.50]
+; BDVER2-NEXT:    vmovq {{.*#+}} xmm2 = mem[0],zero sched: [5:0.50]
+; BDVER2-NEXT:    vpaddq %xmm1, %xmm0, %xmm1 # sched: [2:0.50]
+; BDVER2-NEXT:    vpaddq %xmm2, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    vmovq %xmm0, %rax # sched: [10:1.00]
+; BDVER2-NEXT:    vmovq %xmm1, (%rsi) # sched: [2:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_movd_64:
 ; BTVER2-SSE:       # %bb.0:
@@ -5474,19 +5474,19 @@ define <2 x double> @test_movhpd(<2 x double> %a0, <2 x double> %a1, x86_mmx *%a
 ;
 ; BDVER2-SSE-LABEL: test_movhpd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    movhpd {{.*#+}} xmm1 = xmm1[0],mem[0] sched: [7:1.00]
-; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    movhpd %xmm0, (%rdi) # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    movapd %xmm1, %xmm0 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    movhpd {{.*#+}} xmm1 = xmm1[0],mem[0] sched: [7:0.50]
+; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    movhpd %xmm0, (%rdi) # sched: [2:1.00]
+; BDVER2-SSE-NEXT:    movapd %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_movhpd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vmovhpd {{.*#+}} xmm1 = xmm1[0],mem[0] sched: [7:1.00]
-; BDVER2-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    vmovhpd %xmm0, (%rdi) # sched: [1:1.00]
-; BDVER2-NEXT:    vmovapd %xmm1, %xmm0 # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vmovhpd {{.*#+}} xmm1 = xmm1[0],mem[0] sched: [7:0.50]
+; BDVER2-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    vmovhpd %xmm0, (%rdi) # sched: [2:1.00]
+; BDVER2-NEXT:    vmovapd %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_movhpd:
 ; BTVER2-SSE:       # %bb.0:
@@ -5636,19 +5636,19 @@ define <2 x double> @test_movlpd(<2 x double> %a0, <2 x double> %a1, x86_mmx *%a
 ;
 ; BDVER2-SSE-LABEL: test_movlpd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    movlpd {{.*#+}} xmm1 = mem[0],xmm1[1] sched: [7:1.00]
-; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    movlpd %xmm0, (%rdi) # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    movapd %xmm1, %xmm0 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    movlpd {{.*#+}} xmm1 = mem[0],xmm1[1] sched: [7:0.50]
+; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    movlpd %xmm0, (%rdi) # sched: [2:1.00]
+; BDVER2-SSE-NEXT:    movapd %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_movlpd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vmovlpd {{.*#+}} xmm1 = mem[0],xmm1[1] sched: [7:1.00]
-; BDVER2-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    vmovlpd %xmm0, (%rdi) # sched: [1:1.00]
-; BDVER2-NEXT:    vmovapd %xmm1, %xmm0 # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vmovlpd {{.*#+}} xmm1 = mem[0],xmm1[1] sched: [7:0.50]
+; BDVER2-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    vmovlpd %xmm0, (%rdi) # sched: [2:1.00]
+; BDVER2-NEXT:    vmovapd %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_movlpd:
 ; BTVER2-SSE:       # %bb.0:
@@ -5760,13 +5760,13 @@ define i32 @test_movmskpd(<2 x double> %a0) {
 ;
 ; BDVER2-SSE-LABEL: test_movmskpd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    movmskpd %xmm0, %eax # sched: [2:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    movmskpd %xmm0, %eax # sched: [10:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_movmskpd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vmovmskpd %xmm0, %eax # sched: [2:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vmovmskpd %xmm0, %eax # sched: [10:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_movmskpd:
 ; BTVER2-SSE:       # %bb.0:
@@ -5875,15 +5875,15 @@ define void @test_movntdqa(<2 x i64> %a0, <2 x i64> *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_movntdqa:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    paddq %xmm0, %xmm0 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    movntdq %xmm0, (%rdi) # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    paddq %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    movntdq %xmm0, (%rdi) # sched: [2:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_movntdqa:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpaddq %xmm0, %xmm0, %xmm0 # sched: [1:0.50]
-; BDVER2-NEXT:    vmovntdq %xmm0, (%rdi) # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpaddq %xmm0, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    vmovntdq %xmm0, (%rdi) # sched: [2:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_movntdqa:
 ; BTVER2-SSE:       # %bb.0:
@@ -5994,15 +5994,15 @@ define void @test_movntpd(<2 x double> %a0, <2 x double> *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_movntpd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    addpd %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    movntpd %xmm0, (%rdi) # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    addpd %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    movntpd %xmm0, (%rdi) # sched: [3:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_movntpd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vaddpd %xmm0, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    vmovntpd %xmm0, (%rdi) # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vaddpd %xmm0, %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    vmovntpd %xmm0, (%rdi) # sched: [3:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_movntpd:
 ; BTVER2-SSE:       # %bb.0:
@@ -6126,17 +6126,17 @@ define <2 x i64> @test_movq_mem(<2 x i64> %a0, i64 *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_movq_mem:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    movq {{.*#+}} xmm1 = mem[0],zero sched: [6:0.50]
-; BDVER2-SSE-NEXT:    paddq %xmm1, %xmm0 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    movq %xmm0, (%rdi) # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    movq {{.*#+}} xmm1 = mem[0],zero sched: [5:0.50]
+; BDVER2-SSE-NEXT:    paddq %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    movq %xmm0, (%rdi) # sched: [2:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_movq_mem:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vmovq {{.*#+}} xmm1 = mem[0],zero sched: [6:0.50]
-; BDVER2-NEXT:    vpaddq %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
-; BDVER2-NEXT:    vmovq %xmm0, (%rdi) # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vmovq {{.*#+}} xmm1 = mem[0],zero sched: [5:0.50]
+; BDVER2-NEXT:    vpaddq %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    vmovq %xmm0, (%rdi) # sched: [2:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_movq_mem:
 ; BTVER2-SSE:       # %bb.0:
@@ -6256,15 +6256,15 @@ define <2 x i64> @test_movq_reg(<2 x i64> %a0, <2 x i64> %a1) {
 ;
 ; BDVER2-SSE-LABEL: test_movq_reg:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    movq {{.*#+}} xmm0 = xmm0[0],zero sched: [1:0.33]
-; BDVER2-SSE-NEXT:    paddq %xmm1, %xmm0 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    movq {{.*#+}} xmm0 = xmm0[0],zero sched: [2:0.50]
+; BDVER2-SSE-NEXT:    paddq %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_movq_reg:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero sched: [1:0.33]
-; BDVER2-NEXT:    vpaddq %xmm0, %xmm1, %xmm0 # sched: [1:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero sched: [2:0.50]
+; BDVER2-NEXT:    vpaddq %xmm0, %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_movq_reg:
 ; BTVER2-SSE:       # %bb.0:
@@ -6388,17 +6388,17 @@ define void @test_movsd_mem(double* %a0, double* %a1) {
 ;
 ; BDVER2-SSE-LABEL: test_movsd_mem:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero sched: [6:0.50]
-; BDVER2-SSE-NEXT:    addsd %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    movsd %xmm0, (%rsi) # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero sched: [5:0.50]
+; BDVER2-SSE-NEXT:    addsd %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    movsd %xmm0, (%rsi) # sched: [2:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_movsd_mem:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero sched: [6:0.50]
-; BDVER2-NEXT:    vaddsd %xmm0, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    vmovsd %xmm0, (%rsi) # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero sched: [5:0.50]
+; BDVER2-NEXT:    vaddsd %xmm0, %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    vmovsd %xmm0, (%rsi) # sched: [2:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_movsd_mem:
 ; BTVER2-SSE:       # %bb.0:
@@ -6513,14 +6513,14 @@ define <2 x double> @test_movsd_reg(<2 x double> %a0, <2 x double> %a1) {
 ;
 ; BDVER2-SSE-LABEL: test_movsd_reg:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    movlhps {{.*#+}} xmm1 = xmm1[0],xmm0[0] sched: [1:1.00]
-; BDVER2-SSE-NEXT:    movaps %xmm1, %xmm0 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    movlhps {{.*#+}} xmm1 = xmm1[0],xmm0[0] sched: [2:0.50]
+; BDVER2-SSE-NEXT:    movaps %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_movsd_reg:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm1[0],xmm0[0] sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vmovlhps {{.*#+}} xmm0 = xmm1[0],xmm0[0] sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_movsd_reg:
 ; BTVER2-SSE:       # %bb.0:
@@ -6641,17 +6641,17 @@ define void @test_movupd(<2 x double> *%a0, <2 x double> *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_movupd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    movupd (%rdi), %xmm0 # sched: [6:0.50]
-; BDVER2-SSE-NEXT:    addpd %xmm0, %xmm0 # sched: [3:1.00]
+; BDVER2-SSE-NEXT:    movupd (%rdi), %xmm0 # sched: [5:0.50]
+; BDVER2-SSE-NEXT:    addpd %xmm0, %xmm0 # sched: [5:1.00]
 ; BDVER2-SSE-NEXT:    movupd %xmm0, (%rsi) # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_movupd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vmovupd (%rdi), %xmm0 # sched: [6:0.50]
-; BDVER2-NEXT:    vaddpd %xmm0, %xmm0, %xmm0 # sched: [3:1.00]
+; BDVER2-NEXT:    vmovupd (%rdi), %xmm0 # sched: [5:0.50]
+; BDVER2-NEXT:    vaddpd %xmm0, %xmm0, %xmm0 # sched: [5:1.00]
 ; BDVER2-NEXT:    vmovupd %xmm0, (%rsi) # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_movupd:
 ; BTVER2-SSE:       # %bb.0:
@@ -6768,14 +6768,14 @@ define <2 x double> @test_mulpd(<2 x double> %a0, <2 x double> %a1, <2 x double>
 ; BDVER2-SSE-LABEL: test_mulpd:
 ; BDVER2-SSE:       # %bb.0:
 ; BDVER2-SSE-NEXT:    mulpd %xmm1, %xmm0 # sched: [5:1.00]
-; BDVER2-SSE-NEXT:    mulpd (%rdi), %xmm0 # sched: [11:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    mulpd (%rdi), %xmm0 # sched: [10:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_mulpd:
 ; BDVER2:       # %bb.0:
 ; BDVER2-NEXT:    vmulpd %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
-; BDVER2-NEXT:    vmulpd (%rdi), %xmm0, %xmm0 # sched: [11:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vmulpd (%rdi), %xmm0, %xmm0 # sched: [10:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_mulpd:
 ; BTVER2-SSE:       # %bb.0:
@@ -6888,14 +6888,14 @@ define double @test_mulsd(double %a0, double %a1, double *%a2) {
 ; BDVER2-SSE-LABEL: test_mulsd:
 ; BDVER2-SSE:       # %bb.0:
 ; BDVER2-SSE-NEXT:    mulsd %xmm1, %xmm0 # sched: [5:1.00]
-; BDVER2-SSE-NEXT:    mulsd (%rdi), %xmm0 # sched: [11:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    mulsd (%rdi), %xmm0 # sched: [10:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_mulsd:
 ; BDVER2:       # %bb.0:
 ; BDVER2-NEXT:    vmulsd %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
-; BDVER2-NEXT:    vmulsd (%rdi), %xmm0, %xmm0 # sched: [11:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vmulsd (%rdi), %xmm0, %xmm0 # sched: [10:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_mulsd:
 ; BTVER2-SSE:       # %bb.0:
@@ -7020,17 +7020,17 @@ define <2 x double> @test_orpd(<2 x double> %a0, <2 x double> %a1, <2 x double> 
 ;
 ; BDVER2-SSE-LABEL: test_orpd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    orpd %xmm1, %xmm0 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    orpd (%rdi), %xmm0 # sched: [7:1.00]
-; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    orpd %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    orpd (%rdi), %xmm0 # sched: [7:0.50]
+; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_orpd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vorpd %xmm1, %xmm0, %xmm0 # sched: [1:1.00]
-; BDVER2-NEXT:    vorpd (%rdi), %xmm0, %xmm0 # sched: [7:1.00]
-; BDVER2-NEXT:    vaddpd %xmm0, %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vorpd %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    vorpd (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
+; BDVER2-NEXT:    vaddpd %xmm0, %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_orpd:
 ; BTVER2-SSE:       # %bb.0:
@@ -7155,15 +7155,15 @@ define <8 x i16> @test_packssdw(<4 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_packssdw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    packssdw %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    packssdw %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    packssdw (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_packssdw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpackssdw %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpackssdw %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpackssdw (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_packssdw:
 ; BTVER2-SSE:       # %bb.0:
@@ -7281,15 +7281,15 @@ define <16 x i8> @test_packsswb(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_packsswb:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    packsswb %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    packsswb %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    packsswb (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_packsswb:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpacksswb %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpacksswb %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpacksswb (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_packsswb:
 ; BTVER2-SSE:       # %bb.0:
@@ -7407,15 +7407,15 @@ define <16 x i8> @test_packuswb(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_packuswb:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    packuswb %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    packuswb %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    packuswb (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_packuswb:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpackuswb %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpackuswb %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpackuswb (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_packuswb:
 ; BTVER2-SSE:       # %bb.0:
@@ -7533,15 +7533,15 @@ define <16 x i8> @test_paddb(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_paddb:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    paddb %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    paddb %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    paddb (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_paddb:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpaddb %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpaddb %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpaddb (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_paddb:
 ; BTVER2-SSE:       # %bb.0:
@@ -7657,15 +7657,15 @@ define <4 x i32> @test_paddd(<4 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_paddd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    paddd %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    paddd %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    paddd (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_paddd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpaddd %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpaddd %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpaddd (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_paddd:
 ; BTVER2-SSE:       # %bb.0:
@@ -7777,15 +7777,15 @@ define <2 x i64> @test_paddq(<2 x i64> %a0, <2 x i64> %a1, <2 x i64> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_paddq:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    paddq %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    paddq %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    paddq (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_paddq:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpaddq %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpaddq %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpaddq (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_paddq:
 ; BTVER2-SSE:       # %bb.0:
@@ -7901,15 +7901,15 @@ define <16 x i8> @test_paddsb(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_paddsb:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    paddsb %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    paddsb %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    paddsb (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_paddsb:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpaddsb %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpaddsb %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpaddsb (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_paddsb:
 ; BTVER2-SSE:       # %bb.0:
@@ -8026,15 +8026,15 @@ define <8 x i16> @test_paddsw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_paddsw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    paddsw %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    paddsw %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    paddsw (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_paddsw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpaddsw %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpaddsw %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpaddsw (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_paddsw:
 ; BTVER2-SSE:       # %bb.0:
@@ -8151,15 +8151,15 @@ define <16 x i8> @test_paddusb(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_paddusb:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    paddusb %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    paddusb %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    paddusb (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_paddusb:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpaddusb %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpaddusb %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpaddusb (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_paddusb:
 ; BTVER2-SSE:       # %bb.0:
@@ -8276,15 +8276,15 @@ define <8 x i16> @test_paddusw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_paddusw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    paddusw %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    paddusw %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    paddusw (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_paddusw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpaddusw %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpaddusw %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpaddusw (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_paddusw:
 ; BTVER2-SSE:       # %bb.0:
@@ -8401,15 +8401,15 @@ define <8 x i16> @test_paddw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_paddw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    paddw %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    paddw %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    paddw (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_paddw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpaddw %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpaddw %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpaddw (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_paddw:
 ; BTVER2-SSE:       # %bb.0:
@@ -8534,17 +8534,17 @@ define <2 x i64> @test_pand(<2 x i64> %a0, <2 x i64> %a1, <2 x i64> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pand:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pand %xmm1, %xmm0 # sched: [1:0.33]
+; BDVER2-SSE-NEXT:    pand %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    pand (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    paddq %xmm1, %xmm0 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    paddq %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pand:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpand %xmm1, %xmm0, %xmm0 # sched: [1:0.33]
+; BDVER2-NEXT:    vpand %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpand (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    vpaddq %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpaddq %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pand:
 ; BTVER2-SSE:       # %bb.0:
@@ -8690,19 +8690,19 @@ define <2 x i64> @test_pandn(<2 x i64> %a0, <2 x i64> %a1, <2 x i64> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pandn:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pandn %xmm1, %xmm0 # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    movdqa %xmm0, %xmm1 # sched: [1:0.33]
+; BDVER2-SSE-NEXT:    pandn %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    movdqa %xmm0, %xmm1 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    pandn (%rdi), %xmm1 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    paddq %xmm0, %xmm1 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    movdqa %xmm1, %xmm0 # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    paddq %xmm0, %xmm1 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    movdqa %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pandn:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpandn %xmm1, %xmm0, %xmm0 # sched: [1:0.33]
+; BDVER2-NEXT:    vpandn %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpandn (%rdi), %xmm0, %xmm1 # sched: [7:0.50]
-; BDVER2-NEXT:    vpaddq %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpaddq %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pandn:
 ; BTVER2-SSE:       # %bb.0:
@@ -8829,15 +8829,15 @@ define <16 x i8> @test_pavgb(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pavgb:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pavgb %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    pavgb %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    pavgb (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pavgb:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpavgb %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpavgb %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpavgb (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pavgb:
 ; BTVER2-SSE:       # %bb.0:
@@ -8963,15 +8963,15 @@ define <8 x i16> @test_pavgw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pavgw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pavgw %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    pavgw %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    pavgw (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pavgw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpavgw %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpavgw %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpavgw (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pavgw:
 ; BTVER2-SSE:       # %bb.0:
@@ -9108,17 +9108,17 @@ define <16 x i8> @test_pcmpeqb(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pcmpeqb:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pcmpeqb %xmm0, %xmm1 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    pcmpeqb %xmm0, %xmm1 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    pcmpeqb (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    por %xmm1, %xmm0 # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    por %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pcmpeqb:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpcomeqb %xmm1, %xmm0, %xmm1 # sched: [1:0.50]
+; BDVER2-NEXT:    vpcomeqb %xmm1, %xmm0, %xmm1 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpcomeqb (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    vpor %xmm0, %xmm1, %xmm0 # sched: [1:0.33]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpor %xmm0, %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pcmpeqb:
 ; BTVER2-SSE:       # %bb.0:
@@ -9251,17 +9251,17 @@ define <4 x i32> @test_pcmpeqd(<4 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pcmpeqd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pcmpeqd %xmm0, %xmm1 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    pcmpeqd %xmm0, %xmm1 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    pcmpeqd (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    por %xmm1, %xmm0 # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    por %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pcmpeqd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpcomeqd %xmm1, %xmm0, %xmm1 # sched: [1:0.50]
+; BDVER2-NEXT:    vpcomeqd %xmm1, %xmm0, %xmm1 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpcomeqd (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    vpor %xmm0, %xmm1, %xmm0 # sched: [1:0.33]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpor %xmm0, %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pcmpeqd:
 ; BTVER2-SSE:       # %bb.0:
@@ -9394,17 +9394,17 @@ define <8 x i16> @test_pcmpeqw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pcmpeqw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pcmpeqw %xmm0, %xmm1 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    pcmpeqw %xmm0, %xmm1 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    pcmpeqw (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    por %xmm1, %xmm0 # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    por %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pcmpeqw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpcomeqw %xmm1, %xmm0, %xmm1 # sched: [1:0.50]
+; BDVER2-NEXT:    vpcomeqw %xmm1, %xmm0, %xmm1 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpcomeqw (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    vpor %xmm0, %xmm1, %xmm0 # sched: [1:0.33]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpor %xmm0, %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pcmpeqw:
 ; BTVER2-SSE:       # %bb.0:
@@ -9543,18 +9543,18 @@ define <16 x i8> @test_pcmpgtb(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pcmpgtb:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    movdqa %xmm0, %xmm2 # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    pcmpgtb %xmm1, %xmm2 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    movdqa %xmm0, %xmm2 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    pcmpgtb (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    por %xmm2, %xmm0 # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    pcmpgtb %xmm1, %xmm2 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    por %xmm2, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pcmpgtb:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpcomgtb %xmm1, %xmm0, %xmm1 # sched: [1:0.50]
+; BDVER2-NEXT:    vpcomgtb %xmm1, %xmm0, %xmm1 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpcomgtb (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    vpor %xmm0, %xmm1, %xmm0 # sched: [1:0.33]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpor %xmm0, %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pcmpgtb:
 ; BTVER2-SSE:       # %bb.0:
@@ -9695,18 +9695,18 @@ define <4 x i32> @test_pcmpgtd(<4 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pcmpgtd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    movdqa %xmm0, %xmm2 # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    pcmpgtd %xmm1, %xmm2 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    movdqa %xmm0, %xmm2 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    pcmpeqd (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    por %xmm2, %xmm0 # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    pcmpgtd %xmm1, %xmm2 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    por %xmm2, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pcmpgtd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpcomgtd %xmm1, %xmm0, %xmm1 # sched: [1:0.50]
+; BDVER2-NEXT:    vpcomgtd %xmm1, %xmm0, %xmm1 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpcomeqd (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    vpor %xmm0, %xmm1, %xmm0 # sched: [1:0.33]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpor %xmm0, %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pcmpgtd:
 ; BTVER2-SSE:       # %bb.0:
@@ -9847,18 +9847,18 @@ define <8 x i16> @test_pcmpgtw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pcmpgtw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    movdqa %xmm0, %xmm2 # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    pcmpgtw %xmm1, %xmm2 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    movdqa %xmm0, %xmm2 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    pcmpgtw (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    por %xmm2, %xmm0 # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    pcmpgtw %xmm1, %xmm2 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    por %xmm2, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pcmpgtw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpcomgtw %xmm1, %xmm0, %xmm1 # sched: [1:0.50]
+; BDVER2-NEXT:    vpcomgtw %xmm1, %xmm0, %xmm1 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpcomgtw (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    vpor %xmm0, %xmm1, %xmm0 # sched: [1:0.33]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpor %xmm0, %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pcmpgtw:
 ; BTVER2-SSE:       # %bb.0:
@@ -9978,15 +9978,15 @@ define i16 @test_pextrw(<8 x i16> %a0) {
 ;
 ; BDVER2-SSE-LABEL: test_pextrw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pextrw $6, %xmm0, %eax # sched: [3:1.00]
+; BDVER2-SSE-NEXT:    pextrw $6, %xmm0, %eax # sched: [13:1.00]
 ; BDVER2-SSE-NEXT:    # kill: def $ax killed $ax killed $eax
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pextrw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpextrw $6, %xmm0, %eax # sched: [3:1.00]
+; BDVER2-NEXT:    vpextrw $6, %xmm0, %eax # sched: [13:1.00]
 ; BDVER2-NEXT:    # kill: def $ax killed $ax killed $eax
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pextrw:
 ; BTVER2-SSE:       # %bb.0:
@@ -10100,15 +10100,15 @@ define <8 x i16> @test_pinsrw(<8 x i16> %a0, i16 %a1, i16 *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pinsrw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pinsrw $1, %edi, %xmm0 # sched: [2:1.00]
-; BDVER2-SSE-NEXT:    pinsrw $3, (%rsi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    pinsrw $1, %edi, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    pinsrw $3, (%rsi), %xmm0 # sched: [6:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pinsrw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpinsrw $1, %edi, %xmm0, %xmm0 # sched: [2:1.00]
-; BDVER2-NEXT:    vpinsrw $3, (%rsi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpinsrw $1, %edi, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    vpinsrw $3, (%rsi), %xmm0, %xmm0 # sched: [6:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pinsrw:
 ; BTVER2-SSE:       # %bb.0:
@@ -10220,15 +10220,15 @@ define <4 x i32> @test_pmaddwd(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pmaddwd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pmaddwd %xmm1, %xmm0 # sched: [5:1.00]
-; BDVER2-SSE-NEXT:    pmaddwd (%rdi), %xmm0 # sched: [11:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    pmaddwd %xmm1, %xmm0 # sched: [4:1.00]
+; BDVER2-SSE-NEXT:    pmaddwd (%rdi), %xmm0 # sched: [9:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pmaddwd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpmaddwd %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
-; BDVER2-NEXT:    vpmaddwd (%rdi), %xmm0, %xmm0 # sched: [11:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpmaddwd %xmm1, %xmm0, %xmm0 # sched: [4:1.00]
+; BDVER2-NEXT:    vpmaddwd (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pmaddwd:
 ; BTVER2-SSE:       # %bb.0:
@@ -10346,15 +10346,15 @@ define <8 x i16> @test_pmaxsw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pmaxsw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pmaxsw %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    pmaxsw %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    pmaxsw (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pmaxsw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpmaxsw %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpmaxsw %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpmaxsw (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pmaxsw:
 ; BTVER2-SSE:       # %bb.0:
@@ -10471,15 +10471,15 @@ define <16 x i8> @test_pmaxub(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pmaxub:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pmaxub %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    pmaxub %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    pmaxub (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pmaxub:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpmaxub %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpmaxub %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpmaxub (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pmaxub:
 ; BTVER2-SSE:       # %bb.0:
@@ -10596,15 +10596,15 @@ define <8 x i16> @test_pminsw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pminsw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pminsw %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    pminsw %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    pminsw (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pminsw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpminsw %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpminsw %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpminsw (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pminsw:
 ; BTVER2-SSE:       # %bb.0:
@@ -10721,15 +10721,15 @@ define <16 x i8> @test_pminub(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pminub:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pminub %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    pminub %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    pminub (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pminub:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpminub %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpminub %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpminub (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pminub:
 ; BTVER2-SSE:       # %bb.0:
@@ -10831,13 +10831,13 @@ define i32 @test_pmovmskb(<16 x i8> %a0) {
 ;
 ; BDVER2-SSE-LABEL: test_pmovmskb:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pmovmskb %xmm0, %eax # sched: [2:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    pmovmskb %xmm0, %eax # sched: [13:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pmovmskb:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpmovmskb %xmm0, %eax # sched: [2:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpmovmskb %xmm0, %eax # sched: [13:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pmovmskb:
 ; BTVER2-SSE:       # %bb.0:
@@ -10944,15 +10944,15 @@ define <8 x i16> @test_pmulhuw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pmulhuw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pmulhuw %xmm1, %xmm0 # sched: [5:1.00]
-; BDVER2-SSE-NEXT:    pmulhuw (%rdi), %xmm0 # sched: [11:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    pmulhuw %xmm1, %xmm0 # sched: [4:1.00]
+; BDVER2-SSE-NEXT:    pmulhuw (%rdi), %xmm0 # sched: [9:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pmulhuw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpmulhuw %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
-; BDVER2-NEXT:    vpmulhuw (%rdi), %xmm0, %xmm0 # sched: [11:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpmulhuw %xmm1, %xmm0, %xmm0 # sched: [4:1.00]
+; BDVER2-NEXT:    vpmulhuw (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pmulhuw:
 ; BTVER2-SSE:       # %bb.0:
@@ -11065,15 +11065,15 @@ define <8 x i16> @test_pmulhw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pmulhw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pmulhw %xmm1, %xmm0 # sched: [5:1.00]
-; BDVER2-SSE-NEXT:    pmulhw (%rdi), %xmm0 # sched: [11:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    pmulhw %xmm1, %xmm0 # sched: [4:1.00]
+; BDVER2-SSE-NEXT:    pmulhw (%rdi), %xmm0 # sched: [9:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pmulhw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpmulhw %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
-; BDVER2-NEXT:    vpmulhw (%rdi), %xmm0, %xmm0 # sched: [11:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpmulhw %xmm1, %xmm0, %xmm0 # sched: [4:1.00]
+; BDVER2-NEXT:    vpmulhw (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pmulhw:
 ; BTVER2-SSE:       # %bb.0:
@@ -11186,15 +11186,15 @@ define <8 x i16> @test_pmullw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pmullw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pmullw %xmm1, %xmm0 # sched: [5:1.00]
-; BDVER2-SSE-NEXT:    pmullw (%rdi), %xmm0 # sched: [11:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    pmullw %xmm1, %xmm0 # sched: [4:1.00]
+; BDVER2-SSE-NEXT:    pmullw (%rdi), %xmm0 # sched: [9:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pmullw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpmullw %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
-; BDVER2-NEXT:    vpmullw (%rdi), %xmm0, %xmm0 # sched: [11:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpmullw %xmm1, %xmm0, %xmm0 # sched: [4:1.00]
+; BDVER2-NEXT:    vpmullw (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pmullw:
 ; BTVER2-SSE:       # %bb.0:
@@ -11306,15 +11306,15 @@ define <2 x i64> @test_pmuludq(<4 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pmuludq:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pmuludq %xmm1, %xmm0 # sched: [5:1.00]
-; BDVER2-SSE-NEXT:    pmuludq (%rdi), %xmm0 # sched: [11:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    pmuludq %xmm1, %xmm0 # sched: [4:1.00]
+; BDVER2-SSE-NEXT:    pmuludq (%rdi), %xmm0 # sched: [9:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pmuludq:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpmuludq %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
-; BDVER2-NEXT:    vpmuludq (%rdi), %xmm0, %xmm0 # sched: [11:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpmuludq %xmm1, %xmm0, %xmm0 # sched: [4:1.00]
+; BDVER2-NEXT:    vpmuludq (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pmuludq:
 ; BTVER2-SSE:       # %bb.0:
@@ -11441,17 +11441,17 @@ define <2 x i64> @test_por(<2 x i64> %a0, <2 x i64> %a1, <2 x i64> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_por:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    por %xmm1, %xmm0 # sched: [1:0.33]
+; BDVER2-SSE-NEXT:    por %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    por (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    paddq %xmm1, %xmm0 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    paddq %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_por:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpor %xmm1, %xmm0, %xmm0 # sched: [1:0.33]
+; BDVER2-NEXT:    vpor %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpor (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    vpaddq %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpaddq %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_por:
 ; BTVER2-SSE:       # %bb.0:
@@ -11568,15 +11568,15 @@ define <2 x i64> @test_psadbw(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_psadbw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    psadbw %xmm1, %xmm0 # sched: [5:1.00]
-; BDVER2-SSE-NEXT:    psadbw (%rdi), %xmm0 # sched: [11:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    psadbw %xmm1, %xmm0 # sched: [4:0.50]
+; BDVER2-SSE-NEXT:    psadbw (%rdi), %xmm0 # sched: [9:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_psadbw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpsadbw %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
-; BDVER2-NEXT:    vpsadbw (%rdi), %xmm0, %xmm0 # sched: [11:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpsadbw %xmm1, %xmm0, %xmm0 # sched: [4:0.50]
+; BDVER2-NEXT:    vpsadbw (%rdi), %xmm0, %xmm0 # sched: [9:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_psadbw:
 ; BTVER2-SSE:       # %bb.0:
@@ -11706,17 +11706,17 @@ define <4 x i32> @test_pshufd(<4 x i32> %a0, <4 x i32> *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_pshufd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pshufd {{.*#+}} xmm1 = xmm0[1,0,3,2] sched: [1:0.50]
+; BDVER2-SSE-NEXT:    pshufd {{.*#+}} xmm1 = xmm0[1,0,3,2] sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    pshufd {{.*#+}} xmm0 = mem[3,2,1,0] sched: [7:0.50]
-; BDVER2-SSE-NEXT:    paddd %xmm1, %xmm0 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    paddd %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pshufd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[1,0,3,2] sched: [1:0.50]
 ; BDVER2-NEXT:    vpshufd {{.*#+}} xmm1 = mem[3,2,1,0] sched: [7:0.50]
-; BDVER2-NEXT:    vpaddd %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[1,0,3,2] sched: [2:0.50]
+; BDVER2-NEXT:    vpaddd %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pshufd:
 ; BTVER2-SSE:       # %bb.0:
@@ -11849,17 +11849,17 @@ define <8 x i16> @test_pshufhw(<8 x i16> %a0, <8 x i16> *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_pshufhw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pshufhw {{.*#+}} xmm1 = xmm0[0,1,2,3,5,4,7,6] sched: [1:0.50]
+; BDVER2-SSE-NEXT:    pshufhw {{.*#+}} xmm1 = xmm0[0,1,2,3,5,4,7,6] sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    pshufhw {{.*#+}} xmm0 = mem[0,1,2,3,7,6,5,4] sched: [7:0.50]
-; BDVER2-SSE-NEXT:    paddw %xmm1, %xmm0 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    paddw %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pshufhw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,5,4,7,6] sched: [1:0.50]
 ; BDVER2-NEXT:    vpshufhw {{.*#+}} xmm1 = mem[0,1,2,3,7,6,5,4] sched: [7:0.50]
-; BDVER2-NEXT:    vpaddw %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,5,4,7,6] sched: [2:0.50]
+; BDVER2-NEXT:    vpaddw %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pshufhw:
 ; BTVER2-SSE:       # %bb.0:
@@ -11992,17 +11992,17 @@ define <8 x i16> @test_pshuflw(<8 x i16> %a0, <8 x i16> *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_pshuflw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pshuflw {{.*#+}} xmm1 = xmm0[1,0,3,2,4,5,6,7] sched: [1:0.50]
+; BDVER2-SSE-NEXT:    pshuflw {{.*#+}} xmm1 = xmm0[1,0,3,2,4,5,6,7] sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    pshuflw {{.*#+}} xmm0 = mem[3,2,1,0,4,5,6,7] sched: [7:0.50]
-; BDVER2-SSE-NEXT:    paddw %xmm1, %xmm0 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    paddw %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pshuflw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpshuflw {{.*#+}} xmm0 = xmm0[1,0,3,2,4,5,6,7] sched: [1:0.50]
 ; BDVER2-NEXT:    vpshuflw {{.*#+}} xmm1 = mem[3,2,1,0,4,5,6,7] sched: [7:0.50]
-; BDVER2-NEXT:    vpaddw %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpshuflw {{.*#+}} xmm0 = xmm0[1,0,3,2,4,5,6,7] sched: [2:0.50]
+; BDVER2-NEXT:    vpaddw %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pshuflw:
 ; BTVER2-SSE:       # %bb.0:
@@ -12132,17 +12132,17 @@ define <4 x i32> @test_pslld(<4 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pslld:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pslld %xmm1, %xmm0 # sched: [2:1.00]
-; BDVER2-SSE-NEXT:    pslld (%rdi), %xmm0 # sched: [8:1.00]
-; BDVER2-SSE-NEXT:    pslld $2, %xmm0 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    pslld %xmm1, %xmm0 # sched: [3:0.50]
+; BDVER2-SSE-NEXT:    pslld (%rdi), %xmm0 # sched: [8:0.50]
+; BDVER2-SSE-NEXT:    pslld $2, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pslld:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpslld %xmm1, %xmm0, %xmm0 # sched: [2:1.00]
-; BDVER2-NEXT:    vpslld (%rdi), %xmm0, %xmm0 # sched: [8:1.00]
-; BDVER2-NEXT:    vpslld $2, %xmm0, %xmm0 # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpslld %xmm1, %xmm0, %xmm0 # sched: [3:0.50]
+; BDVER2-NEXT:    vpslld (%rdi), %xmm0, %xmm0 # sched: [8:0.50]
+; BDVER2-NEXT:    vpslld $2, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pslld:
 ; BTVER2-SSE:       # %bb.0:
@@ -12254,13 +12254,13 @@ define <4 x i32> @test_pslldq(<4 x i32> %a0) {
 ;
 ; BDVER2-SSE-LABEL: test_pslldq:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pslldq {{.*#+}} xmm0 = zero,zero,zero,zero,xmm0[0,1,2,3,4,5,6,7,8,9,10,11] sched: [1:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    pslldq {{.*#+}} xmm0 = zero,zero,zero,zero,xmm0[0,1,2,3,4,5,6,7,8,9,10,11] sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pslldq:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpslldq {{.*#+}} xmm0 = zero,zero,zero,zero,xmm0[0,1,2,3,4,5,6,7,8,9,10,11] sched: [1:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpslldq {{.*#+}} xmm0 = zero,zero,zero,zero,xmm0[0,1,2,3,4,5,6,7,8,9,10,11] sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pslldq:
 ; BTVER2-SSE:       # %bb.0:
@@ -12379,17 +12379,17 @@ define <2 x i64> @test_psllq(<2 x i64> %a0, <2 x i64> %a1, <2 x i64> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_psllq:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    psllq %xmm1, %xmm0 # sched: [2:1.00]
-; BDVER2-SSE-NEXT:    psllq (%rdi), %xmm0 # sched: [8:1.00]
-; BDVER2-SSE-NEXT:    psllq $2, %xmm0 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    psllq %xmm1, %xmm0 # sched: [3:0.50]
+; BDVER2-SSE-NEXT:    psllq (%rdi), %xmm0 # sched: [8:0.50]
+; BDVER2-SSE-NEXT:    psllq $2, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_psllq:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpsllq %xmm1, %xmm0, %xmm0 # sched: [2:1.00]
-; BDVER2-NEXT:    vpsllq (%rdi), %xmm0, %xmm0 # sched: [8:1.00]
-; BDVER2-NEXT:    vpsllq $2, %xmm0, %xmm0 # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpsllq %xmm1, %xmm0, %xmm0 # sched: [3:0.50]
+; BDVER2-NEXT:    vpsllq (%rdi), %xmm0, %xmm0 # sched: [8:0.50]
+; BDVER2-NEXT:    vpsllq $2, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_psllq:
 ; BTVER2-SSE:       # %bb.0:
@@ -12521,17 +12521,17 @@ define <8 x i16> @test_psllw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_psllw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    psllw %xmm1, %xmm0 # sched: [2:1.00]
-; BDVER2-SSE-NEXT:    psllw (%rdi), %xmm0 # sched: [8:1.00]
-; BDVER2-SSE-NEXT:    psllw $2, %xmm0 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    psllw %xmm1, %xmm0 # sched: [3:0.50]
+; BDVER2-SSE-NEXT:    psllw (%rdi), %xmm0 # sched: [8:0.50]
+; BDVER2-SSE-NEXT:    psllw $2, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_psllw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpsllw %xmm1, %xmm0, %xmm0 # sched: [2:1.00]
-; BDVER2-NEXT:    vpsllw (%rdi), %xmm0, %xmm0 # sched: [8:1.00]
-; BDVER2-NEXT:    vpsllw $2, %xmm0, %xmm0 # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpsllw %xmm1, %xmm0, %xmm0 # sched: [3:0.50]
+; BDVER2-NEXT:    vpsllw (%rdi), %xmm0, %xmm0 # sched: [8:0.50]
+; BDVER2-NEXT:    vpsllw $2, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_psllw:
 ; BTVER2-SSE:       # %bb.0:
@@ -12663,17 +12663,17 @@ define <4 x i32> @test_psrad(<4 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_psrad:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    psrad %xmm1, %xmm0 # sched: [2:1.00]
-; BDVER2-SSE-NEXT:    psrad (%rdi), %xmm0 # sched: [8:1.00]
-; BDVER2-SSE-NEXT:    psrad $2, %xmm0 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    psrad %xmm1, %xmm0 # sched: [3:0.50]
+; BDVER2-SSE-NEXT:    psrad (%rdi), %xmm0 # sched: [8:0.50]
+; BDVER2-SSE-NEXT:    psrad $2, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_psrad:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpsrad %xmm1, %xmm0, %xmm0 # sched: [2:1.00]
-; BDVER2-NEXT:    vpsrad (%rdi), %xmm0, %xmm0 # sched: [8:1.00]
-; BDVER2-NEXT:    vpsrad $2, %xmm0, %xmm0 # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpsrad %xmm1, %xmm0, %xmm0 # sched: [3:0.50]
+; BDVER2-NEXT:    vpsrad (%rdi), %xmm0, %xmm0 # sched: [8:0.50]
+; BDVER2-NEXT:    vpsrad $2, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_psrad:
 ; BTVER2-SSE:       # %bb.0:
@@ -12805,17 +12805,17 @@ define <8 x i16> @test_psraw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_psraw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    psraw %xmm1, %xmm0 # sched: [2:1.00]
-; BDVER2-SSE-NEXT:    psraw (%rdi), %xmm0 # sched: [8:1.00]
-; BDVER2-SSE-NEXT:    psraw $2, %xmm0 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    psraw %xmm1, %xmm0 # sched: [3:0.50]
+; BDVER2-SSE-NEXT:    psraw (%rdi), %xmm0 # sched: [8:0.50]
+; BDVER2-SSE-NEXT:    psraw $2, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_psraw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpsraw %xmm1, %xmm0, %xmm0 # sched: [2:1.00]
-; BDVER2-NEXT:    vpsraw (%rdi), %xmm0, %xmm0 # sched: [8:1.00]
-; BDVER2-NEXT:    vpsraw $2, %xmm0, %xmm0 # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpsraw %xmm1, %xmm0, %xmm0 # sched: [3:0.50]
+; BDVER2-NEXT:    vpsraw (%rdi), %xmm0, %xmm0 # sched: [8:0.50]
+; BDVER2-NEXT:    vpsraw $2, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_psraw:
 ; BTVER2-SSE:       # %bb.0:
@@ -12947,17 +12947,17 @@ define <4 x i32> @test_psrld(<4 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_psrld:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    psrld %xmm1, %xmm0 # sched: [2:1.00]
-; BDVER2-SSE-NEXT:    psrld (%rdi), %xmm0 # sched: [8:1.00]
-; BDVER2-SSE-NEXT:    psrld $2, %xmm0 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    psrld %xmm1, %xmm0 # sched: [3:0.50]
+; BDVER2-SSE-NEXT:    psrld (%rdi), %xmm0 # sched: [8:0.50]
+; BDVER2-SSE-NEXT:    psrld $2, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_psrld:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpsrld %xmm1, %xmm0, %xmm0 # sched: [2:1.00]
-; BDVER2-NEXT:    vpsrld (%rdi), %xmm0, %xmm0 # sched: [8:1.00]
-; BDVER2-NEXT:    vpsrld $2, %xmm0, %xmm0 # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpsrld %xmm1, %xmm0, %xmm0 # sched: [3:0.50]
+; BDVER2-NEXT:    vpsrld (%rdi), %xmm0, %xmm0 # sched: [8:0.50]
+; BDVER2-NEXT:    vpsrld $2, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_psrld:
 ; BTVER2-SSE:       # %bb.0:
@@ -13069,13 +13069,13 @@ define <4 x i32> @test_psrldq(<4 x i32> %a0) {
 ;
 ; BDVER2-SSE-LABEL: test_psrldq:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    psrldq {{.*#+}} xmm0 = xmm0[4,5,6,7,8,9,10,11,12,13,14,15],zero,zero,zero,zero sched: [1:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    psrldq {{.*#+}} xmm0 = xmm0[4,5,6,7,8,9,10,11,12,13,14,15],zero,zero,zero,zero sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_psrldq:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpsrldq {{.*#+}} xmm0 = xmm0[4,5,6,7,8,9,10,11,12,13,14,15],zero,zero,zero,zero sched: [1:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpsrldq {{.*#+}} xmm0 = xmm0[4,5,6,7,8,9,10,11,12,13,14,15],zero,zero,zero,zero sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_psrldq:
 ; BTVER2-SSE:       # %bb.0:
@@ -13194,17 +13194,17 @@ define <2 x i64> @test_psrlq(<2 x i64> %a0, <2 x i64> %a1, <2 x i64> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_psrlq:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    psrlq %xmm1, %xmm0 # sched: [2:1.00]
-; BDVER2-SSE-NEXT:    psrlq (%rdi), %xmm0 # sched: [8:1.00]
-; BDVER2-SSE-NEXT:    psrlq $2, %xmm0 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    psrlq %xmm1, %xmm0 # sched: [3:0.50]
+; BDVER2-SSE-NEXT:    psrlq (%rdi), %xmm0 # sched: [8:0.50]
+; BDVER2-SSE-NEXT:    psrlq $2, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_psrlq:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpsrlq %xmm1, %xmm0, %xmm0 # sched: [2:1.00]
-; BDVER2-NEXT:    vpsrlq (%rdi), %xmm0, %xmm0 # sched: [8:1.00]
-; BDVER2-NEXT:    vpsrlq $2, %xmm0, %xmm0 # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpsrlq %xmm1, %xmm0, %xmm0 # sched: [3:0.50]
+; BDVER2-NEXT:    vpsrlq (%rdi), %xmm0, %xmm0 # sched: [8:0.50]
+; BDVER2-NEXT:    vpsrlq $2, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_psrlq:
 ; BTVER2-SSE:       # %bb.0:
@@ -13336,17 +13336,17 @@ define <8 x i16> @test_psrlw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_psrlw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    psrlw %xmm1, %xmm0 # sched: [2:1.00]
-; BDVER2-SSE-NEXT:    psrlw (%rdi), %xmm0 # sched: [8:1.00]
-; BDVER2-SSE-NEXT:    psrlw $2, %xmm0 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    psrlw %xmm1, %xmm0 # sched: [3:0.50]
+; BDVER2-SSE-NEXT:    psrlw (%rdi), %xmm0 # sched: [8:0.50]
+; BDVER2-SSE-NEXT:    psrlw $2, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_psrlw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpsrlw %xmm1, %xmm0, %xmm0 # sched: [2:1.00]
-; BDVER2-NEXT:    vpsrlw (%rdi), %xmm0, %xmm0 # sched: [8:1.00]
-; BDVER2-NEXT:    vpsrlw $2, %xmm0, %xmm0 # sched: [1:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpsrlw %xmm1, %xmm0, %xmm0 # sched: [3:0.50]
+; BDVER2-NEXT:    vpsrlw (%rdi), %xmm0, %xmm0 # sched: [8:0.50]
+; BDVER2-NEXT:    vpsrlw $2, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_psrlw:
 ; BTVER2-SSE:       # %bb.0:
@@ -13469,15 +13469,15 @@ define <16 x i8> @test_psubb(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_psubb:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    psubb %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    psubb %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    psubb (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_psubb:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpsubb %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpsubb %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpsubb (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_psubb:
 ; BTVER2-SSE:       # %bb.0:
@@ -13593,15 +13593,15 @@ define <4 x i32> @test_psubd(<4 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_psubd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    psubd %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    psubd %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    psubd (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_psubd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpsubd %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpsubd %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpsubd (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_psubd:
 ; BTVER2-SSE:       # %bb.0:
@@ -13713,15 +13713,15 @@ define <2 x i64> @test_psubq(<2 x i64> %a0, <2 x i64> %a1, <2 x i64> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_psubq:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    psubq %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    psubq %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    psubq (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_psubq:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpsubq %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpsubq %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpsubq (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_psubq:
 ; BTVER2-SSE:       # %bb.0:
@@ -13837,15 +13837,15 @@ define <16 x i8> @test_psubsb(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_psubsb:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    psubsb %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    psubsb %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    psubsb (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_psubsb:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpsubsb %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpsubsb %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpsubsb (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_psubsb:
 ; BTVER2-SSE:       # %bb.0:
@@ -13962,15 +13962,15 @@ define <8 x i16> @test_psubsw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_psubsw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    psubsw %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    psubsw %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    psubsw (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_psubsw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpsubsw %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpsubsw %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpsubsw (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_psubsw:
 ; BTVER2-SSE:       # %bb.0:
@@ -14087,15 +14087,15 @@ define <16 x i8> @test_psubusb(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_psubusb:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    psubusb %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    psubusb %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    psubusb (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_psubusb:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpsubusb %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpsubusb %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpsubusb (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_psubusb:
 ; BTVER2-SSE:       # %bb.0:
@@ -14212,15 +14212,15 @@ define <8 x i16> @test_psubusw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_psubusw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    psubusw %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    psubusw %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    psubusw (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_psubusw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpsubusw %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpsubusw %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpsubusw (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_psubusw:
 ; BTVER2-SSE:       # %bb.0:
@@ -14337,15 +14337,15 @@ define <8 x i16> @test_psubw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_psubw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    psubw %xmm1, %xmm0 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    psubw %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    psubw (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_psubw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpsubw %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BDVER2-NEXT:    vpsubw %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpsubw (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_psubw:
 ; BTVER2-SSE:       # %bb.0:
@@ -14461,15 +14461,15 @@ define <16 x i8> @test_punpckhbw(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_punpckhbw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    punpckhbw {{.*#+}} xmm0 = xmm0[8],xmm1[8],xmm0[9],xmm1[9],xmm0[10],xmm1[10],xmm0[11],xmm1[11],xmm0[12],xmm1[12],xmm0[13],xmm1[13],xmm0[14],xmm1[14],xmm0[15],xmm1[15] sched: [1:0.50]
+; BDVER2-SSE-NEXT:    punpckhbw {{.*#+}} xmm0 = xmm0[8],xmm1[8],xmm0[9],xmm1[9],xmm0[10],xmm1[10],xmm0[11],xmm1[11],xmm0[12],xmm1[12],xmm0[13],xmm1[13],xmm0[14],xmm1[14],xmm0[15],xmm1[15] sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    punpckhbw {{.*#+}} xmm0 = xmm0[8],mem[8],xmm0[9],mem[9],xmm0[10],mem[10],xmm0[11],mem[11],xmm0[12],mem[12],xmm0[13],mem[13],xmm0[14],mem[14],xmm0[15],mem[15] sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_punpckhbw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpunpckhbw {{.*#+}} xmm0 = xmm0[8],xmm1[8],xmm0[9],xmm1[9],xmm0[10],xmm1[10],xmm0[11],xmm1[11],xmm0[12],xmm1[12],xmm0[13],xmm1[13],xmm0[14],xmm1[14],xmm0[15],xmm1[15] sched: [1:0.50]
+; BDVER2-NEXT:    vpunpckhbw {{.*#+}} xmm0 = xmm0[8],xmm1[8],xmm0[9],xmm1[9],xmm0[10],xmm1[10],xmm0[11],xmm1[11],xmm0[12],xmm1[12],xmm0[13],xmm1[13],xmm0[14],xmm1[14],xmm0[15],xmm1[15] sched: [2:0.50]
 ; BDVER2-NEXT:    vpunpckhbw {{.*#+}} xmm0 = xmm0[8],mem[8],xmm0[9],mem[9],xmm0[10],mem[10],xmm0[11],mem[11],xmm0[12],mem[12],xmm0[13],mem[13],xmm0[14],mem[14],xmm0[15],mem[15] sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_punpckhbw:
 ; BTVER2-SSE:       # %bb.0:
@@ -14596,17 +14596,17 @@ define <4 x i32> @test_punpckhdq(<4 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_punpckhdq:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    punpckhdq {{.*#+}} xmm0 = xmm0[2],xmm1[2],xmm0[3],xmm1[3] sched: [1:0.50]
+; BDVER2-SSE-NEXT:    punpckhdq {{.*#+}} xmm0 = xmm0[2],xmm1[2],xmm0[3],xmm1[3] sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    punpckhdq {{.*#+}} xmm1 = xmm1[2],mem[2],xmm1[3],mem[3] sched: [7:0.50]
-; BDVER2-SSE-NEXT:    paddd %xmm1, %xmm0 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    paddd %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_punpckhdq:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpunpckhdq {{.*#+}} xmm0 = xmm0[2],xmm1[2],xmm0[3],xmm1[3] sched: [1:0.50]
+; BDVER2-NEXT:    vpunpckhdq {{.*#+}} xmm0 = xmm0[2],xmm1[2],xmm0[3],xmm1[3] sched: [2:0.50]
 ; BDVER2-NEXT:    vpunpckhdq {{.*#+}} xmm1 = xmm1[2],mem[2],xmm1[3],mem[3] sched: [7:0.50]
-; BDVER2-NEXT:    vpaddd %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpaddd %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_punpckhdq:
 ; BTVER2-SSE:       # %bb.0:
@@ -14736,17 +14736,17 @@ define <2 x i64> @test_punpckhqdq(<2 x i64> %a0, <2 x i64> %a1, <2 x i64> *%a2) 
 ;
 ; BDVER2-SSE-LABEL: test_punpckhqdq:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    punpckhqdq {{.*#+}} xmm0 = xmm0[1],xmm1[1] sched: [1:0.50]
+; BDVER2-SSE-NEXT:    punpckhqdq {{.*#+}} xmm0 = xmm0[1],xmm1[1] sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    punpckhqdq {{.*#+}} xmm1 = xmm1[1],mem[1] sched: [7:0.50]
-; BDVER2-SSE-NEXT:    paddq %xmm1, %xmm0 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    paddq %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_punpckhqdq:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpunpckhqdq {{.*#+}} xmm0 = xmm0[1],xmm1[1] sched: [1:0.50]
+; BDVER2-NEXT:    vpunpckhqdq {{.*#+}} xmm0 = xmm0[1],xmm1[1] sched: [2:0.50]
 ; BDVER2-NEXT:    vpunpckhqdq {{.*#+}} xmm1 = xmm1[1],mem[1] sched: [7:0.50]
-; BDVER2-NEXT:    vpaddq %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpaddq %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_punpckhqdq:
 ; BTVER2-SSE:       # %bb.0:
@@ -14867,15 +14867,15 @@ define <8 x i16> @test_punpckhwd(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_punpckhwd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    punpckhwd {{.*#+}} xmm0 = xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7] sched: [1:0.50]
+; BDVER2-SSE-NEXT:    punpckhwd {{.*#+}} xmm0 = xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7] sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    punpckhwd {{.*#+}} xmm0 = xmm0[4],mem[4],xmm0[5],mem[5],xmm0[6],mem[6],xmm0[7],mem[7] sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_punpckhwd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpunpckhwd {{.*#+}} xmm0 = xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7] sched: [1:0.50]
+; BDVER2-NEXT:    vpunpckhwd {{.*#+}} xmm0 = xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7] sched: [2:0.50]
 ; BDVER2-NEXT:    vpunpckhwd {{.*#+}} xmm0 = xmm0[4],mem[4],xmm0[5],mem[5],xmm0[6],mem[6],xmm0[7],mem[7] sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_punpckhwd:
 ; BTVER2-SSE:       # %bb.0:
@@ -14991,15 +14991,15 @@ define <16 x i8> @test_punpcklbw(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_punpcklbw:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7] sched: [1:0.50]
+; BDVER2-SSE-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7] sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],mem[0],xmm0[1],mem[1],xmm0[2],mem[2],xmm0[3],mem[3],xmm0[4],mem[4],xmm0[5],mem[5],xmm0[6],mem[6],xmm0[7],mem[7] sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_punpcklbw:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpunpcklbw {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7] sched: [1:0.50]
+; BDVER2-NEXT:    vpunpcklbw {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7] sched: [2:0.50]
 ; BDVER2-NEXT:    vpunpcklbw {{.*#+}} xmm0 = xmm0[0],mem[0],xmm0[1],mem[1],xmm0[2],mem[2],xmm0[3],mem[3],xmm0[4],mem[4],xmm0[5],mem[5],xmm0[6],mem[6],xmm0[7],mem[7] sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_punpcklbw:
 ; BTVER2-SSE:       # %bb.0:
@@ -15126,17 +15126,17 @@ define <4 x i32> @test_punpckldq(<4 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_punpckldq:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1] sched: [1:0.50]
+; BDVER2-SSE-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1] sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    punpckldq {{.*#+}} xmm1 = xmm1[0],mem[0],xmm1[1],mem[1] sched: [7:0.50]
-; BDVER2-SSE-NEXT:    paddd %xmm1, %xmm0 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    paddd %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_punpckldq:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpunpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1] sched: [1:0.50]
+; BDVER2-NEXT:    vpunpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1] sched: [2:0.50]
 ; BDVER2-NEXT:    vpunpckldq {{.*#+}} xmm1 = xmm1[0],mem[0],xmm1[1],mem[1] sched: [7:0.50]
-; BDVER2-NEXT:    vpaddd %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpaddd %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_punpckldq:
 ; BTVER2-SSE:       # %bb.0:
@@ -15266,17 +15266,17 @@ define <2 x i64> @test_punpcklqdq(<2 x i64> %a0, <2 x i64> %a1, <2 x i64> *%a2) 
 ;
 ; BDVER2-SSE-LABEL: test_punpcklqdq:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0] sched: [1:0.50]
+; BDVER2-SSE-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0] sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    punpcklqdq {{.*#+}} xmm1 = xmm1[0],mem[0] sched: [7:0.50]
-; BDVER2-SSE-NEXT:    paddq %xmm1, %xmm0 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    paddq %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_punpcklqdq:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0] sched: [1:0.50]
+; BDVER2-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0] sched: [2:0.50]
 ; BDVER2-NEXT:    vpunpcklqdq {{.*#+}} xmm1 = xmm1[0],mem[0] sched: [7:0.50]
-; BDVER2-NEXT:    vpaddq %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpaddq %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_punpcklqdq:
 ; BTVER2-SSE:       # %bb.0:
@@ -15397,15 +15397,15 @@ define <8 x i16> @test_punpcklwd(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_punpcklwd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3] sched: [1:0.50]
+; BDVER2-SSE-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3] sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0],mem[0],xmm0[1],mem[1],xmm0[2],mem[2],xmm0[3],mem[3] sched: [7:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_punpcklwd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpunpcklwd {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3] sched: [1:0.50]
+; BDVER2-NEXT:    vpunpcklwd {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3] sched: [2:0.50]
 ; BDVER2-NEXT:    vpunpcklwd {{.*#+}} xmm0 = xmm0[0],mem[0],xmm0[1],mem[1],xmm0[2],mem[2],xmm0[3],mem[3] sched: [7:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_punpcklwd:
 ; BTVER2-SSE:       # %bb.0:
@@ -15530,17 +15530,17 @@ define <2 x i64> @test_pxor(<2 x i64> %a0, <2 x i64> %a1, <2 x i64> *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_pxor:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    pxor %xmm1, %xmm0 # sched: [1:0.33]
+; BDVER2-SSE-NEXT:    pxor %xmm1, %xmm0 # sched: [2:0.50]
 ; BDVER2-SSE-NEXT:    pxor (%rdi), %xmm0 # sched: [7:0.50]
-; BDVER2-SSE-NEXT:    paddq %xmm1, %xmm0 # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    paddq %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_pxor:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vpxor %xmm1, %xmm0, %xmm0 # sched: [1:0.33]
+; BDVER2-NEXT:    vpxor %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
 ; BDVER2-NEXT:    vpxor (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
-; BDVER2-NEXT:    vpaddq %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vpaddq %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_pxor:
 ; BTVER2-SSE:       # %bb.0:
@@ -15670,17 +15670,17 @@ define <2 x double> @test_shufpd(<2 x double> %a0, <2 x double> %a1, <2 x double
 ;
 ; BDVER2-SSE-LABEL: test_shufpd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    shufpd {{.*#+}} xmm0 = xmm0[1],xmm1[0] sched: [1:1.00]
-; BDVER2-SSE-NEXT:    shufpd {{.*#+}} xmm1 = xmm1[1],mem[0] sched: [7:1.00]
-; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    shufpd {{.*#+}} xmm0 = xmm0[1],xmm1[0] sched: [2:0.50]
+; BDVER2-SSE-NEXT:    shufpd {{.*#+}} xmm1 = xmm1[1],mem[0] sched: [7:0.50]
+; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_shufpd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vshufpd {{.*#+}} xmm0 = xmm0[1],xmm1[0] sched: [1:1.00]
-; BDVER2-NEXT:    vshufpd {{.*#+}} xmm1 = xmm1[1],mem[0] sched: [7:1.00]
-; BDVER2-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vshufpd {{.*#+}} xmm0 = xmm0[1],xmm1[0] sched: [2:0.50]
+; BDVER2-NEXT:    vshufpd {{.*#+}} xmm1 = xmm1[1],mem[0] sched: [7:0.50]
+; BDVER2-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_shufpd:
 ; BTVER2-SSE:       # %bb.0:
@@ -15811,17 +15811,17 @@ define <2 x double> @test_sqrtpd(<2 x double> %a0, <2 x double> *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_sqrtpd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    sqrtpd %xmm0, %xmm1 # sched: [21:21.00]
-; BDVER2-SSE-NEXT:    sqrtpd (%rdi), %xmm0 # sched: [27:21.00]
-; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    sqrtpd %xmm0, %xmm1 # sched: [9:13.50]
+; BDVER2-SSE-NEXT:    sqrtpd (%rdi), %xmm0 # sched: [14:13.50]
+; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_sqrtpd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vsqrtpd %xmm0, %xmm0 # sched: [21:21.00]
-; BDVER2-NEXT:    vsqrtpd (%rdi), %xmm1 # sched: [27:21.00]
-; BDVER2-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vsqrtpd (%rdi), %xmm1 # sched: [14:13.50]
+; BDVER2-NEXT:    vsqrtpd %xmm0, %xmm0 # sched: [9:13.50]
+; BDVER2-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_sqrtpd:
 ; BTVER2-SSE:       # %bb.0:
@@ -15967,19 +15967,19 @@ define <2 x double> @test_sqrtsd(<2 x double> %a0, <2 x double> *%a1) {
 ;
 ; BDVER2-SSE-LABEL: test_sqrtsd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    sqrtsd %xmm0, %xmm0 # sched: [21:21.00]
-; BDVER2-SSE-NEXT:    movapd (%rdi), %xmm1 # sched: [6:0.50]
-; BDVER2-SSE-NEXT:    sqrtsd %xmm1, %xmm1 # sched: [21:21.00]
-; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    movapd (%rdi), %xmm1 # sched: [5:0.50]
+; BDVER2-SSE-NEXT:    sqrtsd %xmm0, %xmm0 # sched: [9:13.50]
+; BDVER2-SSE-NEXT:    sqrtsd %xmm1, %xmm1 # sched: [9:13.50]
+; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_sqrtsd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vsqrtsd %xmm0, %xmm0, %xmm0 # sched: [21:21.00]
-; BDVER2-NEXT:    vmovapd (%rdi), %xmm1 # sched: [6:0.50]
-; BDVER2-NEXT:    vsqrtsd %xmm1, %xmm1, %xmm1 # sched: [21:21.00]
-; BDVER2-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vmovapd (%rdi), %xmm1 # sched: [5:0.50]
+; BDVER2-NEXT:    vsqrtsd %xmm0, %xmm0, %xmm0 # sched: [9:13.50]
+; BDVER2-NEXT:    vsqrtsd %xmm1, %xmm1, %xmm1 # sched: [9:13.50]
+; BDVER2-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_sqrtsd:
 ; BTVER2-SSE:       # %bb.0:
@@ -16101,15 +16101,15 @@ define <2 x double> @test_subpd(<2 x double> %a0, <2 x double> %a1, <2 x double>
 ;
 ; BDVER2-SSE-LABEL: test_subpd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    subpd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    subpd (%rdi), %xmm0 # sched: [9:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    subpd %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    subpd (%rdi), %xmm0 # sched: [10:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_subpd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vsubpd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    vsubpd (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vsubpd %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    vsubpd (%rdi), %xmm0, %xmm0 # sched: [10:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_subpd:
 ; BTVER2-SSE:       # %bb.0:
@@ -16221,15 +16221,15 @@ define double @test_subsd(double %a0, double %a1, double *%a2) {
 ;
 ; BDVER2-SSE-LABEL: test_subsd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    subsd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    subsd (%rdi), %xmm0 # sched: [9:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    subsd %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    subsd (%rdi), %xmm0 # sched: [10:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_subsd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vsubsd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    vsubsd (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vsubsd %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    vsubsd (%rdi), %xmm0, %xmm0 # sched: [10:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_subsd:
 ; BTVER2-SSE:       # %bb.0:
@@ -16445,31 +16445,31 @@ define i32 @test_ucomisd(<2 x double> %a0, <2 x double> %a1, <2 x double> *%a2) 
 ;
 ; BDVER2-SSE-LABEL: test_ucomisd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    ucomisd %xmm1, %xmm0 # sched: [2:1.00]
+; BDVER2-SSE-NEXT:    ucomisd %xmm1, %xmm0 # sched: [1:1.00]
 ; BDVER2-SSE-NEXT:    setnp %al # sched: [1:0.50]
 ; BDVER2-SSE-NEXT:    sete %cl # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    andb %al, %cl # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    ucomisd (%rdi), %xmm0 # sched: [8:1.00]
+; BDVER2-SSE-NEXT:    andb %al, %cl # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    ucomisd (%rdi), %xmm0 # sched: [6:1.00]
 ; BDVER2-SSE-NEXT:    setnp %al # sched: [1:0.50]
 ; BDVER2-SSE-NEXT:    sete %dl # sched: [1:0.50]
-; BDVER2-SSE-NEXT:    andb %al, %dl # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    orb %cl, %dl # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    movzbl %dl, %eax # sched: [1:0.33]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    andb %al, %dl # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    orb %cl, %dl # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    movzbl %dl, %eax # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_ucomisd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vucomisd %xmm1, %xmm0 # sched: [2:1.00]
+; BDVER2-NEXT:    vucomisd %xmm1, %xmm0 # sched: [1:1.00]
 ; BDVER2-NEXT:    setnp %al # sched: [1:0.50]
 ; BDVER2-NEXT:    sete %cl # sched: [1:0.50]
-; BDVER2-NEXT:    andb %al, %cl # sched: [1:0.33]
-; BDVER2-NEXT:    vucomisd (%rdi), %xmm0 # sched: [8:1.00]
+; BDVER2-NEXT:    andb %al, %cl # sched: [1:0.50]
+; BDVER2-NEXT:    vucomisd (%rdi), %xmm0 # sched: [6:1.00]
 ; BDVER2-NEXT:    setnp %al # sched: [1:0.50]
 ; BDVER2-NEXT:    sete %dl # sched: [1:0.50]
-; BDVER2-NEXT:    andb %al, %dl # sched: [1:0.33]
-; BDVER2-NEXT:    orb %cl, %dl # sched: [1:0.33]
-; BDVER2-NEXT:    movzbl %dl, %eax # sched: [1:0.33]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    andb %al, %dl # sched: [1:0.50]
+; BDVER2-NEXT:    orb %cl, %dl # sched: [1:0.50]
+; BDVER2-NEXT:    movzbl %dl, %eax # sched: [1:0.50]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_ucomisd:
 ; BTVER2-SSE:       # %bb.0:
@@ -16628,17 +16628,17 @@ define <2 x double> @test_unpckhpd(<2 x double> %a0, <2 x double> %a1, <2 x doub
 ;
 ; BDVER2-SSE-LABEL: test_unpckhpd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    unpckhpd {{.*#+}} xmm0 = xmm0[1],xmm1[1] sched: [1:1.00]
-; BDVER2-SSE-NEXT:    unpckhpd {{.*#+}} xmm1 = xmm1[1],mem[1] sched: [7:1.00]
-; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    unpckhpd {{.*#+}} xmm0 = xmm0[1],xmm1[1] sched: [2:0.50]
+; BDVER2-SSE-NEXT:    unpckhpd {{.*#+}} xmm1 = xmm1[1],mem[1] sched: [7:0.50]
+; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_unpckhpd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vunpckhpd {{.*#+}} xmm0 = xmm0[1],xmm1[1] sched: [1:1.00]
-; BDVER2-NEXT:    vunpckhpd {{.*#+}} xmm1 = xmm1[1],mem[1] sched: [7:1.00]
-; BDVER2-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vunpckhpd {{.*#+}} xmm0 = xmm0[1],xmm1[1] sched: [2:0.50]
+; BDVER2-NEXT:    vunpckhpd {{.*#+}} xmm1 = xmm1[1],mem[1] sched: [7:0.50]
+; BDVER2-NEXT:    vaddpd %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_unpckhpd:
 ; BTVER2-SSE:       # %bb.0:
@@ -16776,18 +16776,18 @@ define <2 x double> @test_unpcklpd(<2 x double> %a0, <2 x double> %a1, <2 x doub
 ;
 ; BDVER2-SSE-LABEL: test_unpcklpd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    movapd %xmm0, %xmm2 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    unpcklpd {{.*#+}} xmm2 = xmm2[0],xmm1[0] sched: [1:1.00]
-; BDVER2-SSE-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],mem[0] sched: [7:1.00]
-; BDVER2-SSE-NEXT:    addpd %xmm2, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    movapd %xmm0, %xmm2 # sched: [1:0.50]
+; BDVER2-SSE-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],mem[0] sched: [7:0.50]
+; BDVER2-SSE-NEXT:    unpcklpd {{.*#+}} xmm2 = xmm2[0],xmm1[0] sched: [2:0.50]
+; BDVER2-SSE-NEXT:    addpd %xmm2, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_unpcklpd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vunpcklpd {{.*#+}} xmm1 = xmm0[0],xmm1[0] sched: [1:1.00]
-; BDVER2-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm0[0],mem[0] sched: [7:1.00]
-; BDVER2-NEXT:    vaddpd %xmm0, %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vunpcklpd {{.*#+}} xmm1 = xmm0[0],xmm1[0] sched: [2:0.50]
+; BDVER2-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm0[0],mem[0] sched: [7:0.50]
+; BDVER2-NEXT:    vaddpd %xmm0, %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_unpcklpd:
 ; BTVER2-SSE:       # %bb.0:
@@ -16919,17 +16919,17 @@ define <2 x double> @test_xorpd(<2 x double> %a0, <2 x double> %a1, <2 x double>
 ;
 ; BDVER2-SSE-LABEL: test_xorpd:
 ; BDVER2-SSE:       # %bb.0:
-; BDVER2-SSE-NEXT:    xorpd %xmm1, %xmm0 # sched: [1:1.00]
-; BDVER2-SSE-NEXT:    xorpd (%rdi), %xmm0 # sched: [7:1.00]
-; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-SSE-NEXT:    retq # sched: [1:1.00]
+; BDVER2-SSE-NEXT:    xorpd %xmm1, %xmm0 # sched: [2:0.50]
+; BDVER2-SSE-NEXT:    xorpd (%rdi), %xmm0 # sched: [7:0.50]
+; BDVER2-SSE-NEXT:    addpd %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-SSE-NEXT:    retq # sched: [5:1.00]
 ;
 ; BDVER2-LABEL: test_xorpd:
 ; BDVER2:       # %bb.0:
-; BDVER2-NEXT:    vxorpd %xmm1, %xmm0, %xmm0 # sched: [1:1.00]
-; BDVER2-NEXT:    vxorpd (%rdi), %xmm0, %xmm0 # sched: [7:1.00]
-; BDVER2-NEXT:    vaddpd %xmm0, %xmm1, %xmm0 # sched: [3:1.00]
-; BDVER2-NEXT:    retq # sched: [1:1.00]
+; BDVER2-NEXT:    vxorpd %xmm1, %xmm0, %xmm0 # sched: [2:0.50]
+; BDVER2-NEXT:    vxorpd (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
+; BDVER2-NEXT:    vaddpd %xmm0, %xmm1, %xmm0 # sched: [5:1.00]
+; BDVER2-NEXT:    retq # sched: [5:1.00]
 ;
 ; BTVER2-SSE-LABEL: test_xorpd:
 ; BTVER2-SSE:       # %bb.0:

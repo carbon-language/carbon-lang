@@ -2,7 +2,7 @@
 ; RUN: llc < %s -x86-use-vzeroupper -mtriple=x86_64-unknown-unknown -mattr=+avx | FileCheck %s --check-prefix=ALL --check-prefix=VZ --check-prefix=AVX
 ; RUN: llc < %s -x86-use-vzeroupper -mtriple=x86_64-unknown-unknown -mattr=+avx512f | FileCheck %s --check-prefix=ALL --check-prefix=VZ --check-prefix=AVX512
 ; RUN: llc < %s -x86-use-vzeroupper -mtriple=x86_64-unknown-unknown -mattr=+avx,+fast-partial-ymm-or-zmm-write | FileCheck %s --check-prefix=ALL --check-prefix=NO-VZ --check-prefix=FAST-ymm-zmm
-; RUN: llc < %s -x86-use-vzeroupper -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+avx | FileCheck %s --check-prefix=ALL --check-prefix=NO-VZ --check-prefix=BDVER2
+; RUN: llc < %s -x86-use-vzeroupper -mtriple=x86_64-unknown-unknown -mcpu=bdver2 | FileCheck %s --check-prefix=ALL --check-prefix=NO-VZ --check-prefix=BDVER2
 ; RUN: llc < %s -x86-use-vzeroupper -mtriple=x86_64-unknown-unknown -mcpu=btver2 | FileCheck %s --check-prefix=ALL --check-prefix=NO-VZ --check-prefix=BTVER2
 
 declare i32 @foo()
@@ -60,8 +60,8 @@ define <8 x float> @test01(<4 x float> %a, <4 x float> %b, <8 x float> %c) nounw
 ; BDVER2-LABEL: test01:
 ; BDVER2:       # %bb.0:
 ; BDVER2-NEXT:    subq $56, %rsp
-; BDVER2-NEXT:    vmovups %ymm2, (%rsp) # 32-byte Spill
 ; BDVER2-NEXT:    vmovaps {{.*}}(%rip), %xmm0
+; BDVER2-NEXT:    vmovups %ymm2, (%rsp) # 32-byte Spill
 ; BDVER2-NEXT:    vzeroupper
 ; BDVER2-NEXT:    callq do_sse
 ; BDVER2-NEXT:    vmovaps %xmm0, {{.*}}(%rip)
@@ -203,8 +203,8 @@ define <4 x float> @test03(<4 x float> %a, <4 x float> %b) nounwind {
 ; BDVER2-NEXT:    testl %eax, %eax
 ; BDVER2-NEXT:    jne .LBB3_1
 ; BDVER2-NEXT:  # %bb.2: # %for.body.preheader
-; BDVER2-NEXT:    movl $4, %ebx
 ; BDVER2-NEXT:    vmovaps (%rsp), %xmm0 # 16-byte Reload
+; BDVER2-NEXT:    movl $4, %ebx
 ; BDVER2-NEXT:    .p2align 4, 0x90
 ; BDVER2-NEXT:  .LBB3_3: # %for.body
 ; BDVER2-NEXT:    # =>This Inner Loop Header: Depth=1
@@ -214,7 +214,7 @@ define <4 x float> @test03(<4 x float> %a, <4 x float> %b) nounwind {
 ; BDVER2-NEXT:    vextractf128 $1, %ymm0, %xmm0
 ; BDVER2-NEXT:    vzeroupper
 ; BDVER2-NEXT:    callq do_sse
-; BDVER2-NEXT:    addl $-1, %ebx
+; BDVER2-NEXT:    decl %ebx
 ; BDVER2-NEXT:    jne .LBB3_3
 ; BDVER2-NEXT:  # %bb.4: # %for.end
 ; BDVER2-NEXT:    addq $16, %rsp

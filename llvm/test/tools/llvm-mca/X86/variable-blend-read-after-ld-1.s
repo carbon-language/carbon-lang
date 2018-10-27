@@ -9,7 +9,7 @@
 
 # RUN: llvm-mca -mtriple=x86_64-unknown-unknown -mcpu=skylake -iterations=1 -timeline -instruction-info=false -resource-pressure=false < %s | FileCheck %s -check-prefix=ALL -check-prefix=SKYLAKE
 
-# RUN: llvm-mca -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -iterations=1 -timeline -instruction-info=false -resource-pressure=false < %s | FileCheck %s -check-prefix=ALL -check-prefix=BDVER2
+# RUN: llvm-mca -mtriple=x86_64-unknown-unknown -mcpu=bdver2 -iterations=1 -timeline -instruction-info=false -resource-pressure=false < %s | FileCheck %s -check-prefix=ALL -check-prefix=BDVER2
 
 # RUN: llvm-mca -mtriple=x86_64-unknown-unknown -mcpu=btver2 -iterations=1 -timeline -instruction-info=false -resource-pressure=false < %s | FileCheck %s -check-prefix=ALL -check-prefix=BTVER2
 
@@ -21,8 +21,8 @@ vblendvps %xmm1, (%rdi), %xmm2, %xmm3
 # ALL:          Iterations:        1
 # ALL-NEXT:     Instructions:      2
 
-# BDVER2-NEXT:  Total Cycles:      11
-# BDVER2-NEXT:  Total uOps:        4
+# BDVER2-NEXT:  Total Cycles:      10
+# BDVER2-NEXT:  Total uOps:        2
 
 # BDWELL-NEXT:  Total Cycles:      10
 # BDWELL-NEXT:  Total uOps:        4
@@ -46,9 +46,9 @@ vblendvps %xmm1, (%rdi), %xmm2, %xmm3
 # ZNVER1-NEXT:  Total uOps:        2
 
 # BDVER2:       Dispatch Width:    4
-# BDVER2-NEXT:  uOps Per Cycle:    0.36
-# BDVER2-NEXT:  IPC:               0.18
-# BDVER2-NEXT:  Block RThroughput: 1.0
+# BDVER2-NEXT:  uOps Per Cycle:    0.20
+# BDVER2-NEXT:  IPC:               0.20
+# BDVER2-NEXT:  Block RThroughput: 2.5
 
 # BDWELL:       Dispatch Width:    4
 # BDWELL-NEXT:  uOps Per Cycle:    0.40
@@ -86,7 +86,6 @@ vblendvps %xmm1, (%rdi), %xmm2, %xmm3
 # ZNVER1-NEXT:  Block RThroughput: 1.0
 
 # BDVER2:       Timeline view:
-# BDVER2-NEXT:                      0
 # BDVER2-NEXT:  Index     0123456789
 
 # BDWELL:       Timeline view:
@@ -116,8 +115,8 @@ vblendvps %xmm1, (%rdi), %xmm2, %xmm3
 # ZNVER1-NEXT:                      0
 # ZNVER1-NEXT:  Index     0123456789
 
-# BDVER2:       [0,0]     DeeeER    .   vaddps	%xmm0, %xmm0, %xmm1
-# BDVER2-NEXT:  [0,1]     DeeeeeeeeER   vblendvps	%xmm1, (%rdi), %xmm2, %xmm3
+# BDVER2:       [0,0]     DeeeeeER .   vaddps	%xmm0, %xmm0, %xmm1
+# BDVER2-NEXT:  [0,1]     DeeeeeeeER   vblendvps	%xmm1, (%rdi), %xmm2, %xmm3
 
 # BDWELL:       [0,0]     DeeeER   .   vaddps	%xmm0, %xmm0, %xmm1
 # BDWELL-NEXT:  [0,1]     DeeeeeeeER   vblendvps	%xmm1, (%rdi), %xmm2, %xmm3

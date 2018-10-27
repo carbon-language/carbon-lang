@@ -2,7 +2,7 @@
 # RUN: llvm-mca -mtriple=x86_64-unknown-unknown -mcpu=haswell -iterations=1 -timeline -resource-pressure=false < %s | FileCheck %s -check-prefix=ALL -check-prefix=HASWELL
 # RUN: llvm-mca -mtriple=x86_64-unknown-unknown -mcpu=broadwell -iterations=1 -timeline -resource-pressure=false < %s | FileCheck %s -check-prefix=ALL -check-prefix=BDWELL
 # RUN: llvm-mca -mtriple=x86_64-unknown-unknown -mcpu=skylake -iterations=1 -timeline -resource-pressure=false < %s | FileCheck %s -check-prefix=ALL -check-prefix=SKYLAKE
-# RUN: llvm-mca -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -iterations=1 -timeline -resource-pressure=false < %s | FileCheck %s -check-prefix=ALL -check-prefix=BDVER2
+# RUN: llvm-mca -mtriple=x86_64-unknown-unknown -mcpu=bdver2 -iterations=1 -timeline -resource-pressure=false < %s | FileCheck %s -check-prefix=ALL -check-prefix=BDVER2
 # RUN: llvm-mca -mtriple=x86_64-unknown-unknown -mcpu=btver2 -iterations=1 -timeline -resource-pressure=false < %s | FileCheck %s -check-prefix=ALL -check-prefix=BTVER2
 # RUN: llvm-mca -mtriple=x86_64-unknown-unknown -mcpu=znver1 -iterations=1 -timeline -resource-pressure=false < %s | FileCheck %s -check-prefix=ALL -check-prefix=ZNVER1
 
@@ -12,8 +12,8 @@ bextrl	%esi, (%rdi), %eax
 # ALL:          Iterations:        1
 # ALL-NEXT:     Instructions:      2
 
-# BDVER2-NEXT:  Total Cycles:      10
-# BDVER2-NEXT:  Total uOps:        4
+# BDVER2-NEXT:  Total Cycles:      9
+# BDVER2-NEXT:  Total uOps:        3
 
 # BDWELL-NEXT:  Total Cycles:      10
 # BDWELL-NEXT:  Total uOps:        4
@@ -31,8 +31,8 @@ bextrl	%esi, (%rdi), %eax
 # ZNVER1-NEXT:  Total uOps:        3
 
 # BDVER2:       Dispatch Width:    4
-# BDVER2-NEXT:  uOps Per Cycle:    0.40
-# BDVER2-NEXT:  IPC:               0.20
+# BDVER2-NEXT:  uOps Per Cycle:    0.33
+# BDVER2-NEXT:  IPC:               0.22
 # BDVER2-NEXT:  Block RThroughput: 1.0
 
 # BDWELL:       Dispatch Width:    4
@@ -70,8 +70,8 @@ bextrl	%esi, (%rdi), %eax
 
 # ALL:          [1]    [2]    [3]    [4]    [5]    [6]    Instructions:
 
-# BDVER2-NEXT:   1      1     0.33                        addl	%edi, %esi
-# BDVER2-NEXT:   3      7     1.00    *                   bextrl	%esi, (%rdi), %eax
+# BDVER2-NEXT:   1      1     0.50                        addl	%edi, %esi
+# BDVER2-NEXT:   2      6     0.50    *                   bextrl	%esi, (%rdi), %eax
 
 # BDWELL-NEXT:   1      1     0.25                        addl	%edi, %esi
 # BDWELL-NEXT:   3      7     0.50    *                   bextrl	%esi, (%rdi), %eax
@@ -90,15 +90,15 @@ bextrl	%esi, (%rdi), %eax
 
 # ALL:          Timeline view:
 
-# BDVER2-NEXT:  Index     0123456789
+# BDVER2-NEXT:  Index     012345678
 # BDWELL-NEXT:  Index     0123456789
 # BTVER2-NEXT:  Index     0123456
 # HASWELL-NEXT: Index     0123456789
 # SKYLAKE-NEXT: Index     0123456789
 # ZNVER1-NEXT:  Index     01234567
 
-# BDVER2:       [0,0]     DeER .   .   addl	%edi, %esi
-# BDVER2-NEXT:  [0,1]     DeeeeeeeER   bextrl	%esi, (%rdi), %eax
+# BDVER2:       [0,0]     DeER .  .   addl	%edi, %esi
+# BDVER2-NEXT:  [0,1]     DeeeeeeER   bextrl	%esi, (%rdi), %eax
 
 # BDWELL:       [0,0]     DeER .   .   addl	%edi, %esi
 # BDWELL-NEXT:  [0,1]     DeeeeeeeER   bextrl	%esi, (%rdi), %eax
