@@ -268,6 +268,24 @@ protected:
   };
   enum { NumExprBits = 17 };
 
+  class PredefinedExprBitfields {
+    friend class ASTStmtReader;
+    friend class PredefinedExpr;
+
+    unsigned : NumExprBits;
+
+    /// The kind of this PredefinedExpr. One of the enumeration values
+    /// in PredefinedExpr::IdentKind.
+    unsigned Kind : 4;
+
+    /// True if this PredefinedExpr has a trailing "StringLiteral *"
+    /// for the predefined identifier.
+    unsigned HasFunctionName : 1;
+
+    /// The location of this PredefinedExpr.
+    SourceLocation Loc;
+  };
+
   class CharacterLiteralBitfields {
     friend class CharacterLiteral;
 
@@ -432,6 +450,7 @@ protected:
 
     // Expressions
     ExprBitfields ExprBits;
+    PredefinedExprBitfields PredefinedExprBits;
     CharacterLiteralBitfields CharacterLiteralBits;
     FloatingLiteralBitfields FloatingLiteralBits;
     UnaryExprOrTypeTraitExprBitfields UnaryExprOrTypeTraitExprBits;

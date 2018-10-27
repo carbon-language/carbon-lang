@@ -388,9 +388,13 @@ void ASTStmtWriter::VisitExpr(Expr *E) {
 
 void ASTStmtWriter::VisitPredefinedExpr(PredefinedExpr *E) {
   VisitExpr(E);
+
+  bool HasFunctionName = E->getFunctionName() != nullptr;
+  Record.push_back(HasFunctionName);
+  Record.push_back(E->getIdentKind()); // FIXME: stable encoding
   Record.AddSourceLocation(E->getLocation());
-  Record.push_back(E->getIdentType()); // FIXME: stable encoding
-  Record.AddStmt(E->getFunctionName());
+  if (HasFunctionName)
+    Record.AddStmt(E->getFunctionName());
   Code = serialization::EXPR_PREDEFINED;
 }
 

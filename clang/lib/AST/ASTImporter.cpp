@@ -6148,8 +6148,8 @@ ExpectedStmt ASTNodeImporter::VisitPredefinedExpr(PredefinedExpr *E) {
   StringLiteral *ToFunctionName;
   std::tie(ToBeginLoc, ToType, ToFunctionName) = *Imp;
 
-  return new (Importer.getToContext()) PredefinedExpr(
-      ToBeginLoc, ToType, E->getIdentType(), ToFunctionName);
+  return PredefinedExpr::Create(Importer.getToContext(), ToBeginLoc, ToType,
+                                E->getIdentKind(), ToFunctionName);
 }
 
 ExpectedStmt ASTNodeImporter::VisitDeclRefExpr(DeclRefExpr *E) {

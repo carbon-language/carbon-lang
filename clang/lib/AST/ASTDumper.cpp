@@ -2198,7 +2198,7 @@ void ASTDumper::VisitObjCIvarRefExpr(const ObjCIvarRefExpr *Node) {
 
 void ASTDumper::VisitPredefinedExpr(const PredefinedExpr *Node) {
   VisitExpr(Node);
-  OS << " " << PredefinedExpr::getIdentTypeName(Node->getIdentType());
+  OS << " " << PredefinedExpr::getIdentKindName(Node->getIdentKind());
 }
 
 void ASTDumper::VisitCharacterLiteral(const CharacterLiteral *Node) {

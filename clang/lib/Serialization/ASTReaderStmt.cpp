@@ -496,9 +496,12 @@ void ASTStmtReader::VisitExpr(Expr *E) {
 
 void ASTStmtReader::VisitPredefinedExpr(PredefinedExpr *E) {
   VisitExpr(E);
+  bool HasFunctionName = Record.readInt();
+  E->PredefinedExprBits.HasFunctionName = HasFunctionName;
+  E->PredefinedExprBits.Kind = Record.readInt();
   E->setLocation(ReadSourceLocation());
-  E->Type = (PredefinedExpr::IdentType)Record.readInt();
-  E->FnName = cast_or_null<StringLiteral>(Record.readSubExpr());
+  if (HasFunctionName)
+    E->setFunctionName(cast<StringLiteral>(Record.readSubExpr()));
 }
 
 void ASTStmtReader::VisitDeclRefExpr(DeclRefExpr *E) {
@@ -2334,12 +2337,14 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       break;
 
     case STMT_CAPTURED:
-      S = CapturedStmt::CreateDeserialized(Context,
-                                           Record[ASTStmtReader::NumStmtFields]);
+      S = CapturedStmt::CreateDeserialized(
+          Context, Record[ASTStmtReader::NumStmtFields]);
       break;
 
     case EXPR_PREDEFINED:
-      S = new (Context) PredefinedExpr(Empty);
+      S = PredefinedExpr::CreateEmpty(
+          Context,
+          /*HasFunctionName*/ Record[ASTStmtReader::NumExprFields]);
       break;
 
     case EXPR_DECL_REF:
