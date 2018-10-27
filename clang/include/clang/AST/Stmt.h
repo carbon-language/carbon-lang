@@ -89,6 +89,8 @@ protected:
     llvm_unreachable("Stmts cannot be released with regular 'delete'.");
   }
 
+  //===--- Statement bitfields classes ---===//
+
   class StmtBitfields {
     friend class Stmt;
 
@@ -97,12 +99,55 @@ protected:
   };
   enum { NumStmtBits = 8 };
 
+  class NullStmtBitfields {
+    friend class ASTStmtReader;
+    friend class ASTStmtWriter;
+    friend class NullStmt;
+
+    unsigned : NumStmtBits;
+
+    /// True if the null statement was preceded by an empty macro, e.g:
+    /// @code
+    ///   #define CALL(x)
+    ///   CALL(0);
+    /// @endcode
+    unsigned HasLeadingEmptyMacro : 1;
+
+    /// The location of the semi-colon.
+    SourceLocation SemiLoc;
+  };
+
   class CompoundStmtBitfields {
+    friend class ASTStmtReader;
     friend class CompoundStmt;
 
     unsigned : NumStmtBits;
 
     unsigned NumStmts : 32 - NumStmtBits;
+
+    /// The location of the opening "{".
+    SourceLocation LBraceLoc;
+  };
+
+  class LabelStmtBitfields {
+    friend class LabelStmt;
+
+    unsigned : NumStmtBits;
+
+    SourceLocation IdentLoc;
+  };
+
+  class AttributedStmtBitfields {
+    friend class ASTStmtReader;
+    friend class AttributedStmt;
+
+    unsigned : NumStmtBits;
+
+    /// Number of attributes.
+    unsigned NumAttrs : 32 - NumStmtBits;
+
+    /// The location of the attribute.
+    SourceLocation AttrLoc;
   };
 
   class IfStmtBitfields {
@@ -112,6 +157,81 @@ protected:
 
     unsigned IsConstexpr : 1;
   };
+
+  class SwitchStmtBitfields {
+    friend class SwitchStmt;
+
+    unsigned : NumStmtBits;
+
+    /// The location of the "switch".
+    SourceLocation SwitchLoc;
+  };
+
+  class WhileStmtBitfields {
+    friend class WhileStmt;
+
+    unsigned : NumStmtBits;
+
+    /// The location of the "while".
+    SourceLocation WhileLoc;
+  };
+
+  class DoStmtBitfields {
+    friend class DoStmt;
+
+    unsigned : NumStmtBits;
+
+    /// The location of the "do".
+    SourceLocation DoLoc;
+  };
+
+  class ForStmtBitfields {
+    friend class ForStmt;
+
+    unsigned : NumStmtBits;
+
+    /// The location of the "for".
+    SourceLocation ForLoc;
+  };
+
+  class GotoStmtBitfields {
+    friend class GotoStmt;
+    friend class IndirectGotoStmt;
+
+    unsigned : NumStmtBits;
+
+    /// The location of the "goto".
+    SourceLocation GotoLoc;
+  };
+
+  class ContinueStmtBitfields {
+    friend class ContinueStmt;
+
+    unsigned : NumStmtBits;
+
+    /// The location of the "continue".
+    SourceLocation ContinueLoc;
+  };
+
+  class BreakStmtBitfields {
+    friend class BreakStmt;
+
+    unsigned : NumStmtBits;
+
+    /// The location of the "break".
+    SourceLocation BreakLoc;
+  };
+
+  class ReturnStmtBitfields {
+    friend class ReturnStmt;
+
+    unsigned : NumStmtBits;
+
+    /// The location of the "return".
+    SourceLocation RetLoc;
+  };
+
+  //===--- Expression bitfields classes ---===//
 
   class ExprBitfields {
     friend class ASTStmtReader; // deserialization
@@ -294,9 +414,23 @@ protected:
   };
 
   union {
+    // Statements
     StmtBitfields StmtBits;
+    NullStmtBitfields NullStmtBits;
     CompoundStmtBitfields CompoundStmtBits;
+    LabelStmtBitfields LabelStmtBits;
+    AttributedStmtBitfields AttributedStmtBits;
     IfStmtBitfields IfStmtBits;
+    SwitchStmtBitfields SwitchStmtBits;
+    WhileStmtBitfields WhileStmtBits;
+    DoStmtBitfields DoStmtBits;
+    ForStmtBitfields ForStmtBits;
+    GotoStmtBitfields GotoStmtBits;
+    ContinueStmtBitfields ContinueStmtBits;
+    BreakStmtBitfields BreakStmtBits;
+    ReturnStmtBitfields ReturnStmtBits;
+
+    // Expressions
     ExprBitfields ExprBits;
     CharacterLiteralBitfields CharacterLiteralBits;
     FloatingLiteralBitfields FloatingLiteralBits;
@@ -380,7 +514,7 @@ protected:
 
 public:
   Stmt(StmtClass SC) {
-    static_assert(sizeof(*this) == sizeof(void *),
+    static_assert(sizeof(*this) <= 8,
                   "changing bitfields changed sizeof(Stmt)");
     static_assert(sizeof(*this) % alignof(void *) == 0,
                   "Insufficient alignment!");
@@ -515,9 +649,7 @@ public:
 
   /// isSingleDecl - This method returns true if this DeclStmt refers
   /// to a single Decl.
-  bool isSingleDecl() const {
-    return DG.isSingleDecl();
-  }
+  bool isSingleDecl() const { return DG.isSingleDecl(); }
 
   const Decl *getSingleDecl() const { return DG.getSingleDecl(); }
   Decl *getSingleDecl() { return DG.getSingleDecl(); }
@@ -572,33 +704,25 @@ public:
 /// NullStmt - This is the null statement ";": C99 6.8.3p3.
 ///
 class NullStmt : public Stmt {
-  SourceLocation SemiLoc;
-
-  /// True if the null statement was preceded by an empty macro, e.g:
-  /// @code
-  ///   #define CALL(x)
-  ///   CALL(0);
-  /// @endcode
-  bool HasLeadingEmptyMacro = false;
-
 public:
-  friend class ASTStmtReader;
-  friend class ASTStmtWriter;
-
   NullStmt(SourceLocation L, bool hasLeadingEmptyMacro = false)
-      : Stmt(NullStmtClass), SemiLoc(L),
-        HasLeadingEmptyMacro(hasLeadingEmptyMacro) {}
+      : Stmt(NullStmtClass) {
+    NullStmtBits.HasLeadingEmptyMacro = hasLeadingEmptyMacro;
+    setSemiLoc(L);
+  }
 
   /// Build an empty null statement.
   explicit NullStmt(EmptyShell Empty) : Stmt(NullStmtClass, Empty) {}
 
-  SourceLocation getSemiLoc() const { return SemiLoc; }
-  void setSemiLoc(SourceLocation L) { SemiLoc = L; }
+  SourceLocation getSemiLoc() const { return NullStmtBits.SemiLoc; }
+  void setSemiLoc(SourceLocation L) { NullStmtBits.SemiLoc = L; }
 
-  bool hasLeadingEmptyMacro() const { return HasLeadingEmptyMacro; }
+  bool hasLeadingEmptyMacro() const {
+    return NullStmtBits.HasLeadingEmptyMacro;
+  }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return SemiLoc; }
-  SourceLocation getEndLoc() const LLVM_READONLY { return SemiLoc; }
+  SourceLocation getBeginLoc() const { return getSemiLoc(); }
+  SourceLocation getEndLoc() const { return getSemiLoc(); }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == NullStmtClass;
@@ -615,7 +739,8 @@ class CompoundStmt final : public Stmt,
   friend class ASTStmtReader;
   friend TrailingObjects;
 
-  SourceLocation LBraceLoc, RBraceLoc;
+  /// The location of the closing "}". LBraceLoc is stored in CompoundStmtBits.
+  SourceLocation RBraceLoc;
 
   CompoundStmt(ArrayRef<Stmt *> Stmts, SourceLocation LB, SourceLocation RB);
   explicit CompoundStmt(EmptyShell Empty) : Stmt(CompoundStmtClass, Empty) {}
@@ -628,8 +753,9 @@ public:
 
   // Build an empty compound statement with a location.
   explicit CompoundStmt(SourceLocation Loc)
-      : Stmt(CompoundStmtClass), LBraceLoc(Loc), RBraceLoc(Loc) {
+      : Stmt(CompoundStmtClass), RBraceLoc(Loc) {
     CompoundStmtBits.NumStmts = 0;
+    CompoundStmtBits.LBraceLoc = Loc;
   }
 
   // Build an empty compound statement.
@@ -655,7 +781,7 @@ public:
     body_begin()[size() - 1] = S;
   }
 
-  using const_body_iterator = Stmt* const *;
+  using const_body_iterator = Stmt *const *;
   using body_const_range = llvm::iterator_range<const_body_iterator>;
 
   body_const_range body() const {
@@ -697,10 +823,10 @@ public:
     return const_reverse_body_iterator(body_begin());
   }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return LBraceLoc; }
-  SourceLocation getEndLoc() const LLVM_READONLY { return RBraceLoc; }
+  SourceLocation getBeginLoc() const { return CompoundStmtBits.LBraceLoc; }
+  SourceLocation getEndLoc() const { return RBraceLoc; }
 
-  SourceLocation getLBracLoc() const { return LBraceLoc; }
+  SourceLocation getLBracLoc() const { return CompoundStmtBits.LBraceLoc; }
   SourceLocation getRBracLoc() const { return RBraceLoc; }
 
   static bool classof(const Stmt *T) {
@@ -862,36 +988,35 @@ inline SourceLocation SwitchCase::getEndLoc() const {
 /// LabelStmt - Represents a label, which has a substatement.  For example:
 ///    foo: return;
 class LabelStmt : public Stmt {
-  SourceLocation IdentLoc;
   LabelDecl *TheDecl;
   Stmt *SubStmt;
 
 public:
+  /// Build a label statement.
   LabelStmt(SourceLocation IL, LabelDecl *D, Stmt *substmt)
-      : Stmt(LabelStmtClass), IdentLoc(IL), TheDecl(D), SubStmt(substmt) {
-    static_assert(sizeof(LabelStmt) ==
-                      2 * sizeof(SourceLocation) + 2 * sizeof(void *),
-                  "LabelStmt too big");
+      : Stmt(LabelStmtClass), TheDecl(D), SubStmt(substmt) {
+    setIdentLoc(IL);
   }
 
-  // Build an empty label statement.
+  /// Build an empty label statement.
   explicit LabelStmt(EmptyShell Empty) : Stmt(LabelStmtClass, Empty) {}
 
-  SourceLocation getIdentLoc() const { return IdentLoc; }
+  SourceLocation getIdentLoc() const { return LabelStmtBits.IdentLoc; }
+  void setIdentLoc(SourceLocation L) { LabelStmtBits.IdentLoc = L; }
+
   LabelDecl *getDecl() const { return TheDecl; }
   void setDecl(LabelDecl *D) { TheDecl = D; }
+
   const char *getName() const;
   Stmt *getSubStmt() { return SubStmt; }
+
   const Stmt *getSubStmt() const { return SubStmt; }
-  void setIdentLoc(SourceLocation L) { IdentLoc = L; }
   void setSubStmt(Stmt *SS) { SubStmt = SS; }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return IdentLoc; }
-  SourceLocation getEndLoc() const LLVM_READONLY {
-    return SubStmt->getEndLoc();
-  }
+  SourceLocation getBeginLoc() const { return getIdentLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return SubStmt->getEndLoc();}
 
-  child_range children() { return child_range(&SubStmt, &SubStmt+1); }
+  child_range children() { return child_range(&SubStmt, &SubStmt + 1); }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == LabelStmtClass;
@@ -909,17 +1034,19 @@ class AttributedStmt final
   friend TrailingObjects;
 
   Stmt *SubStmt;
-  SourceLocation AttrLoc;
-  unsigned NumAttrs;
 
-  AttributedStmt(SourceLocation Loc, ArrayRef<const Attr*> Attrs, Stmt *SubStmt)
-    : Stmt(AttributedStmtClass), SubStmt(SubStmt), AttrLoc(Loc),
-      NumAttrs(Attrs.size()) {
+  AttributedStmt(SourceLocation Loc, ArrayRef<const Attr *> Attrs,
+                 Stmt *SubStmt)
+      : Stmt(AttributedStmtClass), SubStmt(SubStmt) {
+    AttributedStmtBits.NumAttrs = Attrs.size();
+    AttributedStmtBits.AttrLoc = Loc;
     std::copy(Attrs.begin(), Attrs.end(), getAttrArrayPtr());
   }
 
   explicit AttributedStmt(EmptyShell Empty, unsigned NumAttrs)
-      : Stmt(AttributedStmtClass, Empty), NumAttrs(NumAttrs) {
+      : Stmt(AttributedStmtClass, Empty) {
+    AttributedStmtBits.NumAttrs = NumAttrs;
+    AttributedStmtBits.AttrLoc = SourceLocation{};
     std::fill_n(getAttrArrayPtr(), NumAttrs, nullptr);
   }
 
@@ -930,23 +1057,21 @@ class AttributedStmt final
 
 public:
   static AttributedStmt *Create(const ASTContext &C, SourceLocation Loc,
-                                ArrayRef<const Attr*> Attrs, Stmt *SubStmt);
+                                ArrayRef<const Attr *> Attrs, Stmt *SubStmt);
 
   // Build an empty attributed statement.
   static AttributedStmt *CreateEmpty(const ASTContext &C, unsigned NumAttrs);
 
-  SourceLocation getAttrLoc() const { return AttrLoc; }
-  ArrayRef<const Attr*> getAttrs() const {
-    return llvm::makeArrayRef(getAttrArrayPtr(), NumAttrs);
+  SourceLocation getAttrLoc() const { return AttributedStmtBits.AttrLoc; }
+  ArrayRef<const Attr *> getAttrs() const {
+    return llvm::makeArrayRef(getAttrArrayPtr(), AttributedStmtBits.NumAttrs);
   }
 
   Stmt *getSubStmt() { return SubStmt; }
   const Stmt *getSubStmt() const { return SubStmt; }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return AttrLoc; }
-  SourceLocation getEndLoc() const LLVM_READONLY {
-    return SubStmt->getEndLoc();
-  }
+  SourceLocation getBeginLoc() const { return getAttrLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return SubStmt->getEndLoc();}
 
   child_range children() { return child_range(&SubStmt, &SubStmt + 1); }
 
@@ -1035,7 +1160,6 @@ public:
 
 /// SwitchStmt - This represents a 'switch' stmt.
 class SwitchStmt : public Stmt {
-  SourceLocation SwitchLoc;
   enum { INIT, VAR, COND, BODY, END_EXPR };
   Stmt* SubExprs[END_EXPR];
 
@@ -1085,12 +1209,12 @@ public:
   /// Set the case list for this switch statement.
   void setSwitchCaseList(SwitchCase *SC) { FirstCase.setPointer(SC); }
 
-  SourceLocation getSwitchLoc() const { return SwitchLoc; }
-  void setSwitchLoc(SourceLocation L) { SwitchLoc = L; }
+  SourceLocation getSwitchLoc() const { return SwitchStmtBits.SwitchLoc; }
+  void setSwitchLoc(SourceLocation L) { SwitchStmtBits.SwitchLoc = L; }
 
   void setBody(Stmt *S, SourceLocation SL) {
     SubExprs[BODY] = S;
-    SwitchLoc = SL;
+    SwitchStmtBits.SwitchLoc = SL;
   }
 
   void addSwitchCase(SwitchCase *SC) {
@@ -1108,9 +1232,9 @@ public:
   /// have been explicitly covered.
   bool isAllEnumCasesCovered() const { return FirstCase.getInt(); }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return SwitchLoc; }
+  SourceLocation getBeginLoc() const { return getSwitchLoc(); }
 
-  SourceLocation getEndLoc() const LLVM_READONLY {
+  SourceLocation getEndLoc() const {
     return SubExprs[BODY] ? SubExprs[BODY]->getEndLoc()
                           : SubExprs[COND]->getEndLoc();
   }
@@ -1127,7 +1251,6 @@ public:
 
 /// WhileStmt - This represents a 'while' stmt.
 class WhileStmt : public Stmt {
-  SourceLocation WhileLoc;
   enum { VAR, COND, BODY, END_EXPR };
   Stmt* SubExprs[END_EXPR];
 
@@ -1162,14 +1285,12 @@ public:
   const Stmt *getBody() const { return SubExprs[BODY]; }
   void setBody(Stmt *S) { SubExprs[BODY] = S; }
 
-  SourceLocation getWhileLoc() const { return WhileLoc; }
-  void setWhileLoc(SourceLocation L) { WhileLoc = L; }
+  SourceLocation getWhileLoc() const { return WhileStmtBits.WhileLoc; }
+  void setWhileLoc(SourceLocation L) { WhileStmtBits.WhileLoc = L; }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return WhileLoc; }
+  SourceLocation getBeginLoc() const { return getWhileLoc(); }
 
-  SourceLocation getEndLoc() const LLVM_READONLY {
-    return SubExprs[BODY]->getEndLoc();
-  }
+  SourceLocation getEndLoc() const { return getBody()->getEndLoc(); }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == WhileStmtClass;
@@ -1183,40 +1304,43 @@ public:
 
 /// DoStmt - This represents a 'do/while' stmt.
 class DoStmt : public Stmt {
-  SourceLocation DoLoc;
   enum { BODY, COND, END_EXPR };
-  Stmt* SubExprs[END_EXPR];
+  Stmt *SubExprs[END_EXPR];
   SourceLocation WhileLoc;
-  SourceLocation RParenLoc;  // Location of final ')' in do stmt condition.
+  SourceLocation RParenLoc; // Location of final ')' in do stmt condition.
 
 public:
-  DoStmt(Stmt *body, Expr *cond, SourceLocation DL, SourceLocation WL,
+  DoStmt(Stmt *Body, Expr *Cond, SourceLocation DL, SourceLocation WL,
          SourceLocation RP)
-    : Stmt(DoStmtClass), DoLoc(DL), WhileLoc(WL), RParenLoc(RP) {
-    SubExprs[COND] = reinterpret_cast<Stmt*>(cond);
-    SubExprs[BODY] = body;
+      : Stmt(DoStmtClass), WhileLoc(WL), RParenLoc(RP) {
+    setCond(Cond);
+    setBody(Body);
+    setDoLoc(DL);
   }
 
   /// Build an empty do-while statement.
   explicit DoStmt(EmptyShell Empty) : Stmt(DoStmtClass, Empty) {}
 
-  Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
-  const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
-  void setCond(Expr *E) { SubExprs[COND] = reinterpret_cast<Stmt*>(E); }
+  Expr *getCond() { return reinterpret_cast<Expr *>(SubExprs[COND]); }
+  const Expr *getCond() const {
+    return reinterpret_cast<Expr *>(SubExprs[COND]);
+  }
+
+  void setCond(Expr *Cond) { SubExprs[COND] = reinterpret_cast<Stmt *>(Cond); }
+
   Stmt *getBody() { return SubExprs[BODY]; }
   const Stmt *getBody() const { return SubExprs[BODY]; }
-  void setBody(Stmt *S) { SubExprs[BODY] = S; }
+  void setBody(Stmt *Body) { SubExprs[BODY] = Body; }
 
-  SourceLocation getDoLoc() const { return DoLoc; }
-  void setDoLoc(SourceLocation L) { DoLoc = L; }
+  SourceLocation getDoLoc() const { return DoStmtBits.DoLoc; }
+  void setDoLoc(SourceLocation L) { DoStmtBits.DoLoc = L; }
   SourceLocation getWhileLoc() const { return WhileLoc; }
   void setWhileLoc(SourceLocation L) { WhileLoc = L; }
-
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return DoLoc; }
-  SourceLocation getEndLoc() const LLVM_READONLY { return RParenLoc; }
+  SourceLocation getBeginLoc() const { return getDoLoc(); }
+  SourceLocation getEndLoc() const { return getRParenLoc(); }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == DoStmtClass;
@@ -1224,7 +1348,7 @@ public:
 
   // Iterators
   child_range children() {
-    return child_range(&SubExprs[0], &SubExprs[0]+END_EXPR);
+    return child_range(&SubExprs[0], &SubExprs[0] + END_EXPR);
   }
 };
 
@@ -1232,7 +1356,6 @@ public:
 /// the init/cond/inc parts of the ForStmt will be null if they were not
 /// specified in the source.
 class ForStmt : public Stmt {
-  SourceLocation ForLoc;
   enum { INIT, CONDVAR, COND, INC, BODY, END_EXPR };
   Stmt* SubExprs[END_EXPR]; // SubExprs[INIT] is an expression or declstmt.
   SourceLocation LParenLoc, RParenLoc;
@@ -1278,18 +1401,15 @@ public:
   void setInc(Expr *E) { SubExprs[INC] = reinterpret_cast<Stmt*>(E); }
   void setBody(Stmt *S) { SubExprs[BODY] = S; }
 
-  SourceLocation getForLoc() const { return ForLoc; }
-  void setForLoc(SourceLocation L) { ForLoc = L; }
+  SourceLocation getForLoc() const { return ForStmtBits.ForLoc; }
+  void setForLoc(SourceLocation L) { ForStmtBits.ForLoc = L; }
   SourceLocation getLParenLoc() const { return LParenLoc; }
   void setLParenLoc(SourceLocation L) { LParenLoc = L; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return ForLoc; }
-
-  SourceLocation getEndLoc() const LLVM_READONLY {
-    return SubExprs[BODY]->getEndLoc();
-  }
+  SourceLocation getBeginLoc() const { return getForLoc(); }
+  SourceLocation getEndLoc() const { return getBody()->getEndLoc(); }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ForStmtClass;
@@ -1304,12 +1424,13 @@ public:
 /// GotoStmt - This represents a direct goto.
 class GotoStmt : public Stmt {
   LabelDecl *Label;
-  SourceLocation GotoLoc;
   SourceLocation LabelLoc;
 
 public:
   GotoStmt(LabelDecl *label, SourceLocation GL, SourceLocation LL)
-      : Stmt(GotoStmtClass), Label(label), GotoLoc(GL), LabelLoc(LL) {}
+      : Stmt(GotoStmtClass), Label(label), LabelLoc(LL) {
+    setGotoLoc(GL);
+  }
 
   /// Build an empty goto statement.
   explicit GotoStmt(EmptyShell Empty) : Stmt(GotoStmtClass, Empty) {}
@@ -1317,13 +1438,13 @@ public:
   LabelDecl *getLabel() const { return Label; }
   void setLabel(LabelDecl *D) { Label = D; }
 
-  SourceLocation getGotoLoc() const { return GotoLoc; }
-  void setGotoLoc(SourceLocation L) { GotoLoc = L; }
+  SourceLocation getGotoLoc() const { return GotoStmtBits.GotoLoc; }
+  void setGotoLoc(SourceLocation L) { GotoStmtBits.GotoLoc = L; }
   SourceLocation getLabelLoc() const { return LabelLoc; }
   void setLabelLoc(SourceLocation L) { LabelLoc = L; }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return GotoLoc; }
-  SourceLocation getEndLoc() const LLVM_READONLY { return LabelLoc; }
+  SourceLocation getBeginLoc() const { return getGotoLoc(); }
+  SourceLocation getEndLoc() const { return getLabelLoc(); }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == GotoStmtClass;
@@ -1337,37 +1458,39 @@ public:
 
 /// IndirectGotoStmt - This represents an indirect goto.
 class IndirectGotoStmt : public Stmt {
-  SourceLocation GotoLoc;
   SourceLocation StarLoc;
   Stmt *Target;
 
 public:
-  IndirectGotoStmt(SourceLocation gotoLoc, SourceLocation starLoc,
-                   Expr *target)
-    : Stmt(IndirectGotoStmtClass), GotoLoc(gotoLoc), StarLoc(starLoc),
-      Target((Stmt*)target) {}
+  IndirectGotoStmt(SourceLocation gotoLoc, SourceLocation starLoc, Expr *target)
+      : Stmt(IndirectGotoStmtClass), StarLoc(starLoc) {
+    setTarget(target);
+    setGotoLoc(gotoLoc);
+  }
 
   /// Build an empty indirect goto statement.
   explicit IndirectGotoStmt(EmptyShell Empty)
       : Stmt(IndirectGotoStmtClass, Empty) {}
 
-  void setGotoLoc(SourceLocation L) { GotoLoc = L; }
-  SourceLocation getGotoLoc() const { return GotoLoc; }
+  void setGotoLoc(SourceLocation L) { GotoStmtBits.GotoLoc = L; }
+  SourceLocation getGotoLoc() const { return GotoStmtBits.GotoLoc; }
   void setStarLoc(SourceLocation L) { StarLoc = L; }
   SourceLocation getStarLoc() const { return StarLoc; }
 
-  Expr *getTarget() { return reinterpret_cast<Expr*>(Target); }
-  const Expr *getTarget() const {return reinterpret_cast<const Expr*>(Target);}
-  void setTarget(Expr *E) { Target = reinterpret_cast<Stmt*>(E); }
+  Expr *getTarget() { return reinterpret_cast<Expr *>(Target); }
+  const Expr *getTarget() const {
+    return reinterpret_cast<const Expr *>(Target);
+  }
+  void setTarget(Expr *E) { Target = reinterpret_cast<Stmt *>(E); }
 
   /// getConstantTarget - Returns the fixed target of this indirect
   /// goto, if one exists.
   LabelDecl *getConstantTarget();
   const LabelDecl *getConstantTarget() const {
-    return const_cast<IndirectGotoStmt*>(this)->getConstantTarget();
+    return const_cast<IndirectGotoStmt *>(this)->getConstantTarget();
   }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return GotoLoc; }
+  SourceLocation getBeginLoc() const { return getGotoLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY { return Target->getEndLoc(); }
 
   static bool classof(const Stmt *T) {
@@ -1375,24 +1498,24 @@ public:
   }
 
   // Iterators
-  child_range children() { return child_range(&Target, &Target+1); }
+  child_range children() { return child_range(&Target, &Target + 1); }
 };
 
 /// ContinueStmt - This represents a continue.
 class ContinueStmt : public Stmt {
-  SourceLocation ContinueLoc;
-
 public:
-  ContinueStmt(SourceLocation CL) : Stmt(ContinueStmtClass), ContinueLoc(CL) {}
+  ContinueStmt(SourceLocation CL) : Stmt(ContinueStmtClass) {
+    setContinueLoc(CL);
+  }
 
   /// Build an empty continue statement.
   explicit ContinueStmt(EmptyShell Empty) : Stmt(ContinueStmtClass, Empty) {}
 
-  SourceLocation getContinueLoc() const { return ContinueLoc; }
-  void setContinueLoc(SourceLocation L) { ContinueLoc = L; }
+  SourceLocation getContinueLoc() const { return ContinueStmtBits.ContinueLoc; }
+  void setContinueLoc(SourceLocation L) { ContinueStmtBits.ContinueLoc = L; }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return ContinueLoc; }
-  SourceLocation getEndLoc() const LLVM_READONLY { return ContinueLoc; }
+  SourceLocation getBeginLoc() const { return getContinueLoc(); }
+  SourceLocation getEndLoc() const { return getContinueLoc(); }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ContinueStmtClass;
@@ -1406,22 +1529,19 @@ public:
 
 /// BreakStmt - This represents a break.
 class BreakStmt : public Stmt {
-  SourceLocation BreakLoc;
-
 public:
-  BreakStmt(SourceLocation BL) : Stmt(BreakStmtClass), BreakLoc(BL) {
-    static_assert(sizeof(BreakStmt) == 2 * sizeof(SourceLocation),
-                  "BreakStmt too large");
+  BreakStmt(SourceLocation BL) : Stmt(BreakStmtClass) {
+    setBreakLoc(BL);
   }
 
   /// Build an empty break statement.
   explicit BreakStmt(EmptyShell Empty) : Stmt(BreakStmtClass, Empty) {}
 
-  SourceLocation getBreakLoc() const { return BreakLoc; }
-  void setBreakLoc(SourceLocation L) { BreakLoc = L; }
+  SourceLocation getBreakLoc() const { return BreakStmtBits.BreakLoc; }
+  void setBreakLoc(SourceLocation L) { BreakStmtBits.BreakLoc = L; }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return BreakLoc; }
-  SourceLocation getEndLoc() const LLVM_READONLY { return BreakLoc; }
+  SourceLocation getBeginLoc() const { return getBreakLoc(); }
+  SourceLocation getEndLoc() const { return getBreakLoc(); }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == BreakStmtClass;
@@ -1442,7 +1562,6 @@ public:
 /// return void.  We explicitly model this in the AST, which means you can't
 /// depend on the return type of the function and the presence of an argument.
 class ReturnStmt : public Stmt {
-  SourceLocation RetLoc;
   Stmt *RetExpr;
   const VarDecl *NRVOCandidate;
 
@@ -1450,8 +1569,10 @@ public:
   explicit ReturnStmt(SourceLocation RL) : ReturnStmt(RL, nullptr, nullptr) {}
 
   ReturnStmt(SourceLocation RL, Expr *E, const VarDecl *NRVOCandidate)
-      : Stmt(ReturnStmtClass), RetLoc(RL), RetExpr((Stmt *)E),
-        NRVOCandidate(NRVOCandidate) {}
+      : Stmt(ReturnStmtClass), RetExpr((Stmt *)E),
+        NRVOCandidate(NRVOCandidate) {
+    ReturnStmtBits.RetLoc = RL;
+  }
 
   /// Build an empty return expression.
   explicit ReturnStmt(EmptyShell Empty) : Stmt(ReturnStmtClass, Empty) {}
@@ -1460,8 +1581,8 @@ public:
   Expr *getRetValue();
   void setRetValue(Expr *E) { RetExpr = reinterpret_cast<Stmt*>(E); }
 
-  SourceLocation getReturnLoc() const { return RetLoc; }
-  void setReturnLoc(SourceLocation L) { RetLoc = L; }
+  SourceLocation getReturnLoc() const { return ReturnStmtBits.RetLoc; }
+  void setReturnLoc(SourceLocation L) { ReturnStmtBits.RetLoc = L; }
 
   /// Retrieve the variable that might be used for the named return
   /// value optimization.
@@ -1471,10 +1592,10 @@ public:
   const VarDecl *getNRVOCandidate() const { return NRVOCandidate; }
   void setNRVOCandidate(const VarDecl *Var) { NRVOCandidate = Var; }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return RetLoc; }
+  SourceLocation getBeginLoc() const { return getReturnLoc(); }
 
-  SourceLocation getEndLoc() const LLVM_READONLY {
-    return RetExpr ? RetExpr->getEndLoc() : RetLoc;
+  SourceLocation getEndLoc() const {
+    return RetExpr ? RetExpr->getEndLoc() : getReturnLoc();
   }
 
   static bool classof(const Stmt *T) {

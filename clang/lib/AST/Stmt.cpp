@@ -311,9 +311,10 @@ int64_t Stmt::getID(const ASTContext &Context) const {
 
 CompoundStmt::CompoundStmt(ArrayRef<Stmt *> Stmts, SourceLocation LB,
                            SourceLocation RB)
-    : Stmt(CompoundStmtClass), LBraceLoc(LB), RBraceLoc(RB) {
+    : Stmt(CompoundStmtClass), RBraceLoc(RB) {
   CompoundStmtBits.NumStmts = Stmts.size();
   setStmts(Stmts);
+  CompoundStmtBits.LBraceLoc = LB;
 }
 
 void CompoundStmt::setStmts(ArrayRef<Stmt *> Stmts) {
@@ -836,13 +837,14 @@ bool IfStmt::isObjCAvailabilityCheck() const {
 ForStmt::ForStmt(const ASTContext &C, Stmt *Init, Expr *Cond, VarDecl *condVar,
                  Expr *Inc, Stmt *Body, SourceLocation FL, SourceLocation LP,
                  SourceLocation RP)
-  : Stmt(ForStmtClass), ForLoc(FL), LParenLoc(LP), RParenLoc(RP)
+  : Stmt(ForStmtClass), LParenLoc(LP), RParenLoc(RP)
 {
   SubExprs[INIT] = Init;
   setConditionVariable(C, condVar);
   SubExprs[COND] = Cond;
   SubExprs[INC] = Inc;
   SubExprs[BODY] = Body;
+  ForStmtBits.ForLoc = FL;
 }
 
 VarDecl *ForStmt::getConditionVariable() const {
@@ -871,6 +873,7 @@ SwitchStmt::SwitchStmt(const ASTContext &C, Stmt *init, VarDecl *Var,
   SubExprs[INIT] = init;
   SubExprs[COND] = cond;
   SubExprs[BODY] = nullptr;
+  SwitchStmtBits.SwitchLoc = SourceLocation{};
 }
 
 VarDecl *SwitchStmt::getConditionVariable() const {
@@ -904,7 +907,7 @@ WhileStmt::WhileStmt(const ASTContext &C, VarDecl *Var, Expr *cond, Stmt *body,
   setConditionVariable(C, Var);
   SubExprs[COND] = cond;
   SubExprs[BODY] = body;
-  WhileLoc = WL;
+  WhileStmtBits.WhileLoc = WL;
 }
 
 VarDecl *WhileStmt::getConditionVariable() const {
