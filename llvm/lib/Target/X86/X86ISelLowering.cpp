@@ -6325,6 +6325,9 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
     if (!resolveTargetShuffleInputs(N0, SrcInputs0, SrcMask0, DAG) ||
         !resolveTargetShuffleInputs(N1, SrcInputs1, SrcMask1, DAG))
       return false;
+    // TODO - Add support for more than 2 inputs.
+    if ((SrcInputs0.size() + SrcInputs1.size()) > 2)
+      return false;
     int MaskSize = std::max(SrcMask0.size(), SrcMask1.size());
     SmallVector<int, 64> Mask0, Mask1;
     scaleShuffleMask<int>(MaskSize / SrcMask0.size(), SrcMask0, Mask0);
@@ -6384,7 +6387,8 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
         Mask[i + InsertIdx] = (NumElts * (1 + InputIdx)) + ExtractIdx + M;
       }
     }
-    return true;
+    // TODO - Add support for more than 1 subinput.
+    return Ops.size() <= 2;
   }
   case ISD::SCALAR_TO_VECTOR: {
     // Match against a scalar_to_vector of an extract from a vector,
@@ -6577,7 +6581,7 @@ static bool resolveTargetShuffleInputs(SDValue Op,
       return false;
 
   resolveTargetShuffleInputsAndMask(Inputs, Mask);
-  return Inputs.size() <= 2;
+  return true;
 }
 
 /// Returns the scalar element that will make up the ith
