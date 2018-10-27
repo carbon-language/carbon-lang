@@ -41,7 +41,7 @@ def _run_benchmark(env, out_dir, include_debug_info):
     # paths a fair amount, though the `if (stuff_is_broken) { diag() ... }`
     # branches should still heavily be weighted in the not-taken direction,
     # since we built all of LLVM/etc).
-    _build_things_in(env, target_dir, what=['check-llvm', 'check-clang'])
+    _build_things_in(env, out_dir, what=['check-llvm', 'check-clang'])
 
     # Building tblgen gets us coverage; don't skip it. (out_dir may also not
     # have them anyway, but that's less of an issue)
