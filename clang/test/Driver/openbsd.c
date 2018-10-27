@@ -12,7 +12,7 @@
 // RUN: %clang -no-canonical-prefixes -target i686-pc-openbsd -pg -pthread %s -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-PG %s
 // CHECK-PG: clang{{.*}}" "-cc1" "-triple" "i686-pc-openbsd"
-// CHECK-PG: ld{{.*}}" "-e" "__start" "--eh-frame-hdr" "-Bdynamic" "-dynamic-linker" "{{.*}}ld.so" "-o" "a.out" "-nopie" "{{.*}}gcrt0.o" "{{.*}}crtbegin.o" "{{.*}}.o" "-lcompiler_rt" "-lpthread_p" "-lc_p" "-lcompiler_rt" "{{.*}}crtend.o"
+// CHECK-PG: ld{{.*}}" "-e" "__start" "--eh-frame-hdr" "-Bdynamic" "-dynamic-linker" "{{.*}}ld.so" "-o" "a.out" "{{.*}}gcrt0.o" "{{.*}}crtbegin.o" "{{.*}}.o" "-lcompiler_rt" "-lpthread_p" "-lc_p" "-lcompiler_rt" "{{.*}}crtend.o"
 
 // Check CPU type for MIPS64
 // RUN: %clang -target mips64-unknown-openbsd -### -c %s 2>&1 \
@@ -84,8 +84,6 @@
 // Check linking against correct startup code when (not) using PIE
 // RUN: %clang -no-canonical-prefixes -target i686-pc-openbsd %s -### 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-PIE %s
-// RUN: %clang -no-canonical-prefixes -target i686-pc-openbsd -pg %s -### 2>&1 \
-// RUN:   | FileCheck -check-prefix=CHECK-NOPIE %s
 // RUN: %clang -no-canonical-prefixes -target i686-pc-openbsd -pie %s -### 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-PIE-FLAG %s
 // RUN: %clang -no-canonical-prefixes -target i686-pc-openbsd -fno-pie %s -### 2>&1 \
