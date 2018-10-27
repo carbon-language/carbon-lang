@@ -35,6 +35,14 @@ def _run_benchmark(env, out_dir, include_debug_info):
     """The 'benchmark' we run to generate profile data."""
     target_dir = env.output_subdir('instrumentation_run')
 
+    # `check-llvm` and `check-clang` are cheap ways to increase coverage. The
+    # former lets us touch on the non-x86 backends a bit if configured, and the
+    # latter gives us more C to chew on (and will send us through diagnostic
+    # paths a fair amount, though the `if (stuff_is_broken) { diag() ... }`
+    # branches should still heavily be weighted in the not-taken direction,
+    # since we built all of LLVM/etc).
+    _build_things_in(env, out_dir, what=['check-llvm', 'check-clang'])
+
     # Building tblgen gets us coverage; don't skip it. (out_dir may also not
     # have them anyway, but that's less of an issue)
     cmake = _get_cmake_invocation_for_bootstrap_from(
@@ -47,14 +55,6 @@ def _run_benchmark(env, out_dir, include_debug_info):
 
     # Just build all the things. The more data we have, the better.
     _build_things_in(env, target_dir, what=['all'])
-
-    # `check-llvm` and `check-clang` are cheap ways to increase coverage. The
-    # former lets us touch on the non-x86 backends a bit if configured, and the
-    # latter gives us more C to chew on (and will send us through diagnostic
-    # paths a fair amount, though the `if (stuff_is_broken) { diag() ... }`
-    # branches should still heavily be weighted in the not-taken direction,
-    # since we built all of LLVM/etc).
-    _build_things_in(env, target_dir, what=['check-llvm', 'check-clang'])
 
 ### Script
 
