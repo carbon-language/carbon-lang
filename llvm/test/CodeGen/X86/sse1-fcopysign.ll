@@ -43,18 +43,12 @@ define float @f32_neg(float %a, float %b) nounwind {
 define <4 x float> @v4f32_pos(<4 x float> %a, <4 x float> %b) nounwind {
 ; X86-LABEL: v4f32_pos:
 ; X86:       # %bb.0:
-; X86-NEXT:    movaps {{.*#+}} xmm1 = [1,1,1,1]
-; X86-NEXT:    andps {{\.LCPI.*}}, %xmm1
 ; X86-NEXT:    andps {{\.LCPI.*}}, %xmm0
-; X86-NEXT:    orps %xmm1, %xmm0
 ; X86-NEXT:    retl
 ;
 ; X64-LABEL: v4f32_pos:
 ; X64:       # %bb.0:
-; X64-NEXT:    movaps {{.*#+}} xmm1 = [1,1,1,1]
-; X64-NEXT:    andps {{.*}}(%rip), %xmm1
 ; X64-NEXT:    andps {{.*}}(%rip), %xmm0
-; X64-NEXT:    orps %xmm1, %xmm0
 ; X64-NEXT:    retq
   %tmp = tail call <4 x float> @llvm.copysign.v4f32(<4 x float> %a, <4 x float> <float 1.0, float 1.0, float 1.0, float 1.0>)
   ret <4 x float> %tmp
@@ -63,18 +57,12 @@ define <4 x float> @v4f32_pos(<4 x float> %a, <4 x float> %b) nounwind {
 define <4 x float> @v4f32_neg(<4 x float> %a, <4 x float> %b) nounwind {
 ; X86-LABEL: v4f32_neg:
 ; X86:       # %bb.0:
-; X86-NEXT:    movaps {{.*#+}} xmm1 = [-1,-1,-1,-1]
-; X86-NEXT:    andps {{\.LCPI.*}}, %xmm1
-; X86-NEXT:    andps {{\.LCPI.*}}, %xmm0
-; X86-NEXT:    orps %xmm1, %xmm0
+; X86-NEXT:    orps {{\.LCPI.*}}, %xmm0
 ; X86-NEXT:    retl
 ;
 ; X64-LABEL: v4f32_neg:
 ; X64:       # %bb.0:
-; X64-NEXT:    movaps {{.*#+}} xmm1 = [-1,-1,-1,-1]
-; X64-NEXT:    andps {{.*}}(%rip), %xmm1
-; X64-NEXT:    andps {{.*}}(%rip), %xmm0
-; X64-NEXT:    orps %xmm1, %xmm0
+; X64-NEXT:    orps {{.*}}(%rip), %xmm0
 ; X64-NEXT:    retq
   %tmp = tail call <4 x float> @llvm.copysign.v4f32(<4 x float> %a, <4 x float> <float -1.0, float -1.0, float -1.0, float -1.0>)
   ret <4 x float> %tmp
