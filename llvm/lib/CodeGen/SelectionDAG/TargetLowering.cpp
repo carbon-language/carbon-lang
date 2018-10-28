@@ -4147,6 +4147,11 @@ bool TargetLowering::expandFP_TO_UINT(SDNode *Node, SDValue &Result,
   EVT SetCCVT =
       getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), SrcVT);
 
+  // Only expand vector types if we have the appropriate vector bit operations.
+  if (DstVT.isVector() && (!isOperationLegalOrCustom(ISD::FP_TO_SINT, DstVT) ||
+                           !isOperationLegalOrCustomOrPromote(ISD::XOR, SrcVT)))
+    return false;
+
   // Expand based on maximum range of FP_TO_SINT:
   // True = fp_to_sint(Src)
   // False = 0x8000000000000000 + fp_to_sint(Src - 0x8000000000000000)
