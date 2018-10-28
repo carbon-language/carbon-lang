@@ -462,8 +462,8 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, ExprResult LHSVal,
     return StmtError();
   }
 
-  CaseStmt *CS = new (Context)
-      CaseStmt(LHSVal.get(), RHSVal.get(), CaseLoc, DotDotDotLoc, ColonLoc);
+  auto *CS = CaseStmt::Create(Context, LHSVal.get(), RHSVal.get(),
+                              CaseLoc, DotDotDotLoc, ColonLoc);
   getCurFunction()->SwitchStack.back().getPointer()->addSwitchCase(CS);
   return CS;
 }
@@ -472,7 +472,7 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, ExprResult LHSVal,
 void Sema::ActOnCaseStmtBody(Stmt *caseStmt, Stmt *SubStmt) {
   DiagnoseUnusedExprResult(SubStmt);
 
-  CaseStmt *CS = static_cast<CaseStmt*>(caseStmt);
+  auto *CS = static_cast<CaseStmt *>(caseStmt);
   CS->setSubStmt(SubStmt);
 }
 
