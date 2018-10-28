@@ -975,11 +975,11 @@ class CaseStmt final
   CaseStmt(Expr *lhs, Expr *rhs, SourceLocation caseLoc,
            SourceLocation ellipsisLoc, SourceLocation colonLoc)
       : SwitchCase(CaseStmtClass, caseLoc, colonLoc) {
-    setLHS(lhs);
-    setSubStmt(nullptr);
     // Handle GNU case statements of the form LHS ... RHS.
     bool IsGNURange = rhs != nullptr;
     SwitchCaseBits.CaseStmtIsGNURange = IsGNURange;
+    setLHS(lhs);
+    setSubStmt(nullptr);
     if (IsGNURange) {
       setRHS(rhs);
       setEllipsisLoc(ellipsisLoc);
