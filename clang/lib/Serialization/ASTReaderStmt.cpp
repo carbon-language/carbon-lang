@@ -1875,6 +1875,8 @@ void ASTStmtReader::VisitOMPLoopDirective(OMPLoopDirective *D) {
     D->setCombinedCond(Record.readSubExpr());
     D->setCombinedNextLowerBound(Record.readSubExpr());
     D->setCombinedNextUpperBound(Record.readSubExpr());
+    D->setCombinedDistCond(Record.readSubExpr());
+    D->setCombinedParForInDistCond(Record.readSubExpr());
   }
   SmallVector<Expr *, 4> Sub;
   unsigned CollapsedNum = D->getCollapsedNumber();

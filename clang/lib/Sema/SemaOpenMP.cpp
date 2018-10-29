@@ -410,7 +410,7 @@ public:
     }
     return IsDuplicate;
   }
-  
+
   /// Set default data sharing attribute to none.
   void setDefaultDSANone(SourceLocation Loc) {
     assert(!isStackEmpty());
@@ -5296,6 +5296,12 @@ checkOpenMPLoop(OpenMPDirectiveKind DKind, Expr *CollapseLoopCountExpr,
           ? SemaRef.BuildBinOp(CurScope, CondLoc, BO_LE, IV.get(), UB.get())
           : SemaRef.BuildBinOp(CurScope, CondLoc, BO_LT, IV.get(),
                                NumIterations.get());
+  ExprResult CombDistCond;
+  if (isOpenMPLoopBoundSharingDirective(DKind)) {
+    CombDistCond =
+        SemaRef.BuildBinOp(CurScope, CondLoc, BO_LE, IV.get(), NumIterations.get());
+  }
+
   ExprResult CombCond;
   if (isOpenMPLoopBoundSharingDirective(DKind)) {
     CombCond =
@@ -5370,7 +5376,7 @@ checkOpenMPLoop(OpenMPDirectiveKind DKind, Expr *CollapseLoopCountExpr,
   // on PrevUB instead of NumIterations - used to implement 'for' when found
   // in combination with 'distribute', like in 'distribute parallel for'
   SourceLocation DistIncLoc = AStmt->getBeginLoc();
-  ExprResult DistCond, DistInc, PrevEUB;
+  ExprResult DistCond, DistInc, PrevEUB, ParForInDistCond;
   if (isOpenMPLoopBoundSharingDirective(DKind)) {
     DistCond = SemaRef.BuildBinOp(CurScope, CondLoc, BO_LE, IV.get(), UB.get());
     assert(DistCond.isUsable() && "distribute cond expr was not built");
@@ -5393,6 +5399,11 @@ checkOpenMPLoop(OpenMPDirectiveKind DKind, Expr *CollapseLoopCountExpr,
     PrevEUB = SemaRef.BuildBinOp(CurScope, DistIncLoc, BO_Assign, UB.get(),
                                  CondOp.get());
     PrevEUB = SemaRef.ActOnFinishFullExpr(PrevEUB.get());
+
+    // Build IV <= PrevUB to be used in parallel for is in combination with
+    // a distribute directive with schedule(static, 1)
+    ParForInDistCond =
+        SemaRef.BuildBinOp(CurScope, CondLoc, BO_LE, IV.get(), PrevUB.get());
   }
 
   // Build updates and final values of the loop counters.
@@ -5516,6 +5527,8 @@ checkOpenMPLoop(OpenMPDirectiveKind DKind, Expr *CollapseLoopCountExpr,
   Built.DistCombinedFields.Cond = CombCond.get();
   Built.DistCombinedFields.NLB = CombNextLB.get();
   Built.DistCombinedFields.NUB = CombNextUB.get();
+  Built.DistCombinedFields.DistCond = CombDistCond.get();
+  Built.DistCombinedFields.ParForInDistCond = ParForInDistCond.get();
 
   return NestedLoopCount;
 }

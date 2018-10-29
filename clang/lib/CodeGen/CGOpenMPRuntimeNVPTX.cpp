@@ -4247,8 +4247,11 @@ void CGOpenMPRuntimeNVPTX::getDefaultDistScheduleAndChunk(
 void CGOpenMPRuntimeNVPTX::getDefaultScheduleAndChunk(
     CodeGenFunction &CGF, const OMPLoopDirective &S,
     OpenMPScheduleClauseKind &ScheduleKind,
-    llvm::Value *&Chunk) const {
+    const Expr *&ChunkExpr) const {
   ScheduleKind = OMPC_SCHEDULE_static;
-  Chunk = CGF.Builder.getIntN(CGF.getContext().getTypeSize(
-      S.getIterationVariable()->getType()), 1);
+  // Chunk size is 1 in this case.
+  llvm::APInt ChunkSize(32, 1);
+  ChunkExpr = IntegerLiteral::Create(CGF.getContext(), ChunkSize,
+      CGF.getContext().getIntTypeForBitwidth(32, /*Signed=*/0),
+      SourceLocation());
 }

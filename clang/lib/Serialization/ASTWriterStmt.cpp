@@ -1876,6 +1876,8 @@ void ASTStmtWriter::VisitOMPLoopDirective(OMPLoopDirective *D) {
     Record.AddStmt(D->getCombinedCond());
     Record.AddStmt(D->getCombinedNextLowerBound());
     Record.AddStmt(D->getCombinedNextUpperBound());
+    Record.AddStmt(D->getCombinedDistCond());
+    Record.AddStmt(D->getCombinedParForInDistCond());
   }
   for (auto I : D->counters()) {
     Record.AddStmt(I);
