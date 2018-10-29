@@ -10,6 +10,13 @@
 // CHECK-NEXT: CaseStmt
 // CHECK-NEXT: IntegerLiteral
 // CHECK-NEXT: BreakStmt
+// CHECK-NEXT: CaseStmt
+// CHECK-NEXT: IntegerLiteral
+// CHECK-NEXT: IntegerLiteral
+// CHECK-NEXT: CaseStmt
+// CHECK-NEXT: IntegerLiteral
+// CHECK-NEXT: IntegerLiteral
+// CHECK-NEXT: BreakStmt
 
 // CHECK: SwitchStmt
 // CHECK-NEXT: DeclStmt
@@ -22,6 +29,10 @@
 // CHECK-NEXT: IntegerLiteral
 // CHECK-NEXT: BreakStmt
 // CHECK-NEXT: CaseStmt
+// CHECK-NEXT: IntegerLiteral
+// CHECK-NEXT: BreakStmt
+// CHECK-NEXT: CaseStmt
+// CHECK-NEXT: IntegerLiteral
 // CHECK-NEXT: IntegerLiteral
 // CHECK-NEXT: BreakStmt
 
