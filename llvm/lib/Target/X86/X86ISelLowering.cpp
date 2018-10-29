@@ -6379,13 +6379,12 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
       Mask.push_back(i);
     for (int i = 0; i != (int)NumSubElts; ++i) {
       int M = SubMask[i];
-      if (M < 0) {
-        Mask[i + InsertIdx] = M;
-      } else {
+      if (0 <= M) {
         int InputIdx = M / NumSubElts;
         int ExtractIdx = SubInputs[InputIdx].getConstantOperandVal(1);
-        Mask[i + InsertIdx] = (NumElts * (1 + InputIdx)) + ExtractIdx + M;
+        M = (NumElts * (1 + InputIdx)) + ExtractIdx + (M % NumSubElts);
       }
+      Mask[i + InsertIdx] = M;
     }
     // TODO - Add support for more than 1 subinput.
     return Ops.size() <= 2;
