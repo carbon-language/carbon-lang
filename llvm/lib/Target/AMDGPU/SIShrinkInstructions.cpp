@@ -299,7 +299,7 @@ static MachineInstr* matchSwap(MachineInstr &MovT, MachineRegisterInfo &MRI,
 
   const SIRegisterInfo &TRI = TII->getRegisterInfo();
   if (!TRI.isVGPR(MRI, X))
-    return false;
+    return nullptr;
 
   for (MachineOperand &YTop : MRI.use_nodbg_operands(T)) {
     if (YTop.getSubReg() != Tsub)
