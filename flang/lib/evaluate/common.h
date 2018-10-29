@@ -87,15 +87,9 @@ static constexpr bool Satisfies(RelationalOperator op, Ordering order) {
 
 static constexpr bool Satisfies(RelationalOperator op, Relation relation) {
   switch (relation) {
-  case Relation::Less:
-    return op == RelationalOperator::LT || op == RelationalOperator::LE ||
-        op == RelationalOperator::NE;
-  case Relation::Equal:
-    return op == RelationalOperator::LE || op == RelationalOperator::EQ ||
-        op == RelationalOperator::GE;
-  case Relation::Greater:
-    return op == RelationalOperator::NE || op == RelationalOperator::GE ||
-        op == RelationalOperator::GT;
+  case Relation::Less: return Satisfies(op, Ordering::Less);
+  case Relation::Equal: return Satisfies(op, Ordering::Equal);
+  case Relation::Greater: return Satisfies(op, Ordering::Greater);
   case Relation::Unordered: return false;
   }
   return false;  // silence g++ warning
