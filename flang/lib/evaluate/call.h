@@ -41,7 +41,6 @@ struct ActualArgument {
   std::optional<int> VectorSize() const;
 
   std::optional<parser::CharBlock> keyword;
-  bool isAssumedRank{false};  // TODO: make into a function of the value
   bool isAlternateReturn{false};  // when true, "value" is a label number
 
   // TODO: Mark legacy %VAL and %REF arguments

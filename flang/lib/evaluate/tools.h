@@ -84,6 +84,23 @@ template<typename A> bool IsConstant(const Expr<A> &expr) {
   return std::visit([](const auto &x) { return IsConstant(x); }, expr.u);
 }
 
+// Predicate: true when an expression is assumed-rank
+template<typename A> bool IsAssumedRank(const A &) { return false; }
+template<typename A> bool IsAssumedRank(const Designator<A> &designator) {
+  if (const auto *symbolPtr{
+          std::get_if<const semantics::Symbol *>(&designator.u)}) {
+    if (const auto *details{
+            (*symbolPtr)
+                ->template detailsIf<semantics::ObjectEntityDetails>()}) {
+      return details->IsAssumedRank();
+    }
+  }
+  return false;
+}
+template<typename A> bool IsAssumedRank(const Expr<A> &expr) {
+  return std::visit([](const auto &x) { return IsAssumedRank(x); }, expr.u);
+}
+
 // When an expression is a constant integer, extract its value.
 template<typename A> std::optional<std::int64_t> ToInt64(const A &) {
   return std::nullopt;

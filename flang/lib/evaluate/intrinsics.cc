@@ -933,9 +933,9 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
   for (std::size_t j{0}; j < dummies; ++j) {
     const IntrinsicDummyArgument &d{dummy[std::min(j, dummyArgPatterns - 1)]};
     if (const ActualArgument * arg{actualForDummy[j]}) {
-      if (arg->isAssumedRank && d.rank != Rank::anyOrAssumedRank) {
-        messages.Say(
-            "assumed-rank array cannot be used for '%s=' argument"_err_en_US,
+      if (IsAssumedRank(*arg->value) && d.rank != Rank::anyOrAssumedRank) {
+        messages.Say("assumed-rank array cannot be forwarded to "
+                     "'%s=' argument"_err_en_US,
             d.keyword);
         return std::nullopt;
       }

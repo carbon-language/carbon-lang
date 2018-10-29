@@ -718,7 +718,7 @@ MaybeExpr ExprAnalyzer::CompleteSubscripts(ArrayRef &&ref) {
                  symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     // C928 & C1002
     if (Triplet * last{std::get_if<Triplet>(&ref.subscript.back().u)}) {
-      if (!last->upper().has_value() && details->isAssumedSize()) {
+      if (!last->upper().has_value() && details->IsAssumedSize()) {
         Say("assumed-size array '%s' must have explicit final subscript upper bound value"_err_en_US,
             symbol.name().ToString().data());
       }
