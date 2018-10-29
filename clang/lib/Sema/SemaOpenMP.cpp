@@ -2321,6 +2321,8 @@ public:
         }
       }
     }
+    // Check implicitly captured variables.
+    VisitSubCaptures(S);
   }
   void VisitStmt(Stmt *S) {
     for (Stmt *C : S->children()) {
