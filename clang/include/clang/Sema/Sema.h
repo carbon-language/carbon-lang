@@ -8686,6 +8686,10 @@ public:
   ExprResult getOpenMPCapturedExpr(VarDecl *Capture, ExprValueKind VK,
                                    ExprObjectKind OK, SourceLocation Loc);
 
+  /// If the current region is a loop-based region, mark the start of the loop
+  /// construct.
+  void startOpenMPLoop();
+
   /// Check if the specified variable is used in 'private' clause.
   /// \param Level Relative level of nested OpenMP construct for that the check
   /// is performed.

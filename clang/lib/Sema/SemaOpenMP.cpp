@@ -138,9 +138,11 @@ private:
     /// 'ordered' clause, the second one is true if the regions has 'ordered'
     /// clause, false otherwise.
     llvm::Optional<std::pair<const Expr *, OMPOrderedClause *>> OrderedRegion;
+    unsigned AssociatedLoops = 1;
+    const Decl *PossiblyLoopCounter = nullptr;
     bool NowaitRegion = false;
     bool CancelRegion = false;
-    unsigned AssociatedLoops = 1;
+    bool LoopStart = false;
     SourceLocation InnerTeamsRegionLoc;
     /// Reference to the taskgroup task_reduction reference expression.
     Expr *TaskgroupReductionRef = nullptr;
@@ -208,6 +210,33 @@ public:
     Stack.back().first.pop_back();
   }
 
+  /// Marks that we're started loop parsing.
+  void loopInit() {
+    assert(isOpenMPLoopDirective(getCurrentDirective()) &&
+           "Expected loop-based directive.");
+    Stack.back().first.back().LoopStart = true;
+  }
+  /// Start capturing of the variables in the loop context.
+  void loopStart() {
+    assert(isOpenMPLoopDirective(getCurrentDirective()) &&
+           "Expected loop-based directive.");
+    Stack.back().first.back().LoopStart = false;
+  }
+  /// true, if variables are captured, false otherwise.
+  bool isLoopStarted() const {
+    assert(isOpenMPLoopDirective(getCurrentDirective()) &&
+           "Expected loop-based directive.");
+    return !Stack.back().first.back().LoopStart;
+  }
+  /// Marks (or clears) declaration as possibly loop counter.
+  void resetPossibleLoopCounter(const Decl *D = nullptr) {
+    Stack.back().first.back().PossiblyLoopCounter =
+        D ? D->getCanonicalDecl() : D;
+  }
+  /// Gets the possible loop counter decl.
+  const Decl *getPossiblyLoopCunter() const {
+    return Stack.back().first.back().PossiblyLoopCounter;
+  }
   /// Start new OpenMP region stack in new non-capturing function.
   void pushFunction() {
     const FunctionScopeInfo *CurFnScope = SemaRef.getCurFunction();
@@ -354,7 +383,7 @@ public:
       return OMPD_unknown;
     return std::next(Stack.back().first.rbegin())->Directive;
   }
-  
+
   /// Add requires decl to internal vector
   void addRequiresDecl(OMPRequiresDecl *RD) {
     RequiresDecls.push_back(RD);
@@ -1510,8 +1539,28 @@ void Sema::adjustOpenMPTargetScopeIndex(unsigned &FunctionScopesIndex,
   FunctionScopesIndex -= Regions.size();
 }
 
+void Sema::startOpenMPLoop() {
+  assert(LangOpts.OpenMP && "OpenMP must be enabled.");
+  if (isOpenMPLoopDirective(DSAStack->getCurrentDirective()))
+    DSAStack->loopInit();
+}
+
 bool Sema::isOpenMPPrivateDecl(const ValueDecl *D, unsigned Level) const {
   assert(LangOpts.OpenMP && "OpenMP is not allowed");
+  if (isOpenMPLoopDirective(DSAStack->getCurrentDirective())) {
+    if (DSAStack->getAssociatedLoops() > 0 &&
+        !DSAStack->isLoopStarted()) {
+      DSAStack->resetPossibleLoopCounter(D);
+      DSAStack->loopStart();
+      return true;
+    }
+    if ((DSAStack->getPossiblyLoopCunter() == D->getCanonicalDecl() ||
+         DSAStack->isLoopControlVariable(D).first) &&
+        !DSAStack->hasExplicitDSA(
+            D, [](OpenMPClauseKind K) { return K != OMPC_private; }, Level) &&
+        !isOpenMPSimdDirective(DSAStack->getCurrentDirective()))
+      return true;
+  }
   return DSAStack->hasExplicitDSA(
              D, [](OpenMPClauseKind K) { return K == OMPC_private; }, Level) ||
          (DSAStack->isClauseParsingMode() &&
@@ -2021,6 +2070,30 @@ class DSAAttrChecker final : public StmtVisitor<DSAAttrChecker, void> {
   Sema::VarsWithInheritedDSAType VarsWithInheritedDSA;
   llvm::SmallDenseSet<const ValueDecl *, 4> ImplicitDeclarations;
 
+  void VisitSubCaptures(OMPExecutableDirective *S) {
+    // Check implicitly captured variables.
+    if (!S->hasAssociatedStmt() || !S->getAssociatedStmt())
+      return;
+    for (const CapturedStmt::Capture &Cap :
+         S->getInnermostCapturedStmt()->captures()) {
+      if (!Cap.capturesVariable())
+        continue;
+      VarDecl *VD = Cap.getCapturedVar();
+      // Do not try to map the variable if it or its sub-component was mapped
+      // already.
+      if (isOpenMPTargetExecutionDirective(Stack->getCurrentDirective()) &&
+          Stack->checkMappableExprComponentListsForDecl(
+              VD, /*CurrentRegionOnly=*/true,
+              [](OMPClauseMappableExprCommon::MappableExprComponentListRef,
+                 OpenMPClauseKind) { return true; }))
+        continue;
+      DeclRefExpr *DRE = buildDeclRefExpr(
+          SemaRef, VD, VD->getType().getNonLValueExprType(SemaRef.Context),
+          Cap.getLocation(), /*RefersToCapture=*/true);
+      Visit(DRE);
+    }
+  }
+
 public:
   void VisitDeclRefExpr(DeclRefExpr *E) {
     if (E->isTypeDependent() || E->isValueDependent() ||
@@ -2253,25 +2326,9 @@ public:
     for (Stmt *C : S->children()) {
       if (C) {
         if (auto *OED = dyn_cast<OMPExecutableDirective>(C)) {
-          // Check implicitly captured vriables in the task-based directives to
+          // Check implicitly captured variables in the task-based directives to
           // check if they must be firstprivatized.
-          if (!OED->hasAssociatedStmt())
-            continue;
-          const Stmt *AS = OED->getAssociatedStmt();
-          if (!AS)
-            continue;
-          for (const CapturedStmt::Capture &Cap :
-               cast<CapturedStmt>(AS)->captures()) {
-            if (Cap.capturesVariable()) {
-              DeclRefExpr *DRE = buildDeclRefExpr(
-                  SemaRef, Cap.getCapturedVar(),
-                  Cap.getCapturedVar()->getType().getNonLValueExprType(
-                      SemaRef.Context),
-                  Cap.getLocation(),
-                  /*RefersToCapture=*/true);
-              Visit(DRE);
-            }
-          }
+          VisitSubCaptures(OED);
         } else {
           Visit(C);
         }
@@ -4522,6 +4579,15 @@ void Sema::ActOnOpenMPLoopInitialization(SourceLocation ForLoc, Stmt *Init) {
           }
         }
         DSAStack->addLoopControlVariable(D, VD);
+        const Decl *LD = DSAStack->getPossiblyLoopCunter();
+        if (LD != D->getCanonicalDecl()) {
+          DSAStack->resetPossibleLoopCounter();
+          if (auto *Var = dyn_cast_or_null<VarDecl>(LD))
+            MarkDeclarationsReferencedInExpr(
+                buildDeclRefExpr(*this, const_cast<VarDecl *>(Var),
+                                 Var->getType().getNonLValueExprType(Context),
+                                 ForLoc, /*RefersToCapture=*/true));
+        }
       }
     }
     DSAStack->setAssociatedLoops(AssociatedLoops - 1);

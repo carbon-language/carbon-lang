@@ -4949,10 +4949,16 @@ void CodeGenFunction::EmitSimpleOMPExecutableDirective(
     if (isOpenMPSimdDirective(D.getDirectiveKind())) {
       emitOMPSimdRegion(CGF, cast<OMPLoopDirective>(D), Action);
     } else {
+      OMPPrivateScope LoopGlobals(CGF);
       if (const auto *LD = dyn_cast<OMPLoopDirective>(&D)) {
         for (const Expr *E : LD->counters()) {
-          if (const auto *VD = dyn_cast<OMPCapturedExprDecl>(
-                  cast<DeclRefExpr>(E)->getDecl())) {
+          const auto *VD = dyn_cast<VarDecl>(cast<DeclRefExpr>(E)->getDecl());
+          if (!VD->hasLocalStorage() && !CGF.LocalDeclMap.count(VD)) {
+            LValue GlobLVal = CGF.EmitLValue(E);
+            LoopGlobals.addPrivate(
+                VD, [&GlobLVal]() { return GlobLVal.getAddress(); });
+          }
+          if (const auto *CED = dyn_cast<OMPCapturedExprDecl>(VD)) {
             // Emit only those that were not explicitly referenced in clauses.
             if (!CGF.LocalDeclMap.count(VD))
               CGF.EmitVarDecl(*VD);
@@ -4973,6 +4979,7 @@ void CodeGenFunction::EmitSimpleOMPExecutableDirective(
           }
         }
       }
+      LoopGlobals.Privatize();
       CGF.EmitStmt(D.getInnermostCapturedStmt()->getCapturedStmt());
     }
   };
