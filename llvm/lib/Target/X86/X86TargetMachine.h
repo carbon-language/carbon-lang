@@ -53,6 +53,10 @@ public:
   TargetLoweringObjectFile *getObjFileLowering() const override {
     return TLOF.get();
   }
+
+  bool isMachineVerifierClean() const override {
+    return false;
+  }
 };
 
 } // end namespace llvm
