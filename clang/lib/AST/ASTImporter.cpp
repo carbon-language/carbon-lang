@@ -5790,8 +5790,8 @@ ExpectedStmt ASTNodeImporter::VisitSwitchStmt(SwitchStmt *S) {
   SourceLocation ToSwitchLoc;
   std::tie(ToInit, ToConditionVariable, ToCond, ToBody, ToSwitchLoc) = *Imp;
 
-  auto *ToStmt = new (Importer.getToContext()) SwitchStmt(
-      Importer.getToContext(), ToInit, ToConditionVariable, ToCond);
+  auto *ToStmt = SwitchStmt::Create(Importer.getToContext(), ToInit,
+                                    ToConditionVariable, ToCond);
   ToStmt->setBody(ToBody);
   ToStmt->setSwitchLoc(ToSwitchLoc);
 
