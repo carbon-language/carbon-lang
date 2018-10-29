@@ -491,22 +491,15 @@ public:
   /// VisContext - Manages the stack for \#pragma GCC visibility.
   void *VisContext; // Really a "PragmaVisStack*"
 
-  /// This an attribute introduced by \#pragma clang attribute.
+  /// This represents the stack of attributes that were pushed by
+  /// \#pragma clang attribute.
   struct PragmaAttributeEntry {
     SourceLocation Loc;
     ParsedAttr *Attribute;
     SmallVector<attr::SubjectMatchRule, 4> MatchRules;
     bool IsUsed;
   };
-
-  /// A push'd group of PragmaAttributeEntries.
-  struct PragmaAttributeGroup {
-    /// The location of the push attribute.
-    SourceLocation Loc;
-    SmallVector<PragmaAttributeEntry, 2> Entries;
-  };
-
-  SmallVector<PragmaAttributeGroup, 2> PragmaAttributeStack;
+  SmallVector<PragmaAttributeEntry, 2> PragmaAttributeStack;
 
   /// The declaration that is currently receiving an attribute from the
   /// #pragma attribute stack.
@@ -8477,10 +8470,9 @@ public:
   /// the appropriate attribute.
   void AddCFAuditedAttribute(Decl *D);
 
-  void ActOnPragmaAttributeAttribute(ParsedAttr &Attribute,
-                                     SourceLocation PragmaLoc,
-                                     attr::ParsedSubjectMatchRuleSet Rules);
-  void ActOnPragmaAttributeEmptyPush(SourceLocation PragmaLoc);
+  /// Called on well-formed '\#pragma clang attribute push'.
+  void ActOnPragmaAttributePush(ParsedAttr &Attribute, SourceLocation PragmaLoc,
+                                attr::ParsedSubjectMatchRuleSet Rules);
 
   /// Called on well-formed '\#pragma clang attribute pop'.
   void ActOnPragmaAttributePop(SourceLocation PragmaLoc);
