@@ -149,7 +149,7 @@ int bar(int n){
 
 // check exit condition
 // CHECK-DAG: [[OMP_IV_VAL_1:%.+]] = load {{.+}} [[OMP_IV]],
-// CHECK: [[CMP_IV_UB:%.+]] = icmp sle {{.+}} [[OMP_IV_VAL_1]], 100
+// CHECK: [[CMP_IV_UB:%.+]] = icmp slt {{.+}} [[OMP_IV_VAL_1]], 100
 // CHECK: br {{.+}} [[CMP_IV_UB]], label %[[DIST_INNER_LOOP_BODY:.+]], label %[[DIST_INNER_LOOP_END:.+]]
 
 // check that PrevLB and PrevUB are passed to the 'for'

@@ -446,7 +446,7 @@ int main() {
       // LAMBDA-DAG: [[OMP_IV_VAL_1:%.+]] = load {{.+}} [[OMP_IV]],
       // LAMBDA-DAG: [[OMP_UB_VAL_3:%.+]] = load {{.+}}
       // LAMBDA-DAG: [[OMP_UB_VAL_3_PLUS_ONE:%.+]] = add {{.+}} [[OMP_UB_VAL_3]], 1
-      // LAMBDA: [[CMP_IV_UB:%.+]] = icmp sle {{.+}} [[OMP_IV_VAL_1]], [[OMP_UB_VAL_3_PLUS_ONE]]
+      // LAMBDA: [[CMP_IV_UB:%.+]] = icmp slt {{.+}} [[OMP_IV_VAL_1]], [[OMP_UB_VAL_3_PLUS_ONE]]
       // LAMBDA: br {{.+}} [[CMP_IV_UB]], label %[[DIST_INNER_LOOP_BODY:.+]], label %[[DIST_INNER_LOOP_END:.+]]
 
       // check that PrevLB and PrevUB are passed to the 'for'
@@ -1209,7 +1209,7 @@ int main() {
     // CHECK-DAG: [[OMP_IV_VAL_1:%.+]] = load {{.+}} [[OMP_IV]],
     // CHECK-DAG: [[OMP_UB_VAL_3:%.+]] = load {{.+}}
     // CHECK-DAG: [[OMP_UB_VAL_3_PLUS_ONE:%.+]] = add {{.+}} [[OMP_UB_VAL_3]], 1
-    // CHECK: [[CMP_IV_UB:%.+]] = icmp sle {{.+}} [[OMP_IV_VAL_1]], [[OMP_UB_VAL_3_PLUS_ONE]]
+    // CHECK: [[CMP_IV_UB:%.+]] = icmp slt {{.+}} [[OMP_IV_VAL_1]], [[OMP_UB_VAL_3_PLUS_ONE]]
     // CHECK: br {{.+}} [[CMP_IV_UB]], label %[[DIST_INNER_LOOP_BODY:.+]], label %[[DIST_INNER_LOOP_END:.+]]
 
     // check that PrevLB and PrevUB are passed to the 'for'
@@ -1937,7 +1937,7 @@ int main() {
 // CHECK-DAG: [[OMP_IV_VAL_1:%.+]] = load {{.+}} [[OMP_IV]],
 // CHECK-DAG: [[OMP_UB_VAL_3:%.+]] = load {{.+}}
 // CHECK-DAG: [[OMP_UB_VAL_3_PLUS_ONE:%.+]] = add {{.+}} [[OMP_UB_VAL_3]], 1
-// CHECK: [[CMP_IV_UB:%.+]] = icmp sle {{.+}} [[OMP_IV_VAL_1]], [[OMP_UB_VAL_3_PLUS_ONE]]
+// CHECK: [[CMP_IV_UB:%.+]] = icmp slt {{.+}} [[OMP_IV_VAL_1]], [[OMP_UB_VAL_3_PLUS_ONE]]
 // CHECK: br {{.+}} [[CMP_IV_UB]], label %[[DIST_INNER_LOOP_BODY:.+]], label %[[DIST_INNER_LOOP_END:.+]]
 
 // check that PrevLB and PrevUB are passed to the 'for'
