@@ -107,7 +107,7 @@ signed char convert_signed_int_to_signed_char(signed int x) {
   return x;
 }
 
-#line 1111 // !!!
+#line 10111 // !!!
 
 int main() {
   // No bits set.
@@ -158,13 +158,19 @@ int main() {
   convert_unsigned_char_to_signed_int((uint8_t)UINT8_MAX);
   convert_signed_char_to_signed_int((int8_t)UINT8_MAX);
   convert_unsigned_int_to_signed_int((uint32_t)UINT32_MAX);
+// CHECK-V0: {{.*}}integer-conversion.c:900:10: runtime error: implicit conversion from type 'unsigned int' of value 4294967295 (32-bit, unsigned) to type 'int' changed the value to -1 (32-bit, signed)
   convert_signed_int_to_unsigned_int((int32_t)(uint32_t)UINT32_MAX);
+// CHECK-V0: {{.*}}integer-conversion.c:1000:10: runtime error: implicit conversion from type 'int' of value -1 (32-bit, signed) to type 'unsigned int' changed the value to 4294967295 (32-bit, unsigned)
   convert_signed_int_to_unsigned_char((int32_t)(uint32_t)UINT32_MAX);
 // CHECK-V0: {{.*}}integer-conversion.c:1100:10: runtime error: implicit conversion from type 'int' of value -1 (32-bit, signed) to type 'unsigned char' changed the value to 255 (8-bit, unsigned)
   convert_signed_char_to_unsigned_char((int8_t)UINT8_MAX);
+// CHECK-V0: {{.*}}integer-conversion.c:1200:10: runtime error: implicit conversion from type 'signed char' of value -1 (8-bit, signed) to type 'unsigned char' changed the value to 255 (8-bit, unsigned)
   convert_unsigned_char_to_signed_char((uint8_t)UINT8_MAX);
+// CHECK-V0: {{.*}}integer-conversion.c:1300:10: runtime error: implicit conversion from type 'unsigned char' of value 255 (8-bit, unsigned) to type 'signed char' changed the value to -1 (8-bit, signed)
   convert_signed_char_to_unsigned_int((int8_t)UINT8_MAX);
+// CHECK-V0: {{.*}}integer-conversion.c:1400:10: runtime error: implicit conversion from type 'signed char' of value -1 (8-bit, signed) to type 'unsigned int' changed the value to 4294967295 (32-bit, unsigned)
   convert_unsigned_int_to_signed_char((uint32_t)UINT32_MAX);
+// CHECK-V0: {{.*}}integer-conversion.c:1500:10: runtime error: implicit conversion from type 'unsigned int' of value 4294967295 (32-bit, unsigned) to type 'signed char' changed the value to -1 (8-bit, signed)
   convert_signed_int_to_signed_char((int32_t)(uint32_t)UINT32_MAX);
 #elif defined(V1)
    // Source 'Sign' bit set.
@@ -178,12 +184,17 @@ int main() {
   convert_unsigned_char_to_signed_int((uint8_t)INT8_MIN);
   convert_signed_char_to_signed_int((int8_t)INT8_MIN);
   convert_unsigned_int_to_signed_int((uint32_t)INT32_MIN);
+// CHECK-V1: {{.*}}integer-conversion.c:900:10: runtime error: implicit conversion from type 'unsigned int' of value 2147483648 (32-bit, unsigned) to type 'int' changed the value to -2147483648 (32-bit, signed)
   convert_signed_int_to_unsigned_int((int32_t)(uint32_t)INT32_MIN);
+// CHECK-V1: {{.*}}integer-conversion.c:1000:10: runtime error: implicit conversion from type 'int' of value -2147483648 (32-bit, signed) to type 'unsigned int' changed the value to 2147483648 (32-bit, unsigned)
   convert_signed_int_to_unsigned_char((int32_t)(uint32_t)INT32_MIN);
 // CHECK-V1: {{.*}}integer-conversion.c:1100:10: runtime error: implicit conversion from type 'int' of value -2147483648 (32-bit, signed) to type 'unsigned char' changed the value to 0 (8-bit, unsigned)
   convert_signed_char_to_unsigned_char((int8_t)INT8_MIN);
+// CHECK-V1: {{.*}}integer-conversion.c:1200:10: runtime error: implicit conversion from type 'signed char' of value -128 (8-bit, signed) to type 'unsigned char' changed the value to 128 (8-bit, unsigned)
   convert_unsigned_char_to_signed_char((uint8_t)INT8_MIN);
+// CHECK-V1: {{.*}}integer-conversion.c:1300:10: runtime error: implicit conversion from type 'unsigned char' of value 128 (8-bit, unsigned) to type 'signed char' changed the value to -128 (8-bit, signed)
   convert_signed_char_to_unsigned_int((int8_t)INT8_MIN);
+// CHECK-V1: {{.*}}integer-conversion.c:1400:10: runtime error: implicit conversion from type 'signed char' of value -128 (8-bit, signed) to type 'unsigned int' changed the value to 4294967168 (32-bit, unsigned)
   convert_unsigned_int_to_signed_char((uint32_t)INT32_MIN);
 // CHECK-V1: {{.*}}integer-conversion.c:1500:10: runtime error: implicit conversion from type 'unsigned int' of value 2147483648 (32-bit, unsigned) to type 'signed char' changed the value to 0 (8-bit, signed)
   convert_signed_int_to_signed_char((int32_t)(uint32_t)INT32_MIN);
@@ -224,8 +235,11 @@ int main() {
   convert_signed_int_to_unsigned_int((int32_t)(uint32_t)UINT8_MAX);
   convert_signed_int_to_unsigned_char((int32_t)(uint32_t)UINT8_MAX);
   convert_signed_char_to_unsigned_char((int8_t)UINT8_MAX);
+// CHECK-V3: {{.*}}integer-conversion.c:1200:10: runtime error: implicit conversion from type 'signed char' of value -1 (8-bit, signed) to type 'unsigned char' changed the value to 255 (8-bit, unsigned)
   convert_unsigned_char_to_signed_char((uint8_t)UINT8_MAX);
+// CHECK-V3: {{.*}}integer-conversion.c:1300:10: runtime error: implicit conversion from type 'unsigned char' of value 255 (8-bit, unsigned) to type 'signed char' changed the value to -1 (8-bit, signed)
   convert_signed_char_to_unsigned_int((int8_t)UINT8_MAX);
+// CHECK-V3: {{.*}}integer-conversion.c:1400:10: runtime error: implicit conversion from type 'signed char' of value -1 (8-bit, signed) to type 'unsigned int' changed the value to 4294967295 (32-bit, unsigned)
   convert_unsigned_int_to_signed_char((uint32_t)UINT8_MAX);
 // CHECK-V3: {{.*}}integer-conversion.c:1500:10: runtime error: implicit conversion from type 'unsigned int' of value 255 (32-bit, unsigned) to type 'signed char' changed the value to -1 (8-bit, signed)
   convert_signed_int_to_signed_char((int32_t)(uint32_t)UINT8_MAX);
@@ -244,8 +258,11 @@ int main() {
   convert_signed_int_to_unsigned_int((int32_t)(uint32_t)(uint8_t)INT8_MIN);
   convert_signed_int_to_unsigned_char((int32_t)(uint32_t)(uint8_t)INT8_MIN);
   convert_signed_char_to_unsigned_char((int8_t)(uint8_t)INT8_MIN);
+// CHECK-V4: {{.*}}integer-conversion.c:1200:10: runtime error: implicit conversion from type 'signed char' of value -128 (8-bit, signed) to type 'unsigned char' changed the value to 128 (8-bit, unsigned)
   convert_unsigned_char_to_signed_char((uint8_t)(uint8_t)INT8_MIN);
+// CHECK-V4: {{.*}}integer-conversion.c:1300:10: runtime error: implicit conversion from type 'unsigned char' of value 128 (8-bit, unsigned) to type 'signed char' changed the value to -128 (8-bit, signed)
   convert_signed_char_to_unsigned_int((int8_t)(uint8_t)INT8_MIN);
+// CHECK-V4: {{.*}}integer-conversion.c:1400:10: runtime error: implicit conversion from type 'signed char' of value -128 (8-bit, signed) to type 'unsigned int' changed the value to 4294967168 (32-bit, unsigned)
   convert_unsigned_int_to_signed_char((uint32_t)(uint8_t)INT8_MIN);
 // CHECK-V4: {{.*}}integer-conversion.c:1500:10: runtime error: implicit conversion from type 'unsigned int' of value 128 (32-bit, unsigned) to type 'signed char' changed the value to -128 (8-bit, signed)
   convert_signed_int_to_signed_char((int32_t)(uint32_t)(uint8_t)INT8_MIN);
@@ -262,12 +279,17 @@ int main() {
   convert_unsigned_char_to_signed_int((uint8_t)(uint8_t)INT8_MIN);
   convert_signed_char_to_signed_int((int8_t)(uint8_t)INT8_MIN);
   convert_unsigned_int_to_signed_int((~((uint32_t)(uint8_t)INT8_MIN)));
+// CHECK-V5: {{.*}}integer-conversion.c:900:10: runtime error: implicit conversion from type 'unsigned int' of value 4294967167 (32-bit, unsigned) to type 'int' changed the value to -129 (32-bit, signed)
   convert_signed_int_to_unsigned_int((int32_t)(~((uint32_t)(uint8_t)INT8_MIN)));
+// CHECK-V5: {{.*}}integer-conversion.c:1000:10: runtime error: implicit conversion from type 'int' of value -129 (32-bit, signed) to type 'unsigned int' changed the value to 4294967167 (32-bit, unsigned)
   convert_signed_int_to_unsigned_char((int32_t)(~((uint32_t)(uint8_t)INT8_MIN)));
 // CHECK-V5: {{.*}}integer-conversion.c:1100:10: runtime error: implicit conversion from type 'int' of value -129 (32-bit, signed) to type 'unsigned char' changed the value to 127 (8-bit, unsigned)
   convert_signed_char_to_unsigned_char((int8_t)(uint8_t)INT8_MIN);
+// CHECK-V5: {{.*}}integer-conversion.c:1200:10: runtime error: implicit conversion from type 'signed char' of value -128 (8-bit, signed) to type 'unsigned char' changed the value to 128 (8-bit, unsigned)
   convert_unsigned_char_to_signed_char((uint8_t)(uint8_t)INT8_MIN);
+// CHECK-V5: {{.*}}integer-conversion.c:1300:10: runtime error: implicit conversion from type 'unsigned char' of value 128 (8-bit, unsigned) to type 'signed char' changed the value to -128 (8-bit, signed)
   convert_signed_char_to_unsigned_int((int8_t)(uint8_t)INT8_MIN);
+// CHECK-V5: {{.*}}integer-conversion.c:1400:10: runtime error: implicit conversion from type 'signed char' of value -128 (8-bit, signed) to type 'unsigned int' changed the value to 4294967168 (32-bit, unsigned)
   convert_unsigned_int_to_signed_char((~((uint32_t)(uint8_t)INT8_MIN)));
 // CHECK-V5: {{.*}}integer-conversion.c:1500:10: runtime error: implicit conversion from type 'unsigned int' of value 4294967167 (32-bit, unsigned) to type 'signed char' changed the value to 127 (8-bit, signed)
   convert_signed_int_to_signed_char((int32_t)(~((uint32_t)(uint8_t)INT8_MIN)));
@@ -284,12 +306,17 @@ int main() {
   convert_unsigned_char_to_signed_int((uint8_t)INT8_MIN);
   convert_signed_char_to_signed_int((int8_t)INT8_MIN);
   convert_unsigned_int_to_signed_int((uint32_t)INT32_MIN);
-  convert_signed_int_to_unsigned_int((uint32_t)INT32_MIN);
+// CHECK-V6: {{.*}}integer-conversion.c:900:10: runtime error: implicit conversion from type 'unsigned int' of value 2147483648 (32-bit, unsigned) to type 'int' changed the value to -2147483648 (32-bit, signed)
+  convert_signed_int_to_unsigned_int((int32_t)INT32_MIN);
+// CHECK-V6: {{.*}}integer-conversion.c:1000:10: runtime error: implicit conversion from type 'int' of value -2147483648 (32-bit, signed) to type 'unsigned int' changed the value to 2147483648 (32-bit, unsigned)
   convert_signed_int_to_unsigned_char((int32_t)(((uint32_t)INT32_MIN) | ((uint32_t)(uint8_t)INT8_MIN)));
 // CHECK-V6: {{.*}}integer-conversion.c:1100:10: runtime error: implicit conversion from type 'int' of value -2147483520 (32-bit, signed) to type 'unsigned char' changed the value to 128 (8-bit, unsigned)
   convert_signed_char_to_unsigned_char((int8_t)INT8_MIN);
+// CHECK-V6: {{.*}}integer-conversion.c:1200:10: runtime error: implicit conversion from type 'signed char' of value -128 (8-bit, signed) to type 'unsigned char' changed the value to 128 (8-bit, unsigned)
   convert_unsigned_char_to_signed_char((uint8_t)INT8_MIN);
+// CHECK-V6: {{.*}}integer-conversion.c:1300:10: runtime error: implicit conversion from type 'unsigned char' of value 128 (8-bit, unsigned) to type 'signed char' changed the value to -128 (8-bit, signed)
   convert_signed_char_to_unsigned_int((int8_t)INT8_MIN);
+// CHECK-V6: {{.*}}integer-conversion.c:1400:10: runtime error: implicit conversion from type 'signed char' of value -128 (8-bit, signed) to type 'unsigned int' changed the value to 4294967168 (32-bit, unsigned)
   convert_unsigned_int_to_signed_char((((uint32_t)INT32_MIN) | ((uint32_t)(uint8_t)INT8_MIN)));
 // CHECK-V6: {{.*}}integer-conversion.c:1500:10: runtime error: implicit conversion from type 'unsigned int' of value 2147483776 (32-bit, unsigned) to type 'signed char' changed the value to -128 (8-bit, signed)
   convert_signed_int_to_signed_char((int32_t)(((uint32_t)INT32_MIN) | ((uint32_t)(uint8_t)INT8_MIN)));
@@ -306,7 +333,7 @@ int main() {
   convert_unsigned_char_to_signed_int((uint8_t)INT8_MAX);
   convert_signed_char_to_signed_int((int8_t)INT8_MAX);
   convert_unsigned_int_to_signed_int((uint32_t)INT32_MAX);
-  convert_signed_int_to_unsigned_int((uint32_t)INT32_MAX);
+  convert_signed_int_to_unsigned_int((int32_t)INT32_MAX);
   convert_signed_int_to_unsigned_char((int32_t)(~(((uint32_t)INT32_MIN) | ((uint32_t)(uint8_t)INT8_MIN))));
 // CHECK-V7: {{.*}}integer-conversion.c:1100:10: runtime error: implicit conversion from type 'int' of value 2147483519 (32-bit, signed) to type 'unsigned char' changed the value to 127 (8-bit, unsigned)
   convert_signed_char_to_unsigned_char((int8_t)INT8_MAX);
