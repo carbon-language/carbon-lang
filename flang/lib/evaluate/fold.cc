@@ -422,7 +422,7 @@ Expr<Type<TypeCategory::Logical, KIND>> FoldOperation(
 // end per-operation folding functions
 
 template<typename T>
-Expr<T> FoldHelper<T>::FoldExpr(FoldingContext &context, Expr<T> &&expr) {
+Expr<T> ExpressionBase<T>::Rewrite(FoldingContext &context, Expr<T> &&expr) {
   return std::visit(
       [&](auto &&x) -> Expr<T> {
         if constexpr (T::isSpecificIntrinsicType) {
@@ -439,7 +439,7 @@ Expr<T> FoldHelper<T>::FoldExpr(FoldingContext &context, Expr<T> &&expr) {
       std::move(expr.u));
 }
 
-FOR_EACH_TYPE_AND_KIND(template struct FoldHelper)
+FOR_EACH_TYPE_AND_KIND(template class ExpressionBase)
 
 template<typename T>
 std::optional<Constant<T>>

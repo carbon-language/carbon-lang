@@ -54,17 +54,41 @@ using common::RelationalOperator;
 // - Expr<SomeType> is a union of Expr<SomeKind<CATEGORY>> over the five
 //   intrinsic type categories of Fortran.  It represents any valid expression.
 //
-// Every Expr specialization supports at least these interfaces:
-//   using Result = ...;  // type of a result of this expression
-//   DynamicType GetType() const;
-//   int Rank() const;
-//   std::ostream &Dump(std::ostream &) const;
-
 // Everything that can appear in, or as, a valid Fortran expression must be
 // represented with an instance of some class containing a Result typedef that
 // maps to some instantiation of Type<CATEGORY, KIND>, SomeKind<CATEGORY>,
 // or SomeType.
 template<typename A> using ResultType = typename std::decay_t<A>::Result;
+
+// Common Expr<> behaviors: every Expr<T> derives from ExpressionBase<T>.
+template<typename RESULT> class ExpressionBase {
+public:
+  using Result = RESULT;
+
+private:
+  using Derived = Expr<Result>;
+  Derived &derived() { return *static_cast<Derived *>(this); }
+  const Derived &derived() const { return *static_cast<const Derived *>(this); }
+
+public:
+  template<typename A> Derived &operator=(const A &x) {
+    Derived &d{derived()};
+    d.u = x;
+    return d;
+  }
+
+  template<typename A>
+  Derived &operator=(std::enable_if_t<!std::is_reference_v<A>, A> &&x) {
+    Derived &d{derived()};
+    d.u = std::move(x);
+    return d;
+  }
+
+  std::optional<DynamicType> GetType() const;
+  int Rank() const;
+  std::ostream &Dump(std::ostream &) const;
+  static Derived Rewrite(FoldingContext &, Derived &&);
+};
 
 // BOZ literal "typeless" constants must be wide enough to hold a numeric
 // value of any supported kind of INTEGER or REAL.  They must also be
@@ -356,32 +380,6 @@ struct LogicalOperation
 
 // Per-category expression representations
 
-// Common Expr<> behaviors
-template<typename RESULT> struct ExpressionBase {
-  using Result = RESULT;
-  using Derived = Expr<Result>;
-
-  Derived &derived() { return *static_cast<Derived *>(this); }
-  const Derived &derived() const { return *static_cast<const Derived *>(this); }
-
-  template<typename A> Derived &operator=(const A &x) {
-    Derived &d{derived()};
-    d.u = x;
-    return d;
-  }
-
-  template<typename A>
-  Derived &operator=(std::enable_if_t<!std::is_reference_v<A>, A> &&x) {
-    Derived &d{derived()};
-    d.u = std::move(x);
-    return d;
-  }
-
-  std::optional<DynamicType> GetType() const;
-  int Rank() const;
-  std::ostream &Dump(std::ostream &) const;
-};
-
 template<int KIND>
 class Expr<Type<TypeCategory::Integer, KIND>>
   : public ExpressionBase<Type<TypeCategory::Integer, KIND>> {
@@ -564,18 +562,11 @@ public:
   common::MapTemplate<Expr, CategoryTypes<CAT>> u;
 };
 
-// Note that Expr<SomeDerived> does not inherit from ExpressionBase
-// since Constant<SomeDerived> and Scalar<SomeDerived> are not defined
-// for derived types.
-template<> class Expr<SomeDerived> {
+// An expression whose result has a derived type.
+template<> class Expr<SomeDerived> : public ExpressionBase<SomeDerived> {
 public:
   using Result = SomeDerived;
   EVALUATE_UNION_CLASS_BOILERPLATE(Expr)
-
-  std::optional<DynamicType> GetType() const;
-  int Rank() const;
-  std::ostream &Dump(std::ostream &) const;
-
   std::variant<Designator<Result>, FunctionRef<Result>> u;
 };
 
@@ -627,6 +618,6 @@ struct GenericExprWrapper {
 };
 
 FOR_EACH_CATEGORY_TYPE(extern template class Expr)
-FOR_EACH_TYPE_AND_KIND(extern template struct ExpressionBase)
+FOR_EACH_TYPE_AND_KIND(extern template class ExpressionBase)
 }
 #endif  // FORTRAN_EVALUATE_EXPRESSION_H_

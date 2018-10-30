@@ -110,11 +110,6 @@ std::ostream &ExpressionBase<RESULT>::Dump(std::ostream &o) const {
   return o;
 }
 
-std::ostream &Expr<SomeDerived>::Dump(std::ostream &o) const {
-  std::visit([&](const auto &x) { x.Dump(o); }, u);
-  return o;
-}
-
 template<int KIND>
 Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
   return std::visit(
@@ -154,10 +149,6 @@ std::optional<DynamicType> ExpressionBase<A>::GetType() const {
   }
 }
 
-std::optional<DynamicType> Expr<SomeDerived>::GetType() const {
-  return std::visit([](const auto &x) { return x.GetType(); }, u);
-}
-
 template<typename A> int ExpressionBase<A>::Rank() const {
   return std::visit(
       [](const auto &x) {
@@ -171,10 +162,6 @@ template<typename A> int ExpressionBase<A>::Rank() const {
       derived().u);
 }
 
-int Expr<SomeDerived>::Rank() const {
-  return std::visit([](const auto &x) { return x.Rank(); }, u);
-}
-
 // Template instantiations to resolve the "extern template" declarations
 // that appear in expression.h.
 
@@ -184,8 +171,7 @@ FOR_EACH_INTEGER_KIND(template struct Relational)
 FOR_EACH_REAL_KIND(template struct Relational)
 FOR_EACH_CHARACTER_KIND(template struct Relational)
 template struct Relational<SomeType>;
-FOR_EACH_INTRINSIC_KIND(template struct ExpressionBase)
-FOR_EACH_CATEGORY_TYPE(template struct ExpressionBase)
+FOR_EACH_TYPE_AND_KIND(template class ExpressionBase)
 }
 
 // For reclamation of analyzed expressions to which owning pointers have

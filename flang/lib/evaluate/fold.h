@@ -29,14 +29,9 @@ using namespace Fortran::parser::literals;
 // Fold() rewrites an expression and returns it.  When the rewritten expression
 // is a constant, GetScalarConstantValue() below will be able to extract it.
 // Note the rvalue reference argument: the rewrites are performed in place
-// for efficiency.  The implementation is wrapped in a helper template class so
-// that all the per-type template instantiations can be made once in fold.cc.
-template<typename T> struct FoldHelper {
-  static Expr<T> FoldExpr(FoldingContext &, Expr<T> &&);
-};
-
+// for efficiency.
 template<typename T> Expr<T> Fold(FoldingContext &context, Expr<T> &&expr) {
-  return FoldHelper<T>::FoldExpr(context, std::move(expr));
+  return Expr<T>::Rewrite(context, std::move(expr));
 }
 
 template<typename T>
@@ -48,8 +43,6 @@ std::optional<Expr<T>> Fold(
     return std::nullopt;
   }
 }
-
-FOR_EACH_TYPE_AND_KIND(extern template struct FoldHelper)
 
 // GetScalarConstantValue() extracts the constant value of an expression,
 // when it has one, even if it is parenthesized or optional.

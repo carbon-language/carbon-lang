@@ -239,7 +239,7 @@ template<TypeCategory CATEGORY> struct SomeKind {
 
 template<> class SomeKind<TypeCategory::Derived> {
 public:
-  static constexpr bool isSpecificIntrinsicType{true};
+  static constexpr bool isSpecificIntrinsicType{false};
   static constexpr TypeCategory category{TypeCategory::Derived};
 
   CLASS_BOILERPLATE(SomeKind)
