@@ -117,7 +117,7 @@ namespace {
     HALFSUPPORT = 0x08000,
     CHAR8SUPPORT = 0x10000,
     KEYCONCEPTS = 0x20000,
-    KEYOBJC2    = 0x40000,
+    KEYOBJC     = 0x40000,
     KEYZVECTOR  = 0x80000,
     KEYCOROUTINES = 0x100000,
     KEYMODULES = 0x200000,
@@ -163,8 +163,8 @@ static KeywordStatus getKeywordStatus(const LangOptions &LangOpts,
   if (LangOpts.C11 && (Flags & KEYC11)) return KS_Enabled;
   // We treat bridge casts as objective-C keywords so we can warn on them
   // in non-arc mode.
-  if (LangOpts.ObjC2 && (Flags & KEYARC)) return KS_Enabled;
-  if (LangOpts.ObjC2 && (Flags & KEYOBJC2)) return KS_Enabled;
+  if (LangOpts.ObjC && (Flags & KEYARC)) return KS_Enabled;
+  if (LangOpts.ObjC && (Flags & KEYOBJC)) return KS_Enabled;
   if (LangOpts.ConceptsTS && (Flags & KEYCONCEPTS)) return KS_Enabled;
   if (LangOpts.CoroutinesTS && (Flags & KEYCOROUTINES)) return KS_Enabled;
   if (LangOpts.ModulesTS && (Flags & KEYMODULES)) return KS_Enabled;
@@ -228,11 +228,8 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
 #define CXX_KEYWORD_OPERATOR(NAME, ALIAS) \
   if (LangOpts.CXXOperatorNames)          \
     AddCXXOperatorKeyword(StringRef(#NAME), tok::ALIAS, *this);
-#define OBJC1_AT_KEYWORD(NAME) \
-  if (LangOpts.ObjC1)          \
-    AddObjCKeyword(StringRef(#NAME), tok::objc_##NAME, *this);
-#define OBJC2_AT_KEYWORD(NAME) \
-  if (LangOpts.ObjC2)          \
+#define OBJC_AT_KEYWORD(NAME)  \
+  if (LangOpts.ObjC)           \
     AddObjCKeyword(StringRef(#NAME), tok::objc_##NAME, *this);
 #define TESTING_KEYWORD(NAME, FLAGS)
 #include "clang/Basic/TokenKinds.def"
