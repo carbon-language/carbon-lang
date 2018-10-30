@@ -37745,27 +37745,27 @@ static SDValue lowerX86FPLogicOp(SDNode *N, SelectionDAG &DAG,
                                  const X86Subtarget &Subtarget) {
   MVT VT = N->getSimpleValueType(0);
   // If we have integer vector types available, use the integer opcodes.
-  if ((VT.isVector() || VT == MVT::f128) && Subtarget.hasSSE2()) {
-    SDLoc dl(N);
+  if (!VT.isVector() || !Subtarget.hasSSE2())
+    return SDValue();
 
-    unsigned IntBits = std::min(VT.getScalarSizeInBits(), 64U);
-    MVT IntSVT = MVT::getIntegerVT(IntBits);
-    MVT IntVT = MVT::getVectorVT(IntSVT, VT.getSizeInBits() / IntBits);
+  SDLoc dl(N);
 
-    SDValue Op0 = DAG.getBitcast(IntVT, N->getOperand(0));
-    SDValue Op1 = DAG.getBitcast(IntVT, N->getOperand(1));
-    unsigned IntOpcode;
-    switch (N->getOpcode()) {
-    default: llvm_unreachable("Unexpected FP logic op");
-    case X86ISD::FOR: IntOpcode = ISD::OR; break;
-    case X86ISD::FXOR: IntOpcode = ISD::XOR; break;
-    case X86ISD::FAND: IntOpcode = ISD::AND; break;
-    case X86ISD::FANDN: IntOpcode = X86ISD::ANDNP; break;
-    }
-    SDValue IntOp = DAG.getNode(IntOpcode, dl, IntVT, Op0, Op1);
-    return DAG.getBitcast(VT, IntOp);
+  unsigned IntBits = VT.getScalarSizeInBits();
+  MVT IntSVT = MVT::getIntegerVT(IntBits);
+  MVT IntVT = MVT::getVectorVT(IntSVT, VT.getSizeInBits() / IntBits);
+
+  SDValue Op0 = DAG.getBitcast(IntVT, N->getOperand(0));
+  SDValue Op1 = DAG.getBitcast(IntVT, N->getOperand(1));
+  unsigned IntOpcode;
+  switch (N->getOpcode()) {
+  default: llvm_unreachable("Unexpected FP logic op");
+  case X86ISD::FOR:   IntOpcode = ISD::OR; break;
+  case X86ISD::FXOR:  IntOpcode = ISD::XOR; break;
+  case X86ISD::FAND:  IntOpcode = ISD::AND; break;
+  case X86ISD::FANDN: IntOpcode = X86ISD::ANDNP; break;
   }
-  return SDValue();
+  SDValue IntOp = DAG.getNode(IntOpcode, dl, IntVT, Op0, Op1);
+  return DAG.getBitcast(VT, IntOp);
 }
 
 
