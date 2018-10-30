@@ -256,6 +256,9 @@ protected:
 
     unsigned : NumStmtBits;
 
+    /// True if this ReturnStmt has storage for an NRVO candidate.
+    unsigned HasNRVOCandidate : 1;
+
     /// The location of the "return".
     SourceLocation RetLoc;
   };
@@ -1999,40 +2002,67 @@ public:
 /// return a value, and it allows returning a value in functions declared to
 /// return void.  We explicitly model this in the AST, which means you can't
 /// depend on the return type of the function and the presence of an argument.
-class ReturnStmt : public Stmt {
+class ReturnStmt final
+    : public Stmt,
+      private llvm::TrailingObjects<ReturnStmt, const VarDecl *> {
+  friend TrailingObjects;
+
+  /// The return expression.
   Stmt *RetExpr;
-  const VarDecl *NRVOCandidate;
 
-public:
-  explicit ReturnStmt(SourceLocation RL) : ReturnStmt(RL, nullptr, nullptr) {}
+  // ReturnStmt is followed optionally by a trailing "const VarDecl *"
+  // for the NRVO candidate. Present if and only if hasNRVOCandidate().
 
-  ReturnStmt(SourceLocation RL, Expr *E, const VarDecl *NRVOCandidate)
-      : Stmt(ReturnStmtClass), RetExpr((Stmt *)E),
-        NRVOCandidate(NRVOCandidate) {
-    ReturnStmtBits.RetLoc = RL;
+  /// True if this ReturnStmt has storage for an NRVO candidate.
+  bool hasNRVOCandidate() const { return ReturnStmtBits.HasNRVOCandidate; }
+
+  unsigned numTrailingObjects(OverloadToken<const VarDecl *>) const {
+    return hasNRVOCandidate();
   }
 
-  /// Build an empty return expression.
-  explicit ReturnStmt(EmptyShell Empty) : Stmt(ReturnStmtClass, Empty) {}
+  /// Build a return statement.
+  ReturnStmt(SourceLocation RL, Expr *E, const VarDecl *NRVOCandidate);
 
-  const Expr *getRetValue() const;
-  Expr *getRetValue();
-  void setRetValue(Expr *E) { RetExpr = reinterpret_cast<Stmt*>(E); }
+  /// Build an empty return statement.
+  explicit ReturnStmt(EmptyShell Empty, bool HasNRVOCandidate);
 
-  SourceLocation getReturnLoc() const { return ReturnStmtBits.RetLoc; }
-  void setReturnLoc(SourceLocation L) { ReturnStmtBits.RetLoc = L; }
+public:
+  /// Create a return statement.
+  static ReturnStmt *Create(const ASTContext &Ctx, SourceLocation RL, Expr *E,
+                            const VarDecl *NRVOCandidate);
+
+  /// Create an empty return statement, optionally with
+  /// storage for an NRVO candidate.
+  static ReturnStmt *CreateEmpty(const ASTContext &Ctx, bool HasNRVOCandidate);
+
+  Expr *getRetValue() { return reinterpret_cast<Expr *>(RetExpr); }
+  const Expr *getRetValue() const { return reinterpret_cast<Expr *>(RetExpr); }
+  void setRetValue(Expr *E) { RetExpr = reinterpret_cast<Stmt *>(E); }
 
   /// Retrieve the variable that might be used for the named return
   /// value optimization.
   ///
   /// The optimization itself can only be performed if the variable is
   /// also marked as an NRVO object.
-  const VarDecl *getNRVOCandidate() const { return NRVOCandidate; }
-  void setNRVOCandidate(const VarDecl *Var) { NRVOCandidate = Var; }
+  const VarDecl *getNRVOCandidate() const {
+    return hasNRVOCandidate() ? *getTrailingObjects<const VarDecl *>()
+                              : nullptr;
+  }
+
+  /// Set the variable that might be used for the named return value
+  /// optimization. The return statement must have storage for it,
+  /// which is the case if and only if hasNRVOCandidate() is true.
+  void setNRVOCandidate(const VarDecl *Var) {
+    assert(hasNRVOCandidate() &&
+           "This return statement has no storage for an NRVO candidate!");
+    *getTrailingObjects<const VarDecl *>() = Var;
+  }
+
+  SourceLocation getReturnLoc() const { return ReturnStmtBits.RetLoc; }
+  void setReturnLoc(SourceLocation L) { ReturnStmtBits.RetLoc = L; }
 
   SourceLocation getBeginLoc() const { return getReturnLoc(); }
-
-  SourceLocation getEndLoc() const {
+  SourceLocation getEndLoc() const LLVM_READONLY {
     return RetExpr ? RetExpr->getEndLoc() : getReturnLoc();
   }
 
@@ -2042,7 +2072,8 @@ public:
 
   // Iterators
   child_range children() {
-    if (RetExpr) return child_range(&RetExpr, &RetExpr+1);
+    if (RetExpr)
+      return child_range(&RetExpr, &RetExpr + 1);
     return child_range(child_iterator(), child_iterator());
   }
 };

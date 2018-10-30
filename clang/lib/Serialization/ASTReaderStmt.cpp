@@ -328,9 +328,14 @@ void ASTStmtReader::VisitBreakStmt(BreakStmt *S) {
 
 void ASTStmtReader::VisitReturnStmt(ReturnStmt *S) {
   VisitStmt(S);
+
+  bool HasNRVOCandidate = Record.readInt();
+
   S->setRetValue(Record.readSubExpr());
+  if (HasNRVOCandidate)
+    S->setNRVOCandidate(ReadDeclAs<VarDecl>());
+
   S->setReturnLoc(ReadSourceLocation());
-  S->setNRVOCandidate(ReadDeclAs<VarDecl>());
 }
 
 void ASTStmtReader::VisitDeclStmt(DeclStmt *S) {
@@ -2359,7 +2364,8 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       break;
 
     case STMT_RETURN:
-      S = new (Context) ReturnStmt(Empty);
+      S = ReturnStmt::CreateEmpty(
+          Context, /* HasNRVOCandidate=*/Record[ASTStmtReader::NumStmtFields]);
       break;
 
     case STMT_DECL:

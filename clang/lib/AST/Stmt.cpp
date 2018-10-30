@@ -1042,11 +1042,33 @@ LabelDecl *IndirectGotoStmt::getConstantTarget() {
 }
 
 // ReturnStmt
-const Expr* ReturnStmt::getRetValue() const {
-  return cast_or_null<Expr>(RetExpr);
+ReturnStmt::ReturnStmt(SourceLocation RL, Expr *E, const VarDecl *NRVOCandidate)
+    : Stmt(ReturnStmtClass), RetExpr(E) {
+  bool HasNRVOCandidate = NRVOCandidate != nullptr;
+  ReturnStmtBits.HasNRVOCandidate = HasNRVOCandidate;
+  if (HasNRVOCandidate)
+    setNRVOCandidate(NRVOCandidate);
+  setReturnLoc(RL);
 }
-Expr* ReturnStmt::getRetValue() {
-  return cast_or_null<Expr>(RetExpr);
+
+ReturnStmt::ReturnStmt(EmptyShell Empty, bool HasNRVOCandidate)
+    : Stmt(ReturnStmtClass, Empty) {
+  ReturnStmtBits.HasNRVOCandidate = HasNRVOCandidate;
+}
+
+ReturnStmt *ReturnStmt::Create(const ASTContext &Ctx, SourceLocation RL,
+                               Expr *E, const VarDecl *NRVOCandidate) {
+  bool HasNRVOCandidate = NRVOCandidate != nullptr;
+  void *Mem = Ctx.Allocate(totalSizeToAlloc<const VarDecl *>(HasNRVOCandidate),
+                           alignof(ReturnStmt));
+  return new (Mem) ReturnStmt(RL, E, NRVOCandidate);
+}
+
+ReturnStmt *ReturnStmt::CreateEmpty(const ASTContext &Ctx,
+                                    bool HasNRVOCandidate) {
+  void *Mem = Ctx.Allocate(totalSizeToAlloc<const VarDecl *>(HasNRVOCandidate),
+                           alignof(ReturnStmt));
+  return new (Mem) ReturnStmt(EmptyShell(), HasNRVOCandidate);
 }
 
 // CaseStmt
