@@ -1306,8 +1306,8 @@ StmtResult Sema::ActOnWhileStmt(SourceLocation WhileLoc, ConditionResult Cond,
   if (isa<NullStmt>(Body))
     getCurCompoundScope().setHasEmptyLoopBodies();
 
-  return new (Context)
-      WhileStmt(Context, CondVal.first, CondVal.second, Body, WhileLoc);
+  return WhileStmt::Create(Context, CondVal.first, CondVal.second, Body,
+                           WhileLoc);
 }
 
 StmtResult

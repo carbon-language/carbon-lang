@@ -183,9 +183,15 @@ void ASTStmtWriter::VisitSwitchStmt(SwitchStmt *S) {
 
 void ASTStmtWriter::VisitWhileStmt(WhileStmt *S) {
   VisitStmt(S);
-  Record.AddDeclRef(S->getConditionVariable());
+
+  bool HasVar = S->getConditionVariableDeclStmt() != nullptr;
+  Record.push_back(HasVar);
+
   Record.AddStmt(S->getCond());
   Record.AddStmt(S->getBody());
+  if (HasVar)
+    Record.AddDeclRef(S->getConditionVariable());
+
   Record.AddSourceLocation(S->getWhileLoc());
   Code = serialization::STMT_WHILE;
 }

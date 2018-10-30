@@ -978,32 +978,60 @@ void SwitchStmt::setConditionVariable(const ASTContext &Ctx, VarDecl *V) {
       DeclStmt(DeclGroupRef(V), VarRange.getBegin(), VarRange.getEnd());
 }
 
-WhileStmt::WhileStmt(const ASTContext &C, VarDecl *Var, Expr *cond, Stmt *body,
-                     SourceLocation WL)
-  : Stmt(WhileStmtClass) {
-  setConditionVariable(C, Var);
-  SubExprs[COND] = cond;
-  SubExprs[BODY] = body;
-  WhileStmtBits.WhileLoc = WL;
+WhileStmt::WhileStmt(const ASTContext &Ctx, VarDecl *Var, Expr *Cond,
+                     Stmt *Body, SourceLocation WL)
+    : Stmt(WhileStmtClass) {
+  bool HasVar = Var != nullptr;
+  WhileStmtBits.HasVar = HasVar;
+
+  setCond(Cond);
+  setBody(Body);
+  if (HasVar)
+    setConditionVariable(Ctx, Var);
+
+  setWhileLoc(WL);
 }
 
-VarDecl *WhileStmt::getConditionVariable() const {
-  if (!SubExprs[VAR])
-    return nullptr;
+WhileStmt::WhileStmt(EmptyShell Empty, bool HasVar)
+    : Stmt(WhileStmtClass, Empty) {
+  WhileStmtBits.HasVar = HasVar;
+}
 
-  auto *DS = cast<DeclStmt>(SubExprs[VAR]);
+WhileStmt *WhileStmt::Create(const ASTContext &Ctx, VarDecl *Var, Expr *Cond,
+                             Stmt *Body, SourceLocation WL) {
+  bool HasVar = Var != nullptr;
+  void *Mem =
+      Ctx.Allocate(totalSizeToAlloc<Stmt *>(NumMandatoryStmtPtr + HasVar),
+                   alignof(WhileStmt));
+  return new (Mem) WhileStmt(Ctx, Var, Cond, Body, WL);
+}
+
+WhileStmt *WhileStmt::CreateEmpty(const ASTContext &Ctx, bool HasVar) {
+  void *Mem =
+      Ctx.Allocate(totalSizeToAlloc<Stmt *>(NumMandatoryStmtPtr + HasVar),
+                   alignof(WhileStmt));
+  return new (Mem) WhileStmt(EmptyShell(), HasVar);
+}
+
+VarDecl *WhileStmt::getConditionVariable() {
+  auto *DS = getConditionVariableDeclStmt();
+  if (!DS)
+    return nullptr;
   return cast<VarDecl>(DS->getSingleDecl());
 }
 
-void WhileStmt::setConditionVariable(const ASTContext &C, VarDecl *V) {
+void WhileStmt::setConditionVariable(const ASTContext &Ctx, VarDecl *V) {
+  assert(hasVarStorage() &&
+         "This while statement has no storage for a condition variable!");
+
   if (!V) {
-    SubExprs[VAR] = nullptr;
+    getTrailingObjects<Stmt *>()[varOffset()] = nullptr;
     return;
   }
 
   SourceRange VarRange = V->getSourceRange();
-  SubExprs[VAR] = new (C) DeclStmt(DeclGroupRef(V), VarRange.getBegin(),
-                                   VarRange.getEnd());
+  getTrailingObjects<Stmt *>()[varOffset()] = new (Ctx)
+      DeclStmt(DeclGroupRef(V), VarRange.getBegin(), VarRange.getEnd());
 }
 
 // IndirectGotoStmt
