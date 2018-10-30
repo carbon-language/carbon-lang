@@ -5368,33 +5368,17 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
         if (!RHSF)
           break;
 
-        const fltSemantics *Sem;
-        // FIXME: This shouldn't be here.
-        if (LHSExt->getSrcTy()->isHalfTy())
-          Sem = &APFloat::IEEEhalf();
-        else if (LHSExt->getSrcTy()->isFloatTy())
-          Sem = &APFloat::IEEEsingle();
-        else if (LHSExt->getSrcTy()->isDoubleTy())
-          Sem = &APFloat::IEEEdouble();
-        else if (LHSExt->getSrcTy()->isFP128Ty())
-          Sem = &APFloat::IEEEquad();
-        else if (LHSExt->getSrcTy()->isX86_FP80Ty())
-          Sem = &APFloat::x87DoubleExtended();
-        else if (LHSExt->getSrcTy()->isPPC_FP128Ty())
-          Sem = &APFloat::PPCDoubleDouble();
-        else
-          break;
-
+        const fltSemantics &FPSem = LHSExt->getSrcTy()->getFltSemantics();
         bool Lossy;
         APFloat F = RHSF->getValueAPF();
-        F.convert(*Sem, APFloat::rmNearestTiesToEven, &Lossy);
+        F.convert(FPSem, APFloat::rmNearestTiesToEven, &Lossy);
 
         // Avoid lossy conversions and denormals. Zero is a special case
         // that's OK to convert.
         APFloat Fabs = F;
         Fabs.clearSign();
         if (!Lossy &&
-            ((Fabs.compare(APFloat::getSmallestNormalized(*Sem)) !=
+            ((Fabs.compare(APFloat::getSmallestNormalized(FPSem)) !=
                  APFloat::cmpLessThan) || Fabs.isZero()))
 
           return new FCmpInst(Pred, LHSExt->getOperand(0),
