@@ -3810,7 +3810,7 @@ static SDValue FoldBUILD_VECTOR(const SDLoc &DL, EVT VT,
                                 SelectionDAG &DAG) {
   int NumOps = Ops.size();
   assert(NumOps != 0 && "Can't build an empty vector!");
-  assert(VT.getVectorNumElements() == NumOps &&
+  assert(VT.getVectorNumElements() == (unsigned)NumOps &&
          "Incorrect element count in BUILD_VECTOR!");
 
   // BUILD_VECTOR of UNDEFs is UNDEF.
