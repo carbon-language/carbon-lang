@@ -413,7 +413,10 @@ template<typename RESULT>
 struct ArrayConstructor : public ArrayConstructorValues<RESULT> {
   using Result = RESULT;
   using ArrayConstructorValues<Result>::ArrayConstructorValues;
+  Result result;
+  DynamicType GetType() const;
   static constexpr int Rank() { return 1; }
+  Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 };
 
@@ -463,8 +466,8 @@ private:
   using Operations = std::variant<ComplexComponent<KIND>, Parentheses<Result>,
       Negate<Result>, Add<Result>, Subtract<Result>, Multiply<Result>,
       Divide<Result>, Power<Result>, RealToIntPower<Result>, Extremum<Result>>;
-  using Others =
-      std::variant<Constant<Result>, Designator<Result>, FunctionRef<Result>>;
+  using Others = std::variant<Constant<Result>, ArrayConstructor<Result>,
+      Designator<Result>, FunctionRef<Result>>;
 
 public:
   common::CombineVariants<Operations, Conversions, Others> u;
@@ -483,8 +486,8 @@ public:
   using Operations =
       std::variant<Parentheses<Result>, Multiply<Result>, Divide<Result>,
           Power<Result>, RealToIntPower<Result>, ComplexConstructor<KIND>>;
-  using Others =
-      std::variant<Constant<Result>, Designator<Result>, FunctionRef<Result>>;
+  using Others = std::variant<Constant<Result>, ArrayConstructor<Result>,
+      Designator<Result>, FunctionRef<Result>>;
 
 public:
   common::CombineVariants<Operations, Others> u;
@@ -505,8 +508,8 @@ public:
 
   Expr<SubscriptInteger> LEN() const;
 
-  std::variant<Constant<Result>, Designator<Result>, FunctionRef<Result>,
-      Parentheses<Result>, Concat<KIND>, Extremum<Result>>
+  std::variant<Constant<Result>, ArrayConstructor<Result>, Designator<Result>,
+      FunctionRef<Result>, Parentheses<Result>, Concat<KIND>, Extremum<Result>>
       u;
 };
 
@@ -581,14 +584,25 @@ private:
       Parentheses<Result>, Not<KIND>, LogicalOperation<KIND>>;
   using Relations = std::conditional_t<KIND == LogicalResult::kind,
       std::variant<Relational<SomeType>>, std::variant<>>;
-  using Others =
-      std::variant<Constant<Result>, Designator<Result>, FunctionRef<Result>>;
+  using Others = std::variant<Constant<Result>, ArrayConstructor<Result>,
+      Designator<Result>, FunctionRef<Result>>;
 
 public:
   common::CombineVariants<Operations, Relations, Others> u;
 };
 
 FOR_EACH_LOGICAL_KIND(extern template class Expr)
+
+// An expression whose result has a derived type.
+template<> class Expr<SomeDerived> : public ExpressionBase<SomeDerived> {
+public:
+  using Result = SomeDerived;
+  EVALUATE_UNION_CLASS_BOILERPLATE(Expr)
+  // TODO: structure constructor
+  std::variant<Designator<Result>, ArrayConstructor<Result>,
+      FunctionRef<Result>>
+      u;
+};
 
 // A polymorphic expression of known intrinsic type category, but dynamic
 // kind, represented as a discriminated union over Expr<Type<CAT, K>>
@@ -599,15 +613,6 @@ public:
   using Result = SomeKind<CAT>;
   EVALUATE_UNION_CLASS_BOILERPLATE(Expr)
   common::MapTemplate<Expr, CategoryTypes<CAT>> u;
-};
-
-// An expression whose result has a derived type.
-template<> class Expr<SomeDerived> : public ExpressionBase<SomeDerived> {
-public:
-  using Result = SomeDerived;
-  EVALUATE_UNION_CLASS_BOILERPLATE(Expr)
-  // TODO: array constructor, structure constructor
-  std::variant<Designator<Result>, FunctionRef<Result>> u;
 };
 
 // A completely generic expression, polymorphic across all of the intrinsic type

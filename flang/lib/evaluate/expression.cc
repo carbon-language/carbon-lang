@@ -132,7 +132,7 @@ std::ostream &Emit(std::ostream &o, const ArrayConstructorValues<T> &values) {
 
 template<typename T>
 std::ostream &ArrayConstructor<T>::Dump(std::ostream &o) const {
-  o << '[' << Result::Dump() << "::";
+  o << '[' << result.Dump() << "::";
   Emit(o, *this);
   return o << ']';
 }
@@ -148,6 +148,11 @@ std::ostream &ExpressionBase<RESULT>::Dump(std::ostream &o) const {
   return o;
 }
 
+template<typename T> Expr<SubscriptInteger> ArrayConstructor<T>::LEN() const {
+  // TODO pmk: extract from type spec
+  return AsExpr(Constant<SubscriptInteger>{0});  // TODO placeholder
+}
+
 template<int KIND>
 Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
   return std::visit(
@@ -155,6 +160,7 @@ Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
                          return AsExpr(
                              Constant<SubscriptInteger>{c.value.size()});
                        },
+          [](const ArrayConstructor<Result> &a) { return a.LEN(); },
           [](const Parentheses<Result> &x) { return x.left().LEN(); },
           [](const Concat<KIND> &c) {
             return c.left().LEN() + c.right().LEN();
@@ -169,6 +175,11 @@ Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
 }
 
 Expr<SomeType>::~Expr() {}
+
+template<typename T> DynamicType ArrayConstructor<T>::GetType() const {
+  // TODO: pmk: parameterized derived types, CHARACTER length
+  return *result.GetType();
+}
 
 template<typename A>
 std::optional<DynamicType> ExpressionBase<A>::GetType() const {

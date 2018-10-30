@@ -322,7 +322,7 @@ struct SomeType {
 // and derived type constants are structure constructors; generic
 // constants are generic expressions wrapping these constants.
 template<typename T> struct Constant {
-  // TODO: static_assert(T::isSpecificIntrinsicType);
+  static_assert(T::isSpecificIntrinsicType);
   using Result = T;
   using Value = Scalar<Result>;
   CLASS_BOILERPLATE(Constant)
