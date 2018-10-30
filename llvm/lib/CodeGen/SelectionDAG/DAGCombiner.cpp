@@ -12854,19 +12854,23 @@ SDValue DAGCombiner::ForwardStoreValueToDirectLoad(LoadSDNode *LD) {
   BaseIndexOffset BasePtrLD = BaseIndexOffset::match(LD, DAG);
   BaseIndexOffset BasePtrST = BaseIndexOffset::match(ST, DAG);
   int64_t Offset;
-
-  bool STCoversLD =
-      BasePtrST.equalBaseIndex(BasePtrLD, DAG, Offset) && (Offset >= 0) &&
-      (Offset * 8 <= LDMemType.getSizeInBits()) &&
-      (Offset * 8 + LDMemType.getSizeInBits() <= STMemType.getSizeInBits());
-
-  if (!STCoversLD)
+  if (!BasePtrST.equalBaseIndex(BasePtrLD, DAG, Offset))
     return SDValue();
 
-  // Normalize for Endianness.
+  // Normalize for Endianness. After this Offset=0 will denote that the least
+  // significant bit in the loaded value maps to the least significant bit in
+  // the stored value). With Offset=n (for n > 0) the loaded value starts at the
+  // n:th least significant byte of the stored value.
   if (DAG.getDataLayout().isBigEndian())
-    Offset =
-        (STMemType.getSizeInBits() - LDMemType.getSizeInBits()) / 8 - Offset;
+    Offset = (STMemType.getStoreSizeInBits() -
+              LDMemType.getStoreSizeInBits()) / 8 - Offset;
+
+  // Check that the stored value cover all bits that are loaded.
+  bool STCoversLD =
+      (Offset >= 0) &&
+      (Offset * 8 + LDMemType.getSizeInBits() <= STMemType.getSizeInBits());
+  if (!STCoversLD)
+    return SDValue();
 
   // Memory as copy space (potentially masked).
   if (Offset == 0 && LDType == STType && STMemType == LDMemType) {
@@ -12899,7 +12903,7 @@ SDValue DAGCombiner::ForwardStoreValueToDirectLoad(LoadSDNode *LD) {
       continue;
     if (STMemType != LDMemType) {
       // TODO: Support vectors? This requires extract_subvector/bitcast.
-      if (!STMemType.isVector() && !LDMemType.isVector() && 
+      if (!STMemType.isVector() && !LDMemType.isVector() &&
           STMemType.isInteger() && LDMemType.isInteger())
         Val = DAG.getNode(ISD::TRUNCATE, SDLoc(LD), LDMemType, Val);
       else
