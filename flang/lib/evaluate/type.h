@@ -49,15 +49,14 @@ struct DynamicType {
     return category == that.category && kind == that.kind &&
         derived == that.derived;
   }
-  std::string Dump() const {
-    return EnumToString(category) + '(' + std::to_string(kind) + ')';
-  }
-
+  std::string Dump() const;
   DynamicType ResultTypeForMultiply(const DynamicType &) const;
 
   TypeCategory category;
   int kind{0};
   const semantics::DerivedTypeSpec *derived{nullptr};
+  // TODO pmk: descriptor for character length
+  // TODO pmk: derived type kind parameters and descriptor for lengths
 };
 
 std::optional<DynamicType> GetSymbolType(const semantics::Symbol &);

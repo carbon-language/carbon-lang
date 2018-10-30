@@ -46,6 +46,16 @@ std::optional<DynamicType> GetSymbolType(const semantics::Symbol &symbol) {
   return std::nullopt;
 }
 
+std::string DynamicType::Dump() const {
+  if (category == TypeCategory::Derived) {
+    // TODO: derived type parameters
+    return "TYPE("s + derived->name().ToString() + ')';
+  } else {
+    // TODO: CHARACTER length
+    return EnumToString(category) + '(' + std::to_string(kind) + ')';
+  }
+}
+
 DynamicType DynamicType::ResultTypeForMultiply(const DynamicType &that) const {
   switch (category) {
   case TypeCategory::Integer:

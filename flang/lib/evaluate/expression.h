@@ -378,6 +378,45 @@ struct LogicalOperation
   LogicalOperator logicalOperator;
 };
 
+// Array constructors
+
+template<typename RESULT> struct ArrayConstructorValues;
+
+template<typename ITEM, typename OPERAND> struct ImpliedDo {
+  using Item = ITEM;
+  using Result = typename Item::Result;
+  using Operand = OPERAND;
+  static_assert(Operand::category == TypeCategory::Integer);
+  parser::CharBlock controlVariableName;
+  CopyableIndirection<Expr<Operand>> lower, upper, stride;
+  CopyableIndirection<Item> values;
+};
+
+template<typename RESULT> struct ArrayConstructorValue {
+  using Result = RESULT;
+  EVALUATE_UNION_CLASS_BOILERPLATE(ArrayConstructorValue)
+  template<typename INT>
+  using ImpliedDo = ImpliedDo<ArrayConstructorValues<Result>, INT>;
+  common::CombineVariants<std::variant<CopyableIndirection<Expr<Result>>>,
+      common::MapTemplate<ImpliedDo, IntegerTypes>>
+      u;
+};
+
+template<typename RESULT> struct ArrayConstructorValues {
+  using Result = RESULT;
+  CLASS_BOILERPLATE(ArrayConstructorValues)
+  template<typename A> void Push(A &&x) { values.emplace_back(std::move(x)); }
+  std::vector<ArrayConstructorValue<Result>> values;
+};
+
+template<typename RESULT>
+struct ArrayConstructor : public ArrayConstructorValues<RESULT> {
+  using Result = RESULT;
+  using ArrayConstructorValues<Result>::ArrayConstructorValues;
+  static constexpr int Rank() { return 1; }
+  std::ostream &Dump(std::ostream &) const;
+};
+
 // Per-category expression representations
 
 template<int KIND>
@@ -399,8 +438,8 @@ private:
   using Operations = std::variant<Parentheses<Result>, Negate<Result>,
       Add<Result>, Subtract<Result>, Multiply<Result>, Divide<Result>,
       Power<Result>, Extremum<Result>>;
-  using Others =
-      std::variant<Constant<Result>, Designator<Result>, FunctionRef<Result>>;
+  using Others = std::variant<Constant<Result>, ArrayConstructor<Result>,
+      Designator<Result>, FunctionRef<Result>>;
 
 public:
   common::CombineVariants<Operations, Conversions, Others> u;
@@ -567,6 +606,7 @@ template<> class Expr<SomeDerived> : public ExpressionBase<SomeDerived> {
 public:
   using Result = SomeDerived;
   EVALUATE_UNION_CLASS_BOILERPLATE(Expr)
+  // TODO: array constructor, structure constructor
   std::variant<Designator<Result>, FunctionRef<Result>> u;
 };
 

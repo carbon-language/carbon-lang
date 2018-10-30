@@ -99,6 +99,44 @@ template<typename T> std::ostream &Constant<T>::Dump(std::ostream &o) const {
   }
 }
 
+template<typename T>
+std::ostream &Emit(std::ostream &o, const CopyableIndirection<Expr<T>> &expr) {
+  return expr->Dump(o);
+}
+template<typename T>
+std::ostream &Emit(std::ostream &, const ArrayConstructorValues<T> &);
+
+template<typename ITEM, typename INT>
+std::ostream &Emit(std::ostream &o, const ImpliedDo<ITEM, INT> &implDo) {
+  o << '(';
+  Emit(o, *implDo.values);
+  o << ',' << INT::Dump() << "::";
+  o << implDo.controlVariableName.ToString();
+  o << '=';
+  implDo.lower->Dump(o) << ',';
+  implDo.upper->Dump(o) << ',';
+  implDo.stride->Dump(o) << ')';
+  return o;
+}
+
+template<typename T>
+std::ostream &Emit(std::ostream &o, const ArrayConstructorValues<T> &values) {
+  const char *sep{""};
+  for (const auto &value : values.values) {
+    o << sep;
+    std::visit([&](const auto &x) { Emit(o, x); }, value.u);
+    sep = ",";
+  }
+  return o;
+}
+
+template<typename T>
+std::ostream &ArrayConstructor<T>::Dump(std::ostream &o) const {
+  o << '[' << Result::Dump() << "::";
+  Emit(o, *this);
+  return o << ']';
+}
+
 template<typename RESULT>
 std::ostream &ExpressionBase<RESULT>::Dump(std::ostream &o) const {
   std::visit(common::visitors{[&](const BOZLiteralConstant &x) {
