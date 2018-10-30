@@ -5018,7 +5018,7 @@ void CodeGenFunction::EmitSimpleOMPExecutableDirective(
             LoopGlobals.addPrivate(
                 VD, [&GlobLVal]() { return GlobLVal.getAddress(); });
           }
-          if (const auto *CED = dyn_cast<OMPCapturedExprDecl>(VD)) {
+          if (isa<OMPCapturedExprDecl>(VD)) {
             // Emit only those that were not explicitly referenced in clauses.
             if (!CGF.LocalDeclMap.count(VD))
               CGF.EmitVarDecl(*VD);
