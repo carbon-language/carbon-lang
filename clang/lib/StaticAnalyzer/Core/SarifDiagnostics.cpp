@@ -174,8 +174,6 @@ static json::Object createLocation(json::Object &&PhysicalLocation,
 }
 
 static Importance calculateImportance(const PathDiagnosticPiece &Piece) {
-  StringRef PieceStr = Piece.getString();
-
   switch (Piece.getKind()) {
   case PathDiagnosticPiece::Kind::Call:
   case PathDiagnosticPiece::Kind::Macro:
