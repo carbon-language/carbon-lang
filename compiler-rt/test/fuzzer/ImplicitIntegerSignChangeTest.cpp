@@ -9,8 +9,8 @@
 #include <cstdlib>
 #include <iostream>
 
-static volatile unsigned int Sink;
-static volatile   signed int Storage = -1;
+static volatile uint32_t Sink;
+static volatile int32_t Storage = -1;
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   assert(Data);

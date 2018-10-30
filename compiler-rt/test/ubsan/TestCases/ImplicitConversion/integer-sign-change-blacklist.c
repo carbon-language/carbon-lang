@@ -16,9 +16,11 @@
 // RUN: %clang -fsanitize=implicit-integer-sign-change -fno-sanitize-recover=implicit-integer-sign-change -fsanitize-blacklist=%tmp -O2 %s -o %t && not %run %t 2>&1 | not FileCheck %s
 // RUN: %clang -fsanitize=implicit-integer-sign-change -fno-sanitize-recover=implicit-integer-sign-change -fsanitize-blacklist=%tmp -O3 %s -o %t && not %run %t 2>&1 | not FileCheck %s
 
-signed int implicitSignChange(unsigned int argc) {
+#include <stdint.h>
+
+int32_t implicitSignChange(uint32_t argc) {
   return argc; // BOOM
-// CHECK: {{.*}}integer-sign-change-blacklist.c:[[@LINE-1]]:10: runtime error: implicit conversion from type 'unsigned int' of value 4294967295 (32-bit, unsigned) to type 'int' changed the value to -1 (32-bit, signed)
+// CHECK: {{.*}}integer-sign-change-blacklist.c:[[@LINE-1]]:10: runtime error: implicit conversion from type 'uint32_t' (aka 'unsigned int') of value 4294967295 (32-bit, unsigned) to type 'int32_t' (aka 'int') changed the value to -1 (32-bit, signed)
 }
 
 int main(int argc, char **argv) {
