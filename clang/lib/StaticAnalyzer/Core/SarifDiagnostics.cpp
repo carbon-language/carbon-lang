@@ -70,7 +70,7 @@ static std::string percentEncodeURICharacter(char C) {
 }
 
 static std::string fileNameToURI(StringRef Filename) {
-  llvm::SmallString<32> Ret = "file://";
+  llvm::SmallString<32> Ret = StringRef("file://");
 
   // Get the root name to see if it has a URI authority.
   StringRef Root = sys::path::root_name(Filename);
