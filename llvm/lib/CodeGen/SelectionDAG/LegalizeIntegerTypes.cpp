@@ -310,6 +310,26 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BITCAST(SDNode *N) {
     // make us bitcast between two vectors which are legalized in different ways.
     if (NOutVT.bitsEq(NInVT) && !NOutVT.isVector())
       return DAG.getNode(ISD::BITCAST, dl, NOutVT, GetWidenedVector(InOp));
+    // If the output type is also a vector and widening it to the same size
+    // as the widened input type would be a legal type, we can widen the bitcast
+    // and handle the promotion after.
+    if (NOutVT.isVector()) {
+      unsigned WidenInSize = NInVT.getSizeInBits();
+      unsigned OutSize = OutVT.getSizeInBits();
+      if (WidenInSize % OutSize == 0) {
+        unsigned Scale = WidenInSize / OutSize;
+        EVT WideOutVT = EVT::getVectorVT(*DAG.getContext(),
+                                         OutVT.getVectorElementType(),
+                                         OutVT.getVectorNumElements() * Scale);
+        if (isTypeLegal(WideOutVT)) {
+          InOp = DAG.getBitcast(WideOutVT, GetWidenedVector(InOp));
+          MVT IdxTy = TLI.getVectorIdxTy(DAG.getDataLayout());
+          InOp = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, OutVT, InOp,
+                             DAG.getConstant(0, dl, IdxTy));
+          return DAG.getNode(ISD::ANY_EXTEND, dl, NOutVT, InOp);
+        }
+      }
+    }
   }
 
   return DAG.getNode(ISD::ANY_EXTEND, dl, NOutVT,

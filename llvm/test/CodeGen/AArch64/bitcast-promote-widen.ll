@@ -6,16 +6,12 @@
 define <2 x i16> @bitcast_v2i16_v2f16(<2 x half> %x) {
 ; CHECK-LABEL: bitcast_v2i16_v2f16:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    sub sp, sp, #16 // =16
-; CHECK-NEXT:    .cfi_def_cfa_offset 16
 ; CHECK-NEXT:    // kill: def $d0 killed $d0 def $q0
-; CHECK-NEXT:    str s0, [sp, #12]
-; CHECK-NEXT:    ldrh w8, [sp, #12]
-; CHECK-NEXT:    ldrh w9, [sp, #14]
-; CHECK-NEXT:    fmov s0, w8
-; CHECK-NEXT:    mov v0.s[1], w9
-; CHECK-NEXT:    // kill: def $d0 killed $d0 killed $q0
-; CHECK-NEXT:    add sp, sp, #16 // =16
+; CHECK-NEXT:    umov w8, v0.h[0]
+; CHECK-NEXT:    fmov s1, w8
+; CHECK-NEXT:    umov w8, v0.h[1]
+; CHECK-NEXT:    mov v1.s[1], w8
+; CHECK-NEXT:    mov v0.16b, v1.16b
 ; CHECK-NEXT:    ret
   %y = bitcast <2 x half> %x to <2 x i16>
   ret <2 x i16> %y
