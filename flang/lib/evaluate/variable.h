@@ -68,7 +68,8 @@ public:
   DataRef &base() { return *base_; }
   const Symbol &symbol() const { return *symbol_; }
   int Rank() const;
-  const Symbol *GetSymbol(bool first) const;
+  const Symbol *GetFirstSymbol() const;
+  const Symbol *GetLastSymbol() const;
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 
@@ -117,7 +118,8 @@ struct ArrayRef {
     : u{std::move(c)}, subscript(std::move(ss)) {}
 
   int Rank() const;
-  const Symbol *GetSymbol(bool first) const;
+  const Symbol *GetFirstSymbol() const;
+  const Symbol *GetLastSymbol() const;
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 
@@ -144,13 +146,8 @@ public:
   CoarrayRef &set_team(Expr<SomeInteger> &&, bool isTeamNumber = false);
 
   int Rank() const;
-  const Symbol *GetSymbol(bool first) const {
-    if (first) {
-      return base_.front();
-    } else {
-      return base_.back();
-    }
-  }
+  const Symbol *GetFirstSymbol() const { return base_.front(); }
+  const Symbol *GetLastSymbol() const { return base_.back(); }
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 
@@ -171,7 +168,8 @@ struct DataRef {
   explicit DataRef(const Symbol &n) : u{&n} {}
 
   int Rank() const;
-  const Symbol *GetSymbol(bool first) const;
+  const Symbol *GetFirstSymbol() const;
+  const Symbol *GetLastSymbol() const;
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 
@@ -196,7 +194,8 @@ public:
   Expr<SubscriptInteger> first() const;
   Expr<SubscriptInteger> last() const;
   int Rank() const;
-  const Symbol *GetSymbol(bool first) const;
+  const Symbol *GetFirstSymbol() const;
+  const Symbol *GetLastSymbol() const;
   Expr<SubscriptInteger> LEN() const;
   std::optional<Strings> Fold(FoldingContext &);
   std::ostream &Dump(std::ostream &) const;
@@ -220,9 +219,8 @@ public:
   const DataRef &complex() const { return complex_; }
   Part part() const { return part_; }
   int Rank() const;
-  const Symbol *GetSymbol(bool first) const {
-    return complex_.GetSymbol(first);
-  }
+  const Symbol *GetFirstSymbol() const { return complex_.GetFirstSymbol(); }
+  const Symbol *GetLastSymbol() const { return complex_.GetLastSymbol(); }
   std::ostream &Dump(std::ostream &) const;
 
 private:
@@ -253,41 +251,12 @@ public:
   Designator(DataRef &&that)
     : u{common::MoveVariant<Variant>(std::move(that.u))} {}
 
-  std::optional<DynamicType> GetType() const {
-    if constexpr (std::is_same_v<Result, SomeDerived>) {
-      if (const Symbol * sym{GetSymbol(false)}) {
-        return GetSymbolType(*sym);
-      } else {
-        return std::nullopt;
-      }
-    } else {
-      return Result::GetType();
-    }
-  }
-
-  int Rank() const {
-    return std::visit(
-        common::visitors{[](const Symbol *sym) { return GetSymbolRank(*sym); },
-            [](const auto &x) { return x.Rank(); }},
-        u);
-  }
-
-  const Symbol *GetSymbol(bool first) const {
-    return std::visit(common::visitors{[](const Symbol *sym) { return sym; },
-                          [=](const auto &x) { return x.GetSymbol(first); }},
-        u);
-  }
-
+  std::optional<DynamicType> GetType() const;
+  int Rank() const;
+  const Symbol *GetFirstSymbol() const;
+  const Symbol *GetLastSymbol() const;
   Expr<SubscriptInteger> LEN() const;
-
-  std::ostream &Dump(std::ostream &o) const {
-    std::visit(common::visitors{[&](const Symbol *sym) {
-                                  o << GetSymbolName(*sym).ToString();
-                                },
-                   [&](const auto &x) { x.Dump(o); }},
-        u);
-    return o;
-  }
+  std::ostream &Dump(std::ostream &o) const;
 
   Variant u;
 };

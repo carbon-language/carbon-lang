@@ -58,7 +58,7 @@ template<typename A> bool IsVariable(const A &) { return false; }
 template<typename A> bool IsVariable(const Designator<A> &designator) {
   if constexpr (common::HasMember<Substring, decltype(Designator<A>::u)>) {
     if (const auto *substring{std::get_if<Substring>(&designator.u)}) {
-      return substring->GetSymbol(false) != nullptr;
+      return substring->GetLastSymbol() != nullptr;
     }
   }
   return true;

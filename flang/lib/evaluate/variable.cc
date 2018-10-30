@@ -313,6 +313,14 @@ std::ostream &ProcedureDesignator::Dump(std::ostream &o) const {
   return Emit(o, u);
 }
 
+template<typename T> std::ostream &Designator<T>::Dump(std::ostream &o) const {
+  std::visit(
+      common::visitors{[&](const Symbol *sym) { o << sym->name().ToString(); },
+          [&](const auto &x) { x.Dump(o); }},
+      u);
+  return o;
+}
+
 // LEN()
 static Expr<SubscriptInteger> SymbolLEN(const Symbol &sym) {
   return AsExpr(Constant<SubscriptInteger>{0});  // TODO
@@ -338,12 +346,17 @@ Expr<SubscriptInteger> Substring::LEN() const {
       Extremum<SubscriptInteger>{AsExpr(Constant<SubscriptInteger>{0}),
           last() - first() + AsExpr(Constant<SubscriptInteger>{1})});
 }
-template<typename A> Expr<SubscriptInteger> Designator<A>::LEN() const {
-  return std::visit(
-      common::visitors{[](const Symbol *s) { return SymbolLEN(*s); },
-          [](const Component &c) { return c.LEN(); },
-          [](const auto &x) { return x.LEN(); }},
-      u);
+template<typename T> Expr<SubscriptInteger> Designator<T>::LEN() const {
+  if constexpr (Result::category == TypeCategory::Character) {
+    return std::visit(
+        common::visitors{[](const Symbol *s) { return SymbolLEN(*s); },
+            [](const Component &c) { return c.LEN(); },
+            [](const auto &x) { return x.LEN(); }},
+        u);
+  } else {
+    CHECK(!"LEN() on non-character Designator");
+    return AsExpr(Constant<SubscriptInteger>{0});
+  }
 }
 Expr<SubscriptInteger> ProcedureDesignator::LEN() const {
   return std::visit(
@@ -419,6 +432,12 @@ int Substring::Rank() const {
       u_);
 }
 int ComplexPart::Rank() const { return complex_.Rank(); }
+template<typename T> int Designator<T>::Rank() const {
+  return std::visit(
+      common::visitors{[](const Symbol *sym) { return sym->Rank(); },
+          [](const auto &x) { return x.Rank(); }},
+      u);
+}
 int ProcedureDesignator::Rank() const {
   if (const Symbol * symbol{GetSymbol()}) {
     return symbol->Rank();
@@ -441,36 +460,79 @@ bool ProcedureDesignator::IsElemental() const {
   return 0;
 }
 
-// GetSymbol
-const Symbol *Component::GetSymbol(bool first) const {
-  return base_->GetSymbol(first);
+// GetFirstSymbol(), GetLastSymbol()
+const Symbol *Component::GetFirstSymbol() const {
+  return base_->GetFirstSymbol();
 }
-const Symbol *ArrayRef::GetSymbol(bool first) const {
+const Symbol *Component::GetLastSymbol() const {
+  return base_->GetLastSymbol();
+}
+const Symbol *ArrayRef::GetFirstSymbol() const {
   return std::visit(common::visitors{[](const Symbol *sym) { return sym; },
                         [=](const Component &component) {
-                          return component.GetSymbol(first);
+                          return component.GetFirstSymbol();
                         }},
       u);
 }
-const Symbol *DataRef::GetSymbol(bool first) const {
+const Symbol *ArrayRef::GetLastSymbol() const {
   return std::visit(common::visitors{[](const Symbol *sym) { return sym; },
-                        [=](const auto &x) { return x.GetSymbol(first); }},
+                        [=](const Component &component) {
+                          return component.GetLastSymbol();
+                        }},
       u);
 }
-const Symbol *Substring::GetSymbol(bool first) const {
+const Symbol *DataRef::GetFirstSymbol() const {
+  return std::visit(common::visitors{[](const Symbol *sym) { return sym; },
+                        [=](const auto &x) { return x.GetFirstSymbol(); }},
+      u);
+}
+const Symbol *DataRef::GetLastSymbol() const {
+  return std::visit(common::visitors{[](const Symbol *sym) { return sym; },
+                        [=](const auto &x) { return x.GetLastSymbol(); }},
+      u);
+}
+const Symbol *Substring::GetFirstSymbol() const {
   if (const DataRef * dataRef{std::get_if<DataRef>(&u_)}) {
-    return dataRef->GetSymbol(first);
+    return dataRef->GetFirstSymbol();
   } else {
     return nullptr;  // substring of character literal
   }
 }
+const Symbol *Substring::GetLastSymbol() const {
+  if (const DataRef * dataRef{std::get_if<DataRef>(&u_)}) {
+    return dataRef->GetLastSymbol();
+  } else {
+    return nullptr;  // substring of character literal
+  }
+}
+template<typename T> const Symbol *Designator<T>::GetFirstSymbol() const {
+  return std::visit(common::visitors{[](const Symbol *sym) { return sym; },
+                        [=](const auto &x) { return x.GetFirstSymbol(); }},
+      u);
+}
+template<typename T> const Symbol *Designator<T>::GetLastSymbol() const {
+  return std::visit(common::visitors{[](const Symbol *sym) { return sym; },
+                        [=](const auto &x) { return x.GetLastSymbol(); }},
+      u);
+}
 const Symbol *ProcedureDesignator::GetSymbol() const {
   return std::visit(common::visitors{[](const Symbol *sym) { return sym; },
-                        [](const Component &c) { return c.GetSymbol(false); },
+                        [](const Component &c) { return c.GetLastSymbol(); },
                         [](const auto &) -> const Symbol * { return nullptr; }},
       u);
 }
 
+template<typename T> std::optional<DynamicType> Designator<T>::GetType() const {
+  if constexpr (std::is_same_v<Result, SomeDerived>) {
+    if (const Symbol * sym{GetLastSymbol()}) {
+      return GetSymbolType(*sym);
+    } else {
+      return std::nullopt;
+    }
+  } else {
+    return Result::GetType();
+  }
+}
 std::optional<DynamicType> ProcedureDesignator::GetType() const {
   if (const Symbol * symbol{GetSymbol()}) {
     return {GetSymbolType(*symbol)};
@@ -481,5 +543,5 @@ std::optional<DynamicType> ProcedureDesignator::GetType() const {
   return std::nullopt;
 }
 
-FOR_EACH_CHARACTER_KIND(template class Designator)
+FOR_EACH_SPECIFIC_TYPE(template class Designator)
 }
