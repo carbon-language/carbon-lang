@@ -1,0 +1,171 @@
+// Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#ifndef FIRST_TERM_STMT
+#define FIRST_TERM_STMT(num)
+#endif
+#ifndef HANDLE_TERM_STMT
+#ifndef HANDLE_STMT
+#define HANDLE_TERM_STMT(num, opcode, Class)
+#else
+#define HANDLE_TERM_STMT(num, opcode, Class) HANDLE_STMT(num, opcode, Class)
+#endif
+#endif
+#ifndef LAST_TERM_STMT
+#define LAST_TERM_STMT(num)
+#endif
+
+#ifndef FIRST_BINARY_STMT
+#define FIRST_BINARY_STMT(num)
+#endif
+#ifndef HANDLE_BINARY_STMT
+#ifndef HANDLE_STMT
+#define HANDLE_BINARY_STMT(num, opcode, instclass)
+#else
+#define HANDLE_BINARY_STMT(num, opcode, Class) HANDLE_STMT(num, opcode, Class)
+#endif
+#endif
+#ifndef LAST_BINARY_STMT
+#define LAST_BINARY_STMT(num)
+#endif
+
+#ifndef FIRST_MEMORY_STMT
+#define FIRST_MEMORY_STMT(num)
+#endif
+#ifndef HANDLE_MEMORY_STMT
+#ifndef HANDLE_STMT
+#define HANDLE_MEMORY_STMT(num, opcode, Class)
+#else
+#define HANDLE_MEMORY_STMT(num, opcode, Class) HANDLE_STMT(num, opcode, Class)
+#endif
+#endif
+#ifndef LAST_MEMORY_STMT
+#define LAST_MEMORY_STMT(num)
+#endif
+
+#ifndef FIRST_CAST_STMT
+#define FIRST_CAST_STMT(num)
+#endif
+#ifndef HANDLE_CAST_STMT
+#ifndef HANDLE_STMT
+#define HANDLE_CAST_STMT(num, opcode, Class)
+#else
+#define HANDLE_CAST_STMT(num, opcode, Class) HANDLE_STMT(num, opcode, Class)
+#endif
+#endif
+#ifndef LAST_CAST_STMT
+#define LAST_CAST_STMT(num)
+#endif
+
+#ifndef FIRST_OTHER_STMT
+#define FIRST_OTHER_STMT(num)
+#endif
+#ifndef HANDLE_LAST_OTHER_STMT
+#ifndef HANDLE_LAST_STMT
+#ifndef HANDLE_OTHER_STMT
+#ifndef HANDLE_STMT
+#define HANDLE_LAST_OTHER_STMT(num, opcode, Class)
+#else
+#define HANDLE_LAST_OTHER_STMT(num, opcode, Class) \
+  HANDLE_STMT(num, opcode, Class)
+#endif
+#else
+#define HANDLE_LAST_OTHER_STMT(num, opcode, Class) \
+  HANDLE_OTHER_STMT(num, opcode, Class)
+#endif
+#else
+#define HANDLE_LAST_OTHER_STMT(num, opcode, Class) \
+  HANDLE_LAST_STMT(num, opcode, Class)
+#endif
+#endif
+#ifndef HANDLE_OTHER_STMT
+#ifndef HANDLE_STMT
+#define HANDLE_OTHER_STMT(num, opcode, Class)
+#else
+#define HANDLE_OTHER_STMT(num, opcode, Class) HANDLE_STMT(num, opcode, Class)
+#endif
+#endif
+#ifndef LAST_OTHER_STMT
+#define LAST_OTHER_STMT(num)
+#endif
+
+// Terminator Instructions - These instructions are used to terminate a basic
+// block of the program.   Every basic block must end with one of these
+// instructions for it to be a well formed basic block.
+FIRST_TERM_STMT(1)
+HANDLE_TERM_STMT(1, Ret,         ReturnStmt)
+HANDLE_TERM_STMT(2, Br,          BranchStmt)
+HANDLE_TERM_STMT(3, Switch,      SwitchStmt)
+HANDLE_TERM_STMT(4, SwitchCase,  SwitchCaseStmt)
+HANDLE_TERM_STMT(5, SwitchType,  SwitchTypeStmt)
+HANDLE_TERM_STMT(6, SwitchRank,  SwitchRankStmt)
+HANDLE_TERM_STMT(7, IndirectBr,  IndirectBrStmt)
+HANDLE_TERM_STMT(8, Unreachable, UnreachableStmt)
+LAST_TERM_STMT(8)
+
+// Standard actions - These instructions capture computations as
+// evalute::expressions
+FIRST_BINARY_STMT(9)
+HANDLE_BINARY_STMT(9,  Assign,    AssignmentStmt)
+HANDLE_BINARY_STMT(10, PtrAssign, PointerAssignStmt)
+HANDLE_BINARY_STMT(11, LblAssign, LabelAssignStmt)
+HANDLE_BINARY_STMT(12, Expr,      ExprStmt)
+LAST_BINARY_STMT(12)
+
+// Memory operators - These instructions capture ALLOCATE and DEALLOCATE
+// Fortran statements
+FIRST_MEMORY_STMT(13)
+HANDLE_MEMORY_STMT(13, Alloc,        AllocateStmt)
+HANDLE_MEMORY_STMT(14, Dealloc,      DeallocateStmt)
+HANDLE_MEMORY_STMT(15, AllocLocal,   AllocLocalInsn)
+HANDLE_MEMORY_STMT(16, Load,         LoadInsn)
+HANDLE_MEMORY_STMT(17, Store,        StoreInsn)
+HANDLE_MEMORY_STMT(18, Disassociate, DisassociateStmt)
+LAST_MEMORY_STMT(18)
+
+// Other operators - These are operations that don't fit the above categories
+FIRST_OTHER_STMT(19)
+HANDLE_OTHER_STMT(19, Call,         CallStmt)
+HANDLE_OTHER_STMT(20, RTCall,       RuntimeStmt)
+HANDLE_OTHER_STMT(21, IORTCall,     IORuntimeStmt)
+HANDLE_OTHER_STMT(22, ScopeEnt,     ScopeEnterStmt)
+HANDLE_OTHER_STMT(23, ScopeExt,     ScopeExitStmt)
+HANDLE_LAST_OTHER_STMT(24, PHI,     PHIStmt)
+LAST_OTHER_STMT(24)
+
+#undef FIRST_TERM_STMT
+#undef HANDLE_TERM_STMT
+#undef LAST_TERM_STMT
+
+#undef FIRST_BINARY_STMT
+#undef HANDLE_BINARY_STMT
+#undef LAST_BINARY_STMT
+
+#undef FIRST_MEMORY_STMT
+#undef HANDLE_MEMORY_STMT
+#undef LAST_MEMORY_STMT
+
+#undef FIRST_CAST_STMT
+#undef HANDLE_CAST_STMT
+#undef LAST_CAST_STMT
+
+#undef FIRST_OTHER_STMT
+#undef HANDLE_OTHER_STMT
+#undef HANDLE_LAST_OTHER_STMT
+#undef HANDLE_LAST_STMT
+#undef LAST_OTHER_STMT
+
+#ifdef HANDLE_STMT
+#undef HANDLE_STMT
+#endif
