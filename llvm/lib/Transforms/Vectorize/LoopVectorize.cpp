@@ -5754,7 +5754,7 @@ unsigned LoopVectorizationCostModel::getInstructionCost(Instruction *I,
     // First-order recurrences are replaced by vector shuffles inside the loop.
     if (VF > 1 && Legal->isFirstOrderRecurrence(Phi))
       return TTI.getShuffleCost(TargetTransformInfo::SK_ExtractSubvector,
-                                VectorTy, VF - 1, VectorTy);
+                                VectorTy, VF - 1, ToVectorTy(RetTy, 1));
 
     // Phi nodes in non-header blocks (not inductions, reductions, etc.) are
     // converted into select instructions. We require N - 1 selects per phi
