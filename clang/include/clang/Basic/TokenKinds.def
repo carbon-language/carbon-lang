@@ -576,10 +576,10 @@ ALIAS("__fp16", half                , KEYALL)
 KEYWORD(half                        , HALFSUPPORT)
 
 // Objective-C ARC keywords.
-KEYWORD(__bridge                     , KEYARC)
-KEYWORD(__bridge_transfer            , KEYARC)
-KEYWORD(__bridge_retained            , KEYARC)
-KEYWORD(__bridge_retain              , KEYARC)
+KEYWORD(__bridge                     , KEYOBJC)
+KEYWORD(__bridge_transfer            , KEYOBJC)
+KEYWORD(__bridge_retained            , KEYOBJC)
+KEYWORD(__bridge_retain              , KEYOBJC)
 
 // Objective-C keywords.
 KEYWORD(__covariant                  , KEYOBJC)
