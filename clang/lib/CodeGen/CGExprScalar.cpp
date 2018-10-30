@@ -965,6 +965,7 @@ EmitIntegerTruncationCheckHelper(Value *Src, QualType SrcType, Value *Dst,
                                  QualType DstType, CGBuilderTy &Builder) {
   llvm::Type *SrcTy = Src->getType();
   llvm::Type *DstTy = Dst->getType();
+  (void)DstTy; // Only used in assert()
 
   // This should be truncation of integral types.
   assert(Src != Dst);
@@ -1058,6 +1059,8 @@ EmitIntegerSignChangeCheckHelper(Value *Src, QualType SrcType, Value *Dst,
 
   bool SrcSigned = SrcType->isSignedIntegerOrEnumerationType();
   bool DstSigned = DstType->isSignedIntegerOrEnumerationType();
+  (void)SrcSigned; // Only used in assert()
+  (void)DstSigned; // Only used in assert()
   unsigned SrcBits = SrcTy->getScalarSizeInBits();
   unsigned DstBits = DstTy->getScalarSizeInBits();
   (void)SrcBits; // Only used in assert()
