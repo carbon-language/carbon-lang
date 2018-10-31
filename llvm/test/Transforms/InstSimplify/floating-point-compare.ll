@@ -290,9 +290,7 @@ define <2 x i1> @UIToFP_is_not_negative_vec(<2 x i32> %x) {
 
 define i1 @UIToFP_nnan_is_not_negative(i32 %x) {
 ; CHECK-LABEL: @UIToFP_nnan_is_not_negative(
-; CHECK-NEXT:    [[A:%.*]] = uitofp i32 [[X:%.*]] to float
-; CHECK-NEXT:    [[R:%.*]] = fcmp nnan ult float [[A]], 0.000000e+00
-; CHECK-NEXT:    ret i1 [[R]]
+; CHECK-NEXT:    ret i1 false
 ;
   %a = uitofp i32 %x to float
   %r = fcmp nnan ult float %a, 0.000000e+00
@@ -301,9 +299,7 @@ define i1 @UIToFP_nnan_is_not_negative(i32 %x) {
 
 define <2 x i1> @UIToFP_nnan_is_not_negative_vec(<2 x i32> %x) {
 ; CHECK-LABEL: @UIToFP_nnan_is_not_negative_vec(
-; CHECK-NEXT:    [[A:%.*]] = uitofp <2 x i32> [[X:%.*]] to <2 x float>
-; CHECK-NEXT:    [[R:%.*]] = fcmp nnan ult <2 x float> [[A]], zeroinitializer
-; CHECK-NEXT:    ret <2 x i1> [[R]]
+; CHECK-NEXT:    ret <2 x i1> zeroinitializer
 ;
   %a = uitofp <2 x i32> %x to <2 x float>
   %r = fcmp nnan ult <2 x float> %a, zeroinitializer
@@ -366,9 +362,7 @@ define <2 x i1> @fabs_is_not_negative_vec(<2 x double> %x) {
 
 define i1 @fabs_nnan_is_not_negative(double %x) {
 ; CHECK-LABEL: @fabs_nnan_is_not_negative(
-; CHECK-NEXT:    [[FABS:%.*]] = tail call double @llvm.fabs.f64(double [[X:%.*]])
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp nnan ult double [[FABS]], 0.000000e+00
-; CHECK-NEXT:    ret i1 [[CMP]]
+; CHECK-NEXT:    ret i1 false
 ;
   %fabs = tail call double @llvm.fabs.f64(double %x)
   %cmp = fcmp nnan ult double %fabs, 0.0
@@ -377,9 +371,7 @@ define i1 @fabs_nnan_is_not_negative(double %x) {
 
 define <2 x i1> @fabs_nnan_is_not_negative_vec(<2 x double> %x) {
 ; CHECK-LABEL: @fabs_nnan_is_not_negative_vec(
-; CHECK-NEXT:    [[FABS:%.*]] = tail call <2 x double> @llvm.fabs.v2f64(<2 x double> [[X:%.*]])
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp nnan ult <2 x double> [[FABS]], zeroinitializer
-; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+; CHECK-NEXT:    ret <2 x i1> zeroinitializer
 ;
   %fabs = tail call <2 x double> @llvm.fabs.v2f64(<2 x double> %x)
   %cmp = fcmp nnan ult <2 x double> %fabs, zeroinitializer

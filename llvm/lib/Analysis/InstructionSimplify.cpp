@@ -3620,8 +3620,11 @@ static Value *SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
         if (CannotBeOrderedLessThanZero(LHS, Q.TLI))
           return getTrue(RetTy);
         break;
+      case FCmpInst::FCMP_ULT:
+        if (FMF.noNaNs() && CannotBeOrderedLessThanZero(LHS, Q.TLI))
+          return getFalse(RetTy);
+        break;
       case FCmpInst::FCMP_OLT:
-        // X < 0
         if (CannotBeOrderedLessThanZero(LHS, Q.TLI))
           return getFalse(RetTy);
         break;
