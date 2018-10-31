@@ -128,6 +128,7 @@ static cl::alias SectionContentsShort("s",
 
 cl::opt<bool> llvm::SymbolTable("syms", cl::desc("Display the symbol table"));
 static cl::alias SymbolTableShort("t", cl::desc("Alias for --syms"),
+                                  cl::NotHidden,
                                   cl::aliasopt(llvm::SymbolTable));
 
 cl::opt<bool>
