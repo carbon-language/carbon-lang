@@ -122,8 +122,9 @@ static cl::alias SectionContentsShort("s",
                                       cl::desc("Alias for --full-contents"),
                                       cl::aliasopt(SectionContents));
 
-cl::opt<bool>
-llvm::SymbolTable("t", cl::desc("Display the symbol table"));
+cl::opt<bool> llvm::SymbolTable("syms", cl::desc("Display the symbol table"));
+static cl::alias SymbolTableShort("t", cl::desc("Alias for --syms"),
+                                  cl::aliasopt(llvm::SymbolTable));
 
 cl::opt<bool>
 llvm::ExportsTrie("exports-trie", cl::desc("Display mach-o exported symbols"));
