@@ -5431,10 +5431,13 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
       switch (Pred) {
       default:
         break;
-      // fabs(x) < 0 --> false
+      case FCmpInst::FCMP_UGE:
       case FCmpInst::FCMP_OLT:
+        // fabs(x) >= 0.0 --> true
+        // fabs(x) <  0.0 --> false
         llvm_unreachable("fcmp should have simplified");
-          // fabs(x) > 0 --> x != 0
+
+      // fabs(x) > 0 --> x != 0
       case FCmpInst::FCMP_OGT:
         return new FCmpInst(FCmpInst::FCMP_ONE, CI->getArgOperand(0), RHSC);
       // fabs(x) <= 0 --> x == 0
