@@ -1,6 +1,8 @@
 ; RUN: llc -O0 -mtriple=aarch64-apple-ios -global-isel -debug-only=irtranslator \
 ; RUN:     -stop-after=irtranslator %s -o - 2>&1 | FileCheck %s
 
+; REQUIRES: asserts
+
 ; CHECK: Checking DILocation from   %retval = alloca i32, align 4 was copied to G_FRAME_INDEX
 ; CHECK: Checking DILocation from   %rv = alloca i32, align 4 was copied to G_FRAME_INDEX
 ; CHECK: Checking DILocation from   store i32 0, i32* %retval, align 4 was copied to G_CONSTANT
