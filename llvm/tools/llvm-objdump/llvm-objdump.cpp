@@ -106,7 +106,11 @@ DisassembleFunctions("df",
 static StringSet<> DisasmFuncsSet;
 
 cl::opt<bool>
-llvm::Relocations("r", cl::desc("Display the relocation entries in the file"));
+llvm::Relocations("reloc",
+                  cl::desc("Display the relocation entries in the file"));
+static cl::alias RelocationsShort("r", cl::desc("Alias for --reloc"),
+                                  cl::NotHidden,
+                                  cl::aliasopt(llvm::Relocations));
 
 cl::opt<bool>
 llvm::DynamicRelocations("dynamic-reloc",
