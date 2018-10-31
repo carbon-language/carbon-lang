@@ -7993,7 +7993,8 @@ SDValue SelectionDAGBuilder::lowerRangeToAssertZExt(SelectionDAG &DAG,
     return Op;
 
   APInt Hi = CR.getUnsignedMax();
-  unsigned Bits = Hi.getActiveBits();
+  unsigned Bits = std::max(Hi.getActiveBits(),
+                           static_cast<unsigned>(IntegerType::MIN_INT_BITS));
 
   EVT SmallVT = EVT::getIntegerVT(*DAG.getContext(), Bits);
 
