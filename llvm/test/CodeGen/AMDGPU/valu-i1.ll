@@ -212,20 +212,16 @@ exit:
 ; SI-DAG: v_cmp_ne_u32_e32 [[NEG1_CHECK_1:vcc]], -1, [[B]]
 ; SI: s_and_b64 [[ORNEG1:s\[[0-9]+:[0-9]+\]]], [[NEG1_CHECK_1]], [[NEG1_CHECK_0]]
 ; SI: s_and_saveexec_b64 [[ORNEG2:s\[[0-9]+:[0-9]+\]]], [[ORNEG1]]
-; SI: s_xor_b64 [[ORNEG3:s\[[0-9]+:[0-9]+\]]], exec, [[ORNEG2]]
 ; SI: s_cbranch_execz [[LABEL_FLOW:BB[0-9]+_[0-9]+]]
 
 ; SI: BB{{[0-9]+_[0-9]+}}: ; %bb20
 ; SI: buffer_store_dword
-; SI: v_cmp_ge_i64_e{{32|64}} [[CMP:s\[[0-9]+:[0-9]+\]|vcc]]
-; SI: s_or_b64 [[TMP:s\[[0-9]+:[0-9]+\]]], [[CMP]], [[COND_STATE]]
 
 ; SI: [[LABEL_FLOW]]:
 ; SI-NEXT: ; in Loop: Header=[[LABEL_LOOP]]
-; SI-NEXT: s_or_b64 exec, exec, [[ORNEG3]]
-; SI-NEXT: s_mov_b64 [[MOVED_TMP:s\[[0-9]+:[0-9]+\]]], [[TMP]]
-; SI-NEXT: s_and_b64 [[MASKED_ORNEG3:s\[[0-9]+:[0-9]+\]]], exec, [[ORNEG3]]
-; SI-NEXT: s_or_b64 [[COND_STATE]], [[MASKED_ORNEG3]], [[MOVED_TMP]]
+; SI-NEXT: s_or_b64 exec, exec, [[ORNEG2]]
+; SI-NEXT: v_cmp_ne_u32_e32 vcc, 0, v10
+; SI-NEXT: s_or_b64 [[COND_STATE]], vcc, [[COND_STATE]]
 ; SI-NEXT: s_andn2_b64 exec, exec, [[COND_STATE]]
 ; SI-NEXT: s_cbranch_execnz [[LABEL_LOOP]]
 

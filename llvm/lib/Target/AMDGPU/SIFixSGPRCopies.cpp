@@ -327,9 +327,7 @@ static bool phiHasBreakDef(const MachineInstr &PHI,
     switch (DefInstr->getOpcode()) {
     default:
       break;
-    case AMDGPU::SI_BREAK:
     case AMDGPU::SI_IF_BREAK:
-    case AMDGPU::SI_ELSE_BREAK:
       return true;
     case AMDGPU::PHI:
       if (phiHasBreakDef(*DefInstr, MRI, Visited))
