@@ -365,6 +365,9 @@ TEST(STLExtrasTest, ADLTest) {
 }
 
 TEST(STLExtrasTest, EmptyTest) {
+  // Try to avoid ambiguities with C++17 headers.
+  using llvm::empty;
+
   std::vector<void*> V;
   EXPECT_TRUE(empty(V));
   V.push_back(nullptr);
