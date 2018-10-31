@@ -16,7 +16,7 @@ entry:
 
 ; CHECK-DEFAULT-CODE-MODEL: check_watermark:
 ; CHECK-DEFAULT-CODE-MODEL-DAG: stp x29, x30, [sp
-; CHECK-DEFAULT-CODE-MODEL-DAG: orr x15, xzr, #0x100
+; CHECK-DEFAULT-CODE-MODEL-DAG: mov x15, #256
 ; CHECK-DEFAULT-CODE-MODEL:     bl __chkstk
 ; CHECK-DEFAULT-CODE-MODEL:     sub sp, sp, x15, lsl #4
 
@@ -24,7 +24,7 @@ entry:
 
 ; CHECK-LARGE-CODE-MODEL: check_watermark:
 ; CHECK-LARGE-CODE-MODEL-DAG: stp x29, x30, [sp
-; CHECK-LARGE-CODE-MODEL-DAG: orr x15, xzr, #0x100
+; CHECK-LARGE-CODE-MODEL-DAG: mov x15, #256
 ; CHECK-LARGE-CODE-MODEL-DAG: adrp x16, __chkstk
 ; CHECK-LARGE-CODE-MODEL-DAG: add x16, x16, __chkstk
 ; CHECK-LARGE-CODE-MODEL:     blr x16
