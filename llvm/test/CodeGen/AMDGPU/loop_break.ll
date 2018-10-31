@@ -22,23 +22,28 @@
 ; OPT: bb9:
 ; OPT: call void @llvm.amdgcn.end.cf(i64
 
-; TODO: Can remove exec fixes in return block
 ; GCN-LABEL: {{^}}break_loop:
-; GCN: s_mov_b64 [[MASK:s\[[0-9]+:[0-9]+\]]], 0{{$}}
+; GCN:      s_mov_b64         [[OUTER_MASK:s\[[0-9]+:[0-9]+\]]], 0{{$}}
 
 ; GCN: [[LOOP_ENTRY:BB[0-9]+_[0-9]+]]: ; %bb1
-; GCN: v_cmp_lt_i32_e32 vcc, -1
-; GCN: s_and_b64 vcc, exec, vcc
-; GCN: s_cbranch_vccnz [[FLOW:BB[0-9]+_[0-9]+]]
+; GCN:      v_cmp_lt_i32_e32  vcc, -1
+; GCN:      s_and_b64         vcc, exec, vcc
+; GCN:      s_or_b64          [[INNER_MASK:s\[[0-9]+:[0-9]+\]]], [[INNER_MASK]], exec
+; GCN:      s_cbranch_vccnz   [[FLOW:BB[0-9]+_[0-9]+]]
 
-; GCN: ; %bb.2: ; %bb4
-; GCN: buffer_load_dword
-; GCN: v_cmp_ge_i32_e32 vcc,
+; GCN: ; %bb4
+; GCN:      buffer_load_dword
+; GCN:      v_cmp_ge_i32_e32  vcc,
+; GCN:      s_andn2_b64       [[INNER_MASK]], [[INNER_MASK]], exec
+; GCN:      s_and_b64         [[TMP0:s\[[0-9]+:[0-9]+\]]], vcc, exec
+; GCN:      s_or_b64          [[INNER_MASK]], [[INNER_MASK]], [[TMP0]]
 
-; GCN: [[FLOW]]:
-; GCN: s_or_b64 [[MASK]], vcc, [[MASK]]
-; GCN: s_andn2_b64 exec, exec, [[MASK]]
-; GCN-NEXT: s_cbranch_execnz [[LOOP_ENTRY]]
+; GCN: [[FLOW]]: ; %Flow
+; GCN:      s_and_b64         [[TMP1:s\[[0-9]+:[0-9]+\]]], exec, [[INNER_MASK]]
+; GCN:      s_or_b64          [[TMP1]], [[TMP1]], [[OUTER_MASK]]
+; GCN:      s_mov_b64         [[OUTER_MASK]], [[TMP1]]
+; GCN:      s_andn2_b64       exec, exec, [[TMP1]]
+; GCN-NEXT: s_cbranch_execnz  [[LOOP_ENTRY]]
 
 ; GCN: ; %bb.4: ; %bb9
 ; GCN-NEXT: s_endpgm
