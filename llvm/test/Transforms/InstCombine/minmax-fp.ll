@@ -57,7 +57,10 @@ define double @t5(float %a) {
   ret double %3
 }
 
-; Signed zero, should not be converted
+; TODO:
+; From IEEE754: "Comparisons shall ignore the sign of zero (so +0 = −0)."
+; So the compare constant may be treated as +0.0, and we sink the fpext.
+
 define double @t6(float %a) {
 ; CHECK-LABEL: @t6(
 ; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ult float [[A:%.*]], -0.000000e+00
@@ -71,7 +74,10 @@ define double @t6(float %a) {
   ret double %3
 }
 
-; Signed zero, should not be converted
+; TODO:
+; From IEEE754: "Comparisons shall ignore the sign of zero (so +0 = −0)."
+; So the compare constant may be treated as -0.0, and we sink the fpext.
+
 define double @t7(float %a) {
 ; CHECK-LABEL: @t7(
 ; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ult float [[A:%.*]], 0.000000e+00
@@ -83,6 +89,42 @@ define double @t7(float %a) {
   %2 = fpext float %a to double
   %3 = select i1 %1, double %2, double -0.0
   ret double %3
+}
+
+; TODO:
+; min(min(x, 0.0), 0.0) --> min(x, 0.0)
+
+define float @fmin_fmin_zero_mismatch(float %x) {
+; CHECK-LABEL: @fmin_fmin_zero_mismatch(
+; CHECK-NEXT:    [[CMP1:%.*]] = fcmp olt float [[X:%.*]], -0.000000e+00
+; CHECK-NEXT:    [[MIN1:%.*]] = select i1 [[CMP1]], float [[X]], float 0.000000e+00
+; CHECK-NEXT:    [[CMP2:%.*]] = fcmp olt float [[MIN1]], 0.000000e+00
+; CHECK-NEXT:    [[MIN2:%.*]] = select i1 [[CMP2]], float [[MIN1]], float 0.000000e+00
+; CHECK-NEXT:    ret float [[MIN2]]
+;
+  %cmp1 = fcmp olt float %x, -0.0
+  %min1 = select i1 %cmp1, float %x, float 0.0
+  %cmp2 = fcmp olt float %min1, 0.0
+  %min2 = select i1 %cmp2, float %min1, float 0.0
+  ret float %min2
+}
+
+; TODO:
+; max(max(x, -0.0), -0.0) --> max(x, -0.0)
+
+define float @fmax_fmax_zero_mismatch(float %x) {
+; CHECK-LABEL: @fmax_fmax_zero_mismatch(
+; CHECK-NEXT:    [[CMP1:%.*]] = fcmp ogt float [[X:%.*]], 0.000000e+00
+; CHECK-NEXT:    [[MAX1:%.*]] = select i1 [[CMP1]], float [[X]], float -0.000000e+00
+; CHECK-NEXT:    [[CMP2:%.*]] = fcmp olt float [[MAX1]], 0.000000e+00
+; CHECK-NEXT:    [[MAX2:%.*]] = select i1 [[CMP2]], float -0.000000e+00, float [[MAX1]]
+; CHECK-NEXT:    ret float [[MAX2]]
+;
+  %cmp1 = fcmp ogt float %x, 0.0
+  %max1 = select i1 %cmp1, float %x, float -0.0
+  %cmp2 = fcmp ogt float 0.0, %max1
+  %max2 = select i1 %cmp2, float -0.0, float %max1
+  ret float %max2
 }
 
 define i64 @t8(float %a) {
