@@ -900,7 +900,8 @@ public:
 };
 
 /// ConstantExpr - An expression that occurs in a constant context.
-struct ConstantExpr : public FullExpr {
+class ConstantExpr : public FullExpr {
+public:
   ConstantExpr(Expr *subexpr)
     : FullExpr(ConstantExprClass, subexpr) {}
 
