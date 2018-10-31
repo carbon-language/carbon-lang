@@ -731,6 +731,9 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
       BuildMI(MBB, MBBI, DL, TII->get(AArch64::BL))
           .addExternalSymbol("__chkstk")
           .addReg(AArch64::X15, RegState::Implicit)
+          .addReg(AArch64::X16, RegState::Implicit | RegState::Define | RegState::Dead)
+          .addReg(AArch64::X17, RegState::Implicit | RegState::Define | RegState::Dead)
+          .addReg(AArch64::NZCV, RegState::Implicit | RegState::Define | RegState::Dead)
           .setMIFlags(MachineInstr::FrameSetup);
       break;
     case CodeModel::Large:
@@ -743,6 +746,9 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
       BuildMI(MBB, MBBI, DL, TII->get(AArch64::BLR))
           .addReg(AArch64::X16, RegState::Kill)
           .addReg(AArch64::X15, RegState::Implicit | RegState::Define)
+          .addReg(AArch64::X16, RegState::Implicit | RegState::Define | RegState::Dead)
+          .addReg(AArch64::X17, RegState::Implicit | RegState::Define | RegState::Dead)
+          .addReg(AArch64::NZCV, RegState::Implicit | RegState::Define | RegState::Dead)
           .setMIFlags(MachineInstr::FrameSetup);
       break;
     }
