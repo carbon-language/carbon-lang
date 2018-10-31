@@ -238,7 +238,7 @@ public:
 } // end anonymous namespace
 
 /// Return a vector shuffle operation which
-/// performs the same shuffe in terms of order or result bytes, but on a type
+/// performs the same shuffle in terms of order or result bytes, but on a type
 /// whose vector element type is narrower than the original shuffle type.
 /// e.g. <v4i32> <0, 1, 0, 1> -> v8i16 <0, 1, 2, 3, 0, 1, 2, 3>
 SDValue SelectionDAGLegalize::ShuffleWithNarrowerEltType(
