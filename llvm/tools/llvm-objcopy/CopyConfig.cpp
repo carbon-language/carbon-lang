@@ -405,9 +405,14 @@ DriverConfig parseStripOptions(ArrayRef<const char *> ArgsArr) {
   Config.DiscardAll = InputArgs.hasArg(STRIP_discard_all);
   Config.StripUnneeded = InputArgs.hasArg(STRIP_strip_unneeded);
   Config.StripAll = InputArgs.hasArg(STRIP_strip_all);
+  Config.StripAllGNU = InputArgs.hasArg(STRIP_strip_all_gnu);
 
-  if (!Config.StripDebug && !Config.StripUnneeded && !Config.DiscardAll)
+  if (!Config.StripDebug && !Config.StripUnneeded && !Config.DiscardAll &&
+      !Config.StripAllGNU)
     Config.StripAll = true;
+
+  for (auto Arg : InputArgs.filtered(STRIP_keep))
+    Config.Keep.push_back(Arg->getValue());
 
   for (auto Arg : InputArgs.filtered(STRIP_remove_section))
     Config.ToRemove.push_back(Arg->getValue());
