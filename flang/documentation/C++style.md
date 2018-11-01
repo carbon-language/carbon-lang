@@ -160,34 +160,39 @@ or assignments should exist for a class, explicitly `=delete` all of them.
 1. Make single-argument constructors (other than copy and move constructors)
 'explicit' unless you really want to define an implicit conversion.
 #### Pointers
-There are many -- perhaps too many -- means of indirect addressing in
-this project.
-Some are standard C++ language and library features, others are
-local inventions:
-* Bare pointers (`Foo *p`): these are considered dangerous because they do
-not describe ownership of storage and they might be null.
-Bare pointers might be necessary as data members instead of
-references in order to enable a default copy constructor for
-the class; such usage is private and hidden by an accessor.
-* References (`Foo &r`, `const Foo &r`): non-nullable, but not owning.
+There are many -- perhaps too many -- means of indirect addressing
+data in this project.
+Some of these are standard C++ language and library features,
+while others are local inventions in `lib/common`:
+* Bare pointers (`Foo *p`): nullable, non-owning, undefined when
+uninitialized, shallowly copyable, and almost never the right abstraction
+to use in this project.
+* References (`Foo &r`, `const Foo &r`): non-nullable, not owning, and
+shallowly copied.
 References are great for invisible indirection to objects whose lifetimes are
 broader than that of the reference.
 * Rvalue references (`Foo &&r`): These are non-nullable references
-with ownership, and they are ubiquitously used for formal arguments
+*with* ownership, and they are ubiquitously used for formal arguments
 wherever appropriate.
-* `std::unique_ptr<>`: A nullable pointer with ownership.
+* `std::unique_ptr<>`: A nullable pointer with ownership, null by default.
+Not copyable.
 * `std::shared_ptr<>`: A nullable pointer with shared ownership via reference
-counting.  Slow.
+counting, null by default.  Slow.
 * `OwningPointer<>`: A nullable pointer with ownership, better suited
 for use with forward-defined types than `std::unique_ptr<>` is.
-Does not have means for allocating data, and requires one to define
-a destructor.
-* `Indirection<>`: A non-nullable pointer with ownership.
-Deep copy semantics are available, but off by default.
+Null by default.
+Does not have means for allocating data, and inconveniently requires
+the definition of an external destructor.
+* `Indirection<>`: A non-nullable pointer with ownership and
+optional deep copy semantics.
+Often better than a reference (due to ownership) or `std::unique_ptr<>`
+(due to non-nullability).
 * `CountedReference<>`: A nullable pointer with shared ownership via
-reference counting that's much lighter weight than `std::shared_ptr<>`
-but not safe for multithreaded access.  Used in place of `std::shared_ptr<>`
-when its overhead is prohibitive.
+reference counting.
+Safe only when the data are private to one
+thread of execution.
+Used sparely in place of `std::shared_ptr<>` only when the overhead
+of that standard feature is prohibitive.
 ### Overall design preferences
 Don't use dynamic solutions to solve problems that can be solved at
 build time; don't solve build time problems by writing programs that
