@@ -35,6 +35,22 @@ defm split_dwo
                       "<dwo-file>, then strip-dwo on the input file">,
       MetaVarName<"dwo-file">;
 
+def enable_deterministic_archives
+    : Flag<["-", "--"], "enable-deterministic-archives">,
+      HelpText<"Enable deterministic mode when copying archives (use zero for "
+               "UIDs, GIDs, and timestamps).">;
+def D : Flag<["-"], "D">,
+        Alias<enable_deterministic_archives>,
+        HelpText<"Alias for --enable-deterministic-archives">;
+
+def disable_deterministic_archives
+    : Flag<["-", "--"], "disable-deterministic-archives">,
+      HelpText<"Disable deterministic mode when copying archives (use real "
+               "values for UIDs, GIDs, and timestamps).">;
+def U : Flag<["-"], "U">,
+        Alias<disable_deterministic_archives>,
+        HelpText<"Alias for --disable-deterministic-archives">;
+
 def preserve_dates : Flag<[ "-", "--" ], "preserve-dates">,
                      HelpText<"Preserve access and modification timestamps">;
 

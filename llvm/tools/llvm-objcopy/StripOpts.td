@@ -8,6 +8,22 @@ multiclass Eq<string name, string help> {
 
 def help : Flag<["-", "--"], "help">;
 
+def enable_deterministic_archives
+    : Flag<["-", "--"], "enable-deterministic-archives">,
+      HelpText<"Enable deterministic mode when stripping archives (use zero "
+               "for UIDs, GIDs, and timestamps).">;
+def D : Flag<["-"], "D">,
+        Alias<enable_deterministic_archives>,
+        HelpText<"Alias for --enable-deterministic-archives">;
+
+def disable_deterministic_archives
+    : Flag<["-", "--"], "disable-deterministic-archives">,
+      HelpText<"Disable deterministic mode when stripping archives (use real "
+               "values for UIDs, GIDs, and timestamps).">;
+def U : Flag<["-"], "U">,
+        Alias<disable_deterministic_archives>,
+        HelpText<"Alias for --disable-deterministic-archives">;
+
 defm output : Eq<"o", "Write output to <file>">,
               MetaVarName<"output">;
 

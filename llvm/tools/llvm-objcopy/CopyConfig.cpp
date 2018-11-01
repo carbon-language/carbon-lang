@@ -343,6 +343,10 @@ DriverConfig parseObjcopyOptions(ArrayRef<const char *> ArgsArr) {
   for (auto Arg : InputArgs.filtered(OBJCOPY_keep_symbol))
     Config.SymbolsToKeep.push_back(Arg->getValue());
 
+  Config.DeterministicArchives = InputArgs.hasFlag(
+      OBJCOPY_enable_deterministic_archives,
+      OBJCOPY_disable_deterministic_archives, /*default=*/true);
+
   Config.PreserveDates = InputArgs.hasArg(OBJCOPY_preserve_dates);
 
   if (Config.DecompressDebugSections &&
@@ -410,6 +414,10 @@ DriverConfig parseStripOptions(ArrayRef<const char *> ArgsArr) {
 
   for (auto Arg : InputArgs.filtered(STRIP_keep_symbol))
     Config.SymbolsToKeep.push_back(Arg->getValue());
+
+  Config.DeterministicArchives =
+      InputArgs.hasFlag(STRIP_enable_deterministic_archives,
+                        STRIP_disable_deterministic_archives, /*default=*/true);
 
   Config.PreserveDates = InputArgs.hasArg(STRIP_preserve_dates);
 
