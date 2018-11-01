@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/Analyses/FormatString.h"
-#include "clang/Analysis/Analyses/OSLog.h"
+#include "clang/AST/OSLog.h"
 #include "FormatStringParsing.h"
 #include "clang/Basic/TargetInfo.h"
 

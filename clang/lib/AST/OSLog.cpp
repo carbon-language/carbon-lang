@@ -1,6 +1,6 @@
 // TODO: header template
 
-#include "clang/Analysis/Analyses/OSLog.h"
+#include "clang/AST/OSLog.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"

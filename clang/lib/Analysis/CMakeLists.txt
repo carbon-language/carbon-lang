@@ -18,7 +18,6 @@ add_clang_library(clangAnalysis
   ExprMutationAnalyzer.cpp
   FormatString.cpp
   LiveVariables.cpp
-  OSLog.cpp
   ObjCNoReturn.cpp
   PostOrderCFGView.cpp
   PrintfFormatString.cpp
