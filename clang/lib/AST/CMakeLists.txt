@@ -48,7 +48,6 @@ add_clang_library(clangAST
   NestedNameSpecifier.cpp
   NSAPI.cpp
   ODRHash.cpp
-  OSLog.cpp
   OpenMPClause.cpp
   ParentMap.cpp
   QualTypeNames.cpp
