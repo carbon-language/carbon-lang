@@ -749,7 +749,9 @@ int SystemZTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src,
     assert (!Dst->isVectorTy());
 
     if (Opcode == Instruction::SIToFP || Opcode == Instruction::UIToFP)
-      return (SrcScalarBits >= 32 ? 1 : 2 /*i8/i16 extend*/);
+      return (SrcScalarBits >= 32
+                ? 1
+                : SrcScalarBits > 1 ? 2 /*i8/i16 extend*/ : 5 /*branch seq.*/);
 
     if ((Opcode == Instruction::ZExt || Opcode == Instruction::SExt) &&
         Src->isIntegerTy(1)) {
