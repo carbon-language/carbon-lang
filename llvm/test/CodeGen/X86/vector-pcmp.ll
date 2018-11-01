@@ -438,3 +438,156 @@ define <2 x i64> @cmpgt_zext_v2i64(<2 x i64> %a, <2 x i64> %b) {
   %zext = zext <2 x i1> %cmp to <2 x i64>
   ret <2 x i64> %zext
 }
+
+; Test that we optimize a zext of a vector setcc ne zero where all bits but the
+; lsb are known to be zero.
+define <8 x i32> @cmpne_knownzeros_zext_v8i16_v8i32(<8 x i16> %x) {
+; SSE2-LABEL: cmpne_knownzeros_zext_v8i16_v8i32:
+; SSE2:       # %bb.0:
+; SSE2-NEXT:    psrlw $15, %xmm0
+; SSE2-NEXT:    pxor %xmm2, %xmm2
+; SSE2-NEXT:    pcmpeqw %xmm0, %xmm2
+; SSE2-NEXT:    pcmpeqd %xmm1, %xmm1
+; SSE2-NEXT:    pxor %xmm2, %xmm1
+; SSE2-NEXT:    movdqa %xmm1, %xmm0
+; SSE2-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3]
+; SSE2-NEXT:    movdqa {{.*#+}} xmm2 = [1,1,1,1]
+; SSE2-NEXT:    pand %xmm2, %xmm0
+; SSE2-NEXT:    punpckhwd {{.*#+}} xmm1 = xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
+; SSE2-NEXT:    pand %xmm2, %xmm1
+; SSE2-NEXT:    retq
+;
+; SSE42-LABEL: cmpne_knownzeros_zext_v8i16_v8i32:
+; SSE42:       # %bb.0:
+; SSE42-NEXT:    psrlw $15, %xmm0
+; SSE42-NEXT:    pxor %xmm2, %xmm2
+; SSE42-NEXT:    pcmpeqw %xmm0, %xmm2
+; SSE42-NEXT:    pcmpeqd %xmm1, %xmm1
+; SSE42-NEXT:    pxor %xmm2, %xmm1
+; SSE42-NEXT:    pmovzxwd {{.*#+}} xmm0 = xmm1[0],zero,xmm1[1],zero,xmm1[2],zero,xmm1[3],zero
+; SSE42-NEXT:    movdqa {{.*#+}} xmm2 = [1,1,1,1]
+; SSE42-NEXT:    pand %xmm2, %xmm0
+; SSE42-NEXT:    punpckhwd {{.*#+}} xmm1 = xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
+; SSE42-NEXT:    pand %xmm2, %xmm1
+; SSE42-NEXT:    retq
+;
+; AVX1-LABEL: cmpne_knownzeros_zext_v8i16_v8i32:
+; AVX1:       # %bb.0:
+; AVX1-NEXT:    vpsrlw $15, %xmm0, %xmm0
+; AVX1-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX1-NEXT:    vpcmpeqw %xmm1, %xmm0, %xmm0
+; AVX1-NEXT:    vpcmpeqd %xmm1, %xmm1, %xmm1
+; AVX1-NEXT:    vpxor %xmm1, %xmm0, %xmm0
+; AVX1-NEXT:    vpunpckhwd {{.*#+}} xmm1 = xmm0[4,4,5,5,6,6,7,7]
+; AVX1-NEXT:    vpmovzxwd {{.*#+}} xmm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero
+; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; AVX1-NEXT:    vandps {{.*}}(%rip), %ymm0, %ymm0
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: cmpne_knownzeros_zext_v8i16_v8i32:
+; AVX2:       # %bb.0:
+; AVX2-NEXT:    vpsrlw $15, %xmm0, %xmm0
+; AVX2-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX2-NEXT:    vpcmpeqw %xmm1, %xmm0, %xmm0
+; AVX2-NEXT:    vpcmpeqd %xmm1, %xmm1, %xmm1
+; AVX2-NEXT:    vpxor %xmm1, %xmm0, %xmm0
+; AVX2-NEXT:    vpmovzxwd {{.*#+}} ymm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,xmm0[4],zero,xmm0[5],zero,xmm0[6],zero,xmm0[7],zero
+; AVX2-NEXT:    vpbroadcastd {{.*#+}} ymm1 = [1,1,1,1,1,1,1,1]
+; AVX2-NEXT:    vpand %ymm1, %ymm0, %ymm0
+; AVX2-NEXT:    retq
+  %a = lshr <8 x i16> %x, <i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15>
+  %b = icmp ne <8 x i16> %a, zeroinitializer
+  %c = zext <8 x i1> %b to <8 x i32>
+  ret <8 x i32> %c
+}
+
+define <8 x i32> @cmpne_knownzeros_zext_v8i32_v8i32(<8 x i32> %x) {
+; SSE-LABEL: cmpne_knownzeros_zext_v8i32_v8i32:
+; SSE:       # %bb.0:
+; SSE-NEXT:    psrld $31, %xmm1
+; SSE-NEXT:    psrld $31, %xmm0
+; SSE-NEXT:    pxor %xmm2, %xmm2
+; SSE-NEXT:    pcmpeqd %xmm2, %xmm0
+; SSE-NEXT:    movdqa {{.*#+}} xmm3 = [1,1,1,1]
+; SSE-NEXT:    pandn %xmm3, %xmm0
+; SSE-NEXT:    pcmpeqd %xmm2, %xmm1
+; SSE-NEXT:    pandn %xmm3, %xmm1
+; SSE-NEXT:    retq
+;
+; AVX1-LABEL: cmpne_knownzeros_zext_v8i32_v8i32:
+; AVX1:       # %bb.0:
+; AVX1-NEXT:    vpsrld $31, %xmm0, %xmm1
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; AVX1-NEXT:    vpsrld $31, %xmm0, %xmm0
+; AVX1-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; AVX1-NEXT:    vpcmpeqd %xmm2, %xmm0, %xmm0
+; AVX1-NEXT:    vpcmpeqd %xmm3, %xmm3, %xmm3
+; AVX1-NEXT:    vpxor %xmm3, %xmm0, %xmm0
+; AVX1-NEXT:    vpcmpeqd %xmm2, %xmm1, %xmm1
+; AVX1-NEXT:    vpxor %xmm3, %xmm1, %xmm1
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; AVX1-NEXT:    vandps {{.*}}(%rip), %ymm0, %ymm0
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: cmpne_knownzeros_zext_v8i32_v8i32:
+; AVX2:       # %bb.0:
+; AVX2-NEXT:    vpsrld $31, %ymm0, %ymm0
+; AVX2-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX2-NEXT:    vpcmpeqd %ymm1, %ymm0, %ymm0
+; AVX2-NEXT:    vpbroadcastd {{.*#+}} ymm1 = [1,1,1,1,1,1,1,1]
+; AVX2-NEXT:    vpandn %ymm1, %ymm0, %ymm0
+; AVX2-NEXT:    retq
+  %a = lshr <8 x i32> %x, <i32 31, i32 31, i32 31, i32 31, i32 31, i32 31, i32 31, i32 31>
+  %b = icmp ne <8 x i32> %a, zeroinitializer
+  %c = zext <8 x i1> %b to <8 x i32>
+  ret <8 x i32> %c
+}
+
+define <8 x i16> @cmpne_knownzeros_zext_v8i32_v8i16(<8 x i32> %x) {
+; SSE-LABEL: cmpne_knownzeros_zext_v8i32_v8i16:
+; SSE:       # %bb.0:
+; SSE-NEXT:    psrld $31, %xmm0
+; SSE-NEXT:    psrld $31, %xmm1
+; SSE-NEXT:    pxor %xmm2, %xmm2
+; SSE-NEXT:    pcmpeqd %xmm2, %xmm1
+; SSE-NEXT:    pcmpeqd %xmm3, %xmm3
+; SSE-NEXT:    pxor %xmm3, %xmm1
+; SSE-NEXT:    pcmpeqd %xmm2, %xmm0
+; SSE-NEXT:    pxor %xmm3, %xmm0
+; SSE-NEXT:    packssdw %xmm1, %xmm0
+; SSE-NEXT:    psrlw $15, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX1-LABEL: cmpne_knownzeros_zext_v8i32_v8i16:
+; AVX1:       # %bb.0:
+; AVX1-NEXT:    vpsrld $31, %xmm0, %xmm1
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; AVX1-NEXT:    vpsrld $31, %xmm0, %xmm0
+; AVX1-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; AVX1-NEXT:    vpcmpeqd %xmm2, %xmm0, %xmm0
+; AVX1-NEXT:    vpcmpeqd %xmm3, %xmm3, %xmm3
+; AVX1-NEXT:    vpxor %xmm3, %xmm0, %xmm0
+; AVX1-NEXT:    vpcmpeqd %xmm2, %xmm1, %xmm1
+; AVX1-NEXT:    vpxor %xmm3, %xmm1, %xmm1
+; AVX1-NEXT:    vpackssdw %xmm0, %xmm1, %xmm0
+; AVX1-NEXT:    vpsrlw $15, %xmm0, %xmm0
+; AVX1-NEXT:    vzeroupper
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: cmpne_knownzeros_zext_v8i32_v8i16:
+; AVX2:       # %bb.0:
+; AVX2-NEXT:    vpsrld $31, %ymm0, %ymm0
+; AVX2-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX2-NEXT:    vpcmpeqd %ymm1, %ymm0, %ymm0
+; AVX2-NEXT:    vpcmpeqd %ymm1, %ymm1, %ymm1
+; AVX2-NEXT:    vpxor %ymm1, %ymm0, %ymm0
+; AVX2-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; AVX2-NEXT:    vpackssdw %xmm1, %xmm0, %xmm0
+; AVX2-NEXT:    vpsrlw $15, %xmm0, %xmm0
+; AVX2-NEXT:    vzeroupper
+; AVX2-NEXT:    retq
+  %a = lshr <8 x i32> %x, <i32 31, i32 31, i32 31, i32 31, i32 31, i32 31, i32 31, i32 31>
+  %b = icmp ne <8 x i32> %a, zeroinitializer
+  %c = zext <8 x i1> %b to <8 x i16>
+  ret <8 x i16> %c
+}
