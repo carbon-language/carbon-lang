@@ -788,6 +788,7 @@ HCE::ExtValue::operator MachineOperand() const {
       return MachineOperand::CreateCPI(V.ImmVal, Offset, TF);
     case MachineOperand::MO_JumpTableIndex:
       assert(Offset == 0);
+      return MachineOperand::CreateJTI(V.ImmVal, TF);
     default:
       llvm_unreachable("Unhandled kind");
  }
