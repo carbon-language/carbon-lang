@@ -1,15 +1,15 @@
 include "llvm/Option/OptParser.td"
 
-multiclass Eq<string name> {
+multiclass Eq<string name, string help> {
   def NAME: Separate<["--", "-"], name>;
-  def NAME # _eq: Joined<["--", "-"], name # "=">, Alias<!cast<Separate>(NAME)>;
+  def NAME # _eq: Joined<["--", "-"], name # "=">, Alias<!cast<Separate>(NAME)>,
+    HelpText<help>;
 }
 
 def help : Flag<["-", "--"], "help">;
 
-defm output : Eq<"o">,
-              MetaVarName<"output">,
-              HelpText<"Write output to <file>">;
+defm output : Eq<"o", "Write output to <file>">,
+              MetaVarName<"output">;
 
 def preserve_dates : Flag<[ "-", "--" ], "preserve-dates">,
                      HelpText<"Preserve access and modification timestamps">;
@@ -34,16 +34,14 @@ def g : Flag<["-"], "g">,
 def S : Flag<["-"], "S">,
         Alias<strip_debug>;
 
-defm remove_section : Eq<"remove-section">,
-                      MetaVarName<"section">,
-                      HelpText<"Remove <section>">;
+defm remove_section : Eq<"remove-section", "Remove <section>">,
+                      MetaVarName<"section">;
 
 def R : JoinedOrSeparate<["-"], "R">,
         Alias<remove_section>;
 
-defm keep_symbol : Eq<"keep-symbol">,
-                   MetaVarName<"symbol">,
-                   HelpText<"Do not remove symbol <symbol>">;
+defm keep_symbol : Eq<"keep-symbol", "Do not remove symbol <symbol>">,
+                   MetaVarName<"symbol">;
 
 def K : JoinedOrSeparate<["-"], "K">,
         Alias<keep_symbol>;
