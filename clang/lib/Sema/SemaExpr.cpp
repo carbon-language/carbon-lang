@@ -10497,6 +10497,10 @@ QualType Sema::CheckCompareOperands(ExprResult &LHS, ExprResult &RHS,
   }
 
   if (getLangOpts().OpenCLVersion >= 200) {
+    if (LHSType->isClkEventT() && RHSType->isClkEventT()) {
+      return computeResultTy();
+    }
+
     if (LHSType->isQueueT() && RHSType->isQueueT()) {
       return computeResultTy();
     }
