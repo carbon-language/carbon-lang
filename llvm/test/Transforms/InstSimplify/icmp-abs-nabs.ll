@@ -399,3 +399,38 @@ define <3 x i1> @nabs_is_not_over_0_sle_vec_splat(<3 x i33> %x) {
   ret <3 x i1> %r
 }
 
+; Negative test - intersection does not equal absolute value range.
+; PR39510 - https://bugs.llvm.org/show_bug.cgi?id=39510
+
+define i1 @abs_no_intersection(i32 %a) {
+; CHECK-LABEL: @abs_no_intersection(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp slt i32 [[A:%.*]], 0
+; CHECK-NEXT:    [[SUB:%.*]] = sub nsw i32 0, [[A]]
+; CHECK-NEXT:    [[COND:%.*]] = select i1 [[CMP]], i32 [[SUB]], i32 [[A]]
+; CHECK-NEXT:    [[R:%.*]] = icmp ne i32 [[COND]], 2
+; CHECK-NEXT:    ret i1 [[R]]
+;
+  %cmp = icmp slt i32 %a, 0
+  %sub = sub nsw i32 0, %a
+  %cond = select i1 %cmp, i32 %sub, i32 %a
+  %r = icmp ne i32 %cond, 2
+  ret i1 %r
+}
+
+; Negative test - intersection does not equal absolute value range.
+
+define i1 @nabs_no_intersection(i32 %a) {
+; CHECK-LABEL: @nabs_no_intersection(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i32 [[A:%.*]], 0
+; CHECK-NEXT:    [[SUB:%.*]] = sub i32 0, [[A]]
+; CHECK-NEXT:    [[COND:%.*]] = select i1 [[CMP]], i32 [[SUB]], i32 [[A]]
+; CHECK-NEXT:    [[R:%.*]] = icmp ne i32 [[COND]], -2
+; CHECK-NEXT:    ret i1 [[R]]
+;
+  %cmp = icmp sgt i32 %a, 0
+  %sub = sub i32 0, %a
+  %cond = select i1 %cmp, i32 %sub, i32 %a
+  %r = icmp ne i32 %cond, -2
+  ret i1 %r
+}
+
