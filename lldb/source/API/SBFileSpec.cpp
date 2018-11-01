@@ -51,7 +51,7 @@ bool SBFileSpec::IsValid() const { return m_opaque_ap->operator bool(); }
 bool SBFileSpec::Exists() const {
   Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_API));
 
-  bool result = m_opaque_ap->Exists();
+  bool result = FileSystem::Instance().Exists(*m_opaque_ap);
 
   if (log)
     log->Printf("SBFileSpec(%p)::Exists () => %s",

@@ -273,14 +273,6 @@ public:
   void Dump(Stream *s) const;
 
   //------------------------------------------------------------------
-  /// Existence test.
-  ///
-  /// @return
-  ///     \b true if the file exists on disk, \b false otherwise.
-  //------------------------------------------------------------------
-  bool Exists() const;
-
-  //------------------------------------------------------------------
   /// Canonicalize this file path (basically running the static
   /// FileSpec::Resolve method on it). Useful if you asked us not to resolve
   /// the file path when you set the file.

@@ -453,11 +453,6 @@ void FileSpec::Dump(Stream *s) const {
   }
 }
 
-//------------------------------------------------------------------
-// Returns true if the file exists.
-//------------------------------------------------------------------
-bool FileSpec::Exists() const { return llvm::sys::fs::exists(GetPath()); }
-
 bool FileSpec::ResolvePath() {
   if (m_is_resolved)
     return true; // We have already resolved this path
