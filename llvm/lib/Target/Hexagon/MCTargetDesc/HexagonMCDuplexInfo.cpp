@@ -127,7 +127,7 @@ unsigned HexagonMCInstrInfo::iClassOfDuplexPair(unsigned Ga, unsigned Gb) {
     case HexagonII::HSIG_A:
       return 0x4;
     }
-    LLVM_FALLTHROUGH; // FIXME: Intentional?
+    break;
   case HexagonII::HSIG_L2:
     switch (Gb) {
     default:
@@ -139,7 +139,7 @@ unsigned HexagonMCInstrInfo::iClassOfDuplexPair(unsigned Ga, unsigned Gb) {
     case HexagonII::HSIG_A:
       return 0x5;
     }
-    LLVM_FALLTHROUGH; // FIXME: Intentional?
+    break;
   case HexagonII::HSIG_S1:
     switch (Gb) {
     default:
@@ -153,7 +153,7 @@ unsigned HexagonMCInstrInfo::iClassOfDuplexPair(unsigned Ga, unsigned Gb) {
     case HexagonII::HSIG_A:
       return 0x6;
     }
-    LLVM_FALLTHROUGH; // FIXME: Intentional?
+    break;
   case HexagonII::HSIG_S2:
     switch (Gb) {
     default:
@@ -169,7 +169,7 @@ unsigned HexagonMCInstrInfo::iClassOfDuplexPair(unsigned Ga, unsigned Gb) {
     case HexagonII::HSIG_A:
       return 0x7;
     }
-    LLVM_FALLTHROUGH; // FIXME: Intentional?
+    break;
   case HexagonII::HSIG_A:
     switch (Gb) {
     default:
@@ -177,7 +177,7 @@ unsigned HexagonMCInstrInfo::iClassOfDuplexPair(unsigned Ga, unsigned Gb) {
     case HexagonII::HSIG_A:
       return 0x3;
     }
-    LLVM_FALLTHROUGH; // FIXME: Intentional?
+    break;
   case HexagonII::HSIG_Compound:
     switch (Gb) {
     case HexagonII::HSIG_Compound:
