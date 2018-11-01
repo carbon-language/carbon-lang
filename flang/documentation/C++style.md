@@ -186,7 +186,7 @@ the definition of an external destructor.
 * `Indirection<>`: A non-nullable pointer with ownership and
 optional deep copy semantics.
 Often better than a reference (due to ownership) or `std::unique_ptr<>`
-(due to non-nullability).
+(due to non-nullability and copyability).
 * `CountedReference<>`: A nullable pointer with shared ownership via
 reference counting.
 Safe only when the data are private to one
