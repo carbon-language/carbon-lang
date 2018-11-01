@@ -12,6 +12,7 @@
 
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBStream.h"
+#include "lldb/Host/FileSystem.h"
 #include "lldb/Host/PosixApi.h"
 #include "lldb/Utility/FileSpec.h"
 #include "lldb/Utility/Log.h"
@@ -61,7 +62,7 @@ bool SBFileSpec::Exists() const {
 }
 
 bool SBFileSpec::ResolveExecutableLocation() {
-  return m_opaque_ap->ResolveExecutableLocation();
+  return FileSystem::Instance().ResolveExecutableLocation(*m_opaque_ap);
 }
 
 int SBFileSpec::ResolvePath(const char *src_path, char *dst_path,

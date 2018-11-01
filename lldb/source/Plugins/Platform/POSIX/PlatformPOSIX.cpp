@@ -135,7 +135,8 @@ PlatformPOSIX::ResolveExecutable(const ModuleSpec &module_spec,
     }
 
     if (!resolved_module_spec.GetFileSpec().Exists())
-      resolved_module_spec.GetFileSpec().ResolveExecutableLocation();
+      FileSystem::Instance().ResolveExecutableLocation(
+          resolved_module_spec.GetFileSpec());
 
     // Resolve any executable within a bundle on MacOSX
     Host::ResolveExecutableInBundle(resolved_module_spec.GetFileSpec());

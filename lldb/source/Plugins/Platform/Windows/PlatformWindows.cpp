@@ -199,7 +199,8 @@ Status PlatformWindows::ResolveExecutable(
     }
 
     if (!resolved_module_spec.GetFileSpec().Exists())
-      resolved_module_spec.GetFileSpec().ResolveExecutableLocation();
+      FileSystem::Instance().ResolveExecutableLocation(
+          resolved_module_spec.GetFileSpec());
 
     if (resolved_module_spec.GetFileSpec().Exists())
       error.Clear();

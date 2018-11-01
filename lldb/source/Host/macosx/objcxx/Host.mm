@@ -55,10 +55,11 @@
 #include <unistd.h>
 
 #include "lldb/Host/ConnectionFileDescriptor.h"
+#include "lldb/Host/FileSystem.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/ThreadLauncher.h"
-#include "lldb/Target/ProcessLaunchInfo.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/ProcessLaunchInfo.h"
 #include "lldb/Utility/ArchSpec.h"
 #include "lldb/Utility/CleanUp.h"
 #include "lldb/Utility/DataBufferHeap.h"
@@ -1282,7 +1283,7 @@ Status Host::LaunchProcess(ProcessLaunchInfo &launch_info) {
     status(exe_spec.GetPath(), stats);
   }
   if (!exists(stats)) {
-    exe_spec.ResolveExecutableLocation();
+    FileSystem::Instance().ResolveExecutableLocation(exe_spec);
     status(exe_spec.GetPath(), stats);
   }
   if (!exists(stats)) {
