@@ -357,6 +357,8 @@ struct Concat
   static std::ostream &Infix(std::ostream &o) { return o << "//"; }
 };
 
+// TODO: Once the symbol table supports compiler temporaries,
+// just put the literal string into one and use a regular Substring.
 template<int KIND>
 struct LiteralSubstring : public Operation<LiteralSubstring<KIND>,
                               Type<TypeCategory::Character, KIND>,
@@ -401,14 +403,14 @@ struct LogicalOperation
 
 template<typename RESULT> struct ArrayConstructorValues;
 
-template<typename ITEM, typename OPERAND> struct ImpliedDo {
-  using Item = ITEM;
-  using Result = typename Item::Result;
+template<typename VALUES, typename OPERAND> struct ImpliedDo {
+  using Values = VALUES;
   using Operand = OPERAND;
+  using Result = ResultType<Values>;
   static_assert(Operand::category == TypeCategory::Integer);
   parser::CharBlock controlVariableName;
   CopyableIndirection<Expr<Operand>> lower, upper, stride;
-  CopyableIndirection<Item> values;
+  CopyableIndirection<Values> values;
 };
 
 template<typename RESULT> struct ArrayConstructorValue {
@@ -432,11 +434,13 @@ template<typename RESULT>
 struct ArrayConstructor : public ArrayConstructorValues<RESULT> {
   using Result = RESULT;
   using ArrayConstructorValues<Result>::ArrayConstructorValues;
-  Result result;
   DynamicType GetType() const;
   static constexpr int Rank() { return 1; }
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
+
+  Result result;
+  std::vector<Expr<SubscriptInteger>> typeParameterValues;
 };
 
 // Per-category expression representations
