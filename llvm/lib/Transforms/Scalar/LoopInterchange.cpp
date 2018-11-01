@@ -1390,6 +1390,8 @@ bool LoopInterchangeTransform::adjustLoopBranches() {
   // Make sure we have no other PHIs.
   auto InnerPhis = drop_begin(InnerLoopHeader->phis(), 1);
   auto OuterPhis = drop_begin(OuterLoopHeader->phis(), 1);
+  (void) InnerPhis;
+  (void) OuterPhis;
   assert(begin(InnerPhis) == end(InnerPhis) && "Unexpected PHIs in inner loop");
   assert(begin(OuterPhis) == end(OuterPhis) && "Unexpected PHis in outer loop");
 
