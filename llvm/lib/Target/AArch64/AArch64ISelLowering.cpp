@@ -2865,6 +2865,8 @@ SDValue AArch64TargetLowering::LowerOperation(SDValue Op,
     return LowerFRAMEADDR(Op, DAG);
   case ISD::RETURNADDR:
     return LowerRETURNADDR(Op, DAG);
+  case ISD::ADDROFRETURNADDR:
+    return LowerADDROFRETURNADDR(Op, DAG);
   case ISD::INSERT_VECTOR_ELT:
     return LowerINSERT_VECTOR_ELT(Op, DAG);
   case ISD::EXTRACT_VECTOR_ELT:
@@ -5219,6 +5221,20 @@ unsigned AArch64TargetLowering::getRegisterByName(const char* RegName, EVT VT,
     return Reg;
   report_fatal_error(Twine("Invalid register name \""
                               + StringRef(RegName)  + "\"."));
+}
+
+SDValue AArch64TargetLowering::LowerADDROFRETURNADDR(SDValue Op,
+                                                     SelectionDAG &DAG) const {
+  DAG.getMachineFunction().getFrameInfo().setFrameAddressIsTaken(true);
+
+  EVT VT = Op.getValueType();
+  SDLoc DL(Op);
+
+  SDValue FrameAddr =
+      DAG.getCopyFromReg(DAG.getEntryNode(), DL, AArch64::FP, VT);
+  SDValue Offset = DAG.getConstant(8, DL, getPointerTy(DAG.getDataLayout()));
+
+  return DAG.getNode(ISD::ADD, DL, VT, FrameAddr, Offset);
 }
 
 SDValue AArch64TargetLowering::LowerRETURNADDR(SDValue Op,
