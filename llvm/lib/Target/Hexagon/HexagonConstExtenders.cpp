@@ -1208,6 +1208,7 @@ void HCE::recordExtender(MachineInstr &MI, unsigned OpNum) {
       case Hexagon::S4_subaddi:       // (__: ## - Rs<<0)
         ED.Expr.Rs = MI.getOperand(OpNum+1);
         ED.Expr.Neg = true;
+        break;
       default:                        // (__: ## + __<<_)
         break;
     }
