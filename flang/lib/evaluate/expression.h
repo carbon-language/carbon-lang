@@ -357,6 +357,25 @@ struct Concat
   static std::ostream &Infix(std::ostream &o) { return o << "//"; }
 };
 
+template<int KIND>
+struct LiteralSubstring : public Operation<LiteralSubstring<KIND>,
+                              Type<TypeCategory::Character, KIND>,
+                              SubscriptInteger, SubscriptInteger> {
+  using Result = Type<TypeCategory::Character, KIND>;
+  using Operand = SubscriptInteger;
+  using String = Scalar<Result>;
+  using Base = Operation<LiteralSubstring, Result, Operand, Operand>;
+  LiteralSubstring(
+      const String &s, const Expr<Operand> &lower, const Expr<Operand> &upper)
+    : string{s}, Base{lower, upper} {}
+  LiteralSubstring(String &&s, Expr<Operand> &&lower, Expr<Operand> &&upper)
+    : Base{std::move(lower), std::move(upper)}, string{std::move(s)} {}
+
+  std::ostream &Prefix(std::ostream &) const;
+  Expr<SubscriptInteger> LEN() const;
+  String string;
+};
+
 ENUM_CLASS(LogicalOperator, And, Or, Eqv, Neqv)
 
 template<int KIND>
@@ -508,8 +527,9 @@ public:
 
   Expr<SubscriptInteger> LEN() const;
 
-  std::variant<Constant<Result>, ArrayConstructor<Result>, Designator<Result>,
-      FunctionRef<Result>, Parentheses<Result>, Concat<KIND>, Extremum<Result>>
+  std::variant<Constant<Result>, LiteralSubstring<KIND>,
+      ArrayConstructor<Result>, Designator<Result>, FunctionRef<Result>,
+      Parentheses<Result>, Concat<KIND>, Extremum<Result>>
       u;
 };
 
@@ -551,9 +571,7 @@ template<> class Relational<SomeType> {
 public:
   using Result = LogicalResult;
   EVALUATE_UNION_CLASS_BOILERPLATE(Relational)
-  static constexpr std::optional<DynamicType> GetType() {
-    return Result::GetType();
-  }
+  static constexpr DynamicType GetType() { return Result::GetType(); }
   int Rank() const {
     return std::visit([](const auto &x) { return x.Rank(); }, u);
   }

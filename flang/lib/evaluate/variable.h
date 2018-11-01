@@ -43,13 +43,10 @@ using semantics::Symbol;
 struct DataRef;
 template<typename A> struct Variable;
 
-// Subscript and cosubscript expressions are of a kind that matches the
-// address size, at least at the top level.
-using IndirectSubscriptIntegerExpr =
-    CopyableIndirection<Expr<SubscriptInteger>>;
-
+// pmk: are these still needed?
 int GetSymbolRank(const Symbol &);
 const parser::CharBlock &GetSymbolName(const Symbol &);
+
 
 // R913 structure-component & C920: Defined to be a multi-part
 // data-ref whose last part has no subscripts (or image-selector, although
@@ -66,10 +63,9 @@ public:
 
   const DataRef &base() const { return *base_; }
   DataRef &base() { return *base_; }
-  const Symbol &symbol() const { return *symbol_; }
   int Rank() const;
-  const Symbol *GetFirstSymbol() const;
-  const Symbol *GetLastSymbol() const;
+  const Symbol &GetFirstSymbol() const;
+  const Symbol &GetLastSymbol() const { return *symbol_; }
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 
@@ -118,8 +114,8 @@ struct ArrayRef {
     : u{std::move(c)}, subscript(std::move(ss)) {}
 
   int Rank() const;
-  const Symbol *GetFirstSymbol() const;
-  const Symbol *GetLastSymbol() const;
+  const Symbol &GetFirstSymbol() const;
+  const Symbol &GetLastSymbol() const;
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 
@@ -146,8 +142,8 @@ public:
   CoarrayRef &set_team(Expr<SomeInteger> &&, bool isTeamNumber = false);
 
   int Rank() const;
-  const Symbol *GetFirstSymbol() const { return base_.front(); }
-  const Symbol *GetLastSymbol() const { return base_.back(); }
+  const Symbol &GetFirstSymbol() const { return *base_.front(); }
+  const Symbol &GetLastSymbol() const { return *base_.back(); }
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 
@@ -168,8 +164,8 @@ struct DataRef {
   explicit DataRef(const Symbol &n) : u{&n} {}
 
   int Rank() const;
-  const Symbol *GetFirstSymbol() const;
-  const Symbol *GetLastSymbol() const;
+  const Symbol &GetFirstSymbol() const;
+  const Symbol &GetLastSymbol() const;
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 
@@ -177,34 +173,33 @@ struct DataRef {
 };
 
 // R908 substring, R909 parent-string, R910 substring-range.
-// The base object of a substring can be a literal.
+// The base object of a substring can be a literal, but those are represented
+// as a LiteralSubstring expression.
 // In the F2018 standard, substrings of array sections are parsed as
 // variants of sections instead.
 class Substring {
 public:
-  using Strings = std::variant<std::string, std::u16string, std::u32string>;
   CLASS_BOILERPLATE(Substring)
-  template<typename A>
-  Substring(A &&parent, std::optional<Expr<SubscriptInteger>> &&first,
+  Substring(DataRef &&parent, std::optional<Expr<SubscriptInteger>> &&first,
       std::optional<Expr<SubscriptInteger>> &&last)
-    : u_{std::move(parent)} {
+    : parent_{std::move(parent)} {
     SetBounds(first, last);
   }
 
   Expr<SubscriptInteger> first() const;
   Expr<SubscriptInteger> last() const;
   int Rank() const;
-  const Symbol *GetFirstSymbol() const;
-  const Symbol *GetLastSymbol() const;
+  const Symbol &GetFirstSymbol() const;
+  const Symbol &GetLastSymbol() const;
   Expr<SubscriptInteger> LEN() const;
-  std::optional<Strings> Fold(FoldingContext &);
   std::ostream &Dump(std::ostream &) const;
 
+  void Fold(FoldingContext &);
+
 private:
-  using Variant = common::CombineVariants<std::variant<DataRef>, Strings>;
   void SetBounds(std::optional<Expr<SubscriptInteger>> &,
       std::optional<Expr<SubscriptInteger>> &);
-  Variant u_;
+  DataRef parent_;
   std::optional<IndirectSubscriptIntegerExpr> first_, last_;
 };
 
@@ -219,8 +214,8 @@ public:
   const DataRef &complex() const { return complex_; }
   Part part() const { return part_; }
   int Rank() const;
-  const Symbol *GetFirstSymbol() const { return complex_.GetFirstSymbol(); }
-  const Symbol *GetLastSymbol() const { return complex_.GetLastSymbol(); }
+  const Symbol &GetFirstSymbol() const { return complex_.GetFirstSymbol(); }
+  const Symbol &GetLastSymbol() const { return complex_.GetLastSymbol(); }
   std::ostream &Dump(std::ostream &) const;
 
 private:
@@ -253,8 +248,8 @@ public:
 
   std::optional<DynamicType> GetType() const;
   int Rank() const;
-  const Symbol *GetFirstSymbol() const;
-  const Symbol *GetLastSymbol() const;
+  const Symbol &GetFirstSymbol() const;
+  const Symbol &GetLastSymbol() const;
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &o) const;
 

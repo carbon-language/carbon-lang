@@ -58,6 +58,11 @@ template<typename A> std::ostream &Relational<A>::Infix(std::ostream &o) const {
   return o << '.' << EnumToString(opr) << '.';
 }
 
+template<int KIND>
+std::ostream &LiteralSubstring<KIND>::Prefix(std::ostream &o) const {
+  return o << KIND << '_' << parser::QuoteCharacterLiteral(string) << '(';
+}
+
 std::ostream &Relational<SomeType>::Dump(std::ostream &o) const {
   std::visit([&](const auto &rel) { rel.Dump(o); }, u);
   return o;
@@ -81,12 +86,7 @@ template<typename T> std::ostream &Constant<T>::Dump(std::ostream &o) const {
       T::category == TypeCategory::Complex) {
     return o << value.DumpHexadecimal() << '_' << T::kind;
   } else if constexpr (T::category == TypeCategory::Character) {
-    if constexpr (T::kind == 1) {
-      return o << T::kind << '_' << parser::QuoteCharacterLiteral(value);
-    } else {
-      return o << T::kind
-               << "_'(wide character dumping unimplemented)'";  // TODO
-    }
+    return o << T::kind << '_' << parser::QuoteCharacterLiteral(value);
   } else if constexpr (T::category == TypeCategory::Logical) {
     if (value.IsTrue()) {
       o << ".TRUE.";
@@ -149,8 +149,14 @@ std::ostream &ExpressionBase<RESULT>::Dump(std::ostream &o) const {
 }
 
 template<typename T> Expr<SubscriptInteger> ArrayConstructor<T>::LEN() const {
-  // TODO pmk: extract from type spec
+  // TODO pmk: extract from type spec in array constructor
   return AsExpr(Constant<SubscriptInteger>{0});  // TODO placeholder
+}
+
+template<int KIND> Expr<SubscriptInteger> LiteralSubstring<KIND>::LEN() const {
+  auto lower{this->left()};
+  auto upper{this->right()};
+  return std::move(upper) - std::move(lower) + Expr<SubscriptInteger>{1};
 }
 
 template<int KIND>
@@ -160,6 +166,7 @@ Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
                          return AsExpr(
                              Constant<SubscriptInteger>{c.value.size()});
                        },
+          [](const LiteralSubstring<KIND> &ls) { return ls.LEN(); },
           [](const ArrayConstructor<Result> &a) { return a.LEN(); },
           [](const Parentheses<Result> &x) { return x.left().LEN(); },
           [](const Concat<KIND> &c) {
@@ -178,7 +185,7 @@ Expr<SomeType>::~Expr() {}
 
 template<typename T> DynamicType ArrayConstructor<T>::GetType() const {
   // TODO: pmk: parameterized derived types, CHARACTER length
-  return *result.GetType();
+  return result.GetType();
 }
 
 template<typename A>

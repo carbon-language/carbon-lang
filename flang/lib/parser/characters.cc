@@ -82,14 +82,30 @@ std::optional<std::size_t> CountCharacters(
   return {chars};
 }
 
-std::string QuoteCharacterLiteral(
-    const std::string &str, bool doubleDoubleQuotes, bool doubleBackslash) {
+template<typename STRING>
+std::string QuoteCharacterLiteralHelper(
+    const STRING &str, bool doubleDoubleQuotes, bool doubleBackslash) {
   std::string result{'"'};
   const auto emit{[&](char ch) { result += ch; }};
-  for (char ch : str) {
+  for (auto ch : str) {
     EmitQuotedChar(ch, emit, emit, doubleDoubleQuotes, doubleBackslash);
   }
   result += '"';
   return result;
+}
+
+std::string QuoteCharacterLiteral(
+    const std::string &str, bool doubleDoubleQuotes, bool doubleBackslash) {
+  return QuoteCharacterLiteralHelper(str, doubleDoubleQuotes, doubleBackslash);
+}
+
+std::string QuoteCharacterLiteral(
+    const std::u16string &str, bool doubleDoubleQuotes, bool doubleBackslash) {
+  return QuoteCharacterLiteralHelper(str, doubleDoubleQuotes, doubleBackslash);
+}
+
+std::string QuoteCharacterLiteral(
+    const std::u32string &str, bool doubleDoubleQuotes, bool doubleBackslash) {
+  return QuoteCharacterLiteralHelper(str, doubleDoubleQuotes, doubleBackslash);
 }
 }

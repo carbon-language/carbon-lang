@@ -520,7 +520,7 @@ MaybeExpr TypedWrapper(DynamicType &&dyType, WRAPPED &&x) {
 
 // Wraps a data reference in a typed Designator<>.
 static MaybeExpr Designate(DataRef &&dataRef) {
-  const Symbol &symbol{*dataRef.GetLastSymbol()};
+  const Symbol &symbol{dataRef.GetLastSymbol()};
   if (std::optional<DynamicType> dyType{GetSymbolType(symbol)}) {
     return TypedWrapper<Designator, DataRef>(
         std::move(*dyType), std::move(dataRef));
@@ -577,7 +577,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Substring &ss) {
               GetSubstringBound(std::get<0>(range.t))};
           std::optional<Expr<SubscriptInteger>> last{
               GetSubstringBound(std::get<1>(range.t))};
-          const Symbol &symbol{*checked->GetLastSymbol()};
+          const Symbol &symbol{checked->GetLastSymbol()};
           if (std::optional<DynamicType> dynamicType{GetSymbolType(symbol)}) {
             if (dynamicType->category == TypeCategory::Character) {
               return WrapperHelper<TypeCategory::Character, Designator,
@@ -693,7 +693,7 @@ MaybeExpr ExprAnalyzer::ApplySubscripts(
 }
 
 MaybeExpr ExprAnalyzer::CompleteSubscripts(ArrayRef &&ref) {
-  const Symbol &symbol{*ref.GetLastSymbol()};
+  const Symbol &symbol{ref.GetLastSymbol()};
   int symbolRank{symbol.Rank()};
   if (ref.subscript.empty()) {
     // A -> A(:,:)
@@ -804,8 +804,36 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::CoindexedNamedObject &co) {
   return std::nullopt;
 }
 
-MaybeExpr ExprAnalyzer::Analyze(const parser::CharLiteralConstantSubstring &) {
-  Say("TODO: CharLiteralConstantSubstring unimplemented"_err_en_US);
+MaybeExpr ExprAnalyzer::Analyze(const parser::CharLiteralConstantSubstring &x) {
+  const parser::SubstringRange &range{std::get<parser::SubstringRange>(x.t)};
+  std::optional<Expr<SubscriptInteger>> lower{
+      GetSubstringBound(std::get<0>(range.t))};
+  std::optional<Expr<SubscriptInteger>> upper{
+      GetSubstringBound(std::get<1>(range.t))};
+  if (MaybeExpr string{Analyze(std::get<parser::CharLiteralConstant>(x.t))}) {
+    if (auto *charExpr{std::get_if<Expr<SomeCharacter>>(&string->u)}) {
+      Expr<SubscriptInteger> length{std::visit(
+          [](const auto &ckExpr) { return ckExpr.LEN(); }, charExpr->u)};
+      if (!lower.has_value()) {
+        lower = Expr<SubscriptInteger>{1};
+      }
+      if (!upper.has_value()) {
+        std::optional<std::int64_t> size{ToInt64(length)};
+        CHECK(size.has_value());
+        upper = Expr<SubscriptInteger>{static_cast<std::int64_t>(*size)};
+      }
+      return std::visit(
+          [&](auto &&ckExpr) -> MaybeExpr {
+            using Result = ResultType<decltype(ckExpr)>;
+            auto *cp{std::get_if<Constant<Result>>(&ckExpr.u)};
+            CHECK(cp != nullptr);  // the parent was parsed as a constant string
+            return AsGenericExpr(Expr<SomeCharacter>{Expr<Result>{
+                LiteralSubstring<Result::kind>{std::move(cp->value),
+                    std::move(*lower), std::move(*upper)}}});
+          },
+          std::move(charExpr->u));
+    }
+  }
   return std::nullopt;
 }
 
@@ -1184,11 +1212,12 @@ MaybeExpr ExprAnalyzer::TopLevelChecks(DataRef &&dataRef) {
 void ExprAnalyzer::CheckUnsubscriptedComponent(const Component &component) {
   int baseRank{component.base().Rank()};
   if (baseRank > 0) {
-    int componentRank{component.symbol().Rank()};
+    const Symbol &symbol{component.GetLastSymbol()};
+    int componentRank{symbol.Rank()};
     if (componentRank > 0) {
       Say("reference to whole rank-%d component '%%%s' of "
           "rank-%d array of derived type is not allowed"_err_en_US,
-          componentRank, component.symbol().name().ToString().data(), baseRank);
+          componentRank, symbol.name().ToString().data(), baseRank);
     }
   }
 }

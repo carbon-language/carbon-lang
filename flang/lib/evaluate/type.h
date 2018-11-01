@@ -70,9 +70,7 @@ template<TypeCategory CATEGORY, int KIND> struct TypeBase {
   // data types will have set this flag to true.
   static constexpr bool isSpecificIntrinsicType{true};
   static constexpr DynamicType dynamicType{CATEGORY, KIND};
-  static constexpr std::optional<DynamicType> GetType() {
-    return {dynamicType};
-  }
+  static constexpr DynamicType GetType() { return {dynamicType}; }
   static constexpr TypeCategory category{CATEGORY};
   static constexpr int kind{KIND};
   static std::string Dump() { return dynamicType.Dump(); }
@@ -167,6 +165,11 @@ using SubscriptInteger = Type<TypeCategory::Integer, 8>;
 using LogicalResult = Type<TypeCategory::Logical, 1>;
 using LargestReal = Type<TypeCategory::Real, 16>;
 
+// Many expressions, including subscripts, CHARACTER lengths, array bounds,
+// and effective type parameter values, are of a maximal kind of INTEGER.
+using IndirectSubscriptIntegerExpr =
+    CopyableIndirection<Expr<SubscriptInteger>>;
+
 // A predicate that is true when a kind value is a kind that could possibly
 // be supported for an intrinsic type category on some target instruction
 // set architecture.
@@ -244,9 +247,7 @@ public:
   CLASS_BOILERPLATE(SomeKind)
   explicit SomeKind(const semantics::DerivedTypeSpec &s) : spec_{&s} {}
 
-  std::optional<DynamicType> GetType() const {
-    return {DynamicType{category, 0, spec_}};
-  }
+  DynamicType GetType() const { return DynamicType{category, 0, spec_}; }
   const semantics::DerivedTypeSpec &spec() const { return *spec_; }
   std::string Dump() const;
 
@@ -330,7 +331,7 @@ template<typename T> struct Constant {
   template<typename A>
   Constant(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
     : value(std::move(x)) {}
-  constexpr std::optional<DynamicType> GetType() const {
+  constexpr DynamicType GetType() const {
     if constexpr (Result::isSpecificIntrinsicType) {
       return Result::GetType();
     } else {

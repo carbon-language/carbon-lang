@@ -34,25 +34,17 @@ Expr<ResultType<A>> FoldOperation(FoldingContext &, A &&x) {
 }
 
 // Designators
-// At the moment, only substrings fold.
-// TODO: Parameters, KIND type parameters
+// At the moment, only empty substrings fold.
+// TODO: Parameters, KIND type parameters, substrings of parameters
 template<int KIND>
 Expr<Type<TypeCategory::Character, KIND>> FoldOperation(FoldingContext &context,
     Designator<Type<TypeCategory::Character, KIND>> &&designator) {
   using CHAR = Type<TypeCategory::Character, KIND>;
   if (auto *substring{std::get_if<Substring>(&designator.u)}) {
-    if (auto folded{substring->Fold(context)}) {
-      if (auto *string{std::get_if<Scalar<CHAR>>(&*folded)}) {
-        return Expr<CHAR>{Constant<CHAR>{std::move(*string)}};
-      }
-      // A zero-length substring of an arbitrary data reference can
-      // be folded, but the C++ string type of the empty value will be
-      // std::string and that may not be right for multi-byte CHARACTER
-      // kinds.
-      if (auto length{ToInt64(Fold(context, substring->LEN()))}) {
-        if (*length == 0) {
-          return Expr<CHAR>{Constant<CHAR>{Scalar<CHAR>{}}};
-        }
+    substring->Fold(context);
+    if (auto length{ToInt64(Fold(context, substring->LEN()))}) {
+      if (*length == 0) {
+        return Expr<CHAR>{Constant<CHAR>{Scalar<CHAR>{}}};
       }
     }
   }
@@ -353,22 +345,56 @@ Expr<T> FoldOperation(FoldingContext &context, Extremum<T> &&x) {
 template<int KIND>
 Expr<Type<TypeCategory::Complex, KIND>> FoldOperation(
     FoldingContext &context, ComplexConstructor<KIND> &&x) {
-  using COMPLEX = Type<TypeCategory::Complex, KIND>;
+  using Result = Type<TypeCategory::Complex, KIND>;
   if (auto folded{FoldOperands(context, x.left(), x.right())}) {
-    return Expr<COMPLEX>{
-        Constant<COMPLEX>{Scalar<COMPLEX>{folded->first, folded->second}}};
+    return Expr<Result>{
+        Constant<Result>{Scalar<Result>{folded->first, folded->second}}};
   }
-  return Expr<COMPLEX>{std::move(x)};
+  return Expr<Result>{std::move(x)};
+}
+
+template<int KIND>
+Expr<Type<TypeCategory::Character, KIND>> FoldOperation(
+    FoldingContext &context, LiteralSubstring<KIND> &&x) {
+  using Result = Type<TypeCategory::Character, KIND>;
+  x.left() = Fold(context, std::move(x.left()));
+  x.right() = Fold(context, std::move(x.right()));
+  auto lower{ToInt64(x.left())};
+  auto upper{ToInt64(x.left())};
+  if (lower.has_value() && *lower < 1) {
+    context.messages.Say("lower bound (%jd) on literal substring "
+                         "is less than one"_en_US,
+        static_cast<std::intmax_t>(*lower));
+    lower = 1;
+  }
+  if (upper.has_value()) {
+    if (*upper < 1 || (lower.has_value() && *upper < *lower)) {
+      return Expr<Result>{Constant<Result>(Scalar<Result>{})};
+    }
+    std::int64_t len = x.string.size();
+    if (*upper > len) {
+      context.messages.Say("upper bound (%jd) on substring "
+                           "is greater than character length (%jd)"_en_US,
+          static_cast<std::intmax_t>(*upper), static_cast<std::intmax_t>(len));
+      upper = len;
+    }
+    if (lower.has_value()) {
+      Scalar<Result> substring{
+          x.string.substr(*lower - 1, *upper - *lower + 1)};
+      return Expr<Result>{Constant<Result>{substring}};
+    }
+  }
+  return Expr<Result>{std::move(x)};
 }
 
 template<int KIND>
 Expr<Type<TypeCategory::Character, KIND>> FoldOperation(
     FoldingContext &context, Concat<KIND> &&x) {
-  using CHAR = Type<TypeCategory::Character, KIND>;
+  using Result = Type<TypeCategory::Character, KIND>;
   if (auto folded{FoldOperands(context, x.left(), x.right())}) {
-    return Expr<CHAR>{Constant<CHAR>{folded->first + folded->second}};
+    return Expr<Result>{Constant<Result>{folded->first + folded->second}};
   }
-  return Expr<CHAR>{std::move(x)};
+  return Expr<Result>{std::move(x)};
 }
 
 template<typename T>
