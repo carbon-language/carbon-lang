@@ -196,6 +196,23 @@ Safe to use *only* when the data are private to just one
 thread of execution.
 Used sparingly in place of `std::shared_ptr<>` only when the overhead
 of that standard feature is prohibitive.
+
+A feature matrix:
+
+| pointer | nullable | default null | owning | reassignable | copyable |
+| ------- | -------- | ------------ | ------ | ------------ | -------- |
+| `*p` | yes | no | no | yes | shallowly |
+| `&r` | no | n/a | no | no | shallowly |
+| `unique_ptr<>` | yes | yes | yes | yes | no |
+| `shared_ptr<>` | yes | yes | yes | yes | shallowly |
+| `OwningPointer<>` | yes | yes | yes | yes | no |
+| `Indirection<>` | no | n/a | yes | yes | optionally deeply |
+| `CountedReference<>` | yes | yes | yes | yes | shallowly |
+
+Note that `std::optional<Indirection<>>` checks all the boxes, if you
+need a nullable `Indirection<>`.
+
+
 ### Overall design preferences
 Don't use dynamic solutions to solve problems that can be solved at
 build time; don't solve build time problems by writing programs that
