@@ -19820,7 +19820,7 @@ static SDValue LowerEXTEND_VECTOR_INREG(SDValue Op,
   // As SRAI is only available on i16/i32 types, we expand only up to i32
   // and handle i64 separately.
   while (CurrVT != VT && CurrVT.getVectorElementType() != MVT::i32) {
-    Curr = DAG.getNode(X86ISD::UNPCKL, dl, CurrVT, DAG.getUNDEF(CurrVT), Curr);
+    Curr = getUnpackl(DAG, dl, CurrVT, DAG.getUNDEF(CurrVT), Curr);
     MVT CurrSVT = MVT::getIntegerVT(CurrVT.getScalarSizeInBits() * 2);
     CurrVT = MVT::getVectorVT(CurrSVT, CurrVT.getVectorNumElements() / 2);
     Curr = DAG.getBitcast(CurrVT, Curr);
