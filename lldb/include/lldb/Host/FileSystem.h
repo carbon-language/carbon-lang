@@ -43,9 +43,11 @@ public:
 
   Status ResolveSymbolicLink(const FileSpec &src, FileSpec &dst);
 
-  /// Wraps ::fopen in a platform-independent way. Once opened, FILEs can be
-  /// manipulated and closed with the normal ::fread, ::fclose, etc. functions.
+  /// Wraps ::fopen in a platform-independent way.
   FILE *Fopen(const char *path, const char *mode);
+
+  /// Wraps ::open in a platform-independent way.
+  int Open(const char *path, int flags, int mode);
 
   /// Returns the modification time of the given file.
   /// @{
