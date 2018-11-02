@@ -190,6 +190,7 @@ the definition of an external destructor.
 optional deep copy semantics; reassignable.
 Often better than a reference (due to ownership) or `std::unique_ptr<>`
 (due to non-nullability and copyability).
+Can be wrapped in `std::optional<>` when nullability is required.
 * `CountedReference<>`: A nullable pointer with shared ownership via
 reference counting, null by default, shallowly copyable, reassignable.
 Safe to use *only* when the data are private to just one
@@ -199,19 +200,15 @@ of that standard feature is prohibitive.
 
 A feature matrix:
 
-| pointer | nullable | default null | owning | reassignable | copyable |
-| ------- | -------- | ------------ | ------ | ------------ | -------- |
-| `*p` | yes | no | no | yes | shallowly |
-| `&r` | no | n/a | no | no | shallowly |
-| `unique_ptr<>` | yes | yes | yes | yes | no |
-| `shared_ptr<>` | yes | yes | yes | yes | shallowly |
-| `OwningPointer<>` | yes | yes | yes | yes | no |
-| `Indirection<>` | no | n/a | yes | yes | optionally deeply |
-| `CountedReference<>` | yes | yes | yes | yes | shallowly |
-
-Note that `std::optional<Indirection<>>` checks all the boxes, if you
-need a nullable `Indirection<>`.
-
+| pointer | nullable | default null | owning | reassignable | copyable | undefined type ok? |
+| ------- | -------- | ------------ | ------ | ------------ | -------- | ------------------ |
+| `*p` | yes | no | no | yes | shallowly | yes |
+| `&r` | no | n/a | no | no | shallowly | no |
+| `unique_ptr<>` | yes | yes | yes | yes | no | no |
+| `shared_ptr<>` | yes | yes | yes | yes | shallowly | no |
+| `OwningPointer<>` | yes | yes | yes | yes | no | yes |
+| `Indirection<>` | no | n/a | yes | yes | optionally deeply | no |
+| `CountedReference<>` | yes | yes | yes | yes | shallowly | no |
 
 ### Overall design preferences
 Don't use dynamic solutions to solve problems that can be solved at
