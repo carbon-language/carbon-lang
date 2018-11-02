@@ -209,6 +209,20 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
     }
   }
 
+  // Custom lower lane accesses to expand out variable indices
+  if (Subtarget->hasSIMD128()) {
+    for (auto T : {MVT::v16i8, MVT::v8i16, MVT::v4i32, MVT::v4f32}) {
+      setOperationAction(ISD::EXTRACT_VECTOR_ELT, T, Custom);
+      setOperationAction(ISD::INSERT_VECTOR_ELT, T, Custom);
+    }
+    if (EnableUnimplementedWasmSIMDInstrs) {
+      for (auto T : {MVT::v2i64, MVT::v2f64}) {
+        setOperationAction(ISD::EXTRACT_VECTOR_ELT, T, Custom);
+        setOperationAction(ISD::INSERT_VECTOR_ELT, T, Custom);
+      }
+    }
+  }
+
   // Trap lowers to wasm unreachable
   setOperationAction(ISD::TRAP, MVT::Other, Legal);
 
@@ -859,6 +873,9 @@ SDValue WebAssemblyTargetLowering::LowerOperation(SDValue Op,
     return LowerCopyToReg(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN:
     return LowerINTRINSIC_WO_CHAIN(Op, DAG);
+  case ISD::EXTRACT_VECTOR_ELT:
+  case ISD::INSERT_VECTOR_ELT:
+    return LowerAccessVectorElement(Op, DAG);
   case ISD::VECTOR_SHUFFLE:
     return LowerVECTOR_SHUFFLE(Op, DAG);
   case ISD::SHL:
@@ -1048,6 +1065,18 @@ WebAssemblyTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
   }
 
   return DAG.getNode(WebAssemblyISD::SHUFFLE, DL, Op.getValueType(), Ops);
+}
+
+SDValue
+WebAssemblyTargetLowering::LowerAccessVectorElement(SDValue Op,
+                                                    SelectionDAG &DAG) const {
+  // Allow constant lane indices, expand variable lane indices
+  SDNode *IdxNode = Op.getOperand(Op.getNumOperands() - 1).getNode();
+  if (isa<ConstantSDNode>(IdxNode) || IdxNode->isUndef())
+    return Op;
+  else
+    // Perform default expansion
+    return SDValue();
 }
 
 SDValue WebAssemblyTargetLowering::LowerShift(SDValue Op,
