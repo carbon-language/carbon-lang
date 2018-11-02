@@ -185,8 +185,7 @@ struct DataRef {
 };
 
 // R908 substring, R909 parent-string, R910 substring-range.
-// The base object of a substring can be a literal, but those are represented
-// as a LiteralSubstring expression.
+// The base object of a substring can be a literal.
 // In the F2018 standard, substrings of array sections are parsed as
 // variants of sections instead.
 class Substring {
@@ -204,7 +203,7 @@ public:
     SetBounds(first, last);
   }
 
-  Expr<SubscriptInteger> first() const;
+  Expr<SubscriptInteger> first() const;  // TODO pmk: lower/upper
   Expr<SubscriptInteger> last() const;
   int Rank() const;
   BaseObject GetBaseObject() const;
@@ -213,6 +212,7 @@ public:
   std::ostream &Dump(std::ostream &) const;
 
   void Fold(FoldingContext &);
+  std::optional<std::string> AsConstantString() const;
 
 private:
   void SetBounds(std::optional<Expr<SubscriptInteger>> &,

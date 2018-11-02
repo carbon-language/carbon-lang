@@ -21,7 +21,9 @@
 #include "../common/idioms.h"
 #include <cinttypes>
 #include <memory>
+#include <optional>
 #include <ostream>
+#include <string>
 #include <vector>
 
 namespace Fortran::evaluate {
@@ -50,16 +52,28 @@ public:
     return *this;
   }
 
+  int itemBytes() const { return itemBytes_; }
+  StaticDataObject &set_itemBytes(int b) {
+    CHECK(b >= 1);
+    itemBytes_ = b;
+    return *this;
+  }
+
   const std::vector<std::uint8_t> &data() const { return data_; }
   std::vector<std::uint8_t> &data() { return data_; }
 
+  StaticDataObject &Push(const std::string &);
+  StaticDataObject &Push(const std::u16string &);
+  StaticDataObject &Push(const std::u32string &);
+  std::optional<std::string> AsString() const;
   std::ostream &Dump(std::ostream &) const;
 
 private:
   StaticDataObject() {}
 
   std::string name_;
-  int alignment_{0};
+  int alignment_{1};
+  int itemBytes_{1};
   std::vector<std::uint8_t> data_;
 };
 }

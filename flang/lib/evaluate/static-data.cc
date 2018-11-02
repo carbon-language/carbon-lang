@@ -27,4 +27,41 @@ std::ostream &StaticDataObject::Dump(std::ostream &o) const {
   }
   return o << '}';
 }
+
+StaticDataObject &StaticDataObject::Push(const std::string &string) {
+  for (auto ch : string) {
+    data_.push_back(static_cast<std::uint8_t>(ch));
+  }
+  return *this;
+}
+
+StaticDataObject &StaticDataObject::Push(const std::u16string &string) {
+  // TODO here and below: big-endian targets
+  for (auto ch : string) {
+    data_.push_back(static_cast<std::uint8_t>(ch));
+    data_.push_back(static_cast<std::uint8_t>(ch >> 8));
+  }
+  return *this;
+}
+
+StaticDataObject &StaticDataObject::Push(const std::u32string &string) {
+  for (auto ch : string) {
+    data_.push_back(static_cast<std::uint8_t>(ch));
+    data_.push_back(static_cast<std::uint8_t>(ch >> 8));
+    data_.push_back(static_cast<std::uint8_t>(ch >> 16));
+    data_.push_back(static_cast<std::uint8_t>(ch >> 24));
+  }
+  return *this;
+}
+
+std::optional<std::string> StaticDataObject::AsString() const {
+  if (itemBytes_ <= 1) {
+    std::string result;
+    for (std::uint8_t byte : data_) {
+      result += static_cast<char>(byte);
+    }
+    return {std::move(result)};
+  }
+  return std::nullopt;
+}
 }

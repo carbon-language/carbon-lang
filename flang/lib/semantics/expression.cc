@@ -827,9 +827,14 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::CharLiteralConstantSubstring &x) {
             using Result = ResultType<decltype(ckExpr)>;
             auto *cp{std::get_if<Constant<Result>>(&ckExpr.u)};
             CHECK(cp != nullptr);  // the parent was parsed as a constant string
-            return AsGenericExpr(Expr<SomeCharacter>{Expr<Result>{
-                LiteralSubstring<Result::kind>{std::move(cp->value),
-                    std::move(*lower), std::move(*upper)}}});
+            StaticDataObject::Pointer staticData{StaticDataObject::Create()};
+            staticData->set_alignment(Result::kind)
+                .set_itemBytes(Result::kind)
+                .Push(cp->value);
+            Substring substring{
+                std::move(staticData), std::move(*lower), std::move(*upper)};
+            return AsGenericExpr(Expr<SomeCharacter>{
+                Expr<Result>{Designator<Result>{std::move(substring)}}});
           },
           std::move(charExpr->u));
     }

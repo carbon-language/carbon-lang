@@ -130,7 +130,7 @@ void Substring::Fold(FoldingContext &context) {
   std::optional<std::int64_t> lbi{ToInt64(**first_)};
   if (lbi.has_value() && *lbi < 1) {
     context.messages.Say(
-        "lower bound on substring (%jd) is less than one"_en_US,
+        "lower bound (%jd) on substring is less than one"_en_US,
         static_cast<std::intmax_t>(*lbi));
     *lbi = 1;
     first_ = AsExpr(Constant<SubscriptInteger>{1});
@@ -140,10 +140,40 @@ void Substring::Fold(FoldingContext &context) {
   }
   *last_ = evaluate::Fold(context, std::move(**last_));
   if (std::optional<std::int64_t> ubi{ToInt64(**last_)}) {
+    auto *literal{std::get_if<StaticDataObject::Pointer>(&parent_)};
+    std::optional<std::int64_t> length;
+    if (literal != nullptr) {
+      length = (*literal)->data().size();
+    } else {
+      // TODO pmk: get max character length from symbol
+    }
     if (*ubi < 1 || (lbi.has_value() && *ubi < *lbi)) {
       // Zero-length string: canonicalize
-      first_ = AsExpr(Constant<SubscriptInteger>{1});
-      last_ = AsExpr(Constant<SubscriptInteger>{0});
+      *lbi = 1, *ubi = 0;
+      first_ = AsExpr(Constant<SubscriptInteger>{*lbi});
+      last_ = AsExpr(Constant<SubscriptInteger>{*ubi});
+    } else if (length.has_value() && *ubi > *length) {
+      context.messages.Say("upper bound (&jd) on substring is greater "
+                           "than character length (%jd)"_en_US,
+          static_cast<std::intmax_t>(*ubi), static_cast<std::int64_t>(*length));
+      *ubi = *length;
+    }
+    if (lbi.has_value()) {
+      if (literal != nullptr || *ubi < *lbi) {
+        auto newStaticDataPointer{StaticDataObject::Create()};
+        auto items{*ubi - *lbi + 1};
+        auto width{(*literal)->itemBytes()};
+        auto bytes{items * width};
+        auto startByte{(*lbi - 1) * width};
+        const auto *from{&(*literal)->data()[0] + startByte};
+        for (auto j{0}; j < bytes; ++j) {
+          newStaticDataPointer->data().push_back(from[j]);
+        }
+        parent_ = newStaticDataPointer;
+        first_ = AsExpr(Constant<SubscriptInteger>{1});
+        std::int64_t length = newStaticDataPointer->data().size();
+        last_ = AsExpr(Constant<SubscriptInteger>{length});
+      }
     }
   }
 }

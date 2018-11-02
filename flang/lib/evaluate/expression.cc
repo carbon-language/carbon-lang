@@ -58,11 +58,6 @@ template<typename A> std::ostream &Relational<A>::Infix(std::ostream &o) const {
   return o << '.' << EnumToString(opr) << '.';
 }
 
-template<int KIND>
-std::ostream &LiteralSubstring<KIND>::Prefix(std::ostream &o) const {
-  return o << KIND << '_' << parser::QuoteCharacterLiteral(string) << '(';
-}
-
 std::ostream &Relational<SomeType>::Dump(std::ostream &o) const {
   std::visit([&](const auto &rel) { rel.Dump(o); }, u);
   return o;
@@ -153,12 +148,6 @@ template<typename T> Expr<SubscriptInteger> ArrayConstructor<T>::LEN() const {
   return AsExpr(Constant<SubscriptInteger>{0});  // TODO placeholder
 }
 
-template<int KIND> Expr<SubscriptInteger> LiteralSubstring<KIND>::LEN() const {
-  auto lower{this->left()};
-  auto upper{this->right()};
-  return std::move(upper) - std::move(lower) + Expr<SubscriptInteger>{1};
-}
-
 template<int KIND>
 Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
   return std::visit(
@@ -166,7 +155,6 @@ Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
                          return AsExpr(
                              Constant<SubscriptInteger>{c.value.size()});
                        },
-          [](const LiteralSubstring<KIND> &ls) { return ls.LEN(); },
           [](const ArrayConstructor<Result> &a) { return a.LEN(); },
           [](const Parentheses<Result> &x) { return x.left().LEN(); },
           [](const Concat<KIND> &c) {
