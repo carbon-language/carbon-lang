@@ -22,6 +22,7 @@ add_library(FortranEvaluate
   intrinsics.cc
   logical.cc
   real.cc
+  static-data.cc
   tools.cc
   type.cc
   variable.cc

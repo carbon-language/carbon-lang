@@ -23,6 +23,7 @@
 
 #include "call.h"
 #include "common.h"
+#include "static-data.h"
 #include "type.h"
 #include "../common/idioms.h"
 #include "../common/template.h"
@@ -47,6 +48,17 @@ template<typename A> struct Variable;
 int GetSymbolRank(const Symbol &);
 const parser::CharBlock &GetSymbolName(const Symbol &);
 
+// Reference a base object in memory.  This can be a Fortran symbol,
+// static data (e.g., CHARACTER literal), or compiler-created temporary.
+struct BaseObject {
+  CLASS_BOILERPLATE(BaseObject)
+  explicit BaseObject(const Symbol &symbol) : u{&symbol} {}
+  explicit BaseObject(StaticDataObject::Pointer &&p) : u{std::move(p)} {}
+  int Rank() const;
+  Expr<SubscriptInteger> LEN() const;
+  std::ostream &Dump(std::ostream &) const;
+  std::variant<const Symbol *, StaticDataObject::Pointer> u;
+};
 
 // R913 structure-component & C920: Defined to be a multi-part
 // data-ref whose last part has no subscripts (or image-selector, although
@@ -108,8 +120,8 @@ struct Subscript {
 // these types.
 struct ArrayRef {
   CLASS_BOILERPLATE(ArrayRef)
-  ArrayRef(const Symbol &n, std::vector<Subscript> &&ss)
-    : u{&n}, subscript(std::move(ss)) {}
+  ArrayRef(const Symbol &symbol, std::vector<Subscript> &&ss)
+    : u{&symbol}, subscript(std::move(ss)) {}
   ArrayRef(Component &&c, std::vector<Subscript> &&ss)
     : u{std::move(c)}, subscript(std::move(ss)) {}
 
@@ -185,12 +197,18 @@ public:
     : parent_{std::move(parent)} {
     SetBounds(first, last);
   }
+  Substring(StaticDataObject::Pointer &&parent,
+      std::optional<Expr<SubscriptInteger>> &&first,
+      std::optional<Expr<SubscriptInteger>> &&last)
+    : parent_{std::move(parent)} {
+    SetBounds(first, last);
+  }
 
   Expr<SubscriptInteger> first() const;
   Expr<SubscriptInteger> last() const;
   int Rank() const;
-  const Symbol &GetFirstSymbol() const;
-  const Symbol &GetLastSymbol() const;
+  BaseObject GetBaseObject() const;
+  const Symbol *GetLastSymbol() const;
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 
@@ -199,7 +217,7 @@ public:
 private:
   void SetBounds(std::optional<Expr<SubscriptInteger>> &,
       std::optional<Expr<SubscriptInteger>> &);
-  DataRef parent_;
+  std::variant<DataRef, StaticDataObject::Pointer> parent_;
   std::optional<IndirectSubscriptIntegerExpr> first_, last_;
 };
 
@@ -248,8 +266,8 @@ public:
 
   std::optional<DynamicType> GetType() const;
   int Rank() const;
-  const Symbol &GetFirstSymbol() const;
-  const Symbol &GetLastSymbol() const;
+  BaseObject GetBaseObject() const;
+  const Symbol *GetLastSymbol() const;
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &o) const;
 
