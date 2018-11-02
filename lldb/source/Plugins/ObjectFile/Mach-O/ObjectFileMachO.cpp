@@ -6324,10 +6324,10 @@ bool ObjectFileMachO::SaveCore(const lldb::ProcessSP &process_sp,
 
           File core_file;
           std::string core_file_path(outfile.GetPath());
-          error = core_file.Open(core_file_path.c_str(),
-                                 File::eOpenOptionWrite |
-                                     File::eOpenOptionTruncate |
-                                     File::eOpenOptionCanCreate);
+          error = FileSystem::Instance().Open(core_file, outfile,
+                                              File::eOpenOptionWrite |
+                                                  File::eOpenOptionTruncate |
+                                                  File::eOpenOptionCanCreate);
           if (error.Success()) {
             // Read 1 page at a time
             uint8_t bytes[0x1000];
