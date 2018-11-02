@@ -3,7 +3,9 @@ Release
 MinSizeRel
 build
 tags
+TAGS
 *.o
+.nfs*
 *~
 *#
 CMakeCache.txt

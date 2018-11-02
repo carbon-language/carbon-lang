@@ -164,34 +164,37 @@ There are many -- perhaps too many -- means of indirect addressing
 data in this project.
 Some of these are standard C++ language and library features,
 while others are local inventions in `lib/common`:
-* Bare pointers (`Foo *p`): nullable, non-owning, undefined when
-uninitialized, shallowly copyable, and almost never the right abstraction
-to use in this project.
-* References (`Foo &r`, `const Foo &r`): non-nullable, not owning, and
-shallowly copied.
+* Bare pointers (`Foo *p`): these are obviously nullable, non-owning,
+undefined when uninitialized, shallowly copyable, reassignable, and almost
+never the right abstraction to use in this project.
+* References (`Foo &r`, `const Foo &r`): non-nullable, not owning,
+shallowly copyable, and not reassignable.
 References are great for invisible indirection to objects whose lifetimes are
 broader than that of the reference.
+(Sometimes when a class data member should be a reference, but we also need
+reassignability, it will be declared as a pointer, and its accessor
+will be defined to return a reference.)
 * Rvalue references (`Foo &&r`): These are non-nullable references
 *with* ownership, and they are ubiquitously used for formal arguments
 wherever appropriate.
-* `std::unique_ptr<>`: A nullable pointer with ownership, null by default.
-Not copyable.
+* `std::unique_ptr<>`: A nullable pointer with ownership, null by default,
+not copyable, reassignable.
 * `std::shared_ptr<>`: A nullable pointer with shared ownership via reference
-counting, null by default.  Slow.
+counting, null by default, shallowly copyable, reassignable, and slow.
 * `OwningPointer<>`: A nullable pointer with ownership, better suited
 for use with forward-defined types than `std::unique_ptr<>` is.
-Null by default.
+Null by default, not copyable, reassignable.
 Does not have means for allocating data, and inconveniently requires
 the definition of an external destructor.
 * `Indirection<>`: A non-nullable pointer with ownership and
-optional deep copy semantics.
+optional deep copy semantics; reassignable.
 Often better than a reference (due to ownership) or `std::unique_ptr<>`
 (due to non-nullability and copyability).
 * `CountedReference<>`: A nullable pointer with shared ownership via
-reference counting.
-Safe only when the data are private to one
+reference counting, null by default, shallowly copyable, reassignable.
+Safe to use *only* when the data are private to just one
 thread of execution.
-Used sparely in place of `std::shared_ptr<>` only when the overhead
+Used sparingly in place of `std::shared_ptr<>` only when the overhead
 of that standard feature is prohibitive.
 ### Overall design preferences
 Don't use dynamic solutions to solve problems that can be solved at
