@@ -45,11 +45,19 @@ typedef unsigned char CFI_rank_t;
 // and should be used for all array indexing and loop bound calculations.
 typedef ptrdiff_t CFI_index_t;
 
-#define CFI_DESC_T(rank) \
+#ifdef __cplusplus
+// C++ does not support zero-sized array (rank=0)
+// Also, CFI_cdesc_t already contains 1 dim in cpp
+#define CFI_CDESC_T(rank) \
+  std::aligned_storage_t<sizeof(CFI_cdesc_t) + (rank - 1) * sizeof(CFI_dim_t), \
+      alignof(CFI_cdesc_t)>
+#else
+#define CFI_CDESC_T(rank) \
   struct { \
     CFI_cdesc_t cdesc; /* must be first */ \
     CFI_dim_t dim[rank]; \
-  };
+  }
+#endif
 
 typedef unsigned char CFI_attribute_t;
 #define CFI_attribute_pointer 1
