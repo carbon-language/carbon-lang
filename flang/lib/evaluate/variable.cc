@@ -122,7 +122,7 @@ Expr<SubscriptInteger> Substring::last() const {
   }
 }
 
-void Substring::Fold(FoldingContext &context) {
+std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
   if (!first_.has_value()) {
     first_ = AsExpr(Constant<SubscriptInteger>{1});
   }
@@ -160,22 +160,36 @@ void Substring::Fold(FoldingContext &context) {
     }
     if (lbi.has_value()) {
       if (literal != nullptr || *ubi < *lbi) {
-        auto newStaticDataPointer{StaticDataObject::Create()};
+        auto newStaticData{StaticDataObject::Create()};
         auto items{*ubi - *lbi + 1};
         auto width{(*literal)->itemBytes()};
         auto bytes{items * width};
         auto startByte{(*lbi - 1) * width};
         const auto *from{&(*literal)->data()[0] + startByte};
         for (auto j{0}; j < bytes; ++j) {
-          newStaticDataPointer->data().push_back(from[j]);
+          newStaticData->data().push_back(from[j]);
         }
-        parent_ = newStaticDataPointer;
+        parent_ = newStaticData;
         first_ = AsExpr(Constant<SubscriptInteger>{1});
-        std::int64_t length = newStaticDataPointer->data().size();
+        std::int64_t length = newStaticData->data().size();
         last_ = AsExpr(Constant<SubscriptInteger>{length});
+        switch (width) {
+        case 1:
+          return {
+              AsCategoryExpr(AsExpr(Constant<Type<TypeCategory::Character, 1>>{
+                  *newStaticData->AsString()}))};
+        case 2:
+          return {AsCategoryExpr(Constant<Type<TypeCategory::Character, 2>>{
+              *newStaticData->AsU16String()})};
+        case 4:
+          return {AsCategoryExpr(Constant<Type<TypeCategory::Character, 4>>{
+              *newStaticData->AsU32String()})};
+        default: CRASH_NO_CASE;
+        }
       }
     }
   }
+  return std::nullopt;
 }
 
 // Variable dumping

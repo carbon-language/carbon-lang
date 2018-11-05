@@ -41,12 +41,17 @@ Expr<Type<TypeCategory::Character, KIND>> FoldOperation(FoldingContext &context,
     Designator<Type<TypeCategory::Character, KIND>> &&designator) {
   using CHAR = Type<TypeCategory::Character, KIND>;
   if (auto *substring{std::get_if<Substring>(&designator.u)}) {
-    substring->Fold(context);
+    if (std::optional<Expr<SomeCharacter>> folded{substring->Fold(context)}) {
+      if (auto *kindChar{std::get_if<Expr<CHAR>>(&folded->u)}) {
+        if (auto value{GetScalarConstantValue(*kindChar)}) {
+          return Expr<CHAR>{std::move(*value)};
+        }
+      }
+    }
     if (auto length{ToInt64(Fold(context, substring->LEN()))}) {
       if (*length == 0) {
         return Expr<CHAR>{Constant<CHAR>{Scalar<CHAR>{}}};
       }
-      // TODO pmk: substring of literal - write Substring::AsConstantString
     }
   }
   return Expr<CHAR>{std::move(designator)};

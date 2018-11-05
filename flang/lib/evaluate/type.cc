@@ -34,7 +34,8 @@ std::optional<DynamicType> GetSymbolType(const semantics::Symbol &symbol) {
         if (IsValidKindOfIntrinsicType(category, kind)) {
           return std::make_optional(DynamicType{category, kind});
         }
-      } break;
+        break;
+      }
       case semantics::DeclTypeSpec::Category::TypeDerived:
       case semantics::DeclTypeSpec::Category::ClassDerived:
         return std::make_optional(DynamicType{

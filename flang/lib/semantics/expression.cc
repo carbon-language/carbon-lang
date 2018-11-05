@@ -20,6 +20,7 @@
 #include "../evaluate/common.h"
 #include "../evaluate/fold.h"
 #include "../evaluate/tools.h"
+#include "../parser/characters.h"
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
 #include <functional>
@@ -165,6 +166,8 @@ struct ExprAnalyzer {
   // Kind parameter analysis always returns a valid kind value.
   int Analyze(
       const std::optional<parser::KindParam> &, int defaultKind, int kanjiKind);
+
+  MaybeExpr Analyze(std::string &&, int);
 
   std::optional<Subscript> Analyze(const parser::SectionSubscript &);
   std::vector<Subscript> Analyze(const std::list<parser::SectionSubscript> &);
@@ -430,16 +433,38 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::ComplexLiteralConstant &z) {
       context.defaultKinds().GetDefaultKind(TypeCategory::Real)));
 }
 
+MaybeExpr ExprAnalyzer::Analyze(std::string &&string, int kind) {
+  if (!IsValidKindOfIntrinsicType(TypeCategory::Character, kind)) {
+    Say("unsupported CHARACTER(KIND=%d)"_err_en_US, kind);
+    return std::nullopt;
+  }
+  if (kind == 1) {
+    return {AsGenericExpr(
+        Constant<Type<TypeCategory::Character, 1>>{std::move(string)})};
+  } else if (std::optional<std::u32string> unicode{
+                 parser::DecodeUTF8(string)}) {
+    if (kind == 4) {
+      return {AsGenericExpr(
+          Constant<Type<TypeCategory::Character, 4>>{std::move(*unicode)})};
+    }
+    CHECK(kind == 2);
+    // TODO: better Kanji support
+    std::u16string result;
+    for (const char32_t &ch : *unicode) {
+      result += static_cast<char16_t>(ch);
+    }
+    return {AsGenericExpr(
+        Constant<Type<TypeCategory::Character, 2>>{std::move(result)})};
+  } else {
+    Say("bad UTF-8 encoding of CHARACTER(KIND=%d) literal"_err_en_US, kind);
+    return std::nullopt;
+  }
+}
+
 MaybeExpr ExprAnalyzer::Analyze(const parser::CharLiteralConstant &x) {
   int kind{Analyze(std::get<std::optional<parser::KindParam>>(x.t), 1)};
   auto value{std::get<std::string>(x.t)};
-  auto result{common::SearchDynamicTypes(
-      TypeKindVisitor<TypeCategory::Character, Constant, std::string>{
-          kind, std::move(value)})};
-  if (!result.has_value()) {
-    Say("unsupported CHARACTER(KIND=%d)"_err_en_US, kind);
-  }
-  return result;
+  return Analyze(std::move(value), kind);
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::LogicalLiteralConstant &x) {
@@ -456,9 +481,9 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::LogicalLiteralConstant &x) {
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::HollerithLiteralConstant &x) {
-  return common::SearchDynamicTypes(
-      TypeKindVisitor<TypeCategory::Character, Constant, std::string>{
-          context.defaultKinds().GetDefaultKind(TypeCategory::Character), x.v});
+  int kind{context.defaultKinds().GetDefaultKind(TypeCategory::Character)};
+  auto value{x.v};
+  return Analyze(std::move(value), kind);
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::BOZLiteralConstant &x) {

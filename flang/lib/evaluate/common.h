@@ -186,6 +186,7 @@ struct FoldingContext {
   parser::ContextualMessages messages;
   Rounding rounding{defaultRounding};
   bool flushDenormalsToZero{false};
+  bool bigEndian{false};
 };
 
 void RealFlagWarnings(FoldingContext &, const RealFlags &, const char *op);

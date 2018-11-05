@@ -68,6 +68,7 @@ template<TypeCategory CATEGORY, int KIND = 0> class Type;
 template<TypeCategory CATEGORY, int KIND> struct TypeBase {
   // Only types that represent a known kind of one of the five intrinsic
   // data types will have set this flag to true.
+  // TODO pmk: convert to type predicate expression
   static constexpr bool isSpecificIntrinsicType{true};
   static constexpr DynamicType dynamicType{CATEGORY, KIND};
   static constexpr DynamicType GetType() { return {dynamicType}; }
@@ -181,8 +182,7 @@ static constexpr bool IsValidKindOfIntrinsicType(
   case TypeCategory::Real:
   case TypeCategory::Complex:
     return kind == 2 || kind == 4 || kind == 8 || kind == 10 || kind == 16;
-  case TypeCategory::Character:
-    return kind == 1;  // TODO: || kind == 2 || kind == 4;
+  case TypeCategory::Character: return kind == 1 || kind == 2 || kind == 4;
   case TypeCategory::Logical:
     return kind == 1 || kind == 2 || kind == 4 || kind == 8;
   default: return false;
@@ -326,20 +326,17 @@ template<typename T> struct Constant {
   static_assert(T::isSpecificIntrinsicType);
   using Result = T;
   using Value = Scalar<Result>;
+
   CLASS_BOILERPLATE(Constant)
   template<typename A> Constant(const A &x) : value{x} {}
   template<typename A>
   Constant(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
     : value(std::move(x)) {}
-  constexpr DynamicType GetType() const {
-    if constexpr (Result::isSpecificIntrinsicType) {
-      return Result::GetType();
-    } else {
-      return value.GetType();
-    }
-  }
+
+  constexpr DynamicType GetType() const { return Result::GetType(); }
   int Rank() const { return 0; }
   std::ostream &Dump(std::ostream &) const;
+
   Value value;
 };
 }

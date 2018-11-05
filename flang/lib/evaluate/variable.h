@@ -211,8 +211,7 @@ public:
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 
-  void Fold(FoldingContext &);
-  std::optional<std::string> AsConstantString() const;
+  std::optional<Expr<SomeCharacter>> Fold(FoldingContext &);
 
 private:
   void SetBounds(std::optional<Expr<SubscriptInteger>> &,

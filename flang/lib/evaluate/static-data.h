@@ -66,7 +66,11 @@ public:
   StaticDataObject &Push(const std::u16string &);
   StaticDataObject &Push(const std::u32string &);
   std::optional<std::string> AsString() const;
+  std::optional<std::u16string> AsU16String() const;
+  std::optional<std::u32string> AsU32String() const;
   std::ostream &Dump(std::ostream &) const;
+
+  static bool bigEndian;
 
 private:
   StaticDataObject() {}

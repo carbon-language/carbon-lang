@@ -134,14 +134,19 @@ template<typename A> Expr<ResultType<A>> AsExpr(A &&x) {
   return Expr<ResultType<A>>{std::move(x)};
 }
 
-template<TypeCategory CAT>
-Expr<SomeKind<CAT>> AsCategoryExpr(Expr<SomeKind<CAT>> &&x) {
+template<typename T> Expr<T> AsExpr(Expr<T> &&x) {
+  static_assert(T::isSpecificIntrinsicType);
   return std::move(x);
 }
 
 template<typename A>
 Expr<SomeKind<ResultType<A>::category>> AsCategoryExpr(A &&x) {
   return Expr<SomeKind<ResultType<A>::category>>{AsExpr(std::move(x))};
+}
+
+template<TypeCategory CATEGORY>
+Expr<SomeKind<CATEGORY>> AsCategoryExpr(Expr<SomeKind<CATEGORY>> &&x) {
+  return std::move(x);
 }
 
 template<typename A> Expr<SomeType> AsGenericExpr(A &&x) {

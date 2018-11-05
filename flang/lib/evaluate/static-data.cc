@@ -15,6 +15,9 @@
 #include "static-data.h"
 
 namespace Fortran::evaluate {
+
+bool StaticDataObject::bigEndian{false};
+
 std::ostream &StaticDataObject::Dump(std::ostream &o) const {
   o << "static data ";
   char sep{'{'};
@@ -36,20 +39,21 @@ StaticDataObject &StaticDataObject::Push(const std::string &string) {
 }
 
 StaticDataObject &StaticDataObject::Push(const std::u16string &string) {
-  // TODO here and below: big-endian targets
+  int shift{bigEndian * 8};
   for (auto ch : string) {
-    data_.push_back(static_cast<std::uint8_t>(ch));
-    data_.push_back(static_cast<std::uint8_t>(ch >> 8));
+    data_.push_back(static_cast<std::uint8_t>(ch >> shift));
+    data_.push_back(static_cast<std::uint8_t>(ch >> (shift ^ 8)));
   }
   return *this;
 }
 
 StaticDataObject &StaticDataObject::Push(const std::u32string &string) {
+  int shift{bigEndian * 24};
   for (auto ch : string) {
-    data_.push_back(static_cast<std::uint8_t>(ch));
-    data_.push_back(static_cast<std::uint8_t>(ch >> 8));
-    data_.push_back(static_cast<std::uint8_t>(ch >> 16));
-    data_.push_back(static_cast<std::uint8_t>(ch >> 24));
+    data_.push_back(static_cast<std::uint8_t>(ch >> shift));
+    data_.push_back(static_cast<std::uint8_t>(ch >> (shift ^ 8)));
+    data_.push_back(static_cast<std::uint8_t>(ch >> (shift ^ 16)));
+    data_.push_back(static_cast<std::uint8_t>(ch >> (shift ^ 24)));
   }
   return *this;
 }
@@ -59,6 +63,36 @@ std::optional<std::string> StaticDataObject::AsString() const {
     std::string result;
     for (std::uint8_t byte : data_) {
       result += static_cast<char>(byte);
+    }
+    return {std::move(result)};
+  }
+  return std::nullopt;
+}
+
+std::optional<std::u16string> StaticDataObject::AsU16String() const {
+  if (itemBytes_ == 2) {
+    int shift{bigEndian * 8};
+    std::u16string result;
+    auto end{data_.cend()};
+    for (auto byte{data_.cbegin()}; byte < end;) {
+      result += static_cast<char16_t>(*byte++) << shift |
+          static_cast<char16_t>(*byte++) << (shift ^ 8);
+    }
+    return {std::move(result)};
+  }
+  return std::nullopt;
+}
+
+std::optional<std::u32string> StaticDataObject::AsU32String() const {
+  if (itemBytes_ == 4) {
+    int shift{bigEndian * 24};
+    std::u32string result;
+    auto end{data_.cend()};
+    for (auto byte{data_.cbegin()}; byte < end;) {
+      result += static_cast<char32_t>(*byte++) << shift |
+          static_cast<char32_t>(*byte++) << (shift ^ 8) |
+          static_cast<char32_t>(*byte++) << (shift ^ 16) |
+          static_cast<char32_t>(*byte++) << (shift ^ 24);
     }
     return {std::move(result)};
   }
