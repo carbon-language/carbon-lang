@@ -144,10 +144,9 @@ if.then:                                          ; preds = %for.cond
   br label %for.cond.backedge
 }
 
-; Transform will bail because of the zext
 ; Check that d.sroa.0.0.be is promoted passed directly into the tail call.
 ; CHECK-LABEL: check_zext_phi_call_arg
-; CHECK: uxt
+; CHECK-NOT: uxt
 define i32 @check_zext_phi_call_arg() {
 entry:
   br label %for.cond
