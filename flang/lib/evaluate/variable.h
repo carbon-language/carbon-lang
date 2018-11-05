@@ -56,7 +56,7 @@ struct BaseObject {
   explicit BaseObject(StaticDataObject::Pointer &&p) : u{std::move(p)} {}
   int Rank() const;
   Expr<SubscriptInteger> LEN() const;
-  std::ostream &Dump(std::ostream &) const;
+  std::ostream &AsFortran(std::ostream &) const;
   std::variant<const Symbol *, StaticDataObject::Pointer> u;
 };
 
@@ -79,7 +79,7 @@ public:
   const Symbol &GetFirstSymbol() const;
   const Symbol &GetLastSymbol() const { return *symbol_; }
   Expr<SubscriptInteger> LEN() const;
-  std::ostream &Dump(std::ostream &) const;
+  std::ostream &AsFortran(std::ostream &) const;
 
 private:
   CopyableIndirection<DataRef> base_;
@@ -97,7 +97,7 @@ public:
   std::optional<Expr<SubscriptInteger>> lower() const;
   std::optional<Expr<SubscriptInteger>> upper() const;
   std::optional<Expr<SubscriptInteger>> stride() const;
-  std::ostream &Dump(std::ostream &) const;
+  std::ostream &AsFortran(std::ostream &) const;
 
 private:
   std::optional<IndirectSubscriptIntegerExpr> lower_, upper_, stride_;
@@ -109,7 +109,7 @@ struct Subscript {
   explicit Subscript(Expr<SubscriptInteger> &&s)
     : u{IndirectSubscriptIntegerExpr::Make(std::move(s))} {}
   int Rank() const;
-  std::ostream &Dump(std::ostream &) const;
+  std::ostream &AsFortran(std::ostream &) const;
   std::variant<IndirectSubscriptIntegerExpr, Triplet> u;
 };
 
@@ -129,7 +129,7 @@ struct ArrayRef {
   const Symbol &GetFirstSymbol() const;
   const Symbol &GetLastSymbol() const;
   Expr<SubscriptInteger> LEN() const;
-  std::ostream &Dump(std::ostream &) const;
+  std::ostream &AsFortran(std::ostream &) const;
 
   std::variant<const Symbol *, Component> u;
   std::vector<Subscript> subscript;
@@ -157,7 +157,7 @@ public:
   const Symbol &GetFirstSymbol() const { return *base_.front(); }
   const Symbol &GetLastSymbol() const { return *base_.back(); }
   Expr<SubscriptInteger> LEN() const;
-  std::ostream &Dump(std::ostream &) const;
+  std::ostream &AsFortran(std::ostream &) const;
 
 private:
   std::vector<const Symbol *> base_;
@@ -179,7 +179,7 @@ struct DataRef {
   const Symbol &GetFirstSymbol() const;
   const Symbol &GetLastSymbol() const;
   Expr<SubscriptInteger> LEN() const;
-  std::ostream &Dump(std::ostream &) const;
+  std::ostream &AsFortran(std::ostream &) const;
 
   std::variant<const Symbol *, Component, ArrayRef, CoarrayRef> u;
 };
@@ -209,7 +209,7 @@ public:
   BaseObject GetBaseObject() const;
   const Symbol *GetLastSymbol() const;
   Expr<SubscriptInteger> LEN() const;
-  std::ostream &Dump(std::ostream &) const;
+  std::ostream &AsFortran(std::ostream &) const;
 
   std::optional<Expr<SomeCharacter>> Fold(FoldingContext &);
 
@@ -233,7 +233,7 @@ public:
   int Rank() const;
   const Symbol &GetFirstSymbol() const { return complex_.GetFirstSymbol(); }
   const Symbol &GetLastSymbol() const { return complex_.GetLastSymbol(); }
-  std::ostream &Dump(std::ostream &) const;
+  std::ostream &AsFortran(std::ostream &) const;
 
 private:
   DataRef complex_;
@@ -268,7 +268,7 @@ public:
   BaseObject GetBaseObject() const;
   const Symbol *GetLastSymbol() const;
   Expr<SubscriptInteger> LEN() const;
-  std::ostream &Dump(std::ostream &o) const;
+  std::ostream &AsFortran(std::ostream &o) const;
 
   Variant u;
 };
@@ -287,7 +287,7 @@ public:
   Expr<SubscriptInteger> LEN() const;
   int Rank() const { return proc_.Rank(); }
   bool IsElemental() const { return proc_.IsElemental(); }
-  std::ostream &Dump(std::ostream &) const;
+  std::ostream &AsFortran(std::ostream &) const;
 
 protected:
   ProcedureDesignator proc_;
@@ -329,8 +329,8 @@ template<typename A> struct Variable {
   int Rank() const {
     return std::visit([](const auto &x) { return x.Rank(); }, u);
   }
-  std::ostream &Dump(std::ostream &o) const {
-    std::visit([&](const auto &x) { x.Dump(o); }, u);
+  std::ostream &AsFortran(std::ostream &o) const {
+    std::visit([&](const auto &x) { x.AsFortran(o); }, u);
     return o;
   }
   std::variant<Designator<Result>, FunctionRef<Result>> u;

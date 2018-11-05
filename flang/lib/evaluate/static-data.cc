@@ -13,22 +13,23 @@
 // limitations under the License.
 
 #include "static-data.h"
+#include "../parser/characters.h"
 
 namespace Fortran::evaluate {
 
 bool StaticDataObject::bigEndian{false};
 
-std::ostream &StaticDataObject::Dump(std::ostream &o) const {
-  o << "static data ";
-  char sep{'{'};
-  for (std::uint8_t byte : data_) {
-    o << sep << "0x" << std::hex << byte;
-    sep = ',';
+std::ostream &StaticDataObject::AsFortran(std::ostream &o) const {
+  if (auto string{AsString()}) {
+    o << parser::QuoteCharacterLiteral(*string);
+  } else if (auto string{AsU16String()}) {
+    o << "2_" << parser::QuoteCharacterLiteral(*string);
+  } else if (auto string{AsU32String()}) {
+    o << "4_" << parser::QuoteCharacterLiteral(*string);
+  } else {
+    CRASH_NO_CASE;
   }
-  if (sep == '{') {
-    o << '{';
-  }
-  return o << '}';
+  return o;
 }
 
 StaticDataObject &StaticDataObject::Push(const std::string &string) {

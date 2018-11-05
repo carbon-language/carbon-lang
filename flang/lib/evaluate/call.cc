@@ -23,14 +23,14 @@ std::optional<DynamicType> ActualArgument::GetType() const {
 
 int ActualArgument::Rank() const { return value->Rank(); }
 
-std::ostream &ActualArgument::Dump(std::ostream &o) const {
+std::ostream &ActualArgument::AsFortran(std::ostream &o) const {
   if (keyword.has_value()) {
     o << keyword->ToString() << '=';
   }
   if (isAlternateReturn) {
     o << '*';
   }
-  return value->Dump(o);
+  return value->AsFortran(o);
 }
 
 std::optional<int> ActualArgument::VectorSize() const {
@@ -41,11 +41,15 @@ std::optional<int> ActualArgument::VectorSize() const {
   return std::nullopt;
 }
 
-std::ostream &ProcedureRef::Dump(std::ostream &o) const {
-  proc_.Dump(o);
+std::ostream &SpecificIntrinsic::AsFortran(std::ostream &o) const {
+  return o << name;
+}
+
+std::ostream &ProcedureRef::AsFortran(std::ostream &o) const {
+  proc_.AsFortran(o);
   char separator{'('};
   for (const auto &arg : arguments_) {
-    arg->Dump(o << separator);
+    arg->AsFortran(o << separator);
     separator = ',';
   }
   if (separator == '(') {

@@ -867,7 +867,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       return std::nullopt;
     } else if (!d.typePattern.categorySet.test(type->category)) {
       messages.Say("actual argument for '%s=' has bad type '%s'"_err_en_US,
-          d.keyword, type->Dump().data());
+          d.keyword, type->AsFortran().data());
       return std::nullopt;  // argument has invalid type category
     }
     bool argOk{false};
@@ -920,7 +920,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
     if (!argOk) {
       messages.Say(
           "actual argument for '%s=' has bad type or kind '%s'"_err_en_US,
-          d.keyword, type->Dump().data());
+          d.keyword, type->AsFortran().data());
       return std::nullopt;
     }
   }
@@ -1268,10 +1268,6 @@ std::optional<SpecificCall> IntrinsicProcTable::Probe(
     parser::ContextualMessages *messages) const {
   CHECK(impl_ != nullptr || !"IntrinsicProcTable: not configured");
   return impl_->Probe(call, arguments, messages);
-}
-
-std::ostream &SpecificIntrinsic::Dump(std::ostream &o) const {
-  return o << name;
 }
 
 std::ostream &TypePattern::Dump(std::ostream &o) const {

@@ -47,7 +47,7 @@ std::optional<DynamicType> GetSymbolType(const semantics::Symbol &symbol) {
   return std::nullopt;
 }
 
-std::string DynamicType::Dump() const {
+std::string DynamicType::AsFortran() const {
   if (category == TypeCategory::Derived) {
     // TODO: derived type parameters
     return "TYPE("s + derived->name().ToString() + ')';
@@ -99,7 +99,7 @@ DynamicType DynamicType::ResultTypeForMultiply(const DynamicType &that) const {
   return *this;
 }
 
-std::string SomeDerived::Dump() const {
+std::string SomeDerived::AsFortran() const {
   return "TYPE("s + spec().name().ToString() + ')';
 }
 }

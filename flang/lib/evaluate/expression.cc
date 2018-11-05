@@ -28,19 +28,19 @@ using namespace Fortran::parser::literals;
 
 namespace Fortran::evaluate {
 
-// Dump
+// AsFortran() formatting
 
 template<typename D, typename R, typename... O>
-std::ostream &Operation<D, R, O...>::Dump(std::ostream &o) const {
-  left().Dump(derived().Prefix(o));
+std::ostream &Operation<D, R, O...>::AsFortran(std::ostream &o) const {
+  left().AsFortran(derived().Prefix(o));
   if constexpr (operands > 1) {
-    right().Dump(derived().Infix(o));
+    right().AsFortran(derived().Infix(o));
   }
   return derived().Suffix(o);
 }
 
 template<typename TO, TypeCategory FROMCAT>
-std::ostream &Convert<TO, FROMCAT>::Dump(std::ostream &o) const {
+std::ostream &Convert<TO, FROMCAT>::AsFortran(std::ostream &o) const {
   static_assert(TO::category == TypeCategory::Integer ||
       TO::category == TypeCategory::Real ||
       TO::category == TypeCategory::Logical || !"Convert<> to bad category!");
@@ -51,15 +51,15 @@ std::ostream &Convert<TO, FROMCAT>::Dump(std::ostream &o) const {
   } else if constexpr (TO::category == TypeCategory::Logical) {
     o << "LOGICAL";
   }
-  return this->left().Dump(o << '(') << ",KIND=" << TO::kind << ')';
+  return this->left().AsFortran(o << '(') << ",KIND=" << TO::kind << ')';
 }
 
 template<typename A> std::ostream &Relational<A>::Infix(std::ostream &o) const {
   return o << '.' << EnumToString(opr) << '.';
 }
 
-std::ostream &Relational<SomeType>::Dump(std::ostream &o) const {
-  std::visit([&](const auto &rel) { rel.Dump(o); }, u);
+std::ostream &Relational<SomeType>::AsFortran(std::ostream &o) const {
+  std::visit([&](const auto &rel) { rel.AsFortran(o); }, u);
   return o;
 }
 
@@ -74,7 +74,8 @@ std::ostream &LogicalOperation<KIND>::Infix(std::ostream &o) const {
   return o;
 }
 
-template<typename T> std::ostream &Constant<T>::Dump(std::ostream &o) const {
+template<typename T>
+std::ostream &Constant<T>::AsFortran(std::ostream &o) const {
   if constexpr (T::category == TypeCategory::Integer) {
     return o << value.SignedDecimal() << '_' << T::kind;
   } else if constexpr (T::category == TypeCategory::Real ||
@@ -90,13 +91,13 @@ template<typename T> std::ostream &Constant<T>::Dump(std::ostream &o) const {
     }
     return o << '_' << Result::kind;
   } else {
-    return value.u.Dump(o);
+    return value.u.AsFortran(o);
   }
 }
 
 template<typename T>
 std::ostream &Emit(std::ostream &o, const CopyableIndirection<Expr<T>> &expr) {
-  return expr->Dump(o);
+  return expr->AsFortran(o);
 }
 template<typename T>
 std::ostream &Emit(std::ostream &, const ArrayConstructorValues<T> &);
@@ -105,12 +106,12 @@ template<typename ITEM, typename INT>
 std::ostream &Emit(std::ostream &o, const ImpliedDo<ITEM, INT> &implDo) {
   o << '(';
   Emit(o, *implDo.values);
-  o << ',' << INT::Dump() << "::";
+  o << ',' << INT::AsFortran() << "::";
   o << implDo.controlVariableName.ToString();
   o << '=';
-  implDo.lower->Dump(o) << ',';
-  implDo.upper->Dump(o) << ',';
-  implDo.stride->Dump(o) << ')';
+  implDo.lower->AsFortran(o) << ',';
+  implDo.upper->AsFortran(o) << ',';
+  implDo.stride->AsFortran(o) << ')';
   return o;
 }
 
@@ -126,19 +127,20 @@ std::ostream &Emit(std::ostream &o, const ArrayConstructorValues<T> &values) {
 }
 
 template<typename T>
-std::ostream &ArrayConstructor<T>::Dump(std::ostream &o) const {
-  o << '[' << result.Dump() << "::";
+std::ostream &ArrayConstructor<T>::AsFortran(std::ostream &o) const {
+  o << '[' << result.AsFortran() << "::";
   Emit(o, *this);
   return o << ']';
 }
 
 template<typename RESULT>
-std::ostream &ExpressionBase<RESULT>::Dump(std::ostream &o) const {
-  std::visit(common::visitors{[&](const BOZLiteralConstant &x) {
-                                o << "Z'" << x.Hexadecimal() << "'";
-                              },
-                 [&](const CopyableIndirection<Substring> &s) { s->Dump(o); },
-                 [&](const auto &x) { x.Dump(o); }},
+std::ostream &ExpressionBase<RESULT>::AsFortran(std::ostream &o) const {
+  std::visit(
+      common::visitors{[&](const BOZLiteralConstant &x) {
+                         o << "Z'" << x.Hexadecimal() << "'";
+                       },
+          [&](const CopyableIndirection<Substring> &s) { s->AsFortran(o); },
+          [&](const auto &x) { x.AsFortran(o); }},
       derived().u);
   return o;
 }

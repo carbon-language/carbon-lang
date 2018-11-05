@@ -1270,7 +1270,7 @@ public:
   bool Pre(parser::Expr &expr) {
     if (expr.typedExpr.get() == nullptr) {
       if (MaybeExpr checked{AnalyzeExpr(context_, expr)}) {
-        checked->Dump(std::cout << "checked expression: ") << '\n';
+        checked->AsFortran(std::cout << "checked expression: ") << '\n';
         expr.typedExpr.reset(
             new evaluate::GenericExprWrapper{std::move(*checked)});
       } else {

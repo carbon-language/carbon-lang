@@ -86,7 +86,7 @@ public:
 
   std::optional<DynamicType> GetType() const;
   int Rank() const;
-  std::ostream &Dump(std::ostream &) const;
+  std::ostream &AsFortran(std::ostream &) const;
   static Derived Rewrite(FoldingContext &, Derived &&);
 };
 
@@ -184,10 +184,10 @@ public:
     }
   }
 
-  std::ostream &Dump(std::ostream &) const;
+  std::ostream &AsFortran(std::ostream &) const;
 
 protected:
-  // Overridable functions for Dump()
+  // Overridable functions for AsFortran()
   static std::ostream &Prefix(std::ostream &o) { return o << '('; }
   static std::ostream &Infix(std::ostream &o) { return o << ','; }
   static std::ostream &Suffix(std::ostream &o) { return o << ')'; }
@@ -214,7 +214,7 @@ struct Convert : public Operation<Convert<TO, FROMCAT>, TO, SomeKind<FROMCAT>> {
   using Operand = SomeKind<FROMCAT>;
   using Base = Operation<Convert, Result, Operand>;
   using Base::Base;
-  std::ostream &Dump(std::ostream &) const;
+  std::ostream &AsFortran(std::ostream &) const;
 };
 
 template<typename A>
@@ -416,7 +416,7 @@ struct ArrayConstructor : public ArrayConstructorValues<RESULT> {
   DynamicType GetType() const;
   static constexpr int Rank() { return 1; }
   Expr<SubscriptInteger> LEN() const;
-  std::ostream &Dump(std::ostream &) const;
+  std::ostream &AsFortran(std::ostream &) const;
 
   Result result;
   std::vector<Expr<SubscriptInteger>> typeParameterValues;
@@ -557,7 +557,7 @@ public:
   int Rank() const {
     return std::visit([](const auto &x) { return x.Rank(); }, u);
   }
-  std::ostream &Dump(std::ostream &o) const;
+  std::ostream &AsFortran(std::ostream &o) const;
   common::MapTemplate<Relational, DirectlyComparableTypes> u;
 };
 

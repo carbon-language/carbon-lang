@@ -192,10 +192,10 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
   return std::nullopt;
 }
 
-// Variable dumping
+// Variable formatting
 
 template<typename A> std::ostream &Emit(std::ostream &o, const A &x) {
-  return x.Dump(o);
+  return x.AsFortran(o);
 }
 
 template<> std::ostream &Emit(std::ostream &o, const std::string &lit) {
@@ -263,14 +263,16 @@ template<> std::ostream &Emit(std::ostream &o, const IntrinsicProcedure &p) {
   return o << p;
 }
 
-std::ostream &BaseObject::Dump(std::ostream &o) const { return Emit(o, u); }
+std::ostream &BaseObject::AsFortran(std::ostream &o) const {
+  return Emit(o, u);
+}
 
-std::ostream &Component::Dump(std::ostream &o) const {
-  base_->Dump(o);
+std::ostream &Component::AsFortran(std::ostream &o) const {
+  base_->AsFortran(o);
   return Emit(o << '%', symbol_);
 }
 
-std::ostream &Triplet::Dump(std::ostream &o) const {
+std::ostream &Triplet::AsFortran(std::ostream &o) const {
   Emit(o, lower_) << ':';
   Emit(o, upper_);
   if (stride_) {
@@ -279,19 +281,19 @@ std::ostream &Triplet::Dump(std::ostream &o) const {
   return o;
 }
 
-std::ostream &Subscript::Dump(std::ostream &o) const { return Emit(o, u); }
+std::ostream &Subscript::AsFortran(std::ostream &o) const { return Emit(o, u); }
 
-std::ostream &ArrayRef::Dump(std::ostream &o) const {
+std::ostream &ArrayRef::AsFortran(std::ostream &o) const {
   Emit(o, u);
   char separator{'('};
   for (const Subscript &ss : subscript) {
-    ss.Dump(o << separator);
+    ss.AsFortran(o << separator);
     separator = ',';
   }
   return o << ')';
 }
 
-std::ostream &CoarrayRef::Dump(std::ostream &o) const {
+std::ostream &CoarrayRef::AsFortran(std::ostream &o) const {
   for (const Symbol *sym : base_) {
     Emit(o, *sym);
   }
@@ -318,26 +320,27 @@ std::ostream &CoarrayRef::Dump(std::ostream &o) const {
   return o << ']';
 }
 
-std::ostream &DataRef::Dump(std::ostream &o) const { return Emit(o, u); }
+std::ostream &DataRef::AsFortran(std::ostream &o) const { return Emit(o, u); }
 
-std::ostream &Substring::Dump(std::ostream &o) const {
+std::ostream &Substring::AsFortran(std::ostream &o) const {
   Emit(o, parent_) << '(';
   Emit(o, first_) << ':';
   return Emit(o, last_);
 }
 
-std::ostream &ComplexPart::Dump(std::ostream &o) const {
-  return complex_.Dump(o) << '%' << EnumToString(part_);
+std::ostream &ComplexPart::AsFortran(std::ostream &o) const {
+  return complex_.AsFortran(o) << '%' << EnumToString(part_);
 }
 
-std::ostream &ProcedureDesignator::Dump(std::ostream &o) const {
+std::ostream &ProcedureDesignator::AsFortran(std::ostream &o) const {
   return Emit(o, u);
 }
 
-template<typename T> std::ostream &Designator<T>::Dump(std::ostream &o) const {
+template<typename T>
+std::ostream &Designator<T>::AsFortran(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Symbol *sym) { o << sym->name().ToString(); },
-          [&](const auto &x) { x.Dump(o); }},
+          [&](const auto &x) { x.AsFortran(o); }},
       u);
   return o;
 }

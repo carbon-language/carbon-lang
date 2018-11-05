@@ -103,7 +103,7 @@ struct TestCall {
     for (const auto &a : args) {
       std::cout << sep;
       sep = ',';
-      a->Dump(std::cout);
+      a->AsFortran(std::cout);
     }
     if (sep == '(') {
       std::cout << '(';

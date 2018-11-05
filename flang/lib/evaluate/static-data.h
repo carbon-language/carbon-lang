@@ -68,7 +68,7 @@ public:
   std::optional<std::string> AsString() const;
   std::optional<std::u16string> AsU16String() const;
   std::optional<std::u32string> AsU32String() const;
-  std::ostream &Dump(std::ostream &) const;
+  std::ostream &AsFortran(std::ostream &) const;
 
   static bool bigEndian;
 

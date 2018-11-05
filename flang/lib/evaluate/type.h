@@ -49,7 +49,7 @@ struct DynamicType {
     return category == that.category && kind == that.kind &&
         derived == that.derived;
   }
-  std::string Dump() const;
+  std::string AsFortran() const;
   DynamicType ResultTypeForMultiply(const DynamicType &) const;
 
   TypeCategory category;
@@ -74,7 +74,7 @@ template<TypeCategory CATEGORY, int KIND> struct TypeBase {
   static constexpr DynamicType GetType() { return {dynamicType}; }
   static constexpr TypeCategory category{CATEGORY};
   static constexpr int kind{KIND};
-  static std::string Dump() { return dynamicType.Dump(); }
+  static std::string AsFortran() { return dynamicType.AsFortran(); }
 };
 
 template<int KIND>
@@ -249,7 +249,7 @@ public:
 
   DynamicType GetType() const { return DynamicType{category, 0, spec_}; }
   const semantics::DerivedTypeSpec &spec() const { return *spec_; }
-  std::string Dump() const;
+  std::string AsFortran() const;
 
 private:
   const semantics::DerivedTypeSpec *spec_;
@@ -335,7 +335,7 @@ template<typename T> struct Constant {
 
   constexpr DynamicType GetType() const { return Result::GetType(); }
   int Rank() const { return 0; }
-  std::ostream &Dump(std::ostream &) const;
+  std::ostream &AsFortran(std::ostream &) const;
 
   Value value;
 };
