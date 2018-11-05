@@ -5,9 +5,7 @@
 
 define double @oeq(double %x) {
 ; CHECK-LABEL: @oeq(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp oeq double [[X:%.*]], 4.200000e+01
-; CHECK-NEXT:    [[COND:%.*]] = select i1 [[CMP]], double [[X]], double 4.200000e+01
-; CHECK-NEXT:    ret double [[COND]]
+; CHECK-NEXT:    ret double 4.200000e+01
 ;
   %cmp = fcmp oeq double %x, 42.0
   %cond = select i1 %cmp, double %x, double 42.0
@@ -18,9 +16,7 @@ define double @oeq(double %x) {
 
 define float @oeq_swapped(float %x) {
 ; CHECK-LABEL: @oeq_swapped(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp oeq float [[X:%.*]], 4.200000e+01
-; CHECK-NEXT:    [[COND:%.*]] = select i1 [[CMP]], float 4.200000e+01, float [[X]]
-; CHECK-NEXT:    ret float [[COND]]
+; CHECK-NEXT:    ret float [[X:%.*]]
 ;
   %cmp = fcmp oeq float %x, 42.0
   %cond = select i1 %cmp, float 42.0, float %x
@@ -34,9 +30,7 @@ define float @oeq_swapped(float %x) {
 
 define double @une(double %x) {
 ; CHECK-LABEL: @une(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp une double [[X:%.*]], 4.200000e+01
-; CHECK-NEXT:    [[COND:%.*]] = select i1 [[CMP]], double [[X]], double 4.200000e+01
-; CHECK-NEXT:    ret double [[COND]]
+; CHECK-NEXT:    ret double [[X:%.*]]
 ;
   %cmp = fcmp une double %x, 42.0
   %cond = select i1 %cmp, double %x, double 42.0
@@ -47,9 +41,7 @@ define double @une(double %x) {
 
 define double @une_swapped(double %x) {
 ; CHECK-LABEL: @une_swapped(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp une double [[X:%.*]], 4.200000e+01
-; CHECK-NEXT:    [[COND:%.*]] = select i1 [[CMP]], double 4.200000e+01, double [[X]]
-; CHECK-NEXT:    ret double [[COND]]
+; CHECK-NEXT:    ret double 4.200000e+01
 ;
   %cmp = fcmp une double %x, 42.0
   %cond = select i1 %cmp, double 42.0, double %x
