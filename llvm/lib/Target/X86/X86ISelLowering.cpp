@@ -19697,7 +19697,7 @@ static SDValue LowerSIGN_EXTEND_Mask(SDValue Op,
   if (!Subtarget.hasBWI() && VTElt.getSizeInBits() <= 16) {
     // If v16i32 is to be avoided, we'll need to split and concatenate.
     if (NumElts == 16 && !Subtarget.canExtendTo512DQ())
-      return SplitAndExtendv16i1(ISD::SIGN_EXTEND, VT, In, dl, DAG);
+      return SplitAndExtendv16i1(Op.getOpcode(), VT, In, dl, DAG);
 
     ExtVT = MVT::getVectorVT(MVT::i32, NumElts);
   }
@@ -19716,7 +19716,7 @@ static SDValue LowerSIGN_EXTEND_Mask(SDValue Op,
   MVT WideEltVT = WideVT.getVectorElementType();
   if ((Subtarget.hasDQI() && WideEltVT.getSizeInBits() >= 32) ||
       (Subtarget.hasBWI() && WideEltVT.getSizeInBits() <= 16)) {
-    V = DAG.getNode(ISD::SIGN_EXTEND, dl, WideVT, In);
+    V = DAG.getNode(Op.getOpcode(), dl, WideVT, In);
   } else {
     SDValue NegOne = getOnesVector(WideVT, DAG, dl);
     SDValue Zero = getZeroVector(WideVT, Subtarget, DAG, dl);
