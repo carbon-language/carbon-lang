@@ -19,6 +19,7 @@
 #include "../common/idioms.h"
 #include "../evaluate/common.h"
 #include "../evaluate/fold.h"
+#include "../evaluate/intrinsics.h"
 #include "../evaluate/tools.h"
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
