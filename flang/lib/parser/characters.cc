@@ -23,16 +23,16 @@ std::optional<int> UTF8CharacterBytes(const char *p) {
     return {1};
   }
   if ((*p & 0xf8) == 0xf0) {
-    if (*p != 0xf0 && (p[1] & 0xc0) == 0x80 && (p[2] & 0xc0) == 0x80 &&
+    if ((*p & 0x07) != 0 && (p[1] & 0xc0) == 0x80 && (p[2] & 0xc0) == 0x80 &&
         (p[3] & 0xc0) == 0x80) {
       return {4};
     }
   } else if ((*p & 0xf0) == 0xe0) {
-    if (*p != 0xe0 && (p[1] & 0xc0) == 0x80 && (p[2] & 0xc0) == 0x80) {
+    if ((*p & 0x0f) != 0 && (p[1] & 0xc0) == 0x80 && (p[2] & 0xc0) == 0x80) {
       return {3};
     }
   } else if ((*p & 0xe0) == 0xc0) {
-    if (*p != 0xc0 && (p[1] & 0xc0) == 0x80) {
+    if ((*p & 0x1f) != 0 && (p[1] & 0xc0) == 0x80) {
       return {2};
     }
   }
