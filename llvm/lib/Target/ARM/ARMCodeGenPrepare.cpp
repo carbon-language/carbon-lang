@@ -443,7 +443,7 @@ IRPromoter::PrepareConstants(SmallPtrSetImpl<Value*> &Visited,
   //   > The operators that can wrap are: add, sub, mul and shl.
   //   > shl interprets its second operand as unsigned and if the first operand
   //     is an immediate, it will need zext to be nuw.
-  //   > I'm assuming mul cannot be nuw while using a negative immediate...
+  //   > I'm assuming mul has to interpret immediates as unsigned for nuw.
   //   > Which leaves the nuw add and sub to be handled; as with shl, if an
   //     immediate is used as operand 0, it will need zext to be nuw.
   // - We also allow add and sub to safely overflow in certain circumstances
@@ -468,8 +468,8 @@ IRPromoter::PrepareConstants(SmallPtrSetImpl<Value*> &Visited,
           break;
 
         unsigned Opc = I->getOpcode();
-        assert((Opc == Instruction::Add || Opc == Instruction::Sub) &&
-               "expected only an add or sub to use a negative imm");
+        if (Opc != Instruction::Add && Opc != Instruction::Sub)
+          continue;
 
         LLVM_DEBUG(dbgs() << "ARM CGP: Adjusting " << *I << "\n");
         auto *NewConst = ConstantInt::get(Ctx, Const->getValue().abs());
