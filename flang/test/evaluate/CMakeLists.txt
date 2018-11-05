@@ -98,15 +98,16 @@ target_link_libraries(reshape-test
   FortranRuntime
 )
 
-add_executable(CFI_functions-test
-  CFI_functions.cc
+add_executable(ISO-Fortran-binding-test
+  ISO-Fortran-binding.cc
 )
 
-target_link_libraries(CFI_functions-test
+target_link_libraries(ISO-Fortran-binding-test
   FortranEvaluate
   FortranEvaluateTesting
   FortranRuntime
 )
+
 add_test(NAME Expression COMMAND expression-test)
 add_test(NAME Leadz COMMAND leading-zero-bit-count-test)
 add_test(NAME PopPar COMMAND bit-population-count-test)
@@ -115,4 +116,4 @@ add_test(NAME Intrinsics COMMAND intrinsics-test)
 add_test(NAME Logical COMMAND logical-test)
 add_test(NAME Real COMMAND real-test)
 add_test(NAME RESHAPE COMMAND reshape-test)
-add_test(NAME CFI_functions COMMAND CFI_functions-test)
+add_test(NAME ISO-Fortran-binding COMMAND ISO-Fortran-binding-test)

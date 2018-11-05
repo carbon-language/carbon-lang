@@ -133,7 +133,6 @@ static constexpr std::size_t MinElemLen(CFI_type_t type) {
     minElemLen = 2 * sizeof(long double);
     break;
   case CFI_type_Bool: minElemLen = 1; break;
-  case CFI_type_char: minElemLen = sizeof(char); break;
   }
   return minElemLen;
 }
@@ -148,7 +147,7 @@ int CFI_establish(CFI_cdesc_t *descriptor, void *base_addr,
   if (rank > CFI_MAX_RANK) {
     return CFI_INVALID_RANK;
   }
-  if (base_addr != nullptr && attribute != CFI_attribute_pointer) {
+  if (base_addr != nullptr && attribute == CFI_attribute_allocatable) {
     return CFI_ERROR_BASE_ADDR_NOT_NULL;
   }
   if (rank > 0 && base_addr != nullptr && extents == nullptr) {
@@ -171,11 +170,14 @@ int CFI_establish(CFI_cdesc_t *descriptor, void *base_addr,
   descriptor->attribute = attribute;
   descriptor->f18Addendum = 0;
   std::size_t byteSize{elem_len};
-  for (std::size_t j{0}; j < rank; ++j) {
-    descriptor->dim[j].lower_bound = 1;
-    descriptor->dim[j].extent = extents[j];
-    descriptor->dim[j].sm = byteSize;
-    byteSize *= extents[j];
+  std::size_t lower_bound{attribute!=CFI_attribute_pointer};
+  if (base_addr !=nullptr) {
+    for (std::size_t j{0}; j < rank; ++j) {
+      descriptor->dim[j].lower_bound = lower_bound;
+      descriptor->dim[j].extent = extents[j];
+      descriptor->dim[j].sm = byteSize;
+      byteSize *= extents[j];
+    }
   }
   return CFI_SUCCESS;
 }
