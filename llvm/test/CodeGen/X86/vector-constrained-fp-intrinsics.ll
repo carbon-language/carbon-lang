@@ -2423,6 +2423,409 @@ entry:
   ret <4 x double> %min
 }
 
+define <1 x float> @constrained_vector_ceil_v1f32() {
+; CHECK-LABEL: constrained_vector_ceil_v1f32:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    pushq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 16
+; CHECK-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    callq ceilf
+; CHECK-NEXT:    popq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %ceil = call <1 x float> @llvm.experimental.constrained.ceil.v1f32(
+                               <1 x float> <float 1.5>,
+                               metadata !"round.dynamic",
+                               metadata !"fpexcept.strict")
+  ret <1 x float> %ceil
+}
+
+define <2 x double> @constrained_vector_ceil_v2f64() {
+; CHECK-LABEL: constrained_vector_ceil_v2f64:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    subq $24, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 32
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    callq ceil
+; CHECK-NEXT:    movaps %xmm0, (%rsp) # 16-byte Spill
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    callq ceil
+; CHECK-NEXT:    unpcklpd (%rsp), %xmm0 # 16-byte Folded Reload
+; CHECK-NEXT:    # xmm0 = xmm0[0],mem[0]
+; CHECK-NEXT:    addq $24, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %ceil = call <2 x double> @llvm.experimental.constrained.ceil.v2f64(
+                                <2 x double> <double 1.1, double 1.9>,
+                                metadata !"round.dynamic",
+                                metadata !"fpexcept.strict")
+  ret <2 x double> %ceil
+}
+
+define <3 x float> @constrained_vector_ceil_v3f32() {
+; CHECK-LABEL: constrained_vector_ceil_v3f32:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    subq $40, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 48
+; CHECK-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    callq ceilf
+; CHECK-NEXT:    movaps %xmm0, {{[-0-9]+}}(%r{{[sb]}}p) # 16-byte Spill
+; CHECK-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    callq ceilf
+; CHECK-NEXT:    movaps %xmm0, (%rsp) # 16-byte Spill
+; CHECK-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    callq ceilf
+; CHECK-NEXT:    movaps (%rsp), %xmm1 # 16-byte Reload
+; CHECK-NEXT:    unpcklps {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1]
+; CHECK-NEXT:    unpcklpd {{[-0-9]+}}(%r{{[sb]}}p), %xmm1 # 16-byte Folded Reload
+; CHECK-NEXT:    # xmm1 = xmm1[0],mem[0]
+; CHECK-NEXT:    movaps %xmm1, %xmm0
+; CHECK-NEXT:    addq $40, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %ceil = call <3 x float> @llvm.experimental.constrained.ceil.v3f32(
+                              <3 x float> <float 1.5, float 2.5, float 3.5>,
+                              metadata !"round.dynamic",
+                              metadata !"fpexcept.strict")
+  ret <3 x float> %ceil
+}
+
+define <3 x double> @constrained_vector_ceil_v3f64() {
+; CHECK-LABEL: constrained_vector_ceil_v3f64:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    subq $24, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 32
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    callq ceil
+; CHECK-NEXT:    movsd %xmm0, {{[-0-9]+}}(%r{{[sb]}}p) # 8-byte Spill
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    callq ceil
+; CHECK-NEXT:    movsd %xmm0, (%rsp) # 8-byte Spill
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    callq ceil
+; CHECK-NEXT:    movsd %xmm0, {{[0-9]+}}(%rsp)
+; CHECK-NEXT:    fldl {{[0-9]+}}(%rsp)
+; CHECK-NEXT:    movsd {{[-0-9]+}}(%r{{[sb]}}p), %xmm0 # 8-byte Reload
+; CHECK-NEXT:    # xmm0 = mem[0],zero
+; CHECK-NEXT:    movsd (%rsp), %xmm1 # 8-byte Reload
+; CHECK-NEXT:    # xmm1 = mem[0],zero
+; CHECK-NEXT:    addq $24, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %ceil = call <3 x double> @llvm.experimental.constrained.ceil.v3f64(
+                          <3 x double> <double 1.1, double 1.9, double 1.5>,
+                          metadata !"round.dynamic",
+                          metadata !"fpexcept.strict")
+  ret <3 x double> %ceil
+}
+
+define <1 x float> @constrained_vector_floor_v1f32() {
+; CHECK-LABEL: constrained_vector_floor_v1f32:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    pushq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 16
+; CHECK-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    callq floorf
+; CHECK-NEXT:    popq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %floor = call <1 x float> @llvm.experimental.constrained.floor.v1f32(
+                               <1 x float> <float 1.5>,
+                               metadata !"round.dynamic",
+                               metadata !"fpexcept.strict")
+  ret <1 x float> %floor
+}
+
+
+define <2 x double> @constrained_vector_floor_v2f64() {
+; CHECK-LABEL: constrained_vector_floor_v2f64:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    subq $24, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 32
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    callq floor
+; CHECK-NEXT:    movaps %xmm0, (%rsp) # 16-byte Spill
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    callq floor
+; CHECK-NEXT:    unpcklpd (%rsp), %xmm0 # 16-byte Folded Reload
+; CHECK-NEXT:    # xmm0 = xmm0[0],mem[0]
+; CHECK-NEXT:    addq $24, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %floor = call <2 x double> @llvm.experimental.constrained.floor.v2f64(
+                                <2 x double> <double 1.1, double 1.9>,
+                                metadata !"round.dynamic",
+                                metadata !"fpexcept.strict")
+  ret <2 x double> %floor
+}
+
+define <3 x float> @constrained_vector_floor_v3f32() {
+; CHECK-LABEL: constrained_vector_floor_v3f32:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    subq $40, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 48
+; CHECK-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    callq floorf
+; CHECK-NEXT:    movaps %xmm0, {{[-0-9]+}}(%r{{[sb]}}p) # 16-byte Spill
+; CHECK-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    callq floorf
+; CHECK-NEXT:    movaps %xmm0, (%rsp) # 16-byte Spill
+; CHECK-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    callq floorf
+; CHECK-NEXT:    movaps (%rsp), %xmm1 # 16-byte Reload
+; CHECK-NEXT:    unpcklps {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1]
+; CHECK-NEXT:    unpcklpd {{[-0-9]+}}(%r{{[sb]}}p), %xmm1 # 16-byte Folded Reload
+; CHECK-NEXT:    # xmm1 = xmm1[0],mem[0]
+; CHECK-NEXT:    movaps %xmm1, %xmm0
+; CHECK-NEXT:    addq $40, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %floor = call <3 x float> @llvm.experimental.constrained.floor.v3f32(
+                              <3 x float> <float 1.5, float 2.5, float 3.5>,
+                              metadata !"round.dynamic",
+                              metadata !"fpexcept.strict")
+  ret <3 x float> %floor
+}
+
+define <3 x double> @constrained_vector_floor_v3f64() {
+; CHECK-LABEL: constrained_vector_floor_v3f64:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    subq $24, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 32
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    callq floor
+; CHECK-NEXT:    movsd %xmm0, {{[-0-9]+}}(%r{{[sb]}}p) # 8-byte Spill
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    callq floor
+; CHECK-NEXT:    movsd %xmm0, (%rsp) # 8-byte Spill
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    callq floor
+; CHECK-NEXT:    movsd %xmm0, {{[0-9]+}}(%rsp)
+; CHECK-NEXT:    fldl {{[0-9]+}}(%rsp)
+; CHECK-NEXT:    movsd {{[-0-9]+}}(%r{{[sb]}}p), %xmm0 # 8-byte Reload
+; CHECK-NEXT:    # xmm0 = mem[0],zero
+; CHECK-NEXT:    movsd (%rsp), %xmm1 # 8-byte Reload
+; CHECK-NEXT:    # xmm1 = mem[0],zero
+; CHECK-NEXT:    addq $24, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %floor = call <3 x double> @llvm.experimental.constrained.floor.v3f64(
+                          <3 x double> <double 1.1, double 1.9, double 1.5>,
+                          metadata !"round.dynamic",
+                          metadata !"fpexcept.strict")
+  ret <3 x double> %floor
+}
+
+define <1 x float> @constrained_vector_round_v1f32() {
+; CHECK-LABEL: constrained_vector_round_v1f32:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    pushq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 16
+; CHECK-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    callq roundf
+; CHECK-NEXT:    popq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %round = call <1 x float> @llvm.experimental.constrained.round.v1f32(
+                               <1 x float> <float 1.5>,
+                               metadata !"round.dynamic",
+                               metadata !"fpexcept.strict")
+  ret <1 x float> %round
+}
+
+define <2 x double> @constrained_vector_round_v2f64() {
+; CHECK-LABEL: constrained_vector_round_v2f64:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    subq $24, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 32
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    callq round
+; CHECK-NEXT:    movaps %xmm0, (%rsp) # 16-byte Spill
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    callq round
+; CHECK-NEXT:    unpcklpd (%rsp), %xmm0 # 16-byte Folded Reload
+; CHECK-NEXT:    # xmm0 = xmm0[0],mem[0]
+; CHECK-NEXT:    addq $24, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %round = call <2 x double> @llvm.experimental.constrained.round.v2f64(
+                                <2 x double> <double 1.1, double 1.9>,
+                                metadata !"round.dynamic",
+                                metadata !"fpexcept.strict")
+  ret <2 x double> %round
+}
+
+define <3 x float> @constrained_vector_round_v3f32() {
+; CHECK-LABEL: constrained_vector_round_v3f32:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    subq $40, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 48
+; CHECK-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    callq roundf
+; CHECK-NEXT:    movaps %xmm0, {{[-0-9]+}}(%r{{[sb]}}p) # 16-byte Spill
+; CHECK-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    callq roundf
+; CHECK-NEXT:    movaps %xmm0, (%rsp) # 16-byte Spill
+; CHECK-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    callq roundf
+; CHECK-NEXT:    movaps (%rsp), %xmm1 # 16-byte Reload
+; CHECK-NEXT:    unpcklps {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1]
+; CHECK-NEXT:    unpcklpd {{[-0-9]+}}(%r{{[sb]}}p), %xmm1 # 16-byte Folded Reload
+; CHECK-NEXT:    # xmm1 = xmm1[0],mem[0]
+; CHECK-NEXT:    movaps %xmm1, %xmm0
+; CHECK-NEXT:    addq $40, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %round = call <3 x float> @llvm.experimental.constrained.round.v3f32(
+                              <3 x float> <float 1.5, float 2.5, float 3.5>,
+                              metadata !"round.dynamic",
+                              metadata !"fpexcept.strict")
+  ret <3 x float> %round
+}
+
+
+define <3 x double> @constrained_vector_round_v3f64() {
+; CHECK-LABEL: constrained_vector_round_v3f64:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    subq $24, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 32
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    callq round
+; CHECK-NEXT:    movsd %xmm0, {{[-0-9]+}}(%r{{[sb]}}p) # 8-byte Spill
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    callq round
+; CHECK-NEXT:    movsd %xmm0, (%rsp) # 8-byte Spill
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    callq round
+; CHECK-NEXT:    movsd %xmm0, {{[0-9]+}}(%rsp)
+; CHECK-NEXT:    fldl {{[0-9]+}}(%rsp)
+; CHECK-NEXT:    movsd {{[-0-9]+}}(%r{{[sb]}}p), %xmm0 # 8-byte Reload
+; CHECK-NEXT:    # xmm0 = mem[0],zero
+; CHECK-NEXT:    movsd (%rsp), %xmm1 # 8-byte Reload
+; CHECK-NEXT:    # xmm1 = mem[0],zero
+; CHECK-NEXT:    addq $24, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %round = call <3 x double> @llvm.experimental.constrained.round.v3f64(
+                          <3 x double> <double 1.1, double 1.9, double 1.5>,
+                          metadata !"round.dynamic",
+                          metadata !"fpexcept.strict")
+  ret <3 x double> %round
+}
+
+define <1 x float> @constrained_vector_trunc_v1f32() {
+; CHECK-LABEL: constrained_vector_trunc_v1f32:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    pushq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 16
+; CHECK-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    callq truncf
+; CHECK-NEXT:    popq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %trunc = call <1 x float> @llvm.experimental.constrained.trunc.v1f32(
+                               <1 x float> <float 1.5>,
+                               metadata !"round.dynamic",
+                               metadata !"fpexcept.strict")
+  ret <1 x float> %trunc
+}
+
+define <2 x double> @constrained_vector_trunc_v2f64() {
+; CHECK-LABEL: constrained_vector_trunc_v2f64:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    subq $24, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 32
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    callq trunc
+; CHECK-NEXT:    movaps %xmm0, (%rsp) # 16-byte Spill
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    callq trunc
+; CHECK-NEXT:    unpcklpd (%rsp), %xmm0 # 16-byte Folded Reload
+; CHECK-NEXT:    # xmm0 = xmm0[0],mem[0]
+; CHECK-NEXT:    addq $24, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %trunc = call <2 x double> @llvm.experimental.constrained.trunc.v2f64(
+                                <2 x double> <double 1.1, double 1.9>,
+                                metadata !"round.dynamic",
+                                metadata !"fpexcept.strict")
+  ret <2 x double> %trunc
+}
+
+define <3 x float> @constrained_vector_trunc_v3f32() {
+; CHECK-LABEL: constrained_vector_trunc_v3f32:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    subq $40, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 48
+; CHECK-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    callq truncf
+; CHECK-NEXT:    movaps %xmm0, {{[-0-9]+}}(%r{{[sb]}}p) # 16-byte Spill
+; CHECK-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    callq truncf
+; CHECK-NEXT:    movaps %xmm0, (%rsp) # 16-byte Spill
+; CHECK-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    callq truncf
+; CHECK-NEXT:    movaps (%rsp), %xmm1 # 16-byte Reload
+; CHECK-NEXT:    unpcklps {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1]
+; CHECK-NEXT:    unpcklpd {{[-0-9]+}}(%r{{[sb]}}p), %xmm1 # 16-byte Folded Reload
+; CHECK-NEXT:    # xmm1 = xmm1[0],mem[0]
+; CHECK-NEXT:    movaps %xmm1, %xmm0
+; CHECK-NEXT:    addq $40, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %trunc = call <3 x float> @llvm.experimental.constrained.trunc.v3f32(
+                              <3 x float> <float 1.5, float 2.5, float 3.5>,
+                              metadata !"round.dynamic",
+                              metadata !"fpexcept.strict")
+  ret <3 x float> %trunc
+}
+
+define <3 x double> @constrained_vector_trunc_v3f64() {
+; CHECK-LABEL: constrained_vector_trunc_v3f64:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    subq $24, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 32
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    callq trunc
+; CHECK-NEXT:    movsd %xmm0, {{[-0-9]+}}(%r{{[sb]}}p) # 8-byte Spill
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    callq trunc
+; CHECK-NEXT:    movsd %xmm0, (%rsp) # 8-byte Spill
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    callq trunc
+; CHECK-NEXT:    movsd %xmm0, {{[0-9]+}}(%rsp)
+; CHECK-NEXT:    fldl {{[0-9]+}}(%rsp)
+; CHECK-NEXT:    movsd {{[-0-9]+}}(%r{{[sb]}}p), %xmm0 # 8-byte Reload
+; CHECK-NEXT:    # xmm0 = mem[0],zero
+; CHECK-NEXT:    movsd (%rsp), %xmm1 # 8-byte Reload
+; CHECK-NEXT:    # xmm1 = mem[0],zero
+; CHECK-NEXT:    addq $24, %rsp
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    retq
+entry:
+  %trunc = call <3 x double> @llvm.experimental.constrained.trunc.v3f64(
+                          <3 x double> <double 1.1, double 1.9, double 1.5>,
+                          metadata !"round.dynamic",
+                          metadata !"fpexcept.strict")
+  ret <3 x double> %trunc
+}
+
+
 ; Single width declarations
 declare <2 x double> @llvm.experimental.constrained.fadd.v2f64(<2 x double>, <2 x double>, metadata, metadata)
 declare <2 x double> @llvm.experimental.constrained.fsub.v2f64(<2 x double>, <2 x double>, metadata, metadata)
@@ -2443,6 +2846,10 @@ declare <2 x double> @llvm.experimental.constrained.rint.v2f64(<2 x double>, met
 declare <2 x double> @llvm.experimental.constrained.nearbyint.v2f64(<2 x double>, metadata, metadata)
 declare <2 x double> @llvm.experimental.constrained.maxnum.v2f64(<2 x double>, <2 x double>, metadata, metadata)
 declare <2 x double> @llvm.experimental.constrained.minnum.v2f64(<2 x double>, <2 x double>, metadata, metadata)
+declare <2 x double> @llvm.experimental.constrained.ceil.v2f64(<2 x double>, metadata, metadata)
+declare <2 x double> @llvm.experimental.constrained.floor.v2f64(<2 x double>, metadata, metadata)
+declare <2 x double> @llvm.experimental.constrained.round.v2f64(<2 x double>, metadata, metadata)
+declare <2 x double> @llvm.experimental.constrained.trunc.v2f64(<2 x double>, metadata, metadata)
 
 ; Scalar width declarations
 declare <1 x float> @llvm.experimental.constrained.fadd.v1f32(<1 x float>, <1 x float>, metadata, metadata)
@@ -2464,6 +2871,10 @@ declare <1 x float> @llvm.experimental.constrained.rint.v1f32(<1 x float>, metad
 declare <1 x float> @llvm.experimental.constrained.nearbyint.v1f32(<1 x float>, metadata, metadata)
 declare <1 x float> @llvm.experimental.constrained.maxnum.v1f32(<1 x float>, <1 x float>, metadata, metadata)
 declare <1 x float> @llvm.experimental.constrained.minnum.v1f32(<1 x float>, <1 x float>, metadata, metadata)
+declare <1 x float> @llvm.experimental.constrained.ceil.v1f32(<1 x float>, metadata, metadata)
+declare <1 x float> @llvm.experimental.constrained.floor.v1f32(<1 x float>, metadata, metadata)
+declare <1 x float> @llvm.experimental.constrained.round.v1f32(<1 x float>, metadata, metadata)
+declare <1 x float> @llvm.experimental.constrained.trunc.v1f32(<1 x float>, metadata, metadata)
 
 ; Illegal width declarations
 declare <3 x float> @llvm.experimental.constrained.fadd.v3f32(<3 x float>, <3 x float>, metadata, metadata)
@@ -2504,6 +2915,14 @@ declare <3 x float> @llvm.experimental.constrained.maxnum.v3f32(<3 x float>, <3 
 declare <3 x double> @llvm.experimental.constrained.maxnum.v3f64(<3 x double>, <3 x double>, metadata, metadata)
 declare <3 x float> @llvm.experimental.constrained.minnum.v3f32(<3 x float>, <3 x float>, metadata, metadata)
 declare <3 x double> @llvm.experimental.constrained.minnum.v3f64(<3 x double>, <3 x double>, metadata, metadata)
+declare <3 x float> @llvm.experimental.constrained.ceil.v3f32(<3 x float>, metadata, metadata)
+declare <3 x double> @llvm.experimental.constrained.ceil.v3f64(<3 x double>, metadata, metadata)
+declare <3 x float> @llvm.experimental.constrained.floor.v3f32(<3 x float>, metadata, metadata)
+declare <3 x double> @llvm.experimental.constrained.floor.v3f64(<3 x double>, metadata, metadata)
+declare <3 x float> @llvm.experimental.constrained.round.v3f32(<3 x float>, metadata, metadata)
+declare <3 x double> @llvm.experimental.constrained.round.v3f64(<3 x double>, metadata, metadata)
+declare <3 x float> @llvm.experimental.constrained.trunc.v3f32(<3 x float>, metadata, metadata)
+declare <3 x double> @llvm.experimental.constrained.trunc.v3f64(<3 x double>, metadata, metadata)
 
 ; Double width declarations
 declare <4 x double> @llvm.experimental.constrained.fadd.v4f64(<4 x double>, <4 x double>, metadata, metadata)
@@ -2525,3 +2944,8 @@ declare <4 x double> @llvm.experimental.constrained.rint.v4f64(<4 x double>, met
 declare <4 x double> @llvm.experimental.constrained.nearbyint.v4f64(<4 x double>, metadata, metadata)
 declare <4 x double> @llvm.experimental.constrained.maxnum.v4f64(<4 x double>, <4 x double>, metadata, metadata)
 declare <4 x double> @llvm.experimental.constrained.minnum.v4f64(<4 x double>, <4 x double>, metadata, metadata)
+declare <4 x double> @llvm.experimental.constrained.ceil.v4f64(<4 x double>, metadata, metadata)
+declare <4 x double> @llvm.experimental.constrained.floor.v4f64(<4 x double>, metadata, metadata)
+declare <4 x double> @llvm.experimental.constrained.round.v4f64(<4 x double>, metadata, metadata)
+declare <4 x double> @llvm.experimental.constrained.trunc.v4f64(<4 x double>, metadata, metadata)
+
