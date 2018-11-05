@@ -96,7 +96,12 @@ llvm::Error AllTUsToolExecutor::execute(
     llvm::errs() << Msg.str() << "\n";
   };
 
-  auto Files = Compilations.getAllFiles();
+  std::vector<std::string> Files;
+  llvm::Regex RegexFilter(Filter);
+  for (const auto& File : Compilations.getAllFiles()) {
+    if (RegexFilter.match(File))
+      Files.push_back(File);
+  }
   // Add a counter to track the progress.
   const std::string TotalNumStr = std::to_string(Files.size());
   unsigned Counter = 0;
@@ -116,10 +121,7 @@ llvm::Error AllTUsToolExecutor::execute(
       llvm::errs() << "Error while getting current working directory: "
                    << EC.message() << "\n";
     }
-    llvm::Regex RegexFilter(Filter);
     for (std::string File : Files) {
-      if (!RegexFilter.match(File))
-        continue;
       Pool.async(
           [&](std::string Path) {
             Log("[" + std::to_string(Count()) + "/" + TotalNumStr +
