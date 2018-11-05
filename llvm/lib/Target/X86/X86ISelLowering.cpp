@@ -1787,13 +1787,13 @@ SDValue X86TargetLowering::emitStackGuardXorFP(SelectionDAG &DAG, SDValue Val,
 }
 
 TargetLoweringBase::LegalizeTypeAction
-X86TargetLowering::getPreferredVectorAction(EVT VT) const {
+X86TargetLowering::getPreferredVectorAction(MVT VT) const {
   if (VT == MVT::v32i1 && Subtarget.hasAVX512() && !Subtarget.hasBWI())
     return TypeSplitVector;
 
   if (ExperimentalVectorWideningLegalization &&
       VT.getVectorNumElements() != 1 &&
-      VT.getVectorElementType().getSimpleVT() != MVT::i1)
+      VT.getVectorElementType() != MVT::i1)
     return TypeWidenVector;
 
   return TargetLoweringBase::getPreferredVectorAction(VT);
