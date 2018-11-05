@@ -73,8 +73,6 @@ public:
   friend class DWARFUnit;
   friend class DWARFDIE;
   friend class DWARFASTParserClang;
-  friend class DWARFASTParserGo;
-  friend class DWARFASTParserJava;
   friend class DWARFASTParserOCaml;
 
   //------------------------------------------------------------------

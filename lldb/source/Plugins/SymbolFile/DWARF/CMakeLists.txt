@@ -4,7 +4,6 @@ add_lldb_library(lldbPluginSymbolFileDWARF PLUGIN
   DIERef.cpp
   DWARFAbbreviationDeclaration.cpp
   DWARFASTParserClang.cpp
-  DWARFASTParserJava.cpp
   DWARFASTParserOCaml.cpp
   DWARFAttribute.cpp
   DWARFBaseDIE.cpp

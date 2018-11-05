@@ -24,7 +24,6 @@
 #include "lldb/Initialization/SystemInitializerCommon.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Symbol/ClangASTContext.h"
-#include "lldb/Symbol/JavaASTContext.h"
 #include "lldb/Symbol/OCamlASTContext.h"
 #include "lldb/Utility/Timer.h"
 
@@ -57,12 +56,10 @@
 #include "Plugins/InstrumentationRuntime/UBSan/UBSanRuntime.h"
 #include "Plugins/JITLoader/GDB/JITLoaderGDB.h"
 #include "Plugins/Language/CPlusPlus/CPlusPlusLanguage.h"
-#include "Plugins/Language/Java/JavaLanguage.h"
 #include "Plugins/Language/OCaml/OCamlLanguage.h"
 #include "Plugins/Language/ObjC/ObjCLanguage.h"
 #include "Plugins/Language/ObjCPlusPlus/ObjCPlusPlusLanguage.h"
 #include "Plugins/LanguageRuntime/CPlusPlus/ItaniumABI/ItaniumABILanguageRuntime.h"
-#include "Plugins/LanguageRuntime/Java/JavaLanguageRuntime.h"
 #include "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV1.h"
 #include "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV2.h"
 #include "Plugins/LanguageRuntime/RenderScript/RenderScriptRuntime/RenderScriptRuntime.h"
@@ -311,7 +308,6 @@ void SystemInitializerFull::Initialize() {
   llvm::InitializeAllDisassemblers();
 
   ClangASTContext::Initialize();
-  JavaASTContext::Initialize();
   OCamlASTContext::Initialize();
 
   ABIMacOSX_i386::Initialize();
@@ -357,10 +353,8 @@ void SystemInitializerFull::Initialize() {
   AppleObjCRuntimeV1::Initialize();
   SystemRuntimeMacOSX::Initialize();
   RenderScriptRuntime::Initialize();
-  JavaLanguageRuntime::Initialize();
 
   CPlusPlusLanguage::Initialize();
-  JavaLanguage::Initialize();
   ObjCLanguage::Initialize();
   ObjCPlusPlusLanguage::Initialize();
   OCamlLanguage::Initialize();
@@ -443,7 +437,6 @@ void SystemInitializerFull::Terminate() {
   PluginManager::Terminate();
 
   ClangASTContext::Terminate();
-  JavaASTContext::Terminate();
   OCamlASTContext::Terminate();
 
   ABIMacOSX_i386::Terminate();
@@ -484,10 +477,8 @@ void SystemInitializerFull::Terminate() {
   AppleObjCRuntimeV1::Terminate();
   SystemRuntimeMacOSX::Terminate();
   RenderScriptRuntime::Terminate();
-  JavaLanguageRuntime::Terminate();
 
   CPlusPlusLanguage::Terminate();
-  JavaLanguage::Terminate();
   ObjCLanguage::Terminate();
   ObjCPlusPlusLanguage::Terminate();
   OCamlLanguage::Terminate();
