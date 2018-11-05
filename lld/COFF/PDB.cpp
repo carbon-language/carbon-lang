@@ -362,7 +362,7 @@ static void addTypeInfo(pdb::TpiStreamBuilder &TpiBuilder,
 // Recompiling the precompiled headers will generate a new PCH key and thus
 // invalidate all the dependent objects.
 static uint32_t extractPCHSignature(ObjFile *File) {
-  auto DbgIt = find_if(File->getDebugChunks(), [](auto &C) {
+  auto DbgIt = find_if(File->getDebugChunks(), [](SectionChunk *C) {
     return C->getSectionName() == ".debug$S";
   });
   if (!DbgIt)
