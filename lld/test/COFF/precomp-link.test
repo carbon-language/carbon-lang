@@ -1,3 +1,5 @@
+REQUIRES: system-windows
+
 RUN: lld-link %S/Inputs/precomp-a.obj %S/Inputs/precomp-b.obj %S/Inputs/precomp.obj /nodefaultlib /entry:main /debug /pdb:%t.pdb /out:%t.exe /opt:ref /opt:icf
 RUN: llvm-pdbutil dump -types %t.pdb | FileCheck %s
 
