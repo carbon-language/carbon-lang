@@ -53,6 +53,12 @@ private:
 
 } // namespace
 
+llvm::cl::opt<std::string>
+    Filter("filter",
+           llvm::cl::desc("Only process files that match this filter. "
+                          "This flag only applies to all-TUs."),
+           llvm::cl::init(".*"));
+
 AllTUsToolExecutor::AllTUsToolExecutor(
     const CompilationDatabase &Compilations, unsigned ThreadCount,
     std::shared_ptr<PCHContainerOperations> PCHContainerOps)
@@ -110,7 +116,10 @@ llvm::Error AllTUsToolExecutor::execute(
       llvm::errs() << "Error while getting current working directory: "
                    << EC.message() << "\n";
     }
+    llvm::Regex RegexFilter(Filter);
     for (std::string File : Files) {
+      if (!RegexFilter.match(File))
+        continue;
       Pool.async(
           [&](std::string Path) {
             Log("[" + std::to_string(Count()) + "/" + TotalNumStr +
@@ -147,7 +156,8 @@ llvm::Error AllTUsToolExecutor::execute(
 static llvm::cl::opt<unsigned> ExecutorConcurrency(
     "execute-concurrency",
     llvm::cl::desc("The number of threads used to process all files in "
-                   "parallel. Set to 0 for hardware concurrency."),
+                   "parallel. Set to 0 for hardware concurrency. "
+                   "This flag only applies to all-TUs."),
     llvm::cl::init(0));
 
 class AllTUsToolExecutorPlugin : public ToolExecutorPlugin {
