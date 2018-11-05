@@ -339,13 +339,12 @@ public:
 
   // Helpers to make a Symbol in the current scope
   template<typename D>
-  Symbol &MakeSymbol(
-      const SourceName &name, const Attrs &attrs, const D &details) {
+  Symbol &MakeSymbol(const SourceName &name, const Attrs &attrs, D &&details) {
     // Note: don't use FindSymbol here. If this is a derived type scope,
     // we want to detect if the name is already declared as a component.
     const auto &it{currScope().find(name)};
     if (it == currScope().end()) {
-      const auto pair{currScope().try_emplace(name, attrs, details)};
+      const auto pair{currScope().try_emplace(name, attrs, std::move(details))};
       CHECK(pair.second);  // name was not found, so must be able to add
       auto &symbol{*pair.first->second};
       symbol.add_occurrence(name);
@@ -358,7 +357,8 @@ public:
         // derived type with same name as a generic
         auto *derivedType{d->derivedType()};
         if (!derivedType) {
-          derivedType = &currScope().MakeSymbol(name, attrs, details);
+          derivedType =
+              &currScope().MakeSymbol(name, attrs, std::move(details));
           d->set_derivedType(*derivedType);
         } else {
           SayAlreadyDeclared(name, *derivedType);
@@ -369,7 +369,7 @@ public:
     if (symbol.CanReplaceDetails(details)) {
       // update the existing symbol
       symbol.attrs() |= attrs;
-      symbol.set_details(details);
+      symbol.set_details(std::move(details));
       return symbol;
     } else if constexpr (std::is_same_v<UnknownDetails, D>) {
       symbol.attrs() |= attrs;
@@ -383,16 +383,15 @@ public:
   }
   template<typename D>
   Symbol &MakeSymbol(
-      const parser::Name &name, const Attrs &attrs, const D &details) {
-    return MakeSymbol(name.source, attrs, details);
+      const parser::Name &name, const Attrs &attrs, D &&details) {
+    return MakeSymbol(name.source, attrs, std::move(details));
   }
   template<typename D>
-  Symbol &MakeSymbol(const parser::Name &name, const D &details) {
-    return MakeSymbol(name, Attrs(), details);
+  Symbol &MakeSymbol(const parser::Name &name, D &&details) {
+    return MakeSymbol(name, Attrs{}, std::move(details));
   }
-  template<typename D>
-  Symbol &MakeSymbol(const SourceName &name, const D &details) {
-    return MakeSymbol(name, Attrs(), details);
+  template<typename D> Symbol &MakeSymbol(const SourceName &name, D &&details) {
+    return MakeSymbol(name, Attrs{}, std::move(details));
   }
   Symbol &MakeSymbol(const SourceName &name, Attrs attrs = Attrs{}) {
     return MakeSymbol(name, attrs, UnknownDetails{});
@@ -631,7 +630,7 @@ private:
   const Symbol *ResolveDerivedType(const SourceName &);
   bool CanBeTypeBoundProc(const Symbol &);
   Symbol *FindExplicitInterface(const SourceName &);
-  Symbol &MakeTypeSymbol(const SourceName &, const Details &);
+  Symbol &MakeTypeSymbol(const SourceName &, Details &&);
   bool OkToAddComponent(const SourceName &, bool isParentComp = false);
 
   // Declare an object or procedure entity.
@@ -1547,8 +1546,8 @@ bool ModuleVisitor::Pre(const parser::Module &x) {
   const auto &name{
       std::get<parser::Statement<parser::ModuleStmt>>(x.t).statement.v.source};
   auto &subpPart{std::get<std::optional<parser::ModuleSubprogramPart>>(x.t)};
-  auto &symbol{BeginModule(name, false, subpPart)};
-  MakeSymbol(name, symbol.details());
+  BeginModule(name, false, subpPart);
+  MakeSymbol(name, ModuleDetails{});
   return true;
 }
 
@@ -2620,7 +2619,7 @@ Symbol *DeclarationVisitor::FindExplicitInterface(const SourceName &name) {
 // Create a symbol for a type parameter, component, or procedure binding in
 // the current derived type scope.
 Symbol &DeclarationVisitor::MakeTypeSymbol(
-    const SourceName &name, const Details &details) {
+    const SourceName &name, Details &&details) {
   Scope &derivedType{currScope()};
   CHECK(derivedType.kind() == Scope::Kind::DerivedType);
   if (auto it{derivedType.find(name)}; it != derivedType.end()) {

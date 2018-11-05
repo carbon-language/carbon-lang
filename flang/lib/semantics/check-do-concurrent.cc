@@ -215,13 +215,13 @@ private:
   parser::CharBlock currentStatementSourcePosition_{nullptr};
 };
 
-using CS = std::vector<Symbol>;
+using CS = std::vector<const Symbol *>;
 
 struct GatherSymbols {
   CS symbols;
   template<typename T> constexpr bool Pre(const T &) { return true; }
   template<typename T> constexpr void Post(const T &) {}
-  void Post(const parser::Name &name) { symbols.push_back(*name.symbol); }
+  void Post(const parser::Name &name) { symbols.push_back(name.symbol); }
 };
 
 static bool IntegerVariable(const Symbol &variable) {
@@ -237,19 +237,19 @@ static CS GatherAllVariableNames(
                    [&](const parser::LocalitySpec::Local &local) {
                      for (auto &v : local.v) {
                        CHECK(v.symbol);
-                       names.emplace_back(*v.symbol);
+                       names.push_back(v.symbol);
                      }
                    },
                    [&](const parser::LocalitySpec::LocalInit &localInit) {
                      for (auto &v : localInit.v) {
                        CHECK(v.symbol);
-                       names.emplace_back(*v.symbol);
+                       names.push_back(v.symbol);
                      }
                    },
                    [&](const parser::LocalitySpec::Shared &shared) {
                      for (auto &v : shared.v) {
                        CHECK(v.symbol);
-                       names.emplace_back(*v.symbol);
+                       names.push_back(v.symbol);
                      }
                    }},
         ls.u);
@@ -264,13 +264,13 @@ static CS GatherNotSharedVariableNames(
                    [&](const parser::LocalitySpec::Local &local) {
                      for (auto &v : local.v) {
                        CHECK(v.symbol);
-                       names.emplace_back(*v.symbol);
+                       names.push_back(v.symbol);
                      }
                    },
                    [&](const parser::LocalitySpec::LocalInit &localInit) {
                      for (auto &v : localInit.v) {
                        CHECK(v.symbol);
-                       names.emplace_back(*v.symbol);
+                       names.push_back(v.symbol);
                      }
                    }},
         ls.u);
@@ -285,7 +285,7 @@ static CS GatherLocalVariableNames(
                    [&](const parser::LocalitySpec::Local &local) {
                      for (auto &v : local.v) {
                        CHECK(v.symbol);
-                       names.emplace_back(*v.symbol);
+                       names.push_back(v.symbol);
                      }
                    }},
         ls.u);
@@ -374,8 +374,8 @@ private:
   }
   void CheckScopingConstraints(const CS &symbols) const {
     // C1124
-    for (auto &symbol : symbols) {
-      if (!InnermostEnclosingScope(symbol)) {
+    for (auto *symbol : symbols) {
+      if (!InnermostEnclosingScope(*symbol)) {
         messages_.Say(currentStatementSourcePosition_,
             "variable in locality-spec must be in innermost"
             " scoping unit"_err_en_US);
@@ -386,8 +386,8 @@ private:
   void CheckMaskIsPure(const parser::ScalarLogicalExpr &mask) const {
     // C1121 - procedures in mask must be pure
     CS references{GatherReferencesFromExpression(*mask.thing.thing)};
-    for (auto &r : references) {
-      if (isProcedure(r.flags()) && !isPure(r.attrs())) {
+    for (auto *r : references) {
+      if (isProcedure(r->flags()) && !isPure(r->attrs())) {
         messages_.Say(currentStatementSourcePosition_,
             "concurrent-header mask expression cannot reference impure"
             " procedure"_err_en_US);
@@ -397,8 +397,8 @@ private:
   }
   void CheckNoCollisions(const CS &containerA, const CS &containerB,
       const parser::MessageFormattedText &errorMessage) const {
-    for (auto &a : containerA) {
-      for (auto &b : containerB) {
+    for (auto *a : containerA) {
+      for (auto *b : containerB) {
         if (a == b) {
           messages_.Say(currentStatementSourcePosition_, errorMessage);
           return;
@@ -459,7 +459,7 @@ private:
         continue;  // XXX - this shouldn't be needed
       }
       CHECK(indexName.symbol);
-      indexNames.push_back(*indexName.symbol);
+      indexNames.push_back(indexName.symbol);
       if (!IntegerVariable(*indexName.symbol)) {
         messages_.Say(
             indexName.source, "index-name must have INTEGER type"_err_en_US);
