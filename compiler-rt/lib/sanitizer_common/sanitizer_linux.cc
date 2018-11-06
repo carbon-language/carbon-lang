@@ -1966,6 +1966,10 @@ static void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
 
 void SignalContext::InitPcSpBp() { GetPcSpBp(context, &pc, &sp, &bp); }
 
+void InitializePlatformEarly() {
+  // Do nothing.
+}
+
 void MaybeReexec() {
   // No need to re-exec on Linux.
 }
