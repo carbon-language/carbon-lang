@@ -78,6 +78,30 @@ define <2 x i1> @fneg_constant_swap_pred_vec_undef(<2 x float> %x) {
   ret <2 x i1> %cmp
 }
 
+; FIXME: The new fcmp should have the same FMF as the original.
+
+define i1 @fneg_fmf(float %x) {
+; CHECK-LABEL: @fneg_fmf(
+; CHECK-NEXT:    [[R:%.*]] = fcmp oeq float [[X:%.*]], -4.200000e+01
+; CHECK-NEXT:    ret i1 [[R]]
+;
+  %n = fsub fast float -0.0, %x
+  %r = fcmp fast oeq float %n, 42.0
+  ret i1 %r
+}
+
+; FIXME: The new fcmp should have the same FMF as the original, vector edition.
+
+define <2 x i1> @fcmp_fneg_fmf_vec(<2 x float> %x) {
+; CHECK-LABEL: @fcmp_fneg_fmf_vec(
+; CHECK-NEXT:    [[R:%.*]] = fcmp ule <2 x float> [[X:%.*]], <float -4.200000e+01, float 1.900000e+01>
+; CHECK-NEXT:    ret <2 x i1> [[R]]
+;
+  %n = fsub nsz <2 x float> zeroinitializer, %x
+  %r = fcmp nnan reassoc uge <2 x float> %n, <float 42.0, float -19.0>
+  ret <2 x i1> %r
+}
+
 define i1 @fneg_fneg_swap_pred(float %x, float %y) {
 ; CHECK-LABEL: @fneg_fneg_swap_pred(
 ; CHECK-NEXT:    [[CMP:%.*]] = fcmp ogt float [[X:%.*]], [[Y:%.*]]
