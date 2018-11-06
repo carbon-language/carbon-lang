@@ -5467,9 +5467,10 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
   Value *X, *Y;
   if (match(Op0, m_FNeg(m_Value(X)))) {
     if (match(Op1, m_FNeg(m_Value(Y)))) {
-      // FIXME: Drops FMF.
       // fcmp pred (fneg X), (fneg Y) -> fcmp swap(pred) X, Y
-      return new FCmpInst(I.getSwappedPredicate(), X, Y);
+      Instruction *NewFCmp = new FCmpInst(I.getSwappedPredicate(), X, Y);
+      NewFCmp->copyFastMathFlags(&I);
+      return NewFCmp;
     }
 
     Constant *C;

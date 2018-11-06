@@ -104,7 +104,7 @@ define <2 x i1> @fcmp_fneg_fmf_vec(<2 x float> %x) {
 
 define i1 @fneg_fneg_swap_pred(float %x, float %y) {
 ; CHECK-LABEL: @fneg_fneg_swap_pred(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ogt float [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp nnan ogt float [[X:%.*]], [[Y:%.*]]
 ; CHECK-NEXT:    ret i1 [[CMP]]
 ;
   %neg1 = fsub float -0.0, %x
@@ -115,7 +115,7 @@ define i1 @fneg_fneg_swap_pred(float %x, float %y) {
 
 define <2 x i1> @fneg_fneg_swap_pred_vec(<2 x float> %x, <2 x float> %y) {
 ; CHECK-LABEL: @fneg_fneg_swap_pred_vec(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ogt <2 x float> [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp ninf ogt <2 x float> [[X:%.*]], [[Y:%.*]]
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %neg1 = fsub <2 x float> <float -0.0, float -0.0>, %x
