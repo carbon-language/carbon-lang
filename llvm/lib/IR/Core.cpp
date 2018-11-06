@@ -2316,7 +2316,7 @@ const char *LLVMIntrinsicCopyOverloadedName(unsigned ID,
   ArrayRef<Type*> Tys(unwrap(ParamTypes), ParamCount);
   auto Str = llvm::Intrinsic::getName(IID, Tys);
   *NameLength = Str.length();
-  return strndup(Str.c_str(), Str.length());
+  return strdup(Str.c_str());
 }
 
 LLVMBool LLVMIntrinsicIsOverloaded(unsigned ID) {
