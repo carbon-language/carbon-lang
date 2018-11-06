@@ -515,18 +515,54 @@ __int64 _InterlockedOr64_rel(__int64 volatile *_Value, __int64 _Mask);
 |* Interlocked Xor
 \*----------------------------------------------------------------------------*/
 #if defined(__arm__) || defined(__aarch64__)
-char _InterlockedXor8_acq(char volatile *_Value, char _Mask);
-char _InterlockedXor8_nf(char volatile *_Value, char _Mask);
-char _InterlockedXor8_rel(char volatile *_Value, char _Mask);
-short _InterlockedXor16_acq(short volatile *_Value, short _Mask);
-short _InterlockedXor16_nf(short volatile *_Value, short _Mask);
-short _InterlockedXor16_rel(short volatile *_Value, short _Mask);
-long _InterlockedXor_acq(long volatile *_Value, long _Mask);
-long _InterlockedXor_nf(long volatile *_Value, long _Mask);
-long _InterlockedXor_rel(long volatile *_Value, long _Mask);
-__int64 _InterlockedXor64_acq(__int64 volatile *_Value, __int64 _Mask);
-__int64 _InterlockedXor64_nf(__int64 volatile *_Value, __int64 _Mask);
-__int64 _InterlockedXor64_rel(__int64 volatile *_Value, __int64 _Mask);
+static __inline__ char __DEFAULT_FN_ATTRS
+_InterlockedXor8_acq(char volatile *_Value, char _Mask) {
+  return __atomic_fetch_xor(_Value, _Mask, __ATOMIC_ACQUIRE);
+}
+static __inline__ char __DEFAULT_FN_ATTRS
+_InterlockedXor8_nf(char volatile *_Value, char _Mask) {
+  return __atomic_fetch_xor(_Value, _Mask, __ATOMIC_RELAXED);
+}
+static __inline__ char __DEFAULT_FN_ATTRS
+_InterlockedXor8_rel(char volatile *_Value, char _Mask) {
+  return __atomic_fetch_xor(_Value, _Mask, __ATOMIC_RELEASE);
+}
+static __inline__ short __DEFAULT_FN_ATTRS
+_InterlockedXor16_acq(short volatile *_Value, short _Mask) {
+  return __atomic_fetch_xor(_Value, _Mask, __ATOMIC_ACQUIRE);
+}
+static __inline__ short __DEFAULT_FN_ATTRS
+_InterlockedXor16_nf(short volatile *_Value, short _Mask) {
+  return __atomic_fetch_xor(_Value, _Mask, __ATOMIC_RELAXED);
+}
+static __inline__ short __DEFAULT_FN_ATTRS
+_InterlockedXor16_rel(short volatile *_Value, short _Mask) {
+  return __atomic_fetch_xor(_Value, _Mask, __ATOMIC_RELEASE);
+}
+static __inline__ long __DEFAULT_FN_ATTRS
+_InterlockedXor_acq(long volatile *_Value, long _Mask) {
+  return __atomic_fetch_xor(_Value, _Mask, __ATOMIC_ACQUIRE);
+}
+static __inline__ long __DEFAULT_FN_ATTRS
+_InterlockedXor_nf(long volatile *_Value, long _Mask) {
+  return __atomic_fetch_xor(_Value, _Mask, __ATOMIC_RELAXED);
+}
+static __inline__ long __DEFAULT_FN_ATTRS
+_InterlockedXor_rel(long volatile *_Value, long _Mask) {
+  return __atomic_fetch_xor(_Value, _Mask, __ATOMIC_RELEASE);
+}
+static __inline__ __int64 __DEFAULT_FN_ATTRS
+_InterlockedXor64_acq(__int64 volatile *_Value, __int64 _Mask) {
+  return __atomic_fetch_xor(_Value, _Mask, __ATOMIC_ACQUIRE);
+}
+static __inline__ __int64 __DEFAULT_FN_ATTRS
+_InterlockedXor64_nf(__int64 volatile *_Value, __int64 _Mask) {
+  return __atomic_fetch_xor(_Value, _Mask, __ATOMIC_RELAXED);
+}
+static __inline__ __int64 __DEFAULT_FN_ATTRS
+_InterlockedXor64_rel(__int64 volatile *_Value, __int64 _Mask) {
+  return __atomic_fetch_xor(_Value, _Mask, __ATOMIC_RELEASE);
+}
 #endif
 /*----------------------------------------------------------------------------*\
 |* Interlocked Exchange
