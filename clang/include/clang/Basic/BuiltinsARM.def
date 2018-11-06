@@ -256,6 +256,19 @@ TARGET_HEADER_BUILTIN(_InterlockedExchange64_acq, "LLiLLiD*LLi", "nh", "intrin.h
 TARGET_HEADER_BUILTIN(_InterlockedExchange64_nf,  "LLiLLiD*LLi", "nh", "intrin.h", ALL_MS_LANGUAGES, "")
 TARGET_HEADER_BUILTIN(_InterlockedExchange64_rel, "LLiLLiD*LLi", "nh", "intrin.h", ALL_MS_LANGUAGES, "")
 
+TARGET_HEADER_BUILTIN(_InterlockedCompareExchange8_acq,  "ccD*cc",         "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+TARGET_HEADER_BUILTIN(_InterlockedCompareExchange8_nf,   "ccD*cc",         "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+TARGET_HEADER_BUILTIN(_InterlockedCompareExchange8_rel,  "ccD*cc",         "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+TARGET_HEADER_BUILTIN(_InterlockedCompareExchange16_acq, "ssD*ss",         "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+TARGET_HEADER_BUILTIN(_InterlockedCompareExchange16_nf,  "ssD*ss",         "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+TARGET_HEADER_BUILTIN(_InterlockedCompareExchange16_rel, "ssD*ss",         "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+TARGET_HEADER_BUILTIN(_InterlockedCompareExchange_acq,   "LiLiD*LiLi",     "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+TARGET_HEADER_BUILTIN(_InterlockedCompareExchange_nf,    "LiLiD*LiLi",     "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+TARGET_HEADER_BUILTIN(_InterlockedCompareExchange_rel,   "LiLiD*LiLi",     "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+TARGET_HEADER_BUILTIN(_InterlockedCompareExchange64_acq, "LLiLLiD*LLiLLi", "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+TARGET_HEADER_BUILTIN(_InterlockedCompareExchange64_nf,  "LLiLLiD*LLiLLi", "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+TARGET_HEADER_BUILTIN(_InterlockedCompareExchange64_rel, "LLiLLiD*LLiLLi", "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+
 #undef BUILTIN
 #undef LANGBUILTIN
 #undef TARGET_HEADER_BUILTIN
