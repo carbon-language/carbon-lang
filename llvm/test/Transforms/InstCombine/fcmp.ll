@@ -78,7 +78,7 @@ define <2 x i1> @fneg_constant_swap_pred_vec_undef(<2 x float> %x) {
   ret <2 x i1> %cmp
 }
 
-; FIXME: The new fcmp should have the same FMF as the original.
+; The new fcmp should have the same FMF as the original.
 
 define i1 @fneg_fmf(float %x) {
 ; CHECK-LABEL: @fneg_fmf(
@@ -90,7 +90,7 @@ define i1 @fneg_fmf(float %x) {
   ret i1 %r
 }
 
-; FIXME: The new fcmp should have the same FMF as the original, vector edition.
+; The new fcmp should have the same FMF as the original, vector edition.
 
 define <2 x i1> @fcmp_fneg_fmf_vec(<2 x float> %x) {
 ; CHECK-LABEL: @fcmp_fneg_fmf_vec(
@@ -109,7 +109,7 @@ define i1 @fneg_fneg_swap_pred(float %x, float %y) {
 ;
   %neg1 = fsub float -0.0, %x
   %neg2 = fsub float -0.0, %y
-  %cmp = fcmp olt float %neg1, %neg2
+  %cmp = fcmp nnan olt float %neg1, %neg2
   ret i1 %cmp
 }
 
@@ -120,7 +120,7 @@ define <2 x i1> @fneg_fneg_swap_pred_vec(<2 x float> %x, <2 x float> %y) {
 ;
   %neg1 = fsub <2 x float> <float -0.0, float -0.0>, %x
   %neg2 = fsub <2 x float> <float -0.0, float -0.0>, %y
-  %cmp = fcmp olt <2 x float> %neg1, %neg2
+  %cmp = fcmp ninf olt <2 x float> %neg1, %neg2
   ret <2 x i1> %cmp
 }
 
