@@ -805,6 +805,9 @@ enum class CodeGenFunction::MSVCIntrin {
   _InterlockedXor_acq,
   _InterlockedXor_rel,
   _InterlockedXor_nf,
+  _InterlockedAnd_acq,
+  _InterlockedAnd_rel,
+  _InterlockedAnd_nf,
   __fastfail,
 };
 
@@ -912,6 +915,15 @@ Value *CodeGenFunction::EmitMSVCBuiltinExpr(MSVCIntrin BuiltinID,
                                  AtomicOrdering::Release);
   case MSVCIntrin::_InterlockedXor_nf:
     return MakeBinaryAtomicValue(*this, AtomicRMWInst::Xor, E,
+                                 AtomicOrdering::Monotonic);
+  case MSVCIntrin::_InterlockedAnd_acq:
+    return MakeBinaryAtomicValue(*this, AtomicRMWInst::And, E,
+                                 AtomicOrdering::Acquire);
+  case MSVCIntrin::_InterlockedAnd_rel:
+    return MakeBinaryAtomicValue(*this, AtomicRMWInst::And, E,
+                                 AtomicOrdering::Release);
+  case MSVCIntrin::_InterlockedAnd_nf:
+    return MakeBinaryAtomicValue(*this, AtomicRMWInst::And, E,
                                  AtomicOrdering::Monotonic);
 
   case MSVCIntrin::_InterlockedDecrement: {
@@ -6271,6 +6283,21 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI_InterlockedXor_nf:
   case ARM::BI_InterlockedXor64_nf:
     return EmitMSVCBuiltinExpr(MSVCIntrin::_InterlockedXor_nf, E);
+  case ARM::BI_InterlockedAnd8_acq:
+  case ARM::BI_InterlockedAnd16_acq:
+  case ARM::BI_InterlockedAnd_acq:
+  case ARM::BI_InterlockedAnd64_acq:
+    return EmitMSVCBuiltinExpr(MSVCIntrin::_InterlockedAnd_acq, E);
+  case ARM::BI_InterlockedAnd8_rel:
+  case ARM::BI_InterlockedAnd16_rel:
+  case ARM::BI_InterlockedAnd_rel:
+  case ARM::BI_InterlockedAnd64_rel:
+    return EmitMSVCBuiltinExpr(MSVCIntrin::_InterlockedAnd_rel, E);
+  case ARM::BI_InterlockedAnd8_nf:
+  case ARM::BI_InterlockedAnd16_nf:
+  case ARM::BI_InterlockedAnd_nf:
+  case ARM::BI_InterlockedAnd64_nf:
+    return EmitMSVCBuiltinExpr(MSVCIntrin::_InterlockedAnd_nf, E);
   }
 
   // Get the last argument, which specifies the vector type.
@@ -8832,6 +8859,21 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   case AArch64::BI_InterlockedXor_nf:
   case AArch64::BI_InterlockedXor64_nf:
     return EmitMSVCBuiltinExpr(MSVCIntrin::_InterlockedXor_nf, E);
+  case AArch64::BI_InterlockedAnd8_acq:
+  case AArch64::BI_InterlockedAnd16_acq:
+  case AArch64::BI_InterlockedAnd_acq:
+  case AArch64::BI_InterlockedAnd64_acq:
+    return EmitMSVCBuiltinExpr(MSVCIntrin::_InterlockedAnd_acq, E);
+  case AArch64::BI_InterlockedAnd8_rel:
+  case AArch64::BI_InterlockedAnd16_rel:
+  case AArch64::BI_InterlockedAnd_rel:
+  case AArch64::BI_InterlockedAnd64_rel:
+    return EmitMSVCBuiltinExpr(MSVCIntrin::_InterlockedAnd_rel, E);
+  case AArch64::BI_InterlockedAnd8_nf:
+  case AArch64::BI_InterlockedAnd16_nf:
+  case AArch64::BI_InterlockedAnd_nf:
+  case AArch64::BI_InterlockedAnd64_nf:
+    return EmitMSVCBuiltinExpr(MSVCIntrin::_InterlockedAnd_nf, E);
 
   case AArch64::BI_InterlockedAdd: {
     Value *Arg0 = EmitScalarExpr(E->getArg(0));

@@ -428,54 +428,18 @@ _InterlockedDecrement64_rel(__int64 volatile *_Value) {
 |* Interlocked And
 \*----------------------------------------------------------------------------*/
 #if defined(__arm__) || defined(__aarch64__)
-static __inline__ char __DEFAULT_FN_ATTRS
-_InterlockedAnd8_acq(char volatile *_Value, char _Mask) {
-  return __atomic_fetch_and(_Value, _Mask, __ATOMIC_ACQUIRE);
-}
-static __inline__ char __DEFAULT_FN_ATTRS
-_InterlockedAnd8_nf(char volatile *_Value, char _Mask) {
-  return __atomic_fetch_and(_Value, _Mask, __ATOMIC_RELAXED);
-}
-static __inline__ char __DEFAULT_FN_ATTRS
-_InterlockedAnd8_rel(char volatile *_Value, char _Mask) {
-  return __atomic_fetch_and(_Value, _Mask, __ATOMIC_RELEASE);
-}
-static __inline__ short __DEFAULT_FN_ATTRS
-_InterlockedAnd16_acq(short volatile *_Value, short _Mask) {
-  return __atomic_fetch_and(_Value, _Mask, __ATOMIC_ACQUIRE);
-}
-static __inline__ short __DEFAULT_FN_ATTRS
-_InterlockedAnd16_nf(short volatile *_Value, short _Mask) {
-  return __atomic_fetch_and(_Value, _Mask, __ATOMIC_RELAXED);
-}
-static __inline__ short __DEFAULT_FN_ATTRS
-_InterlockedAnd16_rel(short volatile *_Value, short _Mask) {
-  return __atomic_fetch_and(_Value, _Mask, __ATOMIC_RELEASE);
-}
-static __inline__ long __DEFAULT_FN_ATTRS
-_InterlockedAnd_acq(long volatile *_Value, long _Mask) {
-  return __atomic_fetch_and(_Value, _Mask, __ATOMIC_ACQUIRE);
-}
-static __inline__ long __DEFAULT_FN_ATTRS
-_InterlockedAnd_nf(long volatile *_Value, long _Mask) {
-  return __atomic_fetch_and(_Value, _Mask, __ATOMIC_RELAXED);
-}
-static __inline__ long __DEFAULT_FN_ATTRS
-_InterlockedAnd_rel(long volatile *_Value, long _Mask) {
-  return __atomic_fetch_and(_Value, _Mask, __ATOMIC_RELEASE);
-}
-static __inline__ __int64 __DEFAULT_FN_ATTRS
-_InterlockedAnd64_acq(__int64 volatile *_Value, __int64 _Mask) {
-  return __atomic_fetch_and(_Value, _Mask, __ATOMIC_ACQUIRE);
-}
-static __inline__ __int64 __DEFAULT_FN_ATTRS
-_InterlockedAnd64_nf(__int64 volatile *_Value, __int64 _Mask) {
-  return __atomic_fetch_and(_Value, _Mask, __ATOMIC_RELAXED);
-}
-static __inline__ __int64 __DEFAULT_FN_ATTRS
-_InterlockedAnd64_rel(__int64 volatile *_Value, __int64 _Mask) {
-  return __atomic_fetch_and(_Value, _Mask, __ATOMIC_RELEASE);
-}
+char _InterlockedAnd8_acq(char volatile *_Value, char _Mask);
+char _InterlockedAnd8_nf(char volatile *_Value, char _Mask);
+char _InterlockedAnd8_rel(char volatile *_Value, char _Mask);
+short _InterlockedAnd16_acq(short volatile *_Value, short _Mask);
+short _InterlockedAnd16_nf(short volatile *_Value, short _Mask);
+short _InterlockedAnd16_rel(short volatile *_Value, short _Mask);
+long _InterlockedAnd_acq(long volatile *_Value, long _Mask);
+long _InterlockedAnd_nf(long volatile *_Value, long _Mask);
+long _InterlockedAnd_rel(long volatile *_Value, long _Mask);
+__int64 _InterlockedAnd64_acq(__int64 volatile *_Value, __int64 _Mask);
+__int64 _InterlockedAnd64_nf(__int64 volatile *_Value, __int64 _Mask);
+__int64 _InterlockedAnd64_rel(__int64 volatile *_Value, __int64 _Mask);
 #endif
 /*----------------------------------------------------------------------------*\
 |* Bit Counting and Testing
