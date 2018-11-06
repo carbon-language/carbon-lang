@@ -5,8 +5,8 @@ declare half @llvm.fabs.f16(half)
 declare double @llvm.fabs.f64(double)
 declare <2 x float> @llvm.fabs.v2f32(<2 x float>)
 
-define i1 @test1(float %x, float %y) {
-; CHECK-LABEL: @test1(
+define i1 @fpext_fpext(float %x, float %y) {
+; CHECK-LABEL: @fpext_fpext(
 ; CHECK-NEXT:    [[CMP:%.*]] = fcmp nnan ogt float [[X:%.*]], [[Y:%.*]]
 ; CHECK-NEXT:    ret i1 [[CMP]]
 ;
@@ -16,8 +16,8 @@ define i1 @test1(float %x, float %y) {
   ret i1 %cmp
 }
 
-define i1 @test2(float %a) {
-; CHECK-LABEL: @test2(
+define i1 @fpext_constant(float %a) {
+; CHECK-LABEL: @fpext_constant(
 ; CHECK-NEXT:    [[CMP:%.*]] = fcmp ninf ogt float [[A:%.*]], 1.000000e+00
 ; CHECK-NEXT:    ret i1 [[CMP]]
 ;
@@ -26,8 +26,19 @@ define i1 @test2(float %a) {
   ret i1 %cmp
 }
 
-define i1 @test3(float %a) {
-; CHECK-LABEL: @test3(
+define <2 x i1> @fpext_constant_vec_splat(<2 x half> %a) {
+; CHECK-LABEL: @fpext_constant_vec_splat(
+; CHECK-NEXT:    [[EXT:%.*]] = fpext <2 x half> [[A:%.*]] to <2 x double>
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp nnan ole <2 x double> [[EXT]], <double 4.200000e+01, double 4.200000e+01>
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %ext = fpext <2 x half> %a to <2 x double>
+  %cmp = fcmp nnan ole <2 x double> %ext, <double 42.0, double 42.0>
+  ret <2 x i1> %cmp
+}
+
+define i1 @fpext_constant_lossy(float %a) {
+; CHECK-LABEL: @fpext_constant_lossy(
 ; CHECK-NEXT:    [[EXT:%.*]] = fpext float [[A:%.*]] to double
 ; CHECK-NEXT:    [[CMP:%.*]] = fcmp ogt double [[EXT]], 0x3FF0000000000001
 ; CHECK-NEXT:    ret i1 [[CMP]]
@@ -37,8 +48,8 @@ define i1 @test3(float %a) {
   ret i1 %cmp
 }
 
-define i1 @test4(float %a) {
-; CHECK-LABEL: @test4(
+define i1 @fpext_constant_denorm(float %a) {
+; CHECK-LABEL: @fpext_constant_denorm(
 ; CHECK-NEXT:    [[EXT:%.*]] = fpext float [[A:%.*]] to double
 ; CHECK-NEXT:    [[CMP:%.*]] = fcmp ogt double [[EXT]], 0x36A0000000000000
 ; CHECK-NEXT:    ret i1 [[CMP]]
