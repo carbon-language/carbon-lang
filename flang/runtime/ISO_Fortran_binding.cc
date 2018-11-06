@@ -170,8 +170,8 @@ int CFI_establish(CFI_cdesc_t *descriptor, void *base_addr,
   descriptor->attribute = attribute;
   descriptor->f18Addendum = 0;
   std::size_t byteSize{elem_len};
-  std::size_t lower_bound{attribute!=CFI_attribute_pointer};
-  if (base_addr !=nullptr) {
+  std::size_t lower_bound{attribute != CFI_attribute_pointer};
+  if (base_addr != nullptr) {
     for (std::size_t j{0}; j < rank; ++j) {
       descriptor->dim[j].lower_bound = lower_bound;
       descriptor->dim[j].extent = extents[j];

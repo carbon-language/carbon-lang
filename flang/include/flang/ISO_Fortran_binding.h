@@ -45,20 +45,6 @@ typedef unsigned char CFI_rank_t;
 // and should be used for all array indexing and loop bound calculations.
 typedef ptrdiff_t CFI_index_t;
 
-#ifdef __cplusplus
-// C++ does not support zero-sized array (rank=0)
-// Also, CFI_cdesc_t already contains 1 dim in cpp
-#define CFI_CDESC_T(rank) \
-  std::aligned_storage_t<sizeof(CFI_cdesc_t) + (rank - 1) * sizeof(CFI_dim_t), \
-      alignof(CFI_cdesc_t)>
-#else
-#define CFI_CDESC_T(rank) \
-  struct { \
-    CFI_cdesc_t cdesc; /* must be first */ \
-    CFI_dim_t dim[rank]; \
-  }
-#endif
-
 typedef unsigned char CFI_attribute_t;
 #define CFI_attribute_pointer 1
 #define CFI_attribute_allocatable 2
@@ -138,6 +124,28 @@ typedef struct CFI_cdesc_t {
   unsigned char f18Addendum;
   CFI_dim_t dim[CFI_ISO_FORTRAN_BINDING_FLEXIBLE_ARRAY]; /* must appear last */
 } CFI_cdesc_t;
+
+/* 18.5.4 */
+#ifdef __cplusplus
+// C++ does not support zero-sized array (rank=0)
+// Also, CFI_cdesc_t already contains 1 dim in cpp
+template<bool B, int rank> struct Cond_CFI_cdesc_t {
+  static_assert((rank >= 2 && rank <= CFI_MAX_RANK), "CFI_INVALID_RANK");
+  CFI_cdesc_t cdesc;
+  CFI_dim_t dim[rank - 1];
+};
+template<int rank> struct Cond_CFI_cdesc_t<false, rank> {
+  static_assert((rank >= 0 && rank < 2), "CFI_INVALID_RANK");
+  CFI_cdesc_t cdesc;
+};
+#define CFI_CDESC_T(rank) Cond_CFI_cdesc_t<(rank >= 2), rank>
+#else
+#define CFI_CDESC_T(rank) \
+  struct { \
+    CFI_cdesc_t cdesc; /* must be first */ \
+    CFI_dim_t dim[rank]; \
+  }
+#endif
 
 /* 18.5.5 procedural interfaces*/
 #ifdef __cplusplus
