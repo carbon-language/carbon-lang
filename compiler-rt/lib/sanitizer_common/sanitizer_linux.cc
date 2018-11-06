@@ -19,7 +19,6 @@
 
 #include "sanitizer_common.h"
 #include "sanitizer_flags.h"
-#include "sanitizer_getauxval.h"
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_libc.h"
 #include "sanitizer_linux.h"
@@ -629,35 +628,7 @@ char **GetEnviron() {
   return envp;
 }
 
-void ReExec() {
-  const char *pathname = "/proc/self/exe";
-
-#if SANITIZER_NETBSD
-  static const int name[] = {
-    CTL_KERN, KERN_PROC_ARGS, -1, KERN_PROC_PATHNAME,
-  };
-  char path[400];
-  uptr len;
-
-  len = sizeof(path);
-  if (internal_sysctl(name, ARRAY_SIZE(name), path, &len, NULL, 0) != -1)
-    pathname = path;
-#elif SANITIZER_SOLARIS
-  pathname = getexecname();
-  CHECK_NE(pathname, NULL);
-#elif SANITIZER_USE_GETAUXVAL
-  // Calling execve with /proc/self/exe sets that as $EXEC_ORIGIN. Binaries that
-  // rely on that will fail to load shared libraries. Query AT_EXECFN instead.
-  pathname = reinterpret_cast<const char *>(getauxval(AT_EXECFN));
-#endif
-
-  uptr rv = internal_execve(pathname, GetArgv(), GetEnviron());
-  int rverrno;
-  CHECK_EQ(internal_iserror(rv, &rverrno), true);
-  Printf("execve failed, errno %d\n", rverrno);
-  Die();
-}
-#endif
+#endif  // !SANITIZER_OPENBSD
 
 #if !SANITIZER_SOLARIS
 enum MutexState {
