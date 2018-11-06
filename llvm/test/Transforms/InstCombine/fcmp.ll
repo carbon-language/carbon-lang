@@ -7,7 +7,7 @@ declare <2 x float> @llvm.fabs.v2f32(<2 x float>)
 
 define i1 @test1(float %x, float %y) {
 ; CHECK-LABEL: @test1(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ogt float [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp nnan ogt float [[X:%.*]], [[Y:%.*]]
 ; CHECK-NEXT:    ret i1 [[CMP]]
 ;
   %ext1 = fpext float %x to double

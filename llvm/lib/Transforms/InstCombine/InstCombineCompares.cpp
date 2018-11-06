@@ -5483,11 +5483,13 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
     }
   }
 
-  // fcmp (fpext x), (fpext y) -> fcmp x, y
-  if (FPExtInst *LHSExt = dyn_cast<FPExtInst>(Op0))
-    if (FPExtInst *RHSExt = dyn_cast<FPExtInst>(Op1))
-      if (LHSExt->getSrcTy() == RHSExt->getSrcTy())
-        return new FCmpInst(Pred, LHSExt->getOperand(0), RHSExt->getOperand(0));
+  // fcmp (fpext X), (fpext Y) -> fcmp X, Y
+  if (match(Op0, m_FPExt(m_Value(X))) && match(Op1, m_FPExt(m_Value(Y))) &&
+      X->getType() == Y->getType()) {
+    Instruction *NewFCmp = new FCmpInst(Pred, X, Y);
+    NewFCmp->copyFastMathFlags(&I);
+    return NewFCmp;
+  }
 
   if (I.getType()->isVectorTy())
     if (Instruction *Res = foldVectorCmp(I, Builder))
