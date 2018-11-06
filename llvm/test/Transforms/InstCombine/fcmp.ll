@@ -28,8 +28,7 @@ define i1 @fpext_constant(float %a) {
 
 define <2 x i1> @fpext_constant_vec_splat(<2 x half> %a) {
 ; CHECK-LABEL: @fpext_constant_vec_splat(
-; CHECK-NEXT:    [[EXT:%.*]] = fpext <2 x half> [[A:%.*]] to <2 x double>
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp nnan ole <2 x double> [[EXT]], <double 4.200000e+01, double 4.200000e+01>
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp nnan ole <2 x half> [[A:%.*]], <half 0xH5140, half 0xH5140>
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %ext = fpext <2 x half> %a to <2 x double>

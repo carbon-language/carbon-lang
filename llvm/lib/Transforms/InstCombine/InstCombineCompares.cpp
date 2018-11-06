@@ -5468,24 +5468,24 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
       return NewFCmp;
     }
 
-    // TODO: Use m_APFloat to handle vector splats.
-    ConstantFP *C;
-    if (match(Op1, m_ConstantFP(C))) {
+    const APFloat *C;
+    if (match(Op1, m_APFloat(C))) {
       // fcmp (fpext X), C -> fcmp X, (fptrunc C) if fptrunc is lossless
-      const fltSemantics &FPSem = X->getType()->getFltSemantics();
+      const fltSemantics &FPSem =
+          X->getType()->getScalarType()->getFltSemantics();
       bool Lossy;
-      APFloat F = C->getValueAPF();
-      F.convert(FPSem, APFloat::rmNearestTiesToEven, &Lossy);
+      APFloat TruncC = *C;
+      TruncC.convert(FPSem, APFloat::rmNearestTiesToEven, &Lossy);
 
       // Avoid lossy conversions and denormals.
       // Zero is a special case that's OK to convert.
-      APFloat Fabs = F;
+      APFloat Fabs = TruncC;
       Fabs.clearSign();
       if (!Lossy &&
           ((Fabs.compare(APFloat::getSmallestNormalized(FPSem)) !=
             APFloat::cmpLessThan) || Fabs.isZero())) {
-        Instruction *NewFCmp =
-            new FCmpInst(Pred, X, ConstantFP::get(C->getContext(), F));
+        Constant *NewC = ConstantFP::get(X->getType(), TruncC);
+        Instruction *NewFCmp = new FCmpInst(Pred, X, NewC);
         NewFCmp->copyFastMathFlags(&I);
         return NewFCmp;
       }
