@@ -128,9 +128,6 @@ struct SuffixTreeNode {
   /// mapping by tacking that character on the end of the current string.
   DenseMap<unsigned, SuffixTreeNode *> Children;
 
-  /// A flag set to false if the node has been pruned from the tree.
-  bool IsInTree = true;
-
   /// The start index of this node's substring in the main string.
   unsigned StartIdx = EmptyIdx;
 
@@ -533,7 +530,6 @@ public:
   /// \param Str The string to construct the suffix tree for.
   SuffixTree(const std::vector<unsigned> &Str) : Str(Str) {
     Root = insertInternalNode(nullptr, EmptyIdx, EmptyIdx, 0);
-    Root->IsInTree = true;
     Active.Node = Root;
 
     // Keep track of the number of suffixes we have to add of the current
