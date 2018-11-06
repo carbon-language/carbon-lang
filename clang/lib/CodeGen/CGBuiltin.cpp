@@ -249,12 +249,13 @@ static Value *MakeAtomicCmpXchgValue(CodeGenFunction &CGF, const CallExpr *E,
 static
 Value *EmitAtomicCmpXchgForMSIntrin(CodeGenFunction &CGF, const CallExpr *E,
     AtomicOrdering SuccessOrdering = AtomicOrdering::SequentiallyConsistent) {
-  auto T = E->getType();
   assert(E->getArg(0)->getType()->isPointerType());
-  assert(CGF.getContext().hasSameUnqualifiedType(T,
-                                  E->getArg(0)->getType()->getPointeeType()));
-  assert(CGF.getContext().hasSameUnqualifiedType(T, E->getArg(1)->getType()));
-  assert(CGF.getContext().hasSameUnqualifiedType(T, E->getArg(2)->getType()));
+  assert(CGF.getContext().hasSameUnqualifiedType(
+      E->getType(), E->getArg(0)->getType()->getPointeeType()));
+  assert(CGF.getContext().hasSameUnqualifiedType(E->getType(),
+                                                 E->getArg(1)->getType()));
+  assert(CGF.getContext().hasSameUnqualifiedType(E->getType(),
+                                                 E->getArg(2)->getType()));
 
   auto *Destination = CGF.EmitScalarExpr(E->getArg(0));
   auto *Comparand = CGF.EmitScalarExpr(E->getArg(2));
