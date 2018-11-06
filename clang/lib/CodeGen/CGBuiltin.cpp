@@ -272,6 +272,19 @@ Value *EmitAtomicCmpXchgForMSIntrin(CodeGenFunction &CGF, const CallExpr *E,
   return CGF.Builder.CreateExtractValue(Result, 0);
 }
 
+static Value *EmitAtomicIncrementValue(CodeGenFunction &CGF, const CallExpr *E,
+    AtomicOrdering Ordering = AtomicOrdering::SequentiallyConsistent) {
+  assert(E->getArg(0)->getType()->isPointerType());
+
+  auto *IntTy = CGF.ConvertType(E->getType());
+  auto *Result = CGF.Builder.CreateAtomicRMW(
+                   AtomicRMWInst::Add,
+                   CGF.EmitScalarExpr(E->getArg(0)),
+                   ConstantInt::get(IntTy, 1),
+                   Ordering);
+  return CGF.Builder.CreateAdd(Result, ConstantInt::get(IntTy, 1));
+}
+
 // Emit a simple mangled intrinsic that has 1 argument and a return type
 // matching the argument type.
 static Value *emitUnaryBuiltin(CodeGenFunction &CGF,
@@ -808,6 +821,9 @@ enum class CodeGenFunction::MSVCIntrin {
   _InterlockedAnd_acq,
   _InterlockedAnd_rel,
   _InterlockedAnd_nf,
+  _InterlockedIncrement_acq,
+  _InterlockedIncrement_rel,
+  _InterlockedIncrement_nf,
   __fastfail,
 };
 
@@ -925,6 +941,12 @@ Value *CodeGenFunction::EmitMSVCBuiltinExpr(MSVCIntrin BuiltinID,
   case MSVCIntrin::_InterlockedAnd_nf:
     return MakeBinaryAtomicValue(*this, AtomicRMWInst::And, E,
                                  AtomicOrdering::Monotonic);
+  case MSVCIntrin::_InterlockedIncrement_acq:
+    return EmitAtomicIncrementValue(*this, E, AtomicOrdering::Acquire);
+  case MSVCIntrin::_InterlockedIncrement_rel:
+    return EmitAtomicIncrementValue(*this, E, AtomicOrdering::Release);
+  case MSVCIntrin::_InterlockedIncrement_nf:
+    return EmitAtomicIncrementValue(*this, E, AtomicOrdering::Monotonic);
 
   case MSVCIntrin::_InterlockedDecrement: {
     llvm::Type *IntTy = ConvertType(E->getType());
@@ -935,15 +957,8 @@ Value *CodeGenFunction::EmitMSVCBuiltinExpr(MSVCIntrin BuiltinID,
       llvm::AtomicOrdering::SequentiallyConsistent);
     return Builder.CreateSub(RMWI, ConstantInt::get(IntTy, 1));
   }
-  case MSVCIntrin::_InterlockedIncrement: {
-    llvm::Type *IntTy = ConvertType(E->getType());
-    AtomicRMWInst *RMWI = Builder.CreateAtomicRMW(
-      AtomicRMWInst::Add,
-      EmitScalarExpr(E->getArg(0)),
-      ConstantInt::get(IntTy, 1),
-      llvm::AtomicOrdering::SequentiallyConsistent);
-    return Builder.CreateAdd(RMWI, ConstantInt::get(IntTy, 1));
-  }
+  case MSVCIntrin::_InterlockedIncrement:
+    return EmitAtomicIncrementValue(*this, E);
 
   case MSVCIntrin::__fastfail: {
     // Request immediate process termination from the kernel. The instruction
@@ -6298,6 +6313,18 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI_InterlockedAnd_nf:
   case ARM::BI_InterlockedAnd64_nf:
     return EmitMSVCBuiltinExpr(MSVCIntrin::_InterlockedAnd_nf, E);
+  case ARM::BI_InterlockedIncrement16_acq:
+  case ARM::BI_InterlockedIncrement_acq:
+  case ARM::BI_InterlockedIncrement64_acq:
+    return EmitMSVCBuiltinExpr(MSVCIntrin::_InterlockedIncrement_acq, E);
+  case ARM::BI_InterlockedIncrement16_rel:
+  case ARM::BI_InterlockedIncrement_rel:
+  case ARM::BI_InterlockedIncrement64_rel:
+    return EmitMSVCBuiltinExpr(MSVCIntrin::_InterlockedIncrement_rel, E);
+  case ARM::BI_InterlockedIncrement16_nf:
+  case ARM::BI_InterlockedIncrement_nf:
+  case ARM::BI_InterlockedIncrement64_nf:
+    return EmitMSVCBuiltinExpr(MSVCIntrin::_InterlockedIncrement_nf, E);
   }
 
   // Get the last argument, which specifies the vector type.
@@ -8874,6 +8901,18 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   case AArch64::BI_InterlockedAnd_nf:
   case AArch64::BI_InterlockedAnd64_nf:
     return EmitMSVCBuiltinExpr(MSVCIntrin::_InterlockedAnd_nf, E);
+  case AArch64::BI_InterlockedIncrement16_acq:
+  case AArch64::BI_InterlockedIncrement_acq:
+  case AArch64::BI_InterlockedIncrement64_acq:
+    return EmitMSVCBuiltinExpr(MSVCIntrin::_InterlockedIncrement_acq, E);
+  case AArch64::BI_InterlockedIncrement16_rel:
+  case AArch64::BI_InterlockedIncrement_rel:
+  case AArch64::BI_InterlockedIncrement64_rel:
+    return EmitMSVCBuiltinExpr(MSVCIntrin::_InterlockedIncrement_rel, E);
+  case AArch64::BI_InterlockedIncrement16_nf:
+  case AArch64::BI_InterlockedIncrement_nf:
+  case AArch64::BI_InterlockedIncrement64_nf:
+    return EmitMSVCBuiltinExpr(MSVCIntrin::_InterlockedIncrement_nf, E);
 
   case AArch64::BI_InterlockedAdd: {
     Value *Arg0 = EmitScalarExpr(E->getArg(0));

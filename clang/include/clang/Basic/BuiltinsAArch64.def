@@ -182,6 +182,16 @@ TARGET_HEADER_BUILTIN(_InterlockedAnd64_acq, "LLiLLiD*LLi", "nh", "intrin.h", AL
 TARGET_HEADER_BUILTIN(_InterlockedAnd64_nf,  "LLiLLiD*LLi", "nh", "intrin.h", ALL_MS_LANGUAGES, "")
 TARGET_HEADER_BUILTIN(_InterlockedAnd64_rel, "LLiLLiD*LLi", "nh", "intrin.h", ALL_MS_LANGUAGES, "")
 
+TARGET_HEADER_BUILTIN(_InterlockedIncrement16_acq, "ssD*",     "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+TARGET_HEADER_BUILTIN(_InterlockedIncrement16_nf,  "ssD*",     "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+TARGET_HEADER_BUILTIN(_InterlockedIncrement16_rel, "ssD*",     "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+TARGET_HEADER_BUILTIN(_InterlockedIncrement_acq,   "LiLiD*",   "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+TARGET_HEADER_BUILTIN(_InterlockedIncrement_nf,    "LiLiD*",   "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+TARGET_HEADER_BUILTIN(_InterlockedIncrement_rel,   "LiLiD*",   "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+TARGET_HEADER_BUILTIN(_InterlockedIncrement64_acq, "LLiLLiD*", "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+TARGET_HEADER_BUILTIN(_InterlockedIncrement64_nf,  "LLiLLiD*", "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+TARGET_HEADER_BUILTIN(_InterlockedIncrement64_rel, "LLiLLiD*", "nh", "intrin.h", ALL_MS_LANGUAGES, "")
+
 TARGET_HEADER_BUILTIN(_ReadWriteBarrier, "v", "nh", "intrin.h", ALL_MS_LANGUAGES, "")
 TARGET_HEADER_BUILTIN(__getReg, "ULLii", "nh", "intrin.h", ALL_MS_LANGUAGES, "")
 TARGET_HEADER_BUILTIN(_ReadStatusReg,  "ii",  "nh", "intrin.h", ALL_MS_LANGUAGES, "")

@@ -346,42 +346,15 @@ __int64 _InterlockedExchangeAdd64_rel(__int64 volatile *_Addend, __int64 _Value)
 |* Interlocked Increment
 \*----------------------------------------------------------------------------*/
 #if defined(__arm__) || defined(__aarch64__)
-static __inline__ short __DEFAULT_FN_ATTRS
-_InterlockedIncrement16_acq(short volatile *_Value) {
-  return __atomic_add_fetch(_Value, 1, __ATOMIC_ACQUIRE);
-}
-static __inline__ short __DEFAULT_FN_ATTRS
-_InterlockedIncrement16_nf(short volatile *_Value) {
-  return __atomic_add_fetch(_Value, 1, __ATOMIC_RELAXED);
-}
-static __inline__ short __DEFAULT_FN_ATTRS
-_InterlockedIncrement16_rel(short volatile *_Value) {
-  return __atomic_add_fetch(_Value, 1, __ATOMIC_RELEASE);
-}
-static __inline__ long __DEFAULT_FN_ATTRS
-_InterlockedIncrement_acq(long volatile *_Value) {
-  return __atomic_add_fetch(_Value, 1, __ATOMIC_ACQUIRE);
-}
-static __inline__ long __DEFAULT_FN_ATTRS
-_InterlockedIncrement_nf(long volatile *_Value) {
-  return __atomic_add_fetch(_Value, 1, __ATOMIC_RELAXED);
-}
-static __inline__ long __DEFAULT_FN_ATTRS
-_InterlockedIncrement_rel(long volatile *_Value) {
-  return __atomic_add_fetch(_Value, 1, __ATOMIC_RELEASE);
-}
-static __inline__ __int64 __DEFAULT_FN_ATTRS
-_InterlockedIncrement64_acq(__int64 volatile *_Value) {
-  return __atomic_add_fetch(_Value, 1, __ATOMIC_ACQUIRE);
-}
-static __inline__ __int64 __DEFAULT_FN_ATTRS
-_InterlockedIncrement64_nf(__int64 volatile *_Value) {
-  return __atomic_add_fetch(_Value, 1, __ATOMIC_RELAXED);
-}
-static __inline__ __int64 __DEFAULT_FN_ATTRS
-_InterlockedIncrement64_rel(__int64 volatile *_Value) {
-  return __atomic_add_fetch(_Value, 1, __ATOMIC_RELEASE);
-}
+short _InterlockedIncrement16_acq(short volatile *_Value);
+short _InterlockedIncrement16_nf(short volatile *_Value);
+short _InterlockedIncrement16_rel(short volatile *_Value);
+long _InterlockedIncrement_acq(long volatile *_Value);
+long _InterlockedIncrement_nf(long volatile *_Value);
+long _InterlockedIncrement_rel(long volatile *_Value);
+__int64 _InterlockedIncrement64_acq(__int64 volatile *_Value);
+__int64 _InterlockedIncrement64_nf(__int64 volatile *_Value);
+__int64 _InterlockedIncrement64_rel(__int64 volatile *_Value);
 #endif
 /*----------------------------------------------------------------------------*\
 |* Interlocked Decrement
