@@ -82,7 +82,7 @@ define <2 x i1> @fneg_constant_swap_pred_vec_undef(<2 x float> %x) {
 
 define i1 @fneg_fmf(float %x) {
 ; CHECK-LABEL: @fneg_fmf(
-; CHECK-NEXT:    [[R:%.*]] = fcmp oeq float [[X:%.*]], -4.200000e+01
+; CHECK-NEXT:    [[R:%.*]] = fcmp fast oeq float [[X:%.*]], -4.200000e+01
 ; CHECK-NEXT:    ret i1 [[R]]
 ;
   %n = fsub fast float -0.0, %x
@@ -94,7 +94,7 @@ define i1 @fneg_fmf(float %x) {
 
 define <2 x i1> @fcmp_fneg_fmf_vec(<2 x float> %x) {
 ; CHECK-LABEL: @fcmp_fneg_fmf_vec(
-; CHECK-NEXT:    [[R:%.*]] = fcmp ule <2 x float> [[X:%.*]], <float -4.200000e+01, float 1.900000e+01>
+; CHECK-NEXT:    [[R:%.*]] = fcmp reassoc nnan ule <2 x float> [[X:%.*]], <float -4.200000e+01, float 1.900000e+01>
 ; CHECK-NEXT:    ret <2 x i1> [[R]]
 ;
   %n = fsub nsz <2 x float> zeroinitializer, %x

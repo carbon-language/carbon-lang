@@ -5445,14 +5445,6 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
       if (Instruction *NV = foldFCmpIntToFPConst(I, LHSI, RHSC))
         return NV;
       break;
-    case Instruction::FSub: {
-      // fcmp pred (fneg x), C -> fcmp swap(pred) x, -C
-      Value *Op;
-      if (match(LHSI, m_FNeg(m_Value(Op))))
-        return new FCmpInst(I.getSwappedPredicate(), Op,
-                            ConstantExpr::getFNeg(RHSC));
-      break;
-    }
     case Instruction::FDiv:
       if (Instruction *NV = foldFCmpReciprocalAndZero(I, LHSI, RHSC))
         return NV;
@@ -5472,10 +5464,23 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
   }
   }
 
-  // fcmp pred (fneg x), (fneg y) -> fcmp swap(pred) x, y
   Value *X, *Y;
-  if (match(Op0, m_FNeg(m_Value(X))) && match(Op1, m_FNeg(m_Value(Y))))
-    return new FCmpInst(I.getSwappedPredicate(), X, Y);
+  if (match(Op0, m_FNeg(m_Value(X)))) {
+    if (match(Op1, m_FNeg(m_Value(Y)))) {
+      // FIXME: Drops FMF.
+      // fcmp pred (fneg X), (fneg Y) -> fcmp swap(pred) X, Y
+      return new FCmpInst(I.getSwappedPredicate(), X, Y);
+    }
+
+    Constant *C;
+    if (match(Op1, m_Constant(C))) {
+      // fcmp pred (fneg X), C --> fcmp swap(pred) X, -C
+      Constant *NegC = ConstantExpr::getFNeg(C);
+      Instruction *NewFCmp = new FCmpInst(I.getSwappedPredicate(), X, NegC);
+      NewFCmp->copyFastMathFlags(&I);
+      return NewFCmp;
+    }
+  }
 
   // fcmp (fpext x), (fpext y) -> fcmp x, y
   if (FPExtInst *LHSExt = dyn_cast<FPExtInst>(Op0))
