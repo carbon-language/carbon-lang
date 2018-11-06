@@ -12,7 +12,7 @@ define i1 @test1(float %x, float %y) {
 ;
   %ext1 = fpext float %x to double
   %ext2 = fpext float %y to double
-  %cmp = fcmp ogt double %ext1, %ext2
+  %cmp = fcmp nnan ogt double %ext1, %ext2
   ret i1 %cmp
 }
 
@@ -22,7 +22,7 @@ define i1 @test2(float %a) {
 ; CHECK-NEXT:    ret i1 [[CMP]]
 ;
   %ext = fpext float %a to double
-  %cmp = fcmp ogt double %ext, 1.000000e+00
+  %cmp = fcmp ninf ogt double %ext, 1.000000e+00
   ret i1 %cmp
 }
 
