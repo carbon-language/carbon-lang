@@ -460,14 +460,10 @@ bool llvm::hoistRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
     if (inSubLoop(BB, CurLoop, LI))
       continue;
 
-    // Keep track of whether the prefix of instructions visited so far are such
-    // that the next instruction visited is guaranteed to execute if the loop
-    // is entered.
-    bool IsMustExecute = CurLoop->getHeader() == BB;
     // Keep track of whether the prefix instructions could have written memory.
-    // TODO: This and IsMustExecute may be done smarter if we keep track of all
-    // throwing and mem-writing operations in every block, e.g. using something
-    // similar to isGuaranteedToExecute.
+    // TODO: This may be done smarter if we keep track of all throwing and
+    // mem-writing operations in every block, e.g. using something similar to
+    // isGuaranteedToExecute.
     bool IsMemoryNotModified = CurLoop->getHeader() == BB;
 
     for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E;) {
@@ -493,10 +489,9 @@ bool llvm::hoistRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
       //
       if (CurLoop->hasLoopInvariantOperands(&I) &&
           canSinkOrHoistInst(I, AA, DT, CurLoop, CurAST, true, ORE) &&
-          (IsMustExecute ||
-           isSafeToExecuteUnconditionally(
-               I, DT, CurLoop, SafetyInfo, ORE,
-               CurLoop->getLoopPreheader()->getTerminator()))) {
+          isSafeToExecuteUnconditionally(
+              I, DT, CurLoop, SafetyInfo, ORE,
+              CurLoop->getLoopPreheader()->getTerminator())) {
         hoist(I, DT, CurLoop, SafetyInfo, ORE);
         Changed = true;
         continue;
@@ -531,15 +526,13 @@ bool llvm::hoistRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
       if (((I.use_empty() &&
             match(&I, m_Intrinsic<Intrinsic::invariant_start>())) ||
            isGuard(&I)) &&
-          IsMustExecute && IsMemoryNotModified &&
-          CurLoop->hasLoopInvariantOperands(&I)) {
+          IsMemoryNotModified && CurLoop->hasLoopInvariantOperands(&I) &&
+          SafetyInfo->isGuaranteedToExecute(I, DT, CurLoop)) {
         hoist(I, DT, CurLoop, SafetyInfo, ORE);
         Changed = true;
         continue;
       }
 
-      if (IsMustExecute)
-        IsMustExecute = isGuaranteedToTransferExecutionToSuccessor(&I);
       if (IsMemoryNotModified)
         IsMemoryNotModified = !I.mayWriteToMemory();
     }
