@@ -231,13 +231,17 @@ struct SuffixTreeNode {
 /// https://www.cs.helsinki.fi/u/ukkonen/SuffixT1withFigs.pdf
 class SuffixTree {
 public:
-  /// Stores each leaf node in the tree.
-  ///
-  /// This is used for finding outlining candidates.
-  std::vector<SuffixTreeNode *> LeafVector;
-
   /// Each element is an integer representing an instruction in the module.
   ArrayRef<unsigned> Str;
+
+  /// A repeated substring in the tree.
+  struct RepeatedSubstring {
+    /// The length of the string.
+    unsigned Length;
+
+    /// The start indices of each occurrence.
+    std::vector<unsigned> StartIndices;
+  };
 
 private:
   /// Maintains each node in the tree.
@@ -322,8 +326,7 @@ private:
   }
 
   /// Set the suffix indices of the leaves to the start indices of their
-  /// respective suffixes. Also stores each leaf in \p LeafVector at its
-  /// respective suffix index.
+  /// respective suffixes.
   ///
   /// \param[in] CurrNode The node currently being visited.
   /// \param CurrIdx The current index of the string being visited.
@@ -353,9 +356,6 @@ private:
       CurrNode.SuffixIdx = Str.size() - CurrIdx;
       assert(CurrNode.Parent && "CurrNode had no parent!");
       CurrNode.Parent->OccurrenceCount++;
-
-      // Store the leaf in the leaf vector for pruning later.
-      LeafVector[CurrNode.SuffixIdx] = &CurrNode;
     }
   }
 
@@ -489,6 +489,44 @@ private:
     return SuffixesToAdd;
   }
 
+  /// Helper function for findRepeatedSubstrings.
+  /// Traverses the suffix tree that finds all nodes associated with a repeated
+  /// substring. That is, all internal non-root nodes. If the given node has
+  /// more than one leaf child, store the repeated strings in Substrings.
+  void
+  findRepeatedSubstringsHelper(SuffixTreeNode &Curr,
+                               std::vector<RepeatedSubstring> &Substrings,
+                               const unsigned MinLength = 1) {
+  assert(!Curr.isLeaf() && "Visited a leaf?");
+  std::vector<SuffixTreeNode *> LeafChildren;
+  unsigned Length = Curr.ConcatLen;
+
+  for (auto &ChildPair : Curr.Children) {
+    if (!ChildPair.second->isLeaf())
+      findRepeatedSubstringsHelper(*ChildPair.second, Substrings, MinLength);
+    else if (Length >= MinLength)
+      LeafChildren.push_back(ChildPair.second);
+  }
+
+  // The root node never has repeats. Quit here.
+  if (Curr.isRoot())
+    return;
+
+  // If there are no occurrences of the minimum length, then quit.
+  if (LeafChildren.empty() || LeafChildren.size() < 2)
+    return;
+
+  // We have a node associated with a repeated substring. Store that in
+  // Substrings and move on.
+  RepeatedSubstring RS;
+  RS.Length = Length;
+
+  // Each occurrence starts at a suffix given by a leaf child.
+  for (SuffixTreeNode *Leaf : LeafChildren)
+    RS.StartIndices.push_back(Leaf->SuffixIdx);
+  Substrings.push_back(RS);
+}
+
 public:
   /// Construct a suffix tree from a sequence of unsigned integers.
   ///
@@ -497,7 +535,6 @@ public:
     Root = insertInternalNode(nullptr, EmptyIdx, EmptyIdx, 0);
     Root->IsInTree = true;
     Active.Node = Root;
-    LeafVector = std::vector<SuffixTreeNode *>(Str.size());
 
     // Keep track of the number of suffixes we have to add of the current
     // prefix.
@@ -517,6 +554,15 @@ public:
     // Set the suffix indices of each leaf.
     assert(Root && "Root node can't be nullptr!");
     setSuffixIndices(*Root, 0);
+  }
+
+  /// Finds all repeated substrings with an optionally-provided minimum length
+  /// and stores them in \p Substrings.
+  /// If \p MinLength is provided, only return those with a given minimum
+  /// length.
+  void findRepeatedSubstrings(std::vector<RepeatedSubstring> &Substrings,
+                              const unsigned MinLength = 1) {
+    findRepeatedSubstringsHelper(*Root, Substrings, MinLength);
   }
 };
 
@@ -925,80 +971,55 @@ unsigned MachineOutliner::findCandidates(
   FunctionList.clear();
   unsigned MaxLen = 0;
 
-  // FIXME: Visit internal nodes instead of leaves.
-  for (SuffixTreeNode *Leaf : ST.LeafVector) {
-    assert(Leaf && "Leaves in LeafVector cannot be null!");
-    if (!Leaf->IsInTree)
-      continue;
+  // First, find dall of the repeated substrings in the tree of minimum length
+  // 2.
+  // FIXME: 2 is an approximation which isn't necessarily true for, say, X86.
+  // If we factor in instruction lengths, we need more information than this.
+  // FIXME: It'd be nice if we could just have a repeated substring iterator.
+  std::vector<SuffixTree::RepeatedSubstring> RepeatedSubstrings;
+  ST.findRepeatedSubstrings(RepeatedSubstrings, 2);
 
-    assert(Leaf->Parent && "All leaves must have parents!");
-    SuffixTreeNode &Parent = *(Leaf->Parent);
-
-    // If it doesn't appear enough, or we already outlined from it, skip it.
-    if (Parent.OccurrenceCount < 2 || Parent.isRoot() || !Parent.IsInTree)
-      continue;
-
-    // Figure out if this candidate is beneficial.
-    unsigned StringLen = Leaf->ConcatLen - (unsigned)Leaf->size();
-
-    // Too short to be beneficial; skip it.
-    // FIXME: This isn't necessarily true for, say, X86. If we factor in
-    // instruction lengths we need more information than this.
-    if (StringLen < 2)
-      continue;
-
-    // If this is a beneficial class of candidate, then every one is stored in
-    // this vector.
+  for (SuffixTree::RepeatedSubstring &RS : RepeatedSubstrings) {
     std::vector<Candidate> CandidatesForRepeatedSeq;
+    unsigned StringLen = RS.Length;
+    for (const unsigned &StartIdx : RS.StartIndices) {
+      unsigned EndIdx = StartIdx + StringLen - 1;
+      // Trick: Discard some candidates that would be incompatible with the
+      // ones we've already found for this sequence. This will save us some
+      // work in candidate selection.
+      //
+      // If two candidates overlap, then we can't outline them both. This
+      // happens when we have candidates that look like, say
+      //
+      // AA (where each "A" is an instruction).
+      //
+      // We might have some portion of the module that looks like this:
+      // AAAAAA (6 A's)
+      //
+      // In this case, there are 5 different copies of "AA" in this range, but
+      // at most 3 can be outlined. If only outlining 3 of these is going to
+      // be unbeneficial, then we ought to not bother.
+      //
+      // Note that two things DON'T overlap when they look like this:
+      // start1...end1 .... start2...end2
+      // That is, one must either
+      // * End before the other starts
+      // * Start after the other ends
+      if (std::all_of(
+              CandidatesForRepeatedSeq.begin(), CandidatesForRepeatedSeq.end(),
+              [&StartIdx, &EndIdx](const Candidate &C) {
+                return (EndIdx < C.getStartIdx() || StartIdx > C.getEndIdx());
+              })) {
+        // It doesn't overlap with anything, so we can outline it.
+        // Each sequence is over [StartIt, EndIt].
+        // Save the candidate and its location.
 
-    // Figure out the call overhead for each instance of the sequence.
-    for (auto &ChildPair : Parent.Children) {
-      SuffixTreeNode *M = ChildPair.second;
+        MachineBasicBlock::iterator StartIt = Mapper.InstrList[StartIdx];
+        MachineBasicBlock::iterator EndIt = Mapper.InstrList[EndIdx];
 
-      if (M && M->IsInTree && M->isLeaf()) {
-        // Never visit this leaf again.
-        M->IsInTree = false;
-        unsigned StartIdx = M->SuffixIdx;
-        unsigned EndIdx = StartIdx + StringLen - 1;
-
-        // Trick: Discard some candidates that would be incompatible with the
-        // ones we've already found for this sequence. This will save us some
-        // work in candidate selection.
-        //
-        // If two candidates overlap, then we can't outline them both. This
-        // happens when we have candidates that look like, say
-        //
-        // AA (where each "A" is an instruction).
-        //
-        // We might have some portion of the module that looks like this:
-        // AAAAAA (6 A's)
-        //
-        // In this case, there are 5 different copies of "AA" in this range, but
-        // at most 3 can be outlined. If only outlining 3 of these is going to
-        // be unbeneficial, then we ought to not bother.
-        //
-        // Note that two things DON'T overlap when they look like this:
-        // start1...end1 .... start2...end2
-        // That is, one must either
-        // * End before the other starts
-        // * Start after the other ends
-        if (std::all_of(CandidatesForRepeatedSeq.begin(),
-                        CandidatesForRepeatedSeq.end(),
-                        [&StartIdx, &EndIdx](const Candidate &C) {
-                          return (EndIdx < C.getStartIdx() ||
-                                  StartIdx > C.getEndIdx());
-                        })) {
-          // It doesn't overlap with anything, so we can outline it.
-          // Each sequence is over [StartIt, EndIt].
-          // Save the candidate and its location.
-
-          MachineBasicBlock::iterator StartIt = Mapper.InstrList[StartIdx];
-          MachineBasicBlock::iterator EndIt = Mapper.InstrList[EndIdx];
-
-          CandidatesForRepeatedSeq.emplace_back(StartIdx, StringLen, StartIt,
-                                                EndIt, StartIt->getParent(),
-                                                FunctionList.size());
-        }
+        CandidatesForRepeatedSeq.emplace_back(StartIdx, StringLen, StartIt,
+                                              EndIt, StartIt->getParent(),
+                                              FunctionList.size());
       }
     }
 
@@ -1021,7 +1042,8 @@ unsigned MachineOutliner::findCandidates(
       continue;
 
     std::vector<unsigned> Seq;
-    for (unsigned i = Leaf->SuffixIdx; i < Leaf->SuffixIdx + StringLen; i++)
+    unsigned StartIdx = RS.StartIndices[0]; // Grab any start index.
+    for (unsigned i = StartIdx; i < StartIdx + StringLen; i++)
       Seq.push_back(ST.Str[i]);
     OF.Sequence = Seq;
     OF.Name = FunctionList.size();
@@ -1040,9 +1062,6 @@ unsigned MachineOutliner::findCandidates(
     for (std::shared_ptr<Candidate> &C : OF.Candidates)
       CandidateList.push_back(C);
     FunctionList.push_back(OF);
-
-    // Move to the next function.
-    Parent.IsInTree = false;
   }
 
   return MaxLen;
