@@ -5284,7 +5284,7 @@ static Instruction *foldFCmpReciprocalAndZero(FCmpInst &I, Instruction *LHSI,
   // Finally emit the new fcmp.
   Value *X = LHSI->getOperand(1);
   FCmpInst *NewFCI = new FCmpInst(Pred, X, RHSC);
-  NewFCI->setFastMathFlags(I.getFastMathFlags());
+  NewFCI->copyFastMathFlags(&I);
   return NewFCI;
 }
 
