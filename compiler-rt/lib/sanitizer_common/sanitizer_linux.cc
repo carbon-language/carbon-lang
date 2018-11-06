@@ -623,8 +623,13 @@ char **GetArgv() {
   return argv;
 }
 
-void ReExec() {
+char **GetEnviron() {
   char **argv, **envp;
+  GetArgsAndEnv(&argv, &envp);
+  return envp;
+}
+
+void ReExec() {
   const char *pathname = "/proc/self/exe";
 
 #if SANITIZER_NETBSD
@@ -646,8 +651,7 @@ void ReExec() {
   pathname = reinterpret_cast<const char *>(getauxval(AT_EXECFN));
 #endif
 
-  GetArgsAndEnv(&argv, &envp);
-  uptr rv = internal_execve(pathname, argv, envp);
+  uptr rv = internal_execve(pathname, GetArgv(), GetEnviron());
   int rverrno;
   CHECK_EQ(internal_iserror(rv, &rverrno), true);
   Printf("execve failed, errno %d\n", rverrno);
