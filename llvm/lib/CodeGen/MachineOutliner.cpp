@@ -167,12 +167,6 @@ struct SuffixTreeNode {
   /// The parent of this node. Every node except for the root has a parent.
   SuffixTreeNode *Parent = nullptr;
 
-  /// The number of times this node's string appears in the tree.
-  ///
-  /// This is equal to the number of leaf children of the string. It represents
-  /// the number of suffixes that the node's string is a prefix of.
-  unsigned OccurrenceCount = 0;
-
   /// The length of the string formed by concatenating the edge labels from the
   /// root to this node.
   unsigned ConcatLen = 0;
@@ -352,7 +346,6 @@ private:
       // If yes, give it a suffix index and bump its parent's occurrence count.
       CurrNode.SuffixIdx = Str.size() - CurrIdx;
       assert(CurrNode.Parent && "CurrNode had no parent!");
-      CurrNode.Parent->OccurrenceCount++;
     }
   }
 
