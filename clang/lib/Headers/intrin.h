@@ -360,42 +360,15 @@ __int64 _InterlockedIncrement64_rel(__int64 volatile *_Value);
 |* Interlocked Decrement
 \*----------------------------------------------------------------------------*/
 #if defined(__arm__) || defined(__aarch64__)
-static __inline__ short __DEFAULT_FN_ATTRS
-_InterlockedDecrement16_acq(short volatile *_Value) {
-  return __atomic_sub_fetch(_Value, 1, __ATOMIC_ACQUIRE);
-}
-static __inline__ short __DEFAULT_FN_ATTRS
-_InterlockedDecrement16_nf(short volatile *_Value) {
-  return __atomic_sub_fetch(_Value, 1, __ATOMIC_RELAXED);
-}
-static __inline__ short __DEFAULT_FN_ATTRS
-_InterlockedDecrement16_rel(short volatile *_Value) {
-  return __atomic_sub_fetch(_Value, 1, __ATOMIC_RELEASE);
-}
-static __inline__ long __DEFAULT_FN_ATTRS
-_InterlockedDecrement_acq(long volatile *_Value) {
-  return __atomic_sub_fetch(_Value, 1, __ATOMIC_ACQUIRE);
-}
-static __inline__ long __DEFAULT_FN_ATTRS
-_InterlockedDecrement_nf(long volatile *_Value) {
-  return __atomic_sub_fetch(_Value, 1, __ATOMIC_RELAXED);
-}
-static __inline__ long __DEFAULT_FN_ATTRS
-_InterlockedDecrement_rel(long volatile *_Value) {
-  return __atomic_sub_fetch(_Value, 1, __ATOMIC_RELEASE);
-}
-static __inline__ __int64 __DEFAULT_FN_ATTRS
-_InterlockedDecrement64_acq(__int64 volatile *_Value) {
-  return __atomic_sub_fetch(_Value, 1, __ATOMIC_ACQUIRE);
-}
-static __inline__ __int64 __DEFAULT_FN_ATTRS
-_InterlockedDecrement64_nf(__int64 volatile *_Value) {
-  return __atomic_sub_fetch(_Value, 1, __ATOMIC_RELAXED);
-}
-static __inline__ __int64 __DEFAULT_FN_ATTRS
-_InterlockedDecrement64_rel(__int64 volatile *_Value) {
-  return __atomic_sub_fetch(_Value, 1, __ATOMIC_RELEASE);
-}
+short _InterlockedDecrement16_acq(short volatile *_Value);
+short _InterlockedDecrement16_nf(short volatile *_Value);
+short _InterlockedDecrement16_rel(short volatile *_Value);
+long _InterlockedDecrement_acq(long volatile *_Value);
+long _InterlockedDecrement_nf(long volatile *_Value);
+long _InterlockedDecrement_rel(long volatile *_Value);
+__int64 _InterlockedDecrement64_acq(__int64 volatile *_Value);
+__int64 _InterlockedDecrement64_nf(__int64 volatile *_Value);
+__int64 _InterlockedDecrement64_rel(__int64 volatile *_Value);
 #endif
 /*----------------------------------------------------------------------------*\
 |* Interlocked And
