@@ -5483,9 +5483,12 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
       Fabs.clearSign();
       if (!Lossy &&
           ((Fabs.compare(APFloat::getSmallestNormalized(FPSem)) !=
-            APFloat::cmpLessThan) || Fabs.isZero()))
-        // TODO: Propagate FMF.
-        return new FCmpInst(Pred, X, ConstantFP::get(C->getContext(), F));
+            APFloat::cmpLessThan) || Fabs.isZero())) {
+        Instruction *NewFCmp =
+            new FCmpInst(Pred, X, ConstantFP::get(C->getContext(), F));
+        NewFCmp->copyFastMathFlags(&I);
+        return NewFCmp;
+      }
     }
   }
 

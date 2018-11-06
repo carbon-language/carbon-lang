@@ -18,7 +18,7 @@ define i1 @test1(float %x, float %y) {
 
 define i1 @test2(float %a) {
 ; CHECK-LABEL: @test2(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ogt float [[A:%.*]], 1.000000e+00
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp ninf ogt float [[A:%.*]], 1.000000e+00
 ; CHECK-NEXT:    ret i1 [[CMP]]
 ;
   %ext = fpext float %a to double
