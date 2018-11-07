@@ -228,8 +228,8 @@ private:
 // A type parameter value: integer expression or assumed or deferred.
 class ParamValue {
 public:
-  static const ParamValue Assumed() { return ParamValue(Category::Assumed); }
-  static const ParamValue Deferred() { return ParamValue(Category::Deferred); }
+  static const ParamValue Assumed() { return Category::Assumed; }
+  static const ParamValue Deferred() { return Category::Deferred; }
   ParamValue(const parser::Expr &);
   bool isExplicit() const { return category_ == Category::Explicit; }
   bool isAssumed() const { return category_ == Category::Assumed; }

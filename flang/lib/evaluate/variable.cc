@@ -27,10 +27,10 @@ using namespace Fortran::parser::literals;
 
 namespace Fortran::evaluate {
 
-int GetSymbolRank(const Symbol *symbol) { return symbol->Rank(); }
+int GetSymbolRank(const Symbol &symbol) { return symbol.Rank(); }
 
-const parser::CharBlock &GetSymbolName(const Symbol *symbol) {
-  return symbol->name();
+const parser::CharBlock &GetSymbolName(const Symbol &symbol) {
+  return symbol.name();
 }
 
 // Constructors, accessors, mutators

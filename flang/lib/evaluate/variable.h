@@ -48,8 +48,8 @@ template<typename A> struct Variable;
 using IndirectSubscriptIntegerExpr =
     CopyableIndirection<Expr<SubscriptInteger>>;
 
-int GetSymbolRank(const Symbol *);
-const parser::CharBlock &GetSymbolName(const Symbol *);
+int GetSymbolRank(const Symbol &);
+const parser::CharBlock &GetSymbolName(const Symbol &);
 
 // R913 structure-component & C920: Defined to be a multi-part
 // data-ref whose last part has no subscripts (or image-selector, although
@@ -267,7 +267,7 @@ public:
 
   int Rank() const {
     return std::visit(
-        common::visitors{[](const Symbol *sym) { return GetSymbolRank(sym); },
+        common::visitors{[](const Symbol *sym) { return GetSymbolRank(*sym); },
             [](const auto &x) { return x.Rank(); }},
         u);
   }
@@ -282,7 +282,7 @@ public:
 
   std::ostream &Dump(std::ostream &o) const {
     std::visit(common::visitors{[&](const Symbol *sym) {
-                                  o << GetSymbolName(sym).ToString();
+                                  o << GetSymbolName(*sym).ToString();
                                 },
                    [&](const auto &x) { x.Dump(o); }},
         u);
