@@ -181,7 +181,6 @@ namespace {
     void allocateBasicBlock(MachineBasicBlock &MBB);
     void handleThroughOperands(MachineInstr &MI,
                                SmallVectorImpl<unsigned> &VirtDead);
-    int getStackSpaceFor(unsigned VirtReg);
     bool isLastUseOfLocalReg(const MachineOperand &MO) const;
 
     void addKillFlag(const LiveReg &LRI);
@@ -214,6 +213,12 @@ namespace {
     void spillAll(MachineBasicBlock::iterator MI);
     bool setPhysReg(MachineInstr &MI, unsigned OpNum, MCPhysReg PhysReg);
 
+    int getStackSpaceFor(unsigned VirtReg);
+    void spill(MachineBasicBlock::iterator Before, unsigned VirtReg,
+               MCPhysReg AssignedReg, bool Kill);
+    void reload(MachineBasicBlock::iterator Before, unsigned VirtReg,
+                MCPhysReg PhysReg);
+
     void dumpState();
   };
 
@@ -242,6 +247,46 @@ int RegAllocFast::getStackSpaceFor(unsigned VirtReg) {
   // Assign the slot.
   StackSlotForVirtReg[VirtReg] = FrameIdx;
   return FrameIdx;
+}
+
+/// Insert spill instruction for \p AssignedReg before \p Before. Update
+/// DBG_VALUEs with \p VirtReg operands with the stack slot.
+void RegAllocFast::spill(MachineBasicBlock::iterator Before, unsigned VirtReg,
+                         MCPhysReg AssignedReg, bool Kill) {
+  LLVM_DEBUG(dbgs() << "Spilling " << printReg(VirtReg, TRI)
+                    << " in " << printReg(AssignedReg, TRI));
+  int FI = getStackSpaceFor(VirtReg);
+  LLVM_DEBUG(dbgs() << " to stack slot #" << FI << "\n");
+
+  const TargetRegisterClass &RC = *MRI->getRegClass(VirtReg);
+  TII->storeRegToStackSlot(*MBB, Before, AssignedReg, Kill, FI, &RC, TRI);
+  ++NumStores;
+
+  // If this register is used by DBG_VALUE then insert new DBG_VALUE to
+  // identify spilled location as the place to find corresponding variable's
+  // value.
+  SmallVectorImpl<MachineInstr *> &LRIDbgValues = LiveDbgValueMap[VirtReg];
+  for (MachineInstr *DBG : LRIDbgValues) {
+    MachineInstr *NewDV = buildDbgValueForSpill(*MBB, Before, *DBG, FI);
+    assert(NewDV->getParent() == MBB && "dangling parent pointer");
+    (void)NewDV;
+    LLVM_DEBUG(dbgs() << "Inserting debug info due to spill:\n" << *NewDV);
+  }
+  // Now this register is spilled there is should not be any DBG_VALUE
+  // pointing to this register because they are all pointing to spilled value
+  // now.
+  LRIDbgValues.clear();
+}
+
+/// Insert reload instruction for \p PhysReg before \p Before.
+void RegAllocFast::reload(MachineBasicBlock::iterator Before, unsigned VirtReg,
+                          MCPhysReg PhysReg) {
+  LLVM_DEBUG(dbgs() << "Reloading " << printReg(VirtReg, TRI) << " into "
+                    << printReg(PhysReg, TRI) << "\n");
+  int FI = getStackSpaceFor(VirtReg);
+  const TargetRegisterClass &RC = *MRI->getRegClass(VirtReg);
+  TII->loadRegFromStackSlot(*MBB, Before, PhysReg, FI, &RC, TRI);
+  ++NumLoads;
 }
 
 /// Return true if MO is the only remaining reference to its virtual register,
@@ -320,31 +365,9 @@ void RegAllocFast::spillVirtReg(MachineBasicBlock::iterator MI,
     // instruction, not on the spill.
     bool SpillKill = MachineBasicBlock::iterator(LR.LastUse) != MI;
     LR.Dirty = false;
-    LLVM_DEBUG(dbgs() << "Spilling " << printReg(LRI->VirtReg, TRI) << " in "
-                      << printReg(LR.PhysReg, TRI));
-    const TargetRegisterClass &RC = *MRI->getRegClass(LRI->VirtReg);
-    int FI = getStackSpaceFor(LRI->VirtReg);
-    LLVM_DEBUG(dbgs() << " to stack slot #" << FI << "\n");
-    TII->storeRegToStackSlot(*MBB, MI, LR.PhysReg, SpillKill, FI, &RC, TRI);
-    ++NumStores;   // Update statistics
 
-    // If this register is used by DBG_VALUE then insert new DBG_VALUE to
-    // identify spilled location as the place to find corresponding variable's
-    // value.
-    SmallVectorImpl<MachineInstr *> &LRIDbgValues =
-      LiveDbgValueMap[LRI->VirtReg];
-    for (MachineInstr *DBG : LRIDbgValues) {
-      MachineInstr *NewDV = buildDbgValueForSpill(*MBB, MI, *DBG, FI);
-      assert(NewDV->getParent() == MBB && "dangling parent pointer");
-      (void)NewDV;
-      LLVM_DEBUG(dbgs() << "Inserting debug info due to spill:"
-                        << "\n"
-                        << *NewDV);
-    }
-    // Now this register is spilled there is should not be any DBG_VALUE
-    // pointing to this register because they are all pointing to spilled value
-    // now.
-    LRIDbgValues.clear();
+    spill(MI, LRI->VirtReg, LR.PhysReg, SpillKill);
+
     if (SpillKill)
       LR.LastUse = nullptr; // Don't kill register again
   }
@@ -653,12 +676,7 @@ RegAllocFast::LiveRegMap::iterator RegAllocFast::reloadVirtReg(MachineInstr &MI,
   MachineOperand &MO = MI.getOperand(OpNum);
   if (New) {
     LRI = allocVirtReg(MI, LRI, Hint);
-    const TargetRegisterClass &RC = *MRI->getRegClass(VirtReg);
-    int FrameIndex = getStackSpaceFor(VirtReg);
-    LLVM_DEBUG(dbgs() << "Reloading " << printReg(VirtReg, TRI) << " into "
-                      << printReg(LRI->PhysReg, TRI) << "\n");
-    TII->loadRegFromStackSlot(*MBB, MI, LRI->PhysReg, FrameIndex, &RC, TRI);
-    ++NumLoads;
+    reload(MI, VirtReg, LRI->PhysReg);
   } else if (LRI->Dirty) {
     if (isLastUseOfLocalReg(MO)) {
       LLVM_DEBUG(dbgs() << "Killing last use: " << MO << "\n");
