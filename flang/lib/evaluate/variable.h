@@ -26,11 +26,14 @@
 #include "type.h"
 #include "../common/idioms.h"
 #include "../common/template.h"
-#include "../semantics/symbol.h"
 #include <optional>
 #include <ostream>
 #include <variant>
 #include <vector>
+
+namespace Fortran::semantics {
+class Symbol;
+}
 
 namespace Fortran::evaluate {
 
@@ -44,6 +47,9 @@ template<typename A> struct Variable;
 // address size, at least at the top level.
 using IndirectSubscriptIntegerExpr =
     CopyableIndirection<Expr<SubscriptInteger>>;
+
+int GetSymbolRank(const Symbol *);
+const parser::CharBlock &GetSymbolName(const Symbol *);
 
 // R913 structure-component & C920: Defined to be a multi-part
 // data-ref whose last part has no subscripts (or image-selector, although
@@ -261,7 +267,7 @@ public:
 
   int Rank() const {
     return std::visit(
-        common::visitors{[](const Symbol *sym) { return sym->Rank(); },
+        common::visitors{[](const Symbol *sym) { return GetSymbolRank(sym); },
             [](const auto &x) { return x.Rank(); }},
         u);
   }
@@ -276,7 +282,7 @@ public:
 
   std::ostream &Dump(std::ostream &o) const {
     std::visit(common::visitors{[&](const Symbol *sym) {
-                                  o << sym->name().ToString();
+                                  o << GetSymbolName(sym).ToString();
                                 },
                    [&](const auto &x) { x.Dump(o); }},
         u);

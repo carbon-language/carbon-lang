@@ -27,6 +27,12 @@ using namespace Fortran::parser::literals;
 
 namespace Fortran::evaluate {
 
+int GetSymbolRank(const Symbol *symbol) { return symbol->Rank(); }
+
+const parser::CharBlock &GetSymbolName(const Symbol *symbol) {
+  return symbol->name();
+}
+
 // Constructors, accessors, mutators
 
 Triplet::Triplet(std::optional<Expr<SubscriptInteger>> &&l,
