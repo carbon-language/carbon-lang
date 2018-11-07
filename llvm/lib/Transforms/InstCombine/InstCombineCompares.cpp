@@ -5302,9 +5302,17 @@ static Instruction *foldFabsWithFcmpZero(FCmpInst &I) {
     // fabs(X) > 0.0 --> X != 0.0
     return new FCmpInst(FCmpInst::FCMP_ONE, X, I.getOperand(1));
 
+  case FCmpInst::FCMP_UGT:
+    // fabs(X) u> 0.0 --> X u!= 0.0
+    return new FCmpInst(FCmpInst::FCMP_UNE, X, I.getOperand(1));
+
   case FCmpInst::FCMP_OLE:
     // fabs(X) <= 0.0 --> X == 0.0
     return new FCmpInst(FCmpInst::FCMP_OEQ, X, I.getOperand(1));
+
+  case FCmpInst::FCMP_ULE:
+    // fabs(X) u<= 0.0 --> X u== 0.0
+    return new FCmpInst(FCmpInst::FCMP_UEQ, X, I.getOperand(1));
 
   case FCmpInst::FCMP_OGE:
     // fabs(X) >= 0.0 --> !isnan(X)
