@@ -39,6 +39,13 @@ module m
   !ERROR: EXTERNAL attribute not allowed on 'bar'
   external :: bar
 
+  !ERROR: PARAMETER attribute not allowed on 'm'
+  parameter(m=2)
+  !ERROR: PARAMETER attribute not allowed on 'foo'
+  parameter(foo=2)
+  !ERROR: PARAMETER attribute not allowed on 'bar'
+  parameter(bar=2)
+
 contains
   subroutine bar
   end subroutine

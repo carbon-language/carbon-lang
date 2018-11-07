@@ -14,29 +14,50 @@
 
 #include "type.h"
 #include "scope.h"
+#include "semantics.h"
 #include "symbol.h"
+#include "../evaluate/fold.h"
+#include "../evaluate/tools.h"
 #include "../evaluate/type.h"
 #include "../parser/characters.h"
 
 namespace Fortran::semantics {
 
-IntExpr::~IntExpr() {}
+LazyExpr::LazyExpr(SomeExpr &&expr) : u_{CopyableExprPtr{std::move(expr)}} {}
 
-std::ostream &operator<<(std::ostream &o, const IntExpr &x) {
-  return x.Output(o);
-}
-std::ostream &operator<<(std::ostream &o, const IntConst &x) {
-  return o << x.value_;
-}
+MaybeExpr LazyExpr::Get() { return static_cast<const LazyExpr *>(this)->Get(); }
 
-std::unordered_map<std::uint64_t, IntConst> IntConst::cache;
-
-const IntConst &IntConst::Make(std::uint64_t value) {
-  auto it{cache.find(value)};
-  if (it == cache.end()) {
-    it = cache.insert({value, IntConst{value}}).first;
+const MaybeExpr LazyExpr::Get() const {
+  if (auto *ptr{std::get_if<CopyableExprPtr>(&u_)}) {
+    return **ptr;
+  } else {
+    return std::nullopt;
   }
-  return it->second;
+}
+
+bool LazyExpr::Resolve(SemanticsContext &context) {
+  if (auto *expr{std::get_if<const parser::Expr *>(&u_)}) {
+    if (!*expr) {
+      u_ = ErrorInExpr{};
+    } else if (MaybeExpr maybeExpr{AnalyzeExpr(context, **expr)}) {
+      u_ = CopyableExprPtr{
+          evaluate::Fold(context.foldingContext(), std::move(*maybeExpr))};
+    } else {
+      u_ = ErrorInExpr{};
+    }
+  }
+  return std::holds_alternative<CopyableExprPtr>(u_);
+}
+
+std::ostream &operator<<(std::ostream &o, const LazyExpr &x) {
+  std::visit(
+      common::visitors{
+          [&](const parser::Expr *x) { o << (x ? "UNRESOLVED" : "EMPTY"); },
+          [&](const LazyExpr::ErrorInExpr &) { o << "ERROR"; },
+          [&](const LazyExpr::CopyableExprPtr &x) { x->Dump(o); },
+      },
+      x.u_);
+  return o;
 }
 
 void DerivedTypeSpec::set_scope(const Scope &scope) {
@@ -46,11 +67,36 @@ void DerivedTypeSpec::set_scope(const Scope &scope) {
 }
 
 std::ostream &operator<<(std::ostream &o, const DerivedTypeSpec &x) {
-  return o << "TYPE(" << x.name().ToString() << ')';
+  o << "TYPE(" << x.name().ToString();
+  if (!x.paramValues_.empty()) {
+    bool first = true;
+    o << '(';
+    for (auto &pair : x.paramValues_) {
+      if (first) {
+        first = false;
+      } else {
+        o << ',';
+      }
+      if (auto &name{pair.first}) {
+        o << name->ToString() << '=';
+      }
+      o << pair.second;
+    }
+    o << ')';
+  }
+  return o << ')';
 }
 
-const Bound Bound::ASSUMED{Bound::Assumed};
-const Bound Bound::DEFERRED{Bound::Deferred};
+Bound::Bound(int bound)
+  : category_{Category::Explicit},
+    expr_{SomeExpr{evaluate::AsExpr(
+        evaluate::Constant<evaluate::SubscriptInteger>{bound})}} {}
+
+void Bound::Resolve(SemanticsContext &context) {
+  if (isExplicit()) {
+    expr_.Resolve(context);
+  }
+}
 
 std::ostream &operator<<(std::ostream &o, const Bound &x) {
   if (x.isAssumed()) {
@@ -58,7 +104,7 @@ std::ostream &operator<<(std::ostream &o, const Bound &x) {
   } else if (x.isDeferred()) {
     o << ':';
   } else {
-    x.expr_->Output(o);
+    o << x.expr_;
   }
   return o;
 }
@@ -75,6 +121,25 @@ std::ostream &operator<<(std::ostream &o, const ShapeSpec &x) {
     if (!x.ub_.isDeferred()) {
       o << x.ub_;
     }
+  }
+  return o;
+}
+
+ParamValue::ParamValue(const parser::Expr &expr)
+  : category_{Category::Explicit}, expr_{expr} {}
+
+void ParamValue::ResolveExplicit(SemanticsContext &context) {
+  CHECK(isExplicit());
+  expr_.Resolve(context);
+}
+
+std::ostream &operator<<(std::ostream &o, const ParamValue &x) {
+  if (x.isAssumed()) {
+    o << '*';
+  } else if (x.isDeferred()) {
+    o << ':';
+  } else {
+    o << x.GetExplicit();
   }
   return o;
 }
@@ -129,8 +194,7 @@ bool DeclTypeSpec::operator==(const DeclTypeSpec &that) const {
 std::ostream &operator<<(std::ostream &o, const DeclTypeSpec &x) {
   switch (x.category()) {
   case DeclTypeSpec::Intrinsic: return o << x.intrinsicTypeSpec();
-  case DeclTypeSpec::TypeDerived:
-    return o << "TYPE(" << x.derivedTypeSpec().name().ToString() << ')';
+  case DeclTypeSpec::TypeDerived: return o << x.derivedTypeSpec();
   case DeclTypeSpec::ClassDerived:
     return o << "CLASS(" << x.derivedTypeSpec().name().ToString() << ')';
   case DeclTypeSpec::TypeStar: return o << "TYPE(*)";
@@ -178,5 +242,53 @@ std::ostream &operator<<(std::ostream &o, const GenericSpec &x) {
   case GenericSpec::OP_XOR: return o << "OPERATOR(.XOR.)";
   default: CRASH_NO_CASE;
   }
+}
+
+class ExprResolver {
+public:
+  ExprResolver(SemanticsContext &context) : context_{context} {}
+  void Resolve() { Resolve(context_.globalScope()); }
+
+private:
+  SemanticsContext &context_;
+
+  void Resolve(Scope &);
+  void Resolve(Symbol &);
+  void Resolve(Bound &bound) { bound.Resolve(context_); }
+  void Resolve(LazyExpr &expr) { expr.Resolve(context_); }
+};
+
+void ExprResolver::Resolve(Scope &scope) {
+  for (auto &pair : scope) {
+    Resolve(*pair.second);
+  }
+  for (auto &child : scope.children()) {
+    Resolve(child);
+  }
+}
+void ExprResolver::Resolve(Symbol &symbol) {
+  if (auto *type{symbol.GetType()}) {
+    if (type->category() == DeclTypeSpec::TypeDerived) {
+      DerivedTypeSpec &dts{type->derivedTypeSpec()};
+      for (auto & [ name, value ] : dts.paramValues()) {
+        if (value.isExplicit()) {
+          value.ResolveExplicit(context_);
+        }
+      }
+    }
+  }
+  if (auto *details{symbol.detailsIf<ObjectEntityDetails>()}) {
+    Resolve(details->init());
+    for (ShapeSpec &shapeSpec : details->shape()) {
+      Resolve(shapeSpec.lb_);
+      Resolve(shapeSpec.ub_);
+    }
+  } else if (auto *details{symbol.detailsIf<TypeParamDetails>()}) {
+    Resolve(details->init());
+  }
+}
+
+void ResolveSymbolExprs(SemanticsContext &context) {
+  ExprResolver(context).Resolve();
 }
 }

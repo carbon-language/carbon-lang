@@ -18,6 +18,8 @@
 #include "attr.h"
 #include "../common/fortran.h"
 #include "../common/idioms.h"
+#include "../common/indirection.h"
+#include "../evaluate/expression.h"
 #include "../parser/char-block.h"
 #include <list>
 #include <memory>
@@ -25,65 +27,74 @@
 #include <ostream>
 #include <string>
 #include <unordered_map>
+#include <variant>
+
+namespace Fortran::parser {
+class Expr;
+}
 
 namespace Fortran::semantics {
 
 class Scope;
 class Symbol;
+class SemanticsContext;
+class ExprResolver;
 
 /// A SourceName is a name in the cooked character stream,
 /// i.e. a range of lower-case characters with provenance.
 using SourceName = parser::CharBlock;
-
 using TypeCategory = common::TypeCategory;
+using SomeExpr = evaluate::Expr<evaluate::SomeType>;
+using MaybeExpr = std::optional<SomeExpr>;
 
-// TODO
-class IntExpr {
+// An expression that starts out as a parser::Expr and gets resolved to
+// a MaybeExpr. Resolve should not be called until after names are resolved.
+// An unresolved LazyExpr should not be used after the parse tree is deleted.
+class LazyExpr {
 public:
-  static IntExpr MakeConst(std::uint64_t value) {
-    return IntExpr();  // TODO
-  }
-  IntExpr() {}
-  virtual ~IntExpr();
-  virtual std::ostream &Output(std::ostream &o) const { return o << "IntExpr"; }
-};
-
-// TODO
-class IntConst {
-public:
-  static const IntConst &Make(std::uint64_t value);
-  bool operator==(const IntConst &x) const { return value_ == x.value_; }
-  bool operator!=(const IntConst &x) const { return !operator==(x); }
-  bool operator<(const IntConst &x) const { return value_ < x.value_; }
-  std::uint64_t value() const { return value_; }
-  std::ostream &Output(std::ostream &o) const { return o << this->value_; }
+  LazyExpr() : u_{nullptr} {}
+  LazyExpr(const parser::Expr &expr) : u_{&expr} {}
+  LazyExpr(SomeExpr &&);
+  LazyExpr(LazyExpr &&) = default;
+  LazyExpr &operator=(LazyExpr &&) = default;
+  LazyExpr Clone() const { return LazyExpr(*this); }
+  const MaybeExpr Get() const;
+  MaybeExpr Get();
+  bool Resolve(SemanticsContext &);
 
 private:
-  static std::unordered_map<std::uint64_t, IntConst> cache;
-  IntConst(std::uint64_t value) : value_{value} {}
-  const std::uint64_t value_;
-  friend std::ostream &operator<<(std::ostream &, const IntConst &);
+  using CopyableExprPtr = common::Indirection<SomeExpr, true>;
+  struct ErrorInExpr {};  // marks an expr with an error in evaluation
+  std::variant<const parser::Expr *, CopyableExprPtr, ErrorInExpr> u_;
+
+  LazyExpr(const LazyExpr &) = default;
+  friend std::ostream &operator<<(std::ostream &, const LazyExpr &);
 };
 
 // An array spec bound: an explicit integer expression or ASSUMED or DEFERRED
 class Bound {
 public:
-  static const Bound ASSUMED;
-  static const Bound DEFERRED;
-  Bound(const IntExpr &expr) : category_{Explicit}, expr_{expr} {}
-  bool isExplicit() const { return category_ == Explicit; }
-  bool isAssumed() const { return category_ == Assumed; }
-  bool isDeferred() const { return category_ == Deferred; }
-  const IntExpr &getExplicit() const {
-    CHECK(isExplicit());
-    return *expr_;
-  }
+  static Bound Assumed() { return Bound(Category::Assumed); }
+  static Bound Deferred() { return Bound(Category::Deferred); }
+  Bound(const parser::Expr &expr)
+    : category_{Category::Explicit}, expr_{expr} {}
+  Bound(int bound);
+  Bound(Bound &&) = default;
+  Bound &operator=(Bound &&) = default;
+  Bound Clone() const { return Bound(category_, expr_.Clone()); }
+  bool isExplicit() const { return category_ == Category::Explicit; }
+  bool isAssumed() const { return category_ == Category::Assumed; }
+  bool isDeferred() const { return category_ == Category::Deferred; }
+  const LazyExpr &GetExplicit() const { return expr_; }
+  void Resolve(SemanticsContext &);
 
 private:
-  enum Category { Explicit, Deferred, Assumed };
-  Bound(Category category) : category_{category}, expr_{std::nullopt} {}
+  enum class Category { Explicit, Deferred, Assumed };
+  Bound(Category category) : category_{category} {}
+  Bound(Category category, LazyExpr &&expr)
+    : category_{category}, expr_{std::move(expr)} {}
   Category category_;
-  std::optional<IntExpr> expr_;
+  LazyExpr expr_;
   friend std::ostream &operator<<(std::ostream &, const Bound &);
 };
 
@@ -107,40 +118,52 @@ private:
 class ShapeSpec {
 public:
   // lb:ub
-  static ShapeSpec MakeExplicit(const Bound &lb, const Bound &ub) {
-    return ShapeSpec(lb, ub);
+  static ShapeSpec MakeExplicit(Bound &&lb, Bound &&ub) {
+    return ShapeSpec(std::move(lb), std::move(ub));
   }
   // 1:ub
-  static const ShapeSpec MakeExplicit(const Bound &ub) {
-    return MakeExplicit(IntExpr::MakeConst(1), ub);
+  static const ShapeSpec MakeExplicit(Bound &&ub) {
+    return MakeExplicit(Bound{1}, std::move(ub));
   }
-  // 1: or lb:
-  static ShapeSpec MakeAssumed(const Bound &lb = IntExpr::MakeConst(1)) {
-    return ShapeSpec(lb, Bound::DEFERRED);
+  // 1:
+  static ShapeSpec MakeAssumed() {
+    return ShapeSpec(Bound{1}, Bound::Deferred());
+  }
+  // lb:
+  static ShapeSpec MakeAssumed(Bound &&lb) {
+    return ShapeSpec(std::move(lb), Bound::Deferred());
   }
   // :
   static ShapeSpec MakeDeferred() {
-    return ShapeSpec(Bound::DEFERRED, Bound::DEFERRED);
+    return ShapeSpec(Bound::Deferred(), Bound::Deferred());
   }
-  // 1:* or lb:*
-  static ShapeSpec MakeImplied(const Bound &lb = IntExpr::MakeConst(1)) {
-    return ShapeSpec(lb, Bound::ASSUMED);
+  // 1:*
+  static ShapeSpec MakeImplied() {
+    return ShapeSpec(Bound{1}, Bound::Assumed());
+  }
+  // lb:*
+  static ShapeSpec MakeImplied(Bound &&lb) {
+    return ShapeSpec(std::move(lb), Bound::Assumed());
   }
   // ..
   static ShapeSpec MakeAssumedRank() {
-    return ShapeSpec(Bound::ASSUMED, Bound::ASSUMED);
+    return ShapeSpec(Bound::Assumed(), Bound::Assumed());
   }
+
+  ShapeSpec(ShapeSpec &&) = default;
+  ShapeSpec &operator=(ShapeSpec &&) = default;
+  ShapeSpec Clone() const { return ShapeSpec{lb_.Clone(), ub_.Clone()}; }
 
   bool isExplicit() const { return ub_.isExplicit(); }
   bool isDeferred() const { return lb_.isDeferred(); }
-
   const Bound &lbound() const { return lb_; }
   const Bound &ubound() const { return ub_; }
 
 private:
-  ShapeSpec(const Bound &lb, const Bound &ub) : lb_{lb}, ub_{ub} {}
+  ShapeSpec(Bound &&lb, Bound &&ub) : lb_{std::move(lb)}, ub_{std::move(ub)} {}
   Bound lb_;
   Bound ub_;
+  friend ExprResolver;
   friend std::ostream &operator<<(std::ostream &, const ShapeSpec &);
 };
 
@@ -202,23 +225,47 @@ private:
   friend std::ostream &operator<<(std::ostream &, const GenericSpec &);
 };
 
-// The value of a len type parameter
-using LenParamValue = Bound;
+// A type parameter value: integer expression or assumed or deferred.
+class ParamValue {
+public:
+  static const ParamValue Assumed() { return ParamValue(Category::Assumed); }
+  static const ParamValue Deferred() { return ParamValue(Category::Deferred); }
+  ParamValue(const parser::Expr &);
+  bool isExplicit() const { return category_ == Category::Explicit; }
+  bool isAssumed() const { return category_ == Category::Assumed; }
+  bool isDeferred() const { return category_ == Category::Deferred; }
+  const LazyExpr &GetExplicit() const { return expr_; }
+  void ResolveExplicit(SemanticsContext &);
 
-using ParamValue = LenParamValue;
+private:
+  enum class Category { Explicit, Deferred, Assumed };
+  ParamValue(Category category) : category_{category} {}
+  Category category_;
+  LazyExpr expr_;
+  friend std::ostream &operator<<(std::ostream &, const ParamValue &);
+};
 
 class DerivedTypeSpec {
 public:
+  using listType = std::list<std::pair<std::optional<SourceName>, ParamValue>>;
   explicit DerivedTypeSpec(const SourceName &name) : name_{&name} {}
   DerivedTypeSpec() = delete;
   const SourceName &name() const { return *name_; }
   const Scope *scope() const { return scope_; }
   void set_scope(const Scope &);
+  listType &paramValues() { return paramValues_; }
+  const listType &paramValues() const { return paramValues_; }
+  void AddParamValue(ParamValue &&value) {
+    paramValues_.emplace_back(std::nullopt, std::move(value));
+  }
+  void AddParamValue(const SourceName &name, ParamValue &&value) {
+    paramValues_.emplace_back(name, std::move(value));
+  }
 
 private:
   const SourceName *name_;
   const Scope *scope_{nullptr};
-  std::list<std::pair<std::optional<SourceName>, ParamValue>> paramValues_;
+  listType paramValues_;
   friend std::ostream &operator<<(std::ostream &, const DerivedTypeSpec &);
 };
 
@@ -269,6 +316,9 @@ private:
   const Symbol *symbol_{nullptr};
   std::optional<DeclTypeSpec> type_;
 };
+
+// Resolve expressions in symbols.
+void ResolveSymbolExprs(SemanticsContext &);
 }
 
 #endif  // FORTRAN_SEMANTICS_TYPE_H_

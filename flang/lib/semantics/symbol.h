@@ -114,8 +114,12 @@ class ObjectEntityDetails {
 public:
   ObjectEntityDetails(const EntityDetails &);
   ObjectEntityDetails(bool isDummy = false) : isDummy_{isDummy} {}
+  LazyExpr &init() { return init_; }
+  const LazyExpr &init() const { return init_; }
+  void set_init(const parser::Expr &);
   const std::optional<DeclTypeSpec> &type() const { return type_; }
   void set_type(const DeclTypeSpec &type);
+  ArraySpec &shape() { return shape_; }
   const ArraySpec &shape() const { return shape_; }
   void set_shape(const ArraySpec &shape);
   bool isDummy() const { return isDummy_; }
@@ -127,6 +131,7 @@ public:
 
 private:
   bool isDummy_;
+  LazyExpr init_;
   std::optional<DeclTypeSpec> type_;
   ArraySpec shape_;
   friend std::ostream &operator<<(std::ostream &, const ObjectEntityDetails &);
@@ -190,6 +195,11 @@ class TypeParamDetails {
 public:
   TypeParamDetails(common::TypeParamAttr attr) : attr_{attr} {}
   common::TypeParamAttr attr() const { return attr_; }
+  // std::optional<LazyExpr> &init() { return init_; }
+  // const std::optional<LazyExpr> &init() const { return init_; }
+  LazyExpr &init() { return init_; }
+  const LazyExpr &init() const { return init_; }
+  void set_init(const parser::Expr &);
   const std::optional<DeclTypeSpec> &type() const { return type_; }
   void set_type(const DeclTypeSpec &type) {
     CHECK(!type_);
@@ -198,6 +208,7 @@ public:
 
 private:
   common::TypeParamAttr attr_;
+  LazyExpr init_;
   std::optional<DeclTypeSpec> type_;
 };
 
@@ -359,6 +370,7 @@ public:
   Symbol &GetUltimate();
   const Symbol &GetUltimate() const;
 
+  DeclTypeSpec *GetType();
   const DeclTypeSpec *GetType() const;
   void SetType(const DeclTypeSpec &);
 

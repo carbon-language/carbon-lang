@@ -19,7 +19,6 @@
 #include "../common/idioms.h"
 #include "../evaluate/common.h"
 #include "../evaluate/fold.h"
-#include "../evaluate/intrinsics.h"
 #include "../evaluate/tools.h"
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
@@ -536,7 +535,14 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Name &n) {
         "TODO INTERNAL: name '%s' was not resolved to a symbol"_err_en_US,
         n.ToString().data());
   } else if (n.symbol->attrs().test(semantics::Attr::PARAMETER)) {
-    Say("TODO: PARAMETER references not yet implemented"_err_en_US);
+    if (auto *details{n.symbol->detailsIf<semantics::ObjectEntityDetails>()}) {
+      auto &init{details->init()};
+      if (init.Resolve(context)) {
+        return init.Get();
+      }
+    }
+    Say(n.source, "parameter '%s' does not have a value"_err_en_US,
+        n.ToString().data());
     // TODO: enumerators, do they have the PARAMETER attribute?
   } else {
     if (MaybeExpr result{Designate(DataRef{*n.symbol})}) {
@@ -804,7 +810,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::CharLiteralConstantSubstring &) {
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::ArrayConstructor &) {
-  Say("TODO: ArrayConstructor unimplemented"_err_en_US);
+  Say("TODO: ArrayConstructor unimplemented"_en_US);
   return std::nullopt;
 }
 

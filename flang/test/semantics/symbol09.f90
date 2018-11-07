@@ -81,7 +81,7 @@ subroutine s4
   integer :: a
  end type t
  !REF: /s4/t
- !DEF: /s4/x ObjectEntity TYPE(t)
+ !DEF: /s4/x ObjectEntity TYPE(t(1_4))
  type(t(1)) :: x
  !REF: /s4/x
  !REF: /s4/t
@@ -100,7 +100,7 @@ subroutine s5
   integer, len :: l
  end type t
  !REF: /s5/t
- !DEF: /s5/x ALLOCATABLE ObjectEntity TYPE(t)
+ !DEF: /s5/x ALLOCATABLE ObjectEntity TYPE(t(:))
  type(t(:)), allocatable :: x
  !DEF: /s5/y ALLOCATABLE ObjectEntity REAL(4)
  real, allocatable :: y

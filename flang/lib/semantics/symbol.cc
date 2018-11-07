@@ -58,7 +58,7 @@ void ObjectEntityDetails::set_type(const DeclTypeSpec &type) {
 void ObjectEntityDetails::set_shape(const ArraySpec &shape) {
   CHECK(shape_.empty());
   for (const auto &shapeSpec : shape) {
-    shape_.push_back(shapeSpec);
+    shape_.emplace_back(shapeSpec.Clone());
   }
 }
 
@@ -66,6 +66,10 @@ ProcEntityDetails::ProcEntityDetails(const EntityDetails &d) {
   if (auto type{d.type()}) {
     interface_.set_type(*type);
   }
+}
+
+void TypeParamDetails::set_init(const parser::Expr &expr) {
+  init_ = LazyExpr{expr};
 }
 
 const Symbol &UseDetails::module() const {
@@ -192,6 +196,11 @@ const Symbol &Symbol::GetUltimate() const {
   }
 }
 
+DeclTypeSpec *Symbol::GetType() {
+  return const_cast<DeclTypeSpec *>(
+      const_cast<const Symbol *>(this)->GetType());
+}
+
 const DeclTypeSpec *Symbol::GetType() const {
   return std::visit(
       common::visitors{
@@ -281,6 +290,10 @@ int Symbol::Rank() const {
 ObjectEntityDetails::ObjectEntityDetails(const EntityDetails &d)
   : isDummy_{d.isDummy()}, type_{d.type()} {}
 
+void ObjectEntityDetails::set_init(const parser::Expr &x) {
+  init_ = LazyExpr{x};
+}
+
 std::ostream &operator<<(std::ostream &os, const EntityDetails &x) {
   if (x.type()) {
     os << " type: " << *x.type();
@@ -297,6 +310,9 @@ std::ostream &operator<<(std::ostream &os, const ObjectEntityDetails &x) {
     for (const auto &s : x.shape()) {
       os << ' ' << s;
     }
+  }
+  if (x.init_.Get()) {
+    os << " init:" << x.init_;
   }
   return os;
 }
@@ -401,6 +417,9 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
               os << ' ' << *x.type();
             }
             os << ' ' << common::EnumToString(x.attr());
+            if (x.init().Get()) {
+              os << " init:" << x.init();
+            }
           },
           [&](const MiscDetails &x) {
             os << ' ' << MiscDetails::EnumToString(x.kind());

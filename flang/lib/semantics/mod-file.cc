@@ -43,6 +43,9 @@ static void PutObjectEntity(std::ostream &, const Symbol &);
 static void PutProcEntity(std::ostream &, const Symbol &);
 static void PutTypeParam(std::ostream &, const Symbol &);
 static void PutEntity(std::ostream &, const Symbol &, std::function<void()>);
+static void PutInit(std::ostream &, const LazyExpr &);
+static void PutBound(std::ostream &, const Bound &);
+static void PutExpr(std::ostream &, const LazyExpr &);
 static std::ostream &PutAttrs(
     std::ostream &, Attrs, std::string before = ","s, std::string after = ""s);
 static std::ostream &PutLower(std::ostream &, const Symbol &);
@@ -300,6 +303,37 @@ void PutEntity(std::ostream &os, const Symbol &symbol) {
           },
       },
       symbol.details());
+  os << '\n';
+}
+
+void PutShapeSpec(std::ostream &os, const ShapeSpec &x) {
+  if (x.ubound().isAssumed()) {
+    CHECK(x.ubound().isAssumed());
+    os << "..";
+  } else {
+    if (!x.lbound().isDeferred()) {
+      PutBound(os, x.lbound());
+    }
+    os << ':';
+    if (!x.ubound().isDeferred()) {
+      PutBound(os, x.ubound());
+    }
+  }
+}
+void PutShape(std::ostream &os, const ArraySpec &shape) {
+  if (!shape.empty()) {
+    os << '(';
+    bool first{true};
+    for (const auto &shapeSpec : shape) {
+      if (first) {
+        first = false;
+      } else {
+        os << ',';
+      }
+      PutShapeSpec(os, shapeSpec);
+    }
+    os << ')';
+  }
 }
 
 void PutObjectEntity(std::ostream &os, const Symbol &symbol) {
@@ -308,6 +342,8 @@ void PutObjectEntity(std::ostream &os, const Symbol &symbol) {
     CHECK(type);
     PutLower(os, *type);
   });
+  PutShape(os, symbol.get<ObjectEntityDetails>().shape());
+  PutInit(os, symbol.get<ObjectEntityDetails>().init());
 }
 
 void PutProcEntity(std::ostream &os, const Symbol &symbol) {
@@ -324,13 +360,37 @@ void PutProcEntity(std::ostream &os, const Symbol &symbol) {
 }
 
 void PutTypeParam(std::ostream &os, const Symbol &symbol) {
+  auto &details{symbol.get<TypeParamDetails>()};
   PutEntity(os, symbol, [&]() {
     auto *type{symbol.GetType()};
     CHECK(type);
     PutLower(os, *type);
-    PutLower(
-        os << ',', common::EnumToString(symbol.get<TypeParamDetails>().attr()));
+    PutLower(os << ',', common::EnumToString(details.attr()));
   });
+  PutInit(os, details.init());
+}
+
+void PutInit(std::ostream &os, const LazyExpr &init) {
+  if (init.Get()) {
+    PutExpr(os << '=', init);
+  }
+}
+
+void PutBound(std::ostream &os, const Bound &x) {
+  if (x.isAssumed()) {
+    os << '*';
+  } else if (x.isDeferred()) {
+    os << ':';
+  } else {
+    PutExpr(os, x.GetExplicit());
+  }
+}
+
+void PutExpr(std::ostream &os, const LazyExpr &expr) {
+  if (expr.Get()) {
+    // TODO: Dump does not necessarily produce Fortran code
+    expr.Get()->Dump(os);
+  }
 }
 
 // Write an entity (object or procedure) declaration.
@@ -339,7 +399,7 @@ void PutEntity(
     std::ostream &os, const Symbol &symbol, std::function<void()> writeType) {
   writeType();
   PutAttrs(os, symbol.attrs());
-  PutLower(os << "::", symbol) << '\n';
+  PutLower(os << "::", symbol);
 }
 
 // Put out each attribute to os, surrounded by `before` and `after` and
