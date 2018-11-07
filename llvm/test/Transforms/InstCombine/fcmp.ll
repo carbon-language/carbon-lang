@@ -197,6 +197,17 @@ define <2 x i1> @fabs_ole(<2 x float> %a) {
   ret <2 x i1> %cmp
 }
 
+define <2 x i1> @fabs_ule(<2 x float> %a) {
+; CHECK-LABEL: @fabs_ule(
+; CHECK-NEXT:    [[CALL:%.*]] = call <2 x float> @llvm.fabs.v2f32(<2 x float> [[A:%.*]])
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp ninf arcp ule <2 x float> [[CALL]], zeroinitializer
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %call = call <2 x float> @llvm.fabs.v2f32(<2 x float> %a)
+  %cmp = fcmp ninf arcp ule <2 x float> %call, zeroinitializer
+  ret <2 x i1> %cmp
+}
+
 define i1 @fabs_ogt(double %a) {
 ; CHECK-LABEL: @fabs_ogt(
 ; CHECK-NEXT:    [[CMP:%.*]] = fcmp one double [[A:%.*]], 0.000000e+00
@@ -204,6 +215,17 @@ define i1 @fabs_ogt(double %a) {
 ;
   %call = call double @llvm.fabs.f64(double %a)
   %cmp = fcmp reassoc ogt double %call, 0.0
+  ret i1 %cmp
+}
+
+define i1 @fabs_ugt(double %a) {
+; CHECK-LABEL: @fabs_ugt(
+; CHECK-NEXT:    [[CALL:%.*]] = call double @llvm.fabs.f64(double [[A:%.*]])
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp reassoc ninf ugt double [[CALL]], 0.000000e+00
+; CHECK-NEXT:    ret i1 [[CMP]]
+;
+  %call = call double @llvm.fabs.f64(double %a)
+  %cmp = fcmp ninf reassoc ugt double %call, 0.0
   ret i1 %cmp
 }
 
