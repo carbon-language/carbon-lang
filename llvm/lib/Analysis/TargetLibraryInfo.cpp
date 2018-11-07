@@ -615,13 +615,9 @@ bool TargetLibraryInfoImpl::isValidProtoForLibFunc(const FunctionType &FTy,
   switch (F) {
   case LibFunc_execl:
   case LibFunc_execlp:
+  case LibFunc_execle:
     return (NumParams >= 2 && FTy.getParamType(0)->isPointerTy() &&
             FTy.getParamType(1)->isPointerTy() &&
-            FTy.getReturnType()->isIntegerTy(32));
-  case LibFunc_execle:
-    return (NumParams >= 3 && FTy.getParamType(0)->isPointerTy() &&
-            FTy.getParamType(1)->isPointerTy() &&
-            FTy.getParamType(NumParams - 1)->isPointerTy() &&
             FTy.getReturnType()->isIntegerTy(32));
   case LibFunc_execv:
   case LibFunc_execvp:
