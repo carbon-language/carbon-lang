@@ -5291,6 +5291,12 @@ static Instruction *foldFabsWithFcmpZero(FCmpInst &I) {
       !match(I.getOperand(1), m_PosZeroFP()))
     return nullptr;
 
+  auto replacePredAndOp0 = [](FCmpInst *I, FCmpInst::Predicate P, Value *X) {
+    I->setPredicate(P);
+    I->setOperand(0, X);
+    return I;
+  };
+
   switch (I.getPredicate()) {
   case FCmpInst::FCMP_UGE:
   case FCmpInst::FCMP_OLT:
@@ -5300,29 +5306,29 @@ static Instruction *foldFabsWithFcmpZero(FCmpInst &I) {
 
   case FCmpInst::FCMP_OGT:
     // fabs(X) > 0.0 --> X != 0.0
-    return new FCmpInst(FCmpInst::FCMP_ONE, X, I.getOperand(1));
+    return replacePredAndOp0(&I, FCmpInst::FCMP_ONE, X);
 
   case FCmpInst::FCMP_UGT:
     // fabs(X) u> 0.0 --> X u!= 0.0
-    return new FCmpInst(FCmpInst::FCMP_UNE, X, I.getOperand(1));
+    return replacePredAndOp0(&I, FCmpInst::FCMP_UNE, X);
 
   case FCmpInst::FCMP_OLE:
     // fabs(X) <= 0.0 --> X == 0.0
-    return new FCmpInst(FCmpInst::FCMP_OEQ, X, I.getOperand(1));
+    return replacePredAndOp0(&I, FCmpInst::FCMP_OEQ, X);
 
   case FCmpInst::FCMP_ULE:
     // fabs(X) u<= 0.0 --> X u== 0.0
-    return new FCmpInst(FCmpInst::FCMP_UEQ, X, I.getOperand(1));
+    return replacePredAndOp0(&I, FCmpInst::FCMP_UEQ, X);
 
   case FCmpInst::FCMP_OGE:
     // fabs(X) >= 0.0 --> !isnan(X)
     assert(!I.hasNoNaNs() && "fcmp should have simplified");
-    return new FCmpInst(FCmpInst::FCMP_ORD, X, I.getOperand(1));
+    return replacePredAndOp0(&I, FCmpInst::FCMP_ORD, X);
 
   case FCmpInst::FCMP_ULT:
     // fabs(X) u< 0.0 --> isnan(X)
     assert(!I.hasNoNaNs() && "fcmp should have simplified");
-    return new FCmpInst(FCmpInst::FCMP_UNO, X, I.getOperand(1));
+    return replacePredAndOp0(&I, FCmpInst::FCMP_UNO, X);
 
   case FCmpInst::FCMP_OEQ:
   case FCmpInst::FCMP_UEQ:
@@ -5335,7 +5341,7 @@ static Instruction *foldFabsWithFcmpZero(FCmpInst &I) {
     // fabs(X) != 0.0 --> X != 0.0
     // isnan(fabs(X)) --> isnan(X)
     // !isnan(fabs(X) --> !isnan(X)
-    return new FCmpInst(I.getPredicate(), X, I.getOperand(1));
+    return replacePredAndOp0(&I, I.getPredicate(), X);
 
   default:
     return nullptr;
