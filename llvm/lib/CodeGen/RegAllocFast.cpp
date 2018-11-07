@@ -149,10 +149,6 @@ namespace {
       return false;
     }
 
-    /// This flag is set when LiveRegMap will be cleared completely after
-    /// spilling all live registers. LiveRegMap entries should not be erased.
-    bool isBulkSpilling = false;
-
     enum : unsigned {
       spillClean = 50,
       spillDirty = 100,
@@ -186,9 +182,9 @@ namespace {
     bool isLastUseOfLocalReg(const MachineOperand &MO) const;
 
     void addKillFlag(const LiveReg &LRI);
-    void killVirtReg(LiveRegMap::iterator LRI);
+    void killVirtReg(LiveReg &LR);
     void killVirtReg(unsigned VirtReg);
-    void spillVirtReg(MachineBasicBlock::iterator MI, LiveRegMap::iterator);
+    void spillVirtReg(MachineBasicBlock::iterator MI, LiveReg &LR);
     void spillVirtReg(MachineBasicBlock::iterator MI, unsigned VirtReg);
 
     void usePhysReg(MachineOperand &MO);
@@ -205,13 +201,11 @@ namespace {
       return LiveVirtRegs.find(TargetRegisterInfo::virtReg2Index(VirtReg));
     }
 
-    LiveRegMap::iterator assignVirtToPhysReg(unsigned VirtReg, MCPhysReg PhysReg);
-    LiveRegMap::iterator allocVirtReg(MachineInstr &MI, LiveRegMap::iterator,
-                                      unsigned Hint);
-    LiveRegMap::iterator defineVirtReg(MachineInstr &MI, unsigned OpNum,
-                                       unsigned VirtReg, unsigned Hint);
-    LiveRegMap::iterator reloadVirtReg(MachineInstr &MI, unsigned OpNum,
-                                       unsigned VirtReg, unsigned Hint);
+    void allocVirtReg(MachineInstr &MI, LiveReg &LR, unsigned Hint);
+    MCPhysReg defineVirtReg(MachineInstr &MI, unsigned OpNum, unsigned VirtReg,
+                            unsigned Hint);
+    LiveReg &reloadVirtReg(MachineInstr &MI, unsigned OpNum, unsigned VirtReg,
+                           unsigned Hint);
     void spillAll(MachineBasicBlock::iterator MI);
     bool setPhysReg(MachineInstr &MI, unsigned OpNum, MCPhysReg PhysReg);
 
@@ -330,14 +324,12 @@ void RegAllocFast::addKillFlag(const LiveReg &LR) {
 }
 
 /// Mark virtreg as no longer available.
-void RegAllocFast::killVirtReg(LiveRegMap::iterator LRI) {
-  addKillFlag(*LRI);
-  assert(PhysRegState[LRI->PhysReg] == LRI->VirtReg &&
+void RegAllocFast::killVirtReg(LiveReg &LR) {
+  addKillFlag(LR);
+  assert(PhysRegState[LR.PhysReg] == LR.VirtReg &&
          "Broken RegState mapping");
-  setPhysRegState(LRI->PhysReg, regFree);
-  // Erase from LiveVirtRegs unless we're spilling in bulk.
-  if (!isBulkSpilling)
-    LiveVirtRegs.erase(LRI);
+  setPhysRegState(LR.PhysReg, regFree);
+  LR.PhysReg = 0;
 }
 
 /// Mark virtreg as no longer available.
@@ -345,8 +337,8 @@ void RegAllocFast::killVirtReg(unsigned VirtReg) {
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
          "killVirtReg needs a virtual register");
   LiveRegMap::iterator LRI = findLiveVirtReg(VirtReg);
-  if (LRI != LiveVirtRegs.end())
-    killVirtReg(LRI);
+  if (LRI != LiveVirtRegs.end() && LRI->PhysReg)
+    killVirtReg(*LRI);
 }
 
 /// This method spills the value specified by VirtReg into the corresponding
@@ -356,15 +348,14 @@ void RegAllocFast::spillVirtReg(MachineBasicBlock::iterator MI,
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
          "Spilling a physical register is illegal!");
   LiveRegMap::iterator LRI = findLiveVirtReg(VirtReg);
-  assert(LRI != LiveVirtRegs.end() && "Spilling unmapped virtual register");
-  spillVirtReg(MI, LRI);
+  assert(LRI != LiveVirtRegs.end() && LRI->PhysReg &&
+         "Spilling unmapped virtual register");
+  spillVirtReg(MI, *LRI);
 }
 
 /// Do the actual work of spilling.
-void RegAllocFast::spillVirtReg(MachineBasicBlock::iterator MI,
-                                LiveRegMap::iterator LRI) {
-  LiveReg &LR = *LRI;
-  assert(PhysRegState[LR.PhysReg] == LRI->VirtReg && "Broken RegState mapping");
+void RegAllocFast::spillVirtReg(MachineBasicBlock::iterator MI, LiveReg &LR) {
+  assert(PhysRegState[LR.PhysReg] == LR.VirtReg && "Broken RegState mapping");
 
   if (LR.Dirty) {
     // If this physreg is used by the instruction, we want to kill it on the
@@ -372,25 +363,25 @@ void RegAllocFast::spillVirtReg(MachineBasicBlock::iterator MI,
     bool SpillKill = MachineBasicBlock::iterator(LR.LastUse) != MI;
     LR.Dirty = false;
 
-    spill(MI, LRI->VirtReg, LR.PhysReg, SpillKill);
+    spill(MI, LR.VirtReg, LR.PhysReg, SpillKill);
 
     if (SpillKill)
       LR.LastUse = nullptr; // Don't kill register again
   }
-  killVirtReg(LRI);
+  killVirtReg(LR);
 }
 
 /// Spill all dirty virtregs without killing them.
 void RegAllocFast::spillAll(MachineBasicBlock::iterator MI) {
   if (LiveVirtRegs.empty()) return;
-  isBulkSpilling = true;
   // The LiveRegMap is keyed by an unsigned (the virtreg number), so the order
   // of spilling here is deterministic, if arbitrary.
-  for (LiveRegMap::iterator I = LiveVirtRegs.begin(), E = LiveVirtRegs.end();
-       I != E; ++I)
-    spillVirtReg(MI, I);
+  for (LiveReg &LR : LiveVirtRegs) {
+    if (!LR.PhysReg)
+      continue;
+    spillVirtReg(MI, LR);
+  }
   LiveVirtRegs.clear();
-  isBulkSpilling = false;
 }
 
 /// Handle the direct use of a physical register.  Check that the register is
@@ -519,9 +510,10 @@ unsigned RegAllocFast::calcSpillCost(MCPhysReg PhysReg) const {
                       << printReg(PhysReg, TRI) << " is reserved already.\n");
     return spillImpossible;
   default: {
-    LiveRegMap::const_iterator I = findLiveVirtReg(VirtReg);
-    assert(I != LiveVirtRegs.end() && "Missing VirtReg entry");
-    return I->Dirty ? spillDirty : spillClean;
+    LiveRegMap::const_iterator LRI = findLiveVirtReg(VirtReg);
+    assert(LRI != LiveVirtRegs.end() && LRI->PhysReg &&
+           "Missing VirtReg entry");
+    return LRI->Dirty ? spillDirty : spillClean;
   }
   }
 
@@ -539,9 +531,10 @@ unsigned RegAllocFast::calcSpillCost(MCPhysReg PhysReg) const {
     case regReserved:
       return spillImpossible;
     default: {
-      LiveRegMap::const_iterator I = findLiveVirtReg(VirtReg);
-      assert(I != LiveVirtRegs.end() && "Missing VirtReg entry");
-      Cost += I->Dirty ? spillDirty : spillClean;
+      LiveRegMap::const_iterator LRI = findLiveVirtReg(VirtReg);
+      assert(LRI != LiveVirtRegs.end() && LRI->PhysReg &&
+             "Missing VirtReg entry");
+      Cost += LRI->Dirty ? spillDirty : spillClean;
       break;
     }
     }
@@ -562,18 +555,9 @@ void RegAllocFast::assignVirtToPhysReg(LiveReg &LR, MCPhysReg PhysReg) {
   setPhysRegState(PhysReg, VirtReg);
 }
 
-RegAllocFast::LiveRegMap::iterator
-RegAllocFast::assignVirtToPhysReg(unsigned VirtReg, MCPhysReg PhysReg) {
-  LiveRegMap::iterator LRI = findLiveVirtReg(VirtReg);
-  assert(LRI != LiveVirtRegs.end() && "VirtReg disappeared");
-  assignVirtToPhysReg(*LRI, PhysReg);
-  return LRI;
-}
-
 /// Allocates a physical register for VirtReg.
-RegAllocFast::LiveRegMap::iterator RegAllocFast::allocVirtReg(MachineInstr &MI,
-    LiveRegMap::iterator LRI, unsigned Hint) {
-  const unsigned VirtReg = LRI->VirtReg;
+void RegAllocFast::allocVirtReg(MachineInstr &MI, LiveReg &LR, unsigned Hint) {
+  const unsigned VirtReg = LR.VirtReg;
 
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
          "Can only allocate virtual registers");
@@ -590,9 +574,8 @@ RegAllocFast::LiveRegMap::iterator RegAllocFast::allocVirtReg(MachineInstr &MI,
     if (Cost < spillDirty) {
       if (Cost)
         definePhysReg(MI, Hint, regFree);
-      // definePhysReg may kill virtual registers and modify LiveVirtRegs.
-      // That invalidates LRI, so run a new lookup for VirtReg.
-      return assignVirtToPhysReg(VirtReg, Hint);
+      assignVirtToPhysReg(LR, Hint);
+      return;
     }
   }
 
@@ -600,8 +583,8 @@ RegAllocFast::LiveRegMap::iterator RegAllocFast::allocVirtReg(MachineInstr &MI,
   ArrayRef<MCPhysReg> AllocationOrder = RegClassInfo.getOrder(&RC);
   for (MCPhysReg PhysReg : AllocationOrder) {
     if (PhysRegState[PhysReg] == regFree && !isRegUsedInInstr(PhysReg)) {
-      assignVirtToPhysReg(*LRI, PhysReg);
-      return LRI;
+      assignVirtToPhysReg(LR, PhysReg);
+      return;
     }
   }
 
@@ -616,8 +599,8 @@ RegAllocFast::LiveRegMap::iterator RegAllocFast::allocVirtReg(MachineInstr &MI,
     LLVM_DEBUG(dbgs() << "Cost: " << Cost << " BestCost: " << BestCost << '\n');
     // Cost is 0 when all aliases are already disabled.
     if (Cost == 0) {
-      assignVirtToPhysReg(*LRI, PhysReg);
-      return LRI;
+      assignVirtToPhysReg(LR, PhysReg);
+      return;
     }
     if (Cost < BestCost) {
       BestReg = PhysReg;
@@ -632,26 +615,23 @@ RegAllocFast::LiveRegMap::iterator RegAllocFast::allocVirtReg(MachineInstr &MI,
     else
       MI.emitError("ran out of registers during register allocation");
     definePhysReg(MI, *AllocationOrder.begin(), regFree);
-    return assignVirtToPhysReg(VirtReg, *AllocationOrder.begin());
+    assignVirtToPhysReg(LR, *AllocationOrder.begin());
+    return;
   }
 
   definePhysReg(MI, BestReg, regFree);
-  // definePhysReg may kill virtual registers and modify LiveVirtRegs.
-  // That invalidates LRI, so run a new lookup for VirtReg.
-  return assignVirtToPhysReg(VirtReg, BestReg);
+  assignVirtToPhysReg(LR, BestReg);
 }
 
 /// Allocates a register for VirtReg and mark it as dirty.
-RegAllocFast::LiveRegMap::iterator RegAllocFast::defineVirtReg(MachineInstr &MI,
-                                                               unsigned OpNum,
-                                                               unsigned VirtReg,
-                                                               unsigned Hint) {
+MCPhysReg RegAllocFast::defineVirtReg(MachineInstr &MI, unsigned OpNum,
+                                      unsigned VirtReg, unsigned Hint) {
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
          "Not a virtual register");
   LiveRegMap::iterator LRI;
   bool New;
   std::tie(LRI, New) = LiveVirtRegs.insert(LiveReg(VirtReg));
-  if (New) {
+  if (!LRI->PhysReg) {
     // If there is no hint, peek at the only use of this register.
     if ((!Hint || !TargetRegisterInfo::isPhysicalRegister(Hint)) &&
         MRI->hasOneNonDBGUse(VirtReg)) {
@@ -660,7 +640,7 @@ RegAllocFast::LiveRegMap::iterator RegAllocFast::defineVirtReg(MachineInstr &MI,
       if (UseMI.isCopyLike())
         Hint = UseMI.getOperand(0).getReg();
     }
-    LRI = allocVirtReg(MI, LRI, Hint);
+    allocVirtReg(MI, *LRI, Hint);
   } else if (LRI->LastUse) {
     // Redefining a live register - kill at the last use, unless it is this
     // instruction defining VirtReg multiple times.
@@ -672,22 +652,22 @@ RegAllocFast::LiveRegMap::iterator RegAllocFast::defineVirtReg(MachineInstr &MI,
   LRI->LastOpNum = OpNum;
   LRI->Dirty = true;
   markRegUsedInInstr(LRI->PhysReg);
-  return LRI;
+  return LRI->PhysReg;
 }
 
 /// Make sure VirtReg is available in a physreg and return it.
-RegAllocFast::LiveRegMap::iterator RegAllocFast::reloadVirtReg(MachineInstr &MI,
-                                                               unsigned OpNum,
-                                                               unsigned VirtReg,
-                                                               unsigned Hint) {
+RegAllocFast::LiveReg &RegAllocFast::reloadVirtReg(MachineInstr &MI,
+                                                   unsigned OpNum,
+                                                   unsigned VirtReg,
+                                                   unsigned Hint) {
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
          "Not a virtual register");
   LiveRegMap::iterator LRI;
   bool New;
   std::tie(LRI, New) = LiveVirtRegs.insert(LiveReg(VirtReg));
   MachineOperand &MO = MI.getOperand(OpNum);
-  if (New) {
-    LRI = allocVirtReg(MI, LRI, Hint);
+  if (!LRI->PhysReg) {
+    allocVirtReg(MI, *LRI, Hint);
     reload(MI, VirtReg, LRI->PhysReg);
   } else if (LRI->Dirty) {
     if (isLastUseOfLocalReg(MO)) {
@@ -718,7 +698,7 @@ RegAllocFast::LiveRegMap::iterator RegAllocFast::reloadVirtReg(MachineInstr &MI,
   LRI->LastUse = &MI;
   LRI->LastOpNum = OpNum;
   markRegUsedInInstr(LRI->PhysReg);
-  return LRI;
+  return *LRI;
 }
 
 /// Changes operand OpNum in MI the refer the PhysReg, considering subregs. This
@@ -798,8 +778,8 @@ void RegAllocFast::handleThroughOperands(MachineInstr &MI,
       LLVM_DEBUG(dbgs() << "Operand " << I << "(" << MO
                         << ") is tied to operand " << MI.findTiedOperandIdx(I)
                         << ".\n");
-      LiveRegMap::iterator LRI = reloadVirtReg(MI, I, Reg, 0);
-      MCPhysReg PhysReg = LRI->PhysReg;
+      LiveReg &LR = reloadVirtReg(MI, I, Reg, 0);
+      MCPhysReg PhysReg = LR.PhysReg;
       setPhysReg(MI, I, PhysReg);
       // Note: we don't update the def operand yet. That would cause the normal
       // def-scan to attempt spilling.
@@ -807,8 +787,8 @@ void RegAllocFast::handleThroughOperands(MachineInstr &MI,
       LLVM_DEBUG(dbgs() << "Partial redefine: " << MO << '\n');
       // Reload the register, but don't assign to the operand just yet.
       // That would confuse the later phys-def processing pass.
-      LiveRegMap::iterator LRI = reloadVirtReg(MI, I, Reg, 0);
-      PartialDefs.push_back(LRI->PhysReg);
+      LiveReg &LR = reloadVirtReg(MI, I, Reg, 0);
+      PartialDefs.push_back(LR.PhysReg);
     }
   }
 
@@ -821,8 +801,7 @@ void RegAllocFast::handleThroughOperands(MachineInstr &MI,
     if (!MO.isEarlyClobber())
       continue;
     // Note: defineVirtReg may invalidate MO.
-    LiveRegMap::iterator LRI = defineVirtReg(MI, I, Reg, 0);
-    MCPhysReg PhysReg = LRI->PhysReg;
+    MCPhysReg PhysReg = defineVirtReg(MI, I, Reg, 0);
     if (setPhysReg(MI, I, PhysReg))
       VirtDead.push_back(Reg);
   }
@@ -856,11 +835,12 @@ void RegAllocFast::dumpState() {
       break;
     default: {
       dbgs() << '=' << printReg(PhysRegState[Reg]);
-      LiveRegMap::iterator I = findLiveVirtReg(PhysRegState[Reg]);
-      assert(I != LiveVirtRegs.end() && "Missing VirtReg entry");
-      if (I->Dirty)
+      LiveRegMap::iterator LRI = findLiveVirtReg(PhysRegState[Reg]);
+      assert(LRI != LiveVirtRegs.end() && LRI->PhysReg &&
+             "Missing VirtReg entry");
+      if (LRI->Dirty)
         dbgs() << "*";
-      assert(I->PhysReg == Reg && "Bad inverse map");
+      assert(LRI->PhysReg == Reg && "Bad inverse map");
       break;
     }
     }
@@ -869,6 +849,8 @@ void RegAllocFast::dumpState() {
   // Check that LiveVirtRegs is the inverse.
   for (LiveRegMap::iterator i = LiveVirtRegs.begin(),
        e = LiveVirtRegs.end(); i != e; ++i) {
+    if (!i->PhysReg)
+      continue;
     assert(TargetRegisterInfo::isVirtualRegister(i->VirtReg) &&
            "Bad map key");
     assert(TargetRegisterInfo::isPhysicalRegister(i->PhysReg) &&
@@ -916,7 +898,7 @@ void RegAllocFast::allocateBasicBlock(MachineBasicBlock &MBB) {
       // See if this virtual register has already been allocated to a physical
       // register or spilled to a stack slot.
       LiveRegMap::iterator LRI = findLiveVirtReg(Reg);
-      if (LRI != LiveVirtRegs.end())
+      if (LRI != LiveVirtRegs.end() && LRI->PhysReg)
         setPhysReg(*DebugMI, 0, LRI->PhysReg);
       else {
         int SS = StackSlotForVirtReg[Reg];
@@ -1026,11 +1008,11 @@ void RegAllocFast::allocateBasicBlock(MachineBasicBlock &MBB) {
       unsigned Reg = MO.getReg();
       if (!TargetRegisterInfo::isVirtualRegister(Reg)) continue;
       if (MO.isUse()) {
-        LiveRegMap::iterator LRI = reloadVirtReg(MI, I, Reg, CopyDstReg);
-        MCPhysReg PhysReg = LRI->PhysReg;
+        LiveReg &LR = reloadVirtReg(MI, I, Reg, CopyDstReg);
+        MCPhysReg PhysReg = LR.PhysReg;
         CopySrcReg = (CopySrcReg == Reg || CopySrcReg == PhysReg) ? PhysReg : 0;
         if (setPhysReg(MI, I, PhysReg))
-          killVirtReg(LRI);
+          killVirtReg(LR);
       }
     }
 
@@ -1074,8 +1056,7 @@ void RegAllocFast::allocateBasicBlock(MachineBasicBlock &MBB) {
         definePhysReg(MI, Reg, MO.isDead() ? regFree : regReserved);
         continue;
       }
-      LiveRegMap::iterator LRI = defineVirtReg(MI, I, Reg, CopySrcReg);
-      MCPhysReg PhysReg = LRI->PhysReg;
+      MCPhysReg PhysReg = defineVirtReg(MI, I, Reg, CopySrcReg);
       if (setPhysReg(MI, I, PhysReg)) {
         VirtDead.push_back(Reg);
         CopyDstReg = 0; // cancel coalescing;
