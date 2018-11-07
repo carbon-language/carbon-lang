@@ -296,6 +296,28 @@ define <2 x i1> @fabs_ueq(<2 x float> %a) {
   ret <2 x i1> %cmp
 }
 
+define <2 x i1> @fabs_ord(<2 x float> %a) {
+; CHECK-LABEL: @fabs_ord(
+; CHECK-NEXT:    [[CALL:%.*]] = call <2 x float> @llvm.fabs.v2f32(<2 x float> [[A:%.*]])
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp arcp ord <2 x float> [[CALL]], zeroinitializer
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %call = call <2 x float> @llvm.fabs.v2f32(<2 x float> %a)
+  %cmp = fcmp arcp ord <2 x float> %call, zeroinitializer
+  ret <2 x i1> %cmp
+}
+
+define <2 x i1> @fabs_uno(<2 x float> %a) {
+; CHECK-LABEL: @fabs_uno(
+; CHECK-NEXT:    [[CALL:%.*]] = call <2 x float> @llvm.fabs.v2f32(<2 x float> [[A:%.*]])
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp arcp uno <2 x float> [[CALL]], zeroinitializer
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %call = call <2 x float> @llvm.fabs.v2f32(<2 x float> %a)
+  %cmp = fcmp arcp uno <2 x float> %call, zeroinitializer
+  ret <2 x i1> %cmp
+}
+
 ; Don't crash.
 define i32 @test17(double %a, double (double)* %p) {
 ; CHECK-LABEL: @test17(
