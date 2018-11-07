@@ -2512,7 +2512,7 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
   // Shrink the condition operand if the new type is smaller than the old type.
   // But do not shrink to a non-standard type, because backend can't generate 
   // good code for that yet.
-  // TODO: We can make it agressive again after fixing PR39569.
+  // TODO: We can make it aggressive again after fixing PR39569.
   if (NewWidth > 0 && NewWidth < Known.getBitWidth() &&
       shouldChangeType(Known.getBitWidth(), NewWidth)) {
     IntegerType *Ty = IntegerType::get(SI.getContext(), NewWidth);
