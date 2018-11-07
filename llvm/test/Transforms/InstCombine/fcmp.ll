@@ -219,8 +219,7 @@ define i1 @fabs_oge(double %a) {
 
 define i1 @fabs_ult(double %a) {
 ; CHECK-LABEL: @fabs_ult(
-; CHECK-NEXT:    [[CALL:%.*]] = call double @llvm.fabs.f64(double [[A:%.*]])
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp reassoc arcp ult double [[CALL]], 0.000000e+00
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp uno double [[A:%.*]], 0.000000e+00
 ; CHECK-NEXT:    ret i1 [[CMP]]
 ;
   %call = call double @llvm.fabs.f64(double %a)

@@ -5311,6 +5311,11 @@ static Instruction *foldFabsWithFcmpZero(FCmpInst &I) {
     assert(!I.hasNoNaNs() && "fcmp should have simplified");
     return new FCmpInst(FCmpInst::FCMP_ORD, X, I.getOperand(1));
 
+  case FCmpInst::FCMP_ULT:
+    // fabs(X) u< 0.0 --> isnan(X)
+    assert(!I.hasNoNaNs() && "fcmp should have simplified");
+    return new FCmpInst(FCmpInst::FCMP_UNO, X, I.getOperand(1));
+
   case FCmpInst::FCMP_OEQ:
   case FCmpInst::FCMP_UEQ:
   case FCmpInst::FCMP_ONE:
