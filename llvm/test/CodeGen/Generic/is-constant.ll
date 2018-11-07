@@ -11,7 +11,7 @@ declare i1 @llvm.is.constant.i256(i256 %a)
 declare i1 @llvm.is.constant.v2i64(<2 x i64> %a)
 declare i1 @llvm.is.constant.f32(float %a)
 declare i1 @llvm.is.constant.sl_i32i32s({i32, i32} %a)
-declare i1 @llvm.is.constant.a2i32([2 x i32] %a)
+declare i1 @llvm.is.constant.a2i64([2 x i64] %a)
 declare i1 @llvm.is.constant.p0i64(i64* %a)
 
 ;; Basic test that optimization folds away the is.constant when given
@@ -63,7 +63,7 @@ define i1 @test_diff() #0 {
   ret i1 %ret
 }
 
-define i1 @test_various_types(i256 %int, float %float, <2 x i64> %vec, {i32, i32} %struct, [2 x i32] %arr, i64* %ptr) #0 {
+define i1 @test_various_types(i256 %int, float %float, <2 x i64> %vec, {i32, i32} %struct, [2 x i64] %arr, i64* %ptr) #0 {
 ; CHECK-LABEL: @test_various_types(
 ; CHECK: llvm.is.constant
 ; CHECK: llvm.is.constant
@@ -76,14 +76,14 @@ define i1 @test_various_types(i256 %int, float %float, <2 x i64> %vec, {i32, i32
   %v2 = call i1 @llvm.is.constant.f32(float %float)
   %v3 = call i1 @llvm.is.constant.v2i64(<2 x i64> %vec)
   %v4 = call i1 @llvm.is.constant.sl_i32i32s({i32, i32} %struct)
-  %v5 = call i1 @llvm.is.constant.a2i32([2 x i32] %arr)
+  %v5 = call i1 @llvm.is.constant.a2i64([2 x i64] %arr)
   %v6 = call i1 @llvm.is.constant.p0i64(i64* %ptr)
 
   %c1 = call i1 @llvm.is.constant.i256(i256 -1)
   %c2 = call i1 @llvm.is.constant.f32(float 17.0)
   %c3 = call i1 @llvm.is.constant.v2i64(<2 x i64> <i64 -1, i64 44>)
   %c4 = call i1 @llvm.is.constant.sl_i32i32s({i32, i32} {i32 -1, i32 32})
-  %c5 = call i1 @llvm.is.constant.a2i32([2 x i32] [i32 -1, i32 32])
+  %c5 = call i1 @llvm.is.constant.a2i64([2 x i64] [i64 -1, i64 32])
   %c6 = call i1 @llvm.is.constant.p0i64(i64* inttoptr (i32 42 to i64*))
 
   %x1 = add i1 %v1, %c1
@@ -106,7 +106,7 @@ define i1 @test_various_types2() #0 {
 ; CHECK-LABEL: @test_various_types2(
 ; CHECK: ret i1 false
   %r = call i1 @test_various_types(i256 -1, float 22.0, <2 x i64> <i64 -1, i64 44>,
-                     {i32, i32} {i32 -1, i32 55}, [2 x i32] [i32 -1, i32 55],
+                     {i32, i32} {i32 -1, i32 55}, [2 x i64] [i64 -1, i64 55],
 		     i64* inttoptr (i64 42 to i64*))
   ret i1 %r
 }
