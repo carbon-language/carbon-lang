@@ -5328,8 +5328,13 @@ static Instruction *foldFabsWithFcmpZero(FCmpInst &I) {
   case FCmpInst::FCMP_UEQ:
   case FCmpInst::FCMP_ONE:
   case FCmpInst::FCMP_UNE:
-    // fabs(X) == 0.0 --> X == 0.0
+  case FCmpInst::FCMP_ORD:
+  case FCmpInst::FCMP_UNO:
+    // Look through the fabs() because it doesn't change anything but the sign.
+    // fabs(X) == 0.0 --> X == 0.0,
     // fabs(X) != 0.0 --> X != 0.0
+    // isnan(fabs(X)) --> isnan(X)
+    // !isnan(fabs(X) --> !isnan(X)
     return new FCmpInst(I.getPredicate(), X, I.getOperand(1));
 
   default:

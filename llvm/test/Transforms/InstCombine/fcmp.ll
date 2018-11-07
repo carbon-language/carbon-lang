@@ -298,8 +298,7 @@ define <2 x i1> @fabs_ueq(<2 x float> %a) {
 
 define <2 x i1> @fabs_ord(<2 x float> %a) {
 ; CHECK-LABEL: @fabs_ord(
-; CHECK-NEXT:    [[CALL:%.*]] = call <2 x float> @llvm.fabs.v2f32(<2 x float> [[A:%.*]])
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp arcp ord <2 x float> [[CALL]], zeroinitializer
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp ord <2 x float> [[A:%.*]], zeroinitializer
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %call = call <2 x float> @llvm.fabs.v2f32(<2 x float> %a)
@@ -309,8 +308,7 @@ define <2 x i1> @fabs_ord(<2 x float> %a) {
 
 define <2 x i1> @fabs_uno(<2 x float> %a) {
 ; CHECK-LABEL: @fabs_uno(
-; CHECK-NEXT:    [[CALL:%.*]] = call <2 x float> @llvm.fabs.v2f32(<2 x float> [[A:%.*]])
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp arcp uno <2 x float> [[CALL]], zeroinitializer
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp uno <2 x float> [[A:%.*]], zeroinitializer
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %call = call <2 x float> @llvm.fabs.v2f32(<2 x float> %a)
