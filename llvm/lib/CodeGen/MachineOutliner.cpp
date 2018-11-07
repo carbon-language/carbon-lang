@@ -164,9 +164,6 @@ struct SuffixTreeNode {
   /// construction algorithm O(N^2) rather than O(N).
   SuffixTreeNode *Link = nullptr;
 
-  /// The parent of this node. Every node except for the root has a parent.
-  SuffixTreeNode *Parent = nullptr;
-
   /// The length of the string formed by concatenating the edge labels from the
   /// root to this node.
   unsigned ConcatLen = 0;
@@ -191,9 +188,8 @@ struct SuffixTreeNode {
     return *EndIdx - StartIdx + 1;
   }
 
-  SuffixTreeNode(unsigned StartIdx, unsigned *EndIdx, SuffixTreeNode *Link,
-                 SuffixTreeNode *Parent)
-      : StartIdx(StartIdx), EndIdx(EndIdx), Link(Link), Parent(Parent) {}
+  SuffixTreeNode(unsigned StartIdx, unsigned *EndIdx, SuffixTreeNode *Link)
+      : StartIdx(StartIdx), EndIdx(EndIdx), Link(Link) {}
 
   SuffixTreeNode() {}
 };
@@ -286,7 +282,7 @@ private:
     assert(StartIdx <= LeafEndIdx && "String can't start after it ends!");
 
     SuffixTreeNode *N = new (NodeAllocator.Allocate())
-        SuffixTreeNode(StartIdx, &LeafEndIdx, nullptr, &Parent);
+        SuffixTreeNode(StartIdx, &LeafEndIdx, nullptr);
     Parent.Children[Edge] = N;
 
     return N;
@@ -309,7 +305,7 @@ private:
 
     unsigned *E = new (InternalEndIdxAllocator) unsigned(EndIdx);
     SuffixTreeNode *N = new (NodeAllocator.Allocate())
-        SuffixTreeNode(StartIdx, E, Root, Parent);
+        SuffixTreeNode(StartIdx, E, Root);
     if (Parent)
       Parent->Children[Edge] = N;
 
@@ -320,33 +316,24 @@ private:
   /// respective suffixes.
   ///
   /// \param[in] CurrNode The node currently being visited.
-  /// \param CurrIdx The current index of the string being visited.
-  void setSuffixIndices(SuffixTreeNode &CurrNode, unsigned CurrIdx) {
+  /// \param CurrNodeLen The concatenation of all node sizes from the root to
+  /// this node. Used to produce suffix indices.
+  void setSuffixIndices(SuffixTreeNode &CurrNode, unsigned CurrNodeLen) {
 
     bool IsLeaf = CurrNode.Children.size() == 0 && !CurrNode.isRoot();
 
-    // Store the length of the concatenation of all strings from the root to
-    // this node.
-    if (!CurrNode.isRoot()) {
-      if (CurrNode.ConcatLen == 0)
-        CurrNode.ConcatLen = CurrNode.size();
-
-      if (CurrNode.Parent)
-        CurrNode.ConcatLen += CurrNode.Parent->ConcatLen;
-    }
-
+    // Store the concatenation of lengths down from the root.
+    CurrNode.ConcatLen = CurrNodeLen;
     // Traverse the tree depth-first.
     for (auto &ChildPair : CurrNode.Children) {
       assert(ChildPair.second && "Node had a null child!");
-      setSuffixIndices(*ChildPair.second, CurrIdx + ChildPair.second->size());
+      setSuffixIndices(*ChildPair.second,
+                       CurrNodeLen + ChildPair.second->size());
     }
 
-    // Is this node a leaf?
-    if (IsLeaf) {
-      // If yes, give it a suffix index and bump its parent's occurrence count.
-      CurrNode.SuffixIdx = Str.size() - CurrIdx;
-      assert(CurrNode.Parent && "CurrNode had no parent!");
-    }
+    // Is this node a leaf? If it is, give it a suffix index.
+    if (IsLeaf)
+      CurrNode.SuffixIdx = Str.size() - CurrNodeLen;
   }
 
   /// Construct the suffix tree for the prefix of the input ending at
@@ -451,7 +438,6 @@ private:
         // Make the old node a child of the split node and update its start
         // index. This is the node n from the diagram.
         NextNode->StartIdx += Active.Len;
-        NextNode->Parent = SplitNode;
         SplitNode->Children[Str[NextNode->StartIdx]] = NextNode;
 
         // SplitNode is an internal node, update the suffix link.
