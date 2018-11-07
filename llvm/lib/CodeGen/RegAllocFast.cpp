@@ -133,6 +133,8 @@ namespace {
     /// cannot be allocated.
     RegUnitSet UsedInInstr;
 
+    void setPhysRegState(MCPhysReg PhysReg, unsigned NewState);
+
     /// Mark a physreg as used in this instruction.
     void markRegUsedInInstr(MCPhysReg PhysReg) {
       for (MCRegUnitIterator Units(PhysReg, TRI); Units.isValid(); ++Units)
@@ -228,6 +230,10 @@ char RegAllocFast::ID = 0;
 
 INITIALIZE_PASS(RegAllocFast, "regallocfast", "Fast Register Allocator", false,
                 false)
+
+void RegAllocFast::setPhysRegState(MCPhysReg PhysReg, unsigned NewState) {
+  PhysRegState[PhysReg] = NewState;
+}
 
 /// This allocates space for the specified virtual register to be held on the
 /// stack.
@@ -328,7 +334,7 @@ void RegAllocFast::killVirtReg(LiveRegMap::iterator LRI) {
   addKillFlag(*LRI);
   assert(PhysRegState[LRI->PhysReg] == LRI->VirtReg &&
          "Broken RegState mapping");
-  PhysRegState[LRI->PhysReg] = regFree;
+  setPhysRegState(LRI->PhysReg, regFree);
   // Erase from LiveVirtRegs unless we're spilling in bulk.
   if (!isBulkSpilling)
     LiveVirtRegs.erase(LRI);
@@ -438,12 +444,12 @@ void RegAllocFast::usePhysReg(MachineOperand &MO) {
     case regFree:
       if (TRI->isSuperRegister(PhysReg, Alias)) {
         // Leave the superregister in the working set.
-        PhysRegState[Alias] = regFree;
+        setPhysRegState(Alias, regFree);
         MO.getParent()->addRegisterKilled(Alias, TRI, true);
         return;
       }
       // Some other alias was in the working set - clear it.
-      PhysRegState[Alias] = regDisabled;
+      setPhysRegState(Alias, regDisabled);
       break;
     default:
       llvm_unreachable("Instruction uses an alias of an allocated register");
@@ -451,7 +457,7 @@ void RegAllocFast::usePhysReg(MachineOperand &MO) {
   }
 
   // All aliases are disabled, bring register into working set.
-  PhysRegState[PhysReg] = regFree;
+  setPhysRegState(PhysReg, regFree);
   MO.setIsKill();
 }
 
@@ -469,12 +475,12 @@ void RegAllocFast::definePhysReg(MachineBasicBlock::iterator MI,
     LLVM_FALLTHROUGH;
   case regFree:
   case regReserved:
-    PhysRegState[PhysReg] = NewState;
+    setPhysRegState(PhysReg, NewState);
     return;
   }
 
   // This is a disabled register, disable all aliases.
-  PhysRegState[PhysReg] = NewState;
+  setPhysRegState(PhysReg, NewState);
   for (MCRegAliasIterator AI(PhysReg, TRI, false); AI.isValid(); ++AI) {
     MCPhysReg Alias = *AI;
     switch (unsigned VirtReg = PhysRegState[Alias]) {
@@ -485,7 +491,7 @@ void RegAllocFast::definePhysReg(MachineBasicBlock::iterator MI,
       LLVM_FALLTHROUGH;
     case regFree:
     case regReserved:
-      PhysRegState[Alias] = regDisabled;
+      setPhysRegState(Alias, regDisabled);
       if (TRI->isSuperRegister(PhysReg, Alias))
         return;
       break;
@@ -547,11 +553,13 @@ unsigned RegAllocFast::calcSpillCost(MCPhysReg PhysReg) const {
 /// proper container for VirtReg now.  The physical register must not be used
 /// for anything else when this is called.
 void RegAllocFast::assignVirtToPhysReg(LiveReg &LR, MCPhysReg PhysReg) {
-  LLVM_DEBUG(dbgs() << "Assigning " << printReg(LR.VirtReg, TRI) << " to "
+  unsigned VirtReg = LR.VirtReg;
+  LLVM_DEBUG(dbgs() << "Assigning " << printReg(VirtReg, TRI) << " to "
                     << printReg(PhysReg, TRI) << "\n");
-  PhysRegState[PhysReg] = LR.VirtReg;
-  assert(!LR.PhysReg && "Already assigned a physreg");
+  assert(LR.PhysReg == 0 && "Already assigned a physreg");
+  assert(PhysReg != 0 && "Trying to assign no register");
   LR.PhysReg = PhysReg;
+  setPhysRegState(PhysReg, VirtReg);
 }
 
 RegAllocFast::LiveRegMap::iterator
