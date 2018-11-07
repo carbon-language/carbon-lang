@@ -152,7 +152,7 @@ static llvm::Error IsInvalidOpcode(const Instruction &Instr) {
     return llvm::make_error<BenchmarkFailure>(
         "unsupported opcode: Push/Pop/AdjCallStack");
   if (llvm::Error Error = isInvalidMemoryInstr(Instr))
-    return std::move(Error);
+    return Error;
   // We do not handle instructions with OPERAND_PCREL.
   for (const Operand &Op : Instr.Operands)
     if (Op.isExplicit() &&
