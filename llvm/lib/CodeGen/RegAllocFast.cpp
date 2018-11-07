@@ -88,7 +88,7 @@ namespace {
       unsigned short LastOpNum = 0;    ///< OpNum on LastUse.
       bool Dirty = false;              ///< Register needs spill.
 
-      explicit LiveReg(unsigned v) : VirtReg(v) {}
+      explicit LiveReg(unsigned VirtReg) : VirtReg(VirtReg) {}
 
       unsigned getSparseSetIndex() const {
         return TargetRegisterInfo::virtReg2Index(VirtReg);
@@ -96,14 +96,13 @@ namespace {
     };
 
     using LiveRegMap = SparseSet<LiveReg>;
-
     /// This map contains entries for each virtual register that is currently
     /// available in a physical register.
     LiveRegMap LiveVirtRegs;
 
-    DenseMap<unsigned, SmallVector<MachineInstr *, 4>> LiveDbgValueMap;
+    DenseMap<unsigned, SmallVector<MachineInstr *, 2>> LiveDbgValueMap;
 
-    /// Track the state of a physical register.
+    /// State of a physical register.
     enum RegState {
       /// A disabled register is not available for allocation, but an alias may
       /// be in use. A register can only be moved out of the disabled state if
@@ -123,18 +122,16 @@ namespace {
       /// register. In that case, LiveVirtRegs contains the inverse mapping.
     };
 
-    /// One of the RegState enums, or a virtreg.
+    /// Maps each physical register to a RegState enum or a virtual register.
     std::vector<unsigned> PhysRegState;
 
     SmallVector<unsigned, 16> VirtDead;
     SmallVector<MachineInstr *, 32> Coalesced;
 
-    /// Set of register units.
-    using UsedInInstrSet = SparseSet<unsigned>;
-
+    using RegUnitSet = SparseSet<uint16_t, identity<uint16_t>>;
     /// Set of register units that are used in the current instruction, and so
     /// cannot be allocated.
-    UsedInInstrSet UsedInInstr;
+    RegUnitSet UsedInInstr;
 
     /// Mark a physreg as used in this instruction.
     void markRegUsedInInstr(MCPhysReg PhysReg) {
@@ -155,7 +152,7 @@ namespace {
     bool isBulkSpilling = false;
 
     enum : unsigned {
-      spillClean = 1,
+      spillClean = 50,
       spillDirty = 100,
       spillImpossible = ~0u
     };
@@ -180,10 +177,11 @@ namespace {
 
   private:
     bool runOnMachineFunction(MachineFunction &MF) override;
+
     void allocateBasicBlock(MachineBasicBlock &MBB);
     void handleThroughOperands(MachineInstr &MI,
                                SmallVectorImpl<unsigned> &VirtDead);
-    int getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass &RC);
+    int getStackSpaceFor(unsigned VirtReg);
     bool isLastUseOfLocalReg(const MachineOperand &MO) const;
 
     void addKillFlag(const LiveReg &LRI);
@@ -228,8 +226,7 @@ INITIALIZE_PASS(RegAllocFast, "regallocfast", "Fast Register Allocator", false,
 
 /// This allocates space for the specified virtual register to be held on the
 /// stack.
-int RegAllocFast::getStackSpaceFor(unsigned VirtReg,
-                                   const TargetRegisterClass &RC) {
+int RegAllocFast::getStackSpaceFor(unsigned VirtReg) {
   // Find the location Reg would belong...
   int SS = StackSlotForVirtReg[VirtReg];
   // Already has space allocated?
@@ -237,6 +234,7 @@ int RegAllocFast::getStackSpaceFor(unsigned VirtReg,
     return SS;
 
   // Allocate a new stack object for this spill location...
+  const TargetRegisterClass &RC = *MRI->getRegClass(VirtReg);
   unsigned Size = TRI->getSpillSize(RC);
   unsigned Align = TRI->getSpillAlignment(RC);
   int FrameIdx = MFI->CreateSpillStackObject(Size, Align);
@@ -325,7 +323,7 @@ void RegAllocFast::spillVirtReg(MachineBasicBlock::iterator MI,
     LLVM_DEBUG(dbgs() << "Spilling " << printReg(LRI->VirtReg, TRI) << " in "
                       << printReg(LR.PhysReg, TRI));
     const TargetRegisterClass &RC = *MRI->getRegClass(LRI->VirtReg);
-    int FI = getStackSpaceFor(LRI->VirtReg, RC);
+    int FI = getStackSpaceFor(LRI->VirtReg);
     LLVM_DEBUG(dbgs() << " to stack slot #" << FI << "\n");
     TII->storeRegToStackSlot(*MBB, MI, LR.PhysReg, SpillKill, FI, &RC, TRI);
     ++NumStores;   // Update statistics
@@ -656,7 +654,7 @@ RegAllocFast::LiveRegMap::iterator RegAllocFast::reloadVirtReg(MachineInstr &MI,
   if (New) {
     LRI = allocVirtReg(MI, LRI, Hint);
     const TargetRegisterClass &RC = *MRI->getRegClass(VirtReg);
-    int FrameIndex = getStackSpaceFor(VirtReg, RC);
+    int FrameIndex = getStackSpaceFor(VirtReg);
     LLVM_DEBUG(dbgs() << "Reloading " << printReg(VirtReg, TRI) << " into "
                       << printReg(LRI->PhysReg, TRI) << "\n");
     TII->loadRegFromStackSlot(*MBB, MI, LRI->PhysReg, FrameIndex, &RC, TRI);
@@ -1084,7 +1082,6 @@ void RegAllocFast::allocateBasicBlock(MachineBasicBlock &MBB) {
   LLVM_DEBUG(MBB.dump());
 }
 
-/// Allocates registers for a function.
 bool RegAllocFast::runOnMachineFunction(MachineFunction &MF) {
   LLVM_DEBUG(dbgs() << "********** FAST REGISTER ALLOCATION **********\n"
                     << "********** Function: " << MF.getName() << '\n');
