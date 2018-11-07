@@ -193,7 +193,7 @@ define <2 x i1> @fabs_ole(<2 x float> %a) {
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %call = call <2 x float> @llvm.fabs.v2f32(<2 x float> %a)
-  %cmp = fcmp ole <2 x float> %call, zeroinitializer
+  %cmp = fcmp ninf ole <2 x float> %call, zeroinitializer
   ret <2 x i1> %cmp
 }
 
@@ -203,7 +203,7 @@ define i1 @fabs_ogt(double %a) {
 ; CHECK-NEXT:    ret i1 [[CMP]]
 ;
   %call = call double @llvm.fabs.f64(double %a)
-  %cmp = fcmp ogt double %call, 0.0
+  %cmp = fcmp reassoc ogt double %call, 0.0
   ret i1 %cmp
 }
 
@@ -213,7 +213,7 @@ define i1 @fabs_oge(double %a) {
 ; CHECK-NEXT:    ret i1 [[CMP]]
 ;
   %call = call double @llvm.fabs.f64(double %a)
-  %cmp = fcmp oge double %call, 0.0
+  %cmp = fcmp afn oge double %call, 0.0
   ret i1 %cmp
 }
 
@@ -223,7 +223,7 @@ define i1 @fabs_une(half %a) {
 ; CHECK-NEXT:    ret i1 [[CMP]]
 ;
   %call = call half @llvm.fabs.f16(half %a)
-  %cmp = fcmp une half %call, 0.0
+  %cmp = fcmp ninf une half %call, 0.0
   ret i1 %cmp
 }
 
@@ -233,7 +233,7 @@ define i1 @fabs_oeq(double %a) {
 ; CHECK-NEXT:    ret i1 [[CMP]]
 ;
   %call = call double @llvm.fabs.f64(double %a)
-  %cmp = fcmp oeq double %call, 0.0
+  %cmp = fcmp ninf reassoc oeq double %call, 0.0
   ret i1 %cmp
 }
 
@@ -243,7 +243,7 @@ define i1 @fabs_one(double %a) {
 ; CHECK-NEXT:    ret i1 [[CMP]]
 ;
   %call = call double @llvm.fabs.f64(double %a)
-  %cmp = fcmp one double %call, 0.0
+  %cmp = fcmp fast one double %call, 0.0
   ret i1 %cmp
 }
 
@@ -253,7 +253,7 @@ define <2 x i1> @fabs_ueq(<2 x float> %a) {
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %call = call <2 x float> @llvm.fabs.v2f32(<2 x float> %a)
-  %cmp = fcmp ueq <2 x float> %call, zeroinitializer
+  %cmp = fcmp arcp ueq <2 x float> %call, zeroinitializer
   ret <2 x i1> %cmp
 }
 
