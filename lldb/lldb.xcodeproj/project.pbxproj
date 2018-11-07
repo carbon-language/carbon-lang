@@ -8623,9 +8623,22 @@
 					"-Wimplicit-fallthrough",
 				);
 				OTHER_LDFLAGS = (
-					"$(LLDB_COMPRESSION_LDFLAGS)",
+					"$(inherited)",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
+					"-framework",
+					Foundation,
+					"-framework",
+					DebugSymbols,
+					"-framework",
+					Security,
+					"-framework",
+					CoreServices,
+					"-framework",
+					ApplicationServices,
+					"$(LLDB_GTESTS_LDFLAGS)",
 					"$(LLDB_ZLIB_LDFLAGS)",
-					"$(LLDB_COVERAGE_LDFLAGS)",
+					"$(LLDB_COMPRESSION_LDFLAGS)",
 				);
 				PYTHON_FRAMEWORK_PATH = /System/Library/Frameworks/Python.framework/;
 				PYTHON_VERSION_MAJOR = 2;
@@ -8713,9 +8726,22 @@
 					"-Wimplicit-fallthrough",
 				);
 				OTHER_LDFLAGS = (
-					"$(LLDB_COMPRESSION_LDFLAGS)",
+					"$(inherited)",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
+					"-framework",
+					Foundation,
+					"-framework",
+					DebugSymbols,
+					"-framework",
+					Security,
+					"-framework",
+					CoreServices,
+					"-framework",
+					ApplicationServices,
+					"$(LLDB_GTESTS_LDFLAGS)",
 					"$(LLDB_ZLIB_LDFLAGS)",
-					"$(LLDB_COVERAGE_LDFLAGS)",
+					"$(LLDB_COMPRESSION_LDFLAGS)",
 				);
 				PYTHON_FRAMEWORK_PATH = /System/Library/Frameworks/Python.framework/;
 				PYTHON_VERSION_MAJOR = 2;
@@ -9036,6 +9062,8 @@
 					"-framework",
 					ApplicationServices,
 					"$(LLDB_GTESTS_LDFLAGS)",
+					"$(LLDB_ZLIB_LDFLAGS)",
+					"$(LLDB_COMPRESSION_LDFLAGS)",
 				);
 				PRODUCT_NAME = "lldb-gtest";
 			};
@@ -9078,6 +9106,8 @@
 					"-framework",
 					ApplicationServices,
 					"$(LLDB_GTESTS_LDFLAGS)",
+					"$(LLDB_ZLIB_LDFLAGS)",
+					"$(LLDB_COMPRESSION_LDFLAGS)",
 				);
 				PRODUCT_NAME = "lldb-gtest";
 			};
@@ -9120,6 +9150,8 @@
 					"-framework",
 					ApplicationServices,
 					"$(LLDB_GTESTS_LDFLAGS)",
+					"$(LLDB_ZLIB_LDFLAGS)",
+					"$(LLDB_COMPRESSION_LDFLAGS)",
 				);
 				PRODUCT_NAME = "lldb-gtest";
 			};
@@ -9162,6 +9194,8 @@
 					"-framework",
 					ApplicationServices,
 					"$(LLDB_GTESTS_LDFLAGS)",
+					"$(LLDB_ZLIB_LDFLAGS)",
+					"$(LLDB_COMPRESSION_LDFLAGS)",
 				);
 				PRODUCT_NAME = "lldb-gtest";
 			};
@@ -9863,9 +9897,22 @@
 					"-DNDEBUG",
 				);
 				OTHER_LDFLAGS = (
-					"$(LLDB_COMPRESSION_LDFLAGS)",
+					"$(inherited)",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
+					"-framework",
+					Foundation,
+					"-framework",
+					DebugSymbols,
+					"-framework",
+					Security,
+					"-framework",
+					CoreServices,
+					"-framework",
+					ApplicationServices,
+					"$(LLDB_GTESTS_LDFLAGS)",
 					"$(LLDB_ZLIB_LDFLAGS)",
-					"$(LLDB_COVERAGE_LDFLAGS)",
+					"$(LLDB_COMPRESSION_LDFLAGS)",
 				);
 				PYTHON_FRAMEWORK_PATH = /System/Library/Frameworks/Python.framework/;
 				PYTHON_VERSION_MAJOR = 2;
@@ -10579,9 +10626,22 @@
 					"-Wimplicit-fallthrough",
 				);
 				OTHER_LDFLAGS = (
-					"$(LLDB_COMPRESSION_LDFLAGS)",
+					"$(inherited)",
+					"-filelist",
+					"$(LLVM_BUILD_DIR)/archives.txt",
+					"-framework",
+					Foundation,
+					"-framework",
+					DebugSymbols,
+					"-framework",
+					Security,
+					"-framework",
+					CoreServices,
+					"-framework",
+					ApplicationServices,
+					"$(LLDB_GTESTS_LDFLAGS)",
 					"$(LLDB_ZLIB_LDFLAGS)",
-					"$(LLDB_COVERAGE_LDFLAGS)",
+					"$(LLDB_COMPRESSION_LDFLAGS)",
 				);
 				PYTHON_FRAMEWORK_PATH = /System/Library/Frameworks/Python.framework/;
 				PYTHON_VERSION_MAJOR = 2;
