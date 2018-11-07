@@ -262,7 +262,7 @@ void RegAllocFast::spill(MachineBasicBlock::iterator Before, unsigned VirtReg,
   LLVM_DEBUG(dbgs() << "Spilling " << printReg(VirtReg, TRI)
                     << " in " << printReg(AssignedReg, TRI));
   int FI = getStackSpaceFor(VirtReg);
-  LLVM_DEBUG(dbgs() << " to stack slot #" << FI << "\n");
+  LLVM_DEBUG(dbgs() << " to stack slot #" << FI << '\n');
 
   const TargetRegisterClass &RC = *MRI->getRegClass(VirtReg);
   TII->storeRegToStackSlot(*MBB, Before, AssignedReg, Kill, FI, &RC, TRI);
@@ -288,7 +288,7 @@ void RegAllocFast::spill(MachineBasicBlock::iterator Before, unsigned VirtReg,
 void RegAllocFast::reload(MachineBasicBlock::iterator Before, unsigned VirtReg,
                           MCPhysReg PhysReg) {
   LLVM_DEBUG(dbgs() << "Reloading " << printReg(VirtReg, TRI) << " into "
-                    << printReg(PhysReg, TRI) << "\n");
+                    << printReg(PhysReg, TRI) << '\n');
   int FI = getStackSpaceFor(VirtReg);
   const TargetRegisterClass &RC = *MRI->getRegClass(VirtReg);
   TII->loadRegFromStackSlot(*MBB, Before, PhysReg, FI, &RC, TRI);
@@ -555,7 +555,7 @@ unsigned RegAllocFast::calcSpillCost(MCPhysReg PhysReg) const {
 void RegAllocFast::assignVirtToPhysReg(LiveReg &LR, MCPhysReg PhysReg) {
   unsigned VirtReg = LR.VirtReg;
   LLVM_DEBUG(dbgs() << "Assigning " << printReg(VirtReg, TRI) << " to "
-                    << printReg(PhysReg, TRI) << "\n");
+                    << printReg(PhysReg, TRI) << '\n');
   assert(LR.PhysReg == 0 && "Already assigned a physreg");
   assert(PhysReg != 0 && "Trying to assign no register");
   LR.PhysReg = PhysReg;
@@ -578,8 +578,11 @@ RegAllocFast::LiveRegMap::iterator RegAllocFast::allocVirtReg(MachineInstr &MI,
   assert(TargetRegisterInfo::isVirtualRegister(VirtReg) &&
          "Can only allocate virtual registers");
 
-  // Take hint when possible.
   const TargetRegisterClass &RC = *MRI->getRegClass(VirtReg);
+  LLVM_DEBUG(dbgs() << "Search register for " << printReg(VirtReg)
+                    << " in class " << TRI->getRegClassName(&RC) << '\n');
+
+  // Take hint when possible.
   if (TargetRegisterInfo::isPhysicalRegister(Hint) &&
       MRI->isAllocatable(Hint) && RC.contains(Hint)) {
     // Ignore the hint if we would have to spill a dirty register.
@@ -594,8 +597,8 @@ RegAllocFast::LiveRegMap::iterator RegAllocFast::allocVirtReg(MachineInstr &MI,
   }
 
   // First try to find a completely free register.
-  ArrayRef<MCPhysReg> AO = RegClassInfo.getOrder(&RC);
-  for (MCPhysReg PhysReg : AO) {
+  ArrayRef<MCPhysReg> AllocationOrder = RegClassInfo.getOrder(&RC);
+  for (MCPhysReg PhysReg : AllocationOrder) {
     if (PhysRegState[PhysReg] == regFree && !isRegUsedInInstr(PhysReg)) {
       assignVirtToPhysReg(*LRI, PhysReg);
       return LRI;
@@ -603,38 +606,39 @@ RegAllocFast::LiveRegMap::iterator RegAllocFast::allocVirtReg(MachineInstr &MI,
   }
 
   LLVM_DEBUG(dbgs() << "Allocating " << printReg(VirtReg) << " from "
-                    << TRI->getRegClassName(&RC) << "\n");
+                    << TRI->getRegClassName(&RC) << '\n');
 
   unsigned BestReg = 0;
   unsigned BestCost = spillImpossible;
-  for (MCPhysReg PhysReg : AO) {
+  for (MCPhysReg PhysReg : AllocationOrder) {
+    LLVM_DEBUG(dbgs() << "\tRegister: " << printReg(PhysReg, TRI) << ' ');
     unsigned Cost = calcSpillCost(PhysReg);
-    LLVM_DEBUG(dbgs() << "\tRegister: " << printReg(PhysReg, TRI) << "\n");
-    LLVM_DEBUG(dbgs() << "\tCost: " << Cost << "\n");
-    LLVM_DEBUG(dbgs() << "\tBestCost: " << BestCost << "\n");
+    LLVM_DEBUG(dbgs() << "Cost: " << Cost << " BestCost: " << BestCost << '\n');
     // Cost is 0 when all aliases are already disabled.
     if (Cost == 0) {
       assignVirtToPhysReg(*LRI, PhysReg);
       return LRI;
     }
-    if (Cost < BestCost)
-      BestReg = PhysReg, BestCost = Cost;
+    if (Cost < BestCost) {
+      BestReg = PhysReg;
+      BestCost = Cost;
+    }
   }
 
-  if (BestReg) {
-    definePhysReg(MI, BestReg, regFree);
-    // definePhysReg may kill virtual registers and modify LiveVirtRegs.
-    // That invalidates LRI, so run a new lookup for VirtReg.
-    return assignVirtToPhysReg(VirtReg, BestReg);
+  if (!BestReg) {
+    // Nothing we can do. Report an error and keep going with a bad allocation.
+    if (MI.isInlineAsm())
+      MI.emitError("inline assembly requires more registers than available");
+    else
+      MI.emitError("ran out of registers during register allocation");
+    definePhysReg(MI, *AllocationOrder.begin(), regFree);
+    return assignVirtToPhysReg(VirtReg, *AllocationOrder.begin());
   }
 
-  // Nothing we can do. Report an error and keep going with a bad allocation.
-  if (MI.isInlineAsm())
-    MI.emitError("inline assembly requires more registers than available");
-  else
-    MI.emitError("ran out of registers during register allocation");
-  definePhysReg(MI, *AO.begin(), regFree);
-  return assignVirtToPhysReg(VirtReg, *AO.begin());
+  definePhysReg(MI, BestReg, regFree);
+  // definePhysReg may kill virtual registers and modify LiveVirtRegs.
+  // That invalidates LRI, so run a new lookup for VirtReg.
+  return assignVirtToPhysReg(VirtReg, BestReg);
 }
 
 /// Allocates a register for VirtReg and mark it as dirty.
@@ -687,16 +691,16 @@ RegAllocFast::LiveRegMap::iterator RegAllocFast::reloadVirtReg(MachineInstr &MI,
     reload(MI, VirtReg, LRI->PhysReg);
   } else if (LRI->Dirty) {
     if (isLastUseOfLocalReg(MO)) {
-      LLVM_DEBUG(dbgs() << "Killing last use: " << MO << "\n");
+      LLVM_DEBUG(dbgs() << "Killing last use: " << MO << '\n');
       if (MO.isUse())
         MO.setIsKill();
       else
         MO.setIsDead();
     } else if (MO.isKill()) {
-      LLVM_DEBUG(dbgs() << "Clearing dubious kill: " << MO << "\n");
+      LLVM_DEBUG(dbgs() << "Clearing dubious kill: " << MO << '\n');
       MO.setIsKill(false);
     } else if (MO.isDead()) {
-      LLVM_DEBUG(dbgs() << "Clearing dubious dead: " << MO << "\n");
+      LLVM_DEBUG(dbgs() << "Clearing dubious dead: " << MO << '\n');
       MO.setIsDead(false);
     }
   } else if (MO.isKill()) {
@@ -704,10 +708,10 @@ RegAllocFast::LiveRegMap::iterator RegAllocFast::reloadVirtReg(MachineInstr &MI,
     // register would be killed immediately, and there might be a second use:
     //   %foo = OR killed %x, %x
     // This would cause a second reload of %x into a different register.
-    LLVM_DEBUG(dbgs() << "Clearing clean kill: " << MO << "\n");
+    LLVM_DEBUG(dbgs() << "Clearing clean kill: " << MO << '\n');
     MO.setIsKill(false);
   } else if (MO.isDead()) {
-    LLVM_DEBUG(dbgs() << "Clearing clean dead: " << MO << "\n");
+    LLVM_DEBUG(dbgs() << "Clearing clean dead: " << MO << '\n');
     MO.setIsDead(false);
   }
   assert(LRI->PhysReg && "Register not assigned");
@@ -800,7 +804,7 @@ void RegAllocFast::handleThroughOperands(MachineInstr &MI,
       // Note: we don't update the def operand yet. That would cause the normal
       // def-scan to attempt spilling.
     } else if (MO.getSubReg() && MI.readsVirtualRegister(Reg)) {
-      LLVM_DEBUG(dbgs() << "Partial redefine: " << MO << "\n");
+      LLVM_DEBUG(dbgs() << "Partial redefine: " << MO << '\n');
       // Reload the register, but don't assign to the operand just yet.
       // That would confuse the later phys-def processing pass.
       LiveRegMap::iterator LRI = reloadVirtReg(MI, I, Reg, 0);
