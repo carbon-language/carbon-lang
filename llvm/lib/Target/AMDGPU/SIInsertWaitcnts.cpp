@@ -382,8 +382,6 @@ private:
 
   DenseMap<MachineLoop *, std::unique_ptr<LoopWaitcntData>> LoopWaitcntDataMap;
 
-  std::vector<std::unique_ptr<BlockWaitcntBrackets>> KillWaitBrackets;
-
   // ForceEmitZeroWaitcnts: force all waitcnts insts to be s_waitcnt 0
   // because of amdgpu-waitcnt-forcezero flag
   bool ForceEmitZeroWaitcnts;
@@ -408,13 +406,6 @@ public:
     AU.setPreservesCFG();
     AU.addRequired<MachineLoopInfo>();
     MachineFunctionPass::getAnalysisUsage(AU);
-  }
-
-  void addKillWaitBracket(BlockWaitcntBrackets *Bracket) {
-    // The waitcnt information is copied because it changes as the block is
-    // traversed.
-    KillWaitBrackets.push_back(
-        llvm::make_unique<BlockWaitcntBrackets>(*Bracket));
   }
 
   bool isForceEmitWaitcnt() const {
@@ -1425,24 +1416,6 @@ void SIInsertWaitcnts::mergeInputScoreBrackets(MachineBasicBlock &Block) {
     MixedExpTypes |= PredScoreBrackets->mixedExpTypes();
   }
 
-  // TODO: Is SC Block->IsMainExit() same as Block.succ_empty()?
-  // Also handle kills for exit block.
-  if (Block.succ_empty() && !KillWaitBrackets.empty()) {
-    for (unsigned int I = 0; I < KillWaitBrackets.size(); I++) {
-      for (enum InstCounterType T = VM_CNT; T < NUM_INST_CNTS;
-           T = (enum InstCounterType)(T + 1)) {
-        int Span = KillWaitBrackets[I]->getScoreUB(T) -
-                   KillWaitBrackets[I]->getScoreLB(T);
-        MaxPending[T] = std::max(MaxPending[T], Span);
-        Span = KillWaitBrackets[I]->pendingFlat(T) -
-               KillWaitBrackets[I]->getScoreLB(T);
-        MaxFlat[T] = std::max(MaxFlat[T], Span);
-      }
-
-      MixedExpTypes |= KillWaitBrackets[I]->mixedExpTypes();
-    }
-  }
-
   // Special handling for GDS_GPR_LOCK and EXP_GPR_LOCK.
   for (MachineBasicBlock *Pred : Block.predecessors()) {
     BlockWaitcntBrackets *PredScoreBrackets =
@@ -1458,18 +1431,6 @@ void SIInsertWaitcnts::mergeInputScoreBrackets(MachineBasicBlock &Block) {
     int EXPSpan = PredScoreBrackets->getEventUB(EXP_GPR_LOCK) -
                   PredScoreBrackets->getScoreLB(EXP_CNT);
     MaxPending[EXP_CNT] = std::max(MaxPending[EXP_CNT], EXPSpan);
-  }
-
-  // TODO: Is SC Block->IsMainExit() same as Block.succ_empty()?
-  if (Block.succ_empty() && !KillWaitBrackets.empty()) {
-    for (unsigned int I = 0; I < KillWaitBrackets.size(); I++) {
-      int GDSSpan = KillWaitBrackets[I]->getEventUB(GDS_GPR_LOCK) -
-                    KillWaitBrackets[I]->getScoreLB(EXP_CNT);
-      MaxPending[EXP_CNT] = std::max(MaxPending[EXP_CNT], GDSSpan);
-      int EXPSpan = KillWaitBrackets[I]->getEventUB(EXP_GPR_LOCK) -
-                    KillWaitBrackets[I]->getScoreLB(EXP_CNT);
-      MaxPending[EXP_CNT] = std::max(MaxPending[EXP_CNT], EXPSpan);
-    }
   }
 
 #if 0
@@ -1546,60 +1507,6 @@ void SIInsertWaitcnts::mergeInputScoreBrackets(MachineBasicBlock &Block) {
         if (NewEventUB > 0) {
           ScoreBrackets->setEventUB(
               W, std::max(ScoreBrackets->getEventUB(W), NewEventUB));
-        }
-      }
-    }
-  }
-
-  // TODO: Is SC Block->IsMainExit() same as Block.succ_empty()?
-  // Set the register scoreboard.
-  if (Block.succ_empty() && !KillWaitBrackets.empty()) {
-    for (unsigned int I = 0; I < KillWaitBrackets.size(); I++) {
-      // Now merge the gpr_reg_score information.
-      for (enum InstCounterType T = VM_CNT; T < NUM_INST_CNTS;
-           T = (enum InstCounterType)(T + 1)) {
-        int PredLB = KillWaitBrackets[I]->getScoreLB(T);
-        int PredUB = KillWaitBrackets[I]->getScoreUB(T);
-        if (PredLB < PredUB) {
-          int PredScale = MaxPending[T] - PredUB;
-          // Merge vgpr scores.
-          for (int J = 0; J <= KillWaitBrackets[I]->getMaxVGPR(); J++) {
-            int PredRegScore = KillWaitBrackets[I]->getRegScore(J, T);
-            if (PredRegScore <= PredLB)
-              continue;
-            int NewRegScore = PredScale + PredRegScore;
-            ScoreBrackets->setRegScore(
-                J, T, std::max(ScoreBrackets->getRegScore(J, T), NewRegScore));
-          }
-          // Also need to merge sgpr scores for lgkm_cnt.
-          if (T == LGKM_CNT) {
-            for (int J = 0; J <= KillWaitBrackets[I]->getMaxSGPR(); J++) {
-              int PredRegScore =
-                  KillWaitBrackets[I]->getRegScore(J + NUM_ALL_VGPRS, LGKM_CNT);
-              if (PredRegScore <= PredLB)
-                continue;
-              int NewRegScore = PredScale + PredRegScore;
-              ScoreBrackets->setRegScore(
-                  J + NUM_ALL_VGPRS, LGKM_CNT,
-                  std::max(
-                      ScoreBrackets->getRegScore(J + NUM_ALL_VGPRS, LGKM_CNT),
-                      NewRegScore));
-            }
-          }
-        }
-      }
-
-      // Also merge the WaitEvent information.
-      ForAllWaitEventType(W) {
-        enum InstCounterType T = KillWaitBrackets[I]->eventCounter(W);
-        int PredEventUB = KillWaitBrackets[I]->getEventUB(W);
-        if (PredEventUB > KillWaitBrackets[I]->getScoreLB(T)) {
-          int NewEventUB =
-              MaxPending[T] + PredEventUB - KillWaitBrackets[I]->getScoreUB(T);
-          if (NewEventUB > 0) {
-            ScoreBrackets->setEventUB(
-                W, std::max(ScoreBrackets->getEventUB(W), NewEventUB));
-          }
         }
       }
     }
@@ -1699,13 +1606,6 @@ void SIInsertWaitcnts::insertWaitcntInBlock(MachineFunction &MF,
       }
       ScoreBrackets->setWaitcnt(&Inst);
       continue;
-    }
-
-    // Kill instructions generate a conditional branch to the endmain block.
-    // Merge the current waitcnt state into the endmain block information.
-    // TODO: Are there other flavors of KILL instruction?
-    if (Inst.getOpcode() == AMDGPU::KILL) {
-      addKillWaitBracket(ScoreBrackets);
     }
 
     bool VCCZBugWorkAround = false;
@@ -1871,7 +1771,7 @@ bool SIInsertWaitcnts::runOnMachineFunction(MachineFunction &MF) {
   LoopWaitcntDataMap.clear();
   BlockWaitcntProcessedSet.clear();
 
-  // Walk over the blocks in reverse post-dominator order, inserting
+  // Walk over the blocks in reverse post order, inserting
   // s_waitcnt where needed.
   ReversePostOrderTraversal<MachineFunction *> RPOT(&MF);
   bool Modified = false;
