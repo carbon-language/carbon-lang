@@ -54,7 +54,7 @@ using namespace llvm;
 
 STATISTIC(NumStores, "Number of stores added");
 STATISTIC(NumLoads , "Number of loads added");
-STATISTIC(NumCopies, "Number of copies coalesced");
+STATISTIC(NumCoalesced, "Number of copies coalesced");
 
 static RegisterRegAlloc
   fastRegAlloc("fast", "fast register allocator", createFastRegisterAllocator);
@@ -1079,7 +1079,7 @@ void RegAllocFast::allocateBasicBlock(MachineBasicBlock &MBB) {
   // LiveVirtRegs might refer to the instrs.
   for (MachineInstr *MI : Coalesced)
     MBB.erase(MI);
-  NumCopies += Coalesced.size();
+  NumCoalesced += Coalesced.size();
 
   LLVM_DEBUG(MBB.dump());
 }
