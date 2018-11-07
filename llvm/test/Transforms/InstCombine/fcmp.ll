@@ -217,6 +217,26 @@ define i1 @fabs_oge(double %a) {
   ret i1 %cmp
 }
 
+define i1 @fabs_ult(double %a) {
+; CHECK-LABEL: @fabs_ult(
+; CHECK-NEXT:    [[CALL:%.*]] = call double @llvm.fabs.f64(double [[A:%.*]])
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp reassoc arcp ult double [[CALL]], 0.000000e+00
+; CHECK-NEXT:    ret i1 [[CMP]]
+;
+  %call = call double @llvm.fabs.f64(double %a)
+  %cmp = fcmp reassoc arcp ult double %call, 0.0
+  ret i1 %cmp
+}
+
+define <2 x i1> @fabs_ult_nnan(<2 x float> %a) {
+; CHECK-LABEL: @fabs_ult_nnan(
+; CHECK-NEXT:    ret <2 x i1> zeroinitializer
+;
+  %call = call <2 x float> @llvm.fabs.v2f32(<2 x float> %a)
+  %cmp = fcmp nnan reassoc arcp ult <2 x float> %call, zeroinitializer
+  ret <2 x i1> %cmp
+}
+
 define i1 @fabs_une(half %a) {
 ; CHECK-LABEL: @fabs_une(
 ; CHECK-NEXT:    [[CMP:%.*]] = fcmp une half [[A:%.*]], 0xH0000
