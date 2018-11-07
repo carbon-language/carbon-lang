@@ -1192,10 +1192,6 @@ void InitListChecker::CheckListElementTypes(const InitializedEntity &Entity,
     if (!VerifyOnly)
       SemaRef.Diag(IList->getBeginLoc(), diag::err_init_objc_class) << DeclType;
     hadError = true;
-  } else if (DeclType->isOCLIntelSubgroupAVCType()) {
-    // Checks for scalar type are sufficient for these types too.
-    CheckScalarType(Entity, IList, DeclType, Index, StructuredList,
-                    StructuredIndex);
   } else {
     if (!VerifyOnly)
       SemaRef.Diag(IList->getBeginLoc(), diag::err_illegal_initializer_type)
@@ -5256,11 +5252,6 @@ static bool TryOCLSamplerInitialization(Sema &S,
   return true;
 }
 
-static bool IsZeroInitializer(Expr *Initializer, Sema &S) {
-  return Initializer->isIntegerConstantExpr(S.getASTContext()) &&
-    (Initializer->EvaluateKnownConstInt(S.getASTContext()) == 0);
-}
-
 static bool TryOCLZeroOpaqueTypeInitialization(Sema &S,
                                                InitializationSequence &Sequence,
                                                QualType DestType,
@@ -5277,23 +5268,8 @@ static bool TryOCLZeroOpaqueTypeInitialization(Sema &S,
   // event should be zero.
   //
   if (DestType->isEventT() || DestType->isQueueT()) {
-    if (!IsZeroInitializer(Initializer, S))
-      return false;
-
-    Sequence.AddOCLZeroOpaqueTypeStep(DestType);
-    return true;
-  }
-
-  // We should allow zero initialization for all types defined in the
-  // cl_intel_device_side_avc_motion_estimation extension, except
-  // intel_sub_group_avc_mce_payload_t and intel_sub_group_avc_mce_result_t.
-  if (S.getOpenCLOptions().isEnabled(
-          "cl_intel_device_side_avc_motion_estimation") &&
-      DestType->isOCLIntelSubgroupAVCType()) {
-    if (DestType->isOCLIntelSubgroupAVCMcePayloadType() ||
-        DestType->isOCLIntelSubgroupAVCMceResultType())
-      return false;
-    if (!IsZeroInitializer(Initializer, S))
+    if (!Initializer->isIntegerConstantExpr(S.getASTContext()) ||
+        (Initializer->EvaluateKnownConstInt(S.getASTContext()) != 0))
       return false;
 
     Sequence.AddOCLZeroOpaqueTypeStep(DestType);
@@ -8050,9 +8026,7 @@ InitializationSequence::Perform(Sema &S,
         // defined in SPIR spec v1.2 and also opencl-c.h
         unsigned AddressingMode  = (0x0E & SamplerValue) >> 1;
         unsigned FilterMode      = (0x30 & SamplerValue) >> 4;
-        if (FilterMode != 1 && FilterMode != 2 &&
-            !S.getOpenCLOptions().isEnabled(
-                "cl_intel_device_side_avc_motion_estimation"))
+        if (FilterMode != 1 && FilterMode != 2)
           S.Diag(Kind.getLocation(),
                  diag::warn_sampler_initializer_invalid_bits)
                  << "Filter Mode";
@@ -8069,8 +8043,7 @@ InitializationSequence::Perform(Sema &S,
       break;
     }
     case SK_OCLZeroOpaqueType: {
-      assert((Step->Type->isEventT() || Step->Type->isQueueT() ||
-              Step->Type->isOCLIntelSubgroupAVCType()) &&
+      assert((Step->Type->isEventT() || Step->Type->isQueueT()) &&
              "Wrong type for initialization of OpenCL opaque type.");
 
       CurInit = S.ImpCastExprToType(CurInit.get(), Step->Type,

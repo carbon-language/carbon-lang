@@ -2236,8 +2236,7 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
   }
 
   case CK_ZeroToOCLOpaqueType: {
-    assert((DestTy->isEventT() || DestTy->isQueueT() ||
-            DestTy->isOCLIntelSubgroupAVCType()) &&
+    assert((DestTy->isEventT() || DestTy->isQueueT()) &&
            "CK_ZeroToOCLEvent cast on non-event type");
     return llvm::Constant::getNullValue(ConvertType(DestTy));
   }
