@@ -275,6 +275,34 @@ collector:
     ret i8 addrspace(1)* %obj
   }
 
+Recording On Stack Regions
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In addition to the explicit relocation form previously described, the
+statepoint infrastructure also allows the listing of allocas within the gc
+pointer list.  Allocas can be listed with or without additional explicit gc
+pointer values and relocations.
+
+An alloca in the gc region of the statepoint operand list will cause the
+address of the stack region to be listed in the stackmap for the statepoint.
+
+This mechanism can be used to describe explicit spill slots if desired.  It
+then becomes the generator's responsibility to ensure that values are
+spill/filled to/from the alloca as needed on either side of the safepoint.
+Note that there is no way to indicate a corresponding base pointer for such
+an explicitly specified spill slot, so usage is restricted to values for
+which the associated collector can derive the object base from the pointer
+itself.
+
+This mechanism can be used to describe on stack objects containing
+references provided that the collector can map from the location on the
+stack to a heap map describing the internal layout of the references the
+collector needs to process.
+
+WARNING: At the moment, this alternate form is not well exercised.  It is
+recommended to use this with caution and expect to have to fix a few bugs.
+In particular, the RewriteStatepointsForGC utility pass does not do
+anything for allocas today.
   
 Base & Derived Pointers
 ^^^^^^^^^^^^^^^^^^^^^^^
