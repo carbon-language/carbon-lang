@@ -24,7 +24,7 @@
 #include "CodeRegion.h"
 #include "CodeRegionGenerator.h"
 #include "PipelinePrinter.h"
-#include "Stages/FetchStage.h"
+#include "Stages/EntryStage.h"
 #include "Stages/InstructionTables.h"
 #include "Views/DispatchStatistics.h"
 #include "Views/InstructionInfoView.h"
@@ -434,7 +434,7 @@ int main(int argc, char **argv) {
     if (PrintInstructionTables) {
       //  Create a pipeline, stages, and a printer.
       auto P = make_unique<mca::Pipeline>();
-      P->appendStage(make_unique<mca::FetchStage>(S));
+      P->appendStage(make_unique<mca::EntryStage>(S));
       P->appendStage(make_unique<mca::InstructionTables>(SM));
       mca::PipelinePrinter Printer(*P);
 
