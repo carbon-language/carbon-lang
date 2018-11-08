@@ -23,6 +23,7 @@ add_library(LLVMExegesis
   LlvmState.cpp
   MCInstrDescView.cpp
   PerfHelper.cpp
+  ROBSize.cpp
   RegisterAliasing.cpp
   SnippetGenerator.cpp
   RegisterValue.cpp

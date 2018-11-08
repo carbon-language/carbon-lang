@@ -32,10 +32,19 @@ static constexpr const char FunctionID[] = "foo";
 static std::vector<llvm::MCInst>
 generateSnippetSetupCode(const ExegesisTarget &ET,
                          const llvm::MCSubtargetInfo *const MSI,
+                         const unsigned ScratchReg,
+                         llvm::ArrayRef<unsigned> ScratchRegisterCopies,
                          llvm::ArrayRef<RegisterValue> RegisterInitialValues,
                          bool &IsSnippetSetupComplete) {
   IsSnippetSetupComplete = true;
   std::vector<llvm::MCInst> Result;
+  // Copy registers.
+  for (const unsigned Reg : ScratchRegisterCopies) {
+    assert(ScratchReg > 0 && "scratch reg copies but no scratch reg");
+    const auto CopyRegisterCode = ET.copyReg(*MSI, Reg, ScratchReg);
+    Result.insert(Result.end(), CopyRegisterCode.begin(), CopyRegisterCode.end());
+  }
+  // Load values in registers.
   for (const RegisterValue &RV : RegisterInitialValues) {
     // Load a constant in the register.
     const auto SetRegisterCode = ET.setRegTo(*MSI, RV.Register, RV.Value);
@@ -155,6 +164,7 @@ llvm::BitVector getFunctionReservedRegs(const llvm::TargetMachine &TM) {
 void assembleToStream(const ExegesisTarget &ET,
                       std::unique_ptr<llvm::LLVMTargetMachine> TM,
                       llvm::ArrayRef<unsigned> LiveIns,
+                      llvm::ArrayRef<unsigned> ScratchRegisterCopies,
                       llvm::ArrayRef<RegisterValue> RegisterInitialValues,
                       llvm::ArrayRef<llvm::MCInst> Instructions,
                       llvm::raw_pwrite_stream &AsmStream) {
@@ -178,7 +188,7 @@ void assembleToStream(const ExegesisTarget &ET,
 
   bool IsSnippetSetupComplete;
   std::vector<llvm::MCInst> Code =
-      generateSnippetSetupCode(ET, TM->getMCSubtargetInfo(),
+      generateSnippetSetupCode(ET, TM->getMCSubtargetInfo(), ET.getScratchMemoryRegister(TM->getTargetTriple()), ScratchRegisterCopies,
                                RegisterInitialValues, IsSnippetSetupComplete);
 
   Code.insert(Code.end(), Instructions.begin(), Instructions.end());
@@ -199,7 +209,7 @@ void assembleToStream(const ExegesisTarget &ET,
   llvm::MCContext &MCContext = MMI->getContext();
   llvm::legacy::PassManager PM;
 
-  llvm::TargetLibraryInfoImpl TLII(llvm::Triple(Module->getTargetTriple()));
+  llvm::TargetLibraryInfoImpl TLII(Triple(Module->getTargetTriple()));
   PM.add(new llvm::TargetLibraryInfoWrapperPass(TLII));
 
   llvm::TargetPassConfig *TPC = TM->createPassConfig(PM);

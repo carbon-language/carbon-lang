@@ -76,6 +76,11 @@ public:
   setRegTo(const llvm::MCSubtargetInfo &STI, unsigned Reg,
            const llvm::APInt &Value) const = 0;
 
+  // Generates code to copy `FromReg` to `ToReg`.
+  // Precondition: Registers must be the same size.
+  virtual std::vector<llvm::MCInst>
+  copyReg(const llvm::MCSubtargetInfo &STI, unsigned ToReg, unsigned FromReg) const = 0;
+
   // Returns the register pointing to scratch memory, or 0 if this target
   // does not support memory operands. The benchmark function uses the
   // default calling convention.
@@ -83,10 +88,16 @@ public:
     return 0;
   }
 
+  // Returns the opcode to move the value at `[Reg]` into `Reg`, where `Reg` is
+  // the from the same register class as getScratchMemoryRegister().
+  virtual unsigned getChaseRegOpcode() const {
+    llvm_unreachable(
+      "fillMemoryOperands() requires getScratchMemoryRegister() > 0");
+  }
+
   // Fills memory operands with references to the address at [Reg] + Offset.
   virtual void fillMemoryOperands(InstructionTemplate &IT, unsigned Reg,
                                   unsigned Offset) const {
-
     llvm_unreachable(
         "fillMemoryOperands() requires getScratchMemoryRegister() > 0");
   }

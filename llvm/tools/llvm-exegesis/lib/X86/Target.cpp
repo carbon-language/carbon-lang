@@ -484,6 +484,19 @@ private:
     return {}; // Not yet implemented.
   }
 
+  std::vector<llvm::MCInst> copyReg(const llvm::MCSubtargetInfo &STI,
+                                    unsigned ToReg,
+                                    unsigned FromReg) const override {
+    if (llvm::X86::GR64RegClass.contains(ToReg))
+      assert(llvm::X86::GR64RegClass.contains(FromReg) && "registers must be the same size");
+      return {llvm::MCInstBuilder(X86::MOV64rr).addReg(ToReg).addReg(FromReg)};
+    return {}; // Not yet implemented.
+  }
+
+  unsigned getChaseRegOpcode() const override {
+    return X86::MOV64rm;
+  }
+
   std::unique_ptr<SnippetGenerator>
   createLatencySnippetGenerator(const LLVMState &State) const override {
     return llvm::make_unique<X86LatencySnippetGenerator>(State);

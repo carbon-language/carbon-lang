@@ -27,6 +27,10 @@ struct BenchmarkCode {
   // registers initial values.
   std::vector<RegisterValue> RegisterInitialValues;
 
+  // Before the code is executed some instructions are added to copy the
+  // scratch register into the specified registers.
+  std::vector<unsigned> ScratchRegisterCopies;
+
   // We also need to provide the registers that are live on entry for the
   // assembler to generate proper prologue/epilogue.
   std::vector<unsigned> LiveIns;
