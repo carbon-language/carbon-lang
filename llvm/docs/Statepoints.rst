@@ -254,6 +254,28 @@ following command.
 
   opt -rewrite-statepoints-for-gc test/Transforms/RewriteStatepointsForGC/basics.ll -S | llc -debug-only=stackmaps
 
+Simplifications for Non-Relocating GCs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Some of the complexity in the previous example is unnecessary for a
+non-relocating collector.  While a non-relocating collector still needs the
+information about which location contain live references, it doesn't need to
+represent explicit relocations.  As such, the previously described explicit
+lowering can be simplified to remove all of the ``gc.relocate`` intrinsic
+calls and leave uses in terms of the original reference value.  
+
+Here's the explicit lowering for the previous example for a non-relocating
+collector:
+
+.. code-block:: llvm
+
+  define i8 addrspace(1)* @test1(i8 addrspace(1)* %obj) 
+         gc "statepoint-example" {
+    call token (i64, i32, void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(i64 0, i32 0, void ()* @foo, i32 0, i32 0, i32 0, i32 0, i8 addrspace(1)* %obj)
+    ret i8 addrspace(1)* %obj
+  }
+
+  
 Base & Derived Pointers
 ^^^^^^^^^^^^^^^^^^^^^^^
 
