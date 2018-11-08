@@ -202,8 +202,7 @@ ErrorOr<std::unique_ptr<ToolOutputFile>> getOutputStream() {
   if (OutputFilename == "")
     OutputFilename = "-";
   std::error_code EC;
-  auto Out =
-      llvm::make_unique<ToolOutputFile>(OutputFilename, EC, sys::fs::F_None);
+  auto Out = make_unique<ToolOutputFile>(OutputFilename, EC, sys::fs::F_None);
   if (!EC)
     return std::move(Out);
   return EC;
@@ -251,9 +250,9 @@ int main(int argc, char **argv) {
   InitLLVM X(argc, argv);
 
   // Initialize targets and assembly parsers.
-  llvm::InitializeAllTargetInfos();
-  llvm::InitializeAllTargetMCs();
-  llvm::InitializeAllAsmParsers();
+  InitializeAllTargetInfos();
+  InitializeAllTargetMCs();
+  InitializeAllAsmParsers();
 
   // Enable printing of available targets when flag --version is specified.
   cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
@@ -309,7 +308,7 @@ int main(int argc, char **argv) {
       TheTarget->createMCInstrAnalysis(MCII.get()));
 
   if (!MCPU.compare("native"))
-    MCPU = llvm::sys::getHostCPUName();
+    MCPU = sys::getHostCPUName();
 
   std::unique_ptr<MCSubtargetInfo> STI(
       TheTarget->createMCSubtargetInfo(TripleName, MCPU, /* FeaturesStr */ ""));
@@ -368,7 +367,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  std::unique_ptr<llvm::ToolOutputFile> TOF = std::move(*OF);
+  std::unique_ptr<ToolOutputFile> TOF = std::move(*OF);
 
   const MCSchedModel &SM = STI->getSchedModel();
 
@@ -407,7 +406,7 @@ int main(int argc, char **argv) {
     ArrayRef<MCInst> Insts = Region->getInstructions();
     std::vector<std::unique_ptr<mca::Instruction>> LoweredSequence;
     for (const MCInst &MCI : Insts) {
-      llvm::Expected<std::unique_ptr<mca::Instruction>> Inst =
+      Expected<std::unique_ptr<mca::Instruction>> Inst =
           IB.createInstruction(MCI);
       if (!Inst) {
         if (auto NewE = handleErrors(
@@ -434,18 +433,17 @@ int main(int argc, char **argv) {
 
     if (PrintInstructionTables) {
       //  Create a pipeline, stages, and a printer.
-      auto P = llvm::make_unique<mca::Pipeline>();
-      P->appendStage(llvm::make_unique<mca::FetchStage>(S));
-      P->appendStage(llvm::make_unique<mca::InstructionTables>(SM));
+      auto P = make_unique<mca::Pipeline>();
+      P->appendStage(make_unique<mca::FetchStage>(S));
+      P->appendStage(make_unique<mca::InstructionTables>(SM));
       mca::PipelinePrinter Printer(*P);
 
       // Create the views for this pipeline, execute, and emit a report.
       if (PrintInstructionInfoView) {
-        Printer.addView(llvm::make_unique<mca::InstructionInfoView>(
-            *STI, *MCII, Insts, *IP));
+        Printer.addView(
+            make_unique<mca::InstructionInfoView>(*STI, *MCII, Insts, *IP));
       }
-      Printer.addView(
-          llvm::make_unique<mca::ResourcePressureView>(*STI, *IP, Insts));
+      Printer.addView(make_unique<mca::ResourcePressureView>(*STI, *IP, Insts));
 
       if (!runPipeline(*P))
         return 1;
@@ -459,32 +457,31 @@ int main(int argc, char **argv) {
     mca::PipelinePrinter Printer(*P);
 
     if (PrintSummaryView)
-      Printer.addView(llvm::make_unique<mca::SummaryView>(SM, Insts, Width));
+      Printer.addView(make_unique<mca::SummaryView>(SM, Insts, Width));
 
     if (PrintInstructionInfoView)
       Printer.addView(
-          llvm::make_unique<mca::InstructionInfoView>(*STI, *MCII, Insts, *IP));
+          make_unique<mca::InstructionInfoView>(*STI, *MCII, Insts, *IP));
 
     if (PrintDispatchStats)
-      Printer.addView(llvm::make_unique<mca::DispatchStatistics>());
+      Printer.addView(make_unique<mca::DispatchStatistics>());
 
     if (PrintSchedulerStats)
-      Printer.addView(llvm::make_unique<mca::SchedulerStatistics>(*STI));
+      Printer.addView(make_unique<mca::SchedulerStatistics>(*STI));
 
     if (PrintRetireStats)
-      Printer.addView(llvm::make_unique<mca::RetireControlUnitStatistics>());
+      Printer.addView(make_unique<mca::RetireControlUnitStatistics>());
 
     if (PrintRegisterFileStats)
-      Printer.addView(llvm::make_unique<mca::RegisterFileStatistics>(*STI));
+      Printer.addView(make_unique<mca::RegisterFileStatistics>(*STI));
 
     if (PrintResourcePressureView)
-      Printer.addView(
-          llvm::make_unique<mca::ResourcePressureView>(*STI, *IP, Insts));
+      Printer.addView(make_unique<mca::ResourcePressureView>(*STI, *IP, Insts));
 
     if (PrintTimelineView) {
       unsigned TimelineIterations =
           TimelineMaxIterations ? TimelineMaxIterations : 10;
-      Printer.addView(llvm::make_unique<mca::TimelineView>(
+      Printer.addView(make_unique<mca::TimelineView>(
           *STI, *IP, Insts, std::min(TimelineIterations, S.getNumIterations()),
           TimelineMaxCycles));
     }
