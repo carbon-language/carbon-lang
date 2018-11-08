@@ -770,6 +770,7 @@ void MergeFunctions::mergeTwoFunctions(Function *F, Function *G) {
         GlobalNumbers.erase(G);
         // If G's address is not significant, replace it entirely.
         Constant *BitcastF = ConstantExpr::getBitCast(F, G->getType());
+        removeUsers(G);
         G->replaceAllUsesWith(BitcastF);
       } else {
         // Redirect direct callers of G to F. (See note on MergeFunctionsPDI
