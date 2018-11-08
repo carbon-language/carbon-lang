@@ -87,6 +87,7 @@ private:
   static constexpr Part topPartMask{static_cast<Part>(~0) >> extraTopPartBits};
 
 public:
+  // Some types used for member function results
   struct ValueWithOverflow {
     Integer value;
     bool overflow;
@@ -994,7 +995,7 @@ private:
     }
   }
 
-  Part part_[parts];
+  Part part_[parts]{};
 };
 
 extern template class Integer<8>;

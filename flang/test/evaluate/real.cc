@@ -15,6 +15,7 @@
 #include "fp-testing.h"
 #include "testing.h"
 #include "../../lib/evaluate/type.h"
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 
@@ -158,6 +159,7 @@ template<typename R> void basicTests(int rm, Rounding rounding) {
       TEST(ivf.flags.empty())(ldesc);
       MATCH(x, ivf.value.ToUInt64())(ldesc);
     }
+    TEST(vr.value.AINT().value.Compare(vr.value) == Relation::Equal)(ldesc);
     ix = ix.Negate().value;
     TEST(ix.IsNegative())(ldesc);
     x = -x;
@@ -181,6 +183,7 @@ template<typename R> void basicTests(int rm, Rounding rounding) {
       MATCH(x, ivf.value.ToUInt64())(ldesc);
       MATCH(nx, ivf.value.ToInt64())(ldesc);
     }
+    TEST(vr.value.AINT().value.Compare(vr.value) == Relation::Equal)(ldesc);
   }
 }
 
@@ -207,20 +210,44 @@ std::uint64_t MakeReal(std::uint64_t n) {
   return x;
 }
 
-std::uint32_t NormalizeNaN(std::uint32_t x) {
-  if ((x & 0x7f800000) == 0x7f800000 && (x & 0x007fffff) != 0) {
+inline bool IsNaN(std::uint32_t x) {
+  return (x & 0x7f800000) == 0x7f800000 && (x & 0x007fffff) != 0;
+}
+
+inline bool IsNaN(std::uint64_t x) {
+  return (x & 0x7ff0000000000000) == 0x7ff0000000000000 &&
+      (x & 0x000fffffffffffff) != 0;
+}
+
+inline bool IsInfinite(std::uint32_t x) {
+  return (x & 0x7fffffff) == 0x7f800000;
+}
+
+inline bool IsInfinite(std::uint64_t x) {
+  return (x & 0x7fffffffffffffff) == 0x7ff0000000000000;
+}
+
+inline std::uint32_t NormalizeNaN(std::uint32_t x) {
+  if (IsNaN(x)) {
     x = 0x7fe00000;
   }
   return x;
 }
 
-std::uint64_t NormalizeNaN(std::uint64_t x) {
-  if ((x & 0x7ff0000000000000) == 0x7ff0000000000000 &&
-      (x & 0x000fffffffffffff) != 0) {
+inline std::uint64_t NormalizeNaN(std::uint64_t x) {
+  if (IsNaN(x)) {
     x = 0x7ffc000000000000;
   }
   return x;
 }
+
+enum FlagBits {
+  Overflow = 1,
+  DivideByZero = 2,
+  InvalidArgument = 4,
+  Underflow = 8,
+  Inexact = 16,
+};
 
 std::uint32_t FlagsToBits(const RealFlags &flags) {
   std::uint32_t bits{0};
@@ -228,19 +255,19 @@ std::uint32_t FlagsToBits(const RealFlags &flags) {
   // TODO: clang support for fenv.h is broken, so tests of flag settings
   // are disabled.
   if (flags.test(RealFlag::Overflow)) {
-    bits |= 1;
+    bits |= Overflow;
   }
   if (flags.test(RealFlag::DivideByZero)) {
-    bits |= 2;
+    bits |= DivideByZero;
   }
   if (flags.test(RealFlag::InvalidArgument)) {
-    bits |= 4;
+    bits |= InvalidArgument;
   }
   if (flags.test(RealFlag::Underflow)) {
-    bits |= 8;
+    bits |= Underflow;
   }
   if (flags.test(RealFlag::Inexact)) {
-    bits |= 0x10;
+    bits |= Inexact;
   }
 #endif  // __clang__
   return bits;
@@ -288,10 +315,62 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
   ScopedHostFloatingPointEnvironment fpenv;
 
   for (UINT j{0}; j < opds; ++j) {
+
     UINT rj{MakeReal(j)};
     u.ui = rj;
     FLT fj{u.f};
     REAL x{typename REAL::Word{std::uint64_t{rj}}};
+
+    // unary operations
+    {
+      ValueWithRealFlags<REAL> aint{x.AINT()};
+#ifndef __clang__  // broken and also slow
+      fpenv.ClearFlags();
+#endif
+      FLT fcheck{std::trunc(fj)};
+      auto actualFlags{FlagsToBits(fpenv.CurrentFlags())};
+      actualFlags &= ~Inexact;  // x86 std::trunc can set Inexact; AINT ain't
+      u.f = fcheck;
+      if (IsNaN(u.ui)) {
+        actualFlags |= InvalidArgument;  // x86 std::trunc(NaN) WAR
+      }
+      UINT rcheck{NormalizeNaN(u.ui)};
+      UINT check = aint.value.RawBits().ToUInt64();
+      MATCH(rcheck, check)
+      ("%d AINT(0x%llx)", pass, static_cast<long long>(rj));
+      MATCH(actualFlags, FlagsToBits(aint.flags))
+      ("%d AINT(0x%llx)", pass, static_cast<long long>(rj));
+    }
+
+    {
+      MATCH(IsNaN(rj), x.IsNotANumber())
+      ("%d IsNaN(0x%llx)", pass, static_cast<long long>(rj));
+      MATCH(IsInfinite(rj), x.IsInfinite())
+      ("%d IsInfinite(0x%llx)", pass, static_cast<long long>(rj));
+
+      auto scaled{x.AsScaledDecimal()};
+      if (IsNaN(rj)) {
+        TEST(scaled.flags.test(RealFlag::InvalidArgument))
+        ("%d invalid(0x%llx)", pass, static_cast<long long>(rj));
+      } else if (IsInfinite(rj)) {
+        TEST(scaled.flags.test(RealFlag::Overflow))
+        ("%d overflow(0x%llx)", pass, static_cast<long long>(rj));
+      } else {
+        auto integer{scaled.value.integer.ToInt64()};
+        MATCH(x.IsNegative(), scaled.value.negative)
+        ("%d IsNegative(0x%llx)", pass, static_cast<long long>(rj));
+        char buffer[128], *dummy;
+        snprintf(buffer, sizeof buffer, "%c%lld.0E%d",
+            scaled.value.negative ? '-' : ' ', static_cast<long long>(integer),
+            scaled.value.decimalExponent);
+        u.f = std::strtold(buffer, &dummy);
+        MATCH(rj, u.ui)
+        ("%d scaled decimal 0x%llx %s %Lg", pass, static_cast<long long>(rj),
+            buffer, static_cast<long double>(u.f));
+      }
+    }
+
+    // dyadic operations
     for (UINT k{0}; k < opds; ++k) {
       UINT rk{MakeReal(k)};
       u.ui = rk;

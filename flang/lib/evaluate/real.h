@@ -20,6 +20,7 @@
 #include "rounding-bits.h"
 #include <cinttypes>
 #include <limits>
+#include <ostream>
 #include <string>
 
 // Some environments, viz. clang on Darwin, allow the macro HUGE
@@ -48,6 +49,17 @@ public:
   static constexpr std::uint64_t maxExponent{(1 << exponentBits) - 1};
   static constexpr std::uint64_t exponentBias{maxExponent / 2};
 
+  // Decimal precision
+  // log(2)/log(10) = 0.30102999... in any base; avoid floating constexpr
+  static constexpr int decimalDigits{(precision * 30103) / 100000};
+
+  // Associates a decimal exponent with an integral value for formmatting.
+  struct ScaledDecimal {
+    bool negative{false};
+    Word integer;
+    int decimalExponent{0};  // Exxx
+  };
+
   template<typename W, int P, bool I> friend class Real;
 
   constexpr Real() {}  // +0.0
@@ -56,7 +68,7 @@ public:
   constexpr Real &operator=(const Real &) = default;
   constexpr Real &operator=(Real &&) = default;
 
-  // TODO AINT/ANINT, CEILING, FLOOR, DIM, MAX, MIN, DPROD, FRACTION
+  // TODO ANINT, CEILING, FLOOR, DIM, MAX, MIN, DPROD, FRACTION
   // HUGE, INT/NINT, MAXEXPONENT, MINEXPONENT, NEAREST, OUT_OF_RANGE,
   // PRECISION, HUGE, TINY, RRSPACING/SPACING, SCALE, SET_EXPONENT, SIGN
 
@@ -174,20 +186,44 @@ public:
     return result;
   }
 
+  // Truncation to integer in same real format.
+  constexpr ValueWithRealFlags<Real> AINT() const {
+    ValueWithRealFlags<Real> result{*this};
+    if (IsNotANumber()) {
+      result.flags.set(RealFlag::InvalidArgument);
+      result.value = NotANumber();
+    } else if (IsInfinite()) {
+      result.flags.set(RealFlag::Overflow);
+    } else {
+      std::uint64_t exponent{Exponent()};
+      if (exponent < exponentBias) {  // |x| < 1.0
+        result.value.Normalize(IsNegative(), 0, Fraction{});  // +/-0.0
+      } else {
+        constexpr std::uint64_t noClipExponent{exponentBias + precision - 1};
+        if (int clip = noClipExponent - exponent; clip > 0) {
+          result.value.word_ = result.value.word_.IAND(Word::MASKR(clip).NOT());
+        }
+      }
+    }
+    return result;
+  }
+
   template<typename INT> constexpr ValueWithRealFlags<INT> ToInteger() const {
+    ValueWithRealFlags<INT> result;
+    if (IsNotANumber()) {
+      result.flags.set(RealFlag::InvalidArgument);
+      result.value = result.value.HUGE();
+      return result;
+    }
     bool isNegative{IsNegative()};
     std::uint64_t exponent{Exponent()};
     Fraction fraction{GetFraction()};
-    ValueWithRealFlags<INT> result;
-    if (exponent == maxExponent && !fraction.IsZero()) {  // NaN
-      result.flags.set(RealFlag::InvalidArgument);
-      result.value = result.value.HUGE();
-    } else if (exponent >= maxExponent ||  // +/-Inf
+    if (exponent >= maxExponent ||  // +/-Inf
         exponent >= exponentBias + result.value.bits) {  // too big
       if (isNegative) {
-        result.value = result.value.MASKL(1);
+        result.value = result.value.MASKL(1);  // most negative integer value
       } else {
-        result.value = result.value.HUGE();
+        result.value = result.value.HUGE();  // most positive integer value
       }
       result.flags.set(RealFlag::Overflow);
     } else if (exponent < exponentBias) {  // |x| < 1.0 -> 0
@@ -258,8 +294,12 @@ public:
     return result;
   }
 
+  // Represents the number as "J*(10**K)" where J and K are integers.
+  ValueWithRealFlags<ScaledDecimal> AsScaledDecimal() const;
+
   constexpr Word RawBits() const { return word_; }
 
+  // Extracts "raw" biased exponent field.
   constexpr std::uint64_t Exponent() const {
     return word_.IBITS(significandBits, exponentBits).ToUInt64();
   }
@@ -267,6 +307,10 @@ public:
   static ValueWithRealFlags<Real> Read(
       const char *&, Rounding rounding = defaultRounding);
   std::string DumpHexadecimal() const;
+
+  // Emits a character representation for an equivalent Fortran constant
+  // or parenthesized constant expression that produces this value.
+  std::ostream &AsFortran(std::ostream &, int kind) const;
 
 private:
   using Fraction = Integer<precision>;  // all bits made explicit

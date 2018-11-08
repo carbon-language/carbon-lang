@@ -481,6 +481,157 @@ std::string Real<W, P, IM>::DumpHexadecimal() const {
   }
 }
 
+template<typename W, int P, bool IM>
+std::ostream &Real<W, P, IM>::AsFortran(std::ostream &o, int kind) const {
+  ValueWithRealFlags<ScaledDecimal> scaled{AsScaledDecimal()};
+  if (scaled.flags.test(RealFlag::InvalidArgument)) {
+    o << "(0._" << kind << "/0.)";
+  } else if (scaled.flags.test(RealFlag::Overflow)) {
+    if (IsNegative()) {
+      o << "(-1._" << kind << "/0.)";
+    } else {
+      o << "(1._" << kind << "/0.)";
+    }
+  } else {
+    if (scaled.value.negative) {
+      o << "(-";
+    }
+    std::string digits{scaled.value.integer.UnsignedDecimal()};
+    int exponent = scaled.value.decimalExponent + digits.size() - 1;
+    o << digits[0] << '.' << digits.substr(1);
+    if (exponent != 0) {
+      o << 'e' << exponent;
+    }
+    o << '_' << kind;
+    if (scaled.value.negative) {
+      o << ')';
+    }
+  }
+  return o;
+}
+
+template<typename W, int P, bool IM>
+auto Real<W, P, IM>::AsScaledDecimal() const
+    -> ValueWithRealFlags<ScaledDecimal> {
+
+  // This constant is max x such that REAL(INT(x)) == x without loss
+  static constexpr Real maxExactSignedValue{
+      Word{exponentBias + bits - 2}
+          .SHIFTL(significandBits)
+          .IOR(Word::MASKR(significandBits))};
+  // This constant is min x such that x + 1.0 == NEXTAFTER(x)
+  // (or, equivalently, for all representable y >= x, y == AINT(y))
+  static constexpr Real minFractionlessValue{
+      Word{exponentBias + precision - 1}
+          .SHIFTL(significandBits)
+          .IOR(Word::MASKR(significandBits))};
+
+  ValueWithRealFlags<ScaledDecimal> result;
+  if (IsNotANumber()) {
+    result.flags.set(RealFlag::InvalidArgument);
+    return result;
+  }
+  if (IsInfinite()) {
+    result.flags.set(RealFlag::Overflow);
+    result.value.integer = Word::HUGE();
+    return result;
+  }
+  if (IsNegative()) {
+    result = Negate().AsScaledDecimal();
+    result.value.negative = true;
+    return result;
+  }
+  if (IsZero()) {
+    return result;
+  }
+
+  // N.B. This code could be made more generic and work with output bases
+  // other than ten, so long as "decimalDigits" were modified accordingly.
+  Real ten{FromInteger(Word{10}).value};  // 10.0
+
+  // The maximum exact power of ten can't be calculated as
+  // a constexpr, so it's computed on the first call to
+  // this function.
+  static Real maxExactPowerOfTen;  // 10.0 ** decimalDigits
+  if (maxExactPowerOfTen.IsZero()) {
+    maxExactPowerOfTen = ten;
+    for (int j{1}; j < decimalDigits; ++j) {
+      auto next{maxExactPowerOfTen.Multiply(ten)};
+      CHECK(!next.value.IsZero());
+      maxExactPowerOfTen = next.value;
+    }
+  }
+
+  Real one{FromInteger(Word{1}).value};  // 1.0
+  Real bigStep{one};
+  Real smallStep{one};
+  ValueWithRealFlags<Real> scaled;
+  Rounding rounding{Rounding::TiesToEven};  // pmk? try ToZero
+  if (Compare(minFractionlessValue) == Relation::Less) {
+    // Scale smaller value up by a power of ten so that it loses no bit when
+    // converted to integer.
+    Real next{maxExactPowerOfTen};
+    while (Multiply(next, rounding).value.Compare(maxExactSignedValue) ==
+        Relation::Less) {
+      result.value.decimalExponent -= decimalDigits;
+      bigStep = next;
+      next = next.Multiply(maxExactPowerOfTen, rounding).value;
+    }
+    Real bigger{Multiply(bigStep, rounding).value};
+    next = ten;
+    while (bigger.Multiply(next, rounding).value.Compare(maxExactSignedValue) ==
+        Relation::Less) {
+      --result.value.decimalExponent;
+      smallStep = next;
+      next = next.Multiply(ten, rounding).value;
+    }
+    scaled = Multiply(smallStep, rounding);
+    scaled.value =
+        scaled.value.Multiply(bigStep, rounding).AccumulateFlags(scaled.flags);
+  } else {
+    // Scale larger value down by a power of ten so that it does not overflow
+    // when converted to integer.
+    Real last{maxExactSignedValue};
+    Real next{last.Multiply(maxExactPowerOfTen, rounding).value};
+    while (Compare(next) != Relation::Less) {
+      result.value.decimalExponent += decimalDigits;
+      bigStep = bigStep.Multiply(maxExactPowerOfTen, rounding).value;
+      last = next;
+      next = next.Multiply(maxExactPowerOfTen, rounding).value;
+    }
+    next = last;
+    while (Compare(next) == Relation::Greater) {
+      ++result.value.decimalExponent;
+      smallStep = smallStep.Multiply(ten, rounding).value;
+      next = last.Multiply(smallStep, rounding).value;
+    }
+    scaled = Divide(smallStep, rounding);
+    scaled.value =
+        scaled.value.Divide(bigStep, rounding).AccumulateFlags(scaled.flags);
+  }
+
+  scaled.flags.reset(RealFlag::Inexact);
+  CHECK(scaled.flags.empty());
+  auto asInteger{scaled.value.template ToInteger<Word>()};
+  asInteger.flags.reset(RealFlag::Inexact);
+  CHECK(asInteger.flags.empty());
+  result.value.integer = asInteger.value;
+
+  // Canonicalize to the minimum integer value
+  if (!result.value.integer.IsZero()) {
+    while (true) {
+      auto qr{result.value.integer.DivideUnsigned(10)};
+      if (!qr.remainder.IsZero()) {
+        break;
+      }
+      ++result.value.decimalExponent;
+      result.value.integer = qr.quotient;
+    }
+  }
+
+  return result;
+}
+
 template class Real<Integer<16>, 11>;
 template class Real<Integer<32>, 24>;
 template class Real<Integer<64>, 53>;
