@@ -591,8 +591,8 @@ Stack Map Format
 
 Locations for each pointer value which may need read and/or updated by
 the runtime or collector are provided in a separate section of the
-generated object file as specified specified in the PatchPoint
-documentation.  This special section is encoded per the
+generated object file as specified in the PatchPoint documentation.
+This special section is encoded per the
 :ref:`Stack Map format <stackmap-format>`.
 
 The general expectation is that a JIT compiler will parse and discard this
