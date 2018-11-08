@@ -63,8 +63,6 @@ static cl::opt<exegesis::InstructionBenchmark::ModeE>
                                         "latency", "Instruction Latency"),
                              clEnumValN(exegesis::InstructionBenchmark::Uops,
                                         "uops", "Uop Decomposition"),
-                             clEnumValN(exegesis::InstructionBenchmark::ROBSize,
-                                        "rob_size", "ROB Size"),
                              // When not asking for a specific benchmark mode,
                              // we'll analyse the results.
                              clEnumValN(exegesis::InstructionBenchmark::Unknown,
@@ -203,6 +201,7 @@ public:
       return;
     if (CommentText.consume_front("DEFREG")) {
       // LLVM-EXEGESIS-DEFREF <reg> <hex_value>
+      RegisterValue RegVal;
       llvm::SmallVector<llvm::StringRef, 2> Parts;
       CommentText.split(Parts, ' ', /*unlimited splits*/ -1,
                         /*do not keep empty strings*/ false);
@@ -211,7 +210,6 @@ public:
                      << "\n";
         ++InvalidComments;
       }
-      RegisterValue RegVal;
       if (!(RegVal.Register = findRegisterByName(Parts[0].trim()))) {
         llvm::errs() << "unknown register in 'LLVM-EXEGESIS-DEFREG "
                      << CommentText << "\n";

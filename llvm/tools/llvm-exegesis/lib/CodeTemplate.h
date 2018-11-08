@@ -17,7 +17,6 @@
 #define LLVM_TOOLS_LLVM_EXEGESIS_CODETEMPLATE_H
 
 #include "MCInstrDescView.h"
-#include "RegisterValue.h"
 #include "llvm/ADT/BitmaskEnum.h"
 
 namespace llvm {
@@ -121,9 +120,6 @@ struct CodeTemplate {
   std::string Info;
   // The list of the instructions for this template.
   std::vector<InstructionTemplate> Instructions;
-  // The list of registers in which to copy the scratch register as a setup
-  // step.
-  std::vector<unsigned> ScratchRegisterCopies;
   // If the template uses the provided scratch memory, the register in which
   // the pointer to this memory is passed in to the function.
   unsigned ScratchSpacePointerInReg = 0;

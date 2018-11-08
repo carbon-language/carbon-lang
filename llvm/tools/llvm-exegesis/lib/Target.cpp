@@ -9,7 +9,6 @@
 #include "Target.h"
 
 #include "Latency.h"
-#include "ROBSize.h"
 #include "Uops.h"
 
 namespace llvm {
@@ -39,31 +38,6 @@ void ExegesisTarget::registerTarget(ExegesisTarget *Target) {
 }
 
 std::unique_ptr<SnippetGenerator>
-ExegesisTarget::createLatencySnippetGenerator(const LLVMState &State) const {
-  return llvm::make_unique<LatencySnippetGenerator>(State);
-}
-
-std::unique_ptr<SnippetGenerator>
-ExegesisTarget::createUopsSnippetGenerator(const LLVMState &State) const {
-  return llvm::make_unique<UopsSnippetGenerator>(State);
-}
-
-std::unique_ptr<SnippetGenerator>
-static createROBSizeSnippetGenerator(const LLVMState &State) {
-  return llvm::make_unique<ROBSizeSnippetGenerator>(State);
-}
-
-std::unique_ptr<BenchmarkRunner>
-ExegesisTarget::createLatencyBenchmarkRunner(const LLVMState &State) const {
-  return llvm::make_unique<LatencyBenchmarkRunner>(State);
-}
-
-std::unique_ptr<BenchmarkRunner>
-ExegesisTarget::createUopsBenchmarkRunner(const LLVMState &State) const {
-  return llvm::make_unique<UopsBenchmarkRunner>(State);
-}
-
-std::unique_ptr<SnippetGenerator>
 ExegesisTarget::createSnippetGenerator(InstructionBenchmark::ModeE Mode,
                                        const LLVMState &State) const {
   switch (Mode) {
@@ -73,8 +47,6 @@ ExegesisTarget::createSnippetGenerator(InstructionBenchmark::ModeE Mode,
     return createLatencySnippetGenerator(State);
   case InstructionBenchmark::Uops:
     return createUopsSnippetGenerator(State);
-  case InstructionBenchmark::ROBSize:
-    return createROBSizeSnippetGenerator(State);
   }
   return nullptr;
 }
@@ -86,12 +58,31 @@ ExegesisTarget::createBenchmarkRunner(InstructionBenchmark::ModeE Mode,
   case InstructionBenchmark::Unknown:
     return nullptr;
   case InstructionBenchmark::Latency:
-  case InstructionBenchmark::ROBSize:
     return createLatencyBenchmarkRunner(State);
   case InstructionBenchmark::Uops:
     return createUopsBenchmarkRunner(State);
   }
   return nullptr;
+}
+
+std::unique_ptr<SnippetGenerator>
+ExegesisTarget::createLatencySnippetGenerator(const LLVMState &State) const {
+  return llvm::make_unique<LatencySnippetGenerator>(State);
+}
+
+std::unique_ptr<SnippetGenerator>
+ExegesisTarget::createUopsSnippetGenerator(const LLVMState &State) const {
+  return llvm::make_unique<UopsSnippetGenerator>(State);
+}
+
+std::unique_ptr<BenchmarkRunner>
+ExegesisTarget::createLatencyBenchmarkRunner(const LLVMState &State) const {
+  return llvm::make_unique<LatencyBenchmarkRunner>(State);
+}
+
+std::unique_ptr<BenchmarkRunner>
+ExegesisTarget::createUopsBenchmarkRunner(const LLVMState &State) const {
+  return llvm::make_unique<UopsBenchmarkRunner>(State);
 }
 
 static_assert(std::is_pod<PfmCountersInfo>::value,
@@ -129,11 +120,6 @@ private:
   std::vector<llvm::MCInst> setRegTo(const llvm::MCSubtargetInfo &STI,
                                      unsigned Reg,
                                      const llvm::APInt &Value) const override {
-    llvm_unreachable("Not yet implemented");
-  }
-
-  std::vector<llvm::MCInst> copyReg(const llvm::MCSubtargetInfo &STI,
-                                     unsigned ToReg, unsigned FromReg) const override {
     llvm_unreachable("Not yet implemented");
   }
 

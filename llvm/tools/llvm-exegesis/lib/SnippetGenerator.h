@@ -62,7 +62,6 @@ public:
 
   // Given a snippet, computes which registers the setup code needs to define.
   std::vector<RegisterValue> computeRegisterInitialValues(
-    const std::vector<unsigned> &ScratchRegisterCopies,
       const std::vector<InstructionTemplate> &Snippet) const;
 
 protected:
