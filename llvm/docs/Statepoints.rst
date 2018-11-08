@@ -93,7 +93,10 @@ the collector must be able to:
 
 This document describes the mechanism by which an LLVM based compiler
 can provide this information to a language runtime/collector, and
-ensure that all pointers can be read and updated if desired.  
+ensure that all pointers can be read and updated if desired.
+
+Abstract Machine Model
+^^^^^^^^^^^^^^^^^^^^^^^
 
 At a high level, LLVM has been extended to support compiling to an abstract 
 machine which extends the actual target with a non-integral pointer type 
@@ -103,10 +106,16 @@ integer representation.  This semantic quirk allows the runtime to pick a
 integer mapping for each point in the program allowing relocations of objects 
 without visible effects.
 
-Warning: Non-Integral Pointer Types are a newly added concept in LLVM IR.  
-It's possible that we've missed disabling some of the optimizations which 
-assume an integral value for pointers.  If you find such a case, please 
-file a bug or share a patch.
+This high level abstract machine model is used for most of the optimizer.  As
+a result, transform passes do not need to be extended to look through explicit
+relocation sequence.  Before starting code generation, we switch
+representations to an explicit form.  The exact location chosen for lowering
+is an implementation detail.
+
+Note that most of the value of the abstract machine model comes for collectors
+which need to model potentially relocatable objects.  For a compiler which
+supports only a non-relocating collector, you may wish to consider starting
+with the fully explicit form.  
 
 Warning: There is one currently known semantic hole in the definition of 
 non-integral pointers which has not been addressed upstream.  To work around
@@ -116,10 +125,13 @@ not safe to speculate a load if doing causes a non-integral pointer value to
 be loaded as any other type or vice versa.  In practice, this restriction is 
 well isolated to isSafeToSpeculate in ValueTracking.cpp.
 
-This high level abstract machine model is used for most of the LLVM optimizer.
-Before starting code generation, we switch representations to an explicit form.
-In theory, a frontend could directly generate this low level explicit form, but 
-doing so is likely to inhibit optimization.  
+Explicit Representation
+^^^^^^^^^^^^^^^^^^^^^^^
+
+A frontend could directly generate this low level explicit form, but 
+doing so may inhibit optimization.  Instead, it is recommended that
+compilers with relocating collectors target the abstract machine model just
+described.  
 
 The heart of the explicit approach is to construct (or rewrite) the IR in a 
 manner where the possible updates performed by the garbage collector are
