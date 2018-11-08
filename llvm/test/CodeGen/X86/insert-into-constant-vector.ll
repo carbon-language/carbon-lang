@@ -273,50 +273,48 @@ define <8 x i32> @elt7_v8i32(i32 %x) {
 ;
 ; X32AVX1-LABEL: elt7_v8i32:
 ; X32AVX1:       # %bb.0:
-; X32AVX1-NEXT:    vmovaps {{.*#+}} ymm0 = <42,1,2,3,4,5,6,u>
-; X32AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; X32AVX1-NEXT:    vpinsrd $3, {{[0-9]+}}(%esp), %xmm1, %xmm1
-; X32AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; X32AVX1-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; X32AVX1-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,1,2,0]
+; X32AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; X32AVX1-NEXT:    vblendps {{.*#+}} ymm0 = mem[0,1,2,3,4,5,6],ymm0[7]
 ; X32AVX1-NEXT:    retl
 ;
 ; X64AVX1-LABEL: elt7_v8i32:
 ; X64AVX1:       # %bb.0:
-; X64AVX1-NEXT:    vmovaps {{.*#+}} ymm0 = <42,1,2,3,4,5,6,u>
-; X64AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; X64AVX1-NEXT:    vpinsrd $3, %edi, %xmm1, %xmm1
-; X64AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; X64AVX1-NEXT:    vmovd %edi, %xmm0
+; X64AVX1-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,1,2,0]
+; X64AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; X64AVX1-NEXT:    vblendps {{.*#+}} ymm0 = mem[0,1,2,3,4,5,6],ymm0[7]
 ; X64AVX1-NEXT:    retq
 ;
 ; X32AVX2-LABEL: elt7_v8i32:
 ; X32AVX2:       # %bb.0:
-; X32AVX2-NEXT:    vmovdqa {{.*#+}} ymm0 = <42,1,2,3,4,5,6,u>
-; X32AVX2-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; X32AVX2-NEXT:    vpinsrd $3, {{[0-9]+}}(%esp), %xmm1, %xmm1
-; X32AVX2-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
+; X32AVX2-NEXT:    vbroadcastss {{[0-9]+}}(%esp), %xmm0
+; X32AVX2-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; X32AVX2-NEXT:    vblendps {{.*#+}} ymm0 = mem[0,1,2,3,4,5,6],ymm0[7]
 ; X32AVX2-NEXT:    retl
 ;
 ; X64AVX2-LABEL: elt7_v8i32:
 ; X64AVX2:       # %bb.0:
-; X64AVX2-NEXT:    vmovdqa {{.*#+}} ymm0 = <42,1,2,3,4,5,6,u>
-; X64AVX2-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; X64AVX2-NEXT:    vpinsrd $3, %edi, %xmm1, %xmm1
-; X64AVX2-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
+; X64AVX2-NEXT:    vmovd %edi, %xmm0
+; X64AVX2-NEXT:    vpbroadcastd %xmm0, %xmm0
+; X64AVX2-NEXT:    vinserti128 $1, %xmm0, %ymm0, %ymm0
+; X64AVX2-NEXT:    vpblendd {{.*#+}} ymm0 = mem[0,1,2,3,4,5,6],ymm0[7]
 ; X64AVX2-NEXT:    retq
 ;
 ; X32AVX512F-LABEL: elt7_v8i32:
 ; X32AVX512F:       # %bb.0:
-; X32AVX512F-NEXT:    vmovdqa {{.*#+}} ymm0 = <42,1,2,3,4,5,6,u>
-; X32AVX512F-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; X32AVX512F-NEXT:    vpinsrd $3, {{[0-9]+}}(%esp), %xmm1, %xmm1
-; X32AVX512F-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
+; X32AVX512F-NEXT:    vbroadcastss {{[0-9]+}}(%esp), %xmm0
+; X32AVX512F-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; X32AVX512F-NEXT:    vblendps {{.*#+}} ymm0 = mem[0,1,2,3,4,5,6],ymm0[7]
 ; X32AVX512F-NEXT:    retl
 ;
 ; X64AVX512F-LABEL: elt7_v8i32:
 ; X64AVX512F:       # %bb.0:
-; X64AVX512F-NEXT:    vmovdqa {{.*#+}} ymm0 = <42,1,2,3,4,5,6,u>
-; X64AVX512F-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; X64AVX512F-NEXT:    vpinsrd $3, %edi, %xmm1, %xmm1
-; X64AVX512F-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
+; X64AVX512F-NEXT:    vmovd %edi, %xmm0
+; X64AVX512F-NEXT:    vpbroadcastd %xmm0, %xmm0
+; X64AVX512F-NEXT:    vinserti128 $1, %xmm0, %ymm0, %ymm0
+; X64AVX512F-NEXT:    vpblendd {{.*#+}} ymm0 = mem[0,1,2,3,4,5,6],ymm0[7]
 ; X64AVX512F-NEXT:    retq
    %ins = insertelement <8 x i32> <i32 42, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>, i32 %x, i32 7
    ret <8 x i32> %ins
@@ -354,21 +352,46 @@ define <8 x float> @elt6_v8f32(float %x) {
 ; X64SSE4-NEXT:    movaps {{.*#+}} xmm0 = [4.2E+1,1.0E+0,2.0E+0,3.0E+0]
 ; X64SSE4-NEXT:    retq
 ;
-; X32AVX-LABEL: elt6_v8f32:
-; X32AVX:       # %bb.0:
-; X32AVX-NEXT:    vmovaps {{.*#+}} ymm0 = <4.2E+1,1.0E+0,2.0E+0,3.0E+0,4.0E+0,5.0E+0,u,7.0E+0>
-; X32AVX-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; X32AVX-NEXT:    vinsertps {{.*#+}} xmm1 = xmm1[0,1],mem[0],xmm1[3]
-; X32AVX-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
-; X32AVX-NEXT:    retl
+; X32AVX1-LABEL: elt6_v8f32:
+; X32AVX1:       # %bb.0:
+; X32AVX1-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; X32AVX1-NEXT:    vmovddup {{.*#+}} xmm0 = xmm0[0,0]
+; X32AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; X32AVX1-NEXT:    vblendps {{.*#+}} ymm0 = mem[0,1,2,3,4,5],ymm0[6],mem[7]
+; X32AVX1-NEXT:    retl
 ;
-; X64AVX-LABEL: elt6_v8f32:
-; X64AVX:       # %bb.0:
-; X64AVX-NEXT:    vmovaps {{.*#+}} ymm1 = <4.2E+1,1.0E+0,2.0E+0,3.0E+0,4.0E+0,5.0E+0,u,7.0E+0>
-; X64AVX-NEXT:    vextractf128 $1, %ymm1, %xmm2
-; X64AVX-NEXT:    vinsertps {{.*#+}} xmm0 = xmm2[0,1],xmm0[0],xmm2[3]
-; X64AVX-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
-; X64AVX-NEXT:    retq
+; X64AVX1-LABEL: elt6_v8f32:
+; X64AVX1:       # %bb.0:
+; X64AVX1-NEXT:    vmovddup {{.*#+}} xmm0 = xmm0[0,0]
+; X64AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; X64AVX1-NEXT:    vblendps {{.*#+}} ymm0 = mem[0,1,2,3,4,5],ymm0[6],mem[7]
+; X64AVX1-NEXT:    retq
+;
+; X32AVX2-LABEL: elt6_v8f32:
+; X32AVX2:       # %bb.0:
+; X32AVX2-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; X32AVX2-NEXT:    vbroadcastsd %xmm0, %ymm0
+; X32AVX2-NEXT:    vblendps {{.*#+}} ymm0 = mem[0,1,2,3,4,5],ymm0[6],mem[7]
+; X32AVX2-NEXT:    retl
+;
+; X64AVX2-LABEL: elt6_v8f32:
+; X64AVX2:       # %bb.0:
+; X64AVX2-NEXT:    vbroadcastsd %xmm0, %ymm0
+; X64AVX2-NEXT:    vblendps {{.*#+}} ymm0 = mem[0,1,2,3,4,5],ymm0[6],mem[7]
+; X64AVX2-NEXT:    retq
+;
+; X32AVX512F-LABEL: elt6_v8f32:
+; X32AVX512F:       # %bb.0:
+; X32AVX512F-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; X32AVX512F-NEXT:    vbroadcastsd %xmm0, %ymm0
+; X32AVX512F-NEXT:    vblendps {{.*#+}} ymm0 = mem[0,1,2,3,4,5],ymm0[6],mem[7]
+; X32AVX512F-NEXT:    retl
+;
+; X64AVX512F-LABEL: elt6_v8f32:
+; X64AVX512F:       # %bb.0:
+; X64AVX512F-NEXT:    vbroadcastsd %xmm0, %ymm0
+; X64AVX512F-NEXT:    vblendps {{.*#+}} ymm0 = mem[0,1,2,3,4,5],ymm0[6],mem[7]
+; X64AVX512F-NEXT:    retq
    %ins = insertelement <8 x float> <float 42.0, float 1.0, float 2.0, float 3.0, float 4.0, float 5.0, float 6.0, float 7.0>, float %x, i32 6
    ret <8 x float> %ins
 }
@@ -453,10 +476,10 @@ define <8 x i64> @elt5_v8i64(i64 %x) {
 ;
 ; X64AVX512F-LABEL: elt5_v8i64:
 ; X64AVX512F:       # %bb.0:
+; X64AVX512F-NEXT:    vmovq %rdi, %xmm1
+; X64AVX512F-NEXT:    vmovdqa64 {{.*#+}} zmm2 = [0,1,2,3,4,8,6,7]
 ; X64AVX512F-NEXT:    vmovdqa64 {{.*#+}} zmm0 = <42,1,2,3,4,u,6,7>
-; X64AVX512F-NEXT:    vextracti32x4 $2, %zmm0, %xmm1
-; X64AVX512F-NEXT:    vpinsrq $1, %rdi, %xmm1, %xmm1
-; X64AVX512F-NEXT:    vinserti32x4 $2, %xmm1, %zmm0, %zmm0
+; X64AVX512F-NEXT:    vpermt2q %zmm1, %zmm2, %zmm0
 ; X64AVX512F-NEXT:    retq
    %ins = insertelement <8 x i64> <i64 42, i64 1, i64 2, i64 3, i64 4, i64 5, i64 6, i64 7>, i64 %x, i32 5
    ret <8 x i64> %ins
