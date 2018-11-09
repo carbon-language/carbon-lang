@@ -16933,12 +16933,15 @@ static SDValue combineShuffleOfScalars(ShuffleVectorSDNode *SVN,
   SDValue N0 = SVN->getOperand(0);
   SDValue N1 = SVN->getOperand(1);
 
-  if (!N0->hasOneUse() || !N1->hasOneUse())
+  if (!N0->hasOneUse())
     return SDValue();
 
   // If only one of N1,N2 is constant, bail out if it is not ALL_ZEROS as
   // discussed above.
   if (!N1.isUndef()) {
+    if (!N1->hasOneUse())
+      return SDValue();
+
     bool N0AnyConst = isAnyConstantBuildVector(N0.getNode());
     bool N1AnyConst = isAnyConstantBuildVector(N1.getNode());
     if (N0AnyConst && !N1AnyConst && !ISD::isBuildVectorAllZeros(N0.getNode()))
@@ -17371,7 +17374,7 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
 
   // Attempt to combine a shuffle of 2 inputs of 'scalar sources' -
   // BUILD_VECTOR or SCALAR_TO_VECTOR into a single BUILD_VECTOR.
-  if (Level < AfterLegalizeVectorOps && TLI.isTypeLegal(VT))
+  if (Level < AfterLegalizeDAG && TLI.isTypeLegal(VT))
     if (SDValue Res = combineShuffleOfScalars(SVN, DAG, TLI))
       return Res;
 
