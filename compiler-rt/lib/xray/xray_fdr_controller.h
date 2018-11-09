@@ -300,9 +300,8 @@ public:
     UndoableFunctionEnters = 0;
     UndoableTailExits = 0;
 
-    W.writeFunction(FDRLogWriter::FunctionRecordKind::EnterArg, mask(FuncId),
-                    Delta);
-    return W.writeMetadata<MetadataRecord::RecordKinds::CallArgument>(Arg);
+    return W.writeFunctionWithArg(FDRLogWriter::FunctionRecordKind::EnterArg,
+                                  mask(FuncId), Delta, Arg);
   }
 
   bool functionExit(int32_t FuncId, uint64_t TSC,

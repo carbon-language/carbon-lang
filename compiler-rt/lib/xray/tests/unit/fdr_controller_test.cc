@@ -262,6 +262,23 @@ TEST_F(BufferManagementTest, HandlesOverflow) {
   EXPECT_THAT_EXPECTED(TraceOrErr, HasValue(SizeIs(kBuffers * 2)));
 }
 
+TEST_F(BufferManagementTest, HandlesOverflowWithArgs) {
+  uint64_t TSC = 1;
+  uint16_t CPU = 1;
+  uint64_t ARG = 1;
+  for (size_t I = 0; I < kBuffers + 1; ++I) {
+    ASSERT_TRUE(C->functionEnterArg(1, TSC++, CPU, ARG++));
+    ASSERT_TRUE(C->functionExit(1, TSC++, CPU));
+  }
+  ASSERT_TRUE(C->flush());
+  ASSERT_THAT(BQ->finalize(), Eq(BufferQueue::ErrorCode::Ok));
+
+  std::string Serialized = serialize(*BQ, 3);
+  llvm::DataExtractor DE(Serialized, true, 8);
+  auto TraceOrErr = llvm::xray::loadTrace(DE);
+  EXPECT_THAT_EXPECTED(TraceOrErr, HasValue(SizeIs(kBuffers)));
+}
+
 TEST_F(BufferManagementTest, HandlesOverflowWithCustomEvents) {
   uint64_t TSC = 1;
   uint16_t CPU = 1;

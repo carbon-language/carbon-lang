@@ -110,6 +110,30 @@ public:
     return true;
   }
 
+  bool writeFunctionWithArg(FunctionRecordKind Kind, int32_t FuncId,
+                            int32_t Delta, uint64_t Arg) {
+    // We need to write the function with arg into the buffer, and then
+    // atomically update the buffer extents. This ensures that any reads
+    // synchronised on the buffer extents record will always see the writes
+    // that happen before the atomic update.
+    FunctionRecord R;
+    R.Type = 0;
+    R.RecordKind = uint8_t(Kind);
+    R.FuncId = FuncId;
+    R.TSCDelta = Delta;
+    MetadataRecord A =
+        createMetadataRecord<MetadataRecord::RecordKinds::CallArgument>(Arg);
+    NextRecord = reinterpret_cast<char *>(internal_memcpy(
+                     NextRecord, reinterpret_cast<char *>(&R), sizeof(R))) +
+                 sizeof(R);
+    NextRecord = reinterpret_cast<char *>(internal_memcpy(
+                     NextRecord, reinterpret_cast<char *>(&A), sizeof(A))) +
+                 sizeof(A);
+    atomic_fetch_add(&Buffer.Extents, sizeof(R) + sizeof(A),
+                     memory_order_acq_rel);
+    return true;
+  }
+
   bool writeCustomEvent(int32_t Delta, const void *Event, int32_t EventSize) {
     // We write the metadata record and the custom event data into the buffer
     // first, before we atomically update the extents for the buffer. This
