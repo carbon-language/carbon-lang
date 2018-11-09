@@ -1039,8 +1039,6 @@ int CodeCoverageTool::doExport(int argc, const char **argv,
     Exporter = llvm::make_unique<CoverageExporterLcov>(*Coverage.get(),
                                                        ViewOpts, outs());
     break;
-  default:
-    llvm_unreachable("Unknown coverage output format!");
   }
 
   if (SourceFiles.empty())
