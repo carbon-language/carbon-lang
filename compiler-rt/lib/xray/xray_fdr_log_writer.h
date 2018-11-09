@@ -63,6 +63,10 @@ class FDRLogWriter {
   template <class T> void writeRecord(const T &R) {
     internal_memcpy(NextRecord, reinterpret_cast<const char *>(&R), sizeof(T));
     NextRecord += sizeof(T);
+    // We need this atomic fence here to ensure that other threads attempting to
+    // read the bytes in the buffer will see the writes committed before the
+    // extents are updated.
+    atomic_thread_fence(memory_order_release);
     atomic_fetch_add(&Buffer.Extents, sizeof(T), memory_order_acq_rel);
   }
 
@@ -89,6 +93,10 @@ public:
     constexpr auto Size = sizeof(MetadataRecord) * N;
     internal_memcpy(NextRecord, reinterpret_cast<const char *>(Recs), Size);
     NextRecord += Size;
+    // We need this atomic fence here to ensure that other threads attempting to
+    // read the bytes in the buffer will see the writes committed before the
+    // extents are updated.
+    atomic_thread_fence(memory_order_release);
     atomic_fetch_add(&Buffer.Extents, Size, memory_order_acq_rel);
     return Size;
   }
@@ -129,6 +137,10 @@ public:
     NextRecord = reinterpret_cast<char *>(internal_memcpy(
                      NextRecord, reinterpret_cast<char *>(&A), sizeof(A))) +
                  sizeof(A);
+    // We need this atomic fence here to ensure that other threads attempting to
+    // read the bytes in the buffer will see the writes committed before the
+    // extents are updated.
+    atomic_thread_fence(memory_order_release);
     atomic_fetch_add(&Buffer.Extents, sizeof(R) + sizeof(A),
                      memory_order_acq_rel);
     return true;
@@ -149,6 +161,11 @@ public:
     NextRecord = reinterpret_cast<char *>(
                      internal_memcpy(NextRecord, Event, EventSize)) +
                  EventSize;
+
+    // We need this atomic fence here to ensure that other threads attempting to
+    // read the bytes in the buffer will see the writes committed before the
+    // extents are updated.
+    atomic_thread_fence(memory_order_release);
     atomic_fetch_add(&Buffer.Extents, sizeof(R) + EventSize,
                      memory_order_acq_rel);
     return true;
@@ -167,6 +184,11 @@ public:
     NextRecord = reinterpret_cast<char *>(
                      internal_memcpy(NextRecord, Event, EventSize)) +
                  EventSize;
+
+    // We need this atomic fence here to ensure that other threads attempting to
+    // read the bytes in the buffer will see the writes committed before the
+    // extents are updated.
+    atomic_thread_fence(memory_order_release);
     atomic_fetch_add(&Buffer.Extents, EventSize, memory_order_acq_rel);
     return true;
   }
