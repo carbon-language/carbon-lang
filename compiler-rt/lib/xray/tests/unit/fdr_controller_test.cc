@@ -77,6 +77,32 @@ TEST_F(FunctionSequenceTest, DefaultInitFinalizeFlush) {
           AllOf(FuncId(1), RecordType(llvm::xray::RecordTypes::EXIT)))));
 }
 
+TEST_F(FunctionSequenceTest, BoundaryFuncIdEncoding) {
+  // We ensure that we can write function id's that are at the boundary of the
+  // acceptable function ids.
+  int32_t FId = (1 << 28) - 1;
+  uint64_t TSC = 2;
+  uint16_t CPU = 1;
+  ASSERT_TRUE(C->functionEnter(FId, TSC++, CPU));
+  ASSERT_TRUE(C->functionExit(FId, TSC++, CPU));
+  ASSERT_TRUE(C->functionEnterArg(FId, TSC++, CPU, 1));
+  ASSERT_TRUE(C->functionTailExit(FId, TSC++, CPU));
+  ASSERT_TRUE(C->flush());
+  ASSERT_EQ(BQ->finalize(), BufferQueue::ErrorCode::Ok);
+
+  // Serialize the buffers then test to see we find the expected records.
+  std::string Serialized = serialize(*BQ, 3);
+  llvm::DataExtractor DE(Serialized, true, 8);
+  auto TraceOrErr = llvm::xray::loadTrace(DE);
+  EXPECT_THAT_EXPECTED(
+      TraceOrErr,
+      HasValue(ElementsAre(
+          AllOf(FuncId(FId), RecordType(llvm::xray::RecordTypes::ENTER)),
+          AllOf(FuncId(FId), RecordType(llvm::xray::RecordTypes::EXIT)),
+          AllOf(FuncId(FId), RecordType(llvm::xray::RecordTypes::ENTER_ARG)),
+          AllOf(FuncId(FId), RecordType(llvm::xray::RecordTypes::TAIL_EXIT)))));
+}
+
 TEST_F(FunctionSequenceTest, ThresholdsAreEnforced) {
   C = llvm::make_unique<FDRController<>>(BQ.get(), B, *W, clock_gettime, 1000);
   ASSERT_TRUE(C->functionEnter(1, 2, 3));
