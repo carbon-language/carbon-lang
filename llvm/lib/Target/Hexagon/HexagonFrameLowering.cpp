@@ -555,6 +555,7 @@ void HexagonFrameLowering::emitPrologue(MachineFunction &MF,
 bool HexagonFrameLowering::enableCalleeSaveSkip(
     const MachineFunction &MF) const {
   const auto &F = MF.getFunction();
+  (void)F; // Silence unused variable in release builds
   assert(F.hasFnAttribute(Attribute::NoReturn) &&
          F.getFunction().hasFnAttribute(Attribute::NoUnwind) &&
          !F.getFunction().hasFnAttribute(Attribute::UWTable));
