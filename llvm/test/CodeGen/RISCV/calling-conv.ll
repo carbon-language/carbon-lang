@@ -997,14 +997,14 @@ define void @caller_large_scalar_ret() nounwind {
 define void @callee_large_struct_ret(%struct.large* noalias sret %agg.result) nounwind {
 ; RV32I-FPELIM-LABEL: callee_large_struct_ret:
 ; RV32I-FPELIM:       # %bb.0:
+; RV32I-FPELIM-NEXT:    addi a1, zero, 4
+; RV32I-FPELIM-NEXT:    sw a1, 12(a0)
+; RV32I-FPELIM-NEXT:    addi a1, zero, 3
+; RV32I-FPELIM-NEXT:    sw a1, 8(a0)
 ; RV32I-FPELIM-NEXT:    addi a1, zero, 2
 ; RV32I-FPELIM-NEXT:    sw a1, 4(a0)
 ; RV32I-FPELIM-NEXT:    addi a1, zero, 1
 ; RV32I-FPELIM-NEXT:    sw a1, 0(a0)
-; RV32I-FPELIM-NEXT:    addi a1, zero, 3
-; RV32I-FPELIM-NEXT:    sw a1, 8(a0)
-; RV32I-FPELIM-NEXT:    addi a1, zero, 4
-; RV32I-FPELIM-NEXT:    sw a1, 12(a0)
 ; RV32I-FPELIM-NEXT:    ret
 ;
 ; RV32I-WITHFP-LABEL: callee_large_struct_ret:
@@ -1013,14 +1013,14 @@ define void @callee_large_struct_ret(%struct.large* noalias sret %agg.result) no
 ; RV32I-WITHFP-NEXT:    sw ra, 12(sp)
 ; RV32I-WITHFP-NEXT:    sw s0, 8(sp)
 ; RV32I-WITHFP-NEXT:    addi s0, sp, 16
+; RV32I-WITHFP-NEXT:    addi a1, zero, 4
+; RV32I-WITHFP-NEXT:    sw a1, 12(a0)
+; RV32I-WITHFP-NEXT:    addi a1, zero, 3
+; RV32I-WITHFP-NEXT:    sw a1, 8(a0)
 ; RV32I-WITHFP-NEXT:    addi a1, zero, 2
 ; RV32I-WITHFP-NEXT:    sw a1, 4(a0)
 ; RV32I-WITHFP-NEXT:    addi a1, zero, 1
 ; RV32I-WITHFP-NEXT:    sw a1, 0(a0)
-; RV32I-WITHFP-NEXT:    addi a1, zero, 3
-; RV32I-WITHFP-NEXT:    sw a1, 8(a0)
-; RV32I-WITHFP-NEXT:    addi a1, zero, 4
-; RV32I-WITHFP-NEXT:    sw a1, 12(a0)
 ; RV32I-WITHFP-NEXT:    lw s0, 8(sp)
 ; RV32I-WITHFP-NEXT:    lw ra, 12(sp)
 ; RV32I-WITHFP-NEXT:    addi sp, sp, 16
