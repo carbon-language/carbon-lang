@@ -698,12 +698,58 @@ getDataSharingMode(CodeGenModule &CGM) {
                                           : CGOpenMPRuntimeNVPTX::Generic;
 }
 
+// Checks if the expression is constant or does not have non-trivial function
+// calls.
+static bool isTrivial(ASTContext &Ctx, const Expr * E) {
+  // We can skip constant expressions.
+  // We can skip expressions with trivial calls or simple expressions.
+  return (E->isEvaluatable(Ctx, Expr::SE_AllowUndefinedBehavior) ||
+          !E->hasNonTrivialCall(Ctx)) &&
+         !E->HasSideEffects(Ctx, /*IncludePossibleEffects=*/true);
+}
+
 /// Checks if the \p Body is the \a CompoundStmt and returns its child statement
-/// iff there is only one.
-static const Stmt *getSingleCompoundChild(const Stmt *Body) {
-  if (const auto *C = dyn_cast<CompoundStmt>(Body))
-    if (C->size() == 1)
-      return C->body_front();
+/// iff there is only one that is not evaluatable at the compile time.
+static const Stmt *getSingleCompoundChild(ASTContext &Ctx, const Stmt *Body) {
+  if (const auto *C = dyn_cast<CompoundStmt>(Body)) {
+    const Stmt *Child = nullptr;
+    for (const Stmt *S : C->body()) {
+      if (const auto *E = dyn_cast<Expr>(S)) {
+        if (isTrivial(Ctx, E))
+          continue;
+      }
+      // Some of the statements can be ignored.
+      if (isa<AsmStmt>(S) || isa<NullStmt>(S) || isa<OMPFlushDirective>(S) ||
+          isa<OMPBarrierDirective>(S) || isa<OMPTaskyieldDirective>(S))
+        continue;
+      // Analyze declarations.
+      if (const auto *DS = dyn_cast<DeclStmt>(S)) {
+        if (llvm::all_of(DS->decls(), [&Ctx](const Decl *D) {
+              if (isa<EmptyDecl>(D) || isa<DeclContext>(D) ||
+                  isa<TypeDecl>(D) || isa<PragmaCommentDecl>(D) ||
+                  isa<PragmaDetectMismatchDecl>(D) || isa<UsingDecl>(D) ||
+                  isa<UsingDirectiveDecl>(D) ||
+                  isa<OMPDeclareReductionDecl>(D) ||
+                  isa<OMPThreadPrivateDecl>(D))
+                return true;
+              const auto *VD = dyn_cast<VarDecl>(D);
+              if (!VD)
+                return false;
+              return VD->isConstexpr() ||
+                     ((VD->getType().isTrivialType(Ctx) ||
+                       VD->getType()->isReferenceType()) &&
+                      (!VD->hasInit() || isTrivial(Ctx, VD->getInit())));
+            }))
+          continue;
+      }
+      // Found multiple children - cannot get the one child only.
+      if (Child)
+        return Body;
+      Child = S;
+    }
+    if (Child)
+      return Child;
+  }
   return Body;
 }
 
@@ -732,7 +778,7 @@ static bool hasNestedSPMDDirective(ASTContext &Ctx,
   const auto *CS = D.getInnermostCapturedStmt();
   const auto *Body =
       CS->getCapturedStmt()->IgnoreContainers(/*IgnoreCaptured=*/true);
-  const Stmt *ChildStmt = getSingleCompoundChild(Body);
+  const Stmt *ChildStmt = getSingleCompoundChild(Ctx, Body);
 
   if (const auto *NestedDir = dyn_cast<OMPExecutableDirective>(ChildStmt)) {
     OpenMPDirectiveKind DKind = NestedDir->getDirectiveKind();
@@ -746,7 +792,7 @@ static bool hasNestedSPMDDirective(ASTContext &Ctx,
             /*IgnoreCaptured=*/true);
         if (!Body)
           return false;
-        ChildStmt = getSingleCompoundChild(Body);
+        ChildStmt = getSingleCompoundChild(Ctx, Body);
         if (const auto *NND = dyn_cast<OMPExecutableDirective>(ChildStmt)) {
           DKind = NND->getDirectiveKind();
           if (isOpenMPParallelDirective(DKind) &&
@@ -905,7 +951,7 @@ static bool hasNestedLightweightDirective(ASTContext &Ctx,
   const auto *CS = D.getInnermostCapturedStmt();
   const auto *Body =
       CS->getCapturedStmt()->IgnoreContainers(/*IgnoreCaptured=*/true);
-  const Stmt *ChildStmt = getSingleCompoundChild(Body);
+  const Stmt *ChildStmt = getSingleCompoundChild(Ctx, Body);
 
   if (const auto *NestedDir = dyn_cast<OMPExecutableDirective>(ChildStmt)) {
     OpenMPDirectiveKind DKind = NestedDir->getDirectiveKind();
@@ -920,7 +966,7 @@ static bool hasNestedLightweightDirective(ASTContext &Ctx,
             /*IgnoreCaptured=*/true);
         if (!Body)
           return false;
-        ChildStmt = getSingleCompoundChild(Body);
+        ChildStmt = getSingleCompoundChild(Ctx, Body);
         if (const auto *NND = dyn_cast<OMPExecutableDirective>(ChildStmt)) {
           DKind = NND->getDirectiveKind();
           if (isOpenMPWorksharingDirective(DKind) &&
@@ -932,7 +978,7 @@ static bool hasNestedLightweightDirective(ASTContext &Ctx,
             /*IgnoreCaptured=*/true);
         if (!Body)
           return false;
-        ChildStmt = getSingleCompoundChild(Body);
+        ChildStmt = getSingleCompoundChild(Ctx, Body);
         if (const auto *NND = dyn_cast<OMPExecutableDirective>(ChildStmt)) {
           DKind = NND->getDirectiveKind();
           if (isOpenMPParallelDirective(DKind) &&
@@ -944,7 +990,7 @@ static bool hasNestedLightweightDirective(ASTContext &Ctx,
                 /*IgnoreCaptured=*/true);
             if (!Body)
               return false;
-            ChildStmt = getSingleCompoundChild(Body);
+            ChildStmt = getSingleCompoundChild(Ctx, Body);
             if (const auto *NND = dyn_cast<OMPExecutableDirective>(ChildStmt)) {
               DKind = NND->getDirectiveKind();
               if (isOpenMPWorksharingDirective(DKind) &&
@@ -965,7 +1011,7 @@ static bool hasNestedLightweightDirective(ASTContext &Ctx,
             /*IgnoreCaptured=*/true);
         if (!Body)
           return false;
-        ChildStmt = getSingleCompoundChild(Body);
+        ChildStmt = getSingleCompoundChild(Ctx, Body);
         if (const auto *NND = dyn_cast<OMPExecutableDirective>(ChildStmt)) {
           DKind = NND->getDirectiveKind();
           if (isOpenMPWorksharingDirective(DKind) &&
@@ -1287,10 +1333,6 @@ void CGOpenMPRuntimeNVPTX::emitSPMDKernel(const OMPExecutableDirective &D,
   IsInTTDRegion = false;
 }
 
-static void
-getDistributeLastprivateVars(const OMPExecutableDirective &D,
-                             llvm::SmallVectorImpl<const ValueDecl *> &Vars);
-
 void CGOpenMPRuntimeNVPTX::emitSPMDEntryHeader(
     CodeGenFunction &CGF, EntryFunctionState &EST,
     const OMPExecutableDirective &D) {
@@ -1303,33 +1345,10 @@ void CGOpenMPRuntimeNVPTX::emitSPMDEntryHeader(
   // Initialize the OMP state in the runtime; called by all active threads.
   bool RequiresFullRuntime = CGM.getLangOpts().OpenMPCUDAForceFullRuntime ||
                              !supportsLightweightRuntime(CGF.getContext(), D);
-  // Check if we have inner distribute + lastprivate|reduction clauses.
-  bool RequiresDatasharing = RequiresFullRuntime;
-  if (!RequiresDatasharing) {
-    const OMPExecutableDirective *TD = &D;
-    if (!isOpenMPTeamsDirective(TD->getDirectiveKind()) &&
-        !isOpenMPParallelDirective(TD->getDirectiveKind())) {
-      const Stmt *S = getSingleCompoundChild(
-          TD->getInnermostCapturedStmt()->getCapturedStmt()->IgnoreContainers(
-              /*IgnoreCaptured=*/true));
-      TD = cast<OMPExecutableDirective>(S);
-    }
-    if (!isOpenMPDistributeDirective(TD->getDirectiveKind()) &&
-        !isOpenMPParallelDirective(TD->getDirectiveKind())) {
-      const Stmt *S = getSingleCompoundChild(
-          TD->getInnermostCapturedStmt()->getCapturedStmt()->IgnoreContainers(
-              /*IgnoreCaptured=*/true));
-      TD = cast<OMPExecutableDirective>(S);
-    }
-    if (isOpenMPDistributeDirective(TD->getDirectiveKind()))
-      RequiresDatasharing = TD->hasClausesOfKind<OMPLastprivateClause>() ||
-                            TD->hasClausesOfKind<OMPReductionClause>();
-  }
-  llvm::Value *Args[] = {
-      getThreadLimit(CGF, /*IsInSPMDExecutionMode=*/true),
-      /*RequiresOMPRuntime=*/
-      Bld.getInt16(RequiresFullRuntime ? 1 : 0),
-      /*RequiresDataSharing=*/Bld.getInt16(RequiresDatasharing ? 1 : 0)};
+  llvm::Value *Args[] = {getThreadLimit(CGF, /*IsInSPMDExecutionMode=*/true),
+                         /*RequiresOMPRuntime=*/
+                         Bld.getInt16(RequiresFullRuntime ? 1 : 0),
+                         /*RequiresDataSharing=*/Bld.getInt16(0)};
   CGF.EmitRuntimeCall(
       createNVPTXRuntimeFunction(OMPRTL_NVPTX__kmpc_spmd_kernel_init), Args);
 
@@ -1928,13 +1947,14 @@ llvm::Value *CGOpenMPRuntimeNVPTX::emitParallelOutlinedFunction(
 /// Get list of lastprivate variables from the teams distribute ... or
 /// teams {distribute ...} directives.
 static void
-getDistributeLastprivateVars(const OMPExecutableDirective &D,
+getDistributeLastprivateVars(ASTContext &Ctx, const OMPExecutableDirective &D,
                              llvm::SmallVectorImpl<const ValueDecl *> &Vars) {
   assert(isOpenMPTeamsDirective(D.getDirectiveKind()) &&
          "expected teams directive.");
   const OMPExecutableDirective *Dir = &D;
   if (!isOpenMPDistributeDirective(D.getDirectiveKind())) {
     if (const Stmt *S = getSingleCompoundChild(
+            Ctx,
             D.getInnermostCapturedStmt()->getCapturedStmt()->IgnoreContainers(
                 /*IgnoreCaptured=*/true))) {
       Dir = dyn_cast<OMPExecutableDirective>(S);
@@ -1961,7 +1981,7 @@ llvm::Value *CGOpenMPRuntimeNVPTX::emitTeamsOutlinedFunction(
   llvm::SmallVector<const ValueDecl *, 4> LastPrivates;
   llvm::SmallDenseMap<const ValueDecl *, const FieldDecl *> MappedDeclsFields;
   if (getExecutionMode() == CGOpenMPRuntimeNVPTX::EM_SPMD) {
-    getDistributeLastprivateVars(D, LastPrivates);
+    getDistributeLastprivateVars(CGM.getContext(), D, LastPrivates);
     if (!LastPrivates.empty())
       GlobalizedRD = ::buildRecordForGlobalizedVars(
           CGM.getContext(), llvm::None, LastPrivates, MappedDeclsFields);
