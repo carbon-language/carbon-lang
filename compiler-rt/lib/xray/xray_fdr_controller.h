@@ -252,9 +252,13 @@ public:
     if (PreambleStatus == PreambleResult::InvalidBuffer)
       return returnBuffer();
 
-    UndoableFunctionEnters = (PreambleStatus == PreambleResult::WroteMetadata)
-                                 ? 1
-                                 : UndoableFunctionEnters + 1;
+    if (PreambleStatus == PreambleResult::WroteMetadata) {
+      UndoableFunctionEnters = 1;
+      UndoableTailExits = 0;
+    } else {
+      ++UndoableFunctionEnters;
+    }
+
     auto Delta = TSC - LatestTSC;
     LastFunctionEntryTSC = TSC;
     LatestTSC = TSC;
