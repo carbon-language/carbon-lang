@@ -1805,7 +1805,7 @@ bool ShuffleVectorInst::isExtractSubvectorMask(ArrayRef<int> Mask,
     return false;
 
   // Must be smaller (else this is an Identity shuffle).
-  if (NumSrcElts <= Mask.size())
+  if (NumSrcElts <= (int)Mask.size())
     return false;
 
   // Find start of extraction, accounting that we may start with an UNDEF.
