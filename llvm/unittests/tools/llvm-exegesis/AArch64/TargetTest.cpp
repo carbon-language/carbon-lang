@@ -60,9 +60,10 @@ TEST_F(AArch64TargetTest, SetRegToConstant) {
 }
 
 TEST_F(AArch64TargetTest, DefaultPfmCounters) {
-  EXPECT_EQ(ExegesisTarget_->getPfmCounters("").CycleCounter, "CPU_CYCLES");
+  const std::string Expected = "CPU_CYCLES";
+  EXPECT_EQ(ExegesisTarget_->getPfmCounters("").CycleCounter, Expected);
   EXPECT_EQ(ExegesisTarget_->getPfmCounters("unknown_cpu").CycleCounter,
-            "CPU_CYCLES");
+            Expected);
 }
 
 } // namespace
