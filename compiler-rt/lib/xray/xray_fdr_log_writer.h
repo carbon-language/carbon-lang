@@ -46,8 +46,27 @@ template <size_t Index> struct SerializerImpl {
 
 using Serializer = SerializerImpl<0>;
 
+template <class Tuple, size_t Index> struct AggregateSizesImpl {
+  static constexpr size_t value =
+      sizeof(typename std::tuple_element<Index, Tuple>::type) +
+      AggregateSizesImpl<Tuple, Index - 1>::value;
+};
+
+template <class Tuple> struct AggregateSizesImpl<Tuple, 0> {
+  static constexpr size_t value =
+      sizeof(typename std::tuple_element<0, Tuple>::type);
+};
+
+template <class Tuple> struct AggregateSizes {
+  static constexpr size_t value =
+      AggregateSizesImpl<Tuple, std::tuple_size<Tuple>::value - 1>::value;
+};
+
 template <MetadataRecord::RecordKinds Kind, class... DataTypes>
 MetadataRecord createMetadataRecord(DataTypes &&... Ds) {
+  static_assert(AggregateSizes<std::tuple<DataTypes...>>::value <=
+                    sizeof(MetadataRecord) - 1,
+                "Metadata payload longer than metadata buffer!");
   MetadataRecord R;
   R.Type = 1;
   R.RecordKind = static_cast<uint8_t>(Kind);
