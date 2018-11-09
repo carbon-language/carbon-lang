@@ -59,6 +59,12 @@ TEST_F(PowerPCTargetTest, SetRegToConstant) {
   EXPECT_THAT(Insts, Not(IsEmpty()));
 }
 
+TEST_F(PowerPCTargetTest, DefaultPfmCounters) {
+  EXPECT_EQ(ExegesisTarget_->getPfmCounters("").CycleCounter, "CYCLES");
+  EXPECT_EQ(ExegesisTarget_->getPfmCounters("unknown_cpu").CycleCounter,
+            "CYCLES");
+}
+
 } // namespace
 } // namespace exegesis
 } // namespace llvm

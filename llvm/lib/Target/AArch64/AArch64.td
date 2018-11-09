@@ -626,3 +626,9 @@ def AArch64 : Target {
   let AssemblyWriters = [GenericAsmWriter, AppleAsmWriter];
   let AllowRegisterRenaming = 1;
 }
+
+//===----------------------------------------------------------------------===//
+// Pfm Counters
+//===----------------------------------------------------------------------===//
+
+include "AArch64PfmCounters.td"

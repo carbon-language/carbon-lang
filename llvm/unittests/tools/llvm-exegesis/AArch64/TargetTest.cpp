@@ -59,6 +59,12 @@ TEST_F(AArch64TargetTest, SetRegToConstant) {
   EXPECT_THAT(Insts, Not(IsEmpty()));
 }
 
+TEST_F(AArch64TargetTest, DefaultPfmCounters) {
+  EXPECT_EQ(ExegesisTarget_->getPfmCounters("").CycleCounter, "CPU_CYCLES");
+  EXPECT_EQ(ExegesisTarget_->getPfmCounters("unknown_cpu").CycleCounter,
+            "CPU_CYCLES");
+}
+
 } // namespace
 } // namespace exegesis
 } // namespace llvm
