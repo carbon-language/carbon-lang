@@ -15627,6 +15627,14 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget &Subtarget,
   SmallVector<int, 16> WidenedMask;
   if (VT.getScalarSizeInBits() < 64 && !Is1BitVector &&
       canWidenShuffleElements(ZeroableMask, WidenedMask)) {
+    // Shuffle mask widening should not interfere with a broadcast opportunity
+    // by obfuscating the operands with bitcasts.
+    // TODO: Avoid lowering directly from this top-level function: make this
+    // a query (canLowerAsBroadcast) and defer lowering to the type-based calls.
+    if (SDValue Broadcast =
+            lowerVectorShuffleAsBroadcast(DL, VT, V1, V2, Mask, Subtarget, DAG))
+      return Broadcast;
+
     MVT NewEltVT = VT.isFloatingPoint()
                        ? MVT::getFloatingPointVT(VT.getScalarSizeInBits() * 2)
                        : MVT::getIntegerVT(VT.getScalarSizeInBits() * 2);
