@@ -26,8 +26,8 @@ historical interest at this point with one exception - its implementation of
 shadow stacks has been used successfully by a number of language frontends and
 is still supported.  
 
-Overview
-========
+Overview & Core Concepts
+========================
 
 To collect dead objects, garbage collectors must be able to identify
 any references to objects contained within executing code, and,
