@@ -122,11 +122,12 @@ static StringRef normalizeAttrName(StringRef AttrName,
                                    ParsedAttr::Syntax SyntaxUsed) {
   // Normalize the attribute name, __foo__ becomes foo. This is only allowable
   // for GNU attributes, and attributes using the double square bracket syntax.
-  bool IsGNU = SyntaxUsed == ParsedAttr::AS_GNU ||
-               ((SyntaxUsed == ParsedAttr::AS_CXX11 ||
-                 SyntaxUsed == ParsedAttr::AS_C2x) &&
-                NormalizedScopeName == "gnu");
-  if (IsGNU && AttrName.size() >= 4 && AttrName.startswith("__") &&
+  bool ShouldNormalize =
+      SyntaxUsed == ParsedAttr::AS_GNU ||
+      ((SyntaxUsed == ParsedAttr::AS_CXX11 ||
+        SyntaxUsed == ParsedAttr::AS_C2x) &&
+       (NormalizedScopeName == "gnu" || NormalizedScopeName == "clang"));
+  if (ShouldNormalize && AttrName.size() >= 4 && AttrName.startswith("__") &&
       AttrName.endswith("__"))
     AttrName = AttrName.slice(2, AttrName.size() - 2);
 
