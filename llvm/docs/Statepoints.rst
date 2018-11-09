@@ -908,7 +908,15 @@ Problem Areas and Active Work
 =============================
 
 #. Support for languages which allow unmanaged pointers to garbage collected
-   objects (i.e. pass a pointer to an object to a C routine) via pinning.
+   objects (i.e. pass a pointer to an object to a C routine) in the abstract
+   machine model.  At the moment, the best idea on how to approach this
+   involves an intrinsic or opaque function which hides the connection between
+   the reference value and the raw pointer.  The problem is that having a
+   ptrtoint or inttoptr cast (which is common for such use cases) breaks the
+   rules used for inferring base pointers for arbitrary references when
+   lowering out of the abstract model to the explicit physical model.  Note
+   that a frontend which lowers directly to the physical model doesn't have
+   any problems here.
 
 #. Support for garbage collected objects allocated on the stack.  Specifically,
    allocas are always assumed to be in address space 0 and we need a
