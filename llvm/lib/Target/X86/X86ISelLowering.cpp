@@ -31941,6 +31941,18 @@ bool X86TargetLowering::SimplifyDemandedBitsForTargetNode(
     }
     break;
   }
+  case X86ISD::VSEXT: {
+    SDValue Src = Op.getOperand(0);
+    unsigned InBits = Src.getScalarValueSizeInBits();
+
+    // If none of the top bits are demanded, convert this into an any_extend.
+    if (OriginalDemandedBits.getActiveBits() <= InBits)
+      return TLO.CombineTo(Op,
+                           TLO.DAG.getNode(X86ISD::VZEXT, SDLoc(Op),
+                                           Op.getValueType(), Src));
+
+    break;
+  }
   }
 
   return TargetLowering::SimplifyDemandedBitsForTargetNode(
