@@ -1114,7 +1114,7 @@ int TargetTransformInfo::getInstructionThroughput(const Instruction *I) const {
     // TODO: Identify and add costs for insert subvector, etc.
     int SubIndex;
     if (Shuffle->isExtractSubvectorMask(SubIndex))
-      return TTIImpl->getShuffleCost(SK_ExtractSubvector, Ty, SubIndex, SrcTy);
+      return TTIImpl->getShuffleCost(SK_ExtractSubvector, SrcTy, SubIndex, Ty);
 
     if (Shuffle->changesLength())
       return -1;
