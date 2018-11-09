@@ -3538,7 +3538,7 @@ void CGDebugInfo::EmitLocation(CGBuilderTy &Builder, SourceLocation Loc) {
   // Update our current location
   setLocation(Loc);
 
-  if (CurLoc.isInvalid() || CurLoc.isMacroID() || LexicalBlockStack.empty())
+  if (CurLoc.isInvalid() || CurLoc.isMacroID())
     return;
 
   llvm::MDNode *Scope = LexicalBlockStack.back();
