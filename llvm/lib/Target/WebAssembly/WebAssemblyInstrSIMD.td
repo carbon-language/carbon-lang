@@ -37,6 +37,58 @@ foreach SIZE = [2, 4, 8, 16, 32] in
 def LaneIdx#SIZE : ImmLeaf<i32, "return 0 <= Imm && Imm < "#SIZE#";">;
 
 //===----------------------------------------------------------------------===//
+// Load and store
+//===----------------------------------------------------------------------===//
+
+// Load: v128.load
+multiclass SIMDLoad<ValueType vec_t> {
+  let mayLoad = 1 in
+  defm LOAD_#vec_t :
+    SIMD_I<(outs V128:$dst), (ins P2Align:$align, offset32_op:$off, I32:$addr),
+           (outs), (ins P2Align:$align, offset32_op:$off), [],
+           "v128.load\t$dst, ${off}(${addr})$align",
+           "v128.load\t$off$align", 0>;
+}
+
+foreach vec_t = [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64] in {
+defm "" : SIMDLoad<vec_t>;
+
+// Def load and store patterns from WebAssemblyInstrMemory.td for vector types
+def : LoadPatNoOffset<vec_t, load, !cast<NI>("LOAD_"#vec_t)>;
+def : LoadPatImmOff<vec_t, load, regPlusImm, !cast<NI>("LOAD_"#vec_t)>;
+def : LoadPatImmOff<vec_t, load, or_is_add, !cast<NI>("LOAD_"#vec_t)>;
+def : LoadPatGlobalAddr<vec_t, load, !cast<NI>("LOAD_"#vec_t)>;
+def : LoadPatExternalSym<vec_t, load, !cast<NI>("LOAD_"#vec_t)>;
+def : LoadPatOffsetOnly<vec_t, load, !cast<NI>("LOAD_"#vec_t)>;
+def : LoadPatGlobalAddrOffOnly<vec_t, load, !cast<NI>("LOAD_"#vec_t)>;
+def : LoadPatExternSymOffOnly<vec_t, load, !cast<NI>("LOAD_"#vec_t)>;
+}
+
+// Store: v128.store
+multiclass SIMDStore<ValueType vec_t> {
+  let mayStore = 1 in
+  defm STORE_#vec_t :
+    SIMD_I<(outs), (ins P2Align:$align, offset32_op:$off, I32:$addr, V128:$vec),
+           (outs), (ins P2Align:$align, offset32_op:$off), [],
+           "v128.store\t${off}(${addr})$align, $vec",
+           "v128.store\t$off$align", 1>;
+}
+
+foreach vec_t = [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64] in {
+defm "" : SIMDStore<vec_t>;
+
+// Def load and store patterns from WebAssemblyInstrMemory.td for vector types
+def : StorePatNoOffset<vec_t, store, !cast<NI>("STORE_"#vec_t)>;
+def : StorePatImmOff<vec_t, store, regPlusImm, !cast<NI>("STORE_"#vec_t)>;
+def : StorePatImmOff<vec_t, store, or_is_add, !cast<NI>("STORE_"#vec_t)>;
+def : StorePatGlobalAddr<vec_t, store, !cast<NI>("STORE_"#vec_t)>;
+def : StorePatExternalSym<vec_t, store, !cast<NI>("STORE_"#vec_t)>;
+def : StorePatOffsetOnly<vec_t, store, !cast<NI>("STORE_"#vec_t)>;
+def : StorePatGlobalAddrOffOnly<vec_t, store, !cast<NI>("STORE_"#vec_t)>;
+def : StorePatExternSymOffOnly<vec_t, store, !cast<NI>("STORE_"#vec_t)>;
+}
+
+//===----------------------------------------------------------------------===//
 // Constructing SIMD values
 //===----------------------------------------------------------------------===//
 
@@ -93,6 +145,61 @@ defm "" : ConstVec<v2f64,
                   (ins f64imm_op:$i0, f64imm_op:$i1),
                   (build_vector (f64 fpimm:$i0), (f64 fpimm:$i1)),
                   "$i0, $i1">;
+
+// Shuffle lanes: shuffle
+defm SHUFFLE :
+  SIMD_I<(outs V128:$dst),
+         (ins V128:$x, V128:$y,
+           vec_i8imm_op:$m0, vec_i8imm_op:$m1,
+           vec_i8imm_op:$m2, vec_i8imm_op:$m3,
+           vec_i8imm_op:$m4, vec_i8imm_op:$m5,
+           vec_i8imm_op:$m6, vec_i8imm_op:$m7,
+           vec_i8imm_op:$m8, vec_i8imm_op:$m9,
+           vec_i8imm_op:$mA, vec_i8imm_op:$mB,
+           vec_i8imm_op:$mC, vec_i8imm_op:$mD,
+           vec_i8imm_op:$mE, vec_i8imm_op:$mF),
+         (outs),
+         (ins
+           vec_i8imm_op:$m0, vec_i8imm_op:$m1,
+           vec_i8imm_op:$m2, vec_i8imm_op:$m3,
+           vec_i8imm_op:$m4, vec_i8imm_op:$m5,
+           vec_i8imm_op:$m6, vec_i8imm_op:$m7,
+           vec_i8imm_op:$m8, vec_i8imm_op:$m9,
+           vec_i8imm_op:$mA, vec_i8imm_op:$mB,
+           vec_i8imm_op:$mC, vec_i8imm_op:$mD,
+           vec_i8imm_op:$mE, vec_i8imm_op:$mF),
+         [],
+         "v8x16.shuffle\t$dst, $x, $y, "#
+           "$m0, $m1, $m2, $m3, $m4, $m5, $m6, $m7, "#
+           "$m8, $m9, $mA, $mB, $mC, $mD, $mE, $mF",
+         "v8x16.shuffle\t"#
+           "$m0, $m1, $m2, $m3, $m4, $m5, $m6, $m7, "#
+           "$m8, $m9, $mA, $mB, $mC, $mD, $mE, $mF",
+         3>;
+
+// Shuffles after custom lowering
+def wasm_shuffle_t : SDTypeProfile<1, 18, []>;
+def wasm_shuffle : SDNode<"WebAssemblyISD::SHUFFLE", wasm_shuffle_t>;
+foreach vec_t = [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64] in {
+def : Pat<(vec_t (wasm_shuffle (vec_t V128:$x), (vec_t V128:$y),
+            (i32 LaneIdx32:$m0), (i32 LaneIdx32:$m1),
+            (i32 LaneIdx32:$m2), (i32 LaneIdx32:$m3),
+            (i32 LaneIdx32:$m4), (i32 LaneIdx32:$m5),
+            (i32 LaneIdx32:$m6), (i32 LaneIdx32:$m7),
+            (i32 LaneIdx32:$m8), (i32 LaneIdx32:$m9),
+            (i32 LaneIdx32:$mA), (i32 LaneIdx32:$mB),
+            (i32 LaneIdx32:$mC), (i32 LaneIdx32:$mD),
+            (i32 LaneIdx32:$mE), (i32 LaneIdx32:$mF))),
+          (vec_t (SHUFFLE (vec_t V128:$x), (vec_t V128:$y),
+            (i32 LaneIdx32:$m0), (i32 LaneIdx32:$m1),
+            (i32 LaneIdx32:$m2), (i32 LaneIdx32:$m3),
+            (i32 LaneIdx32:$m4), (i32 LaneIdx32:$m5),
+            (i32 LaneIdx32:$m6), (i32 LaneIdx32:$m7),
+            (i32 LaneIdx32:$m8), (i32 LaneIdx32:$m9),
+            (i32 LaneIdx32:$mA), (i32 LaneIdx32:$mB),
+            (i32 LaneIdx32:$mC), (i32 LaneIdx32:$mD),
+            (i32 LaneIdx32:$mE), (i32 LaneIdx32:$mF)))>;
+}
 
 // Create vector with identical lanes: splat
 def splat2 : PatFrag<(ops node:$x), (build_vector node:$x, node:$x)>;
@@ -349,63 +456,80 @@ def : Pat<(v2f64 (build_vector (f64 F64:$x0), (f64 F64:$x1))),
           (v2f64 (REPLACE_LANE_v2f64
             (v2f64 (SPLAT_v2f64 (f64 F64:$x0))), 1, F64:$x1))>;
 
-// Shuffle lanes: shuffle
-defm SHUFFLE :
-  SIMD_I<(outs V128:$dst),
-         (ins V128:$x, V128:$y,
-           vec_i8imm_op:$m0, vec_i8imm_op:$m1,
-           vec_i8imm_op:$m2, vec_i8imm_op:$m3,
-           vec_i8imm_op:$m4, vec_i8imm_op:$m5,
-           vec_i8imm_op:$m6, vec_i8imm_op:$m7,
-           vec_i8imm_op:$m8, vec_i8imm_op:$m9,
-           vec_i8imm_op:$mA, vec_i8imm_op:$mB,
-           vec_i8imm_op:$mC, vec_i8imm_op:$mD,
-           vec_i8imm_op:$mE, vec_i8imm_op:$mF),
-         (outs),
-         (ins
-           vec_i8imm_op:$m0, vec_i8imm_op:$m1,
-           vec_i8imm_op:$m2, vec_i8imm_op:$m3,
-           vec_i8imm_op:$m4, vec_i8imm_op:$m5,
-           vec_i8imm_op:$m6, vec_i8imm_op:$m7,
-           vec_i8imm_op:$m8, vec_i8imm_op:$m9,
-           vec_i8imm_op:$mA, vec_i8imm_op:$mB,
-           vec_i8imm_op:$mC, vec_i8imm_op:$mD,
-           vec_i8imm_op:$mE, vec_i8imm_op:$mF),
-         [],
-         "v8x16.shuffle\t$dst, $x, $y, "#
-           "$m0, $m1, $m2, $m3, $m4, $m5, $m6, $m7, "#
-           "$m8, $m9, $mA, $mB, $mC, $mD, $mE, $mF",
-         "v8x16.shuffle\t"#
-           "$m0, $m1, $m2, $m3, $m4, $m5, $m6, $m7, "#
-           "$m8, $m9, $mA, $mB, $mC, $mD, $mE, $mF",
-         3>;
+//===----------------------------------------------------------------------===//
+// Comparisons
+//===----------------------------------------------------------------------===//
 
-// Shuffles after custom lowering
-def wasm_shuffle_t : SDTypeProfile<1, 18, []>;
-def wasm_shuffle : SDNode<"WebAssemblyISD::SHUFFLE", wasm_shuffle_t>;
-foreach vec_t = [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64] in {
-def : Pat<(vec_t (wasm_shuffle (vec_t V128:$x), (vec_t V128:$y),
-            (i32 LaneIdx32:$m0), (i32 LaneIdx32:$m1),
-            (i32 LaneIdx32:$m2), (i32 LaneIdx32:$m3),
-            (i32 LaneIdx32:$m4), (i32 LaneIdx32:$m5),
-            (i32 LaneIdx32:$m6), (i32 LaneIdx32:$m7),
-            (i32 LaneIdx32:$m8), (i32 LaneIdx32:$m9),
-            (i32 LaneIdx32:$mA), (i32 LaneIdx32:$mB),
-            (i32 LaneIdx32:$mC), (i32 LaneIdx32:$mD),
-            (i32 LaneIdx32:$mE), (i32 LaneIdx32:$mF))),
-          (vec_t (SHUFFLE (vec_t V128:$x), (vec_t V128:$y),
-            (i32 LaneIdx32:$m0), (i32 LaneIdx32:$m1),
-            (i32 LaneIdx32:$m2), (i32 LaneIdx32:$m3),
-            (i32 LaneIdx32:$m4), (i32 LaneIdx32:$m5),
-            (i32 LaneIdx32:$m6), (i32 LaneIdx32:$m7),
-            (i32 LaneIdx32:$m8), (i32 LaneIdx32:$m9),
-            (i32 LaneIdx32:$mA), (i32 LaneIdx32:$mB),
-            (i32 LaneIdx32:$mC), (i32 LaneIdx32:$mD),
-            (i32 LaneIdx32:$mE), (i32 LaneIdx32:$mF)))>;
+multiclass SIMDCondition<ValueType vec_t, ValueType out_t, string vec,
+                         string name, CondCode cond, bits<32> simdop> {
+  defm _#vec_t :
+    SIMD_I<(outs V128:$dst), (ins V128:$lhs, V128:$rhs), (outs), (ins),
+           [(set (out_t V128:$dst),
+             (setcc (vec_t V128:$lhs), (vec_t V128:$rhs), cond)
+           )],
+           vec#"."#name#"\t$dst, $lhs, $rhs", vec#"."#name, simdop>;
 }
 
+multiclass SIMDConditionInt<string name, CondCode cond, bits<32> baseInst> {
+  defm "" : SIMDCondition<v16i8, v16i8, "i8x16", name, cond, baseInst>;
+  defm "" : SIMDCondition<v8i16, v8i16, "i16x8", name, cond,
+                          !add(baseInst, 10)>;
+  defm "" : SIMDCondition<v4i32, v4i32, "i32x4", name, cond,
+                          !add(baseInst, 20)>;
+}
+
+multiclass SIMDConditionFP<string name, CondCode cond, bits<32> baseInst> {
+  defm "" : SIMDCondition<v4f32, v4i32, "f32x4", name, cond, baseInst>;
+  defm "" : SIMDCondition<v2f64, v2i64, "f64x2", name, cond,
+                          !add(baseInst, 6)>;
+}
+
+// Equality: eq
+let isCommutable = 1 in {
+defm EQ : SIMDConditionInt<"eq", SETEQ, 24>;
+defm EQ : SIMDConditionFP<"eq", SETOEQ, 64>;
+} // isCommutable = 1
+
+// Non-equality: ne
+let isCommutable = 1 in {
+defm NE : SIMDConditionInt<"ne", SETNE, 25>;
+defm NE : SIMDConditionFP<"ne", SETUNE, 65>;
+} // isCommutable = 1
+
+// Less than: lt_s / lt_u / lt
+defm LT_S : SIMDConditionInt<"lt_s", SETLT, 26>;
+defm LT_U : SIMDConditionInt<"lt_u", SETULT, 27>;
+defm LT : SIMDConditionFP<"lt", SETOLT, 66>;
+
+// Greater than: gt_s / gt_u / gt
+defm GT_S : SIMDConditionInt<"gt_s", SETGT, 28>;
+defm GT_U : SIMDConditionInt<"gt_u", SETUGT, 29>;
+defm GT : SIMDConditionFP<"gt", SETOGT, 67>;
+
+// Less than or equal: le_s / le_u / le
+defm LE_S : SIMDConditionInt<"le_s", SETLE, 30>;
+defm LE_U : SIMDConditionInt<"le_u", SETULE, 31>;
+defm LE : SIMDConditionFP<"le", SETOLE, 68>;
+
+// Greater than or equal: ge_s / ge_u / ge
+defm GE_S : SIMDConditionInt<"ge_s", SETGE, 32>;
+defm GE_U : SIMDConditionInt<"ge_u", SETUGE, 33>;
+defm GE : SIMDConditionFP<"ge", SETOGE, 69>;
+
+// Lower float comparisons that don't care about NaN to standard WebAssembly
+// float comparisons. These instructions are generated in the target-independent
+// expansion of unordered comparisons and ordered ne.
+def : Pat<(v4i32 (seteq (v4f32 V128:$lhs), (v4f32 V128:$rhs))),
+          (v4i32 (EQ_v4f32 (v4f32 V128:$lhs), (v4f32 V128:$rhs)))>;
+def : Pat<(v4i32 (setne (v4f32 V128:$lhs), (v4f32 V128:$rhs))),
+          (v4i32 (NE_v4f32 (v4f32 V128:$lhs), (v4f32 V128:$rhs)))>;
+def : Pat<(v2i64 (seteq (v2f64 V128:$lhs), (v2f64 V128:$rhs))),
+          (v2i64 (EQ_v2f64 (v2f64 V128:$lhs), (v2f64 V128:$rhs)))>;
+def : Pat<(v2i64 (setne (v2f64 V128:$lhs), (v2f64 V128:$rhs))),
+          (v2i64 (NE_v2f64 (v2f64 V128:$lhs), (v2f64 V128:$rhs)))>;
+
 //===----------------------------------------------------------------------===//
-// Integer arithmetic
+// Bitwise operations
 //===----------------------------------------------------------------------===//
 
 multiclass SIMDBinary<ValueType vec_t, string vec, SDNode node, string name,
@@ -419,19 +543,11 @@ multiclass SIMDBinary<ValueType vec_t, string vec, SDNode node, string name,
                         simdop>;
 }
 
-multiclass SIMDBinaryIntSmall<SDNode node, string name, bits<32> baseInst> {
-  defm "" : SIMDBinary<v16i8, "i8x16", node, name, baseInst>;
-  defm "" : SIMDBinary<v8i16, "i16x8", node, name, !add(baseInst, 17)>;
-}
-
-multiclass SIMDBinaryIntNoI64x2<SDNode node, string name, bits<32> baseInst> {
-  defm "" : SIMDBinaryIntSmall<node, name, baseInst>;
-  defm "" : SIMDBinary<v4i32, "i32x4", node, name, !add(baseInst, 34)>;
-}
-
-multiclass SIMDBinaryInt<SDNode node, string name, bits<32> baseInst> {
-  defm "" : SIMDBinaryIntNoI64x2<node, name, baseInst>;
-  defm "" : SIMDBinary<v2i64, "i64x2", node, name, !add(baseInst, 51)>;
+multiclass SIMDBitwise<SDNode node, string name, bits<32> simdop> {
+  defm "" : SIMDBinary<v16i8, "v128", node, name, simdop>;
+  defm "" : SIMDBinary<v8i16, "v128", node, name, simdop>;
+  defm "" : SIMDBinary<v4i32, "v128", node, name, simdop>;
+  defm "" : SIMDBinary<v2i64, "v128", node, name, simdop>;
 }
 
 multiclass SIMDUnary<ValueType vec_t, string vec, SDNode node, string name,
@@ -443,6 +559,39 @@ multiclass SIMDUnary<ValueType vec_t, string vec, SDNode node, string name,
                         vec#"."#name#"\t$dst, $vec", vec#"."#name, simdop>;
 }
 
+// Bitwise logic: v128.and / v128.or / v128.xor
+let isCommutable = 1 in {
+defm AND : SIMDBitwise<and, "and", 76>;
+defm OR : SIMDBitwise<or, "or", 77>;
+defm XOR : SIMDBitwise<xor, "xor", 78>;
+} // isCommutable = 1
+
+// Bitwise logic: v128.not
+foreach vec_t = [v16i8, v8i16, v4i32, v2i64] in
+defm NOT: SIMDUnary<vec_t, "v128", vnot, "not", 79>;
+
+// Bitwise select: v128.bitselect
+foreach vec_t = [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64] in
+  defm BITSELECT_#vec_t :
+    SIMD_I<(outs V128:$dst), (ins V128:$v1, V128:$v2, V128:$c), (outs), (ins),
+           [(set (vec_t V128:$dst),
+             (vec_t (int_wasm_bitselect
+               (vec_t V128:$c), (vec_t V128:$v1), (vec_t V128:$v2)
+             ))
+           )],
+           "v128.bitselect\t$dst, $v1, $v2, $c", "v128.bitselect", 80>;
+
+// Bitselect is equivalent to (c & v1) | (~c & v2)
+foreach vec_t = [v16i8, v8i16, v4i32, v2i64] in
+  def : Pat<(vec_t (or (and (vec_t V128:$c), (vec_t V128:$v1)),
+              (and (vnot V128:$c), (vec_t V128:$v2)))),
+            (!cast<Instruction>("BITSELECT_"#vec_t)
+              V128:$v1, V128:$v2, V128:$c)>;
+
+//===----------------------------------------------------------------------===//
+// Integer unary arithmetic
+//===----------------------------------------------------------------------===//
+
 multiclass SIMDUnaryInt<SDNode node, string name, bits<32> baseInst> {
   defm "" : SIMDUnary<v16i8, "i8x16", node, name, baseInst>;
   defm "" : SIMDUnary<v8i16, "i16x8", node, name, !add(baseInst, 17)>;
@@ -450,37 +599,31 @@ multiclass SIMDUnaryInt<SDNode node, string name, bits<32> baseInst> {
   defm "" : SIMDUnary<v2i64, "i64x2", node, name, !add(baseInst, 51)>;
 }
 
+multiclass SIMDReduceVec<ValueType vec_t, string vec, SDNode op, string name,
+                         bits<32> simdop> {
+  defm _#vec_t : SIMD_I<(outs I32:$dst), (ins V128:$vec), (outs), (ins),
+                        [(set I32:$dst, (i32 (op (vec_t V128:$vec))))],
+                        vec#"."#name#"\t$dst, $vec", vec#"."#name, simdop>;
+}
+
+multiclass SIMDReduce<SDNode op, string name, bits<32> baseInst> {
+  defm "" : SIMDReduceVec<v16i8, "i8x16", op, name, baseInst>;
+  defm "" : SIMDReduceVec<v8i16, "i16x8", op, name, !add(baseInst, 17)>;
+  defm "" : SIMDReduceVec<v4i32, "i32x4", op, name, !add(baseInst, 34)>;
+  defm "" : SIMDReduceVec<v2i64, "i64x2", op, name, !add(baseInst, 51)>;
+}
+
 // Integer vector negation
 def ivneg : PatFrag<(ops node:$in), (sub immAllZerosV, node:$in)>;
-
-// Integer addition: add
-let isCommutable = 1 in
-defm ADD : SIMDBinaryInt<add, "add", 87>;
-
-// Integer subtraction: sub
-defm SUB : SIMDBinaryInt<sub, "sub", 90>;
-
-// Integer multiplication: mul
-defm MUL : SIMDBinaryIntNoI64x2<mul, "mul", 93>;
 
 // Integer negation: neg
 defm NEG : SIMDUnaryInt<ivneg, "neg", 81>;
 
-//===----------------------------------------------------------------------===//
-// Saturating integer arithmetic
-//===----------------------------------------------------------------------===//
+// Any lane true: any_true
+defm ANYTRUE : SIMDReduce<int_wasm_anytrue, "any_true", 82>;
 
-// Saturating integer addition: add_saturate_s / add_saturate_u
-let isCommutable = 1 in {
-defm ADD_SAT_S : SIMDBinaryIntSmall<saddsat, "add_saturate_s", 88>;
-defm ADD_SAT_U : SIMDBinaryIntSmall<uaddsat, "add_saturate_u", 89>;
-} // isCommutable = 1
-
-// Saturating integer subtraction: sub_saturate_s / sub_saturate_u
-defm SUB_SAT_S :
-  SIMDBinaryIntSmall<int_wasm_sub_saturate_signed, "sub_saturate_s", 91>;
-defm SUB_SAT_U :
-  SIMDBinaryIntSmall<int_wasm_sub_saturate_unsigned, "sub_saturate_u", 92>;
+// All lanes true: all_true
+defm ALLTRUE : SIMDReduce<int_wasm_alltrue, "all_true", 83>;
 
 //===----------------------------------------------------------------------===//
 // Bit shifts
@@ -531,195 +674,43 @@ def : Pat<(v2i64 (shifts[0] (v2i64 V128:$vec), I32:$x)),
           (v2i64 (shifts[1] (v2i64 V128:$vec), I32:$x))>;
 
 //===----------------------------------------------------------------------===//
-// Bitwise operations
+// Integer binary arithmetic
 //===----------------------------------------------------------------------===//
 
-multiclass SIMDBitwise<SDNode node, string name, bits<32> simdop> {
-  defm "" : SIMDBinary<v16i8, "v128", node, name, simdop>;
-  defm "" : SIMDBinary<v8i16, "v128", node, name, simdop>;
-  defm "" : SIMDBinary<v4i32, "v128", node, name, simdop>;
-  defm "" : SIMDBinary<v2i64, "v128", node, name, simdop>;
+multiclass SIMDBinaryIntSmall<SDNode node, string name, bits<32> baseInst> {
+  defm "" : SIMDBinary<v16i8, "i8x16", node, name, baseInst>;
+  defm "" : SIMDBinary<v8i16, "i16x8", node, name, !add(baseInst, 17)>;
 }
 
-// Bitwise logic: v128.and / v128.or / v128.xor
+multiclass SIMDBinaryIntNoI64x2<SDNode node, string name, bits<32> baseInst> {
+  defm "" : SIMDBinaryIntSmall<node, name, baseInst>;
+  defm "" : SIMDBinary<v4i32, "i32x4", node, name, !add(baseInst, 34)>;
+}
+
+multiclass SIMDBinaryInt<SDNode node, string name, bits<32> baseInst> {
+  defm "" : SIMDBinaryIntNoI64x2<node, name, baseInst>;
+  defm "" : SIMDBinary<v2i64, "i64x2", node, name, !add(baseInst, 51)>;
+}
+
+// Integer addition: add / add_saturate_s / add_saturate_u
 let isCommutable = 1 in {
-defm AND : SIMDBitwise<and, "and", 76>;
-defm OR : SIMDBitwise<or, "or", 77>;
-defm XOR : SIMDBitwise<xor, "xor", 78>;
+defm ADD : SIMDBinaryInt<add, "add", 87>;
+defm ADD_SAT_S : SIMDBinaryIntSmall<saddsat, "add_saturate_s", 88>;
+defm ADD_SAT_U : SIMDBinaryIntSmall<uaddsat, "add_saturate_u", 89>;
 } // isCommutable = 1
 
-// Bitwise logic: v128.not
-foreach vec_t = [v16i8, v8i16, v4i32, v2i64] in
-  defm NOT : SIMDUnary<vec_t, "v128", vnot, "not", 79>;
+// Integer subtraction: sub / sub_saturate_s / sub_saturate_u
+defm SUB : SIMDBinaryInt<sub, "sub", 90>;
+defm SUB_SAT_S :
+  SIMDBinaryIntSmall<int_wasm_sub_saturate_signed, "sub_saturate_s", 91>;
+defm SUB_SAT_U :
+  SIMDBinaryIntSmall<int_wasm_sub_saturate_unsigned, "sub_saturate_u", 92>;
 
-// Bitwise select: v128.bitselect
-foreach vec_t = [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64] in
-  defm BITSELECT_#vec_t :
-    SIMD_I<(outs V128:$dst), (ins V128:$v1, V128:$v2, V128:$c), (outs), (ins),
-           [(set (vec_t V128:$dst),
-             (vec_t (int_wasm_bitselect
-               (vec_t V128:$c), (vec_t V128:$v1), (vec_t V128:$v2)
-             ))
-           )],
-           "v128.bitselect\t$dst, $v1, $v2, $c", "v128.bitselect", 80>;
-
-// Bitselect is equivalent to (c & v1) | (~c & v2)
-foreach vec_t = [v16i8, v8i16, v4i32, v2i64] in
-  def : Pat<(vec_t (or (and (vec_t V128:$c), (vec_t V128:$v1)),
-              (and (vnot V128:$c), (vec_t V128:$v2)))),
-            (!cast<Instruction>("BITSELECT_"#vec_t)
-              V128:$v1, V128:$v2, V128:$c)>;
+// Integer multiplication: mul
+defm MUL : SIMDBinaryIntNoI64x2<mul, "mul", 93>;
 
 //===----------------------------------------------------------------------===//
-// Boolean horizontal reductions
-//===----------------------------------------------------------------------===//
-
-multiclass SIMDReduceVec<ValueType vec_t, string vec, string name, SDNode op,
-                         bits<32> simdop> {
-  defm _#vec_t : SIMD_I<(outs I32:$dst), (ins V128:$vec), (outs), (ins),
-                        [(set I32:$dst, (i32 (op (vec_t V128:$vec))))],
-                        vec#"."#name#"\t$dst, $vec", vec#"."#name, simdop>;
-}
-
-multiclass SIMDReduce<string name, SDNode op, bits<32> baseInst> {
-  defm "" : SIMDReduceVec<v16i8, "i8x16", name, op, baseInst>;
-  defm "" : SIMDReduceVec<v8i16, "i16x8", name, op, !add(baseInst, 17)>;
-  defm "" : SIMDReduceVec<v4i32, "i32x4", name, op, !add(baseInst, 34)>;
-  defm "" : SIMDReduceVec<v2i64, "i64x2", name, op, !add(baseInst, 51)>;
-}
-
-// Any lane true: any_true
-defm ANYTRUE : SIMDReduce<"any_true", int_wasm_anytrue, 82>;
-
-// All lanes true: all_true
-defm ALLTRUE : SIMDReduce<"all_true", int_wasm_alltrue, 83>;
-
-//===----------------------------------------------------------------------===//
-// Comparisons
-//===----------------------------------------------------------------------===//
-
-multiclass SIMDCondition<ValueType vec_t, ValueType out_t, string vec,
-                         string name, CondCode cond, bits<32> simdop> {
-  defm _#vec_t :
-    SIMD_I<(outs V128:$dst), (ins V128:$lhs, V128:$rhs), (outs), (ins),
-           [(set (out_t V128:$dst),
-             (setcc (vec_t V128:$lhs), (vec_t V128:$rhs), cond)
-           )],
-           vec#"."#name#"\t$dst, $lhs, $rhs", vec#"."#name, simdop>;
-}
-
-multiclass SIMDConditionInt<string name, CondCode cond, bits<32> baseInst> {
-  defm "" : SIMDCondition<v16i8, v16i8, "i8x16", name, cond, baseInst>;
-  defm "" : SIMDCondition<v8i16, v8i16, "i16x8", name, cond,
-                          !add(baseInst, 10)>;
-  defm "" : SIMDCondition<v4i32, v4i32, "i32x4", name, cond,
-                          !add(baseInst, 20)>;
-}
-
-multiclass SIMDConditionFP<string name, CondCode cond, bits<32> baseInst> {
-  defm "" : SIMDCondition<v4f32, v4i32, "f32x4", name, cond, baseInst>;
-  defm "" : SIMDCondition<v2f64, v2i64, "f64x2", name, cond,
-                          !add(baseInst, 6)>;
-}
-
-// Equality: eq
-let isCommutable = 1 in {
-defm EQ : SIMDConditionInt<"eq", SETEQ, 24>;
-defm EQ : SIMDConditionFP<"eq", SETOEQ, 64>;
-} // isCommutable = 1
-
-// Non-equality: ne
-let isCommutable = 1 in {
-defm NE : SIMDConditionInt<"ne", SETNE, 25>;
-defm NE : SIMDConditionFP<"ne", SETUNE, 65>;
-} // isCommutable = 1
-
-// Less than: lt_s / lt_u / lt
-defm LT_S : SIMDConditionInt<"lt_s", SETLT, 26>;
-defm LT_U : SIMDConditionInt<"lt_u", SETULT, 27>;
-defm LT : SIMDConditionFP<"lt", SETOLT, 66>;
-
-// Less than or equal: le_s / le_u / le
-defm LE_S : SIMDConditionInt<"le_s", SETLE, 30>;
-defm LE_U : SIMDConditionInt<"le_u", SETULE, 31>;
-defm LE : SIMDConditionFP<"le", SETOLE, 68>;
-
-// Greater than: gt_s / gt_u / gt
-defm GT_S : SIMDConditionInt<"gt_s", SETGT, 28>;
-defm GT_U : SIMDConditionInt<"gt_u", SETUGT, 29>;
-defm GT : SIMDConditionFP<"gt", SETOGT, 67>;
-
-// Greater than or equal: ge_s / ge_u / ge
-defm GE_S : SIMDConditionInt<"ge_s", SETGE, 32>;
-defm GE_U : SIMDConditionInt<"ge_u", SETUGE, 33>;
-defm GE : SIMDConditionFP<"ge", SETOGE, 69>;
-
-// Lower float comparisons that don't care about NaN to standard WebAssembly
-// float comparisons. These instructions are generated in the target-independent
-// expansion of unordered comparisons and ordered ne.
-def : Pat<(v4i32 (seteq (v4f32 V128:$lhs), (v4f32 V128:$rhs))),
-          (v4i32 (EQ_v4f32 (v4f32 V128:$lhs), (v4f32 V128:$rhs)))>;
-def : Pat<(v4i32 (setne (v4f32 V128:$lhs), (v4f32 V128:$rhs))),
-          (v4i32 (NE_v4f32 (v4f32 V128:$lhs), (v4f32 V128:$rhs)))>;
-def : Pat<(v2i64 (seteq (v2f64 V128:$lhs), (v2f64 V128:$rhs))),
-          (v2i64 (EQ_v2f64 (v2f64 V128:$lhs), (v2f64 V128:$rhs)))>;
-def : Pat<(v2i64 (setne (v2f64 V128:$lhs), (v2f64 V128:$rhs))),
-          (v2i64 (NE_v2f64 (v2f64 V128:$lhs), (v2f64 V128:$rhs)))>;
-
-//===----------------------------------------------------------------------===//
-// Load and store
-//===----------------------------------------------------------------------===//
-
-// Load: v128.load
-multiclass SIMDLoad<ValueType vec_t> {
-  let mayLoad = 1 in
-  defm LOAD_#vec_t :
-    SIMD_I<(outs V128:$dst), (ins P2Align:$align, offset32_op:$off, I32:$addr),
-           (outs), (ins P2Align:$align, offset32_op:$off), [],
-           "v128.load\t$dst, ${off}(${addr})$align",
-           "v128.load\t$off$align", 0>;
-}
-
-foreach vec_t = [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64] in {
-defm "" : SIMDLoad<vec_t>;
-
-// Def load and store patterns from WebAssemblyInstrMemory.td for vector types
-def : LoadPatNoOffset<vec_t, load, !cast<NI>("LOAD_"#vec_t)>;
-def : LoadPatImmOff<vec_t, load, regPlusImm, !cast<NI>("LOAD_"#vec_t)>;
-def : LoadPatImmOff<vec_t, load, or_is_add, !cast<NI>("LOAD_"#vec_t)>;
-def : LoadPatGlobalAddr<vec_t, load, !cast<NI>("LOAD_"#vec_t)>;
-def : LoadPatExternalSym<vec_t, load, !cast<NI>("LOAD_"#vec_t)>;
-def : LoadPatOffsetOnly<vec_t, load, !cast<NI>("LOAD_"#vec_t)>;
-def : LoadPatGlobalAddrOffOnly<vec_t, load, !cast<NI>("LOAD_"#vec_t)>;
-def : LoadPatExternSymOffOnly<vec_t, load, !cast<NI>("LOAD_"#vec_t)>;
-}
-
-// Store: v128.store
-multiclass SIMDStore<ValueType vec_t> {
-  let mayStore = 1 in
-  defm STORE_#vec_t :
-    SIMD_I<(outs), (ins P2Align:$align, offset32_op:$off, I32:$addr, V128:$vec),
-           (outs), (ins P2Align:$align, offset32_op:$off), [],
-           "v128.store\t${off}(${addr})$align, $vec",
-           "v128.store\t$off$align", 1>;
-}
-
-foreach vec_t = [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64] in {
-defm "" : SIMDStore<vec_t>;
-
-// Def load and store patterns from WebAssemblyInstrMemory.td for vector types
-def : StorePatNoOffset<vec_t, store, !cast<NI>("STORE_"#vec_t)>;
-def : StorePatImmOff<vec_t, store, regPlusImm, !cast<NI>("STORE_"#vec_t)>;
-def : StorePatImmOff<vec_t, store, or_is_add, !cast<NI>("STORE_"#vec_t)>;
-def : StorePatGlobalAddr<vec_t, store, !cast<NI>("STORE_"#vec_t)>;
-def : StorePatExternalSym<vec_t, store, !cast<NI>("STORE_"#vec_t)>;
-def : StorePatOffsetOnly<vec_t, store, !cast<NI>("STORE_"#vec_t)>;
-def : StorePatGlobalAddrOffOnly<vec_t, store, !cast<NI>("STORE_"#vec_t)>;
-def : StorePatExternSymOffOnly<vec_t, store, !cast<NI>("STORE_"#vec_t)>;
-}
-
-//===----------------------------------------------------------------------===//
-// Floating-point sign bit operations
+// Floating-point unary arithmetic
 //===----------------------------------------------------------------------===//
 
 multiclass SIMDUnaryFP<SDNode node, string name, bits<32> baseInst> {
@@ -727,30 +718,23 @@ multiclass SIMDUnaryFP<SDNode node, string name, bits<32> baseInst> {
   defm "" : SIMDUnary<v2f64, "f64x2", node, name, !add(baseInst, 11)>;
 }
 
-// Negation: neg
-defm NEG : SIMDUnaryFP<fneg, "neg", 150>;
-
 // Absolute value: abs
 defm ABS : SIMDUnaryFP<fabs, "abs", 149>;
 
+// Negation: neg
+defm NEG : SIMDUnaryFP<fneg, "neg", 150>;
+
+// Square root: sqrt
+defm SQRT : SIMDUnaryFP<fsqrt, "sqrt", 151>;
+
 //===----------------------------------------------------------------------===//
-// Floating-point min and max
+// Floating-point binary arithmetic
 //===----------------------------------------------------------------------===//
 
 multiclass SIMDBinaryFP<SDNode node, string name, bits<32> baseInst> {
   defm "" : SIMDBinary<v4f32, "f32x4", node, name, baseInst>;
   defm "" : SIMDBinary<v2f64, "f64x2", node, name, !add(baseInst, 11)>;
 }
-
-// NaN-propagating minimum: min
-defm MIN : SIMDBinaryFP<fminimum, "min", 158>;
-
-// NaN-propagating maximum: max
-defm MAX : SIMDBinaryFP<fmaximum, "max", 159>;
-
-//===----------------------------------------------------------------------===//
-// Floating-point arithmetic
-//===----------------------------------------------------------------------===//
 
 // Addition: add
 let isCommutable = 1 in
@@ -759,15 +743,18 @@ defm ADD : SIMDBinaryFP<fadd, "add", 154>;
 // Subtraction: sub
 defm SUB : SIMDBinaryFP<fsub, "sub", 155>;
 
-// Division: div
-defm DIV : SIMDBinaryFP<fdiv, "div", 157>;
-
 // Multiplication: mul
 let isCommutable = 1 in
 defm MUL : SIMDBinaryFP<fmul, "mul", 156>;
 
-// Square root: sqrt
-defm SQRT : SIMDUnaryFP<fsqrt, "sqrt", 151>;
+// Division: div
+defm DIV : SIMDBinaryFP<fdiv, "div", 157>;
+
+// NaN-propagating minimum: min
+defm MIN : SIMDBinaryFP<fminimum, "min", 158>;
+
+// NaN-propagating maximum: max
+defm MAX : SIMDBinaryFP<fmaximum, "max", 159>;
 
 //===----------------------------------------------------------------------===//
 // Conversions
