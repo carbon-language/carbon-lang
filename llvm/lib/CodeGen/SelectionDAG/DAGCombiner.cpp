@@ -16718,17 +16718,19 @@ static SDValue narrowExtractedVectorLoad(SDNode *Extract, SelectionDAG &DAG) {
   if (DAG.getDataLayout().isBigEndian())
     return SDValue();
 
-  // TODO: The one-use check is overly conservative. Check the cost of the
-  // extract instead or remove that condition entirely.
   auto *Ld = dyn_cast<LoadSDNode>(Extract->getOperand(0));
   auto *ExtIdx = dyn_cast<ConstantSDNode>(Extract->getOperand(1));
-  if (!Ld || !Ld->hasOneUse() || Ld->getExtensionType() || Ld->isVolatile() ||
-      !ExtIdx)
+  if (!Ld || Ld->getExtensionType() || Ld->isVolatile() || !ExtIdx)
+    return SDValue();
+
+  // Allow targets to opt-out.
+  EVT VT = Extract->getValueType(0);
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  if (!TLI.shouldReduceLoadWidth(Ld, Ld->getExtensionType(), VT))
     return SDValue();
 
   // The narrow load will be offset from the base address of the old load if
   // we are extracting from something besides index 0 (little-endian).
-  EVT VT = Extract->getValueType(0);
   SDLoc DL(Extract);
   SDValue BaseAddr = Ld->getOperand(1);
   unsigned Offset = ExtIdx->getZExtValue() * VT.getScalarType().getStoreSize();
