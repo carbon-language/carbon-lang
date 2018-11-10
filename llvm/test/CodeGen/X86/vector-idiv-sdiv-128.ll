@@ -627,26 +627,22 @@ define <16 x i8> @test_rem_variable_16i8(<16 x i8> %a, <16 x i8> %b) nounwind {
 ; SSE2-NEXT:    cbtw
 ; SSE2-NEXT:    idivb -{{[0-9]+}}(%rsp)
 ; SSE2-NEXT:    movsbl %ah, %eax
-; SSE2-NEXT:    movzbl %al, %eax
 ; SSE2-NEXT:    movd %eax, %xmm0
 ; SSE2-NEXT:    movb -{{[0-9]+}}(%rsp), %al
 ; SSE2-NEXT:    cbtw
 ; SSE2-NEXT:    idivb -{{[0-9]+}}(%rsp)
 ; SSE2-NEXT:    movsbl %ah, %eax
-; SSE2-NEXT:    movzbl %al, %eax
 ; SSE2-NEXT:    movd %eax, %xmm1
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3],xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
 ; SSE2-NEXT:    movb -{{[0-9]+}}(%rsp), %al
 ; SSE2-NEXT:    cbtw
 ; SSE2-NEXT:    idivb -{{[0-9]+}}(%rsp)
 ; SSE2-NEXT:    movsbl %ah, %eax
-; SSE2-NEXT:    movzbl %al, %eax
 ; SSE2-NEXT:    movd %eax, %xmm2
 ; SSE2-NEXT:    movb -{{[0-9]+}}(%rsp), %al
 ; SSE2-NEXT:    cbtw
 ; SSE2-NEXT:    idivb -{{[0-9]+}}(%rsp)
 ; SSE2-NEXT:    movsbl %ah, %eax
-; SSE2-NEXT:    movzbl %al, %eax
 ; SSE2-NEXT:    movd %eax, %xmm0
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1],xmm0[2],xmm2[2],xmm0[3],xmm2[3],xmm0[4],xmm2[4],xmm0[5],xmm2[5],xmm0[6],xmm2[6],xmm0[7],xmm2[7]
 ; SSE2-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3]
@@ -654,26 +650,22 @@ define <16 x i8> @test_rem_variable_16i8(<16 x i8> %a, <16 x i8> %b) nounwind {
 ; SSE2-NEXT:    cbtw
 ; SSE2-NEXT:    idivb -{{[0-9]+}}(%rsp)
 ; SSE2-NEXT:    movsbl %ah, %eax
-; SSE2-NEXT:    movzbl %al, %eax
 ; SSE2-NEXT:    movd %eax, %xmm1
 ; SSE2-NEXT:    movb -{{[0-9]+}}(%rsp), %al
 ; SSE2-NEXT:    cbtw
 ; SSE2-NEXT:    idivb -{{[0-9]+}}(%rsp)
 ; SSE2-NEXT:    movsbl %ah, %eax
-; SSE2-NEXT:    movzbl %al, %eax
 ; SSE2-NEXT:    movd %eax, %xmm2
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm2 = xmm2[0],xmm1[0],xmm2[1],xmm1[1],xmm2[2],xmm1[2],xmm2[3],xmm1[3],xmm2[4],xmm1[4],xmm2[5],xmm1[5],xmm2[6],xmm1[6],xmm2[7],xmm1[7]
 ; SSE2-NEXT:    movb -{{[0-9]+}}(%rsp), %al
 ; SSE2-NEXT:    cbtw
 ; SSE2-NEXT:    idivb -{{[0-9]+}}(%rsp)
 ; SSE2-NEXT:    movsbl %ah, %eax
-; SSE2-NEXT:    movzbl %al, %eax
 ; SSE2-NEXT:    movd %eax, %xmm3
 ; SSE2-NEXT:    movb -{{[0-9]+}}(%rsp), %al
 ; SSE2-NEXT:    cbtw
 ; SSE2-NEXT:    idivb -{{[0-9]+}}(%rsp)
 ; SSE2-NEXT:    movsbl %ah, %eax
-; SSE2-NEXT:    movzbl %al, %eax
 ; SSE2-NEXT:    movd %eax, %xmm1
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm3[0],xmm1[1],xmm3[1],xmm1[2],xmm3[2],xmm1[3],xmm3[3],xmm1[4],xmm3[4],xmm1[5],xmm3[5],xmm1[6],xmm3[6],xmm1[7],xmm3[7]
 ; SSE2-NEXT:    punpcklwd {{.*#+}} xmm1 = xmm1[0],xmm2[0],xmm1[1],xmm2[1],xmm1[2],xmm2[2],xmm1[3],xmm2[3]
@@ -682,26 +674,22 @@ define <16 x i8> @test_rem_variable_16i8(<16 x i8> %a, <16 x i8> %b) nounwind {
 ; SSE2-NEXT:    cbtw
 ; SSE2-NEXT:    idivb -{{[0-9]+}}(%rsp)
 ; SSE2-NEXT:    movsbl %ah, %eax
-; SSE2-NEXT:    movzbl %al, %eax
 ; SSE2-NEXT:    movd %eax, %xmm0
 ; SSE2-NEXT:    movb -{{[0-9]+}}(%rsp), %al
 ; SSE2-NEXT:    cbtw
 ; SSE2-NEXT:    idivb -{{[0-9]+}}(%rsp)
 ; SSE2-NEXT:    movsbl %ah, %eax
-; SSE2-NEXT:    movzbl %al, %eax
 ; SSE2-NEXT:    movd %eax, %xmm3
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm3 = xmm3[0],xmm0[0],xmm3[1],xmm0[1],xmm3[2],xmm0[2],xmm3[3],xmm0[3],xmm3[4],xmm0[4],xmm3[5],xmm0[5],xmm3[6],xmm0[6],xmm3[7],xmm0[7]
 ; SSE2-NEXT:    movb -{{[0-9]+}}(%rsp), %al
 ; SSE2-NEXT:    cbtw
 ; SSE2-NEXT:    idivb -{{[0-9]+}}(%rsp)
 ; SSE2-NEXT:    movsbl %ah, %eax
-; SSE2-NEXT:    movzbl %al, %eax
 ; SSE2-NEXT:    movd %eax, %xmm0
 ; SSE2-NEXT:    movb -{{[0-9]+}}(%rsp), %al
 ; SSE2-NEXT:    cbtw
 ; SSE2-NEXT:    idivb -{{[0-9]+}}(%rsp)
 ; SSE2-NEXT:    movsbl %ah, %eax
-; SSE2-NEXT:    movzbl %al, %eax
 ; SSE2-NEXT:    movd %eax, %xmm2
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm2 = xmm2[0],xmm0[0],xmm2[1],xmm0[1],xmm2[2],xmm0[2],xmm2[3],xmm0[3],xmm2[4],xmm0[4],xmm2[5],xmm0[5],xmm2[6],xmm0[6],xmm2[7],xmm0[7]
 ; SSE2-NEXT:    punpcklwd {{.*#+}} xmm2 = xmm2[0],xmm3[0],xmm2[1],xmm3[1],xmm2[2],xmm3[2],xmm2[3],xmm3[3]
@@ -709,13 +697,11 @@ define <16 x i8> @test_rem_variable_16i8(<16 x i8> %a, <16 x i8> %b) nounwind {
 ; SSE2-NEXT:    cbtw
 ; SSE2-NEXT:    idivb -{{[0-9]+}}(%rsp)
 ; SSE2-NEXT:    movsbl %ah, %eax
-; SSE2-NEXT:    movzbl %al, %eax
 ; SSE2-NEXT:    movd %eax, %xmm0
 ; SSE2-NEXT:    movb -{{[0-9]+}}(%rsp), %al
 ; SSE2-NEXT:    cbtw
 ; SSE2-NEXT:    idivb -{{[0-9]+}}(%rsp)
 ; SSE2-NEXT:    movsbl %ah, %eax
-; SSE2-NEXT:    movzbl %al, %eax
 ; SSE2-NEXT:    movd %eax, %xmm3
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm3 = xmm3[0],xmm0[0],xmm3[1],xmm0[1],xmm3[2],xmm0[2],xmm3[3],xmm0[3],xmm3[4],xmm0[4],xmm3[5],xmm0[5],xmm3[6],xmm0[6],xmm3[7],xmm0[7]
 ; SSE2-NEXT:    movb -{{[0-9]+}}(%rsp), %al
@@ -723,13 +709,11 @@ define <16 x i8> @test_rem_variable_16i8(<16 x i8> %a, <16 x i8> %b) nounwind {
 ; SSE2-NEXT:    movb -{{[0-9]+}}(%rsp), %cl
 ; SSE2-NEXT:    idivb -{{[0-9]+}}(%rsp)
 ; SSE2-NEXT:    movsbl %ah, %eax
-; SSE2-NEXT:    movzbl %al, %eax
 ; SSE2-NEXT:    movd %eax, %xmm4
 ; SSE2-NEXT:    movl %ecx, %eax
 ; SSE2-NEXT:    cbtw
 ; SSE2-NEXT:    idivb -{{[0-9]+}}(%rsp)
 ; SSE2-NEXT:    movsbl %ah, %eax
-; SSE2-NEXT:    movzbl %al, %eax
 ; SSE2-NEXT:    movd %eax, %xmm0
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm4[0],xmm0[1],xmm4[1],xmm0[2],xmm4[2],xmm0[3],xmm4[3],xmm0[4],xmm4[4],xmm0[5],xmm4[5],xmm0[6],xmm4[6],xmm0[7],xmm4[7]
 ; SSE2-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0],xmm3[0],xmm0[1],xmm3[1],xmm0[2],xmm3[2],xmm0[3],xmm3[3]
@@ -739,293 +723,235 @@ define <16 x i8> @test_rem_variable_16i8(<16 x i8> %a, <16 x i8> %b) nounwind {
 ;
 ; SSE41-LABEL: test_rem_variable_16i8:
 ; SSE41:       # %bb.0:
-; SSE41-NEXT:    pushq %rbp
-; SSE41-NEXT:    pushq %r15
-; SSE41-NEXT:    pushq %r14
-; SSE41-NEXT:    pushq %r13
-; SSE41-NEXT:    pushq %r12
-; SSE41-NEXT:    pushq %rbx
 ; SSE41-NEXT:    pextrb $1, %xmm0, %eax
 ; SSE41-NEXT:    # kill: def $al killed $al killed $eax
 ; SSE41-NEXT:    cbtw
 ; SSE41-NEXT:    pextrb $1, %xmm1, %ecx
 ; SSE41-NEXT:    idivb %cl
-; SSE41-NEXT:    movsbl %ah, %eax
-; SSE41-NEXT:    movzbl %al, %eax
-; SSE41-NEXT:    movl %eax, {{[-0-9]+}}(%r{{[sb]}}p) # 4-byte Spill
+; SSE41-NEXT:    movsbl %ah, %ecx
 ; SSE41-NEXT:    pextrb $0, %xmm0, %eax
 ; SSE41-NEXT:    # kill: def $al killed $al killed $eax
 ; SSE41-NEXT:    cbtw
-; SSE41-NEXT:    pextrb $0, %xmm1, %ecx
-; SSE41-NEXT:    idivb %cl
+; SSE41-NEXT:    pextrb $0, %xmm1, %edx
+; SSE41-NEXT:    idivb %dl
 ; SSE41-NEXT:    movsbl %ah, %eax
-; SSE41-NEXT:    movzbl %al, %r9d
+; SSE41-NEXT:    movd %eax, %xmm2
 ; SSE41-NEXT:    pextrb $2, %xmm0, %eax
 ; SSE41-NEXT:    # kill: def $al killed $al killed $eax
 ; SSE41-NEXT:    cbtw
+; SSE41-NEXT:    pinsrb $1, %ecx, %xmm2
 ; SSE41-NEXT:    pextrb $2, %xmm1, %ecx
 ; SSE41-NEXT:    idivb %cl
-; SSE41-NEXT:    movsbl %ah, %eax
-; SSE41-NEXT:    movzbl %al, %r10d
+; SSE41-NEXT:    movsbl %ah, %ecx
 ; SSE41-NEXT:    pextrb $3, %xmm0, %eax
 ; SSE41-NEXT:    # kill: def $al killed $al killed $eax
 ; SSE41-NEXT:    cbtw
+; SSE41-NEXT:    pinsrb $2, %ecx, %xmm2
 ; SSE41-NEXT:    pextrb $3, %xmm1, %ecx
 ; SSE41-NEXT:    idivb %cl
-; SSE41-NEXT:    movsbl %ah, %eax
-; SSE41-NEXT:    movzbl %al, %r11d
+; SSE41-NEXT:    movsbl %ah, %ecx
 ; SSE41-NEXT:    pextrb $4, %xmm0, %eax
 ; SSE41-NEXT:    # kill: def $al killed $al killed $eax
 ; SSE41-NEXT:    cbtw
+; SSE41-NEXT:    pinsrb $3, %ecx, %xmm2
 ; SSE41-NEXT:    pextrb $4, %xmm1, %ecx
 ; SSE41-NEXT:    idivb %cl
-; SSE41-NEXT:    movsbl %ah, %eax
-; SSE41-NEXT:    movzbl %al, %r14d
+; SSE41-NEXT:    movsbl %ah, %ecx
 ; SSE41-NEXT:    pextrb $5, %xmm0, %eax
 ; SSE41-NEXT:    # kill: def $al killed $al killed $eax
 ; SSE41-NEXT:    cbtw
+; SSE41-NEXT:    pinsrb $4, %ecx, %xmm2
 ; SSE41-NEXT:    pextrb $5, %xmm1, %ecx
 ; SSE41-NEXT:    idivb %cl
-; SSE41-NEXT:    movsbl %ah, %eax
-; SSE41-NEXT:    movzbl %al, %r15d
+; SSE41-NEXT:    movsbl %ah, %ecx
 ; SSE41-NEXT:    pextrb $6, %xmm0, %eax
 ; SSE41-NEXT:    # kill: def $al killed $al killed $eax
 ; SSE41-NEXT:    cbtw
+; SSE41-NEXT:    pinsrb $5, %ecx, %xmm2
 ; SSE41-NEXT:    pextrb $6, %xmm1, %ecx
 ; SSE41-NEXT:    idivb %cl
-; SSE41-NEXT:    movsbl %ah, %eax
-; SSE41-NEXT:    movzbl %al, %r12d
+; SSE41-NEXT:    movsbl %ah, %ecx
 ; SSE41-NEXT:    pextrb $7, %xmm0, %eax
 ; SSE41-NEXT:    # kill: def $al killed $al killed $eax
 ; SSE41-NEXT:    cbtw
+; SSE41-NEXT:    pinsrb $6, %ecx, %xmm2
 ; SSE41-NEXT:    pextrb $7, %xmm1, %ecx
 ; SSE41-NEXT:    idivb %cl
-; SSE41-NEXT:    movsbl %ah, %eax
-; SSE41-NEXT:    movzbl %al, %r13d
+; SSE41-NEXT:    movsbl %ah, %ecx
 ; SSE41-NEXT:    pextrb $8, %xmm0, %eax
 ; SSE41-NEXT:    # kill: def $al killed $al killed $eax
 ; SSE41-NEXT:    cbtw
+; SSE41-NEXT:    pinsrb $7, %ecx, %xmm2
 ; SSE41-NEXT:    pextrb $8, %xmm1, %ecx
 ; SSE41-NEXT:    idivb %cl
-; SSE41-NEXT:    movsbl %ah, %eax
-; SSE41-NEXT:    movzbl %al, %r8d
+; SSE41-NEXT:    movsbl %ah, %ecx
 ; SSE41-NEXT:    pextrb $9, %xmm0, %eax
 ; SSE41-NEXT:    # kill: def $al killed $al killed $eax
 ; SSE41-NEXT:    cbtw
+; SSE41-NEXT:    pinsrb $8, %ecx, %xmm2
 ; SSE41-NEXT:    pextrb $9, %xmm1, %ecx
 ; SSE41-NEXT:    idivb %cl
-; SSE41-NEXT:    movsbl %ah, %eax
-; SSE41-NEXT:    movzbl %al, %ebp
+; SSE41-NEXT:    movsbl %ah, %ecx
 ; SSE41-NEXT:    pextrb $10, %xmm0, %eax
 ; SSE41-NEXT:    # kill: def $al killed $al killed $eax
 ; SSE41-NEXT:    cbtw
+; SSE41-NEXT:    pinsrb $9, %ecx, %xmm2
 ; SSE41-NEXT:    pextrb $10, %xmm1, %ecx
 ; SSE41-NEXT:    idivb %cl
-; SSE41-NEXT:    movsbl %ah, %eax
-; SSE41-NEXT:    movzbl %al, %ecx
+; SSE41-NEXT:    movsbl %ah, %ecx
 ; SSE41-NEXT:    pextrb $11, %xmm0, %eax
 ; SSE41-NEXT:    # kill: def $al killed $al killed $eax
 ; SSE41-NEXT:    cbtw
-; SSE41-NEXT:    pextrb $11, %xmm1, %edx
-; SSE41-NEXT:    idivb %dl
-; SSE41-NEXT:    movsbl %ah, %eax
-; SSE41-NEXT:    movzbl %al, %edx
+; SSE41-NEXT:    pinsrb $10, %ecx, %xmm2
+; SSE41-NEXT:    pextrb $11, %xmm1, %ecx
+; SSE41-NEXT:    idivb %cl
+; SSE41-NEXT:    movsbl %ah, %ecx
 ; SSE41-NEXT:    pextrb $12, %xmm0, %eax
 ; SSE41-NEXT:    # kill: def $al killed $al killed $eax
 ; SSE41-NEXT:    cbtw
-; SSE41-NEXT:    pextrb $12, %xmm1, %esi
-; SSE41-NEXT:    idivb %sil
-; SSE41-NEXT:    movsbl %ah, %eax
-; SSE41-NEXT:    movzbl %al, %esi
+; SSE41-NEXT:    pinsrb $11, %ecx, %xmm2
+; SSE41-NEXT:    pextrb $12, %xmm1, %ecx
+; SSE41-NEXT:    idivb %cl
+; SSE41-NEXT:    movsbl %ah, %ecx
 ; SSE41-NEXT:    pextrb $13, %xmm0, %eax
 ; SSE41-NEXT:    # kill: def $al killed $al killed $eax
 ; SSE41-NEXT:    cbtw
-; SSE41-NEXT:    pextrb $13, %xmm1, %edi
-; SSE41-NEXT:    idivb %dil
-; SSE41-NEXT:    movsbl %ah, %eax
-; SSE41-NEXT:    movzbl %al, %edi
+; SSE41-NEXT:    pinsrb $12, %ecx, %xmm2
+; SSE41-NEXT:    pextrb $13, %xmm1, %ecx
+; SSE41-NEXT:    idivb %cl
+; SSE41-NEXT:    movsbl %ah, %ecx
 ; SSE41-NEXT:    pextrb $14, %xmm0, %eax
 ; SSE41-NEXT:    # kill: def $al killed $al killed $eax
 ; SSE41-NEXT:    cbtw
-; SSE41-NEXT:    movd %r9d, %xmm2
-; SSE41-NEXT:    pextrb $14, %xmm1, %ebx
-; SSE41-NEXT:    idivb %bl
-; SSE41-NEXT:    movsbl %ah, %eax
-; SSE41-NEXT:    movzbl %al, %ebx
+; SSE41-NEXT:    pinsrb $13, %ecx, %xmm2
+; SSE41-NEXT:    pextrb $14, %xmm1, %ecx
+; SSE41-NEXT:    idivb %cl
+; SSE41-NEXT:    movsbl %ah, %ecx
 ; SSE41-NEXT:    pextrb $15, %xmm0, %eax
 ; SSE41-NEXT:    # kill: def $al killed $al killed $eax
 ; SSE41-NEXT:    cbtw
-; SSE41-NEXT:    pinsrb $1, {{[-0-9]+}}(%r{{[sb]}}p), %xmm2 # 4-byte Folded Reload
-; SSE41-NEXT:    pinsrb $2, %r10d, %xmm2
-; SSE41-NEXT:    pinsrb $3, %r11d, %xmm2
-; SSE41-NEXT:    pinsrb $4, %r14d, %xmm2
-; SSE41-NEXT:    pinsrb $5, %r15d, %xmm2
-; SSE41-NEXT:    pinsrb $6, %r12d, %xmm2
-; SSE41-NEXT:    pinsrb $7, %r13d, %xmm2
-; SSE41-NEXT:    pinsrb $8, %r8d, %xmm2
-; SSE41-NEXT:    pinsrb $9, %ebp, %xmm2
-; SSE41-NEXT:    pinsrb $10, %ecx, %xmm2
-; SSE41-NEXT:    pinsrb $11, %edx, %xmm2
-; SSE41-NEXT:    pinsrb $12, %esi, %xmm2
-; SSE41-NEXT:    pinsrb $13, %edi, %xmm2
-; SSE41-NEXT:    pinsrb $14, %ebx, %xmm2
+; SSE41-NEXT:    pinsrb $14, %ecx, %xmm2
 ; SSE41-NEXT:    pextrb $15, %xmm1, %ecx
 ; SSE41-NEXT:    idivb %cl
 ; SSE41-NEXT:    movsbl %ah, %eax
-; SSE41-NEXT:    movzbl %al, %eax
 ; SSE41-NEXT:    pinsrb $15, %eax, %xmm2
 ; SSE41-NEXT:    movdqa %xmm2, %xmm0
-; SSE41-NEXT:    popq %rbx
-; SSE41-NEXT:    popq %r12
-; SSE41-NEXT:    popq %r13
-; SSE41-NEXT:    popq %r14
-; SSE41-NEXT:    popq %r15
-; SSE41-NEXT:    popq %rbp
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: test_rem_variable_16i8:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    pushq %rbp
-; AVX-NEXT:    pushq %r15
-; AVX-NEXT:    pushq %r14
-; AVX-NEXT:    pushq %r13
-; AVX-NEXT:    pushq %r12
-; AVX-NEXT:    pushq %rbx
 ; AVX-NEXT:    vpextrb $1, %xmm0, %eax
 ; AVX-NEXT:    # kill: def $al killed $al killed $eax
 ; AVX-NEXT:    cbtw
 ; AVX-NEXT:    vpextrb $1, %xmm1, %ecx
 ; AVX-NEXT:    idivb %cl
-; AVX-NEXT:    movsbl %ah, %eax
-; AVX-NEXT:    movzbl %al, %eax
-; AVX-NEXT:    movl %eax, {{[-0-9]+}}(%r{{[sb]}}p) # 4-byte Spill
+; AVX-NEXT:    movsbl %ah, %ecx
 ; AVX-NEXT:    vpextrb $0, %xmm0, %eax
 ; AVX-NEXT:    # kill: def $al killed $al killed $eax
 ; AVX-NEXT:    cbtw
-; AVX-NEXT:    vpextrb $0, %xmm1, %ecx
-; AVX-NEXT:    idivb %cl
+; AVX-NEXT:    vpextrb $0, %xmm1, %edx
+; AVX-NEXT:    idivb %dl
 ; AVX-NEXT:    movsbl %ah, %eax
-; AVX-NEXT:    movzbl %al, %r9d
+; AVX-NEXT:    vmovd %eax, %xmm2
 ; AVX-NEXT:    vpextrb $2, %xmm0, %eax
 ; AVX-NEXT:    # kill: def $al killed $al killed $eax
 ; AVX-NEXT:    cbtw
+; AVX-NEXT:    vpinsrb $1, %ecx, %xmm2, %xmm2
 ; AVX-NEXT:    vpextrb $2, %xmm1, %ecx
 ; AVX-NEXT:    idivb %cl
-; AVX-NEXT:    movsbl %ah, %eax
-; AVX-NEXT:    movzbl %al, %r10d
+; AVX-NEXT:    movsbl %ah, %ecx
 ; AVX-NEXT:    vpextrb $3, %xmm0, %eax
 ; AVX-NEXT:    # kill: def $al killed $al killed $eax
 ; AVX-NEXT:    cbtw
+; AVX-NEXT:    vpinsrb $2, %ecx, %xmm2, %xmm2
 ; AVX-NEXT:    vpextrb $3, %xmm1, %ecx
 ; AVX-NEXT:    idivb %cl
-; AVX-NEXT:    movsbl %ah, %eax
-; AVX-NEXT:    movzbl %al, %r11d
+; AVX-NEXT:    movsbl %ah, %ecx
 ; AVX-NEXT:    vpextrb $4, %xmm0, %eax
 ; AVX-NEXT:    # kill: def $al killed $al killed $eax
 ; AVX-NEXT:    cbtw
+; AVX-NEXT:    vpinsrb $3, %ecx, %xmm2, %xmm2
 ; AVX-NEXT:    vpextrb $4, %xmm1, %ecx
 ; AVX-NEXT:    idivb %cl
-; AVX-NEXT:    movsbl %ah, %eax
-; AVX-NEXT:    movzbl %al, %r14d
+; AVX-NEXT:    movsbl %ah, %ecx
 ; AVX-NEXT:    vpextrb $5, %xmm0, %eax
 ; AVX-NEXT:    # kill: def $al killed $al killed $eax
 ; AVX-NEXT:    cbtw
+; AVX-NEXT:    vpinsrb $4, %ecx, %xmm2, %xmm2
 ; AVX-NEXT:    vpextrb $5, %xmm1, %ecx
 ; AVX-NEXT:    idivb %cl
-; AVX-NEXT:    movsbl %ah, %eax
-; AVX-NEXT:    movzbl %al, %r15d
+; AVX-NEXT:    movsbl %ah, %ecx
 ; AVX-NEXT:    vpextrb $6, %xmm0, %eax
 ; AVX-NEXT:    # kill: def $al killed $al killed $eax
 ; AVX-NEXT:    cbtw
+; AVX-NEXT:    vpinsrb $5, %ecx, %xmm2, %xmm2
 ; AVX-NEXT:    vpextrb $6, %xmm1, %ecx
 ; AVX-NEXT:    idivb %cl
-; AVX-NEXT:    movsbl %ah, %eax
-; AVX-NEXT:    movzbl %al, %r12d
+; AVX-NEXT:    movsbl %ah, %ecx
 ; AVX-NEXT:    vpextrb $7, %xmm0, %eax
 ; AVX-NEXT:    # kill: def $al killed $al killed $eax
 ; AVX-NEXT:    cbtw
+; AVX-NEXT:    vpinsrb $6, %ecx, %xmm2, %xmm2
 ; AVX-NEXT:    vpextrb $7, %xmm1, %ecx
 ; AVX-NEXT:    idivb %cl
-; AVX-NEXT:    movsbl %ah, %eax
-; AVX-NEXT:    movzbl %al, %r13d
+; AVX-NEXT:    movsbl %ah, %ecx
 ; AVX-NEXT:    vpextrb $8, %xmm0, %eax
 ; AVX-NEXT:    # kill: def $al killed $al killed $eax
 ; AVX-NEXT:    cbtw
+; AVX-NEXT:    vpinsrb $7, %ecx, %xmm2, %xmm2
 ; AVX-NEXT:    vpextrb $8, %xmm1, %ecx
 ; AVX-NEXT:    idivb %cl
-; AVX-NEXT:    movsbl %ah, %eax
-; AVX-NEXT:    movzbl %al, %r8d
+; AVX-NEXT:    movsbl %ah, %ecx
 ; AVX-NEXT:    vpextrb $9, %xmm0, %eax
 ; AVX-NEXT:    # kill: def $al killed $al killed $eax
 ; AVX-NEXT:    cbtw
+; AVX-NEXT:    vpinsrb $8, %ecx, %xmm2, %xmm2
 ; AVX-NEXT:    vpextrb $9, %xmm1, %ecx
 ; AVX-NEXT:    idivb %cl
-; AVX-NEXT:    movsbl %ah, %eax
-; AVX-NEXT:    movzbl %al, %ebp
+; AVX-NEXT:    movsbl %ah, %ecx
 ; AVX-NEXT:    vpextrb $10, %xmm0, %eax
 ; AVX-NEXT:    # kill: def $al killed $al killed $eax
 ; AVX-NEXT:    cbtw
+; AVX-NEXT:    vpinsrb $9, %ecx, %xmm2, %xmm2
 ; AVX-NEXT:    vpextrb $10, %xmm1, %ecx
 ; AVX-NEXT:    idivb %cl
-; AVX-NEXT:    movsbl %ah, %eax
-; AVX-NEXT:    movzbl %al, %ecx
+; AVX-NEXT:    movsbl %ah, %ecx
 ; AVX-NEXT:    vpextrb $11, %xmm0, %eax
 ; AVX-NEXT:    # kill: def $al killed $al killed $eax
 ; AVX-NEXT:    cbtw
-; AVX-NEXT:    vpextrb $11, %xmm1, %edx
-; AVX-NEXT:    idivb %dl
-; AVX-NEXT:    movsbl %ah, %eax
-; AVX-NEXT:    movzbl %al, %edx
+; AVX-NEXT:    vpinsrb $10, %ecx, %xmm2, %xmm2
+; AVX-NEXT:    vpextrb $11, %xmm1, %ecx
+; AVX-NEXT:    idivb %cl
+; AVX-NEXT:    movsbl %ah, %ecx
 ; AVX-NEXT:    vpextrb $12, %xmm0, %eax
 ; AVX-NEXT:    # kill: def $al killed $al killed $eax
 ; AVX-NEXT:    cbtw
-; AVX-NEXT:    vpextrb $12, %xmm1, %esi
-; AVX-NEXT:    idivb %sil
-; AVX-NEXT:    movsbl %ah, %eax
-; AVX-NEXT:    movzbl %al, %esi
+; AVX-NEXT:    vpinsrb $11, %ecx, %xmm2, %xmm2
+; AVX-NEXT:    vpextrb $12, %xmm1, %ecx
+; AVX-NEXT:    idivb %cl
+; AVX-NEXT:    movsbl %ah, %ecx
 ; AVX-NEXT:    vpextrb $13, %xmm0, %eax
 ; AVX-NEXT:    # kill: def $al killed $al killed $eax
 ; AVX-NEXT:    cbtw
-; AVX-NEXT:    vpextrb $13, %xmm1, %edi
-; AVX-NEXT:    idivb %dil
-; AVX-NEXT:    movsbl %ah, %eax
-; AVX-NEXT:    movzbl %al, %edi
+; AVX-NEXT:    vpinsrb $12, %ecx, %xmm2, %xmm2
+; AVX-NEXT:    vpextrb $13, %xmm1, %ecx
+; AVX-NEXT:    idivb %cl
+; AVX-NEXT:    movsbl %ah, %ecx
 ; AVX-NEXT:    vpextrb $14, %xmm0, %eax
 ; AVX-NEXT:    # kill: def $al killed $al killed $eax
 ; AVX-NEXT:    cbtw
-; AVX-NEXT:    vmovd %r9d, %xmm2
-; AVX-NEXT:    vpextrb $14, %xmm1, %ebx
-; AVX-NEXT:    idivb %bl
-; AVX-NEXT:    movsbl %ah, %eax
-; AVX-NEXT:    movzbl %al, %ebx
+; AVX-NEXT:    vpinsrb $13, %ecx, %xmm2, %xmm2
+; AVX-NEXT:    vpextrb $14, %xmm1, %ecx
+; AVX-NEXT:    idivb %cl
+; AVX-NEXT:    movsbl %ah, %ecx
 ; AVX-NEXT:    vpextrb $15, %xmm0, %eax
 ; AVX-NEXT:    # kill: def $al killed $al killed $eax
 ; AVX-NEXT:    cbtw
-; AVX-NEXT:    vpinsrb $1, {{[-0-9]+}}(%r{{[sb]}}p), %xmm2, %xmm0 # 4-byte Folded Reload
-; AVX-NEXT:    vpinsrb $2, %r10d, %xmm0, %xmm0
-; AVX-NEXT:    vpinsrb $3, %r11d, %xmm0, %xmm0
-; AVX-NEXT:    vpinsrb $4, %r14d, %xmm0, %xmm0
-; AVX-NEXT:    vpinsrb $5, %r15d, %xmm0, %xmm0
-; AVX-NEXT:    vpinsrb $6, %r12d, %xmm0, %xmm0
-; AVX-NEXT:    vpinsrb $7, %r13d, %xmm0, %xmm0
-; AVX-NEXT:    vpinsrb $8, %r8d, %xmm0, %xmm0
-; AVX-NEXT:    vpinsrb $9, %ebp, %xmm0, %xmm0
-; AVX-NEXT:    vpinsrb $10, %ecx, %xmm0, %xmm0
-; AVX-NEXT:    vpinsrb $11, %edx, %xmm0, %xmm0
-; AVX-NEXT:    vpinsrb $12, %esi, %xmm0, %xmm0
-; AVX-NEXT:    vpinsrb $13, %edi, %xmm0, %xmm0
-; AVX-NEXT:    vpinsrb $14, %ebx, %xmm0, %xmm0
+; AVX-NEXT:    vpinsrb $14, %ecx, %xmm2, %xmm0
 ; AVX-NEXT:    vpextrb $15, %xmm1, %ecx
 ; AVX-NEXT:    idivb %cl
 ; AVX-NEXT:    movsbl %ah, %eax
-; AVX-NEXT:    movzbl %al, %eax
 ; AVX-NEXT:    vpinsrb $15, %eax, %xmm0, %xmm0
-; AVX-NEXT:    popq %rbx
-; AVX-NEXT:    popq %r12
-; AVX-NEXT:    popq %r13
-; AVX-NEXT:    popq %r14
-; AVX-NEXT:    popq %r15
-; AVX-NEXT:    popq %rbp
 ; AVX-NEXT:    retq
   %res = srem <16 x i8> %a, %b
   ret <16 x i8> %res
