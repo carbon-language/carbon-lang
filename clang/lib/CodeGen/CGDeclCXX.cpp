@@ -63,7 +63,7 @@ static void EmitDeclInit(CodeGenFunction &CGF, const VarDecl &D,
 /// Emit code to cause the destruction of the given variable with
 /// static storage duration.
 static void EmitDeclDestroy(CodeGenFunction &CGF, const VarDecl &D,
-                            ConstantAddress addr) {
+                            ConstantAddress Addr) {
   CodeGenModule &CGM = CGF.CGM;
 
   // FIXME:  __attribute__((cleanup)) ?
