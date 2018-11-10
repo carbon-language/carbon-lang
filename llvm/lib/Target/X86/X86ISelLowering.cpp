@@ -40075,7 +40075,6 @@ static SDValue combineVSZext(SDNode *N, SelectionDAG &DAG,
   MVT OpVT = Op.getSimpleValueType();
   MVT OpEltVT = OpVT.getVectorElementType();
   unsigned OpEltSizeInBits = OpEltVT.getSizeInBits();
-  unsigned InputBits = OpEltSizeInBits * NumElts;
 
   // Perform any constant folding.
   // FIXME: Reduce constant pool usage and don't fold when OptSize is enabled.
