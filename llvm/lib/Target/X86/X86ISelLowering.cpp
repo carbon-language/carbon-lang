@@ -19747,8 +19747,8 @@ static SDValue LowerSIGN_EXTEND_Mask(SDValue Op,
       (Subtarget.hasBWI() && WideEltVT.getSizeInBits() <= 16)) {
     V = DAG.getNode(Op.getOpcode(), dl, WideVT, In);
   } else {
-    SDValue NegOne = getOnesVector(WideVT, DAG, dl);
-    SDValue Zero = getZeroVector(WideVT, Subtarget, DAG, dl);
+    SDValue NegOne = DAG.getConstant(-1, dl, WideVT);
+    SDValue Zero = DAG.getConstant(0, dl, WideVT);
     V = DAG.getSelect(dl, WideVT, In, NegOne, Zero);
   }
 
