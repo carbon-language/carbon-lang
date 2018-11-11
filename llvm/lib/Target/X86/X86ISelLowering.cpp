@@ -17560,7 +17560,7 @@ static  SDValue LowerZERO_EXTEND_Mask(SDValue Op,
   }
 
   SDValue One = DAG.getConstant(1, DL, WideVT);
-  SDValue Zero = getZeroVector(WideVT, Subtarget, DAG, DL);
+  SDValue Zero = DAG.getConstant(0, DL, WideVT);
 
   SDValue SelectedVal = DAG.getSelect(DL, WideVT, In, One, Zero);
 
