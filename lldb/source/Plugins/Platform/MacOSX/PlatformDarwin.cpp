@@ -9,14 +9,11 @@
 
 #include "PlatformDarwin.h"
 
-// C Includes
 #include <string.h>
 
-// C++ Includes
 #include <algorithm>
 #include <mutex>
 
-// Project includes
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Breakpoint/BreakpointSite.h"
 #include "lldb/Core/Debugger.h"

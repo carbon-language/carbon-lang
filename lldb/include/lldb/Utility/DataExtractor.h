@@ -29,7 +29,6 @@ namespace llvm {
 template <typename T> class SmallVectorImpl;
 }
 
-// C++ Includes
 
 namespace lldb_private {
 

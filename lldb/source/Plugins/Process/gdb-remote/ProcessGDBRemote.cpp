@@ -9,7 +9,6 @@
 
 #include "lldb/Host/Config.h"
 
-// C Includes
 #include <errno.h>
 #include <stdlib.h>
 #ifndef LLDB_DISABLE_POSIX
@@ -22,7 +21,6 @@
 #include <sys/types.h>
 #include <time.h>
 
-// C++ Includes
 #include <algorithm>
 #include <csignal>
 #include <map>
@@ -71,7 +69,6 @@
 #include "lldb/Utility/StreamString.h"
 #include "lldb/Utility/Timer.h"
 
-// Project includes
 #include "GDBRemoteRegisterContext.h"
 #include "Plugins/Platform/MacOSX/PlatformRemoteiOS.h"
 #include "Plugins/Process/Utility/GDBRemoteSignals.h"

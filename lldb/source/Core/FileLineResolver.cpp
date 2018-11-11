@@ -9,7 +9,6 @@
 
 #include "lldb/Core/FileLineResolver.h"
 
-// Project includes
 #include "lldb/Core/FileSpecList.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/LineTable.h"

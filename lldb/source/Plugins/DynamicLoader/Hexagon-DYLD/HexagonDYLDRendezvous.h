@@ -10,14 +10,11 @@
 #ifndef liblldb_HexagonDYLDRendezvous_H_
 #define liblldb_HexagonDYLDRendezvous_H_
 
-// C Includes
 #include <limits.h>
-// C++ Includes
 #include <list>
 #include <map>
 #include <string>
 
-// Other libraries and framework includes
 #include "lldb/lldb-defines.h"
 #include "lldb/lldb-types.h"
 

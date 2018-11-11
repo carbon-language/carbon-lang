@@ -10,7 +10,6 @@
 #ifndef liblldb_DynamicLoader_h_
 #define liblldb_DynamicLoader_h_
 
-// Project includes
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Utility/FileSpec.h"
 #include "lldb/Utility/Status.h"

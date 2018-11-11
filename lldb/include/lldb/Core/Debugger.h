@@ -10,15 +10,11 @@
 #ifndef liblldb_Debugger_h_
 #define liblldb_Debugger_h_
 
-// C Includes
 #include <stdint.h>
 
-// C++ Includes
 #include <memory>
 #include <vector>
 
-// Other libraries and framework includes
-// Project includes
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/FormatEntity.h"
 #include "lldb/Core/IOHandler.h"

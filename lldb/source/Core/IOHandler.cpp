@@ -9,20 +9,16 @@
 
 #include "lldb/Core/IOHandler.h"
 
-// C Includes
 #ifndef LLDB_DISABLE_CURSES
 #include <curses.h>
 #include <panel.h>
 #endif
 
-// C++ Includes
 #if defined(__APPLE__)
 #include <deque>
 #endif
 #include <string>
 
-// Other libraries and framework includes
-// Project includes
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Host/File.h"

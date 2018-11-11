@@ -10,13 +10,9 @@
 #ifndef liblldb_FileSpec_h_
 #define liblldb_FileSpec_h_
 
-// C Includes
-// C++ Includes
 #include <functional>
 #include <string>
 
-// Other libraries and framework includes
-// Project includes
 #include "lldb/Utility/ConstString.h"
 
 #include "llvm/ADT/StringRef.h"
