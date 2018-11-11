@@ -52,7 +52,8 @@ static void error(std::error_code EC) {
 static void error(Error Err) {
   if (!Err)
     return;
-  logAllUnhandledErrors(std::move(Err), WithColor::error(outs(), ""), "reading file: ");
+  logAllUnhandledErrors(std::move(Err), WithColor::error(outs()),
+                        "reading file: ");
   outs().flush();
   exit(1);
 }
@@ -497,7 +498,7 @@ static void dumpArchive(const Archive *Arc) {
       if (auto E = isNotObjectErrorInvalidFileType(ChildOrErr.takeError())) {
         std::string Buf;
         raw_string_ostream OS(Buf);
-        logAllUnhandledErrors(std::move(E), OS, "");
+        logAllUnhandledErrors(std::move(E), OS);
         OS.flush();
         reportError(Arc->getFileName(), Buf);
       }
