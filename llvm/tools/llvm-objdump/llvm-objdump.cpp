@@ -2014,6 +2014,8 @@ void llvm::PrintSymbolTable(const ObjectFile *o, StringRef ArchiveName,
       FileFunc = 'f';
     else if (Type == SymbolRef::ST_Function)
       FileFunc = 'F';
+    else if (Type == SymbolRef::ST_Data)
+      FileFunc = 'O';
 
     const char *Fmt = o->getBytesInAddress() > 4 ? "%016" PRIx64 :
                                                    "%08" PRIx64;
