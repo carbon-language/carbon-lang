@@ -28,7 +28,6 @@ namespace {
 class ErlangGC : public GCStrategy {
 public:
   ErlangGC() {
-    InitRoots = false;
     NeededSafePoints = 1 << GC::PostCall;
     UsesMetadata = true;
     CustomRoots = false;
@@ -57,7 +56,6 @@ public:
 class ShadowStackGC : public GCStrategy {
 public:
   ShadowStackGC() {
-    InitRoots = true;
     CustomRoots = true;
   }
 };
@@ -74,7 +72,6 @@ public:
     UseStatepoints = true;
     // These options are all gc.root specific, we specify them so that the
     // gc.root lowering code doesn't run.
-    InitRoots = false;
     NeededSafePoints = 0;
     UsesMetadata = false;
     CustomRoots = false;
@@ -108,7 +105,6 @@ public:
     UseStatepoints = true;
     // These options are all gc.root specific, we specify them so that the
     // gc.root lowering code doesn't run.
-    InitRoots = false;
     NeededSafePoints = 0;
     UsesMetadata = false;
     CustomRoots = false;

@@ -38,7 +38,7 @@ namespace {
 /// directed by the GCStrategy. It also performs automatic root initialization
 /// and custom intrinsic lowering.
 class LowerIntrinsics : public FunctionPass {
-  bool PerformDefaultLowering(Function &F, GCStrategy &S);
+  bool DoLowering(Function &F, GCStrategy &S);
 
 public:
   static char ID;
@@ -100,13 +100,6 @@ void LowerIntrinsics::getAnalysisUsage(AnalysisUsage &AU) const {
   FunctionPass::getAnalysisUsage(AU);
   AU.addRequired<GCModuleInfo>();
   AU.addPreserved<DominatorTreeWrapperPass>();
-}
-
-static bool NeedsDefaultLoweringPass(const GCStrategy &C) {
-  // Default lowering is necessary only if read or write barriers have a default
-  // action. The default for roots is no action.
-  return !C.customWriteBarrier() || !C.customReadBarrier() ||
-         C.initializeRoots();
 }
 
 /// doInitialization - If this module uses the GC intrinsics, find them now.
@@ -188,19 +181,17 @@ bool LowerIntrinsics::runOnFunction(Function &F) {
   GCFunctionInfo &FI = getAnalysis<GCModuleInfo>().getFunctionInfo(F);
   GCStrategy &S = FI.getStrategy();
 
-  bool MadeChange = false;
-
-  if (NeedsDefaultLoweringPass(S))
-    MadeChange |= PerformDefaultLowering(F, S);
-
-  return MadeChange;
+  return DoLowering(F, S);
 }
 
-bool LowerIntrinsics::PerformDefaultLowering(Function &F, GCStrategy &S) {
-  bool LowerWr = !S.customWriteBarrier();
-  bool LowerRd = !S.customReadBarrier();
-  bool InitRoots = S.initializeRoots();
-
+/// Lower barriers out of existance (if the associated GCStrategy hasn't
+/// already done so...), and insert initializing stores to roots as a defensive
+/// measure.  Given we're going to report all roots live at all safepoints, we
+/// need to be able to ensure each root has been initialized by the point the
+/// first safepoint is reached.  This really should have been done by the
+/// frontend, but the old API made this non-obvious, so we do a potentially
+/// redundant store just in case.  
+bool LowerIntrinsics::DoLowering(Function &F, GCStrategy &S) {
   SmallVector<AllocaInst *, 32> Roots;
 
   bool MadeChange = false;
@@ -209,37 +200,33 @@ bool LowerIntrinsics::PerformDefaultLowering(Function &F, GCStrategy &S) {
       if (IntrinsicInst *CI = dyn_cast<IntrinsicInst>(II++)) {
         Function *F = CI->getCalledFunction();
         switch (F->getIntrinsicID()) {
-        case Intrinsic::gcwrite:
-          if (LowerWr) {
-            // Replace a write barrier with a simple store.
-            Value *St =
-                new StoreInst(CI->getArgOperand(0), CI->getArgOperand(2), CI);
-            CI->replaceAllUsesWith(St);
-            CI->eraseFromParent();
-          }
+        default: break;
+        case Intrinsic::gcwrite: {
+          // Replace a write barrier with a simple store.
+          Value *St = new StoreInst(CI->getArgOperand(0),
+                                    CI->getArgOperand(2), CI);
+          CI->replaceAllUsesWith(St);
+          CI->eraseFromParent();
+          MadeChange = true;
           break;
-        case Intrinsic::gcread:
-          if (LowerRd) {
-            // Replace a read barrier with a simple load.
-            Value *Ld = new LoadInst(CI->getArgOperand(1), "", CI);
-            Ld->takeName(CI);
-            CI->replaceAllUsesWith(Ld);
-            CI->eraseFromParent();
-          }
-          break;
-        case Intrinsic::gcroot:
-          if (InitRoots) {
-            // Initialize the GC root, but do not delete the intrinsic. The
-            // backend needs the intrinsic to flag the stack slot.
-            Roots.push_back(
-                cast<AllocaInst>(CI->getArgOperand(0)->stripPointerCasts()));
-          }
-          break;
-        default:
-          continue;
         }
-
-        MadeChange = true;
+        case Intrinsic::gcread: {
+          // Replace a read barrier with a simple load.
+          Value *Ld = new LoadInst(CI->getArgOperand(1), "", CI);
+          Ld->takeName(CI);
+          CI->replaceAllUsesWith(Ld);
+          CI->eraseFromParent();
+          MadeChange = true;
+          break;
+        }
+        case Intrinsic::gcroot: {
+          // Initialize the GC root, but do not delete the intrinsic. The
+          // backend needs the intrinsic to flag the stack slot.
+          Roots.push_back(
+              cast<AllocaInst>(CI->getArgOperand(0)->stripPointerCasts()));
+          break;
+        }
+        }
       }
     }
   }
