@@ -22,7 +22,6 @@
 #define LLVM_TRANSFORMS_SCALAR_SCCP_H
 
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
@@ -32,7 +31,6 @@
 
 namespace llvm {
 
-class Function;
 class PostDominatorTree;
 
 /// This pass performs function-level constant propagation and merging.
