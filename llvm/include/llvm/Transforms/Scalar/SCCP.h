@@ -43,6 +43,7 @@ public:
 struct AnalysisResultsForFn {
   std::unique_ptr<PredicateInfo> PredInfo;
   DominatorTree *DT;
+  PostDominatorTree *PDT;
 };
 
 bool runIPSCCP(Module &M, const DataLayout &DL, const TargetLibraryInfo *TLI,
