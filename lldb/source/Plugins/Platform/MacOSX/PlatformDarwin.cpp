@@ -42,7 +42,7 @@
 #include "llvm/Support/VersionTuple.h"
 
 #if defined(__APPLE__)
-#include <TargetConditionals.h> // for TARGET_OS_TV, TARGET_OS_WATCH
+#include <TargetConditionals.h>
 #endif
 
 using namespace lldb;

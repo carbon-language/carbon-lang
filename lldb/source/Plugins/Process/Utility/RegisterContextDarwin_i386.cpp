@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 // C Includes
-#include <stddef.h> // offsetof
+#include <stddef.h>
 
 // C++ Includes
 // Other libraries and framework includes

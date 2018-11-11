@@ -9,7 +9,7 @@
 
 // C Includes
 // C++ Includes
-#include <cctype> // for alnum
+#include <cctype>
 // Other libraries and framework includes
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTDiagnostic.h"

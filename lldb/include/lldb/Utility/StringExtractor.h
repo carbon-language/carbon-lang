@@ -15,7 +15,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 
-#include <stddef.h> // for size_t
+#include <stddef.h>
 #include <stdint.h>
 #include <string>
 

@@ -8,9 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 // C Includes
-#include <inttypes.h> // PRIx64
+#include <inttypes.h>
 #include <stdarg.h>
-#include <stddef.h> // offsetof
+#include <stddef.h>
 
 // C++ Includes
 // Other libraries and framework includes
