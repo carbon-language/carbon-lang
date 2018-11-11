@@ -23,6 +23,7 @@
 #include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
 #include <string>
@@ -43,17 +44,17 @@ namespace llvm {
 static void error(std::error_code EC) {
   if (!EC)
     return;
-  outs() << "\nError reading file: " << EC.message() << ".\n";
+  WithColor::error(outs(), "") << "reading file: " << EC.message() << ".\n";
   outs().flush();
   exit(1);
 }
 
 static void error(Error Err) {
-  if (Err) {
-    logAllUnhandledErrors(std::move(Err), outs(), "Error reading file: ");
-    outs().flush();
-    exit(1);
-  }
+  if (!Err)
+    return;
+  logAllUnhandledErrors(std::move(Err), WithColor::error(outs(), ""), "reading file: ");
+  outs().flush();
+  exit(1);
 }
 
 } // namespace llvm
@@ -61,7 +62,7 @@ static void error(Error Err) {
 static void reportError(StringRef Input, StringRef Message) {
   if (Input == "-")
     Input = "<stdin>";
-  errs() << Input << ": " << Message << "\n";
+  WithColor::error(errs(), Input) << Message << "\n";
   errs().flush();
   exit(1);
 }
