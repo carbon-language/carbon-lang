@@ -143,7 +143,7 @@ public:
   ELFDumper(const ELFFile<ELFT> *Obj, ScopedPrinter &Writer);
 
   void printFileHeaders() override;
-  void printSections() override;
+  void printSectionHeaders() override;
   void printRelocations() override;
   void printDynamicRelocations() override;
   void printSymbols() override;
@@ -324,7 +324,7 @@ public:
   virtual void printFileHeaders(const ELFFile<ELFT> *Obj) = 0;
   virtual void printGroupSections(const ELFFile<ELFT> *Obj) = 0;
   virtual void printRelocations(const ELFFile<ELFT> *Obj) = 0;
-  virtual void printSections(const ELFFile<ELFT> *Obj) = 0;
+  virtual void printSectionHeaders(const ELFFile<ELFT> *Obj) = 0;
   virtual void printSymbols(const ELFFile<ELFT> *Obj) = 0;
   virtual void printDynamicSymbols(const ELFFile<ELFT> *Obj) = 0;
   virtual void printDynamicRelocations(const ELFFile<ELFT> *Obj) = 0;
@@ -359,7 +359,7 @@ public:
   void printFileHeaders(const ELFO *Obj) override;
   void printGroupSections(const ELFFile<ELFT> *Obj) override;
   void printRelocations(const ELFO *Obj) override;
-  void printSections(const ELFO *Obj) override;
+  void printSectionHeaders(const ELFO *Obj) override;
   void printSymbols(const ELFO *Obj) override;
   void printDynamicSymbols(const ELFO *Obj) override;
   void printDynamicRelocations(const ELFO *Obj) override;
@@ -452,7 +452,7 @@ public:
   void printGroupSections(const ELFFile<ELFT> *Obj) override;
   void printRelocations(const ELFO *Obj) override;
   void printRelocations(const Elf_Shdr *Sec, const ELFO *Obj);
-  void printSections(const ELFO *Obj) override;
+  void printSectionHeaders(const ELFO *Obj) override;
   void printSymbols(const ELFO *Obj) override;
   void printDynamicSymbols(const ELFO *Obj) override;
   void printDynamicRelocations(const ELFO *Obj) override;
@@ -1592,9 +1592,8 @@ void ELFDumper<ELFT>::printFileHeaders() {
   ELFDumperStyle->printFileHeaders(Obj);
 }
 
-template<class ELFT>
-void ELFDumper<ELFT>::printSections() {
-  ELFDumperStyle->printSections(Obj);
+template <class ELFT> void ELFDumper<ELFT>::printSectionHeaders() {
+  ELFDumperStyle->printSectionHeaders(Obj);
 }
 
 template<class ELFT>
@@ -2920,7 +2919,8 @@ std::string getSectionTypeString(unsigned Arch, unsigned Type) {
   return "";
 }
 
-template <class ELFT> void GNUStyle<ELFT>::printSections(const ELFO *Obj) {
+template <class ELFT>
+void GNUStyle<ELFT>::printSectionHeaders(const ELFO *Obj) {
   size_t SectionIndex = 0;
   std::string Number, Type, Size, Address, Offset, Flags, Link, Info, EntrySize,
       Alignment;
@@ -4213,7 +4213,8 @@ void LLVMStyle<ELFT>::printRelocation(const ELFO *Obj, Elf_Rela Rel,
   }
 }
 
-template <class ELFT> void LLVMStyle<ELFT>::printSections(const ELFO *Obj) {
+template <class ELFT>
+void LLVMStyle<ELFT>::printSectionHeaders(const ELFO *Obj) {
   ListScope SectionsD(W, "Sections");
 
   int SectionIndex = -1;
