@@ -2180,6 +2180,18 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
       if (ReferencedBF->containsAddress(Address, /*UseMaxSize = */true)) {
         RefFunctionOffset = Address - ReferencedBF->getAddress();
         if (RefFunctionOffset) {
+          // Workaround for member function pointer de-virtualization bug.
+          // We check if a code non-pc-relative relocation is pointing
+          // to a (fptr - 1).
+          if (ContainingBF && !Relocation::isPCRelative(Rel.getType())) {
+            if (const auto *NextBF = getBinaryFunctionAtAddress(Address + 1)) {
+              errs() << "BOLT-WARNING: detected possible compiler "
+                        "de-virtualization bug: -1 addend used with "
+                        "non-pc-relative relocation against function "
+                     << *NextBF << " in function " << *ContainingBF << '\n';
+              continue;
+            }
+          }
           ReferencedSymbol =
             ReferencedBF->getOrCreateLocalLabel(Address,
                                                 /*CreatePastEnd =*/ true);
