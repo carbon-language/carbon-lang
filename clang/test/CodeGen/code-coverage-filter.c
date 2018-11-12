@@ -23,62 +23,62 @@ void test() {
   test2();
 }
 
-// ALL: define void @test1() #0 {{.*}}
+// ALL: void @test1() #0 {{.*}}
 // ALL: {{.*}}__llvm_gcov_ctr{{.*}}
 // ALL: ret void
-// ALL: define void @test2() #0 {{.*}}
+// ALL: void @test2() #0 {{.*}}
 // ALL: {{.*}}__llvm_gcov_ctr{{.*}}
 // ALL: ret void
-// ALL: define void @test() #0 {{.*}}
+// ALL: void @test() #0 {{.*}}
 // ALL: {{.*}}__llvm_gcov_ctr{{.*}}
 // ALL: ret void
 
-// NO-HEADER: define void @test1() #0 {{.*}}
+// NO-HEADER: void @test1() #0 {{.*}}
 // NO-HEADER-NOT: {{.*}}__llvm_gcov_ctr{{.*}}
 // NO-HEADER: ret void
-// NO-HEADER: define void @test2() #0 {{.*}}
+// NO-HEADER: void @test2() #0 {{.*}}
 // NO-HEADER-NOT: {{.*}}__llvm_gcov_ctr{{.*}}
 // NO-HEADER: ret void
-// NO-HEADER: define void @test() #0 {{.*}}
+// NO-HEADER: void @test() #0 {{.*}}
 // NO-HEADER: {{.*}}__llvm_gcov_ctr{{.*}}
 // NO-HEADER: ret void
 
-// NO-HEADER2: define void @test1() #0 {{.*}}
+// NO-HEADER2: void @test1() #0 {{.*}}
 // NO-HEADER2: {{.*}}__llvm_gcov_ctr{{.*}}
 // NO-HEADER2: ret void
-// NO-HEADER2: define void @test2() #0 {{.*}}
+// NO-HEADER2: void @test2() #0 {{.*}}
 // NO-HEADER2-NOT: {{.*}}__llvm_gcov_ctr{{.*}}
 // NO-HEADER2: ret void
-// NO-HEADER2: define void @test() #0 {{.*}}
+// NO-HEADER2: void @test() #0 {{.*}}
 // NO-HEADER2: {{.*}}__llvm_gcov_ctr{{.*}}
 // NO-HEADER2: ret void
 
-// JUST-C: define void @test1() #0 {{.*}}
+// JUST-C: void @test1() #0 {{.*}}
 // JUST-C-NOT: {{.*}}__llvm_gcov_ctr{{.*}}
 // JUST-C: ret void
-// JUST-C: define void @test2() #0 {{.*}}
+// JUST-C: void @test2() #0 {{.*}}
 // JUST-C-NOT: {{.*}}__llvm_gcov_ctr{{.*}}
 // JUST-C: ret void
-// JUST-C: define void @test() #0 {{.*}}
+// JUST-C: void @test() #0 {{.*}}
 // JUST-C: {{.*}}__llvm_gcov_ctr{{.*}}
 // JUST-C: ret void
 
-// HEADER: define void @test1() #0 {{.*}}
+// HEADER: void @test1() #0 {{.*}}
 // HEADER: {{.*}}__llvm_gcov_ctr{{.*}}
 // HEADER: ret void
-// HEADER: define void @test2() #0 {{.*}}
+// HEADER: void @test2() #0 {{.*}}
 // HEADER: {{.*}}__llvm_gcov_ctr{{.*}}
 // HEADER: ret void
-// HEADER: define void @test() #0 {{.*}}
+// HEADER: void @test() #0 {{.*}}
 // HEADER-NOT: {{.*}}__llvm_gcov_ctr{{.*}}
 // HEADER: ret void
 
-// NONE: define void @test1() #0 {{.*}}
+// NONE: void @test1() #0 {{.*}}
 // NONE-NOT: {{.*}}__llvm_gcov_ctr{{.*}}
 // NONE: ret void
-// NONE: define void @test2() #0 {{.*}}
+// NONE: void @test2() #0 {{.*}}
 // NONE-NOT: {{.*}}__llvm_gcov_ctr{{.*}}
 // NONE: ret void
-// NONE: define void @test() #0 {{.*}}
+// NONE: void @test() #0 {{.*}}
 // NONE-NOT: {{.*}}__llvm_gcov_ctr{{.*}}
 // NONE: ret void
