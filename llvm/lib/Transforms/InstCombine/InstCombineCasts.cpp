@@ -530,6 +530,11 @@ Instruction *InstCombiner::narrowRotate(TruncInst &Trunc) {
         match(R, m_And(m_Neg(m_Specific(X)), m_SpecificInt(Mask))))
       return X;
 
+    // Same as above, but the shift amount may be extended after masking:
+    if (match(L, m_ZExt(m_And(m_Value(X), m_SpecificInt(Mask)))) &&
+        match(R, m_ZExt(m_And(m_Neg(m_Specific(X)), m_SpecificInt(Mask)))))
+      return X;
+
     return nullptr;
   };
 

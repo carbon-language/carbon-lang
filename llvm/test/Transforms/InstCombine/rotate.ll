@@ -3,10 +3,11 @@
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 
-; These are UB-free rotate left/right patterns that are narrowed to a smaller bitwidth.
-; See PR34046 and PR16726 for motivating examples:
+; These may be UB-free rotate left/right patterns that are narrowed to a smaller bitwidth.
+; See PR34046, PR16726, and PR39624 for motivating examples:
 ; https://bugs.llvm.org/show_bug.cgi?id=34046
 ; https://bugs.llvm.org/show_bug.cgi?id=16726
+; https://bugs.llvm.org/show_bug.cgi?id=39624
 
 define i16 @rotate_left_16bit(i16 %v, i32 %shift) {
 ; CHECK-LABEL: @rotate_left_16bit(
@@ -122,22 +123,17 @@ define i8 @rotate8_not_safe(i8 %v, i32 %shamt) {
   ret i8 %ret
 }
 
-; FIXME:
 ; We should narrow (v << (s & 15)) | (v >> (-s & 15))
 ; when both v and s have been promoted.
 
 define i16 @rotateleft_16_neg_mask(i16 %v, i16 %shamt) {
 ; CHECK-LABEL: @rotateleft_16_neg_mask(
-; CHECK-NEXT:    [[NEG:%.*]] = sub i16 0, [[SHAMT:%.*]]
-; CHECK-NEXT:    [[LSHAMT:%.*]] = and i16 [[SHAMT]], 15
-; CHECK-NEXT:    [[LSHAMTCONV:%.*]] = zext i16 [[LSHAMT]] to i32
-; CHECK-NEXT:    [[RSHAMT:%.*]] = and i16 [[NEG]], 15
-; CHECK-NEXT:    [[RSHAMTCONV:%.*]] = zext i16 [[RSHAMT]] to i32
-; CHECK-NEXT:    [[CONV:%.*]] = zext i16 [[V:%.*]] to i32
-; CHECK-NEXT:    [[SHL:%.*]] = shl i32 [[CONV]], [[LSHAMTCONV]]
-; CHECK-NEXT:    [[SHR:%.*]] = lshr i32 [[CONV]], [[RSHAMTCONV]]
-; CHECK-NEXT:    [[OR:%.*]] = or i32 [[SHR]], [[SHL]]
-; CHECK-NEXT:    [[RET:%.*]] = trunc i32 [[OR]] to i16
+; CHECK-NEXT:    [[TMP1:%.*]] = sub i16 0, [[SHAMT:%.*]]
+; CHECK-NEXT:    [[TMP2:%.*]] = and i16 [[SHAMT]], 15
+; CHECK-NEXT:    [[TMP3:%.*]] = and i16 [[TMP1]], 15
+; CHECK-NEXT:    [[TMP4:%.*]] = lshr i16 [[V:%.*]], [[TMP3]]
+; CHECK-NEXT:    [[TMP5:%.*]] = shl i16 [[V]], [[TMP2]]
+; CHECK-NEXT:    [[RET:%.*]] = or i16 [[TMP4]], [[TMP5]]
 ; CHECK-NEXT:    ret i16 [[RET]]
 ;
   %neg = sub i16 0, %shamt
@@ -155,16 +151,12 @@ define i16 @rotateleft_16_neg_mask(i16 %v, i16 %shamt) {
 
 define i16 @rotateleft_16_neg_mask_commute(i16 %v, i16 %shamt) {
 ; CHECK-LABEL: @rotateleft_16_neg_mask_commute(
-; CHECK-NEXT:    [[NEG:%.*]] = sub i16 0, [[SHAMT:%.*]]
-; CHECK-NEXT:    [[LSHAMT:%.*]] = and i16 [[SHAMT]], 15
-; CHECK-NEXT:    [[LSHAMTCONV:%.*]] = zext i16 [[LSHAMT]] to i32
-; CHECK-NEXT:    [[RSHAMT:%.*]] = and i16 [[NEG]], 15
-; CHECK-NEXT:    [[RSHAMTCONV:%.*]] = zext i16 [[RSHAMT]] to i32
-; CHECK-NEXT:    [[CONV:%.*]] = zext i16 [[V:%.*]] to i32
-; CHECK-NEXT:    [[SHL:%.*]] = shl i32 [[CONV]], [[LSHAMTCONV]]
-; CHECK-NEXT:    [[SHR:%.*]] = lshr i32 [[CONV]], [[RSHAMTCONV]]
-; CHECK-NEXT:    [[OR:%.*]] = or i32 [[SHL]], [[SHR]]
-; CHECK-NEXT:    [[RET:%.*]] = trunc i32 [[OR]] to i16
+; CHECK-NEXT:    [[TMP1:%.*]] = sub i16 0, [[SHAMT:%.*]]
+; CHECK-NEXT:    [[TMP2:%.*]] = and i16 [[SHAMT]], 15
+; CHECK-NEXT:    [[TMP3:%.*]] = and i16 [[TMP1]], 15
+; CHECK-NEXT:    [[TMP4:%.*]] = shl i16 [[V:%.*]], [[TMP2]]
+; CHECK-NEXT:    [[TMP5:%.*]] = lshr i16 [[V]], [[TMP3]]
+; CHECK-NEXT:    [[RET:%.*]] = or i16 [[TMP4]], [[TMP5]]
 ; CHECK-NEXT:    ret i16 [[RET]]
 ;
   %neg = sub i16 0, %shamt
@@ -182,16 +174,12 @@ define i16 @rotateleft_16_neg_mask_commute(i16 %v, i16 %shamt) {
 
 define i8 @rotateright_8_neg_mask(i8 %v, i8 %shamt) {
 ; CHECK-LABEL: @rotateright_8_neg_mask(
-; CHECK-NEXT:    [[NEG:%.*]] = sub i8 0, [[SHAMT:%.*]]
-; CHECK-NEXT:    [[RSHAMT:%.*]] = and i8 [[SHAMT]], 7
-; CHECK-NEXT:    [[RSHAMTCONV:%.*]] = zext i8 [[RSHAMT]] to i32
-; CHECK-NEXT:    [[LSHAMT:%.*]] = and i8 [[NEG]], 7
-; CHECK-NEXT:    [[LSHAMTCONV:%.*]] = zext i8 [[LSHAMT]] to i32
-; CHECK-NEXT:    [[CONV:%.*]] = zext i8 [[V:%.*]] to i32
-; CHECK-NEXT:    [[SHL:%.*]] = shl i32 [[CONV]], [[LSHAMTCONV]]
-; CHECK-NEXT:    [[SHR:%.*]] = lshr i32 [[CONV]], [[RSHAMTCONV]]
-; CHECK-NEXT:    [[OR:%.*]] = or i32 [[SHR]], [[SHL]]
-; CHECK-NEXT:    [[RET:%.*]] = trunc i32 [[OR]] to i8
+; CHECK-NEXT:    [[TMP1:%.*]] = sub i8 0, [[SHAMT:%.*]]
+; CHECK-NEXT:    [[TMP2:%.*]] = and i8 [[SHAMT]], 7
+; CHECK-NEXT:    [[TMP3:%.*]] = and i8 [[TMP1]], 7
+; CHECK-NEXT:    [[TMP4:%.*]] = lshr i8 [[V:%.*]], [[TMP2]]
+; CHECK-NEXT:    [[TMP5:%.*]] = shl i8 [[V]], [[TMP3]]
+; CHECK-NEXT:    [[RET:%.*]] = or i8 [[TMP4]], [[TMP5]]
 ; CHECK-NEXT:    ret i8 [[RET]]
 ;
   %neg = sub i8 0, %shamt
@@ -209,16 +197,12 @@ define i8 @rotateright_8_neg_mask(i8 %v, i8 %shamt) {
 
 define i8 @rotateright_8_neg_mask_commute(i8 %v, i8 %shamt) {
 ; CHECK-LABEL: @rotateright_8_neg_mask_commute(
-; CHECK-NEXT:    [[NEG:%.*]] = sub i8 0, [[SHAMT:%.*]]
-; CHECK-NEXT:    [[RSHAMT:%.*]] = and i8 [[SHAMT]], 7
-; CHECK-NEXT:    [[RSHAMTCONV:%.*]] = zext i8 [[RSHAMT]] to i32
-; CHECK-NEXT:    [[LSHAMT:%.*]] = and i8 [[NEG]], 7
-; CHECK-NEXT:    [[LSHAMTCONV:%.*]] = zext i8 [[LSHAMT]] to i32
-; CHECK-NEXT:    [[CONV:%.*]] = zext i8 [[V:%.*]] to i32
-; CHECK-NEXT:    [[SHL:%.*]] = shl i32 [[CONV]], [[LSHAMTCONV]]
-; CHECK-NEXT:    [[SHR:%.*]] = lshr i32 [[CONV]], [[RSHAMTCONV]]
-; CHECK-NEXT:    [[OR:%.*]] = or i32 [[SHL]], [[SHR]]
-; CHECK-NEXT:    [[RET:%.*]] = trunc i32 [[OR]] to i8
+; CHECK-NEXT:    [[TMP1:%.*]] = sub i8 0, [[SHAMT:%.*]]
+; CHECK-NEXT:    [[TMP2:%.*]] = and i8 [[SHAMT]], 7
+; CHECK-NEXT:    [[TMP3:%.*]] = and i8 [[TMP1]], 7
+; CHECK-NEXT:    [[TMP4:%.*]] = shl i8 [[V:%.*]], [[TMP3]]
+; CHECK-NEXT:    [[TMP5:%.*]] = lshr i8 [[V]], [[TMP2]]
+; CHECK-NEXT:    [[RET:%.*]] = or i8 [[TMP4]], [[TMP5]]
 ; CHECK-NEXT:    ret i8 [[RET]]
 ;
   %neg = sub i8 0, %shamt
@@ -234,7 +218,6 @@ define i8 @rotateright_8_neg_mask_commute(i8 %v, i8 %shamt) {
   ret i8 %ret
 }
 
-; FIXME:
 ; The shift amount may already be in the wide type,
 ; so we need to truncate it going into the rotate pattern.
 
