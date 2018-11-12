@@ -309,3 +309,87 @@ define i8 @rotateleft_8_neg_mask_wide_amount_commute(i8 %v, i32 %shamt) {
   ret i8 %ret
 }
 
+; TODO: Convert select pattern to masked shift that ends in 'or'.
+
+define i32 @rotr_select(i32 %x, i32 %shamt) {
+; CHECK-LABEL: @rotr_select(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i32 [[SHAMT:%.*]], 0
+; CHECK-NEXT:    [[SUB:%.*]] = sub i32 32, [[SHAMT]]
+; CHECK-NEXT:    [[SHR:%.*]] = lshr i32 [[X:%.*]], [[SHAMT]]
+; CHECK-NEXT:    [[SHL:%.*]] = shl i32 [[X]], [[SUB]]
+; CHECK-NEXT:    [[OR:%.*]] = or i32 [[SHR]], [[SHL]]
+; CHECK-NEXT:    [[R:%.*]] = select i1 [[CMP]], i32 [[X]], i32 [[OR]]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %cmp = icmp eq i32 %shamt, 0
+  %sub = sub i32 32, %shamt
+  %shr = lshr i32 %x, %shamt
+  %shl = shl i32 %x, %sub
+  %or = or i32 %shr, %shl
+  %r = select i1 %cmp, i32 %x, i32 %or
+  ret i32 %r
+}
+
+; TODO: Convert select pattern to masked shift that ends in 'or'.
+
+define i8 @rotr_select_commute(i8 %x, i8 %shamt) {
+; CHECK-LABEL: @rotr_select_commute(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i8 [[SHAMT:%.*]], 0
+; CHECK-NEXT:    [[SUB:%.*]] = sub i8 8, [[SHAMT]]
+; CHECK-NEXT:    [[SHR:%.*]] = lshr i8 [[X:%.*]], [[SHAMT]]
+; CHECK-NEXT:    [[SHL:%.*]] = shl i8 [[X]], [[SUB]]
+; CHECK-NEXT:    [[OR:%.*]] = or i8 [[SHL]], [[SHR]]
+; CHECK-NEXT:    [[R:%.*]] = select i1 [[CMP]], i8 [[X]], i8 [[OR]]
+; CHECK-NEXT:    ret i8 [[R]]
+;
+  %cmp = icmp eq i8 %shamt, 0
+  %sub = sub i8 8, %shamt
+  %shr = lshr i8 %x, %shamt
+  %shl = shl i8 %x, %sub
+  %or = or i8 %shl, %shr
+  %r = select i1 %cmp, i8 %x, i8 %or
+  ret i8 %r
+}
+
+; TODO: Convert select pattern to masked shift that ends in 'or'.
+
+define i16 @rotl_select(i16 %x, i16 %shamt) {
+; CHECK-LABEL: @rotl_select(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i16 [[SHAMT:%.*]], 0
+; CHECK-NEXT:    [[SUB:%.*]] = sub i16 16, [[SHAMT]]
+; CHECK-NEXT:    [[SHR:%.*]] = lshr i16 [[X:%.*]], [[SUB]]
+; CHECK-NEXT:    [[SHL:%.*]] = shl i16 [[X]], [[SHAMT]]
+; CHECK-NEXT:    [[OR:%.*]] = or i16 [[SHR]], [[SHL]]
+; CHECK-NEXT:    [[R:%.*]] = select i1 [[CMP]], i16 [[X]], i16 [[OR]]
+; CHECK-NEXT:    ret i16 [[R]]
+;
+  %cmp = icmp eq i16 %shamt, 0
+  %sub = sub i16 16, %shamt
+  %shr = lshr i16 %x, %sub
+  %shl = shl i16 %x, %shamt
+  %or = or i16 %shr, %shl
+  %r = select i1 %cmp, i16 %x, i16 %or
+  ret i16 %r
+}
+
+; TODO: Convert select pattern to masked shift that ends in 'or'.
+
+define i64 @rotl_select_commute(i64 %x, i64 %shamt) {
+; CHECK-LABEL: @rotl_select_commute(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i64 [[SHAMT:%.*]], 0
+; CHECK-NEXT:    [[SUB:%.*]] = sub i64 64, [[SHAMT]]
+; CHECK-NEXT:    [[SHR:%.*]] = lshr i64 [[X:%.*]], [[SUB]]
+; CHECK-NEXT:    [[SHL:%.*]] = shl i64 [[X]], [[SHAMT]]
+; CHECK-NEXT:    [[OR:%.*]] = or i64 [[SHL]], [[SHR]]
+; CHECK-NEXT:    [[R:%.*]] = select i1 [[CMP]], i64 [[X]], i64 [[OR]]
+; CHECK-NEXT:    ret i64 [[R]]
+;
+  %cmp = icmp eq i64 %shamt, 0
+  %sub = sub i64 64, %shamt
+  %shr = lshr i64 %x, %sub
+  %shl = shl i64 %x, %shamt
+  %or = or i64 %shl, %shr
+  %r = select i1 %cmp, i64 %x, i64 %or
+  ret i64 %r
+}
+
