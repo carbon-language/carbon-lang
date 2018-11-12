@@ -23,10 +23,15 @@ class Twine;
 
 namespace lldb_private {
 
-class FileSystem;
 class DataBufferLLVM : public DataBuffer {
 public:
   ~DataBufferLLVM();
+
+  static std::shared_ptr<DataBufferLLVM>
+  CreateSliceFromPath(const llvm::Twine &Path, uint64_t Size, uint64_t Offset);
+
+  static std::shared_ptr<DataBufferLLVM>
+  CreateFromPath(const llvm::Twine &Path);
 
   uint8_t *GetBytes() override;
   const uint8_t *GetBytes() const override;
@@ -35,7 +40,6 @@ public:
   char *GetChars() { return reinterpret_cast<char *>(GetBytes()); }
 
 private:
-  friend FileSystem;
   /// Construct a DataBufferLLVM from \p Buffer.  \p Buffer must be a valid
   /// pointer.
   explicit DataBufferLLVM(std::unique_ptr<llvm::WritableMemoryBuffer> Buffer);
