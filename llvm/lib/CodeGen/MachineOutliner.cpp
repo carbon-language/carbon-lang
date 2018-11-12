@@ -1215,11 +1215,19 @@ void MachineOutliner::pruneOverlaps(
     if (C1.getStartIdx() > MaxCandidateLen)
       FarthestPossibleIdx = C1.getStartIdx() - MaxCandidateLen;
 
+    MachineBasicBlock *C1MBB = C1.getMBB();
+
     // Compare against the candidates in the list that start at most
     // FarthestPossibleIdx indices away from C1. There are at most
     // MaxCandidateLen of these.
     for (auto Sit = It + 1; Sit != Et; Sit++) {
       Candidate &C2 = **Sit;
+
+      // If the two candidates don't belong to the same MBB, then we're done.
+      // Because we sorted the candidates, there's no way that we'd find a
+      // candidate in C1MBB after this point.
+      if (C2.getMBB() != C1MBB)
+        break;
 
       // Is this candidate too far away to overlap?
       if (C2.getStartIdx() < FarthestPossibleIdx)
