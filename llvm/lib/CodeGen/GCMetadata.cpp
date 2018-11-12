@@ -105,8 +105,6 @@ void Printer::getAnalysisUsage(AnalysisUsage &AU) const {
 
 static const char *DescKind(GC::PointKind Kind) {
   switch (Kind) {
-  case GC::PreCall:
-    return "pre-call";
   case GC::PostCall:
     return "post-call";
   }

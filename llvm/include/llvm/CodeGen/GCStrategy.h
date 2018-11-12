@@ -66,7 +66,6 @@ namespace GC {
 /// most runtimes, PostCall safepoints are appropriate.
 ///
 enum PointKind {
-  PreCall, ///< Instr is a call instruction.
   PostCall ///< Instr is the return address of a call.
 };
 
