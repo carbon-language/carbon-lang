@@ -742,7 +742,12 @@ struct InstructionMapper {
   /// \param TII \p TargetInstrInfo for the function.
   void convertToUnsignedVec(MachineBasicBlock &MBB,
                             const TargetInstrInfo &TII) {
-    unsigned Flags = TII.getMachineOutlinerMBBFlags(MBB);
+    unsigned Flags;
+
+    // Don't even map in this case.
+    if (!TII.isMBBSafeToOutlineFrom(MBB, Flags))
+      return;
+
     MachineBasicBlock::iterator It = MBB.begin();
 
     // The number of instructions in this block that will be considered for

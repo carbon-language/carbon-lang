@@ -5286,29 +5286,44 @@ bool AArch64InstrInfo::isFunctionSafeToOutlineFrom(
   return true;
 }
 
-unsigned
-AArch64InstrInfo::getMachineOutlinerMBBFlags(MachineBasicBlock &MBB) const {
-  unsigned Flags = 0x0;
+bool AArch64InstrInfo::isMBBSafeToOutlineFrom(MachineBasicBlock &MBB,
+                                              unsigned &Flags) const {
+  // Check if LR is available through all of the MBB. If it's not, then set
+  // a flag.
+  assert(MBB.getParent()->getRegInfo().tracksLiveness() &&
+         "Suitable Machine Function for outlining must track liveness");
+  LiveRegUnits ModifiedRegUnits(getRegisterInfo());
+  LiveRegUnits UsedRegUnits(getRegisterInfo());
+  ModifiedRegUnits.addLiveOuts(MBB);
+  UsedRegUnits.addLiveOuts(MBB);
+  const TargetRegisterInfo *TRI = &getRegisterInfo();
+
+  std::for_each(MBB.rbegin(), MBB.rend(),
+                [&ModifiedRegUnits, &UsedRegUnits, &TRI](MachineInstr &MI) {
+                  LiveRegUnits::accumulateUsedDefed(MI, ModifiedRegUnits,
+                                                    UsedRegUnits, TRI);
+                });
+
+  // If one of these registers is live out of the MBB, but not modified in the
+  // MBB, then we can't outline.
+  if ((ModifiedRegUnits.available(AArch64::W16) &&
+       !UsedRegUnits.available(AArch64::W16)) ||
+      (ModifiedRegUnits.available(AArch64::W17) &&
+       !UsedRegUnits.available(AArch64::W17)) ||
+      (ModifiedRegUnits.available(AArch64::NZCV) &&
+       !UsedRegUnits.available(AArch64::NZCV)))
+    return false;
+
   // Check if there's a call inside this MachineBasicBlock. If there is, then
   // set a flag.
   if (any_of(MBB, [](MachineInstr &MI) { return MI.isCall(); }))
     Flags |= MachineOutlinerMBBFlags::HasCalls;
 
-  // Check if LR is available through all of the MBB. If it's not, then set
-  // a flag.
-  assert(MBB.getParent()->getRegInfo().tracksLiveness() &&
-         "Suitable Machine Function for outlining must track liveness");
-  LiveRegUnits LRU(getRegisterInfo());
-  LRU.addLiveOuts(MBB);
+  if (!ModifiedRegUnits.available(AArch64::LR) ||
+      !UsedRegUnits.available(AArch64::LR))
+    Flags |= MachineOutlinerMBBFlags::LRUnavailableSomewhere;
 
-  std::for_each(MBB.rbegin(),
-                MBB.rend(),
-                [&LRU](MachineInstr &MI) { LRU.accumulate(MI); });
-
-  if (!LRU.available(AArch64::LR))
-      Flags |= MachineOutlinerMBBFlags::LRUnavailableSomewhere;
-
-  return Flags;
+  return true;
 }
 
 outliner::InstrType
