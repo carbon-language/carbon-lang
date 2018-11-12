@@ -240,14 +240,13 @@ define i8 @rotateright_8_neg_mask_commute(i8 %v, i8 %shamt) {
 
 define i16 @rotateright_16_neg_mask_wide_amount(i16 %v, i32 %shamt) {
 ; CHECK-LABEL: @rotateright_16_neg_mask_wide_amount(
-; CHECK-NEXT:    [[NEG:%.*]] = sub i32 0, [[SHAMT:%.*]]
-; CHECK-NEXT:    [[RSHAMT:%.*]] = and i32 [[SHAMT]], 15
-; CHECK-NEXT:    [[LSHAMT:%.*]] = and i32 [[NEG]], 15
-; CHECK-NEXT:    [[CONV:%.*]] = zext i16 [[V:%.*]] to i32
-; CHECK-NEXT:    [[SHL:%.*]] = shl i32 [[CONV]], [[LSHAMT]]
-; CHECK-NEXT:    [[SHR:%.*]] = lshr i32 [[CONV]], [[RSHAMT]]
-; CHECK-NEXT:    [[OR:%.*]] = or i32 [[SHR]], [[SHL]]
-; CHECK-NEXT:    [[RET:%.*]] = trunc i32 [[OR]] to i16
+; CHECK-NEXT:    [[TMP1:%.*]] = trunc i32 [[SHAMT:%.*]] to i16
+; CHECK-NEXT:    [[TMP2:%.*]] = sub i16 0, [[TMP1]]
+; CHECK-NEXT:    [[TMP3:%.*]] = and i16 [[TMP1]], 15
+; CHECK-NEXT:    [[TMP4:%.*]] = and i16 [[TMP2]], 15
+; CHECK-NEXT:    [[TMP5:%.*]] = lshr i16 [[V:%.*]], [[TMP3]]
+; CHECK-NEXT:    [[TMP6:%.*]] = shl i16 [[V]], [[TMP4]]
+; CHECK-NEXT:    [[RET:%.*]] = or i16 [[TMP5]], [[TMP6]]
 ; CHECK-NEXT:    ret i16 [[RET]]
 ;
   %neg = sub i32 0, %shamt
@@ -263,14 +262,13 @@ define i16 @rotateright_16_neg_mask_wide_amount(i16 %v, i32 %shamt) {
 
 define i16 @rotateright_16_neg_mask_wide_amount_commute(i16 %v, i32 %shamt) {
 ; CHECK-LABEL: @rotateright_16_neg_mask_wide_amount_commute(
-; CHECK-NEXT:    [[NEG:%.*]] = sub i32 0, [[SHAMT:%.*]]
-; CHECK-NEXT:    [[RSHAMT:%.*]] = and i32 [[SHAMT]], 15
-; CHECK-NEXT:    [[LSHAMT:%.*]] = and i32 [[NEG]], 15
-; CHECK-NEXT:    [[CONV:%.*]] = zext i16 [[V:%.*]] to i32
-; CHECK-NEXT:    [[SHL:%.*]] = shl i32 [[CONV]], [[LSHAMT]]
-; CHECK-NEXT:    [[SHR:%.*]] = lshr i32 [[CONV]], [[RSHAMT]]
-; CHECK-NEXT:    [[OR:%.*]] = or i32 [[SHL]], [[SHR]]
-; CHECK-NEXT:    [[RET:%.*]] = trunc i32 [[OR]] to i16
+; CHECK-NEXT:    [[TMP1:%.*]] = trunc i32 [[SHAMT:%.*]] to i16
+; CHECK-NEXT:    [[TMP2:%.*]] = sub i16 0, [[TMP1]]
+; CHECK-NEXT:    [[TMP3:%.*]] = and i16 [[TMP1]], 15
+; CHECK-NEXT:    [[TMP4:%.*]] = and i16 [[TMP2]], 15
+; CHECK-NEXT:    [[TMP5:%.*]] = shl i16 [[V:%.*]], [[TMP4]]
+; CHECK-NEXT:    [[TMP6:%.*]] = lshr i16 [[V]], [[TMP3]]
+; CHECK-NEXT:    [[RET:%.*]] = or i16 [[TMP5]], [[TMP6]]
 ; CHECK-NEXT:    ret i16 [[RET]]
 ;
   %neg = sub i32 0, %shamt
@@ -286,14 +284,13 @@ define i16 @rotateright_16_neg_mask_wide_amount_commute(i16 %v, i32 %shamt) {
 
 define i8 @rotateleft_8_neg_mask_wide_amount(i8 %v, i32 %shamt) {
 ; CHECK-LABEL: @rotateleft_8_neg_mask_wide_amount(
-; CHECK-NEXT:    [[NEG:%.*]] = sub i32 0, [[SHAMT:%.*]]
-; CHECK-NEXT:    [[LSHAMT:%.*]] = and i32 [[SHAMT]], 7
-; CHECK-NEXT:    [[RSHAMT:%.*]] = and i32 [[NEG]], 7
-; CHECK-NEXT:    [[CONV:%.*]] = zext i8 [[V:%.*]] to i32
-; CHECK-NEXT:    [[SHL:%.*]] = shl i32 [[CONV]], [[LSHAMT]]
-; CHECK-NEXT:    [[SHR:%.*]] = lshr i32 [[CONV]], [[RSHAMT]]
-; CHECK-NEXT:    [[OR:%.*]] = or i32 [[SHR]], [[SHL]]
-; CHECK-NEXT:    [[RET:%.*]] = trunc i32 [[OR]] to i8
+; CHECK-NEXT:    [[TMP1:%.*]] = trunc i32 [[SHAMT:%.*]] to i8
+; CHECK-NEXT:    [[TMP2:%.*]] = sub i8 0, [[TMP1]]
+; CHECK-NEXT:    [[TMP3:%.*]] = and i8 [[TMP1]], 7
+; CHECK-NEXT:    [[TMP4:%.*]] = and i8 [[TMP2]], 7
+; CHECK-NEXT:    [[TMP5:%.*]] = lshr i8 [[V:%.*]], [[TMP4]]
+; CHECK-NEXT:    [[TMP6:%.*]] = shl i8 [[V]], [[TMP3]]
+; CHECK-NEXT:    [[RET:%.*]] = or i8 [[TMP5]], [[TMP6]]
 ; CHECK-NEXT:    ret i8 [[RET]]
 ;
   %neg = sub i32 0, %shamt
@@ -309,14 +306,13 @@ define i8 @rotateleft_8_neg_mask_wide_amount(i8 %v, i32 %shamt) {
 
 define i8 @rotateleft_8_neg_mask_wide_amount_commute(i8 %v, i32 %shamt) {
 ; CHECK-LABEL: @rotateleft_8_neg_mask_wide_amount_commute(
-; CHECK-NEXT:    [[NEG:%.*]] = sub i32 0, [[SHAMT:%.*]]
-; CHECK-NEXT:    [[LSHAMT:%.*]] = and i32 [[SHAMT]], 7
-; CHECK-NEXT:    [[RSHAMT:%.*]] = and i32 [[NEG]], 7
-; CHECK-NEXT:    [[CONV:%.*]] = zext i8 [[V:%.*]] to i32
-; CHECK-NEXT:    [[SHL:%.*]] = shl i32 [[CONV]], [[LSHAMT]]
-; CHECK-NEXT:    [[SHR:%.*]] = lshr i32 [[CONV]], [[RSHAMT]]
-; CHECK-NEXT:    [[OR:%.*]] = or i32 [[SHL]], [[SHR]]
-; CHECK-NEXT:    [[RET:%.*]] = trunc i32 [[OR]] to i8
+; CHECK-NEXT:    [[TMP1:%.*]] = trunc i32 [[SHAMT:%.*]] to i8
+; CHECK-NEXT:    [[TMP2:%.*]] = sub i8 0, [[TMP1]]
+; CHECK-NEXT:    [[TMP3:%.*]] = and i8 [[TMP1]], 7
+; CHECK-NEXT:    [[TMP4:%.*]] = and i8 [[TMP2]], 7
+; CHECK-NEXT:    [[TMP5:%.*]] = shl i8 [[V:%.*]], [[TMP3]]
+; CHECK-NEXT:    [[TMP6:%.*]] = lshr i8 [[V]], [[TMP4]]
+; CHECK-NEXT:    [[RET:%.*]] = or i8 [[TMP5]], [[TMP6]]
 ; CHECK-NEXT:    ret i8 [[RET]]
 ;
   %neg = sub i32 0, %shamt
