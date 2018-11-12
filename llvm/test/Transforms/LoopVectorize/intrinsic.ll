@@ -1196,7 +1196,7 @@ declare i32 @llvm.fshl.i32 (i32, i32, i32)
 
 define void @fshl_i32(i32 %n, i32* noalias %x, i32* noalias %y, i32 %shAmt) {
 ; CHECK-LABEL: @fshl_i32(
-; CHECK-NOT:     call <4 x i32> @llvm.fshl.v4i32(<4 x i32> [[WIDE_LOADX:%.*]], <4 x i32> [[WIDE_LOADY:%.*]], <4 x i32> [[SPLAT:%.*]])
+; CHECK:         call <4 x i32> @llvm.fshl.v4i32(<4 x i32> [[WIDE_LOADX:%.*]], <4 x i32> [[WIDE_LOADY:%.*]], <4 x i32> [[SPLAT:%.*]])
 ; CHECK:         ret void
 entry:
   %cmp = icmp sgt i32 %n, 0
@@ -1222,7 +1222,7 @@ declare i32 @llvm.fshr.i32 (i32, i32, i32)
 
 define void @fshr_i32(i32 %n, i32* noalias %x, i32* noalias %y, i32 %shAmt) {
 ; CHECK-LABEL: @fshr_i32(
-; CHECK-NOT:     call <4 x i32> @llvm.fshr.v4i32(<4 x i32> [[WIDE_LOADX:%.*]], <4 x i32> [[WIDE_LOADY:%.*]], <4 x i32> [[SPLAT:%.*]])
+; CHECK:         call <4 x i32> @llvm.fshr.v4i32(<4 x i32> [[WIDE_LOADX:%.*]], <4 x i32> [[WIDE_LOADY:%.*]], <4 x i32> [[SPLAT:%.*]])
 ; CHECK:         ret void
 entry:
   %cmp = icmp sgt i32 %n, 0
