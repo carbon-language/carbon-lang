@@ -327,6 +327,9 @@ bool ToolInvocation::run() {
     Invocation->getPreprocessorOpts().addRemappedFile(It.getKey(),
                                                       Input.release());
   }
+  // Patch up the install dir, so we find the same standard library as the
+  // original compiler on MacOS.
+  Invocation->getHeaderSearchOpts().InstallDir = Driver->getInstalledDir();
   return runInvocation(BinaryName, Compilation.get(), std::move(Invocation),
                        std::move(PCHContainerOps));
 }

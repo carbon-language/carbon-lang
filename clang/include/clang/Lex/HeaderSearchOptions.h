@@ -108,6 +108,13 @@ public:
   /// etc.).
   std::string ResourceDir;
 
+  /// Compiler install dir as detected by the Driver.
+  /// This is typically the directory that contains the clang executable, i.e.
+  /// the 'bin/' subdir of a clang distribution.
+  /// Only used to add include dirs for libc++ on Darwin. Please avoid relying
+  /// on this field for other purposes.
+  std::string InstallDir;
+
   /// The directory used for the module cache.
   std::string ModuleCachePath;
 
