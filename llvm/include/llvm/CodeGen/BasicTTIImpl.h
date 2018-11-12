@@ -118,6 +118,29 @@ private:
     return Cost;
   }
 
+  /// Estimate a cost of subvector extraction as a sequence of extract and
+  /// insert operations.
+  unsigned getExtractSubvectorOverhead(Type *Ty, int Index, Type *SubTy) {
+    assert(Ty && Ty->isVectorTy() && SubTy && SubTy->isVectorTy() &&
+           "Can only extract subvectors from vectors");
+    int NumElts = Ty->getVectorNumElements();
+    int NumSubElts = SubTy->getVectorNumElements();
+    assert((Index + NumSubElts) <= NumElts &&
+           "SK_ExtractSubvector index out of range");
+
+    unsigned Cost = 0;
+    // Subvector extraction cost is equal to the cost of extracting element from
+    // the source type plus the cost of inserting them into the result vector
+    // type.
+    for (int i = 0; i != NumSubElts; ++i) {
+      Cost += static_cast<T *>(this)->getVectorInstrCost(
+          Instruction::ExtractElement, Ty, i + Index);
+      Cost += static_cast<T *>(this)->getVectorInstrCost(
+          Instruction::InsertElement, SubTy, i);
+    }
+    return Cost;
+  }
+
   /// Local query method delegates up to T which *must* implement this!
   const TargetSubtargetInfo *getST() const {
     return static_cast<const T *>(this)->getST();
@@ -579,6 +602,8 @@ public:
     case TTI::SK_PermuteSingleSrc:
     case TTI::SK_PermuteTwoSrc:
       return getPermuteShuffleOverhead(Tp);
+    case TTI::SK_ExtractSubvector:
+      return getExtractSubvectorOverhead(Tp, Index, SubTp);
     default:
       return 1;
     }
