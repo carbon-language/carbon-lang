@@ -268,10 +268,8 @@ void GCMachineCodeAnalysis::VisitCallPoint(MachineBasicBlock::iterator CI) {
   MachineBasicBlock::iterator RAI = CI;
   ++RAI;
 
-  if (FI->getStrategy().needsSafePoint(GC::PostCall)) {
-    MCSymbol *Label = InsertLabel(*CI->getParent(), RAI, CI->getDebugLoc());
-    FI->addSafePoint(GC::PostCall, Label, CI->getDebugLoc());
-  }
+  MCSymbol *Label = InsertLabel(*CI->getParent(), RAI, CI->getDebugLoc());
+  FI->addSafePoint(Label, CI->getDebugLoc());
 }
 
 void GCMachineCodeAnalysis::FindSafePoints(MachineFunction &MF) {
