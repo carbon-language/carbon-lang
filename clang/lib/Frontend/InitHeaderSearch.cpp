@@ -476,9 +476,14 @@ void InitHeaderSearch::AddDefaultIncludePaths(const LangOptions &Lang,
       if (triple.isOSDarwin()) {
         // On Darwin, libc++ may be installed alongside the compiler in
         // include/c++/v1.
-        if (!HSOpts.InstallDir.empty()) {
-          // Get from foo/bin to foo.
-          SmallString<128> P(llvm::sys::path::parent_path(HSOpts.InstallDir));
+        if (!HSOpts.ResourceDir.empty()) {
+          // Remove version from foo/lib/clang/version
+          StringRef NoVer = llvm::sys::path::parent_path(HSOpts.ResourceDir);
+          // Remove clang from foo/lib/clang
+          StringRef Lib = llvm::sys::path::parent_path(NoVer);
+          // Remove lib from foo/lib
+          SmallString<128> P = llvm::sys::path::parent_path(Lib);
+
           // Get foo/include/c++/v1
           llvm::sys::path::append(P, "include", "c++", "v1");
           AddUnmappedPath(P, CXXSystem, false);

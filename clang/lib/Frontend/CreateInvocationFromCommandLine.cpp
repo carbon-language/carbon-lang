@@ -11,18 +11,17 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Frontend/Utils.h"
 #include "clang/Basic/DiagnosticOptions.h"
-#include "clang/Driver/Action.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
+#include "clang/Driver/Action.h"
 #include "clang/Driver/Options.h"
 #include "clang/Driver/Tool.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
-#include "clang/Frontend/Utils.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Support/Host.h"
-#include "llvm/Support/Path.h"
 using namespace clang;
 using namespace llvm::opt;
 
@@ -103,8 +102,5 @@ std::unique_ptr<CompilerInvocation> clang::createInvocationFromCommandLine(
                                      CCArgs.size(),
                                      *Diags))
     return nullptr;
-  // Patch up the install dir, so we find the same standard library as the
-  // original compiler on MacOS.
-  CI->getHeaderSearchOpts().InstallDir = TheDriver.getInstalledDir();
   return CI;
 }
