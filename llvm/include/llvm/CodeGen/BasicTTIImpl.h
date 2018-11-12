@@ -123,9 +123,8 @@ private:
   unsigned getExtractSubvectorOverhead(Type *Ty, int Index, Type *SubTy) {
     assert(Ty && Ty->isVectorTy() && SubTy && SubTy->isVectorTy() &&
            "Can only extract subvectors from vectors");
-    int NumElts = Ty->getVectorNumElements();
     int NumSubElts = SubTy->getVectorNumElements();
-    assert((Index + NumSubElts) <= NumElts &&
+    assert((Index + NumSubElts) <= (int)Ty->getVectorNumElements() &&
            "SK_ExtractSubvector index out of range");
 
     unsigned Cost = 0;
