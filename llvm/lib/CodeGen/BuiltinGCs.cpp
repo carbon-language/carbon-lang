@@ -30,7 +30,6 @@ public:
   ErlangGC() {
     NeededSafePoints = 1 << GC::PostCall;
     UsesMetadata = true;
-    CustomRoots = false;
   }
 };
 
@@ -55,9 +54,7 @@ public:
 /// while introducing only minor runtime overhead.
 class ShadowStackGC : public GCStrategy {
 public:
-  ShadowStackGC() {
-    CustomRoots = true;
-  }
+  ShadowStackGC() {}
 };
 
 /// A GCStrategy which serves as an example for the usage of a statepoint based
@@ -74,7 +71,6 @@ public:
     // gc.root lowering code doesn't run.
     NeededSafePoints = 0;
     UsesMetadata = false;
-    CustomRoots = false;
   }
 
   Optional<bool> isGCManagedPointer(const Type *Ty) const override {
@@ -107,7 +103,6 @@ public:
     // gc.root lowering code doesn't run.
     NeededSafePoints = 0;
     UsesMetadata = false;
-    CustomRoots = false;
   }
 
   Optional<bool> isGCManagedPointer(const Type *Ty) const override {

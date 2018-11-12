@@ -89,7 +89,6 @@ protected:
                                /// anything but their default values.
 
   unsigned NeededSafePoints = 0;    ///< Bitmask of required safe points.
-  bool CustomRoots = false;      ///< Default is to pass through to backend.
   bool UsesMetadata = false;     ///< If set, backend must emit metadata tables.
 
 public:
@@ -131,11 +130,6 @@ public:
   bool needsSafePoint(GC::PointKind Kind) const {
     return (NeededSafePoints & 1 << Kind) != 0;
   }
-
-  /// By default, roots are left for the code generator so it can generate a
-  /// stack map. If true, you must provide a custom pass to lower
-  /// calls to \@llvm.gcroot.
-  bool customRoots() const { return CustomRoots; }
 
   /// If set, appropriate metadata tables must be emitted by the back-end
   /// (assembler, JIT, or otherwise). For statepoint, this method is
