@@ -23435,12 +23435,15 @@ static SDValue LowerMULH(SDValue Op, const X86Subtarget &Subtarget,
       Lo = getTargetVShiftByConstNode(X86ISD::VSRLI, dl, ExVT, Lo, 8, DAG);
       Hi = getTargetVShiftByConstNode(X86ISD::VSRLI, dl, ExVT, Hi, 8, DAG);
 
-      SDValue Res = DAG.getNode(X86ISD::PACKUS, dl, VT, Lo, Hi);
-      // The ymm variant of PACKUS treats the 128-bit lanes separately, so we
-      // need to permute the final result into place.
-      Res = DAG.getBitcast(MVT::v4i64, Res);
-      Res = DAG.getVectorShuffle(MVT::v4i64, dl, Res, Res, { 0, 2, 1, 3 });
-      return DAG.getBitcast(VT, Res);
+      // Bitcast back to VT and then pack all the even elements from Lo and Hi.
+      // Shuffle lowering should turn this into PACKUS+PERMQ
+      Lo = DAG.getBitcast(VT, Lo);
+      Hi = DAG.getBitcast(VT, Hi);
+      return DAG.getVectorShuffle(VT, dl, Lo, Hi,
+                                  { 0,  2,  4,  6,  8, 10, 12, 14,
+                                   16, 18, 20, 22, 24, 26, 28, 30,
+                                   32, 34, 36, 38, 40, 42, 44, 46,
+                                   48, 50, 52, 54, 56, 58, 60, 62});
     }
 
     assert(VT == MVT::v16i8 && "Unexpected VT");
@@ -23450,12 +23453,7 @@ static SDValue LowerMULH(SDValue Op, const X86Subtarget &Subtarget,
     SDValue Mul = DAG.getNode(ISD::MUL, dl, MVT::v16i16, ExA, ExB);
     Mul =
         getTargetVShiftByConstNode(X86ISD::VSRLI, dl, MVT::v16i16, Mul, 8, DAG);
-    // If we have BWI we can use truncate instruction.
-    if (Subtarget.hasBWI())
-      return DAG.getNode(ISD::TRUNCATE, dl, VT, Mul);
-    Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v8i16, Mul, Lo);
-    Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v8i16, Mul, Hi);
-    return DAG.getNode(X86ISD::PACKUS, dl, VT, Lo, Hi);
+    return DAG.getNode(ISD::TRUNCATE, dl, VT, Mul);
   }
 
   assert(VT == MVT::v16i8 &&
@@ -23506,7 +23504,14 @@ static SDValue LowerMULH(SDValue Op, const X86Subtarget &Subtarget,
   SDValue RHi = DAG.getNode(ISD::MUL, dl, ExVT, AHi, BHi);
   RLo = getTargetVShiftByConstNode(X86ISD::VSRLI, dl, ExVT, RLo, 8, DAG);
   RHi = getTargetVShiftByConstNode(X86ISD::VSRLI, dl, ExVT, RHi, 8, DAG);
-  return DAG.getNode(X86ISD::PACKUS, dl, VT, RLo, RHi);
+
+  // Bitcast back to VT and then pack all the even elements from Lo and Hi.
+  // Shuffle lowering should turn this into PACKUS.
+  RLo = DAG.getBitcast(VT, RLo);
+  RHi = DAG.getBitcast(VT, RHi);
+  return DAG.getVectorShuffle(VT, dl, RLo, RHi,
+                              { 0,  2,  4,  6,  8, 10, 12, 14,
+                               16, 18, 20, 22, 24, 26, 28, 30});
 }
 
 SDValue X86TargetLowering::LowerWin64_i128OP(SDValue Op, SelectionDAG &DAG) const {
