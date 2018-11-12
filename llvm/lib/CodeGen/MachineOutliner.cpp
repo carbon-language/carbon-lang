@@ -919,7 +919,7 @@ struct MachineOutliner : public ModulePass {
   unsigned
   buildCandidateList(std::vector<std::shared_ptr<Candidate>> &CandidateList,
                      std::vector<OutlinedFunction> &FunctionList,
-                     SuffixTree &ST, InstructionMapper &Mapper);
+                     InstructionMapper &Mapper);
 
   /// Helper function for pruneOverlaps.
   /// Removes \p C from the candidate list, and updates its \p OutlinedFunction.
@@ -1263,8 +1263,10 @@ void MachineOutliner::pruneOverlaps(
 
 unsigned MachineOutliner::buildCandidateList(
     std::vector<std::shared_ptr<Candidate>> &CandidateList,
-    std::vector<OutlinedFunction> &FunctionList, SuffixTree &ST,
+    std::vector<OutlinedFunction> &FunctionList,
     InstructionMapper &Mapper) {
+  // Construct a suffix tree and use it to find candidates.
+  SuffixTree ST(Mapper.UnsignedVec);
 
   std::vector<unsigned> CandidateSequence; // Current outlining candidate.
   unsigned MaxCandidateLen = 0;            // Length of the longest candidate.
@@ -1628,15 +1630,12 @@ bool MachineOutliner::runOnModule(Module &M) {
 
   // Prepare instruction mappings for the suffix tree.
   populateMapper(Mapper, M, MMI);
-
-  // Construct a suffix tree, use it to find candidates, and then outline them.
-  SuffixTree ST(Mapper.UnsignedVec);
   std::vector<std::shared_ptr<Candidate>> CandidateList;
   std::vector<OutlinedFunction> FunctionList;
 
   // Find all of the outlining candidates.
   unsigned MaxCandidateLen =
-      buildCandidateList(CandidateList, FunctionList, ST, Mapper);
+      buildCandidateList(CandidateList, FunctionList, Mapper);
 
   // Remove candidates that overlap with other candidates.
   pruneOverlaps(CandidateList, FunctionList, Mapper, MaxCandidateLen);
