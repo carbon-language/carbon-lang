@@ -205,8 +205,9 @@ static void registerEPCallbacks(PassBuilder &PB, bool VerifyEachPass,
     PB.registerOptimizerLastEPCallback(
         [&PB, VerifyEachPass, DebugLogging](FunctionPassManager &PM,
                                             PassBuilder::OptimizationLevel) {
-          PB.parsePassPipeline(PM, OptimizerLastEPPipeline, VerifyEachPass,
-                               DebugLogging);
+          ExitOnError Err("Unable to parse OptimizerLastEP pipeline: ");
+          Err(PB.parsePassPipeline(PM, OptimizerLastEPPipeline, VerifyEachPass,
+                                   DebugLogging));
         });
 }
 
