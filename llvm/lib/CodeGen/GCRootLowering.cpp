@@ -141,8 +141,7 @@ static bool CouldBecomeSafePoint(Instruction *I) {
   return true;
 }
 
-static bool InsertRootInitializers(Function &F, AllocaInst **Roots,
-                                   unsigned Count) {
+static bool InsertRootInitializers(Function &F, ArrayRef<AllocaInst *> Roots) {
   // Scroll past alloca instructions.
   BasicBlock::iterator IP = F.getEntryBlock().begin();
   while (isa<AllocaInst>(IP))
@@ -159,12 +158,12 @@ static bool InsertRootInitializers(Function &F, AllocaInst **Roots,
   // Add root initializers.
   bool MadeChange = false;
 
-  for (AllocaInst **I = Roots, **E = Roots + Count; I != E; ++I)
-    if (!InitedRoots.count(*I)) {
+  for (AllocaInst *Root : Roots)
+    if (!InitedRoots.count(Root)) {
       StoreInst *SI = new StoreInst(
-          ConstantPointerNull::get(cast<PointerType>((*I)->getAllocatedType())),
-          *I);
-      SI->insertAfter(*I);
+          ConstantPointerNull::get(cast<PointerType>(Root->getAllocatedType())),
+          Root);
+      SI->insertAfter(Root);
       MadeChange = true;
     }
 
@@ -195,44 +194,45 @@ bool LowerIntrinsics::DoLowering(Function &F, GCStrategy &S) {
   SmallVector<AllocaInst *, 32> Roots;
 
   bool MadeChange = false;
-  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
-    for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E;) {
-      if (IntrinsicInst *CI = dyn_cast<IntrinsicInst>(II++)) {
-        Function *F = CI->getCalledFunction();
-        switch (F->getIntrinsicID()) {
-        default: break;
-        case Intrinsic::gcwrite: {
-          // Replace a write barrier with a simple store.
-          Value *St = new StoreInst(CI->getArgOperand(0),
-                                    CI->getArgOperand(2), CI);
-          CI->replaceAllUsesWith(St);
-          CI->eraseFromParent();
-          MadeChange = true;
-          break;
-        }
-        case Intrinsic::gcread: {
-          // Replace a read barrier with a simple load.
-          Value *Ld = new LoadInst(CI->getArgOperand(1), "", CI);
-          Ld->takeName(CI);
-          CI->replaceAllUsesWith(Ld);
-          CI->eraseFromParent();
-          MadeChange = true;
-          break;
-        }
-        case Intrinsic::gcroot: {
-          // Initialize the GC root, but do not delete the intrinsic. The
-          // backend needs the intrinsic to flag the stack slot.
-          Roots.push_back(
-              cast<AllocaInst>(CI->getArgOperand(0)->stripPointerCasts()));
-          break;
-        }
-        }
+  for (BasicBlock &BB : F) 
+    for (BasicBlock::iterator II = BB.begin(), E = BB.end(); II != E;) {
+      IntrinsicInst *CI = dyn_cast<IntrinsicInst>(II++);
+      if (!CI)
+        continue;
+
+      Function *F = CI->getCalledFunction();
+      switch (F->getIntrinsicID()) {
+      default: break;
+      case Intrinsic::gcwrite: {
+        // Replace a write barrier with a simple store.
+        Value *St = new StoreInst(CI->getArgOperand(0),
+                                  CI->getArgOperand(2), CI);
+        CI->replaceAllUsesWith(St);
+        CI->eraseFromParent();
+        MadeChange = true;
+        break;
+      }
+      case Intrinsic::gcread: {
+        // Replace a read barrier with a simple load.
+        Value *Ld = new LoadInst(CI->getArgOperand(1), "", CI);
+        Ld->takeName(CI);
+        CI->replaceAllUsesWith(Ld);
+        CI->eraseFromParent();
+        MadeChange = true;
+        break;
+      }
+      case Intrinsic::gcroot: {
+        // Initialize the GC root, but do not delete the intrinsic. The
+        // backend needs the intrinsic to flag the stack slot.
+        Roots.push_back(
+            cast<AllocaInst>(CI->getArgOperand(0)->stripPointerCasts()));
+        break;
+      }
       }
     }
-  }
 
   if (Roots.size())
-    MadeChange |= InsertRootInitializers(F, Roots.begin(), Roots.size());
+    MadeChange |= InsertRootInitializers(F, Roots);
 
   return MadeChange;
 }
@@ -280,9 +280,8 @@ void GCMachineCodeAnalysis::VisitCallPoint(MachineBasicBlock::iterator CI) {
 }
 
 void GCMachineCodeAnalysis::FindSafePoints(MachineFunction &MF) {
-  for (MachineFunction::iterator BBI = MF.begin(), BBE = MF.end(); BBI != BBE;
-       ++BBI)
-    for (MachineBasicBlock::iterator MI = BBI->begin(), ME = BBI->end();
+  for (MachineBasicBlock &MBB : MF)
+    for (MachineBasicBlock::iterator MI = MBB.begin(), ME = MBB.end();
          MI != ME; ++MI)
       if (MI->isCall()) {
         // Do not treat tail or sibling call sites as safe points.  This is
