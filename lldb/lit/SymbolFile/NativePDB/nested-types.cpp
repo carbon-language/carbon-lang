@@ -14,6 +14,8 @@ struct S {
   };
   int C = 2;
   int D = 3;
+  using VoidPtrT = void *;
+  VoidPtrT DD = nullptr;
 };
 struct T {
   using NestedTypedef = int;
@@ -81,6 +83,7 @@ int main(int argc, char **argv) {
 // CHECK: (const S) GlobalA = {
 // CHECK:   (int) C = 2
 // CHECK:   (int) D = 3
+// CHECK:   (void *) DD = 0x00000000
 // CHECK: }
 // CHECK: (lldb) target variable -T GlobalB
 // CHECK: (const S::NestedStruct) GlobalB = {
@@ -117,6 +120,7 @@ int main(int argc, char **argv) {
 // CHECK: |-CXXRecordDecl {{.*}} struct S definition
 // CHECK: | |-FieldDecl {{.*}} C 'int'
 // CHECK: | |-FieldDecl {{.*}} D 'int'
+// CHECK: | |-FieldDecl {{.*}} DD 'void *'
 // CHECK: | `-CXXRecordDecl {{.*}} struct NestedStruct definition
 // CHECK: |   |-FieldDecl {{.*}} A 'int'
 // CHECK: |   `-FieldDecl {{.*}} B 'int'

@@ -253,6 +253,29 @@ static lldb::BasicType GetCompilerTypeForSimpleKind(SimpleTypeKind kind) {
   }
 }
 
+static bool IsSimpleTypeSignedInteger(SimpleTypeKind kind) {
+  switch (kind) {
+  case SimpleTypeKind::Int128:
+  case SimpleTypeKind::Int64:
+  case SimpleTypeKind::Int64Quad:
+  case SimpleTypeKind::Int32:
+  case SimpleTypeKind::Int32Long:
+  case SimpleTypeKind::Int16:
+  case SimpleTypeKind::Int16Short:
+  case SimpleTypeKind::Float128:
+  case SimpleTypeKind::Float80:
+  case SimpleTypeKind::Float64:
+  case SimpleTypeKind::Float32:
+  case SimpleTypeKind::Float16:
+  case SimpleTypeKind::NarrowCharacter:
+  case SimpleTypeKind::SignedCharacter:
+  case SimpleTypeKind::SByte:
+    return true;
+  default:
+    return false;
+  }
+}
+
 static size_t GetTypeSizeForSimpleKind(SimpleTypeKind kind) {
   switch (kind) {
   case SimpleTypeKind::Boolean128:
@@ -300,6 +323,35 @@ static size_t GetTypeSizeForSimpleKind(SimpleTypeKind kind) {
   case SimpleTypeKind::Void:
   default:
     return 0;
+  }
+}
+
+std::pair<size_t, bool> GetIntegralTypeInfo(TypeIndex ti, TpiStream &tpi) {
+  if (ti.isSimple()) {
+    SimpleTypeKind stk = ti.getSimpleKind();
+    return {GetTypeSizeForSimpleKind(stk), IsSimpleTypeSignedInteger(stk)};
+  }
+
+  CVType cvt = tpi.getType(ti);
+  switch (cvt.kind()) {
+  case LF_MODIFIER: {
+    ModifierRecord mfr;
+    llvm::cantFail(TypeDeserializer::deserializeAs<ModifierRecord>(cvt, mfr));
+    return GetIntegralTypeInfo(mfr.ModifiedType, tpi);
+  }
+  case LF_POINTER: {
+    PointerRecord pr;
+    llvm::cantFail(TypeDeserializer::deserializeAs<PointerRecord>(cvt, pr));
+    return GetIntegralTypeInfo(pr.ReferentType, tpi);
+  }
+  case LF_ENUM: {
+    EnumRecord er;
+    llvm::cantFail(TypeDeserializer::deserializeAs<EnumRecord>(cvt, er));
+    return GetIntegralTypeInfo(er.UnderlyingType, tpi);
+  }
+  default:
+    assert(false && "Type is not integral!");
+    return {0, false};
   }
 }
 
@@ -557,10 +609,15 @@ GetNestedTagRecord(const NestedTypeRecord &Record, const CVTagRecord &parent,
   if (Record.Type.isSimple())
     return llvm::None;
 
+  CVType cvt = tpi.getType(Record.Type);
+
+  if (!IsTagRecord(cvt))
+    return llvm::None;
+
   // If it's an inner definition, then treat whatever name we have here as a
   // single component of a mangled name.  So we can inject it into the parent's
   // mangled name to see if it matches.
-  CVTagRecord child = CVTagRecord::create(tpi.getType(Record.Type));
+  CVTagRecord child = CVTagRecord::create(cvt);
   std::string qname = parent.asTag().getUniqueName();
   if (qname.size() < 4 || child.asTag().getUniqueName().size() < 4)
     return llvm::None;
@@ -971,15 +1028,17 @@ lldb::TypeSP SymbolFileNativePDB::CreateTagType(PdbSymUid type_uid,
 
 lldb::TypeSP SymbolFileNativePDB::CreateTagType(PdbSymUid type_uid,
                                                 const EnumRecord &er) {
-  llvm::StringRef name = DropNameScope(er.getName());
-
-  clang::DeclContext *decl_context = m_clang->GetTranslationUnitDecl();
+  const PdbTypeSymId &tid = type_uid.asTypeSym();
+  TypeIndex ti(tid.index);
+  clang::DeclContext *decl_context = nullptr;
+  std::string uname;
+  std::tie(decl_context, uname) = CreateDeclInfoForType(er, ti);
 
   Declaration decl;
   TypeSP underlying_type = GetOrCreateType(er.UnderlyingType);
   CompilerType enum_ct = m_clang->CreateEnumerationType(
-      name.str().c_str(), decl_context, decl,
-      underlying_type->GetFullCompilerType(), er.isScoped());
+      uname.c_str(), decl_context, decl, underlying_type->GetFullCompilerType(),
+      er.isScoped());
 
   ClangASTContext::StartTagDeclarationDefinition(enum_ct);
   ClangASTContext::SetHasExternalStorage(enum_ct.GetOpaqueQualType(), true);
@@ -987,7 +1046,7 @@ lldb::TypeSP SymbolFileNativePDB::CreateTagType(PdbSymUid type_uid,
   // We're just going to forward resolve this for now.  We'll complete
   // it only if the user requests.
   return std::make_shared<lldb_private::Type>(
-      type_uid.toOpaqueId(), m_clang->GetSymbolFile(), ConstString(name),
+      type_uid.toOpaqueId(), m_clang->GetSymbolFile(), ConstString(uname),
       underlying_type->GetByteSize(), nullptr, LLDB_INVALID_UID,
       lldb_private::Type::eEncodingIsUID, decl, enum_ct,
       lldb_private::Type::eResolveStateForward);
@@ -1184,6 +1243,39 @@ TypeSP SymbolFileNativePDB::GetOrCreateType(PdbSymUid type_uid) {
   return CreateAndCacheType(type_uid);
 }
 
+static DWARFExpression
+MakeConstantLocationExpression(TypeIndex underlying_ti, TpiStream &tpi,
+                               const ConstantSym &constant, ModuleSP module) {
+  const ArchSpec &architecture = module->GetArchitecture();
+  uint32_t address_size = architecture.GetAddressByteSize();
+
+  size_t size = 0;
+  bool is_signed = false;
+  std::tie(size, is_signed) = GetIntegralTypeInfo(underlying_ti, tpi);
+
+  union {
+    llvm::support::little64_t I;
+    llvm::support::ulittle64_t U;
+  } Value;
+
+  std::shared_ptr<DataBufferHeap> buffer = std::make_shared<DataBufferHeap>();
+  buffer->SetByteSize(size);
+
+  llvm::ArrayRef<uint8_t> bytes;
+  if (is_signed) {
+    Value.I = constant.Value.getSExtValue();
+  } else {
+    Value.U = constant.Value.getZExtValue();
+  }
+
+  bytes = llvm::makeArrayRef(reinterpret_cast<const uint8_t *>(&Value), 8)
+              .take_front(size);
+  buffer->CopyData(bytes.data(), size);
+  DataExtractor extractor(buffer, lldb::eByteOrderLittle, address_size);
+  DWARFExpression result(nullptr, extractor, nullptr, 0, size);
+  return result;
+}
+
 static DWARFExpression MakeGlobalLocationExpression(uint16_t section,
                                                     uint32_t offset,
                                                     ModuleSP module) {
@@ -1227,6 +1319,9 @@ VariableSP SymbolFileNativePDB::CreateGlobalVariable(PdbSymUid var_uid) {
   const PdbCuSymId &cu_sym = var_uid.asCuSym();
   lldbassert(cu_sym.global);
   CVSymbol sym = m_index->symrecords().readRecord(cu_sym.offset);
+  if (sym.kind() == S_CONSTANT)
+    return CreateConstantSymbol(var_uid, sym);
+
   lldb::ValueType scope = eValueTypeInvalid;
   TypeIndex ti;
   llvm::StringRef name;
@@ -1295,6 +1390,34 @@ VariableSP SymbolFileNativePDB::CreateGlobalVariable(PdbSymUid var_uid) {
       false);
   var_sp->SetLocationIsConstantValueData(false);
 
+  return var_sp;
+}
+
+lldb::VariableSP
+SymbolFileNativePDB::CreateConstantSymbol(PdbSymUid var_uid,
+                                          const CVSymbol &cvs) {
+  TpiStream &tpi = m_index->tpi();
+  ConstantSym constant(cvs.kind());
+
+  llvm::cantFail(SymbolDeserializer::deserializeAs<ConstantSym>(cvs, constant));
+  std::string global_name("::");
+  global_name += constant.Name;
+  PDB_SymType pdbst = GetPdbSymType(tpi, constant.Type);
+  PdbSymUid tuid = PdbSymUid::makeTypeSymId(pdbst, constant.Type, false);
+  SymbolFileTypeSP type_sp =
+      std::make_shared<SymbolFileType>(*this, tuid.toOpaqueId());
+
+  Declaration decl;
+  Variable::RangeList ranges;
+  ModuleSP module = GetObjectFile()->GetModule();
+  DWARFExpression location =
+      MakeConstantLocationExpression(constant.Type, tpi, constant, module);
+
+  VariableSP var_sp = std::make_shared<Variable>(
+      var_uid.toOpaqueId(), constant.Name.str().c_str(), global_name.c_str(),
+      type_sp, eValueTypeVariableGlobal, module.get(), ranges, &decl, location,
+      false, false, false);
+  var_sp->SetLocationIsConstantValueData(true);
   return var_sp;
 }
 
@@ -1587,7 +1710,8 @@ uint32_t SymbolFileNativePDB::FindGlobalVariables(
     case SymbolKind::S_GDATA32:
     case SymbolKind::S_LDATA32:
     case SymbolKind::S_GTHREAD32:
-    case SymbolKind::S_LTHREAD32: {
+    case SymbolKind::S_LTHREAD32:
+    case SymbolKind::S_CONSTANT: {
       PdbSymUid uid = PdbSymUid::makeGlobalVariableUid(result.first);
       var = GetOrCreateGlobalVariable(uid);
       variables.AddVariable(var);
