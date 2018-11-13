@@ -966,6 +966,12 @@ void InterleavedAccessInfo::invalidateGroupsRequiringScalarEpilogue() {
   RequiresScalarEpilogue = false;
 }
 
+template <typename InstT>
+void InterleaveGroup<InstT>::addMetadata(InstT *NewInst) const {
+  llvm_unreachable("addMetadata can only be used for Instruction");
+}
+
+namespace llvm {
 template <>
 void InterleaveGroup<Instruction>::addMetadata(Instruction *NewInst) const {
   SmallVector<Value *, 4> VL;
@@ -973,8 +979,4 @@ void InterleaveGroup<Instruction>::addMetadata(Instruction *NewInst) const {
                  [](std::pair<int, Instruction *> p) { return p.second; });
   propagateMetadata(NewInst, VL);
 }
-
-template <typename InstT>
-void InterleaveGroup<InstT>::addMetadata(InstT *NewInst) const {
-  llvm_unreachable("addMetadata can only be used for Instruction");
 }
