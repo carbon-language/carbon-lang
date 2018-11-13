@@ -2287,7 +2287,7 @@ static void emitRangeList(DwarfDebug &DD, AsmPrinter *Asm,
     // contributions.
     auto *Base = CUBase;
     if (!Base && (P.second.size() > 1 || DwarfVersion < 5) &&
-        (UseDwarfRangesBaseAddressSpecifier || DwarfVersion >= 5)) {
+        (CU.getCUNode()->getRangesBaseAddress() || DwarfVersion >= 5)) {
       BaseIsSet = true;
       // FIXME/use care: This may not be a useful base address if it's not
       // the lowest address/range in this object.
