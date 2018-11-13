@@ -535,6 +535,49 @@ void SymbolFileNativePDB::InitializeObject() {
   lldbassert(m_clang);
 }
 
+static llvm::Optional<CVTagRecord>
+GetNestedTagRecord(const NestedTypeRecord &Record, const CVTagRecord &parent,
+                   TpiStream &tpi) {
+  // An LF_NESTTYPE is essentially a nested typedef / using declaration, but it
+  // is also used to indicate the primary definition of a nested class.  That is
+  // to say, if you have:
+  // struct A {
+  //   struct B {};
+  //   using C = B;
+  // };
+  // Then in the debug info, this will appear as:
+  // LF_STRUCTURE `A::B` [type index = N]
+  // LF_STRUCTURE `A`
+  //   LF_NESTTYPE [name = `B`, index = N]
+  //   LF_NESTTYPE [name = `C`, index = N]
+  // In order to accurately reconstruct the decl context hierarchy, we need to
+  // know which ones are actual definitions and which ones are just aliases.
+
+  // If it's a simple type, then this is something like `using foo = int`.
+  if (Record.Type.isSimple())
+    return llvm::None;
+
+  // If it's an inner definition, then treat whatever name we have here as a
+  // single component of a mangled name.  So we can inject it into the parent's
+  // mangled name to see if it matches.
+  CVTagRecord child = CVTagRecord::create(tpi.getType(Record.Type));
+  std::string qname = parent.asTag().getUniqueName();
+  if (qname.size() < 4 || child.asTag().getUniqueName().size() < 4)
+    return llvm::None;
+
+  // qname[3] is the tag type identifier (struct, class, union, etc).  Since the
+  // inner tag type is not necessarily the same as the outer tag type, re-write
+  // it to match the inner tag type.
+  qname[3] = child.asTag().getUniqueName()[3];
+  std::string piece = Record.Name;
+  piece.push_back('@');
+  qname.insert(4, std::move(piece));
+  if (qname != child.asTag().UniqueName)
+    return llvm::None;
+
+  return std::move(child);
+}
+
 void SymbolFileNativePDB::PreprocessTpiStream() {
   LazyRandomTypeCollection &types = m_index->tpi().typeCollection();
 
@@ -552,19 +595,27 @@ void SymbolFileNativePDB::PreprocessTpiStream() {
 
     struct ProcessTpiStream : public TypeVisitorCallbacks {
       ProcessTpiStream(PdbIndex &index, TypeIndex parent,
+                       const CVTagRecord &parent_cvt,
                        llvm::DenseMap<TypeIndex, TypeIndex> &parents)
-          : index(index), parents(parents), parent(parent) {}
+          : index(index), parents(parents), parent(parent),
+            parent_cvt(parent_cvt) {}
 
       PdbIndex &index;
       llvm::DenseMap<TypeIndex, TypeIndex> &parents;
       TypeIndex parent;
+      const CVTagRecord &parent_cvt;
 
       llvm::Error visitKnownMember(CVMemberRecord &CVR,
                                    NestedTypeRecord &Record) override {
-        parents[Record.Type] = parent;
-        CVType child = index.tpi().getType(Record.Type);
-        if (!IsForwardRefUdt(child))
+        llvm::Optional<CVTagRecord> tag =
+            GetNestedTagRecord(Record, parent_cvt, index.tpi());
+        if (!tag)
           return llvm::ErrorSuccess();
+
+        parents[Record.Type] = parent;
+        if (!tag->asTag().isForwardRef())
+          return llvm::ErrorSuccess();
+
         llvm::Expected<TypeIndex> full_decl =
             index.tpi().findFullDeclForForwardRef(Record.Type);
         if (!full_decl) {
@@ -577,7 +628,7 @@ void SymbolFileNativePDB::PreprocessTpiStream() {
     };
 
     CVType field_list = m_index->tpi().getType(tag.asTag().FieldList);
-    ProcessTpiStream process(*m_index, *ti, m_parent_types);
+    ProcessTpiStream process(*m_index, *ti, tag, m_parent_types);
     llvm::Error error = visitMemberRecordStream(field_list.data(), process);
     if (error)
       llvm::consumeError(std::move(error));
@@ -792,6 +843,16 @@ static std::string RenderDemanglerNode(llvm::ms_demangle::Node *n) {
   return {OS.getBuffer()};
 }
 
+static bool
+AnyScopesHaveTemplateParams(llvm::ArrayRef<llvm::ms_demangle::Node *> scopes) {
+  for (llvm::ms_demangle::Node *n : scopes) {
+    auto *idn = static_cast<llvm::ms_demangle::IdentifierNode *>(n);
+    if (idn->TemplateParams)
+      return true;
+  }
+  return false;
+}
+
 std::pair<clang::DeclContext *, std::string>
 SymbolFileNativePDB::CreateDeclInfoForType(const TagRecord &record,
                                            TypeIndex ti) {
@@ -816,6 +877,14 @@ SymbolFileNativePDB::CreateDeclInfoForType(const TagRecord &record,
   if (parent_iter == m_parent_types.end()) {
     if (scopes.empty())
       return {context, uname};
+
+    // If there is no parent in the debug info, but some of the scopes have
+    // template params, then this is a case of bad debug info.  See, for
+    // example, llvm.org/pr39607.  We don't want to create an ambiguity between
+    // a NamespaceDecl and a CXXRecordDecl, so instead we create a class at
+    // global scope with the fully qualified name.
+    if (AnyScopesHaveTemplateParams(scopes))
+      return {context, record.Name};
 
     for (llvm::ms_demangle::Node *scope : scopes) {
       auto *nii = static_cast<llvm::ms_demangle::NamedIdentifierNode *>(scope);
