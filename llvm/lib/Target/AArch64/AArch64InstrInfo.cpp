@@ -5135,10 +5135,16 @@ AArch64InstrInfo::getOutliningCandidateInfo(
                         return Sum + getInstSizeInBytes(MI);
                       });
 
-  // Compute liveness information for each candidate.
+  // Properties about candidate MBBs that hold for all of them.
+  unsigned FlagsSetInAll = 0xF;
+
+  // Compute liveness information for each candidate, and set FlagsSetInAll.
   const TargetRegisterInfo &TRI = getRegisterInfo();
   std::for_each(RepeatedSequenceLocs.begin(), RepeatedSequenceLocs.end(),
-                [&TRI](outliner::Candidate &C) { C.initLRU(TRI); });
+                [&TRI, &FlagsSetInAll](outliner::Candidate &C) {
+                  FlagsSetInAll &= C.Flags;
+                  C.initLRU(TRI);
+                });
 
   // According to the AArch64 Procedure Call Standard, the following are
   // undefined on entry/exit from a function call:
@@ -5240,10 +5246,9 @@ AArch64InstrInfo::getOutliningCandidateInfo(
     }
   }
 
-  // If the MBB containing the first candidate has calls, then it's possible
-  // that we have calls in the candidate. If there are no calls, then there's
-  // no way that any candidate could have any calls.
-  if (FirstCand.Flags & MachineOutlinerMBBFlags::HasCalls) {
+  // Does every candidate's MBB contain a call? If so, then we might have a call
+  // in the range.
+  if (FlagsSetInAll & MachineOutlinerMBBFlags::HasCalls) {
     // Check if the range contains a call. These require a save + restore of the
     // link register.
     if (std::any_of(FirstCand.front(), FirstCand.back(),
