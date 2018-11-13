@@ -1839,8 +1839,8 @@ void DwarfDebug::emitDebugPubSection(bool GnuStyle, StringRef Name,
     if (GnuStyle) {
       dwarf::PubIndexEntryDescriptor Desc = computeIndexValue(TheU, Entity);
       Asm->OutStreamer->AddComment(
-          Twine("Kind: ") + dwarf::GDBIndexEntryKindString(Desc.Kind) + ", " +
-          dwarf::GDBIndexEntryLinkageString(Desc.Linkage));
+          Twine("Attributes: ") + dwarf::GDBIndexEntryKindString(Desc.Kind) +
+          ", " + dwarf::GDBIndexEntryLinkageString(Desc.Linkage));
       Asm->emitInt8(Desc.toBits());
     }
 

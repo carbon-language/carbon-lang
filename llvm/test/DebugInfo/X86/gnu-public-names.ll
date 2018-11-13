@@ -65,7 +65,7 @@
 ; }
 
 ; ASM: .section        .debug_gnu_pubnames
-; ASM: .byte   32                      # Kind: VARIABLE, EXTERNAL
+; ASM: .byte   32                      # Attributes: VARIABLE, EXTERNAL
 ; ASM-NEXT: .asciz  "global_variable"       # External Name
 
 ; ASM: .section        .debug_gnu_pubtypes
