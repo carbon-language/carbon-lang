@@ -1969,7 +1969,7 @@ int X86TTIImpl::getIntrinsicInstrCost(Intrinsic::ID IID, Type *RetTy,
     { ISD::ROTR,       MVT::v8i32,   1 },
     { ISD::ROTR,       MVT::v4i32,   1 }
   };
-  // XOP: ROTL = VPROT(X,Y), ROTR = VPROT(SUB(0,X),Y)
+  // XOP: ROTL = VPROT(X,Y), ROTR = VPROT(X,SUB(0,Y))
   static const CostTblEntry XOPCostTbl[] = {
     { ISD::ROTL,       MVT::v4i64,   4 },
     { ISD::ROTL,       MVT::v8i32,   4 },
