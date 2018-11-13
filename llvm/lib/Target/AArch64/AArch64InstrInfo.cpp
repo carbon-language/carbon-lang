@@ -5292,26 +5292,26 @@ bool AArch64InstrInfo::isMBBSafeToOutlineFrom(MachineBasicBlock &MBB,
   // a flag.
   assert(MBB.getParent()->getRegInfo().tracksLiveness() &&
          "Suitable Machine Function for outlining must track liveness");
-  LiveRegUnits ModifiedRegUnits(getRegisterInfo());
-  LiveRegUnits UsedRegUnits(getRegisterInfo());
-  ModifiedRegUnits.addLiveOuts(MBB);
-  UsedRegUnits.addLiveOuts(MBB);
-  const TargetRegisterInfo *TRI = &getRegisterInfo();
+  LiveRegUnits LRU(getRegisterInfo());
 
   std::for_each(MBB.rbegin(), MBB.rend(),
-                [&ModifiedRegUnits, &UsedRegUnits, &TRI](MachineInstr &MI) {
-                  LiveRegUnits::accumulateUsedDefed(MI, ModifiedRegUnits,
-                                                    UsedRegUnits, TRI);
-                });
+                [&LRU](MachineInstr &MI) { LRU.accumulate(MI); });
 
-  // If one of these registers is live out of the MBB, but not modified in the
-  // MBB, then we can't outline.
-  if ((ModifiedRegUnits.available(AArch64::W16) &&
-       !UsedRegUnits.available(AArch64::W16)) ||
-      (ModifiedRegUnits.available(AArch64::W17) &&
-       !UsedRegUnits.available(AArch64::W17)) ||
-      (ModifiedRegUnits.available(AArch64::NZCV) &&
-       !UsedRegUnits.available(AArch64::NZCV)))
+  // Check if each of the unsafe registers are available...
+  bool W16AvailableInBlock = LRU.available(AArch64::W16);
+  bool W17AvailableInBlock = LRU.available(AArch64::W17);
+  bool NZCVAvailableInBlock = LRU.available(AArch64::NZCV);
+
+  // Now, add the live outs to the set.
+  LRU.addLiveOuts(MBB);
+
+  // If any of these registers is available in the MBB, but also a live out of
+  // the block, then we know outlining is unsafe.
+  if (W16AvailableInBlock && !LRU.available(AArch64::W16))
+    return false;
+  if (W17AvailableInBlock && !LRU.available(AArch64::W17))
+    return false;
+  if (NZCVAvailableInBlock && !LRU.available(AArch64::NZCV))
     return false;
 
   // Check if there's a call inside this MachineBasicBlock. If there is, then
@@ -5319,8 +5319,7 @@ bool AArch64InstrInfo::isMBBSafeToOutlineFrom(MachineBasicBlock &MBB,
   if (any_of(MBB, [](MachineInstr &MI) { return MI.isCall(); }))
     Flags |= MachineOutlinerMBBFlags::HasCalls;
 
-  if (!ModifiedRegUnits.available(AArch64::LR) ||
-      !UsedRegUnits.available(AArch64::LR))
+  if (!LRU.available(AArch64::LR))
     Flags |= MachineOutlinerMBBFlags::LRUnavailableSomewhere;
 
   return true;
