@@ -964,6 +964,20 @@ static int getDecodedCastOpcode(unsigned Val) {
   }
 }
 
+static int getDecodedUnaryOpcode(unsigned Val, Type *Ty) {
+  bool IsFP = Ty->isFPOrFPVectorTy();
+  // UnOps are only valid for int/fp or vector of int/fp types
+  if (!IsFP && !Ty->isIntOrIntVectorTy())
+    return -1;
+
+  switch (Val) {
+  default:
+    return -1;
+  case bitc::UNOP_NEG:
+    return IsFP ? Instruction::FNeg : -1;
+  }
+}
+
 static int getDecodedBinaryOpcode(unsigned Val, Type *Ty) {
   bool IsFP = Ty->isFPOrFPVectorTy();
   // BinOps are only valid for int/fp or vector of int/fp types
@@ -2317,6 +2331,19 @@ Error BitcodeReader::parseConstants() {
       }
       break;
     }
+    case bitc::CST_CODE_CE_UNOP: {  // CE_UNOP: [opcode, opval]
+      if (Record.size() < 2)
+        return error("Invalid record");
+      int Opc = getDecodedUnaryOpcode(Record[0], CurTy);
+      if (Opc < 0) {
+        V = UndefValue::get(CurTy);  // Unknown unop.
+      } else {
+        Constant *LHS = ValueList.getConstantFwdRef(Record[1], CurTy);
+        unsigned Flags = 0;
+        V = ConstantExpr::get(Opc, LHS, Flags);
+      }
+      break;
+    }
     case bitc::CST_CODE_CE_BINOP: {  // CE_BINOP: [opcode, opval, opval]
       if (Record.size() < 3)
         return error("Invalid record");
@@ -3535,7 +3562,27 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       I = nullptr;
       continue;
     }
+    case bitc::FUNC_CODE_INST_UNOP: {    // UNOP: [opval, ty, opcode]
+      unsigned OpNum = 0;
+      Value *LHS;
+      if (getValueTypePair(Record, OpNum, NextValueNo, LHS) ||
+          OpNum+1 > Record.size())
+        return error("Invalid record");
 
+      int Opc = getDecodedUnaryOpcode(Record[OpNum++], LHS->getType());
+      if (Opc == -1)
+        return error("Invalid record");
+      I = UnaryOperator::Create((Instruction::UnaryOps)Opc, LHS);
+      InstructionList.push_back(I);
+      if (OpNum < Record.size()) {
+        if (isa<FPMathOperator>(I)) {
+          FastMathFlags FMF = getDecodedFastMathFlags(Record[OpNum]);
+          if (FMF.any())
+            I->setFastMathFlags(FMF);
+        }
+      }
+      break;
+    }
     case bitc::FUNC_CODE_INST_BINOP: {    // BINOP: [opval, ty, opval, opcode]
       unsigned OpNum = 0;
       Value *LHS, *RHS;

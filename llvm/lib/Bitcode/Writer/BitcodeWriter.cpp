@@ -112,6 +112,8 @@ enum {
 
   // FUNCTION_BLOCK abbrev id's.
   FUNCTION_INST_LOAD_ABBREV = bitc::FIRST_APPLICATION_ABBREV,
+  FUNCTION_INST_UNOP_ABBREV,
+  FUNCTION_INST_UNOP_FLAGS_ABBREV,
   FUNCTION_INST_BINOP_ABBREV,
   FUNCTION_INST_BINOP_FLAGS_ABBREV,
   FUNCTION_INST_CAST_ABBREV,
@@ -510,6 +512,13 @@ static unsigned getEncodedCastOpcode(unsigned Opcode) {
   case Instruction::IntToPtr: return bitc::CAST_INTTOPTR;
   case Instruction::BitCast : return bitc::CAST_BITCAST;
   case Instruction::AddrSpaceCast: return bitc::CAST_ADDRSPACECAST;
+  }
+}
+
+static unsigned getEncodedUnaryOpcode(unsigned Opcode) {
+  switch (Opcode) {
+  default: llvm_unreachable("Unknown binary instruction!");
+  case Instruction::FNeg: return bitc::UNOP_NEG;
   }
 }
 
@@ -2384,6 +2393,16 @@ void ModuleBitcodeWriter::writeConstants(unsigned FirstVal, unsigned LastVal,
             Record.push_back(Flags);
         }
         break;
+      case Instruction::FNeg: {
+        assert(CE->getNumOperands() == 1 && "Unknown constant expr!");
+        Code = bitc::CST_CODE_CE_UNOP;
+        Record.push_back(getEncodedUnaryOpcode(CE->getOpcode()));
+        Record.push_back(VE.getValueID(C->getOperand(0)));
+        uint64_t Flags = getOptimizationFlags(CE);
+        if (Flags != 0)
+          Record.push_back(Flags);
+        break;
+      }
       case Instruction::GetElementPtr: {
         Code = bitc::CST_CODE_CE_GEP;
         const auto *GO = cast<GEPOperator>(C);
@@ -2556,7 +2575,19 @@ void ModuleBitcodeWriter::writeInstruction(const Instruction &I,
       }
     }
     break;
-
+  case Instruction::FNeg: {
+    Code = bitc::FUNC_CODE_INST_UNOP;
+    if (!pushValueAndType(I.getOperand(0), InstID, Vals))
+      AbbrevToUse = FUNCTION_INST_UNOP_ABBREV;
+    Vals.push_back(getEncodedUnaryOpcode(I.getOpcode()));
+    uint64_t Flags = getOptimizationFlags(&I);
+    if (Flags != 0) {
+      if (AbbrevToUse == FUNCTION_INST_UNOP_ABBREV)
+        AbbrevToUse = FUNCTION_INST_UNOP_FLAGS_ABBREV;
+      Vals.push_back(Flags);
+    }
+    break;
+  }
   case Instruction::GetElementPtr: {
     Code = bitc::FUNC_CODE_INST_GEP;
     AbbrevToUse = FUNCTION_INST_GEP_ABBREV;
@@ -3215,6 +3246,25 @@ void ModuleBitcodeWriter::writeBlockInfo() {
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // volatile
     if (Stream.EmitBlockInfoAbbrev(bitc::FUNCTION_BLOCK_ID, Abbv) !=
         FUNCTION_INST_LOAD_ABBREV)
+      llvm_unreachable("Unexpected abbrev ordering!");
+  }
+  { // INST_UNOP abbrev for FUNCTION_BLOCK.
+    auto Abbv = std::make_shared<BitCodeAbbrev>();
+    Abbv->Add(BitCodeAbbrevOp(bitc::FUNC_CODE_INST_UNOP));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // LHS
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 4)); // opc
+    if (Stream.EmitBlockInfoAbbrev(bitc::FUNCTION_BLOCK_ID, Abbv) !=
+        FUNCTION_INST_UNOP_ABBREV)
+      llvm_unreachable("Unexpected abbrev ordering!");
+  }
+  { // INST_UNOP_FLAGS abbrev for FUNCTION_BLOCK.
+    auto Abbv = std::make_shared<BitCodeAbbrev>();
+    Abbv->Add(BitCodeAbbrevOp(bitc::FUNC_CODE_INST_UNOP));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // LHS
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 4)); // opc
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8)); // flags
+    if (Stream.EmitBlockInfoAbbrev(bitc::FUNCTION_BLOCK_ID, Abbv) !=
+        FUNCTION_INST_UNOP_FLAGS_ABBREV)
       llvm_unreachable("Unexpected abbrev ordering!");
   }
   { // INST_BINOP abbrev for FUNCTION_BLOCK.
