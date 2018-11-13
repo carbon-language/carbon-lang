@@ -99,8 +99,8 @@ Next we need to update our addModule method to replace the call to
 
 .. code-block:: c++
 
-  ThreadSafeModule optimizeModule(ThreadSafeModule M,
-                                  const MaterializationResponsibility &R) {
+  static Expected<ThreadSafeModule>
+  optimizeModule(ThreadSafeModule M, const MaterializationResponsibility &R) {
     // Create a function pass manager.
     auto FPM = llvm::make_unique<legacy::FunctionPassManager>(M.get());
 

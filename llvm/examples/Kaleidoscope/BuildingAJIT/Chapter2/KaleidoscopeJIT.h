@@ -47,7 +47,6 @@ private:
   ThreadSafeContext Ctx;
 
 public:
-
   KaleidoscopeJIT(JITTargetMachineBuilder JTMB, DataLayout DL)
       : ObjectLayer(ES,
                     []() { return llvm::make_unique<SectionMemoryManager>(); }),
@@ -86,10 +85,8 @@ public:
   }
 
 private:
-
   static Expected<ThreadSafeModule>
-  optimizeModule(ThreadSafeModule TSM,
-                 const MaterializationResponsibility &R) {
+  optimizeModule(ThreadSafeModule TSM, const MaterializationResponsibility &R) {
     // Create a function pass manager.
     auto FPM = llvm::make_unique<legacy::FunctionPassManager>(TSM.getModule());
 
