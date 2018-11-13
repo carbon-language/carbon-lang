@@ -312,7 +312,7 @@ can be used:
    }
 
 The "CHECK-COUNT:" directive
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you need to match multiple lines with the same pattern over and over again
 you can repeat a plain ``CHECK:`` as many times as needed. If that looks too
