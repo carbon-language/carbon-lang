@@ -69,7 +69,7 @@
 ; ASM-NEXT: .asciz  "global_variable"       # External Name
 
 ; ASM: .section        .debug_gnu_pubtypes
-; ASM: .byte   16                      # Kind: TYPE, EXTERNAL
+; ASM: .byte   16                      # Attributes: TYPE, EXTERNAL
 ; ASM-NEXT: .asciz  "C"                     # External Name
 
 ; CHECK: .debug_info contents:
