@@ -20,8 +20,8 @@
 #include <optional>
 
 namespace Fortran::parser {
-class Expr;
-class Program;
+struct Expr;
+struct Program;
 }
 
 namespace Fortran::semantics {

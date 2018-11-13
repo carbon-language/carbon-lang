@@ -18,6 +18,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <type_traits>
 
 using namespace Fortran::evaluate;
 using namespace Fortran::common;
@@ -295,6 +296,41 @@ void inttest(std::int64_t x, int pass, Rounding rounding) {
   MATCH(actualFlags, FlagsToBits(real.flags))("%d 0x%llx", pass, x);
 }
 
+template<typename FLT = float> FLT ToIntPower(FLT x, int power) {
+  if (power == 0) {
+    return x / x;
+  }
+  bool negative{power < 0};
+  if (negative) {
+    power = -power;
+  }
+  FLT result{1};
+  while (power > 0) {
+    if (power & 1) {
+      result *= x;
+    }
+    x *= x;
+    power >>= 1;
+  }
+  if (negative) {
+    result = 1.0 / result;
+  }
+  return result;
+}
+
+template<typename FLT, int decimalDigits>
+FLT TimesIntPowerOfTen(FLT x, int power) {
+  if (power > decimalDigits || power < -decimalDigits) {
+    auto maxExactPowerOfTen{
+        TimesIntPowerOfTen<FLT, decimalDigits>(1, decimalDigits)};
+    auto big{ToIntPower<FLT>(maxExactPowerOfTen, power / decimalDigits)};
+    auto small{
+        TimesIntPowerOfTen<FLT, decimalDigits>(1, power % decimalDigits)};
+    return (x * big) * small;
+  }
+  return x * ToIntPower<FLT>(10.0, power);
+}
+
 template<typename UINT = std::uint32_t, typename FLT = float,
     typename REAL = Real4>
 void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
@@ -348,25 +384,37 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
       MATCH(IsInfinite(rj), x.IsInfinite())
       ("%d IsInfinite(0x%llx)", pass, static_cast<long long>(rj));
 
-      auto scaled{x.AsScaledDecimal()};
-      if (IsNaN(rj)) {
-        TEST(scaled.flags.test(RealFlag::InvalidArgument))
-        ("%d invalid(0x%llx)", pass, static_cast<long long>(rj));
-      } else if (IsInfinite(rj)) {
-        TEST(scaled.flags.test(RealFlag::Overflow))
-        ("%d overflow(0x%llx)", pass, static_cast<long long>(rj));
-      } else {
-        auto integer{scaled.value.integer.ToInt64()};
-        MATCH(x.IsNegative(), scaled.value.negative)
-        ("%d IsNegative(0x%llx)", pass, static_cast<long long>(rj));
-        char buffer[128], *dummy;
-        snprintf(buffer, sizeof buffer, "%c%lld.0E%d",
-            scaled.value.negative ? '-' : ' ', static_cast<long long>(integer),
-            scaled.value.decimalExponent);
-        u.f = std::strtold(buffer, &dummy);
-        MATCH(rj, u.ui)
-        ("%d scaled decimal 0x%llx %s %Lg", pass, static_cast<long long>(rj),
-            buffer, static_cast<long double>(u.f));
+      // Rounding mode doesn't affect the conversion of binary floating-point
+      // data to scaled decimal, but it does affect the check in which the
+      // result is converted back to binary floating-point, and can cause
+      // spurious failures.
+      if (rounding == Rounding::TiesToEven) {
+        auto scaled{x.AsScaledDecimal()};
+        if (IsNaN(rj)) {
+          TEST(scaled.flags.test(RealFlag::InvalidArgument))
+          ("%d invalid(0x%llx)", pass, static_cast<long long>(rj));
+        } else if (IsInfinite(rj)) {
+          TEST(scaled.flags.test(RealFlag::Overflow))
+          ("%d overflow(0x%llx)", pass, static_cast<long long>(rj));
+        } else {
+          auto integer{scaled.value.integer.ToUInt64()};
+          MATCH(x.IsNegative(), scaled.value.negative)
+          ("%d IsNegative(0x%llx)", pass, static_cast<long long>(rj));
+          char buffer[128];
+          snprintf(buffer, sizeof buffer, "%c%llu.0E%d",
+              "+-"[scaled.value.negative],
+              static_cast<unsigned long long>(integer),
+              scaled.value.decimalExponent);
+          if constexpr (std::is_same_v<FLT, float>) {
+            char *p;
+            u.f = std::strtof(buffer, &p);
+          } else {
+            u.f = std::atof(buffer);
+          }
+          MATCH(rj, u.ui)
+          ("%d scaled decimal 0x%llx %s", pass, static_cast<long long>(rj),
+              buffer);
+        }
       }
     }
 

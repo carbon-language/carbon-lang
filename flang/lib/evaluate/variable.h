@@ -44,10 +44,6 @@ using semantics::Symbol;
 struct DataRef;
 template<typename A> struct Variable;
 
-// pmk: are these still needed?
-int GetSymbolRank(const Symbol &);
-const parser::CharBlock &GetSymbolName(const Symbol &);
-
 // Reference a base object in memory.  This can be a Fortran symbol,
 // static data (e.g., CHARACTER literal), or compiler-created temporary.
 struct BaseObject {

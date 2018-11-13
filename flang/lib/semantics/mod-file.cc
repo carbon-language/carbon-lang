@@ -387,9 +387,8 @@ void PutBound(std::ostream &os, const Bound &x) {
 }
 
 void PutExpr(std::ostream &os, const LazyExpr &expr) {
-  if (expr.Get()) {
-    // TODO: Dump does not necessarily produce Fortran code
-    expr.Get()->Dump(os);
+  if (auto x{expr.Get()}) {
+    x->AsFortran(os);
   }
 }
 

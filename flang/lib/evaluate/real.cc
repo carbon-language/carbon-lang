@@ -500,7 +500,7 @@ std::ostream &Real<W, P, IM>::AsFortran(std::ostream &o, int kind) const {
     int exponent = scaled.value.decimalExponent + digits.size() - 1;
     o << digits[0] << '.' << digits.substr(1);
     if (exponent != 0) {
-      o << 'e' << exponent;
+      o << 'E' << exponent;
     }
     o << '_' << kind;
     if (scaled.value.negative) {
@@ -511,20 +511,8 @@ std::ostream &Real<W, P, IM>::AsFortran(std::ostream &o, int kind) const {
 }
 
 template<typename W, int P, bool IM>
-auto Real<W, P, IM>::AsScaledDecimal() const
+auto Real<W, P, IM>::AsScaledDecimal(Rounding rounding) const
     -> ValueWithRealFlags<ScaledDecimal> {
-
-  // This constant is max x such that REAL(INT(x)) == x without loss
-  static constexpr Real maxExactSignedValue{
-      Word{exponentBias + bits - 2}
-          .SHIFTL(significandBits)
-          .IOR(Word::MASKR(significandBits))};
-  // This constant is min x such that x + 1.0 == NEXTAFTER(x)
-  // (or, equivalently, for all representable y >= x, y == AINT(y))
-  static constexpr Real minFractionlessValue{
-      Word{exponentBias + precision - 1}
-          .SHIFTL(significandBits)
-          .IOR(Word::MASKR(significandBits))};
 
   ValueWithRealFlags<ScaledDecimal> result;
   if (IsNotANumber()) {
@@ -537,7 +525,12 @@ auto Real<W, P, IM>::AsScaledDecimal() const
     return result;
   }
   if (IsNegative()) {
-    result = Negate().AsScaledDecimal();
+    if (rounding == Rounding::Up) {
+      rounding = Rounding::Down;
+    } else if (rounding == Rounding::Down) {
+      rounding = Rounding::Up;
+    }
+    result = Negate().AsScaledDecimal(rounding);
     result.value.negative = true;
     return result;
   }
@@ -545,79 +538,81 @@ auto Real<W, P, IM>::AsScaledDecimal() const
     return result;
   }
 
-  // N.B. This code could be made more generic and work with output bases
-  // other than ten, so long as "decimalDigits" were modified accordingly.
-  Real ten{FromInteger(Word{10}).value};  // 10.0
+  Word fraction{Word::ConvertUnsigned(GetFraction()).value};
+  Word asInt{fraction.SHIFTL(bits - precision)};
+  int twoPower{UnbiasedExponent() - bits + 1};
 
-  // The maximum exact power of ten can't be calculated as
-  // a constexpr, so it's computed on the first call to
-  // this function.
-  static Real maxExactPowerOfTen;  // 10.0 ** decimalDigits
-  if (maxExactPowerOfTen.IsZero()) {
-    maxExactPowerOfTen = ten;
-    for (int j{1}; j < decimalDigits; ++j) {
-      auto next{maxExactPowerOfTen.Multiply(ten)};
-      CHECK(!next.value.IsZero());
-      maxExactPowerOfTen = next.value;
-    }
-  }
+  // The original Real, a finite positive number, is now represented as a
+  // left-justified integer and a binary exponent.  In other words, asInt
+  // has its sign bit set and the value of "asInt * 2.0**twoPower" equals
+  // the original Real exactly; both asInt and twoPower are integers.
+  //
+  // To generate the scaled decimal result, we multiply or divide asInt by
+  // 2**twoPower iteratively.  Whenever the result of a multiplication or
+  // division would overflow (or lose precision, respectively), we scale
+  // asInt by dividing it by ten (or multiplying, respectively).  Since
+  // 10==2*5, the scaling is actually by a factor of five since the factor
+  // of two can be accommodated by shifting.  These scalings are recorded
+  // in a decimal exponent.  Once all of the "2.0**twoPower" scaling is
+  // done, we have a value that is represented as
+  // "asInt * 10.0**decimalExponent", and that is the penultimate result.
 
-  Real one{FromInteger(Word{1}).value};  // 1.0
-  Real bigStep{one};
-  Real smallStep{one};
-  ValueWithRealFlags<Real> scaled;
-  Rounding rounding{Rounding::TiesToEven};  // pmk? try ToZero
-  if (Compare(minFractionlessValue) == Relation::Less) {
-    // Scale smaller value up by a power of ten so that it loses no bit when
-    // converted to integer.
-    Real next{maxExactPowerOfTen};
-    while (Multiply(next, rounding).value.Compare(maxExactSignedValue) ==
-        Relation::Less) {
-      result.value.decimalExponent -= decimalDigits;
-      bigStep = next;
-      next = next.Multiply(maxExactPowerOfTen, rounding).value;
+  static constexpr Word five{5};
+  if (twoPower > 0) {
+    // Multiply asInt by 2**twoPower.
+    static constexpr Word two{2};
+    for (; twoPower > 0; --twoPower) {
+      if (asInt.BTEST(bits - 1)) {
+        // asInt * 2 would overflow:  divide by five and increment the
+        // decimal exponent (effectively dividing by ten and then multiplying
+        // by two).
+        auto qr{asInt.DivideUnsigned(five)};
+        asInt = qr.quotient;
+        ++result.value.decimalExponent;
+        if (twoPower > 1 &&
+            qr.remainder.CompareUnsigned(two) == Ordering::Greater) {
+          --twoPower;
+          asInt = asInt.SHIFTL(1).IBSET(0);
+        }
+      } else {
+        asInt = asInt.SHIFTL(1);
+      }
     }
-    Real bigger{Multiply(bigStep, rounding).value};
-    next = ten;
-    while (bigger.Multiply(next, rounding).value.Compare(maxExactSignedValue) ==
-        Relation::Less) {
-      --result.value.decimalExponent;
-      smallStep = next;
-      next = next.Multiply(ten, rounding).value;
-    }
-    scaled = Multiply(smallStep, rounding);
-    scaled.value =
-        scaled.value.Multiply(bigStep, rounding).AccumulateFlags(scaled.flags);
   } else {
-    // Scale larger value down by a power of ten so that it does not overflow
-    // when converted to integer.
-    Real last{maxExactSignedValue};
-    Real next{last.Multiply(maxExactPowerOfTen, rounding).value};
-    while (Compare(next) != Relation::Less) {
-      result.value.decimalExponent += decimalDigits;
-      bigStep = bigStep.Multiply(maxExactPowerOfTen, rounding).value;
-      last = next;
-      next = next.Multiply(maxExactPowerOfTen, rounding).value;
+    // Divide asInt by 2**(-twoPower).
+    unsigned lower3{0};
+    for (; twoPower < 0; ++twoPower) {
+      auto times5{asInt.MultiplyUnsigned(five)};
+      if (!times5.upper.IsZero()) {
+        // asInt is too big to need scaling, just shift it down.
+        lower3 >>= 1;
+        if (asInt.BTEST(0)) {
+          lower3 |= 4;
+        }
+        asInt = asInt.SHIFTR(1);
+      } else {
+        // asInt is small enough to be scaled; do so.
+        unsigned times5lower3{lower3 * 5};
+        unsigned round{times5lower3 >> 3};
+        auto rounded{times5.lower.AddUnsigned(Word{round})};
+        if (rounded.carry) {
+          lower3 >>= 1;
+          if (asInt.BTEST(0)) {
+            lower3 |= 4;
+          }
+          asInt = asInt.SHIFTR(1);
+        } else {
+          --result.value.decimalExponent;
+          lower3 = times5lower3 & 7;
+          asInt = rounded.value;
+        }
+      }
     }
-    next = last;
-    while (Compare(next) == Relation::Greater) {
-      ++result.value.decimalExponent;
-      smallStep = smallStep.Multiply(ten, rounding).value;
-      next = last.Multiply(smallStep, rounding).value;
-    }
-    scaled = Divide(smallStep, rounding);
-    scaled.value =
-        scaled.value.Divide(bigStep, rounding).AccumulateFlags(scaled.flags);
   }
 
-  scaled.flags.reset(RealFlag::Inexact);
-  CHECK(scaled.flags.empty());
-  auto asInteger{scaled.value.template ToInteger<Word>()};
-  asInteger.flags.reset(RealFlag::Inexact);
-  CHECK(asInteger.flags.empty());
-  result.value.integer = asInteger.value;
-
-  // Canonicalize to the minimum integer value
+  // Canonicalize to the minimum integer value: the final result will not
+  // be a multiple of ten.
+  result.value.integer = asInt;
   if (!result.value.integer.IsZero()) {
     while (true) {
       auto qr{result.value.integer.DivideUnsigned(10)};

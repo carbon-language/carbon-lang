@@ -30,7 +30,7 @@
 #include <variant>
 
 namespace Fortran::parser {
-class Expr;
+struct Expr;
 }
 
 namespace Fortran::semantics {

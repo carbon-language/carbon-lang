@@ -26,8 +26,8 @@ using namespace Fortran::ISO;
 // CFI_CDESC_T test helpers
 template<int rank> class Test_CFI_CDESC_T {
 public:
-  Test_CFI_CDESC_T() : dvStorage_{0} {};
-  ~Test_CFI_CDESC_T(){};
+  Test_CFI_CDESC_T() {}
+  ~Test_CFI_CDESC_T() {}
   void Check() {
     // Test CFI_CDESC_T macro defined in section 18.5.4 of F2018 standard
     // CFI_CDESC_T must give storage that is:
@@ -48,7 +48,7 @@ public:
   }
 
 private:
-  static constexpr int rank_ = rank;
+  static constexpr int rank_{rank};
   CFI_CDESC_T(rank) dvStorage_;
 };
 

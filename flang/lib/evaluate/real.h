@@ -49,14 +49,16 @@ public:
   static constexpr std::uint64_t maxExponent{(1 << exponentBits) - 1};
   static constexpr std::uint64_t exponentBias{maxExponent / 2};
 
-  // Decimal precision
-  // log(2)/log(10) = 0.30102999... in any base; avoid floating constexpr
-  static constexpr int decimalDigits{(precision * 30103) / 100000};
+  // Decimal precision of a binary floating-point representation is
+  // actual the base-5 precision.
+  // log(2)/log(5) = 0.430+ in any base.
+  // Calculate "precision*0.43" with integer arithmetic so as to be constexpr.
+  static constexpr int decimalDigits{(precision * 43) / 100};
 
   // Associates a decimal exponent with an integral value for formmatting.
   struct ScaledDecimal {
     bool negative{false};
-    Word integer;
+    Word integer;  // unsigned
     int decimalExponent{0};  // Exxx
   };
 
@@ -123,7 +125,11 @@ public:
     if (exponent == maxExponent) {
       return INT::HUGE();
     } else {
-      return {static_cast<std::int64_t>(exponent - exponentBias)};
+      int result = exponent - exponentBias;
+      if (IsDenormal()) {
+        ++result;
+      }
+      return {result};
     }
   }
 
@@ -295,13 +301,24 @@ public:
   }
 
   // Represents the number as "J*(10**K)" where J and K are integers.
-  ValueWithRealFlags<ScaledDecimal> AsScaledDecimal() const;
+  ValueWithRealFlags<ScaledDecimal> AsScaledDecimal(
+      Rounding rounding = defaultRounding) const;
 
   constexpr Word RawBits() const { return word_; }
 
   // Extracts "raw" biased exponent field.
   constexpr std::uint64_t Exponent() const {
     return word_.IBITS(significandBits, exponentBits).ToUInt64();
+  }
+
+  // Extracts unbiased exponent value.
+  constexpr int UnbiasedExponent() const {
+    int exponent =
+        word_.IBITS(significandBits, exponentBits).ToUInt64() - exponentBias;
+    if (IsDenormal()) {
+      ++exponent;
+    }
+    return exponent;
   }
 
   static ValueWithRealFlags<Real> Read(

@@ -54,7 +54,7 @@ std::ostream &operator<<(std::ostream &o, const LazyExpr &x) {
       common::visitors{
           [&](const parser::Expr *x) { o << (x ? "UNRESOLVED" : "EMPTY"); },
           [&](const LazyExpr::ErrorInExpr &) { o << "ERROR"; },
-          [&](const LazyExpr::CopyableExprPtr &x) { x->Dump(o); },
+          [&](const LazyExpr::CopyableExprPtr &x) { x->AsFortran(o); },
       },
       x.u_);
   return o;
@@ -270,7 +270,7 @@ void ExprResolver::Resolve(Symbol &symbol) {
   if (auto *type{symbol.GetType()}) {
     if (type->category() == DeclTypeSpec::TypeDerived) {
       DerivedTypeSpec &dts{type->derivedTypeSpec()};
-      for (auto & [ name, value ] : dts.paramValues()) {
+      for (auto &[name, value] : dts.paramValues()) {
         if (value.isExplicit()) {
           value.ResolveExplicit(context_);
         }
