@@ -536,7 +536,7 @@ static bool IsPartOfWord(char c) {
 }
 
 Check::FileCheckType &Check::FileCheckType::setCount(int C) {
-  assert(Count > 0 || "zero and negative counts are not supported");
+  assert(Count > 0 && "zero and negative counts are not supported");
   assert((C == 1 || Kind == CheckPlain) &&
          "count supported only for plain CHECK directives");
   Count = C;
