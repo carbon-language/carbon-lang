@@ -118,7 +118,7 @@ static void splats(int i, long l, __uint128_t t, float f, double d) {
   vf = l + vf;
   vf = 2.0 + vf;
   vf = d + vf; // expected-warning {{implicit conversion loses floating-point precision}}
-  vf = vf + 0xffffffff; // expected-warning {{implicit conversion from 'unsigned int' to 'float2' (vector of 2 'float' values) changes value from 4294967295 to 4.2949673E+9}}
+  vf = vf + 0xffffffff;
   vf = vf + 2.1; // expected-warning {{implicit conversion loses floating-point precision}}
   
   vd = l + vd;

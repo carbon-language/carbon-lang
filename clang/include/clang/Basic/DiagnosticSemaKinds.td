@@ -3229,10 +3229,6 @@ def warn_impcast_float_integer : Warning<
   "implicit conversion turns floating-point number into integer: %0 to %1">,
   InGroup<FloatConversion>, DefaultIgnore;
 
-def warn_impcast_precision_float_to_integer : Warning<
-  "implicit conversion from %0 to %1 changes value from %2 to %3">,
-  InGroup<DiagGroup<"float-precision">>;
-
 def warn_impcast_float_to_integer : Warning<
   "implicit conversion from %0 to %1 changes value from %2 to %3">,
   InGroup<FloatOverflowConversion>, DefaultIgnore;
