@@ -347,13 +347,13 @@ SmallVector<VPlanSlp::MultiNodeOpTy, 4> VPlanSlp::reorderMultiNodeOps() {
 }
 
 void VPlanSlp::dumpBundle(ArrayRef<VPValue *> Values) {
-  LLVM_DEBUG(dbgs() << " Ops: ");
+  dbgs() << " Ops: ";
   for (auto Op : Values)
     if (auto *Instr = cast_or_null<VPInstruction>(Op)->getUnderlyingInstr())
-      LLVM_DEBUG(dbgs() << *Instr << " | ");
+      dbgs() << *Instr << " | ";
     else
-      LLVM_DEBUG(dbgs() << " nullptr | ");
-  LLVM_DEBUG(dbgs() << "\n");
+      dbgs() << " nullptr | ";
+  dbgs() << "\n";
 }
 
 VPInstruction *VPlanSlp::buildGraph(ArrayRef<VPValue *> Values) {
