@@ -362,14 +362,14 @@ VPInstruction *VPlanSlp::buildGraph(ArrayRef<VPValue *> Values) {
   // If we already visited this instruction bundle, re-use the existing node
   auto I = BundleToCombined.find(to_vector<4>(Values));
   if (I != BundleToCombined.end()) {
-#ifdef NDEBUG
+#ifndef NDEBUG
     // Check that the resulting graph is a tree. If we re-use a node, this means
     // its values have multiple users. We only allow this, if all users of each
     // value are the same instruction.
     for (auto *V : Values) {
       auto UI = V->user_begin();
       auto *FirstUser = *UI++;
-      while (UI != V->use_end()) {
+      while (UI != V->user_end()) {
         assert(*UI == FirstUser && "Currently we only support SLP trees.");
         UI++;
       }
