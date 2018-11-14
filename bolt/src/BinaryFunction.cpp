@@ -3252,6 +3252,16 @@ void BinaryFunction::fixBranches() {
         BB->removeDuplicateConditionalSuccessor(CondBranch);
       }
       if (!NextBB || (NextBB != TSuccessor && NextBB != FSuccessor)) {
+        // If one of the branches is guaranteed to be "long" while the other
+        // could be "short", then prioritize short for "taken". This will
+        // generate a sequence 1 byte shorter on x86.
+        if (BC.isX86() &&
+            TSuccessor->isCold() != FSuccessor->isCold() &&
+            BB->isCold() != TSuccessor->isCold()) {
+          std::swap(TSuccessor, FSuccessor);
+          MIB->reverseBranchCondition(*CondBranch, TSuccessor->getLabel(), Ctx);
+          BB->swapConditionalSuccessors();
+        }
         BB->addBranchInstruction(FSuccessor);
       }
     }
