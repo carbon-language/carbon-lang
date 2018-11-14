@@ -1008,6 +1008,7 @@ public:
                                  unsigned VF = 1) {
     unsigned RetVF = (RetTy->isVectorTy() ? RetTy->getVectorNumElements() : 1);
     assert((RetVF == 1 || VF == 1) && "VF > 1 and RetVF is a vector type");
+    auto *ConcreteTTI = static_cast<T *>(this);
 
     switch (IID) {
     default: {
@@ -1033,29 +1034,24 @@ public:
         ScalarizationCost += getOperandsScalarizationOverhead(Args, VF);
       }
 
-      return static_cast<T *>(this)->
-        getIntrinsicInstrCost(IID, RetTy, Types, FMF, ScalarizationCost);
+      return ConcreteTTI->getIntrinsicInstrCost(IID, RetTy, Types, FMF,
+                                                ScalarizationCost);
     }
     case Intrinsic::masked_scatter: {
       assert(VF == 1 && "Can't vectorize types here.");
       Value *Mask = Args[3];
       bool VarMask = !isa<Constant>(Mask);
       unsigned Alignment = cast<ConstantInt>(Args[2])->getZExtValue();
-      return
-        static_cast<T *>(this)->getGatherScatterOpCost(Instruction::Store,
-                                                       Args[0]->getType(),
-                                                       Args[1], VarMask,
-                                                       Alignment);
+      return ConcreteTTI->getGatherScatterOpCost(
+          Instruction::Store, Args[0]->getType(), Args[1], VarMask, Alignment);
     }
     case Intrinsic::masked_gather: {
       assert(VF == 1 && "Can't vectorize types here.");
       Value *Mask = Args[2];
       bool VarMask = !isa<Constant>(Mask);
       unsigned Alignment = cast<ConstantInt>(Args[1])->getZExtValue();
-      return
-        static_cast<T *>(this)->getGatherScatterOpCost(Instruction::Load,
-                                                       RetTy, Args[0], VarMask,
-                                                       Alignment);
+      return ConcreteTTI->getGatherScatterOpCost(Instruction::Load, RetTy,
+                                                 Args[0], VarMask, Alignment);
     }
     case Intrinsic::experimental_vector_reduce_add:
     case Intrinsic::experimental_vector_reduce_mul:
@@ -1085,7 +1081,6 @@ public:
                                                               : TTI::OP_None;
       // fshl: (X << (Z % BW)) | (Y >> (BW - (Z % BW)))
       // fshr: (X << (BW - (Z % BW))) | (Y >> (Z % BW))
-      auto *ConcreteTTI = static_cast<T *>(this);
       unsigned Cost = 0;
       Cost += ConcreteTTI->getArithmeticInstrCost(BinaryOperator::Or, RetTy);
       Cost += ConcreteTTI->getArithmeticInstrCost(BinaryOperator::Sub, RetTy);
