@@ -905,7 +905,13 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     // 64-bit targets and two 32-bit loads on a 32-bit target. Similar for
     // store.
     setOperationAction(ISD::LOAD,               MVT::v2f32, Custom);
+    setOperationAction(ISD::LOAD,               MVT::v2i32, Custom);
+    setOperationAction(ISD::LOAD,               MVT::v4i16, Custom);
+    setOperationAction(ISD::LOAD,               MVT::v8i8,  Custom);
     setOperationAction(ISD::STORE,              MVT::v2f32, Custom);
+    setOperationAction(ISD::STORE,              MVT::v2i32, Custom);
+    setOperationAction(ISD::STORE,              MVT::v4i16, Custom);
+    setOperationAction(ISD::STORE,              MVT::v8i8,  Custom);
 
     setOperationAction(ISD::BITCAST,            MVT::v2i32, Custom);
     setOperationAction(ISD::BITCAST,            MVT::v4i16, Custom);
@@ -20073,14 +20079,24 @@ static SDValue LowerStore(SDValue Op, const X86Subtarget &Subtarget,
   if (St->isTruncatingStore())
     return SDValue();
 
-  assert(StoredVal.getValueType() == MVT::v2f32 && "Unexpected VT");
+  MVT StoreVT = StoredVal.getSimpleValueType();
+  assert(StoreVT.isVector() && StoreVT.getSizeInBits() == 64 &&
+         "Unexpected VT");
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  if (DAG.getTargetLoweringInfo().getTypeAction(*DAG.getContext(), StoreVT) !=
+        TargetLowering::TypeWidenVector)
+    return SDValue();
 
-  // Widen the vector, cast to a v2x64 type, extract the single 64-bit
-  // element and store it.
-  StoredVal = DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v4f32, StoredVal,
-                          DAG.getUNDEF(MVT::v2f32));
-  StoredVal = DAG.getBitcast(MVT::v2f64, StoredVal);
-  StoredVal = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::f64, StoredVal,
+  // Widen the vector, cast to a v2x64 type, extract the single 64-bit element
+  // and store it.
+  MVT WideVT = MVT::getVectorVT(StoreVT.getVectorElementType(),
+                                StoreVT.getVectorNumElements() * 2);
+  StoredVal = DAG.getNode(ISD::CONCAT_VECTORS, dl, WideVT, StoredVal,
+                          DAG.getUNDEF(StoreVT));
+  MVT StVT = Subtarget.is64Bit() && StoreVT.isInteger() ? MVT::i64 : MVT::f64;
+  MVT CastVT = MVT::getVectorVT(StVT, 2);
+  StoredVal = DAG.getBitcast(CastVT, StoredVal);
+  StoredVal = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, StVT, StoredVal,
                           DAG.getIntPtrConstant(0, dl));
 
   return DAG.getStore(St->getChain(), dl, StoredVal, St->getBasePtr(),
@@ -26567,20 +26583,27 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     break;
   }
   case ISD::LOAD: {
-    // Use an f64 load and a scalar_to_vector for v2f32 loads. This avoids
-    // scalarizing in 32-bit mode. In 64-bit mode this avoids a int->fp cast
-    // since type legalization will try to use an i64 load.
-    assert(N->getValueType(0) == MVT::v2f32 && "Unexpected VT");
+    // Use an f64/i64 load and a scalar_to_vector for v2f32/v2i32 loads. This
+    // avoids scalarizing in 32-bit mode. In 64-bit mode this avoids a int->fp
+    // cast since type legalization will try to use an i64 load.
+    MVT VT = N->getSimpleValueType(0);
+    assert(VT.isVector() && VT.getSizeInBits() == 64 && "Unexpected VT");
+    if (getTypeAction(*DAG.getContext(), VT) != TypeWidenVector)
+      return;
     if (!ISD::isNON_EXTLoad(N))
       return;
     auto *Ld = cast<LoadSDNode>(N);
-    SDValue Res = DAG.getLoad(MVT::f64, dl, Ld->getChain(), Ld->getBasePtr(),
+    MVT LdVT = Subtarget.is64Bit() && VT.isInteger() ? MVT::i64 : MVT::f64;
+    SDValue Res = DAG.getLoad(LdVT, dl, Ld->getChain(), Ld->getBasePtr(),
                               Ld->getPointerInfo(),
                               Ld->getAlignment(),
                               Ld->getMemOperand()->getFlags());
     SDValue Chain = Res.getValue(1);
-    Res = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v2f64, Res);
-    Res = DAG.getBitcast(MVT::v4f32, Res);
+    MVT WideVT = MVT::getVectorVT(LdVT, 2);
+    Res = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, WideVT, Res);
+    MVT CastVT = MVT::getVectorVT(VT.getVectorElementType(),
+                                  VT.getVectorNumElements() * 2);
+    Res = DAG.getBitcast(CastVT, Res);
     Results.push_back(Res);
     Results.push_back(Chain);
     return;
