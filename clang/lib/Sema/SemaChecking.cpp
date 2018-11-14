@@ -105,6 +105,19 @@ SourceLocation Sema::getLocationOfStringLiteralByte(const StringLiteral *SL,
                                Context.getTargetInfo());
 }
 
+// FIXME: Force the precision of the source value down so we don't print
+// digits which are usually useless (we don't really care here if we
+// truncate a digit by accident in edge cases).  Ideally, APFloat::toString
+// would automatically print the shortest representation, but it's a bit
+// tricky to implement.
+static void PrettyPrintFloat(const llvm::APFloat &floatValue,
+                             const llvm::fltSemantics &floatSem,
+                             SmallVectorImpl<char> &prettyFloatValue) {
+  unsigned precision = llvm::APFloat::semanticsPrecision(floatSem);
+  precision = llvm::divideCeil(precision * 59, 196);
+  floatValue.toString(prettyFloatValue, precision);
+}
+
 /// Checks that a call expression's argument count is the desired number.
 /// This is useful when doing custom type-checking.  Returns true on error.
 static bool checkArgCount(Sema &S, CallExpr *call, unsigned desiredArgCount) {
@@ -10473,15 +10486,8 @@ static void DiagnoseFloatingImpCast(Sema &S, Expr *E, QualType T,
     DiagID = diag::warn_impcast_float_to_integer;
   }
 
-  // FIXME: Force the precision of the source value down so we don't print
-  // digits which are usually useless (we don't really care here if we
-  // truncate a digit by accident in edge cases).  Ideally, APFloat::toString
-  // would automatically print the shortest representation, but it's a bit
-  // tricky to implement.
   SmallString<16> PrettySourceValue;
-  unsigned precision = llvm::APFloat::semanticsPrecision(Value.getSemantics());
-  precision = (precision * 59 + 195) / 196;
-  Value.toString(PrettySourceValue, precision);
+  PrettyPrintFloat(Value, Value.getSemantics(), PrettySourceValue);
 
   SmallString<16> PrettyTargetValue;
   if (IsBool)
@@ -10912,6 +10918,32 @@ CheckImplicitConversion(Sema &S, Expr *E, QualType T, SourceLocation CC,
       }
     }
     return;
+  }
+
+  if (Source->isIntegerType() && TargetBT && TargetBT->isFloatingType()) {
+    llvm::APSInt IntValue;
+    if (E->EvaluateAsInt(IntValue, S.Context, Expr::SE_AllowSideEffects)) {
+      if (S.SourceMgr.isInSystemMacro(CC))
+        return;
+      const llvm::fltSemantics &FloatSemantics =
+          S.Context.getFloatTypeSemantics(QualType(TargetBT, 0));
+      llvm::APFloat FloatValue(FloatSemantics);
+      if (FloatValue.convertFromAPInt(IntValue, Source->isSignedIntegerType(),
+                                      llvm::APFloat::rmNearestTiesToEven) !=
+          llvm::APFloat::opOK) {
+        SmallString<16> PrettyTargetValue;
+        SmallString<16> PrettySourceValue;
+        PrettyPrintFloat(FloatValue, FloatSemantics, PrettyTargetValue);
+        IntValue.toString(PrettySourceValue);
+
+        S.DiagRuntimeBehavior(
+            E->getExprLoc(), E,
+            S.PDiag(diag::warn_impcast_precision_float_to_integer)
+                << E->getType() << T << PrettySourceValue << PrettyTargetValue
+                << E->getSourceRange() << clang::SourceRange(CC));
+        return;
+      }
+    }
   }
 
   DiagnoseNullConversion(S, E, T, CC);
