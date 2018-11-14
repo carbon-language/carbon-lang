@@ -383,7 +383,6 @@ template<typename W, int P, bool IM>
 ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Read(
     const char *&p, Rounding rounding) {
   ValueWithRealFlags<Real> result;
-  Real ten{FromInteger(Integer<8>{10}).value};
   while (*p == ' ') {
     ++p;
   }
