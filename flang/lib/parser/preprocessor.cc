@@ -826,7 +826,7 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
     return left;
   }
   op = it->second;
-  if (precedence[op] < minimumPrecedence) {
+  if (op < POWER || precedence[op] < minimumPrecedence) {
     return left;
   }
   opAt = *atToken;
@@ -978,7 +978,8 @@ bool Preprocessor::IsIfPredicateTrue(const TokenSequence &expr,
   bool result{ExpressionValue(expr3, 0, &atToken, &error) != 0};
   if (error.has_value()) {
     prescanner->Say(std::move(*error));
-  } else if (atToken < expr3.SizeInTokens()) {
+  } else if (atToken < expr3.SizeInTokens() &&
+      expr3.TokenAt(atToken).ToString() != "!") {
     prescanner->Say(expr3.GetIntervalProvenanceRange(
                         atToken, expr3.SizeInTokens() - atToken),
         atToken == 0 ? "could not parse any expression"_err_en_US
