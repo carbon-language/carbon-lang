@@ -22,16 +22,12 @@
 namespace Fortran::evaluate {
 
 template<typename REAL, typename INT>
-ValueWithRealFlags<REAL> IntPower(
-    const REAL &base, const INT &power, Rounding rounding = defaultRounding) {
-  REAL one{REAL::FromInteger(INT{1}).value};
-  ValueWithRealFlags<REAL> result;
-  result.value = one;
+ValueWithRealFlags<REAL> TimesIntPowerOf(const REAL &factor, const REAL &base,
+    const INT &power, Rounding rounding = defaultRounding) {
+  ValueWithRealFlags<REAL> result{factor};
   if (base.IsNotANumber()) {
     result.value = REAL::NotANumber();
-    if (base.IsSignalingNaN()) {
-      result.flags.set(RealFlag::InvalidArgument);
-    }
+    result.flags.set(RealFlag::InvalidArgument);
   } else if (power.IsZero()) {
     if (base.IsZero() || base.IsInfinite()) {
       result.flags.set(RealFlag::InvalidArgument);
@@ -39,21 +35,29 @@ ValueWithRealFlags<REAL> IntPower(
   } else {
     bool negativePower{power.IsNegative()};
     INT absPower{power.ABS().value};
-    REAL shifted{base};
+    REAL squares{base};
     int nbits{INT::bits - absPower.LEADZ()};
-    for (int j{0}; j + 1 < nbits; ++j) {
+    for (int j{0}; j < nbits; ++j) {
       if (absPower.BTEST(j)) {
-        result.value =
-            result.value.Multiply(shifted).AccumulateFlags(result.flags);
+        if (negativePower) {
+          result.value =
+              result.value.Divide(squares).AccumulateFlags(result.flags);
+        } else {
+          result.value =
+              result.value.Multiply(squares).AccumulateFlags(result.flags);
+        }
       }
-      shifted = shifted.Add(shifted).AccumulateFlags(result.flags);
-    }
-    result.value = result.value.Multiply(shifted).AccumulateFlags(result.flags);
-    if (negativePower) {
-      result.value = one.Divide(result.value).AccumulateFlags(result.flags);
+      squares = squares.Multiply(squares).AccumulateFlags(result.flags);
     }
   }
   return result;
+}
+
+template<typename REAL, typename INT>
+ValueWithRealFlags<REAL> IntPower(
+    const REAL &base, const INT &power, Rounding rounding = defaultRounding) {
+  REAL one{REAL::FromInteger(INT{1}).value};
+  return TimesIntPowerOf(one, base, power, rounding);
 }
 }
 #endif  // FORTRAN_EVALUATE_INT_POWER_H_

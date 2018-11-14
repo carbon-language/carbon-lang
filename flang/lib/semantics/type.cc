@@ -270,7 +270,9 @@ void ExprResolver::Resolve(Symbol &symbol) {
   if (auto *type{symbol.GetType()}) {
     if (type->category() == DeclTypeSpec::TypeDerived) {
       DerivedTypeSpec &dts{type->derivedTypeSpec()};
-      for (auto &[name, value] : dts.paramValues()) {
+      for (auto &nameAndValue : dts.paramValues()) {
+        // &[name, value] elicits "unused variable" warnings
+        auto &value{nameAndValue.second};
         if (value.isExplicit()) {
           value.ResolveExplicit(context_);
         }

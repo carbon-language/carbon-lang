@@ -91,27 +91,27 @@ CoarrayRef &CoarrayRef::set_team(Expr<SomeInteger> &&v, bool isTeamNumber) {
   return *this;
 }
 
-void Substring::SetBounds(std::optional<Expr<SubscriptInteger>> &first,
-    std::optional<Expr<SubscriptInteger>> &last) {
-  if (first.has_value()) {
-    first_ = IndirectSubscriptIntegerExpr::Make(std::move(*first));
+void Substring::SetBounds(std::optional<Expr<SubscriptInteger>> &lower,
+    std::optional<Expr<SubscriptInteger>> &upper) {
+  if (lower.has_value()) {
+    lower_ = IndirectSubscriptIntegerExpr::Make(std::move(*lower));
   }
-  if (last.has_value()) {
-    last_ = IndirectSubscriptIntegerExpr::Make(std::move(*last));
+  if (upper.has_value()) {
+    upper_ = IndirectSubscriptIntegerExpr::Make(std::move(*upper));
   }
 }
 
-Expr<SubscriptInteger> Substring::first() const {
-  if (first_.has_value()) {
-    return **first_;
+Expr<SubscriptInteger> Substring::lower() const {
+  if (lower_.has_value()) {
+    return **lower_;
   } else {
     return AsExpr(Constant<SubscriptInteger>{1});
   }
 }
 
-Expr<SubscriptInteger> Substring::last() const {
-  if (last_.has_value()) {
-    return **last_;
+Expr<SubscriptInteger> Substring::upper() const {
+  if (upper_.has_value()) {
+    return **upper_;
   } else {
     return std::visit(
         common::visitors{[](const DataRef &dataRef) { return dataRef.LEN(); },
@@ -123,23 +123,23 @@ Expr<SubscriptInteger> Substring::last() const {
 }
 
 std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
-  if (!first_.has_value()) {
-    first_ = AsExpr(Constant<SubscriptInteger>{1});
+  if (!lower_.has_value()) {
+    lower_ = AsExpr(Constant<SubscriptInteger>{1});
   }
-  *first_ = evaluate::Fold(context, std::move(**first_));
-  std::optional<std::int64_t> lbi{ToInt64(**first_)};
+  *lower_ = evaluate::Fold(context, std::move(**lower_));
+  std::optional<std::int64_t> lbi{ToInt64(**lower_)};
   if (lbi.has_value() && *lbi < 1) {
     context.messages.Say(
         "lower bound (%jd) on substring is less than one"_en_US,
         static_cast<std::intmax_t>(*lbi));
     *lbi = 1;
-    first_ = AsExpr(Constant<SubscriptInteger>{1});
+    lower_ = AsExpr(Constant<SubscriptInteger>{1});
   }
-  if (!last_.has_value()) {
-    last_ = last();
+  if (!upper_.has_value()) {
+    upper_ = upper();
   }
-  *last_ = evaluate::Fold(context, std::move(**last_));
-  if (std::optional<std::int64_t> ubi{ToInt64(**last_)}) {
+  *upper_ = evaluate::Fold(context, std::move(**upper_));
+  if (std::optional<std::int64_t> ubi{ToInt64(**upper_)}) {
     auto *literal{std::get_if<StaticDataObject::Pointer>(&parent_)};
     std::optional<std::int64_t> length;
     if (literal != nullptr) {
@@ -150,8 +150,8 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
     if (*ubi < 1 || (lbi.has_value() && *ubi < *lbi)) {
       // Zero-length string: canonicalize
       *lbi = 1, *ubi = 0;
-      first_ = AsExpr(Constant<SubscriptInteger>{*lbi});
-      last_ = AsExpr(Constant<SubscriptInteger>{*ubi});
+      lower_ = AsExpr(Constant<SubscriptInteger>{*lbi});
+      upper_ = AsExpr(Constant<SubscriptInteger>{*ubi});
     } else if (length.has_value() && *ubi > *length) {
       context.messages.Say("upper bound (&jd) on substring is greater "
                            "than character length (%jd)"_en_US,
@@ -170,9 +170,9 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
           newStaticData->data().push_back(from[j]);
         }
         parent_ = newStaticData;
-        first_ = AsExpr(Constant<SubscriptInteger>{1});
+        lower_ = AsExpr(Constant<SubscriptInteger>{1});
         std::int64_t length = newStaticData->data().size();
-        last_ = AsExpr(Constant<SubscriptInteger>{length});
+        upper_ = AsExpr(Constant<SubscriptInteger>{length});
         switch (width) {
         case 1:
           return {
@@ -324,8 +324,8 @@ std::ostream &DataRef::AsFortran(std::ostream &o) const { return Emit(o, u); }
 
 std::ostream &Substring::AsFortran(std::ostream &o) const {
   Emit(o, parent_) << '(';
-  Emit(o, first_) << ':';
-  return Emit(o, last_);
+  Emit(o, lower_) << ':';
+  return Emit(o, upper_);
 }
 
 std::ostream &ComplexPart::AsFortran(std::ostream &o) const {
@@ -380,7 +380,7 @@ Expr<SubscriptInteger> DataRef::LEN() const {
 Expr<SubscriptInteger> Substring::LEN() const {
   return AsExpr(
       Extremum<SubscriptInteger>{AsExpr(Constant<SubscriptInteger>{0}),
-          last() - first() + AsExpr(Constant<SubscriptInteger>{1})});
+          upper() - lower() + AsExpr(Constant<SubscriptInteger>{1})});
 }
 template<typename T> Expr<SubscriptInteger> Designator<T>::LEN() const {
   if constexpr (Result::category == TypeCategory::Character) {

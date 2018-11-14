@@ -193,14 +193,14 @@ public:
     SetBounds(first, last);
   }
   Substring(StaticDataObject::Pointer &&parent,
-      std::optional<Expr<SubscriptInteger>> &&first,
-      std::optional<Expr<SubscriptInteger>> &&last)
+      std::optional<Expr<SubscriptInteger>> &&lower,
+      std::optional<Expr<SubscriptInteger>> &&upper)
     : parent_{std::move(parent)} {
-    SetBounds(first, last);
+    SetBounds(lower, upper);
   }
 
-  Expr<SubscriptInteger> first() const;  // TODO pmk: lower/upper
-  Expr<SubscriptInteger> last() const;
+  Expr<SubscriptInteger> lower() const;
+  Expr<SubscriptInteger> upper() const;
   int Rank() const;
   BaseObject GetBaseObject() const;
   const Symbol *GetLastSymbol() const;
@@ -213,7 +213,7 @@ private:
   void SetBounds(std::optional<Expr<SubscriptInteger>> &,
       std::optional<Expr<SubscriptInteger>> &);
   std::variant<DataRef, StaticDataObject::Pointer> parent_;
-  std::optional<IndirectSubscriptIntegerExpr> first_, last_;
+  std::optional<IndirectSubscriptIntegerExpr> lower_, upper_;
 };
 
 // R915 complex-part-designator

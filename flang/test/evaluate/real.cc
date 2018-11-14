@@ -367,9 +367,11 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
       auto actualFlags{FlagsToBits(fpenv.CurrentFlags())};
       actualFlags &= ~Inexact;  // x86 std::trunc can set Inexact; AINT ain't
       u.f = fcheck;
+#ifndef __clang__
       if (IsNaN(u.ui)) {
-        actualFlags |= InvalidArgument;  // x86 std::trunc(NaN) WAR
+        actualFlags |= InvalidArgument;  // x86 std::trunc(NaN) workaround
       }
+#endif
       UINT rcheck{NormalizeNaN(u.ui)};
       UINT check = aint.value.RawBits().ToUInt64();
       MATCH(rcheck, check)
@@ -384,10 +386,6 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
       MATCH(IsInfinite(rj), x.IsInfinite())
       ("%d IsInfinite(0x%llx)", pass, static_cast<long long>(rj));
 
-      // Rounding mode doesn't affect the conversion of binary floating-point
-      // data to scaled decimal, but it does affect the check in which the
-      // result is converted back to binary floating-point, and can cause
-      // spurious failures.
       if (rounding == Rounding::TiesToEven) {
         auto scaled{x.AsScaledDecimal()};
         if (IsNaN(rj)) {
@@ -401,17 +399,13 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
           MATCH(x.IsNegative(), scaled.value.negative)
           ("%d IsNegative(0x%llx)", pass, static_cast<long long>(rj));
           char buffer[128];
+          const char *p = buffer;
           snprintf(buffer, sizeof buffer, "%c%llu.0E%d",
               "+-"[scaled.value.negative],
               static_cast<unsigned long long>(integer),
               scaled.value.decimalExponent);
-          if constexpr (std::is_same_v<FLT, float>) {
-            char *p;
-            u.f = std::strtof(buffer, &p);
-          } else {
-            u.f = std::atof(buffer);
-          }
-          MATCH(rj, u.ui)
+          auto readBack{REAL::Read(p, rounding)};
+          MATCH(rj, readBack.value.RawBits().ToUInt64())
           ("%d scaled decimal 0x%llx %s", pass, static_cast<long long>(rj),
               buffer);
         }
