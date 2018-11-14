@@ -20082,7 +20082,6 @@ static SDValue LowerStore(SDValue Op, const X86Subtarget &Subtarget,
   MVT StoreVT = StoredVal.getSimpleValueType();
   assert(StoreVT.isVector() && StoreVT.getSizeInBits() == 64 &&
          "Unexpected VT");
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   if (DAG.getTargetLoweringInfo().getTypeAction(*DAG.getContext(), StoreVT) !=
         TargetLowering::TypeWidenVector)
     return SDValue();
