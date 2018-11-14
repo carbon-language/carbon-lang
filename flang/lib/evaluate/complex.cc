@@ -95,6 +95,12 @@ template<typename R> std::string Complex<R>::DumpHexadecimal() const {
   return result;
 }
 
+template<typename R> std::ostream &Complex<R>::AsFortran(std::ostream &o, int kind) const {
+  re_.AsFortran(o << '(', kind);
+  im_.AsFortran(o << ',', kind);
+  return o << ')';
+}
+
 template class Complex<Real<Integer<16>, 11>>;
 template class Complex<Real<Integer<32>, 24>>;
 template class Complex<Real<Integer<64>, 53>>;

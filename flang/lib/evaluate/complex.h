@@ -83,6 +83,8 @@ public:
   }
 
   std::string DumpHexadecimal() const;
+  std::ostream &AsFortran(std::ostream &, int kind) const;
+
   // TODO: (C)ABS once Real::HYPOT is done
   // TODO: unit testing
 

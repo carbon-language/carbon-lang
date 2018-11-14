@@ -570,7 +570,7 @@ std::ostream &Real<W, P, IM>::AsFortran(std::ostream &o, int kind) const {
     int exponent = scaled.value.decimalExponent + digits.size() - 1;
     o << digits[0] << '.' << digits.substr(1);
     if (exponent != 0) {
-      o << 'E' << exponent;
+      o << 'e' << exponent;
     }
     o << '_' << kind;
     if (scaled.value.negative) {

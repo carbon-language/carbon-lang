@@ -45,17 +45,25 @@ std::ostream &Convert<TO, FROMCAT>::AsFortran(std::ostream &o) const {
       TO::category == TypeCategory::Real ||
       TO::category == TypeCategory::Logical || !"Convert<> to bad category!");
   if constexpr (TO::category == TypeCategory::Integer) {
-    o << "INT";
+    o << "int";
   } else if constexpr (TO::category == TypeCategory::Real) {
-    o << "REAL";
+    o << "real";
   } else if constexpr (TO::category == TypeCategory::Logical) {
-    o << "LOGICAL";
+    o << "logical";
   }
-  return this->left().AsFortran(o << '(') << ",KIND=" << TO::kind << ')';
+  return this->left().AsFortran(o << '(') << ",kind=" << TO::kind << ')';
 }
 
 template<typename A> std::ostream &Relational<A>::Infix(std::ostream &o) const {
-  return o << '.' << EnumToString(opr) << '.';
+  switch (opr) {
+  case RelationalOperator::LT: o << '<'; break;
+  case RelationalOperator::LE: o << "<="; break;
+  case RelationalOperator::EQ: o << "=="; break;
+  case RelationalOperator::NE: o << "/="; break;
+  case RelationalOperator::GE: o << ">="; break;
+  case RelationalOperator::GT: o << '>'; break;
+  }
+  return o;
 }
 
 std::ostream &Relational<SomeType>::AsFortran(std::ostream &o) const {
@@ -66,10 +74,10 @@ std::ostream &Relational<SomeType>::AsFortran(std::ostream &o) const {
 template<int KIND>
 std::ostream &LogicalOperation<KIND>::Infix(std::ostream &o) const {
   switch (logicalOperator) {
-  case LogicalOperator::And: o << ".AND."; break;
-  case LogicalOperator::Or: o << ".OR."; break;
-  case LogicalOperator::Eqv: o << ".EQV."; break;
-  case LogicalOperator::Neqv: o << ".NEQV."; break;
+  case LogicalOperator::And: o << ".and."; break;
+  case LogicalOperator::Or: o << ".or."; break;
+  case LogicalOperator::Eqv: o << ".eqv."; break;
+  case LogicalOperator::Neqv: o << ".neqv."; break;
   }
   return o;
 }
@@ -80,14 +88,14 @@ std::ostream &Constant<T>::AsFortran(std::ostream &o) const {
     return o << value.SignedDecimal() << '_' << T::kind;
   } else if constexpr (T::category == TypeCategory::Real ||
       T::category == TypeCategory::Complex) {
-    return o << value.DumpHexadecimal() << '_' << T::kind;
+    return value.AsFortran(o, T::kind);
   } else if constexpr (T::category == TypeCategory::Character) {
     return o << T::kind << '_' << parser::QuoteCharacterLiteral(value);
   } else if constexpr (T::category == TypeCategory::Logical) {
     if (value.IsTrue()) {
-      o << ".TRUE.";
+      o << ".true.";
     } else {
-      o << ".FALSE.";
+      o << ".false.";
     }
     return o << '_' << Result::kind;
   } else {
@@ -137,7 +145,7 @@ template<typename RESULT>
 std::ostream &ExpressionBase<RESULT>::AsFortran(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const BOZLiteralConstant &x) {
-                         o << "Z'" << x.Hexadecimal() << "'";
+                         o << "z'" << x.Hexadecimal() << "'";
                        },
           [&](const CopyableIndirection<Substring> &s) { s->AsFortran(o); },
           [&](const auto &x) { x.AsFortran(o); }},
