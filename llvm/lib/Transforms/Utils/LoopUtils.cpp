@@ -74,40 +74,8 @@ bool llvm::formDedicatedExitBlocks(Loop *L, DominatorTree *DT, LoopInfo *LI,
     if (IsDedicatedExit)
       return false;
 
-    // With nested loops, the inner loop might exit to the header of an
-    // enclosing loop, and the in-loop-predecessor is a latch for that
-    // enclosing loop. If we insert a block between the latch and the header,
-    // that block becomes the new latch. Any loop metadata from the old latch
-    // needs to be moved to the new one.
-    MDNode *OuterLoopMD = nullptr;
-
-    // If the exit block is a header of a different loop, get that loop's
-    // metadata before we split the block.
-    if (LI->isLoopHeader(BB))
-      OuterLoopMD = LI->getLoopFor(BB)->getLoopID();
-
     auto *NewExitBB = SplitBlockPredecessors(
         BB, InLoopPredecessors, ".loopexit", DT, LI, nullptr, PreserveLCSSA);
-
-    // If OuterLoopMD is non-null, we know that the exit block BB is a
-    // loop header for a different loop, with metadata on its back edges.
-    // If NewExitBB is a member of that loop, then NewExitBB is a latch,
-    // and the loop's metadata needs to be copied to NewExitBB.
-    if (NewExitBB && OuterLoopMD &&
-        LI->getLoopFor(NewExitBB) == LI->getLoopFor(BB)) {
-      // The preds of NewExitBB are all former latches of the outer loop.
-      // Remove their metadata.
-      for (auto *PredLoopBB : InLoopPredecessors) {
-        Instruction *TI = PredLoopBB->getTerminator();
-        // All the latches should have the same metadata (ensured by
-        // getLoopID()).
-        assert(TI->getMetadata(LLVMContext::MD_loop) == OuterLoopMD &&
-               "exit edge to other loop doesn't contain expected metadata");
-        TI->setMetadata(LLVMContext::MD_loop, nullptr);
-      }
-      NewExitBB->getTerminator()->setMetadata(LLVMContext::MD_loop,
-                                              OuterLoopMD);
-    }
 
     if (!NewExitBB)
       LLVM_DEBUG(
