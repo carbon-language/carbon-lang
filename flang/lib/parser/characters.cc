@@ -88,7 +88,8 @@ std::string QuoteCharacterLiteralHelper(
   std::string result{'"'};
   const auto emit{[&](char ch) { result += ch; }};
   for (auto ch : str) {
-    EmitQuotedChar(ch, emit, emit, doubleDoubleQuotes, doubleBackslash);
+    char32_t ch32{static_cast<unsigned char>(ch)};
+    EmitQuotedChar(ch32, emit, emit, doubleDoubleQuotes, doubleBackslash);
   }
   result += '"';
   return result;

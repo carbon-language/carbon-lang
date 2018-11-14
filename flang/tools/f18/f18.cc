@@ -439,7 +439,6 @@ int main(int argc, char *const argv[]) {
           << "  -f[no-]backslash     enable[disable] \\escapes in literals\n"
           << "  -M[no]backslash      disable[enable] \\escapes in literals\n"
           << "  -Mstandard           enable conformance warnings\n"
-          << "  -Mx,125,4            set bit 2 in xflag[125] (all Kanji mode)\n"
           << "  -r8 | -fdefault-real-8 | -i8 | -fdefault-integer-8  "
              "change default kinds of intrinsic types\n"
           << "  -Werror              treat warnings as errors\n"

@@ -103,7 +103,7 @@ inline constexpr char HexadecimalDigitValue(char ch) {
 
 inline constexpr std::optional<char> BackslashEscapeValue(char ch) {
   switch (ch) {
-  // case 'a': return {'\a'};  pgf90 doesn't know about \a
+  case 'a': return {'\a'};
   case 'b': return {'\b'};
   case 'f': return {'\f'};
   case 'n': return {'\n'};
@@ -119,7 +119,7 @@ inline constexpr std::optional<char> BackslashEscapeValue(char ch) {
 
 inline constexpr std::optional<char> BackslashEscapeChar(char ch) {
   switch (ch) {
-  // case '\a': return {'a'};  pgf90 doesn't know about \a
+  case '\a': return {'a'};
   case '\b': return {'b'};
   case '\f': return {'f'};
   case '\n': return {'n'};
@@ -146,7 +146,7 @@ void EmitQuotedChar(char32_t ch, const NORMAL &emit, const INSERTED &insert,
       insert('\\');
     }
     emit('\\');
-  } else if (ch < ' ') {
+  } else if (ch < ' ' || (ch >= 0x80 && ch <= 0xff)) {
     insert('\\');
     if (std::optional escape{BackslashEscapeChar(ch)}) {
       emit(*escape);
