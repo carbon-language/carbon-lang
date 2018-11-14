@@ -240,12 +240,13 @@ static unsigned getLAScore(VPValue *V1, VPValue *V2, unsigned MaxLevel,
 
 std::pair<VPlanSlp::OpMode, VPValue *>
 VPlanSlp::getBest(OpMode Mode, VPValue *Last,
-                  SmallVectorImpl<VPValue *> &Candidates,
+                  SmallPtrSetImpl<VPValue *> &Candidates,
                   VPInterleavedAccessInfo &IAI) {
+  assert((Mode == OpMode::Load || Mode == OpMode::Opcode) &&
+         "Currently we only handle load and commutative opcodes");
   LLVM_DEBUG(dbgs() << "      getBest\n");
-  VPValue *Best = Candidates[0];
-  SmallVector<VPValue *, 4> BestCandidates;
 
+  SmallVector<VPValue *, 4> BestCandidates;
   LLVM_DEBUG(dbgs() << "        Candidates  for "
                     << *cast<VPInstruction>(Last)->getUnderlyingInstr() << " ");
   for (auto *Candidate : Candidates) {
@@ -265,34 +266,33 @@ VPlanSlp::getBest(OpMode Mode, VPValue *Last,
   if (BestCandidates.size() == 1)
     return {Mode, BestCandidates[0]};
 
-  if (Mode == OpMode::Opcode) {
-    unsigned BestScore = 0;
-    for (unsigned Depth = 1; Depth < LookaheadMaxDepth; Depth++) {
-      unsigned PrevScore = ~0u;
-      bool AllSame = true;
+  VPValue *Best = nullptr;
+  unsigned BestScore = 0;
+  for (unsigned Depth = 1; Depth < LookaheadMaxDepth; Depth++) {
+    unsigned PrevScore = ~0u;
+    bool AllSame = true;
 
-      // FIXME: Avoid visiting the same operands multiple times.
-      for (auto *Candidate : BestCandidates) {
-        unsigned Score = getLAScore(Last, Candidate, Depth, IAI);
-        if (PrevScore == ~0u)
-          PrevScore = Score;
-        if (PrevScore != Score)
-          AllSame = false;
+    // FIXME: Avoid visiting the same operands multiple times.
+    for (auto *Candidate : BestCandidates) {
+      unsigned Score = getLAScore(Last, Candidate, Depth, IAI);
+      if (PrevScore == ~0u)
         PrevScore = Score;
+      if (PrevScore != Score)
+        AllSame = false;
+      PrevScore = Score;
 
-        if (Score > BestScore) {
-          BestScore = Score;
-          Best = Candidate;
-        }
+      if (Score > BestScore) {
+        BestScore = Score;
+        Best = Candidate;
       }
-      if (!AllSame)
-        break;
     }
+    if (!AllSame)
+      break;
   }
   LLVM_DEBUG(dbgs() << "Found best "
                     << *cast<VPInstruction>(Best)->getUnderlyingInstr()
                     << "\n");
-  std::remove(Candidates.begin(), Candidates.end(), Best);
+  Candidates.erase(Best);
 
   return {Mode, Best};
 }
@@ -316,14 +316,13 @@ SmallVector<VPlanSlp::MultiNodeOpTy, 4> VPlanSlp::reorderMultiNodeOps() {
 
   for (unsigned Lane = 1, E = MultiNodeOps[0].second.size(); Lane < E; ++Lane) {
     LLVM_DEBUG(dbgs() << "  Finding best value for lane " << Lane << "\n");
-    SmallVector<VPValue *, 4> Candidates;
-    Candidates.reserve(MultiNodeOps.size());
+    SmallPtrSet<VPValue *, 4> Candidates;
     LLVM_DEBUG(dbgs() << "  Candidates  ");
     for (auto Ops : MultiNodeOps) {
       LLVM_DEBUG(
           dbgs() << *cast<VPInstruction>(Ops.second[Lane])->getUnderlyingInstr()
                  << " ");
-      Candidates.push_back(Ops.second[Lane]);
+      Candidates.insert(Ops.second[Lane]);
     }
     LLVM_DEBUG(dbgs() << "\n");
 

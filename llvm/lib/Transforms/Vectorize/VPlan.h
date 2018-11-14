@@ -1607,7 +1607,7 @@ private:
   /// candidates to choose from are values with an opcode matching \p Last's
   /// or loads consecutive to \p Last.
   std::pair<OpMode, VPValue *> getBest(OpMode Mode, VPValue *Last,
-                                       SmallVectorImpl<VPValue *> &Candidates,
+                                       SmallPtrSetImpl<VPValue *> &Candidates,
                                        VPInterleavedAccessInfo &IAI);
 
   /// Print bundle \p Values to dbgs().
