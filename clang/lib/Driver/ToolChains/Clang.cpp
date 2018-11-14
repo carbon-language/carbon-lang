@@ -3102,21 +3102,24 @@ static void RenderDebugOptions(const ToolChain &TC, const Driver &D,
     if (checkDebugInfoOption(A, Args, D, TC))
       DWARFVersion = DwarfVersionNum(A->getSpelling());
 
-  // Forward -gcodeview. EmitCodeView might have been set by CL-compatibility
-  // argument parsing.
-  if (EmitCodeView) {
-    if (const Arg *A = Args.getLastArg(options::OPT_gcodeview)) {
-      EmitCodeView = checkDebugInfoOption(A, Args, D, TC);
-      if (EmitCodeView) {
-        // DWARFVersion remains at 0 if no explicit choice was made.
-        CmdArgs.push_back("-gcodeview");
-      }
-    }
+  if (const Arg *A = Args.getLastArg(options::OPT_gcodeview)) {
+    if (checkDebugInfoOption(A, Args, D, TC))
+      EmitCodeView = true;
   }
 
+  // If the user asked for debug info but did not explicitly specify -gcodeview
+  // or -gdwarf, ask the toolchain for the default format.
   if (!EmitCodeView && DWARFVersion == 0 &&
-      DebugInfoKind != codegenoptions::NoDebugInfo)
-    DWARFVersion = TC.GetDefaultDwarfVersion();
+      DebugInfoKind != codegenoptions::NoDebugInfo) {
+    switch (TC.getDefaultDebugFormat()) {
+    case codegenoptions::DIF_CodeView:
+      EmitCodeView = true;
+      break;
+    case codegenoptions::DIF_DWARF:
+      DWARFVersion = TC.GetDefaultDwarfVersion();
+      break;
+    }
+  }
 
   // -gline-directives-only supported only for the DWARF debug info.
   if (DWARFVersion == 0 && DebugInfoKind == codegenoptions::DebugDirectivesOnly)
@@ -3194,6 +3197,9 @@ static void RenderDebugOptions(const ToolChain &TC, const Driver &D,
     else if (checkDebugInfoOption(A, Args, D, TC))
       CmdArgs.push_back("-gembed-source");
   }
+
+  if (EmitCodeView)
+    CmdArgs.push_back("-gcodeview");
 
   RenderDebugEnablingArgs(Args, CmdArgs, DebugInfoKind, DWARFVersion,
                           DebuggerTuning);
@@ -3916,8 +3922,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   types::ID InputType = Input.getType();
   if (D.IsCLMode())
     AddClangCLArgs(Args, InputType, CmdArgs, &DebugInfoKind, &EmitCodeView);
-  else
-    EmitCodeView = Args.hasArg(options::OPT_gcodeview);
 
   DwarfFissionKind DwarfFission;
   RenderDebugOptions(TC, D, RawTriple, Args, EmitCodeView, IsWindowsMSVC,
@@ -5503,7 +5507,6 @@ void Clang::AddClangCLArgs(const ArgList &Args, types::ID InputType,
       *DebugInfoKind = codegenoptions::LimitedDebugInfo;
     else
       *DebugInfoKind = codegenoptions::DebugLineTablesOnly;
-    CmdArgs.push_back("-gcodeview");
   } else {
     *EmitCodeView = false;
   }
