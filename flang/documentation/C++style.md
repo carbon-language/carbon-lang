@@ -203,7 +203,7 @@ A feature matrix:
 | pointer | nullable | default null | owning | reassignable | copyable | undefined type ok? |
 | ------- | -------- | ------------ | ------ | ------------ | -------- | ------------------ |
 | `*p` | yes | no | no | yes | shallowly | yes |
-| `&r` | no | n/a | no | no | shallowly | no |
+| `&r` | no | n/a | no | no | shallowly | yes |
 | `unique_ptr<>` | yes | yes | yes | yes | no | no |
 | `shared_ptr<>` | yes | yes | yes | yes | shallowly | no |
 | `OwningPointer<>` | yes | yes | yes | yes | no | yes |
