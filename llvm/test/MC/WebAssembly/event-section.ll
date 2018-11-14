@@ -1,3 +1,4 @@
+; XFAIL: *
 ; RUN: llc -filetype=obj -exception-model=wasm -mattr=+exception-handling %s -o - | obj2yaml | FileCheck %s
 ; RUN: llc -filetype=obj -exception-model=wasm -mattr=+exception-handling %s -o - | llvm-readobj -s | FileCheck -check-prefix=SEC %s
 
