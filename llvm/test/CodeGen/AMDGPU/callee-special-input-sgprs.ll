@@ -383,13 +383,12 @@ define void @other_arg_use_workgroup_id_z(i32 %arg0) #1 {
 ; GCN: enable_sgpr_workgroup_id_y = 0
 ; GCN: enable_sgpr_workgroup_id_z = 0
 
+; GCN-NOT: s6
 ; GCN-DAG: s_mov_b32 s33, s7
 ; GCN-DAG: v_mov_b32_e32 v0, 0x22b
-
-; GCN-NOT: s6
-; GCN: s_mov_b32 s4, s33
-; GCN-NOT: s6
+; GCN-DAG: s_mov_b32 s4, s33
 ; GCN-DAG: s_mov_b32 s32, s33
+; GCN-NOT: s6
 ; GCN: s_swappc_b64
 define amdgpu_kernel void @kern_indirect_other_arg_use_workgroup_id_x() #1 {
   call void @other_arg_use_workgroup_id_x(i32 555)
@@ -578,16 +577,16 @@ define void @func_use_every_sgpr_input_call_use_workgroup_id_xyz() #1 {
 
 ; GCN: s_swappc_b64
 
-; GCN: buffer_store_dword v{{[0-9]+}}, off, s[0:3], s5 offset:4
-; GCN: v_mov_b32_e32 v[[LO:[0-9]+]], s[[LO_X]]
-; GCN: v_mov_b32_e32 v[[HI:[0-9]+]], s[[HI_X]]
-; GCN: {{flat|global}}_load_dword v{{[0-9]+}}, v{{\[}}[[LO]]:[[HI]]{{\]}}
-; GCN: v_mov_b32_e32 v[[LO:[0-9]+]], s[[LO_Y]]
-; GCN: v_mov_b32_e32 v[[HI:[0-9]+]], s[[HI_Y]]
-; GCN: {{flat|global}}_load_dword v{{[0-9]+}}, v{{\[}}[[LO]]:[[HI]]{{\]}}
-; GCN: v_mov_b32_e32 v[[LO:[0-9]+]], s[[LO_Z]]
-; GCN: v_mov_b32_e32 v[[HI:[0-9]+]], s[[HI_Z]]
-; GCN: {{flat|global}}_load_dword v{{[0-9]+}}, v{{\[}}[[LO]]:[[HI]]{{\]}}
+; GCN-DAG: buffer_store_dword v{{[0-9]+}}, off, s[0:3], s5 offset:4
+; GCN-DAG: v_mov_b32_e32 v[[LO1:[0-9]+]], s[[LO_X]]
+; GCN-DAG: v_mov_b32_e32 v[[HI1:[0-9]+]], s[[HI_X]]
+; GCN-DAG: {{flat|global}}_load_dword v{{[0-9]+}}, v{{\[}}[[LO1]]:[[HI1]]{{\]}}
+; GCN-DAG: v_mov_b32_e32 v[[LO2:[0-9]+]], s[[LO_Y]]
+; GCN-DAG: v_mov_b32_e32 v[[HI2:[0-9]+]], s[[HI_Y]]
+; GCN-DAG: {{flat|global}}_load_dword v{{[0-9]+}}, v{{\[}}[[LO2]]:[[HI2]]{{\]}}
+; GCN-DAG: v_mov_b32_e32 v[[LO3:[0-9]+]], s[[LO_Z]]
+; GCN-DAG: v_mov_b32_e32 v[[HI3:[0-9]+]], s[[HI_Z]]
+; GCN-DAG: {{flat|global}}_load_dword v{{[0-9]+}}, v{{\[}}[[LO3]]:[[HI3]]{{\]}}
 ; GCN: ; use
 ; GCN: ; use [[SAVE_X]]
 ; GCN: ; use [[SAVE_Y]]

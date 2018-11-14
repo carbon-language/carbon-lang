@@ -839,8 +839,8 @@ define void @test_udiv_v2i32(<2 x i32>* %x, <2 x i32>* %y, <2 x i32>* %z) nounwi
 ; X86-NEXT:    xorl %edx, %edx
 ; X86-NEXT:    divl %esi
 ; X86-NEXT:    movl %eax, %esi
-; X86-NEXT:    xorl %edx, %edx
 ; X86-NEXT:    movl %ecx, %eax
+; X86-NEXT:    xorl %edx, %edx
 ; X86-NEXT:    divl %ebx
 ; X86-NEXT:    movd %eax, %xmm0
 ; X86-NEXT:    movd %esi, %xmm1
@@ -885,8 +885,8 @@ define void @test_udiv_v2i32(<2 x i32>* %x, <2 x i32>* %y, <2 x i32>* %z) nounwi
 ; X86_WIDEN-NEXT:    xorl %edx, %edx
 ; X86_WIDEN-NEXT:    divl (%ebx)
 ; X86_WIDEN-NEXT:    movl %eax, %esi
-; X86_WIDEN-NEXT:    xorl %edx, %edx
 ; X86_WIDEN-NEXT:    movl %ecx, %eax
+; X86_WIDEN-NEXT:    xorl %edx, %edx
 ; X86_WIDEN-NEXT:    divl 4(%ebx)
 ; X86_WIDEN-NEXT:    movl %eax, 4(%edi)
 ; X86_WIDEN-NEXT:    movl %esi, (%edi)
@@ -943,8 +943,8 @@ define void @test_urem_v2i32(<2 x i32>* %x, <2 x i32>* %y, <2 x i32>* %z) nounwi
 ; X86-NEXT:    xorl %edx, %edx
 ; X86-NEXT:    divl %esi
 ; X86-NEXT:    movl %edx, %esi
-; X86-NEXT:    xorl %edx, %edx
 ; X86-NEXT:    movl %ecx, %eax
+; X86-NEXT:    xorl %edx, %edx
 ; X86-NEXT:    divl %ebx
 ; X86-NEXT:    movd %edx, %xmm0
 ; X86-NEXT:    movd %esi, %xmm1
@@ -989,8 +989,8 @@ define void @test_urem_v2i32(<2 x i32>* %x, <2 x i32>* %y, <2 x i32>* %z) nounwi
 ; X86_WIDEN-NEXT:    xorl %edx, %edx
 ; X86_WIDEN-NEXT:    divl (%ebx)
 ; X86_WIDEN-NEXT:    movl %edx, %esi
-; X86_WIDEN-NEXT:    xorl %edx, %edx
 ; X86_WIDEN-NEXT:    movl %ecx, %eax
+; X86_WIDEN-NEXT:    xorl %edx, %edx
 ; X86_WIDEN-NEXT:    divl 4(%ebx)
 ; X86_WIDEN-NEXT:    movl %edx, 4(%edi)
 ; X86_WIDEN-NEXT:    movl %esi, (%edi)
