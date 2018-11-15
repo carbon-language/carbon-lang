@@ -2578,35 +2578,20 @@ class MemberExpr final
   /// MemberLoc - This is the location of the member name.
   SourceLocation MemberLoc;
 
-  /// This is the location of the -> or . in the expression.
-  SourceLocation OperatorLoc;
-
-  /// IsArrow - True if this is "X->F", false if this is "X.F".
-  bool IsArrow : 1;
-
-  /// True if this member expression used a nested-name-specifier to
-  /// refer to the member, e.g., "x->Base::f", or found its member via a using
-  /// declaration.  When true, a MemberExprNameQualifier
-  /// structure is allocated immediately after the MemberExpr.
-  bool HasQualifierOrFoundDecl : 1;
-
-  /// True if this member expression specified a template keyword
-  /// and/or a template argument list explicitly, e.g., x->f<int>,
-  /// x->template f, x->template f<int>.
-  /// When true, an ASTTemplateKWAndArgsInfo structure and its
-  /// TemplateArguments (if any) are present.
-  bool HasTemplateKWAndArgsInfo : 1;
-
-  /// True if this member expression refers to a method that
-  /// was resolved from an overloaded set having size greater than 1.
-  bool HadMultipleCandidates : 1;
-
   size_t numTrailingObjects(OverloadToken<MemberExprNameQualifier>) const {
-    return HasQualifierOrFoundDecl ? 1 : 0;
+    return hasQualifierOrFoundDecl();
   }
 
   size_t numTrailingObjects(OverloadToken<ASTTemplateKWAndArgsInfo>) const {
-    return HasTemplateKWAndArgsInfo ? 1 : 0;
+    return hasTemplateKWAndArgsInfo();
+  }
+
+  bool hasQualifierOrFoundDecl() const {
+    return MemberExprBits.HasQualifierOrFoundDecl;
+  }
+
+  bool hasTemplateKWAndArgsInfo() const {
+    return MemberExprBits.HasTemplateKWAndArgsInfo;
   }
 
 public:
@@ -2617,10 +2602,13 @@ public:
              base->isValueDependent(), base->isInstantiationDependent(),
              base->containsUnexpandedParameterPack()),
         Base(base), MemberDecl(memberdecl), MemberDNLoc(NameInfo.getInfo()),
-        MemberLoc(NameInfo.getLoc()), OperatorLoc(operatorloc),
-        IsArrow(isarrow), HasQualifierOrFoundDecl(false),
-        HasTemplateKWAndArgsInfo(false), HadMultipleCandidates(false) {
+        MemberLoc(NameInfo.getLoc()) {
     assert(memberdecl->getDeclName() == NameInfo.getName());
+    MemberExprBits.IsArrow = isarrow;
+    MemberExprBits.HasQualifierOrFoundDecl = false;
+    MemberExprBits.HasTemplateKWAndArgsInfo = false;
+    MemberExprBits.HadMultipleCandidates = false;
+    MemberExprBits.OperatorLoc = operatorloc;
   }
 
   // NOTE: this constructor should be used only when it is known that
@@ -2633,10 +2621,13 @@ public:
       : Expr(MemberExprClass, ty, VK, OK, base->isTypeDependent(),
              base->isValueDependent(), base->isInstantiationDependent(),
              base->containsUnexpandedParameterPack()),
-        Base(base), MemberDecl(memberdecl), MemberDNLoc(), MemberLoc(l),
-        OperatorLoc(operatorloc), IsArrow(isarrow),
-        HasQualifierOrFoundDecl(false), HasTemplateKWAndArgsInfo(false),
-        HadMultipleCandidates(false) {}
+        Base(base), MemberDecl(memberdecl), MemberDNLoc(), MemberLoc(l) {
+    MemberExprBits.IsArrow = isarrow;
+    MemberExprBits.HasQualifierOrFoundDecl = false;
+    MemberExprBits.HasTemplateKWAndArgsInfo = false;
+    MemberExprBits.HadMultipleCandidates = false;
+    MemberExprBits.OperatorLoc = operatorloc;
+  }
 
   static MemberExpr *Create(const ASTContext &C, Expr *base, bool isarrow,
                             SourceLocation OperatorLoc,
@@ -2659,7 +2650,7 @@ public:
 
   /// Retrieves the declaration found by lookup.
   DeclAccessPair getFoundDecl() const {
-    if (!HasQualifierOrFoundDecl)
+    if (!hasQualifierOrFoundDecl())
       return DeclAccessPair::make(getMemberDecl(),
                                   getMemberDecl()->getAccess());
     return getTrailingObjects<MemberExprNameQualifier>()->FoundDecl;
@@ -2674,9 +2665,8 @@ public:
   /// nested-name-specifier that precedes the member name, with source-location
   /// information.
   NestedNameSpecifierLoc getQualifierLoc() const {
-    if (!HasQualifierOrFoundDecl)
+    if (!hasQualifierOrFoundDecl())
       return NestedNameSpecifierLoc();
-
     return getTrailingObjects<MemberExprNameQualifier>()->QualifierLoc;
   }
 
@@ -2690,21 +2680,24 @@ public:
   /// Retrieve the location of the template keyword preceding
   /// the member name, if any.
   SourceLocation getTemplateKeywordLoc() const {
-    if (!HasTemplateKWAndArgsInfo) return SourceLocation();
+    if (!hasTemplateKWAndArgsInfo())
+      return SourceLocation();
     return getTrailingObjects<ASTTemplateKWAndArgsInfo>()->TemplateKWLoc;
   }
 
   /// Retrieve the location of the left angle bracket starting the
   /// explicit template argument list following the member name, if any.
   SourceLocation getLAngleLoc() const {
-    if (!HasTemplateKWAndArgsInfo) return SourceLocation();
+    if (!hasTemplateKWAndArgsInfo())
+      return SourceLocation();
     return getTrailingObjects<ASTTemplateKWAndArgsInfo>()->LAngleLoc;
   }
 
   /// Retrieve the location of the right angle bracket ending the
   /// explicit template argument list following the member name, if any.
   SourceLocation getRAngleLoc() const {
-    if (!HasTemplateKWAndArgsInfo) return SourceLocation();
+    if (!hasTemplateKWAndArgsInfo())
+      return SourceLocation();
     return getTrailingObjects<ASTTemplateKWAndArgsInfo>()->RAngleLoc;
   }
 
@@ -2751,10 +2744,10 @@ public:
                                MemberLoc, MemberDNLoc);
   }
 
-  SourceLocation getOperatorLoc() const LLVM_READONLY { return OperatorLoc; }
+  SourceLocation getOperatorLoc() const { return MemberExprBits.OperatorLoc; }
 
-  bool isArrow() const { return IsArrow; }
-  void setArrow(bool A) { IsArrow = A; }
+  bool isArrow() const { return MemberExprBits.IsArrow; }
+  void setArrow(bool A) { MemberExprBits.IsArrow = A; }
 
   /// getMemberLoc - Return the location of the "member", in X->F, it is the
   /// location of 'F'.
@@ -2774,13 +2767,13 @@ public:
   /// Returns true if this member expression refers to a method that
   /// was resolved from an overloaded set having size greater than 1.
   bool hadMultipleCandidates() const {
-    return HadMultipleCandidates;
+    return MemberExprBits.HadMultipleCandidates;
   }
   /// Sets the flag telling whether this expression refers to
   /// a method that was resolved from an overloaded set having size
   /// greater than 1.
   void setHadMultipleCandidates(bool V = true) {
-    HadMultipleCandidates = V;
+    MemberExprBits.HadMultipleCandidates = V;
   }
 
   /// Returns true if virtual dispatch is performed.

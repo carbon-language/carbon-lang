@@ -402,6 +402,35 @@ protected:
     unsigned NumPreArgs : 1;
   };
 
+  class MemberExprBitfields {
+    friend class MemberExpr;
+
+    unsigned : NumExprBits;
+
+    /// IsArrow - True if this is "X->F", false if this is "X.F".
+    unsigned IsArrow : 1;
+
+    /// True if this member expression used a nested-name-specifier to
+    /// refer to the member, e.g., "x->Base::f", or found its member via
+    /// a using declaration.  When true, a MemberExprNameQualifier
+    /// structure is allocated immediately after the MemberExpr.
+    unsigned HasQualifierOrFoundDecl : 1;
+
+    /// True if this member expression specified a template keyword
+    /// and/or a template argument list explicitly, e.g., x->f<int>,
+    /// x->template f, x->template f<int>.
+    /// When true, an ASTTemplateKWAndArgsInfo structure and its
+    /// TemplateArguments (if any) are present.
+    unsigned HasTemplateKWAndArgsInfo : 1;
+
+    /// True if this member expression refers to a method that
+    /// was resolved from an overloaded set having size greater than 1.
+    unsigned HadMultipleCandidates : 1;
+
+    /// This is the location of the -> or . in the expression.
+    SourceLocation OperatorLoc;
+  };
+
   class CastExprBitfields {
     friend class CastExpr;
     friend class ImplicitCastExpr;
@@ -527,6 +556,7 @@ protected:
     UnaryOperatorBitfields UnaryOperatorBits;
     UnaryExprOrTypeTraitExprBitfields UnaryExprOrTypeTraitExprBits;
     CallExprBitfields CallExprBits;
+    MemberExprBitfields MemberExprBits;
     CastExprBitfields CastExprBits;
     InitListExprBitfields InitListExprBits;
     PseudoObjectExprBitfields PseudoObjectExprBits;
