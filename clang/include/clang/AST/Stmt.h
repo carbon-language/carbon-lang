@@ -448,6 +448,9 @@ protected:
     unsigned : NumExprBits;
 
     unsigned Opc : 6;
+
+    /// This is only meaningful for operations on floating point
+    /// types and 0 otherwise.
     unsigned FPFeatures : 3;
 
     SourceLocation OpLoc;
