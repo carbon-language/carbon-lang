@@ -123,17 +123,16 @@ define i8 @rotate8_not_safe(i8 %v, i32 %shamt) {
   ret i8 %ret
 }
 
-; FIXME: A non-power-of-2 destination type can't be masked as above.
+; A non-power-of-2 destination type can't be masked as above.
 
 define i9 @rotate9_not_safe(i9 %v, i32 %shamt) {
 ; CHECK-LABEL: @rotate9_not_safe(
-; CHECK-NEXT:    [[TMP1:%.*]] = trunc i32 [[SHAMT:%.*]] to i9
-; CHECK-NEXT:    [[TMP2:%.*]] = sub i9 0, [[TMP1]]
-; CHECK-NEXT:    [[TMP3:%.*]] = and i9 [[TMP1]], 8
-; CHECK-NEXT:    [[TMP4:%.*]] = and i9 [[TMP2]], 8
-; CHECK-NEXT:    [[TMP5:%.*]] = lshr i9 [[V:%.*]], [[TMP4]]
-; CHECK-NEXT:    [[TMP6:%.*]] = shl i9 [[V]], [[TMP3]]
-; CHECK-NEXT:    [[RET:%.*]] = or i9 [[TMP5]], [[TMP6]]
+; CHECK-NEXT:    [[CONV:%.*]] = zext i9 [[V:%.*]] to i32
+; CHECK-NEXT:    [[SUB:%.*]] = sub i32 9, [[SHAMT:%.*]]
+; CHECK-NEXT:    [[SHR:%.*]] = lshr i32 [[CONV]], [[SUB]]
+; CHECK-NEXT:    [[SHL:%.*]] = shl i32 [[CONV]], [[SHAMT]]
+; CHECK-NEXT:    [[OR:%.*]] = or i32 [[SHR]], [[SHL]]
+; CHECK-NEXT:    [[RET:%.*]] = trunc i32 [[OR]] to i9
 ; CHECK-NEXT:    ret i9 [[RET]]
 ;
   %conv = zext i9 %v to i32
@@ -331,17 +330,18 @@ define i8 @rotateleft_8_neg_mask_wide_amount_commute(i8 %v, i32 %shamt) {
   ret i8 %ret
 }
 
-; Non-power-of-2 types. This is transformed correctly, but it's not a typical rotate pattern. 
+; Non-power-of-2 types. This could be transformed, but it's not a typical rotate pattern.
 
 define i9 @rotateleft_9_neg_mask_wide_amount_commute(i9 %v, i33 %shamt) {
 ; CHECK-LABEL: @rotateleft_9_neg_mask_wide_amount_commute(
-; CHECK-NEXT:    [[TMP1:%.*]] = trunc i33 [[SHAMT:%.*]] to i9
-; CHECK-NEXT:    [[TMP2:%.*]] = sub i9 0, [[TMP1]]
-; CHECK-NEXT:    [[TMP3:%.*]] = and i9 [[TMP1]], 8
-; CHECK-NEXT:    [[TMP4:%.*]] = and i9 [[TMP2]], 8
-; CHECK-NEXT:    [[TMP5:%.*]] = shl i9 [[V:%.*]], [[TMP3]]
-; CHECK-NEXT:    [[TMP6:%.*]] = lshr i9 [[V]], [[TMP4]]
-; CHECK-NEXT:    [[RET:%.*]] = or i9 [[TMP5]], [[TMP6]]
+; CHECK-NEXT:    [[NEG:%.*]] = sub i33 0, [[SHAMT:%.*]]
+; CHECK-NEXT:    [[LSHAMT:%.*]] = and i33 [[SHAMT]], 8
+; CHECK-NEXT:    [[RSHAMT:%.*]] = and i33 [[NEG]], 8
+; CHECK-NEXT:    [[CONV:%.*]] = zext i9 [[V:%.*]] to i33
+; CHECK-NEXT:    [[SHL:%.*]] = shl i33 [[CONV]], [[LSHAMT]]
+; CHECK-NEXT:    [[SHR:%.*]] = lshr i33 [[CONV]], [[RSHAMT]]
+; CHECK-NEXT:    [[OR:%.*]] = or i33 [[SHL]], [[SHR]]
+; CHECK-NEXT:    [[RET:%.*]] = trunc i33 [[OR]] to i9
 ; CHECK-NEXT:    ret i9 [[RET]]
 ;
   %neg = sub i33 0, %shamt
