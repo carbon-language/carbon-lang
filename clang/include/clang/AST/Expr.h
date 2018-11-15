@@ -1568,98 +1568,131 @@ public:
 ///   char X[2] = "foobar";
 /// In this case, getByteLength() will return 6, but the string literal will
 /// have type "char[2]".
-class StringLiteral : public Expr {
+class StringLiteral final
+    : public Expr,
+      private llvm::TrailingObjects<StringLiteral, unsigned, SourceLocation,
+                                    char> {
+  friend class ASTStmtReader;
+  friend TrailingObjects;
+
+  /// StringLiteral is followed by several trailing objects. They are in order:
+  ///
+  /// * A single unsigned storing the length in characters of this string. The
+  ///   length in bytes is this length times the width of a single character.
+  ///   Always present and stored as a trailing objects because storing it in
+  ///   StringLiteral would increase the size of StringLiteral by sizeof(void *)
+  ///   due to alignment requirements. If you add some data to StringLiteral,
+  ///   consider moving it inside StringLiteral.
+  ///
+  /// * An array of getNumConcatenated() SourceLocation, one for each of the
+  ///   token this string is made of.
+  ///
+  /// * An array of getByteLength() char used to store the string data.
+
 public:
   enum StringKind { Ascii, Wide, UTF8, UTF16, UTF32 };
 
 private:
-  friend class ASTStmtReader;
+  unsigned numTrailingObjects(OverloadToken<unsigned>) const { return 1; }
+  unsigned numTrailingObjects(OverloadToken<SourceLocation>) const {
+    return getNumConcatenated();
+  }
 
-  union {
-    const char *asChar;
-    const uint16_t *asUInt16;
-    const uint32_t *asUInt32;
-  } StrData;
-  unsigned Length;
-  unsigned CharByteWidth : 4;
-  unsigned Kind : 3;
-  unsigned IsPascal : 1;
-  unsigned NumConcatenated;
-  SourceLocation TokLocs[1];
+  unsigned numTrailingObjects(OverloadToken<char>) const {
+    return getByteLength();
+  }
 
-  StringLiteral(QualType Ty) :
-    Expr(StringLiteralClass, Ty, VK_LValue, OK_Ordinary, false, false, false,
-         false) {}
+  char *getStrDataAsChar() { return getTrailingObjects<char>(); }
+  const char *getStrDataAsChar() const { return getTrailingObjects<char>(); }
+
+  const uint16_t *getStrDataAsUInt16() const {
+    return reinterpret_cast<const uint16_t *>(getTrailingObjects<char>());
+  }
+
+  const uint32_t *getStrDataAsUInt32() const {
+    return reinterpret_cast<const uint32_t *>(getTrailingObjects<char>());
+  }
+
+  /// Build a string literal.
+  StringLiteral(const ASTContext &Ctx, StringRef Str, StringKind Kind,
+                bool Pascal, QualType Ty, const SourceLocation *Loc,
+                unsigned NumConcatenated);
+
+  /// Build an empty string literal.
+  StringLiteral(EmptyShell Empty, unsigned NumConcatenated, unsigned Length,
+                unsigned CharByteWidth);
 
   /// Map a target and string kind to the appropriate character width.
   static unsigned mapCharByteWidth(TargetInfo const &Target, StringKind SK);
 
+  /// Set one of the string literal token.
+  void setStrTokenLoc(unsigned TokNum, SourceLocation L) {
+    assert(TokNum < getNumConcatenated() && "Invalid tok number");
+    getTrailingObjects<SourceLocation>()[TokNum] = L;
+  }
+
 public:
   /// This is the "fully general" constructor that allows representation of
   /// strings formed from multiple concatenated tokens.
-  static StringLiteral *Create(const ASTContext &C, StringRef Str,
+  static StringLiteral *Create(const ASTContext &Ctx, StringRef Str,
                                StringKind Kind, bool Pascal, QualType Ty,
-                               const SourceLocation *Loc, unsigned NumStrs);
+                               const SourceLocation *Loc,
+                               unsigned NumConcatenated);
 
   /// Simple constructor for string literals made from one token.
-  static StringLiteral *Create(const ASTContext &C, StringRef Str,
+  static StringLiteral *Create(const ASTContext &Ctx, StringRef Str,
                                StringKind Kind, bool Pascal, QualType Ty,
                                SourceLocation Loc) {
-    return Create(C, Str, Kind, Pascal, Ty, &Loc, 1);
+    return Create(Ctx, Str, Kind, Pascal, Ty, &Loc, 1);
   }
 
   /// Construct an empty string literal.
-  static StringLiteral *CreateEmpty(const ASTContext &C, unsigned NumStrs);
+  static StringLiteral *CreateEmpty(const ASTContext &Ctx,
+                                    unsigned NumConcatenated, unsigned Length,
+                                    unsigned CharByteWidth);
 
   StringRef getString() const {
-    assert(CharByteWidth==1
-           && "This function is used in places that assume strings use char");
-    return StringRef(StrData.asChar, getByteLength());
+    assert(getCharByteWidth() == 1 &&
+           "This function is used in places that assume strings use char");
+    return StringRef(getStrDataAsChar(), getByteLength());
   }
 
   /// Allow access to clients that need the byte representation, such as
   /// ASTWriterStmt::VisitStringLiteral().
   StringRef getBytes() const {
     // FIXME: StringRef may not be the right type to use as a result for this.
-    if (CharByteWidth == 1)
-      return StringRef(StrData.asChar, getByteLength());
-    if (CharByteWidth == 4)
-      return StringRef(reinterpret_cast<const char*>(StrData.asUInt32),
-                       getByteLength());
-    assert(CharByteWidth == 2 && "unsupported CharByteWidth");
-    return StringRef(reinterpret_cast<const char*>(StrData.asUInt16),
-                     getByteLength());
+    return StringRef(getStrDataAsChar(), getByteLength());
   }
 
   void outputString(raw_ostream &OS) const;
 
   uint32_t getCodeUnit(size_t i) const {
-    assert(i < Length && "out of bounds access");
-    if (CharByteWidth == 1)
-      return static_cast<unsigned char>(StrData.asChar[i]);
-    if (CharByteWidth == 4)
-      return StrData.asUInt32[i];
-    assert(CharByteWidth == 2 && "unsupported CharByteWidth");
-    return StrData.asUInt16[i];
+    assert(i < getLength() && "out of bounds access");
+    switch (getCharByteWidth()) {
+    case 1:
+      return static_cast<unsigned char>(getStrDataAsChar()[i]);
+    case 2:
+      return getStrDataAsUInt16()[i];
+    case 4:
+      return getStrDataAsUInt32()[i];
+    }
+    llvm_unreachable("Unsupported character width!");
   }
 
-  unsigned getByteLength() const { return CharByteWidth*Length; }
-  unsigned getLength() const { return Length; }
-  unsigned getCharByteWidth() const { return CharByteWidth; }
+  unsigned getByteLength() const { return getCharByteWidth() * getLength(); }
+  unsigned getLength() const { return *getTrailingObjects<unsigned>(); }
+  unsigned getCharByteWidth() const { return StringLiteralBits.CharByteWidth; }
 
-  /// Sets the string data to the given string data.
-  void setString(const ASTContext &C, StringRef Str,
-                 StringKind Kind, bool IsPascal);
+  StringKind getKind() const {
+    return static_cast<StringKind>(StringLiteralBits.Kind);
+  }
 
-  StringKind getKind() const { return static_cast<StringKind>(Kind); }
-
-
-  bool isAscii() const { return Kind == Ascii; }
-  bool isWide() const { return Kind == Wide; }
-  bool isUTF8() const { return Kind == UTF8; }
-  bool isUTF16() const { return Kind == UTF16; }
-  bool isUTF32() const { return Kind == UTF32; }
-  bool isPascal() const { return IsPascal; }
+  bool isAscii() const { return getKind() == Ascii; }
+  bool isWide() const { return getKind() == Wide; }
+  bool isUTF8() const { return getKind() == UTF8; }
+  bool isUTF16() const { return getKind() == UTF16; }
+  bool isUTF32() const { return getKind() == UTF32; }
+  bool isPascal() const { return StringLiteralBits.IsPascal; }
 
   bool containsNonAscii() const {
     for (auto c : getString())
@@ -1677,15 +1710,14 @@ public:
 
   /// getNumConcatenated - Get the number of string literal tokens that were
   /// concatenated in translation phase #6 to form this string literal.
-  unsigned getNumConcatenated() const { return NumConcatenated; }
-
-  SourceLocation getStrTokenLoc(unsigned TokNum) const {
-    assert(TokNum < NumConcatenated && "Invalid tok number");
-    return TokLocs[TokNum];
+  unsigned getNumConcatenated() const {
+    return StringLiteralBits.NumConcatenated;
   }
-  void setStrTokenLoc(unsigned TokNum, SourceLocation L) {
-    assert(TokNum < NumConcatenated && "Invalid tok number");
-    TokLocs[TokNum] = L;
+
+  /// Get one of the string literal token.
+  SourceLocation getStrTokenLoc(unsigned TokNum) const {
+    assert(TokNum < getNumConcatenated() && "Invalid tok number");
+    return getTrailingObjects<SourceLocation>()[TokNum];
   }
 
   /// getLocationOfByte - Return a source location that points to the specified
@@ -1702,13 +1734,17 @@ public:
                     unsigned *StartTokenByteOffset = nullptr) const;
 
   typedef const SourceLocation *tokloc_iterator;
-  tokloc_iterator tokloc_begin() const { return TokLocs; }
-  tokloc_iterator tokloc_end() const { return TokLocs + NumConcatenated; }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return TokLocs[0]; }
-  SourceLocation getEndLoc() const LLVM_READONLY {
-    return TokLocs[NumConcatenated - 1];
+  tokloc_iterator tokloc_begin() const {
+    return getTrailingObjects<SourceLocation>();
   }
+
+  tokloc_iterator tokloc_end() const {
+    return getTrailingObjects<SourceLocation>() + getNumConcatenated();
+  }
+
+  SourceLocation getBeginLoc() const LLVM_READONLY { return *tokloc_begin(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return *(tokloc_end() - 1); }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == StringLiteralClass;
