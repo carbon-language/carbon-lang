@@ -262,16 +262,16 @@ define i64 @rotr_safe_i64(i64 %x, i64 %y) {
 ; CHECK-NEXT:    [[NEGY:%.*]] = sub i64 0, [[Y:%.*]]
 ; CHECK-NEXT:    [[YMASK:%.*]] = and i64 [[Y]], 63
 ; CHECK-NEXT:    [[NEGYMASK:%.*]] = and i64 [[NEGY]], 63
-; CHECK-NEXT:    [[SHL:%.*]] = shl i64 [[X:%.*]], [[YMASK]]
-; CHECK-NEXT:    [[SHR:%.*]] = lshr i64 [[X]], [[NEGYMASK]]
+; CHECK-NEXT:    [[SHL:%.*]] = shl i64 [[X:%.*]], [[NEGYMASK]]
+; CHECK-NEXT:    [[SHR:%.*]] = lshr i64 [[X]], [[YMASK]]
 ; CHECK-NEXT:    [[R:%.*]] = or i64 [[SHR]], [[SHL]]
 ; CHECK-NEXT:    ret i64 [[R]]
 ;
   %negy = sub i64 0, %y
   %ymask = and i64 %y, 63
   %negymask = and i64 %negy, 63
-  %shl = shl i64 %x, %ymask
-  %shr = lshr i64 %x, %negymask
+  %shl = shl i64 %x, %negymask
+  %shr = lshr i64 %x, %ymask
   %r = or i64 %shr, %shl
   ret i64 %r
 }
@@ -284,8 +284,8 @@ define i8 @rotr_safe_i8_commute_extra_use(i8 %x, i8 %y, i8* %p) {
 ; CHECK-NEXT:    [[NEGY:%.*]] = sub i8 0, [[Y:%.*]]
 ; CHECK-NEXT:    [[YMASK:%.*]] = and i8 [[Y]], 7
 ; CHECK-NEXT:    [[NEGYMASK:%.*]] = and i8 [[NEGY]], 7
-; CHECK-NEXT:    [[SHL:%.*]] = shl i8 [[X:%.*]], [[YMASK]]
-; CHECK-NEXT:    [[SHR:%.*]] = lshr i8 [[X]], [[NEGYMASK]]
+; CHECK-NEXT:    [[SHL:%.*]] = shl i8 [[X:%.*]], [[NEGYMASK]]
+; CHECK-NEXT:    [[SHR:%.*]] = lshr i8 [[X]], [[YMASK]]
 ; CHECK-NEXT:    store i8 [[SHR]], i8* [[P:%.*]], align 1
 ; CHECK-NEXT:    [[R:%.*]] = or i8 [[SHL]], [[SHR]]
 ; CHECK-NEXT:    ret i8 [[R]]
@@ -293,8 +293,8 @@ define i8 @rotr_safe_i8_commute_extra_use(i8 %x, i8 %y, i8* %p) {
   %negy = sub i8 0, %y
   %ymask = and i8 %y, 7
   %negymask = and i8 %negy, 7
-  %shl = shl i8 %x, %ymask
-  %shr = lshr i8 %x, %negymask
+  %shl = shl i8 %x, %negymask
+  %shr = lshr i8 %x, %ymask
   store i8 %shr, i8* %p
   %r = or i8 %shl, %shr
   ret i8 %r
@@ -330,16 +330,16 @@ define <3 x i16> @rotr_safe_v3i16(<3 x i16> %x, <3 x i16> %y) {
 ; CHECK-NEXT:    [[NEGY:%.*]] = sub <3 x i16> zeroinitializer, [[Y:%.*]]
 ; CHECK-NEXT:    [[YMASK:%.*]] = and <3 x i16> [[Y]], <i16 15, i16 15, i16 15>
 ; CHECK-NEXT:    [[NEGYMASK:%.*]] = and <3 x i16> [[NEGY]], <i16 15, i16 15, i16 15>
-; CHECK-NEXT:    [[SHL:%.*]] = shl <3 x i16> [[X:%.*]], [[YMASK]]
-; CHECK-NEXT:    [[SHR:%.*]] = lshr <3 x i16> [[X]], [[NEGYMASK]]
+; CHECK-NEXT:    [[SHL:%.*]] = shl <3 x i16> [[X:%.*]], [[NEGYMASK]]
+; CHECK-NEXT:    [[SHR:%.*]] = lshr <3 x i16> [[X]], [[YMASK]]
 ; CHECK-NEXT:    [[R:%.*]] = or <3 x i16> [[SHR]], [[SHL]]
 ; CHECK-NEXT:    ret <3 x i16> [[R]]
 ;
   %negy = sub <3 x i16> zeroinitializer, %y
   %ymask = and <3 x i16> %y, <i16 15, i16 15, i16 15>
   %negymask = and <3 x i16> %negy, <i16 15, i16 15, i16 15>
-  %shl = shl <3 x i16> %x, %ymask
-  %shr = lshr <3 x i16> %x, %negymask
+  %shl = shl <3 x i16> %x, %negymask
+  %shr = lshr <3 x i16> %x, %ymask
   %r = or <3 x i16> %shr, %shl
   ret <3 x i16> %r
 }
