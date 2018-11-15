@@ -887,27 +887,28 @@ double FloatingLiteral::getValueAsApproximateDouble() const {
   return V.convertToDouble();
 }
 
-int StringLiteral::mapCharByteWidth(TargetInfo const &target,StringKind k) {
-  int CharByteWidth = 0;
-  switch(k) {
-    case Ascii:
-    case UTF8:
-      CharByteWidth = target.getCharWidth();
-      break;
-    case Wide:
-      CharByteWidth = target.getWCharWidth();
-      break;
-    case UTF16:
-      CharByteWidth = target.getChar16Width();
-      break;
-    case UTF32:
-      CharByteWidth = target.getChar32Width();
-      break;
+unsigned StringLiteral::mapCharByteWidth(TargetInfo const &Target,
+                                         StringKind SK) {
+  unsigned CharByteWidth = 0;
+  switch (SK) {
+  case Ascii:
+  case UTF8:
+    CharByteWidth = Target.getCharWidth();
+    break;
+  case Wide:
+    CharByteWidth = Target.getWCharWidth();
+    break;
+  case UTF16:
+    CharByteWidth = Target.getChar16Width();
+    break;
+  case UTF32:
+    CharByteWidth = Target.getChar32Width();
+    break;
   }
   assert((CharByteWidth & 7) == 0 && "Assumes character size is byte multiple");
   CharByteWidth /= 8;
-  assert((CharByteWidth==1 || CharByteWidth==2 || CharByteWidth==4)
-         && "character byte widths supported are 1, 2, and 4 only");
+  assert((CharByteWidth == 1 || CharByteWidth == 2 || CharByteWidth == 4) &&
+         "The only supported character byte widths are 1,2 and 4!");
   return CharByteWidth;
 }
 
@@ -1102,7 +1103,8 @@ StringLiteral::getLocationOfByte(unsigned ByteNo, const SourceManager &SM,
                                  const LangOptions &Features,
                                  const TargetInfo &Target, unsigned *StartToken,
                                  unsigned *StartTokenByteOffset) const {
-  assert((Kind == StringLiteral::Ascii || Kind == StringLiteral::UTF8) &&
+  assert((getKind() == StringLiteral::Ascii ||
+          getKind() == StringLiteral::UTF8) &&
          "Only narrow string literals are currently supported");
 
   // Loop over all of the tokens in this string until we find the one that
@@ -1169,8 +1171,6 @@ StringLiteral::getLocationOfByte(unsigned ByteNo, const SourceManager &SM,
     ByteNo -= TokNumBytes;
   }
 }
-
-
 
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
 /// corresponds to, e.g. "sizeof" or "[pre]++".

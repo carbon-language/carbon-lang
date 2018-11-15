@@ -1552,14 +1552,15 @@ public:
 };
 
 /// StringLiteral - This represents a string literal expression, e.g. "foo"
-/// or L"bar" (wide strings).  The actual string is returned by getBytes()
-/// is NOT null-terminated, and the length of the string is determined by
-/// calling getByteLength().  The C type for a string is always a
-/// ConstantArrayType.  In C++, the char type is const qualified, in C it is
-/// not.
+/// or L"bar" (wide strings). The actual string data can be obtained with
+/// getBytes() and is NOT null-terminated. The length of the string data is
+/// determined by calling getByteLength().
+///
+/// The C type for a string is always a ConstantArrayType. In C++, the char
+/// type is const qualified, in C it is not.
 ///
 /// Note that strings in C can be formed by concatenation of multiple string
-/// literal pptokens in translation phase #6.  This keeps track of the locations
+/// literal pptokens in translation phase #6. This keeps track of the locations
 /// of each of these pieces.
 ///
 /// Strings in C can also be truncated and extended by assigning into arrays,
@@ -1569,13 +1570,7 @@ public:
 /// have type "char[2]".
 class StringLiteral : public Expr {
 public:
-  enum StringKind {
-    Ascii,
-    Wide,
-    UTF8,
-    UTF16,
-    UTF32
-  };
+  enum StringKind { Ascii, Wide, UTF8, UTF16, UTF32 };
 
 private:
   friend class ASTStmtReader;
@@ -1596,7 +1591,8 @@ private:
     Expr(StringLiteralClass, Ty, VK_LValue, OK_Ordinary, false, false, false,
          false) {}
 
-  static int mapCharByteWidth(TargetInfo const &target,StringKind k);
+  /// Map a target and string kind to the appropriate character width.
+  static unsigned mapCharByteWidth(TargetInfo const &Target, StringKind SK);
 
 public:
   /// This is the "fully general" constructor that allows representation of
@@ -1666,17 +1662,15 @@ public:
   bool isPascal() const { return IsPascal; }
 
   bool containsNonAscii() const {
-    StringRef Str = getString();
-    for (unsigned i = 0, e = Str.size(); i != e; ++i)
-      if (!isASCII(Str[i]))
+    for (auto c : getString())
+      if (!isASCII(c))
         return true;
     return false;
   }
 
   bool containsNonAsciiOrNull() const {
-    StringRef Str = getString();
-    for (unsigned i = 0, e = Str.size(); i != e; ++i)
-      if (!isASCII(Str[i]) || !Str[i])
+    for (auto c : getString())
+      if (!isASCII(c) || !c)
         return true;
     return false;
   }
