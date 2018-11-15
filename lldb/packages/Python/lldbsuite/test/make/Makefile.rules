@@ -51,6 +51,17 @@ ifeq "$(OS)" ""
 endif
 
 #----------------------------------------------------------------------
+# If OS is Windows, force SHELL to be cmd
+#
+# Some versions of make on Windows will search for other shells such as
+# C:\cygwin\bin\sh.exe. This shell fails for numerous different reasons
+# so default to using cmd.exe.
+#----------------------------------------------------------------------
+ifeq "$(OS)" "Windows_NT"
+	SHELL = $(WINDIR)\system32\cmd.exe
+endif
+
+#----------------------------------------------------------------------
 # If TRIPLE is not defined try to set the ARCH, CC, CFLAGS, and more
 # from the triple alone
 #----------------------------------------------------------------------
