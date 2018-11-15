@@ -374,6 +374,17 @@ protected:
     unsigned Kind : 3;
   };
 
+  class UnaryOperatorBitfields {
+    friend class UnaryOperator;
+
+    unsigned : NumExprBits;
+
+    unsigned Opc : 5;
+    unsigned CanOverflow : 1;
+
+    SourceLocation Loc;
+  };
+
   class UnaryExprOrTypeTraitExprBitfields {
     friend class UnaryExprOrTypeTraitExpr;
 
@@ -513,6 +524,7 @@ protected:
     DeclRefExprBitfields DeclRefExprBits;
     FloatingLiteralBitfields FloatingLiteralBits;
     CharacterLiteralBitfields CharacterLiteralBits;
+    UnaryOperatorBitfields UnaryOperatorBits;
     UnaryExprOrTypeTraitExprBitfields UnaryExprOrTypeTraitExprBits;
     CallExprBitfields CallExprBits;
     CastExprBitfields CastExprBits;

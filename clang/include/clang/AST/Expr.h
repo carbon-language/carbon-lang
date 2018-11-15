@@ -1869,15 +1869,11 @@ public:
 ///   later returns zero in the type of the operand.
 ///
 class UnaryOperator : public Expr {
+  Stmt *Val;
+
 public:
   typedef UnaryOperatorKind Opcode;
 
-private:
-  unsigned Opc : 5;
-  unsigned CanOverflow : 1;
-  SourceLocation Loc;
-  Stmt *Val;
-public:
   UnaryOperator(Expr *input, Opcode opc, QualType type, ExprValueKind VK,
                 ExprObjectKind OK, SourceLocation l, bool CanOverflow)
       : Expr(UnaryOperatorClass, type, VK, OK,
@@ -1886,21 +1882,28 @@ public:
              (input->isInstantiationDependent() ||
               type->isInstantiationDependentType()),
              input->containsUnexpandedParameterPack()),
-        Opc(opc), CanOverflow(CanOverflow), Loc(l), Val(input) {}
+        Val(input) {
+    UnaryOperatorBits.Opc = opc;
+    UnaryOperatorBits.CanOverflow = CanOverflow;
+    UnaryOperatorBits.Loc = l;
+  }
 
   /// Build an empty unary operator.
-  explicit UnaryOperator(EmptyShell Empty)
-    : Expr(UnaryOperatorClass, Empty), Opc(UO_AddrOf) { }
+  explicit UnaryOperator(EmptyShell Empty) : Expr(UnaryOperatorClass, Empty) {
+    UnaryOperatorBits.Opc = UO_AddrOf;
+  }
 
-  Opcode getOpcode() const { return static_cast<Opcode>(Opc); }
-  void setOpcode(Opcode O) { Opc = O; }
+  Opcode getOpcode() const {
+    return static_cast<Opcode>(UnaryOperatorBits.Opc);
+  }
+  void setOpcode(Opcode Opc) { UnaryOperatorBits.Opc = Opc; }
 
   Expr *getSubExpr() const { return cast<Expr>(Val); }
   void setSubExpr(Expr *E) { Val = E; }
 
   /// getOperatorLoc - Return the location of the operator.
-  SourceLocation getOperatorLoc() const { return Loc; }
-  void setOperatorLoc(SourceLocation L) { Loc = L; }
+  SourceLocation getOperatorLoc() const { return UnaryOperatorBits.Loc; }
+  void setOperatorLoc(SourceLocation L) { UnaryOperatorBits.Loc = L; }
 
   /// Returns true if the unary operator can cause an overflow. For instance,
   ///   signed int i = INT_MAX; i++;
@@ -1908,8 +1911,8 @@ public:
   /// Due to integer promotions, c++ is promoted to an int before the postfix
   /// increment, and the result is an int that cannot overflow. However, i++
   /// can overflow.
-  bool canOverflow() const { return CanOverflow; }
-  void setCanOverflow(bool C) { CanOverflow = C; }
+  bool canOverflow() const { return UnaryOperatorBits.CanOverflow; }
+  void setCanOverflow(bool C) { UnaryOperatorBits.CanOverflow = C; }
 
   /// isPostfix - Return true if this is a postfix operation, like x++.
   static bool isPostfix(Opcode Op) {
@@ -1961,12 +1964,12 @@ public:
   static OverloadedOperatorKind getOverloadedOperator(Opcode Opc);
 
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return isPostfix() ? Val->getBeginLoc() : Loc;
+    return isPostfix() ? Val->getBeginLoc() : getOperatorLoc();
   }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return isPostfix() ? Loc : Val->getEndLoc();
+    return isPostfix() ? getOperatorLoc() : Val->getEndLoc();
   }
-  SourceLocation getExprLoc() const LLVM_READONLY { return Loc; }
+  SourceLocation getExprLoc() const { return getOperatorLoc(); }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == UnaryOperatorClass;
