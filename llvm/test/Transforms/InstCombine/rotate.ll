@@ -123,6 +123,28 @@ define i8 @rotate8_not_safe(i8 %v, i32 %shamt) {
   ret i8 %ret
 }
 
+; FIXME: A non-power-of-2 destination type can't be masked as above.
+
+define i9 @rotate9_not_safe(i9 %v, i32 %shamt) {
+; CHECK-LABEL: @rotate9_not_safe(
+; CHECK-NEXT:    [[TMP1:%.*]] = trunc i32 [[SHAMT:%.*]] to i9
+; CHECK-NEXT:    [[TMP2:%.*]] = sub i9 0, [[TMP1]]
+; CHECK-NEXT:    [[TMP3:%.*]] = and i9 [[TMP1]], 8
+; CHECK-NEXT:    [[TMP4:%.*]] = and i9 [[TMP2]], 8
+; CHECK-NEXT:    [[TMP5:%.*]] = lshr i9 [[V:%.*]], [[TMP4]]
+; CHECK-NEXT:    [[TMP6:%.*]] = shl i9 [[V]], [[TMP3]]
+; CHECK-NEXT:    [[RET:%.*]] = or i9 [[TMP5]], [[TMP6]]
+; CHECK-NEXT:    ret i9 [[RET]]
+;
+  %conv = zext i9 %v to i32
+  %sub = sub i32 9, %shamt
+  %shr = lshr i32 %conv, %sub
+  %shl = shl i32 %conv, %shamt
+  %or = or i32 %shr, %shl
+  %ret = trunc i32 %or to i9
+  ret i9 %ret
+}
+
 ; We should narrow (v << (s & 15)) | (v >> (-s & 15))
 ; when both v and s have been promoted.
 
@@ -307,6 +329,30 @@ define i8 @rotateleft_8_neg_mask_wide_amount_commute(i8 %v, i32 %shamt) {
   %or = or i32 %shl, %shr
   %ret = trunc i32 %or to i8
   ret i8 %ret
+}
+
+; Non-power-of-2 types. This is transformed correctly, but it's not a typical rotate pattern. 
+
+define i9 @rotateleft_9_neg_mask_wide_amount_commute(i9 %v, i33 %shamt) {
+; CHECK-LABEL: @rotateleft_9_neg_mask_wide_amount_commute(
+; CHECK-NEXT:    [[TMP1:%.*]] = trunc i33 [[SHAMT:%.*]] to i9
+; CHECK-NEXT:    [[TMP2:%.*]] = sub i9 0, [[TMP1]]
+; CHECK-NEXT:    [[TMP3:%.*]] = and i9 [[TMP1]], 8
+; CHECK-NEXT:    [[TMP4:%.*]] = and i9 [[TMP2]], 8
+; CHECK-NEXT:    [[TMP5:%.*]] = shl i9 [[V:%.*]], [[TMP3]]
+; CHECK-NEXT:    [[TMP6:%.*]] = lshr i9 [[V]], [[TMP4]]
+; CHECK-NEXT:    [[RET:%.*]] = or i9 [[TMP5]], [[TMP6]]
+; CHECK-NEXT:    ret i9 [[RET]]
+;
+  %neg = sub i33 0, %shamt
+  %lshamt = and i33 %shamt, 8
+  %rshamt = and i33 %neg, 8
+  %conv = zext i9 %v to i33
+  %shl = shl i33 %conv, %lshamt
+  %shr = lshr i33 %conv, %rshamt
+  %or = or i33 %shl, %shr
+  %ret = trunc i33 %or to i9
+  ret i9 %ret
 }
 
 ; Convert select pattern to masked shift that ends in 'or'.
