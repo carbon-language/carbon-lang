@@ -2559,6 +2559,10 @@ class MemberExpr final
       private llvm::TrailingObjects<MemberExpr, MemberExprNameQualifier,
                                     ASTTemplateKWAndArgsInfo,
                                     TemplateArgumentLoc> {
+  friend class ASTReader;
+  friend class ASTStmtWriter;
+  friend TrailingObjects;
+
   /// Base - the expression for the base pointer or structure references.  In
   /// X.F, this is "X".
   Stmt *Base;
@@ -2796,10 +2800,6 @@ public:
   const_child_range children() const {
     return const_child_range(&Base, &Base + 1);
   }
-
-  friend TrailingObjects;
-  friend class ASTReader;
-  friend class ASTStmtWriter;
 };
 
 /// CompoundLiteralExpr - [C99 6.5.2.5]
