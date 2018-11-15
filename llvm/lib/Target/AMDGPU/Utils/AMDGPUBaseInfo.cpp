@@ -159,7 +159,8 @@ void streamIsaVersion(const MCSubtargetInfo *STI, raw_ostream &Stream) {
 }
 
 bool hasCodeObjectV3(const MCSubtargetInfo *STI) {
-  return STI->getFeatureBits().test(FeatureCodeObjectV3);
+  return STI->getTargetTriple().getOS() == Triple::AMDHSA &&
+             STI->getFeatureBits().test(FeatureCodeObjectV3);
 }
 
 unsigned getWavefrontSize(const MCSubtargetInfo *STI) {
