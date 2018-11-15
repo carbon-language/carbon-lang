@@ -849,15 +849,29 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     // scalars) and extend in-register to a legal 128-bit vector type. For sext
     // loads these must work with a single scalar load.
     for (MVT VT : MVT::integer_vector_valuetypes()) {
-      setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v4i8, Custom);
-      setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v4i16, Custom);
-      setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v8i8, Custom);
+      if (!ExperimentalVectorWideningLegalization) {
+        // We don't want narrow result types here when widening.
+        setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v4i8, Custom);
+        setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v4i16, Custom);
+        setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v8i8, Custom);
+      }
       setLoadExtAction(ISD::EXTLOAD, VT, MVT::v2i8, Custom);
       setLoadExtAction(ISD::EXTLOAD, VT, MVT::v2i16, Custom);
       setLoadExtAction(ISD::EXTLOAD, VT, MVT::v2i32, Custom);
       setLoadExtAction(ISD::EXTLOAD, VT, MVT::v4i8, Custom);
       setLoadExtAction(ISD::EXTLOAD, VT, MVT::v4i16, Custom);
       setLoadExtAction(ISD::EXTLOAD, VT, MVT::v8i8, Custom);
+    }
+
+    if (ExperimentalVectorWideningLegalization) {
+      // Explicitly code the list so we don't use narrow result types.
+      setLoadExtAction(ISD::SEXTLOAD, MVT::v4i32, MVT::v4i8,  Custom);
+      setLoadExtAction(ISD::SEXTLOAD, MVT::v4i32, MVT::v4i16, Custom);
+      setLoadExtAction(ISD::SEXTLOAD, MVT::v4i64, MVT::v4i8,  Custom);
+      setLoadExtAction(ISD::SEXTLOAD, MVT::v4i64, MVT::v4i16, Custom);
+      setLoadExtAction(ISD::SEXTLOAD, MVT::v8i16, MVT::v8i8,  Custom);
+      setLoadExtAction(ISD::SEXTLOAD, MVT::v8i32, MVT::v8i8,  Custom);
+      setLoadExtAction(ISD::SEXTLOAD, MVT::v8i64, MVT::v8i8,  Custom);
     }
 
     for (auto VT : { MVT::v2f64, MVT::v2i64 }) {
@@ -979,17 +993,22 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::ZERO_EXTEND_VECTOR_INREG, VT, Legal);
     }
 
-    for (MVT VT : MVT::integer_vector_valuetypes()) {
-      setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v2i8, Custom);
-      setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v2i16, Custom);
-      setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v2i32, Custom);
+    if (!ExperimentalVectorWideningLegalization) {
+      // Avoid narrow result types when widening. The legal types are listed
+      // in the next loop.
+      for (MVT VT : MVT::integer_vector_valuetypes()) {
+        setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v2i8, Custom);
+        setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v2i16, Custom);
+        setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v2i32, Custom);
+      }
     }
 
     // SSE41 also has vector sign/zero extending loads, PMOV[SZ]X
     for (auto LoadExtOp : { ISD::SEXTLOAD, ISD::ZEXTLOAD }) {
       setLoadExtAction(LoadExtOp, MVT::v8i16, MVT::v8i8,  Legal);
       setLoadExtAction(LoadExtOp, MVT::v4i32, MVT::v4i8,  Legal);
-      setLoadExtAction(LoadExtOp, MVT::v2i32, MVT::v2i8,  Legal);
+      if (!ExperimentalVectorWideningLegalization)
+        setLoadExtAction(LoadExtOp, MVT::v2i32, MVT::v2i8,  Legal);
       setLoadExtAction(LoadExtOp, MVT::v2i64, MVT::v2i8,  Legal);
       setLoadExtAction(LoadExtOp, MVT::v4i32, MVT::v4i16, Legal);
       setLoadExtAction(LoadExtOp, MVT::v2i64, MVT::v2i16, Legal);
