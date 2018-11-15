@@ -312,7 +312,7 @@ protected:
     unsigned InstantiationDependent : 1;
     unsigned ContainsUnexpandedParameterPack : 1;
   };
-  enum { NumExprBits = 17 };
+  enum { NumExprBits = NumStmtBits + 9 };
 
   class PredefinedExprBitfields {
     friend class ASTStmtReader;
