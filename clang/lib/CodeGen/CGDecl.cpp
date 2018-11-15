@@ -976,9 +976,9 @@ static Address createUnnamedGlobalFrom(CodeGenModule &CGM, const VarDecl &D,
       return CGM.getMangledName(FD);
     } else if (const auto *OM = dyn_cast<ObjCMethodDecl>(DC)) {
       return OM->getNameAsString();
-    } else if (const auto *OM = dyn_cast<BlockDecl>(DC)) {
+    } else if (isa<BlockDecl>(DC)) {
       return "<block>";
-    } else if (const auto *OM = dyn_cast<CapturedDecl>(DC)) {
+    } else if (isa<CapturedDecl>(DC)) {
       return "<captured>";
     } else {
       llvm::llvm_unreachable_internal("expected a function or method");
