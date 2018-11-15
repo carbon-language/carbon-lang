@@ -937,6 +937,15 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SIGN_EXTEND_VECTOR_INREG, MVT::v4i32, Custom);
     setOperationAction(ISD::SIGN_EXTEND_VECTOR_INREG, MVT::v8i16, Custom);
 
+    if (ExperimentalVectorWideningLegalization) {
+      setOperationAction(ISD::TRUNCATE, MVT::v2i8,  Custom);
+      setOperationAction(ISD::TRUNCATE, MVT::v2i16, Custom);
+      setOperationAction(ISD::TRUNCATE, MVT::v2i32, Custom);
+      setOperationAction(ISD::TRUNCATE, MVT::v4i8,  Custom);
+      setOperationAction(ISD::TRUNCATE, MVT::v4i16, Custom);
+      setOperationAction(ISD::TRUNCATE, MVT::v8i8,  Custom);
+    }
+
     // In the customized shift lowering, the legal v4i32/v2i64 cases
     // in AVX2 will be recognized.
     for (auto VT : { MVT::v16i8, MVT::v8i16, MVT::v4i32, MVT::v2i64 }) {
@@ -17917,6 +17926,10 @@ SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
   assert(VT.getVectorNumElements() == InVT.getVectorNumElements() &&
          "Invalid TRUNCATE operation");
 
+  // If called by the legalizer just return.
+  if (!DAG.getTargetLoweringInfo().isTypeLegal(InVT))
+    return SDValue();
+
   if (VT.getVectorElementType() == MVT::i1)
     return LowerTruncateVecI1(Op, DAG, Subtarget);
 
@@ -26198,6 +26211,57 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
   case ISD::UDIVREM: {
     SDValue V = LowerWin64_i128OP(SDValue(N,0), DAG);
     Results.push_back(V);
+    return;
+  }
+  case ISD::TRUNCATE: {
+    MVT VT = N->getSimpleValueType(0);
+    if (getTypeAction(*DAG.getContext(), VT) != TypeWidenVector)
+      return;
+
+    // The generic legalizer will try to widen the input type to the same
+    // number of elements as the widened result type. But this isn't always
+    // the best thing so do some custom legalization to avoid some cases.
+    MVT WidenVT = getTypeToTransformTo(*DAG.getContext(), VT).getSimpleVT();
+    SDValue In = N->getOperand(0);
+    EVT InVT = In.getValueType();
+
+    unsigned InBits = InVT.getSizeInBits();
+    if (128 % InBits == 0) {
+      // 128 bit and smaller inputs should avoid truncate all together and
+      // just use a build_vector that will become a shuffle.
+      // TODO: Widen and use a shuffle directly?
+      MVT InEltVT = InVT.getSimpleVT().getVectorElementType();
+      EVT EltVT = VT.getVectorElementType();
+      unsigned WidenNumElts = WidenVT.getVectorNumElements();
+      SmallVector<SDValue, 16> Ops(WidenNumElts, DAG.getUNDEF(EltVT));
+      // Use the original element count so we don't do more scalar opts than
+      // necessary.
+      unsigned MinElts = VT.getVectorNumElements();
+      for (unsigned i=0; i < MinElts; ++i) {
+        SDValue Val = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, InEltVT, In,
+                                  DAG.getIntPtrConstant(i, dl));
+        Ops[i] = DAG.getNode(ISD::TRUNCATE, dl, EltVT, Val);
+      }
+      Results.push_back(DAG.getBuildVector(WidenVT, dl, Ops));
+      return;
+    }
+    // With AVX512 there are some cases that can use a target specific
+    // truncate node to go from 256/512 to less than 128 with zeros in the
+    // upper elements of the 128 bit result.
+    if (Subtarget.hasAVX512() && isTypeLegal(InVT)) {
+      // We can use VTRUNC directly if for 256 bits with VLX or for any 512.
+      if ((InBits == 256 && Subtarget.hasVLX()) || InBits == 512) {
+        Results.push_back(DAG.getNode(X86ISD::VTRUNC, dl, WidenVT, In));
+        return;
+      }
+      // There's one case we can widen to 512 bits and use VTRUNC.
+      if (InVT == MVT::v4i64 && VT == MVT::v4i8 && isTypeLegal(MVT::v8i64)) {
+        In = DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v8i64, In,
+                         DAG.getUNDEF(MVT::v4i64));
+        Results.push_back(DAG.getNode(X86ISD::VTRUNC, dl, WidenVT, In));
+        return;
+      }
+    }
     return;
   }
   case ISD::FP_TO_SINT:

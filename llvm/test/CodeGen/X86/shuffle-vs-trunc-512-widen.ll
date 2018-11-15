@@ -911,118 +911,12 @@ define <4 x double> @PR34175(<32 x i16>* %p) {
 }
 
 define <16 x i8> @trunc_v8i64_to_v8i8_return_v16i8(<8 x i64> %vec) nounwind {
-; AVX512F-LABEL: trunc_v8i64_to_v8i8_return_v16i8:
-; AVX512F:       # %bb.0:
-; AVX512F-NEXT:    vextracti32x4 $3, %zmm0, %xmm1
-; AVX512F-NEXT:    vpextrq $1, %xmm1, %r8
-; AVX512F-NEXT:    vmovq %xmm1, %r9
-; AVX512F-NEXT:    vextracti32x4 $2, %zmm0, %xmm1
-; AVX512F-NEXT:    vpextrq $1, %xmm1, %r10
-; AVX512F-NEXT:    vmovq %xmm1, %rsi
-; AVX512F-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; AVX512F-NEXT:    vpextrq $1, %xmm1, %rdi
-; AVX512F-NEXT:    vmovq %xmm1, %rax
-; AVX512F-NEXT:    vpextrq $1, %xmm0, %rcx
-; AVX512F-NEXT:    vmovq %xmm0, %rdx
-; AVX512F-NEXT:    vpxor %xmm0, %xmm0, %xmm0
-; AVX512F-NEXT:    vpinsrb $0, %edx, %xmm0, %xmm0
-; AVX512F-NEXT:    vpinsrb $1, %ecx, %xmm0, %xmm0
-; AVX512F-NEXT:    vpinsrb $2, %eax, %xmm0, %xmm0
-; AVX512F-NEXT:    vpinsrb $3, %edi, %xmm0, %xmm0
-; AVX512F-NEXT:    vpinsrb $4, %esi, %xmm0, %xmm0
-; AVX512F-NEXT:    vpinsrb $5, %r10d, %xmm0, %xmm0
-; AVX512F-NEXT:    vpinsrb $6, %r9d, %xmm0, %xmm0
-; AVX512F-NEXT:    vpinsrb $7, %r8d, %xmm0, %xmm0
-; AVX512F-NEXT:    vzeroupper
-; AVX512F-NEXT:    retq
-;
-; AVX512VL-LABEL: trunc_v8i64_to_v8i8_return_v16i8:
-; AVX512VL:       # %bb.0:
-; AVX512VL-NEXT:    vextracti32x4 $3, %zmm0, %xmm1
-; AVX512VL-NEXT:    vpextrq $1, %xmm1, %r8
-; AVX512VL-NEXT:    vmovq %xmm1, %r9
-; AVX512VL-NEXT:    vextracti32x4 $2, %zmm0, %xmm1
-; AVX512VL-NEXT:    vpextrq $1, %xmm1, %r10
-; AVX512VL-NEXT:    vmovq %xmm1, %rsi
-; AVX512VL-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; AVX512VL-NEXT:    vpextrq $1, %xmm1, %rdi
-; AVX512VL-NEXT:    vmovq %xmm1, %rax
-; AVX512VL-NEXT:    vpextrq $1, %xmm0, %rcx
-; AVX512VL-NEXT:    vmovq %xmm0, %rdx
-; AVX512VL-NEXT:    vpxor %xmm0, %xmm0, %xmm0
-; AVX512VL-NEXT:    vpinsrb $0, %edx, %xmm0, %xmm0
-; AVX512VL-NEXT:    vpinsrb $1, %ecx, %xmm0, %xmm0
-; AVX512VL-NEXT:    vpinsrb $2, %eax, %xmm0, %xmm0
-; AVX512VL-NEXT:    vpinsrb $3, %edi, %xmm0, %xmm0
-; AVX512VL-NEXT:    vpinsrb $4, %esi, %xmm0, %xmm0
-; AVX512VL-NEXT:    vpinsrb $5, %r10d, %xmm0, %xmm0
-; AVX512VL-NEXT:    vpinsrb $6, %r9d, %xmm0, %xmm0
-; AVX512VL-NEXT:    vpinsrb $7, %r8d, %xmm0, %xmm0
-; AVX512VL-NEXT:    vzeroupper
-; AVX512VL-NEXT:    retq
-;
-; AVX512BW-LABEL: trunc_v8i64_to_v8i8_return_v16i8:
-; AVX512BW:       # %bb.0:
-; AVX512BW-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
-; AVX512BW-NEXT:    vextracti128 $1, %ymm1, %xmm2
-; AVX512BW-NEXT:    vmovdqa {{.*#+}} xmm3 = <u,u,0,8,u,u,u,u,u,u,u,u,u,u,u,u>
-; AVX512BW-NEXT:    vpshufb %xmm3, %xmm2, %xmm2
-; AVX512BW-NEXT:    vpshufb %xmm3, %xmm1, %xmm1
-; AVX512BW-NEXT:    vpunpcklwd {{.*#+}} xmm1 = xmm1[0],xmm2[0],xmm1[1],xmm2[1],xmm1[2],xmm2[2],xmm1[3],xmm2[3]
-; AVX512BW-NEXT:    vextracti128 $1, %ymm0, %xmm2
-; AVX512BW-NEXT:    vmovdqa {{.*#+}} xmm3 = <0,8,u,u,u,u,u,u,u,u,u,u,u,u,u,u>
-; AVX512BW-NEXT:    vpshufb %xmm3, %xmm2, %xmm2
-; AVX512BW-NEXT:    vpshufb %xmm3, %xmm0, %xmm0
-; AVX512BW-NEXT:    vpunpcklwd {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1],xmm0[2],xmm2[2],xmm0[3],xmm2[3]
-; AVX512BW-NEXT:    vpblendd {{.*#+}} xmm0 = xmm0[0],xmm1[1],xmm0[2,3]
-; AVX512BW-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
-; AVX512BW-NEXT:    vzeroupper
-; AVX512BW-NEXT:    retq
-;
-; AVX512BWVL-LABEL: trunc_v8i64_to_v8i8_return_v16i8:
-; AVX512BWVL:       # %bb.0:
-; AVX512BWVL-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
-; AVX512BWVL-NEXT:    vextracti128 $1, %ymm1, %xmm2
-; AVX512BWVL-NEXT:    vmovdqa {{.*#+}} xmm3 = <u,u,0,8,u,u,u,u,u,u,u,u,u,u,u,u>
-; AVX512BWVL-NEXT:    vpshufb %xmm3, %xmm2, %xmm2
-; AVX512BWVL-NEXT:    vpshufb %xmm3, %xmm1, %xmm1
-; AVX512BWVL-NEXT:    vpunpcklwd {{.*#+}} xmm1 = xmm1[0],xmm2[0],xmm1[1],xmm2[1],xmm1[2],xmm2[2],xmm1[3],xmm2[3]
-; AVX512BWVL-NEXT:    vextracti128 $1, %ymm0, %xmm2
-; AVX512BWVL-NEXT:    vmovdqa {{.*#+}} xmm3 = <0,8,u,u,u,u,u,u,u,u,u,u,u,u,u,u>
-; AVX512BWVL-NEXT:    vpshufb %xmm3, %xmm2, %xmm2
-; AVX512BWVL-NEXT:    vpshufb %xmm3, %xmm0, %xmm0
-; AVX512BWVL-NEXT:    vpunpcklwd {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1],xmm0[2],xmm2[2],xmm0[3],xmm2[3]
-; AVX512BWVL-NEXT:    vpblendd {{.*#+}} xmm0 = xmm0[0],xmm1[1],xmm0[2,3]
-; AVX512BWVL-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
-; AVX512BWVL-NEXT:    vzeroupper
-; AVX512BWVL-NEXT:    retq
-;
-; AVX512VBMI-LABEL: trunc_v8i64_to_v8i8_return_v16i8:
-; AVX512VBMI:       # %bb.0:
-; AVX512VBMI-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
-; AVX512VBMI-NEXT:    vextracti128 $1, %ymm1, %xmm2
-; AVX512VBMI-NEXT:    vmovdqa {{.*#+}} xmm3 = <u,u,0,8,u,u,u,u,u,u,u,u,u,u,u,u>
-; AVX512VBMI-NEXT:    vpshufb %xmm3, %xmm2, %xmm2
-; AVX512VBMI-NEXT:    vpshufb %xmm3, %xmm1, %xmm1
-; AVX512VBMI-NEXT:    vpunpcklwd {{.*#+}} xmm1 = xmm1[0],xmm2[0],xmm1[1],xmm2[1],xmm1[2],xmm2[2],xmm1[3],xmm2[3]
-; AVX512VBMI-NEXT:    vextracti128 $1, %ymm0, %xmm2
-; AVX512VBMI-NEXT:    vmovdqa {{.*#+}} xmm3 = <0,8,u,u,u,u,u,u,u,u,u,u,u,u,u,u>
-; AVX512VBMI-NEXT:    vpshufb %xmm3, %xmm2, %xmm2
-; AVX512VBMI-NEXT:    vpshufb %xmm3, %xmm0, %xmm0
-; AVX512VBMI-NEXT:    vpunpcklwd {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1],xmm0[2],xmm2[2],xmm0[3],xmm2[3]
-; AVX512VBMI-NEXT:    vpblendd {{.*#+}} xmm0 = xmm0[0],xmm1[1],xmm0[2,3]
-; AVX512VBMI-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
-; AVX512VBMI-NEXT:    vzeroupper
-; AVX512VBMI-NEXT:    retq
-;
-; AVX512VBMIVL-LABEL: trunc_v8i64_to_v8i8_return_v16i8:
-; AVX512VBMIVL:       # %bb.0:
-; AVX512VBMIVL-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
-; AVX512VBMIVL-NEXT:    vmovdqa {{.*#+}} ymm2 = <0,8,16,24,32,40,48,56,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u,u>
-; AVX512VBMIVL-NEXT:    vpermi2b %ymm1, %ymm0, %ymm2
-; AVX512VBMIVL-NEXT:    vmovq {{.*#+}} xmm0 = xmm2[0],zero
-; AVX512VBMIVL-NEXT:    vzeroupper
-; AVX512VBMIVL-NEXT:    retq
+; AVX512-LABEL: trunc_v8i64_to_v8i8_return_v16i8:
+; AVX512:       # %bb.0:
+; AVX512-NEXT:    vpmovqb %zmm0, %xmm0
+; AVX512-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512-NEXT:    vzeroupper
+; AVX512-NEXT:    retq
   %truncated = trunc <8 x i64> %vec to <8 x i8>
   %result = shufflevector <8 x i8> %truncated, <8 x i8> zeroinitializer, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
   ret <16 x i8> %result

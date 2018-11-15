@@ -381,13 +381,42 @@ define <2 x i64> @trunc_v8i32_to_v8i8_return_v2i64(<8 x i32> %vec) nounwind {
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
 ;
-; AVX512-LABEL: trunc_v8i32_to_v8i8_return_v2i64:
-; AVX512:       # %bb.0:
-; AVX512-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
-; AVX512-NEXT:    vpmovdb %zmm0, %xmm0
-; AVX512-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
-; AVX512-NEXT:    vzeroupper
-; AVX512-NEXT:    retq
+; AVX512F-LABEL: trunc_v8i32_to_v8i8_return_v2i64:
+; AVX512F:       # %bb.0:
+; AVX512F-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
+; AVX512F-NEXT:    vpmovdb %zmm0, %xmm0
+; AVX512F-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512F-NEXT:    vzeroupper
+; AVX512F-NEXT:    retq
+;
+; AVX512VL-LABEL: trunc_v8i32_to_v8i8_return_v2i64:
+; AVX512VL:       # %bb.0:
+; AVX512VL-NEXT:    vpmovdb %ymm0, %xmm0
+; AVX512VL-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512VL-NEXT:    vzeroupper
+; AVX512VL-NEXT:    retq
+;
+; AVX512BW-LABEL: trunc_v8i32_to_v8i8_return_v2i64:
+; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
+; AVX512BW-NEXT:    vpmovdb %zmm0, %xmm0
+; AVX512BW-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512BW-NEXT:    vzeroupper
+; AVX512BW-NEXT:    retq
+;
+; AVX512BWVL-LABEL: trunc_v8i32_to_v8i8_return_v2i64:
+; AVX512BWVL:       # %bb.0:
+; AVX512BWVL-NEXT:    vpmovdb %ymm0, %xmm0
+; AVX512BWVL-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512BWVL-NEXT:    vzeroupper
+; AVX512BWVL-NEXT:    retq
+;
+; AVX512VBMIVL-LABEL: trunc_v8i32_to_v8i8_return_v2i64:
+; AVX512VBMIVL:       # %bb.0:
+; AVX512VBMIVL-NEXT:    vpmovdb %ymm0, %xmm0
+; AVX512VBMIVL-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512VBMIVL-NEXT:    vzeroupper
+; AVX512VBMIVL-NEXT:    retq
   %truncated.vec = trunc <8 x i32> %vec to <8 x i8>
   %bc = bitcast <8 x i8> %truncated.vec to i64
   %result = insertelement <2 x i64> zeroinitializer, i64 %bc, i32 0
@@ -536,13 +565,42 @@ define <16 x i8> @trunc_v8i32_to_v8i8_return_v16i8(<8 x i32> %vec) nounwind {
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
 ;
-; AVX512-LABEL: trunc_v8i32_to_v8i8_return_v16i8:
-; AVX512:       # %bb.0:
-; AVX512-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
-; AVX512-NEXT:    vpmovdb %zmm0, %xmm0
-; AVX512-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
-; AVX512-NEXT:    vzeroupper
-; AVX512-NEXT:    retq
+; AVX512F-LABEL: trunc_v8i32_to_v8i8_return_v16i8:
+; AVX512F:       # %bb.0:
+; AVX512F-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
+; AVX512F-NEXT:    vpmovdb %zmm0, %xmm0
+; AVX512F-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512F-NEXT:    vzeroupper
+; AVX512F-NEXT:    retq
+;
+; AVX512VL-LABEL: trunc_v8i32_to_v8i8_return_v16i8:
+; AVX512VL:       # %bb.0:
+; AVX512VL-NEXT:    vpmovdb %ymm0, %xmm0
+; AVX512VL-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512VL-NEXT:    vzeroupper
+; AVX512VL-NEXT:    retq
+;
+; AVX512BW-LABEL: trunc_v8i32_to_v8i8_return_v16i8:
+; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
+; AVX512BW-NEXT:    vpmovdb %zmm0, %xmm0
+; AVX512BW-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512BW-NEXT:    vzeroupper
+; AVX512BW-NEXT:    retq
+;
+; AVX512BWVL-LABEL: trunc_v8i32_to_v8i8_return_v16i8:
+; AVX512BWVL:       # %bb.0:
+; AVX512BWVL-NEXT:    vpmovdb %ymm0, %xmm0
+; AVX512BWVL-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512BWVL-NEXT:    vzeroupper
+; AVX512BWVL-NEXT:    retq
+;
+; AVX512VBMIVL-LABEL: trunc_v8i32_to_v8i8_return_v16i8:
+; AVX512VBMIVL:       # %bb.0:
+; AVX512VBMIVL-NEXT:    vpmovdb %ymm0, %xmm0
+; AVX512VBMIVL-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512VBMIVL-NEXT:    vzeroupper
+; AVX512VBMIVL-NEXT:    retq
   %truncated = trunc <8 x i32> %vec to <8 x i8>
   %result = shufflevector <8 x i8> %truncated, <8 x i8> zeroinitializer, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
   ret <16 x i8> %result
@@ -586,13 +644,42 @@ define <2 x i64> @trunc_v4i64_to_v4i16_return_v2i64(<4 x i64> %vec) nounwind {
 ; AVX2-FAST-NEXT:    vzeroupper
 ; AVX2-FAST-NEXT:    retq
 ;
-; AVX512-LABEL: trunc_v4i64_to_v4i16_return_v2i64:
-; AVX512:       # %bb.0:
-; AVX512-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
-; AVX512-NEXT:    vpmovqw %zmm0, %xmm0
-; AVX512-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
-; AVX512-NEXT:    vzeroupper
-; AVX512-NEXT:    retq
+; AVX512F-LABEL: trunc_v4i64_to_v4i16_return_v2i64:
+; AVX512F:       # %bb.0:
+; AVX512F-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
+; AVX512F-NEXT:    vpmovqw %zmm0, %xmm0
+; AVX512F-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512F-NEXT:    vzeroupper
+; AVX512F-NEXT:    retq
+;
+; AVX512VL-LABEL: trunc_v4i64_to_v4i16_return_v2i64:
+; AVX512VL:       # %bb.0:
+; AVX512VL-NEXT:    vpmovqw %ymm0, %xmm0
+; AVX512VL-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512VL-NEXT:    vzeroupper
+; AVX512VL-NEXT:    retq
+;
+; AVX512BW-LABEL: trunc_v4i64_to_v4i16_return_v2i64:
+; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
+; AVX512BW-NEXT:    vpmovqw %zmm0, %xmm0
+; AVX512BW-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512BW-NEXT:    vzeroupper
+; AVX512BW-NEXT:    retq
+;
+; AVX512BWVL-LABEL: trunc_v4i64_to_v4i16_return_v2i64:
+; AVX512BWVL:       # %bb.0:
+; AVX512BWVL-NEXT:    vpmovqw %ymm0, %xmm0
+; AVX512BWVL-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512BWVL-NEXT:    vzeroupper
+; AVX512BWVL-NEXT:    retq
+;
+; AVX512VBMIVL-LABEL: trunc_v4i64_to_v4i16_return_v2i64:
+; AVX512VBMIVL:       # %bb.0:
+; AVX512VBMIVL-NEXT:    vpmovqw %ymm0, %xmm0
+; AVX512VBMIVL-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512VBMIVL-NEXT:    vzeroupper
+; AVX512VBMIVL-NEXT:    retq
   %truncated = trunc <4 x i64> %vec to <4 x i16>
   %bc = bitcast <4 x i16> %truncated to i64
   %result = insertelement <2 x i64> zeroinitializer, i64 %bc, i32 0
@@ -764,13 +851,42 @@ define <8 x i16> @trunc_v4i64_to_v4i16_return_v8i16(<4 x i64> %vec) nounwind {
 ; AVX2-FAST-NEXT:    vzeroupper
 ; AVX2-FAST-NEXT:    retq
 ;
-; AVX512-LABEL: trunc_v4i64_to_v4i16_return_v8i16:
-; AVX512:       # %bb.0:
-; AVX512-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
-; AVX512-NEXT:    vpmovqw %zmm0, %xmm0
-; AVX512-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
-; AVX512-NEXT:    vzeroupper
-; AVX512-NEXT:    retq
+; AVX512F-LABEL: trunc_v4i64_to_v4i16_return_v8i16:
+; AVX512F:       # %bb.0:
+; AVX512F-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
+; AVX512F-NEXT:    vpmovqw %zmm0, %xmm0
+; AVX512F-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512F-NEXT:    vzeroupper
+; AVX512F-NEXT:    retq
+;
+; AVX512VL-LABEL: trunc_v4i64_to_v4i16_return_v8i16:
+; AVX512VL:       # %bb.0:
+; AVX512VL-NEXT:    vpmovqw %ymm0, %xmm0
+; AVX512VL-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512VL-NEXT:    vzeroupper
+; AVX512VL-NEXT:    retq
+;
+; AVX512BW-LABEL: trunc_v4i64_to_v4i16_return_v8i16:
+; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
+; AVX512BW-NEXT:    vpmovqw %zmm0, %xmm0
+; AVX512BW-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512BW-NEXT:    vzeroupper
+; AVX512BW-NEXT:    retq
+;
+; AVX512BWVL-LABEL: trunc_v4i64_to_v4i16_return_v8i16:
+; AVX512BWVL:       # %bb.0:
+; AVX512BWVL-NEXT:    vpmovqw %ymm0, %xmm0
+; AVX512BWVL-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512BWVL-NEXT:    vzeroupper
+; AVX512BWVL-NEXT:    retq
+;
+; AVX512VBMIVL-LABEL: trunc_v4i64_to_v4i16_return_v8i16:
+; AVX512VBMIVL:       # %bb.0:
+; AVX512VBMIVL-NEXT:    vpmovqw %ymm0, %xmm0
+; AVX512VBMIVL-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX512VBMIVL-NEXT:    vzeroupper
+; AVX512VBMIVL-NEXT:    retq
   %truncated = trunc <4 x i64> %vec to <4 x i16>
   %result = shufflevector <4 x i16> %truncated, <4 x i16> zeroinitializer, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
   ret <8 x i16> %result
@@ -801,17 +917,47 @@ define <16 x i8> @trunc_v4i64_to_v4i8_return_v16i8(<4 x i64> %vec) nounwind {
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
 ;
-; AVX512-LABEL: trunc_v4i64_to_v4i8_return_v16i8:
-; AVX512:       # %bb.0:
-; AVX512-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; AVX512-NEXT:    vmovdqa {{.*#+}} xmm2 = <0,8,u,u,u,u,u,u,u,u,u,u,u,u,u,u>
-; AVX512-NEXT:    vpshufb %xmm2, %xmm1, %xmm1
-; AVX512-NEXT:    vpshufb %xmm2, %xmm0, %xmm0
-; AVX512-NEXT:    vpunpcklwd {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3]
-; AVX512-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; AVX512-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3,4,5,6,7]
-; AVX512-NEXT:    vzeroupper
-; AVX512-NEXT:    retq
+; AVX512F-LABEL: trunc_v4i64_to_v4i8_return_v16i8:
+; AVX512F:       # %bb.0:
+; AVX512F-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
+; AVX512F-NEXT:    vpmovqb %zmm0, %xmm0
+; AVX512F-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX512F-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3,4,5,6,7]
+; AVX512F-NEXT:    vzeroupper
+; AVX512F-NEXT:    retq
+;
+; AVX512VL-LABEL: trunc_v4i64_to_v4i8_return_v16i8:
+; AVX512VL:       # %bb.0:
+; AVX512VL-NEXT:    vpmovqb %ymm0, %xmm0
+; AVX512VL-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX512VL-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3,4,5,6,7]
+; AVX512VL-NEXT:    vzeroupper
+; AVX512VL-NEXT:    retq
+;
+; AVX512BW-LABEL: trunc_v4i64_to_v4i8_return_v16i8:
+; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
+; AVX512BW-NEXT:    vpmovqb %zmm0, %xmm0
+; AVX512BW-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX512BW-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3,4,5,6,7]
+; AVX512BW-NEXT:    vzeroupper
+; AVX512BW-NEXT:    retq
+;
+; AVX512BWVL-LABEL: trunc_v4i64_to_v4i8_return_v16i8:
+; AVX512BWVL:       # %bb.0:
+; AVX512BWVL-NEXT:    vpmovqb %ymm0, %xmm0
+; AVX512BWVL-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX512BWVL-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3,4,5,6,7]
+; AVX512BWVL-NEXT:    vzeroupper
+; AVX512BWVL-NEXT:    retq
+;
+; AVX512VBMIVL-LABEL: trunc_v4i64_to_v4i8_return_v16i8:
+; AVX512VBMIVL:       # %bb.0:
+; AVX512VBMIVL-NEXT:    vpmovqb %ymm0, %xmm0
+; AVX512VBMIVL-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX512VBMIVL-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3,4,5,6,7]
+; AVX512VBMIVL-NEXT:    vzeroupper
+; AVX512VBMIVL-NEXT:    retq
   %truncated = trunc <4 x i64> %vec to <4 x i8>
   %result = shufflevector <4 x i8> %truncated, <4 x i8> zeroinitializer, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 4, i32 5, i32 6, i32 7, i32 5, i32 5, i32 undef, i32 7>
   ret <16 x i8> %result
@@ -1025,13 +1171,10 @@ define void @trunc_v4i64_to_v4i8(<32 x i8>* %L, <4 x i8>* %S) nounwind {
 ;
 ; AVX512F-LABEL: trunc_v4i64_to_v4i8:
 ; AVX512F:       # %bb.0:
-; AVX512F-NEXT:    vmovdqa (%rdi), %xmm0
-; AVX512F-NEXT:    vmovdqa 16(%rdi), %xmm1
-; AVX512F-NEXT:    vmovdqa {{.*#+}} xmm2 = <0,8,u,u,u,u,u,u,u,u,u,u,u,u,u,u>
-; AVX512F-NEXT:    vpshufb %xmm2, %xmm1, %xmm1
-; AVX512F-NEXT:    vpshufb %xmm2, %xmm0, %xmm0
-; AVX512F-NEXT:    vpunpcklwd {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3]
+; AVX512F-NEXT:    vmovdqa (%rdi), %ymm0
+; AVX512F-NEXT:    vpmovqb %zmm0, %xmm0
 ; AVX512F-NEXT:    vmovd %xmm0, (%rsi)
+; AVX512F-NEXT:    vzeroupper
 ; AVX512F-NEXT:    retq
 ;
 ; AVX512VL-LABEL: trunc_v4i64_to_v4i8:
@@ -1043,13 +1186,10 @@ define void @trunc_v4i64_to_v4i8(<32 x i8>* %L, <4 x i8>* %S) nounwind {
 ;
 ; AVX512BW-LABEL: trunc_v4i64_to_v4i8:
 ; AVX512BW:       # %bb.0:
-; AVX512BW-NEXT:    vmovdqa (%rdi), %xmm0
-; AVX512BW-NEXT:    vmovdqa 16(%rdi), %xmm1
-; AVX512BW-NEXT:    vmovdqa {{.*#+}} xmm2 = <0,8,u,u,u,u,u,u,u,u,u,u,u,u,u,u>
-; AVX512BW-NEXT:    vpshufb %xmm2, %xmm1, %xmm1
-; AVX512BW-NEXT:    vpshufb %xmm2, %xmm0, %xmm0
-; AVX512BW-NEXT:    vpunpcklwd {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3]
+; AVX512BW-NEXT:    vmovdqa (%rdi), %ymm0
+; AVX512BW-NEXT:    vpmovqb %zmm0, %xmm0
 ; AVX512BW-NEXT:    vmovd %xmm0, (%rsi)
+; AVX512BW-NEXT:    vzeroupper
 ; AVX512BW-NEXT:    retq
 ;
 ; AVX512BWVL-LABEL: trunc_v4i64_to_v4i8:
