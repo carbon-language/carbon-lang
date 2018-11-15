@@ -442,6 +442,17 @@ protected:
     unsigned BasePathIsEmpty : 1;
   };
 
+  class BinaryOperatorBitfields {
+    friend class BinaryOperator;
+
+    unsigned : NumExprBits;
+
+    unsigned Opc : 6;
+    unsigned FPFeatures : 3;
+
+    SourceLocation OpLoc;
+  };
+
   class InitListExprBitfields {
     friend class InitListExpr;
 
@@ -558,6 +569,7 @@ protected:
     CallExprBitfields CallExprBits;
     MemberExprBitfields MemberExprBits;
     CastExprBitfields CastExprBits;
+    BinaryOperatorBitfields BinaryOperatorBits;
     InitListExprBitfields InitListExprBits;
     PseudoObjectExprBitfields PseudoObjectExprBits;
 
