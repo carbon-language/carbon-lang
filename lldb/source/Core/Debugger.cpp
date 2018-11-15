@@ -426,7 +426,7 @@ void Debugger::SetReproducerPath(llvm::StringRef p) {
 
 llvm::Error Debugger::SetReproducerCapture(bool b) {
   auto &r = repro::Reproducer::Instance();
-  if (auto e = r.SetGenerateReproducer(false))
+  if (auto e = r.SetGenerateReproducer(b))
     return e;
   return llvm::Error::success();
 }
