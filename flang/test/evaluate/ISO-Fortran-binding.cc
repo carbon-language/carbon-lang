@@ -323,8 +323,7 @@ static void check_CFI_allocate(CFI_cdesc_t *dv,
       MATCH(lower_bounds[i], dv->dim[i].lower_bound);
       MATCH(upper_bounds[i], dv->dim[i].extent + dv->dim[i].lower_bound - 1);
     }
-    // if (type == CFI_type_char) {//what I expect
-    if (type == CFI_type_cptr) {  // current imple
+    if (type == CFI_type_char) {
       MATCH(elem_len, dv->elem_len);
     } else {
       MATCH(true, desc_elem_len == dv->elem_len);
@@ -333,8 +332,9 @@ static void check_CFI_allocate(CFI_cdesc_t *dv,
   } else {
     MATCH(true, base_addr == dv->base_addr);
   }
-  // check dv properties that should not have been altered were not
-  // regardless of success/failure
+
+  // Below dv members shall not be altered by CFI_allocate regardless of
+  // success/failure
   MATCH(true, attribute == dv->attribute);
   MATCH(true, rank == dv->rank);
   MATCH(true, type == dv->type);
@@ -358,23 +358,17 @@ static void check_CFI_allocate(CFI_cdesc_t *dv,
     ++numErr;
     expectedRetCode = CFI_ERROR_BASE_ADDR_NOT_NULL;
   }
-  if (type == CFI_type_cptr && elem_len <= 0) {  // current implem
-    // if (type == CFI_type_char && elem_len <= 0) {//what I expect
-    ++numErr;
-    expectedRetCode = CFI_INVALID_ELEM_LEN;
-  }
   if (attribute != CFI_attribute_pointer &&
       attribute != CFI_attribute_allocatable) {
     ++numErr;
-    // expectedRetCode = CFI_INVALID_ATTRIBUTE;//what I expect
-    expectedRetCode = CFI_INVALID_DESCRIPTOR;  // current implem
+    expectedRetCode = CFI_INVALID_ATTRIBUTE;
   }
   if (rank > 0 && (lower_bounds == nullptr || upper_bounds == nullptr)) {
     ++numErr;
     expectedRetCode = CFI_INVALID_EXTENT;
   }
 
-  // memory allocation is the only remaining unpredicatble failure
+  // Memory allocation failures are unpredicatble in this test.
   if (numErr == 0 && retCode != CFI_SUCCESS) {
     MATCH(true, retCode == CFI_ERROR_MEM_ALLOCATION);
   } else if (numErr > 1) {
@@ -664,7 +658,7 @@ static void run_CFI_setpointer_tests() {
 }
 
 int main() {
-  TestCdescMacroForAllRanksSmallerThan<CFI_MAX_RANK>();:
+  TestCdescMacroForAllRanksSmallerThan<CFI_MAX_RANK>();
   run_CFI_establish_tests();
   run_CFI_address_tests();
   // TODO: calrify CFI_allocate -> CFI_type_cptr/CFI_type_char

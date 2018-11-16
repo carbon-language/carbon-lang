@@ -39,7 +39,7 @@ int CFI_allocate(CFI_cdesc_t *descriptor, const CFI_index_t lower_bounds[],
   if (descriptor->attribute != CFI_attribute_allocatable &&
       descriptor->attribute != CFI_attribute_pointer) {
     // Non-interoperable object
-    return CFI_INVALID_DESCRIPTOR;
+    return CFI_INVALID_ATTRIBUTE;
   }
   if (descriptor->attribute == CFI_attribute_allocatable &&
       descriptor->base_addr != nullptr) {
@@ -52,7 +52,7 @@ int CFI_allocate(CFI_cdesc_t *descriptor, const CFI_index_t lower_bounds[],
       descriptor->type > CFI_type_struct) {
     return CFI_INVALID_TYPE;
   }
-  if (descriptor->type != CFI_type_cptr) {
+  if (descriptor->type != CFI_type_char) {
     elem_len = descriptor->elem_len;
     if (elem_len <= 0) {
       return CFI_INVALID_ELEM_LEN;
@@ -133,6 +133,7 @@ static constexpr std::size_t MinElemLen(CFI_type_t type) {
     minElemLen = 2 * sizeof(long double);
     break;
   case CFI_type_Bool: minElemLen = 1; break;
+  case CFI_type_cptr: minElemLen = sizeof(void *); break;
   }
   return minElemLen;
 }
