@@ -514,6 +514,15 @@ protected:
     SourceLocation Loc;
   };
 
+  class CXXNullPtrLiteralExprBitfields {
+    friend class CXXNullPtrLiteralExpr;
+
+    unsigned : NumExprBits;
+
+    /// The location of the null pointer literal.
+    SourceLocation Loc;
+  };
+
   class TypeTraitExprBitfields {
     friend class ASTStmtReader;
     friend class ASTStmtWriter;
@@ -613,6 +622,7 @@ protected:
 
     // C++ Expressions
     CXXBoolLiteralExprBitfields CXXBoolLiteralExprBits;
+    CXXNullPtrLiteralExprBitfields CXXNullPtrLiteralExprBits;
     TypeTraitExprBitfields TypeTraitExprBits;
     ExprWithCleanupsBitfields ExprWithCleanupsBits;
 

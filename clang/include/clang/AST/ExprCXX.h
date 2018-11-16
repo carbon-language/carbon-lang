@@ -582,22 +582,21 @@ public:
 ///
 /// Introduced in C++11, the only literal of type \c nullptr_t is \c nullptr.
 class CXXNullPtrLiteralExpr : public Expr {
-  SourceLocation Loc;
-
 public:
-  CXXNullPtrLiteralExpr(QualType Ty, SourceLocation l)
+  CXXNullPtrLiteralExpr(QualType Ty, SourceLocation Loc)
       : Expr(CXXNullPtrLiteralExprClass, Ty, VK_RValue, OK_Ordinary, false,
-             false, false, false),
-        Loc(l) {}
+             false, false, false) {
+    CXXNullPtrLiteralExprBits.Loc = Loc;
+  }
 
   explicit CXXNullPtrLiteralExpr(EmptyShell Empty)
       : Expr(CXXNullPtrLiteralExprClass, Empty) {}
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return Loc; }
-  SourceLocation getEndLoc() const LLVM_READONLY { return Loc; }
+  SourceLocation getBeginLoc() const { return getLocation(); }
+  SourceLocation getEndLoc() const { return getLocation(); }
 
-  SourceLocation getLocation() const { return Loc; }
-  void setLocation(SourceLocation L) { Loc = L; }
+  SourceLocation getLocation() const { return CXXNullPtrLiteralExprBits.Loc; }
+  void setLocation(SourceLocation L) { CXXNullPtrLiteralExprBits.Loc = L; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXNullPtrLiteralExprClass;
