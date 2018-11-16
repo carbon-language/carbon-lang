@@ -75,7 +75,7 @@ run your program.
   always have the same pointer widths, so if you're compiling 64-bit code for
   the host, you're also compiling 64-bit code for the device.) Note that as of
   v10.0 CUDA SDK `no longer supports compilation of 32-bit
-  applications<https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html#deprecated-features>`_.
+  applications <https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html#deprecated-features>`_.
 
 * ``<GPU arch>`` -- the `compute capability
   <https://developer.nvidia.com/cuda-gpus>`_ of your GPU. For example, if you
