@@ -23,13 +23,15 @@
 #include <stdio.h>
 #include <sanitizer/hwasan_interface.h>
 
+static volatile char sink;
+
 int main(int argc, char **argv) {
   __hwasan_enable_allocator_tagging();
   int offset = argc < 2 ? 40 : atoi(argv[1]);
   int size = argc < 3 ? 30 : atoi(argv[2]);
   char * volatile x = (char*)malloc(size);
   fprintf(stderr, "base: %p access: %p\n", x, &x[offset]);
-  x[offset] = 42;
+  sink = x[offset];
 
 // CHECK40-LEFT: allocated heap chunk; size: 32 offset: 8
 // CHECK40-LEFT: is located 10 bytes to the right of 30-byte region
