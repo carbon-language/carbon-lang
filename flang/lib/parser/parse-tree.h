@@ -541,7 +541,7 @@ struct Name {
   COPY_AND_ASSIGN_BOILERPLATE(Name);
   std::string ToString() const { return source.ToString(); }
   CharBlock source;
-  semantics::Symbol *symbol{nullptr};  // filled in later by semantic analysis
+  mutable semantics::Symbol *symbol{nullptr};  // filled in during semantics
 };
 
 // R516 keyword -> name

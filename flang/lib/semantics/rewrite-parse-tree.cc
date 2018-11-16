@@ -25,15 +25,10 @@ namespace Fortran::semantics {
 
 using namespace parser::literals;
 
-// Symbols collected during name resolution that are added to parse tree.
-using symbolMap = std::map<const char *, Symbol *>;
-
-/// Walk the parse tree and add symbols from the symbolMap in Name nodes.
 /// Convert mis-identified statement functions to array element assignments.
 class RewriteMutator {
 public:
-  RewriteMutator(parser::Messages &messages, const symbolMap &symbols)
-    : messages_{messages}, symbols_{symbols} {}
+  RewriteMutator(parser::Messages &messages) : messages_{messages} {}
 
   // Default action for a parse tree node is to visit children.
   template<typename T> bool Pre(T &) { return true; }
@@ -69,7 +64,6 @@ private:
       parser::Statement<common::Indirection<parser::StmtFunctionStmt>>;
   bool errorOnUnresolvedName_{true};
   parser::Messages &messages_;
-  const symbolMap &symbols_;
   std::list<stmtFuncType> stmtFuncsToConvert_;
 
   // For T = Variable or Expr, if x has a function reference that really
@@ -91,12 +85,9 @@ private:
   }
 };
 
-// Fill in name.symbol if there is a corresponding symbol
+// Check that name has been resolved to a symbol
 void RewriteMutator::Post(parser::Name &name) {
-  const auto it{symbols_.find(name.source.begin())};
-  if (it != symbols_.end()) {
-    name.symbol = it->second;
-  } else if (errorOnUnresolvedName_) {
+  if (name.symbol == nullptr && errorOnUnresolvedName_) {
     messages_.Say(name.source, "Internal: no symbol found for '%s'"_en_US,
         name.ToString().c_str());
   }
@@ -132,31 +123,8 @@ bool RewriteMutator::Pre(parser::ExecutionPart &x) {
   return true;
 }
 
-static void CollectSymbol(Symbol &symbol, symbolMap &symbols) {
-  for (const auto &name : symbol.occurrences()) {
-    symbols.emplace(name.begin(), &symbol);
-  }
-}
-
-static void CollectSymbols(const Scope &scope, symbolMap &symbols) {
-  for (auto &pair : scope) {
-    Symbol *symbol{pair.second};
-    CollectSymbol(*symbol, symbols);
-    if (auto *details{symbol->detailsIf<GenericDetails>()}) {
-      if (details->derivedType()) {
-        CollectSymbol(*details->derivedType(), symbols);
-      }
-    }
-  }
-  for (auto &child : scope.children()) {
-    CollectSymbols(child, symbols);
-  }
-}
-
 void RewriteParseTree(SemanticsContext &context, parser::Program &program) {
-  symbolMap symbols;
-  CollectSymbols(context.globalScope(), symbols);
-  RewriteMutator mutator{context.messages(), symbols};
+  RewriteMutator mutator{context.messages()};
   parser::Walk(program, mutator);
 }
 }

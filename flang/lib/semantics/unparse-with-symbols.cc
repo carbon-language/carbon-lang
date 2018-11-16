@@ -74,8 +74,10 @@ void SymbolDumpVisitor::Indent(std::ostream &out, int indent) const {
 
 void SymbolDumpVisitor::Post(const parser::Name &name) {
   if (const auto *symbol{name.symbol}) {
-    CHECK(currStmt_);
-    symbols_.emplace(currStmt_->begin(), symbol);
+    if (!symbol->has<MiscDetails>()) {
+      CHECK(currStmt_);
+      symbols_.emplace(currStmt_->begin(), symbol);
+    }
   }
 }
 

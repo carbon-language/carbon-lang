@@ -30,11 +30,7 @@ Scope &Scope::MakeScope(Kind kind, Symbol *symbol) {
 }
 
 Scope::iterator Scope::find(const SourceName &name) {
-  auto it{symbols_.find(name)};
-  if (it != end()) {
-    it->second->add_occurrence(name);
-  }
-  return it;
+  return symbols_.find(name);
 }
 Scope::const_iterator Scope::find(const SourceName &name) const {
   return symbols_.find(name);
@@ -42,14 +38,13 @@ Scope::const_iterator Scope::find(const SourceName &name) const {
 Scope::size_type Scope::erase(const SourceName &name) {
   auto it{symbols_.find(name)};
   if (it != end()) {
-    it->second->remove_occurrence(name);
     symbols_.erase(it);
     return 1;
   } else {
     return 0;
   }
 }
-Symbol *Scope::FindSymbol(const SourceName &name) {
+Symbol *Scope::FindSymbol(const SourceName &name) const {
   if (kind() == Kind::DerivedType) {
     return parent_.FindSymbol(name);
   }
@@ -112,12 +107,8 @@ std::optional<parser::MessageFixedText> Scope::SetImportKind(ImportKind kind) {
   }
 }
 
-bool Scope::add_importName(const SourceName &name) {
-  if (!parent_.FindSymbol(name)) {
-    return false;
-  }
+void Scope::add_importName(const SourceName &name) {
   importNames_.insert(name);
-  return true;
 }
 
 // true if name can be imported or host-associated from parent scope.

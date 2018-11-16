@@ -87,7 +87,7 @@ public:
   size_type size() const { return symbols_.size(); }
 
   // Look for symbol by name in this scope and host (depending on imports).
-  Symbol *FindSymbol(const SourceName &);
+  Symbol *FindSymbol(const SourceName &) const;
 
   /// Make a Symbol with unknown details.
   std::pair<iterator, bool> try_emplace(
@@ -135,7 +135,7 @@ public:
   // Return an error message for incompatible kinds.
   std::optional<parser::MessageFixedText> SetImportKind(ImportKind);
 
-  bool add_importName(const SourceName &);
+  void add_importName(const SourceName &);
 
   // The range of the source of this and nested scopes.
   const parser::CharBlock &sourceRange() const { return sourceRange_; }

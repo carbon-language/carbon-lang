@@ -67,3 +67,14 @@ contains
   module subroutine i
   end
 end module
+
+! Separate module procedure defined in same module as declared
+module m3
+  interface
+    module subroutine sub
+    end subroutine
+  end interface
+contains
+  module procedure sub
+  end procedure
+end module

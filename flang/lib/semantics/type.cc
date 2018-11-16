@@ -67,21 +67,29 @@ void DerivedTypeSpec::set_scope(const Scope &scope) {
   scope_ = &scope;
 }
 
+void DerivedTypeSpec::AddParamValue(ParamValue &&value) {
+  paramValues_.emplace_back(std::nullopt, std::move(value));
+}
+void DerivedTypeSpec::AddParamValue(
+    const SourceName &name, ParamValue &&value) {
+  paramValues_.emplace_back(name, std::move(value));
+}
+
 std::ostream &operator<<(std::ostream &o, const DerivedTypeSpec &x) {
   o << "TYPE(" << x.name().ToString();
   if (!x.paramValues_.empty()) {
     bool first = true;
     o << '(';
-    for (auto &pair : x.paramValues_) {
+    for (const auto &[name, value] : x.paramValues_) {
       if (first) {
         first = false;
       } else {
         o << ',';
       }
-      if (auto &name{pair.first}) {
+      if (name) {
         o << name->ToString() << '=';
       }
-      o << pair.second;
+      o << value;
     }
     o << ')';
   }
@@ -211,38 +219,6 @@ void ProcInterface::set_symbol(const Symbol &symbol) {
 void ProcInterface::set_type(const DeclTypeSpec &type) {
   CHECK(!symbol_);
   type_ = type;
-}
-
-std::ostream &operator<<(std::ostream &o, const GenericSpec &x) {
-  switch (x.kind()) {
-  case GenericSpec::GENERIC_NAME: return o << x.genericName().ToString();
-  case GenericSpec::OP_DEFINED:
-    return o << '(' << x.definedOp().ToString() << ')';
-  case GenericSpec::ASSIGNMENT: return o << "ASSIGNMENT(=)";
-  case GenericSpec::READ_FORMATTED: return o << "READ(FORMATTED)";
-  case GenericSpec::READ_UNFORMATTED: return o << "READ(UNFORMATTED)";
-  case GenericSpec::WRITE_FORMATTED: return o << "WRITE(FORMATTED)";
-  case GenericSpec::WRITE_UNFORMATTED: return o << "WRITE(UNFORMATTED)";
-  case GenericSpec::OP_ADD: return o << "OPERATOR(+)";
-  case GenericSpec::OP_CONCAT: return o << "OPERATOR(//)";
-  case GenericSpec::OP_DIVIDE: return o << "OPERATOR(/)";
-  case GenericSpec::OP_MULTIPLY: return o << "OPERATOR(*)";
-  case GenericSpec::OP_POWER: return o << "OPERATOR(**)";
-  case GenericSpec::OP_SUBTRACT: return o << "OPERATOR(-)";
-  case GenericSpec::OP_AND: return o << "OPERATOR(.AND.)";
-  case GenericSpec::OP_EQ: return o << "OPERATOR(.EQ.)";
-  case GenericSpec::OP_EQV: return o << "OPERATOR(.EQV.)";
-  case GenericSpec::OP_GE: return o << "OPERATOR(.GE.)";
-  case GenericSpec::OP_GT: return o << "OPERATOR(.GT.)";
-  case GenericSpec::OP_LE: return o << "OPERATOR(.LE.)";
-  case GenericSpec::OP_LT: return o << "OPERATOR(.LT.)";
-  case GenericSpec::OP_NE: return o << "OPERATOR(.NE.)";
-  case GenericSpec::OP_NEQV: return o << "OPERATOR(.NEQV.)";
-  case GenericSpec::OP_NOT: return o << "OPERATOR(.NOT.)";
-  case GenericSpec::OP_OR: return o << "OPERATOR(.OR.)";
-  case GenericSpec::OP_XOR: return o << "OPERATOR(.XOR.)";
-  default: CRASH_NO_CASE;
-  }
 }
 
 class ExprResolver {

@@ -19,7 +19,8 @@
 #include "../common/enum-set.h"
 #include "../common/fortran.h"
 #include <functional>
-#include <memory>
+#include <list>
+#include <optional>
 
 namespace Fortran::semantics {
 
@@ -187,7 +188,7 @@ class FinalProcDetails {};
 
 class MiscDetails {
 public:
-  ENUM_CLASS(Kind, ConstructName);
+  ENUM_CLASS(Kind, ConstructName, ScopeName);
   MiscDetails(Kind kind) : kind_{kind} {}
   Kind kind() const { return kind_; }
 
@@ -221,13 +222,13 @@ private:
 class UseDetails {
 public:
   UseDetails(const SourceName &location, const Symbol &symbol)
-    : location_{&location}, symbol_{&symbol} {}
-  const SourceName &location() const { return *location_; }
+    : location_{location}, symbol_{&symbol} {}
+  const SourceName &location() const { return location_; }
   const Symbol &symbol() const { return *symbol_; }
   const Symbol &module() const;
 
 private:
-  const SourceName *location_;
+  SourceName location_;
   const Symbol *symbol_;
 };
 
@@ -238,7 +239,7 @@ public:
   UseErrorDetails(const UseDetails &);
   UseErrorDetails &add_occurrence(const SourceName &, const Scope &);
 
-  using listType = std::list<std::pair<const SourceName *, const Scope *>>;
+  using listType = std::list<std::pair<SourceName, const Scope *>>;
   const listType occurrences() const { return occurrences_; };
 
 private:
@@ -258,7 +259,7 @@ private:
 class GenericDetails {
 public:
   using listType = std::list<const Symbol *>;
-  using procNamesType = std::list<std::pair<const SourceName *, bool>>;
+  using procNamesType = std::list<std::pair<SourceName, bool>>;
 
   GenericDetails() {}
   GenericDetails(const listType &specificProcs);
@@ -269,7 +270,7 @@ public:
 
   void add_specificProc(const Symbol *proc) { specificProcs_.push_back(proc); }
   void add_specificProcName(const SourceName &name, bool isModuleProc) {
-    specificProcNames_.emplace_back(&name, isModuleProc);
+    specificProcNames_.emplace_back(name, isModuleProc);
   }
   void ClearSpecificProcNames() { specificProcNames_.clear(); }
 
@@ -321,8 +322,7 @@ public:
   using Flags = common::EnumSet<Flag, Flag_enumSize>;
 
   const Scope &owner() const { return *owner_; }
-  const SourceName &name() const { return occurrences_.front(); }
-  const SourceName &lastOccurrence() const { return occurrences_.back(); }
+  const SourceName &name() const { return name_; }
   Attrs &attrs() { return attrs_; }
   const Attrs &attrs() const { return attrs_; }
   Flags &flags() { return flags_; }
@@ -366,10 +366,6 @@ public:
   // Can the details of this symbol be replaced with the given details?
   bool CanReplaceDetails(const Details &details) const;
 
-  const std::list<SourceName> &occurrences() const { return occurrences_; }
-  void add_occurrence(const SourceName &);
-  void remove_occurrence(const SourceName &);
-
   // Follow use-associations to get the ultimate entity.
   Symbol &GetUltimate();
   const Symbol &GetUltimate() const;
@@ -389,7 +385,7 @@ public:
 
 private:
   const Scope *owner_;
-  std::list<SourceName> occurrences_;
+  SourceName name_;
   Attrs attrs_;
   Flags flags_;
   Scope *scope_{nullptr};
@@ -414,7 +410,7 @@ public:
       Details &&details) {
     Symbol &symbol = Get();
     symbol.owner_ = &owner;
-    symbol.occurrences_.push_back(name);
+    symbol.name_ = name;
     symbol.attrs_ = attrs;
     symbol.details_ = std::move(details);
     return symbol;

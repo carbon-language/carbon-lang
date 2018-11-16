@@ -169,62 +169,6 @@ private:
 
 using ArraySpec = std::list<ShapeSpec>;
 
-class GenericSpec {
-public:
-  enum Kind {
-    GENERIC_NAME,
-    OP_DEFINED,
-    ASSIGNMENT,
-    READ_FORMATTED,
-    READ_UNFORMATTED,
-    WRITE_FORMATTED,
-    WRITE_UNFORMATTED,
-    OP_ADD,
-    OP_AND,
-    OP_CONCAT,
-    OP_DIVIDE,
-    OP_EQ,
-    OP_EQV,
-    OP_GE,
-    OP_GT,
-    OP_LE,
-    OP_LT,
-    OP_MULTIPLY,
-    OP_NE,
-    OP_NEQV,
-    OP_NOT,
-    OP_OR,
-    OP_POWER,
-    OP_SUBTRACT,
-    OP_XOR,
-  };
-  static GenericSpec IntrinsicOp(Kind kind) {
-    return GenericSpec(kind, nullptr);
-  }
-  static GenericSpec DefinedOp(const SourceName &name) {
-    return GenericSpec(OP_DEFINED, &name);
-  }
-  static GenericSpec GenericName(const SourceName &name) {
-    return GenericSpec(GENERIC_NAME, &name);
-  }
-
-  const Kind kind() const { return kind_; }
-  const SourceName &genericName() const {
-    CHECK(kind_ == GENERIC_NAME);
-    return *name_;
-  }
-  const SourceName &definedOp() const {
-    CHECK(kind_ == OP_DEFINED);
-    return *name_;
-  }
-
-private:
-  GenericSpec(Kind kind, const SourceName *name) : kind_{kind}, name_{name} {}
-  const Kind kind_;
-  const SourceName *const name_;  // only for GENERIC_NAME & OP_DEFINED
-  friend std::ostream &operator<<(std::ostream &, const GenericSpec &);
-};
-
 // A type parameter value: integer expression or assumed or deferred.
 class ParamValue {
 public:
@@ -248,22 +192,18 @@ private:
 class DerivedTypeSpec {
 public:
   using listType = std::list<std::pair<std::optional<SourceName>, ParamValue>>;
-  explicit DerivedTypeSpec(const SourceName &name) : name_{&name} {}
+  explicit DerivedTypeSpec(const SourceName &name) : name_{name} {}
   DerivedTypeSpec() = delete;
-  const SourceName &name() const { return *name_; }
+  const SourceName &name() const { return name_; }
   const Scope *scope() const { return scope_; }
   void set_scope(const Scope &);
   listType &paramValues() { return paramValues_; }
   const listType &paramValues() const { return paramValues_; }
-  void AddParamValue(ParamValue &&value) {
-    paramValues_.emplace_back(std::nullopt, std::move(value));
-  }
-  void AddParamValue(const SourceName &name, ParamValue &&value) {
-    paramValues_.emplace_back(name, std::move(value));
-  }
+  void AddParamValue(ParamValue &&);
+  void AddParamValue(const SourceName &, ParamValue &&);
 
 private:
-  const SourceName *name_;
+  const SourceName name_;
   const Scope *scope_{nullptr};
   listType paramValues_;
   friend std::ostream &operator<<(std::ostream &, const DerivedTypeSpec &);

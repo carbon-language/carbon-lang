@@ -15,7 +15,8 @@
 #include "symbol.h"
 #include "scope.h"
 #include "../common/idioms.h"
-#include <memory>
+#include <ostream>
+#include <string>
 
 namespace Fortran::semantics {
 
@@ -24,10 +25,10 @@ std::ostream &operator<<(std::ostream &os, const parser::CharBlock &name) {
 }
 
 const Scope *ModuleDetails::parent() const {
-  return isSubmodule_ ? &scope_->parent() : nullptr;
+  return isSubmodule_ && scope_ ? &scope_->parent() : nullptr;
 }
 const Scope *ModuleDetails::ancestor() const {
-  if (!isSubmodule_) {
+  if (!isSubmodule_ || !scope_) {
     return nullptr;
   }
   for (auto *scope{scope_};;) {
@@ -82,7 +83,7 @@ UseErrorDetails::UseErrorDetails(const UseDetails &useDetails) {
 }
 UseErrorDetails &UseErrorDetails::add_occurrence(
     const SourceName &location, const Scope &module) {
-  occurrences_.push_back(std::make_pair(&location, &module));
+  occurrences_.push_back(std::make_pair(location, &module));
   return *this;
 }
 
@@ -169,20 +170,6 @@ bool Symbol::CanReplaceDetails(const Details &details) const {
   }
 }
 
-void Symbol::add_occurrence(const SourceName &name) {
-  if (occurrences_.back().begin() != name.begin()) {
-    occurrences_.push_back(name);
-  }
-}
-void Symbol::remove_occurrence(const SourceName &name) {
-  auto end{occurrences_.end()};
-  for (auto it{occurrences_.begin()}; it != end; ++it) {
-    if (it->begin() == name.begin()) {
-      occurrences_.erase(it);
-      return;
-    }
-  }
-}
 Symbol &Symbol::GetUltimate() {
   return const_cast<Symbol &>(static_cast<const Symbol *>(this)->GetUltimate());
 }
@@ -358,11 +345,16 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
           [&](const MainProgramDetails &x) {},
           [&](const ModuleDetails &x) {
             if (x.isSubmodule()) {
-              auto &ancestor{x.ancestor()->name()};
-              auto &parent{x.parent()->name()};
-              os << " (" << ancestor.ToString();
-              if (parent != ancestor) {
-                os << ':' << parent.ToString();
+              os << " (";
+              if (x.ancestor()) {
+                auto &ancestor{x.ancestor()->name()};
+                os << ancestor;
+                if (x.parent()) {
+                  auto &parent{x.parent()->name()};
+                  if (ancestor != parent) {
+                    os << ':' << parent;
+                  }
+                }
               }
               os << ")";
             }
@@ -397,8 +389,8 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
           },
           [&](const UseErrorDetails &x) {
             os << " uses:";
-            for (const auto &pair : x.occurrences()) {
-              os << " from " << pair.second->name() << " at " << *pair.first;
+            for (const auto &[location, module] : x.occurrences()) {
+              os << " from " << module->name() << " at " << location;
             }
           },
           [](const HostAssocDetails &) {},
