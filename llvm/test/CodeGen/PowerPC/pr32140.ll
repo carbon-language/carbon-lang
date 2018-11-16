@@ -10,7 +10,10 @@
 define void @bswapStorei64Toi32() {
 ; CHECK-LABEL: bswapStorei64Toi32:
 ; CHECK:       # %bb.0: # %entry
-; CHECK:         lwa 3, 0(3)
+; CHECK-NEXT:    addis 3, 2, ai@toc@ha
+; CHECK-NEXT:    addis 4, 2, bi@toc@ha
+; CHECK-NEXT:    lwa 3, ai@toc@l(3)
+; CHECK-NEXT:    addi 4, 4, bi@toc@l
 ; CHECK-NEXT:    rldicl 3, 3, 32, 32
 ; CHECK-NEXT:    stwbrx 3, 0, 4
 ; CHECK-NEXT:    blr
@@ -26,7 +29,10 @@ entry:
 define void @bswapStorei32Toi16() {
 ; CHECK-LABEL: bswapStorei32Toi16:
 ; CHECK:       # %bb.0: # %entry
-; CHECK:         lha 3, 0(3)
+; CHECK-NEXT:    addis 3, 2, as@toc@ha
+; CHECK-NEXT:    addis 4, 2, bs@toc@ha
+; CHECK-NEXT:    lha 3, as@toc@l(3)
+; CHECK-NEXT:    addi 4, 4, bs@toc@l
 ; CHECK-NEXT:    srwi 3, 3, 16
 ; CHECK-NEXT:    sthbrx 3, 0, 4
 ; CHECK-NEXT:    blr
@@ -42,7 +48,10 @@ entry:
 define void @bswapStorei64Toi16() {
 ; CHECK-LABEL: bswapStorei64Toi16:
 ; CHECK:       # %bb.0: # %entry
-; CHECK:         lha 3, 0(3)
+; CHECK-NEXT:    addis 3, 2, as@toc@ha
+; CHECK-NEXT:    addis 4, 2, bs@toc@ha
+; CHECK-NEXT:    lha 3, as@toc@l(3)
+; CHECK-NEXT:    addi 4, 4, bs@toc@l
 ; CHECK-NEXT:    rldicl 3, 3, 16, 48
 ; CHECK-NEXT:    sthbrx 3, 0, 4
 ; CHECK-NEXT:    blr

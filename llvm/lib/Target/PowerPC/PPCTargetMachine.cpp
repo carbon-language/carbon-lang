@@ -214,11 +214,7 @@ static Reloc::Model getEffectiveRelocModel(const Triple &TT,
   if (TT.isOSDarwin())
     return Reloc::DynamicNoPIC;
 
-  // Non-darwin 64-bit platforms are PIC by default.
-  if (TT.getArch() == Triple::ppc64 || TT.getArch() == Triple::ppc64le)
-    return Reloc::PIC_;
-
-  // 32-bit is static by default.
+  // Otherwise is static by default.
   return Reloc::Static;
 }
 

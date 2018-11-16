@@ -61,12 +61,11 @@ entry:
 define void @test_ineull_store(i64 %a, i64 %b) {
 ; CHECK-LABEL: test_ineull_store:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    addis r5, r2, .LC0@toc@ha
 ; CHECK-NEXT:    xor r3, r3, r4
-; CHECK-NEXT:    ld r4, .LC0@toc@l(r5)
-; CHECK-NEXT:    addic r5, r3, -1
-; CHECK-NEXT:    subfe r3, r5, r3
-; CHECK-NEXT:    std r3, 0(r4)
+; CHECK-NEXT:    addis r5, r2, glob@toc@ha
+; CHECK-NEXT:    addic r4, r3, -1
+; CHECK-NEXT:    subfe r3, r4, r3
+; CHECK-NEXT:    std r3, glob@toc@l(r5)
 ; CHECK-NEXT:    blr
 entry:
   %cmp = icmp ne i64 %a, %b
@@ -78,12 +77,11 @@ entry:
 define void @test_ineull_sext_store(i64 %a, i64 %b) {
 ; CHECK-LABEL: test_ineull_sext_store:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    addis r5, r2, .LC0@toc@ha
 ; CHECK-NEXT:    xor r3, r3, r4
-; CHECK-NEXT:    ld r4, .LC0@toc@l(r5)
+; CHECK-NEXT:    addis r5, r2, glob@toc@ha
 ; CHECK-NEXT:    subfic r3, r3, 0
 ; CHECK-NEXT:    subfe r3, r3, r3
-; CHECK-NEXT:    std r3, 0(r4)
+; CHECK-NEXT:    std r3, glob@toc@l(r5)
 ; CHECK-NEXT:    blr
 entry:
   %cmp = icmp ne i64 %a, %b
@@ -95,11 +93,10 @@ entry:
 define void @test_ineull_z_store(i64 %a) {
 ; CHECK-LABEL: test_ineull_z_store:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    addis r4, r2, .LC0@toc@ha
 ; CHECK-NEXT:    addic r5, r3, -1
-; CHECK-NEXT:    ld r4, .LC0@toc@l(r4)
+; CHECK-NEXT:    addis r4, r2, glob@toc@ha
 ; CHECK-NEXT:    subfe r3, r5, r3
-; CHECK-NEXT:    std r3, 0(r4)
+; CHECK-NEXT:    std r3, glob@toc@l(r4)
 ; CHECK-NEXT:    blr
 entry:
   %cmp = icmp ne i64 %a, 0
@@ -111,11 +108,10 @@ entry:
 define void @test_ineull_sext_z_store(i64 %a) {
 ; CHECK-LABEL: test_ineull_sext_z_store:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    addis r4, r2, .LC0@toc@ha
 ; CHECK-NEXT:    subfic r3, r3, 0
-; CHECK-NEXT:    ld r4, .LC0@toc@l(r4)
+; CHECK-NEXT:    addis r4, r2, glob@toc@ha
 ; CHECK-NEXT:    subfe r3, r3, r3
-; CHECK-NEXT:    std r3, 0(r4)
+; CHECK-NEXT:    std r3, glob@toc@l(r4)
 ; CHECK-NEXT:    blr
 entry:
   %cmp = icmp ne i64 %a, 0
