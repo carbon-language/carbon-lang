@@ -20327,20 +20327,8 @@ static SDValue LowerLoad(SDValue Op, const X86Subtarget &Subtarget,
   unsigned SizeRatio = RegSz / MemSz;
 
   if (Ext == ISD::SEXTLOAD) {
-    // If we have SSE4.1, we can directly emit a sext/sext_invec node.
-    if (Subtarget.hasSSE41()) {
-      SDValue Sext = getExtendInVec(/*Signed*/true, dl, RegVT, SlicedVec, DAG);
-      return DAG.getMergeValues({Sext, TF}, dl);
-    }
-
-    // Otherwise we'll use SIGN_EXTEND_VECTOR_INREG to sign extend the lowest
-    // lanes.
-    assert(TLI.isOperationLegalOrCustom(ISD::SIGN_EXTEND_VECTOR_INREG, RegVT) &&
-           "We can't implement a sext load without SIGN_EXTEND_VECTOR_INREG!");
-
-    SDValue Shuff = DAG.getNode(ISD::SIGN_EXTEND_VECTOR_INREG, dl, RegVT,
-                                SlicedVec);
-    return DAG.getMergeValues({Shuff, TF}, dl);
+    SDValue Sext = getExtendInVec(/*Signed*/true, dl, RegVT, SlicedVec, DAG);
+    return DAG.getMergeValues({Sext, TF}, dl);
   }
 
   if (Ext == ISD::EXTLOAD && !Subtarget.hasBWI() && RegVT == MVT::v8i64 &&
