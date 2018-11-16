@@ -203,6 +203,27 @@ SctcMode("sctc-mode",
   cl::cat(BoltOptCategory));
 
 static cl::opt<unsigned>
+SplitAlignThreshold("split-align-threshold",
+  cl::desc("when deciding to split a function, apply this alignment "
+           "while doing the size comparison (see -split-threshold). "
+           "Default value: 2."),
+  cl::init(2),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<unsigned>
+SplitThreshold("split-threshold",
+  cl::desc("split function only if its main size is reduced by more than "
+           "given amount of bytes. Default value: 0, i.e. split iff the "
+           "size is reduced. Note that on some architectures the size can "
+           "increase after splitting."),
+  cl::init(0),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<unsigned>
 TSPThreshold("tsp-threshold",
   cl::desc("maximum number of hot basic blocks in a function for which to use "
            "a precise TSP solution while re-ordering basic blocks"),
@@ -511,6 +532,18 @@ void ReorderBasicBlocks::splitFunction(BinaryFunction &BF) const {
   if (AllCold)
     return;
 
+  auto PreSplitLayout = BF.getLayout();
+
+  auto &BC = BF.getBinaryContext();
+  size_t OriginalHotSize;
+  size_t HotSize;
+  size_t ColdSize;
+  if (BC.isX86())
+    std::tie(OriginalHotSize, ColdSize) = BC.calculateEmittedSize(BF);
+  DEBUG(dbgs() << "Estimated size for function " << BF << " pre-split is <0x"
+               << Twine::utohexstr(OriginalHotSize) << ", 0x"
+               << Twine::utohexstr(ColdSize) << ">\n");
+
   // Never outline the first basic block.
   BF.layout_front()->setCanOutline(false);
   for (auto *BB : BF.layout()) {
@@ -576,6 +609,26 @@ void ReorderBasicBlocks::splitFunction(BinaryFunction &BF) const {
     if (!BB->canOutline())
       break;
     BB->setIsCold(true);
+  }
+
+  // Check the new size to see if it's worth splitting the function.
+  if (BC.isX86() && BF.isSplit()) {
+    std::tie(HotSize, ColdSize) = BC.calculateEmittedSize(BF);
+    DEBUG(dbgs() << "Estimated size for function " << BF << " post-split is <0x"
+                 << Twine::utohexstr(HotSize) << ", 0x"
+                 << Twine::utohexstr(ColdSize) << ">\n");
+    if (alignTo(OriginalHotSize, opts::SplitAlignThreshold) <=
+        alignTo(HotSize, opts::SplitAlignThreshold) + opts::SplitThreshold) {
+      DEBUG(dbgs() << "Reversing splitting of function " << BF << ":\n  0x"
+                   << Twine::utohexstr(HotSize) << ", 0x"
+                   << Twine::utohexstr(ColdSize) << " -> 0x"
+                   << Twine::utohexstr(OriginalHotSize) << '\n');
+
+      BF.updateBasicBlockLayout(PreSplitLayout);
+      for (auto &BB : BF) {
+        BB.setIsCold(false);
+      }
+    }
   }
 }
 
