@@ -78,6 +78,7 @@
 #define ctime_r __ctime_r50
 #define devname __devname50
 #define getitimer __getitimer50
+#define getmntinfo __getmntinfo13
 #define getpwent __getpwent50
 #define getpwnam __getpwnam50
 #define getpwnam_r __getpwnam_r50
@@ -7264,6 +7265,23 @@ INTERCEPTOR(struct __sanitizer_netent *, getnetbyaddr, u32 net, int type) {
 #define INIT_NETENT
 #endif
 
+#if SANITIZER_INTERCEPT_GETMNTINFO
+INTERCEPTOR(int, getmntinfo, void **mntbufp, int flags) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getmntinfo, mntbufp, flags);
+  int cnt = REAL(getmntinfo)(mntbufp, flags);
+  if (cnt > 0 && mntbufp) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, mntbufp, sizeof(void *));
+    if (*mntbufp)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, *mntbufp, cnt * struct_statvfs_sz);
+  }
+  return cnt;
+}
+#define INIT_GETMNTINFO COMMON_INTERCEPT_FUNCTION(getmntinfo)
+#else
+#define INIT_GETMNTINFO
+#endif
+
 static void InitializeCommonInterceptors() {
   static u64 metadata_mem[sizeof(MetadataHashMap) / sizeof(u64) + 1];
   interceptor_metadata_map = new((void *)&metadata_mem) MetadataHashMap();
@@ -7517,6 +7535,7 @@ static void InitializeCommonInterceptors() {
   INIT_TTYENT;
   INIT_PROTOENT;
   INIT_NETENT;
+  INIT_GETMNTINFO;
 
   INIT___PRINTF_CHK;
 }
