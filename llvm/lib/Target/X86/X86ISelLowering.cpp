@@ -23367,7 +23367,7 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget &Subtarget,
            "Pre-AVX2 support only supports v16i8 multiplication");
     MVT ExVT = MVT::v8i16;
 
-    // Extract the lo parts and sign extend to i16
+    // Extract the lo parts to any extend to i16
     // We're going to mask off the low byte of each result element of the
     // pmullw, so it doesn't matter what's in the high byte of each 16-bit
     // element.
@@ -23378,11 +23378,11 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget &Subtarget,
     ALo = DAG.getBitcast(ExVT, ALo);
     BLo = DAG.getBitcast(ExVT, BLo);
 
-    // Extract the hi parts and sign extend to i16
+    // Extract the hi parts to any extend to i16
     // We're going to mask off the low byte of each result element of the
     // pmullw, so it doesn't matter what's in the high byte of each 16-bit
     // element.
-    const int HiShufMask[] = {8,  -1, 9,  -1, 10, -1, 11, -1,
+    const int HiShufMask[] = { 8, -1,  9, -1, 10, -1, 11, -1,
                               12, -1, 13, -1, 14, -1, 15, -1};
     SDValue AHi = DAG.getVectorShuffle(VT, dl, A, A, HiShufMask);
     SDValue BHi = DAG.getVectorShuffle(VT, dl, B, B, HiShufMask);
