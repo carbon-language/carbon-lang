@@ -548,26 +548,25 @@ public:
 
 /// A boolean literal, per ([C++ lex.bool] Boolean literals).
 class CXXBoolLiteralExpr : public Expr {
-  bool Value;
-  SourceLocation Loc;
-
 public:
-  CXXBoolLiteralExpr(bool val, QualType Ty, SourceLocation l)
+  CXXBoolLiteralExpr(bool Val, QualType Ty, SourceLocation Loc)
       : Expr(CXXBoolLiteralExprClass, Ty, VK_RValue, OK_Ordinary, false, false,
-             false, false),
-        Value(val), Loc(l) {}
+             false, false) {
+    CXXBoolLiteralExprBits.Value = Val;
+    CXXBoolLiteralExprBits.Loc = Loc;
+  }
 
   explicit CXXBoolLiteralExpr(EmptyShell Empty)
       : Expr(CXXBoolLiteralExprClass, Empty) {}
 
-  bool getValue() const { return Value; }
-  void setValue(bool V) { Value = V; }
+  bool getValue() const { return CXXBoolLiteralExprBits.Value; }
+  void setValue(bool V) { CXXBoolLiteralExprBits.Value = V; }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return Loc; }
-  SourceLocation getEndLoc() const LLVM_READONLY { return Loc; }
+  SourceLocation getBeginLoc() const { return getLocation(); }
+  SourceLocation getEndLoc() const { return getLocation(); }
 
-  SourceLocation getLocation() const { return Loc; }
-  void setLocation(SourceLocation L) { Loc = L; }
+  SourceLocation getLocation() const { return CXXBoolLiteralExprBits.Loc; }
+  void setLocation(SourceLocation L) { CXXBoolLiteralExprBits.Loc = L; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXBoolLiteralExprClass;
