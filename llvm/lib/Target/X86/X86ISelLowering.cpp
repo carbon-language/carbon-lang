@@ -20150,16 +20150,16 @@ static SDValue LowerStore(SDValue Op, const X86Subtarget &Subtarget,
 static SDValue LowerLoad(SDValue Op, const X86Subtarget &Subtarget,
                                  SelectionDAG &DAG) {
   MVT RegVT = Op.getSimpleValueType();
-  assert(RegVT.isVector() && "We only custom lower vector sext loads.");
+  assert(RegVT.isVector() && "We only custom lower vector loads.");
   assert(RegVT.isInteger() &&
-         "We only custom lower integer vector sext loads.");
+         "We only custom lower integer vector loads.");
 
   LoadSDNode *Ld = cast<LoadSDNode>(Op.getNode());
   SDLoc dl(Ld);
   EVT MemVT = Ld->getMemoryVT();
 
   // Without AVX512DQ, we need to use a scalar type for v2i1/v4i1/v8i1 loads.
-  if (RegVT.isVector() && RegVT.getVectorElementType() == MVT::i1) {
+  if (RegVT.getVectorElementType() == MVT::i1) {
     assert(EVT(RegVT) == MemVT && "Expected non-extending load");
     assert(RegVT.getVectorNumElements() <= 8 && "Unexpected VT");
     assert(Subtarget.hasAVX512() && !Subtarget.hasDQI() &&
@@ -20262,26 +20262,26 @@ static SDValue LowerLoad(SDValue Op, const X86Subtarget &Subtarget,
   assert((Ext != ISD::SEXTLOAD || NumLoads == 1) &&
          "Can only lower sext loads with a single scalar load!");
 
-  unsigned loadRegZize = RegSz;
+  unsigned loadRegSize = RegSz;
   if (Ext == ISD::SEXTLOAD && RegSz >= 256)
-    loadRegZize = 128;
+    loadRegSize = 128;
 
   // If we don't have BWI we won't be able to create the shuffle needed for
   // v8i8->v8i64.
   if (Ext == ISD::EXTLOAD && !Subtarget.hasBWI() && RegVT == MVT::v8i64 &&
       MemVT == MVT::v8i8)
-    loadRegZize = 128;
+    loadRegSize = 128;
 
   // Represent our vector as a sequence of elements which are the
   // largest scalar that we can load.
   EVT LoadUnitVecVT = EVT::getVectorVT(
-      *DAG.getContext(), SclrLoadTy, loadRegZize / SclrLoadTy.getSizeInBits());
+      *DAG.getContext(), SclrLoadTy, loadRegSize / SclrLoadTy.getSizeInBits());
 
   // Represent the data using the same element type that is stored in
   // memory. In practice, we ''widen'' MemVT.
   EVT WideVecVT =
       EVT::getVectorVT(*DAG.getContext(), MemVT.getScalarType(),
-                       loadRegZize / MemVT.getScalarSizeInBits());
+                       loadRegSize / MemVT.getScalarSizeInBits());
 
   assert(WideVecVT.getSizeInBits() == LoadUnitVecVT.getSizeInBits() &&
          "Invalid vector type");
