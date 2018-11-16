@@ -70,12 +70,13 @@ entry:
 define void @test_lllesll_store(i64 %a, i64 %b) {
 ; CHECK-LABEL: test_lllesll_store:
 ; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    addis r5, r2, .LC0@toc@ha
 ; CHECK-NEXT:    sradi r6, r4, 63
-; CHECK-NEXT:    addis r5, r2, glob@toc@ha
+; CHECK-NEXT:    ld r5, .LC0@toc@l(r5)
 ; CHECK-NEXT:    subfc r4, r3, r4
 ; CHECK-NEXT:    rldicl r3, r3, 1, 63
 ; CHECK-NEXT:    adde r3, r6, r3
-; CHECK-NEXT:    std r3, glob@toc@l(r5)
+; CHECK-NEXT:    std r3, 0(r5)
 ; CHECK-NEXT:    blr
 entry:
   %cmp = icmp sle i64 %a, %b
@@ -89,12 +90,13 @@ define void @test_lllesll_sext_store(i64 %a, i64 %b) {
 ; CHECK-LABEL: test_lllesll_sext_store:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    sradi r6, r4, 63
-; CHECK-NEXT:    addis r5, r2, glob@toc@ha
+; CHECK-NEXT:    addis r5, r2, .LC0@toc@ha
 ; CHECK-NEXT:    subfc r4, r3, r4
 ; CHECK-NEXT:    rldicl r3, r3, 1, 63
+; CHECK-NEXT:    ld r4, .LC0@toc@l(r5)
 ; CHECK-NEXT:    adde r3, r6, r3
 ; CHECK-NEXT:    neg r3, r3
-; CHECK-NEXT:    std r3, glob@toc@l(r5)
+; CHECK-NEXT:    std r3, 0(r4)
 ; CHECK-NEXT:    blr
 entry:
   %cmp = icmp sle i64 %a, %b
@@ -107,11 +109,12 @@ entry:
 define void @test_lllesll_z_store(i64 %a) {
 ; CHECK-LABEL: test_lllesll_z_store:
 ; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    addis r4, r2, .LC0@toc@ha
 ; CHECK-NEXT:    addi r5, r3, -1
-; CHECK-NEXT:    addis r4, r2, glob@toc@ha
+; CHECK-NEXT:    ld r4, .LC0@toc@l(r4)
 ; CHECK-NEXT:    or r3, r5, r3
 ; CHECK-NEXT:    rldicl r3, r3, 1, 63
-; CHECK-NEXT:    std r3, glob@toc@l(r4)
+; CHECK-NEXT:    std r3, 0(r4)
 ; CHECK-NEXT:    blr
 entry:
   %cmp = icmp slt i64 %a, 1
@@ -124,11 +127,12 @@ entry:
 define void @test_lllesll_sext_z_store(i64 %a) {
 ; CHECK-LABEL: test_lllesll_sext_z_store:
 ; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    addis r4, r2, .LC0@toc@ha
 ; CHECK-NEXT:    addi r5, r3, -1
-; CHECK-NEXT:    addis r4, r2, glob@toc@ha
+; CHECK-NEXT:    ld r4, .LC0@toc@l(r4)
 ; CHECK-NEXT:    or r3, r5, r3
 ; CHECK-NEXT:    sradi r3, r3, 63
-; CHECK-NEXT:    std r3, glob@toc@l(r4)
+; CHECK-NEXT:    std r3, 0(r4)
 ; CHECK-NEXT:    blr
 entry:
   %cmp = icmp slt i64 %a, 1

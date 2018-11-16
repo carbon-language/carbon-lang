@@ -37,11 +37,12 @@ entry:
 define void @test_llless_store(i16 signext %a, i16 signext %b) {
 ; CHECK-LABEL: test_llless_store:
 ; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    addis r5, r2, .LC0@toc@ha
 ; CHECK-NEXT:    sub r3, r4, r3
-; CHECK-NEXT:    addis r5, r2, glob@toc@ha
+; CHECK-NEXT:    ld r4, .LC0@toc@l(r5)
 ; CHECK-NEXT:    rldicl r3, r3, 1, 63
 ; CHECK-NEXT:    xori r3, r3, 1
-; CHECK-NEXT:    sth r3, glob@toc@l(r5)
+; CHECK-NEXT:    sth r3, 0(r4)
 ; CHECK-NEXT:    blr
 entry:
   %cmp = icmp sle i16 %a, %b
@@ -53,11 +54,12 @@ entry:
 define void @test_llless_sext_store(i16 signext %a, i16 signext %b) {
 ; CHECK-LABEL: test_llless_sext_store:
 ; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    addis r5, r2, .LC0@toc@ha
 ; CHECK-NEXT:    sub r3, r4, r3
-; CHECK-NEXT:    addis r5, r2, glob@toc@ha
+; CHECK-NEXT:    ld r4, .LC0@toc@l(r5)
 ; CHECK-NEXT:    rldicl r3, r3, 1, 63
 ; CHECK-NEXT:    addi r3, r3, -1
-; CHECK-NEXT:    sth r3, glob@toc@l(r5)
+; CHECK-NEXT:    sth r3, 0(r4)
 ; CHECK-NEXT:    blr
 entry:
   %cmp = icmp sle i16 %a, %b
