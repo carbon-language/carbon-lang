@@ -23359,8 +23359,8 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget &Subtarget,
       return DAG.getNode(
           ISD::TRUNCATE, dl, VT,
           DAG.getNode(ISD::MUL, dl, ExVT,
-                      DAG.getNode(ISD::SIGN_EXTEND, dl, ExVT, A),
-                      DAG.getNode(ISD::SIGN_EXTEND, dl, ExVT, B)));
+                      DAG.getNode(ISD::ANY_EXTEND, dl, ExVT, A),
+                      DAG.getNode(ISD::ANY_EXTEND, dl, ExVT, B)));
     }
 
     assert(VT == MVT::v16i8 &&
