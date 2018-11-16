@@ -2,7 +2,7 @@
 // RUN:                                       not %run %t 40 2>&1 | FileCheck %s --check-prefix=CHECK40-LEFT
 // RUN: %env_hwasan_opts=malloc_align_right=2 not %run %t 40 2>&1 | FileCheck %s --check-prefix=CHECK40-RIGHT
 // RUN:                                       not %run %t 80 2>&1 | FileCheck %s --check-prefix=CHECK80-LEFT
-// RUN: %env_hwasan_opts=malloc_align_right=2 not %run %t 80 2>&1 | FileCheck %s --check-prefix=CHECK80-RIGHT
+// DISABLED: %env_hwasan_opts=malloc_align_right=2 not %run %t 80 2>&1 | FileCheck %s --check-prefix=CHECK80-RIGHT
 // RUN: not %run %t -30 2>&1 | FileCheck %s --check-prefix=CHECKm30
 // RUN: not %run %t -30 1000000 2>&1 | FileCheck %s --check-prefix=CHECKMm30
 // RUN: not %run %t 1000000 1000000 2>&1 | FileCheck %s --check-prefix=CHECKM
