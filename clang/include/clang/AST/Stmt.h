@@ -523,6 +523,18 @@ protected:
     SourceLocation Loc;
   };
 
+  class CXXThisExprBitfields {
+    friend class CXXThisExpr;
+
+    unsigned : NumExprBits;
+
+    /// Whether this is an implicit "this".
+    unsigned IsImplicit : 1;
+
+    /// The location of the "this".
+    SourceLocation Loc;
+  };
+
   class TypeTraitExprBitfields {
     friend class ASTStmtReader;
     friend class ASTStmtWriter;
@@ -623,6 +635,7 @@ protected:
     // C++ Expressions
     CXXBoolLiteralExprBitfields CXXBoolLiteralExprBits;
     CXXNullPtrLiteralExprBitfields CXXNullPtrLiteralExprBits;
+    CXXThisExprBitfields CXXThisExprBits;
     TypeTraitExprBitfields TypeTraitExprBits;
     ExprWithCleanupsBitfields ExprWithCleanupsBits;
 

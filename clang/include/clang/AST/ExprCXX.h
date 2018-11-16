@@ -962,29 +962,28 @@ public:
 /// };
 /// \endcode
 class CXXThisExpr : public Expr {
-  SourceLocation Loc;
-  bool Implicit : 1;
-
 public:
-  CXXThisExpr(SourceLocation L, QualType Type, bool isImplicit)
-      : Expr(CXXThisExprClass, Type, VK_RValue, OK_Ordinary,
+  CXXThisExpr(SourceLocation L, QualType Ty, bool IsImplicit)
+      : Expr(CXXThisExprClass, Ty, VK_RValue, OK_Ordinary,
              // 'this' is type-dependent if the class type of the enclosing
              // member function is dependent (C++ [temp.dep.expr]p2)
-             Type->isDependentType(), Type->isDependentType(),
-             Type->isInstantiationDependentType(),
-             /*ContainsUnexpandedParameterPack=*/false),
-        Loc(L), Implicit(isImplicit) {}
+             Ty->isDependentType(), Ty->isDependentType(),
+             Ty->isInstantiationDependentType(),
+             /*ContainsUnexpandedParameterPack=*/false) {
+    CXXThisExprBits.IsImplicit = IsImplicit;
+    CXXThisExprBits.Loc = L;
+  }
 
   CXXThisExpr(EmptyShell Empty) : Expr(CXXThisExprClass, Empty) {}
 
-  SourceLocation getLocation() const { return Loc; }
-  void setLocation(SourceLocation L) { Loc = L; }
+  SourceLocation getLocation() const { return CXXThisExprBits.Loc; }
+  void setLocation(SourceLocation L) { CXXThisExprBits.Loc = L; }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return Loc; }
-  SourceLocation getEndLoc() const LLVM_READONLY { return Loc; }
+  SourceLocation getBeginLoc() const { return getLocation(); }
+  SourceLocation getEndLoc() const { return getLocation(); }
 
-  bool isImplicit() const { return Implicit; }
-  void setImplicit(bool I) { Implicit = I; }
+  bool isImplicit() const { return CXXThisExprBits.IsImplicit; }
+  void setImplicit(bool I) { CXXThisExprBits.IsImplicit = I; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXThisExprClass;
