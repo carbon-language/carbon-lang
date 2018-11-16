@@ -2074,7 +2074,8 @@ public:
 
   /// Emit function code. The caller is responsible for emitting function
   /// symbol(s) and setting the section to emit the code to.
-  void emitBody(MCStreamer &Streamer, bool EmitColdPart);
+  void emitBody(MCStreamer &Streamer, bool EmitColdPart,
+                bool EmitCodeOnly = false);
 
   /// Emit function as a blob with relocations and labels for relocations.
   void emitBodyRaw(MCStreamer *Streamer);

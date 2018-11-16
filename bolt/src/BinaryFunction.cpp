@@ -2639,8 +2639,9 @@ uint64_t BinaryFunction::getEditDistance() const {
                                                  BasicBlocksLayout);
 }
 
-void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
-  if (EmitColdPart && hasConstantIsland())
+void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart,
+                              bool EmitCodeOnly) {
+  if (!EmitCodeOnly && EmitColdPart && hasConstantIsland())
     duplicateConstantIslands();
 
   for (auto BB : layout()) {
@@ -2672,6 +2673,9 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
     for (auto I = BB->begin(), E = BB->end(); I != E; ++I) {
       auto &Instr = *I;
 
+      if (EmitCodeOnly && BC.MII->get(Instr.getOpcode()).isPseudo())
+        continue;
+
       // Handle pseudo instructions.
       if (BC.MIB->isEHLabel(Instr)) {
         const auto *Label = BC.MIB->getTargetSymbol(Instr);
@@ -2695,7 +2699,7 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
         Streamer.EmitNeverAlignCodeAtEnd(/*Alignment to avoid=*/64);
       }
 
-      if (opts::UpdateDebugSections && UnitLineTable.first) {
+      if (!EmitCodeOnly && opts::UpdateDebugSections && UnitLineTable.first) {
         LastLocSeen = emitLineInfo(Instr.getLoc(), LastLocSeen);
       }
 
@@ -2704,7 +2708,8 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
     }
   }
 
-  emitConstantIslands(Streamer, EmitColdPart);
+  if (!EmitCodeOnly)
+    emitConstantIslands(Streamer, EmitColdPart);
 }
 
 void BinaryFunction::emitBodyRaw(MCStreamer *Streamer) {

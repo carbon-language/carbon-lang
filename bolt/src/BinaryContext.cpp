@@ -15,8 +15,13 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
 #include "llvm/DebugInfo/DWARF/DWARFUnit.h"
+#include "llvm/MC/MCAssembler.h"
+#include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCELFStreamer.h"
+#include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCObjectWriter.h"
+#include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/CommandLine.h"
@@ -1148,4 +1153,79 @@ BinaryContext::createInjectedBinaryFunction(const std::string &Name,
   auto *BF = InjectedBinaryFunctions.back();
   setSymbolToFunctionMap(BF->getSymbol(), BF);
   return BF;
+}
+
+std::pair<size_t, size_t>
+BinaryContext::calculateEmittedSize(BinaryFunction &BF) {
+  // Adjust branch instruction to match the current layout.
+  BF.fixBranches();
+
+  // Create local MC context to isolate the effect of ephemeral code emission.
+  std::unique_ptr<MCObjectFileInfo> LocalMOFI =
+    llvm::make_unique<MCObjectFileInfo>();
+  std::unique_ptr<MCContext> LocalCtx =
+    llvm::make_unique<MCContext>(AsmInfo.get(), MRI.get(), LocalMOFI.get());
+  LocalMOFI->InitMCObjectFileInfo(*TheTriple, /*PIC=*/false, *LocalCtx);
+  auto *MAB = TheTarget->createMCAsmBackend(*STI, *MRI, MCTargetOptions());
+  auto *MCE = TheTarget->createMCCodeEmitter(*MII, *MRI, *LocalCtx);
+  SmallString<256> Code;
+  raw_svector_ostream VecOS(Code);
+
+  std::unique_ptr<MCStreamer> Streamer(TheTarget->createMCObjectStreamer(
+      *TheTriple, *LocalCtx, std::unique_ptr<MCAsmBackend>(MAB), VecOS,
+      std::unique_ptr<MCCodeEmitter>(MCE), *STI,
+      /* RelaxAll */ false,
+      /* IncrementalLinkerCompatible */ false,
+      /* DWARFMustBeAtTheEnd */ false));
+
+  Streamer->InitSections(false);
+
+  auto *Section = LocalMOFI->getTextSection();
+  Section->setHasInstructions(true);
+
+  auto *StartLabel = LocalCtx->getOrCreateSymbol("__hstart");
+  auto *EndLabel = LocalCtx->getOrCreateSymbol("__hend");
+  auto *ColdStartLabel = LocalCtx->getOrCreateSymbol("__cstart");
+  auto *ColdEndLabel = LocalCtx->getOrCreateSymbol("__cend");
+
+  Streamer->SwitchSection(Section);
+  Streamer->EmitLabel(StartLabel);
+  BF.emitBody(*Streamer, /*EmitColdPart = */false, /*EmitCodeOnly = */true);
+  Streamer->EmitLabel(EndLabel);
+
+  if (BF.isSplit()) {
+    auto *ColdSection =
+      LocalCtx->getELFSection(BF.getColdCodeSectionName(),
+                              ELF::SHT_PROGBITS,
+                              ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
+    ColdSection->setHasInstructions(true);
+
+    Streamer->SwitchSection(ColdSection);
+    Streamer->EmitLabel(ColdStartLabel);
+    BF.emitBody(*Streamer, /*EmitColdPart = */true, /*EmitCodeOnly = */true);
+    Streamer->EmitLabel(ColdEndLabel);
+  }
+
+  // To avoid calling MCObjectStreamer::flushPendingLabels() which is private.
+  Streamer->EmitBytes(StringRef(""));
+
+  auto &Assembler =
+      static_cast<MCObjectStreamer *>(Streamer.get())->getAssembler();
+  MCAsmLayout Layout(Assembler);
+  Assembler.layout(Layout);
+
+  const auto HotSize = Layout.getSymbolOffset(*EndLabel) -
+                       Layout.getSymbolOffset(*StartLabel);
+  const auto ColdSize = BF.isSplit() ? Layout.getSymbolOffset(*ColdEndLabel) -
+                                       Layout.getSymbolOffset(*ColdStartLabel)
+                                     : 0ULL;
+
+  // Clean-up the effect of the code emission.
+  for (const auto &Symbol : Assembler.symbols()) {
+    auto *MutableSymbol = const_cast<MCSymbol *>(&Symbol);
+    MutableSymbol->setUndefined();
+    MutableSymbol->setIsRegistered(false);
+  }
+
+  return std::make_pair(HotSize, ColdSize);
 }

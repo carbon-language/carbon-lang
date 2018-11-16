@@ -669,6 +669,13 @@ public:
   static std::vector<BinaryFunction *>
   getSortedFunctions(std::map<uint64_t, BinaryFunction> &BinaryFunctions);
 
+  /// Do the best effort to calculate the size of the function by emitting
+  /// its code, and relaxing branch instructions.
+  ///
+  /// Return the pair where the first size is for the main part, and the second
+  /// size is for the cold one.
+  std::pair<size_t, size_t> calculateEmittedSize(BinaryFunction &BF);
+
   /// Compute the native code size for a range of instructions.
   /// Note: this can be imprecise wrt the final binary since happening prior to
   /// relaxation, as well as wrt the original binary because of opcode
