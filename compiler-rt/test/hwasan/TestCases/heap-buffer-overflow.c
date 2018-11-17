@@ -2,7 +2,7 @@
 // RUN:                                       not %run %t 40 2>&1 | FileCheck %s --check-prefix=CHECK40-LEFT
 // RUN: %env_hwasan_opts=malloc_align_right=2 not %run %t 40 2>&1 | FileCheck %s --check-prefix=CHECK40-RIGHT
 // RUN:                                       not %run %t 80 2>&1 | FileCheck %s --check-prefix=CHECK80-LEFT
-// DISABLED: %env_hwasan_opts=malloc_align_right=2 not %run %t 80 2>&1 | FileCheck %s --check-prefix=CHECK80-RIGHT
+// RUN: %env_hwasan_opts=malloc_align_right=2 not %run %t 80 2>&1 | FileCheck %s --check-prefix=CHECK80-RIGHT
 // RUN: not %run %t -30 2>&1 | FileCheck %s --check-prefix=CHECKm30
 // RUN: not %run %t -30 1000000 2>&1 | FileCheck %s --check-prefix=CHECKMm30
 // RUN: not %run %t 1000000 1000000 2>&1 | FileCheck %s --check-prefix=CHECKM
@@ -35,12 +35,12 @@ int main(int argc, char **argv) {
 
 // CHECK40-LEFT: allocated heap chunk; size: 32 offset: 8
 // CHECK40-LEFT: is located 10 bytes to the right of 30-byte region
-// CHECK40-RIGHT: allocated heap chunk; size: 32 offset: 10
+// CHECK40-RIGHT: allocated heap chunk; size: 32 offset:
 // CHECK40-RIGHT: is located 10 bytes to the right of 30-byte region
 //
 // CHECK80-LEFT: allocated heap chunk; size: 32 offset: 16
 // CHECK80-LEFT: is located 50 bytes to the right of 30-byte region
-// CHECK80-RIGHT: allocated heap chunk; size: 32 offset: 18
+// CHECK80-RIGHT: allocated heap chunk; size: 32 offset:
 // CHECK80-RIGHT: is located 50 bytes to the right of 30-byte region
 //
 // CHECKm30: allocated heap chunk; size: 32 offset: 2
