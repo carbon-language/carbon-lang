@@ -1003,42 +1003,43 @@ public:
 class CXXThrowExpr : public Expr {
   friend class ASTStmtReader;
 
-  Stmt *Op;
-  SourceLocation ThrowLoc;
-
-  /// Whether the thrown variable (if any) is in scope.
-  unsigned IsThrownVariableInScope : 1;
+  /// The optional expression in the throw statement.
+  Stmt *Operand;
 
 public:
   // \p Ty is the void type which is used as the result type of the
-  // expression.  The \p l is the location of the throw keyword.  \p expr
-  // can by null, if the optional expression to throw isn't present.
-  CXXThrowExpr(Expr *expr, QualType Ty, SourceLocation l,
+  // expression. The \p Loc is the location of the throw keyword.
+  // \p Operand is the expression in the throw statement, and can be
+  // null if not present.
+  CXXThrowExpr(Expr *Operand, QualType Ty, SourceLocation Loc,
                bool IsThrownVariableInScope)
       : Expr(CXXThrowExprClass, Ty, VK_RValue, OK_Ordinary, false, false,
-             expr && expr->isInstantiationDependent(),
-             expr && expr->containsUnexpandedParameterPack()),
-        Op(expr), ThrowLoc(l),
-        IsThrownVariableInScope(IsThrownVariableInScope) {}
+             Operand && Operand->isInstantiationDependent(),
+             Operand && Operand->containsUnexpandedParameterPack()),
+        Operand(Operand) {
+    CXXThrowExprBits.ThrowLoc = Loc;
+    CXXThrowExprBits.IsThrownVariableInScope = IsThrownVariableInScope;
+  }
   CXXThrowExpr(EmptyShell Empty) : Expr(CXXThrowExprClass, Empty) {}
 
-  const Expr *getSubExpr() const { return cast_or_null<Expr>(Op); }
-  Expr *getSubExpr() { return cast_or_null<Expr>(Op); }
+  const Expr *getSubExpr() const { return cast_or_null<Expr>(Operand); }
+  Expr *getSubExpr() { return cast_or_null<Expr>(Operand); }
 
-  SourceLocation getThrowLoc() const { return ThrowLoc; }
+  SourceLocation getThrowLoc() const { return CXXThrowExprBits.ThrowLoc; }
 
   /// Determines whether the variable thrown by this expression (if any!)
   /// is within the innermost try block.
   ///
   /// This information is required to determine whether the NRVO can apply to
   /// this variable.
-  bool isThrownVariableInScope() const { return IsThrownVariableInScope; }
+  bool isThrownVariableInScope() const {
+    return CXXThrowExprBits.IsThrownVariableInScope;
+  }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return ThrowLoc; }
-
+  SourceLocation getBeginLoc() const { return getThrowLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
     if (!getSubExpr())
-      return ThrowLoc;
+      return getThrowLoc();
     return getSubExpr()->getEndLoc();
   }
 
@@ -1048,7 +1049,7 @@ public:
 
   // Iterators
   child_range children() {
-    return child_range(&Op, Op ? &Op+1 : &Op);
+    return child_range(&Operand, Operand ? &Operand + 1 : &Operand);
   }
 };
 
