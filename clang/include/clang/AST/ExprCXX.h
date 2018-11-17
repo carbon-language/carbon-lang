@@ -1059,26 +1059,24 @@ public:
 /// corresponding parameter's default argument, when the call did not
 /// explicitly supply arguments for all of the parameters.
 class CXXDefaultArgExpr final : public Expr {
+  friend class ASTStmtReader;
+
   /// The parameter whose default is being used.
   ParmVarDecl *Param;
 
-  /// The location where the default argument expression was used.
-  SourceLocation Loc;
-
-  CXXDefaultArgExpr(StmtClass SC, SourceLocation Loc, ParmVarDecl *param)
+  CXXDefaultArgExpr(StmtClass SC, SourceLocation Loc, ParmVarDecl *Param)
       : Expr(SC,
-             param->hasUnparsedDefaultArg()
-               ? param->getType().getNonReferenceType()
-               : param->getDefaultArg()->getType(),
-             param->getDefaultArg()->getValueKind(),
-             param->getDefaultArg()->getObjectKind(), false, false, false,
+             Param->hasUnparsedDefaultArg()
+                 ? Param->getType().getNonReferenceType()
+                 : Param->getDefaultArg()->getType(),
+             Param->getDefaultArg()->getValueKind(),
+             Param->getDefaultArg()->getObjectKind(), false, false, false,
              false),
-        Param(param), Loc(Loc) {}
+        Param(Param) {
+    CXXDefaultArgExprBits.Loc = Loc;
+  }
 
 public:
-  friend class ASTStmtReader;
-  friend class ASTStmtWriter;
-
   CXXDefaultArgExpr(EmptyShell Empty) : Expr(CXXDefaultArgExprClass, Empty) {}
 
   // \p Param is the parameter whose default argument is used by this
@@ -1093,23 +1091,18 @@ public:
   ParmVarDecl *getParam() { return Param; }
 
   // Retrieve the actual argument to the function call.
-  const Expr *getExpr() const {
-    return getParam()->getDefaultArg();
-  }
-  Expr *getExpr() {
-    return getParam()->getDefaultArg();
-  }
+  const Expr *getExpr() const { return getParam()->getDefaultArg(); }
+  Expr *getExpr() { return getParam()->getDefaultArg(); }
 
-  /// Retrieve the location where this default argument was actually
-  /// used.
-  SourceLocation getUsedLocation() const { return Loc; }
+  /// Retrieve the location where this default argument was actually used.
+  SourceLocation getUsedLocation() const { return CXXDefaultArgExprBits.Loc; }
 
   /// Default argument expressions have no representation in the
   /// source, so they have an empty source range.
-  SourceLocation getBeginLoc() const LLVM_READONLY { return SourceLocation(); }
-  SourceLocation getEndLoc() const LLVM_READONLY { return SourceLocation(); }
+  SourceLocation getBeginLoc() const { return SourceLocation(); }
+  SourceLocation getEndLoc() const { return SourceLocation(); }
 
-  SourceLocation getExprLoc() const LLVM_READONLY { return Loc; }
+  SourceLocation getExprLoc() const { return getUsedLocation(); }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXDefaultArgExprClass;

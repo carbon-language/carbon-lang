@@ -548,6 +548,16 @@ protected:
     SourceLocation ThrowLoc;
   };
 
+  class CXXDefaultArgExprBitfields {
+    friend class ASTStmtReader;
+    friend class CXXDefaultArgExpr;
+
+    unsigned : NumExprBits;
+
+    /// The location where the default argument expression was used.
+    SourceLocation Loc;
+  };
+
   class TypeTraitExprBitfields {
     friend class ASTStmtReader;
     friend class ASTStmtWriter;
@@ -650,6 +660,7 @@ protected:
     CXXNullPtrLiteralExprBitfields CXXNullPtrLiteralExprBits;
     CXXThisExprBitfields CXXThisExprBits;
     CXXThrowExprBitfields CXXThrowExprBits;
+    CXXDefaultArgExprBitfields CXXDefaultArgExprBits;
     TypeTraitExprBitfields TypeTraitExprBits;
     ExprWithCleanupsBitfields ExprWithCleanupsBits;
 
