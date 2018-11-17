@@ -4000,7 +4000,9 @@ void CGOpenMPRuntimeNVPTX::emitReduction(
     return;
 
   bool ParallelReduction = isOpenMPParallelDirective(Options.ReductionKind);
+#ifndef NDEBUG
   bool TeamsReduction = isOpenMPTeamsDirective(Options.ReductionKind);
+#endif
 
   if (Options.SimpleReduction) {
     assert(!TeamsReduction && !ParallelReduction &&
