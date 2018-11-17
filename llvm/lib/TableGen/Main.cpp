@@ -46,10 +46,6 @@ static cl::list<std::string>
 IncludeDirs("I", cl::desc("Directory of include files"),
             cl::value_desc("directory"), cl::Prefix);
 
-static cl::list<std::string>
-MacroNames("D", cl::desc("Name of the macro to be defined"),
-            cl::value_desc("macro name"), cl::Prefix);
-
 static int reportError(const char *ProgName, Twine Msg) {
   errs() << ProgName << ": " << Msg;
   errs().flush();
@@ -95,7 +91,7 @@ int llvm::TableGenMain(char *argv0, TableGenMainFn *MainFn) {
   // it later.
   SrcMgr.setIncludeDirs(IncludeDirs);
 
-  TGParser Parser(SrcMgr, MacroNames, Records);
+  TGParser Parser(SrcMgr, Records);
 
   if (Parser.ParseFile())
     return 1;
