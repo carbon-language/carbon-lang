@@ -33,7 +33,11 @@ namespace Fortran::semantics {
 
 using namespace parser::literals;
 
-class MessageHandler;
+using Message = parser::Message;
+using Messages = parser::Messages;
+using MessageFixedText = parser::MessageFixedText;
+using MessageFormattedText = parser::MessageFormattedText;
+
 class ResolveNamesVisitor;
 
 static const parser::Name *GetGenericSpecName(const parser::GenericSpec &);
@@ -82,8 +86,57 @@ private:
   friend void ShowImplicitRule(std::ostream &, const ImplicitRules &, char);
 };
 
+// Track statement source locations and save messages.
+class MessageHandler {
+public:
+  void set_messages(Messages &messages) { messages_ = &messages; }
+  const SourceName *currStmtSource() { return currStmtSource_; }
+  void set_currStmtSource(const SourceName *);
+
+  // Emit a message
+  Message &Say(Message &&);
+  // Emit a message associated with the current statement source.
+  Message &Say(MessageFixedText &&);
+  // Emit a message about a SourceName
+  Message &Say(const SourceName &, MessageFixedText &&);
+  // Emit a formatted message associated with a source location.
+  Message &Say(const SourceName &, MessageFixedText &&, const SourceName &);
+  Message &Say(const SourceName &, MessageFixedText &&, const SourceName &,
+      const SourceName &);
+
+private:
+  // Where messages are emitted:
+  Messages *messages_{nullptr};
+  // Source location of current statement; null if not in a statement
+  const SourceName *currStmtSource_{nullptr};
+};
+
+class BaseVisitor {
+public:
+  template<typename T> void Walk(const T &);
+  void set_this(ResolveNamesVisitor *x) { this_ = x; }
+
+  MessageHandler &messageHandler() { return messageHandler_; }
+  const SourceName *currStmtSource();
+  SemanticsContext &context() const { return *context_; }
+  void set_context(SemanticsContext &);
+
+  template<typename... A>
+  Message &Say(const parser::Name &name, MessageFixedText &&msg, A... args) {
+    return Say(name.source, std::move(msg), std::forward<A>(args)...);
+  }
+  template<typename... A> Message &Say(A... args) {
+    return messageHandler_.Say(std::forward<A>(args)...);
+  }
+
+private:
+  ResolveNamesVisitor *this_{nullptr};
+  SemanticsContext *context_{nullptr};
+  MessageHandler messageHandler_;
+};
+
 // Provide Post methods to collect attributes into a member variable.
-class AttrsVisitor {
+class AttrsVisitor : public virtual BaseVisitor {
 public:
   bool BeginAttrs();  // always returns true
   Attrs GetAttrs();
@@ -166,9 +219,6 @@ public:
   bool Pre(const parser::TypeGuardStmt &);
   void Post(const parser::TypeGuardStmt &);
 
-  SemanticsContext &context() const { return *context_; }
-  void set_context(SemanticsContext &context) { context_ = &context; }
-
 protected:
   std::unique_ptr<DeclTypeSpec> &GetDeclTypeSpec();
   void BeginDeclTypeSpec();
@@ -180,7 +230,6 @@ protected:
 private:
   bool expectDeclTypeSpec_{false};  // should only see decl-type-spec when true
   std::unique_ptr<DeclTypeSpec> declTypeSpec_;
-  SemanticsContext *context_{nullptr};
   DerivedTypeSpec *derivedTypeSpec_{nullptr};
   const parser::Name *derivedTypeName_{nullptr};
 
@@ -190,47 +239,8 @@ private:
   ParamValue GetParamValue(const parser::TypeParamValue &);
 };
 
-// Track statement source locations and save messages.
-class MessageHandler {
-public:
-  using Message = parser::Message;
-  using MessageFixedText = parser::MessageFixedText;
-  using MessageFormattedText = parser::MessageFormattedText;
-
-  void set_messages(parser::Messages &messages) { messages_ = &messages; }
-
-  const SourceName *currStmtSource() { return currStmtSource_; }
-  void set_currStmtSource(const SourceName *x) { currStmtSource_ = x; }
-
-  // Emit a message
-  Message &Say(Message &&);
-  // Emit a message associated with the current statement source.
-  Message &Say(MessageFixedText &&);
-  // Emit a message about a SourceName
-  Message &Say(const SourceName &, MessageFixedText &&);
-  // Emit a formatted message associated with a source location.
-  Message &Say(const SourceName &, MessageFixedText &&, const SourceName &);
-  Message &Say(const SourceName &, MessageFixedText &&, const SourceName &,
-      const SourceName &);
-  template<typename... A>
-  Message &Say(const parser::Name &name, MessageFixedText &&msg, A... args) {
-    return Say(name.source, std::move(msg), std::forward<A>(args)...);
-  }
-  // Special messages: already declared; about a type; two names & locations
-  void SayAlreadyDeclared(const parser::Name &, const Symbol &);
-  void SayDerivedType(const SourceName &, MessageFixedText &&, const Scope &);
-  void Say2(const parser::Name &, MessageFixedText &&, const Symbol &,
-      MessageFixedText &&);
-
-private:
-  // Where messages are emitted:
-  parser::Messages *messages_{nullptr};
-  // Source location of current statement; null if not in a statement
-  const SourceName *currStmtSource_{nullptr};
-};
-
 // Visit ImplicitStmt and related parse tree nodes and updates implicit rules.
-class ImplicitRulesVisitor : public DeclTypeSpecVisitor, public MessageHandler {
+class ImplicitRulesVisitor : public DeclTypeSpecVisitor {
 public:
   using DeclTypeSpecVisitor::Post;
   using DeclTypeSpecVisitor::Pre;
@@ -241,11 +251,6 @@ public:
   bool Pre(const parser::LetterSpec &);
   bool Pre(const parser::ImplicitSpec &);
   void Post(const parser::ImplicitSpec &);
-
-  void set_context(SemanticsContext &context) {
-    DeclTypeSpecVisitor::set_context(context);
-    MessageHandler::set_messages(context.messages());
-  }
 
   ImplicitRules &implicitRules() { return *implicitRules_; }
   const ImplicitRules &implicitRules() const { return *implicitRules_; }
@@ -280,7 +285,7 @@ private:
 // 4. DIMENSION :: x(10)
 // 5. TODO: COMMON x(10)
 // 6. TODO: BasedPointerStmt
-class ArraySpecVisitor {
+class ArraySpecVisitor : public virtual BaseVisitor {
 public:
   bool Pre(const parser::ArraySpec &);
   void Post(const parser::AttrSpec &) { PostAttrSpec(); }
@@ -311,9 +316,6 @@ private:
 // Manage a stack of Scopes
 class ScopeHandler : public ImplicitRulesVisitor {
 public:
-  template<typename T> void Walk(const T &);
-  void set_this(ResolveNamesVisitor *x) { this_ = x; }
-
   Scope &currScope() { return *currScope_; }
   // The enclosing scope, skipping blocks and derived types.
   Scope &InclusiveScope();
@@ -330,15 +332,20 @@ public:
     ImplicitRulesVisitor::ClearScopes();
   }
 
-  //TSK: is this the right place???
   template<typename T> bool Pre(const parser::Statement<T> &x) {
-    set_currStmtSource(&x.source);
+    messageHandler().set_currStmtSource(&x.source);
     currScope_->AddSourceRange(x.source);
     return true;
   }
   template<typename T> void Post(const parser::Statement<T> &) {
-    set_currStmtSource(nullptr);
+    messageHandler().set_currStmtSource(nullptr);
   }
+
+  // Special messages: already declared; about a type; two names & locations
+  void SayAlreadyDeclared(const parser::Name &, const Symbol &);
+  void SayDerivedType(const SourceName &, MessageFixedText &&, const Scope &);
+  void Say2(const parser::Name &, MessageFixedText &&, const Symbol &,
+      MessageFixedText &&);
 
   // Search for symbol by name in current and containing scopes
   Symbol *FindSymbol(const parser::Name &);
@@ -909,6 +916,19 @@ void ShowImplicitRule(
   }
 }
 
+template<typename T> void BaseVisitor::Walk(const T &x) {
+  parser::Walk(x, *this_);
+}
+
+const SourceName *BaseVisitor::currStmtSource() {
+  return messageHandler_.currStmtSource();
+}
+
+void BaseVisitor::set_context(SemanticsContext &context) {
+  context_ = &context;
+  messageHandler_.set_messages(context.messages());
+}
+
 // AttrsVisitor implementation
 
 bool AttrsVisitor::BeginAttrs() {
@@ -1087,38 +1107,24 @@ int DeclTypeSpecVisitor::GetKindParamValue(
 
 // MessageHandler implementation
 
-MessageHandler::Message &MessageHandler::Say(MessageFixedText &&msg) {
+void MessageHandler::set_currStmtSource(const SourceName *source) {
+  currStmtSource_ = source;
+}
+Message &MessageHandler::Say(MessageFixedText &&msg) {
   CHECK(currStmtSource_);
   return messages_->Say(*currStmtSource_, std::move(msg));
 }
-MessageHandler::Message &MessageHandler::Say(
-    const SourceName &name, MessageFixedText &&msg) {
+Message &MessageHandler::Say(const SourceName &name, MessageFixedText &&msg) {
   return Say(name, std::move(msg), name);
 }
-MessageHandler::Message &MessageHandler::Say(const SourceName &location,
-    MessageFixedText &&msg, const SourceName &arg1) {
+Message &MessageHandler::Say(const SourceName &location, MessageFixedText &&msg,
+    const SourceName &arg1) {
   return messages_->Say(location, std::move(msg), arg1.ToString().c_str());
 }
-MessageHandler::Message &MessageHandler::Say(const SourceName &location,
-    MessageFixedText &&msg, const SourceName &arg1, const SourceName &arg2) {
+Message &MessageHandler::Say(const SourceName &location, MessageFixedText &&msg,
+    const SourceName &arg1, const SourceName &arg2) {
   return messages_->Say(location, std::move(msg), arg1.ToString().c_str(),
       arg2.ToString().c_str());
-}
-void MessageHandler::SayAlreadyDeclared(
-    const parser::Name &name, const Symbol &prev) {
-  Say2(name, "'%s' is already declared in this scoping unit"_err_en_US, prev,
-      "Previous declaration of '%s'"_en_US);
-}
-void MessageHandler::SayDerivedType(
-    const SourceName &name, MessageFixedText &&msg, const Scope &type) {
-  Say(name, std::move(msg), name, type.name())
-      .Attach(type.name(), "Declaration of derived type '%s'"_en_US,
-          type.name().ToString().c_str());
-}
-void MessageHandler::Say2(const parser::Name &name, MessageFixedText &&msg1,
-    const Symbol &symbol, MessageFixedText &&msg2) {
-  Say(name.source, std::move(msg1))
-      .Attach(symbol.name(), msg2, symbol.name().ToString().c_str());
 }
 
 // ImplicitRulesVisitor implementation
@@ -1305,6 +1311,23 @@ Bound ArraySpecVisitor::GetBound(const parser::SpecificationExpr &x) {
 }
 
 // ScopeHandler implementation
+
+void ScopeHandler::SayAlreadyDeclared(
+    const parser::Name &name, const Symbol &prev) {
+  Say2(name, "'%s' is already declared in this scoping unit"_err_en_US, prev,
+      "Previous declaration of '%s'"_en_US);
+}
+void ScopeHandler::SayDerivedType(
+    const SourceName &name, MessageFixedText &&msg, const Scope &type) {
+  Say(name, std::move(msg), name, type.name())
+      .Attach(type.name(), "Declaration of derived type '%s'"_en_US,
+          type.name().ToString().c_str());
+}
+void ScopeHandler::Say2(const parser::Name &name, MessageFixedText &&msg1,
+    const Symbol &symbol, MessageFixedText &&msg2) {
+  Say(name.source, std::move(msg1))
+      .Attach(symbol.name(), msg2, symbol.name().ToString().c_str());
+}
 
 Scope &ScopeHandler::InclusiveScope() {
   for (auto *scope{&currScope()};; scope = &scope->parent()) {
@@ -2720,7 +2743,7 @@ bool DeclarationVisitor::OkToAddComponent(
   for (bool inParent{false};; inParent = true) {
     CHECK(scope->kind() == Scope::Kind::DerivedType);
     if (auto *prev{FindInScope(*scope, name)}) {
-      parser::MessageFixedText msg{""_en_US};
+      auto msg{""_en_US};
       if (isParentComp) {
         msg = "Type cannot be extended as it has a component named"
               " '%s'"_err_en_US;
@@ -2746,10 +2769,6 @@ bool DeclarationVisitor::OkToAddComponent(
 }
 
 // ConstructVisitor implementation
-
-template<typename T> void ScopeHandler::Walk(const T &x) {
-  parser::Walk(x, *this_);
-}
 
 bool ConstructVisitor::Pre(const parser::ConcurrentHeader &) {
   BeginDeclTypeSpec();
