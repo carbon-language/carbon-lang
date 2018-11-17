@@ -558,6 +558,16 @@ protected:
     SourceLocation Loc;
   };
 
+  class CXXDefaultInitExprBitfields {
+    friend class ASTStmtReader;
+    friend class CXXDefaultInitExpr;
+
+    unsigned : NumExprBits;
+
+    /// The location where the default initializer expression was used.
+    SourceLocation Loc;
+  };
+
   class TypeTraitExprBitfields {
     friend class ASTStmtReader;
     friend class ASTStmtWriter;
@@ -661,6 +671,7 @@ protected:
     CXXThisExprBitfields CXXThisExprBits;
     CXXThrowExprBitfields CXXThrowExprBits;
     CXXDefaultArgExprBitfields CXXDefaultArgExprBits;
+    CXXDefaultInitExprBitfields CXXDefaultInitExprBits;
     TypeTraitExprBitfields TypeTraitExprBits;
     ExprWithCleanupsBitfields ExprWithCleanupsBits;
 

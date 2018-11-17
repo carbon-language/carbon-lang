@@ -1123,26 +1123,23 @@ public:
 /// (C++11 [class.base.init]p8) or in aggregate initialization
 /// (C++1y [dcl.init.aggr]p7).
 class CXXDefaultInitExpr : public Expr {
+  friend class ASTReader;
+  friend class ASTStmtReader;
+
   /// The field whose default is being used.
   FieldDecl *Field;
 
-  /// The location where the default initializer expression was used.
-  SourceLocation Loc;
-
-  CXXDefaultInitExpr(const ASTContext &C, SourceLocation Loc, FieldDecl *Field,
-                     QualType T);
+  CXXDefaultInitExpr(const ASTContext &Ctx, SourceLocation Loc,
+                     FieldDecl *Field, QualType Ty);
 
   CXXDefaultInitExpr(EmptyShell Empty) : Expr(CXXDefaultInitExprClass, Empty) {}
 
 public:
-  friend class ASTReader;
-  friend class ASTStmtReader;
-
   /// \p Field is the non-static data member whose default initializer is used
   /// by this expression.
-  static CXXDefaultInitExpr *Create(const ASTContext &C, SourceLocation Loc,
+  static CXXDefaultInitExpr *Create(const ASTContext &Ctx, SourceLocation Loc,
                                     FieldDecl *Field) {
-    return new (C) CXXDefaultInitExpr(C, Loc, Field, Field->getType());
+    return new (Ctx) CXXDefaultInitExpr(Ctx, Loc, Field, Field->getType());
   }
 
   /// Get the field whose initializer will be used.
@@ -1159,8 +1156,8 @@ public:
     return Field->getInClassInitializer();
   }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return Loc; }
-  SourceLocation getEndLoc() const LLVM_READONLY { return Loc; }
+  SourceLocation getBeginLoc() const { return CXXDefaultInitExprBits.Loc; }
+  SourceLocation getEndLoc() const { return CXXDefaultInitExprBits.Loc; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXDefaultInitExprClass;
