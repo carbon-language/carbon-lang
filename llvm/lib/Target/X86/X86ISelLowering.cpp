@@ -23369,10 +23369,9 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget &Subtarget,
     // We're going to mask off the low byte of each result element of the
     // pmullw, so it doesn't matter what's in the high byte of each 16-bit
     // element.
-    const int LoShufMask[] = {0, -1, 1, -1, 2, -1, 3, -1,
-                              4, -1, 5, -1, 6, -1, 7, -1};
-    SDValue ALo = DAG.getVectorShuffle(VT, dl, A, A, LoShufMask);
-    SDValue BLo = DAG.getVectorShuffle(VT, dl, B, B, LoShufMask);
+    SDValue Undef = DAG.getUNDEF(VT);
+    SDValue ALo = getUnpackl(DAG, dl, VT, A, Undef);
+    SDValue BLo = getUnpackl(DAG, dl, VT, B, Undef);
     ALo = DAG.getBitcast(ExVT, ALo);
     BLo = DAG.getBitcast(ExVT, BLo);
 
@@ -23380,10 +23379,8 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget &Subtarget,
     // We're going to mask off the low byte of each result element of the
     // pmullw, so it doesn't matter what's in the high byte of each 16-bit
     // element.
-    const int HiShufMask[] = { 8, -1,  9, -1, 10, -1, 11, -1,
-                              12, -1, 13, -1, 14, -1, 15, -1};
-    SDValue AHi = DAG.getVectorShuffle(VT, dl, A, A, HiShufMask);
-    SDValue BHi = DAG.getVectorShuffle(VT, dl, B, B, HiShufMask);
+    SDValue AHi = getUnpackh(DAG, dl, VT, A, Undef);
+    SDValue BHi = getUnpackh(DAG, dl, VT, B, Undef);
     AHi = DAG.getBitcast(ExVT, AHi);
     BHi = DAG.getBitcast(ExVT, BHi);
 
