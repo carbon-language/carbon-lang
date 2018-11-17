@@ -64,6 +64,10 @@ HWASAN_FLAG(
     "8: allocations are sometimes aligned right to 8-byte boundary; "
     "9: allocations are always aligned right to 8-byte boundary."
   )
+HWASAN_FLAG(bool, free_checks_tail_magic, 1,
+    "If set, free() will check the magic values "
+    "to the right of the allocated object "
+    "if the allocation size is not a divident of the granule size")
 HWASAN_FLAG(
     int, max_free_fill_size, 0,
     "HWASan allocator flag. max_free_fill_size is the maximal amount of "

@@ -42,6 +42,8 @@ enum RightAlignMode {
 static RightAlignMode right_align_mode = kRightAlignNever;
 static bool right_align_8 = false;
 
+// Initialized in HwasanAllocatorInit, an never changed.
+static ALIGNED(16) u8 tail_magic[kShadowAlignment];
 
 bool HwasanChunkView::IsAllocated() const {
   return metadata_ && metadata_->alloc_context_id && metadata_->requested_size;
@@ -111,7 +113,8 @@ void HwasanAllocatorInit() {
              flags()->malloc_align_right);
       Die();
   }
-
+  for (uptr i = 0; i < kShadowAlignment; i++)
+    tail_magic[i] = GetCurrentThread()->GenerateRandomTag();
 }
 
 void AllocatorSwallowThreadLocalCache(AllocatorCache *cache) {
@@ -164,6 +167,9 @@ static void *HwasanAllocate(StackTrace *stack, uptr orig_size, uptr alignment,
     uptr fill_size = Min(size, (uptr)flags()->max_malloc_fill_size);
     internal_memset(allocated, flags()->malloc_fill_byte, fill_size);
   }
+  if (!right_align_mode)
+    internal_memcpy(reinterpret_cast<u8 *>(allocated) + orig_size, tail_magic,
+                    size - orig_size);
 
   void *user_ptr = allocated;
   if (flags()->tag_in_malloc &&
@@ -208,6 +214,19 @@ void HwasanDeallocate(StackTrace *stack, void *tagged_ptr) {
   uptr orig_size = meta->requested_size;
   u32 free_context_id = StackDepotPut(*stack);
   u32 alloc_context_id = meta->alloc_context_id;
+
+  // Check tail magic.
+  uptr tagged_size = TaggedSize(orig_size);
+  if (flags()->free_checks_tail_magic && !meta->right_aligned && orig_size) {
+    uptr tail_size = tagged_size - orig_size;
+    CHECK_LT(tail_size, kShadowAlignment);
+    void *tail_beg = reinterpret_cast<void *>(
+        reinterpret_cast<uptr>(aligned_ptr) + orig_size);
+    if (tail_size && internal_memcmp(tail_beg, tail_magic, tail_size))
+      ReportTailOverwritten(stack, reinterpret_cast<uptr>(tagged_ptr),
+                            orig_size, tail_size, tail_magic);
+  }
+
   meta->requested_size = 0;
   meta->alloc_context_id = 0;
   // This memory will not be reused by anyone else, so we are free to keep it
