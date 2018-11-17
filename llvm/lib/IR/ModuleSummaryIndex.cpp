@@ -166,14 +166,13 @@ void ModuleSummaryIndex::propagateConstants(
           GVS->setReadOnly(false);
       propagateConstantsToRefs(S.get());
     }
-#if LLVM_ENABLE_STATS
-  for (auto &P : *this)
-    if (P.second.SummaryList.size())
-      if (auto *GVS = dyn_cast<GlobalVarSummary>(
-              P.second.SummaryList[0]->getBaseObject()))
-        if (isGlobalValueLive(GVS) && GVS->isReadOnly())
-          ReadOnlyLiveGVars++;
-#endif
+  if (llvm::AreStatisticsEnabled())
+    for (auto &P : *this)
+      if (P.second.SummaryList.size())
+        if (auto *GVS = dyn_cast<GlobalVarSummary>(
+                P.second.SummaryList[0]->getBaseObject()))
+          if (isGlobalValueLive(GVS) && GVS->isReadOnly())
+            ReadOnlyLiveGVars++;
 }
 
 // TODO: write a graphviz dumper for SCCs (see ModuleSummaryIndex::exportToDot)
