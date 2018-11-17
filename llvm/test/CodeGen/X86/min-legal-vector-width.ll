@@ -650,176 +650,26 @@ define <16 x i16> @test_16f32tosb_512(<16 x float>* %ptr, <16 x i16> %passthru) 
 define void @mul256(<64 x i8>* %a, <64 x i8>* %b, <64 x i8>* %c) "min-legal-vector-width"="256" {
 ; CHECK-LABEL: mul256:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    vmovdqa (%rsi), %xmm6
-; CHECK-NEXT:    vmovdqa 16(%rsi), %xmm2
-; CHECK-NEXT:    vmovdqa 32(%rsi), %xmm8
-; CHECK-NEXT:    vmovdqa 48(%rsi), %xmm4
-; CHECK-NEXT:    vpxor %xmm0, %xmm0, %xmm0
-; CHECK-NEXT:    vpunpckhbw {{.*#+}} xmm3 = xmm2[8],xmm0[8],xmm2[9],xmm0[9],xmm2[10],xmm0[10],xmm2[11],xmm0[11],xmm2[12],xmm0[12],xmm2[13],xmm0[13],xmm2[14],xmm0[14],xmm2[15],xmm0[15]
-; CHECK-NEXT:    vpunpcklbw {{.*#+}} xmm2 = xmm2[0],xmm0[0],xmm2[1],xmm0[1],xmm2[2],xmm0[2],xmm2[3],xmm0[3],xmm2[4],xmm0[4],xmm2[5],xmm0[5],xmm2[6],xmm0[6],xmm2[7],xmm0[7]
-; CHECK-NEXT:    vinserti128 $1, %xmm3, %ymm2, %ymm3
-; CHECK-NEXT:    vmovdqa (%rdi), %xmm7
-; CHECK-NEXT:    vmovdqa 16(%rdi), %xmm1
-; CHECK-NEXT:    vmovdqa 32(%rdi), %xmm9
-; CHECK-NEXT:    vmovdqa 48(%rdi), %xmm5
-; CHECK-NEXT:    vpunpckhbw {{.*#+}} xmm2 = xmm1[8],xmm0[8],xmm1[9],xmm0[9],xmm1[10],xmm0[10],xmm1[11],xmm0[11],xmm1[12],xmm0[12],xmm1[13],xmm0[13],xmm1[14],xmm0[14],xmm1[15],xmm0[15]
-; CHECK-NEXT:    vpunpcklbw {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3],xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
-; CHECK-NEXT:    vinserti128 $1, %xmm2, %ymm1, %ymm1
-; CHECK-NEXT:    vpmullw %ymm3, %ymm1, %ymm1
-; CHECK-NEXT:    vpxor %xmm3, %xmm3, %xmm3
-; CHECK-NEXT:    vpblendw {{.*#+}} xmm2 = xmm1[0,1],xmm3[2,3,4,5,6,7]
-; CHECK-NEXT:    vpextrw $1, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $1, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $2, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $2, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $3, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $3, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $4, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $4, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $5, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $5, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $6, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $6, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $7, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $7, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vextracti128 $1, %ymm1, %xmm1
-; CHECK-NEXT:    vmovd %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $8, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $1, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $9, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $2, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $10, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $3, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $11, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $4, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $12, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $5, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $13, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $6, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $14, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $7, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $15, %eax, %xmm2, %xmm1
-; CHECK-NEXT:    vpunpckhbw {{.*#+}} xmm2 = xmm6[8],xmm0[8],xmm6[9],xmm0[9],xmm6[10],xmm0[10],xmm6[11],xmm0[11],xmm6[12],xmm0[12],xmm6[13],xmm0[13],xmm6[14],xmm0[14],xmm6[15],xmm0[15]
-; CHECK-NEXT:    vpunpcklbw {{.*#+}} xmm6 = xmm6[0],xmm0[0],xmm6[1],xmm0[1],xmm6[2],xmm0[2],xmm6[3],xmm0[3],xmm6[4],xmm0[4],xmm6[5],xmm0[5],xmm6[6],xmm0[6],xmm6[7],xmm0[7]
-; CHECK-NEXT:    vinserti128 $1, %xmm2, %ymm6, %ymm2
-; CHECK-NEXT:    vpunpckhbw {{.*#+}} xmm6 = xmm7[8],xmm0[8],xmm7[9],xmm0[9],xmm7[10],xmm0[10],xmm7[11],xmm0[11],xmm7[12],xmm0[12],xmm7[13],xmm0[13],xmm7[14],xmm0[14],xmm7[15],xmm0[15]
-; CHECK-NEXT:    vpunpcklbw {{.*#+}} xmm7 = xmm7[0],xmm0[0],xmm7[1],xmm0[1],xmm7[2],xmm0[2],xmm7[3],xmm0[3],xmm7[4],xmm0[4],xmm7[5],xmm0[5],xmm7[6],xmm0[6],xmm7[7],xmm0[7]
-; CHECK-NEXT:    vinserti128 $1, %xmm6, %ymm7, %ymm6
-; CHECK-NEXT:    vpmullw %ymm2, %ymm6, %ymm2
-; CHECK-NEXT:    vpblendw {{.*#+}} xmm6 = xmm2[0,1],xmm3[2,3,4,5,6,7]
-; CHECK-NEXT:    vpextrw $1, %xmm2, %eax
-; CHECK-NEXT:    vpinsrb $1, %eax, %xmm6, %xmm6
-; CHECK-NEXT:    vpextrw $2, %xmm2, %eax
-; CHECK-NEXT:    vpinsrb $2, %eax, %xmm6, %xmm6
-; CHECK-NEXT:    vpextrw $3, %xmm2, %eax
-; CHECK-NEXT:    vpinsrb $3, %eax, %xmm6, %xmm6
-; CHECK-NEXT:    vpextrw $4, %xmm2, %eax
-; CHECK-NEXT:    vpinsrb $4, %eax, %xmm6, %xmm6
-; CHECK-NEXT:    vpextrw $5, %xmm2, %eax
-; CHECK-NEXT:    vpinsrb $5, %eax, %xmm6, %xmm6
-; CHECK-NEXT:    vpextrw $6, %xmm2, %eax
-; CHECK-NEXT:    vpinsrb $6, %eax, %xmm6, %xmm6
-; CHECK-NEXT:    vpextrw $7, %xmm2, %eax
-; CHECK-NEXT:    vpinsrb $7, %eax, %xmm6, %xmm6
-; CHECK-NEXT:    vextracti128 $1, %ymm2, %xmm2
-; CHECK-NEXT:    vmovd %xmm2, %eax
-; CHECK-NEXT:    vpinsrb $8, %eax, %xmm6, %xmm6
-; CHECK-NEXT:    vpextrw $1, %xmm2, %eax
-; CHECK-NEXT:    vpinsrb $9, %eax, %xmm6, %xmm6
-; CHECK-NEXT:    vpextrw $2, %xmm2, %eax
-; CHECK-NEXT:    vpinsrb $10, %eax, %xmm6, %xmm6
-; CHECK-NEXT:    vpextrw $3, %xmm2, %eax
-; CHECK-NEXT:    vpinsrb $11, %eax, %xmm6, %xmm6
-; CHECK-NEXT:    vpextrw $4, %xmm2, %eax
-; CHECK-NEXT:    vpinsrb $12, %eax, %xmm6, %xmm6
-; CHECK-NEXT:    vpextrw $5, %xmm2, %eax
-; CHECK-NEXT:    vpinsrb $13, %eax, %xmm6, %xmm6
-; CHECK-NEXT:    vpextrw $6, %xmm2, %eax
-; CHECK-NEXT:    vpinsrb $14, %eax, %xmm6, %xmm6
-; CHECK-NEXT:    vpextrw $7, %xmm2, %eax
-; CHECK-NEXT:    vpinsrb $15, %eax, %xmm6, %xmm2
-; CHECK-NEXT:    vinserti128 $1, %xmm1, %ymm2, %ymm6
-; CHECK-NEXT:    vpunpckhbw {{.*#+}} xmm1 = xmm4[8],xmm0[8],xmm4[9],xmm0[9],xmm4[10],xmm0[10],xmm4[11],xmm0[11],xmm4[12],xmm0[12],xmm4[13],xmm0[13],xmm4[14],xmm0[14],xmm4[15],xmm0[15]
-; CHECK-NEXT:    vpunpcklbw {{.*#+}} xmm2 = xmm4[0],xmm0[0],xmm4[1],xmm0[1],xmm4[2],xmm0[2],xmm4[3],xmm0[3],xmm4[4],xmm0[4],xmm4[5],xmm0[5],xmm4[6],xmm0[6],xmm4[7],xmm0[7]
-; CHECK-NEXT:    vinserti128 $1, %xmm1, %ymm2, %ymm1
-; CHECK-NEXT:    vpunpckhbw {{.*#+}} xmm2 = xmm5[8],xmm0[8],xmm5[9],xmm0[9],xmm5[10],xmm0[10],xmm5[11],xmm0[11],xmm5[12],xmm0[12],xmm5[13],xmm0[13],xmm5[14],xmm0[14],xmm5[15],xmm0[15]
-; CHECK-NEXT:    vpunpcklbw {{.*#+}} xmm4 = xmm5[0],xmm0[0],xmm5[1],xmm0[1],xmm5[2],xmm0[2],xmm5[3],xmm0[3],xmm5[4],xmm0[4],xmm5[5],xmm0[5],xmm5[6],xmm0[6],xmm5[7],xmm0[7]
-; CHECK-NEXT:    vinserti128 $1, %xmm2, %ymm4, %ymm2
+; CHECK-NEXT:    vpmovzxbw {{.*#+}} ymm0 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero
+; CHECK-NEXT:    vpmovzxbw {{.*#+}} ymm1 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero
+; CHECK-NEXT:    vpmullw %ymm0, %ymm1, %ymm0
+; CHECK-NEXT:    vpmovwb %ymm0, %xmm0
+; CHECK-NEXT:    vpmovzxbw {{.*#+}} ymm1 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero
+; CHECK-NEXT:    vpmovzxbw {{.*#+}} ymm2 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero
 ; CHECK-NEXT:    vpmullw %ymm1, %ymm2, %ymm1
-; CHECK-NEXT:    vpblendw {{.*#+}} xmm2 = xmm1[0,1],xmm3[2,3,4,5,6,7]
-; CHECK-NEXT:    vpextrw $1, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $1, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $2, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $2, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $3, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $3, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $4, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $4, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $5, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $5, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $6, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $6, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $7, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $7, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vextracti128 $1, %ymm1, %xmm1
-; CHECK-NEXT:    vmovd %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $8, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $1, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $9, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $2, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $10, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $3, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $11, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $4, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $12, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $5, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $13, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $6, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $14, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $7, %xmm1, %eax
-; CHECK-NEXT:    vpinsrb $15, %eax, %xmm2, %xmm1
-; CHECK-NEXT:    vpunpckhbw {{.*#+}} xmm2 = xmm8[8],xmm0[8],xmm8[9],xmm0[9],xmm8[10],xmm0[10],xmm8[11],xmm0[11],xmm8[12],xmm0[12],xmm8[13],xmm0[13],xmm8[14],xmm0[14],xmm8[15],xmm0[15]
-; CHECK-NEXT:    vpunpcklbw {{.*#+}} xmm4 = xmm8[0],xmm0[0],xmm8[1],xmm0[1],xmm8[2],xmm0[2],xmm8[3],xmm0[3],xmm8[4],xmm0[4],xmm8[5],xmm0[5],xmm8[6],xmm0[6],xmm8[7],xmm0[7]
-; CHECK-NEXT:    vinserti128 $1, %xmm2, %ymm4, %ymm2
-; CHECK-NEXT:    vpunpckhbw {{.*#+}} xmm4 = xmm9[8],xmm0[8],xmm9[9],xmm0[9],xmm9[10],xmm0[10],xmm9[11],xmm0[11],xmm9[12],xmm0[12],xmm9[13],xmm0[13],xmm9[14],xmm0[14],xmm9[15],xmm0[15]
-; CHECK-NEXT:    vpunpcklbw {{.*#+}} xmm0 = xmm9[0],xmm0[0],xmm9[1],xmm0[1],xmm9[2],xmm0[2],xmm9[3],xmm0[3],xmm9[4],xmm0[4],xmm9[5],xmm0[5],xmm9[6],xmm0[6],xmm9[7],xmm0[7]
-; CHECK-NEXT:    vinserti128 $1, %xmm4, %ymm0, %ymm0
-; CHECK-NEXT:    vpmullw %ymm2, %ymm0, %ymm0
-; CHECK-NEXT:    vpblendw {{.*#+}} xmm2 = xmm0[0,1],xmm3[2,3,4,5,6,7]
-; CHECK-NEXT:    vpextrw $1, %xmm0, %eax
-; CHECK-NEXT:    vpinsrb $1, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $2, %xmm0, %eax
-; CHECK-NEXT:    vpinsrb $2, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $3, %xmm0, %eax
-; CHECK-NEXT:    vpinsrb $3, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $4, %xmm0, %eax
-; CHECK-NEXT:    vpinsrb $4, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $5, %xmm0, %eax
-; CHECK-NEXT:    vpinsrb $5, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $6, %xmm0, %eax
-; CHECK-NEXT:    vpinsrb $6, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $7, %xmm0, %eax
-; CHECK-NEXT:    vpinsrb $7, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vextracti128 $1, %ymm0, %xmm0
-; CHECK-NEXT:    vmovd %xmm0, %eax
-; CHECK-NEXT:    vpinsrb $8, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $1, %xmm0, %eax
-; CHECK-NEXT:    vpinsrb $9, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $2, %xmm0, %eax
-; CHECK-NEXT:    vpinsrb $10, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $3, %xmm0, %eax
-; CHECK-NEXT:    vpinsrb $11, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $4, %xmm0, %eax
-; CHECK-NEXT:    vpinsrb $12, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $5, %xmm0, %eax
-; CHECK-NEXT:    vpinsrb $13, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $6, %xmm0, %eax
-; CHECK-NEXT:    vpinsrb $14, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrw $7, %xmm0, %eax
-; CHECK-NEXT:    vpinsrb $15, %eax, %xmm2, %xmm0
+; CHECK-NEXT:    vpmovwb %ymm1, %xmm1
 ; CHECK-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
-; CHECK-NEXT:    vmovdqa %ymm0, 32(%rdx)
-; CHECK-NEXT:    vmovdqa %ymm6, (%rdx)
+; CHECK-NEXT:    vpmovzxbw {{.*#+}} ymm1 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero
+; CHECK-NEXT:    vpmovzxbw {{.*#+}} ymm2 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero
+; CHECK-NEXT:    vpmullw %ymm1, %ymm2, %ymm1
+; CHECK-NEXT:    vpmovwb %ymm1, %xmm1
+; CHECK-NEXT:    vpmovzxbw {{.*#+}} ymm2 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero
+; CHECK-NEXT:    vpmovzxbw {{.*#+}} ymm3 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero
+; CHECK-NEXT:    vpmullw %ymm2, %ymm3, %ymm2
+; CHECK-NEXT:    vpmovwb %ymm2, %xmm2
+; CHECK-NEXT:    vinserti128 $1, %xmm2, %ymm1, %ymm1
+; CHECK-NEXT:    vmovdqa %ymm1, 32(%rdx)
+; CHECK-NEXT:    vmovdqa %ymm0, (%rdx)
 ; CHECK-NEXT:    vzeroupper
 ; CHECK-NEXT:    retq
   %d = load <64 x i8>, <64 x i8>* %a
@@ -832,15 +682,25 @@ define void @mul256(<64 x i8>* %a, <64 x i8>* %b, <64 x i8>* %c) "min-legal-vect
 define void @mul512(<64 x i8>* %a, <64 x i8>* %b, <64 x i8>* %c) "min-legal-vector-width"="512" {
 ; CHECK-LABEL: mul512:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    vpmovzxbw {{.*#+}} zmm0 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero,mem[16],zero,mem[17],zero,mem[18],zero,mem[19],zero,mem[20],zero,mem[21],zero,mem[22],zero,mem[23],zero,mem[24],zero,mem[25],zero,mem[26],zero,mem[27],zero,mem[28],zero,mem[29],zero,mem[30],zero,mem[31],zero
-; CHECK-NEXT:    vpmovzxbw {{.*#+}} zmm1 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero,mem[16],zero,mem[17],zero,mem[18],zero,mem[19],zero,mem[20],zero,mem[21],zero,mem[22],zero,mem[23],zero,mem[24],zero,mem[25],zero,mem[26],zero,mem[27],zero,mem[28],zero,mem[29],zero,mem[30],zero,mem[31],zero
-; CHECK-NEXT:    vpmullw %zmm0, %zmm1, %zmm0
-; CHECK-NEXT:    vpmovwb %zmm0, %ymm0
-; CHECK-NEXT:    vpmovzxbw {{.*#+}} zmm1 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero,mem[16],zero,mem[17],zero,mem[18],zero,mem[19],zero,mem[20],zero,mem[21],zero,mem[22],zero,mem[23],zero,mem[24],zero,mem[25],zero,mem[26],zero,mem[27],zero,mem[28],zero,mem[29],zero,mem[30],zero,mem[31],zero
-; CHECK-NEXT:    vpmovzxbw {{.*#+}} zmm2 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero,mem[16],zero,mem[17],zero,mem[18],zero,mem[19],zero,mem[20],zero,mem[21],zero,mem[22],zero,mem[23],zero,mem[24],zero,mem[25],zero,mem[26],zero,mem[27],zero,mem[28],zero,mem[29],zero,mem[30],zero,mem[31],zero
-; CHECK-NEXT:    vpmullw %zmm1, %zmm2, %zmm1
-; CHECK-NEXT:    vpmovwb %zmm1, %ymm1
-; CHECK-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm0
+; CHECK-NEXT:    vpmovzxbw {{.*#+}} ymm0 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero
+; CHECK-NEXT:    vpmovzxbw {{.*#+}} ymm1 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero
+; CHECK-NEXT:    vpmullw %ymm0, %ymm1, %ymm0
+; CHECK-NEXT:    vpmovwb %ymm0, %xmm0
+; CHECK-NEXT:    vpmovzxbw {{.*#+}} ymm1 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero
+; CHECK-NEXT:    vpmovzxbw {{.*#+}} ymm2 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero
+; CHECK-NEXT:    vpmullw %ymm1, %ymm2, %ymm1
+; CHECK-NEXT:    vpmovwb %ymm1, %xmm1
+; CHECK-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
+; CHECK-NEXT:    vpmovzxbw {{.*#+}} ymm1 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero
+; CHECK-NEXT:    vpmovzxbw {{.*#+}} ymm2 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero
+; CHECK-NEXT:    vpmullw %ymm1, %ymm2, %ymm1
+; CHECK-NEXT:    vpmovwb %ymm1, %xmm1
+; CHECK-NEXT:    vpmovzxbw {{.*#+}} ymm2 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero
+; CHECK-NEXT:    vpmovzxbw {{.*#+}} ymm3 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero
+; CHECK-NEXT:    vpmullw %ymm2, %ymm3, %ymm2
+; CHECK-NEXT:    vpmovwb %ymm2, %xmm2
+; CHECK-NEXT:    vinserti128 $1, %xmm2, %ymm1, %ymm1
+; CHECK-NEXT:    vinserti64x4 $1, %ymm0, %zmm1, %zmm0
 ; CHECK-NEXT:    vmovdqa64 %zmm0, (%rdx)
 ; CHECK-NEXT:    vzeroupper
 ; CHECK-NEXT:    retq

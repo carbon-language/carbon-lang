@@ -23350,7 +23350,7 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget &Subtarget,
       // For 256-bit vectors, split into 128-bit vectors to allow the
       // sign-extension to occur. We don't need this on AVX512BW as we can
       // safely sign-extend to v32i16.
-      if (VT == MVT::v32i8 && !Subtarget.hasBWI())
+      if (VT == MVT::v32i8 && !Subtarget.canExtendTo512BW())
         return split256IntArith(Op, DAG);
 
       MVT ExVT = MVT::getVectorVT(MVT::i16, VT.getVectorNumElements());
