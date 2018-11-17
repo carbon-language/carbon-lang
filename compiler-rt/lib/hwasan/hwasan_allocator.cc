@@ -217,7 +217,7 @@ void HwasanDeallocate(StackTrace *stack, void *tagged_ptr) {
 
   // Check tail magic.
   uptr tagged_size = TaggedSize(orig_size);
-  if (flags()->free_checks_tail_magic && !meta->right_aligned && orig_size) {
+  if (flags()->free_checks_tail_magic && !right_align_mode && orig_size) {
     uptr tail_size = tagged_size - orig_size;
     CHECK_LT(tail_size, kShadowAlignment);
     void *tail_beg = reinterpret_cast<void *>(
