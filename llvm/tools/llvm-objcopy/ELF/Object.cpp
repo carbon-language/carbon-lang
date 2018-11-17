@@ -97,14 +97,14 @@ void SectionWriter::visit(const Section &Sec) {
   if (Sec.Type == SHT_NOBITS)
     return;
   uint8_t *Buf = Out.getBufferStart() + Sec.Offset;
-  std::copy(std::begin(Sec.Contents), std::end(Sec.Contents), Buf);
+  llvm::copy(Sec.Contents, Buf);
 }
 
 void Section::accept(SectionVisitor &Visitor) const { Visitor.visit(*this); }
 
 void SectionWriter::visit(const OwnedDataSection &Sec) {
   uint8_t *Buf = Out.getBufferStart() + Sec.Offset;
-  std::copy(std::begin(Sec.Data), std::end(Sec.Data), Buf);
+  llvm::copy(Sec.Data, Buf);
 }
 
 static const std::vector<uint8_t> ZlibGnuMagic = {'Z', 'L', 'I', 'B'};
@@ -269,7 +269,7 @@ template <class ELFT>
 void ELFSectionWriter<ELFT>::visit(const SectionIndexSection &Sec) {
   uint8_t *Buf = Out.getBufferStart() + Sec.Offset;
   auto *IndexesBuffer = reinterpret_cast<Elf_Word *>(Buf);
-  std::copy(std::begin(Sec.Indexes), std::end(Sec.Indexes), IndexesBuffer);
+  llvm::copy(Sec.Indexes, IndexesBuffer);
 }
 
 void SectionIndexSection::initialize(SectionTableRef SecTable) {
@@ -554,7 +554,7 @@ void RelocationSection::markSymbols() {
 }
 
 void SectionWriter::visit(const DynamicRelocationSection &Sec) {
-  std::copy(std::begin(Sec.Contents), std::end(Sec.Contents),
+  llvm::copy(Sec.Contents,
             Out.getBufferStart() + Sec.Offset);
 }
 
@@ -641,7 +641,7 @@ void ELFSectionWriter<ELFT>::visit(const GnuDebugLinkSection &Sec) {
   Elf_Word *CRC =
       reinterpret_cast<Elf_Word *>(Buf + Sec.Size - sizeof(Elf_Word));
   *CRC = Sec.CRC32;
-  std::copy(std::begin(Sec.FileName), std::end(Sec.FileName), File);
+  llvm::copy(Sec.FileName, File);
 }
 
 void GnuDebugLinkSection::accept(SectionVisitor &Visitor) const {
