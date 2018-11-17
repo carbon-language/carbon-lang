@@ -1540,10 +1540,10 @@ void BinaryWriter::finalize() {
   // loading and physical addresses are intended for ROM loading.
   // However, if no segment has a physical address, we'll fallback to using
   // virtual addresses for all.
-  if (std::all_of(std::begin(OrderedSegments), std::end(OrderedSegments),
-                  [](const Segment *Segment) { return Segment->PAddr == 0; }))
-    for (const auto &Segment : OrderedSegments)
-      Segment->PAddr = Segment->VAddr;
+  if (all_of(OrderedSegments,
+             [](const Segment *Seg) { return Seg->PAddr == 0; }))
+    for (Segment *Seg : OrderedSegments)
+      Seg->PAddr = Seg->VAddr;
 
   std::stable_sort(std::begin(OrderedSegments), std::end(OrderedSegments),
                    compareSegmentsByPAddr);
@@ -1558,8 +1558,8 @@ void BinaryWriter::finalize() {
   uint64_t Offset = 0;
 
   // Modify the first segment so that there is no gap at the start. This allows
-  // our layout algorithm to proceed as expected while not out writing out the
-  // gap at the start.
+  // our layout algorithm to proceed as expected while not writing out the gap
+  // at the start.
   if (!OrderedSegments.empty()) {
     auto Seg = OrderedSegments[0];
     auto Sec = Seg->firstSection();
