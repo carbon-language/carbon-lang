@@ -253,7 +253,12 @@ ifeq "$(MAKE_DWO)" "YES"
 endif
 
 # Use a shared module cache when building in the default test build directory.
+ifeq "$(OS)" "Windows_NT"
+CLANG_MODULE_CACHE_DIR := $(BUILDDIR)/module-cache
+else
+# FIXME: Get sed to work on Windows here.
 CLANG_MODULE_CACHE_DIR := $(shell echo "$(BUILDDIR)" | sed 's/lldb-test-build.noindex.*/lldb-test-build.noindex\/module-cache-clang/')
+endif
 
 ifeq "$(findstring lldb-test-build.noindex, $(BUILDDIR))" ""
 CLANG_MODULE_CACHE_DIR := $(BUILDDIR)/module-cache
