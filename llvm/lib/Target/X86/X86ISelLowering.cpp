@@ -949,12 +949,14 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SIGN_EXTEND_VECTOR_INREG, MVT::v8i16, Custom);
 
     if (ExperimentalVectorWideningLegalization) {
-      setOperationAction(ISD::TRUNCATE, MVT::v2i8,  Custom);
-      setOperationAction(ISD::TRUNCATE, MVT::v2i16, Custom);
-      setOperationAction(ISD::TRUNCATE, MVT::v2i32, Custom);
-      setOperationAction(ISD::TRUNCATE, MVT::v4i8,  Custom);
-      setOperationAction(ISD::TRUNCATE, MVT::v4i16, Custom);
-      setOperationAction(ISD::TRUNCATE, MVT::v8i8,  Custom);
+      setOperationAction(ISD::SIGN_EXTEND, MVT::v4i64, Custom);
+
+      setOperationAction(ISD::TRUNCATE,    MVT::v2i8,  Custom);
+      setOperationAction(ISD::TRUNCATE,    MVT::v2i16, Custom);
+      setOperationAction(ISD::TRUNCATE,    MVT::v2i32, Custom);
+      setOperationAction(ISD::TRUNCATE,    MVT::v4i8,  Custom);
+      setOperationAction(ISD::TRUNCATE,    MVT::v4i16, Custom);
+      setOperationAction(ISD::TRUNCATE,    MVT::v8i8,  Custom);
     }
 
     // In the customized shift lowering, the legal v4i32/v2i64 cases
@@ -26349,10 +26351,34 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
       return;
 
     EVT VT = N->getValueType(0);
-    assert((VT == MVT::v16i32 || VT == MVT::v8i64) && "Unexpected VT!");
     SDValue In = N->getOperand(0);
     EVT InVT = In.getValueType();
-    if (InVT.is128BitVector()) {
+    if (!Subtarget.hasSSE41() && VT == MVT::v4i64 &&
+        (InVT == MVT::v4i16 || InVT == MVT::v4i8)) {
+      // Custom split this so we can extend i8/i16->i32 invec. This is better
+      // since sign_extend_inreg i8/i16->i64 requires two sra operations. So
+      // this allows the first to be shared.
+      In = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::v4i32, In);
+
+      // Fill a vector with sign bits for each element.
+      SDValue SignBits = DAG.getNode(ISD::SRA, dl, MVT::v4i32, In,
+                                     DAG.getConstant(31, dl, MVT::v4i32));
+
+      // Create an unpackl and unpackh to interleave the sign bits then bitcast
+      // to v2i64.
+      SDValue Lo = DAG.getVectorShuffle(MVT::v4i32, dl, In, SignBits,
+                                        {0, 4, 1, 5});
+      Lo = DAG.getNode(ISD::BITCAST, dl, MVT::v2i64, Lo);
+      SDValue Hi = DAG.getVectorShuffle(MVT::v4i32, dl, In, SignBits,
+                                        {2, 6, 3, 7});
+      Hi = DAG.getNode(ISD::BITCAST, dl, MVT::v2i64, Hi);
+
+      SDValue Res = DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, Lo, Hi);
+      Results.push_back(Res);
+      return;
+    }
+
+    if ((VT == MVT::v16i32 || VT == MVT::v8i64) && InVT.is128BitVector()) {
       // Perform custom splitting instead of the two stage extend we would get
       // by default.
       EVT LoVT, HiVT;
