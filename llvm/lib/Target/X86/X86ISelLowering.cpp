@@ -32085,13 +32085,15 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
   }
 
   // Simplify target shuffles.
-  if (!isTargetShuffle(Opc))
+  if (!isTargetShuffle(Opc) || !VT.isSimple())
     return false;
 
   // Get target shuffle mask.
+  bool IsUnary;
   SmallVector<int, 64> OpMask;
   SmallVector<SDValue, 2> OpInputs;
-  if (!resolveTargetShuffleInputs(Op, OpInputs, OpMask, TLO.DAG))
+  if (!getTargetShuffleMask(Op.getNode(), VT.getSimpleVT(), true, OpInputs,
+                            OpMask, IsUnary))
     return false;
 
   // Shuffle inputs must be the same type as the result.
@@ -32101,9 +32103,13 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
 
   // Check if shuffle mask can be simplified to undef/zero/identity.
   int NumSrcs = OpInputs.size();
-  for (int i = 0; i != NumElts; ++i)
+  for (int i = 0; i != NumElts; ++i) {
+    int &M = OpMask[i];
     if (!DemandedElts[i])
-      OpMask[i] = SM_SentinelUndef;
+      M = SM_SentinelUndef;
+    else if (0 <= M && OpInputs[M / NumElts].isUndef())
+      M = SM_SentinelUndef;
+  }
 
   if (isUndefInRange(OpMask, 0, NumElts)) {
     KnownUndef.setAllBits();
