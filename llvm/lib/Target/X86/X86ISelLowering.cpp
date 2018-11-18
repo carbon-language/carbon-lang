@@ -23902,10 +23902,10 @@ static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
 }
 
 // Determine if V is a splat value, and return the scalar.
+// TODO - can we make this generic and move to SelectionDAG?
 static SDValue IsSplatValue(MVT VT, SDValue V, const SDLoc &dl,
-                            SelectionDAG &DAG, const X86Subtarget &Subtarget,
-                            unsigned Opcode) {
-   V = peekThroughEXTRACT_SUBVECTORs(V);
+                            SelectionDAG &DAG) {
+  V = peekThroughEXTRACT_SUBVECTORs(V);
 
   // Check if this is a splat build_vector node.
   if (BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(V)) {
@@ -23916,8 +23916,7 @@ static SDValue IsSplatValue(MVT VT, SDValue V, const SDLoc &dl,
   }
 
   // Check for SUB(SPLAT_BV, SPLAT) cases from rotate patterns.
-  if (V.getOpcode() == ISD::SUB &&
-      !SupportedVectorVarShift(VT, Subtarget, Opcode)) {
+  if (V.getOpcode() == ISD::SUB) {
     SDValue LHS = peekThroughEXTRACT_SUBVECTORs(V.getOperand(0));
     SDValue RHS = peekThroughEXTRACT_SUBVECTORs(V.getOperand(1));
 
@@ -23969,7 +23968,7 @@ static SDValue LowerScalarVariableShift(SDValue Op, SelectionDAG &DAG,
 
   Amt = peekThroughEXTRACT_SUBVECTORs(Amt);
 
-  if (SDValue BaseShAmt = IsSplatValue(VT, Amt, dl, DAG, Subtarget, Opcode)) {
+  if (SDValue BaseShAmt = IsSplatValue(VT, Amt, dl, DAG)) {
     if (SupportedVectorShiftWithBaseAmnt(VT, Subtarget, Opcode)) {
       MVT EltVT = VT.getVectorElementType();
       assert(EltVT.bitsLE(MVT::i64) && "Unexpected element type!");
@@ -24672,7 +24671,7 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
   // Rotate by splat - expand back to shifts.
   // TODO - legalizers should be able to handle this.
   if ((EltSizeInBits >= 16 || Subtarget.hasBWI()) &&
-      IsSplatValue(VT, Amt, DL, DAG, Subtarget, Opcode)) {
+      IsSplatValue(VT, Amt, DL, DAG)) {
     SDValue AmtR = DAG.getConstant(EltSizeInBits, DL, VT);
     AmtR = DAG.getNode(ISD::SUB, DL, VT, AmtR, Amt);
     SDValue SHL = DAG.getNode(ISD::SHL, DL, VT, R, Amt);
