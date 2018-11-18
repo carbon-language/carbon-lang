@@ -23903,7 +23903,7 @@ static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
 
 // If V is a splat value, return the source vector and splat index;
 // TODO - can we make this generic and move to SelectionDAG?
-static SDValue IsSplatVector(MVT VT, SDValue V, int &SplatIdx) {
+static SDValue IsSplatVector(SDValue V, int &SplatIdx) {
   V = peekThroughEXTRACT_SUBVECTORs(V);
 
   // Check if this is a splat build_vector node.
@@ -23949,12 +23949,13 @@ static SDValue IsSplatVector(MVT VT, SDValue V, int &SplatIdx) {
   return V.getOperand(Idx / NumElts);
 }
 
-static SDValue GetSplatValue(MVT VT, SDValue V, const SDLoc &dl,
-                            SelectionDAG &DAG) {
+static SDValue GetSplatValue(SDValue V, const SDLoc &dl,
+                             SelectionDAG &DAG) {
   int SplatIdx;
-  if (SDValue SrcVector = IsSplatVector(VT, V, SplatIdx))
-    return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, VT.getVectorElementType(),
-                       SrcVector, DAG.getIntPtrConstant(SplatIdx, dl));
+  if (SDValue SrcVector = IsSplatVector(V, SplatIdx))
+    return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
+                       SrcVector.getValueType().getScalarType(), SrcVector,
+                       DAG.getIntPtrConstant(SplatIdx, dl));
   return SDValue();
 }
 
@@ -23970,7 +23971,7 @@ static SDValue LowerScalarVariableShift(SDValue Op, SelectionDAG &DAG,
 
   Amt = peekThroughEXTRACT_SUBVECTORs(Amt);
 
-  if (SDValue BaseShAmt = GetSplatValue(VT, Amt, dl, DAG)) {
+  if (SDValue BaseShAmt = GetSplatValue(Amt, dl, DAG)) {
     if (SupportedVectorShiftWithBaseAmnt(VT, Subtarget, Opcode)) {
       MVT EltVT = VT.getVectorElementType();
       assert(EltVT.bitsLE(MVT::i64) && "Unexpected element type!");
@@ -24674,7 +24675,7 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
   // TODO - legalizers should be able to handle this.
   if (EltSizeInBits >= 16 || Subtarget.hasBWI()) {
     int SplatIdx;
-    if (IsSplatVector(VT, Amt, SplatIdx)) {
+    if (IsSplatVector(Amt, SplatIdx)) {
       SDValue AmtR = DAG.getConstant(EltSizeInBits, DL, VT);
       AmtR = DAG.getNode(ISD::SUB, DL, VT, AmtR, Amt);
       SDValue SHL = DAG.getNode(ISD::SHL, DL, VT, R, Amt);
