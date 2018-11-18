@@ -14,8 +14,8 @@ define void @t() nounwind ssp {
 ; CHECK-NEXT:  LBB0_6: ## %return
 ; CHECK-NEXT:    retq
 ; CHECK-NEXT:  LBB0_2: ## %if.end
-; CHECK-NEXT:    movl (%rax), %eax
-; CHECK-NEXT:    testl %eax, %eax
+; CHECK-NEXT:    movb $1, %al
+; CHECK-NEXT:    testb %al, %al
 ; CHECK-NEXT:    xorl %eax, %eax
 ; CHECK-NEXT:    testb %al, %al
 ; CHECK-NEXT:    jne LBB0_5
