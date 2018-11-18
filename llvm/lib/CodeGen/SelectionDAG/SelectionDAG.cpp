@@ -5078,13 +5078,12 @@ SDValue SelectionDAG::getNode(unsigned Opcode, const SDLoc &DL, EVT VT,
     break;
   }
   case ISD::SELECT:
-    if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1)) {
-     if (N1C->getZExtValue())
-       return N2;             // select true, X, Y -> X
-     return N3;             // select false, X, Y -> Y
-    }
+    // select true, N2, N3 --> N2
+    // select false, N2, N3 --> N3
+    if (auto *N1C = dyn_cast<ConstantSDNode>(N1))
+      return N1C->getZExtValue() ? N2 : N3;
 
-    if (N2 == N3) return N2;   // select C, X, X -> X
+    if (N2 == N3) return N2;   // select ?, N2, N2 --> N2
     break;
   case ISD::VECTOR_SHUFFLE:
     llvm_unreachable("should use getVectorShuffle constructor!");
