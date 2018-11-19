@@ -5078,6 +5078,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, const SDLoc &DL, EVT VT,
     break;
   }
   case ISD::SELECT:
+  case ISD::VSELECT:
     if (SDValue V = simplifySelect(N1, N2, N3))
       return V;
     break;
@@ -6790,10 +6791,17 @@ SDValue SelectionDAG::simplifySelect(SDValue Cond, SDValue T, SDValue F) {
   if (F.isUndef())
     return T;
 
-  // fold (select true, T, F) -> T
-  // fold (select false, T, F) -> F
+  // select true, T, F --> T
+  // select false, T, F --> F
   if (auto *CondC = dyn_cast<ConstantSDNode>(Cond))
     return CondC->isNullValue() ? F : T;
+
+  // TODO: This should simplify VSELECT with constant condition using something
+  // like this (but check boolean contents to be complete?):
+  //  if (ISD::isBuildVectorAllOnes(Cond.getNode()))
+  //    return T;
+  //  if (ISD::isBuildVectorAllZeros(Cond.getNode()))
+  //    return F;
 
   // select ?, T, T --> T
   if (T == F)
