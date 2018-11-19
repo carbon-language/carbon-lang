@@ -38,7 +38,7 @@ public:
     // suitable in size
     if (rank > 0) {
       MATCH(sizeof(dvStorage_), Descriptor::SizeInBytes(rank_, false));
-    } else {  // C++ implem overalocates for rank=0 by 24bytes.
+    } else {  // C++ implementation over-allocates for rank=0 by 24bytes.
       MATCH(true, sizeof(dvStorage_) >= Descriptor::SizeInBytes(rank_, false));
     }
     // suitable in alignment
@@ -167,7 +167,7 @@ static void check_CFI_establish(CFI_cdesc_t *dv, void *base_addr,
 }
 
 static void run_CFI_establish_tests() {
-  // Testing CFI_establish definied in section 18.5.5
+  // Testing CFI_establish defined in section 18.5.5
   CFI_index_t extents[CFI_MAX_RANK];
   for (int i{0}; i < CFI_MAX_RANK; ++i) {
     extents[i] = i + 66;
@@ -221,7 +221,7 @@ static void check_CFI_address(
   MATCH(true, addr == addrCheck);
 }
 
-// Helper function to set lower bound of decsriptor
+// Helper function to set lower bound of descriptor
 static void EstablishLowerBounds(CFI_cdesc_t *dv, CFI_index_t *sub) {
   for (int i{0}; i < dv->rank; ++i) {
     dv->dim[i].lower_bound = sub[i];
@@ -280,9 +280,6 @@ static void run_CFI_address_tests() {
         std::size_t size = ByteSize(type, 12);
         dv->elem_len = size;
         for (int i{0}; i < dv->rank; ++i) {
-          // contiguous
-          dv->dim[i].sm = size;
-          // non contiguous
           dv->dim[i].sm = size + (contiguous ? 0 : dv->elem_len);
           size = dv->dim[i].sm * dv->dim[i].extent;
         }
@@ -304,7 +301,7 @@ static void check_CFI_allocate(CFI_cdesc_t *dv,
     const CFI_index_t lower_bounds[], const CFI_index_t upper_bounds[],
     std::size_t elem_len) {
   // 18.5.5.3
-  // Backup descriptor data for futur checks
+  // Backup descriptor data for future checks
   const CFI_rank_t rank = dv->rank;
   const std::size_t desc_elem_len = dv->elem_len;
   const CFI_attribute_t attribute = dv->attribute;
@@ -353,7 +350,7 @@ static void check_CFI_allocate(CFI_cdesc_t *dv,
   }
   if (base_addr != nullptr && attribute == CFI_attribute_allocatable) {
     // This is less restrictive than 18.5.5.3 arg req for which pointers arg
-    // shall be unsassociated. However, this match ALLOCATE behavior
+    // shall be unassociated. However, this match ALLOCATE behavior
     // (9.7.3/9.7.4)
     ++numErr;
     expectedRetCode = CFI_ERROR_BASE_ADDR_NOT_NULL;
@@ -368,7 +365,7 @@ static void check_CFI_allocate(CFI_cdesc_t *dv,
     expectedRetCode = CFI_INVALID_EXTENT;
   }
 
-  // Memory allocation failures are unpredicatble in this test.
+  // Memory allocation failures are unpredictable in this test.
   if (numErr == 0 && retCode != CFI_SUCCESS) {
     MATCH(true, retCode == CFI_ERROR_MEM_ALLOCATION);
   } else if (numErr > 1) {
@@ -644,7 +641,7 @@ static void run_CFI_setpointer_tests() {
   retCode = CFI_setpointer(result, source, lower_bounds);
   MATCH(CFI_SUCCESS, retCode);
 
-  // The follwoing members must be invariant
+  // The following members must be invariant
   MATCH(rank, result->rank);
   MATCH(elem_len, result->elem_len);
   MATCH(type, result->type);
@@ -661,7 +658,6 @@ int main() {
   TestCdescMacroForAllRanksSmallerThan<CFI_MAX_RANK>();
   run_CFI_establish_tests();
   run_CFI_address_tests();
-  // TODO: calrify CFI_allocate -> CFI_type_cptr/CFI_type_char
   run_CFI_allocate_tests();
   // TODO: test CFI_deallocate
   // TODO: test CFI_is_contiguous

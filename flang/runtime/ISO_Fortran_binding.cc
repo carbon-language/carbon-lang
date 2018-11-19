@@ -252,7 +252,7 @@ int CFI_section(CFI_cdesc_t *result, const CFI_cdesc_t *source,
     return CFI_INVALID_DESCRIPTOR;
   }
 
-  // For zero-sized arrays, base_addr is proc-dep (see 18.5.3).
+  // For zero-sized arrays, base_addr is processor-dependent (see 18.5.3).
   // We keep it on the source base_addr
   result->base_addr = isZeroSized ? source->base_addr
                                   : reinterpret_cast<void *>(shiftedBaseAddr);
