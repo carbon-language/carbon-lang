@@ -12,6 +12,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/FormatVariadic.h"
+#include <limits>
 #include <unordered_set>
 #include <vector>
 
@@ -95,7 +96,21 @@ writeClusterId(llvm::raw_ostream &OS,
 
 template <EscapeTag Tag>
 static void writeMeasurementValue(llvm::raw_ostream &OS, const double Value) {
-  writeEscaped<Tag>(OS, llvm::formatv("{0:F}", Value).str());
+  // Given Value, if we wanted to serialize it to a string,
+  // how many base-10 digits will we need to store, max?
+  static constexpr auto MaxDigitCount =
+      std::numeric_limits<decltype(Value)>::max_digits10;
+  // Also, we will need a decimal separator.
+  static constexpr auto DecimalSeparatorLen = 1; // '.' e.g.
+  // So how long of a string will the serialization produce, max?
+  static constexpr auto SerializationLen = MaxDigitCount + DecimalSeparatorLen;
+
+  // WARNING: when changing the format, also adjust the small-size estimate ^.
+  static constexpr StringLiteral SimpleFloatFormat = StringLiteral("{0:F}");
+
+  writeEscaped<Tag>(
+      OS,
+      llvm::formatv(SimpleFloatFormat.data(), Value).sstr<SerializationLen>());
 }
 
 template <typename EscapeTag, EscapeTag Tag>
