@@ -20083,8 +20083,8 @@ static SDValue LowerEXTEND_VECTOR_INREG(SDValue Op,
     return SignExt;
 
   if (VT == MVT::v2i64 && CurrVT == MVT::v4i32) {
-    SDValue Sign = DAG.getNode(X86ISD::VSRAI, dl, CurrVT, Curr,
-                               DAG.getConstant(31, dl, MVT::i8));
+    SDValue Zero = DAG.getConstant(0, dl, CurrVT);
+    SDValue Sign = DAG.getSetCC(dl, CurrVT, Zero, Curr, ISD::SETGT);
     SDValue Ext = DAG.getVectorShuffle(CurrVT, dl, SignExt, Sign, {0, 4, 1, 5});
     return DAG.getBitcast(VT, Ext);
   }
@@ -26358,8 +26358,8 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
       In = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::v4i32, In);
 
       // Fill a vector with sign bits for each element.
-      SDValue SignBits = DAG.getNode(ISD::SRA, dl, MVT::v4i32, In,
-                                     DAG.getConstant(31, dl, MVT::v4i32));
+      SDValue Zero = DAG.getConstant(0, dl, MVT::v4i32);
+      SDValue SignBits = DAG.getSetCC(dl, MVT::v4i32, Zero, In, ISD::SETGT);
 
       // Create an unpackl and unpackh to interleave the sign bits then bitcast
       // to v2i64.
