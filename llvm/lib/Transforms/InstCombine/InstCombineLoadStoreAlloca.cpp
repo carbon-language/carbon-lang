@@ -19,6 +19,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/MDBuilder.h"
@@ -1600,11 +1601,15 @@ bool InstCombiner::mergeStoreIntoSuccessor(StoreInst &SI) {
 
   // Insert a PHI node now if we need it.
   Value *MergedVal = OtherStore->getOperand(0);
+  // The debug locations of the original instructions might differ. Merge them.
+  DebugLoc MergedLoc = DILocation::getMergedLocation(SI.getDebugLoc(),
+                                                     OtherStore->getDebugLoc());
   if (MergedVal != SI.getOperand(0)) {
     PHINode *PN = PHINode::Create(MergedVal->getType(), 2, "storemerge");
     PN->addIncoming(SI.getOperand(0), SI.getParent());
     PN->addIncoming(OtherStore->getOperand(0), OtherBB);
     MergedVal = InsertNewInstBefore(PN, DestBB->front());
+    PN->setDebugLoc(MergedLoc);
   }
 
   // Advance to a place where it is safe to insert the new store and insert it.
@@ -1613,8 +1618,7 @@ bool InstCombiner::mergeStoreIntoSuccessor(StoreInst &SI) {
                                    SI.isVolatile(), SI.getAlignment(),
                                    SI.getOrdering(), SI.getSyncScopeID());
   InsertNewInstBefore(NewSI, *BBI);
-  // The debug locations of the original instructions might differ. Merge them.
-  NewSI->applyMergedLocation(SI.getDebugLoc(), OtherStore->getDebugLoc());
+  NewSI->setDebugLoc(MergedLoc);
 
   // If the two stores had AA tags, merge them.
   AAMDNodes AATags;
