@@ -8140,7 +8140,6 @@ SITargetLowering::performInsertVectorEltCombine(SDNode *N,
   SDValue Ins = N->getOperand(1);
   EVT IdxVT = Idx.getValueType();
 
-  SDValue V;
   SmallVector<SDValue, 16> Ops;
   for (unsigned I = 0, E = VecVT.getVectorNumElements(); I < E; ++I) {
     SDValue IC = DAG.getConstant(I, SL, IdxVT);
