@@ -114,13 +114,11 @@ void Analysis::writeSnippet(llvm::raw_ostream &OS,
       writeEscaped<Tag>(OS, "[error decoding asm snippet]");
       return;
     }
-    Lines.emplace_back();
-    std::string &Line = Lines.back();
-    llvm::raw_string_ostream OSS(Line);
+    llvm::SmallString<128> InstPrinterStr; // FIXME: magic number.
+    llvm::raw_svector_ostream OSS(InstPrinterStr);
     InstPrinter_->printInst(&MI, OSS, "", *SubtargetInfo_);
     Bytes = Bytes.drop_front(MISize);
-    OSS.flush();
-    Line = llvm::StringRef(Line).trim().str();
+    Lines.emplace_back(llvm::StringRef(InstPrinterStr).trim());
   }
   writeEscaped<Tag>(OS, llvm::join(Lines, Separator));
 }
