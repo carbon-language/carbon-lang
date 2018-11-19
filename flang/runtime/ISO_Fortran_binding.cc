@@ -179,12 +179,6 @@ int CFI_establish(CFI_cdesc_t *descriptor, void *base_addr,
       descriptor->dim[j].sm = byteSize;
       byteSize *= extents[j];
     }
-  } else {
-    for (std::size_t j{0}; j < rank; ++j) {
-      descriptor->dim[j].lower_bound = lower_bound;
-      descriptor->dim[j].extent = 0;
-      descriptor->dim[j].sm = 0;
-    }
   }
   return CFI_SUCCESS;
 }
@@ -265,6 +259,7 @@ int CFI_section(CFI_cdesc_t *result, const CFI_cdesc_t *source,
   resRank = 0;
   for (int j{0}; j < source->rank; ++j) {
     if (actualStride[j] != 0) {
+      result->dim[resRank].lower_bound = 0;
       result->dim[resRank].extent = extent[j];
       result->dim[resRank].sm = actualStride[j] * source->dim[j].sm;
       ++resRank;
@@ -291,9 +286,6 @@ int CFI_select_part(CFI_cdesc_t *result, const CFI_cdesc_t *source,
   if (result->type != CFI_type_char) {
     elem_len = result->elem_len;
   }
-  if (elem_len == 0) {
-    return CFI_INVALID_ELEM_LEN;  // TODO: is it wrong to forbid this?
-  }
   if (displacement + elem_len > source->elem_len) {
     return CFI_INVALID_ELEM_LEN;
   }
@@ -302,7 +294,9 @@ int CFI_select_part(CFI_cdesc_t *result, const CFI_cdesc_t *source,
       displacement + reinterpret_cast<char *>(source->base_addr));
   result->elem_len = elem_len;
   for (int j{0}; j < source->rank; ++j) {
-    result->dim[j] = source->dim[j];
+    result->dim[j].lower_bound = 0;
+    result->dim[j].extent = source->dim[j].extent;
+    result->dim[j].sm = source->dim[j].sm;
   }
   return CFI_SUCCESS;
 }
