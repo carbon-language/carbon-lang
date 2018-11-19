@@ -1395,9 +1395,10 @@ MachineOutliner::createOutlinedFunction(Module &M, const OutlinedFunction &OF,
         Unit /* File */,
         0 /* Line 0 is reserved for compiler-generated code. */,
         DB.createSubroutineType(DB.getOrCreateTypeArray(None)), /* void type */
-        false, true, 0, /* Line 0 is reserved for compiler-generated code. */
+        0, /* Line 0 is reserved for compiler-generated code. */
         DINode::DIFlags::FlagArtificial /* Compiler-generated code. */,
-        true /* Outlined code is optimized code by definition. */);
+        /* Outlined code is optimized code by definition. */
+        DISubprogram::SPFlagDefinition | DISubprogram::SPFlagOptimized);
 
     // Don't add any new variables to the subprogram.
     DB.finalizeSubprogram(OutlinedSP);
