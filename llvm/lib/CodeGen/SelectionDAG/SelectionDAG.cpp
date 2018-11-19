@@ -2345,6 +2345,19 @@ KnownBits SelectionDAG::computeKnownBits(SDValue Op, const APInt &DemandedElts,
     }
     break;
   }
+  case ISD::SCALAR_TO_VECTOR: {
+    // We know about scalar_to_vector as much as we know about it source,
+    // which becomes the first element of otherwise unknown vector.
+    if (DemandedElts != 1)
+      break;
+
+    SDValue N0 = Op.getOperand(0);
+    Known = computeKnownBits(N0, DemandedElts, Depth + 1);
+    if (N0.getValueSizeInBits() != BitWidth)
+      Known = Known.trunc(BitWidth);
+
+    break;
+  }
   case ISD::BITCAST: {
     SDValue N0 = Op.getOperand(0);
     EVT SubVT = N0.getValueType();
