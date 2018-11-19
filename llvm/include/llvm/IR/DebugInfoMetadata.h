@@ -1628,9 +1628,10 @@ public:
                              bool IsOptimized,
                              unsigned Virtuality = SPFlagNonvirtual) {
     // We're assuming virtuality is the low-order field.
-    static_assert(SPFlagVirtual == dwarf::DW_VIRTUALITY_virtual &&
-                      SPFlagPureVirtual == dwarf::DW_VIRTUALITY_pure_virtual,
-                  "Virtuality constant mismatch");
+    static_assert(
+        int(SPFlagVirtual) == int(dwarf::DW_VIRTUALITY_virtual &&
+            int(SPFlagPureVirtual) == int(dwarf::DW_VIRTUALITY_pure_virtual),
+        "Virtuality constant mismatch");
     return static_cast<DISPFlags>((Virtuality & SPFlagVirtuality) |
                                   (IsLocalToUnit ? SPFlagLocalToUnit : 0) |
                                   (IsDefinition ? SPFlagDefinition : 0) |
