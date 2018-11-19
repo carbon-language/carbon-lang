@@ -1047,12 +1047,6 @@ public:
 #endif
 };
 
-#ifndef NDEBUG
-static raw_ostream &operator<<(raw_ostream &OS, const VectorInfo &S) {
-  S.print(OS);
-  return OS;
-}
-#endif
 } // anonymous namespace
 
 bool InterleavedLoadCombineImpl::findPattern(
