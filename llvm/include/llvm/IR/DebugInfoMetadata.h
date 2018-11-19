@@ -1629,7 +1629,7 @@ public:
                              unsigned Virtuality = SPFlagNonvirtual) {
     // We're assuming virtuality is the low-order field.
     static_assert(
-        int(SPFlagVirtual) == int(dwarf::DW_VIRTUALITY_virtual &&
+        int(SPFlagVirtual) == int(dwarf::DW_VIRTUALITY_virtual) &&
             int(SPFlagPureVirtual) == int(dwarf::DW_VIRTUALITY_pure_virtual),
         "Virtuality constant mismatch");
     return static_cast<DISPFlags>((Virtuality & SPFlagVirtuality) |
