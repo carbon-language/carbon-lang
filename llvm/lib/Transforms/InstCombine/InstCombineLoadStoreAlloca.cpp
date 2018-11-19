@@ -1526,7 +1526,7 @@ bool InstCombiner::mergeStoreIntoSuccessor(StoreInst &SI) {
   // Check if the successor block has exactly 2 incoming edges.
   BasicBlock *StoreBB = SI.getParent();
   BasicBlock *DestBB = StoreBB->getTerminator()->getSuccessor(0);
-  if (pred_size(DestBB) != 2)
+  if (!DestBB->hasNPredecessors(2))
     return false;
 
   // Capture the other block (the block that doesn't contain our store).
