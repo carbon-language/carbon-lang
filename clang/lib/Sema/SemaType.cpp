@@ -7205,7 +7205,7 @@ static void deduceOpenCLImplicitAddrSpace(TypeProcessingState &State,
       (T->isVoidType() && !IsPointee))
     return;
 
-  LangAS ImpAddr;
+  LangAS ImpAddr = LangAS::Default;
   // Put OpenCL automatic variable in private address space.
   // OpenCL v1.2 s6.5:
   // The default address space name for arguments to a function in a
