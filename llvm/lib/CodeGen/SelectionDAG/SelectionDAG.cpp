@@ -6784,7 +6784,7 @@ SDValue SelectionDAG::simplifySelect(SDValue Cond, SDValue T, SDValue F) {
   // select, ?, undef, F --> F
   // select, ?, T, undef --> T
   if (Cond.isUndef())
-    return isa<ConstantSDNode>(T) ? T : F;
+    return isConstantValueOfAnyType(T) ? T : F;
   if (T.isUndef())
     return F;
   if (F.isUndef())
