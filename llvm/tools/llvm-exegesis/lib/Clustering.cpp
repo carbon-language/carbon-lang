@@ -121,7 +121,7 @@ void InstructionBenchmarkClustering::dbScan(const size_t MinPts) {
     CurrentCluster.PointIndices.push_back(P);
 
     // Process P's neighbors.
-    llvm::SetVector<size_t> ToProcess;
+    llvm::SetVector<size_t, std::deque<size_t>> ToProcess;
     ToProcess.insert(Neighbors.begin(), Neighbors.end());
     while (!ToProcess.empty()) {
       // Retrieve a point from the set.
