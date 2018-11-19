@@ -9,6 +9,7 @@
 
 #include "Clustering.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/SmallVector.h"
 #include <string>
 
 namespace llvm {
@@ -32,9 +33,9 @@ namespace exegesis {
 
 // Finds the points at distance less than sqrt(EpsilonSquared) of Q (not
 // including Q).
-std::vector<size_t>
+llvm::SmallVector<size_t, 0>
 InstructionBenchmarkClustering::rangeQuery(const size_t Q) const {
-  std::vector<size_t> Neighbors;
+  llvm::SmallVector<size_t, 0> Neighbors;
   const auto &QMeasurements = Points_[Q].Measurements;
   for (size_t P = 0, NumPoints = Points_.size(); P < NumPoints; ++P) {
     if (P == Q)

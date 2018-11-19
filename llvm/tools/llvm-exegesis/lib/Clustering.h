@@ -97,7 +97,7 @@ private:
       const std::vector<InstructionBenchmark> &Points, double EpsilonSquared);
   llvm::Error validateAndSetup();
   void dbScan(size_t MinPts);
-  std::vector<size_t> rangeQuery(size_t Q) const;
+  llvm::SmallVector<size_t, 0> rangeQuery(size_t Q) const;
 
   const std::vector<InstructionBenchmark> &Points_;
   const double EpsilonSquared_;
