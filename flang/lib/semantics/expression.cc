@@ -1260,6 +1260,43 @@ evaluate::MaybeExpr AnalyzeExpr(
   return evaluate::ExprAnalyzer{context}.Analyze(expr);
 }
 
+template<typename A>
+evaluate::MaybeExpr AnalyzeWrappedExpr(
+    SemanticsContext &context, const A &expr) {
+  evaluate::ExprAnalyzer ea{context};
+  return evaluate::AnalyzeHelper(ea, expr);
+}
+
+evaluate::MaybeExpr AnalyzeExpr(
+    SemanticsContext &context, const parser::Scalar<parser::Expr> &expr) {
+  return AnalyzeWrappedExpr(context, expr);
+}
+evaluate::MaybeExpr AnalyzeExpr(
+    SemanticsContext &context, const parser::Constant<parser::Expr> &expr) {
+  return AnalyzeWrappedExpr(context, expr);
+}
+evaluate::MaybeExpr AnalyzeExpr(
+    SemanticsContext &context, const parser::Integer<parser::Expr> &expr) {
+  return AnalyzeWrappedExpr(context, expr);
+}
+evaluate::MaybeExpr AnalyzeExpr(SemanticsContext &context,
+    const parser::Scalar<parser::Constant<parser::Expr>> &expr) {
+  return AnalyzeWrappedExpr(context, expr);
+}
+evaluate::MaybeExpr AnalyzeExpr(SemanticsContext &context,
+    const parser::Scalar<parser::Integer<parser::Expr>> &expr) {
+  return AnalyzeWrappedExpr(context, expr);
+}
+evaluate::MaybeExpr AnalyzeExpr(SemanticsContext &context,
+    const parser::Integer<parser::Constant<parser::Expr>> &expr) {
+  return AnalyzeWrappedExpr(context, expr);
+}
+evaluate::MaybeExpr AnalyzeExpr(SemanticsContext &context,
+    const parser::Scalar<parser::Integer<parser::Constant<parser::Expr>>>
+        &expr) {
+  return AnalyzeWrappedExpr(context, expr);
+}
+
 class Mutator {
 public:
   Mutator(SemanticsContext &context) : context_{context} {}
