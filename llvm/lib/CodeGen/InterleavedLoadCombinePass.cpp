@@ -619,11 +619,6 @@ private:
   }
 };
 
-static raw_ostream &operator<<(raw_ostream &OS, const Polynomial &P) {
-  P.print(OS);
-  return OS;
-}
-
 /// VectorInfo stores abstract the following information for each vector
 /// element:
 ///
@@ -810,7 +805,7 @@ public:
       Result.PV = LHS.PV;
     }
     // Both operands produced sensible results?
-    else if ((LHS.BB == RHS.BB) && (LHS.PV == LHS.PV)) {
+    else if ((LHS.BB == RHS.BB) && (LHS.PV == RHS.PV)) {
       Result.BB = LHS.BB;
       Result.PV = LHS.PV;
     }
