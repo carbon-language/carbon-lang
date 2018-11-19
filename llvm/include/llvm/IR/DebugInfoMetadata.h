@@ -1632,10 +1632,11 @@ public:
         int(SPFlagVirtual) == int(dwarf::DW_VIRTUALITY_virtual) &&
             int(SPFlagPureVirtual) == int(dwarf::DW_VIRTUALITY_pure_virtual),
         "Virtuality constant mismatch");
-    return static_cast<DISPFlags>((Virtuality & SPFlagVirtuality) |
-                                  (IsLocalToUnit ? SPFlagLocalToUnit : 0) |
-                                  (IsDefinition ? SPFlagDefinition : 0) |
-                                  (IsOptimized ? SPFlagOptimized : 0));
+    return static_cast<DISPFlags>(
+        (Virtuality & SPFlagVirtuality) |
+        (IsLocalToUnit ? SPFlagLocalToUnit : SPFlagZero) |
+        (IsDefinition ? SPFlagDefinition : SPFlagZero) |
+        (IsOptimized ? SPFlagOptimized : SPFlagZero));
   }
 
 private:
