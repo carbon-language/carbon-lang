@@ -204,7 +204,7 @@ int CFI_section(CFI_cdesc_t *result, const CFI_cdesc_t *source,
   CFI_index_t extent[CFI_MAX_RANK];
   CFI_index_t actualStride[CFI_MAX_RANK];
   CFI_rank_t resRank{0};
-  char *shiftedBaseAddr{reinterpret_cast<char *>(source->base_addr)};
+  char *shiftedBaseAddr{static_cast<char *>(source->base_addr)};
 
   if (source->rank == 0) {
     return CFI_INVALID_RANK;
@@ -254,8 +254,7 @@ int CFI_section(CFI_cdesc_t *result, const CFI_cdesc_t *source,
 
   // For zero-sized arrays, base_addr is processor-dependent (see 18.5.3).
   // We keep it on the source base_addr
-  result->base_addr = isZeroSized ? source->base_addr
-                                  : reinterpret_cast<void *>(shiftedBaseAddr);
+  result->base_addr = isZeroSized ? source->base_addr : shiftedBaseAddr;
   resRank = 0;
   for (int j{0}; j < source->rank; ++j) {
     if (actualStride[j] != 0) {
