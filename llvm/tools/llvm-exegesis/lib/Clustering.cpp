@@ -33,9 +33,9 @@ namespace exegesis {
 
 // Finds the points at distance less than sqrt(EpsilonSquared) of Q (not
 // including Q).
-llvm::SmallVector<size_t, 0>
-InstructionBenchmarkClustering::rangeQuery(const size_t Q) const {
-  llvm::SmallVector<size_t, 0> Neighbors;
+void InstructionBenchmarkClustering::rangeQuery(
+    const size_t Q, llvm::SmallVectorImpl<size_t> &Neighbors) const {
+  Neighbors.clear();
   const auto &QMeasurements = Points_[Q].Measurements;
   for (size_t P = 0, NumPoints = Points_.size(); P < NumPoints; ++P) {
     if (P == Q)
@@ -47,7 +47,6 @@ InstructionBenchmarkClustering::rangeQuery(const size_t Q) const {
       Neighbors.push_back(P);
     }
   }
-  return Neighbors;
 }
 
 bool InstructionBenchmarkClustering::isNeighbour(
@@ -103,10 +102,11 @@ llvm::Error InstructionBenchmarkClustering::validateAndSetup() {
 }
 
 void InstructionBenchmarkClustering::dbScan(const size_t MinPts) {
+  llvm::SmallVector<size_t, 0> Neighbors; // Persistent buffer to avoid allocs.
   for (size_t P = 0, NumPoints = Points_.size(); P < NumPoints; ++P) {
     if (!ClusterIdForPoint_[P].isUndef())
       continue; // Previously processed in inner loop.
-    const auto Neighbors = rangeQuery(P);
+    rangeQuery(P, Neighbors);
     if (Neighbors.size() + 1 < MinPts) { // Density check.
       // The region around P is not dense enough to create a new cluster, mark
       // as noise for now.
@@ -141,7 +141,7 @@ void InstructionBenchmarkClustering::dbScan(const size_t MinPts) {
       ClusterIdForPoint_[Q] = CurrentCluster.Id;
       CurrentCluster.PointIndices.push_back(Q);
       // And extend to the neighbors of Q if the region is dense enough.
-      const auto Neighbors = rangeQuery(Q);
+      rangeQuery(Q, Neighbors);
       if (Neighbors.size() + 1 >= MinPts) {
         ToProcess.insert(Neighbors.begin(), Neighbors.end());
       }
