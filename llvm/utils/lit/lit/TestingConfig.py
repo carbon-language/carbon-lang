@@ -85,7 +85,9 @@ class TestingConfig:
         cfg_globals['config'] = self
         cfg_globals['lit_config'] = litConfig
         cfg_globals['__file__'] = path
+        original_sys_path = list(sys.path)
         try:
+            sys.path.insert(0, os.path.dirname(path))
             exec(compile(data, path, 'exec'), cfg_globals, None)
             if litConfig.debug:
                 litConfig.note('... loaded config %r' % path)
@@ -100,7 +102,7 @@ class TestingConfig:
             litConfig.fatal(
                 'unable to parse config file %r, traceback: %s' % (
                     path, traceback.format_exc()))
-
+        sys.path = original_sys_path
         self.finish(litConfig)
 
     def __init__(self, parent, name, suffixes, test_format,
