@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "Clustering.h"
+#include "llvm/ADT/SetVector.h"
 #include <string>
-#include <unordered_set>
 
 namespace llvm {
 namespace exegesis {
@@ -120,11 +120,12 @@ void InstructionBenchmarkClustering::dbScan(const size_t MinPts) {
     CurrentCluster.PointIndices.push_back(P);
 
     // Process P's neighbors.
-    std::unordered_set<size_t> ToProcess(Neighbors.begin(), Neighbors.end());
+    llvm::SetVector<size_t> ToProcess;
+    ToProcess.insert(Neighbors.begin(), Neighbors.end());
     while (!ToProcess.empty()) {
       // Retrieve a point from the set.
       const size_t Q = *ToProcess.begin();
-      ToProcess.erase(Q);
+      ToProcess.erase(ToProcess.begin());
 
       if (ClusterIdForPoint_[Q].isNoise()) {
         // Change noise point to border point.
