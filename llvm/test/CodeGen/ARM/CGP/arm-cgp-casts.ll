@@ -457,8 +457,8 @@ if.end:
 }
 
 ; CHECK-COMMON-LABEL: trunc_sink_less_than_zext_ret
-; CHECK-COMMON-NOT: uxt
-; CHECK-COMMON: cmp
+; CHECK-COMMON-NOT: uxth
+; CHECK-COMMON: sub
 ; CHECK-COMMON: uxtb
 define zeroext i8 @trunc_sink_less_than_zext_ret(i16 zeroext %a, i16 zeroext %b, i16 zeroext %c, i8 zeroext %d, i8 zeroext %e) {
 entry:
