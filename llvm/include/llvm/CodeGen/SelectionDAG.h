@@ -962,6 +962,9 @@ public:
                    False, getCondCode(Cond));
   }
 
+  /// Try to simplify a select/vselect into 1 of its operands or a constant.
+  SDValue simplifySelect(SDValue Cond, SDValue TVal, SDValue FVal);
+
   /// VAArg produces a result and token chain, and takes a pointer
   /// and a source value as input.
   SDValue getVAArg(EVT VT, const SDLoc &dl, SDValue Chain, SDValue Ptr,

@@ -5078,24 +5078,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, const SDLoc &DL, EVT VT,
     break;
   }
   case ISD::SELECT:
-    // select undef, N2, N3 --> N2 (if it's a constant), otherwise N3
-    if (N1.isUndef())
-      return isa<ConstantSDNode>(N2) ? N2 : N3;
-    // select, ?, undef, N3 --> N3
-    if (N2.isUndef())
-      return N3;
-    // select, ?, N2, undef --> N2
-    if (N3.isUndef())
-      return N2;
-
-    // select true, N2, N3 --> N2
-    // select false, N2, N3 --> N3
-    if (auto *N1C = dyn_cast<ConstantSDNode>(N1))
-      return N1C->isNullValue() ? N3 : N2;
-
-    // select ?, N2, N2 --> N2
-    if (N2 == N3)
-      return N2;
+    if (SDValue V = simplifySelect(N1, N2, N3))
+      return V;
     break;
   case ISD::VECTOR_SHUFFLE:
     llvm_unreachable("should use getVectorShuffle constructor!");
@@ -6793,6 +6777,29 @@ SDValue SelectionDAG::getMaskedScatter(SDVTList VTs, EVT VT, const SDLoc &dl,
   SDValue V(N, 0);
   NewSDValueDbgMsg(V, "Creating new node: ", this);
   return V;
+}
+
+SDValue SelectionDAG::simplifySelect(SDValue Cond, SDValue T, SDValue F) {
+  // select undef, T, F --> T (if T is a constant), otherwise F
+  // select, ?, undef, F --> F
+  // select, ?, T, undef --> T
+  if (Cond.isUndef())
+    return isa<ConstantSDNode>(T) ? T : F;
+  if (T.isUndef())
+    return F;
+  if (F.isUndef())
+    return T;
+
+  // fold (select true, T, F) -> T
+  // fold (select false, T, F) -> F
+  if (auto *CondC = dyn_cast<ConstantSDNode>(Cond))
+    return CondC->isNullValue() ? F : T;
+
+  // select ?, T, T --> T
+  if (T == F)
+    return T;
+
+  return SDValue();
 }
 
 SDValue SelectionDAG::getVAArg(EVT VT, const SDLoc &dl, SDValue Chain,
