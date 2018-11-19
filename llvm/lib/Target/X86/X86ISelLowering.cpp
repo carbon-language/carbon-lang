@@ -40494,9 +40494,9 @@ static SDValue combineSub(SDNode *N, SelectionDAG &DAG,
   return combineAddOrSubToADCOrSBB(N, DAG);
 }
 
-static SDValue combineVSZext(SDNode *N, SelectionDAG &DAG,
-                             TargetLowering::DAGCombinerInfo &DCI,
-                             const X86Subtarget &Subtarget) {
+static SDValue combineExtendVectorInreg(SDNode *N, SelectionDAG &DAG,
+                                        TargetLowering::DAGCombinerInfo &DCI,
+                                        const X86Subtarget &Subtarget) {
   if (DCI.isBeforeLegalize())
     return SDValue();
 
@@ -40928,7 +40928,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
     return combineVectorShiftImm(N, DAG, DCI, Subtarget);
   case ISD::SIGN_EXTEND_VECTOR_INREG:
   case ISD::ZERO_EXTEND_VECTOR_INREG:
-    return combineVSZext(N, DAG, DCI, Subtarget);
+    return combineExtendVectorInreg(N, DAG, DCI, Subtarget);
   case X86ISD::PINSRB:
   case X86ISD::PINSRW:      return combineVectorInsert(N, DAG, DCI, Subtarget);
   case X86ISD::SHUFP:       // Handle all target specific shuffles
