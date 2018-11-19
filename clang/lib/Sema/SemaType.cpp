@@ -7227,7 +7227,9 @@ static void deduceOpenCLImplicitAddrSpace(TypeProcessingState &State,
     if (IsPointee) {
       ImpAddr = LangAS::opencl_generic;
     } else {
-      if (D.getContext() == DeclaratorContext::FileContext) {
+      if (D.getContext() == DeclaratorContext::TemplateArgContext) {
+        // Do not deduce address space for non-pointee type in template args
+      } else if (D.getContext() == DeclaratorContext::FileContext) {
         ImpAddr = LangAS::opencl_global;
       } else {
         if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_static ||
