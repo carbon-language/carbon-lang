@@ -2798,7 +2798,7 @@ bool PhiNodeSetIterator::operator==(const PhiNodeSetIterator &RHS) const {
 }
 
 bool PhiNodeSetIterator::operator!=(const PhiNodeSetIterator &RHS) const {
-  return CurrentIndex != RHS.CurrentIndex;
+  return !((*this) == RHS);
 }
 
 /// Keep track of simplification of Phi nodes.
