@@ -924,7 +924,7 @@ struct MachineOutliner : public ModulePass {
   /// \param[out] CandidateList Filled with outlining candidates for the module.
   /// \param[out] FunctionList Filled with functions corresponding to each type
   /// of \p Candidate.
-  /// \param ST The suffix tree for the module.
+  /// \param Mapper Contains the instruction mappings for the module.
   ///
   /// \returns The length of the longest candidate found. 0 if there are none.
   unsigned
