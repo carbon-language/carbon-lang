@@ -34,8 +34,9 @@ namespace exegesis {
 // Finds the points at distance less than sqrt(EpsilonSquared) of Q (not
 // including Q).
 void InstructionBenchmarkClustering::rangeQuery(
-    const size_t Q, llvm::SmallVectorImpl<size_t> &Neighbors) const {
+    const size_t Q, std::vector<size_t> &Neighbors) const {
   Neighbors.clear();
+  Neighbors.reserve(Points_.size() - 1); // The Q itself isn't a neighbor.
   const auto &QMeasurements = Points_[Q].Measurements;
   for (size_t P = 0, NumPoints = Points_.size(); P < NumPoints; ++P) {
     if (P == Q)
@@ -91,7 +92,7 @@ llvm::Error InstructionBenchmarkClustering::validateAndSetup() {
 }
 
 void InstructionBenchmarkClustering::dbScan(const size_t MinPts) {
-  llvm::SmallVector<size_t, 0> Neighbors; // Persistent buffer to avoid allocs.
+  std::vector<size_t> Neighbors; // Persistent buffer to avoid allocs.
   for (size_t P = 0, NumPoints = Points_.size(); P < NumPoints; ++P) {
     if (!ClusterIdForPoint_[P].isUndef())
       continue; // Previously processed in inner loop.
@@ -136,6 +137,8 @@ void InstructionBenchmarkClustering::dbScan(const size_t MinPts) {
       }
     }
   }
+  // assert(Neighbors.capacity() == (Points_.size() - 1));
+  // ^ True, but it is not quaranteed to be true in all the cases.
 
   // Add noisy points to noise cluster.
   for (size_t P = 0, NumPoints = Points_.size(); P < NumPoints; ++P) {
