@@ -50,12 +50,13 @@ public:
   static constexpr std::uint64_t exponentBias{maxExponent / 2};
 
   // Decimal precision of a binary floating-point representation is
-  // actual the base-5 precision.
+  // actually the same as the base-5 precision, as factors of two
+  // can be accommodated by the binary exponent.
   // log(2)/log(5) = 0.430+ in any base.
   // Calculate "precision*0.43" with integer arithmetic so as to be constexpr.
   static constexpr int decimalDigits{(precision * 43) / 100};
 
-  // Associates a decimal exponent with an integral value for formmatting.
+  // Associates a decimal exponent with an integral value for formatting.
   struct ScaledDecimal {
     bool negative{false};
     Word integer;  // unsigned
