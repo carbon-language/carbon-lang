@@ -619,6 +619,13 @@ private:
   }
 };
 
+#ifndef NDEBUG
+static raw_ostream &operator<<(raw_ostream &OS, const Polynomial &S) {
+  S.print(OS);
+  return OS;
+}
+#endif
+
 /// VectorInfo stores abstract the following information for each vector
 /// element:
 ///
