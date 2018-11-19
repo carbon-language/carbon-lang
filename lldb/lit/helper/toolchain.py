@@ -1,4 +1,4 @@
-ï»¿import os
+import os
 import platform
 import subprocess
 import sys
