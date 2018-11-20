@@ -1460,6 +1460,23 @@ bool TargetLowering::SimplifyDemandedVectorElts(
                                      TLO, Depth + 1))
         return true;
 
+      // Try calling SimplifyDemandedBits, converting demanded elts to the bits
+      // of the large element.
+      // TODO - bigendian once we have test coverage.
+      if (TLO.DAG.getDataLayout().isLittleEndian()) {
+        unsigned SrcEltSizeInBits = SrcVT.getScalarSizeInBits();
+        APInt SrcDemandedBits = APInt::getNullValue(SrcEltSizeInBits);
+        for (unsigned i = 0; i != NumElts; ++i)
+          if (DemandedElts[i]) {
+            unsigned Ofs = (i % Scale) * EltSizeInBits;
+            SrcDemandedBits.setBits(Ofs, Ofs + EltSizeInBits);
+          }
+
+        KnownBits Known;
+        if (SimplifyDemandedBits(Src, SrcDemandedBits, Known, TLO, Depth + 1))
+          return true;
+      }
+
       // If the src element is zero/undef then all the output elements will be -
       // only demanded elements are guaranteed to be correct.
       for (unsigned i = 0; i != NumSrcElts; ++i) {
