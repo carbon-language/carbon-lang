@@ -1569,7 +1569,7 @@ bool TargetLowering::SimplifyDemandedVectorElts(
     EVT SubVT = Sub.getValueType();
     unsigned NumSubElts = SubVT.getVectorNumElements();
     const APInt& Idx = cast<ConstantSDNode>(Op.getOperand(2))->getAPIntValue();
-    if (Idx.uge(NumElts - NumSubElts))
+    if (Idx.ugt(NumElts - NumSubElts))
       break;
     unsigned SubIdx = Idx.getZExtValue();
     APInt SubElts = DemandedElts.extractBits(NumSubElts, SubIdx);
