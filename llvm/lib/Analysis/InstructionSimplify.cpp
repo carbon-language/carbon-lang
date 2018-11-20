@@ -5042,7 +5042,16 @@ static Value *simplifyIntrinsic(Function *F, IterTy ArgBegin, IterTy ArgEnd,
   }
   case Intrinsic::fshl:
   case Intrinsic::fshr: {
-    Value *ShAmtArg = ArgBegin[2];
+    Value *Op0 = ArgBegin[0], *Op1 = ArgBegin[1], *ShAmtArg = ArgBegin[2];
+
+    // If both operands are undef, the result is undef.
+    if (match(Op0, m_Undef()) && match(Op1, m_Undef()))
+      return UndefValue::get(F->getReturnType());
+
+    // If shift amount is undef, assume it is zero.
+    if (match(ShAmtArg, m_Undef()))
+      return ArgBegin[IID == Intrinsic::fshl ? 0 : 1];
+
     const APInt *ShAmtC;
     if (match(ShAmtArg, m_APInt(ShAmtC))) {
       // If there's effectively no shift, return the 1st arg or 2nd arg.

@@ -632,8 +632,7 @@ define <2 x i8> @fshr_zero_shift_guard_splat(<2 x i8> %x, <2 x i8> %y, <2 x i8> 
 
 define i8 @fshl_ops_undef(i8 %shamt) {
 ; CHECK-LABEL: @fshl_ops_undef(
-; CHECK-NEXT:    [[R:%.*]] = call i8 @llvm.fshl.i8(i8 undef, i8 undef, i8 [[SHAMT:%.*]])
-; CHECK-NEXT:    ret i8 [[R]]
+; CHECK-NEXT:    ret i8 undef
 ;
   %r = call i8 @llvm.fshl.i8(i8 undef, i8 undef, i8 %shamt)
   ret i8 %r
@@ -641,8 +640,7 @@ define i8 @fshl_ops_undef(i8 %shamt) {
 
 define i9 @fshr_ops_undef(i9 %shamt) {
 ; CHECK-LABEL: @fshr_ops_undef(
-; CHECK-NEXT:    [[R:%.*]] = call i9 @llvm.fshr.i9(i9 undef, i9 undef, i9 [[SHAMT:%.*]])
-; CHECK-NEXT:    ret i9 [[R]]
+; CHECK-NEXT:    ret i9 undef
 ;
   %r = call i9 @llvm.fshr.i9(i9 undef, i9 undef, i9 %shamt)
   ret i9 %r
@@ -652,8 +650,7 @@ define i9 @fshr_ops_undef(i9 %shamt) {
 
 define i8 @fshl_shift_undef(i8 %x, i8 %y) {
 ; CHECK-LABEL: @fshl_shift_undef(
-; CHECK-NEXT:    [[R:%.*]] = call i8 @llvm.fshl.i8(i8 [[X:%.*]], i8 [[Y:%.*]], i8 undef)
-; CHECK-NEXT:    ret i8 [[R]]
+; CHECK-NEXT:    ret i8 [[X:%.*]]
 ;
   %r = call i8 @llvm.fshl.i8(i8 %x, i8 %y, i8 undef)
   ret i8 %r
@@ -661,8 +658,7 @@ define i8 @fshl_shift_undef(i8 %x, i8 %y) {
 
 define i9 @fshr_shift_undef(i9 %x, i9 %y) {
 ; CHECK-LABEL: @fshr_shift_undef(
-; CHECK-NEXT:    [[R:%.*]] = call i9 @llvm.fshr.i9(i9 [[X:%.*]], i9 [[Y:%.*]], i9 undef)
-; CHECK-NEXT:    ret i9 [[R]]
+; CHECK-NEXT:    ret i9 [[Y:%.*]]
 ;
   %r = call i9 @llvm.fshr.i9(i9 %x, i9 %y, i9 undef)
   ret i9 %r
