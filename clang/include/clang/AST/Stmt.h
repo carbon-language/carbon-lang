@@ -416,6 +416,14 @@ protected:
     unsigned IsType : 1; // true if operand is a type, false if an expression.
   };
 
+  class ArraySubscriptExprBitfields {
+    friend class ArraySubscriptExpr;
+
+    unsigned : NumExprBits;
+
+    SourceLocation RBracketLoc;
+  };
+
   class CallExprBitfields {
     friend class CallExpr;
 
@@ -658,6 +666,7 @@ protected:
     CharacterLiteralBitfields CharacterLiteralBits;
     UnaryOperatorBitfields UnaryOperatorBits;
     UnaryExprOrTypeTraitExprBitfields UnaryExprOrTypeTraitExprBits;
+    ArraySubscriptExprBitfields ArraySubscriptExprBits;
     CallExprBitfields CallExprBits;
     MemberExprBitfields MemberExprBits;
     CastExprBitfields CastExprBits;

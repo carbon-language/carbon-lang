@@ -2315,9 +2315,9 @@ public:
 
 /// ArraySubscriptExpr - [C99 6.5.2.1] Array Subscripting.
 class ArraySubscriptExpr : public Expr {
-  enum { LHS, RHS, END_EXPR=2 };
-  Stmt* SubExprs[END_EXPR];
-  SourceLocation RBracketLoc;
+  enum { LHS, RHS, END_EXPR };
+  Stmt *SubExprs[END_EXPR];
+
 public:
   ArraySubscriptExpr(Expr *lhs, Expr *rhs, QualType t,
                      ExprValueKind VK, ExprObjectKind OK,
@@ -2328,10 +2328,10 @@ public:
          (lhs->isInstantiationDependent() ||
           rhs->isInstantiationDependent()),
          (lhs->containsUnexpandedParameterPack() ||
-          rhs->containsUnexpandedParameterPack())),
-    RBracketLoc(rbracketloc) {
+          rhs->containsUnexpandedParameterPack())) {
     SubExprs[LHS] = lhs;
     SubExprs[RHS] = rhs;
+    ArraySubscriptExprBits.RBracketLoc = rbracketloc;
   }
 
   /// Create an empty array subscript expression.
@@ -2374,10 +2374,14 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY {
     return getLHS()->getBeginLoc();
   }
-  SourceLocation getEndLoc() const LLVM_READONLY { return RBracketLoc; }
+  SourceLocation getEndLoc() const { return getRBracketLoc(); }
 
-  SourceLocation getRBracketLoc() const { return RBracketLoc; }
-  void setRBracketLoc(SourceLocation L) { RBracketLoc = L; }
+  SourceLocation getRBracketLoc() const {
+    return ArraySubscriptExprBits.RBracketLoc;
+  }
+  void setRBracketLoc(SourceLocation L) {
+    ArraySubscriptExprBits.RBracketLoc = L;
+  }
 
   SourceLocation getExprLoc() const LLVM_READONLY {
     return getBase()->getExprLoc();
