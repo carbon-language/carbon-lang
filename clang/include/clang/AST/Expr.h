@@ -2318,6 +2318,8 @@ class ArraySubscriptExpr : public Expr {
   enum { LHS, RHS, END_EXPR };
   Stmt *SubExprs[END_EXPR];
 
+  bool lhsIsBase() const { return getRHS()->getType()->isIntegerType(); }
+
 public:
   ArraySubscriptExpr(Expr *lhs, Expr *rhs, QualType t,
                      ExprValueKind VK, ExprObjectKind OK,
@@ -2355,21 +2357,11 @@ public:
   const Expr *getRHS() const { return cast<Expr>(SubExprs[RHS]); }
   void setRHS(Expr *E) { SubExprs[RHS] = E; }
 
-  Expr *getBase() {
-    return getRHS()->getType()->isIntegerType() ? getLHS() : getRHS();
-  }
+  Expr *getBase() { return lhsIsBase() ? getLHS() : getRHS(); }
+  const Expr *getBase() const { return lhsIsBase() ? getLHS() : getRHS(); }
 
-  const Expr *getBase() const {
-    return getRHS()->getType()->isIntegerType() ? getLHS() : getRHS();
-  }
-
-  Expr *getIdx() {
-    return getRHS()->getType()->isIntegerType() ? getRHS() : getLHS();
-  }
-
-  const Expr *getIdx() const {
-    return getRHS()->getType()->isIntegerType() ? getRHS() : getLHS();
-  }
+  Expr *getIdx() { return lhsIsBase() ? getRHS() : getLHS(); }
+  const Expr *getIdx() const { return lhsIsBase() ? getRHS() : getLHS(); }
 
   SourceLocation getBeginLoc() const LLVM_READONLY {
     return getLHS()->getBeginLoc();
