@@ -272,8 +272,8 @@ public:
   static const uint32_t PointerModeShift = 5;
   static const uint32_t PointerModeMask = 0x07;
 
-  // ----------XXX------XXXXX-------
-  static const uint32_t PointerOptionMask = 0x1C0F80;
+  // ----------XXX------XXXXX--------
+  static const uint32_t PointerOptionMask = 0x381f00;
 
   // -------------XXXXXX------------
   static const uint32_t PointerSizeShift = 13;
