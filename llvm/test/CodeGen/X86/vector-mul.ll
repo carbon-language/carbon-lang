@@ -1253,35 +1253,21 @@ define <2 x i64> @mul_v2i64_zext_cross_bb(<2 x i32>* %in, <2 x i32>* %y) {
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %ecx
 ; X86-NEXT:    pmovzxdq {{.*#+}} xmm0 = mem[0],zero,mem[1],zero
 ; X86-NEXT:    pmovzxdq {{.*#+}} xmm1 = mem[0],zero,mem[1],zero
-; X86-NEXT:    movdqa %xmm0, %xmm2
-; X86-NEXT:    pmuludq %xmm1, %xmm2
-; X86-NEXT:    psrlq $32, %xmm0
 ; X86-NEXT:    pmuludq %xmm1, %xmm0
-; X86-NEXT:    psllq $32, %xmm0
-; X86-NEXT:    paddq %xmm2, %xmm0
 ; X86-NEXT:    retl
 ;
 ; X64-LABEL: mul_v2i64_zext_cross_bb:
 ; X64:       # %bb.0:
 ; X64-NEXT:    pmovzxdq {{.*#+}} xmm0 = mem[0],zero,mem[1],zero
 ; X64-NEXT:    pmovzxdq {{.*#+}} xmm1 = mem[0],zero,mem[1],zero
-; X64-NEXT:    movdqa %xmm0, %xmm2
-; X64-NEXT:    pmuludq %xmm1, %xmm2
-; X64-NEXT:    psrlq $32, %xmm0
 ; X64-NEXT:    pmuludq %xmm1, %xmm0
-; X64-NEXT:    psllq $32, %xmm0
-; X64-NEXT:    paddq %xmm2, %xmm0
 ; X64-NEXT:    retq
 ;
 ; X64-AVX-LABEL: mul_v2i64_zext_cross_bb:
 ; X64-AVX:       # %bb.0:
 ; X64-AVX-NEXT:    vpmovzxdq {{.*#+}} xmm0 = mem[0],zero,mem[1],zero
 ; X64-AVX-NEXT:    vpmovzxdq {{.*#+}} xmm1 = mem[0],zero,mem[1],zero
-; X64-AVX-NEXT:    vpmuludq %xmm1, %xmm0, %xmm2
-; X64-AVX-NEXT:    vpsrlq $32, %xmm0, %xmm0
 ; X64-AVX-NEXT:    vpmuludq %xmm1, %xmm0, %xmm0
-; X64-AVX-NEXT:    vpsllq $32, %xmm0, %xmm0
-; X64-AVX-NEXT:    vpaddq %xmm0, %xmm2, %xmm0
 ; X64-AVX-NEXT:    retq
   %a = load <2 x i32>, <2 x i32>* %in
   %b = zext <2 x i32> %a to <2 x i64>
@@ -1302,19 +1288,9 @@ define <4 x i64> @mul_v4i64_zext_cross_bb(<4 x i32>* %in, <4 x i32>* %y) {
 ; X86-NEXT:    pmovzxdq {{.*#+}} xmm1 = mem[0],zero,mem[1],zero
 ; X86-NEXT:    pmovzxdq {{.*#+}} xmm0 = mem[0],zero,mem[1],zero
 ; X86-NEXT:    pmovzxdq {{.*#+}} xmm2 = mem[0],zero,mem[1],zero
-; X86-NEXT:    pmovzxdq {{.*#+}} xmm3 = mem[0],zero,mem[1],zero
-; X86-NEXT:    movdqa %xmm0, %xmm4
-; X86-NEXT:    pmuludq %xmm3, %xmm4
-; X86-NEXT:    psrlq $32, %xmm0
-; X86-NEXT:    pmuludq %xmm3, %xmm0
-; X86-NEXT:    psllq $32, %xmm0
-; X86-NEXT:    paddq %xmm4, %xmm0
-; X86-NEXT:    movdqa %xmm1, %xmm3
-; X86-NEXT:    pmuludq %xmm2, %xmm3
-; X86-NEXT:    psrlq $32, %xmm1
 ; X86-NEXT:    pmuludq %xmm2, %xmm1
-; X86-NEXT:    psllq $32, %xmm1
-; X86-NEXT:    paddq %xmm3, %xmm1
+; X86-NEXT:    pmovzxdq {{.*#+}} xmm2 = mem[0],zero,mem[1],zero
+; X86-NEXT:    pmuludq %xmm2, %xmm0
 ; X86-NEXT:    retl
 ;
 ; X64-LABEL: mul_v4i64_zext_cross_bb:
@@ -1322,19 +1298,9 @@ define <4 x i64> @mul_v4i64_zext_cross_bb(<4 x i32>* %in, <4 x i32>* %y) {
 ; X64-NEXT:    pmovzxdq {{.*#+}} xmm1 = mem[0],zero,mem[1],zero
 ; X64-NEXT:    pmovzxdq {{.*#+}} xmm0 = mem[0],zero,mem[1],zero
 ; X64-NEXT:    pmovzxdq {{.*#+}} xmm2 = mem[0],zero,mem[1],zero
-; X64-NEXT:    pmovzxdq {{.*#+}} xmm3 = mem[0],zero,mem[1],zero
-; X64-NEXT:    movdqa %xmm0, %xmm4
-; X64-NEXT:    pmuludq %xmm3, %xmm4
-; X64-NEXT:    psrlq $32, %xmm0
-; X64-NEXT:    pmuludq %xmm3, %xmm0
-; X64-NEXT:    psllq $32, %xmm0
-; X64-NEXT:    paddq %xmm4, %xmm0
-; X64-NEXT:    movdqa %xmm1, %xmm3
-; X64-NEXT:    pmuludq %xmm2, %xmm3
-; X64-NEXT:    psrlq $32, %xmm1
 ; X64-NEXT:    pmuludq %xmm2, %xmm1
-; X64-NEXT:    psllq $32, %xmm1
-; X64-NEXT:    paddq %xmm3, %xmm1
+; X64-NEXT:    pmovzxdq {{.*#+}} xmm2 = mem[0],zero,mem[1],zero
+; X64-NEXT:    pmuludq %xmm2, %xmm0
 ; X64-NEXT:    retq
 ;
 ; X64-XOP-LABEL: mul_v4i64_zext_cross_bb:
@@ -1345,16 +1311,8 @@ define <4 x i64> @mul_v4i64_zext_cross_bb(<4 x i32>* %in, <4 x i32>* %y) {
 ; X64-XOP-NEXT:    vpmovzxdq {{.*#+}} xmm1 = mem[0],zero,mem[1],zero
 ; X64-XOP-NEXT:    vpmovzxdq {{.*#+}} xmm2 = mem[0],zero,mem[1],zero
 ; X64-XOP-NEXT:    vextractf128 $1, %ymm0, %xmm3
-; X64-XOP-NEXT:    vpmuludq %xmm2, %xmm3, %xmm4
-; X64-XOP-NEXT:    vpsrlq $32, %xmm3, %xmm3
 ; X64-XOP-NEXT:    vpmuludq %xmm2, %xmm3, %xmm2
-; X64-XOP-NEXT:    vpsllq $32, %xmm2, %xmm2
-; X64-XOP-NEXT:    vpaddq %xmm2, %xmm4, %xmm2
-; X64-XOP-NEXT:    vpmuludq %xmm1, %xmm0, %xmm3
-; X64-XOP-NEXT:    vpsrlq $32, %xmm0, %xmm0
 ; X64-XOP-NEXT:    vpmuludq %xmm1, %xmm0, %xmm0
-; X64-XOP-NEXT:    vpsllq $32, %xmm0, %xmm0
-; X64-XOP-NEXT:    vpaddq %xmm0, %xmm3, %xmm0
 ; X64-XOP-NEXT:    vinsertf128 $1, %xmm2, %ymm0, %ymm0
 ; X64-XOP-NEXT:    retq
 ;
@@ -1362,11 +1320,7 @@ define <4 x i64> @mul_v4i64_zext_cross_bb(<4 x i32>* %in, <4 x i32>* %y) {
 ; X64-AVX2:       # %bb.0:
 ; X64-AVX2-NEXT:    vpmovzxdq {{.*#+}} ymm0 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero
 ; X64-AVX2-NEXT:    vpmovzxdq {{.*#+}} ymm1 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero
-; X64-AVX2-NEXT:    vpmuludq %ymm1, %ymm0, %ymm2
-; X64-AVX2-NEXT:    vpsrlq $32, %ymm0, %ymm0
 ; X64-AVX2-NEXT:    vpmuludq %ymm1, %ymm0, %ymm0
-; X64-AVX2-NEXT:    vpsllq $32, %ymm0, %ymm0
-; X64-AVX2-NEXT:    vpaddq %ymm0, %ymm2, %ymm0
 ; X64-AVX2-NEXT:    retq
   %a = load <4 x i32>, <4 x i32>* %in
   %b = zext <4 x i32> %a to <4 x i64>
