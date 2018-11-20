@@ -600,7 +600,7 @@ public:
 
   /// EvaluateAsInt - Return true if this is a constant which we can fold and
   /// convert to an integer, using any crazy technique that we want to.
-  bool EvaluateAsInt(llvm::APSInt &Result, const ASTContext &Ctx,
+  bool EvaluateAsInt(EvalResult &Result, const ASTContext &Ctx,
                      SideEffectsKind AllowSideEffects = SE_NoSideEffects) const;
 
   /// EvaluateAsFloat - Return true if this is a constant which we can fold and
@@ -901,9 +901,14 @@ public:
 
 /// ConstantExpr - An expression that occurs in a constant context.
 class ConstantExpr : public FullExpr {
-public:
   ConstantExpr(Expr *subexpr)
     : FullExpr(ConstantExprClass, subexpr) {}
+
+public:
+  static ConstantExpr *Create(const ASTContext &Context, Expr *E) {
+    assert(!isa<ConstantExpr>(E));
+    return new (Context) ConstantExpr(E);
+  }
 
   /// Build an empty constant expression wrapper.
   explicit ConstantExpr(EmptyShell Empty)
@@ -3087,8 +3092,8 @@ inline Expr *Expr::IgnoreImpCasts() {
   while (true)
     if (ImplicitCastExpr *ice = dyn_cast<ImplicitCastExpr>(e))
       e = ice->getSubExpr();
-    else if (ConstantExpr *ce = dyn_cast<ConstantExpr>(e))
-      e = ce->getSubExpr();
+    else if (FullExpr *fe = dyn_cast<FullExpr>(e))
+      e = fe->getSubExpr();
     else
       break;
   return e;
