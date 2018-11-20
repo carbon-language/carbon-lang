@@ -62,9 +62,11 @@ void test_setvbuf() {
 int main(void) {
   printf("setvbuf\n");
 
+#if defined(__NetBSD__)
   test_setbuf();
   test_setbuffer();
   test_setlinebuf();
+#endif
   test_setvbuf();
 
   // CHECK: setvbuf
