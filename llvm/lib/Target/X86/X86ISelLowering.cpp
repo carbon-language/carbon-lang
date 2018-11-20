@@ -23413,7 +23413,7 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget &Subtarget,
 
     MVT ExVT = MVT::getVectorVT(MVT::i16, NumElts / 2);
 
-    // Extract the lo parts to any extend to i16
+    // Extract the lo parts to any extend to i16.
     // We're going to mask off the low byte of each result element of the
     // pmullw, so it doesn't matter what's in the high byte of each 16-bit
     // element.
@@ -23423,7 +23423,7 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget &Subtarget,
     ALo = DAG.getBitcast(ExVT, ALo);
     BLo = DAG.getBitcast(ExVT, BLo);
 
-    // Extract the hi parts to any extend to i16
+    // Extract the hi parts to any extend to i16.
     // We're going to mask off the low byte of each result element of the
     // pmullw, so it doesn't matter what's in the high byte of each 16-bit
     // element.
@@ -23432,20 +23432,12 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget &Subtarget,
     AHi = DAG.getBitcast(ExVT, AHi);
     BHi = DAG.getBitcast(ExVT, BHi);
 
-    // Multiply, mask the lower 8bits of the lo/hi results and pack
+    // Multiply, mask the lower 8bits of the lo/hi results and pack.
     SDValue RLo = DAG.getNode(ISD::MUL, dl, ExVT, ALo, BLo);
     SDValue RHi = DAG.getNode(ISD::MUL, dl, ExVT, AHi, BHi);
     RLo = DAG.getNode(ISD::AND, dl, ExVT, RLo, DAG.getConstant(255, dl, ExVT));
     RHi = DAG.getNode(ISD::AND, dl, ExVT, RHi, DAG.getConstant(255, dl, ExVT));
-    RLo = DAG.getBitcast(VT, RLo);
-    RHi = DAG.getBitcast(VT, RHi);
-
-    // For each 128-bit lane, we need to take the 8 even elements from RLo then
-    // the 8 even elements from RHi.
-    SmallVector<int, 64> PackMask;
-    createPackShuffleMask(VT, PackMask, /*Unary*/false);
-
-    return DAG.getVectorShuffle(VT, dl, RLo, RHi, PackMask);
+    return DAG.getNode(X86ISD::PACKUS, dl, VT, RLo, RHi);
   }
 
   // Lower v4i32 mul as 2x shuffle, 2x pmuludq, 2x shuffle.
