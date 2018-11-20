@@ -1,7 +1,5 @@
 // RUN: %clangxx -O0 -g %s -o %t && %run %t 2>&1 | FileCheck %s
 
-// UNSUPPORTED: solaris
-
 #include <stdio.h>
 
 void print_something() {
@@ -9,9 +7,6 @@ void print_something() {
     printf("Hello world %zu\n", i);
 }
 
-// setbuffer/setlinebuf/setbuf uses setvbuf
-// internally on NetBSD
-#if defined(__NetBSD__)
 void test_setbuf() {
   char buf[BUFSIZ];
 
@@ -41,7 +36,6 @@ void test_setlinebuf() {
 
   print_something();
 }
-#endif
 
 void test_setvbuf() {
   char buf[BUFSIZ];
@@ -62,11 +56,9 @@ void test_setvbuf() {
 int main(void) {
   printf("setvbuf\n");
 
-#if defined(__NetBSD__)
   test_setbuf();
   test_setbuffer();
   test_setlinebuf();
-#endif
   test_setvbuf();
 
   // CHECK: setvbuf
