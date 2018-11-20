@@ -946,6 +946,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SIGN_EXTEND_VECTOR_INREG, MVT::v8i16, Custom);
 
     if (ExperimentalVectorWideningLegalization) {
+      setOperationAction(ISD::SIGN_EXTEND, MVT::v8i32, Custom);
       setOperationAction(ISD::SIGN_EXTEND, MVT::v4i64, Custom);
 
       setOperationAction(ISD::TRUNCATE,    MVT::v2i8,  Custom);
@@ -26363,6 +26364,38 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
       SDValue Hi = DAG.getVectorShuffle(MVT::v4i32, dl, In, SignBits,
                                         {2, 6, 3, 7});
       Hi = DAG.getNode(ISD::BITCAST, dl, MVT::v2i64, Hi);
+
+      SDValue Res = DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, Lo, Hi);
+      Results.push_back(Res);
+      return;
+    }
+
+    if (!Subtarget.hasSSE41() && VT == MVT::v8i32 && InVT == MVT::v8i8) {
+      // Widen the input to 128 bits.
+      In = DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v16i8, In,
+                       DAG.getUNDEF(InVT));
+      // Emit a shuffle that will become punpcklbw putting the input elements
+      // in the high half of the expansion.
+      In = DAG.getVectorShuffle(MVT::v16i8, dl, In, In,
+                                {-1, 0, -1, 1, -1, 2, -1, 3,
+                                 -1, 4, -1, 5, -1, 6, -1, 7});
+      In = DAG.getNode(ISD::BITCAST, dl, MVT::v8i16, In);
+
+      // Emit a shuffle that will become punpcklwd. Shift right to fill with
+      // sign bits.
+      SDValue Lo = DAG.getVectorShuffle(MVT::v8i16, dl, In, In,
+                                        {-1, 0, -1, 1, -1, 2, -1, 3});
+      Lo = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, Lo);
+      Lo = DAG.getNode(ISD::SRA, dl, MVT::v4i32, Lo,
+                       DAG.getConstant(24, dl, MVT::v4i32));
+
+      // Emit a shuffle that will become punpckhwd. Shift right to fill with
+      // sign bits.
+      SDValue Hi = DAG.getVectorShuffle(MVT::v8i16, dl, In, In,
+                                        {-1, 4, -1, 5, -1, 6, -1, 7});
+      Hi = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, Hi);
+      Hi = DAG.getNode(ISD::SRA, dl, MVT::v4i32, Hi,
+                       DAG.getConstant(24, dl, MVT::v4i32));
 
       SDValue Res = DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, Lo, Hi);
       Results.push_back(Res);
