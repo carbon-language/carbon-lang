@@ -5932,6 +5932,31 @@ static void createPackShuffleMask(MVT VT, SmallVectorImpl<int> &Mask,
   }
 }
 
+// Split the demanded elts of a PACKSS/PACKUS node between its operands.
+static void getPackDemandedElts(EVT VT, const APInt &DemandedElts,
+                                APInt &DemandedLHS, APInt &DemandedRHS) {
+  int NumLanes = VT.getSizeInBits() / 128;
+  int NumElts = DemandedElts.getBitWidth();
+  int NumInnerElts = NumElts / 2;
+  int NumEltsPerLane = NumElts / NumLanes;
+  int NumInnerEltsPerLane = NumInnerElts / NumLanes;
+
+  DemandedLHS = APInt::getNullValue(NumInnerElts);
+  DemandedRHS = APInt::getNullValue(NumInnerElts);
+
+  // Map DemandedElts to the packed operands.
+  for (int Lane = 0; Lane != NumLanes; ++Lane) {
+    for (int Elt = 0; Elt != NumInnerEltsPerLane; ++Elt) {
+      int OuterIdx = (Lane * NumEltsPerLane) + Elt;
+      int InnerIdx = (Lane * NumInnerEltsPerLane) + Elt;
+      if (DemandedElts[OuterIdx])
+        DemandedLHS.setBit(InnerIdx);
+      if (DemandedElts[OuterIdx + NumInnerEltsPerLane])
+        DemandedRHS.setBit(InnerIdx);
+    }
+  }
+}
+
 /// Calculates the shuffle mask corresponding to the target-specific opcode.
 /// If the mask could be calculated, returns it in \p Mask, returns the shuffle
 /// operands in \p Ops, and returns true.
@@ -29938,12 +29963,24 @@ void X86TargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
   }
   case X86ISD::PACKUS: {
     // PACKUS is just a truncation if the upper half is zero.
-    // TODO: Add DemandedElts support.
+    APInt DemandedLHS, DemandedRHS;
+    getPackDemandedElts(VT, DemandedElts, DemandedLHS, DemandedRHS);
+
+    Known.One = APInt::getAllOnesValue(BitWidth * 2);
+    Known.Zero = APInt::getAllOnesValue(BitWidth * 2);
+
     KnownBits Known2;
-    DAG.computeKnownBits(Op.getOperand(0), Known, Depth + 1);
-    DAG.computeKnownBits(Op.getOperand(1), Known2, Depth + 1);
-    Known.One &= Known2.One;
-    Known.Zero &= Known2.Zero;
+    if (!!DemandedLHS) {
+      DAG.computeKnownBits(Op.getOperand(0), Known2, DemandedLHS, Depth + 1);
+      Known.One &= Known2.One;
+      Known.Zero &= Known2.Zero;
+    }
+    if (!!DemandedRHS) {
+      DAG.computeKnownBits(Op.getOperand(1), Known2, DemandedRHS, Depth + 1);
+      Known.One &= Known2.One;
+      Known.Zero &= Known2.Zero;
+    }
+
     if (Known.countMinLeadingZeros() < BitWidth)
       Known.resetAll();
     Known = Known.trunc(BitWidth);
@@ -30039,10 +30076,16 @@ unsigned X86TargetLowering::ComputeNumSignBitsForTargetNode(
 
   case X86ISD::PACKSS: {
     // PACKSS is just a truncation if the sign bits extend to the packed size.
-    // TODO: Add DemandedElts support.
+    APInt DemandedLHS, DemandedRHS;
+    getPackDemandedElts(Op.getValueType(), DemandedElts, DemandedLHS,
+                        DemandedRHS);
+
     unsigned SrcBits = Op.getOperand(0).getScalarValueSizeInBits();
-    unsigned Tmp0 = DAG.ComputeNumSignBits(Op.getOperand(0), Depth + 1);
-    unsigned Tmp1 = DAG.ComputeNumSignBits(Op.getOperand(1), Depth + 1);
+    unsigned Tmp0 = SrcBits, Tmp1 = SrcBits;
+    if (!!DemandedLHS)
+      Tmp0 = DAG.ComputeNumSignBits(Op.getOperand(0), DemandedLHS, Depth + 1);
+    if (!!DemandedRHS)
+      Tmp1 = DAG.ComputeNumSignBits(Op.getOperand(1), DemandedRHS, Depth + 1);
     unsigned Tmp = std::min(Tmp0, Tmp1);
     if (Tmp > (SrcBits - VTBits))
       return Tmp - (SrcBits - VTBits);
@@ -32226,24 +32269,8 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
   }
   case X86ISD::PACKSS:
   case X86ISD::PACKUS: {
-    int NumLanes = VT.getSizeInBits() / 128;
-    int NumInnerElts = NumElts / 2;
-    int NumEltsPerLane = NumElts / NumLanes;
-    int NumInnerEltsPerLane = NumInnerElts / NumLanes;
-
-    // Map DemandedElts to the packed operands.
-    APInt DemandedLHS = APInt::getNullValue(NumInnerElts);
-    APInt DemandedRHS = APInt::getNullValue(NumInnerElts);
-    for (int Lane = 0; Lane != NumLanes; ++Lane) {
-      for (int Elt = 0; Elt != NumInnerEltsPerLane; ++Elt) {
-        int OuterIdx = (Lane * NumEltsPerLane) + Elt;
-        int InnerIdx = (Lane * NumInnerEltsPerLane) + Elt;
-        if (DemandedElts[OuterIdx])
-          DemandedLHS.setBit(InnerIdx);
-        if (DemandedElts[OuterIdx + NumInnerEltsPerLane])
-          DemandedRHS.setBit(InnerIdx);
-      }
-    }
+    APInt DemandedLHS, DemandedRHS;
+    getPackDemandedElts(VT, DemandedElts, DemandedLHS, DemandedRHS);
 
     APInt SrcUndef, SrcZero;
     if (SimplifyDemandedVectorElts(Op.getOperand(0), DemandedLHS, SrcUndef,
