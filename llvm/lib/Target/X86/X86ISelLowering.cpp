@@ -32459,9 +32459,13 @@ static SDValue XFormVExtractWithShuffleIntoLoad(SDNode *N, SelectionDAG &DAG,
   if (Idx == SM_SentinelUndef)
     return DAG.getUNDEF(EltVT);
 
+  // Bail if any mask element is SM_SentinelZero - getVectorShuffle below
+  // won't handle it.
+  if (llvm::any_of(ShuffleMask, [](int M) { return M == SM_SentinelZero; }))
+    return SDValue();
+
   assert(0 <= Idx && Idx < (int)(2 * NumElems) && "Shuffle index out of range");
-  SDValue LdNode = (Idx < (int)NumElems) ? ShuffleOps[0]
-                                         : ShuffleOps[1];
+  SDValue LdNode = (Idx < (int)NumElems) ? ShuffleOps[0] : ShuffleOps[1];
 
   // If inputs to shuffle are the same for both ops, then allow 2 uses
   unsigned AllowedUses =
