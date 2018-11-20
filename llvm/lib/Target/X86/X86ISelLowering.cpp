@@ -32232,6 +32232,36 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
       return true;
     break;
   }
+  case X86ISD::PACKSS:
+  case X86ISD::PACKUS: {
+    int NumLanes = VT.getSizeInBits() / 128;
+    int NumInnerElts = NumElts / 2;
+    int NumEltsPerLane = NumElts / NumLanes;
+    int NumInnerEltsPerLane = NumInnerElts / NumLanes;
+
+    // Map DemandedElts to the packed operands.
+    APInt DemandedLHS = APInt::getNullValue(NumInnerElts);
+    APInt DemandedRHS = APInt::getNullValue(NumInnerElts);
+    for (int Lane = 0; Lane != NumLanes; ++Lane) {
+      for (int Elt = 0; Elt != NumInnerEltsPerLane; ++Elt) {
+        int OuterIdx = (Lane * NumEltsPerLane) + Elt;
+        int InnerIdx = (Lane * NumInnerEltsPerLane) + Elt;
+        if (DemandedElts[OuterIdx])
+          DemandedLHS.setBit(InnerIdx);
+        if (DemandedElts[OuterIdx + NumInnerEltsPerLane])
+          DemandedRHS.setBit(InnerIdx);
+      }
+    }
+
+    APInt SrcUndef, SrcZero;
+    if (SimplifyDemandedVectorElts(Op.getOperand(0), DemandedLHS, SrcUndef,
+                                   SrcZero, TLO, Depth + 1))
+      return true;
+    if (SimplifyDemandedVectorElts(Op.getOperand(1), DemandedRHS, SrcUndef,
+                                   SrcZero, TLO, Depth + 1))
+      return true;
+    break;
+  }
   case X86ISD::VBROADCAST: {
     SDValue Src = Op.getOperand(0);
     MVT SrcVT = Src.getSimpleValueType();
