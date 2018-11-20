@@ -946,7 +946,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SIGN_EXTEND_VECTOR_INREG, MVT::v8i16, Custom);
 
     if (ExperimentalVectorWideningLegalization) {
-      setOperationAction(ISD::SIGN_EXTEND, MVT::v8i32, Custom);
       setOperationAction(ISD::SIGN_EXTEND, MVT::v4i64, Custom);
 
       setOperationAction(ISD::TRUNCATE,    MVT::v2i8,  Custom);
@@ -20085,39 +20084,46 @@ static SDValue LowerEXTEND_VECTOR_INREG(SDValue Op,
 
   // We should only get here for sign extend.
   assert(Opc == ISD::SIGN_EXTEND_VECTOR_INREG && "Unexpected opcode!");
+  assert(VT.is128BitVector() && InVT.is128BitVector() && "Unexpected VTs");
 
   // pre-SSE41 targets unpack lower lanes and then sign-extend using SRAI.
   SDValue Curr = In;
-  MVT CurrVT = InVT;
+  SDValue SignExt = Curr;
 
   // As SRAI is only available on i16/i32 types, we expand only up to i32
   // and handle i64 separately.
-  while (CurrVT != VT && CurrVT.getVectorElementType() != MVT::i32) {
-    Curr = getUnpackl(DAG, dl, CurrVT, DAG.getUNDEF(CurrVT), Curr);
-    MVT CurrSVT = MVT::getIntegerVT(CurrVT.getScalarSizeInBits() * 2);
-    CurrVT = MVT::getVectorVT(CurrSVT, CurrVT.getVectorNumElements() / 2);
-    Curr = DAG.getBitcast(CurrVT, Curr);
-  }
+  if (InVT != MVT::v4i32) {
+    MVT DestVT = VT == MVT::v2i64 ? MVT::v4i32 : VT;
 
-  SDValue SignExt = Curr;
-  if (CurrVT != InVT) {
-    unsigned SignExtShift =
-        CurrVT.getScalarSizeInBits() - InSVT.getSizeInBits();
-    SignExt = DAG.getNode(X86ISD::VSRAI, dl, CurrVT, Curr,
+    unsigned DestWidth = DestVT.getScalarSizeInBits();
+    unsigned Scale = DestWidth / InSVT.getSizeInBits();
+
+    unsigned InNumElts = InVT.getVectorNumElements();
+    unsigned DestElts = DestVT.getVectorNumElements();
+
+    // Build a shuffle mask that takes each input element and places it in the
+    // MSBs of the new element size.
+    SmallVector<int, 16> Mask(InNumElts, SM_SentinelUndef);
+    for (unsigned i = 0; i != DestElts; ++i)
+      Mask[i * Scale + (Scale - 1)] = i;
+
+    Curr = DAG.getVectorShuffle(InVT, dl, In, In, Mask);
+    Curr = DAG.getBitcast(DestVT, Curr);
+
+    unsigned SignExtShift = DestWidth - InSVT.getSizeInBits();
+    SignExt = DAG.getNode(X86ISD::VSRAI, dl, DestVT, Curr,
                           DAG.getConstant(SignExtShift, dl, MVT::i8));
   }
 
-  if (CurrVT == VT)
-    return SignExt;
-
-  if (VT == MVT::v2i64 && CurrVT == MVT::v4i32) {
-    SDValue Zero = DAG.getConstant(0, dl, CurrVT);
-    SDValue Sign = DAG.getSetCC(dl, CurrVT, Zero, Curr, ISD::SETGT);
-    SDValue Ext = DAG.getVectorShuffle(CurrVT, dl, SignExt, Sign, {0, 4, 1, 5});
-    return DAG.getBitcast(VT, Ext);
+  if (VT == MVT::v2i64) {
+    assert(Curr.getValueType() == MVT::v4i32 && "Unexpected input VT");
+    SDValue Zero = DAG.getConstant(0, dl, MVT::v4i32);
+    SDValue Sign = DAG.getSetCC(dl, MVT::v4i32, Zero, Curr, ISD::SETGT);
+    SignExt = DAG.getVectorShuffle(MVT::v4i32, dl, SignExt, Sign, {0, 4, 1, 5});
+    SignExt = DAG.getBitcast(VT, SignExt);
   }
 
-  return SDValue();
+  return SignExt;
 }
 
 static SDValue LowerSIGN_EXTEND(SDValue Op, const X86Subtarget &Subtarget,
@@ -26385,38 +26391,6 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
       SDValue Hi = DAG.getVectorShuffle(MVT::v4i32, dl, In, SignBits,
                                         {2, 6, 3, 7});
       Hi = DAG.getNode(ISD::BITCAST, dl, MVT::v2i64, Hi);
-
-      SDValue Res = DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, Lo, Hi);
-      Results.push_back(Res);
-      return;
-    }
-
-    if (!Subtarget.hasSSE41() && VT == MVT::v8i32 && InVT == MVT::v8i8) {
-      // Widen the input to 128 bits.
-      In = DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v16i8, In,
-                       DAG.getUNDEF(InVT));
-      // Emit a shuffle that will become punpcklbw putting the input elements
-      // in the high half of the expansion.
-      In = DAG.getVectorShuffle(MVT::v16i8, dl, In, In,
-                                {-1, 0, -1, 1, -1, 2, -1, 3,
-                                 -1, 4, -1, 5, -1, 6, -1, 7});
-      In = DAG.getNode(ISD::BITCAST, dl, MVT::v8i16, In);
-
-      // Emit a shuffle that will become punpcklwd. Shift right to fill with
-      // sign bits.
-      SDValue Lo = DAG.getVectorShuffle(MVT::v8i16, dl, In, In,
-                                        {-1, 0, -1, 1, -1, 2, -1, 3});
-      Lo = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, Lo);
-      Lo = DAG.getNode(ISD::SRA, dl, MVT::v4i32, Lo,
-                       DAG.getConstant(24, dl, MVT::v4i32));
-
-      // Emit a shuffle that will become punpckhwd. Shift right to fill with
-      // sign bits.
-      SDValue Hi = DAG.getVectorShuffle(MVT::v8i16, dl, In, In,
-                                        {-1, 4, -1, 5, -1, 6, -1, 7});
-      Hi = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, Hi);
-      Hi = DAG.getNode(ISD::SRA, dl, MVT::v4i32, Hi,
-                       DAG.getConstant(24, dl, MVT::v4i32));
 
       SDValue Res = DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, Lo, Hi);
       Results.push_back(Res);
