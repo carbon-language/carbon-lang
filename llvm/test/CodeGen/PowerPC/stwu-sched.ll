@@ -15,8 +15,8 @@ define void @initCombList(%0* nocapture, i32 signext) local_unnamed_addr #0 {
 ; CHECK-NEXT: stwu 5, 64(4)
 
 ; CHECK-ITIN-LABEL: initCombList:
-; CHECK-ITIN:   addi 3, 3, -8
-; CHECK-ITIN-NEXT: stwu 5, 64(4)
+; CHECK-ITIN: stwu 5, 64(4)
+; CHECK-ITIN-NEXT:   addi 3, 3, -8
 
 
   %3 = zext i32 %1 to i64
