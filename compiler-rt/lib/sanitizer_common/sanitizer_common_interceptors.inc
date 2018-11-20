@@ -7306,6 +7306,8 @@ INTERCEPTOR(int, setvbuf, __sanitizer_FILE *stream, char *buf, int mode,
   int ret = REAL(setvbuf)(stream, buf, mode, size);
   if (buf)
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, size);
+  if (ret == 0)
+    unpoison_file(stream);
   return ret;
 }
 #define INIT_SETVBUF COMMON_INTERCEPT_FUNCTION(setvbuf)
