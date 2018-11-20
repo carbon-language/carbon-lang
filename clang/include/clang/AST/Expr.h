@@ -901,14 +901,9 @@ public:
 
 /// ConstantExpr - An expression that occurs in a constant context.
 class ConstantExpr : public FullExpr {
+public:
   ConstantExpr(Expr *subexpr)
     : FullExpr(ConstantExprClass, subexpr) {}
-
-public:
-  static ConstantExpr *Create(const ASTContext &Context, Expr *E) {
-    assert(!isa<ConstantExpr>(E));
-    return new (Context) ConstantExpr(E);
-  }
 
   /// Build an empty constant expression wrapper.
   explicit ConstantExpr(EmptyShell Empty)
@@ -3096,8 +3091,8 @@ inline Expr *Expr::IgnoreImpCasts() {
   while (true)
     if (ImplicitCastExpr *ice = dyn_cast<ImplicitCastExpr>(e))
       e = ice->getSubExpr();
-    else if (FullExpr *fe = dyn_cast<FullExpr>(e))
-      e = fe->getSubExpr();
+    else if (ConstantExpr *ce = dyn_cast<ConstantExpr>(e))
+      e = ce->getSubExpr();
     else
       break;
   return e;
