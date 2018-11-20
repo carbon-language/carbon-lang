@@ -496,6 +496,16 @@ protected:
     unsigned HadArrayRangeDesignator : 1;
   };
 
+  class ParenListExprBitfields {
+    friend class ASTStmtReader;
+    friend class ParenListExpr;
+
+    unsigned : NumExprBits;
+
+    /// The number of expressions in the paren list.
+    unsigned NumExprs;
+  };
+
   class PseudoObjectExprBitfields {
     friend class ASTStmtReader; // deserialization
     friend class PseudoObjectExpr;
@@ -672,6 +682,7 @@ protected:
     CastExprBitfields CastExprBits;
     BinaryOperatorBitfields BinaryOperatorBits;
     InitListExprBitfields InitListExprBits;
+    ParenListExprBitfields ParenListExprBits;
     PseudoObjectExprBitfields PseudoObjectExprBits;
 
     // C++ Expressions

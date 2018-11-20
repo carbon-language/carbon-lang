@@ -6410,8 +6410,7 @@ Sema::MaybeConvertParenListExprToParenExpr(Scope *S, Expr *OrigExpr) {
 ExprResult Sema::ActOnParenListExpr(SourceLocation L,
                                     SourceLocation R,
                                     MultiExprArg Val) {
-  Expr *expr = new (Context) ParenListExpr(Context, L, Val, R);
-  return expr;
+  return ParenListExpr::Create(Context, L, Val, R);
 }
 
 /// Emit a specialized diagnostic when one expression is a null pointer

@@ -6409,8 +6409,8 @@ ExpectedStmt ASTNodeImporter::VisitParenListExpr(ParenListExpr *E) {
   if (!ToRParenLocOrErr)
     return ToRParenLocOrErr.takeError();
 
-  return new (Importer.getToContext()) ParenListExpr(
-      Importer.getToContext(), *ToLParenLocOrErr, ToExprs, *ToRParenLocOrErr);
+  return ParenListExpr::Create(Importer.getToContext(), *ToLParenLocOrErr,
+                               ToExprs, *ToRParenLocOrErr);
 }
 
 ExpectedStmt ASTNodeImporter::VisitStmtExpr(StmtExpr *E) {
