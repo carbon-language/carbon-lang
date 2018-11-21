@@ -21238,7 +21238,9 @@ static SDValue getScalarMaskingNode(SDValue Op, SDValue Mask,
   SDLoc dl(Op);
 
   assert(Mask.getValueType() == MVT::i8 && "Unexpect type");
-  SDValue IMask = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v1i1, Mask);
+  SDValue IMask = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v1i1,
+                              DAG.getBitcast(MVT::v8i1, Mask),
+                              DAG.getIntPtrConstant(0, dl));
   if (Op.getOpcode() == X86ISD::FSETCCM ||
       Op.getOpcode() == X86ISD::FSETCCM_RND ||
       Op.getOpcode() == X86ISD::VFPCLASSS)
