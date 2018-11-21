@@ -32257,6 +32257,13 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
     MVT SrcVT = Src.getSimpleValueType();
     if (!SrcVT.isVector())
       return false;
+    // Don't bother broadcasting if we just need the 0'th element.
+    if (DemandedElts == 1) {
+      if(Src.getValueType() != VT)
+        Src = widenSubVector(VT.getSimpleVT(), Src, false, Subtarget, TLO.DAG,
+                             SDLoc(Op));
+      return TLO.CombineTo(Op, Src);
+    }
     APInt SrcUndef, SrcZero;
     APInt SrcElts = APInt::getOneBitSet(SrcVT.getVectorNumElements(), 0);
     if (SimplifyDemandedVectorElts(Src, SrcElts, SrcUndef, SrcZero, TLO,
