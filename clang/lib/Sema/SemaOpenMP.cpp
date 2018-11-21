@@ -1275,10 +1275,16 @@ bool DSAStackTy::hasExplicitDSA(
     return false;
   std::advance(StartI, Level);
   auto I = StartI->SharingMap.find(D);
-  return (I != StartI->SharingMap.end()) &&
+  if ((I != StartI->SharingMap.end()) &&
          I->getSecond().RefExpr.getPointer() &&
          CPred(I->getSecond().Attributes) &&
-         (!NotLastprivate || !I->getSecond().RefExpr.getInt());
+         (!NotLastprivate || !I->getSecond().RefExpr.getInt()))
+    return true;
+  // Check predetermined rules for the loop control variables.
+  auto LI = StartI->LCVMap.find(D);
+  if (LI != StartI->LCVMap.end())
+    return CPred(OMPC_private);
+  return false;
 }
 
 bool DSAStackTy::hasExplicitDirective(
