@@ -88,10 +88,8 @@ define double @fsel_nonzero_false_val(double %x, double %y, double %z) {
 ; AVX-LABEL: fsel_nonzero_false_val:
 ; AVX:       # %bb.0:
 ; AVX-NEXT:    vcmpeqsd %xmm1, %xmm0, %xmm0
-; AVX-NEXT:    vandpd %xmm2, %xmm0, %xmm1
-; AVX-NEXT:    vmovsd {{.*#+}} xmm2 = mem[0],zero
-; AVX-NEXT:    vandnpd %xmm2, %xmm0, %xmm0
-; AVX-NEXT:    vorpd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
+; AVX-NEXT:    vblendvpd %xmm0, %xmm2, %xmm1, %xmm0
 ; AVX-NEXT:    retq
   %cond = fcmp oeq double %x, %y
   %r = select i1 %cond, double %z, double 42.0
@@ -112,9 +110,7 @@ define double @fsel_nonzero_true_val(double %x, double %y, double %z) {
 ; AVX:       # %bb.0:
 ; AVX-NEXT:    vcmpeqsd %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX-NEXT:    vandpd %xmm1, %xmm0, %xmm1
-; AVX-NEXT:    vandnpd %xmm2, %xmm0, %xmm0
-; AVX-NEXT:    vorpd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    vblendvpd %xmm0, %xmm1, %xmm2, %xmm0
 ; AVX-NEXT:    retq
   %cond = fcmp oeq double %x, %y
   %r = select i1 %cond, double 42.0, double %z
