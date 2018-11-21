@@ -18174,17 +18174,18 @@ SDValue DAGCombiner::SimplifySelectCC(const SDLoc &DL, SDValue N0, SDValue N1,
   // (x ? y : y) -> y.
   if (N2 == N3) return N2;
 
+  EVT CmpOpVT = N0.getValueType();
   EVT VT = N2.getValueType();
-  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getNode());
-  ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.getNode());
-  ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N3.getNode());
+  auto *N1C = dyn_cast<ConstantSDNode>(N1.getNode());
+  auto *N2C = dyn_cast<ConstantSDNode>(N2.getNode());
+  auto *N3C = dyn_cast<ConstantSDNode>(N3.getNode());
 
-  // Determine if the condition we're dealing with is constant
-  SDValue SCC = SimplifySetCC(getSetCCResultType(N0.getValueType()),
-                              N0, N1, CC, DL, false);
+  // Determine if the condition we're dealing with is constant.
+  SDValue SCC = SimplifySetCC(getSetCCResultType(CmpOpVT), N0, N1, CC, DL,
+                              false);
   if (SCC.getNode()) AddToWorklist(SCC.getNode());
 
-  if (ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(SCC.getNode())) {
+  if (auto *SCCC = dyn_cast_or_null<ConstantSDNode>(SCC.getNode())) {
     // fold select_cc true, x, y -> x
     // fold select_cc false, x, y -> y
     return !SCCC->isNullValue() ? N2 : N3;
@@ -18198,10 +18199,10 @@ SDValue DAGCombiner::SimplifySelectCC(const SDLoc &DL, SDValue N0, SDValue N1,
   // types an we want the other legalization to happen first (e.g. to avoid
   // messing with soft float) and if the ConstantFP is not legal, because if
   // it is legal, we may not need to store the FP constant in a constant pool.
-  if (ConstantFPSDNode *TV = dyn_cast<ConstantFPSDNode>(N2))
-    if (ConstantFPSDNode *FV = dyn_cast<ConstantFPSDNode>(N3)) {
-      if (TLI.isTypeLegal(N2.getValueType()) &&
-          (TLI.getOperationAction(ISD::ConstantFP, N2.getValueType()) !=
+  if (auto *TV = dyn_cast<ConstantFPSDNode>(N2))
+    if (auto *FV = dyn_cast<ConstantFPSDNode>(N3)) {
+      if (TLI.isTypeLegal(VT) &&
+          (TLI.getOperationAction(ISD::ConstantFP, VT) !=
                TargetLowering::Legal &&
            !TLI.isFPImmLegal(TV->getValueAPF(), TV->getValueType(0)) &&
            !TLI.isFPImmLegal(FV->getValueAPF(), FV->getValueType(0))) &&
@@ -18228,9 +18229,8 @@ SDValue DAGCombiner::SimplifySelectCC(const SDLoc &DL, SDValue N0, SDValue N1,
         unsigned EltSize = (unsigned)TD.getTypeAllocSize(Elts[0]->getType());
         SDValue One = DAG.getIntPtrConstant(EltSize, SDLoc(FV));
 
-        SDValue Cond = DAG.getSetCC(DL,
-                                    getSetCCResultType(N0.getValueType()),
-                                    N0, N1, CC);
+        SDValue Cond = DAG.getSetCC(DL, getSetCCResultType(CmpOpVT), N0, N1,
+                                    CC);
         AddToWorklist(Cond.getNode());
         SDValue CstOffset = DAG.getSelect(DL, Zero.getValueType(),
                                           Cond, One, Zero);
@@ -18257,7 +18257,7 @@ SDValue DAGCombiner::SimplifySelectCC(const SDLoc &DL, SDValue N0, SDValue N1,
   if (CC == ISD::SETEQ && N0->getOpcode() == ISD::AND &&
       N0->getValueType(0) == VT && isNullConstant(N1) && isNullConstant(N2)) {
     SDValue AndLHS = N0->getOperand(0);
-    ConstantSDNode *ConstAndRHS = dyn_cast<ConstantSDNode>(N0->getOperand(1));
+    auto *ConstAndRHS = dyn_cast<ConstantSDNode>(N0->getOperand(1));
     if (ConstAndRHS && ConstAndRHS->getAPIntValue().countPopulation() == 1) {
       // Shift the tested bit over the sign bit.
       const APInt &AndMask = ConstAndRHS->getAPIntValue();
@@ -18282,13 +18282,12 @@ SDValue DAGCombiner::SimplifySelectCC(const SDLoc &DL, SDValue N0, SDValue N1,
   bool Swap = N3C && isNullConstant(N2) && N3C->getAPIntValue().isPowerOf2();
 
   if ((Fold || Swap) &&
-      TLI.getBooleanContents(N0.getValueType()) ==
+      TLI.getBooleanContents(CmpOpVT) ==
           TargetLowering::ZeroOrOneBooleanContent &&
-      (!LegalOperations ||
-       TLI.isOperationLegal(ISD::SETCC, N0.getValueType()))) {
+      (!LegalOperations || TLI.isOperationLegal(ISD::SETCC, CmpOpVT))) {
 
     if (Swap) {
-      CC = ISD::getSetCCInverse(CC, N0.getValueType().isInteger());
+      CC = ISD::getSetCCInverse(CC, CmpOpVT.isInteger());
       std::swap(N2C, N3C);
     }
 
@@ -18300,14 +18299,14 @@ SDValue DAGCombiner::SimplifySelectCC(const SDLoc &DL, SDValue N0, SDValue N1,
     SDValue Temp, SCC;
     // zext (setcc n0, n1)
     if (LegalTypes) {
-      SCC = DAG.getSetCC(DL, getSetCCResultType(N0.getValueType()), N0, N1, CC);
-      if (N2.getValueType().bitsLT(SCC.getValueType()))
-        Temp = DAG.getZeroExtendInReg(SCC, SDLoc(N2), N2.getValueType());
+      SCC = DAG.getSetCC(DL, getSetCCResultType(CmpOpVT), N0, N1, CC);
+      if (VT.bitsLT(SCC.getValueType()))
+        Temp = DAG.getZeroExtendInReg(SCC, SDLoc(N2), VT);
       else
-        Temp = DAG.getNode(ISD::ZERO_EXTEND, SDLoc(N2), N2.getValueType(), SCC);
+        Temp = DAG.getNode(ISD::ZERO_EXTEND, SDLoc(N2), VT, SCC);
     } else {
       SCC = DAG.getSetCC(SDLoc(N0), MVT::i1, N0, N1, CC);
-      Temp = DAG.getNode(ISD::ZERO_EXTEND, SDLoc(N2), N2.getValueType(), SCC);
+      Temp = DAG.getNode(ISD::ZERO_EXTEND, SDLoc(N2), VT, SCC);
     }
 
     AddToWorklist(SCC.getNode());
@@ -18340,18 +18339,16 @@ SDValue DAGCombiner::SimplifySelectCC(const SDLoc &DL, SDValue N0, SDValue N1,
              N0 == N3 && N2.getOpcode() == ISD::SUB && N0 == N2.getOperand(1))
       SubC = dyn_cast<ConstantSDNode>(N2.getOperand(0));
 
-    EVT XType = N0.getValueType();
-    if (SubC && SubC->isNullValue() && XType.isInteger()) {
+    if (SubC && SubC->isNullValue() && CmpOpVT.isInteger()) {
       SDLoc DL(N0);
-      SDValue Shift = DAG.getNode(ISD::SRA, DL, XType,
-                                  N0,
-                                  DAG.getConstant(XType.getSizeInBits() - 1, DL,
-                                         getShiftAmountTy(N0.getValueType())));
-      SDValue Add = DAG.getNode(ISD::ADD, DL,
-                                XType, N0, Shift);
+      SDValue Shift = DAG.getNode(ISD::SRA, DL, CmpOpVT, N0,
+                                  DAG.getConstant(CmpOpVT.getSizeInBits() - 1,
+                                                  DL,
+                                                  getShiftAmountTy(CmpOpVT)));
+      SDValue Add = DAG.getNode(ISD::ADD, DL, CmpOpVT, N0, Shift);
       AddToWorklist(Shift.getNode());
       AddToWorklist(Add.getNode());
-      return DAG.getNode(ISD::XOR, DL, XType, Add, Shift);
+      return DAG.getNode(ISD::XOR, DL, CmpOpVT, Add, Shift);
     }
   }
 
