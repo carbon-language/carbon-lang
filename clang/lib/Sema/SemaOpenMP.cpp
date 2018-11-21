@@ -3905,7 +3905,8 @@ class OpenMPIterationSpaceChecker {
   ///   Var <= UB
   ///   UB  >  Var
   ///   UB  >= Var
-  bool TestIsLessOp = false;
+  /// This will have no value when the condition is !=
+  llvm::Optional<bool> TestIsLessOp;
   /// This flag is true when condition is strict ( < or > ).
   bool TestIsStrictOp = false;
   /// This flag is true when step is subtracted on each iteration.
@@ -3971,8 +3972,8 @@ private:
   /// Helper to set loop counter variable and its initializer.
   bool setLCDeclAndLB(ValueDecl *NewLCDecl, Expr *NewDeclRefExpr, Expr *NewLB);
   /// Helper to set upper bound.
-  bool setUB(Expr *NewUB, bool LessOp, bool StrictOp, SourceRange SR,
-             SourceLocation SL);
+  bool setUB(Expr *NewUB, llvm::Optional<bool> LessOp, bool StrictOp,
+             SourceRange SR, SourceLocation SL);
   /// Helper to set loop increment.
   bool setStep(Expr *NewStep, bool Subtract);
 };
@@ -4007,15 +4008,17 @@ bool OpenMPIterationSpaceChecker::setLCDeclAndLB(ValueDecl *NewLCDecl,
   return false;
 }
 
-bool OpenMPIterationSpaceChecker::setUB(Expr *NewUB, bool LessOp, bool StrictOp,
-                                        SourceRange SR, SourceLocation SL) {
+bool OpenMPIterationSpaceChecker::setUB(Expr *NewUB, llvm::Optional<bool> LessOp,
+                                        bool StrictOp, SourceRange SR,
+                                        SourceLocation SL) {
   // State consistency checking to ensure correct usage.
   assert(LCDecl != nullptr && LB != nullptr && UB == nullptr &&
          Step == nullptr && !TestIsLessOp && !TestIsStrictOp);
   if (!NewUB)
     return true;
   UB = NewUB;
-  TestIsLessOp = LessOp;
+  if (LessOp)
+    TestIsLessOp = LessOp;
   TestIsStrictOp = StrictOp;
   ConditionSrcRange = SR;
   ConditionLoc = SL;
@@ -4055,18 +4058,23 @@ bool OpenMPIterationSpaceChecker::setStep(Expr *NewStep, bool Subtract) {
     bool IsConstPos =
         IsConstant && Result.isSigned() && (Subtract == Result.isNegative());
     bool IsConstZero = IsConstant && !Result.getBoolValue();
+
+    // != with increment is treated as <; != with decrement is treated as >
+    if (!TestIsLessOp.hasValue())
+      TestIsLessOp = IsConstPos || (IsUnsigned && !Subtract);
     if (UB && (IsConstZero ||
-               (TestIsLessOp ? (IsConstNeg || (IsUnsigned && Subtract))
-                             : (IsConstPos || (IsUnsigned && !Subtract))))) {
+               (TestIsLessOp.getValue() ? 
+                  (IsConstNeg || (IsUnsigned && Subtract)) :
+                  (IsConstPos || (IsUnsigned && !Subtract))))) {
       SemaRef.Diag(NewStep->getExprLoc(),
                    diag::err_omp_loop_incr_not_compatible)
-          << LCDecl << TestIsLessOp << NewStep->getSourceRange();
+          << LCDecl << TestIsLessOp.getValue() << NewStep->getSourceRange();
       SemaRef.Diag(ConditionLoc,
                    diag::note_omp_loop_cond_requres_compatible_incr)
-          << TestIsLessOp << ConditionSrcRange;
+          << TestIsLessOp.getValue() << ConditionSrcRange;
       return true;
     }
-    if (TestIsLessOp == Subtract) {
+    if (TestIsLessOp.getValue() == Subtract) {
       NewStep =
           SemaRef.CreateBuiltinUnaryOp(NewStep->getExprLoc(), UO_Minus, NewStep)
               .get();
@@ -4207,7 +4215,12 @@ bool OpenMPIterationSpaceChecker::checkAndSetCond(Expr *S) {
                      (BO->getOpcode() == BO_GT || BO->getOpcode() == BO_GE),
                      (BO->getOpcode() == BO_LT || BO->getOpcode() == BO_GT),
                      BO->getSourceRange(), BO->getOperatorLoc());
-    }
+    } else if (BO->getOpcode() == BO_NE)
+        return setUB(getInitLCDecl(BO->getLHS()) == LCDecl ?
+                       BO->getRHS() : BO->getLHS(),
+                     /*LessOp=*/llvm::None,
+                     /*StrictOp=*/true,
+                     BO->getSourceRange(), BO->getOperatorLoc());
   } else if (auto *CE = dyn_cast<CXXOperatorCallExpr>(S)) {
     if (CE->getNumArgs() == 2) {
       auto Op = CE->getOperator();
@@ -4224,6 +4237,14 @@ bool OpenMPIterationSpaceChecker::checkAndSetCond(Expr *S) {
           return setUB(CE->getArg(0), Op == OO_Greater || Op == OO_GreaterEqual,
                        Op == OO_Less || Op == OO_Greater, CE->getSourceRange(),
                        CE->getOperatorLoc());
+        break;
+      case OO_ExclaimEqual: 
+        return setUB(getInitLCDecl(CE->getArg(0)) == LCDecl ?
+                     CE->getArg(1) : CE->getArg(0),
+                     /*LessOp=*/llvm::None,
+                     /*StrictOp=*/true,
+                     CE->getSourceRange(),
+                     CE->getOperatorLoc());
         break;
       default:
         break;
@@ -4373,8 +4394,8 @@ Expr *OpenMPIterationSpaceChecker::buildNumIterations(
   if (VarType->isIntegerType() || VarType->isPointerType() ||
       SemaRef.getLangOpts().CPlusPlus) {
     // Upper - Lower
-    Expr *UBExpr = TestIsLessOp ? UB : LB;
-    Expr *LBExpr = TestIsLessOp ? LB : UB;
+    Expr *UBExpr = TestIsLessOp.getValue() ? UB : LB;
+    Expr *LBExpr = TestIsLessOp.getValue() ? LB : UB;
     Expr *Upper = tryBuildCapture(SemaRef, UBExpr, Captures).get();
     Expr *Lower = tryBuildCapture(SemaRef, LBExpr, Captures).get();
     if (!Upper || !Lower)
@@ -4475,8 +4496,9 @@ Expr *OpenMPIterationSpaceChecker::buildPreCond(
 
   ExprResult CondExpr =
       SemaRef.BuildBinOp(S, DefaultLoc,
-                         TestIsLessOp ? (TestIsStrictOp ? BO_LT : BO_LE)
-                                      : (TestIsStrictOp ? BO_GT : BO_GE),
+                         TestIsLessOp.getValue() ? 
+                           (TestIsStrictOp ? BO_LT : BO_LE) :
+                           (TestIsStrictOp ? BO_GT : BO_GE),
                          NewLB.get(), NewUB.get());
   if (CondExpr.isUsable()) {
     if (!SemaRef.Context.hasSameUnqualifiedType(CondExpr.get()->getType(),
@@ -4554,9 +4576,9 @@ Expr *OpenMPIterationSpaceChecker::buildOrderedLoopData(
       SemaRef.getLangOpts().CPlusPlus) {
     // Upper - Lower
     Expr *Upper =
-        TestIsLessOp ? Cnt : tryBuildCapture(SemaRef, UB, Captures).get();
+        TestIsLessOp.getValue() ? Cnt : tryBuildCapture(SemaRef, UB, Captures).get();
     Expr *Lower =
-        TestIsLessOp ? tryBuildCapture(SemaRef, LB, Captures).get() : Cnt;
+        TestIsLessOp.getValue() ? tryBuildCapture(SemaRef, LB, Captures).get() : Cnt;
     if (!Upper || !Lower)
       return nullptr;
 
