@@ -1,5 +1,5 @@
-# RUN: not llvm-mca -march=aarch64 -mcpu=cyclone -resource-pressure=false < %s |& FileCheck %s
-# UNSUPPORTED: -windows-
+# RUN: not llvm-mca -march=aarch64 -mcpu=cyclone -resource-pressure=false < %s 2> %t
+# RUN: FileCheck --input-file %t %s
 
   ldr	x7, [x1, #8]
   ldr	x6, [x1, x2]
