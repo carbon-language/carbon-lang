@@ -6380,7 +6380,7 @@ ExpectedStmt ASTNodeImporter::VisitConstantExpr(ConstantExpr *E) {
   Expr *ToSubExpr;
   std::tie(ToSubExpr) = *Imp;
 
-  return ConstantExpr::Create(Importer.getToContext(), ToSubExpr);
+  return new (Importer.getToContext()) ConstantExpr(ToSubExpr);
 }
 
 ExpectedStmt ASTNodeImporter::VisitParenExpr(ParenExpr *E) {

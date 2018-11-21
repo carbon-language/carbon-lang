@@ -4376,11 +4376,10 @@ ExprResult Sema::ActOnOMPArraySectionExpr(Expr *Base, SourceLocation LBLoc,
     return ExprError();
 
   if (LowerBound && !OriginalTy->isAnyPointerType()) {
-    Expr::EvalResult Result;
-    if (LowerBound->EvaluateAsInt(Result, Context)) {
+    llvm::APSInt LowerBoundValue;
+    if (LowerBound->EvaluateAsInt(LowerBoundValue, Context)) {
       // OpenMP 4.5, [2.4 Array Sections]
       // The array section must be a subset of the original array.
-      llvm::APSInt LowerBoundValue = Result.Val.getInt();
       if (LowerBoundValue.isNegative()) {
         Diag(LowerBound->getExprLoc(), diag::err_omp_section_not_subset_of_array)
             << LowerBound->getSourceRange();
@@ -4390,11 +4389,10 @@ ExprResult Sema::ActOnOMPArraySectionExpr(Expr *Base, SourceLocation LBLoc,
   }
 
   if (Length) {
-    Expr::EvalResult Result;
-    if (Length->EvaluateAsInt(Result, Context)) {
+    llvm::APSInt LengthValue;
+    if (Length->EvaluateAsInt(LengthValue, Context)) {
       // OpenMP 4.5, [2.4 Array Sections]
       // The length must evaluate to non-negative integers.
-      llvm::APSInt LengthValue = Result.Val.getInt();
       if (LengthValue.isNegative()) {
         Diag(Length->getExprLoc(), diag::err_omp_section_length_negative)
             << LengthValue.toString(/*Radix=*/10, /*Signed=*/true)
@@ -5797,8 +5795,6 @@ Sema::BuildCompoundLiteralExpr(SourceLocation LParenLoc, TypeSourceInfo *TInfo,
           ? VK_RValue
           : VK_LValue;
 
-  if (isFileScope)
-    LiteralExpr = ConstantExpr::Create(Context, LiteralExpr);
   Expr *E = new (Context) CompoundLiteralExpr(LParenLoc, TInfo, literalType,
                                               VK, LiteralExpr, isFileScope);
   if (isFileScope) {
@@ -5807,6 +5803,7 @@ Sema::BuildCompoundLiteralExpr(SourceLocation LParenLoc, TypeSourceInfo *TInfo,
         !literalType->isDependentType()) // C99 6.5.2.5p3
       if (CheckForConstantInitializer(LiteralExpr, literalType))
         return ExprError();
+    E = new (Context) ConstantExpr(E);
   } else if (literalType.getAddressSpace() != LangAS::opencl_private &&
              literalType.getAddressSpace() != LangAS::Default) {
     // Embedded-C extensions to C99 6.5.2.5:
@@ -8402,8 +8399,8 @@ static bool canConvertIntToOtherIntTy(Sema &S, ExprResult *Int,
   // Reject cases where the value of the Int is unknown as that would
   // possibly cause truncation, but accept cases where the scalar can be
   // demoted without loss of precision.
-  Expr::EvalResult EVResult;
-  bool CstInt = Int->get()->EvaluateAsInt(EVResult, S.Context);
+  llvm::APSInt Result;
+  bool CstInt = Int->get()->EvaluateAsInt(Result, S.Context);
   int Order = S.Context.getIntegerTypeOrder(OtherIntTy, IntTy);
   bool IntSigned = IntTy->hasSignedIntegerRepresentation();
   bool OtherIntSigned = OtherIntTy->hasSignedIntegerRepresentation();
@@ -8411,7 +8408,6 @@ static bool canConvertIntToOtherIntTy(Sema &S, ExprResult *Int,
   if (CstInt) {
     // If the scalar is constant and is of a higher order and has more active
     // bits that the vector element type, reject it.
-    llvm::APSInt Result = EVResult.Val.getInt();
     unsigned NumBits = IntSigned
                            ? (Result.isNegative() ? Result.getMinSignedBits()
                                                   : Result.getActiveBits())
@@ -8439,9 +8435,8 @@ static bool canConvertIntTyToFloatTy(Sema &S, ExprResult *Int,
 
   // Determine if the integer constant can be expressed as a floating point
   // number of the appropriate type.
-  Expr::EvalResult EVResult;
-  bool CstInt = Int->get()->EvaluateAsInt(EVResult, S.Context);
-
+  llvm::APSInt Result;
+  bool CstInt = Int->get()->EvaluateAsInt(Result, S.Context);
   uint64_t Bits = 0;
   if (CstInt) {
     // Reject constants that would be truncated if they were converted to
@@ -8449,7 +8444,6 @@ static bool canConvertIntTyToFloatTy(Sema &S, ExprResult *Int,
     // FIXME: Ideally the conversion to an APFloat and from an APFloat
     //        could be avoided if there was a convertFromAPInt method
     //        which could signal back if implicit truncation occurred.
-    llvm::APSInt Result = EVResult.Val.getInt();
     llvm::APFloat Float(S.Context.getFloatTypeSemantics(FloatTy));
     Float.convertFromAPInt(Result, IntTy->hasSignedIntegerRepresentation(),
                            llvm::APFloat::rmTowardZero);
@@ -8789,10 +8783,9 @@ static void DiagnoseBadDivideOrRemainderValues(Sema& S, ExprResult &LHS,
                                                ExprResult &RHS,
                                                SourceLocation Loc, bool IsDiv) {
   // Check for division/remainder by zero.
-  Expr::EvalResult RHSValue;
+  llvm::APSInt RHSValue;
   if (!RHS.get()->isValueDependent() &&
-      RHS.get()->EvaluateAsInt(RHSValue, S.Context) &&
-      RHSValue.Val.getInt() == 0)
+      RHS.get()->EvaluateAsInt(RHSValue, S.Context) && RHSValue == 0)
     S.DiagRuntimeBehavior(Loc, RHS.get(),
                           S.PDiag(diag::warn_remainder_division_by_zero)
                             << IsDiv << RHS.get()->getSourceRange());
@@ -9034,9 +9027,8 @@ static void diagnoseStringPlusInt(Sema &Self, SourceLocation OpLoc,
   if (!IsStringPlusInt || IndexExpr->isValueDependent())
     return;
 
-  Expr::EvalResult Result;
-  if (IndexExpr->EvaluateAsInt(Result, Self.getASTContext())) {
-    llvm::APSInt index = Result.Val.getInt();
+  llvm::APSInt index;
+  if (IndexExpr->EvaluateAsInt(index, Self.getASTContext())) {
     unsigned StrLenWithNull = StrExpr->getLength() + 1;
     if (index.isNonNegative() &&
         index <= llvm::APSInt(llvm::APInt(index.getBitWidth(), StrLenWithNull),
@@ -9180,11 +9172,10 @@ QualType Sema::CheckAdditionOperands(ExprResult &LHS, ExprResult &RHS,
   if (PExp->IgnoreParenCasts()->isNullPointerConstant(
           Context, Expr::NPC_ValueDependentIsNotNull)) {
     // In C++ adding zero to a null pointer is defined.
-    Expr::EvalResult KnownVal;
+    llvm::APSInt KnownVal;
     if (!getLangOpts().CPlusPlus ||
         (!IExp->isValueDependent() &&
-         (!IExp->EvaluateAsInt(KnownVal, Context) ||
-          KnownVal.Val.getInt() != 0))) {
+         (!IExp->EvaluateAsInt(KnownVal, Context) || KnownVal != 0))) {
       // Check the conditions to see if this is the 'p = nullptr + n' idiom.
       bool IsGNUIdiom = BinaryOperator::isNullPointerArithmeticExtension(
           Context, BO_Add, PExp, IExp);
@@ -9259,11 +9250,10 @@ QualType Sema::CheckSubtractionOperands(ExprResult &LHS, ExprResult &RHS,
       if (LHS.get()->IgnoreParenCasts()->isNullPointerConstant(Context,
                                            Expr::NPC_ValueDependentIsNotNull)) {
         // In C++ adding zero to a null pointer is defined.
-        Expr::EvalResult KnownVal;
+        llvm::APSInt KnownVal;
         if (!getLangOpts().CPlusPlus ||
             (!RHS.get()->isValueDependent() &&
-             (!RHS.get()->EvaluateAsInt(KnownVal, Context) ||
-              KnownVal.Val.getInt() != 0))) {
+             (!RHS.get()->EvaluateAsInt(KnownVal, Context) || KnownVal != 0))) {
           diagnoseArithmeticOnNullPointer(*this, Loc, LHS.get(), false);
         }
       }
@@ -9339,12 +9329,11 @@ static void DiagnoseBadShiftValues(Sema& S, ExprResult &LHS, ExprResult &RHS,
   if (S.getLangOpts().OpenCL)
     return;
 
+  llvm::APSInt Right;
   // Check right/shifter operand
-  Expr::EvalResult RHSResult;
   if (RHS.get()->isValueDependent() ||
-      !RHS.get()->EvaluateAsInt(RHSResult, S.Context))
+      !RHS.get()->EvaluateAsInt(Right, S.Context))
     return;
-  llvm::APSInt Right = RHSResult.Val.getInt();
 
   if (Right.isNegative()) {
     S.DiagRuntimeBehavior(Loc, RHS.get(),
@@ -9367,12 +9356,11 @@ static void DiagnoseBadShiftValues(Sema& S, ExprResult &LHS, ExprResult &RHS,
   // according to C++ has undefined behavior ([expr.shift] 5.8/2). Unsigned
   // integers have defined behavior modulo one more than the maximum value
   // representable in the result type, so never warn for those.
-  Expr::EvalResult LHSResult;
+  llvm::APSInt Left;
   if (LHS.get()->isValueDependent() ||
       LHSType->hasUnsignedIntegerRepresentation() ||
-      !LHS.get()->EvaluateAsInt(LHSResult, S.Context))
+      !LHS.get()->EvaluateAsInt(Left, S.Context))
     return;
-  llvm::APSInt Left = LHSResult.Val.getInt();
 
   // If LHS does not have a signed type and non-negative value
   // then, the behavior is undefined. Warn about it.
@@ -10742,9 +10730,8 @@ inline QualType Sema::CheckLogicalOperands(ExprResult &LHS, ExprResult &RHS,
     // that isn't 0 or 1 (which indicate a potential logical operation that
     // happened to fold to true/false) then warn.
     // Parens on the RHS are ignored.
-    Expr::EvalResult EVResult;
-    if (RHS.get()->EvaluateAsInt(EVResult, Context)) {
-      llvm::APSInt Result = EVResult.Val.getInt();
+    llvm::APSInt Result;
+    if (RHS.get()->EvaluateAsInt(Result, Context))
       if ((getLangOpts().Bool && !RHS.get()->getType()->isBooleanType() &&
            !RHS.get()->getExprLoc().isMacroID()) ||
           (Result != 0 && Result != 1)) {
@@ -10764,7 +10751,6 @@ inline QualType Sema::CheckLogicalOperands(ExprResult &LHS, ExprResult &RHS,
                      SourceRange(getLocForEndOfToken(LHS.get()->getEndLoc()),
                                  RHS.get()->getEndLoc()));
       }
-    }
   }
 
   if (!Context.getLangOpts().CPlusPlus) {
@@ -14180,15 +14166,12 @@ Sema::VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result,
     return ExprError();
   }
 
-  if (!isa<ConstantExpr>(E))
-    E = ConstantExpr::Create(Context, E);
-
   // Circumvent ICE checking in C++11 to avoid evaluating the expression twice
   // in the non-ICE case.
   if (!getLangOpts().CPlusPlus11 && E->isIntegerConstantExpr(Context)) {
     if (Result)
       *Result = E->EvaluateKnownConstIntCheckOverflow(Context);
-    return E;
+    return new (Context) ConstantExpr(E);
   }
 
   Expr::EvalResult EvalResult;
@@ -14206,7 +14189,7 @@ Sema::VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result,
   if (Folded && getLangOpts().CPlusPlus11 && Notes.empty()) {
     if (Result)
       *Result = EvalResult.Val.getInt();
-    return E;
+    return new (Context) ConstantExpr(E);
   }
 
   // If our only note is the usual "invalid subexpression" note, just point
@@ -14234,7 +14217,7 @@ Sema::VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result,
 
   if (Result)
     *Result = EvalResult.Val.getInt();
-  return E;
+  return new (Context) ConstantExpr(E);
 }
 
 namespace {

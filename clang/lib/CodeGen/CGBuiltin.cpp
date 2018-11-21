@@ -1926,26 +1926,6 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   case Builtin::BI__builtin_rotateright64:
     return emitRotate(E, true);
 
-  case Builtin::BI__builtin_constant_p: {
-    llvm::Type *ResultType = ConvertType(E->getType());
-    if (CGM.getCodeGenOpts().OptimizationLevel == 0)
-      // At -O0, we don't perform inlining, so we don't need to delay the
-      // processing.
-      return RValue::get(ConstantInt::get(ResultType, 0));
-    if (auto *DRE = dyn_cast<DeclRefExpr>(E->getArg(0)->IgnoreImplicit())) {
-      auto DREType = DRE->getType();
-      if (DREType->isAggregateType() || DREType->isFunctionType())
-        return RValue::get(ConstantInt::get(ResultType, 0));
-    }
-    Value *ArgValue = EmitScalarExpr(E->getArg(0));
-    llvm::Type *ArgType = ArgValue->getType();
-
-    Value *F = CGM.getIntrinsic(Intrinsic::is_constant, ArgType);
-    Value *Result = Builder.CreateCall(F, ArgValue);
-    if (Result->getType() != ResultType)
-      Result = Builder.CreateIntCast(Result, ResultType, /*isSigned*/true);
-    return RValue::get(Result);
-  }
   case Builtin::BI__builtin_object_size: {
     unsigned Type =
         E->getArg(1)->EvaluateKnownConstInt(getContext()).getZExtValue();
@@ -2210,12 +2190,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
 
   case Builtin::BI__builtin___memcpy_chk: {
     // fold __builtin_memcpy_chk(x, y, cst1, cst2) to memcpy iff cst1<=cst2.
-    Expr::EvalResult SizeResult, DstSizeResult;
-    if (!E->getArg(2)->EvaluateAsInt(SizeResult, CGM.getContext()) ||
-        !E->getArg(3)->EvaluateAsInt(DstSizeResult, CGM.getContext()))
+    llvm::APSInt Size, DstSize;
+    if (!E->getArg(2)->EvaluateAsInt(Size, CGM.getContext()) ||
+        !E->getArg(3)->EvaluateAsInt(DstSize, CGM.getContext()))
       break;
-    llvm::APSInt Size = SizeResult.Val.getInt();
-    llvm::APSInt DstSize = DstSizeResult.Val.getInt();
     if (Size.ugt(DstSize))
       break;
     Address Dest = EmitPointerWithAlignment(E->getArg(0));
@@ -2236,12 +2214,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
 
   case Builtin::BI__builtin___memmove_chk: {
     // fold __builtin_memmove_chk(x, y, cst1, cst2) to memmove iff cst1<=cst2.
-    Expr::EvalResult SizeResult, DstSizeResult;
-    if (!E->getArg(2)->EvaluateAsInt(SizeResult, CGM.getContext()) ||
-        !E->getArg(3)->EvaluateAsInt(DstSizeResult, CGM.getContext()))
+    llvm::APSInt Size, DstSize;
+    if (!E->getArg(2)->EvaluateAsInt(Size, CGM.getContext()) ||
+        !E->getArg(3)->EvaluateAsInt(DstSize, CGM.getContext()))
       break;
-    llvm::APSInt Size = SizeResult.Val.getInt();
-    llvm::APSInt DstSize = DstSizeResult.Val.getInt();
     if (Size.ugt(DstSize))
       break;
     Address Dest = EmitPointerWithAlignment(E->getArg(0));
@@ -2276,12 +2252,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   }
   case Builtin::BI__builtin___memset_chk: {
     // fold __builtin_memset_chk(x, y, cst1, cst2) to memset iff cst1<=cst2.
-    Expr::EvalResult SizeResult, DstSizeResult;
-    if (!E->getArg(2)->EvaluateAsInt(SizeResult, CGM.getContext()) ||
-        !E->getArg(3)->EvaluateAsInt(DstSizeResult, CGM.getContext()))
+    llvm::APSInt Size, DstSize;
+    if (!E->getArg(2)->EvaluateAsInt(Size, CGM.getContext()) ||
+        !E->getArg(3)->EvaluateAsInt(DstSize, CGM.getContext()))
       break;
-    llvm::APSInt Size = SizeResult.Val.getInt();
-    llvm::APSInt DstSize = DstSizeResult.Val.getInt();
     if (Size.ugt(DstSize))
       break;
     Address Dest = EmitPointerWithAlignment(E->getArg(0));
@@ -5795,11 +5769,10 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     llvm::FunctionType *FTy =
         llvm::FunctionType::get(VoidTy, /*Variadic=*/false);
 
-    Expr::EvalResult Result;
-    if (!E->getArg(0)->EvaluateAsInt(Result, CGM.getContext()))
+    APSInt Value;
+    if (!E->getArg(0)->EvaluateAsInt(Value, CGM.getContext()))
       llvm_unreachable("Sema will ensure that the parameter is constant");
 
-    llvm::APSInt Value = Result.Val.getInt();
     uint64_t ZExtValue = Value.zextOrTrunc(IsThumb ? 16 : 32).getZExtValue();
 
     llvm::InlineAsm *Emit =
@@ -6902,11 +6875,10 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   }
 
   if (BuiltinID == AArch64::BI__getReg) {
-    Expr::EvalResult Result;
-    if (!E->getArg(0)->EvaluateAsInt(Result, CGM.getContext()))
+    APSInt Value;
+    if (!E->getArg(0)->EvaluateAsInt(Value, CGM.getContext()))
       llvm_unreachable("Sema will ensure that the parameter is constant");
 
-    llvm::APSInt Value = Result.Val.getInt();
     LLVMContext &Context = CGM.getLLVMContext();
     std::string Reg = Value == 31 ? "sp" : "x" + Value.toString(10);
 

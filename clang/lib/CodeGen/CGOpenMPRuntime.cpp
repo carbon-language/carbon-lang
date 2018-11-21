@@ -6795,11 +6795,10 @@ private:
     }
 
     // Check if the length evaluates to 1.
-    Expr::EvalResult Result;
-    if (!Length->EvaluateAsInt(Result, CGF.getContext()))
+    llvm::APSInt ConstLength;
+    if (!Length->EvaluateAsInt(ConstLength, CGF.getContext()))
       return true; // Can have more that size 1.
 
-    llvm::APSInt ConstLength = Result.Val.getInt();
     return ConstLength.getSExtValue() != 1;
   }
 
@@ -9163,8 +9162,8 @@ void CGOpenMPRuntime::emitDeclareSimdFunction(const FunctionDecl *FD,
         ParamAttrTy &ParamAttr = ParamAttrs[Pos];
         ParamAttr.Kind = Linear;
         if (*SI) {
-          Expr::EvalResult Result;
-          if (!(*SI)->EvaluateAsInt(Result, C, Expr::SE_AllowSideEffects)) {
+          if (!(*SI)->EvaluateAsInt(ParamAttr.StrideOrArg, C,
+                                    Expr::SE_AllowSideEffects)) {
             if (const auto *DRE =
                     cast<DeclRefExpr>((*SI)->IgnoreParenImpCasts())) {
               if (const auto *StridePVD = cast<ParmVarDecl>(DRE->getDecl())) {
@@ -9173,8 +9172,6 @@ void CGOpenMPRuntime::emitDeclareSimdFunction(const FunctionDecl *FD,
                     ParamPositions[StridePVD->getCanonicalDecl()]);
               }
             }
-          } else {
-            ParamAttr.StrideOrArg = Result.Val.getInt();
           }
         }
         ++SI;
