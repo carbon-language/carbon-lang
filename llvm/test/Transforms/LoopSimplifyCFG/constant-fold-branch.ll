@@ -2262,3 +2262,348 @@ loop_1_backedge:
 exit:
   ret i32 %i
 }
+
+define i32 @intermediate_complex_subloop_branch_from_inner_to_parent(i1 %cond1, i1 %cond2, i1 %cond3, i32 %N) {
+; CHECK-LABEL: @intermediate_complex_subloop_branch_from_inner_to_parent(
+; CHECK-NEXT:  preheader:
+; CHECK-NEXT:    br label [[LOOP_1:%.*]]
+; CHECK:       loop_1:
+; CHECK-NEXT:    [[I:%.*]] = phi i32 [ 0, [[PREHEADER:%.*]] ], [ [[I_NEXT:%.*]], [[LOOP_1_BACKEDGE:%.*]] ]
+; CHECK-NEXT:    br label [[LOOP_2:%.*]]
+; CHECK:       loop_2:
+; CHECK-NEXT:    [[J:%.*]] = phi i32 [ 0, [[LOOP_1]] ], [ [[J_NEXT:%.*]], [[LOOP_2_BACKEDGE:%.*]] ]
+; CHECK-NEXT:    br label [[LOOP_3:%.*]]
+; CHECK:       loop_3:
+; CHECK-NEXT:    [[K:%.*]] = phi i32 [ 0, [[LOOP_2]] ], [ [[K_NEXT:%.*]], [[LOOP_3_BACKEDGE:%.*]] ]
+; CHECK-NEXT:    br i1 [[COND1:%.*]], label [[LOOP_3_BACKEDGE]], label [[INTERMEDIATE:%.*]]
+; CHECK:       intermediate:
+; CHECK-NEXT:    br label [[INTERMEDIATE_LOOP:%.*]]
+; CHECK:       intermediate_loop:
+; CHECK-NEXT:    br i1 [[COND3:%.*]], label [[INTERMEDIATE_LOOP_BACKEDGE:%.*]], label [[INTERMEDIATE_BLOCK:%.*]]
+; CHECK:       intermediate_loop.backedge:
+; CHECK-NEXT:    br label [[INTERMEDIATE_LOOP]]
+; CHECK:       intermediate_block:
+; CHECK-NEXT:    br i1 [[COND2:%.*]], label [[INTERMEDIATE_LOOP_BACKEDGE]], label [[INTERMEDIATE_EXIT:%.*]]
+; CHECK:       intermediate_exit:
+; CHECK-NEXT:    br i1 false, label [[LOOP_3_BACKEDGE]], label [[LOOP_2_BACKEDGE]]
+; CHECK:       loop_3_backedge:
+; CHECK-NEXT:    [[K_NEXT]] = add i32 [[K]], 1
+; CHECK-NEXT:    br i1 [[COND2]], label [[LOOP_3]], label [[LOOP_2_BACKEDGE]]
+; CHECK:       loop_2_backedge:
+; CHECK-NEXT:    [[J_NEXT]] = add i32 [[J]], 1
+; CHECK-NEXT:    [[C_2:%.*]] = icmp slt i32 [[J_NEXT]], [[N:%.*]]
+; CHECK-NEXT:    br i1 [[C_2]], label [[LOOP_2]], label [[LOOP_1_BACKEDGE]]
+; CHECK:       loop_1_backedge:
+; CHECK-NEXT:    [[I_NEXT]] = add i32 [[I]], 1
+; CHECK-NEXT:    [[C_1:%.*]] = icmp slt i32 [[I_NEXT]], [[N]]
+; CHECK-NEXT:    br i1 [[C_1]], label [[LOOP_1]], label [[EXIT:%.*]]
+; CHECK:       exit:
+; CHECK-NEXT:    [[I_LCSSA:%.*]] = phi i32 [ [[I]], [[LOOP_1_BACKEDGE]] ]
+; CHECK-NEXT:    ret i32 [[I_LCSSA]]
+;
+preheader:
+  br label %loop_1
+
+loop_1:
+  %i = phi i32 [ 0, %preheader ], [ %i.next, %loop_1_backedge ]
+  br label %loop_2
+
+loop_2:
+  %j = phi i32 [ 0, %loop_1 ], [ %j.next, %loop_2_backedge ]
+  br label %loop_3
+
+loop_3:
+  %k = phi i32 [ 0, %loop_2 ], [ %k.next, %loop_3_backedge ]
+  br i1 %cond1, label %loop_3_backedge, label %intermediate
+
+intermediate:
+  br label %intermediate_loop
+
+intermediate_loop:
+  br i1 %cond3, label %intermediate_loop, label %intermediate_block
+
+intermediate_block:
+  br i1 %cond2, label %intermediate_loop, label %intermediate_exit
+
+intermediate_exit:
+  br i1 false, label %loop_3_backedge, label %loop_2_backedge
+
+loop_3_backedge:
+  %k.next = add i32 %k, 1
+  br i1 %cond2, label %loop_3, label %loop_2_backedge
+
+loop_2_backedge:
+  %j.next = add i32 %j, 1
+  %c_2 = icmp slt i32 %j.next, %N
+  br i1 %c_2, label %loop_2, label %loop_1_backedge
+
+loop_1_backedge:
+  %i.next = add i32 %i, 1
+  %c_1 = icmp slt i32 %i.next, %N
+  br i1 %c_1, label %loop_1, label %exit
+
+exit:
+  ret i32 %i
+}
+
+define i32 @intermediate_complex_subloop_switch_from_inner_to_parent(i1 %cond1, i1 %cond2, i1 %cond3, i32 %N) {
+; CHECK-LABEL: @intermediate_complex_subloop_switch_from_inner_to_parent(
+; CHECK-NEXT:  preheader:
+; CHECK-NEXT:    br label [[LOOP_1:%.*]]
+; CHECK:       loop_1:
+; CHECK-NEXT:    [[I:%.*]] = phi i32 [ 0, [[PREHEADER:%.*]] ], [ [[I_NEXT:%.*]], [[LOOP_1_BACKEDGE:%.*]] ]
+; CHECK-NEXT:    br label [[LOOP_2:%.*]]
+; CHECK:       loop_2:
+; CHECK-NEXT:    [[J:%.*]] = phi i32 [ 0, [[LOOP_1]] ], [ [[J_NEXT:%.*]], [[LOOP_2_BACKEDGE:%.*]] ]
+; CHECK-NEXT:    br label [[LOOP_3:%.*]]
+; CHECK:       loop_3:
+; CHECK-NEXT:    [[K:%.*]] = phi i32 [ 0, [[LOOP_2]] ], [ [[K_NEXT:%.*]], [[LOOP_3_BACKEDGE:%.*]] ]
+; CHECK-NEXT:    br i1 [[COND1:%.*]], label [[LOOP_3_BACKEDGE]], label [[INTERMEDIATE:%.*]]
+; CHECK:       intermediate:
+; CHECK-NEXT:    br label [[INTERMEDIATE_LOOP:%.*]]
+; CHECK:       intermediate_loop:
+; CHECK-NEXT:    br i1 [[COND3:%.*]], label [[INTERMEDIATE_LOOP_BACKEDGE:%.*]], label [[INTERMEDIATE_BLOCK:%.*]]
+; CHECK:       intermediate_loop.backedge:
+; CHECK-NEXT:    br label [[INTERMEDIATE_LOOP]]
+; CHECK:       intermediate_block:
+; CHECK-NEXT:    br i1 [[COND2:%.*]], label [[INTERMEDIATE_LOOP_BACKEDGE]], label [[INTERMEDIATE_EXIT:%.*]]
+; CHECK:       intermediate_exit:
+; CHECK-NEXT:    switch i32 1, label [[LOOP_2_BACKEDGE]] [
+; CHECK-NEXT:    i32 0, label [[LOOP_3_BACKEDGE]]
+; CHECK-NEXT:    ]
+; CHECK:       loop_3_backedge:
+; CHECK-NEXT:    [[K_NEXT]] = add i32 [[K]], 1
+; CHECK-NEXT:    br i1 [[COND2]], label [[LOOP_3]], label [[LOOP_2_BACKEDGE]]
+; CHECK:       loop_2_backedge:
+; CHECK-NEXT:    [[J_NEXT]] = add i32 [[J]], 1
+; CHECK-NEXT:    [[C_2:%.*]] = icmp slt i32 [[J_NEXT]], [[N:%.*]]
+; CHECK-NEXT:    br i1 [[C_2]], label [[LOOP_2]], label [[LOOP_1_BACKEDGE]]
+; CHECK:       loop_1_backedge:
+; CHECK-NEXT:    [[I_NEXT]] = add i32 [[I]], 1
+; CHECK-NEXT:    [[C_1:%.*]] = icmp slt i32 [[I_NEXT]], [[N]]
+; CHECK-NEXT:    br i1 [[C_1]], label [[LOOP_1]], label [[EXIT:%.*]]
+; CHECK:       exit:
+; CHECK-NEXT:    [[I_LCSSA:%.*]] = phi i32 [ [[I]], [[LOOP_1_BACKEDGE]] ]
+; CHECK-NEXT:    ret i32 [[I_LCSSA]]
+;
+preheader:
+  br label %loop_1
+
+loop_1:
+  %i = phi i32 [ 0, %preheader ], [ %i.next, %loop_1_backedge ]
+  br label %loop_2
+
+loop_2:
+  %j = phi i32 [ 0, %loop_1 ], [ %j.next, %loop_2_backedge ]
+  br label %loop_3
+
+loop_3:
+  %k = phi i32 [ 0, %loop_2 ], [ %k.next, %loop_3_backedge ]
+  br i1 %cond1, label %loop_3_backedge, label %intermediate
+
+intermediate:
+  br label %intermediate_loop
+
+intermediate_loop:
+  br i1 %cond3, label %intermediate_loop, label %intermediate_block
+
+intermediate_block:
+  br i1 %cond2, label %intermediate_loop, label %intermediate_exit
+
+intermediate_exit:
+  switch i32 1, label %loop_2_backedge [i32 0, label %loop_3_backedge]
+
+loop_3_backedge:
+  %k.next = add i32 %k, 1
+  br i1 %cond2, label %loop_3, label %loop_2_backedge
+
+loop_2_backedge:
+  %j.next = add i32 %j, 1
+  %c_2 = icmp slt i32 %j.next, %N
+  br i1 %c_2, label %loop_2, label %loop_1_backedge
+
+loop_1_backedge:
+  %i.next = add i32 %i, 1
+  %c_1 = icmp slt i32 %i.next, %N
+  br i1 %c_1, label %loop_1, label %exit
+
+exit:
+  ret i32 %i
+}
+
+
+define i32 @intermediate_complex_subloop_branch_from_inner_to_grandparent(i1 %cond1, i1 %cond2, i1 %cond3, i32 %N) {
+; CHECK-LABEL: @intermediate_complex_subloop_branch_from_inner_to_grandparent(
+; CHECK-NEXT:  preheader:
+; CHECK-NEXT:    br label [[LOOP_1:%.*]]
+; CHECK:       loop_1:
+; CHECK-NEXT:    [[I:%.*]] = phi i32 [ 0, [[PREHEADER:%.*]] ], [ [[I_NEXT:%.*]], [[LOOP_1_BACKEDGE:%.*]] ]
+; CHECK-NEXT:    br label [[LOOP_2:%.*]]
+; CHECK:       loop_2:
+; CHECK-NEXT:    [[J:%.*]] = phi i32 [ 0, [[LOOP_1]] ], [ [[J_NEXT:%.*]], [[LOOP_2_BACKEDGE:%.*]] ]
+; CHECK-NEXT:    br label [[LOOP_3:%.*]]
+; CHECK:       loop_3:
+; CHECK-NEXT:    [[K:%.*]] = phi i32 [ 0, [[LOOP_2]] ], [ [[K_NEXT:%.*]], [[LOOP_3_BACKEDGE:%.*]] ]
+; CHECK-NEXT:    br i1 [[COND1:%.*]], label [[LOOP_3_BACKEDGE]], label [[INTERMEDIATE:%.*]]
+; CHECK:       intermediate:
+; CHECK-NEXT:    br label [[INTERMEDIATE_LOOP:%.*]]
+; CHECK:       intermediate_loop:
+; CHECK-NEXT:    br i1 [[COND3:%.*]], label [[INTERMEDIATE_LOOP_BACKEDGE:%.*]], label [[INTERMEDIATE_BLOCK:%.*]]
+; CHECK:       intermediate_loop.backedge:
+; CHECK-NEXT:    br label [[INTERMEDIATE_LOOP]]
+; CHECK:       intermediate_block:
+; CHECK-NEXT:    br i1 [[COND2:%.*]], label [[INTERMEDIATE_LOOP_BACKEDGE]], label [[INTERMEDIATE_EXIT:%.*]]
+; CHECK:       intermediate_exit:
+; CHECK-NEXT:    br i1 false, label [[LOOP_3_BACKEDGE]], label [[LOOP_1_BACKEDGE_LOOPEXIT:%.*]]
+; CHECK:       loop_3_backedge:
+; CHECK-NEXT:    [[K_NEXT]] = add i32 [[K]], 1
+; CHECK-NEXT:    br i1 [[COND2]], label [[LOOP_3]], label [[LOOP_2_BACKEDGE]]
+; CHECK:       loop_2_backedge:
+; CHECK-NEXT:    [[J_NEXT]] = add i32 [[J]], 1
+; CHECK-NEXT:    [[C_2:%.*]] = icmp slt i32 [[J_NEXT]], [[N:%.*]]
+; CHECK-NEXT:    br i1 [[C_2]], label [[LOOP_2]], label [[LOOP_1_BACKEDGE_LOOPEXIT1:%.*]]
+; CHECK:       loop_1_backedge.loopexit:
+; CHECK-NEXT:    br label [[LOOP_1_BACKEDGE]]
+; CHECK:       loop_1_backedge.loopexit1:
+; CHECK-NEXT:    br label [[LOOP_1_BACKEDGE]]
+; CHECK:       loop_1_backedge:
+; CHECK-NEXT:    [[I_NEXT]] = add i32 [[I]], 1
+; CHECK-NEXT:    [[C_1:%.*]] = icmp slt i32 [[I_NEXT]], [[N]]
+; CHECK-NEXT:    br i1 [[C_1]], label [[LOOP_1]], label [[EXIT:%.*]]
+; CHECK:       exit:
+; CHECK-NEXT:    [[I_LCSSA:%.*]] = phi i32 [ [[I]], [[LOOP_1_BACKEDGE]] ]
+; CHECK-NEXT:    ret i32 [[I_LCSSA]]
+;
+preheader:
+  br label %loop_1
+
+loop_1:
+  %i = phi i32 [ 0, %preheader ], [ %i.next, %loop_1_backedge ]
+  br label %loop_2
+
+loop_2:
+  %j = phi i32 [ 0, %loop_1 ], [ %j.next, %loop_2_backedge ]
+  br label %loop_3
+
+loop_3:
+  %k = phi i32 [ 0, %loop_2 ], [ %k.next, %loop_3_backedge ]
+  br i1 %cond1, label %loop_3_backedge, label %intermediate
+
+intermediate:
+  br label %intermediate_loop
+
+intermediate_loop:
+  br i1 %cond3, label %intermediate_loop, label %intermediate_block
+
+intermediate_block:
+  br i1 %cond2, label %intermediate_loop, label %intermediate_exit
+
+intermediate_exit:
+  br i1 false, label %loop_3_backedge, label %loop_1_backedge
+
+loop_3_backedge:
+  %k.next = add i32 %k, 1
+  br i1 %cond2, label %loop_3, label %loop_2_backedge
+
+loop_2_backedge:
+  %j.next = add i32 %j, 1
+  %c_2 = icmp slt i32 %j.next, %N
+  br i1 %c_2, label %loop_2, label %loop_1_backedge
+
+loop_1_backedge:
+  %i.next = add i32 %i, 1
+  %c_1 = icmp slt i32 %i.next, %N
+  br i1 %c_1, label %loop_1, label %exit
+
+exit:
+  ret i32 %i
+}
+
+define i32 @intermediate_complex_subloop_switch_from_inner_to_grandparent(i1 %cond1, i1 %cond2, i1 %cond3, i32 %N) {
+; CHECK-LABEL: @intermediate_complex_subloop_switch_from_inner_to_grandparent(
+; CHECK-NEXT:  preheader:
+; CHECK-NEXT:    br label [[LOOP_1:%.*]]
+; CHECK:       loop_1:
+; CHECK-NEXT:    [[I:%.*]] = phi i32 [ 0, [[PREHEADER:%.*]] ], [ [[I_NEXT:%.*]], [[LOOP_1_BACKEDGE:%.*]] ]
+; CHECK-NEXT:    br label [[LOOP_2:%.*]]
+; CHECK:       loop_2:
+; CHECK-NEXT:    [[J:%.*]] = phi i32 [ 0, [[LOOP_1]] ], [ [[J_NEXT:%.*]], [[LOOP_2_BACKEDGE:%.*]] ]
+; CHECK-NEXT:    br label [[LOOP_3:%.*]]
+; CHECK:       loop_3:
+; CHECK-NEXT:    [[K:%.*]] = phi i32 [ 0, [[LOOP_2]] ], [ [[K_NEXT:%.*]], [[LOOP_3_BACKEDGE:%.*]] ]
+; CHECK-NEXT:    br i1 [[COND1:%.*]], label [[LOOP_3_BACKEDGE]], label [[INTERMEDIATE:%.*]]
+; CHECK:       intermediate:
+; CHECK-NEXT:    br label [[INTERMEDIATE_LOOP:%.*]]
+; CHECK:       intermediate_loop:
+; CHECK-NEXT:    br i1 [[COND3:%.*]], label [[INTERMEDIATE_LOOP_BACKEDGE:%.*]], label [[INTERMEDIATE_BLOCK:%.*]]
+; CHECK:       intermediate_loop.backedge:
+; CHECK-NEXT:    br label [[INTERMEDIATE_LOOP]]
+; CHECK:       intermediate_block:
+; CHECK-NEXT:    br i1 [[COND2:%.*]], label [[INTERMEDIATE_LOOP_BACKEDGE]], label [[INTERMEDIATE_EXIT:%.*]]
+; CHECK:       intermediate_exit:
+; CHECK-NEXT:    switch i32 1, label [[LOOP_1_BACKEDGE_LOOPEXIT:%.*]] [
+; CHECK-NEXT:    i32 0, label [[LOOP_3_BACKEDGE]]
+; CHECK-NEXT:    ]
+; CHECK:       loop_3_backedge:
+; CHECK-NEXT:    [[K_NEXT]] = add i32 [[K]], 1
+; CHECK-NEXT:    br i1 [[COND2]], label [[LOOP_3]], label [[LOOP_2_BACKEDGE]]
+; CHECK:       loop_2_backedge:
+; CHECK-NEXT:    [[J_NEXT]] = add i32 [[J]], 1
+; CHECK-NEXT:    [[C_2:%.*]] = icmp slt i32 [[J_NEXT]], [[N:%.*]]
+; CHECK-NEXT:    br i1 [[C_2]], label [[LOOP_2]], label [[LOOP_1_BACKEDGE_LOOPEXIT1:%.*]]
+; CHECK:       loop_1_backedge.loopexit:
+; CHECK-NEXT:    br label [[LOOP_1_BACKEDGE]]
+; CHECK:       loop_1_backedge.loopexit1:
+; CHECK-NEXT:    br label [[LOOP_1_BACKEDGE]]
+; CHECK:       loop_1_backedge:
+; CHECK-NEXT:    [[I_NEXT]] = add i32 [[I]], 1
+; CHECK-NEXT:    [[C_1:%.*]] = icmp slt i32 [[I_NEXT]], [[N]]
+; CHECK-NEXT:    br i1 [[C_1]], label [[LOOP_1]], label [[EXIT:%.*]]
+; CHECK:       exit:
+; CHECK-NEXT:    [[I_LCSSA:%.*]] = phi i32 [ [[I]], [[LOOP_1_BACKEDGE]] ]
+; CHECK-NEXT:    ret i32 [[I_LCSSA]]
+;
+preheader:
+  br label %loop_1
+
+loop_1:
+  %i = phi i32 [ 0, %preheader ], [ %i.next, %loop_1_backedge ]
+  br label %loop_2
+
+loop_2:
+  %j = phi i32 [ 0, %loop_1 ], [ %j.next, %loop_2_backedge ]
+  br label %loop_3
+
+loop_3:
+  %k = phi i32 [ 0, %loop_2 ], [ %k.next, %loop_3_backedge ]
+  br i1 %cond1, label %loop_3_backedge, label %intermediate
+
+intermediate:
+  br label %intermediate_loop
+
+intermediate_loop:
+  br i1 %cond3, label %intermediate_loop, label %intermediate_block
+
+intermediate_block:
+  br i1 %cond2, label %intermediate_loop, label %intermediate_exit
+
+intermediate_exit:
+  switch i32 1, label %loop_1_backedge [i32 0, label %loop_3_backedge]
+
+loop_3_backedge:
+  %k.next = add i32 %k, 1
+  br i1 %cond2, label %loop_3, label %loop_2_backedge
+
+loop_2_backedge:
+  %j.next = add i32 %j, 1
+  %c_2 = icmp slt i32 %j.next, %N
+  br i1 %c_2, label %loop_2, label %loop_1_backedge
+
+loop_1_backedge:
+  %i.next = add i32 %i, 1
+  %c_1 = icmp slt i32 %i.next, %N
+  br i1 %c_1, label %loop_1, label %exit
+
+exit:
+  ret i32 %i
+}
