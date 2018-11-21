@@ -1775,7 +1775,6 @@ bool Parser::ParseOpenMPVarList(OpenMPDirectiveKind DKind,
                                 OpenMPVarListDataTy &Data) {
   UnqualifiedId UnqualifiedReductionId;
   bool InvalidReductionId = false;
-  bool MapTypeModifierSpecified = false;
 
   // Parse '('.
   BalancedDelimiterTracker T(*this, tok::l_paren, tok::annot_pragma_openmp_end);
@@ -1878,8 +1877,6 @@ bool Parser::ParseOpenMPVarList(OpenMPDirectiveKind DKind,
           if (Data.MapTypeModifier != OMPC_MAP_always) {
             Diag(Tok, diag::err_omp_unknown_map_type_modifier);
             Data.MapTypeModifier = OMPC_MAP_unknown;
-          } else {
-            MapTypeModifierSpecified = true;
           }
 
           ConsumeToken();
@@ -1904,8 +1901,6 @@ bool Parser::ParseOpenMPVarList(OpenMPDirectiveKind DKind,
           if (Data.MapTypeModifier != OMPC_MAP_always) {
             Diag(Tok, diag::err_omp_unknown_map_type_modifier);
             Data.MapTypeModifier = OMPC_MAP_unknown;
-          } else {
-            MapTypeModifierSpecified = true;
           }
 
           ConsumeToken();
@@ -1942,9 +1937,7 @@ bool Parser::ParseOpenMPVarList(OpenMPDirectiveKind DKind,
       (Kind != OMPC_reduction && Kind != OMPC_task_reduction &&
        Kind != OMPC_in_reduction && Kind != OMPC_depend && Kind != OMPC_map) ||
       (Kind == OMPC_reduction && !InvalidReductionId) ||
-      (Kind == OMPC_map && Data.MapType != OMPC_MAP_unknown &&
-       (!MapTypeModifierSpecified ||
-        Data.MapTypeModifier == OMPC_MAP_always)) ||
+      (Kind == OMPC_map && Data.MapType != OMPC_MAP_unknown) ||
       (Kind == OMPC_depend && Data.DepKind != OMPC_DEPEND_unknown);
   const bool MayHaveTail = (Kind == OMPC_linear || Kind == OMPC_aligned);
   while (IsComma || (Tok.isNot(tok::r_paren) && Tok.isNot(tok::colon) &&
