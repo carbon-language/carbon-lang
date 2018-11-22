@@ -102,7 +102,7 @@ private:
   SmallPtrSet<BasicBlock *, 8> LiveExitBlocks;
   // The exits of the original loop that will become unreachable from entry
   // after the constant folding.
-  SmallPtrSet<BasicBlock *, 8> DeadExitBlocks;
+  SmallVector<BasicBlock *, 8> DeadExitBlocks;
   // The blocks that will still be a part of the current loop after folding.
   SmallPtrSet<BasicBlock *, 8> BlocksInLoopAfterFolding;
   // The blocks that have terminators with constant condition that can be
@@ -116,19 +116,24 @@ private:
     if (!DeleteCurrentLoop)
       dbgs() << " not";
     dbgs() << " be destroyed\n";
-    dbgs() << "Blocks in which we can constant-fold terminator:\n";
-    for (const BasicBlock *BB : FoldCandidates)
-      dbgs() << "\t" << BB->getName() << "\n";
+    auto PrintOutVector = [&](const char *Message,
+                           const SmallVectorImpl<BasicBlock *> &S) {
+      dbgs() << Message << "\n";
+      for (const BasicBlock *BB : S)
+        dbgs() << "\t" << BB->getName() << "\n";
+    };
     auto PrintOutSet = [&](const char *Message,
                            const SmallPtrSetImpl<BasicBlock *> &S) {
       dbgs() << Message << "\n";
       for (const BasicBlock *BB : S)
         dbgs() << "\t" << BB->getName() << "\n";
     };
+    PrintOutVector("Blocks in which we can constant-fold terminator:",
+                   FoldCandidates);
     PrintOutSet("Live blocks from the original loop:", LiveLoopBlocks);
     PrintOutSet("Dead blocks from the original loop:", DeadLoopBlocks);
     PrintOutSet("Live exit blocks:", LiveExitBlocks);
-    PrintOutSet("Dead exit blocks:", DeadExitBlocks);
+    PrintOutVector("Dead exit blocks:", DeadExitBlocks);
     if (!DeleteCurrentLoop)
       PrintOutSet("The following blocks will still be part of the loop:",
                   BlocksInLoopAfterFolding);
@@ -181,7 +186,7 @@ private:
     L.getExitBlocks(ExitBlocks);
     for (auto *ExitBlock : ExitBlocks)
       if (!LiveExitBlocks.count(ExitBlock))
-        DeadExitBlocks.insert(ExitBlock);
+        DeadExitBlocks.push_back(ExitBlock);
 
     // Whether or not the edge From->To will still be present in graph after the
     // folding.
