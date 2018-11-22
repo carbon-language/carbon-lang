@@ -226,6 +226,8 @@ private:
     // Sanity check: header must be in loop.
     assert(BlocksInLoopAfterFolding.count(L.getHeader()) &&
            "Header not in loop?");
+    assert(BlocksInLoopAfterFolding.size() <= LiveLoopBlocks.size() &&
+           "All blocks that stay in loop should be live!");
   }
 
   /// Constant-fold terminators of blocks acculumated in FoldCandidates into the
