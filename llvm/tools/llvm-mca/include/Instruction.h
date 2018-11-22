@@ -26,8 +26,6 @@
 #endif
 
 #include <memory>
-#include <set>
-#include <vector>
 
 namespace llvm {
 namespace mca {
@@ -134,7 +132,7 @@ class WriteState {
   // gets notified with the actual CyclesLeft.
 
   // The 'second' element of a pair is a "ReadAdvance" number of cycles.
-  std::set<std::pair<ReadState *, int>> Users;
+  SmallVector<std::pair<ReadState *, int>, 4> Users;
 
 public:
   WriteState(const WriteDescriptor &Desc, unsigned RegID,
@@ -319,15 +317,16 @@ struct ResourceUsage {
 
 /// An instruction descriptor
 struct InstrDesc {
-  std::vector<WriteDescriptor> Writes; // Implicit writes are at the end.
-  std::vector<ReadDescriptor> Reads;   // Implicit reads are at the end.
+  SmallVector<WriteDescriptor, 4> Writes; // Implicit writes are at the end.
+  SmallVector<ReadDescriptor, 4> Reads;   // Implicit reads are at the end.
 
   // For every resource used by an instruction of this kind, this vector
   // reports the number of "consumed cycles".
-  std::vector<std::pair<uint64_t, ResourceUsage>> Resources;
+  SmallVector<std::pair<uint64_t, ResourceUsage>, 4> Resources;
 
   // A list of buffered resources consumed by this instruction.
-  std::vector<uint64_t> Buffers;
+  SmallVector<uint64_t, 4> Buffers;
+
   unsigned MaxLatency;
   // Number of MicroOps for this instruction.
   unsigned NumMicroOps;
