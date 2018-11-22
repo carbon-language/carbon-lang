@@ -294,7 +294,6 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(hasReturnValue);
   REGISTER_MATCHER(hasRHS);
   REGISTER_MATCHER(hasSelector);
-  REGISTER_MATCHER(hasSideEffects);
   REGISTER_MATCHER(hasSingleDecl);
   REGISTER_MATCHER(hasSize);
   REGISTER_MATCHER(hasSizeExpr);

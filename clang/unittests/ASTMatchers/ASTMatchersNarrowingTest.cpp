@@ -2259,21 +2259,5 @@ TEST(Matcher, isMain) {
     notMatches("int main2() {}", functionDecl(isMain())));
 }
 
-TEST(Matcher, hasSideEffects) {
-  EXPECT_TRUE(matches("void call();"
-                      "void f() { call(); }",
-                      expr(hasSideEffects())));
-  EXPECT_TRUE(matches("void f(int& a) { a = 0; }", expr(hasSideEffects())));
-  EXPECT_TRUE(
-      matches("void f(volatile int a) { (void)a; }", expr(hasSideEffects())));
-
-  EXPECT_TRUE(notMatches("void call();"
-                         "void f() { }",
-                         expr(hasSideEffects())));
-  EXPECT_TRUE(
-      notMatches("void f(int& a) { (void)a; }", expr(hasSideEffects())));
-  EXPECT_TRUE(notMatches("void f(int a) { (void)a; }", expr(hasSideEffects())));
-}
-
 } // namespace ast_matchers
 } // namespace clang

@@ -4118,26 +4118,6 @@ AST_MATCHER_P(IfStmt, hasConditionVariableStatement,
          InnerMatcher.matches(*DeclarationStatement, Finder, Builder);
 }
 
-/// \brief Matches expressions with potential side effects other than producing
-/// a value, such as a calling a function, throwing an exception, or reading a
-/// volatile variable.
-///
-/// Given
-/// \code
-///   void f(int& a, int b, volatile int c) {
-///     call();
-///     a = 0;
-///     a;
-///     b;
-///     c;
-///   }
-/// \endcode
-/// expr(hasSideEffects())
-///   matches 'call()', 'a = 0', 'c', but not '0', 'a', 'b'.
-AST_MATCHER(Expr, hasSideEffects) {
-  return Node.HasSideEffects(Finder->getASTContext());
-}
-
 /// Matches the index expression of an array subscript expression.
 ///
 /// Given
