@@ -49,6 +49,10 @@ void WriteState::onInstructionIssued() {
     unsigned ReadCycles = std::max(0, CyclesLeft - User.second);
     RS->writeStartEvent(ReadCycles);
   }
+
+  // Notify any writes that are in a false dependency with this write.
+  if (PartialWrite)
+    PartialWrite->writeStartEvent(CyclesLeft);
 }
 
 void WriteState::addUser(ReadState *User, int ReadAdvance) {
@@ -65,12 +69,26 @@ void WriteState::addUser(ReadState *User, int ReadAdvance) {
   Users.insert(NewPair);
 }
 
+void WriteState::addUser(WriteState *User) {
+  if (CyclesLeft != UNKNOWN_CYCLES) {
+    User->writeStartEvent(std::max(0, CyclesLeft));
+    return;
+  }
+
+  assert(!PartialWrite && "PartialWrite already set!");
+  PartialWrite = User;
+  User->setDependentWrite(this);
+}
+
 void WriteState::cycleEvent() {
   // Note: CyclesLeft can be a negative number. It is an error to
   // make it an unsigned quantity because users of this write may
   // specify a negative ReadAdvance.
   if (CyclesLeft != UNKNOWN_CYCLES)
     CyclesLeft--;
+
+  if (DependentWriteCyclesLeft)
+    DependentWriteCyclesLeft--;
 }
 
 void ReadState::cycleEvent() {
@@ -143,13 +161,11 @@ void Instruction::update() {
 
   // A partial register write cannot complete before a dependent write.
   auto IsDefReady = [&](const WriteState &Def) {
-    if (const WriteState *Write = Def.getDependentWrite()) {
-      int WriteLatency = Write->getCyclesLeft();
-      if (WriteLatency == UNKNOWN_CYCLES)
-        return false;
-      return static_cast<unsigned>(WriteLatency) < getLatency();
+    if (!Def.getDependentWrite()) {
+      unsigned CyclesLeft = Def.getDependentWriteCyclesLeft();
+      return !CyclesLeft || CyclesLeft < getLatency();
     }
-    return true;
+    return false;
   };
 
   if (all_of(getDefs(), IsDefReady))
@@ -163,6 +179,9 @@ void Instruction::cycleEvent() {
   if (isDispatched()) {
     for (ReadState &Use : getUses())
       Use.cycleEvent();
+
+    for (WriteState &Def : getDefs())
+      Def.cycleEvent();
 
     update();
     return;

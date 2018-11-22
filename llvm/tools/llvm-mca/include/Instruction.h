@@ -123,8 +123,10 @@ class WriteState {
   // that we don't break the WAW, and the two writes can be merged together.
   const WriteState *DependentWrite;
 
-  // Number of writes that are in a WAW dependency with this write.
-  unsigned NumWriteUsers;
+  // A partial write that is in a false dependency with this write.
+  WriteState *PartialWrite;
+
+  unsigned DependentWriteCyclesLeft;
 
   // A list of dependent reads. Users is a set of dependent
   // reads. A dependent read is added to the set only if CyclesLeft
@@ -139,7 +141,8 @@ public:
              bool clearsSuperRegs = false, bool writesZero = false)
       : WD(&Desc), CyclesLeft(UNKNOWN_CYCLES), RegisterID(RegID),
         PRFID(0), ClearsSuperRegs(clearsSuperRegs), WritesZero(writesZero),
-        IsEliminated(false), DependentWrite(nullptr), NumWriteUsers(0U) {}
+        IsEliminated(false), DependentWrite(nullptr), PartialWrite(nullptr),
+        DependentWriteCyclesLeft(0) {}
 
   WriteState(const WriteState &Other) = default;
   WriteState &operator=(const WriteState &Other) = default;
@@ -151,8 +154,17 @@ public:
   unsigned getLatency() const { return WD->Latency; }
 
   void addUser(ReadState *Use, int ReadAdvance);
+  void addUser(WriteState *Use);
 
-  unsigned getNumUsers() const { return Users.size() + NumWriteUsers; }
+  unsigned getDependentWriteCyclesLeft() const { return DependentWriteCyclesLeft; }
+
+  unsigned getNumUsers() const {
+    unsigned NumUsers = Users.size();
+    if (PartialWrite)
+      ++NumUsers;
+    return NumUsers;
+  }
+
   bool clearsSuperRegisters() const { return ClearsSuperRegs; }
   bool isWriteZero() const { return WritesZero; }
   bool isEliminated() const { return IsEliminated; }
@@ -161,10 +173,12 @@ public:
   }
 
   const WriteState *getDependentWrite() const { return DependentWrite; }
-  void setDependentWrite(WriteState *Other) {
-    DependentWrite = Other;
-    ++Other->NumWriteUsers;
+  void setDependentWrite(WriteState *Other) { DependentWrite = Other; }
+  void writeStartEvent(unsigned Cycles) {
+    DependentWriteCyclesLeft = Cycles;
+    DependentWrite = nullptr;
   }
+
   void setWriteZero() { WritesZero = true; }
   void setEliminated() {
     assert(Users.empty() && "Write is in an inconsistent state.");
