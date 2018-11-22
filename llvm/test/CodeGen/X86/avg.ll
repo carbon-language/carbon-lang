@@ -463,28 +463,13 @@ define void @avg_v48i8(<48 x i8>* %a, <48 x i8>* %b) nounwind {
 ;
 ; AVX512BW-LABEL: avg_v48i8:
 ; AVX512BW:       # %bb.0:
-; AVX512BW-NEXT:    vpmovzxbd {{.*#+}} zmm0 = mem[0],zero,zero,zero,mem[1],zero,zero,zero,mem[2],zero,zero,zero,mem[3],zero,zero,zero,mem[4],zero,zero,zero,mem[5],zero,zero,zero,mem[6],zero,zero,zero,mem[7],zero,zero,zero,mem[8],zero,zero,zero,mem[9],zero,zero,zero,mem[10],zero,zero,zero,mem[11],zero,zero,zero,mem[12],zero,zero,zero,mem[13],zero,zero,zero,mem[14],zero,zero,zero,mem[15],zero,zero,zero
-; AVX512BW-NEXT:    vpmovzxbd {{.*#+}} zmm1 = mem[0],zero,zero,zero,mem[1],zero,zero,zero,mem[2],zero,zero,zero,mem[3],zero,zero,zero,mem[4],zero,zero,zero,mem[5],zero,zero,zero,mem[6],zero,zero,zero,mem[7],zero,zero,zero,mem[8],zero,zero,zero,mem[9],zero,zero,zero,mem[10],zero,zero,zero,mem[11],zero,zero,zero,mem[12],zero,zero,zero,mem[13],zero,zero,zero,mem[14],zero,zero,zero,mem[15],zero,zero,zero
-; AVX512BW-NEXT:    vpmovzxbd {{.*#+}} zmm2 = mem[0],zero,zero,zero,mem[1],zero,zero,zero,mem[2],zero,zero,zero,mem[3],zero,zero,zero,mem[4],zero,zero,zero,mem[5],zero,zero,zero,mem[6],zero,zero,zero,mem[7],zero,zero,zero,mem[8],zero,zero,zero,mem[9],zero,zero,zero,mem[10],zero,zero,zero,mem[11],zero,zero,zero,mem[12],zero,zero,zero,mem[13],zero,zero,zero,mem[14],zero,zero,zero,mem[15],zero,zero,zero
-; AVX512BW-NEXT:    vpmovzxbd {{.*#+}} zmm3 = mem[0],zero,zero,zero,mem[1],zero,zero,zero,mem[2],zero,zero,zero,mem[3],zero,zero,zero,mem[4],zero,zero,zero,mem[5],zero,zero,zero,mem[6],zero,zero,zero,mem[7],zero,zero,zero,mem[8],zero,zero,zero,mem[9],zero,zero,zero,mem[10],zero,zero,zero,mem[11],zero,zero,zero,mem[12],zero,zero,zero,mem[13],zero,zero,zero,mem[14],zero,zero,zero,mem[15],zero,zero,zero
-; AVX512BW-NEXT:    vpaddd %zmm3, %zmm0, %zmm0
-; AVX512BW-NEXT:    vpmovzxbd {{.*#+}} zmm3 = mem[0],zero,zero,zero,mem[1],zero,zero,zero,mem[2],zero,zero,zero,mem[3],zero,zero,zero,mem[4],zero,zero,zero,mem[5],zero,zero,zero,mem[6],zero,zero,zero,mem[7],zero,zero,zero,mem[8],zero,zero,zero,mem[9],zero,zero,zero,mem[10],zero,zero,zero,mem[11],zero,zero,zero,mem[12],zero,zero,zero,mem[13],zero,zero,zero,mem[14],zero,zero,zero,mem[15],zero,zero,zero
-; AVX512BW-NEXT:    vpaddd %zmm3, %zmm1, %zmm1
-; AVX512BW-NEXT:    vpmovzxbd {{.*#+}} zmm3 = mem[0],zero,zero,zero,mem[1],zero,zero,zero,mem[2],zero,zero,zero,mem[3],zero,zero,zero,mem[4],zero,zero,zero,mem[5],zero,zero,zero,mem[6],zero,zero,zero,mem[7],zero,zero,zero,mem[8],zero,zero,zero,mem[9],zero,zero,zero,mem[10],zero,zero,zero,mem[11],zero,zero,zero,mem[12],zero,zero,zero,mem[13],zero,zero,zero,mem[14],zero,zero,zero,mem[15],zero,zero,zero
-; AVX512BW-NEXT:    vpaddd %zmm3, %zmm2, %zmm2
-; AVX512BW-NEXT:    vpternlogd $255, %zmm3, %zmm3, %zmm3
-; AVX512BW-NEXT:    vpsubd %zmm3, %zmm0, %zmm0
-; AVX512BW-NEXT:    vpsubd %zmm3, %zmm1, %zmm1
-; AVX512BW-NEXT:    vpsubd %zmm3, %zmm2, %zmm2
-; AVX512BW-NEXT:    vpsrld $1, %zmm2, %zmm2
-; AVX512BW-NEXT:    vpsrld $1, %zmm1, %zmm1
-; AVX512BW-NEXT:    vpsrld $1, %zmm0, %zmm0
-; AVX512BW-NEXT:    vpmovdw %zmm0, %ymm0
-; AVX512BW-NEXT:    vpmovdw %zmm1, %ymm1
-; AVX512BW-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm0
-; AVX512BW-NEXT:    vpmovwb %zmm0, %ymm0
-; AVX512BW-NEXT:    vpmovdw %zmm2, %ymm1
-; AVX512BW-NEXT:    vpmovwb %zmm1, %ymm1
+; AVX512BW-NEXT:    vmovdqa (%rdi), %xmm0
+; AVX512BW-NEXT:    vmovdqa 16(%rdi), %xmm1
+; AVX512BW-NEXT:    vmovdqa 32(%rdi), %xmm2
+; AVX512BW-NEXT:    vpavgb 16(%rsi), %xmm1, %xmm1
+; AVX512BW-NEXT:    vpavgb (%rsi), %xmm0, %xmm0
+; AVX512BW-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
+; AVX512BW-NEXT:    vpavgb 32(%rsi), %xmm2, %xmm1
 ; AVX512BW-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm1
 ; AVX512BW-NEXT:    vmovdqu %ymm0, (%rax)
 ; AVX512BW-NEXT:    vextracti32x4 $2, %zmm1, (%rax)

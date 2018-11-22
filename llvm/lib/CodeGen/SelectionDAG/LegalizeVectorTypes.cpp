@@ -2247,10 +2247,16 @@ SDValue DAGTypeLegalizer::SplitVecOp_TruncateHelper(SDNode *N) {
   unsigned InElementSize = InVT.getScalarSizeInBits();
   unsigned OutElementSize = OutVT.getScalarSizeInBits();
 
+  // Determine the split output VT. If its legal we can just split dirctly.
+  EVT LoOutVT, HiOutVT;
+  std::tie(LoOutVT, HiOutVT) = DAG.GetSplitDestVTs(OutVT);
+  assert(LoOutVT == HiOutVT && "Unequal split?");
+
   // If the input elements are only 1/2 the width of the result elements,
   // just use the normal splitting. Our trick only work if there's room
   // to split more than once.
-  if (InElementSize <= OutElementSize * 2)
+  if (isTypeLegal(LoOutVT) ||
+      InElementSize <= OutElementSize * 2)
     return SplitVecOp_UnaryOp(N);
   SDLoc DL(N);
 
