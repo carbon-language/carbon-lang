@@ -24,6 +24,7 @@
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/Timer.h"
 #include <map>
+#include <sstream>
 #include <unordered_map>
 
 #include <unistd.h>
@@ -73,6 +74,26 @@ const char TimerGroupDesc[] = "Aggregator";
 
 }
 
+DataAggregator::~DataAggregator() {
+  deleteTempFiles();
+}
+
+namespace {
+void deleteTempFile(const std::string &FileName) {
+  if (auto Errc = sys::fs::remove(FileName.c_str())) {
+    errs() << "PERF2BOLT: failed to delete temporary file "
+           << FileName << " with error " << Errc.message() << "\n";
+  }
+}
+}
+
+void DataAggregator::deleteTempFiles() {
+  for (auto &FileName : TempFiles) {
+    deleteTempFile(FileName);
+  }
+  TempFiles.clear();
+}
+
 void DataAggregator::findPerfExecutable() {
   auto PerfExecutable = sys::Process::FindInEnvPath("PATH", "perf");
   if (!PerfExecutable) {
@@ -93,9 +114,35 @@ void DataAggregator::start(StringRef PerfDataFilename) {
     return;
 
   findPerfExecutable();
-  launchPerfBranchEventsNoWait();
-  launchPerfMemEventsNoWait();
-  launchPerfMMapEventsNoWait();
+
+  if (opts::BasicAggregation) {
+    launchPerfProcess("events without LBR",
+                      BranchEventsPPI,
+                      "script -F pid,event,ip",
+                      /*Wait = */false);
+  } else {
+    launchPerfProcess("branch events",
+                      BranchEventsPPI,
+                      "script -F pid,brstack",
+                      /*Wait = */false);
+  }
+
+  // Note: we launch script for mem events regardless of the option, as the
+  //       command fails fairly fast if mem events were not collected.
+  launchPerfProcess("mem events",
+                    MemEventsPPI,
+                    "script -F pid,event,addr,ip",
+                    /*Wait = */false);
+
+  launchPerfProcess("process events",
+                    MMapEventsPPI,
+                    "script --show-mmap-events",
+                    /*Wait = */false);
+
+  launchPerfProcess("task events",
+                    TaskEventsPPI,
+                    "script --show-task-events",
+                    /*Wait = */false);
 }
 
 void DataAggregator::abort() {
@@ -105,203 +152,102 @@ void DataAggregator::abort() {
   std::string Error;
 
   // Kill subprocesses in case they are not finished
-  sys::Wait(MMapEventsPI, 1, false, &Error);
-  sys::Wait(BranchEventsPI, 1, false, &Error);
-  sys::Wait(MemEventsPI, 1, false, &Error);
+  sys::Wait(TaskEventsPPI.PI, 1, false, &Error);
+  sys::Wait(MMapEventsPPI.PI, 1, false, &Error);
+  sys::Wait(BranchEventsPPI.PI, 1, false, &Error);
+  sys::Wait(MemEventsPPI.PI, 1, false, &Error);
 
   deleteTempFiles();
+
+  exit(1);
 }
 
-bool DataAggregator::launchPerfBranchEventsNoWait() {
+void DataAggregator::launchPerfProcess(StringRef Name, PerfProcessInfo &PPI,
+                                       const char *ArgsString, bool Wait) {
   SmallVector<const char*, 4> Argv;
 
-  if (opts::BasicAggregation)
-    outs()
-        << "PERF2BOLT: Spawning perf-script job to read events without LBR\n";
-  else
-    outs() << "PERF2BOLT: Spawning perf-script job to read branch events\n";
+  outs() << "PERF2BOLT: spawning perf job to read " << Name << '\n';
   Argv.push_back(PerfPath.data());
-  Argv.push_back("script");
-  Argv.push_back("-F");
-  if (opts::BasicAggregation)
-    Argv.push_back("pid,event,ip");
-  else
-    Argv.push_back("pid,brstack");
+
+  auto *WritableArgsString = strdup(ArgsString);
+  auto *Str = WritableArgsString;
+  do {
+    Argv.push_back(Str);
+    while (*Str && *Str != ' ')
+      ++Str;
+    if (!*Str)
+      break;
+    *Str++ = 0;
+  } while (true);
+
   Argv.push_back("-i");
   Argv.push_back(PerfDataFilename.data());
   Argv.push_back(nullptr);
 
   if (auto Errc = sys::fs::createTemporaryFile("perf.script", "out",
-                                               PerfBranchEventsOutputPath)) {
-    outs() << "PERF2BOLT: Failed to create temporary file "
-           << PerfBranchEventsOutputPath << " with error " << Errc.message()
+                                               PPI.StdoutPath)) {
+    errs() << "PERF2BOLT: failed to create temporary file "
+           << PPI.StdoutPath << " with error " << Errc.message()
            << "\n";
     exit(1);
   }
+  TempFiles.push_back(PPI.StdoutPath.data());
 
   if (auto Errc = sys::fs::createTemporaryFile("perf.script", "err",
-                                               PerfBranchEventsErrPath)) {
-    outs() << "PERF2BOLT: Failed to create temporary file "
-           << PerfBranchEventsErrPath << " with error " << Errc.message()
-           << "\n";
+                                               PPI.StderrPath)) {
+    errs() << "PERF2BOLT: failed to create temporary file "
+           << PPI.StderrPath << " with error " << Errc.message() << "\n";
     exit(1);
   }
-  Optional<StringRef> Redirects[] = {
-      llvm::None,                                   // Stdin
-      StringRef(PerfBranchEventsOutputPath.data()), // Stdout
-      StringRef(PerfBranchEventsErrPath.data())};   // Stderr
-
-  DEBUG(dbgs() << "Launching perf: " << PerfPath.data() << " 1> "
-               << PerfBranchEventsOutputPath.data() << " 2> "
-               << PerfBranchEventsErrPath.data() << "\n");
-
-  BranchEventsPI = sys::ExecuteNoWait(PerfPath.data(), Argv.data(),
-                                      /*envp*/ nullptr, Redirects);
-
-  return true;
-}
-
-bool DataAggregator::launchPerfMemEventsNoWait() {
-  SmallVector<const char*, 4> Argv;
-
-  outs() << "PERF2BOLT: Spawning perf-script job to read mem events\n";
-  Argv.push_back(PerfPath.data());
-  Argv.push_back("script");
-  Argv.push_back("-F");
-  Argv.push_back("pid,event,addr,ip");
-  Argv.push_back("-i");
-  Argv.push_back(PerfDataFilename.data());
-  Argv.push_back(nullptr);
-
-  if (auto Errc = sys::fs::createTemporaryFile("perf.script", "out",
-                                               PerfMemEventsOutputPath)) {
-    outs() << "PERF2BOLT: Failed to create temporary file "
-           << PerfMemEventsOutputPath << " with error " << Errc.message() << "\n";
-    exit(1);
-  }
-
-  if (auto Errc = sys::fs::createTemporaryFile("perf.script", "err",
-                                               PerfMemEventsErrPath)) {
-    outs() << "PERF2BOLT: Failed to create temporary file "
-           << PerfMemEventsErrPath << " with error " << Errc.message() << "\n";
-    exit(1);
-  }
+  TempFiles.push_back(PPI.StderrPath.data());
 
   Optional<StringRef> Redirects[] = {
-      llvm::None,                                // Stdin
-      StringRef(PerfMemEventsOutputPath.data()), // Stdout
-      StringRef(PerfMemEventsErrPath.data())};   // Stderr
+      llvm::None,                       // Stdin
+      StringRef(PPI.StdoutPath.data()),  // Stdout
+      StringRef(PPI.StderrPath.data())}; // Stderr
 
   DEBUG(dbgs() << "Launching perf: " << PerfPath.data() << " 1> "
-               << PerfMemEventsOutputPath.data() << " 2> "
-               << PerfMemEventsErrPath.data() << "\n");
+               << PPI.StdoutPath.data() << " 2> "
+               << PPI.StderrPath.data() << "\n");
 
-  MemEventsPI = sys::ExecuteNoWait(PerfPath.data(), Argv.data(),
-                                   /*envp*/ nullptr, Redirects);
-
-  return true;
-}
-
-bool DataAggregator::launchPerfMMapEventsNoWait() {
-  SmallVector<const char*, 4> Argv;
-
-  outs() << "PERF2BOLT: Spawning perf-script job to read process info\n";
-  Argv.push_back(PerfPath.data());
-  Argv.push_back("script");
-  Argv.push_back("--show-mmap-events");
-  Argv.push_back("-i");
-  Argv.push_back(PerfDataFilename.data());
-  Argv.push_back(nullptr);
-
-  if (auto Errc = sys::fs::createTemporaryFile("perf.script", "out",
-                                               PerfMMapEventsOutputPath)) {
-    outs() << "PERF2BOLT: Failed to create temporary file "
-           << PerfMMapEventsOutputPath << " with error " << Errc.message()
-           << "\n";
-    exit(1);
+  if (Wait) {
+    PPI.PI.ReturnCode =
+      sys::ExecuteAndWait(PerfPath.data(), Argv.data(), /*envp*/ nullptr,
+                          Redirects);
+  } else {
+    PPI.PI = sys::ExecuteNoWait(PerfPath.data(), Argv.data(), /*envp*/ nullptr,
+                                Redirects);
   }
 
-  if (auto Errc = sys::fs::createTemporaryFile("perf.script", "err",
-                                               PerfMMapEventsErrPath)) {
-    outs() << "PERF2BOLT: Failed to create temporary file "
-           << PerfMMapEventsErrPath << " with error " << Errc.message() << "\n";
-    exit(1);
-  }
-
-  Optional<StringRef> Redirects[] = {
-      llvm::None,                                 // Stdin
-      StringRef(PerfMMapEventsOutputPath.data()), // Stdout
-      StringRef(PerfMMapEventsErrPath.data())};   // Stderr
-
-  DEBUG(dbgs() << "Launching perf: " << PerfPath.data() << " 1> "
-               << PerfMMapEventsOutputPath.data() << " 2> "
-               << PerfMMapEventsErrPath.data() << "\n");
-
-  MMapEventsPI = sys::ExecuteNoWait(PerfPath.data(), Argv.data(),
-                                    /*envp*/ nullptr, Redirects);
-
-  return true;
+  free(WritableArgsString);
 }
 
 void DataAggregator::processFileBuildID(StringRef FileBuildID) {
   if (opts::ReadPreAggregated)
     return;
 
-  SmallVector<const char *, 4> Argv;
-  SmallVector<char, 256> OutputPath;
-  SmallVector<char, 256> ErrPath;
+  PerfProcessInfo BuildIDProcessInfo;
+  launchPerfProcess("buildid list",
+                    BuildIDProcessInfo,
+                    "buildid-list",
+                    /*Wait = */true);
 
-  Argv.push_back(PerfPath.data());
-  Argv.push_back("buildid-list");
-  Argv.push_back("-i");
-  Argv.push_back(PerfDataFilename.data());
-  Argv.push_back(nullptr);
-
-  if (auto Errc = sys::fs::createTemporaryFile("perf.buildid", "out",
-                                               OutputPath)) {
-    outs() << "PERF2BOLT: Failed to create temporary file "
-           << OutputPath << " with error " << Errc.message() << "\n";
-    exit(1);
-  }
-
-  if (auto Errc = sys::fs::createTemporaryFile("perf.script", "err",
-                                               ErrPath)) {
-    outs() << "PERF2BOLT: Failed to create temporary file "
-           << ErrPath << " with error " << Errc.message() << "\n";
-    exit(1);
-  }
-
-  Optional<StringRef> Redirects[] = {
-      llvm::None,                   // Stdin
-      StringRef(OutputPath.data()), // Stdout
-      StringRef(ErrPath.data())};   // Stderr
-
-  DEBUG(dbgs() << "Launching perf: " << PerfPath.data() << " 1> "
-               << OutputPath.data() << " 2> "
-               << ErrPath.data() << "\n");
-
-  auto RetCode = sys::ExecuteAndWait(PerfPath.data(), Argv.data(),
-                                     /*envp*/ nullptr, Redirects);
-
-  if (RetCode != 0) {
+  if (BuildIDProcessInfo.PI.ReturnCode != 0) {
     ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
-      MemoryBuffer::getFileOrSTDIN(ErrPath.data());
+      MemoryBuffer::getFileOrSTDIN(BuildIDProcessInfo.StderrPath.data());
     StringRef ErrBuf = (*MB)->getBuffer();
 
-    errs() << "PERF-ERROR: Return code " << RetCode << "\n";
+    errs() << "PERF-ERROR: return code " << BuildIDProcessInfo.PI.ReturnCode
+           << '\n';
     errs() << ErrBuf;
-    deleteTempFile(ErrPath.data());
-    deleteTempFile(OutputPath.data());
     return;
   }
 
   ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
-    MemoryBuffer::getFileOrSTDIN(OutputPath.data());
+    MemoryBuffer::getFileOrSTDIN(BuildIDProcessInfo.StdoutPath.data());
   if (std::error_code EC = MB.getError()) {
-    errs() << "Cannot open " << PerfMMapEventsOutputPath.data() << ": "
+    errs() << "Cannot open " << BuildIDProcessInfo.StdoutPath.data() << ": "
            << EC.message() << "\n";
-    deleteTempFile(ErrPath.data());
-    deleteTempFile(OutputPath.data());
     return;
   }
 
@@ -310,8 +256,6 @@ void DataAggregator::processFileBuildID(StringRef FileBuildID) {
   if (ParsingBuf.empty()) {
     errs() << "PERF2BOLT-WARNING: build-id will not be checked because perf "
               "data was recorded without it\n";
-    deleteTempFile(ErrPath.data());
-    deleteTempFile(OutputPath.data());
     return;
   }
 
@@ -325,10 +269,7 @@ void DataAggregator::processFileBuildID(StringRef FileBuildID) {
               "data, or there were no samples recorded for the binary. "
               "Use -ignore-build-id option to override.\n";
     if (!opts::IgnoreBuildID) {
-      deleteTempFile(ErrPath.data());
-      deleteTempFile(OutputPath.data());
       abort();
-      exit(1);
     }
   } else if (*FileName != BinaryName) {
     errs() << "PERF2BOLT-WARNING: build-id matched a different file name\n";
@@ -337,8 +278,6 @@ void DataAggregator::processFileBuildID(StringRef FileBuildID) {
     outs() << "PERF2BOLT: matched build-id and file name\n";
   }
 
-  deleteTempFile(ErrPath.data());
-  deleteTempFile(OutputPath.data());
   return;
 }
 
@@ -364,22 +303,6 @@ bool DataAggregator::checkPerfDataMagic(StringRef FileName) {
   return false;
 }
 
-void DataAggregator::deleteTempFile(StringRef File) {
-  if (auto Errc = sys::fs::remove(File.data())) {
-    outs() << "PERF2BOLT: Failed to delete temporary file "
-           << File << " with error " << Errc.message() << "\n";
-  }
-}
-
-void DataAggregator::deleteTempFiles() {
-  deleteTempFile(PerfBranchEventsErrPath.data());
-  deleteTempFile(PerfBranchEventsOutputPath.data());
-  deleteTempFile(PerfMemEventsErrPath.data());
-  deleteTempFile(PerfMemEventsOutputPath.data());
-  deleteTempFile(PerfMMapEventsErrPath.data());
-  deleteTempFile(PerfMMapEventsOutputPath.data());
-}
-
 bool DataAggregator::processPreAggregated() {
   std::string Error;
 
@@ -395,7 +318,7 @@ bool DataAggregator::processPreAggregated() {
   Col = 0;
   Line = 1;
   if (parseAggregatedLBRSamples()) {
-    outs() << "PERF2BOLT: Failed to parse samples\n";
+    errs() << "PERF2BOLT: failed to parse samples\n";
     exit(1);
   }
 
@@ -414,88 +337,64 @@ bool DataAggregator::processPreAggregated() {
 
 bool DataAggregator::aggregate(BinaryContext &BC,
                                std::map<uint64_t, BinaryFunction> &BFs) {
-  std::string Error;
-
   this->BC = &BC;
   this->BFs = &BFs;
 
   if (opts::ReadPreAggregated)
     return processPreAggregated();
 
-  outs() << "PERF2BOLT: Waiting for perf mmap events collection to finish...\n";
-  auto PI1 = sys::Wait(MMapEventsPI, 0, true, &Error);
+  auto prepareToParse = [&] (StringRef Name, PerfProcessInfo &Process) {
+    std::string Error;
+    outs() << "PERF2BOLT: waiting for perf " << Name
+           << " collection to finish...\n";
+    auto PI = sys::Wait(Process.PI, 0, true, &Error);
 
-  if (!Error.empty()) {
-    errs() << "PERF-ERROR: " << Error << "\n";
-    deleteTempFiles();
-    exit(1);
-  }
+    if (!Error.empty()) {
+      errs() << "PERF-ERROR: " << PerfPath << ": " << Error << "\n";
+      deleteTempFiles();
+      exit(1);
+    }
 
-  if (PI1.ReturnCode != 0) {
+    if (PI.ReturnCode != 0) {
+      ErrorOr<std::unique_ptr<MemoryBuffer>> ErrorMB =
+        MemoryBuffer::getFileOrSTDIN(Process.StderrPath.data());
+      StringRef ErrBuf = (*ErrorMB)->getBuffer();
+
+      errs() << "PERF-ERROR: return code " << PI.ReturnCode << "\n";
+      errs() << ErrBuf;
+      deleteTempFiles();
+      exit(1);
+    }
+
     ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
-      MemoryBuffer::getFileOrSTDIN(PerfMMapEventsErrPath.data());
-    StringRef ErrBuf = (*MB)->getBuffer();
+      MemoryBuffer::getFileOrSTDIN(Process.StdoutPath.data());
+    if (std::error_code EC = MB.getError()) {
+      errs() << "Cannot open " << Process.StdoutPath.data() << ": "
+             << EC.message() << "\n";
+      deleteTempFiles();
+      exit(1);
+    }
 
-    errs() << "PERF-ERROR: Return code " << PI1.ReturnCode << "\n";
-    errs() << ErrBuf;
-    deleteTempFiles();
-    exit(1);
-  }
+    FileBuf.reset(MB->release());
+    ParsingBuf = FileBuf->getBuffer();
+    Col = 0;
+    Line = 1;
+  };
 
-  ErrorOr<std::unique_ptr<MemoryBuffer>> MB1 =
-    MemoryBuffer::getFileOrSTDIN(PerfMMapEventsOutputPath.data());
-  if (std::error_code EC = MB1.getError()) {
-    errs() << "Cannot open " << PerfMMapEventsOutputPath.data() << ": "
-           << EC.message() << "\n";
-    deleteTempFiles();
-    exit(1);
-  }
-
-  FileBuf.reset(MB1->release());
-  ParsingBuf = FileBuf->getBuffer();
-  Col = 0;
-  Line = 1;
+  prepareToParse("mmap events", MMapEventsPPI);
   if (parseMMapEvents()) {
-    outs() << "PERF2BOLT: Failed to parse mmap events\n";
+    errs() << "PERF2BOLT: failed to parse mmap events\n";
   }
 
-  outs()
-      << "PERF2BOLT: Waiting for perf events collection to finish...\n";
-  auto PI2 = sys::Wait(BranchEventsPI, 0, true, &Error);
-
-  if (!Error.empty()) {
-    errs() << "PERF-ERROR: " << Error << "\n";
-    deleteTempFiles();
-    exit(1);
+  prepareToParse("task events", TaskEventsPPI);
+  if (parseTaskEvents()) {
+    errs() << "PERF2BOLT: failed to parse task events\n";
   }
 
-  if (PI2.ReturnCode != 0) {
-    ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
-      MemoryBuffer::getFileOrSTDIN(PerfBranchEventsErrPath.data());
-    StringRef ErrBuf = (*MB)->getBuffer();
-
-    errs() << "PERF-ERROR: Return code " << PI2.ReturnCode << "\n";
-    errs() << ErrBuf;
-    deleteTempFiles();
-    exit(1);
-  }
-
-  ErrorOr<std::unique_ptr<MemoryBuffer>> MB2 =
-    MemoryBuffer::getFileOrSTDIN(PerfBranchEventsOutputPath.data());
-  if (std::error_code EC = MB2.getError()) {
-    errs() << "Cannot open " << PerfBranchEventsOutputPath.data() << ": "
-           << EC.message() << "\n";
-    deleteTempFiles();
-    exit(1);
-  }
-
-  FileBuf.reset(MB2->release());
-  ParsingBuf = FileBuf->getBuffer();
-  Col = 0;
-  Line = 1;
+  prepareToParse("events", BranchEventsPPI);
   if ((!opts::BasicAggregation && parseBranchEvents()) ||
       (opts::BasicAggregation && parseBasicEvents())) {
-    outs() << "PERF2BOLT: Failed to parse samples\n";
+    errs() << "PERF2BOLT: failed to parse samples\n";
   }
 
   // Mark all functions with registered events as having a valid profile.
@@ -508,10 +407,12 @@ bool DataAggregator::aggregate(BinaryContext &BC,
     }
   }
 
-  auto PI3 = sys::Wait(MemEventsPI, 0, true, &Error);
-  if (PI3.ReturnCode != 0) {
+  // Special handling for memory events
+  std::string Error;
+  auto PI = sys::Wait(MemEventsPPI.PI, 0, true, &Error);
+  if (PI.ReturnCode != 0) {
     ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
-      MemoryBuffer::getFileOrSTDIN(PerfMemEventsErrPath.data());
+      MemoryBuffer::getFileOrSTDIN(MemEventsPPI.StderrPath.data());
     StringRef ErrBuf = (*MB)->getBuffer();
 
     deleteTempFiles();
@@ -519,28 +420,28 @@ bool DataAggregator::aggregate(BinaryContext &BC,
     Regex NoData("Samples for '.*' event do not have ADDR attribute set. "
                  "Cannot print 'addr' field.");
     if (!NoData.match(ErrBuf)) {
-      errs() << "PERF-ERROR: Return code " << PI3.ReturnCode << "\n";
+      errs() << "PERF-ERROR: return code " << PI.ReturnCode << "\n";
       errs() << ErrBuf;
       exit(1);
     }
     return true;
   }
 
-  ErrorOr<std::unique_ptr<MemoryBuffer>> MB3 =
-    MemoryBuffer::getFileOrSTDIN(PerfMemEventsOutputPath.data());
-  if (std::error_code EC = MB3.getError()) {
-    errs() << "Cannot open " << PerfMemEventsOutputPath.data() << ": "
+  ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
+    MemoryBuffer::getFileOrSTDIN(MemEventsPPI.StdoutPath.data());
+  if (std::error_code EC = MB.getError()) {
+    errs() << "Cannot open " << MemEventsPPI.StdoutPath.data() << ": "
            << EC.message() << "\n";
     deleteTempFiles();
     exit(1);
   }
 
-  FileBuf.reset(MB3->release());
+  FileBuf.reset(MB->release());
   ParsingBuf = FileBuf->getBuffer();
   Col = 0;
   Line = 1;
   if (const auto EC = parseMemEvents()) {
-    errs() << "PERF2BOLT: Failed to parse memory events: "
+    errs() << "PERF2BOLT: failed to parse memory events: "
            << EC.message() << '\n';
   }
 
@@ -962,12 +863,13 @@ bool DataAggregator::hasData() {
 }
 
 std::error_code DataAggregator::parseBranchEvents() {
-  outs() << "PERF2BOLT: Aggregating branch events...\n";
+  outs() << "PERF2BOLT: aggregating branch events...\n";
   NamedRegionTimer T("parseBranch", "Branch samples parsing", TimerGroupName,
                      TimerGroupDesc, opts::TimeAggregator);
   uint64_t NumEntries{0};
   uint64_t NumSamples{0};
   uint64_t NumTraces{0};
+  uint64_t NumTotalSamples{0};
 
   struct Location {
     uint64_t From;
@@ -1000,6 +902,8 @@ std::error_code DataAggregator::parseBranchEvents() {
   std::unordered_map<Location, TraceInfo, LocationHash> FallthroughLBRs;
 
   while (hasData()) {
+    ++NumTotalSamples;
+
     auto SampleRes = parseBranchSample();
     if (std::error_code EC = SampleRes.getError())
       return EC;
@@ -1072,27 +976,42 @@ std::error_code DataAggregator::parseBranchEvents() {
     doBranch(Loc.From, Loc.To, Info.TakenCount, Info.MispredCount);
   }
 
-  outs() << "PERF2BOLT: Read " << NumSamples << " samples and "
+  auto printColored = [](raw_ostream &OS, float Percent, float T1, float T2) {
+    OS << " (";
+    if (OS.has_colors()) {
+      if (Percent > T2) {
+        OS.changeColor(raw_ostream::RED);
+      } else if (Percent > T1) {
+        OS.changeColor(raw_ostream::YELLOW);
+      } else {
+        OS.changeColor(raw_ostream::GREEN);
+      }
+    }
+    OS << format("%.1f%%", Percent);
+    if (OS.has_colors())
+      OS.resetColor();
+    OS << ")";
+  };
+
+  outs() << "PERF2BOLT: read " << NumSamples << " samples and "
          << NumEntries << " LBR entries\n";
-  outs() << "PERF2BOLT: Traces mismatching disassembled function contents: "
+  if (NumTotalSamples) {
+    const auto IgnoredSamples = NumTotalSamples - NumSamples;
+    const auto PercentIgnored = 100.0f * IgnoredSamples / NumTotalSamples;
+    outs() << "PERF2BOLT: " << IgnoredSamples << " samples";
+    printColored(outs(), PercentIgnored, 20, 50);
+    outs() << " were ignored\n";
+    if (PercentIgnored > 50.0f) {
+      errs() << "PERF2BOLT-WARNING: less than 50% of all recorded samples were "
+                "attributed to the input binary\n";
+    }
+  }
+  outs() << "PERF2BOLT: traces mismatching disassembled function contents: "
          << NumInvalidTraces;
   float Perc{0.0f};
   if (NumTraces > 0) {
-    outs() << " (";
     Perc = NumInvalidTraces * 100.0f / NumTraces;
-    if (outs().has_colors()) {
-      if (Perc > 10.0f) {
-        outs().changeColor(raw_ostream::RED);
-      } else if (Perc > 5.0f) {
-        outs().changeColor(raw_ostream::YELLOW);
-      } else {
-        outs().changeColor(raw_ostream::GREEN);
-      }
-    }
-    outs() << format("%.1f%%", Perc);
-    if (outs().has_colors())
-      outs().resetColor();
-    outs() << ")";
+    printColored(outs(), Perc, 5, 10);
   }
   outs() << "\n";
   if (Perc > 10.0f) {
@@ -1102,7 +1021,7 @@ std::error_code DataAggregator::parseBranchEvents() {
               "performance.\n\n";
   }
 
-  outs() << "PERF2BOLT: Out of range traces involving unknown regions: "
+  outs() << "PERF2BOLT: out of range traces involving unknown regions: "
          << NumLongRangeTraces;
   if (NumTraces > 0) {
     outs() << format(" (%.1f%%)", NumLongRangeTraces * 100.0f / NumTraces);
@@ -1113,7 +1032,7 @@ std::error_code DataAggregator::parseBranchEvents() {
 }
 
 std::error_code DataAggregator::parseBasicEvents() {
-  outs() << "PERF2BOLT: Aggregating basic events (without LBR)...\n";
+  outs() << "PERF2BOLT: aggregating basic events (without LBR)...\n";
   NamedRegionTimer T("parseBasic", "Perf samples parsing", TimerGroupName,
                      TimerGroupDesc, opts::TimeAggregator);
   uint64_t NumSamples{0};
@@ -1137,9 +1056,9 @@ std::error_code DataAggregator::parseBasicEvents() {
     doSample(*Func, Sample.PC);
     EventNames.insert(Sample.EventName);
   }
-  outs() << "PERF2BOLT: Read " << NumSamples << " samples\n";
+  outs() << "PERF2BOLT: read " << NumSamples << " samples\n";
 
-  outs() << "PERF2BOLT: Out of range samples recorded in unknown regions: "
+  outs() << "PERF2BOLT: out of range samples recorded in unknown regions: "
          << OutOfRangeSamples;
   float Perc{0.0f};
   if (NumSamples > 0) {
@@ -1171,7 +1090,7 @@ std::error_code DataAggregator::parseBasicEvents() {
 }
 
 std::error_code DataAggregator::parseMemEvents() {
-  outs() << "PERF2BOLT: Aggregating memory events...\n";
+  outs() << "PERF2BOLT: aggregating memory events...\n";
   NamedRegionTimer T("memevents", "Mem samples parsing", TimerGroupName,
                      TimerGroupDesc, opts::TimeAggregator);
 
@@ -1224,7 +1143,7 @@ std::error_code DataAggregator::parseMemEvents() {
 }
 
 std::error_code DataAggregator::parseAggregatedLBRSamples() {
-  outs() << "PERF2BOLT: Aggregating...\n";
+  outs() << "PERF2BOLT: aggregating...\n";
   NamedRegionTimer T("parseAggregated", "Aggregated LBR parsing", TimerGroupName,
                      TimerGroupDesc, opts::TimeAggregator);
   uint64_t NumAggrEntries{0};
@@ -1255,8 +1174,8 @@ std::error_code DataAggregator::parseAggregatedLBRSamples() {
     }
     }
   }
-  outs() << "PERF2BOLT: Read " << NumAggrEntries << " aggregated LBR entries\n";
-  outs() << "PERF2BOLT: Traces mismatching disassembled function contents: "
+  outs() << "PERF2BOLT: read " << NumAggrEntries << " aggregated LBR entries\n";
+  outs() << "PERF2BOLT: traces mismatching disassembled function contents: "
          << NumInvalidTraces;
   float Perc{0.0f};
   if (NumTraces > 0) {
@@ -1296,6 +1215,98 @@ std::error_code DataAggregator::parseAggregatedLBRSamples() {
   return std::error_code();
 }
 
+Optional<pid_t>
+DataAggregator::parseCommExecEvent() {
+  auto LineEnd = ParsingBuf.find_first_of("\n");
+  if (LineEnd == StringRef::npos) {
+    reportError("expected rest of line");
+    Diag << "Found: " << ParsingBuf << "\n";
+    return NoneType();
+  }
+  StringRef Line = ParsingBuf.substr(0, LineEnd);
+
+  auto Pos = Line.find("PERF_RECORD_COMM exec");
+  if (Pos == StringRef::npos) {
+    return NoneType();
+  }
+  Line = Line.drop_front(Pos);
+
+  // Line:
+  //  PERF_RECORD_COMM exec: <name>:<pid>/<tid>"
+  auto PIDStr = Line.rsplit(':').second.split('/').first;
+  pid_t PID;
+  if (PIDStr.getAsInteger(10, PID)) {
+    reportError("expected PID");
+    Diag << "Found: " << PIDStr << "in '" << Line << "'\n";
+    return NoneType();
+  }
+
+  return PID;
+}
+
+namespace {
+Optional<uint64_t> parsePerfTime(const StringRef TimeStr) {
+  const auto SecTimeStr = TimeStr.split('.').first;
+  const auto USecTimeStr = TimeStr.split('.').second;
+  uint64_t SecTime;
+  uint64_t USecTime;
+  if (SecTimeStr.getAsInteger(10, SecTime) ||
+      USecTimeStr.getAsInteger(10, USecTime)) {
+    return NoneType();
+  }
+  return SecTime * 1000000ULL + USecTime;
+}
+}
+
+Optional<DataAggregator::ForkInfo>
+DataAggregator::parseForkEvent() {
+  while (checkAndConsumeFS()) {}
+
+  auto LineEnd = ParsingBuf.find_first_of("\n");
+  if (LineEnd == StringRef::npos) {
+    reportError("expected rest of line");
+    Diag << "Found: " << ParsingBuf << "\n";
+    return NoneType();
+  }
+  StringRef Line = ParsingBuf.substr(0, LineEnd);
+
+  auto Pos = Line.find("PERF_RECORD_FORK");
+  if (Pos == StringRef::npos) {
+    consumeRestOfLine();
+    return NoneType();
+  }
+
+  ForkInfo FI;
+
+  const auto TimeStr =
+    Line.substr(0, Pos).rsplit(':').first.rsplit(FieldSeparator).second;
+  if (auto TimeRes = parsePerfTime(TimeStr)) {
+    FI.Time = *TimeRes;
+  }
+
+  Line = Line.drop_front(Pos);
+
+  // Line:
+  //  PERF_RECORD_FORK(<child_pid>:<child_tid>):(<parent_pid>:<parent_tid>)
+  const auto ChildPIDStr = Line.split('(').second.split(':').first;
+  if (ChildPIDStr.getAsInteger(10, FI.ChildPID)) {
+    reportError("expected PID");
+    Diag << "Found: " << ChildPIDStr << "in '" << Line << "'\n";
+    return NoneType();
+  }
+
+  const auto ParentPIDStr = Line.rsplit('(').second.split(':').first;
+  if (ParentPIDStr.getAsInteger(10, FI.ParentPID)) {
+    reportError("expected PID");
+    Diag << "Found: " << ParentPIDStr << "in '" << Line << "'\n";
+    return NoneType();
+  }
+
+  consumeRestOfLine();
+
+  return FI;
+}
+
 ErrorOr<std::pair<StringRef, DataAggregator::MMapInfo>>
 DataAggregator::parseMMapEvent() {
   while (checkAndConsumeFS()) {}
@@ -1315,7 +1326,20 @@ DataAggregator::parseMMapEvent() {
     consumeRestOfLine();
     return std::make_pair(StringRef(), ParsedInfo);
   }
+
+  // Line:
+  //   {<name> .* <sec>.<usec>: }PERF_RECORD_MMAP2 <pid>/<tid>: .* <file_name>
+
+  const auto TimeStr =
+    Line.substr(0, Pos).rsplit(':').first.rsplit(FieldSeparator).second;
+  if (auto TimeRes = parsePerfTime(TimeStr)) {
+    ParsedInfo.Time = *TimeRes;
+  }
+
   Line = Line.drop_front(Pos);
+
+  // Line:
+  //   PERF_RECORD_MMAP2 <pid>/<tid>: [<hexbase>(<hexsize>) .*]: .* <file_name>
 
   auto FileName = Line.rsplit(FieldSeparator).second;
   if (FileName.startswith("//") || FileName.startswith("[")) {
@@ -1324,21 +1348,21 @@ DataAggregator::parseMMapEvent() {
   }
   FileName = sys::path::filename(FileName);
 
-  StringRef PIDStr = Line.split(FieldSeparator).second.split('/').first;
+  const auto PIDStr = Line.split(FieldSeparator).second.split('/').first;
   if (PIDStr.getAsInteger(10, ParsedInfo.PID)) {
     reportError("expected PID");
     Diag << "Found: " << PIDStr << "in '" << Line << "'\n";
     return make_error_code(llvm::errc::io_error);
   }
 
-  StringRef BaseAddressStr = Line.split('[').second.split('(').first;
+  const auto BaseAddressStr = Line.split('[').second.split('(').first;
   if (BaseAddressStr.getAsInteger(0, ParsedInfo.BaseAddress)) {
     reportError("expected base address");
     Diag << "Found: " << BaseAddressStr << "in '" << Line << "'\n";
     return make_error_code(llvm::errc::io_error);
   }
 
-  StringRef SizeStr = Line.split('(').second.split(')').first;
+  const auto SizeStr = Line.split('(').second.split(')').first;
   if (SizeStr.getAsInteger(0, ParsedInfo.Size)) {
     reportError("expected mmaped size");
     Diag << "Found: " << SizeStr << "in '" << Line << "'\n";
@@ -1351,7 +1375,7 @@ DataAggregator::parseMMapEvent() {
 }
 
 std::error_code DataAggregator::parseMMapEvents() {
-  outs() << "PERF2BOLT: Parsing perf-script mmap events output\n";
+  outs() << "PERF2BOLT: parsing perf-script mmap events output\n";
   NamedRegionTimer T("parseMMapEvents", "Parsing mmap events", TimerGroupName,
                      TimerGroupDesc, opts::TimeAggregator);
 
@@ -1422,8 +1446,59 @@ std::error_code DataAggregator::parseMMapEvents() {
     exit(1);
   }
 
-  outs() << "PERF2BOLT: Input binary is associated with "
+  return std::error_code();
+}
+
+std::error_code DataAggregator::parseTaskEvents() {
+  outs() << "PERF2BOLT: parsing perf-script task events output\n";
+  NamedRegionTimer T("parseTaskEvents", "Parsing task events", TimerGroupName,
+                     TimerGroupDesc, opts::TimeAggregator);
+
+  while (hasData()) {
+    if (auto CommInfo = parseCommExecEvent()) {
+      // Remove forked child that ran execve
+      auto MMapInfoIter = BinaryMMapInfo.find(*CommInfo);
+      if (MMapInfoIter != BinaryMMapInfo.end() &&
+          MMapInfoIter->second.Forked) {
+        BinaryMMapInfo.erase(MMapInfoIter);
+      }
+      consumeRestOfLine();
+      continue;
+    }
+
+    auto ForkInfo = parseForkEvent();
+    if (!ForkInfo)
+      continue;
+
+    if (ForkInfo->ParentPID == ForkInfo->ChildPID)
+      continue;
+
+    if (ForkInfo->Time == 0) {
+      // Process was forked and mmaped before perf ran. In this case the child
+      // should have its own mmap entry unless it was execve'd.
+      continue;
+    }
+
+    auto MMapInfoIter = BinaryMMapInfo.find(ForkInfo->ParentPID);
+    if (MMapInfoIter == BinaryMMapInfo.end())
+      continue;
+
+    auto MMapInfo = MMapInfoIter->second;
+    MMapInfo.PID = ForkInfo->ChildPID;
+    MMapInfo.Forked = true;
+    BinaryMMapInfo.insert(std::make_pair(MMapInfo.PID, MMapInfo));
+  }
+
+  outs() << "PERF2BOLT: input binary is associated with "
          << BinaryMMapInfo.size() << " PID(s)\n";
+
+  DEBUG(
+    for (auto &MMI : BinaryMMapInfo) {
+      outs() << "  " << MMI.second.PID << (MMI.second.Forked ? " (forked)" : "")
+             << ": (0x" << Twine::utohexstr(MMI.second.BaseAddress)
+             << ": 0x" << Twine::utohexstr(MMI.second.Size) << ")\n";
+    }
+  );
 
   return std::error_code();
 }
@@ -1523,7 +1598,7 @@ std::error_code DataAggregator::writeAggregatedFile() const {
     }
   }
 
-  outs() << "PERF2BOLT: Wrote " << BranchValues << " objects and "
+  outs() << "PERF2BOLT: wrote " << BranchValues << " objects and "
          << MemValues << " memory objects to " << OutputFDataName << "\n";
 
   return std::error_code();
