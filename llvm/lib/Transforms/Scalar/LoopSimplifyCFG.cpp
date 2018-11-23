@@ -41,6 +41,9 @@ using namespace llvm;
 
 #define DEBUG_TYPE "loop-simplifycfg"
 
+static cl::opt<bool> EnableTermFolding("enable-loop-simplifycfg-term-folding",
+                                       cl::init(false));
+
 STATISTIC(NumTerminatorsFolded,
           "Number of terminators folded to unconditional branches");
 
@@ -352,6 +355,9 @@ public:
 /// Turn branches and switches with known constant conditions into unconditional
 /// branches.
 static bool constantFoldTerminators(Loop &L, DominatorTree &DT, LoopInfo &LI) {
+  if (!EnableTermFolding)
+    return false;
+
   // To keep things simple, only process loops with single latch. We
   // canonicalize most loops to this form. We can support multi-latch if needed.
   if (!L.getLoopLatch())
