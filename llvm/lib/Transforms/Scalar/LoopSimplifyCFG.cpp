@@ -249,7 +249,10 @@ private:
       for (auto *Succ : successors(BB))
         if (Succ != TheOnlySucc) {
           DeadSuccessors.insert(Succ);
-          Succ->removePredecessor(BB);
+          // If our successor lies in a different loop, we don't want to remove
+          // the one-input Phi because it is a LCSSA Phi.
+          bool PreserveLCSSAPhi = !L.contains(Succ);
+          Succ->removePredecessor(BB, PreserveLCSSAPhi);
         }
 
       IRBuilder<> Builder(BB->getContext());
