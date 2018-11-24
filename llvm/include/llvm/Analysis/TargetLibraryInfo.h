@@ -47,6 +47,7 @@ struct VecDesc {
 class TargetLibraryInfoImpl {
   friend class TargetLibraryInfo;
 
+  Triple TT;
   unsigned char AvailableArray[(NumLibFuncs+3)/4];
   llvm::DenseMap<unsigned, std::string> CustomNames;
   static StringRef const StandardNames[NumLibFuncs];
@@ -87,7 +88,8 @@ public:
   enum VectorLibrary {
     NoLibrary,  // Don't use any vector library.
     Accelerate, // Use Accelerate framework.
-    SVML        // Intel short vector math library.
+    SVML,       // Intel short vector math library.
+    SLEEFGNUABI // SLEEF - SIMD Library for Evaluating Elementary Functions.
   };
 
   TargetLibraryInfoImpl();

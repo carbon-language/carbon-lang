@@ -25,7 +25,9 @@ static cl::opt<TargetLibraryInfoImpl::VectorLibrary> ClVectorLibrary(
                clEnumValN(TargetLibraryInfoImpl::Accelerate, "Accelerate",
                           "Accelerate framework"),
                clEnumValN(TargetLibraryInfoImpl::SVML, "SVML",
-                          "Intel SVML library")));
+                          "Intel SVML library"),
+               clEnumValN(TargetLibraryInfoImpl::SLEEFGNUABI, "sleefgnuabi",
+                          "SIMD Library for Evaluating Elementary Functions")));
 
 StringRef const TargetLibraryInfoImpl::StandardNames[LibFunc::NumLibFuncs] = {
 #define TLI_DEFINE_STRING
@@ -524,7 +526,8 @@ TargetLibraryInfoImpl::TargetLibraryInfoImpl() {
   initialize(*this, Triple(), StandardNames);
 }
 
-TargetLibraryInfoImpl::TargetLibraryInfoImpl(const Triple &T) {
+TargetLibraryInfoImpl::TargetLibraryInfoImpl(const Triple &T)
+  : TT(T) {
   // Default to everything being available.
   memset(AvailableArray, -1, sizeof(AvailableArray));
 
@@ -532,7 +535,8 @@ TargetLibraryInfoImpl::TargetLibraryInfoImpl(const Triple &T) {
 }
 
 TargetLibraryInfoImpl::TargetLibraryInfoImpl(const TargetLibraryInfoImpl &TLI)
-    : CustomNames(TLI.CustomNames), ShouldExtI32Param(TLI.ShouldExtI32Param),
+    : TT(TLI.TT), CustomNames(TLI.CustomNames),
+      ShouldExtI32Param(TLI.ShouldExtI32Param),
       ShouldExtI32Return(TLI.ShouldExtI32Return),
       ShouldSignExtI32Param(TLI.ShouldSignExtI32Param) {
   memcpy(AvailableArray, TLI.AvailableArray, sizeof(AvailableArray));
@@ -541,7 +545,7 @@ TargetLibraryInfoImpl::TargetLibraryInfoImpl(const TargetLibraryInfoImpl &TLI)
 }
 
 TargetLibraryInfoImpl::TargetLibraryInfoImpl(TargetLibraryInfoImpl &&TLI)
-    : CustomNames(std::move(TLI.CustomNames)),
+    : TT(std::move(TLI.TT)), CustomNames(std::move(TLI.CustomNames)),
       ShouldExtI32Param(TLI.ShouldExtI32Param),
       ShouldExtI32Return(TLI.ShouldExtI32Return),
       ShouldSignExtI32Param(TLI.ShouldSignExtI32Param) {
@@ -552,6 +556,7 @@ TargetLibraryInfoImpl::TargetLibraryInfoImpl(TargetLibraryInfoImpl &&TLI)
 }
 
 TargetLibraryInfoImpl &TargetLibraryInfoImpl::operator=(const TargetLibraryInfoImpl &TLI) {
+  TT = TLI.TT;
   CustomNames = TLI.CustomNames;
   ShouldExtI32Param = TLI.ShouldExtI32Param;
   ShouldExtI32Return = TLI.ShouldExtI32Return;
@@ -561,6 +566,7 @@ TargetLibraryInfoImpl &TargetLibraryInfoImpl::operator=(const TargetLibraryInfoI
 }
 
 TargetLibraryInfoImpl &TargetLibraryInfoImpl::operator=(TargetLibraryInfoImpl &&TLI) {
+  TT = std::move(TLI.TT);
   CustomNames = std::move(TLI.CustomNames);
   ShouldExtI32Param = TLI.ShouldExtI32Param;
   ShouldExtI32Return = TLI.ShouldExtI32Return;
@@ -1577,6 +1583,150 @@ void TargetLibraryInfoImpl::addVectorizableFunctionsFromVecLib(
         {"llvm.log.f32", "__svml_logf16", 16},
     };
     addVectorizableFunctions(VecFuncs);
+    break;
+  }
+  case SLEEFGNUABI: {
+    if (TT.getArch() == llvm::Triple::aarch64 ||
+        TT.getArch() == llvm::Triple::aarch64_be) {
+      const VecDesc AArch64TwoAndFourLaneVecFuncs[] = {
+        { "acos", "_ZGVnN2v_acos", 2 },
+        { "acos", "_ZGVnN4v_acosf", 4 },
+        { "acosf", "_ZGVnN4v_acosf", 4 },
+        { "llvm.acos.f64", "_ZGVnN2v_acos", 2 },
+        { "llvm.acos.f32", "_ZGVnN4v_acosf", 4 },
+
+        { "asin", "_ZGVnN2v_asin", 2 },
+        { "asin", "_ZGVnN4v_asinf", 4 },
+        { "asinf", "_ZGVnN4v_asinf", 4 },
+        { "llvm.asin.f64", "_ZGVnN2v_asin", 2 },
+        { "llvm.asin.f32", "_ZGVnN4v_asinf", 4 },
+
+        { "atan", "_ZGVnN2v_atan", 2 },
+        { "atan", "_ZGVnN4v_atanf", 4 },
+        { "atanf", "_ZGVnN4v_atanf", 4 },
+        { "llvm.atan.f64", "_ZGVnN2v_atan", 2 },
+        { "llvm.atan.f32", "_ZGVnN4v_atanf", 4 },
+
+        { "atan2", "_ZGVnN2vv_atan2", 2 },
+        { "atan2", "_ZGVnN4vv_atan2f", 4 },
+        { "atan2f", "_ZGVnN4vv_atan2f", 4 },
+        { "llvm.atan2.f64", "_ZGVnN2vv_atan2", 2 },
+        { "llvm.atan2.f32", "_ZGVnN4vv_atan2f", 4 },
+        { "llvm.atan2.v2f64", "_ZGVnN2vv_atan2", 2 },
+        { "llvm.atan2.v4f32", "_ZGVnN4vv_atan2f", 4 },
+
+        { "atanh", "_ZGVnN2v_atanh", 2 },
+        { "atanh", "_ZGVnN4v_atanhf", 4 },
+        { "atanhf", "_ZGVnN4v_atanhf", 4 },
+        { "llvm.atanh.f64", "_ZGVnN2v_atanh", 2 },
+        { "llvm.atanh.f32", "_ZGVnN4v_atanhf", 4 },
+
+        { "cos", "_ZGVnN2v_cos", 2 },
+        { "cos", "_ZGVnN4v_cosf", 4 },
+        { "cosf", "_ZGVnN4v_cosf", 4 },
+        { "llvm.cos.f64", "_ZGVnN2v_cos", 2 },
+        { "llvm.cos.f32", "_ZGVnN4v_cosf", 4 },
+
+        { "cosh", "_ZGVnN2v_cosh", 2 },
+        { "cosh", "_ZGVnN4v_coshf", 4 },
+        { "coshf", "_ZGVnN4v_coshf", 4 },
+        { "llvm.cosh.f64", "_ZGVnN2v_cosh", 2 },
+        { "llvm.cosh.f32", "_ZGVnN4v_coshf", 4 },
+
+        { "exp", "_ZGVnN2v_exp", 2 },
+        { "exp", "_ZGVnN4v_expf", 4 },
+        { "expf", "_ZGVnN4v_expf", 4 },
+        { "llvm.exp.f64", "_ZGVnN2v_exp", 2 },
+        { "llvm.exp.f32", "_ZGVnN4v_expf", 4 },
+        { "llvm.exp.v2f64", "_ZGVnN2v_exp", 2 },
+        { "llvm.exp.v4f32", "_ZGVnN4v_expf", 4 },
+
+        { "exp2", "_ZGVnN2v_exp2", 2 },
+        { "exp2", "_ZGVnN4v_exp2f", 4 },
+        { "exp2f", "_ZGVnN4v_exp2f", 4 },
+        { "llvm.exp2.f64", "_ZGVnN2v_exp2", 2 },
+        { "llvm.exp2.f32", "_ZGVnN4v_exp2f", 4 },
+        { "llvm.exp2.v2f64", "_ZGVnN2v_exp2", 2 },
+        { "llvm.exp2.v4f32", "_ZGVnN4v_exp2f", 4 },
+
+        { "exp10", "_ZGVnN2v_exp10", 2 },
+        { "exp10", "_ZGVnN4v_exp10f", 4 },
+        { "exp10f", "_ZGVnN4v_exp10f", 4 },
+        { "llvm.exp10.f64", "_ZGVnN2v_exp10", 2 },
+        { "llvm.exp10.f32", "_ZGVnN4v_exp10f", 4 },
+        { "llvm.exp10.v2f64", "_ZGVnN2v_exp10", 2 },
+        { "llvm.exp10.v4f32", "_ZGVnN4v_exp10f", 4 },
+
+        { "lgamma", "_ZGVnN2v_lgamma", 2 },
+        { "lgamma", "_ZGVnN4v_lgammaf", 4 },
+        { "lgammaf", "_ZGVnN4v_lgammaf", 4 },
+        { "llvm.lgamma.f64", "_ZGVnN2v_lgamma", 2 },
+        { "llvm.lgamma.f32", "_ZGVnN4v_lgammaf", 4 },
+
+        { "log", "_ZGVnN2v_log", 2 },
+        { "log", "_ZGVnN4v_logf", 4 },
+        { "logf", "_ZGVnN4v_logf", 4 },
+        { "llvm.log.f64", "_ZGVnN2v_log", 2 },
+        { "llvm.log.f32", "_ZGVnN4v_logf", 4 },
+
+        { "log2", "_ZGVnN2v_log2", 2 },
+        { "log2", "_ZGVnN4v_log2f", 4 },
+        { "log2f", "_ZGVnN4v_log2f", 4 },
+        { "llvm.log2.f64", "_ZGVnN2v_log2", 2 },
+        { "llvm.log2.f32", "_ZGVnN4v_log2f", 4 },
+
+        { "log10", "_ZGVnN2v_log10", 2 },
+        { "log10", "_ZGVnN4v_log10f", 4 },
+        { "log10f", "_ZGVnN4v_log10f", 4 },
+        { "llvm.log10.f64", "_ZGVnN2v_log10", 2 },
+        { "llvm.log10.f32", "_ZGVnN4v_log10f", 4 },
+
+        { "pow", "_ZGVnN2vv_pow", 2 },
+        { "pow", "_ZGVnN4vv_powf", 4 },
+        { "powf", "_ZGVnN4vv_powf", 4 },
+        { "llvm.pow.f64", "_ZGVnN2vv_pow", 2 },
+        { "llvm.pow.f32", "_ZGVnN4vv_powf", 4 },
+        { "llvm.pow.v2f64", "_ZGVnN2vv_pow", 2 },
+        { "llvm.pow.v4f32", "_ZGVnN4vv_powf", 4 },
+
+        { "sin", "_ZGVnN2v_sin", 2 },
+        { "sin", "_ZGVnN4v_sinf", 4 },
+        { "sinf", "_ZGVnN4v_sinf", 4 },
+        { "llvm.sin.f64", "_ZGVnN2v_sin", 2 },
+        { "llvm.sin.f32", "_ZGVnN4v_sinf", 4 },
+
+        { "sinh", "_ZGVnN2v_sinh", 2 },
+        { "sinh", "_ZGVnN4v_sinhf", 4 },
+        { "sinhf", "_ZGVnN4v_sinhf", 4 },
+        { "llvm.sinh.f64", "_ZGVnN2v_sinh", 2 },
+        { "llvm.sinh.f32", "_ZGVnN4v_sinhf", 4 },
+
+        { "sqrt", "_ZGVnN2v_sqrt", 2 },
+        { "sqrt", "_ZGVnN4v_sqrtf", 4 },
+        { "sqrtf", "_ZGVnN4v_sqrtf", 4 },
+        { "llvm.sqrt.f64", "_ZGVnN2v_sqrt", 2 },
+        { "llvm.sqrt.f32", "_ZGVnN4v_sqrtf", 4 },
+
+        { "tan", "_ZGVnN2v_tan", 2 },
+        { "tan", "_ZGVnN4v_tanf", 4 },
+        { "tanf", "_ZGVnN4v_tanf", 4 },
+        { "llvm.tan.f64", "_ZGVnN2v_tan", 2 },
+        { "llvm.tan.f32", "_ZGVnN4v_tanf", 4 },
+
+        { "tanh", "_ZGVnN2v_tanh", 2 },
+        { "tanh", "_ZGVnN4v_tanhf", 4 },
+        { "tanhf", "_ZGVnN4v_tanhf", 4 },
+        { "llvm.tanh.f64", "_ZGVnN2v_tanh", 2 },
+        { "llvm.tanh.f32", "_ZGVnN4v_tanhf", 4 },
+
+        { "tgamma", "_ZGVnN2v_tgamma", 2 },
+        { "tgamma", "_ZGVnN4v_tgammaf", 4 },
+        { "tgammaf", "_ZGVnN4v_tgammaf", 4 },
+        { "llvm.tgamma.f64", "_ZGVnN2v_tgamma", 2 },
+        { "llvm.tgamma.f32", "_ZGVnN4v_tgammaf", 4 },
+      };
+      addVectorizableFunctions(AArch64TwoAndFourLaneVecFuncs);
+    }
     break;
   }
   case NoLibrary:
