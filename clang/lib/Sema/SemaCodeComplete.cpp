@@ -8214,7 +8214,6 @@ void Sema::CodeCompleteIncludedFile(llvm::StringRef Dir, bool Angled) {
   // Helper: adds results relative to IncludeDir, if possible.
   auto AddFilesFromDirLookup = [&](const DirectoryLookup &IncludeDir,
                                    bool IsSystem) {
-    llvm::SmallString<128> Dir;
     switch (IncludeDir.getLookupType()) {
     case DirectoryLookup::LT_HeaderMap:
       // header maps are not (currently) enumerable.
