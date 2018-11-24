@@ -430,34 +430,14 @@ let IntrProperties = [IntrNoMem, IntrSpeculatable] in {
   def int_powi : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, llvm_i32_ty]>;
   def int_sin  : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
   def int_cos  : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
-  def int_acos : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
-  def int_asin : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
-  def int_atan : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
-  def int_atan2 : Intrinsic<[llvm_anyfloat_ty],
-                            [LLVMMatchType<0>, LLVMMatchType<0>]>;
-  def int_tan  : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
   def int_pow  : Intrinsic<[llvm_anyfloat_ty],
                            [LLVMMatchType<0>, LLVMMatchType<0>]>;
-
-  def int_cosh : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
-  def int_sinh : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
-  def int_tanh : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
-
-  def int_asinh : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
-  def int_acosh : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
-  def int_atanh : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
-
-  def int_lgamma : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
-  def int_tgamma : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
-
   def int_log  : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
   def int_log10: Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
   def int_log2 : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
   def int_exp  : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
   def int_exp2 : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
-  def int_exp10 : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
   def int_fabs : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
-
   def int_copysign : Intrinsic<[llvm_anyfloat_ty],
                                [LLVMMatchType<0>, LLVMMatchType<0>]>;
   def int_floor : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
