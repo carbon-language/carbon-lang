@@ -18129,6 +18129,9 @@ SDValue DAGCombiner::foldSelectCCToShiftAnd(const SDLoc &DL, SDValue N0,
 SDValue DAGCombiner::convertSelectOfFPConstantsToLoadOffset(
     const SDLoc &DL, SDValue N0, SDValue N1, SDValue N2, SDValue N3,
     ISD::CondCode CC) {
+  if (!TLI.reduceSelectOfFPConstantLoads(N0.getValueType().isFloatingPoint()))
+    return SDValue();
+
   // If we are before legalize types, we want the other legalization to happen
   // first (for example, to avoid messing with soft float).
   auto *TV = dyn_cast<ConstantFPSDNode>(N2);

@@ -76,18 +76,18 @@ define float @fcmp_select_fp_constants(float %x) nounwind readnone {
 ;
 ; X64_AVX2-LABEL: fcmp_select_fp_constants:
 ; X64_AVX2:       # %bb.0:
+; X64_AVX2-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
+; X64_AVX2-NEXT:    vmovss {{.*#+}} xmm2 = mem[0],zero,zero,zero
 ; X64_AVX2-NEXT:    vcmpneqss {{.*}}(%rip), %xmm0, %xmm0
-; X64_AVX2-NEXT:    vmovd %xmm0, %eax
-; X64_AVX2-NEXT:    andl $1, %eax
-; X64_AVX2-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; X64_AVX2-NEXT:    vblendvps %xmm0, %xmm1, %xmm2, %xmm0
 ; X64_AVX2-NEXT:    retq
 ;
 ; X64_AVX512F-LABEL: fcmp_select_fp_constants:
 ; X64_AVX512F:       # %bb.0:
-; X64_AVX512F-NEXT:    vcmpneqss {{.*}}(%rip), %xmm0, %k0
-; X64_AVX512F-NEXT:    kmovw %k0, %eax
-; X64_AVX512F-NEXT:    movzwl %ax, %eax
+; X64_AVX512F-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
+; X64_AVX512F-NEXT:    vcmpneqss {{.*}}(%rip), %xmm0, %k1
 ; X64_AVX512F-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; X64_AVX512F-NEXT:    vmovss %xmm1, %xmm0, %xmm0 {%k1}
 ; X64_AVX512F-NEXT:    retq
  %c = fcmp une float %x, -4.0
  %r = select i1 %c, float 42.0, float 23.0
