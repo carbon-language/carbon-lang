@@ -54,4 +54,3 @@ as usual but additionally store stack-safe information in the
 a 'safe' variable we can produce an additional report to let the user know that
 probably Stack Safety Analysis failed and we should check for a bug in the
 compiler.
-
