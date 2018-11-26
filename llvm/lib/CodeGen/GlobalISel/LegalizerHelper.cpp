@@ -675,7 +675,7 @@ LegalizerHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx, LLT WideTy) {
                                 MIRBuilder.buildConstant(WideTy, SizeDiff));
     }
     auto &TII = *MI.getMF()->getSubtarget().getInstrInfo();
-    // Make the original instruction a trunc now, and update it's source.
+    // Make the original instruction a trunc now, and update its source.
     MI.setDesc(TII.get(TargetOpcode::G_TRUNC));
     MI.getOperand(1).setReg(MIBNewOp->getOperand(0).getReg());
     MIRBuilder.recordInsertion(&MI);
