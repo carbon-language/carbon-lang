@@ -62,10 +62,6 @@ public:
   unsigned isStoreToStackSlot(const MachineInstr &MI,
                               int &FrameIndex) const override;
 
-  /// Returns true if there is an extendable register and that the extending
-  /// value is non-zero.
-  static bool hasExtendedReg(const MachineInstr &MI);
-
   /// Does this instruction set its full destination register to zero?
   static bool isGPRZero(const MachineInstr &MI);
 

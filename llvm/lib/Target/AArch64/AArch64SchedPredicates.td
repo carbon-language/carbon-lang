@@ -28,6 +28,10 @@ def CheckMemScaled  : CheckImmOperandSimple<3>;
 
 // Generic predicates.
 
+// Identify arithmetic instructions with extend.
+def IsArithExtPred        : CheckOpcode<[ADDWrx, ADDXrx, ADDXrx64, ADDSWrx, ADDSXrx, ADDSXrx64,
+                                         SUBWrx, SUBXrx, SUBXrx64, SUBSWrx, SUBSXrx, SUBSXrx64]>;
+
 // Identify arithmetic instructions with shift.
 def IsArithShiftPred      : CheckOpcode<[ADDWrs, ADDXrs, ADDSWrs, ADDSXrs,
                                          SUBWrs, SUBXrs, SUBSWrs, SUBSXrs]>;
@@ -71,25 +75,34 @@ def IsStoreRegOffsetPred  : CheckOpcode<[STRBBroW, STRBBroX,
 
 // Target predicates.
 
-// Identify arithmetic and logic instructions with a shifted register.
-def RegShiftedFn   : TIIPredicate<"hasShiftedReg",
-                                  MCOpcodeSwitchStatement<
-                                    [MCOpcodeSwitchCase<
-                                       !listconcat(IsArithShiftPred.ValidOpcodes,
-                                                   IsLogicShiftPred.ValidOpcodes),
+// Identify arithmetic instructions with an extended register.
+def RegExtendedFn   : TIIPredicate<"hasExtendedReg",
+                                   MCOpcodeSwitchStatement<
+                                     [MCOpcodeSwitchCase<
+                                       IsArithExtPred.ValidOpcodes,
                                        MCReturnStatement<CheckNot<CheckZeroOperand<3>>>>],
-                                  MCReturnStatement<FalsePred>>>;
-def RegShiftedPred : MCSchedPredicate<RegShiftedFn>;
+                                     MCReturnStatement<FalsePred>>>;
+def RegExtendedPred : MCSchedPredicate<RegExtendedFn>;
+
+// Identify arithmetic and logic instructions with a shifted register.
+def RegShiftedFn    : TIIPredicate<"hasShiftedReg",
+                                   MCOpcodeSwitchStatement<
+                                     [MCOpcodeSwitchCase<
+                                        !listconcat(IsArithShiftPred.ValidOpcodes,
+                                                    IsLogicShiftPred.ValidOpcodes),
+                                        MCReturnStatement<CheckNot<CheckZeroOperand<3>>>>],
+                                   MCReturnStatement<FalsePred>>>;
+def RegShiftedPred  : MCSchedPredicate<RegShiftedFn>;
 
 // Identify a load or store using the register offset addressing mode
 // with an extended or scaled register.
-def ScaledIdxFn    : TIIPredicate<"isScaledAddr",
-                                  MCOpcodeSwitchStatement<
-                                    [MCOpcodeSwitchCase<
-                                       !listconcat(IsLoadRegOffsetPred.ValidOpcodes,
-                                                   IsStoreRegOffsetPred.ValidOpcodes),
-                                       MCReturnStatement<
-                                         CheckAny<[CheckNot<CheckMemExtLSL>,
-                                                   CheckMemScaled]>>>],
-                                    MCReturnStatement<FalsePred>>>;
-def ScaledIdxPred  : MCSchedPredicate<ScaledIdxFn>;
+def ScaledIdxFn     : TIIPredicate<"isScaledAddr",
+                                   MCOpcodeSwitchStatement<
+                                     [MCOpcodeSwitchCase<
+                                        !listconcat(IsLoadRegOffsetPred.ValidOpcodes,
+                                                    IsStoreRegOffsetPred.ValidOpcodes),
+                                        MCReturnStatement<
+                                          CheckAny<[CheckNot<CheckMemExtLSL>,
+                                                    CheckMemScaled]>>>],
+                                     MCReturnStatement<FalsePred>>>;
+def ScaledIdxPred   : MCSchedPredicate<ScaledIdxFn>;

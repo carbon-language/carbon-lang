@@ -1740,33 +1740,6 @@ bool AArch64InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   return true;
 }
 
-/// Return true if this is this instruction has a non-zero immediate
-bool AArch64InstrInfo::hasExtendedReg(const MachineInstr &MI) {
-  switch (MI.getOpcode()) {
-  default:
-    break;
-  case AArch64::ADDSWrx:
-  case AArch64::ADDSXrx:
-  case AArch64::ADDSXrx64:
-  case AArch64::ADDWrx:
-  case AArch64::ADDXrx:
-  case AArch64::ADDXrx64:
-  case AArch64::SUBSWrx:
-  case AArch64::SUBSXrx:
-  case AArch64::SUBSXrx64:
-  case AArch64::SUBWrx:
-  case AArch64::SUBXrx:
-  case AArch64::SUBXrx64:
-    if (MI.getOperand(3).isImm()) {
-      unsigned val = MI.getOperand(3).getImm();
-      return (val != 0);
-    }
-    break;
-  }
-
-  return false;
-}
-
 // Return true if this instruction simply sets its single destination register
 // to zero. This is equivalent to a register rename of the zero-register.
 bool AArch64InstrInfo::isGPRZero(const MachineInstr &MI) {
