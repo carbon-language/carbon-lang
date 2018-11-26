@@ -10,7 +10,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/StackSafetyAnalysis.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/InstIterator.h"
@@ -20,6 +19,9 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "stack-safety"
+
+static cl::opt<int> StackSafetyMaxIterations("stack-safety-max-iterations",
+                                             cl::init(20), cl::Hidden);
 
 namespace {
 
@@ -150,9 +152,14 @@ struct StackSafetyInfo::FunctionInfo {
   SmallVector<ParamInfo, 4> Params;
   // TODO: describe return value as depending on one or more of its arguments.
 
+  // StackSafetyDataFlowAnalysis counter stored here for faster access.
+  int UpdateCount = 0;
+
   FunctionInfo(const StackSafetyInfo &SSI) : FunctionInfo(*SSI.Info) {}
 
   explicit FunctionInfo(const Function *F) : GV(F){};
+  // Creates FunctionInfo that forwards all the parameters to the aliasee.
+  explicit FunctionInfo(const GlobalAlias *A);
 
   FunctionInfo(FunctionInfo &&) = default;
 
@@ -163,6 +170,8 @@ struct StackSafetyInfo::FunctionInfo {
   StringRef getName() const { return GV->getName(); }
 
   void print(raw_ostream &O) const {
+    // TODO: Consider different printout format after
+    // StackSafetyDataFlowAnalysis. Calls and parameters are irrelevant then.
     O << "  @" << getName() << (IsDSOLocal() ? "" : " dso_preemptable")
       << (IsInterposable() ? " interposable" : "") << "\n";
     O << "    args uses:\n";
@@ -176,6 +185,18 @@ struct StackSafetyInfo::FunctionInfo {
 private:
   FunctionInfo(const FunctionInfo &) = default;
 };
+
+StackSafetyInfo::FunctionInfo::FunctionInfo(const GlobalAlias *A) : GV(A) {
+  unsigned PointerSize = A->getParent()->getDataLayout().getPointerSizeInBits();
+  const GlobalObject *Aliasee = A->getBaseObject();
+  const FunctionType *Type = cast<FunctionType>(Aliasee->getValueType());
+  // 'Forward' all parameters to this alias to the aliasee
+  for (unsigned ArgNo = 0; ArgNo < Type->getNumParams(); ArgNo++) {
+    Params.emplace_back(PointerSize, nullptr);
+    UseInfo &US = Params.back().Use;
+    US.Calls.emplace_back(Aliasee, ArgNo, ConstantRange(APInt(PointerSize, 0)));
+  }
+}
 
 namespace {
 
@@ -373,8 +394,172 @@ StackSafetyInfo StackSafetyLocalAnalysis::run() {
   return StackSafetyInfo(std::move(Info));
 }
 
+class StackSafetyDataFlowAnalysis {
+  using FunctionMap =
+      std::map<const GlobalValue *, StackSafetyInfo::FunctionInfo>;
+
+  FunctionMap Functions;
+  // Callee-to-Caller multimap.
+  DenseMap<const GlobalValue *, SmallVector<const GlobalValue *, 4>> Callers;
+  SetVector<const GlobalValue *> WorkList;
+
+  unsigned PointerSize = 0;
+  const ConstantRange UnknownRange;
+
+  ConstantRange getArgumentAccessRange(const GlobalValue *Callee,
+                                       unsigned ParamNo) const;
+  bool updateOneUse(UseInfo &US, bool UpdateToFullSet);
+  void updateOneNode(const GlobalValue *Callee,
+                     StackSafetyInfo::FunctionInfo &FS);
+  void updateOneNode(const GlobalValue *Callee) {
+    updateOneNode(Callee, Functions.find(Callee)->second);
+  }
+  void updateAllNodes() {
+    for (auto &F : Functions)
+      updateOneNode(F.first, F.second);
+  }
+  void runDataFlow();
+  void verifyFixedPoint();
+
+public:
+  StackSafetyDataFlowAnalysis(
+      Module &M, std::function<const StackSafetyInfo &(Function &)> FI);
+  StackSafetyGlobalInfo run();
+};
+
+StackSafetyDataFlowAnalysis::StackSafetyDataFlowAnalysis(
+    Module &M, std::function<const StackSafetyInfo &(Function &)> FI)
+    : PointerSize(M.getDataLayout().getPointerSizeInBits()),
+      UnknownRange(PointerSize, true) {
+  // Without ThinLTO, run the local analysis for every function in the TU and
+  // then run the DFA and annotate allocas
+  for (auto &F : M.functions())
+    if (!F.isDeclaration())
+      Functions.emplace(&F, FI(F));
+  for (auto &A : M.aliases())
+    if (isa<Function>(A.getBaseObject()))
+      Functions.emplace(&A, &A);
+}
+
+ConstantRange
+StackSafetyDataFlowAnalysis::getArgumentAccessRange(const GlobalValue *Callee,
+                                                    unsigned ParamNo) const {
+  auto IT = Functions.find(Callee);
+  // Unknown callee (outside of LTO domain or an indirect call).
+  if (IT == Functions.end())
+    return UnknownRange;
+  const StackSafetyInfo::FunctionInfo &FS = IT->second;
+  // The definition of this symbol may not be the definition in this linkage
+  // unit.
+  if (!FS.IsDSOLocal() || FS.IsInterposable())
+    return UnknownRange;
+  if (ParamNo >= FS.Params.size()) // possibly vararg
+    return UnknownRange;
+  return FS.Params[ParamNo].Use.Range;
+}
+
+bool StackSafetyDataFlowAnalysis::updateOneUse(UseInfo &US,
+                                               bool UpdateToFullSet) {
+  bool Changed = false;
+  for (auto &CS : US.Calls) {
+    assert(!CS.Range.isEmptySet() &&
+           "Param range can't be empty-set, invalid access range");
+
+    ConstantRange CalleeRange = getArgumentAccessRange(CS.Callee, CS.ParamNo);
+    CalleeRange = CalleeRange.add(CS.Offset);
+    if (!US.Range.contains(CalleeRange)) {
+      Changed = true;
+      if (UpdateToFullSet)
+        US.Range = UnknownRange;
+      else
+        US.Range = US.Range.unionWith(CalleeRange);
+    }
+  }
+  return Changed;
+}
+
+void StackSafetyDataFlowAnalysis::updateOneNode(
+    const GlobalValue *Callee, StackSafetyInfo::FunctionInfo &FS) {
+  bool UpdateToFullSet = FS.UpdateCount > StackSafetyMaxIterations;
+  bool Changed = false;
+  for (auto &AS : FS.Allocas)
+    Changed |= updateOneUse(AS.Use, UpdateToFullSet);
+  for (auto &PS : FS.Params)
+    Changed |= updateOneUse(PS.Use, UpdateToFullSet);
+
+  if (Changed) {
+    LLVM_DEBUG(dbgs() << "=== update [" << FS.UpdateCount
+                      << (UpdateToFullSet ? ", full-set" : "") << "] "
+                      << FS.getName() << "\n");
+    // Callers of this function may need updating.
+    for (auto &CallerID : Callers[Callee])
+      WorkList.insert(CallerID);
+
+    ++FS.UpdateCount;
+  }
+}
+
+void StackSafetyDataFlowAnalysis::runDataFlow() {
+  Callers.clear();
+  WorkList.clear();
+
+  SmallVector<const GlobalValue *, 16> Callees;
+  for (auto &F : Functions) {
+    Callees.clear();
+    StackSafetyInfo::FunctionInfo &FS = F.second;
+    for (auto &AS : FS.Allocas)
+      for (auto &CS : AS.Use.Calls)
+        Callees.push_back(CS.Callee);
+    for (auto &PS : FS.Params)
+      for (auto &CS : PS.Use.Calls)
+        Callees.push_back(CS.Callee);
+
+    llvm::sort(Callees);
+    Callees.erase(std::unique(Callees.begin(), Callees.end()), Callees.end());
+
+    for (auto &Callee : Callees)
+      Callers[Callee].push_back(F.first);
+  }
+
+  updateAllNodes();
+
+  while (!WorkList.empty()) {
+    const GlobalValue *Callee = WorkList.back();
+    WorkList.pop_back();
+    updateOneNode(Callee);
+  }
+}
+
+void StackSafetyDataFlowAnalysis::verifyFixedPoint() {
+  WorkList.clear();
+  updateAllNodes();
+  assert(WorkList.empty());
+}
+
+StackSafetyGlobalInfo StackSafetyDataFlowAnalysis::run() {
+  runDataFlow();
+  LLVM_DEBUG(verifyFixedPoint());
+
+  StackSafetyGlobalInfo SSI;
+  for (auto &F : Functions)
+    SSI.emplace(F.first, std::move(F.second));
+  return SSI;
+}
+
 void print(const StackSafetyGlobalInfo &SSI, raw_ostream &O, const Module &M) {
-  O << "Not Implemented\n";
+  size_t Count = 0;
+  for (auto &F : M.functions())
+    if (!F.isDeclaration()) {
+      SSI.find(&F)->second.print(O);
+      O << "\n";
+      ++Count;
+    }
+  for (auto &A : M.aliases()) {
+    SSI.find(&A)->second.print(O);
+    O << "\n";
+    ++Count;
+  }
+  assert(Count == SSI.size() && "Unexpected functions in the result");
 }
 
 } // end anonymous namespace
@@ -431,7 +616,14 @@ AnalysisKey StackSafetyGlobalAnalysis::Key;
 
 StackSafetyGlobalInfo
 StackSafetyGlobalAnalysis::run(Module &M, ModuleAnalysisManager &AM) {
-  return {};
+  FunctionAnalysisManager &FAM =
+      AM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
+
+  StackSafetyDataFlowAnalysis SSDFA(
+      M, [&FAM](Function &F) -> const StackSafetyInfo & {
+        return FAM.getResult<StackSafetyAnalysis>(F);
+      });
+  return SSDFA.run();
 }
 
 PreservedAnalyses StackSafetyGlobalPrinterPass::run(Module &M,
@@ -459,7 +651,14 @@ void StackSafetyGlobalInfoWrapperPass::getAnalysisUsage(
   AU.addRequired<StackSafetyInfoWrapperPass>();
 }
 
-bool StackSafetyGlobalInfoWrapperPass::runOnModule(Module &M) { return false; }
+bool StackSafetyGlobalInfoWrapperPass::runOnModule(Module &M) {
+  StackSafetyDataFlowAnalysis SSDFA(
+      M, [this](Function &F) -> const StackSafetyInfo & {
+        return getAnalysis<StackSafetyInfoWrapperPass>(F).getResult();
+      });
+  SSI = SSDFA.run();
+  return false;
+}
 
 static const char LocalPassArg[] = "stack-safety-local";
 static const char LocalPassName[] = "Stack Safety Local Analysis";

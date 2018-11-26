@@ -1,9 +1,7 @@
-; RUN: opt -S -analyze -stack-safety-local < %s | FileCheck %s
-; RUN: opt -S -passes="print<stack-safety-local>" -disable-output < %s 2>&1 | FileCheck %s
-; RUN: opt -S -analyze -stack-safety < %s | FileCheck %s --check-prefix=GLOBAL
-; RUN: opt -S -passes="print-stack-safety" -disable-output < %s 2>&1 | FileCheck %s --check-prefix=GLOBAL
-
-; GLOBAL: Not Implemented
+; RUN: opt -S -analyze -stack-safety-local < %s | FileCheck %s --check-prefixes=CHECK,LOCAL
+; RUN: opt -S -passes="print<stack-safety-local>" -disable-output < %s 2>&1 | FileCheck %s --check-prefixes=CHECK,LOCAL
+; RUN: opt -S -analyze -stack-safety < %s | FileCheck %s --check-prefixes=CHECK,GLOBAL
+; RUN: opt -S -passes="print-stack-safety" -disable-output < %s 2>&1 | FileCheck %s --check-prefixes=CHECK,GLOBAL
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
@@ -147,7 +145,8 @@ define void @DirectCall() {
 ; CHECK-LABEL: @DirectCall dso_preemptable{{$}}
 ; CHECK-NEXT: args uses:
 ; CHECK-NEXT: allocas uses:
-; CHECK-NEXT: x[8]: empty-set, @Foo(arg0, [2,3)){{$}}
+; LOCAL-NEXT: x[8]: empty-set, @Foo(arg0, [2,3)){{$}}
+; GLOBAL-NEXT: x[8]: full-set, @Foo(arg0, [2,3)){{$}}
 ; CHECK-NOT: ]:
 entry:
   %x = alloca i64, align 4
