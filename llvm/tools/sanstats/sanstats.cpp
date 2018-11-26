@@ -81,8 +81,9 @@ const char *ReadModule(char SizeofPtr, const char *Begin, const char *End) {
     // remove one from the address to get the correct DI.
     if (Expected<DILineInfo> LineInfo =
             Symbolizer.symbolizeCode(Filename, Addr - 1)) {
-      llvm::outs() << LineInfo->FileName << ':' << LineInfo->Line << ' '
-                   << LineInfo->FunctionName << ' ';
+      llvm::outs() << format_hex(Addr - 1, 18) << ' ' << LineInfo->FileName
+                   << ':' << LineInfo->Line << ' ' << LineInfo->FunctionName
+                   << ' ';
     } else {
       logAllUnhandledErrors(LineInfo.takeError(), llvm::outs(), "<error> ");
     }

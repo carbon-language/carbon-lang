@@ -25,19 +25,19 @@
 
 # RUN: sanstats %t.stats | FileCheck %s
 
-# CHECK: /tmp{{[/\\]}}f.c:1 f1 cfi-vcall 1
-# CHECK: /tmp{{[/\\]}}f.c:2 f2 cfi-nvcall 2
-# CHECK: /tmp{{[/\\]}}f.c:3 f3 cfi-derived-cast 3
-# CHECK: /tmp{{[/\\]}}f.c:1 f1 cfi-unrelated-cast 4
-# CHECK: /tmp{{[/\\]}}f.c:2 f2 cfi-icall 5
-# CHECK: /tmp{{[/\\]}}f.c:3 f3 <unknown> 6
+# CHECK: 0x0000000000000000 /tmp{{[/\\]}}f.c:1 f1 cfi-vcall 1
+# CHECK: 0x0000000000000010 /tmp{{[/\\]}}f.c:2 f2 cfi-nvcall 2
+# CHECK: 0x0000000000000020 /tmp{{[/\\]}}f.c:3 f3 cfi-derived-cast 3
+# CHECK: 0x0000000000000000 /tmp{{[/\\]}}f.c:1 f1 cfi-unrelated-cast 4
+# CHECK: 0x0000000000000010 /tmp{{[/\\]}}f.c:2 f2 cfi-icall 5
+# CHECK: 0x0000000000000020 /tmp{{[/\\]}}f.c:3 f3 <unknown> 6
 
-# CHECK: /tmp{{[/\\]}}f.c:3 f3 cfi-vcall 7
-# CHECK: /tmp{{[/\\]}}f.c:2 f2 cfi-nvcall 8
-# CHECK: /tmp{{[/\\]}}f.c:1 f1 cfi-derived-cast 9
-# CHECK: /tmp{{[/\\]}}f.c:3 f3 cfi-unrelated-cast 11
-# CHECK: /tmp{{[/\\]}}f.c:2 f2 cfi-icall 12
-# CHECK: /tmp{{[/\\]}}f.c:1 f1 <unknown> 14
+# CHECK: 0x0000000000000020 /tmp{{[/\\]}}f.c:3 f3 cfi-vcall 7
+# CHECK: 0x0000000000000010 /tmp{{[/\\]}}f.c:2 f2 cfi-nvcall 8
+# CHECK: 0x0000000000000000 /tmp{{[/\\]}}f.c:1 f1 cfi-derived-cast 9
+# CHECK: 0x0000000000000020 /tmp{{[/\\]}}f.c:3 f3 cfi-unrelated-cast 11
+# CHECK: 0x0000000000000010 /tmp{{[/\\]}}f.c:2 f2 cfi-icall 12
+# CHECK: 0x0000000000000000 /tmp{{[/\\]}}f.c:1 f1 <unknown> 14
 
 --- !ELF
 FileHeader:      
