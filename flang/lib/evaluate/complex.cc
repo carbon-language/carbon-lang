@@ -95,7 +95,8 @@ template<typename R> std::string Complex<R>::DumpHexadecimal() const {
   return result;
 }
 
-template<typename R> std::ostream &Complex<R>::AsFortran(std::ostream &o, int kind) const {
+template<typename R>
+std::ostream &Complex<R>::AsFortran(std::ostream &o, int kind) const {
   re_.AsFortran(o << '(', kind);
   im_.AsFortran(o << ',', kind);
   return o << ')';

@@ -15,9 +15,9 @@
 #ifndef FORTRAN_EVALUATE_ROUNDING_BITS_H_
 #define FORTRAN_EVALUATE_ROUNDING_BITS_H_
 
-// A helper class used by Real<> (below) to determine rounding of inexact
-// results.  Bits lost from intermediate computations by being shifted
-// rightward are accumulated here.
+// A helper class used by Real<> to determine rounding of rational results
+// to floating-point values.  Bits lost from intermediate computations by
+// being shifted rightward are accumulated in instances of this class.
 
 namespace Fortran::evaluate::value {
 
@@ -96,7 +96,7 @@ public:
   }
 
 private:
-  bool guard_{false};  // 0.5 * ulp
+  bool guard_{false};  // 0.5 * ulp (unit in lowest place)
   bool round_{false};  // 0.25 * ulp
   bool sticky_{false};  // true if any lesser-valued bit would be set
 };

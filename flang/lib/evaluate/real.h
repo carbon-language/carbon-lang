@@ -39,8 +39,10 @@ namespace Fortran::evaluate::value {
 template<typename WORD, int PRECISION, bool IMPLICIT_MSB = true> class Real {
 public:
   using Word = WORD;
-  static constexpr int bits{Word::bits};
   static constexpr int precision{PRECISION};
+  using Fraction = Integer<precision>;  // all bits made explicit
+
+  static constexpr int bits{Word::bits};
   static constexpr bool implicitMSB{IMPLICIT_MSB};
   static constexpr int significandBits{precision - implicitMSB};
   static constexpr int exponentBits{bits - significandBits - 1 /*sign*/};
@@ -57,6 +59,7 @@ public:
   static constexpr int decimalDigits{(precision * 43) / 100};
 
   // Associates a decimal exponent with an integral value for formatting.
+  // TODO pmk remove
   struct ScaledDecimal {
     bool negative{false};
     Word integer;  // unsigned
@@ -322,22 +325,7 @@ public:
     return exponent;
   }
 
-  static ValueWithRealFlags<Real> Read(
-      const char *&, Rounding rounding = defaultRounding);
-  std::string DumpHexadecimal() const;
-
-  // Emits a character representation for an equivalent Fortran constant
-  // or parenthesized constant expression that produces this value.
-  std::ostream &AsFortran(std::ostream &, int kind) const;
-
-private:
-  using Fraction = Integer<precision>;  // all bits made explicit
-  using Significand = Integer<significandBits>;  // no implicit bit
-
-  constexpr Significand GetSignificand() const {
-    return Significand::ConvertUnsigned(word_).value;
-  }
-
+  // Extracts the fraction; any implied bit is made explicit.
   constexpr Fraction GetFraction() const {
     Fraction result{Fraction::ConvertUnsigned(word_).value};
     if constexpr (!implicitMSB) {
@@ -350,6 +338,21 @@ private:
         return result.IBCLR(significandBits);
       }
     }
+  }
+
+  static ValueWithRealFlags<Real> Read(
+      const char *&, Rounding rounding = defaultRounding);
+  std::string DumpHexadecimal() const;
+
+  // Emits a character representation for an equivalent Fortran constant
+  // or parenthesized constant expression that produces this value.
+  std::ostream &AsFortran(std::ostream &, int kind) const;
+
+private:
+  using Significand = Integer<significandBits>;  // no implicit bit
+
+  constexpr Significand GetSignificand() const {
+    return Significand::ConvertUnsigned(word_).value;
   }
 
   constexpr std::int64_t CombineExponents(const Real &y, bool forDivide) const {

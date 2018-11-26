@@ -16,6 +16,7 @@ add_library(FortranEvaluate
   call.cc
   common.cc
   complex.cc
+  decimal.cc
   expression.cc
   fold.cc
   integer.cc
