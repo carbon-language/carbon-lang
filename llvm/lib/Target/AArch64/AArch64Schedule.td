@@ -50,9 +50,6 @@ def WriteLDIdx : SchedWrite; // Load from a register index (maybe scaled).
 def WriteSTIdx : SchedWrite; // Store to a register index (maybe scaled).
 def ReadAdrBase : SchedRead; // Read the base resister of a reg-offset LD/ST.
 
-// Predicate for determining when a shiftable register is shifted.
-def RegShiftedPred : SchedPredicate<[{TII->hasShiftedReg(*MI)}]>;
-
 // Predicate for determining when a extendedable register is extended.
 def RegExtendedPred : SchedPredicate<[{TII->hasExtendedReg(*MI)}]>;
 

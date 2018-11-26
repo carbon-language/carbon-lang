@@ -62,10 +62,6 @@ public:
   unsigned isStoreToStackSlot(const MachineInstr &MI,
                               int &FrameIndex) const override;
 
-  /// Returns true if there is a shiftable register and that the shift value
-  /// is non-zero.
-  static bool hasShiftedReg(const MachineInstr &MI);
-
   /// Returns true if there is an extendable register and that the extending
   /// value is non-zero.
   static bool hasExtendedReg(const MachineInstr &MI);
