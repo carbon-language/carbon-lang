@@ -373,6 +373,10 @@ StackSafetyInfo StackSafetyLocalAnalysis::run() {
   return StackSafetyInfo(std::move(Info));
 }
 
+void print(const StackSafetyGlobalInfo &SSI, raw_ostream &O, const Module &M) {
+  O << "Not Implemented\n";
+}
+
 } // end anonymous namespace
 
 StackSafetyInfo::StackSafetyInfo() = default;
@@ -423,6 +427,40 @@ bool StackSafetyInfoWrapperPass::runOnFunction(Function &F) {
   return false;
 }
 
+AnalysisKey StackSafetyGlobalAnalysis::Key;
+
+StackSafetyGlobalInfo
+StackSafetyGlobalAnalysis::run(Module &M, ModuleAnalysisManager &AM) {
+  return {};
+}
+
+PreservedAnalyses StackSafetyGlobalPrinterPass::run(Module &M,
+                                                    ModuleAnalysisManager &AM) {
+  OS << "'Stack Safety Analysis' for module '" << M.getName() << "'\n";
+  print(AM.getResult<StackSafetyGlobalAnalysis>(M), OS, M);
+  return PreservedAnalyses::all();
+}
+
+char StackSafetyGlobalInfoWrapperPass::ID = 0;
+
+StackSafetyGlobalInfoWrapperPass::StackSafetyGlobalInfoWrapperPass()
+    : ModulePass(ID) {
+  initializeStackSafetyGlobalInfoWrapperPassPass(
+      *PassRegistry::getPassRegistry());
+}
+
+void StackSafetyGlobalInfoWrapperPass::print(raw_ostream &O,
+                                             const Module *M) const {
+  ::print(SSI, O, *M);
+}
+
+void StackSafetyGlobalInfoWrapperPass::getAnalysisUsage(
+    AnalysisUsage &AU) const {
+  AU.addRequired<StackSafetyInfoWrapperPass>();
+}
+
+bool StackSafetyGlobalInfoWrapperPass::runOnModule(Module &M) { return false; }
+
 static const char LocalPassArg[] = "stack-safety-local";
 static const char LocalPassName[] = "Stack Safety Local Analysis";
 INITIALIZE_PASS_BEGIN(StackSafetyInfoWrapperPass, LocalPassArg, LocalPassName,
@@ -430,3 +468,10 @@ INITIALIZE_PASS_BEGIN(StackSafetyInfoWrapperPass, LocalPassArg, LocalPassName,
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
 INITIALIZE_PASS_END(StackSafetyInfoWrapperPass, LocalPassArg, LocalPassName,
                     false, true)
+
+static const char GlobalPassName[] = "Stack Safety Analysis";
+INITIALIZE_PASS_BEGIN(StackSafetyGlobalInfoWrapperPass, DEBUG_TYPE,
+                      GlobalPassName, false, false)
+INITIALIZE_PASS_DEPENDENCY(StackSafetyInfoWrapperPass)
+INITIALIZE_PASS_END(StackSafetyGlobalInfoWrapperPass, DEBUG_TYPE,
+                    GlobalPassName, false, false)

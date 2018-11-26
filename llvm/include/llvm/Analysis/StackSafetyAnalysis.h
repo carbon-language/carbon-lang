@@ -73,6 +73,48 @@ public:
   bool runOnFunction(Function &F) override;
 };
 
+using StackSafetyGlobalInfo = std::map<const GlobalValue *, StackSafetyInfo>;
+
+/// This pass performs the global (interprocedural) stack safety analysis (new
+/// pass manager).
+class StackSafetyGlobalAnalysis
+    : public AnalysisInfoMixin<StackSafetyGlobalAnalysis> {
+  friend AnalysisInfoMixin<StackSafetyGlobalAnalysis>;
+  static AnalysisKey Key;
+
+public:
+  using Result = StackSafetyGlobalInfo;
+  Result run(Module &M, ModuleAnalysisManager &AM);
+};
+
+/// Printer pass for the \c StackSafetyGlobalAnalysis results.
+class StackSafetyGlobalPrinterPass
+    : public PassInfoMixin<StackSafetyGlobalPrinterPass> {
+  raw_ostream &OS;
+
+public:
+  explicit StackSafetyGlobalPrinterPass(raw_ostream &OS) : OS(OS) {}
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
+};
+
+/// This pass performs the global (interprocedural) stack safety analysis
+/// (legacy pass manager).
+class StackSafetyGlobalInfoWrapperPass : public ModulePass {
+  StackSafetyGlobalInfo SSI;
+
+public:
+  static char ID;
+
+  StackSafetyGlobalInfoWrapperPass();
+
+  const StackSafetyGlobalInfo &getResult() const { return SSI; }
+
+  void print(raw_ostream &O, const Module *M) const override;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+
+  bool runOnModule(Module &M) override;
+};
+
 } // end namespace llvm
 
 #endif // LLVM_ANALYSIS_STACKSAFETYANALYSIS_H
