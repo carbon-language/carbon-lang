@@ -195,7 +195,7 @@ int CFI_is_contiguous(const CFI_cdesc_t *descriptor) {
 }
 
 static inline bool IsAssumedSize(const CFI_cdesc_t *dv) {
-  return (dv->rank > 0 && dv->dim[dv->rank - 1].extent == -1);
+  return dv->rank > 0 && dv->dim[dv->rank - 1].extent == -1;
 }
 
 int CFI_section(CFI_cdesc_t *result, const CFI_cdesc_t *source,
