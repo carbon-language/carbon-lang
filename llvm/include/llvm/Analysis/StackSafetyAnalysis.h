@@ -19,8 +19,22 @@
 
 namespace llvm {
 
+/// Interface to access stack safety analysis results for single function.
 class StackSafetyInfo {
 public:
+  struct FunctionInfo;
+
+private:
+  std::unique_ptr<FunctionInfo> Info;
+
+public:
+  StackSafetyInfo();
+  StackSafetyInfo(FunctionInfo &&Info);
+  StackSafetyInfo(StackSafetyInfo &&);
+  StackSafetyInfo &operator=(StackSafetyInfo &&);
+  ~StackSafetyInfo();
+
+  // TODO: Add useful for client methods.
   void print(raw_ostream &O) const;
 };
 
