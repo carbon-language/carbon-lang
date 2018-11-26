@@ -56,11 +56,6 @@ def RegShiftedPred : SchedPredicate<[{TII->hasShiftedReg(*MI)}]>;
 // Predicate for determining when a extendedable register is extended.
 def RegExtendedPred : SchedPredicate<[{TII->hasExtendedReg(*MI)}]>;
 
-// ScaledIdxPred is true if a WriteLDIdx operand will be
-// scaled. Subtargets can use this to dynamically select resources and
-// latency for WriteLDIdx and ReadAdrBase.
-def ScaledIdxPred : SchedPredicate<[{TII->isScaledAddr(*MI)}]>;
-
 // Serialized two-level address load.
 // EXAMPLE: LOADGot
 def WriteLDAdr : WriteSequence<[WriteAdr, WriteLD]>;

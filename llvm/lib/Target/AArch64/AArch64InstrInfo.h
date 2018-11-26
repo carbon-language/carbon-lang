@@ -79,11 +79,6 @@ public:
   /// Does this instruction rename an FPR without modifying bits?
   static bool isFPRCopy(const MachineInstr &MI);
 
-  /// Return true if this is load/store scales or extends its register offset.
-  /// This refers to scaling a dynamic index as opposed to scaled immediates.
-  /// MI should be a memory op that allows scaled addressing.
-  static bool isScaledAddr(const MachineInstr &MI);
-
   /// Return true if pairing the given load or store is hinted to be
   /// unprofitable.
   static bool isLdStPairSuppressed(const MachineInstr &MI);
@@ -270,6 +265,9 @@ public:
   /// Return true if the instructions is a SEH instruciton used for unwinding
   /// on Windows.
   static bool isSEHInstruction(const MachineInstr &MI);
+
+#define GET_TII_HELPER_DECLS
+#include "AArch64GenInstrInfo.inc"
 
 private:
   /// Sets the offsets on outlined instructions in \p MBB which use SP

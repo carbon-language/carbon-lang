@@ -1927,67 +1927,6 @@ unsigned AArch64InstrInfo::isStoreToStackSlot(const MachineInstr &MI,
   return 0;
 }
 
-/// Return true if this is load/store scales or extends its register offset.
-/// This refers to scaling a dynamic index as opposed to scaled immediates.
-/// MI should be a memory op that allows scaled addressing.
-bool AArch64InstrInfo::isScaledAddr(const MachineInstr &MI) {
-  switch (MI.getOpcode()) {
-  default:
-    break;
-  case AArch64::LDRBBroW:
-  case AArch64::LDRBroW:
-  case AArch64::LDRDroW:
-  case AArch64::LDRHHroW:
-  case AArch64::LDRHroW:
-  case AArch64::LDRQroW:
-  case AArch64::LDRSBWroW:
-  case AArch64::LDRSBXroW:
-  case AArch64::LDRSHWroW:
-  case AArch64::LDRSHXroW:
-  case AArch64::LDRSWroW:
-  case AArch64::LDRSroW:
-  case AArch64::LDRWroW:
-  case AArch64::LDRXroW:
-  case AArch64::STRBBroW:
-  case AArch64::STRBroW:
-  case AArch64::STRDroW:
-  case AArch64::STRHHroW:
-  case AArch64::STRHroW:
-  case AArch64::STRQroW:
-  case AArch64::STRSroW:
-  case AArch64::STRWroW:
-  case AArch64::STRXroW:
-  case AArch64::LDRBBroX:
-  case AArch64::LDRBroX:
-  case AArch64::LDRDroX:
-  case AArch64::LDRHHroX:
-  case AArch64::LDRHroX:
-  case AArch64::LDRQroX:
-  case AArch64::LDRSBWroX:
-  case AArch64::LDRSBXroX:
-  case AArch64::LDRSHWroX:
-  case AArch64::LDRSHXroX:
-  case AArch64::LDRSWroX:
-  case AArch64::LDRSroX:
-  case AArch64::LDRWroX:
-  case AArch64::LDRXroX:
-  case AArch64::STRBBroX:
-  case AArch64::STRBroX:
-  case AArch64::STRDroX:
-  case AArch64::STRHHroX:
-  case AArch64::STRHroX:
-  case AArch64::STRQroX:
-  case AArch64::STRSroX:
-  case AArch64::STRWroX:
-  case AArch64::STRXroX:
-
-    unsigned Val = MI.getOperand(3).getImm();
-    AArch64_AM::ShiftExtendType ExtType = AArch64_AM::getMemExtendType(Val);
-    return (ExtType != AArch64_AM::UXTX) || AArch64_AM::getMemDoShift(Val);
-  }
-  return false;
-}
-
 /// Check all MachineMemOperands for a hint to suppress pairing.
 bool AArch64InstrInfo::isLdStPairSuppressed(const MachineInstr &MI) {
   return llvm::any_of(MI.memoperands(), [](MachineMemOperand *MMO) {
@@ -5764,3 +5703,6 @@ bool AArch64InstrInfo::shouldOutlineFromFunctionByDefault(
   MachineFunction &MF) const {
   return MF.getFunction().optForMinSize();
 }
+
+#define GET_TII_HELPERS
+#include "AArch64GenInstrInfo.inc"
