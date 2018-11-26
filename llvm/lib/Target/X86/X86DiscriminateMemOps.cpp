@@ -41,6 +41,9 @@ void updateDebugInfo(MachineInstr *MI, const DILocation *Loc) {
 
 class X86DiscriminateMemOps : public MachineFunctionPass {
   bool runOnMachineFunction(MachineFunction &MF) override;
+  StringRef getPassName() const override {
+    return "X86 Discriminate Memory Operands";
+  }
 
 public:
   static char ID;

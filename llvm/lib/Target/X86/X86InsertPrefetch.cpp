@@ -54,6 +54,9 @@ class X86InsertPrefetch : public MachineFunctionPass {
 public:
   static char ID;
   X86InsertPrefetch(const std::string &PrefetchHintsFilename);
+  StringRef getPassName() const override {
+    return "X86 Insert Cache Prefetches";
+  }
 
 private:
   std::string Filename;
