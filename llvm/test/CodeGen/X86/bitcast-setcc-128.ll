@@ -741,3 +741,322 @@ entry:
   %e = bitcast <64 x i1> %d to i64
   ret i64 %e
 }
+
+define void @bitcast_16i8_store(i16* %p, <16 x i8> %a0) {
+; SSE2-SSSE3-LABEL: bitcast_16i8_store:
+; SSE2-SSSE3:       # %bb.0:
+; SSE2-SSSE3-NEXT:    pxor %xmm1, %xmm1
+; SSE2-SSSE3-NEXT:    pcmpgtb %xmm0, %xmm1
+; SSE2-SSSE3-NEXT:    movdqa %xmm1, -{{[0-9]+}}(%rsp)
+; SSE2-SSSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
+; SSE2-SSSE3-NEXT:    andl $1, %eax
+; SSE2-SSSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
+; SSE2-SSSE3-NEXT:    andl $1, %ecx
+; SSE2-SSSE3-NEXT:    leal (%rcx,%rax,2), %eax
+; SSE2-SSSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
+; SSE2-SSSE3-NEXT:    andl $1, %ecx
+; SSE2-SSSE3-NEXT:    leal (%rax,%rcx,4), %eax
+; SSE2-SSSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
+; SSE2-SSSE3-NEXT:    andl $1, %ecx
+; SSE2-SSSE3-NEXT:    leal (%rax,%rcx,8), %eax
+; SSE2-SSSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
+; SSE2-SSSE3-NEXT:    andl $1, %ecx
+; SSE2-SSSE3-NEXT:    shll $4, %ecx
+; SSE2-SSSE3-NEXT:    orl %eax, %ecx
+; SSE2-SSSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %eax
+; SSE2-SSSE3-NEXT:    andl $1, %eax
+; SSE2-SSSE3-NEXT:    shll $5, %eax
+; SSE2-SSSE3-NEXT:    orl %ecx, %eax
+; SSE2-SSSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
+; SSE2-SSSE3-NEXT:    andl $1, %ecx
+; SSE2-SSSE3-NEXT:    shll $6, %ecx
+; SSE2-SSSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %edx
+; SSE2-SSSE3-NEXT:    andl $1, %edx
+; SSE2-SSSE3-NEXT:    shll $7, %edx
+; SSE2-SSSE3-NEXT:    orl %ecx, %edx
+; SSE2-SSSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
+; SSE2-SSSE3-NEXT:    andl $1, %ecx
+; SSE2-SSSE3-NEXT:    shll $8, %ecx
+; SSE2-SSSE3-NEXT:    orl %edx, %ecx
+; SSE2-SSSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %edx
+; SSE2-SSSE3-NEXT:    andl $1, %edx
+; SSE2-SSSE3-NEXT:    shll $9, %edx
+; SSE2-SSSE3-NEXT:    orl %ecx, %edx
+; SSE2-SSSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
+; SSE2-SSSE3-NEXT:    andl $1, %ecx
+; SSE2-SSSE3-NEXT:    shll $10, %ecx
+; SSE2-SSSE3-NEXT:    orl %edx, %ecx
+; SSE2-SSSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %edx
+; SSE2-SSSE3-NEXT:    andl $1, %edx
+; SSE2-SSSE3-NEXT:    shll $11, %edx
+; SSE2-SSSE3-NEXT:    orl %ecx, %edx
+; SSE2-SSSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
+; SSE2-SSSE3-NEXT:    andl $1, %ecx
+; SSE2-SSSE3-NEXT:    shll $12, %ecx
+; SSE2-SSSE3-NEXT:    orl %edx, %ecx
+; SSE2-SSSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %edx
+; SSE2-SSSE3-NEXT:    andl $1, %edx
+; SSE2-SSSE3-NEXT:    shll $13, %edx
+; SSE2-SSSE3-NEXT:    orl %ecx, %edx
+; SSE2-SSSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %ecx
+; SSE2-SSSE3-NEXT:    andl $1, %ecx
+; SSE2-SSSE3-NEXT:    shll $14, %ecx
+; SSE2-SSSE3-NEXT:    orl %edx, %ecx
+; SSE2-SSSE3-NEXT:    movzbl -{{[0-9]+}}(%rsp), %edx
+; SSE2-SSSE3-NEXT:    shll $15, %edx
+; SSE2-SSSE3-NEXT:    orl %ecx, %edx
+; SSE2-SSSE3-NEXT:    orl %eax, %edx
+; SSE2-SSSE3-NEXT:    movw %dx, (%rdi)
+; SSE2-SSSE3-NEXT:    retq
+;
+; AVX12-LABEL: bitcast_16i8_store:
+; AVX12:       # %bb.0:
+; AVX12-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX12-NEXT:    vpcmpgtb %xmm0, %xmm1, %xmm0
+; AVX12-NEXT:    vpextrb $1, %xmm0, %eax
+; AVX12-NEXT:    andl $1, %eax
+; AVX12-NEXT:    vpextrb $0, %xmm0, %ecx
+; AVX12-NEXT:    andl $1, %ecx
+; AVX12-NEXT:    leal (%rcx,%rax,2), %eax
+; AVX12-NEXT:    vpextrb $2, %xmm0, %ecx
+; AVX12-NEXT:    andl $1, %ecx
+; AVX12-NEXT:    leal (%rax,%rcx,4), %eax
+; AVX12-NEXT:    vpextrb $3, %xmm0, %ecx
+; AVX12-NEXT:    andl $1, %ecx
+; AVX12-NEXT:    leal (%rax,%rcx,8), %eax
+; AVX12-NEXT:    vpextrb $4, %xmm0, %ecx
+; AVX12-NEXT:    andl $1, %ecx
+; AVX12-NEXT:    shll $4, %ecx
+; AVX12-NEXT:    orl %eax, %ecx
+; AVX12-NEXT:    vpextrb $5, %xmm0, %eax
+; AVX12-NEXT:    andl $1, %eax
+; AVX12-NEXT:    shll $5, %eax
+; AVX12-NEXT:    orl %ecx, %eax
+; AVX12-NEXT:    vpextrb $6, %xmm0, %ecx
+; AVX12-NEXT:    andl $1, %ecx
+; AVX12-NEXT:    shll $6, %ecx
+; AVX12-NEXT:    vpextrb $7, %xmm0, %edx
+; AVX12-NEXT:    andl $1, %edx
+; AVX12-NEXT:    shll $7, %edx
+; AVX12-NEXT:    orl %ecx, %edx
+; AVX12-NEXT:    vpextrb $8, %xmm0, %ecx
+; AVX12-NEXT:    andl $1, %ecx
+; AVX12-NEXT:    shll $8, %ecx
+; AVX12-NEXT:    orl %edx, %ecx
+; AVX12-NEXT:    vpextrb $9, %xmm0, %edx
+; AVX12-NEXT:    andl $1, %edx
+; AVX12-NEXT:    shll $9, %edx
+; AVX12-NEXT:    orl %ecx, %edx
+; AVX12-NEXT:    vpextrb $10, %xmm0, %ecx
+; AVX12-NEXT:    andl $1, %ecx
+; AVX12-NEXT:    shll $10, %ecx
+; AVX12-NEXT:    orl %edx, %ecx
+; AVX12-NEXT:    vpextrb $11, %xmm0, %edx
+; AVX12-NEXT:    andl $1, %edx
+; AVX12-NEXT:    shll $11, %edx
+; AVX12-NEXT:    orl %ecx, %edx
+; AVX12-NEXT:    vpextrb $12, %xmm0, %ecx
+; AVX12-NEXT:    andl $1, %ecx
+; AVX12-NEXT:    shll $12, %ecx
+; AVX12-NEXT:    orl %edx, %ecx
+; AVX12-NEXT:    vpextrb $13, %xmm0, %edx
+; AVX12-NEXT:    andl $1, %edx
+; AVX12-NEXT:    shll $13, %edx
+; AVX12-NEXT:    orl %ecx, %edx
+; AVX12-NEXT:    vpextrb $14, %xmm0, %ecx
+; AVX12-NEXT:    andl $1, %ecx
+; AVX12-NEXT:    shll $14, %ecx
+; AVX12-NEXT:    orl %edx, %ecx
+; AVX12-NEXT:    vpextrb $15, %xmm0, %edx
+; AVX12-NEXT:    shll $15, %edx
+; AVX12-NEXT:    orl %ecx, %edx
+; AVX12-NEXT:    orl %eax, %edx
+; AVX12-NEXT:    movw %dx, (%rdi)
+; AVX12-NEXT:    retq
+;
+; AVX512F-LABEL: bitcast_16i8_store:
+; AVX512F:       # %bb.0:
+; AVX512F-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX512F-NEXT:    vpcmpgtb %xmm0, %xmm1, %xmm0
+; AVX512F-NEXT:    vpmovsxbd %xmm0, %zmm0
+; AVX512F-NEXT:    vptestmd %zmm0, %zmm0, %k0
+; AVX512F-NEXT:    kmovw %k0, (%rdi)
+; AVX512F-NEXT:    vzeroupper
+; AVX512F-NEXT:    retq
+;
+; AVX512BW-LABEL: bitcast_16i8_store:
+; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    vpmovb2m %xmm0, %k0
+; AVX512BW-NEXT:    kmovw %k0, (%rdi)
+; AVX512BW-NEXT:    retq
+  %a1 = icmp slt <16 x i8> %a0, zeroinitializer
+  %a2 = bitcast <16 x i1> %a1 to i16
+  store i16 %a2, i16* %p
+  ret void
+}
+
+define void @bitcast_8i16_store(i8* %p, <8 x i16> %a0) {
+; SSE2-SSSE3-LABEL: bitcast_8i16_store:
+; SSE2-SSSE3:       # %bb.0:
+; SSE2-SSSE3-NEXT:    pxor %xmm1, %xmm1
+; SSE2-SSSE3-NEXT:    pcmpgtw %xmm0, %xmm1
+; SSE2-SSSE3-NEXT:    packsswb %xmm0, %xmm1
+; SSE2-SSSE3-NEXT:    pmovmskb %xmm1, %eax
+; SSE2-SSSE3-NEXT:    movb %al, (%rdi)
+; SSE2-SSSE3-NEXT:    retq
+;
+; AVX12-LABEL: bitcast_8i16_store:
+; AVX12:       # %bb.0:
+; AVX12-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX12-NEXT:    vpcmpgtw %xmm0, %xmm1, %xmm0
+; AVX12-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
+; AVX12-NEXT:    vpmovmskb %xmm0, %eax
+; AVX12-NEXT:    movb %al, (%rdi)
+; AVX12-NEXT:    retq
+;
+; AVX512F-LABEL: bitcast_8i16_store:
+; AVX512F:       # %bb.0:
+; AVX512F-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX512F-NEXT:    vpcmpgtw %xmm0, %xmm1, %xmm0
+; AVX512F-NEXT:    vpmovsxwd %xmm0, %ymm0
+; AVX512F-NEXT:    vptestmd %ymm0, %ymm0, %k0
+; AVX512F-NEXT:    kmovw %k0, %eax
+; AVX512F-NEXT:    movb %al, (%rdi)
+; AVX512F-NEXT:    vzeroupper
+; AVX512F-NEXT:    retq
+;
+; AVX512BW-LABEL: bitcast_8i16_store:
+; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    vpmovw2m %xmm0, %k0
+; AVX512BW-NEXT:    kmovd %k0, %eax
+; AVX512BW-NEXT:    movb %al, (%rdi)
+; AVX512BW-NEXT:    retq
+  %a1 = icmp slt <8 x i16> %a0, zeroinitializer
+  %a2 = bitcast <8 x i1> %a1 to i8
+  store i8 %a2, i8* %p
+  ret void
+}
+
+define void @bitcast_4i32_store(i4* %p, <4 x i32> %a0) {
+; SSE2-SSSE3-LABEL: bitcast_4i32_store:
+; SSE2-SSSE3:       # %bb.0:
+; SSE2-SSSE3-NEXT:    pxor %xmm1, %xmm1
+; SSE2-SSSE3-NEXT:    pcmpgtd %xmm0, %xmm1
+; SSE2-SSSE3-NEXT:    movd %xmm1, %eax
+; SSE2-SSSE3-NEXT:    andb $1, %al
+; SSE2-SSSE3-NEXT:    pshufd {{.*#+}} xmm0 = xmm1[1,1,2,3]
+; SSE2-SSSE3-NEXT:    movd %xmm0, %ecx
+; SSE2-SSSE3-NEXT:    andb $1, %cl
+; SSE2-SSSE3-NEXT:    addb %cl, %cl
+; SSE2-SSSE3-NEXT:    pshufd {{.*#+}} xmm0 = xmm1[2,3,0,1]
+; SSE2-SSSE3-NEXT:    movd %xmm0, %edx
+; SSE2-SSSE3-NEXT:    andb $1, %dl
+; SSE2-SSSE3-NEXT:    shlb $2, %dl
+; SSE2-SSSE3-NEXT:    orb %cl, %dl
+; SSE2-SSSE3-NEXT:    pshufd {{.*#+}} xmm0 = xmm1[3,1,2,3]
+; SSE2-SSSE3-NEXT:    movd %xmm0, %ecx
+; SSE2-SSSE3-NEXT:    shlb $3, %cl
+; SSE2-SSSE3-NEXT:    orb %dl, %cl
+; SSE2-SSSE3-NEXT:    orb %al, %cl
+; SSE2-SSSE3-NEXT:    andb $15, %cl
+; SSE2-SSSE3-NEXT:    movb %cl, (%rdi)
+; SSE2-SSSE3-NEXT:    retq
+;
+; AVX12-LABEL: bitcast_4i32_store:
+; AVX12:       # %bb.0:
+; AVX12-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX12-NEXT:    vpcmpgtd %xmm0, %xmm1, %xmm0
+; AVX12-NEXT:    vmovd %xmm0, %eax
+; AVX12-NEXT:    andb $1, %al
+; AVX12-NEXT:    vpextrd $1, %xmm0, %ecx
+; AVX12-NEXT:    andb $1, %cl
+; AVX12-NEXT:    addb %cl, %cl
+; AVX12-NEXT:    vpextrd $2, %xmm0, %edx
+; AVX12-NEXT:    andb $1, %dl
+; AVX12-NEXT:    shlb $2, %dl
+; AVX12-NEXT:    orb %cl, %dl
+; AVX12-NEXT:    vpextrd $3, %xmm0, %ecx
+; AVX12-NEXT:    shlb $3, %cl
+; AVX12-NEXT:    orb %dl, %cl
+; AVX12-NEXT:    orb %al, %cl
+; AVX12-NEXT:    andb $15, %cl
+; AVX12-NEXT:    movb %cl, (%rdi)
+; AVX12-NEXT:    retq
+;
+; AVX512F-LABEL: bitcast_4i32_store:
+; AVX512F:       # %bb.0:
+; AVX512F-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX512F-NEXT:    vpcmpgtd %xmm0, %xmm1, %k0
+; AVX512F-NEXT:    kmovw %k0, %eax
+; AVX512F-NEXT:    movb %al, (%rdi)
+; AVX512F-NEXT:    retq
+;
+; AVX512BW-LABEL: bitcast_4i32_store:
+; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX512BW-NEXT:    vpcmpgtd %xmm0, %xmm1, %k0
+; AVX512BW-NEXT:    kmovd %k0, %eax
+; AVX512BW-NEXT:    movb %al, (%rdi)
+; AVX512BW-NEXT:    retq
+  %a1 = icmp slt <4 x i32> %a0, zeroinitializer
+  %a2 = bitcast <4 x i1> %a1 to i4
+  store i4 %a2, i4* %p
+  ret void
+}
+
+define void @bitcast_2i64_store(i2* %p, <2 x i64> %a0) {
+; SSE2-SSSE3-LABEL: bitcast_2i64_store:
+; SSE2-SSSE3:       # %bb.0:
+; SSE2-SSSE3-NEXT:    movdqa {{.*#+}} xmm1 = [2147483648,2147483648]
+; SSE2-SSSE3-NEXT:    pxor %xmm1, %xmm0
+; SSE2-SSSE3-NEXT:    movdqa %xmm1, %xmm2
+; SSE2-SSSE3-NEXT:    pcmpgtd %xmm0, %xmm2
+; SSE2-SSSE3-NEXT:    pshufd {{.*#+}} xmm3 = xmm2[0,0,2,2]
+; SSE2-SSSE3-NEXT:    pcmpeqd %xmm1, %xmm0
+; SSE2-SSSE3-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,1,3,3]
+; SSE2-SSSE3-NEXT:    pand %xmm3, %xmm0
+; SSE2-SSSE3-NEXT:    pshufd {{.*#+}} xmm1 = xmm2[1,1,3,3]
+; SSE2-SSSE3-NEXT:    por %xmm0, %xmm1
+; SSE2-SSSE3-NEXT:    movq %xmm1, %rax
+; SSE2-SSSE3-NEXT:    andb $1, %al
+; SSE2-SSSE3-NEXT:    pshufd {{.*#+}} xmm0 = xmm1[2,3,0,1]
+; SSE2-SSSE3-NEXT:    movq %xmm0, %rcx
+; SSE2-SSSE3-NEXT:    addb %cl, %cl
+; SSE2-SSSE3-NEXT:    orb %al, %cl
+; SSE2-SSSE3-NEXT:    andb $3, %cl
+; SSE2-SSSE3-NEXT:    movb %cl, (%rdi)
+; SSE2-SSSE3-NEXT:    retq
+;
+; AVX12-LABEL: bitcast_2i64_store:
+; AVX12:       # %bb.0:
+; AVX12-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX12-NEXT:    vpcmpgtq %xmm0, %xmm1, %xmm0
+; AVX12-NEXT:    vpextrq $1, %xmm0, %rax
+; AVX12-NEXT:    addb %al, %al
+; AVX12-NEXT:    vmovq %xmm0, %rcx
+; AVX12-NEXT:    andb $1, %cl
+; AVX12-NEXT:    orb %al, %cl
+; AVX12-NEXT:    andb $3, %cl
+; AVX12-NEXT:    movb %cl, (%rdi)
+; AVX12-NEXT:    retq
+;
+; AVX512F-LABEL: bitcast_2i64_store:
+; AVX512F:       # %bb.0:
+; AVX512F-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX512F-NEXT:    vpcmpgtq %xmm0, %xmm1, %k0
+; AVX512F-NEXT:    kmovw %k0, %eax
+; AVX512F-NEXT:    movb %al, (%rdi)
+; AVX512F-NEXT:    retq
+;
+; AVX512BW-LABEL: bitcast_2i64_store:
+; AVX512BW:       # %bb.0:
+; AVX512BW-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX512BW-NEXT:    vpcmpgtq %xmm0, %xmm1, %k0
+; AVX512BW-NEXT:    kmovd %k0, %eax
+; AVX512BW-NEXT:    movb %al, (%rdi)
+; AVX512BW-NEXT:    retq
+  %a1 = icmp slt <2 x i64> %a0, zeroinitializer
+  %a2 = bitcast <2 x i1> %a1 to i2
+  store i2 %a2, i2* %p
+  ret void
+}
