@@ -151,6 +151,7 @@ action("config") {
       "HAVE_POSIX_FALLOCATE=1",
       "HAVE_SCHED_GETAFFINITY=1",
       "HAVE_CPU_COUNT=1",
+      "HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC=1",
       "HAVE_VALGRIND_VALGRIND_H=1",
     ]
   } else {
@@ -162,6 +163,7 @@ action("config") {
       "HAVE_POSIX_FALLOCATE=",
       "HAVE_SCHED_GETAFFINITY=",
       "HAVE_CPU_COUNT=",
+      "HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC=",
       "HAVE_VALGRIND_VALGRIND_H=",
     ]
   }
@@ -177,6 +179,7 @@ action("config") {
       "HAVE_MALLOC_MALLOC_H=1",
       "HAVE_MALLOC_ZONE_STATISTICS=1",
       "HAVE_LIBXAR=1",
+      "HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC=1",
     ]
   } else {
     args += [
@@ -189,6 +192,7 @@ action("config") {
       "HAVE_MALLOC_MALLOC_H=",
       "HAVE_MALLOC_ZONE_STATISTICS=",
       "HAVE_LIBXAR=",
+      "HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC=",
     ]
   }
 
