@@ -462,9 +462,8 @@ bool StackSafetyDataFlowAnalysis::updateOneUse(UseInfo &US,
                                                bool UpdateToFullSet) {
   bool Changed = false;
   for (auto &CS : US.Calls) {
-    // FIXME: this doesn't build.
-    //    assert(!CS.Range.isEmptySet() &&
-    //       "Param range can't be empty-set, invalid access range");
+    assert(!CS.Offset.isEmptySet() &&
+           "Param range can't be empty-set, invalid offset range");
 
     ConstantRange CalleeRange = getArgumentAccessRange(CS.Callee, CS.ParamNo);
     CalleeRange = CalleeRange.add(CS.Offset);
