@@ -438,7 +438,7 @@ StackSafetyDataFlowAnalysis::StackSafetyDataFlowAnalysis(
       Functions.emplace(&F, FI(F));
   for (auto &A : M.aliases())
     if (isa<Function>(A.getBaseObject()))
-      Functions.emplace(&A, &A);
+      Functions.emplace(&A, StackSafetyInfo::FunctionInfo(&A));
 }
 
 ConstantRange
