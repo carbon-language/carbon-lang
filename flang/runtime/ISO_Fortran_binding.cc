@@ -225,12 +225,12 @@ int CFI_section(CFI_cdesc_t *result, const CFI_cdesc_t *source,
 
   bool isZeroSized{false};
   for (int j{0}; j < source->rank; ++j) {
-    const CFI_dim_t &dim = source->dim[j];
-    const CFI_index_t srcLB = dim.lower_bound;
-    const CFI_index_t srcUB = srcLB + dim.extent - 1;
-    const CFI_index_t lb = (lower_bounds != nullptr) ? lower_bounds[j] : srcLB;
-    const CFI_index_t ub = (upper_bounds != nullptr) ? upper_bounds[j] : srcUB;
-    const CFI_index_t stride = (strides != nullptr) ? strides[j] : 1;
+    const CFI_dim_t &dim{source->dim[j]};
+    const CFI_index_t srcLB{dim.lower_bound};
+    const CFI_index_t srcUB{srcLB + dim.extent - 1};
+    const CFI_index_t lb{lower_bounds != nullptr ? lower_bounds[j] : srcLB};
+    const CFI_index_t ub{upper_bounds != nullptr ? upper_bounds[j] : srcUB};
+    const CFI_index_t stride{strides != nullptr ? strides[j] : 1};
 
     if (stride == 0 && lb != ub) {
       return CFI_ERROR_OUT_OF_BOUNDS;
@@ -240,7 +240,7 @@ int CFI_section(CFI_cdesc_t *result, const CFI_cdesc_t *source,
         return CFI_ERROR_OUT_OF_BOUNDS;
       }
       shiftedBaseAddr += (lb - srcLB) * dim.sm;
-      extent[j] = (stride != 0) ? 1 + (ub - lb) / stride : 1;
+      extent[j] = stride != 0 ? 1 + (ub - lb) / stride : 1;
     } else {
       isZeroSized = true;
       extent[j] = 0;

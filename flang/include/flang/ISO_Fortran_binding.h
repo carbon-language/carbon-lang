@@ -130,13 +130,12 @@ typedef struct CFI_cdesc_t {
 // C++ does not support zero-sized array (rank=0)
 // Also, CFI_cdesc_t already contains 1 dim in cpp
 namespace cfi_internal {
-template<int rank> struct CdescStorage {
-  static_assert((rank > 1 && rank <= CFI_MAX_RANK), "CFI_INVALID_RANK");
-  CFI_cdesc_t cdesc;
-  CFI_dim_t dim[rank - 1];
+template<int r> struct CdescStorage : public CFI_cdesc_t {
+  static_assert((r > 1 && r <= CFI_MAX_RANK), "CFI_INVALID_RANK");
+  CFI_dim_t dim[r - 1];
 };
-template<> struct CdescStorage<1> { CFI_cdesc_t cdesc; };
-template<> struct CdescStorage<0> { CFI_cdesc_t cdesc; };
+template<> struct CdescStorage<1> : public CFI_cdesc_t {};
+template<> struct CdescStorage<0> : public CFI_cdesc_t {};
 }
 #define CFI_CDESC_T(rank) cfi_internal::CdescStorage<rank>
 #else
