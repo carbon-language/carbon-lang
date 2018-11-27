@@ -213,6 +213,8 @@ for target in targets:
       clang_bc_flags += ' -mcpu=' + device['gpu']
     clang_bc_rule = "CLANG_CL_BC_" + target + "_" + device['gpu']
     c_compiler_rule(b, clang_bc_rule, "LLVM-CC", llvm_clang, clang_bc_flags)
+    as_bc_rule = "LLVM_AS_BC_" + target + "_" + device['gpu']
+    b.rule(as_bc_rule, "%s -E -P %s -x cl $in -o - | %s -o $out" % (llvm_clang, clang_bc_flags, llvm_as), 'LLVM-AS $out')
 
     objects = []
     sources_seen = set()
@@ -265,7 +267,7 @@ for target in targets:
           src_file = os.path.join(src_path, src)
           ext = os.path.splitext(src)[1]
           if ext == '.ll':
-            b.build(obj, 'LLVM_AS', src_file)
+            b.build(obj, as_bc_rule, src_file)
           else:
             b.build(obj, clang_bc_rule, src_file)
 
