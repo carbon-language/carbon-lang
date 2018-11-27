@@ -5547,12 +5547,17 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
   // We special-case function promotion here because we only allow promoting
   // builtin functions to function pointers in the callee of a call.
   ExprResult Result;
+  QualType ReturnTy;
   if (BuiltinID &&
       Fn->getType()->isSpecificBuiltinType(BuiltinType::BuiltinFn)) {
-    Result = ImpCastExprToType(Fn, Context.getPointerType(FDecl->getType()),
-                               CK_BuiltinFnToFnPtr).get();
+    // Extract the return type from the (builtin) function pointer type.
+    auto FnPtrTy = Context.getPointerType(FDecl->getType());
+    Result = ImpCastExprToType(Fn, FnPtrTy, CK_BuiltinFnToFnPtr).get();
+    auto FnTy = FnPtrTy->getPointeeType()->castAs<FunctionType>();
+    ReturnTy = FnTy->getReturnType();
   } else {
     Result = CallExprUnaryConversions(Fn);
+    ReturnTy = Context.BoolTy;
   }
   if (Result.isInvalid())
     return ExprError();
@@ -5562,13 +5567,12 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
   // of arguments and function on error.
   CallExpr *TheCall;
   if (Config)
-    TheCall = new (Context) CUDAKernelCallExpr(Context, Fn,
-                                               cast<CallExpr>(Config), Args,
-                                               Context.BoolTy, VK_RValue,
-                                               RParenLoc);
+    TheCall =
+        new (Context) CUDAKernelCallExpr(Context, Fn, cast<CallExpr>(Config),
+                                         Args, ReturnTy, VK_RValue, RParenLoc);
   else
-    TheCall = new (Context) CallExpr(Context, Fn, Args, Context.BoolTy,
-                                     VK_RValue, RParenLoc);
+    TheCall = new (Context)
+        CallExpr(Context, Fn, Args, ReturnTy, VK_RValue, RParenLoc);
 
   if (!getLangOpts().CPlusPlus) {
     // C cannot always handle TypoExpr nodes in builtin calls and direct
