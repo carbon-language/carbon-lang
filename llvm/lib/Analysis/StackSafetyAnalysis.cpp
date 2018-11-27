@@ -432,7 +432,7 @@ StackSafetyDataFlowAnalysis::StackSafetyDataFlowAnalysis(
     : PointerSize(M.getDataLayout().getPointerSizeInBits()),
       UnknownRange(PointerSize, true) {
   // Without ThinLTO, run the local analysis for every function in the TU and
-  // then run the DFA and annotate allocas
+  // then run the DFA.
   for (auto &F : M.functions())
     if (!F.isDeclaration())
       Functions.emplace(&F, FI(F));
