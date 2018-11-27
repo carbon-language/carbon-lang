@@ -154,8 +154,10 @@ Error DbiModuleDescriptorBuilder::commit(BinaryStreamWriter &ModiWriter,
     if (auto EC =
             SymbolWriter.writeInteger<uint32_t>(COFF::DEBUG_SECTION_MAGIC))
       return EC;
-    for (ArrayRef<uint8_t> Syms : Symbols)
-      SymbolWriter.writeBytes(Syms);
+    for (ArrayRef<uint8_t> Syms : Symbols) {
+      if (auto EC = SymbolWriter.writeBytes(Syms))
+        return EC;
+    }
     assert(SymbolWriter.getOffset() % alignOf(CodeViewContainer::Pdb) == 0 &&
            "Invalid debug section alignment!");
     // TODO: Write C11 Line data
