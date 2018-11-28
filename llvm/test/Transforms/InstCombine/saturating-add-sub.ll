@@ -13,7 +13,7 @@ declare <2 x i8> @llvm.sadd.sat.v2i8(<2 x i8>, <2 x i8>)
 ; Constant uadd argument is canonicalized to the right.
 define i8 @test_scalar_uadd_canonical(i8 %a) {
 ; CHECK-LABEL: @test_scalar_uadd_canonical(
-; CHECK-NEXT:    [[X:%.*]] = call i8 @llvm.uadd.sat.i8(i8 10, i8 [[A:%.*]])
+; CHECK-NEXT:    [[X:%.*]] = call i8 @llvm.uadd.sat.i8(i8 [[A:%.*]], i8 10)
 ; CHECK-NEXT:    ret i8 [[X]]
 ;
   %x = call i8 @llvm.uadd.sat.i8(i8 10, i8 %a)
@@ -22,7 +22,7 @@ define i8 @test_scalar_uadd_canonical(i8 %a) {
 
 define <2 x i8> @test_vector_uadd_canonical(<2 x i8> %a) {
 ; CHECK-LABEL: @test_vector_uadd_canonical(
-; CHECK-NEXT:    [[X:%.*]] = call <2 x i8> @llvm.uadd.sat.v2i8(<2 x i8> <i8 10, i8 20>, <2 x i8> [[A:%.*]])
+; CHECK-NEXT:    [[X:%.*]] = call <2 x i8> @llvm.uadd.sat.v2i8(<2 x i8> [[A:%.*]], <2 x i8> <i8 10, i8 20>)
 ; CHECK-NEXT:    ret <2 x i8> [[X]]
 ;
   %x = call <2 x i8> @llvm.uadd.sat.v2i8(<2 x i8> <i8 10, i8 20>, <2 x i8> %a)
@@ -32,7 +32,7 @@ define <2 x i8> @test_vector_uadd_canonical(<2 x i8> %a) {
 ; Constant sadd argument is canonicalized to the right.
 define i8 @test_scalar_sadd_canonical(i8 %a) {
 ; CHECK-LABEL: @test_scalar_sadd_canonical(
-; CHECK-NEXT:    [[X:%.*]] = call i8 @llvm.sadd.sat.i8(i8 -10, i8 [[A:%.*]])
+; CHECK-NEXT:    [[X:%.*]] = call i8 @llvm.sadd.sat.i8(i8 [[A:%.*]], i8 -10)
 ; CHECK-NEXT:    ret i8 [[X]]
 ;
   %x = call i8 @llvm.sadd.sat.i8(i8 -10, i8 %a)
@@ -41,7 +41,7 @@ define i8 @test_scalar_sadd_canonical(i8 %a) {
 
 define <2 x i8> @test_vector_sadd_canonical(<2 x i8> %a) {
 ; CHECK-LABEL: @test_vector_sadd_canonical(
-; CHECK-NEXT:    [[X:%.*]] = call <2 x i8> @llvm.sadd.sat.v2i8(<2 x i8> <i8 10, i8 -20>, <2 x i8> [[A:%.*]])
+; CHECK-NEXT:    [[X:%.*]] = call <2 x i8> @llvm.sadd.sat.v2i8(<2 x i8> [[A:%.*]], <2 x i8> <i8 10, i8 -20>)
 ; CHECK-NEXT:    ret <2 x i8> [[X]]
 ;
   %x = call <2 x i8> @llvm.sadd.sat.v2i8(<2 x i8> <i8 10, i8 -20>, <2 x i8> %a)
@@ -498,7 +498,7 @@ define i8 @test_scalar_ssub_different_sign(i8 %a) {
 ; Can combine sadd and ssub with appropriate signs.
 define i8 @test_scalar_sadd_ssub(i8 %a) {
 ; CHECK-LABEL: @test_scalar_sadd_ssub(
-; CHECK-NEXT:    [[V1:%.*]] = call i8 @llvm.sadd.sat.i8(i8 10, i8 [[A:%.*]])
+; CHECK-NEXT:    [[V1:%.*]] = call i8 @llvm.sadd.sat.i8(i8 [[A:%.*]], i8 10)
 ; CHECK-NEXT:    [[V2:%.*]] = call i8 @llvm.ssub.sat.i8(i8 [[V1]], i8 -20)
 ; CHECK-NEXT:    ret i8 [[V2]]
 ;
@@ -509,7 +509,7 @@ define i8 @test_scalar_sadd_ssub(i8 %a) {
 
 define <2 x i8> @test_vector_sadd_ssub(<2 x i8> %a) {
 ; CHECK-LABEL: @test_vector_sadd_ssub(
-; CHECK-NEXT:    [[V1:%.*]] = call <2 x i8> @llvm.sadd.sat.v2i8(<2 x i8> <i8 -10, i8 -10>, <2 x i8> [[A:%.*]])
+; CHECK-NEXT:    [[V1:%.*]] = call <2 x i8> @llvm.sadd.sat.v2i8(<2 x i8> [[A:%.*]], <2 x i8> <i8 -10, i8 -10>)
 ; CHECK-NEXT:    [[V2:%.*]] = call <2 x i8> @llvm.ssub.sat.v2i8(<2 x i8> [[V1]], <2 x i8> <i8 20, i8 20>)
 ; CHECK-NEXT:    ret <2 x i8> [[V2]]
 ;

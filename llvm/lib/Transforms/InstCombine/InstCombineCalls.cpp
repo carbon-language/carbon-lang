@@ -2061,6 +2061,12 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     break;
   }
 
+  case Intrinsic::uadd_sat:
+  case Intrinsic::sadd_sat:
+    if (Instruction *I = canonicalizeConstantArg0ToArg1(CI))
+      return I;
+    break;
+
   case Intrinsic::minnum:
   case Intrinsic::maxnum:
   case Intrinsic::minimum:
