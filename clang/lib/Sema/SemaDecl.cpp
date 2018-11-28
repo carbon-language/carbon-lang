@@ -9822,6 +9822,15 @@ static bool CheckMultiVersionAdditionalDecl(
     return true;
   }
 
+  // Permit forward declarations in the case where these two are compatible.
+  if (!OldFD->isMultiVersion()) {
+    OldFD->setIsMultiVersion();
+    NewFD->setIsMultiVersion();
+    Redeclaration = true;
+    OldDecl = OldFD;
+    return false;
+  }
+
   NewFD->setIsMultiVersion();
   Redeclaration = false;
   MergeTypeWithPrevious = false;
@@ -9896,14 +9905,6 @@ static bool CheckMultiVersionFunction(Sema &S, FunctionDecl *NewFD,
     return CheckTargetCausesMultiVersioning(S, OldFD, NewFD, NewTA,
                                             Redeclaration, OldDecl,
                                             MergeTypeWithPrevious, Previous);
-  // Previous declarations lack CPUDispatch/CPUSpecific.
-  if (!OldFD->isMultiVersion()) {
-    S.Diag(OldFD->getLocation(), diag::err_multiversion_required_in_redecl)
-        << 1;
-    S.Diag(NewFD->getLocation(), diag::note_multiversioning_caused_here);
-    NewFD->setInvalidDecl();
-    return true;
-  }
 
   // At this point, we have a multiversion function decl (in OldFD) AND an
   // appropriate attribute in the current function decl.  Resolve that these are
