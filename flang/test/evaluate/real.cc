@@ -393,38 +393,34 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
       MATCH(IsInfinite(rj), x.IsInfinite())
       ("%d IsInfinite(0x%llx)", pass, static_cast<long long>(rj));
 
-      if (rounding == Rounding::TiesToEven ||
-          rounding == Rounding::ToZero) {  // pmk
-        int kind{REAL::bits / 8};
-        std::stringstream ss, css;
-        x.AsFortran(ss, kind);
-        std::string s{ss.str()};
-        if (IsNaN(rj)) {
-          css << "(0._" << kind << "/0.)";
-          MATCH(css.str(), s)
-          ("%d invalid(0x%llx)", pass, static_cast<long long>(rj));
-        } else if (IsInfinite(rj)) {
-          css << '(';
-          if (IsNegative(rj)) {
-            css << '-';
-          }
-          css << "1._" << kind << "/0.)";
-          MATCH(css.str(), s)
-          ("%d overflow(0x%llx)", pass, static_cast<long long>(rj));
-        } else {
-          const char *p = s.data();
-          if (*p == '(') {
-            ++p;
-          }
-          auto readBack{REAL::Read(p, rounding)};
-          MATCH(rj, readBack.value.RawBits().ToUInt64())
-          ("%d Read(AsFortran()) 0x%llx %s %g", pass,
-              static_cast<long long>(rj), s.data(), static_cast<double>(fj));
-          MATCH('_', *p)
-          ("%d Read(AsFortran()) 0x%llx %s %d", pass,
-              static_cast<long long>(rj), s.data(),
-              static_cast<int>(p - s.data()));
+      int kind{REAL::bits / 8};
+      std::stringstream ss, css;
+      x.AsFortran(ss, kind);
+      std::string s{ss.str()};
+      if (IsNaN(rj)) {
+        css << "(0._" << kind << "/0.)";
+        MATCH(css.str(), s)
+        ("%d invalid(0x%llx)", pass, static_cast<long long>(rj));
+      } else if (IsInfinite(rj)) {
+        css << '(';
+        if (IsNegative(rj)) {
+          css << '-';
         }
+        css << "1._" << kind << "/0.)";
+        MATCH(css.str(), s)
+        ("%d overflow(0x%llx)", pass, static_cast<long long>(rj));
+      } else {
+        const char *p = s.data();
+        if (*p == '(') {
+          ++p;
+        }
+        auto readBack{REAL::Read(p, rounding)};
+        MATCH(rj, readBack.value.RawBits().ToUInt64())
+        ("%d Read(AsFortran()) 0x%llx %s %g", pass, static_cast<long long>(rj),
+            s.data(), static_cast<double>(fj));
+        MATCH('_', *p)
+        ("%d Read(AsFortran()) 0x%llx %s %d", pass, static_cast<long long>(rj),
+            s.data(), static_cast<int>(p - s.data()));
       }
     }
 

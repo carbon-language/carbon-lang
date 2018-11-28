@@ -23,9 +23,6 @@
 #include <ostream>
 #include <string>
 
-#include <iostream>  // TODO pmk rm
-extern bool pmk;
-
 // Some environments, viz. clang on Darwin, allow the macro HUGE
 // to leak out of <math.h> even when it is never directly included.
 #undef HUGE
@@ -178,10 +175,6 @@ public:
     int exponent{exponentBias + absN.bits - leadz - 1};
     int bitsNeeded{absN.bits - (leadz + implicitMSB)};
     int bitsLost{bitsNeeded - significandBits};
-    if (pmk)
-      std::cerr << "pmk real.h exponent " << exponent << " bitsLost "
-                << bitsLost << " rounding " << static_cast<int>(rounding)
-                << '\n';
     if (bitsLost <= 0) {
       Fraction fraction{Fraction::ConvertUnsigned(absN).value};
       result.flags |= result.value.Normalize(
@@ -189,13 +182,8 @@ public:
     } else {
       Fraction fraction{Fraction::ConvertUnsigned(absN.SHIFTR(bitsLost)).value};
       result.flags |= result.value.Normalize(isNegative, exponent, fraction);
-      if (pmk)
-        std::cerr << "pmk Normalized " << result.value.DumpHexadecimal()
-                  << '\n';
       RoundingBits roundingBits{absN, bitsLost};
       result.flags |= result.value.Round(rounding, roundingBits);
-      if (pmk)
-        std::cerr << "pmk Rounded " << result.value.DumpHexadecimal() << '\n';
     }
     return result;
   }

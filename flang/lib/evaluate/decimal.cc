@@ -15,13 +15,12 @@
 #include "decimal.h"
 #include "integer.h"
 #include "leading-zero-bit-count.h"
+#include "../common/bit-population-count.h"
 #include "../common/idioms.h"
-#include <iostream>  // TODO pmk rm
-bool pmk{false};
 
 namespace Fortran::evaluate::value {
 
-static std::ostream *debug{nullptr};  // pmk constexpr
+static constexpr std::ostream *debug{nullptr};
 
 template<typename REAL>
 std::ostream &Decimal<REAL>::Dump(std::ostream &o) const {
@@ -126,7 +125,6 @@ public:
   using Word = typename Real::Word;
 
   void SetTo(std::uint64_t n) {
-    exponent_ = 0;
     if constexpr (Word::bits >= 8 * sizeof n) {
       word_ = n;
     } else {
@@ -135,7 +133,7 @@ public:
         word_ = n;
       } else {
         word_ = n >> shift;
-        exponent_ = shift;
+        exponent_ += shift;
         bool sticky{n << (64 - shift) != 0};
         if (sticky) {
           word_ = word_.IOR(Word{1});
@@ -172,7 +170,7 @@ public:
 
   std::ostream &Dump(std::ostream &) const;
 
-  void AdjustExponent(int by = -1) { exponent_ += by; }
+  void AdjustExponent(int by) { exponent_ += by; }
 
   ValueWithRealFlags<Real> ToReal(
       bool isNegative = false, Rounding rounding = Rounding::TiesToEven) const;
@@ -242,13 +240,6 @@ ValueWithRealFlags<REAL> IntermediateFloat<REAL>::ToReal(
 template<typename REAL>
 ValueWithRealFlags<REAL> Decimal<REAL>::ToReal(
     const char *&p, Rounding rounding) {
-  if (std::string{p} == "3.4028234663852885981170418348451692544e38_4") {
-    debug = &std::cerr;
-    pmk = true;
-  } else {
-    debug = nullptr;
-    pmk = false;
-  }  // pmk
   if (debug) {
     *debug << "ToReal('" << p << "')\n";
   }
@@ -321,35 +312,52 @@ ValueWithRealFlags<REAL> Decimal<REAL>::ToReal(
     return result;
   }
 
+  // At this point, *this holds a multi-precision base-quintillion
+  // integer with its radix point to the right of its digits,
+  // and "exponent_" is the power of ten by which it is to be scaled.
+
+  IntermediateFloat<Real> f;
+
+  // Avoid needless rounding by scaling the value down by a multiple of two
+  // to make it odd.
+  while (digits_ > 0 && (digit_[0] & 1) == 0) {
+    f.AdjustExponent(1);
+    DivideBy<2>();
+  }
+  Normalize();
+  if (debug) {
+    Dump(f.Dump(*debug << "made odd ") << '\n');
+  }
+
   if (exponent_ < 0) {
-    // There are decimal digits to the right of the decimal point.
-    // Align that decimal point on a quintillion radix point by
-    // appending zero-valued decimal digits.
+    // If the number were to be represented in decimal and scaled,
+    // there would be decimal digits to the right of the decimal point.
+    // Align that decimal exponent to be a multiple of log10(quintillion)
+    // so that the base-quintillion digits can be viewed as having an
+    // effective radix point that's meaningful.
     int align{-exponent_ % log10Quintillion};
     if (align > 0) {
       for (; align < log10Quintillion; ++align) {
         --exponent_;
-        MultiplyBy<10>();
+        MultiplyBy<5>();
+        f.AdjustExponent(1);
       }
       if (debug) {
-        Dump(*debug << "aligned\n");
+        Dump(f.Dump(*debug << "aligned ") << '\n');
       }
     }
   }
-
-  IntermediateFloat<Real> f;
 
   // Transfer the integer part, if any, to the floating-point
   // result.  The most significant digit can be moved directly;
   // lesser-order digits require transfer of carries.
   if (exponent_ >= -(digits_ - 1) * log10Quintillion) {
     if (debug) {
-      Dump(*debug << "converting integer part:");
+      Dump(f.Dump(*debug << "converting integer part ") << '\n');
     }
     f.SetTo(digit_[--digits_]);
     if (debug) {
-      f.Dump(*debug << "after converting top digit: ") << '\n';
-      Dump(*debug);
+      Dump(f.Dump(*debug << "after top digit ") << '\n');
     }
     while (exponent_ > -digits_ * log10Quintillion) {
       digitLimit_ = digits_;
@@ -357,8 +365,8 @@ ValueWithRealFlags<REAL> Decimal<REAL>::ToReal(
       f.MultiplyAndAdd(10, carry);
       --exponent_;
       if (debug) {
-        f.Dump(*debug << "foot of loop after carry " << carry << ": ") << '\n';
-        Dump(*debug);
+        Dump(f.Dump(*debug << "foor of loop after carry " << carry << ": ")
+            << '\n');
       }
     }
   }
@@ -371,9 +379,7 @@ ValueWithRealFlags<REAL> Decimal<REAL>::ToReal(
   // appended to the floating-point result.
   exponent_ += digits_ * log10Quintillion;
   if (debug) {
-    *debug << "after converting integer part ";
-    f.Dump(*debug) << '\n';
-    Dump(*debug);
+    Dump(f.Dump(*debug << "after converting integer part ") << '\n');
   }
 
   // Convert the remaining fraction into bits of the
@@ -381,8 +387,7 @@ ValueWithRealFlags<REAL> Decimal<REAL>::ToReal(
   // room.
   while (!f.IsFull() && !IsZero()) {
     if (debug) {
-      f.Dump(*debug << "step: ") << '\n';
-      Dump(*debug);
+      Dump(f.Dump(*debug << "step ") << '\n');
     }
     f.AdjustExponent(-1);
     digitLimit_ = digits_;
@@ -398,12 +403,10 @@ ValueWithRealFlags<REAL> Decimal<REAL>::ToReal(
     f.MultiplyAndAdd(2, carry);
   }
   if (debug) {
-    f.Dump(*debug << "after converting fraction ") << '\n';
-    Dump(*debug);
+    Dump(f.Dump(*debug << "after converting fraction ") << '\n');
   }
 
-  auto result{f.ToReal(isNegative_, rounding)};
-  return result;
+  return f.ToReal(isNegative_, rounding);
 }
 
 template<typename REAL>
