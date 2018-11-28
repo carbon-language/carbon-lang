@@ -33,6 +33,9 @@ void *CFI_address(
 
 int CFI_allocate(CFI_cdesc_t *descriptor, const CFI_index_t lower_bounds[],
     const CFI_index_t upper_bounds[], std::size_t elem_len) {
+  if (descriptor == nullptr) {
+    return CFI_INVALID_DESCRIPTOR;
+  }
   if (descriptor->version != CFI_VERSION) {
     return CFI_INVALID_DESCRIPTOR;
   }
@@ -80,6 +83,9 @@ int CFI_allocate(CFI_cdesc_t *descriptor, const CFI_index_t lower_bounds[],
 }
 
 int CFI_deallocate(CFI_cdesc_t *descriptor) {
+  if (descriptor == nullptr) {
+    return CFI_INVALID_DESCRIPTOR;
+  }
   if (descriptor->version != CFI_VERSION) {
     return CFI_INVALID_DESCRIPTOR;
   }
@@ -157,6 +163,9 @@ int CFI_establish(CFI_cdesc_t *descriptor, void *base_addr,
   if (type < CFI_type_signed_char || type > CFI_type_struct) {
     return CFI_INVALID_TYPE;
   }
+  if (descriptor == nullptr) {
+    return CFI_INVALID_DESCRIPTOR;
+  }
   std::size_t minElemLen{MinElemLen(type)};
   if (minElemLen > 0) {
     elem_len = minElemLen;
@@ -204,8 +213,10 @@ int CFI_section(CFI_cdesc_t *result, const CFI_cdesc_t *source,
   CFI_index_t extent[CFI_MAX_RANK];
   CFI_index_t actualStride[CFI_MAX_RANK];
   CFI_rank_t resRank{0};
-  char *shiftedBaseAddr{static_cast<char *>(source->base_addr)};
 
+  if (result == nullptr || source == nullptr) {
+    return CFI_INVALID_DESCRIPTOR;
+  }
   if (source->rank == 0) {
     return CFI_INVALID_RANK;
   }
@@ -223,6 +234,7 @@ int CFI_section(CFI_cdesc_t *result, const CFI_cdesc_t *source,
     return CFI_ERROR_BASE_ADDR_NULL;
   }
 
+  char *shiftedBaseAddr{static_cast<char *>(source->base_addr)};
   bool isZeroSized{false};
   for (int j{0}; j < source->rank; ++j) {
     const CFI_dim_t &dim{source->dim[j]};
@@ -269,6 +281,9 @@ int CFI_section(CFI_cdesc_t *result, const CFI_cdesc_t *source,
 
 int CFI_select_part(CFI_cdesc_t *result, const CFI_cdesc_t *source,
     std::size_t displacement, std::size_t elem_len) {
+  if (result == nullptr || source == nullptr) {
+    return CFI_INVALID_DESCRIPTOR;
+  }
   if (result->rank != source->rank) {
     return CFI_INVALID_RANK;
   }
@@ -302,6 +317,9 @@ int CFI_select_part(CFI_cdesc_t *result, const CFI_cdesc_t *source,
 
 int CFI_setpointer(CFI_cdesc_t *result, const CFI_cdesc_t *source,
     const CFI_index_t lower_bounds[]) {
+  if (result == nullptr) {
+    return CFI_INVALID_DESCRIPTOR;
+  }
   if (result->attribute != CFI_attribute_pointer) {
     return CFI_INVALID_ATTRIBUTE;
   }
