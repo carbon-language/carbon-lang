@@ -74,6 +74,14 @@ bool Semantics::Perform() {
   return !AnyFatalError();
 }
 
+const Scope &Semantics::FindScope(const parser::CharBlock &source) const {
+  if (const auto *scope{context_.globalScope().FindScope(source)}) {
+    return *scope;
+  } else {
+    common::die("invalid source location");
+  }
+}
+
 void Semantics::EmitMessages(std::ostream &os) const {
   context_.messages().Emit(os, cooked_);
 }

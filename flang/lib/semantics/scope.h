@@ -137,9 +137,16 @@ public:
 
   bool add_importName(const SourceName &);
 
+  // The range of the source of this and nested scopes.
+  const parser::CharBlock &sourceRange() const { return sourceRange_; }
+  void AddSourceRange(const parser::CharBlock &);
+  // Find the smallest scope under this one that contains source
+  const Scope *FindScope(const parser::CharBlock &) const;
+
 private:
   Scope &parent_;
   const Kind kind_;
+  parser::CharBlock sourceRange_;
   Symbol *const symbol_;
   std::list<Scope> children_;
   mapType symbols_;

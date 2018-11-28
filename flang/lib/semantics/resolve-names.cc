@@ -199,15 +199,8 @@ public:
 
   void set_messages(parser::Messages &messages) { messages_ = &messages; }
 
-  template<typename T> bool Pre(const parser::Statement<T> &x) {
-    currStmtSource_ = &x.source;
-    return true;
-  }
-  template<typename T> void Post(const parser::Statement<T> &) {
-    currStmtSource_ = nullptr;
-  }
-
   const SourceName *currStmtSource() { return currStmtSource_; }
+  void set_currStmtSource(const SourceName *x) { currStmtSource_ = x; }
 
   // Add a message to the messages to be emitted.
   Message &Say(Message &&);
@@ -240,8 +233,6 @@ class ImplicitRulesVisitor : public DeclTypeSpecVisitor, public MessageHandler {
 public:
   using DeclTypeSpecVisitor::Post;
   using DeclTypeSpecVisitor::Pre;
-  using MessageHandler::Post;
-  using MessageHandler::Pre;
   using ImplicitNoneNameSpec = parser::ImplicitStmt::ImplicitNoneNameSpec;
 
   void Post(const parser::ParameterStmt &);
@@ -336,6 +327,15 @@ public:
     PopScope();  // trigger ConvertToObjectEntity calls
     currScope_ = &context().globalScope();
     ImplicitRulesVisitor::ClearScopes();
+  }
+
+  template<typename T> bool Pre(const parser::Statement<T> &x) {
+    set_currStmtSource(&x.source);
+    currScope_->AddSourceRange(x.source);
+    return true;
+  }
+  template<typename T> void Post(const parser::Statement<T> &) {
+    set_currStmtSource(nullptr);
   }
 
   Symbol *FindSymbol(const SourceName &name);
@@ -765,6 +765,8 @@ public:
   using InterfaceVisitor::Pre;
   using ModuleVisitor::Post;
   using ModuleVisitor::Pre;
+  using ScopeHandler::Post;
+  using ScopeHandler::Pre;
   using SubprogramVisitor::Post;
   using SubprogramVisitor::Pre;
 

@@ -89,10 +89,13 @@ class Semantics {
 public:
   explicit Semantics(SemanticsContext &context, parser::Program &program,
       parser::CookedSource &cooked)
-    : context_{context}, program_{program}, cooked_{cooked} {}
+    : context_{context}, program_{program}, cooked_{cooked} {
+    context.globalScope().AddSourceRange(parser::CharBlock{cooked.data()});
+  }
 
   SemanticsContext &context() const { return context_; }
   bool Perform();
+  const Scope &FindScope(const parser::CharBlock &) const;
   bool AnyFatalError() const { return context_.AnyFatalError(); }
   void EmitMessages(std::ostream &) const;
   void DumpSymbols(std::ostream &);

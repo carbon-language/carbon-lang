@@ -134,6 +134,28 @@ bool Scope::CanImport(const SourceName &name) const {
   }
 }
 
+const Scope *Scope::FindScope(const parser::CharBlock &source) const {
+  if (!sourceRange_.Contains(source)) {
+    return nullptr;
+  }
+  for (const auto &child : children_) {
+    if (const auto *scope{child.FindScope(source)}) {
+      return scope;
+    }
+  }
+  return this;
+}
+
+void Scope::AddSourceRange(const parser::CharBlock &source) {
+  if (sourceRange_.empty()) {
+    sourceRange_ = source;
+  } else if (!source.empty()) {
+    sourceRange_ =
+        parser::CharBlock(std::min(sourceRange_.begin(), source.begin()),
+            std::max(sourceRange_.end(), source.end()));
+  }
+}
+
 std::ostream &operator<<(std::ostream &os, const Scope &scope) {
   os << Scope::EnumToString(scope.kind()) << " scope: ";
   if (auto *symbol{scope.symbol()}) {

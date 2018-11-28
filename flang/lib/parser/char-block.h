@@ -48,6 +48,10 @@ public:
     return interval_.start()[j];
   }
 
+  bool Contains(const CharBlock &that) const {
+    return interval_.Contains(that.interval_);
+  }
+
   bool IsBlank() const {
     for (char ch : *this) {
       if (ch != ' ' && ch != '\t') {
