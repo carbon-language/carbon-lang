@@ -2065,7 +2065,45 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::sadd_sat:
     if (Instruction *I = canonicalizeConstantArg0ToArg1(CI))
       return I;
+    LLVM_FALLTHROUGH;
+  case Intrinsic::usub_sat:
+  case Intrinsic::ssub_sat: {
+    Value *Arg0 = II->getArgOperand(0);
+    Value *Arg1 = II->getArgOperand(1);
+    Intrinsic::ID IID = II->getIntrinsicID();
+
+    // Make use of known overflow information.
+    OverflowResult OR;
+    switch (IID) {
+    default:
+      llvm_unreachable("Unexpected intrinsic!");
+    case Intrinsic::uadd_sat:
+      OR = computeOverflowForUnsignedAdd(Arg0, Arg1, II);
+      if (OR == OverflowResult::NeverOverflows)
+        return BinaryOperator::CreateNUWAdd(Arg0, Arg1);
+      if (OR == OverflowResult::AlwaysOverflows)
+        return replaceInstUsesWith(*II,
+                                   ConstantInt::getAllOnesValue(II->getType()));
+      break;
+    case Intrinsic::usub_sat:
+      OR = computeOverflowForUnsignedSub(Arg0, Arg1, II);
+      if (OR == OverflowResult::NeverOverflows)
+        return BinaryOperator::CreateNUWSub(Arg0, Arg1);
+      if (OR == OverflowResult::AlwaysOverflows)
+        return replaceInstUsesWith(*II,
+                                   ConstantInt::getNullValue(II->getType()));
+      break;
+    case Intrinsic::sadd_sat:
+      if (willNotOverflowSignedAdd(Arg0, Arg1, *II))
+        return BinaryOperator::CreateNSWAdd(Arg0, Arg1);
+      break;
+    case Intrinsic::ssub_sat:
+      if (willNotOverflowSignedSub(Arg0, Arg1, *II))
+        return BinaryOperator::CreateNSWSub(Arg0, Arg1);
+      break;
+    }
     break;
+  }
 
   case Intrinsic::minnum:
   case Intrinsic::maxnum:
