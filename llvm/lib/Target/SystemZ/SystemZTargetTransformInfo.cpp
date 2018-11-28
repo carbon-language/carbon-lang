@@ -908,6 +908,10 @@ isFoldableLoad(const LoadInst *Ld, const Instruction *&FoldedValue) {
        UserI->getOpcode() == Instruction::UDiv) &&
       UserI->getOperand(1) != FoldedValue)
     return false; // Not commutative, only RHS foldable.
+  // LoadOrTruncBits holds the number of effectively loaded bits, but 0 if an
+  // extension was made of the load.
+  unsigned LoadOrTruncBits =
+      ((SExtBits || ZExtBits) ? 0 : (TruncBits ? TruncBits : LoadedBits));
   switch (UserI->getOpcode()) {
   case Instruction::Add: // SE: 16->32, 16/32->64, z14:16->64. ZE: 32->64
   case Instruction::Sub:
@@ -918,6 +922,8 @@ isFoldableLoad(const LoadInst *Ld, const Instruction *&FoldedValue) {
     if (LoadedBits == 16 &&
         (SExtBits == 32 ||
          (SExtBits == 64 && ST->hasMiscellaneousExtensions2())))
+      return true;
+    if (LoadOrTruncBits == 16)
       return true;
     LLVM_FALLTHROUGH;
   case Instruction::SDiv:// SE: 32->64
@@ -938,16 +944,12 @@ isFoldableLoad(const LoadInst *Ld, const Instruction *&FoldedValue) {
     // case Instruction::FDiv:
 
     // All possible extensions of memory checked above.
-    if (SExtBits || ZExtBits)
-      return false;
 
     // Comparison between memory and immediate.
     if (UserI->getOpcode() == Instruction::ICmp)
       if (ConstantInt *CI = dyn_cast<ConstantInt>(UserI->getOperand(1)))
         if (isUInt<16>(CI->getZExtValue()))
           return true;
-
-    unsigned LoadOrTruncBits = (TruncBits ? TruncBits : LoadedBits);
     return (LoadOrTruncBits == 32 || LoadOrTruncBits == 64);
     break;
   }
