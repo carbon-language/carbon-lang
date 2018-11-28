@@ -20,6 +20,13 @@
 namespace Fortran::ISO {
 extern "C" {
 
+static inline constexpr bool IsCharacterType(CFI_type_t ty) {
+  return ty == CFI_type_char;
+}
+static inline constexpr bool IsAssumedSize(const CFI_cdesc_t *dv) {
+  return dv->rank > 0 && dv->dim[dv->rank - 1].extent == -1;
+}
+
 void *CFI_address(
     const CFI_cdesc_t *descriptor, const CFI_index_t subscripts[]) {
   auto p = reinterpret_cast<char *>(descriptor->base_addr);
@@ -55,7 +62,7 @@ int CFI_allocate(CFI_cdesc_t *descriptor, const CFI_index_t lower_bounds[],
       descriptor->type > CFI_type_struct) {
     return CFI_INVALID_TYPE;
   }
-  if (descriptor->type != CFI_type_char) {
+  if (!IsCharacterType(descriptor->type)) {
     elem_len = descriptor->elem_len;
     if (elem_len <= 0) {
       return CFI_INVALID_ELEM_LEN;
@@ -203,10 +210,6 @@ int CFI_is_contiguous(const CFI_cdesc_t *descriptor) {
   return 1;
 }
 
-static inline bool IsAssumedSize(const CFI_cdesc_t *dv) {
-  return dv->rank > 0 && dv->dim[dv->rank - 1].extent == -1;
-}
-
 int CFI_section(CFI_cdesc_t *result, const CFI_cdesc_t *source,
     const CFI_index_t lower_bounds[], const CFI_index_t upper_bounds[],
     const CFI_index_t strides[]) {
@@ -297,7 +300,7 @@ int CFI_select_part(CFI_cdesc_t *result, const CFI_cdesc_t *source,
     return CFI_INVALID_DESCRIPTOR;
   }
 
-  if (result->type != CFI_type_char) {
+  if (!IsCharacterType(result->type)) {
     elem_len = result->elem_len;
   }
   if (displacement + elem_len > source->elem_len) {

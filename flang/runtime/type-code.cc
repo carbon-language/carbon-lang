@@ -45,7 +45,7 @@ TypeCode::TypeCode(TypeCategory f, int kind) {
     break;
   case TypeCategory::Character:
     if (kind == 1) {
-      raw_ = CFI_type_cptr;
+      raw_ = CFI_type_char;
     }
     break;
   case TypeCategory::Logical:

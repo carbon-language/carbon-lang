@@ -43,7 +43,7 @@ public:
     return raw_ >= CFI_type_float_Complex &&
         raw_ <= CFI_type_long_double_Complex;
   }
-  constexpr bool IsCharacter() const { return raw_ == CFI_type_cptr; }
+  constexpr bool IsCharacter() const { return raw_ == CFI_type_char; }
   constexpr bool IsLogical() const { return raw_ == CFI_type_Bool; }
   constexpr bool IsDerived() const { return raw_ == CFI_type_struct; }
 
