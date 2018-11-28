@@ -915,16 +915,19 @@ isFoldableLoad(const LoadInst *Ld, const Instruction *&FoldedValue) {
   switch (UserI->getOpcode()) {
   case Instruction::Add: // SE: 16->32, 16/32->64, z14:16->64. ZE: 32->64
   case Instruction::Sub:
+  case Instruction::ICmp:
     if (LoadedBits == 32 && ZExtBits == 64)
       return true;
     LLVM_FALLTHROUGH;
   case Instruction::Mul: // SE: 16->32, 32->64, z14:16->64
-    if (LoadedBits == 16 &&
-        (SExtBits == 32 ||
-         (SExtBits == 64 && ST->hasMiscellaneousExtensions2())))
-      return true;
-    if (LoadOrTruncBits == 16)
-      return true;
+    if (UserI->getOpcode() != Instruction::ICmp) {
+      if (LoadedBits == 16 &&
+          (SExtBits == 32 ||
+           (SExtBits == 64 && ST->hasMiscellaneousExtensions2())))
+        return true;
+      if (LoadOrTruncBits == 16)
+        return true;
+    }
     LLVM_FALLTHROUGH;
   case Instruction::SDiv:// SE: 32->64
     if (LoadedBits == 32 && SExtBits == 64)
@@ -934,7 +937,6 @@ isFoldableLoad(const LoadInst *Ld, const Instruction *&FoldedValue) {
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:
-  case Instruction::ICmp:
     // This also makes sense for float operations, but disabled for now due
     // to regressions.
     // case Instruction::FCmp:

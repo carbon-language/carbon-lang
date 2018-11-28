@@ -726,6 +726,16 @@ define void @icmp() {
   %tr_0 = trunc i64 %li64_2 to i32
   icmp eq i32 %tr_0, undef
 
+  ; Sign-extended load
+  %li32_2 = load i32, i32* undef
+  %sext = sext i32 %li32_2 to i64
+  icmp eq i64 %sext, undef
+
+  ; Zero-extended load
+  %li32_3 = load i32, i32* undef
+  %zext = zext i32 %li32_3 to i64
+  icmp eq i64 %zext, undef
+
   ; Loads with multiple uses are *not* folded
   %li64_3 = load i64, i64* undef
   %tr_1 = trunc i64 %li64_3 to i32
@@ -745,7 +755,13 @@ define void @icmp() {
 ; CHECK: Cost Model: Found an estimated cost of 0 for instruction:   %li64_2 = load i64, i64* undef
 ; CHECK: Cost Model: Found an estimated cost of 0 for instruction:   %tr_0 = trunc i64 %li64_2 to i32
 ; CHECK: Cost Model: Found an estimated cost of 1 for instruction:   %5 = icmp eq i32 %tr_0, undef
+; CHECK: Cost Model: Found an estimated cost of 0 for instruction:   %li32_2 = load i32, i32* undef
+; CHECK: Cost Model: Found an estimated cost of 0 for instruction:   %sext = sext i32 %li32_2 to i64
+; CHECK: Cost Model: Found an estimated cost of 1 for instruction:   %6 = icmp eq i64 %sext, undef
+; CHECK: Cost Model: Found an estimated cost of 0 for instruction:   %li32_3 = load i32, i32* undef
+; CHECK: Cost Model: Found an estimated cost of 0 for instruction:   %zext = zext i32 %li32_3 to i64
+; CHECK: Cost Model: Found an estimated cost of 1 for instruction:   %7 = icmp eq i64 %zext, undef
 ; CHECK: Cost Model: Found an estimated cost of 1 for instruction:   %li64_3 = load i64, i64* undef
 ; CHECK: Cost Model: Found an estimated cost of 0 for instruction:   %tr_1 = trunc i64 %li64_3 to i32
-; CHECK: Cost Model: Found an estimated cost of 1 for instruction:   %6 = icmp eq i64 %li64_3, undef
+; CHECK: Cost Model: Found an estimated cost of 1 for instruction:   %8 = icmp eq i64 %li64_3, undef
 }
