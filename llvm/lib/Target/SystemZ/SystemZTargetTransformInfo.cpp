@@ -939,6 +939,15 @@ isFoldableLoad(const LoadInst *Ld, const Instruction *&FoldedValue) {
   return false;
 }
 
+static bool isBswapIntrinsicCall(const Value *V) {
+  if (const Instruction *I = dyn_cast<Instruction>(V))
+    if (auto *CI = dyn_cast<CallInst>(I))
+      if (auto *F = CI->getCalledFunction())
+        if (F->getIntrinsicID() == Intrinsic::bswap)
+          return true;
+  return false;
+}
+
 int SystemZTTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
                                     unsigned Alignment, unsigned AddressSpace,
                                     const Instruction *I) {
@@ -974,6 +983,22 @@ int SystemZTTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
 
   unsigned NumOps =
     (Src->isVectorTy() ? getNumVectorRegs(Src) : getNumberOfParts(Src));
+
+  // Store/Load reversed saves one instruction.
+  if (!Src->isVectorTy() && NumOps == 1 && I != nullptr) {
+    if (Opcode == Instruction::Load && I->hasOneUse()) {
+      const Instruction *LdUser = cast<Instruction>(*I->user_begin());
+      // In case of load -> bswap -> store, return normal cost for the load.
+      if (isBswapIntrinsicCall(LdUser) &&
+          (!LdUser->hasOneUse() || !isa<StoreInst>(*LdUser->user_begin())))
+        return 0;
+    }
+    else if (const StoreInst *SI = dyn_cast<StoreInst>(I)) {
+      const Value *StoredVal = SI->getValueOperand();
+      if (StoredVal->hasOneUse() && isBswapIntrinsicCall(StoredVal))
+        return 0;
+    }
+  }
 
   if (Src->getScalarSizeInBits() == 128)
     // 128 bit scalars are held in a pair of two 64 bit registers.
