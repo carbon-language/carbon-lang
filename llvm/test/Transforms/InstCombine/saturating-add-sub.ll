@@ -529,9 +529,7 @@ define i8 @test_scalar_ssub_overflow(i8 %a) {
 ; nneg usub neg always overflows.
 define i8 @test_scalar_usub_nneg_neg(i8 %a) {
 ; CHECK-LABEL: @test_scalar_usub_nneg_neg(
-; CHECK-NEXT:    [[A_NNEG:%.*]] = and i8 [[A:%.*]], 127
-; CHECK-NEXT:    [[R:%.*]] = call i8 @llvm.usub.sat.i8(i8 [[A_NNEG]], i8 -10)
-; CHECK-NEXT:    ret i8 [[R]]
+; CHECK-NEXT:    ret i8 0
 ;
   %a_nneg = and i8 %a, 127
   %r = call i8 @llvm.usub.sat.i8(i8 %a_nneg, i8 -10)
@@ -540,9 +538,7 @@ define i8 @test_scalar_usub_nneg_neg(i8 %a) {
 
 define <2 x i8> @test_vector_usub_nneg_neg(<2 x i8> %a) {
 ; CHECK-LABEL: @test_vector_usub_nneg_neg(
-; CHECK-NEXT:    [[A_NNEG:%.*]] = and <2 x i8> [[A:%.*]], <i8 127, i8 127>
-; CHECK-NEXT:    [[R:%.*]] = call <2 x i8> @llvm.usub.sat.v2i8(<2 x i8> [[A_NNEG]], <2 x i8> <i8 -10, i8 -20>)
-; CHECK-NEXT:    ret <2 x i8> [[R]]
+; CHECK-NEXT:    ret <2 x i8> zeroinitializer
 ;
   %a_nneg = and <2 x i8> %a, <i8 127, i8 127>
   %r = call <2 x i8> @llvm.usub.sat.v2i8(<2 x i8> %a_nneg, <2 x i8> <i8 -10, i8 -20>)
