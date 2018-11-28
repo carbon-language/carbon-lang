@@ -835,8 +835,17 @@ int SystemZTTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
     switch (Opcode) {
     case Instruction::ICmp: {
       unsigned Cost = 1;
-      if (ValTy->isIntegerTy() && ValTy->getScalarSizeInBits() <= 16)
+      if (ValTy->isIntegerTy() && ValTy->getScalarSizeInBits() <= 16) {
+        if (I != nullptr) {
+          // Single instruction for comparison of memory with a small immediate.
+          if (const LoadInst* Ld = dyn_cast<LoadInst>(I->getOperand(0))) {
+            const Instruction *FoldedValue = nullptr;
+            if (isFoldableLoad(Ld, FoldedValue))
+              return Cost;
+          }
+        }
         Cost += 2; // extend both operands
+      }
       return Cost;
     }
     case Instruction::Select:
@@ -931,6 +940,12 @@ isFoldableLoad(const LoadInst *Ld, const Instruction *&FoldedValue) {
     // All possible extensions of memory checked above.
     if (SExtBits || ZExtBits)
       return false;
+
+    // Comparison between memory and immediate.
+    if (UserI->getOpcode() == Instruction::ICmp)
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(UserI->getOperand(1)))
+        if (isUInt<16>(CI->getZExtValue()))
+          return true;
 
     unsigned LoadOrTruncBits = (TruncBits ? TruncBits : LoadedBits);
     return (LoadOrTruncBits == 32 || LoadOrTruncBits == 64);
