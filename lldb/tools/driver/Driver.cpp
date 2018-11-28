@@ -26,9 +26,11 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ConvertUTF.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <algorithm>
@@ -280,8 +282,7 @@ bool Driver::GetDebugMode() const { return m_option_data.m_debug_mode; }
 // indicating whether or not to start up the full debugger (i.e. the Command
 // Interpreter) or not.  Return FALSE if the arguments were invalid OR if the
 // user only wanted help or version information.
-SBError Driver::ProcessArgs(const opt::InputArgList &args, FILE *out_fh,
-                            bool &exiting) {
+SBError Driver::ProcessArgs(const opt::InputArgList &args, bool &exiting) {
   SBError error;
   ResetOptionValues();
 
@@ -497,15 +498,12 @@ SBError Driver::ProcessArgs(const opt::InputArgList &args, FILE *out_fh,
       for (auto value : arg->getValues())
         m_option_data.m_args.push_back(value);
     }
-  } else {
-    if (args.getLastArgNoClaim()) {
-      ::fprintf(out_fh,
-                "Warning: program arguments are ignored when attaching.\n");
-    }
+  } else if (args.getLastArgNoClaim()) {
+    WithColor::warning() << "program arguments are ignored when attaching.\n";
   }
 
   if (m_option_data.m_print_version) {
-    ::fprintf(out_fh, "%s\n", m_debugger.GetVersionString());
+    llvm::outs() << m_debugger.GetVersionString() << '\n';
     exiting = true;
     return error;
   }
@@ -516,11 +514,11 @@ SBError Driver::ProcessArgs(const opt::InputArgList &args, FILE *out_fh,
       char python_path[PATH_MAX];
       size_t num_chars = python_file_spec.GetPath(python_path, PATH_MAX);
       if (num_chars < PATH_MAX) {
-        ::fprintf(out_fh, "%s\n", python_path);
+        llvm::outs() << python_path << '\n';
       } else
-        ::fprintf(out_fh, "<PATH TOO LONG>\n");
+        llvm::outs() << "<PATH TOO LONG>\n";
     } else
-      ::fprintf(out_fh, "<COULD NOT FIND PATH>\n");
+      llvm::outs() << "<COULD NOT FIND PATH>\n";
     exiting = true;
     return error;
   }
@@ -544,11 +542,13 @@ static ::FILE *PrepareCommandsForSourcing(const char *commands_data,
   if (err == 0) {
     ssize_t nrwr = write(fds[WRITE], commands_data, commands_size);
     if (nrwr < 0) {
-      fprintf(stderr,
-              "error: write(%i, %p, %" PRIu64 ") failed (errno = %i) "
-              "when trying to open LLDB commands pipe\n",
-              fds[WRITE], static_cast<const void *>(commands_data),
-              static_cast<uint64_t>(commands_size), errno);
+      WithColor::error()
+          << format(
+                 "write(%i, %p, %" PRIu64
+                 ") failed (errno = %i) when trying to open LLDB commands pipe",
+                 fds[WRITE], static_cast<const void *>(commands_data),
+                 static_cast<uint64_t>(commands_size), errno)
+          << '\n';
     } else if (static_cast<size_t>(nrwr) == commands_size) {
 // Close the write end of the pipe so when we give the read end to
 // the debugger/command interpreter it will exit when it consumes all
@@ -568,15 +568,15 @@ static ::FILE *PrepareCommandsForSourcing(const char *commands_data,
                         // descriptor Hand ownership if the FILE * over to the
                         // debugger for "commands_file".
       } else {
-        fprintf(stderr,
-                "error: fdopen(%i, \"r\") failed (errno = %i) when "
-                "trying to open LLDB commands pipe\n",
-                fds[READ], errno);
+        WithColor::error() << format("fdopen(%i, \"r\") failed (errno = %i) "
+                                     "when trying to open LLDB commands pipe",
+                                     fds[READ], errno)
+                           << '\n';
       }
     }
   } else {
-    fprintf(stderr,
-            "error: can't create pipe file descriptors for LLDB commands\n");
+    WithColor::error()
+        << "can't create pipe file descriptors for LLDB commands\n";
   }
 
   return commands_file;
@@ -724,9 +724,9 @@ int Driver::MainLoop() {
     if (error.Fail()) {
       const char *error_cstr = error.GetCString();
       if (error_cstr && error_cstr[0])
-        fprintf(stderr, "error: %s\n", error_cstr);
+        WithColor::error() << error_cstr << '\n';
       else
-        fprintf(stderr, "error: %u\n", error.GetError());
+        WithColor::error() << error.GetError() << '\n';
     }
   } else {
     // Check if we have any data in the commands stream, and if so, save it to a
@@ -940,6 +940,11 @@ main(int argc, char const *argv[])
     return 0;
   }
 
+  for (auto *arg : input_args.filtered(OPT_UNKNOWN)) {
+    WithColor::warning() << "ignoring unknown option: " << arg->getSpelling()
+                         << '\n';
+  }
+
   SBDebugger::Initialize();
   SBHostOS::ThreadCreated("<lldb.driver.main-thread>");
 
@@ -958,12 +963,11 @@ main(int argc, char const *argv[])
     Driver driver;
 
     bool exiting = false;
-    SBError error(driver.ProcessArgs(input_args, stdout, exiting));
+    SBError error(driver.ProcessArgs(input_args, exiting));
     if (error.Fail()) {
       exit_code = 1;
-      const char *error_cstr = error.GetCString();
-      if (error_cstr)
-        ::fprintf(stderr, "error: %s\n", error_cstr);
+      if (const char *error_cstr = error.GetCString())
+        WithColor::error() << error_cstr << '\n';
     } else if (!exiting) {
       exit_code = driver.MainLoop();
     }
