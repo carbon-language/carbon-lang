@@ -2113,6 +2113,40 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           *II, Builder.CreateBinaryIntrinsic(
               Intrinsic::sadd_sat, Arg0, NegVal));
     }
+
+    // sat(sat(X + Val2) + Val) -> sat(X + (Val+Val2))
+    // sat(sat(X - Val2) - Val) -> sat(X - (Val+Val2))
+    // if Val and Val2 have the same sign
+    if (auto *Other = dyn_cast<IntrinsicInst>(Arg0)) {
+      Value *X;
+      const APInt *Val, *Val2;
+      APInt NewVal;
+      bool IsUnsigned =
+          IID == Intrinsic::uadd_sat || IID == Intrinsic::usub_sat;
+      if (Other->getIntrinsicID() == II->getIntrinsicID() &&
+          match(Arg1, m_APInt(Val)) &&
+          match(Other->getArgOperand(0), m_Value(X)) &&
+          match(Other->getArgOperand(1), m_APInt(Val2))) {
+        if (IsUnsigned)
+          NewVal = Val->uadd_sat(*Val2);
+        else if (Val->isNonNegative() == Val2->isNonNegative()) {
+          bool Overflow;
+          NewVal = Val->sadd_ov(*Val2, Overflow);
+          if (Overflow) {
+            // Both adds together may add more than SignedMaxValue
+            // without saturating the final result.
+            break;
+          }
+        } else {
+          // Cannot fold saturated addition with different signs.
+          break;
+        }
+
+        return replaceInstUsesWith(
+            *II, Builder.CreateBinaryIntrinsic(
+                     IID, X, ConstantInt::get(II->getType(), NewVal)));
+      }
+    }
     break;
   }
 
