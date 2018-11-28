@@ -2102,6 +2102,17 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         return BinaryOperator::CreateNSWSub(Arg0, Arg1);
       break;
     }
+
+    // ssub.sat(X, C) -> sadd.sat(X, -C) if C != MIN
+    // TODO: Support non-splat C.
+    const APInt *C;
+    if (IID == Intrinsic::ssub_sat && match(Arg1, m_APInt(C)) &&
+        !C->isMinSignedValue()) {
+      Value *NegVal = ConstantInt::get(II->getType(), -*C);
+      return replaceInstUsesWith(
+          *II, Builder.CreateBinaryIntrinsic(
+              Intrinsic::sadd_sat, Arg0, NegVal));
+    }
     break;
   }
 
