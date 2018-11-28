@@ -91,7 +91,7 @@ static cl::opt<bool>
                      cl::desc("Disable memory promotion in LICM pass"));
 
 static cl::opt<bool> ControlFlowHoisting(
-    "licm-control-flow-hoisting", cl::Hidden, cl::init(false),
+    "licm-control-flow-hoisting", cl::Hidden, cl::init(true),
     cl::desc("Enable control flow (and PHI) hoisting in LICM"));
 
 static cl::opt<uint32_t> MaxNumUsesTraversed(
