@@ -1570,49 +1570,51 @@ int X86TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src,
   if (!SrcTy.isSimple() || !DstTy.isSimple())
     return BaseT::getCastInstrCost(Opcode, Dst, Src);
 
-  if (ST->hasBWI())
-    if (const auto *Entry = ConvertCostTableLookup(AVX512BWConversionTbl, ISD,
-                                                   DstTy.getSimpleVT(),
-                                                   SrcTy.getSimpleVT()))
-      return Entry->Cost;
+  MVT SimpleSrcTy = SrcTy.getSimpleVT();
+  MVT SimpleDstTy = DstTy.getSimpleVT();
 
-  if (ST->hasDQI())
-    if (const auto *Entry = ConvertCostTableLookup(AVX512DQConversionTbl, ISD,
-                                                   DstTy.getSimpleVT(),
-                                                   SrcTy.getSimpleVT()))
-      return Entry->Cost;
+  // Make sure that neither type is going to be split before using the
+  // AVX512 tables. This handles -mprefer-vector-width=256
+  // with -min-legal-vector-width<=256
+  if (TLI->getTypeAction(SimpleSrcTy) != TargetLowering::TypeSplitVector &&
+      TLI->getTypeAction(SimpleDstTy) != TargetLowering::TypeSplitVector) {
+    if (ST->hasBWI())
+      if (const auto *Entry = ConvertCostTableLookup(AVX512BWConversionTbl, ISD,
+                                                     SimpleDstTy, SimpleSrcTy))
+        return Entry->Cost;
 
-  if (ST->hasAVX512())
-    if (const auto *Entry = ConvertCostTableLookup(AVX512FConversionTbl, ISD,
-                                                   DstTy.getSimpleVT(),
-                                                   SrcTy.getSimpleVT()))
-      return Entry->Cost;
+    if (ST->hasDQI())
+      if (const auto *Entry = ConvertCostTableLookup(AVX512DQConversionTbl, ISD,
+                                                     SimpleDstTy, SimpleSrcTy))
+        return Entry->Cost;
+
+    if (ST->hasAVX512())
+      if (const auto *Entry = ConvertCostTableLookup(AVX512FConversionTbl, ISD,
+                                                     SimpleDstTy, SimpleSrcTy))
+        return Entry->Cost;
+  }
 
   if (ST->hasAVX2()) {
     if (const auto *Entry = ConvertCostTableLookup(AVX2ConversionTbl, ISD,
-                                                   DstTy.getSimpleVT(),
-                                                   SrcTy.getSimpleVT()))
+                                                   SimpleDstTy, SimpleSrcTy))
       return Entry->Cost;
   }
 
   if (ST->hasAVX()) {
     if (const auto *Entry = ConvertCostTableLookup(AVXConversionTbl, ISD,
-                                                   DstTy.getSimpleVT(),
-                                                   SrcTy.getSimpleVT()))
+                                                   SimpleDstTy, SimpleSrcTy))
       return Entry->Cost;
   }
 
   if (ST->hasSSE41()) {
     if (const auto *Entry = ConvertCostTableLookup(SSE41ConversionTbl, ISD,
-                                                   DstTy.getSimpleVT(),
-                                                   SrcTy.getSimpleVT()))
+                                                   SimpleDstTy, SimpleSrcTy))
       return Entry->Cost;
   }
 
   if (ST->hasSSE2()) {
     if (const auto *Entry = ConvertCostTableLookup(SSE2ConversionTbl, ISD,
-                                                   DstTy.getSimpleVT(),
-                                                   SrcTy.getSimpleVT()))
+                                                   SimpleDstTy, SimpleSrcTy))
       return Entry->Cost;
   }
 
