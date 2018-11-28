@@ -65,7 +65,9 @@ template <typename T> class ArrayRef;
           return false;
         return true;
       }
-      bool operator!=(const ConstraintInfo &RHS) const { return *this != RHS; }
+      bool operator!=(const ConstraintInfo &RHS) const {
+        return !(*this == RHS);
+      }
     };
 
     /// OperandInfo - The information we keep track of for each operand in the
