@@ -1003,8 +1003,10 @@ void CodeGenModule::UpdateMultiVersionNames(GlobalDecl GD,
            "Other GD should now be a multiversioned function");
     // OtherFD is the version of this function that was mangled BEFORE
     // becoming a MultiVersion function.  It potentially needs to be updated.
-    const FunctionDecl *OtherFD =
-        OtherGD.getCanonicalDecl().getDecl()->getAsFunction();
+    const FunctionDecl *OtherFD = OtherGD.getCanonicalDecl()
+                                      .getDecl()
+                                      ->getAsFunction()
+                                      ->getMostRecentDecl();
     std::string OtherName = getMangledNameImpl(*this, OtherGD, OtherFD);
     // This is so that if the initial version was already the 'default'
     // version, we don't try to update it.

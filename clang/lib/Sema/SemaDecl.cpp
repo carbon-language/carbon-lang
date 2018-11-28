@@ -9404,6 +9404,27 @@ static bool CheckMultiVersionValue(Sema &S, const FunctionDecl *FD) {
   return false;
 }
 
+static bool HasNonMultiVersionAttributes(const FunctionDecl *FD,
+                                         MultiVersionKind MVType) {
+  for (const Attr *A : FD->attrs()) {
+    switch (A->getKind()) {
+    case attr::CPUDispatch:
+    case attr::CPUSpecific:
+      if (MVType != MultiVersionKind::CPUDispatch &&
+          MVType != MultiVersionKind::CPUSpecific)
+        return true;
+      break;
+    case attr::Target:
+      if (MVType != MultiVersionKind::Target)
+        return true;
+      break;
+    default:
+      return true;
+    }
+  }
+  return false;
+}
+
 static bool CheckMultiVersionAdditionalRules(Sema &S, const FunctionDecl *OldFD,
                                              const FunctionDecl *NewFD,
                                              bool CausesMV,
@@ -9449,15 +9470,14 @@ static bool CheckMultiVersionAdditionalRules(Sema &S, const FunctionDecl *OldFD,
 
   // For now, disallow all other attributes.  These should be opt-in, but
   // an analysis of all of them is a future FIXME.
-  if (CausesMV && OldFD &&
-      std::distance(OldFD->attr_begin(), OldFD->attr_end()) != 1) {
+  if (CausesMV && OldFD && HasNonMultiVersionAttributes(OldFD, MVType)) {
     S.Diag(OldFD->getLocation(), diag::err_multiversion_no_other_attrs)
         << IsCPUSpecificCPUDispatchMVType;
     S.Diag(NewFD->getLocation(), diag::note_multiversioning_caused_here);
     return true;
   }
 
-  if (std::distance(NewFD->attr_begin(), NewFD->attr_end()) != 1)
+  if (HasNonMultiVersionAttributes(NewFD, MVType))
     return S.Diag(NewFD->getLocation(), diag::err_multiversion_no_other_attrs)
            << IsCPUSpecificCPUDispatchMVType;
 
@@ -9581,6 +9601,15 @@ static bool CheckMultiVersionFirstFunction(Sema &S, FunctionDecl *FD,
   return false;
 }
 
+static bool PreviousDeclsHaveMultiVersionAttribute(const FunctionDecl *FD) {
+  for (const Decl *D = FD->getPreviousDecl(); D; D = D->getPreviousDecl()) {
+    if (D->getAsFunction()->getMultiVersionKind() != MultiVersionKind::None)
+      return true;
+  }
+
+  return false;
+}
+
 static bool CheckTargetCausesMultiVersioning(
     Sema &S, FunctionDecl *OldFD, FunctionDecl *NewFD, const TargetAttr *NewTA,
     bool &Redeclaration, NamedDecl *&OldDecl, bool &MergeTypeWithPrevious,
@@ -9592,7 +9621,8 @@ static bool CheckTargetCausesMultiVersioning(
 
   // If the old decl is NOT MultiVersioned yet, and we don't cause that
   // to change, this is a simple redeclaration.
-  if (!OldTA || OldTA->getFeaturesStr() == NewTA->getFeaturesStr())
+  if (!NewTA->isDefaultVersion() &&
+      (!OldTA || OldTA->getFeaturesStr() == NewTA->getFeaturesStr()))
     return false;
 
   // Otherwise, this decl causes MultiVersioning.
@@ -9614,6 +9644,15 @@ static bool CheckTargetCausesMultiVersioning(
     return true;
   }
 
+  // If this is 'default', permit the forward declaration.
+  if (!OldFD->isMultiVersion() && !OldTA && NewTA->isDefaultVersion()) {
+    Redeclaration = true;
+    OldDecl = OldFD;
+    OldFD->setIsMultiVersion();
+    NewFD->setIsMultiVersion();
+    return false;
+  }
+
   if (CheckMultiVersionValue(S, OldFD)) {
     S.Diag(NewFD->getLocation(), diag::note_multiversioning_caused_here);
     NewFD->setInvalidDecl();
@@ -9632,7 +9671,10 @@ static bool CheckTargetCausesMultiVersioning(
 
   for (const auto *FD : OldFD->redecls()) {
     const auto *CurTA = FD->getAttr<TargetAttr>();
-    if (!CurTA || CurTA->isInherited()) {
+    // We allow forward declarations before ANY multiversioning attributes, but
+    // nothing after the fact.
+    if (PreviousDeclsHaveMultiVersionAttribute(FD) &&
+        (!CurTA || CurTA->isInherited())) {
       S.Diag(FD->getLocation(), diag::err_multiversion_required_in_redecl)
           << 0;
       S.Diag(NewFD->getLocation(), diag::note_multiversioning_caused_here);
