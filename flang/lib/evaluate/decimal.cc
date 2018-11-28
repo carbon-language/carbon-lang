@@ -14,10 +14,14 @@
 
 #include "decimal.h"
 #include "integer.h"
+#include "leading-zero-bit-count.h"
+#include "../common/idioms.h"
+#include <iostream>  // TODO pmk rm
+bool pmk{false};
 
 namespace Fortran::evaluate::value {
 
-static std::ostream *debug{nullptr};
+static std::ostream *debug{nullptr};  // pmk constexpr
 
 template<typename REAL>
 std::ostream &Decimal<REAL>::Dump(std::ostream &o) const {
@@ -30,14 +34,15 @@ std::ostream &Decimal<REAL>::Dump(std::ostream &o) const {
   return o << " e" << exponent_ << '\n';
 }
 
-template<typename REAL> void Decimal<REAL>::FromReal(const Real &x) {
+template<typename REAL> void Decimal<REAL>::FromReal(const REAL &x) {
   if (x.IsNegative()) {
     FromReal(x.Negate());
     isNegative_ = true;
     return;
   }
   if (debug) {
-    *debug << "FromReal(" << x.DumpHexadecimal() << ")\n";
+    *debug << "FromReal(" << x.DumpHexadecimal() << ") bits " << Real::bits
+           << '\n';
   }
   if (x.IsZero()) {
     return;
@@ -58,7 +63,12 @@ template<typename REAL> void Decimal<REAL>::FromReal(const Real &x) {
   if (debug) {
     *debug << "second twoPow " << twoPow << ", lshift " << lshift << '\n';
   }
-  SetTo(x.GetFraction().SHIFTL(lshift));
+  using Word = typename Real::Word;
+  Word word{Word::ConvertUnsigned(x.GetFraction()).value};
+  SetTo(word.SHIFTL(lshift));
+  if (debug) {
+    Dump(*debug);
+  }
 
   for (; twoPow > 0 && IsDivisibleBy<5>(); --twoPow) {
     DivideBy<5>();
@@ -115,9 +125,23 @@ public:
   using Real = REAL;
   using Word = typename Real::Word;
 
-  void SetTo(Word n) {
-    word_ = n;
+  void SetTo(std::uint64_t n) {
     exponent_ = 0;
+    if constexpr (Word::bits >= 8 * sizeof n) {
+      word_ = n;
+    } else {
+      int shift{64 - LeadingZeroBitCount(n) - Word::bits};
+      if (shift <= 0) {
+        word_ = n;
+      } else {
+        word_ = n >> shift;
+        exponent_ = shift;
+        bool sticky{n << (64 - shift) != 0};
+        if (sticky) {
+          word_ = word_.IOR(Word{1});
+        }
+      }
+    }
   }
 
   void MultiplyAndAdd(std::uint32_t n, std::uint32_t plus = 0) {
@@ -134,10 +158,11 @@ public:
       sticky |= product.lower.BTEST(0);
       product.lower = product.lower.DSHIFTR(product.upper, 1);
       product.upper = product.upper.SHIFTR(1);
+      ++exponent_;
     }
     word_ = product.lower;
     if (sticky) {
-      word_ = word_.IOR(word_.MASKR(1));
+      word_ = word_.IOR(Word{1});
     }
   }
 
@@ -149,7 +174,8 @@ public:
 
   void AdjustExponent(int by = -1) { exponent_ += by; }
 
-  Real ToReal(bool isNegative = false) const;
+  ValueWithRealFlags<Real> ToReal(
+      bool isNegative = false, Rounding rounding = Rounding::TiesToEven) const;
 
 private:
   Word word_{0};
@@ -162,34 +188,70 @@ std::ostream &IntermediateFloat<REAL>::Dump(std::ostream &o) const {
 }
 
 template<typename REAL>
-REAL IntermediateFloat<REAL>::ToReal(bool isNegative) const {
+ValueWithRealFlags<REAL> IntermediateFloat<REAL>::ToReal(
+    bool isNegative, Rounding rounding) const {
   if (word_.IsNegative()) {
+    // word_ represents an unsigned quantity, so shift it down if the MSB is set
     IntermediateFloat shifted;
-    shifted.word_ =
-        word_.SHIFTR(1).IOR(word_.IAND(word_.MASKR(1)));  // sticky bit
+    Word sticky{word_.IAND(Word{1})};
+    shifted.word_ = word_.SHIFTR(1).IOR(sticky);
     shifted.exponent_ = exponent_ + 1;
-    return shifted.ToReal(false);
+    if (debug) {
+      shifted.Dump(*debug << "IntermediateFloat::ToReal: shifted: ") << '\n';
+    }
+    return shifted.ToReal(isNegative, rounding);
   }
-  Real result = Real::FromInteger(word_).value;
+  ValueWithRealFlags<Real> result;
+  if (isNegative) {
+    result = Real::FromInteger(word_.Negate().value, rounding);
+  } else {
+    result = Real::FromInteger(word_, rounding);
+  }
+  if (debug) {
+    *debug << "IntermediateFloat::ToReal: after FromInteger: "
+           << result.value.DumpHexadecimal() << " * 2**" << exponent_ << '\n';
+  }
   int expo{exponent_};
   while (expo + Real::exponentBias < 1) {
-    Real twoPow{Word{1}.SHIFTL(Real::significandBits)};
-    result = result.Multiply(twoPow).value;
+    Real twoPow{Word{1}.SHIFTL(Real::significandBits)};  // min normal value
+    result.value = result.value.Multiply(twoPow).AccumulateFlags(result.flags);
     expo += Real::exponentBias - 1;
+    if (debug) {
+      *debug << "IntermediateFloat::ToReal: reduced: "
+             << result.value.DumpHexadecimal() << " * 2**" << expo << '\n';
+    }
   }
   while (expo + Real::exponentBias >= Real::maxExponent) {
     Real twoPow{Word{Real::maxExponent - 1}.SHIFTL(Real::significandBits)};
-    result = result.Multiply(twoPow).value;
+    result.value = result.value.Multiply(twoPow).AccumulateFlags(result.flags);
     expo += Real::maxExponent - 1 - Real::exponentBias;
+    if (debug) {
+      *debug << "IntermediateFloat::ToReal: magnified: "
+             << result.value.DumpHexadecimal() << " * 2**" << expo << '\n';
+    }
   }
   Real twoPow{Word{expo + Real::exponentBias}.SHIFTL(Real::significandBits)};
-  if (isNegative) {
-    twoPow = twoPow.Negate();
+  if (debug) {
+    *debug << "IntermediateFloat::ToReal: twoPow: " << twoPow.DumpHexadecimal()
+           << '\n';
   }
-  return result.Multiply(twoPow).value;
+  result.value = result.value.Multiply(twoPow).AccumulateFlags(result.flags);
+  return result;
 }
 
-template<typename REAL> REAL Decimal<REAL>::ToReal(const char *&p) {
+template<typename REAL>
+ValueWithRealFlags<REAL> Decimal<REAL>::ToReal(
+    const char *&p, Rounding rounding) {
+  if (std::string{p} == "3.4028234663852885981170418348451692544e38_4") {
+    debug = &std::cerr;
+    pmk = true;
+  } else {
+    debug = nullptr;
+    pmk = false;
+  }  // pmk
+  if (debug) {
+    *debug << "ToReal('" << p << "')\n";
+  }
   while (*p == ' ') {
     ++p;
   }
@@ -218,11 +280,13 @@ template<typename REAL> REAL Decimal<REAL>::ToReal(const char *&p) {
         ++exponent_;
       }
     } else {
-      MultiplyBy<10>(c - '0');
+      int carry{MultiplyBy<10>(c - '0')};
+      CHECK(carry == 0);
       if (decimalPoint) {
         --exponent_;
       }
     }
+    if (debug) Dump(*debug << "ToReal in loop, p at '" << p << "'\n'");
   }
 
   switch (*p) {
@@ -232,9 +296,8 @@ template<typename REAL> REAL Decimal<REAL>::ToReal(const char *&p) {
   case 'D':
   case 'q':
   case 'Q':
-    ++p;
-    bool negExpo{*p == '-'};
-    if (*p == '+' || *p == '-') {
+    bool negExpo{*++p == '-'};
+    if (negExpo || *p == '+') {
       ++p;
     }
     char *q;
@@ -248,10 +311,14 @@ template<typename REAL> REAL Decimal<REAL>::ToReal(const char *&p) {
   }
 
   if (debug) {
-    Dump(*debug << "ToReal start: ");
+    Dump(*debug << "ToReal start, p at '" << p << "'\n");
   }
   if (IsZero()) {
-    return Real{}.Negate();  // -0.0
+    ValueWithRealFlags<Real> result;
+    if (isNegative_) {
+      result.value = Real{}.Negate();  // -0.0
+    }
+    return result;
   }
 
   if (exponent_ < 0) {
@@ -276,12 +343,23 @@ template<typename REAL> REAL Decimal<REAL>::ToReal(const char *&p) {
   // result.  The most significant digit can be moved directly;
   // lesser-order digits require transfer of carries.
   if (exponent_ >= -(digits_ - 1) * log10Quintillion) {
+    if (debug) {
+      Dump(*debug << "converting integer part:");
+    }
     f.SetTo(digit_[--digits_]);
+    if (debug) {
+      f.Dump(*debug << "after converting top digit: ") << '\n';
+      Dump(*debug);
+    }
     while (exponent_ > -digits_ * log10Quintillion) {
       digitLimit_ = digits_;
       int carry{MultiplyBy<10>()};
       f.MultiplyAndAdd(10, carry);
       --exponent_;
+      if (debug) {
+        f.Dump(*debug << "foot of loop after carry " << carry << ": ") << '\n';
+        Dump(*debug);
+      }
     }
   }
 
@@ -324,7 +402,8 @@ template<typename REAL> REAL Decimal<REAL>::ToReal(const char *&p) {
     Dump(*debug);
   }
 
-  return f.ToReal(isNegative_);
+  auto result{f.ToReal(isNegative_, rounding)};
+  return result;
 }
 
 template<typename REAL>

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "real.h"
+#include "decimal.h"
 #include "int-power.h"
 #include "../common/idioms.h"
 #include "../parser/characters.h"
@@ -88,8 +89,8 @@ ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Add(
     result.value = y;  // x + +/-Inf -> +/-Inf
     return result;
   }
-  std::uint64_t exponent{Exponent()};
-  std::uint64_t yExponent{y.Exponent()};
+  int exponent{Exponent()};
+  int yExponent{y.Exponent()};
   if (exponent < yExponent) {
     // y is larger in magnitude; simplify by reversing operands
     return y.Add(*this, rounding);
@@ -267,9 +268,9 @@ ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Divide(
 }
 
 template<typename W, int P, bool IM>
-RealFlags Real<W, P, IM>::Normalize(bool negative, std::uint64_t exponent,
+RealFlags Real<W, P, IM>::Normalize(bool negative, int exponent,
     const Fraction &fraction, Rounding rounding, RoundingBits *roundingBits) {
-  std::uint64_t lshift = fraction.LEADZ();
+  int lshift{fraction.LEADZ()};
   if (lshift == fraction.bits /* fraction is zero */ &&
       (roundingBits == nullptr || roundingBits->empty())) {
     // No fraction, no rounding bits -> +/-0.0
@@ -329,7 +330,7 @@ RealFlags Real<W, P, IM>::Normalize(bool negative, std::uint64_t exponent,
 template<typename W, int P, bool IM>
 RealFlags Real<W, P, IM>::Round(
     Rounding rounding, const RoundingBits &bits, bool multiply) {
-  std::uint64_t origExponent{Exponent()};
+  int origExponent{Exponent()};
   RealFlags flags;
   bool inexact{!bits.empty()};
   if (inexact) {
@@ -339,7 +340,7 @@ RealFlags Real<W, P, IM>::Round(
       bits.MustRound(rounding, IsNegative(), word_.BTEST(0) /* is odd */)) {
     typename Fraction::ValueWithCarry sum{
         GetFraction().AddUnsigned(Fraction{}, true)};
-    std::uint64_t newExponent{origExponent};
+    int newExponent{origExponent};
     if (sum.carry) {
       // The fraction was all ones before rounding; sum.value is now zero
       sum.value = sum.value.IBSET(precision - 1);
@@ -372,8 +373,8 @@ RealFlags Real<W, P, IM>::Round(
 
 template<typename W, int P, bool IM>
 void Real<W, P, IM>::NormalizeAndRound(ValueWithRealFlags<Real> &result,
-    bool isNegative, std::uint64_t exponent, const Fraction &fraction,
-    Rounding rounding, RoundingBits roundingBits, bool multiply) {
+    bool isNegative, int exponent, const Fraction &fraction, Rounding rounding,
+    RoundingBits roundingBits, bool multiply) {
   result.flags |= result.value.Normalize(
       isNegative, exponent, fraction, rounding, &roundingBits);
   result.flags |= result.value.Round(rounding, roundingBits, multiply);
@@ -382,126 +383,8 @@ void Real<W, P, IM>::NormalizeAndRound(ValueWithRealFlags<Real> &result,
 template<typename W, int P, bool IM>
 ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Read(
     const char *&p, Rounding rounding) {
-  ValueWithRealFlags<Real> result;
-  while (*p == ' ') {
-    ++p;
-  }
-  bool isNegative{*p == '-'};
-  if (*p == '-' || *p == '+') {
-    ++p;
-  }
-  Word integer{0};
-  int decimalExponent{0};
-  bool full{false};
-  bool inFraction{false};
-  for (;; ++p) {
-    if (*p == '.') {
-      if (inFraction) {
-        break;
-      }
-      inFraction = true;
-    } else if (!parser::IsDecimalDigit(*p)) {
-      break;
-    } else if (full) {
-      if (!inFraction) {
-        ++decimalExponent;
-      }
-    } else {
-      auto times10{integer.MultiplyUnsigned(Word{10})};
-      if (!times10.upper.IsZero()) {
-        full = true;
-        if (!inFraction) {
-          ++decimalExponent;
-        }
-      } else {
-        auto augmented{times10.lower.AddUnsigned(Word{*p - '0'})};
-        if (augmented.carry) {
-          full = true;
-          if (!inFraction) {
-            ++decimalExponent;
-          }
-        } else {
-          integer = augmented.value;
-          if (inFraction) {
-            --decimalExponent;
-          }
-        }
-      }
-    }
-  }
-
-  if (parser::IsLetter(*p)) {
-    ++p;
-    bool negExpo{*p == '-'};
-    if (*p == '+' || *p == '-') {
-      ++p;
-    }
-    auto expo{Integer<32>::ReadUnsigned(p)};
-    std::int64_t expoVal{expo.value.ToInt64()};
-    if (expo.overflow) {
-      expoVal = std::numeric_limits<std::int32_t>::max();
-    } else if (negExpo) {
-      expoVal *= -1;
-    }
-    decimalExponent += expoVal;
-  }
-
-  int binaryExponent{exponentBias + bits - 1};
-  if (integer.IsZero()) {
-    decimalExponent = 0;
-  } else {
-    int leadz{integer.LEADZ()};
-    binaryExponent -= leadz;
-    integer = integer.SHIFTL(leadz);
-  }
-  for (; decimalExponent > 0; --decimalExponent) {
-    auto times5{integer.MultiplyUnsigned(Word{5})};
-    ++binaryExponent;
-    integer = times5.lower;
-    for (; !times5.upper.IsZero(); times5.upper = times5.upper.SHIFTR(1)) {
-      ++binaryExponent;
-      integer = integer.SHIFTR(1);
-      if (times5.upper.BTEST(0)) {
-        integer = integer.IBSET(bits - 1);
-      }
-    }
-  }
-  for (; decimalExponent < 0; ++decimalExponent) {
-    auto div5{integer.DivideUnsigned(Word{5})};
-    --binaryExponent;
-    integer = div5.quotient;
-    std::uint8_t lost = div5.remainder.ToUInt64() * 0x33;
-    while (!integer.BTEST(bits - 1)) {
-      integer = integer.SHIFTL(1);
-      if (lost & 0x80) {
-        integer = integer.IBSET(0);
-      }
-      lost <<= 1;
-      --binaryExponent;
-    }
-  }
-
-  RoundingBits roundingBits;
-  for (int j{0}; bits - j > precision; ++j) {
-    roundingBits.ShiftRight(integer.BTEST(0));
-    integer = integer.SHIFTR(1);
-  }
-
-  Fraction fraction{Fraction::ConvertUnsigned(integer).value};
-  while (binaryExponent < 1) {
-    if (fraction.IsZero()) {
-      binaryExponent = 0;
-      break;
-    } else {
-      ++binaryExponent;
-      roundingBits.ShiftRight(fraction.BTEST(0));
-      fraction = fraction.SHIFTR(1);
-    }
-  }
-
-  NormalizeAndRound(
-      result, isNegative, binaryExponent, fraction, rounding, roundingBits);
-  return result;
+  Decimal<Real> decimal;
+  return decimal.ToReal(p, rounding);
 }
 
 template<typename W, int P, bool IM>
@@ -553,149 +436,28 @@ std::string Real<W, P, IM>::DumpHexadecimal() const {
 
 template<typename W, int P, bool IM>
 std::ostream &Real<W, P, IM>::AsFortran(std::ostream &o, int kind) const {
-  ValueWithRealFlags<ScaledDecimal> scaled{AsScaledDecimal()};
-  if (scaled.flags.test(RealFlag::InvalidArgument)) {
+  if (IsNotANumber()) {
     o << "(0._" << kind << "/0.)";
-  } else if (scaled.flags.test(RealFlag::Overflow)) {
+  } else if (IsInfinite()) {
     if (IsNegative()) {
       o << "(-1._" << kind << "/0.)";
     } else {
       o << "(1._" << kind << "/0.)";
     }
   } else {
-    if (scaled.value.negative) {
-      o << "(-";
+    bool parenthesize{IsNegative()};
+    if (parenthesize) {
+      o << "(";
     }
-    std::string digits{scaled.value.integer.UnsignedDecimal()};
-    int exponent = scaled.value.decimalExponent + digits.size() - 1;
-    o << digits[0] << '.' << digits.substr(1);
-    if (exponent != 0) {
-      o << 'e' << exponent;
-    }
+    Decimal<Real> decimal;
+    decimal.FromReal(*this);
+    o << decimal.ToString();
     o << '_' << kind;
-    if (scaled.value.negative) {
+    if (parenthesize) {
       o << ')';
     }
   }
   return o;
-}
-
-template<typename W, int P, bool IM>
-auto Real<W, P, IM>::AsScaledDecimal(Rounding rounding) const
-    -> ValueWithRealFlags<ScaledDecimal> {
-
-  ValueWithRealFlags<ScaledDecimal> result;
-  if (IsNotANumber()) {
-    result.flags.set(RealFlag::InvalidArgument);
-    return result;
-  }
-  if (IsInfinite()) {
-    result.flags.set(RealFlag::Overflow);
-    result.value.integer = Word::HUGE();
-    return result;
-  }
-  if (IsNegative()) {
-    if (rounding == Rounding::Up) {
-      rounding = Rounding::Down;
-    } else if (rounding == Rounding::Down) {
-      rounding = Rounding::Up;
-    }
-    result = Negate().AsScaledDecimal(rounding);
-    result.value.negative = true;
-    return result;
-  }
-  if (IsZero()) {
-    return result;
-  }
-
-  Word fraction{Word::ConvertUnsigned(GetFraction()).value};
-  Word asInt{fraction.SHIFTL(bits - precision)};
-  int twoPower{UnbiasedExponent() - bits + 1};
-
-  // The original Real, a finite positive number, is now represented as a
-  // left-justified integer and a binary exponent.  In other words, asInt
-  // has its sign bit set and the value of "asInt * 2.0**twoPower" equals
-  // the original Real exactly; both asInt and twoPower are integers.
-  //
-  // To generate the scaled decimal result, we multiply or divide asInt by
-  // 2**twoPower iteratively.  Whenever the result of a multiplication or
-  // division would overflow (or lose precision, respectively), we scale
-  // asInt by dividing it by ten (or multiplying, respectively).  Since
-  // 10==2*5, the scaling is actually by a factor of five since the factor
-  // of two can be accommodated by shifting.  These scalings are recorded
-  // in a decimal exponent.  Once all of the "2.0**twoPower" scaling is
-  // done, we have a value that is represented as
-  // "asInt * 10.0**decimalExponent", and that is the penultimate result.
-
-  static constexpr Word five{5};
-  if (twoPower > 0) {
-    // Multiply asInt by 2**twoPower.
-    static constexpr Word two{2};
-    for (; twoPower > 0; --twoPower) {
-      if (asInt.BTEST(bits - 1)) {
-        // asInt * 2 would overflow:  divide by five and increment the
-        // decimal exponent (effectively dividing by ten and then multiplying
-        // by two).
-        auto qr{asInt.DivideUnsigned(five)};
-        asInt = qr.quotient;
-        ++result.value.decimalExponent;
-        if (twoPower > 1 &&
-            qr.remainder.CompareUnsigned(two) == Ordering::Greater) {
-          --twoPower;
-          asInt = asInt.SHIFTL(1).IBSET(0);
-        }
-      } else {
-        asInt = asInt.SHIFTL(1);
-      }
-    }
-  } else {
-    // Divide asInt by 2**(-twoPower).
-    std::uint32_t lower{0};
-    for (; twoPower < 0; ++twoPower) {
-      auto times5{asInt.MultiplyUnsigned(five)};
-      if (!times5.upper.IsZero()) {
-        // asInt is too big to need scaling, just shift it down.
-        lower >>= 1;
-        if (asInt.BTEST(0)) {
-          lower |= 1 << 31;
-        }
-        asInt = asInt.SHIFTR(1);
-      } else {
-        std::uint64_t lowerTimes5{lower * static_cast<std::uint64_t>(5)};
-        std::uint32_t round = lowerTimes5 >> 32;
-        auto rounded{times5.lower.AddUnsigned(Word{round})};
-        if (rounded.carry) {
-          // asInt is still too big to need scaling (rounding would overflow)
-          lower >>= 1;
-          if (asInt.BTEST(0)) {
-            lower |= 1 << 31;
-          }
-          asInt = asInt.SHIFTR(1);
-        } else {
-          // asInt is small enough to be scaled; do so.
-          --result.value.decimalExponent;
-          lower = lowerTimes5;
-          asInt = rounded.value;
-        }
-      }
-    }
-  }
-
-  // Canonicalize to the minimum integer value: the final result will not
-  // be a multiple of ten.
-  result.value.integer = asInt;
-  if (!result.value.integer.IsZero()) {
-    while (true) {
-      auto qr{result.value.integer.DivideUnsigned(10)};
-      if (!qr.remainder.IsZero()) {
-        break;
-      }
-      ++result.value.decimalExponent;
-      result.value.integer = qr.quotient;
-    }
-  }
-
-  return result;
 }
 
 template class Real<Integer<16>, 11>;

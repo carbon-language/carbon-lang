@@ -23,6 +23,9 @@
 #include <ostream>
 #include <string>
 
+#include <iostream>  // TODO pmk rm
+extern bool pmk;
+
 // Some environments, viz. clang on Darwin, allow the macro HUGE
 // to leak out of <math.h> even when it is never directly included.
 #undef HUGE
@@ -39,17 +42,17 @@ namespace Fortran::evaluate::value {
 template<typename WORD, int PRECISION, bool IMPLICIT_MSB = true> class Real {
 public:
   using Word = WORD;
+  static constexpr int bits{Word::bits};
   static constexpr int precision{PRECISION};
   using Fraction = Integer<precision>;  // all bits made explicit
-
-  static constexpr int bits{Word::bits};
   static constexpr bool implicitMSB{IMPLICIT_MSB};
   static constexpr int significandBits{precision - implicitMSB};
   static constexpr int exponentBits{bits - significandBits - 1 /*sign*/};
   static_assert(precision > 0);
   static_assert(exponentBits > 1);
-  static constexpr std::uint64_t maxExponent{(1 << exponentBits) - 1};
-  static constexpr std::uint64_t exponentBias{maxExponent / 2};
+  static_assert(exponentBits <= 16);
+  static constexpr int maxExponent{(1 << exponentBits) - 1};
+  static constexpr int exponentBias{maxExponent / 2};
 
   // Decimal precision of a binary floating-point representation is
   // actually the same as the base-5 precision, as factors of two
@@ -57,14 +60,6 @@ public:
   // log(2)/log(5) = 0.430+ in any base.
   // Calculate "precision*0.43" with integer arithmetic so as to be constexpr.
   static constexpr int decimalDigits{(precision * 43) / 100};
-
-  // Associates a decimal exponent with an integral value for formatting.
-  // TODO pmk remove
-  struct ScaledDecimal {
-    bool negative{false};
-    Word integer;  // unsigned
-    int decimalExponent{0};  // Exxx
-  };
 
   template<typename W, int P, bool I> friend class Real;
 
@@ -125,11 +120,11 @@ public:
       const Real &, Rounding rounding = defaultRounding) const;
 
   template<typename INT> constexpr INT EXPONENT() const {
-    std::uint64_t exponent{Exponent()};
+    int exponent{Exponent()};
     if (exponent == maxExponent) {
       return INT::HUGE();
     } else {
-      int result = exponent - exponentBias;
+      int result{exponent - exponentBias};
       if (IsDenormal()) {
         ++result;
       }
@@ -180,9 +175,13 @@ public:
       return {};  // all bits zero -> +0.0
     }
     ValueWithRealFlags<Real> result;
-    std::uint64_t exponent{exponentBias + absN.bits - leadz - 1};
+    int exponent{exponentBias + absN.bits - leadz - 1};
     int bitsNeeded{absN.bits - (leadz + implicitMSB)};
     int bitsLost{bitsNeeded - significandBits};
+    if (pmk)
+      std::cerr << "pmk real.h exponent " << exponent << " bitsLost "
+                << bitsLost << " rounding " << static_cast<int>(rounding)
+                << '\n';
     if (bitsLost <= 0) {
       Fraction fraction{Fraction::ConvertUnsigned(absN).value};
       result.flags |= result.value.Normalize(
@@ -190,8 +189,13 @@ public:
     } else {
       Fraction fraction{Fraction::ConvertUnsigned(absN.SHIFTR(bitsLost)).value};
       result.flags |= result.value.Normalize(isNegative, exponent, fraction);
+      if (pmk)
+        std::cerr << "pmk Normalized " << result.value.DumpHexadecimal()
+                  << '\n';
       RoundingBits roundingBits{absN, bitsLost};
       result.flags |= result.value.Round(rounding, roundingBits);
+      if (pmk)
+        std::cerr << "pmk Rounded " << result.value.DumpHexadecimal() << '\n';
     }
     return result;
   }
@@ -205,11 +209,11 @@ public:
     } else if (IsInfinite()) {
       result.flags.set(RealFlag::Overflow);
     } else {
-      std::uint64_t exponent{Exponent()};
+      int exponent{Exponent()};
       if (exponent < exponentBias) {  // |x| < 1.0
         result.value.Normalize(IsNegative(), 0, Fraction{});  // +/-0.0
       } else {
-        constexpr std::uint64_t noClipExponent{exponentBias + precision - 1};
+        constexpr int noClipExponent{exponentBias + precision - 1};
         if (int clip = noClipExponent - exponent; clip > 0) {
           result.value.word_ = result.value.word_.IAND(Word::MASKR(clip).NOT());
         }
@@ -226,7 +230,7 @@ public:
       return result;
     }
     bool isNegative{IsNegative()};
-    std::uint64_t exponent{Exponent()};
+    int exponent{Exponent()};
     Fraction fraction{GetFraction()};
     if (exponent >= maxExponent ||  // +/-Inf
         exponent >= exponentBias + result.value.bits) {  // too big
@@ -243,7 +247,7 @@ public:
       }
     } else {
       // finite number |x| >= 1.0
-      constexpr std::uint64_t noShiftExponent{exponentBias + precision - 1};
+      constexpr int noShiftExponent{exponentBias + precision - 1};
       if (exponent < noShiftExponent) {
         int rshift = noShiftExponent - exponent;
         if (!fraction.IBITS(0, rshift).IsZero()) {
@@ -288,7 +292,7 @@ public:
       absX = x.Negate();
     }
     ValueWithRealFlags<Real> result;
-    std::uint64_t exponent{exponentBias + x.Exponent() - A::exponentBias};
+    int exponent{exponentBias + x.Exponent() - A::exponentBias};
     int bitsLost{A::precision - precision};
     typename A::Fraction xFraction{x.GetFraction()};
     if (bitsLost <= 0) {
@@ -304,15 +308,26 @@ public:
     return result;
   }
 
-  // Represents the number as "J*(10**K)" where J and K are integers.
-  ValueWithRealFlags<ScaledDecimal> AsScaledDecimal(
-      Rounding rounding = defaultRounding) const;
-
   constexpr Word RawBits() const { return word_; }
 
   // Extracts "raw" biased exponent field.
-  constexpr std::uint64_t Exponent() const {
+  constexpr int Exponent() const {
     return word_.IBITS(significandBits, exponentBits).ToUInt64();
+  }
+
+  // Extracts the fraction; any implied bit is made explicit.
+  constexpr Fraction GetFraction() const {
+    Fraction result{Fraction::ConvertUnsigned(word_).value};
+    if constexpr (!implicitMSB) {
+      return result;
+    } else {
+      int exponent{Exponent()};
+      if (exponent > 0 && exponent < maxExponent) {
+        return result.IBSET(significandBits);
+      } else {
+        return result.IBCLR(significandBits);
+      }
+    }
   }
 
   // Extracts unbiased exponent value.
@@ -323,21 +338,6 @@ public:
       ++exponent;
     }
     return exponent;
-  }
-
-  // Extracts the fraction; any implied bit is made explicit.
-  constexpr Fraction GetFraction() const {
-    Fraction result{Fraction::ConvertUnsigned(word_).value};
-    if constexpr (!implicitMSB) {
-      return result;
-    } else {
-      std::uint64_t exponent{Exponent()};
-      if (exponent > 0 && exponent < maxExponent) {
-        return result.IBSET(significandBits);
-      } else {
-        return result.IBCLR(significandBits);
-      }
-    }
   }
 
   static ValueWithRealFlags<Real> Read(
@@ -355,8 +355,8 @@ private:
     return Significand::ConvertUnsigned(word_).value;
   }
 
-  constexpr std::int64_t CombineExponents(const Real &y, bool forDivide) const {
-    std::int64_t exponent = Exponent(), yExponent = y.Exponent();
+  constexpr int CombineExponents(const Real &y, bool forDivide) const {
+    int exponent = Exponent(), yExponent = y.Exponent();
     // A zero exponent field value has the same weight as 1.
     exponent += !exponent;
     yExponent += !yExponent;
@@ -384,16 +384,16 @@ private:
   // The value is a number, and a zero fraction means a zero value (i.e.,
   // a maximal exponent and zero fraction doesn't signify infinity, although
   // this member function will detect overflow and encode infinities).
-  RealFlags Normalize(bool negative, std::uint64_t exponent,
-      const Fraction &fraction, Rounding rounding = defaultRounding,
+  RealFlags Normalize(bool negative, int exponent, const Fraction &fraction,
+      Rounding rounding = defaultRounding,
       RoundingBits *roundingBits = nullptr);
 
   // Rounds a result, if necessary, in place.
   RealFlags Round(Rounding, const RoundingBits &, bool multiply = false);
 
   static void NormalizeAndRound(ValueWithRealFlags<Real> &result,
-      bool isNegative, std::uint64_t exponent, const Fraction &, Rounding,
-      RoundingBits, bool multiply = false);
+      bool isNegative, int exponent, const Fraction &, Rounding, RoundingBits,
+      bool multiply = false);
 
   Word word_{};  // an Integer<>
 };

@@ -18,6 +18,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <sstream>
 #include <type_traits>
 
 using namespace Fortran::evaluate;
@@ -228,6 +229,12 @@ inline bool IsInfinite(std::uint64_t x) {
   return (x & 0x7fffffffffffffff) == 0x7ff0000000000000;
 }
 
+inline bool IsNegative(std::uint32_t x) { return (x & 0x80000000) != 0; }
+
+inline bool IsNegative(std::uint64_t x) {
+  return (x & 0x8000000000000000) != 0;
+}
+
 inline std::uint32_t NormalizeNaN(std::uint32_t x) {
   if (IsNaN(x)) {
     x = 0x7fe00000;
@@ -386,28 +393,37 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
       MATCH(IsInfinite(rj), x.IsInfinite())
       ("%d IsInfinite(0x%llx)", pass, static_cast<long long>(rj));
 
-      if (rounding == Rounding::TiesToEven) {
-        auto scaled{x.AsScaledDecimal()};
+      if (rounding == Rounding::TiesToEven ||
+          rounding == Rounding::ToZero) {  // pmk
+        int kind{REAL::bits / 8};
+        std::stringstream ss, css;
+        x.AsFortran(ss, kind);
+        std::string s{ss.str()};
         if (IsNaN(rj)) {
-          TEST(scaled.flags.test(RealFlag::InvalidArgument))
+          css << "(0._" << kind << "/0.)";
+          MATCH(css.str(), s)
           ("%d invalid(0x%llx)", pass, static_cast<long long>(rj));
         } else if (IsInfinite(rj)) {
-          TEST(scaled.flags.test(RealFlag::Overflow))
+          css << '(';
+          if (IsNegative(rj)) {
+            css << '-';
+          }
+          css << "1._" << kind << "/0.)";
+          MATCH(css.str(), s)
           ("%d overflow(0x%llx)", pass, static_cast<long long>(rj));
         } else {
-          auto integer{scaled.value.integer.ToUInt64()};
-          MATCH(x.IsNegative(), scaled.value.negative)
-          ("%d IsNegative(0x%llx)", pass, static_cast<long long>(rj));
-          char buffer[128];
-          const char *p = buffer;
-          snprintf(buffer, sizeof buffer, "%c%llu.0E%d",
-              "+-"[scaled.value.negative],
-              static_cast<unsigned long long>(integer),
-              scaled.value.decimalExponent);
+          const char *p = s.data();
+          if (*p == '(') {
+            ++p;
+          }
           auto readBack{REAL::Read(p, rounding)};
           MATCH(rj, readBack.value.RawBits().ToUInt64())
-          ("%d scaled decimal 0x%llx %s", pass, static_cast<long long>(rj),
-              buffer);
+          ("%d Read(AsFortran()) 0x%llx %s %g", pass,
+              static_cast<long long>(rj), s.data(), static_cast<double>(fj));
+          MATCH('_', *p)
+          ("%d Read(AsFortran()) 0x%llx %s %d", pass,
+              static_cast<long long>(rj), s.data(),
+              static_cast<int>(p - s.data()));
         }
       }
     }

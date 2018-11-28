@@ -15,6 +15,8 @@
 #ifndef FORTRAN_EVALUATE_DECIMAL_H_
 #define FORTRAN_EVALUATE_DECIMAL_H_
 
+#include "common.h"
+#include "integer.h"
 #include "real.h"
 #include <cinttypes>
 #include <limits>
@@ -62,8 +64,15 @@ public:
     first_ = 0;
     exponent_ = 0;
   }
+
   void FromReal(const Real &);
-  Real ToReal(const char *&);  // arg left pointing to first unparsed char
+
+  // Convert a character representation of a floating-point value to
+  // the underlying Real type.  The reference argument is a pointer that
+  // is left pointing to the first character that wasn't included.
+  ValueWithRealFlags<Real> ToReal(
+      const char *&, Rounding rounding = Rounding::TiesToEven);
+
   std::string ToString(int maxDigits = 1000000) const;
 
 private:
@@ -92,15 +101,23 @@ private:
       ++exponent_;
       n = qr.quotient;
     }
-    while (!n.IsZero() && digits_ < digitLimit_) {
-      auto qr{n.DivideUnsigned(quintillion)};
-      digit_[digits_++] = qr.remainder.ToUInt64();
-      if (digits_ == first_ + 1 && digit_[first_] == 0) {
-        ++first_;
+    if constexpr (INT::bits < 60) {
+      // n is necessarily less than a quintillion
+      if (!n.IsZero()) {
+        digit_[digits_++] = n.ToUInt64();
       }
-      n = qr.quotient;
+      return 0;
+    } else {
+      while (!n.IsZero() && digits_ < digitLimit_) {
+        auto qr{n.DivideUnsigned(quintillion)};
+        digit_[digits_++] = qr.remainder.ToUInt64();
+        if (digits_ == first_ + 1 && digit_[first_] == 0) {
+          ++first_;
+        }
+        n = qr.quotient;
+      }
+      return n;
     }
-    return n;
   }
 
   int RemoveLeastOrderZeroDigits() {
