@@ -67,10 +67,7 @@ class Pipeline {
 public:
   Pipeline() : Cycles(0) {}
   void appendStage(std::unique_ptr<Stage> S);
-
-  /// Returns the total number of simulated cycles.
-  Expected<unsigned> run();
-
+  Error run();
   void addEventListener(HWEventListener *Listener);
 };
 } // namespace mca

@@ -240,9 +240,8 @@ static void processViewOptions() {
 // Returns true on success.
 static bool runPipeline(mca::Pipeline &P) {
   // Handle pipeline errors here.
-  Expected<unsigned> Cycles = P.run();
-  if (!Cycles) {
-    WithColor::error() << toString(Cycles.takeError());
+  if (auto Err = P.run()) {
+    WithColor::error() << toString(std::move(Err));
     return false;
   }
   return true;
