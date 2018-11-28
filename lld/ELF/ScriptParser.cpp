@@ -406,7 +406,7 @@ std::tuple<ELFKind, uint16_t, bool> ScriptParser::readBfdName() {
   if (S == "elf32-tradbigmips")
     return std::make_tuple(ELF32BEKind, EM_MIPS, false);
   if (S == "elf32-ntradbigmips")
-    return std::make_tuple(LF32BEKind, EM_MIPS, true);
+    return std::make_tuple(ELF32BEKind, EM_MIPS, true);
   if (S == "elf32-tradlittlemips")
     return std::make_tuple(ELF32LEKind, EM_MIPS, false);
   if (S == "elf32-ntradlittlemips")
