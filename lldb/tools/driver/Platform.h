@@ -12,7 +12,6 @@
 
 #if defined(_WIN32)
 
-#include "lldb/Host/HostGetOpt.h"
 #include <io.h>
 #if defined(_MSC_VER)
 #include <signal.h>
@@ -74,7 +73,6 @@ extern int tcsetattr(int fd, int optional_actions,
 extern int tcgetattr(int fildes, struct termios *termios_p);
 
 #else
-#include "lldb/Host/HostGetOpt.h"
 #include <inttypes.h>
 
 #include <libgen.h>
