@@ -16,11 +16,21 @@
 using namespace llvm;
 using namespace llvm::MachO;
 
-using ExportedSymbol = std::tuple<SymbolKind, std::string, bool, bool>;
+struct ExportedSymbol {
+  SymbolKind Kind;
+  std::string Name;
+  bool WeakDefined;
+  bool ThreadLocalValue;
+};
 using ExportedSymbolSeq = std::vector<ExportedSymbol>;
 
 inline bool operator<(const ExportedSymbol &lhs, const ExportedSymbol &rhs) {
-  return std::get<1>(lhs) < std::get<1>(rhs);
+  return std::tie(lhs.Kind, lhs.Name) < std::tie(rhs.Kind, rhs.Name);
+}
+
+inline bool operator==(const ExportedSymbol &lhs, const ExportedSymbol &rhs) {
+  return std::tie(lhs.Kind, lhs.Name, lhs.WeakDefined, lhs.ThreadLocalValue) ==
+         std::tie(rhs.Kind, rhs.Name, rhs.WeakDefined, rhs.ThreadLocalValue);
 }
 
 static ExportedSymbol TBDv2Symbols[] = {
@@ -102,8 +112,9 @@ TEST(TBDv2, ReadFile) {
   for (const auto *Sym : File->symbols()) {
     EXPECT_FALSE(Sym->isWeakReferenced());
     EXPECT_FALSE(Sym->isUndefined());
-    Exports.emplace_back(Sym->getKind(), Sym->getName(), Sym->isWeakDefined(),
-                         Sym->isThreadLocalValue());
+    Exports.emplace_back(ExportedSymbol{Sym->getKind(), Sym->getName(),
+                                        Sym->isWeakDefined(),
+                                        Sym->isThreadLocalValue()});
   }
   llvm::sort(Exports.begin(), Exports.end());
 
