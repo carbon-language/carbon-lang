@@ -293,9 +293,6 @@ public:
                    const SIRegisterInfo *TRI, const MachineRegisterInfo *MRI,
                    unsigned OpNo, int32_t Val);
 
-  void setWaitAtBeginning() { WaitAtBeginning = true; }
-  void clearWaitAtBeginning() { WaitAtBeginning = false; }
-  bool getWaitAtBeginning() const { return WaitAtBeginning; }
   int32_t getMaxVGPR() const { return VgprUB; }
   int32_t getMaxSGPR() const { return SgprUB; }
 
@@ -343,7 +340,6 @@ public:
 
 private:
   const GCNSubtarget *ST = nullptr;
-  bool WaitAtBeginning = false;
   bool RevisitLoop = false;
   int32_t PostOrder = 0;
   int32_t ScoreLBs[NUM_INST_CNTS] = {0};
@@ -867,18 +863,9 @@ void SIInsertWaitcnts::generateWaitcntInstBefore(
 
   AMDGPU::Waitcnt Wait;
 
-  // See if an s_waitcnt is forced at block entry, or is needed at
-  // program end.
-  if (ScoreBrackets->getWaitAtBeginning()) {
-    // Note that we have already cleared the state, so we don't need to update
-    // it.
-    ScoreBrackets->clearWaitAtBeginning();
-    Wait = AMDGPU::Waitcnt::allZero();
-  }
-
   // See if this instruction has a forced S_WAITCNT VM.
   // TODO: Handle other cases of NeedsWaitcntVmBefore()
-  else if (MI.getOpcode() == AMDGPU::BUFFER_WBINVL1 ||
+  if (MI.getOpcode() == AMDGPU::BUFFER_WBINVL1 ||
            MI.getOpcode() == AMDGPU::BUFFER_WBINVL1_SC ||
            MI.getOpcode() == AMDGPU::BUFFER_WBINVL1_VOL) {
     Wait.VmCnt = 0;
@@ -1274,9 +1261,8 @@ void SIInsertWaitcnts::mergeInputScoreBrackets(MachineBasicBlock &Block) {
     BlockWaitcntBrackets *PredScoreBrackets =
         BlockWaitcntBracketsMap[Pred].get();
     bool Visited = BlockVisitedSet.count(Pred);
-    if (!Visited || PredScoreBrackets->getWaitAtBeginning()) {
+    if (!Visited)
       continue;
-    }
     for (auto T : inst_counter_types()) {
       int span =
           PredScoreBrackets->getScoreUB(T) - PredScoreBrackets->getScoreLB(T);
@@ -1286,17 +1272,6 @@ void SIInsertWaitcnts::mergeInputScoreBrackets(MachineBasicBlock &Block) {
       MaxFlat[T] = std::max(MaxFlat[T], span);
     }
   }
-
-#if 0
-  // LC does not (unlike) add a waitcnt at beginning. Leaving it as marker.
-  // TODO: how does LC distinguish between function entry and main entry?
-  // If this is the entry to a function, force a wait.
-  MachineBasicBlock &Entry = Block.getParent()->front();
-  if (Entry.getNumber() == Block.getNumber()) {
-    ScoreBrackets->setWaitAtBeginning();
-    return;
-  }
-#endif
 
   // Now set the current Block's brackets to the largest ending bracket.
   for (auto T : inst_counter_types()) {
