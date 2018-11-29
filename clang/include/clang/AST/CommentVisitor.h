@@ -23,10 +23,10 @@ template<template <typename> class Ptr, typename ImplClass, typename RetTy=void>
 class CommentVisitorBase {
 public:
 #define PTR(CLASS) typename Ptr<CLASS>::type
-#define DISPATCH(NAME, CLASS) \
- return static_cast<ImplClass*>(this)->visit ## NAME(static_cast<PTR(CLASS)>(C))
+#define DISPATCH(NAME, CLASS)                                                  \
+  return static_cast<ImplClass *>(this)->Visit##NAME(static_cast<PTR(CLASS)>(C))
 
-  RetTy visit(PTR(Comment) C) {
+  RetTy Visit(PTR(Comment) C) {
     if (!C)
       return RetTy();
 
@@ -44,13 +44,13 @@ public:
   // If the derived class does not implement a certain Visit* method, fall back
   // on Visit* method for the superclass.
 #define ABSTRACT_COMMENT(COMMENT) COMMENT
-#define COMMENT(CLASS, PARENT) \
-  RetTy visit ## CLASS(PTR(CLASS) C) { DISPATCH(PARENT, PARENT); }
+#define COMMENT(CLASS, PARENT)                                                 \
+  RetTy Visit##CLASS(PTR(CLASS) C) { DISPATCH(PARENT, PARENT); }
 #include "clang/AST/CommentNodes.inc"
 #undef ABSTRACT_COMMENT
 #undef COMMENT
 
-  RetTy visitComment(PTR(Comment) C) { return RetTy(); }
+  RetTy VisitComment(PTR(Comment) C) { return RetTy(); }
 
 #undef PTR
 #undef DISPATCH
