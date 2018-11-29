@@ -326,7 +326,6 @@ protected:
   bool EnableUnsafeDSOffsetFolding;
   bool EnableSIScheduler;
   bool EnableDS128;
-  bool EnablePRTStrictNull;
   bool DumpCode;
 
   // Subtarget statically properties set by tablegen
@@ -575,12 +574,6 @@ public:
   /// buffer resources used for private memory access.
   bool privateMemoryResourceIsRangeChecked() const {
     return getGeneration() < AMDGPUSubtarget::GFX9;
-  }
-
-  /// \returns If target requires PRT Struct NULL support (zero result registers
-  /// for sparse texture support).
-  bool usePRTStrictNull() const {
-    return EnablePRTStrictNull;
   }
 
   bool hasAutoWaitcntBeforeBarrier() const {
