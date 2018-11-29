@@ -13,6 +13,14 @@
 /// Memory reads and writes are issued asynchronously, so we need to insert
 /// S_WAITCNT instructions when we want to access any of their results or
 /// overwrite any register that's used asynchronously.
+///
+/// TODO: This pass currently keeps one timeline per hardware counter. A more
+/// finely-grained approach that keeps one timeline per event type could
+/// sometimes get away with generating weaker s_waitcnt instructions. For
+/// example, when both SMEM and LDS are in flight and we need to wait for
+/// the i-th-last LDS instruction, then an lgkmcnt(i) is actually sufficient,
+/// but the pass will currently generate a conservative lgkmcnt(0) because
+/// multiple event types are in flight.
 //
 //===----------------------------------------------------------------------===//
 
@@ -132,10 +140,13 @@ enum WaitEventType {
   NUM_WAIT_EVENTS,
 };
 
-iterator_range<enum_iterator<WaitEventType>> wait_event_types() {
-  return make_range(enum_iterator<WaitEventType>(VMEM_ACCESS),
-                    enum_iterator<WaitEventType>(NUM_WAIT_EVENTS));
-}
+static const uint32_t WaitEventMaskForInst[NUM_INST_CNTS] = {
+  (1 << VMEM_ACCESS),
+  (1 << SMEM_ACCESS) | (1 << LDS_ACCESS) | (1 << GDS_ACCESS) |
+      (1 << SQ_MESSAGE),
+  (1 << EXP_GPR_LOCK) | (1 << GDS_GPR_LOCK) | (1 << VMW_GPR_LOCK) |
+      (1 << EXP_PARAM_ACCESS) | (1 << EXP_POS_ACCESS),
+};
 
 // The mapping is:
 //  0                .. SQ_MAX_PGM_VGPRS-1               real VGPRs
@@ -232,24 +243,12 @@ public:
 
   // Mapping from event to counter.
   InstCounterType eventCounter(WaitEventType E) {
-    switch (E) {
-    case VMEM_ACCESS:
+    if (E == VMEM_ACCESS)
       return VM_CNT;
-    case LDS_ACCESS:
-    case GDS_ACCESS:
-    case SQ_MESSAGE:
-    case SMEM_ACCESS:
+    if (WaitEventMaskForInst[LGKM_CNT] & (1 << E))
       return LGKM_CNT;
-    case EXP_GPR_LOCK:
-    case GDS_GPR_LOCK:
-    case VMW_GPR_LOCK:
-    case EXP_POS_ACCESS:
-    case EXP_PARAM_ACCESS:
-      return EXP_CNT;
-    default:
-      llvm_unreachable("unhandled event type");
-    }
-    return NUM_INST_CNTS;
+    assert(WaitEventMaskForInst[EXP_CNT] & (1 << E));
+    return EXP_CNT;
   }
 
   void setRegScore(int GprNo, InstCounterType T, int32_t Val) {
@@ -278,7 +277,8 @@ public:
   void clear() {
     memset(ScoreLBs, 0, sizeof(ScoreLBs));
     memset(ScoreUBs, 0, sizeof(ScoreUBs));
-    memset(EventUBs, 0, sizeof(EventUBs));
+    PendingEvents = 0;
+    memset(MixedPendingEvents, 0, sizeof(MixedPendingEvents));
     for (auto T : inst_counter_types())
       memset(VgprScores[T], 0, sizeof(VgprScores[T]));
     memset(SgprScores, 0, sizeof(SgprScores));
@@ -296,14 +296,8 @@ public:
   void setWaitAtBeginning() { WaitAtBeginning = true; }
   void clearWaitAtBeginning() { WaitAtBeginning = false; }
   bool getWaitAtBeginning() const { return WaitAtBeginning; }
-  void setEventUB(enum WaitEventType W, int32_t Val) { EventUBs[W] = Val; }
   int32_t getMaxVGPR() const { return VgprUB; }
   int32_t getMaxSGPR() const { return SgprUB; }
-
-  int32_t getEventUB(enum WaitEventType W) const {
-    assert(W < NUM_WAIT_EVENTS);
-    return EventUBs[W];
-  }
 
   bool counterOutOfOrder(InstCounterType T) const;
   bool simplifyWaitcnt(AMDGPU::Waitcnt &Wait) const;
@@ -316,10 +310,11 @@ public:
                      const MachineRegisterInfo *MRI, WaitEventType E,
                      MachineInstr &MI);
 
-  bool hasPendingSMEM() const {
-    return (EventUBs[SMEM_ACCESS] > ScoreLBs[LGKM_CNT] &&
-            EventUBs[SMEM_ACCESS] <= ScoreUBs[LGKM_CNT]);
+  bool hasPendingEvent(WaitEventType E) const {
+    return PendingEvents & (1 << E);
   }
+
+  void mergePendingEvents(const BlockWaitcntBrackets &Other);
 
   bool hasPendingFlat() const {
     return ((LastFlat[LGKM_CNT] > ScoreLBs[LGKM_CNT] &&
@@ -343,11 +338,6 @@ public:
   void setPostOrder(int32_t PostOrderIn) { PostOrder = PostOrderIn; }
   int32_t getPostOrder() const { return PostOrder; }
 
-  bool mixedExpTypes() const { return MixedExpTypes; }
-  void setMixedExpTypes(bool MixedExpTypesIn) {
-    MixedExpTypes = MixedExpTypesIn;
-  }
-
   void print(raw_ostream &);
   void dump() { print(dbgs()); }
 
@@ -355,11 +345,11 @@ private:
   const GCNSubtarget *ST = nullptr;
   bool WaitAtBeginning = false;
   bool RevisitLoop = false;
-  bool MixedExpTypes = false;
   int32_t PostOrder = 0;
   int32_t ScoreLBs[NUM_INST_CNTS] = {0};
   int32_t ScoreUBs[NUM_INST_CNTS] = {0};
-  int32_t EventUBs[NUM_WAIT_EVENTS] = {0};
+  uint32_t PendingEvents = 0;
+  bool MixedPendingEvents[NUM_INST_CNTS] = {false};
   // Remember the last flat memory operation.
   int32_t LastFlat[NUM_INST_CNTS] = {0};
   // wait_cnt scores for every vgpr.
@@ -559,19 +549,17 @@ void BlockWaitcntBrackets::updateByEvent(const SIInstrInfo *TII,
   const MachineRegisterInfo &MRIA = *MRI;
   InstCounterType T = eventCounter(E);
   int32_t CurrScore = getScoreUB(T) + 1;
-  // EventUB and ScoreUB need to be update regardless if this event changes
-  // the score of a register or not.
+  // PendingEvents and ScoreUB need to be update regardless if this event
+  // changes the score of a register or not.
   // Examples including vm_cnt when buffer-store or lgkm_cnt when send-message.
-  EventUBs[E] = CurrScore;
+  if (!hasPendingEvent(E)) {
+    if (PendingEvents & WaitEventMaskForInst[T])
+      MixedPendingEvents[T] = true;
+    PendingEvents |= 1 << E;
+  }
   setScoreUB(T, CurrScore);
 
   if (T == EXP_CNT) {
-    // Check for mixed export types. If they are mixed, then a waitcnt exp(0)
-    // is required.
-    if (!MixedExpTypes) {
-      MixedExpTypes = counterOutOfOrder(EXP_CNT);
-    }
-
     // Put score on the source vgprs. If this is a store, just use those
     // specific register(s).
     if (TII->isDS(Inst) && (Inst.mayStore() || Inst.mayLoad())) {
@@ -803,9 +791,6 @@ void BlockWaitcntBrackets::applyWaitcnt(const AMDGPU::Waitcnt &Wait) {
   applyWaitcnt(VM_CNT, Wait.VmCnt);
   applyWaitcnt(EXP_CNT, Wait.ExpCnt);
   applyWaitcnt(LGKM_CNT, Wait.LgkmCnt);
-
-  if (Wait.ExpCnt == 0)
-    setMixedExpTypes(false);
 }
 
 void BlockWaitcntBrackets::applyWaitcnt(InstCounterType T, unsigned Count) {
@@ -818,76 +803,28 @@ void BlockWaitcntBrackets::applyWaitcnt(InstCounterType T, unsigned Count) {
     setScoreLB(T, std::max(getScoreLB(T), UB - (int32_t)Count));
   } else {
     setScoreLB(T, UB);
+    MixedPendingEvents[T] = false;
+    PendingEvents &= ~WaitEventMaskForInst[T];
+  }
+}
+
+void BlockWaitcntBrackets::mergePendingEvents(const BlockWaitcntBrackets &Other) {
+  for (auto T : inst_counter_types()) {
+    uint32_t Old = PendingEvents & WaitEventMaskForInst[T];
+    uint32_t New = Other.PendingEvents & WaitEventMaskForInst[T];
+    if (Other.MixedPendingEvents[T] || (Old && New && Old != New))
+      MixedPendingEvents[T] = true;
+    PendingEvents |= New;
   }
 }
 
 // Where there are multiple types of event in the bracket of a counter,
 // the decrement may go out of order.
 bool BlockWaitcntBrackets::counterOutOfOrder(InstCounterType T) const {
-  switch (T) {
-  case VM_CNT:
-    return false;
-  case LGKM_CNT: {
-    if (EventUBs[SMEM_ACCESS] > ScoreLBs[LGKM_CNT] &&
-        EventUBs[SMEM_ACCESS] <= ScoreUBs[LGKM_CNT]) {
-      // Scalar memory read always can go out of order.
-      return true;
-    }
-    int NumEventTypes = 0;
-    if (EventUBs[LDS_ACCESS] > ScoreLBs[LGKM_CNT] &&
-        EventUBs[LDS_ACCESS] <= ScoreUBs[LGKM_CNT]) {
-      NumEventTypes++;
-    }
-    if (EventUBs[GDS_ACCESS] > ScoreLBs[LGKM_CNT] &&
-        EventUBs[GDS_ACCESS] <= ScoreUBs[LGKM_CNT]) {
-      NumEventTypes++;
-    }
-    if (EventUBs[SQ_MESSAGE] > ScoreLBs[LGKM_CNT] &&
-        EventUBs[SQ_MESSAGE] <= ScoreUBs[LGKM_CNT]) {
-      NumEventTypes++;
-    }
-    if (NumEventTypes <= 1) {
-      return false;
-    }
-    break;
-  }
-  case EXP_CNT: {
-    // If there has been a mixture of export types, then a waitcnt exp(0) is
-    // required.
-    if (MixedExpTypes)
-      return true;
-    int NumEventTypes = 0;
-    if (EventUBs[EXP_GPR_LOCK] > ScoreLBs[EXP_CNT] &&
-        EventUBs[EXP_GPR_LOCK] <= ScoreUBs[EXP_CNT]) {
-      NumEventTypes++;
-    }
-    if (EventUBs[GDS_GPR_LOCK] > ScoreLBs[EXP_CNT] &&
-        EventUBs[GDS_GPR_LOCK] <= ScoreUBs[EXP_CNT]) {
-      NumEventTypes++;
-    }
-    if (EventUBs[VMW_GPR_LOCK] > ScoreLBs[EXP_CNT] &&
-        EventUBs[VMW_GPR_LOCK] <= ScoreUBs[EXP_CNT]) {
-      NumEventTypes++;
-    }
-    if (EventUBs[EXP_PARAM_ACCESS] > ScoreLBs[EXP_CNT] &&
-        EventUBs[EXP_PARAM_ACCESS] <= ScoreUBs[EXP_CNT]) {
-      NumEventTypes++;
-    }
-
-    if (EventUBs[EXP_POS_ACCESS] > ScoreLBs[EXP_CNT] &&
-        EventUBs[EXP_POS_ACCESS] <= ScoreUBs[EXP_CNT]) {
-      NumEventTypes++;
-    }
-
-    if (NumEventTypes <= 1) {
-      return false;
-    }
-    break;
-  }
-  default:
-    break;
-  }
-  return true;
+  // Scalar memory read always can go out of order.
+  if (T == LGKM_CNT && hasPendingEvent(SMEM_ACCESS))
+    return true;
+  return MixedPendingEvents[T];
 }
 
 INITIALIZE_PASS_BEGIN(SIInsertWaitcnts, DEBUG_TYPE, "SI Insert Waitcnts", false,
@@ -1023,14 +960,12 @@ void SIInsertWaitcnts::generateWaitcntInstBefore(
     if (MI.modifiesRegister(AMDGPU::EXEC, TRI)) {
       // Export and GDS are tracked individually, either may trigger a waitcnt
       // for EXEC.
-      ScoreBrackets->determineWait(
-          EXP_CNT, ScoreBrackets->getEventUB(EXP_GPR_LOCK), Wait);
-      ScoreBrackets->determineWait(
-          EXP_CNT, ScoreBrackets->getEventUB(EXP_PARAM_ACCESS), Wait);
-      ScoreBrackets->determineWait(
-          EXP_CNT, ScoreBrackets->getEventUB(EXP_POS_ACCESS), Wait);
-      ScoreBrackets->determineWait(
-          EXP_CNT, ScoreBrackets->getEventUB(GDS_GPR_LOCK), Wait);
+      if (ScoreBrackets->hasPendingEvent(EXP_GPR_LOCK) ||
+          ScoreBrackets->hasPendingEvent(EXP_PARAM_ACCESS) ||
+          ScoreBrackets->hasPendingEvent(EXP_POS_ACCESS) ||
+          ScoreBrackets->hasPendingEvent(GDS_GPR_LOCK)) {
+        Wait.ExpCnt = 0;
+      }
     }
 
 #if 0 // TODO: the following code to handle CALL.
@@ -1135,7 +1070,7 @@ void SIInsertWaitcnts::generateWaitcntInstBefore(
   if (readsVCCZ(MI) && ST->getGeneration() <= AMDGPUSubtarget::SEA_ISLANDS) {
     if (ScoreBrackets->getScoreLB(LGKM_CNT) <
             ScoreBrackets->getScoreUB(LGKM_CNT) &&
-        ScoreBrackets->hasPendingSMEM()) {
+        ScoreBrackets->hasPendingEvent(SMEM_ACCESS)) {
       Wait.LgkmCnt = 0;
     }
   }
@@ -1315,7 +1250,6 @@ void SIInsertWaitcnts::mergeInputScoreBrackets(MachineBasicBlock &Block) {
   BlockWaitcntBrackets *ScoreBrackets = BlockWaitcntBracketsMap[&Block].get();
   int32_t MaxPending[NUM_INST_CNTS] = {0};
   int32_t MaxFlat[NUM_INST_CNTS] = {0};
-  bool MixedExpTypes = false;
 
   // For single basic block loops, we need to retain the Block's
   // score bracket to have accurate Pred info. So, make a copy of Block's
@@ -1351,25 +1285,6 @@ void SIInsertWaitcnts::mergeInputScoreBrackets(MachineBasicBlock &Block) {
           PredScoreBrackets->pendingFlat(T) - PredScoreBrackets->getScoreLB(T);
       MaxFlat[T] = std::max(MaxFlat[T], span);
     }
-
-    MixedExpTypes |= PredScoreBrackets->mixedExpTypes();
-  }
-
-  // Special handling for GDS_GPR_LOCK and EXP_GPR_LOCK.
-  for (MachineBasicBlock *Pred : Block.predecessors()) {
-    BlockWaitcntBrackets *PredScoreBrackets =
-        BlockWaitcntBracketsMap[Pred].get();
-    bool Visited = BlockVisitedSet.count(Pred);
-    if (!Visited || PredScoreBrackets->getWaitAtBeginning()) {
-      continue;
-    }
-
-    int GDSSpan = PredScoreBrackets->getEventUB(GDS_GPR_LOCK) -
-                  PredScoreBrackets->getScoreLB(EXP_CNT);
-    MaxPending[EXP_CNT] = std::max(MaxPending[EXP_CNT], GDSSpan);
-    int EXPSpan = PredScoreBrackets->getEventUB(EXP_GPR_LOCK) -
-                  PredScoreBrackets->getScoreLB(EXP_CNT);
-    MaxPending[EXP_CNT] = std::max(MaxPending[EXP_CNT], EXPSpan);
   }
 
 #if 0
@@ -1389,8 +1304,6 @@ void SIInsertWaitcnts::mergeInputScoreBrackets(MachineBasicBlock &Block) {
     ScoreBrackets->setScoreLB(T, 0);
     ScoreBrackets->setLastFlat(T, MaxFlat[T]);
   }
-
-  ScoreBrackets->setMixedExpTypes(MixedExpTypes);
 
   // Set the register scoreboard.
   for (MachineBasicBlock *Pred : Block.predecessors()) {
@@ -1434,52 +1347,7 @@ void SIInsertWaitcnts::mergeInputScoreBrackets(MachineBasicBlock &Block) {
       }
     }
 
-    // Also merge the WaitEvent information.
-    for (auto W : wait_event_types()) {
-      enum InstCounterType T = PredScoreBrackets->eventCounter(W);
-      int PredEventUB = PredScoreBrackets->getEventUB(W);
-      if (PredEventUB > PredScoreBrackets->getScoreLB(T)) {
-        int NewEventUB =
-            MaxPending[T] + PredEventUB - PredScoreBrackets->getScoreUB(T);
-        if (NewEventUB > 0) {
-          ScoreBrackets->setEventUB(
-              W, std::max(ScoreBrackets->getEventUB(W), NewEventUB));
-        }
-      }
-    }
-  }
-
-  // Special case handling of GDS_GPR_LOCK and EXP_GPR_LOCK. Merge this for the
-  // sequencing predecessors, because changes to EXEC require waitcnts due to
-  // the delayed nature of these operations.
-  for (MachineBasicBlock *Pred : Block.predecessors()) {
-    if (!BlockVisitedSet.count(Pred)) {
-      continue;
-    }
-
-    BlockWaitcntBrackets *PredScoreBrackets =
-        BlockWaitcntBracketsMap[Pred].get();
-
-    int pred_gds_ub = PredScoreBrackets->getEventUB(GDS_GPR_LOCK);
-    if (pred_gds_ub > PredScoreBrackets->getScoreLB(EXP_CNT)) {
-      int new_gds_ub = MaxPending[EXP_CNT] + pred_gds_ub -
-                       PredScoreBrackets->getScoreUB(EXP_CNT);
-      if (new_gds_ub > 0) {
-        ScoreBrackets->setEventUB(
-            GDS_GPR_LOCK,
-            std::max(ScoreBrackets->getEventUB(GDS_GPR_LOCK), new_gds_ub));
-      }
-    }
-    int pred_exp_ub = PredScoreBrackets->getEventUB(EXP_GPR_LOCK);
-    if (pred_exp_ub > PredScoreBrackets->getScoreLB(EXP_CNT)) {
-      int new_exp_ub = MaxPending[EXP_CNT] + pred_exp_ub -
-                       PredScoreBrackets->getScoreUB(EXP_CNT);
-      if (new_exp_ub > 0) {
-        ScoreBrackets->setEventUB(
-            EXP_GPR_LOCK,
-            std::max(ScoreBrackets->getEventUB(EXP_GPR_LOCK), new_exp_ub));
-      }
-    }
+    ScoreBrackets->mergePendingEvents(*PredScoreBrackets);
   }
 
   // if a single block loop, update the score brackets. Not needed for other
@@ -1562,7 +1430,7 @@ void SIInsertWaitcnts::insertWaitcntInBlock(MachineFunction &MF,
         (!VCCZBugHandledSet.count(&Inst))) {
       if (ScoreBrackets->getScoreLB(LGKM_CNT) <
               ScoreBrackets->getScoreUB(LGKM_CNT) &&
-          ScoreBrackets->hasPendingSMEM()) {
+          ScoreBrackets->hasPendingEvent(SMEM_ACCESS)) {
         if (ST->getGeneration() <= AMDGPUSubtarget::SEA_ISLANDS)
           VCCZBugWorkAround = true;
       }
