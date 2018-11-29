@@ -112,9 +112,9 @@ iterator_range<enum_iterator<InstCounterType>> inst_counter_types() {
 using RegInterval = std::pair<signed, signed>;
 
 struct {
-  int32_t VmcntMax;
-  int32_t ExpcntMax;
-  int32_t LgkmcntMax;
+  uint32_t VmcntMax;
+  uint32_t ExpcntMax;
+  uint32_t LgkmcntMax;
   int32_t NumVGPRsMax;
   int32_t NumSGPRsMax;
 } HardwareLimits;
@@ -194,7 +194,7 @@ public:
 
   ~BlockWaitcntBrackets() = default;
 
-  static int32_t getWaitCountMax(InstCounterType T) {
+  static uint32_t getWaitCountMax(InstCounterType T) {
     switch (T) {
     case VM_CNT:
       return HardwareLimits.VmcntMax;
@@ -208,33 +208,33 @@ public:
     return 0;
   }
 
-  void setScoreLB(InstCounterType T, int32_t Val) {
+  void setScoreLB(InstCounterType T, uint32_t Val) {
     assert(T < NUM_INST_CNTS);
     if (T >= NUM_INST_CNTS)
       return;
     ScoreLBs[T] = Val;
   }
 
-  void setScoreUB(InstCounterType T, int32_t Val) {
+  void setScoreUB(InstCounterType T, uint32_t Val) {
     assert(T < NUM_INST_CNTS);
     if (T >= NUM_INST_CNTS)
       return;
     ScoreUBs[T] = Val;
     if (T == EXP_CNT) {
-      int32_t UB = (int)(ScoreUBs[T] - getWaitCountMax(EXP_CNT));
-      if (ScoreLBs[T] < UB)
+      uint32_t UB = ScoreUBs[T] - getWaitCountMax(EXP_CNT);
+      if (ScoreLBs[T] < UB && UB < ScoreUBs[T])
         ScoreLBs[T] = UB;
     }
   }
 
-  int32_t getScoreLB(InstCounterType T) const {
+  uint32_t getScoreLB(InstCounterType T) const {
     assert(T < NUM_INST_CNTS);
     if (T >= NUM_INST_CNTS)
       return 0;
     return ScoreLBs[T];
   }
 
-  int32_t getScoreUB(InstCounterType T) const {
+  uint32_t getScoreUB(InstCounterType T) const {
     assert(T < NUM_INST_CNTS);
     if (T >= NUM_INST_CNTS)
       return 0;
@@ -251,7 +251,7 @@ public:
     return EXP_CNT;
   }
 
-  void setRegScore(int GprNo, InstCounterType T, int32_t Val) {
+  void setRegScore(int GprNo, InstCounterType T, uint32_t Val) {
     if (GprNo < NUM_ALL_VGPRS) {
       if (GprNo > VgprUB) {
         VgprUB = GprNo;
@@ -266,7 +266,7 @@ public:
     }
   }
 
-  int32_t getRegScore(int GprNo, InstCounterType T) {
+  uint32_t getRegScore(int GprNo, InstCounterType T) {
     if (GprNo < NUM_ALL_VGPRS) {
       return VgprScores[T][GprNo];
     }
@@ -291,7 +291,7 @@ public:
 
   void setExpScore(const MachineInstr *MI, const SIInstrInfo *TII,
                    const SIRegisterInfo *TRI, const MachineRegisterInfo *MRI,
-                   unsigned OpNo, int32_t Val);
+                   unsigned OpNo, uint32_t Val);
 
   int32_t getMaxVGPR() const { return VgprUB; }
   int32_t getMaxSGPR() const { return SgprUB; }
@@ -299,7 +299,7 @@ public:
   bool counterOutOfOrder(InstCounterType T) const;
   bool simplifyWaitcnt(AMDGPU::Waitcnt &Wait) const;
   bool simplifyWaitcnt(InstCounterType T, unsigned &Count) const;
-  void determineWait(InstCounterType T, int ScoreToWait,
+  void determineWait(InstCounterType T, uint32_t ScoreToWait,
                      AMDGPU::Waitcnt &Wait) const;
   void applyWaitcnt(const AMDGPU::Waitcnt &Wait);
   void applyWaitcnt(InstCounterType T, unsigned Count);
@@ -342,19 +342,19 @@ private:
   const GCNSubtarget *ST = nullptr;
   bool RevisitLoop = false;
   int32_t PostOrder = 0;
-  int32_t ScoreLBs[NUM_INST_CNTS] = {0};
-  int32_t ScoreUBs[NUM_INST_CNTS] = {0};
+  uint32_t ScoreLBs[NUM_INST_CNTS] = {0};
+  uint32_t ScoreUBs[NUM_INST_CNTS] = {0};
   uint32_t PendingEvents = 0;
   bool MixedPendingEvents[NUM_INST_CNTS] = {false};
   // Remember the last flat memory operation.
-  int32_t LastFlat[NUM_INST_CNTS] = {0};
+  uint32_t LastFlat[NUM_INST_CNTS] = {0};
   // wait_cnt scores for every vgpr.
   // Keep track of the VgprUB and SgprUB to make merge at join efficient.
   int32_t VgprUB = 0;
   int32_t SgprUB = 0;
-  int32_t VgprScores[NUM_INST_CNTS][NUM_ALL_VGPRS];
+  uint32_t VgprScores[NUM_INST_CNTS][NUM_ALL_VGPRS];
   // Wait cnt scores for every sgpr, only lgkmcnt is relevant.
-  int32_t SgprScores[SQ_MAX_PGM_SGPRS] = {0};
+  uint32_t SgprScores[SQ_MAX_PGM_SGPRS] = {0};
 };
 
 // This is a per-loop-region object that records waitcnt status at the end of
@@ -527,7 +527,7 @@ void BlockWaitcntBrackets::setExpScore(const MachineInstr *MI,
                                        const SIInstrInfo *TII,
                                        const SIRegisterInfo *TRI,
                                        const MachineRegisterInfo *MRI,
-                                       unsigned OpNo, int32_t Val) {
+                                       unsigned OpNo, uint32_t Val) {
   RegInterval Interval = getRegInterval(MI, TII, MRI, TRI, OpNo, false);
   LLVM_DEBUG({
     const MachineOperand &Opnd = MI->getOperand(OpNo);
@@ -544,7 +544,9 @@ void BlockWaitcntBrackets::updateByEvent(const SIInstrInfo *TII,
                                          WaitEventType E, MachineInstr &Inst) {
   const MachineRegisterInfo &MRIA = *MRI;
   InstCounterType T = eventCounter(E);
-  int32_t CurrScore = getScoreUB(T) + 1;
+  uint32_t CurrScore = getScoreUB(T) + 1;
+  if (CurrScore == 0)
+    report_fatal_error("InsertWaitcnt score wraparound");
   // PendingEvents and ScoreUB need to be update regardless if this event
   // changes the score of a register or not.
   // Examples including vm_cnt when buffer-store or lgkm_cnt when send-message.
@@ -683,8 +685,8 @@ void BlockWaitcntBrackets::updateByEvent(const SIInstrInfo *TII,
 void BlockWaitcntBrackets::print(raw_ostream &OS) {
   OS << '\n';
   for (auto T : inst_counter_types()) {
-    int LB = getScoreLB(T);
-    int UB = getScoreUB(T);
+    uint32_t LB = getScoreLB(T);
+    uint32_t UB = getScoreUB(T);
 
     switch (T) {
     case VM_CNT:
@@ -704,10 +706,10 @@ void BlockWaitcntBrackets::print(raw_ostream &OS) {
     if (LB < UB) {
       // Print vgpr scores.
       for (int J = 0; J <= getMaxVGPR(); J++) {
-        int RegScore = getRegScore(J, T);
+        uint32_t RegScore = getRegScore(J, T);
         if (RegScore <= LB)
           continue;
-        int RelScore = RegScore - LB - 1;
+        uint32_t RelScore = RegScore - LB - 1;
         if (J < SQ_MAX_PGM_VGPRS + EXTRA_VGPR_LDS) {
           OS << RelScore << ":v" << J << " ";
         } else {
@@ -717,10 +719,10 @@ void BlockWaitcntBrackets::print(raw_ostream &OS) {
       // Also need to print sgpr scores for lgkm_cnt.
       if (T == LGKM_CNT) {
         for (int J = 0; J <= getMaxSGPR(); J++) {
-          int RegScore = getRegScore(J + NUM_ALL_VGPRS, LGKM_CNT);
+          uint32_t RegScore = getRegScore(J + NUM_ALL_VGPRS, LGKM_CNT);
           if (RegScore <= LB)
             continue;
-          int RelScore = RegScore - LB - 1;
+          uint32_t RelScore = RegScore - LB - 1;
           OS << RelScore << ":s" << J << " ";
         }
       }
@@ -740,30 +742,22 @@ bool BlockWaitcntBrackets::simplifyWaitcnt(AMDGPU::Waitcnt &Wait) const {
 
 bool BlockWaitcntBrackets::simplifyWaitcnt(InstCounterType T,
                                            unsigned &Count) const {
-  const int32_t LB = getScoreLB(T);
-  const int32_t UB = getScoreUB(T);
-  if (Count < (unsigned)UB && UB - (int32_t)Count > LB)
+  const uint32_t LB = getScoreLB(T);
+  const uint32_t UB = getScoreUB(T);
+  if (Count < UB && UB - Count > LB)
     return true;
 
   Count = ~0u;
   return false;
 }
 
-void BlockWaitcntBrackets::determineWait(InstCounterType T, int ScoreToWait,
+void BlockWaitcntBrackets::determineWait(InstCounterType T,
+                                         uint32_t ScoreToWait,
                                          AMDGPU::Waitcnt &Wait) const {
-  if (ScoreToWait == -1) {
-    // The score to wait is unknown. This implies that it was not encountered
-    // during the path of the CFG walk done during the current traversal but
-    // may be seen on a different path. Emit an s_wait counter with a
-    // conservative value of 0 for the counter.
-    addWait(Wait, T, 0);
-    return;
-  }
-
   // If the score of src_operand falls within the bracket, we need an
   // s_waitcnt instruction.
-  const int32_t LB = getScoreLB(T);
-  const int32_t UB = getScoreUB(T);
+  const uint32_t LB = getScoreLB(T);
+  const uint32_t UB = getScoreUB(T);
   if ((UB >= ScoreToWait) && (ScoreToWait > LB)) {
     if ((T == VM_CNT || T == LGKM_CNT) &&
         hasPendingFlat() &&
@@ -790,13 +784,13 @@ void BlockWaitcntBrackets::applyWaitcnt(const AMDGPU::Waitcnt &Wait) {
 }
 
 void BlockWaitcntBrackets::applyWaitcnt(InstCounterType T, unsigned Count) {
-  const int32_t UB = getScoreUB(T);
-  if (Count >= (unsigned)UB)
+  const uint32_t UB = getScoreUB(T);
+  if (Count >= UB)
     return;
   if (Count != 0) {
     if (counterOutOfOrder(T))
       return;
-    setScoreLB(T, std::max(getScoreLB(T), UB - (int32_t)Count));
+    setScoreLB(T, std::max(getScoreLB(T), UB - Count));
   } else {
     setScoreLB(T, UB);
     MixedPendingEvents[T] = false;
@@ -1235,8 +1229,8 @@ void SIInsertWaitcnts::updateEventWaitcntAfter(
 // this merged score bracket is used when adding waitcnts to the Block
 void SIInsertWaitcnts::mergeInputScoreBrackets(MachineBasicBlock &Block) {
   BlockWaitcntBrackets *ScoreBrackets = BlockWaitcntBracketsMap[&Block].get();
-  int32_t MaxPending[NUM_INST_CNTS] = {0};
-  int32_t MaxFlat[NUM_INST_CNTS] = {0};
+  uint32_t MaxPending[NUM_INST_CNTS] = {0};
+  uint32_t MaxFlat[NUM_INST_CNTS] = {0};
 
   // For single basic block loops, we need to retain the Block's
   // score bracket to have accurate Pred info. So, make a copy of Block's
@@ -1264,7 +1258,7 @@ void SIInsertWaitcnts::mergeInputScoreBrackets(MachineBasicBlock &Block) {
     if (!Visited)
       continue;
     for (auto T : inst_counter_types()) {
-      int span =
+      uint32_t span =
           PredScoreBrackets->getScoreUB(T) - PredScoreBrackets->getScoreLB(T);
       MaxPending[T] = std::max(MaxPending[T], span);
       span =
@@ -1291,27 +1285,27 @@ void SIInsertWaitcnts::mergeInputScoreBrackets(MachineBasicBlock &Block) {
 
     // Now merge the gpr_reg_score information
     for (auto T : inst_counter_types()) {
-      int PredLB = PredScoreBrackets->getScoreLB(T);
-      int PredUB = PredScoreBrackets->getScoreUB(T);
+      uint32_t PredLB = PredScoreBrackets->getScoreLB(T);
+      uint32_t PredUB = PredScoreBrackets->getScoreUB(T);
       if (PredLB < PredUB) {
-        int PredScale = MaxPending[T] - PredUB;
+        uint32_t PredScale = MaxPending[T] - PredUB;
         // Merge vgpr scores.
         for (int J = 0; J <= PredScoreBrackets->getMaxVGPR(); J++) {
-          int PredRegScore = PredScoreBrackets->getRegScore(J, T);
+          uint32_t PredRegScore = PredScoreBrackets->getRegScore(J, T);
           if (PredRegScore <= PredLB)
             continue;
-          int NewRegScore = PredScale + PredRegScore;
+          uint32_t NewRegScore = PredScale + PredRegScore;
           ScoreBrackets->setRegScore(
               J, T, std::max(ScoreBrackets->getRegScore(J, T), NewRegScore));
         }
         // Also need to merge sgpr scores for lgkm_cnt.
         if (T == LGKM_CNT) {
           for (int J = 0; J <= PredScoreBrackets->getMaxSGPR(); J++) {
-            int PredRegScore =
+            uint32_t PredRegScore =
                 PredScoreBrackets->getRegScore(J + NUM_ALL_VGPRS, LGKM_CNT);
             if (PredRegScore <= PredLB)
               continue;
-            int NewRegScore = PredScale + PredRegScore;
+            uint32_t NewRegScore = PredScale + PredRegScore;
             ScoreBrackets->setRegScore(
                 J + NUM_ALL_VGPRS, LGKM_CNT,
                 std::max(
