@@ -3,7 +3,7 @@
 
 define signext i32 @testi32slt(i32 signext %c1, i32 signext %c2, i32 signext %c3, i32 signext %c4, i32 signext %a1, i32 signext %a2) #0 {
 ; CHECK-LABEL: testi32slt
-; CHECK: crorc [[REG:[0-9]+]], 6, 2
+; CHECK: crorc [[REG:[0-9]+]], 2, 6
 ; CHECK: bc 12, [[REG]], {{\.[a-zA-Z0-9_]+}}
 entry:
   %cmp1 = icmp eq i32 %c3, %c4
@@ -33,7 +33,7 @@ iffalse:
 
 define signext i32 @testi32sle(i32 signext %c1, i32 signext %c2, i32 signext %c3, i32 signext %c4, i32 signext %a1, i32 signext %a2) #0 {
 ; CHECK-LABEL: testi32sle
-; CHECK: crandc [[REG:[0-9]+]], 6, 2
+; CHECK: crandc [[REG:[0-9]+]], 2, 6
 ; CHECK: bc 12, [[REG]], {{\.[a-zA-Z0-9_]+}}
 entry:
   %cmp1 = icmp eq i32 %c3, %c4
@@ -78,7 +78,7 @@ iffalse:
 
 define signext i32 @testi32sge(i32 signext %c1, i32 signext %c2, i32 signext %c3, i32 signext %c4, i32 signext %a1, i32 signext %a2) #0 {
 ; CHECK-LABEL: testi32sge:
-; CHECK: crandc [[REG:[0-9]+]], 2, 6
+; CHECK: crandc [[REG:[0-9]+]], 6, 2
 ; CHECK: bc 12, [[REG]], {{\.[a-zA-Z0-9_]+}}
 entry:
   %cmp1 = icmp eq i32 %c3, %c4
@@ -108,7 +108,7 @@ iffalse:
 
 define signext i32 @testi32sgt(i32 signext %c1, i32 signext %c2, i32 signext %c3, i32 signext %c4, i32 signext %a1, i32 signext %a2) #0 {
 ; CHECK-LABEL: testi32sgt:
-; CHECK: crorc [[REG:[0-9]+]], 2, 6
+; CHECK: crorc [[REG:[0-9]+]], 6, 2
 ; CHECK: bc 12, [[REG]], {{\.[a-zA-Z0-9_]+}}
 entry:
   %cmp1 = icmp eq i32 %c3, %c4
@@ -153,7 +153,7 @@ iffalse:
 
 define i64 @testi64slt(i64 %c1, i64 %c2, i64 %c3, i64 %c4, i64 %a1, i64 %a2) #0 {
 ; CHECK-LABEL: testi64slt
-; CHECK: crorc [[REG:[0-9]+]], 6, 2
+; CHECK: crorc [[REG:[0-9]+]], 2, 6
 ; CHECK: bc 12, [[REG]], {{\.[a-zA-Z0-9_]+}}
 entry:
   %cmp1 = icmp eq i64 %c3, %c4
@@ -183,7 +183,7 @@ iffalse:
 
 define i64 @testi64sle(i64 %c1, i64 %c2, i64 %c3, i64 %c4, i64 %a1, i64 %a2) #0 {
 ; CHECK-LABEL: testi64sle
-; CHECK: crandc [[REG:[0-9]+]], 6, 2
+; CHECK: crandc [[REG:[0-9]+]], 2, 6
 ; CHECK: bc 12, [[REG]], {{\.[a-zA-Z0-9_]+}}
 entry:
   %cmp1 = icmp eq i64 %c3, %c4
@@ -228,7 +228,7 @@ iffalse:
 
 define i64 @testi64sge(i64 %c1, i64 %c2, i64 %c3, i64 %c4, i64 %a1, i64 %a2) #0 {
 ; CHECK-LABEL: testi64sge
-; CHECK: crandc [[REG:[0-9]+]], 2, 6
+; CHECK: crandc [[REG:[0-9]+]], 6, 2
 ; CHECK: bc 12, [[REG]], {{\.[a-zA-Z0-9_]+}}
 entry:
   %cmp1 = icmp eq i64 %c3, %c4
@@ -258,7 +258,7 @@ iffalse:
 
 define i64 @testi64sgt(i64 %c1, i64 %c2, i64 %c3, i64 %c4, i64 %a1, i64 %a2) #0 {
 ; CHECK-LABEL: testi64sgt
-; CHECK: crorc [[REG:[0-9]+]], 2, 6
+; CHECK: crorc [[REG:[0-9]+]], 6, 2
 ; CHECK: bc 12, [[REG]], {{\.[a-zA-Z0-9_]+}}
 entry:
   %cmp1 = icmp eq i64 %c3, %c4
@@ -303,7 +303,7 @@ iffalse:
 
 define float @testfloatslt(float %c1, float %c2, float %c3, float %c4, float %a1, float %a2) #0 {
 ; CHECK-LABEL: testfloatslt
-; CHECK: crorc [[REG:[0-9]+]], 6, 2
+; CHECK: crorc [[REG:[0-9]+]], 2, 6
 ; CHECK: bc 12, [[REG]], {{\.[a-zA-Z0-9_]+}}
 entry:
   %cmp1 = fcmp oeq float %c3, %c4
@@ -333,7 +333,7 @@ iffalse:
 
 define float @testfloatsle(float %c1, float %c2, float %c3, float %c4, float %a1, float %a2) #0 {
 ; CHECK-LABEL: testfloatsle
-; CHECK: crandc [[REG:[0-9]+]], 6, 2
+; CHECK: crandc [[REG:[0-9]+]], 2, 6
 ; CHECK: bc 12, [[REG]], {{\.[a-zA-Z0-9_]+}}
 entry:
   %cmp1 = fcmp oeq float %c3, %c4
@@ -378,7 +378,7 @@ iffalse:
 
 define float @testfloatsge(float %c1, float %c2, float %c3, float %c4, float %a1, float %a2) #0 {
 ; CHECK-LABEL: testfloatsge
-; CHECK: crandc [[REG:[0-9]+]], 2, 6
+; CHECK: crandc [[REG:[0-9]+]], 6, 2
 ; CHECK: bc 12, [[REG]], {{\.[a-zA-Z0-9_]+}}
 entry:
   %cmp1 = fcmp oeq float %c3, %c4
@@ -408,7 +408,7 @@ iffalse:
 
 define float @testfloatsgt(float %c1, float %c2, float %c3, float %c4, float %a1, float %a2) #0 {
 ; CHECK-LABEL: testfloatsgt
-; CHECK: crorc [[REG:[0-9]+]], 2, 6
+; CHECK: crorc [[REG:[0-9]+]], 6, 2
 ; CHECK: bc 12, [[REG]], {{\.[a-zA-Z0-9_]+}}
 entry:
   %cmp1 = fcmp oeq float %c3, %c4
@@ -453,7 +453,7 @@ iffalse:
 
 define double @testdoubleslt(double %c1, double %c2, double %c3, double %c4, double %a1, double %a2) #0 {
 ; CHECK-LABEL: testdoubleslt
-; CHECK: crorc [[REG:[0-9]+]], 6, 2
+; CHECK: crorc [[REG:[0-9]+]], 2, 6
 ; CHECK: bc 12, [[REG]], {{\.[a-zA-Z0-9_]+}}
 entry:
   %cmp1 = fcmp oeq double %c3, %c4
@@ -483,7 +483,7 @@ iffalse:
 
 define double @testdoublesle(double %c1, double %c2, double %c3, double %c4, double %a1, double %a2) #0 {
 ; CHECK-LABEL: testdoublesle
-; CHECK: crandc [[REG:[0-9]+]], 6, 2
+; CHECK: crandc [[REG:[0-9]+]], 2, 6
 ; CHECK: bc 12, [[REG]], {{\.[a-zA-Z0-9_]+}}
 entry:
   %cmp1 = fcmp oeq double %c3, %c4
@@ -528,7 +528,7 @@ iffalse:
 
 define double @testdoublesge(double %c1, double %c2, double %c3, double %c4, double %a1, double %a2) #0 {
 ; CHECK-LABEL: testdoublesge
-; CHECK: crandc [[REG:[0-9]+]], 2, 6
+; CHECK: crandc [[REG:[0-9]+]], 6, 2
 ; CHECK: bc 12, [[REG]], {{\.[a-zA-Z0-9_]+}}
 entry:
   %cmp1 = fcmp oeq double %c3, %c4
@@ -558,7 +558,7 @@ iffalse:
 
 define double @testdoublesgt(double %c1, double %c2, double %c3, double %c4, double %a1, double %a2) #0 {
 ; CHECK-LABEL: testdoublesgt:
-; CHECK: crorc [[REG:[0-9]+]], 2, 6
+; CHECK: crorc [[REG:[0-9]+]], 6, 2
 ; CHECK: bc 12, [[REG]], {{\.[a-zA-Z0-9_]+}}
 entry:
   %cmp1 = fcmp oeq double %c3, %c4
