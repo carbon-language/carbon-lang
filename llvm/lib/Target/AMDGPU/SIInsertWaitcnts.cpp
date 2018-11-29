@@ -69,6 +69,25 @@ static cl::opt<unsigned> ForceEmitZeroFlag(
 
 namespace {
 
+template <typename EnumT>
+class enum_iterator
+    : public iterator_facade_base<enum_iterator<EnumT>,
+                                  std::forward_iterator_tag, const EnumT> {
+  EnumT Value;
+public:
+  enum_iterator() = default;
+  enum_iterator(EnumT Value) : Value(Value) {}
+
+  enum_iterator &operator++() {
+    Value = static_cast<EnumT>(Value + 1);
+    return *this;
+  }
+
+  bool operator==(const enum_iterator &RHS) const { return Value == RHS.Value; }
+
+  EnumT operator*() const { return Value; }
+};
+
 // Class of object that encapsulates latest instruction counter score
 // associated with the operand.  Used for determining whether
 // s_waitcnt instruction needs to be emited.
@@ -76,6 +95,11 @@ namespace {
 #define CNT_MASK(t) (1u << (t))
 
 enum InstCounterType { VM_CNT = 0, LGKM_CNT, EXP_CNT, NUM_INST_CNTS };
+
+iterator_range<enum_iterator<InstCounterType>> inst_counter_types() {
+  return make_range(enum_iterator<InstCounterType>(VM_CNT),
+                    enum_iterator<InstCounterType>(NUM_INST_CNTS));
+}
 
 using RegInterval = std::pair<signed, signed>;
 
@@ -108,6 +132,11 @@ enum WaitEventType {
   NUM_WAIT_EVENTS,
 };
 
+iterator_range<enum_iterator<WaitEventType>> wait_event_types() {
+  return make_range(enum_iterator<WaitEventType>(VMEM_ACCESS),
+                    enum_iterator<WaitEventType>(NUM_WAIT_EVENTS));
+}
+
 // The mapping is:
 //  0                .. SQ_MAX_PGM_VGPRS-1               real VGPRs
 //  SQ_MAX_PGM_VGPRS .. NUM_ALL_VGPRS-1                  extra VGPR-like slots
@@ -121,11 +150,6 @@ enum RegisterMapping {
   EXTRA_VGPR_LDS = 0,     // This is a placeholder the Shader algorithm uses.
   NUM_ALL_VGPRS = SQ_MAX_PGM_VGPRS + NUM_EXTRA_VGPRS, // Where SGPR starts.
 };
-
-#define ForAllWaitEventType(w)                                                 \
-  for (enum WaitEventType w = (enum WaitEventType)0;                           \
-       (w) < (enum WaitEventType)NUM_WAIT_EVENTS;                              \
-       (w) = (enum WaitEventType)((w) + 1))
 
 void addWait(AMDGPU::Waitcnt &Wait, InstCounterType T, unsigned Count) {
   switch (T) {
@@ -153,10 +177,8 @@ void addWait(AMDGPU::Waitcnt &Wait, InstCounterType T, unsigned Count) {
 class BlockWaitcntBrackets {
 public:
   BlockWaitcntBrackets(const GCNSubtarget *SubTarget) : ST(SubTarget) {
-    for (enum InstCounterType T = VM_CNT; T < NUM_INST_CNTS;
-         T = (enum InstCounterType)(T + 1)) {
+    for (auto T : inst_counter_types())
       memset(VgprScores[T], 0, sizeof(VgprScores[T]));
-    }
   }
 
   ~BlockWaitcntBrackets() = default;
@@ -257,10 +279,8 @@ public:
     memset(ScoreLBs, 0, sizeof(ScoreLBs));
     memset(ScoreUBs, 0, sizeof(ScoreUBs));
     memset(EventUBs, 0, sizeof(EventUBs));
-    for (enum InstCounterType T = VM_CNT; T < NUM_INST_CNTS;
-         T = (enum InstCounterType)(T + 1)) {
+    for (auto T : inst_counter_types())
       memset(VgprScores[T], 0, sizeof(VgprScores[T]));
-    }
     memset(SgprScores, 0, sizeof(SgprScores));
   }
 
@@ -426,8 +446,7 @@ public:
   }
 
   bool isForceEmitWaitcnt() const {
-    for (enum InstCounterType T = VM_CNT; T < NUM_INST_CNTS;
-         T = (enum InstCounterType)(T + 1))
+    for (auto T : inst_counter_types())
       if (ForceEmitWaitcnt[T])
         return true;
     return false;
@@ -679,8 +698,7 @@ void BlockWaitcntBrackets::updateByEvent(const SIInstrInfo *TII,
 
 void BlockWaitcntBrackets::print(raw_ostream &OS) {
   OS << '\n';
-  for (enum InstCounterType T = VM_CNT; T < NUM_INST_CNTS;
-       T = (enum InstCounterType)(T + 1)) {
+  for (auto T : inst_counter_types()) {
     int LB = getScoreLB(T);
     int UB = getScoreUB(T);
 
@@ -1325,8 +1343,7 @@ void SIInsertWaitcnts::mergeInputScoreBrackets(MachineBasicBlock &Block) {
     if (!Visited || PredScoreBrackets->getWaitAtBeginning()) {
       continue;
     }
-    for (enum InstCounterType T = VM_CNT; T < NUM_INST_CNTS;
-         T = (enum InstCounterType)(T + 1)) {
+    for (auto T : inst_counter_types()) {
       int span =
           PredScoreBrackets->getScoreUB(T) - PredScoreBrackets->getScoreLB(T);
       MaxPending[T] = std::max(MaxPending[T], span);
@@ -1367,8 +1384,7 @@ void SIInsertWaitcnts::mergeInputScoreBrackets(MachineBasicBlock &Block) {
 #endif
 
   // Now set the current Block's brackets to the largest ending bracket.
-  for (enum InstCounterType T = VM_CNT; T < NUM_INST_CNTS;
-       T = (enum InstCounterType)(T + 1)) {
+  for (auto T : inst_counter_types()) {
     ScoreBrackets->setScoreUB(T, MaxPending[T]);
     ScoreBrackets->setScoreLB(T, 0);
     ScoreBrackets->setLastFlat(T, MaxFlat[T]);
@@ -1386,8 +1402,7 @@ void SIInsertWaitcnts::mergeInputScoreBrackets(MachineBasicBlock &Block) {
         BlockWaitcntBracketsMap[Pred].get();
 
     // Now merge the gpr_reg_score information
-    for (enum InstCounterType T = VM_CNT; T < NUM_INST_CNTS;
-         T = (enum InstCounterType)(T + 1)) {
+    for (auto T : inst_counter_types()) {
       int PredLB = PredScoreBrackets->getScoreLB(T);
       int PredUB = PredScoreBrackets->getScoreUB(T);
       if (PredLB < PredUB) {
@@ -1420,7 +1435,7 @@ void SIInsertWaitcnts::mergeInputScoreBrackets(MachineBasicBlock &Block) {
     }
 
     // Also merge the WaitEvent information.
-    ForAllWaitEventType(W) {
+    for (auto W : wait_event_types()) {
       enum InstCounterType T = PredScoreBrackets->eventCounter(W);
       int PredEventUB = PredScoreBrackets->getEventUB(W);
       if (PredEventUB > PredScoreBrackets->getScoreLB(T)) {
@@ -1623,8 +1638,7 @@ void SIInsertWaitcnts::insertWaitcntInBlock(MachineFunction &MF,
       // generating the precise wait count, just wait on 0.
       bool HasPending = false;
       MachineInstr *SWaitInst = WaitcntData->getWaitcnt();
-      for (enum InstCounterType T = VM_CNT; T < NUM_INST_CNTS;
-           T = (enum InstCounterType)(T + 1)) {
+      for (auto T : inst_counter_types()) {
         if (ScoreBrackets->getScoreUB(T) > ScoreBrackets->getScoreLB(T)) {
           ScoreBrackets->setScoreLB(T, ScoreBrackets->getScoreUB(T));
           HasPending = true;
@@ -1675,8 +1689,7 @@ bool SIInsertWaitcnts::runOnMachineFunction(MachineFunction &MF) {
   const SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
 
   ForceEmitZeroWaitcnts = ForceEmitZeroFlag;
-  for (enum InstCounterType T = VM_CNT; T < NUM_INST_CNTS;
-       T = (enum InstCounterType)(T + 1))
+  for (auto T : inst_counter_types())
     ForceEmitWaitcnt[T] = false;
 
   HardwareLimits.VmcntMax = AMDGPU::getVmcntBitMask(IV);
