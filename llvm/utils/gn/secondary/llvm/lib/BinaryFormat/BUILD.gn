@@ -1,0 +1,13 @@
+static_library("BinaryFormat") {
+  output_name = "LLVMBinaryFormat"
+  deps = [
+    "//llvm/lib/Support",
+  ]
+  sources = [
+    "Dwarf.cpp",
+    "Magic.cpp",
+    "MsgPackReader.cpp",
+    "MsgPackWriter.cpp",
+    "Wasm.cpp",
+  ]
+}
