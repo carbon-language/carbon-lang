@@ -165,13 +165,11 @@ template<typename R> void basicTests(int rm, Rounding rounding) {
       vr.value.AsFortran(ss, kind, rounding);
       std::string decimal{ss.str()};
       const char *p{decimal.data()};
-      char ddesc[128];
-      std::snprintf(ddesc, sizeof ddesc, "%s decimal='%s'", ldesc, p);
-      MATCH(x, static_cast<std::uint64_t>(std::stold(decimal)))(ddesc);
+      MATCH(x, static_cast<std::uint64_t>(std::stold(decimal)))(ldesc);
       auto check{R::Read(p, rounding)};
       auto icheck{check.value.template ToInteger<Integer8>()};
-      MATCH(x, icheck.value.ToUInt64())(ddesc);
-      TEST(vr.value.Compare(check.value) == Relation::Equal)(ddesc);
+      MATCH(x, icheck.value.ToUInt64())(ldesc);
+      TEST(vr.value.Compare(check.value) == Relation::Equal)(ldesc);
     }
     TEST(vr.value.AINT().value.Compare(vr.value) == Relation::Equal)(ldesc);
     ix = ix.Negate().value;
