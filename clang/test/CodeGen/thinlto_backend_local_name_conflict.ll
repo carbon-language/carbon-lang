@@ -2,6 +2,8 @@
 ; static read only variables with the same name (which will have the same GUID
 ; in the combined index).
 
+; REQUIRES: x86-registered-target
+
 ; Do setup work for all below tests: generate bitcode and combined index
 ; RUN: opt -module-summary -module-hash %s -o %t.bc
 ; RUN: opt -module-summary -module-hash %p/Inputs/thinlto_backend_local_name_conflict1.ll -o %t2.bc
