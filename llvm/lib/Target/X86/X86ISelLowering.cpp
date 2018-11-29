@@ -11529,7 +11529,7 @@ static SDValue lowerVectorShuffleAsBroadcast(const SDLoc &DL, MVT VT,
   SDValue BC = peekThroughBitcasts(V);
 
   // Also check the simpler case, where we can directly reuse the scalar.
-  if (V.getOpcode() == ISD::BUILD_VECTOR ||
+  if ((V.getOpcode() == ISD::BUILD_VECTOR && V.hasOneUse()) ||
       (V.getOpcode() == ISD::SCALAR_TO_VECTOR && BroadcastIdx == 0)) {
     V = V.getOperand(BroadcastIdx);
 
