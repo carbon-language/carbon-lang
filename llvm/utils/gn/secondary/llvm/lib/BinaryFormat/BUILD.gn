@@ -7,6 +7,7 @@ static_library("BinaryFormat") {
     "Dwarf.cpp",
     "Magic.cpp",
     "MsgPackReader.cpp",
+    "MsgPackTypes.cpp",
     "MsgPackWriter.cpp",
     "Wasm.cpp",
   ]
