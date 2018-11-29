@@ -634,13 +634,11 @@ TextAPIReader::get(std::unique_ptr<MemoryBuffer> InputBuffer) {
   std::vector<const InterfaceFile *> Files;
   YAMLIn >> Files;
 
-  auto File = std::unique_ptr<InterfaceFile>(
-      const_cast<InterfaceFile *>(Files.front()));
-
   if (YAMLIn.error())
     return make_error<StringError>(Ctx.ErrorMessage, YAMLIn.error());
 
-  return File;
+  auto *File = const_cast<InterfaceFile *>(Files.front());
+  return std::unique_ptr<InterfaceFile>(File);
 }
 
 Error TextAPIWriter::writeToStream(raw_ostream &OS, const InterfaceFile &File) {
