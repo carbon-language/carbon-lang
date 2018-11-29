@@ -250,7 +250,7 @@ std::optional<R> MapOptional(
 //   };
 // SearchDynamicTypes will traverse the indices 0 .. (Types-1) and
 // invoke VISITOR::Test<J>() until it returns a value that casts
-// to a true Boolean.  If no invocation of Test succeeds, it returns a
+// to true.  If no invocation of Test succeeds, it returns a
 // default-constructed Result.
 template<std::size_t J, typename VISITOR>
 typename VISITOR::Result SearchDynamicTypesHelper(VISITOR &&visitor) {

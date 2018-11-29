@@ -423,7 +423,7 @@ template<typename T>
 Expr<T> ExpressionBase<T>::Rewrite(FoldingContext &context, Expr<T> &&expr) {
   return std::visit(
       [&](auto &&x) -> Expr<T> {
-        if constexpr (T::isSpecificIntrinsicType) {
+        if constexpr (IsSpecificIntrinsicType<T>) {
           return FoldOperation(context, std::move(x));
         } else if constexpr (std::is_same_v<T, SomeDerived>) {
           return FoldOperation(context, std::move(x));

@@ -19,7 +19,7 @@
 template<int KIND> void testKind() {
   using Type =
       Fortran::evaluate::Type<Fortran::common::TypeCategory::Logical, KIND>;
-  TEST(Type::isSpecificIntrinsicType);
+  TEST(Fortran::evaluate::IsSpecificIntrinsicType<Type>);
   TEST(Type::category == Fortran::common::TypeCategory::Logical);
   TEST(Type::kind == KIND);
   using Value = Fortran::evaluate::Scalar<Type>;
@@ -52,6 +52,5 @@ int main() {
   testKind<2>();
   testKind<4>();
   testKind<8>();
-  testKind<16>();
   return testing::Complete();
 }

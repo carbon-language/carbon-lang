@@ -252,7 +252,7 @@ template<typename A> class Designator {
 
 public:
   using Result = A;
-  static_assert(Result::isSpecificIntrinsicType ||
+  static_assert(IsSpecificIntrinsicType<Result> ||
       std::is_same_v<Result, SomeKind<TypeCategory::Derived>>);
   EVALUATE_UNION_CLASS_BOILERPLATE(Designator)
   Designator(const DataRef &that) : u{common::MoveVariant<Variant>(that.u)} {}
@@ -292,7 +292,7 @@ protected:
 
 template<typename A> struct FunctionRef : public ProcedureRef {
   using Result = A;
-  static_assert(Result::isSpecificIntrinsicType ||
+  static_assert(IsSpecificIntrinsicType<Result> ||
       std::is_same_v<Result, SomeKind<TypeCategory::Derived>>);
   CLASS_BOILERPLATE(FunctionRef)
   FunctionRef(ProcedureRef &&pr) : ProcedureRef{std::move(pr)} {}
@@ -316,7 +316,7 @@ FOR_EACH_SPECIFIC_TYPE(extern template struct FunctionRef)
 
 template<typename A> struct Variable {
   using Result = A;
-  static_assert(Result::isSpecificIntrinsicType ||
+  static_assert(IsSpecificIntrinsicType<Result> ||
       std::is_same_v<Result, SomeKind<TypeCategory::Derived>>);
   EVALUATE_UNION_CLASS_BOILERPLATE(Variable)
   std::optional<DynamicType> GetType() const {

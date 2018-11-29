@@ -115,7 +115,7 @@ class Operation {
 public:
   using Derived = DERIVED;
   using Result = RESULT;
-  static_assert(Result::isSpecificIntrinsicType);
+  static_assert(IsSpecificIntrinsicType<Result>);
   static constexpr std::size_t operands{sizeof...(OPERANDS)};
   template<int J> using Operand = std::tuple_element_t<J, OperandTypes>;
 

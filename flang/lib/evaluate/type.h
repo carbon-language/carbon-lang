@@ -66,10 +66,6 @@ std::optional<DynamicType> GetSymbolType(const semantics::Symbol &);
 template<TypeCategory CATEGORY, int KIND = 0> class Type;
 
 template<TypeCategory CATEGORY, int KIND> struct TypeBase {
-  // Only types that represent a known kind of one of the five intrinsic
-  // data types will have set this flag to true.
-  // TODO pmk: convert to type predicate expression
-  static constexpr bool isSpecificIntrinsicType{true};
   static constexpr DynamicType dynamicType{CATEGORY, KIND};
   static constexpr DynamicType GetType() { return {dynamicType}; }
   static constexpr TypeCategory category{CATEGORY};
@@ -215,6 +211,10 @@ using NumericTypes = common::CombineTuples<IntegerTypes, FloatingTypes>;
 using RelationalTypes = common::CombineTuples<NumericTypes, CharacterTypes>;
 using AllIntrinsicTypes = common::CombineTuples<RelationalTypes, LogicalTypes>;
 
+// Predicate: does a type represent a specific intrinsic type?
+template<typename T>
+constexpr bool IsSpecificIntrinsicType{common::HasMember<T, AllIntrinsicTypes>};
+
 // When Scalar<T> is S, then TypeOf<S> is T.
 // TypeOf is implemented by scanning all supported types for a match
 // with Type<T>::Scalar.
@@ -235,13 +235,11 @@ template<typename CONST> using TypeOf = typename TypeOfHelper<CONST>::type;
 
 // Represents a type of any supported kind within a particular category.
 template<TypeCategory CATEGORY> struct SomeKind {
-  static constexpr bool isSpecificIntrinsicType{false};
   static constexpr TypeCategory category{CATEGORY};
 };
 
 template<> class SomeKind<TypeCategory::Derived> {
 public:
-  static constexpr bool isSpecificIntrinsicType{false};
   static constexpr TypeCategory category{TypeCategory::Derived};
 
   CLASS_BOILERPLATE(SomeKind)
@@ -265,9 +263,7 @@ using SomeDerived = SomeKind<TypeCategory::Derived>;
 // Represents a completely generic intrinsic type.
 using SomeCategory = std::tuple<SomeInteger, SomeReal, SomeComplex,
     SomeCharacter, SomeLogical, SomeDerived>;
-struct SomeType {
-  static constexpr bool isSpecificIntrinsicType{false};
-};
+struct SomeType {};
 
 // For "[extern] template class", &c. boilerplate
 #define FOR_EACH_INTEGER_KIND(PREFIX) \
@@ -323,7 +319,7 @@ struct SomeType {
 // and derived type constants are structure constructors; generic
 // constants are generic expressions wrapping these constants.
 template<typename T> struct Constant {
-  static_assert(T::isSpecificIntrinsicType);
+  static_assert(IsSpecificIntrinsicType<T>);
   using Result = T;
   using Value = Scalar<Result>;
 

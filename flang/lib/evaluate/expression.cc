@@ -191,7 +191,7 @@ template<typename T> DynamicType ArrayConstructor<T>::GetType() const {
 
 template<typename A>
 std::optional<DynamicType> ExpressionBase<A>::GetType() const {
-  if constexpr (Result::isSpecificIntrinsicType) {
+  if constexpr (IsSpecificIntrinsicType<Result>) {
     return Result::GetType();
   } else {
     return std::visit(
