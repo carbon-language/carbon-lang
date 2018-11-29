@@ -785,10 +785,13 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     addRegisterClass(MVT::v2i64, Subtarget.hasVLX() ? &X86::VR128XRegClass
                                                     : &X86::VR128RegClass);
 
-    setOperationAction(ISD::SDIV, MVT::v2i32, Custom);
-    setOperationAction(ISD::SREM, MVT::v2i32, Custom);
-    setOperationAction(ISD::UDIV, MVT::v2i32, Custom);
-    setOperationAction(ISD::UREM, MVT::v2i32, Custom);
+    for (auto VT : { MVT::v2i8, MVT::v4i8, MVT::v8i8,
+                     MVT::v2i16, MVT::v4i16, MVT::v2i32 }) {
+      setOperationAction(ISD::SDIV, VT, Custom);
+      setOperationAction(ISD::SREM, VT, Custom);
+      setOperationAction(ISD::UDIV, VT, Custom);
+      setOperationAction(ISD::UREM, VT, Custom);
+    }
 
     setOperationAction(ISD::MUL,                MVT::v2i8,  Custom);
     setOperationAction(ISD::MUL,                MVT::v2i16, Custom);
@@ -1811,10 +1814,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   setTargetDAGCombine(ISD::XOR);
   setTargetDAGCombine(ISD::MSCATTER);
   setTargetDAGCombine(ISD::MGATHER);
-  setTargetDAGCombine(ISD::SDIV);
-  setTargetDAGCombine(ISD::UDIV);
-  setTargetDAGCombine(ISD::SREM);
-  setTargetDAGCombine(ISD::UREM);
 
   computeRegisterProperties(Subtarget.getRegisterInfo());
 
@@ -26312,19 +26311,39 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
   case ISD::SDIV:
   case ISD::UDIV:
   case ISD::SREM:
-  case ISD::UREM:
-    if (N->getValueType(0) == MVT::v2i32) {
-      // If we're already legalizing via widening, we don't need this since
-      // that will scalarize div/rem.
-      if (getTypeAction(*DAG.getContext(), MVT::v2i32) == TypeWidenVector)
-        return;
+  case ISD::UREM: {
+    EVT VT = N->getValueType(0);
+    if (getTypeAction(*DAG.getContext(), VT) == TypeWidenVector) {
+      // If this RHS is a constant splat vector we can widen this and let
+      // division/remainder by constant optimize it.
+      // TODO: Can we do something for non-splat?
+      APInt SplatVal;
+      if (ISD::isConstantSplatVector(N->getOperand(1).getNode(), SplatVal)) {
+        unsigned NumConcats = 128 / VT.getSizeInBits();
+        SmallVector<SDValue, 8> Ops0(NumConcats, DAG.getUNDEF(VT));
+        Ops0[0] = N->getOperand(0);
+        EVT ResVT = TLI.getTypeToTransformTo(*DAG.getContext(), VT);
+        SDValue N0 = DAG.getNode(ISD::CONCAT_VECTORS, dl, ResVT, Ops0);
+        SDValue N1 = DAG.getConstant(SplatVal, dl, ResVT);
+        SDValue Res = DAG.getNode(N->getOpcode(), dl, ResVT, N0, N1);
+        Results.push_back(Res);
+      }
+      return;
+    }
+
+    if (VT == MVT::v2i32) {
       // Legalize v2i32 div/rem by unrolling. Otherwise we promote to the
       // v2i64 and unroll later. But then we create i64 scalar ops which
       // might be slow in 64-bit mode or require a libcall in 32-bit mode.
       Results.push_back(DAG.UnrollVectorOp(N));
       return;
     }
+
+    if (VT.isVector())
+      return;
+
     LLVM_FALLTHROUGH;
+  }
   case ISD::SDIVREM:
   case ISD::UDIVREM: {
     SDValue V = LowerWin64_i128OP(SDValue(N,0), DAG);
@@ -40953,37 +40972,6 @@ static SDValue combinePMULDQ(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-// Try to widen division/remainder by splat constant to avoid scalarization.
-// TODO: Can we do something for non-splat?
-static SDValue combineDivRem(SDNode *N, SelectionDAG &DAG,
-                             TargetLowering::DAGCombinerInfo &DCI) {
-  if (!DCI.isBeforeLegalize())
-    return SDValue();
-
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  LLVMContext &Context = *DAG.getContext();
-  EVT VT = N->getValueType(0);
-  if (!VT.isVector() || 128 % VT.getSizeInBits() != 0 ||
-      TLI.getTypeAction(Context, VT) != TargetLowering::TypeWidenVector)
-    return SDValue();
-
-  APInt SplatVal;
-  if (!ISD::isConstantSplatVector(N->getOperand(1).getNode(), SplatVal))
-    return SDValue();
-
-  unsigned NumConcats = 128 / VT.getSizeInBits();
-  SmallVector<SDValue, 8> Ops0(NumConcats, DAG.getUNDEF(VT));
-  Ops0[0] = N->getOperand(0);
-
-  SDLoc dl(N);
-  EVT ResVT = TLI.getTypeToTransformTo(Context, VT);
-  SDValue N0 = DAG.getNode(ISD::CONCAT_VECTORS, dl, ResVT, Ops0);
-  SDValue N1 = DAG.getConstant(SplatVal, dl, ResVT);
-  SDValue Res = DAG.getNode(N->getOpcode(), dl, ResVT, N0, N1);
-  return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, Res,
-                     DAG.getIntPtrConstant(0, dl));
-}
-
 SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
                                              DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -41114,10 +41102,6 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::PCMPGT:      return combineVectorCompare(N, DAG, Subtarget);
   case X86ISD::PMULDQ:
   case X86ISD::PMULUDQ:     return combinePMULDQ(N, DAG, DCI);
-  case ISD::UDIV:
-  case ISD::SDIV:
-  case ISD::UREM:
-  case ISD::SREM:           return combineDivRem(N, DAG, DCI);
   }
 
   return SDValue();
