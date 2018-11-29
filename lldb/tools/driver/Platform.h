@@ -60,7 +60,6 @@ struct timeval {
   long tv_usec;
 };
 typedef long pid_t;
-#define snprintf _snprintf
 #define PATH_MAX MAX_PATH
 #endif
 
