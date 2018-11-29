@@ -126,7 +126,7 @@ namespace  {
     /// The \c FullComment parent of the comment being dumped.
     const FullComment *FC = nullptr;
 
-    bool ShowColors;
+    const bool ShowColors;
 
     /// Dump a child of the current node.
     template<typename Fn> void dumpChild(Fn doDumpChild) {
