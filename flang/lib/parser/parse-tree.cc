@@ -30,13 +30,15 @@ ImportStmt::ImportStmt(common::ImportKind &&k, std::list<Name> &&n)
 // R901 designator
 bool Designator::EndsInBareName() const {
   return std::visit(
-      common::visitors{[](const ObjectName &) { return true; },
+      common::visitors{
+          [](const ObjectName &) { return true; },
           [](const DataRef &dr) {
             return std::holds_alternative<Name>(dr.u) ||
                 std::holds_alternative<common::Indirection<StructureComponent>>(
                     dr.u);
           },
-          [](const Substring &) { return false; }},
+          [](const Substring &) { return false; },
+      },
       u);
 }
 

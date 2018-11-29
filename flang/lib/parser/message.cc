@@ -52,11 +52,12 @@ MessageFormattedText::MessageFormattedText(MessageFixedText text, ...)
 
 std::string MessageExpectedText::ToString() const {
   return std::visit(
-      common::visitors{[](const CharBlock &cb) {
-                         return MessageFormattedText("expected '%s'"_err_en_US,
-                             cb.NULTerminatedToString().data())
-                             .MoveString();
-                       },
+      common::visitors{
+          [](const CharBlock &cb) {
+            return MessageFormattedText(
+                "expected '%s'"_err_en_US, cb.NULTerminatedToString().data())
+                .MoveString();
+          },
           [](const SetOfChars &set) {
             SetOfChars expect{set};
             if (expect.Has('\n')) {
@@ -85,16 +86,20 @@ std::string MessageExpectedText::ToString() const {
               return MessageFormattedText("expected '%s'"_err_en_US, s.data())
                   .MoveString();
             }
-          }},
+          },
+      },
       u_);
 }
 
 bool MessageExpectedText::Merge(const MessageExpectedText &that) {
-  return std::visit(common::visitors{[](SetOfChars &s1, const SetOfChars &s2) {
-                                       s1 = s1.Union(s2);
-                                       return true;
-                                     },
-                        [](const auto &, const auto &) { return false; }},
+  return std::visit(
+      common::visitors{
+          [](SetOfChars &s1, const SetOfChars &s2) {
+            s1 = s1.Union(s2);
+            return true;
+          },
+          [](const auto &, const auto &) { return false; },
+      },
       u_, that.u_);
 }
 
@@ -106,32 +111,38 @@ bool Message::SortBefore(const Message &that) const {
   // are speculative.  Messages with ProvenanceRange locations are ordered
   // before others for sorting.
   return std::visit(
-      common::visitors{[](const CharBlock &cb1, const CharBlock &cb2) {
-                         return cb1.begin() < cb2.begin();
-                       },
+      common::visitors{
+          [](const CharBlock &cb1, const CharBlock &cb2) {
+            return cb1.begin() < cb2.begin();
+          },
           [](const CharBlock &, const ProvenanceRange &) { return false; },
           [](const ProvenanceRange &pr1, const ProvenanceRange &pr2) {
             return pr1.start() < pr2.start();
           },
-          [](const ProvenanceRange &, const CharBlock &) { return true; }},
+          [](const ProvenanceRange &, const CharBlock &) { return true; },
+      },
       location_, that.location_);
 }
 
 bool Message::IsFatal() const {
   return std::visit(
-      common::visitors{[](const MessageExpectedText &) { return true; },
+      common::visitors{
+          [](const MessageExpectedText &) { return true; },
           [](const MessageFixedText &x) { return x.isFatal(); },
-          [](const MessageFormattedText &x) { return x.isFatal(); }},
+          [](const MessageFormattedText &x) { return x.isFatal(); },
+      },
       text_);
 }
 
 std::string Message::ToString() const {
   return std::visit(
-      common::visitors{[](const MessageFixedText &t) {
-                         return t.text().NULTerminatedToString();
-                       },
+      common::visitors{
+          [](const MessageFixedText &t) {
+            return t.text().NULTerminatedToString();
+          },
           [](const MessageFormattedText &t) { return t.string(); },
-          [](const MessageExpectedText &e) { return e.ToString(); }},
+          [](const MessageExpectedText &e) { return e.ToString(); },
+      },
       text_);
 }
 
@@ -152,7 +163,8 @@ std::optional<ProvenanceRange> Message::GetProvenanceRange(
   return std::visit(
       common::visitors{
           [&](const CharBlock &cb) { return cooked.GetProvenanceRange(cb); },
-          [](const ProvenanceRange &pr) { return std::make_optional(pr); }},
+          [](const ProvenanceRange &pr) { return std::make_optional(pr); },
+      },
       location_);
 }
 
@@ -192,11 +204,13 @@ bool Message::Merge(const Message &that) {
   return AtSameLocation(that) &&
       (!that.attachment_.get() ||
           attachment_.get() == that.attachment_.get()) &&
-      std::visit(common::visitors{[](MessageExpectedText &e1,
-                                      const MessageExpectedText &e2) {
-                                    return e1.Merge(e2);
-                                  },
-                     [](const auto &, const auto &) { return false; }},
+      std::visit(
+          common::visitors{
+              [](MessageExpectedText &e1, const MessageExpectedText &e2) {
+                return e1.Merge(e2);
+              },
+              [](const auto &, const auto &) { return false; },
+          },
           text_, that.text_);
 }
 
@@ -211,13 +225,15 @@ Message &Message::Attach(Message *m) {
 
 bool Message::AtSameLocation(const Message &that) const {
   return std::visit(
-      common::visitors{[](const CharBlock &cb1, const CharBlock &cb2) {
-                         return cb1.begin() == cb2.begin();
-                       },
+      common::visitors{
+          [](const CharBlock &cb1, const CharBlock &cb2) {
+            return cb1.begin() == cb2.begin();
+          },
           [](const ProvenanceRange &pr1, const ProvenanceRange &pr2) {
             return pr1.start() == pr2.start();
           },
-          [](const auto &, const auto &) { return false; }},
+          [](const auto &, const auto &) { return false; },
+      },
       location_, that.location_);
 }
 

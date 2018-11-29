@@ -212,29 +212,32 @@ void AllSources::EmitMessage(std::ostream &o,
               o << "^\n";
             }
           },
-          [&](const CompilerInsertion &ins) { o << message << '\n'; }},
+          [&](const CompilerInsertion &ins) { o << message << '\n'; },
+      },
       origin.u);
 }
 
 const SourceFile *AllSources::GetSourceFile(
     Provenance at, std::size_t *offset) const {
   const Origin &origin{MapToOrigin(at)};
-  return std::visit(common::visitors{[&](const Inclusion &inc) {
-                                       if (offset != nullptr) {
-                                         *offset =
-                                             origin.covers.MemberOffset(at);
-                                       }
-                                       return &inc.source;
-                                     },
-                        [&](const Macro &mac) {
-                          return GetSourceFile(origin.replaces.start(), offset);
-                        },
-                        [offset](const CompilerInsertion &) {
-                          if (offset != nullptr) {
-                            *offset = 0;
-                          }
-                          return static_cast<const SourceFile *>(nullptr);
-                        }},
+  return std::visit(
+      common::visitors{
+          [&](const Inclusion &inc) {
+            if (offset != nullptr) {
+              *offset = origin.covers.MemberOffset(at);
+            }
+            return &inc.source;
+          },
+          [&](const Macro &mac) {
+            return GetSourceFile(origin.replaces.start(), offset);
+          },
+          [offset](const CompilerInsertion &) {
+            if (offset != nullptr) {
+              *offset = 0;
+            }
+            return static_cast<const SourceFile *>(nullptr);
+          },
+      },
       origin.u);
 }
 
@@ -281,13 +284,15 @@ AllSources::Origin::Origin(ProvenanceRange r, const std::string &text)
 
 const char &AllSources::Origin::operator[](std::size_t n) const {
   return std::visit(
-      common::visitors{[n](const Inclusion &inc) -> const char & {
-                         return inc.source.content()[n];
-                       },
+      common::visitors{
+          [n](const Inclusion &inc) -> const char & {
+            return inc.source.content()[n];
+          },
           [n](const Macro &mac) -> const char & { return mac.expansion[n]; },
           [n](const CompilerInsertion &ins) -> const char & {
             return ins.text[n];
-          }},
+          },
+      },
       u);
 }
 
@@ -356,21 +361,23 @@ std::ostream &AllSources::Dump(std::ostream &o) const {
     o << "   ";
     DumpRange(o, m.covers);
     o << " -> ";
-    std::visit(common::visitors{[&](const Inclusion &inc) {
-                                  if (inc.isModule) {
-                                    o << "module ";
-                                  }
-                                  o << "file " << inc.source.path();
-                                },
-                   [&](const Macro &mac) { o << "macro " << mac.expansion; },
-                   [&](const CompilerInsertion &ins) {
-                     o << "compiler '" << ins.text << '\'';
-                     if (ins.text.length() == 1) {
-                       int ch = ins.text[0];
-                       o << " (0x" << std::hex << (ch & 0xff) << std::dec
-                         << ")";
-                     }
-                   }},
+    std::visit(
+        common::visitors{
+            [&](const Inclusion &inc) {
+              if (inc.isModule) {
+                o << "module ";
+              }
+              o << "file " << inc.source.path();
+            },
+            [&](const Macro &mac) { o << "macro " << mac.expansion; },
+            [&](const CompilerInsertion &ins) {
+              o << "compiler '" << ins.text << '\'';
+              if (ins.text.length() == 1) {
+                int ch = ins.text[0];
+                o << " (0x" << std::hex << (ch & 0xff) << std::dec << ")";
+              }
+            },
+        },
         m.u);
     if (IsValid(m.replaces)) {
       o << " replaces ";

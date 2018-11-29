@@ -27,16 +27,17 @@ ConvertRealOperandsResult ConvertRealOperands(
     parser::ContextualMessages &messages, Expr<SomeType> &&x,
     Expr<SomeType> &&y, int defaultRealKind) {
   return std::visit(
-      common::visitors{[&](Expr<SomeInteger> &&ix, Expr<SomeInteger> &&iy)
-                           -> ConvertRealOperandsResult {
-                         // Can happen in a CMPLX() constructor.  Per F'2018,
-                         // both integer operands are converted to default REAL.
-                         return {AsSameKindExprs<TypeCategory::Real>(
-                             ConvertToKind<TypeCategory::Real>(
-                                 defaultRealKind, std::move(ix)),
-                             ConvertToKind<TypeCategory::Real>(
-                                 defaultRealKind, std::move(iy)))};
-                       },
+      common::visitors{
+          [&](Expr<SomeInteger> &&ix,
+              Expr<SomeInteger> &&iy) -> ConvertRealOperandsResult {
+            // Can happen in a CMPLX() constructor.  Per F'2018,
+            // both integer operands are converted to default REAL.
+            return {AsSameKindExprs<TypeCategory::Real>(
+                ConvertToKind<TypeCategory::Real>(
+                    defaultRealKind, std::move(ix)),
+                ConvertToKind<TypeCategory::Real>(
+                    defaultRealKind, std::move(iy)))};
+          },
           [&](Expr<SomeInteger> &&ix,
               Expr<SomeReal> &&ry) -> ConvertRealOperandsResult {
             return {AsSameKindExprs<TypeCategory::Real>(
@@ -81,7 +82,8 @@ ConvertRealOperandsResult ConvertRealOperands(
           [&](auto &&, auto &&) -> ConvertRealOperandsResult {
             messages.Say("operands must be INTEGER or REAL"_err_en_US);
             return std::nullopt;
-          }},
+          },
+      },
       std::move(x.u), std::move(y.u));
 }
 
@@ -248,11 +250,11 @@ std::optional<Expr<SomeType>> NumericOperation(
     parser::ContextualMessages &messages, Expr<SomeType> &&x,
     Expr<SomeType> &&y, int defaultRealKind) {
   return std::visit(
-      common::visitors{[](Expr<SomeInteger> &&ix, Expr<SomeInteger> &&iy) {
-                         return Package(
-                             PromoteAndCombine<OPR, TypeCategory::Integer>(
-                                 std::move(ix), std::move(iy)));
-                       },
+      common::visitors{
+          [](Expr<SomeInteger> &&ix, Expr<SomeInteger> &&iy) {
+            return Package(PromoteAndCombine<OPR, TypeCategory::Integer>(
+                std::move(ix), std::move(iy)));
+          },
           [](Expr<SomeReal> &&rx, Expr<SomeReal> &&ry) {
             return Package(PromoteAndCombine<OPR, TypeCategory::Real>(
                 std::move(rx), std::move(ry)));
@@ -316,7 +318,8 @@ std::optional<Expr<SomeType>> NumericOperation(
             // TODO: defined operator
             messages.Say("non-numeric operands to numeric operation"_err_en_US);
             return NoExpr();
-          }},
+          },
+      },
       std::move(x.u), std::move(y.u));
 }
 
@@ -396,10 +399,11 @@ Expr<LogicalResult> PromoteAndRelate(
 std::optional<Expr<LogicalResult>> Relate(parser::ContextualMessages &messages,
     RelationalOperator opr, Expr<SomeType> &&x, Expr<SomeType> &&y) {
   return std::visit(
-      common::visitors{[=](Expr<SomeInteger> &&ix, Expr<SomeInteger> &&iy) {
-                         return std::make_optional(PromoteAndRelate(
-                             opr, std::move(ix), std::move(iy)));
-                       },
+      common::visitors{
+          [=](Expr<SomeInteger> &&ix, Expr<SomeInteger> &&iy) {
+            return std::make_optional(
+                PromoteAndRelate(opr, std::move(ix), std::move(iy)));
+          },
           [=](Expr<SomeReal> &&rx, Expr<SomeReal> &&ry) {
             return std::make_optional(
                 PromoteAndRelate(opr, std::move(rx), std::move(ry)));
@@ -478,7 +482,8 @@ std::optional<Expr<LogicalResult>> Relate(parser::ContextualMessages &messages,
             messages.Say(
                 "relational operands do not have comparable types"_err_en_US);
             return std::optional<Expr<LogicalResult>>{};
-          }},
+          },
+      },
       std::move(x.u), std::move(y.u));
 }
 

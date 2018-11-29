@@ -31,7 +31,8 @@ public:
     for (auto i{block.begin()}, end{block.end()}; i != end; ++i) {
       if (auto *executableConstruct{std::get_if<ExecutableConstruct>(&i->u)}) {
         std::visit(
-            common::visitors{[](auto &) {},
+            common::visitors{
+                [](auto &) {},
                 [&](Statement<common::Indirection<LabelDoStmt>> &labelDoStmt) {
                   auto &label{std::get<Label>(labelDoStmt.statement->t)};
                   stack.push_back(LabelInfo{i, label});
@@ -41,7 +42,8 @@ public:
                 },
                 [&](Statement<ActionStmt> &actionStmt) {
                   CanonicalizeIfMatch(block, stack, i, actionStmt);
-                }},
+                },
+            },
             executableConstruct->u);
       }
     }

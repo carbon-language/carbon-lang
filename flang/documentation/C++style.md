@@ -96,6 +96,10 @@ easily read and understood with a minimum of scrolling.
 
 Avoid using assignments in controlling expressions of `if()` &c., even with
 the idiom of wrapping them with extra parentheses.
+
+In multi-element initializer lists (especially `common::visitors{...}`),
+including a comma after the last element often causes `clang-format` to do
+a better jobs of formatting.
 ### C++ language
 Use *C++17*, unless some compiler to which we must be portable lacks a feature
 you are considering.

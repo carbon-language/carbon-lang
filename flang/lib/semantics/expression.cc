@@ -89,10 +89,12 @@ std::optional<DataRef> ExtractDataRef(Expr<SomeKind<CAT>> &&expr) {
 
 template<> std::optional<DataRef> ExtractDataRef(Expr<SomeType> &&expr) {
   return std::visit(
-      common::visitors{[](BOZLiteralConstant &&) -> std::optional<DataRef> {
-                         return std::nullopt;
-                       },
-          [](auto &&catExpr) { return ExtractDataRef(std::move(catExpr)); }},
+      common::visitors{
+          [](BOZLiteralConstant &&) -> std::optional<DataRef> {
+            return std::nullopt;
+          },
+          [](auto &&catExpr) { return ExtractDataRef(std::move(catExpr)); },
+      },
       std::move(expr.u));
 }
 
@@ -290,7 +292,8 @@ int ExprAnalyzer::Analyze(const std::optional<parser::KindParam> &kindParam,
     return defaultKind;
   }
   return std::visit(
-      common::visitors{[](std::uint64_t k) { return static_cast<int>(k); },
+      common::visitors{
+          [](std::uint64_t k) { return static_cast<int>(k); },
           [&](const parser::Scalar<
               parser::Integer<parser::Constant<parser::Name>>> &n) {
             if (MaybeExpr ie{AnalyzeHelper(*this, n)}) {
@@ -310,7 +313,8 @@ int ExprAnalyzer::Analyze(const std::optional<parser::KindParam> &kindParam,
             }
             Say("Kanji not allowed here"_err_en_US);
             return defaultKind;
-          }},
+          },
+      },
       kindParam->u);
 }
 
@@ -672,19 +676,20 @@ std::optional<Expr<SubscriptInteger>> ExprAnalyzer::TripletPart(
 std::optional<Subscript> ExprAnalyzer::Analyze(
     const parser::SectionSubscript &ss) {
   return std::visit(
-      common::visitors{[&](const parser::SubscriptTriplet &t) {
-                         return std::make_optional(
-                             Subscript{Triplet{TripletPart(std::get<0>(t.t)),
-                                 TripletPart(std::get<1>(t.t)),
-                                 TripletPart(std::get<2>(t.t))}});
-                       },
+      common::visitors{
+          [&](const parser::SubscriptTriplet &t) {
+            return std::make_optional(Subscript{Triplet{
+                TripletPart(std::get<0>(t.t)), TripletPart(std::get<1>(t.t)),
+                TripletPart(std::get<2>(t.t))}});
+          },
           [&](const auto &s) -> std::optional<Subscript> {
             if (auto subscriptExpr{AsSubscript(AnalyzeHelper(*this, s))}) {
               return {Subscript{std::move(*subscriptExpr)}};
             } else {
               return std::nullopt;
             }
-          }},
+          },
+      },
       ss.u);
 }
 
@@ -713,7 +718,8 @@ MaybeExpr ExprAnalyzer::ApplySubscripts(
                   ArrayRef{std::move(base), std::move(subscripts)});
             }
             return std::nullopt;
-          }},
+          },
+      },
       std::move(dataRef.u));
 }
 
@@ -914,7 +920,8 @@ std::optional<CallAndArguments> ExprAnalyzer::Procedure(
                       Say("TODO: unimplemented/invalid kind of symbol as procedure designator '%s'"_err_en_US,
                           n.ToString().data());
                       return std::nullopt;
-                    }},
+                    },
+                },
                 n.symbol->details());
           },
           [&](const parser::ProcComponentRef &pcr)
@@ -941,9 +948,10 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::FunctionReference &funcRef) {
       std::get<std::list<parser::ActualArgSpec>>(funcRef.v.t)) {
     MaybeExpr actualArgExpr;
     std::visit(
-        common::visitors{[&](const common::Indirection<parser::Variable> &v) {
-                           actualArgExpr = AnalyzeHelper(*this, v);
-                         },
+        common::visitors{
+            [&](const common::Indirection<parser::Variable> &v) {
+              actualArgExpr = AnalyzeHelper(*this, v);
+            },
             [&](const common::Indirection<parser::Expr> &x) {
               actualArgExpr = Analyze(*x);
             },
@@ -961,7 +969,8 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::FunctionReference &funcRef) {
             },
             [&](const parser::ActualArg::PercentVal &) {
               Say("TODO: %VAL() argument"_err_en_US);
-            }},
+            },
+        },
         std::get<parser::ActualArg>(arg.t).u);
     if (actualArgExpr.has_value()) {
       arguments.emplace_back(std::make_optional(
@@ -1008,7 +1017,8 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Parentheses &x) {
                     return {AsGenericExpr(Parentheses<Ty>{std::move(expr)})};
                   },
                   std::move(catExpr.u));
-            }},
+            },
+        },
         std::move(operand->u));
   }
   return std::nullopt;
@@ -1026,7 +1036,8 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::UnaryPlus &x) {
                   cat != TypeCategory::Complex) {
                 Say("operand of unary + must be of a numeric type"_err_en_US);
               }
-            }},
+            },
+        },
         value->u);
   }
   return value;
@@ -1041,16 +1052,18 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Negate &x) {
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::NOT &x) {
   if (MaybeExpr operand{AnalyzeHelper(*this, *x.v)}) {
-    return std::visit(common::visitors{[](Expr<SomeLogical> &&lx) -> MaybeExpr {
-                                         return {AsGenericExpr(
-                                             LogicalNegation(std::move(lx)))};
-                                       },
-                          [=](auto &&) -> MaybeExpr {
-                            // TODO: accept INTEGER operand and maybe typeless
-                            // if not overridden
-                            Say("Operand of .NOT. must be LOGICAL"_err_en_US);
-                            return std::nullopt;
-                          }},
+    return std::visit(
+        common::visitors{
+            [](Expr<SomeLogical> &&lx) -> MaybeExpr {
+              return {AsGenericExpr(LogicalNegation(std::move(lx)))};
+            },
+            [=](auto &&) -> MaybeExpr {
+              // TODO: accept INTEGER operand and maybe typeless
+              // if not overridden
+              Say("Operand of .NOT. must be LOGICAL"_err_en_US);
+              return std::nullopt;
+            },
+        },
         std::move(operand->u));
   }
   return std::nullopt;
@@ -1195,7 +1208,8 @@ MaybeExpr LogicalHelper(
               // need to define IAND, IOR, IEOR intrinsic representation
               ea.Say("operands to LOGICAL operation must be LOGICAL"_err_en_US);
               return {};
-            }},
+            },
+        },
         std::move(std::get<0>(*both).u), std::move(std::get<1>(*both).u));
   }
   return std::nullopt;

@@ -114,10 +114,12 @@ Expr<SubscriptInteger> Substring::upper() const {
     return **upper_;
   } else {
     return std::visit(
-        common::visitors{[](const DataRef &dataRef) { return dataRef.LEN(); },
+        common::visitors{
+            [](const DataRef &dataRef) { return dataRef.LEN(); },
             [](const StaticDataObject::Pointer &object) {
               return AsExpr(Constant<SubscriptInteger>{object->data().size()});
-            }},
+            },
+        },
         parent_);
   }
 }
@@ -339,8 +341,10 @@ std::ostream &ProcedureDesignator::AsFortran(std::ostream &o) const {
 template<typename T>
 std::ostream &Designator<T>::AsFortran(std::ostream &o) const {
   std::visit(
-      common::visitors{[&](const Symbol *sym) { o << sym->name().ToString(); },
-          [&](const auto &x) { x.AsFortran(o); }},
+      common::visitors{
+          [&](const Symbol *sym) { o << sym->name().ToString(); },
+          [&](const auto &x) { x.AsFortran(o); },
+      },
       u);
   return o;
 }
@@ -352,10 +356,12 @@ static Expr<SubscriptInteger> SymbolLEN(const Symbol &sym) {
 
 Expr<SubscriptInteger> BaseObject::LEN() const {
   return std::visit(
-      common::visitors{[](const Symbol *symbol) { return SymbolLEN(*symbol); },
+      common::visitors{
+          [](const Symbol *symbol) { return SymbolLEN(*symbol); },
           [](const StaticDataObject::Pointer &object) {
             return AsExpr(Constant<SubscriptInteger>{object->data().size()});
-          }},
+          },
+      },
       u);
 }
 
@@ -364,8 +370,10 @@ Expr<SubscriptInteger> Component::LEN() const {
 }
 Expr<SubscriptInteger> ArrayRef::LEN() const {
   return std::visit(
-      common::visitors{[](const Symbol *symbol) { return SymbolLEN(*symbol); },
-          [](const Component &component) { return component.LEN(); }},
+      common::visitors{
+          [](const Symbol *symbol) { return SymbolLEN(*symbol); },
+          [](const Component &component) { return component.LEN(); },
+      },
       u);
 }
 Expr<SubscriptInteger> CoarrayRef::LEN() const {
@@ -373,8 +381,10 @@ Expr<SubscriptInteger> CoarrayRef::LEN() const {
 }
 Expr<SubscriptInteger> DataRef::LEN() const {
   return std::visit(
-      common::visitors{[](const Symbol *s) { return SymbolLEN(*s); },
-          [](const auto &x) { return x.LEN(); }},
+      common::visitors{
+          [](const Symbol *s) { return SymbolLEN(*s); },
+          [](const auto &x) { return x.LEN(); },
+      },
       u);
 }
 Expr<SubscriptInteger> Substring::LEN() const {
@@ -385,9 +395,11 @@ Expr<SubscriptInteger> Substring::LEN() const {
 template<typename T> Expr<SubscriptInteger> Designator<T>::LEN() const {
   if constexpr (Result::category == TypeCategory::Character) {
     return std::visit(
-        common::visitors{[](const Symbol *s) { return SymbolLEN(*s); },
+        common::visitors{
+            [](const Symbol *s) { return SymbolLEN(*s); },
             [](const Component &c) { return c.LEN(); },
-            [](const auto &x) { return x.LEN(); }},
+            [](const auto &x) { return x.LEN(); },
+        },
         u);
   } else {
     CHECK(!"LEN() on non-character Designator");
@@ -396,20 +408,24 @@ template<typename T> Expr<SubscriptInteger> Designator<T>::LEN() const {
 }
 Expr<SubscriptInteger> ProcedureDesignator::LEN() const {
   return std::visit(
-      common::visitors{[](const Symbol *s) { return SymbolLEN(*s); },
+      common::visitors{
+          [](const Symbol *s) { return SymbolLEN(*s); },
           [](const Component &c) { return c.LEN(); },
           [](const auto &) {
             CRASH_NO_CASE;
             return AsExpr(Constant<SubscriptInteger>{0});
-          }},
+          },
+      },
       u);
 }
 
 // Rank()
 int BaseObject::Rank() const {
   return std::visit(
-      common::visitors{[](const Symbol *symbol) { return symbol->Rank(); },
-          [](const StaticDataObject::Pointer &) { return 0; }},
+      common::visitors{
+          [](const Symbol *symbol) { return symbol->Rank(); },
+          [](const StaticDataObject::Pointer &) { return 0; },
+      },
       u);
 }
 
@@ -421,12 +437,15 @@ int Component::Rank() const {
 }
 
 int Subscript::Rank() const {
-  return std::visit(common::visitors{[](const IndirectSubscriptIntegerExpr &x) {
-                                       int rank{x->Rank()};
-                                       CHECK(rank <= 1);
-                                       return rank;
-                                     },
-                        [](const Triplet &) { return 1; }},
+  return std::visit(
+      common::visitors{
+          [](const IndirectSubscriptIntegerExpr &x) {
+            int rank{x->Rank()};
+            CHECK(rank <= 1);
+            return rank;
+          },
+          [](const Triplet &) { return 1; },
+      },
       u);
 }
 
@@ -470,16 +489,20 @@ int DataRef::Rank() const {
 
 int Substring::Rank() const {
   return std::visit(
-      common::visitors{[](const DataRef &dataRef) { return dataRef.Rank(); },
-          [](const StaticDataObject::Pointer &) { return 0; }},
+      common::visitors{
+          [](const DataRef &dataRef) { return dataRef.Rank(); },
+          [](const StaticDataObject::Pointer &) { return 0; },
+      },
       parent_);
 }
 
 int ComplexPart::Rank() const { return complex_.Rank(); }
 template<typename T> int Designator<T>::Rank() const {
   return std::visit(
-      common::visitors{[](const Symbol *sym) { return sym->Rank(); },
-          [](const auto &x) { return x.Rank(); }},
+      common::visitors{
+          [](const Symbol *sym) { return sym->Rank(); },
+          [](const auto &x) { return x.Rank(); },
+      },
       u);
 }
 int ProcedureDesignator::Rank() const {
@@ -511,58 +534,70 @@ const Symbol &Component::GetFirstSymbol() const {
 
 const Symbol &ArrayRef::GetFirstSymbol() const {
   return *std::visit(
-      common::visitors{[](const Symbol *symbol) { return symbol; },
+      common::visitors{
+          [](const Symbol *symbol) { return symbol; },
           [=](const Component &component) {
             return &component.GetFirstSymbol();
-          }},
+          },
+      },
       u);
 }
 
 const Symbol &ArrayRef::GetLastSymbol() const {
-  return *std::visit(common::visitors{[](const Symbol *sym) { return sym; },
-                         [=](const Component &component) {
-                           return &component.GetLastSymbol();
-                         }},
+  return *std::visit(
+      common::visitors{
+          [](const Symbol *sym) { return sym; },
+          [=](const Component &component) {
+            return &component.GetLastSymbol();
+          },
+      },
       u);
 }
 
 const Symbol &DataRef::GetFirstSymbol() const {
   return *std::visit(
-      common::visitors{[](const Symbol *symbol) { return symbol; },
-          [](const auto &x) { return &x.GetFirstSymbol(); }},
+      common::visitors{
+          [](const Symbol *symbol) { return symbol; },
+          [](const auto &x) { return &x.GetFirstSymbol(); },
+      },
       u);
 }
 
 const Symbol &DataRef::GetLastSymbol() const {
   return *std::visit(
-      common::visitors{[](const Symbol *symbol) { return symbol; },
-          [](const auto &x) { return &x.GetLastSymbol(); }},
+      common::visitors{
+          [](const Symbol *symbol) { return symbol; },
+          [](const auto &x) { return &x.GetLastSymbol(); },
+      },
       u);
 }
 
 BaseObject Substring::GetBaseObject() const {
-  return std::visit(common::visitors{[](const DataRef &dataRef) {
-                                       return BaseObject{
-                                           dataRef.GetFirstSymbol()};
-                                     },
-
-                        [](StaticDataObject::Pointer pointer) {
-                          return BaseObject{std::move(pointer)};
-                        }},
+  return std::visit(
+      common::visitors{
+          [](const DataRef &dataRef) {
+            return BaseObject{dataRef.GetFirstSymbol()};
+          },
+          [](StaticDataObject::Pointer pointer) {
+            return BaseObject{std::move(pointer)};
+          },
+      },
       parent_);
 }
 
 const Symbol *Substring::GetLastSymbol() const {
-  return std::visit(common::visitors{[](const DataRef &dataRef) {
-                                       return &dataRef.GetLastSymbol();
-                                     },
-                        [](const auto &) -> const Symbol * { return nullptr; }},
+  return std::visit(
+      common::visitors{
+          [](const DataRef &dataRef) { return &dataRef.GetLastSymbol(); },
+          [](const auto &) -> const Symbol * { return nullptr; },
+      },
       parent_);
 }
 
 template<typename T> BaseObject Designator<T>::GetBaseObject() const {
   return std::visit(
-      common::visitors{[](const Symbol *symbol) { return BaseObject{*symbol}; },
+      common::visitors{
+          [](const Symbol *symbol) { return BaseObject{*symbol}; },
           [](const auto &x) {
             if constexpr (std::is_same_v<std::decay_t<decltype(x)>,
                               Substring>) {
@@ -570,13 +605,15 @@ template<typename T> BaseObject Designator<T>::GetBaseObject() const {
             } else {
               return BaseObject{x.GetFirstSymbol()};
             }
-          }},
+          },
+      },
       u);
 }
 
 template<typename T> const Symbol *Designator<T>::GetLastSymbol() const {
   return std::visit(
-      common::visitors{[](const Symbol *symbol) { return symbol; },
+      common::visitors{
+          [](const Symbol *symbol) { return symbol; },
           [](const auto &x) {
             if constexpr (std::is_same_v<std::decay_t<decltype(x)>,
                               Substring>) {
@@ -584,14 +621,18 @@ template<typename T> const Symbol *Designator<T>::GetLastSymbol() const {
             } else {
               return &x.GetLastSymbol();
             }
-          }},
+          },
+      },
       u);
 }
 
 const Symbol *ProcedureDesignator::GetSymbol() const {
-  return std::visit(common::visitors{[](const Symbol *sym) { return sym; },
-                        [](const Component &c) { return &c.GetLastSymbol(); },
-                        [](const auto &) -> const Symbol * { return nullptr; }},
+  return std::visit(
+      common::visitors{
+          [](const Symbol *sym) { return sym; },
+          [](const Component &c) { return &c.GetLastSymbol(); },
+          [](const auto &) -> const Symbol * { return nullptr; },
+      },
       u);
 }
 

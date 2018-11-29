@@ -144,11 +144,13 @@ std::ostream &ArrayConstructor<T>::AsFortran(std::ostream &o) const {
 template<typename RESULT>
 std::ostream &ExpressionBase<RESULT>::AsFortran(std::ostream &o) const {
   std::visit(
-      common::visitors{[&](const BOZLiteralConstant &x) {
-                         o << "z'" << x.Hexadecimal() << "'";
-                       },
+      common::visitors{
+          [&](const BOZLiteralConstant &x) {
+            o << "z'" << x.Hexadecimal() << "'";
+          },
           [&](const CopyableIndirection<Substring> &s) { s->AsFortran(o); },
-          [&](const auto &x) { x.AsFortran(o); }},
+          [&](const auto &x) { x.AsFortran(o); },
+      },
       derived().u);
   return o;
 }
@@ -161,10 +163,10 @@ template<typename T> Expr<SubscriptInteger> ArrayConstructor<T>::LEN() const {
 template<int KIND>
 Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
   return std::visit(
-      common::visitors{[](const Constant<Result> &c) {
-                         return AsExpr(
-                             Constant<SubscriptInteger>{c.value.size()});
-                       },
+      common::visitors{
+          [](const Constant<Result> &c) {
+            return AsExpr(Constant<SubscriptInteger>{c.value.size()});
+          },
           [](const ArrayConstructor<Result> &a) { return a.LEN(); },
           [](const Parentheses<Result> &x) { return x.left().LEN(); },
           [](const Concat<KIND> &c) {
@@ -175,7 +177,8 @@ Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
                 Extremum<SubscriptInteger>{c.left().LEN(), c.right().LEN()}};
           },
           [](const Designator<Result> &dr) { return dr.LEN(); },
-          [](const FunctionRef<Result> &fr) { return fr.LEN(); }},
+          [](const FunctionRef<Result> &fr) { return fr.LEN(); },
+      },
       u);
 }
 

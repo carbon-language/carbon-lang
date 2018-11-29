@@ -233,25 +233,28 @@ static CS GatherAllVariableNames(
     const std::list<parser::LocalitySpec> &localitySpecs) {
   CS names;
   for (auto &ls : localitySpecs) {
-    std::visit(common::visitors{[](auto &) {},
-                   [&](const parser::LocalitySpec::Local &local) {
-                     for (auto &v : local.v) {
-                       CHECK(v.symbol);
-                       names.push_back(v.symbol);
-                     }
-                   },
-                   [&](const parser::LocalitySpec::LocalInit &localInit) {
-                     for (auto &v : localInit.v) {
-                       CHECK(v.symbol);
-                       names.push_back(v.symbol);
-                     }
-                   },
-                   [&](const parser::LocalitySpec::Shared &shared) {
-                     for (auto &v : shared.v) {
-                       CHECK(v.symbol);
-                       names.push_back(v.symbol);
-                     }
-                   }},
+    std::visit(
+        common::visitors{
+            [](auto &) {},
+            [&](const parser::LocalitySpec::Local &local) {
+              for (auto &v : local.v) {
+                CHECK(v.symbol);
+                names.push_back(v.symbol);
+              }
+            },
+            [&](const parser::LocalitySpec::LocalInit &localInit) {
+              for (auto &v : localInit.v) {
+                CHECK(v.symbol);
+                names.push_back(v.symbol);
+              }
+            },
+            [&](const parser::LocalitySpec::Shared &shared) {
+              for (auto &v : shared.v) {
+                CHECK(v.symbol);
+                names.push_back(v.symbol);
+              }
+            },
+        },
         ls.u);
   }
   return names;
@@ -260,19 +263,22 @@ static CS GatherNotSharedVariableNames(
     const std::list<parser::LocalitySpec> &localitySpecs) {
   CS names;
   for (auto &ls : localitySpecs) {
-    std::visit(common::visitors{[](auto &) {},
-                   [&](const parser::LocalitySpec::Local &local) {
-                     for (auto &v : local.v) {
-                       CHECK(v.symbol);
-                       names.push_back(v.symbol);
-                     }
-                   },
-                   [&](const parser::LocalitySpec::LocalInit &localInit) {
-                     for (auto &v : localInit.v) {
-                       CHECK(v.symbol);
-                       names.push_back(v.symbol);
-                     }
-                   }},
+    std::visit(
+        common::visitors{
+            [](auto &) {},
+            [&](const parser::LocalitySpec::Local &local) {
+              for (auto &v : local.v) {
+                CHECK(v.symbol);
+                names.push_back(v.symbol);
+              }
+            },
+            [&](const parser::LocalitySpec::LocalInit &localInit) {
+              for (auto &v : localInit.v) {
+                CHECK(v.symbol);
+                names.push_back(v.symbol);
+              }
+            },
+        },
         ls.u);
   }
   return names;
@@ -281,13 +287,16 @@ static CS GatherLocalVariableNames(
     const std::list<parser::LocalitySpec> &localitySpecs) {
   CS names;
   for (auto &ls : localitySpecs) {
-    std::visit(common::visitors{[](auto &) {},
-                   [&](const parser::LocalitySpec::Local &local) {
-                     for (auto &v : local.v) {
-                       CHECK(v.symbol);
-                       names.push_back(v.symbol);
-                     }
-                   }},
+    std::visit(
+        common::visitors{
+            [](auto &) {},
+            [&](const parser::LocalitySpec::Local &local) {
+              for (auto &v : local.v) {
+                CHECK(v.symbol);
+                names.push_back(v.symbol);
+              }
+            },
+        },
         ls.u);
   }
   return names;
