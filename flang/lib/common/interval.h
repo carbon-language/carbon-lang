@@ -69,6 +69,15 @@ public:
     }
     return false;
   }
+  void ExtendToCover(const Interval &that) {
+    if (size_ == 0) {
+      *this = that;
+    } else if (that.size_ != 0) {
+      const auto end{std::max(NextAfter(), that.NextAfter())};
+      start_ = std::min(start_, that.start_);
+      size_ = end - start_;
+    }
+  }
 
   std::size_t MemberOffset(const A &x) const {
     CHECK(Contains(x));

@@ -147,13 +147,7 @@ const Scope *Scope::FindScope(const parser::CharBlock &source) const {
 }
 
 void Scope::AddSourceRange(const parser::CharBlock &source) {
-  if (sourceRange_.empty()) {
-    sourceRange_ = source;
-  } else if (!source.empty()) {
-    sourceRange_ =
-        parser::CharBlock(std::min(sourceRange_.begin(), source.begin()),
-            std::max(sourceRange_.end(), source.end()));
-  }
+  sourceRange_.ExtendToCover(source);
 }
 
 std::ostream &operator<<(std::ostream &os, const Scope &scope) {
