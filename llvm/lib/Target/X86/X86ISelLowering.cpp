@@ -1811,6 +1811,10 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   setTargetDAGCombine(ISD::XOR);
   setTargetDAGCombine(ISD::MSCATTER);
   setTargetDAGCombine(ISD::MGATHER);
+  setTargetDAGCombine(ISD::SDIV);
+  setTargetDAGCombine(ISD::UDIV);
+  setTargetDAGCombine(ISD::SREM);
+  setTargetDAGCombine(ISD::UREM);
 
   computeRegisterProperties(Subtarget.getRegisterInfo());
 
@@ -40949,6 +40953,37 @@ static SDValue combinePMULDQ(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+// Try to widen division/remainder by splat constant to avoid scalarization.
+// TODO: Can we do something for non-splat?
+static SDValue combineDivRem(SDNode *N, SelectionDAG &DAG,
+                             TargetLowering::DAGCombinerInfo &DCI) {
+  if (!DCI.isBeforeLegalize())
+    return SDValue();
+
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  LLVMContext &Context = *DAG.getContext();
+  EVT VT = N->getValueType(0);
+  if (!VT.isVector() || 128 % VT.getSizeInBits() != 0 ||
+      TLI.getTypeAction(Context, VT) != TargetLowering::TypeWidenVector)
+    return SDValue();
+
+  APInt SplatVal;
+  if (!ISD::isConstantSplatVector(N->getOperand(1).getNode(), SplatVal))
+    return SDValue();
+
+  unsigned NumConcats = 128 / VT.getSizeInBits();
+  SmallVector<SDValue, 8> Ops0(NumConcats, DAG.getUNDEF(VT));
+  Ops0[0] = N->getOperand(0);
+
+  SDLoc dl(N);
+  EVT ResVT = TLI.getTypeToTransformTo(Context, VT);
+  SDValue N0 = DAG.getNode(ISD::CONCAT_VECTORS, dl, ResVT, Ops0);
+  SDValue N1 = DAG.getConstant(SplatVal, dl, ResVT);
+  SDValue Res = DAG.getNode(N->getOpcode(), dl, ResVT, N0, N1);
+  return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, Res,
+                     DAG.getIntPtrConstant(0, dl));
+}
+
 SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
                                              DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -41079,6 +41114,10 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::PCMPGT:      return combineVectorCompare(N, DAG, Subtarget);
   case X86ISD::PMULDQ:
   case X86ISD::PMULUDQ:     return combinePMULDQ(N, DAG, DCI);
+  case ISD::UDIV:
+  case ISD::SDIV:
+  case ISD::UREM:
+  case ISD::SREM:           return combineDivRem(N, DAG, DCI);
   }
 
   return SDValue();
