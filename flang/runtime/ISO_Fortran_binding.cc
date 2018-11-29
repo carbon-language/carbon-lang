@@ -15,6 +15,7 @@
 // Implements the required interoperability API from ISO_Fortran_binding.h
 // as specified in section 18.5.5 of Fortran 2018.
 
+#include "../include/flang/ISO_Fortran_binding.h"
 #include "descriptor.h"
 
 namespace Fortran::ISO {
@@ -29,13 +30,13 @@ static inline constexpr bool IsAssumedSize(const CFI_cdesc_t *dv) {
 
 void *CFI_address(
     const CFI_cdesc_t *descriptor, const CFI_index_t subscripts[]) {
-  auto p = reinterpret_cast<char *>(descriptor->base_addr);
-  std::size_t rank{descriptor->rank};
+  char *p{static_cast<char *>(descriptor->base_addr)};
+  const CFI_rank_t rank{descriptor->rank};
   const CFI_dim_t *dim{descriptor->dim};
-  for (std::size_t j{0}; j < rank; ++j, ++dim) {
+  for (CFI_rank_t j{0}; j < rank; ++j, ++dim) {
     p += (subscripts[j] - dim->lower_bound) * dim->sm;
   }
-  return reinterpret_cast<void *>(p);
+  return p;
 }
 
 int CFI_allocate(CFI_cdesc_t *descriptor, const CFI_index_t lower_bounds[],
@@ -187,7 +188,7 @@ int CFI_establish(CFI_cdesc_t *descriptor, void *base_addr,
   descriptor->attribute = attribute;
   descriptor->f18Addendum = 0;
   std::size_t byteSize{elem_len};
-  const std::size_t lower_bound{0};
+  constexpr std::size_t lower_bound{0};
   if (base_addr != nullptr) {
     for (std::size_t j{0}; j < rank; ++j) {
       descriptor->dim[j].lower_bound = lower_bound;
@@ -307,8 +308,7 @@ int CFI_select_part(CFI_cdesc_t *result, const CFI_cdesc_t *source,
     return CFI_INVALID_ELEM_LEN;
   }
 
-  result->base_addr = reinterpret_cast<void *>(
-      displacement + reinterpret_cast<char *>(source->base_addr));
+  result->base_addr = displacement + static_cast<char *>(source->base_addr);
   result->elem_len = elem_len;
   for (int j{0}; j < source->rank; ++j) {
     result->dim[j].lower_bound = 0;
