@@ -155,7 +155,7 @@ public:
   /// This is used by the YAML writer to identify the specification it should
   /// use for writing the file.
   ///
-  /// \param Type The file type.
+  /// \param Kind The file type.
   void setFileType(FileType Kind) { FileKind = Kind; }
 
   /// Get the file type.
@@ -263,7 +263,7 @@ public:
 
   /// Add a re-exported library.
   ///
-  /// \param Name The name of the library to re-export.
+  /// \param InstallName The name of the library to re-export.
   /// \param Architectures The set of architecture for which this applies.
   void addReexportedLibrary(StringRef InstallName,
                             ArchitectureSet Architectures);

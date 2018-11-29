@@ -23,7 +23,7 @@ inline bool operator<(const ExportedSymbol &lhs, const ExportedSymbol &rhs) {
   return std::get<1>(lhs) < std::get<1>(rhs);
 }
 
-static ExportedSymbolSeq TBDv2Symbols({
+static ExportedSymbol TBDv2Symbols[] = {
     {SymbolKind::GlobalSymbol, "$ld$hide$os9.0$_sym1", false, false},
     {SymbolKind::GlobalSymbol, "_sym1", false, false},
     {SymbolKind::GlobalSymbol, "_sym2", false, false},
@@ -42,7 +42,7 @@ static ExportedSymbolSeq TBDv2Symbols({
     {SymbolKind::ObjectiveCInstanceVariable, "class1._ivar1", false, false},
     {SymbolKind::ObjectiveCInstanceVariable, "class1._ivar2", false, false},
     {SymbolKind::ObjectiveCInstanceVariable, "class1._ivar3", false, false},
-});
+};
 
 namespace TBDv2 {
 
@@ -107,8 +107,9 @@ TEST(TBDv2, ReadFile) {
   }
   llvm::sort(Exports.begin(), Exports.end());
 
-  EXPECT_EQ(TBDv2Symbols.size(), Exports.size());
-  EXPECT_TRUE(std::equal(Exports.begin(), Exports.end(), TBDv2Symbols.begin()));
+  EXPECT_EQ(sizeof(TBDv2Symbols) / sizeof(ExportedSymbol), Exports.size());
+  EXPECT_TRUE(
+      std::equal(Exports.begin(), Exports.end(), std::begin(TBDv2Symbols)));
 }
 
 TEST(TBDv2, ReadFile2) {
