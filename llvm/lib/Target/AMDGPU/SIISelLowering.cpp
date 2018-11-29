@@ -830,8 +830,7 @@ static MVT memVTFromAggregate(Type *Ty) {
     NumElts = 1;
   }
 
-  Type *FlagComponent = Ty->getContainedType(1);
-  assert(FlagComponent->isIntegerTy(32) && "Expected int32 type");
+  assert(Ty->getContainedType(1)->isIntegerTy(32) && "Expected int32 type");
 
   // Calculate the size of the memVT type from the aggregate
   unsigned Pow2Elts = 0;
