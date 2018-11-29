@@ -43,9 +43,9 @@ template <> struct ScalarEnumerationTraits<MachO::ObjCConstraintType> {
   static void enumeration(IO &, MachO::ObjCConstraintType &);
 };
 
-template <> struct ScalarTraits<MachO::PlatformType> {
-  static void output(const MachO::PlatformType &, void *, raw_ostream &);
-  static StringRef input(StringRef, void *, MachO::PlatformType &);
+template <> struct ScalarTraits<MachO::PlatformKind> {
+  static void output(const MachO::PlatformKind &, void *, raw_ostream &);
+  static StringRef input(StringRef, void *, MachO::PlatformKind &);
   static QuotingType mustQuote(StringRef);
 };
 

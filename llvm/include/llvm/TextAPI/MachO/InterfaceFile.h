@@ -34,6 +34,16 @@
 namespace llvm {
 namespace MachO {
 
+/// Defines the list of MachO platforms.
+enum class PlatformKind : unsigned {
+  unknown,
+  macOS = MachO::PLATFORM_MACOS,
+  iOS = MachO::PLATFORM_IOS,
+  tvOS = MachO::PLATFORM_TVOS,
+  watchOS = MachO::PLATFORM_WATCHOS,
+  bridgeOS = MachO::PLATFORM_BRIDGEOS,
+};
+
 /// Defines a list of Objective-C constraints.
 enum class ObjCConstraintType : unsigned {
   /// No constraint.
@@ -164,10 +174,10 @@ public:
   FileType getFileType() const { return FileKind; }
 
   /// Set the platform.
-  void setPlatform(PlatformType Platform_) { Platform = Platform_; }
+  void setPlatform(PlatformKind Platform_) { Platform = Platform_; }
 
   /// Get the platform.
-  PlatformType getPlatform() const { return Platform; }
+  PlatformKind getPlatform() const { return Platform; }
 
   /// Specify the set of supported architectures by this file.
   void setArchitectures(ArchitectureSet Architectures_) {
@@ -406,7 +416,7 @@ private:
 
   std::string Path;
   FileType FileKind;
-  PlatformType Platform;
+  PlatformKind Platform;
   ArchitectureSet Architectures;
   std::string InstallName;
   PackedVersion CurrentVersion;

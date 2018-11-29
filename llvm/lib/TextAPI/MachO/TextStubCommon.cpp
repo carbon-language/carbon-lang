@@ -43,43 +43,44 @@ void ScalarEnumerationTraits<ObjCConstraintType>::enumeration(
   IO.enumCase(Constraint, "gc", ObjCConstraintType::GC);
 }
 
-void ScalarTraits<PlatformType>::output(const PlatformType &Value, void *,
+void ScalarTraits<PlatformKind>::output(const PlatformKind &Value, void *,
                                         raw_ostream &OS) {
   switch (Value) {
-  case PLATFORM_MACOS:
+  default:
+    llvm_unreachable("unexpected platform");
+    break;
+  case PlatformKind::macOS:
     OS << "macosx";
     break;
-  case PLATFORM_IOS:
+  case PlatformKind::iOS:
     OS << "ios";
     break;
-  case PLATFORM_WATCHOS:
+  case PlatformKind::watchOS:
     OS << "watchos";
     break;
-  case PLATFORM_TVOS:
+  case PlatformKind::tvOS:
     OS << "tvos";
     break;
-  case PLATFORM_BRIDGEOS:
+  case PlatformKind::bridgeOS:
     OS << "bridgeos";
     break;
   }
 }
-StringRef ScalarTraits<PlatformType>::input(StringRef Scalar, void *,
-                                            PlatformType &Value) {
-  int Result = StringSwitch<unsigned>(Scalar)
-                   .Case("macosx", PLATFORM_MACOS)
-                   .Case("ios", PLATFORM_IOS)
-                   .Case("watchos", PLATFORM_WATCHOS)
-                   .Case("tvos", PLATFORM_TVOS)
-                   .Case("bridgeos", PLATFORM_BRIDGEOS)
-                   .Default(0);
+StringRef ScalarTraits<PlatformKind>::input(StringRef Scalar, void *,
+                                            PlatformKind &Value) {
+  Value = StringSwitch<PlatformKind>(Scalar)
+              .Case("macosx", PlatformKind::macOS)
+              .Case("ios", PlatformKind::iOS)
+              .Case("watchos", PlatformKind::watchOS)
+              .Case("tvos", PlatformKind::tvOS)
+              .Case("bridgeos", PlatformKind::bridgeOS)
+              .Default(PlatformKind::unknown);
 
-  if (!Result)
+  if (Value == PlatformKind::unknown)
     return "unknown platform";
-
-  Value = static_cast<PlatformType>(Result);
   return {};
 }
-QuotingType ScalarTraits<PlatformType>::mustQuote(StringRef) {
+QuotingType ScalarTraits<PlatformKind>::mustQuote(StringRef) {
   return QuotingType::None;
 }
 

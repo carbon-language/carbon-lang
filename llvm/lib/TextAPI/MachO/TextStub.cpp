@@ -515,11 +515,11 @@ template <> struct MappingTraits<const InterfaceFile *> {
 
     std::vector<Architecture> Architectures;
     std::vector<UUID> UUIDs;
-    PlatformType Platform;
+    PlatformKind Platform{PlatformKind::unknown};
     StringRef InstallName;
     PackedVersion CurrentVersion;
     PackedVersion CompatibilityVersion;
-    SwiftVersion SwiftABIVersion;
+    SwiftVersion SwiftABIVersion{0};
     ObjCConstraintType ObjCConstraint{ObjCConstraintType::None};
     TBDFlags Flags{TBDFlags::None};
     StringRef ParentUmbrella;

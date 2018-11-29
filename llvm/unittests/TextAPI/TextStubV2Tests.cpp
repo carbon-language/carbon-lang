@@ -92,7 +92,7 @@ TEST(TBDv2, ReadFile) {
   auto Archs = Architecture::armv7 | Architecture::armv7s |
                Architecture::armv7k | Architecture::arm64;
   EXPECT_EQ(Archs, File->getArchitectures());
-  EXPECT_EQ(PLATFORM_IOS, File->getPlatform());
+  EXPECT_EQ(PlatformKind::iOS, File->getPlatform());
   EXPECT_EQ(std::string("Test.dylib"), File->getInstallName());
   EXPECT_EQ(PackedVersion(2, 3, 4), File->getCurrentVersion());
   EXPECT_EQ(PackedVersion(1, 0, 0), File->getCompatibilityVersion());
@@ -160,7 +160,7 @@ TEST(TBDv2, ReadFile2) {
   auto Archs = Architecture::armv7 | Architecture::armv7s |
                Architecture::armv7k | Architecture::arm64;
   EXPECT_EQ(Archs, File->getArchitectures());
-  EXPECT_EQ(PLATFORM_IOS, File->getPlatform());
+  EXPECT_EQ(PlatformKind::iOS, File->getPlatform());
   EXPECT_EQ(std::string("Test.dylib"), File->getInstallName());
   EXPECT_EQ(PackedVersion(1, 0, 0), File->getCurrentVersion());
   EXPECT_EQ(PackedVersion(1, 0, 0), File->getCompatibilityVersion());
@@ -200,7 +200,7 @@ TEST(TBDv2, WriteFile) {
   File.setInstallName("/usr/lib/libfoo.dylib");
   File.setFileType(FileType::TBD_V2);
   File.setArchitectures(Architecture::i386 | Architecture::x86_64);
-  File.setPlatform(PLATFORM_MACOS);
+  File.setPlatform(PlatformKind::macOS);
   File.setCurrentVersion(PackedVersion(1, 2, 3));
   File.setTwoLevelNamespace();
   File.setApplicationExtensionSafe();
@@ -238,7 +238,7 @@ TEST(TBDv2, Platform_macOS) {
   EXPECT_TRUE(!!Result);
   auto File = std::move(Result.get());
   EXPECT_EQ(FileType::TBD_V2, File->getFileType());
-  EXPECT_EQ(PLATFORM_MACOS, File->getPlatform());
+  EXPECT_EQ(PlatformKind::macOS, File->getPlatform());
 }
 
 TEST(TBDv2, Platform_iOS) {
@@ -253,7 +253,7 @@ TEST(TBDv2, Platform_iOS) {
   EXPECT_TRUE(!!Result);
   auto File = std::move(Result.get());
   EXPECT_EQ(FileType::TBD_V2, File->getFileType());
-  EXPECT_EQ(PLATFORM_IOS, File->getPlatform());
+  EXPECT_EQ(PlatformKind::iOS, File->getPlatform());
 }
 
 TEST(TBDv2, Platform_watchOS) {
@@ -268,7 +268,7 @@ TEST(TBDv2, Platform_watchOS) {
   EXPECT_TRUE(!!Result);
   auto File = std::move(Result.get());
   EXPECT_EQ(FileType::TBD_V2, File->getFileType());
-  EXPECT_EQ(PLATFORM_WATCHOS, File->getPlatform());
+  EXPECT_EQ(PlatformKind::watchOS, File->getPlatform());
 }
 
 TEST(TBDv2, Platform_tvOS) {
@@ -283,7 +283,7 @@ TEST(TBDv2, Platform_tvOS) {
   EXPECT_TRUE(!!Result);
   auto File = std::move(Result.get());
   EXPECT_EQ(FileType::TBD_V2, File->getFileType());
-  EXPECT_EQ(PLATFORM_TVOS, File->getPlatform());
+  EXPECT_EQ(PlatformKind::tvOS, File->getPlatform());
 }
 
 TEST(TBDv2, Platform_bridgeOS) {
@@ -299,7 +299,7 @@ TEST(TBDv2, Platform_bridgeOS) {
   EXPECT_TRUE(!!Result);
   auto File = std::move(Result.get());
   EXPECT_EQ(FileType::TBD_V2, File->getFileType());
-  EXPECT_EQ(PLATFORM_BRIDGEOS, File->getPlatform());
+  EXPECT_EQ(PlatformKind::bridgeOS, File->getPlatform());
 }
 
 TEST(TBDv2, Swift_1_0) {
