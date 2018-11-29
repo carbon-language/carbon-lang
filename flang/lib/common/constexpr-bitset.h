@@ -140,7 +140,7 @@ public:
     if (bits_ == 0) {
       return std::nullopt;
     } else {
-      return {TrailingZeroCount(bits_)};
+      return {TrailingZeroBitCount(bits_)};
     }
   }
 

@@ -82,7 +82,7 @@ template<typename UINT> inline constexpr bool Parity(UINT x) {
 
 // "Parity is for farmers." -- Seymour R. Cray
 
-template<typename UINT> inline constexpr int TrailingZeroCount(UINT x) {
+template<typename UINT> inline constexpr int TrailingZeroBitCount(UINT x) {
   return BitPopulationCount(x ^ (x - 1)) - !!x;
 }
 }

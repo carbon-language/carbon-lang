@@ -59,10 +59,11 @@ void dumpTest() {
 }
 
 template<typename R> void basicTests(int rm, Rounding rounding) {
+  static constexpr int kind{R::bits / 8};
   char desc[64];
   using Word = typename R::Word;
-  std::snprintf(
-      desc, sizeof desc, "bits=%d, le=%d", R::bits, Word::littleEndian);
+  std::snprintf(desc, sizeof desc, "bits=%d, le=%d, kind=%d", R::bits,
+      Word::littleEndian, kind);
   R zero;
   TEST(!zero.IsNegative())(desc);
   TEST(!zero.IsNotANumber())(desc);
@@ -160,6 +161,17 @@ template<typename R> void basicTests(int rm, Rounding rounding) {
       TEST(!vr.value.IsInfinite())(ldesc);
       TEST(ivf.flags.empty())(ldesc);
       MATCH(x, ivf.value.ToUInt64())(ldesc);
+      std::stringstream ss;
+      vr.value.AsFortran(ss, kind, rounding);
+      std::string decimal{ss.str()};
+      const char *p{decimal.data()};
+      char ddesc[128];
+      std::snprintf(ddesc, sizeof ddesc, "%s decimal='%s'", ldesc, p);
+      MATCH(x, static_cast<std::uint64_t>(std::stold(decimal)))(ddesc);
+      auto check{R::Read(p, rounding)};
+      auto icheck{check.value.template ToInteger<Integer8>()};
+      MATCH(x, icheck.value.ToUInt64())(ddesc);
+      TEST(vr.value.Compare(check.value) == Relation::Equal)(ddesc);
     }
     TEST(vr.value.AINT().value.Compare(vr.value) == Relation::Equal)(ldesc);
     ix = ix.Negate().value;
@@ -393,9 +405,9 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
       MATCH(IsInfinite(rj), x.IsInfinite())
       ("%d IsInfinite(0x%llx)", pass, static_cast<long long>(rj));
 
-      int kind{REAL::bits / 8};
+      static constexpr int kind{REAL::bits / 8};
       std::stringstream ss, css;
-      x.AsFortran(ss, kind);
+      x.AsFortran(ss, kind, rounding);
       std::string s{ss.str()};
       if (IsNaN(rj)) {
         css << "(0._" << kind << "/0.)";
