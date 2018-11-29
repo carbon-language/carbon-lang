@@ -1,4 +1,4 @@
-;===- ./lib/LLVMBuild.txt --------------------------------------*- Conf -*--===;
+;===- ./lib/TextAPI/LLVMBuild.txt ------------------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,40 +15,8 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories =
- Analysis
- AsmParser
- Bitcode
- CodeGen
- DebugInfo
- Demangle
- ExecutionEngine
- FuzzMutate
- LineEditor
- Linker
- IR
- IRReader
- LTO
- MC
- Object
- BinaryFormat
- ObjectYAML
- Option
- OptRemarks
- Passes
- ProfileData
- Support
- TableGen
- Target
- Testing
- TextAPI
- ToolDrivers
- Transforms
- WindowsManifest
- XRay
-
 [component_0]
-type = Group
-name = Libraries
-parent = $ROOT
+type = Library
+name = TextAPI
+parent = Libraries
+required_libraries = Support BinaryFormat
