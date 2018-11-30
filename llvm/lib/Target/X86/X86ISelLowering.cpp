@@ -23766,12 +23766,7 @@ static SDValue LowerMULH(SDValue Op, const X86Subtarget &Subtarget,
   RHi = getTargetVShiftByConstNode(X86ISD::VSRLI, dl, ExVT, RHi, 8, DAG);
 
   // Bitcast back to VT and then pack all the even elements from Lo and Hi.
-  // Shuffle lowering should turn this into PACKUS.
-  RLo = DAG.getBitcast(VT, RLo);
-  RHi = DAG.getBitcast(VT, RHi);
-  return DAG.getVectorShuffle(VT, dl, RLo, RHi,
-                              { 0,  2,  4,  6,  8, 10, 12, 14,
-                               16, 18, 20, 22, 24, 26, 28, 30});
+  return DAG.getNode(X86ISD::PACKUS, dl, VT, RLo, RHi);
 }
 
 SDValue X86TargetLowering::LowerWin64_i128OP(SDValue Op, SelectionDAG &DAG) const {
