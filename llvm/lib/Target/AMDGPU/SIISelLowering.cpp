@@ -9303,42 +9303,49 @@ void SITargetLowering::computeKnownBitsForFrameIndex(const SDValue Op,
   Known.Zero.setHighBits(AssumeFrameIndexHighZeroBits);
 }
 
+LLVM_ATTRIBUTE_UNUSED
+static bool isCopyFromRegOfInlineAsm(const SDNode *N) {
+  assert(N->getOpcode() == ISD::CopyFromReg);
+  do {
+    // Follow the chain until we find an INLINEASM node.
+    N = N->getOperand(0).getNode();
+    if (N->getOpcode() == ISD::INLINEASM)
+      return true;
+  } while (N->getOpcode() == ISD::CopyFromReg);
+  return false;
+}
+
 bool SITargetLowering::isSDNodeSourceOfDivergence(const SDNode * N,
   FunctionLoweringInfo * FLI, LegacyDivergenceAnalysis * KDA) const
 {
   switch (N->getOpcode()) {
-    case ISD::Register:
     case ISD::CopyFromReg:
     {
-      const RegisterSDNode *R = nullptr;
-      if (N->getOpcode() == ISD::Register) {
-        R = dyn_cast<RegisterSDNode>(N);
-      }
-      else {
-        R = dyn_cast<RegisterSDNode>(N->getOperand(1));
-      }
-      if (R)
-      {
-        const MachineFunction * MF = FLI->MF;
-        const GCNSubtarget &ST = MF->getSubtarget<GCNSubtarget>();
-        const MachineRegisterInfo &MRI = MF->getRegInfo();
-        const SIRegisterInfo &TRI = ST.getInstrInfo()->getRegisterInfo();
-        unsigned Reg = R->getReg();
-        if (TRI.isPhysicalRegister(Reg))
-          return TRI.isVGPR(MRI, Reg);
+      const RegisterSDNode *R = cast<RegisterSDNode>(N->getOperand(1));
+      const MachineFunction * MF = FLI->MF;
+      const GCNSubtarget &ST = MF->getSubtarget<GCNSubtarget>();
+      const MachineRegisterInfo &MRI = MF->getRegInfo();
+      const SIRegisterInfo &TRI = ST.getInstrInfo()->getRegisterInfo();
+      unsigned Reg = R->getReg();
+      if (TRI.isPhysicalRegister(Reg))
+        return !TRI.isSGPRReg(MRI, Reg);
 
-        if (MRI.isLiveIn(Reg)) {
-          // workitem.id.x workitem.id.y workitem.id.z
-          // Any VGPR formal argument is also considered divergent
-          if (TRI.isVGPR(MRI, Reg))
-              return true;
-          // Formal arguments of non-entry functions
-          // are conservatively considered divergent
-          else if (!AMDGPU::isEntryFunctionCC(FLI->Fn->getCallingConv()))
-            return true;
-        }
-        return !KDA || KDA->isDivergent(FLI->getValueFromVirtualReg(Reg));
+      if (MRI.isLiveIn(Reg)) {
+        // workitem.id.x workitem.id.y workitem.id.z
+        // Any VGPR formal argument is also considered divergent
+        if (!TRI.isSGPRReg(MRI, Reg))
+          return true;
+        // Formal arguments of non-entry functions
+        // are conservatively considered divergent
+        else if (!AMDGPU::isEntryFunctionCC(FLI->Fn->getCallingConv()))
+          return true;
+        return false;
       }
+      const Value *V = FLI->getValueFromVirtualReg(Reg);
+      if (V)
+        return KDA->isDivergent(V);
+      assert(Reg == FLI->DemoteRegister || isCopyFromRegOfInlineAsm(N));
+      return !TRI.isSGPRReg(MRI, Reg);
     }
     break;
     case ISD::LOAD: {
