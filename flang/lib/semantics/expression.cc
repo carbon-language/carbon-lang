@@ -29,7 +29,7 @@
 
 using namespace Fortran::parser::literals;
 
-// Typedef for optional generic expressions
+// Typedef for optional generic expressions (ubiquitous in this file)
 using MaybeExpr =
     std::optional<Fortran::evaluate::Expr<Fortran::evaluate::SomeType>>;
 
@@ -40,17 +40,14 @@ namespace Fortran::evaluate {
 
 using common::TypeCategory;
 
-using MaybeExpr = std::optional<Expr<SomeType>>;
-
 // Constraint checking
-void ExpressionAnalysisContext::CheckConstraints(
-    MaybeExpr &expr, const Constraints *constraints) {
-  if (constraints != nullptr) {
-    CheckConstraints(expr, constraints->inner);
-    if (expr.has_value()) {
-      if (!(this->*constraints->checker)(*expr)) {
-        expr.reset();
-      }
+void ExpressionAnalysisContext::CheckConstraints(MaybeExpr &expr) {
+  if (inner_ != nullptr) {
+    inner_->CheckConstraints(expr);
+  }
+  if (constraint_ != nullptr && expr.has_value()) {
+    if (!(this->*constraint_)(*expr)) {
+      expr.reset();
     }
   }
 }
@@ -65,7 +62,7 @@ bool ExpressionAnalysisContext::ScalarConstraint(Expr<SomeType> &expr) {
 }
 
 bool ExpressionAnalysisContext::ConstantConstraint(Expr<SomeType> &expr) {
-  expr = Fold(context.foldingContext(), std::move(expr));
+  expr = Fold(context_.foldingContext(), std::move(expr));
   if (IsConstant(expr)) {
     return true;
   }
@@ -158,9 +155,11 @@ struct CallAndArguments {
 // member function that converts parse trees into (usually) generic
 // expressions.
 struct ExprAnalyzer : public ExpressionAnalysisContext {
-  using ExpressionAnalysisContext::ExpressionAnalysisContext;
 
-  MaybeExpr Analyze(const parser::Expr &, const Constraints * = nullptr);
+  ExprAnalyzer(ExpressionAnalysisContext &eac)
+    : ExpressionAnalysisContext{eac} {}
+
+  MaybeExpr Analyze(const parser::Expr &);
   MaybeExpr Analyze(const parser::CharLiteralConstantSubstring &);
   MaybeExpr Analyze(const parser::LiteralConstant &);
   MaybeExpr Analyze(const parser::IntLiteralConstant &);
@@ -231,35 +230,31 @@ struct ExprAnalyzer : public ExpressionAnalysisContext {
   std::optional<CallAndArguments> Procedure(
       const parser::ProcedureDesignator &, ActualArguments &);
 };
-}
 
-namespace Fortran::semantics {
-
-MaybeExpr AnalyzeExpr(SemanticsContext &context, const parser::Expr &expr,
-    const evaluate::Constraints *constraints) {
-  evaluate::ExprAnalyzer ea{context};
-  return ea.Analyze(expr, constraints);
+MaybeExpr AnalyzeExpr(
+    ExpressionAnalysisContext &context, const parser::Expr &expr) {
+  ExprAnalyzer ea{context};
+  return ea.Analyze(expr);
 }
 
 template<typename... As>
-MaybeExpr AnalyzeExpr(SemanticsContext &context, const std::variant<As...> &u,
-    const evaluate::Constraints *constraints) {
-  return std::visit(
-      [&](const auto &x) { return AnalyzeExpr(context, x, constraints); }, u);
+MaybeExpr AnalyzeExpr(
+    ExpressionAnalysisContext &context, const std::variant<As...> &u) {
+  return std::visit([&](const auto &x) { return AnalyzeExpr(context, x); }, u);
 }
 
 template<typename A>
-MaybeExpr AnalyzeExpr(SemanticsContext &context,
-    const common::Indirection<A> &x, const evaluate::Constraints *constraints) {
-  return AnalyzeExpr(context, *x, constraints);
+MaybeExpr AnalyzeExpr(
+    ExpressionAnalysisContext &context, const common::Indirection<A> &x) {
+  return AnalyzeExpr(context, *x);
 }
 
 template<>
-MaybeExpr AnalyzeExpr(SemanticsContext &context, const parser::Designator &d,
-    const evaluate::Constraints *constraints) {
+MaybeExpr AnalyzeExpr(
+    ExpressionAnalysisContext &context, const parser::Designator &d) {
   // These checks have to be deferred to these "top level" data-refs where
   // we can be sure that there are no following subscripts (yet).
-  if (MaybeExpr result{AnalyzeExpr(context, d.u, constraints)}) {
+  if (MaybeExpr result{AnalyzeExpr(context, d.u)}) {
     if (std::optional<evaluate::DataRef> dataRef{
             evaluate::ExtractDataRef(std::move(result))}) {
       evaluate::ExprAnalyzer ea{context};
@@ -271,41 +266,36 @@ MaybeExpr AnalyzeExpr(SemanticsContext &context, const parser::Designator &d,
 }
 
 template<typename A>
-MaybeExpr AnalyzeExpr(SemanticsContext &context, const A &x,
-    const evaluate::Constraints *constraints) {
+MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context, const A &x) {
   if constexpr (UnionTrait<A>) {
-    return AnalyzeExpr(context, x.u, constraints);
+    return AnalyzeExpr(context, x.u);
   } else {
     evaluate::ExprAnalyzer ea{context};
     MaybeExpr result{ea.Analyze(x)};
-    ea.CheckConstraints(result, constraints);
+    ea.CheckConstraints(result);
     return result;
   }
 }
-}
 
-namespace Fortran::evaluate {
-
-template<typename A> MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const A &x) {
-  return semantics::AnalyzeExpr(ea.context, x, nullptr);
-}
+template MaybeExpr AnalyzeExpr(
+    ExpressionAnalysisContext &, const parser::Expr &);
 
 // Implementations of ExprAnalyzer::Analyze follow for various parse tree
 // node types.
 
-MaybeExpr ExprAnalyzer::Analyze(
-    const parser::Expr &expr, const Constraints *constraints) {
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr &expr) {
   if (!expr.source.empty()) {
     // Analyze the expression in a specified source position context for better
     // error reporting.
-    auto save{context.foldingContext().messages.SetLocation(expr.source)};
-    MaybeExpr result{semantics::AnalyzeExpr(context, expr.u, nullptr)};
-    CheckConstraints(result, constraints);
+    auto save{context_.foldingContext().messages.SetLocation(expr.source)};
+    MaybeExpr result{AnalyzeExpr(*this, expr.u)};
+    CheckConstraints(result);
+    return result;
+  } else {
+    MaybeExpr result{AnalyzeExpr(*this, expr.u)};
+    CheckConstraints(result);
     return result;
   }
-  MaybeExpr result{semantics::AnalyzeExpr(context, expr.u, nullptr)};
-  CheckConstraints(result, constraints);
-  return result;
 }
 
 int ExprAnalyzer::Analyze(const std::optional<parser::KindParam> &kindParam,
@@ -318,7 +308,7 @@ int ExprAnalyzer::Analyze(const std::optional<parser::KindParam> &kindParam,
           [](std::uint64_t k) { return static_cast<int>(k); },
           [&](const parser::Scalar<
               parser::Integer<parser::Constant<parser::Name>>> &n) {
-            if (MaybeExpr ie{AnalyzeHelper(*this, n)}) {
+            if (MaybeExpr ie{AnalyzeExpr(*this, n)}) {
               if (std::optional<std::int64_t> i64{ToInt64(*ie)}) {
                 int iv = *i64;
                 if (iv == *i64) {
@@ -344,7 +334,7 @@ int ExprAnalyzer::Analyze(const std::optional<parser::KindParam> &kindParam,
 template<typename PARSED>
 MaybeExpr IntLiteralConstant(ExprAnalyzer &ea, const PARSED &x) {
   int kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
-      ea.context.defaultKinds().GetDefaultKind(TypeCategory::Integer))};
+      ea.context().defaultKinds().GetDefaultKind(TypeCategory::Integer))};
   auto value{std::get<0>(x.t)};  // std::(u)int64_t
   auto result{common::SearchDynamicTypes(
       TypeKindVisitor<TypeCategory::Integer, Constant, std::int64_t>{
@@ -400,12 +390,12 @@ struct RealTypeVisitor {
 MaybeExpr ExprAnalyzer::Analyze(const parser::RealLiteralConstant &x) {
   // Use a local message context around the real literal for better
   // provenance on any messages.
-  auto save{context.foldingContext().messages.SetLocation(x.real.source)};
+  auto save{context_.foldingContext().messages.SetLocation(x.real.source)};
   // If a kind parameter appears, it defines the kind of the literal and any
   // letter used in an exponent part (e.g., the 'E' in "6.02214E+23")
   // should agree.  In the absence of an explicit kind parameter, any exponent
   // letter determines the kind.  Otherwise, defaults apply.
-  auto &defaults{context.defaultKinds()};
+  auto &defaults{context_.defaultKinds()};
   int defaultKind{defaults.GetDefaultKind(TypeCategory::Real)};
   const char *end{x.real.source.end()};
   std::optional<int> letterKind;
@@ -428,7 +418,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::RealLiteralConstant &x) {
     Say("explicit kind parameter on real constant disagrees with exponent letter"_en_US);
   }
   auto result{common::SearchDynamicTypes(
-      RealTypeVisitor{kind, x.real.source, context.foldingContext()})};
+      RealTypeVisitor{kind, x.real.source, context_.foldingContext()})};
   if (!result.has_value()) {
     Say("unsupported REAL(KIND=%d)"_err_en_US, kind);
   }
@@ -450,13 +440,13 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::SignedRealLiteralConstant &x) {
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::ComplexPart &x) {
-  return AnalyzeHelper(*this, x.u);
+  return AnalyzeExpr(*this, x.u);
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::ComplexLiteralConstant &z) {
-  return AsMaybeExpr(ConstructComplex(context.foldingContext().messages,
+  return AsMaybeExpr(ConstructComplex(context_.foldingContext().messages,
       Analyze(std::get<0>(z.t)), Analyze(std::get<1>(z.t)),
-      context.defaultKinds().GetDefaultKind(TypeCategory::Real)));
+      context_.defaultKinds().GetDefaultKind(TypeCategory::Real)));
 }
 
 MaybeExpr ExprAnalyzer::Analyze(std::string &&string, int kind) {
@@ -495,7 +485,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::CharLiteralConstant &x) {
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::LogicalLiteralConstant &x) {
   auto kind{Analyze(std::get<std::optional<parser::KindParam>>(x.t),
-      context.defaultKinds().GetDefaultKind(TypeCategory::Logical))};
+      context_.defaultKinds().GetDefaultKind(TypeCategory::Logical))};
   bool value{std::get<bool>(x.t)};
   auto result{common::SearchDynamicTypes(
       TypeKindVisitor<TypeCategory::Logical, Constant, bool>{
@@ -507,7 +497,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::LogicalLiteralConstant &x) {
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::HollerithLiteralConstant &x) {
-  int kind{context.defaultKinds().GetDefaultKind(TypeCategory::Character)};
+  int kind{context_.defaultKinds().GetDefaultKind(TypeCategory::Character)};
   auto value{x.v};
   return Analyze(std::move(value), kind);
 }
@@ -588,7 +578,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Name &n) {
   } else if (n.symbol->attrs().test(semantics::Attr::PARAMETER)) {
     if (auto *details{n.symbol->detailsIf<semantics::ObjectEntityDetails>()}) {
       auto &init{details->init()};
-      if (init.Resolve(context)) {
+      if (init.Resolve(context_)) {
         return init.Get();
       }
     }
@@ -606,7 +596,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Name &n) {
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::NamedConstant &n) {
   if (MaybeExpr value{Analyze(n.v)}) {
-    Expr<SomeType> folded{Fold(context.foldingContext(), std::move(*value))};
+    Expr<SomeType> folded{Fold(context_.foldingContext(), std::move(*value))};
     if (IsConstant(folded)) {
       return {folded};
     }
@@ -616,8 +606,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::NamedConstant &n) {
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Substring &ss) {
-  if (MaybeExpr baseExpr{
-          AnalyzeHelper(*this, std::get<parser::DataRef>(ss.t))}) {
+  if (MaybeExpr baseExpr{AnalyzeExpr(*this, std::get<parser::DataRef>(ss.t))}) {
     if (std::optional<DataRef> dataRef{ExtractDataRef(std::move(*baseExpr))}) {
       if (MaybeExpr newBaseExpr{TopLevelChecks(std::move(*dataRef))}) {
         if (std::optional<DataRef> checked{
@@ -668,7 +657,7 @@ std::optional<Expr<SubscriptInteger>> ExprAnalyzer::AsSubscript(
 std::optional<Expr<SubscriptInteger>> ExprAnalyzer::GetSubstringBound(
     const std::optional<parser::ScalarIntExpr> &bound) {
   if (bound.has_value()) {
-    if (MaybeExpr expr{AnalyzeHelper(*this, *bound)}) {
+    if (MaybeExpr expr{AnalyzeExpr(*this, *bound)}) {
       if (expr->Rank() > 1) {
         Say("substring bound expression has rank %d"_err_en_US, expr->Rank());
       }
@@ -690,7 +679,7 @@ std::optional<Expr<SubscriptInteger>> ExprAnalyzer::GetSubstringBound(
 std::optional<Expr<SubscriptInteger>> ExprAnalyzer::TripletPart(
     const std::optional<parser::Subscript> &s) {
   if (s.has_value()) {
-    return AsSubscript(AnalyzeHelper(*this, *s));
+    return AsSubscript(AnalyzeExpr(*this, *s));
   }
   return std::nullopt;
 }
@@ -705,7 +694,7 @@ std::optional<Subscript> ExprAnalyzer::Analyze(
                 TripletPart(std::get<2>(t.t))}});
           },
           [&](const auto &s) -> std::optional<Subscript> {
-            if (auto subscriptExpr{AsSubscript(AnalyzeHelper(*this, s))}) {
+            if (auto subscriptExpr{AsSubscript(AnalyzeExpr(*this, s))}) {
               return {Subscript{std::move(*subscriptExpr)}};
             } else {
               return std::nullopt;
@@ -782,7 +771,7 @@ MaybeExpr ExprAnalyzer::CompleteSubscripts(ArrayRef &&ref) {
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::ArrayElement &ae) {
   std::vector<Subscript> subscripts{Analyze(ae.subscripts)};
-  if (MaybeExpr baseExpr{AnalyzeHelper(*this, ae.base)}) {
+  if (MaybeExpr baseExpr{AnalyzeExpr(*this, ae.base)}) {
     if (std::optional<DataRef> dataRef{ExtractDataRef(std::move(*baseExpr))}) {
       if (MaybeExpr result{
               ApplySubscripts(std::move(*dataRef), std::move(subscripts))}) {
@@ -795,7 +784,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::ArrayElement &ae) {
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::StructureComponent &sc) {
-  if (MaybeExpr base{AnalyzeHelper(*this, sc.base)}) {
+  if (MaybeExpr base{AnalyzeExpr(*this, sc.base)}) {
     if (auto *dtExpr{std::get_if<Expr<SomeDerived>>(&base->u)}) {
       Symbol *sym{sc.component.symbol};
       const semantics::DerivedTypeSpec *dtSpec{nullptr};
@@ -924,8 +913,8 @@ std::optional<CallAndArguments> ExprAnalyzer::Procedure(
                       } else {
                         CallCharacteristics cc{n.source};
                         if (std::optional<SpecificCall> specificCall{
-                                context.intrinsics().Probe(cc, arguments,
-                                    &context.foldingContext().messages)}) {
+                                context_.intrinsics().Probe(cc, arguments,
+                                    &context_.foldingContext().messages)}) {
                           return {CallAndArguments{
                               ProcedureDesignator{
                                   std::move(specificCall->specificIntrinsic)},
@@ -948,7 +937,7 @@ std::optional<CallAndArguments> ExprAnalyzer::Procedure(
           },
           [&](const parser::ProcComponentRef &pcr)
               -> std::optional<CallAndArguments> {
-            if (MaybeExpr component{AnalyzeHelper(*this, pcr.v)}) {
+            if (MaybeExpr component{AnalyzeExpr(*this, pcr.v)}) {
               // TODO distinguish PCR from TBP
               // TODO optional PASS argument for TBP
               Say("TODO: proc component ref"_err_en_US);
@@ -972,7 +961,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::FunctionReference &funcRef) {
     std::visit(
         common::visitors{
             [&](const common::Indirection<parser::Variable> &v) {
-              actualArgExpr = AnalyzeHelper(*this, v);
+              actualArgExpr = AnalyzeExpr(*this, v);
             },
             [&](const common::Indirection<parser::Expr> &x) {
               actualArgExpr = Analyze(*x);
@@ -996,7 +985,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::FunctionReference &funcRef) {
         std::get<parser::ActualArg>(arg.t).u);
     if (actualArgExpr.has_value()) {
       arguments.emplace_back(std::make_optional(
-          Fold(context.foldingContext(), std::move(*actualArgExpr))));
+          Fold(context_.foldingContext(), std::move(*actualArgExpr))));
       if (const auto &argKW{std::get<std::optional<parser::Keyword>>(arg.t)}) {
         arguments.back()->keyword = argKW->v.source;
       }
@@ -1022,7 +1011,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::FunctionReference &funcRef) {
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Parentheses &x) {
   // TODO: C1003: A parenthesized function reference may not return a
   // procedure pointer.
-  if (MaybeExpr operand{AnalyzeHelper(*this, *x.v)}) {
+  if (MaybeExpr operand{AnalyzeExpr(*this, *x.v)}) {
     return std::visit(
         common::visitors{
             [&](BOZLiteralConstant &&boz) {
@@ -1047,7 +1036,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Parentheses &x) {
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::UnaryPlus &x) {
-  MaybeExpr value{AnalyzeHelper(*this, *x.v)};
+  MaybeExpr value{AnalyzeExpr(*this, *x.v)};
   if (value.has_value()) {
     std::visit(
         common::visitors{
@@ -1066,14 +1055,14 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::UnaryPlus &x) {
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Negate &x) {
-  if (MaybeExpr operand{AnalyzeHelper(*this, *x.v)}) {
-    return Negation(context.foldingContext().messages, std::move(*operand));
+  if (MaybeExpr operand{AnalyzeExpr(*this, *x.v)}) {
+    return Negation(context_.foldingContext().messages, std::move(*operand));
   }
   return std::nullopt;
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::NOT &x) {
-  if (MaybeExpr operand{AnalyzeHelper(*this, *x.v)}) {
+  if (MaybeExpr operand{AnalyzeExpr(*this, *x.v)}) {
     return std::visit(
         common::visitors{
             [](Expr<SomeLogical> &&lx) -> MaybeExpr {
@@ -1104,17 +1093,17 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::DefinedUnary &) {
 // TODO: check defined operators for illegal intrinsic operator cases
 template<template<typename> class OPR, typename PARSED>
 MaybeExpr BinaryOperationHelper(ExprAnalyzer &ea, const PARSED &x) {
-  if (auto both{common::AllPresent(AnalyzeHelper(ea, *std::get<0>(x.t)),
-          AnalyzeHelper(ea, *std::get<1>(x.t)))}) {
+  if (auto both{common::AllPresent(AnalyzeExpr(ea, *std::get<0>(x.t)),
+          AnalyzeExpr(ea, *std::get<1>(x.t)))}) {
     int leftRank{std::get<0>(*both).Rank()};
     int rightRank{std::get<1>(*both).Rank()};
     if (leftRank > 0 && rightRank > 0 && leftRank != rightRank) {
       ea.Say("left operand has rank %d, right operand has rank %d"_err_en_US,
           leftRank, rightRank);
     }
-    return NumericOperation<OPR>(ea.context.foldingContext().messages,
+    return NumericOperation<OPR>(ea.context().foldingContext().messages,
         std::move(std::get<0>(*both)), std::move(std::get<1>(*both)),
-        ea.context.defaultKinds().GetDefaultKind(TypeCategory::Real));
+        ea.context().defaultKinds().GetDefaultKind(TypeCategory::Real));
   }
   return std::nullopt;
 }
@@ -1140,15 +1129,15 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Subtract &x) {
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::ComplexConstructor &x) {
-  return AsMaybeExpr(ConstructComplex(context.foldingContext().messages,
-      AnalyzeHelper(*this, *std::get<0>(x.t)),
-      AnalyzeHelper(*this, *std::get<1>(x.t)),
-      context.defaultKinds().GetDefaultKind(TypeCategory::Real)));
+  return AsMaybeExpr(ConstructComplex(context_.foldingContext().messages,
+      AnalyzeExpr(*this, *std::get<0>(x.t)),
+      AnalyzeExpr(*this, *std::get<1>(x.t)),
+      context_.defaultKinds().GetDefaultKind(TypeCategory::Real)));
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Concat &x) {
-  if (auto both{common::AllPresent(AnalyzeHelper(*this, *std::get<0>(x.t)),
-          AnalyzeHelper(*this, *std::get<1>(x.t)))}) {
+  if (auto both{common::AllPresent(AnalyzeExpr(*this, *std::get<0>(x.t)),
+          AnalyzeExpr(*this, *std::get<1>(x.t)))}) {
     return std::visit(
         common::visitors{
             [&](Expr<SomeCharacter> &&cx, Expr<SomeCharacter> &&cy) {
@@ -1180,9 +1169,9 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Concat &x) {
 template<typename PARSED>
 MaybeExpr RelationHelper(
     ExprAnalyzer &ea, RelationalOperator opr, const PARSED &x) {
-  if (auto both{common::AllPresent(AnalyzeHelper(ea, *std::get<0>(x.t)),
-          AnalyzeHelper(ea, *std::get<1>(x.t)))}) {
-    return AsMaybeExpr(Relate(ea.context.foldingContext().messages, opr,
+  if (auto both{common::AllPresent(AnalyzeExpr(ea, *std::get<0>(x.t)),
+          AnalyzeExpr(ea, *std::get<1>(x.t)))}) {
+    return AsMaybeExpr(Relate(ea.context().foldingContext().messages, opr,
         std::move(std::get<0>(*both)), std::move(std::get<1>(*both))));
   }
   return std::nullopt;
@@ -1216,8 +1205,8 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::GT &x) {
 template<typename PARSED>
 MaybeExpr LogicalHelper(
     ExprAnalyzer &ea, LogicalOperator opr, const PARSED &x) {
-  if (auto both{common::AllPresent(AnalyzeHelper(ea, *std::get<0>(x.t)),
-          AnalyzeHelper(ea, *std::get<1>(x.t)))}) {
+  if (auto both{common::AllPresent(AnalyzeExpr(ea, *std::get<0>(x.t)),
+          AnalyzeExpr(ea, *std::get<1>(x.t)))}) {
     return std::visit(
         common::visitors{
             [=](Expr<SomeLogical> &&lx, Expr<SomeLogical> &&ly) -> MaybeExpr {
@@ -1290,10 +1279,6 @@ void ExprAnalyzer::CheckUnsubscriptedComponent(const Component &component) {
 }
 
 namespace Fortran::semantics {
-
-template std::optional<evaluate::Expr<evaluate::SomeType>> AnalyzeExpr(
-    SemanticsContext &, const parser::Expr &,
-    const evaluate::Constraints *c = nullptr);
 
 class Mutator {
 public:
