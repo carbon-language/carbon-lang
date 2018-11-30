@@ -32253,10 +32253,10 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
   case X86ISD::VSRA: {
     // We only need the bottom 64-bits of the (128-bit) shift amount.
     SDValue Amt = Op.getOperand(1);
-    EVT AmtVT = Amt.getSimpleValueType();
+    MVT AmtVT = Amt.getSimpleValueType();
     assert(AmtVT.is128BitVector() && "Unexpected value type");
     APInt AmtUndef, AmtZero;
-    int NumAmtElts = AmtVT.getVectorNumElements();
+    unsigned NumAmtElts = AmtVT.getVectorNumElements();
     APInt AmtElts = APInt::getLowBitsSet(NumAmtElts, NumAmtElts / 2);
     if (SimplifyDemandedVectorElts(Amt, AmtElts, AmtUndef, AmtZero, TLO,
                                    Depth + 1))
@@ -32266,7 +32266,7 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
   case X86ISD::CVTSI2P:
   case X86ISD::CVTUI2P: {
     SDValue Src = Op.getOperand(0);
-    EVT SrcVT = Src.getValueType();
+    MVT SrcVT = Src.getSimpleValueType();
     APInt SrcUndef, SrcZero;
     APInt SrcElts = DemandedElts.zextOrTrunc(SrcVT.getVectorNumElements());
     if (SimplifyDemandedVectorElts(Src, SrcElts, SrcUndef, SrcZero, TLO,
