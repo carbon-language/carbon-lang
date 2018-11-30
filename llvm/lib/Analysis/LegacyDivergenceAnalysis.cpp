@@ -356,7 +356,7 @@ void LegacyDivergenceAnalysis::print(raw_ostream &OS, const Module *) const {
   if ((!gpuDA || !gpuDA->hasDivergence()) && DivergentValues.empty())
     return;
 
-  const Function *F;
+  const Function *F = nullptr;
   if (!DivergentValues.empty()) {
     const Value *FirstDivergentValue = *DivergentValues.begin();
     if (const Argument *Arg = dyn_cast<Argument>(FirstDivergentValue)) {
@@ -370,6 +370,8 @@ void LegacyDivergenceAnalysis::print(raw_ostream &OS, const Module *) const {
   } else if (gpuDA) {
     F = &gpuDA->getFunction();
   }
+  if (!F)
+    return;
 
   // Dumps all divergent values in F, arguments and then instructions.
   for (auto &Arg : F->args()) {
