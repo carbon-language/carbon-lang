@@ -536,9 +536,9 @@ RecurrenceDescriptor::isConditionalRdxPattern(
     return InstDesc(false, I);
 
   Value *Op1, *Op2;
-  if (m_FAdd(m_Value(Op1), m_Value(Op2)).match(I1) ||
-      m_FSub(m_Value(Op1), m_Value(Op2)).match(I1) &&
-      (I1->isFast()))
+  if ((m_FAdd(m_Value(Op1), m_Value(Op2)).match(I1)  ||
+       m_FSub(m_Value(Op1), m_Value(Op2)).match(I1)) &&
+      I1->isFast())
     return InstDesc(Kind == RK_FloatAdd, SI);
 
   if (m_FMul(m_Value(Op1), m_Value(Op2)).match(I1) && (I1->isFast()))
