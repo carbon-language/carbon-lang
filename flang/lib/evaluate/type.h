@@ -80,6 +80,7 @@ public:
   using Scalar = value::Integer<8 * KIND>;
 };
 
+// REAL(KIND=2) is IEEE half-precision (16 bits)
 template<>
 class Type<TypeCategory::Real, 2> : public TypeBase<TypeCategory::Real, 2> {
 public:
@@ -87,6 +88,16 @@ public:
       value::Real<typename Type<TypeCategory::Integer, 2>::Scalar, 11>;
 };
 
+// REAL(KIND=3) identifies the "other" half-precision format, which is
+// basically REAL(4) without its least-order 16 fraction bits.
+template<>
+class Type<TypeCategory::Real, 3> : public TypeBase<TypeCategory::Real, 3> {
+public:
+  using Scalar =
+      value::Real<typename Type<TypeCategory::Integer, 2>::Scalar, 8>;
+};
+
+// REAL(KIND=4) is IEEE-754 single precision (32 bits)
 template<>
 class Type<TypeCategory::Real, 4> : public TypeBase<TypeCategory::Real, 4> {
 public:
@@ -94,6 +105,7 @@ public:
       value::Real<typename Type<TypeCategory::Integer, 4>::Scalar, 24>;
 };
 
+// REAL(KIND=8) is IEEE double precision (64 bits)
 template<>
 class Type<TypeCategory::Real, 8> : public TypeBase<TypeCategory::Real, 8> {
 public:
@@ -101,12 +113,14 @@ public:
       value::Real<typename Type<TypeCategory::Integer, 8>::Scalar, 53>;
 };
 
+// REAL(KIND=10) is x87 FPU extended precision (80 bits, all explicit)
 template<>
 class Type<TypeCategory::Real, 10> : public TypeBase<TypeCategory::Real, 10> {
 public:
   using Scalar = value::Real<value::Integer<80>, 64, false>;
 };
 
+// REAL(KIND=16) is IEEE quad precision (128 bits)
 template<>
 class Type<TypeCategory::Real, 16> : public TypeBase<TypeCategory::Real, 16> {
 public:
@@ -177,7 +191,8 @@ static constexpr bool IsValidKindOfIntrinsicType(
     return kind == 1 || kind == 2 || kind == 4 || kind == 8 || kind == 16;
   case TypeCategory::Real:
   case TypeCategory::Complex:
-    return kind == 2 || kind == 4 || kind == 8 || kind == 10 || kind == 16;
+    return kind == 2 || kind == 3 || kind == 4 || kind == 8 || kind == 10 ||
+        kind == 16;
   case TypeCategory::Character: return kind == 1 || kind == 2 || kind == 4;
   case TypeCategory::Logical:
     return kind == 1 || kind == 2 || kind == 4 || kind == 8;
@@ -198,7 +213,7 @@ using CategoryTypesHelper =
     common::CombineTuples<CategoryKindTuple<CATEGORY, KINDS>...>;
 
 template<TypeCategory CATEGORY>
-using CategoryTypes = CategoryTypesHelper<CATEGORY, 1, 2, 4, 8, 10, 16, 32>;
+using CategoryTypes = CategoryTypesHelper<CATEGORY, 1, 2, 3, 4, 8, 10, 16, 32>;
 
 using IntegerTypes = CategoryTypes<TypeCategory::Integer>;
 using RealTypes = CategoryTypes<TypeCategory::Real>;
@@ -274,12 +289,14 @@ struct SomeType {};
   PREFIX<Type<TypeCategory::Integer, 16>>;
 #define FOR_EACH_REAL_KIND(PREFIX) \
   PREFIX<Type<TypeCategory::Real, 2>>; \
+  PREFIX<Type<TypeCategory::Real, 3>>; \
   PREFIX<Type<TypeCategory::Real, 4>>; \
   PREFIX<Type<TypeCategory::Real, 8>>; \
   PREFIX<Type<TypeCategory::Real, 10>>; \
   PREFIX<Type<TypeCategory::Real, 16>>;
 #define FOR_EACH_COMPLEX_KIND(PREFIX) \
   PREFIX<Type<TypeCategory::Complex, 2>>; \
+  PREFIX<Type<TypeCategory::Complex, 3>>; \
   PREFIX<Type<TypeCategory::Complex, 4>>; \
   PREFIX<Type<TypeCategory::Complex, 8>>; \
   PREFIX<Type<TypeCategory::Complex, 10>>; \

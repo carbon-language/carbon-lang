@@ -29,6 +29,10 @@
 
 using namespace Fortran::parser::literals;
 
+// Typedef for optional generic expressions
+using MaybeExpr =
+    std::optional<Fortran::evaluate::Expr<Fortran::evaluate::SomeType>>;
+
 // Much of the code that implements semantic analysis of expressions is
 // tightly coupled with their typed representations in lib/evaluate,
 // and appears here in namespace Fortran::evaluate for convenience.
@@ -37,6 +41,45 @@ namespace Fortran::evaluate {
 using common::TypeCategory;
 
 using MaybeExpr = std::optional<Expr<SomeType>>;
+
+// Constraint checking
+void ExpressionAnalysisContext::CheckConstraints(
+    MaybeExpr &expr, const Constraints *constraints) {
+  if (constraints != nullptr) {
+    CheckConstraints(expr, constraints->inner);
+    if (expr.has_value()) {
+      if (!(this->*constraints->checker)(*expr)) {
+        expr.reset();
+      }
+    }
+  }
+}
+
+bool ExpressionAnalysisContext::ScalarConstraint(Expr<SomeType> &expr) {
+  int rank{expr.Rank()};
+  if (rank == 0) {
+    return true;
+  }
+  Say("expression must be scalar, but has rank %d"_err_en_US, rank);
+  return false;
+}
+
+bool ExpressionAnalysisContext::ConstantConstraint(Expr<SomeType> &expr) {
+  expr = Fold(context.foldingContext(), std::move(expr));
+  if (IsConstant(expr)) {
+    return true;
+  }
+  Say("expression must be constant"_err_en_US);
+  return false;
+}
+
+bool ExpressionAnalysisContext::IntegerConstraint(Expr<SomeType> &expr) {
+  if (std::holds_alternative<Expr<SomeInteger>>(expr.u)) {
+    return true;
+  }
+  Say("expression must be INTEGER"_err_en_US);
+  return false;
+}
 
 // A utility subroutine to repackage optional expressions of various levels
 // of type specificity as fully general MaybeExpr values.
@@ -114,10 +157,10 @@ struct CallAndArguments {
 // This local class wraps some state and a highly overloaded Analyze()
 // member function that converts parse trees into (usually) generic
 // expressions.
-struct ExprAnalyzer {
-  explicit ExprAnalyzer(semantics::SemanticsContext &ctx) : context{ctx} {}
+struct ExprAnalyzer : public ExpressionAnalysisContext {
+  using ExpressionAnalysisContext::ExpressionAnalysisContext;
 
-  MaybeExpr Analyze(const parser::Expr &);
+  MaybeExpr Analyze(const parser::Expr &, const Constraints * = nullptr);
   MaybeExpr Analyze(const parser::CharLiteralConstantSubstring &);
   MaybeExpr Analyze(const parser::LiteralConstant &);
   MaybeExpr Analyze(const parser::IntLiteralConstant &);
@@ -187,81 +230,39 @@ struct ExprAnalyzer {
 
   std::optional<CallAndArguments> Procedure(
       const parser::ProcedureDesignator &, ActualArguments &);
-
-  template<typename... A> void Say(A... args) {
-    context.foldingContext().messages.Say(std::forward<A>(args)...);
-  }
-  template<typename... A> void Say(const parser::CharBlock &at, A... args) {
-    context.foldingContext().messages.Say(at, std::forward<A>(args)...);
-  }
-
-  semantics::SemanticsContext &context;
 };
-
-// This helper template function handles the Scalar<>, Integer<>, and
-// Constant<> wrappers in the parse tree, as well as default behavior
-// for unions.  (C++ doesn't allow template specialization in
-// a class, so this helper template function must be outside ExprAnalyzer
-// and reflect back into it.)
-template<typename A> MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const A &x) {
-  if constexpr (UnionTrait<A>) {
-    return AnalyzeHelper(ea, x.u);
-  } else {
-    return ea.Analyze(x);
-  }
 }
 
-template<typename A>
-MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const parser::Scalar<A> &x) {
-  if (MaybeExpr result{AnalyzeHelper(ea, x.thing)}) {
-    int rank{result->Rank()};
-    if (rank > 0) {
-      ea.Say("expression must be scalar, but has rank %d"_err_en_US, rank);
-    }
-  }
-  return std::nullopt;
-}
+namespace Fortran::semantics {
 
-template<typename A>
-MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const parser::Integer<A> &x) {
-  if (auto result{AnalyzeHelper(ea, x.thing)}) {
-    if (std::holds_alternative<Expr<SomeInteger>>(result->u)) {
-      return result;
-    }
-    ea.Say("expression must be INTEGER"_err_en_US);
-  }
-  return std::nullopt;
-}
-
-template<typename A>
-MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const parser::Constant<A> &x) {
-  if (MaybeExpr result{AnalyzeHelper(ea, x.thing)}) {
-    Expr<SomeType> folded{
-        Fold(ea.context.foldingContext(), std::move(*result))};
-    if (IsConstant(folded)) {
-      return {folded};
-    }
-    ea.Say("expression must be constant"_err_en_US);
-  }
-  return std::nullopt;
+MaybeExpr AnalyzeExpr(SemanticsContext &context, const parser::Expr &expr,
+    const evaluate::Constraints *constraints) {
+  evaluate::ExprAnalyzer ea{context};
+  return ea.Analyze(expr, constraints);
 }
 
 template<typename... As>
-MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const std::variant<As...> &u) {
-  return std::visit([&](const auto &x) { return AnalyzeHelper(ea, x); }, u);
+MaybeExpr AnalyzeExpr(SemanticsContext &context, const std::variant<As...> &u,
+    const evaluate::Constraints *constraints) {
+  return std::visit(
+      [&](const auto &x) { return AnalyzeExpr(context, x, constraints); }, u);
 }
 
 template<typename A>
-MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const common::Indirection<A> &x) {
-  return AnalyzeHelper(ea, *x);
+MaybeExpr AnalyzeExpr(SemanticsContext &context,
+    const common::Indirection<A> &x, const evaluate::Constraints *constraints) {
+  return AnalyzeExpr(context, *x, constraints);
 }
 
 template<>
-MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const parser::Designator &d) {
+MaybeExpr AnalyzeExpr(SemanticsContext &context, const parser::Designator &d,
+    const evaluate::Constraints *constraints) {
   // These checks have to be deferred to these "top level" data-refs where
   // we can be sure that there are no following subscripts (yet).
-  if (MaybeExpr result{AnalyzeHelper(ea, d.u)}) {
-    if (std::optional<DataRef> dataRef{ExtractDataRef(std::move(result))}) {
+  if (MaybeExpr result{AnalyzeExpr(context, d.u, constraints)}) {
+    if (std::optional<evaluate::DataRef> dataRef{
+            evaluate::ExtractDataRef(std::move(result))}) {
+      evaluate::ExprAnalyzer ea{context};
       return ea.TopLevelChecks(std::move(*dataRef));
     }
     return result;
@@ -269,21 +270,42 @@ MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const parser::Designator &d) {
   return std::nullopt;
 }
 
-// Analyze something with source provenance
-template<typename A> MaybeExpr AnalyzeSourced(ExprAnalyzer &ea, const A &x) {
-  if (!x.source.empty()) {
-    auto save{ea.context.foldingContext().messages.SetLocation(x.source)};
-    return AnalyzeHelper(ea, x);
+template<typename A>
+MaybeExpr AnalyzeExpr(SemanticsContext &context, const A &x,
+    const evaluate::Constraints *constraints) {
+  if constexpr (UnionTrait<A>) {
+    return AnalyzeExpr(context, x.u, constraints);
   } else {
-    return AnalyzeHelper(ea, x);
+    evaluate::ExprAnalyzer ea{context};
+    MaybeExpr result{ea.Analyze(x)};
+    ea.CheckConstraints(result, constraints);
+    return result;
   }
+}
+}
+
+namespace Fortran::evaluate {
+
+template<typename A> MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const A &x) {
+  return semantics::AnalyzeExpr(ea.context, x, nullptr);
 }
 
 // Implementations of ExprAnalyzer::Analyze follow for various parse tree
 // node types.
 
-MaybeExpr ExprAnalyzer::Analyze(const parser::Expr &x) {
-  return AnalyzeSourced(*this, x);
+MaybeExpr ExprAnalyzer::Analyze(
+    const parser::Expr &expr, const Constraints *constraints) {
+  if (!expr.source.empty()) {
+    // Analyze the expression in a specified source position context for better
+    // error reporting.
+    auto save{context.foldingContext().messages.SetLocation(expr.source)};
+    MaybeExpr result{semantics::AnalyzeExpr(context, expr.u, nullptr)};
+    CheckConstraints(result, constraints);
+    return result;
+  }
+  MaybeExpr result{semantics::AnalyzeExpr(context, expr.u, nullptr)};
+  CheckConstraints(result, constraints);
+  return result;
 }
 
 int ExprAnalyzer::Analyze(const std::optional<parser::KindParam> &kindParam,
@@ -1269,47 +1291,9 @@ void ExprAnalyzer::CheckUnsubscriptedComponent(const Component &component) {
 
 namespace Fortran::semantics {
 
-evaluate::MaybeExpr AnalyzeExpr(
-    SemanticsContext &context, const parser::Expr &expr) {
-  return evaluate::ExprAnalyzer{context}.Analyze(expr);
-}
-
-template<typename A>
-evaluate::MaybeExpr AnalyzeWrappedExpr(
-    SemanticsContext &context, const A &expr) {
-  evaluate::ExprAnalyzer ea{context};
-  return evaluate::AnalyzeHelper(ea, expr);
-}
-
-evaluate::MaybeExpr AnalyzeExpr(
-    SemanticsContext &context, const parser::Scalar<parser::Expr> &expr) {
-  return AnalyzeWrappedExpr(context, expr);
-}
-evaluate::MaybeExpr AnalyzeExpr(
-    SemanticsContext &context, const parser::Constant<parser::Expr> &expr) {
-  return AnalyzeWrappedExpr(context, expr);
-}
-evaluate::MaybeExpr AnalyzeExpr(
-    SemanticsContext &context, const parser::Integer<parser::Expr> &expr) {
-  return AnalyzeWrappedExpr(context, expr);
-}
-evaluate::MaybeExpr AnalyzeExpr(SemanticsContext &context,
-    const parser::Scalar<parser::Constant<parser::Expr>> &expr) {
-  return AnalyzeWrappedExpr(context, expr);
-}
-evaluate::MaybeExpr AnalyzeExpr(SemanticsContext &context,
-    const parser::Scalar<parser::Integer<parser::Expr>> &expr) {
-  return AnalyzeWrappedExpr(context, expr);
-}
-evaluate::MaybeExpr AnalyzeExpr(SemanticsContext &context,
-    const parser::Integer<parser::Constant<parser::Expr>> &expr) {
-  return AnalyzeWrappedExpr(context, expr);
-}
-evaluate::MaybeExpr AnalyzeExpr(SemanticsContext &context,
-    const parser::Scalar<parser::Integer<parser::Constant<parser::Expr>>>
-        &expr) {
-  return AnalyzeWrappedExpr(context, expr);
-}
+template std::optional<evaluate::Expr<evaluate::SomeType>> AnalyzeExpr(
+    SemanticsContext &, const parser::Expr &,
+    const evaluate::Constraints *c = nullptr);
 
 class Mutator {
 public:

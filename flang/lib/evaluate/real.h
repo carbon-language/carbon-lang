@@ -387,11 +387,12 @@ private:
   Word word_{};  // an Integer<>
 };
 
-extern template class Real<Integer<16>, 11>;
-extern template class Real<Integer<32>, 24>;
-extern template class Real<Integer<64>, 53>;
+extern template class Real<Integer<16>, 11>;  // IEEE half format
+extern template class Real<Integer<16>, 8>;  // the "other" half format
+extern template class Real<Integer<32>, 24>;  // IEEE single
+extern template class Real<Integer<64>, 53>;  // IEEE double
 extern template class Real<Integer<80>, 64, false>;  // 80387 extended precision
-extern template class Real<Integer<128>, 112>;
+extern template class Real<Integer<128>, 112>;  // IEEE quad
 // N.B. No "double-double" support.
 }
 #endif  // FORTRAN_EVALUATE_REAL_H_

@@ -202,6 +202,7 @@ private:
 };
 
 extern template class Decimal<Real<Integer<16>, 11>>;
+extern template class Decimal<Real<Integer<16>, 8>>;
 extern template class Decimal<Real<Integer<32>, 24>>;
 extern template class Decimal<Real<Integer<64>, 53>>;
 extern template class Decimal<Real<Integer<80>, 64, false>>;

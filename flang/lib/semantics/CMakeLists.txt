@@ -14,6 +14,7 @@
 
 
 add_library(FortranSemantics
+  assignment.cc
   attr.cc
   canonicalize-do.cc
   check-do-concurrent.cc

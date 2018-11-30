@@ -15,7 +15,6 @@
 #ifndef FORTRAN_SEMANTICS_SEMANTICS_H_
 #define FORTRAN_SEMANTICS_SEMANTICS_H_
 
-#include "expression.h"
 #include "scope.h"
 #include "../evaluate/common.h"
 #include "../evaluate/intrinsics.h"

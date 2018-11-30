@@ -15,9 +15,11 @@
 #ifndef FORTRAN_SEMANTICS_EXPRESSION_H_
 #define FORTRAN_SEMANTICS_EXPRESSION_H_
 
+#include "semantics.h"
 #include "../evaluate/expression.h"
 #include "../evaluate/type.h"
 #include <optional>
+#include <variant>
 
 namespace Fortran::parser {
 struct Expr;
@@ -27,30 +29,77 @@ template<typename> struct Integer;
 template<typename> struct Constant;
 }
 
+namespace Fortran::evaluate {
+struct Constraints;
+struct ExpressionAnalysisContext {
+  using ConstraintChecker = bool (ExpressionAnalysisContext::*)(
+      Expr<SomeType> &);
+
+  ExpressionAnalysisContext(semantics::SemanticsContext &ctx) : context{ctx} {}
+
+  template<typename... A> void Say(A... args) {
+    context.foldingContext().messages.Say(std::forward<A>(args)...);
+  }
+
+  void CheckConstraints(std::optional<Expr<SomeType>> &, const Constraints *);
+  bool ScalarConstraint(Expr<SomeType> &);
+  bool ConstantConstraint(Expr<SomeType> &);
+  bool IntegerConstraint(Expr<SomeType> &);
+
+  semantics::SemanticsContext &context;
+};
+
+// Constraint checking (e.g., for Scalar<> expressions) is implemented by
+// passing a pointer to one of these partial closures along to AnalyzeExpr.
+// The constraint can then be checked and errors reported with precise
+// source program location information.
+struct Constraints {
+  ExpressionAnalysisContext::ConstraintChecker checker;
+  const Constraints *inner{nullptr};
+};
+}
+
 namespace Fortran::semantics {
 
 class SemanticsContext;
 
 // Semantic analysis of one expression.
-std::optional<evaluate::Expr<evaluate::SomeType>> AnalyzeExpr(
-    SemanticsContext &, const parser::Expr &);
 
+template<typename PARSED>
 std::optional<evaluate::Expr<evaluate::SomeType>> AnalyzeExpr(
-    SemanticsContext &, const parser::Scalar<parser::Expr> &);
+    SemanticsContext &, const PARSED &,
+    const evaluate::Constraints * = nullptr);
+
+extern template std::optional<evaluate::Expr<evaluate::SomeType>> AnalyzeExpr(
+    SemanticsContext &, const parser::Expr &,
+    const evaluate::Constraints *c = nullptr);
+
+template<typename A>
 std::optional<evaluate::Expr<evaluate::SomeType>> AnalyzeExpr(
-    SemanticsContext &, const parser::Constant<parser::Expr> &);
+    SemanticsContext &context, const parser::Scalar<A> &expr,
+    const evaluate::Constraints *constraints = nullptr) {
+  evaluate::Constraints newConstraints{
+      &evaluate::ExpressionAnalysisContext::ScalarConstraint, constraints};
+  return AnalyzeExpr(context, expr.thing, &newConstraints);
+}
+
+template<typename A>
 std::optional<evaluate::Expr<evaluate::SomeType>> AnalyzeExpr(
-    SemanticsContext &, const parser::Integer<parser::Expr> &);
+    SemanticsContext &context, const parser::Constant<A> &expr,
+    const evaluate::Constraints *constraints = nullptr) {
+  evaluate::Constraints newConstraints{
+      &evaluate::ExpressionAnalysisContext::ConstantConstraint, constraints};
+  return AnalyzeExpr(context, expr.thing, &newConstraints);
+}
+
+template<typename A>
 std::optional<evaluate::Expr<evaluate::SomeType>> AnalyzeExpr(
-    SemanticsContext &, const parser::Scalar<parser::Constant<parser::Expr>> &);
-std::optional<evaluate::Expr<evaluate::SomeType>> AnalyzeExpr(
-    SemanticsContext &, const parser::Scalar<parser::Integer<parser::Expr>> &);
-std::optional<evaluate::Expr<evaluate::SomeType>> AnalyzeExpr(
-    SemanticsContext &,
-    const parser::Integer<parser::Constant<parser::Expr>> &);
-std::optional<evaluate::Expr<evaluate::SomeType>> AnalyzeExpr(
-    SemanticsContext &,
-    const parser::Scalar<parser::Integer<parser::Constant<parser::Expr>>> &);
+    SemanticsContext &context, const parser::Integer<A> &expr,
+    const evaluate::Constraints *constraints = nullptr) {
+  evaluate::Constraints newConstraints{
+      &evaluate::ExpressionAnalysisContext::IntegerConstraint, constraints};
+  return AnalyzeExpr(context, expr.thing, &newConstraints);
+}
 
 // Semantic analysis of all expressions in a parse tree, which is
 // decorated with typed representations for top-level expressions.

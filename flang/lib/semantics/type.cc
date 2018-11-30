@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "type.h"
+#include "expression.h"
 #include "scope.h"
 #include "semantics.h"
 #include "symbol.h"

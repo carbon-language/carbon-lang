@@ -103,6 +103,7 @@ std::ostream &Complex<R>::AsFortran(std::ostream &o, int kind) const {
 }
 
 template class Complex<Real<Integer<16>, 11>>;
+template class Complex<Real<Integer<16>, 8>>;
 template class Complex<Real<Integer<32>, 24>>;
 template class Complex<Real<Integer<64>, 53>>;
 template class Complex<Real<Integer<80>, 64, false>>;

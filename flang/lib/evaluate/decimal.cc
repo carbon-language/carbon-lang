@@ -397,6 +397,7 @@ std::string Decimal<REAL, LOG10RADIX>::ToMinimalString(
 }
 
 template class Decimal<Real<Integer<16>, 11>>;
+template class Decimal<Real<Integer<16>, 8>>;
 template class Decimal<Real<Integer<32>, 24>>;
 template class Decimal<Real<Integer<64>, 53>>;
 template class Decimal<Real<Integer<80>, 64, false>>;

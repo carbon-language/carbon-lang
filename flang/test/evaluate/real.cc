@@ -25,6 +25,7 @@ using namespace Fortran::evaluate;
 using namespace Fortran::common;
 
 using Real2 = Scalar<Type<TypeCategory::Real, 2>>;
+using Real3 = Scalar<Type<TypeCategory::Real, 3>>;
 using Real4 = Scalar<Type<TypeCategory::Real, 4>>;
 using Real8 = Scalar<Type<TypeCategory::Real, 8>>;
 using Real10 = Scalar<Type<TypeCategory::Real, 10>>;
@@ -514,6 +515,7 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
 
 void roundTest(int rm, Rounding rounding, std::uint32_t opds) {
   basicTests<Real2>(rm, rounding);
+  basicTests<Real3>(rm, rounding);
   basicTests<Real4>(rm, rounding);
   basicTests<Real8>(rm, rounding);
   basicTests<Real10>(rm, rounding);

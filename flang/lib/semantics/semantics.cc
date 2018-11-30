@@ -16,6 +16,7 @@
 #include "canonicalize-do.h"
 #include "check-do-concurrent.h"
 #include "default-kinds.h"
+#include "expression.h"
 #include "mod-file.h"
 #include "resolve-labels.h"
 #include "resolve-names.h"
