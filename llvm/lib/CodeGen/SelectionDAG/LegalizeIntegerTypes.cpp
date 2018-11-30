@@ -1063,9 +1063,10 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
 /// shared among BR_CC, SELECT_CC, and SETCC handlers.
 void DAGTypeLegalizer::PromoteSetCCOperands(SDValue &NewLHS,SDValue &NewRHS,
                                             ISD::CondCode CCCode) {
-  // We have to insert explicit sign or zero extends.  Note that we could
-  // insert sign extends for ALL conditions, but zero extend is cheaper on
-  // many machines (an AND instead of two shifts), so prefer it.
+  // We have to insert explicit sign or zero extends. Note that we could
+  // insert sign extends for ALL conditions. For those operations where either
+  // zero or sign extension would be valid, use SExtOrZExtPromotedInteger
+  // which will choose the cheapest for the target.
   switch (CCCode) {
   default: llvm_unreachable("Unknown integer comparison!");
   case ISD::SETEQ:
@@ -1086,8 +1087,8 @@ void DAGTypeLegalizer::PromoteSetCCOperands(SDValue &NewLHS,SDValue &NewRHS,
       NewLHS = OpL;
       NewRHS = OpR;
     } else {
-      NewLHS = ZExtPromotedInteger(NewLHS);
-      NewRHS = ZExtPromotedInteger(NewRHS);
+      NewLHS = SExtOrZExtPromotedInteger(NewLHS);
+      NewRHS = SExtOrZExtPromotedInteger(NewRHS);
     }
     break;
   }
@@ -1095,11 +1096,8 @@ void DAGTypeLegalizer::PromoteSetCCOperands(SDValue &NewLHS,SDValue &NewRHS,
   case ISD::SETUGT:
   case ISD::SETULE:
   case ISD::SETULT:
-    // ALL of these operations will work if we either sign or zero extend
-    // the operands (including the unsigned comparisons!).  Zero extend is
-    // usually a simpler/cheaper operation, so prefer it.
-    NewLHS = ZExtPromotedInteger(NewLHS);
-    NewRHS = ZExtPromotedInteger(NewRHS);
+    NewLHS = SExtOrZExtPromotedInteger(NewLHS);
+    NewRHS = SExtOrZExtPromotedInteger(NewRHS);
     break;
   case ISD::SETGE:
   case ISD::SETGT:
