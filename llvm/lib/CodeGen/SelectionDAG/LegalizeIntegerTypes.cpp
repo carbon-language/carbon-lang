@@ -1042,6 +1042,9 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
 
   case ISD::ADDCARRY:
   case ISD::SUBCARRY: Res = PromoteIntOp_ADDSUBCARRY(N, OpNo); break;
+
+  case ISD::FRAMEADDR:
+  case ISD::RETURNADDR: Res = PromoteIntOp_FRAMERETURNADDR(N); break;
   }
 
   // If the result is null, the sub-method took care of registering results etc.
@@ -1399,6 +1402,12 @@ SDValue DAGTypeLegalizer::PromoteIntOp_ADDSUBCARRY(SDNode *N, unsigned OpNo) {
   }
 
   return SDValue(DAG.UpdateNodeOperands(N, LHS, RHS, Carry), 0);
+}
+
+SDValue DAGTypeLegalizer::PromoteIntOp_FRAMERETURNADDR(SDNode *N) {
+  // Promote the RETURNADDR/FRAMEADDR argument to a supported integer width.
+  SDValue Op = ZExtPromotedInteger(N->getOperand(0));
+  return SDValue(DAG.UpdateNodeOperands(N, Op), 0);
 }
 
 //===----------------------------------------------------------------------===//
