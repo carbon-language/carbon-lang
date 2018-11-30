@@ -192,7 +192,6 @@ define float @frem_undef_op1_fast(float %x) {
 define double @fadd_undef_undef(double %x) {
 ; ANY-LABEL: fadd_undef_undef:
 ; ANY:       # %bb.0:
-; ANY-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
 ; ANY-NEXT:    retq
   %r = fadd double undef, undef
   ret double %r
@@ -201,7 +200,6 @@ define double @fadd_undef_undef(double %x) {
 define double @fsub_undef_undef(double %x) {
 ; ANY-LABEL: fsub_undef_undef:
 ; ANY:       # %bb.0:
-; ANY-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
 ; ANY-NEXT:    retq
   %r = fsub double undef, undef
   ret double %r
@@ -210,7 +208,6 @@ define double @fsub_undef_undef(double %x) {
 define double @fmul_undef_undef(double %x) {
 ; ANY-LABEL: fmul_undef_undef:
 ; ANY:       # %bb.0:
-; ANY-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
 ; ANY-NEXT:    retq
   %r = fmul double undef, undef
   ret double %r
@@ -219,7 +216,6 @@ define double @fmul_undef_undef(double %x) {
 define double @fdiv_undef_undef(double %x) {
 ; ANY-LABEL: fdiv_undef_undef:
 ; ANY:       # %bb.0:
-; ANY-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
 ; ANY-NEXT:    retq
   %r = fdiv double undef, undef
   ret double %r
@@ -228,7 +224,6 @@ define double @fdiv_undef_undef(double %x) {
 define double @frem_undef_undef(double %x) {
 ; ANY-LABEL: frem_undef_undef:
 ; ANY:       # %bb.0:
-; ANY-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
 ; ANY-NEXT:    retq
   %r = frem double undef, undef
   ret double %r
