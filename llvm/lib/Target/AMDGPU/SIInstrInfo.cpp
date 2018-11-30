@@ -5632,3 +5632,84 @@ int SIInstrInfo::pseudoToMCOpcode(int Opcode) const {
 
   return MCOp;
 }
+
+static
+TargetInstrInfo::RegSubRegPair getRegOrUndef(const MachineOperand &RegOpnd) {
+  assert(RegOpnd.isReg());
+  return RegOpnd.isUndef() ? TargetInstrInfo::RegSubRegPair() :
+                             getRegSubRegPair(RegOpnd);
+}
+
+TargetInstrInfo::RegSubRegPair
+llvm::getRegSequenceSubReg(MachineInstr &MI, unsigned SubReg) {
+  assert(MI.isRegSequence());
+  for (unsigned I = 0, E = (MI.getNumOperands() - 1)/ 2; I < E; ++I)
+    if (MI.getOperand(1 + 2 * I + 1).getImm() == SubReg) {
+      auto &RegOp = MI.getOperand(1 + 2 * I);
+      return getRegOrUndef(RegOp);
+    }
+  return TargetInstrInfo::RegSubRegPair();
+}
+
+// Try to find the definition of reg:subreg in subreg-manipulation pseudos
+// Following a subreg of reg:subreg isn't supported
+static bool followSubRegDef(MachineInstr &MI,
+                            TargetInstrInfo::RegSubRegPair &RSR) {
+  if (!RSR.SubReg)
+    return false;
+  switch (MI.getOpcode()) {
+  default: break;
+  case AMDGPU::REG_SEQUENCE:
+    RSR = getRegSequenceSubReg(MI, RSR.SubReg);
+    return true;
+  // EXTRACT_SUBREG ins't supported as this would follow a subreg of subreg
+  case AMDGPU::INSERT_SUBREG:
+    if (RSR.SubReg == (unsigned)MI.getOperand(3).getImm())
+      // inserted the subreg we're looking for
+      RSR = getRegOrUndef(MI.getOperand(2));
+    else { // the subreg in the rest of the reg
+      auto R1 = getRegOrUndef(MI.getOperand(1));
+      if (R1.SubReg) // subreg of subreg isn't supported
+        return false;
+      RSR.Reg = R1.Reg;
+    }
+    return true;
+  }
+  return false;
+}
+
+MachineInstr *llvm::getVRegSubRegDef(const TargetInstrInfo::RegSubRegPair &P,
+                                     MachineRegisterInfo &MRI) {
+  assert(MRI.isSSA());
+  if (!TargetRegisterInfo::isVirtualRegister(P.Reg))
+    return nullptr;
+
+  auto RSR = P;
+  auto *DefInst = MRI.getVRegDef(RSR.Reg);
+  while (auto *MI = DefInst) {
+    DefInst = nullptr;
+    switch (MI->getOpcode()) {
+    case AMDGPU::COPY:
+    case AMDGPU::V_MOV_B32_e32: {
+      auto &Op1 = MI->getOperand(1);
+      if (Op1.isReg() &&
+        TargetRegisterInfo::isVirtualRegister(Op1.getReg())) {
+        if (Op1.isUndef())
+          return nullptr;
+        RSR = getRegSubRegPair(Op1);
+        DefInst = MRI.getVRegDef(RSR.Reg);
+      }
+      break;
+    }
+    default:
+      if (followSubRegDef(*MI, RSR)) {
+        if (!RSR.Reg)
+          return nullptr;
+        DefInst = MRI.getVRegDef(RSR.Reg);
+      }
+    }
+    if (!DefInst)
+      return MI;
+  }
+  return nullptr;
+}
