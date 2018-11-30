@@ -1552,8 +1552,7 @@ llvm::Constant *ConstantEmitter::tryEmitPrivate(const Expr *E,
   if (destType->isReferenceType())
     Success = E->EvaluateAsLValue(Result, CGM.getContext());
   else
-    Success = E->EvaluateAsRValue(Result, CGM.getContext(),
-                                  /* InConstantContext */ true);
+    Success = E->EvaluateAsRValue(Result, CGM.getContext());
 
   llvm::Constant *C;
   if (Success && !Result.HasSideEffects)
