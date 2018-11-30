@@ -157,3 +157,14 @@ static void src_fn(void) {
 void test14() {
   assign(dest_p, src_fn);
 }
+
+struct test15_s {
+  const char *name;
+  int num_args;
+};
+
+extern int test15_v;
+
+struct test15_s tcg_op_defs_org_x86_64[] = {
+    {"tag", __builtin_constant_p(test15_v) && !test15_v ? 0x10 : 0 },
+};
