@@ -1455,7 +1455,7 @@ llvm::Constant *ConstantEmitter::tryEmitPrivateForVarInit(const VarDecl &D) {
         if (CD->isTrivial() && CD->isDefaultConstructor())
           return CGM.EmitNullConstant(D.getType());
       }
-      InConstantContext = true;
+    InConstantContext = true;
   }
 
   QualType destType = D.getType();
