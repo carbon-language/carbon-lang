@@ -78,18 +78,6 @@ bool ExpressionAnalysisContext::IntegerConstraint(Expr<SomeType> &expr) {
   return false;
 }
 
-// A utility subroutine to repackage optional expressions of various levels
-// of type specificity as fully general MaybeExpr values.
-template<typename A> MaybeExpr AsMaybeExpr(A &&x) {
-  return std::make_optional(AsGenericExpr(std::move(x)));
-}
-template<typename A> MaybeExpr AsMaybeExpr(std::optional<A> &&x) {
-  if (x.has_value()) {
-    return AsMaybeExpr(std::move(*x));
-  }
-  return std::nullopt;
-}
-
 // If a generic expression simply wraps a DataRef, extract it.
 // TODO: put in tools.h?
 template<typename A> std::optional<DataRef> ExtractDataRef(A &&) {
@@ -151,9 +139,25 @@ struct CallAndArguments {
   ActualArguments arguments;
 };
 
-// This local class wraps some state and a highly overloaded Analyze()
-// member function that converts parse trees into (usually) generic
-// expressions.
+// It would be great if we could either (1) add more overloads here
+// of the template function AnalyzeExpr() so that it can process each
+// of the parse tree node types that can appear in an expression, or
+// (2) implement the member function ExprAnalyzer::Analyze() below as
+// a template member function with all of these specializations.
+// BUT: C++ template specializations can't be used when they are
+// mutually recursive, as each is visibility only to those that follow it.
+// And member template functions can't be specialized, which we have to
+// be able to do to accomplish constraint checking and seamless traversal
+// of indirections and sum types in the parse tree.
+//
+// So: the implementation of expression analysis here is split between
+// the AnalyzeExpr() template function introduced in the expression.h
+// header file, and this ExprAnalyzer class, whose member function
+// declarations are essentially forward declarations to the per-node
+// analysis functions.  The analysis functions typically invoke the
+// AnalyzeExpr() template function to scan their operands, and the
+// specializations of AnalyzeExpr reflect back into the class.
+
 struct ExprAnalyzer : public ExpressionAnalysisContext {
 
   ExprAnalyzer(ExpressionAnalysisContext &eac)
@@ -237,6 +241,9 @@ MaybeExpr AnalyzeExpr(
   return ea.Analyze(expr);
 }
 
+template MaybeExpr AnalyzeExpr(
+    ExpressionAnalysisContext &, const parser::Expr &);
+
 template<typename... As>
 MaybeExpr AnalyzeExpr(
     ExpressionAnalysisContext &context, const std::variant<As...> &u) {
@@ -277,8 +284,17 @@ MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context, const A &x) {
   }
 }
 
-template MaybeExpr AnalyzeExpr(
-    ExpressionAnalysisContext &, const parser::Expr &);
+// A utility subroutine to repackage optional expressions of various levels
+// of type specificity as fully general MaybeExpr values.
+template<typename A> MaybeExpr AsMaybeExpr(A &&x) {
+  return std::make_optional(AsGenericExpr(std::move(x)));
+}
+template<typename A> MaybeExpr AsMaybeExpr(std::optional<A> &&x) {
+  if (x.has_value()) {
+    return AsMaybeExpr(std::move(*x));
+  }
+  return std::nullopt;
+}
 
 // Implementations of ExprAnalyzer::Analyze follow for various parse tree
 // node types.

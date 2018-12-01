@@ -29,6 +29,23 @@ template<typename> struct Integer;
 template<typename> struct Constant;
 }
 
+// The expression semantic analysis code has its implementation in
+// namespace Fortran::evaluate, but the exposed API to it is in the
+// namespace Fortran::semantics (below).
+//
+// The template function AnalyzeExpr is an internal interface
+// between the implementation and the API used by semantic analysis.
+// This template function has a few specializations here in the header
+// file to handle what semantics might want to pass in as a top-level
+// expression; other specializations appear in the implementation.
+//
+// The ExpressionAnalysisContext wraps a SemanticsContext reference
+// and implements constraint checking on expressions using the
+// parse tree node wrappers that mirror the grammar annotations used
+// in the Fortran standard (i.e., scalar-, constant-, &c.).  These
+// constraint checks are performed in a deferred manner so that any
+// errors are reported on the most accurate source location available.
+
 namespace Fortran::evaluate {
 class ExpressionAnalysisContext {
 public:
@@ -64,8 +81,13 @@ template<typename PARSED>
 std::optional<Expr<SomeType>> AnalyzeExpr(
     ExpressionAnalysisContext &, const PARSED &);
 
+// This extern template is the gateway into the rest of the expression
+// analysis implementation in expression.cc.
 extern template std::optional<Expr<SomeType>> AnalyzeExpr(
     ExpressionAnalysisContext &, const parser::Expr &);
+
+// These specializations create nested expression analysis contexts
+// to implement constraint checking.
 
 template<typename A>
 std::optional<Expr<SomeType>> AnalyzeExpr(
@@ -95,7 +117,6 @@ std::optional<Expr<SomeType>> AnalyzeExpr(
 namespace Fortran::semantics {
 
 // Semantic analysis of one expression.
-
 template<typename A>
 std::optional<evaluate::Expr<evaluate::SomeType>> AnalyzeExpr(
     SemanticsContext &context, const A &expr) {
