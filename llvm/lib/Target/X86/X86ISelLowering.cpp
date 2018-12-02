@@ -25221,7 +25221,7 @@ static SDValue LowerBITCAST(SDValue Op, const X86Subtarget &Subtarget,
   if (SrcVT == MVT::v2i32 || SrcVT == MVT::v4i16 || SrcVT == MVT::v8i8 ||
       SrcVT == MVT::i64) {
     assert(Subtarget.hasSSE2() && "Requires at least SSE2!");
-    if (DstVT != MVT::f64)
+    if (DstVT != MVT::f64 && DstVT != MVT::i64)
       // This conversion needs to be expanded.
       return SDValue();
 
@@ -25253,8 +25253,9 @@ static SDValue LowerBITCAST(SDValue Op, const X86Subtarget &Subtarget,
 
     EVT NewVT = EVT::getVectorVT(*DAG.getContext(), SVT, NumElts * 2);
     SDValue BV = DAG.getBuildVector(NewVT, dl, Elts);
-    SDValue ToV2F64 = DAG.getBitcast(MVT::v2f64, BV);
-    return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::f64, ToV2F64,
+    MVT V2X64VT = MVT::getVectorVT(DstVT, 2);
+    SDValue ToV2X64 = DAG.getBitcast(V2X64VT, BV);
+    return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, DstVT, ToV2X64,
                        DAG.getIntPtrConstant(0, dl));
   }
 
