@@ -6,5 +6,5 @@ void testArrayInitExpr()
     auto l = [a]{
     };
     // CHECK: |-ArrayInitLoopExpr 0x{{[^ ]*}} <col:15> 'int [10]'
-    // CHECK: | `-ArrayInitIndexExpr 0x{{[^ ]*}} <<invalid sloc>> 'unsigned long'
+    // CHECK: |     `-ArrayInitIndexExpr 0x{{[^ ]*}} <<invalid sloc>> 'unsigned long'
 }
