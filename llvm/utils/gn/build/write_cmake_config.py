@@ -72,11 +72,11 @@ def main():
             _, var = in_line.split(None, 1)
             try:
                 var, val = var.split(None, 1)
+                in_line = '#define %s %s' % (var, val)  # val ends in \n.
             except:
-                var, val = var.rstrip(), '\n'
-            if values[var]:
-                in_line = '#define %s %s' % (var, val)
-            else:
+                var = var.rstrip()
+                in_line = '#define %s\n' % var
+            if not values[var]:
                 in_line = '/* #undef %s */\n' % var
             unused_values.discard(var)
         out_lines.append(in_line)
