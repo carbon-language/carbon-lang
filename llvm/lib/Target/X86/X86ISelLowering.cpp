@@ -37296,6 +37296,18 @@ static SDValue combineStore(SDNode *N, SelectionDAG &DAG,
   SDValue StoredVal = St->getOperand(1);
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
+  // Convert a store of vXi1 into a store of iX and a bitcast.
+  if (!Subtarget.hasAVX512() && VT == StVT && VT.isVector() &&
+      VT.getVectorElementType() == MVT::i1) {
+
+    EVT NewVT = EVT::getIntegerVT(*DAG.getContext(), VT.getVectorNumElements());
+    StoredVal = DAG.getBitcast(NewVT, StoredVal);
+
+    return DAG.getStore(St->getChain(), dl, StoredVal, St->getBasePtr(),
+                        St->getPointerInfo(), St->getAlignment(),
+                        St->getMemOperand()->getFlags());
+  }
+
   // If this is a store of a scalar_to_vector to v1i1, just use a scalar store.
   // This will avoid a copy to k-register.
   if (VT == MVT::v1i1 && VT == StVT && Subtarget.hasAVX512() &&
