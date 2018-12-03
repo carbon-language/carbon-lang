@@ -435,7 +435,7 @@ class AnyTypeGenerator(TypeGenerator):
             if (self._cardinality is aleph0) or prev==self._cardinality:
                 break
         else:
-            raise RuntimeError,"Infinite loop in setting cardinality"
+            raise RuntimeError("Infinite loop in setting cardinality")
 
     def generateType(self, N):
         index,M = getNthPairVariableBounds(N, self.bounds)
@@ -466,7 +466,7 @@ def test():
         if i == atg.cardinality:
             try:
                 atg.get(i)
-                raise RuntimeError,"Cardinality was wrong"
+                raise RuntimeError("Cardinality was wrong")
             except AssertionError:
                 break
         print '%4d: %s'%(i, atg.get(i))
