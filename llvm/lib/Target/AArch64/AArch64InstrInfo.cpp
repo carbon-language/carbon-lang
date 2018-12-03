@@ -5169,32 +5169,51 @@ AArch64InstrInfo::getOutliningCandidateInfo(
     // We need to decide how to emit calls + frames. We can always emit the same
     // frame if we don't need to save to the stack. If we have to save to the
     // stack, then we need a different frame.
-    unsigned NumNoStackSave = 0;
+    unsigned NumBytesNoStackCalls = 0;
+    std::vector<outliner::Candidate> CandidatesWithoutStackFixups;
 
     for (outliner::Candidate &C : RepeatedSequenceLocs) {
       C.initLRU(TRI);
 
       // Is LR available? If so, we don't need a save.
       if (C.LRU.available(AArch64::LR)) {
+        NumBytesNoStackCalls += 4;
         C.setCallInfo(MachineOutlinerNoLRSave, 4);
-        ++NumNoStackSave;
+        CandidatesWithoutStackFixups.push_back(C);
       }
 
       // Is an unused register available? If so, we won't modify the stack, so
       // we can outline with the same frame type as those that don't save LR.
       else if (findRegisterToSaveLRTo(C)) {
+        NumBytesNoStackCalls += 12;
         C.setCallInfo(MachineOutlinerRegSave, 12);
-        ++NumNoStackSave;
+        CandidatesWithoutStackFixups.push_back(C);
+      }
+
+      // Is SP used in the sequence at all? If not, we don't have to modify
+      // the stack, so we are guaranteed to get the same frame.
+      else if (C.UsedInSequence.available(AArch64::SP)) {
+        NumBytesNoStackCalls += 12;
+        C.setCallInfo(MachineOutlinerDefault, 12);
+        CandidatesWithoutStackFixups.push_back(C);
+      }
+
+      // If we outline this, we need to modify the stack. Pretend we don't
+      // outline this by saving all of its bytes.
+      else {
+        NumBytesNoStackCalls += SequenceSize;
       }
     }
 
     // If there are no places where we have to save LR, then note that we don't
     // have to update the stack. Otherwise, give every candidate the default
     // call type.
-    if (NumNoStackSave == RepeatedSequenceLocs.size())
+    if (NumBytesNoStackCalls <= RepeatedSequenceLocs.size() * 12) {
+      RepeatedSequenceLocs = CandidatesWithoutStackFixups;
       FrameID = MachineOutlinerNoLRSave;
-    else
+    } else {
       SetCandidateCallInfo(MachineOutlinerDefault, 12);
+    }
   }
 
   // Does every candidate's MBB contain a call? If so, then we might have a call
