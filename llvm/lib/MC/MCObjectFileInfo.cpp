@@ -510,10 +510,6 @@ void MCObjectFileInfo::initCOFFMCObjectFileInfo(const Triple &T) {
       ".rdata", COFF::IMAGE_SCN_CNT_INITIALIZED_DATA | COFF::IMAGE_SCN_MEM_READ,
       SectionKind::getReadOnly());
 
-  // FIXME: We're emitting LSDA info into a readonly section on COFF, even
-  // though it contains relocatable pointers.  In PIC mode, this is probably a
-  // big runtime hit for C++ apps.  Either the contents of the LSDA need to be
-  // adjusted or this should be a data section.
   if (T.getArch() == Triple::x86_64) {
     // On Windows 64 with SEH, the LSDA is emitted into the .xdata section
     LSDASection = nullptr;
