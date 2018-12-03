@@ -1527,13 +1527,13 @@ void ASTStmtReader::VisitCXXNewExpr(CXXNewExpr *E) {
 
 void ASTStmtReader::VisitCXXDeleteExpr(CXXDeleteExpr *E) {
   VisitExpr(E);
-  E->GlobalDelete = Record.readInt();
-  E->ArrayForm = Record.readInt();
-  E->ArrayFormAsWritten = Record.readInt();
-  E->UsualArrayDeleteWantsSize = Record.readInt();
+  E->CXXDeleteExprBits.GlobalDelete = Record.readInt();
+  E->CXXDeleteExprBits.ArrayForm = Record.readInt();
+  E->CXXDeleteExprBits.ArrayFormAsWritten = Record.readInt();
+  E->CXXDeleteExprBits.UsualArrayDeleteWantsSize = Record.readInt();
   E->OperatorDelete = ReadDeclAs<FunctionDecl>();
   E->Argument = Record.readSubExpr();
-  E->Loc = ReadSourceLocation();
+  E->CXXDeleteExprBits.Loc = ReadSourceLocation();
 }
 
 void ASTStmtReader::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *E) {
