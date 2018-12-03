@@ -544,7 +544,7 @@ Line: %s
 """%(r.getName(),display,r.getName(),options))
         reporterSelections = '\n'.join(reporterSelections)
         reporterOptionsDivs = '\n'.join(reporterOptions)
-        reportersArray = '[%s]'%(','.join([`r.getName()` for r in self.server.reporters]))
+        reportersArray = '[%s]'%(','.join([repr(r.getName()) for r in self.server.reporters]))
 
         if c.files:
             fieldSize = min(5, len(c.files))
