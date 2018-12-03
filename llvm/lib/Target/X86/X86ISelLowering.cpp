@@ -35398,6 +35398,26 @@ static SDValue combineVectorPack(SDNode *N, SelectionDAG &DAG,
     return getConstVector(Bits, Undefs, VT.getSimpleVT(), DAG, SDLoc(N));
   }
 
+  // Try to combine a PACKUSWB implemented truncate with a regular truncate to
+  // create a larger truncate.
+  // TODO: Match PACKSSWB as well?
+  if (Subtarget.hasAVX512() && Opcode == X86ISD::PACKUS &&
+      N0.getOpcode() == ISD::TRUNCATE && N1.isUndef() && VT == MVT::v16i8 &&
+      N0.getOperand(0).getValueType() == MVT::v8i32) {
+
+    APInt ZeroMask = APInt::getHighBitsSet(16, 8);
+    if (DAG.MaskedValueIsZero(N0, ZeroMask)) {
+      if (Subtarget.hasVLX())
+        return DAG.getNode(X86ISD::VTRUNC, SDLoc(N), VT, N0.getOperand(0));
+
+      // Widen input to v16i32 so we can truncate that.
+      SDLoc dl(N);
+      SDValue Concat = DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v16i32,
+                                   N0.getOperand(0), DAG.getUNDEF(MVT::v8i32));
+      return DAG.getNode(ISD::TRUNCATE, SDLoc(N), VT, Concat);
+    }
+  }
+
   // Attempt to combine as shuffle.
   SDValue Op(N, 0);
   if (SDValue Res =
