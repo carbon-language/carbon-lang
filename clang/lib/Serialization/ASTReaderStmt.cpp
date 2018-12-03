@@ -2347,14 +2347,14 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
     case STMT_SWITCH:
       S = SwitchStmt::CreateEmpty(
           Context,
-          /* HasInit=*/Record[ASTStmtReader::NumStmtFields + 0],
+          /* HasInit=*/Record[ASTStmtReader::NumStmtFields],
           /* HasVar=*/Record[ASTStmtReader::NumStmtFields + 1]);
       break;
 
     case STMT_WHILE:
       S = WhileStmt::CreateEmpty(
           Context,
-          /* HasVar=*/Record[ASTStmtReader::NumStmtFields + 0]);
+          /* HasVar=*/Record[ASTStmtReader::NumStmtFields]);
       break;
 
     case STMT_DO:
@@ -2438,7 +2438,7 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
     case EXPR_STRING_LITERAL:
       S = StringLiteral::CreateEmpty(
           Context,
-          /* NumConcatenated=*/Record[ASTStmtReader::NumExprFields + 0],
+          /* NumConcatenated=*/Record[ASTStmtReader::NumExprFields],
           /* Length=*/Record[ASTStmtReader::NumExprFields + 1],
           /* CharByteWidth=*/Record[ASTStmtReader::NumExprFields + 2]);
       break;
@@ -2454,7 +2454,7 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
     case EXPR_PAREN_LIST:
       S = ParenListExpr::CreateEmpty(
           Context,
-          /* NumExprs=*/Record[ASTStmtReader::NumExprFields + 0]);
+          /* NumExprs=*/Record[ASTStmtReader::NumExprFields]);
       break;
 
     case EXPR_UNARY_OPERATOR:
@@ -2481,7 +2481,7 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
     case EXPR_CALL:
       S = new (Context) CallExpr(
-          Context, /* NumArgs=*/Record[ASTStmtReader::NumExprFields + 0],
+          Context, /* NumArgs=*/Record[ASTStmtReader::NumExprFields],
           Empty);
       break;
 
@@ -3073,13 +3073,13 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
     case EXPR_CXX_OPERATOR_CALL:
       S = new (Context) CXXOperatorCallExpr(
-          Context, /*NumArgs=*/Record[ASTStmtReader::NumExprFields + 0],
+          Context, /*NumArgs=*/Record[ASTStmtReader::NumExprFields],
           Empty);
       break;
 
     case EXPR_CXX_MEMBER_CALL:
       S = new (Context) CXXMemberCallExpr(
-          Context, /*NumArgs=*/Record[ASTStmtReader::NumExprFields + 0],
+          Context, /*NumArgs=*/Record[ASTStmtReader::NumExprFields],
           Empty);
       break;
 
@@ -3121,7 +3121,7 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
     case EXPR_USER_DEFINED_LITERAL:
       S = new (Context) UserDefinedLiteral(
-          Context, /*NumArgs=*/Record[ASTStmtReader::NumExprFields + 0], Empty);
+          Context, /*NumArgs=*/Record[ASTStmtReader::NumExprFields], Empty);
       break;
 
     case EXPR_CXX_STD_INITIALIZER_LIST:
@@ -3292,7 +3292,7 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
     case EXPR_CUDA_KERNEL_CALL:
       S = new (Context) CUDAKernelCallExpr(
-          Context, /*NumArgs=*/Record[ASTStmtReader::NumExprFields + 0], Empty);
+          Context, /*NumArgs=*/Record[ASTStmtReader::NumExprFields], Empty);
       break;
 
     case EXPR_ASTYPE:
