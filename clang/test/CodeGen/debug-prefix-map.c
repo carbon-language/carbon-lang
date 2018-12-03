@@ -36,5 +36,5 @@ void test_rewrite_includes() {
 // CHECK-NOT: !DIFile(filename:
 
 // CHECK-COMPILATION-DIR: !DIFile(filename: "{{.*}}", directory: "/var/empty")
-// CHECK-COMPILATION-DIR: !DIFile(filename: "Inputs/stdio.h", directory: "/var/empty")
+// CHECK-COMPILATION-DIR: !DIFile(filename: "{{.*}}Inputs/stdio.h", directory: "/var/empty")
 // CHECK-COMPILATION-DIR-NOT: !DIFile(filename:
