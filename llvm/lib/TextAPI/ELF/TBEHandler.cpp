@@ -17,7 +17,7 @@
 using namespace llvm;
 using namespace llvm::elfabi;
 
-LLVM_YAML_STRONG_TYPEDEF(ELFArch, ELFArchMapper);
+LLVM_YAML_STRONG_TYPEDEF(ELFArch, ELFArchMapper)
 
 namespace llvm {
 namespace yaml {
