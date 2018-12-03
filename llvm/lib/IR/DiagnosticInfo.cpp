@@ -121,6 +121,10 @@ DiagnosticLocation::DiagnosticLocation(const DISubprogram *SP) {
   Column = 0;
 }
 
+StringRef DiagnosticLocation::getRelativePath() const {
+  return File->getFilename();
+}
+
 std::string DiagnosticLocation::getAbsolutePath() const {
   StringRef Name = File->getFilename();
   if (sys::path::is_absolute(Name))

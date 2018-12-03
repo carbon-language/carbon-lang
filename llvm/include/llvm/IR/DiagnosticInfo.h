@@ -353,7 +353,7 @@ public:
   /// Return the full path to the file.
   std::string getAbsolutePath() const;
   /// Return the file name relative to the compilation directory.
-  StringRef getRelativePath() const { return File->getFilename(); }
+  StringRef getRelativePath() const;
   unsigned getLine() const { return Line; }
   unsigned getColumn() const { return Column; }
 };
