@@ -479,10 +479,10 @@ void MCObjectFileInfo::initELFMCObjectFileInfo(const Triple &T, bool Large) {
 }
 
 void MCObjectFileInfo::initCOFFMCObjectFileInfo(const Triple &T) {
-  EHFrameSection = Ctx->getCOFFSection(
-      ".eh_frame", COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-                       COFF::IMAGE_SCN_MEM_READ | COFF::IMAGE_SCN_MEM_WRITE,
-      SectionKind::getData());
+  EHFrameSection =
+      Ctx->getCOFFSection(".eh_frame", COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                           COFF::IMAGE_SCN_MEM_READ,
+                          SectionKind::getData());
 
   // Set the `IMAGE_SCN_MEM_16BIT` flag when compiling for thumb mode.  This is
   // used to indicate to the linker that the text segment contains thumb instructions
