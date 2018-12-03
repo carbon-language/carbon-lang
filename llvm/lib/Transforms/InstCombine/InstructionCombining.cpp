@@ -1424,21 +1424,23 @@ Instruction *InstCombiner::foldVectorBinop(BinaryOperator &Inst) {
       V1->getType()->getVectorNumElements() <= NumElts) {
     assert(Inst.getType()->getScalarType() == V1->getType()->getScalarType() &&
            "Shuffle should not change scalar type");
-    unsigned V1Width = V1->getType()->getVectorNumElements();
+
     // Find constant NewC that has property:
     //   shuffle(NewC, ShMask) = C
     // If such constant does not exist (example: ShMask=<0,0> and C=<1,2>)
     // reorder is not possible. A 1-to-1 mapping is not required. Example:
     // ShMask = <1,1,2,2> and C = <5,5,6,6> --> NewC = <undef,5,6,undef>
+    bool ConstOp1 = isa<Constant>(RHS);
     SmallVector<int, 16> ShMask;
     ShuffleVectorInst::getShuffleMask(Mask, ShMask);
-    SmallVector<Constant *, 16>
-        NewVecC(V1Width, UndefValue::get(C->getType()->getScalarType()));
+    unsigned SrcVecNumElts = V1->getType()->getVectorNumElements();
+    UndefValue *UndefScalar = UndefValue::get(C->getType()->getScalarType());
+    SmallVector<Constant *, 16> NewVecC(SrcVecNumElts, UndefScalar);
     bool MayChange = true;
     for (unsigned I = 0; I < NumElts; ++I) {
+      Constant *CElt = C->getAggregateElement(I);
       if (ShMask[I] >= 0) {
         assert(ShMask[I] < (int)NumElts && "Not expecting narrowing shuffle");
-        Constant *CElt = C->getAggregateElement(I);
         Constant *NewCElt = NewVecC[ShMask[I]];
         // Bail out if:
         // 1. The constant vector contains a constant expression.
@@ -1447,7 +1449,7 @@ Instruction *InstCombiner::foldVectorBinop(BinaryOperator &Inst) {
         // 3. This is a widening shuffle that copies elements of V1 into the
         //    extended elements (extending with undef is allowed).
         if (!CElt || (!isa<UndefValue>(NewCElt) && NewCElt != CElt) ||
-            I >= V1Width) {
+            I >= SrcVecNumElts) {
           MayChange = false;
           break;
         }
@@ -1459,14 +1461,13 @@ Instruction *InstCombiner::foldVectorBinop(BinaryOperator &Inst) {
       // It may not be safe to execute a binop on a vector with undef elements
       // because the entire instruction can be folded to undef or create poison
       // that did not exist in the original code.
-      bool ConstOp1 = isa<Constant>(Inst.getOperand(1));
       if (Inst.isIntDivRem() || (Inst.isShift() && ConstOp1))
         NewC = getSafeVectorConstantForBinop(Opcode, NewC, ConstOp1);
 
       // Op(shuffle(V1, Mask), C) -> shuffle(Op(V1, NewC), Mask)
       // Op(C, shuffle(V1, Mask)) -> shuffle(Op(NewC, V1), Mask)
-      Value *NewLHS = isa<Constant>(LHS) ? NewC : V1;
-      Value *NewRHS = isa<Constant>(LHS) ? V1 : NewC;
+      Value *NewLHS = ConstOp1 ? V1 : NewC;
+      Value *NewRHS = ConstOp1 ? NewC : V1;
       return createBinOpShuffle(NewLHS, NewRHS, Mask);
     }
   }
