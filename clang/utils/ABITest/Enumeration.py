@@ -46,7 +46,8 @@ aleph0 = Aleph0()
 def base(line):
     return line*(line+1)//2
 
-def pairToN((x,y)):
+def pairToN(pair):
+    x,y = pair
     line,index = x+y,y
     return base(line)+index
 

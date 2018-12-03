@@ -99,7 +99,8 @@ class RecordType(Type):
                             ' '.join(map(getField, self.fields)))
 
     def getTypedefDef(self, name, printer):
-        def getField((i, t)):
+        def getField(it):
+            i, t = it
             if t.isBitField():
                 if t.isPaddingBitField():
                     return '%s : 0;'%(printer.getTypeName(t),)
