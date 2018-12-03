@@ -633,13 +633,13 @@ define <4 x i16> @widening_shuffle_shl_constant_op1(<2 x i16> %v) {
   ret <4 x i16> %bo
 }
 
-; FIXME: A binop that does not produce undef in the high lanes can not be moved before the shuffle.
+; A binop that does not produce undef in the high lanes can not be moved before the shuffle.
 ; This is not ok because 'shl undef, 1 (or 2)' --> 0' but moving the shuffle results in undef instead.
 
 define <4 x i16> @widening_shuffle_shl_constant_op1_non0(<2 x i16> %v) {
 ; CHECK-LABEL: @widening_shuffle_shl_constant_op1_non0(
-; CHECK-NEXT:    [[TMP1:%.*]] = shl <2 x i16> [[V:%.*]], <i16 2, i16 4>
-; CHECK-NEXT:    [[BO:%.*]] = shufflevector <2 x i16> [[TMP1]], <2 x i16> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+; CHECK-NEXT:    [[SHUF:%.*]] = shufflevector <2 x i16> [[V:%.*]], <2 x i16> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+; CHECK-NEXT:    [[BO:%.*]] = shl <4 x i16> [[SHUF]], <i16 2, i16 4, i16 1, i16 2>
 ; CHECK-NEXT:    ret <4 x i16> [[BO]]
 ;
   %shuf = shufflevector <2 x i16> %v, <2 x i16> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
@@ -647,13 +647,13 @@ define <4 x i16> @widening_shuffle_shl_constant_op1_non0(<2 x i16> %v) {
   ret <4 x i16> %bo
 }
 
-; FIXME: A binop that does not produce undef in the high lanes can not be moved before the shuffle.
+; A binop that does not produce undef in the high lanes can not be moved before the shuffle.
 ; This is not ok because 'or -1, undef --> -1' but moving the shuffle results in undef instead.
 
 define <4 x i16> @widening_shuffle_or(<2 x i16> %v) {
 ; CHECK-LABEL: @widening_shuffle_or(
-; CHECK-NEXT:    [[TMP1:%.*]] = or <2 x i16> [[V:%.*]], <i16 42, i16 -42>
-; CHECK-NEXT:    [[BO:%.*]] = shufflevector <2 x i16> [[TMP1]], <2 x i16> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+; CHECK-NEXT:    [[SHUF:%.*]] = shufflevector <2 x i16> [[V:%.*]], <2 x i16> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+; CHECK-NEXT:    [[BO:%.*]] = or <4 x i16> [[SHUF]], <i16 42, i16 -42, i16 -1, i16 -1>
 ; CHECK-NEXT:    ret <4 x i16> [[BO]]
 ;
   %shuf = shufflevector <2 x i16> %v, <2 x i16> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
