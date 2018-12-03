@@ -5567,9 +5567,8 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
       Fn->getType()->isSpecificBuiltinType(BuiltinType::BuiltinFn)) {
     // Extract the return type from the (builtin) function pointer type.
     // FIXME Several builtins still have setType in
-    //       Sema::CheckBuiltinFunctionCall. One should review their
-    //       definitions in Builtins.def to ensure they are correct before
-    //       removing setType calls.
+    // Sema::CheckBuiltinFunctionCall. One should review their definitions in
+    // Builtins.def to ensure they are correct before removing setType calls.
     QualType FnPtrTy = Context.getPointerType(FDecl->getType());
     Result = ImpCastExprToType(Fn, FnPtrTy, CK_BuiltinFnToFnPtr).get();
     ResultTy = FDecl->getCallResultType();
