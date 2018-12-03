@@ -9310,6 +9310,10 @@ bool ARMAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
   switch (MatchResult) {
   case Match_Success:
+    LLVM_DEBUG(dbgs() << "Parsed as: ";
+               Inst.dump_pretty(dbgs(), MII.getName(Inst.getOpcode()));
+               dbgs() << "\n");
+
     // Context sensitive operand constraints aren't handled by the matcher,
     // so check them here.
     if (validateInstruction(Inst, Operands)) {
@@ -9327,7 +9331,9 @@ bool ARMAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       // individual transformations can chain off each other. E.g.,
       // tPOP(r8)->t2LDMIA_UPD(sp,r8)->t2STR_POST(sp,r8)
       while (processInstruction(Inst, Operands, Out))
-        ;
+        LLVM_DEBUG(dbgs() << "Changed to: ";
+                   Inst.dump_pretty(dbgs(), MII.getName(Inst.getOpcode()));
+                   dbgs() << "\n");
 
       // Only after the instruction is fully processed, we can validate it
       if (wasInITBlock && hasV8Ops() && isThumb() &&
