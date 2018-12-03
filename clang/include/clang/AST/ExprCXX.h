@@ -98,8 +98,10 @@ public:
     Range = getSourceRangeImpl();
   }
 
-  explicit CXXOperatorCallExpr(ASTContext& C, EmptyShell Empty)
-      : CallExpr(C, CXXOperatorCallExprClass, Empty) {}
+  explicit CXXOperatorCallExpr(ASTContext &C, unsigned NumArgs,
+                               EmptyShell Empty)
+      : CallExpr(C, CXXOperatorCallExprClass, /*NumPreArgs=*/0, NumArgs,
+                 Empty) {}
 
   /// Returns the kind of overloaded operator that this
   /// expression refers to.
@@ -163,12 +165,13 @@ public:
 /// the object argument).
 class CXXMemberCallExpr : public CallExpr {
 public:
-  CXXMemberCallExpr(ASTContext &C, Expr *fn, ArrayRef<Expr*> args,
-                    QualType t, ExprValueKind VK, SourceLocation RP)
-      : CallExpr(C, CXXMemberCallExprClass, fn, args, t, VK, RP) {}
+  CXXMemberCallExpr(ASTContext &C, Expr *fn, ArrayRef<Expr *> args, QualType t,
+                    ExprValueKind VK, SourceLocation RP,
+                    unsigned MinNumArgs = 0)
+      : CallExpr(C, CXXMemberCallExprClass, fn, args, t, VK, RP, MinNumArgs) {}
 
-  CXXMemberCallExpr(ASTContext &C, EmptyShell Empty)
-      : CallExpr(C, CXXMemberCallExprClass, Empty) {}
+  CXXMemberCallExpr(ASTContext &C, unsigned NumArgs, EmptyShell Empty)
+      : CallExpr(C, CXXMemberCallExprClass, /*NumPreArgs=*/0, NumArgs, Empty) {}
 
   /// Retrieves the implicit object argument for the member call.
   ///
@@ -206,12 +209,14 @@ private:
 
 public:
   CUDAKernelCallExpr(ASTContext &C, Expr *fn, CallExpr *Config,
-                     ArrayRef<Expr*> args, QualType t, ExprValueKind VK,
-                     SourceLocation RP)
-      : CallExpr(C, CUDAKernelCallExprClass, fn, Config, args, t, VK, RP) {}
+                     ArrayRef<Expr *> args, QualType t, ExprValueKind VK,
+                     SourceLocation RP, unsigned MinNumArgs = 0)
+      : CallExpr(C, CUDAKernelCallExprClass, fn, Config, args, t, VK, RP,
+                 MinNumArgs) {}
 
-  CUDAKernelCallExpr(ASTContext &C, EmptyShell Empty)
-      : CallExpr(C, CUDAKernelCallExprClass, END_PREARG, Empty) {}
+  CUDAKernelCallExpr(ASTContext &C, unsigned NumArgs, EmptyShell Empty)
+      : CallExpr(C, CUDAKernelCallExprClass, /*NumPreArgs=*/END_PREARG, NumArgs,
+                 Empty) {}
 
   const CallExpr *getConfig() const {
     return cast_or_null<CallExpr>(getPreArg(CONFIG));
@@ -488,8 +493,10 @@ public:
       : CallExpr(C, UserDefinedLiteralClass, Fn, Args, T, VK, LitEndLoc),
         UDSuffixLoc(SuffixLoc) {}
 
-  explicit UserDefinedLiteral(const ASTContext &C, EmptyShell Empty)
-      : CallExpr(C, UserDefinedLiteralClass, Empty) {}
+  explicit UserDefinedLiteral(const ASTContext &C, unsigned NumArgs,
+                              EmptyShell Empty)
+      : CallExpr(C, UserDefinedLiteralClass, /*NumPreArgs=*/0, NumArgs,
+                 Empty) {}
 
   /// The kind of literal operator which is invoked.
   enum LiteralOperatorKind {

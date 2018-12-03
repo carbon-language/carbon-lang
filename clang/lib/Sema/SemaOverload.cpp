@@ -12836,7 +12836,8 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
 
     CXXMemberCallExpr *call
       = new (Context) CXXMemberCallExpr(Context, MemExprE, Args,
-                                        resultType, valueKind, RParenLoc);
+                                        resultType, valueKind, RParenLoc,
+                                        proto->getNumParams());
 
     if (CheckCallReturnType(proto->getReturnType(), op->getRHS()->getBeginLoc(),
                             call, nullptr))
@@ -12986,9 +12987,11 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
   ResultType = ResultType.getNonLValueExprType(Context);
 
   assert(Method && "Member call to something that isn't a method?");
+  const auto *Proto = Method->getType()->getAs<FunctionProtoType>();
   CXXMemberCallExpr *TheCall =
     new (Context) CXXMemberCallExpr(Context, MemExprE, Args,
-                                    ResultType, VK, RParenLoc);
+                                    ResultType, VK, RParenLoc,
+                                    Proto->getNumParams());
 
   // Check for a valid return type.
   if (CheckCallReturnType(Method->getReturnType(), MemExpr->getMemberLoc(),
@@ -13008,8 +13011,6 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
   }
 
   // Convert the rest of the arguments
-  const FunctionProtoType *Proto =
-    Method->getType()->getAs<FunctionProtoType>();
   if (ConvertArgumentsForCall(TheCall, MemExpr, Method, Proto, Args,
                               RParenLoc))
     return ExprError();
