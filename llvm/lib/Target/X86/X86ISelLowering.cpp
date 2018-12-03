@@ -37805,6 +37805,8 @@ static SDValue combineFaddFsub(SDNode *N, SelectionDAG &DAG,
 /// Attempt to pre-truncate inputs to arithmetic ops if it will simplify
 /// the codegen.
 /// e.g. TRUNC( BINOP( X, Y ) ) --> BINOP( TRUNC( X ), TRUNC( Y ) )
+/// TODO: This overlaps with the generic combiner's visitTRUNCATE. Remove
+///       anything that is guaranteed to be transformed by DAGCombiner.
 static SDValue combineTruncatedArithmetic(SDNode *N, SelectionDAG &DAG,
                                           const X86Subtarget &Subtarget,
                                           const SDLoc &DL) {

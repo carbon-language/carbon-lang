@@ -9758,14 +9758,18 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR:
-    // TODO: This should allow vector constants/types too.
     if (!LegalOperations && N0.hasOneUse() &&
-        (isa<ConstantSDNode>(N0.getOperand(0)) ||
-         isa<ConstantSDNode>(N0.getOperand(1)))) {
-      SDLoc DL(N);
-      SDValue NarrowL = DAG.getNode(ISD::TRUNCATE, DL, VT, N0.getOperand(0));
-      SDValue NarrowR = DAG.getNode(ISD::TRUNCATE, DL, VT, N0.getOperand(1));
-      return DAG.getNode(N0.getOpcode(), DL, VT, NarrowL, NarrowR);
+        (isConstantOrConstantVector(N0.getOperand(0)) ||
+         isConstantOrConstantVector(N0.getOperand(1)))) {
+      // TODO: We already restricted this to pre-legalization, but for vectors
+      // we are extra cautious to not create an unsupported operation.
+      // Target-specific changes are likely needed to avoid regressions here.
+      if (VT.isScalarInteger() || TLI.isOperationLegal(N0.getOpcode(), VT)) {
+        SDLoc DL(N);
+        SDValue NarrowL = DAG.getNode(ISD::TRUNCATE, DL, VT, N0.getOperand(0));
+        SDValue NarrowR = DAG.getNode(ISD::TRUNCATE, DL, VT, N0.getOperand(1));
+        return DAG.getNode(N0.getOpcode(), DL, VT, NarrowL, NarrowR);
+      }
     }
   }
 
