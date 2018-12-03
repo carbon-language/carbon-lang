@@ -5562,17 +5562,20 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
   // We special-case function promotion here because we only allow promoting
   // builtin functions to function pointers in the callee of a call.
   ExprResult Result;
-  QualType ReturnTy;
+  QualType ResultTy;
   if (BuiltinID &&
       Fn->getType()->isSpecificBuiltinType(BuiltinType::BuiltinFn)) {
     // Extract the return type from the (builtin) function pointer type.
-    auto FnPtrTy = Context.getPointerType(FDecl->getType());
+    // FIXME Several builtins still have setType in
+    //       Sema::CheckBuiltinFunctionCall. One should review their
+    //       definitions in Builtins.def to ensure they are correct before
+    //       removing setType calls.
+    QualType FnPtrTy = Context.getPointerType(FDecl->getType());
     Result = ImpCastExprToType(Fn, FnPtrTy, CK_BuiltinFnToFnPtr).get();
-    auto FnTy = FnPtrTy->getPointeeType()->castAs<FunctionType>();
-    ReturnTy = FnTy->getReturnType();
+    ResultTy = FDecl->getCallResultType();
   } else {
     Result = CallExprUnaryConversions(Fn);
-    ReturnTy = Context.BoolTy;
+    ResultTy = Context.BoolTy;
   }
   if (Result.isInvalid())
     return ExprError();
@@ -5584,10 +5587,10 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
   if (Config)
     TheCall =
         new (Context) CUDAKernelCallExpr(Context, Fn, cast<CallExpr>(Config),
-                                         Args, ReturnTy, VK_RValue, RParenLoc);
+                                         Args, ResultTy, VK_RValue, RParenLoc);
   else
     TheCall = new (Context)
-        CallExpr(Context, Fn, Args, ReturnTy, VK_RValue, RParenLoc);
+        CallExpr(Context, Fn, Args, ResultTy, VK_RValue, RParenLoc);
 
   if (!getLangOpts().CPlusPlus) {
     // C cannot always handle TypoExpr nodes in builtin calls and direct
