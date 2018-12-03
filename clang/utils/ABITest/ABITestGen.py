@@ -10,7 +10,7 @@ from TypeGen import *
 
 ####
 
-class TypePrinter:
+class TypePrinter(object):
     def __init__(self, output, outputHeader=None, 
                  outputTests=None, outputDriver=None,
                  headerName=None, info=None):

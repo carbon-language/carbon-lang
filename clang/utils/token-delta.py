@@ -94,7 +94,7 @@ class DeltaAlgorithm(object):
 
 ###
 
-class Token:
+class Token(object):
     def __init__(self, type, data, flags, file, line, column):
         self.type   = type
         self.data   = data

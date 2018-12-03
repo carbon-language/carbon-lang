@@ -422,7 +422,7 @@ Submit</h3>
         return self.send_string(res, 'text/plain')
 
     def get_report_context(self, report):
-        class Context:
+        class Context(object):
             pass
         if report is None or report == 'None':
             data = self.load_crashes()

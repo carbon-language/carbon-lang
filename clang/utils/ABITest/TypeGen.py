@@ -17,7 +17,7 @@ from Enumeration import *
 ###
 # Actual type types
 
-class Type:
+class Type(object):
     def isBitField(self):
         return False
 
