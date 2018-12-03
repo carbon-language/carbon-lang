@@ -2246,6 +2246,14 @@ CXXCtorInitializer::CXXCtorInitializer(ASTContext &Context,
     : Initializee(TInfo), Init(Init), LParenLoc(L), RParenLoc(R),
       IsDelegating(true), IsVirtual(false), IsWritten(false), SourceOrder(0) {}
 
+int64_t CXXCtorInitializer::getID(const ASTContext &Context) const {
+  Optional<int64_t> Out = Context.getAllocator().identifyObject(this);
+  assert(Out && "Wrong allocator used");
+  assert(*Out % alignof(CXXCtorInitializer) == 0 &&
+         "Wrong alignment information");
+  return *Out / alignof(CXXCtorInitializer);
+}
+
 TypeLoc CXXCtorInitializer::getBaseClassLoc() const {
   if (isBaseInitializer())
     return Initializee.get<TypeSourceInfo*>()->getTypeLoc();
