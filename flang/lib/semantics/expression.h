@@ -27,6 +27,8 @@ struct Program;
 template<typename> struct Scalar;
 template<typename> struct Integer;
 template<typename> struct Constant;
+template<typename> struct Logical;
+template<typename> struct DefaultChar;
 }
 
 // The expression semantic analysis code has its implementation in
@@ -68,6 +70,8 @@ public:
   bool ScalarConstraint(Expr<SomeType> &);
   bool ConstantConstraint(Expr<SomeType> &);
   bool IntegerConstraint(Expr<SomeType> &);
+  bool LogicalConstraint(Expr<SomeType> &);
+  bool DefaultCharConstraint(Expr<SomeType> &);
 
 protected:
   semantics::SemanticsContext &context_;
@@ -85,6 +89,33 @@ std::optional<Expr<SomeType>> AnalyzeExpr(
 // analysis implementation in expression.cc.
 extern template std::optional<Expr<SomeType>> AnalyzeExpr(
     ExpressionAnalysisContext &, const parser::Expr &);
+
+// Forward declarations of exposed specializations
+template<typename A>
+MaybeExpr AnalyzeExpr(
+    ExpressionAnalysisContext &, const common::Indirection<A> &);
+template<typename A>
+std::optional<Expr<SomeType>> AnalyzeExpr(
+    ExpressionAnalysisContext &, const parser::Scalar<A> &);
+template<typename A>
+std::optional<Expr<SomeType>> AnalyzeExpr(
+    ExpressionAnalysisContext &, const parser::Constant<A> &);
+template<typename A>
+std::optional<Expr<SomeType>> AnalyzeExpr(
+    ExpressionAnalysisContext &, const parser::Integer<A> &);
+template<typename A>
+std::optional<Expr<SomeType>> AnalyzeExpr(
+    ExpressionAnalysisContext &, const parser::Logical<A> &);
+template<typename A>
+std::optional<Expr<SomeType>> AnalyzeExpr(
+    ExpressionAnalysisContext &, const parser::DefaultChar<A> &);
+
+// Indirections are silently traversed by AnalyzeExpr().
+template<typename A>
+MaybeExpr AnalyzeExpr(
+    ExpressionAnalysisContext &context, const common::Indirection<A> &x) {
+  return AnalyzeExpr(context, *x);
+}
 
 // These specializations create nested expression analysis contexts
 // to implement constraint checking.
@@ -109,7 +140,22 @@ template<typename A>
 std::optional<Expr<SomeType>> AnalyzeExpr(
     ExpressionAnalysisContext &context, const parser::Integer<A> &expr) {
   ExpressionAnalysisContext withCheck{
-      context, &ExpressionAnalysisContext::ConstantConstraint};
+      context, &ExpressionAnalysisContext::IntegerConstraint};
+  return AnalyzeExpr(withCheck, expr.thing);
+}
+
+template<typename A>
+std::optional<Expr<SomeType>> AnalyzeExpr(
+    ExpressionAnalysisContext &context, const parser::Logical<A> &expr) {
+  ExpressionAnalysisContext withCheck{
+      context, &ExpressionAnalysisContext::LogicalConstraint};
+  return AnalyzeExpr(withCheck, expr.thing);
+}
+template<typename A>
+std::optional<Expr<SomeType>> AnalyzeExpr(
+    ExpressionAnalysisContext &context, const parser::DefaultChar<A> &expr) {
+  ExpressionAnalysisContext withCheck{
+      context, &ExpressionAnalysisContext::DefaultCharConstraint};
   return AnalyzeExpr(withCheck, expr.thing);
 }
 }

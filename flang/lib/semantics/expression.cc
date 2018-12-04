@@ -42,12 +42,14 @@ using common::TypeCategory;
 
 // Constraint checking
 void ExpressionAnalysisContext::CheckConstraints(MaybeExpr &expr) {
-  if (inner_ != nullptr) {
-    inner_->CheckConstraints(expr);
-  }
-  if (constraint_ != nullptr && expr.has_value()) {
-    if (!(this->*constraint_)(*expr)) {
-      expr.reset();
+  if (expr.has_value()) {
+    if (inner_ != nullptr) {
+      inner_->CheckConstraints(expr);
+    }
+    if (constraint_ != nullptr) {
+      if (!(this->*constraint_)(*expr)) {
+        expr.reset();
+      }
     }
   }
 }
@@ -75,6 +77,23 @@ bool ExpressionAnalysisContext::IntegerConstraint(Expr<SomeType> &expr) {
     return true;
   }
   Say("expression must be INTEGER"_err_en_US);
+  return false;
+}
+
+bool ExpressionAnalysisContext::LogicalConstraint(Expr<SomeType> &expr) {
+  if (std::holds_alternative<Expr<SomeLogical>>(expr.u)) {
+    return true;
+  }
+  Say("expression must be LOGICAL"_err_en_US);
+  return false;
+}
+
+bool ExpressionAnalysisContext::DefaultCharConstraint(Expr<SomeType> &expr) {
+  if (auto *charExpr{std::get_if<Expr<SomeCharacter>>(&expr.u)}) {
+    return charExpr->GetKind() ==
+        context.defaultKinds.GetDefaultKind(TypeCategory::Character);
+  }
+  Say("expression must be default CHARACTER"_err_en_US);
   return false;
 }
 
@@ -142,9 +161,6 @@ struct CallAndArguments {
 // Forward declarations of additional AnalyzeExpr specializations
 template<typename... As>
 MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &, const std::variant<As...> &);
-template<typename A>
-MaybeExpr AnalyzeExpr(
-    ExpressionAnalysisContext &, const common::Indirection<A> &);
 template<>
 MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &, const parser::Designator &);
 template<>
@@ -294,17 +310,11 @@ MaybeExpr AnalyzeExpr(
 template MaybeExpr AnalyzeExpr(
     ExpressionAnalysisContext &, const parser::Expr &);
 
-// Variants and indirections are silently traversed by AnalyzeExpr().
+// Variants are silently traversed by AnalyzeExpr().
 template<typename... As>
 MaybeExpr AnalyzeExpr(
     ExpressionAnalysisContext &context, const std::variant<As...> &u) {
   return std::visit([&](const auto &x) { return AnalyzeExpr(context, x); }, u);
-}
-
-template<typename A>
-MaybeExpr AnalyzeExpr(
-    ExpressionAnalysisContext &context, const common::Indirection<A> &x) {
-  return AnalyzeExpr(context, *x);
 }
 
 // Wraps a object in an explicitly typed representation (e.g., Designator<>
