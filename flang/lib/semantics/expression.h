@@ -74,6 +74,8 @@ public:
   bool LogicalConstraint(Expr<SomeType> &);
   bool DefaultCharConstraint(Expr<SomeType> &);
 
+  std::optional<Expr<SomeType>> Analyze(const parser::Expr &);
+
 protected:
   semantics::SemanticsContext &context_;
 
@@ -86,10 +88,11 @@ template<typename PARSED>
 std::optional<Expr<SomeType>> AnalyzeExpr(
     ExpressionAnalysisContext &, const PARSED &);
 
-// This extern template is the gateway into the rest of the expression
-// analysis implementation in expression.cc.
-extern template std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &, const parser::Expr &);
+template<>
+inline std::optional<Expr<SomeType>> AnalyzeExpr(
+    ExpressionAnalysisContext &context, const parser::Expr &expr) {
+  return context.Analyze(expr);
+}
 
 // Forward declarations of exposed specializations
 template<typename A>

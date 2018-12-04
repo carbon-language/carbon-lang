@@ -280,33 +280,17 @@ MaybeExpr AnalyzeExpr(
 // Catch-all unwrapper for AnalyzeExpr's most general case.
 template<typename A>
 MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context, const A &x) {
+  // Some compiler/version/option set combinations used to mysteriously
+  // overlook the template specialization in expression.h that
+  // redirected parser::Expr arguments, and they would arrive here
+  // in the catch-all template.  We've worked around that problem.
+  static_assert(
+      !std::is_same_v<A, parser::Expr>, "template specialization failed");
   return AnalyzeExpr(context, x.u);
 }
 
 // Definitions of AnalyzeExpr() specializations follow.
 // Helper subroutines are intermixed.
-
-// This specialization of AnalyzeExpr() constitutes the main entry point
-// to this module from the templates in expression.h.
-MaybeExpr AnalyzeExpr(
-    ExpressionAnalysisContext &context, const parser::Expr &expr) {
-  if (!expr.source.empty()) {
-    // Analyze the expression in a specified source position context for better
-    // error reporting.
-    auto save{
-        context.context().foldingContext().messages.SetLocation(expr.source)};
-    MaybeExpr result{AnalyzeExpr(context, expr.u)};
-    context.CheckConstraints(result);
-    return result;
-  } else {
-    MaybeExpr result{AnalyzeExpr(context, expr.u)};
-    context.CheckConstraints(result);
-    return result;
-  }
-}
-
-template MaybeExpr AnalyzeExpr(
-    ExpressionAnalysisContext &, const parser::Expr &);
 
 // Variants are silently traversed by AnalyzeExpr().
 template<typename... As>
@@ -1477,6 +1461,21 @@ MaybeExpr AnalyzeExpr(
     ExpressionAnalysisContext &context, const parser::Expr::DefinedBinary &) {
   context.Say("TODO: DefinedBinary unimplemented"_err_en_US);
   return std::nullopt;
+}
+
+MaybeExpr ExpressionAnalysisContext::Analyze(const parser::Expr &expr) {
+  if (!expr.source.empty()) {
+    // Analyze the expression in a specified source position context for better
+    // error reporting.
+    auto save{context_.foldingContext().messages.SetLocation(expr.source)};
+    MaybeExpr result{AnalyzeExpr(*this, expr.u)};
+    CheckConstraints(result);
+    return result;
+  } else {
+    MaybeExpr result{AnalyzeExpr(*this, expr.u)};
+    CheckConstraints(result);
+    return result;
+  }
 }
 }
 
