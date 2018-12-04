@@ -7398,8 +7398,8 @@ INTERCEPTOR(SIZE_T, regerror, int errcode, const void *preg, char *errbuf,
   if (preg)
     COMMON_INTERCEPTOR_READ_RANGE(ctx, preg, struct_regex_sz);
   SIZE_T res = REAL(regerror)(errcode, preg, errbuf, errbuf_size);
-  if (errbuf && res > 0)
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, errbuf, res);
+  if (errbuf)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, errbuf, REAL(strlen)(errbuf) + 1);
   return res;
 }
 INTERCEPTOR(void, regfree, const void *preg) {
