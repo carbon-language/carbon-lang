@@ -77,6 +77,11 @@
 #define ctime __ctime50
 #define ctime_r __ctime_r50
 #define devname __devname50
+#define fts_children __fts_children60
+#define fts_close __fts_close60
+#define fts_open __fts_open60
+#define fts_read __fts_read60
+#define fts_set __fts_set60
 #define getitimer __getitimer50
 #define getmntinfo __getmntinfo13
 #define getpwent __getpwent50
@@ -7449,6 +7454,75 @@ INTERCEPTOR(SSIZE_T, regasub, char **buf, const char *sub,
 #define INIT_REGEX
 #endif
 
+#if SANITIZER_INTERCEPT_FTS
+INTERCEPTOR(void *, fts_open, char *const *path_argv, int options,
+            int (*compar)(void **, void **)) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fts_open, path_argv, options, compar);
+  if (path_argv) {
+    for (char *const *pa = path_argv; ; ++pa) {
+      COMMON_INTERCEPTOR_READ_RANGE(ctx, pa, sizeof(char **));
+      if (!*pa)
+        break;
+      COMMON_INTERCEPTOR_READ_RANGE(ctx, *pa, REAL(strlen)(*pa) + 1);
+    }
+  }
+  // TODO(kamil): handle compar callback
+  void *fts = REAL(fts_open)(path_argv, options, compar);
+  if (fts)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, fts, struct_FTS_sz);
+  return fts;
+}
+
+INTERCEPTOR(void *, fts_read, void *ftsp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fts_read, ftsp);
+  if (ftsp)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, ftsp, struct_FTS_sz);
+  void *ftsent = REAL(fts_read)(ftsp);
+  if (ftsent)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ftsent, struct_FTSENT_sz);
+  return ftsent;
+}
+
+INTERCEPTOR(void *, fts_children, void *ftsp, int options) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fts_children, ftsp, options);
+  if (ftsp)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, ftsp, struct_FTS_sz);
+  void *ftsent = REAL(fts_children)(ftsp, options);
+  if (ftsent)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ftsent, struct_FTSENT_sz);
+  return ftsent;
+}
+
+INTERCEPTOR(int, fts_set, void *ftsp, void *f, int options) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fts_set, ftsp, f, options);
+  if (ftsp)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, ftsp, struct_FTS_sz);
+  if (f)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, f, struct_FTSENT_sz);
+  return REAL(fts_set)(ftsp, f, options);
+}
+
+INTERCEPTOR(int, fts_close, void *ftsp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fts_close, ftsp);
+  if (ftsp)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, ftsp, struct_FTS_sz);
+  return REAL(fts_close)(ftsp);
+}
+#define INIT_FTS                                                               \
+  COMMON_INTERCEPT_FUNCTION(fts_open);                                         \
+  COMMON_INTERCEPT_FUNCTION(fts_read);                                         \
+  COMMON_INTERCEPT_FUNCTION(fts_children);                                     \
+  COMMON_INTERCEPT_FUNCTION(fts_set);                                          \
+  COMMON_INTERCEPT_FUNCTION(fts_close);
+#else
+#define INIT_FTS
+#endif
+
 static void InitializeCommonInterceptors() {
   static u64 metadata_mem[sizeof(MetadataHashMap) / sizeof(u64) + 1];
   interceptor_metadata_map = new((void *)&metadata_mem) MetadataHashMap();
@@ -7707,6 +7781,7 @@ static void InitializeCommonInterceptors() {
   INIT_SETVBUF;
   INIT_GETVFSSTAT;
   INIT_REGEX;
+  INIT_FTS;
 
   INIT___PRINTF_CHK;
 }

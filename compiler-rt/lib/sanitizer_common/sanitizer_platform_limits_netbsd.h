@@ -60,6 +60,8 @@ extern unsigned struct_timespec_sz;
 extern unsigned struct_sembuf_sz;
 
 extern unsigned struct_kevent_sz;
+extern unsigned struct_FTS_sz;
+extern unsigned struct_FTSENT_sz;
 
 extern unsigned struct_regex_sz;
 extern unsigned struct_regmatch_sz;
