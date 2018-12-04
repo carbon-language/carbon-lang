@@ -4812,6 +4812,12 @@ bool X86TargetLowering::decomposeMulByConstant(EVT VT, SDValue C) const {
          (1 - MulC).isPowerOf2() || (-(MulC + 1)).isPowerOf2();
 }
 
+bool X86TargetLowering::shouldUseStrictFP_TO_INT(EVT FpVT, EVT IntVT,
+                                                 bool IsSigned) const {
+  // f80 UINT_TO_FP is more efficient using Strict code if FCMOV is available.
+  return !IsSigned && FpVT == MVT::f80 && Subtarget.hasCMov();
+}
+
 bool X86TargetLowering::isExtractSubvectorCheap(EVT ResVT, EVT SrcVT,
                                                 unsigned Index) const {
   if (!isOperationLegalOrCustom(ISD::EXTRACT_SUBVECTOR, ResVT))
