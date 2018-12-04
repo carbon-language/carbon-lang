@@ -230,35 +230,65 @@ void Walk(common::Indirection<T> &x, M &mutator) {
 
 // Walk a class with a single field 'thing'.
 template<typename T, typename V> void Walk(const Scalar<T> &x, V &visitor) {
-  Walk(x.thing, visitor);
+  if (visitor.Pre(x)) {
+    Walk(x.thing, visitor);
+    visitor.Post(x);
+  }
 }
 template<typename T, typename M> void Walk(Scalar<T> &x, M &mutator) {
-  Walk(x.thing, mutator);
+  if (mutator.Pre(x)) {
+    Walk(x.thing, mutator);
+    mutator.Post(x);
+  }
 }
 template<typename T, typename V> void Walk(const Constant<T> &x, V &visitor) {
-  Walk(x.thing, visitor);
+  if (visitor.Pre(x)) {
+    Walk(x.thing, visitor);
+    visitor.Post(x);
+  }
 }
 template<typename T, typename M> void Walk(Constant<T> &x, M &mutator) {
-  Walk(x.thing, mutator);
+  if (mutator.Pre(x)) {
+    Walk(x.thing, mutator);
+    mutator.Post(x);
+  }
 }
 template<typename T, typename V> void Walk(const Integer<T> &x, V &visitor) {
-  Walk(x.thing, visitor);
+  if (visitor.Pre(x)) {
+    Walk(x.thing, visitor);
+    visitor.Post(x);
+  }
 }
 template<typename T, typename M> void Walk(Integer<T> &x, M &mutator) {
-  Walk(x.thing, mutator);
+  if (mutator.Pre(x)) {
+    Walk(x.thing, mutator);
+    mutator.Post(x);
+  }
 }
 template<typename T, typename V> void Walk(const Logical<T> &x, V &visitor) {
-  Walk(x.thing, visitor);
+  if (visitor.Pre(x)) {
+    Walk(x.thing, visitor);
+    visitor.Post(x);
+  }
 }
 template<typename T, typename M> void Walk(Logical<T> &x, M &mutator) {
-  Walk(x.thing, mutator);
+  if (mutator.Pre(x)) {
+    Walk(x.thing, mutator);
+    mutator.Post(x);
+  }
 }
 template<typename T, typename V>
 void Walk(const DefaultChar<T> &x, V &visitor) {
-  Walk(x.thing, visitor);
+  if (visitor.Pre(x)) {
+    Walk(x.thing, visitor);
+    visitor.Post(x);
+  }
 }
 template<typename T, typename M> void Walk(DefaultChar<T> &x, M &mutator) {
-  Walk(x.thing, mutator);
+  if (mutator.Pre(x)) {
+    Walk(x.thing, mutator);
+    mutator.Post(x);
+  }
 }
 
 template<typename T, typename V> void Walk(const Statement<T> &x, V &visitor) {

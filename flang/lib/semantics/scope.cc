@@ -14,6 +14,9 @@
 
 #include "scope.h"
 #include "symbol.h"
+#include "type.h"
+#include "../evaluate/fold.h"
+#include "../parser/characters.h"
 #include <algorithm>
 #include <memory>
 
@@ -26,8 +29,7 @@ bool Scope::IsModule() const {
 }
 
 Scope &Scope::MakeScope(Kind kind, Symbol *symbol) {
-  children_.emplace_back(*this, kind, symbol);
-  return children_.back();
+  return children_.emplace_back(*this, kind, symbol);
 }
 
 Scope::iterator Scope::find(const SourceName &name) {
@@ -70,11 +72,11 @@ bool Scope::AddSubmodule(const SourceName &name, Scope &submodule) {
   return submodules_.emplace(name, &submodule).second;
 }
 
-const DeclTypeSpec &Scope::MakeNumericType(TypeCategory category, int kind) {
-  return MakeLengthlessType(NumericTypeSpec{category, kind});
+const DeclTypeSpec &Scope::MakeNumericType(TypeCategory category, KindExpr &&kind) {
+  return MakeLengthlessType(NumericTypeSpec{category, std::move(kind)});
 }
-const DeclTypeSpec &Scope::MakeLogicalType(int kind) {
-  return MakeLengthlessType(LogicalTypeSpec{kind});
+const DeclTypeSpec &Scope::MakeLogicalType(KindExpr &&kind) {
+  return MakeLengthlessType(LogicalTypeSpec{std::move(kind)});
 }
 const DeclTypeSpec &Scope::MakeTypeStarType() {
   return MakeLengthlessType(DeclTypeSpec{DeclTypeSpec::TypeStar});
@@ -84,28 +86,36 @@ const DeclTypeSpec &Scope::MakeClassStarType() {
 }
 // Types that can't have length parameters can be reused without having to
 // compare length expressions. They are stored in the global scope.
-const DeclTypeSpec &Scope::MakeLengthlessType(const DeclTypeSpec &type) {
+const DeclTypeSpec &Scope::MakeLengthlessType(DeclTypeSpec &&type) {
   auto it{std::find(declTypeSpecs_.begin(), declTypeSpecs_.end(), type)};
   if (it != declTypeSpecs_.end()) {
     return *it;
   } else {
-    declTypeSpecs_.push_back(type);
-    return declTypeSpecs_.back();
+    return declTypeSpecs_.emplace_back(std::move(type));
   }
 }
 
-const DeclTypeSpec &Scope::MakeCharacterType(ParamValue &&length, int kind) {
-  characterTypeSpecs_.emplace_back(std::move(length), kind);
-  declTypeSpecs_.emplace_back(characterTypeSpecs_.back());
-  return declTypeSpecs_.back();
+const DeclTypeSpec &Scope::MakeCharacterType(ParamValue &&length, KindExpr &&kind) {
+  return declTypeSpecs_.emplace_back(
+      CharacterTypeSpec{std::move(length), std::move(kind)});
 }
 
-DerivedTypeSpec &Scope::MakeDerivedType(const Symbol &typeSymbol) {
-  return derivedTypeSpecs_.emplace_back(typeSymbol);
-}
 const DeclTypeSpec &Scope::MakeDerivedType(
     DeclTypeSpec::Category category, const DerivedTypeSpec &derived) {
   return declTypeSpecs_.emplace_back(category, derived);
+}
+
+DeclTypeSpec &Scope::MakeDerivedType(const Symbol &typeSymbol) {
+  CHECK(typeSymbol.has<DerivedTypeDetails>());
+  CHECK(typeSymbol.scope() != nullptr);
+  return MakeDerivedType(
+      DerivedTypeSpec{typeSymbol}, DeclTypeSpec::TypeDerived);
+}
+
+DeclTypeSpec &Scope::MakeDerivedType(
+    DerivedTypeSpec &&instance, DeclTypeSpec::Category category) {
+  return declTypeSpecs_.emplace_back(
+      category, DerivedTypeSpec{std::move(instance)});
 }
 
 Scope::ImportKind Scope::GetImportKind() const {
@@ -187,5 +197,108 @@ std::ostream &operator<<(std::ostream &os, const Scope &scope) {
     os << "  " << *symbol << '\n';
   }
   return os;
+}
+
+bool Scope::IsParameterizedDerivedType() const {
+  if (kind_ != Kind::DerivedType) {
+    return false;
+  }
+  if (const Scope * parent{GetDerivedTypeParent()}) {
+    if (parent->IsParameterizedDerivedType()) {
+      return true;
+    }
+  }
+  for (const auto &pair : symbols_) {
+    if (pair.second->has<TypeParamDetails>()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+const DeclTypeSpec *Scope::FindInstantiatedDerivedType(
+    const DerivedTypeSpec &spec, DeclTypeSpec::Category category) const {
+  DeclTypeSpec type{category, spec};
+  auto typeIter{std::find(declTypeSpecs_.begin(), declTypeSpecs_.end(), type)};
+  if (typeIter != declTypeSpecs_.end()) {
+    return &*typeIter;
+  }
+  return nullptr;
+}
+
+const DeclTypeSpec &Scope::FindOrInstantiateDerivedType(DerivedTypeSpec &&spec,
+    DeclTypeSpec::Category category, evaluate::FoldingContext &foldingContext) {
+  spec.FoldParameterExpressions(foldingContext);
+  if (const DeclTypeSpec * type{FindInstantiatedDerivedType(spec, category)}) {
+    return *type;
+  }
+  // Create a new instantiation of this parameterized derived type
+  // for this particular distinct set of actual parameter values.
+  DeclTypeSpec &type{MakeDerivedType(std::move(spec), category)};
+  type.derivedTypeSpec().Instantiate(*this, foldingContext);
+  return type;
+}
+
+void Scope::InstantiateDerivedType(
+    Scope &clone, evaluate::FoldingContext &foldingContext) const {
+  clone.sourceRange_ = sourceRange_;
+  clone.chars_ = chars_;
+  for (const auto &pair : symbols_) {
+    pair.second->Instantiate(clone, foldingContext);
+  }
+}
+
+const DeclTypeSpec &Scope::InstantiateIntrinsicType(
+    const DeclTypeSpec &spec, evaluate::FoldingContext &foldingContext) {
+  const IntrinsicTypeSpec *intrinsic{spec.AsIntrinsic()};
+  CHECK(intrinsic != nullptr);
+  if (evaluate::ToInt64(intrinsic->kind()).has_value()) {
+    return spec;  // KIND is already a known constant
+  }
+  // The expression was not originally constant, but now it must be so
+  // in the context of a parameterized derived type instantiation.
+  KindExpr copy{intrinsic->kind()};
+  copy = evaluate::Fold(foldingContext, std::move(copy));
+  auto value{evaluate::ToInt64(copy)};
+  CHECK(value.has_value() &&
+      "KIND parameter of intrinsic type did not resolve to a "
+      "constant INTEGER value in a parameterized derived type instance");
+  if (!evaluate::IsValidKindOfIntrinsicType(intrinsic->category(), *value)) {
+    foldingContext.messages.Say(
+        "KIND parameter value (%jd) of intrinsic type %s did not resolve to a supported value"_err_en_US,
+        static_cast<std::intmax_t>(*value),
+        parser::ToUpperCaseLetters(common::EnumToString(intrinsic->category()))
+            .data());
+  }
+  switch (spec.category()) {
+  case DeclTypeSpec::Numeric:
+    return declTypeSpecs_.emplace_back(
+        NumericTypeSpec{intrinsic->category(), KindExpr{*value}});
+  case DeclTypeSpec::Logical:
+    return declTypeSpecs_.emplace_back(LogicalTypeSpec{KindExpr{*value}});
+  case DeclTypeSpec::Character:
+    return declTypeSpecs_.emplace_back(CharacterTypeSpec{
+        ParamValue{spec.characterTypeSpec().length()}, KindExpr{*value}});
+  default: CRASH_NO_CASE;
+  }
+}
+
+const Symbol *Scope::GetSymbol() const {
+  if (symbol_ != nullptr) {
+    return symbol_;
+  }
+  if (derivedTypeSpec_ != nullptr) {
+    return &derivedTypeSpec_->typeSymbol();
+  }
+  return nullptr;
+}
+
+const Scope *Scope::GetDerivedTypeParent() const {
+  if (const Symbol * symbol{GetSymbol()}) {
+    if (const DerivedTypeSpec * parent{symbol->GetParentTypeSpec(this)}) {
+      return parent->scope();
+    }
+  }
+  return nullptr;
 }
 }

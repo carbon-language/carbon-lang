@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 namespace Fortran::parser {
 template<typename> struct Statement;
 struct AssignmentStmt;
+struct ConcurrentHeader;
 struct ForallStmt;
 struct PointerAssignmentStmt;
 struct Program;
@@ -36,6 +37,11 @@ void AnalyzeAssignment(
     SemanticsContext &, const parser::Statement<parser::WhereStmt> &);
 void AnalyzeAssignment(
     SemanticsContext &, const parser::Statement<parser::ForallStmt> &);
+
+// R1125 concurrent-header is used in FORALL statements & constructs as
+// well as in DO CONCURRENT loops.
+void AnalyzeConcurrentHeader(
+    SemanticsContext &, const parser::ConcurrentHeader &);
 
 // Semantic analysis of all assignment statements and related constructs.
 void AnalyzeAssignments(parser::Program &, SemanticsContext &);

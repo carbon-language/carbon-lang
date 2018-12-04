@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -58,13 +58,17 @@ using ActualArguments = std::vector<std::optional<ActualArgument>>;
 
 // Intrinsics are identified by their names and the characteristics
 // of their arguments, at least for now.
-using IntrinsicProcedure = const char *;  // not an owning pointer
+using IntrinsicProcedure = std::string;
 
 struct SpecificIntrinsic {
   explicit SpecificIntrinsic(IntrinsicProcedure n) : name{n} {}
   SpecificIntrinsic(IntrinsicProcedure n, std::optional<DynamicType> &&dt,
       int r, semantics::Attrs a)
     : name{n}, type{std::move(dt)}, rank{r}, attrs{a} {}
+  SpecificIntrinsic(const SpecificIntrinsic &) = default;
+  SpecificIntrinsic(SpecificIntrinsic &&) = default;
+  SpecificIntrinsic &operator=(const SpecificIntrinsic &) = default;
+  SpecificIntrinsic &operator=(SpecificIntrinsic &&) = default;
   bool operator==(const SpecificIntrinsic &) const;
   std::ostream &AsFortran(std::ostream &) const;
 

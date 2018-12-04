@@ -33,6 +33,10 @@ namespace Fortran::parser {
 struct Expr;
 }
 
+namespace Fortran::evaluate {
+struct FoldingContext;
+}
+
 namespace Fortran::semantics {
 
 class Scope;
@@ -50,6 +54,7 @@ using SomeIntExpr = evaluate::Expr<evaluate::SomeInteger>;
 using MaybeIntExpr = std::optional<SomeIntExpr>;
 using SubscriptIntExpr = evaluate::Expr<evaluate::SubscriptInteger>;
 using MaybeSubscriptIntExpr = std::optional<SubscriptIntExpr>;
+using KindExpr = SubscriptIntExpr;
 
 // An array spec bound: an explicit integer expression or ASSUMED or DEFERRED
 class Bound {
@@ -85,14 +90,17 @@ private:
 // A type parameter value: integer expression or assumed or deferred.
 class ParamValue {
 public:
-  static ParamValue Assumed() { return Category::Assumed; }
-  static ParamValue Deferred() { return Category::Deferred; }
-  explicit ParamValue(MaybeIntExpr &&expr);
+  static constexpr ParamValue Assumed() { return Category::Assumed; }
+  static constexpr ParamValue Deferred() { return Category::Deferred; }
+  ParamValue(const ParamValue &) = default;
+  explicit ParamValue(MaybeIntExpr &&);
   explicit ParamValue(std::int64_t);
   bool isExplicit() const { return category_ == Category::Explicit; }
   bool isAssumed() const { return category_ == Category::Assumed; }
   bool isDeferred() const { return category_ == Category::Deferred; }
   const MaybeIntExpr &GetExplicit() const { return expr_; }
+  void SetExplicit(SomeIntExpr &&);
+  bool operator==(const ParamValue &) const;
 
 private:
   enum class Category { Explicit, Deferred, Assumed };
@@ -105,25 +113,25 @@ private:
 class IntrinsicTypeSpec {
 public:
   TypeCategory category() const { return category_; }
-  int kind() const { return kind_; }
+  const KindExpr &kind() const { return kind_; }
   bool operator==(const IntrinsicTypeSpec &x) const {
     return category_ == x.category_ && kind_ == x.kind_;
   }
   bool operator!=(const IntrinsicTypeSpec &x) const { return !operator==(x); }
 
 protected:
-  IntrinsicTypeSpec(TypeCategory, int kind);
+  IntrinsicTypeSpec(TypeCategory, KindExpr &&);
 
 private:
   TypeCategory category_;
-  int kind_;
+  KindExpr kind_;
   friend std::ostream &operator<<(std::ostream &os, const IntrinsicTypeSpec &x);
 };
 
 class NumericTypeSpec : public IntrinsicTypeSpec {
 public:
-  NumericTypeSpec(TypeCategory category, int kind)
-    : IntrinsicTypeSpec(category, kind) {
+  NumericTypeSpec(TypeCategory category, KindExpr &&kind)
+    : IntrinsicTypeSpec(category, std::move(kind)) {
     CHECK(category == TypeCategory::Integer || category == TypeCategory::Real ||
         category == TypeCategory::Complex);
   }
@@ -131,14 +139,15 @@ public:
 
 class LogicalTypeSpec : public IntrinsicTypeSpec {
 public:
-  LogicalTypeSpec(int kind) : IntrinsicTypeSpec(TypeCategory::Logical, kind) {}
+  explicit LogicalTypeSpec(KindExpr &&kind)
+    : IntrinsicTypeSpec(TypeCategory::Logical, std::move(kind)) {}
 };
 
 class CharacterTypeSpec : public IntrinsicTypeSpec {
 public:
-  CharacterTypeSpec(ParamValue &&length, int kind)
-    : IntrinsicTypeSpec(TypeCategory::Character, kind), length_{std::move(
-                                                            length)} {}
+  CharacterTypeSpec(ParamValue &&length, KindExpr &&kind)
+    : IntrinsicTypeSpec(TypeCategory::Character, std::move(kind)),
+      length_{std::move(length)} {}
   const ParamValue length() const { return length_; }
 
 private:
@@ -205,22 +214,29 @@ using ArraySpec = std::list<ShapeSpec>;
 
 class DerivedTypeSpec {
 public:
-  using listType = std::list<std::pair<std::optional<SourceName>, ParamValue>>;
-  DerivedTypeSpec &operator=(const DerivedTypeSpec &) = delete;
   explicit DerivedTypeSpec(const Symbol &symbol) : typeSymbol_{symbol} {}
-  DerivedTypeSpec() = delete;
+  DerivedTypeSpec(const DerivedTypeSpec &);
+  DerivedTypeSpec(DerivedTypeSpec &&);
+
   const Symbol &typeSymbol() const { return typeSymbol_; }
   const Scope *scope() const { return scope_; }
   void set_scope(const Scope &);
-  listType &paramValues() { return paramValues_; }
-  const listType &paramValues() const { return paramValues_; }
-  void AddParamValue(ParamValue &&);
-  void AddParamValue(const SourceName &, ParamValue &&);
+  const std::map<SourceName, ParamValue> &parameters() const {
+    return parameters_;
+  }
+
+  bool HasActualParameters() const { return !parameters_.empty(); }
+  ParamValue &AddParamValue(SourceName, ParamValue &&);
+  ParamValue *FindParameter(SourceName);
+  const ParamValue *FindParameter(SourceName) const;
+  void FoldParameterExpressions(evaluate::FoldingContext &);
+  void Instantiate(Scope &, evaluate::FoldingContext &);
+  bool operator==(const DerivedTypeSpec &) const;  // for std::find()
 
 private:
   const Symbol &typeSymbol_;
-  const Scope *scope_{nullptr};
-  listType paramValues_;
+  const Scope *scope_{nullptr};  // same as typeSymbol_.scope() unless PDT
+  std::map<SourceName, ParamValue> parameters_;
   friend std::ostream &operator<<(std::ostream &, const DerivedTypeSpec &);
 };
 
@@ -237,42 +253,37 @@ public:
   };
 
   // intrinsic-type-spec or TYPE(intrinsic-type-spec), not character
-  DeclTypeSpec(const NumericTypeSpec &);
-  DeclTypeSpec(const LogicalTypeSpec &);
+  DeclTypeSpec(NumericTypeSpec &&);
+  DeclTypeSpec(LogicalTypeSpec &&);
   // character
-  DeclTypeSpec(CharacterTypeSpec &);
+  DeclTypeSpec(const CharacterTypeSpec &);
+  DeclTypeSpec(CharacterTypeSpec &&);
   // TYPE(derived-type-spec) or CLASS(derived-type-spec)
   DeclTypeSpec(Category, const DerivedTypeSpec &);
+  DeclTypeSpec(Category, DerivedTypeSpec &&);
   // TYPE(*) or CLASS(*)
   DeclTypeSpec(Category);
-  DeclTypeSpec() = delete;
 
   bool operator==(const DeclTypeSpec &) const;
   bool operator!=(const DeclTypeSpec &that) const { return !operator==(that); }
 
   Category category() const { return category_; }
+  void set_category(Category category) { category_ = category; }
   bool IsNumeric(TypeCategory) const;
+  IntrinsicTypeSpec *AsIntrinsic();
   const IntrinsicTypeSpec *AsIntrinsic() const;
   const DerivedTypeSpec *AsDerived() const;
   const NumericTypeSpec &numericTypeSpec() const;
   const LogicalTypeSpec &logicalTypeSpec() const;
   const CharacterTypeSpec &characterTypeSpec() const;
   const DerivedTypeSpec &derivedTypeSpec() const;
-  void set_category(Category category) { category_ = category; }
+  DerivedTypeSpec &derivedTypeSpec();
 
 private:
   Category category_;
-  union TypeSpec {
-    TypeSpec() : derived{nullptr} {}
-    TypeSpec(NumericTypeSpec numeric) : numeric{numeric} {}
-    TypeSpec(LogicalTypeSpec logical) : logical{logical} {}
-    TypeSpec(const CharacterTypeSpec *character) : character{character} {}
-    TypeSpec(const DerivedTypeSpec *derived) : derived{derived} {}
-    NumericTypeSpec numeric;
-    LogicalTypeSpec logical;
-    const CharacterTypeSpec *character;
-    const DerivedTypeSpec *derived;
-  } typeSpec_;
+  std::variant<std::monostate, NumericTypeSpec, LogicalTypeSpec,
+      CharacterTypeSpec, DerivedTypeSpec>
+      typeSpec_;
 };
 std::ostream &operator<<(std::ostream &, const DeclTypeSpec &);
 
@@ -292,5 +303,4 @@ private:
   const DeclTypeSpec *type_{nullptr};
 };
 }
-
 #endif  // FORTRAN_SEMANTICS_TYPE_H_

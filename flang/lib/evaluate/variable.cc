@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -208,10 +208,6 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
 
 std::ostream &Emit(std::ostream &o, const Symbol &symbol) {
   return o << symbol.name().ToString();
-}
-
-std::ostream &Emit(std::ostream &o, const IntrinsicProcedure &p) {
-  return o << p;
 }
 
 std::ostream &Emit(std::ostream &o, const std::string &lit) {

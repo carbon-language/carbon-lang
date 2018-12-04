@@ -25,6 +25,10 @@
 #include <set>
 #include <string>
 
+namespace Fortran::evaluate {
+struct FoldingContext;
+}
+
 namespace Fortran::semantics {
 
 using namespace parser::literals;
@@ -59,12 +63,17 @@ public:
   }
   Kind kind() const { return kind_; }
   bool IsModule() const;  // only module, not submodule
+  bool IsParameterizedDerivedType() const;
   Symbol *symbol() { return symbol_; }
   const Symbol *symbol() const { return symbol_; }
 
+  const Symbol *GetSymbol() const;
+  const Scope *GetDerivedTypeParent() const;
+
   const SourceName &name() const {
-    CHECK(symbol_);  // must only be called for Scopes known to have a symbol
-    return symbol_->name();
+    const Symbol *sym{GetSymbol()};
+    CHECK(sym != nullptr);
+    return sym->name();
   }
 
   /// Make a scope nested in this one
@@ -85,8 +94,12 @@ public:
   const_iterator find(const SourceName &name) const;
   size_type erase(const SourceName &);
   size_type size() const { return symbols_.size(); }
+  bool empty() const { return symbols_.empty(); }
 
   // Look for symbol by name in this scope and host (depending on imports).
+  // Be advised: when the scope is a derived type, the search begins in its
+  // enclosing scope and will not match any component or parameter of the
+  // derived type; use find() instead when seeking those.
   Symbol *FindSymbol(const SourceName &) const;
 
   /// Make a Symbol with unknown details.
@@ -121,13 +134,13 @@ public:
   Scope *FindSubmodule(const SourceName &) const;
   bool AddSubmodule(const SourceName &, Scope &);
 
-  DerivedTypeSpec &MakeDerivedType(const Symbol &);
+  DeclTypeSpec &MakeDerivedType(const Symbol &);
 
-  const DeclTypeSpec &MakeNumericType(TypeCategory, int kind);
-  const DeclTypeSpec &MakeLogicalType(int kind);
-  const DeclTypeSpec &MakeCharacterType(ParamValue &&length, int kind = 0);
-  const DeclTypeSpec &MakeDerivedType(
-      DeclTypeSpec::Category, const DerivedTypeSpec &);
+  const DeclTypeSpec &MakeNumericType(TypeCategory, KindExpr &&kind);
+  const DeclTypeSpec &MakeLogicalType(KindExpr &&kind);
+  const DeclTypeSpec &MakeCharacterType(
+      ParamValue &&length, KindExpr &&kind = KindExpr{0});
+  const DeclTypeSpec &MakeDerivedType(DeclTypeSpec::Category, DerivedTypeSpec &&);
   const DeclTypeSpec &MakeTypeStarType();
   const DeclTypeSpec &MakeClassStarType();
 
@@ -145,26 +158,47 @@ public:
 
   void add_importName(const SourceName &);
 
+  const DerivedTypeSpec *derivedTypeSpec() const { return derivedTypeSpec_; }
+  void set_derivedTypeSpec(const DerivedTypeSpec &spec) {
+    derivedTypeSpec_ = &spec;
+  }
+
   // The range of the source of this and nested scopes.
   const parser::CharBlock &sourceRange() const { return sourceRange_; }
   void AddSourceRange(const parser::CharBlock &);
   // Find the smallest scope under this one that contains source
   const Scope *FindScope(const parser::CharBlock &) const;
 
+  // Attempts to find a match for a derived type instance
+  const DeclTypeSpec *FindInstantiatedDerivedType(
+      const DerivedTypeSpec &, DeclTypeSpec::Category) const;
+
+  // Returns a matching derived type instance if one exists, otherwise
+  // creates one
+  const DeclTypeSpec &FindOrInstantiateDerivedType(
+      DerivedTypeSpec &&, DeclTypeSpec::Category, evaluate::FoldingContext &);
+
+  // Clones a DerivedType scope into a new derived type instance's scope.
+  void InstantiateDerivedType(Scope &, evaluate::FoldingContext &) const;
+
+  const DeclTypeSpec &InstantiateIntrinsicType(
+      const DeclTypeSpec &, evaluate::FoldingContext &);
+
 private:
-  Scope &parent_;
+  Scope &parent_;  // this is enclosing scope, not extended derived type base
   const Kind kind_;
   parser::CharBlock sourceRange_;
-  Symbol *const symbol_;
+  Symbol *const symbol_;  // if not null, symbol_->scope() == this
   std::list<Scope> children_;
   mapType symbols_;
   std::map<SourceName, Scope *> submodules_;
   std::list<DeclTypeSpec> declTypeSpecs_;
-  std::list<CharacterTypeSpec> characterTypeSpecs_;
-  std::list<DerivedTypeSpec> derivedTypeSpecs_;
   std::string chars_;
   std::optional<ImportKind> importKind_;
   std::set<SourceName> importNames_;
+  const DerivedTypeSpec *derivedTypeSpec_{nullptr};  // dTS->scope() == this
+  // When additional data members are added to Scope, remember to
+  // copy them, if appropriate, in InstantiateDerivedType().
 
   // Storage for all Symbols. Every Symbol is in allSymbols and every Symbol*
   // or Symbol& points to one in there.

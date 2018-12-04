@@ -1,4 +1,4 @@
-! Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -54,8 +54,8 @@ end
 !    integer(4),kind::c=1_4
 !    integer(4),len::d=3_8
 !  end type
-!  type(t(4_4,:)),allocatable::z
-!  class(t(5_4,:)),allocatable::z2
+!  type(t(c=4_4,d=:)),allocatable::z
+!  class(t(c=5_4,d=:)),allocatable::z2
 !  type(*),allocatable::z3
 !  class(*),allocatable::z4
 !  real(2)::f

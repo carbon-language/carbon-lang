@@ -715,11 +715,10 @@ public:
 #undef NODE_NAME
 
   template<typename T> bool Pre(const T &x) {
-    IndentEmptyLine();
     if (UnionTrait<T> || WrapperTrait<T>) {
-      out_ << GetNodeName(x) << " -> ";
-      emptyline_ = false;
+      Prefix(GetNodeName(x));
     } else {
+      IndentEmptyLine();
       out_ << GetNodeName(x);
       EndLine();
       ++indent_;
@@ -786,10 +785,16 @@ public:
   template<typename T> bool Pre(const common::Indirection<T> &) { return true; }
   template<typename T> void Post(const common::Indirection<T> &) {}
 
+  template<typename A> bool Pre(const parser::Scalar<A> &) {
+    Prefix("Scalar");
+    return true;
+  }
+  template<typename A> void Post(const parser::Scalar<A> &) {
+    EndLineIfNonempty();
+  }
+
   template<typename A> bool Pre(const parser::Constant<A> &) {
-    IndentEmptyLine();
-    out_ << "Constant ->";
-    emptyline_ = false;
+    Prefix("Constant");
     return true;
   }
   template<typename A> void Post(const parser::Constant<A> &) {
@@ -797,20 +802,26 @@ public:
   }
 
   template<typename A> bool Pre(const parser::Integer<A> &) {
-    IndentEmptyLine();
-    out_ << "Integer ->";
-    emptyline_ = false;
+    Prefix("Integer");
     return true;
   }
-  template<typename A> void Post(const parser::Integer<A> &) {}
+  template<typename A> void Post(const parser::Integer<A> &) {
+    EndLineIfNonempty();
+  }
 
-  template<typename A> bool Pre(const parser::Scalar<A> &) {
-    IndentEmptyLine();
-    out_ << "Scalar ->";
-    emptyline_ = false;
+  template<typename A> bool Pre(const parser::Logical<A> &) {
+    Prefix("Logical");
     return true;
   }
-  template<typename A> void Post(const parser::Scalar<A> &) {
+  template<typename A> void Post(const parser::Logical<A> &) {
+    EndLineIfNonempty();
+  }
+
+  template<typename A> bool Pre(const parser::DefaultChar<A> &) {
+    Prefix("DefaultChar");
+    return true;
+  }
+  template<typename A> void Post(const parser::DefaultChar<A> &) {
     EndLineIfNonempty();
   }
 
@@ -828,6 +839,18 @@ protected:
       }
       emptyline_ = false;
     }
+  }
+
+  void Prefix(const char *str) {
+    IndentEmptyLine();
+    out_ << str << " -> ";
+    emptyline_ = false;
+  }
+
+  void Prefix(const std::string &str) {
+    IndentEmptyLine();
+    out_ << str << " -> ";
+    emptyline_ = false;
   }
 
   void EndLine() {

@@ -437,12 +437,13 @@ public:
   int Rank() const;
 
   // Clones the Symbol in the context of a parameterized derived type instance
-  Symbol &Instantiate(
-      Scope &, const DerivedTypeSpec &, evaluate::FoldingContext &) const;
+  Symbol &Instantiate(Scope &, evaluate::FoldingContext &) const;
 
-  // If the symbol refers to a derived type with a parent component,
-  // return the symbol of the parent component's derived type.
-  const Symbol *GetParent() const;
+  // If there is a parent component, return a pointer to its
+  // derived type spec.
+  // The Scope * argument defaults to this->scope_ but should be overridden
+  // for a parameterized derived type instantiation with the instance's scope.
+  const DerivedTypeSpec *GetParentTypeSpec(const Scope * = nullptr) const;
 
 private:
   const Scope *owner_;
@@ -456,6 +457,11 @@ private:
   const std::string GetDetailsName() const;
   friend std::ostream &operator<<(std::ostream &, const Symbol &);
   friend std::ostream &DumpForUnparse(std::ostream &, const Symbol &, bool);
+
+  // If the symbol refers to a derived type with a parent component,
+  // return that parent component's symbol.
+  const Symbol *GetParentComponent(const Scope * = nullptr) const;
+
   template<std::size_t> friend class Symbols;
   template<class, std::size_t> friend struct std::array;
 };

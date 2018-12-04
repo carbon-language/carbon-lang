@@ -82,7 +82,7 @@ const Scalar<T> *GetScalarConstantValue(const Expr<SomeType> &expr) {
 bool IsConstantExpr(const Expr<SomeType> &);
 
 // When an expression is a constant integer, ToInt64() extracts its value.
-// Ensure that the expression has been folded beforehand if folding might
+// Ensure that the expression has been folded beforehand when folding might
 // be required.
 template<int KIND>
 std::optional<std::int64_t> ToInt64(

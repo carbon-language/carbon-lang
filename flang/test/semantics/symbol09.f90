@@ -1,4 +1,4 @@
-! Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ subroutine s4
   integer :: a
  end type t
  !REF: /s4/t
- !DEF: /s4/x ObjectEntity TYPE(t(1_4))
+ !DEF: /s4/x ObjectEntity TYPE(t(k=1_4))
  type(t(1)) :: x
  !REF: /s4/x
  !REF: /s4/t
@@ -100,7 +100,7 @@ subroutine s5
   integer, len :: l
  end type t
  !REF: /s5/t
- !DEF: /s5/x ALLOCATABLE ObjectEntity TYPE(t(:))
+ !DEF: /s5/x ALLOCATABLE ObjectEntity TYPE(t(l=:))
  type(t(:)), allocatable :: x
  !DEF: /s5/y ALLOCATABLE ObjectEntity REAL(4)
  real, allocatable :: y

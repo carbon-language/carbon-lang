@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ using SymbolOrComponent = std::variant<const Symbol *, Component>;
 // x%KIND for intrinsic types is similarly rewritten in semantics to
 // KIND(x), which is then folded to a constant value.
 // "Bare" type parameter references within a derived type definition do
-// not have base objects here.
+// not have base objects here, only symbols.
 template<int KIND> struct TypeParamInquiry {
   using Result = Type<TypeCategory::Integer, KIND>;
   CLASS_BOILERPLATE(TypeParamInquiry)
@@ -109,6 +109,7 @@ template<int KIND> struct TypeParamInquiry {
   static constexpr int Rank() { return 0; }  // always scalar
   bool operator==(const TypeParamInquiry &) const;
   std::ostream &AsFortran(std::ostream &) const;
+
   SymbolOrComponent u{nullptr};
   const Symbol *parameter;
 };
@@ -331,7 +332,9 @@ public:
   ProcedureRef(ProcedureDesignator &&p, ActualArguments &&a)
     : proc_{std::move(p)}, arguments_(std::move(a)) {}
 
+  ProcedureDesignator &proc() { return proc_; }
   const ProcedureDesignator &proc() const { return proc_; }
+  ActualArguments &arguments() { return arguments_; }
   const ActualArguments &arguments() const { return arguments_; }
 
   Expr<SubscriptInteger> LEN() const;

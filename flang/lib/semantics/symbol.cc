@@ -590,14 +590,15 @@ std::ostream &DumpForUnparse(
   return os;
 }
 
-Symbol &Symbol::Instantiate(Scope &scope, const DerivedTypeSpec &spec,
-    evaluate::FoldingContext &foldingContext) const {
+Symbol &Symbol::Instantiate(
+    Scope &scope, evaluate::FoldingContext &foldingContext) const {
+  CHECK(foldingContext.pdtInstance != nullptr);
+  const DerivedTypeSpec &instanceSpec{*foldingContext.pdtInstance};
   auto pair{scope.try_emplace(name_, attrs_)};
   Symbol &symbol{*pair.first->second};
   if (!pair.second) {
     // Symbol was already present in the scope, which can only happen
-    // in the case of type parameters that had actual values present in
-    // the derived type spec.
+    // in the case of type parameters with actual or default values.
     get<TypeParamDetails>();  // confirm or crash with message
     return symbol;
   }
@@ -608,6 +609,32 @@ Symbol &Symbol::Instantiate(Scope &scope, const DerivedTypeSpec &spec,
           [&](const ObjectEntityDetails &that) {
             symbol.details_ = that;
             ObjectEntityDetails &details{symbol.get<ObjectEntityDetails>()};
+            if (DeclTypeSpec * origType{symbol.GetType()}) {
+              if (const DerivedTypeSpec * derived{origType->AsDerived()}) {
+                DerivedTypeSpec newSpec{*derived};
+                if (test(Flag::ParentComp)) {
+                  // Forward all explicit type parameter values from the
+                  // derived type spec under instantiation to this parent
+                  // component spec when they define type parameters that
+                  // pertain to the parent component.
+                  for (const auto &pair : instanceSpec.parameters()) {
+                    if (scope.find(pair.first) == scope.end()) {
+                      newSpec.AddParamValue(
+                          pair.first, ParamValue{pair.second});
+                    }
+                  }
+                }
+                details.ReplaceType(scope.FindOrInstantiateDerivedType(
+                    std::move(newSpec), origType->category(), foldingContext));
+              } else if (origType->AsIntrinsic() != nullptr) {
+                const DeclTypeSpec &newType{
+                    scope.InstantiateIntrinsicType(*origType, foldingContext)};
+                details.ReplaceType(newType);
+              } else {
+                common::die("instantiated component has type that is "
+                            "neither intrinsic nor derived");
+              }
+            }
             details.set_init(
                 evaluate::Fold(foldingContext, std::move(details.init())));
             for (ShapeSpec &dim : details.shape()) {
@@ -624,52 +651,62 @@ Symbol &Symbol::Instantiate(Scope &scope, const DerivedTypeSpec &spec,
           },
           [&](const ProcBindingDetails &that) {
             symbol.details_ = ProcBindingDetails{
-                that.symbol().Instantiate(scope, spec, foldingContext)};
+                that.symbol().Instantiate(scope, foldingContext)};
           },
           [&](const GenericBindingDetails &that) {
             symbol.details_ = GenericBindingDetails{};
             GenericBindingDetails &details{symbol.get<GenericBindingDetails>()};
             for (const Symbol *sym : that.specificProcs()) {
-              details.add_specificProc(
-                  sym->Instantiate(scope, spec, foldingContext));
+              details.add_specificProc(sym->Instantiate(scope, foldingContext));
             }
           },
           [&](const TypeParamDetails &that) {
+            // LEN type parameter, or error recovery on a KIND type parameter
+            // with no corresponding actual argument or default
             symbol.details_ = that;
-            TypeParamDetails &details{symbol.get<TypeParamDetails>()};
-            details.set_init(
-                evaluate::Fold(foldingContext, std::move(details.init())));
           },
-          [&](const FinalProcDetails &that) { symbol.details_ = that; },
-          [&](const auto &) {
-            get<ObjectEntityDetails>();  // crashes with actual details
+          [&](const auto &that) {
+            common::die("unexpected details in Symbol::Instantiate");
           },
       },
       details_);
   return symbol;
 }
 
-const Symbol *Symbol::GetParent() const {
+const Symbol *Symbol::GetParentComponent(const Scope *scope) const {
   const auto &details{get<DerivedTypeDetails>()};
-  CHECK(scope_ != nullptr);
-  if (!details.extends().empty()) {
-    auto iter{scope_->find(details.extends())};
-    CHECK(iter != scope_->end());
-    const Symbol &parentComp{*iter->second};
-    CHECK(parentComp.test(Symbol::Flag::ParentComp));
-    const auto &object{parentComp.get<ObjectEntityDetails>()};
-    const DerivedTypeSpec *derived{object.type()->AsDerived()};
-    CHECK(derived != nullptr);
-    return &derived->typeSymbol();
+  if (scope == nullptr) {
+    CHECK(scope_ != nullptr);
+    scope = scope_;
   }
-  return nullptr;
+  if (details.extends().empty()) {
+    return nullptr;
+  }
+  auto iter{scope->find(details.extends())};
+  CHECK(iter != scope->end());
+  const Symbol &parentComp{*iter->second};
+  CHECK(parentComp.test(Symbol::Flag::ParentComp));
+  return &parentComp;
+}
+
+const DerivedTypeSpec *Symbol::GetParentTypeSpec(const Scope *scope) const {
+  if (const Symbol * parentComponent{GetParentComponent(scope)}) {
+    const auto &object{parentComponent->get<ObjectEntityDetails>()};
+    const DerivedTypeSpec *spec{object.type()->AsDerived()};
+    CHECK(spec != nullptr);
+    return spec;
+  } else {
+    return nullptr;
+  }
 }
 
 std::list<SourceName> DerivedTypeDetails::OrderParameterNames(
     const Symbol &type) const {
   std::list<SourceName> result;
-  if (const Symbol * parent{type.GetParent()}) {
-    result = parent->get<DerivedTypeDetails>().OrderParameterNames(*parent);
+  if (const DerivedTypeSpec * spec{type.GetParentTypeSpec()}) {
+    const DerivedTypeDetails &details{
+        spec->typeSymbol().get<DerivedTypeDetails>()};
+    result = details.OrderParameterNames(spec->typeSymbol());
   }
   for (const auto &name : paramNames_) {
     result.push_back(name);
@@ -680,9 +717,10 @@ std::list<SourceName> DerivedTypeDetails::OrderParameterNames(
 std::list<Symbol *> DerivedTypeDetails::OrderParameterDeclarations(
     const Symbol &type) const {
   std::list<Symbol *> result;
-  if (const Symbol * parent{type.GetParent()}) {
-    result =
-        parent->get<DerivedTypeDetails>().OrderParameterDeclarations(*parent);
+  if (const DerivedTypeSpec * spec{type.GetParentTypeSpec()}) {
+    const DerivedTypeDetails &details{
+        spec->typeSymbol().get<DerivedTypeDetails>()};
+    result = details.OrderParameterDeclarations(spec->typeSymbol());
   }
   for (Symbol *symbol : paramDecls_) {
     result.push_back(symbol);

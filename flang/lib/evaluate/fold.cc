@@ -49,7 +49,7 @@ CoarrayRef FoldOperation(FoldingContext &, CoarrayRef &&);
 DataRef FoldOperation(FoldingContext &, DataRef &&);
 Substring FoldOperation(FoldingContext &, Substring &&);
 ComplexPart FoldOperation(FoldingContext &, ComplexPart &&);
-
+template<typename T> Expr<T> FoldOperation(FoldingContext &, FunctionRef<T> &&);
 template<typename T> Expr<T> FoldOperation(FoldingContext &, Designator<T> &&);
 template<int KIND>
 Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
@@ -153,6 +153,37 @@ ComplexPart FoldOperation(FoldingContext &context, ComplexPart &&complexPart) {
 }
 
 template<typename T>
+Expr<T> FoldOperation(FoldingContext &context, FunctionRef<T> &&funcRef) {
+  ActualArguments args{std::move(funcRef.arguments())};
+  for (std::optional<ActualArgument> &arg : args) {
+    if (arg.has_value()) {
+      *arg->value = FoldOperation(context, std::move(*arg->value));
+    }
+  }
+  if (auto *intrinsic{std::get_if<SpecificIntrinsic>(&funcRef.proc().u)}) {
+    std::string name{intrinsic->name};
+    if (name == "kind") {
+      if constexpr (common::HasMember<T, IntegerTypes>) {
+        return Expr<T>{args[0]->value->GetType()->kind};
+      } else {
+        common::die("kind() result not integral");
+      }
+    } else if (name == "len") {
+      if constexpr (std::is_same_v<T, SubscriptInteger>) {
+        if (auto *charExpr{UnwrapExpr<Expr<SomeCharacter>>(*args[0]->value)}) {
+          return std::visit([](auto &kx) { return kx.LEN(); }, charExpr->u);
+        }
+      } else {
+        common::die("len() result not SubscriptInteger");
+      }
+    } else {
+      // TODO: many more intrinsic functions
+    }
+  }
+  return Expr<T>{FunctionRef<T>{std::move(funcRef.proc()), std::move(args)}};
+}
+
+template<typename T>
 Expr<T> FoldOperation(FoldingContext &context, Designator<T> &&designator) {
   if constexpr (T::category == TypeCategory::Character) {
     if (auto *substring{common::Unwrap<Substring>(designator.u)}) {
@@ -193,20 +224,28 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
     const semantics::Scope *scope{context.pdtInstance->scope()};
     CHECK(scope != nullptr);
     auto iter{scope->find(inquiry.parameter->name())};
-    CHECK(iter != scope->end());
-    const Symbol &symbol{*iter->second};
-    const auto *details{symbol.detailsIf<semantics::TypeParamDetails>()};
-    CHECK(details != nullptr);
-    CHECK(details->init().has_value());
-    Expr<SomeInteger> expr{*details->init()};
-    return Fold(context,
-        Expr<IntKIND>{
-            Convert<IntKIND, TypeCategory::Integer>(std::move(expr))});
+    if (iter != scope->end()) {
+      const Symbol &symbol{*iter->second};
+      const auto *details{symbol.detailsIf<semantics::TypeParamDetails>()};
+      CHECK(details != nullptr);
+      CHECK(details->init().has_value());
+      Expr<SomeInteger> expr{*details->init()};
+      return Fold(context,
+          Expr<IntKIND>{
+              Convert<IntKIND, TypeCategory::Integer>(std::move(expr))});
+    } else {
+      // Parameter of a parent derived type; these are saved in the spec.
+      const auto *value{
+          context.pdtInstance->FindParameter(inquiry.parameter->name())};
+      CHECK(value != nullptr);
+      CHECK(value->isExplicit());
+      return Fold(context,
+          Expr<IntKIND>{Convert<IntKIND, TypeCategory::Integer>(
+              value->GetExplicit().value())});
+    }
   }
   return Expr<IntKIND>{std::move(inquiry)};
 }
-
-// TODO: Fold/rewrite intrinsic function references
 
 // Unary operations
 
@@ -595,16 +634,21 @@ FOR_EACH_TYPE_AND_KIND(template class ExpressionBase)
 // the expression may reference derived type kind parameters whose values
 // are not yet known.
 //
-// The implementation uses an overloaded helper function and template.
+// The implementation uses mutually recursive helper function overloadings and
+// templates.
 
 struct ConstExprContext {
   std::set<parser::CharBlock> constantNames;
 };
 
+// Base cases
 bool IsConstExpr(ConstExprContext &, const BOZLiteralConstant &) {
   return true;
 }
 template<typename A> bool IsConstExpr(ConstExprContext &, const Constant<A> &) {
+  return true;
+}
+bool IsConstExpr(ConstExprContext &, const StaticDataObject::Pointer) {
   return true;
 }
 template<int KIND>
@@ -612,7 +656,12 @@ bool IsConstExpr(ConstExprContext &, const TypeParamInquiry<KIND> &inquiry) {
   return inquiry.parameter->template get<semantics::TypeParamDetails>()
              .attr() == common::TypeParamAttr::Kind;
 }
+bool IsConstExpr(ConstExprContext &, const Symbol *symbol) {
+  return symbol->attrs().test(semantics::Attr::PARAMETER);
+}
+bool IsConstExpr(ConstExprContext &, const CoarrayRef &) { return false; }
 
+// Prototypes for mutual recursion
 template<typename D, typename R, typename O1>
 bool IsConstExpr(ConstExprContext &, const Operation<D, R, O1> &);
 template<typename D, typename R, typename O1, typename O2>
@@ -625,13 +674,24 @@ template<typename A>
 bool IsConstExpr(ConstExprContext &, const ArrayConstructorValues<A> &);
 template<typename A>
 bool IsConstExpr(ConstExprContext &, const ArrayConstructor<A> &);
+bool IsConstExpr(ConstExprContext &, const BaseObject &);
+bool IsConstExpr(ConstExprContext &, const Component &);
+bool IsConstExpr(ConstExprContext &, const Triplet &);
+bool IsConstExpr(ConstExprContext &, const Subscript &);
+bool IsConstExpr(ConstExprContext &, const ArrayRef &);
+bool IsConstExpr(ConstExprContext &, const DataRef &);
+bool IsConstExpr(ConstExprContext &, const Substring &);
+bool IsConstExpr(ConstExprContext &, const ComplexPart &);
 template<typename A>
 bool IsConstExpr(ConstExprContext &, const Designator<A> &);
+bool IsConstExpr(ConstExprContext &, const ActualArgument &);
 template<typename A>
 bool IsConstExpr(ConstExprContext &, const FunctionRef<A> &);
 template<typename A> bool IsConstExpr(ConstExprContext &, const Expr<A> &);
 template<typename A>
 bool IsConstExpr(ConstExprContext &, const CopyableIndirection<A> &);
+template<typename A>
+bool IsConstExpr(ConstExprContext &, const std::optional<A> &);
 template<typename A>
 bool IsConstExpr(ConstExprContext &, const std::vector<A> &);
 template<typename... As>
@@ -675,14 +735,56 @@ bool IsConstExpr(ConstExprContext &context, const ArrayConstructor<A> &array) {
   return IsConstExpr(context, array.values) &&
       IsConstExpr(context, array.typeParameterValues);
 }
+bool IsConstExpr(ConstExprContext &context, const BaseObject &base) {
+  return IsConstExpr(context, base.u);
+}
+bool IsConstExpr(ConstExprContext &context, const Component &component) {
+  return IsConstExpr(context, component.base());
+}
+bool IsConstExpr(ConstExprContext &context, const Triplet &triplet) {
+  return IsConstExpr(context, triplet.lower()) &&
+      IsConstExpr(context, triplet.upper()) &&
+      IsConstExpr(context, triplet.stride());
+}
+bool IsConstExpr(ConstExprContext &context, const Subscript &subscript) {
+  return IsConstExpr(context, subscript.u);
+}
+bool IsConstExpr(ConstExprContext &context, const ArrayRef &arrayRef) {
+  return IsConstExpr(context, arrayRef.u) &&
+      IsConstExpr(context, arrayRef.subscript);
+}
+bool IsConstExpr(ConstExprContext &context, const DataRef &dataRef) {
+  return IsConstExpr(context, dataRef.u);
+}
+bool IsConstExpr(ConstExprContext &context, const Substring &substring) {
+  if (const auto *dataRef{substring.GetParentIf<DataRef>()}) {
+    if (!IsConstExpr(context, *dataRef)) {
+      return false;
+    }
+  }
+  return IsConstExpr(context, substring.lower()) &&
+      IsConstExpr(context, substring.upper());
+}
+bool IsConstExpr(ConstExprContext &context, const ComplexPart &complexPart) {
+  return IsConstExpr(context, complexPart.complex());
+}
 template<typename A>
 bool IsConstExpr(ConstExprContext &context, const Designator<A> &designator) {
-  // TODO: true for PARAMETER and for kind type parameters
-  return false;
+  return IsConstExpr(context, designator.u);
+}
+bool IsConstExpr(ConstExprContext &context, const ActualArgument &arg) {
+  return IsConstExpr(context, *arg.value);
 }
 template<typename A>
 bool IsConstExpr(ConstExprContext &context, const FunctionRef<A> &funcRef) {
-  // TODO: calls to intrinsics with constant arguments
+  if (const auto *intrinsic{
+          std::get_if<SpecificIntrinsic>(&funcRef.proc().u)}) {
+    if (intrinsic->name == "kind") {
+      return true;
+    }
+    // TODO: This is a placeholder with obvious false positives
+    return IsConstExpr(context, funcRef.arguments());
+  }
   return false;
 }
 template<typename A>
@@ -692,6 +794,10 @@ bool IsConstExpr(ConstExprContext &context, const Expr<A> &expr) {
 template<typename A>
 bool IsConstExpr(ConstExprContext &context, const CopyableIndirection<A> &x) {
   return IsConstExpr(context, *x);
+}
+template<typename A>
+bool IsConstExpr(ConstExprContext &context, const std::optional<A> &maybe) {
+  return !maybe.has_value() || IsConstExpr(context, *maybe);
 }
 template<typename A>
 bool IsConstExpr(ConstExprContext &context, const std::vector<A> &v) {

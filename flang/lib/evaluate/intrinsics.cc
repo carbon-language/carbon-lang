@@ -111,6 +111,7 @@ static constexpr TypePattern AnyNumeric{NumericType, KindCode::any};
 static constexpr TypePattern AnyChar{CharType, KindCode::any};
 static constexpr TypePattern AnyLogical{LogicalType, KindCode::any};
 static constexpr TypePattern AnyRelatable{RelatableType, KindCode::any};
+static constexpr TypePattern AnyIntrinsic{IntrinsicType, KindCode::any};
 static constexpr TypePattern Anything{AnyType, KindCode::any};
 
 // Match some kind of some intrinsic type(s); all "Same" values must match,
@@ -385,6 +386,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         SameInt},
     {"is_iostat_end", {{"i", AnyInt}}, DefaultLogical},
     {"is_iostat_eor", {{"i", AnyInt}}, DefaultLogical},
+    {"kind", {{"x", AnyIntrinsic}}, DefaultInt},
     {"lbound",
         {{"array", Anything, Rank::anyOrAssumedRank}, SubscriptDefaultKIND},
         KINDInt, Rank::vector},

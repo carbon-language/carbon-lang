@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "semantics.h"
+#include "assignment.h"
 #include "canonicalize-do.h"
 #include "check-do-concurrent.h"
 #include "default-kinds.h"
@@ -42,13 +43,13 @@ const DeclTypeSpec &SemanticsContext::MakeNumericType(
   if (kind == 0) {
     kind = defaultKinds_.GetDefaultKind(category);
   }
-  return globalScope_.MakeNumericType(category, kind);
+  return globalScope_.MakeNumericType(category, KindExpr{kind});
 }
 const DeclTypeSpec &SemanticsContext::MakeLogicalType(int kind) {
   if (kind == 0) {
     kind = defaultKinds_.GetDefaultKind(TypeCategory::Logical);
   }
-  return globalScope_.MakeLogicalType(kind);
+  return globalScope_.MakeLogicalType(KindExpr{kind});
 }
 
 bool SemanticsContext::AnyFatalError() const {
@@ -84,6 +85,7 @@ bool Semantics::Perform() {
   }
   if (context_.debugExpressions()) {
     AnalyzeExpressions(program_, context_);
+    AnalyzeAssignments(program_, context_);
   }
   return !AnyFatalError();
 }

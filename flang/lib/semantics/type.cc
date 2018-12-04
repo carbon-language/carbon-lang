@@ -21,8 +21,16 @@
 #include "../evaluate/tools.h"
 #include "../evaluate/type.h"
 #include "../parser/characters.h"
+#include <algorithm>
+#include <sstream>
 
 namespace Fortran::semantics {
+
+DerivedTypeSpec::DerivedTypeSpec(const DerivedTypeSpec &that)
+  : typeSymbol_{that.typeSymbol_}, parameters_{that.parameters_} {}
+
+DerivedTypeSpec::DerivedTypeSpec(DerivedTypeSpec &&that)
+  : typeSymbol_{that.typeSymbol_}, parameters_{std::move(that.parameters_)} {}
 
 void DerivedTypeSpec::set_scope(const Scope &scope) {
   CHECK(!scope_);
@@ -30,38 +38,142 @@ void DerivedTypeSpec::set_scope(const Scope &scope) {
   scope_ = &scope;
 }
 
-void DerivedTypeSpec::AddParamValue(ParamValue &&value) {
-  paramValues_.emplace_back(std::nullopt, std::move(value));
+bool DerivedTypeSpec::operator==(const DerivedTypeSpec &that) const {
+  return &typeSymbol_ == &that.typeSymbol_ && parameters_ == that.parameters_;
 }
-void DerivedTypeSpec::AddParamValue(
-    const SourceName &name, ParamValue &&value) {
-  paramValues_.emplace_back(name, std::move(value));
+
+ParamValue &DerivedTypeSpec::AddParamValue(
+    SourceName name, ParamValue &&value) {
+  auto pair{parameters_.insert(std::make_pair(name, std::move(value)))};
+  CHECK(pair.second);  // name was not already present
+  return pair.first->second;
+}
+
+ParamValue *DerivedTypeSpec::FindParameter(SourceName target) {
+  auto iter{parameters_.find(target)};
+  if (iter != parameters_.end()) {
+    return &iter->second;
+  } else {
+    return nullptr;
+  }
+}
+
+const ParamValue *DerivedTypeSpec::FindParameter(SourceName target) const {
+  auto iter{parameters_.find(target)};
+  if (iter != parameters_.end()) {
+    return &iter->second;
+  } else {
+    return nullptr;
+  }
+}
+
+void DerivedTypeSpec::FoldParameterExpressions(
+    evaluate::FoldingContext &foldingContext) {
+  for (auto &pair : parameters_) {
+    if (MaybeIntExpr expr{pair.second.GetExplicit()}) {
+      pair.second.SetExplicit(evaluate::Fold(foldingContext, std::move(*expr)));
+    }
+  }
+}
+
+void DerivedTypeSpec::Instantiate(
+    Scope &containingScope, evaluate::FoldingContext &origFoldingContext) {
+  CHECK(scope_ == nullptr);
+  Scope &newScope{containingScope.MakeScope(Scope::Kind::DerivedType)};
+  newScope.set_derivedTypeSpec(*this);
+  scope_ = &newScope;
+  const DerivedTypeDetails &typeDetails{typeSymbol_.get<DerivedTypeDetails>()};
+
+  // Evaluate any necessary default initial value expressions for those
+  // type parameters that lack explicit initialization.  These expressions
+  // are evaluated in the scope of the derived type instance and follow the
+  // order in which their declarations appeared so as to allow later
+  // parameter values to depend on those of their predecessors.
+  // The folded values of the expressions replace the init() expressions
+  // of the parameters' symbols in the instantiation's scope.
+  evaluate::FoldingContext foldingContext{origFoldingContext};
+  foldingContext.pdtInstance = this;
+
+  for (Symbol *symbol : typeDetails.OrderParameterDeclarations(typeSymbol_)) {
+    const SourceName &name{symbol->name()};
+    const TypeParamDetails &details{symbol->get<TypeParamDetails>()};
+    MaybeIntExpr expr;
+    ParamValue *paramValue{FindParameter(name)};
+    if (paramValue != nullptr) {
+      expr = paramValue->GetExplicit();
+    } else {
+      expr = details.init();
+      expr = evaluate::Fold(foldingContext, std::move(expr));
+    }
+    // Ensure that any kind type parameters are constant by now.
+    if (details.attr() == common::TypeParamAttr::Kind && expr.has_value()) {
+      // Any errors in rank and type will have already elicited messages, so
+      // don't complain further here.
+      if (auto maybeDynamicType{expr->GetType()}) {
+        if (expr->Rank() == 0 &&
+            maybeDynamicType->category == TypeCategory::Integer &&
+            !evaluate::ToInt64(expr).has_value()) {
+          std::stringstream fortran;
+          expr->AsFortran(fortran);
+          if (auto *msg{foldingContext.messages.Say(
+                  "Value of kind type parameter '%s' (%s) is not "
+                  "scalar INTEGER constant"_err_en_US,
+                  name.ToString().data(), fortran.str().data())}) {
+            msg->Attach(name, "declared here"_en_US);
+          }
+        }
+      }
+    }
+    if (expr.has_value()) {
+      const Scope *typeScope{typeSymbol_.scope()};
+      if (typeScope != nullptr &&
+          typeScope->find(symbol->name()) != typeScope->end()) {
+        // This type parameter belongs to the derived type itself, not
+        // one of its parents.  Put the type parameter expression value
+        // into the new scope as the initialization value for the parameter
+        // so that type parameter inquiries can acquire it.
+        TypeParamDetails instanceDetails{details.attr()};
+        instanceDetails.set_init(std::move(*expr));
+        Symbol *parameter{newScope.try_emplace(name, std::move(instanceDetails))
+                              .first->second};
+        CHECK(parameter != nullptr);
+      } else if (paramValue != nullptr) {
+        // Update the type parameter value in the spec for parent component
+        // derived type instantiation later (in symbol.cc) and folding.
+        paramValue->SetExplicit(std::move(*expr));
+      } else {
+        // Save the resolved value in the spec in case folding needs it.
+        AddParamValue(symbol->name(), ParamValue{std::move(*expr)});
+      }
+    }
+  }
+
+  // Instantiate every non-parameter symbol from the original derived
+  // type's scope into the new instance.
+  const Scope *typeScope{typeSymbol_.scope()};
+  CHECK(typeScope != nullptr);
+  typeScope->InstantiateDerivedType(newScope, foldingContext);
 }
 
 std::ostream &operator<<(std::ostream &o, const DerivedTypeSpec &x) {
   o << x.typeSymbol().name().ToString();
-  if (!x.paramValues_.empty()) {
-    bool first = true;
+  if (!x.parameters_.empty()) {
     o << '(';
-    for (const auto &[name, value] : x.paramValues_) {
+    bool first = true;
+    for (const auto &[name, value] : x.parameters_) {
       if (first) {
         first = false;
       } else {
         o << ',';
       }
-      if (name) {
-        o << name->ToString() << '=';
-      }
-      o << value;
+      o << name.ToString() << '=' << value;
     }
     o << ')';
   }
   return o;
 }
 
-Bound::Bound(int bound)
-  : category_{Category::Explicit},
-    expr_{evaluate::Expr<evaluate::SubscriptInteger>{bound}} {}
+Bound::Bound(int bound) : expr_{bound} {}
 
 std::ostream &operator<<(std::ostream &o, const Bound &x) {
   if (x.isAssumed()) {
@@ -97,6 +209,15 @@ ParamValue::ParamValue(std::int64_t value)
   : ParamValue(SomeIntExpr{evaluate::Expr<evaluate::SubscriptInteger>{value}}) {
 }
 
+void ParamValue::SetExplicit(SomeIntExpr &&x) {
+  category_ = Category::Explicit;
+  expr_ = std::move(x);
+}
+
+bool ParamValue::operator==(const ParamValue &that) const {
+  return category_ == that.category_ && expr_ == that.expr_;
+}
+
 std::ostream &operator<<(std::ostream &o, const ParamValue &x) {
   if (x.isAssumed()) {
     o << '*';
@@ -110,32 +231,43 @@ std::ostream &operator<<(std::ostream &o, const ParamValue &x) {
   return o;
 }
 
-IntrinsicTypeSpec::IntrinsicTypeSpec(TypeCategory category, int kind)
-  : category_{category}, kind_{kind} {
+IntrinsicTypeSpec::IntrinsicTypeSpec(TypeCategory category, KindExpr &&kind)
+  : category_{category}, kind_{std::move(kind)} {
   CHECK(category != TypeCategory::Derived);
-  CHECK(kind > 0);
 }
 
 std::ostream &operator<<(std::ostream &os, const IntrinsicTypeSpec &x) {
   os << parser::ToUpperCaseLetters(common::EnumToString(x.category()));
-  if (x.kind() != 0) {
-    os << '(' << x.kind() << ')';
+  if (auto k{evaluate::ToInt64(x.kind())}) {
+    return os << '(' << *k << ')';  // emit unsuffixed kind code
+  } else {
+    return x.kind().AsFortran(os << '(') << ')';
   }
-  return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const CharacterTypeSpec &x) {
-  return os << "CHARACTER(" << x.length() << ',' << x.kind() << ')';
+  os << "CHARACTER(" << x.length() << ',';
+  if (auto k{evaluate::ToInt64(x.kind())}) {
+    return os << *k << ')';  // emit unsuffixed kind code
+  } else {
+    return x.kind().AsFortran(os) << ')';
+  }
 }
 
-DeclTypeSpec::DeclTypeSpec(const NumericTypeSpec &typeSpec)
-  : category_{Numeric}, typeSpec_{typeSpec} {}
-DeclTypeSpec::DeclTypeSpec(const LogicalTypeSpec &typeSpec)
-  : category_{Logical}, typeSpec_{typeSpec} {}
-DeclTypeSpec::DeclTypeSpec(CharacterTypeSpec &typeSpec)
-  : category_{Character}, typeSpec_{&typeSpec} {}
+DeclTypeSpec::DeclTypeSpec(NumericTypeSpec &&typeSpec)
+  : category_{Numeric}, typeSpec_{std::move(typeSpec)} {}
+DeclTypeSpec::DeclTypeSpec(LogicalTypeSpec &&typeSpec)
+  : category_{Logical}, typeSpec_{std::move(typeSpec)} {}
+DeclTypeSpec::DeclTypeSpec(const CharacterTypeSpec &typeSpec)
+  : category_{Character}, typeSpec_{typeSpec} {}
+DeclTypeSpec::DeclTypeSpec(CharacterTypeSpec &&typeSpec)
+  : category_{Character}, typeSpec_{std::move(typeSpec)} {}
 DeclTypeSpec::DeclTypeSpec(Category category, const DerivedTypeSpec &typeSpec)
-  : category_{category}, typeSpec_{&typeSpec} {
+  : category_{category}, typeSpec_{typeSpec} {
+  CHECK(category == TypeDerived || category == ClassDerived);
+}
+DeclTypeSpec::DeclTypeSpec(Category category, DerivedTypeSpec &&typeSpec)
+  : category_{category}, typeSpec_{std::move(typeSpec)} {
   CHECK(category == TypeDerived || category == ClassDerived);
 }
 DeclTypeSpec::DeclTypeSpec(Category category) : category_{category} {
@@ -144,49 +276,51 @@ DeclTypeSpec::DeclTypeSpec(Category category) : category_{category} {
 bool DeclTypeSpec::IsNumeric(TypeCategory tc) const {
   return category_ == Numeric && numericTypeSpec().category() == tc;
 }
+IntrinsicTypeSpec *DeclTypeSpec::AsIntrinsic() {
+  switch (category_) {
+  case Numeric: return &std::get<NumericTypeSpec>(typeSpec_);
+  case Logical: return &std::get<LogicalTypeSpec>(typeSpec_);
+  case Character: return &std::get<CharacterTypeSpec>(typeSpec_);
+  default: return nullptr;
+  }
+}
 const IntrinsicTypeSpec *DeclTypeSpec::AsIntrinsic() const {
   switch (category_) {
-  case Numeric: return &typeSpec_.numeric;
-  case Logical: return &typeSpec_.logical;
-  case Character: return typeSpec_.character;
+  case Numeric: return &std::get<NumericTypeSpec>(typeSpec_);
+  case Logical: return &std::get<LogicalTypeSpec>(typeSpec_);
+  case Character: return &std::get<CharacterTypeSpec>(typeSpec_);
   default: return nullptr;
   }
 }
 const DerivedTypeSpec *DeclTypeSpec::AsDerived() const {
   switch (category_) {
   case TypeDerived:
-  case ClassDerived: return typeSpec_.derived;
+  case ClassDerived: return &std::get<DerivedTypeSpec>(typeSpec_);
   default: return nullptr;
   }
 }
 const NumericTypeSpec &DeclTypeSpec::numericTypeSpec() const {
   CHECK(category_ == Numeric);
-  return typeSpec_.numeric;
+  return std::get<NumericTypeSpec>(typeSpec_);
 }
 const LogicalTypeSpec &DeclTypeSpec::logicalTypeSpec() const {
   CHECK(category_ == Logical);
-  return typeSpec_.logical;
+  return std::get<LogicalTypeSpec>(typeSpec_);
 }
 const CharacterTypeSpec &DeclTypeSpec::characterTypeSpec() const {
   CHECK(category_ == Character);
-  return *typeSpec_.character;
+  return std::get<CharacterTypeSpec>(typeSpec_);
 }
 const DerivedTypeSpec &DeclTypeSpec::derivedTypeSpec() const {
   CHECK(category_ == TypeDerived || category_ == ClassDerived);
-  return *typeSpec_.derived;
+  return std::get<DerivedTypeSpec>(typeSpec_);
+}
+DerivedTypeSpec &DeclTypeSpec::derivedTypeSpec() {
+  CHECK(category_ == TypeDerived || category_ == ClassDerived);
+  return std::get<DerivedTypeSpec>(typeSpec_);
 }
 bool DeclTypeSpec::operator==(const DeclTypeSpec &that) const {
-  if (category_ != that.category_) {
-    return false;
-  }
-  switch (category_) {
-  case Numeric: return typeSpec_.numeric == that.typeSpec_.numeric;
-  case Logical: return typeSpec_.logical == that.typeSpec_.logical;
-  case Character: return typeSpec_.character == that.typeSpec_.character;
-  case TypeDerived:
-  case ClassDerived: return typeSpec_.derived == that.typeSpec_.derived;
-  default: return true;
-  }
+  return category_ == that.category_ && typeSpec_ == that.typeSpec_;
 }
 
 std::ostream &operator<<(std::ostream &o, const DeclTypeSpec &x) {

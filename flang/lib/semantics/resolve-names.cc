@@ -27,6 +27,7 @@
 #include "../evaluate/common.h"
 #include "../evaluate/fold.h"
 #include "../evaluate/tools.h"
+#include "../evaluate/type.h"
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
 #include <list>
@@ -91,6 +92,7 @@ private:
 // Track statement source locations and save messages.
 class MessageHandler {
 public:
+  Messages &messages() { return *messages_; };
   void set_messages(Messages &messages) { messages_ = &messages; }
   const SourceName *currStmtSource() { return currStmtSource_; }
   void set_currStmtSource(const SourceName *);
@@ -113,6 +115,20 @@ private:
   const SourceName *currStmtSource_{nullptr};
 };
 
+// Inheritance graph for the parse tree visitation classes that follow:
+//   BaseVisitor
+//   + AttrsVisitor
+//   | + DeclTypeSpecVisitor
+//   |   + ImplicitRulesVisitor
+//   |     + ScopeHandler -----------+--+
+//   |       + ModuleVisitor ========|==+
+//   |       + InterfaceVisitor      |  |
+//   |       +-+ SubprogramVisitor ==|==+
+//   + ArraySpecVisitor              |  |
+//     + DeclarationVisitor <--------+  |
+//       + ConstructVisitor             |
+//         + ResolveNamesVisitor <------+
+
 class BaseVisitor {
 public:
   template<typename T> void Walk(const T &);
@@ -122,17 +138,17 @@ public:
   const SourceName *currStmtSource();
   SemanticsContext &context() const { return *context_; }
   void set_context(SemanticsContext &);
+  evaluate::FoldingContext &GetFoldingContext() const {
+    return context_->foldingContext();
+  }
 
   // Make a placeholder symbol for a Name that otherwise wouldn't have one.
   // It is not in any scope and always has MiscDetails.
   void MakePlaceholder(const parser::Name &, MiscDetails::Kind);
 
   template<typename T> MaybeExpr EvaluateExpr(const T &expr) {
-    if (auto maybeExpr{AnalyzeExpr(*context_, expr)}) {
-      return evaluate::Fold(context_->foldingContext(), std::move(*maybeExpr));
-    } else {
-      return std::nullopt;
-    }
+    auto maybeExpr{AnalyzeExpr(*context_, expr)};
+    return evaluate::Fold(GetFoldingContext(), std::move(maybeExpr));
   }
 
   template<typename T> MaybeIntExpr EvaluateIntExpr(const T &expr) {
@@ -147,7 +163,7 @@ public:
   template<typename T>
   MaybeSubscriptIntExpr EvaluateSubscriptIntExpr(const T &expr) {
     if (MaybeIntExpr maybeIntExpr{EvaluateIntExpr(expr)}) {
-      return evaluate::Fold(context_->foldingContext(),
+      return evaluate::Fold(GetFoldingContext(),
           evaluate::ConvertToType<evaluate::SubscriptInteger>(
               std::move(*maybeIntExpr)));
     } else {
@@ -243,23 +259,18 @@ public:
   explicit DeclTypeSpecVisitor() {}
   using AttrsVisitor::Post;
   using AttrsVisitor::Pre;
-  void Post(const parser::IntegerTypeSpec &);
-  void Post(const parser::IntrinsicTypeSpec::Logical &);
-  void Post(const parser::IntrinsicTypeSpec::Real &);
-  void Post(const parser::IntrinsicTypeSpec::Complex &);
   void Post(const parser::IntrinsicTypeSpec::DoublePrecision &);
   void Post(const parser::IntrinsicTypeSpec::DoubleComplex &);
   bool Pre(const parser::DeclarationTypeSpec::Class &);
   void Post(const parser::DeclarationTypeSpec::ClassStar &);
   void Post(const parser::DeclarationTypeSpec::TypeStar &);
-  void Post(const parser::TypeParamSpec &);
   bool Pre(const parser::TypeGuardStmt &);
   void Post(const parser::TypeGuardStmt &);
   bool Pre(const parser::AcSpec &);
 
 protected:
   struct State {
-    bool expectDeclTypeSpec{false};  // should only see decl-type-spec when true
+    bool expectDeclTypeSpec{false};  // should see decl-type-spec only when true
     const DeclTypeSpec *declTypeSpec{nullptr};
     struct {
       DerivedTypeSpec *type{nullptr};
@@ -272,17 +283,17 @@ protected:
   void EndDeclTypeSpec();
   State SetDeclTypeSpecState(State);
   void SetDeclTypeSpec(const DeclTypeSpec &);
-  DerivedTypeSpec &SetDerivedTypeSpec(Scope &, const parser::Name &);
-  ParamValue GetParamValue(const parser::TypeParamValue &);
+  void SetDeclTypeSpecCategory(DeclTypeSpec::Category);
+  DeclTypeSpec::Category GetDeclTypeSpecCategory() const {
+    return state_.derived.category;
+  }
+  KindExpr GetKindParamExpr(
+      TypeCategory, const std::optional<parser::KindSelector> &);
 
 private:
   State state_;
 
-  void MakeNumericType(
-      TypeCategory, const std::optional<parser::KindSelector> &);
   void MakeNumericType(TypeCategory, int kind);
-  int GetKindParamValue(
-      TypeCategory, const std::optional<parser::KindSelector> &);
 };
 
 // Visit ImplicitStmt and related parse tree nodes and updates implicit rules.
@@ -399,6 +410,9 @@ public:
   // Search for name only in scope, not in enclosing scopes.
   Symbol *FindInScope(const Scope &, const parser::Name &);
   Symbol *FindInScope(const Scope &, const SourceName &);
+  // Search for name in a derived type scope and its parents.
+  Symbol *FindInTypeOrParents(SourceName);
+  Symbol *FindInTypeOrParents(const Scope &, SourceName);
   void EraseSymbol(const parser::Name &);
   // Record that name resolved to symbol
   Symbol *Resolve(const parser::Name &, Symbol *);
@@ -419,7 +433,7 @@ public:
   Symbol &MakeSymbol(
       const parser::Name &name, const Attrs &attrs, D &&details) {
     // Note: don't use FindSymbol here. If this is a derived type scope,
-    // we want to detect if the name is already declared as a component.
+    // we want to detect whether the name is already declared as a component.
     auto *symbol{FindInScope(currScope(), name)};
     if (!symbol) {
       symbol = &MakeSymbol(name, attrs);
@@ -466,6 +480,10 @@ protected:
   const DeclTypeSpec *GetImplicitType(Symbol &);
   bool ConvertToObjectEntity(Symbol &);
   bool ConvertToProcEntity(Symbol &);
+
+  DeclTypeSpec &MakeNumericType(
+      TypeCategory, const std::optional<parser::KindSelector> &);
+  DeclTypeSpec &MakeLogicalType(const std::optional<parser::KindSelector> &);
 
   // Walk the ModuleSubprogramPart or InternalSubprogramPart collecting names.
   template<typename T>
@@ -624,12 +642,18 @@ public:
   void Post(const parser::DimensionStmt::Declaration &);
   bool Pre(const parser::TypeDeclarationStmt &) { return BeginDecl(); }
   void Post(const parser::TypeDeclarationStmt &) { EndDecl(); }
+  void Post(const parser::IntegerTypeSpec &);
+  void Post(const parser::IntrinsicTypeSpec::Real &);
+  void Post(const parser::IntrinsicTypeSpec::Complex &);
+  void Post(const parser::IntrinsicTypeSpec::Logical &);
   void Post(const parser::IntrinsicTypeSpec::Character &);
   void Post(const parser::CharSelector::LengthAndKind &);
   void Post(const parser::CharLength &);
   void Post(const parser::LengthSelector &);
+  bool Pre(const parser::DeclarationTypeSpec::Type &);
+  bool Pre(const parser::DeclarationTypeSpec::Class &);
   bool Pre(const parser::DeclarationTypeSpec::Record &);
-  bool Pre(const parser::DerivedTypeSpec &);
+  void Post(const parser::DerivedTypeSpec &);
   void Post(const parser::DerivedTypeDef &x);
   bool Pre(const parser::DerivedTypeStmt &x);
   void Post(const parser::DerivedTypeStmt &x);
@@ -674,7 +698,7 @@ private:
   // Info about current character type while walking DeclTypeSpec
   struct {
     std::optional<ParamValue> length;
-    int kind{0};
+    std::optional<KindExpr> kind;
   } charInfo_;
   // Info about current derived type while walking DerivedTypeStmt
   struct {
@@ -697,9 +721,9 @@ private:
   const Symbol *ResolveDerivedType(const parser::Name &);
   bool CanBeTypeBoundProc(const Symbol &);
   Symbol *FindExplicitInterface(const parser::Name &);
-  const Symbol *FindTypeSymbol(const parser::Name &);
   Symbol *MakeTypeSymbol(const parser::Name &, Details &&);
   bool OkToAddComponent(const parser::Name &, const Symbol * = nullptr);
+  ParamValue GetParamValue(const parser::TypeParamValue &);
 
   // Declare an object or procedure entity.
   // T is one of: EntityDetails, ObjectEntityDetails, ProcEntityDetails
@@ -899,7 +923,6 @@ private:
   const parser::Name *ResolveName(const parser::Name &);
   const parser::Name *FindComponent(const parser::Name *, const parser::Name &);
 
-  Symbol *FindComponent(const Scope &, const parser::Name &);
   bool CheckAccessibleComponent(const parser::Name &);
   void CheckImports();
   void CheckImport(const SourceName &, const SourceName &);
@@ -1101,35 +1124,17 @@ void DeclTypeSpecVisitor::EndDeclTypeSpec() {
   CHECK(state_.expectDeclTypeSpec);
   state_ = {};
 }
-DeclTypeSpecVisitor::State DeclTypeSpecVisitor::SetDeclTypeSpecState(State x) {
+DeclTypeSpecVisitor::State DeclTypeSpecVisitor::SetDeclTypeSpecState(
+    const State &x) {
   auto result{state_};
   state_ = x;
   return result;
 }
 
-void DeclTypeSpecVisitor::Post(const parser::TypeParamSpec &x) {
-  CHECK(state_.derived.type);
-  DerivedTypeSpec &derivedTypeSpec{*state_.derived.type};
-  const auto &value{std::get<parser::TypeParamValue>(x.t)};
-  if (const auto &keyword{std::get<std::optional<parser::Keyword>>(x.t)}) {
-    derivedTypeSpec.AddParamValue(keyword->v.source, GetParamValue(value));
-  } else {
-    derivedTypeSpec.AddParamValue(GetParamValue(value));
-  }
-}
-
-ParamValue DeclTypeSpecVisitor::GetParamValue(const parser::TypeParamValue &x) {
-  return std::visit(
-      common::visitors{
-          [=](const parser::ScalarIntExpr &x) {
-            return ParamValue{EvaluateIntExpr(x)};
-          },
-          [](const parser::Star &) { return ParamValue::Assumed(); },
-          [](const parser::TypeParamValue::Deferred &) {
-            return ParamValue::Deferred();
-          },
-      },
-      x.u);
+void DeclTypeSpecVisitor::SetDeclTypeSpecCategory(
+    DeclTypeSpec::Category category) {
+  CHECK(state_.expectDeclTypeSpec);
+  state_.derived.category = category;
 }
 
 bool DeclTypeSpecVisitor::Pre(const parser::TypeGuardStmt &) {
@@ -1152,19 +1157,6 @@ bool DeclTypeSpecVisitor::Pre(const parser::AcSpec &x) {
   return false;
 }
 
-void DeclTypeSpecVisitor::Post(const parser::IntrinsicTypeSpec::Logical &x) {
-  SetDeclTypeSpec(context().MakeLogicalType(
-      GetKindParamValue(TypeCategory::Logical, x.kind)));
-}
-void DeclTypeSpecVisitor::Post(const parser::IntegerTypeSpec &x) {
-  MakeNumericType(TypeCategory::Integer, x.v);
-}
-void DeclTypeSpecVisitor::Post(const parser::IntrinsicTypeSpec::Real &x) {
-  MakeNumericType(TypeCategory::Real, x.kind);
-}
-void DeclTypeSpecVisitor::Post(const parser::IntrinsicTypeSpec::Complex &x) {
-  MakeNumericType(TypeCategory::Complex, x.kind);
-}
 void DeclTypeSpecVisitor::Post(
     const parser::IntrinsicTypeSpec::DoublePrecision &) {
   MakeNumericType(
@@ -1174,10 +1166,6 @@ void DeclTypeSpecVisitor::Post(
     const parser::IntrinsicTypeSpec::DoubleComplex &) {
   MakeNumericType(
       TypeCategory::Complex, context().defaultKinds().doublePrecisionKind());
-}
-void DeclTypeSpecVisitor::MakeNumericType(
-    TypeCategory category, const std::optional<parser::KindSelector> &kind) {
-  MakeNumericType(category, GetKindParamValue(category, kind));
 }
 void DeclTypeSpecVisitor::MakeNumericType(TypeCategory category, int kind) {
   SetDeclTypeSpec(context().MakeNumericType(category, kind));
@@ -1202,40 +1190,9 @@ void DeclTypeSpecVisitor::SetDeclTypeSpec(const DeclTypeSpec &declTypeSpec) {
   state_.declTypeSpec = &declTypeSpec;
 }
 
-// Set the current DeclTypeSpec to a derived type created from this name.
-DerivedTypeSpec &DeclTypeSpecVisitor::SetDerivedTypeSpec(
-    Scope &scope, const parser::Name &typeName) {
-  DerivedTypeSpec &derived{scope.MakeDerivedType(*typeName.symbol)};
-  SetDeclTypeSpec(scope.MakeDerivedType(state_.derived.category, derived));
-  state_.derived.type = &derived;
-  return derived;
-}
-
-int DeclTypeSpecVisitor::GetKindParamValue(
+KindExpr DeclTypeSpecVisitor::GetKindParamExpr(
     TypeCategory category, const std::optional<parser::KindSelector> &kind) {
-  if (!kind) {
-    return 0;
-  }
-  // TODO: check that we get a valid kind
-  return std::visit(
-      common::visitors{
-          [&](const parser::ScalarIntConstantExpr &x) -> int {
-            if (auto maybeExpr{EvaluateExpr(x)}) {
-              if (auto intConst{evaluate::ToInt64(*maybeExpr)}) {
-                return *intConst;
-              }
-            }
-            return 0;
-          },
-          [&](const parser::KindSelector::StarSize &x) -> int {
-            std::uint64_t size{x.v};
-            if (category == TypeCategory::Complex) {
-              size /= 2;
-            }
-            return size;
-          },
-      },
-      kind->u);
+  return AnalyzeKindSelector(context(), *currStmtSource(), category, kind);
 }
 
 // MessageHandler implementation
@@ -1447,9 +1404,11 @@ void ScopeHandler::SayAlreadyDeclared(
 }
 void ScopeHandler::SayDerivedType(
     const SourceName &name, MessageFixedText &&msg, const Scope &type) {
-  Say(name, std::move(msg), name, type.name())
-      .Attach(type.name(), "Declaration of derived type '%s'"_en_US,
-          type.name().ToString().c_str());
+  const Symbol *typeSymbol{type.GetSymbol()};
+  CHECK(typeSymbol != nullptr);
+  Say(name, std::move(msg), name, typeSymbol->name())
+      .Attach(typeSymbol->name(), "Declaration of derived type '%s'"_en_US,
+          typeSymbol->name().ToString().c_str());
 }
 void ScopeHandler::Say2(const parser::Name &name, MessageFixedText &&msg1,
     const Symbol &symbol, MessageFixedText &&msg2) {
@@ -1513,6 +1472,13 @@ Symbol *ScopeHandler::FindSymbol(const parser::Name &name) {
   return FindSymbol(currScope(), name);
 }
 Symbol *ScopeHandler::FindSymbol(const Scope &scope, const parser::Name &name) {
+  // Scope::FindSymbol() skips over innermost derived type scopes.
+  // Ensure that "bare" type parameter names are not overlooked.
+  if (Symbol * symbol{FindInTypeOrParents(scope, name.source)}) {
+    if (symbol->has<TypeParamDetails>()) {
+      return Resolve(name, symbol);
+    }
+  }
   return Resolve(name, scope.FindSymbol(name.source));
 }
 
@@ -1557,6 +1523,22 @@ Symbol *ScopeHandler::FindInScope(const Scope &scope, const SourceName &name) {
   } else {
     return nullptr;
   }
+}
+
+// Find a component or type parameter by name in a derived type or its parents.
+Symbol *ScopeHandler::FindInTypeOrParents(SourceName name) {
+  return FindInTypeOrParents(currScope(), name);
+}
+Symbol *ScopeHandler::FindInTypeOrParents(const Scope &scope, SourceName name) {
+  if (scope.kind() == Scope::Kind::DerivedType) {
+    if (Symbol * symbol{FindInScope(scope, name)}) {
+      return symbol;
+    }
+    if (const Scope * parent{scope.GetDerivedTypeParent()}) {
+      return FindInTypeOrParents(*parent, name);
+    }
+  }
+  return nullptr;
 }
 
 void ScopeHandler::EraseSymbol(const parser::Name &name) {
@@ -1627,6 +1609,26 @@ bool ScopeHandler::ConvertToProcEntity(Symbol &symbol) {
     symbol.set(Symbol::Flag::Function);
   }
   return true;
+}
+
+DeclTypeSpec &ScopeHandler::MakeNumericType(
+    TypeCategory category, const std::optional<parser::KindSelector> &kind) {
+  KindExpr value{GetKindParamExpr(category, kind)};
+  if (auto known{evaluate::ToInt64(value)}) {
+    return context().MakeNumericType(category, static_cast<int>(*known));
+  } else {
+    return currScope_->MakeNumericType(category, std::move(value));
+  }
+}
+
+DeclTypeSpec &ScopeHandler::MakeLogicalType(
+    const std::optional<parser::KindSelector> &kind) {
+  KindExpr value{GetKindParamExpr(TypeCategory::Logical, kind)};
+  if (auto known{evaluate::ToInt64(value)}) {
+    return context().MakeLogicalType(static_cast<int>(*known));
+  } else {
+    return currScope_->MakeLogicalType(std::move(value));
+  }
 }
 
 // ModuleVisitor implementation
@@ -2500,26 +2502,32 @@ Symbol &DeclarationVisitor::DeclareObjectEntity(
   return symbol;
 }
 
+void DeclarationVisitor::Post(const parser::IntegerTypeSpec &x) {
+  SetDeclTypeSpec(MakeNumericType(TypeCategory::Integer, x.v));
+}
+void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Real &x) {
+  SetDeclTypeSpec(MakeNumericType(TypeCategory::Real, x.kind));
+}
+void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Complex &x) {
+  SetDeclTypeSpec(MakeNumericType(TypeCategory::Complex, x.kind));
+}
+void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Logical &x) {
+  SetDeclTypeSpec(MakeLogicalType(x.kind));
+}
 void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Character &x) {
   if (!charInfo_.length) {
     charInfo_.length = ParamValue{1};
   }
-  if (charInfo_.kind == 0) {
-    charInfo_.kind =
-        context().defaultKinds().GetDefaultKind(TypeCategory::Character);
+  if (!charInfo_.kind.has_value()) {
+    charInfo_.kind = KindExpr{
+        context().defaultKinds().GetDefaultKind(TypeCategory::Character)};
   }
   SetDeclTypeSpec(currScope().MakeCharacterType(
-      std::move(*charInfo_.length), charInfo_.kind));
+      std::move(*charInfo_.length), std::move(*charInfo_.kind)));
   charInfo_ = {};
 }
 void DeclarationVisitor::Post(const parser::CharSelector::LengthAndKind &x) {
-  if (auto maybeExpr{EvaluateExpr(x.kind)}) {
-    if (std::optional<std::int64_t> kind{evaluate::ToInt64(*maybeExpr)}) {
-      charInfo_.kind = *kind;
-    } else {
-      common::die("TODO: kind did not evaluate to a constant integer");
-    }
-  }
+  charInfo_.kind = EvaluateSubscriptIntExpr(x.kind);
   if (x.length) {
     charInfo_.length = GetParamValue(*x.length);
   }
@@ -2537,21 +2545,131 @@ void DeclarationVisitor::Post(const parser::LengthSelector &x) {
   }
 }
 
-bool DeclarationVisitor::Pre(const parser::DeclarationTypeSpec::Record &) {
-  return true;  // TODO
+bool DeclarationVisitor::Pre(const parser::DeclarationTypeSpec::Type &x) {
+  CHECK(GetDeclTypeSpecCategory() == DeclTypeSpec::Category::TypeDerived);
+  return true;
 }
 
-bool DeclarationVisitor::Pre(const parser::DerivedTypeSpec &x) {
-  const auto &typeName{std::get<parser::Name>(x.t)};
-  if (const auto *symbol{ResolveDerivedType(typeName)}) {
-    SetDerivedTypeSpec(currScope(), typeName).set_scope(*symbol->scope());
-  }
+bool DeclarationVisitor::Pre(const parser::DeclarationTypeSpec::Class &x) {
+  SetDeclTypeSpecCategory(DeclTypeSpec::Category::ClassDerived);
   return true;
+}
+
+bool DeclarationVisitor::Pre(const parser::DeclarationTypeSpec::Record &) {
+  // TODO
+  return true;
+}
+
+void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
+  const auto &typeName{std::get<parser::Name>(x.t)};
+  const Symbol *typeSymbol{ResolveDerivedType(&typeName)};
+  if (typeSymbol == nullptr) {
+    return;
+  }
+
+  // This DerivedTypeSpec is created initially as a search key.
+  // If it turns out to have the same name and actual parameter
+  // value expressions as some other DerivedTypeSpec in the current
+  // scope, then we'll use that extant spec; otherwise, when this
+  // spec is distinct from all derived types previously instantiated
+  // in the current scope, this spec will be moved to that collection.
+  DerivedTypeSpec spec{*typeSymbol};
+
+  // The expressions in a derived type specifier whose values define
+  // non-defaulted type parameters are evaluated in the enclosing scope.
+  // Default initialization expressions for the derived type's parameters
+  // may reference other parameters so long as the declaration precedes the
+  // use in the expression (10.1.12).  This is not necessarily the same
+  // order as "type parameter order" (7.5.3.2).
+  // Parameters of the most deeply nested "base class" come first when the
+  // derived type is an extension.
+  const DerivedTypeDetails &typeDetails{typeSymbol->get<DerivedTypeDetails>()};
+  auto parameterNames{typeDetails.OrderParameterNames(*typeSymbol)};
+  auto nextNameIter{parameterNames.begin()};
+  bool seenAnyName{false};
+  for (const auto &typeParamSpec :
+      std::get<std::list<parser::TypeParamSpec>>(x.t)) {
+    const auto &optKeyword{
+        std::get<std::optional<parser::Keyword>>(typeParamSpec.t)};
+    SourceName name;
+    if (optKeyword.has_value()) {
+      seenAnyName = true;
+      name = optKeyword->v.source;
+      if (std::find(parameterNames.begin(), parameterNames.end(), name) ==
+          parameterNames.end()) {
+        Say(name,
+            "'%s' is not the name of a parameter for this type"_err_en_US);
+      }
+    } else if (seenAnyName) {
+      Say(typeName.source, "Type parameter value must have a name"_err_en_US);
+      continue;
+    } else if (nextNameIter != parameterNames.end()) {
+      name = *nextNameIter++;
+    } else {
+      Say(typeName.source,
+          "Too many type parameters given for derived type '%s'"_err_en_US);
+      break;
+    }
+    if (spec.FindParameter(name)) {
+      Say(typeName.source,
+          "Multiple values given for type parameter '%s'"_err_en_US, name);
+    } else {
+      const auto &value{std::get<parser::TypeParamValue>(typeParamSpec.t)};
+      ParamValue param{GetParamValue(value)};  // folded
+      if (!param.isExplicit() || param.GetExplicit().has_value()) {
+        spec.AddParamValue(name, std::move(param));
+      }
+    }
+  }
+
+  // Ensure that any type parameter without an explicit value has a
+  // default initialization in the derived type's definition.
+  const Scope *typeScope{typeSymbol->scope()};
+  CHECK(typeScope != nullptr);
+  for (const SourceName &name : parameterNames) {
+    if (!spec.FindParameter(name)) {
+      const Symbol *symbol{FindInTypeOrParents(*typeScope, name)};
+      CHECK(symbol != nullptr);
+      const auto *details{symbol->detailsIf<TypeParamDetails>()};
+      if (details == nullptr || !details->init().has_value()) {
+        Say(typeName.source,
+            "Type parameter '%s' lacks a value and has no default"_err_en_US,
+            symbol->name());
+      }
+    }
+  }
+
+  auto category{GetDeclTypeSpecCategory()};
+  if (const DeclTypeSpec *
+      extant{currScope().FindInstantiatedDerivedType(spec, category)}) {
+    // This derived type and parameter expressions (if any) are already present
+    // in this scope.
+    SetDeclTypeSpec(*extant);
+  } else {
+    DeclTypeSpec &type{currScope().MakeDerivedType(std::move(spec), category)};
+    if (parameterNames.empty() || currScope().IsParameterizedDerivedType()) {
+      // The derived type being instantiated is not a parameterized derived
+      // type, or the instantiation is within the definition of a parameterized
+      // derived type; don't instantiate a new scope.
+      type.derivedTypeSpec().set_scope(*typeScope);
+    } else {
+      // This is a parameterized derived type and this spec is not in the
+      // context of a parameterized derived type definition, so we need to
+      // clone its contents, specialize them with the actual type parameter
+      // values, and check constraints.
+      auto inLocation{
+          GetFoldingContext().messages.SetLocation(*currStmtSource())};
+      type.derivedTypeSpec().Instantiate(currScope(), GetFoldingContext());
+    }
+    SetDeclTypeSpec(type);
+  }
 }
 
 void DeclarationVisitor::Post(const parser::DerivedTypeDef &x) {
   std::set<SourceName> paramNames;
   auto &scope{currScope()};
+  CHECK(scope.symbol() != nullptr);
+  CHECK(scope.symbol()->scope() == &scope);
   auto &details{scope.symbol()->get<DerivedTypeDetails>()};
   auto &stmt{std::get<parser::Statement<parser::DerivedTypeStmt>>(x.t)};
   for (auto &paramName : std::get<std::list<parser::Name>>(stmt.statement.t)) {
@@ -2603,16 +2721,15 @@ void DeclarationVisitor::Post(const parser::DerivedTypeStmt &x) {
   PushScope(Scope::Kind::DerivedType, &symbol);
   if (auto *extendsName{derivedTypeInfo_.extends}) {
     if (const Symbol * extends{ResolveDerivedType(*extendsName)}) {
-      symbol.get<DerivedTypeDetails>().set_extends(extendsName->source);
       // Declare the "parent component"; private if the type is
       if (OkToAddComponent(*extendsName, extends)) {
+        symbol.get<DerivedTypeDetails>().set_extends(extendsName->source);
         auto &comp{DeclareEntity<ObjectEntityDetails>(*extendsName, Attrs{})};
         comp.attrs().set(Attr::PRIVATE, extends->attrs().test(Attr::PRIVATE));
         comp.set(Symbol::Flag::ParentComp);
-        DerivedTypeSpec &derived{currScope().MakeDerivedType(*extends)};
-        derived.set_scope(currScope());
-        comp.SetType(
-            currScope().MakeDerivedType(DeclTypeSpec::TypeDerived, derived));
+        DeclTypeSpec &type{currScope().MakeDerivedType(*extends)};
+        type.derivedTypeSpec().set_scope(*extends->scope());
+        comp.SetType(type);
       }
     }
   }
@@ -2785,7 +2902,8 @@ bool DeclarationVisitor::Pre(const parser::TypeBoundGenericStmt &x) {
     if (!genericSymbol->has<GenericBindingDetails>()) {
       genericSymbol = nullptr;  // MakeTypeSymbol will report the error below
     }
-  } else if (const auto *inheritedSymbol{FindTypeSymbol(*genericName)}) {
+  } else if (const auto *inheritedSymbol{
+                 FindInTypeOrParents(genericName->source)}) {
     // look in parent types:
     if (inheritedSymbol->has<GenericBindingDetails>()) {
       inheritedProcs =
@@ -2809,7 +2927,7 @@ bool DeclarationVisitor::Pre(const parser::TypeBoundGenericStmt &x) {
     details.add_specificProcs(*inheritedProcs);
   }
   for (const auto &bindingName : std::get<std::list<parser::Name>>(x.t)) {
-    const auto *symbol{FindTypeSymbol(bindingName)};
+    const auto *symbol{FindInTypeOrParents(bindingName.source)};
     if (!symbol) {
       Say(bindingName,
           "Binding name '%s' not found in this derived type"_err_en_US);
@@ -2890,6 +3008,7 @@ void DeclarationVisitor::SetType(
 // Find the Symbol for this derived type.
 const Symbol *DeclarationVisitor::ResolveDerivedType(const parser::Name &name) {
   const auto *symbol{FindSymbol(name)};
+  const Symbol *symbol{FindSymbol(name)};
   if (!symbol) {
     Say(name, "Derived type '%s' not found"_err_en_US);
     return nullptr;
@@ -2938,21 +3057,6 @@ Symbol *DeclarationVisitor::FindExplicitInterface(const parser::Name &name) {
   return symbol;
 }
 
-// Find a component by name in the current derived type or its parents.
-const Symbol *DeclarationVisitor::FindTypeSymbol(const parser::Name &name) {
-  for (const Scope *scope{&currScope()};;) {
-    CHECK(scope->kind() == Scope::Kind::DerivedType);
-    if (const Symbol * symbol{FindInScope(*scope, name)}) {
-      return symbol;
-    }
-    const Symbol *parent{scope->symbol()->GetParent()};
-    if (parent == nullptr) {
-      return nullptr;
-    }
-    scope = parent->scope();
-  }
-}
-
 // Create a symbol for a type parameter, component, or procedure binding in
 // the current derived type scope. Return false on error.
 Symbol *DeclarationVisitor::MakeTypeSymbol(
@@ -2973,7 +3077,11 @@ Symbol *DeclarationVisitor::MakeTypeSymbol(
         std::holds_alternative<ProcBindingDetails>(details)) {
       attrs.set(Attr::PRIVATE);
     }
-    return &MakeSymbol(name, attrs, details);
+    Symbol &result{MakeSymbol(name, attrs, details)};
+    if (result.has<TypeParamDetails>()) {
+      derivedType.symbol()->get<DerivedTypeDetails>().add_paramDecl(result);
+    }
+    return &result;
   }
 }
 
@@ -2981,8 +3089,7 @@ Symbol *DeclarationVisitor::MakeTypeSymbol(
 // Otherwise, emit an error and return false.
 bool DeclarationVisitor::OkToAddComponent(
     const parser::Name &name, const Symbol *extends) {
-  const Scope *scope{&currScope()};
-  for (bool inParent{false};; inParent = true) {
+  for (const Scope *scope{&currScope()}; scope != nullptr;) {
     CHECK(scope->kind() == Scope::Kind::DerivedType);
     if (auto *prev{FindInScope(*scope, name)}) {
       auto msg{""_en_US};
@@ -2992,7 +3099,7 @@ bool DeclarationVisitor::OkToAddComponent(
       } else if (prev->test(Symbol::Flag::ParentComp)) {
         msg = "'%s' is a parent type of this type and so cannot be"
               " a component"_err_en_US;
-      } else if (inParent) {
+      } else if (scope != &currScope()) {
         msg = "Component '%s' is already declared in a parent of this"
               " derived type"_err_en_US;
       } else {
@@ -3002,15 +3109,28 @@ bool DeclarationVisitor::OkToAddComponent(
       Say2(name, std::move(msg), *prev, "Previous declaration of '%s'"_en_US);
       return false;
     }
-    if (!inParent && extends != nullptr) {
+    if (scope == &currScope() && extends != nullptr) {
       // The parent component has not yet been added to the scope.
       scope = extends->scope();
-    } else if (const Symbol * parent{scope->symbol()->GetParent()}) {
-      scope = parent->scope();
     } else {
-      return true;
+      scope = scope->GetDerivedTypeParent();
     }
   }
+  return true;
+}
+
+ParamValue DeclarationVisitor::GetParamValue(const parser::TypeParamValue &x) {
+  return std::visit(
+      common::visitors{
+          [=](const parser::ScalarIntExpr &x) {
+            return ParamValue{EvaluateIntExpr(x)};
+          },
+          [](const parser::Star &) { return ParamValue::Assumed(); },
+          [](const parser::TypeParamValue::Deferred &) {
+            return ParamValue::Deferred();
+          },
+      },
+      x.u);
 }
 
 // ConstructVisitor implementation
@@ -3061,7 +3181,7 @@ bool ConstructVisitor::Pre(const parser::DataImpliedDo &x) {
       std::get<parser::LoopBounds<parser::ScalarIntConstantExpr>>(x.t)};
   if (type) {
     BeginDeclTypeSpec();
-    DeclTypeSpecVisitor::Post(*type);
+    DeclarationVisitor::Post(*type);
   }
   if (auto *symbol{DeclareConstructEntity(bounds.name.thing.thing)}) {
     CheckIntegerType(*symbol);
@@ -3420,6 +3540,8 @@ const parser::Name *ResolveNamesVisitor::ResolveName(const parser::Name &name) {
 }
 
 // base is a part-ref of a derived type; find the named component in its type.
+// Also handles intrinsic type parameter inquiries (%kind, %len) and
+// COMPLEX component references (%re, %im).
 const parser::Name *ResolveNamesVisitor::FindComponent(
     const parser::Name *base, const parser::Name &component) {
   if (!base || !base->symbol) {
@@ -3457,15 +3579,17 @@ const parser::Name *ResolveNamesVisitor::FindComponent(
       return nullptr;
     }
   } else if (const DerivedTypeSpec * derived{type->AsDerived()}) {
-    if (const auto *scope{derived->scope()}) {
-      if (!FindComponent(*scope, component)) {
+    if (const Scope * scope{derived->scope()}) {
+      if (Resolve(component, FindInTypeOrParents(*scope, component.source))) {
+        if (CheckAccessibleComponent(component)) {
+          return &component;
+        }
+      } else {
         SayDerivedType(component.source,
             "Component '%s' not found in derived type '%s'"_err_en_US, *scope);
-      } else if (CheckAccessibleComponent(component)) {
-        return &component;
       }
-      return nullptr;
     }
+    return nullptr;
   }
   if (symbol.test(Symbol::Flag::Implicit)) {
     Say(*base,
@@ -3499,19 +3623,6 @@ bool ResolveNamesVisitor::CheckAccessibleComponent(
       "PRIVATE component '%s' is only accessible within module '%s'"_err_en_US,
       component.ToString(), moduleScope.name());
   return false;
-}
-
-// Look in this type's scope and then its parents for component.
-Symbol *ResolveNamesVisitor::FindComponent(
-    const Scope &type, const parser::Name &component) {
-  CHECK(type.kind() == Scope::Kind::DerivedType);
-  if (auto *symbol{FindInScope(type, component)}) {
-    return symbol;
-  }
-  if (const Symbol * parent{type.symbol()->GetParent()}) {
-    return FindComponent(*parent->scope(), component);
-  }
-  return nullptr;
 }
 
 void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {

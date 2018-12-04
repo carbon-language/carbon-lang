@@ -92,7 +92,7 @@ public:
 
   std::optional<Expr<SomeType>> Analyze(const parser::Expr &);
   std::optional<Expr<SomeType>> Analyze(const parser::Variable &);
-  int Analyze(common::TypeCategory category,
+  Expr<SubscriptInteger> Analyze(common::TypeCategory category,
       const std::optional<parser::KindSelector> &);
 
   int GetDefaultKind(common::TypeCategory);
@@ -245,8 +245,8 @@ std::optional<evaluate::Expr<evaluate::SomeType>> AnalyzeExpr(
 void AnalyzeExpressions(parser::Program &, SemanticsContext &);
 
 // Semantic analysis of an intrinsic type's KIND parameter expression.
-// Always returns a valid kind value for the type category.
-int AnalyzeKindSelector(SemanticsContext &, parser::CharBlock,
-    common::TypeCategory, const std::optional<parser::KindSelector> &);
+evaluate::Expr<evaluate::SubscriptInteger> AnalyzeKindSelector(
+    SemanticsContext &, parser::CharBlock, common::TypeCategory,
+    const std::optional<parser::KindSelector> &);
 }
 #endif  // FORTRAN_SEMANTICS_EXPRESSION_H_

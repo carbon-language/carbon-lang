@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "type.h"
+#include "fold.h"
 #include "../common/idioms.h"
 #include "../semantics/symbol.h"
 #include "../semantics/type.h"
@@ -33,14 +34,15 @@ std::optional<DynamicType> GetSymbolType(const semantics::Symbol *symbol) {
   if (symbol != nullptr) {
     if (const auto *type{symbol->GetType()}) {
       if (const auto *intrinsic{type->AsIntrinsic()}) {
-        TypeCategory category{intrinsic->category()};
-        int kind{intrinsic->kind()};
-        if (IsValidKindOfIntrinsicType(category, kind)) {
-          DynamicType dyType{category, kind};
-          if (symbol->IsDescriptor()) {
-            dyType.descriptor = symbol;
+        if (auto kind{ToInt64(intrinsic->kind())}) {
+          TypeCategory category{intrinsic->category()};
+          if (IsValidKindOfIntrinsicType(category, *kind)) {
+            DynamicType dyType{category, static_cast<int>(*kind)};
+            if (symbol->IsDescriptor()) {
+              dyType.descriptor = symbol;
+            }
+            return std::make_optional(std::move(dyType));
           }
-          return std::make_optional(std::move(dyType));
         }
       } else if (const auto *derived{type->AsDerived()}) {
         DynamicType dyType{TypeCategory::Derived, 0, derived};

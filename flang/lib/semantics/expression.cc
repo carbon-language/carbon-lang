@@ -13,7 +13,8 @@
 // limitations under the License.
 
 #include "expression.h"
-#include "dump-parse-tree.h"  // TODO temporary
+#include "dump-parse-tree.h"  // TODO pmk temporary
+#include "scope.h"
 #include "semantics.h"
 #include "symbol.h"
 #include "../common/idioms.h"
@@ -24,8 +25,9 @@
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
 #include <functional>
-#include <iostream>  // TODO pmk rm
 #include <optional>
+
+#include <iostream>  // TODO pmk rm
 
 // Typedef for optional generic expressions (ubiquitous in this file)
 using MaybeExpr =
@@ -662,6 +664,17 @@ struct TypeParamInquiryVisitor {
   const Symbol &parameter;
 };
 
+static std::optional<Expr<SomeInteger>> MakeTypeParamInquiry(
+    const Symbol *symbol) {
+  if (std::optional<DynamicType> dyType{GetSymbolType(symbol)}) {
+    if (dyType->category == TypeCategory::Integer) {
+      return common::SearchDynamicTypes(TypeParamInquiryVisitor{
+          dyType->kind, SymbolOrComponent{nullptr}, *symbol});
+    }
+  }
+  return std::nullopt;
+}
+
 // Names and named constants
 static MaybeExpr AnalyzeExpr(
     ExpressionAnalysisContext &context, const parser::Name &n) {
@@ -677,13 +690,9 @@ static MaybeExpr AnalyzeExpr(
     context.Say(n.source, "parameter does not have a value"_err_en_US);
     // TODO: enumerators, do they have the PARAMETER attribute?
   } else if (n.symbol->detailsIf<semantics::TypeParamDetails>()) {
-    // A bare reference to a derived type parameter (within the type definition)
-    if (std::optional<DynamicType> dyType{GetSymbolType(n.symbol)}) {
-      if (dyType->category == TypeCategory::Integer) {
-        return AsMaybeExpr(common::SearchDynamicTypes(TypeParamInquiryVisitor{
-            dyType->kind, SymbolOrComponent{nullptr}, *n.symbol}));
-      }
-    }
+    // A bare reference to a derived type parameter (within a parameterized
+    // derived type definition)
+    return AsMaybeExpr(MakeTypeParamInquiry(n.symbol));
   } else if (MaybeExpr result{Designate(DataRef{*n.symbol})}) {
     return result;
   } else {
@@ -897,6 +906,22 @@ static SymbolOrComponent IgnoreAnySubscripts(
       std::move(designator.u));
 }
 
+// Components of parent derived types are explicitly represented as such.
+static std::optional<Component> CreateComponent(
+    DataRef &&base, const Symbol &component, const semantics::Scope &scope) {
+  if (&component.owner() == &scope) {
+    return {Component{std::move(base), component}};
+  }
+  if (const semantics::Scope * parentScope{scope.GetDerivedTypeParent()}) {
+    if (const Symbol * parentComponent{parentScope->GetSymbol()}) {
+      return CreateComponent(
+          DataRef{Component{std::move(base), *parentComponent}}, component,
+          *parentScope);
+    }
+  }
+  return std::nullopt;
+}
+
 // Derived type component references and type parameter inquiries
 static MaybeExpr AnalyzeExpr(
     ExpressionAnalysisContext &context, const parser::StructureComponent &sc) {
@@ -914,27 +939,28 @@ static MaybeExpr AnalyzeExpr(
       if (sym->detailsIf<semantics::TypeParamDetails>()) {
         if (auto *designator{UnwrapExpr<Designator<SomeDerived>>(*dtExpr)}) {
           std::optional<DynamicType> dyType{GetSymbolType(sym)};
-          if (dyType.has_value() && dyType->category == TypeCategory::Integer) {
-            return AsMaybeExpr(
-                common::SearchDynamicTypes(TypeParamInquiryVisitor{dyType->kind,
-                    IgnoreAnySubscripts(std::move(*designator)), *sym}));
-          }
+          CHECK(dyType.has_value());
+          CHECK(dyType->category == TypeCategory::Integer);
+          return AsMaybeExpr(
+              common::SearchDynamicTypes(TypeParamInquiryVisitor{dyType->kind,
+                  IgnoreAnySubscripts(std::move(*designator)), *sym}));
         } else {
           context.Say(name,
               "type parameter inquiry must be applied to a designator"_err_en_US);
         }
-      } else if (dtSpec == nullptr) {
+      } else if (dtSpec == nullptr || dtSpec->scope() == nullptr) {
         context.Say(name,
             "TODO: base of component reference lacks a derived type"_err_en_US);
-      } else if (&sym->owner() != dtSpec->scope()) {
-        // TODO: extended derived types - insert explicit reference to base?
-        context.Say(name,
-            "component is not in scope of derived TYPE(%s)"_err_en_US,
-            dtSpec->typeSymbol().name().ToString().data());
       } else if (std::optional<DataRef> dataRef{
                      ExtractDataRef(std::move(*dtExpr))}) {
-        Component component{std::move(*dataRef), *sym};
-        return Designate(DataRef{std::move(component)});
+        if (auto component{
+                CreateComponent(std::move(*dataRef), *sym, *dtSpec->scope())}) {
+          return Designate(DataRef{std::move(*component)});
+        } else {
+          context.Say(name,
+              "component is not in scope of derived TYPE(%s)"_err_en_US,
+              dtSpec->typeSymbol().name().ToString().data());
+        }
       } else {
         context.Say(name,
             "base of component reference must be a data reference"_err_en_US);
@@ -964,7 +990,7 @@ static MaybeExpr AnalyzeExpr(
       } else if (kind == MiscKind::KindParamInquiry ||
           kind == MiscKind::LenParamInquiry) {
         // Convert x%KIND -> intrinsic KIND(x), x%LEN -> intrinsic LEN(x)
-        SpecificIntrinsic func{name.ToString().data()};
+        SpecificIntrinsic func{name.ToString()};
         func.type = context.GetDefaultKindOfType(TypeCategory::Integer);
         return TypedWrapper<FunctionRef, ProcedureRef>(*func.type,
             ProcedureRef{ProcedureDesignator{std::move(func)},
@@ -1071,7 +1097,7 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
     std::visit(
         common::visitors{
             [&](const common::Indirection<parser::Variable> &v) {
-              actualArgExpr = AnalyzeExpr(context, v);
+              actualArgExpr = AnalyzeExpr(context, *v);
             },
             [&](const common::Indirection<parser::Expr> &x) {
               actualArgExpr = AnalyzeExpr(context, *x);
@@ -1106,7 +1132,6 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
   }
 
   // TODO: map user generic to specific procedure
-  // TODO: validate arguments against user interface
   if (std::optional<CallAndArguments> proc{Procedure(context,
           std::get<parser::ProcedureDesignator>(funcRef.v.t), arguments)}) {
     if (std::optional<DynamicType> dyType{
@@ -1417,44 +1442,51 @@ MaybeExpr ExpressionAnalysisContext::Analyze(const parser::Variable &variable) {
   return AnalyzeExpr(*this, variable.u);
 }
 
-int ExpressionAnalysisContext::Analyze(TypeCategory category,
+Expr<SubscriptInteger> ExpressionAnalysisContext::Analyze(TypeCategory category,
     const std::optional<parser::KindSelector> &selector) {
   int defaultKind{GetDefaultKind(category)};
   if (!selector.has_value()) {
-    return defaultKind;
+    return Expr<SubscriptInteger>{defaultKind};
   }
   return std::visit(
       common::visitors{
-          [&](const parser::ScalarIntConstantExpr &x) -> int {
+          [&](const parser::ScalarIntConstantExpr &x)
+              -> Expr<SubscriptInteger> {
             if (MaybeExpr kind{AnalyzeExpr(*this, x)}) {
-              MaybeExpr folded{Fold(GetFoldingContext(), std::move(kind))};
-              if (std::optional<std::int64_t> code{ToInt64(*folded)}) {
+              Expr<SomeType> folded{
+                  Fold(GetFoldingContext(), std::move(*kind))};
+              if (std::optional<std::int64_t> code{ToInt64(folded)}) {
                 if (IsValidKindOfIntrinsicType(category, *code)) {
-                  return *code;
+                  return Expr<SubscriptInteger>{*code};
                 }
-                SayAt(x, "%s(kind=%jd) is not a supported type"_err_en_US,
-                    EnumToString(category).data(), *code);
+                SayAt(x, "%s(KIND=%jd) is not a supported type"_err_en_US,
+                    parser::ToUpperCaseLetters(EnumToString(category)).data(),
+                    *code);
+              } else if (auto *intExpr{UnwrapExpr<Expr<SomeInteger>>(folded)}) {
+                return ConvertToType<SubscriptInteger>(std::move(*intExpr));
               }
             }
-            return defaultKind;
+            return Expr<SubscriptInteger>{defaultKind};
           },
-          [&](const parser::KindSelector::StarSize &x) -> int {
+          [&](const parser::KindSelector::StarSize &x)
+              -> Expr<SubscriptInteger> {
             std::intmax_t size = x.v;
             if (category == TypeCategory::Complex) {
               // COMPLEX*16 == COMPLEX(KIND=8)
-              if ((size % 2) != 0 ||
-                  !evaluate::IsValidKindOfIntrinsicType(category, size / 2)) {
-                Say("Complex*%jd is not a supported type"_err_en_US, size);
-                return defaultKind;
+              if ((size % 2) == 0 &&
+                  evaluate::IsValidKindOfIntrinsicType(category, size / 2)) {
+                size /= 2;
+              } else {
+                Say("COMPLEX*%jd is not a supported type"_err_en_US, size);
+                size = defaultKind;
               }
-              return size / 2;
             } else if (!evaluate::IsValidKindOfIntrinsicType(category, size)) {
               Say("%s*%jd is not a supported type"_err_en_US,
-                  EnumToString(category).data(), size);
-              return defaultKind;
-            } else {
-              return size;
+                  parser::ToUpperCaseLetters(EnumToString(category)).data(),
+                  size);
+              size = defaultKind;
             }
+            return Expr<SubscriptInteger>{size};
           },
       },
       selector->u);
@@ -1504,7 +1536,8 @@ void AnalyzeExpressions(parser::Program &program, SemanticsContext &context) {
   parser::Walk(program, visitor);
 }
 
-int AnalyzeKindSelector(SemanticsContext &context, parser::CharBlock source,
+evaluate::Expr<evaluate::SubscriptInteger> AnalyzeKindSelector(
+    SemanticsContext &context, parser::CharBlock source,
     common::TypeCategory category,
     const std::optional<parser::KindSelector> &selector) {
   evaluate::ExpressionAnalysisContext exprContext{context};
