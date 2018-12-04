@@ -42,14 +42,12 @@ using common::TypeCategory;
 
 // Constraint checking
 void ExpressionAnalysisContext::CheckConstraints(MaybeExpr &expr) {
-  if (expr.has_value()) {
-    if (inner_ != nullptr) {
-      inner_->CheckConstraints(expr);
-    }
-    if (constraint_ != nullptr) {
-      if (!(this->*constraint_)(*expr)) {
-        expr.reset();
-      }
+  if (inner_ != nullptr) {
+    inner_->CheckConstraints(expr);
+  }
+  if (constraint_ != nullptr && expr.has_value()) {
+    if (!(this->*constraint_)(*expr)) {
+      expr.reset();
     }
   }
 }
