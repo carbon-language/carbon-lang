@@ -92,7 +92,7 @@ extern template std::optional<Expr<SomeType>> AnalyzeExpr(
 
 // Forward declarations of exposed specializations
 template<typename A>
-MaybeExpr AnalyzeExpr(
+std::optional<Expr<SomeType>> AnalyzeExpr(
     ExpressionAnalysisContext &, const common::Indirection<A> &);
 template<typename A>
 std::optional<Expr<SomeType>> AnalyzeExpr(
@@ -112,7 +112,7 @@ std::optional<Expr<SomeType>> AnalyzeExpr(
 
 // Indirections are silently traversed by AnalyzeExpr().
 template<typename A>
-MaybeExpr AnalyzeExpr(
+std::optional<Expr<SomeType>> AnalyzeExpr(
     ExpressionAnalysisContext &context, const common::Indirection<A> &x) {
   return AnalyzeExpr(context, *x);
 }

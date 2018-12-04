@@ -91,7 +91,7 @@ bool ExpressionAnalysisContext::LogicalConstraint(Expr<SomeType> &expr) {
 bool ExpressionAnalysisContext::DefaultCharConstraint(Expr<SomeType> &expr) {
   if (auto *charExpr{std::get_if<Expr<SomeCharacter>>(&expr.u)}) {
     return charExpr->GetKind() ==
-        context.defaultKinds.GetDefaultKind(TypeCategory::Character);
+        context_.defaultKinds().GetDefaultKind(TypeCategory::Character);
   }
   Say("expression must be default CHARACTER"_err_en_US);
   return false;
