@@ -356,7 +356,13 @@ int bar(int n){
 // CHECK:  [[RES:%.+]] = icmp eq i32 [[TID]], [[CC_VAL]]
 // CHECK:  br i1 [[RES]], label
 
-// CHECK:  call void @llvm.nvvm.barrier0()
+// CHECK:  call void @__kmpc_critical(
+// CHECK:  load i32, i32*
+// CHECK:  add nsw i32
+// CHECK:  store i32
+// CHECK:  call void @__kmpc_end_critical(
+
+// CHECK:  call void @__kmpc_barrier(%struct.ident_t* @{{.+}}, i32 %{{.+}})
 // CHECK:  [[NEW_CC_VAL:%.+]] = add nsw i32 [[CC_VAL]], 1
 // CHECK:  store i32 [[NEW_CC_VAL]], i32* [[CC]],
 // CHECK:  br label

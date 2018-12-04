@@ -2743,14 +2743,16 @@ void CGOpenMPRuntimeNVPTX::emitCriticalRegion(
   CGF.EmitBlock(BodyBB);
 
   // Output the critical statement.
-  CriticalOpGen(CGF);
+  CGOpenMPRuntime::emitCriticalRegion(CGF, CriticalName, CriticalOpGen, Loc,
+                                      Hint);
 
   // After the body surrounded by the critical region, the single executing
   // thread will jump to the synchronisation point.
   // Block waits for all threads in current team to finish then increments the
   // counter variable and returns to the loop.
   CGF.EmitBlock(SyncBB);
-  getNVPTXCTABarrier(CGF);
+  emitBarrierCall(CGF, Loc, OMPD_unknown, /*EmitChecks=*/false,
+                  /*ForceSimpleCall=*/true);
 
   llvm::Value *IncCounterVal =
       CGF.Builder.CreateNSWAdd(CounterVal, CGF.Builder.getInt32(1));
