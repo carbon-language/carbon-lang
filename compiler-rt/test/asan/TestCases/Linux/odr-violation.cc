@@ -26,9 +26,7 @@
 // Use private aliases for global variables: use indicator symbol to detect ODR violation.
 // RUN: %clangxx_asan -DBUILD_SO=1 -fPIC -shared -mllvm -asan-use-private-alias %s -o %t-ODR-SO.so -DSZ=100
 // RUN: %clangxx_asan -mllvm -asan-use-private-alias %s %t-ODR-SO.so -Wl,-R. -o %t-ODR-EXE
-// RUN: %env_asan_opts=fast_unwind_on_malloc=0                              %run %t-ODR-EXE 2>&1 | FileCheck %s --check-prefix=DISABLED
-// RUN: %env_asan_opts=fast_unwind_on_malloc=0:use_odr_indicator=false      %run %t-ODR-EXE 2>&1 | FileCheck %s --check-prefix=DISABLED
-// RUN: %env_asan_opts=fast_unwind_on_malloc=0:use_odr_indicator=true   not %run %t-ODR-EXE 2>&1 | FileCheck %s
+// RUN: %env_asan_opts=fast_unwind_on_malloc=0 not %run %t-ODR-EXE 2>&1 | FileCheck %s
 
 // GNU driver doesn't handle .so files properly.
 // REQUIRES: Clang
