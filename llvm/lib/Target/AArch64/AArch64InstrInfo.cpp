@@ -5214,6 +5214,12 @@ AArch64InstrInfo::getOutliningCandidateInfo(
     } else {
       SetCandidateCallInfo(MachineOutlinerDefault, 12);
     }
+
+    // If we dropped all of the candidates, bail out here.
+    if (RepeatedSequenceLocs.size() < 2) {
+      RepeatedSequenceLocs.clear();
+      return outliner::OutlinedFunction();
+    }
   }
 
   // Does every candidate's MBB contain a call? If so, then we might have a call
