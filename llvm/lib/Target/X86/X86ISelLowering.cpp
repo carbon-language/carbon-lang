@@ -24092,8 +24092,6 @@ static SDValue LowerScalarVariableShift(SDValue Op, SelectionDAG &DAG,
   unsigned X86OpcI = getTargetVShiftUniformOpcode(Opcode, false);
   unsigned X86OpcV = getTargetVShiftUniformOpcode(Opcode, true);
 
-  Amt = peekThroughEXTRACT_SUBVECTORs(Amt);
-
   if (SDValue BaseShAmt = GetSplatValue(Amt, dl, DAG)) {
     if (SupportedVectorShiftWithBaseAmnt(VT, Subtarget, Opcode)) {
       MVT EltVT = VT.getVectorElementType();
