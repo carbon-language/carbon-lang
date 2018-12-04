@@ -1805,8 +1805,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   setTargetDAGCombine(ISD::ANY_EXTEND);
   setTargetDAGCombine(ISD::SIGN_EXTEND);
   setTargetDAGCombine(ISD::SIGN_EXTEND_INREG);
-  setTargetDAGCombine(ISD::SIGN_EXTEND_VECTOR_INREG);
-  setTargetDAGCombine(ISD::ZERO_EXTEND_VECTOR_INREG);
   setTargetDAGCombine(ISD::SINT_TO_FP);
   setTargetDAGCombine(ISD::UINT_TO_FP);
   setTargetDAGCombine(ISD::SETCC);
@@ -40666,46 +40664,6 @@ static SDValue combineSub(SDNode *N, SelectionDAG &DAG,
   return combineAddOrSubToADCOrSBB(N, DAG);
 }
 
-static SDValue combineExtendVectorInreg(SDNode *N, SelectionDAG &DAG,
-                                        TargetLowering::DAGCombinerInfo &DCI,
-                                        const X86Subtarget &Subtarget) {
-  if (DCI.isBeforeLegalize())
-    return SDValue();
-
-  SDLoc DL(N);
-  unsigned Opcode = N->getOpcode();
-  MVT VT = N->getSimpleValueType(0);
-  MVT SVT = VT.getVectorElementType();
-  unsigned NumElts = VT.getVectorNumElements();
-  unsigned EltSizeInBits = SVT.getSizeInBits();
-
-  SDValue Op = N->getOperand(0);
-  MVT OpVT = Op.getSimpleValueType();
-  MVT OpEltVT = OpVT.getVectorElementType();
-  unsigned OpEltSizeInBits = OpEltVT.getSizeInBits();
-
-  // Perform any constant folding.
-  // FIXME: Reduce constant pool usage and don't fold when OptSize is enabled.
-  APInt UndefElts;
-  SmallVector<APInt, 64> EltBits;
-  if (getTargetConstantBitsFromNode(Op, OpEltSizeInBits, UndefElts, EltBits)) {
-    APInt Undefs(NumElts, 0);
-    SmallVector<APInt, 4> Vals(NumElts, APInt(EltSizeInBits, 0));
-    bool IsZEXT = (Opcode == ISD::ZERO_EXTEND_VECTOR_INREG);
-    for (unsigned i = 0; i != NumElts; ++i) {
-      if (UndefElts[i]) {
-        Undefs.setBit(i);
-        continue;
-      }
-      Vals[i] = IsZEXT ? EltBits[i].zextOrTrunc(EltSizeInBits)
-                       : EltBits[i].sextOrTrunc(EltSizeInBits);
-    }
-    return getConstVector(Vals, Undefs, VT, DAG, DL);
-  }
-
-  return SDValue();
-}
-
 static SDValue combineVectorCompare(SDNode *N, SelectionDAG &DAG,
                                     const X86Subtarget &Subtarget) {
   MVT VT = N->getSimpleValueType(0);
@@ -41098,9 +41056,6 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::VSRAI:
   case X86ISD::VSRLI:
     return combineVectorShiftImm(N, DAG, DCI, Subtarget);
-  case ISD::SIGN_EXTEND_VECTOR_INREG:
-  case ISD::ZERO_EXTEND_VECTOR_INREG:
-    return combineExtendVectorInreg(N, DAG, DCI, Subtarget);
   case X86ISD::PINSRB:
   case X86ISD::PINSRW:      return combineVectorInsert(N, DAG, DCI, Subtarget);
   case X86ISD::SHUFP:       // Handle all target specific shuffles
