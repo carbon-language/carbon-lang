@@ -30169,21 +30169,6 @@ SDValue X86TargetLowering::unwrapAddress(SDValue N) const {
   return N;
 }
 
-/// Returns true (and the GlobalValue and the offset) if the node is a
-/// GlobalAddress + offset.
-bool X86TargetLowering::isGAPlusOffset(SDNode *N,
-                                       const GlobalValue* &GA,
-                                       int64_t &Offset) const {
-  if (N->getOpcode() == X86ISD::Wrapper) {
-    if (isa<GlobalAddressSDNode>(N->getOperand(0))) {
-      GA = cast<GlobalAddressSDNode>(N->getOperand(0))->getGlobal();
-      Offset = cast<GlobalAddressSDNode>(N->getOperand(0))->getOffset();
-      return true;
-    }
-  }
-  return TargetLowering::isGAPlusOffset(N, GA, Offset);
-}
-
 // Attempt to match a combined shuffle mask against supported unary shuffle
 // instructions.
 // TODO: Investigate sharing more of this with shuffle lowering.
