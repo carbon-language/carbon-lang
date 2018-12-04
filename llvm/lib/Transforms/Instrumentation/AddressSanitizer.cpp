@@ -344,10 +344,14 @@ static cl::opt<uint32_t> ClForceExperiment(
     cl::init(0));
 
 static cl::opt<bool>
-    ClUsePrivateAliasForGlobals("asan-use-private-alias",
-                                cl::desc("Use private aliases for global"
-                                         " variables"),
-                                cl::Hidden, cl::init(false));
+    ClUsePrivateAlias("asan-use-private-alias",
+                      cl::desc("Use private aliases for global variables"),
+                      cl::Hidden, cl::init(false));
+
+static cl::opt<bool>
+    ClUseOdrIndicator("asan-use-odr-indicator",
+                      cl::desc("Use odr indicators to improve ODR reporting"),
+                      cl::Hidden, cl::init(false));
 
 static cl::opt<bool>
     ClUseGlobalsGC("asan-globals-live-support",
@@ -2173,12 +2177,14 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M, bool
     bool CanUsePrivateAliases =
         TargetTriple.isOSBinFormatELF() || TargetTriple.isOSBinFormatMachO() ||
         TargetTriple.isOSBinFormatWasm();
-    if (CanUsePrivateAliases && ClUsePrivateAliasForGlobals) {
+    if (CanUsePrivateAliases && ClUsePrivateAlias) {
       // Create local alias for NewGlobal to avoid crash on ODR between
       // instrumented and non-instrumented libraries.
-      auto *GA =
+      InstrumentedGlobal =
           GlobalAlias::create(GlobalValue::PrivateLinkage, "", NewGlobal);
+    }
 
+    if (ClUseOdrIndicator) {
       // With local aliases, we need to provide another externally visible
       // symbol __odr_asan_XXX to detect ODR violation.
       auto *ODRIndicatorSym =
@@ -2192,7 +2198,6 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M, bool
       ODRIndicatorSym->setDLLStorageClass(NewGlobal->getDLLStorageClass());
       ODRIndicatorSym->setAlignment(1);
       ODRIndicator = ODRIndicatorSym;
-      InstrumentedGlobal = GA;
     }
 
     Constant *Initializer = ConstantStruct::get(
