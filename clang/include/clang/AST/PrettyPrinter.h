@@ -38,21 +38,19 @@ public:
 struct PrintingPolicy {
   /// Create a default printing policy for the specified language.
   PrintingPolicy(const LangOptions &LO)
-    : Indentation(2), SuppressSpecifiers(false),
-      SuppressTagKeyword(LO.CPlusPlus),
-      IncludeTagDefinition(false), SuppressScope(false),
-      SuppressUnwrittenScope(false), SuppressInitializers(false),
-      ConstantArraySizeAsWritten(false), AnonymousTagLocations(true),
-      SuppressStrongLifetime(false), SuppressLifetimeQualifiers(false),
-      SuppressTemplateArgsInCXXConstructors(false),
-      Bool(LO.Bool), Restrict(LO.C99),
-      Alignof(LO.CPlusPlus11), UnderscoreAlignof(LO.C11),
-      UseVoidForZeroParams(!LO.CPlusPlus),
-      TerseOutput(false), PolishForDeclaration(false),
-      Half(LO.Half), MSWChar(LO.MicrosoftExt && !LO.WChar),
-      IncludeNewlines(true), MSVCFormatting(false),
-      ConstantsAsWritten(false), SuppressImplicitBase(false),
-      FullyQualifiedName(false) { }
+      : Indentation(2), SuppressSpecifiers(false),
+        SuppressTagKeyword(LO.CPlusPlus), IncludeTagDefinition(false),
+        SuppressScope(false), SuppressUnwrittenScope(false),
+        SuppressInitializers(false), ConstantArraySizeAsWritten(false),
+        AnonymousTagLocations(true), SuppressStrongLifetime(false),
+        SuppressLifetimeQualifiers(false),
+        SuppressTemplateArgsInCXXConstructors(false), Bool(LO.Bool),
+        Restrict(LO.C99), Alignof(LO.CPlusPlus11), UnderscoreAlignof(LO.C11),
+        UseVoidForZeroParams(!LO.CPlusPlus), TerseOutput(false),
+        PolishForDeclaration(false), Half(LO.Half),
+        MSWChar(LO.MicrosoftExt && !LO.WChar), IncludeNewlines(true),
+        MSVCFormatting(false), ConstantsAsWritten(false),
+        SuppressImplicitBase(false), FullyQualifiedName(false) {}
 
   /// Adjust this printing policy for cases where it's known that we're
   /// printing C++ code (for instance, if AST dumping reaches a C++-only
