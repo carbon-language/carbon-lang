@@ -190,7 +190,7 @@ public:
   unsigned FrameConstructionID;
 
   /// Return the number of candidates for this \p OutlinedFunction.
-  unsigned getOccurrenceCount() { return OccurrenceCount; }
+  unsigned getOccurrenceCount() const { return OccurrenceCount; }
 
   /// Decrement the occurrence count of this OutlinedFunction and return the
   /// new count.
@@ -210,7 +210,9 @@ public:
   }
 
   /// Return the size in bytes of the unoutlined sequences.
-  unsigned getNotOutlinedCost() const { return OccurrenceCount * SequenceSize; }
+  unsigned getNotOutlinedCost() const {
+    return getOccurrenceCount() * SequenceSize;
+  }
 
   /// Return the number of instructions that would be saved by outlining
   /// this function.
