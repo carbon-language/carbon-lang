@@ -179,10 +179,6 @@ public:
   /// This is initialized after we go through and create the actual function.
   MachineFunction *MF = nullptr;
 
-  /// The sequence of integers corresponding to the instructions in this
-  /// function.
-  std::vector<unsigned> Sequence;
-
   /// Represents the size of a sequence in bytes. (Some instructions vary
   /// widely in size, so just counting the instructions isn't very useful.)
   unsigned SequenceSize;
@@ -224,6 +220,9 @@ public:
     return (NotOutlinedCost < OutlinedCost) ? 0
                                             : NotOutlinedCost - OutlinedCost;
   }
+
+  /// Return the number of instructions in this sequence.
+  unsigned getNumInstrs() const { return Candidates[0]->getLength(); }
 
   OutlinedFunction(std::vector<Candidate> &Cands,
                    unsigned SequenceSize, unsigned FrameOverhead,
