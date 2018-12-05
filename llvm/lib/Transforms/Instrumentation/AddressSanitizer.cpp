@@ -735,9 +735,12 @@ public:
 
   explicit AddressSanitizerModule(bool CompileKernel = false,
                                   bool Recover = false,
-                                  bool UseGlobalsGC = true)
-      : ModulePass(ID),
-        UseGlobalsGC(UseGlobalsGC && ClUseGlobalsGC),
+                                  bool UseGlobalsGC = true,
+                                  bool UseOdrIndicator = false)
+      : ModulePass(ID), UseGlobalsGC(UseGlobalsGC && ClUseGlobalsGC),
+        // Enable aliases as they should have no downside with ODR indicators.
+        UsePrivateAlias(UseOdrIndicator || ClUsePrivateAlias),
+        UseOdrIndicator(UseOdrIndicator || ClUseOdrIndicator),
         // Not a typo: ClWithComdat is almost completely pointless without
         // ClUseGlobalsGC (because then it only works on modules without
         // globals, which are rare); it is a prerequisite for ClUseGlobalsGC;
@@ -746,10 +749,9 @@ public:
         // ClWithComdat and ClUseGlobalsGC unless the frontend says it's ok to
         // do globals-gc.
         UseCtorComdat(UseGlobalsGC && ClWithComdat) {
-          this->Recover = ClRecover.getNumOccurrences() > 0 ?
-              ClRecover : Recover;
-          this->CompileKernel = ClEnableKasan.getNumOccurrences() > 0 ?
-              ClEnableKasan : CompileKernel;
+    this->Recover = ClRecover.getNumOccurrences() > 0 ? ClRecover : Recover;
+    this->CompileKernel =
+        ClEnableKasan.getNumOccurrences() > 0 ? ClEnableKasan : CompileKernel;
   }
 
   bool runOnModule(Module &M) override;
@@ -794,6 +796,8 @@ private:
   bool CompileKernel;
   bool Recover;
   bool UseGlobalsGC;
+  bool UsePrivateAlias;
+  bool UseOdrIndicator;
   bool UseCtorComdat;
   Type *IntptrTy;
   LLVMContext *C;
@@ -1093,9 +1097,11 @@ INITIALIZE_PASS(
 
 ModulePass *llvm::createAddressSanitizerModulePass(bool CompileKernel,
                                                    bool Recover,
-                                                   bool UseGlobalsGC) {
+                                                   bool UseGlobalsGC,
+                                                   bool UseOdrIndicator) {
   assert(!CompileKernel || Recover);
-  return new AddressSanitizerModule(CompileKernel, Recover, UseGlobalsGC);
+  return new AddressSanitizerModule(CompileKernel, Recover, UseGlobalsGC,
+                                    UseOdrIndicator);
 }
 
 static size_t TypeSizeToSizeIndex(uint32_t TypeSize) {
@@ -2177,14 +2183,14 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M, bool
     bool CanUsePrivateAliases =
         TargetTriple.isOSBinFormatELF() || TargetTriple.isOSBinFormatMachO() ||
         TargetTriple.isOSBinFormatWasm();
-    if (CanUsePrivateAliases && ClUsePrivateAlias) {
+    if (CanUsePrivateAliases && UsePrivateAlias) {
       // Create local alias for NewGlobal to avoid crash on ODR between
       // instrumented and non-instrumented libraries.
       InstrumentedGlobal =
           GlobalAlias::create(GlobalValue::PrivateLinkage, "", NewGlobal);
     }
 
-    if (ClUseOdrIndicator) {
+    if (UseOdrIndicator) {
       // With local aliases, we need to provide another externally visible
       // symbol __odr_asan_XXX to detect ODR violation.
       auto *ODRIndicatorSym =

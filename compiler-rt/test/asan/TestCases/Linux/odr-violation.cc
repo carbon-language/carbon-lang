@@ -33,6 +33,11 @@
 // RUN: %clangxx_asan -mllvm -asan-use-private-alias -mllvm -asan-use-odr-indicator %s %t-ODR-SO.so -Wl,-R. -o %t-ODR-EXE
 // RUN: %env_asan_opts=fast_unwind_on_malloc=0 not %run %t-ODR-EXE 2>&1 | FileCheck %s
 
+// Same as above but with clang switches.
+// RUN: %clangxx_asan -DBUILD_SO=1 -fPIC -shared -fsanitize-address-use-odr-indicator %s -o %t-ODR-SO.so -DSZ=100
+// RUN: %clangxx_asan -fsanitize-address-use-odr-indicator %s %t-ODR-SO.so -Wl,-R. -o %t-ODR-EXE
+// RUN: %env_asan_opts=fast_unwind_on_malloc=0 not %run %t-ODR-EXE 2>&1 | FileCheck %s
+
 // GNU driver doesn't handle .so files properly.
 // REQUIRES: Clang
 
