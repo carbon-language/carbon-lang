@@ -78,21 +78,21 @@ static ProfilingData *getThreadLocalData() XRAY_NEVER_INSTRUMENT {
   if (atomic_load_relaxed(&ThreadExitingLatch))
     return nullptr;
 
-  uintptr_t Allocators = 0;
+  uptr Allocators = 0;
   if (atomic_compare_exchange_strong(&TLD.Allocators, &Allocators, 1,
                                      memory_order_acq_rel)) {
     new (&AllocatorsStorage)
         FunctionCallTrie::Allocators(FunctionCallTrie::InitAllocators());
-    Allocators = reinterpret_cast<uintptr_t>(
+    Allocators = reinterpret_cast<uptr>(
         reinterpret_cast<FunctionCallTrie::Allocators *>(&AllocatorsStorage));
     atomic_store(&TLD.Allocators, Allocators, memory_order_release);
   }
 
-  uintptr_t FCT = 0;
+  uptr FCT = 0;
   if (atomic_compare_exchange_strong(&TLD.FCT, &FCT, 1, memory_order_acq_rel)) {
     new (&FunctionCallTrieStorage) FunctionCallTrie(
         *reinterpret_cast<FunctionCallTrie::Allocators *>(Allocators));
-    FCT = reinterpret_cast<uintptr_t>(
+    FCT = reinterpret_cast<uptr>(
         reinterpret_cast<FunctionCallTrie *>(&FunctionCallTrieStorage));
     atomic_store(&TLD.FCT, FCT, memory_order_release);
   }
@@ -109,13 +109,13 @@ static void cleanupTLD() XRAY_NEVER_INSTRUMENT {
     return;
 
   auto FCT = atomic_exchange(&TLD.FCT, 0, memory_order_acq_rel);
-  if (FCT == reinterpret_cast<uintptr_t>(reinterpret_cast<FunctionCallTrie *>(
+  if (FCT == reinterpret_cast<uptr>(reinterpret_cast<FunctionCallTrie *>(
                  &FunctionCallTrieStorage)))
     reinterpret_cast<FunctionCallTrie *>(FCT)->~FunctionCallTrie();
 
   auto Allocators = atomic_exchange(&TLD.Allocators, 0, memory_order_acq_rel);
   if (Allocators ==
-      reinterpret_cast<uintptr_t>(
+      reinterpret_cast<uptr>(
           reinterpret_cast<FunctionCallTrie::Allocators *>(&AllocatorsStorage)))
     reinterpret_cast<FunctionCallTrie::Allocators *>(Allocators)->~Allocators();
 }
@@ -125,8 +125,8 @@ static void postCurrentThreadFCT(ProfilingData &T) XRAY_NEVER_INSTRUMENT {
   if (!TLDInit)
     return;
 
-  uintptr_t P = atomic_load(&T.FCT, memory_order_acquire);
-  if (P != reinterpret_cast<uintptr_t>(
+  uptr P = atomic_load(&T.FCT, memory_order_acquire);
+  if (P != reinterpret_cast<uptr>(
                reinterpret_cast<FunctionCallTrie *>(&FunctionCallTrieStorage)))
     return;
 
