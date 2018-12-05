@@ -1737,7 +1737,6 @@ bool TargetLowering::SimplifyDemandedVectorElts(
     }
     break;
   }
-  case ISD::ANY_EXTEND_VECTOR_INREG:
   case ISD::SIGN_EXTEND_VECTOR_INREG:
   case ISD::ZERO_EXTEND_VECTOR_INREG: {
     APInt SrcUndef, SrcZero;
@@ -1770,7 +1769,6 @@ bool TargetLowering::SimplifyDemandedVectorElts(
     break;
   }
   case ISD::TRUNCATE:
-  case ISD::ANY_EXTEND:
   case ISD::SIGN_EXTEND:
   case ISD::ZERO_EXTEND:
     if (SimplifyDemandedVectorElts(Op.getOperand(0), DemandedElts, KnownUndef,
