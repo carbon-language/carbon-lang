@@ -2284,7 +2284,7 @@ block exactly as if it had been sent the ``retain`` message.
 
 .. _arc.runtime.objc_storeStrong:
 
-``id objc_storeStrong(id *object, id value);``
+``void objc_storeStrong(id *object, id value);``
 ----------------------------------------------
 
 *Precondition:* ``object`` is a valid pointer to a ``__strong`` object which is
