@@ -358,7 +358,7 @@ def : Proc<"hexagonv65", HexagonModelV65,
            [ArchV5, ArchV55, ArchV60, ArchV62, ArchV65,
             FeatureDuplex, FeatureMemNoShuf, FeatureMemops, FeatureNVJ,
             FeatureNVS, FeaturePackets, FeatureSmallData]>;
-def : Proc<"hexagonv66", HexagonModelV65, // Use v65, to be fixed soon.
+def : Proc<"hexagonv66", HexagonModelV66,
            [ArchV5, ArchV55, ArchV60, ArchV62, ArchV65, ArchV66,
             FeatureDuplex, FeatureMemNoShuf, FeatureMemops, FeatureNVJ,
             FeatureNVS, FeaturePackets, FeatureSmallData]>;
