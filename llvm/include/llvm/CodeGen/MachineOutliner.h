@@ -61,9 +61,6 @@ public:
   /// \p OutlinedFunctions.
   unsigned FunctionIdx;
 
-  /// Set to false if the candidate overlapped with another candidate.
-  bool InCandidateList = true;
-
   /// Identifier denoting the instructions to emit to call an outlined function
   /// from this point. Defined by the target.
   unsigned CallConstructionID;
@@ -105,9 +102,7 @@ public:
   }
 
   /// Returns the call overhead of this candidate if it is in the list.
-  unsigned getCallOverhead() const {
-    return InCandidateList ? CallOverhead : 0;
-  }
+  unsigned getCallOverhead() const { return CallOverhead; }
 
   MachineBasicBlock::iterator &front() { return FirstInst; }
   MachineBasicBlock::iterator &back() { return LastInst; }
@@ -168,10 +163,6 @@ public:
 /// class of candidate.
 struct OutlinedFunction {
 
-private:
-  /// The number of candidates for this \p OutlinedFunction.
-  unsigned OccurrenceCount = 0;
-
 public:
   std::vector<std::shared_ptr<Candidate>> Candidates;
 
@@ -191,14 +182,6 @@ public:
 
   /// Return the number of candidates for this \p OutlinedFunction.
   unsigned getOccurrenceCount() const { return Candidates.size(); }
-
-  /// Decrement the occurrence count of this OutlinedFunction and return the
-  /// new count.
-  unsigned decrement() {
-    assert(OccurrenceCount > 0 && "Can't decrement an empty function!");
-    OccurrenceCount--;
-    return getOccurrenceCount();
-  }
 
   /// Return the number of bytes it would take to outline this
   /// function.
@@ -231,7 +214,6 @@ public:
                    unsigned FrameConstructionID)
       : SequenceSize(SequenceSize), FrameOverhead(FrameOverhead),
         FrameConstructionID(FrameConstructionID) {
-    OccurrenceCount = Cands.size();
     for (Candidate &C : Cands)
       Candidates.push_back(std::make_shared<outliner::Candidate>(C));
 
