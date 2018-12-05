@@ -904,7 +904,7 @@ struct MachineOutliner : public ModulePass {
                InstructionMapper &Mapper);
 
   /// Creates a function for \p OF and inserts it into the module.
-  MachineFunction *createOutlinedFunction(Module &M, const OutlinedFunction &OF,
+  MachineFunction *createOutlinedFunction(Module &M, OutlinedFunction &OF,
                                           InstructionMapper &Mapper,
                                           unsigned Name);
 
@@ -931,8 +931,8 @@ struct MachineOutliner : public ModulePass {
   /// function for remark emission.
   DISubprogram *getSubprogramOrNull(const OutlinedFunction &OF) {
     DISubprogram *SP;
-    for (const std::shared_ptr<Candidate> &C : OF.Candidates)
-      if (C && C->getMF() && (SP = C->getMF()->getFunction().getSubprogram()))
+    for (const Candidate &C : OF.Candidates)
+      if (C.getMF() && (SP = C.getMF()->getFunction().getSubprogram()))
         return SP;
     return nullptr;
   }
@@ -1021,7 +1021,7 @@ void MachineOutliner::emitOutlinedFunctionRemark(OutlinedFunction &OF) {
   for (size_t i = 0, e = OF.Candidates.size(); i < e; i++) {
 
     R << NV((Twine("StartLoc") + Twine(i)).str(),
-            OF.Candidates[i]->front()->getDebugLoc());
+            OF.Candidates[i].front()->getDebugLoc());
     if (i != e - 1)
       R << ", ";
   }
@@ -1134,7 +1134,7 @@ unsigned MachineOutliner::buildCandidateList(
 }
 
 MachineFunction *
-MachineOutliner::createOutlinedFunction(Module &M, const OutlinedFunction &OF,
+MachineOutliner::createOutlinedFunction(Module &M, OutlinedFunction &OF,
                                         InstructionMapper &Mapper,
                                         unsigned Name) {
 
@@ -1169,7 +1169,7 @@ MachineOutliner::createOutlinedFunction(Module &M, const OutlinedFunction &OF,
   // function. This makes sure the outlined function knows what kinds of
   // instructions are going into it. This is fine, since all parent functions
   // must necessarily support the instructions that are in the outlined region.
-  Candidate &FirstCand = *OF.Candidates.front();
+  Candidate &FirstCand = OF.Candidates.front();
   const Function &ParentFn = FirstCand.getMF()->getFunction();
   if (ParentFn.hasFnAttribute("target-features"))
     F->addFnAttr(ParentFn.getFnAttribute("target-features"));
@@ -1259,10 +1259,10 @@ bool MachineOutliner::outline(Module &M,
   for (OutlinedFunction &OF : FunctionList) {
     // If we outlined something that overlapped with a candidate in a previous
     // step, then we can't outline from it.
-    erase_if(OF.Candidates, [&Mapper](std::shared_ptr<Candidate> &C) {
+    erase_if(OF.Candidates, [&Mapper](Candidate &C) {
       return std::any_of(
-          Mapper.UnsignedVec.begin() + C->getStartIdx(),
-          Mapper.UnsignedVec.begin() + C->getEndIdx() + 1,
+          Mapper.UnsignedVec.begin() + C.getStartIdx(),
+          Mapper.UnsignedVec.begin() + C.getEndIdx() + 1,
           [](unsigned I) { return (I == static_cast<unsigned>(-1)); });
     });
 
@@ -1281,8 +1281,7 @@ bool MachineOutliner::outline(Module &M,
     const TargetInstrInfo &TII = *STI.getInstrInfo();
 
     // Replace occurrences of the sequence with calls to the new function.
-    for (std::shared_ptr<Candidate> &Cptr : OF.Candidates) {
-      Candidate &C = *Cptr;
+    for (Candidate &C : OF.Candidates) {
       MachineBasicBlock &MBB = *C.getMBB();
       MachineBasicBlock::iterator StartIt = C.front();
       MachineBasicBlock::iterator EndIt = C.back();

@@ -164,7 +164,7 @@ public:
 struct OutlinedFunction {
 
 public:
-  std::vector<std::shared_ptr<Candidate>> Candidates;
+  std::vector<Candidate> Candidates;
 
   /// The actual outlined function created.
   /// This is initialized after we go through and create the actual function.
@@ -187,8 +187,8 @@ public:
   /// function.
   unsigned getOutliningCost() const {
     unsigned CallOverhead = 0;
-    for (const std::shared_ptr<Candidate> &C : Candidates)
-      CallOverhead += C->getCallOverhead();
+    for (const Candidate &C : Candidates)
+      CallOverhead += C.getCallOverhead();
     return CallOverhead + SequenceSize + FrameOverhead;
   }
 
@@ -207,19 +207,15 @@ public:
   }
 
   /// Return the number of instructions in this sequence.
-  unsigned getNumInstrs() const { return Candidates[0]->getLength(); }
+  unsigned getNumInstrs() const { return Candidates[0].getLength(); }
 
-  OutlinedFunction(std::vector<Candidate> &Cands,
-                   unsigned SequenceSize, unsigned FrameOverhead,
-                   unsigned FrameConstructionID)
-      : SequenceSize(SequenceSize), FrameOverhead(FrameOverhead),
-        FrameConstructionID(FrameConstructionID) {
-    for (Candidate &C : Cands)
-      Candidates.push_back(std::make_shared<outliner::Candidate>(C));
-
+  OutlinedFunction(std::vector<Candidate> &Candidates, unsigned SequenceSize,
+                   unsigned FrameOverhead, unsigned FrameConstructionID)
+      : Candidates(Candidates), SequenceSize(SequenceSize),
+        FrameOverhead(FrameOverhead), FrameConstructionID(FrameConstructionID) {
     const unsigned B = getBenefit();
-    for (std::shared_ptr<Candidate> &C : Candidates)
-      C->Benefit = B;
+    for (Candidate &C : Candidates)
+      C.Benefit = B;
   }
 
   OutlinedFunction() {}
