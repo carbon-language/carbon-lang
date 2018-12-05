@@ -1264,10 +1264,6 @@ bool MachineOutliner::outline(
   // Number to append to the current outlined function.
   unsigned OutlinedFunctionNum = 0;
 
-  // If something was already removed, its entry in the UnsignedVec will be
-  // this.
-  const unsigned AlreadyRemoved = static_cast<unsigned>(-1);
-
   // Sort by benefit. The most beneficial functions should be outlined first.
   std::stable_sort(
       FunctionList.begin(), FunctionList.end(),
@@ -1281,9 +1277,10 @@ bool MachineOutliner::outline(
     // If we outlined something that overlapped with a candidate in a previous
     // step, then we can't outline from it.
     erase_if(OF.Candidates, [&Mapper](std::shared_ptr<Candidate> &C) {
-      return std::any_of(Mapper.UnsignedVec.begin() + C->getStartIdx(),
-                         Mapper.UnsignedVec.begin() + C->getEndIdx() + 1,
-                         [](unsigned I) { return (I == AlreadyRemoved); });
+      return std::any_of(
+          Mapper.UnsignedVec.begin() + C->getStartIdx(),
+          Mapper.UnsignedVec.begin() + C->getEndIdx() + 1,
+          [](unsigned I) { return (I == static_cast<unsigned>(-1)); });
     });
 
     // If we made it unbeneficial to outline this function, skip it.
@@ -1344,10 +1341,10 @@ bool MachineOutliner::outline(
       // Erase needs one past the end, so we need std::next there too.
       MBB.erase(std::next(StartIt), std::next(EndIt));
 
-      // Keep track of what we removed.
+      // Keep track of what we removed by marking them all as -1.
       std::for_each(Mapper.UnsignedVec.begin() + C.getStartIdx(),
                     Mapper.UnsignedVec.begin() + C.getEndIdx() + 1,
-                    [](unsigned &I) { I = AlreadyRemoved; });
+                    [](unsigned &I) { I = static_cast<unsigned>(-1); });
       OutlinedSomething = true;
 
       // Statistics.
