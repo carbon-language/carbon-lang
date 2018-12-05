@@ -51,13 +51,6 @@ public:
   static constexpr int maxExponent{(1 << exponentBits) - 1};
   static constexpr int exponentBias{maxExponent / 2};
 
-  // Decimal precision of a binary floating-point representation is
-  // actually the same as the base-5 precision, as factors of two
-  // can be accommodated by the binary exponent.
-  // log(2)/log(5) = 0.430+ in any base.
-  // Calculate "precision*0.43" with integer arithmetic so as to be constexpr.
-  static constexpr int decimalDigits{(precision * 43) / 100};
-
   template<typename W, int P, bool I> friend class Real;
 
   constexpr Real() {}  // +0.0

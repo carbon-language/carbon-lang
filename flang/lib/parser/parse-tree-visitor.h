@@ -66,12 +66,12 @@ template<typename M> void Walk(format::IntrinsicTypeDataEditDesc &, M &);
 // Traversal of needed STL template classes (optional, list, tuple, variant)
 template<typename T, typename V>
 void Walk(const std::optional<T> &x, V &visitor) {
-  if (x) {
+  if (x.has_value()) {
     Walk(*x, visitor);
   }
 }
 template<typename T, typename M> void Walk(std::optional<T> &x, M &mutator) {
-  if (x) {
+  if (x.has_value()) {
     Walk(*x, mutator);
   }
 }

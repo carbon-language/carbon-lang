@@ -295,8 +295,9 @@ template<TypeCategory TOCAT, typename VALUE> struct ConvertToKindHelper {
 
 template<TypeCategory TOCAT, typename VALUE>
 Expr<SomeKind<TOCAT>> ConvertToKind(int kind, VALUE &&x) {
-  return *common::SearchDynamicTypes(
-      ConvertToKindHelper<TOCAT, VALUE>{kind, std::move(x)});
+  return common::SearchDynamicTypes(
+      ConvertToKindHelper<TOCAT, VALUE>{kind, std::move(x)})
+      .value();
 }
 
 // Given a type category CAT, SameKindExprs<CAT, N> is a variant that

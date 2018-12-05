@@ -430,9 +430,8 @@ constexpr struct SkipDigitString {
 static std::optional<std::int64_t> SignedInteger(
     const std::optional<std::uint64_t> &x, Location at, bool negate,
     ParseState &state) {
-  std::optional<std::int64_t> result;
   if (!x.has_value()) {
-    return result;
+    return std::nullopt;
   }
   std::uint64_t limit{std::numeric_limits<std::int64_t>::max()};
   if (negate) {
@@ -442,8 +441,7 @@ static std::optional<std::int64_t> SignedInteger(
     state.Say(at, "overflow in signed decimal literal"_err_en_US);
   }
   std::int64_t value = *x;
-  result = negate ? -value : value;
-  return result;
+  return std::make_optional<std::int64_t>(negate ? -value : value);
 }
 
 struct SignedIntLiteralConstantWithoutKind {
@@ -580,9 +578,7 @@ struct HollerithLiteral {
       } else {
         // Multi-byte character
         while (bytes-- > 0) {
-          std::optional<const char *> byte{nextCh.Parse(state)};
-          CHECK(byte.has_value());
-          content += **byte;
+          content += *nextCh.Parse(state).value();
         }
       }
     }

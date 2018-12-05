@@ -818,8 +818,8 @@ MaybeExpr AnalyzeExpr(
             if (dynamicType->category == TypeCategory::Character) {
               return WrapperHelper<TypeCategory::Character, Designator,
                   Substring>(dynamicType->kind,
-                  Substring{
-                      std::move(*checked), std::move(first), std::move(last)});
+                  Substring{std::move(checked.value()), std::move(first),
+                      std::move(last)});
             }
           }
           context.Say("substring may apply only to CHARACTER"_err_en_US);
@@ -848,9 +848,8 @@ MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
         lower = Expr<SubscriptInteger>{1};
       }
       if (!upper.has_value()) {
-        std::optional<std::int64_t> size{ToInt64(length)};
-        CHECK(size.has_value());
-        upper = Expr<SubscriptInteger>{static_cast<std::int64_t>(*size)};
+        upper = Expr<SubscriptInteger>{
+            static_cast<std::int64_t>(ToInt64(length).value())};
       }
       return std::visit(
           [&](auto &&ckExpr) -> MaybeExpr {
@@ -861,8 +860,8 @@ MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
             staticData->set_alignment(Result::kind)
                 .set_itemBytes(Result::kind)
                 .Push(cp->value);
-            Substring substring{
-                std::move(staticData), std::move(*lower), std::move(*upper)};
+            Substring substring{std::move(staticData), std::move(lower.value()),
+                std::move(upper.value())};
             return AsGenericExpr(Expr<SomeCharacter>{
                 Expr<Result>{Designator<Result>{std::move(substring)}}});
           },

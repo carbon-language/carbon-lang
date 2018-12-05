@@ -148,7 +148,7 @@ void EmitQuotedChar(char32_t ch, const NORMAL &emit, const INSERTED &insert,
     emit('\\');
   } else if (ch < ' ' || (ch >= 0x80 && ch <= 0xff)) {
     insert('\\');
-    if (std::optional escape{BackslashEscapeChar(ch)}) {
+    if (std::optional<char> escape{BackslashEscapeChar(ch)}) {
       emit(*escape);
     } else {
       // octal escape sequence

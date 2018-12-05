@@ -488,7 +488,7 @@ public:
       resultType result;
       result.emplace_back(std::move(*first));
       if (state.GetLocation() > start) {
-        result.splice(result.end(), *many(parser_).Parse(state));
+        result.splice(result.end(), many(parser_).Parse(state).value());
       }
       return {std::move(result)};
     }
@@ -581,8 +581,7 @@ public:
   constexpr DefaultedParser(const PA &p) : parser_{p} {}
   std::optional<resultType> Parse(ParseState &state) const {
     std::optional<std::optional<resultType>> ax{maybe(parser_).Parse(state)};
-    CHECK(ax.has_value());  // maybe() always succeeds
-    if (ax.value().has_value()) {
+    if (ax.value().has_value()) {  // maybe() always succeeds
       return std::move(*ax);
     }
     return {resultType{}};

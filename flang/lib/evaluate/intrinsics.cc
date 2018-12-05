@@ -908,7 +908,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       if (sameArg == nullptr) {
         sameArg = arg;
       }
-      argOk = *type == sameArg->GetType();
+      argOk = type.value() == sameArg->GetType();
       break;
     case KindCode::effectiveKind:
       common::die("INTERNAL: KindCode::effectiveKind appears on argument '%s' "
@@ -1017,7 +1017,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
     if (call.isSubroutineCall) {
       return std::nullopt;
     }
-    resultType = DynamicType{*result.categorySet.LeastElement(), 0};
+    resultType = DynamicType{result.categorySet.LeastElement().value(), 0};
     switch (result.kindCode) {
     case KindCode::defaultIntegerKind:
       CHECK(result.categorySet == IntType);
@@ -1124,11 +1124,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
     break;
   case Rank::shaped:
     CHECK(shapeArg != nullptr);
-    {
-      std::optional<int> shapeLen{shapeArg->VectorSize()};
-      CHECK(shapeLen.has_value());
-      resultRank = *shapeLen;
-    }
+    resultRank = shapeArg->VectorSize().value();
     break;
   case Rank::elementalOrBOZ:
   case Rank::shape:

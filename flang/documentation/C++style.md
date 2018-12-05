@@ -147,6 +147,13 @@ We have an `ENUM_CLASS` macro that helps capture the names of constants.
 explicitly, it should contains either a `default:;` at its end or a
 `default:` label that obviously crashes; we have a `CRASH_NO_CASE` macro
 for such situations.
+1. When using `std::optional` values, avoid unprotected access to their content.
+This is usually by means of `x.has_value()` guarding execution of `*x`.
+This is implicit when they are function results assigned to local variables
+in `if`/`while` predicates.
+When no presence test is obviously protecting a `*x` reference to the
+contents, and it is assumed that the contents are present, validate that
+assumption by using `x.value()` instead.
 #### Classes
 1. Define POD structures with `struct`.
 1. Don't use `this->` in (non-static) member functions, unless forced to
