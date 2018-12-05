@@ -202,19 +202,19 @@ public:
 
   /// Return the number of bytes it would take to outline this
   /// function.
-  unsigned getOutliningCost() {
+  unsigned getOutliningCost() const {
     unsigned CallOverhead = 0;
-    for (std::shared_ptr<Candidate> &C : Candidates)
+    for (const std::shared_ptr<Candidate> &C : Candidates)
       CallOverhead += C->getCallOverhead();
     return CallOverhead + SequenceSize + FrameOverhead;
   }
 
   /// Return the size in bytes of the unoutlined sequences.
-  unsigned getNotOutlinedCost() { return OccurrenceCount * SequenceSize; }
+  unsigned getNotOutlinedCost() const { return OccurrenceCount * SequenceSize; }
 
   /// Return the number of instructions that would be saved by outlining
   /// this function.
-  unsigned getBenefit() {
+  unsigned getBenefit() const {
     unsigned NotOutlinedCost = getNotOutlinedCost();
     unsigned OutlinedCost = getOutliningCost();
     return (NotOutlinedCost < OutlinedCost) ? 0
@@ -233,7 +233,7 @@ public:
     for (Candidate &C : Cands)
       Candidates.push_back(std::make_shared<outliner::Candidate>(C));
 
-    unsigned B = getBenefit();
+    const unsigned B = getBenefit();
     for (std::shared_ptr<Candidate> &C : Candidates)
       C->Benefit = B;
   }
