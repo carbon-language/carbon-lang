@@ -1614,9 +1614,10 @@ bool TargetLowering::SimplifyDemandedVectorElts(
       unsigned Idx = CIdx->getZExtValue();
       if (!DemandedElts[Idx])
         return TLO.CombineTo(Op, Vec);
-      DemandedElts.clearBit(Idx);
 
-      if (SimplifyDemandedVectorElts(Vec, DemandedElts, KnownUndef,
+      APInt DemandedVecElts(DemandedElts);
+      DemandedVecElts.clearBit(Idx);
+      if (SimplifyDemandedVectorElts(Vec, DemandedVecElts, KnownUndef,
                                      KnownZero, TLO, Depth + 1))
         return true;
 
