@@ -21,8 +21,8 @@
 #include "sanitizer_common/sanitizer_mutex.h"
 #if SANITIZER_FUCHSIA
 #include <zircon/process.h>
-#include <zircon/syscalls.h>
 #include <zircon/status.h>
+#include <zircon/syscalls.h>
 #else
 #include "sanitizer_common/sanitizer_posix.h"
 #endif
@@ -50,13 +50,13 @@ template <class T> T *allocate() XRAY_NEVER_INSTRUMENT {
   }
   uintptr_t B;
   Status =
-    _zx_vmar_map(_zx_vmar_root_self(), ZX_VM_PERM_READ | ZX_VM_PERM_WRITE, 0,
-                 Vmo, 0, sizeof(T), &B);
+      _zx_vmar_map(_zx_vmar_root_self(), ZX_VM_PERM_READ | ZX_VM_PERM_WRITE, 0,
+                   Vmo, 0, sizeof(T), &B);
   _zx_handle_close(Vmo);
   if (Status != ZX_OK) {
     if (Verbosity())
-      Report("XRay Profiling: Failed to map VMAR of size %zu: %s\n",
-             sizeof(T), _zx_status_get_string(Status));
+      Report("XRay Profiling: Failed to map VMAR of size %zu: %s\n", sizeof(T),
+             _zx_status_get_string(Status));
     return nullptr;
   }
   return reinterpret_cast<T *>(B);
@@ -80,8 +80,8 @@ template <class T> void deallocate(T *B) XRAY_NEVER_INSTRUMENT {
     return;
   uptr RoundedSize = RoundUpTo(sizeof(T), GetPageSizeCached());
 #if SANITIZER_FUCHSIA
-  _zx_vmar_unmap(_zx_vmar_root_self(),
-                 reinterpret_cast<uintptr_t>(B), RoundedSize);
+  _zx_vmar_unmap(_zx_vmar_root_self(), reinterpret_cast<uintptr_t>(B),
+                 RoundedSize);
 #else
   internal_munmap(B, RoundedSize);
 #endif
@@ -95,19 +95,18 @@ T *allocateBuffer(size_t S) XRAY_NEVER_INSTRUMENT {
   zx_status_t Status = _zx_vmo_create(RoundedSize, 0, &Vmo);
   if (Status != ZX_OK) {
     if (Verbosity())
-      Report("XRay Profiling: Failed to create VMO of size %zu: %s\n",
-             S, _zx_status_get_string(Status));
+      Report("XRay Profiling: Failed to create VMO of size %zu: %s\n", S,
+             _zx_status_get_string(Status));
     return nullptr;
   }
   uintptr_t B;
-  Status =
-    _zx_vmar_map(_zx_vmar_root_self(), ZX_VM_PERM_READ | ZX_VM_PERM_WRITE, 0,
-                 Vmo, 0, S, &B);
+  Status = _zx_vmar_map(_zx_vmar_root_self(),
+                        ZX_VM_PERM_READ | ZX_VM_PERM_WRITE, 0, Vmo, 0, S, &B);
   _zx_handle_close(Vmo);
   if (Status != ZX_OK) {
     if (Verbosity())
-      Report("XRay Profiling: Failed to map VMAR of size %zu: %s\n",
-             S, _zx_status_get_string(Status));
+      Report("XRay Profiling: Failed to map VMAR of size %zu: %s\n", S,
+             _zx_status_get_string(Status));
     return nullptr;
   }
 #else
@@ -130,7 +129,8 @@ template <class T> void deallocateBuffer(T *B, size_t S) XRAY_NEVER_INSTRUMENT {
     return;
   uptr RoundedSize = RoundUpTo(S * sizeof(T), GetPageSizeCached());
 #if SANITIZER_FUCHSIA
-  _zx_vmar_unmap(_zx_vmar_root_self(), reinterpret_cast<uintptr_t>(B), RoundedSize);
+  _zx_vmar_unmap(_zx_vmar_root_self(), reinterpret_cast<uintptr_t>(B),
+                 RoundedSize);
 #else
   internal_munmap(B, RoundedSize);
 #endif
@@ -251,7 +251,7 @@ public:
     MaxMemory = O.MaxMemory;
     O.MaxMemory = 0;
     if (BackingStore != nullptr)
-      deallocate(BackingStore, MaxMemory);
+      deallocateBuffer(BackingStore, MaxMemory);
     BackingStore = O.BackingStore;
     O.BackingStore = nullptr;
     AlignedNextBlock = O.AlignedNextBlock;
