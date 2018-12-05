@@ -299,9 +299,15 @@ namespace  {
       dumpStmt(T->getSizeExpr());
     }
     void VisitDependentSizedArrayType(const DependentSizedArrayType *T) {
-      VisitArrayType(T);
+      switch (T->getSizeModifier()) {
+        case ArrayType::Normal: break;
+        case ArrayType::Static: OS << " static"; break;
+        case ArrayType::Star: OS << " *"; break;
+      }
+      OS << " " << T->getIndexTypeQualifiers().getAsString();
       OS << " ";
       dumpSourceRange(T->getBracketsRange());
+      dumpTypeAsChild(T->getElementType());
       dumpStmt(T->getSizeExpr());
     }
     void VisitDependentSizedExtVectorType(
