@@ -267,12 +267,6 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
                                             SQ.getWithInstruction(&EI)))
     return replaceInstUsesWith(EI, V);
 
-  // If vector val is constant with all elements the same, replace EI with
-  // that element.  We handle a known element # below.
-  if (auto *C = dyn_cast<Constant>(SrcVec))
-    if (cheapToScalarize(C, false))
-      return replaceInstUsesWith(EI, C->getAggregateElement(0U));
-
   // If extracting a specified index from the vector, see if we can recursively
   // find a previously computed scalar that was inserted into the vector.
   auto *IndexC = dyn_cast<ConstantInt>(Index);

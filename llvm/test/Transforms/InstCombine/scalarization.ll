@@ -97,14 +97,6 @@ define i32 @extelt_binop_binop_insertelt(<4 x i32> %A, <4 x i32> %B, i32 %f) {
   ret i32 %E
 }
 
-define float @extract_element_splat_constant_vector_variable_index(i32 %y) {
-; CHECK-LABEL: @extract_element_splat_constant_vector_variable_index(
-; CHECK-NEXT:    ret float 2.000000e+00
-;
-  %r = extractelement <4 x float> <float 2.0, float 2.0, float 2.0, float 2.0>, i32 %y
-  ret float %r
-}
-
 define float @extract_element_constant_vector_variable_index(i32 %y) {
 ; CHECK-LABEL: @extract_element_constant_vector_variable_index(
 ; CHECK-NEXT:    [[R:%.*]] = extractelement <4 x float> <float 1.000000e+00, float 2.000000e+00, float 3.000000e+00, float 4.000000e+00>, i32 [[Y:%.*]]
