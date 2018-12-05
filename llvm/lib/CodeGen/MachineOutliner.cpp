@@ -874,7 +874,8 @@ struct MachineOutliner : public ModulePass {
   /// Remark output explaining that a function was outlined.
   void emitOutlinedFunctionRemark(OutlinedFunction &OF);
 
-  /// Find all repeated substrings that satisfy the outlining cost model.
+  /// Find all repeated substrings that satisfy the outlining cost model by
+  /// constructing a suffix tree.
   ///
   /// If a substring appears at least twice, then it must be represented by
   /// an internal node which appears in at least two suffixes. Each suffix
@@ -883,16 +884,13 @@ struct MachineOutliner : public ModulePass {
   /// internal node represents a beneficial substring, then we use each of
   /// its leaf children to find the locations of its substring.
   ///
-  /// \param ST A suffix tree to query.
   /// \param Mapper Contains outlining mapping information.
   /// \param[out] FunctionList Filled with a list of \p OutlinedFunctions
   /// each type of candidate.
   ///
   /// \returns The length of the longest candidate found.
-  unsigned
-  findCandidates(SuffixTree &ST,
-                 InstructionMapper &Mapper,
-                 std::vector<OutlinedFunction> &FunctionList);
+  void findCandidates(InstructionMapper &Mapper,
+                      std::vector<OutlinedFunction> &FunctionList);
 
   /// Replace the sequences of instructions represented by \p OutlinedFunctions
   /// with calls to functions.
@@ -907,21 +905,6 @@ struct MachineOutliner : public ModulePass {
   MachineFunction *createOutlinedFunction(Module &M, OutlinedFunction &OF,
                                           InstructionMapper &Mapper,
                                           unsigned Name);
-
-  /// Find potential outlining candidates.
-  ///
-  /// For each type of potential candidate, also build an \p OutlinedFunction
-  /// struct containing the information to build the function for that
-  /// candidate.
-  ///
-  /// \param[out] FunctionList Filled with functions corresponding to each type
-  /// of \p Candidate.
-  /// \param Mapper Contains the instruction mappings for the module.
-  ///
-  /// \returns The length of the longest candidate found. 0 if there are none.
-  unsigned
-  buildCandidateList(std::vector<OutlinedFunction> &FunctionList,
-                     InstructionMapper &Mapper);
 
   /// Construct a suffix tree on the instructions in \p M and outline repeated
   /// strings from that tree.
@@ -1031,11 +1014,11 @@ void MachineOutliner::emitOutlinedFunctionRemark(OutlinedFunction &OF) {
   MORE.emit(R);
 }
 
-unsigned MachineOutliner::findCandidates(
-    SuffixTree &ST, InstructionMapper &Mapper,
-    std::vector<OutlinedFunction> &FunctionList) {
+void
+MachineOutliner::findCandidates(InstructionMapper &Mapper,
+                                std::vector<OutlinedFunction> &FunctionList) {
   FunctionList.clear();
-  unsigned MaxLen = 0;
+  SuffixTree ST(Mapper.UnsignedVec);
 
   // First, find dall of the repeated substrings in the tree of minimum length
   // 2.
@@ -1110,27 +1093,8 @@ unsigned MachineOutliner::findCandidates(
       continue;
     }
 
-    if (StringLen > MaxLen)
-      MaxLen = StringLen;
-
     FunctionList.push_back(OF);
   }
-
-  return MaxLen;
-}
-
-unsigned MachineOutliner::buildCandidateList(
-    std::vector<OutlinedFunction> &FunctionList,
-    InstructionMapper &Mapper) {
-  // Construct a suffix tree and use it to find candidates.
-  SuffixTree ST(Mapper.UnsignedVec);
-
-  std::vector<unsigned> CandidateSequence; // Current outlining candidate.
-  unsigned MaxCandidateLen = 0;            // Length of the longest candidate.
-
-  MaxCandidateLen = findCandidates(ST, Mapper, FunctionList);
-
-  return MaxCandidateLen;
 }
 
 MachineFunction *
@@ -1494,7 +1458,7 @@ bool MachineOutliner::runOnModule(Module &M) {
   std::vector<OutlinedFunction> FunctionList;
 
   // Find all of the outlining candidates.
-  buildCandidateList(FunctionList, Mapper);
+  findCandidates(Mapper, FunctionList);
 
   // If we've requested size remarks, then collect the MI counts of every
   // function before outlining, and the MI counts after outlining.
