@@ -325,6 +325,7 @@ namespace {
     SDValue visitSHL(SDNode *N);
     SDValue visitSRA(SDNode *N);
     SDValue visitSRL(SDNode *N);
+    SDValue visitFunnelShift(SDNode *N);
     SDValue visitRotate(SDNode *N);
     SDValue visitABS(SDNode *N);
     SDValue visitBSWAP(SDNode *N);
@@ -1513,6 +1514,8 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::SRL:                return visitSRL(N);
   case ISD::ROTR:
   case ISD::ROTL:               return visitRotate(N);
+  case ISD::FSHL:
+  case ISD::FSHR:               return visitFunnelShift(N);
   case ISD::ABS:                return visitABS(N);
   case ISD::BSWAP:              return visitBSWAP(N);
   case ISD::BITREVERSE:         return visitBITREVERSE(N);
@@ -6922,6 +6925,39 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
         AddToWorklist(Use);
     }
   }
+
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitFunnelShift(SDNode *N) {
+  EVT VT = N->getValueType(0);
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  SDValue N2 = N->getOperand(2);
+  bool IsFSHL = N->getOpcode() == ISD::FSHL;
+  unsigned BitWidth = VT.getScalarSizeInBits();
+
+  // fold (fshl N0, N1, 0) -> N0
+  // fold (fshr N0, N1, 0) -> N1
+  if (DAG.MaskedValueIsZero(N2, APInt::getAllOnesValue(BitWidth)))
+    return IsFSHL ? N0 : N1;
+
+  // fold (fsh* N0, N1, c) -> (fsh* N0, N1, c % BitWidth)
+  if (ConstantSDNode *Cst = isConstOrConstSplat(N2)) {
+    if (Cst->getAPIntValue().uge(BitWidth)) {
+      uint64_t RotAmt = Cst->getAPIntValue().urem(BitWidth);
+      return DAG.getNode(N->getOpcode(), SDLoc(N), VT, N0, N1,
+                         DAG.getConstant(RotAmt, SDLoc(N), N2.getValueType()));
+    }
+  }
+
+  // fold (fshl N0, N0, N2) -> (rotl N0, N2)
+  // fold (fshr N0, N0, N2) -> (rotr N0, N2)
+  // TODO: Investigate flipping this rotate if only one is legal, if funnel shift
+  // is legal as well we might be better off avoiding non-constant (BW - N2).
+  unsigned RotOpc = IsFSHL ? ISD::ROTL : ISD::ROTR;
+  if (N0 == N1 && hasOperation(RotOpc, VT))
+    return DAG.getNode(RotOpc, SDLoc(N), VT, N0, N2);
 
   return SDValue();
 }
