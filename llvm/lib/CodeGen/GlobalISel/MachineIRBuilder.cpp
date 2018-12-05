@@ -519,6 +519,64 @@ MachineInstrBuilder MachineIRBuilderBase::buildUnmerge(ArrayRef<unsigned> Res,
   return MIB;
 }
 
+MachineInstrBuilder
+MachineIRBuilderBase::buildBuildVector(unsigned Res, ArrayRef<unsigned> Ops) {
+#ifndef NDEBUG
+  assert((!Ops.empty() || Ops.size() < 2) && "Must have at least 2 operands");
+  assert(getMRI()->getType(Res).isVector() && "Res type must be a vector");
+  LLT Ty = getMRI()->getType(Ops[0]);
+  for (auto Reg : Ops)
+    assert(getMRI()->getType(Reg) == Ty && "type mismatch in input list");
+  assert(Ops.size() * Ty.getSizeInBits() ==
+             getMRI()->getType(Res).getSizeInBits() &&
+         "input scalars do not exactly cover the outpur vector register");
+#endif
+  MachineInstrBuilder MIB = buildInstr(TargetOpcode::G_BUILD_VECTOR);
+  MIB.addDef(Res);
+  for (auto Op : Ops)
+    MIB.addUse(Op);
+  return MIB;
+}
+
+MachineInstrBuilder
+MachineIRBuilderBase::buildBuildVectorTrunc(unsigned Res,
+                                            ArrayRef<unsigned> Ops) {
+#ifndef NDEBUG
+  assert((!Ops.empty() || Ops.size() < 2) && "Must have at least 2 operands");
+  LLT Ty = getMRI()->getType(Ops[0]);
+  for (auto Reg : Ops)
+    assert(getMRI()->getType(Reg) == Ty && "type mismatch in input list");
+#endif
+  if (getMRI()->getType(Ops[0]).getSizeInBits() ==
+      getMRI()->getType(Res).getElementType().getSizeInBits())
+    return buildBuildVector(Res, Ops);
+  MachineInstrBuilder MIB = buildInstr(TargetOpcode::G_BUILD_VECTOR_TRUNC);
+  MIB.addDef(Res);
+  for (auto Op : Ops)
+    MIB.addUse(Op);
+  return MIB;
+}
+
+MachineInstrBuilder
+MachineIRBuilderBase::buildConcatVectors(unsigned Res, ArrayRef<unsigned> Ops) {
+  #ifndef NDEBUG
+  assert((!Ops.empty() || Ops.size() < 2) && "Must have at least 2 operands");
+  LLT Ty = getMRI()->getType(Ops[0]);
+  for (auto Reg : Ops) {
+    assert(getMRI()->getType(Reg).isVector() && "expected vector operand");
+    assert(getMRI()->getType(Reg) == Ty && "type mismatch in input list");
+  }
+  assert(Ops.size() * Ty.getSizeInBits() ==
+             getMRI()->getType(Res).getSizeInBits() &&
+         "input vectors do not exactly cover the outpur vector register");
+  #endif
+  MachineInstrBuilder MIB = buildInstr(TargetOpcode::G_CONCAT_VECTORS);
+  MIB.addDef(Res);
+  for (auto Op : Ops)
+    MIB.addUse(Op);
+  return MIB;
+}
+
 MachineInstrBuilder MachineIRBuilderBase::buildInsert(unsigned Res,
                                                       unsigned Src, unsigned Op,
                                                       unsigned Index) {
