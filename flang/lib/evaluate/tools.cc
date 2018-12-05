@@ -347,7 +347,7 @@ std::optional<Expr<SomeType>> Negation(
             messages.Say("BOZ literal cannot be negated"_err_en_US);
             return NoExpr();
           },
-          [&](Expr<SomeInteger> &&x) { return Package(std::move(x)); },
+          [&](Expr<SomeInteger> &&x) { return Package(-std::move(x)); },
           [&](Expr<SomeReal> &&x) { return Package(-std::move(x)); },
           [&](Expr<SomeComplex> &&x) { return Package(-std::move(x)); },
           [&](Expr<SomeCharacter> &&x) {
