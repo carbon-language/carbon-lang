@@ -190,7 +190,7 @@ public:
   unsigned FrameConstructionID;
 
   /// Return the number of candidates for this \p OutlinedFunction.
-  unsigned getOccurrenceCount() const { return OccurrenceCount; }
+  unsigned getOccurrenceCount() const { return Candidates.size(); }
 
   /// Decrement the occurrence count of this OutlinedFunction and return the
   /// new count.

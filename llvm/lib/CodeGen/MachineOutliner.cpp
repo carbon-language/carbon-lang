@@ -1414,78 +1414,83 @@ bool MachineOutliner::outline(
   // Number to append to the current outlined function.
   unsigned OutlinedFunctionNum = 0;
 
-  // Replace the candidates with calls to their respective outlined functions.
-  for (const std::shared_ptr<Candidate> &Cptr : CandidateList) {
-    Candidate &C = *Cptr;
-    // Was the candidate removed during pruneOverlaps?
-    if (!C.InCandidateList)
-      continue;
+  // Sort by benefit. The most beneficial functions should be outlined first.
+  std::stable_sort(
+      FunctionList.begin(), FunctionList.end(),
+      [](const OutlinedFunction &LHS, const OutlinedFunction &RHS) {
+        return LHS.getBenefit() > RHS.getBenefit();
+      });
 
-    // If not, then look at its OutlinedFunction.
-    OutlinedFunction &OF = FunctionList[C.FunctionIdx];
+  // Walk over each function, outlining them as we go along. Functions are
+  // outlined greedily, based off the sort above.
+  for (OutlinedFunction &OF : FunctionList) {
+    // If we outlined something that overlapped with a candidate in a previous
+    // step, then we can't outline from it.
+    erase_if(OF.Candidates,
+             [](std::shared_ptr<Candidate> &C) { return !C->InCandidateList; });
 
-    // Was its OutlinedFunction made unbeneficial during pruneOverlaps?
+    // If we made it unbeneficial to outline this function, skip it.
     if (OF.getBenefit() < 1)
       continue;
 
-    // Does this candidate have a function yet?
-    if (!OF.MF) {
-      OF.MF = createOutlinedFunction(M, OF, Mapper, OutlinedFunctionNum);
-      emitOutlinedFunctionRemark(OF);
-      FunctionsCreated++;
-      OutlinedFunctionNum++; // Created a function, move to the next name.
-    }
-
+    // It's beneficial. Create the function and outline its sequence's
+    // occurrences.
+    OF.MF = createOutlinedFunction(M, OF, Mapper, OutlinedFunctionNum);
+    emitOutlinedFunctionRemark(OF);
+    FunctionsCreated++;
+    OutlinedFunctionNum++; // Created a function, move to the next name.
     MachineFunction *MF = OF.MF;
-    MachineBasicBlock &MBB = *C.getMBB();
-    MachineBasicBlock::iterator StartIt = C.front();
-    MachineBasicBlock::iterator EndIt = C.back();
-    assert(StartIt != C.getMBB()->end() && "StartIt out of bounds!");
-    assert(EndIt != C.getMBB()->end() && "EndIt out of bounds!");
-
     const TargetSubtargetInfo &STI = MF->getSubtarget();
     const TargetInstrInfo &TII = *STI.getInstrInfo();
 
-    // Insert a call to the new function and erase the old sequence.
-    auto CallInst = TII.insertOutlinedCall(M, MBB, StartIt, *OF.MF, C);
+    // Replace occurrences of the sequence with calls to the new function.
+    for (std::shared_ptr<Candidate> &Cptr : OF.Candidates) {
+      Candidate &C = *Cptr;
+      MachineBasicBlock &MBB = *C.getMBB();
+      MachineBasicBlock::iterator StartIt = C.front();
+      MachineBasicBlock::iterator EndIt = C.back();
 
-    // If the caller tracks liveness, then we need to make sure that anything
-    // we outline doesn't break liveness assumptions.
-    // The outlined functions themselves currently don't track liveness, but
-    // we should make sure that the ranges we yank things out of aren't
-    // wrong.
-    if (MBB.getParent()->getProperties().hasProperty(
-            MachineFunctionProperties::Property::TracksLiveness)) {
-      // Helper lambda for adding implicit def operands to the call instruction.
-      auto CopyDefs = [&CallInst](MachineInstr &MI) {
-        for (MachineOperand &MOP : MI.operands()) {
-          // Skip over anything that isn't a register.
-          if (!MOP.isReg())
-            continue;
+      // Insert the call.
+      auto CallInst = TII.insertOutlinedCall(M, MBB, StartIt, *MF, C);
 
-          // If it's a def, add it to the call instruction.
-          if (MOP.isDef())
-            CallInst->addOperand(
-                MachineOperand::CreateReg(MOP.getReg(), true, /* isDef = true */
-                                          true /* isImp = true */));
-        }
-      };
+      // If the caller tracks liveness, then we need to make sure that
+      // anything we outline doesn't break liveness assumptions. The outlined
+      // functions themselves currently don't track liveness, but we should
+      // make sure that the ranges we yank things out of aren't wrong.
+      if (MBB.getParent()->getProperties().hasProperty(
+              MachineFunctionProperties::Property::TracksLiveness)) {
+        // Helper lambda for adding implicit def operands to the call
+        // instruction.
+        auto CopyDefs = [&CallInst](MachineInstr &MI) {
+          for (MachineOperand &MOP : MI.operands()) {
+            // Skip over anything that isn't a register.
+            if (!MOP.isReg())
+              continue;
 
-      // Copy over the defs in the outlined range.
-      // First inst in outlined range <-- Anything that's defined in this
-      // ...                           .. range has to be added as an implicit
-      // Last inst in outlined range  <-- def to the call instruction.
-      std::for_each(CallInst, std::next(EndIt), CopyDefs);
+            // If it's a def, add it to the call instruction.
+            if (MOP.isDef())
+              CallInst->addOperand(MachineOperand::CreateReg(
+                  MOP.getReg(), true, /* isDef = true */
+                  true /* isImp = true */));
+          }
+        };
+        // Copy over the defs in the outlined range.
+        // First inst in outlined range <-- Anything that's defined in this
+        // ...                           .. range has to be added as an
+        // implicit Last inst in outlined range  <-- def to the call
+        // instruction.
+        std::for_each(CallInst, std::next(EndIt), CopyDefs);
+      }
+
+      // Erase from the point after where the call was inserted up to, and
+      // including, the final instruction in the sequence.
+      // Erase needs one past the end, so we need std::next there too.
+      MBB.erase(std::next(StartIt), std::next(EndIt));
+      OutlinedSomething = true;
+
+      // Statistics.
+      NumOutlined++;
     }
-
-    // Erase from the point after where the call was inserted up to, and
-    // including, the final instruction in the sequence.
-    // Erase needs one past the end, so we need std::next there too.
-    MBB.erase(std::next(StartIt), std::next(EndIt));
-    OutlinedSomething = true;
-
-    // Statistics.
-    NumOutlined++;
   }
 
   LLVM_DEBUG(dbgs() << "OutlinedSomething = " << OutlinedSomething << "\n";);
