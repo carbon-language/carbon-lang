@@ -16660,29 +16660,33 @@ static SDValue narrowExtractedVectorBinOp(SDNode *Extract, SelectionDAG &DAG) {
   if (!ISD::isBinaryOp(BinOp.getNode()))
     return SDValue();
 
-  // The binop must be a vector type, so we can chop it in half.
+  // The binop must be a vector type, so we can extract some fraction of it.
   EVT WideBVT = BinOp.getValueType();
   if (!WideBVT.isVector())
     return SDValue();
 
   EVT VT = Extract->getValueType(0);
-  unsigned NumElems = VT.getVectorNumElements();
   unsigned ExtractIndex = ExtractIndexC->getZExtValue();
-  assert(ExtractIndex % NumElems == 0 &&
+  assert(ExtractIndex % VT.getVectorNumElements() == 0 &&
          "Extract index is not a multiple of the vector length.");
-  EVT SrcVT = Extract->getOperand(0).getValueType();
 
   // Bail out if this is not a proper multiple width extraction.
-  unsigned NumSrcElems = SrcVT.getVectorNumElements();
-  if (NumSrcElems % NumElems != 0)
+  unsigned WideWidth = WideBVT.getSizeInBits();
+  unsigned NarrowWidth = VT.getSizeInBits();
+  if (WideWidth % NarrowWidth != 0)
+    return SDValue();
+
+  // Bail out if we are extracting a fraction of a single operation. This can
+  // occur because we potentially looked through a bitcast of the binop.
+  unsigned NarrowingRatio = WideWidth / NarrowWidth;
+  unsigned WideNumElts = WideBVT.getVectorNumElements();
+  if (WideNumElts % NarrowingRatio != 0)
     return SDValue();
 
   // Bail out if the target does not support a narrower version of the binop.
-  unsigned NarrowingRatio = NumSrcElems / NumElems;
-  unsigned BOpcode = BinOp.getOpcode();
-  unsigned WideNumElts = WideBVT.getVectorNumElements();
   EVT NarrowBVT = EVT::getVectorVT(*DAG.getContext(), WideBVT.getScalarType(),
                                    WideNumElts / NarrowingRatio);
+  unsigned BOpcode = BinOp.getOpcode();
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   if (!TLI.isOperationLegalOrCustomOrPromote(BOpcode, NarrowBVT))
     return SDValue();
@@ -16691,7 +16695,7 @@ static SDValue narrowExtractedVectorBinOp(SDNode *Extract, SelectionDAG &DAG) {
   // for concat ops. The narrow binop alone makes this transform profitable.
   // We can't just reuse the original extract index operand because we may have
   // bitcasted.
-  unsigned ConcatOpNum = ExtractIndex / NumElems;
+  unsigned ConcatOpNum = ExtractIndex / VT.getVectorNumElements();
   unsigned ExtBOIdx = ConcatOpNum * NarrowBVT.getVectorNumElements();
   EVT ExtBOIdxVT = Extract->getOperand(1).getValueType();
   if (TLI.isExtractSubvectorCheap(NarrowBVT, WideBVT, ExtBOIdx) &&
