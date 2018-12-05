@@ -182,7 +182,7 @@ public:
     if (empty()) {
       return std::nullopt;
     } else if constexpr (std::is_same_v<bitsetType, common::BitSet<BITS>>) {
-      return {static_cast<enumerationType>(*bitset_.LeastElement())};
+      return {static_cast<enumerationType>(bitset_.LeastElement().value())};
     } else {
       // std::bitset: just iterate
       for (std::size_t j{0}; j < BITS; ++j) {
