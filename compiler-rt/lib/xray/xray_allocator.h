@@ -63,7 +63,7 @@ template <class T> T *allocate() XRAY_NEVER_INSTRUMENT {
 #else
   uptr B = internal_mmap(NULL, RoundedSize, PROT_READ | PROT_WRITE,
                          MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-  int ErrNo;
+  int ErrNo = 0;
   if (UNLIKELY(internal_iserror(B, &ErrNo))) {
     if (Verbosity())
       Report(
@@ -113,7 +113,7 @@ T *allocateBuffer(size_t S) XRAY_NEVER_INSTRUMENT {
 #else
   uptr B = internal_mmap(NULL, RoundedSize, PROT_READ | PROT_WRITE,
                          MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-  int ErrNo;
+  int ErrNo = 0;
   if (UNLIKELY(internal_iserror(B, &ErrNo))) {
     if (Verbosity())
       Report(
@@ -171,7 +171,7 @@ template <size_t N> struct Allocator {
   };
 
 private:
-  const size_t MaxMemory{0};
+  size_t MaxMemory{0};
   unsigned char *BackingStore = nullptr;
   unsigned char *AlignedNextBlock = nullptr;
   size_t AllocatedBlocks = 0;
@@ -223,7 +223,43 @@ private:
 
 public:
   explicit Allocator(size_t M) XRAY_NEVER_INSTRUMENT
-      : MaxMemory(RoundUpTo(M, kCacheLineSize)) {}
+      : MaxMemory(RoundUpTo(M, kCacheLineSize)),
+        BackingStore(nullptr),
+        AlignedNextBlock(nullptr),
+        AllocatedBlocks(0),
+        Mutex() {}
+
+  Allocator(const Allocator &) = delete;
+  Allocator &operator=(const Allocator &) = delete;
+
+  Allocator(Allocator &&O) XRAY_NEVER_INSTRUMENT {
+    SpinMutexLock L0(&Mutex);
+    SpinMutexLock L1(&O.Mutex);
+    MaxMemory = O.MaxMemory;
+    O.MaxMemory = 0;
+    BackingStore = O.BackingStore;
+    O.BackingStore = nullptr;
+    AlignedNextBlock = O.AlignedNextBlock;
+    O.AlignedNextBlock = nullptr;
+    AllocatedBlocks = O.AllocatedBlocks;
+    O.AllocatedBlocks = 0;
+  }
+
+  Allocator &operator=(Allocator &&O) XRAY_NEVER_INSTRUMENT {
+    SpinMutexLock L0(&Mutex);
+    SpinMutexLock L1(&O.Mutex);
+    MaxMemory = O.MaxMemory;
+    O.MaxMemory = 0;
+    if (BackingStore != nullptr)
+      deallocate(BackingStore, MaxMemory);
+    BackingStore = O.BackingStore;
+    O.BackingStore = nullptr;
+    AlignedNextBlock = O.AlignedNextBlock;
+    O.AlignedNextBlock = nullptr;
+    AllocatedBlocks = O.AllocatedBlocks;
+    O.AllocatedBlocks = 0;
+    return *this;
+  }
 
   Block Allocate() XRAY_NEVER_INSTRUMENT { return {Alloc()}; }
 
