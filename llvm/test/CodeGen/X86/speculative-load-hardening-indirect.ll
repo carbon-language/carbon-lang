@@ -248,28 +248,32 @@ define i32 @test_indirectbr(i8** %ptr) nounwind {
 ; X64-NEXT:    movq (%rdi), %rdx
 ; X64-NEXT:    orq %rcx, %rdx
 ; X64-NEXT:    jmpq *%rdx
-; X64-NEXT:  .LBB4_1: # %bb0
+; X64-NEXT:  .LBB4_1: # Block address taken
+; X64-NEXT:    # %bb0
 ; X64-NEXT:    cmpq $.LBB4_1, %rdx
 ; X64-NEXT:    cmovneq %rax, %rcx
 ; X64-NEXT:    shlq $47, %rcx
 ; X64-NEXT:    movl $2, %eax
 ; X64-NEXT:    orq %rcx, %rsp
 ; X64-NEXT:    retq
-; X64-NEXT:  .LBB4_3: # %bb2
+; X64-NEXT:  .LBB4_3: # Block address taken
+; X64-NEXT:    # %bb2
 ; X64-NEXT:    cmpq $.LBB4_3, %rdx
 ; X64-NEXT:    cmovneq %rax, %rcx
 ; X64-NEXT:    shlq $47, %rcx
 ; X64-NEXT:    movl $13, %eax
 ; X64-NEXT:    orq %rcx, %rsp
 ; X64-NEXT:    retq
-; X64-NEXT:  .LBB4_4: # %bb3
+; X64-NEXT:  .LBB4_4: # Block address taken
+; X64-NEXT:    # %bb3
 ; X64-NEXT:    cmpq $.LBB4_4, %rdx
 ; X64-NEXT:    cmovneq %rax, %rcx
 ; X64-NEXT:    shlq $47, %rcx
 ; X64-NEXT:    movl $42, %eax
 ; X64-NEXT:    orq %rcx, %rsp
 ; X64-NEXT:    retq
-; X64-NEXT:  .LBB4_2: # %bb1
+; X64-NEXT:  .LBB4_2: # Block address taken
+; X64-NEXT:    # %bb1
 ; X64-NEXT:    cmpq $.LBB4_2, %rdx
 ; X64-NEXT:    cmovneq %rax, %rcx
 ; X64-NEXT:    shlq $47, %rcx
@@ -285,7 +289,8 @@ define i32 @test_indirectbr(i8** %ptr) nounwind {
 ; X64-PIC-NEXT:    movq (%rdi), %rdx
 ; X64-PIC-NEXT:    orq %rcx, %rdx
 ; X64-PIC-NEXT:    jmpq *%rdx
-; X64-PIC-NEXT:  .LBB4_1: # %bb0
+; X64-PIC-NEXT:  .LBB4_1: # Block address taken
+; X64-PIC-NEXT:    # %bb0
 ; X64-PIC-NEXT:    leaq .LBB4_1(%rip), %rsi
 ; X64-PIC-NEXT:    cmpq %rsi, %rdx
 ; X64-PIC-NEXT:    cmovneq %rax, %rcx
@@ -293,7 +298,8 @@ define i32 @test_indirectbr(i8** %ptr) nounwind {
 ; X64-PIC-NEXT:    movl $2, %eax
 ; X64-PIC-NEXT:    orq %rcx, %rsp
 ; X64-PIC-NEXT:    retq
-; X64-PIC-NEXT:  .LBB4_3: # %bb2
+; X64-PIC-NEXT:  .LBB4_3: # Block address taken
+; X64-PIC-NEXT:    # %bb2
 ; X64-PIC-NEXT:    leaq .LBB4_3(%rip), %rsi
 ; X64-PIC-NEXT:    cmpq %rsi, %rdx
 ; X64-PIC-NEXT:    cmovneq %rax, %rcx
@@ -301,7 +307,8 @@ define i32 @test_indirectbr(i8** %ptr) nounwind {
 ; X64-PIC-NEXT:    movl $13, %eax
 ; X64-PIC-NEXT:    orq %rcx, %rsp
 ; X64-PIC-NEXT:    retq
-; X64-PIC-NEXT:  .LBB4_4: # %bb3
+; X64-PIC-NEXT:  .LBB4_4: # Block address taken
+; X64-PIC-NEXT:    # %bb3
 ; X64-PIC-NEXT:    leaq .LBB4_4(%rip), %rsi
 ; X64-PIC-NEXT:    cmpq %rsi, %rdx
 ; X64-PIC-NEXT:    cmovneq %rax, %rcx
@@ -309,7 +316,8 @@ define i32 @test_indirectbr(i8** %ptr) nounwind {
 ; X64-PIC-NEXT:    movl $42, %eax
 ; X64-PIC-NEXT:    orq %rcx, %rsp
 ; X64-PIC-NEXT:    retq
-; X64-PIC-NEXT:  .LBB4_2: # %bb1
+; X64-PIC-NEXT:  .LBB4_2: # Block address taken
+; X64-PIC-NEXT:    # %bb1
 ; X64-PIC-NEXT:    leaq .LBB4_2(%rip), %rsi
 ; X64-PIC-NEXT:    cmpq %rsi, %rdx
 ; X64-PIC-NEXT:    cmovneq %rax, %rcx
@@ -507,7 +515,8 @@ define i32 @test_switch_jumptable(i32 %idx) nounwind {
 ; X64-NEXT:    movq .LJTI6_0(,%rdx,8), %rdx
 ; X64-NEXT:    orq %rcx, %rdx
 ; X64-NEXT:    jmpq *%rdx
-; X64-NEXT:  .LBB6_3: # %bb1
+; X64-NEXT:  .LBB6_3: # Block address taken
+; X64-NEXT:    # %bb1
 ; X64-NEXT:    cmpq $.LBB6_3, %rdx
 ; X64-NEXT:    cmovneq %rax, %rcx
 ; X64-NEXT:    shlq $47, %rcx
@@ -520,21 +529,24 @@ define i32 @test_switch_jumptable(i32 %idx) nounwind {
 ; X64-NEXT:    movl $2, %eax
 ; X64-NEXT:    orq %rcx, %rsp
 ; X64-NEXT:    retq
-; X64-NEXT:  .LBB6_4: # %bb2
+; X64-NEXT:  .LBB6_4: # Block address taken
+; X64-NEXT:    # %bb2
 ; X64-NEXT:    cmpq $.LBB6_4, %rdx
 ; X64-NEXT:    cmovneq %rax, %rcx
 ; X64-NEXT:    shlq $47, %rcx
 ; X64-NEXT:    movl $13, %eax
 ; X64-NEXT:    orq %rcx, %rsp
 ; X64-NEXT:    retq
-; X64-NEXT:  .LBB6_5: # %bb3
+; X64-NEXT:  .LBB6_5: # Block address taken
+; X64-NEXT:    # %bb3
 ; X64-NEXT:    cmpq $.LBB6_5, %rdx
 ; X64-NEXT:    cmovneq %rax, %rcx
 ; X64-NEXT:    shlq $47, %rcx
 ; X64-NEXT:    movl $42, %eax
 ; X64-NEXT:    orq %rcx, %rsp
 ; X64-NEXT:    retq
-; X64-NEXT:  .LBB6_6: # %bb5
+; X64-NEXT:  .LBB6_6: # Block address taken
+; X64-NEXT:    # %bb5
 ; X64-NEXT:    cmpq $.LBB6_6, %rdx
 ; X64-NEXT:    cmovneq %rax, %rcx
 ; X64-NEXT:    shlq $47, %rcx
@@ -557,7 +569,8 @@ define i32 @test_switch_jumptable(i32 %idx) nounwind {
 ; X64-PIC-NEXT:    addq %rsi, %rdx
 ; X64-PIC-NEXT:    orq %rcx, %rdx
 ; X64-PIC-NEXT:    jmpq *%rdx
-; X64-PIC-NEXT:  .LBB6_3: # %bb1
+; X64-PIC-NEXT:  .LBB6_3: # Block address taken
+; X64-PIC-NEXT:    # %bb1
 ; X64-PIC-NEXT:    leaq .LBB6_3(%rip), %rsi
 ; X64-PIC-NEXT:    cmpq %rsi, %rdx
 ; X64-PIC-NEXT:    cmovneq %rax, %rcx
@@ -571,7 +584,8 @@ define i32 @test_switch_jumptable(i32 %idx) nounwind {
 ; X64-PIC-NEXT:    movl $2, %eax
 ; X64-PIC-NEXT:    orq %rcx, %rsp
 ; X64-PIC-NEXT:    retq
-; X64-PIC-NEXT:  .LBB6_4: # %bb2
+; X64-PIC-NEXT:  .LBB6_4: # Block address taken
+; X64-PIC-NEXT:    # %bb2
 ; X64-PIC-NEXT:    leaq .LBB6_4(%rip), %rsi
 ; X64-PIC-NEXT:    cmpq %rsi, %rdx
 ; X64-PIC-NEXT:    cmovneq %rax, %rcx
@@ -579,7 +593,8 @@ define i32 @test_switch_jumptable(i32 %idx) nounwind {
 ; X64-PIC-NEXT:    movl $13, %eax
 ; X64-PIC-NEXT:    orq %rcx, %rsp
 ; X64-PIC-NEXT:    retq
-; X64-PIC-NEXT:  .LBB6_5: # %bb3
+; X64-PIC-NEXT:  .LBB6_5: # Block address taken
+; X64-PIC-NEXT:    # %bb3
 ; X64-PIC-NEXT:    leaq .LBB6_5(%rip), %rsi
 ; X64-PIC-NEXT:    cmpq %rsi, %rdx
 ; X64-PIC-NEXT:    cmovneq %rax, %rcx
@@ -587,7 +602,8 @@ define i32 @test_switch_jumptable(i32 %idx) nounwind {
 ; X64-PIC-NEXT:    movl $42, %eax
 ; X64-PIC-NEXT:    orq %rcx, %rsp
 ; X64-PIC-NEXT:    retq
-; X64-PIC-NEXT:  .LBB6_6: # %bb5
+; X64-PIC-NEXT:  .LBB6_6: # Block address taken
+; X64-PIC-NEXT:    # %bb5
 ; X64-PIC-NEXT:    leaq .LBB6_6(%rip), %rsi
 ; X64-PIC-NEXT:    cmpq %rsi, %rdx
 ; X64-PIC-NEXT:    cmovneq %rax, %rcx
@@ -697,25 +713,29 @@ define i32 @test_switch_jumptable_fallthrough(i32 %idx, i32* %a.ptr, i32* %b.ptr
 ; X64-NEXT:    movl (%rsi), %eax
 ; X64-NEXT:    orl %r9d, %eax
 ; X64-NEXT:    movq $.LBB7_3, %rsi
-; X64-NEXT:  .LBB7_3: # %bb1
+; X64-NEXT:  .LBB7_3: # Block address taken
+; X64-NEXT:    # %bb1
 ; X64-NEXT:    cmpq $.LBB7_3, %rsi
 ; X64-NEXT:    cmovneq %r10, %r9
 ; X64-NEXT:    addl (%rdx), %eax
 ; X64-NEXT:    orl %r9d, %eax
 ; X64-NEXT:    movq $.LBB7_4, %rsi
-; X64-NEXT:  .LBB7_4: # %bb2
+; X64-NEXT:  .LBB7_4: # Block address taken
+; X64-NEXT:    # %bb2
 ; X64-NEXT:    cmpq $.LBB7_4, %rsi
 ; X64-NEXT:    cmovneq %r10, %r9
 ; X64-NEXT:    addl (%rcx), %eax
 ; X64-NEXT:    orl %r9d, %eax
 ; X64-NEXT:    movq $.LBB7_5, %rsi
-; X64-NEXT:  .LBB7_5: # %bb3
+; X64-NEXT:  .LBB7_5: # Block address taken
+; X64-NEXT:    # %bb3
 ; X64-NEXT:    cmpq $.LBB7_5, %rsi
 ; X64-NEXT:    cmovneq %r10, %r9
 ; X64-NEXT:    addl (%r8), %eax
 ; X64-NEXT:    orl %r9d, %eax
 ; X64-NEXT:    movq $.LBB7_6, %rsi
-; X64-NEXT:  .LBB7_6: # %bb4
+; X64-NEXT:  .LBB7_6: # Block address taken
+; X64-NEXT:    # %bb4
 ; X64-NEXT:    cmpq $.LBB7_6, %rsi
 ; X64-NEXT:    cmovneq %r10, %r9
 ; X64-NEXT:    shlq $47, %r9
@@ -743,28 +763,32 @@ define i32 @test_switch_jumptable_fallthrough(i32 %idx, i32* %a.ptr, i32* %b.ptr
 ; X64-PIC-NEXT:    movl (%rsi), %eax
 ; X64-PIC-NEXT:    orl %r9d, %eax
 ; X64-PIC-NEXT:    leaq .LBB7_3(%rip), %rsi
-; X64-PIC-NEXT:  .LBB7_3: # %bb1
+; X64-PIC-NEXT:  .LBB7_3: # Block address taken
+; X64-PIC-NEXT:    # %bb1
 ; X64-PIC-NEXT:    leaq .LBB7_3(%rip), %rdi
 ; X64-PIC-NEXT:    cmpq %rdi, %rsi
 ; X64-PIC-NEXT:    cmovneq %r10, %r9
 ; X64-PIC-NEXT:    addl (%rdx), %eax
 ; X64-PIC-NEXT:    orl %r9d, %eax
 ; X64-PIC-NEXT:    leaq .LBB7_4(%rip), %rsi
-; X64-PIC-NEXT:  .LBB7_4: # %bb2
+; X64-PIC-NEXT:  .LBB7_4: # Block address taken
+; X64-PIC-NEXT:    # %bb2
 ; X64-PIC-NEXT:    leaq .LBB7_4(%rip), %rdx
 ; X64-PIC-NEXT:    cmpq %rdx, %rsi
 ; X64-PIC-NEXT:    cmovneq %r10, %r9
 ; X64-PIC-NEXT:    addl (%rcx), %eax
 ; X64-PIC-NEXT:    orl %r9d, %eax
 ; X64-PIC-NEXT:    leaq .LBB7_5(%rip), %rsi
-; X64-PIC-NEXT:  .LBB7_5: # %bb3
+; X64-PIC-NEXT:  .LBB7_5: # Block address taken
+; X64-PIC-NEXT:    # %bb3
 ; X64-PIC-NEXT:    leaq .LBB7_5(%rip), %rcx
 ; X64-PIC-NEXT:    cmpq %rcx, %rsi
 ; X64-PIC-NEXT:    cmovneq %r10, %r9
 ; X64-PIC-NEXT:    addl (%r8), %eax
 ; X64-PIC-NEXT:    orl %r9d, %eax
 ; X64-PIC-NEXT:    leaq .LBB7_6(%rip), %rsi
-; X64-PIC-NEXT:  .LBB7_6: # %bb4
+; X64-PIC-NEXT:  .LBB7_6: # Block address taken
+; X64-PIC-NEXT:    # %bb4
 ; X64-PIC-NEXT:    leaq .LBB7_6(%rip), %rcx
 ; X64-PIC-NEXT:    cmpq %rcx, %rsi
 ; X64-PIC-NEXT:    cmovneq %r10, %r9
