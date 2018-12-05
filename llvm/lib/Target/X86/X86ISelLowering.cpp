@@ -24765,6 +24765,7 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
   unsigned Opcode = Op.getOpcode();
   unsigned EltSizeInBits = VT.getScalarSizeInBits();
 
+  // AVX512 implicitly uses modulo rotation amounts.
   if (Subtarget.hasAVX512() && 32 <= EltSizeInBits) {
     // Attempt to rotate by immediate.
     APInt UndefElts;
@@ -24788,6 +24789,7 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
 
   // XOP has 128-bit vector variable + immediate rotates.
   // +ve/-ve Amt = rotate left/right - just need to handle ISD::ROTL.
+  // XOP implicitly uses modulo rotation amounts.
   if (Subtarget.hasXOP()) {
     if (VT.is256BitVector())
       return split256IntArith(Op, DAG);
@@ -24796,8 +24798,10 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
     // Attempt to rotate by immediate.
     if (auto *BVAmt = dyn_cast<BuildVectorSDNode>(Amt)) {
       if (auto *RotateConst = BVAmt->getConstantSplatNode()) {
-        uint64_t RotateAmt = RotateConst->getAPIntValue().getZExtValue();
-        assert(RotateAmt < EltSizeInBits && "Rotation out of range");
+        uint64_t RotateAmt = RotateConst->getAPIntValue().urem(EltSizeInBits);
+        if (RotateAmt == 0)
+          return R;
+
         return DAG.getNode(X86ISD::VROTLI, DL, VT, R,
                            DAG.getConstant(RotateAmt, DL, MVT::i8));
       }
@@ -24820,8 +24824,7 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
   // TODO - legalizers should be able to handle this.
   if (auto *BVAmt = dyn_cast<BuildVectorSDNode>(Amt)) {
     if (auto *RotateConst = BVAmt->getConstantSplatNode()) {
-      uint64_t RotateAmt = RotateConst->getAPIntValue().getZExtValue();
-      assert(RotateAmt < EltSizeInBits && "Rotation out of range");
+      uint64_t RotateAmt = RotateConst->getAPIntValue().urem(EltSizeInBits);
       if (RotateAmt == 0)
         return R;
 
@@ -24831,6 +24834,8 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
       return DAG.getNode(ISD::OR, DL, VT, SHL, SRL);
     }
   }
+
+  // TODO: ISD::ROT* uses modulo rotate amounts, we need to handle this.
 
   // Rotate by splat - expand back to shifts.
   // TODO - legalizers should be able to handle this.
@@ -24856,6 +24861,7 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
       return DAG.getNode(ISD::OR, DL, VT, SHL, SRL);
     }
 
+    // We don't need ModuloAmt here as we just peek at individual bits.
     MVT ExtVT = MVT::getVectorVT(MVT::i16, VT.getVectorNumElements() / 2);
 
     auto SignBitSelect = [&](MVT SelVT, SDValue Sel, SDValue V0, SDValue V1) {
@@ -24910,6 +24916,8 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
         DAG.getNode(ISD::SRL, DL, VT, R, DAG.getConstant(7, DL, VT)));
     return SignBitSelect(VT, Amt, M, R);
   }
+
+  // TODO: We need explicit modulo rotation amounts for everything from here on.
 
   bool ConstantAmt = ISD::isBuildVectorOfConstantSDNodes(Amt.getNode());
   bool LegalVarShifts = SupportedVectorVarShift(VT, Subtarget, ISD::SHL) &&
