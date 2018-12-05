@@ -30,6 +30,7 @@ namespace llvm {
 class MachineFunction;
 class MachineInstr;
 class TargetInstrInfo;
+class GISelChangeObserver;
 
 /// Class which stores all the state required in a MachineIRBuilder.
 /// Since MachineIRBuilders will only store state in this object, it allows
@@ -50,7 +51,7 @@ struct MachineIRBuilderState {
   MachineBasicBlock::iterator II;
   /// @}
 
-  std::function<void(MachineInstr *)> InsertedInstr;
+  GISelChangeObserver *Observer;
 };
 
 /// Helper class to build MachineInstr.
@@ -61,6 +62,7 @@ class MachineIRBuilderBase {
 
   MachineIRBuilderState State;
   void validateTruncExt(unsigned Dst, unsigned Src, bool IsExtend);
+  void recordInsertion(MachineInstr *MI) const;
 
 protected:
   unsigned getDestFromArg(unsigned Reg) { return Reg; }
@@ -151,12 +153,8 @@ public:
   void setInstr(MachineInstr &MI);
   /// @}
 
-  /// \name Control where instructions we create are recorded (typically for
-  /// visiting again later during legalization).
-  /// @{
-  void recordInsertion(MachineInstr *InsertedInstr) const;
-  void recordInsertions(std::function<void(MachineInstr *)> InsertedInstr);
-  void stopRecordingInsertions();
+  void setChangeObserver(GISelChangeObserver &Observer);
+  void stopObservingChanges();
   /// @}
 
   /// Set the debug location to \p DL for all the next build instructions.

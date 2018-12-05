@@ -10,6 +10,7 @@
 /// This file implements the MachineIRBuidler class.
 //===----------------------------------------------------------------------===//
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
+#include "llvm/CodeGen/GlobalISel/GISelChangeObserver.h"
 
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -29,7 +30,7 @@ void MachineIRBuilderBase::setMF(MachineFunction &MF) {
   State.TII = MF.getSubtarget().getInstrInfo();
   State.DL = DebugLoc();
   State.II = MachineBasicBlock::iterator();
-  State.InsertedInstr = nullptr;
+  State.Observer = nullptr;
 }
 
 void MachineIRBuilderBase::setMBB(MachineBasicBlock &MBB) {
@@ -54,18 +55,15 @@ void MachineIRBuilderBase::setInsertPt(MachineBasicBlock &MBB,
 }
 
 void MachineIRBuilderBase::recordInsertion(MachineInstr *InsertedInstr) const {
-  if (State.InsertedInstr)
-    State.InsertedInstr(InsertedInstr);
+  if (State.Observer)
+    State.Observer->createdInstr(*InsertedInstr);
 }
 
-void MachineIRBuilderBase::recordInsertions(
-    std::function<void(MachineInstr *)> Inserted) {
-  State.InsertedInstr = std::move(Inserted);
+void MachineIRBuilderBase::setChangeObserver(GISelChangeObserver &Observer) {
+  State.Observer = &Observer;
 }
 
-void MachineIRBuilderBase::stopRecordingInsertions() {
-  State.InsertedInstr = nullptr;
-}
+void MachineIRBuilderBase::stopObservingChanges() { State.Observer = nullptr; }
 
 //------------------------------------------------------------------------------
 // Build instruction variants.
