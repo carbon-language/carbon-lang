@@ -885,8 +885,6 @@ struct MachineOutliner : public ModulePass {
   ///
   /// \param ST A suffix tree to query.
   /// \param Mapper Contains outlining mapping information.
-  /// \param[out] CandidateList Filled with candidates representing each
-  /// beneficial substring.
   /// \param[out] FunctionList Filled with a list of \p OutlinedFunctions
   /// each type of candidate.
   ///
@@ -894,20 +892,15 @@ struct MachineOutliner : public ModulePass {
   unsigned
   findCandidates(SuffixTree &ST,
                  InstructionMapper &Mapper,
-                 std::vector<std::shared_ptr<Candidate>> &CandidateList,
                  std::vector<OutlinedFunction> &FunctionList);
 
-  /// Replace the sequences of instructions represented by the
-  /// \p Candidates in \p CandidateList with calls to \p MachineFunctions
-  /// described in \p FunctionList.
+  /// Replace the sequences of instructions represented by \p OutlinedFunctions
+  /// with calls to functions.
   ///
   /// \param M The module we are outlining from.
-  /// \param CandidateList A list of candidates to be outlined.
   /// \param FunctionList A list of functions to be inserted into the module.
   /// \param Mapper Contains the instruction mappings for the module.
-  bool outline(Module &M,
-               const ArrayRef<std::shared_ptr<Candidate>> &CandidateList,
-               std::vector<OutlinedFunction> &FunctionList,
+  bool outline(Module &M, std::vector<OutlinedFunction> &FunctionList,
                InstructionMapper &Mapper);
 
   /// Creates a function for \p OF and inserts it into the module.
@@ -915,21 +908,19 @@ struct MachineOutliner : public ModulePass {
                                           InstructionMapper &Mapper,
                                           unsigned Name);
 
-  /// Find potential outlining candidates and store them in \p CandidateList.
+  /// Find potential outlining candidates.
   ///
   /// For each type of potential candidate, also build an \p OutlinedFunction
   /// struct containing the information to build the function for that
   /// candidate.
   ///
-  /// \param[out] CandidateList Filled with outlining candidates for the module.
   /// \param[out] FunctionList Filled with functions corresponding to each type
   /// of \p Candidate.
   /// \param Mapper Contains the instruction mappings for the module.
   ///
   /// \returns The length of the longest candidate found. 0 if there are none.
   unsigned
-  buildCandidateList(std::vector<std::shared_ptr<Candidate>> &CandidateList,
-                     std::vector<OutlinedFunction> &FunctionList,
+  buildCandidateList(std::vector<OutlinedFunction> &FunctionList,
                      InstructionMapper &Mapper);
 
   /// Construct a suffix tree on the instructions in \p M and outline repeated
@@ -1042,9 +1033,7 @@ void MachineOutliner::emitOutlinedFunctionRemark(OutlinedFunction &OF) {
 
 unsigned MachineOutliner::findCandidates(
     SuffixTree &ST, InstructionMapper &Mapper,
-    std::vector<std::shared_ptr<Candidate>> &CandidateList,
     std::vector<OutlinedFunction> &FunctionList) {
-  CandidateList.clear();
   FunctionList.clear();
   unsigned MaxLen = 0;
 
@@ -1124,10 +1113,6 @@ unsigned MachineOutliner::findCandidates(
     if (StringLen > MaxLen)
       MaxLen = StringLen;
 
-    // The function is beneficial. Save its candidates to the candidate list
-    // for pruning.
-    for (std::shared_ptr<Candidate> &C : OF.Candidates)
-      CandidateList.push_back(C);
     FunctionList.push_back(OF);
   }
 
@@ -1135,7 +1120,6 @@ unsigned MachineOutliner::findCandidates(
 }
 
 unsigned MachineOutliner::buildCandidateList(
-    std::vector<std::shared_ptr<Candidate>> &CandidateList,
     std::vector<OutlinedFunction> &FunctionList,
     InstructionMapper &Mapper) {
   // Construct a suffix tree and use it to find candidates.
@@ -1144,8 +1128,7 @@ unsigned MachineOutliner::buildCandidateList(
   std::vector<unsigned> CandidateSequence; // Current outlining candidate.
   unsigned MaxCandidateLen = 0;            // Length of the longest candidate.
 
-  MaxCandidateLen =
-      findCandidates(ST, Mapper, CandidateList, FunctionList);
+  MaxCandidateLen = findCandidates(ST, Mapper, FunctionList);
 
   return MaxCandidateLen;
 }
@@ -1255,9 +1238,9 @@ MachineOutliner::createOutlinedFunction(Module &M, const OutlinedFunction &OF,
   return &MF;
 }
 
-bool MachineOutliner::outline(
-    Module &M, const ArrayRef<std::shared_ptr<Candidate>> &CandidateList,
-    std::vector<OutlinedFunction> &FunctionList, InstructionMapper &Mapper) {
+bool MachineOutliner::outline(Module &M,
+                              std::vector<OutlinedFunction> &FunctionList,
+                              InstructionMapper &Mapper) {
 
   bool OutlinedSomething = false;
 
@@ -1509,11 +1492,10 @@ bool MachineOutliner::runOnModule(Module &M) {
 
   // Prepare instruction mappings for the suffix tree.
   populateMapper(Mapper, M, MMI);
-  std::vector<std::shared_ptr<Candidate>> CandidateList;
   std::vector<OutlinedFunction> FunctionList;
 
   // Find all of the outlining candidates.
-  buildCandidateList(CandidateList, FunctionList, Mapper);
+  buildCandidateList(FunctionList, Mapper);
 
   // If we've requested size remarks, then collect the MI counts of every
   // function before outlining, and the MI counts after outlining.
@@ -1530,7 +1512,7 @@ bool MachineOutliner::runOnModule(Module &M) {
     initSizeRemarkInfo(M, MMI, FunctionToInstrCount);
 
   // Outline each of the candidates and return true if something was outlined.
-  bool OutlinedSomething = outline(M, CandidateList, FunctionList, Mapper);
+  bool OutlinedSomething = outline(M, FunctionList, Mapper);
 
   // If we outlined something, we definitely changed the MI count of the
   // module. If we've asked for size remarks, then output them.
