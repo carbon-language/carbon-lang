@@ -567,3 +567,24 @@ for.cond:
 if.end:
   ret void
 }
+
+; CHECK-LABEL: zext_urem_trunc
+; CHECK-NOT: uxt
+define void @zext_urem_trunc() {
+entry:
+  %0 = load i16, i16* @c, align 2
+  %cmp = icmp eq i16 %0, 0
+  %1 = load i8, i8* @e, align 1
+  br i1 %cmp, label %cond.end, label %cond.false
+
+cond.false:
+  %rem.lhs.trunc = zext i8 %1 to i16
+  %rem7 = urem i16 %rem.lhs.trunc, %0
+  %rem.zext = trunc i16 %rem7 to i8
+  br label %cond.end
+
+cond.end:
+  %cond = phi i8 [ %rem.zext, %cond.false ], [ %1, %entry ]
+  store i8 %cond, i8* @a, align 1
+  ret void
+}
