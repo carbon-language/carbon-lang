@@ -3764,11 +3764,13 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
   if ((HandOpcode == ISD::SHL || HandOpcode == ISD::SRL ||
        HandOpcode == ISD::SRA || HandOpcode == ISD::AND) &&
       N0.getOperand(1) == N1.getOperand(1)) {
-    SDValue ORNode = DAG.getNode(LogicOpcode, SDLoc(N0),
-                                 N0.getOperand(0).getValueType(),
-                                 N0.getOperand(0), N1.getOperand(0));
-    AddToWorklist(ORNode.getNode());
-    return DAG.getNode(HandOpcode, SDLoc(N), VT, ORNode, N0.getOperand(1));
+    // If either operand has other uses, this transform is not an improvement.
+    if (!N0.hasOneUse() || !N1.hasOneUse())
+      return SDValue();
+    SDValue Logic = DAG.getNode(LogicOpcode, SDLoc(N0), Op0VT,
+                                N0.getOperand(0), N1.getOperand(0));
+    AddToWorklist(Logic.getNode());
+    return DAG.getNode(HandOpcode, SDLoc(N), VT, Logic, N0.getOperand(1));
   }
 
   // Simplify xor/and/or (bitcast(A), bitcast(B)) -> bitcast(op (A,B))

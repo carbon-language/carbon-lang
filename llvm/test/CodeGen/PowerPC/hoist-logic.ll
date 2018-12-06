@@ -16,15 +16,15 @@ define i32 @lshr_or(i32 %x, i32 %y, i32 %z, i32* %p1, i32* %p2) {
 }
 
 ; This is questionable - hoisting doesn't eliminate anything.
+; It might result in an extra register move.
 
 define i32 @lshr_or_multiuse1(i32 %x, i32 %y, i32 %z, i32* %p1, i32* %p2) {
 ; CHECK-LABEL: lshr_or_multiuse1:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    or 4, 3, 4
-; CHECK-NEXT:    srw 4, 4, 5
-; CHECK-NEXT:    srw 5, 3, 5
-; CHECK-NEXT:    mr 3, 4
-; CHECK-NEXT:    stw 5, 0(6)
+; CHECK-NEXT:    srw 7, 3, 5
+; CHECK-NEXT:    srw 3, 4, 5
+; CHECK-NEXT:    or 3, 7, 3
+; CHECK-NEXT:    stw 7, 0(6)
 ; CHECK-NEXT:    blr
   %xt = lshr i32 %x, %z
   %yt = lshr i32 %y, %z
@@ -38,9 +38,9 @@ define i32 @lshr_or_multiuse1(i32 %x, i32 %y, i32 %z, i32* %p1, i32* %p2) {
 define i32 @lshr_multiuse2(i32 %x, i32 %y, i32 %z, i32* %p1, i32* %p2) {
 ; CHECK-LABEL: lshr_multiuse2:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    or 3, 3, 4
 ; CHECK-NEXT:    srw 3, 3, 5
 ; CHECK-NEXT:    srw 4, 4, 5
+; CHECK-NEXT:    or 3, 3, 4
 ; CHECK-NEXT:    stw 4, 0(7)
 ; CHECK-NEXT:    blr
   %xt = lshr i32 %x, %z
@@ -50,16 +50,15 @@ define i32 @lshr_multiuse2(i32 %x, i32 %y, i32 %z, i32* %p1, i32* %p2) {
   ret i32 %r
 }
 
-; FIXME: This is not profitable to hoist. We need an extra shift instruction.
+; This is not profitable to hoist. We need an extra shift instruction.
 
 define i32 @lshr_multiuse3(i32 %x, i32 %y, i32 %z, i32* %p1, i32* %p2) {
 ; CHECK-LABEL: lshr_multiuse3:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    or 8, 3, 4
 ; CHECK-NEXT:    srw 3, 3, 5
-; CHECK-NEXT:    stw 3, 0(6)
-; CHECK-NEXT:    srw 3, 8, 5
 ; CHECK-NEXT:    srw 4, 4, 5
+; CHECK-NEXT:    stw 3, 0(6)
+; CHECK-NEXT:    or 3, 3, 4
 ; CHECK-NEXT:    stw 4, 0(7)
 ; CHECK-NEXT:    blr
   %xt = lshr i32 %x, %z
