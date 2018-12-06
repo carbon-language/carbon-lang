@@ -15360,6 +15360,7 @@ SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
     return InVec;
 
   EVT VT = InVec.getValueType();
+  unsigned NumElts = VT.getVectorNumElements();
 
   // Remove redundant insertions:
   // (insert_vector_elt x (extract_vector_elt x idx) idx) -> x
@@ -15372,7 +15373,7 @@ SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
     // If this is variable insert to undef vector, it might be better to splat:
     // inselt undef, InVal, EltNo --> build_vector < InVal, InVal, ... >
     if (InVec.isUndef() && TLI.shouldSplatInsEltVarIndex(VT)) {
-      SmallVector<SDValue, 8> Ops(VT.getVectorNumElements(), InVal);
+      SmallVector<SDValue, 8> Ops(NumElts, InVal);
       return DAG.getBuildVector(VT, DL, Ops);
     }
     return SDValue();
@@ -15417,11 +15418,11 @@ SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
     Ops.append(InVec.getNode()->op_begin(),
                InVec.getNode()->op_end());
   } else if (InVec.isUndef()) {
-    unsigned NElts = VT.getVectorNumElements();
-    Ops.append(NElts, DAG.getUNDEF(InVal.getValueType()));
+    Ops.append(NumElts, DAG.getUNDEF(InVal.getValueType()));
   } else {
     return SDValue();
   }
+  assert(Ops.size() == NumElts && "Unexpected vector size");
 
   // Insert the element
   if (Elt < Ops.size()) {
