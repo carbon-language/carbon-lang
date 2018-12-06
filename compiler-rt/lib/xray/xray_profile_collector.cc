@@ -95,7 +95,8 @@ void post(const FunctionCallTrie &T, tid_t TId) XRAY_NEVER_INSTRUMENT {
     if (GlobalAllocators == nullptr || ThreadTries == nullptr)
       return;
 
-    Item = ThreadTries->Append(ThreadTrie());
+    ThreadTrie Empty;
+    Item = ThreadTries->AppendEmplace(Empty);
     if (Item == nullptr)
       return;
 
