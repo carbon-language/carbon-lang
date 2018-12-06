@@ -3719,7 +3719,10 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
   //        the instruction count for all transforms.
 
   // Handle size-changing casts.
-  EVT Op0VT = N0.getOperand(0).getValueType();
+  SDValue X = N0.getOperand(0);
+  SDValue Y = N1.getOperand(0);
+  EVT XVT = X.getValueType();
+  SDLoc DL(N);
   switch (HandOpcode) {
     case ISD::ANY_EXTEND:
     case ISD::TRUNCATE:
@@ -3733,28 +3736,27 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
       // Do not hoist logic op inside of a vector extend, since it may combine
       // into a vsetcc.
       // TODO: Should the vector check apply to truncate though?
-      if (VT.isVector() || Op0VT != N1.getOperand(0).getValueType())
+      if (VT.isVector() || XVT != Y.getValueType())
         return SDValue();
       // Don't create an illegal op during or after legalization.
-      if (LegalOperations && !TLI.isOperationLegal(LogicOpcode, Op0VT))
+      if (LegalOperations && !TLI.isOperationLegal(LogicOpcode, XVT))
         return SDValue();
       // Avoid infinite looping with PromoteIntBinOp.
       if (HandOpcode == ISD::ANY_EXTEND && LegalTypes &&
-          !TLI.isTypeDesirableForOp(LogicOpcode, Op0VT))
+          !TLI.isTypeDesirableForOp(LogicOpcode, XVT))
         return SDValue();
       // Be extra careful sinking truncate.
       // TODO: Should we apply desirable/legal constraints to all opcodes?
       if (HandOpcode == ISD::TRUNCATE) {
-        if (TLI.isZExtFree(VT, Op0VT) && TLI.isTruncateFree(Op0VT, VT))
+        if (TLI.isZExtFree(VT, XVT) && TLI.isTruncateFree(XVT, VT))
           return SDValue();
-        if (!TLI.isTypeLegal(Op0VT))
+        if (!TLI.isTypeLegal(XVT))
           return SDValue();
       }
       // logic_op (hand_op X), (hand_op Y) --> hand_op (logic_op X, Y)
-      SDValue Logic = DAG.getNode(LogicOpcode, SDLoc(N0), Op0VT,
-                                  N0.getOperand(0), N1.getOperand(0));
+      SDValue Logic = DAG.getNode(LogicOpcode, SDLoc(N0), XVT, X, Y);
       AddToWorklist(Logic.getNode());
-      return DAG.getNode(HandOpcode, SDLoc(N), VT, Logic);
+      return DAG.getNode(HandOpcode, DL, VT, Logic);
   }
 
   // For binops SHL/SRL/SRA/AND:
@@ -3765,10 +3767,9 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
     // If either operand has other uses, this transform is not an improvement.
     if (!N0.hasOneUse() || !N1.hasOneUse())
       return SDValue();
-    SDValue Logic = DAG.getNode(LogicOpcode, SDLoc(N0), Op0VT,
-                                N0.getOperand(0), N1.getOperand(0));
+    SDValue Logic = DAG.getNode(LogicOpcode, SDLoc(N0), XVT, X, Y);
     AddToWorklist(Logic.getNode());
-    return DAG.getNode(HandOpcode, SDLoc(N), VT, Logic, N0.getOperand(1));
+    return DAG.getNode(HandOpcode, DL, VT, Logic, N0.getOperand(1));
   }
 
   // Unary ops: logic_op (bswap x), (bswap y) --> bswap (logic_op x, y)
@@ -3776,10 +3777,9 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
     // If either operand has other uses, this transform is not an improvement.
     if (!N0.hasOneUse() || !N1.hasOneUse())
       return SDValue();
-    SDValue Logic = DAG.getNode(LogicOpcode, SDLoc(N0), Op0VT,
-                                N0.getOperand(0), N1.getOperand(0));
+    SDValue Logic = DAG.getNode(LogicOpcode, DL, XVT, X, Y);
     AddToWorklist(Logic.getNode());
-    return DAG.getNode(HandOpcode, SDLoc(N), VT, Logic);
+    return DAG.getNode(HandOpcode, DL, VT, Logic);
   }
 
   // Simplify xor/and/or (bitcast(A), bitcast(B)) -> bitcast(op (A,B))
@@ -3791,18 +3791,11 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
   // on scalars.
   if ((HandOpcode == ISD::BITCAST || HandOpcode == ISD::SCALAR_TO_VECTOR) &&
        Level <= AfterLegalizeTypes) {
-    SDValue In0 = N0.getOperand(0);
-    SDValue In1 = N1.getOperand(0);
-    EVT In0Ty = In0.getValueType();
-    EVT In1Ty = In1.getValueType();
-    SDLoc DL(N);
-    // If both incoming values are integers, and the original types are the
-    // same.
-    if (In0Ty.isInteger() && In1Ty.isInteger() && In0Ty == In1Ty) {
-      SDValue Op = DAG.getNode(LogicOpcode, DL, In0Ty, In0, In1);
-      SDValue BC = DAG.getNode(HandOpcode, DL, VT, Op);
-      AddToWorklist(Op.getNode());
-      return BC;
+    // Input types must be integer and the same.
+    if (XVT.isInteger() && XVT == Y.getValueType()) {
+      SDValue Logic = DAG.getNode(LogicOpcode, DL, XVT, X, Y);
+      AddToWorklist(Logic.getNode());
+      return DAG.getNode(HandOpcode, DL, VT, Logic);
     }
   }
 
@@ -3821,7 +3814,7 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
   if (HandOpcode == ISD::VECTOR_SHUFFLE && Level < AfterLegalizeDAG) {
     auto *SVN0 = cast<ShuffleVectorSDNode>(N0);
     auto *SVN1 = cast<ShuffleVectorSDNode>(N1);
-    assert(N0.getOperand(0).getValueType() == N1.getOperand(0).getValueType() &&
+    assert(X.getValueType() == Y.getValueType() &&
            "Inputs to shuffles are not the same type");
 
     // Check that both shuffles use the same mask. The masks are known to be of
@@ -3834,30 +3827,30 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
 
     // Don't try to fold this node if it requires introducing a
     // build vector of all zeros that might be illegal at this stage.
-    SDValue ShOp = N0->getOperand(1);
+    SDValue ShOp = N0.getOperand(1);
     if (LogicOpcode == ISD::XOR && !ShOp.isUndef())
-      ShOp = tryFoldToZero(SDLoc(N), TLI, VT, DAG, LegalOperations);
+      ShOp = tryFoldToZero(DL, TLI, VT, DAG, LegalOperations);
 
     // (logic_op (shuf (A, C), shuf (B, C))) --> shuf (logic_op (A, B), C)
     if (N0.getOperand(1) == N1.getOperand(1) && ShOp.getNode()) {
-      SDValue NewNode = DAG.getNode(LogicOpcode, SDLoc(N), VT,
-                                    N0->getOperand(0), N1->getOperand(0));
-      AddToWorklist(NewNode.getNode());
-      return DAG.getVectorShuffle(VT, SDLoc(N), NewNode, ShOp, SVN0->getMask());
+      SDValue Logic = DAG.getNode(LogicOpcode, DL, VT,
+                                  N0.getOperand(0), N1.getOperand(0));
+      AddToWorklist(Logic.getNode());
+      return DAG.getVectorShuffle(VT, DL, Logic, ShOp, SVN0->getMask());
     }
 
     // Don't try to fold this node if it requires introducing a
     // build vector of all zeros that might be illegal at this stage.
-    ShOp = N0->getOperand(0);
+    ShOp = N0.getOperand(0);
     if (LogicOpcode == ISD::XOR && !ShOp.isUndef())
-      ShOp = tryFoldToZero(SDLoc(N), TLI, VT, DAG, LegalOperations);
+      ShOp = tryFoldToZero(DL, TLI, VT, DAG, LegalOperations);
 
     // (logic_op (shuf (C, A), shuf (C, B))) --> shuf (C, logic_op (A, B))
-    if (N0->getOperand(0) == N1->getOperand(0) && ShOp.getNode()) {
-      SDValue NewNode = DAG.getNode(LogicOpcode, SDLoc(N), VT,
-                                    N0->getOperand(1), N1->getOperand(1));
-      AddToWorklist(NewNode.getNode());
-      return DAG.getVectorShuffle(VT, SDLoc(N), ShOp, NewNode, SVN0->getMask());
+    if (N0.getOperand(0) == N1.getOperand(0) && ShOp.getNode()) {
+      SDValue Logic = DAG.getNode(LogicOpcode, DL, VT, N0.getOperand(1),
+                                  N1.getOperand(1));
+      AddToWorklist(Logic.getNode());
+      return DAG.getVectorShuffle(VT, DL, ShOp, Logic, SVN0->getMask());
     }
   }
 
