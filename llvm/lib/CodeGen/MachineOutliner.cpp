@@ -519,17 +519,18 @@ public:
       RS = RepeatedSubstring();
       N = nullptr;
 
+      // Each leaf node represents a repeat of a string.
+      std::vector<SuffixTreeNode *> LeafChildren;
+
       // Continue visiting nodes until we find one which repeats more than once.
       while (!ToVisit.empty()) {
         SuffixTreeNode *Curr = ToVisit.back();
         ToVisit.pop_back();
+        LeafChildren.clear();
 
         // Keep track of the length of the string associated with the node. If
         // it's too short, we'll quit.
         unsigned Length = Curr->ConcatLen;
-
-        // Each leaf node represents a repeat of a string.
-        std::vector<SuffixTreeNode *> LeafChildren;
 
         // Iterate over each child, saving internal nodes for visiting, and
         // leaf nodes in LeafChildren. Internal nodes represent individual
