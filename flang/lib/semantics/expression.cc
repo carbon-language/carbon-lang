@@ -742,9 +742,8 @@ MaybeExpr AnalyzeExpr(
         n.ToString().data());
   } else if (n.symbol->attrs().test(semantics::Attr::PARAMETER)) {
     if (auto *details{n.symbol->detailsIf<semantics::ObjectEntityDetails>()}) {
-      auto &init{details->init()};
-      if (init.Resolve(context.context())) {
-        return init.Get();
+      if (auto &init{details->init()}) {
+        return init;
       }
     }
     context.Say(n.source, "parameter '%s' does not have a value"_err_en_US,

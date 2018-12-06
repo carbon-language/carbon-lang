@@ -47,54 +47,29 @@ using TypeCategory = common::TypeCategory;
 using SomeExpr = evaluate::Expr<evaluate::SomeType>;
 using MaybeExpr = std::optional<SomeExpr>;
 
-// An expression that starts out as a parser::Expr and gets resolved to
-// a MaybeExpr. Resolve should not be called until after names are resolved.
-// An unresolved LazyExpr should not be used after the parse tree is deleted.
-class LazyExpr {
-public:
-  LazyExpr() : u_{nullptr} {}
-  LazyExpr(const parser::Expr &expr) : u_{&expr} {}
-  LazyExpr(SomeExpr &&);
-  LazyExpr(LazyExpr &&) = default;
-  LazyExpr &operator=(LazyExpr &&) = default;
-  LazyExpr Clone() const { return LazyExpr(*this); }
-  const MaybeExpr Get() const;
-  MaybeExpr Get();
-  bool Resolve(SemanticsContext &);
-
-private:
-  using CopyableExprPtr = common::Indirection<SomeExpr, true>;
-  struct ErrorInExpr {};  // marks an expr with an error in evaluation
-  std::variant<const parser::Expr *, CopyableExprPtr, ErrorInExpr> u_;
-
-  LazyExpr(const LazyExpr &) = default;
-  friend std::ostream &operator<<(std::ostream &, const LazyExpr &);
-};
-
 // An array spec bound: an explicit integer expression or ASSUMED or DEFERRED
 class Bound {
 public:
   static Bound Assumed() { return Bound(Category::Assumed); }
   static Bound Deferred() { return Bound(Category::Deferred); }
-  Bound(const parser::Expr &expr)
-    : category_{Category::Explicit}, expr_{expr} {}
+  Bound(MaybeExpr &&expr)
+    : category_{Category::Explicit}, expr_{std::move(expr)} {}
   Bound(int bound);
   Bound(Bound &&) = default;
   Bound &operator=(Bound &&) = default;
-  Bound Clone() const { return Bound(category_, expr_.Clone()); }
+  Bound Clone() const;
   bool isExplicit() const { return category_ == Category::Explicit; }
   bool isAssumed() const { return category_ == Category::Assumed; }
   bool isDeferred() const { return category_ == Category::Deferred; }
-  const LazyExpr &GetExplicit() const { return expr_; }
-  void Resolve(SemanticsContext &);
+  const MaybeExpr &GetExplicit() const { return expr_; }
 
 private:
   enum class Category { Explicit, Deferred, Assumed };
   Bound(Category category) : category_{category} {}
-  Bound(Category category, LazyExpr &&expr)
+  Bound(Category category, MaybeExpr &&expr)
     : category_{category}, expr_{std::move(expr)} {}
   Category category_;
-  LazyExpr expr_;
+  MaybeExpr expr_;
   friend std::ostream &operator<<(std::ostream &, const Bound &);
 };
 
@@ -174,18 +149,18 @@ class ParamValue {
 public:
   static const ParamValue Assumed() { return Category::Assumed; }
   static const ParamValue Deferred() { return Category::Deferred; }
-  ParamValue(const parser::Expr &);
+  ParamValue(MaybeExpr &&expr)
+    : category_{Category::Explicit}, expr_{std::move(expr)} {}
   bool isExplicit() const { return category_ == Category::Explicit; }
   bool isAssumed() const { return category_ == Category::Assumed; }
   bool isDeferred() const { return category_ == Category::Deferred; }
-  const LazyExpr &GetExplicit() const { return expr_; }
-  void ResolveExplicit(SemanticsContext &);
+  const MaybeExpr &GetExplicit() const { return expr_; }
 
 private:
   enum class Category { Explicit, Deferred, Assumed };
   ParamValue(Category category) : category_{category} {}
   Category category_;
-  LazyExpr expr_;
+  MaybeExpr expr_;
   friend std::ostream &operator<<(std::ostream &, const ParamValue &);
 };
 
@@ -256,9 +231,6 @@ private:
   const Symbol *symbol_{nullptr};
   std::optional<DeclTypeSpec> type_;
 };
-
-// Resolve expressions in symbols.
-void ResolveSymbolExprs(SemanticsContext &);
 }
 
 #endif  // FORTRAN_SEMANTICS_TYPE_H_

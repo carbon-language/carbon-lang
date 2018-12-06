@@ -24,6 +24,7 @@
 
 
 subroutine sub00(a,b,n,m)
+  integer :: n, m
   real a(n)
   real :: b(m)
 1 print *, n, m
@@ -32,6 +33,7 @@ subroutine sub00(a,b,n,m)
 end subroutine sub00
 
 subroutine do_loop01(a,n)
+  integer :: n
   real, dimension(n) :: a
   do 10 i = 1, n
      print *, i, a(i)
@@ -39,6 +41,7 @@ subroutine do_loop01(a,n)
 end subroutine do_loop01
 
 subroutine do_loop02(a,n)
+  integer :: n
   real, dimension(n,n) :: a
   do 10 j = 1, n
      do 10 i = 1, n
@@ -48,12 +51,14 @@ end subroutine do_loop02
 
 #ifndef STRICT_F18
 subroutine do_loop03(a,n)
+  integer :: n
   real, dimension(n) :: a
   do 10 i = 1, n
 10   print *, i, a(i)		! extension (not f18)
 end subroutine do_loop03
 
 subroutine do_loop04(a,n)
+  integer :: n
   real :: a(n,n)
   do 10 j = 1, n
      do 10 i = 1, n
@@ -61,6 +66,7 @@ subroutine do_loop04(a,n)
 end subroutine do_loop04
 
 subroutine do_loop05(a,n)
+  integer :: n
   real a(n,n,n)
   do 10 k = 1, n
      do 10 j = 1, n
@@ -70,6 +76,7 @@ end subroutine do_loop05
 #endif
 
 subroutine do_loop06(a,n)
+  integer :: n
   real, dimension(n) :: a
   loopname: do i = 1, n
      print *, i, a(i)
@@ -80,6 +87,7 @@ subroutine do_loop06(a,n)
 end subroutine do_loop06
 
 subroutine do_loop07(a,n)
+  integer :: n
   real, dimension(n,n) :: a
   loopone: do j = 1, n
      looptwo: do i = 1, n
@@ -89,6 +97,7 @@ subroutine do_loop07(a,n)
 end subroutine do_loop07
 
 subroutine do_loop08(a,b,n,m,nn)
+  integer :: n, m, nn
   real, dimension(n,n) :: a
   real b(m,nn)
   loopone: do j = 1, n
@@ -122,6 +131,7 @@ end subroutine do_loop08
 #ifndef STRICT_F18
 ! extended ranges supported by PGI, gfortran gives warnings
 subroutine do_loop09(a,n,j)
+  integer :: n
   real a(n)
   goto 400
 200 print *, "found the index", j

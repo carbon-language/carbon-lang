@@ -56,7 +56,6 @@ bool Semantics::Perform() {
   if (AnyFatalError()) {
     return false;
   }
-  ResolveSymbolExprs(context_);
   if (AnyFatalError()) {
     return false;
   }

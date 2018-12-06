@@ -24,43 +24,6 @@
 
 namespace Fortran::semantics {
 
-LazyExpr::LazyExpr(SomeExpr &&expr) : u_{CopyableExprPtr{std::move(expr)}} {}
-
-MaybeExpr LazyExpr::Get() { return static_cast<const LazyExpr *>(this)->Get(); }
-
-const MaybeExpr LazyExpr::Get() const {
-  if (auto *ptr{std::get_if<CopyableExprPtr>(&u_)}) {
-    return **ptr;
-  } else {
-    return std::nullopt;
-  }
-}
-
-bool LazyExpr::Resolve(SemanticsContext &context) {
-  if (auto *expr{std::get_if<const parser::Expr *>(&u_)}) {
-    if (!*expr) {
-      u_ = ErrorInExpr{};
-    } else if (MaybeExpr maybeExpr{AnalyzeExpr(context, **expr)}) {
-      u_ = CopyableExprPtr{
-          evaluate::Fold(context.foldingContext(), std::move(*maybeExpr))};
-    } else {
-      u_ = ErrorInExpr{};
-    }
-  }
-  return std::holds_alternative<CopyableExprPtr>(u_);
-}
-
-std::ostream &operator<<(std::ostream &o, const LazyExpr &x) {
-  std::visit(
-      common::visitors{
-          [&](const parser::Expr *x) { o << (x ? "UNRESOLVED" : "EMPTY"); },
-          [&](const LazyExpr::ErrorInExpr &) { o << "ERROR"; },
-          [&](const LazyExpr::CopyableExprPtr &x) { x->AsFortran(o); },
-      },
-      x.u_);
-  return o;
-}
-
 void DerivedTypeSpec::set_scope(const Scope &scope) {
   CHECK(!scope_);
   CHECK(scope.kind() == Scope::Kind::DerivedType);
@@ -101,19 +64,17 @@ Bound::Bound(int bound)
     expr_{SomeExpr{evaluate::AsExpr(
         evaluate::Constant<evaluate::SubscriptInteger>{bound})}} {}
 
-void Bound::Resolve(SemanticsContext &context) {
-  if (isExplicit()) {
-    expr_.Resolve(context);
-  }
-}
+Bound Bound::Clone() const { return Bound(category_, MaybeExpr{expr_}); }
 
 std::ostream &operator<<(std::ostream &o, const Bound &x) {
   if (x.isAssumed()) {
     o << '*';
   } else if (x.isDeferred()) {
     o << ':';
+  } else if (x.expr_) {
+    x.expr_->AsFortran(o);
   } else {
-    o << x.expr_;
+    o << "<no-expr>";
   }
   return o;
 }
@@ -134,21 +95,15 @@ std::ostream &operator<<(std::ostream &o, const ShapeSpec &x) {
   return o;
 }
 
-ParamValue::ParamValue(const parser::Expr &expr)
-  : category_{Category::Explicit}, expr_{expr} {}
-
-void ParamValue::ResolveExplicit(SemanticsContext &context) {
-  CHECK(isExplicit());
-  expr_.Resolve(context);
-}
-
 std::ostream &operator<<(std::ostream &o, const ParamValue &x) {
   if (x.isAssumed()) {
     o << '*';
   } else if (x.isDeferred()) {
     o << ':';
+  } else if (!x.GetExplicit()) {
+    o << "<no-expr>";
   } else {
-    o << x.GetExplicit();
+    x.GetExplicit()->AsFortran(o);
   }
   return o;
 }
@@ -219,55 +174,5 @@ void ProcInterface::set_symbol(const Symbol &symbol) {
 void ProcInterface::set_type(const DeclTypeSpec &type) {
   CHECK(!symbol_);
   type_ = type;
-}
-
-class ExprResolver {
-public:
-  ExprResolver(SemanticsContext &context) : context_{context} {}
-  void Resolve() { Resolve(context_.globalScope()); }
-
-private:
-  SemanticsContext &context_;
-
-  void Resolve(Scope &);
-  void Resolve(Symbol &);
-  void Resolve(Bound &bound) { bound.Resolve(context_); }
-  void Resolve(LazyExpr &expr) { expr.Resolve(context_); }
-};
-
-void ExprResolver::Resolve(Scope &scope) {
-  for (auto &pair : scope) {
-    Resolve(*pair.second);
-  }
-  for (auto &child : scope.children()) {
-    Resolve(child);
-  }
-}
-void ExprResolver::Resolve(Symbol &symbol) {
-  if (auto *type{symbol.GetType()}) {
-    if (type->category() == DeclTypeSpec::TypeDerived) {
-      DerivedTypeSpec &dts{type->derivedTypeSpec()};
-      for (auto &nameAndValue : dts.paramValues()) {
-        // &[name, value] elicits "unused variable" warnings
-        auto &value{nameAndValue.second};
-        if (value.isExplicit()) {
-          value.ResolveExplicit(context_);
-        }
-      }
-    }
-  }
-  if (auto *details{symbol.detailsIf<ObjectEntityDetails>()}) {
-    Resolve(details->init());
-    for (ShapeSpec &shapeSpec : details->shape()) {
-      Resolve(shapeSpec.lb_);
-      Resolve(shapeSpec.ub_);
-    }
-  } else if (auto *details{symbol.detailsIf<TypeParamDetails>()}) {
-    Resolve(details->init());
-  }
-}
-
-void ResolveSymbolExprs(SemanticsContext &context) {
-  ExprResolver(context).Resolve();
 }
 }

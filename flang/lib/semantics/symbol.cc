@@ -69,10 +69,6 @@ ProcEntityDetails::ProcEntityDetails(const EntityDetails &d) {
   }
 }
 
-void TypeParamDetails::set_init(const parser::Expr &expr) {
-  init_ = LazyExpr{expr};
-}
-
 const Symbol &UseDetails::module() const {
   // owner is a module so it must have a symbol:
   return *symbol_->owner().symbol();
@@ -277,10 +273,6 @@ int Symbol::Rank() const {
 ObjectEntityDetails::ObjectEntityDetails(const EntityDetails &d)
   : isDummy_{d.isDummy()}, type_{d.type()} {}
 
-void ObjectEntityDetails::set_init(const parser::Expr &x) {
-  init_ = LazyExpr{x};
-}
-
 std::ostream &operator<<(std::ostream &os, const EntityDetails &x) {
   if (x.type()) {
     os << " type: " << *x.type();
@@ -298,8 +290,8 @@ std::ostream &operator<<(std::ostream &os, const ObjectEntityDetails &x) {
       os << ' ' << s;
     }
   }
-  if (x.init_.Get()) {
-    os << " init:" << x.init_;
+  if (x.init_) {
+    x.init_->AsFortran(os << " init:");
   }
   return os;
 }
@@ -409,8 +401,8 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
               os << ' ' << *x.type();
             }
             os << ' ' << common::EnumToString(x.attr());
-            if (x.init().Get()) {
-              os << " init:" << x.init();
+            if (x.init()) {
+              x.init()->AsFortran(os << " init:");
             }
           },
           [&](const MiscDetails &x) {

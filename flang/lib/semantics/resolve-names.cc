@@ -15,6 +15,7 @@
 #include "resolve-names.h"
 #include "attr.h"
 #include "default-kinds.h"
+#include "expression.h"
 #include "mod-file.h"
 #include "rewrite-parse-tree.h"
 #include "scope.h"
@@ -22,6 +23,9 @@
 #include "symbol.h"
 #include "type.h"
 #include "../common/indirection.h"
+#include "../evaluate/common.h"
+#include "../evaluate/fold.h"
+#include "../evaluate/tools.h"
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
 #include <list>
@@ -41,11 +45,6 @@ using MessageFormattedText = parser::MessageFormattedText;
 class ResolveNamesVisitor;
 
 static const parser::Name *GetGenericSpecName(const parser::GenericSpec &);
-static const parser::Expr &GetExpr(const parser::ConstantExpr &);
-static const parser::Expr &GetExpr(const parser::IntConstantExpr &);
-static const parser::Expr &GetExpr(const parser::IntExpr &);
-static const parser::Expr &GetExpr(const parser::ScalarIntExpr &);
-static const parser::Expr &GetExpr(const parser::ScalarIntConstantExpr &);
 
 // ImplicitRules maps initial character of identifier to the DeclTypeSpec
 // representing the implicit type; std::nullopt if none.
@@ -121,9 +120,16 @@ public:
   SemanticsContext &context() const { return *context_; }
   void set_context(SemanticsContext &);
 
-  template<typename... A>
-  Message &Say(const parser::Name &name, MessageFixedText &&msg, A... args) {
-    return Say(name.source, std::move(msg), std::forward<A>(args)...);
+  template<typename T> MaybeExpr EvaluateExpr(const T &expr) {
+    if (auto maybeExpr{AnalyzeExpr(*context_, expr)}) {
+      return evaluate::Fold(context_->foldingContext(), std::move(*maybeExpr));
+    } else {
+      return std::nullopt;
+    }
+  }
+
+  template<typename... A> Message &Say(const parser::Name &name, A... args) {
+    return messageHandler_.Say(name.source, std::forward<A>(args)...);
   }
   template<typename... A> Message &Say(A... args) {
     return messageHandler_.Say(std::forward<A>(args)...);
@@ -205,12 +211,12 @@ public:
   explicit DeclTypeSpecVisitor() {}
   using AttrsVisitor::Post;
   using AttrsVisitor::Pre;
-  bool Pre(const parser::IntegerTypeSpec &);
-  bool Pre(const parser::IntrinsicTypeSpec::Logical &);
-  bool Pre(const parser::IntrinsicTypeSpec::Real &);
-  bool Pre(const parser::IntrinsicTypeSpec::Complex &);
-  bool Pre(const parser::IntrinsicTypeSpec::DoublePrecision &);
-  bool Pre(const parser::IntrinsicTypeSpec::DoubleComplex &);
+  void Post(const parser::IntegerTypeSpec &);
+  void Post(const parser::IntrinsicTypeSpec::Logical &);
+  void Post(const parser::IntrinsicTypeSpec::Real &);
+  void Post(const parser::IntrinsicTypeSpec::Complex &);
+  void Post(const parser::IntrinsicTypeSpec::DoublePrecision &);
+  void Post(const parser::IntrinsicTypeSpec::DoubleComplex &);
   void Post(const parser::IntrinsicTypeSpec::Character &);
   bool Pre(const parser::DeclarationTypeSpec::ClassStar &);
   bool Pre(const parser::DeclarationTypeSpec::TypeStar &);
@@ -234,8 +240,10 @@ private:
   const parser::Name *derivedTypeName_{nullptr};
 
   void SetDeclTypeSpec(const DeclTypeSpec &declTypeSpec);
-  void MakeIntrinsic(TypeCategory, int);
-  static int GetKindParamValue(const std::optional<parser::KindSelector> &kind);
+  void MakeIntrinsic(TypeCategory, const std::optional<parser::KindSelector> &);
+  void MakeIntrinsic(TypeCategory, int kind);
+  int GetKindParamValue(
+      TypeCategory, const std::optional<parser::KindSelector> &);
   ParamValue GetParamValue(const parser::TypeParamValue &);
 };
 
@@ -290,11 +298,11 @@ public:
   bool Pre(const parser::ArraySpec &);
   void Post(const parser::AttrSpec &) { PostAttrSpec(); }
   void Post(const parser::ComponentAttrSpec &) { PostAttrSpec(); }
-  bool Pre(const parser::DeferredShapeSpecList &);
-  bool Pre(const parser::AssumedShapeSpec &);
-  bool Pre(const parser::ExplicitShapeSpec &);
-  bool Pre(const parser::AssumedImpliedSpec &);
-  bool Pre(const parser::AssumedRankSpec &);
+  void Post(const parser::DeferredShapeSpecList &);
+  void Post(const parser::AssumedShapeSpec &);
+  void Post(const parser::ExplicitShapeSpec &);
+  void Post(const parser::AssumedImpliedSpec &);
+  void Post(const parser::AssumedRankSpec &);
 
 protected:
   const ArraySpec &arraySpec();
@@ -553,7 +561,7 @@ public:
   bool Pre(const parser::BindStmt &) { return BeginAttrs(); }
   void Post(const parser::BindStmt &) { EndAttrs(); }
   bool Pre(const parser::BindEntity &);
-  bool Pre(const parser::NamedConstantDef &);
+  void Post(const parser::NamedConstantDef &);
   bool Pre(const parser::AsynchronousStmt &);
   bool Pre(const parser::ContiguousStmt &);
   bool Pre(const parser::ExternalStmt &);
@@ -1002,7 +1010,9 @@ void DeclTypeSpecVisitor::Post(const parser::TypeParamSpec &x) {
 ParamValue DeclTypeSpecVisitor::GetParamValue(const parser::TypeParamValue &x) {
   return std::visit(
       common::visitors{
-          [](const parser::ScalarIntExpr &x) { return ParamValue{GetExpr(x)}; },
+          [=](const parser::ScalarIntExpr &x) {
+            return ParamValue{EvaluateExpr(x)};
+          },
           [](const parser::Star &) { return ParamValue::Assumed(); },
           [](const parser::TypeParamValue::Deferred &) {
             return ParamValue::Deferred();
@@ -1027,36 +1037,34 @@ void DeclTypeSpecVisitor::Post(const parser::TypeGuardStmt &) {
   derivedTypeName_ = nullptr;
 }
 
-bool DeclTypeSpecVisitor::Pre(const parser::IntegerTypeSpec &x) {
-  MakeIntrinsic(TypeCategory::Integer, GetKindParamValue(x.v));
-  return false;
+void DeclTypeSpecVisitor::Post(const parser::IntegerTypeSpec &x) {
+  MakeIntrinsic(TypeCategory::Integer, x.v);
 }
 void DeclTypeSpecVisitor::Post(const parser::IntrinsicTypeSpec::Character &x) {
   CHECK(!"TODO: character");
 }
-bool DeclTypeSpecVisitor::Pre(const parser::IntrinsicTypeSpec::Logical &x) {
-  MakeIntrinsic(TypeCategory::Logical, GetKindParamValue(x.kind));
-  return false;
+void DeclTypeSpecVisitor::Post(const parser::IntrinsicTypeSpec::Logical &x) {
+  MakeIntrinsic(TypeCategory::Logical, x.kind);
 }
-bool DeclTypeSpecVisitor::Pre(const parser::IntrinsicTypeSpec::Real &x) {
-  MakeIntrinsic(TypeCategory::Real, GetKindParamValue(x.kind));
-  return false;
+void DeclTypeSpecVisitor::Post(const parser::IntrinsicTypeSpec::Real &x) {
+  MakeIntrinsic(TypeCategory::Real, x.kind);
 }
-bool DeclTypeSpecVisitor::Pre(const parser::IntrinsicTypeSpec::Complex &x) {
-  MakeIntrinsic(TypeCategory::Complex, GetKindParamValue(x.kind));
-  return false;
+void DeclTypeSpecVisitor::Post(const parser::IntrinsicTypeSpec::Complex &x) {
+  MakeIntrinsic(TypeCategory::Complex, x.kind);
 }
-bool DeclTypeSpecVisitor::Pre(
+void DeclTypeSpecVisitor::Post(
     const parser::IntrinsicTypeSpec::DoublePrecision &) {
   MakeIntrinsic(
       TypeCategory::Real, context().defaultKinds().doublePrecisionKind());
-  return false;
 }
-bool DeclTypeSpecVisitor::Pre(
+void DeclTypeSpecVisitor::Post(
     const parser::IntrinsicTypeSpec::DoubleComplex &) {
   MakeIntrinsic(
       TypeCategory::Complex, context().defaultKinds().doublePrecisionKind());
-  return false;
+}
+void DeclTypeSpecVisitor::MakeIntrinsic(
+    TypeCategory category, const std::optional<parser::KindSelector> &kind) {
+  MakeIntrinsic(category, GetKindParamValue(category, kind));
 }
 void DeclTypeSpecVisitor::MakeIntrinsic(TypeCategory category, int kind) {
   if (kind == 0) {
@@ -1088,21 +1096,29 @@ void DeclTypeSpecVisitor::SetDeclTypeSpec(const DeclTypeSpec &declTypeSpec) {
 }
 
 int DeclTypeSpecVisitor::GetKindParamValue(
-    const std::optional<parser::KindSelector> &kind) {
-  if (kind) {
-    if (auto *intExpr{std::get_if<parser::ScalarIntConstantExpr>(&kind->u)}) {
-      const auto &expr{GetExpr(*intExpr)};
-      if (auto *lit{std::get_if<parser::LiteralConstant>(&expr.u)}) {
-        if (auto *intLit{std::get_if<parser::IntLiteralConstant>(&lit->u)}) {
-          return std::get<std::uint64_t>(intLit->t);
-        }
-      }
-      CHECK(!"TODO: constant evaluation");
-    } else {
-      CHECK(!"TODO: translate star-size to kind");
-    }
+    TypeCategory category, const std::optional<parser::KindSelector> &kind) {
+  if (!kind) {
+    return 0;
   }
-  return 0;
+  // TODO: check that we get a valid kind
+  return std::visit(
+      common::visitors{
+          [&](const parser::ScalarIntConstantExpr &x) -> int {
+            if (auto maybeExpr{EvaluateExpr(x)}) {
+              return evaluate::ToInt64(*maybeExpr).value();
+            } else {
+              return 0;
+            }
+          },
+          [&](const parser::KindSelector::StarSize &x) -> int {
+            std::uint64_t size{x.v};
+            if (category == TypeCategory::Complex) {
+              size /= 2;
+            }
+            return size;
+          },
+      },
+      kind->u);
 }
 
 // MessageHandler implementation
@@ -1249,40 +1265,35 @@ bool ArraySpecVisitor::Pre(const parser::ArraySpec &x) {
   return true;
 }
 
-bool ArraySpecVisitor::Pre(const parser::DeferredShapeSpecList &x) {
+void ArraySpecVisitor::Post(const parser::DeferredShapeSpecList &x) {
   for (int i = 0; i < x.v; ++i) {
     arraySpec_.push_back(ShapeSpec::MakeDeferred());
   }
-  return false;
 }
 
-bool ArraySpecVisitor::Pre(const parser::AssumedShapeSpec &x) {
+void ArraySpecVisitor::Post(const parser::AssumedShapeSpec &x) {
   const auto &lb{x.v};
   arraySpec_.push_back(
       lb ? ShapeSpec::MakeAssumed(GetBound(*lb)) : ShapeSpec::MakeAssumed());
-  return true;
 }
 
-bool ArraySpecVisitor::Pre(const parser::ExplicitShapeSpec &x) {
+void ArraySpecVisitor::Post(const parser::ExplicitShapeSpec &x) {
   auto &&ub{GetBound(std::get<parser::SpecificationExpr>(x.t))};
   if (const auto &lb{std::get<std::optional<parser::SpecificationExpr>>(x.t)}) {
     arraySpec_.push_back(ShapeSpec::MakeExplicit(GetBound(*lb), std::move(ub)));
   } else {
     arraySpec_.push_back(ShapeSpec::MakeExplicit(Bound{1}, std::move(ub)));
   }
-  return true;
 }
 
-bool ArraySpecVisitor::Pre(const parser::AssumedImpliedSpec &x) {
+void ArraySpecVisitor::Post(const parser::AssumedImpliedSpec &x) {
   const auto &lb{x.v};
   arraySpec_.push_back(
       lb ? ShapeSpec::MakeImplied(GetBound(*lb)) : ShapeSpec::MakeImplied());
-  return false;
 }
 
-bool ArraySpecVisitor::Pre(const parser::AssumedRankSpec &) {
+void ArraySpecVisitor::Post(const parser::AssumedRankSpec &) {
   arraySpec_.push_back(ShapeSpec::MakeAssumedRank());
-  return false;
 }
 
 const ArraySpec &ArraySpecVisitor::arraySpec() {
@@ -1307,7 +1318,7 @@ void ArraySpecVisitor::PostAttrSpec() {
 }
 
 Bound ArraySpecVisitor::GetBound(const parser::SpecificationExpr &x) {
-  return Bound{GetExpr(x.v)};
+  return Bound{EvaluateExpr(x.v)};
 }
 
 // ScopeHandler implementation
@@ -1749,6 +1760,7 @@ bool InterfaceVisitor::Pre(const parser::GenericSpec &x) {
       const Symbol &ultimate{genericSymbol->GetUltimate()};
       EraseSymbol(*genericName_);
       genericSymbol = &CopySymbol(ultimate);
+      genericName_->symbol = genericSymbol;
       if (const auto *details{ultimate.detailsIf<GenericDetails>()}) {
         genericSymbol->set_details(GenericDetails{details->specificProcs()});
       } else if (const auto *details{ultimate.detailsIf<SubprogramDetails>()}) {
@@ -1766,20 +1778,13 @@ bool InterfaceVisitor::Pre(const parser::GenericSpec &x) {
     // okay
   } else if (genericSymbol->has<SubprogramDetails>() ||
       genericSymbol->has<SubprogramNameDetails>()) {
-    Details details;
-    if (auto *d{genericSymbol->detailsIf<SubprogramNameDetails>()}) {
-      details = *d;
-    } else if (auto *d{genericSymbol->detailsIf<SubprogramDetails>()}) {
-      details = *d;
-    } else {
-      common::die("unexpected kind of symbol");
-    }
     GenericDetails genericDetails;
     genericDetails.set_specific(*genericSymbol);
     EraseSymbol(*genericName_);
     genericSymbol = &MakeSymbol(*genericName_, genericDetails);
+  } else {
+    common::die("unexpected kind of symbol");
   }
-  CHECK(genericSymbol->has<GenericDetails>());
   CHECK(genericName_->symbol == genericSymbol);
   return false;
 }
@@ -1815,6 +1820,7 @@ void InterfaceVisitor::Post(const parser::GenericStmt &x) {
 
 GenericDetails &InterfaceVisitor::GetGenericDetails() {
   CHECK(genericName_);
+  CHECK(genericName_->symbol);
   return genericName_->symbol->get<GenericDetails>();
 }
 
@@ -2202,8 +2208,8 @@ void DeclarationVisitor::Post(const parser::EntityDecl &x) {
   Symbol &symbol{DeclareUnknownEntity(name, attrs)};
   if (auto &init{std::get<std::optional<parser::Initialization>>(x.t)}) {
     if (ConvertToObjectEntity(symbol)) {
-      if (auto *initExpr{std::get_if<parser::ConstantExpr>(&init->u)}) {
-        symbol.get<ObjectEntityDetails>().set_init(GetExpr(*initExpr));
+      if (auto *expr{std::get_if<parser::ConstantExpr>(&init->u)}) {
+        symbol.get<ObjectEntityDetails>().set_init(EvaluateExpr(*expr));
       }
     }
   }
@@ -2224,18 +2230,17 @@ bool DeclarationVisitor::Pre(const parser::BindEntity &x) {
   }
   return false;
 }
-bool DeclarationVisitor::Pre(const parser::NamedConstantDef &x) {
+void DeclarationVisitor::Post(const parser::NamedConstantDef &x) {
   auto &name{std::get<parser::NamedConstant>(x.t).v};
   auto &symbol{HandleAttributeStmt(Attr::PARAMETER, name)};
   if (!ConvertToObjectEntity(symbol)) {
     Say2(name, "PARAMETER attribute not allowed on '%s'"_err_en_US, symbol,
         "Declaration of '%s'"_en_US);
-    return false;
+    return;
   }
   const auto &expr{std::get<parser::ConstantExpr>(x.t)};
-  symbol.get<ObjectEntityDetails>().set_init(GetExpr(expr));
+  symbol.get<ObjectEntityDetails>().set_init(EvaluateExpr(expr));
   ApplyImplicitRules(symbol);
-  return false;
 }
 bool DeclarationVisitor::Pre(const parser::AsynchronousStmt &x) {
   return HandleAttributeStmt(Attr::ASYNCHRONOUS, x.v);
@@ -2453,7 +2458,7 @@ void DeclarationVisitor::Post(const parser::TypeParamDefStmt &x) {
     auto details{TypeParamDetails{attr}};
     if (auto &init{
             std::get<std::optional<parser::ScalarIntConstantExpr>>(decl.t)}) {
-      details.set_init(GetExpr(*init));
+      details.set_init(EvaluateExpr(*init));
     }
     MakeTypeSymbol(name, std::move(details));
     SetType(name, *type);
@@ -2495,7 +2500,7 @@ void DeclarationVisitor::Post(const parser::ComponentDecl &x) {
     if (auto *details{symbol.detailsIf<ObjectEntityDetails>()}) {
       if (auto &init{std::get<std::optional<parser::Initialization>>(x.t)}) {
         if (auto *initExpr{std::get_if<parser::ConstantExpr>(&init->u)}) {
-          details->set_init(GetExpr(*initExpr));
+          details->set_init(EvaluateExpr(*initExpr));
         }
       }
     }
@@ -2816,7 +2821,7 @@ bool ConstructVisitor::Pre(const parser::DataImpliedDo &x) {
       std::get<parser::LoopBounds<parser::ScalarIntConstantExpr>>(x.t)};
   if (type) {
     BeginDeclTypeSpec();
-    DeclTypeSpecVisitor::Pre(*type);
+    DeclTypeSpecVisitor::Post(*type);
   }
   if (auto *symbol{DeclareConstructEntity(bounds.name.thing.thing)}) {
     CheckIntegerType(*symbol);
@@ -3162,8 +3167,7 @@ void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
         // OK
       } else if (symbol->has<DerivedTypeDetails>()) {
         // OK: type constructor
-      } else if (auto *details{symbol->detailsIf<ObjectEntityDetails>()};
-                 details && details->isArray()) {
+      } else if (symbol->has<ObjectEntityDetails>()) {
         // OK: array mis-parsed as a call
       } else if (symbol->test(Symbol::Flag::Implicit)) {
         Say(*name,
@@ -3398,21 +3402,5 @@ static const parser::Name *GetGenericSpecName(const parser::GenericSpec &x) {
   } else {
     return nullptr;
   }
-}
-
-static const parser::Expr &GetExpr(const parser::ConstantExpr &x) {
-  return *x.thing;
-}
-static const parser::Expr &GetExpr(const parser::IntExpr &x) {
-  return *x.thing;
-}
-static const parser::Expr &GetExpr(const parser::IntConstantExpr &x) {
-  return GetExpr(x.thing);
-}
-static const parser::Expr &GetExpr(const parser::ScalarIntExpr &x) {
-  return GetExpr(x.thing);
-}
-static const parser::Expr &GetExpr(const parser::ScalarIntConstantExpr &x) {
-  return GetExpr(x.thing);
 }
 }
