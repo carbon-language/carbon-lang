@@ -3767,7 +3767,7 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
     // If either operand has other uses, this transform is not an improvement.
     if (!N0.hasOneUse() || !N1.hasOneUse())
       return SDValue();
-    SDValue Logic = DAG.getNode(LogicOpcode, SDLoc(N0), XVT, X, Y);
+    SDValue Logic = DAG.getNode(LogicOpcode, DL, XVT, X, Y);
     AddToWorklist(Logic.getNode());
     return DAG.getNode(HandOpcode, DL, VT, Logic, N0.getOperand(1));
   }
