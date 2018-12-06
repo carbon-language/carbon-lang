@@ -881,8 +881,22 @@ void NVPTXAsmPrinter::emitHeader(Module &M, raw_ostream &O,
   if (NTM.getDrvInterface() == NVPTX::NVCL)
     O << ", texmode_independent";
 
+  bool HasFullDebugInfo = false;
+  for (DICompileUnit *CU : M.debug_compile_units()) {
+    switch(CU->getEmissionKind()) {
+    case DICompileUnit::NoDebug:
+    case DICompileUnit::DebugDirectivesOnly:
+      break;
+    case DICompileUnit::LineTablesOnly:
+    case DICompileUnit::FullDebug:
+      HasFullDebugInfo = true;
+      break;
+    }
+    if (HasFullDebugInfo)
+      break;
+  }
   // FIXME: remove comment once debug info is properly supported.
-  if (MMI && MMI->hasDebugInfo())
+  if (MMI && MMI->hasDebugInfo() && HasFullDebugInfo)
     O << "//, debug";
 
   O << "\n";
