@@ -621,10 +621,6 @@ struct InstructionMapper {
   DenseMap<MachineInstr *, unsigned, MachineInstrExpressionTrait>
       InstructionIntegerMap;
 
-  /// Corresponcence from unsigned integers to \p MachineInstrs.
-  /// Inverse of \p InstructionIntegerMap.
-  DenseMap<unsigned, MachineInstr *> IntegerInstructionMap;
-
   /// Correspondence between \p MachineBasicBlocks and target-defined flags.
   DenseMap<MachineBasicBlock *, unsigned> MBBFlagsMap;
 
@@ -644,8 +640,7 @@ struct InstructionMapper {
   /// Maps \p *It to a legal integer.
   ///
   /// Updates \p CanOutlineWithPrevInstr, \p HaveLegalRange, \p InstrListForMBB,
-  /// \p UnsignedVecForMBB, \p InstructionIntegerMap, \p IntegerInstructionMap,
-  /// and \p LegalInstrNumber.
+  /// \p UnsignedVecForMBB, \p InstructionIntegerMap, and \p LegalInstrNumber.
   ///
   /// \returns The integer that \p *It was mapped to.
   unsigned mapToLegalUnsigned(
@@ -678,10 +673,8 @@ struct InstructionMapper {
     unsigned MINumber = ResultIt->second;
 
     // There was an insertion.
-    if (WasInserted) {
+    if (WasInserted)
       LegalInstrNumber++;
-      IntegerInstructionMap.insert(std::make_pair(MINumber, &MI));
-    }
 
     UnsignedVecForMBB.push_back(MINumber);
 
