@@ -18,6 +18,8 @@ using namespace llvm;
 using namespace llvm::elfabi;
 
 LLVM_YAML_STRONG_TYPEDEF(ELFArch, ELFArchMapper)
+LLVM_YAML_STRONG_TYPEDEF(std::string, ELFNeededEntry)
+LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(ELFNeededEntry)
 
 namespace llvm {
 namespace yaml {
@@ -126,21 +128,23 @@ template <> struct CustomMappingTraits<std::set<ELFSymbol>> {
   }
 };
 
-/// YAML traits for generic string vectors (i.e. list of needed libraries).
-template <> struct SequenceTraits<std::vector<std::string>> {
-  static size_t size(IO &IO, std::vector<std::string> &List) {
-    return List.size();
+/// YAML traits for ELFNeededEntry. This is required to enable flow mapping on
+/// NeededLibs.
+template <> struct ScalarTraits<ELFNeededEntry> {
+  static void output(const ELFNeededEntry &Value, void *,
+                     llvm::raw_ostream &Out) {
+    Out << Value.value;
   }
 
-  static std::string &element(IO &IO, std::vector<std::string> &List,
-                              size_t Index) {
-    if (Index >= List.size())
-      List.resize(Index + 1);
-    return List[Index];
+  static StringRef input(StringRef Scalar, void *, ELFNeededEntry &Value) {
+    Value = Scalar.str();
+
+    // Returning empty StringRef indicates successful parse.
+    return StringRef();
   }
 
-  // Compacts list of needed libraries into a single line.
-  static const bool flow = true;
+  // Don't place quotation marks around needed entries.
+  static QuotingType mustQuote(StringRef) { return QuotingType::None; }
 };
 
 /// YAML traits for ELFStub objects.
@@ -151,7 +155,8 @@ template <> struct MappingTraits<ELFStub> {
     IO.mapRequired("TbeVersion", Stub.TbeVersion);
     IO.mapRequired("SoName", Stub.SoName);
     IO.mapRequired("Arch", (ELFArchMapper &)Stub.Arch);
-    IO.mapOptional("NeededLibs", Stub.NeededLibs);
+    IO.mapOptional("NeededLibs",
+                   (std::vector<ELFNeededEntry> &)Stub.NeededLibs);
     IO.mapRequired("Symbols", Stub.Symbols);
   }
 };
