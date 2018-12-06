@@ -3715,8 +3715,8 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
   if (N0.getNumOperands() == 0)
     return SDValue();
 
-  // FIXME: We need to check number of uses of the operands to not increase
-  //        the instruction count.
+  // FIXME: We should check number of uses of the operands to not increase
+  //        the instruction count for all transforms.
 
   EVT Op0VT = N0.getOperand(0).getValueType();
   switch (HandOpcode) {
@@ -3725,6 +3725,10 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
     case ISD::ZERO_EXTEND:
     case ISD::SIGN_EXTEND:
     case ISD::BSWAP:
+      // If both operands have other uses, this transform would create extra
+      // instructions without eliminating anything.
+      if (!N0.hasOneUse() && !N1.hasOneUse())
+        return SDValue();
       // We need matching integer source types.
       // Do not hoist logic op inside of a vector extend, since it may combine
       // into a vsetcc.
