@@ -1015,9 +1015,10 @@ MachineOutliner::findCandidates(InstructionMapper &Mapper,
 
   // First, find dall of the repeated substrings in the tree of minimum length
   // 2.
+  std::vector<Candidate> CandidatesForRepeatedSeq;
   for (auto It = ST.begin(), Et = ST.end(); It != Et; ++It) {
+    CandidatesForRepeatedSeq.clear();
     SuffixTree::RepeatedSubstring RS = *It;
-    std::vector<Candidate> CandidatesForRepeatedSeq;
     unsigned StringLen = RS.Length;
     for (const unsigned &StartIdx : RS.StartIndices) {
       unsigned EndIdx = StartIdx + StringLen - 1;
