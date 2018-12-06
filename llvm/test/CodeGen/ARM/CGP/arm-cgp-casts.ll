@@ -531,3 +531,39 @@ if.end183:
   store i8 %w.0.off0, i8* %d, align 1
   ret void
 }
+
+@c = common dso_local local_unnamed_addr global i16 0, align 2
+@b = common dso_local local_unnamed_addr global i16 0, align 2
+@f = common dso_local local_unnamed_addr global i32 0, align 4
+@e = common dso_local local_unnamed_addr global i8 0, align 1
+@a = common dso_local local_unnamed_addr global i8 0, align 1
+@d = common dso_local local_unnamed_addr global i32 0, align 4
+
+; CHECK-LABEL: and_trunc
+; CHECK: ldrh
+; CHECK: sxth
+; CHECK: uxtb
+define void @and_trunc_two_zext() {
+entry:
+  %0 = load i16, i16* @c, align 2
+  %1 = load i16, i16* @b, align 2
+  %conv = sext i16 %1 to i32
+  store i32 %conv, i32* @f, align 4
+  %2 = trunc i16 %1 to i8
+  %conv1 = and i8 %2, 1
+  store i8 %conv1, i8* @e, align 1
+  %3 = load i8, i8* @a, align 1
+  %narrow = mul nuw i8 %3, %conv1
+  %mul = zext i8 %narrow to i32
+  store i32 %mul, i32* @d, align 4
+  %4 = zext i8 %narrow to i16
+  %conv5 = or i16 %0, %4
+  %tobool = icmp eq i16 %conv5, 0
+  br i1 %tobool, label %if.end, label %for.cond
+
+for.cond:
+  br label %for.cond
+
+if.end:
+  ret void
+}
