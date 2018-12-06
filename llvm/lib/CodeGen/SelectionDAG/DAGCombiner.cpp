@@ -3718,13 +3718,13 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
   // FIXME: We should check number of uses of the operands to not increase
   //        the instruction count for all transforms.
 
+  // Handle size-changing casts.
   EVT Op0VT = N0.getOperand(0).getValueType();
   switch (HandOpcode) {
     case ISD::ANY_EXTEND:
     case ISD::TRUNCATE:
     case ISD::ZERO_EXTEND:
     case ISD::SIGN_EXTEND:
-    case ISD::BSWAP:
       // If both operands have other uses, this transform would create extra
       // instructions without eliminating anything.
       if (!N0.hasOneUse() && !N1.hasOneUse())
@@ -3732,7 +3732,7 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
       // We need matching integer source types.
       // Do not hoist logic op inside of a vector extend, since it may combine
       // into a vsetcc.
-      // TODO: Should the vector check apply to truncate and bswap though?
+      // TODO: Should the vector check apply to truncate though?
       if (VT.isVector() || Op0VT != N1.getOperand(0).getValueType())
         return SDValue();
       // Don't create an illegal op during or after legalization.
@@ -3757,10 +3757,8 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
       return DAG.getNode(HandOpcode, SDLoc(N), VT, Logic);
   }
 
-  // For each of OP in SHL/SRL/SRA/AND...
-  //   fold (and (OP x, z), (OP y, z)) -> (OP (and x, y), z)
-  //   fold (or  (OP x, z), (OP y, z)) -> (OP (or  x, y), z)
-  //   fold (xor (OP x, z), (OP y, z)) -> (OP (xor x, y), z)
+  // For binops SHL/SRL/SRA/AND:
+  //   logic_op (OP x, z), (OP y, z) --> OP (logic_op x, y), z
   if ((HandOpcode == ISD::SHL || HandOpcode == ISD::SRL ||
        HandOpcode == ISD::SRA || HandOpcode == ISD::AND) &&
       N0.getOperand(1) == N1.getOperand(1)) {
@@ -3771,6 +3769,17 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
                                 N0.getOperand(0), N1.getOperand(0));
     AddToWorklist(Logic.getNode());
     return DAG.getNode(HandOpcode, SDLoc(N), VT, Logic, N0.getOperand(1));
+  }
+
+  // Unary ops: logic_op (bswap x), (bswap y) --> bswap (logic_op x, y)
+  if (HandOpcode == ISD::BSWAP) {
+    // If either operand has other uses, this transform is not an improvement.
+    if (!N0.hasOneUse() || !N1.hasOneUse())
+      return SDValue();
+    SDValue Logic = DAG.getNode(LogicOpcode, SDLoc(N0), Op0VT,
+                                N0.getOperand(0), N1.getOperand(0));
+    AddToWorklist(Logic.getNode());
+    return DAG.getNode(HandOpcode, SDLoc(N), VT, Logic);
   }
 
   // Simplify xor/and/or (bitcast(A), bitcast(B)) -> bitcast(op (A,B))
