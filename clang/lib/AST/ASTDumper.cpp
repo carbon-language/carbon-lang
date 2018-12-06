@@ -366,7 +366,6 @@ namespace  {
     void VisitBlockDecl(const BlockDecl *D);
 
     // Stmts.
-    void VisitStmt(const Stmt *Node);
     void VisitDeclStmt(const DeclStmt *Node);
     void VisitAttributedStmt(const AttributedStmt *Node);
     void VisitIfStmt(const IfStmt *Node);
@@ -1727,6 +1726,12 @@ void ASTDumper::dumpStmt(const Stmt *S) {
       OS << "<<<NULL>>>";
       return;
     }
+    {
+      ColorScope Color(OS, ShowColors, StmtColor);
+      OS << S->getStmtClassName();
+    }
+    NodeDumper.dumpPointer(S);
+    NodeDumper.dumpSourceRange(S->getSourceRange());
 
     ConstStmtVisitor<ASTDumper>::Visit(S);
 
@@ -1740,17 +1745,7 @@ void ASTDumper::dumpStmt(const Stmt *S) {
   });
 }
 
-void ASTDumper::VisitStmt(const Stmt *Node) {
-  {
-    ColorScope Color(OS, ShowColors, StmtColor);
-    OS << Node->getStmtClassName();
-  }
-  NodeDumper.dumpPointer(Node);
-  NodeDumper.dumpSourceRange(Node->getSourceRange());
-}
-
 void ASTDumper::VisitDeclStmt(const DeclStmt *Node) {
-  VisitStmt(Node);
   for (DeclStmt::const_decl_iterator I = Node->decl_begin(),
                                      E = Node->decl_end();
        I != E; ++I)
@@ -1758,7 +1753,6 @@ void ASTDumper::VisitDeclStmt(const DeclStmt *Node) {
 }
 
 void ASTDumper::VisitAttributedStmt(const AttributedStmt *Node) {
-  VisitStmt(Node);
   for (ArrayRef<const Attr *>::iterator I = Node->getAttrs().begin(),
                                         E = Node->getAttrs().end();
        I != E; ++I)
@@ -1766,7 +1760,6 @@ void ASTDumper::VisitAttributedStmt(const AttributedStmt *Node) {
 }
 
 void ASTDumper::VisitIfStmt(const IfStmt *Node) {
-  VisitStmt(Node);
   if (Node->hasInitStorage())
     OS << " has_init";
   if (Node->hasVarStorage())
@@ -1776,7 +1769,6 @@ void ASTDumper::VisitIfStmt(const IfStmt *Node) {
 }
 
 void ASTDumper::VisitSwitchStmt(const SwitchStmt *Node) {
-  VisitStmt(Node);
   if (Node->hasInitStorage())
     OS << " has_init";
   if (Node->hasVarStorage())
@@ -1784,35 +1776,29 @@ void ASTDumper::VisitSwitchStmt(const SwitchStmt *Node) {
 }
 
 void ASTDumper::VisitWhileStmt(const WhileStmt *Node) {
-  VisitStmt(Node);
   if (Node->hasVarStorage())
     OS << " has_var";
 }
 
 void ASTDumper::VisitLabelStmt(const LabelStmt *Node) {
-  VisitStmt(Node);
   OS << " '" << Node->getName() << "'";
 }
 
 void ASTDumper::VisitGotoStmt(const GotoStmt *Node) {
-  VisitStmt(Node);
   OS << " '" << Node->getLabel()->getName() << "'";
   NodeDumper.dumpPointer(Node->getLabel());
 }
 
 void ASTDumper::VisitCXXCatchStmt(const CXXCatchStmt *Node) {
-  VisitStmt(Node);
   dumpDecl(Node->getExceptionDecl());
 }
 
 void ASTDumper::VisitCaseStmt(const CaseStmt *Node) {
-  VisitStmt(Node);
   if (Node->caseStmtIsGNURange())
     OS << " gnu_range";
 }
 
 void ASTDumper::VisitCapturedStmt(const CapturedStmt *Node) {
-  VisitStmt(Node);
   dumpDecl(Node->getCapturedDecl());
 }
 
@@ -1822,7 +1808,6 @@ void ASTDumper::VisitCapturedStmt(const CapturedStmt *Node) {
 
 void ASTDumper::VisitOMPExecutableDirective(
     const OMPExecutableDirective *Node) {
-  VisitStmt(Node);
   for (auto *C : Node->clauses()) {
     dumpChild([=] {
       if (!C) {
@@ -1851,7 +1836,6 @@ void ASTDumper::VisitOMPExecutableDirective(
 //===----------------------------------------------------------------------===//
 
 void ASTDumper::VisitExpr(const Expr *Node) {
-  VisitStmt(Node);
   NodeDumper.dumpType(Node->getType());
 
   {
@@ -2277,7 +2261,6 @@ void ASTDumper::VisitObjCBoxedExpr(const ObjCBoxedExpr *Node) {
 }
 
 void ASTDumper::VisitObjCAtCatchStmt(const ObjCAtCatchStmt *Node) {
-  VisitStmt(Node);
   if (const VarDecl *CatchParam = Node->getCatchParamDecl())
     dumpDecl(CatchParam);
   else
