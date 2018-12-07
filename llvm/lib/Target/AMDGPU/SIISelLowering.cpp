@@ -5065,7 +5065,7 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     return loadInputValue(DAG, &AMDGPU::VGPR_32RegClass, MVT::i32,
                           SDLoc(DAG.getEntryNode()),
                           MFI->getArgInfo().WorkItemIDZ);
-  case AMDGPUIntrinsic::SI_load_const: {
+  case SIIntrinsic::SI_load_const: {
     SDValue Load =
         lowerSBuffer(MVT::i32, DL, Op.getOperand(1), Op.getOperand(2),
                      DAG.getTargetConstant(0, DL, MVT::i1), DAG);
@@ -5808,19 +5808,6 @@ SDValue SITargetLowering::LowerINTRINSIC_VOID(SDValue Op,
     return DAG.getNode(AMDGPUISD::INIT_EXEC_FROM_INPUT, DL, MVT::Other, Chain,
                        Op.getOperand(2), Op.getOperand(3));
   }
-  case AMDGPUIntrinsic::AMDGPU_kill: {
-    SDValue Src = Op.getOperand(2);
-    if (const ConstantFPSDNode *K = dyn_cast<ConstantFPSDNode>(Src)) {
-      if (!K->isNegative())
-        return Chain;
-
-      SDValue NegOne = DAG.getTargetConstant(FloatToBits(-1.0f), DL, MVT::i32);
-      return DAG.getNode(AMDGPUISD::KILL, DL, MVT::Other, Chain, NegOne);
-    }
-
-    SDValue Cast = DAG.getNode(ISD::BITCAST, DL, MVT::i32, Src);
-    return DAG.getNode(AMDGPUISD::KILL, DL, MVT::Other, Chain, Cast);
-  }
   case Intrinsic::amdgcn_s_barrier: {
     if (getTargetMachine().getOptLevel() > CodeGenOpt::None) {
       const GCNSubtarget &ST = MF.getSubtarget<GCNSubtarget>();
@@ -5831,7 +5818,7 @@ SDValue SITargetLowering::LowerINTRINSIC_VOID(SDValue Op,
     }
     return SDValue();
   };
-  case AMDGPUIntrinsic::SI_tbuffer_store: {
+  case SIIntrinsic::SI_tbuffer_store: {
 
     // Extract vindex and voffset from vaddr as appropriate
     const ConstantSDNode *OffEn = cast<ConstantSDNode>(Op.getOperand(10));
