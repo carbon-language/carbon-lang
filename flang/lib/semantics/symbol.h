@@ -160,15 +160,15 @@ private:
 
 class DerivedTypeDetails {
 public:
-  bool hasTypeParams() const { return hasTypeParams_; }
+  const std::list<SourceName> &paramNames() const { return paramNames_; }
   const Symbol *extends() const { return extends_; }
   bool sequence() const { return sequence_; }
-  void set_hasTypeParams(bool x = true) { hasTypeParams_ = x; }
+  void add_paramName(const SourceName &name) { paramNames_.emplace_back(name); }
   void set_extends(const Symbol *extends) { extends_ = extends; }
   void set_sequence(bool x = true) { sequence_ = x; }
 
 private:
-  bool hasTypeParams_{false};
+  std::list<SourceName> paramNames_;
   const Symbol *extends_{nullptr};
   bool sequence_{false};
 };

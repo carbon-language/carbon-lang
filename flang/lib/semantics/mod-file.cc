@@ -176,14 +176,12 @@ void ModFileWriter::PutDerivedType(const Symbol &typeSymbol) {
   }
   PutLower(decls_ << "::", typeSymbol);
   auto &typeScope{*typeSymbol.scope()};
-  if (details.hasTypeParams()) {
+  if (!details.paramNames().empty()) {
     bool first{true};
     decls_ << '(';
-    for (const auto *symbol : CollectSymbols(typeScope)) {
-      if (symbol->has<TypeParamDetails>()) {
-        PutLower(first ? decls_ : decls_ << ',', *symbol);
-        first = false;
-      }
+    for (const auto &name : details.paramNames()) {
+      PutLower(first ? decls_ : decls_ << ',', name.ToString());
+      first = false;
     }
     decls_ << ')';
   }

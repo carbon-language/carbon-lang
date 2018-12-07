@@ -24,6 +24,11 @@ module m
   type(t(a+3,:)), allocatable :: z
   real*2 :: f
   complex*32 :: g
+  type t2(i, j, h)
+    integer, len :: h
+    integer, kind :: j
+    integer, len :: i
+  end type
 contains
   subroutine foo(x)
     real :: x(2:)
@@ -49,6 +54,11 @@ end
 !  type(t(4_4,:)),allocatable::z
 !  real(2)::f
 !  complex(16)::g
+!  type::t2(i,j,h)
+!    integer(4),len::h
+!    integer(4),kind::j
+!    integer(4),len::i
+!  end type
 !contains
 !  subroutine foo(x)
 !    real(4)::x(2_4:)

@@ -649,7 +649,7 @@ private:
   const Symbol *ResolveDerivedType(const parser::Name &);
   bool CanBeTypeBoundProc(const Symbol &);
   Symbol *FindExplicitInterface(const parser::Name &);
-  Symbol &MakeTypeSymbol(const parser::Name &, Details &&);
+  bool MakeTypeSymbol(const parser::Name &, Details &&);
   bool OkToAddComponent(const parser::Name &, bool isParentComp = false);
 
   // Declare an object or procedure entity.
@@ -2384,8 +2384,10 @@ bool DeclarationVisitor::Pre(const parser::DerivedTypeSpec &x) {
 void DeclarationVisitor::Post(const parser::DerivedTypeDef &x) {
   std::set<SourceName> paramNames;
   auto &scope{currScope()};
+  auto &details{scope.symbol()->get<DerivedTypeDetails>()};
   auto &stmt{std::get<parser::Statement<parser::DerivedTypeStmt>>(x.t)};
   for (auto &paramName : std::get<std::list<parser::Name>>(stmt.statement.t)) {
+    details.add_paramName(paramName.source);
     auto *symbol{FindInScope(scope, paramName)};
     if (!symbol) {
       Say(paramName,
@@ -2399,8 +2401,6 @@ void DeclarationVisitor::Post(const parser::DerivedTypeDef &x) {
           "Duplicate type parameter name: '%s'"_err_en_US);  // C731
     }
   }
-  auto &details{scope.symbol()->get<DerivedTypeDetails>()};
-  details.set_hasTypeParams(!paramNames.empty());
   for (const auto &[name, symbol] : currScope()) {
     if (symbol->has<TypeParamDetails>() && !paramNames.count(name)) {
       SayDerivedType(name,
@@ -2414,7 +2414,7 @@ void DeclarationVisitor::Post(const parser::DerivedTypeDef &x) {
       Say(stmt.source,
           "A sequence type may not have the EXTENDS attribute"_err_en_US);  // C735
     }
-    if (details.hasTypeParams()) {
+    if (!details.paramNames().empty()) {
       Say(stmt.source,
           "A sequence type may not have type parameters"_err_en_US);  // C740
     }
@@ -2460,8 +2460,9 @@ void DeclarationVisitor::Post(const parser::TypeParamDefStmt &x) {
             std::get<std::optional<parser::ScalarIntConstantExpr>>(decl.t)}) {
       details.set_init(EvaluateExpr(*init));
     }
-    MakeTypeSymbol(name, std::move(details));
-    SetType(name, *type);
+    if (MakeTypeSymbol(name, std::move(details))) {
+      SetType(name, *type);
+    }
   }
   EndDecl();
 }
@@ -2717,8 +2718,8 @@ Symbol *DeclarationVisitor::FindExplicitInterface(const parser::Name &name) {
 }
 
 // Create a symbol for a type parameter, component, or procedure binding in
-// the current derived type scope.
-Symbol &DeclarationVisitor::MakeTypeSymbol(
+// the current derived type scope. Return false on error.
+bool DeclarationVisitor::MakeTypeSymbol(
     const parser::Name &name, Details &&details) {
   Scope &derivedType{currScope()};
   CHECK(derivedType.kind() == Scope::Kind::DerivedType);
@@ -2727,7 +2728,7 @@ Symbol &DeclarationVisitor::MakeTypeSymbol(
         "Type parameter, component, or procedure binding '%s'"
         " already defined in this type"_err_en_US,
         *symbol, "Previous definition of '%s'"_en_US);
-    return *symbol;
+    return false;
   } else {
     auto attrs{GetAttrs()};
     // Apply binding-private-stmt if present and this is a procedure binding
@@ -2736,7 +2737,8 @@ Symbol &DeclarationVisitor::MakeTypeSymbol(
         std::holds_alternative<ProcBindingDetails>(details)) {
       attrs.set(Attr::PRIVATE);
     }
-    return MakeSymbol(name, attrs, details);
+    MakeSymbol(name, attrs, details);
+    return true;
   }
 }
 

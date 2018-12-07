@@ -35,4 +35,10 @@ module m
     !ERROR: 'd' is not a type parameter of this derived type
     integer(8), len :: d
   end type
+  type t5(a, b)
+    integer, len :: a
+    integer, len :: b
+    !ERROR: Type parameter, component, or procedure binding 'a' already defined in this type
+    integer, len :: a
+  end type
 end module
