@@ -269,7 +269,9 @@ CrossTranslationUnitContext::importDefinition(const FunctionDecl *FD) {
 
   ASTImporter &Importer = getOrCreateASTImporter(FD->getASTContext());
   auto *ToDecl =
-      cast<FunctionDecl>(Importer.Import(const_cast<FunctionDecl *>(FD)));
+      cast_or_null<FunctionDecl>(Importer.Import(const_cast<FunctionDecl *>(FD)));
+  if (!ToDecl)
+    return llvm::make_error<IndexError>(index_error_code::failed_import);
   assert(ToDecl->hasBody());
   assert(FD->hasBody() && "Functions already imported should have body.");
   ++NumGetCTUSuccess;
