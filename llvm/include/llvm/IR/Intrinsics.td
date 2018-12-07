@@ -361,6 +361,34 @@ def int_objc_storeStrong                    : Intrinsic<[],
 def int_objc_storeWeak                      : Intrinsic<[llvm_ptr_ty],
                                                         [llvm_ptrptr_ty,
                                                          llvm_ptr_ty]>;
+def int_objc_clang_arc_use                  : Intrinsic<[],
+                                                        [llvm_vararg_ty]>;
+def int_objc_unsafeClaimAutoreleasedReturnValue : Intrinsic<[llvm_ptr_ty],
+                                                            [llvm_ptr_ty]>;
+def int_objc_retainedObject                 : Intrinsic<[llvm_ptr_ty],
+                                                        [llvm_ptr_ty]>;
+def int_objc_unretainedObject               : Intrinsic<[llvm_ptr_ty],
+                                                        [llvm_ptr_ty]>;
+def int_objc_unretainedPointer              : Intrinsic<[llvm_ptr_ty],
+                                                        [llvm_ptr_ty]>;
+def int_objc_retain_autorelease             : Intrinsic<[llvm_ptr_ty],
+                                                        [llvm_ptr_ty]>;
+def int_objc_sync_enter                     : Intrinsic<[llvm_i32_ty],
+                                                        [llvm_ptr_ty]>;
+def int_objc_sync_exit                      : Intrinsic<[llvm_i32_ty],
+                                                        [llvm_ptr_ty]>;
+def int_objc_arc_annotation_topdown_bbstart : Intrinsic<[],
+                                                        [llvm_ptrptr_ty,
+                                                         llvm_ptrptr_ty]>;
+def int_objc_arc_annotation_topdown_bbend   : Intrinsic<[],
+                                                        [llvm_ptrptr_ty,
+                                                         llvm_ptrptr_ty]>;
+def int_objc_arc_annotation_bottomup_bbstart  : Intrinsic<[],
+                                                          [llvm_ptrptr_ty,
+                                                           llvm_ptrptr_ty]>;
+def int_objc_arc_annotation_bottomup_bbend  : Intrinsic<[],
+                                                        [llvm_ptrptr_ty,
+                                                         llvm_ptrptr_ty]>;
 
 
 //===--------------------- Code Generator Intrinsics ----------------------===//
