@@ -159,7 +159,8 @@ CrossTranslationUnitContext::findFunctionInDeclContext(const DeclContext *DC,
 llvm::Expected<const FunctionDecl *>
 CrossTranslationUnitContext::getCrossTUDefinition(const FunctionDecl *FD,
                                                   StringRef CrossTUDir,
-                                                  StringRef IndexName) {
+                                                  StringRef IndexName,
+                                                  bool DisplayCTUProgress) {
   assert(FD && "FD is missing, bad call to this function!");
   assert(!FD->hasBody() && "FD has a definition in current translation unit!");
   ++NumGetCTUCalled;
@@ -168,7 +169,7 @@ CrossTranslationUnitContext::getCrossTUDefinition(const FunctionDecl *FD,
     return llvm::make_error<IndexError>(
         index_error_code::failed_to_generate_usr);
   llvm::Expected<ASTUnit *> ASTUnitOrError =
-      loadExternalAST(LookupFnName, CrossTUDir, IndexName);
+      loadExternalAST(LookupFnName, CrossTUDir, IndexName, DisplayCTUProgress);
   if (!ASTUnitOrError)
     return ASTUnitOrError.takeError();
   ASTUnit *Unit = *ASTUnitOrError;
@@ -205,7 +206,8 @@ void CrossTranslationUnitContext::emitCrossTUDiagnostics(const IndexError &IE) {
 }
 
 llvm::Expected<ASTUnit *> CrossTranslationUnitContext::loadExternalAST(
-    StringRef LookupName, StringRef CrossTUDir, StringRef IndexName) {
+    StringRef LookupName, StringRef CrossTUDir, StringRef IndexName,
+    bool DisplayCTUProgress) {
   // FIXME: The current implementation only supports loading functions with
   //        a lookup name from a single translation unit. If multiple
   //        translation units contains functions with the same lookup name an
@@ -247,6 +249,10 @@ llvm::Expected<ASTUnit *> CrossTranslationUnitContext::loadExternalAST(
           ASTUnit::LoadEverything, Diags, CI.getFileSystemOpts()));
       Unit = LoadedUnit.get();
       FileASTUnitMap[ASTFileName] = std::move(LoadedUnit);
+      if (DisplayCTUProgress) {
+        llvm::errs() << "CTU loaded AST file: "
+                     << ASTFileName << "\n";
+      }
     } else {
       Unit = ASTCacheEntry->second.get();
     }

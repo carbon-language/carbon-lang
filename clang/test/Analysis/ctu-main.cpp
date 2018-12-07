@@ -10,6 +10,14 @@
 // RUN:   -analyzer-config experimental-enable-naive-ctu-analysis=true \
 // RUN:   -analyzer-config ctu-dir=%t/ctudir \
 // RUN:   -verify %s
+// RUN: %clang_analyze_cc1 -triple x86_64-pc-linux-gnu \
+// RUN:   -analyzer-checker=core,debug.ExprInspection \
+// RUN:   -analyzer-config experimental-enable-naive-ctu-analysis=true \
+// RUN:   -analyzer-config ctu-dir=%t/ctudir \
+// RUN:   -analyzer-config display-ctu-progress=true 2>&1 %s | FileCheck %s
+
+// CHECK: CTU loaded AST file: {{.*}}/ctu-other.cpp
+// CHECK: CTU loaded AST file: {{.*}}/ctu-chain.cpp
 
 #include "ctu-hdr.h"
 
