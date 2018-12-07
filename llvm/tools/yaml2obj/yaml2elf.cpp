@@ -158,6 +158,9 @@ class ELFState {
   bool writeSectionContent(Elf_Shdr &SHeader, const ELFYAML::Group &Group,
                            ContiguousBlobAccumulator &CBA);
   bool writeSectionContent(Elf_Shdr &SHeader,
+                           const ELFYAML::VersionNeedSection &Section,
+                           ContiguousBlobAccumulator &CBA);
+  bool writeSectionContent(Elf_Shdr &SHeader,
                            const ELFYAML::MipsABIFlags &Section,
                            ContiguousBlobAccumulator &CBA);
   bool hasDynamicSymbols() const;
@@ -292,6 +295,13 @@ bool ELFState<ELFT>::initSectionHeaders(std::vector<Elf_Shdr> &SHeaders,
       // SHT_NOBITS section does not have content
       // so just to setup the section offset.
       CBA.getOSAndAlignedOffset(SHeader.sh_offset, SHeader.sh_addralign);
+    } else if (auto S = dyn_cast<ELFYAML::VersionNeedSection>(Sec.get())) {
+      if (S->Link.empty())
+        // For VersionNeed section set link to .dynstr by default.
+        SHeader.sh_link = getDotDynStrSecNo();
+
+      if (!writeSectionContent(SHeader, *S, CBA))
+        return false;
     } else
       llvm_unreachable("Unknown section type");
 
@@ -544,6 +554,55 @@ bool ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
     SIdx = sectionIndex;
     OS.write((const char *)&SIdx, sizeof(SIdx));
   }
+  return true;
+}
+
+template <class ELFT>
+bool ELFState<ELFT>::writeSectionContent(
+    Elf_Shdr &SHeader, const ELFYAML::VersionNeedSection &Section,
+    ContiguousBlobAccumulator &CBA) {
+  assert(Section.Type == llvm::ELF::SHT_GNU_verneed &&
+         "Section type is not SHT_GNU_verneed");
+
+  typedef typename ELFT::Verneed Elf_Verneed;
+  typedef typename ELFT::Vernaux Elf_Vernaux;
+
+  uint64_t BlobSize = 0;
+  SHeader.sh_info = Section.VersionNeeds.size();
+  auto &OS = CBA.getOSAndAlignedOffset(SHeader.sh_offset, SHeader.sh_addralign);
+
+  for (auto VNeedIt = Section.VersionNeeds.begin();
+       VNeedIt != Section.VersionNeeds.end(); ++VNeedIt) {
+    Elf_Verneed VNeed;
+
+    VNeed.vn_version = VNeedIt->Version;
+    VNeed.vn_cnt = VNeedIt->Auxiliaries.size();
+    // VNeed.vn_file = DotDynstr.add(VNeedIt->File);
+    // errs() << "Need Name: " << VNeedIt->File << " Index: " << DotDynstr.add(VNeedIt->File) << '\n';
+    VNeed.vn_aux = sizeof(Elf_Verneed);
+    VNeed.vn_next =
+        (VNeedIt != Section.VersionNeeds.end() - 1)
+            ? sizeof(Elf_Verneed) + VNeed.vn_cnt * sizeof(Elf_Vernaux)
+            : 0;
+    BlobSize += sizeof(Elf_Verneed);
+    OS.write((const char *)&VNeed, sizeof(VNeed));
+
+    for (auto VNeedAuxIt = VNeedIt->Auxiliaries.begin();
+         VNeedAuxIt != VNeedIt->Auxiliaries.end(); ++VNeedAuxIt) {
+      Elf_Vernaux VNeedAux;
+      zero(VNeedAux);
+      VNeedAux.vna_hash = VNeedAuxIt->Hash;
+      VNeedAux.vna_flags = VNeedAuxIt->Flags;
+      VNeedAux.vna_other = VNeedAuxIt->Other;
+      // VNeedAux.vna_name = DotDynstr.add(VNeedAuxIt->Name);
+      VNeedAux.vna_next = (VNeedAuxIt != VNeedIt->Auxiliaries.end() - 1)
+                              ? sizeof(Elf_Vernaux)
+                              : 0;
+      BlobSize += sizeof(Elf_Vernaux);
+      OS.write((const char *)&VNeedAux, sizeof(Elf_Vernaux));
+    }
+  }
+  SHeader.sh_size = BlobSize;
   return true;
 }
 
