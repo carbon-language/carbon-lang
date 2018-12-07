@@ -5818,55 +5818,6 @@ SDValue SITargetLowering::LowerINTRINSIC_VOID(SDValue Op,
     }
     return SDValue();
   };
-  case SIIntrinsic::SI_tbuffer_store: {
-
-    // Extract vindex and voffset from vaddr as appropriate
-    const ConstantSDNode *OffEn = cast<ConstantSDNode>(Op.getOperand(10));
-    const ConstantSDNode *IdxEn = cast<ConstantSDNode>(Op.getOperand(11));
-    SDValue VAddr = Op.getOperand(5);
-
-    SDValue Zero = DAG.getTargetConstant(0, DL, MVT::i32);
-
-    assert(!(OffEn->isOne() && IdxEn->isOne()) &&
-           "Legacy intrinsic doesn't support both offset and index - use new version");
-
-    SDValue VIndex = IdxEn->isOne() ? VAddr : Zero;
-    SDValue VOffset = OffEn->isOne() ? VAddr : Zero;
-
-    // Deal with the vec-3 case
-    const ConstantSDNode *NumChannels = cast<ConstantSDNode>(Op.getOperand(4));
-    auto Opcode = NumChannels->getZExtValue() == 3 ?
-      AMDGPUISD::TBUFFER_STORE_FORMAT_X3 : AMDGPUISD::TBUFFER_STORE_FORMAT;
-
-    unsigned Dfmt = cast<ConstantSDNode>(Op.getOperand(8))->getZExtValue();
-    unsigned Nfmt = cast<ConstantSDNode>(Op.getOperand(9))->getZExtValue();
-    unsigned Glc = cast<ConstantSDNode>(Op.getOperand(12))->getZExtValue();
-    unsigned Slc = cast<ConstantSDNode>(Op.getOperand(13))->getZExtValue();
-    SDValue Ops[] = {
-     Chain,
-     Op.getOperand(3),  // vdata
-     Op.getOperand(2),  // rsrc
-     VIndex,
-     VOffset,
-     Op.getOperand(6),  // soffset
-     Op.getOperand(7),  // inst_offset
-     DAG.getConstant(Dfmt | (Nfmt << 4), DL, MVT::i32), // format
-     DAG.getConstant(Glc | (Slc << 1), DL, MVT::i32), // cachepolicy
-     DAG.getConstant(IdxEn->isOne(), DL, MVT::i1), // idxen
-    };
-
-    assert((cast<ConstantSDNode>(Op.getOperand(14)))->getZExtValue() == 0 &&
-           "Value of tfe other than zero is unsupported");
-
-    EVT VT = Op.getOperand(3).getValueType();
-    MachineMemOperand *MMO = MF.getMachineMemOperand(
-      MachinePointerInfo(),
-      MachineMemOperand::MOStore,
-      VT.getStoreSize(), 4);
-    return DAG.getMemIntrinsicNode(Opcode, DL,
-                                   Op->getVTList(), Ops, VT, MMO);
-  }
-
   case Intrinsic::amdgcn_tbuffer_store: {
     SDValue VData = Op.getOperand(2);
     bool IsD16 = (VData.getValueType().getScalarType() == MVT::f16);
