@@ -49,8 +49,10 @@ std::ostream &ProcedureRef::AsFortran(std::ostream &o) const {
   proc_.AsFortran(o);
   char separator{'('};
   for (const auto &arg : arguments_) {
-    arg->AsFortran(o << separator);
-    separator = ',';
+    if (arg.has_value()) {
+      arg->AsFortran(o << separator);
+      separator = ',';
+    }
   }
   if (separator == '(') {
     o << '(';
