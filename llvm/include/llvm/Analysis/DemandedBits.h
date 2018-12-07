@@ -44,11 +44,6 @@ public:
     F(F), AC(AC), DT(DT) {}
 
   /// Return the bits demanded from instruction I.
-  ///
-  /// The instruction must have integer of vector of integer type. For vector
-  /// instructions individual vector elements are not distinguished: A bit is
-  /// demanded if it is demanded for any of the vector elements. The size of
-  /// the return value corresponds to the scalar size in bits.
   APInt getDemandedBits(Instruction *I);
 
   /// Return true if, during analysis, I could not be reached.
