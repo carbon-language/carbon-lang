@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++2a -fcxx-exceptions -ast-dump %s | FileCheck -strict-whitespace %s
+// RUN: %clang_cc1 -std=c++2a -triple x86_64-linux-gnu -fcxx-exceptions -ast-dump %s | FileCheck -strict-whitespace %s
 
 namespace n {
 void function() {}
@@ -187,7 +187,7 @@ void TestIteration() {
   // CHECK-NEXT: BinaryOperator 0x{{[^ ]*}} <col:14, col:16> 'int *' '+'
   // CHECK-NEXT: ImplicitCastExpr
   // CHECK-NEXT: DeclRefExpr 0x{{[^ ]*}} <col:14> 'int [10]' lvalue Var 0x{{[^ ]*}} '__range1' 'int (&)[10]'
-  // CHECK-NEXT: IntegerLiteral 0x{{[^ ]*}} <col:16> 'long long' 10
+  // CHECK-NEXT: IntegerLiteral 0x{{[^ ]*}} <col:16> 'long' 10
   // CHECK-NEXT: BinaryOperator 0x{{[^ ]*}} <col:14> 'bool' '!='
   // CHECK-NEXT: ImplicitCastExpr
   // CHECK-NEXT: DeclRefExpr 0x{{[^ ]*}} <col:14> 'int *':'int *' lvalue Var 0x{{[^ ]*}} '__begin1' 'int *':'int *'
@@ -255,7 +255,7 @@ void TestIteration() {
   // CHECK-NEXT: BinaryOperator 0x{{[^ ]*}} <col:21, col:23> 'int *' '+'
   // CHECK-NEXT: ImplicitCastExpr
   // CHECK-NEXT: DeclRefExpr 0x{{[^ ]*}} <col:21> 'int [10]' lvalue Var 0x{{[^ ]*}} '__range1' 'int (&)[10]'
-  // CHECK-NEXT: IntegerLiteral 0x{{[^ ]*}} <col:23> 'long long' 10
+  // CHECK-NEXT: IntegerLiteral 0x{{[^ ]*}} <col:23> 'long' 10
   // CHECK-NEXT: BinaryOperator 0x{{[^ ]*}} <col:21> 'bool' '!='
   // CHECK-NEXT: ImplicitCastExpr
   // CHECK-NEXT: DeclRefExpr 0x{{[^ ]*}} <col:21> 'int *':'int *' lvalue Var 0x{{[^ ]*}} '__begin1' 'int *':'int *'
