@@ -160,6 +160,7 @@ llvm::Expected<const FunctionDecl *>
 CrossTranslationUnitContext::getCrossTUDefinition(const FunctionDecl *FD,
                                                   StringRef CrossTUDir,
                                                   StringRef IndexName) {
+  assert(FD && "FD is missing, bad call to this function!");
   assert(!FD->hasBody() && "FD has a definition in current translation unit!");
   ++NumGetCTUCalled;
   const std::string LookupFnName = getLookupName(FD);
@@ -258,6 +259,8 @@ llvm::Expected<ASTUnit *> CrossTranslationUnitContext::loadExternalAST(
 
 llvm::Expected<const FunctionDecl *>
 CrossTranslationUnitContext::importDefinition(const FunctionDecl *FD) {
+  assert(FD->hasBody() && "Functions to be imported should have body.");
+
   ASTImporter &Importer = getOrCreateASTImporter(FD->getASTContext());
   auto *ToDecl =
       cast<FunctionDecl>(Importer.Import(const_cast<FunctionDecl *>(FD)));
