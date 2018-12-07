@@ -33,6 +33,7 @@ namespace clang {
 namespace cross_tu {
 
 namespace {
+
 #define DEBUG_TYPE "CrossTranslationUnit"
 STATISTIC(NumGetCTUCalled, "The # of getCTUDefinition function called");
 STATISTIC(
@@ -41,6 +42,37 @@ STATISTIC(
 STATISTIC(NumGetCTUSuccess,
           "The # of getCTUDefinition successfully returned the "
           "requested function's body");
+STATISTIC(NumTripleMismatch, "The # of triple mismatches");
+STATISTIC(NumLangMismatch, "The # of language mismatches");
+
+// Same as Triple's equality operator, but we check a field only if that is
+// known in both instances.
+bool hasEqualKnownFields(const llvm::Triple &Lhs, const llvm::Triple &Rhs) {
+  using llvm::Triple;
+  if (Lhs.getArch() != Triple::UnknownArch &&
+      Rhs.getArch() != Triple::UnknownArch && Lhs.getArch() != Rhs.getArch())
+    return false;
+  if (Lhs.getSubArch() != Triple::NoSubArch &&
+      Rhs.getSubArch() != Triple::NoSubArch &&
+      Lhs.getSubArch() != Rhs.getSubArch())
+    return false;
+  if (Lhs.getVendor() != Triple::UnknownVendor &&
+      Rhs.getVendor() != Triple::UnknownVendor &&
+      Lhs.getVendor() != Rhs.getVendor())
+    return false;
+  if (!Lhs.isOSUnknown() && !Rhs.isOSUnknown() &&
+      Lhs.getOS() != Rhs.getOS())
+    return false;
+  if (Lhs.getEnvironment() != Triple::UnknownEnvironment &&
+      Rhs.getEnvironment() != Triple::UnknownEnvironment &&
+      Lhs.getEnvironment() != Rhs.getEnvironment())
+    return false;
+  if (Lhs.getObjectFormat() != Triple::UnknownObjectFormat &&
+      Rhs.getObjectFormat() != Triple::UnknownObjectFormat &&
+      Lhs.getObjectFormat() != Rhs.getObjectFormat())
+    return false;
+  return true;
+}
 
 // FIXME: This class is will be removed after the transition to llvm::Error.
 class IndexErrorCategory : public std::error_category {
@@ -65,6 +97,10 @@ public:
       return "Failed to load external AST source.";
     case index_error_code::failed_to_generate_usr:
       return "Failed to generate USR.";
+    case index_error_code::triple_mismatch:
+      return "Triple mismatch";
+    case index_error_code::lang_mismatch:
+      return "Language mismatch";
     }
     llvm_unreachable("Unrecognized index_error_code.");
   }
@@ -179,6 +215,31 @@ CrossTranslationUnitContext::getCrossTUDefinition(const FunctionDecl *FD,
   assert(&Unit->getFileManager() ==
          &Unit->getASTContext().getSourceManager().getFileManager());
 
+  const llvm::Triple &TripleTo = Context.getTargetInfo().getTriple();
+  const llvm::Triple &TripleFrom =
+      Unit->getASTContext().getTargetInfo().getTriple();
+  // The imported AST had been generated for a different target.
+  // Some parts of the triple in the loaded ASTContext can be unknown while the
+  // very same parts in the target ASTContext are known. Thus we check for the
+  // known parts only.
+  if (!hasEqualKnownFields(TripleTo, TripleFrom)) {
+    // TODO: Pass the SourceLocation of the CallExpression for more precise
+    // diagnostics.
+    ++NumTripleMismatch;
+    return llvm::make_error<IndexError>(index_error_code::triple_mismatch,
+                                        Unit->getMainFileName(), TripleTo.str(),
+                                        TripleFrom.str());
+  }
+
+  const auto &LangTo = Context.getLangOpts();
+  const auto &LangFrom = Unit->getASTContext().getLangOpts();
+  // FIXME: Currenty we do not support CTU across C++ and C and across
+  // different dialects of C++.
+  if (LangTo.CPlusPlus != LangFrom.CPlusPlus) {
+    ++NumLangMismatch;
+    return llvm::make_error<IndexError>(index_error_code::lang_mismatch);
+  }
+
   TranslationUnitDecl *TU = Unit->getASTContext().getTranslationUnitDecl();
   if (const FunctionDecl *ResultDecl =
           findFunctionInDeclContext(TU, LookupFnName))
@@ -199,6 +260,10 @@ void CrossTranslationUnitContext::emitCrossTUDiagnostics(const IndexError &IE) {
   case index_error_code::multiple_definitions:
     Context.getDiagnostics().Report(diag::err_multiple_def_index)
         << IE.getLineNum();
+    break;
+  case index_error_code::triple_mismatch:
+    Context.getDiagnostics().Report(diag::warn_ctu_incompat_triple)
+        << IE.getFileName() << IE.getTripleToName() << IE.getTripleFromName();
     break;
   default:
     break;
