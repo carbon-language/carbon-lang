@@ -2,7 +2,8 @@
 # RUN: llvm-mca -march=aarch64 -mcpu=exynos-m1 -resource-pressure=false < %s | FileCheck %s -check-prefixes=ALL,M1
 # RUN: llvm-mca -march=aarch64 -mcpu=exynos-m3 -resource-pressure=false < %s | FileCheck %s -check-prefixes=ALL,M3
 
-  b   t
+1:
+  b	1b
 
 # ALL:      Iterations:        100
 # ALL-NEXT: Instructions:      100
@@ -32,5 +33,5 @@
 
 # ALL:      [1]    [2]    [3]    [4]    [5]    [6]    Instructions:
 
-# M1-NEXT:   1      0     0.25                        b	t
-# M3-NEXT:   1      0     0.17                        b	t
+# M1-NEXT:   1      0     0.25                        b	.Ltmp0
+# M3-NEXT:   1      0     0.17                        b	.Ltmp0
