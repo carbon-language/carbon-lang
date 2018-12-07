@@ -3755,7 +3755,6 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
       }
       // logic_op (hand_op X), (hand_op Y) --> hand_op (logic_op X, Y)
       SDValue Logic = DAG.getNode(LogicOpcode, DL, XVT, X, Y);
-      AddToWorklist(Logic.getNode());
       return DAG.getNode(HandOpcode, DL, VT, Logic);
   }
 
@@ -3768,7 +3767,6 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
     if (!N0.hasOneUse() || !N1.hasOneUse())
       return SDValue();
     SDValue Logic = DAG.getNode(LogicOpcode, DL, XVT, X, Y);
-    AddToWorklist(Logic.getNode());
     return DAG.getNode(HandOpcode, DL, VT, Logic, N0.getOperand(1));
   }
 
@@ -3778,7 +3776,6 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
     if (!N0.hasOneUse() || !N1.hasOneUse())
       return SDValue();
     SDValue Logic = DAG.getNode(LogicOpcode, DL, XVT, X, Y);
-    AddToWorklist(Logic.getNode());
     return DAG.getNode(HandOpcode, DL, VT, Logic);
   }
 
@@ -3794,7 +3791,6 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
     // Input types must be integer and the same.
     if (XVT.isInteger() && XVT == Y.getValueType()) {
       SDValue Logic = DAG.getNode(LogicOpcode, DL, XVT, X, Y);
-      AddToWorklist(Logic.getNode());
       return DAG.getNode(HandOpcode, DL, VT, Logic);
     }
   }
@@ -3835,7 +3831,6 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
     if (N0.getOperand(1) == N1.getOperand(1) && ShOp.getNode()) {
       SDValue Logic = DAG.getNode(LogicOpcode, DL, VT,
                                   N0.getOperand(0), N1.getOperand(0));
-      AddToWorklist(Logic.getNode());
       return DAG.getVectorShuffle(VT, DL, Logic, ShOp, SVN0->getMask());
     }
 
@@ -3849,7 +3844,6 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
     if (N0.getOperand(0) == N1.getOperand(0) && ShOp.getNode()) {
       SDValue Logic = DAG.getNode(LogicOpcode, DL, VT, N0.getOperand(1),
                                   N1.getOperand(1));
-      AddToWorklist(Logic.getNode());
       return DAG.getVectorShuffle(VT, DL, ShOp, Logic, SVN0->getMask());
     }
   }
