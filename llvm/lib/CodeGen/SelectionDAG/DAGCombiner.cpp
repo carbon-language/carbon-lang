@@ -112,6 +112,12 @@ static cl::opt<bool>
   MaySplitLoadIndex("combiner-split-load-index", cl::Hidden, cl::init(true),
                     cl::desc("DAG combiner may split indexing from loads"));
 
+// This is a temporary debug flag to disable a combine that is known to
+// conflict with another combine.
+static cl::opt<bool>
+NarrowTruncatedBinops("narrow-truncated-binops", cl::Hidden, cl::init(false),
+                      cl::desc("Move truncates ahead of binops"));
+
 namespace {
 
   class DAGCombiner {
@@ -9804,7 +9810,7 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR:
-    if (!LegalOperations && N0.hasOneUse() &&
+    if (NarrowTruncatedBinops && !LegalOperations && N0.hasOneUse() &&
         (isConstantOrConstantVector(N0.getOperand(0)) ||
          isConstantOrConstantVector(N0.getOperand(1)))) {
       // TODO: We already restricted this to pre-legalization, but for vectors
