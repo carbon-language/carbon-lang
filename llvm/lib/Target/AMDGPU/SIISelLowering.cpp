@@ -4873,12 +4873,13 @@ SDValue SITargetLowering::lowerSBuffer(EVT VT, SDLoc DL, SDValue Rsrc,
   SmallVector<SDValue, 4> Loads;
   unsigned NumLoads = 1;
   MVT LoadVT = VT.getSimpleVT();
+  MVT EltVT = LoadVT.isVector() ? LoadVT.getVectorElementType() : LoadVT;
+  unsigned NumElts = LoadVT.isVector() ? LoadVT.getVectorNumElements() : 1;
+  assert((EltVT == MVT::i32 || EltVT == MVT::f32) &&
+         isPowerOf2_32(NumElts));
 
-  assert(LoadVT == MVT::i32 || LoadVT == MVT::v2i32 || LoadVT == MVT::v4i32 ||
-         LoadVT == MVT::v8i32 || LoadVT == MVT::v16i32);
-
-  if (VT == MVT::v8i32 || VT == MVT::v16i32) {
-    NumLoads = VT == MVT::v16i32 ? 4 : 2;
+  if (NumElts == 8 || NumElts == 16) {
+    NumLoads = NumElts == 16 ? 4 : 2;
     LoadVT = MVT::v4i32;
   }
 
