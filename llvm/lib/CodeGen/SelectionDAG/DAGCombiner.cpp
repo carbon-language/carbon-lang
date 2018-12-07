@@ -3754,7 +3754,7 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
           return SDValue();
       }
       // logic_op (hand_op X), (hand_op Y) --> hand_op (logic_op X, Y)
-      SDValue Logic = DAG.getNode(LogicOpcode, SDLoc(N0), XVT, X, Y);
+      SDValue Logic = DAG.getNode(LogicOpcode, DL, XVT, X, Y);
       AddToWorklist(Logic.getNode());
       return DAG.getNode(HandOpcode, DL, VT, Logic);
   }
