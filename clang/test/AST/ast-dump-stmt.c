@@ -362,3 +362,14 @@ void TestJumps(void) {
   // CHECK: ReturnStmt 0x{{[^ ]*}} <line:[[@LINE-1]]:3, col:22>
   // CHECK-NEXT: CallExpr 0x{{[^ ]*}} <col:10, col:22> 'void'
 }
+
+void TestMiscStmts(void) {
+  ({int a = 10; a;});
+  // CHECK: StmtExpr 0x{{[^ ]*}} <line:[[@LINE-1]]:3, col:20> 'int'
+  // CHECK-NEXT: CompoundStmt
+  // CHECK-NEXT: DeclStmt
+  // CHECK-NEXT: VarDecl 0x{{[^ ]*}} <col:5, col:13> col:9 used a 'int' cinit
+  // CHECK-NEXT: IntegerLiteral 0x{{[^ ]*}} <col:13> 'int' 10
+  // CHECK-NEXT: ImplicitCastExpr
+  // CHECK-NEXT: DeclRefExpr 0x{{[^ ]*}} <col:17> 'int' lvalue Var 0x{{[^ ]*}} 'a' 'int'
+}
