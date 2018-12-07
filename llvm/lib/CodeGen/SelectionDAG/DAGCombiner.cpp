@@ -3729,39 +3729,54 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
   SDValue Y = N1.getOperand(0);
   EVT XVT = X.getValueType();
   SDLoc DL(N);
-  switch (HandOpcode) {
-    case ISD::ANY_EXTEND:
-    case ISD::TRUNCATE:
-    case ISD::ZERO_EXTEND:
-    case ISD::SIGN_EXTEND:
-      // If both operands have other uses, this transform would create extra
-      // instructions without eliminating anything.
-      if (!N0.hasOneUse() && !N1.hasOneUse())
-        return SDValue();
-      // We need matching integer source types.
-      // Do not hoist logic op inside of a vector extend, since it may combine
-      // into a vsetcc.
-      // TODO: Should the vector check apply to truncate though?
-      if (VT.isVector() || XVT != Y.getValueType())
-        return SDValue();
-      // Don't create an illegal op during or after legalization.
-      if (LegalOperations && !TLI.isOperationLegal(LogicOpcode, XVT))
-        return SDValue();
-      // Avoid infinite looping with PromoteIntBinOp.
-      if (HandOpcode == ISD::ANY_EXTEND && LegalTypes &&
-          !TLI.isTypeDesirableForOp(LogicOpcode, XVT))
-        return SDValue();
-      // Be extra careful sinking truncate.
-      // TODO: Should we apply desirable/legal constraints to all opcodes?
-      if (HandOpcode == ISD::TRUNCATE) {
-        if (TLI.isZExtFree(VT, XVT) && TLI.isTruncateFree(XVT, VT))
-          return SDValue();
-        if (!TLI.isTypeLegal(XVT))
-          return SDValue();
-      }
-      // logic_op (hand_op X), (hand_op Y) --> hand_op (logic_op X, Y)
-      SDValue Logic = DAG.getNode(LogicOpcode, DL, XVT, X, Y);
-      return DAG.getNode(HandOpcode, DL, VT, Logic);
+  if (HandOpcode == ISD::ANY_EXTEND || HandOpcode == ISD::ZERO_EXTEND ||
+      HandOpcode == ISD::SIGN_EXTEND) {
+    // If both operands have other uses, this transform would create extra
+    // instructions without eliminating anything.
+    if (!N0.hasOneUse() && !N1.hasOneUse())
+      return SDValue();
+    // We need matching integer source types.
+    // Do not hoist logic op inside of a vector extend, since it may combine
+    // into a vsetcc.
+    // TODO: Should the vector check apply to truncate though?
+    if (VT.isVector() || XVT != Y.getValueType())
+      return SDValue();
+    // Don't create an illegal op during or after legalization.
+    if (LegalOperations && !TLI.isOperationLegal(LogicOpcode, XVT))
+      return SDValue();
+    // Avoid infinite looping with PromoteIntBinOp.
+    // TODO: Should we apply desirable/legal constraints to all opcodes?
+    if (HandOpcode == ISD::ANY_EXTEND && LegalTypes &&
+        !TLI.isTypeDesirableForOp(LogicOpcode, XVT))
+      return SDValue();
+    // logic_op (hand_op X), (hand_op Y) --> hand_op (logic_op X, Y)
+    SDValue Logic = DAG.getNode(LogicOpcode, DL, XVT, X, Y);
+    return DAG.getNode(HandOpcode, DL, VT, Logic);
+  }
+
+  // logic_op (truncate x), (truncate y) --> truncate (logic_op x, y)
+  if (HandOpcode == ISD::TRUNCATE) {
+    // If both operands have other uses, this transform would create extra
+    // instructions without eliminating anything.
+    if (!N0.hasOneUse() && !N1.hasOneUse())
+      return SDValue();
+    // We need matching integer source types.
+    // Do not hoist logic op inside of a vector extend, since it may combine
+    // into a vsetcc.
+    // TODO: Should the vector check apply to truncate though?
+    if (VT.isVector() || XVT != Y.getValueType())
+      return SDValue();
+    // Don't create an illegal op during or after legalization.
+    if (LegalOperations && !TLI.isOperationLegal(LogicOpcode, XVT))
+      return SDValue();
+    // Be extra careful sinking truncate. If it's free, there's no benefit in
+    // widening a binop. Also, don't create a logic op on an illegal type.
+    if (TLI.isZExtFree(VT, XVT) && TLI.isTruncateFree(XVT, VT))
+      return SDValue();
+    if (!TLI.isTypeLegal(XVT))
+      return SDValue();
+    SDValue Logic = DAG.getNode(LogicOpcode, DL, XVT, X, Y);
+    return DAG.getNode(HandOpcode, DL, VT, Logic);
   }
 
   // For binops SHL/SRL/SRA/AND:
