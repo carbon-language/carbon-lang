@@ -118,7 +118,7 @@ void bar5() {
 
 // WINDOWS: define dso_local void @foo_decls.resolver() comdat
 // WINDOWS: call void @foo_decls.sse4.2
-// Windows: call void @foo_decls
+// WINDOWS: call void @foo_decls
 
 // LINUX: define void @bar4()
 // LINUX: call void @foo_multi.ifunc(i32 1, double 5.{{[0+e]*}})
