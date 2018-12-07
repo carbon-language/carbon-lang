@@ -19,6 +19,7 @@
 #include "sanitizer_common/sanitizer_flags.h"
 #include "xray/xray_interface.h"
 #include "xray/xray_log_interface.h"
+#include "xray_buffer_queue.h"
 #include "xray_flags.h"
 #include "xray_profile_collector.h"
 #include "xray_profiling_flags.h"
@@ -46,6 +47,13 @@ struct ProfilingData {
 
 static pthread_key_t ProfilingKey;
 
+// We use a global buffer queue, which gets initialized once at initialisation
+// time, and gets reset when profiling is "done".
+static std::aligned_storage<sizeof(BufferQueue), alignof(BufferQueue)>::type
+    BufferQueueStorage;
+static BufferQueue *BQ = nullptr;
+
+thread_local FunctionCallTrie::Allocators::Buffers ThreadBuffers;
 thread_local std::aligned_storage<sizeof(FunctionCallTrie::Allocators),
                                   alignof(FunctionCallTrie::Allocators)>::type
     AllocatorsStorage;
@@ -81,17 +89,58 @@ static ProfilingData *getThreadLocalData() XRAY_NEVER_INSTRUMENT {
   uptr Allocators = 0;
   if (atomic_compare_exchange_strong(&TLD.Allocators, &Allocators, 1,
                                      memory_order_acq_rel)) {
-    new (&AllocatorsStorage)
-        FunctionCallTrie::Allocators(FunctionCallTrie::InitAllocators());
+    bool Success = false;
+    auto AllocatorsUndo = at_scope_exit([&]() XRAY_NEVER_INSTRUMENT {
+      if (!Success)
+        atomic_store(&TLD.Allocators, 0, memory_order_release);
+    });
+
+    // Acquire a set of buffers for this thread.
+    if (BQ == nullptr)
+      return nullptr;
+
+    if (BQ->getBuffer(ThreadBuffers.NodeBuffer) != BufferQueue::ErrorCode::Ok)
+      return nullptr;
+    auto NodeBufferUndo = at_scope_exit([&]() XRAY_NEVER_INSTRUMENT {
+      if (!Success)
+        BQ->releaseBuffer(ThreadBuffers.NodeBuffer);
+    });
+
+    if (BQ->getBuffer(ThreadBuffers.RootsBuffer) != BufferQueue::ErrorCode::Ok)
+      return nullptr;
+    auto RootsBufferUndo = at_scope_exit([&]() XRAY_NEVER_INSTRUMENT {
+      if (!Success)
+        BQ->releaseBuffer(ThreadBuffers.RootsBuffer);
+    });
+
+    if (BQ->getBuffer(ThreadBuffers.ShadowStackBuffer) !=
+        BufferQueue::ErrorCode::Ok)
+      return nullptr;
+    auto ShadowStackBufferUndo = at_scope_exit([&]() XRAY_NEVER_INSTRUMENT {
+      if (!Success)
+        BQ->releaseBuffer(ThreadBuffers.ShadowStackBuffer);
+    });
+
+    if (BQ->getBuffer(ThreadBuffers.NodeIdPairBuffer) !=
+        BufferQueue::ErrorCode::Ok)
+      return nullptr;
+
+    Success = true;
+    new (&AllocatorsStorage) FunctionCallTrie::Allocators(
+        FunctionCallTrie::InitAllocatorsFromBuffers(ThreadBuffers));
     Allocators = reinterpret_cast<uptr>(
         reinterpret_cast<FunctionCallTrie::Allocators *>(&AllocatorsStorage));
     atomic_store(&TLD.Allocators, Allocators, memory_order_release);
   }
 
+  if (Allocators == 1)
+    return nullptr;
+
   uptr FCT = 0;
   if (atomic_compare_exchange_strong(&TLD.FCT, &FCT, 1, memory_order_acq_rel)) {
-    new (&FunctionCallTrieStorage) FunctionCallTrie(
-        *reinterpret_cast<FunctionCallTrie::Allocators *>(Allocators));
+    new (&FunctionCallTrieStorage)
+        FunctionCallTrie(*reinterpret_cast<FunctionCallTrie::Allocators *>(
+            atomic_load_relaxed(&TLD.Allocators)));
     FCT = reinterpret_cast<uptr>(
         reinterpret_cast<FunctionCallTrie *>(&FunctionCallTrieStorage));
     atomic_store(&TLD.FCT, FCT, memory_order_release);
@@ -104,10 +153,6 @@ static ProfilingData *getThreadLocalData() XRAY_NEVER_INSTRUMENT {
 }
 
 static void cleanupTLD() XRAY_NEVER_INSTRUMENT {
-  RecursionGuard TLDInit(TLDInitGuard);
-  if (!TLDInit)
-    return;
-
   auto FCT = atomic_exchange(&TLD.FCT, 0, memory_order_acq_rel);
   if (FCT == reinterpret_cast<uptr>(reinterpret_cast<FunctionCallTrie *>(
                  &FunctionCallTrieStorage)))
@@ -125,7 +170,7 @@ static void postCurrentThreadFCT(ProfilingData &T) XRAY_NEVER_INSTRUMENT {
   if (!TLDInit)
     return;
 
-  uptr P = atomic_load(&T.FCT, memory_order_acquire);
+  uptr P = atomic_exchange(&T.FCT, 0, memory_order_acq_rel);
   if (P != reinterpret_cast<uptr>(
                reinterpret_cast<FunctionCallTrie *>(&FunctionCallTrieStorage)))
     return;
@@ -133,10 +178,21 @@ static void postCurrentThreadFCT(ProfilingData &T) XRAY_NEVER_INSTRUMENT {
   auto FCT = reinterpret_cast<FunctionCallTrie *>(P);
   DCHECK_NE(FCT, nullptr);
 
-  if (!FCT->getRoots().empty())
-    profileCollectorService::post(*FCT, GetTid());
+  uptr A = atomic_exchange(&T.Allocators, 0, memory_order_acq_rel);
+  if (A !=
+      reinterpret_cast<uptr>(
+          reinterpret_cast<FunctionCallTrie::Allocators *>(&AllocatorsStorage)))
+    return;
 
-  cleanupTLD();
+  auto Allocators = reinterpret_cast<FunctionCallTrie::Allocators *>(A);
+  DCHECK_NE(Allocators, nullptr);
+
+  // Always move the data into the profile collector.
+  profileCollectorService::post(BQ, std::move(*FCT), std::move(*Allocators),
+                                std::move(ThreadBuffers), GetTid());
+
+  // Re-initialize the ThreadBuffers object to a known "default" state.
+  ThreadBuffers = FunctionCallTrie::Allocators::Buffers{};
 }
 
 } // namespace
@@ -176,8 +232,6 @@ XRayLogFlushStatus profilingFlush() XRAY_NEVER_INSTRUMENT {
     return XRayLogFlushStatus::XRAY_LOG_FLUSHING;
   }
 
-  postCurrentThreadFCT(TLD);
-
   // At this point, we'll create the file that will contain the profile, but
   // only if the options say so.
   if (!profilingFlags()->no_flush) {
@@ -205,14 +259,11 @@ XRayLogFlushStatus profilingFlush() XRAY_NEVER_INSTRUMENT {
     }
   }
 
-  // Clean up the current thread's TLD information as well.
-  cleanupTLD();
-
   profileCollectorService::reset();
 
   atomic_store(&ProfilerLogFlushStatus, XRayLogFlushStatus::XRAY_LOG_FLUSHED,
                memory_order_release);
-  atomic_store(&ProfilerLogStatus, XRayLogFlushStatus::XRAY_LOG_FLUSHED,
+  atomic_store(&ProfilerLogStatus, XRayLogInitStatus::XRAY_LOG_UNINITIALIZED,
                memory_order_release);
 
   return XRayLogFlushStatus::XRAY_LOG_FLUSHED;
@@ -272,6 +323,12 @@ XRayLogInitStatus profilingFinalize() XRAY_NEVER_INSTRUMENT {
     return static_cast<XRayLogInitStatus>(CurrentStatus);
   }
 
+  // Mark then finalize the current generation of buffers. This allows us to let
+  // the threads currently holding onto new buffers still use them, but let the
+  // last reference do the memory cleanup.
+  DCHECK_NE(BQ, nullptr);
+  BQ->finalize();
+
   // Wait a grace period to allow threads to see that we're finalizing.
   SleepForMillis(profilingFlags()->grace_period_ms);
 
@@ -293,8 +350,8 @@ XRayLogInitStatus profilingFinalize() XRAY_NEVER_INSTRUMENT {
 }
 
 XRayLogInitStatus
-profilingLoggingInit(UNUSED size_t BufferSize, UNUSED size_t BufferMax,
-                     void *Options, size_t OptionsSize) XRAY_NEVER_INSTRUMENT {
+profilingLoggingInit(size_t, size_t, void *Options,
+                     size_t OptionsSize) XRAY_NEVER_INSTRUMENT {
   RecursionGuard G(ReentranceGuard);
   if (!G)
     return XRayLogInitStatus::XRAY_LOG_UNINITIALIZED;
@@ -302,7 +359,7 @@ profilingLoggingInit(UNUSED size_t BufferSize, UNUSED size_t BufferMax,
   s32 CurrentStatus = XRayLogInitStatus::XRAY_LOG_UNINITIALIZED;
   if (!atomic_compare_exchange_strong(&ProfilerLogStatus, &CurrentStatus,
                                       XRayLogInitStatus::XRAY_LOG_INITIALIZING,
-                                      memory_order_release)) {
+                                      memory_order_acq_rel)) {
     if (Verbosity())
       Report("Cannot initialize already initialised profiling "
              "implementation.\n");
@@ -330,6 +387,41 @@ profilingLoggingInit(UNUSED size_t BufferSize, UNUSED size_t BufferMax,
 
   // We need to reset the profile data collection implementation now.
   profileCollectorService::reset();
+
+  // Then also reset the buffer queue implementation.
+  if (BQ == nullptr) {
+    bool Success = false;
+    new (&BufferQueueStorage)
+        BufferQueue(profilingFlags()->per_thread_allocator_max,
+                    profilingFlags()->buffers_max, Success);
+    if (!Success) {
+      if (Verbosity())
+        Report("Failed to initialize preallocated memory buffers!");
+      atomic_store(&ProfilerLogStatus,
+                   XRayLogInitStatus::XRAY_LOG_UNINITIALIZED,
+                   memory_order_release);
+      return XRayLogInitStatus::XRAY_LOG_UNINITIALIZED;
+    }
+
+    // If we've succeded, set the global pointer to the initialised storage.
+    BQ = reinterpret_cast<BufferQueue *>(&BufferQueueStorage);
+  } else {
+    BQ->finalize();
+    auto InitStatus = BQ->init(profilingFlags()->per_thread_allocator_max,
+                               profilingFlags()->buffers_max);
+
+    if (InitStatus != BufferQueue::ErrorCode::Ok) {
+      if (Verbosity())
+        Report("Failed to initialize preallocated memory buffers; error: %s",
+               BufferQueue::getErrorString(InitStatus));
+      atomic_store(&ProfilerLogStatus,
+                   XRayLogInitStatus::XRAY_LOG_UNINITIALIZED,
+                   memory_order_release);
+      return XRayLogInitStatus::XRAY_LOG_UNINITIALIZED;
+    }
+
+    DCHECK(!BQ->finalizing());
+  }
 
   // We need to set up the exit handlers.
   static pthread_once_t Once = PTHREAD_ONCE_INIT;

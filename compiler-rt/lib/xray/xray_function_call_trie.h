@@ -15,6 +15,7 @@
 #ifndef XRAY_FUNCTION_CALL_TRIE_H
 #define XRAY_FUNCTION_CALL_TRIE_H
 
+#include "xray_buffer_queue.h"
 #include "xray_defs.h"
 #include "xray_profiling_flags.h"
 #include "xray_segmented_array.h"
@@ -161,6 +162,35 @@ public:
     Allocators(const Allocators &) = delete;
     Allocators &operator=(const Allocators &) = delete;
 
+    struct Buffers {
+      BufferQueue::Buffer NodeBuffer;
+      BufferQueue::Buffer RootsBuffer;
+      BufferQueue::Buffer ShadowStackBuffer;
+      BufferQueue::Buffer NodeIdPairBuffer;
+    };
+
+    explicit Allocators(Buffers &B) XRAY_NEVER_INSTRUMENT {
+      new (&NodeAllocatorStorage)
+          NodeAllocatorType(B.NodeBuffer.Data, B.NodeBuffer.Size);
+      NodeAllocator =
+          reinterpret_cast<NodeAllocatorType *>(&NodeAllocatorStorage);
+
+      new (&RootAllocatorStorage)
+          RootAllocatorType(B.RootsBuffer.Data, B.RootsBuffer.Size);
+      RootAllocator =
+          reinterpret_cast<RootAllocatorType *>(&RootAllocatorStorage);
+
+      new (&ShadowStackAllocatorStorage) ShadowStackAllocatorType(
+          B.ShadowStackBuffer.Data, B.ShadowStackBuffer.Size);
+      ShadowStackAllocator = reinterpret_cast<ShadowStackAllocatorType *>(
+          &ShadowStackAllocatorStorage);
+
+      new (&NodeIdPairAllocatorStorage) NodeIdPairAllocatorType(
+          B.NodeIdPairBuffer.Data, B.NodeIdPairBuffer.Size);
+      NodeIdPairAllocator = reinterpret_cast<NodeIdPairAllocatorType *>(
+          &NodeIdPairAllocatorStorage);
+    }
+
     explicit Allocators(uptr Max) XRAY_NEVER_INSTRUMENT {
       new (&NodeAllocatorStorage) NodeAllocatorType(Max);
       NodeAllocator =
@@ -283,6 +313,12 @@ public:
     return A;
   }
 
+  static Allocators
+  InitAllocatorsFromBuffers(Allocators::Buffers &Bufs) XRAY_NEVER_INSTRUMENT {
+    Allocators A(Bufs);
+    return A;
+  }
+
 private:
   NodeArray Nodes;
   RootArray Roots;
@@ -323,16 +359,27 @@ public:
   void enterFunction(const int32_t FId, uint64_t TSC,
                      uint16_t CPU) XRAY_NEVER_INSTRUMENT {
     DCHECK_NE(FId, 0);
-    // This function primarily deals with ensuring that the ShadowStack is
-    // consistent and ready for when an exit event is encountered.
+
+    // If we're already overflowed the function call stack, do not bother
+    // attempting to record any more function entries.
+    if (UNLIKELY(OverflowedFunctions)) {
+      ++OverflowedFunctions;
+      return;
+    }
+
+    // If this is the first function we've encountered, we want to set up the
+    // node(s) and treat it as a root.
     if (UNLIKELY(ShadowStack.empty())) {
-      auto NewRoot = Nodes.AppendEmplace(
-          nullptr, NodeIdPairArray{*NodeIdPairAllocator}, 0u, 0u, FId);
+      auto *NewRoot = Nodes.AppendEmplace(
+          nullptr, NodeIdPairArray(*NodeIdPairAllocator), 0u, 0u, FId);
       if (UNLIKELY(NewRoot == nullptr))
         return;
-      if (Roots.Append(NewRoot) == nullptr)
+      if (Roots.AppendEmplace(NewRoot) == nullptr) {
+        Nodes.trim(1);
         return;
+      }
       if (ShadowStack.AppendEmplace(TSC, NewRoot, CPU) == nullptr) {
+        Nodes.trim(1);
         Roots.trim(1);
         ++OverflowedFunctions;
         return;
@@ -340,13 +387,14 @@ public:
       return;
     }
 
-    auto &Top = ShadowStack.back();
-    auto TopNode = Top.NodePtr;
+    // From this point on, we require that the stack is not empty.
+    DCHECK(!ShadowStack.empty());
+    auto TopNode = ShadowStack.back().NodePtr;
     DCHECK_NE(TopNode, nullptr);
 
-    // If we've seen this callee before, then we just access that node and place
-    // that on the top of the stack.
-    auto Callee = TopNode->Callees.find_element(
+    // If we've seen this callee before, then we access that node and place that
+    // on the top of the stack.
+    auto* Callee = TopNode->Callees.find_element(
         [FId](const NodeIdPair &NR) { return NR.FId == FId; });
     if (Callee != nullptr) {
       CHECK_NE(Callee->NodePtr, nullptr);
@@ -356,7 +404,7 @@ public:
     }
 
     // This means we've never seen this stack before, create a new node here.
-    auto NewNode = Nodes.AppendEmplace(
+    auto* NewNode = Nodes.AppendEmplace(
         TopNode, NodeIdPairArray(*NodeIdPairAllocator), 0u, 0u, FId);
     if (UNLIKELY(NewNode == nullptr))
       return;
@@ -364,7 +412,6 @@ public:
     TopNode->Callees.AppendEmplace(NewNode, FId);
     if (ShadowStack.AppendEmplace(TSC, NewNode, CPU) == nullptr)
       ++OverflowedFunctions;
-    DCHECK_NE(ShadowStack.back().NodePtr, nullptr);
     return;
   }
 
@@ -456,11 +503,13 @@ public:
       if (UNLIKELY(NewRoot == nullptr))
         return;
 
-      O.Roots.Append(NewRoot);
+      if (UNLIKELY(O.Roots.Append(NewRoot) == nullptr))
+        return;
 
       // TODO: Figure out what to do if we fail to allocate any more stack
       // space. Maybe warn or report once?
-      DFSStack.AppendEmplace(Root, NewRoot);
+      if (DFSStack.AppendEmplace(Root, NewRoot) == nullptr)
+        return;
       while (!DFSStack.empty()) {
         NodeAndParent NP = DFSStack.back();
         DCHECK_NE(NP.Node, nullptr);
@@ -473,8 +522,12 @@ public:
               Callee.FId);
           if (UNLIKELY(NewNode == nullptr))
             return;
-          NP.NewNode->Callees.AppendEmplace(NewNode, Callee.FId);
-          DFSStack.AppendEmplace(Callee.NodePtr, NewNode);
+          if (UNLIKELY(NP.NewNode->Callees.AppendEmplace(NewNode, Callee.FId) ==
+                       nullptr))
+            return;
+          if (UNLIKELY(DFSStack.AppendEmplace(Callee.NodePtr, NewNode) ==
+                       nullptr))
+            return;
         }
       }
     }

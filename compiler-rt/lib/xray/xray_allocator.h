@@ -175,6 +175,7 @@ private:
   unsigned char *BackingStore = nullptr;
   unsigned char *AlignedNextBlock = nullptr;
   size_t AllocatedBlocks = 0;
+  bool Owned;
   SpinMutex Mutex{};
 
   void *Alloc() XRAY_NEVER_INSTRUMENT {
@@ -209,14 +210,14 @@ private:
                 0);
     }
 
-    if ((AllocatedBlocks * Block::Size) >= MaxMemory)
+    if (((AllocatedBlocks + 1) * Block::Size) > MaxMemory)
       return nullptr;
 
     // Align the pointer we'd like to return to an appropriate alignment, then
     // advance the pointer from where to start allocations.
     void *Result = AlignedNextBlock;
-    AlignedNextBlock = reinterpret_cast<unsigned char *>(
-        reinterpret_cast<unsigned char *>(AlignedNextBlock) + N);
+    AlignedNextBlock =
+        reinterpret_cast<unsigned char *>(AlignedNextBlock) + Block::Size;
     ++AllocatedBlocks;
     return Result;
   }
@@ -227,6 +228,15 @@ public:
         BackingStore(nullptr),
         AlignedNextBlock(nullptr),
         AllocatedBlocks(0),
+        Owned(true),
+        Mutex() {}
+
+  explicit Allocator(void *P, size_t M) XRAY_NEVER_INSTRUMENT
+      : MaxMemory(M),
+        BackingStore(reinterpret_cast<unsigned char *>(P)),
+        AlignedNextBlock(reinterpret_cast<unsigned char *>(P)),
+        AllocatedBlocks(0),
+        Owned(false),
         Mutex() {}
 
   Allocator(const Allocator &) = delete;
@@ -243,6 +253,8 @@ public:
     O.AlignedNextBlock = nullptr;
     AllocatedBlocks = O.AllocatedBlocks;
     O.AllocatedBlocks = 0;
+    Owned = O.Owned;
+    O.Owned = false;
   }
 
   Allocator &operator=(Allocator &&O) XRAY_NEVER_INSTRUMENT {
@@ -258,13 +270,15 @@ public:
     O.AlignedNextBlock = nullptr;
     AllocatedBlocks = O.AllocatedBlocks;
     O.AllocatedBlocks = 0;
+    Owned = O.Owned;
+    O.Owned = false;
     return *this;
   }
 
   Block Allocate() XRAY_NEVER_INSTRUMENT { return {Alloc()}; }
 
   ~Allocator() NOEXCEPT XRAY_NEVER_INSTRUMENT {
-    if (BackingStore != nullptr) {
+    if (Owned && BackingStore != nullptr) {
       deallocateBuffer(BackingStore, MaxMemory);
     }
   }

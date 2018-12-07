@@ -2,6 +2,9 @@
 #include "xray_segmented_array.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include <algorithm>
+#include <numeric>
+#include <vector>
 
 namespace __xray {
 namespace {
@@ -304,6 +307,41 @@ TEST(SegmentedArrayTest, PlacementNewOnAlignedStorage) {
     auto &Back = Data->back();
     ASSERT_EQ(Back.NodePtr, &Dummy);
     ASSERT_EQ(Back.EntryTSC, i);
+  }
+}
+
+TEST(SegmentedArrayTest, ArrayOfPointersIteratorAccess) {
+  using PtrArray = Array<int *>;
+  PtrArray::AllocatorType Alloc(16384);
+  Array<int *> A(Alloc);
+  static constexpr size_t Count = 100;
+  std::vector<int> Integers(Count);
+  std::iota(Integers.begin(), Integers.end(), 0);
+  for (auto &I : Integers)
+    ASSERT_NE(A.Append(&I), nullptr);
+  int V = 0;
+  ASSERT_EQ(A.size(), Count);
+  for (auto P : A) {
+    ASSERT_NE(P, nullptr);
+    ASSERT_EQ(*P, V++);
+  }
+}
+
+TEST(SegmentedArrayTest, ArrayOfPointersIteratorAccessExhaustion) {
+  using PtrArray = Array<int *>;
+  PtrArray::AllocatorType Alloc(4096);
+  Array<int *> A(Alloc);
+  static constexpr size_t Count = 1000;
+  std::vector<int> Integers(Count);
+  std::iota(Integers.begin(), Integers.end(), 0);
+  for (auto &I : Integers)
+    if (A.Append(&I) == nullptr)
+      break;
+  int V = 0;
+  ASSERT_LT(A.size(), Count);
+  for (auto P : A) {
+    ASSERT_NE(P, nullptr);
+    ASSERT_EQ(*P, V++);
   }
 }
 

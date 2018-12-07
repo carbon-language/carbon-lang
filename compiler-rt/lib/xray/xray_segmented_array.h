@@ -372,7 +372,7 @@ public:
     auto Base = &Tail->Data;
     auto AlignedOffset = Base + (Offset * AlignedElementStorageSize);
     DCHECK_LE(AlignedOffset + sizeof(T),
-              reinterpret_cast<unsigned char *>(Tail) + SegmentSize);
+              reinterpret_cast<unsigned char *>(Base) + SegmentSize);
 
     // In-place construct at Position.
     new (AlignedOffset) T{std::forward<Args>(args)...};
