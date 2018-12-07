@@ -78,6 +78,7 @@ extern "C" void LLVMInitializeX86Target() {
   initializeX86AvoidSFBPassPass(PR);
   initializeX86SpeculativeLoadHardeningPassPass(PR);
   initializeX86FlagsCopyLoweringPassPass(PR);
+  initializeX86CondBrFoldingPassPass(PR);
 }
 
 static std::unique_ptr<TargetLoweringObjectFile> createTLOF(const Triple &TT) {
