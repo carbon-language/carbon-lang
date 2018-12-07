@@ -16,8 +16,8 @@
 // RUN:   -analyzer-config ctu-dir=%t/ctudir \
 // RUN:   -analyzer-config display-ctu-progress=true 2>&1 %s | FileCheck %s
 
-// CHECK: CTU loaded AST file: {{.*}}/ctu-other.cpp.ast
-// CHECK: CTU loaded AST file: {{.*}}/ctu-chain.cpp.ast
+// CHECK: CTU loaded AST file: {{.*}}ctu-other.cpp.ast
+// CHECK: CTU loaded AST file: {{.*}}ctu-chain.cpp.ast
 
 #include "ctu-hdr.h"
 
