@@ -34,10 +34,10 @@ int main(void) {
   // CHECK: strtoi
   // CHECK: strtoi: conversion of '100' to a number successful, using 100, p=0
   // CHECK: strtoi: conversion of '100' to a number failed, using 10, p=0
-  // CHECK: strtoi: conversion of '100xyz' to a number failed, using 10, p=0x78
+  // CHECK: strtoi: conversion of '100xyz' to a number failed, using 100, p=0x78
   // CHECK: strtou: conversion of '100' to a number successful, using 100, p=0
   // CHECK: strtou: conversion of '100' to a number failed, using 10, p=0
-  // CHECK: strtou: conversion of '100xyz' to a number failed, using 10, p=0x78
+  // CHECK: strtou: conversion of '100xyz' to a number failed, using 100, p=0x78
 
   return 0;
 }
