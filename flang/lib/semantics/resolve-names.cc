@@ -446,7 +446,6 @@ protected:
   }
 
 private:
-  ResolveNamesVisitor *this_{nullptr};
   Scope *currScope_{nullptr};
 };
 
