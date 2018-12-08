@@ -2104,6 +2104,9 @@ const int modctl_exists = MODCTL_EXISTS;
 
 const unsigned SHA1_CTX_sz = sizeof(SHA1_CTX);
 const unsigned SHA1_return_length = SHA1_DIGEST_STRING_LENGTH;
+
+const unsigned MD4_CTX_sz = sizeof(MD4_CTX);
+const unsigned MD4_return_length = MD4_DIGEST_STRING_LENGTH;
 }  // namespace __sanitizer
 
 using namespace __sanitizer;

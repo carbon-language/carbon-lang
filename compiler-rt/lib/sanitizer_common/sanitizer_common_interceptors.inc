@@ -7981,6 +7981,83 @@ INTERCEPTOR(char *, SHA1Data, u8 *data, SIZE_T len, char *buf) {
 #define INIT_SHA1
 #endif
 
+#if SANITIZER_INTERCEPT_MD4
+INTERCEPTOR(void, MD4Init, void *context) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, MD4Init, context);
+  REAL(MD4Init)(context);
+  if (context)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, context, MD4_CTX_sz);
+}
+
+INTERCEPTOR(void, MD4Update, void *context, const unsigned char *data,
+            unsigned int len) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, MD4Update, context, data, len);
+  if (data && len > 0)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, data, len);
+  if (context)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, context, MD4_CTX_sz);
+  REAL(MD4Update)(context, data, len);
+  if (context)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, context, MD4_CTX_sz);
+}
+
+INTERCEPTOR(void, MD4Final, unsigned char digest[16], void *context) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, MD4Final, digest, context);
+  if (context)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, context, MD4_CTX_sz);
+  REAL(MD4Final)(digest, context);
+  if (digest)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, digest, sizeof(unsigned char) * 16);
+}
+
+INTERCEPTOR(char *, MD4End, void *context, char *buf) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, MD4End, context, buf);
+  if (context)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, context, MD4_CTX_sz);
+  char *ret = REAL(MD4End)(context, buf);
+  if (ret)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ret, MD4_return_length);
+  return ret;
+}
+
+INTERCEPTOR(char *, MD4File, const char *filename, char *buf) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, MD4File, filename, buf);
+  if (filename)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, filename, REAL(strlen)(filename) + 1);
+  char *ret = REAL(MD4File)(filename, buf);
+  if (ret)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ret, MD4_return_length);
+  return ret;
+}
+
+INTERCEPTOR(char *, MD4Data, const unsigned char *data, unsigned int len,
+            char *buf) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, MD4Data, data, len, buf);
+  if (data && len > 0)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, data, len);
+  char *ret = REAL(MD4Data)(data, len, buf);
+  if (ret)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ret, MD4_return_length);
+  return ret;
+}
+
+#define INIT_MD4                                                               \
+  COMMON_INTERCEPT_FUNCTION(MD4Init);                                          \
+  COMMON_INTERCEPT_FUNCTION(MD4Update);                                        \
+  COMMON_INTERCEPT_FUNCTION(MD4Final);                                         \
+  COMMON_INTERCEPT_FUNCTION(MD4End);                                           \
+  COMMON_INTERCEPT_FUNCTION(MD4File);                                          \
+  COMMON_INTERCEPT_FUNCTION(MD4Data)
+#else
+#define INIT_MD4
+#endif
+
 static void InitializeCommonInterceptors() {
   static u64 metadata_mem[sizeof(MetadataHashMap) / sizeof(u64) + 1];
   interceptor_metadata_map =
@@ -8252,6 +8329,7 @@ static void InitializeCommonInterceptors() {
   INIT_STRTOI;
   INIT_CAPSICUM;
   INIT_SHA1;
+  INIT_MD4;
 
   INIT___PRINTF_CHK;
 }
