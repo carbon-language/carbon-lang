@@ -48,17 +48,16 @@ define i8 @sub_zext_cmp_mask_narrower_result(i32 %x) {
 ; X64-LABEL: sub_zext_cmp_mask_narrower_result:
 ; X64:       # %bb.0:
 ; X64-NEXT:    movl %edi, %eax
-; X64-NEXT:    andl $1, %eax
+; X64-NEXT:    andb $1, %al
 ; X64-NEXT:    orb $46, %al
 ; X64-NEXT:    # kill: def $al killed $al killed $eax
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: sub_zext_cmp_mask_narrower_result:
 ; X32:       # %bb.0:
-; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    andl $1, %eax
+; X32-NEXT:    movb {{[0-9]+}}(%esp), %al
+; X32-NEXT:    andb $1, %al
 ; X32-NEXT:    orb $46, %al
-; X32-NEXT:    # kill: def $al killed $al killed $eax
 ; X32-NEXT:    retl
   %a = and i32 %x, 1
   %c = icmp eq i32 %a, 0
@@ -114,17 +113,16 @@ define i8 @add_zext_cmp_mask_narrower_result(i32 %x) {
 ; X64-LABEL: add_zext_cmp_mask_narrower_result:
 ; X64:       # %bb.0:
 ; X64-NEXT:    movl %edi, %eax
-; X64-NEXT:    andl $1, %eax
+; X64-NEXT:    andb $1, %al
 ; X64-NEXT:    xorb $43, %al
 ; X64-NEXT:    # kill: def $al killed $al killed $eax
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: add_zext_cmp_mask_narrower_result:
 ; X32:       # %bb.0:
-; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    andl $1, %eax
+; X32-NEXT:    movb {{[0-9]+}}(%esp), %al
+; X32-NEXT:    andb $1, %al
 ; X32-NEXT:    xorb $43, %al
-; X32-NEXT:    # kill: def $al killed $al killed $eax
 ; X32-NEXT:    retl
   %a = and i32 %x, 1
   %c = icmp eq i32 %a, 0
@@ -185,7 +183,7 @@ define i16 @low_bit_select_constants_bigger_false_narrower_result(i32 %x) {
 ;
 ; X32-LABEL: low_bit_select_constants_bigger_false_narrower_result:
 ; X32:       # %bb.0:
-; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    andl $1, %eax
 ; X32-NEXT:    orl $36, %eax
 ; X32-NEXT:    # kill: def $ax killed $ax killed $eax
@@ -241,17 +239,16 @@ define i8 @low_bit_select_constants_bigger_true_narrower_result(i16 %x) {
 ; X64-LABEL: low_bit_select_constants_bigger_true_narrower_result:
 ; X64:       # %bb.0:
 ; X64-NEXT:    movl %edi, %eax
-; X64-NEXT:    andl $1, %eax
+; X64-NEXT:    andb $1, %al
 ; X64-NEXT:    xorb $41, %al
 ; X64-NEXT:    # kill: def $al killed $al killed $eax
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: low_bit_select_constants_bigger_true_narrower_result:
 ; X32:       # %bb.0:
-; X32-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    andl $1, %eax
+; X32-NEXT:    movb {{[0-9]+}}(%esp), %al
+; X32-NEXT:    andb $1, %al
 ; X32-NEXT:    xorb $41, %al
-; X32-NEXT:    # kill: def $al killed $al killed $eax
 ; X32-NEXT:    retl
   %a = and i16 %x, 1
   %c = icmp eq i16 %a, 0
