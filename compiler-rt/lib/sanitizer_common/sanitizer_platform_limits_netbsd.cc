@@ -2107,6 +2107,9 @@ const unsigned SHA1_return_length = SHA1_DIGEST_STRING_LENGTH;
 
 const unsigned MD4_CTX_sz = sizeof(MD4_CTX);
 const unsigned MD4_return_length = MD4_DIGEST_STRING_LENGTH;
+
+const unsigned RMD160_CTX_sz = sizeof(RMD160_CTX);
+const unsigned RMD160_return_length = RMD160_DIGEST_STRING_LENGTH;
 }  // namespace __sanitizer
 
 using namespace __sanitizer;
