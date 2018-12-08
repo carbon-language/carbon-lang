@@ -14,10 +14,12 @@
 
 #include "resolve-labels.h"
 #include "../common/enum-set.h"
+#include "../common/template.h"
 #include "../parser/message.h"
 #include "../parser/parse-tree-visitor.h"
 #include <cctype>
 #include <cstdarg>
+#include <type_traits>
 
 namespace Fortran::semantics {
 
@@ -160,39 +162,6 @@ constexpr LabeledStmtClassificationSet constructBranchTargetFlags(
   return labeledStmtClassificationSet;
 }
 
-bool namesBothEqualOrBothNone(const std::optional<parser::Name> &name_a,
-    const std::optional<parser::Name> &name_b) {
-  if (name_a.has_value()) {
-    if (name_b.has_value()) {
-      return name_a->ToString() == name_b->ToString();
-    } else {
-      return false;
-    }
-  } else {
-    return !name_b.has_value();
-  }
-}
-
-bool firstNameNoneOrBothEqual(const std::optional<parser::Name> &name_a,
-    const std::optional<parser::Name> &name_b) {
-  if (!name_a.has_value()) {
-    return true;
-  } else if (name_b.has_value()) {
-    return name_a->ToString() == name_b->ToString();
-  } else {
-    return false;
-  }
-}
-
-bool firstNameNoneOrBothEqual(
-    const std::optional<parser::Name> &name_a, const parser::Name &name_b) {
-  if (!name_a.has_value()) {
-    return true;
-  } else {
-    return name_a->ToString() == name_b.ToString();
-  }
-}
-
 static unsigned SayLabel(parser::Label label) {
   return static_cast<unsigned>(label);
 }
@@ -212,6 +181,33 @@ struct UnitAnalysis {
   TargetStmtMap targetStmts;
   std::vector<ProxyForScope> scopeModel;
 };
+
+// Some parse tree record for statements simply wrap construct names;
+// others include them as tuple components.  Given a statement,
+// return a pointer to its name if it has one.
+template<typename A>
+const parser::CharBlock *GetStmtName(const parser::Statement<A> &stmt) {
+  const std::optional<parser::Name> *name{nullptr};
+  if constexpr (WrapperTrait<A>) {
+    if constexpr (std::is_same_v<decltype(A::v), parser::Name>) {
+      return &stmt.statement.v.source;
+    } else {
+      name = &stmt.statement.v;
+    }
+  } else if constexpr (std::is_same_v<A, parser::SelectRankStmt> ||
+      std::is_same_v<A, parser::SelectTypeStmt>) {
+    name = &std::get<0>(stmt.statement.t);
+  } else if constexpr (common::HasMember<parser::Name,
+                           decltype(stmt.statement.t)>) {
+    return &std::get<parser::Name>(stmt.statement.t).source;
+  } else {
+    name = &std::get<std::optional<parser::Name>>(stmt.statement.t);
+  }
+  if (name && name->has_value()) {
+    return &(*name)->source;
+  }
+  return nullptr;
+}
 
 class ParseTreeAnalyzer {
 public:
@@ -316,38 +312,44 @@ public:
     popConstructNameWithoutBlock(forallConstruct);
   }
 
-  // C1414
-  void Post(const parser::BlockData &blockData) {
-    if (!firstNameNoneOrBothEqual(
-            std::get<parser::Statement<parser::EndBlockDataStmt>>(blockData.t)
-                .statement.v,
-            std::get<parser::Statement<parser::BlockDataStmt>>(blockData.t)
-                .statement.v)) {
-      errorHandler_
-          .Say(currentPosition_, "END BLOCK DATA name mismatch"_err_en_US)
-          .Attach(
-              std::get<parser::Statement<parser::BlockDataStmt>>(blockData.t)
-                  .source,
-              "mismatched BLOCK DATA"_en_US);
+  // Checks for missing or mismatching names on various constructs (e.g., IF)
+  // and their intermediate or terminal statements that allow optional
+  // construct names(e.g., ELSE).  When an optional construct name is present,
+  // the construct as a whole must have a name that matches.
+  template<typename FIRST, typename CONSTRUCT, typename STMT>
+  void CheckOptionalName(const char *constructTag, const CONSTRUCT &a,
+      const parser::Statement<STMT> &stmt) {
+    if (const parser::CharBlock * name{GetStmtName(stmt)}) {
+      const auto &firstStmt{std::get<parser::Statement<FIRST>>(a.t)};
+      if (const parser::CharBlock * firstName{GetStmtName(firstStmt)}) {
+        if (*firstName != *name) {
+          errorHandler_
+              .Say(*name,
+                  parser::MessageFormattedText{
+                      "%s name mismatch"_err_en_US, constructTag})
+              .Attach(*firstName, "should be"_en_US);
+        }
+      } else {
+        errorHandler_
+            .Say(*name,
+                parser::MessageFormattedText{
+                    "%s name not allowed"_err_en_US, constructTag})
+            .Attach(firstStmt.source, "in unnamed %s"_en_US, constructTag);
+      }
     }
   }
+
+  // C1414
+  void Post(const parser::BlockData &blockData) {
+    CheckOptionalName<parser::BlockDataStmt>("BLOCK DATA subprogram", blockData,
+        std::get<parser::Statement<parser::EndBlockDataStmt>>(blockData.t));
+  }
+
   // C1564
   void Post(const parser::FunctionSubprogram &functionSubprogram) {
-    if (!firstNameNoneOrBothEqual(
-            std::get<parser::Statement<parser::EndFunctionStmt>>(
-                functionSubprogram.t)
-                .statement.v,
-            std::get<parser::Name>(
-                std::get<parser::Statement<parser::FunctionStmt>>(
-                    functionSubprogram.t)
-                    .statement.t))) {
-      errorHandler_
-          .Say(currentPosition_, "END FUNCTION name mismatch"_err_en_US)
-          .Attach(std::get<parser::Statement<parser::FunctionStmt>>(
-                      functionSubprogram.t)
-                      .source,
-              "mismatched FUNCTION"_en_US);
-    }
+    CheckOptionalName<parser::FunctionStmt>("FUNCTION", functionSubprogram,
+        std::get<parser::Statement<parser::EndFunctionStmt>>(
+            functionSubprogram.t));
   }
   void Post(const parser::InterfaceBlock &interfaceBlock) {
     auto &interfaceStmt{
@@ -379,118 +381,62 @@ public:
       }
     }
   }
+
   // C1402
   void Post(const parser::Module &module) {
-    if (!firstNameNoneOrBothEqual(
-            std::get<parser::Statement<parser::EndModuleStmt>>(module.t)
-                .statement.v,
-            std::get<parser::Statement<parser::ModuleStmt>>(module.t)
-                .statement.v)) {
-      errorHandler_.Say(currentPosition_, "END MODULE name mismatch"_err_en_US)
-          .Attach(
-              std::get<parser::Statement<parser::ModuleStmt>>(module.t).source,
-              "mismatched MODULE"_en_US);
-    }
+    CheckOptionalName<parser::ModuleStmt>("MODULE", module,
+        std::get<parser::Statement<parser::EndModuleStmt>>(module.t));
   }
+
   // C1569
   void Post(const parser::SeparateModuleSubprogram &separateModuleSubprogram) {
-    if (!firstNameNoneOrBothEqual(
-            std::get<parser::Statement<parser::EndMpSubprogramStmt>>(
-                separateModuleSubprogram.t)
-                .statement.v,
-            std::get<parser::Statement<parser::MpSubprogramStmt>>(
-                separateModuleSubprogram.t)
-                .statement.v)) {
-      errorHandler_
-          .Say(currentPosition_, "END MODULE PROCEDURE name mismatch"_err_en_US)
-          .Attach(std::get<parser::Statement<parser::MpSubprogramStmt>>(
-                      separateModuleSubprogram.t)
-                      .source,
-              "mismatched MODULE PROCEDURE"_en_US);
-    }
+    CheckOptionalName<parser::MpSubprogramStmt>("MODULE PROCEDURE",
+        separateModuleSubprogram,
+        std::get<parser::Statement<parser::EndMpSubprogramStmt>>(
+            separateModuleSubprogram.t));
   }
+
   // C1401
   void Post(const parser::MainProgram &mainProgram) {
-    if (std::get<std::optional<parser::Statement<parser::ProgramStmt>>>(
-            mainProgram.t)
-            .has_value()) {
-      auto &programStmt{
-          std::get<std::optional<parser::Statement<parser::ProgramStmt>>>(
-              mainProgram.t)
-              ->statement};
-      auto &endProgramStmt{
-          std::get<parser::Statement<parser::EndProgramStmt>>(mainProgram.t)
-              .statement};
-      if (endProgramStmt.v.has_value()) {
-        if (programStmt.v.ToString() != endProgramStmt.v->ToString()) {
-          errorHandler_
-              .Say(currentPosition_, "END PROGRAM name mismatch"_err_en_US)
-              .Attach(
-                  std::get<
-                      std::optional<parser::Statement<parser::ProgramStmt>>>(
-                      mainProgram.t)
-                      ->source,
-                  "mismatched PROGRAM"_en_US);
-        }
+    auto &endProgramStmt{
+        std::get<parser::Statement<parser::EndProgramStmt>>(mainProgram.t)
+            .statement};
+    if (const auto &program{
+            std::get<std::optional<parser::Statement<parser::ProgramStmt>>>(
+                mainProgram.t)}) {
+      auto &programStmt{program->statement};
+      if (endProgramStmt.v.has_value() &&
+          programStmt.v.source != endProgramStmt.v->source) {
+        errorHandler_
+            .Say(endProgramStmt.v->source, "PROGRAM name mismatch"_err_en_US)
+            .Attach(programStmt.v.source, "should be"_en_US);
       }
-    } else {
-      if (std::get<parser::Statement<parser::EndProgramStmt>>(mainProgram.t)
-              .statement.v.has_value()) {
-        errorHandler_.Say(currentPosition_,
-            parser::MessageFormattedText{
-                "END PROGRAM cannot have a program-name"_err_en_US});
-      }
+    } else if (endProgramStmt.v.has_value()) {
+      errorHandler_.Say(endProgramStmt.v->source,
+          parser::MessageFormattedText{
+              "END PROGRAM has name without PROGRAM statement"_err_en_US});
     }
   }
+
   // C1413
   void Post(const parser::Submodule &submodule) {
-    if (!firstNameNoneOrBothEqual(
-            std::get<parser::Statement<parser::EndSubmoduleStmt>>(submodule.t)
-                .statement.v,
-            std::get<parser::Name>(
-                std::get<parser::Statement<parser::SubmoduleStmt>>(submodule.t)
-                    .statement.t))) {
-      errorHandler_
-          .Say(currentPosition_, "END SUBMODULE name mismatch"_err_en_US)
-          .Attach(
-              std::get<parser::Statement<parser::SubmoduleStmt>>(submodule.t)
-                  .source,
-              "mismatched SUBMODULE"_en_US);
-    }
+    CheckOptionalName<parser::SubmoduleStmt>("SUBMODULE", submodule,
+        std::get<parser::Statement<parser::EndSubmoduleStmt>>(submodule.t));
   }
+
   // C1567
   void Post(const parser::SubroutineSubprogram &subroutineSubprogram) {
-    if (!firstNameNoneOrBothEqual(
-            std::get<parser::Statement<parser::EndSubroutineStmt>>(
-                subroutineSubprogram.t)
-                .statement.v,
-            std::get<parser::Name>(
-                std::get<parser::Statement<parser::SubroutineStmt>>(
-                    subroutineSubprogram.t)
-                    .statement.t))) {
-      errorHandler_
-          .Say(currentPosition_, "END SUBROUTINE name mismatch"_err_en_US)
-          .Attach(std::get<parser::Statement<parser::SubroutineStmt>>(
-                      subroutineSubprogram.t)
-                      .source,
-              "mismatched SUBROUTINE"_en_US);
-    }
+    CheckOptionalName<parser::SubroutineStmt>("SUBROUTINE",
+        subroutineSubprogram,
+        std::get<parser::Statement<parser::EndSubroutineStmt>>(
+            subroutineSubprogram.t));
   }
+
   // C739
   void Post(const parser::DerivedTypeDef &derivedTypeDef) {
-    if (!firstNameNoneOrBothEqual(
-            std::get<parser::Statement<parser::EndTypeStmt>>(derivedTypeDef.t)
-                .statement.v,
-            std::get<parser::Name>(
-                std::get<parser::Statement<parser::DerivedTypeStmt>>(
-                    derivedTypeDef.t)
-                    .statement.t))) {
-      errorHandler_.Say(currentPosition_, "END TYPE name mismatch"_err_en_US)
-          .Attach(std::get<parser::Statement<parser::DerivedTypeStmt>>(
-                      derivedTypeDef.t)
-                      .source,
-              "mismatched TYPE"_en_US);
-    }
+    CheckOptionalName<parser::DerivedTypeStmt>("derived type definition",
+        derivedTypeDef,
+        std::get<parser::Statement<parser::EndTypeStmt>>(derivedTypeDef.t));
   }
 
   void Post(const parser::LabelDoStmt &labelDoStmt) {
@@ -525,12 +471,12 @@ public:
   }
   void Post(const parser::CycleStmt &cycleStmt) {
     if (cycleStmt.v.has_value()) {
-      CheckLabelContext("CYCLE", cycleStmt.v->ToString());
+      CheckLabelContext("CYCLE", cycleStmt.v->source);
     }
   }
   void Post(const parser::ExitStmt &exitStmt) {
     if (exitStmt.v.has_value()) {
-      CheckLabelContext("EXIT", exitStmt.v->ToString());
+      CheckLabelContext("EXIT", exitStmt.v->source);
     }
   }
 
@@ -606,9 +552,20 @@ private:
     popConstructNameIfPresent(a);
   }
 
+  template<typename FIRST, typename CASEBLOCK, typename CASE,
+      typename CONSTRUCT>
+  void CheckSelectNames(const char *tag, const CONSTRUCT &construct) {
+    CheckEndName<FIRST, parser::EndSelectStmt>(tag, construct);
+    for (const auto &inner : std::get<std::list<CASEBLOCK>>(construct.t)) {
+      CheckOptionalName<FIRST>(
+          tag, construct, std::get<parser::Statement<CASE>>(inner.t));
+    }
+  }
+
   // C1144
   void popConstructName(const parser::CaseConstruct &caseConstruct) {
-    CheckName(caseConstruct, "CASE");
+    CheckSelectNames<parser::SelectCaseStmt, parser::CaseConstruct::Case,
+        parser::CaseStmt>("SELECT CASE", caseConstruct);
     PopScope();
     popConstructNameIfPresent(caseConstruct);
   }
@@ -616,7 +573,9 @@ private:
   // C1154, C1156
   void popConstructName(
       const parser::SelectRankConstruct &selectRankConstruct) {
-    CheckName(selectRankConstruct, "RANK", "RANK ");
+    CheckSelectNames<parser::SelectRankStmt,
+        parser::SelectRankConstruct::RankCase, parser::SelectRankCaseStmt>(
+        "SELECT RANK", selectRankConstruct);
     PopScope();
     popConstructNameIfPresent(selectRankConstruct);
   }
@@ -624,217 +583,124 @@ private:
   // C1165
   void popConstructName(
       const parser::SelectTypeConstruct &selectTypeConstruct) {
-    CheckName(selectTypeConstruct, "TYPE", "TYPE ");
+    CheckSelectNames<parser::SelectTypeStmt,
+        parser::SelectTypeConstruct::TypeCase, parser::TypeGuardStmt>(
+        "SELECT TYPE", selectTypeConstruct);
     PopScope();
     popConstructNameIfPresent(selectTypeConstruct);
   }
 
+  // Checks for missing or mismatching names on various constructs (e.g., BLOCK)
+  // and their END statements.  Both names must be present if either one is.
+  template<typename FIRST, typename END, typename CONSTRUCT>
+  void CheckEndName(const char *constructTag, const CONSTRUCT &a) {
+    const auto &constructStmt{std::get<parser::Statement<FIRST>>(a.t)};
+    const auto &endStmt{std::get<parser::Statement<END>>(a.t)};
+    const parser::CharBlock *endName{GetStmtName(endStmt)};
+    if (const parser::CharBlock * constructName{GetStmtName(constructStmt)}) {
+      if (endName) {
+        if (*constructName != *endName) {
+          errorHandler_
+              .Say(*endName,
+                  parser::MessageFormattedText{
+                      "%s construct name mismatch"_err_en_US, constructTag})
+              .Attach(*constructName, "should be"_en_US);
+        }
+      } else {
+        errorHandler_
+            .Say(endStmt.source,
+                parser::MessageFormattedText{
+                    "%s construct name required but missing"_err_en_US,
+                    constructTag})
+            .Attach(*constructName, "should be"_en_US);
+      }
+    } else if (endName) {
+      errorHandler_
+          .Say(*endName,
+              parser::MessageFormattedText{
+                  "%s construct name unexpected"_err_en_US, constructTag})
+          .Attach(
+              constructStmt.source, "unnamed %s statement"_en_US, constructTag);
+    }
+  }
+
   // C1106
   void CheckName(const parser::AssociateConstruct &associateConstruct) {
-    CheckName("ASSOCIATE", associateConstruct);
+    CheckEndName<parser::AssociateStmt, parser::EndAssociateStmt>(
+        "ASSOCIATE", associateConstruct);
   }
   // C1117
   void CheckName(const parser::CriticalConstruct &criticalConstruct) {
-    CheckName("CRITICAL", criticalConstruct);
+    CheckEndName<parser::CriticalStmt, parser::EndCriticalStmt>(
+        "CRITICAL", criticalConstruct);
   }
   // C1131
   void CheckName(const parser::DoConstruct &doConstruct) {
-    CheckName("DO", doConstruct);
+    CheckEndName<parser::NonLabelDoStmt, parser::EndDoStmt>("DO", doConstruct);
   }
   // C1035
   void CheckName(const parser::ForallConstruct &forallConstruct) {
-    CheckName("FORALL", forallConstruct);
-  }
-
-  template<typename A>
-  void CheckName(const char *const constructTag, const A &a) {
-    if (!namesBothEqualOrBothNone(
-            std::get<std::optional<parser::Name>>(std::get<0>(a.t).statement.t),
-            std::get<2>(a.t).statement.v)) {
-      errorHandler_
-          .Say(currentPosition_,
-              parser::MessageFormattedText{
-                  "%s construct name mismatch"_err_en_US, constructTag})
-          .Attach(std::get<0>(a.t).source, "mismatched construct"_en_US);
-    }
+    CheckEndName<parser::ForallConstructStmt, parser::EndForallStmt>(
+        "FORALL", forallConstruct);
   }
 
   // C1109
   void CheckName(const parser::BlockConstruct &blockConstruct) {
-    if (!namesBothEqualOrBothNone(
-            std::get<parser::Statement<parser::BlockStmt>>(blockConstruct.t)
-                .statement.v,
-            std::get<parser::Statement<parser::EndBlockStmt>>(blockConstruct.t)
-                .statement.v)) {
-      errorHandler_
-          .Say(currentPosition_, "BLOCK construct name mismatch"_err_en_US)
-          .Attach(
-              std::get<parser::Statement<parser::BlockStmt>>(blockConstruct.t)
-                  .source,
-              "mismatched BLOCK"_en_US);
-    }
+    CheckEndName<parser::BlockStmt, parser::EndBlockStmt>(
+        "BLOCK", blockConstruct);
   }
   // C1112
   void CheckName(const parser::ChangeTeamConstruct &changeTeamConstruct) {
-    if (!namesBothEqualOrBothNone(
-            std::get<std::optional<parser::Name>>(
-                std::get<parser::Statement<parser::ChangeTeamStmt>>(
-                    changeTeamConstruct.t)
-                    .statement.t),
-            std::get<std::optional<parser::Name>>(
-                std::get<parser::Statement<parser::EndChangeTeamStmt>>(
-                    changeTeamConstruct.t)
-                    .statement.t))) {
-      errorHandler_
-          .Say(
-              currentPosition_, "CHANGE TEAM construct name mismatch"_err_en_US)
-          .Attach(std::get<parser::Statement<parser::ChangeTeamStmt>>(
-                      changeTeamConstruct.t)
-                      .source,
-              "mismatched CHANGE TEAM"_en_US);
-    }
+    CheckEndName<parser::ChangeTeamStmt, parser::EndChangeTeamStmt>(
+        "CHANGE TEAM", changeTeamConstruct);
   }
 
   // C1142
   void CheckName(const parser::IfConstruct &ifConstruct) {
-    const auto &constructName{std::get<std::optional<parser::Name>>(
-        std::get<parser::Statement<parser::IfThenStmt>>(ifConstruct.t)
-            .statement.t)};
-    if (!namesBothEqualOrBothNone(constructName,
-            std::get<parser::Statement<parser::EndIfStmt>>(ifConstruct.t)
-                .statement.v)) {
-      errorHandler_
-          .Say(currentPosition_, "IF construct name mismatch"_err_en_US)
-          .Attach(std::get<parser::Statement<parser::IfThenStmt>>(ifConstruct.t)
-                      .source,
-              "mismatched IF"_en_US);
-    }
+    CheckEndName<parser::IfThenStmt, parser::EndIfStmt>("IF", ifConstruct);
     for (const auto &elseIfBlock :
         std::get<std::list<parser::IfConstruct::ElseIfBlock>>(ifConstruct.t)) {
-      if (!firstNameNoneOrBothEqual(
-              std::get<std::optional<parser::Name>>(
-                  std::get<parser::Statement<parser::ElseIfStmt>>(elseIfBlock.t)
-                      .statement.t),
-              constructName)) {
-        errorHandler_
-            .Say(currentPosition_, "ELSE IF statement name mismatch"_err_en_US)
-            .Attach(
-                std::get<parser::Statement<parser::IfThenStmt>>(ifConstruct.t)
-                    .source,
-                "mismatched IF"_en_US);
-      }
+      CheckOptionalName<parser::IfThenStmt>("IF construct", ifConstruct,
+          std::get<parser::Statement<parser::ElseIfStmt>>(elseIfBlock.t));
     }
-    if (std::get<std::optional<parser::IfConstruct::ElseBlock>>(ifConstruct.t)
-            .has_value()) {
-      if (!firstNameNoneOrBothEqual(
-              std::get<parser::Statement<parser::ElseStmt>>(
-                  std::get<std::optional<parser::IfConstruct::ElseBlock>>(
-                      ifConstruct.t)
-                      ->t)
-                  .statement.v,
-              constructName)) {
-        errorHandler_
-            .Say(currentPosition_, "ELSE statement name mismatch"_err_en_US)
-            .Attach(
-                std::get<parser::Statement<parser::IfThenStmt>>(ifConstruct.t)
-                    .source,
-                "mismatched IF"_en_US);
-      }
-    }
-  }
-
-  template<typename A>
-  void CheckName(const A &a, const char *const selectTag,
-      const char *const selectSubTag = "") {
-    const auto &constructName{std::get<0>(std::get<0>(a.t).statement.t)};
-    if (!namesBothEqualOrBothNone(
-            constructName, std::get<2>(a.t).statement.v)) {
-      errorHandler_
-          .Say(currentPosition_,
-              parser::MessageFormattedText{
-                  "SELECT %s construct name mismatch"_err_en_US, selectTag})
-          .Attach(std::get<0>(a.t).source,
-              parser::MessageFormattedText{"mismatched %s"_en_US, selectTag});
-    }
-    for (const auto &subpart : std::get<1>(a.t)) {
-      if (!firstNameNoneOrBothEqual(std::get<std::optional<parser::Name>>(
-                                        std::get<0>(subpart.t).statement.t),
-              constructName)) {
-        errorHandler_
-            .Say(currentPosition_,
-                parser::MessageFormattedText{
-                    "%sCASE statement name mismatch"_err_en_US, selectSubTag})
-            .Attach(std::get<0>(a.t).source,
-                parser::MessageFormattedText{"mismatched %s"_en_US, selectTag});
-      }
+    if (const auto &elseBlock{
+            std::get<std::optional<parser::IfConstruct::ElseBlock>>(
+                ifConstruct.t)}) {
+      CheckOptionalName<parser::IfThenStmt>("IF construct", ifConstruct,
+          std::get<parser::Statement<parser::ElseStmt>>(elseBlock->t));
     }
   }
 
   // C1033
   void CheckName(const parser::WhereConstruct &whereConstruct) {
-    const auto &constructName{std::get<std::optional<parser::Name>>(
-        std::get<parser::Statement<parser::WhereConstructStmt>>(
-            whereConstruct.t)
-            .statement.t)};
-    if (!namesBothEqualOrBothNone(constructName,
-            std::get<parser::Statement<parser::EndWhereStmt>>(whereConstruct.t)
-                .statement.v)) {
-      errorHandler_
-          .Say(currentPosition_, "WHERE construct name mismatch"_err_en_US)
-          .Attach(std::get<parser::Statement<parser::WhereConstructStmt>>(
-                      whereConstruct.t)
-                      .source,
-              "mismatched WHERE"_en_US);
-    }
+    CheckEndName<parser::WhereConstructStmt, parser::EndWhereStmt>(
+        "WHERE", whereConstruct);
     for (const auto &maskedElsewhere :
         std::get<std::list<parser::WhereConstruct::MaskedElsewhere>>(
             whereConstruct.t)) {
-      if (!firstNameNoneOrBothEqual(
-              std::get<std::optional<parser::Name>>(
-                  std::get<parser::Statement<parser::MaskedElsewhereStmt>>(
-                      maskedElsewhere.t)
-                      .statement.t),
-              constructName)) {
-        errorHandler_
-            .Say(currentPosition_,
-                "ELSEWHERE (<mask>) statement name mismatch"_err_en_US)
-            .Attach(std::get<parser::Statement<parser::WhereConstructStmt>>(
-                        whereConstruct.t)
-                        .source,
-                "mismatched WHERE"_en_US);
-      }
+      CheckOptionalName<parser::WhereConstructStmt>("WHERE construct",
+          whereConstruct,
+          std::get<parser::Statement<parser::MaskedElsewhereStmt>>(
+              maskedElsewhere.t));
     }
-    if (std::get<std::optional<parser::WhereConstruct::Elsewhere>>(
-            whereConstruct.t)
-            .has_value()) {
-      if (!firstNameNoneOrBothEqual(
-              std::get<parser::Statement<parser::ElsewhereStmt>>(
-                  std::get<std::optional<parser::WhereConstruct::Elsewhere>>(
-                      whereConstruct.t)
-                      ->t)
-                  .statement.v,
-              constructName)) {
-        errorHandler_
-            .Say(
-                currentPosition_, "ELSEWHERE statement name mismatch"_err_en_US)
-            .Attach(std::get<parser::Statement<parser::WhereConstructStmt>>(
-                        whereConstruct.t)
-                        .source,
-                "mismatched WHERE"_en_US);
-      }
+    if (const auto &elsewhere{
+            std::get<std::optional<parser::WhereConstruct::Elsewhere>>(
+                whereConstruct.t)}) {
+      CheckOptionalName<parser::WhereConstructStmt>("WHERE construct",
+          whereConstruct,
+          std::get<parser::Statement<parser::ElsewhereStmt>>(elsewhere->t));
     }
   }
 
   // C1134, C1166
-  template<typename A>
-  void CheckLabelContext(const char *const stmtString, const A &constructName) {
-    const auto iter{std::find(
-        constructNames_.crbegin(), constructNames_.crend(), constructName)};
+  void CheckLabelContext(
+      const char *const stmtString, const parser::CharBlock &constructName) {
+    const auto iter{std::find(constructNames_.crbegin(),
+        constructNames_.crend(), constructName.ToString())};
     if (iter == constructNames_.crend()) {
-      errorHandler_.Say(currentPosition_,
+      errorHandler_.Say(constructName,
           parser::MessageFormattedText{
-              "%s construct-name '%s' is not in scope"_err_en_US, stmtString,
-              constructName.c_str()});
+              "%s construct-name is not in scope"_err_en_US, stmtString});
     }
   }
 

@@ -13,24 +13,17 @@
 ! limitations under the License.
 
 ! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
-! CHECK: END BLOCK DATA name mismatch
-! CHECK: mismatched BLOCK DATA
-! CHECK: END FUNCTION name mismatch
-! CHECK: mismatched FUNCTION
-! CHECK: END SUBROUTINE name mismatch
-! CHECK: mismatched SUBROUTINE
-! CHECK: END PROGRAM name mismatch
-! CHECK: mismatched PROGRAM
-! CHECK: END SUBMODULE name mismatch
-! CHECK: mismatched SUBMODULE
+! CHECK: BLOCK DATA subprogram name mismatch
+! CHECK: should be
+! CHECK: FUNCTION name mismatch
+! CHECK: SUBROUTINE name mismatch
+! CHECK: PROGRAM name mismatch
+! CHECK: SUBMODULE name mismatch
 ! CHECK: INTERFACE generic-name .t7. mismatch
 ! CHECK: mismatched INTERFACE
-! CHECK: END TYPE name mismatch
-! CHECK: mismatched TYPE
-! CHECK: END MODULE PROCEDURE name mismatch
-! CHECK: mismatched MODULE PROCEDURE
-! CHECK: END MODULE name mismatch
-! CHECK: mismatched MODULE
+! CHECK: derived type definition name mismatch
+! CHECK: MODULE PROCEDURE name mismatch
+! CHECK: MODULE name mismatch
 
 block data t1
 end block data t2
