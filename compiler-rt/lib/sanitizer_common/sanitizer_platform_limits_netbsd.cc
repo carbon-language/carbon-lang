@@ -2101,6 +2101,9 @@ const int modctl_load = MODCTL_LOAD;
 const int modctl_unload = MODCTL_UNLOAD;
 const int modctl_stat = MODCTL_STAT;
 const int modctl_exists = MODCTL_EXISTS;
+
+const unsigned SHA1_CTX_sz = sizeof(SHA1_CTX);
+const unsigned SHA1_return_length = SHA1_DIGEST_STRING_LENGTH;
 }  // namespace __sanitizer
 
 using namespace __sanitizer;
