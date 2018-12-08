@@ -7890,7 +7890,7 @@ INTERCEPTOR(int, cap_ioctls_get, int fd, uptr *cmds, SIZE_T maxcmds) {
 
 static void InitializeCommonInterceptors() {
   static u64 metadata_mem[sizeof(MetadataHashMap) / sizeof(u64) + 1];
-  interceptor_metadata_map = new ((void *)&metadata_mem) MetadataHashMap();
+  interceptor_metadata_map = new((void *)&metadata_mem) MetadataHashMap();
 
   INIT_MMAP;
   INIT_MMAP64;
