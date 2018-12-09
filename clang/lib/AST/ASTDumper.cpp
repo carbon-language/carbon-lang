@@ -84,7 +84,6 @@ namespace  {
 
     void dumpDecl(const Decl *D);
     void dumpStmt(const Stmt *S);
-    void dumpFullComment(const FullComment *C);
 
     // Utilities
     void dumpType(QualType T) { NodeDumper.dumpType(T); }
@@ -831,7 +830,7 @@ void ASTDumper::dumpDecl(const Decl *D) {
 
     if (const FullComment *Comment =
             D->getASTContext().getLocalCommentForDeclUncached(D))
-      dumpFullComment(Comment);
+      dumpComment(Comment, Comment);
 
     // Decls within functions are visited by the body.
     if (!isa<FunctionDecl>(*D) && !isa<ObjCMethodDecl>(*D) &&
@@ -2304,12 +2303,6 @@ const char *ASTDumper::getCommandName(unsigned CommandID) {
   return "<not a builtin command>";
 }
 
-void ASTDumper::dumpFullComment(const FullComment *C) {
-  if (!C)
-    return;
-  dumpComment(C, C);
-}
-
 void ASTDumper::dumpComment(const Comment *C, const FullComment *FC) {
   dumpChild([=] {
     if (!C) {
@@ -2547,12 +2540,16 @@ LLVM_DUMP_METHOD void Comment::dump(const ASTContext &Context) const {
 void Comment::dump(raw_ostream &OS, const CommandTraits *Traits,
                    const SourceManager *SM) const {
   const FullComment *FC = dyn_cast<FullComment>(this);
+  if (!FC)
+    return;
   ASTDumper D(OS, Traits, SM);
-  D.dumpFullComment(FC);
+  D.dumpComment(FC, FC);
 }
 
 LLVM_DUMP_METHOD void Comment::dumpColor() const {
   const FullComment *FC = dyn_cast<FullComment>(this);
+  if (!FC)
+    return;
   ASTDumper D(llvm::errs(), nullptr, nullptr, /*ShowColors*/true);
-  D.dumpFullComment(FC);
+  D.dumpComment(FC, FC);
 }
