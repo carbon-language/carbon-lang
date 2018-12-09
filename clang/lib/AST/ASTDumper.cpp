@@ -48,7 +48,6 @@ namespace  {
     TextNodeDumper NodeDumper;
 
     raw_ostream &OS;
-    const CommandTraits *Traits;
 
     /// The policy to use for printing; can be defaulted.
     PrintingPolicy PrintPolicy;
@@ -77,7 +76,7 @@ namespace  {
               const SourceManager *SM, bool ShowColors,
               const PrintingPolicy &PrintPolicy)
         : TreeStructure(OS, ShowColors),
-          NodeDumper(OS, ShowColors, SM, PrintPolicy), OS(OS), Traits(Traits),
+          NodeDumper(OS, ShowColors, SM, PrintPolicy, Traits), OS(OS),
           PrintPolicy(PrintPolicy), ShowColors(ShowColors) {}
 
     void setDeserialize(bool D) { Deserialize = D; }
@@ -433,31 +432,7 @@ namespace  {
     void VisitObjCBoolLiteralExpr(const ObjCBoolLiteralExpr *Node);
 
     // Comments.
-    const char *getCommandName(unsigned CommandID);
     void dumpComment(const Comment *C, const FullComment *FC);
-
-    // Inline comments.
-    void visitTextComment(const TextComment *C, const FullComment *FC);
-    void visitInlineCommandComment(const InlineCommandComment *C,
-                                   const FullComment *FC);
-    void visitHTMLStartTagComment(const HTMLStartTagComment *C,
-                                  const FullComment *FC);
-    void visitHTMLEndTagComment(const HTMLEndTagComment *C,
-                                const FullComment *FC);
-
-    // Block comments.
-    void visitBlockCommandComment(const BlockCommandComment *C,
-                                  const FullComment *FC);
-    void visitParamCommandComment(const ParamCommandComment *C,
-                                  const FullComment *FC);
-    void visitTParamCommandComment(const TParamCommandComment *C,
-                                   const FullComment *FC);
-    void visitVerbatimBlockComment(const VerbatimBlockComment *C,
-                                   const FullComment *FC);
-    void visitVerbatimBlockLineComment(const VerbatimBlockLineComment *C,
-                                       const FullComment *FC);
-    void visitVerbatimLineComment(const VerbatimLineComment *C,
-                                  const FullComment *FC);
   };
 }
 
@@ -2289,142 +2264,17 @@ void ASTDumper::VisitObjCBoolLiteralExpr(const ObjCBoolLiteralExpr *Node) {
 // Comments
 //===----------------------------------------------------------------------===//
 
-const char *ASTDumper::getCommandName(unsigned CommandID) {
-  if (Traits)
-    return Traits->getCommandInfo(CommandID)->Name;
-  const CommandInfo *Info = CommandTraits::getBuiltinCommandInfo(CommandID);
-  if (Info)
-    return Info->Name;
-  return "<not a builtin command>";
-}
-
 void ASTDumper::dumpComment(const Comment *C, const FullComment *FC) {
   dumpChild([=] {
+    NodeDumper.Visit(C, FC);
     if (!C) {
-      ColorScope Color(OS, ShowColors, NullColor);
-      OS << "<<<NULL>>>";
       return;
     }
-
-    {
-      ColorScope Color(OS, ShowColors, CommentColor);
-      OS << C->getCommentKindName();
-    }
-    NodeDumper.dumpPointer(C);
-    NodeDumper.dumpSourceRange(C->getSourceRange());
     ConstCommentVisitor<ASTDumper, void, const FullComment *>::visit(C, FC);
     for (Comment::child_iterator I = C->child_begin(), E = C->child_end();
          I != E; ++I)
       dumpComment(*I, FC);
   });
-}
-
-void ASTDumper::visitTextComment(const TextComment *C, const FullComment *) {
-  OS << " Text=\"" << C->getText() << "\"";
-}
-
-void ASTDumper::visitInlineCommandComment(const InlineCommandComment *C,
-                                          const FullComment *) {
-  OS << " Name=\"" << getCommandName(C->getCommandID()) << "\"";
-  switch (C->getRenderKind()) {
-  case InlineCommandComment::RenderNormal:
-    OS << " RenderNormal";
-    break;
-  case InlineCommandComment::RenderBold:
-    OS << " RenderBold";
-    break;
-  case InlineCommandComment::RenderMonospaced:
-    OS << " RenderMonospaced";
-    break;
-  case InlineCommandComment::RenderEmphasized:
-    OS << " RenderEmphasized";
-    break;
-  }
-
-  for (unsigned i = 0, e = C->getNumArgs(); i != e; ++i)
-    OS << " Arg[" << i << "]=\"" << C->getArgText(i) << "\"";
-}
-
-void ASTDumper::visitHTMLStartTagComment(const HTMLStartTagComment *C,
-                                         const FullComment *) {
-  OS << " Name=\"" << C->getTagName() << "\"";
-  if (C->getNumAttrs() != 0) {
-    OS << " Attrs: ";
-    for (unsigned i = 0, e = C->getNumAttrs(); i != e; ++i) {
-      const HTMLStartTagComment::Attribute &Attr = C->getAttr(i);
-      OS << " \"" << Attr.Name << "=\"" << Attr.Value << "\"";
-    }
-  }
-  if (C->isSelfClosing())
-    OS << " SelfClosing";
-}
-
-void ASTDumper::visitHTMLEndTagComment(const HTMLEndTagComment *C,
-                                       const FullComment *) {
-  OS << " Name=\"" << C->getTagName() << "\"";
-}
-
-void ASTDumper::visitBlockCommandComment(const BlockCommandComment *C,
-                                         const FullComment *) {
-  OS << " Name=\"" << getCommandName(C->getCommandID()) << "\"";
-  for (unsigned i = 0, e = C->getNumArgs(); i != e; ++i)
-    OS << " Arg[" << i << "]=\"" << C->getArgText(i) << "\"";
-}
-
-void ASTDumper::visitParamCommandComment(const ParamCommandComment *C,
-                                         const FullComment *FC) {
-  OS << " " << ParamCommandComment::getDirectionAsString(C->getDirection());
-
-  if (C->isDirectionExplicit())
-    OS << " explicitly";
-  else
-    OS << " implicitly";
-
-  if (C->hasParamName()) {
-    if (C->isParamIndexValid())
-      OS << " Param=\"" << C->getParamName(FC) << "\"";
-    else
-      OS << " Param=\"" << C->getParamNameAsWritten() << "\"";
-  }
-
-  if (C->isParamIndexValid() && !C->isVarArgParam())
-    OS << " ParamIndex=" << C->getParamIndex();
-}
-
-void ASTDumper::visitTParamCommandComment(const TParamCommandComment *C,
-                                          const FullComment *FC) {
-  if (C->hasParamName()) {
-    if (C->isPositionValid())
-      OS << " Param=\"" << C->getParamName(FC) << "\"";
-    else
-      OS << " Param=\"" << C->getParamNameAsWritten() << "\"";
-  }
-
-  if (C->isPositionValid()) {
-    OS << " Position=<";
-    for (unsigned i = 0, e = C->getDepth(); i != e; ++i) {
-      OS << C->getIndex(i);
-      if (i != e - 1)
-        OS << ", ";
-    }
-    OS << ">";
-  }
-}
-
-void ASTDumper::visitVerbatimBlockComment(const VerbatimBlockComment *C,
-                                          const FullComment *) {
-  OS << " Name=\"" << getCommandName(C->getCommandID()) << "\""
-        " CloseName=\"" << C->getCloseName() << "\"";
-}
-
-void ASTDumper::visitVerbatimBlockLineComment(const VerbatimBlockLineComment *C,
-                                              const FullComment *) {
-  OS << " Text=\"" << C->getText() << "\"";
-}
-
-void ASTDumper::visitVerbatimLineComment(const VerbatimLineComment *C,
-                                         const FullComment *) {
-  OS << " Text=\"" << C->getText() << "\"";
 }
 
 //===----------------------------------------------------------------------===//
