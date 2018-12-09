@@ -83,8 +83,7 @@ namespace  {
     void setDeserialize(bool D) { Deserialize = D; }
 
     void dumpDecl(const Decl *D);
-    void dumpStmt(const Stmt *S, const char *label = nullptr);
-    void dumpStmtImpl(const Stmt *S);
+    void dumpStmt(const Stmt *S);
 
     // Utilities
     void dumpType(QualType T) { NodeDumper.dumpType(T); }
@@ -1712,18 +1711,7 @@ void ASTDumper::VisitBlockDecl(const BlockDecl *D) {
 //  Stmt dumping methods.
 //===----------------------------------------------------------------------===//
 
-void ASTDumper::dumpStmt(const Stmt *S, const char *label) {
-  if (label) {
-    dumpChild([=] {
-      OS << label;
-      dumpStmtImpl(S);
-    });
-  } else {
-    dumpStmtImpl(S);
-  }
-}
-
-void ASTDumper::dumpStmtImpl(const Stmt *S) {
+void ASTDumper::dumpStmt(const Stmt *S) {
   dumpChild([=] {
     if (!S) {
       ColorScope Color(OS, ShowColors, NullColor);
@@ -1990,7 +1978,10 @@ void ASTDumper::VisitInitListExpr(const InitListExpr *ILE) {
     NodeDumper.dumpBareDeclRef(Field);
   }
   if (auto *Filler = ILE->getArrayFiller()) {
-    dumpStmt(Filler, "array filler");
+    dumpChild([=] {
+      OS << "array filler";
+      dumpStmt(Filler);
+    });
   }
 }
 
