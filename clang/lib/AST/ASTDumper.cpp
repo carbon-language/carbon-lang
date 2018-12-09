@@ -91,7 +91,6 @@ namespace  {
     void dumpTypeAsChild(const Type *T);
     void dumpDeclRef(const Decl *Node, const char *Label = nullptr);
     void dumpBareDeclRef(const Decl *Node) { NodeDumper.dumpBareDeclRef(Node); }
-    bool hasNodes(const DeclContext *DC);
     void dumpDeclContext(const DeclContext *DC);
     void dumpLookups(const DeclContext *DC, bool DumpDecls);
     void dumpAttr(const Attr *A);
@@ -539,15 +538,6 @@ void ASTDumper::dumpDeclRef(const Decl *D, const char *Label) {
   });
 }
 
-bool ASTDumper::hasNodes(const DeclContext *DC) {
-  if (!DC)
-    return false;
-
-  return DC->hasExternalLexicalStorage() ||
-         (Deserialize ? DC->decls_begin() != DC->decls_end()
-                      : DC->noload_decls_begin() != DC->noload_decls_end());
-}
-
 void ASTDumper::dumpDeclContext(const DeclContext *DC) {
   if (!DC)
     return;
@@ -833,9 +823,14 @@ void ASTDumper::dumpDecl(const Decl *D) {
       dumpComment(Comment, Comment);
 
     // Decls within functions are visited by the body.
-    if (!isa<FunctionDecl>(*D) && !isa<ObjCMethodDecl>(*D) &&
-        hasNodes(dyn_cast<DeclContext>(D)))
-      dumpDeclContext(cast<DeclContext>(D));
+    if (!isa<FunctionDecl>(*D) && !isa<ObjCMethodDecl>(*D)) {
+      auto DC = dyn_cast<DeclContext>(D);
+      if (DC &&
+          (DC->hasExternalLexicalStorage() ||
+           (Deserialize ? DC->decls_begin() != DC->decls_end()
+                        : DC->noload_decls_begin() != DC->noload_decls_end())))
+        dumpDeclContext(DC);
+    }
   });
 }
 
