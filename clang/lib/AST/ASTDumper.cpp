@@ -102,6 +102,12 @@ namespace  {
     void dumpTemplateArgumentList(const TemplateArgumentList &TAL);
     void dumpTemplateArgument(const TemplateArgument &A,
                               SourceRange R = SourceRange());
+    template <typename SpecializationDecl>
+    void dumpTemplateDeclSpecialization(const SpecializationDecl *D,
+                                        bool DumpExplicitInst,
+                                        bool DumpRefOnly);
+    template <typename TemplateDecl>
+    void dumpTemplateDecl(const TemplateDecl *D, bool DumpExplicitInst);
 
     // Objective-C utilities.
     void dumpObjCTypeParamList(const ObjCTypeParamList *typeParams);
@@ -316,12 +322,6 @@ namespace  {
     void VisitTypeAliasTemplateDecl(const TypeAliasTemplateDecl *D);
     void VisitCXXRecordDecl(const CXXRecordDecl *D);
     void VisitStaticAssertDecl(const StaticAssertDecl *D);
-    template<typename SpecializationDecl>
-    void VisitTemplateDeclSpecialization(const SpecializationDecl *D,
-                                         bool DumpExplicitInst,
-                                         bool DumpRefOnly);
-    template<typename TemplateDecl>
-    void VisitTemplateDecl(const TemplateDecl *D, bool DumpExplicitInst);
     void VisitFunctionTemplateDecl(const FunctionTemplateDecl *D);
     void VisitClassTemplateDecl(const ClassTemplateDecl *D);
     void VisitClassTemplateSpecializationDecl(
@@ -1261,10 +1261,10 @@ void ASTDumper::VisitStaticAssertDecl(const StaticAssertDecl *D) {
   dumpStmt(D->getMessage());
 }
 
-template<typename SpecializationDecl>
-void ASTDumper::VisitTemplateDeclSpecialization(const SpecializationDecl *D,
-                                                bool DumpExplicitInst,
-                                                bool DumpRefOnly) {
+template <typename SpecializationDecl>
+void ASTDumper::dumpTemplateDeclSpecialization(const SpecializationDecl *D,
+                                               bool DumpExplicitInst,
+                                               bool DumpRefOnly) {
   bool DumpedAny = false;
   for (auto *RedeclWithBadType : D->redecls()) {
     // FIXME: The redecls() range sometimes has elements of a less-specific
@@ -1303,28 +1303,27 @@ void ASTDumper::VisitTemplateDeclSpecialization(const SpecializationDecl *D,
     dumpDeclRef(D);
 }
 
-template<typename TemplateDecl>
-void ASTDumper::VisitTemplateDecl(const TemplateDecl *D,
-                                  bool DumpExplicitInst) {
+template <typename TemplateDecl>
+void ASTDumper::dumpTemplateDecl(const TemplateDecl *D, bool DumpExplicitInst) {
   NodeDumper.dumpName(D);
   dumpTemplateParameters(D->getTemplateParameters());
 
   dumpDecl(D->getTemplatedDecl());
 
   for (auto *Child : D->specializations())
-    VisitTemplateDeclSpecialization(Child, DumpExplicitInst,
-                                    !D->isCanonicalDecl());
+    dumpTemplateDeclSpecialization(Child, DumpExplicitInst,
+                                   !D->isCanonicalDecl());
 }
 
 void ASTDumper::VisitFunctionTemplateDecl(const FunctionTemplateDecl *D) {
   // FIXME: We don't add a declaration of a function template specialization
   // to its context when it's explicitly instantiated, so dump explicit
   // instantiations when we dump the template itself.
-  VisitTemplateDecl(D, true);
+  dumpTemplateDecl(D, true);
 }
 
 void ASTDumper::VisitClassTemplateDecl(const ClassTemplateDecl *D) {
-  VisitTemplateDecl(D, false);
+  dumpTemplateDecl(D, false);
 }
 
 void ASTDumper::VisitClassTemplateSpecializationDecl(
@@ -1347,7 +1346,7 @@ void ASTDumper::VisitClassScopeFunctionSpecializationDecl(
 }
 
 void ASTDumper::VisitVarTemplateDecl(const VarTemplateDecl *D) {
-  VisitTemplateDecl(D, false);
+  dumpTemplateDecl(D, false);
 }
 
 void ASTDumper::VisitBuiltinTemplateDecl(const BuiltinTemplateDecl *D) {
