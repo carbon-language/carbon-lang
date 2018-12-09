@@ -20,6 +20,7 @@
 #define KMP_OS_DRAGONFLY 0
 #define KMP_OS_FREEBSD 0
 #define KMP_OS_NETBSD 0
+#define KMP_OS_OPENBSD 0
 #define KMP_OS_DARWIN 0
 #define KMP_OS_WINDOWS 0
 #define KMP_OS_CNK 0
@@ -61,6 +62,11 @@
 #define KMP_OS_NETBSD 1
 #endif
 
+#if (defined __OpenBSD__)
+#undef KMP_OS_OPENBSD
+#define KMP_OS_OPENBSD 1
+#endif
+
 #if (defined __bgq__)
 #undef KMP_OS_CNK
 #define KMP_OS_CNK 1
@@ -73,12 +79,12 @@
 
 #if (1 !=                                                                      \
      KMP_OS_LINUX + KMP_OS_DRAGONFLY + KMP_OS_FREEBSD + KMP_OS_NETBSD +        \
-         KMP_OS_DARWIN + KMP_OS_WINDOWS + KMP_OS_HURD)
+         KMP_OS_OPENBSD + KMP_OS_DARWIN + KMP_OS_WINDOWS + KMP_OS_HURD)
 #error Unknown OS
 #endif
 
 #if KMP_OS_LINUX || KMP_OS_DRAGONFLY || KMP_OS_FREEBSD || KMP_OS_NETBSD ||     \
-        KMP_OS_DARWIN || KMP_OS_HURD
+        KMP_OS_OPENBSD || KMP_OS_DARWIN || KMP_OS_HURD
 #undef KMP_OS_UNIX
 #define KMP_OS_UNIX 1
 #endif
