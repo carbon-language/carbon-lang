@@ -1979,15 +1979,15 @@ void ASTDumper::VisitStringLiteral(const StringLiteral *Str) {
 }
 
 void ASTDumper::VisitInitListExpr(const InitListExpr *ILE) {
+  if (auto *Field = ILE->getInitializedFieldInUnion()) {
+    OS << " field ";
+    NodeDumper.dumpBareDeclRef(Field);
+  }
   if (auto *Filler = ILE->getArrayFiller()) {
     dumpChild([=] {
       OS << "array filler";
       dumpStmt(Filler);
     });
-  }
-  if (auto *Field = ILE->getInitializedFieldInUnion()) {
-    OS << " field ";
-    NodeDumper.dumpBareDeclRef(Field);
   }
 }
 
