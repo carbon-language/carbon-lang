@@ -202,7 +202,7 @@ void SIModeRegister::insertSetreg(MachineBasicBlock &MBB, MachineInstr *MI,
                 (Offset << AMDGPU::Hwreg::OFFSET_SHIFT_) |
                 (AMDGPU::Hwreg::ID_MODE << AMDGPU::Hwreg::ID_SHIFT_));
     ++NumSetregInserted;
-    InstrMode.Mask &= ~((1 << Width) - 1) << Offset;
+    InstrMode.Mask &= ~(((1 << Width) - 1) << Offset);
   }
 }
 
