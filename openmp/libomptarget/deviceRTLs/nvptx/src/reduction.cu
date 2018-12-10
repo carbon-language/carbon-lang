@@ -76,17 +76,12 @@ EXTERN int32_t __kmpc_shuffle_int32(int32_t val, int16_t delta, int16_t size) {
 }
 
 EXTERN int64_t __kmpc_shuffle_int64(int64_t val, int16_t delta, int16_t size) {
-#if defined(CUDART_VERSION) && CUDART_VERSION >= 9000
-  return __SHFL_DOWN_SYNC(0xFFFFFFFFFFFFFFFFLL, (long long)val, (unsigned)delta,
-                          (int)size);
-#else
    int lo, hi;
    asm volatile("mov.b64 {%0,%1}, %2;" : "=r"(lo), "=r"(hi) : "l"(val));
    hi = __SHFL_DOWN_SYNC(0xFFFFFFFF, hi, delta, size);
    lo = __SHFL_DOWN_SYNC(0xFFFFFFFF, lo, delta, size);
    asm volatile("mov.b64 %0, {%1,%2};" : "=l"(val) : "r"(lo), "r"(hi));
    return val;
-#endif
 }
 
 static INLINE void gpu_regular_warp_reduce(void *reduce_data,
