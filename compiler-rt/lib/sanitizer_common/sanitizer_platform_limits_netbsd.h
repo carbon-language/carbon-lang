@@ -2237,6 +2237,19 @@ extern const unsigned MD5_CTX_sz;
 extern const unsigned MD5_return_length;
 
 extern const unsigned fpos_t_sz;
+
+#define SHA2_EXTERN(LEN)                          \
+  extern const unsigned SHA##LEN##_CTX_sz;        \
+  extern const unsigned SHA##LEN##_return_length; \
+  extern const unsigned SHA##LEN##_block_length;  \
+  extern const unsigned SHA##LEN##_digest_length
+
+SHA2_EXTERN(224);
+SHA2_EXTERN(256);
+SHA2_EXTERN(384);
+SHA2_EXTERN(512);
+
+#undef SHA2_EXTERN
 }  // namespace __sanitizer
 
 #define CHECK_TYPE_SIZE(TYPE) \
