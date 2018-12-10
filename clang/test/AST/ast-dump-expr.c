@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Wno-unused-value -std=gnu11 -ast-dump %s | FileCheck -strict-whitespace %s
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -Wno-unused-value -std=gnu11 -ast-dump %s | FileCheck -strict-whitespace %s
 
 void Comma(void) {
   1, 2, 3;
@@ -213,15 +213,15 @@ void UnaryOperators(int a, int *b) {
   // CHECK-NEXT: DeclRefExpr 0x{{[^ ]*}} <col:4> 'int' lvalue ParmVar 0x{{[^ ]*}} 'a' 'int'
 
   sizeof a;
-  // CHECK: UnaryExprOrTypeTraitExpr 0x{{[^ ]*}} <line:[[@LINE-1]]:3, col:10> 'unsigned long long' sizeof
+  // CHECK: UnaryExprOrTypeTraitExpr 0x{{[^ ]*}} <line:[[@LINE-1]]:3, col:10> 'unsigned long' sizeof
   // CHECK-NEXT: DeclRefExpr 0x{{[^ ]*}} <col:10> 'int' lvalue ParmVar 0x{{[^ ]*}} 'a' 'int'
 
   sizeof(int);
-  // CHECK: UnaryExprOrTypeTraitExpr 0x{{[^ ]*}} <line:[[@LINE-1]]:3, col:13> 'unsigned long long' sizeof 'int'
+  // CHECK: UnaryExprOrTypeTraitExpr 0x{{[^ ]*}} <line:[[@LINE-1]]:3, col:13> 'unsigned long' sizeof 'int'
 
   _Alignof(int);
   // FIXME: Uses C++ spelling for alignof in C mode.
-  // CHECK: UnaryExprOrTypeTraitExpr 0x{{[^ ]*}} <line:[[@LINE-2]]:3, col:15> 'unsigned long long' alignof 'int'
+  // CHECK: UnaryExprOrTypeTraitExpr 0x{{[^ ]*}} <line:[[@LINE-2]]:3, col:15> 'unsigned long' alignof 'int'
 }
 
 struct S {
@@ -287,7 +287,7 @@ void PrimaryExpressions(int a) {
   // CHECK: CharacterLiteral 0x{{[^ ]*}} <line:[[@LINE-1]]:3> 'int' 97
 
   L'a';
-  // CHECK: CharacterLiteral 0x{{[^ ]*}} <line:[[@LINE-1]]:3> 'unsigned short' 97
+  // CHECK: CharacterLiteral 0x{{[^ ]*}} <line:[[@LINE-1]]:3> 'int' 97
 
   "a";
   // ImplicitCastExpr
@@ -295,7 +295,7 @@ void PrimaryExpressions(int a) {
 
   L"a";
   // ImplicitCastExpr
-  // CHECK: StringLiteral 0x{{[^ ]*}} <col:3> 'unsigned short [2]' lvalue L"a"
+  // CHECK: StringLiteral 0x{{[^ ]*}} <col:3> 'int [2]' lvalue L"a"
 
   u8"a";
   // ImplicitCastExpr
