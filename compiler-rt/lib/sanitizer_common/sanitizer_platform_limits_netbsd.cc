@@ -2116,6 +2116,9 @@ const unsigned MD5_return_length = MD5_DIGEST_STRING_LENGTH;
 
 const unsigned fpos_t_sz = sizeof(fpos_t);
 
+const unsigned MD2_CTX_sz = sizeof(MD2_CTX);
+const unsigned MD2_return_length = MD2_DIGEST_STRING_LENGTH;
+
 #define SHA2_CONST(LEN)                                                      \
   const unsigned SHA##LEN##_CTX_sz = sizeof(SHA##LEN##_CTX);                 \
   const unsigned SHA##LEN##_return_length = SHA##LEN##_DIGEST_STRING_LENGTH; \

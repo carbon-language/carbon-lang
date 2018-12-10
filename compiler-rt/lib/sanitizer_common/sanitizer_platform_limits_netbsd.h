@@ -2238,6 +2238,9 @@ extern const unsigned MD5_return_length;
 
 extern const unsigned fpos_t_sz;
 
+extern const unsigned MD2_CTX_sz;
+extern const unsigned MD2_return_length;
+
 #define SHA2_EXTERN(LEN)                          \
   extern const unsigned SHA##LEN##_CTX_sz;        \
   extern const unsigned SHA##LEN##_return_length; \
