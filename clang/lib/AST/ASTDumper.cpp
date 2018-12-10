@@ -98,10 +98,14 @@ namespace  {
     void dumpCXXCtorInitializer(const CXXCtorInitializer *Init);
     void dumpTemplateParameters(const TemplateParameterList *TPL);
     void dumpTemplateArgumentListInfo(const TemplateArgumentListInfo &TALI);
-    void dumpTemplateArgumentLoc(const TemplateArgumentLoc &A);
+    void dumpTemplateArgumentLoc(const TemplateArgumentLoc &A,
+                                 const Decl *From = nullptr,
+                                 const char *label = nullptr);
     void dumpTemplateArgumentList(const TemplateArgumentList &TAL);
     void dumpTemplateArgument(const TemplateArgument &A,
-                              SourceRange R = SourceRange());
+                              SourceRange R = SourceRange(),
+                              const Decl *From = nullptr,
+                              const char *label = nullptr);
     template <typename SpecializationDecl>
     void dumpTemplateDeclSpecialization(const SpecializationDecl *D,
                                         bool DumpExplicitInst,
@@ -673,8 +677,9 @@ void ASTDumper::dumpTemplateArgumentListInfo(
     dumpTemplateArgumentLoc(TALI[i]);
 }
 
-void ASTDumper::dumpTemplateArgumentLoc(const TemplateArgumentLoc &A) {
-  dumpTemplateArgument(A.getArgument(), A.getSourceRange());
+void ASTDumper::dumpTemplateArgumentLoc(const TemplateArgumentLoc &A,
+                                        const Decl *From, const char *label) {
+  dumpTemplateArgument(A.getArgument(), A.getSourceRange(), From, label);
 }
 
 void ASTDumper::dumpTemplateArgumentList(const TemplateArgumentList &TAL) {
@@ -682,11 +687,16 @@ void ASTDumper::dumpTemplateArgumentList(const TemplateArgumentList &TAL) {
     dumpTemplateArgument(TAL[i]);
 }
 
-void ASTDumper::dumpTemplateArgument(const TemplateArgument &A, SourceRange R) {
+void ASTDumper::dumpTemplateArgument(const TemplateArgument &A, SourceRange R,
+                                     const Decl *From, const char *label) {
   dumpChild([=] {
     OS << "TemplateArgument";
     if (R.isValid())
       NodeDumper.dumpSourceRange(R);
+
+    if (From) {
+      dumpDeclRef(From, label);
+    }
 
     switch (A.getKind()) {
     case TemplateArgument::Null:
@@ -1380,10 +1390,10 @@ void ASTDumper::VisitTemplateTypeParmDecl(const TemplateTypeParmDecl *D) {
     OS << " ...";
   NodeDumper.dumpName(D);
   if (D->hasDefaultArgument())
-    dumpTemplateArgument(D->getDefaultArgument());
-  if (auto *From = D->getDefaultArgStorage().getInheritedFrom())
-    dumpDeclRef(From, D->defaultArgumentWasInherited() ? "inherited from"
-                                                       : "previous");
+    dumpTemplateArgument(D->getDefaultArgument(), SourceRange(),
+                         D->getDefaultArgStorage().getInheritedFrom(),
+                         D->defaultArgumentWasInherited() ? "inherited from"
+                                                          : "previous");
 }
 
 void ASTDumper::VisitNonTypeTemplateParmDecl(const NonTypeTemplateParmDecl *D) {
@@ -1393,10 +1403,10 @@ void ASTDumper::VisitNonTypeTemplateParmDecl(const NonTypeTemplateParmDecl *D) {
     OS << " ...";
   NodeDumper.dumpName(D);
   if (D->hasDefaultArgument())
-    dumpTemplateArgument(D->getDefaultArgument());
-  if (auto *From = D->getDefaultArgStorage().getInheritedFrom())
-    dumpDeclRef(From, D->defaultArgumentWasInherited() ? "inherited from"
-                                                       : "previous");
+    dumpTemplateArgument(D->getDefaultArgument(), SourceRange(),
+                         D->getDefaultArgStorage().getInheritedFrom(),
+                         D->defaultArgumentWasInherited() ? "inherited from"
+                                                          : "previous");
 }
 
 void ASTDumper::VisitTemplateTemplateParmDecl(
@@ -1407,10 +1417,9 @@ void ASTDumper::VisitTemplateTemplateParmDecl(
   NodeDumper.dumpName(D);
   dumpTemplateParameters(D->getTemplateParameters());
   if (D->hasDefaultArgument())
-    dumpTemplateArgumentLoc(D->getDefaultArgument());
-  if (auto *From = D->getDefaultArgStorage().getInheritedFrom())
-    dumpDeclRef(From, D->defaultArgumentWasInherited() ? "inherited from"
-                                                       : "previous");
+    dumpTemplateArgumentLoc(
+        D->getDefaultArgument(), D->getDefaultArgStorage().getInheritedFrom(),
+        D->defaultArgumentWasInherited() ? "inherited from" : "previous");
 }
 
 void ASTDumper::VisitUsingDecl(const UsingDecl *D) {
