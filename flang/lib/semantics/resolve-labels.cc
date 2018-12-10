@@ -398,23 +398,21 @@ public:
 
   // C1401
   void Post(const parser::MainProgram &mainProgram) {
-    auto &endProgramStmt{
-        std::get<parser::Statement<parser::EndProgramStmt>>(mainProgram.t)
-            .statement};
-    if (const auto &program{
-            std::get<std::optional<parser::Statement<parser::ProgramStmt>>>(
-                mainProgram.t)}) {
-      auto &programStmt{program->statement};
-      if (endProgramStmt.v.has_value() &&
-          programStmt.v.source != endProgramStmt.v->source) {
-        errorHandler_
-            .Say(endProgramStmt.v->source, "PROGRAM name mismatch"_err_en_US)
-            .Attach(programStmt.v.source, "should be"_en_US);
+    if (const parser::CharBlock *
+        endName{GetStmtName(std::get<parser::Statement<parser::EndProgramStmt>>(
+            mainProgram.t))}) {
+      if (const auto &program{
+              std::get<std::optional<parser::Statement<parser::ProgramStmt>>>(
+                  mainProgram.t)}) {
+        if (*endName != program->statement.v.source) {
+          errorHandler_.Say(*endName, "END PROGRAM name mismatch"_err_en_US)
+              .Attach(program->statement.v.source, "should be"_en_US);
+        }
+      } else {
+        errorHandler_.Say(*endName,
+            parser::MessageFormattedText{
+                "END PROGRAM has name without PROGRAM statement"_err_en_US});
       }
-    } else if (endProgramStmt.v.has_value()) {
-      errorHandler_.Say(endProgramStmt.v->source,
-          parser::MessageFormattedText{
-              "END PROGRAM has name without PROGRAM statement"_err_en_US});
     }
   }
 
