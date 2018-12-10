@@ -169,8 +169,20 @@ public:
       return false;
 
     unsigned NumDefs = MI.getNumOperands() - 1;
-    MachineInstr *MergeI = getOpcodeDef(TargetOpcode::G_MERGE_VALUES,
-                                        MI.getOperand(NumDefs).getReg(), MRI);
+
+    unsigned MergingOpcode;
+    LLT OpTy = MRI.getType(MI.getOperand(NumDefs).getReg());
+    LLT DestTy = MRI.getType(MI.getOperand(0).getReg());
+    if (OpTy.isVector() && DestTy.isVector())
+      MergingOpcode = TargetOpcode::G_CONCAT_VECTORS;
+    else if (OpTy.isVector() && !DestTy.isVector())
+      MergingOpcode = TargetOpcode::G_BUILD_VECTOR;
+    else
+      MergingOpcode = TargetOpcode::G_MERGE_VALUES;
+
+    MachineInstr *MergeI =
+        getOpcodeDef(MergingOpcode, MI.getOperand(NumDefs).getReg(), MRI);
+
     if (!MergeI)
       return false;
 

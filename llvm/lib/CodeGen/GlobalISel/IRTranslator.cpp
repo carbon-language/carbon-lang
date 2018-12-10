@@ -1598,22 +1598,22 @@ bool IRTranslator::translate(const Constant &C, unsigned Reg) {
     // Return the scalar if it is a <1 x Ty> vector.
     if (CAZ->getNumElements() == 1)
       return translate(*CAZ->getElementValue(0u), Reg);
-    std::vector<unsigned> Ops;
+    SmallVector<unsigned, 4> Ops;
     for (unsigned i = 0; i < CAZ->getNumElements(); ++i) {
       Constant &Elt = *CAZ->getElementValue(i);
       Ops.push_back(getOrCreateVReg(Elt));
     }
-    EntryBuilder.buildMerge(Reg, Ops);
+    EntryBuilder.buildBuildVector(Reg, Ops);
   } else if (auto CV = dyn_cast<ConstantDataVector>(&C)) {
     // Return the scalar if it is a <1 x Ty> vector.
     if (CV->getNumElements() == 1)
       return translate(*CV->getElementAsConstant(0), Reg);
-    std::vector<unsigned> Ops;
+    SmallVector<unsigned, 4> Ops;
     for (unsigned i = 0; i < CV->getNumElements(); ++i) {
       Constant &Elt = *CV->getElementAsConstant(i);
       Ops.push_back(getOrCreateVReg(Elt));
     }
-    EntryBuilder.buildMerge(Reg, Ops);
+    EntryBuilder.buildBuildVector(Reg, Ops);
   } else if (auto CE = dyn_cast<ConstantExpr>(&C)) {
     switch(CE->getOpcode()) {
 #define HANDLE_INST(NUM, OPCODE, CLASS)                         \
@@ -1629,7 +1629,7 @@ bool IRTranslator::translate(const Constant &C, unsigned Reg) {
     for (unsigned i = 0; i < CV->getNumOperands(); ++i) {
       Ops.push_back(getOrCreateVReg(*CV->getOperand(i)));
     }
-    EntryBuilder.buildMerge(Reg, Ops);
+    EntryBuilder.buildBuildVector(Reg, Ops);
   } else if (auto *BA = dyn_cast<BlockAddress>(&C)) {
     EntryBuilder.buildBlockAddress(Reg, BA);
   } else

@@ -492,6 +492,10 @@ MachineInstrBuilder MachineIRBuilderBase::buildMerge(unsigned Res,
   if (Ops.size() == 1)
     return buildCast(Res, Ops[0]);
 
+  // If we're trying to merge vectors, we should use G_CONCAT_VECTORS instead.
+  if (getMRI()->getType(Res).isVector())
+    return buildConcatVectors(Res, Ops);
+
   MachineInstrBuilder MIB = buildInstr(TargetOpcode::G_MERGE_VALUES);
   MIB.addDef(Res);
   for (unsigned i = 0; i < Ops.size(); ++i)
