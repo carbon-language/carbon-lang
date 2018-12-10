@@ -10,20 +10,20 @@
 # ALL:      Iterations:        100
 # ALL-NEXT: Instructions:      400
 
-# EM1-NEXT: Total Cycles:      271
-# EM3-NEXT: Total Cycles:      203
+# EM1-NEXT: Total Cycles:      204
+# EM3-NEXT: Total Cycles:      154
 
 # ALL-NEXT: Total uOps:        400
 
 # EM1:      Dispatch Width:    4
-# EM1-NEXT: uOps Per Cycle:    1.48
-# EM1-NEXT: IPC:               1.48
-# EM1-NEXT: Block RThroughput: 2.7
+# EM1-NEXT: uOps Per Cycle:    1.96
+# EM1-NEXT: IPC:               1.96
+# EM1-NEXT: Block RThroughput: 2.0
 
 # EM3:      Dispatch Width:    6
-# EM3-NEXT: uOps Per Cycle:    1.97
-# EM3-NEXT: IPC:               1.97
-# EM3-NEXT: Block RThroughput: 2.0
+# EM3-NEXT: uOps Per Cycle:    2.60
+# EM3-NEXT: IPC:               2.60
+# EM3-NEXT: Block RThroughput: 1.5
 
 # ALL:      Instruction Info:
 # ALL-NEXT: [1]: #uOps
@@ -35,12 +35,12 @@
 
 # ALL:      [1]    [2]    [3]    [4]    [5]    [6]    Instructions:
 
-# EM1-NEXT:  1      2     0.67                        add	w0, w1, w2
+# EM1-NEXT:  1      1     0.33                        add	w0, w1, w2
 # EM1-NEXT:  1      2     0.67                        sub	x3, x4, x5, lsr #1
-# EM1-NEXT:  1      2     0.67                        adds	x6, x7, x8, lsl #2
+# EM1-NEXT:  1      1     0.33                        adds	x6, x7, x8, lsl #2
 # EM1-NEXT:  1      2     0.67                        subs	w9, w10, w11, asr #3
 
-# EM3-NEXT:  1      2     0.50                        add	w0, w1, w2
+# EM3-NEXT:  1      1     0.25                        add	w0, w1, w2
 # EM3-NEXT:  1      2     0.50                        sub	x3, x4, x5, lsr #1
-# EM3-NEXT:  1      2     0.50                        adds	x6, x7, x8, lsl #2
+# EM3-NEXT:  1      1     0.25                        adds	x6, x7, x8, lsl #2
 # EM3-NEXT:  1      2     0.50                        subs	w9, w10, w11, asr #3

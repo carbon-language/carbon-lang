@@ -9,20 +9,17 @@
 
 # ALL:      Iterations:        100
 # ALL-NEXT: Instructions:      400
-
-# EM1-NEXT: Total Cycles:      408
-# EM3-NEXT: Total Cycles:      208
-
-# ALL-NEXT: Total uOps:        800
+# ALL-NEXT: Total Cycles:      308
+# ALL-NEXT: Total uOps:        600
 
 # EM1:      Dispatch Width:    4
-# EM1-NEXT: uOps Per Cycle:    1.96
-# EM1-NEXT: IPC:               0.98
+# EM1-NEXT: uOps Per Cycle:    1.95
+# EM1-NEXT: IPC:               1.30
 # EM1-NEXT: Block RThroughput: 2.0
 
 # EM3:      Dispatch Width:    6
-# EM3-NEXT: uOps Per Cycle:    3.85
-# EM3-NEXT: IPC:               1.92
+# EM3-NEXT: uOps Per Cycle:    1.95
+# EM3-NEXT: IPC:               1.30
 # EM3-NEXT: Block RThroughput: 2.0
 
 # ALL:      Instruction Info:
@@ -35,12 +32,12 @@
 
 # ALL:      [1]    [2]    [3]    [4]    [5]    [6]    Instructions:
 
-# EM1-NEXT:  2      5     1.00    *                   ldr	w0, [x1, x2]
-# EM1-NEXT:  2      2     1.00           *            str	x3, [x4, w5, sxtw]
-# EM1-NEXT:  2      5     1.00    *                   ldr	x6, [x7, w8, uxtw #3]
-# EM1-NEXT:  2      2     1.00           *            str	x9, [x10, x11, lsl #3]
+# EM1-NEXT:  1      5     1.00    *                   ldr	w0, [x1, x2]
+# EM3-NEXT:  1      5     0.50    *                   ldr	w0, [x1, x2]
 
-# EM3-NEXT:  2      5     0.50    *                   ldr	w0, [x1, x2]
-# EM3-NEXT:  2      1     1.00           *            str	x3, [x4, w5, sxtw]
+# ALL-NEXT:  2      2     1.00           *            str	x3, [x4, w5, sxtw]
+
+# EM1-NEXT:  2      5     1.00    *                   ldr	x6, [x7, w8, uxtw #3]
 # EM3-NEXT:  2      5     0.50    *                   ldr	x6, [x7, w8, uxtw #3]
-# EM3-NEXT:  2      1     1.00           *            str	x9, [x10, x11, lsl #3]
+
+# ALL-NEXT:  1      1     1.00           *            str	x9, [x10, x11, lsl #3]
