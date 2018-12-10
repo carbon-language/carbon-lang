@@ -16,3 +16,44 @@ define void @PR32957(<2 x float>* %in, <8 x float>* %out) {
   store <8 x float> %ins2, <8 x float>* %out, align 32
   ret void
 }
+
+; Check that this does not fail to combine concat_vectors of a value from
+; merge_values through a bitcast.
+define void @d() personality i8* undef {
+; CHECK-LABEL: d:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    pushq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 16
+; CHECK-NEXT:  .Ltmp0:
+; CHECK-NEXT:    callq *%rax
+; CHECK-NEXT:  .Ltmp1:
+; CHECK-NEXT:  # %bb.1: # %bar
+; CHECK-NEXT:  .Ltmp2:
+; CHECK-NEXT:    callq *%rax
+; CHECK-NEXT:  .Ltmp3:
+; CHECK-NEXT:  # %bb.2: # %baz
+; CHECK-NEXT:  .LBB1_3: # %foo
+; CHECK-NEXT:  .Ltmp4:
+entry:
+  %call16 = invoke { i8, double } undef()
+          to label %bar unwind label %foo
+
+foo:                                              ; preds = %bar, %entry
+  %0 = landingpad { i8*, i32 }
+          cleanup
+  br label %bazr
+
+bar:                                              ; preds = %entry
+  %1 = extractvalue { i8, double } %call16, 1
+  %2 = bitcast double %1 to <2 x float>
+  invoke void undef()
+          to label %baz unwind label %foo
+
+baz:                                              ; preds = %bar
+  %3 = extractelement <2 x float> %2, i64 0
+  br label %bazr
+
+bazr:                                             ; preds = %baz, %foo
+  %exn.obj = extractvalue { i8*, i32 } undef, 0
+  unreachable
+}
