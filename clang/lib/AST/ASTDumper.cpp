@@ -1040,9 +1040,10 @@ void ASTDumper::VisitOMPDeclareReductionDecl(const OMPDeclareReductionDecl *D) {
   NodeDumper.dumpName(D);
   NodeDumper.dumpType(D->getType());
   OS << " combiner";
-  dumpStmt(D->getCombiner());
-  if (auto *Initializer = D->getInitializer()) {
+  NodeDumper.dumpPointer(D->getCombiner());
+  if (const auto *Initializer = D->getInitializer()) {
     OS << " initializer";
+    NodeDumper.dumpPointer(Initializer);
     switch (D->getInitializerKind()) {
     case OMPDeclareReductionDecl::DirectInit:
       OS << " omp_priv = ";
@@ -1053,8 +1054,11 @@ void ASTDumper::VisitOMPDeclareReductionDecl(const OMPDeclareReductionDecl *D) {
     case OMPDeclareReductionDecl::CallInit:
       break;
     }
-    dumpStmt(Initializer);
   }
+
+  dumpStmt(D->getCombiner());
+  if (const auto *Initializer = D->getInitializer())
+    dumpStmt(Initializer);
 }
 
 void ASTDumper::VisitOMPRequiresDecl(const OMPRequiresDecl *D) {
