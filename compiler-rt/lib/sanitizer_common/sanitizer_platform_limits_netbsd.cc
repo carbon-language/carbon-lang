@@ -2113,6 +2113,8 @@ const unsigned RMD160_return_length = RMD160_DIGEST_STRING_LENGTH;
 
 const unsigned MD5_CTX_sz = sizeof(MD5_CTX);
 const unsigned MD5_return_length = MD5_DIGEST_STRING_LENGTH;
+
+const unsigned fpos_t_sz = sizeof(fpos_t);
 }  // namespace __sanitizer
 
 using namespace __sanitizer;

@@ -77,6 +77,8 @@
 #define ctime __ctime50
 #define ctime_r __ctime_r50
 #define devname __devname50
+#define fgetpos __fgetpos50
+#define fsetpos __fsetpos50
 #define fts_children __fts_children60
 #define fts_close __fts_close60
 #define fts_open __fts_open60
@@ -8228,6 +8230,59 @@ INTERCEPTOR(char *, MD5Data, const unsigned char *data, unsigned int len,
 #define INIT_MD5
 #endif
 
+#if SANITIZER_INTERCEPT_FSEEK
+INTERCEPTOR(int, fseek, __sanitizer_FILE *stream, long int offset, int whence) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fseek, stream, offset, whence);
+  return REAL(fseek)(stream, offset, whence);
+}
+INTERCEPTOR(int, fseeko, __sanitizer_FILE *stream, OFF_T offset, int whence) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fseeko, stream, offset, whence);
+  return REAL(fseeko)(stream, offset, whence);
+}
+INTERCEPTOR(long int, ftell, __sanitizer_FILE *stream) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, ftell, stream);
+  return REAL(ftell)(stream);
+}
+INTERCEPTOR(OFF_T, ftello, __sanitizer_FILE *stream) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, ftello, stream);
+  return REAL(ftello)(stream);
+}
+INTERCEPTOR(void, rewind, __sanitizer_FILE *stream) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, rewind, stream);
+  return REAL(rewind)(stream);
+}
+INTERCEPTOR(int, fgetpos, __sanitizer_FILE *stream, void *pos) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fgetpos, stream, pos);
+  int ret = REAL(fgetpos)(stream, pos);
+  if (pos && !ret)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, pos, fpos_t_sz);
+  return ret;
+}
+INTERCEPTOR(int, fsetpos, __sanitizer_FILE *stream, const void *pos) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fsetpos, stream, pos);
+  if (pos)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, pos, fpos_t_sz);
+  return REAL(fsetpos)(stream, pos);
+}
+#define INIT_FSEEK \
+  COMMON_INTERCEPT_FUNCTION(fseek); \
+  COMMON_INTERCEPT_FUNCTION(fseeko); \
+  COMMON_INTERCEPT_FUNCTION(ftell); \
+  COMMON_INTERCEPT_FUNCTION(ftello); \
+  COMMON_INTERCEPT_FUNCTION(rewind); \
+  COMMON_INTERCEPT_FUNCTION(fgetpos); \
+  COMMON_INTERCEPT_FUNCTION(fsetpos)
+#else
+#define INIT_FSEEK
+#endif
+
 static void InitializeCommonInterceptors() {
   static u64 metadata_mem[sizeof(MetadataHashMap) / sizeof(u64) + 1];
   interceptor_metadata_map =
@@ -8502,6 +8557,7 @@ static void InitializeCommonInterceptors() {
   INIT_MD4;
   INIT_RMD160;
   INIT_MD5;
+  INIT_FSEEK;
 
   INIT___PRINTF_CHK;
 }

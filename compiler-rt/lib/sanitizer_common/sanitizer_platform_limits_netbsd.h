@@ -2235,6 +2235,8 @@ extern const unsigned RMD160_return_length;
 
 extern const unsigned MD5_CTX_sz;
 extern const unsigned MD5_return_length;
+
+extern const unsigned fpos_t_sz;
 }  // namespace __sanitizer
 
 #define CHECK_TYPE_SIZE(TYPE) \
