@@ -1951,11 +1951,12 @@ void ASTDumper::VisitInitListExpr(const InitListExpr *ILE) {
     OS << " field ";
     NodeDumper.dumpBareDeclRef(Field);
   }
+
   if (auto *Filler = ILE->getArrayFiller()) {
-    dumpChild([=] {
-      OS << "array filler";
-      dumpStmt(Filler);
-    });
+    OS << " array_filler";
+    NodeDumper.dumpPointer(Filler);
+
+    dumpStmt(Filler);
   }
 }
 
