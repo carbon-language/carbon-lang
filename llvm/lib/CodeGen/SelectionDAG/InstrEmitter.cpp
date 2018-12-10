@@ -749,6 +749,9 @@ InstrEmitter::EmitDbgValue(SDDbgValue *SD,
         MIB.addImm(CI->getSExtValue());
     } else if (const ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
       MIB.addFPImm(CF);
+    } else if (isa<ConstantPointerNull>(V)) {
+      // Note: This assumes that all nullptr constants are zero-valued.
+      MIB.addImm(0);
     } else {
       // Could be an Undef.  In any case insert an Undef so we can see what we
       // dropped.
