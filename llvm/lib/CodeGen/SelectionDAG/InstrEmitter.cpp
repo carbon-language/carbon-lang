@@ -694,6 +694,20 @@ InstrEmitter::EmitDbgValue(SDDbgValue *SD,
   assert(cast<DILocalVariable>(Var)->isValidLocationForIntrinsic(DL) &&
          "Expected inlined-at fields to agree");
 
+  SD->setIsEmitted();
+
+  if (SD->isInvalidated()) {
+    // An invalidated SDNode must generate an undef DBG_VALUE: although the
+    // original value is no longer computed, earlier DBG_VALUEs live ranges
+    // must not leak into later code.
+    auto MIB = BuildMI(*MF, DL, TII->get(TargetOpcode::DBG_VALUE));
+    MIB.addReg(0U);
+    MIB.addReg(0U, RegState::Debug);
+    MIB.addMetadata(Var);
+    MIB.addMetadata(Expr);
+    return &*MIB;
+  }
+
   if (SD->getKind() == SDDbgValue::FRAMEIX) {
     // Stack address; this needs to be lowered in target-dependent fashion.
     // EmitTargetCodeForFrameDebugValue is responsible for allocation.
