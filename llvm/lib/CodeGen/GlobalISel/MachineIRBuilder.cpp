@@ -786,7 +786,8 @@ void MachineIRBuilder::validateSelectOp(const LLT &ResTy, const LLT &TstTy,
 
 MachineInstrBuilder MachineIRBuilder::buildInstr(unsigned Opc,
                                                  ArrayRef<DstOp> DstOps,
-                                                 ArrayRef<SrcOp> SrcOps) {
+                                                 ArrayRef<SrcOp> SrcOps,
+                                                 Optional<unsigned> Flags) {
   switch (Opc) {
   default:
     break;
@@ -995,5 +996,7 @@ MachineInstrBuilder MachineIRBuilder::buildInstr(unsigned Opc,
     Op.addDefToMIB(*getMRI(), MIB);
   for (const SrcOp &Op : SrcOps)
     Op.addSrcToMIB(MIB);
+  if (Flags)
+    MIB->setFlags(*Flags);
   return MIB;
 }
