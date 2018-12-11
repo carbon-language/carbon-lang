@@ -61,21 +61,40 @@ void WebAssemblyTargetAsmStreamer::emitLocal(ArrayRef<wasm::ValType> Types) {
 
 void WebAssemblyTargetAsmStreamer::emitEndFunc() { OS << "\t.endfunc\n"; }
 
+void WebAssemblyTargetAsmStreamer::emitSignature(
+    const wasm::WasmSignature *Sig) {
+  OS << "(";
+  emitParamList(Sig);
+  OS << ") -> (";
+  emitReturnList(Sig);
+  OS << ")";
+}
+
+void WebAssemblyTargetAsmStreamer::emitParamList(
+    const wasm::WasmSignature *Sig) {
+  auto &Params = Sig->Params;
+  for (auto &Ty : Params) {
+    if (&Ty != &Params[0])
+      OS << ", ";
+    OS << WebAssembly::TypeToString(Ty);
+  }
+}
+
+void WebAssemblyTargetAsmStreamer::emitReturnList(
+    const wasm::WasmSignature *Sig) {
+  auto &Returns = Sig->Returns;
+  for (auto &Ty : Returns) {
+    if (&Ty != &Returns[0])
+      OS << ", ";
+    OS << WebAssembly::TypeToString(Ty);
+  }
+}
+
 void WebAssemblyTargetAsmStreamer::emitFunctionType(const MCSymbolWasm *Sym) {
   assert(Sym->isFunction());
-  OS << "\t.functype\t" << Sym->getName() << " (";
-  auto &Params = Sym->getSignature()->Params;
-  for (auto &Ty : Params) {
-    if (&Ty != &Params[0]) OS << ", ";
-    OS << WebAssembly::TypeToString(Ty);
-  }
-  OS << ") -> (";
-  auto &Returns = Sym->getSignature()->Returns;
-  for (auto &Ty : Returns) {
-    if (&Ty != &Returns[0]) OS << ", ";
-    OS << WebAssembly::TypeToString(Ty);
-  }
-  OS << ")\n";
+  OS << "\t.functype\t" << Sym->getName() << " ";
+  emitSignature(Sym->getSignature());
+  OS << "\n";
 }
 
 void WebAssemblyTargetAsmStreamer::emitGlobalType(const MCSymbolWasm *Sym) {
@@ -88,17 +107,9 @@ void WebAssemblyTargetAsmStreamer::emitGlobalType(const MCSymbolWasm *Sym) {
 
 void WebAssemblyTargetAsmStreamer::emitEventType(const MCSymbolWasm *Sym) {
   assert(Sym->isEvent());
-  OS << "\t.eventtype\t" << Sym->getName();
-  if (Sym->getSignature()->Returns.empty())
-    OS << ", void";
-  else {
-    assert(Sym->getSignature()->Returns.size() == 1);
-    OS << ", "
-       << WebAssembly::TypeToString(Sym->getSignature()->Returns.front());
-  }
-  for (auto Ty : Sym->getSignature()->Params)
-    OS << ", " << WebAssembly::TypeToString(Ty);
-  OS << '\n';
+  OS << "\t.eventtype\t" << Sym->getName() << " ";
+  emitParamList(Sym->getSignature());
+  OS << "\n";
 }
 
 void WebAssemblyTargetAsmStreamer::emitImportModule(const MCSymbolWasm *Sym,
