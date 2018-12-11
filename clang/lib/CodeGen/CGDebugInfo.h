@@ -548,9 +548,6 @@ private:
              Optional<llvm::DIFile::ChecksumInfo<StringRef>> CSInfo,
              Optional<StringRef> Source);
 
-  /// Get the file info for main compile unit.
-  llvm::DIFile *getOrCreateMainFile();
-
   /// Get the type from the cache or create a new type if necessary.
   llvm::DIType *getOrCreateType(QualType Ty, llvm::DIFile *Fg);
 
