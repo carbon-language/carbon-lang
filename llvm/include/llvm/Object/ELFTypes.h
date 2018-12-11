@@ -676,9 +676,9 @@ public:
     return *this;
   }
   bool operator==(Elf_Note_Iterator_Impl Other) const {
-    if (!Nhdr)
+    if (!Nhdr && Other.Err)
       (void)(bool)(*Other.Err);
-    if (!Other.Nhdr)
+    if (!Other.Nhdr && Err)
       (void)(bool)(*Err);
     return Nhdr == Other.Nhdr;
   }
