@@ -39,7 +39,7 @@ void DerivedTypeSpec::AddParamValue(
 }
 
 std::ostream &operator<<(std::ostream &o, const DerivedTypeSpec &x) {
-  o << "TYPE(" << x.name().ToString();
+  o << x.name().ToString();
   if (!x.paramValues_.empty()) {
     bool first = true;
     o << '(';
@@ -56,7 +56,7 @@ std::ostream &operator<<(std::ostream &o, const DerivedTypeSpec &x) {
     }
     o << ')';
   }
-  return o << ')';
+  return o;
 }
 
 Bound::Bound(int bound)
@@ -158,9 +158,10 @@ bool DeclTypeSpec::operator==(const DeclTypeSpec &that) const {
 std::ostream &operator<<(std::ostream &o, const DeclTypeSpec &x) {
   switch (x.category()) {
   case DeclTypeSpec::Intrinsic: return o << x.intrinsicTypeSpec();
-  case DeclTypeSpec::TypeDerived: return o << x.derivedTypeSpec();
+  case DeclTypeSpec::TypeDerived:
+    return o << "TYPE(" << x.derivedTypeSpec() << ')';
   case DeclTypeSpec::ClassDerived:
-    return o << "CLASS(" << x.derivedTypeSpec().name().ToString() << ')';
+    return o << "CLASS(" << x.derivedTypeSpec() << ')';
   case DeclTypeSpec::TypeStar: return o << "TYPE(*)";
   case DeclTypeSpec::ClassStar: return o << "CLASS(*)";
   default: CRASH_NO_CASE; return o;
@@ -173,6 +174,6 @@ void ProcInterface::set_symbol(const Symbol &symbol) {
 }
 void ProcInterface::set_type(const DeclTypeSpec &type) {
   CHECK(!symbol_);
-  type_ = type;
+  type_ = &type;
 }
 }

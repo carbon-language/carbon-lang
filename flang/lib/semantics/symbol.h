@@ -100,13 +100,13 @@ private:
 class EntityDetails {
 public:
   EntityDetails(bool isDummy = false) : isDummy_{isDummy} {}
-  const std::optional<DeclTypeSpec> &type() const { return type_; }
+  const DeclTypeSpec *type() const { return type_; }
   void set_type(const DeclTypeSpec &type);
   bool isDummy() const { return isDummy_; }
 
 private:
   bool isDummy_;
-  std::optional<DeclTypeSpec> type_;
+  const DeclTypeSpec *type_{nullptr};
   friend std::ostream &operator<<(std::ostream &, const EntityDetails &);
 };
 
@@ -118,7 +118,7 @@ public:
   MaybeExpr &init() { return init_; }
   const MaybeExpr &init() const { return init_; }
   void set_init(MaybeExpr &&expr) { init_ = std::move(expr); }
-  const std::optional<DeclTypeSpec> &type() const { return type_; }
+  const DeclTypeSpec *type() const { return type_; }
   void set_type(const DeclTypeSpec &type);
   ArraySpec &shape() { return shape_; }
   const ArraySpec &shape() const { return shape_; }
@@ -137,7 +137,7 @@ public:
 private:
   bool isDummy_;
   MaybeExpr init_;
-  std::optional<DeclTypeSpec> type_;
+  const DeclTypeSpec *type_{nullptr};
   ArraySpec shape_;
   friend std::ostream &operator<<(std::ostream &, const ObjectEntityDetails &);
 };
@@ -203,16 +203,16 @@ public:
   MaybeExpr &init() { return init_; }
   const MaybeExpr &init() const { return init_; }
   void set_init(MaybeExpr &&expr) { init_ = std::move(expr); }
-  const std::optional<DeclTypeSpec> &type() const { return type_; }
+  const DeclTypeSpec *type() const { return type_; }
   void set_type(const DeclTypeSpec &type) {
     CHECK(!type_);
-    type_ = type;
+    type_ = &type;
   }
 
 private:
   common::TypeParamAttr attr_;
   MaybeExpr init_;
-  std::optional<DeclTypeSpec> type_;
+  const DeclTypeSpec *type_{nullptr};
 };
 
 // Record the USE of a symbol: location is where (USE statement or renaming);

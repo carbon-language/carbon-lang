@@ -14,6 +14,7 @@
 
 #include "scope.h"
 #include "symbol.h"
+#include <algorithm>
 #include <memory>
 
 namespace Fortran::semantics {
@@ -67,6 +68,30 @@ Scope *Scope::FindSubmodule(const SourceName &name) const {
 }
 bool Scope::AddSubmodule(const SourceName &name, Scope &submodule) {
   return submodules_.emplace(name, &submodule).second;
+}
+DeclTypeSpec &Scope::MakeDeclTypeSpec(TypeCategory category, int kind) {
+  DeclTypeSpec type{IntrinsicTypeSpec{category, kind}};
+  auto it{std::find(declTypeSpecs_.begin(), declTypeSpecs_.end(), type)};
+  if (it != declTypeSpecs_.end()) {
+    return *it;
+  } else {
+    declTypeSpecs_.push_back(type);
+    return declTypeSpecs_.back();
+  }
+}
+DeclTypeSpec &Scope::MakeDeclTypeSpec(
+    DeclTypeSpec::Category category, const SourceName &name) {
+  CHECK(category == DeclTypeSpec::TypeDerived ||
+      category == DeclTypeSpec::ClassDerived);
+  derivedTypeSpecs_.emplace_back(name);
+  declTypeSpecs_.emplace_back(category, derivedTypeSpecs_.back());
+  return declTypeSpecs_.back();
+}
+DeclTypeSpec &Scope::MakeDeclTypeSpec(DeclTypeSpec::Category category) {
+  CHECK(category == DeclTypeSpec::TypeStar ||
+      category == DeclTypeSpec::ClassStar);
+  declTypeSpecs_.emplace_back(category);
+  return declTypeSpecs_.back();
 }
 DerivedTypeSpec &Scope::MakeDerivedTypeSpec(const SourceName &name) {
   derivedTypeSpecs_.emplace_back(name);

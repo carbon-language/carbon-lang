@@ -121,6 +121,9 @@ public:
   Scope *FindSubmodule(const SourceName &) const;
   bool AddSubmodule(const SourceName &, Scope &);
 
+  DeclTypeSpec &MakeDeclTypeSpec(TypeCategory, int kind);
+  DeclTypeSpec &MakeDeclTypeSpec(DeclTypeSpec::Category, const SourceName &);
+  DeclTypeSpec &MakeDeclTypeSpec(DeclTypeSpec::Category);
   DerivedTypeSpec &MakeDerivedTypeSpec(const SourceName &);
 
   // For modules read from module files, this is the stream of characters
@@ -151,6 +154,7 @@ private:
   std::list<Scope> children_;
   mapType symbols_;
   std::map<SourceName, Scope *> submodules_;
+  std::list<DeclTypeSpec> declTypeSpecs_;
   std::list<DerivedTypeSpec> derivedTypeSpecs_;
   std::string chars_;
   std::optional<ImportKind> importKind_;

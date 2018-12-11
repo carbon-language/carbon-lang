@@ -22,6 +22,7 @@
 #include "semantics.h"
 #include "symbol.h"
 #include "type.h"
+#include "../common/fortran.h"
 #include "../common/indirection.h"
 #include "../evaluate/common.h"
 #include "../evaluate/fold.h"
@@ -65,7 +66,7 @@ public:
   void set_isImplicitNoneExternal(bool x) { isImplicitNoneExternal_ = x; }
   void set_inheritFromParent(bool x) { inheritFromParent_ = x; }
   // Get the implicit type for identifiers starting with ch. May be null.
-  std::optional<const DeclTypeSpec> GetType(char ch) const;
+  const DeclTypeSpec *GetType(char ch) const;
   // Record the implicit type for this range of characters.
   void SetType(const DeclTypeSpec &type, parser::Location lo, parser::Location,
       bool isDefault = false);
@@ -79,7 +80,7 @@ private:
   bool inheritFromParent_;  // look in parent if not specified here
   SemanticsContext *context_{nullptr};
   // map initial character of identifier to nullptr or its default type
-  std::map<char, const DeclTypeSpec> map_;
+  std::map<char, const DeclTypeSpec *> map_;
 
   friend std::ostream &operator<<(std::ostream &, const ImplicitRules &);
   friend void ShowImplicitRule(std::ostream &, const ImplicitRules &, char);
@@ -218,28 +219,25 @@ public:
   void Post(const parser::IntrinsicTypeSpec::DoublePrecision &);
   void Post(const parser::IntrinsicTypeSpec::DoubleComplex &);
   void Post(const parser::IntrinsicTypeSpec::Character &);
-  bool Pre(const parser::DeclarationTypeSpec::ClassStar &);
-  bool Pre(const parser::DeclarationTypeSpec::TypeStar &);
-  bool Pre(const parser::DeclarationTypeSpec::Record &);
+  void Post(const parser::DeclarationTypeSpec::ClassStar &);
+  void Post(const parser::DeclarationTypeSpec::TypeStar &);
   void Post(const parser::TypeParamSpec &);
   bool Pre(const parser::TypeGuardStmt &);
   void Post(const parser::TypeGuardStmt &);
 
 protected:
-  std::unique_ptr<DeclTypeSpec> &GetDeclTypeSpec();
+  DeclTypeSpec *GetDeclTypeSpec();
   void BeginDeclTypeSpec();
   void EndDeclTypeSpec();
-  void BeginDerivedTypeSpec(const parser::Name &, DerivedTypeSpec &);
-  bool IsDerivedTypeSpec() const { return derivedTypeSpec_ != nullptr; }
-  const parser::Name &SetDerivedDeclTypeSpec(DeclTypeSpec::Category);
+  const parser::Name *derivedTypeName() const { return derivedTypeName_; }
+  void SetDeclTypeSpec(const parser::Name &, DeclTypeSpec &);
 
 private:
   bool expectDeclTypeSpec_{false};  // should only see decl-type-spec when true
-  std::unique_ptr<DeclTypeSpec> declTypeSpec_;
-  DerivedTypeSpec *derivedTypeSpec_{nullptr};
+  DeclTypeSpec *declTypeSpec_{nullptr};
   const parser::Name *derivedTypeName_{nullptr};
 
-  void SetDeclTypeSpec(const DeclTypeSpec &declTypeSpec);
+  void SetDeclTypeSpec(DeclTypeSpec &declTypeSpec);
   void MakeIntrinsic(TypeCategory, const std::optional<parser::KindSelector> &);
   void MakeIntrinsic(TypeCategory, int kind);
   int GetKindParamValue(
@@ -425,7 +423,7 @@ protected:
 
   // Apply the implicit type rules to this symbol.
   void ApplyImplicitRules(Symbol &);
-  std::optional<const DeclTypeSpec> GetImplicitType(Symbol &);
+  const DeclTypeSpec *GetImplicitType(Symbol &);
   bool ConvertToObjectEntity(Symbol &);
   bool ConvertToProcEntity(Symbol &);
 
@@ -583,9 +581,10 @@ public:
   void Post(const parser::DimensionStmt::Declaration &);
   bool Pre(const parser::TypeDeclarationStmt &) { return BeginDecl(); }
   void Post(const parser::TypeDeclarationStmt &) { EndDecl(); }
-  void Post(const parser::DeclarationTypeSpec::Type &);
   void Post(const parser::DeclarationTypeSpec::Class &);
+  bool Pre(const parser::DeclarationTypeSpec::Record &);
   bool Pre(const parser::DerivedTypeSpec &);
+  void Post(const parser::DerivedTypeSpec &);
   void Post(const parser::DerivedTypeDef &x);
   bool Pre(const parser::DerivedTypeStmt &x);
   void Post(const parser::DerivedTypeStmt &x);
@@ -644,8 +643,7 @@ private:
   Symbol &DeclareObjectEntity(const parser::Name &, Attrs);
   Symbol &DeclareProcEntity(const parser::Name &, Attrs, const ProcInterface &);
   void SetType(const parser::Name &, const DeclTypeSpec &);
-  const Symbol *ResolveDerivedType(DeclTypeSpec::Category);
-  const Symbol *ResolveDerivedType(const parser::Name &);
+  const Symbol *ResolveDerivedType(const parser::Name * = nullptr);
   bool CanBeTypeBoundProc(const Symbol &);
   Symbol *FindExplicitInterface(const parser::Name &);
   bool MakeTypeSymbol(const parser::Name &, Details &&);
@@ -861,19 +859,17 @@ bool ImplicitRules::isImplicitNoneExternal() const {
   }
 }
 
-std::optional<const DeclTypeSpec> ImplicitRules::GetType(char ch) const {
+const DeclTypeSpec *ImplicitRules::GetType(char ch) const {
   if (auto it{map_.find(ch)}; it != map_.end()) {
     return it->second;
   } else if (inheritFromParent_ && parent_->context_) {
     return parent_->GetType(ch);
   } else if (ch >= 'i' && ch <= 'n') {
-    return DeclTypeSpec{IntrinsicTypeSpec{TypeCategory::Integer,
-        context_->defaultKinds().GetDefaultKind(TypeCategory::Integer)}};
+    return &context_->MakeIntrinsicTypeSpec(TypeCategory::Integer);
   } else if (ch >= 'a' && ch <= 'z') {
-    return DeclTypeSpec{IntrinsicTypeSpec{TypeCategory::Real,
-        context_->defaultKinds().GetDefaultKind(TypeCategory::Real)}};
+    return &context_->MakeIntrinsicTypeSpec(TypeCategory::Real);
   } else {
-    return std::nullopt;
+    return nullptr;
   }
 }
 
@@ -882,7 +878,7 @@ std::optional<const DeclTypeSpec> ImplicitRules::GetType(char ch) const {
 void ImplicitRules::SetType(const DeclTypeSpec &type, parser::Location lo,
     parser::Location hi, bool isDefault) {
   for (char ch = *lo; ch; ch = ImplicitRules::Incr(ch)) {
-    auto res{map_.emplace(ch, type)};
+    auto res{map_.emplace(ch, &type)};
     if (!res.second && !isDefault) {
       context_->Say(lo,
           "More than one implicit type specified for '%s'"_err_en_US,
@@ -919,7 +915,7 @@ void ShowImplicitRule(
     std::ostream &o, const ImplicitRules &implicitRules, char ch) {
   auto it{implicitRules.map_.find(ch)};
   if (it != implicitRules.map_.end()) {
-    o << "  " << ch << ": " << it->second << '\n';
+    o << "  " << ch << ": " << *it->second << '\n';
   }
 }
 
@@ -972,37 +968,27 @@ bool AttrsVisitor::Pre(const parser::IntentSpec &x) {
 
 // DeclTypeSpecVisitor implementation
 
-std::unique_ptr<DeclTypeSpec> &DeclTypeSpecVisitor::GetDeclTypeSpec() {
-  return declTypeSpec_;
-}
+DeclTypeSpec *DeclTypeSpecVisitor::GetDeclTypeSpec() { return declTypeSpec_; }
+
 void DeclTypeSpecVisitor::BeginDeclTypeSpec() {
   CHECK(!expectDeclTypeSpec_);
-  CHECK(!derivedTypeSpec_);
+  CHECK(!declTypeSpec_);
   expectDeclTypeSpec_ = true;
 }
 void DeclTypeSpecVisitor::EndDeclTypeSpec() {
   CHECK(expectDeclTypeSpec_);
   expectDeclTypeSpec_ = false;
-  declTypeSpec_.reset();
-  derivedTypeSpec_ = nullptr;
+  declTypeSpec_ = nullptr;
   derivedTypeName_ = nullptr;
 }
 
-bool DeclTypeSpecVisitor::Pre(const parser::DeclarationTypeSpec::ClassStar &x) {
-  SetDeclTypeSpec(DeclTypeSpec{DeclTypeSpec::ClassStar});
-  return false;
-}
-bool DeclTypeSpecVisitor::Pre(const parser::DeclarationTypeSpec::TypeStar &x) {
-  SetDeclTypeSpec(DeclTypeSpec{DeclTypeSpec::TypeStar});
-  return false;
-}
-
 void DeclTypeSpecVisitor::Post(const parser::TypeParamSpec &x) {
+  DerivedTypeSpec &derivedTypeSpec{declTypeSpec_->derivedTypeSpec()};
   const auto &value{std::get<parser::TypeParamValue>(x.t)};
   if (const auto &keyword{std::get<std::optional<parser::Keyword>>(x.t)}) {
-    derivedTypeSpec_->AddParamValue(keyword->v.source, GetParamValue(value));
+    derivedTypeSpec.AddParamValue(keyword->v.source, GetParamValue(value));
   } else {
-    derivedTypeSpec_->AddParamValue(GetParamValue(value));
+    derivedTypeSpec.AddParamValue(GetParamValue(value));
   }
 }
 
@@ -1020,11 +1006,6 @@ ParamValue DeclTypeSpecVisitor::GetParamValue(const parser::TypeParamValue &x) {
       x.u);
 }
 
-bool DeclTypeSpecVisitor::Pre(const parser::DeclarationTypeSpec::Record &x) {
-  // TODO
-  return true;
-}
-
 bool DeclTypeSpecVisitor::Pre(const parser::TypeGuardStmt &) {
   BeginDeclTypeSpec();
   return true;
@@ -1032,7 +1013,7 @@ bool DeclTypeSpecVisitor::Pre(const parser::TypeGuardStmt &) {
 void DeclTypeSpecVisitor::Post(const parser::TypeGuardStmt &) {
   // TODO: TypeGuardStmt
   EndDeclTypeSpec();
-  derivedTypeSpec_ = nullptr;
+  declTypeSpec_ = nullptr;
   derivedTypeName_ = nullptr;
 }
 
@@ -1066,32 +1047,30 @@ void DeclTypeSpecVisitor::MakeIntrinsic(
   MakeIntrinsic(category, GetKindParamValue(category, kind));
 }
 void DeclTypeSpecVisitor::MakeIntrinsic(TypeCategory category, int kind) {
-  if (kind == 0) {
-    kind = context().defaultKinds().GetDefaultKind(category);
-  }
-  SetDeclTypeSpec(DeclTypeSpec{IntrinsicTypeSpec{category, kind}});
+  SetDeclTypeSpec(context().MakeIntrinsicTypeSpec(category, kind));
 }
 
-const parser::Name &DeclTypeSpecVisitor::SetDerivedDeclTypeSpec(
-    DeclTypeSpec::Category category) {
-  CHECK(derivedTypeSpec_);
-  SetDeclTypeSpec(DeclTypeSpec{category, *derivedTypeSpec_});
-  return *derivedTypeName_;
+void DeclTypeSpecVisitor::Post(const parser::DeclarationTypeSpec::ClassStar &) {
+  SetDeclTypeSpec(
+      context().globalScope().MakeDeclTypeSpec(DeclTypeSpec::ClassStar));
 }
-
-void DeclTypeSpecVisitor::BeginDerivedTypeSpec(
-    const parser::Name &name, DerivedTypeSpec &derivedTypeSpec) {
-  CHECK(!derivedTypeSpec_);
-  derivedTypeSpec_ = &derivedTypeSpec;
-  derivedTypeName_ = &name;
+void DeclTypeSpecVisitor::Post(const parser::DeclarationTypeSpec::TypeStar &) {
+  SetDeclTypeSpec(
+      context().globalScope().MakeDeclTypeSpec(DeclTypeSpec::TypeStar));
 }
 
 // Check that we're expecting to see a DeclTypeSpec (and haven't seen one yet)
 // and save it in declTypeSpec_.
-void DeclTypeSpecVisitor::SetDeclTypeSpec(const DeclTypeSpec &declTypeSpec) {
+void DeclTypeSpecVisitor::SetDeclTypeSpec(DeclTypeSpec &declTypeSpec) {
   CHECK(expectDeclTypeSpec_);
   CHECK(!declTypeSpec_);
-  declTypeSpec_ = std::make_unique<DeclTypeSpec>(declTypeSpec);
+  declTypeSpec_ = &declTypeSpec;
+}
+// Set both the derived type name and corresponding DeclTypeSpec.
+void DeclTypeSpecVisitor::SetDeclTypeSpec(
+    const parser::Name &name, DeclTypeSpec &declTypeSpec) {
+  derivedTypeName_ = &name;
+  SetDeclTypeSpec(declTypeSpec);
 }
 
 int DeclTypeSpecVisitor::GetKindParamValue(
@@ -1465,15 +1444,14 @@ void ScopeHandler::ApplyImplicitRules(Symbol &symbol) {
   if (NeedsType(symbol)) {
     if (isImplicitNoneType()) {
       Say(symbol.name(), "No explicit type declared for '%s'"_err_en_US);
-    } else if (const auto type{GetImplicitType(symbol)}) {
+    } else if (const auto *type{GetImplicitType(symbol)}) {
       symbol.SetType(*type);
     }
   }
 }
-std::optional<const DeclTypeSpec> ScopeHandler::GetImplicitType(
-    Symbol &symbol) {
+const DeclTypeSpec *ScopeHandler::GetImplicitType(Symbol &symbol) {
   auto &name{symbol.name()};
-  const auto type{implicitRules().GetType(name.begin()[0])};
+  const auto *type{implicitRules().GetType(name.begin()[0])};
   if (type) {
     symbol.set(Symbol::Flag::Implicit);
   } else {
@@ -1911,7 +1889,7 @@ void SubprogramVisitor::Post(const parser::StmtFunctionStmt &x) {
 // Return false if it is actually an assignment statement.
 bool SubprogramVisitor::HandleStmtFunction(const parser::StmtFunctionStmt &x) {
   const auto &name{std::get<parser::Name>(x.t)};
-  std::optional<DeclTypeSpec> resultType;
+  const DeclTypeSpec *resultType{nullptr};
   // Look up name: provides return type or tells us if it's an array
   if (auto *symbol{FindSymbol(name)}) {
     auto *details{symbol->detailsIf<EntityDetails>()};
@@ -2044,7 +2022,7 @@ void SubprogramVisitor::Post(const parser::FunctionStmt &stmt) {
   }
   // add function result to function scope
   EntityDetails funcResultDetails;
-  if (auto &type{GetDeclTypeSpec()}) {
+  if (auto *type{GetDeclTypeSpec()}) {
     funcResultDetails.set_type(*type);
   }
   EndDeclTypeSpec();
@@ -2317,7 +2295,7 @@ Symbol &DeclarationVisitor::DeclareUnknownEntity(
     return DeclareObjectEntity(name, attrs);
   } else {
     Symbol &symbol{DeclareEntity<EntityDetails>(name, attrs)};
-    if (auto &type{GetDeclTypeSpec()}) {
+    if (auto *type{GetDeclTypeSpec()}) {
       SetType(name, *type);
     }
     if (symbol.attrs().test(Attr::EXTERNAL)) {
@@ -2347,7 +2325,7 @@ Symbol &DeclarationVisitor::DeclareObjectEntity(
     const parser::Name &name, Attrs attrs) {
   Symbol &symbol{DeclareEntity<ObjectEntityDetails>(name, attrs)};
   if (auto *details{symbol.detailsIf<ObjectEntityDetails>()}) {
-    if (auto &type{GetDeclTypeSpec()}) {
+    if (auto *type{GetDeclTypeSpec()}) {
       SetType(name, *type);
     }
     if (!arraySpec().empty()) {
@@ -2363,23 +2341,27 @@ Symbol &DeclarationVisitor::DeclareObjectEntity(
   return symbol;
 }
 
-void DeclarationVisitor::Post(const parser::DeclarationTypeSpec::Type &x) {
-  if (const auto *symbol{ResolveDerivedType(DeclTypeSpec::TypeDerived)}) {
-    GetDeclTypeSpec()->derivedTypeSpec().set_scope(*symbol->scope());
-  }
-}
 void DeclarationVisitor::Post(const parser::DeclarationTypeSpec::Class &x) {
-  if (const auto *symbol{ResolveDerivedType(DeclTypeSpec::ClassDerived)}) {
+  // created by default with TypeDerived; change to ClassDerived
+  GetDeclTypeSpec()->set_category(DeclTypeSpec::ClassDerived);
+}
+
+bool DeclarationVisitor::Pre(const parser::DeclarationTypeSpec::Record &) {
+  return true;  // TODO
+}
+
+bool DeclarationVisitor::Pre(const parser::DerivedTypeSpec &x) {
+  const auto &name{std::get<parser::Name>(x.t)};
+  SetDeclTypeSpec(name,
+      currScope().MakeDeclTypeSpec(DeclTypeSpec::TypeDerived, name.source));
+  return true;
+}
+void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
+  if (const auto *symbol{ResolveDerivedType()}) {
     GetDeclTypeSpec()->derivedTypeSpec().set_scope(*symbol->scope());
   }
 }
 
-bool DeclarationVisitor::Pre(const parser::DerivedTypeSpec &x) {
-  auto &name{std::get<parser::Name>(x.t)};
-  auto &derivedTypeSpec{currScope().MakeDerivedTypeSpec(name.source)};
-  BeginDerivedTypeSpec(name, derivedTypeSpec);
-  return true;
-}
 void DeclarationVisitor::Post(const parser::DerivedTypeDef &x) {
   std::set<SourceName> paramNames;
   auto &scope{currScope()};
@@ -2433,24 +2415,24 @@ void DeclarationVisitor::Post(const parser::DerivedTypeStmt &x) {
   auto &symbol{MakeSymbol(name, GetAttrs(), DerivedTypeDetails{})};
   PushScope(Scope::Kind::DerivedType, &symbol);
   if (auto *extendsName{derivedTypeInfo_.extends}) {
-    if (auto *extends{ResolveDerivedType(*extendsName)}) {
+    if (auto *extends{ResolveDerivedType(extendsName)}) {
       symbol.get<DerivedTypeDetails>().set_extends(extends);
       // Declare the "parent component"; private if the type is
       if (OkToAddComponent(*extendsName, true)) {
         auto &comp{DeclareEntity<ObjectEntityDetails>(*extendsName, Attrs{})};
         comp.attrs().set(Attr::PRIVATE, extends->attrs().test(Attr::PRIVATE));
         comp.set(Symbol::Flag::ParentComp);
-        auto &derivedTypeSpec{
-            currScope().MakeDerivedTypeSpec(extendsName->source)};
-        derivedTypeSpec.set_scope(currScope());
-        comp.SetType(DeclTypeSpec{DeclTypeSpec::TypeDerived, derivedTypeSpec});
+        auto &type{currScope().MakeDeclTypeSpec(
+            DeclTypeSpec::TypeDerived, extendsName->source)};
+        type.derivedTypeSpec().set_scope(currScope());
+        comp.SetType(type);
       }
     }
   }
   EndAttrs();
 }
 void DeclarationVisitor::Post(const parser::TypeParamDefStmt &x) {
-  auto &type{GetDeclTypeSpec()};
+  auto *type{GetDeclTypeSpec()};
   auto attr{std::get<common::TypeParamAttr>(x.t)};
   for (auto &decl : std::get<std::list<parser::TypeParamDecl>>(x.t)) {
     auto &name{std::get<parser::Name>(decl.t)};
@@ -2534,7 +2516,7 @@ void DeclarationVisitor::Post(const parser::ProcDecl &x) {
     if (auto *symbol{FindExplicitInterface(*interfaceName_)}) {
       interface.set_symbol(*symbol);
     }
-  } else if (auto &type{GetDeclTypeSpec()}) {
+  } else if (auto *type{GetDeclTypeSpec()}) {
     interface.set_type(*type);
   }
   auto attrs{GetAttrs()};
@@ -2601,9 +2583,7 @@ bool DeclarationVisitor::Pre(const parser::AllocateStmt &) {
   return true;
 }
 void DeclarationVisitor::Post(const parser::AllocateStmt &) {
-  if (IsDerivedTypeSpec()) {
-    ResolveDerivedType(DeclTypeSpec::TypeDerived);
-  }
+  ResolveDerivedType();
   EndDeclTypeSpec();
 }
 
@@ -2612,7 +2592,7 @@ bool DeclarationVisitor::Pre(const parser::StructureConstructor &) {
   return true;
 }
 void DeclarationVisitor::Post(const parser::StructureConstructor &) {
-  ResolveDerivedType(DeclTypeSpec::TypeDerived);
+  ResolveDerivedType();
   EndDeclTypeSpec();
 }
 
@@ -2661,19 +2641,20 @@ void DeclarationVisitor::SetType(
   }
 }
 
-const Symbol *DeclarationVisitor::ResolveDerivedType(
-    DeclTypeSpec::Category category) {
-  return ResolveDerivedType(SetDerivedDeclTypeSpec(category));
-}
-
-// Find the Symbol for this derived type.
-const Symbol *DeclarationVisitor::ResolveDerivedType(const parser::Name &name) {
-  const auto *symbol{FindSymbol(name)};
+// Find the Symbol for this derived type; derivedTypeName if not specified.
+const Symbol *DeclarationVisitor::ResolveDerivedType(const parser::Name *name) {
+  if (name == nullptr) {
+    name = derivedTypeName();
+    if (name == nullptr) {
+      return nullptr;
+    }
+  }
+  const auto *symbol{FindSymbol(*name)};
   if (!symbol) {
-    Say(name, "Derived type '%s' not found"_err_en_US);
+    Say(*name, "Derived type '%s' not found"_err_en_US);
     return nullptr;
   }
-  if (CheckUseError(name)) {
+  if (CheckUseError(*name)) {
     return nullptr;
   }
   if (auto *details{symbol->detailsIf<UseDetails>()}) {
@@ -2685,7 +2666,7 @@ const Symbol *DeclarationVisitor::ResolveDerivedType(const parser::Name &name) {
     }
   }
   if (!symbol->has<DerivedTypeDetails>()) {
-    Say(name, "'%s' is not a derived type"_err_en_US);
+    Say(*name, "'%s' is not a derived type"_err_en_US);
     return nullptr;
   }
   return symbol;

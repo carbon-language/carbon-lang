@@ -67,6 +67,13 @@ public:
     return *this;
   }
 
+  DeclTypeSpec &MakeIntrinsicTypeSpec(TypeCategory category, int kind = 0) {
+    if (kind == 0) {
+      kind = defaultKinds_.GetDefaultKind(category);
+    }
+    return globalScope_.MakeDeclTypeSpec(category, kind);
+  }
+
   bool AnyFatalError() const;
   template<typename... A> parser::Message &Say(A... args) {
     return messages_.Say(std::forward<A>(args)...);

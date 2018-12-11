@@ -167,6 +167,7 @@ private:
 class DerivedTypeSpec {
 public:
   using listType = std::list<std::pair<std::optional<SourceName>, ParamValue>>;
+  DerivedTypeSpec &operator=(const DerivedTypeSpec &) = delete;
   explicit DerivedTypeSpec(const SourceName &name) : name_{name} {}
   DerivedTypeSpec() = delete;
   const SourceName &name() const { return name_; }
@@ -203,6 +204,7 @@ public:
   const IntrinsicTypeSpec &intrinsicTypeSpec() const;
   DerivedTypeSpec &derivedTypeSpec();
   const DerivedTypeSpec &derivedTypeSpec() const;
+  void set_category(Category category) { category_ = category; }
 
 private:
   Category category_;
@@ -223,13 +225,13 @@ std::ostream &operator<<(std::ostream &, const DeclTypeSpec &);
 class ProcInterface {
 public:
   const Symbol *symbol() const { return symbol_; }
-  const DeclTypeSpec *type() const { return type_ ? &*type_ : nullptr; }
+  const DeclTypeSpec *type() const { return type_; }
   void set_symbol(const Symbol &symbol);
   void set_type(const DeclTypeSpec &type);
 
 private:
   const Symbol *symbol_{nullptr};
-  std::optional<DeclTypeSpec> type_;
+  const DeclTypeSpec *type_{nullptr};
 };
 }
 

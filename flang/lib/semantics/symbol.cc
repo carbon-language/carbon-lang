@@ -48,12 +48,12 @@ void ModuleDetails::set_scope(const Scope *scope) {
 
 void EntityDetails::set_type(const DeclTypeSpec &type) {
   CHECK(!type_);
-  type_ = type;
+  type_ = &type;
 }
 
 void ObjectEntityDetails::set_type(const DeclTypeSpec &type) {
   CHECK(!type_);
-  type_ = type;
+  type_ = &type;
 }
 
 void ObjectEntityDetails::set_shape(const ArraySpec &shape) {
@@ -187,16 +187,10 @@ DeclTypeSpec *Symbol::GetType() {
 const DeclTypeSpec *Symbol::GetType() const {
   return std::visit(
       common::visitors{
-          [](const EntityDetails &x) {
-            return x.type().has_value() ? &x.type().value() : nullptr;
-          },
-          [](const ObjectEntityDetails &x) {
-            return x.type().has_value() ? &x.type().value() : nullptr;
-          },
+          [](const EntityDetails &x) { return x.type(); },
+          [](const ObjectEntityDetails &x) { return x.type(); },
           [](const ProcEntityDetails &x) { return x.interface().type(); },
-          [](const TypeParamDetails &x) {
-            return x.type().has_value() ? &x.type().value() : nullptr;
-          },
+          [](const TypeParamDetails &x) { return x.type(); },
           [](const auto &) -> const DeclTypeSpec * { return nullptr; },
       },
       details_);
