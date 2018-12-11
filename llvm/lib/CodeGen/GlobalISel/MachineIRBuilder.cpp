@@ -179,7 +179,7 @@ MachineInstrBuilder MachineIRBuilder::buildGlobalValue(unsigned Res,
 
 void MachineIRBuilder::validateBinaryOp(const LLT &Res, const LLT &Op0,
                                         const LLT &Op1) {
-  assert(Res.isScalar() || Res.isVector() && "invalid operand type");
+  assert((Res.isScalar() || Res.isVector()) && "invalid operand type");
   assert((Res == Op0 && Res == Op1) && "type mismatch");
 }
 
