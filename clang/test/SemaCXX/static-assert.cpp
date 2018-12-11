@@ -111,10 +111,6 @@ static_assert(std::is_same<ExampleTypes::T, ExampleTypes::U>::value, "message");
 // expected-error@-1{{static_assert failed due to requirement 'std::is_same<int, float>::value' "message"}}
 static_assert(std::is_const<ExampleTypes::T>::value, "message");
 // expected-error@-1{{static_assert failed due to requirement 'std::is_const<int>::value' "message"}}
-static_assert(!std::is_const<const ExampleTypes::T>::value, "message");
-// expected-error@-1{{static_assert failed due to requirement '!std::is_const<int>::value' "message"}}
-static_assert(!(std::is_const<const ExampleTypes::T>::value), "message");
-// expected-error@-1{{static_assert failed due to requirement '!(std::is_const<int>::value)' "message"}}
 
 struct BI_tag {};
 struct RAI_tag : BI_tag {};

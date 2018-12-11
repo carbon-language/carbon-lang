@@ -3071,20 +3071,6 @@ static void prettyPrintFailedBooleanCondition(llvm::raw_string_ostream &OS,
     }
     return;
   }
-  if (const auto *Paren = dyn_cast<ParenExpr>(FailedCond)) {
-    OS << "(";
-    prettyPrintFailedBooleanCondition(OS, Paren->getSubExpr(), Policy);
-    OS << ")";
-    return;
-  }
-  // If this is !(BooleanExpression), try pretty-printing the inner expression.
-  const auto *UnaryOp = dyn_cast<UnaryOperator>(FailedCond);
-  if (UnaryOp && UnaryOp->getOpcode() == UO_LNot) {
-    OS << "!";
-    prettyPrintFailedBooleanCondition(OS, UnaryOp->getSubExpr(), Policy);
-    return;
-  }
-
   FailedCond->printPretty(OS, nullptr, Policy);
 }
 
