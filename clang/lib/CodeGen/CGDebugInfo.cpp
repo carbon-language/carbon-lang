@@ -429,7 +429,13 @@ llvm::DIFile *CGDebugInfo::getOrCreateFile(SourceLocation Loc) {
   Optional<llvm::DIFile::ChecksumInfo<StringRef>> CSInfo;
   if (CSKind)
     CSInfo.emplace(*CSKind, Checksum);
+  return createFile(FileName, CSInfo, getSource(SM, SM.getFileID(Loc)));
+}
 
+llvm::DIFile *
+CGDebugInfo::createFile(StringRef FileName,
+                        Optional<llvm::DIFile::ChecksumInfo<StringRef>> CSInfo,
+                        Optional<StringRef> Source) {
   StringRef Dir;
   StringRef File;
   std::string RemappedFile = remapDIPath(FileName);
@@ -460,16 +466,13 @@ llvm::DIFile *CGDebugInfo::getOrCreateFile(SourceLocation Loc) {
     Dir = CurDir;
     File = RemappedFile;
   }
-  llvm::DIFile *F =
-      DBuilder.createFile(File, Dir, CSInfo,
-                          getSource(SM, SM.getFileID(Loc)));
-
+  llvm::DIFile *F = DBuilder.createFile(File, Dir, CSInfo, Source);
   DIFileCache[FileName.data()].reset(F);
   return F;
 }
 
 llvm::DIFile *CGDebugInfo::getOrCreateMainFile() {
-  return DBuilder.createFile(
+  return createFile(
       remapDIPath(TheCU->getFilename()), remapDIPath(TheCU->getDirectory()),
       TheCU->getFile()->getChecksum(),
       CGM.getCodeGenOpts().EmbedSource ? TheCU->getSource() : None);
@@ -607,9 +610,7 @@ void CGDebugInfo::CreateCompileUnit() {
   auto &CGOpts = CGM.getCodeGenOpts();
   TheCU = DBuilder.createCompileUnit(
       LangTag,
-      DBuilder.createFile(remapDIPath(MainFileName),
-                          remapDIPath(getCurrentDirname()), CSInfo,
-                          getSource(SM, SM.getMainFileID())),
+      createFile(MainFileName, CSInfo, getSource(SM, SM.getMainFileID())),
       CGOpts.EmitVersionIdentMetadata ? Producer : "",
       LO.Optimize || CGOpts.PrepareForLTO || CGOpts.PrepareForThinLTO,
       CGOpts.DwarfDebugFlags, RuntimeVers,
