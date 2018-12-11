@@ -3169,8 +3169,7 @@ void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
         // OK
       } else if (symbol->has<DerivedTypeDetails>()) {
         // OK: type constructor
-      } else if (auto *details{symbol->detailsIf<ObjectEntityDetails>()};
-                 details && details->IsArray()) {
+      } else if (symbol->has<ObjectEntityDetails>()) {
         // OK: array mis-parsed as a call
       } else if (symbol->test(Symbol::Flag::Implicit)) {
         Say(*name,
