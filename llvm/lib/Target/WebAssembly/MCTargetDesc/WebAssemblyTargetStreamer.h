@@ -36,15 +36,16 @@ public:
   /// .endfunc
   virtual void emitEndFunc() = 0;
   /// .functype
-  virtual void emitFunctionType(MCSymbolWasm *Symbol) = 0;
+  virtual void emitFunctionType(const MCSymbolWasm *Sym) = 0;
   /// .indidx
   virtual void emitIndIdx(const MCExpr *Value) = 0;
   /// .globaltype
-  virtual void emitGlobalType(MCSymbolWasm *Sym) = 0;
+  virtual void emitGlobalType(const MCSymbolWasm *Sym) = 0;
   /// .eventtype
-  virtual void emitEventType(MCSymbolWasm *Sym) = 0;
+  virtual void emitEventType(const MCSymbolWasm *Sym) = 0;
   /// .import_module
-  virtual void emitImportModule(MCSymbolWasm *Sym, StringRef ModuleName) = 0;
+  virtual void emitImportModule(const MCSymbolWasm *Sym,
+                                StringRef ModuleName) = 0;
 
 protected:
   void emitValueType(wasm::ValType Type);
@@ -59,11 +60,11 @@ public:
 
   void emitLocal(ArrayRef<wasm::ValType> Types) override;
   void emitEndFunc() override;
-  void emitFunctionType(MCSymbolWasm *Symbol) override;
+  void emitFunctionType(const MCSymbolWasm *Sym) override;
   void emitIndIdx(const MCExpr *Value) override;
-  void emitGlobalType(MCSymbolWasm *Sym) override;
-  void emitEventType(MCSymbolWasm *Sym) override;
-  void emitImportModule(MCSymbolWasm *Sym, StringRef ModuleName) override;
+  void emitGlobalType(const MCSymbolWasm *Sym) override;
+  void emitEventType(const MCSymbolWasm *Sym) override;
+  void emitImportModule(const MCSymbolWasm *Sym, StringRef ModuleName) override;
 };
 
 /// This part is for Wasm object output
@@ -73,11 +74,12 @@ public:
 
   void emitLocal(ArrayRef<wasm::ValType> Types) override;
   void emitEndFunc() override;
-  void emitFunctionType(MCSymbolWasm *Symbol) override;
+  void emitFunctionType(const MCSymbolWasm *Sym) override {}
   void emitIndIdx(const MCExpr *Value) override;
-  void emitGlobalType(MCSymbolWasm *Sym) override;
-  void emitEventType(MCSymbolWasm *Sym) override;
-  void emitImportModule(MCSymbolWasm *Sym, StringRef ModuleName) override;
+  void emitGlobalType(const MCSymbolWasm *Sym) override {}
+  void emitEventType(const MCSymbolWasm *Sym) override {}
+  void emitImportModule(const MCSymbolWasm *Sym,
+                        StringRef ModuleName) override {}
 };
 
 /// This part is for null output
@@ -88,11 +90,11 @@ public:
 
   void emitLocal(ArrayRef<wasm::ValType>) override {}
   void emitEndFunc() override {}
-  void emitFunctionType(MCSymbolWasm *) override {}
+  void emitFunctionType(const MCSymbolWasm *) override {}
   void emitIndIdx(const MCExpr *) override {}
-  void emitGlobalType(MCSymbolWasm *) override {}
-  void emitEventType(MCSymbolWasm *) override {}
-  void emitImportModule(MCSymbolWasm *, StringRef) override {}
+  void emitGlobalType(const MCSymbolWasm *) override {}
+  void emitEventType(const MCSymbolWasm *) override {}
+  void emitImportModule(const MCSymbolWasm *, StringRef) override {}
 };
 
 } // end namespace llvm
