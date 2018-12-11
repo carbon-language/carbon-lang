@@ -2065,7 +2065,7 @@ int __kmp_is_address_mapped(void *addr) {
 
 #ifdef USE_LOAD_BALANCE
 
-#if KMP_OS_DARWIN
+#if KMP_OS_DARWIN || KMP_OS_NETBSD
 
 // The function returns the rounded value of the system load average
 // during given time interval which depends on the value of
