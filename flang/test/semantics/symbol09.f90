@@ -19,14 +19,14 @@ subroutine s1
  real a(10), b(10)
  !DEF: /s1/i ObjectEntity INTEGER(8)
  integer(kind=8) i
- !DEF: /s1/Block1/i ObjectEntity INTEGER(8)
+ !DEF: /s1/Forall1/i ObjectEntity INTEGER(8)
  forall(i=1:10)
   !REF: /s1/a
-  !REF: /s1/Block1/i
+  !REF: /s1/Forall1/i
   !REF: /s1/b
   a(i) = b(i)
  end forall
- !DEF: /s1/Block2/i ObjectEntity INTEGER(8)
+ !DEF: /s1/Forall2/i ObjectEntity INTEGER(8)
  !REF: /s1/a
  !REF: /s1/b
  forall(i=1:10)a(i) = b(i)

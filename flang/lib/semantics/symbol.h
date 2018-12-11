@@ -124,13 +124,13 @@ public:
   const ArraySpec &shape() const { return shape_; }
   void set_shape(const ArraySpec &shape);
   bool isDummy() const { return isDummy_; }
-  bool isArray() const { return !shape_.empty(); }
+  bool IsArray() const { return !shape_.empty(); }
   bool IsAssumedSize() const {
-    return isDummy() && isArray() && shape_.back().ubound().isAssumed() &&
+    return isDummy() && IsArray() && shape_.back().ubound().isAssumed() &&
         !shape_.back().lbound().isAssumed();
   }
   bool IsAssumedRank() const {
-    return isDummy() && isArray() && shape_.back().ubound().isAssumed() &&
+    return isDummy() && IsArray() && shape_.back().ubound().isAssumed() &&
         shape_.back().lbound().isAssumed();
   }
 

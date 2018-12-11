@@ -2619,7 +2619,8 @@ void DeclarationVisitor::Post(const parser::StructureConstructor &) {
 Symbol *DeclarationVisitor::DeclareConstructEntity(const parser::Name &name) {
   auto *prev{FindSymbol(name)};
   if (prev) {
-    if (prev->owner() == currScope()) {
+    if (prev->owner().kind() == Scope::Kind::Forall ||
+        prev->owner() == currScope()) {
       SayAlreadyDeclared(name, *prev);
       return nullptr;
     }
@@ -2861,12 +2862,12 @@ void ConstructVisitor::Post(const parser::ConcurrentControl &x) {
 }
 
 bool ConstructVisitor::Pre(const parser::ForallConstruct &) {
-  PushScope(Scope::Kind::Block, nullptr);
+  PushScope(Scope::Kind::Forall, nullptr);
   return true;
 }
 void ConstructVisitor::Post(const parser::ForallConstruct &) { PopScope(); }
 bool ConstructVisitor::Pre(const parser::ForallStmt &) {
-  PushScope(Scope::Kind::Block, nullptr);
+  PushScope(Scope::Kind::Forall, nullptr);
   return true;
 }
 void ConstructVisitor::Post(const parser::ForallStmt &) { PopScope(); }
@@ -3168,7 +3169,8 @@ void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
         // OK
       } else if (symbol->has<DerivedTypeDetails>()) {
         // OK: type constructor
-      } else if (symbol->has<ObjectEntityDetails>()) {
+      } else if (auto *details{symbol->detailsIf<ObjectEntityDetails>()};
+                 details && details->IsArray()) {
         // OK: array mis-parsed as a call
       } else if (symbol->test(Symbol::Flag::Implicit)) {
         Say(*name,
