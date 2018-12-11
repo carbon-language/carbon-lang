@@ -676,7 +676,7 @@ void AArch64InstructionSelector::materializeLargeCMVal(
   MachineRegisterInfo &MRI = MF.getRegInfo();
   MachineIRBuilder MIB(I);
 
-  auto MovZ = MIB.buildInstr(AArch64::MOVZXi, &AArch64::GPR64RegClass);
+  auto MovZ = MIB.buildInstr(AArch64::MOVZXi, {&AArch64::GPR64RegClass}, {});
   MovZ->addOperand(MF, I.getOperand(1));
   MovZ->getOperand(1).setTargetFlags(OpFlags | AArch64II::MO_G0 |
                                      AArch64II::MO_NC);

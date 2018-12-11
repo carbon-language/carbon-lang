@@ -933,11 +933,11 @@ bool IRTranslator::translateKnownIntrinsic(const CallInst &CI, Intrinsic::ID ID,
         TLI.isFMAFasterThanFMulAndFAdd(TLI.getValueType(*DL, CI.getType()))) {
       // TODO: Revisit this to see if we should move this part of the
       // lowering to the combiner.
-      MIRBuilder.buildInstr(TargetOpcode::G_FMA, Dst, Op0, Op1, Op2);
+      MIRBuilder.buildInstr(TargetOpcode::G_FMA, {Dst}, {Op0, Op1, Op2});
     } else {
       LLT Ty = getLLTForType(*CI.getType(), *DL);
-      auto FMul = MIRBuilder.buildInstr(TargetOpcode::G_FMUL, Ty, Op0, Op1);
-      MIRBuilder.buildInstr(TargetOpcode::G_FADD, Dst, FMul, Op2);
+      auto FMul = MIRBuilder.buildInstr(TargetOpcode::G_FMUL, {Ty}, {Op0, Op1});
+      MIRBuilder.buildInstr(TargetOpcode::G_FADD, {Dst}, {FMul, Op2});
     }
     return true;
   }
@@ -1414,7 +1414,7 @@ bool IRTranslator::translatePHI(const User &U, MachineIRBuilder &MIRBuilder) {
 
   SmallVector<MachineInstr *, 4> Insts;
   for (auto Reg : getOrCreateVRegs(PI)) {
-    auto MIB = MIRBuilder.buildInstr(TargetOpcode::G_PHI, Reg);
+    auto MIB = MIRBuilder.buildInstr(TargetOpcode::G_PHI, {Reg}, {});
     Insts.push_back(MIB.getInstr());
   }
 
