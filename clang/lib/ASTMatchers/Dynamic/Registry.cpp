@@ -493,6 +493,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(unresolvedUsingTypenameDecl);
   REGISTER_MATCHER(unresolvedUsingValueDecl);
   REGISTER_MATCHER(userDefinedLiteral);
+  REGISTER_MATCHER(usesADL);
   REGISTER_MATCHER(usingDecl);
   REGISTER_MATCHER(usingDirectiveDecl);
   REGISTER_MATCHER(valueDecl);

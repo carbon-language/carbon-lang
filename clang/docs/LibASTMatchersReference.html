@@ -2562,6 +2562,28 @@ Example matches f(0, 0) (matcher = callExpr(argumentCountIs(2)))
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt;<a href="https://clang.llvm.org/doxygen/classclang_1_1CallExpr.html">CallExpr</a>&gt;</td><td class="name" onclick="toggle('usesADL0')"><a name="usesADL0Anchor">usesADL</a></td><td></td></tr>
+<tr><td colspan="4" class="doc" id="usesADL0"><pre>Matches call expressions which were resolved using ADL.
+
+Example matches y(x) but not y(42) or NS::y(x).
+  namespace NS {
+    struct X {};
+    void y(X);
+  }
+
+  void y(...);
+
+  void test() {
+    NS::X x;
+    y(x); // Matches
+    NS::y(x); // Doesn't match
+    y(42); // Doesn't match
+    using NS::y;
+    y(x); // Found by both unqualified lookup and ADL, doesn't match
+   }
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt;<a href="https://clang.llvm.org/doxygen/classclang_1_1CastExpr.html">CastExpr</a>&gt;</td><td class="name" onclick="toggle('hasCastKind0')"><a name="hasCastKind0Anchor">hasCastKind</a></td><td>CastKind Kind</td></tr>
 <tr><td colspan="4" class="doc" id="hasCastKind0"><pre>Matches casts that has a given cast kind.
 
