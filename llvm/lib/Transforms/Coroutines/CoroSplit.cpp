@@ -547,7 +547,7 @@ static bool hasCallsInBlockBetween(Instruction *From, Instruction *To) {
     if (isa<IntrinsicInst>(I))
       continue;
 
-    if (CallSite CS = CallSite(I))
+    if (CallSite(I))
       return true;
   }
   return false;
