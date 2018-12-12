@@ -114,7 +114,8 @@ public:
   unsigned getInterleave() const { return Interleave.Value; }
   unsigned getIsVectorized() const { return IsVectorized.Value; }
   enum ForceKind getForce() const {
-    if (Force.Value == FK_Undefined && hasDisableAllTransformsHint(TheLoop))
+    if ((ForceKind)Force.Value == FK_Undefined &&
+        hasDisableAllTransformsHint(TheLoop))
       return FK_Disabled;
     return (ForceKind)Force.Value;
   }
