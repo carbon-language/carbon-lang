@@ -19802,22 +19802,21 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
       // (select (x == 0), 0, -1) -> neg & sbb
       if (isNullConstant(Y) &&
           (isAllOnesConstant(Op1) == (CondCode == X86::COND_NE))) {
-        SDVTList VTs = DAG.getVTList(CmpOp0.getValueType(), MVT::i32);
         SDValue Zero = DAG.getConstant(0, DL, CmpOp0.getValueType());
-        SDValue Neg = DAG.getNode(X86ISD::SUB, DL, VTs, Zero, CmpOp0);
-        SDValue Res = DAG.getNode(X86ISD::SETCC_CARRY, DL, Op.getValueType(),
-                                  DAG.getConstant(X86::COND_B, DL, MVT::i8),
-                                  SDValue(Neg.getNode(), 1));
-        return Res;
+        SDValue Cmp = DAG.getNode(X86ISD::CMP, DL, MVT::i32, Zero, CmpOp0);
+        SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::i32);
+        Zero = DAG.getConstant(0, DL, Op.getValueType());
+        return DAG.getNode(X86ISD::SBB, DL, VTs, Zero, Zero, Cmp);
       }
 
       Cmp = DAG.getNode(X86ISD::CMP, DL, MVT::i32,
                         CmpOp0, DAG.getConstant(1, DL, CmpOp0.getValueType()));
       Cmp = ConvertCmpIfNecessary(Cmp, DAG);
 
+      SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::i32);
+      SDValue Zero = DAG.getConstant(0, DL, Op.getValueType());
       SDValue Res =   // Res = 0 or -1.
-        DAG.getNode(X86ISD::SETCC_CARRY, DL, Op.getValueType(),
-                    DAG.getConstant(X86::COND_B, DL, MVT::i8), Cmp);
+        DAG.getNode(X86ISD::SBB, DL, VTs, Zero, Zero, Cmp);
 
       if (isAllOnesConstant(Op1) != (CondCode == X86::COND_E))
         Res = DAG.getNOT(DL, Res, Res.getValueType());
