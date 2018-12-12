@@ -94,7 +94,8 @@ public:
     LLVM_DEBUG(dbgs() << ".. .. New MI: " << MI;);
   }
 
-  void erasedInstr(MachineInstr &MI) override {
+  void erasingInstr(MachineInstr &MI) override {
+    LLVM_DEBUG(dbgs() << ".. .. Erasing: " << MI;);
     InstList.remove(&MI);
     ArtifactList.remove(&MI);
   }
@@ -146,7 +147,7 @@ bool Legalizer::runOnMachineFunction(MachineFunction &MF) {
   const LegalizerInfo &LInfo(Helper.getLegalizerInfo());
   LegalizationArtifactCombiner ArtCombiner(Helper.MIRBuilder, MF.getRegInfo(), LInfo);
   auto RemoveDeadInstFromLists = [&WorkListObserver](MachineInstr *DeadMI) {
-    WorkListObserver.erasedInstr(*DeadMI);
+    WorkListObserver.erasingInstr(*DeadMI);
   };
   bool Changed = false;
   do {
@@ -175,7 +176,7 @@ bool Legalizer::runOnMachineFunction(MachineFunction &MF) {
       MachineInstr &MI = *ArtifactList.pop_back_val();
       assert(isPreISelGenericOpcode(MI.getOpcode()) && "Expecting generic opcode");
       if (isTriviallyDead(MI, MRI)) {
-        LLVM_DEBUG(dbgs() << MI << "Is dead; erasing.\n");
+        LLVM_DEBUG(dbgs() << MI << "Is dead\n");
         RemoveDeadInstFromLists(&MI);
         MI.eraseFromParentAndMarkDBGValuesForRemoval();
         continue;
@@ -183,7 +184,7 @@ bool Legalizer::runOnMachineFunction(MachineFunction &MF) {
       SmallVector<MachineInstr *, 4> DeadInstructions;
       if (ArtCombiner.tryCombineInstruction(MI, DeadInstructions)) {
         for (auto *DeadMI : DeadInstructions) {
-          LLVM_DEBUG(dbgs() << ".. Erasing Dead Instruction " << *DeadMI);
+          LLVM_DEBUG(dbgs() << *DeadMI << "Is dead\n");
           RemoveDeadInstFromLists(DeadMI);
           DeadMI->eraseFromParentAndMarkDBGValuesForRemoval();
         }

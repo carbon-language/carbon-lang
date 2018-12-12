@@ -15,7 +15,7 @@ class DummyGISelObserver : public GISelChangeObserver {
 public:
   void changedInstr(MachineInstr &MI) override {}
   void createdInstr(MachineInstr &MI) override {}
-  void erasedInstr(MachineInstr &MI) override {}
+  void erasingInstr(MachineInstr &MI) override {}
 };
 
 // Test CTTZ expansion when CTTZ_ZERO_UNDEF is legal or custom,

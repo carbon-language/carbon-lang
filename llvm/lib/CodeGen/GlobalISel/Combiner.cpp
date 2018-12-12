@@ -43,7 +43,7 @@ public:
   WorkListMaintainer(WorkListTy &WorkList) : WorkList(WorkList) {}
   virtual ~WorkListMaintainer() {}
 
-  void erasedInstr(MachineInstr &MI) override {
+  void erasingInstr(MachineInstr &MI) override {
     LLVM_DEBUG(dbgs() << "Erased: "; MI.print(dbgs()); dbgs() << "\n");
     WorkList.remove(&MI);
   }
