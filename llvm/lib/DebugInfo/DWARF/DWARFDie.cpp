@@ -184,9 +184,28 @@ static void dumpTypeName(raw_ostream &OS, const DWARFDie &Die) {
   dumpTypeName(OS, D);
 
   switch (T) {
-  case DW_TAG_array_type:
-    OS << "[]";
+  case DW_TAG_array_type: {
+
+    Optional<uint64_t> Bound;
+    for (const DWARFDie &C : D.children())
+      if (C.getTag() == DW_TAG_subrange_type) {
+        OS << '[';
+        uint64_t LowerBound = 0;
+        if (Optional<DWARFFormValue> L = C.find(DW_AT_lower_bound))
+          if (Optional<uint64_t> LB = L->getAsUnsignedConstant()) {
+            LowerBound = *LB;
+            OS << LowerBound << '-';
+          }
+        if (Optional<DWARFFormValue> CountV = C.find(DW_AT_count)) {
+          if (Optional<uint64_t> C = CountV->getAsUnsignedConstant())
+            OS << (*C + LowerBound);
+        } else if (Optional<DWARFFormValue> UpperV = C.find(DW_AT_upper_bound))
+          if (Optional<uint64_t> U = UpperV->getAsUnsignedConstant())
+            OS << *U;
+        OS << ']';
+      }
     break;
+  }
   case DW_TAG_pointer_type:
     OS << '*';
     break;
