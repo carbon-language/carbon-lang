@@ -22,6 +22,10 @@
 # Testing lower_bound, upper_bound, lower and upper, lower and count, and count separately.
 # CHECK:   DW_AT_type{{.*}}"int[1-][2][1-2][1-3][2]"
 
+# subroutine types
+# CHECK:   DW_AT_type{{.*}}"int()"
+# CHECK:   DW_AT_type{{.*}}"void(int)"
+# CHECK:   DW_AT_type{{.*}}"void(int, int)"
 	.section	.debug_str,"MS",@progbits,1
 .Lint_name:
 	.asciz	"int"
@@ -132,6 +136,25 @@
 	.byte	14                      # DW_FORM_strp
 	.byte	0                       # EOM(1)
 	.byte	0                       # EOM(2)
+	.byte	15                      # Abbreviation Code
+	.byte	0x15                    # DW_TAG_subroutine_type
+	.byte	0                       # DW_CHILDREN_no
+	.byte	73                      # DW_AT_type
+	.byte	19                      # DW_FORM_ref4
+	.byte	0                       # EOM(1)
+	.byte	0                       # EOM(2)
+	.byte	16                      # Abbreviation Code
+	.byte	0x15                    # DW_TAG_subroutine_type
+	.byte	1                       # DW_CHILDREN_yes
+	.byte	0                       # EOM(1)
+	.byte	0                       # EOM(2)
+	.byte	17                      # Abbreviation Code
+	.byte	0x5                     # DW_TAG_formal_parameter
+	.byte	0                       # DW_CHILDREN_no
+	.byte	73                      # DW_AT_type
+	.byte	19                      # DW_FORM_ref4
+	.byte	0                       # EOM(1)
+	.byte	0                       # EOM(2)
 	.byte	0                       # EOM(3)
 	.section	.debug_info,"",@progbits
 .Lcu_begin:
@@ -177,6 +200,22 @@
 	.byte	13                      #   DW_AT_subrange_type
 	.byte   2                       #     DW_AT_count
 	.byte	0                       # End Of Children Mark
+.Lsub_int_empty_type:
+	.byte	15                      # DW_TAG_subroutine_type
+	.long	.Lint_type - .Lcu_begin #   DW_AT_type
+.Lsub_void_int_type:
+	.byte	16                      # DW_TAG_subroutine_type
+	.byte	17                       #   DW_TAG_formal_parameter
+	.long	.Lint_type - .Lcu_begin #     DW_AT_type
+	.byte	0                       # End Of Children Mark
+.Lsub_void_int_int_type:
+	.byte	16                      # DW_TAG_subroutine_type
+	.byte	17                       #   DW_TAG_formal_parameter
+	.long	.Lint_type - .Lcu_begin #     DW_AT_type
+	.byte	17                       #   DW_TAG_formal_parameter
+	.long	.Lint_type - .Lcu_begin #     DW_AT_type
+	.byte	0                       # End Of Children Mark
+
 	.byte	3                       # DW_TAG_variable
 	.long	.Lint_type - .Lcu_begin #   DW_AT_type
 	.byte	3                       # DW_TAG_variable
@@ -189,5 +228,11 @@
 	.long	.Lptr_to_member_type - .Lcu_begin #   DW_AT_type
 	.byte	3                       # DW_TAG_variable
 	.long	.Larray_type - .Lcu_begin #   DW_AT_type
+	.byte	3                       # DW_TAG_variable
+	.long	.Lsub_int_empty_type - .Lcu_begin #   DW_AT_type
+	.byte	3                       # DW_TAG_variable
+	.long	.Lsub_void_int_type - .Lcu_begin #   DW_AT_type
+	.byte	3                       # DW_TAG_variable
+	.long	.Lsub_void_int_int_type - .Lcu_begin #   DW_AT_type
 	.byte	0                       # End Of Children Mark
 .Lunit_end:

@@ -173,17 +173,34 @@ static void dumpTypeName(raw_ostream &OS, const DWARFDie &D) {
   case DW_TAG_ptr_to_member_type:
   case DW_TAG_reference_type:
   case DW_TAG_rvalue_reference_type:
+  case DW_TAG_subroutine_type:
     break;
   default:
     dumpTypeTagName(OS, T);
   }
 
   // Follow the DW_AT_type if possible.
-  dumpTypeName(OS, D.getAttributeValueAsReferencedDie(DW_AT_type));
+  DWARFDie TypeDie = D.getAttributeValueAsReferencedDie(DW_AT_type);
+  dumpTypeName(OS, TypeDie);
 
   switch (T) {
+  case DW_TAG_subroutine_type: {
+    if (!TypeDie)
+      OS << "void";
+    OS << '(';
+    bool First = true;
+    for (const DWARFDie &C : D.children()) {
+      if (C.getTag() == DW_TAG_formal_parameter) {
+        if (!First)
+          OS << ", ";
+        First = false;
+        dumpTypeName(OS, C.getAttributeValueAsReferencedDie(DW_AT_type));
+      }
+    }
+    OS << ')';
+    break;
+  }
   case DW_TAG_array_type: {
-
     Optional<uint64_t> Bound;
     for (const DWARFDie &C : D.children())
       if (C.getTag() == DW_TAG_subrange_type) {
