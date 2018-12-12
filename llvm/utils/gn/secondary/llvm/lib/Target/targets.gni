@@ -13,9 +13,7 @@ if (llvm_targets_to_build == "host") {
   }
 } else if (llvm_targets_to_build == "all") {
   # FIXME: Port the remaining targets.
-  llvm_targets_to_build = [
-    "X86",
-  ]
+  llvm_targets_to_build = [ "X86" ]
 }
 
 # Validate that llvm_targets_to_build is set to a list of valid targets,
