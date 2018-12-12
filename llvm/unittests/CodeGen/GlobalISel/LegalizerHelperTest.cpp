@@ -13,6 +13,7 @@ namespace {
 
 class DummyGISelObserver : public GISelChangeObserver {
 public:
+  void changingInstr(MachineInstr &MI) override {}
   void changedInstr(MachineInstr &MI) override {}
   void createdInstr(MachineInstr &MI) override {}
   void erasingInstr(MachineInstr &MI) override {}

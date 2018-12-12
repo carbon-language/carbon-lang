@@ -91,19 +91,23 @@ public:
       else
         InstList.insert(&MI);
     }
-    LLVM_DEBUG(dbgs() << ".. .. New MI: " << MI;);
+    LLVM_DEBUG(dbgs() << ".. .. New MI: " << MI);
   }
 
   void erasingInstr(MachineInstr &MI) override {
-    LLVM_DEBUG(dbgs() << ".. .. Erasing: " << MI;);
+    LLVM_DEBUG(dbgs() << ".. .. Erasing: " << MI);
     InstList.remove(&MI);
     ArtifactList.remove(&MI);
+  }
+
+  void changingInstr(MachineInstr &MI) override {
+    LLVM_DEBUG(dbgs() << ".. .. Changing MI: " << MI);
   }
 
   void changedInstr(MachineInstr &MI) override {
     // When insts change, we want to revisit them to legalize them again.
     // We'll consider them the same as created.
-    LLVM_DEBUG(dbgs() << ".. .. Changed MI: " << MI;);
+    LLVM_DEBUG(dbgs() << ".. .. Changed MI: " << MI);
     createdInstr(MI);
   }
 };

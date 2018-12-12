@@ -30,6 +30,8 @@ public:
   virtual void erasingInstr(MachineInstr &MI) = 0;
   /// An instruction was created and inserted into the function.
   virtual void createdInstr(MachineInstr &MI) = 0;
+  /// This instruction is about to be mutated in some way.
+  virtual void changingInstr(MachineInstr &MI) = 0;
   /// This instruction was mutated in some way.
   virtual void changedInstr(MachineInstr &MI) = 0;
 };
