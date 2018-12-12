@@ -2167,6 +2167,11 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
     CmdArgs.push_back("-target-feature");
     CmdArgs.push_back(MipsTargetFeature);
   }
+
+  // forward -fembed-bitcode to assmebler
+  if (C.getDriver().embedBitcodeEnabled() ||
+      C.getDriver().embedBitcodeMarkerOnly())
+    Args.AddLastArg(CmdArgs, options::OPT_fembed_bitcode_EQ);
 }
 
 static void RenderFloatingPointOptions(const ToolChain &TC, const Driver &D,
