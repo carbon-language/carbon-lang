@@ -289,8 +289,9 @@ static void dumpAttribute(raw_ostream &OS, const DWARFDie &Die,
   // having both the raw value and the pretty-printed value is
   // interesting. These attributes are handled below.
   if (Attr == DW_AT_specification || Attr == DW_AT_abstract_origin) {
-    if (const char *Name = Die.getAttributeValueAsReferencedDie(Attr).getName(
-            DINameKind::LinkageName))
+    if (const char *Name =
+            Die.getAttributeValueAsReferencedDie(formValue).getName(
+                DINameKind::LinkageName))
       OS << Space << "\"" << Name << '\"';
   } else if (Attr == DW_AT_type) {
     OS << Space << "\"";
@@ -390,7 +391,14 @@ DWARFDie::findRecursively(ArrayRef<dwarf::Attribute> Attrs) const {
 
 DWARFDie
 DWARFDie::getAttributeValueAsReferencedDie(dwarf::Attribute Attr) const {
-  if (auto SpecRef = toReference(find(Attr))) {
+  if (Optional<DWARFFormValue> F = find(Attr))
+    return getAttributeValueAsReferencedDie(*F);
+  return DWARFDie();
+}
+
+DWARFDie
+DWARFDie::getAttributeValueAsReferencedDie(const DWARFFormValue &V) const {
+  if (auto SpecRef = toReference(V)) {
     if (auto SpecUnit = U->getUnitVector().getUnitForOffset(*SpecRef))
       return SpecUnit->getDIEForOffset(*SpecRef);
   }
