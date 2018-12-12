@@ -5116,7 +5116,7 @@ suggests an unroll factor to the loop unroller:
 
 This metadata disables all optional loop transformations unless
 explicitly instructed using other transformation metdata such as
-``llvm.loop.unroll.enable''. That is, no heuristic will try to determine
+``llvm.loop.unroll.enable``. That is, no heuristic will try to determine
 whether a transformation is profitable. The purpose is to avoid that the
 loop is transformed to a different loop before an explicitly requested
 (forced) transformation is applied. For instance, loop fusion can make
