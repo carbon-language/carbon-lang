@@ -124,6 +124,8 @@ define float @mag_pos1_float(float %x) nounwind {
 ; CHECK:       [[SIGNMASK8:L.+]]:
 ; CHECK-NEXT:  .long 2147483648              ## float -0
 ; CHECK-NEXT:  .long 2147483648              ## float -0
+; CHECK-NEXT:  .long 2147483648              ## float -0
+; CHECK-NEXT:  .long 2147483648              ## float -0
 ; CHECK:        [[ONE8:L.+]]:
 ; CHECK-NEXT:  .long 1065353216              ## float 1
 ; CHECK-NEXT:  .long 1065353216              ## float 1
