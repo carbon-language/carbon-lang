@@ -1735,6 +1735,45 @@ lldb::user_id_t ObjectFileELF::GetSectionIndexByName(const char *name) {
   return 0;
 }
 
+static SectionType getSectionType(llvm::StringRef Name) {
+  return llvm::StringSwitch<SectionType>(Name)
+      .Case(".ARM.exidx", eSectionTypeARMexidx)
+      .Case(".ARM.extab", eSectionTypeARMextab)
+      .Cases(".bss", ".tbss", eSectionTypeZeroFill)
+      .Cases(".data", ".tdata", eSectionTypeData)
+      .Case(".debug_abbrev", eSectionTypeDWARFDebugAbbrev)
+      .Case(".debug_abbrev.dwo", eSectionTypeDWARFDebugAbbrevDwo)
+      .Case(".debug_addr", eSectionTypeDWARFDebugAddr)
+      .Case(".debug_aranges", eSectionTypeDWARFDebugAranges)
+      .Case(".debug_cu_index", eSectionTypeDWARFDebugCuIndex)
+      .Case(".debug_frame", eSectionTypeDWARFDebugFrame)
+      .Case(".debug_info", eSectionTypeDWARFDebugInfo)
+      .Case(".debug_info.dwo", eSectionTypeDWARFDebugInfoDwo)
+      .Cases(".debug_line", ".debug_line.dwo", eSectionTypeDWARFDebugLine)
+      .Cases(".debug_line_str", ".debug_line_str.dwo",
+             eSectionTypeDWARFDebugLineStr)
+      .Cases(".debug_loc", ".debug_loc.dwo", eSectionTypeDWARFDebugLoc)
+      .Cases(".debug_loclists", ".debug_loclists.dwo",
+             eSectionTypeDWARFDebugLocLists)
+      .Case(".debug_macinfo", eSectionTypeDWARFDebugMacInfo)
+      .Cases(".debug_macro", ".debug_macro.dwo", eSectionTypeDWARFDebugMacro)
+      .Case(".debug_names", eSectionTypeDWARFDebugNames)
+      .Case(".debug_pubnames", eSectionTypeDWARFDebugPubNames)
+      .Case(".debug_pubtypes", eSectionTypeDWARFDebugPubTypes)
+      .Case(".debug_ranges", eSectionTypeDWARFDebugRanges)
+      .Case(".debug_rnglists", eSectionTypeDWARFDebugRngLists)
+      .Case(".debug_str", eSectionTypeDWARFDebugStr)
+      .Case(".debug_str.dwo", eSectionTypeDWARFDebugStrDwo)
+      .Case(".debug_str_offsets", eSectionTypeDWARFDebugStrOffsets)
+      .Case(".debug_str_offsets.dwo", eSectionTypeDWARFDebugStrOffsetsDwo)
+      .Case(".debug_types", eSectionTypeDWARFDebugTypes)
+      .Case(".eh_frame", eSectionTypeEHFrame)
+      .Case(".gnu_debugaltlink", eSectionTypeDWARFGNUDebugAltLink)
+      .Case(".gosymtab", eSectionTypeGoSymtab)
+      .Case(".text", eSectionTypeCode)
+      .Default(eSectionTypeOther);
+}
+
 void ObjectFileELF::CreateSections(SectionList &unified_section_list) {
   if (!m_sections_ap.get() && ParseSectionHeaders()) {
     m_sections_ap.reset(new SectionList());
@@ -1754,151 +1793,9 @@ void ObjectFileELF::CreateSections(SectionList &unified_section_list) {
           header.sh_type == SHT_NOBITS ? 0 : header.sh_size;
       const uint64_t vm_size = header.sh_flags & SHF_ALLOC ? header.sh_size : 0;
 
-      static ConstString g_sect_name_text(".text");
-      static ConstString g_sect_name_data(".data");
-      static ConstString g_sect_name_bss(".bss");
-      static ConstString g_sect_name_tdata(".tdata");
-      static ConstString g_sect_name_tbss(".tbss");
-      static ConstString g_sect_name_dwarf_debug_abbrev(".debug_abbrev");
-      static ConstString g_sect_name_dwarf_debug_addr(".debug_addr");
-      static ConstString g_sect_name_dwarf_debug_aranges(".debug_aranges");
-      static ConstString g_sect_name_dwarf_debug_cu_index(".debug_cu_index");
-      static ConstString g_sect_name_dwarf_debug_frame(".debug_frame");
-      static ConstString g_sect_name_dwarf_debug_info(".debug_info");
-      static ConstString g_sect_name_dwarf_debug_line(".debug_line");
-      static ConstString g_sect_name_dwarf_debug_line_str(".debug_line_str");
-      static ConstString g_sect_name_dwarf_debug_loc(".debug_loc");
-      static ConstString g_sect_name_dwarf_debug_loclists(".debug_loclists");
-      static ConstString g_sect_name_dwarf_debug_macinfo(".debug_macinfo");
-      static ConstString g_sect_name_dwarf_debug_macro(".debug_macro");
-      static ConstString g_sect_name_dwarf_debug_names(".debug_names");
-      static ConstString g_sect_name_dwarf_debug_pubnames(".debug_pubnames");
-      static ConstString g_sect_name_dwarf_debug_pubtypes(".debug_pubtypes");
-      static ConstString g_sect_name_dwarf_debug_ranges(".debug_ranges");
-      static ConstString g_sect_name_dwarf_debug_rnglists(".debug_rnglists");
-      static ConstString g_sect_name_dwarf_debug_str(".debug_str");
-      static ConstString g_sect_name_dwarf_debug_str_offsets(
-          ".debug_str_offsets");
-      static ConstString g_sect_name_dwarf_debug_abbrev_dwo(
-          ".debug_abbrev.dwo");
-      static ConstString g_sect_name_dwarf_debug_info_dwo(".debug_info.dwo");
-      static ConstString g_sect_name_dwarf_debug_line_dwo(".debug_line.dwo");
-      static ConstString g_sect_name_dwarf_debug_line_str_dwo(".debug_line_str.dwo");
-      static ConstString g_sect_name_dwarf_debug_macro_dwo(".debug_macro.dwo");
-      static ConstString g_sect_name_dwarf_debug_loc_dwo(".debug_loc.dwo");
-      static ConstString g_sect_name_dwarf_debug_loclists_dwo(".debug_loclists.dwo");
-      static ConstString g_sect_name_dwarf_debug_str_dwo(".debug_str.dwo");
-      static ConstString g_sect_name_dwarf_debug_str_offsets_dwo(
-          ".debug_str_offsets.dwo");
-      static ConstString g_sect_name_dwarf_debug_types(".debug_types");
-      static ConstString g_sect_name_eh_frame(".eh_frame");
-      static ConstString g_sect_name_arm_exidx(".ARM.exidx");
-      static ConstString g_sect_name_arm_extab(".ARM.extab");
-      static ConstString g_sect_name_go_symtab(".gosymtab");
-      static ConstString g_sect_name_dwarf_gnu_debugaltlink(".gnu_debugaltlink");
+      SectionType sect_type = getSectionType(name.GetStringRef());
 
-      SectionType sect_type = eSectionTypeOther;
-
-      bool is_thread_specific = false;
-
-      if (name == g_sect_name_text)
-        sect_type = eSectionTypeCode;
-      else if (name == g_sect_name_data)
-        sect_type = eSectionTypeData;
-      else if (name == g_sect_name_bss)
-        sect_type = eSectionTypeZeroFill;
-      else if (name == g_sect_name_tdata) {
-        sect_type = eSectionTypeData;
-        is_thread_specific = true;
-      } else if (name == g_sect_name_tbss) {
-        sect_type = eSectionTypeZeroFill;
-        is_thread_specific = true;
-      }
-      // .debug_abbrev – Abbreviations used in the .debug_info section
-      // .debug_aranges – Lookup table for mapping addresses to compilation
-      // units .debug_frame – Call frame information .debug_info – The core
-      // DWARF information section .debug_line – Line number information
-      // .debug_loc – Location lists used in DW_AT_location attributes
-      // .debug_macinfo – Macro information .debug_pubnames – Lookup table
-      // for mapping object and function names to compilation units
-      // .debug_pubtypes – Lookup table for mapping type names to compilation
-      // units .debug_ranges – Address ranges used in DW_AT_ranges attributes
-      // .debug_str – String table used in .debug_info MISSING?
-      // .gnu_debugdata - "mini debuginfo / MiniDebugInfo" section,
-      // http://sourceware.org/gdb/onlinedocs/gdb/MiniDebugInfo.html MISSING?
-      // .debug-index - http://src.chromium.org/viewvc/chrome/trunk/src/build
-      // /gdb-add-index?pathrev=144644 MISSING? .debug_types - Type
-      // descriptions from DWARF 4? See
-      // http://gcc.gnu.org/wiki/DwarfSeparateTypeInfo
-      else if (name == g_sect_name_dwarf_debug_abbrev)
-        sect_type = eSectionTypeDWARFDebugAbbrev;
-      else if (name == g_sect_name_dwarf_debug_addr)
-        sect_type = eSectionTypeDWARFDebugAddr;
-      else if (name == g_sect_name_dwarf_debug_aranges)
-        sect_type = eSectionTypeDWARFDebugAranges;
-      else if (name == g_sect_name_dwarf_debug_cu_index)
-        sect_type = eSectionTypeDWARFDebugCuIndex;
-      else if (name == g_sect_name_dwarf_debug_frame)
-        sect_type = eSectionTypeDWARFDebugFrame;
-      else if (name == g_sect_name_dwarf_debug_info)
-        sect_type = eSectionTypeDWARFDebugInfo;
-      else if (name == g_sect_name_dwarf_debug_line)
-        sect_type = eSectionTypeDWARFDebugLine;
-      else if (name == g_sect_name_dwarf_debug_line_str)
-        sect_type = eSectionTypeDWARFDebugLineStr;
-      else if (name == g_sect_name_dwarf_debug_loc)
-        sect_type = eSectionTypeDWARFDebugLoc;
-      else if (name == g_sect_name_dwarf_debug_loclists)
-        sect_type = eSectionTypeDWARFDebugLocLists;
-      else if (name == g_sect_name_dwarf_debug_macinfo)
-        sect_type = eSectionTypeDWARFDebugMacInfo;
-      else if (name == g_sect_name_dwarf_debug_macro)
-        sect_type = eSectionTypeDWARFDebugMacro;
-      else if (name == g_sect_name_dwarf_debug_names)
-        sect_type = eSectionTypeDWARFDebugNames;
-      else if (name == g_sect_name_dwarf_debug_pubnames)
-        sect_type = eSectionTypeDWARFDebugPubNames;
-      else if (name == g_sect_name_dwarf_debug_pubtypes)
-        sect_type = eSectionTypeDWARFDebugPubTypes;
-      else if (name == g_sect_name_dwarf_debug_ranges)
-        sect_type = eSectionTypeDWARFDebugRanges;
-      else if (name == g_sect_name_dwarf_debug_rnglists)
-        sect_type = eSectionTypeDWARFDebugRngLists;
-      else if (name == g_sect_name_dwarf_debug_str)
-        sect_type = eSectionTypeDWARFDebugStr;
-      else if (name == g_sect_name_dwarf_debug_types)
-        sect_type = eSectionTypeDWARFDebugTypes;
-      else if (name == g_sect_name_dwarf_debug_str_offsets)
-        sect_type = eSectionTypeDWARFDebugStrOffsets;
-      else if (name == g_sect_name_dwarf_debug_abbrev_dwo)
-        sect_type = eSectionTypeDWARFDebugAbbrevDwo;
-      else if (name == g_sect_name_dwarf_debug_info_dwo)
-        sect_type = eSectionTypeDWARFDebugInfoDwo;
-      else if (name == g_sect_name_dwarf_debug_line_dwo)
-        sect_type = eSectionTypeDWARFDebugLine;
-      else if (name == g_sect_name_dwarf_debug_line_str_dwo)
-        sect_type = eSectionTypeDWARFDebugLineStr;
-      else if (name == g_sect_name_dwarf_debug_macro_dwo)
-        sect_type = eSectionTypeDWARFDebugMacro;
-      else if (name == g_sect_name_dwarf_debug_loc_dwo)
-        sect_type = eSectionTypeDWARFDebugLoc;
-      else if (name == g_sect_name_dwarf_debug_loclists_dwo)
-        sect_type = eSectionTypeDWARFDebugLocLists;
-      else if (name == g_sect_name_dwarf_debug_str_dwo)
-        sect_type = eSectionTypeDWARFDebugStrDwo;
-      else if (name == g_sect_name_dwarf_debug_str_offsets_dwo)
-        sect_type = eSectionTypeDWARFDebugStrOffsetsDwo;
-      else if (name == g_sect_name_eh_frame)
-        sect_type = eSectionTypeEHFrame;
-      else if (name == g_sect_name_arm_exidx)
-        sect_type = eSectionTypeARMexidx;
-      else if (name == g_sect_name_arm_extab)
-        sect_type = eSectionTypeARMextab;
-      else if (name == g_sect_name_go_symtab)
-        sect_type = eSectionTypeGoSymtab;
-      else if (name == g_sect_name_dwarf_gnu_debugaltlink)
-        sect_type = eSectionTypeDWARFGNUDebugAltLink;
-
+      bool is_thread_specific = header.sh_flags & SHF_TLS;
       const uint32_t permissions =
           ((header.sh_flags & SHF_ALLOC) ? ePermissionsReadable : 0u) |
           ((header.sh_flags & SHF_WRITE) ? ePermissionsWritable : 0u) |
