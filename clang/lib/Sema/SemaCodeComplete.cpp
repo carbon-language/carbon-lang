@@ -1028,8 +1028,7 @@ void ResultBuilder::AddResult(Result R, DeclContext *CurContext,
   if (HasObjectTypeQualifiers)
     if (const auto *Method = dyn_cast<CXXMethodDecl>(R.Declaration))
       if (Method->isInstance()) {
-        Qualifiers MethodQuals =
-            Qualifiers::fromCVRMask(Method->getTypeQualifiers());
+        Qualifiers MethodQuals = Method->getTypeQualifiers();
         if (ObjectTypeQualifiers == MethodQuals)
           R.Priority += CCD_ObjectQualifierMatch;
         else if (ObjectTypeQualifiers - MethodQuals) {
@@ -2743,17 +2742,17 @@ AddFunctionTypeQualsToCompletionString(CodeCompletionBuilder &Result,
   // FIXME: Add ref-qualifier!
 
   // Handle single qualifiers without copying
-  if (Proto->getTypeQuals() == Qualifiers::Const) {
+  if (Proto->getTypeQuals().hasOnlyConst()) {
     Result.AddInformativeChunk(" const");
     return;
   }
 
-  if (Proto->getTypeQuals() == Qualifiers::Volatile) {
+  if (Proto->getTypeQuals().hasOnlyVolatile()) {
     Result.AddInformativeChunk(" volatile");
     return;
   }
 
-  if (Proto->getTypeQuals() == Qualifiers::Restrict) {
+  if (Proto->getTypeQuals().hasOnlyRestrict()) {
     Result.AddInformativeChunk(" restrict");
     return;
   }
@@ -3738,8 +3737,7 @@ void Sema::CodeCompleteOrdinaryName(Scope *S,
   // the member function to filter/prioritize the results list.
   if (CXXMethodDecl *CurMethod = dyn_cast<CXXMethodDecl>(CurContext)) {
     if (CurMethod->isInstance()) {
-      Results.setObjectTypeQualifiers(
-          Qualifiers::fromCVRMask(CurMethod->getTypeQualifiers()));
+      Results.setObjectTypeQualifiers(CurMethod->getTypeQualifiers());
     }
   }
 
