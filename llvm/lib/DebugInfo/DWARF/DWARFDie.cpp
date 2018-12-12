@@ -208,6 +208,11 @@ static void dumpTypeName(raw_ostream &OS, const DWARFDie &D) {
     OS << '*';
     break;
   case DW_TAG_ptr_to_member_type:
+    if (DWARFDie Cont =
+            D.getAttributeValueAsReferencedDie(DW_AT_containing_type)) {
+      dumpTypeName(OS << ' ', Cont);
+      OS << "::";
+    }
     OS << '*';
     break;
   case DW_TAG_reference_type:

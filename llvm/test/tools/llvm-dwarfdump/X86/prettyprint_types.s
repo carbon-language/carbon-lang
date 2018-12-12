@@ -16,8 +16,7 @@
 # CHECK:   DW_AT_type{{.*}}"int&&"
 
 # ptr_to_member_type
-# FIXME: Add the contained_type to the assembly, and test the print out is "int foo::*"
-# CHECK:   DW_AT_type{{.*}}"int*"
+# CHECK:   DW_AT_type{{.*}}"int foo::*"
 
 # array_type
 # Testing lower_bound, upper_bound, lower and upper, lower and count, and count separately.
@@ -25,7 +24,9 @@
 
 	.section	.debug_str,"MS",@progbits,1
 .Lint_name:
-	.asciz	"int"                   # string offset=107
+	.asciz	"int"
+.Lfoo_name:
+	.asciz	"foo"
 	.section	.debug_abbrev,"",@progbits
 	.byte	1                       # Abbreviation Code
 	.byte	17                      # DW_TAG_compile_unit
@@ -73,6 +74,8 @@
 	.byte	0x1f                    # DW_TAG_ptr_to_member_type
 	.byte	0                       # DW_CHILDREN_no
 	.byte	73                      # DW_AT_type
+	.byte	19                      # DW_FORM_ref4
+	.byte	0x1d                    # DW_AT_type
 	.byte	19                      # DW_FORM_ref4
 	.byte	0                       # EOM(1)
 	.byte	0                       # EOM(2)
@@ -122,6 +125,13 @@
 	.byte	0xb                     # DW_FORM_data1
 	.byte	0                       # EOM(1)
 	.byte	0                       # EOM(2)
+	.byte	14                      # Abbreviation Code
+	.byte	0x13                    # DW_TAG_structure_type
+	.byte	0                       # DW_CHILDREN_no
+	.byte	3                       # DW_AT_name
+	.byte	14                      # DW_FORM_strp
+	.byte	0                       # EOM(1)
+	.byte	0                       # EOM(2)
 	.byte	0                       # EOM(3)
 	.section	.debug_info,"",@progbits
 .Lcu_begin:
@@ -144,9 +154,13 @@
 .Lrvalue_reference_type:
 	.byte	6                       # DW_TAG_rvalue_reference_type
 	.long	.Lint_type - .Lcu_begin #   DW_AT_type
+.Lstruct_type:
+	.byte	14			# DW_TAG_structure_type
+	.long	.Lfoo_name              #   DW_AT_name
 .Lptr_to_member_type:
 	.byte	7                       # DW_TAG_ptr_to_member_type
 	.long	.Lint_type - .Lcu_begin #   DW_AT_type
+	.long   .Lstruct_type - .Lcu_begin #   DW_AT_containing_type
 .Larray_type:
 	.byte	8                       # DW_TAG_array_type
 	.long	.Lint_type - .Lcu_begin #   DW_AT_type
