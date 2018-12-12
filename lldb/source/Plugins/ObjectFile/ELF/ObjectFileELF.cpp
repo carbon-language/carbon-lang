@@ -539,14 +539,13 @@ static uint32_t calc_gnu_debuglink_crc32(const void *buf, size_t size) {
 
 uint32_t ObjectFileELF::CalculateELFNotesSegmentsCRC32(
     const ProgramHeaderColl &program_headers, DataExtractor &object_data) {
-  typedef ProgramHeaderCollConstIter Iter;
 
   uint32_t core_notes_crc = 0;
 
-  for (Iter I = program_headers.begin(); I != program_headers.end(); ++I) {
-    if (I->p_type == llvm::ELF::PT_NOTE) {
-      const elf_off ph_offset = I->p_offset;
-      const size_t ph_size = I->p_filesz;
+  for (const ELFProgramHeader &H : program_headers) {
+    if (H.p_type == llvm::ELF::PT_NOTE) {
+      const elf_off ph_offset = H.p_offset;
+      const size_t ph_size = H.p_filesz;
 
       DataExtractor segment_data;
       if (segment_data.SetData(object_data, ph_offset, ph_size) != ph_size) {
@@ -806,15 +805,11 @@ bool ObjectFileELF::SetLoadAddress(Target &target, lldb::addr_t value,
     if (section_list) {
       if (!value_is_offset) {
         bool found_offset = false;
-        for (size_t i = 1, count = GetProgramHeaderCount(); i <= count; ++i) {
-          const elf::ELFProgramHeader *header = GetProgramHeaderByIndex(i);
-          if (header == nullptr)
+        for (const ELFProgramHeader &H : ProgramHeaders()) {
+          if (H.p_type != PT_LOAD || H.p_offset != 0)
             continue;
 
-          if (header->p_type != PT_LOAD || header->p_offset != 0)
-            continue;
-
-          value = value - header->p_vaddr;
+          value = value - H.p_vaddr;
           found_offset = true;
           break;
         }
@@ -1158,8 +1153,8 @@ size_t ObjectFileELF::GetProgramHeaderInfo(ProgramHeaderColl &program_headers,
 //----------------------------------------------------------------------
 // ParseProgramHeaders
 //----------------------------------------------------------------------
-size_t ObjectFileELF::ParseProgramHeaders() {
-  return GetProgramHeaderInfo(m_program_headers, m_data, m_header);
+bool ObjectFileELF::ParseProgramHeaders() {
+  return GetProgramHeaderInfo(m_program_headers, m_data, m_header) != 0;
 }
 
 lldb_private::Status
@@ -1703,27 +1698,6 @@ size_t ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
 
   section_headers.clear();
   return 0;
-}
-
-size_t ObjectFileELF::GetProgramHeaderCount() { return ParseProgramHeaders(); }
-
-const elf::ELFProgramHeader *
-ObjectFileELF::GetProgramHeaderByIndex(lldb::user_id_t id) {
-  if (!id || !ParseProgramHeaders())
-    return NULL;
-
-  if (--id < m_program_headers.size())
-    return &m_program_headers[id];
-
-  return NULL;
-}
-
-DataExtractor ObjectFileELF::GetSegmentDataByIndex(lldb::user_id_t id) {
-  const elf::ELFProgramHeader *segment_header = GetProgramHeaderByIndex(id);
-  if (segment_header == NULL)
-    return DataExtractor();
-  return DataExtractor(m_data, segment_header->p_offset,
-                       segment_header->p_filesz);
 }
 
 llvm::StringRef
@@ -3181,11 +3155,9 @@ void ObjectFileELF::DumpELFProgramHeaders(Stream *s) {
   s->PutCString("==== --------------- -------- -------- -------- "
                 "-------- -------- ------------------------- --------\n");
 
-  uint32_t idx = 0;
-  for (ProgramHeaderCollConstIter I = m_program_headers.begin();
-       I != m_program_headers.end(); ++I, ++idx) {
-    s->Printf("[%2u] ", idx);
-    ObjectFileELF::DumpELFProgramHeader(s, *I);
+  for (const auto &H : llvm::enumerate(m_program_headers)) {
+    s->Format("[{0,2}] ", H.index());
+    ObjectFileELF::DumpELFProgramHeader(s, H.value());
     s->EOL();
   }
 }
@@ -3305,18 +3277,13 @@ bool ObjectFileELF::GetArchitecture(ArchSpec &arch) {
       m_arch_spec.TripleOSIsUnspecifiedUnknown()) {
     // Core files don't have section headers yet they have PT_NOTE program
     // headers that might shed more light on the architecture
-    if (ParseProgramHeaders()) {
-      for (size_t i = 1, count = GetProgramHeaderCount(); i <= count; ++i) {
-        const elf::ELFProgramHeader *header = GetProgramHeaderByIndex(i);
-        if (header && header->p_type == PT_NOTE && header->p_offset != 0 &&
-            header->p_filesz > 0) {
-          DataExtractor data;
-          if (data.SetData(m_data, header->p_offset, header->p_filesz) ==
-              header->p_filesz) {
-            lldb_private::UUID uuid;
-            RefineModuleDetailsFromNote(data, m_arch_spec, uuid);
-          }
-        }
+    for (const elf::ELFProgramHeader &H : ProgramHeaders()) {
+      if (H.p_type != PT_NOTE || H.p_offset == 0 || H.p_filesz == 0)
+        continue;
+      DataExtractor data;
+      if (data.SetData(m_data, H.p_offset, H.p_filesz) == H.p_filesz) {
+        UUID uuid;
+        RefineModuleDetailsFromNote(data, m_arch_spec, uuid);
       }
     }
   }
@@ -3448,11 +3415,18 @@ size_t ObjectFileELF::ReadSectionData(Section *section,
   return buffer_sp->GetByteSize();
 }
 
+llvm::ArrayRef<ELFProgramHeader> ObjectFileELF::ProgramHeaders() {
+  ParseProgramHeaders();
+  return m_program_headers;
+}
+
+DataExtractor ObjectFileELF::GetSegmentData(const ELFProgramHeader &H) {
+  return DataExtractor(m_data, H.p_offset, H.p_filesz);
+}
+
 bool ObjectFileELF::AnySegmentHasPhysicalAddress() {
-  size_t header_count = ParseProgramHeaders();
-  for (size_t i = 1; i <= header_count; ++i) {
-    auto header = GetProgramHeaderByIndex(i);
-    if (header->p_paddr != 0)
+  for (const ELFProgramHeader &H : ProgramHeaders()) {
+    if (H.p_paddr != 0)
       return true;
   }
   return false;
@@ -3463,19 +3437,17 @@ ObjectFileELF::GetLoadableData(Target &target) {
   // Create a list of loadable data from loadable segments, using physical
   // addresses if they aren't all null
   std::vector<LoadableData> loadables;
-  size_t header_count = ParseProgramHeaders();
   bool should_use_paddr = AnySegmentHasPhysicalAddress();
-  for (size_t i = 1; i <= header_count; ++i) {
+  for (const ELFProgramHeader &H : ProgramHeaders()) {
     LoadableData loadable;
-    auto header = GetProgramHeaderByIndex(i);
-    if (header->p_type != llvm::ELF::PT_LOAD)
+    if (H.p_type != llvm::ELF::PT_LOAD)
       continue;
-    loadable.Dest = should_use_paddr ? header->p_paddr : header->p_vaddr;
+    loadable.Dest = should_use_paddr ? H.p_paddr : H.p_vaddr;
     if (loadable.Dest == LLDB_INVALID_ADDRESS)
       continue;
-    if (header->p_filesz == 0)
+    if (H.p_filesz == 0)
       continue;
-    auto segment_data = GetSegmentDataByIndex(i);
+    auto segment_data = GetSegmentData(H);
     loadable.Contents = llvm::ArrayRef<uint8_t>(segment_data.GetDataStart(),
                                                 segment_data.GetByteSize());
     loadables.push_back(loadable);
