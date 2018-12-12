@@ -11118,7 +11118,6 @@ static void DiagnoseRecursiveConstFields(Sema &S, const ValueDecl *VD,
   std::vector<const RecordType *> RecordTypeList;
   RecordTypeList.push_back(Ty);
   unsigned NextToCheckIndex = 0;
-  // TODO: MAKE THIS NOT RECURSIVE
   // We walk the record hierarchy breadth-first to ensure that we print
   // diagnostics in field nesting order.
   while (RecordTypeList.size() > NextToCheckIndex) {
