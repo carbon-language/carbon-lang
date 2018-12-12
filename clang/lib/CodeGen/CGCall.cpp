@@ -68,13 +68,11 @@ unsigned CodeGenTypes::ClangCallConvToLLVMCallConv(CallingConv CC) {
   }
 }
 
-/// Derives the 'this' type for codegen purposes, i.e. ignoring method CVR
+/// Derives the 'this' type for codegen purposes, i.e. ignoring method
 /// qualification.
-static CanQualType GetThisType(ASTContext &Context, const CXXRecordDecl *RD,
-                               const CXXMethodDecl *MD) {
+/// FIXME: address space qualification?
+static CanQualType GetThisType(ASTContext &Context, const CXXRecordDecl *RD) {
   QualType RecTy = Context.getTagDeclType(RD)->getCanonicalTypeInternal();
-  if (MD)
-    RecTy = Context.getAddrSpaceQualType(RecTy, MD->getType().getAddressSpace());
   return Context.getPointerType(CanQualType::CreateUnsafe(RecTy));
 }
 
@@ -252,7 +250,7 @@ CodeGenTypes::arrangeCXXMethodType(const CXXRecordDecl *RD,
 
   // Add the 'this' pointer.
   if (RD)
-    argTypes.push_back(GetThisType(Context, RD, MD));
+    argTypes.push_back(GetThisType(Context, RD));
   else
     argTypes.push_back(Context.VoidPtrTy);
 
@@ -308,7 +306,7 @@ CodeGenTypes::arrangeCXXStructorDeclaration(const CXXMethodDecl *MD,
 
   SmallVector<CanQualType, 16> argTypes;
   SmallVector<FunctionProtoType::ExtParameterInfo, 16> paramInfos;
-  argTypes.push_back(GetThisType(Context, MD->getParent(), MD));
+  argTypes.push_back(GetThisType(Context, MD->getParent()));
 
   bool PassParams = true;
 
@@ -535,7 +533,7 @@ const CGFunctionInfo &
 CodeGenTypes::arrangeUnprototypedMustTailThunk(const CXXMethodDecl *MD) {
   assert(MD->isVirtual() && "only methods have thunks");
   CanQual<FunctionProtoType> FTP = GetFormalType(MD);
-  CanQualType ArgTys[] = { GetThisType(Context, MD->getParent(), MD) };
+  CanQualType ArgTys[] = { GetThisType(Context, MD->getParent()) };
   return arrangeLLVMFunctionInfo(Context.VoidTy, /*instanceMethod=*/false,
                                  /*chainCall=*/false, ArgTys,
                                  FTP->getExtInfo(), {}, RequiredArgs(1));
@@ -549,7 +547,7 @@ CodeGenTypes::arrangeMSCtorClosure(const CXXConstructorDecl *CD,
   CanQual<FunctionProtoType> FTP = GetFormalType(CD);
   SmallVector<CanQualType, 2> ArgTys;
   const CXXRecordDecl *RD = CD->getParent();
-  ArgTys.push_back(GetThisType(Context, RD, CD));
+  ArgTys.push_back(GetThisType(Context, RD));
   if (CT == Ctor_CopyingClosure)
     ArgTys.push_back(*FTP->param_type_begin());
   if (RD->getNumVBases() > 0)

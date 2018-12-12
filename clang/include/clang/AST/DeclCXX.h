@@ -2182,10 +2182,7 @@ public:
   /// 'this' type.
   QualType getThisType(ASTContext &C) const;
 
-  static QualType getThisType(const FunctionProtoType *FPT,
-                              const CXXRecordDecl *Decl);
-
-  Qualifiers getTypeQualifiers() const {
+  unsigned getTypeQualifiers() const {
     return getType()->getAs<FunctionProtoType>()->getTypeQuals();
   }
 

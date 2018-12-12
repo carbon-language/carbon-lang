@@ -597,7 +597,7 @@ public:
   QualType TransformFunctionProtoType(TypeLocBuilder &TLB,
                                       FunctionProtoTypeLoc TL,
                                       CXXRecordDecl *ThisContext,
-                                      Qualifiers ThisTypeQuals,
+                                      unsigned ThisTypeQuals,
                                       Fn TransformExceptionSpec);
 
   bool TransformExceptionSpec(SourceLocation Loc,
@@ -4274,11 +4274,8 @@ QualType TreeTransform<Derived>::RebuildQualifiedType(QualType T,
   // C++ [dcl.fct]p7:
   //   [When] adding cv-qualifications on top of the function type [...] the
   //   cv-qualifiers are ignored.
-  if (T->isFunctionType()) {
-    T = SemaRef.getASTContext().getAddrSpaceQualType(T,
-                                                     Quals.getAddressSpace());
+  if (T->isFunctionType())
     return T;
-  }
 
   // C++ [dcl.ref]p1:
   //   when the cv-qualifiers are introduced through the use of a typedef-name
@@ -5245,7 +5242,7 @@ TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
   SmallVector<QualType, 4> ExceptionStorage;
   TreeTransform *This = this; // Work around gcc.gnu.org/PR56135.
   return getDerived().TransformFunctionProtoType(
-      TLB, TL, nullptr, Qualifiers(),
+      TLB, TL, nullptr, 0,
       [&](FunctionProtoType::ExceptionSpecInfo &ESI, bool &Changed) {
         return This->TransformExceptionSpec(TL.getBeginLoc(), ESI,
                                             ExceptionStorage, Changed);
@@ -5255,7 +5252,7 @@ TreeTransform<Derived>::TransformFunctionProtoType(TypeLocBuilder &TLB,
 template<typename Derived> template<typename Fn>
 QualType TreeTransform<Derived>::TransformFunctionProtoType(
     TypeLocBuilder &TLB, FunctionProtoTypeLoc TL, CXXRecordDecl *ThisContext,
-    Qualifiers ThisTypeQuals, Fn TransformExceptionSpec) {
+    unsigned ThisTypeQuals, Fn TransformExceptionSpec) {
 
   // Transform the parameters and return type.
   //
@@ -11027,7 +11024,7 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
     SmallVector<QualType, 4> ExceptionStorage;
     TreeTransform *This = this; // Work around gcc.gnu.org/PR56135.
     QualType NewCallOpType = TransformFunctionProtoType(
-        NewCallOpTLBuilder, OldCallOpFPTL, nullptr, Qualifiers(),
+        NewCallOpTLBuilder, OldCallOpFPTL, nullptr, 0,
         [&](FunctionProtoType::ExceptionSpecInfo &ESI, bool &Changed) {
           return This->TransformExceptionSpec(OldCallOpFPTL.getBeginLoc(), ESI,
                                               ExceptionStorage, Changed);

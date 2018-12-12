@@ -510,7 +510,7 @@ struct CanProxyAdaptor<FunctionProtoType>
   }
 
   LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(bool, isVariadic)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(Qualifiers, getTypeQuals)
+  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(unsigned, getTypeQuals)
 
   using param_type_iterator =
       CanTypeIterator<FunctionProtoType::param_type_iterator>;

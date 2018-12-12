@@ -859,7 +859,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     FunctionProtoType::ExtProtoInfo EPI(Context.getDefaultCallingConvention(
         /*IsVariadic=*/false, /*IsCXXMethod=*/true));
     EPI.HasTrailingReturn = true;
-    EPI.TypeQuals.addConst();
+    EPI.TypeQuals |= DeclSpec::TQ_const;
     // C++1y [expr.prim.lambda]:
     //   The lambda return type is 'auto', which is replaced by the
     //   trailing-return type if provided and/or deduced from 'return'
@@ -1198,7 +1198,7 @@ QualType Sema::getLambdaConversionFunctionResultType(
   CallingConv CC = Context.getDefaultCallingConvention(
       CallOpProto->isVariadic(), /*IsCXXMethod=*/false);
   InvokerExtInfo.ExtInfo = InvokerExtInfo.ExtInfo.withCallingConv(CC);
-  InvokerExtInfo.TypeQuals = Qualifiers();
+  InvokerExtInfo.TypeQuals = 0;
   assert(InvokerExtInfo.RefQualifier == RQ_None &&
       "Lambda's call operator should not have a reference qualifier");
   return Context.getFunctionType(CallOpProto->getReturnType(),
@@ -1229,8 +1229,7 @@ static void addFunctionPointerConversion(Sema &S,
       S.Context.getDefaultCallingConvention(
       /*IsVariadic=*/false, /*IsCXXMethod=*/true));
   // The conversion function is always const.
-  ConvExtInfo.TypeQuals = Qualifiers();
-  ConvExtInfo.TypeQuals.addConst();
+  ConvExtInfo.TypeQuals = Qualifiers::Const;
   QualType ConvTy =
       S.Context.getFunctionType(PtrToFunctionTy, None, ConvExtInfo);
 
@@ -1378,8 +1377,7 @@ static void addBlockPointerConversion(Sema &S,
   FunctionProtoType::ExtProtoInfo ConversionEPI(
       S.Context.getDefaultCallingConvention(
           /*IsVariadic=*/false, /*IsCXXMethod=*/true));
-  ConversionEPI.TypeQuals = Qualifiers();
-  ConversionEPI.TypeQuals.addConst();
+  ConversionEPI.TypeQuals = Qualifiers::Const;
   QualType ConvTy = S.Context.getFunctionType(BlockPtrTy, None, ConversionEPI);
 
   SourceLocation Loc = IntroducerRange.getBegin();
