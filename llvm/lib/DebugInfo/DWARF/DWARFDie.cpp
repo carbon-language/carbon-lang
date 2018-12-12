@@ -155,9 +155,7 @@ static void dumpTypeTagName(raw_ostream &OS, dwarf::Tag T) {
 }
 
 /// Recursively dump the DIE type name when applicable.
-static void dumpTypeName(raw_ostream &OS, const DWARFDie &Die) {
-  DWARFDie D = Die.getAttributeValueAsReferencedDie(DW_AT_type);
-
+static void dumpTypeName(raw_ostream &OS, const DWARFDie &D) {
   if (!D.isValid())
     return;
 
@@ -181,7 +179,7 @@ static void dumpTypeName(raw_ostream &OS, const DWARFDie &Die) {
   }
 
   // Follow the DW_AT_type if possible.
-  dumpTypeName(OS, D);
+  dumpTypeName(OS, D.getAttributeValueAsReferencedDie(DW_AT_type));
 
   switch (T) {
   case DW_TAG_array_type: {
@@ -295,7 +293,7 @@ static void dumpAttribute(raw_ostream &OS, const DWARFDie &Die,
       OS << Space << "\"" << Name << '\"';
   } else if (Attr == DW_AT_type) {
     OS << Space << "\"";
-    dumpTypeName(OS, Die);
+    dumpTypeName(OS, Die.getAttributeValueAsReferencedDie(formValue));
     OS << '"';
   } else if (Attr == DW_AT_APPLE_property_attribute) {
     if (Optional<uint64_t> OptVal = formValue.getAsUnsignedConstant())
