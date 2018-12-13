@@ -570,9 +570,7 @@ void llvm::deleteDeadLoop(Loop *L, DominatorTree *DT = nullptr,
   }
 
   // Use a map to unique and a vector to guarantee deterministic ordering.
-  llvm::SmallDenseMap<std::pair<DIVariable *, DIExpression *>,
-                      DbgVariableIntrinsic *, 4>
-      DeadDebugMap;
+  llvm::SmallDenseSet<std::pair<DIVariable *, DIExpression *>, 4> DeadDebugSet;
   llvm::SmallVector<DbgVariableIntrinsic *, 4> DeadDebugInst;
 
   // Given LCSSA form is satisfied, we should not have users of instructions
@@ -602,10 +600,10 @@ void llvm::deleteDeadLoop(Loop *L, DominatorTree *DT = nullptr,
       auto *DVI = dyn_cast<DbgVariableIntrinsic>(&I);
       if (!DVI)
         continue;
-      auto Key = DeadDebugMap.find({DVI->getVariable(), DVI->getExpression()});
-      if (Key != DeadDebugMap.end())
+      auto Key = DeadDebugSet.find({DVI->getVariable(), DVI->getExpression()});
+      if (Key != DeadDebugSet.end())
         continue;
-      DeadDebugMap[{DVI->getVariable(), DVI->getExpression()}] = DVI;
+      DeadDebugSet.insert({DVI->getVariable(), DVI->getExpression()});
       DeadDebugInst.push_back(DVI);
     }
 
