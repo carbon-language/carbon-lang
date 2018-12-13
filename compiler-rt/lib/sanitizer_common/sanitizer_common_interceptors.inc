@@ -8725,6 +8725,189 @@ INTERCEPTOR(int, strnunvisx, char *dst, SIZE_T dlen, const char *src,
 #define INIT_VIS
 #endif
 
+#if SANITIZER_INTERCEPT_CDB
+INTERCEPTOR(struct __sanitizer_cdbr *, cdbr_open, const char *path, int flags) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, cdbr_open, path, flags);
+  if (path)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
+  struct __sanitizer_cdbr *cdbr = REAL(cdbr_open)(path, flags);
+  if (cdbr)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, cdbr, sizeof(*cdbr));
+  return cdbr;
+}
+
+INTERCEPTOR(struct __sanitizer_cdbr *, cdbr_open_mem, void *base, SIZE_T size,
+  int flags, void (*unmap)(void *, void *, SIZE_T), void *cookie) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, cdbr_open_mem, base, size, flags, unmap,
+    cookie);
+  if (base && size)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, base, size);
+  struct __sanitizer_cdbr *cdbr =
+    REAL(cdbr_open_mem)(base, size, flags, unmap, cookie);
+  if (cdbr)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, cdbr, sizeof(*cdbr));
+  return cdbr;
+}
+
+INTERCEPTOR(u32, cdbr_entries, struct __sanitizer_cdbr *cdbr) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, cdbr_entries, cdbr);
+  if (cdbr)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, cdbr, sizeof(*cdbr));
+  return REAL(cdbr_entries)(cdbr);
+}
+
+INTERCEPTOR(int, cdbr_get, struct __sanitizer_cdbr *cdbr, u32 index,
+            const void **data, SIZE_T *datalen) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, cdbr_get, cdbr, index, data, datalen);
+  if (cdbr)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, cdbr, sizeof(*cdbr));
+  int ret = REAL(cdbr_get)(cdbr, index, data, datalen);
+  if (!ret) {
+    if (data)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, data, sizeof(*data));
+    if (datalen)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, datalen, sizeof(*datalen));
+    if (data && datalen)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, *data, *datalen);
+  }
+  return ret;
+}
+
+INTERCEPTOR(int, cdbr_find, struct __sanitizer_cdbr *cdbr, const void *key,
+            SIZE_T keylen, const void **data, SIZE_T *datalen) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, cdbr_find, cdbr, key, keylen, data, datalen);
+  if (cdbr)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, cdbr, sizeof(*cdbr));
+  if (key)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, key, keylen);
+  int ret = REAL(cdbr_find)(cdbr, key, keylen, data, datalen);
+  if (!ret) {
+    if (data)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, data, sizeof(*data));
+    if (datalen)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, datalen, sizeof(*datalen));
+    if (data && datalen)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, *data, *datalen);
+  }
+  return ret;
+}
+
+INTERCEPTOR(void, cdbr_close, struct __sanitizer_cdbr *cdbr) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, cdbr_close, cdbr);
+  if (cdbr)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, cdbr, sizeof(*cdbr));
+  REAL(cdbr_close)(cdbr);
+}
+
+INTERCEPTOR(struct __sanitizer_cdbw *, cdbw_open) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, cdbw_open);
+  struct __sanitizer_cdbw *ret = REAL(cdbw_open)();
+  if (ret)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ret, sizeof(*ret));
+  return ret;
+}
+
+INTERCEPTOR(int, cdbw_put, struct __sanitizer_cdbw *cdbw, const void *key,
+  SIZE_T keylen, const void *data, SIZE_T datalen) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, cdbw_put, cdbw, key, keylen, data, datalen);
+  if (cdbw)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, cdbw, sizeof(*cdbw));
+  if (data && datalen)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, data, datalen);
+  if (key && keylen)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, key, keylen);
+  int ret = REAL(cdbw_put)(cdbw, key, keylen, data, datalen);
+  if (!ret && cdbw)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, cdbw, sizeof(*cdbw));
+  return ret;
+}
+
+INTERCEPTOR(int, cdbw_put_data, struct __sanitizer_cdbw *cdbw, const void *data,
+  SIZE_T datalen, u32 *index) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, cdbw_put_data, cdbw, data, datalen, index);
+  if (cdbw)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, cdbw, sizeof(*cdbw));
+  if (data && datalen)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, data, datalen);
+  int ret = REAL(cdbw_put_data)(cdbw, data, datalen, index);
+  if (!ret) {
+    if (index)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, index, sizeof(*index));
+    if (cdbw)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, cdbw, sizeof(*cdbw));
+  }
+  return ret;
+}
+
+INTERCEPTOR(int, cdbw_put_key, struct __sanitizer_cdbw *cdbw, const void *key,
+  SIZE_T keylen, u32 index) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, cdbw_put_key, cdbw, key, keylen, index);
+  if (cdbw)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, cdbw, sizeof(*cdbw));
+  if (key && keylen)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, key, keylen);
+  int ret = REAL(cdbw_put_key)(cdbw, key, keylen, index);
+  if (!ret && cdbw)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, cdbw, sizeof(*cdbw));
+  return ret;
+}
+
+INTERCEPTOR(int, cdbw_output, struct __sanitizer_cdbw *cdbw, int output,
+  const char descr[16], u32 (*seedgen)(void)) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, cdbw_output, cdbw, output, descr, seedgen);
+  COMMON_INTERCEPTOR_FD_ACCESS(ctx, output);
+  if (cdbw)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, cdbw, sizeof(*cdbw));
+  if (descr)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, descr, internal_strnlen(descr, 16));
+  if (seedgen)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, (void *)seedgen, sizeof(seedgen));
+  int ret = REAL(cdbw_output)(cdbw, output, descr, seedgen);
+  if (!ret) {
+    if (cdbw)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, cdbw, sizeof(*cdbw));
+    if (output >= 0)
+      COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, output);
+  }
+  return ret;
+}
+
+INTERCEPTOR(void, cdbw_close, struct __sanitizer_cdbw *cdbw) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, cdbw_close, cdbw);
+  if (cdbw)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, cdbw, sizeof(*cdbw));
+  REAL(cdbw_close)(cdbw);
+}
+
+#define INIT_CDB \
+  COMMON_INTERCEPT_FUNCTION(cdbr_open); \
+  COMMON_INTERCEPT_FUNCTION(cdbr_open_mem); \
+  COMMON_INTERCEPT_FUNCTION(cdbr_entries); \
+  COMMON_INTERCEPT_FUNCTION(cdbr_get); \
+  COMMON_INTERCEPT_FUNCTION(cdbr_find); \
+  COMMON_INTERCEPT_FUNCTION(cdbr_close); \
+  COMMON_INTERCEPT_FUNCTION(cdbw_open); \
+  COMMON_INTERCEPT_FUNCTION(cdbw_put); \
+  COMMON_INTERCEPT_FUNCTION(cdbw_put_data); \
+  COMMON_INTERCEPT_FUNCTION(cdbw_put_key); \
+  COMMON_INTERCEPT_FUNCTION(cdbw_output); \
+  COMMON_INTERCEPT_FUNCTION(cdbw_close)
+#else
+#define INIT_CDB
+#endif
+
 static void InitializeCommonInterceptors() {
   static u64 metadata_mem[sizeof(MetadataHashMap) / sizeof(u64) + 1];
   interceptor_metadata_map =
@@ -9003,6 +9186,7 @@ static void InitializeCommonInterceptors() {
   INIT_MD2;
   INIT_SHA2;
   INIT_VIS;
+  INIT_CDB;
 
   INIT___PRINTF_CHK;
 }
