@@ -1798,6 +1798,14 @@ extern const internal::VariadicDynCastAllOfMatcher<Stmt, DeclRefExpr>
 extern const internal::VariadicDynCastAllOfMatcher<Stmt, ObjCIvarRefExpr>
     objcIvarRefExpr;
 
+/// Matches a reference to a block.
+///
+/// Example: matches "^{}":
+/// \code
+///   void f() { ^{}(); }
+/// \endcode
+extern const internal::VariadicDynCastAllOfMatcher<Stmt, BlockExpr> blockExpr;
+
 /// Matches if statements.
 ///
 /// Example matches 'if (x) {}'

@@ -139,6 +139,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(binaryConditionalOperator);
   REGISTER_MATCHER(binaryOperator);
   REGISTER_MATCHER(blockDecl);
+  REGISTER_MATCHER(blockExpr);
   REGISTER_MATCHER(blockPointerType);
   REGISTER_MATCHER(booleanType);
   REGISTER_MATCHER(breakStmt);
