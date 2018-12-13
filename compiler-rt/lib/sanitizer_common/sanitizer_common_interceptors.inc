@@ -117,6 +117,7 @@
 #define stat __stat50
 #define time __time50
 #define times __times13
+#define unvis __unvis50
 #define wait3 __wait350
 #define wait4 __wait450
 extern const unsigned short *_ctype_tab_;
@@ -8460,6 +8461,270 @@ SHA2_INTERCEPTORS(512, u64);
 #define INIT_SHA2
 #endif
 
+#if SANITIZER_INTERCEPT_VIS
+INTERCEPTOR(char *, vis, char *dst, int c, int flag, int nextc) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, vis, dst, c, flag, nextc);
+  char *end = REAL(vis)(dst, c, flag, nextc);
+  // dst is NULL terminated and end points to the NULL char
+  if (dst && end)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, end - dst + 1);
+  return end;
+}
+INTERCEPTOR(char *, nvis, char *dst, SIZE_T dlen, int c, int flag, int nextc) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, nvis, dst, dlen, c, flag, nextc);
+  char *end = REAL(nvis)(dst, dlen, c, flag, nextc);
+  // nvis cannot make sure the dst is NULL terminated
+  if (dst && end)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, end - dst + 1);
+  return end;
+}
+INTERCEPTOR(int, strvis, char *dst, const char *src, int flag) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strvis, dst, src, flag);
+  if (src)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, REAL(strlen)(src) + 1);
+  int len = REAL(strvis)(dst, src, flag);
+  if (dst)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, len + 1);
+  return len;
+}
+INTERCEPTOR(int, stravis, char **dst, const char *src, int flag) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, stravis, dst, src, flag);
+  if (src)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, REAL(strlen)(src) + 1);
+  int len = REAL(stravis)(dst, src, flag);
+  if (dst) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, sizeof(char *));
+    if (*dst)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, *dst, len + 1);
+  }
+  return len;
+}
+INTERCEPTOR(int, strnvis, char *dst, SIZE_T dlen, const char *src, int flag) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strnvis, dst, dlen, src, flag);
+  if (src)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, REAL(strlen)(src) + 1);
+  int len = REAL(strnvis)(dst, dlen, src, flag);
+  // The interface will be valid even if there is no space for NULL char
+  if (dst && len > 0)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, len + 1);
+  return len;
+}
+INTERCEPTOR(int, strvisx, char *dst, const char *src, SIZE_T len, int flag) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strvisx, dst, src, len, flag);
+  if (src)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, len);
+  int ret = REAL(strvisx)(dst, src, len, flag);
+  if (dst)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, ret + 1);
+  return ret;
+}
+INTERCEPTOR(int, strnvisx, char *dst, SIZE_T dlen, const char *src, SIZE_T len,
+            int flag) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strnvisx, dst, dlen, src, len, flag);
+  if (src)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, len);
+  int ret = REAL(strnvisx)(dst, dlen, src, len, flag);
+  if (dst && ret >= 0)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, ret + 1);
+  return ret;
+}
+INTERCEPTOR(int, strenvisx, char *dst, SIZE_T dlen, const char *src, SIZE_T len,
+            int flag, int *cerr_ptr) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strenvisx, dst, dlen, src, len, flag, cerr_ptr);
+  if (src)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, len);
+  // FIXME: only need to be checked when "flag | VIS_NOLOCALE" doesn't hold
+  // according to the implementation
+  if (cerr_ptr)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, cerr_ptr, sizeof(int));
+  int ret = REAL(strenvisx)(dst, dlen, src, len, flag, cerr_ptr);
+  if (dst && ret >= 0)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, ret + 1);
+  if (cerr_ptr)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, cerr_ptr, sizeof(int));
+  return ret;
+}
+INTERCEPTOR(char *, svis, char *dst, int c, int flag, int nextc,
+            const char *extra) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, svis, dst, c, flag, nextc, extra);
+  if (extra)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, extra, REAL(strlen)(extra) + 1);
+  char *end = REAL(svis)(dst, c, flag, nextc, extra);
+  if (dst && end)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, end - dst + 1);
+  return end;
+}
+INTERCEPTOR(char *, snvis, char *dst, SIZE_T dlen, int c, int flag, int nextc,
+            const char *extra) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, snvis, dst, dlen, c, flag, nextc, extra);
+  if (extra)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, extra, REAL(strlen)(extra) + 1);
+  char *end = REAL(snvis)(dst, dlen, c, flag, nextc, extra);
+  if (dst && end)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst,
+                                   Min((SIZE_T)(end - dst + 1), dlen));
+  return end;
+}
+INTERCEPTOR(int, strsvis, char *dst, const char *src, int flag,
+            const char *extra) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strsvis, dst, src, flag, extra);
+  if (src)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, REAL(strlen)(src) + 1);
+  if (extra)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, extra, REAL(strlen)(extra) + 1);
+  int len = REAL(strsvis)(dst, src, flag, extra);
+  if (dst)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, len + 1);
+  return len;
+}
+INTERCEPTOR(int, strsnvis, char *dst, SIZE_T dlen, const char *src, int flag,
+            const char *extra) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strsnvis, dst, dlen, src, flag, extra);
+  if (src)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, REAL(strlen)(src) + 1);
+  if (extra)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, extra, REAL(strlen)(extra) + 1);
+  int len = REAL(strsnvis)(dst, dlen, src, flag, extra);
+  // The interface will be valid even if there is no space for NULL char
+  if (dst && len >= 0)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, len + 1);
+  return len;
+}
+INTERCEPTOR(int, strsvisx, char *dst, const char *src, SIZE_T len, int flag,
+            const char *extra) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strsvisx, dst, src, len, flag, extra);
+  if (src)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, len);
+  if (extra)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, extra, REAL(strlen)(extra) + 1);
+  int ret = REAL(strsvisx)(dst, src, len, flag, extra);
+  if (dst)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, ret + 1);
+  return ret;
+}
+INTERCEPTOR(int, strsnvisx, char *dst, SIZE_T dlen, const char *src, SIZE_T len,
+            int flag, const char *extra) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strsnvisx, dst, dlen, src, len, flag, extra);
+  if (src)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, len);
+  if (extra)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, extra, REAL(strlen)(extra) + 1);
+  int ret = REAL(strsnvisx)(dst, dlen, src, len, flag, extra);
+  if (dst && ret >= 0)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, ret + 1);
+  return ret;
+}
+INTERCEPTOR(int, strsenvisx, char *dst, SIZE_T dlen, const char *src,
+            SIZE_T len, int flag, const char *extra, int *cerr_ptr) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strsenvisx, dst, dlen, src, len, flag, extra,
+                           cerr_ptr);
+  if (src)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, len);
+  if (extra)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, extra, REAL(strlen)(extra) + 1);
+  // FIXME: only need to be checked when "flag | VIS_NOLOCALE" doesn't hold
+  // according to the implementation
+  if (cerr_ptr)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, cerr_ptr, sizeof(int));
+  int ret = REAL(strsenvisx)(dst, dlen, src, len, flag, extra, cerr_ptr);
+  if (dst && ret >= 0)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, ret + 1);
+  if (cerr_ptr)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, cerr_ptr, sizeof(int));
+  return ret;
+}
+INTERCEPTOR(int, unvis, char *cp, int c, int *astate, int flag) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, unvis, cp, c, astate, flag);
+  if (astate)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, astate, sizeof(*astate));
+  int ret = REAL(unvis)(cp, c, astate, flag);
+  if (ret == unvis_valid || ret == unvis_validpush) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, cp, sizeof(*cp));
+  }
+  return ret;
+}
+INTERCEPTOR(int, strunvis, char *dst, const char *src) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strunvis, dst, src);
+  if (src)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, REAL(strlen)(src) + 1);
+  int ret = REAL(strunvis)(dst, src);
+  if (ret != -1)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, ret + 1);
+  return ret;
+}
+INTERCEPTOR(int, strnunvis, char *dst, SIZE_T dlen, const char *src) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strnunvis, dst, dlen, src);
+  if (src)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, REAL(strlen)(src) + 1);
+  int ret = REAL(strnunvis)(dst, dlen, src);
+  if (ret != -1)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, ret + 1);
+  return ret;
+}
+INTERCEPTOR(int, strunvisx, char *dst, const char *src, int flag) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strunvisx, dst, src, flag);
+  if (src)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, REAL(strlen)(src) + 1);
+  int ret = REAL(strunvisx)(dst, src, flag);
+  if (ret != -1)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, ret + 1);
+  return ret;
+}
+INTERCEPTOR(int, strnunvisx, char *dst, SIZE_T dlen, const char *src,
+            int flag) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strnunvisx, dst, dlen, src, flag);
+  if (src)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, REAL(strlen)(src) + 1);
+  int ret = REAL(strnunvisx)(dst, dlen, src, flag);
+  if (ret != -1)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, ret + 1);
+  return ret;
+}
+#define INIT_VIS                                                               \
+  COMMON_INTERCEPT_FUNCTION(vis);                                              \
+  COMMON_INTERCEPT_FUNCTION(nvis);                                             \
+  COMMON_INTERCEPT_FUNCTION(strvis);                                           \
+  COMMON_INTERCEPT_FUNCTION(stravis);                                          \
+  COMMON_INTERCEPT_FUNCTION(strnvis);                                          \
+  COMMON_INTERCEPT_FUNCTION(strvisx);                                          \
+  COMMON_INTERCEPT_FUNCTION(strnvisx);                                         \
+  COMMON_INTERCEPT_FUNCTION(strenvisx);                                        \
+  COMMON_INTERCEPT_FUNCTION(svis);                                             \
+  COMMON_INTERCEPT_FUNCTION(snvis);                                            \
+  COMMON_INTERCEPT_FUNCTION(strsvis);                                          \
+  COMMON_INTERCEPT_FUNCTION(strsnvis);                                         \
+  COMMON_INTERCEPT_FUNCTION(strsvisx);                                         \
+  COMMON_INTERCEPT_FUNCTION(strsnvisx);                                        \
+  COMMON_INTERCEPT_FUNCTION(strsenvisx);                                       \
+  COMMON_INTERCEPT_FUNCTION(unvis);                                            \
+  COMMON_INTERCEPT_FUNCTION(strunvis);                                         \
+  COMMON_INTERCEPT_FUNCTION(strnunvis);                                        \
+  COMMON_INTERCEPT_FUNCTION(strunvisx);                                        \
+  COMMON_INTERCEPT_FUNCTION(strnunvisx)
+#else
+#define INIT_VIS
+#endif
+
 static void InitializeCommonInterceptors() {
   static u64 metadata_mem[sizeof(MetadataHashMap) / sizeof(u64) + 1];
   interceptor_metadata_map =
@@ -8737,6 +9002,7 @@ static void InitializeCommonInterceptors() {
   INIT_FSEEK;
   INIT_MD2;
   INIT_SHA2;
+  INIT_VIS;
 
   INIT___PRINTF_CHK;
 }

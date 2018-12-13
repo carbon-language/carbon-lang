@@ -2253,6 +2253,9 @@ SHA2_EXTERN(384);
 SHA2_EXTERN(512);
 
 #undef SHA2_EXTERN
+
+extern const int unvis_valid;
+extern const int unvis_validpush;
 }  // namespace __sanitizer
 
 #define CHECK_TYPE_SIZE(TYPE) \
