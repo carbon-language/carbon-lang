@@ -80,9 +80,12 @@ def run(port, options, root):
 
 
 def port_is_open(port):
-    import SocketServer
     try:
-        t = SocketServer.TCPServer((kDefaultHost, port), None)
+        import socketserver
+    except ImportError:
+        import SocketServer as socketserver
+    try:
+        t = socketserver.TCPServer((kDefaultHost, port), None)
     except:
         return False
     t.server_close()
