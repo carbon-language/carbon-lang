@@ -24793,9 +24793,6 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
     if (auto *BVAmt = dyn_cast<BuildVectorSDNode>(Amt)) {
       if (auto *RotateConst = BVAmt->getConstantSplatNode()) {
         uint64_t RotateAmt = RotateConst->getAPIntValue().urem(EltSizeInBits);
-        if (RotateAmt == 0)
-          return R;
-
         return DAG.getNode(X86ISD::VROTLI, DL, VT, R,
                            DAG.getConstant(RotateAmt, DL, MVT::i8));
       }
@@ -24816,12 +24813,8 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
 
   // Rotate by an uniform constant - expand back to shifts.
   if (auto *BVAmt = dyn_cast<BuildVectorSDNode>(Amt))
-    if (auto *RotateConst = BVAmt->getConstantSplatNode()) {
-      uint64_t RotateAmt = RotateConst->getAPIntValue().urem(EltSizeInBits);
-      if (RotateAmt == 0)
-        return R;
+    if (BVAmt->getConstantSplatNode())
       return SDValue();
-    }
 
   // TODO: ISD::ROT* uses modulo rotate amounts, we need to handle this.
 

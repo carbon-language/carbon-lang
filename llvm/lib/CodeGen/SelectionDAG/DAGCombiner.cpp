@@ -6314,6 +6314,13 @@ SDValue DAGCombiner::visitRotate(SDNode *N) {
   if (isNullOrNullSplat(N1))
     return N0;
 
+  // fold (rot x, c) -> x iff (c % BitSize) == 0
+  if (isPowerOf2_32(Bitsize) && Bitsize > 1) {
+    APInt ModuloMask(N1.getScalarValueSizeInBits(), Bitsize - 1);
+    if (DAG.MaskedValueIsZero(N1, ModuloMask))
+      return N0;
+  }
+
   // fold (rot x, c) -> (rot x, c % BitSize)
   if (ConstantSDNode *Cst = isConstOrConstSplat(N1)) {
     if (Cst->getAPIntValue().uge(Bitsize)) {
