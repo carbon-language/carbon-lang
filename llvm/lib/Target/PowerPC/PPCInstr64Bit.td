@@ -347,12 +347,17 @@ def MFCR8 : XFXForm_3<31, 19, (outs g8rc:$rT), (ins),
 } // hasExtraSrcRegAllocReq = 1
 } // hasSideEffects = 0
 
-let hasSideEffects = 1, isBarrier = 1, usesCustomInserter = 1 in {
+// While longjmp is a control-flow barrier (fallthrough isn't allowed), setjmp
+// is not.
+let hasSideEffects = 1, usesCustomInserter = 1 in {
   let Defs = [CTR8] in
   def EH_SjLj_SetJmp64  : Pseudo<(outs gprc:$dst), (ins memr:$buf),
                             "#EH_SJLJ_SETJMP64",
                             [(set i32:$dst, (PPCeh_sjlj_setjmp addr:$buf))]>,
                           Requires<[In64BitMode]>;
+}
+
+let hasSideEffects = 1, isBarrier = 1, usesCustomInserter = 1 in {
   let isTerminator = 1 in
   def EH_SjLj_LongJmp64 : Pseudo<(outs), (ins memr:$buf),
                             "#EH_SJLJ_LONGJMP64",

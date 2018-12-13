@@ -1550,12 +1550,17 @@ def TAILBA   : IForm<18, 0, 0, (outs), (ins abscalltarget:$dst),
 
 }
 
-let hasSideEffects = 1, isBarrier = 1, usesCustomInserter = 1 in {
+// While longjmp is a control-flow barrier (fallthrough isn't allowed), setjmp
+// is not.
+let hasSideEffects = 1, usesCustomInserter = 1 in {
   let Defs = [CTR] in
   def EH_SjLj_SetJmp32  : Pseudo<(outs gprc:$dst), (ins memr:$buf),
                             "#EH_SJLJ_SETJMP32",
                             [(set i32:$dst, (PPCeh_sjlj_setjmp addr:$buf))]>,
                           Requires<[In32BitMode]>;
+}
+
+let hasSideEffects = 1, isBarrier = 1, usesCustomInserter = 1 in {
   let isTerminator = 1 in
   def EH_SjLj_LongJmp32 : Pseudo<(outs), (ins memr:$buf),
                             "#EH_SJLJ_LONGJMP32",
