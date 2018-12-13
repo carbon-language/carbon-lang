@@ -3521,7 +3521,7 @@ static void HandleCodeCompleteResults(Sema *S,
     CodeCompleter->ProcessCodeCompleteResults(*S, Context, Results, NumResults);
 }
 
-static enum CodeCompletionContext::Kind
+static CodeCompletionContext
 mapCodeCompletionContext(Sema &S, Sema::ParserCompletionContext PCC) {
   switch (PCC) {
   case Sema::PCC_Namespace:
@@ -3558,8 +3558,10 @@ mapCodeCompletionContext(Sema &S, Sema::ParserCompletionContext PCC) {
       return CodeCompletionContext::CCC_Expression;
 
   case Sema::PCC_Expression:
-  case Sema::PCC_Condition:
     return CodeCompletionContext::CCC_Expression;
+  case Sema::PCC_Condition:
+    return CodeCompletionContext(CodeCompletionContext::CCC_Expression,
+                                 S.getASTContext().BoolTy);
 
   case Sema::PCC_Statement:
     return CodeCompletionContext::CCC_Statement;
