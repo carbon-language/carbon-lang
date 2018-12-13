@@ -18537,8 +18537,8 @@ static bool hasNonFlagsUse(SDValue Op) {
 
 /// Emit nodes that will be selected as "test Op0,Op0", or something
 /// equivalent.
-SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, const SDLoc &dl,
-                                    SelectionDAG &DAG) const {
+static SDValue EmitTest(SDValue Op, unsigned X86CC, const SDLoc &dl,
+                        SelectionDAG &DAG, const X86Subtarget &Subtarget) {
   // CF and OF aren't always set the way we want. Determine which
   // of these we need.
   bool NeedCF = false;
@@ -18713,8 +18713,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, const SDLoc &dl,
         if (LeadingOnes + TrailingZeros == BitWidth) {
           assert(TrailingZeros < VT.getSizeInBits() &&
                  "Shift amount should be less than the type width");
-          MVT ShTy = getScalarShiftAmountTy(DAG.getDataLayout(), VT);
-          SDValue ShAmt = DAG.getConstant(TrailingZeros, dl, ShTy);
+          SDValue ShAmt = DAG.getConstant(TrailingZeros, dl, MVT::i8);
           Op = DAG.getNode(ISD::SRL, dl, VT, Op0, ShAmt);
           break;
         }
@@ -18725,8 +18724,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, const SDLoc &dl,
         if (LeadingZeros + TrailingOnes == BitWidth) {
           assert(LeadingZeros < VT.getSizeInBits() &&
                  "Shift amount should be less than the type width");
-          MVT ShTy = getScalarShiftAmountTy(DAG.getDataLayout(), VT);
-          SDValue ShAmt = DAG.getConstant(LeadingZeros, dl, ShTy);
+          SDValue ShAmt = DAG.getConstant(LeadingZeros, dl, MVT::i8);
           Op = DAG.getNode(ISD::SHL, dl, VT, Op0, ShAmt);
           break;
         }
@@ -18819,7 +18817,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, const SDLoc &dl,
 SDValue X86TargetLowering::EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC,
                                    const SDLoc &dl, SelectionDAG &DAG) const {
   if (isNullConstant(Op1))
-    return EmitTest(Op0, X86CC, dl, DAG);
+    return EmitTest(Op0, X86CC, dl, DAG, Subtarget);
 
   if ((Op0.getValueType() == MVT::i8 || Op0.getValueType() == MVT::i16 ||
        Op0.getValueType() == MVT::i32 || Op0.getValueType() == MVT::i64)) {
@@ -19948,7 +19946,8 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
 
   if (AddTest) {
     CC = DAG.getConstant(X86::COND_NE, DL, MVT::i8);
-    Cond = EmitTest(Cond, X86::COND_NE, DL, DAG);
+    Cond = EmitCmp(Cond, DAG.getConstant(0, DL, Cond.getValueType()),
+                   X86::COND_NE, DL, DAG);
   }
 
   // a <  b ? -1 :  0 -> RES = ~setcc_carry
@@ -20795,7 +20794,8 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
   if (addTest) {
     X86::CondCode X86Cond = Inverted ? X86::COND_E : X86::COND_NE;
     CC = DAG.getConstant(X86Cond, dl, MVT::i8);
-    Cond = EmitTest(Cond, X86Cond, dl, DAG);
+    Cond = EmitCmp(Cond, DAG.getConstant(0, dl, Cond.getValueType()),
+                   X86Cond, dl, DAG);
   }
   Cond = ConvertCmpIfNecessary(Cond, DAG);
   return DAG.getNode(X86ISD::BRCOND, dl, Op.getValueType(),
