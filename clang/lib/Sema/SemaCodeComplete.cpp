@@ -4949,7 +4949,8 @@ static QualType getPreferredTypeOfBinaryRHS(Sema &S, Expr *LHS,
   case tok::arrowstar:
     return QualType();
   default:
-    assert(false && "unhandled binary op");
+    // FIXME(ibiryukov): handle the missing op, re-add the assertion.
+    // assert(false && "unhandled binary op");
     return QualType();
   }
 }
