@@ -88,13 +88,13 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   // between these two scenarios.
   setAction({G_CONSTANT, S1}, Legal);
 
-  setAction({G_FADD, S32}, Legal);
+  getActionDefinitionsBuilder(
+    { G_FADD, G_FMUL })
+    .legalFor({S32, S64});
 
   setAction({G_FCMP, S1}, Legal);
   setAction({G_FCMP, 1, S32}, Legal);
   setAction({G_FCMP, 1, S64}, Legal);
-
-  setAction({G_FMUL, S32}, Legal);
 
   setAction({G_ZEXT, S64}, Legal);
   setAction({G_ZEXT, 1, S32}, Legal);
