@@ -24881,8 +24881,6 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
     return SignBitSelect(VT, Amt, M, R);
   }
 
-  // TODO: We need explicit modulo rotation amounts for everything from here on.
-
   bool ConstantAmt = ISD::isBuildVectorOfConstantSDNodes(Amt.getNode());
   bool LegalVarShifts = SupportedVectorVarShift(VT, Subtarget, ISD::SHL) &&
                         SupportedVectorVarShift(VT, Subtarget, ISD::SRL);
@@ -24891,6 +24889,7 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
   // Best to fallback for all supported variable shifts.
   // AVX2 - best to fallback for non-constants as well.
   // TODO - legalizers should be able to handle this.
+  // TODO - We need explicit modulo rotation amounts.
   if (LegalVarShifts || (Subtarget.hasAVX2() && !ConstantAmt) ||
       DAG.isSplatValue(Amt)) {
     SDValue AmtR = DAG.getConstant(EltSizeInBits, DL, VT);
@@ -24899,6 +24898,10 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
     SDValue SRL = DAG.getNode(ISD::SRL, DL, VT, R, AmtR);
     return DAG.getNode(ISD::OR, DL, VT, SHL, SRL);
   }
+
+  // ISD::ROT* uses modulo rotate amounts.
+  Amt = DAG.getNode(ISD::AND, DL, VT, Amt,
+                    DAG.getConstant(EltSizeInBits - 1, DL, VT));
 
   // As with shifts, convert the rotation amount to a multiplication factor.
   SDValue Scale = convertShiftLeftToScale(Amt, DL, Subtarget, DAG);
