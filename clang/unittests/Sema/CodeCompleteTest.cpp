@@ -183,113 +183,113 @@ TEST(SemaCodeCompleteTest, VisitedNSWithoutQualifier) {
 
 TEST(PreferredTypeTest, BinaryExpr) {
   // Check various operations for arithmetic types.
-  EXPECT_THAT(collectPreferredTypes(R"cpp(
+  StringRef code1 = R"cpp(
     void test(int x) {
       x = ^10;
       x += ^10; x -= ^10; x *= ^10; x /= ^10; x %= ^10;
       x + ^10; x - ^10; x * ^10; x / ^10; x % ^10;
-    })cpp"),
-              Each("int"));
-  EXPECT_THAT(collectPreferredTypes(R"cpp(
+    })cpp";
+  EXPECT_THAT(collectPreferredTypes(code1), Each("int"));
+  StringRef code2 = R"cpp(
     void test(float x) {
       x = ^10;
       x += ^10; x -= ^10; x *= ^10; x /= ^10; x %= ^10;
       x + ^10; x - ^10; x * ^10; x / ^10; x % ^10;
-    })cpp"),
-              Each("float"));
+    })cpp";
+  EXPECT_THAT(collectPreferredTypes(code2), Each("float"));
 
   // Pointer types.
-  EXPECT_THAT(collectPreferredTypes(R"cpp(
+  StringRef code3 = R"cpp(
     void test(int *ptr) {
       ptr - ^ptr;
       ptr = ^ptr;
-    })cpp"),
-              Each("int *"));
+    })cpp";
+  EXPECT_THAT(collectPreferredTypes(code3), Each("int *"));
 
-  EXPECT_THAT(collectPreferredTypes(R"cpp(
+  StringRef code4 = R"cpp(
     void test(int *ptr) {
       ptr + ^10;
       ptr += ^10;
       ptr -= ^10;
-    })cpp"),
-              Each("long")); // long is normalized 'ptrdiff_t'.
+    })cpp";
+  EXPECT_THAT(collectPreferredTypes(code4), Each("long")); // long is normalized 'ptrdiff_t'.
 
   // Comparison operators.
-  EXPECT_THAT(collectPreferredTypes(R"cpp(
+  StringRef code5 = R"cpp(
     void test(int i) {
       i <= ^1; i < ^1; i >= ^1; i > ^1; i == ^1; i != ^1;
     }
-  )cpp"),
-              Each("int"));
+  )cpp";
+  EXPECT_THAT(collectPreferredTypes(code5), Each("int"));
 
-  EXPECT_THAT(collectPreferredTypes(R"cpp(
+  StringRef code6 = R"cpp(
     void test(int *ptr) {
       ptr <= ^ptr; ptr < ^ptr; ptr >= ^ptr; ptr > ^ptr;
       ptr == ^ptr; ptr != ^ptr;
     }
-  )cpp"),
-              Each("int *"));
+  )cpp";
+  EXPECT_THAT(collectPreferredTypes(code6), Each("int *"));
 
   // Relational operations.
-  EXPECT_THAT(collectPreferredTypes(R"cpp(
+  StringRef code7 = R"cpp(
     void test(int i, int *ptr) {
       i && ^1; i || ^1;
       ptr && ^1; ptr || ^1;
     }
-  )cpp"),
-              Each("_Bool"));
+  )cpp";
+  EXPECT_THAT(collectPreferredTypes(code7), Each("_Bool"));
 
   // Bitwise operations.
-  EXPECT_THAT(collectPreferredTypes(R"cpp(
+  StringRef code8 = R"cpp(
     void test(long long ll) {
       ll | ^1; ll & ^1;
     }
-  )cpp"),
-              Each("long long"));
+  )cpp";
+  EXPECT_THAT(collectPreferredTypes(code8), Each("long long"));
 
-  EXPECT_THAT(collectPreferredTypes(R"cpp(
+  StringRef code9 = R"cpp(
     enum A {};
     void test(A a) {
       a | ^1; a & ^1;
     }
-  )cpp"),
-              Each("enum A"));
+  )cpp";
+  EXPECT_THAT(collectPreferredTypes(code9), Each("enum A"));
 
-  EXPECT_THAT(collectPreferredTypes(R"cpp(
+  StringRef code10 = R"cpp(
     enum class A {};
     void test(A a) {
       // This is technically illegal with the 'enum class' without overloaded
       // operators, but we pretend it's fine.
       a | ^a; a & ^a;
     }
-  )cpp"),
-              Each("enum A"));
+  )cpp";
+  EXPECT_THAT(collectPreferredTypes(code10), Each("enum A"));
 
   // Binary shifts.
-  EXPECT_THAT(collectPreferredTypes(R"cpp(
+  StringRef code11 = R"cpp(
     void test(int i, long long ll) {
       i << ^1; ll << ^1;
       i <<= ^1; i <<= ^1;
       i >> ^1; ll >> ^1;
       i >>= ^1; i >>= ^1;
     }
-  )cpp"),
-              Each("int"));
+  )cpp";
+  EXPECT_THAT(collectPreferredTypes(code11), Each("int"));
 
   // Comma does not provide any useful information.
-  EXPECT_THAT(collectPreferredTypes(R"cpp(
+  StringRef code12 = R"cpp(
     class Cls {};
     void test(int i, int* ptr, Cls x) {
       (i, ^i);
       (ptr, ^ptr);
       (x, ^x);
     }
-  )cpp"),
-              Each("NULL TYPE"));
+  )cpp";
+  EXPECT_THAT(collectPreferredTypes(code12), Each("NULL TYPE"));
 
   // User-defined types do not take operator overloading into account.
   // However, they provide heuristics for some common cases.
-  EXPECT_THAT(collectPreferredTypes(R"cpp(
+  StringRef code13 = R"cpp(
     class Cls {};
     void test(Cls c) {
       // we assume arithmetic and comparions ops take the same type.
@@ -298,19 +298,19 @@ TEST(PreferredTypeTest, BinaryExpr) {
       // same for the assignments.
       c = ^c; c += ^c; c -= ^c; c *= ^c; c /= ^c; c %= ^c;
     }
-  )cpp"),
-              Each("class Cls"));
+  )cpp";
+  EXPECT_THAT(collectPreferredTypes(code13), Each("class Cls"));
 
-  EXPECT_THAT(collectPreferredTypes(R"cpp(
+  StringRef code14 = R"cpp(
     class Cls {};
     void test(Cls c) {
       // we assume relational ops operate on bools.
       c && ^c; c || ^c;
     }
-  )cpp"),
-              Each("_Bool"));
+  )cpp";
+  EXPECT_THAT(collectPreferredTypes(code14), Each("_Bool"));
 
-  EXPECT_THAT(collectPreferredTypes(R"cpp(
+  StringRef code15 = R"cpp(
     class Cls {};
     void test(Cls c) {
       // we make no assumptions about the following operators, since they are
@@ -318,8 +318,8 @@ TEST(PreferredTypeTest, BinaryExpr) {
       c << ^c; c >> ^c; c | ^c; c & ^c;
       c <<= ^c; c >>= ^c; c |= ^c; c &= ^c;
     }
-  )cpp"),
-              Each("NULL TYPE"));
+  )cpp";
+  EXPECT_THAT(collectPreferredTypes(code15), Each("NULL TYPE"));
 }
 
 } // namespace
