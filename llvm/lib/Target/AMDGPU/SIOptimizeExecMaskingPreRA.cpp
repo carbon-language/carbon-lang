@@ -199,7 +199,7 @@ static unsigned optimizeVcndVcmpPair(MachineBasicBlock &MBB,
        MRI.use_nodbg_empty(CmpReg)) ||
       (CmpReg == CondReg &&
        std::none_of(std::next(Cmp->getIterator()), Andn2->getIterator(),
-                    [TRI](const MachineInstr &MI) {
+                    [&](const MachineInstr &MI) {
                       return MI.readsRegister(CondReg, TRI); }))) {
     LLVM_DEBUG(dbgs() << "Erasing: " << *Cmp << '\n');
 
