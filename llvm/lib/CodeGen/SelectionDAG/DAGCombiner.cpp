@@ -15698,13 +15698,8 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
       if (CstElt->getAPIntValue().ult(VT.getVectorNumElements()))
         DemandedElts.setBit(CstElt->getZExtValue());
     }
-    if (SimplifyDemandedVectorElts(InVec, DemandedElts, true)) {
-      // We simplified the operands of this extract element, but if this extract
-      // is still alive, visit it again to ensure that it is folded properly.
-      if (!N->use_empty())
-        AddToWorklist(N);
+    if (SimplifyDemandedVectorElts(InVec, DemandedElts, true))
       return SDValue(N, 0);
-    }
   }
 
   bool BCNumEltsChanged = false;
