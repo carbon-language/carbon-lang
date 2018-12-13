@@ -18815,9 +18815,6 @@ SDValue X86TargetLowering::EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC,
   if (isNullConstant(Op1))
     return EmitTest(Op0, X86CC, dl, DAG);
 
-  assert(!(isa<ConstantSDNode>(Op1) && Op0.getValueType() == MVT::i1) &&
-         "Unexpected comparison operation for MVT::i1 operands");
-
   if ((Op0.getValueType() == MVT::i8 || Op0.getValueType() == MVT::i16 ||
        Op0.getValueType() == MVT::i32 || Op0.getValueType() == MVT::i64)) {
     // Only promote the compare up to I32 if it is a 16 bit operation
@@ -18839,6 +18836,7 @@ SDValue X86TargetLowering::EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC,
     SDValue Sub = DAG.getNode(X86ISD::SUB, dl, VTs, Op0, Op1);
     return SDValue(Sub.getNode(), 1);
   }
+  assert(Op0.getValueType().isFloatingPoint() && "Unexpected VT!");
   return DAG.getNode(X86ISD::CMP, dl, MVT::i32, Op0, Op1);
 }
 
