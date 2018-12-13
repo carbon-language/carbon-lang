@@ -1701,7 +1701,7 @@ bool MIParser::parseDILocation(MDNode *&Loc) {
   unsigned Column = 0;
   MDNode *Scope = nullptr;
   MDNode *InlinedAt = nullptr;
-  bool ImplicitCode;
+  bool ImplicitCode = false;
 
   if (expectAndConsume(MIToken::lparen))
     return true;
