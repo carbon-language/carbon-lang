@@ -24822,18 +24822,6 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
     if (BVAmt->getConstantSplatNode())
       return SDValue();
 
-  // TODO: ISD::ROT* uses modulo rotate amounts, we need to handle this.
-
-  // Rotate by splat - expand back to shifts.
-  // TODO - legalizers should be able to handle this.
-  if (EltSizeInBits >= 16 && DAG.isSplatValue(Amt)) {
-    SDValue AmtR = DAG.getConstant(EltSizeInBits, DL, VT);
-    AmtR = DAG.getNode(ISD::SUB, DL, VT, AmtR, Amt);
-    SDValue SHL = DAG.getNode(ISD::SHL, DL, VT, R, Amt);
-    SDValue SRL = DAG.getNode(ISD::SRL, DL, VT, R, AmtR);
-    return DAG.getNode(ISD::OR, DL, VT, SHL, SRL);
-  }
-
   // v16i8/v32i8: Split rotation into rot4/rot2/rot1 stages and select by
   // the amount bit.
   if (EltSizeInBits == 8) {
@@ -24899,10 +24887,12 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
   bool LegalVarShifts = SupportedVectorVarShift(VT, Subtarget, ISD::SHL) &&
                         SupportedVectorVarShift(VT, Subtarget, ISD::SRL);
 
+  // Rotate by splat - expand back to shifts.
   // Best to fallback for all supported variable shifts.
   // AVX2 - best to fallback for non-constants as well.
   // TODO - legalizers should be able to handle this.
-  if (LegalVarShifts || (Subtarget.hasAVX2() && !ConstantAmt)) {
+  if (LegalVarShifts || (Subtarget.hasAVX2() && !ConstantAmt) ||
+      DAG.isSplatValue(Amt)) {
     SDValue AmtR = DAG.getConstant(EltSizeInBits, DL, VT);
     AmtR = DAG.getNode(ISD::SUB, DL, VT, AmtR, Amt);
     SDValue SHL = DAG.getNode(ISD::SHL, DL, VT, R, Amt);
