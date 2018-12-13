@@ -985,7 +985,10 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
 
     setOperationAction(ISD::ROTL,               MVT::v4i32, Custom);
     setOperationAction(ISD::ROTL,               MVT::v8i16, Custom);
-    setOperationAction(ISD::ROTL,               MVT::v16i8, Custom);
+
+    // With BWI, expanding (and promoting the shifts) is the better.
+    if (!Subtarget.hasBWI())
+      setOperationAction(ISD::ROTL,             MVT::v16i8, Custom);
   }
 
   if (!Subtarget.useSoftFloat() && Subtarget.hasSSSE3()) {
@@ -1132,7 +1135,10 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
 
     setOperationAction(ISD::ROTL,              MVT::v8i32,  Custom);
     setOperationAction(ISD::ROTL,              MVT::v16i16, Custom);
-    setOperationAction(ISD::ROTL,              MVT::v32i8,  Custom);
+
+    // With BWI, expanding (and promoting the shifts) is the better.
+    if (!Subtarget.hasBWI())
+      setOperationAction(ISD::ROTL,            MVT::v32i8,  Custom);
 
     setOperationAction(ISD::SELECT,            MVT::v4f64, Custom);
     setOperationAction(ISD::SELECT,            MVT::v4i64, Custom);
@@ -24820,27 +24826,17 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
 
   // Rotate by splat - expand back to shifts.
   // TODO - legalizers should be able to handle this.
-  if (EltSizeInBits >= 16 || Subtarget.hasBWI()) {
-    if (DAG.isSplatValue(Amt)) {
-      SDValue AmtR = DAG.getConstant(EltSizeInBits, DL, VT);
-      AmtR = DAG.getNode(ISD::SUB, DL, VT, AmtR, Amt);
-      SDValue SHL = DAG.getNode(ISD::SHL, DL, VT, R, Amt);
-      SDValue SRL = DAG.getNode(ISD::SRL, DL, VT, R, AmtR);
-      return DAG.getNode(ISD::OR, DL, VT, SHL, SRL);
-    }
+  if (EltSizeInBits >= 16 && DAG.isSplatValue(Amt)) {
+    SDValue AmtR = DAG.getConstant(EltSizeInBits, DL, VT);
+    AmtR = DAG.getNode(ISD::SUB, DL, VT, AmtR, Amt);
+    SDValue SHL = DAG.getNode(ISD::SHL, DL, VT, R, Amt);
+    SDValue SRL = DAG.getNode(ISD::SRL, DL, VT, R, AmtR);
+    return DAG.getNode(ISD::OR, DL, VT, SHL, SRL);
   }
 
   // v16i8/v32i8: Split rotation into rot4/rot2/rot1 stages and select by
   // the amount bit.
   if (EltSizeInBits == 8) {
-    if (Subtarget.hasBWI()) {
-      SDValue AmtR = DAG.getConstant(EltSizeInBits, DL, VT);
-      AmtR = DAG.getNode(ISD::SUB, DL, VT, AmtR, Amt);
-      SDValue SHL = DAG.getNode(ISD::SHL, DL, VT, R, Amt);
-      SDValue SRL = DAG.getNode(ISD::SRL, DL, VT, R, AmtR);
-      return DAG.getNode(ISD::OR, DL, VT, SHL, SRL);
-    }
-
     // We don't need ModuloAmt here as we just peek at individual bits.
     MVT ExtVT = MVT::getVectorVT(MVT::i16, VT.getVectorNumElements() / 2);
 
