@@ -1202,8 +1202,7 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
       LargestVectorWidth = VecWidth->getVectorWidth();
 }
 
-void CodeGenFunction::EmitFunctionBody(FunctionArgList &Args,
-                                       const Stmt *Body) {
+void CodeGenFunction::EmitFunctionBody(const Stmt *Body) {
   incrementProfileCounter(Body);
   if (const CompoundStmt *S = dyn_cast<CompoundStmt>(Body))
     EmitCompoundStmtWithoutScope(*S);
@@ -1371,7 +1370,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
     // copy-constructors.
     emitImplicitAssignmentOperatorBody(Args);
   } else if (Body) {
-    EmitFunctionBody(Args, Body);
+    EmitFunctionBody(Body);
   } else
     llvm_unreachable("no definition for emitted function");
 
