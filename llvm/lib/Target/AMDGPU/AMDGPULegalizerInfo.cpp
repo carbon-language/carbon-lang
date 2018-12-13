@@ -99,6 +99,12 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   setAction({G_ZEXT, S64}, Legal);
   setAction({G_ZEXT, 1, S32}, Legal);
 
+  setAction({G_SEXT, S64}, Legal);
+  setAction({G_SEXT, 1, S32}, Legal);
+
+  setAction({G_ANYEXT, S64}, Legal);
+  setAction({G_ANYEXT, 1, S32}, Legal);
+
   setAction({G_FPTOSI, S32}, Legal);
   setAction({G_FPTOSI, 1, S32}, Legal);
 
@@ -117,7 +123,19 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   setAction({G_ICMP, S1}, Legal);
   setAction({G_ICMP, 1, S32}, Legal);
 
+  setAction({G_CTLZ, S32}, Legal);
+  setAction({G_CTLZ_ZERO_UNDEF, S32}, Legal);
+  setAction({G_CTTZ, S32}, Legal);
+  setAction({G_CTTZ_ZERO_UNDEF, S32}, Legal);
+  setAction({G_BSWAP, S32}, Legal);
+  setAction({G_CTPOP, S32}, Legal);
+
   getActionDefinitionsBuilder(G_INTTOPTR)
+    .legalIf([](const LegalityQuery &Query) {
+      return true;
+    });
+
+  getActionDefinitionsBuilder(G_PTRTOINT)
     .legalIf([](const LegalityQuery &Query) {
       return true;
     });
