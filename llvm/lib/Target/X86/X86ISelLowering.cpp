@@ -32285,6 +32285,17 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
     if (SimplifyDemandedVectorElts(Amt, AmtElts, AmtUndef, AmtZero, TLO,
                                    Depth + 1))
       return true;
+    LLVM_FALLTHROUGH;
+  }
+  case X86ISD::VSHLI:
+  case X86ISD::VSRLI:
+  case X86ISD::VSRAI: {
+    SDValue Src = Op.getOperand(0);
+    APInt SrcUndef;
+    if (SimplifyDemandedVectorElts(Src, DemandedElts, SrcUndef, KnownZero, TLO,
+                                   Depth + 1))
+      return true;
+    // TODO convert SrcUndef to KnownUndef.
     break;
   }
   case X86ISD::CVTSI2P:
@@ -32358,6 +32369,10 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
   if (llvm::any_of(OpInputs,
                    [VT](SDValue V) { return VT != V.getValueType(); }))
     return false;
+
+  // Clear known elts that might have been set above.
+  KnownZero.clearAllBits();
+  KnownUndef.clearAllBits();
 
   // Check if shuffle mask can be simplified to undef/zero/identity.
   int NumSrcs = OpInputs.size();
