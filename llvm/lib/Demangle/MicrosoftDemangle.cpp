@@ -1669,10 +1669,10 @@ TypeNode *Demangler::demangleType(StringView &MangledName,
     Ty = demangleCustomType(MangledName);
   } else {
     Ty = demanglePrimitiveType(MangledName);
-    if (!Ty || Error)
-      return Ty;
   }
 
+  if (!Ty || Error)
+    return Ty;
   Ty->Quals = Qualifiers(Ty->Quals | Quals);
   return Ty;
 }
