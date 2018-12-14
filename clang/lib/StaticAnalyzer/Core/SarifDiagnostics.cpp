@@ -123,24 +123,21 @@ static json::Object createFileLocation(const FileEntry &FE,
   std::string FileURI = fileNameToURI(getFileName(FE));
 
   // See if the Files array contains this URI already. If it does not, create
-  // a new file object to add to the array. Calculate the index within the file
-  // location array so it can be stored in the JSON object.
-  unsigned Index = 0;
-  for (const json::Value &File : Files) {
+  // a new file object to add to the array.
+  auto I = llvm::find_if(Files, [&](const json::Value &File) {
     if (const json::Object *Obj = File.getAsObject()) {
       if (const json::Object *FileLoc = Obj->getObject("fileLocation")) {
         Optional<StringRef> URI = FileLoc->getString("uri");
-        if (URI && URI->equals(FileURI))
-          break;
+        return URI && URI->equals(FileURI);
       }
     }
-    ++Index;
-  }
+    return false;
+  });
 
-  // If we reached the end of the array, then add the file to the list of files
-  // we're tracking; Index then points to the last element of the array. Note
-  // that an empty file lists always causes a file to be added.
-  if (Files.empty() || Index == Files.size())
+  // Calculate the index within the file location array so it can be stored in
+  // the JSON object.
+  auto Index = static_cast<unsigned>(std::distance(Files.begin(), I));
+  if (I == Files.end())
     Files.push_back(createFile(FE));
 
   return json::Object{{"uri", FileURI}, {"fileIndex", Index}};
