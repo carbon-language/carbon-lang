@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Clustering.h"
-#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include <string>
 
@@ -92,8 +91,14 @@ llvm::Error InstructionBenchmarkClustering::validateAndSetup() {
 }
 
 void InstructionBenchmarkClustering::dbScan(const size_t MinPts) {
-  std::vector<size_t> Neighbors; // Persistent buffer to avoid allocs.
-  for (size_t P = 0, NumPoints = Points_.size(); P < NumPoints; ++P) {
+  const size_t NumPoints = Points_.size();
+
+  // Persistent buffers to avoid allocs.
+  std::vector<size_t> Neighbors;
+  std::vector<size_t> ToProcess(NumPoints);
+  std::vector<char> Added(NumPoints);
+
+  for (size_t P = 0; P < NumPoints; ++P) {
     if (!ClusterIdForPoint_[P].isUndef())
       continue; // Previously processed in inner loop.
     rangeQuery(P, Neighbors);
@@ -109,14 +114,18 @@ void InstructionBenchmarkClustering::dbScan(const size_t MinPts) {
     Cluster &CurrentCluster = Clusters_.back();
     ClusterIdForPoint_[P] = CurrentCluster.Id; /* Label initial point */
     CurrentCluster.PointIndices.push_back(P);
+    Added[P] = 1;
 
     // Process P's neighbors.
-    llvm::SetVector<size_t, std::deque<size_t>> ToProcess;
-    ToProcess.insert(Neighbors.begin(), Neighbors.end());
-    while (!ToProcess.empty()) {
+    size_t Tail = 0;
+    for (size_t Q : Neighbors)
+      if (!Added[Q]) {
+        ToProcess[Tail++] = P;
+        Added[Q] = 1;
+      }
+    for (size_t Head = 0; Head < Tail; ++Head) {
       // Retrieve a point from the set.
-      const size_t Q = *ToProcess.begin();
-      ToProcess.erase(ToProcess.begin());
+      size_t Q = ToProcess[Head];
 
       if (ClusterIdForPoint_[Q].isNoise()) {
         // Change noise point to border point.
@@ -124,17 +133,18 @@ void InstructionBenchmarkClustering::dbScan(const size_t MinPts) {
         CurrentCluster.PointIndices.push_back(Q);
         continue;
       }
-      if (!ClusterIdForPoint_[Q].isUndef()) {
-        continue; // Previously processed.
-      }
+      assert(ClusterIdForPoint_[Q].isUndef());
       // Add Q to the current custer.
       ClusterIdForPoint_[Q] = CurrentCluster.Id;
       CurrentCluster.PointIndices.push_back(Q);
       // And extend to the neighbors of Q if the region is dense enough.
       rangeQuery(Q, Neighbors);
-      if (Neighbors.size() + 1 >= MinPts) {
-        ToProcess.insert(Neighbors.begin(), Neighbors.end());
-      }
+      if (Neighbors.size() + 1 >= MinPts)
+        for (size_t P : Neighbors)
+          if (!Added[P]) {
+            ToProcess[Tail++] = P;
+            Added[P] = 1;
+          }
     }
   }
   // assert(Neighbors.capacity() == (Points_.size() - 1));
