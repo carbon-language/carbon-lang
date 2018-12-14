@@ -137,9 +137,9 @@ loadObj(StringRef Filename, object::OwningBinary<object::ObjectFile> &ObjFile,
     Sleds.push_back({});
     auto &Entry = Sleds.back();
     uint32_t OffsetPtr = 0;
-    uint32_t AddrPtr = OffsetPtr;
+    uint32_t AddrOff = OffsetPtr;
     Entry.Address = RelocateOrElse(AddrOff, Extractor.getU64(&OffsetPtr));
-    uint32_t FuncPtr = OffsetPtr;
+    uint32_t FuncOff = OffsetPtr;
     Entry.Function = RelocateOrElse(FuncOff, Extractor.getU64(&OffsetPtr));
     auto Kind = Extractor.getU8(&OffsetPtr);
     static constexpr SledEntry::FunctionKinds Kinds[] = {
