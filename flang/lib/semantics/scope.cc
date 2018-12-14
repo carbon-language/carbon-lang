@@ -70,6 +70,7 @@ bool Scope::AddSubmodule(const SourceName &name, Scope &submodule) {
   return submodules_.emplace(name, &submodule).second;
 }
 DeclTypeSpec &Scope::MakeDeclTypeSpec(TypeCategory category, int kind) {
+  CHECK(category != TypeCategory::Character);
   DeclTypeSpec type{IntrinsicTypeSpec{category, kind}};
   auto it{std::find(declTypeSpecs_.begin(), declTypeSpecs_.end(), type)};
   if (it != declTypeSpecs_.end()) {
@@ -79,6 +80,12 @@ DeclTypeSpec &Scope::MakeDeclTypeSpec(TypeCategory category, int kind) {
     return declTypeSpecs_.back();
   }
 }
+DeclTypeSpec &Scope::MakeDeclTypeSpec(ParamValue &&length, int kind) {
+  characterTypeSpecs_.emplace_back(std::move(length), kind);
+  declTypeSpecs_.emplace_back(characterTypeSpecs_.back());
+  return declTypeSpecs_.back();
+}
+
 DeclTypeSpec &Scope::MakeDeclTypeSpec(
     DeclTypeSpec::Category category, const SourceName &name) {
   CHECK(category == DeclTypeSpec::TypeDerived ||

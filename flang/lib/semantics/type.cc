@@ -110,6 +110,7 @@ std::ostream &operator<<(std::ostream &o, const ParamValue &x) {
 
 IntrinsicTypeSpec::IntrinsicTypeSpec(TypeCategory category, int kind)
   : category_{category}, kind_{kind} {
+  CHECK(category != TypeCategory::Character);
   CHECK(category != TypeCategory::Derived);
   CHECK(kind > 0);
 }
@@ -122,8 +123,18 @@ std::ostream &operator<<(std::ostream &os, const IntrinsicTypeSpec &x) {
   return os;
 }
 
+std::ostream &operator<<(std::ostream &os, const CharacterTypeSpec &x) {
+  os << "CHARACTER(" << x.length();
+  if (x.kind() != 0) {
+    os << ",kind=" << x.kind();
+  }
+  return os << ')';
+}
+
 DeclTypeSpec::DeclTypeSpec(const IntrinsicTypeSpec &intrinsic)
   : category_{Intrinsic}, typeSpec_{intrinsic} {}
+DeclTypeSpec::DeclTypeSpec(CharacterTypeSpec &character)
+  : category_{Character}, typeSpec_{&character} {}
 DeclTypeSpec::DeclTypeSpec(Category category, DerivedTypeSpec &derived)
   : category_{category}, typeSpec_{&derived} {
   CHECK(category == TypeDerived || category == ClassDerived);
@@ -134,6 +145,10 @@ DeclTypeSpec::DeclTypeSpec(Category category) : category_{category} {
 const IntrinsicTypeSpec &DeclTypeSpec::intrinsicTypeSpec() const {
   CHECK(category_ == Intrinsic);
   return typeSpec_.intrinsic;
+}
+const CharacterTypeSpec &DeclTypeSpec::characterTypeSpec() const {
+  CHECK(category_ == Character);
+  return *typeSpec_.character;
 }
 DerivedTypeSpec &DeclTypeSpec::derivedTypeSpec() {
   CHECK(category_ == TypeDerived || category_ == ClassDerived);
@@ -158,6 +173,7 @@ bool DeclTypeSpec::operator==(const DeclTypeSpec &that) const {
 std::ostream &operator<<(std::ostream &o, const DeclTypeSpec &x) {
   switch (x.category()) {
   case DeclTypeSpec::Intrinsic: return o << x.intrinsicTypeSpec();
+  case DeclTypeSpec::Character: return o << x.characterTypeSpec();
   case DeclTypeSpec::TypeDerived:
     return o << "TYPE(" << x.derivedTypeSpec() << ')';
   case DeclTypeSpec::ClassDerived:

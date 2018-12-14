@@ -29,4 +29,6 @@ end type
 type(t(.true.)) :: w
 !ERROR: expression must be INTEGER
 real :: w(l*2)
+!ERROR: expression must be INTEGER
+character(len=l) :: v
 end

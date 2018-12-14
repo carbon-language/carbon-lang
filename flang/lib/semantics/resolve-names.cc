@@ -218,7 +218,6 @@ public:
   void Post(const parser::IntrinsicTypeSpec::Complex &);
   void Post(const parser::IntrinsicTypeSpec::DoublePrecision &);
   void Post(const parser::IntrinsicTypeSpec::DoubleComplex &);
-  void Post(const parser::IntrinsicTypeSpec::Character &);
   void Post(const parser::DeclarationTypeSpec::ClassStar &);
   void Post(const parser::DeclarationTypeSpec::TypeStar &);
   void Post(const parser::TypeParamSpec &);
@@ -231,18 +230,18 @@ protected:
   void EndDeclTypeSpec();
   const parser::Name *derivedTypeName() const { return derivedTypeName_; }
   void SetDeclTypeSpec(const parser::Name &, DeclTypeSpec &);
+  void SetDeclTypeSpec(DeclTypeSpec &);
+  ParamValue GetParamValue(const parser::TypeParamValue &);
 
 private:
   bool expectDeclTypeSpec_{false};  // should only see decl-type-spec when true
   DeclTypeSpec *declTypeSpec_{nullptr};
   const parser::Name *derivedTypeName_{nullptr};
 
-  void SetDeclTypeSpec(DeclTypeSpec &declTypeSpec);
   void MakeIntrinsic(TypeCategory, const std::optional<parser::KindSelector> &);
   void MakeIntrinsic(TypeCategory, int kind);
   int GetKindParamValue(
       TypeCategory, const std::optional<parser::KindSelector> &);
-  ParamValue GetParamValue(const parser::TypeParamValue &);
 };
 
 // Visit ImplicitStmt and related parse tree nodes and updates implicit rules.
@@ -581,6 +580,10 @@ public:
   void Post(const parser::DimensionStmt::Declaration &);
   bool Pre(const parser::TypeDeclarationStmt &) { return BeginDecl(); }
   void Post(const parser::TypeDeclarationStmt &) { EndDecl(); }
+  void Post(const parser::IntrinsicTypeSpec::Character &);
+  void Post(const parser::CharSelector::LengthAndKind &);
+  void Post(const parser::TypeParamValue &);
+  void Post(const parser::CharLength &);
   void Post(const parser::DeclarationTypeSpec::Class &);
   bool Pre(const parser::DeclarationTypeSpec::Record &);
   bool Pre(const parser::DerivedTypeSpec &);
@@ -625,6 +628,11 @@ protected:
 private:
   // The attribute corresponding to the statement containing an ObjectDecl
   std::optional<Attr> objectDeclAttr_;
+  // Info about current character type while walking DeclTypeSpec
+  struct {
+    std::optional<ParamValue> length;
+    int kind{0};
+  } charInfo_;
   // Info about current derived type while walking DerivedTypeStmt
   struct {
     const parser::Name *extends{nullptr};  // EXTENDS(name)
@@ -1019,9 +1027,6 @@ void DeclTypeSpecVisitor::Post(const parser::TypeGuardStmt &) {
 
 void DeclTypeSpecVisitor::Post(const parser::IntegerTypeSpec &x) {
   MakeIntrinsic(TypeCategory::Integer, x.v);
-}
-void DeclTypeSpecVisitor::Post(const parser::IntrinsicTypeSpec::Character &x) {
-  CHECK(!"TODO: character");
 }
 void DeclTypeSpecVisitor::Post(const parser::IntrinsicTypeSpec::Logical &x) {
   MakeIntrinsic(TypeCategory::Logical, x.kind);
@@ -2339,6 +2344,35 @@ Symbol &DeclarationVisitor::DeclareObjectEntity(
     }
   }
   return symbol;
+}
+
+void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Character &x) {
+  if (!charInfo_.length) {
+    charInfo_.length = ParamValue{SomeExpr{
+        evaluate::AsExpr(evaluate::Constant<evaluate::SubscriptInteger>{1})}};
+  }
+  SetDeclTypeSpec(currScope().MakeDeclTypeSpec(
+      std::move(*charInfo_.length), charInfo_.kind));
+  charInfo_ = {};
+}
+void DeclarationVisitor::Post(const parser::CharSelector::LengthAndKind &x) {
+  if (auto maybeExpr{EvaluateExpr(x.kind)}) {
+    charInfo_.kind = evaluate::ToInt64(*maybeExpr).value();
+  }
+  if (x.length) {
+    charInfo_.length = GetParamValue(*x.length);
+  }
+}
+void DeclarationVisitor::Post(const parser::TypeParamValue &x) {
+  if (!derivedTypeName()) {
+    charInfo_.length = GetParamValue(x);
+  }
+}
+void DeclarationVisitor::Post(const parser::CharLength &x) {
+  if (const auto *length{std::get_if<std::int64_t>(&x.u)}) {
+    charInfo_.length = ParamValue{SomeExpr{evaluate::AsExpr(
+        evaluate::Constant<evaluate::SubscriptInteger>{*length})}};
+  }
 }
 
 void DeclarationVisitor::Post(const parser::DeclarationTypeSpec::Class &x) {

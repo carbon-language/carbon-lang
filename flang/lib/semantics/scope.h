@@ -122,6 +122,7 @@ public:
   bool AddSubmodule(const SourceName &, Scope &);
 
   DeclTypeSpec &MakeDeclTypeSpec(TypeCategory, int kind);
+  DeclTypeSpec &MakeDeclTypeSpec(ParamValue &&length, int kind = 0);
   DeclTypeSpec &MakeDeclTypeSpec(DeclTypeSpec::Category, const SourceName &);
   DeclTypeSpec &MakeDeclTypeSpec(DeclTypeSpec::Category);
   DerivedTypeSpec &MakeDerivedTypeSpec(const SourceName &);
@@ -155,6 +156,7 @@ private:
   mapType symbols_;
   std::map<SourceName, Scope *> submodules_;
   std::list<DeclTypeSpec> declTypeSpecs_;
+  std::list<CharacterTypeSpec> characterTypeSpecs_;
   std::list<DerivedTypeSpec> derivedTypeSpecs_;
   std::string chars_;
   std::optional<ImportKind> importKind_;
