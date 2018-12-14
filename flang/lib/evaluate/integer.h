@@ -160,15 +160,15 @@ public:
         }
       } else {
         INT signExtension{-(n < 0)};
+        static_assert(nBits >= partBits);
         if constexpr (nBits > partBits) {
-          signExtension <<= partBits;
+          signExtension <<= nBits - partBits;
           for (int j{0}; j < parts; ++j) {
             SetLEPart(j, static_cast<Part>(n));
             n >>= partBits;
             n |= signExtension;
           }
         } else {
-          static_assert(nBits == partBits);
           SetLEPart(0, static_cast<Part>(n));
           for (int j{1}; j < parts; ++j) {
             SetLEPart(j, static_cast<Part>(signExtension));
