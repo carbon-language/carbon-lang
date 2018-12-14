@@ -7,6 +7,6 @@
 
 // CHECK:      struct {
 // CHECK-NEXT: } dont_crash_on_syntax_error;
-// CHECK-NEXT: decltype(nullptr) p(/*implicit*/(decltype(nullptr))0);
+// CHECK-NEXT: decltype(nullptr) p;
 struct {
 } dont_crash_on_syntax_error /* missing ; */ decltype(nullptr) p;

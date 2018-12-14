@@ -4881,13 +4881,6 @@ static void TryDefaultInitialization(Sema &S,
     return;
   }
 
-  // As an extension, and to fix Core issue 1013, zero initialize nullptr_t.
-  // Since there is only 1 valid value of nullptr_t, we can just use that.
-  if (DestType->isNullPtrType()) {
-    Sequence.AddZeroInitializationStep(Entity.getType());
-    return;
-  }
-
   //     - otherwise, no initialization is performed.
 
   //   If a program calls for the default initialization of an object of
