@@ -1170,6 +1170,18 @@ def: Pat<(srl V4I16:$b, (v4i16 (HexagonVSPLAT u4_0ImmPred:$c))),
 def: Pat<(shl V4I16:$b, (v4i16 (HexagonVSPLAT u4_0ImmPred:$c))),
          (S2_asl_i_vh V4I16:$b, imm:$c)>;
 
+def: Pat<(HexagonVASR V2I16:$Rs, u4_0ImmPred:$S),
+         (LoReg (S2_asr_i_vh (ToAext64 $Rs), imm:$S))>;
+def: Pat<(HexagonVASL V2I16:$Rs, u4_0ImmPred:$S),
+         (LoReg (S2_asl_i_vh (ToAext64 $Rs), imm:$S))>;
+def: Pat<(HexagonVLSR V2I16:$Rs, u4_0ImmPred:$S),
+         (LoReg (S2_lsr_i_vh (ToAext64 $Rs), imm:$S))>;
+def: Pat<(HexagonVASR V2I16:$Rs, I32:$Rt),
+         (LoReg (S2_asr_i_vh (ToAext64 $Rs), I32:$Rt))>;
+def: Pat<(HexagonVASL V2I16:$Rs, I32:$Rt),
+         (LoReg (S2_asl_i_vh (ToAext64 $Rs), I32:$Rt))>;
+def: Pat<(HexagonVLSR V2I16:$Rs, I32:$Rt),
+         (LoReg (S2_lsr_i_vh (ToAext64 $Rs), I32:$Rt))>;
 
 // --(9) Arithmetic/bitwise ----------------------------------------------
 //
