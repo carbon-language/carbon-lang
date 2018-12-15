@@ -11,8 +11,8 @@
 #CHECK-NEXT:  VM size: 4294967296
 #CHECK-NEXT:  File size: 0
 #CHECK-NEXT:  There are no subsections
-#
-#CHECK:       Index: 1
+#CHECK-EMPTY:
+#CHECK-NEXT:  Index: 1
 #CHECK-NEXT:  Name: __TEXT
 #CHECK-NEXT:  Type: container
 #CHECK-NEXT:  Permissions: r-x
@@ -29,8 +29,8 @@
 #CHECK-NEXT:    VM address: 0x100000f30
 #CHECK-NEXT:    VM size: 22
 #CHECK-NEXT:    File size: 22
-#
-#CHECK:         Index: 1
+#CHECK-EMPTY:
+#CHECK-NEXT:    Index: 1
 #CHECK-NEXT:    Name: __unwind_info
 #CHECK-NEXT:    Type: compact-unwind
 #CHECK-NEXT:    Permissions: r-x
@@ -38,8 +38,8 @@
 #CHECK-NEXT:    VM address: 0x100000f48
 #CHECK-NEXT:    VM size: 76
 #CHECK-NEXT:    File size: 76
-#
-#CHECK:         Index: 2
+#CHECK-EMPTY:
+#CHECK-NEXT:    Index: 2
 #CHECK-NEXT:    Name: __eh_frame
 #CHECK-NEXT:    Type: eh-frame
 #CHECK-NEXT:    Permissions: r-x
