@@ -130,10 +130,11 @@ void ento::printCheckerHelp(raw_ostream &out, ArrayRef<std::string> plugins) {
 
 void ento::printEnabledCheckerList(raw_ostream &out,
                                    ArrayRef<std::string> plugins,
-                                   const AnalyzerOptions &opts) {
+                                   const AnalyzerOptions &opts,
+                                   DiagnosticsEngine &diags) {
   out << "OVERVIEW: Clang Static Analyzer Enabled Checkers List\n\n";
 
-  ClangCheckerRegistry(plugins).printList(out, opts);
+  ClangCheckerRegistry(plugins).printList(out, opts, diags);
 }
 
 void ento::printAnalyzerConfigList(raw_ostream &out) {
