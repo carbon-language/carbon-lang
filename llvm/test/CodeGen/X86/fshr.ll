@@ -178,46 +178,21 @@ define i32 @var_shift_i32(i32 %x, i32 %y, i32 %z) nounwind {
 }
 
 define i32 @var_shift_i32_optsize(i32 %x, i32 %y, i32 %z) nounwind optsize {
-; X86-FAST-LABEL: var_shift_i32_optsize:
-; X86-FAST:       # %bb.0:
-; X86-FAST-NEXT:    movb {{[0-9]+}}(%esp), %cl
-; X86-FAST-NEXT:    movl {{[0-9]+}}(%esp), %edx
-; X86-FAST-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X86-FAST-NEXT:    shrdl %cl, %edx, %eax
-; X86-FAST-NEXT:    retl
+; X86-LABEL: var_shift_i32_optsize:
+; X86:       # %bb.0:
+; X86-NEXT:    movb {{[0-9]+}}(%esp), %cl
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %edx
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NEXT:    shrdl %cl, %edx, %eax
+; X86-NEXT:    retl
 ;
-; X86-SLOW-LABEL: var_shift_i32_optsize:
-; X86-SLOW:       # %bb.0:
-; X86-SLOW-NEXT:    pushl %esi
-; X86-SLOW-NEXT:    movb {{[0-9]+}}(%esp), %cl
-; X86-SLOW-NEXT:    movl {{[0-9]+}}(%esp), %esi
-; X86-SLOW-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X86-SLOW-NEXT:    movl %eax, %edx
-; X86-SLOW-NEXT:    shrdl %cl, %esi, %edx
-; X86-SLOW-NEXT:    andb $31, %cl
-; X86-SLOW-NEXT:    je .LBB3_2
-; X86-SLOW-NEXT:  # %bb.1:
-; X86-SLOW-NEXT:    movl %edx, %eax
-; X86-SLOW-NEXT:  .LBB3_2:
-; X86-SLOW-NEXT:    popl %esi
-; X86-SLOW-NEXT:    retl
-;
-; X64-FAST-LABEL: var_shift_i32_optsize:
-; X64-FAST:       # %bb.0:
-; X64-FAST-NEXT:    movl %edx, %ecx
-; X64-FAST-NEXT:    movl %esi, %eax
-; X64-FAST-NEXT:    # kill: def $cl killed $cl killed $ecx
-; X64-FAST-NEXT:    shrdl %cl, %edi, %eax
-; X64-FAST-NEXT:    retq
-;
-; X64-SLOW-LABEL: var_shift_i32_optsize:
-; X64-SLOW:       # %bb.0:
-; X64-SLOW-NEXT:    movl %edx, %ecx
-; X64-SLOW-NEXT:    movl %esi, %eax
-; X64-SLOW-NEXT:    shrdl %cl, %edi, %eax
-; X64-SLOW-NEXT:    andb $31, %cl
-; X64-SLOW-NEXT:    cmovel %esi, %eax
-; X64-SLOW-NEXT:    retq
+; X64-LABEL: var_shift_i32_optsize:
+; X64:       # %bb.0:
+; X64-NEXT:    movl %edx, %ecx
+; X64-NEXT:    movl %esi, %eax
+; X64-NEXT:    # kill: def $cl killed $cl killed $ecx
+; X64-NEXT:    shrdl %cl, %edi, %eax
+; X64-NEXT:    retq
   %tmp = tail call i32 @llvm.fshr.i32(i32 %x, i32 %y, i32 %z)
   ret i32 %tmp
 }
