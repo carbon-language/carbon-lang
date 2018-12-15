@@ -1431,7 +1431,8 @@ ProgramStateRef MallocChecker::addExtentSize(CheckerContext &C,
 
 void MallocChecker::checkPreStmt(const CXXDeleteExpr *DE,
                                  CheckerContext &C) const {
-
+  // This will regard deleting freed() regions as a use-after-free, rather then
+  // a double-free or double-delete error.
   if (!ChecksEnabled[CK_NewDeleteChecker])
     if (SymbolRef Sym = C.getSVal(DE->getArgument()).getAsSymbol())
       checkUseAfterFree(Sym, C, DE->getArgument());
@@ -1628,7 +1629,8 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
 }
 
 /// Checks if the previous call to free on the given symbol failed - if free
-/// failed, returns true. Also, returns the corresponding return value symbol.
+/// failed, returns true. Also, stores the corresponding return value symbol in
+/// \p RetStatusSymbol.
 static bool didPreviousFreeFail(ProgramStateRef State,
                                 SymbolRef Sym, SymbolRef &RetStatusSymbol) {
   const SymbolRef *Ret = State->get<FreeReturnValue>(Sym);
@@ -2288,6 +2290,12 @@ void MallocChecker::ReportDoubleFree(CheckerContext &C, SourceRange Range,
   Optional<MallocChecker::CheckKind> CheckKind = getCheckIfTracked(C, Sym);
   if (!CheckKind.hasValue())
     return;
+
+  // If this is a double delete error, print the appropiate warning message.
+  if (CheckKind == CK_NewDeleteChecker) {
+    ReportDoubleDelete(C, Sym);
+    return;
+  }
 
   if (ExplodedNode *N = C.generateErrorNode()) {
     if (!BT_DoubleFree[*CheckKind])
