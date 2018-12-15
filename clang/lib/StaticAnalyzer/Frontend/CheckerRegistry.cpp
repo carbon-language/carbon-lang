@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/StaticAnalyzer/Core/CheckerRegistry.h"
+#include "clang/StaticAnalyzer/Frontend/CheckerRegistry.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
