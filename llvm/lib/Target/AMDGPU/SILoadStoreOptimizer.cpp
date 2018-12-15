@@ -1366,8 +1366,8 @@ bool SILoadStoreOptimizer::promoteConstantOffsetToImm(
     AM.HasBaseReg = true;
     AM.BaseOffs = Dist;
     if (TLI->isLegalGlobalAddressingMode(AM) &&
-        (uint32_t)abs(Dist) > MaxDist) {
-      MaxDist = abs(Dist);
+        (uint32_t)std::abs(Dist) > MaxDist) {
+      MaxDist = std::abs(Dist);
 
       AnchorAddr = MAddrNext;
       AnchorInst = &MINext;
