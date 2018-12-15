@@ -30,6 +30,17 @@ for the lldb testsuite to be run on a remote target device/system.
 //
 //  All numbers are base 10, os_version is a string that will be parsed as major.minor.patch.
 
+//----------------------------------------------------------------------
+// qModuleInfo
+//
+// BRIEF
+//   Report information about a binary on the target system
+//
+// EXAMPLE
+//  receive: qModuleInfo:2f62696e2f6c73;
+//
+// FIXME finish this packet description, v. GDBRemoteCommunicationServerCommon::Handle_qModuleInfo
+
 
 //----------------------------------------------------------------------
 // qGetWorkingDir
