@@ -2192,8 +2192,8 @@ bool X86DAGToDAGISel::isSExtAbsoluteSymbolRef(unsigned Width, SDNode *N) const {
 }
 
 /// Test whether the given X86ISD::CMP node has any uses which require the SF
-/// or OF bits to be accurate.
-static bool hasNoSignedComparisonUses(SDValue Flags) {
+/// flag to be accurate.
+static bool hasNoSignFlagUses(SDValue Flags) {
   // Examine each user of the node.
   for (SDNode::use_iterator UI = Flags->use_begin(), UE = Flags->use_end();
          UI != UE; ++UI) {
@@ -2215,11 +2215,14 @@ static bool hasNoSignedComparisonUses(SDValue Flags) {
       switch (FlagUI->getMachineOpcode()) {
       // These comparisons don't treat the most significant bit specially.
       case X86::SETAr: case X86::SETAEr: case X86::SETBr: case X86::SETBEr:
-      case X86::SETEr: case X86::SETNEr: case X86::SETPr: case X86::SETNPr:
+      case X86::SETEr: case X86::SETNEr: case X86::SETOr: case X86::SETNOr:
+      case X86::SETPr: case X86::SETNPr:
       case X86::SETAm: case X86::SETAEm: case X86::SETBm: case X86::SETBEm:
-      case X86::SETEm: case X86::SETNEm: case X86::SETPm: case X86::SETNPm:
+      case X86::SETEm: case X86::SETNEm: case X86::SETOm: case X86::SETNOm:
+      case X86::SETPm: case X86::SETNPm:
       case X86::JA_1: case X86::JAE_1: case X86::JB_1: case X86::JBE_1:
-      case X86::JE_1: case X86::JNE_1: case X86::JP_1: case X86::JNP_1:
+      case X86::JE_1: case X86::JNE_1: case X86::JO_1: case X86::JNO_1:
+      case X86::JP_1: case X86::JNP_1:
       case X86::CMOVA16rr: case X86::CMOVA16rm:
       case X86::CMOVA32rr: case X86::CMOVA32rm:
       case X86::CMOVA64rr: case X86::CMOVA64rm:
@@ -2241,6 +2244,9 @@ static bool hasNoSignedComparisonUses(SDValue Flags) {
       case X86::CMOVNP16rr: case X86::CMOVNP16rm:
       case X86::CMOVNP32rr: case X86::CMOVNP32rm:
       case X86::CMOVNP64rr: case X86::CMOVNP64rm:
+      case X86::CMOVO16rr: case X86::CMOVO16rm:
+      case X86::CMOVO32rr: case X86::CMOVO32rm:
+      case X86::CMOVO64rr: case X86::CMOVO64rm:
       case X86::CMOVP16rr: case X86::CMOVP16rm:
       case X86::CMOVP32rr: case X86::CMOVP32rm:
       case X86::CMOVP64rr: case X86::CMOVP64rm:
@@ -3715,7 +3721,7 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
 
       if (isUInt<8>(Mask) &&
           (!(Mask & 0x80) || CmpVT == MVT::i8 ||
-           hasNoSignedComparisonUses(SDValue(Node, 0)))) {
+           hasNoSignFlagUses(SDValue(Node, 0)))) {
         // For example, convert "testl %eax, $8" to "testb %al, $8"
         VT = MVT::i8;
         SubRegOp = X86::sub_8bit;
@@ -3723,7 +3729,7 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
         MOpc = X86::TEST8mi;
       } else if (OptForMinSize && isUInt<16>(Mask) &&
                  (!(Mask & 0x8000) || CmpVT == MVT::i16 ||
-                  hasNoSignedComparisonUses(SDValue(Node, 0)))) {
+                  hasNoSignFlagUses(SDValue(Node, 0)))) {
         // For example, "testl %eax, $32776" to "testw %ax, $32776".
         // NOTE: We only want to form TESTW instructions if optimizing for
         // min size. Otherwise we only save one byte and possibly get a length
@@ -3738,7 +3744,7 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
                    // be sure we calculate the correct sign flag if needed.
                    (CmpVT != MVT::i16 || !(Mask & 0x8000))) ||
                   CmpVT == MVT::i32 ||
-                  hasNoSignedComparisonUses(SDValue(Node, 0)))) {
+                  hasNoSignFlagUses(SDValue(Node, 0)))) {
         // For example, "testq %rax, $268468232" to "testl %eax, $268468232".
         // NOTE: We only want to run that transform if N0 is 32 or 64 bits.
         // Otherwize, we find ourselves in a position where we have to do
