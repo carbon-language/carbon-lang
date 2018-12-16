@@ -18581,27 +18581,7 @@ static SDValue EmitTest(SDValue Op, unsigned X86CC, const SDLoc &dl,
   unsigned Opcode = 0;
   unsigned NumOperands = 0;
 
-  // Truncate operations may prevent the merge of the SETCC instruction
-  // and the arithmetic instruction before it. Attempt to truncate the operands
-  // of the arithmetic instruction and use a reduced bit-width instruction.
-  bool NeedTruncation = false;
   SDValue ArithOp = Op;
-  if (Op->getOpcode() == ISD::TRUNCATE && Op->hasOneUse()) {
-    SDValue Arith = Op->getOperand(0);
-    // Both the trunc and the arithmetic op need to have one user each.
-    if (Arith->hasOneUse())
-      switch (Arith.getOpcode()) {
-        default: break;
-        case ISD::ADD:
-        case ISD::SUB:
-        case ISD::AND:
-        case ISD::OR:
-        case ISD::XOR: {
-          NeedTruncation = true;
-          ArithOp = Arith;
-        }
-      }
-  }
 
   // Sometimes flags can be set either with an AND or with an SRL/SHL
   // instruction. SRL/SHL variant should be preferred for masks longer than this
@@ -18767,36 +18747,6 @@ static SDValue EmitTest(SDValue Op, unsigned X86CC, const SDLoc &dl,
   default:
   default_case:
     break;
-  }
-
-  // If we found that truncation is beneficial, perform the truncation and
-  // update 'Op'.
-  if (NeedTruncation) {
-    EVT VT = Op.getValueType();
-    SDValue WideVal = Op->getOperand(0);
-    EVT WideVT = WideVal.getValueType();
-    unsigned ConvertedOp = 0;
-    // Use a target machine opcode to prevent further DAGCombine
-    // optimizations that may separate the arithmetic operations
-    // from the setcc node.
-    switch (WideVal.getOpcode()) {
-      default: break;
-      case ISD::ADD: ConvertedOp = X86ISD::ADD; break;
-      case ISD::SUB: ConvertedOp = X86ISD::SUB; break;
-      case ISD::AND: ConvertedOp = X86ISD::AND; break;
-      case ISD::OR:  ConvertedOp = X86ISD::OR;  break;
-      case ISD::XOR: ConvertedOp = X86ISD::XOR; break;
-    }
-
-    if (ConvertedOp) {
-      const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-      if (TLI.isOperationLegal(WideVal.getOpcode(), WideVT)) {
-        SDValue V0 = DAG.getNode(ISD::TRUNCATE, dl, VT, WideVal.getOperand(0));
-        SDValue V1 = DAG.getNode(ISD::TRUNCATE, dl, VT, WideVal.getOperand(1));
-        SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::i32);
-        Op = DAG.getNode(ConvertedOp, dl, VTs, V0, V1);
-      }
-    }
   }
 
   if (Opcode == 0) {
@@ -39956,6 +39906,110 @@ static SDValue combineSIntToFP(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+static bool needCarryOrOverflowFlag(SDValue Flags) {
+  assert(Flags.getValueType() == MVT::i32 && "Unexpected VT!");
+
+  for (SDNode::use_iterator UI = Flags->use_begin(), UE = Flags->use_end();
+         UI != UE; ++UI) {
+    SDNode *User = *UI;
+
+    X86::CondCode CC;
+    switch (User->getOpcode()) {
+    default:
+      // Be conservative.
+      return true;
+    case X86ISD::SETCC:
+    case X86ISD::SETCC_CARRY:
+      CC = (X86::CondCode)User->getConstantOperandVal(0);
+      break;
+    case X86ISD::BRCOND:
+      CC = (X86::CondCode)User->getConstantOperandVal(2);
+      break;
+    case X86ISD::CMOV:
+      CC = (X86::CondCode)User->getConstantOperandVal(3);
+      break;
+    }
+
+    switch (CC) {
+    default: break;
+    case X86::COND_A: case X86::COND_AE:
+    case X86::COND_B: case X86::COND_BE:
+    case X86::COND_O: case X86::COND_NO:
+    case X86::COND_G: case X86::COND_GE:
+    case X86::COND_L: case X86::COND_LE:
+      return true;
+    }
+  }
+
+  return false;
+}
+
+static SDValue combineCMP(SDNode *N, SelectionDAG &DAG) {
+  // Only handle test patterns.
+  if (!isNullConstant(N->getOperand(1)))
+    return SDValue();
+
+  // If we have a CMP of a truncated binop, see if we can make a smaller binop
+  // and use its flags directly.
+  // TODO: Maybe we should try promoting compares that only use the zero flag
+  // first if we can prove the upper bits with computeKnownBits?
+  SDValue Op = N->getOperand(0);
+  EVT VT = Op.getValueType();
+
+  // Look for a truncate with a single use.
+  if (Op.getOpcode() != ISD::TRUNCATE || !Op.hasOneUse())
+    return SDValue();
+
+  Op = Op.getOperand(0);
+
+  // Arithmetic op can only have one use.
+  if (!Op.hasOneUse())
+    return SDValue();
+
+  unsigned NewOpc;
+  switch (Op.getOpcode()) {
+  default: return SDValue();
+  case ISD::AND:
+    // Skip and with constant. We have special handling for and with immediate
+    // during isel to generate test instructions.
+    if (isa<ConstantSDNode>(Op.getOperand(1)))
+      return SDValue();
+    NewOpc = X86ISD::AND;
+    break;
+  case ISD::OR:  NewOpc = X86ISD::OR;  break;
+  case ISD::XOR: NewOpc = X86ISD::XOR; break;
+  case ISD::ADD:
+    // If the carry or overflow flag is used, we can't truncate.
+    if (needCarryOrOverflowFlag(SDValue(N, 0)))
+      return SDValue();
+    NewOpc = X86ISD::ADD;
+    break;
+  case ISD::SUB:
+    // If the carry or overflow flag is used, we can't truncate.
+    if (needCarryOrOverflowFlag(SDValue(N, 0)))
+      return SDValue();
+    NewOpc = X86ISD::SUB;
+    break;
+  }
+
+  // We found an op we can narrow. Truncate its inputs.
+  SDLoc dl(N);
+  SDValue Op0 = DAG.getNode(ISD::TRUNCATE, dl, VT, Op.getOperand(0));
+  SDValue Op1 = DAG.getNode(ISD::TRUNCATE, dl, VT, Op.getOperand(1));
+
+  // Use a X86 specific opcode to avoid DAG combine messing with it.
+  SDVTList VTs = DAG.getVTList(VT, MVT::i32);
+  Op = DAG.getNode(NewOpc, dl, VTs, Op0, Op1);
+
+  // For AND, keep a CMP so that we can match the test pattern.
+  if (NewOpc == X86ISD::AND)
+    return DAG.getNode(X86ISD::CMP, dl, MVT::i32, Op,
+                       DAG.getConstant(0, dl, VT));
+
+  // Return the flags.
+  return Op.getValue(1);
+}
+
 static SDValue combineSBB(SDNode *N, SelectionDAG &DAG) {
   if (SDValue Flags = combineCarryThroughADD(N->getOperand(2))) {
     MVT VT = N->getSimpleValueType(0);
@@ -41069,6 +41123,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::SHRUNKBLEND: return combineSelect(N, DAG, DCI, Subtarget);
   case ISD::BITCAST:        return combineBitcast(N, DAG, DCI, Subtarget);
   case X86ISD::CMOV:        return combineCMov(N, DAG, DCI, Subtarget);
+  case X86ISD::CMP:         return combineCMP(N, DAG);
   case ISD::ADD:            return combineAdd(N, DAG, Subtarget);
   case ISD::SUB:            return combineSub(N, DAG, Subtarget);
   case X86ISD::SBB:         return combineSBB(N, DAG);
