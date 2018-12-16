@@ -222,8 +222,8 @@ endif()
 # Make sure that non-platform-specific files don't include any system headers.
 # FreeBSD/NetBSD do not install a number of Clang-provided headers for the
 # compiler in the base system due to incompatibilities between FreeBSD/NetBSD's
-# and Clang's versions. As a workaround do not use --sysroot=. on FreeBSD until
-# this is addressed.
+# and Clang's versions. As a workaround do not use --sysroot=. on FreeBSD/NetBSD
+# until this is addressed.
 if(COMPILER_RT_HAS_SYSROOT_FLAG AND NOT CMAKE_SYSTEM_NAME MATCHES "FreeBSD"
    AND NOT CMAKE_SYSTEM_NAME MATCHES "NetBSD")
   file(GLOB _tsan_generic_sources rtl/tsan*)
