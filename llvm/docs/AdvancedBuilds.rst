@@ -51,7 +51,7 @@ CMake option, each variable separated by a ";". As example:
   $ cmake -G Ninja -DCLANG_ENABLE_BOOTSTRAP=On -DCLANG_BOOTSTRAP_PASSTHROUGH="CMAKE_INSTALL_PREFIX;CMAKE_VERBOSE_MAKEFILE" <path to source>
   $ ninja stage2
 
-CMake options starting by BOOTSTRAP_ will be passed only to the stage2 build.
+CMake options starting by ``BOOTSTRAP_`` will be passed only to the stage2 build.
 This gives the opportunity to use Clang specific build flags.
 For example, the following CMake call will enabled '-fno-addrsig' only during
 the stage2 build for C and C++.
