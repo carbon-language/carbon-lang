@@ -903,18 +903,23 @@ private:
   SmallVector<UnderlyingCapability, 4> UnderlyingMutexes;
 
 public:
-  ScopedLockableFactEntry(const CapabilityExpr &CE, SourceLocation Loc,
-                          const CapExprSet &Excl, const CapExprSet &Shrd,
-                          const CapExprSet &ExclRel, const CapExprSet &ShrdRel)
-      : FactEntry(CE, LK_Exclusive, Loc, false) {
-    for (const auto &M : Excl)
-      UnderlyingMutexes.emplace_back(M.sexpr(), UCK_Acquired);
-    for (const auto &M : Shrd)
-      UnderlyingMutexes.emplace_back(M.sexpr(), UCK_Acquired);
-    for (const auto &M : ExclRel)
-      UnderlyingMutexes.emplace_back(M.sexpr(), UCK_ReleasedExclusive);
-    for (const auto &M : ShrdRel)
-      UnderlyingMutexes.emplace_back(M.sexpr(), UCK_ReleasedShared);
+  ScopedLockableFactEntry(const CapabilityExpr &CE, SourceLocation Loc)
+      : FactEntry(CE, LK_Exclusive, Loc, false) {}
+
+  void addExclusiveLock(const CapabilityExpr &M) {
+    UnderlyingMutexes.emplace_back(M.sexpr(), UCK_Acquired);
+  }
+
+  void addSharedLock(const CapabilityExpr &M) {
+    UnderlyingMutexes.emplace_back(M.sexpr(), UCK_Acquired);
+  }
+
+  void addExclusiveUnlock(const CapabilityExpr &M) {
+    UnderlyingMutexes.emplace_back(M.sexpr(), UCK_ReleasedExclusive);
+  }
+
+  void addSharedUnlock(const CapabilityExpr &M) {
+    UnderlyingMutexes.emplace_back(M.sexpr(), UCK_ReleasedShared);
   }
 
   void
@@ -1938,15 +1943,20 @@ void BuildLockset::handleCall(const Expr *Exp, const NamedDecl *D,
     // FIXME: does this store a pointer to DRE?
     CapabilityExpr Scp = Analyzer->SxBuilder.translateAttrExpr(&DRE, nullptr);
 
-    std::copy(ScopedExclusiveReqs.begin(), ScopedExclusiveReqs.end(),
-              std::back_inserter(ExclusiveLocksToAdd));
-    std::copy(ScopedSharedReqs.begin(), ScopedSharedReqs.end(),
-              std::back_inserter(SharedLocksToAdd));
-    Analyzer->addLock(FSet,
-                      llvm::make_unique<ScopedLockableFactEntry>(
-                          Scp, MLoc, ExclusiveLocksToAdd, SharedLocksToAdd,
-                          ExclusiveLocksToRemove, SharedLocksToRemove),
-                      CapDiagKind);
+    auto ScopedEntry = llvm::make_unique<ScopedLockableFactEntry>(Scp, MLoc);
+    for (const auto &M : ExclusiveLocksToAdd)
+      ScopedEntry->addExclusiveLock(M);
+    for (const auto &M : ScopedExclusiveReqs)
+      ScopedEntry->addExclusiveLock(M);
+    for (const auto &M : SharedLocksToAdd)
+      ScopedEntry->addSharedLock(M);
+    for (const auto &M : ScopedSharedReqs)
+      ScopedEntry->addSharedLock(M);
+    for (const auto &M : ExclusiveLocksToRemove)
+      ScopedEntry->addExclusiveUnlock(M);
+    for (const auto &M : SharedLocksToRemove)
+      ScopedEntry->addSharedUnlock(M);
+    Analyzer->addLock(FSet, std::move(ScopedEntry), CapDiagKind);
   }
 }
 
