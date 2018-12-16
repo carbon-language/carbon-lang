@@ -298,3 +298,46 @@ declare {i64, i1} @llvm.uadd.with.overflow.i64(i64, i64) nounwind readnone
 declare {i64, i1} @llvm.sadd.with.overflow.i64(i64, i64) nounwind readnone
 declare {i64, i1} @llvm.usub.with.overflow.i64(i64, i64) nounwind readnone
 declare {i64, i1} @llvm.ssub.with.overflow.i64(i64, i64) nounwind readnone
+
+define i32 @knownbits_fshl(i32 %a0) nounwind {
+; X32-LABEL: knownbits_fshl:
+; X32:       # %bb.0:
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X32-NEXT:    movl $-1, %eax
+; X32-NEXT:    shrdl $27, %ecx, %eax
+; X32-NEXT:    andl $3, %eax
+; X32-NEXT:    retl
+;
+; X64-LABEL: knownbits_fshl:
+; X64:       # %bb.0:
+; X64-NEXT:    movl $-1, %eax
+; X64-NEXT:    shrdl $27, %edi, %eax
+; X64-NEXT:    andl $3, %eax
+; X64-NEXT:    retq
+  %1 = tail call i32 @llvm.fshl.i32(i32 %a0, i32 -1, i32 5)
+  %2 = and i32 %1, 3
+  ret i32 %2
+}
+
+define i32 @knownbits_fshr(i32 %a0) nounwind {
+; X32-LABEL: knownbits_fshr:
+; X32:       # %bb.0:
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X32-NEXT:    movl $-1, %eax
+; X32-NEXT:    shrdl $5, %ecx, %eax
+; X32-NEXT:    andl $3, %eax
+; X32-NEXT:    retl
+;
+; X64-LABEL: knownbits_fshr:
+; X64:       # %bb.0:
+; X64-NEXT:    movl $-1, %eax
+; X64-NEXT:    shrdl $5, %edi, %eax
+; X64-NEXT:    andl $3, %eax
+; X64-NEXT:    retq
+  %1 = tail call i32 @llvm.fshr.i32(i32 %a0, i32 -1, i32 5)
+  %2 = and i32 %1, 3
+  ret i32 %2
+}
+
+declare i32 @llvm.fshl.i32(i32, i32, i32) nounwind readnone
+declare i32 @llvm.fshr.i32(i32, i32, i32) nounwind readnone
