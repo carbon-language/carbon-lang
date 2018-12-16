@@ -6966,8 +6966,10 @@ SDValue DAGCombiner::visitFunnelShift(SDNode *N) {
 
   // fold (fshl N0, N1, 0) -> N0
   // fold (fshr N0, N1, 0) -> N1
-  if (DAG.MaskedValueIsZero(N2, APInt::getAllOnesValue(BitWidth)))
-    return IsFSHL ? N0 : N1;
+  if (isPowerOf2_32(BitWidth))
+    if (DAG.MaskedValueIsZero(
+            N2, APInt(N2.getScalarValueSizeInBits(), BitWidth - 1)))
+      return IsFSHL ? N0 : N1;
 
   // fold (fsh* N0, N1, c) -> (fsh* N0, N1, c % BitWidth)
   if (ConstantSDNode *Cst = isConstOrConstSplat(N2)) {
