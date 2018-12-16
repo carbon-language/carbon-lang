@@ -33,15 +33,23 @@ declare double @llvm.rint.f64(double %Val) nounwind readonly
 declare double @llvm.nearbyint.f64(double %Val) nounwind readonly
 
 define i8 @uaddtest1(i8 %A, i8 %B) {
+; CHECK-LABEL: @uaddtest1(
+; CHECK-NEXT:    [[Y:%.*]] = add i8 [[A:%.*]], [[B:%.*]]
+; CHECK-NEXT:    ret i8 [[Y]]
+;
   %x = call %overflow.result @llvm.uadd.with.overflow.i8(i8 %A, i8 %B)
   %y = extractvalue %overflow.result %x, 0
   ret i8 %y
-; CHECK-LABEL: @uaddtest1(
-; CHECK-NEXT: %y = add i8 %A, %B
-; CHECK-NEXT: ret i8 %y
 }
 
 define i8 @uaddtest2(i8 %A, i8 %B, i1* %overflowPtr) {
+; CHECK-LABEL: @uaddtest2(
+; CHECK-NEXT:    [[AND_A:%.*]] = and i8 [[A:%.*]], 127
+; CHECK-NEXT:    [[AND_B:%.*]] = and i8 [[B:%.*]], 127
+; CHECK-NEXT:    [[X:%.*]] = add nuw i8 [[AND_A]], [[AND_B]]
+; CHECK-NEXT:    store i1 false, i1* [[OVERFLOWPTR:%.*]], align 1
+; CHECK-NEXT:    ret i8 [[X]]
+;
   %and.A = and i8 %A, 127
   %and.B = and i8 %B, 127
   %x = call %overflow.result @llvm.uadd.with.overflow.i8(i8 %and.A, i8 %and.B)
@@ -49,15 +57,16 @@ define i8 @uaddtest2(i8 %A, i8 %B, i1* %overflowPtr) {
   %z = extractvalue %overflow.result %x, 1
   store i1 %z, i1* %overflowPtr
   ret i8 %y
-; CHECK-LABEL: @uaddtest2(
-; CHECK-NEXT: %and.A = and i8 %A, 127
-; CHECK-NEXT: %and.B = and i8 %B, 127
-; CHECK-NEXT: %x = add nuw i8 %and.A, %and.B
-; CHECK-NEXT: store i1 false, i1* %overflowPtr
-; CHECK-NEXT: ret i8 %x
 }
 
 define i8 @uaddtest3(i8 %A, i8 %B, i1* %overflowPtr) {
+; CHECK-LABEL: @uaddtest3(
+; CHECK-NEXT:    [[OR_A:%.*]] = or i8 [[A:%.*]], -128
+; CHECK-NEXT:    [[OR_B:%.*]] = or i8 [[B:%.*]], -128
+; CHECK-NEXT:    [[X:%.*]] = add i8 [[OR_A]], [[OR_B]]
+; CHECK-NEXT:    store i1 true, i1* [[OVERFLOWPTR:%.*]], align 1
+; CHECK-NEXT:    ret i8 [[X]]
+;
   %or.A = or i8 %A, -128
   %or.B = or i8 %B, -128
   %x = call %overflow.result @llvm.uadd.with.overflow.i8(i8 %or.A, i8 %or.B)
@@ -65,211 +74,246 @@ define i8 @uaddtest3(i8 %A, i8 %B, i1* %overflowPtr) {
   %z = extractvalue %overflow.result %x, 1
   store i1 %z, i1* %overflowPtr
   ret i8 %y
-; CHECK-LABEL: @uaddtest3(
-; CHECK-NEXT: %or.A = or i8 %A, -128
-; CHECK-NEXT: %or.B = or i8 %B, -128
-; CHECK-NEXT: %x = add i8 %or.A, %or.B
-; CHECK-NEXT: store i1 true, i1* %overflowPtr
-; CHECK-NEXT: ret i8 %x
 }
 
 define i8 @uaddtest4(i8 %A, i1* %overflowPtr) {
+; CHECK-LABEL: @uaddtest4(
+; CHECK-NEXT:    ret i8 undef
+;
   %x = call %overflow.result @llvm.uadd.with.overflow.i8(i8 undef, i8 %A)
   %y = extractvalue %overflow.result %x, 0
   %z = extractvalue %overflow.result %x, 1
   store i1 %z, i1* %overflowPtr
   ret i8 %y
-; CHECK-LABEL: @uaddtest4(
-; CHECK-NEXT: ret i8 undef
 }
 
 define i8 @uaddtest5(i8 %A, i1* %overflowPtr) {
+; CHECK-LABEL: @uaddtest5(
+; CHECK-NEXT:    store i1 false, i1* [[OVERFLOWPTR:%.*]], align 1
+; CHECK-NEXT:    ret i8 [[A:%.*]]
+;
   %x = call %overflow.result @llvm.uadd.with.overflow.i8(i8 0, i8 %A)
   %y = extractvalue %overflow.result %x, 0
   %z = extractvalue %overflow.result %x, 1
   store i1 %z, i1* %overflowPtr
   ret i8 %y
-; CHECK-LABEL: @uaddtest5(
-; CHECK: ret i8 %A
 }
 
 define i1 @uaddtest6(i8 %A, i8 %B) {
+; CHECK-LABEL: @uaddtest6(
+; CHECK-NEXT:    [[Z:%.*]] = icmp ugt i8 [[A:%.*]], 3
+; CHECK-NEXT:    ret i1 [[Z]]
+;
   %x = call %overflow.result @llvm.uadd.with.overflow.i8(i8 %A, i8 -4)
   %z = extractvalue %overflow.result %x, 1
   ret i1 %z
-; CHECK-LABEL: @uaddtest6(
-; CHECK-NEXT: %z = icmp ugt i8 %A, 3
-; CHECK-NEXT: ret i1 %z
 }
 
 define i8 @uaddtest7(i8 %A, i8 %B) {
+; CHECK-LABEL: @uaddtest7(
+; CHECK-NEXT:    [[Z:%.*]] = add i8 [[A:%.*]], [[B:%.*]]
+; CHECK-NEXT:    ret i8 [[Z]]
+;
   %x = call %overflow.result @llvm.uadd.with.overflow.i8(i8 %A, i8 %B)
   %z = extractvalue %overflow.result %x, 0
   ret i8 %z
-; CHECK-LABEL: @uaddtest7(
-; CHECK-NEXT: %z = add i8 %A, %B
-; CHECK-NEXT: ret i8 %z
 }
 
 ; PR20194
 define %ov.result.32 @saddtest_nsw(i8 %a, i8 %b) {
+; CHECK-LABEL: @saddtest_nsw(
+; CHECK-NEXT:    [[A:%.*]] = sext i8 [[A:%.*]] to i32
+; CHECK-NEXT:    [[B:%.*]] = sext i8 [[B:%.*]] to i32
+; CHECK-NEXT:    [[X:%.*]] = add nsw i32 [[A]], [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = insertvalue [[OV_RESULT_32:%.*]] { i32 undef, i1 false }, i32 [[X]], 0
+; CHECK-NEXT:    ret [[OV_RESULT_32]] %1
+;
   %A = sext i8 %a to i32
   %B = sext i8 %b to i32
   %x = call %ov.result.32 @llvm.sadd.with.overflow.i32(i32 %A, i32 %B)
   ret %ov.result.32 %x
-; CHECK-LABEL: @saddtest_nsw
-; CHECK: %x = add nsw i32 %A, %B
-; CHECK-NEXT: %1 = insertvalue %ov.result.32 { i32 undef, i1 false }, i32 %x, 0
-; CHECK-NEXT:  ret %ov.result.32 %1
 }
 
 define %ov.result.32 @uaddtest_nuw(i32 %a, i32 %b) {
+; CHECK-LABEL: @uaddtest_nuw(
+; CHECK-NEXT:    [[A:%.*]] = and i32 [[A:%.*]], 2147483647
+; CHECK-NEXT:    [[B:%.*]] = and i32 [[B:%.*]], 2147483647
+; CHECK-NEXT:    [[X:%.*]] = add nuw i32 [[A]], [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = insertvalue [[OV_RESULT_32:%.*]] { i32 undef, i1 false }, i32 [[X]], 0
+; CHECK-NEXT:    ret [[OV_RESULT_32]] %1
+;
   %A = and i32 %a, 2147483647
   %B = and i32 %b, 2147483647
   %x = call %ov.result.32 @llvm.uadd.with.overflow.i32(i32 %A, i32 %B)
   ret %ov.result.32 %x
-; CHECK-LABEL: @uaddtest_nuw
-; CHECK: %x = add nuw i32 %A, %B
-; CHECK-NEXT: %1 = insertvalue %ov.result.32 { i32 undef, i1 false }, i32 %x, 0
-; CHECK-NEXT:  ret %ov.result.32 %1
 }
 
 define %ov.result.32 @ssubtest_nsw(i8 %a, i8 %b) {
+; CHECK-LABEL: @ssubtest_nsw(
+; CHECK-NEXT:    [[A:%.*]] = sext i8 [[A:%.*]] to i32
+; CHECK-NEXT:    [[B:%.*]] = sext i8 [[B:%.*]] to i32
+; CHECK-NEXT:    [[X:%.*]] = sub nsw i32 [[A]], [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = insertvalue [[OV_RESULT_32:%.*]] { i32 undef, i1 false }, i32 [[X]], 0
+; CHECK-NEXT:    ret [[OV_RESULT_32]] %1
+;
   %A = sext i8 %a to i32
   %B = sext i8 %b to i32
   %x = call %ov.result.32 @llvm.ssub.with.overflow.i32(i32 %A, i32 %B)
   ret %ov.result.32 %x
-; CHECK-LABEL: @ssubtest_nsw
-; CHECK: %x = sub nsw i32 %A, %B
-; CHECK-NEXT: %1 = insertvalue %ov.result.32 { i32 undef, i1 false }, i32 %x, 0
-; CHECK-NEXT:  ret %ov.result.32 %1
 }
 
 define %ov.result.32 @usubtest_nuw(i32 %a, i32 %b) {
+; CHECK-LABEL: @usubtest_nuw(
+; CHECK-NEXT:    [[A:%.*]] = or i32 [[A:%.*]], -2147483648
+; CHECK-NEXT:    [[B:%.*]] = and i32 [[B:%.*]], 2147483647
+; CHECK-NEXT:    [[X:%.*]] = sub nuw i32 [[A]], [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = insertvalue [[OV_RESULT_32:%.*]] { i32 undef, i1 false }, i32 [[X]], 0
+; CHECK-NEXT:    ret [[OV_RESULT_32]] %1
+;
   %A = or i32 %a, 2147483648
   %B = and i32 %b, 2147483647
   %x = call %ov.result.32 @llvm.usub.with.overflow.i32(i32 %A, i32 %B)
   ret %ov.result.32 %x
-; CHECK-LABEL: @usubtest_nuw
-; CHECK: %x = sub nuw i32 %A, %B
-; CHECK-NEXT: %1 = insertvalue %ov.result.32 { i32 undef, i1 false }, i32 %x, 0
-; CHECK-NEXT:  ret %ov.result.32 %1
 }
 
 define %ov.result.32 @smultest1_nsw(i32 %a, i32 %b) {
+; CHECK-LABEL: @smultest1_nsw(
+; CHECK-NEXT:    [[A:%.*]] = and i32 [[A:%.*]], 4095
+; CHECK-NEXT:    [[B:%.*]] = and i32 [[B:%.*]], 524287
+; CHECK-NEXT:    [[X:%.*]] = mul nuw nsw i32 [[A]], [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = insertvalue [[OV_RESULT_32:%.*]] { i32 undef, i1 false }, i32 [[X]], 0
+; CHECK-NEXT:    ret [[OV_RESULT_32]] %1
+;
   %A = and i32 %a, 4095 ; 0xfff
   %B = and i32 %b, 524287; 0x7ffff
   %x = call %ov.result.32 @llvm.smul.with.overflow.i32(i32 %A, i32 %B)
   ret %ov.result.32 %x
-; CHECK-LABEL: @smultest1_nsw
-; CHECK: %x = mul nuw nsw i32 %A, %B
-; CHECK-NEXT: %1 = insertvalue %ov.result.32 { i32 undef, i1 false }, i32 %x, 0
-; CHECK-NEXT:  ret %ov.result.32 %1
 }
 
 define %ov.result.32 @smultest2_nsw(i32 %a, i32 %b) {
+; CHECK-LABEL: @smultest2_nsw(
+; CHECK-NEXT:    [[A:%.*]] = ashr i32 [[A:%.*]], 16
+; CHECK-NEXT:    [[B:%.*]] = ashr i32 [[B:%.*]], 16
+; CHECK-NEXT:    [[X:%.*]] = mul nsw i32 [[A]], [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = insertvalue [[OV_RESULT_32:%.*]] { i32 undef, i1 false }, i32 [[X]], 0
+; CHECK-NEXT:    ret [[OV_RESULT_32]] %1
+;
   %A = ashr i32 %a, 16
   %B = ashr i32 %b, 16
   %x = call %ov.result.32 @llvm.smul.with.overflow.i32(i32 %A, i32 %B)
   ret %ov.result.32 %x
-; CHECK-LABEL: @smultest2_nsw
-; CHECK: %x = mul nsw i32 %A, %B
-; CHECK-NEXT: %1 = insertvalue %ov.result.32 { i32 undef, i1 false }, i32 %x, 0
-; CHECK-NEXT:  ret %ov.result.32 %1
 }
 
 define %ov.result.32 @smultest3_sw(i32 %a, i32 %b) {
+; CHECK-LABEL: @smultest3_sw(
+; CHECK-NEXT:    [[A:%.*]] = ashr i32 [[A:%.*]], 16
+; CHECK-NEXT:    [[B:%.*]] = ashr i32 [[B:%.*]], 15
+; CHECK-NEXT:    [[X:%.*]] = call [[OV_RESULT_32:%.*]] @llvm.smul.with.overflow.i32(i32 [[A]], i32 [[B]])
+; CHECK-NEXT:    ret [[OV_RESULT_32]] %x
+;
   %A = ashr i32 %a, 16
   %B = ashr i32 %b, 15
   %x = call %ov.result.32 @llvm.smul.with.overflow.i32(i32 %A, i32 %B)
   ret %ov.result.32 %x
-; CHECK-LABEL: @smultest3_sw
-; CHECK: %x = call %ov.result.32 @llvm.smul.with.overflow.i32(i32 %A, i32 %B)
-; CHECK-NEXT:  ret %ov.result.32 %x
 }
 
 define %ov.result.32 @umultest_nuw(i32 %a, i32 %b) {
+; CHECK-LABEL: @umultest_nuw(
+; CHECK-NEXT:    [[A:%.*]] = and i32 [[A:%.*]], 65535
+; CHECK-NEXT:    [[B:%.*]] = and i32 [[B:%.*]], 65535
+; CHECK-NEXT:    [[X:%.*]] = mul nuw i32 [[A]], [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = insertvalue [[OV_RESULT_32:%.*]] { i32 undef, i1 false }, i32 [[X]], 0
+; CHECK-NEXT:    ret [[OV_RESULT_32]] %1
+;
   %A = and i32 %a, 65535 ; 0xffff
   %B = and i32 %b, 65535 ; 0xffff
   %x = call %ov.result.32 @llvm.umul.with.overflow.i32(i32 %A, i32 %B)
   ret %ov.result.32 %x
-; CHECK-LABEL: @umultest_nuw
-; CHECK: %x = mul nuw i32 %A, %B
-; CHECK-NEXT: %1 = insertvalue %ov.result.32 { i32 undef, i1 false }, i32 %x, 0
-; CHECK-NEXT:  ret %ov.result.32 %1
 }
 
 define i8 @umultest1(i8 %A, i1* %overflowPtr) {
+; CHECK-LABEL: @umultest1(
+; CHECK-NEXT:    store i1 false, i1* [[OVERFLOWPTR:%.*]], align 1
+; CHECK-NEXT:    ret i8 0
+;
   %x = call %overflow.result @llvm.umul.with.overflow.i8(i8 0, i8 %A)
   %y = extractvalue %overflow.result %x, 0
   %z = extractvalue %overflow.result %x, 1
   store i1 %z, i1* %overflowPtr
   ret i8 %y
-; CHECK-LABEL: @umultest1(
-; CHECK-NEXT: store i1 false, i1* %overflowPtr
-; CHECK-NEXT: ret i8 0
 }
 
 define i8 @umultest2(i8 %A, i1* %overflowPtr) {
+; CHECK-LABEL: @umultest2(
+; CHECK-NEXT:    store i1 false, i1* [[OVERFLOWPTR:%.*]], align 1
+; CHECK-NEXT:    ret i8 [[A:%.*]]
+;
   %x = call %overflow.result @llvm.umul.with.overflow.i8(i8 1, i8 %A)
   %y = extractvalue %overflow.result %x, 0
   %z = extractvalue %overflow.result %x, 1
   store i1 %z, i1* %overflowPtr
   ret i8 %y
-; CHECK-LABEL: @umultest2(
-; CHECK-NEXT: store i1 false, i1* %overflowPtr
-; CHECK-NEXT: ret i8 %A
 }
 
 define i32 @umultest3(i32 %n) nounwind {
+; CHECK-LABEL: @umultest3(
+; CHECK-NEXT:    [[SHR:%.*]] = lshr i32 [[N:%.*]], 2
+; CHECK-NEXT:    [[MUL:%.*]] = mul nuw i32 [[SHR]], 3
+; CHECK-NEXT:    ret i32 [[MUL]]
+;
   %shr = lshr i32 %n, 2
   %mul = call %ov.result.32 @llvm.umul.with.overflow.i32(i32 %shr, i32 3)
   %ov = extractvalue %ov.result.32 %mul, 1
   %res = extractvalue %ov.result.32 %mul, 0
   %ret = select i1 %ov, i32 -1, i32 %res
   ret i32 %ret
-; CHECK-LABEL: @umultest3(
-; CHECK-NEXT: shr
-; CHECK-NEXT: mul nuw
-; CHECK-NEXT: ret
 }
 
 define i32 @umultest4(i32 %n) nounwind {
+; CHECK-LABEL: @umultest4(
+; CHECK-NEXT:    [[SHR:%.*]] = lshr i32 [[N:%.*]], 1
+; CHECK-NEXT:    [[MUL:%.*]] = call [[OV_RESULT_32:%.*]] @llvm.umul.with.overflow.i32(i32 [[SHR]], i32 4)
+; CHECK-NEXT:    [[OV:%.*]] = extractvalue [[OV_RESULT_32]] %mul, 1
+; CHECK-NEXT:    [[RES:%.*]] = extractvalue [[OV_RESULT_32]] %mul, 0
+; CHECK-NEXT:    [[RET:%.*]] = select i1 [[OV]], i32 -1, i32 [[RES]]
+; CHECK-NEXT:    ret i32 [[RET]]
+;
   %shr = lshr i32 %n, 1
   %mul = call %ov.result.32 @llvm.umul.with.overflow.i32(i32 %shr, i32 4)
   %ov = extractvalue %ov.result.32 %mul, 1
   %res = extractvalue %ov.result.32 %mul, 0
   %ret = select i1 %ov, i32 -1, i32 %res
   ret i32 %ret
-; CHECK-LABEL: @umultest4(
-; CHECK: umul.with.overflow
 }
 
 define %ov.result.32 @umultest5(i32 %x, i32 %y) nounwind {
+; CHECK-LABEL: @umultest5(
+; CHECK-NEXT:    [[OR_X:%.*]] = or i32 [[X:%.*]], -2147483648
+; CHECK-NEXT:    [[OR_Y:%.*]] = or i32 [[Y:%.*]], -2147483648
+; CHECK-NEXT:    [[MUL:%.*]] = mul i32 [[OR_X]], [[OR_Y]]
+; CHECK-NEXT:    [[TMP1:%.*]] = insertvalue [[OV_RESULT_32:%.*]] { i32 undef, i1 true }, i32 [[MUL]], 0
+; CHECK-NEXT:    ret [[OV_RESULT_32]] %1
+;
   %or_x = or i32 %x, 2147483648
   %or_y = or i32 %y, 2147483648
   %mul = call %ov.result.32 @llvm.umul.with.overflow.i32(i32 %or_x, i32 %or_y)
   ret %ov.result.32 %mul
-; CHECK-LABEL: @umultest5(
-; CHECK-NEXT: %[[or_x:.*]] = or i32 %x, -2147483648
-; CHECK-NEXT: %[[or_y:.*]] = or i32 %y, -2147483648
-; CHECK-NEXT: %[[mul:.*]] = mul i32 %[[or_x]], %[[or_y]]
-; CHECK-NEXT: %[[ret:.*]] = insertvalue %ov.result.32 { i32 undef, i1 true }, i32 %[[mul]], 0
-; CHECK-NEXT: ret %ov.result.32 %[[ret]]
 }
 
 define void @powi(double %V, double *%P) {
+; CHECK-LABEL: @powi(
+; CHECK-NEXT:    [[A:%.*]] = fdiv double 1.000000e+00, [[V:%.*]]
+; CHECK-NEXT:    store volatile double [[A]], double* [[P:%.*]], align 8
+; CHECK-NEXT:    [[D:%.*]] = fmul double [[V]], [[V]]
+; CHECK-NEXT:    store volatile double [[D]], double* [[P]], align 8
+; CHECK-NEXT:    ret void
+;
   %A = tail call double @llvm.powi.f64(double %V, i32 -1) nounwind
   store volatile double %A, double* %P
 
   %D = tail call double @llvm.powi.f64(double %V, i32 2) nounwind
   store volatile double %D, double* %P
   ret void
-; CHECK-LABEL: @powi(
-; CHECK: %A = fdiv double 1.0{{.*}}, %V
-; CHECK: store volatile double %A,
-; CHECK: %D = fmul double %V, %V
-; CHECK: store volatile double %D
 }
 
 define i32 @cttz(i32 %a) {
@@ -325,7 +369,7 @@ define <2 x i1> @cttz_knownbits_vec(<2 x i32> %arg) {
 define i1 @cttz_knownbits2(i32 %arg) {
 ; CHECK-LABEL: @cttz_knownbits2(
 ; CHECK-NEXT:    [[OR:%.*]] = or i32 [[ARG:%.*]], 4
-; CHECK-NEXT:    [[CNT:%.*]] = call i32 @llvm.cttz.i32(i32 [[OR]], i1 true) #2, !range ![[$CTTZ_RANGE:[0-9]+]]
+; CHECK-NEXT:    [[CNT:%.*]] = call i32 @llvm.cttz.i32(i32 [[OR]], i1 true) #2, !range !0
 ; CHECK-NEXT:    [[RES:%.*]] = icmp eq i32 [[CNT]], 2
 ; CHECK-NEXT:    ret i1 [[RES]]
 ;
@@ -338,7 +382,7 @@ define i1 @cttz_knownbits2(i32 %arg) {
 define <2 x i1> @cttz_knownbits2_vec(<2 x i32> %arg) {
 ; CHECK-LABEL: @cttz_knownbits2_vec(
 ; CHECK-NEXT:    [[OR:%.*]] = or <2 x i32> [[ARG:%.*]], <i32 4, i32 4>
-; CHECK-NEXT:    [[CNT:%.*]] = call <2 x i32> @llvm.cttz.v2i32(<2 x i32> [[OR]], i1 true)
+; CHECK-NEXT:    [[CNT:%.*]] = call <2 x i32> @llvm.cttz.v2i32(<2 x i32> [[OR]], i1 true) #2
 ; CHECK-NEXT:    [[RES:%.*]] = icmp eq <2 x i32> [[CNT]], <i32 2, i32 2>
 ; CHECK-NEXT:    ret <2 x i1> [[RES]]
 ;
@@ -362,7 +406,7 @@ define i1 @cttz_knownbits3(i32 %arg) {
 define <2 x i1> @cttz_knownbits3_vec(<2 x i32> %arg) {
 ; CHECK-LABEL: @cttz_knownbits3_vec(
 ; CHECK-NEXT:    [[OR:%.*]] = or <2 x i32> [[ARG:%.*]], <i32 4, i32 4>
-; CHECK-NEXT:    [[CNT:%.*]] = call <2 x i32> @llvm.cttz.v2i32(<2 x i32> [[OR]], i1 true)
+; CHECK-NEXT:    [[CNT:%.*]] = call <2 x i32> @llvm.cttz.v2i32(<2 x i32> [[OR]], i1 true) #2
 ; CHECK-NEXT:    [[RES:%.*]] = icmp eq <2 x i32> [[CNT]], <i32 3, i32 3>
 ; CHECK-NEXT:    ret <2 x i1> [[RES]]
 ;
@@ -425,7 +469,7 @@ define <2 x i1> @ctlz_knownbits_vec(<2 x i8> %arg) {
 define i1 @ctlz_knownbits2(i8 %arg) {
 ; CHECK-LABEL: @ctlz_knownbits2(
 ; CHECK-NEXT:    [[OR:%.*]] = or i8 [[ARG:%.*]], 32
-; CHECK-NEXT:    [[CNT:%.*]] = call i8 @llvm.ctlz.i8(i8 [[OR]], i1 true) #2, !range ![[$CTLZ_RANGE:[0-9]+]]
+; CHECK-NEXT:    [[CNT:%.*]] = call i8 @llvm.ctlz.i8(i8 [[OR]], i1 true) #2, !range !1
 ; CHECK-NEXT:    [[RES:%.*]] = icmp eq i8 [[CNT]], 2
 ; CHECK-NEXT:    ret i1 [[RES]]
 ;
@@ -438,7 +482,7 @@ define i1 @ctlz_knownbits2(i8 %arg) {
 define <2 x i1> @ctlz_knownbits2_vec(<2 x i8> %arg) {
 ; CHECK-LABEL: @ctlz_knownbits2_vec(
 ; CHECK-NEXT:    [[OR:%.*]] = or <2 x i8> [[ARG:%.*]], <i8 32, i8 32>
-; CHECK-NEXT:    [[CNT:%.*]] = call <2 x i8> @llvm.ctlz.v2i8(<2 x i8> [[OR]], i1 true)
+; CHECK-NEXT:    [[CNT:%.*]] = call <2 x i8> @llvm.ctlz.v2i8(<2 x i8> [[OR]], i1 true) #2
 ; CHECK-NEXT:    [[RES:%.*]] = icmp eq <2 x i8> [[CNT]], <i8 2, i8 2>
 ; CHECK-NEXT:    ret <2 x i1> [[RES]]
 ;
@@ -462,7 +506,7 @@ define i1 @ctlz_knownbits3(i8 %arg) {
 define <2 x i1> @ctlz_knownbits3_vec(<2 x i8> %arg) {
 ; CHECK-LABEL: @ctlz_knownbits3_vec(
 ; CHECK-NEXT:    [[OR:%.*]] = or <2 x i8> [[ARG:%.*]], <i8 32, i8 32>
-; CHECK-NEXT:    [[CNT:%.*]] = call <2 x i8> @llvm.ctlz.v2i8(<2 x i8> [[OR]], i1 true)
+; CHECK-NEXT:    [[CNT:%.*]] = call <2 x i8> @llvm.ctlz.v2i8(<2 x i8> [[OR]], i1 true) #2
 ; CHECK-NEXT:    [[RES:%.*]] = icmp eq <2 x i8> [[CNT]], <i8 3, i8 3>
 ; CHECK-NEXT:    ret <2 x i1> [[RES]]
 ;
@@ -489,13 +533,14 @@ define <2 x i32> @ctlz_undef_vec(<2 x i32> %Value) {
 }
 
 define i32 @ctlz_make_undef(i32 %a) {
+; CHECK-LABEL: @ctlz_make_undef(
+; CHECK-NEXT:    [[OR:%.*]] = or i32 [[A:%.*]], 8
+; CHECK-NEXT:    [[CTLZ:%.*]] = tail call i32 @llvm.ctlz.i32(i32 [[OR]], i1 true), !range !2
+; CHECK-NEXT:    ret i32 [[CTLZ]]
+;
   %or = or i32 %a, 8
   %ctlz = tail call i32 @llvm.ctlz.i32(i32 %or, i1 false)
   ret i32 %ctlz
-; CHECK-LABEL: @ctlz_make_undef(
-; CHECK-NEXT: %or = or i32 %a, 8
-; CHECK-NEXT: %ctlz = tail call i32 @llvm.ctlz.i32(i32 %or, i1 true)
-; CHECK-NEXT: ret i32 %ctlz
 }
 
 define <2 x i32> @ctlz_make_undef_vec(<2 x i32> %a) {
@@ -526,13 +571,14 @@ define <2 x i32> @cttz_undef_vec(<2 x i32> %Value) nounwind {
 }
 
 define i32 @cttz_make_undef(i32 %a) {
+; CHECK-LABEL: @cttz_make_undef(
+; CHECK-NEXT:    [[OR:%.*]] = or i32 [[A:%.*]], 8
+; CHECK-NEXT:    [[CTTZ:%.*]] = tail call i32 @llvm.cttz.i32(i32 [[OR]], i1 true), !range !3
+; CHECK-NEXT:    ret i32 [[CTTZ]]
+;
   %or = or i32 %a, 8
   %cttz = tail call i32 @llvm.cttz.i32(i32 %or, i1 false)
   ret i32 %cttz
-; CHECK-LABEL: @cttz_make_undef(
-; CHECK-NEXT: %or = or i32 %a, 8
-; CHECK-NEXT: %cttz = tail call i32 @llvm.cttz.i32(i32 %or, i1 true)
-; CHECK-NEXT: ret i32 %cttz
 }
 
 define <2 x i32> @cttz_make_undef_vec(<2 x i32> %a) {
@@ -548,7 +594,7 @@ define <2 x i32> @cttz_make_undef_vec(<2 x i32> %a) {
 
 define i32 @ctlz_select(i32 %Value) nounwind {
 ; CHECK-LABEL: @ctlz_select(
-; CHECK-NEXT:    [[TMP1:%.*]] = call i32 @llvm.ctlz.i32(i32 %Value, i1 false)
+; CHECK-NEXT:    [[TMP1:%.*]] = call i32 @llvm.ctlz.i32(i32 [[VALUE:%.*]], i1 false), !range !4
 ; CHECK-NEXT:    ret i32 [[TMP1]]
 ;
   %tobool = icmp ne i32 %Value, 0
@@ -570,7 +616,7 @@ define <2 x i32> @ctlz_select_vec(<2 x i32> %Value) nounwind {
 
 define i32 @cttz_select(i32 %Value) nounwind {
 ; CHECK-LABEL: @cttz_select(
-; CHECK-NEXT:    [[TMP1:%.*]] = call i32 @llvm.cttz.i32(i32 %Value, i1 false)
+; CHECK-NEXT:    [[TMP1:%.*]] = call i32 @llvm.cttz.i32(i32 [[VALUE:%.*]], i1 false), !range !4
 ; CHECK-NEXT:    ret i32 [[TMP1]]
 ;
   %tobool = icmp ne i32 %Value, 0
@@ -624,9 +670,9 @@ define i1 @overflow_mod_mul(i32 %v1, i32 %v2) nounwind {
 
 define i1 @overflow_mod_overflow_mul(i32 %v1, i32 %v2) nounwind {
 ; CHECK-LABEL: @overflow_mod_overflow_mul(
-; CHECK-NEXT:    [[REM:%.*]] = srem i32 %v1, 65537
-; CHECK-NEXT:    [[T:%.*]] = call %ov.result.32 @llvm.smul.with.overflow.i32(i32 [[REM]], i32 [[REM]])
-; CHECK-NEXT:    [[OBIT:%.*]] = extractvalue %ov.result.32 [[T]], 1
+; CHECK-NEXT:    [[REM:%.*]] = srem i32 [[V1:%.*]], 65537
+; CHECK-NEXT:    [[T:%.*]] = call [[OV_RESULT_32:%.*]] @llvm.smul.with.overflow.i32(i32 [[REM]], i32 [[REM]])
+; CHECK-NEXT:    [[OBIT:%.*]] = extractvalue [[OV_RESULT_32]] %t, 1
 ; CHECK-NEXT:    ret i1 [[OBIT]]
 ;
   %rem = srem i32 %v1, 65537
@@ -638,26 +684,29 @@ define i1 @overflow_mod_overflow_mul(i32 %v1, i32 %v2) nounwind {
 }
 
 define %ov.result.32 @ssubtest_reorder(i8 %a) {
+; CHECK-LABEL: @ssubtest_reorder(
+; CHECK-NEXT:    [[A:%.*]] = sext i8 [[A:%.*]] to i32
+; CHECK-NEXT:    [[X:%.*]] = sub nsw i32 0, [[A]]
+; CHECK-NEXT:    [[TMP1:%.*]] = insertvalue [[OV_RESULT_32:%.*]] { i32 undef, i1 false }, i32 [[X]], 0
+; CHECK-NEXT:    ret [[OV_RESULT_32]] %1
+;
   %A = sext i8 %a to i32
   %x = call %ov.result.32 @llvm.ssub.with.overflow.i32(i32 0, i32 %A)
   ret %ov.result.32 %x
-; CHECK-LABEL: @ssubtest_reorder
-; CHECK: %x = sub nsw i32 0, %A
-; CHECK-NEXT: %1 = insertvalue %ov.result.32 { i32 undef, i1 false }, i32 %x, 0
-; CHECK-NEXT:  ret %ov.result.32 %1
 }
 
 define %ov.result.32 @never_overflows_ssub_test0(i32 %a) {
+; CHECK-LABEL: @never_overflows_ssub_test0(
+; CHECK-NEXT:    [[X:%.*]] = insertvalue [[OV_RESULT_32:%.*]] { i32 undef, i1 false }, i32 [[A:%.*]], 0
+; CHECK-NEXT:    ret [[OV_RESULT_32]] %x
+;
   %x = call %ov.result.32 @llvm.ssub.with.overflow.i32(i32 %a, i32 0)
   ret %ov.result.32 %x
-; CHECK-LABEL: @never_overflows_ssub_test0
-; CHECK-NEXT: %[[x:.*]] = insertvalue %ov.result.32 { i32 undef, i1 false }, i32 %a, 0
-; CHECK-NEXT:  ret %ov.result.32 %[[x]]
 }
 
 define void @cos(double *%P) {
 ; CHECK-LABEL: @cos(
-; CHECK-NEXT:    store volatile double 1.000000e+00, double* %P, align 8
+; CHECK-NEXT:    store volatile double 1.000000e+00, double* [[P:%.*]], align 8
 ; CHECK-NEXT:    ret void
 ;
   %B = tail call double @llvm.cos.f64(double 0.0) nounwind
@@ -668,7 +717,7 @@ define void @cos(double *%P) {
 
 define void @sin(double *%P) {
 ; CHECK-LABEL: @sin(
-; CHECK-NEXT:    store volatile double 0.000000e+00, double* %P, align 8
+; CHECK-NEXT:    store volatile double 0.000000e+00, double* [[P:%.*]], align 8
 ; CHECK-NEXT:    ret void
 ;
   %B = tail call double @llvm.sin.f64(double 0.0) nounwind
@@ -679,8 +728,8 @@ define void @sin(double *%P) {
 
 define void @floor(double *%P) {
 ; CHECK-LABEL: @floor(
-; CHECK-NEXT:    store volatile double 1.000000e+00, double* %P, align 8
-; CHECK-NEXT:    store volatile double -2.000000e+00, double* %P, align 8
+; CHECK-NEXT:    store volatile double 1.000000e+00, double* [[P:%.*]], align 8
+; CHECK-NEXT:    store volatile double -2.000000e+00, double* [[P]], align 8
 ; CHECK-NEXT:    ret void
 ;
   %B = tail call double @llvm.floor.f64(double 1.5) nounwind
@@ -692,8 +741,8 @@ define void @floor(double *%P) {
 
 define void @ceil(double *%P) {
 ; CHECK-LABEL: @ceil(
-; CHECK-NEXT:    store volatile double 2.000000e+00, double* %P, align 8
-; CHECK-NEXT:    store volatile double -1.000000e+00, double* %P, align 8
+; CHECK-NEXT:    store volatile double 2.000000e+00, double* [[P:%.*]], align 8
+; CHECK-NEXT:    store volatile double -1.000000e+00, double* [[P]], align 8
 ; CHECK-NEXT:    ret void
 ;
   %B = tail call double @llvm.ceil.f64(double 1.5) nounwind
@@ -705,8 +754,8 @@ define void @ceil(double *%P) {
 
 define void @trunc(double *%P) {
 ; CHECK-LABEL: @trunc(
-; CHECK-NEXT:    store volatile double 1.000000e+00, double* %P, align 8
-; CHECK-NEXT:    store volatile double -1.000000e+00, double* %P, align 8
+; CHECK-NEXT:    store volatile double 1.000000e+00, double* [[P:%.*]], align 8
+; CHECK-NEXT:    store volatile double -1.000000e+00, double* [[P]], align 8
 ; CHECK-NEXT:    ret void
 ;
   %B = tail call double @llvm.trunc.f64(double 1.5) nounwind
@@ -718,8 +767,8 @@ define void @trunc(double *%P) {
 
 define void @rint(double *%P) {
 ; CHECK-LABEL: @rint(
-; CHECK-NEXT:    store volatile double 2.000000e+00, double* %P, align 8
-; CHECK-NEXT:    store volatile double -2.000000e+00, double* %P, align 8
+; CHECK-NEXT:    store volatile double 2.000000e+00, double* [[P:%.*]], align 8
+; CHECK-NEXT:    store volatile double -2.000000e+00, double* [[P]], align 8
 ; CHECK-NEXT:    ret void
 ;
   %B = tail call double @llvm.rint.f64(double 1.5) nounwind
@@ -731,8 +780,8 @@ define void @rint(double *%P) {
 
 define void @nearbyint(double *%P) {
 ; CHECK-LABEL: @nearbyint(
-; CHECK-NEXT:    store volatile double 2.000000e+00, double* %P, align 8
-; CHECK-NEXT:    store volatile double -2.000000e+00, double* %P, align 8
+; CHECK-NEXT:    store volatile double 2.000000e+00, double* [[P:%.*]], align 8
+; CHECK-NEXT:    store volatile double -2.000000e+00, double* [[P]], align 8
 ; CHECK-NEXT:    ret void
 ;
   %B = tail call double @llvm.nearbyint.f64(double 1.5) nounwind
