@@ -7,6 +7,8 @@ group("default") {
     "//llvm/tools/llvm-dwarfdump",
     "//llvm/tools/llvm-mc",
     "//llvm/tools/llvm-undname",
+    "//llvm/tools/obj2yaml",
+    "//llvm/tools/yaml2obj",
     "//llvm/utils/FileCheck",
     "//llvm/utils/count",
     "//llvm/utils/not",
