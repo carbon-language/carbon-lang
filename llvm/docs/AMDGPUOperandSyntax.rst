@@ -441,8 +441,6 @@ A single bit flag indicating the result of a scalar compare operation.
 
 .. WARNING:: This operand is not currently supported by AMDGPU assembler.
 
-.. _amdgpu_synid_ldsdirect:
-
 lds_direct
 ----------
 
