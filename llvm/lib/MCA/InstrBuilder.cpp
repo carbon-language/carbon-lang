@@ -28,7 +28,7 @@ namespace mca {
 InstrBuilder::InstrBuilder(const llvm::MCSubtargetInfo &sti,
                            const llvm::MCInstrInfo &mcii,
                            const llvm::MCRegisterInfo &mri,
-                           const llvm::MCInstrAnalysis &mcia)
+                           const llvm::MCInstrAnalysis *mcia)
     : STI(sti), MCII(mcii), MRI(mri), MCIA(mcia), FirstCallInst(true),
       FirstReturnInst(true) {
   computeProcResourceMasks(STI.getSchedModel(), ProcResourceMasks);
@@ -587,12 +587,16 @@ InstrBuilder::createInstruction(const MCInst &MCI) {
   // Check if this is a dependency breaking instruction.
   APInt Mask;
 
-  unsigned ProcID = STI.getSchedModel().getProcessorID();
-  bool IsZeroIdiom = MCIA.isZeroIdiom(MCI, Mask, ProcID);
-  bool IsDepBreaking =
-      IsZeroIdiom || MCIA.isDependencyBreaking(MCI, Mask, ProcID);
-  if (MCIA.isOptimizableRegisterMove(MCI, ProcID))
-    NewIS->setOptimizableMove();
+  bool IsZeroIdiom = false;
+  bool IsDepBreaking = false;
+  if (MCIA) {
+    unsigned ProcID = STI.getSchedModel().getProcessorID();
+    IsZeroIdiom = MCIA->isZeroIdiom(MCI, Mask, ProcID);
+    IsDepBreaking =
+        IsZeroIdiom || MCIA->isDependencyBreaking(MCI, Mask, ProcID);
+    if (MCIA->isOptimizableRegisterMove(MCI, ProcID))
+      NewIS->setOptimizableMove();
+  }
 
   // Initialize Reads first.
   for (const ReadDescriptor &RD : D.Reads) {
@@ -649,7 +653,8 @@ InstrBuilder::createInstruction(const MCInst &MCI) {
 
   // Now query the MCInstrAnalysis object to obtain information about which
   // register writes implicitly clear the upper portion of a super-register.
-  MCIA.clearsSuperRegisters(MRI, MCI, WriteMask);
+  if (MCIA)
+    MCIA->clearsSuperRegisters(MRI, MCI, WriteMask);
 
   // Initialize writes.
   unsigned WriteIndex = 0;
