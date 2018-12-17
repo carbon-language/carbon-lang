@@ -61,8 +61,7 @@ std::ostream &operator<<(std::ostream &o, const DerivedTypeSpec &x) {
 
 Bound::Bound(int bound)
   : category_{Category::Explicit},
-    expr_{SomeExpr{evaluate::AsExpr(
-        evaluate::Constant<evaluate::SubscriptInteger>{bound})}} {}
+    expr_{evaluate::Expr<evaluate::SubscriptInteger>{bound}} {}
 
 Bound Bound::Clone() const { return Bound(category_, MaybeExpr{expr_}); }
 
@@ -94,6 +93,11 @@ std::ostream &operator<<(std::ostream &o, const ShapeSpec &x) {
   }
   return o;
 }
+
+ParamValue::ParamValue(MaybeExpr &&expr)
+  : category_{Category::Explicit}, expr_{std::move(expr)} {}
+ParamValue::ParamValue(std::int64_t value)
+  : ParamValue(SomeExpr{evaluate::Expr<evaluate::SubscriptInteger>{value}}) {}
 
 std::ostream &operator<<(std::ostream &o, const ParamValue &x) {
   if (x.isAssumed()) {

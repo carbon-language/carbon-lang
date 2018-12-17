@@ -78,8 +78,8 @@ class ParamValue {
 public:
   static const ParamValue Assumed() { return Category::Assumed; }
   static const ParamValue Deferred() { return Category::Deferred; }
-  ParamValue(MaybeExpr &&expr)
-    : category_{Category::Explicit}, expr_{std::move(expr)} {}
+  ParamValue(MaybeExpr &&expr);
+  ParamValue(std::int64_t);
   bool isExplicit() const { return category_ == Category::Explicit; }
   bool isAssumed() const { return category_ == Category::Assumed; }
   bool isDeferred() const { return category_ == Category::Deferred; }

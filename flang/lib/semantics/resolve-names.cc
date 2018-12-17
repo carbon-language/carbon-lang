@@ -2348,8 +2348,7 @@ Symbol &DeclarationVisitor::DeclareObjectEntity(
 
 void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Character &x) {
   if (!charInfo_.length) {
-    charInfo_.length = ParamValue{SomeExpr{
-        evaluate::AsExpr(evaluate::Constant<evaluate::SubscriptInteger>{1})}};
+    charInfo_.length = ParamValue{1};
   }
   SetDeclTypeSpec(currScope().MakeCharacterType(
       std::move(*charInfo_.length), charInfo_.kind));
@@ -2370,8 +2369,7 @@ void DeclarationVisitor::Post(const parser::TypeParamValue &x) {
 }
 void DeclarationVisitor::Post(const parser::CharLength &x) {
   if (const auto *length{std::get_if<std::int64_t>(&x.u)}) {
-    charInfo_.length = ParamValue{SomeExpr{evaluate::AsExpr(
-        evaluate::Constant<evaluate::SubscriptInteger>{*length})}};
+    charInfo_.length = ParamValue{*length};
   }
 }
 
