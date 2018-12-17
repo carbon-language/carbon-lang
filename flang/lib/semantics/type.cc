@@ -115,7 +115,7 @@ std::ostream &operator<<(std::ostream &o, const ParamValue &x) {
 IntrinsicTypeSpec::IntrinsicTypeSpec(TypeCategory category, int kind)
   : category_{category}, kind_{kind} {
   CHECK(category != TypeCategory::Derived);
-  CHECK(kind >= 0);
+  CHECK(kind > 0);
 }
 
 std::ostream &operator<<(std::ostream &os, const IntrinsicTypeSpec &x) {
@@ -127,11 +127,7 @@ std::ostream &operator<<(std::ostream &os, const IntrinsicTypeSpec &x) {
 }
 
 std::ostream &operator<<(std::ostream &os, const CharacterTypeSpec &x) {
-  os << "CHARACTER(" << x.length();
-  if (x.kind() != 0) {
-    os << ",kind=" << x.kind();
-  }
-  return os << ')';
+  return os << "CHARACTER(" << x.length() << ',' << x.kind() << ')';
 }
 
 DeclTypeSpec::DeclTypeSpec(const NumericTypeSpec &typeSpec)

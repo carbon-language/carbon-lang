@@ -2350,6 +2350,10 @@ void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Character &x) {
   if (!charInfo_.length) {
     charInfo_.length = ParamValue{1};
   }
+  if (charInfo_.kind == 0) {
+    charInfo_.kind =
+        context().defaultKinds().GetDefaultKind(TypeCategory::Character);
+  }
   SetDeclTypeSpec(currScope().MakeCharacterType(
       std::move(*charInfo_.length), charInfo_.kind));
   charInfo_ = {};
