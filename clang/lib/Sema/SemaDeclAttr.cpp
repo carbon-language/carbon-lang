@@ -5694,6 +5694,11 @@ static void handleLayoutVersion(Sema &S, Decl *D, const ParsedAttr &AL) {
   if (!checkUInt32Argument(S, AL, AL.getArgAsExpr(0), Version))
     return;
 
+  // The attribute expects a "major" version number like 19, but new versions of
+  // MSVC have moved to updating the "minor", or less significant numbers, so we
+  // have to multiply by 100 now.
+  Version *= 100;
+
   // TODO: Investigate what happens with the next major version of MSVC.
   if (Version != LangOptions::MSVC2015) {
     S.Diag(AL.getLoc(), diag::err_attribute_argument_out_of_bounds)

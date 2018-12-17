@@ -98,11 +98,14 @@ public:
 
   enum AddrSpaceMapMangling { ASMM_Target, ASMM_On, ASMM_Off };
 
+  // Corresponds to _MSC_VER
   enum MSVCMajorVersion {
-    MSVC2010 = 16,
-    MSVC2012 = 17,
-    MSVC2013 = 18,
-    MSVC2015 = 19
+    MSVC2010 = 1600,
+    MSVC2012 = 1700,
+    MSVC2013 = 1800,
+    MSVC2015 = 1900,
+    MSVC2017 = 1910,
+    MSVC2017_5 = 1912
   };
 
   /// Clang versions with different platform ABI conformance.
@@ -271,7 +274,7 @@ public:
   }
 
   bool isCompatibleWithMSVC(MSVCMajorVersion MajorVersion) const {
-    return MSCompatibilityVersion >= MajorVersion * 10000000U;
+    return MSCompatibilityVersion >= MajorVersion * 100000U;
   }
 
   /// Reset all of the options that are not considered when building a
