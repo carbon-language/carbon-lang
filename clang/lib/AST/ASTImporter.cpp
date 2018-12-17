@@ -122,6 +122,8 @@ namespace clang {
       return getCanonicalForwardRedeclChain<FunctionDecl>(FD);
     if (auto *VD = dyn_cast<VarDecl>(D))
       return getCanonicalForwardRedeclChain<VarDecl>(VD);
+    if (auto *TD = dyn_cast<TagDecl>(D))
+      return getCanonicalForwardRedeclChain<TagDecl>(TD);
     llvm_unreachable("Bad declaration kind");
   }
 
@@ -2607,10 +2609,9 @@ ExpectedDecl ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
       return std::move(Err);
     IDNS = Decl::IDNS_Ordinary;
   } else if (Importer.getToContext().getLangOpts().CPlusPlus)
-    IDNS |= Decl::IDNS_Ordinary;
+    IDNS |= Decl::IDNS_Ordinary | Decl::IDNS_TagFriend;
 
   // We may already have a record of the same name; try to find and match it.
-  RecordDecl *AdoptDecl = nullptr;
   RecordDecl *PrevDecl = nullptr;
   if (!DC->isFunctionOrMethod()) {
     SmallVector<NamedDecl *, 4> ConflictingDecls;
@@ -2643,26 +2644,22 @@ ExpectedDecl ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
       }
 
       if (auto *FoundRecord = dyn_cast<RecordDecl>(Found)) {
-        if (!SearchName) {
+        // Do not emit false positive diagnostic in case of unnamed
+        // struct/union and in case of anonymous structs.  Would be false
+        // because there may be several anonymous/unnamed structs in a class.
+        // E.g. these are both valid:
+        //  struct A { // unnamed structs
+        //    struct { struct A *next; } entry0;
+        //    struct { struct A *next; } entry1;
+        //  };
+        //  struct X { struct { int a; }; struct { int b; }; }; // anon structs
+        if (!SearchName)
           if (!IsStructuralMatch(D, FoundRecord, false))
             continue;
-        } else {
-          if (!IsStructuralMatch(D, FoundRecord)) {
-            ConflictingDecls.push_back(FoundDecl);
-            continue;
-          }
-        }
 
-        PrevDecl = FoundRecord;
-
-        if (RecordDecl *FoundDef = FoundRecord->getDefinition()) {
-          if ((SearchName && !D->isCompleteDefinition() && !IsFriendTemplate)
-              || (D->isCompleteDefinition() &&
-                  D->isAnonymousStructOrUnion()
-                    == FoundDef->isAnonymousStructOrUnion())) {
-            // The record types structurally match, or the "from" translation
-            // unit only had a forward declaration anyway; call it the same
-            // function.
+        if (IsStructuralMatch(D, FoundRecord)) {
+          RecordDecl *FoundDef = FoundRecord->getDefinition();
+          if (D->isThisDeclarationADefinition() && FoundDef) {
             // FIXME: Structural equivalence check should check for same
             // user-defined methods.
             Importer.MapImported(D, FoundDef);
@@ -2670,46 +2667,20 @@ ExpectedDecl ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
               auto *FoundCXX = dyn_cast<CXXRecordDecl>(FoundDef);
               assert(FoundCXX && "Record type mismatch");
 
-              if (D->isCompleteDefinition() && !Importer.isMinimalImport())
+              if (!Importer.isMinimalImport())
                 // FoundDef may not have every implicit method that D has
                 // because implicit methods are created only if they are used.
                 if (Error Err = ImportImplicitMethods(DCXX, FoundCXX))
                   return std::move(Err);
             }
-            return FoundDef;
           }
-          if (IsFriendTemplate)
-            continue;
-        } else if (!D->isCompleteDefinition()) {
-          // We have a forward declaration of this type, so adopt that forward
-          // declaration rather than building a new one.
-
-          // If one or both can be completed from external storage then try one
-          // last time to complete and compare them before doing this.
-
-          if (FoundRecord->hasExternalLexicalStorage() &&
-              !FoundRecord->isCompleteDefinition())
-            FoundRecord->getASTContext().getExternalSource()->CompleteType(FoundRecord);
-          if (D->hasExternalLexicalStorage())
-            D->getASTContext().getExternalSource()->CompleteType(D);
-
-          if (FoundRecord->isCompleteDefinition() &&
-              D->isCompleteDefinition() &&
-              !IsStructuralMatch(D, FoundRecord)) {
-            ConflictingDecls.push_back(FoundDecl);
-            continue;
-          }
-
-          AdoptDecl = FoundRecord;
-          continue;
+          PrevDecl = FoundRecord->getMostRecentDecl();
+          break;
         }
-
-        continue;
-      } else if (isa<ValueDecl>(Found))
-        continue;
+      }
 
       ConflictingDecls.push_back(FoundDecl);
-    }
+    } // for
 
     if (!ConflictingDecls.empty() && SearchName) {
       Name = Importer.HandleNameConflict(Name, DC, IDNS,
@@ -2725,79 +2696,90 @@ ExpectedDecl ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
     return BeginLocOrErr.takeError();
 
   // Create the record declaration.
-  RecordDecl *D2 = AdoptDecl;
-  if (!D2) {
-    CXXRecordDecl *D2CXX = nullptr;
-    if (auto *DCXX = dyn_cast<CXXRecordDecl>(D)) {
-      if (DCXX->isLambda()) {
-        auto TInfoOrErr = import(DCXX->getLambdaTypeInfo());
-        if (!TInfoOrErr)
-          return TInfoOrErr.takeError();
-        if (GetImportedOrCreateSpecialDecl(
-                D2CXX, CXXRecordDecl::CreateLambda, D, Importer.getToContext(),
-                DC, *TInfoOrErr, Loc, DCXX->isDependentLambda(),
-                DCXX->isGenericLambda(), DCXX->getLambdaCaptureDefault()))
-          return D2CXX;
-        ExpectedDecl CDeclOrErr = import(DCXX->getLambdaContextDecl());
-        if (!CDeclOrErr)
-          return CDeclOrErr.takeError();
-        D2CXX->setLambdaMangling(DCXX->getLambdaManglingNumber(), *CDeclOrErr);
-      } else if (DCXX->isInjectedClassName()) {
-        // We have to be careful to do a similar dance to the one in
-        // Sema::ActOnStartCXXMemberDeclarations
-        CXXRecordDecl *const PrevDecl = nullptr;
-        const bool DelayTypeCreation = true;
-        if (GetImportedOrCreateDecl(D2CXX, D, Importer.getToContext(),
-                                    D->getTagKind(), DC, *BeginLocOrErr, Loc,
-                                    Name.getAsIdentifierInfo(), PrevDecl,
-                                    DelayTypeCreation))
-          return D2CXX;
-        Importer.getToContext().getTypeDeclType(
-            D2CXX, dyn_cast<CXXRecordDecl>(DC));
-      } else {
-        if (GetImportedOrCreateDecl(D2CXX, D, Importer.getToContext(),
-                                    D->getTagKind(), DC, *BeginLocOrErr, Loc,
-                                    Name.getAsIdentifierInfo(),
-                                    cast_or_null<CXXRecordDecl>(PrevDecl)))
-          return D2CXX;
-      }
+  RecordDecl *D2 = nullptr;
+  CXXRecordDecl *D2CXX = nullptr;
+  if (auto *DCXX = dyn_cast<CXXRecordDecl>(D)) {
+    if (DCXX->isLambda()) {
+      auto TInfoOrErr = import(DCXX->getLambdaTypeInfo());
+      if (!TInfoOrErr)
+        return TInfoOrErr.takeError();
+      if (GetImportedOrCreateSpecialDecl(
+              D2CXX, CXXRecordDecl::CreateLambda, D, Importer.getToContext(),
+              DC, *TInfoOrErr, Loc, DCXX->isDependentLambda(),
+              DCXX->isGenericLambda(), DCXX->getLambdaCaptureDefault()))
+        return D2CXX;
+      ExpectedDecl CDeclOrErr = import(DCXX->getLambdaContextDecl());
+      if (!CDeclOrErr)
+        return CDeclOrErr.takeError();
+      D2CXX->setLambdaMangling(DCXX->getLambdaManglingNumber(), *CDeclOrErr);
+    } else if (DCXX->isInjectedClassName()) {
+      // We have to be careful to do a similar dance to the one in
+      // Sema::ActOnStartCXXMemberDeclarations
+      const bool DelayTypeCreation = true;
+      if (GetImportedOrCreateDecl(
+              D2CXX, D, Importer.getToContext(), D->getTagKind(), DC,
+              *BeginLocOrErr, Loc, Name.getAsIdentifierInfo(),
+              cast_or_null<CXXRecordDecl>(PrevDecl), DelayTypeCreation))
+        return D2CXX;
+      Importer.getToContext().getTypeDeclType(
+          D2CXX, dyn_cast<CXXRecordDecl>(DC));
+    } else {
+      if (GetImportedOrCreateDecl(D2CXX, D, Importer.getToContext(),
+                                  D->getTagKind(), DC, *BeginLocOrErr, Loc,
+                                  Name.getAsIdentifierInfo(),
+                                  cast_or_null<CXXRecordDecl>(PrevDecl)))
+        return D2CXX;
+    }
 
-      D2 = D2CXX;
-      D2->setAccess(D->getAccess());
-      D2->setLexicalDeclContext(LexicalDC);
-      if (!DCXX->getDescribedClassTemplate() || DCXX->isImplicit())
-        LexicalDC->addDeclInternal(D2);
+    D2 = D2CXX;
+    D2->setAccess(D->getAccess());
+    D2->setLexicalDeclContext(LexicalDC);
+    if (!DCXX->getDescribedClassTemplate() || DCXX->isImplicit())
+      LexicalDC->addDeclInternal(D2);
 
-      if (ClassTemplateDecl *FromDescribed =
-          DCXX->getDescribedClassTemplate()) {
-        ClassTemplateDecl *ToDescribed;
-        if (Error Err = importInto(ToDescribed, FromDescribed))
-          return std::move(Err);
-        D2CXX->setDescribedClassTemplate(ToDescribed);
-        if (!DCXX->isInjectedClassName() && !IsFriendTemplate) {
-          // In a record describing a template the type should be an
-          // InjectedClassNameType (see Sema::CheckClassTemplate). Update the
-          // previously set type to the correct value here (ToDescribed is not
-          // available at record create).
-          // FIXME: The previous type is cleared but not removed from
-          // ASTContext's internal storage.
-          CXXRecordDecl *Injected = nullptr;
-          for (NamedDecl *Found : D2CXX->noload_lookup(Name)) {
-            auto *Record = dyn_cast<CXXRecordDecl>(Found);
-            if (Record && Record->isInjectedClassName()) {
-              Injected = Record;
-              break;
-            }
-          }
-          D2CXX->setTypeForDecl(nullptr);
-          Importer.getToContext().getInjectedClassNameType(D2CXX,
-              ToDescribed->getInjectedClassNameSpecialization());
-          if (Injected) {
-            Injected->setTypeForDecl(nullptr);
-            Importer.getToContext().getTypeDeclType(Injected, D2CXX);
+    if (LexicalDC != DC && D->isInIdentifierNamespace(Decl::IDNS_TagFriend))
+      DC->makeDeclVisibleInContext(D2);
+
+    if (ClassTemplateDecl *FromDescribed =
+        DCXX->getDescribedClassTemplate()) {
+      ClassTemplateDecl *ToDescribed;
+      if (Error Err = importInto(ToDescribed, FromDescribed))
+        return std::move(Err);
+      D2CXX->setDescribedClassTemplate(ToDescribed);
+      if (!DCXX->isInjectedClassName() && !IsFriendTemplate) {
+        // In a record describing a template the type should be an
+        // InjectedClassNameType (see Sema::CheckClassTemplate). Update the
+        // previously set type to the correct value here (ToDescribed is not
+        // available at record create).
+        // FIXME: The previous type is cleared but not removed from
+        // ASTContext's internal storage.
+        CXXRecordDecl *Injected = nullptr;
+        for (NamedDecl *Found : D2CXX->noload_lookup(Name)) {
+          auto *Record = dyn_cast<CXXRecordDecl>(Found);
+          if (Record && Record->isInjectedClassName()) {
+            Injected = Record;
+            break;
           }
         }
-      } else if (MemberSpecializationInfo *MemberInfo =
+        // Create an injected type for the whole redecl chain.
+        SmallVector<Decl *, 2> Redecls =
+            getCanonicalForwardRedeclChain(D2CXX);
+        for (auto *R : Redecls) {
+          auto *RI = cast<CXXRecordDecl>(R);
+          RI->setTypeForDecl(nullptr);
+          // Below we create a new injected type and assign that to the
+          // canonical decl, subsequent declarations in the chain will reuse
+          // that type.
+          Importer.getToContext().getInjectedClassNameType(
+              RI, ToDescribed->getInjectedClassNameSpecialization());
+        }
+        // Set the new type for the previous injected decl too.
+        if (Injected) {
+          Injected->setTypeForDecl(nullptr);
+          Importer.getToContext().getTypeDeclType(Injected, D2CXX);
+        }
+      }
+    } else if (MemberSpecializationInfo *MemberInfo =
                    DCXX->getMemberSpecializationInfo()) {
         TemplateSpecializationKind SK =
             MemberInfo->getTemplateSpecializationKind();
@@ -2814,27 +2796,24 @@ ExpectedDecl ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
             *POIOrErr);
         else
           return POIOrErr.takeError();
-      }
-
-    } else {
-      if (GetImportedOrCreateDecl(D2, D, Importer.getToContext(),
-                                  D->getTagKind(), DC, *BeginLocOrErr, Loc,
-                                  Name.getAsIdentifierInfo(), PrevDecl))
-        return D2;
-      D2->setLexicalDeclContext(LexicalDC);
-      LexicalDC->addDeclInternal(D2);
     }
 
-    if (auto QualifierLocOrErr = import(D->getQualifierLoc()))
-      D2->setQualifierInfo(*QualifierLocOrErr);
-    else
-      return QualifierLocOrErr.takeError();
-
-    if (D->isAnonymousStructOrUnion())
-      D2->setAnonymousStructOrUnion(true);
+  } else {
+    if (GetImportedOrCreateDecl(D2, D, Importer.getToContext(),
+                                D->getTagKind(), DC, *BeginLocOrErr, Loc,
+                                Name.getAsIdentifierInfo(), PrevDecl))
+      return D2;
+    D2->setLexicalDeclContext(LexicalDC);
+    LexicalDC->addDeclInternal(D2);
   }
 
-  Importer.MapImported(D, D2);
+  if (auto QualifierLocOrErr = import(D->getQualifierLoc()))
+    D2->setQualifierInfo(*QualifierLocOrErr);
+  else
+    return QualifierLocOrErr.takeError();
+
+  if (D->isAnonymousStructOrUnion())
+    D2->setAnonymousStructOrUnion(true);
 
   if (D->isCompleteDefinition())
     if (Error Err = ImportDefinition(D, D2, IDK_Default))
@@ -4990,14 +4969,12 @@ static ClassTemplateDecl *getDefinition(ClassTemplateDecl *D) {
 ExpectedDecl ASTNodeImporter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   bool IsFriend = D->getFriendObjectKind() != Decl::FOK_None;
 
-  // If this record has a definition in the translation unit we're coming from,
-  // but this particular declaration is not that definition, import the
+  // If this template has a definition in the translation unit we're coming
+  // from, but this particular declaration is not that definition, import the
   // definition and map to that.
-  auto *Definition =
-      cast_or_null<CXXRecordDecl>(D->getTemplatedDecl()->getDefinition());
-  if (Definition && Definition != D->getTemplatedDecl() && !IsFriend) {
-    if (ExpectedDecl ImportedDefOrErr = import(
-        Definition->getDescribedClassTemplate()))
+  ClassTemplateDecl *Definition = getDefinition(D);
+  if (Definition && Definition != D && !IsFriend) {
+    if (ExpectedDecl ImportedDefOrErr = import(Definition))
       return Importer.MapImported(D, *ImportedDefOrErr);
     else
       return ImportedDefOrErr.takeError();
@@ -5013,38 +4990,29 @@ ExpectedDecl ASTNodeImporter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   if (ToD)
     return ToD;
 
+  ClassTemplateDecl *FoundByLookup = nullptr;
+
   // We may already have a template of the same name; try to find and match it.
   if (!DC->isFunctionOrMethod()) {
     SmallVector<NamedDecl *, 4> ConflictingDecls;
     SmallVector<NamedDecl *, 2> FoundDecls;
     DC->getRedeclContext()->localUncachedLookup(Name, FoundDecls);
     for (auto *FoundDecl : FoundDecls) {
-      if (!FoundDecl->isInIdentifierNamespace(Decl::IDNS_Ordinary))
+      if (!FoundDecl->isInIdentifierNamespace(Decl::IDNS_Ordinary |
+                                              Decl::IDNS_TagFriend))
         continue;
 
       Decl *Found = FoundDecl;
-      if (auto *FoundTemplate = dyn_cast<ClassTemplateDecl>(Found)) {
-
-        // The class to be imported is a definition.
-        if (D->isThisDeclarationADefinition()) {
-          // Lookup will find the fwd decl only if that is more recent than the
-          // definition. So, try to get the definition if that is available in
-          // the redecl chain.
-          ClassTemplateDecl *TemplateWithDef = getDefinition(FoundTemplate);
-          if (TemplateWithDef)
-            FoundTemplate = TemplateWithDef;
-          else
-            continue;
-        }
+      auto *FoundTemplate = dyn_cast<ClassTemplateDecl>(Found);
+      if (FoundTemplate) {
 
         if (IsStructuralMatch(D, FoundTemplate)) {
-          if (!IsFriend) {
-            Importer.MapImported(D->getTemplatedDecl(),
-                                 FoundTemplate->getTemplatedDecl());
-            return Importer.MapImported(D, FoundTemplate);
+          ClassTemplateDecl *TemplateWithDef = getDefinition(FoundTemplate);
+          if (D->isThisDeclarationADefinition() && TemplateWithDef) {
+            return Importer.MapImported(D, TemplateWithDef);
           }
-
-          continue;
+          FoundByLookup = FoundTemplate;
+          break;
         }
       }
 
@@ -5081,17 +5049,38 @@ ExpectedDecl ASTNodeImporter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 
   ToTemplated->setDescribedClassTemplate(D2);
 
-  if (ToTemplated->getPreviousDecl()) {
-    assert(
-        ToTemplated->getPreviousDecl()->getDescribedClassTemplate() &&
-        "Missing described template");
-    D2->setPreviousDecl(
-        ToTemplated->getPreviousDecl()->getDescribedClassTemplate());
-  }
   D2->setAccess(D->getAccess());
   D2->setLexicalDeclContext(LexicalDC);
-  if (!IsFriend)
+
+  if (D->getDeclContext()->containsDeclAndLoad(D))
+    DC->addDeclInternal(D2);
+  if (DC != LexicalDC && D->getLexicalDeclContext()->containsDeclAndLoad(D))
     LexicalDC->addDeclInternal(D2);
+
+  if (FoundByLookup) {
+    auto *Recent =
+        const_cast<ClassTemplateDecl *>(FoundByLookup->getMostRecentDecl());
+
+    // It is possible that during the import of the class template definition
+    // we start the import of a fwd friend decl of the very same class template
+    // and we add the fwd friend decl to the lookup table. But the ToTemplated
+    // had been created earlier and by that time the lookup could not find
+    // anything existing, so it has no previous decl. Later, (still during the
+    // import of the fwd friend decl) we start to import the definition again
+    // and this time the lookup finds the previous fwd friend class template.
+    // In this case we must set up the previous decl for the templated decl.
+    if (!ToTemplated->getPreviousDecl()) {
+      CXXRecordDecl *PrevTemplated =
+          FoundByLookup->getTemplatedDecl()->getMostRecentDecl();
+      if (ToTemplated != PrevTemplated)
+        ToTemplated->setPreviousDecl(PrevTemplated);
+    }
+
+    D2->setPreviousDecl(Recent);
+  }
+
+  if (LexicalDC != DC && IsFriend)
+    DC->makeDeclVisibleInContext(D2);
 
   if (FromTemplated->isCompleteDefinition() &&
       !ToTemplated->isCompleteDefinition()) {
