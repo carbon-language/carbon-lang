@@ -67,10 +67,5 @@ bool MipsLegalizerInfo::legalizeCustom(MachineInstr &MI,
 
   MIRBuilder.setInstr(MI);
 
-  switch (MI.getOpcode()) {
-  default:
-    return false;
-  }
-
-  return true;
+  return false;
 }
