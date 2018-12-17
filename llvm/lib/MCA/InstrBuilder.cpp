@@ -536,6 +536,8 @@ InstrBuilder::createInstrDescImpl(const MCInst &MCI) {
   ID->MayLoad = MCDesc.mayLoad();
   ID->MayStore = MCDesc.mayStore();
   ID->HasSideEffects = MCDesc.hasUnmodeledSideEffects();
+  ID->BeginGroup = SCDesc.BeginGroup;
+  ID->EndGroup = SCDesc.EndGroup;
 
   initializeUsedResources(*ID, SCDesc, STI, ProcResourceMasks);
   computeMaxLatency(*ID, MCDesc, SCDesc, STI);

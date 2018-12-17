@@ -6,7 +6,7 @@ lmg	%r6, %r15, 48(%r15)
 
 # CHECK:      Iterations:        100
 # CHECK-NEXT: Instructions:      200
-# CHECK-NEXT: Total Cycles:      1003
+# CHECK-NEXT: Total Cycles:      1004
 # CHECK-NEXT: Total uOps:        600
 
 # CHECK:      Dispatch Width:    6
@@ -51,15 +51,15 @@ lmg	%r6, %r15, 48(%r15)
 # CHECK-NEXT:  -      -      -      -     0.10   4.90    -      -      -      -      -      -      -     lmg	%r6, %r15, 48(%r15)
 
 # CHECK:      Timeline view:
-# CHECK-NEXT:                     0123456789          012
+# CHECK-NEXT:                     0123456789          0123
 # CHECK-NEXT: Index     0123456789          0123456789
 
-# CHECK:      [0,0]     DeER .    .    .    .    .    . .   stmg	%r6, %r15, 48(%r15)
-# CHECK-NEXT: [0,1]     DeeeeeeeeeeER  .    .    .    . .   lmg	%r6, %r15, 48(%r15)
-# CHECK-NEXT: [1,0]     .D=========eER .    .    .    . .   stmg	%r6, %r15, 48(%r15)
-# CHECK-NEXT: [1,1]     .D=========eeeeeeeeeeER  .    . .   lmg	%r6, %r15, 48(%r15)
-# CHECK-NEXT: [2,0]     . D==================eER .    . .   stmg	%r6, %r15, 48(%r15)
-# CHECK-NEXT: [2,1]     . D==================eeeeeeeeeeER   lmg	%r6, %r15, 48(%r15)
+# CHECK:      [0,0]     DeER .    .    .    .    .    .  .   stmg	%r6, %r15, 48(%r15)
+# CHECK-NEXT: [0,1]     .DeeeeeeeeeeER .    .    .    .  .   lmg	%r6, %r15, 48(%r15)
+# CHECK-NEXT: [1,0]     . D=========eER.    .    .    .  .   stmg	%r6, %r15, 48(%r15)
+# CHECK-NEXT: [1,1]     .  D========eeeeeeeeeeER .    .  .   lmg	%r6, %r15, 48(%r15)
+# CHECK-NEXT: [2,0]     .   D=================eER.    .  .   stmg	%r6, %r15, 48(%r15)
+# CHECK-NEXT: [2,1]     .    D================eeeeeeeeeeER   lmg	%r6, %r15, 48(%r15)
 
 # CHECK:      Average Wait times (based on the timeline view):
 # CHECK-NEXT: [0]: Executions
@@ -68,5 +68,5 @@ lmg	%r6, %r15, 48(%r15)
 # CHECK-NEXT: [3]: Average time elapsed from WB until retire stage
 
 # CHECK:            [0]    [1]    [2]    [3]
-# CHECK-NEXT: 0.     3     10.0   0.3    0.0       stmg	%r6, %r15, 48(%r15)
-# CHECK-NEXT: 1.     3     10.0   0.3    0.0       lmg	%r6, %r15, 48(%r15)
+# CHECK-NEXT: 0.     3     9.7    0.3    0.0       stmg	%r6, %r15, 48(%r15)
+# CHECK-NEXT: 1.     3     9.0    0.3    0.0       lmg	%r6, %r15, 48(%r15)
