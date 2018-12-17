@@ -76,7 +76,7 @@ public:
   std::string CodeModel;
 
   /// The version of the SDK which was used during the compilation.
-  VersionTuple SDKVersion;
+  llvm::VersionTuple SDKVersion;
 };
 
 }  // end namespace clang
