@@ -32397,8 +32397,9 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
 }
 
 bool X86TargetLowering::SimplifyDemandedBitsForTargetNode(
-    SDValue Op, const APInt &OriginalDemandedBits, KnownBits &Known,
-    TargetLoweringOpt &TLO, unsigned Depth) const {
+    SDValue Op, const APInt &OriginalDemandedBits,
+    const APInt &OriginalDemandedElts, KnownBits &Known, TargetLoweringOpt &TLO,
+    unsigned Depth) const {
   unsigned BitWidth = OriginalDemandedBits.getBitWidth();
   unsigned Opc = Op.getOpcode();
   switch(Opc) {
@@ -32424,8 +32425,8 @@ bool X86TargetLowering::SimplifyDemandedBitsForTargetNode(
       KnownBits KnownOp;
       unsigned ShAmt = ShiftImm->getZExtValue();
       APInt DemandedMask = OriginalDemandedBits.lshr(ShAmt);
-      if (SimplifyDemandedBits(Op.getOperand(0), DemandedMask, KnownOp, TLO,
-                               Depth + 1))
+      if (SimplifyDemandedBits(Op.getOperand(0), DemandedMask,
+                               OriginalDemandedElts, KnownOp, TLO, Depth + 1))
         return true;
     }
     break;
@@ -32446,8 +32447,8 @@ bool X86TargetLowering::SimplifyDemandedBitsForTargetNode(
           OriginalDemandedBits.countLeadingZeros() < ShAmt)
         DemandedMask.setSignBit();
 
-      if (SimplifyDemandedBits(Op.getOperand(0), DemandedMask, KnownOp, TLO,
-                               Depth + 1))
+      if (SimplifyDemandedBits(Op.getOperand(0), DemandedMask,
+                               OriginalDemandedElts, KnownOp, TLO, Depth + 1))
         return true;
     }
     break;
@@ -32475,8 +32476,8 @@ bool X86TargetLowering::SimplifyDemandedBitsForTargetNode(
 
     // MOVMSK only uses the MSB from each vector element.
     KnownBits KnownSrc;
-    if (SimplifyDemandedBits(Src, APInt::getSignMask(SrcBits), KnownSrc, TLO,
-                             Depth + 1))
+    if (SimplifyDemandedBits(Src, APInt::getSignMask(SrcBits), DemandedElts,
+                             KnownSrc, TLO, Depth + 1))
       return true;
 
     if (KnownSrc.One[SrcBits - 1])
@@ -32488,7 +32489,7 @@ bool X86TargetLowering::SimplifyDemandedBitsForTargetNode(
   }
 
   return TargetLowering::SimplifyDemandedBitsForTargetNode(
-      Op, OriginalDemandedBits, Known, TLO, Depth);
+      Op, OriginalDemandedBits, OriginalDemandedElts, Known, TLO, Depth);
 }
 
 /// Check if a vector extract from a target-specific shuffle of a load can be
