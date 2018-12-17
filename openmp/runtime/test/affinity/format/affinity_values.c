@@ -10,7 +10,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <omp.h>
-#include "helper.h"
+
+#define XSTR(x) #x
+#define STR(x) XSTR(x)
+
+#define streqls(s1, s2) (!strcmp(s1, s2))
+
+#define check(condition)                                                       \
+  if (!(condition)) {                                                          \
+    fprintf(stderr, "error: %s: %d: " STR(condition) "\n", __FILE__,           \
+            __LINE__);                                                         \
+    exit(1);                                                                   \
+  }
+
 #define DEBUG 0
 
 #if DEBUG
