@@ -32410,8 +32410,22 @@ bool X86TargetLowering::SimplifyDemandedBitsForTargetNode(
     }
     break;
   }
-  case X86ISD::VSRAI:
   case X86ISD::VSRLI: {
+    if (auto *ShiftImm = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+      if (ShiftImm->getAPIntValue().uge(BitWidth))
+        break;
+
+      KnownBits KnownOp;
+      unsigned ShAmt = ShiftImm->getZExtValue();
+      APInt DemandedMask = OriginalDemandedBits << ShAmt;
+
+      if (SimplifyDemandedBits(Op.getOperand(0), DemandedMask,
+                               OriginalDemandedElts, KnownOp, TLO, Depth + 1))
+        return true;
+    }
+    break;
+  }
+  case X86ISD::VSRAI: {
     if (auto *ShiftImm = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
       if (ShiftImm->getAPIntValue().uge(BitWidth))
         break;
@@ -32422,8 +32436,7 @@ bool X86TargetLowering::SimplifyDemandedBitsForTargetNode(
 
       // If any of the demanded bits are produced by the sign extension, we also
       // demand the input sign bit.
-      if (Opc == X86ISD::VSRAI &&
-          OriginalDemandedBits.countLeadingZeros() < ShAmt)
+      if (OriginalDemandedBits.countLeadingZeros() < ShAmt)
         DemandedMask.setSignBit();
 
       if (SimplifyDemandedBits(Op.getOperand(0), DemandedMask,
