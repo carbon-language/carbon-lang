@@ -7539,6 +7539,8 @@ INTERCEPTOR(int, fts_close, void *ftsp) {
 INTERCEPTOR(int, sysctl, int *name, unsigned int namelen, void *oldp,
             SIZE_T *oldlenp, void *newp, SIZE_T newlen) {
   void *ctx;
+  if (COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED)
+    return internal_sysctl(name, namelen, oldp, oldlenp, newp, newlen);
   COMMON_INTERCEPTOR_ENTER(ctx, sysctl, name, namelen, oldp, oldlenp, newp,
                            newlen);
   if (name)
@@ -7561,6 +7563,8 @@ INTERCEPTOR(int, sysctl, int *name, unsigned int namelen, void *oldp,
 INTERCEPTOR(int, sysctlbyname, char *sname, void *oldp, SIZE_T *oldlenp,
             void *newp, SIZE_T newlen) {
   void *ctx;
+  if (COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED)
+    return internal_sysctlbyname(sname, oldp, oldlenp, newp, newlen);
   COMMON_INTERCEPTOR_ENTER(ctx, sysctlbyname, sname, oldp, oldlenp, newp,
                            newlen);
   if (sname)
