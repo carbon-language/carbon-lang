@@ -32379,6 +32379,7 @@ bool X86TargetLowering::SimplifyDemandedBitsForTargetNode(
     SDValue Op, const APInt &OriginalDemandedBits,
     const APInt &OriginalDemandedElts, KnownBits &Known, TargetLoweringOpt &TLO,
     unsigned Depth) const {
+  EVT VT = Op.getValueType();
   unsigned BitWidth = OriginalDemandedBits.getBitWidth();
   unsigned Opc = Op.getOpcode();
   switch(Opc) {
@@ -32401,12 +32402,19 @@ bool X86TargetLowering::SimplifyDemandedBitsForTargetNode(
       if (ShiftImm->getAPIntValue().uge(BitWidth))
         break;
 
-      KnownBits KnownOp;
       unsigned ShAmt = ShiftImm->getZExtValue();
       APInt DemandedMask = OriginalDemandedBits.lshr(ShAmt);
+
       if (SimplifyDemandedBits(Op.getOperand(0), DemandedMask,
-                               OriginalDemandedElts, KnownOp, TLO, Depth + 1))
+                               OriginalDemandedElts, Known, TLO, Depth + 1))
         return true;
+
+      assert(!Known.hasConflict() && "Bits known to be one AND zero?");
+      Known.Zero <<= ShAmt;
+      Known.One <<= ShAmt;
+
+      // Low bits known zero.
+      Known.Zero.setLowBits(ShAmt);
     }
     break;
   }
@@ -32415,22 +32423,30 @@ bool X86TargetLowering::SimplifyDemandedBitsForTargetNode(
       if (ShiftImm->getAPIntValue().uge(BitWidth))
         break;
 
-      KnownBits KnownOp;
       unsigned ShAmt = ShiftImm->getZExtValue();
       APInt DemandedMask = OriginalDemandedBits << ShAmt;
 
       if (SimplifyDemandedBits(Op.getOperand(0), DemandedMask,
-                               OriginalDemandedElts, KnownOp, TLO, Depth + 1))
+                               OriginalDemandedElts, Known, TLO, Depth + 1))
         return true;
+
+      assert(!Known.hasConflict() && "Bits known to be one AND zero?");
+      Known.Zero.lshrInPlace(ShAmt);
+      Known.One.lshrInPlace(ShAmt);
+
+      // High bits known zero.
+      Known.Zero.setHighBits(ShAmt);
     }
     break;
   }
   case X86ISD::VSRAI: {
-    if (auto *ShiftImm = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+    SDValue Op0 = Op.getOperand(0);
+    SDValue Op1 = Op.getOperand(1);
+
+    if (auto *ShiftImm = dyn_cast<ConstantSDNode>(Op1)) {
       if (ShiftImm->getAPIntValue().uge(BitWidth))
         break;
 
-      KnownBits KnownOp;
       unsigned ShAmt = ShiftImm->getZExtValue();
       APInt DemandedMask = OriginalDemandedBits << ShAmt;
 
@@ -32439,15 +32455,29 @@ bool X86TargetLowering::SimplifyDemandedBitsForTargetNode(
       if (OriginalDemandedBits.countLeadingZeros() < ShAmt)
         DemandedMask.setSignBit();
 
-      if (SimplifyDemandedBits(Op.getOperand(0), DemandedMask,
-                               OriginalDemandedElts, KnownOp, TLO, Depth + 1))
+      if (SimplifyDemandedBits(Op0, DemandedMask, OriginalDemandedElts, Known,
+                               TLO, Depth + 1))
         return true;
+
+      assert(!Known.hasConflict() && "Bits known to be one AND zero?");
+      Known.Zero.lshrInPlace(ShAmt);
+      Known.One.lshrInPlace(ShAmt);
+
+      // If the input sign bit is known to be zero, or if none of the top bits
+      // are demanded, turn this into an unsigned shift right.
+      if (Known.Zero[BitWidth - ShAmt - 1] ||
+          OriginalDemandedBits.countLeadingZeros() >= ShAmt)
+        return TLO.CombineTo(
+            Op, TLO.DAG.getNode(X86ISD::VSRLI, SDLoc(Op), VT, Op0, Op1));
+
+      // High bits are known one.
+      if (Known.One[BitWidth - ShAmt - 1])
+        Known.One.setHighBits(ShAmt);
     }
     break;
   }
   case X86ISD::MOVMSK: {
     SDValue Src = Op.getOperand(0);
-    MVT VT = Op.getSimpleValueType();
     MVT SrcVT = Src.getSimpleValueType();
     unsigned SrcBits = SrcVT.getScalarSizeInBits();
     unsigned NumElts = SrcVT.getVectorNumElements();

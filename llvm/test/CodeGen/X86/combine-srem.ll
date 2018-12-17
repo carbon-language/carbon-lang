@@ -226,7 +226,7 @@ define <4 x i32> @combine_vec_srem_by_pow2a_neg(<4 x i32> %x) {
 ; SSE-NEXT:    psrad $31, %xmm1
 ; SSE-NEXT:    psrld $30, %xmm1
 ; SSE-NEXT:    paddd %xmm0, %xmm1
-; SSE-NEXT:    psrad $2, %xmm1
+; SSE-NEXT:    psrld $2, %xmm1
 ; SSE-NEXT:    pxor %xmm2, %xmm2
 ; SSE-NEXT:    psubd %xmm1, %xmm2
 ; SSE-NEXT:    pslld $2, %xmm2
@@ -238,7 +238,7 @@ define <4 x i32> @combine_vec_srem_by_pow2a_neg(<4 x i32> %x) {
 ; AVX-NEXT:    vpsrad $31, %xmm0, %xmm1
 ; AVX-NEXT:    vpsrld $30, %xmm1, %xmm1
 ; AVX-NEXT:    vpaddd %xmm1, %xmm0, %xmm1
-; AVX-NEXT:    vpsrad $2, %xmm1, %xmm1
+; AVX-NEXT:    vpsrld $2, %xmm1, %xmm1
 ; AVX-NEXT:    vpxor %xmm2, %xmm2, %xmm2
 ; AVX-NEXT:    vpsubd %xmm1, %xmm2, %xmm1
 ; AVX-NEXT:    vpslld $2, %xmm1, %xmm1
