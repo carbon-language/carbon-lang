@@ -37,6 +37,20 @@ SemanticsContext::SemanticsContext(
     foldingContext_{evaluate::FoldingContext{
         parser::ContextualMessages{parser::CharBlock{}, &messages_}}} {}
 
+DeclTypeSpec &SemanticsContext::MakeNumericType(
+    TypeCategory category, int kind) {
+  if (kind == 0) {
+    kind = defaultKinds_.GetDefaultKind(category);
+  }
+  return globalScope_.MakeNumericType(category, kind);
+}
+DeclTypeSpec &SemanticsContext::MakeLogicalType(int kind) {
+  if (kind == 0) {
+    kind = defaultKinds_.GetDefaultKind(TypeCategory::Logical);
+  }
+  return globalScope_.MakeLogicalType(kind);
+}
+
 bool SemanticsContext::AnyFatalError() const {
   return !messages_.empty() &&
       (warningsAreErrors_ || messages_.AnyFatalError());

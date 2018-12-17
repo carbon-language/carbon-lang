@@ -26,19 +26,14 @@ namespace Fortran::evaluate {
 
 std::optional<DynamicType> GetSymbolType(const semantics::Symbol &symbol) {
   if (const auto *type{symbol.GetType()}) {
-    switch (type->category()) {
-    case semantics::DeclTypeSpec::Category::Intrinsic: {
-      TypeCategory category{type->intrinsicTypeSpec().category()};
-      int kind{type->intrinsicTypeSpec().kind()};
+    if (const auto *intrinsic{type->AsIntrinsic()}) {
+      TypeCategory category{intrinsic->category()};
+      int kind{intrinsic->kind()};
       if (IsValidKindOfIntrinsicType(category, kind)) {
         return DynamicType{category, kind};
       }
-      break;
-    }
-    case semantics::DeclTypeSpec::Category::TypeDerived:
-    case semantics::DeclTypeSpec::Category::ClassDerived:
+    } else {
       return DynamicType{TypeCategory::Derived, 0, &type->derivedTypeSpec()};
-    default:;
     }
   }
   return std::nullopt;

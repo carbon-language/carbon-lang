@@ -67,12 +67,8 @@ public:
     return *this;
   }
 
-  DeclTypeSpec &MakeIntrinsicTypeSpec(TypeCategory category, int kind = 0) {
-    if (kind == 0) {
-      kind = defaultKinds_.GetDefaultKind(category);
-    }
-    return globalScope_.MakeDeclTypeSpec(category, kind);
-  }
+  DeclTypeSpec &MakeNumericType(TypeCategory, int kind = 0);
+  DeclTypeSpec &MakeLogicalType(int kind = 0);
 
   bool AnyFatalError() const;
   template<typename... A> parser::Message &Say(A... args) {

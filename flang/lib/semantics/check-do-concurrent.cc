@@ -225,9 +225,7 @@ struct GatherSymbols {
 };
 
 static bool IntegerVariable(const Symbol &variable) {
-  return variable.GetType()->category() == semantics::DeclTypeSpec::Intrinsic &&
-      variable.GetType()->intrinsicTypeSpec().category() ==
-      common::TypeCategory::Integer;
+  return variable.GetType()->IsNumeric(common::TypeCategory::Integer);
 }
 static CS GatherAllVariableNames(
     const std::list<parser::LocalitySpec> &localitySpecs) {

@@ -95,7 +95,6 @@ private:
 
 class IntrinsicTypeSpec {
 public:
-  IntrinsicTypeSpec(TypeCategory, int kind);
   TypeCategory category() const { return category_; }
   int kind() const { return kind_; }
   bool operator==(const IntrinsicTypeSpec &x) const {
@@ -103,22 +102,38 @@ public:
   }
   bool operator!=(const IntrinsicTypeSpec &x) const { return !operator==(x); }
 
+protected:
+  IntrinsicTypeSpec(TypeCategory, int kind);
+
 private:
   TypeCategory category_;
   int kind_;
   friend std::ostream &operator<<(std::ostream &os, const IntrinsicTypeSpec &x);
 };
 
-class CharacterTypeSpec {
+class NumericTypeSpec : public IntrinsicTypeSpec {
+public:
+  NumericTypeSpec(TypeCategory category, int kind)
+    : IntrinsicTypeSpec(category, kind) {
+    CHECK(category == TypeCategory::Integer || category == TypeCategory::Real ||
+        category == TypeCategory::Complex);
+  }
+};
+
+class LogicalTypeSpec : public IntrinsicTypeSpec {
+public:
+  LogicalTypeSpec(int kind) : IntrinsicTypeSpec(TypeCategory::Logical, kind) {}
+};
+
+class CharacterTypeSpec : public IntrinsicTypeSpec {
 public:
   CharacterTypeSpec(ParamValue &&length, int kind)
-    : length_{std::move(length)}, kind_{kind} {}
-  int kind() const { return kind_; }
+    : IntrinsicTypeSpec(TypeCategory::Character, kind), length_{std::move(
+                                                            length)} {}
   const ParamValue length() const { return length_; }
 
 private:
   ParamValue length_;
-  int kind_;
   friend std::ostream &operator<<(std::ostream &os, const CharacterTypeSpec &x);
 };
 
@@ -200,7 +215,8 @@ private:
 class DeclTypeSpec {
 public:
   enum Category {
-    Intrinsic,
+    Numeric,
+    Logical,
     Character,
     TypeDerived,
     ClassDerived,
@@ -209,7 +225,8 @@ public:
   };
 
   // intrinsic-type-spec or TYPE(intrinsic-type-spec), not character
-  DeclTypeSpec(const IntrinsicTypeSpec &);
+  DeclTypeSpec(const NumericTypeSpec &);
+  DeclTypeSpec(const LogicalTypeSpec &);
   // character
   DeclTypeSpec(CharacterTypeSpec &);
   // TYPE(derived-type-spec) or CLASS(derived-type-spec)
@@ -222,7 +239,10 @@ public:
   bool operator!=(const DeclTypeSpec &that) const { return !operator==(that); }
 
   Category category() const { return category_; }
-  const IntrinsicTypeSpec &intrinsicTypeSpec() const;
+  bool IsNumeric(TypeCategory) const;
+  const IntrinsicTypeSpec *AsIntrinsic() const;
+  const NumericTypeSpec &numericTypeSpec() const;
+  const LogicalTypeSpec &logicalTypeSpec() const;
   const CharacterTypeSpec &characterTypeSpec() const;
   const DerivedTypeSpec &derivedTypeSpec() const;
   DerivedTypeSpec &derivedTypeSpec();
@@ -232,10 +252,12 @@ private:
   Category category_;
   union TypeSpec {
     TypeSpec() : derived{nullptr} {}
-    TypeSpec(IntrinsicTypeSpec intrinsic) : intrinsic{intrinsic} {}
+    TypeSpec(NumericTypeSpec numeric) : numeric{numeric} {}
+    TypeSpec(LogicalTypeSpec logical) : logical{logical} {}
     TypeSpec(CharacterTypeSpec *character) : character{character} {}
     TypeSpec(DerivedTypeSpec *derived) : derived{derived} {}
-    IntrinsicTypeSpec intrinsic;
+    NumericTypeSpec numeric;
+    LogicalTypeSpec logical;
     CharacterTypeSpec *character;
     DerivedTypeSpec *derived;
   } typeSpec_;

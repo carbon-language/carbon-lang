@@ -238,8 +238,9 @@ private:
   DeclTypeSpec *declTypeSpec_{nullptr};
   const parser::Name *derivedTypeName_{nullptr};
 
-  void MakeIntrinsic(TypeCategory, const std::optional<parser::KindSelector> &);
-  void MakeIntrinsic(TypeCategory, int kind);
+  void MakeNumericType(
+      TypeCategory, const std::optional<parser::KindSelector> &);
+  void MakeNumericType(TypeCategory, int kind);
   int GetKindParamValue(
       TypeCategory, const std::optional<parser::KindSelector> &);
 };
@@ -873,9 +874,9 @@ const DeclTypeSpec *ImplicitRules::GetType(char ch) const {
   } else if (inheritFromParent_ && parent_->context_) {
     return parent_->GetType(ch);
   } else if (ch >= 'i' && ch <= 'n') {
-    return &context_->MakeIntrinsicTypeSpec(TypeCategory::Integer);
+    return &context_->MakeNumericType(TypeCategory::Integer);
   } else if (ch >= 'a' && ch <= 'z') {
-    return &context_->MakeIntrinsicTypeSpec(TypeCategory::Real);
+    return &context_->MakeNumericType(TypeCategory::Real);
   } else {
     return nullptr;
   }
@@ -1025,43 +1026,42 @@ void DeclTypeSpecVisitor::Post(const parser::TypeGuardStmt &) {
   derivedTypeName_ = nullptr;
 }
 
-void DeclTypeSpecVisitor::Post(const parser::IntegerTypeSpec &x) {
-  MakeIntrinsic(TypeCategory::Integer, x.v);
-}
 void DeclTypeSpecVisitor::Post(const parser::IntrinsicTypeSpec::Logical &x) {
-  MakeIntrinsic(TypeCategory::Logical, x.kind);
+  SetDeclTypeSpec(context().MakeLogicalType(
+      GetKindParamValue(TypeCategory::Logical, x.kind)));
+}
+void DeclTypeSpecVisitor::Post(const parser::IntegerTypeSpec &x) {
+  MakeNumericType(TypeCategory::Integer, x.v);
 }
 void DeclTypeSpecVisitor::Post(const parser::IntrinsicTypeSpec::Real &x) {
-  MakeIntrinsic(TypeCategory::Real, x.kind);
+  MakeNumericType(TypeCategory::Real, x.kind);
 }
 void DeclTypeSpecVisitor::Post(const parser::IntrinsicTypeSpec::Complex &x) {
-  MakeIntrinsic(TypeCategory::Complex, x.kind);
+  MakeNumericType(TypeCategory::Complex, x.kind);
 }
 void DeclTypeSpecVisitor::Post(
     const parser::IntrinsicTypeSpec::DoublePrecision &) {
-  MakeIntrinsic(
+  MakeNumericType(
       TypeCategory::Real, context().defaultKinds().doublePrecisionKind());
 }
 void DeclTypeSpecVisitor::Post(
     const parser::IntrinsicTypeSpec::DoubleComplex &) {
-  MakeIntrinsic(
+  MakeNumericType(
       TypeCategory::Complex, context().defaultKinds().doublePrecisionKind());
 }
-void DeclTypeSpecVisitor::MakeIntrinsic(
+void DeclTypeSpecVisitor::MakeNumericType(
     TypeCategory category, const std::optional<parser::KindSelector> &kind) {
-  MakeIntrinsic(category, GetKindParamValue(category, kind));
+  MakeNumericType(category, GetKindParamValue(category, kind));
 }
-void DeclTypeSpecVisitor::MakeIntrinsic(TypeCategory category, int kind) {
-  SetDeclTypeSpec(context().MakeIntrinsicTypeSpec(category, kind));
+void DeclTypeSpecVisitor::MakeNumericType(TypeCategory category, int kind) {
+  SetDeclTypeSpec(context().MakeNumericType(category, kind));
 }
 
 void DeclTypeSpecVisitor::Post(const parser::DeclarationTypeSpec::ClassStar &) {
-  SetDeclTypeSpec(
-      context().globalScope().MakeDeclTypeSpec(DeclTypeSpec::ClassStar));
+  SetDeclTypeSpec(context().globalScope().MakeClassStarType());
 }
 void DeclTypeSpecVisitor::Post(const parser::DeclarationTypeSpec::TypeStar &) {
-  SetDeclTypeSpec(
-      context().globalScope().MakeDeclTypeSpec(DeclTypeSpec::TypeStar));
+  SetDeclTypeSpec(context().globalScope().MakeTypeStarType());
 }
 
 // Check that we're expecting to see a DeclTypeSpec (and haven't seen one yet)
@@ -2351,7 +2351,7 @@ void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Character &x) {
     charInfo_.length = ParamValue{SomeExpr{
         evaluate::AsExpr(evaluate::Constant<evaluate::SubscriptInteger>{1})}};
   }
-  SetDeclTypeSpec(currScope().MakeDeclTypeSpec(
+  SetDeclTypeSpec(currScope().MakeCharacterType(
       std::move(*charInfo_.length), charInfo_.kind));
   charInfo_ = {};
 }
@@ -2386,8 +2386,7 @@ bool DeclarationVisitor::Pre(const parser::DeclarationTypeSpec::Record &) {
 
 bool DeclarationVisitor::Pre(const parser::DerivedTypeSpec &x) {
   const auto &name{std::get<parser::Name>(x.t)};
-  SetDeclTypeSpec(name,
-      currScope().MakeDeclTypeSpec(DeclTypeSpec::TypeDerived, name.source));
+  SetDeclTypeSpec(name, currScope().MakeDerivedType(name.source));
   return true;
 }
 void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
@@ -2456,8 +2455,7 @@ void DeclarationVisitor::Post(const parser::DerivedTypeStmt &x) {
         auto &comp{DeclareEntity<ObjectEntityDetails>(*extendsName, Attrs{})};
         comp.attrs().set(Attr::PRIVATE, extends->attrs().test(Attr::PRIVATE));
         comp.set(Symbol::Flag::ParentComp);
-        auto &type{currScope().MakeDeclTypeSpec(
-            DeclTypeSpec::TypeDerived, extendsName->source)};
+        auto &type{currScope().MakeDerivedType(extendsName->source)};
         type.derivedTypeSpec().set_scope(currScope());
         comp.SetType(type);
       }
@@ -2914,8 +2912,7 @@ void ConstructVisitor::CheckRef(const std::optional<parser::Name> &x) {
 
 void ConstructVisitor::CheckIntegerType(const Symbol &symbol) {
   if (auto *type{symbol.GetType()}) {
-    if (type->category() != DeclTypeSpec::Intrinsic ||
-        type->intrinsicTypeSpec().category() != TypeCategory::Integer) {
+    if (!type->IsNumeric(TypeCategory::Integer)) {
       Say(symbol.name(), "Variable '%s' is not scalar integer"_err_en_US);
     }
   }
@@ -3067,8 +3064,7 @@ const parser::Name *ResolveNamesVisitor::FindComponent(
   if (!type) {
     return nullptr;  // should have already reported error
   }
-  if (type->category() == DeclTypeSpec::Intrinsic &&
-      type->intrinsicTypeSpec().category() == TypeCategory::Complex) {
+  if (type->IsNumeric(TypeCategory::Complex)) {
     auto name{component.ToString()};
     if (name == "re" || name == "im") {
       return nullptr;  // complex-part-designator, not structure-component
