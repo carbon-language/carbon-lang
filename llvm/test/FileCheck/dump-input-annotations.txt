@@ -235,6 +235,53 @@
 ; EMP2-NOT:    {{.}}
 
 ;--------------------------------------------------
+; CHECK-NOT
+;--------------------------------------------------
+
+; No match (success) and unexpected match (error).
+
+; RUN: echo 'hello' > %t.in
+; RUN: echo 'world' >> %t.in
+; RUN: echo 'again' >> %t.in
+
+; RUN: echo 'CHECK-NOT: goodbye' > %t.chk
+; RUN: echo 'CHECK-NOT: world' >> %t.chk
+
+; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk 2>&1 \
+; RUN: | FileCheck -match-full-lines %s -check-prefix=NOT
+; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk -v 2>&1 \
+; RUN: | FileCheck -match-full-lines %s -check-prefixes=NOT,NOT-V
+; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk -vv 2>&1 \
+; RUN: | FileCheck -match-full-lines %s -check-prefixes=NOT,NOT-V,NOT-VV
+
+; NOT:         <<<<<<
+; NOT-NEXT:           1: hello
+; NOT-NEXT:           2: world
+; NOT-NEXT:    not:2     !~~~~ error: no match expected
+; NOT-NEXT:           3: again
+; NOT-NEXT:    >>>>>>
+; NOT-NOT:     {{.}}
+
+; Again, but with a CHECK instead of EOF as search range end.
+
+; RUN: echo 'CHECK: ain' >> %t.chk
+
+; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk 2>&1 \
+; RUN: | FileCheck -match-full-lines %s -check-prefix=NOT2
+; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk -v 2>&1 \
+; RUN: | FileCheck -match-full-lines %s -check-prefixes=NOT2,NOT2-V
+; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk -vv 2>&1 \
+; RUN: | FileCheck -match-full-lines %s -check-prefixes=NOT2,NOT2-V,NOT2-VV
+
+; NOT2:         <<<<<<
+; NOT2-NEXT:             1: hello
+; NOT2-NEXT:             2: world
+; NOT2-NEXT:    not:2       !~~~~ error: no match expected
+; NOT2-NEXT:             3: again
+; NOT2-NEXT:    >>>>>>
+; NOT2-NOT:     {{.}}
+
+;--------------------------------------------------
 ; CHECK-DAG
 ;--------------------------------------------------
 

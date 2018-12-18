@@ -896,16 +896,18 @@ static void PrintMatch(bool ExpectedMatch, const SourceMgr &SM,
                        StringRef Prefix, SMLoc Loc, const FileCheckPattern &Pat,
                        int MatchedCount, StringRef Buffer,
                        StringMap<StringRef> &VariableTable, size_t MatchPos,
-                       size_t MatchLen, const FileCheckRequest &Req) {
+                       size_t MatchLen, const FileCheckRequest &Req,
+                       std::vector<FileCheckDiag> *Diags) {
   if (ExpectedMatch) {
     if (!Req.Verbose)
       return;
     if (!Req.VerboseVerbose && Pat.getCheckTy() == Check::CheckEOF)
       return;
   }
-  SMLoc MatchStart = SMLoc::getFromPointer(Buffer.data() + MatchPos);
-  SMLoc MatchEnd = SMLoc::getFromPointer(Buffer.data() + MatchPos + MatchLen);
-  SMRange MatchRange(MatchStart, MatchEnd);
+  SMRange MatchRange = ProcessMatchResult(
+      ExpectedMatch ? FileCheckDiag::MatchTypeCount
+                    : FileCheckDiag::MatchFinalButExcluded,
+      SM, Loc, Pat.getCheckTy(), Buffer, MatchPos, MatchLen, Diags);
   std::string Message = formatv("{0}: {1} string found in input",
                                 Pat.getCheckTy().getDescription(Prefix),
                                 (ExpectedMatch ? "expected" : "excluded"))
@@ -915,17 +917,19 @@ static void PrintMatch(bool ExpectedMatch, const SourceMgr &SM,
 
   SM.PrintMessage(
       Loc, ExpectedMatch ? SourceMgr::DK_Remark : SourceMgr::DK_Error, Message);
-  SM.PrintMessage(MatchStart, SourceMgr::DK_Note, "found here", {MatchRange});
+  SM.PrintMessage(MatchRange.Start, SourceMgr::DK_Note, "found here",
+                  {MatchRange});
   Pat.PrintVariableUses(SM, Buffer, VariableTable, MatchRange);
 }
 
 static void PrintMatch(bool ExpectedMatch, const SourceMgr &SM,
                        const FileCheckString &CheckStr, int MatchedCount,
                        StringRef Buffer, StringMap<StringRef> &VariableTable,
-                       size_t MatchPos, size_t MatchLen,
-                       FileCheckRequest &Req) {
+                       size_t MatchPos, size_t MatchLen, FileCheckRequest &Req,
+                       std::vector<FileCheckDiag> *Diags) {
   PrintMatch(ExpectedMatch, SM, CheckStr.Prefix, CheckStr.Loc, CheckStr.Pat,
-             MatchedCount, Buffer, VariableTable, MatchPos, MatchLen, Req);
+             MatchedCount, Buffer, VariableTable, MatchPos, MatchLen, Req,
+             Diags);
 }
 
 static void PrintNoMatch(bool ExpectedMatch, const SourceMgr &SM,
@@ -1036,7 +1040,7 @@ size_t FileCheckString::Check(const SourceMgr &SM, StringRef Buffer,
       return StringRef::npos;
     }
     PrintMatch(true, SM, *this, i, MatchBuffer, VariableTable, MatchPos,
-               CurrentMatchLen, Req);
+               CurrentMatchLen, Req, Diags);
 
     // move start point after the match
     LastMatchEnd += MatchPos + CurrentMatchLen;
@@ -1071,7 +1075,7 @@ size_t FileCheckString::Check(const SourceMgr &SM, StringRef Buffer,
 
     // If this match had "not strings", verify that they don't exist in the
     // skipped region.
-    if (CheckNot(SM, SkippedRegion, NotStrings, VariableTable, Req))
+    if (CheckNot(SM, SkippedRegion, NotStrings, VariableTable, Req, Diags))
       return StringRef::npos;
   }
 
@@ -1154,10 +1158,11 @@ bool FileCheckString::CheckSame(const SourceMgr &SM, StringRef Buffer) const {
 }
 
 /// Verify there's no "not strings" in the given buffer.
-bool FileCheckString::CheckNot(const SourceMgr &SM, StringRef Buffer,
-                           const std::vector<const FileCheckPattern *> &NotStrings,
-                           StringMap<StringRef> &VariableTable,
-                           const FileCheckRequest &Req) const {
+bool FileCheckString::CheckNot(
+    const SourceMgr &SM, StringRef Buffer,
+    const std::vector<const FileCheckPattern *> &NotStrings,
+    StringMap<StringRef> &VariableTable, const FileCheckRequest &Req,
+    std::vector<FileCheckDiag> *Diags) const {
   for (const FileCheckPattern *Pat : NotStrings) {
     assert((Pat->getCheckTy() == Check::CheckNot) && "Expect CHECK-NOT!");
 
@@ -1171,7 +1176,7 @@ bool FileCheckString::CheckNot(const SourceMgr &SM, StringRef Buffer,
     }
 
     PrintMatch(false, SM, Prefix, Pat->getLoc(), *Pat, 1, Buffer, VariableTable,
-               Pos, MatchLen, Req);
+               Pos, MatchLen, Req, Diags);
 
     return true;
   }
@@ -1236,7 +1241,7 @@ FileCheckString::CheckDag(const SourceMgr &SM, StringRef Buffer,
       MatchPos += MatchPosBuf;
       if (Req.VerboseVerbose)
         PrintMatch(true, SM, Prefix, Pat.getLoc(), Pat, 1, Buffer,
-                   VariableTable, MatchPos, MatchLen, Req);
+                   VariableTable, MatchPos, MatchLen, Req, Diags);
       MatchRange M{MatchPos, MatchPos + MatchLen};
       if (Req.AllowDeprecatedDagOverlap) {
         // We don't need to track all matches in this mode, so we just maintain
@@ -1278,7 +1283,7 @@ FileCheckString::CheckDag(const SourceMgr &SM, StringRef Buffer,
     }
     if (!Req.VerboseVerbose)
       PrintMatch(true, SM, Prefix, Pat.getLoc(), Pat, 1, Buffer, VariableTable,
-                 MatchPos, MatchLen, Req);
+                 MatchPos, MatchLen, Req, Diags);
 
     // Handle the end of a CHECK-DAG group.
     if (std::next(PatItr) == PatEnd ||
@@ -1289,7 +1294,7 @@ FileCheckString::CheckDag(const SourceMgr &SM, StringRef Buffer,
         // region.
         StringRef SkippedRegion =
             Buffer.slice(StartPos, MatchRanges.begin()->Pos);
-        if (CheckNot(SM, SkippedRegion, NotStrings, VariableTable, Req))
+        if (CheckNot(SM, SkippedRegion, NotStrings, VariableTable, Req, Diags))
           return StringRef::npos;
         // Clear "not strings".
         NotStrings.clear();

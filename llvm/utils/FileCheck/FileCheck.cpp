@@ -143,6 +143,8 @@ struct MarkerStyle {
 
 static MarkerStyle GetMarker(FileCheckDiag::MatchType MatchTy) {
   switch (MatchTy) {
+  case FileCheckDiag::MatchFinalButExcluded:
+    return MarkerStyle('!', raw_ostream::RED, "error: no match expected");
   case FileCheckDiag::MatchFinalButWrongLine:
     return MarkerStyle('!', raw_ostream::RED, "error: match on wrong line");
   case FileCheckDiag::MatchNoneButExpected:
@@ -182,6 +184,7 @@ static void DumpInputAnnotationHelp(raw_ostream &OS) {
   WithColor(OS, raw_ostream::SAVEDCOLOR, true) << "!~~";
   OS << "    marks bad match, such as:\n"
      << "           - CHECK-NEXT on same line as previous match (error)\n"
+     << "           - CHECK-NOT found (error)\n"
      << "  - ";
   WithColor(OS, raw_ostream::SAVEDCOLOR, true) << "X~~";
   OS << "    marks search range when no match is found, such as:\n"
