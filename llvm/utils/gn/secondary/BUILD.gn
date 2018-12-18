@@ -10,6 +10,7 @@ group("default") {
     "//llvm/tools/llvm-mc",
     "//llvm/tools/llvm-nm:symlinks",
     "//llvm/tools/llvm-objdump:symlinks",
+    "//llvm/tools/llvm-pdbutil",
     "//llvm/tools/llvm-readobj:symlinks",
     "//llvm/tools/llvm-undname",
     "//llvm/tools/obj2yaml",
