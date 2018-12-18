@@ -16,7 +16,10 @@ import socket
 import itertools
 
 import Reporter
-import ConfigParser
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 ###
 # Various patterns matched or replaced by server.
@@ -126,7 +129,7 @@ class ScanViewServer(HTTPServer):
         self.load_config()
 
     def load_config(self):
-        self.config = ConfigParser.RawConfigParser()
+        self.config = configparser.RawConfigParser()
 
         # Add defaults
         self.config.add_section('ScanView')
