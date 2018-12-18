@@ -145,6 +145,8 @@ static MarkerStyle GetMarker(FileCheckDiag::MatchType MatchTy) {
   switch (MatchTy) {
   case FileCheckDiag::MatchNoneButExpected:
     return MarkerStyle('X', raw_ostream::RED, "error: no match found");
+  case FileCheckDiag::MatchFuzzy:
+    return MarkerStyle('?', raw_ostream::MAGENTA, "possible intended match");
   case FileCheckDiag::MatchTypeCount:
     llvm_unreachable_internal("unexpected match type");
   }
@@ -164,18 +166,28 @@ static void DumpInputAnnotationHelp(raw_ostream &OS) {
   // Labels for annotation lines.
   OS << "  - ";
   WithColor(OS, raw_ostream::SAVEDCOLOR, true) << "T:L";
-  OS << "    labels the match result for a pattern of type T from "
+  OS << "    labels the only match result for a pattern of type T from "
      << "line L of\n"
+     << "           the check file\n";
+  OS << "  - ";
+  WithColor(OS, raw_ostream::SAVEDCOLOR, true) << "T:L'N";
+  OS << "  labels the Nth match result for a pattern of type T from line "
+     << "L of\n"
      << "           the check file\n";
 
   // Markers on annotation lines.
   OS << "  - ";
   WithColor(OS, raw_ostream::SAVEDCOLOR, true) << "X~~";
-  OS << "    marks search range when no match is found\n";
+  OS << "    marks search range when no match is found\n"
+     << "  - ";
+  WithColor(OS, raw_ostream::SAVEDCOLOR, true) << "?";
+  OS << "      marks fuzzy match when no match is found\n";
 
   // Colors.
   OS << "  - colors ";
   WithColor(OS, raw_ostream::RED, true) << "error";
+  OS << ", ";
+  WithColor(OS, raw_ostream::MAGENTA, true) << "fuzzy match";
   OS << "\n\n"
      << "If you are not seeing color above or in input dumps, try: -color\n";
 }
@@ -185,6 +197,8 @@ struct InputAnnotation {
   /// The check file line (one-origin indexing) where the directive that
   /// produced this annotation is located.
   unsigned CheckLine;
+  /// The index of the match result for this check.
+  unsigned CheckDiagIndex;
   /// The label for this annotation.
   std::string Label;
   /// What input line (one-origin indexing) this annotation marks.  This might
@@ -234,6 +248,8 @@ std::string GetCheckTypeAbbreviation(Check::FileCheckType Ty) {
 static void BuildInputAnnotations(const std::vector<FileCheckDiag> &Diags,
                                   std::vector<InputAnnotation> &Annotations,
                                   unsigned &LabelWidth) {
+  // How many diagnostics has the current check seen so far?
+  unsigned CheckDiagCount = 0;
   // What's the widest label?
   LabelWidth = 0;
   for (auto DiagItr = Diags.begin(), DiagEnd = Diags.end(); DiagItr != DiagEnd;
@@ -245,6 +261,19 @@ static void BuildInputAnnotations(const std::vector<FileCheckDiag> &Diags,
     llvm::raw_string_ostream Label(A.Label);
     Label << GetCheckTypeAbbreviation(DiagItr->CheckTy) << ":"
           << DiagItr->CheckLine;
+    A.CheckDiagIndex = UINT_MAX;
+    auto DiagNext = std::next(DiagItr);
+    if (DiagNext != DiagEnd && DiagItr->CheckTy == DiagNext->CheckTy &&
+        DiagItr->CheckLine == DiagNext->CheckLine)
+      A.CheckDiagIndex = CheckDiagCount++;
+    else if (CheckDiagCount) {
+      A.CheckDiagIndex = CheckDiagCount;
+      CheckDiagCount = 0;
+    }
+    if (A.CheckDiagIndex != UINT_MAX)
+      Label << "'" << A.CheckDiagIndex;
+    else
+      A.CheckDiagIndex = 0;
     Label.flush();
     LabelWidth = std::max((std::string::size_type)LabelWidth, A.Label.size());
 
@@ -278,6 +307,7 @@ static void BuildInputAnnotations(const std::vector<FileCheckDiag> &Diags,
         }
         InputAnnotation B;
         B.CheckLine = A.CheckLine;
+        B.CheckDiagIndex = A.CheckDiagIndex;
         B.Label = A.Label;
         B.InputLine = L;
         B.Marker = Marker;
@@ -308,16 +338,21 @@ static void DumpAnnotatedInput(
   //
   // Second, for annotations for the same input line, sort in the order of the
   // FileCheck directive's line in the check file (where there's at most one
-  // directive per line).  The rationale of this choice is that, for any input
-  // line, this sort establishes a total order of annotations that, with
-  // respect to match results, is consistent across multiple lines, thus
-  // making match results easier to track from one line to the next when they
-  // span multiple lines.
+  // directive per line) and then by the index of the match result for that
+  // directive.  The rationale of this choice is that, for any input line, this
+  // sort establishes a total order of annotations that, with respect to match
+  // results, is consistent across multiple lines, thus making match results
+  // easier to track from one line to the next when they span multiple lines.
   std::sort(Annotations.begin(), Annotations.end(),
             [](const InputAnnotation &A, const InputAnnotation &B) {
               if (A.InputLine != B.InputLine)
                 return A.InputLine < B.InputLine;
-              return A.CheckLine < B.CheckLine;
+              if (A.CheckLine != B.CheckLine)
+                return A.CheckLine < B.CheckLine;
+              assert(A.CheckDiagIndex != B.CheckDiagIndex &&
+                     "expected diagnostic indices to be unique within a "
+                     " check line");
+              return A.CheckDiagIndex < B.CheckDiagIndex;
             });
 
   // Compute the width of the label column.

@@ -127,7 +127,8 @@ public:
                          const StringMap<StringRef> &VariableTable,
                          SMRange MatchRange = None) const;
   void PrintFuzzyMatch(const SourceMgr &SM, StringRef Buffer,
-                       const StringMap<StringRef> &VariableTable) const;
+                       const StringMap<StringRef> &VariableTable,
+                       std::vector<FileCheckDiag> *Diags) const;
 
   bool hasVariable() const {
     return !(VariableUses.empty() && VariableDefs.empty());
@@ -157,13 +158,19 @@ struct FileCheckDiag {
   /// Where is the FileCheck directive for this diagnostic?
   unsigned CheckLine, CheckCol;
   /// What kind of match result does this diagnostic describe?
+  ///
+  /// There might be more than one of these for the same directive.  For
+  /// example, there might be a fuzzy match after a fail.
   enum MatchType {
     // TODO: More members will appear with later patches in this series.
     /// Indicates no match for an expected pattern.
     MatchNoneButExpected,
+    /// Indicates a possible intended match because there's no perfect match.
+    MatchFuzzy,
     MatchTypeCount,
   } MatchTy;
-  /// The search range.
+  /// The match range if MatchTy is not MatchNoneButExpected, or the search
+  /// range otherwise.
   unsigned InputStartLine, InputStartCol, InputEndLine, InputEndCol;
   FileCheckDiag(const SourceMgr &SM, const Check::FileCheckType &CheckTy,
                 SMLoc CheckLoc, MatchType MatchTy, SMRange InputRange);

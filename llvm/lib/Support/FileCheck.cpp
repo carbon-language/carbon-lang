@@ -429,7 +429,8 @@ static SMRange ProcessMatchResult(FileCheckDiag::MatchType MatchTy,
 
 void FileCheckPattern::PrintFuzzyMatch(
     const SourceMgr &SM, StringRef Buffer,
-    const StringMap<StringRef> &VariableTable) const {
+    const StringMap<StringRef> &VariableTable,
+    std::vector<FileCheckDiag> *Diags) const {
   // Attempt to find the closest/best fuzzy match.  Usually an error happens
   // because some string in the output didn't exactly match. In these cases, we
   // would like to show the user a best guess at what "should have" matched, to
@@ -463,8 +464,11 @@ void FileCheckPattern::PrintFuzzyMatch(
   // reasonable and not equal to what we showed in the "scanning from here"
   // line.
   if (Best && Best != StringRef::npos && BestQuality < 50) {
-    SM.PrintMessage(SMLoc::getFromPointer(Buffer.data() + Best),
-                    SourceMgr::DK_Note, "possible intended match here");
+    SMRange MatchRange =
+        ProcessMatchResult(FileCheckDiag::MatchFuzzy, SM, getLoc(),
+                           getCheckTy(), Buffer, Best, 0, Diags);
+    SM.PrintMessage(MatchRange.Start, SourceMgr::DK_Note,
+                    "possible intended match here");
 
     // FIXME: If we wanted to be really friendly we would show why the match
     // failed, as it can be hard to spot simple one character differences.
@@ -956,7 +960,7 @@ static void PrintNoMatch(bool ExpectedMatch, const SourceMgr &SM,
   // Allow the pattern to print additional information if desired.
   Pat.PrintVariableUses(SM, Buffer, VariableTable);
   if (ExpectedMatch)
-    Pat.PrintFuzzyMatch(SM, Buffer, VariableTable);
+    Pat.PrintFuzzyMatch(SM, Buffer, VariableTable, Diags);
 }
 
 static void PrintNoMatch(bool ExpectedMatch, const SourceMgr &SM,

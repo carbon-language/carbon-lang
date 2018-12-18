@@ -1,5 +1,5 @@
 ;--------------------------------------------------
-; Use -strict-whitespace to check marker alignment here.
+; Use -strict-whitespace to check marker and note alignment here.
 ; (Also check multiline marker where start/end columns vary across lines.)
 ;
 ; In the remaining checks, don't use -strict-whitespace and thus check just the
@@ -10,6 +10,7 @@
 ; RUN: echo 'hello world' > %t.in
 ; RUN: echo 'goodbye' >> %t.in
 ; RUN: echo 'world' >> %t.in
+; RUN: echo 'unicorn' >> %t.in
 
 ; RUN: echo 'CHECK: hello' > %t.chk
 ; RUN: echo 'CHECK: universe' >> %t.chk
@@ -19,17 +20,20 @@
 
 ; ALIGN:Full input was:
 ; ALIGN-NEXT:<<<<<<
-; ALIGN-NEXT:         1: hello world
-; ALIGN-NEXT:check:2           X~~~~
-; ALIGN-NEXT:         2: goodbye
-; ALIGN-NEXT:check:2     ~~~~~~~
-; ALIGN-NEXT:         3: world
-; ALIGN-NEXT:check:2     ~~~~~ error: no match found
+; ALIGN-NEXT:           1: hello world
+; ALIGN-NEXT:check:2'0           X~~~~
+; ALIGN-NEXT:           2: goodbye
+; ALIGN-NEXT:check:2'0     ~~~~~~~
+; ALIGN-NEXT:           3: world
+; ALIGN-NEXT:check:2'0     ~~~~~
+; ALIGN-NEXT:           4: unicorn
+; ALIGN-NEXT:check:2'0     ~~~~~~~ error: no match found
+; ALIGN-NEXT:check:2'1     ?       possible intended match
 ; ALIGN-NEXT:>>>>>>
 ; ALIGN-NOT:{{.}}
 
 ;--------------------------------------------------
-; CHECK (also: multi-line search range)
+; CHECK (also: multi-line search range, fuzzy match)
 ;--------------------------------------------------
 
 ; Good match and no match.
@@ -49,11 +53,12 @@
 ; RUN: | FileCheck -match-full-lines %s -check-prefixes=CHK,CHK-V
 
 ; CHK:        <<<<<<
-; CHK-NEXT:            1: hello
-; CHK-NEXT:            2: again
-; CHK-NEXT:   check:2     X~~~~
-; CHK-NEXT:            3: whirled
-; CHK-NEXT:   check:2     ~~~~~~~ error: no match found
+; CHK-NEXT:              1: hello
+; CHK-NEXT:              2: again
+; CHK-NEXT:   check:2'0     X~~~~
+; CHK-NEXT:              3: whirled
+; CHK-NEXT:   check:2'0     ~~~~~~~ error: no match found
+; CHK-NEXT:   check:2'1     ?       possible intended match
 ; CHK-NEXT:   >>>>>>
 ; CHK-NOT:    {{.}}
 
@@ -228,13 +233,14 @@
 ; RUN: | FileCheck -match-full-lines %s -check-prefixes=LAB,LAB-V,LAB-VV
 
 ; LAB:         <<<<<<
-; LAB-NEXT:             1: lab0
-; LAB-NEXT:             2: foo
-; LAB-NEXT:    label:3     X~~
-; LAB-NEXT:             3: lab1
-; LAB-NEXT:    label:3     ~~~~
-; LAB-NEXT:             4: bar
-; LAB-NEXT:    label:3     ~~~ error: no match found
+; LAB-NEXT:               1: lab0
+; LAB-NEXT:               2: foo
+; LAB-NEXT:    label:3'0     X~~
+; LAB-NEXT:               3: lab1
+; LAB-NEXT:    label:3'0     ~~~~
+; LAB-NEXT:    label:3'1     ?    possible intended match
+; LAB-NEXT:               4: bar
+; LAB-NEXT:    label:3'0     ~~~ error: no match found
 ; LAB-NEXT:    >>>>>>
 ; LAB-NOT:     {{.}}
 
