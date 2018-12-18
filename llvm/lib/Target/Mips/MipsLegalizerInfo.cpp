@@ -34,7 +34,11 @@ MipsLegalizerInfo::MipsLegalizerInfo(const MipsSubtarget &ST) {
   getActionDefinitionsBuilder({G_LOAD, G_STORE})
       .legalForCartesianProduct({p0, s32}, {p0});
 
-  getActionDefinitionsBuilder({G_AND, G_OR, G_XOR, G_SHL, G_ASHR, G_LSHR})
+  getActionDefinitionsBuilder({G_AND, G_OR, G_XOR})
+      .legalFor({s32})
+      .clampScalar(0, s32, s32);
+
+  getActionDefinitionsBuilder({G_SHL, G_ASHR, G_LSHR})
       .legalFor({s32});
 
   getActionDefinitionsBuilder(G_ICMP)
