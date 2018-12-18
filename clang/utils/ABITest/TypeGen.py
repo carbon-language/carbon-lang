@@ -242,7 +242,7 @@ def combinations(values, k):
     # combinations, selections of a sequence
     if k==0: yield []
     else:
-        for i in xrange(len(values)-k+1):
+        for i in range(len(values)-k+1):
             for cc in combinations(values[i+1:],k-1):
                 yield [values[i]]+cc
 

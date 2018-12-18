@@ -106,7 +106,7 @@ def generate():
   try:
     while True:
       assert m, 'got a failure with no steps; broken clang binary?'
-      i = random.choice(range(len(m)))
+      i = random.choice(list(range(len(m))))
       x = m[0:i] + m[i+1:]
       m2 = CodeModel()
       for d in x:

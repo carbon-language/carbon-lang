@@ -199,7 +199,7 @@ def getNthPairVariableBounds(N, bounds):
         raise ValueError("Invalid input (out of bounds)")
 
     level = 0
-    active = range(len(bounds))
+    active = list(range(len(bounds)))
     active.sort(key=lambda i: bounds[i])
     prevLevel = 0
     for i,index in enumerate(active):
