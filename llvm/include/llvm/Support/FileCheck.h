@@ -82,6 +82,8 @@ public:
 };
 }
 
+struct FileCheckDiag;
+
 class FileCheckPattern {
   SMLoc PatternLoc;
 
@@ -146,6 +148,28 @@ private:
 };
 
 //===----------------------------------------------------------------------===//
+/// Summary of a FileCheck diagnostic.
+//===----------------------------------------------------------------------===//
+
+struct FileCheckDiag {
+  /// What is the FileCheck directive for this diagnostic?
+  Check::FileCheckType CheckTy;
+  /// Where is the FileCheck directive for this diagnostic?
+  unsigned CheckLine, CheckCol;
+  /// What kind of match result does this diagnostic describe?
+  enum MatchType {
+    // TODO: More members will appear with later patches in this series.
+    /// Indicates no match for an expected pattern.
+    MatchNoneButExpected,
+    MatchTypeCount,
+  } MatchTy;
+  /// The search range.
+  unsigned InputStartLine, InputStartCol, InputEndLine, InputEndCol;
+  FileCheckDiag(const SourceMgr &SM, const Check::FileCheckType &CheckTy,
+                SMLoc CheckLoc, MatchType MatchTy, SMRange InputRange);
+};
+
+//===----------------------------------------------------------------------===//
 // Check Strings.
 //===----------------------------------------------------------------------===//
 
@@ -169,7 +193,7 @@ struct FileCheckString {
 
   size_t Check(const SourceMgr &SM, StringRef Buffer, bool IsLabelScanMode,
                size_t &MatchLen, StringMap<StringRef> &VariableTable,
-               FileCheckRequest &Req) const;
+               FileCheckRequest &Req, std::vector<FileCheckDiag> *Diags) const;
 
   bool CheckNext(const SourceMgr &SM, StringRef Buffer) const;
   bool CheckSame(const SourceMgr &SM, StringRef Buffer) const;
@@ -180,7 +204,8 @@ struct FileCheckString {
   size_t CheckDag(const SourceMgr &SM, StringRef Buffer,
                   std::vector<const FileCheckPattern *> &NotStrings,
                   StringMap<StringRef> &VariableTable,
-                  const FileCheckRequest &Req) const;
+                  const FileCheckRequest &Req,
+                  std::vector<FileCheckDiag> *Diags) const;
 };
 
 /// FileCheck class takes the request and exposes various methods that
@@ -217,7 +242,8 @@ public:
   ///
   /// Returns false if the input fails to satisfy the checks.
   bool CheckInput(SourceMgr &SM, StringRef Buffer,
-                  ArrayRef<FileCheckString> CheckStrings);
+                  ArrayRef<FileCheckString> CheckStrings,
+                  std::vector<FileCheckDiag> *Diags = nullptr);
 };
 } // namespace llvm
 #endif
