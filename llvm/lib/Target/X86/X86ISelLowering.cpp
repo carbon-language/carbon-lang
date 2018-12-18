@@ -24818,6 +24818,9 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
   // v16i8/v32i8: Split rotation into rot4/rot2/rot1 stages and select by
   // the amount bit.
   if (EltSizeInBits == 8 && !IsSplatAmt) {
+    if (ISD::isBuildVectorOfConstantSDNodes(Amt.getNode()))
+      return SDValue();
+
     // We don't need ModuloAmt here as we just peek at individual bits.
     MVT ExtVT = MVT::getVectorVT(MVT::i16, NumElts / 2);
 
