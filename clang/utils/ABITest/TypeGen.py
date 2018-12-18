@@ -1,4 +1,5 @@
 """Flexible enumeration of C types."""
+from __future__ import print_function
 
 from Enumeration import *
 
@@ -462,7 +463,7 @@ def test():
     atg.addGenerator( btg )
     atg.addGenerator( RecordTypeGenerator(fields0, False, 4) )
     atg.addGenerator( etg )
-    print 'Cardinality:',atg.cardinality
+    print('Cardinality:',atg.cardinality)
     for i in range(100):
         if i == atg.cardinality:
             try:
@@ -470,7 +471,7 @@ def test():
                 raise RuntimeError("Cardinality was wrong")
             except AssertionError:
                 break
-        print '%4d: %s'%(i, atg.get(i))
+        print('%4d: %s'%(i, atg.get(i)))
 
 if __name__ == '__main__':
     test()

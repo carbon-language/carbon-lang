@@ -44,6 +44,7 @@ The major indexing objects are:
 Most object information is exposed using properties, when the underlying API
 call is efficient.
 """
+from __future__ import print_function
 
 # TODO
 # ====

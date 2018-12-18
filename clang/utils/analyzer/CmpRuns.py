@@ -25,6 +25,7 @@ Usage:
     diff = compareResults(resultsA, resultsB)
 
 """
+from __future__ import print_function
 
 from collections import defaultdict
 
@@ -318,7 +319,7 @@ def compareStats(resultsA, resultsB):
     statsB = deriveStats(resultsB)
     keys = sorted(statsA.keys())
     for key in keys:
-        print key
+        print(key)
         for kkey in statsA[key]:
             valA = float(statsA[key][kkey])
             valB = float(statsB[key][kkey])
@@ -331,7 +332,7 @@ def compareStats(resultsA, resultsB):
                         report = Colors.GREEN + report + Colors.CLEAR
                     elif ratio > 0.2:
                         report = Colors.RED + report + Colors.CLEAR
-            print "\t %s %s" % (kkey, report)
+            print("\t %s %s" % (kkey, report))
 
 def dumpScanBuildResultsDiff(dirA, dirB, opts, deleteEmpty=True,
                              Stdout=sys.stdout):
