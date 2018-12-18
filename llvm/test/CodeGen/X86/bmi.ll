@@ -681,3 +681,35 @@ define i64 @blsr_disguised_shrunk_add(i64 %x) {
   %c = and i64 %b, %a
   ret i64 %c
 }
+
+; FIXME: We should not be using the S flag from BEXTR.
+define void @pr40060(i32, i32) {
+; X86-LABEL: pr40060:
+; X86:       # %bb.0:
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NEXT:    bextrl %eax, {{[0-9]+}}(%esp), %eax
+; X86-NEXT:    js .LBB33_1
+; X86-NEXT:  # %bb.2:
+; X86-NEXT:    jmp bar # TAILCALL
+; X86-NEXT:  .LBB33_1:
+; X86-NEXT:    retl
+;
+; X64-LABEL: pr40060:
+; X64:       # %bb.0:
+; X64-NEXT:    bextrl %esi, %edi, %eax
+; X64-NEXT:    js .LBB33_1
+; X64-NEXT:  # %bb.2:
+; X64-NEXT:    jmp bar # TAILCALL
+; X64-NEXT:  .LBB33_1:
+; X64-NEXT:    retq
+  %3 = tail call i32 @llvm.x86.bmi.bextr.32(i32 %0, i32 %1)
+  %4 = icmp sgt i32 %3, -1
+  br i1 %4, label %5, label %6
+
+  tail call void @bar()
+  br label %6
+
+  ret void
+}
+
+declare void @bar()
