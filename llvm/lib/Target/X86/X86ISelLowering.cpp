@@ -24813,9 +24813,11 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
   if (0 <= CstSplatIndex)
     return SDValue();
 
+  bool IsSplatAmt = DAG.isSplatValue(Amt);
+
   // v16i8/v32i8: Split rotation into rot4/rot2/rot1 stages and select by
   // the amount bit.
-  if (EltSizeInBits == 8) {
+  if (EltSizeInBits == 8 && !IsSplatAmt) {
     // We don't need ModuloAmt here as we just peek at individual bits.
     MVT ExtVT = MVT::getVectorVT(MVT::i16, NumElts / 2);
 
@@ -24882,8 +24884,7 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
 
   // Fallback for splats + all supported variable shifts.
   // Fallback for non-constants AVX2 vXi16 as well.
-  if (LegalVarShifts || (Subtarget.hasAVX2() && !ConstantAmt) ||
-      DAG.isSplatValue(Amt)) {
+  if (IsSplatAmt || LegalVarShifts || (Subtarget.hasAVX2() && !ConstantAmt)) {
     SDValue AmtR = DAG.getConstant(EltSizeInBits, DL, VT);
     AmtR = DAG.getNode(ISD::SUB, DL, VT, AmtR, Amt);
     SDValue SHL = DAG.getNode(ISD::SHL, DL, VT, R, Amt);
