@@ -75,6 +75,7 @@ set(SYMBOL_TESTS
   symbol07.f90
   symbol08.f90
   symbol09.f90
+  symbol10.f90
 )
 
 # These test files have expected .mod file contents in the source

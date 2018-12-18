@@ -30,6 +30,7 @@
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
 #include <list>
+#include <map>
 #include <memory>
 #include <ostream>
 #include <set>
@@ -504,7 +505,12 @@ private:
   bool inInterfaceBlock_{false};  // set when in interface block
   bool isAbstract_{false};  // set when in abstract interface block
   const parser::Name *genericName_{nullptr};  // set in generic interface block
+  using ProcedureKind = parser::ProcedureStmt::Kind;
+  // mapping of generic to its specific proc names and kinds
+  std::multimap<Symbol *, std::pair<const parser::Name *, ProcedureKind>>
+      specificProcs_;
 
+  void AddSpecificProcs(const std::list<parser::Name> &, ProcedureKind);
   void ResolveSpecificsInGeneric(Symbol &generic);
 };
 
@@ -1783,11 +1789,9 @@ bool InterfaceVisitor::Pre(const parser::ProcedureStmt &x) {
     Say("A PROCEDURE statement is only allowed in a generic interface block"_err_en_US);
     return false;
   }
-  bool expectModuleProc = std::get<parser::ProcedureStmt::Kind>(x.t) ==
-      parser::ProcedureStmt::Kind::ModuleProcedure;
-  for (const auto &name : std::get<std::list<parser::Name>>(x.t)) {
-    GetGenericDetails().add_specificProcName(name.source, expectModuleProc);
-  }
+  auto kind{std::get<parser::ProcedureStmt::Kind>(x.t)};
+  const auto &names{std::get<std::list<parser::Name>>(x.t)};
+  AddSpecificProcs(names, kind);
   return false;
 }
 
@@ -1795,15 +1799,21 @@ void InterfaceVisitor::Post(const parser::GenericStmt &x) {
   if (auto &accessSpec{std::get<std::optional<parser::AccessSpec>>(x.t)}) {
     genericName_->symbol->attrs().set(AccessSpecToAttr(*accessSpec));
   }
-  for (const auto &name : std::get<std::list<parser::Name>>(x.t)) {
-    GetGenericDetails().add_specificProcName(name.source, false);
-  }
+  const auto &names{std::get<std::list<parser::Name>>(x.t)};
+  AddSpecificProcs(names, ProcedureKind::Procedure);
 }
 
 GenericDetails &InterfaceVisitor::GetGenericDetails() {
   CHECK(genericName_);
   CHECK(genericName_->symbol);
   return genericName_->symbol->get<GenericDetails>();
+}
+
+void InterfaceVisitor::AddSpecificProcs(
+    const std::list<parser::Name> &names, ProcedureKind kind) {
+  for (const auto &name : names) {
+    specificProcs_.emplace(genericName_->symbol, std::make_pair(&name, kind));
+  }
 }
 
 // By now we should have seen all specific procedures referenced by name in
@@ -1814,12 +1824,16 @@ void InterfaceVisitor::ResolveSpecificsInGeneric(Symbol &generic) {
   for (const auto *symbol : details.specificProcs()) {
     namesSeen.insert(symbol->name());
   }
-  for (const auto &[name, expectModuleProc] : details.specificProcNames()) {
-    const auto *symbol{currScope().FindSymbol(name)};
+  auto range{specificProcs_.equal_range(&generic)};
+  for (auto it{range.first}; it != range.second; ++it) {
+    auto *name{it->second.first};
+    auto kind{it->second.second};
+    const auto *symbol{FindSymbol(*name)};
     if (!symbol) {
-      Say(name, "Procedure '%s' not found"_err_en_US);
+      Say(*name, "Procedure '%s' not found"_err_en_US);
       continue;
     }
+    symbol = &symbol->GetUltimate();
     if (symbol == &generic) {
       if (auto *specific{generic.get<GenericDetails>().specific()}) {
         symbol = specific;
@@ -1827,23 +1841,24 @@ void InterfaceVisitor::ResolveSpecificsInGeneric(Symbol &generic) {
     }
     if (!symbol->has<SubprogramDetails>() &&
         !symbol->has<SubprogramNameDetails>()) {
-      Say(name, "'%s' is not a subprogram"_err_en_US);
+      Say(*name, "'%s' is not a subprogram"_err_en_US);
       continue;
     }
-    if (expectModuleProc) {
+    if (kind == ProcedureKind::ModuleProcedure) {
       const auto *d{symbol->detailsIf<SubprogramNameDetails>()};
       if (!d || d->kind() != SubprogramKind::Module) {
-        Say(name, "'%s' is not a module procedure"_err_en_US);
+        Say(*name, "'%s' is not a module procedure"_err_en_US);
       }
     }
-    if (!namesSeen.insert(name).second) {
-      Say(name, "Procedure '%s' is already specified in generic '%s'"_err_en_US,
-          name, generic.name());
+    if (!namesSeen.insert(name->source).second) {
+      Say(*name,
+          "Procedure '%s' is already specified in generic '%s'"_err_en_US,
+          name->source, generic.name());
       continue;
     }
     details.add_specificProc(symbol);
   }
-  details.ClearSpecificProcNames();
+  specificProcs_.erase(range.first, range.second);
 }
 
 // Check that the specific procedures are all functions or all subroutines.
