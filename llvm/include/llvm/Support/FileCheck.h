@@ -160,7 +160,8 @@ struct FileCheckDiag {
   /// What kind of match result does this diagnostic describe?
   ///
   /// There might be more than one of these for the same directive.  For
-  /// example, there might be a fuzzy match after a fail.
+  /// example, there might be several discards before either a final or fail,
+  /// and there might be a fuzzy match after a fail.
   enum MatchType {
     // TODO: More members will appear with later patches in this series.
     /// Indicates the final match for an expected pattern.
@@ -170,6 +171,8 @@ struct FileCheckDiag {
     /// Indicates the final match for an expected pattern, but the match is on
     /// the wrong line.
     MatchFinalButWrongLine,
+    /// Indicates a discarded match for an expected pattern.
+    MatchDiscard,
     /// Indicates no match for an expected pattern.
     MatchNoneButExpected,
     /// Indicates a possible intended match because there's no perfect match.

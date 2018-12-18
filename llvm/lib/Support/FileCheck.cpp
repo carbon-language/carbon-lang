@@ -1284,7 +1284,7 @@ FileCheckString::CheckDag(const SourceMgr &SM, StringRef Buffer,
                         "match discarded, overlaps earlier DAG match here",
                         {OldRange});
         if (Diags)
-          Diags->pop_back();
+          Diags->rbegin()->MatchTy = FileCheckDiag::MatchDiscard;
       }
       MatchPos = MI->End;
     }

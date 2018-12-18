@@ -302,7 +302,7 @@
 ; NOT2-NOT:     {{.}}
 
 ;--------------------------------------------------
-; CHECK-DAG (also: matches in different order than directives)
+; CHECK-DAG (also: matches in different order than directives, discarded match)
 ;--------------------------------------------------
 
 ; Good match, discarded match plus good match, and no match.
@@ -319,18 +319,23 @@
 ; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk 2>&1 \
 ; RUN: | FileCheck -match-full-lines %s -check-prefixes=DAG,DAG-Q
 ; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk -v 2>&1 \
-; RUN: | FileCheck -match-full-lines %s -check-prefixes=DAG,DAG-V
+; RUN: | FileCheck -match-full-lines %s -check-prefixes=DAG,DAG-V,DAG-VQ
 ; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk -vv 2>&1 \
 ; RUN: | FileCheck -match-full-lines %s -check-prefixes=DAG,DAG-V,DAG-VV
 
 ; DAG:         <<<<<<
 ; DAG-NEXT:             1: abc
 ; DAG-V-NEXT:  dag:2       ^~~
+; DAG-VV-NEXT: dag:3'0     !~~ discard: overlaps earlier match
 ; DAG-NEXT:             2: def
 ; DAG-V-NEXT:  dag:1       ^~~
+; DAG-VV-NEXT: dag:4'0     !~~ discard: overlaps earlier match
 ; DAG-NEXT:             3: abc
-; DAG-V-NEXT:  dag:3       ^~~
-; DAG-NEXT:    dag:4       X~~ error: no match found
+; DAG-VQ-NEXT: dag:3       ^~~
+; DAG-VV-NEXT: dag:3'1     ^~~
+; DAG-Q-NEXT:  dag:4       X~~ error: no match found
+; DAG-VQ-NEXT: dag:4       X~~ error: no match found
+; DAG-VV-NEXT: dag:4'1     X~~ error: no match found
 ; DAG-NEXT:    >>>>>>
 ; DAG-NOT:     {{.}}
 

@@ -150,6 +150,9 @@ static MarkerStyle GetMarker(FileCheckDiag::MatchType MatchTy) {
     return MarkerStyle('!', raw_ostream::RED, "error: no match expected");
   case FileCheckDiag::MatchFinalButWrongLine:
     return MarkerStyle('!', raw_ostream::RED, "error: match on wrong line");
+  case FileCheckDiag::MatchDiscard:
+    return MarkerStyle('!', raw_ostream::CYAN,
+                       "discard: overlaps earlier match");
   case FileCheckDiag::MatchNoneButExpected:
     return MarkerStyle('X', raw_ostream::RED, "error: no match found");
   case FileCheckDiag::MatchFuzzy:
@@ -191,10 +194,13 @@ static void DumpInputAnnotationHelp(raw_ostream &OS) {
   OS << "    marks bad match, such as:\n"
      << "           - CHECK-NEXT on same line as previous match (error)\n"
      << "           - CHECK-NOT found (error)\n"
+     << "           - CHECK-DAG overlapping match (discarded, reported if "
+     << "-vv)\n"
      << "  - ";
   WithColor(OS, raw_ostream::SAVEDCOLOR, true) << "X~~";
   OS << "    marks search range when no match is found, such as:\n"
      << "           - CHECK-NEXT not found (error)\n"
+     << "           - CHECK-DAG not found after discarded matches (error)\n"
      << "  - ";
   WithColor(OS, raw_ostream::SAVEDCOLOR, true) << "?";
   OS << "      marks fuzzy match when no match is found\n";
@@ -206,6 +212,8 @@ static void DumpInputAnnotationHelp(raw_ostream &OS) {
   WithColor(OS, raw_ostream::RED, true) << "error";
   OS << ", ";
   WithColor(OS, raw_ostream::MAGENTA, true) << "fuzzy match";
+  OS << ", ";
+  WithColor(OS, raw_ostream::CYAN, true, false) << "discarded match";
   OS << ", ";
   WithColor(OS, raw_ostream::CYAN, true, true) << "unmatched input";
   OS << "\n\n"
