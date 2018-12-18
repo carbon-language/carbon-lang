@@ -112,7 +112,9 @@ HELP-NOT: {{.}}
 ; CHECK-GOOD: Full input was:
 ; CHECK-GOOD-NEXT: <<<<<<
 ; CHECK-GOOD-NEXT:          1: ciao
+; CHECK-GOOD-NEXT: check:1     ^~~~
 ; CHECK-GOOD-NEXT:          2: world
+; CHECK-GOOD-NEXT: next:2      ^~~~~
 ; CHECK-GOOD-NEXT: >>>>>>
 
 ; CHECK-ERR: Full input was:

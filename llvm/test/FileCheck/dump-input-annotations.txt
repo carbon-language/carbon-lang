@@ -21,6 +21,7 @@
 ; ALIGN:Full input was:
 ; ALIGN-NEXT:<<<<<<
 ; ALIGN-NEXT:           1: hello world
+; ALIGN-NEXT:check:1       ^~~~~
 ; ALIGN-NEXT:check:2'0           X~~~~
 ; ALIGN-NEXT:           2: goodbye
 ; ALIGN-NEXT:check:2'0     ~~~~~~~
@@ -54,6 +55,7 @@
 
 ; CHK:        <<<<<<
 ; CHK-NEXT:              1: hello
+; CHK-V-NEXT: check:1       ^~~~~
 ; CHK-NEXT:              2: again
 ; CHK-NEXT:   check:2'0     X~~~~
 ; CHK-NEXT:              3: whirled
@@ -75,19 +77,22 @@
 ; RUN: echo 'CHECK-COUNT-3: pete' > %t.chk
 
 ; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk 2>&1 \
-; RUN: | FileCheck -match-full-lines %s -check-prefix=CNT
+; RUN: | FileCheck -match-full-lines %s -check-prefixes=CNT,CNT-Q
 ; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk -v 2>&1 \
 ; RUN: | FileCheck -match-full-lines %s -check-prefixes=CNT,CNT-V
 ; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk -vv 2>&1 \
 ; RUN: | FileCheck -match-full-lines %s -check-prefixes=CNT,CNT-V
 
-; CNT:        <<<<<<
-; CNT-NEXT:            1: pete
-; CNT-NEXT:            2: repete
-; CNT-NEXT:            3: repeat
-; CNT-NEXT:   count:1     X~~~~~ error: no match found
-; CNT-NEXT:   >>>>>>
-; CNT-NOT:    {{.}}
+; CNT:          <<<<<<
+; CNT-NEXT:                1: pete
+; CNT-V-NEXT:   count:1'0     ^~~~
+; CNT-NEXT:                2: repete
+; CNT-V-NEXT:   count:1'1       ^~~~
+; CNT-NEXT:                3: repeat
+; CNT-Q-NEXT:   count:1       X~~~~~ error: no match found
+; CNT-V-NEXT:   count:1'2     X~~~~~ error: no match found
+; CNT-NEXT:     >>>>>>
+; CNT-NOT:      {{.}}
 
 ;--------------------------------------------------
 ; CHECK-NEXT (also: EOF search-range, wrong-line match)
@@ -110,10 +115,12 @@
 ; RUN: | FileCheck -match-full-lines %s -check-prefixes=NXT,NXT-V,NXT-VV
 
 ; NXT:        <<<<<<
-; NXT-NEXT:           1: hello
-; NXT-NEXT:           2: again
-; NXT-NEXT:           3:
-; NXT-NEXT:   next:3     X error: no match found
+; NXT-NEXT:            1: hello
+; NXT-V-NEXT: check:1     ^~~~~
+; NXT-NEXT:            2: again
+; NXT-V-NEXT: next:2      ^~~~~
+; NXT-NEXT:            3:
+; NXT-NEXT:   next:3      X error: no match found
 ; NXT-NEXT:   >>>>>>
 ; NXT-NOT:    {{.}}
 
@@ -135,7 +142,8 @@
 ; NXT2-NOT:  {{.}}
 
 ;--------------------------------------------------
-; CHECK-SAME (also: single-char search range, wrong-line match)
+; CHECK-SAME (also: multiple annotations per line, single-char search range,
+; wrong-line match)
 ;--------------------------------------------------
 
 ; Good match and no match.
@@ -154,8 +162,10 @@
 ; RUN: | FileCheck -match-full-lines %s -check-prefixes=SAM,SAM-V,SAM-VV
 
 ; SAM:        <<<<<<
-; SAM-NEXT:           1: hello world!
-; SAM-NEXT:   same:3                X error: no match found
+; SAM-NEXT:            1: hello world!
+; SAM-V-NEXT: check:1     ^~~~~
+; SAM-V-NEXT: same:2            ^~~~~
+; SAM-NEXT:   same:3                 X error: no match found
 ; SAM-NEXT:   >>>>>>
 ; SAM-NOT:    {{.}}
 
@@ -168,13 +178,16 @@
 
 ; SAM2:      <<<<<<
 ; SAM2-NEXT:          1: hello world!
+; SAM2-NEXT: check:1     ^~~~~
+; SAM2-NEXT: same:2            ^~~~~
 ; SAM2-NEXT:          2: again
 ; SAM2-NEXT: same:3      !~~~~ error: match on wrong line
 ; SAM2-NEXT: >>>>>>
 ; SAM2-NOT:  {{.}}
 
 ;--------------------------------------------------
-; CHECK-EMPTY (also: search range ends at label, wrong-line match)
+; CHECK-EMPTY (also: search range ends at label, single-char match, wrong-line
+; match)
 ;--------------------------------------------------
 
 ; Good match and no match.
@@ -203,11 +216,14 @@
 
 ; EMP:        <<<<<<
 ; EMP-NEXT:            1: hello
+; EMP-V-NEXT: check:1     ^~~~~
 ; EMP-NEXT:            2:
+; EMP-V-NEXT: empty:2     ^
 ; EMP-NEXT:            3: world
 ; EMP-NEXT:   empty:3     X~~~~
 ; EMP-NEXT:            4: label
 ; EMP-NEXT:   empty:3     ~~~~~ error: no match found
+; EMP-V-NEXT: label:4     ^~~~~
 ; EMP-NEXT:   >>>>>>
 ; EMP-NOT:    {{.}}
 
@@ -228,6 +244,7 @@
 
 ; EMP2:        <<<<<<
 ; EMP2-NEXT:            1: hello
+; EMP2-V-NEXT: check:1     ^~~~~
 ; EMP2-NEXT:            2: world
 ; EMP2-NEXT:            3:
 ; EMP2-NEXT:   empty:2     !     error: match on wrong line
@@ -235,7 +252,7 @@
 ; EMP2-NOT:    {{.}}
 
 ;--------------------------------------------------
-; CHECK-NOT
+; CHECK-NOT (also: EOF pattern)
 ;--------------------------------------------------
 
 ; No match (success) and unexpected match (error).
@@ -259,6 +276,8 @@
 ; NOT-NEXT:           2: world
 ; NOT-NEXT:    not:2     !~~~~ error: no match expected
 ; NOT-NEXT:           3: again
+; NOT-VV-NEXT:        4:
+; NOT-VV-NEXT: eof:2     ^
 ; NOT-NEXT:    >>>>>>
 ; NOT-NOT:     {{.}}
 
@@ -278,11 +297,12 @@
 ; NOT2-NEXT:             2: world
 ; NOT2-NEXT:    not:2       !~~~~ error: no match expected
 ; NOT2-NEXT:             3: again
+; NOT2-V-NEXT:  check:3       ^~~
 ; NOT2-NEXT:    >>>>>>
 ; NOT2-NOT:     {{.}}
 
 ;--------------------------------------------------
-; CHECK-DAG
+; CHECK-DAG (also: matches in different order than directives)
 ;--------------------------------------------------
 
 ; Good match, discarded match plus good match, and no match.
@@ -297,22 +317,28 @@
 ; RUN: echo 'CHECK-DAG: def' >> %t.chk
 
 ; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk 2>&1 \
-; RUN: | FileCheck -match-full-lines %s -check-prefixes=DAG
+; RUN: | FileCheck -match-full-lines %s -check-prefixes=DAG,DAG-Q
 ; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk -v 2>&1 \
-; RUN: | FileCheck -match-full-lines %s -check-prefixes=DAG
+; RUN: | FileCheck -match-full-lines %s -check-prefixes=DAG,DAG-V
 ; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk -vv 2>&1 \
-; RUN: | FileCheck -match-full-lines %s -check-prefixes=DAG
+; RUN: | FileCheck -match-full-lines %s -check-prefixes=DAG,DAG-V,DAG-VV
 
 ; DAG:         <<<<<<
-; DAG-NEXT:           1: abc
-; DAG-NEXT:           2: def
-; DAG-NEXT:           3: abc
-; DAG-NEXT:    dag:4     X~~ error: no match found
+; DAG-NEXT:             1: abc
+; DAG-V-NEXT:  dag:2       ^~~
+; DAG-NEXT:             2: def
+; DAG-V-NEXT:  dag:1       ^~~
+; DAG-NEXT:             3: abc
+; DAG-V-NEXT:  dag:3       ^~~
+; DAG-NEXT:    dag:4       X~~ error: no match found
 ; DAG-NEXT:    >>>>>>
 ; DAG-NOT:     {{.}}
 
 ;--------------------------------------------------
 ; CHECK-LABEL
+;
+; FIXME: Labels sometimes produce redundant diagnostics for good matches.
+; That bug is independent of but affects -dump-input.
 ;--------------------------------------------------
 
 ; Good match and no match.
@@ -335,6 +361,8 @@
 
 ; LAB:         <<<<<<
 ; LAB-NEXT:               1: lab0
+; LAB-V-NEXT:  label:1'0     ^~~~
+; LAB-V-NEXT:  label:1'1     ^~~~
 ; LAB-NEXT:               2: foo
 ; LAB-NEXT:    label:3'0     X~~
 ; LAB-NEXT:               3: lab1

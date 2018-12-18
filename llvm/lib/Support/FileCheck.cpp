@@ -416,14 +416,19 @@ static SMRange ProcessMatchResult(FileCheckDiag::MatchType MatchTy,
                                   const SourceMgr &SM, SMLoc Loc,
                                   Check::FileCheckType CheckTy,
                                   StringRef Buffer, size_t Pos, size_t Len,
-                                  std::vector<FileCheckDiag> *Diags) {
+                                  std::vector<FileCheckDiag> *Diags,
+                                  bool AdjustPrevDiag = false) {
   SMLoc Start = SMLoc::getFromPointer(Buffer.data() + Pos);
   SMLoc End = SMLoc::getFromPointer(Buffer.data() + Pos + Len);
   SMRange Range(Start, End);
   // TODO: The second condition will disappear when we extend this to handle
   // more match types.
-  if (Diags && MatchTy != FileCheckDiag::MatchTypeCount)
-    Diags->emplace_back(SM, CheckTy, Loc, MatchTy, Range);
+  if (Diags && MatchTy != FileCheckDiag::MatchTypeCount) {
+    if (AdjustPrevDiag)
+      Diags->rbegin()->MatchTy = MatchTy;
+    else
+      Diags->emplace_back(SM, CheckTy, Loc, MatchTy, Range);
+  }
   return Range;
 }
 
@@ -905,7 +910,7 @@ static void PrintMatch(bool ExpectedMatch, const SourceMgr &SM,
       return;
   }
   SMRange MatchRange = ProcessMatchResult(
-      ExpectedMatch ? FileCheckDiag::MatchTypeCount
+      ExpectedMatch ? FileCheckDiag::MatchFinalAndExpected
                     : FileCheckDiag::MatchFinalButExcluded,
       SM, Loc, Pat.getCheckTy(), Buffer, MatchPos, MatchLen, Diags);
   std::string Message = formatv("{0}: {1} string found in input",
@@ -1060,7 +1065,7 @@ size_t FileCheckString::Check(const SourceMgr &SM, StringRef Buffer,
     if (CheckNext(SM, SkippedRegion)) {
       ProcessMatchResult(FileCheckDiag::MatchFinalButWrongLine, SM, Loc,
                          Pat.getCheckTy(), MatchBuffer, MatchPos, MatchLen,
-                         Diags);
+                         Diags, Req.Verbose);
       return StringRef::npos;
     }
 
@@ -1069,7 +1074,7 @@ size_t FileCheckString::Check(const SourceMgr &SM, StringRef Buffer,
     if (CheckSame(SM, SkippedRegion)) {
       ProcessMatchResult(FileCheckDiag::MatchFinalButWrongLine, SM, Loc,
                          Pat.getCheckTy(), MatchBuffer, MatchPos, MatchLen,
-                         Diags);
+                         Diags, Req.Verbose);
       return StringRef::npos;
     }
 
@@ -1278,6 +1283,8 @@ FileCheckString::CheckDag(const SourceMgr &SM, StringRef Buffer,
         SM.PrintMessage(OldStart, SourceMgr::DK_Note,
                         "match discarded, overlaps earlier DAG match here",
                         {OldRange});
+        if (Diags)
+          Diags->pop_back();
       }
       MatchPos = MI->End;
     }

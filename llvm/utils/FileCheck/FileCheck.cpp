@@ -137,12 +137,15 @@ struct MarkerStyle {
   /// A note to follow the marker, or empty string if none.
   std::string Note;
   MarkerStyle() {}
-  MarkerStyle(char Lead, raw_ostream::Colors Color, const std::string &Note)
+  MarkerStyle(char Lead, raw_ostream::Colors Color,
+              const std::string &Note = "")
       : Lead(Lead), Color(Color), Note(Note) {}
 };
 
 static MarkerStyle GetMarker(FileCheckDiag::MatchType MatchTy) {
   switch (MatchTy) {
+  case FileCheckDiag::MatchFinalAndExpected:
+    return MarkerStyle('^', raw_ostream::GREEN);
   case FileCheckDiag::MatchFinalButExcluded:
     return MarkerStyle('!', raw_ostream::RED, "error: no match expected");
   case FileCheckDiag::MatchFinalButWrongLine:
@@ -181,6 +184,9 @@ static void DumpInputAnnotationHelp(raw_ostream &OS) {
 
   // Markers on annotation lines.
   OS << "  - ";
+  WithColor(OS, raw_ostream::SAVEDCOLOR, true) << "^~~";
+  OS << "    marks good match (reported if -v)\n"
+     << "  - ";
   WithColor(OS, raw_ostream::SAVEDCOLOR, true) << "!~~";
   OS << "    marks bad match, such as:\n"
      << "           - CHECK-NEXT on same line as previous match (error)\n"
@@ -195,9 +201,13 @@ static void DumpInputAnnotationHelp(raw_ostream &OS) {
 
   // Colors.
   OS << "  - colors ";
+  WithColor(OS, raw_ostream::GREEN, true) << "success";
+  OS << ", ";
   WithColor(OS, raw_ostream::RED, true) << "error";
   OS << ", ";
   WithColor(OS, raw_ostream::MAGENTA, true) << "fuzzy match";
+  OS << ", ";
+  WithColor(OS, raw_ostream::CYAN, true, true) << "unmatched input";
   OS << "\n\n"
      << "If you are not seeing color above or in input dumps, try: -color\n";
 }
@@ -222,6 +232,8 @@ struct InputAnnotation {
   unsigned InputStartCol, InputEndCol;
   /// The marker to use.
   MarkerStyle Marker;
+  /// Whether this annotation represents a final match for an expected pattern.
+  bool FinalAndExpectedMatch;
 };
 
 /// Get an abbreviation for the check type.
@@ -289,6 +301,8 @@ static void BuildInputAnnotations(const std::vector<FileCheckDiag> &Diags,
 
     MarkerStyle Marker = GetMarker(DiagItr->MatchTy);
     A.Marker = Marker;
+    A.FinalAndExpectedMatch =
+        DiagItr->MatchTy == FileCheckDiag::MatchFinalAndExpected;
 
     // Compute the mark location, and break annotation into multiple
     // annotations if it spans multiple lines.
@@ -328,15 +342,17 @@ static void BuildInputAnnotations(const std::vector<FileCheckDiag> &Diags,
           B.Marker.Note = "";
         } else
           B.InputEndCol = DiagItr->InputEndCol;
+        B.FinalAndExpectedMatch = A.FinalAndExpectedMatch;
         Annotations.push_back(B);
       }
     }
   }
 }
 
-static void DumpAnnotatedInput(
-    raw_ostream &OS, StringRef InputFileText,
-    std::vector<InputAnnotation> &Annotations, unsigned LabelWidth) {
+static void DumpAnnotatedInput(raw_ostream &OS, const FileCheckRequest &Req,
+                               StringRef InputFileText,
+                               std::vector<InputAnnotation> &Annotations,
+                               unsigned LabelWidth) {
   OS << "Full input was:\n<<<<<<\n";
 
   // Sort annotations.
@@ -359,9 +375,15 @@ static void DumpAnnotatedInput(
                 return A.InputLine < B.InputLine;
               if (A.CheckLine != B.CheckLine)
                 return A.CheckLine < B.CheckLine;
-              assert(A.CheckDiagIndex != B.CheckDiagIndex &&
-                     "expected diagnostic indices to be unique within a "
-                     " check line");
+              // FIXME: Sometimes CHECK-LABEL reports its match twice with
+              // other diagnostics in between, and then diag index incrementing
+              // fails to work properly, and then this assert fails.  We should
+              // suppress one of those diagnostics or do a better job of
+              // computing this index.  For now, we just produce a redundant
+              // CHECK-LABEL annotation.
+              // assert(A.CheckDiagIndex != B.CheckDiagIndex &&
+              //        "expected diagnostic indices to be unique within a "
+              //        " check line");
               return A.CheckDiagIndex < B.CheckDiagIndex;
             });
 
@@ -393,14 +415,45 @@ static void DumpAnnotatedInput(
     WithColor(OS, raw_ostream::BLACK, true)
         << format_decimal(Line, LabelWidth) << ": ";
 
-    // Print numbered line.
+    // For case where -v and colors are enabled, find the annotations for final
+    // matches for expected patterns in order to highlight everything else in
+    // the line.  There are no such annotations if -v is disabled.
+    std::vector<InputAnnotation> FinalAndExpectedMatches;
+    if (Req.Verbose && WithColor(OS).colorsEnabled()) {
+      for (auto I = AnnotationItr; I != AnnotationEnd && I->InputLine == Line;
+           ++I) {
+        if (I->FinalAndExpectedMatch)
+          FinalAndExpectedMatches.push_back(*I);
+      }
+    }
+
+    // Print numbered line with highlighting where there are no matches for
+    // expected patterns.
     bool Newline = false;
-    while (InputFilePtr != InputFileEnd && !Newline) {
-      if (*InputFilePtr == '\n')
-        Newline = true;
-      else
-        OS << *InputFilePtr;
-      ++InputFilePtr;
+    {
+      WithColor COS(OS);
+      bool InMatch = false;
+      if (Req.Verbose)
+        COS.changeColor(raw_ostream::CYAN, true, true);
+      for (unsigned Col = 1; InputFilePtr != InputFileEnd && !Newline; ++Col) {
+        bool WasInMatch = InMatch;
+        InMatch = false;
+        for (auto M : FinalAndExpectedMatches) {
+          if (M.InputStartCol <= Col && Col < M.InputEndCol) {
+            InMatch = true;
+            break;
+          }
+        }
+        if (!WasInMatch && InMatch)
+          COS.resetColor();
+        else if (WasInMatch && !InMatch)
+          COS.changeColor(raw_ostream::CYAN, true, true);
+        if (*InputFilePtr == '\n')
+          Newline = true;
+        else
+          COS << *InputFilePtr;
+        ++InputFilePtr;
+      }
     }
     OS << '\n';
     unsigned InputLineWidth = InputFilePtr - InputFileLine - Newline;
@@ -561,7 +614,7 @@ int main(int argc, char **argv) {
     std::vector<InputAnnotation> Annotations;
     unsigned LabelWidth;
     BuildInputAnnotations(Diags, Annotations, LabelWidth);
-    DumpAnnotatedInput(errs(), InputFileText, Annotations, LabelWidth);
+    DumpAnnotatedInput(errs(), Req, InputFileText, Annotations, LabelWidth);
   }
 
   return ExitCode;
