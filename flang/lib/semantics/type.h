@@ -241,6 +241,7 @@ public:
   Category category() const { return category_; }
   bool IsNumeric(TypeCategory) const;
   const IntrinsicTypeSpec *AsIntrinsic() const;
+  const DerivedTypeSpec *AsDerived() const;
   const NumericTypeSpec &numericTypeSpec() const;
   const LogicalTypeSpec &logicalTypeSpec() const;
   const CharacterTypeSpec &characterTypeSpec() const;

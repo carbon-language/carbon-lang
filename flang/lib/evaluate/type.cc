@@ -32,8 +32,8 @@ std::optional<DynamicType> GetSymbolType(const semantics::Symbol &symbol) {
       if (IsValidKindOfIntrinsicType(category, kind)) {
         return DynamicType{category, kind};
       }
-    } else {
-      return DynamicType{TypeCategory::Derived, 0, &type->derivedTypeSpec()};
+    } else if (const auto *derived{type->AsDerived()}) {
+      return DynamicType{TypeCategory::Derived, 0, derived};
     }
   }
   return std::nullopt;

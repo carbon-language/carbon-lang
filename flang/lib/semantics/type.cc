@@ -154,6 +154,13 @@ const IntrinsicTypeSpec *DeclTypeSpec::AsIntrinsic() const {
   default: return nullptr;
   }
 }
+const DerivedTypeSpec *DeclTypeSpec::AsDerived() const {
+  switch (category_) {
+  case TypeDerived:
+  case ClassDerived: return typeSpec_.derived;
+  default: return nullptr;
+  }
+}
 const NumericTypeSpec &DeclTypeSpec::numericTypeSpec() const {
   CHECK(category_ == Numeric);
   return typeSpec_.numeric;
