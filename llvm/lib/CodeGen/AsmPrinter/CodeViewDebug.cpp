@@ -2833,6 +2833,7 @@ MCSymbol *CodeViewDebug::beginSymbolRecord(SymbolKind SymKind) {
 void CodeViewDebug::endSymbolRecord(MCSymbol *SymEnd) {
   // Symbol records in object files are not aligned, although we are considering
   // it for linker performance reasons.
+  OS.EmitValueToAlignment(4);
   OS.EmitLabel(SymEnd);
 }
 
