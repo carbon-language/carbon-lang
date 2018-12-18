@@ -47,7 +47,7 @@ To add a new check:
  subclass.
 """
 
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import imp
 import os
