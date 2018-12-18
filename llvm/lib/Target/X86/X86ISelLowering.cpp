@@ -830,14 +830,20 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     }
 
     setOperationAction(ISD::UADDSAT,            MVT::v16i8, Legal);
-    setOperationAction(ISD::UADDSAT,            MVT::v8i16, Legal);
+    setOperationAction(ISD::SADDSAT,            MVT::v16i8, Legal);
     setOperationAction(ISD::USUBSAT,            MVT::v16i8, Legal);
+    setOperationAction(ISD::SSUBSAT,            MVT::v16i8, Legal);
+    setOperationAction(ISD::UADDSAT,            MVT::v8i16, Legal);
+    setOperationAction(ISD::SADDSAT,            MVT::v8i16, Legal);
     setOperationAction(ISD::USUBSAT,            MVT::v8i16, Legal);
+    setOperationAction(ISD::SSUBSAT,            MVT::v8i16, Legal);
     // Use widening instead of promotion.
     for (auto VT : { MVT::v8i8, MVT::v4i8, MVT::v2i8,
                      MVT::v4i16, MVT::v2i16 }) {
-      setOperationAction(ISD::UADDSAT,          VT,  Custom);
-      setOperationAction(ISD::USUBSAT,          VT,  Custom);
+      setOperationAction(ISD::UADDSAT, VT, Custom);
+      setOperationAction(ISD::SADDSAT, VT, Custom);
+      setOperationAction(ISD::USUBSAT, VT, Custom);
+      setOperationAction(ISD::SSUBSAT, VT, Custom);
     }
 
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v8i16, Custom);
@@ -1212,9 +1218,13 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::UMIN,      MVT::v4i64,  Custom);
 
     setOperationAction(ISD::UADDSAT,   MVT::v32i8,  HasInt256 ? Legal : Custom);
-    setOperationAction(ISD::UADDSAT,   MVT::v16i16, HasInt256 ? Legal : Custom);
+    setOperationAction(ISD::SADDSAT,   MVT::v32i8,  HasInt256 ? Legal : Custom);
     setOperationAction(ISD::USUBSAT,   MVT::v32i8,  HasInt256 ? Legal : Custom);
+    setOperationAction(ISD::SSUBSAT,   MVT::v32i8,  HasInt256 ? Legal : Custom);
+    setOperationAction(ISD::UADDSAT,   MVT::v16i16, HasInt256 ? Legal : Custom);
+    setOperationAction(ISD::SADDSAT,   MVT::v16i16, HasInt256 ? Legal : Custom);
     setOperationAction(ISD::USUBSAT,   MVT::v16i16, HasInt256 ? Legal : Custom);
+    setOperationAction(ISD::SSUBSAT,   MVT::v16i16, HasInt256 ? Legal : Custom);
 
     for (auto VT : { MVT::v32i8, MVT::v16i16, MVT::v8i32 }) {
       setOperationAction(ISD::ABS,  VT, HasInt256 ? Legal : Custom);
@@ -1334,7 +1344,9 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::SELECT,           VT, Custom);
       setOperationAction(ISD::TRUNCATE,         VT, Custom);
       setOperationAction(ISD::UADDSAT,          VT, Custom);
+      setOperationAction(ISD::SADDSAT,          VT, Custom);
       setOperationAction(ISD::USUBSAT,          VT, Custom);
+      setOperationAction(ISD::SSUBSAT,          VT, Custom);
 
       setOperationAction(ISD::BUILD_VECTOR,     VT, Custom);
       setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
@@ -1596,7 +1608,9 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::MUL,                VT, Custom);
       setOperationAction(ISD::VSELECT,            VT, Expand);
       setOperationAction(ISD::UADDSAT,            VT, Custom);
+      setOperationAction(ISD::SADDSAT,            VT, Custom);
       setOperationAction(ISD::USUBSAT,            VT, Custom);
+      setOperationAction(ISD::SSUBSAT,            VT, Custom);
 
       setOperationAction(ISD::TRUNCATE,           VT, Custom);
       setOperationAction(ISD::SETCC,              VT, Custom);
@@ -1678,7 +1692,9 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::UMIN,         VT, Legal);
       setOperationAction(ISD::SETCC,        VT, Custom);
       setOperationAction(ISD::UADDSAT,      VT, Legal);
+      setOperationAction(ISD::SADDSAT,      VT, Legal);
       setOperationAction(ISD::USUBSAT,      VT, Legal);
+      setOperationAction(ISD::SSUBSAT,      VT, Legal);
 
       // The condition codes aren't legal in SSE/AVX and under AVX512 we use
       // setcc all the way to isel and prefer SETGT in some isel patterns.
@@ -23388,15 +23404,17 @@ static SDValue LowerADD_SUB(SDValue Op, SelectionDAG &DAG) {
   return split256IntArith(Op, DAG);
 }
 
-static SDValue LowerUADDSAT_USUBSAT(SDValue Op, SelectionDAG &DAG) {
+static SDValue LowerADDSAT_SUBSAT(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getSimpleValueType();
   if (VT.getScalarType() == MVT::i1) {
     SDLoc dl(Op);
     switch (Op.getOpcode()) {
     default: llvm_unreachable("Expected saturated arithmetic opcode");
     case ISD::UADDSAT:
+    case ISD::SADDSAT:
       return DAG.getNode(ISD::OR, dl, VT, Op.getOperand(0), Op.getOperand(1));
     case ISD::USUBSAT:
+    case ISD::SSUBSAT:
       return DAG.getNode(ISD::AND, dl, VT, Op.getOperand(0),
                          DAG.getNOT(dl, Op.getOperand(1), VT));
     }
@@ -26194,7 +26212,9 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::ADD:
   case ISD::SUB:                return LowerADD_SUB(Op, DAG);
   case ISD::UADDSAT:
-  case ISD::USUBSAT:            return LowerUADDSAT_USUBSAT(Op, DAG);
+  case ISD::SADDSAT:
+  case ISD::USUBSAT:
+  case ISD::SSUBSAT:            return LowerADDSAT_SUBSAT(Op, DAG);
   case ISD::SMAX:
   case ISD::SMIN:
   case ISD::UMAX:
@@ -26277,11 +26297,13 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     return;
   }
   case ISD::UADDSAT:
+  case ISD::SADDSAT:
   case ISD::USUBSAT:
+  case ISD::SSUBSAT:
   case X86ISD::VPMADDWD:
   case X86ISD::AVG: {
-    // Legalize types for ISD::UADDSAT/USUBSAT and X86ISD::AVG/VPMADDWD
-    // by widening.
+    // Legalize types for ISD::UADDSAT/SADDSAT/USUBSAT/SSUBSAT and
+    // X86ISD::AVG/VPMADDWD by widening.
     assert(Subtarget.hasSSE2() && "Requires at least SSE2!");
 
     EVT VT = N->getValueType(0);
@@ -27228,8 +27250,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FGETEXPS_RND:       return "X86ISD::FGETEXPS_RND";
   case X86ISD::SCALEF:             return "X86ISD::SCALEF";
   case X86ISD::SCALEFS:            return "X86ISD::SCALEFS";
-  case X86ISD::ADDS:               return "X86ISD::ADDS";
-  case X86ISD::SUBS:               return "X86ISD::SUBS";
   case X86ISD::AVG:                return "X86ISD::AVG";
   case X86ISD::MULHRS:             return "X86ISD::MULHRS";
   case X86ISD::SINT_TO_FP_RND:     return "X86ISD::SINT_TO_FP_RND";
