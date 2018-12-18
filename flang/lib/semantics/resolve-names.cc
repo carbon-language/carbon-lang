@@ -224,20 +224,23 @@ public:
   void Post(const parser::TypeParamSpec &);
   bool Pre(const parser::TypeGuardStmt &);
   void Post(const parser::TypeGuardStmt &);
+  bool Pre(const parser::AcSpec &);
 
 protected:
   DeclTypeSpec *GetDeclTypeSpec();
   void BeginDeclTypeSpec();
   void EndDeclTypeSpec();
-  const parser::Name *derivedTypeName() const { return derivedTypeName_; }
+  const parser::Name *derivedTypeName() const { return state_.derivedTypeName; }
   void SetDeclTypeSpec(const parser::Name &, DeclTypeSpec &);
   void SetDeclTypeSpec(DeclTypeSpec &);
   ParamValue GetParamValue(const parser::TypeParamValue &);
 
 private:
-  bool expectDeclTypeSpec_{false};  // should only see decl-type-spec when true
-  DeclTypeSpec *declTypeSpec_{nullptr};
-  const parser::Name *derivedTypeName_{nullptr};
+  struct State {
+    bool expectDeclTypeSpec{false};  // should only see decl-type-spec when true
+    DeclTypeSpec *declTypeSpec{nullptr};
+    const parser::Name *derivedTypeName{nullptr};
+  } state_;
 
   void MakeNumericType(
       TypeCategory, const std::optional<parser::KindSelector> &);
@@ -983,22 +986,22 @@ bool AttrsVisitor::Pre(const parser::IntentSpec &x) {
 
 // DeclTypeSpecVisitor implementation
 
-DeclTypeSpec *DeclTypeSpecVisitor::GetDeclTypeSpec() { return declTypeSpec_; }
+DeclTypeSpec *DeclTypeSpecVisitor::GetDeclTypeSpec() {
+  return state_.declTypeSpec;
+}
 
 void DeclTypeSpecVisitor::BeginDeclTypeSpec() {
-  CHECK(!expectDeclTypeSpec_);
-  CHECK(!declTypeSpec_);
-  expectDeclTypeSpec_ = true;
+  CHECK(!state_.expectDeclTypeSpec);
+  CHECK(!state_.declTypeSpec);
+  state_.expectDeclTypeSpec = true;
 }
 void DeclTypeSpecVisitor::EndDeclTypeSpec() {
-  CHECK(expectDeclTypeSpec_);
-  expectDeclTypeSpec_ = false;
-  declTypeSpec_ = nullptr;
-  derivedTypeName_ = nullptr;
+  CHECK(state_.expectDeclTypeSpec);
+  state_ = {};
 }
 
 void DeclTypeSpecVisitor::Post(const parser::TypeParamSpec &x) {
-  DerivedTypeSpec &derivedTypeSpec{declTypeSpec_->derivedTypeSpec()};
+  DerivedTypeSpec &derivedTypeSpec{state_.declTypeSpec->derivedTypeSpec()};
   const auto &value{std::get<parser::TypeParamValue>(x.t)};
   if (const auto &keyword{std::get<std::optional<parser::Keyword>>(x.t)}) {
     derivedTypeSpec.AddParamValue(keyword->v.source, GetParamValue(value));
@@ -1028,8 +1031,18 @@ bool DeclTypeSpecVisitor::Pre(const parser::TypeGuardStmt &) {
 void DeclTypeSpecVisitor::Post(const parser::TypeGuardStmt &) {
   // TODO: TypeGuardStmt
   EndDeclTypeSpec();
-  declTypeSpec_ = nullptr;
-  derivedTypeName_ = nullptr;
+}
+
+bool DeclTypeSpecVisitor::Pre(const parser::AcSpec &x) {
+  // AcSpec can occur within a TypeDeclarationStmt: save and restore state
+  auto savedState{state_};
+  state_ = {};
+  BeginDeclTypeSpec();
+  Walk(x.type);
+  Walk(x.values);
+  EndDeclTypeSpec();
+  state_ = savedState;
+  return false;
 }
 
 void DeclTypeSpecVisitor::Post(const parser::IntrinsicTypeSpec::Logical &x) {
@@ -1071,16 +1084,16 @@ void DeclTypeSpecVisitor::Post(const parser::DeclarationTypeSpec::TypeStar &) {
 }
 
 // Check that we're expecting to see a DeclTypeSpec (and haven't seen one yet)
-// and save it in declTypeSpec_.
+// and save it in state_.declTypeSpec.
 void DeclTypeSpecVisitor::SetDeclTypeSpec(DeclTypeSpec &declTypeSpec) {
-  CHECK(expectDeclTypeSpec_);
-  CHECK(!declTypeSpec_);
-  declTypeSpec_ = &declTypeSpec;
+  CHECK(state_.expectDeclTypeSpec);
+  CHECK(!state_.declTypeSpec);
+  state_.declTypeSpec = &declTypeSpec;
 }
 // Set both the derived type name and corresponding DeclTypeSpec.
 void DeclTypeSpecVisitor::SetDeclTypeSpec(
     const parser::Name &name, DeclTypeSpec &declTypeSpec) {
-  derivedTypeName_ = &name;
+  state_.derivedTypeName = &name;
   SetDeclTypeSpec(declTypeSpec);
 }
 
