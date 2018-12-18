@@ -19,7 +19,7 @@
 ; RUN: not FileCheck -dump-input=foobar 2>&1 \
 ; RUN: | FileCheck %s -match-full-lines -check-prefix=BADVAL
 
-BADVAL: FileCheck: for the -dump-input option: Cannot find option named 'foobar'!
+BADVAL: FileCheck{{.*}}: for the -dump-input option: Cannot find option named 'foobar'!
 
 ;--------------------------------------------------
 ; help
