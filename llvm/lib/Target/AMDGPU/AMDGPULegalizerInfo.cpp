@@ -90,6 +90,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   // between these two scenarios.
   setAction({G_CONSTANT, S1}, Legal);
 
+  setAction({G_FRAME_INDEX, PrivatePtr}, Legal);
+
   getActionDefinitionsBuilder(
     { G_FADD, G_FMUL, G_FNEG, G_FABS, G_FMA})
     .legalFor({S32, S64});
