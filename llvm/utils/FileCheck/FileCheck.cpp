@@ -144,13 +144,13 @@ struct MarkerStyle {
 
 static MarkerStyle GetMarker(FileCheckDiag::MatchType MatchTy) {
   switch (MatchTy) {
-  case FileCheckDiag::MatchFinalAndExpected:
+  case FileCheckDiag::MatchFoundAndExpected:
     return MarkerStyle('^', raw_ostream::GREEN);
-  case FileCheckDiag::MatchFinalButExcluded:
+  case FileCheckDiag::MatchFoundButExcluded:
     return MarkerStyle('!', raw_ostream::RED, "error: no match expected");
-  case FileCheckDiag::MatchFinalButWrongLine:
+  case FileCheckDiag::MatchFoundButWrongLine:
     return MarkerStyle('!', raw_ostream::RED, "error: match on wrong line");
-  case FileCheckDiag::MatchDiscard:
+  case FileCheckDiag::MatchFoundButDiscarded:
     return MarkerStyle('!', raw_ostream::CYAN,
                        "discard: overlaps earlier match");
   case FileCheckDiag::MatchNoneAndExcluded:
@@ -241,8 +241,8 @@ struct InputAnnotation {
   unsigned InputStartCol, InputEndCol;
   /// The marker to use.
   MarkerStyle Marker;
-  /// Whether this annotation represents a final match for an expected pattern.
-  bool FinalAndExpectedMatch;
+  /// Whether this annotation represents a good match for an expected pattern.
+  bool FoundAndExpectedMatch;
 };
 
 /// Get an abbreviation for the check type.
@@ -310,8 +310,8 @@ static void BuildInputAnnotations(const std::vector<FileCheckDiag> &Diags,
 
     MarkerStyle Marker = GetMarker(DiagItr->MatchTy);
     A.Marker = Marker;
-    A.FinalAndExpectedMatch =
-        DiagItr->MatchTy == FileCheckDiag::MatchFinalAndExpected;
+    A.FoundAndExpectedMatch =
+        DiagItr->MatchTy == FileCheckDiag::MatchFoundAndExpected;
 
     // Compute the mark location, and break annotation into multiple
     // annotations if it spans multiple lines.
@@ -351,7 +351,7 @@ static void BuildInputAnnotations(const std::vector<FileCheckDiag> &Diags,
           B.Marker.Note = "";
         } else
           B.InputEndCol = DiagItr->InputEndCol;
-        B.FinalAndExpectedMatch = A.FinalAndExpectedMatch;
+        B.FoundAndExpectedMatch = A.FoundAndExpectedMatch;
         Annotations.push_back(B);
       }
     }
@@ -424,15 +424,15 @@ static void DumpAnnotatedInput(raw_ostream &OS, const FileCheckRequest &Req,
     WithColor(OS, raw_ostream::BLACK, true)
         << format_decimal(Line, LabelWidth) << ": ";
 
-    // For case where -v and colors are enabled, find the annotations for final
-    // matches for expected patterns in order to highlight everything else in
-    // the line.  There are no such annotations if -v is disabled.
-    std::vector<InputAnnotation> FinalAndExpectedMatches;
+    // For the case where -v and colors are enabled, find the annotations for
+    // good matches for expected patterns in order to highlight everything
+    // else in the line.  There are no such annotations if -v is disabled.
+    std::vector<InputAnnotation> FoundAndExpectedMatches;
     if (Req.Verbose && WithColor(OS).colorsEnabled()) {
       for (auto I = AnnotationItr; I != AnnotationEnd && I->InputLine == Line;
            ++I) {
-        if (I->FinalAndExpectedMatch)
-          FinalAndExpectedMatches.push_back(*I);
+        if (I->FoundAndExpectedMatch)
+          FoundAndExpectedMatches.push_back(*I);
       }
     }
 
@@ -447,7 +447,7 @@ static void DumpAnnotatedInput(raw_ostream &OS, const FileCheckRequest &Req,
       for (unsigned Col = 1; InputFilePtr != InputFileEnd && !Newline; ++Col) {
         bool WasInMatch = InMatch;
         InMatch = false;
-        for (auto M : FinalAndExpectedMatches) {
+        for (auto M : FoundAndExpectedMatches) {
           if (M.InputStartCol <= Col && Col < M.InputEndCol) {
             InMatch = true;
             break;

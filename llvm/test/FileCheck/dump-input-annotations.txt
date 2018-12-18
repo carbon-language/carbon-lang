@@ -322,6 +322,13 @@
 ; RUN: echo 'CHECK-DAG: abc' >> %t.chk
 ; RUN: echo 'CHECK-DAG: def' >> %t.chk
 
+; Prefixes used here:
+; DAG    = quiet, -v, or -vv
+; DAG-Q  = quiet
+; DAG-V  = -v or -vv (-vv implies -v)
+; DAG-VQ = -v and not -vv
+; DAG-VV = -vv
+
 ; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk 2>&1 \
 ; RUN: | FileCheck -match-full-lines %s -check-prefixes=DAG,DAG-Q
 ; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk -v 2>&1 \

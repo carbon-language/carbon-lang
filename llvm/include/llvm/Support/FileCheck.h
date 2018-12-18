@@ -157,32 +157,46 @@ struct FileCheckDiag {
   Check::FileCheckType CheckTy;
   /// Where is the FileCheck directive for this diagnostic?
   unsigned CheckLine, CheckCol;
-  /// What kind of match result does this diagnostic describe?
+  /// What type of match result does this diagnostic describe?
   ///
-  /// There might be more than one of these for the same directive.  For
-  /// example, there might be several discards before either a final or fail,
-  /// and there might be a fuzzy match after a fail.
+  /// A directive's supplied pattern is said to be either expected or excluded
+  /// depending on whether the pattern must have or must not have a match in
+  /// order for the directive to succeed.  For example, a CHECK directive's
+  /// pattern is expected, and a CHECK-NOT directive's pattern is excluded.
+  /// All match result types whose names end with "Excluded" are for excluded
+  /// patterns, and all others are for expected patterns.
+  ///
+  /// There might be more than one match result for a single pattern.  For
+  /// example, there might be several discarded matches
+  /// (MatchFoundButDiscarded) before either a good match
+  /// (MatchFoundAndExpected) or a failure to match (MatchNoneButExpected),
+  /// and there might be a fuzzy match (MatchFuzzy) after the latter.
   enum MatchType {
-    // TODO: More members will appear with later patches in this series.
-    /// Indicates the final match for an expected pattern.
-    MatchFinalAndExpected,
-    /// Indicates the final match for an excluded pattern.
-    MatchFinalButExcluded,
-    /// Indicates the final match for an expected pattern, but the match is on
-    /// the wrong line.
-    MatchFinalButWrongLine,
+    /// Indicates a good match for an expected pattern.
+    MatchFoundAndExpected,
+    /// Indicates a match for an excluded pattern.
+    MatchFoundButExcluded,
+    /// Indicates a match for an expected pattern, but the match is on the
+    /// wrong line.
+    MatchFoundButWrongLine,
     /// Indicates a discarded match for an expected pattern.
-    MatchDiscard,
+    MatchFoundButDiscarded,
     /// Indicates no match for an excluded pattern.
     MatchNoneAndExcluded,
-    /// Indicates no match for an expected pattern.
+    /// Indicates no match for an expected pattern, but this might follow good
+    /// matches when multiple matches are expected for the pattern, or it might
+    /// follow discarded matches for the pattern.
     MatchNoneButExpected,
-    /// Indicates a possible intended match because there's no perfect match.
+    /// Indicates a fuzzy match that serves as a suggestion for the next
+    /// intended match for an expected pattern with too few or no good matches.
     MatchFuzzy,
   } MatchTy;
-  /// The match range if MatchTy is not MatchNoneAndExcluded or
-  /// MatchNoneButExpected, or the search range otherwise.
-  unsigned InputStartLine, InputStartCol, InputEndLine, InputEndCol;
+  /// The search range if MatchTy is MatchNoneAndExcluded or
+  /// MatchNoneButExpected, or the match range otherwise.
+  unsigned InputStartLine;
+  unsigned InputStartCol;
+  unsigned InputEndLine;
+  unsigned InputEndCol;
   FileCheckDiag(const SourceMgr &SM, const Check::FileCheckType &CheckTy,
                 SMLoc CheckLoc, MatchType MatchTy, SMRange InputRange);
 };

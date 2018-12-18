@@ -908,8 +908,8 @@ static void PrintMatch(bool ExpectedMatch, const SourceMgr &SM,
       return;
   }
   SMRange MatchRange = ProcessMatchResult(
-      ExpectedMatch ? FileCheckDiag::MatchFinalAndExpected
-                    : FileCheckDiag::MatchFinalButExcluded,
+      ExpectedMatch ? FileCheckDiag::MatchFoundAndExpected
+                    : FileCheckDiag::MatchFoundButExcluded,
       SM, Loc, Pat.getCheckTy(), Buffer, MatchPos, MatchLen, Diags);
   std::string Message = formatv("{0}: {1} string found in input",
                                 Pat.getCheckTy().getDescription(Prefix),
@@ -1062,7 +1062,7 @@ size_t FileCheckString::Check(const SourceMgr &SM, StringRef Buffer,
     // If this check is a "CHECK-NEXT", verify that the previous match was on
     // the previous line (i.e. that there is one newline between them).
     if (CheckNext(SM, SkippedRegion)) {
-      ProcessMatchResult(FileCheckDiag::MatchFinalButWrongLine, SM, Loc,
+      ProcessMatchResult(FileCheckDiag::MatchFoundButWrongLine, SM, Loc,
                          Pat.getCheckTy(), MatchBuffer, MatchPos, MatchLen,
                          Diags, Req.Verbose);
       return StringRef::npos;
@@ -1071,7 +1071,7 @@ size_t FileCheckString::Check(const SourceMgr &SM, StringRef Buffer,
     // If this check is a "CHECK-SAME", verify that the previous match was on
     // the same line (i.e. that there is no newline between them).
     if (CheckSame(SM, SkippedRegion)) {
-      ProcessMatchResult(FileCheckDiag::MatchFinalButWrongLine, SM, Loc,
+      ProcessMatchResult(FileCheckDiag::MatchFoundButWrongLine, SM, Loc,
                          Pat.getCheckTy(), MatchBuffer, MatchPos, MatchLen,
                          Diags, Req.Verbose);
       return StringRef::npos;
@@ -1283,7 +1283,7 @@ FileCheckString::CheckDag(const SourceMgr &SM, StringRef Buffer,
                         "match discarded, overlaps earlier DAG match here",
                         {OldRange});
         if (Diags)
-          Diags->rbegin()->MatchTy = FileCheckDiag::MatchDiscard;
+          Diags->rbegin()->MatchTy = FileCheckDiag::MatchFoundButDiscarded;
       }
       MatchPos = MI->End;
     }
