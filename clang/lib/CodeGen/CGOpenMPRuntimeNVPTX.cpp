@@ -3089,6 +3089,7 @@ static void emitReductionListCopy(
 /// void inter_warp_copy_func(void* reduce_data, num_warps)
 ///   shared smem[warp_size];
 ///   For all data entries D in reduce_data:
+///     sync
 ///     If (I am the first lane in each warp)
 ///       Copy my local D to smem[warp_id]
 ///     sync
@@ -3203,6 +3204,10 @@ static llvm::Value *emitInterWarpCopyFunction(CodeGenModule &CGM,
         Bld.CreateCondBr(Cmp, BodyBB, ExitBB);
         CGF.EmitBlock(BodyBB);
       }
+      // kmpc_barrier.
+      CGM.getOpenMPRuntime().emitBarrierCall(CGF, Loc, OMPD_unknown,
+                                             /*EmitChecks=*/false,
+                                             /*ForceSimpleCall=*/true);
       llvm::BasicBlock *ThenBB = CGF.createBasicBlock("then");
       llvm::BasicBlock *ElseBB = CGF.createBasicBlock("else");
       llvm::BasicBlock *MergeBB = CGF.createBasicBlock("ifcont");
