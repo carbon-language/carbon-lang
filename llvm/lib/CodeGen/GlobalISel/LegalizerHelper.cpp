@@ -88,17 +88,17 @@ void LegalizerHelper::extractParts(unsigned Reg, LLT Ty, int NumParts,
 static RTLIB::Libcall getRTLibDesc(unsigned Opcode, unsigned Size) {
   switch (Opcode) {
   case TargetOpcode::G_SDIV:
-    assert(Size == 32 && "Unsupported size");
-    return RTLIB::SDIV_I32;
+    assert((Size == 32 || Size == 64) && "Unsupported size");
+    return Size == 64 ? RTLIB::SDIV_I64 : RTLIB::SDIV_I32;
   case TargetOpcode::G_UDIV:
-    assert(Size == 32 && "Unsupported size");
-    return RTLIB::UDIV_I32;
+    assert((Size == 32 || Size == 64) && "Unsupported size");
+    return Size == 64 ? RTLIB::UDIV_I64 : RTLIB::UDIV_I32;
   case TargetOpcode::G_SREM:
-    assert(Size == 32 && "Unsupported size");
-    return RTLIB::SREM_I32;
+    assert((Size == 32 || Size == 64) && "Unsupported size");
+    return Size == 64 ? RTLIB::SREM_I64 : RTLIB::SREM_I32;
   case TargetOpcode::G_UREM:
-    assert(Size == 32 && "Unsupported size");
-    return RTLIB::UREM_I32;
+    assert((Size == 32 || Size == 64) && "Unsupported size");
+    return Size == 64 ? RTLIB::UREM_I64 : RTLIB::UREM_I32;
   case TargetOpcode::G_CTLZ_ZERO_UNDEF:
     assert(Size == 32 && "Unsupported size");
     return RTLIB::CTLZ_I32;
@@ -200,7 +200,7 @@ LegalizerHelper::libcall(MachineInstr &MI) {
   case TargetOpcode::G_SREM:
   case TargetOpcode::G_UREM:
   case TargetOpcode::G_CTLZ_ZERO_UNDEF: {
-    Type *HLTy = Type::getInt32Ty(Ctx);
+    Type *HLTy = IntegerType::get(Ctx, Size);
     auto Status = simpleLibcall(MI, MIRBuilder, Size, HLTy);
     if (Status != Legalized)
       return Status;
