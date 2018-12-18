@@ -1047,17 +1047,27 @@ size_t FileCheckString::Check(const SourceMgr &SM, StringRef Buffer,
   // Similar to the above, in "label-scan mode" we can't yet handle CHECK-NEXT
   // or CHECK-NOT
   if (!IsLabelScanMode) {
-    StringRef SkippedRegion = Buffer.substr(LastPos, FirstMatchPos - LastPos);
+    size_t MatchPos = FirstMatchPos - LastPos;
+    StringRef MatchBuffer = Buffer.substr(LastPos);
+    StringRef SkippedRegion = Buffer.substr(LastPos, MatchPos);
 
     // If this check is a "CHECK-NEXT", verify that the previous match was on
     // the previous line (i.e. that there is one newline between them).
-    if (CheckNext(SM, SkippedRegion))
+    if (CheckNext(SM, SkippedRegion)) {
+      ProcessMatchResult(FileCheckDiag::MatchFinalButWrongLine, SM, Loc,
+                         Pat.getCheckTy(), MatchBuffer, MatchPos, MatchLen,
+                         Diags);
       return StringRef::npos;
+    }
 
     // If this check is a "CHECK-SAME", verify that the previous match was on
     // the same line (i.e. that there is no newline between them).
-    if (CheckSame(SM, SkippedRegion))
+    if (CheckSame(SM, SkippedRegion)) {
+      ProcessMatchResult(FileCheckDiag::MatchFinalButWrongLine, SM, Loc,
+                         Pat.getCheckTy(), MatchBuffer, MatchPos, MatchLen,
+                         Diags);
       return StringRef::npos;
+    }
 
     // If this match had "not strings", verify that they don't exist in the
     // skipped region.

@@ -163,6 +163,9 @@ struct FileCheckDiag {
   /// example, there might be a fuzzy match after a fail.
   enum MatchType {
     // TODO: More members will appear with later patches in this series.
+    /// Indicates the final match for an expected pattern, but the match is on
+    /// the wrong line.
+    MatchFinalButWrongLine,
     /// Indicates no match for an expected pattern.
     MatchNoneButExpected,
     /// Indicates a possible intended match because there's no perfect match.

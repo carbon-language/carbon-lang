@@ -143,6 +143,8 @@ struct MarkerStyle {
 
 static MarkerStyle GetMarker(FileCheckDiag::MatchType MatchTy) {
   switch (MatchTy) {
+  case FileCheckDiag::MatchFinalButWrongLine:
+    return MarkerStyle('!', raw_ostream::RED, "error: match on wrong line");
   case FileCheckDiag::MatchNoneButExpected:
     return MarkerStyle('X', raw_ostream::RED, "error: no match found");
   case FileCheckDiag::MatchFuzzy:
@@ -177,8 +179,13 @@ static void DumpInputAnnotationHelp(raw_ostream &OS) {
 
   // Markers on annotation lines.
   OS << "  - ";
+  WithColor(OS, raw_ostream::SAVEDCOLOR, true) << "!~~";
+  OS << "    marks bad match, such as:\n"
+     << "           - CHECK-NEXT on same line as previous match (error)\n"
+     << "  - ";
   WithColor(OS, raw_ostream::SAVEDCOLOR, true) << "X~~";
-  OS << "    marks search range when no match is found\n"
+  OS << "    marks search range when no match is found, such as:\n"
+     << "           - CHECK-NEXT not found (error)\n"
      << "  - ";
   WithColor(OS, raw_ostream::SAVEDCOLOR, true) << "?";
   OS << "      marks fuzzy match when no match is found\n";

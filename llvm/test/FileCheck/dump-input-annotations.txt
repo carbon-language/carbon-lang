@@ -90,7 +90,7 @@
 ; CNT-NOT:    {{.}}
 
 ;--------------------------------------------------
-; CHECK-NEXT (also: EOF search-range)
+; CHECK-NEXT (also: EOF search-range, wrong-line match)
 ;--------------------------------------------------
 
 ; Good match and no match.
@@ -117,8 +117,25 @@
 ; NXT-NEXT:   >>>>>>
 ; NXT-NOT:    {{.}}
 
+; Wrong-line match.
+
+; RUN: echo 'yonder' >> %t.in
+; RUN: echo 'world' >> %t.in
+
+; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk 2>&1 \
+; RUN: | FileCheck -match-full-lines %s -check-prefix=NXT2
+
+; NXT2:      <<<<<<
+; NXT2-NEXT:         1: hello
+; NXT2-NEXT:         2: again
+; NXT2-NEXT:         3: yonder
+; NXT2-NEXT:         4: world
+; NXT2-NEXT: next:3     !~~~~ error: match on wrong line
+; NXT2-NEXT: >>>>>>
+; NXT2-NOT:  {{.}}
+
 ;--------------------------------------------------
-; CHECK-SAME (also: single-char search range)
+; CHECK-SAME (also: single-char search range, wrong-line match)
 ;--------------------------------------------------
 
 ; Good match and no match.
@@ -142,8 +159,22 @@
 ; SAM-NEXT:   >>>>>>
 ; SAM-NOT:    {{.}}
 
+; Wrong-line match.
+
+; RUN: echo 'again' >> %t.in
+
+; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk -v 2>&1 \
+; RUN: | FileCheck -match-full-lines %s -check-prefixes=SAM2
+
+; SAM2:      <<<<<<
+; SAM2-NEXT:          1: hello world!
+; SAM2-NEXT:          2: again
+; SAM2-NEXT: same:3      !~~~~ error: match on wrong line
+; SAM2-NEXT: >>>>>>
+; SAM2-NOT:  {{.}}
+
 ;--------------------------------------------------
-; CHECK-EMPTY (also: search range ends at label)
+; CHECK-EMPTY (also: search range ends at label, wrong-line match)
 ;--------------------------------------------------
 
 ; Good match and no match.
@@ -179,6 +210,29 @@
 ; EMP-NEXT:   empty:3     ~~~~~ error: no match found
 ; EMP-NEXT:   >>>>>>
 ; EMP-NOT:    {{.}}
+
+; Wrong-line match.
+
+; RUN: echo 'hello' > %t.in
+; RUN: echo 'world' >> %t.in
+
+; RUN: echo 'CHECK: hello' > %t.chk
+; RUN: echo 'CHECK-EMPTY:' >> %t.chk
+
+; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk 2>&1 \
+; RUN: | FileCheck -match-full-lines %s -check-prefix=EMP2
+; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk -v 2>&1 \
+; RUN: | FileCheck -match-full-lines %s -check-prefixes=EMP2,EMP2-V
+; RUN: not FileCheck -dump-input=always -input-file %t.in %t.chk -vv 2>&1 \
+; RUN: | FileCheck -match-full-lines %s -check-prefixes=EMP2,EMP2-V,EMP2-VV
+
+; EMP2:        <<<<<<
+; EMP2-NEXT:            1: hello
+; EMP2-NEXT:            2: world
+; EMP2-NEXT:            3:
+; EMP2-NEXT:   empty:2     !     error: match on wrong line
+; EMP2-NEXT:   >>>>>>
+; EMP2-NOT:    {{.}}
 
 ;--------------------------------------------------
 ; CHECK-DAG
