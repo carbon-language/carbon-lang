@@ -279,3 +279,8 @@ declare i8* @llvm.objc.unretainedPointer(i8*)
 declare i8* @llvm.objc.retain.autorelease(i8*)
 declare i32 @llvm.objc.sync.enter(i8*)
 declare i32 @llvm.objc.sync.exit(i8*)
+
+; CHECK: declare void @objc_release(i8*) [[NLB:#[0-9]+]]
+; CHECK: declare i8* @objc_retain(i8*) [[NLB]]
+
+; CHECK: attributes [[NLB]] = { nonlazybind }

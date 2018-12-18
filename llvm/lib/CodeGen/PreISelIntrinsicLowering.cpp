@@ -57,7 +57,8 @@ static bool lowerLoadRelative(Function &F) {
   return Changed;
 }
 
-static bool lowerObjCCall(Function &F, const char *NewFn) {
+static bool lowerObjCCall(Function &F, const char *NewFn,
+                          bool setNonLazyBind = false) {
   if (F.use_empty())
     return false;
 
@@ -65,6 +66,12 @@ static bool lowerObjCCall(Function &F, const char *NewFn) {
   // program already contains a function with this name.
   Module *M = F.getParent();
   Constant* FCache = M->getOrInsertFunction(NewFn, F.getFunctionType());
+  
+  // If we have Native ARC, set nonlazybind attribute for these APIs for
+  // performance.
+  if (setNonLazyBind)
+    if (Function* Fn = dyn_cast<Function>(FCache))
+      Fn->addFnAttr(Attribute::NonLazyBind);
 
   for (auto I = F.use_begin(), E = F.use_end(); I != E;) {
     auto *CI = dyn_cast<CallInst>(I->getUser());
@@ -125,10 +132,10 @@ static bool lowerIntrinsics(Module &M) {
       Changed |= lowerObjCCall(F, "objc_moveWeak");
       break;
     case Intrinsic::objc_release:
-      Changed |= lowerObjCCall(F, "objc_release");
+      Changed |= lowerObjCCall(F, "objc_release", true);
       break;
     case Intrinsic::objc_retain:
-      Changed |= lowerObjCCall(F, "objc_retain");
+      Changed |= lowerObjCCall(F, "objc_retain", true);
       break;
     case Intrinsic::objc_retainAutorelease:
       Changed |= lowerObjCCall(F, "objc_retainAutorelease");
