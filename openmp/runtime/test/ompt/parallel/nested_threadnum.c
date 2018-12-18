@@ -7,6 +7,7 @@ int main() {
   omp_set_nested(1);
 #pragma omp parallel num_threads(2)
   {
+#pragma omp barrier
 #pragma omp parallel num_threads(2)
     { print_frame(0); }
   }
