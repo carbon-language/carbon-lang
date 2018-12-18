@@ -12,7 +12,6 @@
 from __future__ import print_function
 import lldb
 import argparse
-import commands
 import shlex
 import os
 import re
