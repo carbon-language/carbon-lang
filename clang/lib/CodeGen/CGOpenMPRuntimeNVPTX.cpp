@@ -4518,6 +4518,22 @@ void CGOpenMPRuntimeNVPTX::clear() {
       Records.UseSharedMemory->setInitializer(
           llvm::ConstantInt::get(CGM.Int16Ty, UseSharedMemory ? 1 : 0));
     }
+    // Allocate SharedMemorySize buffer for the shared memory.
+    // FIXME: nvlink does not handle weak linkage correctly (object with the
+    // different size are reported as erroneous).
+    // Restore this code as sson as nvlink is fixed.
+    if (!SharedStaticRD->field_empty()) {
+      llvm::APInt ArySize(/*numBits=*/64, SharedMemorySize);
+      QualType SubTy = C.getConstantArrayType(
+          C.CharTy, ArySize, ArrayType::Normal, /*IndexTypeQuals=*/0);
+      auto *Field = FieldDecl::Create(
+          C, SharedStaticRD, SourceLocation(), SourceLocation(), nullptr, SubTy,
+          C.getTrivialTypeSourceInfo(SubTy, SourceLocation()),
+          /*BW=*/nullptr, /*Mutable=*/false,
+          /*InitStyle=*/ICIS_NoInit);
+      Field->setAccess(AS_public);
+      SharedStaticRD->addDecl(Field);
+    }
     SharedStaticRD->completeDefinition();
     if (!SharedStaticRD->field_empty()) {
       QualType StaticTy = C.getRecordType(SharedStaticRD);
