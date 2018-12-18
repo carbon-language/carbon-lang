@@ -421,9 +421,7 @@ static SMRange ProcessMatchResult(FileCheckDiag::MatchType MatchTy,
   SMLoc Start = SMLoc::getFromPointer(Buffer.data() + Pos);
   SMLoc End = SMLoc::getFromPointer(Buffer.data() + Pos + Len);
   SMRange Range(Start, End);
-  // TODO: The second condition will disappear when we extend this to handle
-  // more match types.
-  if (Diags && MatchTy != FileCheckDiag::MatchTypeCount) {
+  if (Diags) {
     if (AdjustPrevDiag)
       Diags->rbegin()->MatchTy = MatchTy;
     else
@@ -962,12 +960,13 @@ static void PrintNoMatch(bool ExpectedMatch, const SourceMgr &SM,
   Buffer = Buffer.substr(Buffer.find_first_not_of(" \t\n\r"));
   SMRange SearchRange = ProcessMatchResult(
       ExpectedMatch ? FileCheckDiag::MatchNoneButExpected
-                    : FileCheckDiag::MatchTypeCount,
+                    : FileCheckDiag::MatchNoneAndExcluded,
       SM, Loc, Pat.getCheckTy(), Buffer, 0, Buffer.size(), Diags);
   SM.PrintMessage(SearchRange.Start, SourceMgr::DK_Note, "scanning from here");
 
   // Allow the pattern to print additional information if desired.
   Pat.PrintVariableUses(SM, Buffer, VariableTable);
+
   if (ExpectedMatch)
     Pat.PrintFuzzyMatch(SM, Buffer, VariableTable, Diags);
 }
@@ -1176,7 +1175,7 @@ bool FileCheckString::CheckNot(
 
     if (Pos == StringRef::npos) {
       PrintNoMatch(false, SM, Prefix, Pat->getLoc(), *Pat, 1, Buffer,
-                   VariableTable, Req.VerboseVerbose, nullptr);
+                   VariableTable, Req.VerboseVerbose, Diags);
       continue;
     }
 

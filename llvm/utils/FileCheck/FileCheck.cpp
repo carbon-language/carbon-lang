@@ -153,12 +153,12 @@ static MarkerStyle GetMarker(FileCheckDiag::MatchType MatchTy) {
   case FileCheckDiag::MatchDiscard:
     return MarkerStyle('!', raw_ostream::CYAN,
                        "discard: overlaps earlier match");
+  case FileCheckDiag::MatchNoneAndExcluded:
+    return MarkerStyle('X', raw_ostream::GREEN);
   case FileCheckDiag::MatchNoneButExpected:
     return MarkerStyle('X', raw_ostream::RED, "error: no match found");
   case FileCheckDiag::MatchFuzzy:
     return MarkerStyle('?', raw_ostream::MAGENTA, "possible intended match");
-  case FileCheckDiag::MatchTypeCount:
-    llvm_unreachable_internal("unexpected match type");
   }
   llvm_unreachable_internal("unexpected match type");
 }
@@ -200,6 +200,7 @@ static void DumpInputAnnotationHelp(raw_ostream &OS) {
   WithColor(OS, raw_ostream::SAVEDCOLOR, true) << "X~~";
   OS << "    marks search range when no match is found, such as:\n"
      << "           - CHECK-NEXT not found (error)\n"
+     << "           - CHECK-NOT not found (success, reported if -vv)\n"
      << "           - CHECK-DAG not found after discarded matches (error)\n"
      << "  - ";
   WithColor(OS, raw_ostream::SAVEDCOLOR, true) << "?";

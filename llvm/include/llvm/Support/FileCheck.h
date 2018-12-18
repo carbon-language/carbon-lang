@@ -173,14 +173,15 @@ struct FileCheckDiag {
     MatchFinalButWrongLine,
     /// Indicates a discarded match for an expected pattern.
     MatchDiscard,
+    /// Indicates no match for an excluded pattern.
+    MatchNoneAndExcluded,
     /// Indicates no match for an expected pattern.
     MatchNoneButExpected,
     /// Indicates a possible intended match because there's no perfect match.
     MatchFuzzy,
-    MatchTypeCount,
   } MatchTy;
-  /// The match range if MatchTy is not MatchNoneButExpected, or the search
-  /// range otherwise.
+  /// The match range if MatchTy is not MatchNoneAndExcluded or
+  /// MatchNoneButExpected, or the search range otherwise.
   unsigned InputStartLine, InputStartCol, InputEndLine, InputEndCol;
   FileCheckDiag(const SourceMgr &SM, const Check::FileCheckType &CheckTy,
                 SMLoc CheckLoc, MatchType MatchTy, SMRange InputRange);

@@ -252,7 +252,7 @@
 ; EMP2-NOT:    {{.}}
 
 ;--------------------------------------------------
-; CHECK-NOT (also: EOF pattern)
+; CHECK-NOT (also: EOF pattern, and multiline range that ends before EOL)
 ;--------------------------------------------------
 
 ; No match (success) and unexpected match (error).
@@ -273,9 +273,12 @@
 
 ; NOT:         <<<<<<
 ; NOT-NEXT:           1: hello
+; NOT-VV-NEXT: not:1     X~~~~
 ; NOT-NEXT:           2: world
+; NOT-VV-NEXT: not:1     ~~~~~
 ; NOT-NEXT:    not:2     !~~~~ error: no match expected
 ; NOT-NEXT:           3: again
+; NOT-VV-NEXT: not:1     ~~~~~
 ; NOT-VV-NEXT:        4:
 ; NOT-VV-NEXT: eof:2     ^
 ; NOT-NEXT:    >>>>>>
@@ -294,9 +297,12 @@
 
 ; NOT2:         <<<<<<
 ; NOT2-NEXT:             1: hello
+; NOT2-VV-NEXT: not:1       X~~~~
 ; NOT2-NEXT:             2: world
+; NOT2-VV-NEXT: not:1       ~~~~~
 ; NOT2-NEXT:    not:2       !~~~~ error: no match expected
 ; NOT2-NEXT:             3: again
+; NOT2-VV-NEXT: not:1       ~~
 ; NOT2-V-NEXT:  check:3       ^~~
 ; NOT2-NEXT:    >>>>>>
 ; NOT2-NOT:     {{.}}
