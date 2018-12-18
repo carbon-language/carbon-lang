@@ -260,7 +260,7 @@ declare i8* @llvm.objc.autoreleasePoolPush()
 declare i8* @llvm.objc.autoreleaseReturnValue(i8*)
 declare void @llvm.objc.copyWeak(i8**, i8**)
 declare void @llvm.objc.destroyWeak(i8**)
-declare i8* @llvm.objc.initWeak(i8**, i8*)
+declare extern_weak i8* @llvm.objc.initWeak(i8**, i8*)
 declare i8* @llvm.objc.loadWeak(i8**)
 declare i8* @llvm.objc.loadWeakRetained(i8**)
 declare void @llvm.objc.moveWeak(i8**, i8**)
@@ -280,7 +280,33 @@ declare i8* @llvm.objc.retain.autorelease(i8*)
 declare i32 @llvm.objc.sync.enter(i8*)
 declare i32 @llvm.objc.sync.exit(i8*)
 
+attributes #0 = { nounwind }
+
+; CHECK: declare i8* @objc_autorelease(i8*)
+; CHECK: declare void @objc_autoreleasePoolPop(i8*)
+; CHECK: declare i8* @objc_autoreleasePoolPush()
+; CHECK: declare i8* @objc_autoreleaseReturnValue(i8*)
+; CHECK: declare void @objc_copyWeak(i8**, i8**)
+; CHECK: declare void @objc_destroyWeak(i8**)
+; CHECK: declare extern_weak i8* @objc_initWeak(i8**, i8*)
+; CHECK: declare i8* @objc_loadWeak(i8**)
+; CHECK: declare i8* @objc_loadWeakRetained(i8**)
+; CHECK: declare void @objc_moveWeak(i8**, i8**)
 ; CHECK: declare void @objc_release(i8*) [[NLB:#[0-9]+]]
 ; CHECK: declare i8* @objc_retain(i8*) [[NLB]]
+; CHECK: declare i8* @objc_retainAutorelease(i8*)
+; CHECK: declare i8* @objc_retainAutoreleaseReturnValue(i8*)
+; CHECK: declare i8* @objc_retainAutoreleasedReturnValue(i8*)
+; CHECK: declare i8* @objc_retainBlock(i8*)
+; CHECK: declare void @objc_storeStrong(i8**, i8*)
+; CHECK: declare i8* @objc_storeWeak(i8**, i8*)
+; CHECK: declare i8* @objc_unsafeClaimAutoreleasedReturnValue(i8*)
+; CHECK: declare i8* @objc_retainedObject(i8*)
+; CHECK: declare i8* @objc_unretainedObject(i8*)
+; CHECK: declare i8* @objc_unretainedPointer(i8*)
+; CHECK: declare i8* @objc_retain_autorelease(i8*)
+; CHECK: declare i32 @objc_sync_enter(i8*)
+; CHECK: declare i32 @objc_sync_exit(i8*)
 
+; CHECK: attributes #0 = { nounwind }
 ; CHECK: attributes [[NLB]] = { nonlazybind }

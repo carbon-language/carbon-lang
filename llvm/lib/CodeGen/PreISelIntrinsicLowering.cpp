@@ -66,12 +66,15 @@ static bool lowerObjCCall(Function &F, const char *NewFn,
   // program already contains a function with this name.
   Module *M = F.getParent();
   Constant* FCache = M->getOrInsertFunction(NewFn, F.getFunctionType());
-  
-  // If we have Native ARC, set nonlazybind attribute for these APIs for
-  // performance.
-  if (setNonLazyBind)
-    if (Function* Fn = dyn_cast<Function>(FCache))
+
+  if (Function* Fn = dyn_cast<Function>(FCache)) {
+    Fn->setLinkage(F.getLinkage());
+    if (setNonLazyBind && !Fn->isWeakForLinker()) {
+      // If we have Native ARC, set nonlazybind attribute for these APIs for
+      // performance.
       Fn->addFnAttr(Attribute::NonLazyBind);
+    }
+  }
 
   for (auto I = F.use_begin(), E = F.use_end(); I != E;) {
     auto *CI = dyn_cast<CallInst>(I->getUser());
