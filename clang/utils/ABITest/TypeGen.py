@@ -1,5 +1,5 @@
 """Flexible enumeration of C types."""
-from __future__ import print_function
+from __future__ import division, print_function
 
 from Enumeration import *
 
@@ -235,7 +235,7 @@ def fact(n):
 
 # Compute the number of combinations (n choose k)
 def num_combinations(n, k): 
-    return fact(n) / (fact(k) * fact(n - k))
+    return fact(n) // (fact(k) * fact(n - k))
 
 # Enumerate the combinations choosing k elements from the list of values
 def combinations(values, k):

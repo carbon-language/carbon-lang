@@ -25,7 +25,7 @@ Usage:
     diff = compareResults(resultsA, resultsB)
 
 """
-from __future__ import print_function
+from __future__ import division, print_function
 
 from collections import defaultdict
 
@@ -308,7 +308,7 @@ def deriveStats(results):
             "mean": sum(values) / len(values),
             "90th %tile": computePercentile(values, 0.9),
             "95th %tile": computePercentile(values, 0.95),
-            "median": sorted(values)[len(values) / 2],
+            "median": sorted(values)[len(values) // 2],
             "total": sum(values)
         }
     return combined_stats
