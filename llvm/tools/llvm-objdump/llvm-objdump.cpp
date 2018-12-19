@@ -456,6 +456,21 @@ bool llvm::RelocAddressLess(RelocationRef a, RelocationRef b) {
   return a.getOffset() < b.getOffset();
 }
 
+static std::string demangle(StringRef Name) {
+  char *Demangled = nullptr;
+  if (Name.startswith("_Z"))
+    Demangled = itaniumDemangle(Name.data(), Demangled, nullptr, nullptr);
+  else if (Name.startswith("?"))
+    Demangled = microsoftDemangle(Name.data(), Demangled, nullptr, nullptr);
+
+  if (!Demangled)
+    return Name;
+
+  std::string Ret = Demangled;
+  free(Demangled);
+  return Ret;
+}
+
 template <class ELFT>
 static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
                                                 const RelocationRef &RelRef,
@@ -1278,22 +1293,6 @@ static void addPltEntries(const ObjectFile *Obj,
       AllSymbols[*Plt].emplace_back(PltEntry.second, Name, SymbolType);
     }
   }
-}
-
-static std::string demangle(StringRef Name) {
-  char *Demangled = nullptr;
-  size_t Size = 0;
-  if (Name.startswith("_Z"))
-    Demangled = itaniumDemangle(Name.data(), Demangled, &Size, nullptr);
-  else if (Name.startswith("?"))
-    Demangled = microsoftDemangle(Name.data(), Demangled, &Size, nullptr);
-
-  if (!Demangled)
-    return Name;
-
-  std::string Ret = Demangled;
-  free(Demangled);
-  return Ret;
 }
 
 static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
