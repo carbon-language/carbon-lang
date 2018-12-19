@@ -504,7 +504,7 @@ static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
     break;
   }
   }
-  StringRef Target;
+  std::string Target;
   if (!undef) {
     symbol_iterator SI = RelRef.getSymbol();
     const Elf_Sym *symb = Obj->getSymbol(SI->getRawDataRefImpl());
@@ -521,7 +521,7 @@ static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
       Expected<StringRef> SymName = symb->getName(StrTab);
       if (!SymName)
         return errorToErrorCode(SymName.takeError());
-      Target = *SymName;
+      Target = Demangle ? demangle(*SymName) : *SymName;
     }
   } else
     Target = "*ABS*";
@@ -1280,6 +1280,22 @@ static void addPltEntries(const ObjectFile *Obj,
   }
 }
 
+static std::string demangle(StringRef Name) {
+  char *Demangled = nullptr;
+  size_t Size = 0;
+  if (Name.startswith("_Z"))
+    Demangled = itaniumDemangle(Name.data(), Demangled, &Size, nullptr);
+  else if (Name.startswith("?"))
+    Demangled = microsoftDemangle(Name.data(), Demangled, &Size, nullptr);
+
+  if (!Demangled)
+    return Name;
+
+  std::string Ret = Demangled;
+  free(Demangled);
+  return Ret;
+}
+
 static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
   if (StartAddress > StopAddress)
     error("Start address should be less than stop address");
@@ -1573,30 +1589,12 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
         }
       }
 
-      auto PrintSymbol = [](StringRef Name) {
-        outs() << '\n' << Name << ":\n";
-      };
+      outs() << '\n';
       StringRef SymbolName = std::get<1>(Symbols[si]);
-      if (Demangle) {
-        char *DemangledSymbol = nullptr;
-        size_t Size = 0;
-        int Status = -1;
-        if (SymbolName.startswith("_Z"))
-          DemangledSymbol = itaniumDemangle(SymbolName.data(), DemangledSymbol,
-                                            &Size, &Status);
-        else if (SymbolName.startswith("?"))
-          DemangledSymbol = microsoftDemangle(SymbolName.data(),
-                                              DemangledSymbol, &Size, &Status);
-
-        if (Status == 0 && DemangledSymbol)
-          PrintSymbol(StringRef(DemangledSymbol));
-        else
-          PrintSymbol(SymbolName);
-
-        if (DemangledSymbol)
-          free(DemangledSymbol);
-      } else
-        PrintSymbol(SymbolName);
+      if (Demangle)
+        outs() << demangle(SymbolName) << ":\n";
+      else
+        outs() << SymbolName << ":\n";
 
       // Don't print raw contents of a virtual section. A virtual section
       // doesn't have any contents in the file.
@@ -2061,8 +2059,11 @@ void llvm::PrintSymbolTable(const ObjectFile *o, StringRef ArchiveName,
     if (Hidden) {
       outs() << ".hidden ";
     }
-    outs() << Name
-           << '\n';
+
+    if (Demangle)
+      outs() << demangle(Name) << '\n';
+    else
+      outs() << Name << '\n';
   }
 }
 
