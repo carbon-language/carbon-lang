@@ -339,8 +339,8 @@ int main(int argc, char **argv) {
   Expected<const mca::CodeRegions &> RegionsOrErr = CRG.parseCodeRegions();
   if (!RegionsOrErr) {
     if (auto Err =
-            handleErrors(RegionsOrErr.takeError(), [](const StringError &Err) {
-              WithColor::error() << Err.getMessage() << '\n';
+            handleErrors(RegionsOrErr.takeError(), [](const StringError &E) {
+              WithColor::error() << E.getMessage() << '\n';
             })) {
       // Default case.
       WithColor::error() << toString(std::move(Err)) << '\n';
