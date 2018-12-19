@@ -1,3 +1,6 @@
+// FIXME: Same as test/asan/TestCases/Linux/odr-violation.cc ?
+// XFAIL: android
+
 // RUN: %clangxx_asan -fno-rtti -DBUILD_SO1 -fPIC -shared %s -o %t1.so
 // RUN: %clangxx_asan -fno-rtti -DBUILD_SO2 -fPIC -shared %s -o %t2.so
 // RUN: %clangxx_asan -fno-rtti %t1.so %t2.so %s -Wl,-R. -o %t
