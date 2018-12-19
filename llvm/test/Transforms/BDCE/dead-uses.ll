@@ -10,7 +10,7 @@ declare <2 x i32> @llvm.fshr.v2i32(<2 x i32>, <2 x i32>, <2 x i32>)
 define i32 @pr39771_fshr_multi_use_instr(i32 %a) {
 ; CHECK-LABEL: @pr39771_fshr_multi_use_instr(
 ; CHECK-NEXT:    [[X:%.*]] = or i32 [[A:%.*]], 0
-; CHECK-NEXT:    [[B:%.*]] = tail call i32 @llvm.fshr.i32(i32 0, i32 [[X]], i32 1)
+; CHECK-NEXT:    [[B:%.*]] = tail call i32 @llvm.fshr.i32(i32 [[X]], i32 [[X]], i32 1)
 ; CHECK-NEXT:    [[C:%.*]] = lshr i32 [[B]], 23
 ; CHECK-NEXT:    [[D:%.*]] = xor i32 [[C]], [[B]]
 ; CHECK-NEXT:    [[E:%.*]] = and i32 [[D]], 31
@@ -28,7 +28,7 @@ define i32 @pr39771_fshr_multi_use_instr(i32 %a) {
 define <2 x i32> @pr39771_fshr_multi_use_instr_vec(<2 x i32> %a) {
 ; CHECK-LABEL: @pr39771_fshr_multi_use_instr_vec(
 ; CHECK-NEXT:    [[X:%.*]] = or <2 x i32> [[A:%.*]], zeroinitializer
-; CHECK-NEXT:    [[B:%.*]] = tail call <2 x i32> @llvm.fshr.v2i32(<2 x i32> zeroinitializer, <2 x i32> [[X]], <2 x i32> <i32 1, i32 1>)
+; CHECK-NEXT:    [[B:%.*]] = tail call <2 x i32> @llvm.fshr.v2i32(<2 x i32> [[X]], <2 x i32> [[X]], <2 x i32> <i32 1, i32 1>)
 ; CHECK-NEXT:    [[C:%.*]] = lshr <2 x i32> [[B]], <i32 23, i32 23>
 ; CHECK-NEXT:    [[D:%.*]] = xor <2 x i32> [[C]], [[B]]
 ; CHECK-NEXT:    [[E:%.*]] = and <2 x i32> [[D]], <i32 31, i32 31>
