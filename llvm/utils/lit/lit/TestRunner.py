@@ -1108,7 +1108,6 @@ def executeScript(test, litConfig, tmpBase, commands, cwd):
     else:
         if bashPath:
             command = [bashPath, script]
-            #print command, cwd, test.config.environment
         else:
             command = ['/bin/sh', script]
         if litConfig.useValgrind:
@@ -1552,30 +1551,22 @@ def _runShTest(test, litConfig, useExternalSh, script, tmpBase):
     return lit.Test.Result(status, output)
 
 
-def extractScript(test, litConfig, useExternalSh, extra_substitutions):
+def executeShTest(test, litConfig, useExternalSh,
+                  extra_substitutions=[]):
     if test.config.unsupported:
-        return lit.Test.Result(Test.UNSUPPORTED, 'Test is unsupported'), ''
+        return lit.Test.Result(Test.UNSUPPORTED, 'Test is unsupported')
 
     script = parseIntegratedTestScript(test)
     if isinstance(script, lit.Test.Result):
-        return script, ''
+        return script
     if litConfig.noExecute:
-        return lit.Test.Result(Test.PASS), ''
+        return lit.Test.Result(Test.PASS)
 
     tmpDir, tmpBase = getTempPaths(test)
     substitutions = list(extra_substitutions)
     substitutions += getDefaultSubstitutions(test, tmpDir, tmpBase,
                                              normalize_slashes=useExternalSh)
     script = applySubstitutions(script, substitutions)
-    return script, tmpBase
-
-
-def executeShTest(test, litConfig, useExternalSh,
-                  extra_substitutions=[]):
-    script, tmpBase = extractScript(
-            test, litConfig, useExternalSh, extra_substitutions)
-    if isinstance(script, lit.Test.Result):
-        return script
 
     # Re-run failed tests up to test_retry_attempts times.
     attempts = 1

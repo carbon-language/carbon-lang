@@ -14,19 +14,11 @@
 #include <string>
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
-  if (Size == 0)
-    return 0;
-
-  bool UseItanium = Data[0] < 128;
-  std::string NullTerminatedString((const char *)Data + 1, Size - 1);
-
-  if (UseItanium) {
-    free(llvm::itaniumDemangle(NullTerminatedString.c_str(), nullptr, nullptr,
-                               nullptr));
-  } else {
-    free(llvm::microsoftDemangle(NullTerminatedString.c_str(), nullptr, nullptr,
-                                 nullptr));
-  }
+  std::string NullTerminatedString((const char *)Data, Size);
+  int status = 0;
+  if (char *demangle = llvm::itaniumDemangle(NullTerminatedString.c_str(), nullptr,
+                                         nullptr, &status))
+    free(demangle);
 
   return 0;
 }
