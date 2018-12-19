@@ -536,7 +536,10 @@ static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
       Expected<StringRef> SymName = symb->getName(StrTab);
       if (!SymName)
         return errorToErrorCode(SymName.takeError());
-      Target = Demangle ? demangle(*SymName) : *SymName;
+      if (Demangle)
+        Target = demangle(*SymName);
+      else
+        Target = *SymName;
     }
   } else
     Target = "*ABS*";
