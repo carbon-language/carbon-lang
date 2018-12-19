@@ -55,6 +55,52 @@ class Run(object):
         return _execute_test_impl(test, self.lit_config,
                                   self.parallelism_semaphores)
 
+    def execute_tests_using_ninja(self, jobs, max_time):
+        import lit.TestRunner
+        import pipes
+        sys.path.append('/Users/thakis/src/ninja/misc')
+        import ninja_syntax
+        writer = ninja_syntax.Writer(open('lit.ninja', 'w'))
+        # Writes a build.ninja with commands for all tests and runs ninja
+        # to execute them.
+        for i, test in enumerate(self.tests):
+            if not isinstance(test.config.test_format, lit.formats.ShTest):
+                test.setResult(lit.Test.Result(lit.Test.PASS, ''))  # FIXME
+                continue
+            script, tmpBase = lit.TestRunner.extractScript(
+                    test, self.lit_config, True, [])
+            if isinstance(script, lit.Test.Result):
+                test.result = script
+                continue
+
+            # Create the output directory if it does not already exist.
+            lit.util.mkdir_p(os.path.dirname(tmpBase))
+
+            r = 'r%04d' % i
+            # FIXME: duplication with TestRunner.executeScript()
+            # FIXME: windows
+            execdir = os.path.dirname(test.getExecPath())
+            command = ''
+            for var, val in test.config.environment.iteritems():
+                # Need export, else LLD_VERSION doesn't make it through.
+                # The export means LIT_PRESERVES_TMP=1 needs to be set while
+                # running lit, else it's gone by the time ninja runs
+                # (...or this here must run ninja, probably better anyhoo)
+                command += 'export %s=%s; ' % (var, pipes.quote(val))
+            if test.config.pipefail:
+                command += 'set -o pipefail; '
+            command += 'cd %s; { ' % execdir
+            command += '; } && { '.join(script) + '; }'
+
+            # FIXME: tests require bash for e.g. `echo -e` -- unfortunate :-/
+            command = '/bin/bash -c %s' % pipes.quote(command)
+
+            writer.rule(r, command, description=test.getFullName())
+            writer.build('always%04d' % i, r)
+
+            # FIXME: ...well...
+            test.setResult(lit.Test.Result(lit.Test.PASS, ''))
+
     def execute_tests_in_pool(self, jobs, max_time):
         # We need to issue many wait calls, so compute the final deadline and
         # subtract time.time() from that as we go along.
@@ -150,6 +196,7 @@ class Run(object):
                 self.consume_test_result(result)
         else:
             self.execute_tests_in_pool(jobs, max_time)
+            #self.execute_tests_using_ninja(jobs, max_time)
 
         # Mark any tests that weren't run as UNRESOLVED.
         for test in self.tests:
