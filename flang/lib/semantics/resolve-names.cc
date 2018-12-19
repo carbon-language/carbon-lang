@@ -227,20 +227,23 @@ public:
   bool Pre(const parser::AcSpec &);
 
 protected:
+  struct State {
+    bool expectDeclTypeSpec{false};  // should only see decl-type-spec when true
+    DeclTypeSpec *declTypeSpec{nullptr};
+    const parser::Name *derivedTypeName{nullptr};
+  };
+
   DeclTypeSpec *GetDeclTypeSpec();
   void BeginDeclTypeSpec();
   void EndDeclTypeSpec();
+  State SetDeclTypeSpecState(State);
   const parser::Name *derivedTypeName() const { return state_.derivedTypeName; }
   void SetDeclTypeSpec(const parser::Name &, DeclTypeSpec &);
   void SetDeclTypeSpec(DeclTypeSpec &);
   ParamValue GetParamValue(const parser::TypeParamValue &);
 
 private:
-  struct State {
-    bool expectDeclTypeSpec{false};  // should only see decl-type-spec when true
-    DeclTypeSpec *declTypeSpec{nullptr};
-    const parser::Name *derivedTypeName{nullptr};
-  } state_;
+  State state_;
 
   void MakeNumericType(
       TypeCategory, const std::optional<parser::KindSelector> &);
@@ -624,7 +627,6 @@ public:
   bool Pre(const parser::AllocateStmt &);
   void Post(const parser::AllocateStmt &);
   bool Pre(const parser::StructureConstructor &);
-  void Post(const parser::StructureConstructor &);
 
 protected:
   bool BeginDecl();
@@ -1000,6 +1002,11 @@ void DeclTypeSpecVisitor::EndDeclTypeSpec() {
   CHECK(state_.expectDeclTypeSpec);
   state_ = {};
 }
+DeclTypeSpecVisitor::State DeclTypeSpecVisitor::SetDeclTypeSpecState(State x) {
+  auto result{state_};
+  state_ = x;
+  return result;
+}
 
 void DeclTypeSpecVisitor::Post(const parser::TypeParamSpec &x) {
   DerivedTypeSpec &derivedTypeSpec{state_.declTypeSpec->derivedTypeSpec()};
@@ -1036,13 +1043,12 @@ void DeclTypeSpecVisitor::Post(const parser::TypeGuardStmt &) {
 
 bool DeclTypeSpecVisitor::Pre(const parser::AcSpec &x) {
   // AcSpec can occur within a TypeDeclarationStmt: save and restore state
-  auto savedState{state_};
-  state_ = {};
+  auto savedState{SetDeclTypeSpecState({})};
   BeginDeclTypeSpec();
   Walk(x.type);
   Walk(x.values);
   EndDeclTypeSpec();
-  state_ = savedState;
+  SetDeclTypeSpecState(savedState);
   return false;
 }
 
@@ -2650,13 +2656,15 @@ void DeclarationVisitor::Post(const parser::AllocateStmt &) {
   EndDeclTypeSpec();
 }
 
-bool DeclarationVisitor::Pre(const parser::StructureConstructor &) {
+bool DeclarationVisitor::Pre(const parser::StructureConstructor &x) {
+  auto savedState{SetDeclTypeSpecState({})};
   BeginDeclTypeSpec();
-  return true;
-}
-void DeclarationVisitor::Post(const parser::StructureConstructor &) {
+  Walk(std::get<parser::DerivedTypeSpec>(x.t));
+  Walk(std::get<std::list<parser::ComponentSpec>>(x.t));
   ResolveDerivedType();
   EndDeclTypeSpec();
+  SetDeclTypeSpecState(savedState);
+  return false;
 }
 
 Symbol *DeclarationVisitor::DeclareConstructEntity(const parser::Name &name) {
