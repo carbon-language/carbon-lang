@@ -26259,7 +26259,6 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
                                            SmallVectorImpl<SDValue>&Results,
                                            SelectionDAG &DAG) const {
   SDLoc dl(N);
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   switch (N->getOpcode()) {
   default:
     llvm_unreachable("Do not know how to custom type legalize this operation!");
@@ -26381,7 +26380,7 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
         unsigned NumConcats = 128 / VT.getSizeInBits();
         SmallVector<SDValue, 8> Ops0(NumConcats, DAG.getUNDEF(VT));
         Ops0[0] = N->getOperand(0);
-        EVT ResVT = TLI.getTypeToTransformTo(*DAG.getContext(), VT);
+        EVT ResVT = getTypeToTransformTo(*DAG.getContext(), VT);
         SDValue N0 = DAG.getNode(ISD::CONCAT_VECTORS, dl, ResVT, Ops0);
         SDValue N1 = DAG.getConstant(SplatVal, dl, ResVT);
         SDValue Res = DAG.getNode(N->getOpcode(), dl, ResVT, N0, N1);
@@ -26685,7 +26684,7 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     return;
   }
   case ISD::FP_ROUND: {
-    if (!TLI.isTypeLegal(N->getOperand(0).getValueType()))
+    if (!isTypeLegal(N->getOperand(0).getValueType()))
         return;
     SDValue V = DAG.getNode(X86ISD::VFPROUND, dl, MVT::v4f32, N->getOperand(0));
     Results.push_back(V);
