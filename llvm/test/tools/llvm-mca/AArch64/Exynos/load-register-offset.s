@@ -50,7 +50,7 @@
 # EM1-NEXT:  1      5     1.00    *                   ldr	d21, [x22, x23, lsl #3]
 # EM1-NEXT:  2      6     2.00    *                   ldr	q24, [x25, x26, lsl #4]
 
-# EM3-NEXT:  1      5     0.50    *                   ldrb	w0, [x1, x2, lsl #0]
+# EM3-NEXT:  1      4     0.50    *                   ldrb	w0, [x1, x2, lsl #0]
 # EM3-NEXT:  1      5     0.50    *                   ldrh	w3, [x4, x5, sxtx #1]
 # EM3-NEXT:  2      5     0.50    *                   ldr	w6, [x7, w8, uxtw #2]
 # EM3-NEXT:  2      5     0.50    *                   ldr	x9, [x10, w11, sxtw #3]
