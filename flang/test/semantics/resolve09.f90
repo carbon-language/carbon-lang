@@ -76,3 +76,26 @@ contains
     x = b()
   end
 end
+
+! Call to entity in global scope, even with IMPORT, NONE
+subroutine s4
+  block
+    import, none
+    integer :: i
+    !ERROR: Use of 'm' as a procedure conflicts with its declaration
+    i = m()
+    !ERROR: Use of 'm' as a procedure conflicts with its declaration
+    call m()
+  end block
+end
+
+! Call to entity in global scope, even with IMPORT, NONE
+subroutine s5
+  block
+    import, none
+    integer :: i
+    i = foo()
+    !ERROR: Cannot call function 'foo' like a subroutine
+    call foo()
+  end block
+end

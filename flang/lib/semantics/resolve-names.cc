@@ -853,6 +853,7 @@ private:
   bool CheckAccessibleComponent(const parser::Name &);
   void CheckImports();
   void CheckImport(const SourceName &, const SourceName &);
+  bool SetProcFlag(const parser::Name &, Symbol &);
 };
 
 // ImplicitRules implementation
@@ -3169,19 +3170,28 @@ void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
   if (const auto *name{std::get_if<parser::Name>(&x.u)}) {
     auto *symbol{FindSymbol(*name)};
     if (symbol == nullptr) {
-      symbol = &MakeSymbol(*name);
+      symbol = &MakeSymbol(context().globalScope(), name->source, Attrs{});
+      Resolve(*name, *symbol);
+      if (symbol->has<ModuleDetails>()) {
+        Say2(*name,
+            "Use of '%s' as a procedure conflicts with its declaration"_err_en_US,
+            *symbol, "Declaration of '%s'"_en_US);
+        return;
+      }
       if (isImplicitNoneExternal() && !symbol->attrs().test(Attr::EXTERNAL)) {
         Say(*name,
             "'%s' is an external procedure without the EXTERNAL"
             " attribute in a scope with IMPLICIT NONE(EXTERNAL)"_err_en_US);
+        return;
       }
       symbol->attrs().set(Attr::EXTERNAL);
-      symbol->set_details(ProcEntityDetails{});
+      if (!symbol->has<ProcEntityDetails>()) {
+        symbol->set_details(ProcEntityDetails{});
+      }
       if (const auto type{GetImplicitType(*symbol)}) {
         symbol->get<ProcEntityDetails>().interface().set_type(*type);
       }
-      CHECK(expectedProcFlag_);
-      symbol->set(*expectedProcFlag_);
+      SetProcFlag(*name, *symbol);
     } else if (symbol->has<UnknownDetails>()) {
       CHECK(!"unexpected UnknownDetails");
     } else if (CheckUseError(*name)) {
@@ -3189,29 +3199,16 @@ void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
     } else {
       symbol = Resolve(*name, &symbol->GetUltimate());
       ConvertToProcEntity(*symbol);
-      if (symbol->test(Symbol::Flag::Function) &&
-          expectedProcFlag_ == Symbol::Flag::Subroutine) {
-        Say2(*name, "Cannot call function '%s' like a subroutine"_err_en_US,
-            *symbol, "Declaration of '%s'"_en_US);
-      } else if (symbol->test(Symbol::Flag::Subroutine) &&
-          expectedProcFlag_ == Symbol::Flag::Function) {
-        Say2(*name, "Cannot call subroutine '%s' like a function"_err_en_US,
-            *symbol, "Declaration of '%s'"_en_US);
-      } else if (symbol->has<ProcEntityDetails>()) {
-        symbol->set(*expectedProcFlag_);  // in case it hasn't been set yet
-        if (expectedProcFlag_ == Symbol::Flag::Function) {
-          ApplyImplicitRules(*symbol);
-        }
-      } else if (symbol->has<SubprogramDetails>()) {
-        // OK
-      } else if (symbol->has<SubprogramNameDetails>()) {
-        // OK
-      } else if (symbol->has<GenericDetails>()) {
-        // OK
-      } else if (symbol->has<DerivedTypeDetails>()) {
-        // OK: type constructor
-      } else if (symbol->has<ObjectEntityDetails>()) {
-        // OK: array mis-parsed as a call
+      if (!SetProcFlag(*name, *symbol)) {
+        return;  // reported error
+      }
+      if (symbol->has<ProcEntityDetails>() ||
+          symbol->has<SubprogramDetails>() ||
+          symbol->has<DerivedTypeDetails>() ||
+          symbol->has<ObjectEntityDetails>() ||
+          symbol->has<SubprogramNameDetails>() ||
+          symbol->has<GenericDetails>()) {
+        // these are all valid as procedure-designators
       } else if (symbol->test(Symbol::Flag::Implicit)) {
         Say(*name,
             "Use of '%s' as a procedure conflicts with its implicit definition"_err_en_US);
@@ -3222,6 +3219,29 @@ void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
       }
     }
   }
+}
+
+// Check and set the Function or Subroutine flag on symbol; false on error.
+bool ResolveNamesVisitor::SetProcFlag(
+    const parser::Name &name, Symbol &symbol) {
+  CHECK(expectedProcFlag_);
+  if (symbol.test(Symbol::Flag::Function) &&
+      expectedProcFlag_ == Symbol::Flag::Subroutine) {
+    Say2(name, "Cannot call function '%s' like a subroutine"_err_en_US, symbol,
+        "Declaration of '%s'"_en_US);
+    return false;
+  } else if (symbol.test(Symbol::Flag::Subroutine) &&
+      expectedProcFlag_ == Symbol::Flag::Function) {
+    Say2(name, "Cannot call subroutine '%s' like a function"_err_en_US, symbol,
+        "Declaration of '%s'"_en_US);
+    return false;
+  } else if (symbol.has<ProcEntityDetails>()) {
+    symbol.set(*expectedProcFlag_);  // in case it hasn't been set yet
+    if (expectedProcFlag_ == Symbol::Flag::Function) {
+      ApplyImplicitRules(symbol);
+    }
+  }
+  return true;
 }
 
 bool ModuleVisitor::Pre(const parser::AccessStmt &x) {
