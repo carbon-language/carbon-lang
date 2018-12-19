@@ -18,7 +18,7 @@ namespace llvm {
 namespace objcopy {
 namespace coff {
 
-class Object;
+struct Object;
 
 using object::COFFObjectFile;
 

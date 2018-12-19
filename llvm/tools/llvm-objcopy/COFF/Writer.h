@@ -19,7 +19,7 @@ namespace llvm {
 namespace objcopy {
 namespace coff {
 
-class Object;
+struct Object;
 
 class Writer {
 protected:
