@@ -1,6 +1,8 @@
 group("default") {
   deps = [
+    "//clang/lib/AST",
     "//clang/lib/Basic",
+    "//clang/lib/Lex",
     "//lld/test",
     "//llvm/tools/llvm-undname",
   ]
