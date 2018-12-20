@@ -9168,6 +9168,24 @@ static Value *EmitX86MaskLogic(CodeGenFunction &CGF, Instruction::BinaryOps Opc,
                                    Ops[0]->getType());
 }
 
+static Value *EmitX86FunnelShift(CodeGenFunction &CGF, Value *Op0, Value *Op1,
+                                 Value *Amt, bool IsRight) {
+  llvm::Type *Ty = Op0->getType();
+
+  // Amount may be scalar immediate, in which case create a splat vector.
+  // Funnel shifts amounts are treated as modulo and types are all power-of-2 so
+  // we only care about the lowest log2 bits anyway.
+  if (Amt->getType() != Ty) {
+    unsigned NumElts = Ty->getVectorNumElements();
+    Amt = CGF.Builder.CreateIntCast(Amt, Ty->getScalarType(), false);
+    Amt = CGF.Builder.CreateVectorSplat(NumElts, Amt);
+  }
+
+  unsigned IID = IsRight ? Intrinsic::fshr : Intrinsic::fshl;
+  Value *F = CGF.CGM.getIntrinsic(IID, Ty);
+  return CGF.Builder.CreateCall(F, {Op0, Op1, Amt});
+}
+
 static Value *EmitX86Select(CodeGenFunction &CGF,
                             Value *Mask, Value *Op0, Value *Op1) {
 
@@ -10575,7 +10593,41 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     SI->setAlignment(1);
     return SI;
   }
-
+  // Rotate is a special case of funnel shift - 1st 2 args are the same.
+  case X86::BI__builtin_ia32_vprotb:
+  case X86::BI__builtin_ia32_vprotw:
+  case X86::BI__builtin_ia32_vprotd:
+  case X86::BI__builtin_ia32_vprotq:
+  case X86::BI__builtin_ia32_vprotbi:
+  case X86::BI__builtin_ia32_vprotwi:
+  case X86::BI__builtin_ia32_vprotdi:
+  case X86::BI__builtin_ia32_vprotqi:
+  case X86::BI__builtin_ia32_prold128:
+  case X86::BI__builtin_ia32_prold256:
+  case X86::BI__builtin_ia32_prold512:
+  case X86::BI__builtin_ia32_prolq128:
+  case X86::BI__builtin_ia32_prolq256:
+  case X86::BI__builtin_ia32_prolq512:
+  case X86::BI__builtin_ia32_prolvd128:
+  case X86::BI__builtin_ia32_prolvd256:
+  case X86::BI__builtin_ia32_prolvd512:
+  case X86::BI__builtin_ia32_prolvq128:
+  case X86::BI__builtin_ia32_prolvq256:
+  case X86::BI__builtin_ia32_prolvq512:
+    return EmitX86FunnelShift(*this, Ops[0], Ops[0], Ops[1], false);
+  case X86::BI__builtin_ia32_prord128:
+  case X86::BI__builtin_ia32_prord256:
+  case X86::BI__builtin_ia32_prord512:
+  case X86::BI__builtin_ia32_prorq128:
+  case X86::BI__builtin_ia32_prorq256:
+  case X86::BI__builtin_ia32_prorq512:
+  case X86::BI__builtin_ia32_prorvd128:
+  case X86::BI__builtin_ia32_prorvd256:
+  case X86::BI__builtin_ia32_prorvd512:
+  case X86::BI__builtin_ia32_prorvq128:
+  case X86::BI__builtin_ia32_prorvq256:
+  case X86::BI__builtin_ia32_prorvq512:
+    return EmitX86FunnelShift(*this, Ops[0], Ops[0], Ops[1], true);
   case X86::BI__builtin_ia32_selectb_128:
   case X86::BI__builtin_ia32_selectb_256:
   case X86::BI__builtin_ia32_selectb_512:
