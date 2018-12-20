@@ -2201,10 +2201,8 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M, bool
           GlobalAlias::create(GlobalValue::PrivateLinkage, "", NewGlobal);
     }
 
-    // ODR check is not useful for the following, but we see false reports
-    // caused by linker optimizations.
-    if (NewGlobal->hasLocalLinkage() || NewGlobal->hasLinkOnceODRLinkage() ||
-        NewGlobal->hasWeakODRLinkage()) {
+    // ODR should not happen for local linkage.
+    if (NewGlobal->hasLocalLinkage()) {
       ODRIndicator = ConstantExpr::getIntToPtr(ConstantInt::get(IntptrTy, -1),
                                                IRB.getInt8PtrTy());
     } else if (UseOdrIndicator) {
