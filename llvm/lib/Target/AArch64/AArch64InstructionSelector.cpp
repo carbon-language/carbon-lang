@@ -1625,10 +1625,9 @@ bool AArch64InstructionSelector::selectMergeValues(
                                 .addImm(0)
                                 .addUse(I.getOperand(2).getReg())
                                 .addImm(AArch64::sub_32);
-  unsigned BFMDef = MRI.createVirtualRegister(DstRC);
   MachineInstr &BFM =
       *BuildMI(*I.getParent(), I, I.getDebugLoc(), TII.get(AArch64::BFMXri))
-           .addDef(BFMDef)
+           .addDef(I.getOperand(0).getReg())
            .addUse(SubToRegDef)
            .addUse(SubToRegDef2)
            .addImm(32)
