@@ -23,7 +23,7 @@ void f() {
 }
 // CHECK-LABEL: define void @_Z1fv
 // CHECK:       %[[TMP:.*]] = call i8* @_Z1gv()
-// CHECK:       {{.*}} = call i8* @objc_retainAutoreleasedReturnValue(i8* %[[TMP]])
+// CHECK:       {{.*}} = call i8* @llvm.objc.retainAutoreleasedReturnValue(i8* %[[TMP]])
 // CHECK:       call void (%struct.Base*, i8*, ...) @_ZN4BaseC2E6Strongz(%struct.Base* {{.*}}, i8* {{.*}})
 // CHECK-NEXT:  call void @_ZN9InheritorD1Ev(%struct.Inheritor* {{.*}})
 
@@ -37,7 +37,7 @@ void f() {
 // CHECK:       call void @_ZN6StrongD2Ev(%struct.Strong* {{.*}})
 
 // CHECK-LABEL: define linkonce_odr void @_ZN6StrongD2Ev(%struct.Strong* {{.*}})
-// CHECK:       call void @objc_storeStrong(i8** {{.*}}, i8* null)
+// CHECK:       call void @llvm.objc.storeStrong(i8** {{.*}}, i8* null)
 
 // CHECK-LABEL: define linkonce_odr void @_ZN9InheritorD2Ev(%struct.Inheritor* {{.*}})
 // CHECK:       call void @_ZN14NonTrivialDtorD2Ev(%struct.NonTrivialDtor* {{.*}})
