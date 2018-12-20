@@ -281,6 +281,21 @@ AMDGPURegisterBankInfo::getDefaultMappingVOP(const MachineInstr &MI) const {
 }
 
 const RegisterBankInfo::InstructionMapping &
+AMDGPURegisterBankInfo::getDefaultMappingAllVGPR(const MachineInstr &MI) const {
+  const MachineFunction &MF = *MI.getParent()->getParent();
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
+  SmallVector<const ValueMapping*, 8> OpdsMapping(MI.getNumOperands());
+
+  for (unsigned I = 0, E = MI.getNumOperands(); I != E; ++I) {
+    unsigned Size = getSizeInBits(MI.getOperand(I).getReg(), MRI, *TRI);
+    OpdsMapping[I] = AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, Size);
+  }
+
+  return getInstructionMapping(1, 1, getOperandsMapping(OpdsMapping),
+                               MI.getNumOperands());
+}
+
+const RegisterBankInfo::InstructionMapping &
 AMDGPURegisterBankInfo::getInstrMappingForLoad(const MachineInstr &MI) const {
 
   const MachineFunction &MF = *MI.getParent()->getParent();
@@ -614,6 +629,20 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
 
   case AMDGPU::G_LOAD:
     return getInstrMappingForLoad(MI);
+
+  case AMDGPU::G_ATOMICRMW_XCHG:
+  case AMDGPU::G_ATOMICRMW_ADD:
+  case AMDGPU::G_ATOMICRMW_SUB:
+  case AMDGPU::G_ATOMICRMW_AND:
+  case AMDGPU::G_ATOMICRMW_OR:
+  case AMDGPU::G_ATOMICRMW_XOR:
+  case AMDGPU::G_ATOMICRMW_MAX:
+  case AMDGPU::G_ATOMICRMW_MIN:
+  case AMDGPU::G_ATOMICRMW_UMAX:
+  case AMDGPU::G_ATOMICRMW_UMIN:
+  case AMDGPU::G_ATOMIC_CMPXCHG: {
+    return getDefaultMappingAllVGPR(MI);
+  }
   }
 
   return getInstructionMapping(1, 1, getOperandsMapping(OpdsMapping),

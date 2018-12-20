@@ -177,6 +177,16 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
       });
 
 
+  auto &Atomics = getActionDefinitionsBuilder(
+    {G_ATOMICRMW_XCHG, G_ATOMICRMW_ADD, G_ATOMICRMW_SUB,
+     G_ATOMICRMW_AND, G_ATOMICRMW_OR, G_ATOMICRMW_XOR,
+     G_ATOMICRMW_MAX, G_ATOMICRMW_MIN, G_ATOMICRMW_UMAX,
+     G_ATOMICRMW_UMIN, G_ATOMIC_CMPXCHG})
+    .legalFor({{S32, GlobalPtr}, {S32, LocalPtr},
+               {S64, GlobalPtr}, {S64, LocalPtr}});
+  if (ST.hasFlatAddressSpace()) {
+    Atomics.legalFor({{S32, FlatPtr}, {S64, FlatPtr}});
+  }
 
   setAction({G_SELECT, S32}, Legal);
   setAction({G_SELECT, 1, S1}, Legal);
