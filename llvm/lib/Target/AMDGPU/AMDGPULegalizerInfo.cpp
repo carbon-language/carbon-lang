@@ -34,6 +34,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
 
   const LLT S1 = LLT::scalar(1);
   const LLT V2S16 = LLT::vector(2, 16);
+  const LLT V2S32 = LLT::vector(2, 32);
 
   const LLT S32 = LLT::scalar(32);
   const LLT S64 = LLT::scalar(64);
@@ -59,9 +60,10 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   setAction({G_ASHR, S32}, Legal);
   setAction({G_SUB, S32}, Legal);
   setAction({G_MUL, S32}, Legal);
-  setAction({G_AND, S32}, Legal);
-  setAction({G_OR, S32}, Legal);
-  setAction({G_XOR, S32}, Legal);
+
+  // FIXME: 64-bit ones only legal for scalar
+  getActionDefinitionsBuilder({G_AND, G_OR, G_XOR})
+    .legalFor({S32, S1, S64, V2S32});
 
   setAction({G_BITCAST, V2S16}, Legal);
   setAction({G_BITCAST, 1, S32}, Legal);
