@@ -4880,7 +4880,7 @@ def warn_braces_around_scalar_init : Warning<
   "braces around scalar initializer">, InGroup<DiagGroup<"braced-scalar-init">>;
 def ext_many_braces_around_scalar_init : ExtWarn<
   "too many braces around scalar initializer">,
-  InGroup<DiagGroup<"many-braces-around-scalar-init">>;
+  InGroup<DiagGroup<"many-braces-around-scalar-init">>, SFINAEFailure;
 def ext_complex_component_init : Extension<
   "complex initialization specifying real and imaginary components "
   "is an extension">, InGroup<DiagGroup<"complex-component-init">>;
