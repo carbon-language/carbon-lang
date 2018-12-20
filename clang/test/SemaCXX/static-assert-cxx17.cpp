@@ -15,6 +15,11 @@ struct S2 {
 };
 
 template <typename U, typename V>
+inline constexpr bool constexpr_return_false() {
+  return false;
+}
+
+template <typename U, typename V>
 void foo() {
   static_assert(S1<U, V>::value);
   // expected-error@-1{{static_assert failed due to requirement 'S1<int, float>::value'}}
@@ -92,6 +97,8 @@ void foo6() {
   // expected-error@-1{{static_assert failed due to requirement '(X<int> const[0]){} == nullptr'}}
   static_assert(sizeof(X<decltype(X<typename T::T>().X<typename T::T>::~X())>) == 0);
   // expected-error@-1{{static_assert failed due to requirement 'sizeof(X<void>) == 0'}}
+  static_assert(constexpr_return_false<typename T::T, typename T::U>());
+  // expected-error@-1{{static_assert failed due to requirement 'constexpr_return_false<int, float>()'}}
 }
 template void foo6<ExampleTypes>();
 // expected-note@-1{{in instantiation of function template specialization 'foo6<ExampleTypes>' requested here}}
