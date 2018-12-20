@@ -603,7 +603,7 @@ void tools::linkSanitizerRuntimeDeps(const ToolChain &TC,
   if (TC.getTriple().getOS() != llvm::Triple::RTEMS &&
       !TC.getTriple().isAndroid()) {
     CmdArgs.push_back("-lpthread");
-    if (TC.getTriple().isOSOpenBSD())
+    if (!TC.getTriple().isOSOpenBSD())
       CmdArgs.push_back("-lrt");
   }
   CmdArgs.push_back("-lm");
