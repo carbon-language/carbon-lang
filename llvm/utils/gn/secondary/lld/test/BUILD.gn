@@ -80,6 +80,7 @@ group("test") {
     ":lit_site_cfg",
     ":lit_unit_site_cfg",
     "//lld/tools/lld:symlinks",
+    "//lld/unittests",
     "//llvm/tools/llc",
     "//llvm/tools/llvm-ar:symlinks",
     "//llvm/tools/llvm-as",
@@ -101,8 +102,6 @@ group("test") {
     "//llvm/utils/not",
   ]
   testonly = true
-
-  # FIXME: Add dep on "//lld/unittests" target once it exists.
 }
 
 # This is the action that runs all of lld's tests, check-lld.
