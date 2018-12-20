@@ -65,9 +65,9 @@ void test_core(void) {
   d = vec_extract(vd, idx);
   // CHECK: extractelement <2 x double> %{{.*}}, i32 %{{.*}}
 
-  vf = vec_insert(d, vf, idx);
+  vf = vec_insert(f, vf, idx);
   // CHECK: insertelement <4 x float> %{{.*}}, float %{{.*}}, i32 %{{.*}}
-  vd = vec_insert(f, vd, idx);
+  vd = vec_insert(d, vd, idx);
   // CHECK: insertelement <2 x double> %{{.*}}, double %{{.*}}, i32 %{{.*}}
 
   vf = vec_promote(f, idx);
@@ -76,7 +76,7 @@ void test_core(void) {
   // CHECK: insertelement <2 x double> undef, double %{{.*}}, i32 %{{.*}}
 
   vf = vec_insert_and_zero(cptrf);
-  // CHECK: insertelement <4 x float> <float undef, float 0.000000e+00, float 0.000000e+00, float 0.000000e+00>, float %{{.*}}, i32 0
+  // CHECK: insertelement <4 x float> <float 0.000000e+00, float undef, float 0.000000e+00, float 0.000000e+00>, float %{{.*}}, i32 1
   vd = vec_insert_and_zero(cptrd);
   // CHECK: insertelement <2 x double> <double undef, double 0.000000e+00>, double %{{.*}}, i32 0
 
@@ -227,8 +227,8 @@ void test_compare(void) {
   idx = vec_all_lt(vd, vd);
   // CHECK: call { <2 x i64>, i32 } @llvm.s390.vfchdbs(<2 x double> %{{.*}}, <2 x double> %{{.*}})
 
-  idx = vec_all_nge(vd, vd);
-  // CHECK: call { <2 x i64>, i32 } @llvm.s390.vfchedbs(<2 x double> %{{.*}}, <2 x double> %{{.*}})
+  idx = vec_all_nge(vf, vf);
+  // CHECK: call { <4 x i32>, i32 } @llvm.s390.vfchesbs(<4 x float> %{{.*}}, <4 x float> %{{.*}})
   idx = vec_all_nge(vd, vd);
   // CHECK: call { <2 x i64>, i32 } @llvm.s390.vfchedbs(<2 x double> %{{.*}}, <2 x double> %{{.*}})
 
