@@ -72,7 +72,8 @@
 
 // Test the driver properly using "analyzer-config-compatibility-mode=true",
 // even if -analyze isn't specified.
-// RUN: %clang -c -Xclang -analyzer-config -Xclang remember=TheVasa %s
+// RUN: %clang -fsyntax-only -Xclang -analyzer-config\
+// RUN:                      -Xclang remember=TheVasa %s
 
 // expected-no-diagnostics
 
