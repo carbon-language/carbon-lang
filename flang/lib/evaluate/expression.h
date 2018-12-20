@@ -68,8 +68,8 @@ public:
 
 private:
   using Derived = Expr<Result>;
-  Derived &derived() { return *static_cast<Derived *>(this); }
-  const Derived &derived() const { return *static_cast<const Derived *>(this); }
+  Derived &derived();
+  const Derived &derived() const;
 
 public:
   template<typename A> Derived &operator=(const A &x) {

@@ -190,6 +190,16 @@ template<typename T> DynamicType ArrayConstructor<T>::GetType() const {
 }
 
 template<typename A>
+typename ExpressionBase<A>::Derived &ExpressionBase<A>::derived() {
+  return *static_cast<Derived *>(this);
+}
+
+template<typename A>
+const typename ExpressionBase<A>::Derived &ExpressionBase<A>::derived() const {
+  return *static_cast<const Derived *>(this);
+}
+
+template<typename A>
 std::optional<DynamicType> ExpressionBase<A>::GetType() const {
   if constexpr (IsLengthlessIntrinsicType<Result>) {
     return Result::GetType();
