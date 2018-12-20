@@ -96,6 +96,9 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     { G_FADD, G_FMUL, G_FNEG, G_FABS, G_FMA})
     .legalFor({S32, S64});
 
+  getActionDefinitionsBuilder(G_FPTRUNC)
+    .legalFor({{S32, S64}});
+
   // Use actual fsub instruction
   setAction({G_FSUB, S32}, Legal);
 
@@ -120,6 +123,9 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
 
   setAction({G_SITOFP, S32}, Legal);
   setAction({G_SITOFP, 1, S32}, Legal);
+
+  setAction({G_UITOFP, S32}, Legal);
+  setAction({G_UITOFP, 1, S32}, Legal);
 
   setAction({G_FPTOUI, S32}, Legal);
   setAction({G_FPTOUI, 1, S32}, Legal);
