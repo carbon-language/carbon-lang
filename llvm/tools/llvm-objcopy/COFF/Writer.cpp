@@ -225,7 +225,8 @@ void COFFWriter::writeSections() {
              S.Header.SizeOfRawData - S.Contents.size());
 
     Ptr += S.Header.SizeOfRawData;
-    memcpy(Ptr, S.Relocs.data(), S.Relocs.size() * sizeof(coff_relocation));
+    if (!S.Relocs.empty())
+      memcpy(Ptr, S.Relocs.data(), S.Relocs.size() * sizeof(coff_relocation));
   }
 }
 
