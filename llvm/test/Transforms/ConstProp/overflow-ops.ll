@@ -29,6 +29,15 @@ define {i8, i1} @uadd_2() nounwind {
   ret {i8, i1} %t
 }
 
+define {i8, i1} @uadd_undef() nounwind {
+; CHECK-LABEL: @uadd_undef(
+; CHECK-NEXT:    [[T:%.*]] = call { i8, i1 } @llvm.uadd.with.overflow.i8(i8 -114, i8 undef)
+; CHECK-NEXT:    ret { i8, i1 } [[T]]
+;
+  %t = call {i8, i1} @llvm.uadd.with.overflow.i8(i8 142, i8 undef)
+  ret {i8, i1} %t
+}
+
 ;;-----------------------------
 ;; usub
 ;;-----------------------------
@@ -49,6 +58,15 @@ define {i8, i1} @usub_2() nounwind {
   ret {i8, i1} %t
 }
 
+define {i8, i1} @usub_undef() nounwind {
+; CHECK-LABEL: @usub_undef(
+; CHECK-NEXT:    [[T:%.*]] = call { i8, i1 } @llvm.usub.with.overflow.i8(i8 4, i8 undef)
+; CHECK-NEXT:    ret { i8, i1 } [[T]]
+;
+  %t = call {i8, i1} @llvm.usub.with.overflow.i8(i8 4, i8 undef)
+  ret {i8, i1} %t
+}
+
 ;;-----------------------------
 ;; umul
 ;;-----------------------------
@@ -66,6 +84,24 @@ define {i8, i1} @umul_2() nounwind {
 ; CHECK-NEXT:    ret { i8, i1 } { i8 -56, i1 false }
 ;
   %t = call {i8, i1} @llvm.umul.with.overflow.i8(i8 100, i8 2)
+  ret {i8, i1} %t
+}
+
+define {i8, i1} @umul_undef() nounwind {
+; CHECK-LABEL: @umul_undef(
+; CHECK-NEXT:    [[T:%.*]] = call { i8, i1 } @llvm.umul.with.overflow.i8(i8 undef, i8 2)
+; CHECK-NEXT:    ret { i8, i1 } [[T]]
+;
+  %t = call {i8, i1} @llvm.umul.with.overflow.i8(i8 undef, i8 2)
+  ret {i8, i1} %t
+}
+
+define {i8, i1} @umul_both_undef() nounwind {
+; CHECK-LABEL: @umul_both_undef(
+; CHECK-NEXT:    [[T:%.*]] = call { i8, i1 } @llvm.umul.with.overflow.i8(i8 undef, i8 undef)
+; CHECK-NEXT:    ret { i8, i1 } [[T]]
+;
+  %t = call {i8, i1} @llvm.umul.with.overflow.i8(i8 undef, i8 undef)
   ret {i8, i1} %t
 }
 
@@ -113,6 +149,14 @@ define {i8, i1} @sadd_5() nounwind {
   ret {i8, i1} %t
 }
 
+define {i8, i1} @sadd_undef() nounwind {
+; CHECK-LABEL: @sadd_undef(
+; CHECK-NEXT:    [[T:%.*]] = call { i8, i1 } @llvm.sadd.with.overflow.i8(i8 undef, i8 -10)
+; CHECK-NEXT:    ret { i8, i1 } [[T]]
+;
+  %t = call {i8, i1} @llvm.sadd.with.overflow.i8(i8 undef, i8 -10)
+  ret {i8, i1} %t
+}
 
 ;;-----------------------------
 ;; ssub
@@ -174,6 +218,15 @@ define {i8, i1} @ssub_5() nounwind {
   ret {i8, i1} %t
 }
 
+define {i8, i1} @ssub_undef() nounwind {
+; CHECK-LABEL: @ssub_undef(
+; CHECK-NEXT:    [[T:%.*]] = call { i8, i1 } @llvm.ssub.with.overflow.i8(i8 undef, i8 -10)
+; CHECK-NEXT:    ret { i8, i1 } [[T]]
+;
+  %t = call {i8, i1} @llvm.ssub.with.overflow.i8(i8 undef, i8 -10)
+  ret {i8, i1} %t
+}
+
 ;;-----------------------------
 ;; smul
 ;;-----------------------------
@@ -183,5 +236,23 @@ define {i8, i1} @smul_1() nounwind {
 ; CHECK-NEXT:    ret { i8, i1 } { i8 -56, i1 true }
 ;
   %t = call {i8, i1} @llvm.smul.with.overflow.i8(i8 -20, i8 -10)
+  ret {i8, i1} %t
+}
+
+define {i8, i1} @smul_undef() nounwind {
+; CHECK-LABEL: @smul_undef(
+; CHECK-NEXT:    [[T:%.*]] = call { i8, i1 } @llvm.smul.with.overflow.i8(i8 -20, i8 undef)
+; CHECK-NEXT:    ret { i8, i1 } [[T]]
+;
+  %t = call {i8, i1} @llvm.smul.with.overflow.i8(i8 -20, i8 undef)
+  ret {i8, i1} %t
+}
+
+define {i8, i1} @smul_both_undef() nounwind {
+; CHECK-LABEL: @smul_both_undef(
+; CHECK-NEXT:    [[T:%.*]] = call { i8, i1 } @llvm.smul.with.overflow.i8(i8 undef, i8 undef)
+; CHECK-NEXT:    ret { i8, i1 } [[T]]
+;
+  %t = call {i8, i1} @llvm.smul.with.overflow.i8(i8 undef, i8 undef)
   ret {i8, i1} %t
 }
