@@ -616,11 +616,13 @@ endfunction()
 
 macro(add_llvm_library name)
   cmake_parse_arguments(ARG
-    "SHARED;BUILDTREE_ONLY"
+    "SHARED;BUILDTREE_ONLY;MODULE"
     ""
     ""
     ${ARGN})
-  if( BUILD_SHARED_LIBS OR ARG_SHARED )
+  if(ARG_MODULE)
+    llvm_add_library(${name} MODULE ${ARG_UNPARSED_ARGUMENTS})
+  elseif( BUILD_SHARED_LIBS OR ARG_SHARED )
     llvm_add_library(${name} SHARED ${ARG_UNPARSED_ARGUMENTS})
   else()
     llvm_add_library(${name} ${ARG_UNPARSED_ARGUMENTS})
@@ -629,7 +631,7 @@ macro(add_llvm_library name)
   # Libraries that are meant to only be exposed via the build tree only are
   # never installed and are only exported as a target in the special build tree
   # config file.
-  if (NOT ARG_BUILDTREE_ONLY)
+  if (NOT ARG_BUILDTREE_ONLY AND NOT ARG_MODULE)
     set_property( GLOBAL APPEND PROPERTY LLVM_LIBS ${name} )
   endif()
 
@@ -642,7 +644,7 @@ macro(add_llvm_library name)
         ${name} STREQUAL "OptRemarks" OR
         (LLVM_LINK_LLVM_DYLIB AND ${name} STREQUAL "LLVM"))
       set(install_dir lib${LLVM_LIBDIR_SUFFIX})
-      if(ARG_SHARED OR BUILD_SHARED_LIBS)
+      if(ARG_MODULE OR ARG_SHARED OR BUILD_SHARED_LIBS)
         if(WIN32 OR CYGWIN OR MINGW)
           set(install_type RUNTIME)
           set(install_dir bin)
@@ -673,43 +675,14 @@ macro(add_llvm_library name)
     set_property(GLOBAL APPEND PROPERTY LLVM_EXPORTS ${name})
   endif()
   set_target_properties(${name} PROPERTIES FOLDER "Libraries")
-endmacro(add_llvm_library name)
-
-macro(add_llvm_loadable_module name)
-  llvm_add_library(${name} MODULE ${ARGN})
   if(NOT TARGET ${name})
     # Add empty "phony" target
     add_custom_target(${name})
-  else()
-    if( EXCLUDE_FROM_ALL )
-      set_target_properties( ${name} PROPERTIES EXCLUDE_FROM_ALL ON)
-    else()
-      if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
-        if(WIN32 OR CYGWIN)
-          # DLL platform
-          set(dlldir "bin")
-        else()
-          set(dlldir "lib${LLVM_LIBDIR_SUFFIX}")
-        endif()
-
-        if(${name} IN_LIST LLVM_DISTRIBUTION_COMPONENTS OR
-            NOT LLVM_DISTRIBUTION_COMPONENTS)
-          set(export_to_llvmexports EXPORT LLVMExports)
-          set_property(GLOBAL PROPERTY LLVM_HAS_EXPORTS True)
-        endif()
-
-        install(TARGETS ${name}
-                ${export_to_llvmexports}
-                LIBRARY DESTINATION ${dlldir}
-                ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
-      endif()
-      set_property(GLOBAL APPEND PROPERTY LLVM_EXPORTS ${name})
-    endif()
   endif()
-
-  set_target_properties(${name} PROPERTIES FOLDER "Loadable modules")
-endmacro(add_llvm_loadable_module name)
-
+  if (ARG_MODULE)
+    set_target_properties(${name} PROPERTIES FOLDER "Loadable modules")
+  endif()
+endmacro(add_llvm_library name)
 
 macro(add_llvm_executable name)
   cmake_parse_arguments(ARG
