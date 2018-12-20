@@ -66,11 +66,6 @@
 
 // CHECK-NO-COMPAT: error: unknown analyzer-config 'no-false-positives'
 
-// Test the driver properly using "analyzer-config-compatibility-mode=true",
-// even if -analyze isn't specified.
-// RUN: %clang -fsyntax-only -Xclang -analyzer-config\
-// RUN:                      -Xclang remember=TheVasa %s
-
 // expected-no-diagnostics
 
 int main() {}
