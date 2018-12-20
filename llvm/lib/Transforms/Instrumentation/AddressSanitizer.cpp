@@ -2150,6 +2150,10 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M, bool
     NewGlobal->copyAttributesFrom(G);
     NewGlobal->setComdat(G->getComdat());
     NewGlobal->setAlignment(MinRZ);
+    // Don't fold globals with redzones. ODR violation detector and redzone
+    // poisoning implicitly creates a dependence on the global's address, so it
+    // is no longer valid for it to be marked unnamed_addr.
+    NewGlobal->setUnnamedAddr(GlobalValue::UnnamedAddr::None);
 
     // Move null-terminated C strings to "__asan_cstring" section on Darwin.
     if (TargetTriple.isOSBinFormatMachO() && !G->hasSection() &&
