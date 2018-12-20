@@ -503,14 +503,11 @@ void SymbolTable::addShared(StringRef Name, SharedFile<ELFT> &File,
 
   if ((S->isUndefined() || S->isLazy()) && S->Visibility == STV_DEFAULT) {
     uint8_t Binding = S->Binding;
-    bool WasUndefined = S->isUndefined();
     replaceSymbol<SharedSymbol>(S, File, Name, Sym.getBinding(), Sym.st_other,
                                 Sym.getType(), Sym.st_value, Sym.st_size,
                                 Alignment, VerdefIndex);
 
     S->Binding = Binding;
-    if (!S->isWeak() && !Config->GcSections && WasUndefined)
-      File.IsNeeded = true;
   }
 }
 
