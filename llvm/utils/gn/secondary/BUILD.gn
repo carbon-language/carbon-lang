@@ -1,5 +1,6 @@
 group("default") {
   deps = [
+    "//clang/lib/Parse",
     "//clang/tools/clang-format",
     "//lld/test",
     "//llvm/tools/llvm-undname",
