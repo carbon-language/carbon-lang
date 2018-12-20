@@ -503,6 +503,8 @@ public:
   struct PragmaAttributeGroup {
     /// The location of the push attribute.
     SourceLocation Loc;
+    /// The namespace of this push group.
+    const IdentifierInfo *Namespace;
     SmallVector<PragmaAttributeEntry, 2> Entries;
   };
 
@@ -8494,10 +8496,12 @@ public:
   void ActOnPragmaAttributeAttribute(ParsedAttr &Attribute,
                                      SourceLocation PragmaLoc,
                                      attr::ParsedSubjectMatchRuleSet Rules);
-  void ActOnPragmaAttributeEmptyPush(SourceLocation PragmaLoc);
+  void ActOnPragmaAttributeEmptyPush(SourceLocation PragmaLoc,
+                                     const IdentifierInfo *Namespace);
 
   /// Called on well-formed '\#pragma clang attribute pop'.
-  void ActOnPragmaAttributePop(SourceLocation PragmaLoc);
+  void ActOnPragmaAttributePop(SourceLocation PragmaLoc,
+                               const IdentifierInfo *Namespace);
 
   /// Adds the attributes that have been specified using the
   /// '\#pragma clang attribute push' directives to the given declaration.

@@ -815,7 +815,8 @@ def err_pragma_attribute_matcher_negated_subrule_contradicts_subrule : Error<
 def err_pragma_attribute_invalid_matchers : Error<
   "attribute %0 can't be applied to %1">;
 def err_pragma_attribute_stack_mismatch : Error<
-  "'#pragma clang attribute pop' with no matching '#pragma clang attribute push'">;
+  "'#pragma clang attribute %select{%1.|}0pop' with no matching"
+  " '#pragma clang attribute %select{%1.|}0push'">;
 def warn_pragma_attribute_unused : Warning<
   "unused attribute %0 in '#pragma clang attribute push' region">,
   InGroup<PragmaClangAttribute>;
