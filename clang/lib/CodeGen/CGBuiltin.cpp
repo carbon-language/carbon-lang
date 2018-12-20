@@ -9537,6 +9537,7 @@ Value *CodeGenFunction::EmitX86CpuIs(StringRef CPUStr) {
 
   // Grab the global __cpu_model.
   llvm::Constant *CpuModel = CGM.CreateRuntimeVariable(STy, "__cpu_model");
+  cast<llvm::GlobalValue>(CpuModel)->setDSOLocal(true);
 
   // Calculate the index needed to access the correct field based on the
   // range. Also adjust the expected value.
@@ -9609,6 +9610,7 @@ llvm::Value *CodeGenFunction::EmitX86CpuSupports(uint64_t FeaturesMask) {
 
     // Grab the global __cpu_model.
     llvm::Constant *CpuModel = CGM.CreateRuntimeVariable(STy, "__cpu_model");
+    cast<llvm::GlobalValue>(CpuModel)->setDSOLocal(true);
 
     // Grab the first (0th) element from the field __cpu_features off of the
     // global in the struct STy.
@@ -9628,6 +9630,8 @@ llvm::Value *CodeGenFunction::EmitX86CpuSupports(uint64_t FeaturesMask) {
   if (Features2 != 0) {
     llvm::Constant *CpuFeatures2 = CGM.CreateRuntimeVariable(Int32Ty,
                                                              "__cpu_features2");
+    cast<llvm::GlobalValue>(CpuFeatures2)->setDSOLocal(true);
+
     Value *Features =
         Builder.CreateAlignedLoad(CpuFeatures2, CharUnits::fromQuantity(4));
 
@@ -9645,6 +9649,9 @@ Value *CodeGenFunction::EmitX86CpuInit() {
   llvm::FunctionType *FTy = llvm::FunctionType::get(VoidTy,
                                                     /*Variadic*/ false);
   llvm::Constant *Func = CGM.CreateRuntimeFunction(FTy, "__cpu_indicator_init");
+  cast<llvm::GlobalValue>(Func)->setDSOLocal(true);
+  cast<llvm::GlobalValue>(Func)->setDLLStorageClass(
+      llvm::GlobalValue::DefaultStorageClass);
   return Builder.CreateCall(Func);
 }
 
