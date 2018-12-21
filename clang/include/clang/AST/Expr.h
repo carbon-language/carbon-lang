@@ -1086,20 +1086,10 @@ class DeclRefExpr final
   void computeDependence(const ASTContext &Ctx);
 
 public:
-  DeclRefExpr(ValueDecl *D, bool RefersToEnclosingVariableOrCapture, QualType T,
+  DeclRefExpr(const ASTContext &Ctx, ValueDecl *D,
+              bool RefersToEnclosingVariableOrCapture, QualType T,
               ExprValueKind VK, SourceLocation L,
-              const DeclarationNameLoc &LocInfo = DeclarationNameLoc())
-      : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false, false, false),
-        D(D), DNLoc(LocInfo) {
-    DeclRefExprBits.HasQualifier = false;
-    DeclRefExprBits.HasTemplateKWAndArgsInfo = false;
-    DeclRefExprBits.HasFoundDecl = false;
-    DeclRefExprBits.HadMultipleCandidates = false;
-    DeclRefExprBits.RefersToEnclosingVariableOrCapture =
-        RefersToEnclosingVariableOrCapture;
-    DeclRefExprBits.Loc = L;
-    computeDependence(D->getASTContext());
-  }
+              const DeclarationNameLoc &LocInfo = DeclarationNameLoc());
 
   static DeclRefExpr *
   Create(const ASTContext &Context, NestedNameSpecifierLoc QualifierLoc,

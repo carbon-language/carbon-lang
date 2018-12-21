@@ -63,8 +63,8 @@ CreateFunctionRefExpr(Sema &S, FunctionDecl *Fn, NamedDecl *FoundDecl,
     return ExprError();
   if (auto *FPT = Fn->getType()->getAs<FunctionProtoType>())
     S.ResolveExceptionSpec(Loc, FPT);
-  DeclRefExpr *DRE = new (S.Context) DeclRefExpr(Fn, false, Fn->getType(),
-                                                 VK_LValue, Loc, LocInfo);
+  DeclRefExpr *DRE = new (S.Context)
+      DeclRefExpr(S.Context, Fn, false, Fn->getType(), VK_LValue, Loc, LocInfo);
   if (HadMultipleCandidates)
     DRE->setHadMultipleCandidates(true);
 
@@ -6983,8 +6983,8 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   // lvalues/rvalues and the type. Fortunately, we can allocate this
   // call on the stack and we don't need its arguments to be
   // well-formed.
-  DeclRefExpr ConversionRef(Conversion, false, Conversion->getType(), VK_LValue,
-                            From->getBeginLoc());
+  DeclRefExpr ConversionRef(Context, Conversion, false, Conversion->getType(),
+                            VK_LValue, From->getBeginLoc());
   ImplicitCastExpr ConversionFn(ImplicitCastExpr::OnStack,
                                 Context.getPointerType(Conversion->getType()),
                                 CK_FunctionToPointerDecay,

@@ -341,16 +341,31 @@ void DeclRefExpr::computeDependence(const ASTContext &Ctx) {
     ExprBits.ContainsUnexpandedParameterPack = true;
 }
 
+DeclRefExpr::DeclRefExpr(const ASTContext &Ctx, ValueDecl *D,
+                         bool RefersToEnclosingVariableOrCapture, QualType T,
+                         ExprValueKind VK, SourceLocation L,
+                         const DeclarationNameLoc &LocInfo)
+    : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false, false, false),
+      D(D), DNLoc(LocInfo) {
+  DeclRefExprBits.HasQualifier = false;
+  DeclRefExprBits.HasTemplateKWAndArgsInfo = false;
+  DeclRefExprBits.HasFoundDecl = false;
+  DeclRefExprBits.HadMultipleCandidates = false;
+  DeclRefExprBits.RefersToEnclosingVariableOrCapture =
+      RefersToEnclosingVariableOrCapture;
+  DeclRefExprBits.Loc = L;
+  computeDependence(Ctx);
+}
+
 DeclRefExpr::DeclRefExpr(const ASTContext &Ctx,
                          NestedNameSpecifierLoc QualifierLoc,
-                         SourceLocation TemplateKWLoc,
-                         ValueDecl *D, bool RefersToEnclosingVariableOrCapture,
-                         const DeclarationNameInfo &NameInfo,
-                         NamedDecl *FoundD,
+                         SourceLocation TemplateKWLoc, ValueDecl *D,
+                         bool RefersToEnclosingVariableOrCapture,
+                         const DeclarationNameInfo &NameInfo, NamedDecl *FoundD,
                          const TemplateArgumentListInfo *TemplateArgs,
                          QualType T, ExprValueKind VK)
-  : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false, false, false),
-    D(D), DNLoc(NameInfo.getInfo()) {
+    : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false, false, false),
+      D(D), DNLoc(NameInfo.getInfo()) {
   DeclRefExprBits.Loc = NameInfo.getLoc();
   DeclRefExprBits.HasQualifier = QualifierLoc ? 1 : 0;
   if (QualifierLoc) {
