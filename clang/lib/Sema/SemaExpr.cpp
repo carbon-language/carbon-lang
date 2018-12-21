@@ -16547,7 +16547,7 @@ ExprResult RebuildUnknownAnyExpr::resolveDecl(Expr *E, ValueDecl *VD) {
       DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E);
       if (DRE && Proto && Proto->getParamTypes().empty() && Proto->isVariadic()) {
         SourceLocation Loc = FD->getLocation();
-        FunctionDecl *NewFD = FunctionDecl::Create(FD->getASTContext(),
+        FunctionDecl *NewFD = FunctionDecl::Create(S.Context,
                                       FD->getDeclContext(),
                                       Loc, Loc, FD->getNameInfo().getName(),
                                       DestType, FD->getTypeSourceInfo(),
