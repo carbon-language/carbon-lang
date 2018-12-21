@@ -99,7 +99,7 @@ bool os_consume_violation_two_args(OS_CONSUME OSObject *obj, bool extra) {
     escape(obj);
     return true;
   }
-  return false; // expected-note{{Parameter 'obj' is marked as consuming, but the function does not consume the reference}}
+  return false; // expected-note{{Parameter 'obj' is marked as consuming, but the function did not consume the reference}}
 }
 
 bool os_consume_violation(OS_CONSUME OSObject *obj) {
@@ -108,7 +108,7 @@ bool os_consume_violation(OS_CONSUME OSObject *obj) {
     escape(obj);
     return true;
   }
-  return false; // expected-note{{Parameter 'obj' is marked as consuming, but the function does not consume the reference}}
+  return false; // expected-note{{Parameter 'obj' is marked as consuming, but the function did not consume the reference}}
 }
 
 void os_consume_ok(OS_CONSUME OSObject *obj) {
