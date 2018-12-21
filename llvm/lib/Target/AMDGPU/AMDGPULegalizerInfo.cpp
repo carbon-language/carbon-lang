@@ -161,6 +161,13 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   setAction({G_FPTOUI, S32}, Legal);
   setAction({G_FPTOUI, 1, S32}, Legal);
 
+  setAction({G_FPOW, S32}, Legal);
+  setAction({G_FEXP2, S32}, Legal);
+  setAction({G_FLOG2, S32}, Legal);
+
+  getActionDefinitionsBuilder({G_INTRINSIC_TRUNC, G_INTRINSIC_ROUND})
+    .legalFor({S32, S64});
+
   for (LLT PtrTy : AddrSpaces) {
     LLT IdxTy = LLT::scalar(PtrTy.getSizeInBits());
     setAction({G_GEP, PtrTy}, Legal);

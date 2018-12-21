@@ -388,6 +388,10 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   case AMDGPU::G_SITOFP:
   case AMDGPU::G_UITOFP:
   case AMDGPU::G_FPTRUNC:
+  case AMDGPU::G_FEXP2:
+  case AMDGPU::G_FLOG2:
+  case AMDGPU::G_INTRINSIC_TRUNC:
+  case AMDGPU::G_INTRINSIC_ROUND:
     return getDefaultMappingVOP(MI);
   case AMDGPU::G_IMPLICIT_DEF: {
     unsigned Size = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
