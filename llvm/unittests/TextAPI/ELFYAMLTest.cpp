@@ -170,9 +170,11 @@ TEST(ElfYamlTextAPI, YAMLWritesTBESymbols) {
   ELFSymbol SymBar("bar");
   SymBar.Size = 128u;
   SymBar.Type = ELFSymbolType::Func;
+  SymBar.Undefined = false;
   SymBar.Weak = true;
 
   ELFSymbol SymNor("nor");
+  SymNor.Size = 1234u;
   SymNor.Type = ELFSymbolType::Func;
   SymNor.Undefined = true;
   SymNor.Weak = false;
