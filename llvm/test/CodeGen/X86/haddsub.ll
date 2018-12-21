@@ -584,12 +584,6 @@ define <2 x float> @haddps_v2f32(<4 x float> %v0) {
 }
 
 define float @extract_extract_v4f32_fadd_f32(<4 x float> %x) {
-; SSSE3-LABEL: extract_extract_v4f32_fadd_f32:
-; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; SSSE3-NEXT:    addss %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
 ; SSE3-LABEL: extract_extract_v4f32_fadd_f32:
 ; SSE3:       # %bb.0:
 ; SSE3-NEXT:    movshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
@@ -608,12 +602,6 @@ define float @extract_extract_v4f32_fadd_f32(<4 x float> %x) {
 }
 
 define float @extract_extract_v4f32_fadd_f32_commute(<4 x float> %x) {
-; SSSE3-LABEL: extract_extract_v4f32_fadd_f32_commute:
-; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; SSSE3-NEXT:    addss %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
 ; SSE3-LABEL: extract_extract_v4f32_fadd_f32_commute:
 ; SSE3:       # %bb.0:
 ; SSE3-NEXT:    movshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
@@ -632,12 +620,6 @@ define float @extract_extract_v4f32_fadd_f32_commute(<4 x float> %x) {
 }
 
 define float @extract_extract_v8f32_fadd_f32(<8 x float> %x) {
-; SSSE3-LABEL: extract_extract_v8f32_fadd_f32:
-; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; SSSE3-NEXT:    addss %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
 ; SSE3-LABEL: extract_extract_v8f32_fadd_f32:
 ; SSE3:       # %bb.0:
 ; SSE3-NEXT:    movshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
@@ -657,12 +639,6 @@ define float @extract_extract_v8f32_fadd_f32(<8 x float> %x) {
 }
 
 define float @extract_extract_v8f32_fadd_f32_commute(<8 x float> %x) {
-; SSSE3-LABEL: extract_extract_v8f32_fadd_f32_commute:
-; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; SSSE3-NEXT:    addss %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
 ; SSE3-LABEL: extract_extract_v8f32_fadd_f32_commute:
 ; SSE3:       # %bb.0:
 ; SSE3-NEXT:    movshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
@@ -682,12 +658,6 @@ define float @extract_extract_v8f32_fadd_f32_commute(<8 x float> %x) {
 }
 
 define float @extract_extract_v4f32_fsub_f32(<4 x float> %x) {
-; SSSE3-LABEL: extract_extract_v4f32_fsub_f32:
-; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; SSSE3-NEXT:    subss %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
 ; SSE3-LABEL: extract_extract_v4f32_fsub_f32:
 ; SSE3:       # %bb.0:
 ; SSE3-NEXT:    movshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
@@ -706,13 +676,6 @@ define float @extract_extract_v4f32_fsub_f32(<4 x float> %x) {
 }
 
 define float @extract_extract_v4f32_fsub_f32_commute(<4 x float> %x) {
-; SSSE3-LABEL: extract_extract_v4f32_fsub_f32_commute:
-; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; SSSE3-NEXT:    subss %xmm0, %xmm1
-; SSSE3-NEXT:    movaps %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
 ; SSE3-LABEL: extract_extract_v4f32_fsub_f32_commute:
 ; SSE3:       # %bb.0:
 ; SSE3-NEXT:    movshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
@@ -732,12 +695,6 @@ define float @extract_extract_v4f32_fsub_f32_commute(<4 x float> %x) {
 }
 
 define float @extract_extract_v8f32_fsub_f32(<8 x float> %x) {
-; SSSE3-LABEL: extract_extract_v8f32_fsub_f32:
-; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; SSSE3-NEXT:    subss %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
 ; SSE3-LABEL: extract_extract_v8f32_fsub_f32:
 ; SSE3:       # %bb.0:
 ; SSE3-NEXT:    movshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
@@ -757,13 +714,6 @@ define float @extract_extract_v8f32_fsub_f32(<8 x float> %x) {
 }
 
 define float @extract_extract_v8f32_fsub_f32_commute(<8 x float> %x) {
-; SSSE3-LABEL: extract_extract_v8f32_fsub_f32_commute:
-; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; SSSE3-NEXT:    subss %xmm0, %xmm1
-; SSSE3-NEXT:    movaps %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
 ; SSE3-LABEL: extract_extract_v8f32_fsub_f32_commute:
 ; SSE3:       # %bb.0:
 ; SSE3-NEXT:    movshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
@@ -784,14 +734,6 @@ define float @extract_extract_v8f32_fsub_f32_commute(<8 x float> %x) {
 }
 
 define double @extract_extract_v2f64_fadd_f64(<2 x double> %x) {
-; SSSE3-LABEL: extract_extract_v2f64_fadd_f64:
-; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movapd %xmm0, %xmm1
-; SSSE3-NEXT:    unpckhpd {{.*#+}} xmm1 = xmm1[1],xmm0[1]
-; SSSE3-NEXT:    addsd %xmm0, %xmm1
-; SSSE3-NEXT:    movapd %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
 ; SSE3-LABEL: extract_extract_v2f64_fadd_f64:
 ; SSE3:       # %bb.0:
 ; SSE3-NEXT:    movapd %xmm0, %xmm1
@@ -812,14 +754,6 @@ define double @extract_extract_v2f64_fadd_f64(<2 x double> %x) {
 }
 
 define double @extract_extract_v2f64_fadd_f64_commute(<2 x double> %x) {
-; SSSE3-LABEL: extract_extract_v2f64_fadd_f64_commute:
-; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movapd %xmm0, %xmm1
-; SSSE3-NEXT:    unpckhpd {{.*#+}} xmm1 = xmm1[1],xmm0[1]
-; SSSE3-NEXT:    addsd %xmm0, %xmm1
-; SSSE3-NEXT:    movapd %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
 ; SSE3-LABEL: extract_extract_v2f64_fadd_f64_commute:
 ; SSE3:       # %bb.0:
 ; SSE3-NEXT:    movapd %xmm0, %xmm1
@@ -840,14 +774,6 @@ define double @extract_extract_v2f64_fadd_f64_commute(<2 x double> %x) {
 }
 
 define double @extract_extract_v4f64_fadd_f64(<4 x double> %x) {
-; SSSE3-LABEL: extract_extract_v4f64_fadd_f64:
-; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movapd %xmm0, %xmm1
-; SSSE3-NEXT:    unpckhpd {{.*#+}} xmm1 = xmm1[1],xmm0[1]
-; SSSE3-NEXT:    addsd %xmm0, %xmm1
-; SSSE3-NEXT:    movapd %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
 ; SSE3-LABEL: extract_extract_v4f64_fadd_f64:
 ; SSE3:       # %bb.0:
 ; SSE3-NEXT:    movapd %xmm0, %xmm1
@@ -869,14 +795,6 @@ define double @extract_extract_v4f64_fadd_f64(<4 x double> %x) {
 }
 
 define double @extract_extract_v4f64_fadd_f64_commute(<4 x double> %x) {
-; SSSE3-LABEL: extract_extract_v4f64_fadd_f64_commute:
-; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movapd %xmm0, %xmm1
-; SSSE3-NEXT:    unpckhpd {{.*#+}} xmm1 = xmm1[1],xmm0[1]
-; SSSE3-NEXT:    addsd %xmm0, %xmm1
-; SSSE3-NEXT:    movapd %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
 ; SSE3-LABEL: extract_extract_v4f64_fadd_f64_commute:
 ; SSE3:       # %bb.0:
 ; SSE3-NEXT:    movapd %xmm0, %xmm1
@@ -898,13 +816,6 @@ define double @extract_extract_v4f64_fadd_f64_commute(<4 x double> %x) {
 }
 
 define double @extract_extract_v2f64_fsub_f64(<2 x double> %x) {
-; SSSE3-LABEL: extract_extract_v2f64_fsub_f64:
-; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movapd %xmm0, %xmm1
-; SSSE3-NEXT:    unpckhpd {{.*#+}} xmm1 = xmm1[1],xmm0[1]
-; SSSE3-NEXT:    subsd %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
 ; SSE3-LABEL: extract_extract_v2f64_fsub_f64:
 ; SSE3:       # %bb.0:
 ; SSE3-NEXT:    movapd %xmm0, %xmm1
@@ -924,14 +835,6 @@ define double @extract_extract_v2f64_fsub_f64(<2 x double> %x) {
 }
 
 define double @extract_extract_v2f64_fsub_f64_commute(<2 x double> %x) {
-; SSSE3-LABEL: extract_extract_v2f64_fsub_f64_commute:
-; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movapd %xmm0, %xmm1
-; SSSE3-NEXT:    unpckhpd {{.*#+}} xmm1 = xmm1[1],xmm0[1]
-; SSSE3-NEXT:    subsd %xmm0, %xmm1
-; SSSE3-NEXT:    movapd %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
 ; SSE3-LABEL: extract_extract_v2f64_fsub_f64_commute:
 ; SSE3:       # %bb.0:
 ; SSE3-NEXT:    movapd %xmm0, %xmm1
@@ -952,13 +855,6 @@ define double @extract_extract_v2f64_fsub_f64_commute(<2 x double> %x) {
 }
 
 define double @extract_extract_v4f64_fsub_f64(<4 x double> %x) {
-; SSSE3-LABEL: extract_extract_v4f64_fsub_f64:
-; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movapd %xmm0, %xmm1
-; SSSE3-NEXT:    unpckhpd {{.*#+}} xmm1 = xmm1[1],xmm0[1]
-; SSSE3-NEXT:    subsd %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
 ; SSE3-LABEL: extract_extract_v4f64_fsub_f64:
 ; SSE3:       # %bb.0:
 ; SSE3-NEXT:    movapd %xmm0, %xmm1
@@ -979,14 +875,6 @@ define double @extract_extract_v4f64_fsub_f64(<4 x double> %x) {
 }
 
 define double @extract_extract_v4f64_fsub_f64_commute(<4 x double> %x) {
-; SSSE3-LABEL: extract_extract_v4f64_fsub_f64_commute:
-; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    movapd %xmm0, %xmm1
-; SSSE3-NEXT:    unpckhpd {{.*#+}} xmm1 = xmm1[1],xmm0[1]
-; SSSE3-NEXT:    subsd %xmm0, %xmm1
-; SSSE3-NEXT:    movapd %xmm1, %xmm0
-; SSSE3-NEXT:    retq
-;
 ; SSE3-LABEL: extract_extract_v4f64_fsub_f64_commute:
 ; SSE3:       # %bb.0:
 ; SSE3-NEXT:    movapd %xmm0, %xmm1
