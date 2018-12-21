@@ -2107,9 +2107,8 @@ RewriteModernObjC::SynthesizeCallToFunctionDecl(FunctionDecl *FD,
 
   const FunctionType *FT = msgSendType->getAs<FunctionType>();
 
-  CallExpr *Exp =  new (Context) CallExpr(*Context, ICE, Args,
-                                          FT->getCallResultType(*Context),
-                                          VK_RValue, EndLoc);
+  CallExpr *Exp = CallExpr::Create(
+      *Context, ICE, Args, FT->getCallResultType(*Context), VK_RValue, EndLoc);
   return Exp;
 }
 
@@ -2689,8 +2688,8 @@ Stmt *RewriteModernObjC::RewriteObjCBoxedExpr(ObjCBoxedExpr *Exp) {
   ParenExpr *PE = new (Context) ParenExpr(StartLoc, EndLoc, cast);
 
   const FunctionType *FT = msgSendType->getAs<FunctionType>();
-  CallExpr *CE = new (Context)
-      CallExpr(*Context, PE, MsgExprs, FT->getReturnType(), VK_RValue, EndLoc);
+  CallExpr *CE = CallExpr::Create(*Context, PE, MsgExprs, FT->getReturnType(),
+                                  VK_RValue, EndLoc);
   ReplaceStmt(Exp, CE);
   return CE;
 }
@@ -2729,8 +2728,8 @@ Stmt *RewriteModernObjC::RewriteObjCArrayLiteralExpr(ObjCArrayLiteral *Exp) {
   for (unsigned i = 0; i < NumElements; i++)
     InitExprs.push_back(Exp->getElement(i));
   Expr *NSArrayCallExpr =
-    new (Context) CallExpr(*Context, NSArrayDRE, InitExprs,
-                           NSArrayFType, VK_LValue, SourceLocation());
+      CallExpr::Create(*Context, NSArrayDRE, InitExprs, NSArrayFType, VK_LValue,
+                       SourceLocation());
 
   FieldDecl *ARRFD = FieldDecl::Create(*Context, nullptr, SourceLocation(),
                                     SourceLocation(),
@@ -2810,8 +2809,8 @@ Stmt *RewriteModernObjC::RewriteObjCArrayLiteralExpr(ObjCArrayLiteral *Exp) {
   ParenExpr *PE = new (Context) ParenExpr(StartLoc, EndLoc, cast);
 
   const FunctionType *FT = msgSendType->getAs<FunctionType>();
-  CallExpr *CE = new (Context)
-      CallExpr(*Context, PE, MsgExprs, FT->getReturnType(), VK_RValue, EndLoc);
+  CallExpr *CE = CallExpr::Create(*Context, PE, MsgExprs, FT->getReturnType(),
+                                  VK_RValue, EndLoc);
   ReplaceStmt(Exp, CE);
   return CE;
 }
@@ -2858,8 +2857,8 @@ Stmt *RewriteModernObjC::RewriteObjCDictionaryLiteralExpr(ObjCDictionaryLiteral 
 
   // (const id [])objects
   Expr *NSValueCallExpr =
-    new (Context) CallExpr(*Context, NSDictDRE, ValueExprs,
-                           NSDictFType, VK_LValue, SourceLocation());
+      CallExpr::Create(*Context, NSDictDRE, ValueExprs, NSDictFType, VK_LValue,
+                       SourceLocation());
 
   FieldDecl *ARRFD = FieldDecl::Create(*Context, nullptr, SourceLocation(),
                                        SourceLocation(),
@@ -2877,9 +2876,8 @@ Stmt *RewriteModernObjC::RewriteObjCDictionaryLiteralExpr(ObjCDictionaryLiteral 
                              CK_BitCast,
                              DictLiteralValueME);
   // (const id <NSCopying> [])keys
-  Expr *NSKeyCallExpr =
-    new (Context) CallExpr(*Context, NSDictDRE, KeyExprs,
-                           NSDictFType, VK_LValue, SourceLocation());
+  Expr *NSKeyCallExpr = CallExpr::Create(
+      *Context, NSDictDRE, KeyExprs, NSDictFType, VK_LValue, SourceLocation());
 
   MemberExpr *DictLiteralKeyME = new (Context)
       MemberExpr(NSKeyCallExpr, false, SourceLocation(), ARRFD,
@@ -2962,8 +2960,8 @@ Stmt *RewriteModernObjC::RewriteObjCDictionaryLiteralExpr(ObjCDictionaryLiteral 
   ParenExpr *PE = new (Context) ParenExpr(StartLoc, EndLoc, cast);
 
   const FunctionType *FT = msgSendType->getAs<FunctionType>();
-  CallExpr *CE = new (Context)
-      CallExpr(*Context, PE, MsgExprs, FT->getReturnType(), VK_RValue, EndLoc);
+  CallExpr *CE = CallExpr::Create(*Context, PE, MsgExprs, FT->getReturnType(),
+                                  VK_RValue, EndLoc);
   ReplaceStmt(Exp, CE);
   return CE;
 }
@@ -3172,10 +3170,10 @@ Expr *RewriteModernObjC::SynthMsgSendStretCallExpr(FunctionDecl *MsgSendStretFla
   FunctionDecl *FD =
       FunctionDecl::Create(*Context, TUDecl, SourceLocation(), SourceLocation(),
                            ID, FuncType, nullptr, SC_Extern, false, false);
-  DeclRefExpr *DRE = new (Context) DeclRefExpr(*Context, FD, false, castType,
-                                               VK_RValue, SourceLocation());
-  CallExpr *STCE = new (Context) CallExpr(*Context, DRE, MsgExprs,
-                                          castType, VK_LValue, SourceLocation());
+  DeclRefExpr *DRE = new (Context)
+      DeclRefExpr(*Context, FD, false, castType, VK_RValue, SourceLocation());
+  CallExpr *STCE = CallExpr::Create(*Context, DRE, MsgExprs, castType,
+                                    VK_LValue, SourceLocation());
 
   FieldDecl *FieldD = FieldDecl::Create(*Context, nullptr, SourceLocation(),
                                     SourceLocation(),
@@ -3276,9 +3274,8 @@ Stmt *RewriteModernObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
       DeclRefExpr *DRE = new (Context)
           DeclRefExpr(*Context, SuperConstructorFunctionDecl, false, superType,
                       VK_LValue, SourceLocation());
-      SuperRep = new (Context) CallExpr(*Context, DRE, InitExprs,
-                                        superType, VK_LValue,
-                                        SourceLocation());
+      SuperRep = CallExpr::Create(*Context, DRE, InitExprs, superType,
+                                  VK_LValue, SourceLocation());
       // The code for super is a little tricky to prevent collision with
       // the structure definition in the header. The rewriter has it's own
       // internal definition (__rw_objc_super) that is uses. This is why
@@ -3369,12 +3366,11 @@ Stmt *RewriteModernObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     if (LangOpts.MicrosoftExt) {
       SynthSuperConstructorFunctionDecl();
       // Simulate a constructor call...
-      DeclRefExpr *DRE = new (Context) DeclRefExpr(*Context,
-                                                   SuperConstructorFunctionDecl,
-                                                   false, superType, VK_LValue,
-                                                   SourceLocation());
-      SuperRep = new (Context) CallExpr(*Context, DRE, InitExprs,
-                                        superType, VK_LValue, SourceLocation());
+      DeclRefExpr *DRE = new (Context)
+          DeclRefExpr(*Context, SuperConstructorFunctionDecl, false, superType,
+                      VK_LValue, SourceLocation());
+      SuperRep = CallExpr::Create(*Context, DRE, InitExprs, superType,
+                                  VK_LValue, SourceLocation());
       // The code for super is a little tricky to prevent collision with
       // the structure definition in the header. The rewriter has it's own
       // internal definition (__rw_objc_super) that is uses. This is why
@@ -3538,8 +3534,8 @@ Stmt *RewriteModernObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
   ParenExpr *PE = new (Context) ParenExpr(StartLoc, EndLoc, cast);
 
   const FunctionType *FT = msgSendType->getAs<FunctionType>();
-  CallExpr *CE = new (Context)
-      CallExpr(*Context, PE, MsgExprs, FT->getReturnType(), VK_RValue, EndLoc);
+  CallExpr *CE = CallExpr::Create(*Context, PE, MsgExprs, FT->getReturnType(),
+                                  VK_RValue, EndLoc);
   Stmt *ReplacingStmt = CE;
   if (MsgSendStretFlavor) {
     // We have the method which returns a struct/union. Must also generate
@@ -4650,9 +4646,8 @@ Stmt *RewriteModernObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp
        E = Exp->arg_end(); I != E; ++I) {
     BlkExprs.push_back(*I);
   }
-  CallExpr *CE = new (Context) CallExpr(*Context, PE, BlkExprs,
-                                        Exp->getType(), VK_RValue,
-                                        SourceLocation());
+  CallExpr *CE = CallExpr::Create(*Context, PE, BlkExprs, Exp->getType(),
+                                  VK_RValue, SourceLocation());
   return CE;
 }
 
@@ -5395,8 +5390,8 @@ Stmt *RewriteModernObjC::SynthBlockInitExpr(BlockExpr *Exp,
                                            Context->IntTy, SourceLocation());
     InitExprs.push_back(FlagExp);
   }
-  NewRep = new (Context) CallExpr(*Context, DRE, InitExprs,
-                                  FType, VK_LValue, SourceLocation());
+  NewRep = CallExpr::Create(*Context, DRE, InitExprs, FType, VK_LValue,
+                            SourceLocation());
 
   if (GlobalBlockExpr) {
     assert (!GlobalConstructionExp &&

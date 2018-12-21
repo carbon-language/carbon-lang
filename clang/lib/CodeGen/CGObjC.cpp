@@ -3390,11 +3390,11 @@ CodeGenFunction::GenerateObjCAtomicSetterCopyHelperFunction(
 
   Expr *Args[2] = { &DST, &SRC };
   CallExpr *CalleeExp = cast<CallExpr>(PID->getSetterCXXAssignment());
-  CXXOperatorCallExpr TheCall(C, OO_Equal, CalleeExp->getCallee(),
-                              Args, DestTy->getPointeeType(),
-                              VK_LValue, SourceLocation(), FPOptions());
+  CXXOperatorCallExpr *TheCall = CXXOperatorCallExpr::Create(
+      C, OO_Equal, CalleeExp->getCallee(), Args, DestTy->getPointeeType(),
+      VK_LValue, SourceLocation(), FPOptions());
 
-  EmitStmt(&TheCall);
+  EmitStmt(TheCall);
 
   FinishFunction();
   HelperFn = llvm::ConstantExpr::getBitCast(Fn, VoidPtrTy);
