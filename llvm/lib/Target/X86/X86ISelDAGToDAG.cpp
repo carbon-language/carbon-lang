@@ -2308,6 +2308,9 @@ static bool hasNoCarryFlagUses(SDValue Flags) {
       case X86::SETOr: case X86::SETNOr: case X86::SETEr: case X86::SETNEr:
       case X86::SETSr: case X86::SETNSr: case X86::SETPr: case X86::SETNPr:
       case X86::SETLr: case X86::SETGEr: case X86::SETLEr: case X86::SETGr:
+      case X86::SETOm: case X86::SETNOm: case X86::SETEm: case X86::SETNEm:
+      case X86::SETSm: case X86::SETNSm: case X86::SETPm: case X86::SETNPm:
+      case X86::SETLm: case X86::SETGEm: case X86::SETLEm: case X86::SETGm:
       case X86::JO_1: case X86::JNO_1: case X86::JE_1: case X86::JNE_1:
       case X86::JS_1: case X86::JNS_1: case X86::JP_1: case X86::JNP_1:
       case X86::JL_1: case X86::JGE_1: case X86::JLE_1: case X86::JG_1:
