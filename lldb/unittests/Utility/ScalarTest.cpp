@@ -34,10 +34,11 @@ TEST(ScalarTest, Equality) {
   ASSERT_TRUE(checkEquality<int>(96, 96));
   ASSERT_TRUE(checkInequality<float>(4.0f, 4.5f));
   ASSERT_TRUE(checkEquality<float>(4.0f, 4.0f));
-  uint64_t apint1 = 234;
-  uint64_t apint2 = 246;
-  ASSERT_TRUE(checkInequality<APInt>(APInt(64, apint1), APInt(64, apint2)));
-  ASSERT_TRUE(checkEquality<APInt>(APInt(64, apint1), APInt(64, apint1)));
+
+  auto apint1 = APInt(64, 234);
+  auto apint2 = APInt(64, 246);
+  ASSERT_TRUE(checkInequality<APInt>(apint1, apint2));
+  ASSERT_TRUE(checkEquality<APInt>(apint1, apint1));
 
   Scalar void1;
   Scalar void2;
