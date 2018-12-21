@@ -96,7 +96,23 @@ template <typename AddressSpaceView>
 using PrimaryAllocatorASVT = SizeClassAllocator64<AP64<AddressSpaceView>>;
 using PrimaryAllocator = PrimaryAllocatorASVT<LocalAddressSpaceView>;
 #endif
-typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;
+
+template <typename AddressSpaceView>
+using AllocatorCacheASVT =
+    SizeClassAllocatorLocalCache<PrimaryAllocatorASVT<AddressSpaceView>>;
+using AllocatorCache = AllocatorCacheASVT<LocalAddressSpaceView>;
+
+template <typename AddressSpaceView>
+using SecondaryAllocatorASVT =
+    LargeMmapAllocator<NoOpMapUnmapCallback, DefaultLargeMmapAllocatorPtrArray,
+                       AddressSpaceView>;
+
+template <typename AddressSpaceView>
+using AllocatorASVT =
+    CombinedAllocator<PrimaryAllocatorASVT<AddressSpaceView>,
+                      AllocatorCacheASVT<AddressSpaceView>,
+                      SecondaryAllocatorASVT<AddressSpaceView>>;
+using Allocator = AllocatorASVT<LocalAddressSpaceView>;
 
 AllocatorCache *GetAllocatorCache();
 

@@ -192,11 +192,21 @@ using PrimaryAllocator = PrimaryAllocatorASVT<LocalAddressSpaceView>;
 #endif  // SANITIZER_CAN_USE_ALLOCATOR64
 
 static const uptr kNumberOfSizeClasses = SizeClassMap::kNumClasses;
-typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;
-typedef LargeMmapAllocator<AsanMapUnmapCallback> SecondaryAllocator;
-typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
-    SecondaryAllocator> AsanAllocator;
+template <typename AddressSpaceView>
+using AllocatorCacheASVT =
+    SizeClassAllocatorLocalCache<PrimaryAllocatorASVT<AddressSpaceView>>;
+using AllocatorCache = AllocatorCacheASVT<LocalAddressSpaceView>;
 
+template <typename AddressSpaceView>
+using SecondaryAllocatorASVT =
+    LargeMmapAllocator<AsanMapUnmapCallback, DefaultLargeMmapAllocatorPtrArray,
+                       AddressSpaceView>;
+template <typename AddressSpaceView>
+using AsanAllocatorASVT =
+    CombinedAllocator<PrimaryAllocatorASVT<AddressSpaceView>,
+                      AllocatorCacheASVT<AddressSpaceView>,
+                      SecondaryAllocatorASVT<AddressSpaceView>>;
+using AsanAllocator = AsanAllocatorASVT<LocalAddressSpaceView>;
 
 struct AsanThreadLocalMallocStorage {
   uptr quarantine_cache[16];
