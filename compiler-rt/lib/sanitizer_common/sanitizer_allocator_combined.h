@@ -26,6 +26,13 @@ template <class PrimaryAllocator, class AllocatorCache,
 class CombinedAllocator {
  public:
   using AddressSpaceView = AddressSpaceViewTy;
+  static_assert(is_same<AddressSpaceView,
+                        typename PrimaryAllocator::AddressSpaceView>::value,
+                "PrimaryAllocator is using wrong AddressSpaceView");
+  static_assert(is_same<AddressSpaceView,
+                        typename SecondaryAllocator::AddressSpaceView>::value,
+                "SecondaryAllocator is using wrong AddressSpaceView");
+
   void InitLinkerInitialized(s32 release_to_os_interval_ms) {
     primary_.Init(release_to_os_interval_ms);
     secondary_.InitLinkerInitialized();
@@ -33,12 +40,6 @@ class CombinedAllocator {
   }
 
   void Init(s32 release_to_os_interval_ms) {
-    static_assert(is_same<AddressSpaceView,
-                          typename PrimaryAllocator::AddressSpaceView>::value,
-                  "PrimaryAllocator is using wrong AddressSpaceView");
-    static_assert(is_same<AddressSpaceView,
-                          typename SecondaryAllocator::AddressSpaceView>::value,
-                  "SecondaryAllocator is using wrong AddressSpaceView");
     primary_.Init(release_to_os_interval_ms);
     secondary_.Init();
     stats_.Init();
