@@ -79,13 +79,7 @@ class CXXOperatorCallExpr final : public CallExpr {
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
 
-  /// The overloaded operator.
-  OverloadedOperatorKind Operator;
-
   SourceRange Range;
-
-  // Only meaningful for floating point types.
-  FPOptions FPFeatures;
 
   // CXXOperatorCallExpr has some trailing objects belonging
   // to CallExpr. See CallExpr for the details.
@@ -110,15 +104,17 @@ public:
                                           unsigned NumArgs, EmptyShell Empty);
 
   /// Returns the kind of overloaded operator that this expression refers to.
-  OverloadedOperatorKind getOperator() const { return Operator; }
+  OverloadedOperatorKind getOperator() const {
+    return static_cast<OverloadedOperatorKind>(
+        CXXOperatorCallExprBits.OperatorKind);
+  }
 
   static bool isAssignmentOp(OverloadedOperatorKind Opc) {
-    return Opc == OO_Equal || Opc == OO_StarEqual ||
-           Opc == OO_SlashEqual || Opc == OO_PercentEqual ||
-           Opc == OO_PlusEqual || Opc == OO_MinusEqual ||
-           Opc == OO_LessLessEqual || Opc == OO_GreaterGreaterEqual ||
-           Opc == OO_AmpEqual || Opc == OO_CaretEqual ||
-           Opc == OO_PipeEqual;
+    return Opc == OO_Equal || Opc == OO_StarEqual || Opc == OO_SlashEqual ||
+           Opc == OO_PercentEqual || Opc == OO_PlusEqual ||
+           Opc == OO_MinusEqual || Opc == OO_LessLessEqual ||
+           Opc == OO_GreaterGreaterEqual || Opc == OO_AmpEqual ||
+           Opc == OO_CaretEqual || Opc == OO_PipeEqual;
   }
   bool isAssignmentOp() const { return isAssignmentOp(getOperator()); }
 
@@ -133,14 +129,15 @@ public:
   SourceLocation getOperatorLoc() const { return getRParenLoc(); }
 
   SourceLocation getExprLoc() const LLVM_READONLY {
+    OverloadedOperatorKind Operator = getOperator();
     return (Operator < OO_Plus || Operator >= OO_Arrow ||
             Operator == OO_PlusPlus || Operator == OO_MinusMinus)
                ? getBeginLoc()
                : getOperatorLoc();
   }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return Range.getBegin(); }
-  SourceLocation getEndLoc() const LLVM_READONLY { return Range.getEnd(); }
+  SourceLocation getBeginLoc() const { return Range.getBegin(); }
+  SourceLocation getEndLoc() const { return Range.getEnd(); }
   SourceRange getSourceRange() const { return Range; }
 
   static bool classof(const Stmt *T) {
@@ -149,14 +146,17 @@ public:
 
   // Set the FP contractability status of this operator. Only meaningful for
   // operations on floating point types.
-  void setFPFeatures(FPOptions F) { FPFeatures = F; }
-
-  FPOptions getFPFeatures() const { return FPFeatures; }
+  void setFPFeatures(FPOptions F) {
+    CXXOperatorCallExprBits.FPFeatures = F.getInt();
+  }
+  FPOptions getFPFeatures() const {
+    return FPOptions(CXXOperatorCallExprBits.FPFeatures);
+  }
 
   // Get the FP contractability status of this operator. Only meaningful for
   // operations on floating point types.
   bool isFPContractableWithinStatement() const {
-    return FPFeatures.allowFPContractWithinStatement();
+    return getFPFeatures().allowFPContractWithinStatement();
   }
 };
 

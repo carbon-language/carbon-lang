@@ -532,6 +532,20 @@ protected:
 
   //===--- C++ Expression bitfields classes ---===//
 
+  class CXXOperatorCallExprBitfields {
+    friend class ASTStmtReader;
+    friend class CXXOperatorCallExpr;
+
+    unsigned : NumCallExprBits;
+
+    /// The kind of this overloaded operator. One of the enumerator
+    /// value of OverloadedOperatorKind.
+    unsigned OperatorKind : 6;
+
+    // Only meaningful for floating point types.
+    unsigned FPFeatures : 3;
+  };
+
   class CXXBoolLiteralExprBitfields {
     friend class CXXBoolLiteralExpr;
 
@@ -723,6 +737,7 @@ protected:
     PseudoObjectExprBitfields PseudoObjectExprBits;
 
     // C++ Expressions
+    CXXOperatorCallExprBitfields CXXOperatorCallExprBits;
     CXXBoolLiteralExprBitfields CXXBoolLiteralExprBits;
     CXXNullPtrLiteralExprBitfields CXXNullPtrLiteralExprBits;
     CXXThisExprBitfields CXXThisExprBits;
