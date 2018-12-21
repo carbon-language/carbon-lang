@@ -143,7 +143,7 @@ void test_escaping_into_voidstar() {
 void test_escape_has_source() {
   OSObject *obj = new OSObject;
   if (obj)
-    escape_with_source((MYTYPE)obj);
+    escape_with_source(obj);
   return;
 }
 
