@@ -137,6 +137,7 @@ bool X86DiscriminateMemOps::runOnMachineFunction(MachineFunction &MF) {
         Changed = true;
         std::pair<DenseSet<unsigned>::iterator, bool> MustInsert =
             Set.insert(DI->getBaseDiscriminator());
+        (void)MustInsert; // Silence warning in release build.
         assert(MustInsert.second && "New discriminator shouldn't be present in set");
       }
 
