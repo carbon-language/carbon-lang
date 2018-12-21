@@ -1032,6 +1032,7 @@ define void @pr40060(i32, i32) {
 ; X86:       # %bb.0:
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X86-NEXT:    bextrl %eax, {{[0-9]+}}(%esp), %eax
+; X86-NEXT:    testl %eax, %eax
 ; X86-NEXT:    js .LBB45_1
 ; X86-NEXT:  # %bb.2:
 ; X86-NEXT:    jmp bar # TAILCALL
@@ -1041,6 +1042,7 @@ define void @pr40060(i32, i32) {
 ; X64-LABEL: pr40060:
 ; X64:       # %bb.0:
 ; X64-NEXT:    bextrl %esi, %edi, %eax
+; X64-NEXT:    testl %eax, %eax
 ; X64-NEXT:    js .LBB45_1
 ; X64-NEXT:  # %bb.2:
 ; X64-NEXT:    jmp bar # TAILCALL
