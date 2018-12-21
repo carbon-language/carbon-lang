@@ -488,8 +488,9 @@ CXXOperatorCallExpr::CXXOperatorCallExpr(OverloadedOperatorKind OpKind,
                OperatorLoc, /*MinNumArgs=*/0, UsesADL) {
   CXXOperatorCallExprBits.OperatorKind = OpKind;
   CXXOperatorCallExprBits.FPFeatures = FPFeatures.getInt();
-  assert((CXXOperatorCallExprBits.OperatorKind == OpKind) &&
-         "OperatorKind overflow!");
+  assert(
+      (CXXOperatorCallExprBits.OperatorKind == static_cast<unsigned>(OpKind)) &&
+      "OperatorKind overflow!");
   assert((CXXOperatorCallExprBits.FPFeatures == FPFeatures.getInt()) &&
          "FPFeatures overflow!");
   Range = getSourceRangeImpl();
