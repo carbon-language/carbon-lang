@@ -331,6 +331,21 @@ bool DWARFFormValue::extractValue(const DWARFDataExtractor &Data,
   return true;
 }
 
+void DWARFFormValue::dumpAddressSection(const DWARFObject &Obj, raw_ostream &OS,
+                                        DIDumpOptions DumpOpts,
+                                        uint64_t SectionIndex) {
+  if (!DumpOpts.Verbose || SectionIndex == -1ULL)
+    return;
+  ArrayRef<SectionName> SectionNames = Obj.getSectionNames();
+  const auto &SecRef = SectionNames[SectionIndex];
+
+  OS << " \"" << SecRef.Name << '\"';
+
+  // Print section index if name is not unique.
+  if (!SecRef.IsNameUnique)
+    OS << format(" [%" PRIu64 "]", SectionIndex);
+}
+
 void DWARFFormValue::dump(raw_ostream &OS, DIDumpOptions DumpOpts) const {
   uint64_t UValue = Value.uval;
   bool CURelativeOffset = false;
