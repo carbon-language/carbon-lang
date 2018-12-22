@@ -1,5 +1,6 @@
 group("default") {
   deps = [
+    "//clang/lib/ARCMigrate",
     "//clang/lib/AST",
     "//clang/lib/ASTMatchers",
     "//clang/lib/CodeGen",
