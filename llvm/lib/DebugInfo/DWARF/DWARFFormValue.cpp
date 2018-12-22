@@ -331,6 +331,14 @@ bool DWARFFormValue::extractValue(const DWARFDataExtractor &Data,
   return true;
 }
 
+void DWARFFormValue::dumpSectionedAddress(raw_ostream &OS,
+                                          DIDumpOptions DumpOpts,
+                                          SectionedAddress SA) const {
+  OS << format("0x%016" PRIx64, SA.Address);
+  dumpAddressSection(U->getContext().getDWARFObj(), OS, DumpOpts,
+                     SA.SectionIndex);
+}
+
 void DWARFFormValue::dumpAddressSection(const DWARFObject &Obj, raw_ostream &OS,
                                         DIDumpOptions DumpOpts,
                                         uint64_t SectionIndex) {
@@ -365,9 +373,10 @@ void DWARFFormValue::dump(raw_ostream &OS, DIDumpOptions DumpOpts) const {
     AddrOS << format(" indexed (%8.8x) address = ", (uint32_t)UValue);
     if (U == nullptr)
       OS << "<invalid dwarf unit>";
-    else if (Optional<SectionedAddress> A = U->getAddrOffsetSectionItem(UValue))
-      AddrOS << format("0x%016" PRIx64, A->Address);
-    else
+    else if (Optional<SectionedAddress> A =
+                 U->getAddrOffsetSectionItem(UValue)) {
+      dumpSectionedAddress(AddrOS, DumpOpts, *A);
+    } else
       OS << "<no .debug_addr section>";
     break;
   }

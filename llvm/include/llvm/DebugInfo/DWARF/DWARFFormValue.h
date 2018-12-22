@@ -75,6 +75,8 @@ public:
   bool isFormClass(FormClass FC) const;
   const DWARFUnit *getUnit() const { return U; }
   void dump(raw_ostream &OS, DIDumpOptions DumpOpts = DIDumpOptions()) const;
+  void dumpSectionedAddress(raw_ostream &OS, DIDumpOptions DumpOpts,
+                            SectionedAddress SA) const;
   static void dumpAddressSection(const DWARFObject &Obj, raw_ostream &OS,
                                  DIDumpOptions DumpOpts, uint64_t SectionIndex);
 
