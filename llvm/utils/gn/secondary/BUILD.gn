@@ -1,20 +1,6 @@
 group("default") {
   deps = [
-    "//clang/lib/ARCMigrate",
-    "//clang/lib/AST",
-    "//clang/lib/ASTMatchers",
-    "//clang/lib/CodeGen",
-    "//clang/lib/CrossTU",
-    "//clang/lib/Driver",
-    "//clang/lib/Frontend",
-    "//clang/lib/Frontend/Rewrite",
-    "//clang/lib/FrontendTool",
-    "//clang/lib/Index",
-    "//clang/lib/Parse",
-    "//clang/lib/Serialization",
-    "//clang/lib/StaticAnalyzer/Checkers",
-    "//clang/lib/StaticAnalyzer/Core",
-    "//clang/lib/StaticAnalyzer/Frontend",
+    ":clang",
     "//clang/tools/clang-format",
     "//lld/test",
     "//llvm/tools/llvm-cat",
@@ -50,6 +36,11 @@ group("default") {
 # update symlinks (in particular, on Windows it doesn't copy the new lld to its
 # new locations).
 # That seems simpler, more explicit, and good enough.
+group("clang") {
+  deps = [
+    "//clang/tools/driver:symlinks",
+  ]
+}
 group("lld") {
   deps = [
     "//lld/tools/lld:symlinks",

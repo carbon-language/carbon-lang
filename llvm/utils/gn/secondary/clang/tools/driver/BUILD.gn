@@ -1,0 +1,72 @@
+import("//llvm/utils/gn/build/symlink_or_copy.gni")
+
+symlinks = [
+  # target_name, symlink_target pairs: GN doesn't support '+' in rule names.
+  [
+    "clangxx",
+    "clang++",
+  ],
+  [
+    "clang-cl",
+    "clang-cl",
+  ],
+  [
+    "clang-cpp",
+    "clang-cpp",
+  ],
+]
+foreach(target, symlinks) {
+  symlink_or_copy(target[0]) {
+    deps = [
+      ":clang",
+    ]
+    source = "clang"
+    output = "$root_out_dir/bin/${target[1]}"
+  }
+}
+
+# //:clang depends on this symlink target, see comment in //BUILD.gn.
+group("symlinks") {
+  deps = []
+  foreach(target, symlinks) {
+    deps += [ ":${target[0]}" ]
+  }
+}
+
+executable("clang") {
+  configs += [ "//llvm/utils/gn/build:clang_code" ]
+  deps = [
+    "//clang/include/clang/Config",
+    "//clang/lib/Basic",
+    "//clang/lib/CodeGen",
+    "//clang/lib/Driver",
+    "//clang/lib/Frontend",
+    "//clang/lib/FrontendTool",
+    "//clang/lib/Headers",
+    "//clang/tools/clang-offload-bundler",
+    "//llvm/include/llvm/Config:llvm-config",
+    "//llvm/lib/Analysis",
+    "//llvm/lib/CodeGen",
+    "//llvm/lib/IR",
+    "//llvm/lib/MC",
+    "//llvm/lib/MC/MCParser",
+    "//llvm/lib/Option",
+    "//llvm/lib/Support",
+    "//llvm/lib/Target:TargetsToBuild",
+    "//llvm/lib/Transforms/IPO",
+    "//llvm/lib/Transforms/InstCombine",
+    "//llvm/lib/Transforms/Instrumentation",
+    "//llvm/lib/Transforms/ObjCARC",
+    "//llvm/lib/Transforms/Scalar",
+    "//llvm/lib/Transforms/Utils",
+    "//llvm/lib/Transforms/Vectorize",
+  ]
+  sources = [
+    "cc1_main.cpp",
+    "cc1as_main.cpp",
+    "cc1gen_reproducer_main.cpp",
+    "driver.cpp",
+  ]
+
+  # FIXME: Info.plist embedding for mac builds.
+}
