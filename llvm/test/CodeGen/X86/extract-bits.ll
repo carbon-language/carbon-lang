@@ -2972,15 +2972,11 @@ define i64 @bextr64_b5_skipextrauses(i64 %val, i64 %numskipbits, i64 %numlowbits
 ; 64-bit, but with 32-bit output
 
 ; Everything done in 64-bit, truncation happens last.
-define i32 @bextr64_32_b0(i64 %val, i64 %numskipbits, i8 %numlowbits) {
+define i32 @bextr64_32_b0(i64 %val, i64 %numskipbits, i8 %numlowbits) nounwind {
 ; X86-NOBMI-LABEL: bextr64_32_b0:
 ; X86-NOBMI:       # %bb.0:
 ; X86-NOBMI-NEXT:    pushl %edi
-; X86-NOBMI-NEXT:    .cfi_def_cfa_offset 8
 ; X86-NOBMI-NEXT:    pushl %esi
-; X86-NOBMI-NEXT:    .cfi_def_cfa_offset 12
-; X86-NOBMI-NEXT:    .cfi_offset %esi, -12
-; X86-NOBMI-NEXT:    .cfi_offset %edi, -8
 ; X86-NOBMI-NEXT:    movb {{[0-9]+}}(%esp), %dl
 ; X86-NOBMI-NEXT:    movb {{[0-9]+}}(%esp), %cl
 ; X86-NOBMI-NEXT:    movl {{[0-9]+}}(%esp), %esi
@@ -3005,19 +3001,13 @@ define i32 @bextr64_32_b0(i64 %val, i64 %numskipbits, i8 %numlowbits) {
 ; X86-NOBMI-NEXT:    notl %ecx
 ; X86-NOBMI-NEXT:    andl %ecx, %eax
 ; X86-NOBMI-NEXT:    popl %esi
-; X86-NOBMI-NEXT:    .cfi_def_cfa_offset 8
 ; X86-NOBMI-NEXT:    popl %edi
-; X86-NOBMI-NEXT:    .cfi_def_cfa_offset 4
 ; X86-NOBMI-NEXT:    retl
 ;
 ; X86-BMI1NOTBM-LABEL: bextr64_32_b0:
 ; X86-BMI1NOTBM:       # %bb.0:
 ; X86-BMI1NOTBM-NEXT:    pushl %edi
-; X86-BMI1NOTBM-NEXT:    .cfi_def_cfa_offset 8
 ; X86-BMI1NOTBM-NEXT:    pushl %esi
-; X86-BMI1NOTBM-NEXT:    .cfi_def_cfa_offset 12
-; X86-BMI1NOTBM-NEXT:    .cfi_offset %esi, -12
-; X86-BMI1NOTBM-NEXT:    .cfi_offset %edi, -8
 ; X86-BMI1NOTBM-NEXT:    movb {{[0-9]+}}(%esp), %al
 ; X86-BMI1NOTBM-NEXT:    movb {{[0-9]+}}(%esp), %cl
 ; X86-BMI1NOTBM-NEXT:    movl {{[0-9]+}}(%esp), %esi
@@ -3041,16 +3031,12 @@ define i32 @bextr64_32_b0(i64 %val, i64 %numskipbits, i8 %numlowbits) {
 ; X86-BMI1NOTBM-NEXT:  .LBB26_4:
 ; X86-BMI1NOTBM-NEXT:    andnl %edx, %ecx, %eax
 ; X86-BMI1NOTBM-NEXT:    popl %esi
-; X86-BMI1NOTBM-NEXT:    .cfi_def_cfa_offset 8
 ; X86-BMI1NOTBM-NEXT:    popl %edi
-; X86-BMI1NOTBM-NEXT:    .cfi_def_cfa_offset 4
 ; X86-BMI1NOTBM-NEXT:    retl
 ;
 ; X86-BMI1BMI2-LABEL: bextr64_32_b0:
 ; X86-BMI1BMI2:       # %bb.0:
 ; X86-BMI1BMI2-NEXT:    pushl %esi
-; X86-BMI1BMI2-NEXT:    .cfi_def_cfa_offset 8
-; X86-BMI1BMI2-NEXT:    .cfi_offset %esi, -8
 ; X86-BMI1BMI2-NEXT:    movb {{[0-9]+}}(%esp), %al
 ; X86-BMI1BMI2-NEXT:    movb {{[0-9]+}}(%esp), %cl
 ; X86-BMI1BMI2-NEXT:    movl {{[0-9]+}}(%esp), %edx
@@ -3070,7 +3056,6 @@ define i32 @bextr64_32_b0(i64 %val, i64 %numskipbits, i8 %numlowbits) {
 ; X86-BMI1BMI2-NEXT:  .LBB26_4:
 ; X86-BMI1BMI2-NEXT:    andnl %edx, %ecx, %eax
 ; X86-BMI1BMI2-NEXT:    popl %esi
-; X86-BMI1BMI2-NEXT:    .cfi_def_cfa_offset 4
 ; X86-BMI1BMI2-NEXT:    retl
 ;
 ; X64-NOBMI-LABEL: bextr64_32_b0:
@@ -3115,15 +3100,11 @@ define i32 @bextr64_32_b0(i64 %val, i64 %numskipbits, i8 %numlowbits) {
 }
 
 ; Shifting happens in 64-bit, then truncation. Masking is 32-bit.
-define i32 @bextr64_32_b1(i64 %val, i64 %numskipbits, i8 %numlowbits) {
+define i32 @bextr64_32_b1(i64 %val, i64 %numskipbits, i8 %numlowbits) nounwind {
 ; X86-NOBMI-LABEL: bextr64_32_b1:
 ; X86-NOBMI:       # %bb.0:
 ; X86-NOBMI-NEXT:    pushl %edi
-; X86-NOBMI-NEXT:    .cfi_def_cfa_offset 8
 ; X86-NOBMI-NEXT:    pushl %esi
-; X86-NOBMI-NEXT:    .cfi_def_cfa_offset 12
-; X86-NOBMI-NEXT:    .cfi_offset %esi, -12
-; X86-NOBMI-NEXT:    .cfi_offset %edi, -8
 ; X86-NOBMI-NEXT:    movb {{[0-9]+}}(%esp), %dl
 ; X86-NOBMI-NEXT:    movb {{[0-9]+}}(%esp), %cl
 ; X86-NOBMI-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -3142,19 +3123,13 @@ define i32 @bextr64_32_b1(i64 %val, i64 %numskipbits, i8 %numlowbits) {
 ; X86-NOBMI-NEXT:    notl %eax
 ; X86-NOBMI-NEXT:    andl %esi, %eax
 ; X86-NOBMI-NEXT:    popl %esi
-; X86-NOBMI-NEXT:    .cfi_def_cfa_offset 8
 ; X86-NOBMI-NEXT:    popl %edi
-; X86-NOBMI-NEXT:    .cfi_def_cfa_offset 4
 ; X86-NOBMI-NEXT:    retl
 ;
 ; X86-BMI1NOTBM-LABEL: bextr64_32_b1:
 ; X86-BMI1NOTBM:       # %bb.0:
 ; X86-BMI1NOTBM-NEXT:    pushl %edi
-; X86-BMI1NOTBM-NEXT:    .cfi_def_cfa_offset 8
 ; X86-BMI1NOTBM-NEXT:    pushl %esi
-; X86-BMI1NOTBM-NEXT:    .cfi_def_cfa_offset 12
-; X86-BMI1NOTBM-NEXT:    .cfi_offset %esi, -12
-; X86-BMI1NOTBM-NEXT:    .cfi_offset %edi, -8
 ; X86-BMI1NOTBM-NEXT:    movb {{[0-9]+}}(%esp), %al
 ; X86-BMI1NOTBM-NEXT:    movb {{[0-9]+}}(%esp), %cl
 ; X86-BMI1NOTBM-NEXT:    movl {{[0-9]+}}(%esp), %esi
@@ -3170,16 +3145,12 @@ define i32 @bextr64_32_b1(i64 %val, i64 %numskipbits, i8 %numlowbits) {
 ; X86-BMI1NOTBM-NEXT:    shll $8, %eax
 ; X86-BMI1NOTBM-NEXT:    bextrl %eax, %edx, %eax
 ; X86-BMI1NOTBM-NEXT:    popl %esi
-; X86-BMI1NOTBM-NEXT:    .cfi_def_cfa_offset 8
 ; X86-BMI1NOTBM-NEXT:    popl %edi
-; X86-BMI1NOTBM-NEXT:    .cfi_def_cfa_offset 4
 ; X86-BMI1NOTBM-NEXT:    retl
 ;
 ; X86-BMI1BMI2-LABEL: bextr64_32_b1:
 ; X86-BMI1BMI2:       # %bb.0:
 ; X86-BMI1BMI2-NEXT:    pushl %esi
-; X86-BMI1BMI2-NEXT:    .cfi_def_cfa_offset 8
-; X86-BMI1BMI2-NEXT:    .cfi_offset %esi, -8
 ; X86-BMI1BMI2-NEXT:    movb {{[0-9]+}}(%esp), %al
 ; X86-BMI1BMI2-NEXT:    movb {{[0-9]+}}(%esp), %cl
 ; X86-BMI1BMI2-NEXT:    movl {{[0-9]+}}(%esp), %edx
@@ -3192,7 +3163,6 @@ define i32 @bextr64_32_b1(i64 %val, i64 %numskipbits, i8 %numlowbits) {
 ; X86-BMI1BMI2-NEXT:  .LBB27_2:
 ; X86-BMI1BMI2-NEXT:    bzhil %eax, %edx, %eax
 ; X86-BMI1BMI2-NEXT:    popl %esi
-; X86-BMI1BMI2-NEXT:    .cfi_def_cfa_offset 4
 ; X86-BMI1BMI2-NEXT:    retl
 ;
 ; X64-NOBMI-LABEL: bextr64_32_b1:
@@ -3232,15 +3202,11 @@ define i32 @bextr64_32_b1(i64 %val, i64 %numskipbits, i8 %numlowbits) {
 
 ; Shifting happens in 64-bit. Mask is 32-bit, but extended to 64-bit.
 ; Masking is 64-bit. Then truncation.
-define i32 @bextr64_32_b2(i64 %val, i64 %numskipbits, i8 %numlowbits) {
+define i32 @bextr64_32_b2(i64 %val, i64 %numskipbits, i8 %numlowbits) nounwind {
 ; X86-NOBMI-LABEL: bextr64_32_b2:
 ; X86-NOBMI:       # %bb.0:
 ; X86-NOBMI-NEXT:    pushl %edi
-; X86-NOBMI-NEXT:    .cfi_def_cfa_offset 8
 ; X86-NOBMI-NEXT:    pushl %esi
-; X86-NOBMI-NEXT:    .cfi_def_cfa_offset 12
-; X86-NOBMI-NEXT:    .cfi_offset %esi, -12
-; X86-NOBMI-NEXT:    .cfi_offset %edi, -8
 ; X86-NOBMI-NEXT:    movb {{[0-9]+}}(%esp), %dl
 ; X86-NOBMI-NEXT:    movb {{[0-9]+}}(%esp), %cl
 ; X86-NOBMI-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -3259,19 +3225,13 @@ define i32 @bextr64_32_b2(i64 %val, i64 %numskipbits, i8 %numlowbits) {
 ; X86-NOBMI-NEXT:    notl %eax
 ; X86-NOBMI-NEXT:    andl %esi, %eax
 ; X86-NOBMI-NEXT:    popl %esi
-; X86-NOBMI-NEXT:    .cfi_def_cfa_offset 8
 ; X86-NOBMI-NEXT:    popl %edi
-; X86-NOBMI-NEXT:    .cfi_def_cfa_offset 4
 ; X86-NOBMI-NEXT:    retl
 ;
 ; X86-BMI1NOTBM-LABEL: bextr64_32_b2:
 ; X86-BMI1NOTBM:       # %bb.0:
 ; X86-BMI1NOTBM-NEXT:    pushl %edi
-; X86-BMI1NOTBM-NEXT:    .cfi_def_cfa_offset 8
 ; X86-BMI1NOTBM-NEXT:    pushl %esi
-; X86-BMI1NOTBM-NEXT:    .cfi_def_cfa_offset 12
-; X86-BMI1NOTBM-NEXT:    .cfi_offset %esi, -12
-; X86-BMI1NOTBM-NEXT:    .cfi_offset %edi, -8
 ; X86-BMI1NOTBM-NEXT:    movb {{[0-9]+}}(%esp), %al
 ; X86-BMI1NOTBM-NEXT:    movb {{[0-9]+}}(%esp), %cl
 ; X86-BMI1NOTBM-NEXT:    movl {{[0-9]+}}(%esp), %esi
@@ -3287,16 +3247,12 @@ define i32 @bextr64_32_b2(i64 %val, i64 %numskipbits, i8 %numlowbits) {
 ; X86-BMI1NOTBM-NEXT:    shll $8, %eax
 ; X86-BMI1NOTBM-NEXT:    bextrl %eax, %edx, %eax
 ; X86-BMI1NOTBM-NEXT:    popl %esi
-; X86-BMI1NOTBM-NEXT:    .cfi_def_cfa_offset 8
 ; X86-BMI1NOTBM-NEXT:    popl %edi
-; X86-BMI1NOTBM-NEXT:    .cfi_def_cfa_offset 4
 ; X86-BMI1NOTBM-NEXT:    retl
 ;
 ; X86-BMI1BMI2-LABEL: bextr64_32_b2:
 ; X86-BMI1BMI2:       # %bb.0:
 ; X86-BMI1BMI2-NEXT:    pushl %esi
-; X86-BMI1BMI2-NEXT:    .cfi_def_cfa_offset 8
-; X86-BMI1BMI2-NEXT:    .cfi_offset %esi, -8
 ; X86-BMI1BMI2-NEXT:    movb {{[0-9]+}}(%esp), %al
 ; X86-BMI1BMI2-NEXT:    movb {{[0-9]+}}(%esp), %cl
 ; X86-BMI1BMI2-NEXT:    movl {{[0-9]+}}(%esp), %edx
@@ -3309,7 +3265,6 @@ define i32 @bextr64_32_b2(i64 %val, i64 %numskipbits, i8 %numlowbits) {
 ; X86-BMI1BMI2-NEXT:  .LBB28_2:
 ; X86-BMI1BMI2-NEXT:    bzhil %eax, %edx, %eax
 ; X86-BMI1BMI2-NEXT:    popl %esi
-; X86-BMI1BMI2-NEXT:    .cfi_def_cfa_offset 4
 ; X86-BMI1BMI2-NEXT:    retl
 ;
 ; X64-NOBMI-LABEL: bextr64_32_b2:
@@ -6777,7 +6732,7 @@ define i64 @bextr64_d5_skipextrauses(i64 %val, i64 %numskipbits, i64 %numlowbits
 ; ---------------------------------------------------------------------------- ;
 
 ; https://bugs.llvm.org/show_bug.cgi?id=38938
-define void @pr38938(i32* %a0, i64* %a1) {
+define void @pr38938(i32* %a0, i64* %a1) nounwind {
 ; X86-NOBMI-LABEL: pr38938:
 ; X86-NOBMI:       # %bb.0:
 ; X86-NOBMI-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -6852,7 +6807,7 @@ define void @pr38938(i32* %a0, i64* %a1) {
 }
 
 ; The most canonical variant
-define i32 @c0_i32(i32 %arg) {
+define i32 @c0_i32(i32 %arg) nounwind {
 ; X86-NOBMI-LABEL: c0_i32:
 ; X86-NOBMI:       # %bb.0:
 ; X86-NOBMI-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -6906,7 +6861,7 @@ define i32 @c0_i32(i32 %arg) {
 }
 
 ; Should be still fine, but the mask is shifted
-define i32 @c1_i32(i32 %arg) {
+define i32 @c1_i32(i32 %arg) nounwind {
 ; X86-LABEL: c1_i32:
 ; X86:       # %bb.0:
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -6926,7 +6881,7 @@ define i32 @c1_i32(i32 %arg) {
 }
 
 ; Should be still fine, but the result is shifted left afterwards
-define i32 @c2_i32(i32 %arg) {
+define i32 @c2_i32(i32 %arg) nounwind {
 ; X86-LABEL: c2_i32:
 ; X86:       # %bb.0:
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -6947,7 +6902,7 @@ define i32 @c2_i32(i32 %arg) {
 }
 
 ; The mask covers newly shifted-in bit
-define i32 @c4_i32_bad(i32 %arg) {
+define i32 @c4_i32_bad(i32 %arg) nounwind {
 ; X86-LABEL: c4_i32_bad:
 ; X86:       # %bb.0:
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -6969,7 +6924,7 @@ define i32 @c4_i32_bad(i32 %arg) {
 ; i64
 
 ; The most canonical variant
-define i64 @c0_i64(i64 %arg) {
+define i64 @c0_i64(i64 %arg) nounwind {
 ; X86-NOBMI-LABEL: c0_i64:
 ; X86-NOBMI:       # %bb.0:
 ; X86-NOBMI-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -7027,7 +6982,7 @@ define i64 @c0_i64(i64 %arg) {
 }
 
 ; Should be still fine, but the mask is shifted
-define i64 @c1_i64(i64 %arg) {
+define i64 @c1_i64(i64 %arg) nounwind {
 ; X86-LABEL: c1_i64:
 ; X86:       # %bb.0:
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -7048,7 +7003,7 @@ define i64 @c1_i64(i64 %arg) {
 }
 
 ; Should be still fine, but the result is shifted left afterwards
-define i64 @c2_i64(i64 %arg) {
+define i64 @c2_i64(i64 %arg) nounwind {
 ; X86-LABEL: c2_i64:
 ; X86:       # %bb.0:
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -7070,7 +7025,7 @@ define i64 @c2_i64(i64 %arg) {
 }
 
 ; The mask covers newly shifted-in bit
-define i64 @c4_i64_bad(i64 %arg) {
+define i64 @c4_i64_bad(i64 %arg) nounwind {
 ; X86-LABEL: c4_i64_bad:
 ; X86:       # %bb.0:
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -7097,7 +7052,7 @@ define i64 @c4_i64_bad(i64 %arg) {
 ; i32
 
 ; The most canonical variant
-define void @c5_i32(i32 %arg, i32* %ptr) {
+define void @c5_i32(i32 %arg, i32* %ptr) nounwind {
 ; X86-NOBMI-LABEL: c5_i32:
 ; X86-NOBMI:       # %bb.0:
 ; X86-NOBMI-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -7163,7 +7118,7 @@ define void @c5_i32(i32 %arg, i32* %ptr) {
 }
 
 ; Should be still fine, but the mask is shifted
-define void @c6_i32(i32 %arg, i32* %ptr) {
+define void @c6_i32(i32 %arg, i32* %ptr) nounwind {
 ; X86-NOBMI-LABEL: c6_i32:
 ; X86-NOBMI:       # %bb.0:
 ; X86-NOBMI-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -7229,7 +7184,7 @@ define void @c6_i32(i32 %arg, i32* %ptr) {
 }
 
 ; Should be still fine, but the result is shifted left afterwards
-define void @c7_i32(i32 %arg, i32* %ptr) {
+define void @c7_i32(i32 %arg, i32* %ptr) nounwind {
 ; X86-LABEL: c7_i32:
 ; X86:       # %bb.0:
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -7255,7 +7210,7 @@ define void @c7_i32(i32 %arg, i32* %ptr) {
 ; i64
 
 ; The most canonical variant
-define void @c5_i64(i64 %arg, i64* %ptr) {
+define void @c5_i64(i64 %arg, i64* %ptr) nounwind {
 ; X86-NOBMI-LABEL: c5_i64:
 ; X86-NOBMI:       # %bb.0:
 ; X86-NOBMI-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -7325,7 +7280,7 @@ define void @c5_i64(i64 %arg, i64* %ptr) {
 }
 
 ; Should be still fine, but the mask is shifted
-define void @c6_i64(i64 %arg, i64* %ptr) {
+define void @c6_i64(i64 %arg, i64* %ptr) nounwind {
 ; X86-NOBMI-LABEL: c6_i64:
 ; X86-NOBMI:       # %bb.0:
 ; X86-NOBMI-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -7395,7 +7350,7 @@ define void @c6_i64(i64 %arg, i64* %ptr) {
 }
 
 ; Should be still fine, but the result is shifted left afterwards
-define void @c7_i64(i64 %arg, i64* %ptr) {
+define void @c7_i64(i64 %arg, i64* %ptr) nounwind {
 ; X86-LABEL: c7_i64:
 ; X86:       # %bb.0:
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
