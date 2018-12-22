@@ -408,6 +408,67 @@ define i64 @bextr64_b4_commutative(i64 %val, i64 %numskipbits, i64 %numlowbits) 
   ret i64 %masked
 }
 
+; 64-bit, but with 32-bit output
+
+; Everything done in 64-bit, truncation happens last.
+define i32 @bextr64_32_b0(i64 %val, i64 %numskipbits, i8 %numlowbits) {
+; CHECK-LABEL: bextr64_32_b0:
+; CHECK:       // %bb.0:
+; CHECK-NEXT:    mov x9, #-1
+; CHECK-NEXT:    // kill: def $w2 killed $w2 def $x2
+; CHECK-NEXT:    lsr x8, x0, x1
+; CHECK-NEXT:    lsl x9, x9, x2
+; CHECK-NEXT:    bic w0, w8, w9
+; CHECK-NEXT:    ret
+  %shiftedval = lshr i64 %val, %numskipbits
+  %widenumlowbits = zext i8 %numlowbits to i64
+  %notmask = shl nsw i64 -1, %widenumlowbits
+  %mask = xor i64 %notmask, -1
+  %wideres = and i64 %shiftedval, %mask
+  %res = trunc i64 %wideres to i32
+  ret i32 %res
+}
+
+; Shifting happens in 64-bit, then truncation. Masking is 32-bit.
+define i32 @bextr64_32_b1(i64 %val, i64 %numskipbits, i8 %numlowbits) {
+; CHECK-LABEL: bextr64_32_b1:
+; CHECK:       // %bb.0:
+; CHECK-NEXT:    mov w9, #-1
+; CHECK-NEXT:    // kill: def $w2 killed $w2 def $x2
+; CHECK-NEXT:    lsr x8, x0, x1
+; CHECK-NEXT:    lsl w9, w9, w2
+; CHECK-NEXT:    bic w0, w8, w9
+; CHECK-NEXT:    ret
+  %shiftedval = lshr i64 %val, %numskipbits
+  %truncshiftedval = trunc i64 %shiftedval to i32
+  %widenumlowbits = zext i8 %numlowbits to i32
+  %notmask = shl nsw i32 -1, %widenumlowbits
+  %mask = xor i32 %notmask, -1
+  %res = and i32 %truncshiftedval, %mask
+  ret i32 %res
+}
+
+; Shifting happens in 64-bit. Mask is 32-bit, but extended to 64-bit.
+; Masking is 64-bit. Then truncation.
+define i32 @bextr64_32_b2(i64 %val, i64 %numskipbits, i8 %numlowbits) {
+; CHECK-LABEL: bextr64_32_b2:
+; CHECK:       // %bb.0:
+; CHECK-NEXT:    mov w9, #-1
+; CHECK-NEXT:    // kill: def $w2 killed $w2 def $x2
+; CHECK-NEXT:    lsr x8, x0, x1
+; CHECK-NEXT:    lsl w9, w9, w2
+; CHECK-NEXT:    bic w0, w8, w9
+; CHECK-NEXT:    ret
+  %shiftedval = lshr i64 %val, %numskipbits
+  %widenumlowbits = zext i8 %numlowbits to i32
+  %notmask = shl nsw i32 -1, %widenumlowbits
+  %mask = xor i32 %notmask, -1
+  %zextmask = zext i32 %mask to i64
+  %wideres = and i64 %shiftedval, %zextmask
+  %res = trunc i64 %wideres to i32
+  ret i32 %res
+}
+
 ; ---------------------------------------------------------------------------- ;
 ; Pattern c. 32-bit
 ; ---------------------------------------------------------------------------- ;
