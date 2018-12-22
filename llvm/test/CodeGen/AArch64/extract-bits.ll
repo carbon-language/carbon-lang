@@ -232,6 +232,64 @@ define i64 @bextr64_a4_commutative(i64 %val, i64 %numskipbits, i64 %numlowbits) 
   ret i64 %masked
 }
 
+; 64-bit, but with 32-bit output
+
+; Everything done in 64-bit, truncation happens last.
+define i32 @bextr64_32_a0(i64 %val, i64 %numskipbits, i64 %numlowbits) nounwind {
+; CHECK-LABEL: bextr64_32_a0:
+; CHECK:       // %bb.0:
+; CHECK-NEXT:    orr w9, wzr, #0x1
+; CHECK-NEXT:    lsl x9, x9, x2
+; CHECK-NEXT:    lsr x8, x0, x1
+; CHECK-NEXT:    sub w9, w9, #1 // =1
+; CHECK-NEXT:    and w0, w9, w8
+; CHECK-NEXT:    ret
+  %shifted = lshr i64 %val, %numskipbits
+  %onebit = shl i64 1, %numlowbits
+  %mask = add nsw i64 %onebit, -1
+  %masked = and i64 %mask, %shifted
+  %res = trunc i64 %masked to i32
+  ret i32 %res
+}
+
+; Shifting happens in 64-bit, then truncation. Masking is 32-bit.
+define i32 @bextr64_32_a1(i64 %val, i64 %numskipbits, i32 %numlowbits) nounwind {
+; CHECK-LABEL: bextr64_32_a1:
+; CHECK:       // %bb.0:
+; CHECK-NEXT:    orr w9, wzr, #0x1
+; CHECK-NEXT:    lsl w9, w9, w2
+; CHECK-NEXT:    lsr x8, x0, x1
+; CHECK-NEXT:    sub w9, w9, #1 // =1
+; CHECK-NEXT:    and w0, w9, w8
+; CHECK-NEXT:    ret
+  %shifted = lshr i64 %val, %numskipbits
+  %truncshifted = trunc i64 %shifted to i32
+  %onebit = shl i32 1, %numlowbits
+  %mask = add nsw i32 %onebit, -1
+  %masked = and i32 %mask, %truncshifted
+  ret i32 %masked
+}
+
+; Shifting happens in 64-bit. Mask is 32-bit, but extended to 64-bit.
+; Masking is 64-bit. Then truncation.
+define i32 @bextr64_32_a2(i64 %val, i64 %numskipbits, i32 %numlowbits) nounwind {
+; CHECK-LABEL: bextr64_32_a2:
+; CHECK:       // %bb.0:
+; CHECK-NEXT:    orr w9, wzr, #0x1
+; CHECK-NEXT:    lsl w9, w9, w2
+; CHECK-NEXT:    lsr x8, x0, x1
+; CHECK-NEXT:    sub w9, w9, #1 // =1
+; CHECK-NEXT:    and w0, w9, w8
+; CHECK-NEXT:    ret
+  %shifted = lshr i64 %val, %numskipbits
+  %onebit = shl i32 1, %numlowbits
+  %mask = add nsw i32 %onebit, -1
+  %zextmask = zext i32 %mask to i64
+  %masked = and i64 %zextmask, %shifted
+  %truncmasked = trunc i64 %masked to i32
+  ret i32 %truncmasked
+}
+
 ; ---------------------------------------------------------------------------- ;
 ; Pattern b. 32-bit
 ; ---------------------------------------------------------------------------- ;
@@ -659,6 +717,64 @@ define i64 @bextr64_c4_commutative(i64 %val, i64 %numskipbits, i64 %numlowbits) 
   ret i64 %masked
 }
 
+; 64-bit, but with 32-bit output
+
+; Everything done in 64-bit, truncation happens last.
+define i32 @bextr64_32_c0(i64 %val, i64 %numskipbits, i64 %numlowbits) nounwind {
+; CHECK-LABEL: bextr64_32_c0:
+; CHECK:       // %bb.0:
+; CHECK-NEXT:    neg x9, x2
+; CHECK-NEXT:    mov x10, #-1
+; CHECK-NEXT:    lsr x8, x0, x1
+; CHECK-NEXT:    lsr x9, x10, x9
+; CHECK-NEXT:    and w0, w9, w8
+; CHECK-NEXT:    ret
+  %shifted = lshr i64 %val, %numskipbits
+  %numhighbits = sub i64 64, %numlowbits
+  %mask = lshr i64 -1, %numhighbits
+  %masked = and i64 %mask, %shifted
+  %res = trunc i64 %masked to i32
+  ret i32 %res
+}
+
+; Shifting happens in 64-bit, then truncation. Masking is 32-bit.
+define i32 @bextr64_32_c1(i64 %val, i64 %numskipbits, i32 %numlowbits) nounwind {
+; CHECK-LABEL: bextr64_32_c1:
+; CHECK:       // %bb.0:
+; CHECK-NEXT:    neg w9, w2
+; CHECK-NEXT:    mov w10, #-1
+; CHECK-NEXT:    lsr x8, x0, x1
+; CHECK-NEXT:    lsr w9, w10, w9
+; CHECK-NEXT:    and w0, w9, w8
+; CHECK-NEXT:    ret
+  %shifted = lshr i64 %val, %numskipbits
+  %truncshifted = trunc i64 %shifted to i32
+  %numhighbits = sub i32 32, %numlowbits
+  %mask = lshr i32 -1, %numhighbits
+  %masked = and i32 %mask, %truncshifted
+  ret i32 %masked
+}
+
+; Shifting happens in 64-bit. Mask is 32-bit, but extended to 64-bit.
+; Masking is 64-bit. Then truncation.
+define i32 @bextr64_32_c2(i64 %val, i64 %numskipbits, i32 %numlowbits) nounwind {
+; CHECK-LABEL: bextr64_32_c2:
+; CHECK:       // %bb.0:
+; CHECK-NEXT:    neg w9, w2
+; CHECK-NEXT:    mov w10, #-1
+; CHECK-NEXT:    lsr x8, x0, x1
+; CHECK-NEXT:    lsr w9, w10, w9
+; CHECK-NEXT:    and w0, w9, w8
+; CHECK-NEXT:    ret
+  %shifted = lshr i64 %val, %numskipbits
+  %numhighbits = sub i32 32, %numlowbits
+  %mask = lshr i32 -1, %numhighbits
+  %zextmask = zext i32 %mask to i64
+  %masked = and i64 %zextmask, %shifted
+  %truncmasked = trunc i64 %masked to i32
+  ret i32 %truncmasked
+}
+
 ; ---------------------------------------------------------------------------- ;
 ; Pattern d. 32-bit.
 ; ---------------------------------------------------------------------------- ;
@@ -807,6 +923,43 @@ define i64 @bextr64_d3_load_indexzext(i64* %w, i8 %numskipbits, i8 %numlowbits) 
   %highbitscleared = shl i64 %shifted, %sh_prom
   %masked = lshr i64 %highbitscleared, %sh_prom
   ret i64 %masked
+}
+
+; 64-bit, but with 32-bit output
+
+; Everything done in 64-bit, truncation happens last.
+define i32 @bextr64_32_d0(i64 %val, i64 %numskipbits, i64 %numlowbits) nounwind {
+; CHECK-LABEL: bextr64_32_d0:
+; CHECK:       // %bb.0:
+; CHECK-NEXT:    lsr x8, x0, x1
+; CHECK-NEXT:    neg x9, x2
+; CHECK-NEXT:    lsl x8, x8, x9
+; CHECK-NEXT:    lsr x0, x8, x9
+; CHECK-NEXT:    // kill: def $w0 killed $w0 killed $x0
+; CHECK-NEXT:    ret
+  %shifted = lshr i64 %val, %numskipbits
+  %numhighbits = sub i64 64, %numlowbits
+  %highbitscleared = shl i64 %shifted, %numhighbits
+  %masked = lshr i64 %highbitscleared, %numhighbits
+  %res = trunc i64 %masked to i32
+  ret i32 %res
+}
+
+; Shifting happens in 64-bit, then truncation. Masking is 32-bit.
+define i32 @bextr64_32_d1(i64 %val, i64 %numskipbits, i32 %numlowbits) nounwind {
+; CHECK-LABEL: bextr64_32_d1:
+; CHECK:       // %bb.0:
+; CHECK-NEXT:    lsr x8, x0, x1
+; CHECK-NEXT:    neg w9, w2
+; CHECK-NEXT:    lsl w8, w8, w9
+; CHECK-NEXT:    lsr w0, w8, w9
+; CHECK-NEXT:    ret
+  %shifted = lshr i64 %val, %numskipbits
+  %truncshifted = trunc i64 %shifted to i32
+  %numhighbits = sub i32 32, %numlowbits
+  %highbitscleared = shl i32 %truncshifted, %numhighbits
+  %masked = lshr i32 %highbitscleared, %numhighbits
+  ret i32 %masked
 }
 
 ; ---------------------------------------------------------------------------- ;
