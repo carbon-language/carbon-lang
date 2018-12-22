@@ -8,6 +8,7 @@ group("default") {
     "//clang/lib/Driver",
     "//clang/lib/Frontend",
     "//clang/lib/Frontend/Rewrite",
+    "//clang/lib/FrontendTool",
     "//clang/lib/Index",
     "//clang/lib/Parse",
     "//clang/lib/Serialization",
