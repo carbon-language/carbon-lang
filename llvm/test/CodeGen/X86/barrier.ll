@@ -4,8 +4,7 @@
 define void @test() {
 ; CHECK-LABEL: test:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    xorl %eax, %eax
-; CHECK-NEXT:    lock orl %eax, (%esp)
+; CHECK-NEXT:    lock orl $0, (%esp)
 ; CHECK-NEXT:    retl
 	fence seq_cst
 	ret void
