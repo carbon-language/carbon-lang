@@ -764,7 +764,7 @@ void OrcMips64::writeResolverCode(uint8_t *ResolverMem, JITReentryFn ReentryFn,
       0xffb700a8,                     // 0x58: sd s7,168(sp)
       0xffb800b0,                     // 0x5c: sd t8,176(sp)
       0xffb900b8,                     // 0x60: sd t9,184(sp)
-      0xffbe00c0,                     // 0x64: sd s8,192(sp)
+      0xffbe00c0,                     // 0x64: sd fp,192(sp)
       0xffbf00c8,                     // 0x68: sd ra,200(sp)
 
       // Callback manager addr.
@@ -788,7 +788,7 @@ void OrcMips64::writeResolverCode(uint8_t *ResolverMem, JITReentryFn ReentryFn,
       0x0320f809,                     // 0xa4: jalr $t9
       0x00000000,                     // 0xa8: nop
       0xdfbf00c8,                     // 0xac: ld ra, 200(sp)
-      0xdfbe00c0,                     // 0xb0: ld s8, 192(sp)
+      0xdfbe00c0,                     // 0xb0: ld fp, 192(sp)
       0xdfb900b8,                     // 0xb4: ld t9, 184(sp)
       0xdfb800b0,                     // 0xb8: ld t8, 176(sp)
       0xdfb700a8,                     // 0xbc: ld s7, 168(sp)
