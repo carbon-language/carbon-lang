@@ -240,86 +240,18 @@ define <2 x i32> @cvt_v2f32_v2u32(<2 x float> %src) {
 define <32 x i8> @PR40146(<4 x i64> %x) {
 ; CHECK-LABEL: PR40146:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vpextrd $2, %xmm0, %eax
-; CHECK-NEXT:    movzbl %ah, %ecx
-; CHECK-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; CHECK-NEXT:    vpinsrb $0, %eax, %xmm1, %xmm2
-; CHECK-NEXT:    vpinsrb $2, %ecx, %xmm2, %xmm2
-; CHECK-NEXT:    movl %eax, %ecx
-; CHECK-NEXT:    shrl $16, %ecx
-; CHECK-NEXT:    vpinsrb $4, %ecx, %xmm2, %xmm2
-; CHECK-NEXT:    vpextrd $3, %xmm0, %ecx
-; CHECK-NEXT:    shrl $24, %eax
-; CHECK-NEXT:    vpinsrb $6, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    movzbl %ch, %eax
-; CHECK-NEXT:    vpinsrb $8, %ecx, %xmm2, %xmm2
-; CHECK-NEXT:    vpinsrb $10, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    movl %ecx, %eax
-; CHECK-NEXT:    shrl $16, %eax
-; CHECK-NEXT:    vpinsrb $12, %eax, %xmm2, %xmm2
-; CHECK-NEXT:    vmovd %xmm0, %eax
-; CHECK-NEXT:    shrl $24, %ecx
-; CHECK-NEXT:    vpinsrb $14, %ecx, %xmm2, %xmm2
-; CHECK-NEXT:    movzbl %ah, %ecx
-; CHECK-NEXT:    vpinsrb $0, %eax, %xmm1, %xmm1
-; CHECK-NEXT:    vpinsrb $2, %ecx, %xmm1, %xmm1
-; CHECK-NEXT:    movl %eax, %ecx
-; CHECK-NEXT:    shrl $16, %ecx
-; CHECK-NEXT:    vpinsrb $4, %ecx, %xmm1, %xmm1
-; CHECK-NEXT:    vpextrd $1, %xmm0, %ecx
-; CHECK-NEXT:    shrl $24, %eax
-; CHECK-NEXT:    vpinsrb $6, %eax, %xmm1, %xmm0
-; CHECK-NEXT:    movzbl %ch, %eax
-; CHECK-NEXT:    vpinsrb $8, %ecx, %xmm0, %xmm0
-; CHECK-NEXT:    vpinsrb $10, %eax, %xmm0, %xmm0
-; CHECK-NEXT:    movl %ecx, %eax
-; CHECK-NEXT:    shrl $16, %eax
-; CHECK-NEXT:    vpinsrb $12, %eax, %xmm0, %xmm0
-; CHECK-NEXT:    shrl $24, %ecx
-; CHECK-NEXT:    vpinsrb $14, %ecx, %xmm0, %xmm0
-; CHECK-NEXT:    vinsertf128 $1, %xmm2, %ymm0, %ymm0
+; CHECK-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; CHECK-NEXT:    vpmovzxbw {{.*#+}} xmm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,xmm0[4],zero,xmm0[5],zero,xmm0[6],zero,xmm0[7],zero
+; CHECK-NEXT:    vpmovzxbw {{.*#+}} xmm1 = xmm1[0],zero,xmm1[1],zero,xmm1[2],zero,xmm1[3],zero,xmm1[4],zero,xmm1[5],zero,xmm1[6],zero,xmm1[7],zero
+; CHECK-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
 ; CHECK-NEXT:    retl
 ;
 ; CHECK-WIDE-LABEL: PR40146:
 ; CHECK-WIDE:       ## %bb.0:
-; CHECK-WIDE-NEXT:    vpextrd $2, %xmm0, %eax
-; CHECK-WIDE-NEXT:    movzbl %ah, %ecx
-; CHECK-WIDE-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; CHECK-WIDE-NEXT:    vpinsrb $0, %eax, %xmm1, %xmm2
-; CHECK-WIDE-NEXT:    vpinsrb $2, %ecx, %xmm2, %xmm2
-; CHECK-WIDE-NEXT:    movl %eax, %ecx
-; CHECK-WIDE-NEXT:    shrl $16, %ecx
-; CHECK-WIDE-NEXT:    vpinsrb $4, %ecx, %xmm2, %xmm2
-; CHECK-WIDE-NEXT:    vpextrd $3, %xmm0, %ecx
-; CHECK-WIDE-NEXT:    shrl $24, %eax
-; CHECK-WIDE-NEXT:    vpinsrb $6, %eax, %xmm2, %xmm2
-; CHECK-WIDE-NEXT:    movzbl %ch, %eax
-; CHECK-WIDE-NEXT:    vpinsrb $8, %ecx, %xmm2, %xmm2
-; CHECK-WIDE-NEXT:    vpinsrb $10, %eax, %xmm2, %xmm2
-; CHECK-WIDE-NEXT:    movl %ecx, %eax
-; CHECK-WIDE-NEXT:    shrl $16, %eax
-; CHECK-WIDE-NEXT:    vpinsrb $12, %eax, %xmm2, %xmm2
-; CHECK-WIDE-NEXT:    vmovd %xmm0, %eax
-; CHECK-WIDE-NEXT:    shrl $24, %ecx
-; CHECK-WIDE-NEXT:    vpinsrb $14, %ecx, %xmm2, %xmm2
-; CHECK-WIDE-NEXT:    movzbl %ah, %ecx
-; CHECK-WIDE-NEXT:    vpinsrb $0, %eax, %xmm1, %xmm1
-; CHECK-WIDE-NEXT:    vpinsrb $2, %ecx, %xmm1, %xmm1
-; CHECK-WIDE-NEXT:    movl %eax, %ecx
-; CHECK-WIDE-NEXT:    shrl $16, %ecx
-; CHECK-WIDE-NEXT:    vpinsrb $4, %ecx, %xmm1, %xmm1
-; CHECK-WIDE-NEXT:    vpextrd $1, %xmm0, %ecx
-; CHECK-WIDE-NEXT:    shrl $24, %eax
-; CHECK-WIDE-NEXT:    vpinsrb $6, %eax, %xmm1, %xmm0
-; CHECK-WIDE-NEXT:    movzbl %ch, %eax
-; CHECK-WIDE-NEXT:    vpinsrb $8, %ecx, %xmm0, %xmm0
-; CHECK-WIDE-NEXT:    vpinsrb $10, %eax, %xmm0, %xmm0
-; CHECK-WIDE-NEXT:    movl %ecx, %eax
-; CHECK-WIDE-NEXT:    shrl $16, %eax
-; CHECK-WIDE-NEXT:    vpinsrb $12, %eax, %xmm0, %xmm0
-; CHECK-WIDE-NEXT:    shrl $24, %ecx
-; CHECK-WIDE-NEXT:    vpinsrb $14, %ecx, %xmm0, %xmm0
-; CHECK-WIDE-NEXT:    vinsertf128 $1, %xmm2, %ymm0, %ymm0
+; CHECK-WIDE-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; CHECK-WIDE-NEXT:    vpmovzxbw {{.*#+}} xmm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,xmm0[4],zero,xmm0[5],zero,xmm0[6],zero,xmm0[7],zero
+; CHECK-WIDE-NEXT:    vpmovzxbw {{.*#+}} xmm1 = xmm1[0],zero,xmm1[1],zero,xmm1[2],zero,xmm1[3],zero,xmm1[4],zero,xmm1[5],zero,xmm1[6],zero,xmm1[7],zero
+; CHECK-WIDE-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
 ; CHECK-WIDE-NEXT:    retl
   %perm = shufflevector <4 x i64> %x, <4 x i64> undef, <4 x i32> <i32 0, i32 undef, i32 1, i32 undef>
   %t1 = bitcast <4 x i64> %perm to <32 x i8>
