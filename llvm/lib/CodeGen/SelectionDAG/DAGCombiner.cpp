@@ -3731,13 +3731,12 @@ SDValue DAGCombiner::hoistLogicOpWithSameOpcodeHands(SDNode *N) {
     if (!N0.hasOneUse() && !N1.hasOneUse())
       return SDValue();
     // We need matching integer source types.
-    // Do not hoist logic op inside of a vector extend, since it may combine
-    // into a vsetcc.
-    // TODO: Should the vector check apply to truncate though?
-    if (VT.isVector() || XVT != Y.getValueType())
+    if (XVT != Y.getValueType())
       return SDValue();
-    // Don't create an illegal op during or after legalization.
-    if (LegalOperations && !TLI.isOperationLegal(LogicOpcode, XVT))
+    // Don't create an illegal op during or after legalization. Don't ever
+    // create an unsupported vector op.
+    if ((VT.isVector() || LegalOperations) &&
+        !TLI.isOperationLegalOrCustom(LogicOpcode, XVT))
       return SDValue();
     // Avoid infinite looping with PromoteIntBinOp.
     // TODO: Should we apply desirable/legal constraints to all opcodes?
