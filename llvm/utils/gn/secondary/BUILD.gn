@@ -1,7 +1,10 @@
 group("default") {
   deps = [
     ":clang",
+    "//clang/tools/clang-diff",
     "//clang/tools/clang-format",
+    "//clang/tools/clang-import-test",
+    "//clang/tools/diagtool",
     "//lld/test",
     "//llvm/tools/llvm-cat",
     "//llvm/tools/llvm-lto",
