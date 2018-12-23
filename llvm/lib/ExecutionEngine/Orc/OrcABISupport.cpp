@@ -604,19 +604,18 @@ void OrcMips32_Base::writeResolverCode(uint8_t *ResolverMem, JITReentryFn Reentr
       0x8fb1001c,                    // 0xd4: lw $s1,28($sp)
       0x8fb00018,                    // 0xd8: lw $s0,24($sp)
       0x8fa70014,                    // 0xdc: lw $a3,20($sp)
-      0x8fa70014,                    // 0xe0: lw $a3,20($sp)
-      0x8fa60010,                    // 0xe4: lw $a2,16($sp)
-      0x8fa5000c,                    // 0xe8: lw $a1,12($sp)
-      0x8fa40008,                    // 0xec: lw $a0,8($sp)
-      0x27bd0068,                    // 0xf4: addiu $sp,$sp,104
-      0x0300f825,                    // 0xf8: move $ra, $t8
-      0x00000000                     // 0xfc: jr $v0/v1
+      0x8fa60010,                    // 0xe0: lw $a2,16($sp)
+      0x8fa5000c,                    // 0xe4: lw $a1,12($sp)
+      0x8fa40008,                    // 0xe8: lw $a0,8($sp)
+      0x27bd0068,                    // 0xec: addiu $sp,$sp,104
+      0x0300f825,                    // 0xf0: move $ra, $t8
+      0x00000000                     // 0xf4: jr $v0/v1
   };
 
 
   const unsigned ReentryFnAddrOffset = 0x7c;  // JIT re-entry fn addr lui
   const unsigned CallbackMgrAddrOffset = 0x6c; // Callback manager addr lui
-  const unsigned offsett = 0xfc;
+  const unsigned offsett = 0xf4;
 
   memcpy(ResolverMem, ResolverCode, sizeof(ResolverCode));
 
