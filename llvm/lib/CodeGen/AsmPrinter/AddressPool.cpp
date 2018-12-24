@@ -27,12 +27,13 @@ unsigned AddressPool::getIndex(const MCSymbol *Sym, bool TLS) {
 
 void AddressPool::emitHeader(AsmPrinter &Asm, MCSection *Section) {
   static const uint8_t AddrSize = Asm.getDataLayout().getPointerSize();
-  uint64_t Length = sizeof(uint16_t) // version
-                  + sizeof(uint8_t)  // address_size
-                  + sizeof(uint8_t)  // segment_selector_size
-                  + AddrSize * Pool.size(); // entries
+  StringRef Prefix = "debug_addr_";
+  MCSymbol *BeginLabel = Asm.createTempSymbol(Prefix + "start");
+  EndLabel = Asm.createTempSymbol(Prefix + "end");
   Asm.OutStreamer->AddComment("Length of contribution");
-  Asm.emitInt32(Length); // TODO: Support DWARF64 format.
+  Asm.EmitLabelDifference(EndLabel, BeginLabel,
+                          4); // TODO: Support DWARF64 format.
+  Asm.OutStreamer->EmitLabel(BeginLabel);
   Asm.OutStreamer->AddComment("DWARF version number");
   Asm.emitInt16(Asm.getDwarfVersion());
   Asm.OutStreamer->AddComment("Address size");
@@ -67,4 +68,6 @@ void AddressPool::emit(AsmPrinter &Asm, MCSection *AddrSection) {
 
   for (const MCExpr *Entry : Entries)
     Asm.OutStreamer->EmitValue(Entry, Asm.getDataLayout().getPointerSize());
+
+  Asm.OutStreamer->EmitLabel(EndLabel);
 }
