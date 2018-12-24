@@ -18696,57 +18696,52 @@ static SDValue EmitTest(SDValue Op, unsigned X86CC, const SDLoc &dl,
       SDValue Op0 = ArithOp->getOperand(0);
       SDValue Op1 = ArithOp->getOperand(1);
       EVT VT = ArithOp.getValueType();
-      bool isAndn = isBitwiseNot(Op0) || isBitwiseNot(Op1);
-      bool isLegalAndnType = VT == MVT::i32 || VT == MVT::i64;
-      bool isProperAndn = isAndn && isLegalAndnType && Subtarget.hasBMI();
 
-      // If we cannot select an ANDN instruction, check if we can replace
-      // AND+IMM64 with a shift before giving up. This is possible for masks
-      // like 0xFF000000 or 0x00FFFFFF and if we care only about the zero flag.
-      if (!isProperAndn) {
-        if (!ZeroCheck)
-          break;
+      // Check if we can replace AND+IMM64 with a shift before giving up. This
+      // is possible for masks/ like 0xFF000000 or 0x00FFFFFF and if we care
+      // only about the zero flag.
+      if (!ZeroCheck)
+        break;
 
-        // And with cosntant should be canonicalized unless we're dealing
-        // with opaque constants.
-        assert((!isa<ConstantSDNode>(Op0) ||
-                (isa<ConstantSDNode>(Op1) &&
-                 (cast<ConstantSDNode>(Op0)->isOpaque() ||
-                  cast<ConstantSDNode>(Op1)->isOpaque()))) &&
-               "AND node isn't canonicalized");
-        auto *CN = dyn_cast<ConstantSDNode>(Op1);
-        if (!CN)
-          break;
+      // And with constant should be canonicalized unless we're dealing
+      // with opaque constants.
+      assert((!isa<ConstantSDNode>(Op0) ||
+              (isa<ConstantSDNode>(Op1) &&
+               (cast<ConstantSDNode>(Op0)->isOpaque() ||
+                cast<ConstantSDNode>(Op1)->isOpaque()))) &&
+             "AND node isn't canonicalized");
+      auto *CN = dyn_cast<ConstantSDNode>(Op1);
+      if (!CN)
+        break;
 
-        const APInt &Mask = CN->getAPIntValue();
-        if (Mask.isSignedIntN(ShiftToAndMaxMaskWidth))
-          break; // Prefer TEST instruction.
+      const APInt &Mask = CN->getAPIntValue();
+      if (Mask.isSignedIntN(ShiftToAndMaxMaskWidth))
+        break; // Prefer TEST instruction.
 
-        unsigned BitWidth = Mask.getBitWidth();
-        unsigned LeadingOnes = Mask.countLeadingOnes();
-        unsigned TrailingZeros = Mask.countTrailingZeros();
+      unsigned BitWidth = Mask.getBitWidth();
+      unsigned LeadingOnes = Mask.countLeadingOnes();
+      unsigned TrailingZeros = Mask.countTrailingZeros();
 
-        if (LeadingOnes + TrailingZeros == BitWidth) {
-          assert(TrailingZeros < VT.getSizeInBits() &&
-                 "Shift amount should be less than the type width");
-          SDValue ShAmt = DAG.getConstant(TrailingZeros, dl, MVT::i8);
-          Op = DAG.getNode(ISD::SRL, dl, VT, Op0, ShAmt);
-          break;
-        }
-
-        unsigned LeadingZeros = Mask.countLeadingZeros();
-        unsigned TrailingOnes = Mask.countTrailingOnes();
-
-        if (LeadingZeros + TrailingOnes == BitWidth) {
-          assert(LeadingZeros < VT.getSizeInBits() &&
-                 "Shift amount should be less than the type width");
-          SDValue ShAmt = DAG.getConstant(LeadingZeros, dl, MVT::i8);
-          Op = DAG.getNode(ISD::SHL, dl, VT, Op0, ShAmt);
-          break;
-        }
-
+      if (LeadingOnes + TrailingZeros == BitWidth) {
+        assert(TrailingZeros < VT.getSizeInBits() &&
+               "Shift amount should be less than the type width");
+        SDValue ShAmt = DAG.getConstant(TrailingZeros, dl, MVT::i8);
+        Op = DAG.getNode(ISD::SRL, dl, VT, Op0, ShAmt);
         break;
       }
+
+      unsigned LeadingZeros = Mask.countLeadingZeros();
+      unsigned TrailingOnes = Mask.countTrailingOnes();
+
+      if (LeadingZeros + TrailingOnes == BitWidth) {
+        assert(LeadingZeros < VT.getSizeInBits() &&
+               "Shift amount should be less than the type width");
+        SDValue ShAmt = DAG.getConstant(LeadingZeros, dl, MVT::i8);
+        Op = DAG.getNode(ISD::SHL, dl, VT, Op0, ShAmt);
+        break;
+      }
+
+      break;
     }
     LLVM_FALLTHROUGH;
   case ISD::SUB:

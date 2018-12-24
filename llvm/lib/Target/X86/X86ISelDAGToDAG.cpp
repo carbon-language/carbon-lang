@@ -921,6 +921,30 @@ void X86DAGToDAGISel::PostprocessISelDAG() {
         MadeChange = true;
         continue;
       }
+      if (N0Opc == X86::AND8rm || N0Opc == X86::AND16rm ||
+          N0Opc == X86::AND32rm || N0Opc == X86::AND64rm) {
+        unsigned NewOpc;
+        switch (N0Opc) {
+        case X86::AND8rm:  NewOpc = X86::TEST8mr; break;
+        case X86::AND16rm: NewOpc = X86::TEST16mr; break;
+        case X86::AND32rm: NewOpc = X86::TEST32mr; break;
+        case X86::AND64rm: NewOpc = X86::TEST64mr; break;
+        }
+
+        // Need to swap the memory and register operand.
+        SDValue Ops[] = { And.getOperand(1),
+                          And.getOperand(2),
+                          And.getOperand(3),
+                          And.getOperand(4),
+                          And.getOperand(5),
+                          And.getOperand(0),
+                          And.getOperand(6)  /* Chain */ };
+        MachineSDNode *Test = CurDAG->getMachineNode(NewOpc, SDLoc(N),
+                                                     MVT::i32, MVT::Other, Ops);
+        ReplaceUses(N, Test);
+        MadeChange = true;
+        continue;
+      }
     }
 
     // Attempt to remove vectors moves that were inserted to zero upper bits.
