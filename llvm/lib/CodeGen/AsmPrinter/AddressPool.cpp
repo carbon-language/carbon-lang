@@ -24,12 +24,11 @@ unsigned AddressPool::getIndex(const MCSymbol *Sym, bool TLS) {
   return IterBool.first->second.Number;
 }
 
-
-void AddressPool::emitHeader(AsmPrinter &Asm, MCSection *Section) {
+MCSymbol *AddressPool::emitHeader(AsmPrinter &Asm, MCSection *Section) {
   static const uint8_t AddrSize = Asm.getDataLayout().getPointerSize();
   StringRef Prefix = "debug_addr_";
   MCSymbol *BeginLabel = Asm.createTempSymbol(Prefix + "start");
-  EndLabel = Asm.createTempSymbol(Prefix + "end");
+  MCSymbol *EndLabel = Asm.createTempSymbol(Prefix + "end");
   Asm.OutStreamer->AddComment("Length of contribution");
   Asm.EmitLabelDifference(EndLabel, BeginLabel,
                           4); // TODO: Support DWARF64 format.
@@ -40,6 +39,8 @@ void AddressPool::emitHeader(AsmPrinter &Asm, MCSection *Section) {
   Asm.emitInt8(AddrSize);
   Asm.OutStreamer->AddComment("Segment selector size");
   Asm.emitInt8(0); // TODO: Support non-zero segment_selector_size.
+
+  return EndLabel;
 }
 
 // Emit addresses into the section given.
@@ -50,8 +51,10 @@ void AddressPool::emit(AsmPrinter &Asm, MCSection *AddrSection) {
   // Start the dwarf addr section.
   Asm.OutStreamer->SwitchSection(AddrSection);
 
+  MCSymbol *EndLabel = nullptr;
+
   if (Asm.getDwarfVersion() >= 5)
-    emitHeader(Asm, AddrSection);
+    EndLabel = emitHeader(Asm, AddrSection);
 
   // Define the symbol that marks the start of the contribution.
   // It is referenced via DW_AT_addr_base.
@@ -69,5 +72,6 @@ void AddressPool::emit(AsmPrinter &Asm, MCSection *AddrSection) {
   for (const MCExpr *Entry : Entries)
     Asm.OutStreamer->EmitValue(Entry, Asm.getDataLayout().getPointerSize());
 
-  Asm.OutStreamer->EmitLabel(EndLabel);
+  if (EndLabel)
+    Asm.OutStreamer->EmitLabel(EndLabel);
 }

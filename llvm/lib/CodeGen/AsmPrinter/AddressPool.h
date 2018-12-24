@@ -30,8 +30,6 @@ class AddressPool {
   };
   DenseMap<const MCSymbol *, AddressPoolEntry> Pool;
 
-  MCSymbol *EndLabel;
-
   /// Record whether the AddressPool has been queried for an address index since
   /// the last "resetUsedFlag" call. Used to implement type unit fallback - a
   /// type that references addresses cannot be placed in a type unit when using
@@ -57,7 +55,7 @@ public:
   void setLabel(MCSymbol *Sym) { AddressTableBaseSym = Sym; }
 
 private:
-  void emitHeader(AsmPrinter &Asm, MCSection *Section);
+  MCSymbol *emitHeader(AsmPrinter &Asm, MCSection *Section);
 
   /// Symbol designates the start of the contribution to the address table.
   MCSymbol *AddressTableBaseSym = nullptr;
