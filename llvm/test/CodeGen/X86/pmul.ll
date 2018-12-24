@@ -1388,29 +1388,13 @@ define <2 x i64> @pmuldq_square(<2 x i64> %x) {
 ;
 ; SSE41-LABEL: pmuldq_square:
 ; SSE41:       # %bb.0:
-; SSE41-NEXT:    movdqa %xmm0, %xmm1
-; SSE41-NEXT:    psllq $32, %xmm1
-; SSE41-NEXT:    psrad $31, %xmm1
-; SSE41-NEXT:    pblendw {{.*#+}} xmm1 = xmm0[0,1],xmm1[2,3],xmm0[4,5],xmm1[6,7]
-; SSE41-NEXT:    pmuldq %xmm1, %xmm1
-; SSE41-NEXT:    movdqa %xmm1, %xmm0
+; SSE41-NEXT:    pmuldq %xmm0, %xmm0
 ; SSE41-NEXT:    retq
 ;
-; AVX2-LABEL: pmuldq_square:
-; AVX2:       # %bb.0:
-; AVX2-NEXT:    vpsllq $32, %xmm0, %xmm1
-; AVX2-NEXT:    vpsrad $31, %xmm1, %xmm1
-; AVX2-NEXT:    vpblendd {{.*#+}} xmm0 = xmm0[0],xmm1[1],xmm0[2],xmm1[3]
-; AVX2-NEXT:    vpmuldq %xmm0, %xmm0, %xmm0
-; AVX2-NEXT:    retq
-;
-; AVX512-LABEL: pmuldq_square:
-; AVX512:       # %bb.0:
-; AVX512-NEXT:    vpsllq $32, %xmm0, %xmm0
-; AVX512-NEXT:    vpsraq $32, %zmm0, %zmm0
-; AVX512-NEXT:    vpmuldq %xmm0, %xmm0, %xmm0
-; AVX512-NEXT:    vzeroupper
-; AVX512-NEXT:    retq
+; AVX-LABEL: pmuldq_square:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vpmuldq %xmm0, %xmm0, %xmm0
+; AVX-NEXT:    retq
   %1 = shl <2 x i64> %x, <i64 32, i64 32>
   %2 = ashr exact <2 x i64> %1, <i64 32, i64 32>
   %3 = mul nsw <2 x i64> %2, %2
@@ -1418,24 +1402,13 @@ define <2 x i64> @pmuldq_square(<2 x i64> %x) {
 }
 
 define <2 x i64> @pmuludq_square(<2 x i64> %x) {
-; SSE2-LABEL: pmuludq_square:
-; SSE2:       # %bb.0:
-; SSE2-NEXT:    pand {{.*}}(%rip), %xmm0
-; SSE2-NEXT:    pmuludq %xmm0, %xmm0
-; SSE2-NEXT:    retq
-;
-; SSE41-LABEL: pmuludq_square:
-; SSE41:       # %bb.0:
-; SSE41-NEXT:    pxor %xmm1, %xmm1
-; SSE41-NEXT:    pblendw {{.*#+}} xmm1 = xmm0[0,1],xmm1[2,3],xmm0[4,5],xmm1[6,7]
-; SSE41-NEXT:    pmuludq %xmm1, %xmm1
-; SSE41-NEXT:    movdqa %xmm1, %xmm0
-; SSE41-NEXT:    retq
+; SSE-LABEL: pmuludq_square:
+; SSE:       # %bb.0:
+; SSE-NEXT:    pmuludq %xmm0, %xmm0
+; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: pmuludq_square:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; AVX-NEXT:    vpblendd {{.*#+}} xmm0 = xmm0[0],xmm1[1],xmm0[2],xmm1[3]
 ; AVX-NEXT:    vpmuludq %xmm0, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %1 = and <2 x i64> %x, <i64 4294967295, i64 4294967295>
