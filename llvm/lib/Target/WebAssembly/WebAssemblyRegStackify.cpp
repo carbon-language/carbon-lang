@@ -414,7 +414,6 @@ static bool OneUseDominatesOtherUses(unsigned Reg, const MachineOperand &OneUse,
     if (UseVNI != OneUseVNI)
       continue;
 
-    const MachineInstr *OneUseInst = OneUse.getParent();
     if (UseInst == OneUseInst) {
       // Another use in the same instruction. We need to ensure that the one
       // selected use happens "before" it.
