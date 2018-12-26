@@ -59,6 +59,11 @@ test0:
     end_block            # default jumps here.
     i32.const 3
     end_block            # "switch" exit.
+    #if                  # These are not in tablegen defs yet..
+    #if
+    #end_if
+    #else
+    #end_if
     f32x4.add
     # Test correct parsing of instructions with / and : in them:
     # TODO: enable once instruction has been added.
@@ -129,6 +134,11 @@ test0:
 # CHECK-NEXT:      end_block           # label3:
 # CHECK-NEXT:      i32.const 3
 # CHECK-NEXT:      end_block           # label2:
+# DONT-CHECK-NEXT:      if
+# DONT-CHECK-NEXT:      if
+# DONT-CHECK-NEXT:      end_if
+# DONT-CHECK-NEXT:      else
+# DONT-CHECK-NEXT:      end_if
 # CHECK-NEXT:      f32x4.add
 # CHECK-NEXT:      i32.trunc_s/f32
 # CHECK-NEXT:      try
