@@ -83,9 +83,9 @@ UseErrorDetails &UseErrorDetails::add_occurrence(
   return *this;
 }
 
-GenericDetails::GenericDetails(const listType &specificProcs) {
+GenericDetails::GenericDetails(const SymbolList &specificProcs) {
   for (const auto *proc : specificProcs) {
-    add_specificProc(proc);
+    add_specificProc(*proc);
   }
 }
 
@@ -388,7 +388,14 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
           [&](const ProcBindingDetails &x) {
             os << " => " << x.symbol().name();
           },
-          [&](const GenericBindingDetails &) { /* TODO */ },
+          [&](const GenericBindingDetails &x) {
+            os << " =>";
+            char sep{' '};
+            for (const auto *proc : x.specificProcs()) {
+              os << sep << proc->name().ToString();
+              sep = ',';
+            }
+          },
           [&](const FinalProcDetails &) {},
           [&](const TypeParamDetails &x) {
             if (x.type()) {

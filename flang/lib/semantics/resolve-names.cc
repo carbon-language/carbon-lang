@@ -493,8 +493,6 @@ public:
   void Post(const parser::InterfaceStmt &);
   void Post(const parser::EndInterfaceStmt &);
   bool Pre(const parser::GenericSpec &);
-  bool Pre(const parser::TypeBoundGenericStmt &);
-  void Post(const parser::TypeBoundGenericStmt &);
   bool Pre(const parser::ProcedureStmt &);
   void Post(const parser::GenericStmt &);
 
@@ -624,6 +622,7 @@ public:
   void Post(const parser::TypeBoundProcedureStmt::WithoutInterface &);
   void Post(const parser::TypeBoundProcedureStmt::WithInterface &);
   void Post(const parser::FinalProcedureStmt &);
+  bool Pre(const parser::TypeBoundGenericStmt &);
   bool Pre(const parser::AllocateStmt &);
   void Post(const parser::AllocateStmt &);
   bool Pre(const parser::StructureConstructor &);
@@ -636,6 +635,7 @@ protected:
   // Return pointer to the new symbol, or nullptr on error.
   Symbol *DeclareConstructEntity(const parser::Name &);
   bool CheckUseError(const parser::Name &);
+  void CheckAccessibility(const parser::Name &, bool, const Symbol &);
 
 private:
   // The attribute corresponding to the statement containing an ObjectDecl
@@ -666,7 +666,8 @@ private:
   const Symbol *ResolveDerivedType(const parser::Name * = nullptr);
   bool CanBeTypeBoundProc(const Symbol &);
   Symbol *FindExplicitInterface(const parser::Name &);
-  bool MakeTypeSymbol(const parser::Name &, Details &&);
+  const Symbol *FindTypeSymbol(const parser::Name &);
+  Symbol *MakeTypeSymbol(const parser::Name &, Details &&);
   bool OkToAddComponent(const parser::Name &, bool isParentComp = false);
 
   // Declare an object or procedure entity.
@@ -1742,7 +1743,7 @@ void InterfaceVisitor::Post(const parser::EndInterfaceStmt &) {
   isAbstract_ = false;
 }
 
-// Create a symbol for the name name in this GenericSpec, if any.
+// Create a symbol for the name in this GenericSpec, if any.
 bool InterfaceVisitor::Pre(const parser::GenericSpec &x) {
   genericName_ = GetGenericSpecName(x);
   if (!genericName_) {
@@ -1795,13 +1796,6 @@ bool InterfaceVisitor::Pre(const parser::GenericSpec &x) {
   }
   CHECK(genericName_->symbol == genericSymbol);
   return false;
-}
-
-bool InterfaceVisitor::Pre(const parser::TypeBoundGenericStmt &) {
-  return true;
-}
-void InterfaceVisitor::Post(const parser::TypeBoundGenericStmt &) {
-  // TODO: TypeBoundGenericStmt
 }
 
 bool InterfaceVisitor::Pre(const parser::ProcedureStmt &x) {
@@ -1876,7 +1870,7 @@ void InterfaceVisitor::ResolveSpecificsInGeneric(Symbol &generic) {
           name->source, generic.name());
       continue;
     }
-    details.add_specificProc(symbol);
+    details.add_specificProc(*symbol);
   }
   specificProcs_.erase(range.first, range.second);
 }
@@ -2015,8 +2009,8 @@ void SubprogramVisitor::Post(const parser::FunctionSubprogram &) {
 bool SubprogramVisitor::Pre(const parser::InterfaceBody::Subroutine &x) {
   const auto &name{std::get<parser::Name>(
       std::get<parser::Statement<parser::SubroutineStmt>>(x.t).statement.t)};
-  return BeginSubprogram(
-      name, Symbol::Flag::Subroutine, /*hasModulePrefix*/ false, std::nullopt);
+  return BeginSubprogram(name, Symbol::Flag::Subroutine,
+      /*hasModulePrefix*/ false, std::nullopt);
 }
 void SubprogramVisitor::Post(const parser::InterfaceBody::Subroutine &) {
   EndSubprogram();
@@ -2152,7 +2146,7 @@ Symbol &SubprogramVisitor::PushSubprogramScope(
       symbol->attrs().set(Attr::EXTERNAL);
     }
     if (isGeneric()) {
-      GetGenericDetails().add_specificProc(symbol);
+      GetGenericDetails().add_specificProc(*symbol);
     }
     implicitRules().set_inheritFromParent(false);
   }
@@ -2210,6 +2204,16 @@ bool DeclarationVisitor::CheckUseError(const parser::Name &name) {
         name.ToString().data(), module->name().ToString().data());
   }
   return true;
+}
+
+// Report error if accessibility of symbol doesn't match isPrivate.
+void DeclarationVisitor::CheckAccessibility(
+    const parser::Name &name, bool isPrivate, const Symbol &symbol) {
+  if (symbol.attrs().test(Attr::PRIVATE) != isPrivate) {
+    Say2(name,
+        "'%s' does not have the same accessibility as its previous declaration"_err_en_US,
+        symbol, "Previous declaration of '%s'"_en_US);
+  }
 }
 
 void DeclarationVisitor::Post(const parser::DimensionStmt::Declaration &x) {
@@ -2647,6 +2651,62 @@ void DeclarationVisitor::Post(const parser::FinalProcedureStmt &x) {
   }
 }
 
+bool DeclarationVisitor::Pre(const parser::TypeBoundGenericStmt &x) {
+  const auto &genericSpec{
+      std::get<common::Indirection<parser::GenericSpec>>(x.t)};
+  const auto *genericName{GetGenericSpecName(*genericSpec)};
+  if (!genericName) {
+    return false;
+  }
+  bool isPrivate{derivedTypeInfo_.privateBindings};
+  if (auto &accessSpec{std::get<std::optional<parser::AccessSpec>>(x.t)}) {
+    isPrivate = accessSpec->v == parser::AccessSpec::Kind::Private;
+  }
+  const SymbolList *inheritedProcs{nullptr};  // specific procs from parent type
+  auto *genericSymbol{FindInScope(currScope(), *genericName)};
+  if (genericSymbol) {
+    if (!genericSymbol->has<GenericBindingDetails>()) {
+      genericSymbol = nullptr;  // MakeTypeSymbol will report the error below
+    }
+  } else if (const auto *inheritedSymbol{FindTypeSymbol(*genericName)}) {
+    // look in parent types:
+    if (inheritedSymbol->has<GenericBindingDetails>()) {
+      inheritedProcs =
+          &inheritedSymbol->get<GenericBindingDetails>().specificProcs();
+      CheckAccessibility(*genericName, isPrivate, *inheritedSymbol);
+    }
+  }
+  if (genericSymbol) {
+    CheckAccessibility(*genericName, isPrivate, *genericSymbol);
+  } else {
+    genericSymbol = MakeTypeSymbol(*genericName, GenericBindingDetails{});
+    if (!genericSymbol) {
+      return false;
+    }
+    if (isPrivate) {
+      genericSymbol->attrs().set(Attr::PRIVATE);
+    }
+  }
+  auto &details{genericSymbol->get<GenericBindingDetails>()};
+  if (inheritedProcs) {
+    details.add_specificProcs(*inheritedProcs);
+  }
+  for (const auto &bindingName : std::get<std::list<parser::Name>>(x.t)) {
+    const auto *symbol{FindTypeSymbol(bindingName)};
+    if (!symbol) {
+      Say(bindingName,
+          "Binding name '%s' not found in this derived type"_err_en_US);
+    } else if (!symbol->has<ProcBindingDetails>()) {
+      Say2(bindingName,
+          "'%s' is not the name of a specific binding of this type"_err_en_US,
+          *symbol, "Declaration of '%s'"_en_US);
+    } else {
+      details.add_specificProc(*symbol);
+    }
+  }
+  return false;
+}
+
 bool DeclarationVisitor::Pre(const parser::AllocateStmt &) {
   BeginDeclTypeSpec();
   return true;
@@ -2769,9 +2829,24 @@ Symbol *DeclarationVisitor::FindExplicitInterface(const parser::Name &name) {
   return symbol;
 }
 
+// Find a component by name in the current derived type or its parents.
+const Symbol *DeclarationVisitor::FindTypeSymbol(const parser::Name &name) {
+  for (const Scope *scope{&currScope()};;) {
+    CHECK(scope->kind() == Scope::Kind::DerivedType);
+    if (const auto *symbol{FindInScope(*scope, name)}) {
+      return symbol;
+    }
+    const auto *extends{scope->symbol()->get<DerivedTypeDetails>().extends()};
+    if (!extends) {
+      return nullptr;
+    }
+    scope = extends->scope();
+  }
+}
+
 // Create a symbol for a type parameter, component, or procedure binding in
 // the current derived type scope. Return false on error.
-bool DeclarationVisitor::MakeTypeSymbol(
+Symbol *DeclarationVisitor::MakeTypeSymbol(
     const parser::Name &name, Details &&details) {
   Scope &derivedType{currScope()};
   CHECK(derivedType.kind() == Scope::Kind::DerivedType);
@@ -2780,7 +2855,7 @@ bool DeclarationVisitor::MakeTypeSymbol(
         "Type parameter, component, or procedure binding '%s'"
         " already defined in this type"_err_en_US,
         *symbol, "Previous definition of '%s'"_en_US);
-    return false;
+    return nullptr;
   } else {
     auto attrs{GetAttrs()};
     // Apply binding-private-stmt if present and this is a procedure binding
@@ -2789,8 +2864,7 @@ bool DeclarationVisitor::MakeTypeSymbol(
         std::holds_alternative<ProcBindingDetails>(details)) {
       attrs.set(Attr::PRIVATE);
     }
-    MakeSymbol(name, attrs, details);
-    return true;
+    return &MakeSymbol(name, attrs, details);
   }
 }
 

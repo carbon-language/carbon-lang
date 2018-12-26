@@ -121,13 +121,19 @@ std::string ModFileWriter::GetAsString(const Symbol &symbol) {
 
 // Put out the visible symbols from scope.
 void ModFileWriter::PutSymbols(const Scope &scope) {
-  bool didContains{false};
+  std::stringstream typeBindings;  // stuff after CONTAINS in derived type
   for (const auto *symbol : CollectSymbols(scope)) {
-    PutSymbol(*symbol, didContains);
+    PutSymbol(typeBindings, *symbol);
+  }
+  if (auto str{typeBindings.str()}; !str.empty()) {
+    decls_ << "contains\n" << str;
   }
 }
 
-void ModFileWriter::PutSymbol(const Symbol &symbol, bool &didContains) {
+// Emit a symbol to decls_, except for bindings in a derived type (type-bound
+// procedures, type-bound generics, final procedures) which go to typeBindings.
+void ModFileWriter::PutSymbol(
+    std::stringstream &typeBindings, const Symbol &symbol) {
   std::visit(
       common::visitors{
           [&](const ModuleDetails &) { /* should be current module */ },
@@ -138,28 +144,25 @@ void ModFileWriter::PutSymbol(const Symbol &symbol, bool &didContains) {
           [](const UseErrorDetails &) {},
           [&](const ProcBindingDetails &x) {
             bool deferred{symbol.attrs().test(Attr::DEFERRED)};
-            if (!didContains) {
-              didContains = true;
-              decls_ << "contains\n";
-            }
-            decls_ << "procedure";
+            typeBindings << "procedure";
             if (deferred) {
-              PutLower(decls_ << '(', x.symbol()) << ')';
+              PutLower(typeBindings << '(', x.symbol()) << ')';
             }
-            PutAttrs(decls_, symbol.attrs(), ","s, ""s);
-            PutLower(decls_ << "::", symbol);
+            PutAttrs(typeBindings, symbol.attrs(), ","s, ""s);
+            PutLower(typeBindings << "::", symbol);
             if (!deferred && x.symbol().name() != symbol.name()) {
-              PutLower(decls_ << "=>", x.symbol());
+              PutLower(typeBindings << "=>", x.symbol());
             }
-            decls_ << '\n';
+            typeBindings << '\n';
           },
-          [](const GenericBindingDetails &) { /*TODO*/ },
-          [&](const FinalProcDetails &) {
-            if (!didContains) {
-              didContains = true;
-              decls_ << "contains\n";
+          [&](const GenericBindingDetails &x) {
+            for (const auto *proc : x.specificProcs()) {
+              PutLower(typeBindings << "generic::", symbol);
+              PutLower(typeBindings << "=>", *proc) << '\n';
             }
-            PutLower(decls_ << "final::", symbol) << '\n';
+          },
+          [&](const FinalProcDetails &) {
+            PutLower(typeBindings << "final::", symbol) << '\n';
           },
           [](const HostAssocDetails &) {},
           [](const MiscDetails &) {},
