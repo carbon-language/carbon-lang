@@ -38,11 +38,6 @@ endif()
 # Prevent clang from generating libc calls.
 append_list_if(COMPILER_RT_HAS_FFREESTANDING_FLAG -ffreestanding MSAN_RTL_CFLAGS)
 
-# Tracking down https://bugs.llvm.org/show_bug.cgi?id=40162
-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-  list(APPEND MSAN_RTL_CFLAGS -fno-optimize-sibling-calls)
-endif()
-
 set(MSAN_RUNTIME_LIBRARIES)
 
 # Static runtime library.
