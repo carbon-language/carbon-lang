@@ -285,13 +285,21 @@ AsanThread *CreateMainThread() {
   return main_thread;
 }
 
+static bool StackLimitsAreAvailable() {
+#if SANITIZER_WINDOWS
+  return true;
+#else
+  return MemoryMappingLayout::IsAvailable();
+#endif
+}
+
 // This implementation doesn't use the argument, which is just passed down
 // from the caller of Init (which see, above).  It's only there to support
 // OS-specific implementations that need more information passed through.
 void AsanThread::SetThreadStackAndTls(const InitOptions *options) {
   DCHECK_EQ(options, nullptr);
   // If this process is "init" (pid 1), /proc may not be mounted yet.
-  if (!start_routine_ && !MemoryMappingLayout::IsAvailable()) {
+  if (!start_routine_ && !StackLimitsAreAvailable()) {
     stack_top_ = stack_bottom_ = 0;
     tls_begin_ = tls_end_ = 0;
   } else {
