@@ -35067,7 +35067,8 @@ static SDValue combineMulToPMULDQ(SDNode *N, SelectionDAG &DAG,
 
   // Only support vXi64 vectors.
   if (!VT.isVector() || VT.getVectorElementType() != MVT::i64 ||
-      !DAG.getTargetLoweringInfo().isTypeLegal(VT))
+      VT.getVectorNumElements() < 2 ||
+      !isPowerOf2_32(VT.getVectorNumElements()))
     return SDValue();
 
   SDValue N0 = N->getOperand(0);
