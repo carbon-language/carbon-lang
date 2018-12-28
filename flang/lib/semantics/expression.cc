@@ -27,11 +27,17 @@
 #include <iostream>  // TODO pmk remove soon
 #include <optional>
 
-using namespace Fortran::parser::literals;
-
 // Typedef for optional generic expressions (ubiquitous in this file)
 using MaybeExpr =
     std::optional<Fortran::evaluate::Expr<Fortran::evaluate::SomeType>>;
+
+namespace Fortran::parser {
+bool SourceLocationFindingVisitor::Pre(const Expr &x) {
+  source = x.source;
+  return false;
+}
+void SourceLocationFindingVisitor::Post(const CharBlock &at) { source = at; }
+}
 
 // Much of the code that implements semantic analysis of expressions is
 // tightly coupled with their typed representations in lib/evaluate,
@@ -39,61 +45,6 @@ using MaybeExpr =
 namespace Fortran::evaluate {
 
 using common::TypeCategory;
-
-// Constraint checking
-void ExpressionAnalysisContext::CheckConstraints(MaybeExpr &expr) {
-  if (inner_ != nullptr) {
-    inner_->CheckConstraints(expr);
-  }
-  if (constraint_ != nullptr && expr.has_value()) {
-    if (!(this->*constraint_)(*expr)) {
-      expr.reset();
-    }
-  }
-}
-
-bool ExpressionAnalysisContext::ScalarConstraint(Expr<SomeType> &expr) {
-  int rank{expr.Rank()};
-  if (rank == 0) {
-    return true;
-  }
-  Say("expression must be scalar, but has rank %d"_err_en_US, rank);
-  return false;
-}
-
-bool ExpressionAnalysisContext::ConstantConstraint(Expr<SomeType> &expr) {
-  expr = Fold(context_.foldingContext(), std::move(expr));
-  if (IsConstant(expr)) {
-    return true;
-  }
-  Say("expression must be constant"_err_en_US);
-  return false;
-}
-
-bool ExpressionAnalysisContext::IntegerConstraint(Expr<SomeType> &expr) {
-  if (std::holds_alternative<Expr<SomeInteger>>(expr.u)) {
-    return true;
-  }
-  Say("expression must be INTEGER"_err_en_US);
-  return false;
-}
-
-bool ExpressionAnalysisContext::LogicalConstraint(Expr<SomeType> &expr) {
-  if (std::holds_alternative<Expr<SomeLogical>>(expr.u)) {
-    return true;
-  }
-  Say("expression must be LOGICAL"_err_en_US);
-  return false;
-}
-
-bool ExpressionAnalysisContext::DefaultCharConstraint(Expr<SomeType> &expr) {
-  if (auto *charExpr{std::get_if<Expr<SomeCharacter>>(&expr.u)}) {
-    return charExpr->GetKind() ==
-        context_.defaultKinds().GetDefaultKind(TypeCategory::Character);
-  }
-  Say("expression must be default CHARACTER"_err_en_US);
-  return false;
-}
 
 // If a generic expression simply wraps a DataRef, extract it.
 // TODO: put in tools.h?
@@ -1466,13 +1417,9 @@ MaybeExpr ExpressionAnalysisContext::Analyze(const parser::Expr &expr) {
     // Analyze the expression in a specified source position context for better
     // error reporting.
     auto save{context_.foldingContext().messages.SetLocation(expr.source)};
-    MaybeExpr result{AnalyzeExpr(*this, expr.u)};
-    CheckConstraints(result);
-    return result;
+    return AnalyzeExpr(*this, expr.u);
   } else {
-    MaybeExpr result{AnalyzeExpr(*this, expr.u)};
-    CheckConstraints(result);
-    return result;
+    return AnalyzeExpr(*this, expr.u);
   }
 }
 }

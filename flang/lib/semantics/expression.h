@@ -18,18 +18,34 @@
 #include "semantics.h"
 #include "../common/indirection.h"
 #include "../evaluate/expression.h"
+#include "../evaluate/tools.h"
 #include "../evaluate/type.h"
+#include "../parser/parse-tree-visitor.h"
+#include "../parser/parse-tree.h"
 #include <optional>
 #include <variant>
 
+using namespace Fortran::parser::literals;
+
 namespace Fortran::parser {
-struct Expr;
-struct Program;
-template<typename> struct Scalar;
-template<typename> struct Integer;
-template<typename> struct Constant;
-template<typename> struct Logical;
-template<typename> struct DefaultChar;
+struct SourceLocationFindingVisitor {
+  template<typename A> bool Pre(const A &) { return true; }
+  template<typename A> void Post(const A &) {}
+  bool Pre(const Expr &);
+  template<typename A> bool Pre(const Statement<A> &stmt) {
+    source = stmt.source;
+    return false;
+  }
+  void Post(const CharBlock &);
+
+  CharBlock source;
+};
+
+template<typename A> CharBlock FindSourceLocation(const A &x) {
+  SourceLocationFindingVisitor visitor;
+  Walk(x, visitor);
+  return visitor.source;
+}
 }
 
 // The expression semantic analysis code has its implementation in
@@ -45,21 +61,14 @@ template<typename> struct DefaultChar;
 // The ExpressionAnalysisContext wraps a SemanticsContext reference
 // and implements constraint checking on expressions using the
 // parse tree node wrappers that mirror the grammar annotations used
-// in the Fortran standard (i.e., scalar-, constant-, &c.).  These
-// constraint checks are performed in a deferred manner so that any
-// errors are reported on the most accurate source location available.
+// in the Fortran standard (i.e., scalar-, constant-, &c.).
 
 namespace Fortran::evaluate {
 class ExpressionAnalysisContext {
 public:
-  using ConstraintChecker = bool (ExpressionAnalysisContext::*)(
-      Expr<SomeType> &);
-
   ExpressionAnalysisContext(semantics::SemanticsContext &sc) : context_{sc} {}
   ExpressionAnalysisContext(ExpressionAnalysisContext &i)
     : context_{i.context_}, inner_{&i} {}
-  ExpressionAnalysisContext(ExpressionAnalysisContext &i, ConstraintChecker cc)
-    : context_{i.context_}, inner_{&i}, constraint_{cc} {}
 
   semantics::SemanticsContext &context() const { return context_; }
 
@@ -67,12 +76,10 @@ public:
     context_.foldingContext().messages.Say(std::forward<A>(args)...);
   }
 
-  void CheckConstraints(std::optional<Expr<SomeType>> &);
-  bool ScalarConstraint(Expr<SomeType> &);
-  bool ConstantConstraint(Expr<SomeType> &);
-  bool IntegerConstraint(Expr<SomeType> &);
-  bool LogicalConstraint(Expr<SomeType> &);
-  bool DefaultCharConstraint(Expr<SomeType> &);
+  template<typename T, typename... A> void SayAt(const T &parsed, A... args) {
+    context_.foldingContext().messages.Say(
+        parser::FindSourceLocation(parsed), std::forward<A>(args)...);
+  }
 
   std::optional<Expr<SomeType>> Analyze(const parser::Expr &);
 
@@ -81,7 +88,6 @@ protected:
 
 private:
   ExpressionAnalysisContext *inner_{nullptr};
-  ConstraintChecker constraint_{nullptr};
 };
 
 template<typename PARSED>
@@ -121,46 +127,72 @@ std::optional<Expr<SomeType>> AnalyzeExpr(
   return AnalyzeExpr(context, *x);
 }
 
-// These specializations create nested expression analysis contexts
-// to implement constraint checking.
+// These specializations implement constraint checking.
 
 template<typename A>
 std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &context, const parser::Scalar<A> &expr) {
-  ExpressionAnalysisContext withCheck{
-      context, &ExpressionAnalysisContext::ScalarConstraint};
-  return AnalyzeExpr(withCheck, expr.thing);
+    ExpressionAnalysisContext &context, const parser::Scalar<A> &x) {
+  auto result{AnalyzeExpr(context, x.thing)};
+  if (result.has_value()) {
+    if (int rank{result->Rank()}; rank != 0) {
+      context.SayAt(
+          x, "Must be a scalar value, but is a rank-%d array"_err_en_US);
+    }
+  }
+  return result;
 }
 
 template<typename A>
 std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &context, const parser::Constant<A> &expr) {
-  ExpressionAnalysisContext withCheck{
-      context, &ExpressionAnalysisContext::ConstantConstraint};
-  return AnalyzeExpr(withCheck, expr.thing);
+    ExpressionAnalysisContext &context, const parser::Constant<A> &x) {
+  auto result{AnalyzeExpr(context, x.thing)};
+  if (result.has_value()) {
+    *result = Fold(context.context().foldingContext(), std::move(*result));
+    if (!IsConstant(*result)) {
+      context.SayAt(x, "Must be a constant value"_err_en_US);
+    }
+  }
+  return result;
 }
 
 template<typename A>
 std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &context, const parser::Integer<A> &expr) {
-  ExpressionAnalysisContext withCheck{
-      context, &ExpressionAnalysisContext::IntegerConstraint};
-  return AnalyzeExpr(withCheck, expr.thing);
+    ExpressionAnalysisContext &context, const parser::Integer<A> &x) {
+  auto result{AnalyzeExpr(context, x.thing)};
+  if (result.has_value()) {
+    if (!std::holds_alternative<Expr<SomeInteger>>(result->u)) {
+      context.SayAt(x, "Must have INTEGER type"_err_en_US);
+    }
+  }
+  return result;
 }
 
 template<typename A>
 std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &context, const parser::Logical<A> &expr) {
-  ExpressionAnalysisContext withCheck{
-      context, &ExpressionAnalysisContext::LogicalConstraint};
-  return AnalyzeExpr(withCheck, expr.thing);
+    ExpressionAnalysisContext &context, const parser::Logical<A> &x) {
+  auto result{AnalyzeExpr(context, x.thing)};
+  if (result.has_value()) {
+    if (!std::holds_alternative<Expr<SomeLogical>>(result->u)) {
+      context.SayAt(x, "Must have LOGICAL type"_err_en_US);
+    }
+  }
+  return result;
 }
 template<typename A>
 std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &context, const parser::DefaultChar<A> &expr) {
-  ExpressionAnalysisContext withCheck{
-      context, &ExpressionAnalysisContext::DefaultCharConstraint};
-  return AnalyzeExpr(withCheck, expr.thing);
+    ExpressionAnalysisContext &context, const parser::DefaultChar<A> &x) {
+  auto result{AnalyzeExpr(context, x.thing)};
+  if (result.has_value()) {
+    if (auto *charExpr{std::get_if<Expr<SomeCharacter>>(&result->u)}) {
+      if (charExpr->GetKind() ==
+          context.context().defaultKinds().GetDefaultKind(
+              TypeCategory::Character)) {
+        return result;
+      }
+    }
+    context.SayAt(x, "Must have default CHARACTER type"_err_en_US);
+  }
+  return result;
 }
 }
 

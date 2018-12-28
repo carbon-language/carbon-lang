@@ -1115,10 +1115,11 @@ int DeclTypeSpecVisitor::GetKindParamValue(
       common::visitors{
           [&](const parser::ScalarIntConstantExpr &x) -> int {
             if (auto maybeExpr{EvaluateExpr(x)}) {
-              return evaluate::ToInt64(*maybeExpr).value();
-            } else {
-              return 0;
+              if (auto intConst{evaluate::ToInt64(*maybeExpr)}) {
+                return *intConst;
+              }
             }
+            return 0;
           },
           [&](const parser::KindSelector::StarSize &x) -> int {
             std::uint64_t size{x.v};

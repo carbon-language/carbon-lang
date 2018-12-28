@@ -264,6 +264,7 @@ template<typename T, typename M> void Walk(DefaultChar<T> &x, M &mutator) {
 template<typename T, typename V> void Walk(const Statement<T> &x, V &visitor) {
   if (visitor.Pre(x)) {
     // N.B. the label is not traversed
+    Walk(x.source, visitor);
     Walk(x.statement, visitor);
     visitor.Post(x);
   }
@@ -271,6 +272,7 @@ template<typename T, typename V> void Walk(const Statement<T> &x, V &visitor) {
 template<typename T, typename M> void Walk(Statement<T> &x, M &mutator) {
   if (mutator.Pre(x)) {
     // N.B. the label is not traversed
+    Walk(x.source, mutator);
     Walk(x.statement, mutator);
     mutator.Post(x);
   }
@@ -278,11 +280,13 @@ template<typename T, typename M> void Walk(Statement<T> &x, M &mutator) {
 
 template<typename V> void Walk(const Name &x, V &visitor) {
   if (visitor.Pre(x)) {
+    Walk(x.source, visitor);
     visitor.Post(x);
   }
 }
 template<typename M> void Walk(Name &x, M &mutator) {
   if (mutator.Pre(x)) {
+    Walk(x.source, mutator);
     mutator.Post(x);
   }
 }
@@ -464,6 +468,20 @@ template<typename T, typename M> void Walk(LoopBounds<T> &x, M &mutator) {
     mutator.Post(x);
   }
 }
+template<typename V> void Walk(const Expr &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.source, visitor);
+    Walk(x.u, visitor);
+    visitor.Post(x);
+  }
+}
+template<typename M> void Walk(Expr &x, M &mutator) {
+  if (mutator.Pre(x)) {
+    Walk(x.source, mutator);
+    Walk(x.u, mutator);
+    mutator.Post(x);
+  }
+}
 template<typename V> void Walk(const PartRef &x, V &visitor) {
   if (visitor.Pre(x)) {
     Walk(x.name, visitor);
@@ -498,6 +516,20 @@ template<typename M> void Walk(ReadStmt &x, M &mutator) {
     mutator.Post(x);
   }
 }
+template<typename V> void Walk(const SignedIntLiteralConstant &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.source, visitor);
+    Walk(x.t, visitor);
+    visitor.Post(x);
+  }
+}
+template<typename M> void Walk(SignedIntLiteralConstant &x, M &mutator) {
+  if (mutator.Pre(x)) {
+    Walk(x.source, mutator);
+    Walk(x.t, mutator);
+    mutator.Post(x);
+  }
+}
 template<typename V> void Walk(const RealLiteralConstant &x, V &visitor) {
   if (visitor.Pre(x)) {
     Walk(x.real, visitor);
@@ -514,11 +546,13 @@ template<typename M> void Walk(RealLiteralConstant &x, M &mutator) {
 }
 template<typename V> void Walk(const RealLiteralConstant::Real &x, V &visitor) {
   if (visitor.Pre(x)) {
+    Walk(x.source, visitor);
     visitor.Post(x);
   }
 }
 template<typename M> void Walk(RealLiteralConstant::Real &x, M &mutator) {
   if (mutator.Pre(x)) {
+    Walk(x.source, mutator);
     mutator.Post(x);
   }
 }
@@ -691,6 +725,20 @@ void Walk(format::IntrinsicTypeDataEditDesc &x, M &mutator) {
     Walk(x.width, mutator);
     Walk(x.digits, mutator);
     Walk(x.exponentWidth, mutator);
+    mutator.Post(x);
+  }
+}
+template<typename V> void Walk(const CompilerDirective &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.source, visitor);
+    Walk(x.u, visitor);
+    visitor.Post(x);
+  }
+}
+template<typename M> void Walk(CompilerDirective &x, M &mutator) {
+  if (mutator.Pre(x)) {
+    Walk(x.source, mutator);
+    Walk(x.u, mutator);
     mutator.Post(x);
   }
 }
