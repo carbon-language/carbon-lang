@@ -50,10 +50,13 @@ void test_arc4random_buf256() {
 int main(void) {
   test_seed();
   test_arc4random();
+  test_arc4random_uniform();
   test_arc4random_buf10();
   test_arc4random_buf256();
   return 0;
   // CHECK: test_arc4random
+  // CHECK: buf '{{.*}}'
+  // CHECK: test_arc4random_uniform
   // CHECK: buf '{{.*}}'
   // CHECK: test_arc4random_buf10
   // CHECK: buf '{{.*}}'
