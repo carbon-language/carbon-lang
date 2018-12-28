@@ -9927,20 +9927,24 @@ PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr &MI,
   MachineRegisterInfo &RegInfo = F->getRegInfo();
   const TargetRegisterClass *RC = is64bit ? &PPC::G8RCRegClass
                                           : &PPC::GPRCRegClass;
+  const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
+
   unsigned PtrReg = RegInfo.createVirtualRegister(RC);
-  unsigned Shift1Reg = RegInfo.createVirtualRegister(RC);
+  unsigned Shift1Reg = RegInfo.createVirtualRegister(GPRC);
   unsigned ShiftReg =
-    isLittleEndian ? Shift1Reg : RegInfo.createVirtualRegister(RC);
-  unsigned Incr2Reg = RegInfo.createVirtualRegister(RC);
-  unsigned MaskReg = RegInfo.createVirtualRegister(RC);
-  unsigned Mask2Reg = RegInfo.createVirtualRegister(RC);
-  unsigned Mask3Reg = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp2Reg = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp3Reg = RegInfo.createVirtualRegister(RC);
-  unsigned Tmp4Reg = RegInfo.createVirtualRegister(RC);
-  unsigned TmpDestReg = RegInfo.createVirtualRegister(RC);
+    isLittleEndian ? Shift1Reg : RegInfo.createVirtualRegister(GPRC);
+  unsigned Incr2Reg = RegInfo.createVirtualRegister(GPRC);
+  unsigned MaskReg = RegInfo.createVirtualRegister(GPRC);
+  unsigned Mask2Reg = RegInfo.createVirtualRegister(GPRC);
+  unsigned Mask3Reg = RegInfo.createVirtualRegister(GPRC);
+  unsigned Tmp2Reg = RegInfo.createVirtualRegister(GPRC);
+  unsigned Tmp3Reg = RegInfo.createVirtualRegister(GPRC);
+  unsigned Tmp4Reg = RegInfo.createVirtualRegister(GPRC);
+  unsigned TmpDestReg = RegInfo.createVirtualRegister(GPRC);
   unsigned Ptr1Reg;
-  unsigned TmpReg = (!BinOpcode) ? Incr2Reg : RegInfo.createVirtualRegister(RC);
+  unsigned TmpReg = (!BinOpcode) ? Incr2Reg : RegInfo.createVirtualRegister(GPRC);
+
+
 
   //  thisMBB:
   //   ...
@@ -9973,10 +9977,12 @@ PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr &MI,
   } else {
     Ptr1Reg = ptrB;
   }
-  BuildMI(BB, dl, TII->get(PPC::RLWINM), Shift1Reg).addReg(Ptr1Reg)
+  // We need use 32-bit subregister to avoid mismatch register class in 64-bit mode.
+  BuildMI(BB, dl, TII->get(PPC::RLWINM), Shift1Reg)
+      .addReg(Ptr1Reg, 0, is64bit ? PPC::sub_32 : 0)
       .addImm(3).addImm(27).addImm(is8bit ? 28 : 27);
   if (!isLittleEndian)
-    BuildMI(BB, dl, TII->get(is64bit ? PPC::XORI8 : PPC::XORI), ShiftReg)
+    BuildMI(BB, dl, TII->get(PPC::XORI), ShiftReg)
         .addReg(Shift1Reg).addImm(is8bit ? 24 : 16);
   if (is64bit)
     BuildMI(BB, dl, TII->get(PPC::RLDICR), PtrReg)
@@ -10001,23 +10007,23 @@ PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr &MI,
   if (BinOpcode)
     BuildMI(BB, dl, TII->get(BinOpcode), TmpReg)
       .addReg(Incr2Reg).addReg(TmpDestReg);
-  BuildMI(BB, dl, TII->get(is64bit ? PPC::ANDC8 : PPC::ANDC), Tmp2Reg)
+  BuildMI(BB, dl, TII->get(PPC::ANDC), Tmp2Reg)
     .addReg(TmpDestReg).addReg(MaskReg);
-  BuildMI(BB, dl, TII->get(is64bit ? PPC::AND8 : PPC::AND), Tmp3Reg)
+  BuildMI(BB, dl, TII->get(PPC::AND), Tmp3Reg)
     .addReg(TmpReg).addReg(MaskReg);
   if (CmpOpcode) {
     // For unsigned comparisons, we can directly compare the shifted values.
     // For signed comparisons we shift and sign extend.
-    unsigned SReg = RegInfo.createVirtualRegister(RC);
-    BuildMI(BB, dl, TII->get(is64bit ? PPC::AND8 : PPC::AND), SReg)
+    unsigned SReg = RegInfo.createVirtualRegister(GPRC);
+    BuildMI(BB, dl, TII->get(PPC::AND), SReg)
       .addReg(TmpDestReg).addReg(MaskReg);
     unsigned ValueReg = SReg;
     unsigned CmpReg = Incr2Reg;
     if (CmpOpcode == PPC::CMPW) {
-      ValueReg = RegInfo.createVirtualRegister(RC);
+      ValueReg = RegInfo.createVirtualRegister(GPRC);
       BuildMI(BB, dl, TII->get(PPC::SRW), ValueReg)
         .addReg(SReg).addReg(ShiftReg);
-      unsigned ValueSReg = RegInfo.createVirtualRegister(RC);
+      unsigned ValueSReg = RegInfo.createVirtualRegister(GPRC);
       BuildMI(BB, dl, TII->get(is8bit ? PPC::EXTSB : PPC::EXTSH), ValueSReg)
         .addReg(ValueReg);
       ValueReg = ValueSReg;
@@ -10031,7 +10037,7 @@ PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr &MI,
     BB->addSuccessor(exitMBB);
     BB = loop2MBB;
   }
-  BuildMI(BB, dl, TII->get(is64bit ? PPC::OR8 : PPC::OR), Tmp4Reg)
+  BuildMI(BB, dl, TII->get(PPC::OR), Tmp4Reg)
     .addReg(Tmp3Reg).addReg(Tmp2Reg);
   BuildMI(BB, dl, TII->get(PPC::STWCX))
     .addReg(Tmp4Reg).addReg(ZeroReg).addReg(PtrReg);
@@ -10704,22 +10710,24 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
     MachineRegisterInfo &RegInfo = F->getRegInfo();
     const TargetRegisterClass *RC = is64bit ? &PPC::G8RCRegClass
                                             : &PPC::GPRCRegClass;
+    const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
+
     unsigned PtrReg = RegInfo.createVirtualRegister(RC);
-    unsigned Shift1Reg = RegInfo.createVirtualRegister(RC);
+    unsigned Shift1Reg = RegInfo.createVirtualRegister(GPRC);
     unsigned ShiftReg =
-      isLittleEndian ? Shift1Reg : RegInfo.createVirtualRegister(RC);
-    unsigned NewVal2Reg = RegInfo.createVirtualRegister(RC);
-    unsigned NewVal3Reg = RegInfo.createVirtualRegister(RC);
-    unsigned OldVal2Reg = RegInfo.createVirtualRegister(RC);
-    unsigned OldVal3Reg = RegInfo.createVirtualRegister(RC);
-    unsigned MaskReg = RegInfo.createVirtualRegister(RC);
-    unsigned Mask2Reg = RegInfo.createVirtualRegister(RC);
-    unsigned Mask3Reg = RegInfo.createVirtualRegister(RC);
-    unsigned Tmp2Reg = RegInfo.createVirtualRegister(RC);
-    unsigned Tmp4Reg = RegInfo.createVirtualRegister(RC);
-    unsigned TmpDestReg = RegInfo.createVirtualRegister(RC);
+      isLittleEndian ? Shift1Reg : RegInfo.createVirtualRegister(GPRC);
+    unsigned NewVal2Reg = RegInfo.createVirtualRegister(GPRC);
+    unsigned NewVal3Reg = RegInfo.createVirtualRegister(GPRC);
+    unsigned OldVal2Reg = RegInfo.createVirtualRegister(GPRC);
+    unsigned OldVal3Reg = RegInfo.createVirtualRegister(GPRC);
+    unsigned MaskReg = RegInfo.createVirtualRegister(GPRC);
+    unsigned Mask2Reg = RegInfo.createVirtualRegister(GPRC);
+    unsigned Mask3Reg = RegInfo.createVirtualRegister(GPRC);
+    unsigned Tmp2Reg = RegInfo.createVirtualRegister(GPRC);
+    unsigned Tmp4Reg = RegInfo.createVirtualRegister(GPRC);
+    unsigned TmpDestReg = RegInfo.createVirtualRegister(GPRC);
     unsigned Ptr1Reg;
-    unsigned TmpReg = RegInfo.createVirtualRegister(RC);
+    unsigned TmpReg = RegInfo.createVirtualRegister(GPRC);
     unsigned ZeroReg = is64bit ? PPC::ZERO8 : PPC::ZERO;
     //  thisMBB:
     //   ...
@@ -10760,10 +10768,13 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
     } else {
       Ptr1Reg = ptrB;
     }
-    BuildMI(BB, dl, TII->get(PPC::RLWINM), Shift1Reg).addReg(Ptr1Reg)
+
+    // We need use 32-bit subregister to avoid mismatch register class in 64-bit mode.
+    BuildMI(BB, dl, TII->get(PPC::RLWINM), Shift1Reg)
+        .addReg(Ptr1Reg, 0, is64bit ? PPC::sub_32 : 0)
         .addImm(3).addImm(27).addImm(is8bit ? 28 : 27);
     if (!isLittleEndian)
-      BuildMI(BB, dl, TII->get(is64bit ? PPC::XORI8 : PPC::XORI), ShiftReg)
+      BuildMI(BB, dl, TII->get(PPC::XORI), ShiftReg)
           .addReg(Shift1Reg).addImm(is8bit ? 24 : 16);
     if (is64bit)
       BuildMI(BB, dl, TII->get(PPC::RLDICR), PtrReg)
