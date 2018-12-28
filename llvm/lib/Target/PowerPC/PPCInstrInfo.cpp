@@ -3438,15 +3438,20 @@ bool PPCInstrInfo::transformToImmFormFedByLI(MachineInstr &MI,
   if (III.OpNoForForwarding != III.ImmOpNo)
     swapMIOperands(MI, III.OpNoForForwarding, III.ImmOpNo);
 
-  // If the R0/X0 register is special for the original instruction and not for
-  // the new instruction (or vice versa), we need to fix up the register class.
+  // If the special R0/X0 register index are different for original instruction
+  // and new instruction, we need to fix up the register class in new
+  // instruction.
   if (!PostRA && III.ZeroIsSpecialOrig != III.ZeroIsSpecialNew) {
-    if (!III.ZeroIsSpecialOrig) {
+    if (III.ZeroIsSpecialNew) {
+      // If operand at III.ZeroIsSpecialNew is physical reg(eg: ZERO/ZERO8), no
+      // need to fix up register class.
       unsigned RegToModify = MI.getOperand(III.ZeroIsSpecialNew).getReg();
-      const TargetRegisterClass *NewRC =
-        MRI.getRegClass(RegToModify)->hasSuperClassEq(&PPC::GPRCRegClass) ?
-        &PPC::GPRC_and_GPRC_NOR0RegClass : &PPC::G8RC_and_G8RC_NOX0RegClass;
-      MRI.setRegClass(RegToModify, NewRC);
+      if (TargetRegisterInfo::isVirtualRegister(RegToModify)) {
+        const TargetRegisterClass *NewRC =
+          MRI.getRegClass(RegToModify)->hasSuperClassEq(&PPC::GPRCRegClass) ?
+          &PPC::GPRC_and_GPRC_NOR0RegClass : &PPC::G8RC_and_G8RC_NOX0RegClass;
+        MRI.setRegClass(RegToModify, NewRC);
+      }
     }
   }
   return true;
