@@ -1,8 +1,8 @@
-; RUN: opt < %s -loop-unroll -unroll-runtime=true -unroll-runtime-epilog=true -unroll-runtime-multi-exit=true -verify-dom-info -verify-loop-info -S | FileCheck %s -check-prefix=EPILOG-NO-IC
-; RUN: opt < %s -loop-unroll -unroll-runtime=true -unroll-runtime-epilog=true -unroll-runtime-multi-exit=true -verify-dom-info -verify-loop-info -instcombine -S | FileCheck %s -check-prefix=EPILOG
-; RUN: opt < %s -loop-unroll -unroll-runtime -unroll-count=2 -unroll-runtime-epilog=true -unroll-runtime-multi-exit=true -verify-dom-info -verify-loop-info -instcombine
-; RUN: opt < %s -loop-unroll -unroll-runtime=true -unroll-runtime-epilog=false -unroll-runtime-multi-exit=true -verify-dom-info -verify-loop-info -instcombine -S | FileCheck %s -check-prefix=PROLOG
-; RUN: opt < %s -loop-unroll -unroll-runtime -unroll-runtime-epilog=false -unroll-count=2 -unroll-runtime-multi-exit=true -verify-dom-info -verify-loop-info -instcombine
+; RUN: opt < %s -loop-unroll -unroll-runtime=true -unroll-runtime-epilog=true -unroll-runtime-multi-exit=true -verify-loop-lcssa -verify-dom-info -verify-loop-info -S | FileCheck %s -check-prefix=EPILOG-NO-IC
+; RUN: opt < %s -loop-unroll -unroll-runtime=true -unroll-runtime-epilog=true -unroll-runtime-multi-exit=true -verify-loop-lcssa -verify-dom-info -verify-loop-info -instcombine -S | FileCheck %s -check-prefix=EPILOG
+; RUN: opt < %s -loop-unroll -unroll-runtime -unroll-count=2 -unroll-runtime-epilog=true -unroll-runtime-multi-exit=true -verify-loop-lcssa -verify-dom-info -verify-loop-info -instcombine
+; RUN: opt < %s -loop-unroll -unroll-runtime=true -unroll-runtime-epilog=false -unroll-runtime-multi-exit=true -verify-loop-lcssa -verify-dom-info -verify-loop-info -instcombine -S | FileCheck %s -check-prefix=PROLOG
+; RUN: opt < %s -loop-unroll -unroll-runtime -unroll-runtime-epilog=false -unroll-count=2 -unroll-runtime-multi-exit=true -verify-loop-lcssa -verify-dom-info -verify-loop-info -instcombine
 
 ; REQUIRES: asserts
 
