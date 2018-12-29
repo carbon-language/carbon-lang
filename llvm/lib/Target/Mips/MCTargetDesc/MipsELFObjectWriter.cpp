@@ -11,6 +11,7 @@
 #include "MCTargetDesc/MipsMCTargetDesc.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/BinaryFormat/ELF.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCObjectWriter.h"
@@ -225,7 +226,9 @@ unsigned MipsELFObjectWriter::getRelocType(MCContext &Ctx,
   case Mips::fixup_Mips_NONE:
     return ELF::R_MIPS_NONE;
   case FK_Data_1:
-    report_fatal_error("MIPS does not support one byte relocations");
+    Ctx.reportError(Fixup.getLoc(),
+                    "MIPS does not support one byte relocations");
+    return ELF::R_MIPS_NONE;
   case Mips::fixup_Mips_16:
   case FK_Data_2:
     return IsPCRel ? ELF::R_MIPS_PC16 : ELF::R_MIPS_16;
