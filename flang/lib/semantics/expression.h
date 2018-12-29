@@ -66,9 +66,7 @@ template<typename A> CharBlock FindSourceLocation(const A &x) {
 namespace Fortran::evaluate {
 class ExpressionAnalysisContext {
 public:
-  ExpressionAnalysisContext(semantics::SemanticsContext &sc) : context_{sc} {}
-  ExpressionAnalysisContext(ExpressionAnalysisContext &i)
-    : context_{i.context_}, inner_{&i} {}
+  explicit ExpressionAnalysisContext(semantics::SemanticsContext &sc) : context_{sc} {}
 
   semantics::SemanticsContext &context() const { return context_; }
 
@@ -83,11 +81,8 @@ public:
 
   std::optional<Expr<SomeType>> Analyze(const parser::Expr &);
 
-protected:
-  semantics::SemanticsContext &context_;
-
 private:
-  ExpressionAnalysisContext *inner_{nullptr};
+  semantics::SemanticsContext &context_;
 };
 
 template<typename PARSED>
