@@ -1066,6 +1066,5 @@ bool lldb_private::operator==(const lldb_private::CompilerType &lhs,
 
 bool lldb_private::operator!=(const lldb_private::CompilerType &lhs,
                               const lldb_private::CompilerType &rhs) {
-  return lhs.GetTypeSystem() != rhs.GetTypeSystem() ||
-         lhs.GetOpaqueQualType() != rhs.GetOpaqueQualType();
+  return !(lhs == rhs);
 }
