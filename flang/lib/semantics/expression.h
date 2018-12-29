@@ -75,8 +75,7 @@ public:
   }
 
   template<typename T, typename... A> void SayAt(const T &parsed, A... args) {
-    context_.foldingContext().messages.Say(
-        parser::FindSourceLocation(parsed), std::forward<A>(args)...);
+    Say(parser::FindSourceLocation(parsed), std::forward<A>(args)...);
   }
 
   std::optional<Expr<SomeType>> Analyze(const parser::Expr &);
