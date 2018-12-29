@@ -15,20 +15,20 @@
 integer, parameter :: k = 8
 real, parameter :: l = 8.0
 integer :: n = 2
-!ERROR: expression must be constant
+!ERROR: Must be a constant value
 parameter(m=n)
 integer(k) :: x
-!ERROR: expression must be INTEGER
+!ERROR: Must have INTEGER type
 integer(l) :: y
-!ERROR: expression must be constant
+!ERROR: Must be a constant value
 integer(n) :: z
 type t(k)
   integer, kind :: k
 end type
-!ERROR: expression must be INTEGER
+!ERROR: Must have INTEGER type
 type(t(.true.)) :: w
-!ERROR: expression must be INTEGER
+!ERROR: Must have INTEGER type
 real :: w(l*2)
-!ERROR: expression must be INTEGER
+!ERROR: Must have INTEGER type
 character(len=l) :: v
 end
