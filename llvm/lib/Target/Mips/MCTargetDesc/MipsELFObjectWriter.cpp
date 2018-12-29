@@ -239,6 +239,10 @@ unsigned MipsELFObjectWriter::getRelocType(MCContext &Ctx,
 
   if (IsPCRel) {
     switch (Kind) {
+    case FK_Data_8:
+      Ctx.reportError(Fixup.getLoc(),
+                      "MIPS does not support 64-bit PC-relative relocations");
+      return ELF::R_MIPS_NONE;
     case Mips::fixup_Mips_Branch_PCRel:
     case Mips::fixup_Mips_PC16:
       return ELF::R_MIPS_PC16;
