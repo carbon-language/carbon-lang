@@ -19,6 +19,8 @@
 // https://github.com/google/sanitizers/issues/981
 // UNSUPPORTED: android-26
 
+// UNSUPPORTED: freebsd, solaris, darwin
+
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
