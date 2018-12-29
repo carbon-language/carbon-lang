@@ -897,14 +897,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setLoadExtAction(ISD::EXTLOAD, VT, MVT::v8i8, Custom);
     }
 
-    if (ExperimentalVectorWideningLegalization &&
-        !Subtarget.hasSSE41() && Subtarget.is64Bit()) {
-      // This lets DAG combine create sextloads that get split and scalarized.
-      // TODO: Does this make sense? What about v2i8->v2i64?
-      setLoadExtAction(ISD::SEXTLOAD, MVT::v4i64, MVT::v4i8,  Custom);
-      setLoadExtAction(ISD::SEXTLOAD, MVT::v8i64, MVT::v8i8,  Custom);
-    }
-
     for (auto VT : { MVT::v2f64, MVT::v2i64 }) {
       setOperationAction(ISD::BUILD_VECTOR,       VT, Custom);
       setOperationAction(ISD::VECTOR_SHUFFLE,     VT, Custom);
