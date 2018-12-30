@@ -883,12 +883,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     // scalars) and extend in-register to a legal 128-bit vector type. For sext
     // loads these must work with a single scalar load.
     for (MVT VT : MVT::integer_vector_valuetypes()) {
-      if (!ExperimentalVectorWideningLegalization) {
-        // We don't want narrow result types here when widening.
-        setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v4i8, Custom);
-        setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v4i16, Custom);
-        setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v8i8, Custom);
-      }
       setLoadExtAction(ISD::EXTLOAD, VT, MVT::v2i8, Custom);
       setLoadExtAction(ISD::EXTLOAD, VT, MVT::v2i16, Custom);
       setLoadExtAction(ISD::EXTLOAD, VT, MVT::v2i32, Custom);
