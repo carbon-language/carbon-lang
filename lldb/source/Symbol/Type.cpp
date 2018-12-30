@@ -710,11 +710,7 @@ bool TypeAndOrName::operator==(const TypeAndOrName &other) const {
 }
 
 bool TypeAndOrName::operator!=(const TypeAndOrName &other) const {
-  if (m_type_pair != other.m_type_pair)
-    return true;
-  if (m_type_name != other.m_type_name)
-    return true;
-  return false;
+  return !(*this == other);
 }
 
 ConstString TypeAndOrName::GetName() const {
