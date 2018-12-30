@@ -867,8 +867,7 @@ bool TypeImpl::operator==(const TypeImpl &rhs) const {
 }
 
 bool TypeImpl::operator!=(const TypeImpl &rhs) const {
-  return m_static_type != rhs.m_static_type ||
-         m_dynamic_type != rhs.m_dynamic_type;
+  return !(*this == rhs);
 }
 
 bool TypeImpl::IsValid() const {
