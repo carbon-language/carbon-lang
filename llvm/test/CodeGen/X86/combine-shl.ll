@@ -283,17 +283,11 @@ define <8 x i32> @combine_vec_shl_ext_shl1(<8 x i16> %x) {
 ; SSE41-LABEL: combine_vec_shl_ext_shl1:
 ; SSE41:       # %bb.0:
 ; SSE41-NEXT:    pmullw {{.*}}(%rip), %xmm0
-; SSE41-NEXT:    pshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; SSE41-NEXT:    pmovsxwd %xmm1, %xmm1
 ; SSE41-NEXT:    pmovsxwd %xmm0, %xmm0
-; SSE41-NEXT:    movdqa %xmm0, %xmm2
-; SSE41-NEXT:    pslld $30, %xmm2
-; SSE41-NEXT:    pslld $31, %xmm0
-; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1,2,3],xmm2[4,5,6,7]
-; SSE41-NEXT:    movdqa %xmm1, %xmm2
-; SSE41-NEXT:    pslld $28, %xmm2
-; SSE41-NEXT:    pslld $29, %xmm1
-; SSE41-NEXT:    pblendw {{.*#+}} xmm1 = xmm1[0,1,2,3],xmm2[4,5,6,7]
+; SSE41-NEXT:    pslld $30, %xmm0
+; SSE41-NEXT:    pxor %xmm1, %xmm1
+; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm1[0,1,2,3],xmm0[4,5,6,7]
+; SSE41-NEXT:    pxor %xmm1, %xmm1
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: combine_vec_shl_ext_shl1:
