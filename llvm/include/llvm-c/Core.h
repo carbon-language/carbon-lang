@@ -525,7 +525,7 @@ void LLVMContextSetYieldCallback(LLVMContextRef C, LLVMYieldCallback Callback,
  *
  * @see LLVMContext::shouldDiscardValueNames()
  */
-bool LLVMContextShouldDiscardValueNames(LLVMContextRef C);
+LLVMBool LLVMContextShouldDiscardValueNames(LLVMContextRef C);
 
 /**
  * Set whether the given context discards all value names.
@@ -535,7 +535,7 @@ bool LLVMContextShouldDiscardValueNames(LLVMContextRef C);
  *
  * @see LLVMContext::setDiscardValueNames()
  */
-void LLVMContextSetDiscardValueNames(LLVMContextRef C, bool Discard);
+void LLVMContextSetDiscardValueNames(LLVMContextRef C, LLVMBool Discard);
 
 /**
  * Destroy a context instance.
