@@ -1078,15 +1078,13 @@ define {i64, i1} @usuboovf(i64 %a, i64 %b) {
   ret {i64, i1} %t
 }
 
-; FIXME: We're selecting both an INC and an ADD here. One of them becomes an LEA.
+; Make sure we select an INC for both the data use and the flag use.
 define i32 @incovfselectstore(i32 %v1, i32 %v2, i32* %x) {
 ; SDAG-LABEL: incovfselectstore:
 ; SDAG:       ## %bb.0:
 ; SDAG-NEXT:    movl %esi, %eax
-; SDAG-NEXT:    ## kill: def $edi killed $edi def $rdi
-; SDAG-NEXT:    leal 1(%rdi), %ecx
-; SDAG-NEXT:    movl %edi, %esi
-; SDAG-NEXT:    addl $1, %esi
+; SDAG-NEXT:    movl %edi, %ecx
+; SDAG-NEXT:    incl %ecx
 ; SDAG-NEXT:    cmovol %edi, %eax
 ; SDAG-NEXT:    movl %ecx, (%rdx)
 ; SDAG-NEXT:    retq
@@ -1107,15 +1105,13 @@ define i32 @incovfselectstore(i32 %v1, i32 %v2, i32* %x) {
   ret i32 %ret
 }
 
-; FIXME: We're selecting both a DEC and a SUB here. DEC becomes an LEA and
-; SUB becomes a CMP.
+; Make sure we select a DEC for both the data use and the flag use.
 define i32 @decovfselectstore(i32 %v1, i32 %v2, i32* %x) {
 ; SDAG-LABEL: decovfselectstore:
 ; SDAG:       ## %bb.0:
 ; SDAG-NEXT:    movl %esi, %eax
-; SDAG-NEXT:    ## kill: def $edi killed $edi def $rdi
-; SDAG-NEXT:    leal -1(%rdi), %ecx
-; SDAG-NEXT:    cmpl $1, %edi
+; SDAG-NEXT:    movl %edi, %ecx
+; SDAG-NEXT:    decl %ecx
 ; SDAG-NEXT:    cmovol %edi, %eax
 ; SDAG-NEXT:    movl %ecx, (%rdx)
 ; SDAG-NEXT:    retq
