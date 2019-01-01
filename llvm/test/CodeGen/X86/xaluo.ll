@@ -1405,6 +1405,85 @@ define {i64, i1} @usuboovf(i64 %a, i64 %b) {
   ret {i64, i1} %t
 }
 
+; FIXME: We're selecting both an INC and an ADD here. One of them becomes an LEA.
+define i32 @incovfselectstore(i32 %v1, i32 %v2, i32* %x) {
+; SDAG-LABEL: incovfselectstore:
+; SDAG:       ## %bb.0:
+; SDAG-NEXT:    movl %esi, %eax
+; SDAG-NEXT:    ## kill: def $edi killed $edi def $rdi
+; SDAG-NEXT:    leal 1(%rdi), %ecx
+; SDAG-NEXT:    movl %edi, %esi
+; SDAG-NEXT:    addl $1, %esi
+; SDAG-NEXT:    cmovol %edi, %eax
+; SDAG-NEXT:    movl %ecx, (%rdx)
+; SDAG-NEXT:    retq
+;
+; FAST-LABEL: incovfselectstore:
+; FAST:       ## %bb.0:
+; FAST-NEXT:    movl %esi, %eax
+; FAST-NEXT:    movl %edi, %ecx
+; FAST-NEXT:    incl %ecx
+; FAST-NEXT:    cmovol %edi, %eax
+; FAST-NEXT:    movl %ecx, (%rdx)
+; FAST-NEXT:    retq
+;
+; KNL-LABEL: incovfselectstore:
+; KNL:       ## %bb.0:
+; KNL-NEXT:    movl %esi, %eax
+; KNL-NEXT:    ## kill: def $edi killed $edi def $rdi
+; KNL-NEXT:    leal 1(%rdi), %ecx
+; KNL-NEXT:    movl %edi, %esi
+; KNL-NEXT:    addl $1, %esi
+; KNL-NEXT:    cmovol %edi, %eax
+; KNL-NEXT:    movl %ecx, (%rdx)
+; KNL-NEXT:    retq
+  %t = call {i32, i1} @llvm.sadd.with.overflow.i32(i32 %v1, i32 1)
+  %obit = extractvalue {i32, i1} %t, 1
+  %ret = select i1 %obit, i32 %v1, i32 %v2
+  %val = extractvalue {i32, i1} %t, 0
+  store i32 %val, i32* %x
+  ret i32 %ret
+}
+
+; FIXME: We're selecting both a DEC and a SUB here. DEC becomes an LEA and
+; SUB becomes a CMP.
+define i32 @decovfselectstore(i32 %v1, i32 %v2, i32* %x) {
+; SDAG-LABEL: decovfselectstore:
+; SDAG:       ## %bb.0:
+; SDAG-NEXT:    movl %esi, %eax
+; SDAG-NEXT:    ## kill: def $edi killed $edi def $rdi
+; SDAG-NEXT:    leal -1(%rdi), %ecx
+; SDAG-NEXT:    cmpl $1, %edi
+; SDAG-NEXT:    cmovol %edi, %eax
+; SDAG-NEXT:    movl %ecx, (%rdx)
+; SDAG-NEXT:    retq
+;
+; FAST-LABEL: decovfselectstore:
+; FAST:       ## %bb.0:
+; FAST-NEXT:    movl %esi, %eax
+; FAST-NEXT:    movl %edi, %ecx
+; FAST-NEXT:    decl %ecx
+; FAST-NEXT:    cmovol %edi, %eax
+; FAST-NEXT:    movl %ecx, (%rdx)
+; FAST-NEXT:    retq
+;
+; KNL-LABEL: decovfselectstore:
+; KNL:       ## %bb.0:
+; KNL-NEXT:    movl %esi, %eax
+; KNL-NEXT:    ## kill: def $edi killed $edi def $rdi
+; KNL-NEXT:    leal -1(%rdi), %ecx
+; KNL-NEXT:    cmpl $1, %edi
+; KNL-NEXT:    cmovol %edi, %eax
+; KNL-NEXT:    movl %ecx, (%rdx)
+; KNL-NEXT:    retq
+  %t = call {i32, i1} @llvm.ssub.with.overflow.i32(i32 %v1, i32 1)
+  %obit = extractvalue {i32, i1} %t, 1
+  %ret = select i1 %obit, i32 %v1, i32 %v2
+  %val = extractvalue {i32, i1} %t, 0
+  store i32 %val, i32* %x
+  ret i32 %ret
+}
+
 declare {i8,  i1} @llvm.sadd.with.overflow.i8 (i8,  i8 ) nounwind readnone
 declare {i16, i1} @llvm.sadd.with.overflow.i16(i16, i16) nounwind readnone
 declare {i32, i1} @llvm.sadd.with.overflow.i32(i32, i32) nounwind readnone
