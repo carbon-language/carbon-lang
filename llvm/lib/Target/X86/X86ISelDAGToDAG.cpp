@@ -3454,31 +3454,73 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
     SDValue N0 = Node->getOperand(0);
     SDValue N1 = Node->getOperand(1);
 
-    unsigned LoReg, Opc;
+    unsigned LoReg, ROpc, MOpc;
     switch (NVT.SimpleTy) {
     default: llvm_unreachable("Unsupported VT!");
     case MVT::i8:
       LoReg = X86::AL;
-      Opc = Opcode == X86ISD::SMUL ? X86::IMUL8r : X86::MUL8r;
+      ROpc = Opcode == X86ISD::SMUL ? X86::IMUL8r : X86::MUL8r;
+      MOpc = Opcode == X86ISD::SMUL ? X86::IMUL8m : X86::MUL8m;
       break;
-    case MVT::i16: LoReg = X86::AX;  Opc = X86::MUL16r; break;
-    case MVT::i32: LoReg = X86::EAX; Opc = X86::MUL32r; break;
-    case MVT::i64: LoReg = X86::RAX; Opc = X86::MUL64r; break;
+    case MVT::i16:
+      LoReg = X86::AX;
+      ROpc = X86::MUL16r;
+      MOpc = X86::MUL16m;
+      break;
+    case MVT::i32:
+      LoReg = X86::EAX;
+      ROpc = X86::MUL32r;
+      MOpc = X86::MUL32m;
+      break;
+    case MVT::i64:
+      LoReg = X86::RAX;
+      ROpc = X86::MUL64r;
+      MOpc = X86::MUL64m;
+      break;
+    }
+
+    SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4;
+    bool FoldedLoad = tryFoldLoad(Node, N1, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4);
+    // Multiply is commmutative.
+    if (!FoldedLoad) {
+      FoldedLoad = tryFoldLoad(Node, N0, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4);
+      if (FoldedLoad)
+        std::swap(N0, N1);
     }
 
     SDValue InFlag = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, LoReg,
                                           N0, SDValue()).getValue(1);
 
-    // i16/i32/i64 use an instruction that produces a low and high result even
-    // though only the low result is used.
-    SDVTList VTs;
-    if (NVT == MVT::i8)
-      VTs = CurDAG->getVTList(NVT, MVT::i32);
-    else
-      VTs = CurDAG->getVTList(NVT, NVT, MVT::i32);
+    MachineSDNode *CNode;
+    if (FoldedLoad) {
+      // i16/i32/i64 use an instruction that produces a low and high result even
+      // though only the low result is used.
+      SDVTList VTs;
+      if (NVT == MVT::i8)
+        VTs = CurDAG->getVTList(NVT, MVT::i32, MVT::Other);
+      else
+        VTs = CurDAG->getVTList(NVT, NVT, MVT::i32, MVT::Other);
 
-    SDValue Ops[] = {N1, InFlag};
-    SDNode *CNode = CurDAG->getMachineNode(Opc, dl, VTs, Ops);
+      SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, N1.getOperand(0),
+                        InFlag };
+      CNode = CurDAG->getMachineNode(MOpc, dl, VTs, Ops);
+
+      // Update the chain.
+      ReplaceUses(N1.getValue(1), SDValue(CNode, NVT == MVT::i8 ? 2 : 3));
+      // Record the mem-refs
+      CurDAG->setNodeMemRefs(CNode, {cast<LoadSDNode>(N1)->getMemOperand()});
+    } else {
+      // i16/i32/i64 use an instruction that produces a low and high result even
+      // though only the low result is used.
+      SDVTList VTs;
+      if (NVT == MVT::i8)
+        VTs = CurDAG->getVTList(NVT, MVT::i32);
+      else
+        VTs = CurDAG->getVTList(NVT, NVT, MVT::i32);
+
+      CNode = CurDAG->getMachineNode(ROpc, dl, VTs, {N1, InFlag});
+    }
+
     ReplaceUses(SDValue(Node, 0), SDValue(CNode, 0));
     ReplaceUses(SDValue(Node, 1), SDValue(CNode, NVT == MVT::i8 ? 1 : 2));
     CurDAG->RemoveDeadNode(Node);

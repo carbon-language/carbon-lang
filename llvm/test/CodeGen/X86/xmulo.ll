@@ -725,8 +725,9 @@ define i1 @bug27873(i64 %c1, i1 %c2) {
 define zeroext i1 @smuloi8_load(i8* %ptr1, i8 %v2, i8* %res) {
 ; SDAG-LABEL: smuloi8_load:
 ; SDAG:       ## %bb.0:
-; SDAG-NEXT:    movb (%rdi), %al
-; SDAG-NEXT:    imulb %sil
+; SDAG-NEXT:    movl %esi, %eax
+; SDAG-NEXT:    ## kill: def $al killed $al killed $eax
+; SDAG-NEXT:    imulb (%rdi)
 ; SDAG-NEXT:    seto %cl
 ; SDAG-NEXT:    movb %al, (%rdx)
 ; SDAG-NEXT:    movl %ecx, %eax
@@ -753,9 +754,8 @@ define zeroext i1 @smuloi8_load2(i8 %v1, i8* %ptr2, i8* %res) {
 ; SDAG-LABEL: smuloi8_load2:
 ; SDAG:       ## %bb.0:
 ; SDAG-NEXT:    movl %edi, %eax
-; SDAG-NEXT:    movb (%rsi), %cl
 ; SDAG-NEXT:    ## kill: def $al killed $al killed $eax
-; SDAG-NEXT:    imulb %cl
+; SDAG-NEXT:    imulb (%rsi)
 ; SDAG-NEXT:    seto %cl
 ; SDAG-NEXT:    movb %al, (%rdx)
 ; SDAG-NEXT:    movl %ecx, %eax
@@ -926,8 +926,9 @@ define zeroext i1 @smuloi64_load2(i64 %v1, i64* %ptr2, i64* %res) {
 define zeroext i1 @umuloi8_load(i8* %ptr1, i8 %v2, i8* %res) {
 ; SDAG-LABEL: umuloi8_load:
 ; SDAG:       ## %bb.0:
-; SDAG-NEXT:    movb (%rdi), %al
-; SDAG-NEXT:    mulb %sil
+; SDAG-NEXT:    movl %esi, %eax
+; SDAG-NEXT:    ## kill: def $al killed $al killed $eax
+; SDAG-NEXT:    mulb (%rdi)
 ; SDAG-NEXT:    seto %cl
 ; SDAG-NEXT:    movb %al, (%rdx)
 ; SDAG-NEXT:    movl %ecx, %eax
@@ -954,9 +955,8 @@ define zeroext i1 @umuloi8_load2(i8 %v1, i8* %ptr2, i8* %res) {
 ; SDAG-LABEL: umuloi8_load2:
 ; SDAG:       ## %bb.0:
 ; SDAG-NEXT:    movl %edi, %eax
-; SDAG-NEXT:    movb (%rsi), %cl
 ; SDAG-NEXT:    ## kill: def $al killed $al killed $eax
-; SDAG-NEXT:    mulb %cl
+; SDAG-NEXT:    mulb (%rsi)
 ; SDAG-NEXT:    seto %cl
 ; SDAG-NEXT:    movb %al, (%rdx)
 ; SDAG-NEXT:    movl %ecx, %eax
@@ -984,8 +984,9 @@ define zeroext i1 @umuloi16_load(i16* %ptr1, i16 %v2, i16* %res) {
 ; SDAG-LABEL: umuloi16_load:
 ; SDAG:       ## %bb.0:
 ; SDAG-NEXT:    movq %rdx, %rcx
-; SDAG-NEXT:    movzwl (%rdi), %eax
-; SDAG-NEXT:    mulw %si
+; SDAG-NEXT:    movl %esi, %eax
+; SDAG-NEXT:    ## kill: def $ax killed $ax killed $eax
+; SDAG-NEXT:    mulw (%rdi)
 ; SDAG-NEXT:    seto %dl
 ; SDAG-NEXT:    movw %ax, (%rcx)
 ; SDAG-NEXT:    movl %edx, %eax
@@ -1014,9 +1015,8 @@ define zeroext i1 @umuloi16_load2(i16 %v1, i16* %ptr2, i16* %res) {
 ; SDAG:       ## %bb.0:
 ; SDAG-NEXT:    movq %rdx, %rcx
 ; SDAG-NEXT:    movl %edi, %eax
-; SDAG-NEXT:    movzwl (%rsi), %edx
 ; SDAG-NEXT:    ## kill: def $ax killed $ax killed $eax
-; SDAG-NEXT:    mulw %dx
+; SDAG-NEXT:    mulw (%rsi)
 ; SDAG-NEXT:    seto %dl
 ; SDAG-NEXT:    movw %ax, (%rcx)
 ; SDAG-NEXT:    movl %edx, %eax
@@ -1045,8 +1045,8 @@ define zeroext i1 @umuloi32_load(i32* %ptr1, i32 %v2, i32* %res) {
 ; SDAG-LABEL: umuloi32_load:
 ; SDAG:       ## %bb.0:
 ; SDAG-NEXT:    movq %rdx, %rcx
-; SDAG-NEXT:    movl (%rdi), %eax
-; SDAG-NEXT:    mull %esi
+; SDAG-NEXT:    movl %esi, %eax
+; SDAG-NEXT:    mull (%rdi)
 ; SDAG-NEXT:    seto %dl
 ; SDAG-NEXT:    movl %eax, (%rcx)
 ; SDAG-NEXT:    movl %edx, %eax
@@ -1075,8 +1075,7 @@ define zeroext i1 @umuloi32_load2(i32 %v1, i32* %ptr2, i32* %res) {
 ; SDAG:       ## %bb.0:
 ; SDAG-NEXT:    movq %rdx, %rcx
 ; SDAG-NEXT:    movl %edi, %eax
-; SDAG-NEXT:    movl (%rsi), %edx
-; SDAG-NEXT:    mull %edx
+; SDAG-NEXT:    mull (%rsi)
 ; SDAG-NEXT:    seto %dl
 ; SDAG-NEXT:    movl %eax, (%rcx)
 ; SDAG-NEXT:    movl %edx, %eax
@@ -1104,8 +1103,8 @@ define zeroext i1 @umuloi64_load(i64* %ptr1, i64 %v2, i64* %res) {
 ; SDAG-LABEL: umuloi64_load:
 ; SDAG:       ## %bb.0:
 ; SDAG-NEXT:    movq %rdx, %rcx
-; SDAG-NEXT:    movq (%rdi), %rax
-; SDAG-NEXT:    mulq %rsi
+; SDAG-NEXT:    movq %rsi, %rax
+; SDAG-NEXT:    mulq (%rdi)
 ; SDAG-NEXT:    seto %dl
 ; SDAG-NEXT:    movq %rax, (%rcx)
 ; SDAG-NEXT:    movl %edx, %eax
@@ -1134,8 +1133,7 @@ define zeroext i1 @umuloi64_load2(i64 %v1, i64* %ptr2, i64* %res) {
 ; SDAG:       ## %bb.0:
 ; SDAG-NEXT:    movq %rdx, %rcx
 ; SDAG-NEXT:    movq %rdi, %rax
-; SDAG-NEXT:    movq (%rsi), %rdx
-; SDAG-NEXT:    mulq %rdx
+; SDAG-NEXT:    mulq (%rsi)
 ; SDAG-NEXT:    seto %dl
 ; SDAG-NEXT:    movq %rax, (%rcx)
 ; SDAG-NEXT:    movl %edx, %eax
