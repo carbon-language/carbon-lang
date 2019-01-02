@@ -7,6 +7,8 @@ group("default") {
     "//lld/test",
     "//llvm/tools/bugpoint",
     "//llvm/tools/dsymutil",
+    "//llvm/tools/lli",
+    "//llvm/tools/lli/ChildTarget:lli-child-target",
     "//llvm/tools/llvm-c-test",
     "//llvm/tools/llvm-cfi-verify",
     "//llvm/tools/llvm-cov",
