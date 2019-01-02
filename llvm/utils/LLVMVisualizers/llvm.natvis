@@ -105,13 +105,12 @@ For later versions of Visual Studio, no setup is required.
   </Type>
 
   <Type Name="llvm::PointerUnion3&lt;*,*,*&gt;">
-    <DisplayString Condition="(Val.Val.Value &amp; 2) != 2 &amp;&amp; (Val.Val.Value &amp; 1) != 1">{"$T1", s8b}: {($T1)((Val.Val.Value &gt;&gt; 2) &lt;&lt; 2)}</DisplayString>
-    <DisplayString Condition="(Val.Val.Value &amp; 2) == 2">{"$T2", s8b}: {($T2)((Val.Val.Value &gt;&gt; 2) &lt;&lt; 2)}</DisplayString>
-    <DisplayString Condition="(Val.Val.Value &amp; 1) == 1">{"$T3", s8b}: {($T3)((Val.Val.Value &gt;&gt; 2) &lt;&lt; 2)}</DisplayString>
+    <DisplayString Condition="(Val.Val.Value &gt;&gt; ValTy::ValTy::InfoTy::IntShift) &amp; ValTy::ValTy::InfoTy::IntMask">{"$T3", s8b}: {($T3)(Val.Val.Value &amp; ValTy::ValTy::InfoTy::PointerBitMask)}</DisplayString>
+    <DisplayString>{*(InnerUnion*)&amp;Val.Val.Value}</DisplayString>
     <Expand>
-      <ExpandedItem Condition="(Val.Val.Value &amp; 2) != 2 &amp;&amp; (Val.Val.Value &amp; 1) != 1">($T1)((Val.Val.Value &gt;&gt; 2) &lt;&lt; 2)</ExpandedItem>
-      <ExpandedItem Condition="(Val.Val.Value &amp; 2) == 2">($T2)((Val.Val.Value &gt;&gt; 2) &lt;&lt; 2)</ExpandedItem>
-      <ExpandedItem Condition="(Val.Val.Value &amp; 1) == 1">($T3)((Val.Val.Value &gt;&gt; 2) &lt;&lt; 2)</ExpandedItem>
+      <Item Name="[Holds]" Condition="(Val.Val.Value &gt;&gt; ValTy::ValTy::InfoTy::IntShift) &amp; ValTy::ValTy::InfoTy::IntMask">"$T3", s8b</Item>
+      <Item Name="[Ptr]" Condition="(Val.Val.Value &gt;&gt; ValTy::ValTy::InfoTy::IntShift) &amp; ValTy::ValTy::InfoTy::IntMask">($T3)(Val.Val.Value &amp; ValTy::ValTy::InfoTy::PointerBitMask)</Item>
+      <ExpandedItem Condition="!((Val.Val.Value &gt;&gt; ValTy::ValTy::InfoTy::IntShift) &amp; ValTy::ValTy::InfoTy::IntMask)">*(InnerUnion*)&amp;Val.Val.Value</ExpandedItem>
     </Expand>
   </Type>
 
