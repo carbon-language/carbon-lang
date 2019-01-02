@@ -759,7 +759,7 @@ VariableSP SymbolFileNativePDB::CreateGlobalVariable(PdbGlobalSymId var_id) {
       std::make_shared<SymbolFileType>(*this, toOpaqueUid(tid));
   Variable::RangeList ranges;
 
-  m_ast->GetOrCreateGlobalVariableDecl(var_id);
+  m_ast->GetOrCreateVariableDecl(var_id);
 
   DWARFExpression location = MakeGlobalLocationExpression(
       section, offset, GetObjectFile()->GetModule());
@@ -843,6 +843,14 @@ Block &SymbolFileNativePDB::GetOrCreateBlock(PdbCompilandSymId block_id) {
     return *iter->second;
 
   return CreateBlock(block_id);
+}
+
+void SymbolFileNativePDB::ParseDeclsForContext(
+    lldb_private::CompilerDeclContext decl_ctx) {
+  clang::DeclContext *context = m_ast->FromCompilerDeclContext(decl_ctx);
+  if (!context)
+    return;
+  m_ast->ParseDeclsForContext(*context);
 }
 
 lldb::CompUnitSP SymbolFileNativePDB::ParseCompileUnitAtIndex(uint32_t index) {
@@ -1262,7 +1270,7 @@ VariableSP SymbolFileNativePDB::CreateLocalVariable(PdbCompilandSymId scope_id,
       false, false);
 
   if (!is_param)
-    m_ast->GetOrCreateLocalVariableDecl(scope_id, var_id);
+    m_ast->GetOrCreateVariableDecl(scope_id, var_id);
 
   m_local_variables[toOpaqueUid(var_id)] = var_sp;
   return var_sp;

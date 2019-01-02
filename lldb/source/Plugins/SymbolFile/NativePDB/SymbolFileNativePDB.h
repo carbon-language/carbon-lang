@@ -77,6 +77,9 @@ public:
 
   uint32_t GetNumCompileUnits() override;
 
+  void
+  ParseDeclsForContext(lldb_private::CompilerDeclContext decl_ctx) override;
+
   lldb::CompUnitSP ParseCompileUnitAtIndex(uint32_t index) override;
 
   lldb::LanguageType ParseCompileUnitLanguage(const SymbolContext &sc) override;
