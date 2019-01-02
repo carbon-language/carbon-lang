@@ -9187,6 +9187,166 @@ INTERCEPTOR(int, pclose, __sanitizer_FILE *fp) {
 #define INIT_PCLOSE
 #endif
 
+#if SANITIZER_INTERCEPT_FUNOPEN
+typedef int (*funopen_readfn)(void *cookie, char *buf, int len);
+typedef int (*funopen_writefn)(void *cookie, const char *buf, int len);
+typedef OFF_T (*funopen_seekfn)(void *cookie, OFF_T offset, int whence);
+typedef int (*funopen_closefn)(void *cookie);
+
+struct WrappedFunopenCookie {
+  void *real_cookie;
+  funopen_readfn real_read;
+  funopen_writefn real_write;
+  funopen_seekfn real_seek;
+  funopen_closefn real_close;
+};
+
+static int wrapped_funopen_read(void *cookie, char *buf, int len) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(3);
+  WrappedFunopenCookie *wrapped_cookie = (WrappedFunopenCookie *)cookie;
+  funopen_readfn real_read = wrapped_cookie->real_read;
+  return real_read(wrapped_cookie->real_cookie, buf, len);
+}
+
+static int wrapped_funopen_write(void *cookie, const char *buf, int len) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(3);
+  WrappedFunopenCookie *wrapped_cookie = (WrappedFunopenCookie *)cookie;
+  funopen_writefn real_write = wrapped_cookie->real_write;
+  return real_write(wrapped_cookie->real_cookie, buf, len);
+}
+
+static OFF_T wrapped_funopen_seek(void *cookie, OFF_T offset, int whence) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(3);
+  WrappedFunopenCookie *wrapped_cookie = (WrappedFunopenCookie *)cookie;
+  funopen_seekfn real_seek = wrapped_cookie->real_seek;
+  return real_seek(wrapped_cookie->real_cookie, offset, whence);
+}
+
+static int wrapped_funopen_close(void *cookie) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(1);
+  WrappedFunopenCookie *wrapped_cookie = (WrappedFunopenCookie *)cookie;
+  funopen_closefn real_close = wrapped_cookie->real_close;
+  int res = real_close(wrapped_cookie->real_cookie);
+  InternalFree(wrapped_cookie);
+  return res;
+}
+
+INTERCEPTOR(__sanitizer_FILE *, funopen, void *cookie, funopen_readfn readfn,
+            funopen_writefn writefn, funopen_seekfn seekfn,
+            funopen_closefn closefn) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, funopen, cookie, readfn, writefn, seekfn,
+                           closefn);
+
+  WrappedFunopenCookie *wrapped_cookie =
+      (WrappedFunopenCookie *)InternalAlloc(sizeof(WrappedFunopenCookie));
+  wrapped_cookie->real_cookie = cookie;
+  wrapped_cookie->real_read = readfn;
+  wrapped_cookie->real_write = writefn;
+  wrapped_cookie->real_seek = seekfn;
+  wrapped_cookie->real_close = closefn;
+
+  __sanitizer_FILE *res =
+      REAL(funopen)(wrapped_cookie,
+                    readfn  ? wrapped_funopen_read  : nullptr,
+                    writefn ? wrapped_funopen_write : nullptr,
+                    seekfn  ? wrapped_funopen_seek  : nullptr,
+                    closefn ? wrapped_funopen_close : nullptr);
+  if (res)
+    unpoison_file(res);
+  return res;
+}
+#define INIT_FUNOPEN COMMON_INTERCEPT_FUNCTION(funopen)
+#else
+#define INIT_FUNOPEN
+#endif
+
+#if SANITIZER_INTERCEPT_FUNOPEN2
+typedef SSIZE_T (*funopen2_readfn)(void *cookie, void *buf, SIZE_T len);
+typedef SSIZE_T (*funopen2_writefn)(void *cookie, const void *buf, SIZE_T len);
+typedef OFF_T (*funopen2_seekfn)(void *cookie, OFF_T offset, int whence);
+typedef int (*funopen2_flushfn)(void *cookie);
+typedef int (*funopen2_closefn)(void *cookie);
+
+struct WrappedFunopen2Cookie {
+  void *real_cookie;
+  funopen2_readfn real_read;
+  funopen2_writefn real_write;
+  funopen2_seekfn real_seek;
+  funopen2_flushfn real_flush;
+  funopen2_closefn real_close;
+};
+
+static SSIZE_T wrapped_funopen2_read(void *cookie, void *buf, SIZE_T len) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(3);
+  WrappedFunopen2Cookie *wrapped_cookie = (WrappedFunopen2Cookie *)cookie;
+  funopen2_readfn real_read = wrapped_cookie->real_read;
+  return real_read(wrapped_cookie->real_cookie, buf, len);
+}
+
+static SSIZE_T wrapped_funopen2_write(void *cookie, const void *buf,
+                                      SIZE_T len) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(3);
+  WrappedFunopen2Cookie *wrapped_cookie = (WrappedFunopen2Cookie *)cookie;
+  funopen2_writefn real_write = wrapped_cookie->real_write;
+  return real_write(wrapped_cookie->real_cookie, buf, len);
+}
+
+static OFF_T wrapped_funopen2_seek(void *cookie, OFF_T offset, int whence) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(3);
+  WrappedFunopen2Cookie *wrapped_cookie = (WrappedFunopen2Cookie *)cookie;
+  funopen2_seekfn real_seek = wrapped_cookie->real_seek;
+  return real_seek(wrapped_cookie->real_cookie, offset, whence);
+}
+
+static int wrapped_funopen2_flush(void *cookie) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(1);
+  WrappedFunopen2Cookie *wrapped_cookie = (WrappedFunopen2Cookie *)cookie;
+  funopen2_flushfn real_flush = wrapped_cookie->real_flush;
+  return real_flush(wrapped_cookie->real_cookie);
+}
+
+static int wrapped_funopen2_close(void *cookie) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(1);
+  WrappedFunopen2Cookie *wrapped_cookie = (WrappedFunopen2Cookie *)cookie;
+  funopen2_closefn real_close = wrapped_cookie->real_close;
+  int res = real_close(wrapped_cookie->real_cookie);
+  InternalFree(wrapped_cookie);
+  return res;
+}
+
+INTERCEPTOR(__sanitizer_FILE *, funopen2, void *cookie, funopen2_readfn readfn,
+            funopen2_writefn writefn, funopen2_seekfn seekfn,
+            funopen2_flushfn flushfn, funopen2_closefn closefn) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, funopen2, cookie, readfn, writefn, seekfn,
+                           flushfn, closefn);
+
+  WrappedFunopen2Cookie *wrapped_cookie =
+      (WrappedFunopen2Cookie *)InternalAlloc(sizeof(WrappedFunopen2Cookie));
+  wrapped_cookie->real_cookie = cookie;
+  wrapped_cookie->real_read = readfn;
+  wrapped_cookie->real_write = writefn;
+  wrapped_cookie->real_seek = seekfn;
+  wrapped_cookie->real_flush = flushfn;
+  wrapped_cookie->real_close = closefn;
+
+  __sanitizer_FILE *res =
+      REAL(funopen2)(wrapped_cookie,
+                     readfn  ? wrapped_funopen2_read  : nullptr,
+                     writefn ? wrapped_funopen2_write : nullptr,
+                     seekfn  ? wrapped_funopen2_seek  : nullptr,
+                     flushfn ? wrapped_funopen2_flush : nullptr,
+                     closefn ? wrapped_funopen2_close : nullptr);
+  if (res)
+    unpoison_file(res);
+  return res;
+}
+#define INIT_FUNOPEN2 COMMON_INTERCEPT_FUNCTION(funopen2)
+#else
+#define INIT_FUNOPEN2
+#endif
+
 static void InitializeCommonInterceptors() {
   static u64 metadata_mem[sizeof(MetadataHashMap) / sizeof(u64) + 1];
   interceptor_metadata_map =
@@ -9472,6 +9632,8 @@ static void InitializeCommonInterceptors() {
   INIT_POPEN;
   INIT_POPENVE;
   INIT_PCLOSE;
+  INIT_FUNOPEN;
+  INIT_FUNOPEN2;
 
   INIT___PRINTF_CHK;
 }
