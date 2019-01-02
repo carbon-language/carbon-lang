@@ -370,10 +370,12 @@ define i64 @umuloselecti64(i64 %v1, i64 %v2) {
 ;
 ; Check the use of the overflow bit in combination with a branch instruction.
 ;
-define zeroext i1 @smulobri32(i32 %v1, i32 %v2) {
-; SDAG-LABEL: smulobri32:
+define zeroext i1 @smulobri8(i8 %v1, i8 %v2) {
+; SDAG-LABEL: smulobri8:
 ; SDAG:       ## %bb.0:
-; SDAG-NEXT:    imull %esi, %edi
+; SDAG-NEXT:    movl %edi, %eax
+; SDAG-NEXT:    ## kill: def $al killed $al killed $eax
+; SDAG-NEXT:    imulb %sil
 ; SDAG-NEXT:    jo LBB15_1
 ; SDAG-NEXT:  ## %bb.2: ## %continue
 ; SDAG-NEXT:    movb $1, %al
@@ -382,16 +384,98 @@ define zeroext i1 @smulobri32(i32 %v1, i32 %v2) {
 ; SDAG-NEXT:    xorl %eax, %eax
 ; SDAG-NEXT:    retq
 ;
-; FAST-LABEL: smulobri32:
+; FAST-LABEL: smulobri8:
 ; FAST:       ## %bb.0:
-; FAST-NEXT:    imull %esi, %edi
-; FAST-NEXT:    jo LBB15_1
+; FAST-NEXT:    movl %edi, %eax
+; FAST-NEXT:    ## kill: def $al killed $al killed $eax
+; FAST-NEXT:    imulb %sil
+; FAST-NEXT:    seto %al
+; FAST-NEXT:    testb $1, %al
+; FAST-NEXT:    jne LBB15_1
 ; FAST-NEXT:  ## %bb.2: ## %continue
 ; FAST-NEXT:    movb $1, %al
 ; FAST-NEXT:    andb $1, %al
 ; FAST-NEXT:    movzbl %al, %eax
 ; FAST-NEXT:    retq
 ; FAST-NEXT:  LBB15_1: ## %overflow
+; FAST-NEXT:    xorl %eax, %eax
+; FAST-NEXT:    andb $1, %al
+; FAST-NEXT:    movzbl %al, %eax
+; FAST-NEXT:    retq
+  %t = call {i8, i1} @llvm.smul.with.overflow.i8(i8 %v1, i8 %v2)
+  %val = extractvalue {i8, i1} %t, 0
+  %obit = extractvalue {i8, i1} %t, 1
+  br i1 %obit, label %overflow, label %continue, !prof !0
+
+overflow:
+  ret i1 false
+
+continue:
+  ret i1 true
+}
+
+define zeroext i1 @smulobri16(i16 %v1, i16 %v2) {
+; SDAG-LABEL: smulobri16:
+; SDAG:       ## %bb.0:
+; SDAG-NEXT:    imulw %si, %di
+; SDAG-NEXT:    jo LBB16_1
+; SDAG-NEXT:  ## %bb.2: ## %continue
+; SDAG-NEXT:    movb $1, %al
+; SDAG-NEXT:    retq
+; SDAG-NEXT:  LBB16_1: ## %overflow
+; SDAG-NEXT:    xorl %eax, %eax
+; SDAG-NEXT:    retq
+;
+; FAST-LABEL: smulobri16:
+; FAST:       ## %bb.0:
+; FAST-NEXT:    imulw %si, %di
+; FAST-NEXT:    seto %al
+; FAST-NEXT:    testb $1, %al
+; FAST-NEXT:    jne LBB16_1
+; FAST-NEXT:  ## %bb.2: ## %continue
+; FAST-NEXT:    movb $1, %al
+; FAST-NEXT:    andb $1, %al
+; FAST-NEXT:    movzbl %al, %eax
+; FAST-NEXT:    retq
+; FAST-NEXT:  LBB16_1: ## %overflow
+; FAST-NEXT:    xorl %eax, %eax
+; FAST-NEXT:    andb $1, %al
+; FAST-NEXT:    movzbl %al, %eax
+; FAST-NEXT:    retq
+  %t = call {i16, i1} @llvm.smul.with.overflow.i16(i16 %v1, i16 %v2)
+  %val = extractvalue {i16, i1} %t, 0
+  %obit = extractvalue {i16, i1} %t, 1
+  br i1 %obit, label %overflow, label %continue, !prof !0
+
+overflow:
+  ret i1 false
+
+continue:
+  ret i1 true
+}
+
+define zeroext i1 @smulobri32(i32 %v1, i32 %v2) {
+; SDAG-LABEL: smulobri32:
+; SDAG:       ## %bb.0:
+; SDAG-NEXT:    imull %esi, %edi
+; SDAG-NEXT:    jo LBB17_1
+; SDAG-NEXT:  ## %bb.2: ## %continue
+; SDAG-NEXT:    movb $1, %al
+; SDAG-NEXT:    retq
+; SDAG-NEXT:  LBB17_1: ## %overflow
+; SDAG-NEXT:    xorl %eax, %eax
+; SDAG-NEXT:    retq
+;
+; FAST-LABEL: smulobri32:
+; FAST:       ## %bb.0:
+; FAST-NEXT:    imull %esi, %edi
+; FAST-NEXT:    jo LBB17_1
+; FAST-NEXT:  ## %bb.2: ## %continue
+; FAST-NEXT:    movb $1, %al
+; FAST-NEXT:    andb $1, %al
+; FAST-NEXT:    movzbl %al, %eax
+; FAST-NEXT:    retq
+; FAST-NEXT:  LBB17_1: ## %overflow
 ; FAST-NEXT:    xorl %eax, %eax
 ; FAST-NEXT:    andb $1, %al
 ; FAST-NEXT:    movzbl %al, %eax
@@ -412,24 +496,24 @@ define zeroext i1 @smulobri64(i64 %v1, i64 %v2) {
 ; SDAG-LABEL: smulobri64:
 ; SDAG:       ## %bb.0:
 ; SDAG-NEXT:    imulq %rsi, %rdi
-; SDAG-NEXT:    jo LBB16_1
+; SDAG-NEXT:    jo LBB18_1
 ; SDAG-NEXT:  ## %bb.2: ## %continue
 ; SDAG-NEXT:    movb $1, %al
 ; SDAG-NEXT:    retq
-; SDAG-NEXT:  LBB16_1: ## %overflow
+; SDAG-NEXT:  LBB18_1: ## %overflow
 ; SDAG-NEXT:    xorl %eax, %eax
 ; SDAG-NEXT:    retq
 ;
 ; FAST-LABEL: smulobri64:
 ; FAST:       ## %bb.0:
 ; FAST-NEXT:    imulq %rsi, %rdi
-; FAST-NEXT:    jo LBB16_1
+; FAST-NEXT:    jo LBB18_1
 ; FAST-NEXT:  ## %bb.2: ## %continue
 ; FAST-NEXT:    movb $1, %al
 ; FAST-NEXT:    andb $1, %al
 ; FAST-NEXT:    movzbl %al, %eax
 ; FAST-NEXT:    retq
-; FAST-NEXT:  LBB16_1: ## %overflow
+; FAST-NEXT:  LBB18_1: ## %overflow
 ; FAST-NEXT:    xorl %eax, %eax
 ; FAST-NEXT:    andb $1, %al
 ; FAST-NEXT:    movzbl %al, %eax
@@ -446,16 +530,104 @@ continue:
   ret i1 true
 }
 
+define zeroext i1 @umulobri8(i8 %v1, i8 %v2) {
+; SDAG-LABEL: umulobri8:
+; SDAG:       ## %bb.0:
+; SDAG-NEXT:    movl %edi, %eax
+; SDAG-NEXT:    ## kill: def $al killed $al killed $eax
+; SDAG-NEXT:    mulb %sil
+; SDAG-NEXT:    jo LBB19_1
+; SDAG-NEXT:  ## %bb.2: ## %continue
+; SDAG-NEXT:    movb $1, %al
+; SDAG-NEXT:    retq
+; SDAG-NEXT:  LBB19_1: ## %overflow
+; SDAG-NEXT:    xorl %eax, %eax
+; SDAG-NEXT:    retq
+;
+; FAST-LABEL: umulobri8:
+; FAST:       ## %bb.0:
+; FAST-NEXT:    movl %edi, %eax
+; FAST-NEXT:    ## kill: def $al killed $al killed $eax
+; FAST-NEXT:    mulb %sil
+; FAST-NEXT:    seto %al
+; FAST-NEXT:    testb $1, %al
+; FAST-NEXT:    jne LBB19_1
+; FAST-NEXT:  ## %bb.2: ## %continue
+; FAST-NEXT:    movb $1, %al
+; FAST-NEXT:    andb $1, %al
+; FAST-NEXT:    movzbl %al, %eax
+; FAST-NEXT:    retq
+; FAST-NEXT:  LBB19_1: ## %overflow
+; FAST-NEXT:    xorl %eax, %eax
+; FAST-NEXT:    andb $1, %al
+; FAST-NEXT:    movzbl %al, %eax
+; FAST-NEXT:    retq
+  %t = call {i8, i1} @llvm.umul.with.overflow.i8(i8 %v1, i8 %v2)
+  %val = extractvalue {i8, i1} %t, 0
+  %obit = extractvalue {i8, i1} %t, 1
+  br i1 %obit, label %overflow, label %continue, !prof !0
+
+overflow:
+  ret i1 false
+
+continue:
+  ret i1 true
+}
+
+define zeroext i1 @umulobri16(i16 %v1, i16 %v2) {
+; SDAG-LABEL: umulobri16:
+; SDAG:       ## %bb.0:
+; SDAG-NEXT:    movl %edi, %eax
+; SDAG-NEXT:    ## kill: def $ax killed $ax killed $eax
+; SDAG-NEXT:    mulw %si
+; SDAG-NEXT:    jo LBB20_1
+; SDAG-NEXT:  ## %bb.2: ## %continue
+; SDAG-NEXT:    movb $1, %al
+; SDAG-NEXT:    retq
+; SDAG-NEXT:  LBB20_1: ## %overflow
+; SDAG-NEXT:    xorl %eax, %eax
+; SDAG-NEXT:    retq
+;
+; FAST-LABEL: umulobri16:
+; FAST:       ## %bb.0:
+; FAST-NEXT:    movl %edi, %eax
+; FAST-NEXT:    ## kill: def $ax killed $ax killed $eax
+; FAST-NEXT:    mulw %si
+; FAST-NEXT:    seto %al
+; FAST-NEXT:    testb $1, %al
+; FAST-NEXT:    jne LBB20_1
+; FAST-NEXT:  ## %bb.2: ## %continue
+; FAST-NEXT:    movb $1, %al
+; FAST-NEXT:    andb $1, %al
+; FAST-NEXT:    movzbl %al, %eax
+; FAST-NEXT:    retq
+; FAST-NEXT:  LBB20_1: ## %overflow
+; FAST-NEXT:    xorl %eax, %eax
+; FAST-NEXT:    andb $1, %al
+; FAST-NEXT:    movzbl %al, %eax
+; FAST-NEXT:    retq
+  %t = call {i16, i1} @llvm.umul.with.overflow.i16(i16 %v1, i16 %v2)
+  %val = extractvalue {i16, i1} %t, 0
+  %obit = extractvalue {i16, i1} %t, 1
+  br i1 %obit, label %overflow, label %continue, !prof !0
+
+overflow:
+  ret i1 false
+
+continue:
+  ret i1 true
+}
+
 define zeroext i1 @umulobri32(i32 %v1, i32 %v2) {
 ; SDAG-LABEL: umulobri32:
 ; SDAG:       ## %bb.0:
 ; SDAG-NEXT:    movl %edi, %eax
 ; SDAG-NEXT:    mull %esi
-; SDAG-NEXT:    jo LBB17_1
+; SDAG-NEXT:    jo LBB21_1
 ; SDAG-NEXT:  ## %bb.2: ## %continue
 ; SDAG-NEXT:    movb $1, %al
 ; SDAG-NEXT:    retq
-; SDAG-NEXT:  LBB17_1: ## %overflow
+; SDAG-NEXT:  LBB21_1: ## %overflow
 ; SDAG-NEXT:    xorl %eax, %eax
 ; SDAG-NEXT:    retq
 ;
@@ -463,13 +635,13 @@ define zeroext i1 @umulobri32(i32 %v1, i32 %v2) {
 ; FAST:       ## %bb.0:
 ; FAST-NEXT:    movl %edi, %eax
 ; FAST-NEXT:    mull %esi
-; FAST-NEXT:    jo LBB17_1
+; FAST-NEXT:    jo LBB21_1
 ; FAST-NEXT:  ## %bb.2: ## %continue
 ; FAST-NEXT:    movb $1, %al
 ; FAST-NEXT:    andb $1, %al
 ; FAST-NEXT:    movzbl %al, %eax
 ; FAST-NEXT:    retq
-; FAST-NEXT:  LBB17_1: ## %overflow
+; FAST-NEXT:  LBB21_1: ## %overflow
 ; FAST-NEXT:    xorl %eax, %eax
 ; FAST-NEXT:    andb $1, %al
 ; FAST-NEXT:    movzbl %al, %eax
@@ -491,11 +663,11 @@ define zeroext i1 @umulobri64(i64 %v1, i64 %v2) {
 ; SDAG:       ## %bb.0:
 ; SDAG-NEXT:    movq %rdi, %rax
 ; SDAG-NEXT:    mulq %rsi
-; SDAG-NEXT:    jo LBB18_1
+; SDAG-NEXT:    jo LBB22_1
 ; SDAG-NEXT:  ## %bb.2: ## %continue
 ; SDAG-NEXT:    movb $1, %al
 ; SDAG-NEXT:    retq
-; SDAG-NEXT:  LBB18_1: ## %overflow
+; SDAG-NEXT:  LBB22_1: ## %overflow
 ; SDAG-NEXT:    xorl %eax, %eax
 ; SDAG-NEXT:    retq
 ;
@@ -503,13 +675,13 @@ define zeroext i1 @umulobri64(i64 %v1, i64 %v2) {
 ; FAST:       ## %bb.0:
 ; FAST-NEXT:    movq %rdi, %rax
 ; FAST-NEXT:    mulq %rsi
-; FAST-NEXT:    jo LBB18_1
+; FAST-NEXT:    jo LBB22_1
 ; FAST-NEXT:  ## %bb.2: ## %continue
 ; FAST-NEXT:    movb $1, %al
 ; FAST-NEXT:    andb $1, %al
 ; FAST-NEXT:    movzbl %al, %eax
 ; FAST-NEXT:    retq
-; FAST-NEXT:  LBB18_1: ## %overflow
+; FAST-NEXT:  LBB22_1: ## %overflow
 ; FAST-NEXT:    xorl %eax, %eax
 ; FAST-NEXT:    andb $1, %al
 ; FAST-NEXT:    movzbl %al, %eax
