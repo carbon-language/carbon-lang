@@ -7061,12 +7061,19 @@ INTERCEPTOR(char *, devname, u64 dev, u32 type) {
 #endif
 
 #if SANITIZER_INTERCEPT_DEVNAME_R
-INTERCEPTOR(int, devname_r, u64 dev, u32 type, char *path, uptr len) {
+#if SANITIZER_NETBSD
+#define DEVNAME_R_RETTYPE int
+#define DEVNAME_R_SUCCESS(x) (!(x))
+#else
+#define DEVNAME_R_RETTYPE char*
+#define DEVNAME_R_SUCCESS(x) (x)
+#endif
+INTERCEPTOR(DEVNAME_R_RETTYPE, devname_r, u64 dev, u32 type, char *path,
+            uptr len) {
   void *ctx;
-  int res;
   COMMON_INTERCEPTOR_ENTER(ctx, devname_r, dev, type, path, len);
-  res = REAL(devname_r)(dev, type, path, len);
-  if (!res)
+  DEVNAME_R_RETTYPE res = REAL(devname_r)(dev, type, path, len);
+  if (DEVNAME_R_SUCCESS(res))
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, path, REAL(strlen)(path) + 1);
   return res;
 }
