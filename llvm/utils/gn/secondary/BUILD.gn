@@ -8,6 +8,8 @@ group("default") {
     "//llvm/tools/llvm-exegesis",
     "//llvm/tools/llvm-extract",
     "//llvm/tools/llvm-link",
+    "//llvm/tools/llvm-mca",
+    "//llvm/tools/llvm-mt",
     "//llvm/tools/llvm-rc",
     "//llvm/tools/llvm-rtdyld",
     "//llvm/tools/llvm-size",
