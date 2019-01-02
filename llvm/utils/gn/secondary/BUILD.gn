@@ -5,6 +5,8 @@ group("default") {
   deps = [
     "//clang/test",
     "//lld/test",
+    "//llvm/tools/llvm-diff",
+    "//llvm/tools/llvm-dwp",
     "//llvm/tools/llvm-exegesis",
     "//llvm/tools/llvm-extract",
     "//llvm/tools/llvm-link",
@@ -72,6 +74,11 @@ group("lld") {
 group("llvm-ar") {
   deps = [
     "//llvm/tools/llvm-ar:symlinks",
+  ]
+}
+group("llvm-dwp") {
+  deps = [
+    "//llvm/tools/llvm-dwp:symlinks",
   ]
 }
 group("llvm-nm") {
