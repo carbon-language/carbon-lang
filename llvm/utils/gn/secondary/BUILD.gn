@@ -11,6 +11,11 @@ group("default") {
     "//llvm/tools/llvm-rc",
     "//llvm/tools/llvm-rtdyld",
     "//llvm/tools/llvm-undname",
+    "//llvm/tools/llvm-xray",
+    "//llvm/tools/sancov",
+    "//llvm/tools/sanstats",
+    "//llvm/tools/verify-uselistorder",
+    "//llvm/utils/yaml-bench",
   ]
   if (clang_enable_arcmt) {
     deps += [
