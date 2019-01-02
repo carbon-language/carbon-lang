@@ -5,6 +5,10 @@ group("default") {
   deps = [
     "//clang/test",
     "//lld/test",
+    "//llvm/tools/llvm-c-test",
+    "//llvm/tools/llvm-cfi-verify",
+    "//llvm/tools/llvm-cov",
+    "//llvm/tools/llvm-cvtres",
     "//llvm/tools/llvm-cxxdump",
     "//llvm/tools/llvm-cxxfilt",
     "//llvm/tools/llvm-cxxmap",
