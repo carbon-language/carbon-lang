@@ -9116,6 +9116,77 @@ INTERCEPTOR(void, arc4random_addrandom, u8 *dat, int datlen) {
 #define INIT_ARC4RANDOM
 #endif
 
+#if SANITIZER_INTERCEPT_POPEN
+INTERCEPTOR(__sanitizer_FILE *, popen, const char *command, const char *type) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, popen, command, type);
+  if (command)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, command, REAL(strlen)(command) + 1);
+  if (type)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, type, REAL(strlen)(type) + 1);
+  __sanitizer_FILE *res = REAL(popen)(command, type);
+  COMMON_INTERCEPTOR_FILE_OPEN(ctx, res, nullptr);
+  if (res) unpoison_file(res);
+  return res;
+}
+#define INIT_POPEN COMMON_INTERCEPT_FUNCTION(popen)
+#else
+#define INIT_POPEN
+#endif
+
+#if SANITIZER_INTERCEPT_POPENVE
+INTERCEPTOR(__sanitizer_FILE *, popenve, const char *path,
+            char *const *argv, char *const *envp, const char *type) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, popenve, path, argv, envp, type);
+  if (path)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
+  if (argv) {
+    for (char *const *pa = argv; ; ++pa) {
+      COMMON_INTERCEPTOR_READ_RANGE(ctx, pa, sizeof(char **));
+      if (!*pa)
+        break;
+      COMMON_INTERCEPTOR_READ_RANGE(ctx, *pa, REAL(strlen)(*pa) + 1);
+    }
+  }
+  if (envp) {
+    for (char *const *pa = envp; ; ++pa) {
+      COMMON_INTERCEPTOR_READ_RANGE(ctx, pa, sizeof(char **));
+      if (!*pa)
+        break;
+      COMMON_INTERCEPTOR_READ_RANGE(ctx, *pa, REAL(strlen)(*pa) + 1);
+    }
+  }
+  if (type)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, type, REAL(strlen)(type) + 1);
+  __sanitizer_FILE *res = REAL(popenve)(path, argv, envp, type);
+  COMMON_INTERCEPTOR_FILE_OPEN(ctx, res, nullptr);
+  if (res) unpoison_file(res);
+  return res;
+}
+#define INIT_POPENVE COMMON_INTERCEPT_FUNCTION(popenve)
+#else
+#define INIT_POPENVE
+#endif
+
+#if SANITIZER_INTERCEPT_PCLOSE
+INTERCEPTOR(int, pclose, __sanitizer_FILE *fp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, pclose, fp);
+  COMMON_INTERCEPTOR_FILE_CLOSE(ctx, fp);
+  const FileMetadata *m = GetInterceptorMetadata(fp);
+  int res = REAL(pclose)(fp);
+  if (m) {
+    COMMON_INTERCEPTOR_INITIALIZE_RANGE(*m->addr, *m->size);
+    DeleteInterceptorMetadata(fp);
+  }
+  return res;
+}
+#define INIT_PCLOSE COMMON_INTERCEPT_FUNCTION(pclose);
+#else
+#define INIT_PCLOSE
+#endif
+
 static void InitializeCommonInterceptors() {
   static u64 metadata_mem[sizeof(MetadataHashMap) / sizeof(u64) + 1];
   interceptor_metadata_map =
@@ -9398,6 +9469,9 @@ static void InitializeCommonInterceptors() {
   INIT_CDB;
   INIT_GETFSENT;
   INIT_ARC4RANDOM;
+  INIT_POPEN;
+  INIT_POPENVE;
+  INIT_PCLOSE;
 
   INIT___PRINTF_CHK;
 }
