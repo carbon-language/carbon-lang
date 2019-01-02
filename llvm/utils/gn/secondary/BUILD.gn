@@ -5,6 +5,8 @@ group("default") {
   deps = [
     "//clang/test",
     "//lld/test",
+    "//llvm/tools/bugpoint",
+    "//llvm/tools/dsymutil",
     "//llvm/tools/llvm-c-test",
     "//llvm/tools/llvm-cfi-verify",
     "//llvm/tools/llvm-cov",
@@ -19,6 +21,7 @@ group("default") {
     "//llvm/tools/llvm-link",
     "//llvm/tools/llvm-mca",
     "//llvm/tools/llvm-mt",
+    "//llvm/tools/llvm-opt-report",
     "//llvm/tools/llvm-rc",
     "//llvm/tools/llvm-rtdyld",
     "//llvm/tools/llvm-size",
