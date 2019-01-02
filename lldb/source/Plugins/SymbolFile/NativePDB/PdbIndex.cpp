@@ -136,7 +136,7 @@ void PdbIndex::BuildAddrToSymbolMap(CompilandIndexItem &cci) {
     // If the debug info is incorrect, we could have multiple symbols with the
     // same address.  So use try_emplace instead of insert, and the first one
     // will win.
-    cci.m_symbols_by_va.try_emplace(va, PdbSymUid(cu_sym_id));
+    cci.m_symbols_by_va.insert(std::make_pair(va, PdbSymUid(cu_sym_id)));
   }
 }
 
