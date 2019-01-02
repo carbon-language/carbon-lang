@@ -61,6 +61,11 @@ define void @test2() {
   call i8* @llvm.objc.retainAutoreleasedReturnValue(i8* null)
   call i8* @llvm.objc.autoreleaseReturnValue(i8* null)
   ; call i8* @llvm.objc.retainAutoreleaseReturnValue(i8* null) ; TODO
+  %bitcast = bitcast i32* null to i8*
+  %rb = call i8* @llvm.objc.retainBlock(i8* %bitcast)
+  call void @use_pointer(i8* %rb)
+  %rb2 = call i8* @llvm.objc.retainBlock(i8* undef)
+  call void @use_pointer(i8* %rb2)
   ret void
 }
 
