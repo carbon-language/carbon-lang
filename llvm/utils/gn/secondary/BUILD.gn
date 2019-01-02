@@ -10,6 +10,9 @@ group("default") {
     "//llvm/tools/llvm-link",
     "//llvm/tools/llvm-rc",
     "//llvm/tools/llvm-rtdyld",
+    "//llvm/tools/llvm-size",
+    "//llvm/tools/llvm-split",
+    "//llvm/tools/llvm-strings",
     "//llvm/tools/llvm-undname",
     "//llvm/tools/llvm-xray",
     "//llvm/tools/sancov",
@@ -87,6 +90,16 @@ group("llvm-objdump") {
 group("llvm-readobj") {
   deps = [
     "//llvm/tools/llvm-readobj:symlinks",
+  ]
+}
+group("llvm-size") {
+  deps = [
+    "//llvm/tools/llvm-size:symlinks",
+  ]
+}
+group("llvm-strings") {
+  deps = [
+    "//llvm/tools/llvm-strings:symlinks",
   ]
 }
 group("llvm-symbolizer") {
