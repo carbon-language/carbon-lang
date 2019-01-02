@@ -2327,6 +2327,22 @@ bool X86DAGToDAGISel::hasNoSignFlagUses(SDValue Flags) const {
   return true;
 }
 
+static bool mayUseCarryFlag(X86::CondCode CC) {
+  switch (CC) {
+  // Comparisons which don't examine the CF flag.
+  case X86::COND_O: case X86::COND_NO:
+  case X86::COND_E: case X86::COND_NE:
+  case X86::COND_S: case X86::COND_NS:
+  case X86::COND_P: case X86::COND_NP:
+  case X86::COND_L: case X86::COND_GE:
+  case X86::COND_G: case X86::COND_LE:
+    return false;
+  // Anything else: assume conservatively.
+  default:
+    return true;
+  }
+}
+
 /// Test whether the given node which sets flags has any uses which require the
 /// CF flag to be accurate.
  bool X86DAGToDAGISel::hasNoCarryFlagUses(SDValue Flags) const {
@@ -2336,36 +2352,49 @@ bool X86DAGToDAGISel::hasNoSignFlagUses(SDValue Flags) const {
     // Only check things that use the flags.
     if (UI.getUse().getResNo() != Flags.getResNo())
       continue;
-    // Only examine CopyToReg uses that copy to EFLAGS.
-    if (UI->getOpcode() != ISD::CopyToReg ||
-        cast<RegisterSDNode>(UI->getOperand(1))->getReg() != X86::EFLAGS)
-      return false;
-    // Examine each user of the CopyToReg use.
-    for (SDNode::use_iterator FlagUI = UI->use_begin(), FlagUE = UI->use_end();
-         FlagUI != FlagUE; ++FlagUI) {
-      // Only examine the Flag result.
-      if (FlagUI.getUse().getResNo() != 1)
-        continue;
-      // Anything unusual: assume conservatively.
-      if (!FlagUI->isMachineOpcode())
-        return false;
-      // Examine the condition code of the user.
-      X86::CondCode CC = getCondFromOpc(FlagUI->getMachineOpcode());
 
-      switch (CC) {
-      // Comparisons which don't examine the CF flag.
-      case X86::COND_O: case X86::COND_NO:
-      case X86::COND_E: case X86::COND_NE:
-      case X86::COND_S: case X86::COND_NS:
-      case X86::COND_P: case X86::COND_NP:
-      case X86::COND_L: case X86::COND_GE:
-      case X86::COND_G: case X86::COND_LE:
-        continue;
-      // Anything else: assume conservatively.
-      default:
+    unsigned UIOpc = UI->getOpcode();
+
+    if (UIOpc == ISD::CopyToReg) {
+      // Only examine CopyToReg uses that copy to EFLAGS.
+      if (cast<RegisterSDNode>(UI->getOperand(1))->getReg() != X86::EFLAGS)
         return false;
+      // Examine each user of the CopyToReg use.
+      for (SDNode::use_iterator FlagUI = UI->use_begin(), FlagUE = UI->use_end();
+           FlagUI != FlagUE; ++FlagUI) {
+        // Only examine the Flag result.
+        if (FlagUI.getUse().getResNo() != 1)
+          continue;
+        // Anything unusual: assume conservatively.
+        if (!FlagUI->isMachineOpcode())
+          return false;
+        // Examine the condition code of the user.
+        X86::CondCode CC = getCondFromOpc(FlagUI->getMachineOpcode());
+
+        if (mayUseCarryFlag(CC))
+          return false;
       }
+
+      // This CopyToReg is ok. Move on to the next user.
+      continue;
     }
+
+    // This might be an unselected node. So look for the pre-isel opcodes that
+    // use flags.
+    unsigned CCOpNo;
+    switch (UIOpc) {
+    default:
+      // Something unusual. Be conservative.
+      return false;
+    case X86ISD::SETCC:       CCOpNo = 0; break;
+    case X86ISD::SETCC_CARRY: CCOpNo = 0; break;
+    case X86ISD::CMOV:        CCOpNo = 2; break;
+    case X86ISD::BRCOND:      CCOpNo = 2; break;
+    }
+
+    X86::CondCode CC = (X86::CondCode)UI->getConstantOperandVal(CCOpNo);
+    if (mayUseCarryFlag(CC))
+      return false;
   }
   return true;
 }
@@ -2521,8 +2550,6 @@ bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
   switch (Opc) {
   default:
     return false;
-  case X86ISD::INC:
-  case X86ISD::DEC:
   case X86ISD::SUB:
   case X86ISD::SBB:
     break;
@@ -2573,20 +2600,27 @@ bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
 
   MachineSDNode *Result;
   switch (Opc) {
-  case X86ISD::INC:
-  case X86ISD::DEC: {
-    unsigned NewOpc =
-        Opc == X86ISD::INC
-            ? SelectOpcode(X86::INC64m, X86::INC32m, X86::INC16m, X86::INC8m)
-            : SelectOpcode(X86::DEC64m, X86::DEC32m, X86::DEC16m, X86::DEC8m);
-    const SDValue Ops[] = {Base, Scale, Index, Disp, Segment, InputChain};
-    Result =
-        CurDAG->getMachineNode(NewOpc, SDLoc(Node), MVT::i32, MVT::Other, Ops);
-    break;
-  }
   case X86ISD::ADD:
-  case X86ISD::ADC:
   case X86ISD::SUB:
+    // Try to match inc/dec.
+    if (!Subtarget->slowIncDec() ||
+        CurDAG->getMachineFunction().getFunction().optForSize()) {
+      bool IsOne = isOneConstant(StoredVal.getOperand(1));
+      bool IsNegOne = isAllOnesConstant(StoredVal.getOperand(1));
+      // ADD/SUB with 1/-1 and carry flag isn't used can use inc/dec.
+      if ((IsOne || IsNegOne) && hasNoCarryFlagUses(StoredVal.getValue(1))) {
+        unsigned NewOpc = 
+          ((Opc == X86ISD::ADD) == IsOne)
+              ? SelectOpcode(X86::INC64m, X86::INC32m, X86::INC16m, X86::INC8m)
+              : SelectOpcode(X86::DEC64m, X86::DEC32m, X86::DEC16m, X86::DEC8m);
+        const SDValue Ops[] = {Base, Scale, Index, Disp, Segment, InputChain};
+        Result = CurDAG->getMachineNode(NewOpc, SDLoc(Node), MVT::i32,
+                                        MVT::Other, Ops);
+        break;
+      }
+    }
+    LLVM_FALLTHROUGH;
+  case X86ISD::ADC:
   case X86ISD::SBB:
   case X86ISD::AND:
   case X86ISD::OR:
