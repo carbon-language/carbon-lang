@@ -48,6 +48,15 @@ group("default") {
       "//clang/tools/clang-func-mapping",
     ]
   }
+  if (host_os != "win") {
+    # loadable_modules don't work on Windows.
+    # FIXME: In the CMake build, ENABLE_SHARED makes them work somehow
+    # (but they're off by default there too).
+    deps += [
+      "//llvm/lib/Transforms/Hello",
+      "//llvm/tools/bugpoint-passes",
+    ]
+  }
   testonly = true
 }
 
