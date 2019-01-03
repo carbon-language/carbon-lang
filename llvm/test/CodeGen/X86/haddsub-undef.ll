@@ -3,8 +3,8 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown -mattr=+sse3,fast-hops     | FileCheck %s --check-prefixes=SSE,SSE-FAST
 ; RUN: llc < %s -mtriple=x86_64-unknown -mattr=+avx                | FileCheck %s --check-prefixes=AVX,AVX-SLOW,AVX1-SLOW
 ; RUN: llc < %s -mtriple=x86_64-unknown -mattr=+avx,fast-hops      | FileCheck %s --check-prefixes=AVX,AVX-FAST,AVX1-FAST
-; RUN: llc < %s -mtriple=x86_64-unknown -mattr=+avx512f            | FileCheck %s --check-prefixes=AVX,AVX-SLOW,AVX512-SLOW
-; RUN: llc < %s -mtriple=x86_64-unknown -mattr=+avx512f,fast-hops  | FileCheck %s --check-prefixes=AVX,AVX-FAST,AVX512-FAST
+; RUN: llc < %s -mtriple=x86_64-unknown -mattr=+avx512f            | FileCheck %s --check-prefixes=AVX,AVX-SLOW,AVX512,AVX512-SLOW
+; RUN: llc < %s -mtriple=x86_64-unknown -mattr=+avx512f,fast-hops  | FileCheck %s --check-prefixes=AVX,AVX-FAST,AVX512,AVX512-FAST
 
 ; Verify that we correctly fold horizontal binop even in the presence of UNDEFs.
 
@@ -316,6 +316,59 @@ define <8 x float> @test13_undef(<8 x float> %a, <8 x float> %b) {
   ret <8 x float> %vecinit4
 }
 
+define <16 x float> @test13_v16f32_undef(<16 x float> %a, <16 x float> %b) {
+; SSE-LABEL: test13_v16f32_undef:
+; SSE:       # %bb.0:
+; SSE-NEXT:    haddps %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX1-SLOW-LABEL: test13_v16f32_undef:
+; AVX1-SLOW:       # %bb.0:
+; AVX1-SLOW-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; AVX1-SLOW-NEXT:    vhaddps %xmm1, %xmm0, %xmm0
+; AVX1-SLOW-NEXT:    retq
+;
+; AVX1-FAST-LABEL: test13_v16f32_undef:
+; AVX1-FAST:       # %bb.0:
+; AVX1-FAST-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; AVX1-FAST-NEXT:    vhaddps %xmm1, %xmm0, %xmm0
+; AVX1-FAST-NEXT:    retq
+;
+; AVX512-LABEL: test13_v16f32_undef:
+; AVX512:       # %bb.0:
+; AVX512-NEXT:    vmovshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
+; AVX512-NEXT:    vaddss %xmm1, %xmm0, %xmm1
+; AVX512-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512-NEXT:    vpermilps {{.*#+}} xmm3 = xmm0[3,1,2,3]
+; AVX512-NEXT:    vaddss %xmm3, %xmm2, %xmm2
+; AVX512-NEXT:    vinsertps {{.*#+}} xmm1 = xmm1[0],xmm2[0],xmm1[2,3]
+; AVX512-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; AVX512-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
+; AVX512-NEXT:    vaddss %xmm2, %xmm0, %xmm2
+; AVX512-NEXT:    vinsertps {{.*#+}} xmm1 = xmm1[0,1],xmm2[0],xmm1[3]
+; AVX512-NEXT:    vpermilpd {{.*#+}} xmm2 = xmm0[1,0]
+; AVX512-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; AVX512-NEXT:    vaddss %xmm0, %xmm2, %xmm0
+; AVX512-NEXT:    vinsertps {{.*#+}} xmm0 = xmm1[0,1,2],xmm0[0]
+; AVX512-NEXT:    retq
+  %vecext = extractelement <16 x float> %a, i32 0
+  %vecext1 = extractelement <16 x float> %a, i32 1
+  %add1 = fadd float %vecext, %vecext1
+  %vecinit1 = insertelement <16 x float> undef, float %add1, i32 0
+  %vecext2 = extractelement <16 x float> %a, i32 2
+  %vecext3 = extractelement <16 x float> %a, i32 3
+  %add2 = fadd float %vecext2, %vecext3
+  %vecinit2 = insertelement <16 x float> %vecinit1, float %add2, i32 1
+  %vecext4 = extractelement <16 x float> %a, i32 4
+  %vecext5 = extractelement <16 x float> %a, i32 5
+  %add3 = fadd float %vecext4, %vecext5
+  %vecinit3 = insertelement <16 x float> %vecinit2, float %add3, i32 2
+  %vecext6 = extractelement <16 x float> %a, i32 6
+  %vecext7 = extractelement <16 x float> %a, i32 7
+  %add4 = fadd float %vecext6, %vecext7
+  %vecinit4 = insertelement <16 x float> %vecinit3, float %add4, i32 3
+  ret <16 x float> %vecinit4
+}
 define <2 x double> @add_pd_003(<2 x double> %x) {
 ; SSE-SLOW-LABEL: add_pd_003:
 ; SSE-SLOW:       # %bb.0:
