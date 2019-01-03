@@ -19,7 +19,7 @@ class TestDisassembler(TestBase):
         self.assertEqual(s, '\tjcxz\t-127')
 
     def test_nonexistent_triple(self):
-        with self.assertRaisesRegexp(Exception, "Could not obtain disassembler for triple"):
+        with self.assertRaisesRegex(Exception, "Could not obtain disassembler for triple"):
             Disassembler("nonexistent-triple-raises")
 
     def test_get_instructions(self):
