@@ -86,7 +86,7 @@ template <class ELFT>
 void ELFSectionSizer<ELFT>::visit(SymbolTableSection &Sec) {
   Sec.EntrySize = sizeof(Elf_Sym);
   Sec.Size = Sec.Symbols.size() * Sec.EntrySize;
-  // Align to the larget field in Elf_Sym.
+  // Align to the largest field in Elf_Sym.
   Sec.Align = sizeof(Elf_Sym::st_size);
 }
 
@@ -94,7 +94,7 @@ template <class ELFT>
 void ELFSectionSizer<ELFT>::visit(RelocationSection &Sec) {
   Sec.EntrySize = Sec.Type == SHT_REL ? sizeof(Elf_Rel) : sizeof(Elf_Rela);
   Sec.Size = Sec.Relocations.size() * Sec.EntrySize;
-  // Align to the larget field in Elf_Rel(a).
+  // Align to the largest field in Elf_Rel(a).
   Sec.Align =
       Sec.Type == SHT_REL ? sizeof(Elf_Rel::r_info) : sizeof(Elf_Rela::r_info);
 }
