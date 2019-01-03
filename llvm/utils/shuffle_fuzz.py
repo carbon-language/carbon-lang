@@ -107,7 +107,7 @@ def main():
                        else random.choice(range(shuffle_range))
                     for _ in itertools.repeat(None, width)]
                    for _ in itertools.repeat(None, args.max_shuffle_height - i)]
-                  for i in xrange(args.max_shuffle_height)]
+                  for i in range(args.max_shuffle_height)]
 
   if args.verbose:
     # Print out the shuffle sequence in a compact form.
@@ -121,8 +121,8 @@ def main():
 
   # Symbolically evaluate the shuffle tree.
   inputs = [[int(j % element_modulus)
-             for j in xrange(i * width + 1, (i + 1) * width + 1)]
-            for i in xrange(args.max_shuffle_height + 1)]
+             for j in range(i * width + 1, (i + 1) * width + 1)]
+            for i in range(args.max_shuffle_height + 1)]
   results = inputs
   for shuffles in shuffle_tree:
     results = [[((results[i] if j < width else results[i + 1])[j % width]
@@ -157,7 +157,7 @@ define internal fastcc <%(N)d x %(T)s> @test(%(arguments)s) noinline nounwind {
 entry:""" % dict(subst,
                  arguments=', '.join(
                      ['<%(N)d x %(T)s> %%s.0.%(i)d' % dict(subst, i=i)
-                      for i in xrange(args.max_shuffle_height + 1)])))
+                      for i in range(args.max_shuffle_height + 1)])))
 
   for i, shuffles in enumerate(shuffle_tree):
    for j, s in enumerate(shuffles):
@@ -191,7 +191,7 @@ define internal fastcc <%(N)d x %(T)s> @test_wrapper(%(arguments)s) optnone noin
 }
 """ % dict(subst,
            arguments=', '.join(['<%(N)d x %(T)s> %%s.%(i)d' % dict(subst, i=i)
-                                for i in xrange(args.max_shuffle_height + 1)])))
+                                for i in range(args.max_shuffle_height + 1)])))
 
   # Finally, generate a main function which will trap if any lanes are mapped
   # incorrectly (in an observable way).

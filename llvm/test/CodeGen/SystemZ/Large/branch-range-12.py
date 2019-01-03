@@ -99,7 +99,7 @@ print('entry:')
 print('  br label %before0')
 print('')
 
-for i in xrange(branch_blocks):
+for i in range(branch_blocks):
     next = 'before%d' % (i + 1) if i + 1 < branch_blocks else 'main'
     print('before%d:' % i)
     print('  %%bcur%da = load i64 , i64 *%%stopa' % i)
@@ -111,14 +111,14 @@ for i in xrange(branch_blocks):
 
 print('%s:' % next)
 a, b = 1, 1
-for i in xrange(0, main_size, 6):
+for i in range(0, main_size, 6):
     a, b = b, a + b
     offset = 4096 + b % 500000
     value = a % 256
     print('  %%ptr%d = getelementptr i8, i8 *%%base, i64 %d' % (i, offset))
     print('  store volatile i8 %d, i8 *%%ptr%d' % (value, i))
 
-for i in xrange(branch_blocks):
+for i in range(branch_blocks):
     print('  %%acur%da = load i64 , i64 *%%stopa' % i)
     print('  %%acur%db = load i64 , i64 *%%stopb' % i)
     print('  %%asub%d = sub i64 %%acur%da, %%acur%db' % (i, i, i))

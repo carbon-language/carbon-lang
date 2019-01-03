@@ -66,7 +66,7 @@ print('  br label %b0')
 print('')
 
 a, b = 1, 1
-for i in xrange(blocks):
+for i in range(blocks):
     a, b = b, a + b
     value = a % 256
     next = 'b%d' % (i + 1) if i + 1 < blocks else 'end'

@@ -41,7 +41,7 @@ main_size = 0xffd8
 print('define void @f1(i8 *%base, i64 *%counts) {')
 print('entry:')
 
-for i in xrange(branch_blocks - 1, -1, -1):
+for i in range(branch_blocks - 1, -1, -1):
     print('  %%countptr%d = getelementptr i64, i64 *%%counts, i64 %d' % (i, i))
     print('  %%initcount%d = load i64 , i64 *%%countptr%d' % (i, i))
     print('  br label %%loop%d' % i)
@@ -53,14 +53,14 @@ for i in xrange(branch_blocks - 1, -1, -1):
            ' [ %%nextcount%d, %%%s ]' % (i, i, block1, i, block2)))
 
 a, b = 1, 1
-for i in xrange(0, main_size, 6):
+for i in range(0, main_size, 6):
     a, b = b, a + b
     offset = 4096 + b % 500000
     value = a % 256
     print('  %%ptr%d = getelementptr i8, i8 *%%base, i64 %d' % (i, offset))
     print('  store volatile i8 %d, i8 *%%ptr%d' % (value, i))
 
-for i in xrange(branch_blocks):
+for i in range(branch_blocks):
     print('  %%nextcount%d = add i64 %%count%d, -1' % (i, i))
     print('  %%test%d = icmp ne i64 %%nextcount%d, 0' % (i, i))
     print('  br i1 %%test%d, label %%loop%d, label %%after%d' % (i, i, i))

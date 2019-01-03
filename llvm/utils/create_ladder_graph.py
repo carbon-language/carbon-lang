@@ -22,8 +22,8 @@ def main():
     print("Rungs must be a multiple of 2")
     return
   print("int ladder(int *foo, int *bar, int x) {")
-  rung1 = xrange(0, args.rungs, 2)
-  rung2 = xrange(1, args.rungs, 2)
+  rung1 = range(0, args.rungs, 2)
+  rung2 = range(1, args.rungs, 2)
   for i in rung1:
     print("rung1%d:" % i)
     print("*foo = x++;")
