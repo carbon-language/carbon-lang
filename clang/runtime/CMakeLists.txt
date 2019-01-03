@@ -28,7 +28,7 @@ set(COMPILER_RT_SRC_ROOT ${LLVM_MAIN_SRC_DIR}/projects/compiler-rt)
 # variable) as in add_llvm_external_project
 if(NOT EXISTS ${COMPILER_RT_SRC_ROOT})
   # We don't want to set it if LLVM_EXTERNAL_COMPILER_RT_SOURCE_DIR is ""
-  if(${LLVM_EXTERNAL_COMPILER_RT_SOURCE_DIR})
+  if(LLVM_EXTERNAL_COMPILER_RT_SOURCE_DIR)
     set(COMPILER_RT_SRC_ROOT ${LLVM_EXTERNAL_COMPILER_RT_SOURCE_DIR})
   endif()
 endif()
