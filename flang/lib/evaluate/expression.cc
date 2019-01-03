@@ -189,6 +189,7 @@ template<typename T> DynamicType ArrayConstructor<T>::GetType() const {
   return result.GetType();
 }
 
+#if defined(__APPLE__) && defined(__GNUC__)
 template<typename A>
 typename ExpressionBase<A>::Derived &ExpressionBase<A>::derived() {
   return *static_cast<Derived *>(this);
@@ -198,6 +199,7 @@ template<typename A>
 const typename ExpressionBase<A>::Derived &ExpressionBase<A>::derived() const {
   return *static_cast<const Derived *>(this);
 }
+#endif
 
 template<typename A>
 std::optional<DynamicType> ExpressionBase<A>::GetType() const {
