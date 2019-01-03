@@ -19,6 +19,8 @@ from ctypes import byref
 from ctypes import c_char_p
 from ctypes import c_uint
 
+import sys
+
 __all__ = [
     "lib",
     "Enums",
@@ -236,7 +238,7 @@ class Module(LLVMObject):
         def __iter__(self):
             return self
         
-        def next(self):
+        def __next__(self):
             if not isinstance(self.function, Function):
                 raise StopIteration("")
             result = self.function
@@ -245,7 +247,10 @@ class Module(LLVMObject):
             else:
                 self.function = self.function.next
             return result
-    
+
+        if sys.version_info.major == 2:
+            next = __next__
+
     def __iter__(self):
         return Module.__function_iterator(self)
 
@@ -304,7 +309,7 @@ class Function(Value):
         def __iter__(self):
             return self
         
-        def next(self):
+        def __next__(self):
             if not isinstance(self.bb, BasicBlock):
                 raise StopIteration("")
             result = self.bb
@@ -313,6 +318,9 @@ class Function(Value):
             else:
                 self.bb = self.bb.next
             return result
+
+        if sys.version_info.major == 2:
+            next = __next__
     
     def __iter__(self):
         return Function.__bb_iterator(self)
@@ -381,7 +389,7 @@ class BasicBlock(LLVMObject):
         def __iter__(self):
             return self
         
-        def next(self):
+        def __next__(self):
             if not isinstance(self.inst, Instruction):
                 raise StopIteration("")
             result = self.inst
@@ -390,7 +398,10 @@ class BasicBlock(LLVMObject):
             else:
                 self.inst = self.inst.next
             return result
-    
+
+        if sys.version_info.major == 2:
+            next = __next__
+
     def __iter__(self):
         return BasicBlock.__inst_iterator(self)
 
