@@ -944,8 +944,7 @@ void ObjectFilePECOFF::Dump(Stream *s) {
     s->Indent();
     s->PutCString("ObjectFilePECOFF");
 
-    ArchSpec header_arch;
-    GetArchitecture(header_arch);
+    ArchSpec header_arch = GetArchitecture();
 
     *s << ", file = '" << m_file
        << "', arch = " << header_arch.GetArchitectureName() << "\n";
@@ -1148,9 +1147,11 @@ bool ObjectFilePECOFF::IsWindowsSubsystem() {
   }
 }
 
-bool ObjectFilePECOFF::GetArchitecture(ArchSpec &arch) {
+ArchSpec ObjectFilePECOFF::GetArchitecture() {
   uint16_t machine = m_coff_header.machine;
   switch (machine) {
+  default:
+    break;
   case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
   case llvm::COFF::IMAGE_FILE_MACHINE_I386:
   case llvm::COFF::IMAGE_FILE_MACHINE_POWERPC:
@@ -1158,14 +1159,13 @@ bool ObjectFilePECOFF::GetArchitecture(ArchSpec &arch) {
   case llvm::COFF::IMAGE_FILE_MACHINE_ARM:
   case llvm::COFF::IMAGE_FILE_MACHINE_ARMNT:
   case llvm::COFF::IMAGE_FILE_MACHINE_THUMB:
+    ArchSpec arch;
     arch.SetArchitecture(eArchTypeCOFF, machine, LLDB_INVALID_CPUTYPE,
                          IsWindowsSubsystem() ? llvm::Triple::Win32
                                               : llvm::Triple::UnknownOS);
-    return true;
-  default:
-    break;
+    return arch;
   }
-  return false;
+  return ArchSpec();
 }
 
 ObjectFile::Type ObjectFilePECOFF::CalculateType() {
