@@ -27,11 +27,13 @@ module LLVM_Backend {
     textual header "CodeGen/CommandFlags.inc"
     textual header "CodeGen/DIEValue.def"
   }
+}
 
-  module Target {
-    umbrella "Target"
-    module * { export * }
-  }
+// FIXME: Make this as a submodule of LLVM_Backend again.
+//        Doing so causes a linker error in clang-format.
+module LLVM_Backend_Target {
+  umbrella "Target"
+  module * { export * }
 }
 
 module LLVM_Bitcode { requires cplusplus umbrella "Bitcode" module * { export * } }
