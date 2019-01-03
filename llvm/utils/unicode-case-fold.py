@@ -21,7 +21,11 @@ from __future__ import print_function
 
 import sys
 import re
-import urllib2
+try:
+    from urllib.request import urlopen
+except ImportError:
+    from urllib2 import urlopen
+
 
 # This variable will body of the mappings function
 body = ""
@@ -95,7 +99,7 @@ def dump_block(b):
     body += pattern.format(last, stride(b), modulo, shift(b[0]))
 
 current_block = []
-f = urllib2.urlopen(sys.argv[1])
+f = urlopen(sys.argv[1])
 for m in mappings(f):
     if len(current_block) == 0:
         current_block.append(m)
