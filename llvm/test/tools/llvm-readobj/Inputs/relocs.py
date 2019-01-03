@@ -75,7 +75,7 @@ class EnumType(type):
     def makeKey(item):
       return (item[1], item[0])
     e = []
-    for pair in sorted(self._nameMap.iteritems(), key=makeKey):
+    for pair in sorted(self._nameMap.items(), key=makeKey):
       e.append(pair)
     return e
 
