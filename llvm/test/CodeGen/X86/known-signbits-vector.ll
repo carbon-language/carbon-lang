@@ -385,3 +385,69 @@ define <4 x float> @signbits_ashr_sext_select_shuffle_sitofp(<4 x i64> %a0, <4 x
   %6 = sitofp <4 x i64> %5 to <4 x float>
   ret <4 x float> %6
 }
+
+; Make sure we can preserve sign bit information into the second basic block
+; so we can avoid having to shift bit 0 into bit 7 for each element due to
+; v32i1->v32i8 promotion and the splitting of v32i8 into 2xv16i8. This requires
+; ComputeNumSignBits handling for insert_subvector.
+define void @cross_bb_signbits_insert_subvec(<32 x i8>* %ptr, <32 x i8> %x, <32 x i8> %z) {
+; X32-LABEL: cross_bb_signbits_insert_subvec:
+; X32:       # %bb.0:
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-NEXT:    vextractf128 $1, %ymm0, %xmm3
+; X32-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; X32-NEXT:    vpcmpeqb %xmm2, %xmm3, %xmm3
+; X32-NEXT:    vpcmpeqb %xmm2, %xmm0, %xmm0
+; X32-NEXT:    vinsertf128 $1, %xmm3, %ymm0, %ymm0
+; X32-NEXT:    vextractf128 $1, %ymm0, %xmm3
+; X32-NEXT:    vpsllw $7, %xmm3, %xmm3
+; X32-NEXT:    vmovdqa {{.*#+}} xmm4 = [128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128]
+; X32-NEXT:    vpand %xmm4, %xmm3, %xmm3
+; X32-NEXT:    vpcmpgtb %xmm3, %xmm2, %xmm3
+; X32-NEXT:    vpsllw $7, %xmm0, %xmm0
+; X32-NEXT:    vpand %xmm4, %xmm0, %xmm0
+; X32-NEXT:    vpcmpgtb %xmm0, %xmm2, %xmm0
+; X32-NEXT:    vinsertf128 $1, %xmm3, %ymm0, %ymm0
+; X32-NEXT:    vandnps %ymm1, %ymm0, %ymm1
+; X32-NEXT:    vandps {{\.LCPI.*}}, %ymm0, %ymm0
+; X32-NEXT:    vorps %ymm1, %ymm0, %ymm0
+; X32-NEXT:    vmovaps %ymm0, (%eax)
+; X32-NEXT:    vzeroupper
+; X32-NEXT:    retl
+;
+; X64-LABEL: cross_bb_signbits_insert_subvec:
+; X64:       # %bb.0:
+; X64-NEXT:    vextractf128 $1, %ymm0, %xmm3
+; X64-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; X64-NEXT:    vpcmpeqb %xmm2, %xmm3, %xmm3
+; X64-NEXT:    vpcmpeqb %xmm2, %xmm0, %xmm0
+; X64-NEXT:    vinsertf128 $1, %xmm3, %ymm0, %ymm0
+; X64-NEXT:    vextractf128 $1, %ymm0, %xmm3
+; X64-NEXT:    vpsllw $7, %xmm3, %xmm3
+; X64-NEXT:    vmovdqa {{.*#+}} xmm4 = [128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128]
+; X64-NEXT:    vpand %xmm4, %xmm3, %xmm3
+; X64-NEXT:    vpcmpgtb %xmm3, %xmm2, %xmm3
+; X64-NEXT:    vpsllw $7, %xmm0, %xmm0
+; X64-NEXT:    vpand %xmm4, %xmm0, %xmm0
+; X64-NEXT:    vpcmpgtb %xmm0, %xmm2, %xmm0
+; X64-NEXT:    vinsertf128 $1, %xmm3, %ymm0, %ymm0
+; X64-NEXT:    vandnps %ymm1, %ymm0, %ymm1
+; X64-NEXT:    vandps {{.*}}(%rip), %ymm0, %ymm0
+; X64-NEXT:    vorps %ymm1, %ymm0, %ymm0
+; X64-NEXT:    vmovaps %ymm0, (%rdi)
+; X64-NEXT:    vzeroupper
+; X64-NEXT:    retq
+  %a = icmp eq <32 x i8> %x, zeroinitializer
+  %b = icmp eq <32 x i8> %x, zeroinitializer
+  %c = and <32 x i1> %a, %b
+  br label %block
+
+block:
+  %d = select <32 x i1> %c, <32 x i8> <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>, <32 x i8> %z
+  store <32 x i8> %d, <32 x i8>* %ptr, align 32
+  br label %exit
+
+exit:
+  ret void
+}
+
