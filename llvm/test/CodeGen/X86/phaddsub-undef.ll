@@ -5,6 +5,8 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown -mattr=+avx,fast-hops      | FileCheck %s --check-prefixes=AVX,AVX-FAST,AVX1,AVX1-FAST
 ; RUN: llc < %s -mtriple=x86_64-unknown -mattr=+avx2               | FileCheck %s --check-prefixes=AVX,AVX-SLOW,AVX2,AVX2-SLOW
 ; RUN: llc < %s -mtriple=x86_64-unknown -mattr=+avx2,fast-hops     | FileCheck %s --check-prefixes=AVX,AVX-FAST,AVX2,AVX2-FAST
+; RUN: llc < %s -mtriple=x86_64-unknown -mattr=+avx512vl           | FileCheck %s --check-prefixes=AVX,AVX-SLOW,AVX512,AVX512-SLOW
+; RUN: llc < %s -mtriple=x86_64-unknown -mattr=+avx512vl,fast-hops | FileCheck %s --check-prefixes=AVX,AVX-FAST,AVX512,AVX512-FAST
 
 ; Verify that we correctly fold horizontal binop even in the presence of UNDEFs.
 
@@ -23,6 +25,11 @@ define <8 x i32> @test14_undef(<8 x i32> %a, <8 x i32> %b) {
 ; AVX2:       # %bb.0:
 ; AVX2-NEXT:    vphaddd %ymm1, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test14_undef:
+; AVX512:       # %bb.0:
+; AVX512-NEXT:    vphaddd %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    retq
   %vecext = extractelement <8 x i32> %a, i32 0
   %vecext1 = extractelement <8 x i32> %a, i32 1
   %add = add i32 %vecext, %vecext1
@@ -70,6 +77,11 @@ define <8 x i32> @test15_undef(<8 x i32> %a, <8 x i32> %b) {
 ; AVX2:       # %bb.0:
 ; AVX2-NEXT:    vphaddd %ymm0, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test15_undef:
+; AVX512:       # %bb.0:
+; AVX512-NEXT:    vphaddd %ymm0, %ymm0, %ymm0
+; AVX512-NEXT:    retq
   %vecext = extractelement <8 x i32> %a, i32 0
   %vecext1 = extractelement <8 x i32> %a, i32 1
   %add = add i32 %vecext, %vecext1
@@ -96,6 +108,11 @@ define <8 x i32> @test16_undef(<8 x i32> %a, <8 x i32> %b) {
 ; AVX2:       # %bb.0:
 ; AVX2-NEXT:    vphaddd %ymm0, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test16_undef:
+; AVX512:       # %bb.0:
+; AVX512-NEXT:    vphaddd %ymm0, %ymm0, %ymm0
+; AVX512-NEXT:    retq
   %vecext = extractelement <8 x i32> %a, i32 0
   %vecext1 = extractelement <8 x i32> %a, i32 1
   %add = add i32 %vecext, %vecext1
@@ -124,6 +141,12 @@ define <8 x i32> @test17_undef(<8 x i32> %a, <8 x i32> %b) {
 ; AVX2-NEXT:    vextracti128 $1, %ymm0, %xmm1
 ; AVX2-NEXT:    vphaddd %xmm1, %xmm0, %xmm0
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test17_undef:
+; AVX512:       # %bb.0:
+; AVX512-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; AVX512-NEXT:    vphaddd %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    retq
   %vecext = extractelement <8 x i32> %a, i32 0
   %vecext1 = extractelement <8 x i32> %a, i32 1
   %add1 = add i32 %vecext, %vecext1
