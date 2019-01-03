@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
 """A script to generate FileCheck statements for 'opt' regression tests.
 
