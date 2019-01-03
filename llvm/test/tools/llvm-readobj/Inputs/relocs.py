@@ -16,7 +16,6 @@ from __future__ import print_function
 
 import operator
 import shutil
-import StringIO
 import struct
 import subprocess
 import sys
