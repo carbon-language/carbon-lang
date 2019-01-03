@@ -20,5 +20,5 @@ void CoroutineTestRet() {
 }
 // CHECK: [[@LINE-3]]:25: UnexposedStmt=
 // CHECK-SAME: [[@LINE-4]]:25 - [[@LINE-2]]:2]
-// CHECK: [[@LINE-4]]:5: UnexposedStmt=
-// CHECK-SAME: [[@LINE-5]]:5 - [[@LINE-5]]:14]
+// CHECK: [[@LINE-4]]:3: UnexposedStmt=
+// CHECK-SAME: [[@LINE-5]]:3 - [[@LINE-5]]:12]
