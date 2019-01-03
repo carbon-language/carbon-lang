@@ -72,7 +72,10 @@ class SourceFileRenderer:
         file_text = stream.read()
 
         if self.no_highlight:
-            html_highlighted = file_text.decode('utf-8')
+            if sys.version_info.major >= 3:
+                html_highlighted = file_text
+            else:
+                html_highlighted = file_text.decode('utf-8')
         else:
             html_highlighted = highlight(
             file_text,
