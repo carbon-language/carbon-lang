@@ -36,7 +36,7 @@ def parse(file):
       else:
         fname = tmp[0].strip('\r\n')
       
-      if not test.has_key(fname) :
+      if fname not in test :
         test[fname] = {}
       
       for k in test:
@@ -77,12 +77,12 @@ def diffResults(d_old, d_new):
     if DEBUG:
       print(t)
         
-    if d_new.has_key(t) :
+    if t in d_new :
     
       # Check if the test passed or failed.
       for x in test:
-        if d_old[t].has_key(x):
-          if d_new[t].has_key(x):
+        if x in d_old[t]:
+          if x in d_new[t]:
             if d_old[t][x] == 'PASS':
               if d_new[t][x] != 'PASS':
                 print(t + " *** REGRESSION (" + x + ")\n")
@@ -95,22 +95,22 @@ def diffResults(d_old, d_new):
         
         # For execution time, if there is no result, its a fail.
         for x in exectime:
-          if d_old[t].has_key(tp + x):
-            if not d_new[t].has_key(tp + x):
+          if tp + x in d_old[t]:
+            if tp + x not in d_new[t]:
               print(t + " *** REGRESSION (" + tp + x + ")\n")
                 
           else :
-            if d_new[t].has_key(tp + x):
+            if tp + x in d_new[t]:
               print(t + " * NEW PASS (" + tp + x + ")\n")
 
        
         for x in comptime:
-          if d_old[t].has_key(exp + x):
-            if not d_new[t].has_key(exp + x):
+          if exp + x in d_old[t]:
+            if exp + x not in d_new[t]:
               print(t + " *** REGRESSION (" + exp + x + ")\n")
                 
           else :
-            if d_new[t].has_key(exp + x):
+            if exp + x in d_new[t]:
               print(t + " * NEW PASS (" + exp + x + ")\n")
               
     else :

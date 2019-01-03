@@ -33,7 +33,7 @@ def parse(file):
       else:
         fname = tmp[0].strip('\r\n')
 
-      if not test.has_key(fname):
+      if fname not in test:
         test[fname] = {}
 
       test[fname][t[1] + ' state'] = t[0]
@@ -73,16 +73,16 @@ def diffResults(d_old, d_new):
     passes[x] = ''
 
   for t in sorted(d_old.keys()) :
-    if d_new.has_key(t):
+    if t in d_new:
 
       # Check if the test passed or failed.
       for x in ['compile state', 'compile time', 'exec state', 'exec time']:
 
-        if not d_old[t].has_key(x) and not d_new[t].has_key(x):
+        if x not in d_old[t] and x not in d_new[t]:
           continue
 
-        if d_old[t].has_key(x):
-          if d_new[t].has_key(x):
+        if x in d_old[t]:
+          if x in d_new[t]:
 
             if d_old[t][x] == 'PASS':
               if d_new[t][x] != 'PASS':
@@ -98,11 +98,11 @@ def diffResults(d_old, d_new):
           continue
 
         # For execution time, if there is no result it's a fail.
-        if not d_old[t].has_key(x) and not d_new[t].has_key(x):
+        if x not in d_old[t] and x not in d_new[t]:
           continue
-        elif not d_new[t].has_key(x):
+        elif x not in d_new[t]:
           regressions[x] += t + "\n"
-        elif not d_old[t].has_key(x):
+        elif x not in d_old[t]:
           passes[x] += t + "\n"
 
         if math.isnan(d_old[t][x]) and math.isnan(d_new[t][x]):
