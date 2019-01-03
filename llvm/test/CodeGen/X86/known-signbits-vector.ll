@@ -74,8 +74,8 @@ define float @signbits_ashr_extract_sitofp_0(<2 x i64> %a0) nounwind {
 ;
 ; X64-LABEL: signbits_ashr_extract_sitofp_0:
 ; X64:       # %bb.0:
-; X64-NEXT:    vpsrlq $32, %xmm0, %xmm0
 ; X64-NEXT:    vmovq %xmm0, %rax
+; X64-NEXT:    shrq $32, %rax
 ; X64-NEXT:    vcvtsi2ssl %eax, %xmm1, %xmm0
 ; X64-NEXT:    retq
   %1 = ashr <2 x i64> %a0, <i64 32, i64 32>
@@ -101,12 +101,9 @@ define float @signbits_ashr_extract_sitofp_1(<2 x i64> %a0) nounwind {
 ;
 ; X64-LABEL: signbits_ashr_extract_sitofp_1:
 ; X64:       # %bb.0:
-; X64-NEXT:    vpsrlq $32, %xmm0, %xmm0
-; X64-NEXT:    vmovdqa {{.*#+}} xmm1 = [2147483648,1]
-; X64-NEXT:    vpxor %xmm1, %xmm0, %xmm0
-; X64-NEXT:    vpsubq %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vmovq %xmm0, %rax
-; X64-NEXT:    vcvtsi2ssl %eax, %xmm2, %xmm0
+; X64-NEXT:    shrq $32, %rax
+; X64-NEXT:    vcvtsi2ssl %eax, %xmm1, %xmm0
 ; X64-NEXT:    retq
   %1 = ashr <2 x i64> %a0, <i64 32, i64 63>
   %2 = extractelement <2 x i64> %1, i32 0
@@ -132,13 +129,10 @@ define float @signbits_ashr_shl_extract_sitofp(<2 x i64> %a0) nounwind {
 ;
 ; X64-LABEL: signbits_ashr_shl_extract_sitofp:
 ; X64:       # %bb.0:
-; X64-NEXT:    vpsrlq $61, %xmm0, %xmm0
-; X64-NEXT:    vmovdqa {{.*#+}} xmm1 = [4,8]
-; X64-NEXT:    vpxor %xmm1, %xmm0, %xmm0
-; X64-NEXT:    vpsubq %xmm1, %xmm0, %xmm0
-; X64-NEXT:    vpsllq $20, %xmm0, %xmm0
 ; X64-NEXT:    vmovq %xmm0, %rax
-; X64-NEXT:    vcvtsi2ssl %eax, %xmm2, %xmm0
+; X64-NEXT:    sarq $61, %rax
+; X64-NEXT:    shll $20, %eax
+; X64-NEXT:    vcvtsi2ssl %eax, %xmm1, %xmm0
 ; X64-NEXT:    retq
   %1 = ashr <2 x i64> %a0, <i64 61, i64 60>
   %2 = shl <2 x i64> %1, <i64 20, i64 16>
@@ -168,10 +162,8 @@ define float @signbits_ashr_insert_ashr_extract_sitofp(i64 %a0, i64 %a1) nounwin
 ; X64-LABEL: signbits_ashr_insert_ashr_extract_sitofp:
 ; X64:       # %bb.0:
 ; X64-NEXT:    sarq $30, %rdi
-; X64-NEXT:    vmovq %rdi, %xmm0
-; X64-NEXT:    vpsrlq $3, %xmm0, %xmm0
-; X64-NEXT:    vmovq %xmm0, %rax
-; X64-NEXT:    vcvtsi2ssl %eax, %xmm1, %xmm0
+; X64-NEXT:    shrq $3, %rdi
+; X64-NEXT:    vcvtsi2ssl %edi, %xmm0, %xmm0
 ; X64-NEXT:    retq
   %1 = ashr i64 %a0, 30
   %2 = insertelement <2 x i64> undef, i64 %1, i32 0
