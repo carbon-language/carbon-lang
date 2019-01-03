@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import print_function
+
 import re, string, sys, os, time
 
 DEBUG = 0
@@ -22,12 +24,12 @@ def parse(file):
   fname = ''
   for t in r:
     if DEBUG:
-      print t
+      print(t)
     if t[0] == 'PASS' or t[0] == 'FAIL' :
       tmp = t[2].split(testDirName)
       
       if DEBUG:
-        print tmp
+        print(tmp)
       
       if len(tmp) == 2:
         fname = tmp[1].strip('\r\n')
@@ -41,26 +43,26 @@ def parse(file):
         test[fname][k] = 'NA'
         test[fname][t[1]] = t[0]
         if DEBUG:
-          print test[fname][t[1]]
+          print(test[fname][t[1]])
     else :
       try:
         n = t[0].split('RESULT-')[1]
         
         if DEBUG:
-          print n;
+          print(n);
         
         if n == 'llc' or n == 'jit-comptime' or n == 'compile':
           test[fname][tp + n] = float(t[2].split(' ')[2])
           if DEBUG:
-            print test[fname][tp + n]
+            print(test[fname][tp + n])
         
         elif n.endswith('-time') :
             test[fname][exp + n] = float(t[2].strip('\r\n'))
             if DEBUG:
-              print test[fname][exp + n]
+              print(test[fname][exp + n])
         
         else :
-          print "ERROR!"
+          print("ERROR!")
           sys.exit(1)
       
       except:
@@ -73,7 +75,7 @@ def diffResults(d_old, d_new):
 
   for t in sorted(d_old.keys()) :
     if DEBUG:
-      print t
+      print(t)
         
     if d_new.has_key(t) :
     
@@ -83,42 +85,42 @@ def diffResults(d_old, d_new):
           if d_new[t].has_key(x):
             if d_old[t][x] == 'PASS':
               if d_new[t][x] != 'PASS':
-                print t + " *** REGRESSION (" + x + ")\n"
+                print(t + " *** REGRESSION (" + x + ")\n")
             else:
               if d_new[t][x] == 'PASS':
-                print t + " * NEW PASS (" + x + ")\n"
+                print(t + " * NEW PASS (" + x + ")\n")
                 
           else :
-            print t + "*** REGRESSION (" + x + ")\n"
+            print(t + "*** REGRESSION (" + x + ")\n")
         
         # For execution time, if there is no result, its a fail.
         for x in exectime:
           if d_old[t].has_key(tp + x):
             if not d_new[t].has_key(tp + x):
-              print t + " *** REGRESSION (" + tp + x + ")\n"
+              print(t + " *** REGRESSION (" + tp + x + ")\n")
                 
           else :
             if d_new[t].has_key(tp + x):
-              print t + " * NEW PASS (" + tp + x + ")\n"
+              print(t + " * NEW PASS (" + tp + x + ")\n")
 
        
         for x in comptime:
           if d_old[t].has_key(exp + x):
             if not d_new[t].has_key(exp + x):
-              print t + " *** REGRESSION (" + exp + x + ")\n"
+              print(t + " *** REGRESSION (" + exp + x + ")\n")
                 
           else :
             if d_new[t].has_key(exp + x):
-              print t + " * NEW PASS (" + exp + x + ")\n"
+              print(t + " * NEW PASS (" + exp + x + ")\n")
               
     else :
-      print t + ": Removed from test-suite.\n"
+      print(t + ": Removed from test-suite.\n")
     
 
 #Main
 if len(sys.argv) < 3 :
-    print 'Usage:', sys.argv[0], \
-          '<old log> <new log>'
+    print('Usage:', sys.argv[0], \
+          '<old log> <new log>')
     sys.exit(-1)
 
 d_old = parse(sys.argv[1])

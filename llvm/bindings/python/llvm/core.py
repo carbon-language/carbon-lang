@@ -6,6 +6,7 @@
 # License. See LICENSE.TXT for details.
 #
 #===------------------------------------------------------------------------===#
+from __future__ import print_function
 
 from .common import LLVMObject
 from .common import c_object_p
@@ -605,7 +606,7 @@ def register_enumerations():
     ]
     for enum_class, enum_spec in enums:
         for name, value in enum_spec:
-            print name, value
+            print(name, value)
             enum_class.register(name, value)
     return enums
 

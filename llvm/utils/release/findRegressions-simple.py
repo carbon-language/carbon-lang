@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+
+from __future__ import print_function
 import re, string, sys, os, time, math
 
 DEBUG = 0
@@ -18,13 +20,13 @@ def parse(file):
   fname = ''
   for t in r:
     if DEBUG:
-      print t
+      print(t)
 
     if t[0] == 'PASS' or t[0] == 'FAIL' :
       tmp = t[2].split('llvm-test/')
       
       if DEBUG:
-        print tmp
+        print(tmp)
 
       if len(tmp) == 2:
         fname = tmp[1].strip('\r\n')
@@ -41,7 +43,7 @@ def parse(file):
         n = t[0].split('RESULT-')[1]
 
         if DEBUG:
-          print "n == ", n;
+          print("n == ", n);
         
         if n == 'compile-success':
           test[fname]['compile time'] = float(t[2].split('program')[1].strip('\r\n'))
@@ -49,7 +51,7 @@ def parse(file):
         elif n == 'exec-success':
           test[fname]['exec time'] = float(t[2].split('program')[1].strip('\r\n'))
           if DEBUG:
-            print test[fname][string.replace(n, '-success', '')]
+            print(test[fname][string.replace(n, '-success', '')])
 
         else :
           # print "ERROR!"
@@ -120,36 +122,36 @@ def diffResults(d_old, d_new):
       removed += t + "\n"
 
   if len(regressions['compile state']) != 0:
-    print 'REGRESSION: Compilation Failed'
-    print regressions['compile state']
+    print('REGRESSION: Compilation Failed')
+    print(regressions['compile state'])
 
   if len(regressions['exec state']) != 0:
-    print 'REGRESSION: Execution Failed'
-    print regressions['exec state']
+    print('REGRESSION: Execution Failed')
+    print(regressions['exec state'])
 
   if len(regressions['compile time']) != 0:
-    print 'REGRESSION: Compilation Time'
-    print regressions['compile time']
+    print('REGRESSION: Compilation Time')
+    print(regressions['compile time'])
 
   if len(regressions['exec time']) != 0:
-    print 'REGRESSION: Execution Time'
-    print regressions['exec time']
+    print('REGRESSION: Execution Time')
+    print(regressions['exec time'])
 
   if len(passes['compile state']) != 0:
-    print 'NEW PASSES: Compilation'
-    print passes['compile state']
+    print('NEW PASSES: Compilation')
+    print(passes['compile state'])
 
   if len(passes['exec state']) != 0:
-    print 'NEW PASSES: Execution'
-    print passes['exec state']
+    print('NEW PASSES: Execution')
+    print(passes['exec state'])
 
   if len(removed) != 0:
-    print 'REMOVED TESTS'
-    print removed
+    print('REMOVED TESTS')
+    print(removed)
 
 # Main
 if len(sys.argv) < 3 :
-  print 'Usage:', sys.argv[0], '<old log> <new log>'
+  print('Usage:', sys.argv[0], '<old log> <new log>')
   sys.exit(-1)
 
 d_old = parse(sys.argv[1])

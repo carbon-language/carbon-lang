@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from .base import TestBase
 
 from ..disassembler import Disassembler, Option_UseMarkup
@@ -38,6 +40,6 @@ class TestDisassembler(TestBase):
         disassembler = Disassembler(triple)
         disassembler.set_options(Option_UseMarkup)
         count, s = disassembler.get_instruction(sequence)
-        print s
+        print(s)
         self.assertEqual(count, 4)
         self.assertEqual(s, '\tpush\t{<reg:r4>, <reg:lr>}')

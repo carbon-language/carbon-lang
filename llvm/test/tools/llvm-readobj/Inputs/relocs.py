@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 # Generates ELF, COFF and MachO object files for different architectures
 # containing all relocations:
 #
