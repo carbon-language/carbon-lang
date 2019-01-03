@@ -7,7 +7,11 @@ module LLVM_Analysis {
   textual header "Analysis/TargetLibraryInfo.def"
 }
 
-module LLVM_AsmParser { requires cplusplus umbrella "AsmParser" module * { export * } }
+module LLVM_AsmParser {
+  requires cplusplus
+  umbrella "AsmParser"
+  module * { export * }
+}
 
 // A module covering CodeGen/ and Target/. These are intertwined
 // and codependent, and thus notionally form a single module.
@@ -36,7 +40,11 @@ module LLVM_Backend_Target {
   module * { export * }
 }
 
-module LLVM_Bitcode { requires cplusplus umbrella "Bitcode" module * { export * } }
+module LLVM_Bitcode {
+ requires cplusplus
+ umbrella "Bitcode"
+ module * { export * }
+}
 
 
 module LLVM_BinaryFormat {
@@ -246,9 +254,23 @@ module LLVM_IR {
   textual header "IR/RuntimeLibcalls.def"
 }
 
-module LLVM_IRReader { requires cplusplus umbrella "IRReader" module * { export * } }
-module LLVM_LineEditor { requires cplusplus umbrella "LineEditor" module * { export * } }
-module LLVM_LTO { requires cplusplus umbrella "LTO" module * { export * } }
+module LLVM_IRReader {
+  requires cplusplus
+  umbrella "IRReader"
+  module * { export * }
+}
+
+module LLVM_LineEditor {
+  requires cplusplus
+  umbrella "LineEditor"
+  module * { export * }
+}
+
+module LLVM_LTO {
+  requires cplusplus
+  umbrella "LTO"
+  module * { export * }
+}
 
 module LLVM_MC {
   requires cplusplus
@@ -275,7 +297,11 @@ module LLVM_Object {
   module * { export * }
 }
 
-module LLVM_Option { requires cplusplus umbrella "Option" module * { export * } }
+module LLVM_Option {
+  requires cplusplus
+  umbrella "Option"
+  module * { export * }
+}
 
 module LLVM_ProfileData {
   requires cplusplus
@@ -293,7 +319,11 @@ module LLVM_Support_TargetRegistry {
   export *
 }
 
-module LLVM_TableGen { requires cplusplus umbrella "TableGen" module * { export * } }
+module LLVM_TableGen {
+  requires cplusplus
+  umbrella "TableGen"
+  module * { export * }
+}
 
 module LLVM_Transforms {
   requires cplusplus
