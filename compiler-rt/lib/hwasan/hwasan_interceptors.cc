@@ -217,35 +217,6 @@ INTERCEPTOR_ALIAS(void, malloc_stats, void);
 #endif
 #endif // HWASAN_WITH_INTERCEPTORS
 
-
-#if HWASAN_WITH_INTERCEPTORS
-extern "C" int pthread_attr_init(void *attr);
-extern "C" int pthread_attr_destroy(void *attr);
-
-struct ThreadStartArg {
-  thread_callback_t callback;
-  void *param;
-};
-
-static void *HwasanThreadStartFunc(void *arg) {
-  __hwasan_thread_enter();
-  ThreadStartArg A = *reinterpret_cast<ThreadStartArg*>(arg);
-  UnmapOrDie(arg, GetPageSizeCached());
-  return A.callback(A.param);
-}
-
-INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
-            void * param) {
-  ScopedTaggingDisabler disabler;
-  ThreadStartArg *A = reinterpret_cast<ThreadStartArg *> (MmapOrDie(
-      GetPageSizeCached(), "pthread_create"));
-  *A = {callback, param};
-  int res = REAL(pthread_create)(UntagPtr(th), UntagPtr(attr),
-                                 &HwasanThreadStartFunc, A);
-  return res;
-}
-#endif // HWASAN_WITH_INTERCEPTORS
-
 static void BeforeFork() {
   StackDepotLockAll();
 }
@@ -285,7 +256,6 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(fork);
 
 #if HWASAN_WITH_INTERCEPTORS
-  INTERCEPT_FUNCTION(pthread_create);
   INTERCEPT_FUNCTION(realloc);
   INTERCEPT_FUNCTION(free);
 #endif

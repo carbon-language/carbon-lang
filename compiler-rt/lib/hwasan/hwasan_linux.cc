@@ -302,7 +302,12 @@ void AndroidTestTlsSlot() {}
 #endif
 
 Thread *GetCurrentThread() {
-  auto *R = (StackAllocationsRingBuffer*)GetCurrentThreadLongPtr();
+  uptr *ThreadLong = GetCurrentThreadLongPtr();
+#if HWASAN_WITH_INTERCEPTORS
+  if (!*ThreadLong)
+    __hwasan_thread_enter();
+#endif
+  auto *R = (StackAllocationsRingBuffer *)ThreadLong;
   return hwasanThreadList().GetThreadByBufferAddress((uptr)(R->Next()));
 }
 
