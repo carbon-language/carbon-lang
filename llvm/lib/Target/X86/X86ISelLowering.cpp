@@ -32403,15 +32403,38 @@ bool X86TargetLowering::SimplifyDemandedBitsForTargetNode(
     break;
   }
   case X86ISD::VSHLI: {
-    if (auto *ShiftImm = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+    SDValue Op0 = Op.getOperand(0);
+    SDValue Op1 = Op.getOperand(1);
+
+    if (auto *ShiftImm = dyn_cast<ConstantSDNode>(Op1)) {
       if (ShiftImm->getAPIntValue().uge(BitWidth))
         break;
 
       unsigned ShAmt = ShiftImm->getZExtValue();
       APInt DemandedMask = OriginalDemandedBits.lshr(ShAmt);
 
-      if (SimplifyDemandedBits(Op.getOperand(0), DemandedMask,
-                               OriginalDemandedElts, Known, TLO, Depth + 1))
+      // If this is ((X >>u C1) << ShAmt), see if we can simplify this into a
+      // single shift.  We can do this if the bottom bits (which are shifted
+      // out) are never demanded.
+      if (Op0.getOpcode() == X86ISD::VSRLI &&
+          OriginalDemandedBits.countTrailingZeros() >= ShAmt) {
+        if (auto *Shift2Imm = dyn_cast<ConstantSDNode>(Op0.getOperand(1))) {
+          if (Shift2Imm->getAPIntValue().ult(BitWidth)) {
+            int Diff = ShAmt - Shift2Imm->getZExtValue();
+            if (Diff == 0)
+              return TLO.CombineTo(Op, Op0.getOperand(0));
+
+            unsigned NewOpc = Diff < 0 ? X86ISD::VSRLI : X86ISD::VSHLI;
+            SDValue NewShift = TLO.DAG.getNode(
+                NewOpc, SDLoc(Op), VT, Op0.getOperand(0),
+                TLO.DAG.getConstant(std::abs(Diff), SDLoc(Op), MVT::i8));
+            return TLO.CombineTo(Op, NewShift);
+          }
+        }
+      }
+
+      if (SimplifyDemandedBits(Op0, DemandedMask, OriginalDemandedElts, Known,
+                               TLO, Depth + 1))
         return true;
 
       assert(!Known.hasConflict() && "Bits known to be one AND zero?");
