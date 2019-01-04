@@ -9023,6 +9023,11 @@ static bool isBetterMultiversionCandidate(const OverloadCandidate &Cand1,
       !Cand2.Function->isMultiVersion())
     return false;
 
+  // If Cand1 is invalid, it cannot be a better match, if Cand2 is invalid, this
+  // is obviously better.
+  if (Cand1.Function->isInvalidDecl()) return false;
+  if (Cand2.Function->isInvalidDecl()) return true;
+
   // If this is a cpu_dispatch/cpu_specific multiversion situation, prefer
   // cpu_dispatch, else arbitrarily based on the identifiers.
   bool Cand1CPUDisp = Cand1.Function->hasAttr<CPUDispatchAttr>();
