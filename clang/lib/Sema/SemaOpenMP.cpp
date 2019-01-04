@@ -11531,20 +11531,12 @@ bool Sema::CheckOpenMPLinearDecl(const ValueDecl *D, SourceLocation ELoc,
   }
   Type = Type.getNonReferenceType();
 
-  // A list item must not be const-qualified.
-  if (Type.isConstant(Context)) {
-    Diag(ELoc, diag::err_omp_const_variable)
-        << getOpenMPClauseName(OMPC_linear);
-    if (D) {
-      bool IsDecl =
-          !VD ||
-          VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
-      Diag(D->getLocation(),
-           IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-          << D;
-    }
+  // OpenMP 5.0 [2.19.3, List Item Privatization, Restrictions]
+  // A variable that is privatized must not have a const-qualified type
+  // unless it is of class type with a mutable member. This restriction does
+  // not apply to the firstprivate clause.
+  if (rejectConstNotMutableType(*this, D, Type, OMPC_linear, ELoc))
     return true;
-  }
 
   // A list item must be of integral or pointer type.
   Type = Type.getUnqualifiedType().getCanonicalType();
