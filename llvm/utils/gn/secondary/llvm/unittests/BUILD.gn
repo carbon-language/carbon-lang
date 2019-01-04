@@ -33,25 +33,26 @@ group("unittests") {
     #"MI:MITests",
     "Object:ObjectTests",
     "ObjectYAML:ObjectYAMLTests",
+    "OptRemarks:OptRemarksTests",
     "Option:OptionTests",
 
-    # FIXME: Add more:
-    #"OptRemarks:OptRemarksTests",
+    # FIXME: Add.
     #"Passes:PluginsTests",
-
     "ProfileData:ProfileDataTests",
+    "Support:SupportTests",
 
-    # FIXME: Add more:
-    #"Support:SupportTests",
+    # FIXME: Add.
     #"Support/DynamicLibrary:DynamicLibraryTests",
-    #"Transforms/IPO:IPOTests",
-    #"Transforms/Scalar:ScalarTests",
-    #"Transforms/Utils:UtilsTests",
+    "TextAPI:TextAPITests",
+    "Transforms/IPO:IPOTests",
+    "Transforms/Scalar:ScalarTests",
+    "Transforms/Utils:UtilsTests",
+    "Transforms/Vectorize:VectorizeTests",
     "XRay:XRayTests",
 
     # FIXME: Add more:
     #"tools/llvm-cfi-verify:CFIVerifyTests",
-    #"tools/llvm-exegesis:LLVMExegesisTests",
+    "tools/llvm-exegesis:LLVMExegesisTests",
   ]
 
   # Target-dependend unit tests.
@@ -69,8 +70,7 @@ group("unittests") {
   #deps += [ "tools/llvm-exegesis/ARM:LLVMExegesisARMTests" ]
   #}
   if (llvm_build_X86) {
-    # FIXME: Add:
-    #deps += [ "tools/llvm-exegesis/X86:LLVMExegesisX86Tests" ]
+    deps += [ "tools/llvm-exegesis/X86:LLVMExegesisX86Tests" ]
   }
 
   testonly = true
