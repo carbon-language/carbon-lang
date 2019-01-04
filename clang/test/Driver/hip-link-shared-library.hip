@@ -9,3 +9,4 @@
 // CHECK: # "amdgcn-amd-amdhsa" - "AMDGCN::Linker", inputs: ["[[OBJ3]]"], output: "[[IMG3:.*out]]"
 // CHECK-NOT: offload bundler
 // CHECK: # "x86_64-unknown-linux-gnu" - "GNU::Linker", inputs: ["[[OBJ1]]", "{{.*}}/Inputs/in.so", "[[IMG2]]", "[[IMG3]]"], output: "a.out"
+
