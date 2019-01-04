@@ -59,6 +59,10 @@ public:
   constexpr Real &operator=(const Real &) = default;
   constexpr Real &operator=(Real &&) = default;
 
+  constexpr bool operator==(const Real &that) const {
+    return word_ == that.word_;
+  }
+
   // TODO ANINT, CEILING, FLOOR, DIM, MAX, MIN, DPROD, FRACTION
   // HUGE, INT/NINT, MAXEXPONENT, MINEXPONENT, NEAREST, OUT_OF_RANGE,
   // PRECISION, HUGE, TINY, RRSPACING/SPACING, SCALE, SET_EXPONENT, SIGN

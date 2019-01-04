@@ -19,8 +19,13 @@
 #include "../common/fortran.h"
 #include "../common/idioms.h"
 #include "../common/indirection.h"
+#include "../parser/char-block.h"
 #include "../parser/message.h"
 #include <cinttypes>
+
+namespace Fortran::semantics {
+class DerivedTypeSpec;
+}
 
 namespace Fortran::evaluate {
 
@@ -145,7 +150,7 @@ using HostUnsignedInt =
 //   need for std::monostate as a default constituent in a std::variant<>.
 // - There are full copy and move semantics for construction and assignment.
 // - Discriminated unions have a std::variant<> member "u" and support
-//   explicit copy and move constructors.
+//   explicit copy and move constructors as well as comparison for equality.
 #define DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(t) \
   t(const t &) = default; \
   t(t &&) = default; \
@@ -161,7 +166,8 @@ using HostUnsignedInt =
   template<typename _A> explicit t(const _A &x) : u{x} {} \
   template<typename _A> \
   explicit t(std::enable_if_t<!std::is_reference_v<_A>, _A> &&x) \
-    : u(std::move(x)) {}
+    : u(std::move(x)) {} \
+  bool operator==(const t &that) const { return u == that.u; }
 
 // Force availability of copy construction and assignment
 template<typename A> using CopyableIndirection = common::Indirection<A, true>;
@@ -174,19 +180,21 @@ struct FoldingContext {
   explicit FoldingContext(const parser::ContextualMessages &m,
       Rounding round = defaultRounding, bool flush = false)
     : messages{m}, rounding{round}, flushDenormalsToZero{flush} {}
-  FoldingContext(const parser::ContextualMessages &m, const FoldingContext &c)
-    : messages{m}, rounding{c.rounding}, flushDenormalsToZero{
-                                             c.flushDenormalsToZero} {}
-
-  // For narrowed contexts
-  FoldingContext(const FoldingContext &c, const parser::ContextualMessages &m)
-    : messages{m}, rounding{c.rounding}, flushDenormalsToZero{
-                                             c.flushDenormalsToZero} {}
+  FoldingContext(const FoldingContext &that)
+    : messages{that.messages}, rounding{that.rounding},
+      flushDenormalsToZero{that.flushDenormalsToZero}, pdtInstance{
+                                                           that.pdtInstance} {}
+  FoldingContext(
+      const FoldingContext &that, const parser::ContextualMessages &m)
+    : messages{m}, rounding{that.rounding},
+      flushDenormalsToZero{that.flushDenormalsToZero}, pdtInstance{
+                                                           that.pdtInstance} {}
 
   parser::ContextualMessages messages;
   Rounding rounding{defaultRounding};
   bool flushDenormalsToZero{false};
   bool bigEndian{false};
+  const semantics::DerivedTypeSpec *pdtInstance{nullptr};
 };
 
 void RealFlagWarnings(FoldingContext &, const RealFlags &, const char *op);

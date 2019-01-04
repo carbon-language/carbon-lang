@@ -28,6 +28,10 @@ public:
   constexpr Logical(bool truth) : word_{-std::uint64_t{truth}} {}
   constexpr Logical &operator=(const Logical &) = default;
 
+  template<int B> constexpr bool operator==(const Logical<B> &that) const {
+    return IsTrue() == that.IsTrue();
+  }
+
   // For static expression evaluation, all the bits will have the same value.
   constexpr bool IsTrue() const { return word_.BTEST(0); }
 

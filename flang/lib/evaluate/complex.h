@@ -32,6 +32,10 @@ public:
   constexpr Complex &operator=(const Complex &) = default;
   constexpr Complex &operator=(Complex &&) = default;
 
+  constexpr bool operator==(const Complex &that) const {
+    return re_ == that.re_ && im_ == that.im_;
+  }
+
   constexpr const Part &REAL() const { return re_; }
   constexpr const Part &AIMAG() const { return im_; }
   constexpr Complex CONJG() const { return {re_, im_.Negate()}; }

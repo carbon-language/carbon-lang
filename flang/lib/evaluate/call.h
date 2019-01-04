@@ -37,6 +37,7 @@ struct ActualArgument {
 
   std::optional<DynamicType> GetType() const;
   int Rank() const;
+  bool operator==(const ActualArgument &) const;
   std::ostream &AsFortran(std::ostream &) const;
   std::optional<int> VectorSize() const;
 
@@ -64,6 +65,7 @@ struct SpecificIntrinsic {
   SpecificIntrinsic(IntrinsicProcedure n, std::optional<DynamicType> &&dt,
       int r, semantics::Attrs a)
     : name{n}, type{std::move(dt)}, rank{r}, attrs{a} {}
+  bool operator==(const SpecificIntrinsic &) const;
   std::ostream &AsFortran(std::ostream &) const;
 
   IntrinsicProcedure name;

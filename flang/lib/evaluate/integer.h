@@ -180,6 +180,10 @@ public:
 
   constexpr Integer &operator=(const Integer &) = default;
 
+  constexpr bool operator==(const Integer &that) const {
+    return CompareUnsigned(that) == Ordering::Equal;
+  }
+
   // Left-justified mask (e.g., MASKL(1) has only its sign bit set)
   static constexpr Integer MASKL(int places) {
     if (places <= 0) {

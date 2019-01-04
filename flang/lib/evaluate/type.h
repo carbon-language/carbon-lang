@@ -18,7 +18,7 @@
 // These definitions map Fortran's intrinsic types, characterized by byte
 // sizes encoded in KIND type parameter values, to their value representation
 // types in the evaluation library, which are parameterized in terms of
-// total bit width and real precision.  Instances of these class templates
+// total bit width and real precision.  Instances of the Type class template
 // are suitable for use as template parameters to instantiate other class
 // templates, like expressions, over the supported types and kinds.
 
@@ -44,33 +44,33 @@ namespace Fortran::evaluate {
 
 using common::TypeCategory;
 
+// DynamicType is suitable for use as the result type for
+// GetType() functions and member functions.
 struct DynamicType {
-  bool operator==(const DynamicType &that) const {
-    return category == that.category && kind == that.kind &&
-        derived == that.derived;
-  }
+  bool operator==(const DynamicType &that) const;
   std::string AsFortran() const;
   DynamicType ResultTypeForMultiply(const DynamicType &) const;
 
   TypeCategory category;
-  int kind{0};
+  int kind{0};  // set only for intrinsic types
   const semantics::DerivedTypeSpec *derived{nullptr};
-  // TODO pmk: descriptor for character length
-  // TODO pmk: derived type kind parameters and descriptor for lengths
+  const semantics::Symbol *descriptor{nullptr};
 };
 
-std::optional<DynamicType> GetSymbolType(const semantics::Symbol &);
+// Result will be missing when a symbol is absent or
+// has an erroneous type, e.g., REAL(KIND=666).
+std::optional<DynamicType> GetSymbolType(const semantics::Symbol *);
 
 // Specific intrinsic types are represented by specializations of
 // this class template Type<CATEGORY, KIND>.
 template<TypeCategory CATEGORY, int KIND = 0> class Type;
 
-template<TypeCategory CATEGORY, int KIND> struct TypeBase {
-  static constexpr DynamicType dynamicType{CATEGORY, KIND};
-  static constexpr DynamicType GetType() { return {dynamicType}; }
+template<TypeCategory CATEGORY, int KIND = 0> struct TypeBase {
   static constexpr TypeCategory category{CATEGORY};
   static constexpr int kind{KIND};
-  static std::string AsFortran() { return dynamicType.AsFortran(); }
+  constexpr bool operator==(const TypeBase &) const { return true; }
+  static constexpr DynamicType GetType() { return {category, kind}; }
+  static std::string AsFortran() { return GetType().AsFortran(); }
 };
 
 template<int KIND>
@@ -225,10 +225,19 @@ using FloatingTypes = common::CombineTuples<RealTypes, ComplexTypes>;
 using NumericTypes = common::CombineTuples<IntegerTypes, FloatingTypes>;
 using RelationalTypes = common::CombineTuples<NumericTypes, CharacterTypes>;
 using AllIntrinsicTypes = common::CombineTuples<RelationalTypes, LogicalTypes>;
+using LengthlessIntrinsicTypes =
+    common::CombineTuples<NumericTypes, LogicalTypes>;
 
 // Predicate: does a type represent a specific intrinsic type?
 template<typename T>
 constexpr bool IsSpecificIntrinsicType{common::HasMember<T, AllIntrinsicTypes>};
+
+// Predicate: is a type an intrinsic type that is completely characterized
+// by its category and kind parameter value, or might it have a derived type
+// &/or a length type parameter?
+template<typename T>
+constexpr bool IsLengthlessIntrinsicType{
+    common::HasMember<T, LengthlessIntrinsicTypes>};
 
 // When Scalar<T> is S, then TypeOf<S> is T.
 // TypeOf is implemented by scanning all supported types for a match
@@ -251,6 +260,7 @@ template<typename CONST> using TypeOf = typename TypeOfHelper<CONST>::type;
 // Represents a type of any supported kind within a particular category.
 template<TypeCategory CATEGORY> struct SomeKind {
   static constexpr TypeCategory category{CATEGORY};
+  constexpr bool operator==(const SomeKind &) const { return true; }
 };
 
 template<> class SomeKind<TypeCategory::Derived> {
@@ -258,14 +268,21 @@ public:
   static constexpr TypeCategory category{TypeCategory::Derived};
 
   CLASS_BOILERPLATE(SomeKind)
-  explicit SomeKind(const semantics::DerivedTypeSpec &s) : spec_{&s} {}
+  explicit SomeKind(const semantics::DerivedTypeSpec &dts,
+      const semantics::Symbol *sym = nullptr)
+    : spec_{&dts}, descriptor_{sym} {}
 
-  DynamicType GetType() const { return DynamicType{category, 0, spec_}; }
+  DynamicType GetType() const {
+    return DynamicType{category, 0, spec_, descriptor_};
+  }
   const semantics::DerivedTypeSpec &spec() const { return *spec_; }
+  const semantics::Symbol *descriptor() const { return descriptor_; }
+  bool operator==(const SomeKind &) const;
   std::string AsFortran() const;
 
 private:
   const semantics::DerivedTypeSpec *spec_;
+  const semantics::Symbol *descriptor_{nullptr};
 };
 
 using SomeInteger = SomeKind<TypeCategory::Integer>;
@@ -280,36 +297,37 @@ using SomeCategory = std::tuple<SomeInteger, SomeReal, SomeComplex,
     SomeCharacter, SomeLogical, SomeDerived>;
 struct SomeType {};
 
-// For "[extern] template class", &c. boilerplate
+// For generating "[extern] template class", &c. boilerplate
+#define EXPAND_FOR_EACH_INTEGER_KIND(M, P) \
+  M(P, 1) M(P, 2) M(P, 4) M(P, 8) M(P, 16)
+#define EXPAND_FOR_EACH_REAL_KIND(M, P) \
+  M(P, 2) M(P, 3) M(P, 4) M(P, 8) M(P, 10) M(P, 16)
+#define EXPAND_FOR_EACH_COMPLEX_KIND(M, P) EXPAND_FOR_EACH_REAL_KIND(M, P)
+#define EXPAND_FOR_EACH_CHARACTER_KIND(M, P) M(P, 1) M(P, 2) M(P, 4)
+#define EXPAND_FOR_EACH_LOGICAL_KIND(M, P) M(P, 1) M(P, 2) M(P, 4) M(P, 8)
+#define TEMPLATE_INSTANTIATION(P, ARG) P<ARG>;
+
+#define FOR_EACH_INTEGER_KIND_HELP(PREFIX, K) \
+  PREFIX<Type<TypeCategory::Integer, K>>;
+#define FOR_EACH_REAL_KIND_HELP(PREFIX, K) PREFIX<Type<TypeCategory::Real, K>>;
+#define FOR_EACH_COMPLEX_KIND_HELP(PREFIX, K) \
+  PREFIX<Type<TypeCategory::Complex, K>>;
+#define FOR_EACH_CHARACTER_KIND_HELP(PREFIX, K) \
+  PREFIX<Type<TypeCategory::Character, K>>;
+#define FOR_EACH_LOGICAL_KIND_HELP(PREFIX, K) \
+  PREFIX<Type<TypeCategory::Logical, K>>;
+
 #define FOR_EACH_INTEGER_KIND(PREFIX) \
-  PREFIX<Type<TypeCategory::Integer, 1>>; \
-  PREFIX<Type<TypeCategory::Integer, 2>>; \
-  PREFIX<Type<TypeCategory::Integer, 4>>; \
-  PREFIX<Type<TypeCategory::Integer, 8>>; \
-  PREFIX<Type<TypeCategory::Integer, 16>>;
+  EXPAND_FOR_EACH_INTEGER_KIND(FOR_EACH_INTEGER_KIND_HELP, PREFIX)
 #define FOR_EACH_REAL_KIND(PREFIX) \
-  PREFIX<Type<TypeCategory::Real, 2>>; \
-  PREFIX<Type<TypeCategory::Real, 3>>; \
-  PREFIX<Type<TypeCategory::Real, 4>>; \
-  PREFIX<Type<TypeCategory::Real, 8>>; \
-  PREFIX<Type<TypeCategory::Real, 10>>; \
-  PREFIX<Type<TypeCategory::Real, 16>>;
+  EXPAND_FOR_EACH_REAL_KIND(FOR_EACH_REAL_KIND_HELP, PREFIX)
 #define FOR_EACH_COMPLEX_KIND(PREFIX) \
-  PREFIX<Type<TypeCategory::Complex, 2>>; \
-  PREFIX<Type<TypeCategory::Complex, 3>>; \
-  PREFIX<Type<TypeCategory::Complex, 4>>; \
-  PREFIX<Type<TypeCategory::Complex, 8>>; \
-  PREFIX<Type<TypeCategory::Complex, 10>>; \
-  PREFIX<Type<TypeCategory::Complex, 16>>;
+  EXPAND_FOR_EACH_COMPLEX_KIND(FOR_EACH_COMPLEX_KIND_HELP, PREFIX)
 #define FOR_EACH_CHARACTER_KIND(PREFIX) \
-  PREFIX<Type<TypeCategory::Character, 1>>; \
-  PREFIX<Type<TypeCategory::Character, 2>>; \
-  PREFIX<Type<TypeCategory::Character, 4>>;
+  EXPAND_FOR_EACH_CHARACTER_KIND(FOR_EACH_CHARACTER_KIND_HELP, PREFIX)
 #define FOR_EACH_LOGICAL_KIND(PREFIX) \
-  PREFIX<Type<TypeCategory::Logical, 1>>; \
-  PREFIX<Type<TypeCategory::Logical, 2>>; \
-  PREFIX<Type<TypeCategory::Logical, 4>>; \
-  PREFIX<Type<TypeCategory::Logical, 8>>;
+  EXPAND_FOR_EACH_LOGICAL_KIND(FOR_EACH_LOGICAL_KIND_HELP, PREFIX)
+
 #define FOR_EACH_INTRINSIC_KIND(PREFIX) \
   FOR_EACH_INTEGER_KIND(PREFIX) \
   FOR_EACH_REAL_KIND(PREFIX) \
@@ -325,9 +343,10 @@ struct SomeType {};
   PREFIX<SomeComplex>; \
   PREFIX<SomeCharacter>; \
   PREFIX<SomeLogical>; \
+  PREFIX<SomeDerived>; \
   PREFIX<SomeType>;
 #define FOR_EACH_TYPE_AND_KIND(PREFIX) \
-  FOR_EACH_SPECIFIC_TYPE(PREFIX) \
+  FOR_EACH_INTRINSIC_KIND(PREFIX) \
   FOR_EACH_CATEGORY_TYPE(PREFIX)
 
 // Wraps a constant scalar value of a specific intrinsic type
@@ -348,6 +367,7 @@ template<typename T> struct Constant {
 
   constexpr DynamicType GetType() const { return Result::GetType(); }
   int Rank() const { return 0; }
+  bool operator==(const Constant &that) const { return value == that.value; }
   std::ostream &AsFortran(std::ostream &) const;
 
   Value value;

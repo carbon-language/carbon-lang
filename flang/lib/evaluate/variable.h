@@ -27,6 +27,7 @@
 #include "type.h"
 #include "../common/idioms.h"
 #include "../common/template.h"
+#include "../parser/char-block.h"
 #include <optional>
 #include <ostream>
 #include <variant>
@@ -52,6 +53,7 @@ struct BaseObject {
   explicit BaseObject(StaticDataObject::Pointer &&p) : u{std::move(p)} {}
   int Rank() const;
   Expr<SubscriptInteger> LEN() const;
+  bool operator==(const BaseObject &) const;
   std::ostream &AsFortran(std::ostream &) const;
   std::variant<const Symbol *, StaticDataObject::Pointer> u;
 };
@@ -61,6 +63,8 @@ struct BaseObject {
 // that isn't explicit in the document).  Pointer and allocatable components
 // are not explicitly indirected in this representation (TODO: yet?)
 // Complex components (%RE, %IM) are isolated below in ComplexPart.
+// (Type parameter inquiries look like component references but are distinct
+// constructs and not represented by this class.)
 class Component {
 public:
   CLASS_BOILERPLATE(Component)
@@ -75,12 +79,42 @@ public:
   const Symbol &GetFirstSymbol() const;
   const Symbol &GetLastSymbol() const { return *symbol_; }
   Expr<SubscriptInteger> LEN() const;
+  bool operator==(const Component &) const;
   std::ostream &AsFortran(std::ostream &) const;
 
 private:
   CopyableIndirection<DataRef> base_;
   const Symbol *symbol_;
 };
+
+using SymbolOrComponent = std::variant<const Symbol *, Component>;
+
+// R916 type-param-inquiry
+// N.B. x%LEN for CHARACTER is rewritten in semantics to LEN(x), which is
+// then handled via LEN() member functions in the various classes.
+// x%KIND for intrinsic types is similarly rewritten in semantics to
+// KIND(x), which is then folded to a constant value.
+// "Bare" type parameter references within a derived type definition do
+// not have base objects here.
+template<int KIND> struct TypeParamInquiry {
+  using Result = Type<TypeCategory::Integer, KIND>;
+  CLASS_BOILERPLATE(TypeParamInquiry)
+  TypeParamInquiry(const Symbol &symbol, parser::CharBlock p)
+    : u{&symbol}, parameter{std::move(p)} {}
+  TypeParamInquiry(Component &&component, parser::CharBlock p)
+    : u{component}, parameter{p} {}
+  TypeParamInquiry(SymbolOrComponent &&x, parser::CharBlock p)
+    : u{x}, parameter{p} {}
+  explicit TypeParamInquiry(parser::CharBlock p) : parameter{p} {}
+  static constexpr int Rank() { return 0; }  // always scalar
+  bool operator==(const TypeParamInquiry &) const;
+  std::ostream &AsFortran(std::ostream &) const;
+  SymbolOrComponent u{nullptr};
+  parser::CharBlock parameter;
+};
+
+EXPAND_FOR_EACH_INTEGER_KIND(
+    TEMPLATE_INSTANTIATION, extern template struct TypeParamInquiry)
 
 // R921 subscript-triplet
 class Triplet {
@@ -93,6 +127,7 @@ public:
   std::optional<Expr<SubscriptInteger>> lower() const;
   std::optional<Expr<SubscriptInteger>> upper() const;
   std::optional<Expr<SubscriptInteger>> stride() const;
+  bool operator==(const Triplet &) const;
   std::ostream &AsFortran(std::ostream &) const;
 
 private:
@@ -125,9 +160,10 @@ struct ArrayRef {
   const Symbol &GetFirstSymbol() const;
   const Symbol &GetLastSymbol() const;
   Expr<SubscriptInteger> LEN() const;
+  bool operator==(const ArrayRef &) const;
   std::ostream &AsFortran(std::ostream &) const;
 
-  std::variant<const Symbol *, Component> u;
+  SymbolOrComponent u;
   std::vector<Subscript> subscript;
 };
 
@@ -144,15 +180,28 @@ public:
   CoarrayRef(std::vector<const Symbol *> &&,
       std::vector<Expr<SubscriptInteger>> &&,
       std::vector<Expr<SubscriptInteger>> &&);
+
+  const std::vector<const Symbol *> &base() const { return base_; }
+  const std::vector<Expr<SubscriptInteger>> &subscript() const {
+    return subscript_;
+  }
+  const std::vector<Expr<SubscriptInteger>> &cosubscript() const {
+    return cosubscript_;
+  }
+
   // These integral expressions for STAT= and TEAM= must be variables
   // (i.e., Designator or pointer-valued FunctionRef).
+  std::optional<Expr<SomeInteger>> stat() const;
   CoarrayRef &set_stat(Expr<SomeInteger> &&);
+  std::optional<Expr<SomeInteger>> team() const;
+  bool teamIsTeamNumber() const { return teamIsTeamNumber_; }
   CoarrayRef &set_team(Expr<SomeInteger> &&, bool isTeamNumber = false);
 
   int Rank() const;
   const Symbol &GetFirstSymbol() const { return *base_.front(); }
   const Symbol &GetLastSymbol() const { return *base_.back(); }
   Expr<SubscriptInteger> LEN() const;
+  bool operator==(const CoarrayRef &) const;
   std::ostream &AsFortran(std::ostream &) const;
 
 private:
@@ -187,10 +236,10 @@ struct DataRef {
 class Substring {
 public:
   CLASS_BOILERPLATE(Substring)
-  Substring(DataRef &&parent, std::optional<Expr<SubscriptInteger>> &&first,
-      std::optional<Expr<SubscriptInteger>> &&last)
+  Substring(DataRef &&parent, std::optional<Expr<SubscriptInteger>> &&lower,
+      std::optional<Expr<SubscriptInteger>> &&upper)
     : parent_{std::move(parent)} {
-    SetBounds(first, last);
+    SetBounds(lower, upper);
   }
   Substring(StaticDataObject::Pointer &&parent,
       std::optional<Expr<SubscriptInteger>> &&lower,
@@ -202,9 +251,13 @@ public:
   Expr<SubscriptInteger> lower() const;
   Expr<SubscriptInteger> upper() const;
   int Rank() const;
+  template<typename A> const A *GetParentIf() const {
+    return std::get_if<A>(&parent_);
+  }
   BaseObject GetBaseObject() const;
   const Symbol *GetLastSymbol() const;
   Expr<SubscriptInteger> LEN() const;
+  bool operator==(const Substring &) const;
   std::ostream &AsFortran(std::ostream &) const;
 
   std::optional<Expr<SomeCharacter>> Fold(FoldingContext &);
@@ -229,6 +282,7 @@ public:
   int Rank() const;
   const Symbol &GetFirstSymbol() const { return complex_.GetFirstSymbol(); }
   const Symbol &GetLastSymbol() const { return complex_.GetLastSymbol(); }
+  bool operator==(const ComplexPart &) const;
   std::ostream &AsFortran(std::ostream &) const;
 
 private:
@@ -238,20 +292,20 @@ private:
 
 // R901 designator is the most general data reference object, apart from
 // calls to pointer-valued functions.  Its variant holds everything that
-// a DataRef can, and possibly either a substring reference or a complex
-// part (%RE/%IM) reference.
-template<typename A> class Designator {
+// a DataRef can, and possibly also a substring reference or a
+// complex component (%RE/%IM) reference.
+template<typename T> class Designator {
   using DataRefs = decltype(DataRef::u);
   using MaybeSubstring =
-      std::conditional_t<A::category == TypeCategory::Character,
+      std::conditional_t<T::category == TypeCategory::Character,
           std::variant<Substring>, std::variant<>>;
-  using MaybeComplexPart = std::conditional_t<A::category == TypeCategory::Real,
+  using MaybeComplexPart = std::conditional_t<T::category == TypeCategory::Real,
       std::variant<ComplexPart>, std::variant<>>;
   using Variant =
       common::CombineVariants<DataRefs, MaybeSubstring, MaybeComplexPart>;
 
 public:
-  using Result = A;
+  using Result = T;
   static_assert(IsSpecificIntrinsicType<Result> ||
       std::is_same_v<Result, SomeKind<TypeCategory::Derived>>);
   EVALUATE_UNION_CLASS_BOILERPLATE(Designator)
@@ -283,6 +337,7 @@ public:
   Expr<SubscriptInteger> LEN() const;
   int Rank() const { return proc_.Rank(); }
   bool IsElemental() const { return proc_.IsElemental(); }
+  bool operator==(const ProcedureRef &) const;
   std::ostream &AsFortran(std::ostream &) const;
 
 protected:
@@ -292,23 +347,12 @@ protected:
 
 template<typename A> struct FunctionRef : public ProcedureRef {
   using Result = A;
-  static_assert(IsSpecificIntrinsicType<Result> ||
-      std::is_same_v<Result, SomeKind<TypeCategory::Derived>>);
   CLASS_BOILERPLATE(FunctionRef)
   FunctionRef(ProcedureRef &&pr) : ProcedureRef{std::move(pr)} {}
   FunctionRef(ProcedureDesignator &&p, ActualArguments &&a)
     : ProcedureRef{std::move(p), std::move(a)} {}
 
-  std::optional<DynamicType> GetType() const {
-    if constexpr (std::is_same_v<Result, SomeDerived>) {
-      if (const Symbol * symbol{proc_.GetSymbol()}) {
-        return GetSymbolType(*symbol);
-      }
-    } else {
-      return Result::GetType();
-    }
-    return std::nullopt;
-  }
+  std::optional<DynamicType> GetType() const { return proc_.GetType(); }
   std::optional<Constant<Result>> Fold(FoldingContext &);  // for intrinsics
 };
 

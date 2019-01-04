@@ -191,7 +191,7 @@ template<typename T> DynamicType ArrayConstructor<T>::GetType() const {
 
 template<typename A>
 std::optional<DynamicType> ExpressionBase<A>::GetType() const {
-  if constexpr (IsSpecificIntrinsicType<Result>) {
+  if constexpr (IsLengthlessIntrinsicType<Result>) {
     return Result::GetType();
   } else {
     return std::visit(
@@ -200,7 +200,7 @@ std::optional<DynamicType> ExpressionBase<A>::GetType() const {
                             BOZLiteralConstant>) {
             return x.GetType();
           }
-          return std::nullopt;  // typeless -> no type
+          return std::nullopt;  // typeless really means "no type"
         },
         derived().u);
   }
@@ -219,6 +219,31 @@ template<typename A> int ExpressionBase<A>::Rank() const {
       derived().u);
 }
 
+// Equality testing for classes without EVALUATE_UNION_CLASS_BOILERPLATE()
+
+template<typename V, typename O>
+bool ImpliedDo<V, O>::operator==(const ImpliedDo<V, O> &that) const {
+  return controlVariableName == that.controlVariableName &&
+      lower == that.lower && upper == that.upper && stride == that.stride &&
+      values == that.values;
+}
+
+template<typename R>
+bool ArrayConstructorValues<R>::operator==(
+    const ArrayConstructorValues<R> &that) const {
+  return values == that.values;
+}
+
+template<typename R>
+bool ArrayConstructor<R>::operator==(const ArrayConstructor<R> &that) const {
+  return *static_cast<const ArrayConstructorValues<R> *>(this) == that &&
+      result == that.result && typeParameterValues == that.typeParameterValues;
+}
+
+bool GenericExprWrapper::operator==(const GenericExprWrapper &that) const {
+  return v == that.v;
+}
+
 // Template instantiations to resolve the "extern template" declarations
 // that appear in expression.h.
 
@@ -229,6 +254,7 @@ FOR_EACH_REAL_KIND(template struct Relational)
 FOR_EACH_CHARACTER_KIND(template struct Relational)
 template struct Relational<SomeType>;
 FOR_EACH_TYPE_AND_KIND(template class ExpressionBase)
+FOR_EACH_SPECIFIC_TYPE(template struct ArrayConstructor)
 }
 
 // For reclamation of analyzed expressions to which owning pointers have

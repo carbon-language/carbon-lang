@@ -156,8 +156,8 @@ void TestIntrinsics() {
       .DoCall();  // bad intrinsic name
   TestCall{table, "abs"}
       .Push(Named("a", Const(Scalar<Int4>{})))
-      .DoCall(Int4::dynamicType);
-  TestCall{table, "abs"}.Push(Const(Scalar<Int4>{})).DoCall(Int4::dynamicType);
+      .DoCall(Int4::GetType());
+  TestCall{table, "abs"}.Push(Const(Scalar<Int4>{})).DoCall(Int4::GetType());
   TestCall{table, "abs"}
       .Push(Named("bad", Const(Scalar<Int4>{})))
       .DoCall();  // bad keyword
@@ -174,21 +174,17 @@ void TestIntrinsics() {
       .Push(Named("a", Const(Scalar<Int4>{})))
       .Push(Const(Scalar<Int4>{}))
       .DoCall();
-  TestCall{table, "abs"}.Push(Const(Scalar<Int1>{})).DoCall(Int1::dynamicType);
-  TestCall{table, "abs"}.Push(Const(Scalar<Int4>{})).DoCall(Int4::dynamicType);
-  TestCall{table, "abs"}.Push(Const(Scalar<Int8>{})).DoCall(Int8::dynamicType);
-  TestCall{table, "abs"}
-      .Push(Const(Scalar<Real4>{}))
-      .DoCall(Real4::dynamicType);
-  TestCall{table, "abs"}
-      .Push(Const(Scalar<Real8>{}))
-      .DoCall(Real8::dynamicType);
+  TestCall{table, "abs"}.Push(Const(Scalar<Int1>{})).DoCall(Int1::GetType());
+  TestCall{table, "abs"}.Push(Const(Scalar<Int4>{})).DoCall(Int4::GetType());
+  TestCall{table, "abs"}.Push(Const(Scalar<Int8>{})).DoCall(Int8::GetType());
+  TestCall{table, "abs"}.Push(Const(Scalar<Real4>{})).DoCall(Real4::GetType());
+  TestCall{table, "abs"}.Push(Const(Scalar<Real8>{})).DoCall(Real8::GetType());
   TestCall{table, "abs"}
       .Push(Const(Scalar<Complex4>{}))
-      .DoCall(Real4::dynamicType);
+      .DoCall(Real4::GetType());
   TestCall{table, "abs"}
       .Push(Const(Scalar<Complex8>{}))
-      .DoCall(Real8::dynamicType);
+      .DoCall(Real8::GetType());
   TestCall{table, "abs"}.Push(Const(Scalar<Char>{})).DoCall();
   TestCall{table, "abs"}.Push(Const(Scalar<Log4>{})).DoCall();
 
@@ -202,10 +198,10 @@ void TestIntrinsics() {
     amin0Call.Push(Const(Scalar<Int4>{}));
     amin1Call.Push(Const(Scalar<Int4>{}));
   }
-  maxCall.DoCall(Real4::dynamicType);
+  maxCall.DoCall(Real4::GetType());
   max0Call.DoCall();
-  max1Call.DoCall(Int4::dynamicType);
-  amin0Call.DoCall(Real4::dynamicType);
+  max1Call.DoCall(Int4::GetType());
+  amin0Call.DoCall(Real4::GetType());
   amin1Call.DoCall();
 
   // TODO: test other intrinsics

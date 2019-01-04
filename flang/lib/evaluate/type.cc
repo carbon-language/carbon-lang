@@ -24,16 +24,23 @@ using namespace std::literals::string_literals;
 
 namespace Fortran::evaluate {
 
-std::optional<DynamicType> GetSymbolType(const semantics::Symbol &symbol) {
-  if (const auto *type{symbol.GetType()}) {
-    if (const auto *intrinsic{type->AsIntrinsic()}) {
-      TypeCategory category{intrinsic->category()};
-      int kind{intrinsic->kind()};
-      if (IsValidKindOfIntrinsicType(category, kind)) {
-        return DynamicType{category, kind};
+bool DynamicType::operator==(const DynamicType &that) const {
+  return category == that.category && kind == that.kind &&
+      derived == that.derived && descriptor == that.descriptor;
+}
+
+std::optional<DynamicType> GetSymbolType(const semantics::Symbol *symbol) {
+  if (symbol != nullptr) {
+    if (const auto *type{symbol->GetType()}) {
+      if (const auto *intrinsic{type->AsIntrinsic()}) {
+        TypeCategory category{intrinsic->category()};
+        int kind{intrinsic->kind()};
+        if (IsValidKindOfIntrinsicType(category, kind)) {
+          return {DynamicType{category, kind}};
+        }
+      } else if (const auto *derived{type->AsDerived()}) {
+        return {DynamicType{TypeCategory::Derived, 0, derived}};
       }
-    } else if (const auto *derived{type->AsDerived()}) {
-      return DynamicType{TypeCategory::Derived, 0, derived};
     }
   }
   return std::nullopt;
@@ -89,6 +96,11 @@ DynamicType DynamicType::ResultTypeForMultiply(const DynamicType &that) const {
   default: CRASH_NO_CASE;
   }
   return *this;
+}
+
+bool SomeKind<TypeCategory::Derived>::operator==(
+    const SomeKind<TypeCategory::Derived> &that) const {
+  return spec_ == that.spec_ && descriptor_ == that.descriptor_;
 }
 
 std::string SomeDerived::AsFortran() const {

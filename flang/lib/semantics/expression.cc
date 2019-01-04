@@ -287,7 +287,7 @@ MaybeExpr TypedWrapper(DynamicType &&dyType, WRAPPED &&x) {
 // Wraps a data reference in a typed Designator<>.
 static MaybeExpr Designate(DataRef &&dataRef) {
   const Symbol &symbol{dataRef.GetLastSymbol()};
-  if (std::optional<DynamicType> dyType{GetSymbolType(symbol)}) {
+  if (std::optional<DynamicType> dyType{GetSymbolType(&symbol)}) {
     return TypedWrapper<Designator, DataRef>(
         std::move(*dyType), std::move(dataRef));
   }
@@ -764,7 +764,7 @@ MaybeExpr AnalyzeExpr(
           std::optional<Expr<SubscriptInteger>> last{
               GetSubstringBound(context, std::get<1>(range.t))};
           const Symbol &symbol{checked->GetLastSymbol()};
-          if (std::optional<DynamicType> dynamicType{GetSymbolType(symbol)}) {
+          if (std::optional<DynamicType> dynamicType{GetSymbolType(&symbol)}) {
             if (dynamicType->category == TypeCategory::Character) {
               return WrapperHelper<TypeCategory::Character, Designator,
                   Substring>(dynamicType->kind,

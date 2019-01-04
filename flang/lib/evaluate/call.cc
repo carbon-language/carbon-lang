@@ -14,6 +14,7 @@
 
 #include "call.h"
 #include "expression.h"
+#include "../semantics/symbol.h"
 
 namespace Fortran::evaluate {
 
@@ -22,6 +23,11 @@ std::optional<DynamicType> ActualArgument::GetType() const {
 }
 
 int ActualArgument::Rank() const { return value->Rank(); }
+
+bool ActualArgument::operator==(const ActualArgument &that) const {
+  return keyword == that.keyword &&
+      isAlternateReturn == that.isAlternateReturn && value == that.value;
+}
 
 std::ostream &ActualArgument::AsFortran(std::ostream &o) const {
   if (keyword.has_value()) {
@@ -41,8 +47,55 @@ std::optional<int> ActualArgument::VectorSize() const {
   return std::nullopt;
 }
 
+bool SpecificIntrinsic::operator==(const SpecificIntrinsic &that) const {
+  return name == that.name && type == that.type && rank == that.rank &&
+      attrs == that.attrs;
+}
+
 std::ostream &SpecificIntrinsic::AsFortran(std::ostream &o) const {
   return o << name;
+}
+
+std::optional<DynamicType> ProcedureDesignator::GetType() const {
+  if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&u)}) {
+    return intrinsic->type;
+  }
+  if (const Symbol * symbol{GetSymbol()}) {
+    return GetSymbolType(symbol);
+  }
+  return std::nullopt;
+}
+
+int ProcedureDesignator::Rank() const {
+  if (const Symbol * symbol{GetSymbol()}) {
+    return symbol->Rank();
+  }
+  if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&u)}) {
+    return intrinsic->rank;
+  }
+  CHECK(!"ProcedureDesignator::Rank(): no case");
+  return 0;
+}
+
+bool ProcedureDesignator::IsElemental() const {
+  if (const Symbol * symbol{GetSymbol()}) {
+    return symbol->attrs().test(semantics::Attr::ELEMENTAL);
+  }
+  if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&u)}) {
+    return intrinsic->attrs.test(semantics::Attr::ELEMENTAL);
+  }
+  CHECK(!"ProcedureDesignator::IsElemental(): no case");
+  return 0;
+}
+
+const Symbol *ProcedureDesignator::GetSymbol() const {
+  return std::visit(
+      common::visitors{
+          [](const Symbol *sym) { return sym; },
+          [](const Component &c) { return &c.GetLastSymbol(); },
+          [](const auto &) -> const Symbol * { return nullptr; },
+      },
+      u);
 }
 
 std::ostream &ProcedureRef::AsFortran(std::ostream &o) const {

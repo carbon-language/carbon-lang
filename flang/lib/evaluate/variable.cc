@@ -27,12 +27,6 @@ using namespace Fortran::parser::literals;
 
 namespace Fortran::evaluate {
 
-int GetSymbolRank(const Symbol &symbol) { return symbol.Rank(); }
-
-const parser::CharBlock &GetSymbolName(const Symbol &symbol) {
-  return symbol.name();
-}
-
 // Constructors, accessors, mutators
 
 Triplet::Triplet(std::optional<Expr<SubscriptInteger>> &&l,
@@ -76,6 +70,22 @@ CoarrayRef::CoarrayRef(std::vector<const Symbol *> &&c,
   : base_(std::move(c)), subscript_(std::move(ss)),
     cosubscript_(std::move(css)) {
   CHECK(!base_.empty());
+}
+
+std::optional<Expr<SomeInteger>> CoarrayRef::stat() const {
+  if (stat_.has_value()) {
+    return {**stat_};
+  } else {
+    return std::nullopt;
+  }
+}
+
+std::optional<Expr<SomeInteger>> CoarrayRef::team() const {
+  if (team_.has_value()) {
+    return {**team_};
+  } else {
+    return std::nullopt;
+  }
 }
 
 CoarrayRef &CoarrayRef::set_stat(Expr<SomeInteger> &&v) {
@@ -196,20 +206,28 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
 
 // Variable formatting
 
+std::ostream &Emit(std::ostream &o, const Symbol &symbol) {
+  return o << symbol.name().ToString();
+}
+
+std::ostream &Emit(std::ostream &o, const IntrinsicProcedure &p) {
+  return o << p;
+}
+
+std::ostream &Emit(std::ostream &o, const std::string &lit) {
+  return o << parser::QuoteCharacterLiteral(lit);
+}
+
+std::ostream &Emit(std::ostream &o, const std::u16string &lit) {
+  return o << parser::QuoteCharacterLiteral(lit);
+}
+
+std::ostream &Emit(std::ostream &o, const std::u32string &lit) {
+  return o << parser::QuoteCharacterLiteral(lit);
+}
+
 template<typename A> std::ostream &Emit(std::ostream &o, const A &x) {
   return x.AsFortran(o);
-}
-
-template<> std::ostream &Emit(std::ostream &o, const std::string &lit) {
-  return o << parser::QuoteCharacterLiteral(lit);
-}
-
-template<> std::ostream &Emit(std::ostream &o, const std::u16string &lit) {
-  return o << parser::QuoteCharacterLiteral(lit);
-}
-
-template<> std::ostream &Emit(std::ostream &o, const std::u32string &lit) {
-  return o << parser::QuoteCharacterLiteral(lit);
 }
 
 template<typename A>
@@ -257,21 +275,18 @@ std::ostream &Emit(std::ostream &o, const std::variant<A...> &u) {
   return o;
 }
 
-template<> std::ostream &Emit(std::ostream &o, const Symbol &symbol) {
-  return o << symbol.name().ToString();
-}
-
-template<> std::ostream &Emit(std::ostream &o, const IntrinsicProcedure &p) {
-  return o << p;
-}
-
 std::ostream &BaseObject::AsFortran(std::ostream &o) const {
   return Emit(o, u);
 }
 
+template<int KIND>
+std::ostream &TypeParamInquiry<KIND>::AsFortran(std::ostream &o) const {
+  return Emit(o, u) << '%' << parameter.ToString();
+}
+
 std::ostream &Component::AsFortran(std::ostream &o) const {
   base_->AsFortran(o);
-  return Emit(o << '%', symbol_);
+  return Emit(o << '%', *symbol_);
 }
 
 std::ostream &Triplet::AsFortran(std::ostream &o) const {
@@ -368,6 +383,7 @@ Expr<SubscriptInteger> BaseObject::LEN() const {
 Expr<SubscriptInteger> Component::LEN() const {
   return SymbolLEN(GetLastSymbol());
 }
+
 Expr<SubscriptInteger> ArrayRef::LEN() const {
   return std::visit(
       common::visitors{
@@ -376,9 +392,11 @@ Expr<SubscriptInteger> ArrayRef::LEN() const {
       },
       u);
 }
+
 Expr<SubscriptInteger> CoarrayRef::LEN() const {
   return SymbolLEN(*base_.back());
 }
+
 Expr<SubscriptInteger> DataRef::LEN() const {
   return std::visit(
       common::visitors{
@@ -387,11 +405,13 @@ Expr<SubscriptInteger> DataRef::LEN() const {
       },
       u);
 }
+
 Expr<SubscriptInteger> Substring::LEN() const {
   return AsExpr(
       Extremum<SubscriptInteger>{AsExpr(Constant<SubscriptInteger>{0}),
           upper() - lower() + AsExpr(Constant<SubscriptInteger>{1})});
 }
+
 template<typename T> Expr<SubscriptInteger> Designator<T>::LEN() const {
   if constexpr (Result::category == TypeCategory::Character) {
     return std::visit(
@@ -406,6 +426,7 @@ template<typename T> Expr<SubscriptInteger> Designator<T>::LEN() const {
     return AsExpr(Constant<SubscriptInteger>{0});
   }
 }
+
 Expr<SubscriptInteger> ProcedureDesignator::LEN() const {
   return std::visit(
       common::visitors{
@@ -504,27 +525,6 @@ template<typename T> int Designator<T>::Rank() const {
           [](const auto &x) { return x.Rank(); },
       },
       u);
-}
-int ProcedureDesignator::Rank() const {
-  if (const Symbol * symbol{GetSymbol()}) {
-    return symbol->Rank();
-  }
-  if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&u)}) {
-    return intrinsic->rank;
-  }
-  CHECK(!"ProcedureDesignator::Rank(): no case");
-  return 0;
-}
-
-bool ProcedureDesignator::IsElemental() const {
-  if (const Symbol * symbol{GetSymbol()}) {
-    return symbol->attrs().test(semantics::Attr::ELEMENTAL);
-  }
-  if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&u)}) {
-    return intrinsic->attrs.test(semantics::Attr::ELEMENTAL);
-  }
-  CHECK(!"ProcedureDesignator::IsElemental(): no case");
-  return 0;
 }
 
 // GetBaseObject(), GetFirstSymbol(), & GetLastSymbol()
@@ -626,37 +626,53 @@ template<typename T> const Symbol *Designator<T>::GetLastSymbol() const {
       u);
 }
 
-const Symbol *ProcedureDesignator::GetSymbol() const {
-  return std::visit(
-      common::visitors{
-          [](const Symbol *sym) { return sym; },
-          [](const Component &c) { return &c.GetLastSymbol(); },
-          [](const auto &) -> const Symbol * { return nullptr; },
-      },
-      u);
-}
-
 template<typename T> std::optional<DynamicType> Designator<T>::GetType() const {
-  if constexpr (std::is_same_v<Result, SomeDerived>) {
-    if (const Symbol * symbol{GetLastSymbol()}) {
-      return GetSymbolType(*symbol);
-    } else {
-      return std::nullopt;
-    }
-  } else {
+  if constexpr (IsLengthlessIntrinsicType<Result>) {
     return {Result::GetType()};
+  } else if (const Symbol * symbol{GetLastSymbol()}) {
+    return GetSymbolType(symbol);
+  } else {
+    return std::nullopt;
   }
 }
 
-std::optional<DynamicType> ProcedureDesignator::GetType() const {
-  if (const Symbol * symbol{GetSymbol()}) {
-    return {GetSymbolType(*symbol)};
-  }
-  if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&u)}) {
-    return {intrinsic->type};
-  }
-  return std::nullopt;
+// Equality testing
+
+bool BaseObject::operator==(const BaseObject &that) const {
+  return u == that.u;
+}
+bool Component::operator==(const Component &that) const {
+  return base_ == that.base_ && symbol_ == that.symbol_;
+}
+template<int KIND>
+bool TypeParamInquiry<KIND>::operator==(
+    const TypeParamInquiry<KIND> &that) const {
+  return parameter == that.parameter && u == that.u;
+}
+bool Triplet::operator==(const Triplet &that) const {
+  return lower_ == that.lower_ && upper_ == that.upper_ &&
+      stride_ == that.stride_;
+}
+bool ArrayRef::operator==(const ArrayRef &that) const {
+  return u == that.u && subscript == that.subscript;
+}
+bool CoarrayRef::operator==(const CoarrayRef &that) const {
+  return base_ == that.base_ && subscript_ == that.subscript_ &&
+      cosubscript_ == that.cosubscript_ && stat_ == that.stat_ &&
+      team_ == that.team_ && teamIsTeamNumber_ == that.teamIsTeamNumber_;
+}
+bool Substring::operator==(const Substring &that) const {
+  return parent_ == that.parent_ && lower_ == that.lower_ &&
+      upper_ == that.upper_;
+}
+bool ComplexPart::operator==(const ComplexPart &that) const {
+  return part_ == that.part_ && complex_ == that.complex_;
+}
+bool ProcedureRef::operator==(const ProcedureRef &that) const {
+  return proc_ == that.proc_ && arguments_ == that.arguments_;
 }
 
+EXPAND_FOR_EACH_INTEGER_KIND(
+    TEMPLATE_INSTANTIATION, template struct TypeParamInquiry)
 FOR_EACH_SPECIFIC_TYPE(template class Designator)
 }

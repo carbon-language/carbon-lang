@@ -19,7 +19,8 @@
 // Expressions are the sole owners of their constituents; i.e., there is no
 // context-independent hash table or sharing of common subexpressions, and
 // thus these are trees, not DAGs.  Both deep copy and move semantics are
-// supported for expression construction.
+// supported for expression construction.  Expressions may be compared
+// for equality.
 
 #include "common.h"
 #include "type.h"
@@ -182,6 +183,10 @@ public:
     } else {
       return rank;
     }
+  }
+
+  bool operator==(const Operation &that) const {
+    return operand_ == that.operand_;
   }
 
   std::ostream &AsFortran(std::ostream &) const;
@@ -387,6 +392,7 @@ template<typename VALUES, typename OPERAND> struct ImpliedDo {
   using Operand = OPERAND;
   using Result = ResultType<Values>;
   static_assert(Operand::category == TypeCategory::Integer);
+  bool operator==(const ImpliedDo &) const;
   parser::CharBlock controlVariableName;
   CopyableIndirection<Expr<Operand>> lower, upper, stride;
   CopyableIndirection<Values> values;
@@ -406,6 +412,7 @@ template<typename RESULT> struct ArrayConstructorValues {
   using Result = RESULT;
   CLASS_BOILERPLATE(ArrayConstructorValues)
   template<typename A> void Push(A &&x) { values.emplace_back(std::move(x)); }
+  bool operator==(const ArrayConstructorValues &) const;
   std::vector<ArrayConstructorValue<Result>> values;
 };
 
@@ -416,20 +423,20 @@ struct ArrayConstructor : public ArrayConstructorValues<RESULT> {
   DynamicType GetType() const;
   static constexpr int Rank() { return 1; }
   Expr<SubscriptInteger> LEN() const;
+  bool operator==(const ArrayConstructor &) const;
   std::ostream &AsFortran(std::ostream &) const;
 
   Result result;
   std::vector<Expr<SubscriptInteger>> typeParameterValues;
 };
 
-// Per-category expression representations
+// Expression representations for each type category.
 
 template<int KIND>
 class Expr<Type<TypeCategory::Integer, KIND>>
   : public ExpressionBase<Type<TypeCategory::Integer, KIND>> {
 public:
   using Result = Type<TypeCategory::Integer, KIND>;
-  // TODO: R916 type-param-inquiry
 
   EVALUATE_UNION_CLASS_BOILERPLATE(Expr)
   explicit Expr(const Scalar<Result> &x) : u{Constant<Result>{x}} {}
@@ -444,7 +451,7 @@ private:
       Add<Result>, Subtract<Result>, Multiply<Result>, Divide<Result>,
       Power<Result>, Extremum<Result>>;
   using Others = std::variant<Constant<Result>, ArrayConstructor<Result>,
-      Designator<Result>, FunctionRef<Result>>;
+      TypeParamInquiry<KIND>, Designator<Result>, FunctionRef<Result>>;
 
 public:
   common::CombineVariants<Operations, Conversions, Others> u;
@@ -664,10 +671,12 @@ public:
 // from parse tree nodes.
 struct GenericExprWrapper {
   GenericExprWrapper(Expr<SomeType> &&x) : v{std::move(x)} {}
+  bool operator==(const GenericExprWrapper &) const;
   Expr<SomeType> v;
 };
 
 FOR_EACH_CATEGORY_TYPE(extern template class Expr)
 FOR_EACH_TYPE_AND_KIND(extern template class ExpressionBase)
+FOR_EACH_SPECIFIC_TYPE(extern template struct ArrayConstructor)
 }
 #endif  // FORTRAN_EVALUATE_EXPRESSION_H_

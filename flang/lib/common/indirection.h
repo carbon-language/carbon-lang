@@ -58,6 +58,8 @@ public:
   A *operator->() { return p_; }
   const A *operator->() const { return p_; }
 
+  bool operator==(const Indirection &that) const { return *p_ == *that.p_; }
+
   template<typename... ARGS> static Indirection Make(ARGS &&... args) {
     return {new A(std::forward<ARGS>(args)...)};
   }
@@ -106,6 +108,8 @@ public:
   A *operator->() { return p_; }
   const A *operator->() const { return p_; }
 
+  bool operator==(const Indirection &that) const { return *p_ == *that.p_; }
+
   template<typename... ARGS> static Indirection Make(ARGS &&... args) {
     return {new A(std::forward<ARGS>(args)...)};
   }
@@ -147,6 +151,11 @@ public:
   void reset(A *p) {
     this->~OwningPointer();
     p_ = p;
+  }
+
+  bool operator==(const OwningPointer &that) const {
+    return (p_ == nullptr && that.p_ == nullptr) ||
+        (p_ != nullptr && that.p_ != nullptr && *p_ == *that.p_);
   }
 
 private:

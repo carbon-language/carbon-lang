@@ -26,7 +26,15 @@
 // a packaged value of a specific type if it is present and returns a pointer
 // thereto; otherwise, it returns a null pointer.  It's analogous to
 // std::get_if<>() but it accepts a reference argument and is recursive.
-// The type parameter cannot be omitted.
+// The target type parameter cannot be omitted.
+//
+// Be advised: If the target type parameter is not const-qualified, but the
+// isolated value is const-qualified, the result of Unwrap<> will be a
+// pointer to a const-qualified value.
+//
+// Further: const-qualified alternatives in instances of non-const-qualified
+// variants will not be returned from Unwrap if the target type is not
+// const-qualified.
 //
 // UnwrapCopy<>() is a variation of Unwrap<>() that returns an optional copy
 // of the value if one is present with the desired type.
@@ -48,8 +56,7 @@ template<typename A, typename B> auto Unwrap(B &x) -> Constify<A, B> * {
 }
 
 // Prototypes of specializations, to enable mutual recursion
-template<typename A, typename B>
-auto Unwrap(B *) -> Constify<A, std::remove_pointer<B>> *;
+template<typename A, typename B> auto Unwrap(B *p) -> Constify<A, B> *;
 template<typename A, typename B>
 auto Unwrap(const std::unique_ptr<B> &) -> Constify<A, B> *;
 template<typename A, typename B>
@@ -69,8 +76,7 @@ template<typename A, typename B>
 auto Unwrap(const CountedReference<B> &) -> Constify<A, B> *;
 
 // Implementations of specializations
-template<typename A, typename B>
-auto Unwrap(B *p) -> Constify<A, std::remove_pointer<B>> * {
+template<typename A, typename B> auto Unwrap(B *p) -> Constify<A, B> * {
   if (p != nullptr) {
     return Unwrap<A>(*p);
   } else {
@@ -115,12 +121,22 @@ auto Unwrap(const std::optional<B> &x) -> Constify<A, B> * {
 }
 
 template<typename A, typename... Bs> A *Unwrap(std::variant<Bs...> &u) {
-  return std::visit([](auto &x) { return Unwrap<A>(x); }, u);
+  return std::visit(
+      [](auto &x) -> A * {
+        using Ty = std::decay_t<decltype(Unwrap<A>(x))>;
+        if constexpr (!std::is_const_v<std::remove_pointer_t<Ty>> ||
+            std::is_const_v<A>) {
+          return Unwrap<A>(x);
+        }
+        return nullptr;
+      },
+      u);
 }
 
 template<typename A, typename... Bs>
 auto Unwrap(const std::variant<Bs...> &u) -> std::add_const_t<A> * {
-  return std::visit([](const auto &x) { return Unwrap<A>(x); }, u);
+  return std::visit(
+      [](const auto &x) -> std::add_const_t<A> * { return Unwrap<A>(x); }, u);
 }
 
 template<typename A, typename B, bool COPY>
