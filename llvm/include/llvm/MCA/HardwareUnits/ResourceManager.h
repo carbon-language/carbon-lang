@@ -389,10 +389,6 @@ public:
   // Release a previously reserved processor resource.
   void releaseResource(uint64_t ResourceID);
 
-  // Returns true if all resources are in-order, and there is at least one
-  // resource which is a dispatch hazard (BufferSize = 0).
-  bool mustIssueImmediately(const InstrDesc &Desc) const;
-
   bool canBeIssued(const InstrDesc &Desc) const;
 
   void issueInstruction(

@@ -267,24 +267,6 @@ bool ResourceManager::canBeIssued(const InstrDesc &Desc) const {
       });
 }
 
-// Returns true if all resources are in-order, and there is at least one
-// resource which is a dispatch hazard (BufferSize = 0).
-bool ResourceManager::mustIssueImmediately(const InstrDesc &Desc) const {
-  if (!canBeIssued(Desc))
-    return false;
-  bool AllInOrderResources = all_of(Desc.Buffers, [&](uint64_t BufferMask) {
-    unsigned Index = getResourceStateIndex(BufferMask);
-    const ResourceState &Resource = *Resources[Index];
-    return Resource.isInOrder() || Resource.isADispatchHazard();
-  });
-  if (!AllInOrderResources)
-    return false;
-
-  return any_of(Desc.Buffers, [&](uint64_t BufferMask) {
-    return Resources[getResourceStateIndex(BufferMask)]->isADispatchHazard();
-  });
-}
-
 void ResourceManager::issueInstruction(
     const InstrDesc &Desc,
     SmallVectorImpl<std::pair<ResourceRef, ResourceCycles>> &Pipes) {
