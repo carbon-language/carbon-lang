@@ -19,26 +19,37 @@ group("unittests") {
     #"DebugInfo/PDB:DebugInfoPDBTests",
     "Demangle:DemangleTests",
 
-    # FIXME: Add more:
+    # FIXME: Add.
     #"ExecutionEngine:ExecutionEngineTests",
     #"ExecutionEngine/MCJIT:MCJITTests",
     #"ExecutionEngine/Orc:OrcJITTests",
-    #"FuzzMutate:FuzzMutateTests",
-    #"IR:IRTests",
-    #"LineEditor:LineEditorTests",
-    #"MC:MCTests",
+    "FuzzMutate:FuzzMutateTests",
+    "IR:IRTests",
+    "LineEditor:LineEditorTests",
+    "Linker:LinkerTests",
+    "MC:MCTests",
+
+    # FIXME: Add.
     #"MI:MITests",
-    #"Object:ObjectTests",
-    #"ObjectYAML:ObjectYAMLTests",
-    #"Option:OptionTests",
+    "Object:ObjectTests",
+    "ObjectYAML:ObjectYAMLTests",
+    "Option:OptionTests",
+
+    # FIXME: Add more:
+    #"OptRemarks:OptRemarksTests",
     #"Passes:PluginsTests",
-    #"ProfileData:ProfileDataTests",
+
+    "ProfileData:ProfileDataTests",
+
+    # FIXME: Add more:
     #"Support:SupportTests",
     #"Support/DynamicLibrary:DynamicLibraryTests",
     #"Transforms/IPO:IPOTests",
     #"Transforms/Scalar:ScalarTests",
     #"Transforms/Utils:UtilsTests",
-    #"XRay:XRayTests",
+    "XRay:XRayTests",
+
+    # FIXME: Add more:
     #"tools/llvm-cfi-verify:CFIVerifyTests",
     #"tools/llvm-exegesis:LLVMExegesisTests",
   ]
