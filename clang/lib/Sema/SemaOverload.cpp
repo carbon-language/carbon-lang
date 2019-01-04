@@ -2824,11 +2824,9 @@ void Sema::HandleFunctionTypeMismatch(PartialDiagnostic &PDiag,
     return;
   }
 
-  // FIXME: OpenCL: Need to consider address spaces
-  unsigned FromQuals = FromFunction->getTypeQuals().getCVRUQualifiers();
-  unsigned ToQuals = ToFunction->getTypeQuals().getCVRUQualifiers();
-  if (FromQuals != ToQuals) {
-    PDiag << ft_qualifer_mismatch << ToQuals << FromQuals;
+  if (FromFunction->getTypeQuals() != ToFunction->getTypeQuals()) {
+    PDiag << ft_qualifer_mismatch << ToFunction->getTypeQuals()
+          << FromFunction->getTypeQuals();
     return;
   }
 
