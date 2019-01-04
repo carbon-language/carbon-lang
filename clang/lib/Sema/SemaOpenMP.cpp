@@ -1080,14 +1080,16 @@ bool DSAStackTy::isOpenMPLocal(VarDecl *D, iterator Iter) const {
   return false;
 }
 
-static bool isConstNotMutableType(Sema &SemaRef, ValueDecl *D,
+static bool isConstNotMutableType(Sema &SemaRef, QualType Type,
+                                  bool AcceptIfMutable = true,
                                   bool *IsClassType = nullptr) {
   ASTContext &Context = SemaRef.getASTContext();
-  QualType Type = D->getType().getNonReferenceType().getCanonicalType();
+  Type = Type.getNonReferenceType().getCanonicalType();
   bool IsConstant = Type.isConstant(Context);
   Type = Context.getBaseElementType(Type);
-  const CXXRecordDecl *RD =
-      SemaRef.getLangOpts().CPlusPlus ? Type->getAsCXXRecordDecl() : nullptr;
+  const CXXRecordDecl *RD = AcceptIfMutable && SemaRef.getLangOpts().CPlusPlus
+                                ? Type->getAsCXXRecordDecl()
+                                : nullptr;
   if (const auto *CTSD = dyn_cast_or_null<ClassTemplateSpecializationDecl>(RD))
     if (const ClassTemplateDecl *CTD = CTSD->getSpecializedTemplate())
       RD = CTD->getTemplatedDecl();
@@ -1097,21 +1099,27 @@ static bool isConstNotMutableType(Sema &SemaRef, ValueDecl *D,
                          RD->hasDefinition() && RD->hasMutableFields());
 }
 
-static bool rejectConstNotMutableType(Sema &SemaRef, ValueDecl *D,
-                                      OpenMPClauseKind CKind,
-                                      SourceLocation ELoc) {
+static bool rejectConstNotMutableType(Sema &SemaRef, const ValueDecl *D,
+                                      QualType Type, OpenMPClauseKind CKind,
+                                      SourceLocation ELoc,
+                                      bool AcceptIfMutable = true,
+                                      bool ListItemNotVar = false) {
   ASTContext &Context = SemaRef.getASTContext();
   bool IsClassType;
-  if (isConstNotMutableType(SemaRef, D, &IsClassType)) {
-    SemaRef.Diag(ELoc, IsClassType ? diag::err_omp_const_not_mutable_variable
-                                   : diag::err_omp_const_variable)
-        << getOpenMPClauseName(CKind);
-    VarDecl *VD = dyn_cast<VarDecl>(D);
-    bool IsDecl = !VD || VD->isThisDeclarationADefinition(Context) ==
-                             VarDecl::DeclarationOnly;
-    SemaRef.Diag(D->getLocation(),
-                 IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-        << D;
+  if (isConstNotMutableType(SemaRef, Type, AcceptIfMutable, &IsClassType)) {
+    unsigned Diag = ListItemNotVar
+                        ? diag::err_omp_const_list_item
+                        : IsClassType ? diag::err_omp_const_not_mutable_variable
+                                      : diag::err_omp_const_variable;
+    SemaRef.Diag(ELoc, Diag) << getOpenMPClauseName(CKind);
+    if (!ListItemNotVar && D) {
+      const VarDecl *VD = dyn_cast<VarDecl>(D);
+      bool IsDecl = !VD || VD->isThisDeclarationADefinition(Context) ==
+                               VarDecl::DeclarationOnly;
+      SemaRef.Diag(D->getLocation(),
+                   IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+          << D;
+    }
     return true;
   }
   return false;
@@ -1221,7 +1229,7 @@ const DSAStackTy::DSAVarData DSAStackTy::getTopDSA(ValueDecl *D,
     // in a Construct, C/C++, predetermined, p.6]
     //  Variables with const qualified type having no mutable member are
     //  shared.
-    if (isConstNotMutableType(SemaRef, D)) {
+    if (isConstNotMutableType(SemaRef, D->getType())) {
       // Variables with const-qualified type having no mutable member may be
       // listed in a firstprivate clause, even if they are static data members.
       DSAVarData DVarTemp = hasInnermostDSA(
@@ -9830,7 +9838,7 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
     // OpenMP 3.1 [2.9.3.3, private clause, Restrictions]
     // A variable that appears in a private clause must not have a
     // const-qualified type unless it is of class type with a mutable member.
-    if (rejectConstNotMutableType(*this, D, OMPC_private, ELoc))
+    if (rejectConstNotMutableType(*this, D, Type, OMPC_private, ELoc))
       continue;
 
     // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
@@ -10262,7 +10270,7 @@ OMPClause *Sema::ActOnOpenMPLastprivateClause(ArrayRef<Expr *> VarList,
     // OpenMP 3.1 [2.9.3.5, lastprivate clause, Restrictions]
     // A variable that appears in a lastprivate clause must not have a
     // const-qualified type unless it is of class type with a mutable member.
-    if (rejectConstNotMutableType(*this, D, OMPC_lastprivate, ELoc))
+    if (rejectConstNotMutableType(*this, D, Type, OMPC_lastprivate, ELoc))
       continue;
 
     OpenMPDirectiveKind CurrDir = DSAStack->getCurrentDirective();
@@ -10974,17 +10982,9 @@ static bool actOnOMPReductionKindClause(
     // OpenMP [2.14.3.6, reduction clause, Restrictions]
     // A list item that appears in a reduction clause must not be
     // const-qualified.
-    if (Type.getNonReferenceType().isConstant(Context)) {
-      S.Diag(ELoc, diag::err_omp_const_reduction_list_item) << ERange;
-      if (!ASE && !OASE) {
-        bool IsDecl = !VD || VD->isThisDeclarationADefinition(Context) ==
-                                 VarDecl::DeclarationOnly;
-        S.Diag(D->getLocation(),
-               IsDecl ? diag::note_previous_decl : diag::note_defined_here)
-            << D;
-      }
+    if (rejectConstNotMutableType(S, D, Type, ClauseKind, ELoc,
+                                  /*AcceptIfMutable*/ false, ASE || OASE))
       continue;
-    }
 
     OpenMPDirectiveKind CurrDir = Stack->getCurrentDirective();
     // OpenMP [2.9.3.6, Restrictions, C/C++, p.4]
