@@ -16,7 +16,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 
 define i32 @fadd(i32 %arg) {
 ; SSE1-LABEL: 'fadd'
-; SSE1-NEXT:  Cost Model: Found an estimated cost of 2 for instruction: %F32 = fadd float undef, undef
+; SSE1-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %F32 = fadd float undef, undef
 ; SSE1-NEXT:  Cost Model: Found an estimated cost of 2 for instruction: %V4F32 = fadd <4 x float> undef, undef
 ; SSE1-NEXT:  Cost Model: Found an estimated cost of 4 for instruction: %V8F32 = fadd <8 x float> undef, undef
 ; SSE1-NEXT:  Cost Model: Found an estimated cost of 8 for instruction: %V16F32 = fadd <16 x float> undef, undef
@@ -129,7 +129,7 @@ define i32 @fadd(i32 %arg) {
 
 define i32 @fsub(i32 %arg) {
 ; SSE1-LABEL: 'fsub'
-; SSE1-NEXT:  Cost Model: Found an estimated cost of 2 for instruction: %F32 = fsub float undef, undef
+; SSE1-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %F32 = fsub float undef, undef
 ; SSE1-NEXT:  Cost Model: Found an estimated cost of 2 for instruction: %V4F32 = fsub <4 x float> undef, undef
 ; SSE1-NEXT:  Cost Model: Found an estimated cost of 4 for instruction: %V8F32 = fsub <8 x float> undef, undef
 ; SSE1-NEXT:  Cost Model: Found an estimated cost of 8 for instruction: %V16F32 = fsub <16 x float> undef, undef
