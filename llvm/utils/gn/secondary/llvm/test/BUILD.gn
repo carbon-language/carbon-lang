@@ -241,6 +241,7 @@ group("test") {
     "//llvm/tools/sanstats",
     "//llvm/tools/verify-uselistorder",
     "//llvm/tools/yaml2obj",
+    "//llvm/unittests",
     "//llvm/utils/FileCheck",
     "//llvm/utils/TableGen:llvm-tblgen",
     "//llvm/utils/count",
@@ -261,7 +262,6 @@ group("test") {
     ]
   }
 
-  # FIXME: dep on "//llvm/unittests" once it exists
   # FIXME: llvm_build_examples
   testonly = true
 }
