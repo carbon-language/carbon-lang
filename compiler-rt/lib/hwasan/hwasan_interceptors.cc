@@ -17,6 +17,7 @@
 
 #include "interception/interception.h"
 #include "hwasan.h"
+#include "hwasan_allocator.h"
 #include "hwasan_mapping.h"
 #include "hwasan_thread.h"
 #include "hwasan_poisoning.h"
@@ -43,11 +44,6 @@ using __sanitizer::memory_order;
 using __sanitizer::atomic_load;
 using __sanitizer::atomic_store;
 using __sanitizer::atomic_uintptr_t;
-
-DECLARE_REAL(SIZE_T, strlen, const char *s)
-DECLARE_REAL(SIZE_T, strnlen, const char *s, SIZE_T maxlen)
-DECLARE_REAL(void *, memcpy, void *dest, const void *src, uptr n)
-DECLARE_REAL(void *, memset, void *dest, int c, uptr n)
 
 bool IsInInterceptorScope() {
   Thread *t = GetCurrentThread();
@@ -130,13 +126,13 @@ void * __sanitizer_pvalloc(uptr size) {
 void __sanitizer_free(void *ptr) {
   GET_MALLOC_STACK_TRACE;
   if (!ptr || UNLIKELY(IsInDlsymAllocPool(ptr))) return;
-  HwasanDeallocate(&stack, ptr);
+  hwasan_free(ptr, &stack);
 }
 
 void __sanitizer_cfree(void *ptr) {
   GET_MALLOC_STACK_TRACE;
   if (!ptr || UNLIKELY(IsInDlsymAllocPool(ptr))) return;
-  HwasanDeallocate(&stack, ptr);
+  hwasan_free(ptr, &stack);
 }
 
 uptr __sanitizer_malloc_usable_size(const void *ptr) {
@@ -290,6 +286,8 @@ void InitializeInterceptors() {
 
 #if HWASAN_WITH_INTERCEPTORS
   INTERCEPT_FUNCTION(pthread_create);
+  INTERCEPT_FUNCTION(realloc);
+  INTERCEPT_FUNCTION(free);
 #endif
 
   inited = 1;

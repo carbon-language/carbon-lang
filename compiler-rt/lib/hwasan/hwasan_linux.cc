@@ -40,6 +40,7 @@
 #include "sanitizer_common/sanitizer_procmaps.h"
 
 #if HWASAN_WITH_INTERCEPTORS && !SANITIZER_ANDROID
+SANITIZER_INTERFACE_ATTRIBUTE
 THREADLOCAL uptr __hwasan_tls;
 #endif
 
