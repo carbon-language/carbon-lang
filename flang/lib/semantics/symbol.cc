@@ -47,17 +47,34 @@ void ModuleDetails::set_scope(const Scope *scope) {
   scope_ = scope;
 }
 
+std::ostream &operator<<(std::ostream &os, const SubprogramDetails &x) {
+  if (x.isInterface_) {
+    os << " isInterface";
+  }
+  if (x.bindName_) {
+    x.bindName_->AsFortran(os << " bindName:");
+  }
+  if (x.result_) {
+    os << " result:" << x.result_.value()->name();
+  }
+  if (x.dummyArgs_.empty()) {
+    char sep{'('};
+    os << ' ';
+    for (const auto *arg : x.dummyArgs_) {
+      os << sep << arg->name();
+      sep = ',';
+    }
+    os << ')';
+  }
+  return os;
+}
+
 void EntityDetails::set_type(const DeclTypeSpec &type) {
   CHECK(!type_);
   type_ = &type;
 }
 
-void ObjectEntityDetails::set_type(const DeclTypeSpec &type) {
-  CHECK(!type_);
-  type_ = &type;
-}
-
-void ObjectEntityDetails::ReplaceType(const DeclTypeSpec &type) {
+void EntityDetails::ReplaceType(const DeclTypeSpec &type) {
   type_ = &type;
 }
 
@@ -69,13 +86,13 @@ void ObjectEntityDetails::set_shape(const ArraySpec &shape) {
 }
 
 bool ObjectEntityDetails::IsDescriptor() const {
-  if (type_ != nullptr) {
-    if (const IntrinsicTypeSpec * typeSpec{type_->AsIntrinsic()}) {
+  if (const auto *type{this->type()}) {
+    if (const IntrinsicTypeSpec * typeSpec{type->AsIntrinsic()}) {
       if (typeSpec->category() == TypeCategory::Character) {
         // TODO maybe character lengths won't be in descriptors
         return true;
       }
-    } else if (const DerivedTypeSpec * typeSpec{type_->AsDerived()}) {
+    } else if (const DerivedTypeSpec * typeSpec{type->AsDerived()}) {
       if (isDummy()) {
         return true;
       }
@@ -93,8 +110,8 @@ bool ObjectEntityDetails::IsDescriptor() const {
           }
         }
       }
-    } else if (type_->category() == DeclTypeSpec::Category::TypeStar ||
-        type_->category() == DeclTypeSpec::Category::ClassStar) {
+    } else if (type->category() == DeclTypeSpec::Category::TypeStar ||
+        type->category() == DeclTypeSpec::Category::ClassStar) {
       return true;
     }
   }
@@ -106,9 +123,9 @@ bool ObjectEntityDetails::IsDescriptor() const {
   return false;
 }
 
-ProcEntityDetails::ProcEntityDetails(const EntityDetails &d) {
-  if (auto type{d.type()}) {
-    interface_.set_type(*type);
+ProcEntityDetails::ProcEntityDetails(EntityDetails &&d) : EntityDetails(d) {
+  if (type()) {
+    interface_.set_type(*type());
   }
 }
 
@@ -322,20 +339,21 @@ int Symbol::Rank() const {
       details_);
 }
 
-ObjectEntityDetails::ObjectEntityDetails(const EntityDetails &d)
-  : isDummy_{d.isDummy()}, type_{d.type()} {}
+ObjectEntityDetails::ObjectEntityDetails(EntityDetails &&d)
+  : EntityDetails(d) {}
 
 std::ostream &operator<<(std::ostream &os, const EntityDetails &x) {
   if (x.type()) {
     os << " type: " << *x.type();
   }
+  if (x.bindName_) {
+    x.bindName_->AsFortran(os << " bindName:");
+  }
   return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const ObjectEntityDetails &x) {
-  if (x.type()) {
-    os << " type: " << *x.type();
-  }
+  os << *static_cast<const EntityDetails *>(&x);
   if (!x.shape().empty()) {
     os << " shape:";
     for (const auto &s : x.shape()) {
@@ -357,9 +375,15 @@ bool ProcEntityDetails::HasExplicitInterface() const {
 
 std::ostream &operator<<(std::ostream &os, const ProcEntityDetails &x) {
   if (auto *symbol{x.interface_.symbol()}) {
-    os << ' ' << symbol->name().ToString();
+    os << ' ' << symbol->name();
   } else if (auto *type{x.interface_.type()}) {
     os << ' ' << *type;
+  }
+  if (x.bindName()) {
+    x.bindName()->AsFortran(os << " bindName:");
+  }
+  if (x.passName_) {
+    os << " passName:" << *x.passName_;
   }
   return os;
 }
@@ -412,6 +436,9 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
               os << dummy->name();
             }
             os << ')';
+            if (x.bindName()) {
+              x.bindName()->AsFortran(os << " bindName:");
+            }
             if (x.isFunction()) {
               os << " result(";
               DumpType(os, x.result());
@@ -445,12 +472,15 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
           },
           [&](const ProcBindingDetails &x) {
             os << " => " << x.symbol().name();
+            if (x.passName()) {
+              os << " passName:" << *x.passName();
+            }
           },
           [&](const GenericBindingDetails &x) {
             os << " =>";
             char sep{' '};
             for (const auto *proc : x.specificProcs()) {
-              os << sep << proc->name().ToString();
+              os << sep << proc->name();
               sep = ',';
             }
           },
@@ -511,7 +541,7 @@ static void DumpUniqueName(std::ostream &os, const Scope &scope) {
     DumpUniqueName(os, scope.parent());
     os << '/';
     if (auto *scopeSymbol{scope.symbol()}) {
-      os << scopeSymbol->name().ToString();
+      os << scopeSymbol->name();
     } else {
       int index{1};
       for (auto &child : scope.parent().children()) {
@@ -532,7 +562,7 @@ static void DumpUniqueName(std::ostream &os, const Scope &scope) {
 std::ostream &DumpForUnparse(
     std::ostream &os, const Symbol &symbol, bool isDef) {
   DumpUniqueName(os, symbol.owner());
-  os << '/' << symbol.name().ToString();
+  os << '/' << symbol.name();
   if (isDef) {
     if (!symbol.attrs().empty()) {
       os << ' ' << symbol.attrs();

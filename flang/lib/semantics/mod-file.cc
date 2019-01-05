@@ -41,6 +41,8 @@ static std::vector<const Symbol *> CollectSymbols(const Scope &);
 static void PutEntity(std::ostream &, const Symbol &);
 static void PutObjectEntity(std::ostream &, const Symbol &);
 static void PutProcEntity(std::ostream &, const Symbol &);
+static void PutPassName(std::ostream &, const std::optional<SourceName> &);
+static void PutBindName(std::ostream &, const MaybeExpr &);
 static void PutTypeParam(std::ostream &, const Symbol &);
 static void PutEntity(std::ostream &, const Symbol &, std::function<void()>);
 static void PutInit(std::ostream &, const MaybeExpr &);
@@ -148,6 +150,7 @@ void ModFileWriter::PutSymbol(
             if (deferred) {
               PutLower(typeBindings << '(', x.symbol()) << ')';
             }
+            PutPassName(typeBindings, x.passName());
             PutAttrs(typeBindings, symbol.attrs(), ","s, ""s);
             PutLower(typeBindings << "::", symbol);
             if (!deferred && x.symbol().name() != symbol.name()) {
@@ -219,6 +222,7 @@ void ModFileWriter::PutSubprogram(const Symbol &symbol) {
     PutLower(os, *dummy);
   }
   os << ')';
+  PutBindName(os, details.bindName());
   PutAttrs(os, bindAttrs, " "s, ""s);
   if (details.isFunction()) {
     const Symbol &result{details.result()};
@@ -340,17 +344,20 @@ void PutShape(std::ostream &os, const ArraySpec &shape) {
 }
 
 void PutObjectEntity(std::ostream &os, const Symbol &symbol) {
+  auto &details{symbol.get<ObjectEntityDetails>()};
   PutEntity(os, symbol, [&]() {
     auto *type{symbol.GetType()};
     CHECK(type);
     PutLower(os, *type);
+    PutBindName(os, details.bindName());
   });
-  PutShape(os, symbol.get<ObjectEntityDetails>().shape());
-  PutInit(os, symbol.get<ObjectEntityDetails>().init());
+  PutShape(os, details.shape());
+  PutInit(os, details.init());
 }
 
 void PutProcEntity(std::ostream &os, const Symbol &symbol) {
-  const ProcInterface &interface{symbol.get<ProcEntityDetails>().interface()};
+  const auto &details{symbol.get<ProcEntityDetails>()};
+  const ProcInterface &interface{details.interface()};
   PutEntity(os, symbol, [&]() {
     os << "procedure(";
     if (interface.symbol()) {
@@ -359,7 +366,21 @@ void PutProcEntity(std::ostream &os, const Symbol &symbol) {
       PutLower(os, *interface.type());
     }
     os << ')';
+    PutPassName(os, details.passName());
+    PutBindName(os, details.bindName());
   });
+}
+
+void PutPassName(std::ostream &os, const std::optional<SourceName> &passName) {
+  if (passName) {
+    PutLower(os << ",pass(", passName->ToString()) << ')';
+  }
+}
+
+void PutBindName(std::ostream &os, const MaybeExpr &bindName) {
+  if (bindName) {
+    bindName->AsFortran(os << ",bind(c, name=") << ')';
+  }
 }
 
 void PutTypeParam(std::ostream &os, const Symbol &symbol) {

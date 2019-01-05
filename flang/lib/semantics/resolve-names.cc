@@ -122,6 +122,10 @@ public:
   SemanticsContext &context() const { return *context_; }
   void set_context(SemanticsContext &);
 
+  // Make a placeholder symbol for a Name that otherwise wouldn't have one.
+  // It is not in any scope and always has MiscDetails.
+  void MakePlaceholder(const parser::Name &, MiscDetails::Kind);
+
   template<typename T> MaybeExpr EvaluateExpr(const T &expr) {
     if (auto maybeExpr{AnalyzeExpr(*context_, expr)}) {
       return evaluate::Fold(context_->foldingContext(), std::move(*maybeExpr));
@@ -169,9 +173,12 @@ public:
   bool BeginAttrs();  // always returns true
   Attrs GetAttrs();
   Attrs EndAttrs();
+  bool SetPassNameOn(Symbol &);
+  bool SetBindNameOn(Symbol &);
   void Post(const parser::LanguageBindingSpec &);
   bool Pre(const parser::AccessSpec &);
   bool Pre(const parser::IntentSpec &);
+  bool Pre(const parser::Pass &);
 
 // Simple case: encountering CLASSNAME causes ATTRNAME to be set.
 #define HANDLE_ATTR_CLASS(CLASSNAME, ATTRNAME) \
@@ -197,7 +204,6 @@ public:
   HANDLE_ATTR_CLASS(NoPass, NOPASS)
   HANDLE_ATTR_CLASS(Optional, OPTIONAL)
   HANDLE_ATTR_CLASS(Parameter, PARAMETER)
-  HANDLE_ATTR_CLASS(Pass, PASS)
   HANDLE_ATTR_CLASS(Pointer, POINTER)
   HANDLE_ATTR_CLASS(Protected, PROTECTED)
   HANDLE_ATTR_CLASS(Save, SAVE)
@@ -208,7 +214,6 @@ public:
 
 protected:
   std::optional<Attrs> attrs_;
-  std::string langBindingName_{""};
 
   Attr AccessSpecToAttr(const parser::AccessSpec &x) {
     switch (x.v) {
@@ -225,6 +230,10 @@ protected:
     }
     common::die("unreachable");  // suppress g++ warning
   }
+
+private:
+  MaybeExpr bindName_;  // from BIND(C, NAME="...")
+  std::optional<SourceName> passName_;  // from PASS(...)
 };
 
 // Find and create types from declaration-type-spec nodes.
@@ -973,6 +982,14 @@ void BaseVisitor::set_context(SemanticsContext &context) {
   messageHandler_.set_messages(context.messages());
 }
 
+void BaseVisitor::MakePlaceholder(
+    const parser::Name &name, MiscDetails::Kind kind) {
+  if (!name.symbol) {
+    name.symbol = &context_->globalScope().MakeSymbol(
+        name.source, Attrs{}, MiscDetails{MiscDetails::Kind::PassName});
+  }
+}
+
 // AttrsVisitor implementation
 
 bool AttrsVisitor::BeginAttrs() {
@@ -988,13 +1005,47 @@ Attrs AttrsVisitor::EndAttrs() {
   CHECK(attrs_);
   Attrs result{*attrs_};
   attrs_.reset();
+  passName_.reset();
+  bindName_.reset();
   return result;
 }
+
+bool AttrsVisitor::SetPassNameOn(Symbol &symbol) {
+  if (!passName_) {
+    return false;
+  }
+  std::visit(
+      common::visitors{
+          [&](ProcEntityDetails &x) { x.set_passName(*passName_); },
+          [&](ProcBindingDetails &x) { x.set_passName(*passName_); },
+          [](auto &) { common::die("unexpected pass name"); },
+      },
+      symbol.details());
+  return true;
+}
+
+bool AttrsVisitor::SetBindNameOn(Symbol &symbol) {
+  if (!bindName_) {
+    return false;
+  }
+  std::visit(
+      common::visitors{
+          [&](EntityDetails &x) { x.set_bindName(std::move(bindName_)); },
+          [&](ObjectEntityDetails &x) { x.set_bindName(std::move(bindName_)); },
+          [&](ProcEntityDetails &x) { x.set_bindName(std::move(bindName_)); },
+          [&](SubprogramDetails &x) { x.set_bindName(std::move(bindName_)); },
+          [](auto &) { common::die("unexpected bind name"); },
+      },
+      symbol.details());
+  return true;
+}
+
 void AttrsVisitor::Post(const parser::LanguageBindingSpec &x) {
   CHECK(attrs_);
-  attrs_->set(Attr::BIND_C);
   if (x.v) {
-    // TODO: set langBindingName_ from ScalarDefaultCharConstantExpr
+    bindName_ = EvaluateExpr(*x.v);
+  } else {
+    attrs_->set(Attr::BIND_C);
   }
 }
 bool AttrsVisitor::Pre(const parser::AccessSpec &x) {
@@ -1004,6 +1055,15 @@ bool AttrsVisitor::Pre(const parser::AccessSpec &x) {
 bool AttrsVisitor::Pre(const parser::IntentSpec &x) {
   CHECK(attrs_);
   attrs_->set(IntentSpecToAttr(x));
+  return false;
+}
+bool AttrsVisitor::Pre(const parser::Pass &x) {
+  if (x.v) {
+    passName_ = x.v->source;
+    MakePlaceholder(*x.v, MiscDetails::Kind::PassName);
+  } else {
+    attrs_->set(Attr::PASS);
+  }
   return false;
 }
 
@@ -1519,7 +1579,7 @@ bool ScopeHandler::ConvertToObjectEntity(Symbol &symbol) {
   } else if (symbol.has<UnknownDetails>()) {
     symbol.set_details(ObjectEntityDetails{});
   } else if (auto *details{symbol.detailsIf<EntityDetails>()}) {
-    symbol.set_details(ObjectEntityDetails{*details});
+    symbol.set_details(ObjectEntityDetails{std::move(*details)});
   } else {
     return false;
   }
@@ -1532,7 +1592,7 @@ bool ScopeHandler::ConvertToProcEntity(Symbol &symbol) {
   } else if (symbol.has<UnknownDetails>()) {
     symbol.set_details(ProcEntityDetails{});
   } else if (auto *details{symbol.detailsIf<EntityDetails>()}) {
-    symbol.set_details(ProcEntityDetails{*details});
+    symbol.set_details(ProcEntityDetails{std::move(*details)});
   } else {
     return false;
   }
@@ -2096,6 +2156,7 @@ SubprogramDetails &SubprogramVisitor::PostSubprogramStmt(
     const parser::Name &name) {
   Symbol &symbol{*currScope().symbol()};
   CHECK(name.source == symbol.name());
+  SetBindNameOn(symbol);
   symbol.attrs() |= EndAttrs();
   if (symbol.attrs().test(Attr::MODULE)) {
     symbol.attrs().set(Attr::EXTERNAL, false);
@@ -2330,7 +2391,8 @@ bool DeclarationVisitor::HandleAttributeStmt(
 }
 Symbol &DeclarationVisitor::HandleAttributeStmt(
     Attr attr, const parser::Name &name) {
-  if (auto *symbol{FindSymbol(name)}) {
+  auto *symbol{FindSymbol(name)};
+  if (symbol) {
     // symbol was already there: set attribute on it
     if (attr == Attr::ASYNCHRONOUS || attr == Attr::VOLATILE) {
       // TODO: if in a BLOCK, attribute should only be set while in the block
@@ -2339,11 +2401,13 @@ Symbol &DeclarationVisitor::HandleAttributeStmt(
           "Cannot change %s attribute on use-associated '%s'"_err_en_US,
           EnumToString(attr), name.source);
     }
-    symbol->attrs().set(attr);
-    return *symbol;
   } else {
-    return MakeSymbol(name, Attrs{attr});
+    symbol = &MakeSymbol(name, EntityDetails{});
   }
+  if (attr != Attr::BIND_C || !SetBindNameOn(*symbol)) {
+    symbol->attrs().set(attr);
+  }
+  return *symbol;
 }
 
 void DeclarationVisitor::Post(const parser::ObjectDecl &x) {
@@ -2362,6 +2426,7 @@ Symbol &DeclarationVisitor::DeclareUnknownEntity(
     if (auto *type{GetDeclTypeSpec()}) {
       SetType(name, *type);
     }
+    SetBindNameOn(symbol);
     if (symbol.attrs().test(Attr::EXTERNAL)) {
       ConvertToProcEntity(symbol);
     }
@@ -2381,6 +2446,8 @@ Symbol &DeclarationVisitor::DeclareProcEntity(
               : Symbol::Flag::Subroutine);
     }
     details->set_interface(interface);
+    SetBindNameOn(symbol);
+    SetPassNameOn(symbol);
   }
   return symbol;
 }
@@ -2401,6 +2468,7 @@ Symbol &DeclarationVisitor::DeclareObjectEntity(
       }
       ClearArraySpec();
     }
+    SetBindNameOn(symbol);
   }
   return symbol;
 }
@@ -2647,7 +2715,9 @@ void DeclarationVisitor::Post(
           *procedure, "Declaration of '%s'"_en_US);
       continue;
     }
-    MakeTypeSymbol(bindingName, ProcBindingDetails{*procedure});
+    if (auto *s{MakeTypeSymbol(bindingName, ProcBindingDetails{*procedure})}) {
+      SetPassNameOn(*s);
+    }
   }
 }
 
@@ -2661,7 +2731,9 @@ void DeclarationVisitor::Post(
     return;
   }
   for (auto &bindingName : x.bindingNames) {
-    MakeTypeSymbol(bindingName, ProcBindingDetails{*interface});
+    if (auto *s{MakeTypeSymbol(bindingName, ProcBindingDetails{*interface})}) {
+      SetPassNameOn(*s);
+    }
   }
 }
 

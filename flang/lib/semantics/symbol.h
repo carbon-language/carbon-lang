@@ -66,6 +66,8 @@ public:
   bool isFunction() const { return result_.has_value(); }
   bool isInterface() const { return isInterface_; }
   void set_isInterface(bool value = true) { isInterface_ = value; }
+  MaybeExpr bindName() const { return bindName_; }
+  void set_bindName(MaybeExpr &&expr) { bindName_ = std::move(expr); }
   const Symbol &result() const {
     CHECK(isFunction());
     return **result_;
@@ -78,9 +80,10 @@ public:
   void add_dummyArg(Symbol &symbol) { dummyArgs_.push_back(&symbol); }
 
 private:
+  bool isInterface_{false};  // true if this represents an interface-body
+  MaybeExpr bindName_;
   std::list<Symbol *> dummyArgs_;
   std::optional<Symbol *> result_;
-  bool isInterface_{false};  // true if this represents an interface-body
   friend std::ostream &operator<<(std::ostream &, const SubprogramDetails &);
 };
 
@@ -107,32 +110,32 @@ class EntityDetails {
 public:
   EntityDetails(bool isDummy = false) : isDummy_{isDummy} {}
   const DeclTypeSpec *type() const { return type_; }
-  void set_type(const DeclTypeSpec &type);
+  void set_type(const DeclTypeSpec &);
+  void ReplaceType(const DeclTypeSpec &);
   bool isDummy() const { return isDummy_; }
+  MaybeExpr bindName() const { return bindName_; }
+  void set_bindName(MaybeExpr &&expr) { bindName_ = std::move(expr); }
 
 private:
   bool isDummy_;
   const DeclTypeSpec *type_{nullptr};
+  MaybeExpr bindName_;
   friend std::ostream &operator<<(std::ostream &, const EntityDetails &);
 };
 
 // An entity known to be an object.
-class ObjectEntityDetails {
+class ObjectEntityDetails : public EntityDetails {
 public:
-  explicit ObjectEntityDetails(const EntityDetails &);
+  explicit ObjectEntityDetails(EntityDetails &&);
   ObjectEntityDetails(const ObjectEntityDetails &) = default;
   ObjectEntityDetails &operator=(const ObjectEntityDetails &) = default;
-  ObjectEntityDetails(bool isDummy = false) : isDummy_{isDummy} {}
+  ObjectEntityDetails(bool isDummy = false) : EntityDetails(isDummy) {}
   MaybeExpr &init() { return init_; }
   const MaybeExpr &init() const { return init_; }
   void set_init(MaybeExpr &&expr) { init_ = std::move(expr); }
-  const DeclTypeSpec *type() const { return type_; }
-  void set_type(const DeclTypeSpec &type);
-  void ReplaceType(const DeclTypeSpec &type);
   ArraySpec &shape() { return shape_; }
   const ArraySpec &shape() const { return shape_; }
   void set_shape(const ArraySpec &shape);
-  bool isDummy() const { return isDummy_; }
   bool IsArray() const { return !shape_.empty(); }
   bool IsAssumedShape() const {
     return isDummy() && IsArray() && shape_.back().ubound().isDeferred() &&
@@ -153,27 +156,28 @@ public:
   bool IsDescriptor() const;
 
 private:
-  bool isDummy_;
   MaybeExpr init_;
-  const DeclTypeSpec *type_{nullptr};
   ArraySpec shape_;
   friend std::ostream &operator<<(std::ostream &, const ObjectEntityDetails &);
 };
 
 // A procedure pointer, dummy procedure, or external procedure
-class ProcEntityDetails {
+class ProcEntityDetails : public EntityDetails {
 public:
   ProcEntityDetails() = default;
-  ProcEntityDetails(const EntityDetails &d);
+  ProcEntityDetails(EntityDetails &&d);
 
   const ProcInterface &interface() const { return interface_; }
   ProcInterface &interface() { return interface_; }
   void set_interface(const ProcInterface &interface) { interface_ = interface; }
   bool HasExplicitInterface() const;
   bool IsDescriptor() const;
+  const std::optional<SourceName> &passName() const { return passName_; }
+  void set_passName(const SourceName &passName) { passName_ = passName; }
 
 private:
   ProcInterface interface_;
+  std::optional<SourceName> passName_;
   friend std::ostream &operator<<(std::ostream &, const ProcEntityDetails &);
 };
 
@@ -211,9 +215,12 @@ class ProcBindingDetails {
 public:
   explicit ProcBindingDetails(const Symbol &symbol) : symbol_{&symbol} {}
   const Symbol &symbol() const { return *symbol_; }
+  std::optional<SourceName> passName() const { return passName_; }
+  void set_passName(const SourceName &passName) { passName_ = passName; }
 
 private:
   const Symbol *symbol_;  // procedure bound to
+  std::optional<SourceName> passName_;  // name in PASS attribute
 };
 
 class GenericBindingDetails {
@@ -233,7 +240,7 @@ class FinalProcDetails {};
 
 class MiscDetails {
 public:
-  ENUM_CLASS(Kind, ConstructName, ScopeName);
+  ENUM_CLASS(Kind, ConstructName, ScopeName, PassName);
   MiscDetails(Kind kind) : kind_{kind} {}
   Kind kind() const { return kind_; }
 
@@ -251,6 +258,7 @@ public:
   void set_init(MaybeIntExpr &&expr) { init_ = std::move(expr); }
   const DeclTypeSpec *type() const { return type_; }
   void set_type(const DeclTypeSpec &);
+  void ReplaceType(const DeclTypeSpec &);
 
 private:
   common::TypeParamAttr attr_;
@@ -388,6 +396,7 @@ public:
     }
   }
 
+  Details &details() { return details_; }
   const Details &details() const { return details_; }
   // Assign the details of the symbol from one of the variants.
   // Only allowed in certain cases.
