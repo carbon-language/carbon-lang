@@ -1746,16 +1746,14 @@ void CodeGenModule::EmitModuleLinkOptions() {
     bool AnyChildren = false;
 
     // Visit the submodules of this module.
-    for (clang::Module::submodule_iterator Sub = Mod->submodule_begin(),
-                                        SubEnd = Mod->submodule_end();
-         Sub != SubEnd; ++Sub) {
+    for (const auto &SM : Mod->submodules()) {
       // Skip explicit children; they need to be explicitly imported to be
       // linked against.
-      if ((*Sub)->IsExplicit)
+      if (SM->IsExplicit)
         continue;
 
-      if (Visited.insert(*Sub).second) {
-        Stack.push_back(*Sub);
+      if (Visited.insert(SM).second) {
+        Stack.push_back(SM);
         AnyChildren = true;
       }
     }
