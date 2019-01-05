@@ -17949,9 +17949,10 @@ static SDValue truncateVectorWithPACK(unsigned Opcode, EVT DstVT, SDValue In,
                                       const X86Subtarget &Subtarget) {
   assert((Opcode == X86ISD::PACKSS || Opcode == X86ISD::PACKUS) &&
          "Unexpected PACK opcode");
+  assert(DstVT.isVector() && "VT not a vector?");
 
   // Requires SSE2 but AVX512 has fast vector truncate.
-  if (!Subtarget.hasSSE2() || Subtarget.hasAVX512() || !DstVT.isVector())
+  if (!Subtarget.hasSSE2())
     return SDValue();
 
   EVT SrcVT = In.getValueType();
@@ -36899,6 +36900,7 @@ static SDValue combineTruncateWithSat(SDValue In, EVT VT, const SDLoc &DL,
       return DAG.getNode(X86ISD::VTRUNCUS, DL, VT, USatVal);
   }
   if (VT.isVector() && isPowerOf2_32(VT.getVectorNumElements()) &&
+      !Subtarget.hasAVX512() &&
       (SVT == MVT::i8 || SVT == MVT::i16) &&
       (InSVT == MVT::i16 || InSVT == MVT::i32)) {
     if (auto USatVal = detectSSatPattern(In, VT, true)) {
