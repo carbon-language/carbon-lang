@@ -213,7 +213,7 @@ private:
   std::vector<pdb::SecMapEntry> SectionMap;
 
   /// Type index mappings of type server PDBs that we've loaded so far.
-  std::map<GUID, CVIndexMap> TypeServerIndexMappings;
+  std::map<codeview::GUID, CVIndexMap> TypeServerIndexMappings;
 
   /// Type index mappings of precompiled objects type map that we've loaded so
   /// far.
@@ -221,7 +221,7 @@ private:
 
   /// List of TypeServer PDBs which cannot be loaded.
   /// Cached to prevent repeated load attempts.
-  std::map<GUID, std::string> MissingTypeServerPDBs;
+  std::map<codeview::GUID, std::string> MissingTypeServerPDBs;
 };
 
 class DebugSHandler {
@@ -507,7 +507,7 @@ PDBLinker::mergeDebugT(ObjFile *File, CVIndexMap *ObjectIndexMap) {
 }
 
 static Expected<std::unique_ptr<pdb::NativeSession>>
-tryToLoadPDB(const GUID &GuidFromObj, StringRef TSPath) {
+tryToLoadPDB(const codeview::GUID &GuidFromObj, StringRef TSPath) {
   // Ensure the file exists before anything else. We want to return ENOENT,
   // "file not found", even if the path points to a removable device (in which
   // case the return message would be EAGAIN, "resource unavailable try again")
@@ -550,7 +550,7 @@ PDBLinker::maybeMergeTypeServerPDB(ObjFile *File, const CVType &FirstType) {
           TypeDeserializer::deserializeAs(const_cast<CVType &>(FirstType), TS))
     fatal("error reading record: " + toString(std::move(EC)));
 
-  const GUID &TSId = TS.getGuid();
+  const codeview::GUID &TSId = TS.getGuid();
   StringRef TSPath = TS.getName();
 
   // First, check if the PDB has previously failed to load.
