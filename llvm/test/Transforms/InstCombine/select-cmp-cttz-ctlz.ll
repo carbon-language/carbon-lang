@@ -345,7 +345,7 @@ define i128 @test8(i128 %x) {
 
 define i32 @test_ctlz_not_bw(i32 %x) {
 ; CHECK-LABEL: @test_ctlz_not_bw(
-; CHECK-NEXT:    [[CT:%.*]] = tail call i32 @llvm.ctlz.i32(i32 [[X:%.*]], i1 false), !range !1
+; CHECK-NEXT:    [[CT:%.*]] = tail call i32 @llvm.ctlz.i32(i32 [[X:%.*]], i1 true), !range !1
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i32 [[X]], 0
 ; CHECK-NEXT:    [[RES:%.*]] = select i1 [[CMP]], i32 123, i32 [[CT]]
 ; CHECK-NEXT:    ret i32 [[RES]]
@@ -373,7 +373,7 @@ define i32 @test_ctlz_not_bw_multiuse(i32 %x) {
 
 define i32 @test_cttz_not_bw(i32 %x) {
 ; CHECK-LABEL: @test_cttz_not_bw(
-; CHECK-NEXT:    [[CT:%.*]] = tail call i32 @llvm.cttz.i32(i32 [[X:%.*]], i1 false), !range !1
+; CHECK-NEXT:    [[CT:%.*]] = tail call i32 @llvm.cttz.i32(i32 [[X:%.*]], i1 true), !range !1
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i32 [[X]], 0
 ; CHECK-NEXT:    [[RES:%.*]] = select i1 [[CMP]], i32 123, i32 [[CT]]
 ; CHECK-NEXT:    ret i32 [[RES]]
@@ -412,7 +412,7 @@ define <2 x i32> @test_ctlz_bw_vec(<2 x i32> %x) {
 
 define <2 x i32> @test_ctlz_not_bw_vec(<2 x i32> %x) {
 ; CHECK-LABEL: @test_ctlz_not_bw_vec(
-; CHECK-NEXT:    [[CT:%.*]] = tail call <2 x i32> @llvm.ctlz.v2i32(<2 x i32> [[X:%.*]], i1 false)
+; CHECK-NEXT:    [[CT:%.*]] = tail call <2 x i32> @llvm.ctlz.v2i32(<2 x i32> [[X:%.*]], i1 true)
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp eq <2 x i32> [[X]], zeroinitializer
 ; CHECK-NEXT:    [[RES:%.*]] = select <2 x i1> [[CMP]], <2 x i32> zeroinitializer, <2 x i32> [[CT]]
 ; CHECK-NEXT:    ret <2 x i32> [[RES]]
@@ -436,7 +436,7 @@ define <2 x i32> @test_cttz_bw_vec(<2 x i32> %x) {
 
 define <2 x i32> @test_cttz_not_bw_vec(<2 x i32> %x) {
 ; CHECK-LABEL: @test_cttz_not_bw_vec(
-; CHECK-NEXT:    [[CT:%.*]] = tail call <2 x i32> @llvm.cttz.v2i32(<2 x i32> [[X:%.*]], i1 false)
+; CHECK-NEXT:    [[CT:%.*]] = tail call <2 x i32> @llvm.cttz.v2i32(<2 x i32> [[X:%.*]], i1 true)
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp eq <2 x i32> [[X]], zeroinitializer
 ; CHECK-NEXT:    [[RES:%.*]] = select <2 x i1> [[CMP]], <2 x i32> zeroinitializer, <2 x i32> [[CT]]
 ; CHECK-NEXT:    ret <2 x i32> [[RES]]
