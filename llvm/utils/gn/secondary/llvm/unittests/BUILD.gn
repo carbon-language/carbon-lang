@@ -33,14 +33,10 @@ group("unittests") {
     "ObjectYAML:ObjectYAMLTests",
     "OptRemarks:OptRemarksTests",
     "Option:OptionTests",
-
-    # FIXME: Add.
-    #"Passes:PluginsTests",
+    "Passes:PluginsTests",
     "ProfileData:ProfileDataTests",
     "Support:SupportTests",
-
-    # FIXME: Add.
-    #"Support/DynamicLibrary:DynamicLibraryTests",
+    "Support/DynamicLibrary:DynamicLibraryTests",
     "TextAPI:TextAPITests",
     "Transforms/IPO:IPOTests",
     "Transforms/Scalar:ScalarTests",
