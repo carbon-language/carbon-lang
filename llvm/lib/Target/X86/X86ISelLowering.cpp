@@ -32743,7 +32743,8 @@ static SDValue combineBitcastvxi1(SelectionDAG &DAG, SDValue BitCast,
   // vpcmpeqb/vpcmpgtb.
   bool IsTruncated = N0.getOpcode() == ISD::TRUNCATE && N0.hasOneUse() &&
                      (N0.getOperand(0).getValueType() == MVT::v16i8 ||
-                      N0.getOperand(0).getValueType() == MVT::v32i8);
+                      N0.getOperand(0).getValueType() == MVT::v32i8 ||
+                      N0.getOperand(0).getValueType() == MVT::v64i8);
 
   // With AVX512 vxi1 types are legal and we prefer using k-regs.
   // MOVMSK is supported in SSE2 or later.
@@ -32799,12 +32800,30 @@ static SDValue combineBitcastvxi1(SelectionDAG &DAG, SDValue BitCast,
   case MVT::v32i1:
     SExtVT = MVT::v32i8;
     break;
+  case MVT::v64i1:
+    // If we have AVX512F, but not AVX512BW and the input is truncated from
+    // v64i8 checked earlier. Then split the input and make two pmovmskbs.
+    if (Subtarget.hasAVX512() && !Subtarget.hasBWI()) {
+      SExtVT = MVT::v64i8;
+      break;
+    }
+    return SDValue();
   };
 
   SDLoc DL(BitCast);
   SDValue V = DAG.getNode(ISD::SIGN_EXTEND, DL, SExtVT, N0);
 
-  if (SExtVT == MVT::v16i8 || SExtVT == MVT::v32i8) {
+  if (SExtVT == MVT::v64i8) {
+    SDValue Lo, Hi;
+    std::tie(Lo, Hi) = DAG.SplitVector(V, DL);
+    Lo = DAG.getNode(X86ISD::MOVMSK, DL, MVT::i32, Lo);
+    Lo = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::i64, Lo);
+    Hi = DAG.getNode(X86ISD::MOVMSK, DL, MVT::i32, Hi);
+    Hi = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i64, Hi);
+    Hi = DAG.getNode(ISD::SHL, DL, MVT::i64, Hi,
+                     DAG.getConstant(32, DL, MVT::i8));
+    V = DAG.getNode(ISD::OR, DL, MVT::i64, Lo, Hi);
+  } else if (SExtVT == MVT::v16i8 || SExtVT == MVT::v32i8) {
     V = getPMOVMSKB(DL, V, DAG, Subtarget);
   } else {
     if (SExtVT == MVT::v8i16)
