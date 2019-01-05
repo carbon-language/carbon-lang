@@ -53,6 +53,7 @@
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/JamCRC.h"
+#include "llvm/Support/Parallel.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/ScopedPrinter.h"
 #include <memory>
@@ -1387,10 +1388,10 @@ void PDBLinker::addObjectsToPDB() {
 
   if (!Publics.empty()) {
     // Sort the public symbols and add them to the stream.
-    std::sort(Publics.begin(), Publics.end(),
-              [](const PublicSym32 &L, const PublicSym32 &R) {
-                return L.Name < R.Name;
-              });
+    sort(parallel::par, Publics.begin(), Publics.end(),
+         [](const PublicSym32 &L, const PublicSym32 &R) {
+           return L.Name < R.Name;
+         });
     for (const PublicSym32 &Pub : Publics)
       GsiBuilder.addPublicSymbol(Pub);
   }
