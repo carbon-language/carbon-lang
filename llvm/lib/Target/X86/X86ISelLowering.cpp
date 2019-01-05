@@ -32737,9 +32737,17 @@ static SDValue combineBitcastvxi1(SelectionDAG &DAG, SDValue BitCast,
   if (!VT.isScalarInteger() || !VecVT.isSimple())
     return SDValue();
 
+  // If the input is a truncate from v16i8 or v32i8 go ahead and use a
+  // movmskb even with avx512. This will be better than truncating to vXi1 and
+  // using a kmov. This can especially help KNL if the input is a v16i8/v32i8
+  // vpcmpeqb/vpcmpgtb.
+  bool IsTruncated = N0.getOpcode() == ISD::TRUNCATE && N0.hasOneUse() &&
+                     (N0.getOperand(0).getValueType() == MVT::v16i8 ||
+                      N0.getOperand(0).getValueType() == MVT::v32i8);
+
   // With AVX512 vxi1 types are legal and we prefer using k-regs.
   // MOVMSK is supported in SSE2 or later.
-  if (Subtarget.hasAVX512() || !Subtarget.hasSSE2())
+  if (!Subtarget.hasSSE2() || (Subtarget.hasAVX512() && !IsTruncated))
     return SDValue();
 
   // There are MOVMSK flavors for types v16i8, v32i8, v4f32, v8f32, v4f64 and
