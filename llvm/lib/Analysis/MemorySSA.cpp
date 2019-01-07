@@ -994,6 +994,31 @@ public:
   }
 };
 
+class MemorySSA::SkipSelfWalker final : public MemorySSAWalker {
+  ClobberWalkerBase *Walker;
+
+public:
+  SkipSelfWalker(MemorySSA *M, ClobberWalkerBase *W)
+      : MemorySSAWalker(M), Walker(W) {}
+  ~SkipSelfWalker() override = default;
+
+  using MemorySSAWalker::getClobberingMemoryAccess;
+
+  MemoryAccess *getClobberingMemoryAccess(MemoryAccess *MA) override;
+  MemoryAccess *getClobberingMemoryAccess(MemoryAccess *MA,
+                                          const MemoryLocation &Loc) override;
+
+  void invalidateInfo(MemoryAccess *MA) override {
+    if (auto *MUD = dyn_cast<MemoryUseOrDef>(MA))
+      MUD->resetOptimized();
+  }
+
+  void verify(const MemorySSA *MSSA) override {
+    MemorySSAWalker::verify(MSSA);
+    Walker->verify(MSSA);
+  }
+};
+
 } // end namespace llvm
 
 void MemorySSA::renameSuccessorPhis(BasicBlock *BB, MemoryAccess *IncomingVal,
@@ -1129,7 +1154,7 @@ void MemorySSA::markUnreachableAsLiveOnEntry(BasicBlock *BB) {
 
 MemorySSA::MemorySSA(Function &Func, AliasAnalysis *AA, DominatorTree *DT)
     : AA(AA), DT(DT), F(Func), LiveOnEntryDef(nullptr), Walker(nullptr),
-      NextID(0) {
+      SkipWalker(nullptr), NextID(0) {
   buildMemorySSA();
 }
 
@@ -1466,6 +1491,18 @@ MemorySSA::CachingWalker *MemorySSA::getWalkerImpl() {
   Walker = llvm::make_unique<CachingWalker>(this, WalkerBase.get());
   return Walker.get();
 }
+
+MemorySSAWalker *MemorySSA::getSkipSelfWalker() {
+  if (SkipWalker)
+    return SkipWalker.get();
+
+  if (!WalkerBase)
+    WalkerBase = llvm::make_unique<ClobberWalkerBase>(this, AA, DT);
+
+  SkipWalker = llvm::make_unique<SkipSelfWalker>(this, WalkerBase.get());
+  return SkipWalker.get();
+ }
+
 
 // This is a helper function used by the creation routines. It places NewAccess
 // into the access and defs lists for a given basic block, at the given
@@ -2293,6 +2330,17 @@ MemorySSA::CachingWalker::getClobberingMemoryAccess(MemoryAccess *MA) {
 
 MemoryAccess *
 MemorySSA::CachingWalker::getClobberingMemoryAccess(MemoryAccess *MA,
+                                                    const MemoryLocation &Loc) {
+  return Walker->getClobberingMemoryAccessBase(MA, Loc);
+}
+
+MemoryAccess *
+MemorySSA::SkipSelfWalker::getClobberingMemoryAccess(MemoryAccess *MA) {
+  return Walker->getClobberingMemoryAccessBase(MA, true);
+}
+
+MemoryAccess *
+MemorySSA::SkipSelfWalker::getClobberingMemoryAccess(MemoryAccess *MA,
                                                     const MemoryLocation &Loc) {
   return Walker->getClobberingMemoryAccessBase(MA, Loc);
 }
