@@ -240,7 +240,8 @@ class FinalProcDetails {};
 
 class MiscDetails {
 public:
-  ENUM_CLASS(Kind, ConstructName, ScopeName, PassName);
+  ENUM_CLASS(Kind, None, ConstructName, ScopeName, PassName, ComplexPartRe,
+      ComplexPartIm, KindParamInquiry, LenParamInquiry);
   MiscDetails(Kind kind) : kind_{kind} {}
   Kind kind() const { return kind_; }
 

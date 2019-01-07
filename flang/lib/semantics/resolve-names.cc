@@ -3276,36 +3276,46 @@ const parser::Name *ResolveNamesVisitor::FindComponent(
   if (!type) {
     return nullptr;  // should have already reported error
   }
-  if (type->IsNumeric(TypeCategory::Complex)) {
+  if (const IntrinsicTypeSpec * intrinsic{type->AsIntrinsic()}) {
     auto name{component.ToString()};
-    if (name == "re" || name == "im") {
-      return nullptr;  // complex-part-designator, not structure-component
+    auto category{intrinsic->category()};
+    MiscDetails::Kind miscKind{MiscDetails::Kind::None};
+    if (name == "kind") {
+      miscKind = MiscDetails::Kind::KindParamInquiry;
+    } else if (category == TypeCategory::Character) {
+      if (name == "len") {
+        miscKind = MiscDetails::Kind::LenParamInquiry;
+      }
+    } else if (category == TypeCategory::Complex) {
+      if (name == "re") {
+        miscKind = MiscDetails::Kind::ComplexPartRe;
+      } else if (name == "im") {
+        miscKind = MiscDetails::Kind::ComplexPartIm;
+      }
+    }
+    if (miscKind != MiscDetails::Kind::None) {
+      MakePlaceholder(component, miscKind);
+      return nullptr;
+    }
+  } else if (const DerivedTypeSpec * derived{type->AsDerived()}) {
+    if (const auto *scope{derived->scope()}) {
+      if (!FindComponent(*scope, component)) {
+        SayDerivedType(component.source,
+            "Component '%s' not found in derived type '%s'"_err_en_US, *scope);
+      } else if (CheckAccessibleComponent(component)) {
+        return &component;
+      }
+      return nullptr;
     }
   }
-  if (type->category() != DeclTypeSpec::TypeDerived) {
-    if (symbol.test(Symbol::Flag::Implicit)) {
-      Say(*base,
-          "'%s' is not an object of derived type; it is implicitly typed"_err_en_US);
-    } else {
-      Say2(*base, "'%s' is not an object of derived type"_err_en_US, symbol,
-          "Declaration of '%s'"_en_US);
-    }
-    return nullptr;
-  }
-  const Scope *scope{type->derivedTypeSpec().scope()};
-  if (!scope) {
-    return nullptr;  // previously failed to resolve type
-  }
-  auto *result{FindComponent(*scope, component)};
-  if (!result) {
-    SayDerivedType(component.source,
-        "Component '%s' not found in derived type '%s'"_err_en_US, *scope);
-    return nullptr;
-  } else if (!CheckAccessibleComponent(component)) {
-    return nullptr;
+  if (symbol.test(Symbol::Flag::Implicit)) {
+    Say(*base,
+        "'%s' is not an object of derived type; it is implicitly typed"_err_en_US);
   } else {
-    return &component;
+    Say2(*base, "'%s' is not an object of derived type"_err_en_US, symbol,
+        "Declaration of '%s'"_en_US);
   }
+  return nullptr;
 }
 
 // Check that component is accessible from current scope.

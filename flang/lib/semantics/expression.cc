@@ -908,16 +908,16 @@ template<>
 MaybeExpr AnalyzeExpr(
     ExpressionAnalysisContext &context, const parser::StructureComponent &sc) {
   if (MaybeExpr base{AnalyzeExpr(context, sc.base)}) {
-    if (auto *dtExpr{std::get_if<Expr<SomeDerived>>(&base->u)}) {
-      Symbol *sym{sc.component.symbol};
+    Symbol *sym{sc.component.symbol};
+    if (sym == nullptr) {
+      context.Say(sc.component.source,
+          "component name was not resolved to a symbol"_err_en_US);
+    } else if (auto *dtExpr{std::get_if<Expr<SomeDerived>>(&base->u)}) {
       const semantics::DerivedTypeSpec *dtSpec{nullptr};
       if (std::optional<DynamicType> dtDyTy{dtExpr->GetType()}) {
         dtSpec = dtDyTy->derived;
       }
-      if (sym == nullptr) {
-        context.Say(sc.component.source,
-            "component name was not resolved to a symbol"_err_en_US);
-      } else if (sym->detailsIf<semantics::TypeParamDetails>()) {
+      if (sym->detailsIf<semantics::TypeParamDetails>()) {
         context.Say(sc.component.source,
             "TODO: type parameter inquiry unimplemented"_err_en_US);
       } else if (dtSpec == nullptr) {
@@ -936,24 +936,35 @@ MaybeExpr AnalyzeExpr(
         context.Say(sc.component.source,
             "base of component reference must be a data reference"_err_en_US);
       }
-    } else if (auto *zExpr{std::get_if<Expr<SomeComplex>>(&base->u)}) {
-      ComplexPart::Part part{ComplexPart::Part::RE};
-      if (sc.component.source == parser::CharBlock{"im", 2}) {
-        part = ComplexPart::Part::IM;
-      } else if (sc.component.source != parser::CharBlock{"re", 2}) {
+    } else if (auto *details{sym->detailsIf<semantics::MiscDetails>()}) {
+      // special part-ref: %re, %im, %kind, %len
+      using MiscKind = semantics::MiscDetails::Kind;
+      MiscKind kind{details->kind()};
+      if (kind == MiscKind::ComplexPartRe || kind == MiscKind::ComplexPartIm) {
+        if (auto *zExpr{std::get_if<Expr<SomeComplex>>(&base->u)}) {
+          if (std::optional<DataRef> dataRef{
+                  ExtractDataRef(std::move(*zExpr))}) {
+            Expr<SomeReal> realExpr{std::visit(
+                [&](const auto &z) {
+                  using PartType = typename ResultType<decltype(z)>::Part;
+                  auto part{kind == MiscKind::ComplexPartRe
+                          ? ComplexPart::Part::RE
+                          : ComplexPart::Part::IM};
+                  return AsCategoryExpr(Designator<PartType>{
+                      ComplexPart{std::move(*dataRef), part}});
+                },
+                zExpr->u)};
+            return {AsGenericExpr(std::move(realExpr))};
+          }
+        }
+      } else if (kind == MiscKind::KindParamInquiry) {
         context.Say(sc.component.source,
-            "component of complex value must be %%RE or %%IM"_err_en_US);
-        return std::nullopt;
-      }
-      if (std::optional<DataRef> dataRef{ExtractDataRef(std::move(*zExpr))}) {
-        Expr<SomeReal> realExpr{std::visit(
-            [&](const auto &z) {
-              using PartType = typename ResultType<decltype(z)>::Part;
-              return AsCategoryExpr(
-                  Designator<PartType>{ComplexPart{std::move(*dataRef), part}});
-            },
-            zExpr->u)};
-        return {AsGenericExpr(std::move(realExpr))};
+            "TODO: kind parameter inquiry unimplemented"_err_en_US);
+      } else if (kind == MiscKind::LenParamInquiry) {
+        context.Say(sc.component.source,
+            "TODO: len parameter inquiry unimplemented"_err_en_US);
+      } else {
+        common::die("unexpected kind");
       }
     } else {
       context.Say("derived type required before '%%%s'"_err_en_US,
