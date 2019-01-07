@@ -655,6 +655,18 @@ protected:
     unsigned NumArgs : 32 - 8 - 1 - NumExprBits;
   };
 
+  class DependentScopeDeclRefExprBitfields {
+    friend class ASTStmtReader;
+    friend class ASTStmtWriter;
+    friend class DependentScopeDeclRefExpr;
+
+    unsigned : NumExprBits;
+
+    /// Whether the name includes info for explicit template
+    /// keyword and arguments.
+    unsigned HasTemplateKWAndArgsInfo : 1;
+  };
+
   class CXXConstructExprBitfields {
     friend class ASTStmtReader;
     friend class CXXConstructExpr;
@@ -681,6 +693,16 @@ protected:
     unsigned CleanupsHaveSideEffects : 1;
 
     unsigned NumObjects : 32 - 1 - NumExprBits;
+  };
+
+  class CXXUnresolvedConstructExprBitfields {
+    friend class ASTStmtReader;
+    friend class CXXUnresolvedConstructExpr;
+
+    unsigned : NumExprBits;
+
+    /// The number of arguments used to construct the type.
+    unsigned NumArgs;
   };
 
   //===--- C++ Coroutines TS bitfields classes ---===//
@@ -765,8 +787,10 @@ protected:
     CXXDefaultInitExprBitfields CXXDefaultInitExprBits;
     CXXDeleteExprBitfields CXXDeleteExprBits;
     TypeTraitExprBitfields TypeTraitExprBits;
+    DependentScopeDeclRefExprBitfields DependentScopeDeclRefExprBits;
     CXXConstructExprBitfields CXXConstructExprBits;
     ExprWithCleanupsBitfields ExprWithCleanupsBits;
+    CXXUnresolvedConstructExprBitfields CXXUnresolvedConstructExprBits;
 
     // C++ Coroutines TS expressions
     CoawaitExprBitfields CoawaitBits;

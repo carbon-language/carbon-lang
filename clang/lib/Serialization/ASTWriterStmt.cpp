@@ -1583,8 +1583,8 @@ ASTStmtWriter::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E) {
   // Don't emit anything here, HasTemplateKWAndArgsInfo must be
   // emitted first.
 
-  Record.push_back(E->HasTemplateKWAndArgsInfo);
-  if (E->HasTemplateKWAndArgsInfo) {
+  Record.push_back(E->DependentScopeDeclRefExprBits.HasTemplateKWAndArgsInfo);
+  if (E->DependentScopeDeclRefExprBits.HasTemplateKWAndArgsInfo) {
     const ASTTemplateKWAndArgsInfo &ArgInfo =
         *E->getTrailingObjects<ASTTemplateKWAndArgsInfo>();
     Record.push_back(ArgInfo.NumTemplateArgs);

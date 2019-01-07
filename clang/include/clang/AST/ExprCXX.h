@@ -2936,6 +2936,10 @@ class DependentScopeDeclRefExpr final
       private llvm::TrailingObjects<DependentScopeDeclRefExpr,
                                     ASTTemplateKWAndArgsInfo,
                                     TemplateArgumentLoc> {
+  friend class ASTStmtReader;
+  friend class ASTStmtWriter;
+  friend TrailingObjects;
+
   /// The nested-name-specifier that qualifies this unresolved
   /// declaration name.
   NestedNameSpecifierLoc QualifierLoc;
@@ -2943,32 +2947,26 @@ class DependentScopeDeclRefExpr final
   /// The name of the entity we will be referencing.
   DeclarationNameInfo NameInfo;
 
-  /// Whether the name includes info for explicit template
-  /// keyword and arguments.
-  bool HasTemplateKWAndArgsInfo;
-
-  DependentScopeDeclRefExpr(QualType T,
-                            NestedNameSpecifierLoc QualifierLoc,
+  DependentScopeDeclRefExpr(QualType Ty, NestedNameSpecifierLoc QualifierLoc,
                             SourceLocation TemplateKWLoc,
                             const DeclarationNameInfo &NameInfo,
                             const TemplateArgumentListInfo *Args);
 
   size_t numTrailingObjects(OverloadToken<ASTTemplateKWAndArgsInfo>) const {
-    return HasTemplateKWAndArgsInfo ? 1 : 0;
+    return hasTemplateKWAndArgsInfo();
+  }
+
+  bool hasTemplateKWAndArgsInfo() const {
+    return DependentScopeDeclRefExprBits.HasTemplateKWAndArgsInfo;
   }
 
 public:
-  friend class ASTStmtReader;
-  friend class ASTStmtWriter;
-  friend TrailingObjects;
+  static DependentScopeDeclRefExpr *
+  Create(const ASTContext &Context, NestedNameSpecifierLoc QualifierLoc,
+         SourceLocation TemplateKWLoc, const DeclarationNameInfo &NameInfo,
+         const TemplateArgumentListInfo *TemplateArgs);
 
-  static DependentScopeDeclRefExpr *Create(const ASTContext &C,
-                                           NestedNameSpecifierLoc QualifierLoc,
-                                           SourceLocation TemplateKWLoc,
-                                           const DeclarationNameInfo &NameInfo,
-                              const TemplateArgumentListInfo *TemplateArgs);
-
-  static DependentScopeDeclRefExpr *CreateEmpty(const ASTContext &C,
+  static DependentScopeDeclRefExpr *CreateEmpty(const ASTContext &Context,
                                                 bool HasTemplateKWAndArgsInfo,
                                                 unsigned NumTemplateArgs);
 
@@ -2996,21 +2994,24 @@ public:
   /// Retrieve the location of the template keyword preceding
   /// this name, if any.
   SourceLocation getTemplateKeywordLoc() const {
-    if (!HasTemplateKWAndArgsInfo) return SourceLocation();
+    if (!hasTemplateKWAndArgsInfo())
+      return SourceLocation();
     return getTrailingObjects<ASTTemplateKWAndArgsInfo>()->TemplateKWLoc;
   }
 
   /// Retrieve the location of the left angle bracket starting the
   /// explicit template argument list following the name, if any.
   SourceLocation getLAngleLoc() const {
-    if (!HasTemplateKWAndArgsInfo) return SourceLocation();
+    if (!hasTemplateKWAndArgsInfo())
+      return SourceLocation();
     return getTrailingObjects<ASTTemplateKWAndArgsInfo>()->LAngleLoc;
   }
 
   /// Retrieve the location of the right angle bracket ending the
   /// explicit template argument list following the name, if any.
   SourceLocation getRAngleLoc() const {
-    if (!HasTemplateKWAndArgsInfo) return SourceLocation();
+    if (!hasTemplateKWAndArgsInfo())
+      return SourceLocation();
     return getTrailingObjects<ASTTemplateKWAndArgsInfo>()->RAngleLoc;
   }
 
@@ -3164,7 +3165,7 @@ class CXXUnresolvedConstructExpr final
   friend TrailingObjects;
 
   /// The type being constructed.
-  TypeSourceInfo *Type = nullptr;
+  TypeSourceInfo *TSI;
 
   /// The location of the left parentheses ('(').
   SourceLocation LParenLoc;
@@ -3172,34 +3173,31 @@ class CXXUnresolvedConstructExpr final
   /// The location of the right parentheses (')').
   SourceLocation RParenLoc;
 
-  /// The number of arguments used to construct the type.
-  unsigned NumArgs;
-
-  CXXUnresolvedConstructExpr(TypeSourceInfo *Type,
-                             SourceLocation LParenLoc,
-                             ArrayRef<Expr*> Args,
-                             SourceLocation RParenLoc);
+  CXXUnresolvedConstructExpr(TypeSourceInfo *TSI, SourceLocation LParenLoc,
+                             ArrayRef<Expr *> Args, SourceLocation RParenLoc);
 
   CXXUnresolvedConstructExpr(EmptyShell Empty, unsigned NumArgs)
-      : Expr(CXXUnresolvedConstructExprClass, Empty), NumArgs(NumArgs) {}
+      : Expr(CXXUnresolvedConstructExprClass, Empty) {
+    CXXUnresolvedConstructExprBits.NumArgs = NumArgs;
+  }
 
 public:
-  static CXXUnresolvedConstructExpr *Create(const ASTContext &C,
+  static CXXUnresolvedConstructExpr *Create(const ASTContext &Context,
                                             TypeSourceInfo *Type,
                                             SourceLocation LParenLoc,
-                                            ArrayRef<Expr*> Args,
+                                            ArrayRef<Expr *> Args,
                                             SourceLocation RParenLoc);
 
-  static CXXUnresolvedConstructExpr *CreateEmpty(const ASTContext &C,
+  static CXXUnresolvedConstructExpr *CreateEmpty(const ASTContext &Context,
                                                  unsigned NumArgs);
 
   /// Retrieve the type that is being constructed, as specified
   /// in the source code.
-  QualType getTypeAsWritten() const { return Type->getType(); }
+  QualType getTypeAsWritten() const { return TSI->getType(); }
 
   /// Retrieve the type source information for the type being
   /// constructed.
-  TypeSourceInfo *getTypeSourceInfo() const { return Type; }
+  TypeSourceInfo *getTypeSourceInfo() const { return TSI; }
 
   /// Retrieve the location of the left parentheses ('(') that
   /// precedes the argument list.
@@ -3217,46 +3215,43 @@ public:
   bool isListInitialization() const { return LParenLoc.isInvalid(); }
 
   /// Retrieve the number of arguments.
-  unsigned arg_size() const { return NumArgs; }
+  unsigned arg_size() const { return CXXUnresolvedConstructExprBits.NumArgs; }
 
   using arg_iterator = Expr **;
   using arg_range = llvm::iterator_range<arg_iterator>;
 
   arg_iterator arg_begin() { return getTrailingObjects<Expr *>(); }
-  arg_iterator arg_end() { return arg_begin() + NumArgs; }
+  arg_iterator arg_end() { return arg_begin() + arg_size(); }
   arg_range arguments() { return arg_range(arg_begin(), arg_end()); }
 
   using const_arg_iterator = const Expr* const *;
   using const_arg_range = llvm::iterator_range<const_arg_iterator>;
 
   const_arg_iterator arg_begin() const { return getTrailingObjects<Expr *>(); }
-  const_arg_iterator arg_end() const {
-    return arg_begin() + NumArgs;
-  }
+  const_arg_iterator arg_end() const { return arg_begin() + arg_size(); }
   const_arg_range arguments() const {
     return const_arg_range(arg_begin(), arg_end());
   }
 
   Expr *getArg(unsigned I) {
-    assert(I < NumArgs && "Argument index out-of-range");
-    return *(arg_begin() + I);
+    assert(I < arg_size() && "Argument index out-of-range");
+    return arg_begin()[I];
   }
 
   const Expr *getArg(unsigned I) const {
-    assert(I < NumArgs && "Argument index out-of-range");
-    return *(arg_begin() + I);
+    assert(I < arg_size() && "Argument index out-of-range");
+    return arg_begin()[I];
   }
 
   void setArg(unsigned I, Expr *E) {
-    assert(I < NumArgs && "Argument index out-of-range");
-    *(arg_begin() + I) = E;
+    assert(I < arg_size() && "Argument index out-of-range");
+    arg_begin()[I] = E;
   }
 
   SourceLocation getBeginLoc() const LLVM_READONLY;
-
   SourceLocation getEndLoc() const LLVM_READONLY {
-    if (!RParenLoc.isValid() && NumArgs > 0)
-      return getArg(NumArgs - 1)->getEndLoc();
+    if (!RParenLoc.isValid() && arg_size() > 0)
+      return getArg(arg_size() - 1)->getEndLoc();
     return RParenLoc;
   }
 
@@ -3267,7 +3262,7 @@ public:
   // Iterators
   child_range children() {
     auto **begin = reinterpret_cast<Stmt **>(arg_begin());
-    return child_range(begin, begin + NumArgs);
+    return child_range(begin, begin + arg_size());
   }
 };
 

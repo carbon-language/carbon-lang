@@ -385,23 +385,22 @@ CXXRecordDecl *OverloadExpr::getNamingClass() const {
 }
 
 // DependentScopeDeclRefExpr
-DependentScopeDeclRefExpr::DependentScopeDeclRefExpr(QualType T,
-                            NestedNameSpecifierLoc QualifierLoc,
-                            SourceLocation TemplateKWLoc,
-                            const DeclarationNameInfo &NameInfo,
-                            const TemplateArgumentListInfo *Args)
-  : Expr(DependentScopeDeclRefExprClass, T, VK_LValue, OK_Ordinary,
-         true, true,
-         (NameInfo.isInstantiationDependent() ||
-          (QualifierLoc &&
-           QualifierLoc.getNestedNameSpecifier()->isInstantiationDependent())),
-         (NameInfo.containsUnexpandedParameterPack() ||
-          (QualifierLoc &&
-           QualifierLoc.getNestedNameSpecifier()
-                            ->containsUnexpandedParameterPack()))),
-    QualifierLoc(QualifierLoc), NameInfo(NameInfo),
-    HasTemplateKWAndArgsInfo(Args != nullptr || TemplateKWLoc.isValid())
-{
+DependentScopeDeclRefExpr::DependentScopeDeclRefExpr(
+    QualType Ty, NestedNameSpecifierLoc QualifierLoc,
+    SourceLocation TemplateKWLoc, const DeclarationNameInfo &NameInfo,
+    const TemplateArgumentListInfo *Args)
+    : Expr(
+          DependentScopeDeclRefExprClass, Ty, VK_LValue, OK_Ordinary, true,
+          true,
+          (NameInfo.isInstantiationDependent() ||
+           (QualifierLoc &&
+            QualifierLoc.getNestedNameSpecifier()->isInstantiationDependent())),
+          (NameInfo.containsUnexpandedParameterPack() ||
+           (QualifierLoc && QualifierLoc.getNestedNameSpecifier()
+                                ->containsUnexpandedParameterPack()))),
+      QualifierLoc(QualifierLoc), NameInfo(NameInfo) {
+  DependentScopeDeclRefExprBits.HasTemplateKWAndArgsInfo =
+      (Args != nullptr) || TemplateKWLoc.isValid();
   if (Args) {
     bool Dependent = true;
     bool InstantiationDependent = true;
@@ -417,36 +416,34 @@ DependentScopeDeclRefExpr::DependentScopeDeclRefExpr(QualType T,
   }
 }
 
-DependentScopeDeclRefExpr *
-DependentScopeDeclRefExpr::Create(const ASTContext &C,
-                                  NestedNameSpecifierLoc QualifierLoc,
-                                  SourceLocation TemplateKWLoc,
-                                  const DeclarationNameInfo &NameInfo,
-                                  const TemplateArgumentListInfo *Args) {
+DependentScopeDeclRefExpr *DependentScopeDeclRefExpr::Create(
+    const ASTContext &Context, NestedNameSpecifierLoc QualifierLoc,
+    SourceLocation TemplateKWLoc, const DeclarationNameInfo &NameInfo,
+    const TemplateArgumentListInfo *Args) {
   assert(QualifierLoc && "should be created for dependent qualifiers");
   bool HasTemplateKWAndArgsInfo = Args || TemplateKWLoc.isValid();
   std::size_t Size =
       totalSizeToAlloc<ASTTemplateKWAndArgsInfo, TemplateArgumentLoc>(
           HasTemplateKWAndArgsInfo, Args ? Args->size() : 0);
-  void *Mem = C.Allocate(Size);
-  return new (Mem) DependentScopeDeclRefExpr(C.DependentTy, QualifierLoc,
+  void *Mem = Context.Allocate(Size);
+  return new (Mem) DependentScopeDeclRefExpr(Context.DependentTy, QualifierLoc,
                                              TemplateKWLoc, NameInfo, Args);
 }
 
 DependentScopeDeclRefExpr *
-DependentScopeDeclRefExpr::CreateEmpty(const ASTContext &C,
+DependentScopeDeclRefExpr::CreateEmpty(const ASTContext &Context,
                                        bool HasTemplateKWAndArgsInfo,
                                        unsigned NumTemplateArgs) {
   assert(NumTemplateArgs == 0 || HasTemplateKWAndArgsInfo);
   std::size_t Size =
       totalSizeToAlloc<ASTTemplateKWAndArgsInfo, TemplateArgumentLoc>(
           HasTemplateKWAndArgsInfo, NumTemplateArgs);
-  void *Mem = C.Allocate(Size);
-  auto *E =
-      new (Mem) DependentScopeDeclRefExpr(QualType(), NestedNameSpecifierLoc(),
-                                          SourceLocation(),
-                                          DeclarationNameInfo(), nullptr);
-  E->HasTemplateKWAndArgsInfo = HasTemplateKWAndArgsInfo;
+  void *Mem = Context.Allocate(Size);
+  auto *E = new (Mem) DependentScopeDeclRefExpr(
+      QualType(), NestedNameSpecifierLoc(), SourceLocation(),
+      DeclarationNameInfo(), nullptr);
+  E->DependentScopeDeclRefExprBits.HasTemplateKWAndArgsInfo =
+      HasTemplateKWAndArgsInfo;
   return E;
 }
 
@@ -1216,22 +1213,22 @@ ExprWithCleanups *ExprWithCleanups::Create(const ASTContext &C,
   return new (buffer) ExprWithCleanups(empty, numObjects);
 }
 
-CXXUnresolvedConstructExpr::CXXUnresolvedConstructExpr(TypeSourceInfo *Type,
-                                                 SourceLocation LParenLoc,
-                                                 ArrayRef<Expr*> Args,
-                                                 SourceLocation RParenLoc)
+CXXUnresolvedConstructExpr::CXXUnresolvedConstructExpr(TypeSourceInfo *TSI,
+                                                       SourceLocation LParenLoc,
+                                                       ArrayRef<Expr *> Args,
+                                                       SourceLocation RParenLoc)
     : Expr(CXXUnresolvedConstructExprClass,
-           Type->getType().getNonReferenceType(),
-           (Type->getType()->isLValueReferenceType()
+           TSI->getType().getNonReferenceType(),
+           (TSI->getType()->isLValueReferenceType()
                 ? VK_LValue
-                : Type->getType()->isRValueReferenceType() ? VK_XValue
-                                                           : VK_RValue),
+                : TSI->getType()->isRValueReferenceType() ? VK_XValue
+                                                          : VK_RValue),
            OK_Ordinary,
-           Type->getType()->isDependentType() ||
-               Type->getType()->getContainedDeducedType(),
-           true, true, Type->getType()->containsUnexpandedParameterPack()),
-      Type(Type), LParenLoc(LParenLoc), RParenLoc(RParenLoc),
-      NumArgs(Args.size()) {
+           TSI->getType()->isDependentType() ||
+               TSI->getType()->getContainedDeducedType(),
+           true, true, TSI->getType()->containsUnexpandedParameterPack()),
+      TSI(TSI), LParenLoc(LParenLoc), RParenLoc(RParenLoc) {
+  CXXUnresolvedConstructExprBits.NumArgs = Args.size();
   auto **StoredArgs = getTrailingObjects<Expr *>();
   for (unsigned I = 0; I != Args.size(); ++I) {
     if (Args[I]->containsUnexpandedParameterPack())
@@ -1241,25 +1238,22 @@ CXXUnresolvedConstructExpr::CXXUnresolvedConstructExpr(TypeSourceInfo *Type,
   }
 }
 
-CXXUnresolvedConstructExpr *
-CXXUnresolvedConstructExpr::Create(const ASTContext &C,
-                                   TypeSourceInfo *Type,
-                                   SourceLocation LParenLoc,
-                                   ArrayRef<Expr*> Args,
-                                   SourceLocation RParenLoc) {
-  void *Mem = C.Allocate(totalSizeToAlloc<Expr *>(Args.size()));
-  return new (Mem) CXXUnresolvedConstructExpr(Type, LParenLoc, Args, RParenLoc);
+CXXUnresolvedConstructExpr *CXXUnresolvedConstructExpr::Create(
+    const ASTContext &Context, TypeSourceInfo *TSI, SourceLocation LParenLoc,
+    ArrayRef<Expr *> Args, SourceLocation RParenLoc) {
+  void *Mem = Context.Allocate(totalSizeToAlloc<Expr *>(Args.size()));
+  return new (Mem) CXXUnresolvedConstructExpr(TSI, LParenLoc, Args, RParenLoc);
 }
 
 CXXUnresolvedConstructExpr *
-CXXUnresolvedConstructExpr::CreateEmpty(const ASTContext &C, unsigned NumArgs) {
-  Stmt::EmptyShell Empty;
-  void *Mem = C.Allocate(totalSizeToAlloc<Expr *>(NumArgs));
-  return new (Mem) CXXUnresolvedConstructExpr(Empty, NumArgs);
+CXXUnresolvedConstructExpr::CreateEmpty(const ASTContext &Context,
+                                        unsigned NumArgs) {
+  void *Mem = Context.Allocate(totalSizeToAlloc<Expr *>(NumArgs));
+  return new (Mem) CXXUnresolvedConstructExpr(EmptyShell(), NumArgs);
 }
 
 SourceLocation CXXUnresolvedConstructExpr::getBeginLoc() const {
-  return Type->getTypeLoc().getBeginLoc();
+  return TSI->getTypeLoc().getBeginLoc();
 }
 
 CXXDependentScopeMemberExpr::CXXDependentScopeMemberExpr(

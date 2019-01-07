@@ -1612,7 +1612,7 @@ ASTStmtReader::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E) {
   Record.skipInts(1);
   for (unsigned I = 0, N = E->arg_size(); I != N; ++I)
     E->setArg(I, Record.readSubExpr());
-  E->Type = GetTypeSourceInfo();
+  E->TSI = GetTypeSourceInfo();
   E->setLParenLoc(ReadSourceLocation());
   E->setRParenLoc(ReadSourceLocation());
 }
