@@ -21,7 +21,8 @@
 
 #include "llvm/Analysis/DemandedBits.h"
 #include "llvm/ADT/APInt.h"
-#include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -314,7 +315,7 @@ void DemandedBits::performAnalysis() {
   AliveBits.clear();
   DeadUses.clear();
 
-  SmallSetVector<Instruction*, 128> Worklist;
+  SmallVector<Instruction*, 128> Worklist;
 
   // Collect the set of "root" instructions that are known live.
   for (Instruction &I : instructions(F)) {
@@ -329,7 +330,7 @@ void DemandedBits::performAnalysis() {
     Type *T = I.getType();
     if (T->isIntOrIntVectorTy()) {
       if (AliveBits.try_emplace(&I, T->getScalarSizeInBits(), 0).second)
-        Worklist.insert(&I);
+        Worklist.push_back(&I);
 
       continue;
     }
@@ -340,7 +341,7 @@ void DemandedBits::performAnalysis() {
         Type *T = J->getType();
         if (T->isIntOrIntVectorTy())
           AliveBits[J] = APInt::getAllOnesValue(T->getScalarSizeInBits());
-        Worklist.insert(J);
+        Worklist.push_back(J);
       }
     }
     // To save memory, we don't add I to the Visited set here. Instead, we
@@ -411,11 +412,11 @@ void DemandedBits::performAnalysis() {
           APInt ABNew = AB | ABPrev;
           if (ABNew != ABPrev || ABI == AliveBits.end()) {
             AliveBits[I] = std::move(ABNew);
-            Worklist.insert(I);
+            Worklist.push_back(I);
           }
         }
       } else if (I && !Visited.count(I)) {
-        Worklist.insert(I);
+        Worklist.push_back(I);
       }
     }
   }
