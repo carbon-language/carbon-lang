@@ -166,8 +166,7 @@ TypeSP DWARFASTParserClang::ParseTypeFromDWO(const DWARFDIE &die, Log *log) {
     }
   }
 
-  const size_t num_dwo_types = dwo_types.GetSize();
-  if (num_dwo_types != 1)
+  if (dwo_types.GetSize() != 1)
     return TypeSP();
 
   // We found a real definition for this type in the Clang module, so lets use
