@@ -1182,6 +1182,9 @@ public:
     return dyn_cast_or_null<Function>(getCalledOperand());
   }
 
+  /// Return true if the callsite is an indirect call.
+  bool isIndirectCall() const;
+
   /// Helper to get the caller (the parent function).
   Function *getCaller();
   const Function *getCaller() const {
