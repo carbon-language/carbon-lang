@@ -828,6 +828,7 @@ protected:
                                       const MemoryUseOrDef *Template = nullptr);
 
 private:
+  class ClobberWalkerBase;
   class CachingWalker;
   class OptimizeUses;
 
@@ -882,6 +883,7 @@ private:
   mutable DenseMap<const MemoryAccess *, unsigned long> BlockNumbering;
 
   // Memory SSA building info
+  std::unique_ptr<ClobberWalkerBase> WalkerBase;
   std::unique_ptr<CachingWalker> Walker;
   unsigned NextID;
 };
