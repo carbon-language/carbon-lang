@@ -15,6 +15,7 @@
 #include "symbol.h"
 #include "scope.h"
 #include "../common/idioms.h"
+#include "../evaluate/fold.h"
 #include <ostream>
 #include <string>
 
@@ -56,11 +57,54 @@ void ObjectEntityDetails::set_type(const DeclTypeSpec &type) {
   type_ = &type;
 }
 
+void ObjectEntityDetails::ReplaceType(const DeclTypeSpec &type) {
+  type_ = &type;
+}
+
 void ObjectEntityDetails::set_shape(const ArraySpec &shape) {
   CHECK(shape_.empty());
   for (const auto &shapeSpec : shape) {
-    shape_.emplace_back(shapeSpec.Clone());
+    shape_.push_back(shapeSpec);
   }
+}
+
+bool ObjectEntityDetails::IsDescriptor() const {
+  if (type_ != nullptr) {
+    if (const IntrinsicTypeSpec * typeSpec{type_->AsIntrinsic()}) {
+      if (typeSpec->category() == TypeCategory::Character) {
+        // TODO maybe character lengths won't be in descriptors
+        return true;
+      }
+    } else if (const DerivedTypeSpec * typeSpec{type_->AsDerived()}) {
+      if (isDummy()) {
+        return true;
+      }
+      // Any length type parameter?
+      if (const Scope * scope{typeSpec->scope()}) {
+        if (const Symbol * symbol{scope->symbol()}) {
+          if (const auto *details{symbol->detailsIf<DerivedTypeDetails>()}) {
+            for (const Symbol *param : details->paramDecls()) {
+              if (const auto *details{param->detailsIf<TypeParamDetails>()}) {
+                if (details->attr() == common::TypeParamAttr::Len) {
+                  return true;
+                }
+              }
+            }
+          }
+        }
+      }
+    } else if (type_->category() == DeclTypeSpec::Category::ClassDerived ||
+        type_->category() == DeclTypeSpec::Category::TypeStar ||
+        type_->category() == DeclTypeSpec::Category::ClassStar) {
+      return true;
+    }
+  }
+  if (IsAssumedShape() || IsDeferredShape() || IsAssumedRank()) {
+    return true;
+  }
+  // TODO: Explicit shape component array dependent on length parameter
+  // TODO: Automatic (adjustable) arrays
+  return false;
 }
 
 ProcEntityDetails::ProcEntityDetails(const EntityDetails &d) {
@@ -68,6 +112,10 @@ ProcEntityDetails::ProcEntityDetails(const EntityDetails &d) {
     interface_.set_type(*type);
   }
 }
+
+// A procedure pointer or dummy procedure must be a descriptor if
+// and only if it requires a static link.
+bool ProcEntityDetails::IsDescriptor() const { return HasExplicitInterface(); }
 
 const Symbol &UseDetails::module() const {
   // owner is a module so it must have a symbol:
@@ -241,6 +289,17 @@ bool Symbol::IsSeparateModuleProc() const {
   return false;
 }
 
+bool Symbol::IsDescriptor() const {
+  if (const auto *objectDetails{detailsIf<ObjectEntityDetails>()}) {
+    return objectDetails->IsDescriptor();
+  } else if (const auto *procDetails{detailsIf<ProcEntityDetails>()}) {
+    if (attrs_.test(Attr::POINTER) || attrs_.test(Attr::EXTERNAL)) {
+      return procDetails->IsDescriptor();
+    }
+  }
+  return false;
+}
+
 int Symbol::Rank() const {
   return std::visit(
       common::visitors{
@@ -307,8 +366,8 @@ std::ostream &operator<<(std::ostream &os, const ProcEntityDetails &x) {
 }
 
 std::ostream &operator<<(std::ostream &os, const DerivedTypeDetails &x) {
-  if (const Symbol * extends{x.extends()}) {
-    os << " extends:" << extends->name();
+  if (!x.extends().empty()) {
+    os << " extends:" << x.extends().ToString();
   }
   if (x.sequence()) {
     os << " sequence";
@@ -497,5 +556,110 @@ std::ostream &DumpForUnparse(
     }
   }
   return os;
+}
+
+Symbol &Symbol::Instantiate(Scope &scope, const DerivedTypeSpec &spec,
+    evaluate::FoldingContext &foldingContext) const {
+  auto pair{scope.try_emplace(name_, attrs_)};
+  Symbol &symbol{*pair.first->second};
+  if (!pair.second) {
+    // Symbol was already present in the scope, which can only happen
+    // in the case of type parameters that had actual values present in
+    // the derived type spec.
+    get<TypeParamDetails>();  // confirm or crash with message
+    return symbol;
+  }
+  symbol.attrs_ = attrs_;
+  symbol.flags_ = flags_;
+  std::visit(
+      common::visitors{
+          [&](const ObjectEntityDetails &that) {
+            symbol.details_ = that;
+            ObjectEntityDetails &details{symbol.get<ObjectEntityDetails>()};
+            details.set_init(
+                evaluate::Fold(foldingContext, std::move(details.init())));
+            for (ShapeSpec &dim : details.shape()) {
+              if (dim.lbound().isExplicit()) {
+                dim.lbound().SetExplicit(Fold(
+                    foldingContext, std::move(dim.lbound().GetExplicit())));
+              }
+              if (dim.ubound().isExplicit()) {
+                dim.ubound().SetExplicit(Fold(
+                    foldingContext, std::move(dim.ubound().GetExplicit())));
+              }
+            }
+            // TODO: fold cobounds too once we can represent them them
+          },
+          [&](const ProcBindingDetails &that) {
+            symbol.details_ = ProcBindingDetails{
+                that.symbol().Instantiate(scope, spec, foldingContext)};
+          },
+          [&](const GenericBindingDetails &that) {
+            symbol.details_ = GenericBindingDetails{};
+            GenericBindingDetails &details{symbol.get<GenericBindingDetails>()};
+            for (const Symbol *sym : that.specificProcs()) {
+              details.add_specificProc(
+                  sym->Instantiate(scope, spec, foldingContext));
+            }
+          },
+          [&](const TypeParamDetails &that) {
+            symbol.details_ = that;
+            TypeParamDetails &details{symbol.get<TypeParamDetails>()};
+            details.set_init(
+                evaluate::Fold(foldingContext, std::move(details.init())));
+          },
+          [&](const FinalProcDetails &that) { symbol.details_ = that; },
+          [&](const auto &) {
+            get<ObjectEntityDetails>();  // crashes with actual details
+          },
+      },
+      details_);
+  return symbol;
+}
+
+const Symbol *Symbol::GetParent() const {
+  const auto &details{get<DerivedTypeDetails>()};
+  CHECK(scope_ != nullptr);
+  if (!details.extends().empty()) {
+    auto iter{scope_->find(details.extends())};
+    CHECK(iter != scope_->end());
+    const Symbol &parentComp{*iter->second};
+    CHECK(parentComp.test(Symbol::Flag::ParentComp));
+    const auto &object{parentComp.get<ObjectEntityDetails>()};
+    const DerivedTypeSpec *derived{object.type()->AsDerived()};
+    CHECK(derived != nullptr);
+    return &derived->typeSymbol();
+  }
+  return nullptr;
+}
+
+std::list<SourceName> DerivedTypeDetails::OrderParameterNames(
+    const Symbol &type) const {
+  std::list<SourceName> result;
+  if (const Symbol * parent{type.GetParent()}) {
+    result = parent->get<DerivedTypeDetails>().OrderParameterNames(*parent);
+  }
+  for (const auto &name : paramNames_) {
+    result.push_back(name);
+  }
+  return result;
+}
+
+std::list<Symbol *> DerivedTypeDetails::OrderParameterDeclarations(
+    const Symbol &type) const {
+  std::list<Symbol *> result;
+  if (const Symbol * parent{type.GetParent()}) {
+    result =
+        parent->get<DerivedTypeDetails>().OrderParameterDeclarations(*parent);
+  }
+  for (Symbol *symbol : paramDecls_) {
+    result.push_back(symbol);
+  }
+  return result;
+}
+
+void TypeParamDetails::set_type(const DeclTypeSpec &type) {
+  CHECK(type_ == nullptr);
+  type_ = &type;
 }
 }

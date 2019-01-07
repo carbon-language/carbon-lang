@@ -187,6 +187,21 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
     return Expr<IntKIND>{TypeParamInquiry<KIND>{
         FoldOperation(context, std::move(*component)), inquiry.parameter}};
   }
+  if (context.pdtInstance != nullptr &&
+      std::get<const Symbol *>(inquiry.u) == nullptr) {
+    // "bare" type parameter: replace with actual value
+    const semantics::Scope *scope{context.pdtInstance->scope()};
+    CHECK(scope != nullptr);
+    const semantics::Symbol *symbol{scope->FindSymbol(inquiry.parameter)};
+    CHECK(symbol != nullptr);
+    const auto *details{symbol->detailsIf<semantics::TypeParamDetails>()};
+    CHECK(details != nullptr);
+    CHECK(details->init().has_value());
+    Expr<SomeInteger> expr{*details->init()};
+    return Fold(context,
+        Expr<IntKIND>{
+            Convert<IntKIND, TypeCategory::Integer>(std::move(expr))});
+  }
   return Expr<IntKIND>{std::move(inquiry)};
 }
 

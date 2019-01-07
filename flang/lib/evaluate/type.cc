@@ -36,10 +36,18 @@ std::optional<DynamicType> GetSymbolType(const semantics::Symbol *symbol) {
         TypeCategory category{intrinsic->category()};
         int kind{intrinsic->kind()};
         if (IsValidKindOfIntrinsicType(category, kind)) {
-          return {DynamicType{category, kind}};
+          DynamicType dyType{category, kind};
+          if (symbol->IsDescriptor()) {
+            dyType.descriptor = symbol;
+          }
+          return std::make_optional(std::move(dyType));
         }
       } else if (const auto *derived{type->AsDerived()}) {
-        return {DynamicType{TypeCategory::Derived, 0, derived}};
+        DynamicType dyType{TypeCategory::Derived, 0, derived};
+        if (symbol->IsDescriptor()) {
+          dyType.descriptor = symbol;
+        }
+        return std::make_optional(std::move(dyType));
       }
     }
   }
@@ -49,7 +57,7 @@ std::optional<DynamicType> GetSymbolType(const semantics::Symbol *symbol) {
 std::string DynamicType::AsFortran() const {
   if (category == TypeCategory::Derived) {
     // TODO: derived type parameters
-    return "TYPE("s + derived->name().ToString() + ')';
+    return "TYPE("s + derived->typeSymbol().name().ToString() + ')';
   } else {
     // TODO: CHARACTER length
     return EnumToString(category) + '(' + std::to_string(kind) + ')';
@@ -104,6 +112,6 @@ bool SomeKind<TypeCategory::Derived>::operator==(
 }
 
 std::string SomeDerived::AsFortran() const {
-  return "TYPE("s + spec().name().ToString() + ')';
+  return "TYPE("s + spec().typeSymbol().name().ToString() + ')';
 }
 }

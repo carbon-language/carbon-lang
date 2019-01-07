@@ -22,6 +22,10 @@
 #include <list>
 #include <optional>
 
+namespace Fortran::evaluate {
+struct FoldingContext;
+}
+
 namespace Fortran::semantics {
 
 /// A Symbol consists of common information (name, owner, and attributes)
@@ -115,18 +119,29 @@ private:
 // An entity known to be an object.
 class ObjectEntityDetails {
 public:
-  ObjectEntityDetails(const EntityDetails &);
+  explicit ObjectEntityDetails(const EntityDetails &);
+  ObjectEntityDetails(const ObjectEntityDetails &) = default;
+  ObjectEntityDetails &operator=(const ObjectEntityDetails &) = default;
   ObjectEntityDetails(bool isDummy = false) : isDummy_{isDummy} {}
   MaybeExpr &init() { return init_; }
   const MaybeExpr &init() const { return init_; }
   void set_init(MaybeExpr &&expr) { init_ = std::move(expr); }
   const DeclTypeSpec *type() const { return type_; }
   void set_type(const DeclTypeSpec &type);
+  void ReplaceType(const DeclTypeSpec &type);
   ArraySpec &shape() { return shape_; }
   const ArraySpec &shape() const { return shape_; }
   void set_shape(const ArraySpec &shape);
   bool isDummy() const { return isDummy_; }
   bool IsArray() const { return !shape_.empty(); }
+  bool IsAssumedShape() const {
+    return isDummy() && IsArray() && shape_.back().ubound().isDeferred() &&
+        !shape_.back().lbound().isDeferred();
+  }
+  bool IsDeferredShape() const {
+    return !isDummy() && IsArray() && shape_.back().ubound().isDeferred() &&
+        shape_.back().lbound().isDeferred();
+  }
   bool IsAssumedSize() const {
     return isDummy() && IsArray() && shape_.back().ubound().isAssumed() &&
         !shape_.back().lbound().isAssumed();
@@ -135,6 +150,7 @@ public:
     return isDummy() && IsArray() && shape_.back().ubound().isAssumed() &&
         shape_.back().lbound().isAssumed();
   }
+  bool IsDescriptor() const;
 
 private:
   bool isDummy_;
@@ -154,6 +170,7 @@ public:
   ProcInterface &interface() { return interface_; }
   void set_interface(const ProcInterface &interface) { interface_ = interface; }
   bool HasExplicitInterface() const;
+  bool IsDescriptor() const;
 
 private:
   ProcInterface interface_;
@@ -163,21 +180,36 @@ private:
 class DerivedTypeDetails {
 public:
   const std::list<SourceName> &paramNames() const { return paramNames_; }
-  const Symbol *extends() const { return extends_; }
+  const std::list<Symbol *> &paramDecls() const { return paramDecls_; }
+  SourceName extends() const { return extends_; }
   bool sequence() const { return sequence_; }
   void add_paramName(const SourceName &name) { paramNames_.emplace_back(name); }
-  void set_extends(const Symbol *extends) { extends_ = extends; }
+  void add_paramDecl(Symbol &symbol) { paramDecls_.emplace_back(&symbol); }
+  void set_extends(const SourceName &name) { extends_ = name; }
   void set_sequence(bool x = true) { sequence_ = x; }
 
+  // Returns the complete list of derived type parameter names in the
+  // order defined by 7.5.3.2.
+  std::list<SourceName> OrderParameterNames(const Symbol &) const;
+
+  // Returns the complete list of derived type parameter symbols in
+  // the order in which their declarations appear in the derived type
+  // definitions (parents first).
+  std::list<Symbol *> OrderParameterDeclarations(const Symbol &) const;
+
 private:
+  // These are the names of the derived type parameters in (1) the order
+  // in which they appear on the type definition statement, and (2) the
+  // order in which their declarations appear in the derived type definition.
   std::list<SourceName> paramNames_;
-  const Symbol *extends_{nullptr};
+  std::list<Symbol *> paramDecls_;
+  SourceName extends_;
   bool sequence_{false};
 };
 
 class ProcBindingDetails {
 public:
-  ProcBindingDetails(const Symbol &symbol) : symbol_{&symbol} {}
+  explicit ProcBindingDetails(const Symbol &symbol) : symbol_{&symbol} {}
   const Symbol &symbol() const { return *symbol_; }
 
 private:
@@ -211,20 +243,18 @@ private:
 
 class TypeParamDetails {
 public:
-  TypeParamDetails(common::TypeParamAttr attr) : attr_{attr} {}
+  explicit TypeParamDetails(common::TypeParamAttr attr) : attr_{attr} {}
+  TypeParamDetails(const TypeParamDetails &) = default;
   common::TypeParamAttr attr() const { return attr_; }
-  MaybeExpr &init() { return init_; }
-  const MaybeExpr &init() const { return init_; }
-  void set_init(MaybeExpr &&expr) { init_ = std::move(expr); }
+  MaybeIntExpr &init() { return init_; }
+  const MaybeIntExpr &init() const { return init_; }
+  void set_init(MaybeIntExpr &&expr) { init_ = std::move(expr); }
   const DeclTypeSpec *type() const { return type_; }
-  void set_type(const DeclTypeSpec &type) {
-    CHECK(!type_);
-    type_ = &type;
-  }
+  void set_type(const DeclTypeSpec &);
 
 private:
   common::TypeParamAttr attr_;
-  MaybeExpr init_;
+  MaybeIntExpr init_;
   const DeclTypeSpec *type_{nullptr};
 };
 
@@ -377,11 +407,20 @@ public:
   bool IsSubprogram() const;
   bool HasExplicitInterface() const;
   bool IsSeparateModuleProc() const;
+  bool IsDescriptor() const;
 
   bool operator==(const Symbol &that) const { return this == &that; }
   bool operator!=(const Symbol &that) const { return this != &that; }
 
   int Rank() const;
+
+  // Clones the Symbol in the context of a parameterized derived type instance
+  Symbol &Instantiate(
+      Scope &, const DerivedTypeSpec &, evaluate::FoldingContext &) const;
+
+  // If the symbol refers to a derived type with a parent component,
+  // return the symbol of the parent component's derived type.
+  const Symbol *GetParent() const;
 
 private:
   const Scope *owner_;

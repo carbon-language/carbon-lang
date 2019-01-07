@@ -927,7 +927,7 @@ MaybeExpr AnalyzeExpr(
         // TODO: extended derived types - insert explicit reference to base?
         context.Say(sc.component.source,
             "component is not in scope of derived TYPE(%s)"_err_en_US,
-            dtSpec->name().ToString().data());
+            dtSpec->typeSymbol().name().ToString().data());
       } else if (std::optional<DataRef> dataRef{
                      ExtractDataRef(std::move(*dtExpr))}) {
         Component component{std::move(*dataRef), *sym};

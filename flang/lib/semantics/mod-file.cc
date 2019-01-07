@@ -44,8 +44,8 @@ static void PutProcEntity(std::ostream &, const Symbol &);
 static void PutTypeParam(std::ostream &, const Symbol &);
 static void PutEntity(std::ostream &, const Symbol &, std::function<void()>);
 static void PutInit(std::ostream &, const MaybeExpr &);
+static void PutInit(std::ostream &, const MaybeIntExpr &);
 static void PutBound(std::ostream &, const Bound &);
-static void PutExpr(std::ostream &, const SomeExpr &);
 static std::ostream &PutAttrs(
     std::ostream &, Attrs, std::string before = ","s, std::string after = ""s);
 static std::ostream &PutLower(std::ostream &, const Symbol &);
@@ -174,8 +174,8 @@ void ModFileWriter::PutSymbol(
 void ModFileWriter::PutDerivedType(const Symbol &typeSymbol) {
   auto &details{typeSymbol.get<DerivedTypeDetails>()};
   PutAttrs(decls_ << "type", typeSymbol.attrs(), ","s, ""s);
-  if (details.extends()) {
-    PutLower(decls_ << ",extends(", *details.extends()) << ')';
+  if (!details.extends().empty()) {
+    PutLower(decls_ << ",extends(", details.extends().ToString()) << ')';
   }
   PutLower(decls_ << "::", typeSymbol);
   auto &typeScope{*typeSymbol.scope()};
@@ -375,7 +375,13 @@ void PutTypeParam(std::ostream &os, const Symbol &symbol) {
 
 void PutInit(std::ostream &os, const MaybeExpr &init) {
   if (init) {
-    PutExpr(os << '=', *init);
+    init->AsFortran(os << '=');
+  }
+}
+
+void PutInit(std::ostream &os, const MaybeIntExpr &init) {
+  if (init) {
+    init->AsFortran(os << '=');
   }
 }
 
@@ -388,8 +394,6 @@ void PutBound(std::ostream &os, const Bound &x) {
     x.GetExplicit()->AsFortran(os);
   }
 }
-
-void PutExpr(std::ostream &os, const SomeExpr &expr) { expr.AsFortran(os); }
 
 // Write an entity (object or procedure) declaration.
 // writeType is called to write out the type.

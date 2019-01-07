@@ -46,30 +46,39 @@ using SourceName = parser::CharBlock;
 using TypeCategory = common::TypeCategory;
 using SomeExpr = evaluate::Expr<evaluate::SomeType>;
 using MaybeExpr = std::optional<SomeExpr>;
+using SomeIntExpr = evaluate::Expr<evaluate::SomeInteger>;
+using MaybeIntExpr = std::optional<SomeIntExpr>;
+using SubscriptIntExpr = evaluate::Expr<evaluate::SubscriptInteger>;
+using MaybeSubscriptIntExpr = std::optional<SubscriptIntExpr>;
 
 // An array spec bound: an explicit integer expression or ASSUMED or DEFERRED
 class Bound {
 public:
   static Bound Assumed() { return Bound(Category::Assumed); }
   static Bound Deferred() { return Bound(Category::Deferred); }
-  Bound(MaybeExpr &&expr)
-    : category_{Category::Explicit}, expr_{std::move(expr)} {}
-  Bound(int bound);
+  explicit Bound(MaybeSubscriptIntExpr &&expr) : expr_{std::move(expr)} {}
+  explicit Bound(int bound);
+  Bound(const Bound &) = default;
   Bound(Bound &&) = default;
+  Bound &operator=(const Bound &) = default;
   Bound &operator=(Bound &&) = default;
-  Bound Clone() const;
   bool isExplicit() const { return category_ == Category::Explicit; }
   bool isAssumed() const { return category_ == Category::Assumed; }
   bool isDeferred() const { return category_ == Category::Deferred; }
-  const MaybeExpr &GetExplicit() const { return expr_; }
+  MaybeSubscriptIntExpr &GetExplicit() { return expr_; }
+  const MaybeSubscriptIntExpr &GetExplicit() const { return expr_; }
+  void SetExplicit(MaybeSubscriptIntExpr &&expr) {
+    CHECK(isExplicit());
+    expr_ = std::move(expr);
+  }
 
 private:
   enum class Category { Explicit, Deferred, Assumed };
   Bound(Category category) : category_{category} {}
-  Bound(Category category, MaybeExpr &&expr)
+  Bound(Category category, MaybeSubscriptIntExpr &&expr)
     : category_{category}, expr_{std::move(expr)} {}
-  Category category_;
-  MaybeExpr expr_;
+  Category category_{Category::Explicit};
+  MaybeSubscriptIntExpr expr_;
   friend std::ostream &operator<<(std::ostream &, const Bound &);
 };
 
@@ -78,18 +87,18 @@ class ParamValue {
 public:
   static const ParamValue Assumed() { return Category::Assumed; }
   static const ParamValue Deferred() { return Category::Deferred; }
-  ParamValue(MaybeExpr &&expr);
-  ParamValue(std::int64_t);
+  explicit ParamValue(MaybeIntExpr &&expr);
+  explicit ParamValue(std::int64_t);
   bool isExplicit() const { return category_ == Category::Explicit; }
   bool isAssumed() const { return category_ == Category::Assumed; }
   bool isDeferred() const { return category_ == Category::Deferred; }
-  const MaybeExpr &GetExplicit() const { return expr_; }
+  const MaybeIntExpr &GetExplicit() const { return expr_; }
 
 private:
   enum class Category { Explicit, Deferred, Assumed };
   ParamValue(Category category) : category_{category} {}
-  Category category_;
-  MaybeExpr expr_;
+  Category category_{Category::Explicit};
+  MaybeIntExpr expr_;
   friend std::ostream &operator<<(std::ostream &, const ParamValue &);
 };
 
@@ -172,13 +181,16 @@ public:
     return ShapeSpec(Bound::Assumed(), Bound::Assumed());
   }
 
+  ShapeSpec(const ShapeSpec &) = default;
   ShapeSpec(ShapeSpec &&) = default;
+  ShapeSpec &operator=(const ShapeSpec &) = default;
   ShapeSpec &operator=(ShapeSpec &&) = default;
-  ShapeSpec Clone() const { return ShapeSpec{lb_.Clone(), ub_.Clone()}; }
 
   bool isExplicit() const { return ub_.isExplicit(); }
   bool isDeferred() const { return lb_.isDeferred(); }
+  Bound &lbound() { return lb_; }
   const Bound &lbound() const { return lb_; }
+  Bound &ubound() { return ub_; }
   const Bound &ubound() const { return ub_; }
 
 private:
@@ -195,9 +207,9 @@ class DerivedTypeSpec {
 public:
   using listType = std::list<std::pair<std::optional<SourceName>, ParamValue>>;
   DerivedTypeSpec &operator=(const DerivedTypeSpec &) = delete;
-  explicit DerivedTypeSpec(const SourceName &name) : name_{name} {}
+  explicit DerivedTypeSpec(const Symbol &symbol) : typeSymbol_{symbol} {}
   DerivedTypeSpec() = delete;
-  const SourceName &name() const { return name_; }
+  const Symbol &typeSymbol() const { return typeSymbol_; }
   const Scope *scope() const { return scope_; }
   void set_scope(const Scope &);
   listType &paramValues() { return paramValues_; }
@@ -206,7 +218,7 @@ public:
   void AddParamValue(const SourceName &, ParamValue &&);
 
 private:
-  const SourceName name_;
+  const Symbol &typeSymbol_;
   const Scope *scope_{nullptr};
   listType paramValues_;
   friend std::ostream &operator<<(std::ostream &, const DerivedTypeSpec &);

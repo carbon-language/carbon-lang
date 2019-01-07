@@ -100,11 +100,9 @@ DeclTypeSpec &Scope::MakeCharacterType(ParamValue &&length, int kind) {
   return declTypeSpecs_.back();
 }
 
-DeclTypeSpec &Scope::MakeDerivedType(const SourceName &name) {
-  derivedTypeSpecs_.emplace_back(name);
-  declTypeSpecs_.emplace_back(
-      DeclTypeSpec::TypeDerived, derivedTypeSpecs_.back());
-  return declTypeSpecs_.back();
+DeclTypeSpec &Scope::MakeDerivedType(const Symbol &typeSymbol) {
+  DerivedTypeSpec &spec{derivedTypeSpecs_.emplace_back(typeSymbol)};
+  return declTypeSpecs_.emplace_back(DeclTypeSpec::TypeDerived, spec);
 }
 
 Scope::ImportKind Scope::GetImportKind() const {

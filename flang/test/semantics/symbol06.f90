@@ -97,7 +97,7 @@ subroutine s1
  i = x%t1
  !REF: /s1/i
  !REF: /s1/x
- !DEF: /s1/t3/t2 ObjectEntity TYPE(t2)
+ !DEF: /s1/t3/t2 ObjectEntity TYPE(t1)
  !REF: /m1/t1/t1
  i = x%t2%t1
 end subroutine

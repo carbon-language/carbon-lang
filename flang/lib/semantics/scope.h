@@ -124,7 +124,7 @@ public:
   DeclTypeSpec &MakeNumericType(TypeCategory, int kind);
   DeclTypeSpec &MakeLogicalType(int kind);
   DeclTypeSpec &MakeCharacterType(ParamValue &&length, int kind = 0);
-  DeclTypeSpec &MakeDerivedType(const SourceName &);
+  DeclTypeSpec &MakeDerivedType(const Symbol &);
   DeclTypeSpec &MakeTypeStarType();
   DeclTypeSpec &MakeClassStarType();
 
