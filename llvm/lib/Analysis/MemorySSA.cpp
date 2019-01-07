@@ -332,6 +332,7 @@ struct UpwardsMemoryQuery {
   // The MemoryAccess we actually got called with, used to test local domination
   const MemoryAccess *OriginalAccess = nullptr;
   Optional<AliasResult> AR = MayAlias;
+  bool SkipSelfAccess = false;
 
   UpwardsMemoryQuery() = default;
 
@@ -535,13 +536,13 @@ class ClobberWalker {
   ///
   /// This does not test for whether StopAt is a clobber
   UpwardsWalkResult
-  walkToPhiOrClobber(DefPath &Desc,
-                     const MemoryAccess *StopAt = nullptr) const {
+  walkToPhiOrClobber(DefPath &Desc, const MemoryAccess *StopAt = nullptr,
+                     const MemoryAccess *SkipStopAt = nullptr) const {
     assert(!isa<MemoryUse>(Desc.Last) && "Uses don't exist in my world");
 
     for (MemoryAccess *Current : def_chain(Desc.Last)) {
       Desc.Last = Current;
-      if (Current == StopAt)
+      if (Current == StopAt || Current == SkipStopAt)
         return {Current, false, MayAlias};
 
       if (auto *MD = dyn_cast<MemoryDef>(Current)) {
@@ -619,9 +620,16 @@ class ClobberWalker {
       if (!VisitedPhis.insert({Node.Last, Node.Loc}).second)
         continue;
 
-      UpwardsWalkResult Res = walkToPhiOrClobber(Node, /*StopAt=*/StopWhere);
+      const MemoryAccess *SkipStopWhere = nullptr;
+      if (Query->SkipSelfAccess && Node.Loc == Query->StartingLoc) {
+        assert(isa<MemoryDef>(Query->OriginalAccess));
+        SkipStopWhere = Query->OriginalAccess;
+      }
+
+      UpwardsWalkResult Res = walkToPhiOrClobber(Node, /*StopAt=*/StopWhere,
+                                                 /*SkipStopAt=*/SkipStopWhere);
       if (Res.IsKnownClobber) {
-        assert(Res.Result != StopWhere);
+        assert(Res.Result != StopWhere && Res.Result != SkipStopWhere);
         // If this wasn't a cache hit, we hit a clobber when walking. That's a
         // failure.
         TerminatedPath Term{Res.Result, PathIndex};
@@ -633,10 +641,13 @@ class ClobberWalker {
         continue;
       }
 
-      if (Res.Result == StopWhere) {
+      if (Res.Result == StopWhere || Res.Result == SkipStopWhere) {
         // We've hit our target. Save this path off for if we want to continue
-        // walking.
-        NewPaused.push_back(PathIndex);
+        // walking. If we are in the mode of skipping the OriginalAccess, and
+        // we've reached back to the OriginalAccess, do not save path, we've
+        // just looped back to self.
+        if (Res.Result != SkipStopWhere)
+          NewPaused.push_back(PathIndex);
         continue;
       }
 
