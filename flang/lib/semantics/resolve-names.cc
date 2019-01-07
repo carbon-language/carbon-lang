@@ -986,7 +986,7 @@ void BaseVisitor::MakePlaceholder(
     const parser::Name &name, MiscDetails::Kind kind) {
   if (!name.symbol) {
     name.symbol = &context_->globalScope().MakeSymbol(
-        name.source, Attrs{}, MiscDetails{MiscDetails::Kind::PassName});
+        name.source, Attrs{}, MiscDetails{kind});
   }
 }
 
