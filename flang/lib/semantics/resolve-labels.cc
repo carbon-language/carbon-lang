@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ constexpr Legality IsLegalDoTerm(const parser::Statement<A> &) {
     return Legality::never;
   }
 }
-template<>
+
 constexpr Legality IsLegalDoTerm(
     const parser::Statement<parser::ActionStmt> &actionStmt) {
   if (std::holds_alternative<parser::ContinueStmt>(actionStmt.statement.u)) {
@@ -125,7 +125,7 @@ constexpr Legality IsLegalBranchTarget(const parser::Statement<A> &) {
     return Legality::never;
   }
 }
-template<>
+
 constexpr Legality IsLegalBranchTarget(
     const parser::Statement<parser::ActionStmt> &actionStmt) {
   if (!(std::holds_alternative<common::Indirection<parser::ArithmeticIfStmt>>(

@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -101,8 +101,8 @@ template<typename M> void Walk(Block &x, M &mutator) {
     for (auto &elem : x) {
       Walk(elem, mutator);
     }
+    mutator.Post(x);
   }
-  mutator.Post(x);
 }
 template<std::size_t I = 0, typename Func, typename T>
 void ForEachInTuple(const T &tuple, Func func) {

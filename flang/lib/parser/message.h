@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -251,6 +251,8 @@ public:
   };
 
   ContextualMessages(CharBlock at, Messages *m) : at_{at}, messages_{m} {}
+  ContextualMessages(const ContextualMessages &that)
+    : at_{that.at_}, messages_{that.messages_} {}
 
   CharBlock at() const { return at_; }
   Messages *messages() const { return messages_; }
@@ -258,15 +260,16 @@ public:
   // Set CharBlock for messages; restore when the returned value is deleted
   SavedState SetLocation(const CharBlock &);
 
-  template<typename... A> void Say(A &&... args) {
+  template<typename... A> Message *Say(CharBlock at, A &&... args) {
     if (messages_ != nullptr) {
-      messages_->Say(at_, std::forward<A>(args)...);
+      return &messages_->Say(at, std::forward<A>(args)...);
+    } else {
+      return nullptr;
     }
   }
-  template<typename... A> void Say(CharBlock at, A &&... args) {
-    if (messages_ != nullptr) {
-      messages_->Say(at, std::forward<A>(args)...);
-    }
+
+  template<typename... A> Message *Say(A &&... args) {
+    return Say(at_, std::forward<A>(args)...);
   }
 
 private:

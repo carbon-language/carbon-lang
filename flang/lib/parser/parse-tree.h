@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -272,7 +272,6 @@ using Location = const char *;
 // R403 scalar-xyz -> xyz
 // These template class wrappers correspond to the Standard's modifiers
 // scalar-xyz, constant-xzy, int-xzy, default-char-xyz, & logical-xyz.
-// TODO: Implement as wrappers instead, or maybe remove.
 template<typename A> struct Scalar {
   Scalar(Scalar &&that) = default;
   Scalar(A &&that) : thing(std::move(that)) {}
@@ -608,7 +607,7 @@ struct TypeParamValue {
 
 // R706 kind-selector -> ( [KIND =] scalar-int-constant-expr )
 // Legacy extension: kind-selector -> * digit-string
-// TODO: These are probably not semantically identical, at least for COMPLEX.
+// N.B. These are not semantically identical in the case of COMPLEX.
 struct KindSelector {
   UNION_CLASS_BOILERPLATE(KindSelector);
   WRAPPER_CLASS(StarSize, std::uint64_t);
@@ -1696,7 +1695,7 @@ struct Expr {
 
   // Filled in later during semantic analysis of the expression.
   // TODO: May be temporary; remove if caching no longer required.
-  common::OwningPointer<evaluate::GenericExprWrapper> typedExpr;
+  mutable common::OwningPointer<evaluate::GenericExprWrapper> typedExpr;
   CharBlock source;
 
   std::variant<common::Indirection<CharLiteralConstantSubstring>,

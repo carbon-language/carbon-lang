@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ class ParseTreeDumper {
 public:
   explicit ParseTreeDumper(std::ostream &out) : out_(out) {}
 
-  constexpr const char *GetNodeName(const char *const &) { return "char *"; }
+  constexpr const char *GetNodeName(const char *) { return "char *"; }
 #define NODE_NAME(T, N) \
   constexpr const char *GetNodeName(const T &) { return N; }
 #define NODE_ENUM(T, E) \
@@ -729,9 +729,7 @@ public:
 
   template<typename T> void Post(const T &x) {
     if (UnionTrait<T> || WrapperTrait<T>) {
-      if (!emptyline_) {
-        EndLine();
-      }
+      EndLineIfNonempty();
     } else {
       --indent_;
     }
@@ -783,27 +781,43 @@ public:
   void Post(const parser::CharBlock &) {}
 
   template<typename T> bool Pre(const parser::Statement<T> &) { return true; }
-
   template<typename T> void Post(const parser::Statement<T> &) {}
 
   template<typename T> bool Pre(const common::Indirection<T> &) { return true; }
-
   template<typename T> void Post(const common::Indirection<T> &) {}
 
-  template<typename T> bool Pre(const parser::Integer<T> &) { return true; }
+  template<typename A> bool Pre(const parser::Constant<A> &) {
+    IndentEmptyLine();
+    out_ << "Constant ->";
+    emptyline_ = false;
+    return true;
+  }
+  template<typename A> void Post(const parser::Constant<A> &) {
+    EndLineIfNonempty();
+  }
 
-  template<typename T> void Post(const parser::Integer<T> &) {}
+  template<typename A> bool Pre(const parser::Integer<A> &) {
+    IndentEmptyLine();
+    out_ << "Integer ->";
+    emptyline_ = false;
+    return true;
+  }
+  template<typename A> void Post(const parser::Integer<A> &) {}
 
-  template<typename T> bool Pre(const parser::Scalar<T> &) { return true; }
-
-  template<typename T> void Post(const parser::Scalar<T> &) {}
+  template<typename A> bool Pre(const parser::Scalar<A> &) {
+    IndentEmptyLine();
+    out_ << "Scalar ->";
+    emptyline_ = false;
+    return true;
+  }
+  template<typename A> void Post(const parser::Scalar<A> &) {
+    EndLineIfNonempty();
+  }
 
   template<typename... A> bool Pre(const std::tuple<A...> &) { return true; }
-
   template<typename... A> void Post(const std::tuple<A...> &) {}
 
   template<typename... A> bool Pre(const std::variant<A...> &) { return true; }
-
   template<typename... A> void Post(const std::variant<A...> &) {}
 
 protected:
@@ -819,6 +833,12 @@ protected:
   void EndLine() {
     out_ << '\n';
     emptyline_ = true;
+  }
+
+  void EndLineIfNonempty() {
+    if (!emptyline_) {
+      EndLine();
+    }
   }
 
 private:
