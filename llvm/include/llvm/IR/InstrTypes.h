@@ -1185,6 +1185,14 @@ public:
   /// Return true if the callsite is an indirect call.
   bool isIndirectCall() const;
 
+  /// Determine whether the passed iterator points to the callee operand's Use.
+  bool isCallee(Value::const_user_iterator UI) const {
+    return isCallee(&UI.getUse());
+  }
+
+  /// Determine whether this Use is the callee operand's Use.
+  bool isCallee(const Use *U) const { return &getCalledOperandUse() == U; }
+
   /// Helper to get the caller (the parent function).
   Function *getCaller();
   const Function *getCaller() const {
