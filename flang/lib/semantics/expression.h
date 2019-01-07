@@ -66,7 +66,8 @@ template<typename A> CharBlock FindSourceLocation(const A &x) {
 namespace Fortran::evaluate {
 class ExpressionAnalysisContext {
 public:
-  explicit ExpressionAnalysisContext(semantics::SemanticsContext &sc) : context_{sc} {}
+  explicit ExpressionAnalysisContext(semantics::SemanticsContext &sc)
+    : context_{sc} {}
 
   semantics::SemanticsContext &context() const { return context_; }
 
@@ -130,7 +131,7 @@ std::optional<Expr<SomeType>> AnalyzeExpr(
   if (result.has_value()) {
     if (int rank{result->Rank()}; rank != 0) {
       context.SayAt(
-          x, "Must be a scalar value, but is a rank-%d array"_err_en_US);
+          x, "Must be a scalar value, but is a rank-%d array"_err_en_US, rank);
     }
   }
   return result;
@@ -142,7 +143,7 @@ std::optional<Expr<SomeType>> AnalyzeExpr(
   auto result{AnalyzeExpr(context, x.thing)};
   if (result.has_value()) {
     *result = Fold(context.context().foldingContext(), std::move(*result));
-    if (!IsConstant(*result)) {
+    if (!IsConstantExpr(*result)) {
       context.SayAt(x, "Must be a constant value"_err_en_US);
     }
   }

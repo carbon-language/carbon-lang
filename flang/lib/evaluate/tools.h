@@ -17,7 +17,7 @@
 
 #include "expression.h"
 #include "../common/idioms.h"
-#include "../common/template.h"
+#include "../common/unwrap.h"
 #include "../parser/message.h"
 #include "../semantics/symbol.h"
 #include <array>
@@ -74,16 +74,6 @@ template<typename A> bool IsVariable(const Expr<A> &expr) {
   return std::visit([](const auto &x) { return IsVariable(x); }, expr.u);
 }
 
-// Predicate: true when an expression is a constant value
-template<typename A> bool IsConstant(const A &) { return false; }
-template<typename A> bool IsConstant(const Constant<A> &) { return true; }
-template<typename A> bool IsConstant(const Parentheses<A> &p) {
-  return IsConstant(p.left());
-}
-template<typename A> bool IsConstant(const Expr<A> &expr) {
-  return std::visit([](const auto &x) { return IsConstant(x); }, expr.u);
-}
-
 // Predicate: true when an expression is assumed-rank
 template<typename A> bool IsAssumedRank(const A &) { return false; }
 template<typename A> bool IsAssumedRank(const Designator<A> &designator) {
@@ -101,32 +91,6 @@ template<typename A> bool IsAssumedRank(const Expr<A> &expr) {
   return std::visit([](const auto &x) { return IsAssumedRank(x); }, expr.u);
 }
 
-// When an expression is a constant integer, extract its value.
-template<typename A> std::optional<std::int64_t> ToInt64(const A &) {
-  return std::nullopt;
-}
-template<int KIND>
-std::optional<std::int64_t> ToInt64(
-    const Constant<Type<TypeCategory::Integer, KIND>> &c) {
-  return {c.value.ToInt64()};
-}
-template<int KIND>
-std::optional<std::int64_t> ToInt64(
-    const Parentheses<Type<TypeCategory::Integer, KIND>> &p) {
-  return ToInt64(p.left());
-}
-template<typename A> std::optional<std::int64_t> ToInt64(const Expr<A> &expr) {
-  return std::visit([](const auto &x) { return ToInt64(x); }, expr.u);
-}
-template<typename A>
-std::optional<std::int64_t> ToInt64(const std::optional<A> &x) {
-  if (x.has_value()) {
-    return ToInt64(*x);
-  } else {
-    return std::nullopt;
-  }
-}
-
 // Generalizing packagers: these take operations and expressions of more
 // specific types and wrap them in Expr<> containers of more abstract types.
 
@@ -139,11 +103,6 @@ template<typename T> Expr<T> AsExpr(Expr<T> &&x) {
   return std::move(x);
 }
 
-template<typename A>
-Expr<SomeKind<ResultType<A>::category>> AsCategoryExpr(A &&x) {
-  return Expr<SomeKind<ResultType<A>::category>>{AsExpr(std::move(x))};
-}
-
 template<TypeCategory CATEGORY>
 Expr<SomeKind<CATEGORY>> AsCategoryExpr(Expr<SomeKind<CATEGORY>> &&x) {
   return std::move(x);
@@ -153,11 +112,14 @@ template<typename A> Expr<SomeType> AsGenericExpr(A &&x) {
   return Expr<SomeType>{AsCategoryExpr(std::move(x))};
 }
 
-template<> inline Expr<SomeType> AsGenericExpr(Expr<SomeType> &&x) {
-  return std::move(x);
+template<typename A>
+Expr<SomeKind<ResultType<A>::category>> AsCategoryExpr(A &&x) {
+  return Expr<SomeKind<ResultType<A>::category>>{AsExpr(std::move(x))};
 }
 
-template<> inline Expr<SomeType> AsGenericExpr(BOZLiteralConstant &&x) {
+inline Expr<SomeType> AsGenericExpr(Expr<SomeType> &&x) { return std::move(x); }
+
+inline Expr<SomeType> AsGenericExpr(BOZLiteralConstant &&x) {
   return Expr<SomeType>{std::move(x)};
 }
 
@@ -168,6 +130,25 @@ template<int KIND>
 Expr<SomeComplex> MakeComplex(Expr<Type<TypeCategory::Real, KIND>> &&re,
     Expr<Type<TypeCategory::Real, KIND>> &&im) {
   return AsCategoryExpr(ComplexConstructor<KIND>{std::move(re), std::move(im)});
+}
+
+// Specializing extractor.  If an Expr wraps some type of object, perhaps
+// in several layers, return a pointer to it; otherwise null.
+template<typename A, typename B>
+auto UnwrapExpr(B &x) -> common::Constify<A, B> * {
+  using Ty = std::decay_t<B>;
+  if constexpr (std::is_same_v<A, Ty>) {
+    return &x;
+  } else if constexpr (std::is_same_v<Ty, BOZLiteralConstant>) {
+    return nullptr;
+  } else if constexpr (std::is_same_v<Ty, Expr<ResultType<A>>>) {
+    return common::Unwrap<A>(x.u);
+  } else if constexpr (std::is_same_v<Ty, Expr<SomeType>> ||
+      std::is_same_v<Ty, Expr<SomeKind<ResultType<A>::category>>>) {
+    return std::visit([](auto &x) { return UnwrapExpr<A>(x); }, x.u);
+  } else {
+    return nullptr;
+  }
 }
 
 // Creation of conversion expressions can be done to either a known
@@ -434,7 +415,21 @@ std::optional<Expr<SomeType>> Negation(
 std::optional<Expr<LogicalResult>> Relate(parser::ContextualMessages &,
     RelationalOperator, Expr<SomeType> &&, Expr<SomeType> &&);
 
+template<int K>
+Expr<Type<TypeCategory::Logical, K>> LogicalNegation(
+    Expr<Type<TypeCategory::Logical, K>> &&x) {
+  return AsExpr(Not<K>{std::move(x)});
+}
+
 Expr<SomeLogical> LogicalNegation(Expr<SomeLogical> &&);
+
+template<int K>
+Expr<Type<TypeCategory::Logical, K>> BinaryLogicalOperation(LogicalOperator opr,
+    Expr<Type<TypeCategory::Logical, K>> &&x,
+    Expr<Type<TypeCategory::Logical, K>> &&y) {
+  return AsExpr(LogicalOperation<K>{opr, std::move(x), std::move(y)});
+}
+
 Expr<SomeLogical> BinaryLogicalOperation(
     LogicalOperator, Expr<SomeLogical> &&, Expr<SomeLogical> &&);
 

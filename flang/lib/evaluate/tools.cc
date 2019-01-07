@@ -371,10 +371,7 @@ std::optional<Expr<SomeType>> Negation(
 
 Expr<SomeLogical> LogicalNegation(Expr<SomeLogical> &&x) {
   return std::visit(
-      [](auto &&xk) {
-        return AsCategoryExpr(
-            AsExpr(Not<ResultType<decltype(xk)>::kind>{std::move(xk)}));
-      },
+      [](auto &&xk) { return AsCategoryExpr(LogicalNegation(std::move(xk))); },
       std::move(x.u));
 }
 
@@ -492,8 +489,8 @@ Expr<SomeLogical> BinaryLogicalOperation(
   return std::visit(
       [=](auto &&xy) {
         using Ty = ResultType<decltype(xy[0])>;
-        return Expr<SomeLogical>{Expr<Ty>{LogicalOperation<Ty::kind>{
-            opr, std::move(xy[0]), std::move(xy[1])}}};
+        return Expr<SomeLogical>{BinaryLogicalOperation<Ty::kind>(
+            opr, std::move(xy[0]), std::move(xy[1]))};
       },
       AsSameKindExprs(std::move(x), std::move(y)));
 }

@@ -14,6 +14,7 @@
 
 #include "intrinsics.h"
 #include "expression.h"
+#include "fold.h"
 #include "tools.h"
 #include "type.h"
 #include "../common/enum-set.h"
@@ -543,11 +544,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"sin", {{"x", SameFloating}}, SameFloating},
     {"sinh", {{"x", SameFloating}}, SameFloating},
     {"size",
-        {{"array", Anything, Rank::anyOrAssumedRank}, SubscriptDefaultKIND},
-        KINDInt, Rank::vector},
-    {"size",
-        {{"array", Anything, Rank::anyOrAssumedRank},
-            {"dim", {IntType, KindCode::dimArg}, Rank::scalar},
+        {{"array", Anything, Rank::anyOrAssumedRank}, OptionalDIM,
             SubscriptDefaultKIND},
         KINDInt, Rank::scalar},
     {"spacing", {{"x", SameReal}}, SameReal},

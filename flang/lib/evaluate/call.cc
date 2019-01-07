@@ -59,11 +59,9 @@ std::ostream &SpecificIntrinsic::AsFortran(std::ostream &o) const {
 std::optional<DynamicType> ProcedureDesignator::GetType() const {
   if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&u)}) {
     return intrinsic->type;
+  } else {
+    return GetSymbolType(GetSymbol());
   }
-  if (const Symbol * symbol{GetSymbol()}) {
-    return GetSymbolType(symbol);
-  }
-  return std::nullopt;
 }
 
 int ProcedureDesignator::Rank() const {

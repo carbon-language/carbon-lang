@@ -19,9 +19,14 @@
 #include "tools.h"
 #include "type.h"
 #include "../common/indirection.h"
+#include "../common/template.h"
+#include "../common/unwrap.h"
 #include "../parser/message.h"
+#include "../semantics/scope.h"
+#include "../semantics/symbol.h"
 #include <cstdio>
 #include <optional>
+#include <set>
 #include <type_traits>
 #include <variant>
 
@@ -33,28 +38,156 @@ Expr<ResultType<A>> FoldOperation(FoldingContext &, A &&x) {
   return Expr<ResultType<A>>{std::move(x)};
 }
 
-// Designators
-// At the moment, only substrings fold.
-// TODO: Parameters, KIND type parameters
+// Forward declarations of overloads, template instantiations, and template
+// specializations of FoldOperation() to enable mutual recursion between them.
+BaseObject FoldOperation(FoldingContext &, BaseObject &&);
+Component FoldOperation(FoldingContext &, Component &&);
+Triplet FoldOperation(FoldingContext &, Triplet &&);
+Subscript FoldOperation(FoldingContext &, Subscript &&);
+ArrayRef FoldOperation(FoldingContext &, ArrayRef &&);
+CoarrayRef FoldOperation(FoldingContext &, CoarrayRef &&);
+DataRef FoldOperation(FoldingContext &, DataRef &&);
+Substring FoldOperation(FoldingContext &, Substring &&);
+ComplexPart FoldOperation(FoldingContext &, ComplexPart &&);
+
+template<typename T> Expr<T> FoldOperation(FoldingContext &, Designator<T> &&);
 template<int KIND>
-Expr<Type<TypeCategory::Character, KIND>> FoldOperation(FoldingContext &context,
-    Designator<Type<TypeCategory::Character, KIND>> &&designator) {
-  using CHAR = Type<TypeCategory::Character, KIND>;
-  if (auto *substring{std::get_if<Substring>(&designator.u)}) {
-    if (std::optional<Expr<SomeCharacter>> folded{substring->Fold(context)}) {
-      if (auto *kindChar{std::get_if<Expr<CHAR>>(&folded->u)}) {
-        if (auto value{GetScalarConstantValue(*kindChar)}) {
-          return Expr<CHAR>{std::move(*value)};
+Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
+    FoldingContext &, TypeParamInquiry<KIND> &&);
+
+// Overloads, instantiations, and specializations of FoldOperation().
+
+BaseObject FoldOperation(FoldingContext &, BaseObject &&object) {
+  return std::move(object);
+}
+
+Component FoldOperation(FoldingContext &context, Component &&component) {
+  return {FoldOperation(context, std::move(component.base())),
+      component.GetLastSymbol()};
+}
+
+Triplet FoldOperation(FoldingContext &context, Triplet &&triplet) {
+  return {Fold(context, triplet.lower()), Fold(context, triplet.upper()),
+      Fold(context, triplet.stride())};
+}
+
+Subscript FoldOperation(FoldingContext &context, Subscript &&subscript) {
+  return std::visit(
+      common::visitors{
+          [&](IndirectSubscriptIntegerExpr &&expr) {
+            *expr = Fold(context, std::move(*expr));
+            return Subscript(std::move(expr));
+          },
+          [&](Triplet &&triplet) {
+            return Subscript(FoldOperation(context, std::move(triplet)));
+          },
+      },
+      std::move(subscript.u));
+}
+
+ArrayRef FoldOperation(FoldingContext &context, ArrayRef &&arrayRef) {
+  for (Subscript &subscript : arrayRef.subscript) {
+    subscript = FoldOperation(context, std::move(subscript));
+  }
+  return std::visit(
+      common::visitors{
+          [&](const Symbol *symbol) {
+            return ArrayRef{*symbol, std::move(arrayRef.subscript)};
+          },
+          [&](Component &&component) {
+            return ArrayRef{FoldOperation(context, std::move(component)),
+                std::move(arrayRef.subscript)};
+          },
+      },
+      std::move(arrayRef.u));
+}
+
+CoarrayRef FoldOperation(FoldingContext &context, CoarrayRef &&coarrayRef) {
+  auto base{coarrayRef.base()};
+  std::vector<Expr<SubscriptInteger>> subscript, cosubscript;
+  for (Expr<SubscriptInteger> x : coarrayRef.subscript()) {
+    subscript.emplace_back(Fold(context, std::move(x)));
+  }
+  for (Expr<SubscriptInteger> x : coarrayRef.cosubscript()) {
+    cosubscript.emplace_back(Fold(context, std::move(x)));
+  }
+  CoarrayRef folded{
+      std::move(base), std::move(subscript), std::move(cosubscript)};
+  if (std::optional<Expr<SomeInteger>> stat{coarrayRef.stat()}) {
+    folded.set_stat(Fold(context, std::move(*stat)));
+  }
+  if (std::optional<Expr<SomeInteger>> team{coarrayRef.team()}) {
+    folded.set_team(
+        Fold(context, std::move(*team)), coarrayRef.teamIsTeamNumber());
+  }
+  return folded;
+}
+
+DataRef FoldOperation(FoldingContext &context, DataRef &&dataRef) {
+  return std::visit(
+      common::visitors{
+          [&](const Symbol *symbol) { return DataRef{*symbol}; },
+          [&](auto &&x) {
+            return DataRef{FoldOperation(context, std::move(x))};
+          },
+      },
+      std::move(dataRef.u));
+}
+
+Substring FoldOperation(FoldingContext &context, Substring &&substring) {
+  std::optional<Expr<SubscriptInteger>> lower{Fold(context, substring.lower())};
+  std::optional<Expr<SubscriptInteger>> upper{Fold(context, substring.upper())};
+  if (const DataRef * dataRef{substring.GetParentIf<DataRef>()}) {
+    return Substring{FoldOperation(context, DataRef{*dataRef}),
+        std::move(lower), std::move(upper)};
+  } else {
+    auto p{*substring.GetParentIf<StaticDataObject::Pointer>()};
+    return Substring{std::move(p), std::move(lower), std::move(upper)};
+  }
+}
+
+ComplexPart FoldOperation(FoldingContext &context, ComplexPart &&complexPart) {
+  DataRef complex{complexPart.complex()};
+  return ComplexPart{
+      FoldOperation(context, std::move(complex)), complexPart.part()};
+}
+
+template<typename T>
+Expr<T> FoldOperation(FoldingContext &context, Designator<T> &&designator) {
+  if constexpr (T::category == TypeCategory::Character) {
+    if (auto *substring{common::Unwrap<Substring>(designator.u)}) {
+      if (std::optional<Expr<SomeCharacter>> folded{substring->Fold(context)}) {
+        if (const auto *value{GetScalarConstantValue<T>(*folded)}) {
+          return Expr<T>{*value};
+        }
+      }
+      if (auto length{ToInt64(Fold(context, substring->LEN()))}) {
+        if (*length == 0) {
+          return Expr<T>{Constant<T>{Scalar<T>{}}};
         }
       }
     }
-    if (auto length{ToInt64(Fold(context, substring->LEN()))}) {
-      if (*length == 0) {
-        return Expr<CHAR>{Constant<CHAR>{Scalar<CHAR>{}}};
-      }
-    }
   }
-  return Expr<CHAR>{std::move(designator)};
+  return std::visit(
+      common::visitors{
+          [&](const Symbol *symbol) { return Expr<T>{std::move(designator)}; },
+          [&](auto &&x) {
+            return Expr<T>{Designator<T>{FoldOperation(context, std::move(x))}};
+          },
+      },
+      std::move(designator.u));
+}
+
+// Substitute a bare type parameter reference with its value if it has one now
+template<int KIND>
+Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
+    FoldingContext &context, TypeParamInquiry<KIND> &&inquiry) {
+  using IntKIND = Type<TypeCategory::Integer, KIND>;
+  if (Component * component{common::Unwrap<Component>(inquiry.u)}) {
+    return Expr<IntKIND>{TypeParamInquiry<KIND>{
+        FoldOperation(context, std::move(*component)), inquiry.parameter}};
+  }
+  return Expr<IntKIND>{std::move(inquiry)};
 }
 
 // TODO: Fold/rewrite intrinsic function references
@@ -69,10 +202,10 @@ Expr<TO> FoldOperation(
         kindExpr = Fold(context, std::move(kindExpr));
         using Operand = ResultType<decltype(kindExpr)>;
         char buffer[64];
-        if (auto c{GetScalarConstantValue(kindExpr)}) {
+        if (const auto *value{GetScalarConstantValue<Operand>(kindExpr)}) {
           if constexpr (TO::category == TypeCategory::Integer) {
             if constexpr (Operand::category == TypeCategory::Integer) {
-              auto converted{Scalar<TO>::ConvertSigned(c->value)};
+              auto converted{Scalar<TO>::ConvertSigned(*value)};
               if (converted.overflow) {
                 context.messages.Say(
                     "INTEGER(%d) to INTEGER(%d) conversion overflowed"_en_US,
@@ -80,7 +213,7 @@ Expr<TO> FoldOperation(
               }
               return Expr<TO>{Constant<TO>{std::move(converted.value)}};
             } else if constexpr (Operand::category == TypeCategory::Real) {
-              auto converted{c->value.template ToInteger<Scalar<TO>>()};
+              auto converted{value->template ToInteger<Scalar<TO>>()};
               if (converted.flags.test(RealFlag::InvalidArgument)) {
                 context.messages.Say(
                     "REAL(%d) to INTEGER(%d) conversion: invalid argument"_en_US,
@@ -94,7 +227,7 @@ Expr<TO> FoldOperation(
             }
           } else if constexpr (TO::category == TypeCategory::Real) {
             if constexpr (Operand::category == TypeCategory::Integer) {
-              auto converted{Scalar<TO>::FromInteger(c->value)};
+              auto converted{Scalar<TO>::FromInteger(*value)};
               if (!converted.flags.empty()) {
                 std::snprintf(buffer, sizeof buffer,
                     "INTEGER(%d) to REAL(%d) conversion", Operand::kind,
@@ -103,7 +236,7 @@ Expr<TO> FoldOperation(
               }
               return Expr<TO>{Constant<TO>{std::move(converted.value)}};
             } else if constexpr (Operand::category == TypeCategory::Real) {
-              auto converted{Scalar<TO>::Convert(c->value)};
+              auto converted{Scalar<TO>::Convert(*value)};
               if (!converted.flags.empty()) {
                 std::snprintf(buffer, sizeof buffer,
                     "REAL(%d) to REAL(%d) conversion", Operand::kind, TO::kind);
@@ -116,7 +249,7 @@ Expr<TO> FoldOperation(
             }
           } else if constexpr (TO::category == TypeCategory::Logical &&
               Operand::category == TypeCategory::Logical) {
-            return Expr<TO>{Constant<TO>{c->value.IsTrue()}};
+            return Expr<TO>{Constant<TO>{value->IsTrue()}};
           }
         }
         return Expr<TO>{std::move(convert)};
@@ -128,9 +261,9 @@ template<typename T>
 Expr<T> FoldOperation(FoldingContext &context, Parentheses<T> &&x) {
   auto &operand{x.left()};
   operand = Fold(context, std::move(operand));
-  if (auto c{GetScalarConstantValue(operand)}) {
+  if (const auto *value{GetScalarConstantValue<T>(operand)}) {
     // Preserve parentheses, even around constants.
-    return Expr<T>{Parentheses<T>{Expr<T>{Constant<T>{std::move(c->value)}}}};
+    return Expr<T>{Parentheses<T>{Expr<T>{Constant<T>{*value}}}};
   }
   return Expr<T>{std::move(x)};
 }
@@ -139,16 +272,16 @@ template<typename T>
 Expr<T> FoldOperation(FoldingContext &context, Negate<T> &&x) {
   auto &operand{x.left()};
   operand = Fold(context, std::move(operand));
-  if (auto c{GetScalarConstantValue(operand)}) {
+  if (const auto *value{GetScalarConstantValue<T>(operand)}) {
     if constexpr (T::category == TypeCategory::Integer) {
-      auto negated{c->value.Negate()};
+      auto negated{value->Negate()};
       if (negated.overflow) {
         context.messages.Say("INTEGER(%d) negation overflowed"_en_US, T::kind);
       }
       return Expr<T>{Constant<T>{std::move(negated.value)}};
     } else {
       // REAL & COMPLEX negation: no exceptions possible
-      return Expr<T>{Constant<T>{c->value.Negate()}};
+      return Expr<T>{Constant<T>{value->Negate()}};
     }
   }
   return Expr<T>{std::move(x)};
@@ -157,14 +290,15 @@ Expr<T> FoldOperation(FoldingContext &context, Negate<T> &&x) {
 template<int KIND>
 Expr<Type<TypeCategory::Real, KIND>> FoldOperation(
     FoldingContext &context, ComplexComponent<KIND> &&x) {
+  using Operand = Type<TypeCategory::Complex, KIND>;
   using Part = Type<TypeCategory::Real, KIND>;
   auto &operand{x.left()};
   operand = Fold(context, std::move(operand));
-  if (auto z{GetScalarConstantValue(operand)}) {
+  if (const auto *value{GetScalarConstantValue<Operand>(operand)}) {
     if (x.isImaginaryPart) {
-      return Expr<Part>{Constant<Part>{z->value.AIMAG()}};
+      return Expr<Part>{Constant<Part>{value->AIMAG()}};
     } else {
-      return Expr<Part>{Constant<Part>{z->value.REAL()}};
+      return Expr<Part>{Constant<Part>{value->REAL()}};
     }
   }
   return Expr<Part>{std::move(x)};
@@ -176,8 +310,8 @@ Expr<Type<TypeCategory::Logical, KIND>> FoldOperation(
   using Ty = Type<TypeCategory::Logical, KIND>;
   auto &operand{x.left()};
   operand = Fold(context, std::move(operand));
-  if (auto c{GetScalarConstantValue(operand)}) {
-    return Expr<Ty>{Constant<Ty>{c->value.IsTrue()}};
+  if (const auto *value{GetScalarConstantValue<Ty>(operand)}) {
+    return Expr<Ty>{Constant<Ty>{value->IsTrue()}};
   }
   return Expr<Ty>{x};
 }
@@ -187,11 +321,11 @@ Expr<Type<TypeCategory::Logical, KIND>> FoldOperation(
 template<typename T1, typename T2>
 std::optional<std::pair<Scalar<T1>, Scalar<T2>>> FoldOperands(
     FoldingContext &context, Expr<T1> &x, Expr<T2> &y) {
-  x = Fold(context, std::move(x));
+  x = Fold(context, std::move(x));  // use of std::move() on &x is intentional
   y = Fold(context, std::move(y));
-  if (auto xc{GetScalarConstantValue(x)}) {
-    if (auto yc{GetScalarConstantValue(y)}) {
-      return {std::make_pair(xc->value, yc->value)};
+  if (const auto *xvalue{GetScalarConstantValue<T1>(x)}) {
+    if (const auto *yvalue{GetScalarConstantValue<T2>(y)}) {
+      return {std::make_pair(*xvalue, *yvalue)};
     }
   }
   return std::nullopt;
@@ -390,7 +524,6 @@ Expr<LogicalResult> FoldOperation(
   return Expr<LogicalResult>{Relational<SomeType>{std::move(relation)}};
 }
 
-template<>
 inline Expr<LogicalResult> FoldOperation(
     FoldingContext &context, Relational<SomeType> &&relation) {
   return std::visit(
@@ -439,17 +572,135 @@ Expr<T> ExpressionBase<T>::Rewrite(FoldingContext &context, Expr<T> &&expr) {
 
 FOR_EACH_TYPE_AND_KIND(template class ExpressionBase)
 
-template<typename T>
-std::optional<Constant<T>>
-GetScalarConstantValueHelper<T>::GetScalarConstantValue(const Expr<T> &expr) {
-  if (const auto *c{std::get_if<Constant<T>>(&expr.u)}) {
-    return {*c};
-  } else if (const auto *p{std::get_if<Parentheses<T>>(&expr.u)}) {
-    return GetScalarConstantValue(p->left());
+// Constant expression predicate IsConstantExpr().
+// This code determines whether an expression is a "constant expression"
+// in the sense of section 10.1.12.  This is not the same thing as being
+// able to fold it (yet) into a known constant value; specifically,
+// the expression may reference derived type kind parameters whose values
+// are not yet known.
+//
+// The implementation uses an overloaded helper function and template.
+
+struct ConstExprContext {
+  std::set<parser::CharBlock> constantNames;
+};
+
+template<typename A> bool IsConstExpr(ConstExprContext &, const A &) {
+  return false;
+}  // TODO: delete this base case?
+template<typename A> bool IsConstExpr(ConstExprContext &, const Constant<A> &) {
+  return true;
+}
+template<int KIND>
+bool IsConstExpr(ConstExprContext &, const TypeParamInquiry<KIND> &inquiry) {
+  // TODO
+  return false;
+}
+bool IsConstExpr(ConstExprContext &, const BOZLiteralConstant &) {
+  return true;
+}
+
+template<typename D, typename R, typename O1>
+bool IsConstExpr(ConstExprContext &, const Operation<D, R, O1> &);
+template<typename D, typename R, typename O1, typename O2>
+bool IsConstExpr(ConstExprContext &, const Operation<D, R, O1, O2> &);
+template<typename V, typename O>
+bool IsConstExpr(ConstExprContext &, const ImpliedDo<V, O> &);
+template<typename A>
+bool IsConstExpr(ConstExprContext &, const ArrayConstructorValue<A> &);
+template<typename A>
+bool IsConstExpr(ConstExprContext &, const ArrayConstructor<A> &);
+template<typename A>
+bool IsConstExpr(ConstExprContext &, const Designator<A> &);
+template<typename A>
+bool IsConstExpr(ConstExprContext &, const FunctionRef<A> &);
+template<typename A> bool IsConstExpr(ConstExprContext &, const Expr<A> &);
+template<typename A>
+bool IsConstExpr(ConstExprContext &, const CopyableIndirection<A> &);
+template<typename A>
+bool IsConstExpr(ConstExprContext &, const std::vector<A> &);
+template<typename... As>
+bool IsConstExpr(ConstExprContext &, const std::variant<As...> &);
+
+template<typename D, typename R, typename O1>
+bool IsConstExpr(
+    ConstExprContext &context, const Operation<D, R, O1> &operation) {
+  return IsConstExpr(context, operation.left());
+}
+template<typename D, typename R, typename O1, typename O2>
+bool IsConstExpr(
+    ConstExprContext &context, const Operation<D, R, O1, O2> &operation) {
+  return IsConstExpr(context, operation.left()) &&
+      IsConstExpr(context, operation.right());
+}
+template<typename V, typename O>
+bool IsConstExpr(ConstExprContext &context, const ImpliedDo<V, O> &impliedDo) {
+  if (!IsConstExpr(context, impliedDo.lower) ||
+      !IsConstExpr(context, impliedDo.upper) ||
+      !IsConstExpr(context, impliedDo.stride)) {
+    return false;
+  }
+  ConstExprContext newContext{context};
+  newContext.constantNames.insert(impliedDo.controlVariableName);
+  return IsConstExpr(newContext, impliedDo.values);
+}
+template<typename A>
+bool IsConstExpr(
+    ConstExprContext &context, const ArrayConstructorValue<A> &value) {
+  return IsConstExpr(context, value.u);
+}
+template<typename A>
+bool IsConstExpr(ConstExprContext &context, const ArrayConstructor<A> &array) {
+  return IsConstExpr(context, array.values) &&
+      IsConstExpr(context, array.typeParameterValues);
+}
+template<typename A>
+bool IsConstExpr(ConstExprContext &context, const Designator<A> &designator) {
+  // TODO: true for PARAMETER and for kind type parameters
+  return false;
+}
+template<typename A>
+bool IsConstExpr(ConstExprContext &context, const FunctionRef<A> &funcRef) {
+  // TODO: calls to intrinsics with constant arguments
+  return false;
+}
+template<typename A>
+bool IsConstExpr(ConstExprContext &context, const Expr<A> &expr) {
+  return IsConstExpr(context, expr.u);
+}
+template<typename A>
+bool IsConstExpr(ConstExprContext &context, const CopyableIndirection<A> &x) {
+  return IsConstExpr(context, *x);
+}
+template<typename A>
+bool IsConstExpr(ConstExprContext &context, const std::vector<A> &v) {
+  for (const auto &x : v) {
+    if (!IsConstExpr(context, x)) {
+      return false;
+    }
+  }
+  return true;
+}
+template<typename... As>
+bool IsConstExpr(ConstExprContext &context, const std::variant<As...> &u) {
+  return std::visit([&](const auto &x) { return IsConstExpr(context, x); }, u);
+}
+
+bool IsConstantExpr(const Expr<SomeType> &expr) {
+  ConstExprContext context;
+  return IsConstExpr(context, expr);
+}
+
+std::optional<std::int64_t> ToInt64(const Expr<SomeInteger> &expr) {
+  return std::visit(
+      [](const auto &kindExpr) { return ToInt64(kindExpr); }, expr.u);
+}
+
+std::optional<std::int64_t> ToInt64(const Expr<SomeType> &expr) {
+  if (const auto *intExpr{UnwrapExpr<Expr<SomeInteger>>(expr)}) {
+    return ToInt64(*intExpr);
   } else {
     return std::nullopt;
   }
 }
-
-FOR_EACH_INTRINSIC_KIND(template struct GetScalarConstantValueHelper)
 }

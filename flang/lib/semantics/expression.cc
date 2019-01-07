@@ -715,7 +715,7 @@ MaybeExpr AnalyzeExpr(
   if (MaybeExpr value{AnalyzeExpr(context, n.v)}) {
     Expr<SomeType> folded{
         Fold(context.context().foldingContext(), std::move(*value))};
-    if (IsConstant(folded)) {
+    if (IsConstantExpr(folded)) {
       return {folded};
     }
     context.Say(n.v.source, "must be a constant"_err_en_US);

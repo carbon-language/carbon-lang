@@ -20,7 +20,9 @@
 
 #include "common.h"
 #include "expression.h"
+#include "tools.h"
 #include "type.h"
+#include <variant>
 
 namespace Fortran::evaluate {
 
@@ -44,26 +46,65 @@ std::optional<Expr<T>> Fold(
   }
 }
 
-// GetScalarConstantValue() extracts the constant value of an expression,
-// when it has one, even if it is parenthesized or optional.
-template<typename T> struct GetScalarConstantValueHelper {
-  static std::optional<Constant<T>> GetScalarConstantValue(const Expr<T> &);
-};
+// GetScalarConstantValue() isolates the known constant value of
+// an expression, if it has one.  The value can be parenthesized.
+template<typename T>
+const Scalar<T> *GetScalarConstantValue(const Expr<T> &expr) {
+  if (const auto *c{UnwrapExpr<Constant<T>>(expr)}) {
+    return &c->value;
+  } else if (const auto *parens{UnwrapExpr<Parentheses<T>>(expr)}) {
+    return GetScalarConstantValue<T>(parens->left());
+  } else {
+    return nullptr;
+  }
+}
 
 template<typename T>
-std::optional<Constant<T>> GetScalarConstantValue(const Expr<T> &expr) {
-  return GetScalarConstantValueHelper<T>::GetScalarConstantValue(expr);
+const Scalar<T> *GetScalarConstantValue(
+    const Expr<SomeKind<T::category>> &expr) {
+  if (const auto *kindExpr{UnwrapExpr<Expr<T>>(expr.u)}) {
+    return GetScalarConstantValue<T>(*kindExpr);
+  }
+  return nullptr;
 }
+
 template<typename T>
-std::optional<Constant<T>> GetScalarConstantValue(
-    const std::optional<Expr<T>> &expr) {
-  if (expr.has_value()) {
-    return GetScalarConstantValueHelper<T>::GetScalarConstantValue(*expr);
+const Scalar<T> *GetScalarConstantValue(const Expr<SomeType> &expr) {
+  if (const auto *kindExpr{UnwrapExpr<Expr<T>>(expr.u)}) {
+    return GetScalarConstantValue<T>(*kindExpr);
+  }
+  return nullptr;
+}
+
+// Predicate: true when an expression is a constant expression (in the
+// strict sense of the Fortran standard); it may not (yet) be a hard
+// constant value.
+bool IsConstantExpr(const Expr<SomeType> &);
+
+// When an expression is a constant integer, ToInt64() extracts its value.
+// Ensure that the expression has been folded beforehand if folding might
+// be required.
+template<int KIND>
+std::optional<std::int64_t> ToInt64(
+    const Expr<Type<TypeCategory::Integer, KIND>> &expr) {
+  using Ty = Type<TypeCategory::Integer, KIND>;
+  if (const Scalar<Ty> *scalar{GetScalarConstantValue(expr)}) {
+    return {scalar->ToInt64()};
   } else {
     return std::nullopt;
   }
 }
 
-FOR_EACH_INTRINSIC_KIND(extern template struct GetScalarConstantValueHelper)
+std::optional<std::int64_t> ToInt64(const Expr<SomeInteger> &);
+std::optional<std::int64_t> ToInt64(const Expr<SomeType> &);
+
+template<typename A>
+std::optional<std::int64_t> ToInt64(const std::optional<A> &x) {
+  if (x.has_value()) {
+    return ToInt64(*x);
+  } else {
+    return std::nullopt;
+  }
+}
 }
 #endif  // FORTRAN_EVALUATE_FOLD_H_
