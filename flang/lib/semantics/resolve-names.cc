@@ -2487,7 +2487,11 @@ void DeclarationVisitor::Post(const parser::IntrinsicTypeSpec::Character &x) {
 }
 void DeclarationVisitor::Post(const parser::CharSelector::LengthAndKind &x) {
   if (auto maybeExpr{EvaluateExpr(x.kind)}) {
-    charInfo_.kind = evaluate::ToInt64(*maybeExpr).value();
+    if (std::optional<std::int64_t> kind{evaluate::ToInt64(*maybeExpr)}) {
+      charInfo_.kind = *kind;
+    } else {
+      common::die("TODO: kind did not evaluate to a constant integer");
+    }
   }
   if (x.length) {
     charInfo_.length = GetParamValue(*x.length);
