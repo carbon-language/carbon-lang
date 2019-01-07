@@ -10,7 +10,7 @@
 #include "Transport.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include <stdio.h>
+#include <cstdio>
 
 namespace clang {
 namespace clangd {
