@@ -588,7 +588,7 @@ Symbol &Symbol::Instantiate(Scope &scope, const DerivedTypeSpec &spec,
                     foldingContext, std::move(dim.ubound().GetExplicit())));
               }
             }
-            // TODO: fold cobounds too once we can represent them them
+            // TODO: fold cobounds too once we can represent them
           },
           [&](const ProcBindingDetails &that) {
             symbol.details_ = ProcBindingDetails{
