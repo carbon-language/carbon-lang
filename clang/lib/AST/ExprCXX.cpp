@@ -94,83 +94,127 @@ SourceLocation CXXScalarValueInitExpr::getBeginLoc() const {
 }
 
 // CXXNewExpr
-CXXNewExpr::CXXNewExpr(const ASTContext &C, bool globalNew,
-                       FunctionDecl *operatorNew, FunctionDecl *operatorDelete,
-                       bool PassAlignment, bool usualArrayDeleteWantsSize,
-                       ArrayRef<Expr*> placementArgs,
-                       SourceRange typeIdParens, Expr *arraySize,
-                       InitializationStyle initializationStyle,
-                       Expr *initializer, QualType ty,
-                       TypeSourceInfo *allocatedTypeInfo,
-                       SourceRange Range, SourceRange directInitRange)
-    : Expr(CXXNewExprClass, ty, VK_RValue, OK_Ordinary, ty->isDependentType(),
-           ty->isDependentType(), ty->isInstantiationDependentType(),
-           ty->containsUnexpandedParameterPack()),
-      OperatorNew(operatorNew), OperatorDelete(operatorDelete),
-      AllocatedTypeInfo(allocatedTypeInfo), TypeIdParens(typeIdParens),
-      Range(Range), DirectInitRange(directInitRange), GlobalNew(globalNew),
-      PassAlignment(PassAlignment),
-      UsualArrayDeleteWantsSize(usualArrayDeleteWantsSize) {
-  assert((initializer != nullptr || initializationStyle == NoInit) &&
-         "Only NoInit can have no initializer.");
-  StoredInitializationStyle = initializer ? initializationStyle + 1 : 0;
-  AllocateArgsArray(C, arraySize != nullptr, placementArgs.size(),
-                    initializer != nullptr);
-  unsigned i = 0;
-  if (Array) {
-    if (arraySize->isInstantiationDependent())
-      ExprBits.InstantiationDependent = true;
+CXXNewExpr::CXXNewExpr(bool IsGlobalNew, FunctionDecl *OperatorNew,
+                       FunctionDecl *OperatorDelete, bool ShouldPassAlignment,
+                       bool UsualArrayDeleteWantsSize,
+                       ArrayRef<Expr *> PlacementArgs, SourceRange TypeIdParens,
+                       Expr *ArraySize, InitializationStyle InitializationStyle,
+                       Expr *Initializer, QualType Ty,
+                       TypeSourceInfo *AllocatedTypeInfo, SourceRange Range,
+                       SourceRange DirectInitRange)
+    : Expr(CXXNewExprClass, Ty, VK_RValue, OK_Ordinary, Ty->isDependentType(),
+           Ty->isDependentType(), Ty->isInstantiationDependentType(),
+           Ty->containsUnexpandedParameterPack()),
+      OperatorNew(OperatorNew), OperatorDelete(OperatorDelete),
+      AllocatedTypeInfo(AllocatedTypeInfo), Range(Range),
+      DirectInitRange(DirectInitRange) {
 
-    if (arraySize->containsUnexpandedParameterPack())
+  assert((Initializer != nullptr || InitializationStyle == NoInit) &&
+         "Only NoInit can have no initializer!");
+
+  CXXNewExprBits.IsGlobalNew = IsGlobalNew;
+  CXXNewExprBits.IsArray = ArraySize != nullptr;
+  CXXNewExprBits.ShouldPassAlignment = ShouldPassAlignment;
+  CXXNewExprBits.UsualArrayDeleteWantsSize = UsualArrayDeleteWantsSize;
+  CXXNewExprBits.StoredInitializationStyle =
+      Initializer ? InitializationStyle + 1 : 0;
+  bool IsParenTypeId = TypeIdParens.isValid();
+  CXXNewExprBits.IsParenTypeId = IsParenTypeId;
+  CXXNewExprBits.NumPlacementArgs = PlacementArgs.size();
+
+  if (ArraySize) {
+    if (ArraySize->isInstantiationDependent())
+      ExprBits.InstantiationDependent = true;
+    if (ArraySize->containsUnexpandedParameterPack())
       ExprBits.ContainsUnexpandedParameterPack = true;
 
-    SubExprs[i++] = arraySize;
+    getTrailingObjects<Stmt *>()[arraySizeOffset()] = ArraySize;
   }
 
-  if (initializer) {
-    if (initializer->isInstantiationDependent())
+  if (Initializer) {
+    if (Initializer->isInstantiationDependent())
       ExprBits.InstantiationDependent = true;
-
-    if (initializer->containsUnexpandedParameterPack())
+    if (Initializer->containsUnexpandedParameterPack())
       ExprBits.ContainsUnexpandedParameterPack = true;
 
-    SubExprs[i++] = initializer;
+    getTrailingObjects<Stmt *>()[initExprOffset()] = Initializer;
   }
 
-  for (unsigned j = 0; j != placementArgs.size(); ++j) {
-    if (placementArgs[j]->isInstantiationDependent())
+  for (unsigned I = 0; I != PlacementArgs.size(); ++I) {
+    if (PlacementArgs[I]->isInstantiationDependent())
       ExprBits.InstantiationDependent = true;
-    if (placementArgs[j]->containsUnexpandedParameterPack())
+    if (PlacementArgs[I]->containsUnexpandedParameterPack())
       ExprBits.ContainsUnexpandedParameterPack = true;
 
-    SubExprs[i++] = placementArgs[j];
+    getTrailingObjects<Stmt *>()[placementNewArgsOffset() + I] =
+        PlacementArgs[I];
   }
+
+  if (IsParenTypeId)
+    getTrailingObjects<SourceRange>()[0] = TypeIdParens;
 
   switch (getInitializationStyle()) {
   case CallInit:
-    this->Range.setEnd(DirectInitRange.getEnd()); break;
+    this->Range.setEnd(DirectInitRange.getEnd());
+    break;
   case ListInit:
-    this->Range.setEnd(getInitializer()->getSourceRange().getEnd()); break;
+    this->Range.setEnd(getInitializer()->getSourceRange().getEnd());
+    break;
   default:
-    if (TypeIdParens.isValid())
+    if (IsParenTypeId)
       this->Range.setEnd(TypeIdParens.getEnd());
     break;
   }
 }
 
-void CXXNewExpr::AllocateArgsArray(const ASTContext &C, bool isArray,
-                                   unsigned numPlaceArgs, bool hasInitializer){
-  assert(SubExprs == nullptr && "SubExprs already allocated");
-  Array = isArray;
-  NumPlacementArgs = numPlaceArgs;
-
-  unsigned TotalSize = Array + hasInitializer + NumPlacementArgs;
-  SubExprs = new (C) Stmt*[TotalSize];
+CXXNewExpr::CXXNewExpr(EmptyShell Empty, bool IsArray,
+                       unsigned NumPlacementArgs, bool IsParenTypeId)
+    : Expr(CXXNewExprClass, Empty) {
+  CXXNewExprBits.IsArray = IsArray;
+  CXXNewExprBits.NumPlacementArgs = NumPlacementArgs;
+  CXXNewExprBits.IsParenTypeId = IsParenTypeId;
 }
 
-bool CXXNewExpr::shouldNullCheckAllocation(const ASTContext &Ctx) const {
-  return getOperatorNew()->getType()->castAs<FunctionProtoType>()
-                                          ->isNothrow() &&
+CXXNewExpr *
+CXXNewExpr::Create(const ASTContext &Ctx, bool IsGlobalNew,
+                   FunctionDecl *OperatorNew, FunctionDecl *OperatorDelete,
+                   bool ShouldPassAlignment, bool UsualArrayDeleteWantsSize,
+                   ArrayRef<Expr *> PlacementArgs, SourceRange TypeIdParens,
+                   Expr *ArraySize, InitializationStyle InitializationStyle,
+                   Expr *Initializer, QualType Ty,
+                   TypeSourceInfo *AllocatedTypeInfo, SourceRange Range,
+                   SourceRange DirectInitRange) {
+  bool IsArray = ArraySize != nullptr;
+  bool HasInit = Initializer != nullptr;
+  unsigned NumPlacementArgs = PlacementArgs.size();
+  bool IsParenTypeId = TypeIdParens.isValid();
+  void *Mem =
+      Ctx.Allocate(totalSizeToAlloc<Stmt *, SourceRange>(
+                       IsArray + HasInit + NumPlacementArgs, IsParenTypeId),
+                   alignof(CXXNewExpr));
+  return new (Mem)
+      CXXNewExpr(IsGlobalNew, OperatorNew, OperatorDelete, ShouldPassAlignment,
+                 UsualArrayDeleteWantsSize, PlacementArgs, TypeIdParens,
+                 ArraySize, InitializationStyle, Initializer, Ty,
+                 AllocatedTypeInfo, Range, DirectInitRange);
+}
+
+CXXNewExpr *CXXNewExpr::CreateEmpty(const ASTContext &Ctx, bool IsArray,
+                                    bool HasInit, unsigned NumPlacementArgs,
+                                    bool IsParenTypeId) {
+  void *Mem =
+      Ctx.Allocate(totalSizeToAlloc<Stmt *, SourceRange>(
+                       IsArray + HasInit + NumPlacementArgs, IsParenTypeId),
+                   alignof(CXXNewExpr));
+  return new (Mem)
+      CXXNewExpr(EmptyShell(), IsArray, NumPlacementArgs, IsParenTypeId);
+}
+
+bool CXXNewExpr::shouldNullCheckAllocation() const {
+  return getOperatorNew()
+             ->getType()
+             ->castAs<FunctionProtoType>()
+             ->isNothrow() &&
          !getOperatorNew()->isReservedGlobalPlacementOperator();
 }
 

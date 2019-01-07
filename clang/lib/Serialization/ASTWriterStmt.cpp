@@ -1483,20 +1483,27 @@ void ASTStmtWriter::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
 
 void ASTStmtWriter::VisitCXXNewExpr(CXXNewExpr *E) {
   VisitExpr(E);
-  Record.push_back(E->isGlobalNew());
+
   Record.push_back(E->isArray());
+  Record.push_back(E->hasInitializer());
+  Record.push_back(E->getNumPlacementArgs());
+  Record.push_back(E->isParenTypeId());
+
+  Record.push_back(E->isGlobalNew());
   Record.push_back(E->passAlignment());
   Record.push_back(E->doesUsualArrayDeleteWantSize());
-  Record.push_back(E->getNumPlacementArgs());
-  Record.push_back(E->StoredInitializationStyle);
+  Record.push_back(E->CXXNewExprBits.StoredInitializationStyle);
+
   Record.AddDeclRef(E->getOperatorNew());
   Record.AddDeclRef(E->getOperatorDelete());
   Record.AddTypeSourceInfo(E->getAllocatedTypeSourceInfo());
-  Record.AddSourceRange(E->getTypeIdParens());
+  if (E->isParenTypeId())
+    Record.AddSourceRange(E->getTypeIdParens());
   Record.AddSourceRange(E->getSourceRange());
   Record.AddSourceRange(E->getDirectInitRange());
-  for (CXXNewExpr::arg_iterator I = E->raw_arg_begin(), e = E->raw_arg_end();
-       I != e; ++I)
+
+  for (CXXNewExpr::arg_iterator I = E->raw_arg_begin(), N = E->raw_arg_end();
+       I != N; ++I)
     Record.AddStmt(*I);
 
   Code = serialization::EXPR_CXX_NEW;

@@ -612,6 +612,39 @@ protected:
     SourceLocation Loc;
   };
 
+  class CXXNewExprBitfields {
+    friend class ASTStmtReader;
+    friend class ASTStmtWriter;
+    friend class CXXNewExpr;
+
+    unsigned : NumExprBits;
+
+    /// Was the usage ::new, i.e. is the global new to be used?
+    unsigned IsGlobalNew : 1;
+
+    /// Do we allocate an array? If so, the first trailing "Stmt *" is the
+    /// size expression.
+    unsigned IsArray : 1;
+
+    /// Should the alignment be passed to the allocation function?
+    unsigned ShouldPassAlignment : 1;
+
+    /// If this is an array allocation, does the usual deallocation
+    /// function for the allocated type want to know the allocated size?
+    unsigned UsualArrayDeleteWantsSize : 1;
+
+    /// What kind of initializer do we have? Could be none, parens, or braces.
+    /// In storage, we distinguish between "none, and no initializer expr", and
+    /// "none, but an implicit initializer expr".
+    unsigned StoredInitializationStyle : 2;
+
+    /// True if the allocated type was expressed as a parenthesized type-id.
+    unsigned IsParenTypeId : 1;
+
+    /// The number of placement new arguments.
+    unsigned NumPlacementArgs;
+  };
+
   class CXXDeleteExprBitfields {
     friend class ASTStmtReader;
     friend class CXXDeleteExpr;
@@ -785,6 +818,7 @@ protected:
     CXXThrowExprBitfields CXXThrowExprBits;
     CXXDefaultArgExprBitfields CXXDefaultArgExprBits;
     CXXDefaultInitExprBitfields CXXDefaultInitExprBits;
+    CXXNewExprBitfields CXXNewExprBits;
     CXXDeleteExprBitfields CXXDeleteExprBits;
     TypeTraitExprBitfields TypeTraitExprBits;
     DependentScopeDeclRefExprBitfields DependentScopeDeclRefExprBits;
