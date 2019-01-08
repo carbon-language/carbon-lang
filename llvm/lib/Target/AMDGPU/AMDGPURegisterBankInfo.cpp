@@ -190,6 +190,31 @@ AMDGPURegisterBankInfo::getInstrAlternativeMappings(
 
     return AltMappings;
   }
+  case TargetOpcode::G_UADDE:
+  case TargetOpcode::G_USUBE:
+  case TargetOpcode::G_SADDE:
+  case TargetOpcode::G_SSUBE: {
+    unsigned Size = getSizeInBits(MI.getOperand(0).getReg(), MRI, *TRI);
+    const InstructionMapping &SSMapping = getInstructionMapping(1, 1,
+      getOperandsMapping(
+        {AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size),
+         AMDGPU::getValueMapping(AMDGPU::SCCRegBankID, 1),
+         AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size),
+         AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size),
+         AMDGPU::getValueMapping(AMDGPU::SCCRegBankID, 1)}),
+      5); // Num Operands
+    AltMappings.push_back(&SSMapping);
+
+    const InstructionMapping &VVMapping = getInstructionMapping(2, 1,
+      getOperandsMapping({AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, Size),
+                          AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, 1),
+                          AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, Size),
+                          AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, Size),
+                          AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, 1)}),
+      5); // Num Operands
+    AltMappings.push_back(&VVMapping);
+    return AltMappings;
+  }
   default:
     break;
   }
@@ -266,7 +291,8 @@ AMDGPURegisterBankInfo::getDefaultMappingVOP(const MachineInstr &MI) const {
 
   for (unsigned e = MI.getNumOperands(); OpdIdx != e; ++OpdIdx) {
     unsigned Size = getSizeInBits(MI.getOperand(OpdIdx).getReg(), MRI, *TRI);
-    OpdsMapping[OpdIdx] = AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, Size);
+    unsigned BankID = Size == 1 ? AMDGPU::SGPRRegBankID : AMDGPU::VGPRRegBankID;
+    OpdsMapping[OpdIdx] = AMDGPU::getValueMapping(BankID, Size);
   }
 
   return getInstructionMapping(1, 1, getOperandsMapping(OpdsMapping),
@@ -372,6 +398,10 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   case AMDGPU::G_SADDO:
   case AMDGPU::G_USUBO:
   case AMDGPU::G_SSUBO:
+  case AMDGPU::G_UADDE:
+  case AMDGPU::G_SADDE:
+  case AMDGPU::G_USUBE:
+  case AMDGPU::G_SSUBE:
     if (isSALUMapping(MI))
       return getDefaultMappingSOP(MI);
     LLVM_FALLTHROUGH;
