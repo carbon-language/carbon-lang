@@ -562,6 +562,18 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
 
     break;
   }
+  case AMDGPU::G_UNMERGE_VALUES: {
+    unsigned Bank = isSALUMapping(MI) ? AMDGPU::SGPRRegBankID :
+      AMDGPU::VGPRRegBankID;
+
+    // Op1 and Dst should use the same register bank.
+    // FIXME: Shouldn't this be the default? Why do we need to handle this?
+    for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
+      unsigned Size = getSizeInBits(MI.getOperand(i).getReg(), MRI, *TRI);
+      OpdsMapping[i] = AMDGPU::getValueMapping(Bank, Size);
+    }
+    break;
+  }
   case AMDGPU::G_INTRINSIC: {
     switch (MI.getOperand(1).getIntrinsicID()) {
     default:
