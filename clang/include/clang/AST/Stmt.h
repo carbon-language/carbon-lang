@@ -738,6 +738,28 @@ protected:
     unsigned NumArgs;
   };
 
+  class CXXDependentScopeMemberExprBitfields {
+    friend class ASTStmtReader;
+    friend class CXXDependentScopeMemberExpr;
+
+    unsigned : NumExprBits;
+
+    /// Whether this member expression used the '->' operator or
+    /// the '.' operator.
+    unsigned IsArrow : 1;
+
+    /// Whether this member expression has info for explicit template
+    /// keyword and arguments.
+    unsigned HasTemplateKWAndArgsInfo : 1;
+
+    /// See getFirstQualifierFoundInScope() and the comment listing
+    /// the trailing objects.
+    unsigned HasFirstQualifierFoundInScope : 1;
+
+    /// The location of the '->' or '.' operator.
+    SourceLocation OperatorLoc;
+  };
+
   //===--- C++ Coroutines TS bitfields classes ---===//
 
   class CoawaitExprBitfields {
@@ -825,6 +847,7 @@ protected:
     CXXConstructExprBitfields CXXConstructExprBits;
     ExprWithCleanupsBitfields ExprWithCleanupsBits;
     CXXUnresolvedConstructExprBitfields CXXUnresolvedConstructExprBits;
+    CXXDependentScopeMemberExprBitfields CXXDependentScopeMemberExprBits;
 
     // C++ Coroutines TS expressions
     CoawaitExprBitfields CoawaitBits;
