@@ -326,7 +326,7 @@ void WebAssemblyPassConfig::addPreEmitPass() {
     addPass(createWebAssemblyRegColoring());
   }
 
-  // Insert explicit get_local and set_local operators.
+  // Insert explicit local.get and local.set operators.
   addPass(createWebAssemblyExplicitLocals());
 
   // Sort the blocks of the CFG into topological order, a prerequisite for
