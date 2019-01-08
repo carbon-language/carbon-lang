@@ -2856,11 +2856,11 @@ const Symbol *DeclarationVisitor::FindTypeSymbol(const parser::Name &name) {
     if (const Symbol * symbol{FindInScope(*scope, name)}) {
       return symbol;
     }
-    if (const Symbol * parent{scope->symbol()->GetParent()}) {
-      scope = parent->scope();
-    } else {
+    const Symbol *parent{scope->symbol()->GetParent()};
+    if (parent == nullptr) {
       return nullptr;
     }
+    scope = parent->scope();
   }
 }
 
