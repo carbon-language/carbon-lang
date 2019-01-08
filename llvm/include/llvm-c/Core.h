@@ -2807,6 +2807,15 @@ LLVMBasicBlockRef LLVMGetPreviousBasicBlock(LLVMBasicBlockRef BB);
 LLVMBasicBlockRef LLVMGetEntryBasicBlock(LLVMValueRef Fn);
 
 /**
+ * Create a new basic block without inserting it into a function.
+ *
+ * @see llvm::BasicBlock::Create()
+ */
+LLVMBasicBlockRef LLVMCreateBasicBlockInContext(LLVMContextRef C,
+                                                const char *Name,
+                                                size_t NameLen);
+
+/**
  * Append a basic block to the end of a function.
  *
  * @see llvm::BasicBlock::Create()

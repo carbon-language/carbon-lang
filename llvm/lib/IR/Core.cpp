@@ -2532,6 +2532,12 @@ LLVMBasicBlockRef LLVMGetPreviousBasicBlock(LLVMBasicBlockRef BB) {
   return wrap(&*--I);
 }
 
+LLVMBasicBlockRef LLVMCreateBasicBlockInContext(LLVMContextRef C,
+                                                const char *Name,
+                                                size_t NameLen) {
+  return wrap(llvm::BasicBlock::Create(*unwrap(C), StringRef(Name, NameLen)));
+}
+
 LLVMBasicBlockRef LLVMAppendBasicBlockInContext(LLVMContextRef C,
                                                 LLVMValueRef FnRef,
                                                 const char *Name) {
