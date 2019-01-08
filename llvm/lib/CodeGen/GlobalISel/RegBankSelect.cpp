@@ -717,15 +717,21 @@ RegBankSelect::RepairingPlacement::RepairingPlacement(
     unsigned Reg = MO.getReg();
     if (Before) {
       // Check whether Reg is defined by any terminator.
-      MachineBasicBlock::iterator It = MI;
-      for (auto Begin = MI.getParent()->begin();
-           --It != Begin && It->isTerminator();)
-        if (It->modifiesRegister(Reg, &TRI)) {
-          // Insert the repairing code right after the definition.
-          addInsertPoint(*It, /*Before*/ false);
-          return;
-        }
-      addInsertPoint(*It, /*Before*/ true);
+      MachineBasicBlock::reverse_iterator It = MI;
+      auto REnd = MI.getParent()->rend();
+
+      for (; It != REnd && It->isTerminator(); ++It) {
+        assert(!It->modifiesRegister(Reg, &TRI) &&
+               "copy insertion in middle of terminators not handled");
+      }
+
+      if (It == REnd) {
+        addInsertPoint(*MI.getParent()->begin(), true);
+        return;
+      }
+
+      // We are sure to be right before the first terminator.
+      addInsertPoint(*It, /*Before*/ false);
       return;
     }
     // Make sure Reg is not redefined by other terminators, otherwise

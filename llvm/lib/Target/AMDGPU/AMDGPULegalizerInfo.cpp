@@ -85,6 +85,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     PrivatePtr
   };
 
+  setAction({G_BRCOND, S1}, Legal);
+
   setAction({G_ADD, S32}, Legal);
   setAction({G_ASHR, S32}, Legal);
   setAction({G_SUB, S32}, Legal);

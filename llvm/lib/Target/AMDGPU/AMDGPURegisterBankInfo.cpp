@@ -221,6 +221,22 @@ AMDGPURegisterBankInfo::getInstrAlternativeMappings(
     AltMappings.push_back(&VVMapping);
     return AltMappings;
   }
+  case AMDGPU::G_BRCOND: {
+    assert(MRI.getType(MI.getOperand(0).getReg()).getSizeInBits() == 1);
+
+    const InstructionMapping &SMapping = getInstructionMapping(
+      1, 1, getOperandsMapping(
+        {AMDGPU::getValueMapping(AMDGPU::SCCRegBankID, 1), nullptr}),
+      2); // Num Operands
+    AltMappings.push_back(&SMapping);
+
+    const InstructionMapping &VMapping = getInstructionMapping(
+      1, 1, getOperandsMapping(
+        {AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, 1), nullptr }),
+      2); // Num Operands
+    AltMappings.push_back(&VMapping);
+    return AltMappings;
+  }
   default:
     break;
   }
@@ -711,6 +727,16 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   case AMDGPU::G_ATOMICRMW_UMIN:
   case AMDGPU::G_ATOMIC_CMPXCHG: {
     return getDefaultMappingAllVGPR(MI);
+  }
+  case AMDGPU::G_BRCOND: {
+    unsigned Bank = getRegBankID(MI.getOperand(0).getReg(), MRI, *TRI,
+                                 AMDGPU::SGPRRegBankID);
+    assert(MRI.getType(MI.getOperand(0).getReg()).getSizeInBits() == 1);
+    if (Bank != AMDGPU::SCCRegBankID)
+      Bank = AMDGPU::SGPRRegBankID;
+
+    OpdsMapping[0] = AMDGPU::getValueMapping(Bank, 1);
+    break;
   }
   }
 
