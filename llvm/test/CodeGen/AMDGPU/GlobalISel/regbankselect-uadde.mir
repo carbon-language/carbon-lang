@@ -83,8 +83,10 @@ body: |
     ; GREEDY: [[COPY1:%[0-9]+]]:sgpr(s32) = COPY $sgpr1
     ; GREEDY: [[COPY2:%[0-9]+]]:vgpr(s32) = COPY $vgpr0
     ; GREEDY: [[TRUNC:%[0-9]+]]:vgpr(s1) = G_TRUNC [[COPY2]](s32)
-    ; GREEDY: [[COPY3:%[0-9]+]]:scc(s1) = COPY [[TRUNC]](s1)
-    ; GREEDY: [[UADDE:%[0-9]+]]:sgpr(s32), [[UADDE1:%[0-9]+]]:scc(s1) = G_UADDE [[COPY]], [[COPY1]], [[COPY3]]
+    ; GREEDY: [[COPY3:%[0-9]+]]:vgpr(s32) = COPY [[COPY]](s32)
+    ; GREEDY: [[COPY4:%[0-9]+]]:vgpr(s32) = COPY [[COPY1]](s32)
+    ; GREEDY: [[COPY5:%[0-9]+]]:sgpr(s1) = COPY [[TRUNC]](s1)
+    ; GREEDY: [[UADDE:%[0-9]+]]:vgpr(s32), [[UADDE1:%[0-9]+]]:sgpr(s1) = G_UADDE [[COPY3]], [[COPY4]], [[COPY5]]
     %0:_(s32) = COPY $sgpr0
     %1:_(s32) = COPY $sgpr1
     %2:_(s32) = COPY $vgpr0

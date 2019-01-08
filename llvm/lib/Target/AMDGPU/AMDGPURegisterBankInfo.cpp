@@ -74,13 +74,19 @@ unsigned AMDGPURegisterBankInfo::copyCost(const RegisterBank &Dst,
                                           const RegisterBank &Src,
                                           unsigned Size) const {
   if (Dst.getID() == AMDGPU::SGPRRegBankID &&
-      Src.getID() == AMDGPU::VGPRRegBankID)
+      Src.getID() == AMDGPU::VGPRRegBankID) {
+    // For boolean values, we can do a v_cmp to "copy" a VGPR to VCC.
+    if (Size == 1)
+      return 1;
+
     return std::numeric_limits<unsigned>::max();
+  }
 
   // SGPRRegBank with size 1 is actually vcc or another 64-bit sgpr written by
   // the valu.
   if (Size == 1 && Dst.getID() == AMDGPU::SCCRegBankID &&
-      Src.getID() == AMDGPU::SGPRRegBankID)
+      (Src.getID() == AMDGPU::SGPRRegBankID ||
+       Src.getID() == AMDGPU::VGPRRegBankID))
     return std::numeric_limits<unsigned>::max();
 
   return RegisterBankInfo::copyCost(Dst, Src, Size);
