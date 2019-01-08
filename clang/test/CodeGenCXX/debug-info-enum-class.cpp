@@ -52,6 +52,7 @@ namespace test2 {
 // FIXME: this should just be a declaration under -fno-standalone-debug
 // CHECK: !DICompositeType(tag: DW_TAG_enumeration_type, name: "E"
 // CHECK-SAME:             scope: [[TEST2:![0-9]+]]
+// CHECK-NOT:              DIFlagFixedEnum
 // CHECK-SAME:             elements: [[TEST_ENUMS:![0-9]+]]
 // CHECK-SAME:             identifier: "_ZTSN5test21EE"
 // CHECK: [[TEST2]] = !DINamespace(name: "test2"
@@ -67,6 +68,7 @@ namespace test3 {
 // FIXME: this should just be a declaration under -fno-standalone-debug
 // CHECK: !DICompositeType(tag: DW_TAG_enumeration_type, name: "E"
 // CHECK-SAME:             scope: [[TEST3:![0-9]+]]
+// CHECK-NOT:              DIFlagFixedEnum
 // CHECK-SAME:             elements: [[TEST_ENUMS]]
 // CHECK-SAME:             identifier: "_ZTSN5test31EE"
 // CHECK: [[TEST3]] = !DINamespace(name: "test3"
@@ -78,6 +80,7 @@ void func(E *) {
 namespace test4 {
 // CHECK: !DICompositeType(tag: DW_TAG_enumeration_type, name: "E"
 // CHECK-SAME:             scope: [[TEST4:![0-9]+]]
+// CHECK-NOT:              DIFlagFixedEnum
 // CHECK-SAME:             elements: [[TEST_ENUMS]]
 // CHECK-SAME:             identifier: "_ZTSN5test41EE"
 // CHECK: [[TEST4]] = !DINamespace(name: "test4"
