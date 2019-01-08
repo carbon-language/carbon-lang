@@ -3534,6 +3534,13 @@ LLVMValueRef LLVMBuildPointerCast(LLVMBuilderRef B, LLVMValueRef Val,
   return wrap(unwrap(B)->CreatePointerCast(unwrap(Val), unwrap(DestTy), Name));
 }
 
+LLVMValueRef LLVMBuildIntCast2(LLVMBuilderRef B, LLVMValueRef Val,
+                               LLVMTypeRef DestTy, LLVMBool IsSigned,
+                               const char *Name, size_t NameLen) {
+  return wrap(unwrap(B)->CreateIntCast(unwrap(Val), unwrap(DestTy),
+                                       IsSigned, StringRef(Name, NameLen)));
+}
+
 LLVMValueRef LLVMBuildIntCast(LLVMBuilderRef B, LLVMValueRef Val,
                               LLVMTypeRef DestTy, const char *Name) {
   return wrap(unwrap(B)->CreateIntCast(unwrap(Val), unwrap(DestTy),
