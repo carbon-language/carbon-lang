@@ -115,7 +115,7 @@ bool RegBankSelect::assignmentMatch(
   // By default we assume we will have to repair something.
   OnlyAssign = false;
   // Each part of a break down needs to end up in a different register.
-  // In other word, Reg assignement does not match.
+  // In other word, Reg assignment does not match.
   if (ValMapping.NumBreakDowns != 1)
     return false;
 
@@ -528,7 +528,7 @@ RegBankSelect::MappingCost RegBankSelect::computeMapping(
 bool RegBankSelect::applyMapping(
     MachineInstr &MI, const RegisterBankInfo::InstructionMapping &InstrMapping,
     SmallVectorImpl<RegBankSelect::RepairingPlacement> &RepairPts) {
-  // OpdMapper will hold all the information needed for the rewritting.
+  // OpdMapper will hold all the information needed for the rewriting.
   RegisterBankInfo::OperandsMapper OpdMapper(MI, InstrMapping, *MRI);
 
   // First, place the repairing code.
