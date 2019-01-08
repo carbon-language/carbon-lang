@@ -1719,7 +1719,7 @@ void ASTStmtReader::VisitExpressionTraitExpr(ExpressionTraitExpr *E) {
 
 void ASTStmtReader::VisitCXXNoexceptExpr(CXXNoexceptExpr *E) {
   VisitExpr(E);
-  E->Value = (bool)Record.readInt();
+  E->CXXNoexceptExprBits.Value = Record.readInt();
   E->Range = ReadSourceRange();
   E->Operand = Record.readSubExpr();
 }
@@ -1753,7 +1753,7 @@ void ASTStmtReader::VisitSubstNonTypeTemplateParmExpr(
                                               SubstNonTypeTemplateParmExpr *E) {
   VisitExpr(E);
   E->Param = ReadDeclAs<NonTypeTemplateParmDecl>();
-  E->NameLoc = ReadSourceLocation();
+  E->SubstNonTypeTemplateParmExprBits.NameLoc = ReadSourceLocation();
   E->Replacement = Record.readSubExpr();
 }
 

@@ -760,6 +760,25 @@ protected:
     SourceLocation OperatorLoc;
   };
 
+  class CXXNoexceptExprBitfields {
+    friend class ASTStmtReader;
+    friend class CXXNoexceptExpr;
+
+    unsigned : NumExprBits;
+
+    unsigned Value : 1;
+  };
+
+  class SubstNonTypeTemplateParmExprBitfields {
+    friend class ASTStmtReader;
+    friend class SubstNonTypeTemplateParmExpr;
+
+    unsigned : NumExprBits;
+
+    /// The location of the non-type template parameter reference.
+    SourceLocation NameLoc;
+  };
+
   //===--- C++ Coroutines TS bitfields classes ---===//
 
   class CoawaitExprBitfields {
@@ -848,6 +867,8 @@ protected:
     ExprWithCleanupsBitfields ExprWithCleanupsBits;
     CXXUnresolvedConstructExprBitfields CXXUnresolvedConstructExprBits;
     CXXDependentScopeMemberExprBitfields CXXDependentScopeMemberExprBits;
+    CXXNoexceptExprBitfields CXXNoexceptExprBits;
+    SubstNonTypeTemplateParmExprBitfields SubstNonTypeTemplateParmExprBits;
 
     // C++ Coroutines TS expressions
     CoawaitExprBitfields CoawaitBits;

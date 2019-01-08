@@ -3720,7 +3720,6 @@ inline TemplateArgumentLoc *OverloadExpr::getTrailingTemplateArgumentLoc() {
 class CXXNoexceptExpr : public Expr {
   friend class ASTStmtReader;
 
-  bool Value : 1;
   Stmt *Operand;
   SourceRange Range;
 
@@ -3728,21 +3727,23 @@ public:
   CXXNoexceptExpr(QualType Ty, Expr *Operand, CanThrowResult Val,
                   SourceLocation Keyword, SourceLocation RParen)
       : Expr(CXXNoexceptExprClass, Ty, VK_RValue, OK_Ordinary,
-             /*TypeDependent*/false,
-             /*ValueDependent*/Val == CT_Dependent,
+             /*TypeDependent*/ false,
+             /*ValueDependent*/ Val == CT_Dependent,
              Val == CT_Dependent || Operand->isInstantiationDependent(),
              Operand->containsUnexpandedParameterPack()),
-        Value(Val == CT_Cannot), Operand(Operand), Range(Keyword, RParen) {}
+        Operand(Operand), Range(Keyword, RParen) {
+    CXXNoexceptExprBits.Value = Val == CT_Cannot;
+  }
 
   CXXNoexceptExpr(EmptyShell Empty) : Expr(CXXNoexceptExprClass, Empty) {}
 
-  Expr *getOperand() const { return static_cast<Expr*>(Operand); }
+  Expr *getOperand() const { return static_cast<Expr *>(Operand); }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return Range.getBegin(); }
-  SourceLocation getEndLoc() const LLVM_READONLY { return Range.getEnd(); }
-  SourceRange getSourceRange() const LLVM_READONLY { return Range; }
+  SourceLocation getBeginLoc() const { return Range.getBegin(); }
+  SourceLocation getEndLoc() const { return Range.getEnd(); }
+  SourceRange getSourceRange() const { return Range; }
 
-  bool getValue() const { return Value; }
+  bool getValue() const { return CXXNoexceptExprBits.Value; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXNoexceptExprClass;
@@ -3965,27 +3966,27 @@ class SubstNonTypeTemplateParmExpr : public Expr {
   /// The replacement expression.
   Stmt *Replacement;
 
-  /// The location of the non-type template parameter reference.
-  SourceLocation NameLoc;
-
   explicit SubstNonTypeTemplateParmExpr(EmptyShell Empty)
       : Expr(SubstNonTypeTemplateParmExprClass, Empty) {}
 
 public:
-  SubstNonTypeTemplateParmExpr(QualType type,
-                               ExprValueKind valueKind,
-                               SourceLocation loc,
-                               NonTypeTemplateParmDecl *param,
-                               Expr *replacement)
-      : Expr(SubstNonTypeTemplateParmExprClass, type, valueKind, OK_Ordinary,
-             replacement->isTypeDependent(), replacement->isValueDependent(),
-             replacement->isInstantiationDependent(),
-             replacement->containsUnexpandedParameterPack()),
-        Param(param), Replacement(replacement), NameLoc(loc) {}
+  SubstNonTypeTemplateParmExpr(QualType Ty, ExprValueKind ValueKind,
+                               SourceLocation Loc,
+                               NonTypeTemplateParmDecl *Param,
+                               Expr *Replacement)
+      : Expr(SubstNonTypeTemplateParmExprClass, Ty, ValueKind, OK_Ordinary,
+             Replacement->isTypeDependent(), Replacement->isValueDependent(),
+             Replacement->isInstantiationDependent(),
+             Replacement->containsUnexpandedParameterPack()),
+        Param(Param), Replacement(Replacement) {
+    SubstNonTypeTemplateParmExprBits.NameLoc = Loc;
+  }
 
-  SourceLocation getNameLoc() const { return NameLoc; }
-  SourceLocation getBeginLoc() const LLVM_READONLY { return NameLoc; }
-  SourceLocation getEndLoc() const LLVM_READONLY { return NameLoc; }
+  SourceLocation getNameLoc() const {
+    return SubstNonTypeTemplateParmExprBits.NameLoc;
+  }
+  SourceLocation getBeginLoc() const { return getNameLoc(); }
+  SourceLocation getEndLoc() const { return getNameLoc(); }
 
   Expr *getReplacement() const { return cast<Expr>(Replacement); }
 
@@ -3996,7 +3997,7 @@ public:
   }
 
   // Iterators
-  child_range children() { return child_range(&Replacement, &Replacement+1); }
+  child_range children() { return child_range(&Replacement, &Replacement + 1); }
 };
 
 /// Represents a reference to a non-type template parameter pack that
