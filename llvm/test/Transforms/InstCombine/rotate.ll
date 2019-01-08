@@ -213,12 +213,7 @@ define <3 x i42> @rotr_v3i42(<3 x i42> %x, <3 x i42> %y) {
 
 define i32 @rotl_safe_i32(i32 %x, i32 %y) {
 ; CHECK-LABEL: @rotl_safe_i32(
-; CHECK-NEXT:    [[NEGY:%.*]] = sub i32 0, [[Y:%.*]]
-; CHECK-NEXT:    [[YMASK:%.*]] = and i32 [[Y]], 31
-; CHECK-NEXT:    [[NEGYMASK:%.*]] = and i32 [[NEGY]], 31
-; CHECK-NEXT:    [[SHL:%.*]] = shl i32 [[X:%.*]], [[YMASK]]
-; CHECK-NEXT:    [[SHR:%.*]] = lshr i32 [[X]], [[NEGYMASK]]
-; CHECK-NEXT:    [[R:%.*]] = or i32 [[SHR]], [[SHL]]
+; CHECK-NEXT:    [[R:%.*]] = call i32 @llvm.fshl.i32(i32 [[X:%.*]], i32 [[X]], i32 [[Y:%.*]])
 ; CHECK-NEXT:    ret i32 [[R]]
 ;
   %negy = sub i32 0, %y
@@ -236,12 +231,9 @@ define i32 @rotl_safe_i32(i32 %x, i32 %y) {
 define i16 @rotl_safe_i16_commute_extra_use(i16 %x, i16 %y, i16* %p) {
 ; CHECK-LABEL: @rotl_safe_i16_commute_extra_use(
 ; CHECK-NEXT:    [[NEGY:%.*]] = sub i16 0, [[Y:%.*]]
-; CHECK-NEXT:    [[YMASK:%.*]] = and i16 [[Y]], 15
 ; CHECK-NEXT:    [[NEGYMASK:%.*]] = and i16 [[NEGY]], 15
 ; CHECK-NEXT:    store i16 [[NEGYMASK]], i16* [[P:%.*]], align 2
-; CHECK-NEXT:    [[SHL:%.*]] = shl i16 [[X:%.*]], [[YMASK]]
-; CHECK-NEXT:    [[SHR:%.*]] = lshr i16 [[X]], [[NEGYMASK]]
-; CHECK-NEXT:    [[R:%.*]] = or i16 [[SHL]], [[SHR]]
+; CHECK-NEXT:    [[R:%.*]] = call i16 @llvm.fshl.i16(i16 [[X:%.*]], i16 [[X]], i16 [[Y]])
 ; CHECK-NEXT:    ret i16 [[R]]
 ;
   %negy = sub i16 0, %y
@@ -259,12 +251,7 @@ define i16 @rotl_safe_i16_commute_extra_use(i16 %x, i16 %y, i16* %p) {
 
 define i64 @rotr_safe_i64(i64 %x, i64 %y) {
 ; CHECK-LABEL: @rotr_safe_i64(
-; CHECK-NEXT:    [[NEGY:%.*]] = sub i64 0, [[Y:%.*]]
-; CHECK-NEXT:    [[YMASK:%.*]] = and i64 [[Y]], 63
-; CHECK-NEXT:    [[NEGYMASK:%.*]] = and i64 [[NEGY]], 63
-; CHECK-NEXT:    [[SHL:%.*]] = shl i64 [[X:%.*]], [[NEGYMASK]]
-; CHECK-NEXT:    [[SHR:%.*]] = lshr i64 [[X]], [[YMASK]]
-; CHECK-NEXT:    [[R:%.*]] = or i64 [[SHR]], [[SHL]]
+; CHECK-NEXT:    [[R:%.*]] = call i64 @llvm.fshr.i64(i64 [[X:%.*]], i64 [[X]], i64 [[Y:%.*]])
 ; CHECK-NEXT:    ret i64 [[R]]
 ;
   %negy = sub i64 0, %y
@@ -305,12 +292,7 @@ define i8 @rotr_safe_i8_commute_extra_use(i8 %x, i8 %y, i8* %p) {
 
 define <2 x i32> @rotl_safe_v2i32(<2 x i32> %x, <2 x i32> %y) {
 ; CHECK-LABEL: @rotl_safe_v2i32(
-; CHECK-NEXT:    [[NEGY:%.*]] = sub <2 x i32> zeroinitializer, [[Y:%.*]]
-; CHECK-NEXT:    [[YMASK:%.*]] = and <2 x i32> [[Y]], <i32 31, i32 31>
-; CHECK-NEXT:    [[NEGYMASK:%.*]] = and <2 x i32> [[NEGY]], <i32 31, i32 31>
-; CHECK-NEXT:    [[SHL:%.*]] = shl <2 x i32> [[X:%.*]], [[YMASK]]
-; CHECK-NEXT:    [[SHR:%.*]] = lshr <2 x i32> [[X]], [[NEGYMASK]]
-; CHECK-NEXT:    [[R:%.*]] = or <2 x i32> [[SHR]], [[SHL]]
+; CHECK-NEXT:    [[R:%.*]] = call <2 x i32> @llvm.fshl.v2i32(<2 x i32> [[X:%.*]], <2 x i32> [[X]], <2 x i32> [[Y:%.*]])
 ; CHECK-NEXT:    ret <2 x i32> [[R]]
 ;
   %negy = sub <2 x i32> zeroinitializer, %y
@@ -327,12 +309,7 @@ define <2 x i32> @rotl_safe_v2i32(<2 x i32> %x, <2 x i32> %y) {
 
 define <3 x i16> @rotr_safe_v3i16(<3 x i16> %x, <3 x i16> %y) {
 ; CHECK-LABEL: @rotr_safe_v3i16(
-; CHECK-NEXT:    [[NEGY:%.*]] = sub <3 x i16> zeroinitializer, [[Y:%.*]]
-; CHECK-NEXT:    [[YMASK:%.*]] = and <3 x i16> [[Y]], <i16 15, i16 15, i16 15>
-; CHECK-NEXT:    [[NEGYMASK:%.*]] = and <3 x i16> [[NEGY]], <i16 15, i16 15, i16 15>
-; CHECK-NEXT:    [[SHL:%.*]] = shl <3 x i16> [[X:%.*]], [[NEGYMASK]]
-; CHECK-NEXT:    [[SHR:%.*]] = lshr <3 x i16> [[X]], [[YMASK]]
-; CHECK-NEXT:    [[R:%.*]] = or <3 x i16> [[SHR]], [[SHL]]
+; CHECK-NEXT:    [[R:%.*]] = call <3 x i16> @llvm.fshr.v3i16(<3 x i16> [[X:%.*]], <3 x i16> [[X]], <3 x i16> [[Y:%.*]])
 ; CHECK-NEXT:    ret <3 x i16> [[R]]
 ;
   %negy = sub <3 x i16> zeroinitializer, %y
