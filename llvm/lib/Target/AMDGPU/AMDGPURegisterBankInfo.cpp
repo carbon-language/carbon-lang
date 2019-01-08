@@ -216,9 +216,13 @@ bool AMDGPURegisterBankInfo::isSALUMapping(const MachineInstr &MI) const {
     if (!MI.getOperand(i).isReg())
       continue;
     unsigned Reg = MI.getOperand(i).getReg();
-    const RegisterBank *Bank = getRegBank(Reg, MRI, *TRI);
-    if (Bank && Bank->getID() != AMDGPU::SGPRRegBankID)
-      return false;
+    if (const RegisterBank *Bank = getRegBank(Reg, MRI, *TRI)) {
+      if (Bank->getID() == AMDGPU::VGPRRegBankID)
+        return false;
+
+      assert(Bank->getID() == AMDGPU::SGPRRegBankID ||
+             Bank->getID() == AMDGPU::SCCRegBankID);
+    }
   }
   return true;
 }
@@ -231,7 +235,8 @@ AMDGPURegisterBankInfo::getDefaultMappingSOP(const MachineInstr &MI) const {
 
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     unsigned Size = getSizeInBits(MI.getOperand(i).getReg(), MRI, *TRI);
-    OpdsMapping[i] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size);
+    unsigned BankID = Size == 1 ? AMDGPU::SCCRegBankID : AMDGPU::SGPRRegBankID;
+    OpdsMapping[i] = AMDGPU::getValueMapping(BankID, Size);
   }
   return getInstructionMapping(1, 1, getOperandsMapping(OpdsMapping),
                                MI.getNumOperands());
@@ -252,7 +257,11 @@ AMDGPURegisterBankInfo::getDefaultMappingVOP(const MachineInstr &MI) const {
 
   unsigned Reg1 = MI.getOperand(OpdIdx).getReg();
   unsigned Size1 = getSizeInBits(Reg1, MRI, *TRI);
-  unsigned Bank1 = getRegBankID(Reg1, MRI, *TRI);
+
+  unsigned DefaultBankID = Size1 == 1 ?
+    AMDGPU::SGPRRegBankID : AMDGPU::VGPRRegBankID;
+  unsigned Bank1 = getRegBankID(Reg1, MRI, *TRI, DefaultBankID);
+
   OpdsMapping[OpdIdx++] = AMDGPU::getValueMapping(Bank1, Size1);
 
   for (unsigned e = MI.getNumOperands(); OpdIdx != e; ++OpdIdx) {
@@ -359,6 +368,10 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   case AMDGPU::G_SUB:
   case AMDGPU::G_MUL:
   case AMDGPU::G_SHL:
+  case AMDGPU::G_UADDO:
+  case AMDGPU::G_SADDO:
+  case AMDGPU::G_USUBO:
+  case AMDGPU::G_SSUBO:
     if (isSALUMapping(MI))
       return getDefaultMappingSOP(MI);
     LLVM_FALLTHROUGH;

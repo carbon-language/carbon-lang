@@ -94,6 +94,9 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   getActionDefinitionsBuilder({G_AND, G_OR, G_XOR})
     .legalFor({S32, S1, S64, V2S32});
 
+  getActionDefinitionsBuilder({G_UADDO, G_SADDO, G_USUBO, G_SSUBO})
+    .legalFor({{S32, S1}});
+
   setAction({G_BITCAST, V2S16}, Legal);
   setAction({G_BITCAST, 1, S32}, Legal);
 
