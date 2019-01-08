@@ -75,10 +75,6 @@ unsigned AMDGPURegisterBankInfo::copyCost(const RegisterBank &Dst,
                                           unsigned Size) const {
   if (Dst.getID() == AMDGPU::SGPRRegBankID &&
       Src.getID() == AMDGPU::VGPRRegBankID) {
-    // For boolean values, we can do a v_cmp to "copy" a VGPR to VCC.
-    if (Size == 1)
-      return 1;
-
     return std::numeric_limits<unsigned>::max();
   }
 
@@ -86,7 +82,8 @@ unsigned AMDGPURegisterBankInfo::copyCost(const RegisterBank &Dst,
   // the valu.
   if (Size == 1 && Dst.getID() == AMDGPU::SCCRegBankID &&
       (Src.getID() == AMDGPU::SGPRRegBankID ||
-       Src.getID() == AMDGPU::VGPRRegBankID))
+       Src.getID() == AMDGPU::VGPRRegBankID ||
+       Src.getID() == AMDGPU::VCCRegBankID))
     return std::numeric_limits<unsigned>::max();
 
   return RegisterBankInfo::copyCost(Dst, Src, Size);
@@ -151,7 +148,7 @@ AMDGPURegisterBankInfo::getInstrAlternativeMappings(
     AltMappings.push_back(&SSMapping);
 
     const InstructionMapping &SVMapping = getInstructionMapping(2, 1,
-      getOperandsMapping({AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, 1),
+      getOperandsMapping({AMDGPU::getValueMapping(AMDGPU::VCCRegBankID, 1),
                           nullptr, // Predicate operand.
                           AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size),
                           AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, Size)}),
@@ -159,7 +156,7 @@ AMDGPURegisterBankInfo::getInstrAlternativeMappings(
     AltMappings.push_back(&SVMapping);
 
     const InstructionMapping &VSMapping = getInstructionMapping(3, 1,
-      getOperandsMapping({AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, 1),
+      getOperandsMapping({AMDGPU::getValueMapping(AMDGPU::VCCRegBankID, 1),
                           nullptr, // Predicate operand.
                           AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, Size),
                           AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size)}),
@@ -167,7 +164,7 @@ AMDGPURegisterBankInfo::getInstrAlternativeMappings(
     AltMappings.push_back(&VSMapping);
 
     const InstructionMapping &VVMapping = getInstructionMapping(4, 1,
-      getOperandsMapping({AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, 1),
+      getOperandsMapping({AMDGPU::getValueMapping(AMDGPU::VCCRegBankID, 1),
                           nullptr, // Predicate operand.
                           AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, Size),
                           AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, Size)}),
@@ -188,7 +185,7 @@ AMDGPURegisterBankInfo::getInstrAlternativeMappings(
 
     const InstructionMapping &VVMapping = getInstructionMapping(2, 1,
       getOperandsMapping({AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, Size),
-                          AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, 1),
+                          AMDGPU::getValueMapping(AMDGPU::VCCRegBankID, 1),
                           AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, Size),
                           AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, Size)}),
       4); // Num Operands
@@ -213,10 +210,10 @@ AMDGPURegisterBankInfo::getInstrAlternativeMappings(
 
     const InstructionMapping &VVMapping = getInstructionMapping(2, 1,
       getOperandsMapping({AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, Size),
-                          AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, 1),
+                          AMDGPU::getValueMapping(AMDGPU::VCCRegBankID, 1),
                           AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, Size),
                           AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, Size),
-                          AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, 1)}),
+                          AMDGPU::getValueMapping(AMDGPU::VCCRegBankID, 1)}),
       5); // Num Operands
     AltMappings.push_back(&VVMapping);
     return AltMappings;
@@ -232,7 +229,7 @@ AMDGPURegisterBankInfo::getInstrAlternativeMappings(
 
     const InstructionMapping &VMapping = getInstructionMapping(
       1, 1, getOperandsMapping(
-        {AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, 1), nullptr }),
+        {AMDGPU::getValueMapping(AMDGPU::VCCRegBankID, 1), nullptr }),
       2); // Num Operands
     AltMappings.push_back(&VMapping);
     return AltMappings;
@@ -306,14 +303,14 @@ AMDGPURegisterBankInfo::getDefaultMappingVOP(const MachineInstr &MI) const {
   unsigned Size1 = getSizeInBits(Reg1, MRI, *TRI);
 
   unsigned DefaultBankID = Size1 == 1 ?
-    AMDGPU::SGPRRegBankID : AMDGPU::VGPRRegBankID;
+    AMDGPU::VCCRegBankID : AMDGPU::VGPRRegBankID;
   unsigned Bank1 = getRegBankID(Reg1, MRI, *TRI, DefaultBankID);
 
   OpdsMapping[OpdIdx++] = AMDGPU::getValueMapping(Bank1, Size1);
 
   for (unsigned e = MI.getNumOperands(); OpdIdx != e; ++OpdIdx) {
     unsigned Size = getSizeInBits(MI.getOperand(OpdIdx).getReg(), MRI, *TRI);
-    unsigned BankID = Size == 1 ? AMDGPU::SGPRRegBankID : AMDGPU::VGPRRegBankID;
+    unsigned BankID = Size == 1 ? AMDGPU::VCCRegBankID : AMDGPU::VGPRRegBankID;
     OpdsMapping[OpdIdx] = AMDGPU::getValueMapping(BankID, Size);
   }
 
@@ -539,7 +536,7 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   case AMDGPU::G_FCMP: {
     unsigned Size = MRI.getType(MI.getOperand(2).getReg()).getSizeInBits();
     unsigned Op2Bank = getRegBankID(MI.getOperand(2).getReg(), MRI, *TRI);
-    OpdsMapping[0] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, 1);
+    OpdsMapping[0] = AMDGPU::getValueMapping(AMDGPU::VCCRegBankID, 1);
     OpdsMapping[1] = nullptr; // Predicate Operand.
     OpdsMapping[2] = AMDGPU::getValueMapping(Op2Bank, Size);
     OpdsMapping[3] = AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, Size);
@@ -579,7 +576,7 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     unsigned Op3Bank = getRegBankID(MI.getOperand(3).getReg(), MRI, *TRI);
     unsigned Op0Bank = Op2Bank == AMDGPU::SGPRRegBankID &&
                        Op3Bank == AMDGPU::SGPRRegBankID ?
-                       AMDGPU::SCCRegBankID : AMDGPU::SGPRRegBankID;
+                       AMDGPU::SCCRegBankID : AMDGPU::VCCRegBankID;
     OpdsMapping[0] = AMDGPU::getValueMapping(Op0Bank, 1);
     OpdsMapping[1] = nullptr; // Predicate Operand.
     OpdsMapping[2] = AMDGPU::getValueMapping(Op2Bank, Size);
@@ -704,7 +701,7 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
                     Op2Bank == AMDGPU::SGPRRegBankID &&
                     Op3Bank == AMDGPU::SGPRRegBankID;
     unsigned Bank = SGPRSrcs ? AMDGPU::SGPRRegBankID : AMDGPU::VGPRRegBankID;
-    Op1Bank = SGPRSrcs ? AMDGPU::SCCRegBankID : AMDGPU::SGPRRegBankID;
+    Op1Bank = SGPRSrcs ? AMDGPU::SCCRegBankID : AMDGPU::VCCRegBankID;
     OpdsMapping[0] = AMDGPU::getValueMapping(Bank, Size);
     OpdsMapping[1] = AMDGPU::getValueMapping(Op1Bank, 1);
     OpdsMapping[2] = AMDGPU::getValueMapping(Bank, Size);
@@ -733,7 +730,7 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
                                  AMDGPU::SGPRRegBankID);
     assert(MRI.getType(MI.getOperand(0).getReg()).getSizeInBits() == 1);
     if (Bank != AMDGPU::SCCRegBankID)
-      Bank = AMDGPU::SGPRRegBankID;
+      Bank = AMDGPU::VCCRegBankID;
 
     OpdsMapping[0] = AMDGPU::getValueMapping(Bank, 1);
     break;
