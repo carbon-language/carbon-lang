@@ -6,6 +6,8 @@ set(LLVM_LINK_COMPONENTS
   AllTargetsDescs
   AllTargetsDisassemblers
   AllTargetsInfos
+  # FIXME: This works around a linker error with -DLLVM_BUILD_WITH_MODULES=1
+  CodeGen
   MCA
   MC
   MCParser
