@@ -2627,6 +2627,12 @@ JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
     return CR_Erase;
   }
 
+  // The remaining checks apply to the lanes, which aren't tracked here.  This
+  // was already decided to be OK via the following CR_Replace condition.
+  // CR_Replace.
+  if (SubRangeJoin)
+    return CR_Replace;
+
   // If the lanes written by this instruction were all undef in OtherVNI, it is
   // still safe to join the live ranges. This can't be done with a simple value
   // mapping, though - OtherVNI will map to multiple values:
