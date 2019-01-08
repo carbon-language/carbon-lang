@@ -1896,18 +1896,19 @@ public:
 class CXXScalarValueInitExpr : public Expr {
   friend class ASTStmtReader;
 
-  SourceLocation RParenLoc;
   TypeSourceInfo *TypeInfo;
 
 public:
   /// Create an explicitly-written scalar-value initialization
   /// expression.
   CXXScalarValueInitExpr(QualType Type, TypeSourceInfo *TypeInfo,
-                         SourceLocation rParenLoc)
-      : Expr(CXXScalarValueInitExprClass, Type, VK_RValue, OK_Ordinary,
-             false, false, Type->isInstantiationDependentType(),
+                         SourceLocation RParenLoc)
+      : Expr(CXXScalarValueInitExprClass, Type, VK_RValue, OK_Ordinary, false,
+             false, Type->isInstantiationDependentType(),
              Type->containsUnexpandedParameterPack()),
-        RParenLoc(rParenLoc), TypeInfo(TypeInfo) {}
+        TypeInfo(TypeInfo) {
+    CXXScalarValueInitExprBits.RParenLoc = RParenLoc;
+  }
 
   explicit CXXScalarValueInitExpr(EmptyShell Shell)
       : Expr(CXXScalarValueInitExprClass, Shell) {}
@@ -1916,10 +1917,12 @@ public:
     return TypeInfo;
   }
 
-  SourceLocation getRParenLoc() const { return RParenLoc; }
+  SourceLocation getRParenLoc() const {
+    return CXXScalarValueInitExprBits.RParenLoc;
+  }
 
   SourceLocation getBeginLoc() const LLVM_READONLY;
-  SourceLocation getEndLoc() const LLVM_READONLY { return RParenLoc; }
+  SourceLocation getEndLoc() const { return getRParenLoc(); }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXScalarValueInitExprClass;

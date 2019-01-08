@@ -612,6 +612,15 @@ protected:
     SourceLocation Loc;
   };
 
+  class CXXScalarValueInitExprBitfields {
+    friend class ASTStmtReader;
+    friend class CXXScalarValueInitExpr;
+
+    unsigned : NumExprBits;
+
+    SourceLocation RParenLoc;
+  };
+
   class CXXNewExprBitfields {
     friend class ASTStmtReader;
     friend class ASTStmtWriter;
@@ -859,6 +868,7 @@ protected:
     CXXThrowExprBitfields CXXThrowExprBits;
     CXXDefaultArgExprBitfields CXXDefaultArgExprBits;
     CXXDefaultInitExprBitfields CXXDefaultInitExprBits;
+    CXXScalarValueInitExprBitfields CXXScalarValueInitExprBits;
     CXXNewExprBitfields CXXNewExprBits;
     CXXDeleteExprBitfields CXXDeleteExprBits;
     TypeTraitExprBitfields TypeTraitExprBits;

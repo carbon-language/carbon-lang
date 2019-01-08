@@ -90,7 +90,7 @@ QualType CXXUuidofExpr::getTypeOperand(ASTContext &Context) const {
 
 // CXXScalarValueInitExpr
 SourceLocation CXXScalarValueInitExpr::getBeginLoc() const {
-  return TypeInfo ? TypeInfo->getTypeLoc().getBeginLoc() : RParenLoc;
+  return TypeInfo ? TypeInfo->getTypeLoc().getBeginLoc() : getRParenLoc();
 }
 
 // CXXNewExpr
