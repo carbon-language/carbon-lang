@@ -93,8 +93,7 @@ bool ObjectEntityDetails::IsDescriptor() const {
           }
         }
       }
-    } else if (type_->category() == DeclTypeSpec::Category::ClassDerived ||
-        type_->category() == DeclTypeSpec::Category::TypeStar ||
+    } else if (type_->category() == DeclTypeSpec::Category::TypeStar ||
         type_->category() == DeclTypeSpec::Category::ClassStar) {
       return true;
     }

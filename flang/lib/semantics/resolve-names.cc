@@ -142,8 +142,9 @@ public:
   template<typename T>
   MaybeSubscriptIntExpr EvaluateSubscriptIntExpr(const T &expr) {
     if (MaybeIntExpr maybeIntExpr{EvaluateIntExpr(expr)}) {
-      return {evaluate::ConvertToType<evaluate::SubscriptInteger>(
-          std::move(*maybeIntExpr))};
+      return evaluate::Fold(context_->foldingContext(),
+          evaluate::ConvertToType<evaluate::SubscriptInteger>(
+              std::move(*maybeIntExpr)));
     } else {
       return std::nullopt;
     }

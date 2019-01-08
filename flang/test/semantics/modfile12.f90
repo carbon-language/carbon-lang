@@ -48,14 +48,14 @@ end
 !  integer(4),parameter::n=3_4
 !  integer(4),parameter::l=-3_4
 !  real(4),parameter::e=3.333333432674407958984375e-1_4
-!  real(4)::x(int(1_4,kind=8):13_8)
-!  real(4)::y(1_8:int(8_4,kind=8))
+!  real(4)::x(1_8:13_8)
+!  real(4)::y(1_8:8_8)
 !  type::t(c,d)
 !    integer(4),kind::c=1_4
 !    integer(4),len::d=3_8
 !  end type
-!  type(t(4_4,:)),allocatable::z
-!  class(t(5_4,:)),allocatable::z2
+!  type(t(c=4_4,d=:)),allocatable::z
+!  class(t(c=5_4,d=:)),allocatable::z2
 !  type(*),allocatable::z3
 !  class(*),allocatable::z4
 !  real(2)::f
@@ -67,7 +67,7 @@ end
 !  end type
 !contains
 !  subroutine foo(x)
-!    real(4)::x(int(2_4,kind=8):)
+!    real(4)::x(2_8:)
 !  end
 !  subroutine bar(x)
 !    real(4)::x(..)
