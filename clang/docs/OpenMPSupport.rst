@@ -66,12 +66,11 @@ Combined directives
 
 * #pragma omp target teams distribute parallel for [simd]: :good:`Complete`.
 
-Clang does not support any constructs/updates from upcoming OpenMP 5.0 except
+Clang does not support any constructs/updates from OpenMP 5.0 except
 for `reduction`-based clauses in the `task` and `target`-based directives.
 
 In addition, the LLVM OpenMP runtime `libomp` supports the OpenMP Tools
 Interface (OMPT) on x86, x86_64, AArch64, and PPC64 on Linux, Windows, and mac OS.
-ows, and mac OS.
 
 .. _basic support for Cuda devices:
 
@@ -111,8 +110,6 @@ between the threads in the parallel regions.
 
 Features not supported or with limited support for Cuda devices
 ---------------------------------------------------------------
-
-- Reductions across the teams are not supported yet.
 
 - Cancellation constructs are not supported.
 
