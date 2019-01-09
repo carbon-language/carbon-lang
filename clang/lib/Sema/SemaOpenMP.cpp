@@ -4136,7 +4136,7 @@ bool OpenMPIterationSpaceChecker::setStep(Expr *NewStep, bool Subtract) {
     if (!TestIsLessOp.hasValue())
       TestIsLessOp = IsConstPos || (IsUnsigned && !Subtract);
     if (UB && (IsConstZero ||
-               (TestIsLessOp.getValue() ? 
+               (TestIsLessOp.getValue() ?
                   (IsConstNeg || (IsUnsigned && Subtract)) :
                   (IsConstPos || (IsUnsigned && !Subtract))))) {
       SemaRef.Diag(NewStep->getExprLoc(),
@@ -4311,7 +4311,7 @@ bool OpenMPIterationSpaceChecker::checkAndSetCond(Expr *S) {
                        Op == OO_Less || Op == OO_Greater, CE->getSourceRange(),
                        CE->getOperatorLoc());
         break;
-      case OO_ExclaimEqual: 
+      case OO_ExclaimEqual:
         return setUB(getInitLCDecl(CE->getArg(0)) == LCDecl ?
                      CE->getArg(1) : CE->getArg(0),
                      /*LessOp=*/llvm::None,
@@ -4569,7 +4569,7 @@ Expr *OpenMPIterationSpaceChecker::buildPreCond(
 
   ExprResult CondExpr =
       SemaRef.BuildBinOp(S, DefaultLoc,
-                         TestIsLessOp.getValue() ? 
+                         TestIsLessOp.getValue() ?
                            (TestIsStrictOp ? BO_LT : BO_LE) :
                            (TestIsStrictOp ? BO_GT : BO_GE),
                          NewLB.get(), NewUB.get());
@@ -5270,13 +5270,14 @@ checkOpenMPLoop(OpenMPDirectiveKind DKind, Expr *CollapseLoopCountExpr,
 
   // Choose either the 32-bit or 64-bit version.
   ExprResult LastIteration = LastIteration64;
-  if (LastIteration32.isUsable() &&
-      C.getTypeSize(LastIteration32.get()->getType()) == 32 &&
-      (AllCountsNeedLessThan32Bits || NestedLoopCount == 1 ||
-       fitsInto(
-           /*Bits=*/32,
-           LastIteration32.get()->getType()->hasSignedIntegerRepresentation(),
-           LastIteration64.get(), SemaRef)))
+  if (SemaRef.getLangOpts().OpenMPOptimisticCollapse ||
+      (LastIteration32.isUsable() &&
+       C.getTypeSize(LastIteration32.get()->getType()) == 32 &&
+       (AllCountsNeedLessThan32Bits || NestedLoopCount == 1 ||
+        fitsInto(
+            /*Bits=*/32,
+            LastIteration32.get()->getType()->hasSignedIntegerRepresentation(),
+            LastIteration64.get(), SemaRef))))
     LastIteration = LastIteration32;
   QualType VType = LastIteration.get()->getType();
   QualType RealVType = VType;
@@ -13116,7 +13117,7 @@ Sema::ActOnOpenMPMapClause(ArrayRef<OpenMPMapModifierKind> MapTypeModifiers,
       continue;
     }
     assert(Count < OMPMapClause::NumberOfModifiers &&
-           "Modifiers exceed the allowed number of map type modifiers"); 
+           "Modifiers exceed the allowed number of map type modifiers");
     Modifiers[Count] = MapTypeModifiers[I];
     ModifiersLoc[Count] = MapTypeModifiersLoc[I];
     ++Count;
