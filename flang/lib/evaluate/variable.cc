@@ -286,8 +286,6 @@ std::ostream &TypeParamInquiry<KIND>::AsFortran(std::ostream &o) const {
           [&](const Symbol *sym) {
             if (sym != nullptr) {
               Emit(o, *sym) << '%';
-            } else {
-              o << "  ";  // extra spaces to distinguish a "bare" parameter
             }
           },
           [&](const Component &comp) { Emit(o, comp) << '%'; },
