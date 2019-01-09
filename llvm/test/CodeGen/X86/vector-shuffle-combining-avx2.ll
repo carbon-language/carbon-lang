@@ -616,9 +616,7 @@ define <32 x i8> @combine_pshufb_as_packsswb(<16 x i16> %a0, <16 x i16> %a1) nou
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vpsraw $11, %ymm0, %ymm0
 ; CHECK-NEXT:    vpsraw $11, %ymm1, %ymm1
-; CHECK-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero,ymm0[16,18,20,22,24,26,28,30],zero,zero,zero,zero,zero,zero,zero,zero
-; CHECK-NEXT:    vpshufb {{.*#+}} ymm1 = zero,zero,zero,zero,zero,zero,zero,zero,ymm1[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero,ymm1[16,18,20,22,24,26,28,30]
-; CHECK-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; CHECK-NEXT:    vpacksswb %ymm1, %ymm0, %ymm0
 ; CHECK-NEXT:    ret{{[l|q]}}
   %1 = ashr <16 x i16> %a0, <i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11>
   %2 = ashr <16 x i16> %a1, <i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11>
@@ -635,9 +633,7 @@ define <32 x i8> @combine_pshufb_as_packuswb(<16 x i16> %a0, <16 x i16> %a1) nou
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    vpsrlw $11, %ymm0, %ymm0
 ; CHECK-NEXT:    vpsrlw $11, %ymm1, %ymm1
-; CHECK-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero,ymm0[16,18,20,22,24,26,28,30],zero,zero,zero,zero,zero,zero,zero,zero
-; CHECK-NEXT:    vpshufb {{.*#+}} ymm1 = zero,zero,zero,zero,zero,zero,zero,zero,ymm1[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero,ymm1[16,18,20,22,24,26,28,30]
-; CHECK-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; CHECK-NEXT:    vpackuswb %ymm1, %ymm0, %ymm0
 ; CHECK-NEXT:    ret{{[l|q]}}
   %1 = lshr <16 x i16> %a0, <i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11>
   %2 = lshr <16 x i16> %a1, <i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11>

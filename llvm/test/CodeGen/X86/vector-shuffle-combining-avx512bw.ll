@@ -829,18 +829,14 @@ define <64 x i8> @combine_pshufb_as_packsswb(<32 x i16> %a0, <32 x i16> %a1) nou
 ; X32:       # %bb.0:
 ; X32-NEXT:    vpsraw $11, %zmm0, %zmm0
 ; X32-NEXT:    vpsraw $11, %zmm1, %zmm1
-; X32-NEXT:    vpshufb {{.*#+}} zmm0 = zmm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[16,18,20,22,24,26,28,30],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[32,34,36,38,40,42,44,46],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[48,50,52,54,56,58,60,62],zero,zero,zero,zero,zero,zero,zero,zero
-; X32-NEXT:    vpshufb {{.*#+}} zmm1 = zero,zero,zero,zero,zero,zero,zero,zero,zmm1[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero,zmm1[16,18,20,22,24,26,28,30],zero,zero,zero,zero,zero,zero,zero,zero,zmm1[32,34,36,38,40,42,44,46],zero,zero,zero,zero,zero,zero,zero,zero,zmm1[48,50,52,54,56,58,60,62]
-; X32-NEXT:    vporq %zmm1, %zmm0, %zmm0
+; X32-NEXT:    vpacksswb %zmm1, %zmm0, %zmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: combine_pshufb_as_packsswb:
 ; X64:       # %bb.0:
 ; X64-NEXT:    vpsraw $11, %zmm0, %zmm0
 ; X64-NEXT:    vpsraw $11, %zmm1, %zmm1
-; X64-NEXT:    vpshufb {{.*#+}} zmm0 = zmm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[16,18,20,22,24,26,28,30],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[32,34,36,38,40,42,44,46],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[48,50,52,54,56,58,60,62],zero,zero,zero,zero,zero,zero,zero,zero
-; X64-NEXT:    vpshufb {{.*#+}} zmm1 = zero,zero,zero,zero,zero,zero,zero,zero,zmm1[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero,zmm1[16,18,20,22,24,26,28,30],zero,zero,zero,zero,zero,zero,zero,zero,zmm1[32,34,36,38,40,42,44,46],zero,zero,zero,zero,zero,zero,zero,zero,zmm1[48,50,52,54,56,58,60,62]
-; X64-NEXT:    vporq %zmm1, %zmm0, %zmm0
+; X64-NEXT:    vpacksswb %zmm1, %zmm0, %zmm0
 ; X64-NEXT:    retq
   %1 = ashr <32 x i16> %a0, <i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11>
   %2 = ashr <32 x i16> %a1, <i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11>
@@ -857,18 +853,14 @@ define <64 x i8> @combine_pshufb_as_packuswb(<32 x i16> %a0, <32 x i16> %a1) nou
 ; X32:       # %bb.0:
 ; X32-NEXT:    vpsrlw $11, %zmm0, %zmm0
 ; X32-NEXT:    vpsrlw $11, %zmm1, %zmm1
-; X32-NEXT:    vpshufb {{.*#+}} zmm0 = zmm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[16,18,20,22,24,26,28,30],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[32,34,36,38,40,42,44,46],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[48,50,52,54,56,58,60,62],zero,zero,zero,zero,zero,zero,zero,zero
-; X32-NEXT:    vpshufb {{.*#+}} zmm1 = zero,zero,zero,zero,zero,zero,zero,zero,zmm1[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero,zmm1[16,18,20,22,24,26,28,30],zero,zero,zero,zero,zero,zero,zero,zero,zmm1[32,34,36,38,40,42,44,46],zero,zero,zero,zero,zero,zero,zero,zero,zmm1[48,50,52,54,56,58,60,62]
-; X32-NEXT:    vporq %zmm1, %zmm0, %zmm0
+; X32-NEXT:    vpackuswb %zmm1, %zmm0, %zmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: combine_pshufb_as_packuswb:
 ; X64:       # %bb.0:
 ; X64-NEXT:    vpsrlw $11, %zmm0, %zmm0
 ; X64-NEXT:    vpsrlw $11, %zmm1, %zmm1
-; X64-NEXT:    vpshufb {{.*#+}} zmm0 = zmm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[16,18,20,22,24,26,28,30],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[32,34,36,38,40,42,44,46],zero,zero,zero,zero,zero,zero,zero,zero,zmm0[48,50,52,54,56,58,60,62],zero,zero,zero,zero,zero,zero,zero,zero
-; X64-NEXT:    vpshufb {{.*#+}} zmm1 = zero,zero,zero,zero,zero,zero,zero,zero,zmm1[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero,zmm1[16,18,20,22,24,26,28,30],zero,zero,zero,zero,zero,zero,zero,zero,zmm1[32,34,36,38,40,42,44,46],zero,zero,zero,zero,zero,zero,zero,zero,zmm1[48,50,52,54,56,58,60,62]
-; X64-NEXT:    vporq %zmm1, %zmm0, %zmm0
+; X64-NEXT:    vpackuswb %zmm1, %zmm0, %zmm0
 ; X64-NEXT:    retq
   %1 = lshr <32 x i16> %a0, <i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11>
   %2 = lshr <32 x i16> %a1, <i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11, i16 11>
