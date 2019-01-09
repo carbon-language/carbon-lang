@@ -30,6 +30,7 @@ namespace llvm {
 
 class WebAssemblySubtarget final : public WebAssemblyGenSubtargetInfo {
   bool HasSIMD128;
+  bool HasUnimplementedSIMD128;
   bool HasAtomics;
   bool HasNontrappingFPToInt;
   bool HasSignExt;
@@ -78,6 +79,7 @@ public:
   // Predicates used by WebAssemblyInstrInfo.td.
   bool hasAddr64() const { return TargetTriple.isArch64Bit(); }
   bool hasSIMD128() const { return HasSIMD128; }
+  bool hasUnimplementedSIMD128() const { return HasUnimplementedSIMD128; }
   bool hasAtomics() const { return HasAtomics; }
   bool hasNontrappingFPToInt() const { return HasNontrappingFPToInt; }
   bool hasSignExt() const { return HasSignExt; }
