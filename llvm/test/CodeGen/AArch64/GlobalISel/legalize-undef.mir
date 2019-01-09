@@ -35,3 +35,39 @@ body: |
 ...
 
 # FIXME: s2 not correctly handled
+
+---
+name: test_implicit_def_v2s32
+body: |
+  bb.0:
+
+    ; CHECK-LABEL: name: test_implicit_def_v2s32
+    ; CHECK: [[DEF:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
+    ; CHECK: [[DEF1:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
+    ; CHECK: [[DEF2:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
+    ; CHECK: [[DEF3:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
+    ; CHECK: [[BUILD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_BUILD_VECTOR [[DEF]](s32), [[DEF1]](s32), [[DEF2]](s32), [[DEF3]](s32)
+    ; CHECK: [[UV:%[0-9]+]]:_(<2 x s32>), [[UV1:%[0-9]+]]:_(<2 x s32>) = G_UNMERGE_VALUES [[BUILD_VECTOR]](<4 x s32>)
+    ; CHECK: $x0 = COPY [[UV]](<2 x s32>)
+    ; CHECK: $x1 = COPY [[UV1]](<2 x s32>)
+    %0:_(<4 x s32>) = G_IMPLICIT_DEF
+    %1:_(<2 x s32> ), %2:_(<2 x s32>) = G_UNMERGE_VALUES %0
+    $x0 = COPY %1
+    $x1 = COPY %2
+...
+
+---
+name: test_implicit_def_v4s64
+body: |
+  bb.0:
+
+    ; CHECK-LABEL: name: test_implicit_def_v4s64
+    ; CHECK: [[DEF:%[0-9]+]]:_(<2 x s64>) = G_IMPLICIT_DEF
+    ; CHECK: [[DEF1:%[0-9]+]]:_(<2 x s64>) = G_IMPLICIT_DEF
+    ; CHECK: $q0 = COPY [[DEF]](<2 x s64>)
+    ; CHECK: $q1 = COPY [[DEF1]](<2 x s64>)
+    %0:_(<4 x s64>) = G_IMPLICIT_DEF
+    %1:_(<2 x s64> ), %2:_(<2 x s64>) = G_UNMERGE_VALUES %0
+    $q0 = COPY %1
+    $q1 = COPY %2
+...
