@@ -2,14 +2,20 @@
 // RUN:   -config="{CheckOptions: [{key: modernize-use-nodiscard.ReplacementString, value: 'NO_DISCARD'}]}" \
 // RUN: -- -std=c++17
 
-#include <functional>
+namespace std {
+template <class>
+class function;
+class string {};
+}
 
 namespace boost {
 template <class>
 class function;
 }
 
-#include "modernize-use-nodiscard.h"
+#define MUST_USE_RESULT __attribute__((warn_unused_result))
+#define NO_DISCARD [[nodiscard]]
+#define NO_RETURN [[noreturn]]
 
 #define BOOLEAN_FUNC bool f23() const
 
@@ -168,9 +174,9 @@ auto lambda1b = []()  { return true;};
 auto get_functor = [](bool check) {
     return  [&](const std::string& sr)->std::string {
         if(check){
-            return "some string";
+            return std::string();
         }
-        return "another string";
+        return std::string();
     };
 };
 
