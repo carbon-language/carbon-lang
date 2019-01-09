@@ -861,20 +861,8 @@ bool PPCFastISel::PPCEmitCmp(const Value *SrcValue1, const Value *SrcValue2,
     }
   }
 
-  unsigned SrcReg1 = getRegForValue(SrcValue1);
-  if (SrcReg1 == 0)
-    return false;
-
-  unsigned SrcReg2 = 0;
-  if (!UseImm) {
-    SrcReg2 = getRegForValue(SrcValue2);
-    if (SrcReg2 == 0)
-      return false;
-  }
-
   unsigned CmpOpc;
   bool NeedsExt = false;
-  auto RC = MRI.getRegClass(SrcReg1);
   switch (SrcVT.SimpleTy) {
     default: return false;
     case MVT::f32:
@@ -891,11 +879,8 @@ bool PPCFastISel::PPCEmitCmp(const Value *SrcValue1, const Value *SrcValue2,
             CmpOpc = PPC::EFSCMPGT;
             break;
         }
-      } else if (isVSSRCRegClass(RC)) {
-        llvm_unreachable("Unsupposed f32 VSX comparison");
-      } else {
+      } else
         CmpOpc = PPC::FCMPUS;
-      }
       break;
     case MVT::f64:
       if (HasSPE) {
@@ -911,11 +896,8 @@ bool PPCFastISel::PPCEmitCmp(const Value *SrcValue1, const Value *SrcValue2,
             CmpOpc = PPC::EFDCMPGT;
             break;
         }
-      } else if (isVSFRCRegClass(RC)) {
-        CmpOpc = PPC::XSCMPUDP;
-      } else {
+      } else
         CmpOpc = PPC::FCMPUD;
-      }
       break;
     case MVT::i1:
     case MVT::i8:
@@ -934,6 +916,17 @@ bool PPCFastISel::PPCEmitCmp(const Value *SrcValue1, const Value *SrcValue2,
       else
         CmpOpc = IsZExt ? PPC::CMPLDI : PPC::CMPDI;
       break;
+  }
+
+  unsigned SrcReg1 = getRegForValue(SrcValue1);
+  if (SrcReg1 == 0)
+    return false;
+
+  unsigned SrcReg2 = 0;
+  if (!UseImm) {
+    SrcReg2 = getRegForValue(SrcValue2);
+    if (SrcReg2 == 0)
+      return false;
   }
 
   if (NeedsExt) {
