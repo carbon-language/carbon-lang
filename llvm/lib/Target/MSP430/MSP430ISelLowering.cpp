@@ -95,6 +95,8 @@ MSP430TargetLowering::MSP430TargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::SIGN_EXTEND,      MVT::i16,   Custom);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i8, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i16, Expand);
+  setOperationAction(ISD::STACKSAVE,        MVT::Other, Expand);
+  setOperationAction(ISD::STACKRESTORE,     MVT::Other, Expand);
 
   setOperationAction(ISD::CTTZ,             MVT::i8,    Expand);
   setOperationAction(ISD::CTTZ,             MVT::i16,   Expand);
