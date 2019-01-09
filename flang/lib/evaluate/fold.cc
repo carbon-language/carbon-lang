@@ -185,16 +185,17 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
   using IntKIND = Type<TypeCategory::Integer, KIND>;
   if (Component * component{common::Unwrap<Component>(inquiry.u)}) {
     return Expr<IntKIND>{TypeParamInquiry<KIND>{
-        FoldOperation(context, std::move(*component)), inquiry.parameter}};
+        FoldOperation(context, std::move(*component)), *inquiry.parameter}};
   }
   if (context.pdtInstance != nullptr &&
       std::get<const Symbol *>(inquiry.u) == nullptr) {
     // "bare" type parameter: replace with actual value
     const semantics::Scope *scope{context.pdtInstance->scope()};
     CHECK(scope != nullptr);
-    const semantics::Symbol *symbol{scope->FindSymbol(inquiry.parameter)};
-    CHECK(symbol != nullptr);
-    const auto *details{symbol->detailsIf<semantics::TypeParamDetails>()};
+    auto iter{scope->find(inquiry.parameter->name())};
+    CHECK(iter != scope->end());
+    const Symbol &symbol{*iter->second};
+    const auto *details{symbol.detailsIf<semantics::TypeParamDetails>()};
     CHECK(details != nullptr);
     CHECK(details->init().has_value());
     Expr<SomeInteger> expr{*details->init()};
@@ -600,19 +601,16 @@ struct ConstExprContext {
   std::set<parser::CharBlock> constantNames;
 };
 
-template<typename A> bool IsConstExpr(ConstExprContext &, const A &) {
-  return false;
-}  // TODO: delete this base case?
+bool IsConstExpr(ConstExprContext &, const BOZLiteralConstant &) {
+  return true;
+}
 template<typename A> bool IsConstExpr(ConstExprContext &, const Constant<A> &) {
   return true;
 }
 template<int KIND>
 bool IsConstExpr(ConstExprContext &, const TypeParamInquiry<KIND> &inquiry) {
-  // TODO
-  return false;
-}
-bool IsConstExpr(ConstExprContext &, const BOZLiteralConstant &) {
-  return true;
+  return inquiry.parameter->template get<semantics::TypeParamDetails>()
+             .attr() == common::TypeParamAttr::Kind;
 }
 
 template<typename D, typename R, typename O1>
@@ -623,6 +621,8 @@ template<typename V, typename O>
 bool IsConstExpr(ConstExprContext &, const ImpliedDo<V, O> &);
 template<typename A>
 bool IsConstExpr(ConstExprContext &, const ArrayConstructorValue<A> &);
+template<typename A>
+bool IsConstExpr(ConstExprContext &, const ArrayConstructorValues<A> &);
 template<typename A>
 bool IsConstExpr(ConstExprContext &, const ArrayConstructor<A> &);
 template<typename A>
@@ -636,6 +636,7 @@ template<typename A>
 bool IsConstExpr(ConstExprContext &, const std::vector<A> &);
 template<typename... As>
 bool IsConstExpr(ConstExprContext &, const std::variant<As...> &);
+bool IsConstExpr(ConstExprContext &, const Relational<SomeType> &);
 
 template<typename D, typename R, typename O1>
 bool IsConstExpr(
@@ -663,6 +664,11 @@ template<typename A>
 bool IsConstExpr(
     ConstExprContext &context, const ArrayConstructorValue<A> &value) {
   return IsConstExpr(context, value.u);
+}
+template<typename A>
+bool IsConstExpr(
+    ConstExprContext &context, const ArrayConstructorValues<A> &values) {
+  return IsConstExpr(context, values.values);
 }
 template<typename A>
 bool IsConstExpr(ConstExprContext &context, const ArrayConstructor<A> &array) {
@@ -699,6 +705,9 @@ bool IsConstExpr(ConstExprContext &context, const std::vector<A> &v) {
 template<typename... As>
 bool IsConstExpr(ConstExprContext &context, const std::variant<As...> &u) {
   return std::visit([&](const auto &x) { return IsConstExpr(context, x); }, u);
+}
+bool IsConstExpr(ConstExprContext &context, const Relational<SomeType> &rel) {
+  return IsConstExpr(context, rel.u);
 }
 
 bool IsConstantExpr(const Expr<SomeType> &expr) {

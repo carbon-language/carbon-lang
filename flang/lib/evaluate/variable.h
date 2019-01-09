@@ -99,18 +99,18 @@ using SymbolOrComponent = std::variant<const Symbol *, Component>;
 template<int KIND> struct TypeParamInquiry {
   using Result = Type<TypeCategory::Integer, KIND>;
   CLASS_BOILERPLATE(TypeParamInquiry)
-  TypeParamInquiry(const Symbol &symbol, parser::CharBlock p)
-    : u{&symbol}, parameter{std::move(p)} {}
-  TypeParamInquiry(Component &&component, parser::CharBlock p)
-    : u{component}, parameter{p} {}
-  TypeParamInquiry(SymbolOrComponent &&x, parser::CharBlock p)
-    : u{x}, parameter{p} {}
-  explicit TypeParamInquiry(parser::CharBlock p) : parameter{p} {}
+  TypeParamInquiry(const Symbol &symbol, const Symbol &param)
+    : u{&symbol}, parameter{&param} {}
+  TypeParamInquiry(Component &&component, const Symbol &param)
+    : u{component}, parameter{&param} {}
+  TypeParamInquiry(SymbolOrComponent &&x, const Symbol &param)
+    : u{x}, parameter{&param} {}
+  explicit TypeParamInquiry(const Symbol &param) : parameter{&param} {}
   static constexpr int Rank() { return 0; }  // always scalar
   bool operator==(const TypeParamInquiry &) const;
   std::ostream &AsFortran(std::ostream &) const;
   SymbolOrComponent u{nullptr};
-  parser::CharBlock parameter;
+  const Symbol *parameter;
 };
 
 EXPAND_FOR_EACH_INTEGER_KIND(

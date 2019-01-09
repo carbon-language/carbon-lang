@@ -16,6 +16,7 @@
 #define FORTRAN_SEMANTICS_EXPRESSION_H_
 
 #include "semantics.h"
+#include "../common/fortran.h"
 #include "../common/indirection.h"
 #include "../evaluate/expression.h"
 #include "../evaluate/tools.h"
@@ -48,11 +49,13 @@ template<typename A> CharBlock FindSourceLocation(const A &x) {
 }
 }
 
+using namespace Fortran::parser::literals;
+
 // The expression semantic analysis code has its implementation in
 // namespace Fortran::evaluate, but the exposed API to it is in the
 // namespace Fortran::semantics (below).
 //
-// The template function AnalyzeExpr is an internal interface
+// The template function AnalyzeExpr() is an internal interface
 // between the implementation and the API used by semantic analysis.
 // This template function has a few specializations here in the header
 // file to handle what semantics might want to pass in as a top-level
@@ -71,8 +74,16 @@ public:
 
   semantics::SemanticsContext &context() const { return context_; }
 
+  FoldingContext &GetFoldingContext() const {
+    return context_.foldingContext();
+  }
+
+  parser::ContextualMessages &GetContextualMessages() {
+    return GetFoldingContext().messages;
+  }
+
   template<typename... A> void Say(A... args) {
-    context_.foldingContext().messages.Say(std::forward<A>(args)...);
+    GetContextualMessages().Say(std::forward<A>(args)...);
   }
 
   template<typename T, typename... A> void SayAt(const T &parsed, A... args) {
@@ -80,6 +91,11 @@ public:
   }
 
   std::optional<Expr<SomeType>> Analyze(const parser::Expr &);
+  int Analyze(common::TypeCategory category,
+      const std::optional<parser::KindSelector> &);
+
+  int GetDefaultKind(common::TypeCategory);
+  DynamicType GetDefaultKindOfType(common::TypeCategory);
 
 private:
   semantics::SemanticsContext &context_;
@@ -89,7 +105,6 @@ template<typename PARSED>
 std::optional<Expr<SomeType>> AnalyzeExpr(
     ExpressionAnalysisContext &, const PARSED &);
 
-template<>
 inline std::optional<Expr<SomeType>> AnalyzeExpr(
     ExpressionAnalysisContext &context, const parser::Expr &expr) {
   return context.Analyze(expr);
@@ -142,7 +157,7 @@ std::optional<Expr<SomeType>> AnalyzeExpr(
     ExpressionAnalysisContext &context, const parser::Constant<A> &x) {
   auto result{AnalyzeExpr(context, x.thing)};
   if (result.has_value()) {
-    *result = Fold(context.context().foldingContext(), std::move(*result));
+    *result = Fold(context.GetFoldingContext(), std::move(*result));
     if (!IsConstantExpr(*result)) {
       context.SayAt(x, "Must be a constant value"_err_en_US);
     }
@@ -189,6 +204,25 @@ std::optional<Expr<SomeType>> AnalyzeExpr(
   }
   return result;
 }
+
+template<typename L, typename R>
+bool AreConformable(const L &left, const R &right) {
+  int leftRank{left.Rank()};
+  if (left.Rank() == 0) {
+    return true;
+  }
+  int rightRank{right.Rank()};
+  return rightRank == 0 || leftRank == rightRank;
+}
+
+template<typename L, typename R>
+void ConformabilityCheck(
+    parser::ContextualMessages &context, const L &left, const R &right) {
+  if (!AreConformable(left, right)) {
+    context.Say("left operand has rank %d, right operand has rank %d"_err_en_US,
+        left.Rank(), right.Rank());
+  }
+}
 }
 
 namespace Fortran::semantics {
@@ -204,5 +238,10 @@ std::optional<evaluate::Expr<evaluate::SomeType>> AnalyzeExpr(
 // Semantic analysis of all expressions in a parse tree, which is
 // decorated with typed representations for top-level expressions.
 void AnalyzeExpressions(parser::Program &, SemanticsContext &);
+
+// Semantic analysis of an intrinsic type's KIND parameter expression.
+// Always returns a valid kind value for the type category.
+int AnalyzeKindSelector(SemanticsContext &, parser::CharBlock,
+    common::TypeCategory, const std::optional<parser::KindSelector> &);
 }
 #endif  // FORTRAN_SEMANTICS_EXPRESSION_H_

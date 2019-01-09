@@ -292,7 +292,7 @@ using SomeCharacter = SomeKind<TypeCategory::Character>;
 using SomeLogical = SomeKind<TypeCategory::Logical>;
 using SomeDerived = SomeKind<TypeCategory::Derived>;
 
-// Represents a completely generic intrinsic type.
+// Represents a completely generic type (but not typeless).
 using SomeCategory = std::tuple<SomeInteger, SomeReal, SomeComplex,
     SomeCharacter, SomeLogical, SomeDerived>;
 struct SomeType {};
