@@ -8,18 +8,19 @@ order to highlight at compile time which return values should not be ignored.
 
 Member functions need to satisfy the following conditions to be considered by
 this check:
-  - no ``[[nodiscard]]``, ``[[noreturn]]``, ``__attribute__((warn_unused_result))``, ``[[clang::warn_unused_result]]`` nor ``[[gcc::warn_unused_result]]`` attribute,
-  - non-void return type,
-  - non-template return types,
-  - const member function,
-  - non-variadic functions,
-  - no non-const reference parameters,
-  - no pointer parameters,
-  - no template parameters,
-  - no template function parameters,
-  - not be a member of a class with mutable member variables,
-  - no Lambdas,
-  - no conversion functions.
+
+ - no ``[[nodiscard]]``, ``[[noreturn]]``, ``__attribute__((warn_unused_result))``, ``[[clang::warn_unused_result]]`` nor ``[[gcc::warn_unused_result]]`` attribute,
+ - non-void return type,
+ - non-template return types,
+ - const member function,
+ - non-variadic functions,
+ - no non-const reference parameters,
+ - no pointer parameters,
+ - no template parameters,
+ - no template function parameters,
+ - not be a member of a class with mutable member variables,
+ - no Lambdas,
+ - no conversion functions.
 
 Such functions have no means of altering any state or passing values other than
 via the return type. Unless the member functions are altering state via some
