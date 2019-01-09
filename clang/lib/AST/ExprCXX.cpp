@@ -694,9 +694,7 @@ CXXStaticCastExpr *CXXStaticCastExpr::Create(const ASTContext &C, QualType T,
                                              SourceLocation RParenLoc,
                                              SourceRange AngleBrackets) {
   unsigned PathSize = (BasePath ? BasePath->size() : 0);
-  void *Buffer =
-      C.Allocate(totalSizeToAlloc<CastExpr::BasePathSizeTy, CXXBaseSpecifier *>(
-          PathSize ? 1 : 0, PathSize));
+  void *Buffer = C.Allocate(totalSizeToAlloc<CXXBaseSpecifier *>(PathSize));
   auto *E =
       new (Buffer) CXXStaticCastExpr(T, VK, K, Op, PathSize, WrittenTy, L,
                                      RParenLoc, AngleBrackets);
@@ -708,9 +706,7 @@ CXXStaticCastExpr *CXXStaticCastExpr::Create(const ASTContext &C, QualType T,
 
 CXXStaticCastExpr *CXXStaticCastExpr::CreateEmpty(const ASTContext &C,
                                                   unsigned PathSize) {
-  void *Buffer =
-      C.Allocate(totalSizeToAlloc<CastExpr::BasePathSizeTy, CXXBaseSpecifier *>(
-          PathSize ? 1 : 0, PathSize));
+  void *Buffer = C.Allocate(totalSizeToAlloc<CXXBaseSpecifier *>(PathSize));
   return new (Buffer) CXXStaticCastExpr(EmptyShell(), PathSize);
 }
 
@@ -723,9 +719,7 @@ CXXDynamicCastExpr *CXXDynamicCastExpr::Create(const ASTContext &C, QualType T,
                                                SourceLocation RParenLoc,
                                                SourceRange AngleBrackets) {
   unsigned PathSize = (BasePath ? BasePath->size() : 0);
-  void *Buffer =
-      C.Allocate(totalSizeToAlloc<CastExpr::BasePathSizeTy, CXXBaseSpecifier *>(
-          PathSize ? 1 : 0, PathSize));
+  void *Buffer = C.Allocate(totalSizeToAlloc<CXXBaseSpecifier *>(PathSize));
   auto *E =
       new (Buffer) CXXDynamicCastExpr(T, VK, K, Op, PathSize, WrittenTy, L,
                                       RParenLoc, AngleBrackets);
@@ -737,9 +731,7 @@ CXXDynamicCastExpr *CXXDynamicCastExpr::Create(const ASTContext &C, QualType T,
 
 CXXDynamicCastExpr *CXXDynamicCastExpr::CreateEmpty(const ASTContext &C,
                                                     unsigned PathSize) {
-  void *Buffer =
-      C.Allocate(totalSizeToAlloc<CastExpr::BasePathSizeTy, CXXBaseSpecifier *>(
-          PathSize ? 1 : 0, PathSize));
+  void *Buffer = C.Allocate(totalSizeToAlloc<CXXBaseSpecifier *>(PathSize));
   return new (Buffer) CXXDynamicCastExpr(EmptyShell(), PathSize);
 }
 
@@ -784,9 +776,7 @@ CXXReinterpretCastExpr::Create(const ASTContext &C, QualType T,
                                SourceLocation RParenLoc,
                                SourceRange AngleBrackets) {
   unsigned PathSize = (BasePath ? BasePath->size() : 0);
-  void *Buffer =
-      C.Allocate(totalSizeToAlloc<CastExpr::BasePathSizeTy, CXXBaseSpecifier *>(
-          PathSize ? 1 : 0, PathSize));
+  void *Buffer = C.Allocate(totalSizeToAlloc<CXXBaseSpecifier *>(PathSize));
   auto *E =
       new (Buffer) CXXReinterpretCastExpr(T, VK, K, Op, PathSize, WrittenTy, L,
                                           RParenLoc, AngleBrackets);
@@ -798,9 +788,7 @@ CXXReinterpretCastExpr::Create(const ASTContext &C, QualType T,
 
 CXXReinterpretCastExpr *
 CXXReinterpretCastExpr::CreateEmpty(const ASTContext &C, unsigned PathSize) {
-  void *Buffer =
-      C.Allocate(totalSizeToAlloc<CastExpr::BasePathSizeTy, CXXBaseSpecifier *>(
-          PathSize ? 1 : 0, PathSize));
+  void *Buffer = C.Allocate(totalSizeToAlloc<CXXBaseSpecifier *>(PathSize));
   return new (Buffer) CXXReinterpretCastExpr(EmptyShell(), PathSize);
 }
 
@@ -823,9 +811,7 @@ CXXFunctionalCastExpr::Create(const ASTContext &C, QualType T, ExprValueKind VK,
                               const CXXCastPath *BasePath,
                               SourceLocation L, SourceLocation R) {
   unsigned PathSize = (BasePath ? BasePath->size() : 0);
-  void *Buffer =
-      C.Allocate(totalSizeToAlloc<CastExpr::BasePathSizeTy, CXXBaseSpecifier *>(
-          PathSize ? 1 : 0, PathSize));
+  void *Buffer = C.Allocate(totalSizeToAlloc<CXXBaseSpecifier *>(PathSize));
   auto *E =
       new (Buffer) CXXFunctionalCastExpr(T, VK, Written, K, Op, PathSize, L, R);
   if (PathSize)
@@ -836,9 +822,7 @@ CXXFunctionalCastExpr::Create(const ASTContext &C, QualType T, ExprValueKind VK,
 
 CXXFunctionalCastExpr *
 CXXFunctionalCastExpr::CreateEmpty(const ASTContext &C, unsigned PathSize) {
-  void *Buffer =
-      C.Allocate(totalSizeToAlloc<CastExpr::BasePathSizeTy, CXXBaseSpecifier *>(
-          PathSize ? 1 : 0, PathSize));
+  void *Buffer = C.Allocate(totalSizeToAlloc<CXXBaseSpecifier *>(PathSize));
   return new (Buffer) CXXFunctionalCastExpr(EmptyShell(), PathSize);
 }
 

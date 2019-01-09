@@ -481,7 +481,10 @@ protected:
 
     unsigned Kind : 6;
     unsigned PartOfExplicitCast : 1; // Only set for ImplicitCastExpr.
-    unsigned BasePathIsEmpty : 1;
+
+    /// The number of CXXBaseSpecifiers in the cast. 14 bits would be enough
+    /// here. ([implimits] Direct and indirect base classes [16384]).
+    unsigned BasePathSize;
   };
 
   class BinaryOperatorBitfields {
