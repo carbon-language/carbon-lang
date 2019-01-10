@@ -101,6 +101,10 @@ define <8 x i32> @PR40243_alt(<8 x i32> %a, <8 x i32> %b) {
 ;
 ; AVX1-LABEL: PR40243_alt:
 ; AVX1:       # %bb.0:
+; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm1
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; AVX1-NEXT:    vphaddd %xmm1, %xmm0, %xmm0
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: PR40243_alt:
