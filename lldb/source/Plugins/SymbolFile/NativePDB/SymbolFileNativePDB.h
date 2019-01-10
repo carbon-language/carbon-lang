@@ -104,7 +104,8 @@ public:
                                uint32_t max_matches,
                                VariableList &variables) override;
 
-  size_t ParseTypes(const SymbolContext &sc) override;
+  size_t
+  ParseTypesForCompileUnit(lldb_private::CompileUnit &comp_unit) override;
   size_t ParseVariablesForContext(const SymbolContext &sc) override;
 
   void AddSymbols(Symtab &symtab) override;

@@ -1274,7 +1274,7 @@ size_t SymbolFileNativePDB::FindTypesByName(llvm::StringRef name,
   return match_count;
 }
 
-size_t SymbolFileNativePDB::ParseTypes(const SymbolContext &sc) {
+size_t SymbolFileNativePDB::ParseTypesForCompileUnit(CompileUnit &comp_unit) {
   // Only do the full type scan the first time.
   if (m_done_full_type_scan)
     return 0;
