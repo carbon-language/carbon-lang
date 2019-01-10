@@ -919,11 +919,11 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
   // it into an EOR which does. So add the first operand as a def and then
   // again as a use.
   if (MCID.getOpcode() == ARM::t2TEQrr) {
-    MachineOperand MO = MI->getOperand(0);
-    MO.setIsKill(false);
-    MO.setIsDef(true);
-    MO.setIsDead(true);
-    MIB.add(MO);
+    MIB.add(MI->getOperand(0));
+    MIB->getOperand(0).setIsKill(false);
+    MIB->getOperand(0).setIsDef(true);
+    MIB->getOperand(0).setIsDead(true);
+
     if (NewMCID.hasOptionalDef())
       MIB.add(HasCC ? t1CondCodeOp(CCDead) : condCodeOp());
     MIB.add(MI->getOperand(0));
