@@ -156,7 +156,7 @@ group("test") {
   if (clang_enable_static_analyzer) {
     deps += [
       "//clang/tools/clang-check",
-      "//clang/tools/clang-func-mapping",
+      "//clang/tools/clang-extdef-mapping",
     ]
   }
 
