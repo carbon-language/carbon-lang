@@ -340,6 +340,10 @@ instruction is available.
       f[i] = floorf(f[i]);
   }
 
+Note that the optimizer may not be able to vectorize math library functions 
+that access external state such as "errno". To allow better optimization of 
+C/C++ math library functions, use "-fno-math-errno".
+
 Partial unrolling during vectorization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
