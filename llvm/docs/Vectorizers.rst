@@ -311,7 +311,7 @@ ignored (as other compilers do) are still being left un-vectorized.
 Vectorization of function calls
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Loop Vectorize can vectorize intrinsic math functions.
+The Loop Vectorizer can vectorize intrinsic math functions.
 See the table below for a list of these functions.
 
 +-----+-----+---------+
@@ -328,6 +328,11 @@ See the table below for a list of these functions.
 |     |     | fmuladd |
 +-----+-----+---------+
 
+Note that the optimizer may not be able to vectorize math library functions 
+that correspond to these intrinsics if the library calls access external state 
+such as "errno". To allow better optimization of C/C++ math library functions, 
+use "-fno-math-errno".
+
 The loop vectorizer knows about special instructions on the target and will
 vectorize a loop containing a function call that maps to the instructions. For
 example, the loop below will be vectorized on Intel x86 if the SSE4.1 roundps
@@ -339,10 +344,6 @@ instruction is available.
     for (int i = 0; i != 1024; ++i)
       f[i] = floorf(f[i]);
   }
-
-Note that the optimizer may not be able to vectorize math library functions 
-that access external state such as "errno". To allow better optimization of 
-C/C++ math library functions, use "-fno-math-errno".
 
 Partial unrolling during vectorization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
