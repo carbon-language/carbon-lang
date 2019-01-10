@@ -507,6 +507,7 @@ set(powerpc64_SOURCES
   ppc/fixtfdi.c
   ppc/fixunstfti.c
   ppc/fixunstfdi.c
+  ppc/floattitf.c
   ppc/floatditf.c
   ppc/floatunditf.c
   ppc/gcc_qadd.c
