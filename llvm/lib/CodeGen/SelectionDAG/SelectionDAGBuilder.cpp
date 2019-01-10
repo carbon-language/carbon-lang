@@ -7915,19 +7915,19 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
     unsigned numRet;
     ArrayRef<Type *> ResultTypes;
     SmallVector<SDValue, 1> ResultValues(1);
-    if (CSResultType->isSingleValueType()) {
-      numRet = 1;
-      ResultValues[0] = Val;
-      ResultTypes = makeArrayRef(CSResultType);
-    } else {
-      numRet = CSResultType->getNumContainedTypes();
+    if (StructType *StructResult = dyn_cast<StructType>(CSResultType)) {
+      numRet = StructResult->getNumElements();
       assert(Val->getNumOperands() == numRet &&
              "Mismatch in number of output operands in asm result");
-      ResultTypes = CSResultType->subtypes();
+      ResultTypes = StructResult->elements();
       ArrayRef<SDUse> ValueUses = Val->ops();
       ResultValues.resize(numRet);
       std::transform(ValueUses.begin(), ValueUses.end(), ResultValues.begin(),
                      [](const SDUse &u) -> SDValue { return u.get(); });
+    } else {
+      numRet = 1;
+      ResultValues[0] = Val;
+      ResultTypes = makeArrayRef(CSResultType);
     }
     SmallVector<EVT, 1> ResultVTs(numRet);
     for (unsigned i = 0; i < numRet; i++) {
