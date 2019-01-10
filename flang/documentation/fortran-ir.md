@@ -29,9 +29,9 @@ In Fortran, there are a number of statements that result in control flow to stat
 
 #### Structured Control Flow
 
-Fortran has executable constructs that imply three basic control flow forms.  The first form is a structured loop (DO construct)<sup>2</sup>. The second form is a structured cascade of conditional branches (IF construct, IF statement,<sup3</sup> WHERE construct).  The third form is a structured multiway branch (SELECT CASE, SELECT RANK, and SELECT TYPE constructs).  The FORALL construct, while it implies a semantic model of interleaved iterations, can be modeled as a special single-entry single-exit region in FIR perhaps with backstage marker statements.<sup>4</sup>
+Fortran has executable constructs that imply three basic control flow forms.  The first form is a structured loop (DO construct)<sup>2</sup>. The second form is a structured cascade of conditional branches (IF construct, IF statement,<sup>3</sup> WHERE construct).  The third form is a structured multiway branch (SELECT CASE, SELECT RANK, and SELECT TYPE constructs).  The FORALL construct, while it implies a semantic model of interleaved iterations, can be modeled as a special single-entry single-exit region in FIR perhaps with backstage marker statements.<sup>4</sup>
 
-The CYCLE and EXIT statements interact with the above structured executable constructs by providing structured transfers of control.<sup5</sup> CYCLE (possibly named) is only valid in DO constructs and creates an alternate backedge in the enclosing loop.  EXIT transfers control out of the enclosing (possibly named) construct, which need not be a DO construct.
+The CYCLE and EXIT statements interact with the above structured executable constructs by providing structured transfers of control.<sup>5</sup> CYCLE (possibly named) is only valid in DO constructs and creates an alternate backedge in the enclosing loop.  EXIT transfers control out of the enclosing (possibly named) construct, which need not be a DO construct.
 
 #### Unstructured Control Flow
 
