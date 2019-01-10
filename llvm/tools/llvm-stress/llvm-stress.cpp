@@ -356,7 +356,7 @@ struct StoreModifier: public Modifier {
   void Act() override {
     // Try to use predefined pointers. If non-exist, use undef pointer value;
     Value *Ptr = getRandomPointerValue();
-    PointerType *Tp = Ptr->getType();
+    PointerType *Tp = cast<PointerType>(Ptr->getType());
     Value *Val = getRandomValue(Tp->getElementType());
     Type  *ValTy = Val->getType();
 
