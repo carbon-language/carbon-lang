@@ -21,11 +21,13 @@ foo:
   mov #42, 12(r15)
   mov #42, &disp
   mov disp, disp+2
+  mov r7, @r15
 
 ; CHECK: mov #42, r15          ; encoding: [0x3f,0x40,0x2a,0x00]
 ; CHECK: mov #42, 12(r15)      ; encoding: [0xbf,0x40,0x2a,0x00,0x0c,0x00]
 ; CHECK: mov #42, &disp        ; encoding: [0xb2,0x40,0x2a,0x00,A,A]
 ; CHECK: mov disp, disp+2      ; encoding: [0x90,0x40,A,A,B,B]
+; CHECK: mov r7, 0(r15)        ; encoding: [0x8f,0x47,0x00,0x00]
 
   add r7, r8
   add 6(r7), r8
