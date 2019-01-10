@@ -73,7 +73,7 @@ Error COFFReader::readSections(Object &Obj) const {
       return errorCodeToError(EC);
     ArrayRef<coff_relocation> Relocs = COFFObj.getRelocations(Sec);
     for (const coff_relocation &R : Relocs)
-      S.Relocs.push_back(Relocation{R});
+      S.Relocs.push_back(R);
     if (auto EC = COFFObj.getSectionName(Sec, S.Name))
       return errorCodeToError(EC);
     if (Sec->hasExtendedRelocations())
