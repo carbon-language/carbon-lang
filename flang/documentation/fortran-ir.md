@@ -101,7 +101,7 @@ While each control-flow source statement is explicit in the traversal, it can be
 
 Above, various Fortran executable constructs were discussed with respect to how they (may) give rise to control flow.  These Fortran statements are mapped to a small number of FIR statements: ReturnStmt, BranchStmt, SwitchStmt, IndirectBrStmt, and UnreachableStmt.
 
-_ReturnStmt_: execution leaves the enclosing Procedure. A ReturnStmt can return and optional value. This would appear for RETURN statements or at END SUBROUTINE.
+_ReturnStmt_: execution leaves the enclosing Procedure. A ReturnStmt can return an optional value. This would appear for RETURN statements or at END SUBROUTINE.
 
 _BranchStmt_: execution of the current basic block ends. If the branch is unconditional then control transfers to exactly one successor basic block. If the branch is conditional then control transfers to exactly one of two successor blocks depending on the true/false value of the condition. All successors must be in the current Procedure. Unconditional branches would appear for GOTO statements. Conditional branches would appear for IF constructs, IF statements, etc.
 
@@ -110,6 +110,8 @@ _SwitchStmt_: Exactly one of multiple successors is selected based on the contro
 _IndirectBrStmt_: A variable is loaded with the address of a basic block in the containing Procedure. Control is transferred to the contents of this variable. An IndirectBrStmt also requires a complete list of potential basic blocks that may be loaded into the variable. This would appear for ASSIGNED GOTO.
 
 Supporting ASSIGNED GOTO offers a little extra challenge as the ASSIGN GOTO statement's list of target labels is optional.  If that list is not present, then the procedure must be analyzed to find ASSIGN statements. The implementation proactively looks for ASSIGN statements and keeps a dictionary mapping an assigned Symbol to its set of targets. When constructing the CFG, ASSIGNED GOTOs can be processed as to potential targets either from the list provided in the ASSIGNED GOTO or from the analysis pass.
+
+Alternatively, ASSIGNED GOTO could be implemented as a _SwitchStmt_ that tests on a compiler-defined value and fully elaborates all potential target basic blocks.
 
 _UnreachableStmt_: If control reaches an unreachable statement, then an error has occurred. Calls to library routines that do not return should be followed by an UnreachableStmt.  An example would be the STOP statement.
 
