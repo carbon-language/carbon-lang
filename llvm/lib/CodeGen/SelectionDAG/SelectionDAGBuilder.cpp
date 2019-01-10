@@ -7756,7 +7756,8 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
 
           if (const TargetRegisterClass *RC = TLI.getRegClassFor(RegVT)) {
             unsigned NumRegs = InlineAsm::getNumOperandRegisters(OpFlag);
-            MachineRegisterInfo &RegInfo = DAG.getMachineFunction().getRegInfo();
+            MachineRegisterInfo &RegInfo =
+                DAG.getMachineFunction().getRegInfo();
             for (unsigned i = 0; i != NumRegs; ++i)
               Regs.push_back(RegInfo.createVirtualRegister(RC));
           } else {
