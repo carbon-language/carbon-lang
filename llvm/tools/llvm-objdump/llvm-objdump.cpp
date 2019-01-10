@@ -2015,7 +2015,14 @@ void llvm::PrintSymbolTable(const ObjectFile *o, StringRef ArchiveName,
     printCOFFSymbolTable(coff);
     return;
   }
-  for (const SymbolRef &Symbol : o->symbols()) {
+
+  for (auto I = o->symbol_begin(), E = o->symbol_end(); I != E; ++I) {
+    // Skip printing the special zero symbol when dumping an ELF file.
+    // This makes the output consistent with the GNU objdump.
+    if (I == o->symbol_begin() && isa<ELFObjectFileBase>(o))
+      continue;
+
+    const SymbolRef &Symbol = *I;
     Expected<uint64_t> AddressOrError = Symbol.getAddress();
     if (!AddressOrError)
       report_error(ArchiveName, o->getFileName(), AddressOrError.takeError(),
