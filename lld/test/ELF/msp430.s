@@ -38,3 +38,6 @@ foo:
 
 ; CHECK:      Contents of section .data:
 ; CHECK-NEXT: 2000 21008000 800000
+
+; RUN: od -x %t3 | FileCheck -check-prefix=TRAP %s
+; TRAP: 4343 4343 4343 4343 4343 4343 4343 4343
