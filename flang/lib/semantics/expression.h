@@ -208,7 +208,7 @@ std::optional<Expr<SomeType>> AnalyzeExpr(
 template<typename L, typename R>
 bool AreConformable(const L &left, const R &right) {
   int leftRank{left.Rank()};
-  if (left.Rank() == 0) {
+  if (leftRank == 0) {
     return true;
   }
   int rightRank{right.Rank()};
