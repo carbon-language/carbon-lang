@@ -1301,8 +1301,10 @@ void PDBLinker::addObjFile(ObjFile *File, CVIndexMap *ExternIndexMap) {
 
   // If the .debug$T sections fail to merge, assume there is no debug info.
   if (!IndexMapResult) {
-    if (!Config->WarnDebugInfoUnusable)
+    if (!Config->WarnDebugInfoUnusable) {
+      consumeError(IndexMapResult.takeError());
       return;
+    }
     StringRef FileName = sys::path::filename(Path);
     warn("Cannot use debug info for '" + FileName + "' [LNK4099]\n" +
          ">>> failed to load reference " +
