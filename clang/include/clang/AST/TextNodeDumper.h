@@ -16,6 +16,7 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTDumperUtils.h"
+#include "clang/AST/AttrVisitor.h"
 #include "clang/AST/CommentCommandTraits.h"
 #include "clang/AST/CommentVisitor.h"
 #include "clang/AST/ExprCXX.h"
@@ -121,7 +122,8 @@ public:
 class TextNodeDumper
     : public TextTreeStructure,
       public comments::ConstCommentVisitor<TextNodeDumper, void,
-                                           const comments::FullComment *> {
+                                           const comments::FullComment *>,
+      public ConstAttrVisitor<TextNodeDumper> {
   raw_ostream &OS;
   const bool ShowColors;
 
@@ -145,6 +147,8 @@ public:
                  const comments::CommandTraits *Traits);
 
   void Visit(const comments::Comment *C, const comments::FullComment *FC);
+
+  void Visit(const Attr *A);
 
   void dumpPointer(const void *Ptr);
   void dumpLocation(SourceLocation Loc);
@@ -179,6 +183,9 @@ public:
                                 const comments::FullComment *);
   void visitVerbatimLineComment(const comments::VerbatimLineComment *C,
                                 const comments::FullComment *);
+
+// Implements Visit methods for Attrs.
+#include "clang/AST/AttrTextNodeDump.inc"
 };
 
 } // namespace clang
