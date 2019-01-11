@@ -61,6 +61,9 @@ namespace  {
     template<typename Fn> void dumpChild(Fn DoDumpChild) {
       NodeDumper.AddChild(DoDumpChild);
     }
+    template <typename Fn> void dumpChild(StringRef Label, Fn DoDumpChild) {
+      NodeDumper.AddChild(Label, DoDumpChild);
+    }
 
   public:
     ASTDumper(raw_ostream &OS, const CommandTraits *Traits,
@@ -80,7 +83,7 @@ namespace  {
     void setDeserialize(bool D) { Deserialize = D; }
 
     void dumpDecl(const Decl *D);
-    void dumpStmt(const Stmt *S);
+    void dumpStmt(const Stmt *S, StringRef Label = {});
 
     // Utilities
     void dumpType(QualType T) { NodeDumper.dumpType(T); }
@@ -1685,8 +1688,8 @@ void ASTDumper::VisitBlockDecl(const BlockDecl *D) {
 //  Stmt dumping methods.
 //===----------------------------------------------------------------------===//
 
-void ASTDumper::dumpStmt(const Stmt *S) {
-  dumpChild([=] {
+void ASTDumper::dumpStmt(const Stmt *S, StringRef Label) {
+  dumpChild(Label, [=] {
     if (!S) {
       ColorScope Color(OS, ShowColors, NullColor);
       OS << "<<<NULL>>>";
@@ -1957,10 +1960,7 @@ void ASTDumper::VisitInitListExpr(const InitListExpr *ILE) {
     NodeDumper.dumpBareDeclRef(Field);
   }
   if (auto *Filler = ILE->getArrayFiller()) {
-    dumpChild([=] {
-      OS << "array filler";
-      dumpStmt(Filler);
-    });
+    dumpStmt(Filler, "array_filler");
   }
 }
 
