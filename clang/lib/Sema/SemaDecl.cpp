@@ -9030,10 +9030,14 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         // selecting a friend based on a dependent factor.  But there
         // are situations where these conditions don't apply and we
         // can actually do this check immediately.
+        //
+        // Unless the scope is dependent, it's always an error if qualified
+        // redeclaration lookup found nothing at all. Diagnose that now;
+        // nothing will diagnose that error later.
         if (isFriend &&
-            (TemplateParamLists.size() ||
-             D.getCXXScopeSpec().getScopeRep()->isDependent() ||
-             CurContext->isDependentContext())) {
+            (D.getCXXScopeSpec().getScopeRep()->isDependent() ||
+             (!Previous.empty() && (TemplateParamLists.size() ||
+                                    CurContext->isDependentContext())))) {
           // ignore these
         } else {
           // The user tried to provide an out-of-line definition for a
