@@ -849,7 +849,7 @@ Preprocessor::EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
 
     // Restore 'DisableMacroExpansion'.
     DisableMacroExpansion = DisableMacroExpansionAtStartOfDirective;
-    return {false, DT.IncludedUndefinedIds};
+    return {false, DT.IncludedUndefinedIds, {}};
   }
 
   // If we are at the end of the expression after just parsing a value, there
