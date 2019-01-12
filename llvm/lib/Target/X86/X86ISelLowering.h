@@ -98,7 +98,7 @@ namespace llvm {
       SETCC,
 
       /// X86 Select
-      SELECT, SELECTS,
+      SELECTS,
 
       // Same as SETCC except it's materialized with a sbb and the value is all
       // one's or all zero's.
