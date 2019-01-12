@@ -167,7 +167,6 @@ public:
   void dumpBareDeclRef(const Decl *D);
   void dumpName(const NamedDecl *ND);
   void dumpAccessSpecifier(AccessSpecifier AS);
-  void dumpCXXTemporary(const CXXTemporary *Temporary);
 
   void dumpDeclRef(const Decl *D, StringRef Label = {});
 
@@ -255,6 +254,9 @@ public:
   void VisitObjCSubscriptRefExpr(const ObjCSubscriptRefExpr *Node);
   void VisitObjCIvarRefExpr(const ObjCIvarRefExpr *Node);
   void VisitObjCBoolLiteralExpr(const ObjCBoolLiteralExpr *Node);
+
+private:
+  void dumpCXXTemporary(const CXXTemporary *Temporary);
 };
 
 } // namespace clang
