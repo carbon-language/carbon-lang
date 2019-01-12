@@ -184,12 +184,12 @@ void TextNodeDumper::dumpCXXTemporary(const CXXTemporary *Temporary) {
   OS << ")";
 }
 
-void TextNodeDumper::dumpDeclRef(const Decl *D, const char *Label) {
+void TextNodeDumper::dumpDeclRef(const Decl *D, StringRef Label) {
   if (!D)
     return;
 
   AddChild([=] {
-    if (Label)
+    if (!Label.empty())
       OS << Label << ' ';
     dumpBareDeclRef(D);
   });

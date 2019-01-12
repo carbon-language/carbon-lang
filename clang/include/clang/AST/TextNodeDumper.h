@@ -160,7 +160,7 @@ public:
   void dumpAccessSpecifier(AccessSpecifier AS);
   void dumpCXXTemporary(const CXXTemporary *Temporary);
 
-  void dumpDeclRef(const Decl *D, const char *Label = nullptr);
+  void dumpDeclRef(const Decl *D, StringRef Label = {});
 
   void visitTextComment(const comments::TextComment *C,
                         const comments::FullComment *);
