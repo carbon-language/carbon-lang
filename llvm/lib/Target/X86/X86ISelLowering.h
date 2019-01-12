@@ -556,6 +556,10 @@ namespace llvm {
       // Conversions between float and half-float.
       CVTPS2PH, CVTPH2PS, CVTPH2PS_RND,
 
+      // Masked version of above.
+      // SRC, RND, PASSTHRU, MASK
+      MCVTPS2PH,
+
       // Galois Field Arithmetic Instructions
       GF2P8AFFINEINVQB, GF2P8AFFINEQB, GF2P8MULB,
 

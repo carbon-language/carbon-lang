@@ -21383,12 +21383,6 @@ static SDValue getVectorMaskingNode(SDValue Op, SDValue Mask,
   case X86ISD::VPSHUFBITQMB:
   case X86ISD::VFPCLASS:
     return DAG.getNode(ISD::AND, dl, VT, Op, VMask);
-  case X86ISD::CVTPS2PH:
-    // We can't use ISD::VSELECT here because it is not always "Legal"
-    // for the destination type. For example vpmovqb require only AVX512
-    // and vselect that can operate on byte element type require BWI
-    OpcodeSelect = X86ISD::SELECT;
-    break;
   }
   if (PreservedSrc.isUndef())
     PreservedSrc = getZeroVector(VT, Subtarget, DAG, dl);
@@ -22068,15 +22062,29 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       SDValue Mask = Op.getOperand(3);
 
       if (isAllOnesConstant(Mask))
-        return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl,
-                                                Op.getValueType(), Src),
-                                    Mask, PassThru, Subtarget, DAG);
+        return DAG.getNode(IntrData->Opc0, dl, Op.getValueType(), Src);
 
       MVT SrcVT = Src.getSimpleValueType();
       MVT MaskVT = MVT::getVectorVT(MVT::i1, SrcVT.getVectorNumElements());
       Mask = getMaskNode(Mask, MaskVT, Subtarget, DAG, dl);
       return DAG.getNode(IntrData->Opc1, dl, Op.getValueType(), Src, PassThru,
                          Mask);
+    }
+    case CVTPS2PH_MASK: {
+      SDValue Src = Op.getOperand(1);
+      SDValue Rnd = Op.getOperand(2);
+      SDValue PassThru = Op.getOperand(3);
+      SDValue Mask = Op.getOperand(4);
+
+      if (isAllOnesConstant(Mask))
+        return DAG.getNode(IntrData->Opc0, dl, Op.getValueType(), Src, Rnd);
+
+      MVT SrcVT = Src.getSimpleValueType();
+      MVT MaskVT = MVT::getVectorVT(MVT::i1, SrcVT.getVectorNumElements());
+      Mask = getMaskNode(Mask, MaskVT, Subtarget, DAG, dl);
+      return DAG.getNode(IntrData->Opc1, dl, Op.getValueType(), Src, Rnd,
+                         PassThru, Mask);
+
     }
     default:
       break;
@@ -27365,6 +27373,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::SCALAR_SINT_TO_FP_RND: return "X86ISD::SCALAR_SINT_TO_FP_RND";
   case X86ISD::SCALAR_UINT_TO_FP_RND: return "X86ISD::SCALAR_UINT_TO_FP_RND";
   case X86ISD::CVTPS2PH:           return "X86ISD::CVTPS2PH";
+  case X86ISD::MCVTPS2PH:          return "X86ISD::MCVTPS2PH";
   case X86ISD::CVTPH2PS:           return "X86ISD::CVTPH2PS";
   case X86ISD::CVTPH2PS_RND:       return "X86ISD::CVTPH2PS_RND";
   case X86ISD::CVTP2SI:            return "X86ISD::CVTP2SI";
