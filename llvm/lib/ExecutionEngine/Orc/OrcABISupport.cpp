@@ -610,13 +610,13 @@ void OrcMips32_Base::writeResolverCode(uint8_t *ResolverMem,
       0x8fa40008,                    // 0xe8: lw $a0,8($sp)
       0x27bd0068,                    // 0xec: addiu $sp,$sp,104
       0x0300f825,                    // 0xf0: move $ra, $t8
-      0x00000000,                    // 0xf4: move $t9, $v0/v1
-      0x03200008                     // 0xf8: jr $t9
+      0x03200008,                    // 0xf4: jr $t9
+      0x00000000,                    // 0xf8: move $t9, $v0/v1
   };
 
   const unsigned ReentryFnAddrOffset = 0x7c;   // JIT re-entry fn addr lui
   const unsigned CallbackMgrAddrOffset = 0x6c; // Callback manager addr lui
-  const unsigned Offsett = 0xf4;
+  const unsigned Offsett = 0xf8;
 
   memcpy(ResolverMem, ResolverCode, sizeof(ResolverCode));
 
@@ -810,8 +810,8 @@ void OrcMips64::writeResolverCode(uint8_t *ResolverMem, JITReentryFn ReentryFn,
       0xdfa30008,                     // 0x10c: ld v1, 8(sp)
       0x67bd00d0,                     // 0x110: daddiu $sp,$sp,208
       0x0300f825,                     // 0x114: move $ra, $t8
-      0x0040c825,                     // 0x118: move $t9, $v0
-      0x03200008                      // 0x11c: jr $t9
+      0x03200008,                     // 0x118: jr $t9
+      0x0040c825,                     // 0x11c: move $t9, $v0
   };
 
   const unsigned ReentryFnAddrOffset = 0x8c;   // JIT re-entry fn addr lui
