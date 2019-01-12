@@ -20430,10 +20430,11 @@ static SDValue LowerStore(SDValue Op, const X86Subtarget &Subtarget,
     assert(Subtarget.hasAVX512() && !Subtarget.hasDQI() &&
            "Expected AVX512F without AVX512DQI");
 
-    StoredVal = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, MVT::v8i1,
-                            DAG.getUNDEF(MVT::v8i1), StoredVal,
+    StoredVal = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, MVT::v16i1,
+                            DAG.getUNDEF(MVT::v16i1), StoredVal,
                             DAG.getIntPtrConstant(0, dl));
-    StoredVal = DAG.getBitcast(MVT::i8, StoredVal);
+    StoredVal = DAG.getBitcast(MVT::i16, StoredVal);
+    StoredVal = DAG.getNode(ISD::TRUNCATE, dl, MVT::i8, StoredVal);
 
     return DAG.getStore(St->getChain(), dl, StoredVal, St->getBasePtr(),
                         St->getPointerInfo(), St->getAlignment(),
@@ -20499,10 +20500,11 @@ static SDValue LowerLoad(SDValue Op, const X86Subtarget &Subtarget,
     // Replace chain users with the new chain.
     assert(NewLd->getNumValues() == 2 && "Loads must carry a chain!");
 
-    SDValue Extract = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, RegVT,
-                                  DAG.getBitcast(MVT::v8i1, NewLd),
-                                  DAG.getIntPtrConstant(0, dl));
-    return DAG.getMergeValues({Extract, NewLd.getValue(1)}, dl);
+    SDValue Val = DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i16, NewLd);
+    Val = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, RegVT,
+                      DAG.getBitcast(MVT::v16i1, Val),
+                      DAG.getIntPtrConstant(0, dl));
+    return DAG.getMergeValues({Val, NewLd.getValue(1)}, dl);
   }
 
   // Nothing useful we can do without SSE2 shuffles.

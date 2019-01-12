@@ -2887,6 +2887,8 @@ let Predicates = [HasDQI] in {
 let Predicates = [HasAVX512] in {
   def : Pat<(v8i1 (bitconvert (i8 (load addr:$src)))),
             (COPY_TO_REGCLASS (MOVZX32rm8 addr:$src), VK8)>;
+  def : Pat<(v16i1 (bitconvert (loadi16 addr:$src))),
+            (KMOVWkm addr:$src)>;
 }
 
 def X86kextract : SDNode<"ISD::EXTRACT_VECTOR_ELT",
