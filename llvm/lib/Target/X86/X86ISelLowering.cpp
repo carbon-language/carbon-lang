@@ -21385,10 +21385,6 @@ static SDValue getVectorMaskingNode(SDValue Op, SDValue Mask,
   case X86ISD::VPSHUFBITQMB:
   case X86ISD::VFPCLASS:
     return DAG.getNode(ISD::AND, dl, VT, Op, VMask);
-  case ISD::TRUNCATE:
-  case X86ISD::VTRUNC:
-  case X86ISD::VTRUNCS:
-  case X86ISD::VTRUNCUS:
   case X86ISD::CVTPS2PH:
     // We can't use ISD::VSELECT here because it is not always "Legal"
     // for the destination type. For example vpmovqb require only AVX512
@@ -22067,6 +22063,22 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       SDValue SetCC = getSETCC(X86::COND_B, Res.getValue(1), dl, DAG);
       SDValue Results[] = { SetCC, Res };
       return DAG.getMergeValues(Results, dl);
+    }
+    case TRUNCATE_TO_REG: {
+      SDValue Src = Op.getOperand(1);
+      SDValue PassThru = Op.getOperand(2);
+      SDValue Mask = Op.getOperand(3);
+
+      if (isAllOnesConstant(Mask))
+        return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl,
+                                                Op.getValueType(), Src),
+                                    Mask, PassThru, Subtarget, DAG);
+
+      MVT SrcVT = Src.getSimpleValueType();
+      MVT MaskVT = MVT::getVectorVT(MVT::i1, SrcVT.getVectorNumElements());
+      Mask = getMaskNode(Mask, MaskVT, Subtarget, DAG, dl);
+      return DAG.getNode(IntrData->Opc1, dl, Op.getValueType(), Src, PassThru,
+                         Mask);
     }
     default:
       break;
@@ -27172,6 +27184,9 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VTRUNC:             return "X86ISD::VTRUNC";
   case X86ISD::VTRUNCS:            return "X86ISD::VTRUNCS";
   case X86ISD::VTRUNCUS:           return "X86ISD::VTRUNCUS";
+  case X86ISD::VMTRUNC:            return "X86ISD::VMTRUNC";
+  case X86ISD::VMTRUNCS:           return "X86ISD::VMTRUNCS";
+  case X86ISD::VMTRUNCUS:          return "X86ISD::VMTRUNCUS";
   case X86ISD::VTRUNCSTORES:       return "X86ISD::VTRUNCSTORES";
   case X86ISD::VTRUNCSTOREUS:      return "X86ISD::VTRUNCSTOREUS";
   case X86ISD::VMTRUNCSTORES:      return "X86ISD::VMTRUNCSTORES";
