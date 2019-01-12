@@ -20,6 +20,7 @@
 #include "clang/AST/CommentCommandTraits.h"
 #include "clang/AST/CommentVisitor.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/AST/TemplateArgumentVisitor.h"
 
 namespace clang {
 
@@ -123,7 +124,8 @@ class TextNodeDumper
     : public TextTreeStructure,
       public comments::ConstCommentVisitor<TextNodeDumper, void,
                                            const comments::FullComment *>,
-      public ConstAttrVisitor<TextNodeDumper> {
+      public ConstAttrVisitor<TextNodeDumper>,
+      public ConstTemplateArgumentVisitor<TextNodeDumper> {
   raw_ostream &OS;
   const bool ShowColors;
 
@@ -149,6 +151,9 @@ public:
   void Visit(const comments::Comment *C, const comments::FullComment *FC);
 
   void Visit(const Attr *A);
+
+  void Visit(const TemplateArgument &TA, SourceRange R,
+             const Decl *From = nullptr, StringRef Label = {});
 
   void dumpPointer(const void *Ptr);
   void dumpLocation(SourceLocation Loc);
@@ -186,6 +191,16 @@ public:
 
 // Implements Visit methods for Attrs.
 #include "clang/AST/AttrTextNodeDump.inc"
+
+  void VisitNullTemplateArgument(const TemplateArgument &TA);
+  void VisitTypeTemplateArgument(const TemplateArgument &TA);
+  void VisitDeclarationTemplateArgument(const TemplateArgument &TA);
+  void VisitNullPtrTemplateArgument(const TemplateArgument &TA);
+  void VisitIntegralTemplateArgument(const TemplateArgument &TA);
+  void VisitTemplateTemplateArgument(const TemplateArgument &TA);
+  void VisitTemplateExpansionTemplateArgument(const TemplateArgument &TA);
+  void VisitExpressionTemplateArgument(const TemplateArgument &TA);
+  void VisitPackTemplateArgument(const TemplateArgument &TA);
 };
 
 } // namespace clang
