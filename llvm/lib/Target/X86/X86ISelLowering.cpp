@@ -23602,6 +23602,15 @@ static SDValue LowerABS(SDValue Op, const X86Subtarget &Subtarget,
     return DAG.getNode(X86ISD::CMOV, DL, VT, Ops);
   }
 
+  // ABS(vXi64 X) --> VPBLENDVPD(X, 0-X, X).
+  if ((VT == MVT::v2i64 || VT == MVT::v4i64) && Subtarget.hasSSE41()) {
+    SDLoc DL(Op);
+    SDValue Src = Op.getOperand(0);
+    SDValue Sub =
+        DAG.getNode(ISD::SUB, DL, VT, DAG.getConstant(0, DL, VT), Src);
+    return DAG.getNode(X86ISD::SHRUNKBLEND, DL, VT, Src, Sub, Src);
+  }
+
   if (VT.is256BitVector() && !Subtarget.hasInt256()) {
     assert(VT.isInteger() &&
            "Only handle AVX 256-bit vector integer operation");
