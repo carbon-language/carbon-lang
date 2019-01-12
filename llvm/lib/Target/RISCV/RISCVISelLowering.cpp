@@ -525,6 +525,20 @@ static bool isVariableShift(SDValue Val) {
   }
 }
 
+// Returns true if the given node is an sdiv, udiv, or urem with non-constant
+// operands.
+static bool isVariableSDivUDivURem(SDValue Val) {
+  switch (Val.getOpcode()) {
+  default:
+    return false;
+  case ISD::SDIV:
+  case ISD::UDIV:
+  case ISD::UREM:
+    return Val.getOperand(0).getOpcode() != ISD::Constant &&
+           Val.getOperand(1).getOpcode() != ISD::Constant;
+  }
+}
+
 SDValue RISCVTargetLowering::PerformDAGCombine(SDNode *N,
                                                DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -552,12 +566,14 @@ SDValue RISCVTargetLowering::PerformDAGCombine(SDNode *N,
         N, DAG.getNode(N->getOpcode(), DL, LHS.getValueType(), LHS, NewRHS));
   }
   case ISD::ANY_EXTEND: {
-    // If any-extending an i32 variable-length shift to i64, then instead
-    // sign-extend in order to increase the chance of being able to select the
-    // sllw/srlw/sraw instruction.
+    // If any-extending an i32 variable-length shift or sdiv/udiv/urem to i64,
+    // then instead sign-extend in order to increase the chance of being able
+    // to select the sllw/srlw/sraw/divw/divuw/remuw instructions.
     SDValue Src = N->getOperand(0);
-    if (N->getValueType(0) != MVT::i64 || Src.getValueType() != MVT::i32 ||
-        !isVariableShift(Src))
+    if (N->getValueType(0) != MVT::i64 || Src.getValueType() != MVT::i32)
+      break;
+    if (!isVariableShift(Src) &&
+        !(Subtarget.hasStdExtM() && isVariableSDivUDivURem(Src)))
       break;
     SDLoc DL(N);
     return DCI.CombineTo(N, DAG.getNode(ISD::SIGN_EXTEND, DL, MVT::i64, Src));
