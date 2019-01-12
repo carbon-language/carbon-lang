@@ -709,9 +709,8 @@ void ASTDumper::dumpTemplateArgument(const TemplateArgument &A, SourceRange R,
       break;
     case TemplateArgument::Pack:
       OS << " pack";
-      for (TemplateArgument::pack_iterator I = A.pack_begin(), E = A.pack_end();
-           I != E; ++I)
-        dumpTemplateArgument(*I);
+      for (const auto& TArg : A.pack_elements())
+        dumpTemplateArgument(TArg);
       break;
     }
   });
