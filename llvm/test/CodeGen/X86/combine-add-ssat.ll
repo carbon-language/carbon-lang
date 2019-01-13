@@ -17,10 +17,10 @@ define i32 @combine_constant_i32(i32 %a0) {
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    xorl %eax, %eax
 ; CHECK-NEXT:    movl %edi, %ecx
-; CHECK-NEXT:    addl $1, %ecx
+; CHECK-NEXT:    incl %ecx
 ; CHECK-NEXT:    setns %al
 ; CHECK-NEXT:    addl $2147483647, %eax # imm = 0x7FFFFFFF
-; CHECK-NEXT:    addl $1, %edi
+; CHECK-NEXT:    incl %edi
 ; CHECK-NEXT:    cmovnol %edi, %eax
 ; CHECK-NEXT:    retq
   %res = call i32 @llvm.sadd.sat.i32(i32 1, i32 %a0);
@@ -45,30 +45,16 @@ define <8 x i16> @combine_constant_v8i16(<8 x i16> %a0) {
 define i32 @combine_zero_i32(i32 %a0) {
 ; CHECK-LABEL: combine_zero_i32:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    xorl %eax, %eax
-; CHECK-NEXT:    movl %edi, %ecx
-; CHECK-NEXT:    addl $0, %ecx
-; CHECK-NEXT:    setns %al
-; CHECK-NEXT:    addl $2147483647, %eax # imm = 0x7FFFFFFF
-; CHECK-NEXT:    addl $0, %edi
-; CHECK-NEXT:    cmovnol %edi, %eax
+; CHECK-NEXT:    movl %edi, %eax
 ; CHECK-NEXT:    retq
   %1 = call i32 @llvm.sadd.sat.i32(i32 %a0, i32 0);
   ret i32 %1
 }
 
 define <8 x i16> @combine_zero_v8i16(<8 x i16> %a0) {
-; SSE-LABEL: combine_zero_v8i16:
-; SSE:       # %bb.0:
-; SSE-NEXT:    pxor %xmm1, %xmm1
-; SSE-NEXT:    paddsw %xmm1, %xmm0
-; SSE-NEXT:    retq
-;
-; AVX-LABEL: combine_zero_v8i16:
-; AVX:       # %bb.0:
-; AVX-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; AVX-NEXT:    vpaddsw %xmm1, %xmm0, %xmm0
-; AVX-NEXT:    retq
+; CHECK-LABEL: combine_zero_v8i16:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    retq
   %1 = call <8 x i16> @llvm.sadd.sat.v8i16(<8 x i16> %a0, <8 x i16> zeroinitializer);
   ret <8 x i16> %1
 }

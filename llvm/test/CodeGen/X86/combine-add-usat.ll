@@ -41,26 +41,16 @@ define <8 x i16> @combine_constant_v8i16(<8 x i16> %a0) {
 define i32 @combine_zero_i32(i32 %a0) {
 ; CHECK-LABEL: combine_zero_i32:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addl $0, %edi
-; CHECK-NEXT:    movl $-1, %eax
-; CHECK-NEXT:    cmovael %edi, %eax
+; CHECK-NEXT:    movl %edi, %eax
 ; CHECK-NEXT:    retq
   %1 = call i32 @llvm.uadd.sat.i32(i32 %a0, i32 0);
   ret i32 %1
 }
 
 define <8 x i16> @combine_zero_v8i16(<8 x i16> %a0) {
-; SSE-LABEL: combine_zero_v8i16:
-; SSE:       # %bb.0:
-; SSE-NEXT:    pxor %xmm1, %xmm1
-; SSE-NEXT:    paddusw %xmm1, %xmm0
-; SSE-NEXT:    retq
-;
-; AVX-LABEL: combine_zero_v8i16:
-; AVX:       # %bb.0:
-; AVX-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; AVX-NEXT:    vpaddusw %xmm1, %xmm0, %xmm0
-; AVX-NEXT:    retq
+; CHECK-LABEL: combine_zero_v8i16:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    retq
   %1 = call <8 x i16> @llvm.uadd.sat.v8i16(<8 x i16> %a0, <8 x i16> zeroinitializer);
   ret <8 x i16> %1
 }
