@@ -3287,14 +3287,12 @@ bool SelectionDAGLegalize::ExpandNode(SDNode *Node) {
   case ISD::SADDSAT:
   case ISD::UADDSAT:
   case ISD::SSUBSAT:
-  case ISD::USUBSAT: {
-    Results.push_back(TLI.getExpandedSaturationAdditionSubtraction(Node, DAG));
+  case ISD::USUBSAT:
+    Results.push_back(TLI.expandAddSubSat(Node, DAG));
     break;
-  }
-  case ISD::SMULFIX: {
+  case ISD::SMULFIX:
     Results.push_back(TLI.getExpandedFixedPointMultiplication(Node, DAG));
     break;
-  }
   case ISD::SADDO:
   case ISD::SSUBO: {
     SDValue LHS = Node->getOperand(0);
