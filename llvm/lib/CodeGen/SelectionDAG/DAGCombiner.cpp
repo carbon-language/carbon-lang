@@ -2206,6 +2206,10 @@ SDValue DAGCombiner::visitADDSAT(SDNode *N) {
   if (isNullConstant(N1))
     return N0;
 
+  // If it cannot overflow, transform into an add.
+  if (DAG.computeOverflowKind(N0, N1) == SelectionDAG::OFK_Never)
+    return DAG.getNode(ISD::ADD, DL, VT, N0, N1);
+
   return SDValue();
 }
 
