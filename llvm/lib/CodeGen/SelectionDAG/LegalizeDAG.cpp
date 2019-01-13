@@ -3685,10 +3685,7 @@ bool SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     (void)Legalized;
     assert(Legalized && "Can't legalize BR_CC with legal condition!");
 
-    // If we expanded the SETCC by inverting the condition code, then wrap
-    // the existing SETCC in a NOT to restore the intended condition.
-    if (NeedInvert)
-      Tmp4 = DAG.getNOT(dl, Tmp4, Tmp4->getValueType(0));
+    assert(!NeedInvert && "Don't know how to invert BR_CC!");
 
     // If we expanded the SETCC by swapping LHS and RHS, create a new BR_CC
     // node.
