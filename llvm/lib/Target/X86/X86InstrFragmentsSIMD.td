@@ -143,6 +143,14 @@ def X86fpextRnd  : SDNode<"X86ISD::VFPEXTS_RND",
                                              SDTCisSameSizeAs<0, 2>,
                                              SDTCisVT<3, i32>]>>;
 
+def X86vmfpround: SDNode<"X86ISD::VMFPROUND",
+                         SDTypeProfile<1, 3, [SDTCVecEltisVT<0, f32>,
+                                              SDTCVecEltisVT<1, f64>,
+                                              SDTCisSameSizeAs<0, 1>,
+                                              SDTCisSameAs<0, 2>,
+                                              SDTCVecEltisVT<3, i1>,
+                                              SDTCisSameNumEltsAs<1, 3>]>>;
+
 def X86vshiftimm : SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0,1>,
                                         SDTCisVT<2, i8>, SDTCisInt<0>]>;
 

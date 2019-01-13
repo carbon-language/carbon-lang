@@ -304,6 +304,10 @@ namespace llvm {
       // Vector FP round.
       VFPROUND, VFPROUND_RND, VFPROUNDS_RND,
 
+      // Masked version of above. Used for v2f64->v4f32.
+      // SRC, PASSTHRU, MASK
+      VMFPROUND,
+
       // 128-bit vector logical left / right shift
       VSHLDQ, VSRLDQ,
 
