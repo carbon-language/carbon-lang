@@ -590,6 +590,19 @@ def X86cvtp2Int      : SDNode<"X86ISD::CVTP2SI",  SDTFloatToInt>;
 def X86cvtp2UInt     : SDNode<"X86ISD::CVTP2UI",  SDTFloatToInt>;
 
 
+def SDTMFloatToInt: SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisVec<1>,
+                                         SDTCisInt<0>, SDTCisFP<1>,
+                                         SDTCisSameSizeAs<0, 1>,
+                                         SDTCisSameAs<0, 2>,
+                                         SDTCVecEltisVT<3, i1>,
+                                         SDTCisSameNumEltsAs<1, 3>]>;
+
+def X86mcvtp2Int     : SDNode<"X86ISD::MCVTP2SI",  SDTMFloatToInt>;
+def X86mcvtp2UInt    : SDNode<"X86ISD::MCVTP2UI",  SDTMFloatToInt>;
+def X86mcvttp2si     : SDNode<"X86ISD::MCVTTP2SI", SDTMFloatToInt>;
+def X86mcvttp2ui     : SDNode<"X86ISD::MCVTTP2UI", SDTMFloatToInt>;
+
+
 def X86cvtph2ps     : SDNode<"X86ISD::CVTPH2PS",
                               SDTypeProfile<1, 1, [SDTCVecEltisVT<0, f32>,
                                                    SDTCVecEltisVT<1, i16>]> >;

@@ -513,6 +513,10 @@ namespace llvm {
       // Vector signed/unsigned integer to float/double.
       CVTSI2P, CVTUI2P,
 
+      // Masked versions of above. Used for v2f64->v4f32.
+      // SRC, PASSTHRU, MASK
+      MCVTP2SI, MCVTP2UI, MCVTTP2SI, MCVTTP2UI,
+
       // Save xmm argument registers to the stack, according to %al. An operator
       // is needed so that this can be expanded with control flow.
       VASTART_SAVE_XMM_REGS,
