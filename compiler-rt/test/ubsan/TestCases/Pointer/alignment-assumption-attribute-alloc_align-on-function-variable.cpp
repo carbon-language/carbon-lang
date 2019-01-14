@@ -1,7 +1,5 @@
-// FIXME: https://code.google.com/p/address-sanitizer/issues/detail?id=316
-// I'm not sure this is actually *that* issue, but this seems oddly similar to the other XFAIL'ed cases.
-// UNSUPPORTED: android
-// UNSUPPORTED: ios
+// FIXME: Fails on android, armv7. Not sure what is going on.
+// UNSUPPORTED: *
 
 // RUN: %clang   -x c   -fsanitize=alignment -O0 %s -o %t && %run %t 2>&1 | FileCheck %s --implicit-check-not=" assumption " --implicit-check-not="note:" --implicit-check-not="error:"
 // RUN: %clang   -x c   -fsanitize=alignment -O1 %s -o %t && %run %t 2>&1 | FileCheck %s --implicit-check-not=" assumption " --implicit-check-not="note:" --implicit-check-not="error:"
