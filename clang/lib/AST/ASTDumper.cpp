@@ -122,6 +122,9 @@ namespace  {
     void VisitComplexType(const ComplexType *T) {
       dumpTypeAsChild(T->getElementType());
     }
+    void VisitLocInfoType(const LocInfoType *T) {
+      dumpTypeAsChild(T->getTypeSourceInfo()->getType());
+    }
     void VisitPointerType(const PointerType *T) {
       dumpTypeAsChild(T->getPointeeType());
     }
@@ -433,10 +436,6 @@ void ASTDumper::dumpTypeAsChild(const Type *T) {
     NodeDumper.Visit(T);
     if (!T)
       return;
-    if (const LocInfoType *LIT = llvm::dyn_cast<LocInfoType>(T)) {
-      dumpTypeAsChild(LIT->getTypeSourceInfo()->getType());
-      return;
-    }
     TypeVisitor<ASTDumper>::Visit(T);
 
     QualType SingleStepDesugar =
