@@ -1617,17 +1617,21 @@ LLVMValueRef LLVMConstGEP(LLVMValueRef ConstantVal,
                           LLVMValueRef *ConstantIndices, unsigned NumIndices) {
   ArrayRef<Constant *> IdxList(unwrap<Constant>(ConstantIndices, NumIndices),
                                NumIndices);
-  return wrap(ConstantExpr::getGetElementPtr(
-      nullptr, unwrap<Constant>(ConstantVal), IdxList));
+  Constant *Val = unwrap<Constant>(ConstantVal);
+  Type *Ty =
+      cast<PointerType>(Val->getType()->getScalarType())->getElementType();
+  return wrap(ConstantExpr::getGetElementPtr(Ty, Val, IdxList));
 }
 
 LLVMValueRef LLVMConstInBoundsGEP(LLVMValueRef ConstantVal,
                                   LLVMValueRef *ConstantIndices,
                                   unsigned NumIndices) {
-  Constant* Val = unwrap<Constant>(ConstantVal);
   ArrayRef<Constant *> IdxList(unwrap<Constant>(ConstantIndices, NumIndices),
                                NumIndices);
-  return wrap(ConstantExpr::getInBoundsGetElementPtr(nullptr, Val, IdxList));
+  Constant *Val = unwrap<Constant>(ConstantVal);
+  Type *Ty =
+      cast<PointerType>(Val->getType()->getScalarType())->getElementType();
+  return wrap(ConstantExpr::getInBoundsGetElementPtr(Ty, Val, IdxList));
 }
 
 LLVMValueRef LLVMConstTrunc(LLVMValueRef ConstantVal, LLVMTypeRef ToType) {
@@ -3409,20 +3413,50 @@ LLVMValueRef LLVMBuildGEP(LLVMBuilderRef B, LLVMValueRef Pointer,
                           LLVMValueRef *Indices, unsigned NumIndices,
                           const char *Name) {
   ArrayRef<Value *> IdxList(unwrap(Indices), NumIndices);
-  return wrap(unwrap(B)->CreateGEP(nullptr, unwrap(Pointer), IdxList, Name));
+  Value *Val = unwrap(Pointer);
+  Type *Ty =
+      cast<PointerType>(Val->getType()->getScalarType())->getElementType();
+  return wrap(unwrap(B)->CreateGEP(Ty, Val, IdxList, Name));
+}
+
+LLVMValueRef LLVMBuildGEP2(LLVMBuilderRef B, LLVMTypeRef Ty,
+                           LLVMValueRef Pointer, LLVMValueRef *Indices,
+                           unsigned NumIndices, const char *Name) {
+  ArrayRef<Value *> IdxList(unwrap(Indices), NumIndices);
+  return wrap(unwrap(B)->CreateGEP(unwrap(Ty), unwrap(Pointer), IdxList, Name));
 }
 
 LLVMValueRef LLVMBuildInBoundsGEP(LLVMBuilderRef B, LLVMValueRef Pointer,
                                   LLVMValueRef *Indices, unsigned NumIndices,
                                   const char *Name) {
   ArrayRef<Value *> IdxList(unwrap(Indices), NumIndices);
+  Value *Val = unwrap(Pointer);
+  Type *Ty =
+      cast<PointerType>(Val->getType()->getScalarType())->getElementType();
+  return wrap(unwrap(B)->CreateInBoundsGEP(Ty, Val, IdxList, Name));
+}
+
+LLVMValueRef LLVMBuildInBoundsGEP2(LLVMBuilderRef B, LLVMTypeRef Ty,
+                                   LLVMValueRef Pointer, LLVMValueRef *Indices,
+                                   unsigned NumIndices, const char *Name) {
+  ArrayRef<Value *> IdxList(unwrap(Indices), NumIndices);
   return wrap(
-      unwrap(B)->CreateInBoundsGEP(nullptr, unwrap(Pointer), IdxList, Name));
+      unwrap(B)->CreateInBoundsGEP(unwrap(Ty), unwrap(Pointer), IdxList, Name));
 }
 
 LLVMValueRef LLVMBuildStructGEP(LLVMBuilderRef B, LLVMValueRef Pointer,
                                 unsigned Idx, const char *Name) {
-  return wrap(unwrap(B)->CreateStructGEP(nullptr, unwrap(Pointer), Idx, Name));
+  Value *Val = unwrap(Pointer);
+  Type *Ty =
+      cast<PointerType>(Val->getType()->getScalarType())->getElementType();
+  return wrap(unwrap(B)->CreateStructGEP(Ty, Val, Idx, Name));
+}
+
+LLVMValueRef LLVMBuildStructGEP2(LLVMBuilderRef B, LLVMTypeRef Ty,
+                                 LLVMValueRef Pointer, unsigned Idx,
+                                 const char *Name) {
+  return wrap(
+      unwrap(B)->CreateStructGEP(unwrap(Ty), unwrap(Pointer), Idx, Name));
 }
 
 LLVMValueRef LLVMBuildGlobalString(LLVMBuilderRef B, const char *Str,

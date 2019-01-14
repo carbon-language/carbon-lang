@@ -1563,50 +1563,69 @@ public:
     return Insert(GetElementPtrInst::CreateInBounds(Ty, Ptr, Idxs), Name);
   }
 
-  Value *CreateConstGEP1_64(Value *Ptr, uint64_t Idx0, const Twine &Name = "") {
+  Value *CreateConstGEP1_64(Type *Ty, Value *Ptr, uint64_t Idx0,
+                            const Twine &Name = "") {
     Value *Idx = ConstantInt::get(Type::getInt64Ty(Context), Idx0);
 
     if (auto *PC = dyn_cast<Constant>(Ptr))
-      return Insert(Folder.CreateGetElementPtr(nullptr, PC, Idx), Name);
+      return Insert(Folder.CreateGetElementPtr(Ty, PC, Idx), Name);
 
-    return Insert(GetElementPtrInst::Create(nullptr, Ptr, Idx), Name);
+    return Insert(GetElementPtrInst::Create(Ty, Ptr, Idx), Name);
+  }
+
+  Value *CreateConstGEP1_64(Value *Ptr, uint64_t Idx0, const Twine &Name = "") {
+    return CreateConstGEP1_64(nullptr, Ptr, Idx0, Name);
+  }
+
+  Value *CreateConstInBoundsGEP1_64(Type *Ty, Value *Ptr, uint64_t Idx0,
+                                    const Twine &Name = "") {
+    Value *Idx = ConstantInt::get(Type::getInt64Ty(Context), Idx0);
+
+    if (auto *PC = dyn_cast<Constant>(Ptr))
+      return Insert(Folder.CreateInBoundsGetElementPtr(Ty, PC, Idx), Name);
+
+    return Insert(GetElementPtrInst::CreateInBounds(Ty, Ptr, Idx), Name);
   }
 
   Value *CreateConstInBoundsGEP1_64(Value *Ptr, uint64_t Idx0,
                                     const Twine &Name = "") {
-    Value *Idx = ConstantInt::get(Type::getInt64Ty(Context), Idx0);
-
-    if (auto *PC = dyn_cast<Constant>(Ptr))
-      return Insert(Folder.CreateInBoundsGetElementPtr(nullptr, PC, Idx), Name);
-
-    return Insert(GetElementPtrInst::CreateInBounds(nullptr, Ptr, Idx), Name);
+    return CreateConstInBoundsGEP1_64(nullptr, Ptr, Idx0, Name);
   }
 
-  Value *CreateConstGEP2_64(Value *Ptr, uint64_t Idx0, uint64_t Idx1,
-                    const Twine &Name = "") {
+  Value *CreateConstGEP2_64(Type *Ty, Value *Ptr, uint64_t Idx0, uint64_t Idx1,
+                            const Twine &Name = "") {
     Value *Idxs[] = {
       ConstantInt::get(Type::getInt64Ty(Context), Idx0),
       ConstantInt::get(Type::getInt64Ty(Context), Idx1)
     };
 
     if (auto *PC = dyn_cast<Constant>(Ptr))
-      return Insert(Folder.CreateGetElementPtr(nullptr, PC, Idxs), Name);
+      return Insert(Folder.CreateGetElementPtr(Ty, PC, Idxs), Name);
 
-    return Insert(GetElementPtrInst::Create(nullptr, Ptr, Idxs), Name);
+    return Insert(GetElementPtrInst::Create(Ty, Ptr, Idxs), Name);
+  }
+
+  Value *CreateConstGEP2_64(Value *Ptr, uint64_t Idx0, uint64_t Idx1,
+                            const Twine &Name = "") {
+    return CreateConstGEP2_64(nullptr, Ptr, Idx0, Idx1, Name);
+  }
+
+  Value *CreateConstInBoundsGEP2_64(Type *Ty, Value *Ptr, uint64_t Idx0,
+                                    uint64_t Idx1, const Twine &Name = "") {
+    Value *Idxs[] = {
+      ConstantInt::get(Type::getInt64Ty(Context), Idx0),
+      ConstantInt::get(Type::getInt64Ty(Context), Idx1)
+    };
+
+    if (auto *PC = dyn_cast<Constant>(Ptr))
+      return Insert(Folder.CreateInBoundsGetElementPtr(Ty, PC, Idxs), Name);
+
+    return Insert(GetElementPtrInst::CreateInBounds(Ty, Ptr, Idxs), Name);
   }
 
   Value *CreateConstInBoundsGEP2_64(Value *Ptr, uint64_t Idx0, uint64_t Idx1,
                                     const Twine &Name = "") {
-    Value *Idxs[] = {
-      ConstantInt::get(Type::getInt64Ty(Context), Idx0),
-      ConstantInt::get(Type::getInt64Ty(Context), Idx1)
-    };
-
-    if (auto *PC = dyn_cast<Constant>(Ptr))
-      return Insert(Folder.CreateInBoundsGetElementPtr(nullptr, PC, Idxs),
-                    Name);
-
-    return Insert(GetElementPtrInst::CreateInBounds(nullptr, Ptr, Idxs), Name);
+    return CreateConstInBoundsGEP2_64(nullptr, Ptr, Idx0, Idx1, Name);
   }
 
   Value *CreateStructGEP(Type *Ty, Value *Ptr, unsigned Idx,
