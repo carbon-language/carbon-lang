@@ -2728,6 +2728,10 @@ LLVMValueRef LLVMGetCalledValue(LLVMValueRef Instr) {
   return wrap(unwrap<CallBase>(Instr)->getCalledValue());
 }
 
+LLVMTypeRef LLVMGetCalledFunctionType(LLVMValueRef Instr) {
+  return wrap(unwrap<CallBase>(Instr)->getFunctionType());
+}
+
 /*--.. Operations on call instructions (only) ..............................--*/
 
 LLVMBool LLVMIsTailCall(LLVMValueRef Call) {
@@ -3582,9 +3586,20 @@ LLVMValueRef LLVMBuildPhi(LLVMBuilderRef B, LLVMTypeRef Ty, const char *Name) {
 LLVMValueRef LLVMBuildCall(LLVMBuilderRef B, LLVMValueRef Fn,
                            LLVMValueRef *Args, unsigned NumArgs,
                            const char *Name) {
-  return wrap(unwrap(B)->CreateCall(unwrap(Fn),
-                                    makeArrayRef(unwrap(Args), NumArgs),
-                                    Name));
+  Value *V = unwrap(Fn);
+  FunctionType *FnT =
+      cast<FunctionType>(cast<PointerType>(V->getType())->getElementType());
+
+  return wrap(unwrap(B)->CreateCall(FnT, unwrap(Fn),
+                                    makeArrayRef(unwrap(Args), NumArgs), Name));
+}
+
+LLVMValueRef LLVMBuildCall2(LLVMBuilderRef B, LLVMTypeRef Ty, LLVMValueRef Fn,
+                            LLVMValueRef *Args, unsigned NumArgs,
+                            const char *Name) {
+  FunctionType *FTy = unwrap<FunctionType>(Ty);
+  return wrap(unwrap(B)->CreateCall(FTy, unwrap(Fn),
+                                    makeArrayRef(unwrap(Args), NumArgs), Name));
 }
 
 LLVMValueRef LLVMBuildSelect(LLVMBuilderRef B, LLVMValueRef If,

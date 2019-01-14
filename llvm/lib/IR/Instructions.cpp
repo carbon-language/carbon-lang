@@ -388,9 +388,8 @@ void CallInst::init(FunctionType *FTy, Value *Func, ArrayRef<Value *> Args,
   setName(NameStr);
 }
 
-void CallInst::init(Value *Func, const Twine &NameStr) {
-  FTy =
-      cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
+void CallInst::init(FunctionType *FTy, Value *Func, const Twine &NameStr) {
+  this->FTy = FTy;
   assert(getNumOperands() == 1 && "NumOperands not set up?");
   setCalledOperand(Func);
 
@@ -399,22 +398,18 @@ void CallInst::init(Value *Func, const Twine &NameStr) {
   setName(NameStr);
 }
 
-CallInst::CallInst(Value *Func, const Twine &Name, Instruction *InsertBefore)
-    : CallBase(cast<FunctionType>(
-                   cast<PointerType>(Func->getType())->getElementType())
-                   ->getReturnType(),
-               Instruction::Call, OperandTraits<CallBase>::op_end(this) - 1, 1,
-               InsertBefore) {
-  init(Func, Name);
+CallInst::CallInst(FunctionType *Ty, Value *Func, const Twine &Name,
+                   Instruction *InsertBefore)
+    : CallBase(Ty->getReturnType(), Instruction::Call,
+               OperandTraits<CallBase>::op_end(this) - 1, 1, InsertBefore) {
+  init(Ty, Func, Name);
 }
 
-CallInst::CallInst(Value *Func, const Twine &Name, BasicBlock *InsertAtEnd)
-    : CallBase(cast<FunctionType>(
-                   cast<PointerType>(Func->getType())->getElementType())
-                   ->getReturnType(),
-               Instruction::Call, OperandTraits<CallBase>::op_end(this) - 1, 1,
-               InsertAtEnd) {
-  init(Func, Name);
+CallInst::CallInst(FunctionType *Ty, Value *Func, const Twine &Name,
+                   BasicBlock *InsertAtEnd)
+    : CallBase(Ty->getReturnType(), Instruction::Call,
+               OperandTraits<CallBase>::op_end(this) - 1, 1, InsertAtEnd) {
+  init(Ty, Func, Name);
 }
 
 CallInst::CallInst(const CallInst &CI)

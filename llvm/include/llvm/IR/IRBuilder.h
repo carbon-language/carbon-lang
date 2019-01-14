@@ -1880,15 +1880,8 @@ public:
     return Insert(PHINode::Create(Ty, NumReservedValues), Name);
   }
 
-  CallInst *CreateCall(Value *Callee, ArrayRef<Value *> Args = None,
-                       const Twine &Name = "", MDNode *FPMathTag = nullptr) {
-    auto *PTy = cast<PointerType>(Callee->getType());
-    auto *FTy = cast<FunctionType>(PTy->getElementType());
-    return CreateCall(FTy, Callee, Args, Name, FPMathTag);
-  }
-
   CallInst *CreateCall(FunctionType *FTy, Value *Callee,
-                       ArrayRef<Value *> Args, const Twine &Name = "",
+                       ArrayRef<Value *> Args = None, const Twine &Name = "",
                        MDNode *FPMathTag = nullptr) {
     CallInst *CI = CallInst::Create(FTy, Callee, Args, DefaultOperandBundles);
     if (isa<FPMathOperator>(CI))
@@ -1896,18 +1889,42 @@ public:
     return Insert(CI, Name);
   }
 
-  CallInst *CreateCall(Value *Callee, ArrayRef<Value *> Args,
+  CallInst *CreateCall(FunctionType *FTy, Value *Callee, ArrayRef<Value *> Args,
                        ArrayRef<OperandBundleDef> OpBundles,
                        const Twine &Name = "", MDNode *FPMathTag = nullptr) {
-    CallInst *CI = CallInst::Create(Callee, Args, OpBundles);
+    CallInst *CI = CallInst::Create(FTy, Callee, Args, OpBundles);
     if (isa<FPMathOperator>(CI))
       CI = cast<CallInst>(setFPAttrs(CI, FPMathTag, FMF));
     return Insert(CI, Name);
   }
 
-  CallInst *CreateCall(Function *Callee, ArrayRef<Value *> Args,
+  CallInst *CreateCall(Function *Callee, ArrayRef<Value *> Args = None,
                        const Twine &Name = "", MDNode *FPMathTag = nullptr) {
     return CreateCall(Callee->getFunctionType(), Callee, Args, Name, FPMathTag);
+  }
+
+  CallInst *CreateCall(Function *Callee, ArrayRef<Value *> Args,
+                       ArrayRef<OperandBundleDef> OpBundles,
+                       const Twine &Name = "", MDNode *FPMathTag = nullptr) {
+    return CreateCall(Callee->getFunctionType(), Callee, Args, OpBundles, Name,
+                      FPMathTag);
+  }
+
+  // Deprecated [opaque pointer types]
+  CallInst *CreateCall(Value *Callee, ArrayRef<Value *> Args = None,
+                       const Twine &Name = "", MDNode *FPMathTag = nullptr) {
+    return CreateCall(
+        cast<FunctionType>(Callee->getType()->getPointerElementType()), Callee,
+        Args, Name, FPMathTag);
+  }
+
+  // Deprecated [opaque pointer types]
+  CallInst *CreateCall(Value *Callee, ArrayRef<Value *> Args,
+                       ArrayRef<OperandBundleDef> OpBundles,
+                       const Twine &Name = "", MDNode *FPMathTag = nullptr) {
+    return CreateCall(
+        cast<FunctionType>(Callee->getType()->getPointerElementType()), Callee,
+        Args, OpBundles, Name, FPMathTag);
   }
 
   Value *CreateSelect(Value *C, Value *True, Value *False,
