@@ -175,47 +175,58 @@ protected:
   LoadInst *cloneImpl() const;
 
 public:
-  LoadInst(Value *Ptr, const Twine &NameStr, Instruction *InsertBefore);
-  LoadInst(Value *Ptr, const Twine &NameStr, BasicBlock *InsertAtEnd);
-  LoadInst(Type *Ty, Value *Ptr, const Twine &NameStr, bool isVolatile = false,
+  LoadInst(Type *Ty, Value *Ptr, const Twine &NameStr = "",
            Instruction *InsertBefore = nullptr);
-  LoadInst(Value *Ptr, const Twine &NameStr, bool isVolatile = false,
-           Instruction *InsertBefore = nullptr)
-      : LoadInst(cast<PointerType>(Ptr->getType())->getElementType(), Ptr,
-                 NameStr, isVolatile, InsertBefore) {}
-  LoadInst(Value *Ptr, const Twine &NameStr, bool isVolatile,
+  LoadInst(Type *Ty, Value *Ptr, const Twine &NameStr, BasicBlock *InsertAtEnd);
+  LoadInst(Type *Ty, Value *Ptr, const Twine &NameStr, bool isVolatile,
+           Instruction *InsertBefore = nullptr);
+  LoadInst(Type *Ty, Value *Ptr, const Twine &NameStr, bool isVolatile,
            BasicBlock *InsertAtEnd);
-  LoadInst(Value *Ptr, const Twine &NameStr, bool isVolatile, unsigned Align,
-           Instruction *InsertBefore = nullptr)
-      : LoadInst(cast<PointerType>(Ptr->getType())->getElementType(), Ptr,
-                 NameStr, isVolatile, Align, InsertBefore) {}
   LoadInst(Type *Ty, Value *Ptr, const Twine &NameStr, bool isVolatile,
            unsigned Align, Instruction *InsertBefore = nullptr);
-  LoadInst(Value *Ptr, const Twine &NameStr, bool isVolatile,
+  LoadInst(Type *Ty, Value *Ptr, const Twine &NameStr, bool isVolatile,
            unsigned Align, BasicBlock *InsertAtEnd);
-  LoadInst(Value *Ptr, const Twine &NameStr, bool isVolatile, unsigned Align,
-           AtomicOrdering Order, SyncScope::ID SSID = SyncScope::System,
-           Instruction *InsertBefore = nullptr)
-      : LoadInst(cast<PointerType>(Ptr->getType())->getElementType(), Ptr,
-                 NameStr, isVolatile, Align, Order, SSID, InsertBefore) {}
   LoadInst(Type *Ty, Value *Ptr, const Twine &NameStr, bool isVolatile,
            unsigned Align, AtomicOrdering Order,
            SyncScope::ID SSID = SyncScope::System,
            Instruction *InsertBefore = nullptr);
-  LoadInst(Value *Ptr, const Twine &NameStr, bool isVolatile,
+  LoadInst(Type *Ty, Value *Ptr, const Twine &NameStr, bool isVolatile,
            unsigned Align, AtomicOrdering Order, SyncScope::ID SSID,
            BasicBlock *InsertAtEnd);
-  LoadInst(Value *Ptr, const char *NameStr, Instruction *InsertBefore);
-  LoadInst(Value *Ptr, const char *NameStr, BasicBlock *InsertAtEnd);
-  LoadInst(Type *Ty, Value *Ptr, const char *NameStr = nullptr,
-           bool isVolatile = false, Instruction *InsertBefore = nullptr);
-  explicit LoadInst(Value *Ptr, const char *NameStr = nullptr,
-                    bool isVolatile = false,
+
+  // Deprecated [opaque pointer types]
+  explicit LoadInst(Value *Ptr, const Twine &NameStr = "",
                     Instruction *InsertBefore = nullptr)
-      : LoadInst(cast<PointerType>(Ptr->getType())->getElementType(), Ptr,
-                 NameStr, isVolatile, InsertBefore) {}
-  LoadInst(Value *Ptr, const char *NameStr, bool isVolatile,
-           BasicBlock *InsertAtEnd);
+      : LoadInst(Ptr->getType()->getPointerElementType(), Ptr, NameStr,
+                 InsertBefore) {}
+  LoadInst(Value *Ptr, const Twine &NameStr, BasicBlock *InsertAtEnd)
+      : LoadInst(Ptr->getType()->getPointerElementType(), Ptr, NameStr,
+                 InsertAtEnd) {}
+  LoadInst(Value *Ptr, const Twine &NameStr, bool isVolatile,
+           Instruction *InsertBefore = nullptr)
+      : LoadInst(Ptr->getType()->getPointerElementType(), Ptr, NameStr,
+                 isVolatile, InsertBefore) {}
+  LoadInst(Value *Ptr, const Twine &NameStr, bool isVolatile,
+           BasicBlock *InsertAtEnd)
+      : LoadInst(Ptr->getType()->getPointerElementType(), Ptr, NameStr,
+                 isVolatile, InsertAtEnd) {}
+  LoadInst(Value *Ptr, const Twine &NameStr, bool isVolatile, unsigned Align,
+           Instruction *InsertBefore = nullptr)
+      : LoadInst(Ptr->getType()->getPointerElementType(), Ptr, NameStr,
+                 isVolatile, Align, InsertBefore) {}
+  LoadInst(Value *Ptr, const Twine &NameStr, bool isVolatile, unsigned Align,
+           BasicBlock *InsertAtEnd)
+      : LoadInst(Ptr->getType()->getPointerElementType(), Ptr, NameStr,
+                 isVolatile, Align, InsertAtEnd) {}
+  LoadInst(Value *Ptr, const Twine &NameStr, bool isVolatile, unsigned Align,
+           AtomicOrdering Order, SyncScope::ID SSID = SyncScope::System,
+           Instruction *InsertBefore = nullptr)
+      : LoadInst(Ptr->getType()->getPointerElementType(), Ptr, NameStr,
+                 isVolatile, Align, Order, SSID, InsertBefore) {}
+  LoadInst(Value *Ptr, const Twine &NameStr, bool isVolatile, unsigned Align,
+           AtomicOrdering Order, SyncScope::ID SSID, BasicBlock *InsertAtEnd)
+      : LoadInst(Ptr->getType()->getPointerElementType(), Ptr, NameStr,
+                 isVolatile, Align, Order, SSID, InsertAtEnd) {}
 
   /// Return true if this is a load from a volatile memory location.
   bool isVolatile() const { return getSubclassDataFromInstruction() & 1; }

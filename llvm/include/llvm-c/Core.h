@@ -3597,8 +3597,12 @@ LLVMValueRef LLVMBuildAlloca(LLVMBuilderRef, LLVMTypeRef Ty, const char *Name);
 LLVMValueRef LLVMBuildArrayAlloca(LLVMBuilderRef, LLVMTypeRef Ty,
                                   LLVMValueRef Val, const char *Name);
 LLVMValueRef LLVMBuildFree(LLVMBuilderRef, LLVMValueRef PointerVal);
+// LLVMBuildLoad is deprecated in favor of LLVMBuildLoad2, in preparation for
+// opaque pointer types.
 LLVMValueRef LLVMBuildLoad(LLVMBuilderRef, LLVMValueRef PointerVal,
                            const char *Name);
+LLVMValueRef LLVMBuildLoad2(LLVMBuilderRef, LLVMTypeRef Ty,
+                            LLVMValueRef PointerVal, const char *Name);
 LLVMValueRef LLVMBuildStore(LLVMBuilderRef, LLVMValueRef Val, LLVMValueRef Ptr);
 LLVMValueRef LLVMBuildGEP(LLVMBuilderRef B, LLVMValueRef Pointer,
                           LLVMValueRef *Indices, unsigned NumIndices,

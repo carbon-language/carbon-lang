@@ -3346,7 +3346,15 @@ LLVMValueRef LLVMBuildFree(LLVMBuilderRef B, LLVMValueRef PointerVal) {
 
 LLVMValueRef LLVMBuildLoad(LLVMBuilderRef B, LLVMValueRef PointerVal,
                            const char *Name) {
-  return wrap(unwrap(B)->CreateLoad(unwrap(PointerVal), Name));
+  Value *V = unwrap(PointerVal);
+  PointerType *Ty = cast<PointerType>(V->getType());
+
+  return wrap(unwrap(B)->CreateLoad(Ty->getElementType(), V, Name));
+}
+
+LLVMValueRef LLVMBuildLoad2(LLVMBuilderRef B, LLVMTypeRef Ty,
+                            LLVMValueRef PointerVal, const char *Name) {
+  return wrap(unwrap(B)->CreateLoad(unwrap(Ty), unwrap(PointerVal), Name));
 }
 
 LLVMValueRef LLVMBuildStore(LLVMBuilderRef B, LLVMValueRef Val,

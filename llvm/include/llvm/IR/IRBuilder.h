@@ -1352,22 +1352,35 @@ public:
     return Insert(new AllocaInst(Ty, DL.getAllocaAddrSpace(), ArraySize), Name);
   }
 
-  /// Provided to resolve 'CreateLoad(Ptr, "...")' correctly, instead of
+  /// Provided to resolve 'CreateLoad(Ty, Ptr, "...")' correctly, instead of
   /// converting the string to 'bool' for the isVolatile parameter.
-  LoadInst *CreateLoad(Value *Ptr, const char *Name) {
-    return Insert(new LoadInst(Ptr), Name);
-  }
-
-  LoadInst *CreateLoad(Value *Ptr, const Twine &Name = "") {
-    return Insert(new LoadInst(Ptr), Name);
+  LoadInst *CreateLoad(Type *Ty, Value *Ptr, const char *Name) {
+    return Insert(new LoadInst(Ty, Ptr), Name);
   }
 
   LoadInst *CreateLoad(Type *Ty, Value *Ptr, const Twine &Name = "") {
     return Insert(new LoadInst(Ty, Ptr), Name);
   }
 
+  LoadInst *CreateLoad(Type *Ty, Value *Ptr, bool isVolatile,
+                       const Twine &Name = "") {
+    return Insert(new LoadInst(Ty, Ptr, Twine(), isVolatile), Name);
+  }
+
+  // Deprecated [opaque pointer types]
+  LoadInst *CreateLoad(Value *Ptr, const char *Name) {
+    return CreateLoad(Ptr->getType()->getPointerElementType(), Ptr, Name);
+  }
+
+  // Deprecated [opaque pointer types]
+  LoadInst *CreateLoad(Value *Ptr, const Twine &Name = "") {
+    return CreateLoad(Ptr->getType()->getPointerElementType(), Ptr, Name);
+  }
+
+  // Deprecated [opaque pointer types]
   LoadInst *CreateLoad(Value *Ptr, bool isVolatile, const Twine &Name = "") {
-    return Insert(new LoadInst(Ptr, nullptr, isVolatile), Name);
+    return CreateLoad(Ptr->getType()->getPointerElementType(), Ptr, isVolatile,
+                      Name);
   }
 
   StoreInst *CreateStore(Value *Val, Value *Ptr, bool isVolatile = false) {
@@ -1377,22 +1390,41 @@ public:
   /// Provided to resolve 'CreateAlignedLoad(Ptr, Align, "...")'
   /// correctly, instead of converting the string to 'bool' for the isVolatile
   /// parameter.
-  LoadInst *CreateAlignedLoad(Value *Ptr, unsigned Align, const char *Name) {
-    LoadInst *LI = CreateLoad(Ptr, Name);
+  LoadInst *CreateAlignedLoad(Type *Ty, Value *Ptr, unsigned Align,
+                              const char *Name) {
+    LoadInst *LI = CreateLoad(Ty, Ptr, Name);
     LI->setAlignment(Align);
     return LI;
   }
+  LoadInst *CreateAlignedLoad(Type *Ty, Value *Ptr, unsigned Align,
+                              const Twine &Name = "") {
+    LoadInst *LI = CreateLoad(Ty, Ptr, Name);
+    LI->setAlignment(Align);
+    return LI;
+  }
+  LoadInst *CreateAlignedLoad(Type *Ty, Value *Ptr, unsigned Align,
+                              bool isVolatile, const Twine &Name = "") {
+    LoadInst *LI = CreateLoad(Ty, Ptr, isVolatile, Name);
+    LI->setAlignment(Align);
+    return LI;
+  }
+
+  // Deprecated [opaque pointer types]
+  LoadInst *CreateAlignedLoad(Value *Ptr, unsigned Align, const char *Name) {
+    return CreateAlignedLoad(Ptr->getType()->getPointerElementType(), Ptr,
+                             Align, Name);
+  }
+  // Deprecated [opaque pointer types]
   LoadInst *CreateAlignedLoad(Value *Ptr, unsigned Align,
                               const Twine &Name = "") {
-    LoadInst *LI = CreateLoad(Ptr, Name);
-    LI->setAlignment(Align);
-    return LI;
+    return CreateAlignedLoad(Ptr->getType()->getPointerElementType(), Ptr,
+                             Align, Name);
   }
+  // Deprecated [opaque pointer types]
   LoadInst *CreateAlignedLoad(Value *Ptr, unsigned Align, bool isVolatile,
                               const Twine &Name = "") {
-    LoadInst *LI = CreateLoad(Ptr, isVolatile, Name);
-    LI->setAlignment(Align);
-    return LI;
+    return CreateAlignedLoad(Ptr->getType()->getPointerElementType(), Ptr,
+                             Align, isVolatile, Name);
   }
 
   StoreInst *CreateAlignedStore(Value *Val, Value *Ptr, unsigned Align,
