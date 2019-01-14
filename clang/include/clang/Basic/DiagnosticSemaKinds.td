@@ -5875,7 +5875,8 @@ def ext_typecheck_comparison_of_fptr_to_void : Extension<
 def err_typecheck_comparison_of_fptr_to_void : Error<
   "equality comparison between function pointer and void pointer (%0 and %1)">;
 def ext_typecheck_comparison_of_pointer_integer : ExtWarn<
-  "comparison between pointer and integer (%0 and %1)">;
+  "comparison between pointer and integer (%0 and %1)">,
+  InGroup<DiagGroup<"pointer-integer-compare">>;
 def err_typecheck_comparison_of_pointer_integer : Error<
   "comparison between pointer and integer (%0 and %1)">;
 def ext_typecheck_comparison_of_distinct_pointers : ExtWarn<
