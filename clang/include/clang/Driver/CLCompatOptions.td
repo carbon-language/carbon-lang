@@ -116,7 +116,7 @@ def _SLASH_J : CLFlag<"J">, HelpText<"Make char type unsigned">,
 // The _SLASH_O option handles all the /O flags, but we also provide separate
 // aliased options to provide separate help messages.
 def _SLASH_O : CLJoined<"O">,
-  HelpText<"Set multiple /O flags at once; e.g. '/O2y-' is the same as '/O2 /y-'">,
+  HelpText<"Set multiple /O flags at once; e.g. '/O2y-' for '/O2 /Oy-'">,
   MetaVarName<"<flags>">;
 // FIXME: Not sure why we have -O0 here; MSVC doesn't support that.
 def : CLFlag<"O0">, Alias<O0>, HelpText<"Disable optimization">;
