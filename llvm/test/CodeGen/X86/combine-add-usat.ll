@@ -15,9 +15,7 @@ declare  <8 x i16> @llvm.uadd.sat.v8i16(<8 x i16>, <8 x i16>)
 define i32 @combine_undef_i32(i32 %a0) {
 ; CHECK-LABEL: combine_undef_i32:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    addl %eax, %edi
 ; CHECK-NEXT:    movl $-1, %eax
-; CHECK-NEXT:    cmovael %edi, %eax
 ; CHECK-NEXT:    retq
   %res = call i32 @llvm.uadd.sat.i32(i32 %a0, i32 undef)
   ret i32 %res
@@ -26,12 +24,12 @@ define i32 @combine_undef_i32(i32 %a0) {
 define <8 x i16> @combine_undef_v8i16(<8 x i16> %a0) {
 ; SSE-LABEL: combine_undef_v8i16:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    paddusw %xmm0, %xmm0
+; SSE-NEXT:    pcmpeqd %xmm0, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_undef_v8i16:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vpaddusw %xmm0, %xmm0, %xmm0
+; AVX-NEXT:    vpcmpeqd %xmm0, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %res = call <8 x i16> @llvm.uadd.sat.v8i16(<8 x i16> undef, <8 x i16> %a0)
   ret <8 x i16> %res
@@ -64,14 +62,12 @@ define <8 x i16> @combine_constfold_v8i16() {
 define <8 x i16> @combine_constfold_undef_v8i16() {
 ; SSE-LABEL: combine_constfold_undef_v8i16:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    movdqa {{.*#+}} xmm0 = <u,1,u,65535,65535,65281,1,1>
-; SSE-NEXT:    paddusw {{.*}}(%rip), %xmm0
+; SSE-NEXT:    movaps {{.*#+}} xmm0 = [65535,65535,65535,65535,65535,65535,2,65535]
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_constfold_undef_v8i16:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vmovdqa {{.*#+}} xmm0 = <u,1,u,65535,65535,65281,1,1>
-; AVX-NEXT:    vpaddusw {{.*}}(%rip), %xmm0, %xmm0
+; AVX-NEXT:    vmovaps {{.*#+}} xmm0 = [65535,65535,65535,65535,65535,65535,2,65535]
 ; AVX-NEXT:    retq
   %res = call <8 x i16> @llvm.uadd.sat.v8i16(<8 x i16> <i16 undef, i16 1, i16 undef, i16 65535, i16 -1, i16 -255, i16 -65535, i16 1>, <8 x i16> <i16 1, i16 undef, i16 undef, i16 65535, i16 1, i16 65535, i16 1, i16 65535>)
   ret <8 x i16> %res

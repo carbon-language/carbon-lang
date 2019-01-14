@@ -16,12 +16,6 @@ define i32 @combine_undef_i32(i32 %a0) {
 ; CHECK-LABEL: combine_undef_i32:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    xorl %eax, %eax
-; CHECK-NEXT:    movl %edi, %ecx
-; CHECK-NEXT:    subl %eax, %ecx
-; CHECK-NEXT:    setns %al
-; CHECK-NEXT:    addl $2147483647, %eax # imm = 0x7FFFFFFF
-; CHECK-NEXT:    subl %eax, %edi
-; CHECK-NEXT:    cmovnol %edi, %eax
 ; CHECK-NEXT:    retq
   %res = call i32 @llvm.ssub.sat.i32(i32 %a0, i32 undef)
   ret i32 %res
@@ -30,12 +24,12 @@ define i32 @combine_undef_i32(i32 %a0) {
 define <8 x i16> @combine_undef_v8i16(<8 x i16> %a0) {
 ; SSE-LABEL: combine_undef_v8i16:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    psubsw %xmm0, %xmm0
+; SSE-NEXT:    xorps %xmm0, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_undef_v8i16:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vpsubsw %xmm0, %xmm0, %xmm0
+; AVX-NEXT:    vxorps %xmm0, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %res = call <8 x i16> @llvm.ssub.sat.v8i16(<8 x i16> undef, <8 x i16> %a0)
   ret <8 x i16> %res

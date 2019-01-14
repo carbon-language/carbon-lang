@@ -2194,6 +2194,10 @@ SDValue DAGCombiner::visitADDSAT(SDNode *N) {
       return N1;
   }
 
+  // fold (add_sat x, undef) -> -1
+  if (N0.isUndef() || N1.isUndef())
+    return DAG.getAllOnesConstant(DL, VT);
+
   if (DAG.isConstantIntBuildVectorOrConstantInt(N0)) {
     // canonicalize constant to RHS
     if (!DAG.isConstantIntBuildVectorOrConstantInt(N1))
@@ -2791,6 +2795,10 @@ SDValue DAGCombiner::visitSUBSAT(SDNode *N) {
     if (ISD::isBuildVectorAllZeros(N1.getNode()))
       return N0;
   }
+
+  // fold (sub_sat x, undef) -> 0
+  if (N0.isUndef() || N1.isUndef())
+    return DAG.getConstant(0, DL, VT);
 
   // TODO Constant Folding
 

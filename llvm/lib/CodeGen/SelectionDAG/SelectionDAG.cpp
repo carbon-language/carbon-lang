@@ -5180,6 +5180,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, const SDLoc &DL, EVT VT,
       case ISD::SDIV:
       case ISD::UREM:
       case ISD::SREM:
+      case ISD::SSUBSAT:
+      case ISD::USUBSAT:
         return getConstant(0, DL, VT);    // fold op(undef, arg2) -> 0
       }
     }
@@ -5203,8 +5205,12 @@ SDValue SelectionDAG::getNode(unsigned Opcode, const SDLoc &DL, EVT VT,
       return getUNDEF(VT);       // fold op(arg1, undef) -> undef
     case ISD::MUL:
     case ISD::AND:
+    case ISD::SSUBSAT:
+    case ISD::USUBSAT:
       return getConstant(0, DL, VT);  // fold op(arg1, undef) -> 0
     case ISD::OR:
+    case ISD::SADDSAT:
+    case ISD::UADDSAT:
       return getAllOnesConstant(DL, VT);
     }
   }
