@@ -11,6 +11,32 @@ declare  i32 @llvm.uadd.sat.i32  (i32, i32)
 declare  i64 @llvm.uadd.sat.i64  (i64, i64)
 declare  <8 x i16> @llvm.uadd.sat.v8i16(<8 x i16>, <8 x i16>)
 
+; fold (uadd_sat x, undef) -> -1
+define i32 @combine_undef_i32(i32 %a0) {
+; CHECK-LABEL: combine_undef_i32:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    addl %eax, %edi
+; CHECK-NEXT:    movl $-1, %eax
+; CHECK-NEXT:    cmovael %edi, %eax
+; CHECK-NEXT:    retq
+  %res = call i32 @llvm.uadd.sat.i32(i32 %a0, i32 undef)
+  ret i32 %res
+}
+
+define <8 x i16> @combine_undef_v8i16(<8 x i16> %a0) {
+; SSE-LABEL: combine_undef_v8i16:
+; SSE:       # %bb.0:
+; SSE-NEXT:    paddusw %xmm0, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: combine_undef_v8i16:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vpaddusw %xmm0, %xmm0, %xmm0
+; AVX-NEXT:    retq
+  %res = call <8 x i16> @llvm.uadd.sat.v8i16(<8 x i16> undef, <8 x i16> %a0)
+  ret <8 x i16> %res
+}
+
 ; fold (uadd_sat c1, c2) -> c3
 define i32 @combine_constfold_i32() {
 ; CHECK-LABEL: combine_constfold_i32:
