@@ -137,7 +137,9 @@ unix_toolchain("unix") {
     cxx = "$goma_dir/gomacc $cxx"
   }
 
-  ar = "ar"
+  if (current_os != "mac") {
+    ar = "ar"
+  }
 
   toolchain_args = {
     current_os = host_os
