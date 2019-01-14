@@ -422,11 +422,7 @@ void ASTDumper::dumpTypeAsChild(QualType T) {
     return dumpTypeAsChild(SQT.Ty);
 
   dumpChild([=] {
-    OS << "QualType";
-    NodeDumper.dumpPointer(T.getAsOpaquePtr());
-    OS << " ";
-    NodeDumper.dumpBareType(T, false);
-    OS << " " << T.split().Quals.getAsString();
+    NodeDumper.Visit(T);
     dumpTypeAsChild(T.split().Ty);
   });
 }

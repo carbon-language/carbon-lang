@@ -172,6 +172,14 @@ void TextNodeDumper::Visit(const Type *T) {
     OS << " imported";
 }
 
+void TextNodeDumper::Visit(QualType T) {
+  OS << "QualType";
+  dumpPointer(T.getAsOpaquePtr());
+  OS << " ";
+  dumpBareType(T, false);
+  OS << " " << T.split().Quals.getAsString();
+}
+
 void TextNodeDumper::dumpPointer(const void *Ptr) {
   ColorScope Color(OS, ShowColors, AddressColor);
   OS << ' ' << Ptr;
