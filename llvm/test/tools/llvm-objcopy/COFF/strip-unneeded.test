@@ -11,4 +11,5 @@ SYMBOLS-NEXT: external_undefined
 SYMBOLS-PRE-NEXT: local_unreferenced
 SYMBOLS-NEXT: local_referenced
 SYMBOLS-PRE-NEXT: local_undefined_unreferenced
+SYMBOLS-PRE-NEXT: @feat.00
 SYMBOLS-EMPTY:
