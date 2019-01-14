@@ -440,7 +440,6 @@ TEST_F(SymbolFilePDBTests, TestClassInNamespace) {
   SymbolFilePDB *symfile =
       static_cast<SymbolFilePDB *>(plugin->GetSymbolFile());
   llvm::pdb::IPDBSession &session = symfile->GetPDBSession();
-  SymbolContext sc;
   llvm::DenseSet<SymbolFile *> searched_files;
   TypeMap results;
 
@@ -457,9 +456,10 @@ TEST_F(SymbolFilePDBTests, TestClassInNamespace) {
   symfile->ParseDeclsForContext(CompilerDeclContext(
       clang_ast_ctx, static_cast<clang::DeclContext *>(tu)));
 
-  auto ns_namespace = symfile->FindNamespace(sc, ConstString("NS"), nullptr);
+  auto ns_namespace = symfile->FindNamespace(ConstString("NS"), nullptr);
   EXPECT_TRUE(ns_namespace.IsValid());
 
+  SymbolContext sc;
   EXPECT_EQ(1u, symfile->FindTypes(sc, ConstString("NSClass"), &ns_namespace,
                                    false, 0, searched_files, results));
   EXPECT_EQ(1u, results.GetSize());

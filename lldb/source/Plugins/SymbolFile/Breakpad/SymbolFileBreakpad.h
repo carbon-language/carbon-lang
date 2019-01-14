@@ -127,7 +127,7 @@ public:
   }
 
   CompilerDeclContext
-  FindNamespace(const SymbolContext &sc, const ConstString &name,
+  FindNamespace(const ConstString &name,
                 const CompilerDeclContext *parent_decl_ctx) override {
     return CompilerDeclContext();
   }

@@ -2587,7 +2587,7 @@ size_t SymbolFileDWARF::FindTypes(const std::vector<CompilerContext> &context,
 }
 
 CompilerDeclContext
-SymbolFileDWARF::FindNamespace(const SymbolContext &sc, const ConstString &name,
+SymbolFileDWARF::FindNamespace(const ConstString &name,
                                const CompilerDeclContext *parent_decl_ctx) {
   Log *log(LogChannelDWARF::GetLogIfAll(DWARF_LOG_LOOKUPS));
 

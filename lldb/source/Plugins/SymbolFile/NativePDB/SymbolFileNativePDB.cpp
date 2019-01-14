@@ -1550,8 +1550,7 @@ size_t SymbolFileNativePDB::GetTypes(lldb_private::SymbolContextScope *sc_scope,
 }
 
 CompilerDeclContext
-SymbolFileNativePDB::FindNamespace(const SymbolContext &sc,
-                                   const ConstString &name,
+SymbolFileNativePDB::FindNamespace(const ConstString &name,
                                    const CompilerDeclContext *parent_decl_ctx) {
   return {};
 }

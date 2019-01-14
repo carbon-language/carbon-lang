@@ -151,7 +151,7 @@ public:
   TypeSystem *GetTypeSystemForLanguage(lldb::LanguageType language) override;
 
   CompilerDeclContext
-  FindNamespace(const SymbolContext &sc, const ConstString &name,
+  FindNamespace(const ConstString &name,
                 const CompilerDeclContext *parent_decl_ctx) override;
 
   ConstString GetPluginName() override;

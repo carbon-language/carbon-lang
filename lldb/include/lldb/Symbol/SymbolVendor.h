@@ -109,7 +109,7 @@ public:
                            bool append, TypeMap &types);
 
   virtual CompilerDeclContext
-  FindNamespace(const SymbolContext &sc, const ConstString &name,
+  FindNamespace(const ConstString &name,
                 const CompilerDeclContext *parent_decl_ctx);
 
   virtual size_t GetNumCompileUnits();

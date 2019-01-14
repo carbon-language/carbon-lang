@@ -1221,23 +1221,15 @@ uint32_t SymbolFileDWARFDebugMap::FindTypes(
 //}
 
 CompilerDeclContext SymbolFileDWARFDebugMap::FindNamespace(
-    const lldb_private::SymbolContext &sc,
     const lldb_private::ConstString &name,
     const CompilerDeclContext *parent_decl_ctx) {
   CompilerDeclContext matching_namespace;
-  SymbolFileDWARF *oso_dwarf;
 
-  if (sc.comp_unit) {
-    oso_dwarf = GetSymbolFile(sc);
-    if (oso_dwarf)
-      matching_namespace = oso_dwarf->FindNamespace(sc, name, parent_decl_ctx);
-  } else {
-    ForEachSymbolFile([&](SymbolFileDWARF *oso_dwarf) -> bool {
-      matching_namespace = oso_dwarf->FindNamespace(sc, name, parent_decl_ctx);
+  ForEachSymbolFile([&](SymbolFileDWARF *oso_dwarf) -> bool {
+    matching_namespace = oso_dwarf->FindNamespace(name, parent_decl_ctx);
 
-      return (bool)matching_namespace;
-    });
-  }
+    return (bool)matching_namespace;
+  });
 
   return matching_namespace;
 }

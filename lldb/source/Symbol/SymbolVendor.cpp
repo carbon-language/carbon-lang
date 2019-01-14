@@ -352,15 +352,14 @@ size_t SymbolVendor::GetTypes(SymbolContextScope *sc_scope, TypeClass type_mask,
 }
 
 CompilerDeclContext
-SymbolVendor::FindNamespace(const SymbolContext &sc, const ConstString &name,
+SymbolVendor::FindNamespace(const ConstString &name,
                             const CompilerDeclContext *parent_decl_ctx) {
   CompilerDeclContext namespace_decl_ctx;
   ModuleSP module_sp(GetModule());
   if (module_sp) {
     std::lock_guard<std::recursive_mutex> guard(module_sp->GetMutex());
     if (m_sym_file_ap.get())
-      namespace_decl_ctx =
-          m_sym_file_ap->FindNamespace(sc, name, parent_decl_ctx);
+      namespace_decl_ctx = m_sym_file_ap->FindNamespace(name, parent_decl_ctx);
   }
   return namespace_decl_ctx;
 }

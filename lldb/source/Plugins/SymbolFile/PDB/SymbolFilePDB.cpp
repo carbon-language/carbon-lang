@@ -1619,7 +1619,6 @@ PDBASTParser *SymbolFilePDB::GetPDBAstParser() {
 
 
 lldb_private::CompilerDeclContext SymbolFilePDB::FindNamespace(
-    const lldb_private::SymbolContext &sc,
     const lldb_private::ConstString &name,
     const lldb_private::CompilerDeclContext *parent_decl_ctx) {
   auto type_system = GetTypeSystemForLanguage(lldb::eLanguageTypeC_plus_plus);

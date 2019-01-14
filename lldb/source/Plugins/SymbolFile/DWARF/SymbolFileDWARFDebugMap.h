@@ -123,7 +123,6 @@ public:
             llvm::DenseSet<lldb_private::SymbolFile *> &searched_symbol_files,
             lldb_private::TypeMap &types) override;
   lldb_private::CompilerDeclContext FindNamespace(
-      const lldb_private::SymbolContext &sc,
       const lldb_private::ConstString &name,
       const lldb_private::CompilerDeclContext *parent_decl_ctx) override;
   size_t GetTypes(lldb_private::SymbolContextScope *sc_scope,

@@ -802,10 +802,8 @@ void ClangASTSource::FindExternalVisibleDecls(
     SymbolVendor *symbol_vendor = module_sp->GetSymbolVendor();
 
     if (symbol_vendor) {
-      SymbolContext null_sc;
-
       found_namespace_decl =
-          symbol_vendor->FindNamespace(null_sc, name, &namespace_decl);
+          symbol_vendor->FindNamespace(name, &namespace_decl);
 
       if (found_namespace_decl) {
         context.m_namespace_map->push_back(
@@ -835,10 +833,8 @@ void ClangASTSource::FindExternalVisibleDecls(
       if (!symbol_vendor)
         continue;
 
-      SymbolContext null_sc;
-
       found_namespace_decl =
-          symbol_vendor->FindNamespace(null_sc, name, &namespace_decl);
+          symbol_vendor->FindNamespace(name, &namespace_decl);
 
       if (found_namespace_decl) {
         context.m_namespace_map->push_back(
@@ -1881,10 +1877,8 @@ void ClangASTSource::CompleteNamespaceMap(
       if (!symbol_vendor)
         continue;
 
-      SymbolContext null_sc;
-
-      found_namespace_decl = symbol_vendor->FindNamespace(
-          null_sc, name, &module_parent_namespace_decl);
+      found_namespace_decl =
+          symbol_vendor->FindNamespace(name, &module_parent_namespace_decl);
 
       if (!found_namespace_decl)
         continue;
@@ -1916,10 +1910,8 @@ void ClangASTSource::CompleteNamespaceMap(
       if (!symbol_vendor)
         continue;
 
-      SymbolContext null_sc;
-
       found_namespace_decl =
-          symbol_vendor->FindNamespace(null_sc, name, &null_namespace_decl);
+          symbol_vendor->FindNamespace(name, &null_namespace_decl);
 
       if (!found_namespace_decl)
         continue;

@@ -160,7 +160,6 @@ public:
   GetTypeSystemForLanguage(lldb::LanguageType language) override;
 
   lldb_private::CompilerDeclContext FindNamespace(
-      const lldb_private::SymbolContext &sc,
       const lldb_private::ConstString &name,
       const lldb_private::CompilerDeclContext *parent_decl_ctx) override;
 

@@ -218,7 +218,7 @@ public:
   GetTypeSystemForLanguage(lldb::LanguageType language);
 
   virtual CompilerDeclContext
-  FindNamespace(const SymbolContext &sc, const ConstString &name,
+  FindNamespace(const ConstString &name,
                 const CompilerDeclContext *parent_decl_ctx) {
     return CompilerDeclContext();
   }
