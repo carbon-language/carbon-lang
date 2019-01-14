@@ -70,9 +70,8 @@ void TextNodeDumper::Visit(const TemplateArgument &TA, SourceRange R,
   if (R.isValid())
     dumpSourceRange(R);
 
-  if (From) {
+  if (From)
     dumpDeclRef(From, Label);
-  }
 
   ConstTemplateArgumentVisitor<TextNodeDumper>::Visit(TA);
 }
