@@ -3603,36 +3603,17 @@ class InvokeInst : public CallBase {
   /// Construct an InvokeInst given a range of arguments.
   ///
   /// Construct an InvokeInst from a range of arguments
-  inline InvokeInst(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
-                    ArrayRef<Value *> Args, ArrayRef<OperandBundleDef> Bundles,
-                    int NumOperands, const Twine &NameStr,
-                    Instruction *InsertBefore)
-      : InvokeInst(cast<FunctionType>(
-                       cast<PointerType>(Func->getType())->getElementType()),
-                   Func, IfNormal, IfException, Args, Bundles, NumOperands,
-                   NameStr, InsertBefore) {}
-
   inline InvokeInst(FunctionType *Ty, Value *Func, BasicBlock *IfNormal,
                     BasicBlock *IfException, ArrayRef<Value *> Args,
                     ArrayRef<OperandBundleDef> Bundles, int NumOperands,
                     const Twine &NameStr, Instruction *InsertBefore);
-  /// Construct an InvokeInst given a range of arguments.
-  ///
-  /// Construct an InvokeInst from a range of arguments
-  inline InvokeInst(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
-                    ArrayRef<Value *> Args, ArrayRef<OperandBundleDef> Bundles,
-                    int NumOperands, const Twine &NameStr,
-                    BasicBlock *InsertAtEnd);
 
-  void init(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
-            ArrayRef<Value *> Args, ArrayRef<OperandBundleDef> Bundles,
-            const Twine &NameStr) {
-    init(cast<FunctionType>(
-             cast<PointerType>(Func->getType())->getElementType()),
-         Func, IfNormal, IfException, Args, Bundles, NameStr);
-  }
+  inline InvokeInst(FunctionType *Ty, Value *Func, BasicBlock *IfNormal,
+                    BasicBlock *IfException, ArrayRef<Value *> Args,
+                    ArrayRef<OperandBundleDef> Bundles, int NumOperands,
+                    const Twine &NameStr, BasicBlock *InsertAtEnd);
 
-  void init(FunctionType *FTy, Value *Func, BasicBlock *IfNormal,
+  void init(FunctionType *Ty, Value *Func, BasicBlock *IfNormal,
             BasicBlock *IfException, ArrayRef<Value *> Args,
             ArrayRef<OperandBundleDef> Bundles, const Twine &NameStr);
 
@@ -3650,27 +3631,6 @@ protected:
   InvokeInst *cloneImpl() const;
 
 public:
-  static InvokeInst *Create(Value *Func, BasicBlock *IfNormal,
-                            BasicBlock *IfException, ArrayRef<Value *> Args,
-                            const Twine &NameStr,
-                            Instruction *InsertBefore = nullptr) {
-    return Create(cast<FunctionType>(
-                      cast<PointerType>(Func->getType())->getElementType()),
-                  Func, IfNormal, IfException, Args, None, NameStr,
-                  InsertBefore);
-  }
-
-  static InvokeInst *Create(Value *Func, BasicBlock *IfNormal,
-                            BasicBlock *IfException, ArrayRef<Value *> Args,
-                            ArrayRef<OperandBundleDef> Bundles = None,
-                            const Twine &NameStr = "",
-                            Instruction *InsertBefore = nullptr) {
-    return Create(cast<FunctionType>(
-                      cast<PointerType>(Func->getType())->getElementType()),
-                  Func, IfNormal, IfException, Args, Bundles, NameStr,
-                  InsertBefore);
-  }
-
   static InvokeInst *Create(FunctionType *Ty, Value *Func, BasicBlock *IfNormal,
                             BasicBlock *IfException, ArrayRef<Value *> Args,
                             const Twine &NameStr,
@@ -3695,16 +3655,16 @@ public:
                    NameStr, InsertBefore);
   }
 
-  static InvokeInst *Create(Value *Func,
-                            BasicBlock *IfNormal, BasicBlock *IfException,
-                            ArrayRef<Value *> Args, const Twine &NameStr,
-                            BasicBlock *InsertAtEnd) {
+  static InvokeInst *Create(FunctionType *Ty, Value *Func, BasicBlock *IfNormal,
+                            BasicBlock *IfException, ArrayRef<Value *> Args,
+                            const Twine &NameStr, BasicBlock *InsertAtEnd) {
     int NumOperands = ComputeNumOperands(Args.size());
-    return new (NumOperands) InvokeInst(Func, IfNormal, IfException, Args, None,
-                                        NumOperands, NameStr, InsertAtEnd);
+    return new (NumOperands)
+        InvokeInst(Ty, Func, IfNormal, IfException, Args, None, NumOperands,
+                   NameStr, InsertAtEnd);
   }
 
-  static InvokeInst *Create(Value *Func, BasicBlock *IfNormal,
+  static InvokeInst *Create(FunctionType *Ty, Value *Func, BasicBlock *IfNormal,
                             BasicBlock *IfException, ArrayRef<Value *> Args,
                             ArrayRef<OperandBundleDef> Bundles,
                             const Twine &NameStr, BasicBlock *InsertAtEnd) {
@@ -3713,8 +3673,83 @@ public:
     unsigned DescriptorBytes = Bundles.size() * sizeof(BundleOpInfo);
 
     return new (NumOperands, DescriptorBytes)
-        InvokeInst(Func, IfNormal, IfException, Args, Bundles, NumOperands,
+        InvokeInst(Ty, Func, IfNormal, IfException, Args, Bundles, NumOperands,
                    NameStr, InsertAtEnd);
+  }
+
+  static InvokeInst *Create(Function *Func, BasicBlock *IfNormal,
+                            BasicBlock *IfException, ArrayRef<Value *> Args,
+                            const Twine &NameStr,
+                            Instruction *InsertBefore = nullptr) {
+    return Create(Func->getFunctionType(), Func, IfNormal, IfException, Args,
+                  None, NameStr, InsertBefore);
+  }
+
+  static InvokeInst *Create(Function *Func, BasicBlock *IfNormal,
+                            BasicBlock *IfException, ArrayRef<Value *> Args,
+                            ArrayRef<OperandBundleDef> Bundles = None,
+                            const Twine &NameStr = "",
+                            Instruction *InsertBefore = nullptr) {
+    return Create(Func->getFunctionType(), Func, IfNormal, IfException, Args,
+                  Bundles, NameStr, InsertBefore);
+  }
+
+  static InvokeInst *Create(Function *Func, BasicBlock *IfNormal,
+                            BasicBlock *IfException, ArrayRef<Value *> Args,
+                            const Twine &NameStr, BasicBlock *InsertAtEnd) {
+    return Create(Func->getFunctionType(), Func, IfNormal, IfException, Args,
+                  NameStr, InsertAtEnd);
+  }
+
+  static InvokeInst *Create(Function *Func, BasicBlock *IfNormal,
+                            BasicBlock *IfException, ArrayRef<Value *> Args,
+                            ArrayRef<OperandBundleDef> Bundles,
+                            const Twine &NameStr, BasicBlock *InsertAtEnd) {
+    return Create(Func->getFunctionType(), Func, IfNormal, IfException, Args,
+                  Bundles, NameStr, InsertAtEnd);
+  }
+
+  // Deprecated [opaque pointer types]
+  static InvokeInst *Create(Value *Func, BasicBlock *IfNormal,
+                            BasicBlock *IfException, ArrayRef<Value *> Args,
+                            const Twine &NameStr,
+                            Instruction *InsertBefore = nullptr) {
+    return Create(cast<FunctionType>(
+                      cast<PointerType>(Func->getType())->getElementType()),
+                  Func, IfNormal, IfException, Args, None, NameStr,
+                  InsertBefore);
+  }
+
+  // Deprecated [opaque pointer types]
+  static InvokeInst *Create(Value *Func, BasicBlock *IfNormal,
+                            BasicBlock *IfException, ArrayRef<Value *> Args,
+                            ArrayRef<OperandBundleDef> Bundles = None,
+                            const Twine &NameStr = "",
+                            Instruction *InsertBefore = nullptr) {
+    return Create(cast<FunctionType>(
+                      cast<PointerType>(Func->getType())->getElementType()),
+                  Func, IfNormal, IfException, Args, Bundles, NameStr,
+                  InsertBefore);
+  }
+
+  // Deprecated [opaque pointer types]
+  static InvokeInst *Create(Value *Func, BasicBlock *IfNormal,
+                            BasicBlock *IfException, ArrayRef<Value *> Args,
+                            const Twine &NameStr, BasicBlock *InsertAtEnd) {
+    return Create(cast<FunctionType>(
+                      cast<PointerType>(Func->getType())->getElementType()),
+                  Func, IfNormal, IfException, Args, NameStr, InsertAtEnd);
+  }
+
+  // Deprecated [opaque pointer types]
+  static InvokeInst *Create(Value *Func, BasicBlock *IfNormal,
+                            BasicBlock *IfException, ArrayRef<Value *> Args,
+                            ArrayRef<OperandBundleDef> Bundles,
+                            const Twine &NameStr, BasicBlock *InsertAtEnd) {
+    return Create(cast<FunctionType>(
+                      cast<PointerType>(Func->getType())->getElementType()),
+                  Func, IfNormal, IfException, Args, Bundles, NameStr,
+                  InsertAtEnd);
   }
 
   /// Create a clone of \p II with a different set of operand bundles and
@@ -3795,17 +3830,14 @@ InvokeInst::InvokeInst(FunctionType *Ty, Value *Func, BasicBlock *IfNormal,
   init(Ty, Func, IfNormal, IfException, Args, Bundles, NameStr);
 }
 
-InvokeInst::InvokeInst(Value *Func, BasicBlock *IfNormal,
+InvokeInst::InvokeInst(FunctionType *Ty, Value *Func, BasicBlock *IfNormal,
                        BasicBlock *IfException, ArrayRef<Value *> Args,
                        ArrayRef<OperandBundleDef> Bundles, int NumOperands,
                        const Twine &NameStr, BasicBlock *InsertAtEnd)
-    : CallBase(cast<FunctionType>(
-                   cast<PointerType>(Func->getType())->getElementType())
-                   ->getReturnType(),
-               Instruction::Invoke,
+    : CallBase(Ty->getReturnType(), Instruction::Invoke,
                OperandTraits<CallBase>::op_end(this) - NumOperands, NumOperands,
                InsertAtEnd) {
-  init(Func, IfNormal, IfException, Args, Bundles, NameStr);
+  init(Ty, Func, IfNormal, IfException, Args, Bundles, NameStr);
 }
 
 //===----------------------------------------------------------------------===//

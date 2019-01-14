@@ -889,19 +889,59 @@ public:
   }
 
   /// Create an invoke instruction.
-  InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest,
+  InvokeInst *CreateInvoke(FunctionType *Ty, Value *Callee,
+                           BasicBlock *NormalDest, BasicBlock *UnwindDest,
+                           ArrayRef<Value *> Args,
+                           ArrayRef<OperandBundleDef> OpBundles,
+                           const Twine &Name = "") {
+    return Insert(
+        InvokeInst::Create(Ty, Callee, NormalDest, UnwindDest, Args, OpBundles),
+        Name);
+  }
+  InvokeInst *CreateInvoke(FunctionType *Ty, Value *Callee,
+                           BasicBlock *NormalDest, BasicBlock *UnwindDest,
+                           ArrayRef<Value *> Args = None,
+                           const Twine &Name = "") {
+    return Insert(InvokeInst::Create(Ty, Callee, NormalDest, UnwindDest, Args),
+                  Name);
+  }
+
+  InvokeInst *CreateInvoke(Function *Callee, BasicBlock *NormalDest,
+                           BasicBlock *UnwindDest, ArrayRef<Value *> Args,
+                           ArrayRef<OperandBundleDef> OpBundles,
+                           const Twine &Name = "") {
+    return CreateInvoke(Callee->getFunctionType(), Callee, NormalDest,
+                        UnwindDest, Args, OpBundles, Name);
+  }
+
+  InvokeInst *CreateInvoke(Function *Callee, BasicBlock *NormalDest,
                            BasicBlock *UnwindDest,
                            ArrayRef<Value *> Args = None,
                            const Twine &Name = "") {
-    return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest, Args),
-                  Name);
+    return CreateInvoke(Callee->getFunctionType(), Callee, NormalDest,
+                        UnwindDest, Args, Name);
   }
+
+  // Deprecated [opaque pointer types]
   InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest,
                            BasicBlock *UnwindDest, ArrayRef<Value *> Args,
                            ArrayRef<OperandBundleDef> OpBundles,
                            const Twine &Name = "") {
-    return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest, Args,
-                                     OpBundles), Name);
+    return CreateInvoke(
+        cast<FunctionType>(
+            cast<PointerType>(Callee->getType())->getElementType()),
+        Callee, NormalDest, UnwindDest, Args, OpBundles, Name);
+  }
+
+  // Deprecated [opaque pointer types]
+  InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest,
+                           BasicBlock *UnwindDest,
+                           ArrayRef<Value *> Args = None,
+                           const Twine &Name = "") {
+    return CreateInvoke(
+        cast<FunctionType>(
+            cast<PointerType>(Callee->getType())->getElementType()),
+        Callee, NormalDest, UnwindDest, Args, Name);
   }
 
   ResumeInst *CreateResume(Value *Exn) {
