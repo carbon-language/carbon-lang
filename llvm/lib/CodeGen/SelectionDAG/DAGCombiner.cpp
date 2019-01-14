@@ -2198,8 +2198,9 @@ SDValue DAGCombiner::visitADDSAT(SDNode *N) {
     // canonicalize constant to RHS
     if (!DAG.isConstantIntBuildVectorOrConstantInt(N1))
       return DAG.getNode(Opcode, DL, VT, N1, N0);
-
-    // TODO Constant Folding
+    // fold (add_sat c1, c2) -> c3
+    return DAG.FoldConstantArithmetic(Opcode, DL, VT, N0.getNode(),
+                                      N1.getNode());
   }
 
   // fold (add_sat x, 0) -> x
