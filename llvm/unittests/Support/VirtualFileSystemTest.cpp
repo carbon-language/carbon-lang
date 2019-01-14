@@ -430,6 +430,7 @@ TEST(VirtualFileSystemTest, BasicRealFSIteration) {
   EXPECT_EQ(vfs::directory_iterator(), I);
 }
 
+#ifdef LLVM_ON_UNIX
 TEST(VirtualFileSystemTest, MultipleWorkingDirs) {
   // Our root contains a/aa, b/bb, c, where c is a link to a/.
   // Run tests both in root/b/ and root/c/ (to test "normal" and symlink dirs).
@@ -491,7 +492,6 @@ TEST(VirtualFileSystemTest, MultipleWorkingDirs) {
   ASSERT_EQ(CIt, vfs::directory_iterator());
 }
 
-#ifdef LLVM_ON_UNIX
 TEST(VirtualFileSystemTest, BrokenSymlinkRealFSIteration) {
   ScopedDir TestDirectory("virtual-file-system-test", /*Unique*/ true);
   IntrusiveRefCntPtr<vfs::FileSystem> FS = vfs::getRealFileSystem();
