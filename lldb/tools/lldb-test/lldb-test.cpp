@@ -459,10 +459,9 @@ Error opts::symbols::findTypes(lldb_private::Module &Module) {
   CompilerDeclContext *ContextPtr =
       ContextOr->IsValid() ? &*ContextOr : nullptr;
 
-  SymbolContext SC;
   DenseSet<SymbolFile *> SearchedFiles;
   TypeMap Map;
-  Vendor.FindTypes(SC, ConstString(Name), ContextPtr, true, UINT32_MAX,
+  Vendor.FindTypes(ConstString(Name), ContextPtr, true, UINT32_MAX,
                    SearchedFiles, Map);
 
   outs() << formatv("Found {0} types:\n", Map.GetSize());

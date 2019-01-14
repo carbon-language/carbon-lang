@@ -1219,10 +1219,9 @@ uint32_t SymbolFileNativePDB::FindFunctions(const RegularExpression &regex,
 }
 
 uint32_t SymbolFileNativePDB::FindTypes(
-    const SymbolContext &sc, const ConstString &name,
-    const CompilerDeclContext *parent_decl_ctx, bool append,
-    uint32_t max_matches, llvm::DenseSet<SymbolFile *> &searched_symbol_files,
-    TypeMap &types) {
+    const ConstString &name, const CompilerDeclContext *parent_decl_ctx,
+    bool append, uint32_t max_matches,
+    llvm::DenseSet<SymbolFile *> &searched_symbol_files, TypeMap &types) {
   if (!append)
     types.Clear();
   if (!name)

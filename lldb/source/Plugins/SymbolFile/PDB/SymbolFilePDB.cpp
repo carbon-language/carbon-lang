@@ -1376,7 +1376,6 @@ void SymbolFilePDB::AddSymbols(lldb_private::Symtab &symtab) {
 }
 
 uint32_t SymbolFilePDB::FindTypes(
-    const lldb_private::SymbolContext &sc,
     const lldb_private::ConstString &name,
     const lldb_private::CompilerDeclContext *parent_decl_ctx, bool append,
     uint32_t max_matches,

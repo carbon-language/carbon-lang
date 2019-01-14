@@ -99,9 +99,8 @@ public:
                                SymbolContextList &sc_list);
 
   virtual size_t
-  FindTypes(const SymbolContext &sc, const ConstString &name,
-            const CompilerDeclContext *parent_decl_ctx, bool append,
-            size_t max_matches,
+  FindTypes(const ConstString &name, const CompilerDeclContext *parent_decl_ctx,
+            bool append, size_t max_matches,
             llvm::DenseSet<lldb_private::SymbolFile *> &searched_symbol_files,
             TypeMap &types);
 

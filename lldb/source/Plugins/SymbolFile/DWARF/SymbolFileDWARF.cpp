@@ -2437,9 +2437,8 @@ void SymbolFileDWARF::GetMangledNamesForFunction(
 }
 
 uint32_t SymbolFileDWARF::FindTypes(
-    const SymbolContext &sc, const ConstString &name,
-    const CompilerDeclContext *parent_decl_ctx, bool append,
-    uint32_t max_matches,
+    const ConstString &name, const CompilerDeclContext *parent_decl_ctx,
+    bool append, uint32_t max_matches,
     llvm::DenseSet<lldb_private::SymbolFile *> &searched_symbol_files,
     TypeMap &types) {
   // If we aren't appending the results to this list, then clear the list
@@ -2528,8 +2527,8 @@ uint32_t SymbolFileDWARF::FindTypes(
         SymbolVendor *sym_vendor = external_module_sp->GetSymbolVendor();
         if (sym_vendor) {
           const uint32_t num_external_matches =
-              sym_vendor->FindTypes(sc, name, parent_decl_ctx, append,
-                                    max_matches, searched_symbol_files, types);
+              sym_vendor->FindTypes(name, parent_decl_ctx, append, max_matches,
+                                    searched_symbol_files, types);
           if (num_external_matches)
             return num_external_matches;
         }

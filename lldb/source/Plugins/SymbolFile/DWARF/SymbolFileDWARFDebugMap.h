@@ -116,8 +116,7 @@ public:
                          bool include_inlines, bool append,
                          lldb_private::SymbolContextList &sc_list) override;
   uint32_t
-  FindTypes(const lldb_private::SymbolContext &sc,
-            const lldb_private::ConstString &name,
+  FindTypes(const lldb_private::ConstString &name,
             const lldb_private::CompilerDeclContext *parent_decl_ctx,
             bool append, uint32_t max_matches,
             llvm::DenseSet<lldb_private::SymbolFile *> &searched_symbol_files,

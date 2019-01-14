@@ -193,9 +193,8 @@ public:
                                  bool include_inlines, bool append,
                                  SymbolContextList &sc_list);
   virtual uint32_t
-  FindTypes(const SymbolContext &sc, const ConstString &name,
-            const CompilerDeclContext *parent_decl_ctx, bool append,
-            uint32_t max_matches,
+  FindTypes(const ConstString &name, const CompilerDeclContext *parent_decl_ctx,
+            bool append, uint32_t max_matches,
             llvm::DenseSet<lldb_private::SymbolFile *> &searched_symbol_files,
             TypeMap &types);
   virtual size_t FindTypes(const std::vector<CompilerContext> &context,

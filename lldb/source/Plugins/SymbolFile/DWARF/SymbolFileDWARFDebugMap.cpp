@@ -1180,9 +1180,8 @@ TypeSP SymbolFileDWARFDebugMap::FindCompleteObjCDefinitionTypeForDIE(
 }
 
 uint32_t SymbolFileDWARFDebugMap::FindTypes(
-    const SymbolContext &sc, const ConstString &name,
-    const CompilerDeclContext *parent_decl_ctx, bool append,
-    uint32_t max_matches,
+    const ConstString &name, const CompilerDeclContext *parent_decl_ctx,
+    bool append, uint32_t max_matches,
     llvm::DenseSet<lldb_private::SymbolFile *> &searched_symbol_files,
     TypeMap &types) {
   if (!append)
@@ -1191,18 +1190,11 @@ uint32_t SymbolFileDWARFDebugMap::FindTypes(
   const uint32_t initial_types_size = types.GetSize();
   SymbolFileDWARF *oso_dwarf;
 
-  if (sc.comp_unit) {
-    oso_dwarf = GetSymbolFile(sc);
-    if (oso_dwarf)
-      return oso_dwarf->FindTypes(sc, name, parent_decl_ctx, append,
-                                  max_matches, searched_symbol_files, types);
-  } else {
-    ForEachSymbolFile([&](SymbolFileDWARF *oso_dwarf) -> bool {
-      oso_dwarf->FindTypes(sc, name, parent_decl_ctx, append, max_matches,
-                           searched_symbol_files, types);
-      return types.GetSize() >= max_matches;
-    });
-  }
+  ForEachSymbolFile([&](SymbolFileDWARF *oso_dwarf) -> bool {
+    oso_dwarf->FindTypes(name, parent_decl_ctx, append, max_matches,
+                         searched_symbol_files, types);
+    return types.GetSize() >= max_matches;
+  });
 
   return types.GetSize() - initial_types_size;
 }
