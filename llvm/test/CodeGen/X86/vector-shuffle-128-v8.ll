@@ -2488,17 +2488,19 @@ define <8 x i16> @shuffle_v8i16_9zzzuuuu(<8 x i16> %x) {
 ;
 ; SSSE3-LABEL: shuffle_v8i16_9zzzuuuu:
 ; SSSE3:       # %bb.0:
-; SSSE3-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[2,3],zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,xmm0[6,7]
+; SSSE3-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[2,3],zero,zero,zero,zero,zero,zero,xmm0[u,u,u,u,u,u,u,u]
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: shuffle_v8i16_9zzzuuuu:
 ; SSE41:       # %bb.0:
-; SSE41-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[2,3],zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,xmm0[6,7]
+; SSE41-NEXT:    psrld $16, %xmm0
+; SSE41-NEXT:    pmovzxwq {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: shuffle_v8i16_9zzzuuuu:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[2,3],zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,xmm0[6,7]
+; AVX-NEXT:    vpsrld $16, %xmm0, %xmm0
+; AVX-NEXT:    vpmovzxwq {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero
 ; AVX-NEXT:    retq
   %r = shufflevector <8 x i16> zeroinitializer, <8 x i16> %x, <8 x i32> <i32 9, i32 1, i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef>
   ret <8 x i16> %r
