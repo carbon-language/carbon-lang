@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/TextNodeDumper.h"
+#include "clang/AST/LocInfoType.h"
 
 using namespace clang;
 
@@ -128,6 +129,47 @@ void TextNodeDumper::Visit(const Stmt *Node) {
   }
 
   ConstStmtVisitor<TextNodeDumper>::Visit(Node);
+}
+
+void TextNodeDumper::Visit(const Type *T) {
+  if (!T) {
+    ColorScope Color(OS, ShowColors, NullColor);
+    OS << "<<<NULL>>>";
+    return;
+  }
+  if (isa<LocInfoType>(T)) {
+    {
+      ColorScope Color(OS, ShowColors, TypeColor);
+      OS << "LocInfo Type";
+    }
+    dumpPointer(T);
+    return;
+  }
+
+  {
+    ColorScope Color(OS, ShowColors, TypeColor);
+    OS << T->getTypeClassName() << "Type";
+  }
+  dumpPointer(T);
+  OS << " ";
+  dumpBareType(QualType(T, 0), false);
+
+  QualType SingleStepDesugar =
+      T->getLocallyUnqualifiedSingleStepDesugaredType();
+  if (SingleStepDesugar != QualType(T, 0))
+    OS << " sugar";
+
+  if (T->isDependentType())
+    OS << " dependent";
+  else if (T->isInstantiationDependentType())
+    OS << " instantiation_dependent";
+
+  if (T->isVariablyModifiedType())
+    OS << " variably_modified";
+  if (T->containsUnexpandedParameterPack())
+    OS << " contains_unexpanded_pack";
+  if (T->isFromAST())
+    OS << " imported";
 }
 
 void TextNodeDumper::dumpPointer(const void *Ptr) {
