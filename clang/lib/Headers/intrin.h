@@ -549,6 +549,9 @@ static __inline__ void __DEFAULT_FN_ATTRS
 __halt(void) {
   __asm__ volatile ("hlt");
 }
+#endif
+
+#if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__)
 static __inline__ void __DEFAULT_FN_ATTRS
 __nop(void) {
   __asm__ volatile ("nop");
