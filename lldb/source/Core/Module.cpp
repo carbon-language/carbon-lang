@@ -373,9 +373,10 @@ void Module::ParseAllDebugSymbols() {
     symbols->ParseFunctions(*sc.comp_unit);
 
     sc.comp_unit->ForeachFunction([&sc, &symbols](const FunctionSP &f) {
-      sc.function = f.get();
-      symbols->ParseFunctionBlocks(sc);
+      symbols->ParseBlocksRecursive(*f);
+
       // Parse the variables for this function and all its blocks
+      sc.function = f.get();
       symbols->ParseVariablesForContext(sc);
       return false;
     });

@@ -126,7 +126,7 @@ public:
       const lldb_private::SymbolContext &sc,
       std::vector<lldb_private::ConstString> &imported_modules) override;
 
-  size_t ParseFunctionBlocks(const lldb_private::SymbolContext &sc) override;
+  size_t ParseBlocksRecursive(lldb_private::Function &func) override;
 
   size_t
   ParseVariablesForContext(const lldb_private::SymbolContext &sc) override;
@@ -359,10 +359,10 @@ protected:
   lldb_private::Function *ParseFunction(lldb_private::CompileUnit &comp_unit,
                                         const DWARFDIE &die);
 
-  size_t ParseFunctionBlocks(const lldb_private::SymbolContext &sc,
-                             lldb_private::Block *parent_block,
-                             const DWARFDIE &die,
-                             lldb::addr_t subprogram_low_pc, uint32_t depth);
+  size_t ParseBlocksRecursive(lldb_private::CompileUnit &comp_unit,
+                              lldb_private::Block *parent_block,
+                              const DWARFDIE &die,
+                              lldb::addr_t subprogram_low_pc, uint32_t depth);
 
   size_t ParseTypes(const lldb_private::SymbolContext &sc, const DWARFDIE &die,
                     bool parse_siblings, bool parse_children);

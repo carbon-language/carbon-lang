@@ -1142,9 +1142,8 @@ bool SymbolFileNativePDB::ParseImportedModules(
   return false;
 }
 
-size_t SymbolFileNativePDB::ParseFunctionBlocks(const SymbolContext &sc) {
-  lldbassert(sc.comp_unit && sc.function);
-  GetOrCreateBlock(PdbSymUid(sc.function->GetID()).asCompilandSym());
+size_t SymbolFileNativePDB::ParseBlocksRecursive(Function &func) {
+  GetOrCreateBlock(PdbSymUid(func.GetID()).asCompilandSym());
   // FIXME: Parse child blocks
   return 1;
 }

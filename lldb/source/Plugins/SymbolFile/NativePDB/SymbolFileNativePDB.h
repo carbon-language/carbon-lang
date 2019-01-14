@@ -99,7 +99,7 @@ public:
   ParseImportedModules(const SymbolContext &sc,
                        std::vector<ConstString> &imported_modules) override;
 
-  size_t ParseFunctionBlocks(const SymbolContext &sc) override;
+  size_t ParseBlocksRecursive(Function &func) override;
 
   uint32_t FindGlobalVariables(const ConstString &name,
                                const CompilerDeclContext *parent_decl_ctx,

@@ -677,10 +677,14 @@ bool SymbolFileDWARFDebugMap::ParseImportedModules(
   return false;
 }
 
-size_t SymbolFileDWARFDebugMap::ParseFunctionBlocks(const SymbolContext &sc) {
-  SymbolFileDWARF *oso_dwarf = GetSymbolFile(sc);
+size_t SymbolFileDWARFDebugMap::ParseBlocksRecursive(Function &func) {
+  CompileUnit *comp_unit = func.GetCompileUnit();
+  if (!comp_unit)
+    return 0;
+
+  SymbolFileDWARF *oso_dwarf = GetSymbolFile(*comp_unit);
   if (oso_dwarf)
-    return oso_dwarf->ParseFunctionBlocks(sc);
+    return oso_dwarf->ParseBlocksRecursive(func);
   return 0;
 }
 

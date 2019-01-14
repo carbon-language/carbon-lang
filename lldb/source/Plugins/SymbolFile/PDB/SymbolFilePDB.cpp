@@ -384,9 +384,8 @@ bool SymbolFilePDB::ParseImportedModules(
 }
 
 static size_t ParseFunctionBlocksForPDBSymbol(
-    const lldb_private::SymbolContext &sc, uint64_t func_file_vm_addr,
-    const llvm::pdb::PDBSymbol *pdb_symbol, lldb_private::Block *parent_block,
-    bool is_top_parent) {
+    uint64_t func_file_vm_addr, const llvm::pdb::PDBSymbol *pdb_symbol,
+    lldb_private::Block *parent_block, bool is_top_parent) {
   assert(pdb_symbol && parent_block);
 
   size_t num_added = 0;
@@ -425,7 +424,7 @@ static size_t ParseFunctionBlocksForPDBSymbol(
       break;
     while (auto symbol_up = results_up->getNext()) {
       num_added += ParseFunctionBlocksForPDBSymbol(
-          sc, func_file_vm_addr, symbol_up.get(), block, false);
+          func_file_vm_addr, symbol_up.get(), block, false);
     }
   } break;
   default:
@@ -434,18 +433,15 @@ static size_t ParseFunctionBlocksForPDBSymbol(
   return num_added;
 }
 
-size_t
-SymbolFilePDB::ParseFunctionBlocks(const lldb_private::SymbolContext &sc) {
-  lldbassert(sc.comp_unit && sc.function);
+size_t SymbolFilePDB::ParseBlocksRecursive(Function &func) {
   size_t num_added = 0;
-  auto uid = sc.function->GetID();
+  auto uid = func.GetID();
   auto pdb_func_up = m_session_up->getConcreteSymbolById<PDBSymbolFunc>(uid);
   if (!pdb_func_up)
     return 0;
-  Block &parent_block = sc.function->GetBlock(false);
-  num_added =
-      ParseFunctionBlocksForPDBSymbol(sc, pdb_func_up->getVirtualAddress(),
-                                      pdb_func_up.get(), &parent_block, true);
+  Block &parent_block = func.GetBlock(false);
+  num_added = ParseFunctionBlocksForPDBSymbol(
+      pdb_func_up->getVirtualAddress(), pdb_func_up.get(), &parent_block, true);
   return num_added;
 }
 

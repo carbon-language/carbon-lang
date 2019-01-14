@@ -1159,11 +1159,9 @@ bool SymbolFileDWARF::ParseDebugMacros(CompileUnit &comp_unit) {
   return true;
 }
 
-size_t SymbolFileDWARF::ParseFunctionBlocks(const SymbolContext &sc,
-                                            Block *parent_block,
-                                            const DWARFDIE &orig_die,
-                                            addr_t subprogram_low_pc,
-                                            uint32_t depth) {
+size_t SymbolFileDWARF::ParseBlocksRecursive(
+    lldb_private::CompileUnit &comp_unit, Block *parent_block,
+    const DWARFDIE &orig_die, addr_t subprogram_low_pc, uint32_t depth) {
   size_t blocks_added = 0;
   DWARFDIE die = orig_die;
   while (die) {
@@ -1242,13 +1240,13 @@ size_t SymbolFileDWARF::ParseFunctionBlocks(const SymbolContext &sc,
           std::unique_ptr<Declaration> decl_ap;
           if (decl_file != 0 || decl_line != 0 || decl_column != 0)
             decl_ap.reset(new Declaration(
-                sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(decl_file),
+                comp_unit.GetSupportFiles().GetFileSpecAtIndex(decl_file),
                 decl_line, decl_column));
 
           std::unique_ptr<Declaration> call_ap;
           if (call_file != 0 || call_line != 0 || call_column != 0)
             call_ap.reset(new Declaration(
-                sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(call_file),
+                comp_unit.GetSupportFiles().GetFileSpecAtIndex(call_file),
                 call_line, call_column));
 
           block->SetInlinedFunctionInfo(name, mangled_name, decl_ap.get(),
@@ -1258,8 +1256,9 @@ size_t SymbolFileDWARF::ParseFunctionBlocks(const SymbolContext &sc,
         ++blocks_added;
 
         if (die.HasChildren()) {
-          blocks_added += ParseFunctionBlocks(sc, block, die.GetFirstChild(),
-                                              subprogram_low_pc, depth + 1);
+          blocks_added +=
+              ParseBlocksRecursive(comp_unit, block, die.GetFirstChild(),
+                                   subprogram_low_pc, depth + 1);
         }
       }
     } break;
@@ -3125,18 +3124,21 @@ size_t SymbolFileDWARF::ParseTypes(const SymbolContext &sc,
   return types_added;
 }
 
-size_t SymbolFileDWARF::ParseFunctionBlocks(const SymbolContext &sc) {
+size_t SymbolFileDWARF::ParseBlocksRecursive(Function &func) {
   ASSERT_MODULE_LOCK(this);
-  assert(sc.comp_unit && sc.function);
+  CompileUnit *comp_unit = func.GetCompileUnit();
+  lldbassert(comp_unit);
+
+  DWARFUnit *dwarf_cu = GetDWARFCompileUnit(comp_unit);
+  if (!dwarf_cu)
+    return 0;
+
   size_t functions_added = 0;
-  DWARFUnit *dwarf_cu = GetDWARFCompileUnit(sc.comp_unit);
-  if (dwarf_cu) {
-    const dw_offset_t function_die_offset = sc.function->GetID();
-    DWARFDIE function_die = dwarf_cu->GetDIE(function_die_offset);
-    if (function_die) {
-      ParseFunctionBlocks(sc, &sc.function->GetBlock(false), function_die,
-                          LLDB_INVALID_ADDRESS, 0);
-    }
+  const dw_offset_t function_die_offset = func.GetID();
+  DWARFDIE function_die = dwarf_cu->GetDIE(function_die_offset);
+  if (function_die) {
+    ParseBlocksRecursive(*comp_unit, &func.GetBlock(false), function_die,
+                         LLDB_INVALID_ADDRESS, 0);
   }
 
   return functions_added;

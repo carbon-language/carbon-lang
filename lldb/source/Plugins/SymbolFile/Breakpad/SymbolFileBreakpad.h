@@ -75,7 +75,7 @@ public:
     return false;
   }
 
-  size_t ParseFunctionBlocks(const SymbolContext &sc) override { return 0; }
+  size_t ParseBlocksRecursive(Function &func) override { return 0; }
 
   uint32_t FindGlobalVariables(const ConstString &name,
                                const CompilerDeclContext *parent_decl_ctx,
