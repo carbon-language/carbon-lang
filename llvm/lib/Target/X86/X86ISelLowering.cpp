@@ -18574,8 +18574,8 @@ static SDValue lowerAddSubToHorizontalOp(SDValue Op, SelectionDAG &DAG,
 /// vector operation in place of the typical scalar operation.
 static SDValue lowerFaddFsub(SDValue Op, SelectionDAG &DAG,
                              const X86Subtarget &Subtarget) {
-  MVT VT = Op.getSimpleValueType();
-  assert((VT == MVT::f32 || VT == MVT::f64) && "Only expecting float/double");
+  assert((Op.getValueType() == MVT::f32 || Op.getValueType() == MVT::f64) &&
+         "Only expecting float/double");
   return lowerAddSubToHorizontalOp(Op, DAG, Subtarget);
 }
 
