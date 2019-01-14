@@ -4490,6 +4490,8 @@ static std::pair<APInt, bool> FoldValue(unsigned Opcode, const APInt &C1,
   case ISD::UMAX: return std::make_pair(C1.uge(C2) ? C1 : C2, true);
   case ISD::SADDSAT: return std::make_pair(C1.sadd_sat(C2), true);
   case ISD::UADDSAT: return std::make_pair(C1.uadd_sat(C2), true);
+  case ISD::SSUBSAT: return std::make_pair(C1.ssub_sat(C2), true);
+  case ISD::USUBSAT: return std::make_pair(C1.usub_sat(C2), true);
   case ISD::UDIV:
     if (!C2.getBoolValue())
       break;

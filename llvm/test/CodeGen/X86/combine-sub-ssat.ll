@@ -39,14 +39,7 @@ define <8 x i16> @combine_undef_v8i16(<8 x i16> %a0) {
 define i32 @combine_constfold_i32() {
 ; CHECK-LABEL: combine_constfold_i32:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    movl $100, %eax
-; CHECK-NEXT:    xorl %ecx, %ecx
-; CHECK-NEXT:    movl $100, %edx
-; CHECK-NEXT:    subl $2147483647, %edx # imm = 0x7FFFFFFF
-; CHECK-NEXT:    setns %cl
-; CHECK-NEXT:    addl $2147483647, %ecx # imm = 0x7FFFFFFF
-; CHECK-NEXT:    subl $2147483647, %eax # imm = 0x7FFFFFFF
-; CHECK-NEXT:    cmovol %ecx, %eax
+; CHECK-NEXT:    movl $-2147483547, %eax # imm = 0x80000065
 ; CHECK-NEXT:    retq
   %res = call i32 @llvm.ssub.sat.i32(i32 100, i32 2147483647)
   ret i32 %res
@@ -55,14 +48,12 @@ define i32 @combine_constfold_i32() {
 define <8 x i16> @combine_constfold_v8i16() {
 ; SSE-LABEL: combine_constfold_v8i16:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    movdqa {{.*#+}} xmm0 = [0,1,255,65535,65535,65281,32776,1]
-; SSE-NEXT:    psubsw {{.*}}(%rip), %xmm0
+; SSE-NEXT:    movaps {{.*#+}} xmm0 = [65535,2,254,0,65534,65282,32786,2]
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_constfold_v8i16:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vmovdqa {{.*#+}} xmm0 = [0,1,255,65535,65535,65281,32776,1]
-; AVX-NEXT:    vpsubsw {{.*}}(%rip), %xmm0, %xmm0
+; AVX-NEXT:    vmovaps {{.*#+}} xmm0 = [65535,2,254,0,65534,65282,32786,2]
 ; AVX-NEXT:    retq
   %res = call <8 x i16> @llvm.ssub.sat.v8i16(<8 x i16> <i16 0, i16 1, i16 255, i16 65535, i16 -1, i16 -255, i16 -32760, i16 1>, <8 x i16> <i16 1, i16 65535, i16 1, i16 65535, i16 1, i16 65535, i16 -10, i16 65535>)
   ret <8 x i16> %res
@@ -71,14 +62,12 @@ define <8 x i16> @combine_constfold_v8i16() {
 define <8 x i16> @combine_constfold_undef_v8i16() {
 ; SSE-LABEL: combine_constfold_undef_v8i16:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    movdqa {{.*#+}} xmm0 = <u,1,u,65535,65535,65281,32776,1>
-; SSE-NEXT:    psubsw {{.*}}(%rip), %xmm0
+; SSE-NEXT:    movaps {{.*#+}} xmm0 = [0,0,0,0,65534,65282,32786,2]
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_constfold_undef_v8i16:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vmovdqa {{.*#+}} xmm0 = <u,1,u,65535,65535,65281,32776,1>
-; AVX-NEXT:    vpsubsw {{.*}}(%rip), %xmm0, %xmm0
+; AVX-NEXT:    vmovaps {{.*#+}} xmm0 = [0,0,0,0,65534,65282,32786,2]
 ; AVX-NEXT:    retq
   %res = call <8 x i16> @llvm.ssub.sat.v8i16(<8 x i16> <i16 undef, i16 1, i16 undef, i16 65535, i16 -1, i16 -255, i16 -32760, i16 1>, <8 x i16> <i16 1, i16 undef, i16 undef, i16 65535, i16 1, i16 65535, i16 -10, i16 65535>)
   ret <8 x i16> %res
