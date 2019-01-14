@@ -243,7 +243,7 @@ public:
       SmallString<128> PWD, RealPWD;
       if (llvm::sys::fs::current_path(PWD))
         return; // Awful, but nothing to do here.
-      if (auto Err = llvm::sys::fs::real_path(PWD, RealPWD))
+      if (llvm::sys::fs::real_path(PWD, RealPWD))
         WD = {PWD, PWD};
       else
         WD = {PWD, RealPWD};
