@@ -1,4 +1,4 @@
-# RUN: llc -o - %s -mtriple aarch64-unknown -mattr=fuse-arith-logic -run-pass=machine-scheduler -misched-print-dags |& FileCheck %s
+# RUN: llc -o /dev/null 2>&1 %s -mtriple aarch64-unknown -mattr=fuse-arith-logic -run-pass=machine-scheduler -misched-print-dags | FileCheck %s
 # REQUIRES: asserts
 
 ---
