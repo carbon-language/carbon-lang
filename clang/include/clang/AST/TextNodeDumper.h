@@ -169,6 +169,8 @@ public:
 
   void Visit(const CXXCtorInitializer *Init);
 
+  void Visit(const OMPClause *C);
+
   void dumpPointer(const void *Ptr);
   void dumpLocation(SourceLocation Loc);
   void dumpSourceRange(SourceRange R);

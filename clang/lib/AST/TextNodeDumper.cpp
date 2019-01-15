@@ -272,6 +272,24 @@ void TextNodeDumper::Visit(const CXXCtorInitializer *Init) {
   }
 }
 
+void TextNodeDumper::Visit(const OMPClause *C) {
+  if (!C) {
+    ColorScope Color(OS, ShowColors, NullColor);
+    OS << "<<<NULL>>> OMPClause";
+    return;
+  }
+  {
+    ColorScope Color(OS, ShowColors, AttrColor);
+    StringRef ClauseName(getOpenMPClauseName(C->getClauseKind()));
+    OS << "OMP" << ClauseName.substr(/*Start=*/0, /*N=*/1).upper()
+       << ClauseName.drop_front() << "Clause";
+  }
+  dumpPointer(C);
+  dumpSourceRange(SourceRange(C->getBeginLoc(), C->getEndLoc()));
+  if (C->isImplicit())
+    OS << " <implicit>";
+}
+
 void TextNodeDumper::dumpPointer(const void *Ptr) {
   ColorScope Color(OS, ShowColors, AddressColor);
   OS << ' ' << Ptr;
