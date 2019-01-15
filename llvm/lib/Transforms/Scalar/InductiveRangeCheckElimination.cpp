@@ -689,17 +689,6 @@ void LoopConstrainer::replacePHIBlock(PHINode *PN, BasicBlock *Block,
       PN->setIncomingBlock(i, ReplaceBy);
 }
 
-static bool CannotBeMaxInLoop(const SCEV *BoundSCEV, Loop *L,
-                              ScalarEvolution &SE, bool Signed) {
-  unsigned BitWidth = cast<IntegerType>(BoundSCEV->getType())->getBitWidth();
-  APInt Max = Signed ? APInt::getSignedMaxValue(BitWidth) :
-    APInt::getMaxValue(BitWidth);
-  auto Predicate = Signed ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT;
-  return SE.isAvailableAtLoopEntry(BoundSCEV, L) &&
-         SE.isLoopEntryGuardedByCond(L, Predicate, BoundSCEV,
-                                     SE.getConstant(Max));
-}
-
 /// Given a loop with an deccreasing induction variable, is it possible to
 /// safely calculate the bounds of a new loop using the given Predicate.
 static bool isSafeDecreasingBound(const SCEV *Start,
@@ -793,31 +782,6 @@ static bool isSafeIncreasingBound(const SCEV *Start,
   return (SE.isLoopEntryGuardedByCond(L, BoundPred, Start,
                                       SE.getAddExpr(BoundSCEV, Step)) &&
           SE.isLoopEntryGuardedByCond(L, BoundPred, BoundSCEV, Limit));
-}
-
-static bool CannotBeMinInLoop(const SCEV *BoundSCEV, Loop *L,
-                              ScalarEvolution &SE, bool Signed) {
-  unsigned BitWidth = cast<IntegerType>(BoundSCEV->getType())->getBitWidth();
-  APInt Min = Signed ? APInt::getSignedMinValue(BitWidth) :
-    APInt::getMinValue(BitWidth);
-  auto Predicate = Signed ? ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
-  return SE.isAvailableAtLoopEntry(BoundSCEV, L) &&
-         SE.isLoopEntryGuardedByCond(L, Predicate, BoundSCEV,
-                                     SE.getConstant(Min));
-}
-
-static bool isKnownNonNegativeInLoop(const SCEV *BoundSCEV, const Loop *L,
-                                     ScalarEvolution &SE) {
-  const SCEV *Zero = SE.getZero(BoundSCEV->getType());
-  return SE.isAvailableAtLoopEntry(BoundSCEV, L) &&
-         SE.isLoopEntryGuardedByCond(L, ICmpInst::ICMP_SGE, BoundSCEV, Zero);
-}
-
-static bool isKnownNegativeInLoop(const SCEV *BoundSCEV, const Loop *L,
-                                  ScalarEvolution &SE) {
-  const SCEV *Zero = SE.getZero(BoundSCEV->getType());
-  return SE.isAvailableAtLoopEntry(BoundSCEV, L) &&
-         SE.isLoopEntryGuardedByCond(L, ICmpInst::ICMP_SLT, BoundSCEV, Zero);
 }
 
 Optional<LoopStructure>
@@ -977,12 +941,12 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE,
         //   ...                          ...
         // }                            }
         if (IndVarBase->getNoWrapFlags(SCEV::FlagNUW) &&
-            CannotBeMinInLoop(RightSCEV, &L, SE, /*Signed*/false)) {
+            cannotBeMinInLoop(RightSCEV, &L, SE, /*Signed*/false)) {
           Pred = ICmpInst::ICMP_UGT;
           RightSCEV = SE.getMinusSCEV(RightSCEV,
                                       SE.getOne(RightSCEV->getType()));
           DecreasedRightValueByOne = true;
-        } else if (CannotBeMinInLoop(RightSCEV, &L, SE, /*Signed*/true)) {
+        } else if (cannotBeMinInLoop(RightSCEV, &L, SE, /*Signed*/true)) {
           Pred = ICmpInst::ICMP_SGT;
           RightSCEV = SE.getMinusSCEV(RightSCEV,
                                       SE.getOne(RightSCEV->getType()));
@@ -1042,11 +1006,11 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE,
         //   ...                          ...
         // }                            }
         if (IndVarBase->getNoWrapFlags(SCEV::FlagNUW) &&
-            CannotBeMaxInLoop(RightSCEV, &L, SE, /* Signed */ false)) {
+            cannotBeMaxInLoop(RightSCEV, &L, SE, /* Signed */ false)) {
           Pred = ICmpInst::ICMP_ULT;
           RightSCEV = SE.getAddExpr(RightSCEV, SE.getOne(RightSCEV->getType()));
           IncreasedRightValueByOne = true;
-        } else if (CannotBeMaxInLoop(RightSCEV, &L, SE, /* Signed */ true)) {
+        } else if (cannotBeMaxInLoop(RightSCEV, &L, SE, /* Signed */ true)) {
           Pred = ICmpInst::ICMP_SLT;
           RightSCEV = SE.getAddExpr(RightSCEV, SE.getOne(RightSCEV->getType()));
           IncreasedRightValueByOne = true;
@@ -1514,7 +1478,7 @@ bool LoopConstrainer::run() {
     if (Increasing)
       ExitPreLoopAtSCEV = *SR.LowLimit;
     else {
-      if (CannotBeMinInLoop(*SR.HighLimit, &OriginalLoop, SE,
+      if (cannotBeMinInLoop(*SR.HighLimit, &OriginalLoop, SE,
                             IsSignedPredicate))
         ExitPreLoopAtSCEV = SE.getAddExpr(*SR.HighLimit, MinusOneS);
       else {
@@ -1543,7 +1507,7 @@ bool LoopConstrainer::run() {
     if (Increasing)
       ExitMainLoopAtSCEV = *SR.HighLimit;
     else {
-      if (CannotBeMinInLoop(*SR.LowLimit, &OriginalLoop, SE,
+      if (cannotBeMinInLoop(*SR.LowLimit, &OriginalLoop, SE,
                             IsSignedPredicate))
         ExitMainLoopAtSCEV = SE.getAddExpr(*SR.LowLimit, MinusOneS);
       else {
