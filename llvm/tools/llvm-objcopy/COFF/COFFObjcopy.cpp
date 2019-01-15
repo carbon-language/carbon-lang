@@ -28,6 +28,11 @@ using namespace object;
 using namespace COFF;
 
 static Error handleArgs(const CopyConfig &Config, Object &Obj) {
+  // StripAll removes all symbols and thus also removes all relocations.
+  if (Config.StripAll || Config.StripAllGNU)
+    for (Section &Sec : Obj.Sections)
+      Sec.Relocs.clear();
+
   // If we need to do per-symbol removals, initialize the Referenced field.
   if (Config.StripUnneeded || Config.DiscardAll ||
       !Config.SymbolsToRemove.empty())
@@ -36,6 +41,11 @@ static Error handleArgs(const CopyConfig &Config, Object &Obj) {
 
   // Actually do removals of symbols.
   Obj.removeSymbols([&](const Symbol &Sym) {
+    // For StripAll, all relocations have been stripped and we remove all
+    // symbols.
+    if (Config.StripAll || Config.StripAllGNU)
+      return true;
+
     if (is_contained(Config.SymbolsToRemove, Sym.Name)) {
       // Explicitly removing a referenced symbol is an error.
       if (Sym.Referenced)
