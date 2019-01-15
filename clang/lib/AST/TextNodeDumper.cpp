@@ -258,6 +258,20 @@ void TextNodeDumper::Visit(const Decl *D) {
       OS << " constexpr";
 }
 
+void TextNodeDumper::Visit(const CXXCtorInitializer *Init) {
+  OS << "CXXCtorInitializer";
+  if (Init->isAnyMemberInitializer()) {
+    OS << ' ';
+    dumpBareDeclRef(Init->getAnyMember());
+  } else if (Init->isBaseInitializer()) {
+    dumpType(QualType(Init->getBaseClass(), 0));
+  } else if (Init->isDelegatingInitializer()) {
+    dumpType(Init->getTypeSourceInfo()->getType());
+  } else {
+    llvm_unreachable("Unknown initializer type");
+  }
+}
+
 void TextNodeDumper::dumpPointer(const void *Ptr) {
   ColorScope Color(OS, ShowColors, AddressColor);
   OS << ' ' << Ptr;

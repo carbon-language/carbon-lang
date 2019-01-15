@@ -441,17 +441,7 @@ void ASTDumper::dumpAttr(const Attr *A) {
 
 void ASTDumper::dumpCXXCtorInitializer(const CXXCtorInitializer *Init) {
   dumpChild([=] {
-    OS << "CXXCtorInitializer";
-    if (Init->isAnyMemberInitializer()) {
-      OS << ' ';
-      NodeDumper.dumpBareDeclRef(Init->getAnyMember());
-    } else if (Init->isBaseInitializer()) {
-      NodeDumper.dumpType(QualType(Init->getBaseClass(), 0));
-    } else if (Init->isDelegatingInitializer()) {
-      NodeDumper.dumpType(Init->getTypeSourceInfo()->getType());
-    } else {
-      llvm_unreachable("Unknown initializer type");
-    }
+    NodeDumper.Visit(Init);
     dumpStmt(Init->getInit());
   });
 }
