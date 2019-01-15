@@ -1,9 +1,9 @@
-import("//llvm/version.gni")
+import("//clang/resource_dir.gni")
 
 # FIXME: Make this support more platforms.
 assert(current_os == "android")
 
-runtime_output_dir = "$root_build_dir/lib/clang/$llvm_version/lib/linux"
+runtime_output_dir = "$clang_resource_dir/lib/linux"
 runtime_target = "aarch64-android"
 
 action("version_script") {
