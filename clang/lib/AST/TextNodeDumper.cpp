@@ -272,6 +272,18 @@ void TextNodeDumper::Visit(const CXXCtorInitializer *Init) {
   }
 }
 
+void TextNodeDumper::Visit(const BlockDecl::Capture &C) {
+  OS << "capture";
+  if (C.isByRef())
+    OS << " byref";
+  if (C.isNested())
+    OS << " nested";
+  if (C.getVariable()) {
+    OS << ' ';
+    dumpBareDeclRef(C.getVariable());
+  }
+}
+
 void TextNodeDumper::Visit(const OMPClause *C) {
   if (!C) {
     ColorScope Color(OS, ShowColors, NullColor);

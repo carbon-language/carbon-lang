@@ -283,6 +283,7 @@ namespace  {
     void VisitObjCCompatibleAliasDecl(const ObjCCompatibleAliasDecl *D);
     void VisitObjCPropertyDecl(const ObjCPropertyDecl *D);
     void VisitObjCPropertyImplDecl(const ObjCPropertyImplDecl *D);
+    void Visit(const BlockDecl::Capture &C);
     void VisitBlockDecl(const BlockDecl *D);
 
     // Stmts.
@@ -1371,6 +1372,14 @@ void ASTDumper::VisitObjCPropertyImplDecl(const ObjCPropertyImplDecl *D) {
   NodeDumper.dumpDeclRef(D->getPropertyIvarDecl());
 }
 
+void ASTDumper::Visit(const BlockDecl::Capture &C) {
+  dumpChild([=] {
+    NodeDumper.Visit(C);
+    if (C.hasCopyExpr())
+      dumpStmt(C.getCopyExpr());
+  });
+}
+
 void ASTDumper::VisitBlockDecl(const BlockDecl *D) {
   for (auto I : D->parameters())
     dumpDecl(I);
@@ -1381,21 +1390,8 @@ void ASTDumper::VisitBlockDecl(const BlockDecl *D) {
   if (D->capturesCXXThis())
     dumpChild([=]{ OS << "capture this"; });
 
-  for (const auto &I : D->captures()) {
-    dumpChild([=] {
-      OS << "capture";
-      if (I.isByRef())
-        OS << " byref";
-      if (I.isNested())
-        OS << " nested";
-      if (I.getVariable()) {
-        OS << ' ';
-        NodeDumper.dumpBareDeclRef(I.getVariable());
-      }
-      if (I.hasCopyExpr())
-        dumpStmt(I.getCopyExpr());
-    });
-  }
+  for (const auto &I : D->captures())
+    Visit(I);
   dumpStmt(D->getBody());
 }
 
