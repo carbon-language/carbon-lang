@@ -1,6 +1,16 @@
 source_set("sources") {
   configs -= [ "//llvm/utils/gn/build:llvm_code" ]
   configs += [ "//llvm/utils/gn/build:crt_code" ]
+  deps = [
+    "//llvm/utils/gn/build/libs/pthread",
+  ]
+  libs = []
+  if (current_os == "linux" || current_os == "android") {
+    libs += [ "dl" ]
+  }
+  if (current_os == "linux") {
+    libs += [ "rt" ]
+  }
   sources = [
     "sancov_flags.cc",
     "sanitizer_allocator.cc",
@@ -67,4 +77,7 @@ source_set("sources") {
     "sanitizer_unwind_win.cc",
     "sanitizer_win.cc",
   ]
+  if (current_cpu == "x64") {
+    sources += [ "sanitizer_linux_x86_64.S" ]
+  }
 }

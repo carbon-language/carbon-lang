@@ -150,8 +150,10 @@ unix_toolchain("unix") {
   }
 }
 
-if (android_ndk_path != "") {
-  unix_toolchain("stage2_android_aarch64") {
+template("stage2_unix_toolchain") {
+  unix_toolchain(target_name) {
+    forward_variables_from(invoker, "*")
+
     cc = "bin/clang"
     cxx = "bin/clang++"
     ld = cxx
@@ -162,7 +164,19 @@ if (android_ndk_path != "") {
       "//:lld($host_toolchain)",
       "//:llvm-ar($host_toolchain)",
     ]
+  }
+}
 
+stage2_unix_toolchain("stage2_unix") {
+  toolchain_args = {
+    current_os = host_os
+    current_cpu = host_cpu
+    use_lld = host_os != "mac"
+  }
+}
+
+if (android_ndk_path != "") {
+  stage2_unix_toolchain("stage2_android_aarch64") {
     toolchain_args = {
       current_os = "android"
       current_cpu = "arm64"
