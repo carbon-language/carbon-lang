@@ -623,10 +623,8 @@ void ASTDumper::VisitFunctionDecl(const FunctionDecl *D) {
       dumpDecl(Parameter);
 
   if (const CXXConstructorDecl *C = dyn_cast<CXXConstructorDecl>(D))
-    for (CXXConstructorDecl::init_const_iterator I = C->init_begin(),
-                                                 E = C->init_end();
-         I != E; ++I)
-      dumpCXXCtorInitializer(*I);
+    for (const auto *I : C->inits())
+      dumpCXXCtorInitializer(I);
 
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
     if (MD->size_overridden_methods() != 0) {
