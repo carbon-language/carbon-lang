@@ -224,7 +224,7 @@ uint64_t Value::GetValueByteSize(Status *error_ptr, ExecutionContext *exe_ctx) {
   {
     const CompilerType &ast_type = GetCompilerType();
     if (ast_type.IsValid())
-      if (auto size = ast_type.GetByteSize(
+      if (llvm::Optional<uint64_t> size = ast_type.GetByteSize(
               exe_ctx ? exe_ctx->GetBestExecutionContextScope() : nullptr))
         byte_size = *size;
   } break;
@@ -346,7 +346,7 @@ Status Value::GetValueAsData(ExecutionContext *exe_ctx, DataExtractor &data,
     uint32_t limit_byte_size = UINT32_MAX;
 
     if (ast_type.IsValid()) {
-      if (auto size = ast_type.GetByteSize(
+      if (llvm::Optional<uint64_t> size = ast_type.GetByteSize(
               exe_ctx ? exe_ctx->GetBestExecutionContextScope() : nullptr))
         limit_byte_size = *size;
     }
