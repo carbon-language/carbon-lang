@@ -566,6 +566,16 @@ unsigned __int64 __getReg(int);
 long _InterlockedAdd(long volatile *Addend, long Value);
 int _ReadStatusReg(int);
 void _WriteStatusReg(int, int);
+
+static inline unsigned short _byteswap_ushort (unsigned short val) {
+  return __builtin_bswap16(val);
+}
+static inline unsigned long _byteswap_ulong (unsigned long val) {
+  return __builtin_bswap32(val);
+}
+static inline unsigned __int64 _byteswap_uint64 (unsigned __int64 val) {
+  return __builtin_bswap64(val);
+}
 #endif
 
 /*----------------------------------------------------------------------------*\
