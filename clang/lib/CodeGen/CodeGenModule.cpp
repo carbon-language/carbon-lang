@@ -137,12 +137,10 @@ CodeGenModule::CodeGenModule(ASTContext &C, const HeaderSearchOptions &HSO,
 
   // Enable TBAA unless it's suppressed. ThreadSanitizer needs TBAA even at O0.
   if (LangOpts.Sanitize.has(SanitizerKind::Thread) ||
-      (!CodeGenOpts.RelaxedAliasing && CodeGenOpts.OptimizationLevel > 0)) {
-    fprintf(stderr, "TBAA enabled\n");
+      (!CodeGenOpts.RelaxedAliasing && CodeGenOpts.OptimizationLevel > 0))
     TBAA.reset(new CodeGenTBAA(Context, TheModule, CodeGenOpts, getLangOpts(),
                                getCXXABI().getMangleContext()));
-  }
-  
+
   // If debug info or coverage generation is enabled, create the CGDebugInfo
   // object.
   if (CodeGenOpts.getDebugInfo() != codegenoptions::NoDebugInfo ||
