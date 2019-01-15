@@ -1477,16 +1477,14 @@ bool LoopConstrainer::run() {
 
     if (Increasing)
       ExitPreLoopAtSCEV = *SR.LowLimit;
+    else if (cannotBeMinInLoop(*SR.HighLimit, &OriginalLoop, SE,
+                               IsSignedPredicate))
+      ExitPreLoopAtSCEV = SE.getAddExpr(*SR.HighLimit, MinusOneS);
     else {
-      if (cannotBeMinInLoop(*SR.HighLimit, &OriginalLoop, SE,
-                            IsSignedPredicate))
-        ExitPreLoopAtSCEV = SE.getAddExpr(*SR.HighLimit, MinusOneS);
-      else {
-        LLVM_DEBUG(dbgs() << "irce: could not prove no-overflow when computing "
-                          << "preloop exit limit.  HighLimit = "
-                          << *(*SR.HighLimit) << "\n");
-        return false;
-      }
+      LLVM_DEBUG(dbgs() << "irce: could not prove no-overflow when computing "
+                        << "preloop exit limit.  HighLimit = "
+                        << *(*SR.HighLimit) << "\n");
+      return false;
     }
 
     if (!isSafeToExpandAt(ExitPreLoopAtSCEV, InsertPt, SE)) {
@@ -1506,16 +1504,14 @@ bool LoopConstrainer::run() {
 
     if (Increasing)
       ExitMainLoopAtSCEV = *SR.HighLimit;
+    else if (cannotBeMinInLoop(*SR.LowLimit, &OriginalLoop, SE,
+                               IsSignedPredicate))
+      ExitMainLoopAtSCEV = SE.getAddExpr(*SR.LowLimit, MinusOneS);
     else {
-      if (cannotBeMinInLoop(*SR.LowLimit, &OriginalLoop, SE,
-                            IsSignedPredicate))
-        ExitMainLoopAtSCEV = SE.getAddExpr(*SR.LowLimit, MinusOneS);
-      else {
-        LLVM_DEBUG(dbgs() << "irce: could not prove no-overflow when computing "
-                          << "mainloop exit limit.  LowLimit = "
-                          << *(*SR.LowLimit) << "\n");
-        return false;
-      }
+      LLVM_DEBUG(dbgs() << "irce: could not prove no-overflow when computing "
+                        << "mainloop exit limit.  LowLimit = "
+                        << *(*SR.LowLimit) << "\n");
+      return false;
     }
 
     if (!isSafeToExpandAt(ExitMainLoopAtSCEV, InsertPt, SE)) {
