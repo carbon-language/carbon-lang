@@ -12035,11 +12035,10 @@ static SDValue lowerVectorShuffleAsPermuteAndUnpack(
     if (SDValue Unpack = TryUnpack(ScalarSize, ScalarSize / OrigScalarSize))
       return Unpack;
 
-  // If we have PSHUFB, and we're shuffling with a zero vector then we're
-  // better off not doing VECTOR_SHUFFLE(UNPCK()) as we lose track of those
-  // zero elements.
-  if (Subtarget.hasSSSE3() && (ISD::isBuildVectorAllZeros(V1.getNode()) ||
-                               ISD::isBuildVectorAllZeros(V2.getNode())))
+  // If we're shuffling with a zero vector then we're better off not doing
+  // VECTOR_SHUFFLE(UNPCK()) as we lose track of those zero elements.
+  if (ISD::isBuildVectorAllZeros(V1.getNode()) ||
+      ISD::isBuildVectorAllZeros(V2.getNode()))
     return SDValue();
 
   // If none of the unpack-rooted lowerings worked (or were profitable) try an

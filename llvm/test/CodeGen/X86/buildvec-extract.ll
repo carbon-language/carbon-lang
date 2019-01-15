@@ -404,11 +404,10 @@ define <2 x i64> @extract0_i16_zext_insert0_i64_zero(<8 x i16> %x) {
 define <2 x i64> @extract1_i16_zext_insert0_i64_undef(<8 x i16> %x) {
 ; SSE2-LABEL: extract1_i16_zext_insert0_i64_undef:
 ; SSE2:       # %bb.0:
+; SSE2-NEXT:    psrld $16, %xmm0
 ; SSE2-NEXT:    pxor %xmm1, %xmm1
-; SSE2-NEXT:    punpcklwd {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3]
-; SSE2-NEXT:    pshufhw {{.*#+}} xmm0 = xmm1[0,1,2,3,4,6,6,7]
-; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[2,1,2,3]
-; SSE2-NEXT:    pshuflw {{.*#+}} xmm0 = xmm0[3,2,0,1,4,5,6,7]
+; SSE2-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3]
+; SSE2-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
 ; SSE2-NEXT:    retq
 ;
 ; SSE41-LABEL: extract1_i16_zext_insert0_i64_undef:
@@ -449,12 +448,10 @@ define <2 x i64> @extract1_i16_zext_insert0_i64_zero(<8 x i16> %x) {
 define <2 x i64> @extract2_i16_zext_insert0_i64_undef(<8 x i16> %x) {
 ; SSE2-LABEL: extract2_i16_zext_insert0_i64_undef:
 ; SSE2:       # %bb.0:
+; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,1,2,3]
 ; SSE2-NEXT:    pxor %xmm1, %xmm1
-; SSE2-NEXT:    punpcklwd {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3]
-; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm1[3,1,2,0]
-; SSE2-NEXT:    pshuflw {{.*#+}} xmm0 = xmm0[0,2,2,3,4,5,6,7]
-; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
-; SSE2-NEXT:    pshuflw {{.*#+}} xmm0 = xmm0[3,1,2,0,4,5,6,7]
+; SSE2-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3]
+; SSE2-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
 ; SSE2-NEXT:    retq
 ;
 ; SSE41-LABEL: extract2_i16_zext_insert0_i64_undef:
