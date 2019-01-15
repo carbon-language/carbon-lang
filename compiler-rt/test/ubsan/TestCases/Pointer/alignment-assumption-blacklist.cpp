@@ -1,8 +1,3 @@
-// FIXME: https://code.google.com/p/address-sanitizer/issues/detail?id=316
-// I'm not sure this is actually *that* issue, but this seems oddly similar to the other XFAIL'ed cases.
-// XFAIL: android
-// UNSUPPORTED: ios
-
 // RUN: %clang -fsanitize=alignment -fno-sanitize-recover=alignment                           -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s --implicit-check-not=" assumption "
 
 // RUN: rm -f %tmp
