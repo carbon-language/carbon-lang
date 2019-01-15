@@ -134,98 +134,38 @@ namespace  {
     void VisitReferenceType(const ReferenceType *T) {
       dumpTypeAsChild(T->getPointeeType());
     }
-    void VisitRValueReferenceType(const ReferenceType *T) {
-      if (T->isSpelledAsLValue())
-        OS << " written as lvalue reference";
-      VisitReferenceType(T);
-    }
     void VisitMemberPointerType(const MemberPointerType *T) {
       dumpTypeAsChild(T->getClass());
       dumpTypeAsChild(T->getPointeeType());
     }
     void VisitArrayType(const ArrayType *T) {
-      switch (T->getSizeModifier()) {
-        case ArrayType::Normal: break;
-        case ArrayType::Static: OS << " static"; break;
-        case ArrayType::Star: OS << " *"; break;
-      }
-      OS << " " << T->getIndexTypeQualifiers().getAsString();
       dumpTypeAsChild(T->getElementType());
     }
-    void VisitConstantArrayType(const ConstantArrayType *T) {
-      OS << " " << T->getSize();
-      VisitArrayType(T);
-    }
     void VisitVariableArrayType(const VariableArrayType *T) {
-      OS << " ";
-      NodeDumper.dumpSourceRange(T->getBracketsRange());
       VisitArrayType(T);
       dumpStmt(T->getSizeExpr());
     }
     void VisitDependentSizedArrayType(const DependentSizedArrayType *T) {
-      switch (T->getSizeModifier()) {
-        case ArrayType::Normal: break;
-        case ArrayType::Static: OS << " static"; break;
-        case ArrayType::Star: OS << " *"; break;
-      }
-      OS << " " << T->getIndexTypeQualifiers().getAsString();
-      OS << " ";
-      NodeDumper.dumpSourceRange(T->getBracketsRange());
       dumpTypeAsChild(T->getElementType());
       dumpStmt(T->getSizeExpr());
     }
     void VisitDependentSizedExtVectorType(
         const DependentSizedExtVectorType *T) {
-      OS << " ";
-      NodeDumper.dumpLocation(T->getAttributeLoc());
       dumpTypeAsChild(T->getElementType());
       dumpStmt(T->getSizeExpr());
     }
     void VisitVectorType(const VectorType *T) {
-      switch (T->getVectorKind()) {
-        case VectorType::GenericVector: break;
-        case VectorType::AltiVecVector: OS << " altivec"; break;
-        case VectorType::AltiVecPixel: OS << " altivec pixel"; break;
-        case VectorType::AltiVecBool: OS << " altivec bool"; break;
-        case VectorType::NeonVector: OS << " neon"; break;
-        case VectorType::NeonPolyVector: OS << " neon poly"; break;
-      }
-      OS << " " << T->getNumElements();
       dumpTypeAsChild(T->getElementType());
     }
     void VisitFunctionType(const FunctionType *T) {
-      auto EI = T->getExtInfo();
-      if (EI.getNoReturn()) OS << " noreturn";
-      if (EI.getProducesResult()) OS << " produces_result";
-      if (EI.getHasRegParm()) OS << " regparm " << EI.getRegParm();
-      OS << " " << FunctionType::getNameForCallConv(EI.getCC());
       dumpTypeAsChild(T->getReturnType());
     }
     void VisitFunctionProtoType(const FunctionProtoType *T) {
-      auto EPI = T->getExtProtoInfo();
-      if (EPI.HasTrailingReturn) OS << " trailing_return";
-
-      if (!T->getTypeQuals().empty())
-        OS << " " << T->getTypeQuals().getAsString();
-
-      switch (EPI.RefQualifier) {
-        case RQ_None: break;
-        case RQ_LValue: OS << " &"; break;
-        case RQ_RValue: OS << " &&"; break;
-      }
-      // FIXME: Exception specification.
-      // FIXME: Consumed parameters.
       VisitFunctionType(T);
       for (QualType PT : T->getParamTypes())
         dumpTypeAsChild(PT);
-      if (EPI.Variadic)
+      if (T->getExtProtoInfo().Variadic)
         dumpChild([=] { OS << "..."; });
-    }
-    void VisitUnresolvedUsingType(const UnresolvedUsingType *T) {
-      NodeDumper.dumpDeclRef(T->getDecl());
-    }
-    void VisitTypedefType(const TypedefType *T) {
-      NodeDumper.dumpDeclRef(T->getDecl());
     }
     void VisitTypeOfExprType(const TypeOfExprType *T) {
       dumpStmt(T->getUnderlyingExpr());
@@ -234,24 +174,11 @@ namespace  {
       dumpStmt(T->getUnderlyingExpr());
     }
     void VisitUnaryTransformType(const UnaryTransformType *T) {
-      switch (T->getUTTKind()) {
-      case UnaryTransformType::EnumUnderlyingType:
-        OS << " underlying_type";
-        break;
-      }
       dumpTypeAsChild(T->getBaseType());
-    }
-    void VisitTagType(const TagType *T) {
-      NodeDumper.dumpDeclRef(T->getDecl());
     }
     void VisitAttributedType(const AttributedType *T) {
       // FIXME: AttrKind
       dumpTypeAsChild(T->getModifiedType());
-    }
-    void VisitTemplateTypeParmType(const TemplateTypeParmType *T) {
-      OS << " depth " << T->getDepth() << " index " << T->getIndex();
-      if (T->isParameterPack()) OS << " pack";
-      NodeDumper.dumpDeclRef(T->getDecl());
     }
     void VisitSubstTemplateTypeParmType(const SubstTemplateTypeParmType *T) {
       dumpTypeAsChild(T->getReplacedParameter());
@@ -261,24 +188,11 @@ namespace  {
       dumpTypeAsChild(T->getReplacedParameter());
       dumpTemplateArgument(T->getArgumentPack());
     }
-    void VisitAutoType(const AutoType *T) {
-      if (T->isDecltypeAuto()) OS << " decltype(auto)";
-      if (!T->isDeduced())
-        OS << " undeduced";
-    }
     void VisitTemplateSpecializationType(const TemplateSpecializationType *T) {
-      if (T->isTypeAlias()) OS << " alias";
-      OS << " "; T->getTemplateName().dump(OS);
       for (auto &Arg : *T)
         dumpTemplateArgument(Arg);
       if (T->isTypeAlias())
         dumpTypeAsChild(T->getAliasedType());
-    }
-    void VisitInjectedClassNameType(const InjectedClassNameType *T) {
-      NodeDumper.dumpDeclRef(T->getDecl());
-    }
-    void VisitObjCInterfaceType(const ObjCInterfaceType *T) {
-      NodeDumper.dumpDeclRef(T->getDecl());
     }
     void VisitObjCObjectPointerType(const ObjCObjectPointerType *T) {
       dumpTypeAsChild(T->getPointeeType());
@@ -293,7 +207,6 @@ namespace  {
       dumpTypeAsChild(T->getOriginalType());
     }
     void VisitPackExpansionType(const PackExpansionType *T) {
-      if (auto N = T->getNumExpansions()) OS << " expansions " << *N;
       if (!T->isSugared())
         dumpTypeAsChild(T->getPattern());
     }

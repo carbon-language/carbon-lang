@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/TextNodeDumper.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/LocInfoType.h"
 
 using namespace clang;
@@ -170,6 +171,8 @@ void TextNodeDumper::Visit(const Type *T) {
     OS << " contains_unexpanded_pack";
   if (T->isFromAST())
     OS << " imported";
+
+  TypeVisitor<TextNodeDumper>::Visit(T);
 }
 
 void TextNodeDumper::Visit(QualType T) {
@@ -885,4 +888,162 @@ void TextNodeDumper::VisitObjCSubscriptRefExpr(
 
 void TextNodeDumper::VisitObjCBoolLiteralExpr(const ObjCBoolLiteralExpr *Node) {
   OS << " " << (Node->getValue() ? "__objc_yes" : "__objc_no");
+}
+
+void TextNodeDumper::VisitRValueReferenceType(const ReferenceType *T) {
+  if (T->isSpelledAsLValue())
+    OS << " written as lvalue reference";
+}
+
+void TextNodeDumper::VisitArrayType(const ArrayType *T) {
+  switch (T->getSizeModifier()) {
+  case ArrayType::Normal:
+    break;
+  case ArrayType::Static:
+    OS << " static";
+    break;
+  case ArrayType::Star:
+    OS << " *";
+    break;
+  }
+  OS << " " << T->getIndexTypeQualifiers().getAsString();
+}
+
+void TextNodeDumper::VisitConstantArrayType(const ConstantArrayType *T) {
+  OS << " " << T->getSize();
+  VisitArrayType(T);
+}
+
+void TextNodeDumper::VisitVariableArrayType(const VariableArrayType *T) {
+  OS << " ";
+  dumpSourceRange(T->getBracketsRange());
+  VisitArrayType(T);
+}
+
+void TextNodeDumper::VisitDependentSizedArrayType(
+    const DependentSizedArrayType *T) {
+  VisitArrayType(T);
+  OS << " ";
+  dumpSourceRange(T->getBracketsRange());
+}
+
+void TextNodeDumper::VisitDependentSizedExtVectorType(
+    const DependentSizedExtVectorType *T) {
+  OS << " ";
+  dumpLocation(T->getAttributeLoc());
+}
+
+void TextNodeDumper::VisitVectorType(const VectorType *T) {
+  switch (T->getVectorKind()) {
+  case VectorType::GenericVector:
+    break;
+  case VectorType::AltiVecVector:
+    OS << " altivec";
+    break;
+  case VectorType::AltiVecPixel:
+    OS << " altivec pixel";
+    break;
+  case VectorType::AltiVecBool:
+    OS << " altivec bool";
+    break;
+  case VectorType::NeonVector:
+    OS << " neon";
+    break;
+  case VectorType::NeonPolyVector:
+    OS << " neon poly";
+    break;
+  }
+  OS << " " << T->getNumElements();
+}
+
+void TextNodeDumper::VisitFunctionType(const FunctionType *T) {
+  auto EI = T->getExtInfo();
+  if (EI.getNoReturn())
+    OS << " noreturn";
+  if (EI.getProducesResult())
+    OS << " produces_result";
+  if (EI.getHasRegParm())
+    OS << " regparm " << EI.getRegParm();
+  OS << " " << FunctionType::getNameForCallConv(EI.getCC());
+}
+
+void TextNodeDumper::VisitFunctionProtoType(const FunctionProtoType *T) {
+  auto EPI = T->getExtProtoInfo();
+  if (EPI.HasTrailingReturn)
+    OS << " trailing_return";
+  if (T->isConst())
+    OS << " const";
+  if (T->isVolatile())
+    OS << " volatile";
+  if (T->isRestrict())
+    OS << " restrict";
+  switch (EPI.RefQualifier) {
+  case RQ_None:
+    break;
+  case RQ_LValue:
+    OS << " &";
+    break;
+  case RQ_RValue:
+    OS << " &&";
+    break;
+  }
+  // FIXME: Exception specification.
+  // FIXME: Consumed parameters.
+  VisitFunctionType(T);
+}
+
+void TextNodeDumper::VisitUnresolvedUsingType(const UnresolvedUsingType *T) {
+  dumpDeclRef(T->getDecl());
+}
+
+void TextNodeDumper::VisitTypedefType(const TypedefType *T) {
+  dumpDeclRef(T->getDecl());
+}
+
+void TextNodeDumper::VisitUnaryTransformType(const UnaryTransformType *T) {
+  switch (T->getUTTKind()) {
+  case UnaryTransformType::EnumUnderlyingType:
+    OS << " underlying_type";
+    break;
+  }
+}
+
+void TextNodeDumper::VisitTagType(const TagType *T) {
+  dumpDeclRef(T->getDecl());
+}
+
+void TextNodeDumper::VisitTemplateTypeParmType(const TemplateTypeParmType *T) {
+  OS << " depth " << T->getDepth() << " index " << T->getIndex();
+  if (T->isParameterPack())
+    OS << " pack";
+  dumpDeclRef(T->getDecl());
+}
+
+void TextNodeDumper::VisitAutoType(const AutoType *T) {
+  if (T->isDecltypeAuto())
+    OS << " decltype(auto)";
+  if (!T->isDeduced())
+    OS << " undeduced";
+}
+
+void TextNodeDumper::VisitTemplateSpecializationType(
+    const TemplateSpecializationType *T) {
+  if (T->isTypeAlias())
+    OS << " alias";
+  OS << " ";
+  T->getTemplateName().dump(OS);
+}
+
+void TextNodeDumper::VisitInjectedClassNameType(
+    const InjectedClassNameType *T) {
+  dumpDeclRef(T->getDecl());
+}
+
+void TextNodeDumper::VisitObjCInterfaceType(const ObjCInterfaceType *T) {
+  dumpDeclRef(T->getDecl());
+}
+
+void TextNodeDumper::VisitPackExpansionType(const PackExpansionType *T) {
+  if (auto N = T->getNumExpansions())
+    OS << " expansions " << *N;
 }
