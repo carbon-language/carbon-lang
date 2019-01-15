@@ -135,6 +135,15 @@ config("clang_code") {
   ]
 }
 
+config("crt_code") {
+  include_dirs = [ "//compiler-rt/lib" ]
+  cflags = [
+    "-fPIC",
+    "-funwind-tables",
+    "-gline-tables-only",
+  ]
+}
+
 config("warn_covered_switch_default") {
   if (is_clang) {
     cflags = [ "-Wcovered-switch-default" ]

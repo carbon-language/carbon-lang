@@ -12,7 +12,12 @@ group("default") {
   if (android_ndk_path != "") {
     # FIXME: This should be a dependency of a test target instead of being
     # depended on from here.
-    deps += [ "//llvm/tools/llvm-symbolizer(//llvm/utils/gn/build/toolchain:stage2_android_aarch64)" ]
+    android_aarch64_toolchain =
+        "//llvm/utils/gn/build/toolchain:stage2_android_aarch64"
+    deps += [
+      "//compiler-rt/lib/hwasan:hwasan_shared($android_aarch64_toolchain)",
+      "//llvm/tools/llvm-symbolizer($android_aarch64_toolchain)",
+    ]
   }
 
   testonly = true
