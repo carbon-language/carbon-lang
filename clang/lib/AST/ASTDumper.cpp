@@ -612,20 +612,6 @@ void ASTDumper::VisitFunctionDecl(const FunctionDecl *D) {
     }
   }
 
-  if (const FunctionTemplateSpecializationInfo *FTSI =
-          D->getTemplateSpecializationInfo())
-    dumpTemplateArgumentList(*FTSI->TemplateArguments);
-
-  if (!D->param_begin() && D->getNumParams())
-    dumpChild([=] { OS << "<<NULL params x " << D->getNumParams() << ">>"; });
-  else
-    for (const ParmVarDecl *Parameter : D->parameters())
-      dumpDecl(Parameter);
-
-  if (const CXXConstructorDecl *C = dyn_cast<CXXConstructorDecl>(D))
-    for (const auto *I : C->inits())
-      dumpCXXCtorInitializer(I);
-
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
     if (MD->size_overridden_methods() != 0) {
       auto dumpOverride = [=](const CXXMethodDecl *D) {
@@ -648,6 +634,22 @@ void ASTDumper::VisitFunctionDecl(const FunctionDecl *D) {
       });
     }
   }
+
+  if (const FunctionTemplateSpecializationInfo *FTSI =
+          D->getTemplateSpecializationInfo())
+    dumpTemplateArgumentList(*FTSI->TemplateArguments);
+
+  if (!D->param_begin() && D->getNumParams())
+    dumpChild([=] { OS << "<<NULL params x " << D->getNumParams() << ">>"; });
+  else
+    for (const ParmVarDecl *Parameter : D->parameters())
+      dumpDecl(Parameter);
+
+  if (const CXXConstructorDecl *C = dyn_cast<CXXConstructorDecl>(D))
+    for (CXXConstructorDecl::init_const_iterator I = C->init_begin(),
+                                                 E = C->init_end();
+         I != E; ++I)
+      dumpCXXCtorInitializer(*I);
 
   if (D->doesThisDeclarationHaveABody())
     dumpStmt(D->getBody());
