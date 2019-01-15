@@ -1153,6 +1153,26 @@ define  <8 x i64>@test_int_x86_avx512_mask_psadb_w_512(<64 x i8> %x0, <64 x i8> 
   ret  <8 x i64> %res2
 }
 
+declare <32 x i16> @llvm.x86.avx512.psrlv.w.512(<32 x i16>, <32 x i16>) nounwind readnone
+
+define <32 x i16> @test_x86_avx512_psrlv_w_512_const() optsize {
+; X86-LABEL: test_x86_avx512_psrlv_w_512_const:
+; X86:       # %bb.0:
+; X86-NEXT:    vpbroadcastw {{.*#+}} zmm0 = [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
+; X86-NEXT:    # encoding: [0x62,0xf2,0x7d,0x48,0x79,0x05,A,A,A,A]
+; X86-NEXT:    # fixup A - offset: 6, value: {{\.LCPI.*}}, kind: FK_Data_4
+; X86-NEXT:    retl # encoding: [0xc3]
+;
+; X64-LABEL: test_x86_avx512_psrlv_w_512_const:
+; X64:       # %bb.0:
+; X64-NEXT:    vpbroadcastw {{.*#+}} zmm0 = [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
+; X64-NEXT:    # encoding: [0x62,0xf2,0x7d,0x48,0x79,0x05,A,A,A,A]
+; X64-NEXT:    # fixup A - offset: 6, value: {{\.LCPI.*}}-4, kind: reloc_riprel_4byte
+; X64-NEXT:    retq # encoding: [0xc3]
+  %res1 = call <32 x i16> @llvm.x86.avx512.psrlv.w.512(<32 x i16> <i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 -1>, <32 x i16> <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1,  i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 -1>)
+  ret <32 x i16> %res1
+}
+
 declare <32 x i16> @llvm.x86.avx512.mask.psrlv32hi(<32 x i16>, <32 x i16>, <32 x i16>, i32)
 
 define <32 x i16>@test_int_x86_avx512_mask_psrlv32hi(<32 x i16> %x0, <32 x i16> %x1, <32 x i16> %x2, i32 %x3) {
@@ -1347,6 +1367,25 @@ define <32 x i16> @test_x86_avx512_maskz_psll_w_512(<32 x i16> %a0, <8 x i16> %a
 }
 declare <32 x i16> @llvm.x86.avx512.psll.w.512(<32 x i16>, <8 x i16>) nounwind readnone
 
+
+define <32 x i16> @test_x86_avx512_psllv_w_512_const() optsize {
+; X86-LABEL: test_x86_avx512_psllv_w_512_const:
+; X86:       # %bb.0:
+; X86-NEXT:    vpbroadcastw {{.*#+}} zmm0 = [8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8]
+; X86-NEXT:    # encoding: [0x62,0xf2,0x7d,0x48,0x79,0x05,A,A,A,A]
+; X86-NEXT:    # fixup A - offset: 6, value: {{\.LCPI.*}}, kind: FK_Data_4
+; X86-NEXT:    retl # encoding: [0xc3]
+;
+; X64-LABEL: test_x86_avx512_psllv_w_512_const:
+; X64:       # %bb.0:
+; X64-NEXT:    vpbroadcastw {{.*#+}} zmm0 = [8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8]
+; X64-NEXT:    # encoding: [0x62,0xf2,0x7d,0x48,0x79,0x05,A,A,A,A]
+; X64-NEXT:    # fixup A - offset: 6, value: {{\.LCPI.*}}-4, kind: reloc_riprel_4byte
+; X64-NEXT:    retq # encoding: [0xc3]
+  %res1 = call <32 x i16> @llvm.x86.avx512.psllv.w.512(<32 x i16> <i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4, i16 4,  i16 4, i16 4, i16 4, i16 4, i16 4, i16 -1>, <32 x i16> <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1,  i16 1, i16 1, i16 -1>)
+  ret <32 x i16> %res1
+}
+declare <32 x i16> @llvm.x86.avx512.psllv.w.512(<32 x i16>, <32 x i16>) nounwind readnone
 
 define <32 x i16> @test_x86_avx512_pslli_w_512(<32 x i16> %a0) {
 ; CHECK-LABEL: test_x86_avx512_pslli_w_512:
