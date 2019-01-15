@@ -599,7 +599,7 @@ void ASTDumper::VisitFunctionDecl(const FunctionDecl *D) {
   if (D->isTrivial())
     OS << " trivial";
 
-  if (const FunctionProtoType *FPT = D->getType()->getAs<FunctionProtoType>()) {
+  if (const auto *FPT = D->getType()->getAs<FunctionProtoType>()) {
     FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
     switch (EPI.ExceptionSpec.Type) {
     default: break;
@@ -612,7 +612,7 @@ void ASTDumper::VisitFunctionDecl(const FunctionDecl *D) {
     }
   }
 
-  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
+  if (const auto *MD = dyn_cast<CXXMethodDecl>(D)) {
     if (MD->size_overridden_methods() != 0) {
       auto dumpOverride = [=](const CXXMethodDecl *D) {
         SplitQualType T_split = D->getType().split();
@@ -635,8 +635,7 @@ void ASTDumper::VisitFunctionDecl(const FunctionDecl *D) {
     }
   }
 
-  if (const FunctionTemplateSpecializationInfo *FTSI =
-          D->getTemplateSpecializationInfo())
+  if (const auto *FTSI = D->getTemplateSpecializationInfo())
     dumpTemplateArgumentList(*FTSI->TemplateArguments);
 
   if (!D->param_begin() && D->getNumParams())
@@ -645,11 +644,9 @@ void ASTDumper::VisitFunctionDecl(const FunctionDecl *D) {
     for (const ParmVarDecl *Parameter : D->parameters())
       dumpDecl(Parameter);
 
-  if (const CXXConstructorDecl *C = dyn_cast<CXXConstructorDecl>(D))
-    for (CXXConstructorDecl::init_const_iterator I = C->init_begin(),
-                                                 E = C->init_end();
-         I != E; ++I)
-      dumpCXXCtorInitializer(*I);
+  if (const auto *C = dyn_cast<CXXConstructorDecl>(D))
+    for (const auto *I : C->inits())
+      dumpCXXCtorInitializer(I);
 
   if (D->doesThisDeclarationHaveABody())
     dumpStmt(D->getBody());
