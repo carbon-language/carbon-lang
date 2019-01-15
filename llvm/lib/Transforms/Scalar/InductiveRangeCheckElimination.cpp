@@ -133,34 +133,16 @@ namespace {
 ///     taken by the containing loop's induction variable.
 ///
 class InductiveRangeCheck {
-  // Classifies a range check
-  enum RangeCheckKind : unsigned {
-    // Range check of the form "0 <= I".
-    RANGE_CHECK_LOWER = 1,
-
-    // Range check of the form "I < L" where L is known positive.
-    RANGE_CHECK_UPPER = 2,
-
-    // The logical and of the RANGE_CHECK_LOWER and RANGE_CHECK_UPPER
-    // conditions.
-    RANGE_CHECK_BOTH = RANGE_CHECK_LOWER | RANGE_CHECK_UPPER,
-
-    // Unrecognized range check condition.
-    RANGE_CHECK_UNKNOWN = (unsigned)-1
-  };
-
-  static StringRef rangeCheckKindToStr(RangeCheckKind);
 
   const SCEV *Begin = nullptr;
   const SCEV *Step = nullptr;
   const SCEV *End = nullptr;
   Use *CheckUse = nullptr;
-  RangeCheckKind Kind = RANGE_CHECK_UNKNOWN;
   bool IsSigned = true;
 
-  static RangeCheckKind parseRangeCheckICmp(Loop *L, ICmpInst *ICI,
-                                            ScalarEvolution &SE, Value *&Index,
-                                            Value *&Length, bool &IsSigned);
+  static bool parseRangeCheckICmp(Loop *L, ICmpInst *ICI, ScalarEvolution &SE,
+                                  Value *&Index, Value *&Length,
+                                  bool &IsSigned);
 
   static void
   extractRangeChecksFromCond(Loop *L, ScalarEvolution &SE, Use &ConditionUse,
@@ -175,7 +157,6 @@ public:
 
   void print(raw_ostream &OS) const {
     OS << "InductiveRangeCheck:\n";
-    OS << "  Kind: " << rangeCheckKindToStr(Kind) << "\n";
     OS << "  Begin: ";
     Begin->print(OS);
     OS << "  Step: ";
@@ -283,32 +264,11 @@ INITIALIZE_PASS_DEPENDENCY(LoopPass)
 INITIALIZE_PASS_END(IRCELegacyPass, "irce", "Inductive range check elimination",
                     false, false)
 
-StringRef InductiveRangeCheck::rangeCheckKindToStr(
-    InductiveRangeCheck::RangeCheckKind RCK) {
-  switch (RCK) {
-  case InductiveRangeCheck::RANGE_CHECK_UNKNOWN:
-    return "RANGE_CHECK_UNKNOWN";
-
-  case InductiveRangeCheck::RANGE_CHECK_UPPER:
-    return "RANGE_CHECK_UPPER";
-
-  case InductiveRangeCheck::RANGE_CHECK_LOWER:
-    return "RANGE_CHECK_LOWER";
-
-  case InductiveRangeCheck::RANGE_CHECK_BOTH:
-    return "RANGE_CHECK_BOTH";
-  }
-
-  llvm_unreachable("unknown range check type!");
-}
-
 /// Parse a single ICmp instruction, `ICI`, into a range check.  If `ICI` cannot
-/// be interpreted as a range check, return `RANGE_CHECK_UNKNOWN` and set
-/// `Index` and `Length` to `nullptr`.  Otherwise set `Index` to the value being
-/// range checked, and set `Length` to the upper limit `Index` is being range
-/// checked with if (and only if) the range check type is stronger or equal to
-/// RANGE_CHECK_UPPER.
-InductiveRangeCheck::RangeCheckKind
+/// be interpreted as a range check, return false and set `Index` and `Length`
+/// to `nullptr`.  Otherwise set `Index` to the value being range checked, and
+/// set `Length` to the upper limit `Index` is being range checked.
+bool
 InductiveRangeCheck::parseRangeCheckICmp(Loop *L, ICmpInst *ICI,
                                          ScalarEvolution &SE, Value *&Index,
                                          Value *&Length, bool &IsSigned) {
@@ -322,7 +282,7 @@ InductiveRangeCheck::parseRangeCheckICmp(Loop *L, ICmpInst *ICI,
 
   switch (Pred) {
   default:
-    return RANGE_CHECK_UNKNOWN;
+    return false;
 
   case ICmpInst::ICMP_SLE:
     std::swap(LHS, RHS);
@@ -331,9 +291,9 @@ InductiveRangeCheck::parseRangeCheckICmp(Loop *L, ICmpInst *ICI,
     IsSigned = true;
     if (match(RHS, m_ConstantInt<0>())) {
       Index = LHS;
-      return RANGE_CHECK_LOWER;
+      return true; // Lower.
     }
-    return RANGE_CHECK_UNKNOWN;
+    return false;
 
   case ICmpInst::ICMP_SLT:
     std::swap(LHS, RHS);
@@ -342,15 +302,15 @@ InductiveRangeCheck::parseRangeCheckICmp(Loop *L, ICmpInst *ICI,
     IsSigned = true;
     if (match(RHS, m_ConstantInt<-1>())) {
       Index = LHS;
-      return RANGE_CHECK_LOWER;
+      return true; // Lower.
     }
 
     if (IsLoopInvariant(LHS)) {
       Index = RHS;
       Length = LHS;
-      return RANGE_CHECK_UPPER;
+      return true; // Upper.
     }
-    return RANGE_CHECK_UNKNOWN;
+    return false;
 
   case ICmpInst::ICMP_ULT:
     std::swap(LHS, RHS);
@@ -360,9 +320,9 @@ InductiveRangeCheck::parseRangeCheckICmp(Loop *L, ICmpInst *ICI,
     if (IsLoopInvariant(LHS)) {
       Index = RHS;
       Length = LHS;
-      return RANGE_CHECK_BOTH;
+      return true; // Both lower and upper.
     }
-    return RANGE_CHECK_UNKNOWN;
+    return false;
   }
 
   llvm_unreachable("default clause returns!");
@@ -391,8 +351,7 @@ void InductiveRangeCheck::extractRangeChecksFromCond(
 
   Value *Length = nullptr, *Index;
   bool IsSigned;
-  auto RCKind = parseRangeCheckICmp(L, ICI, SE, Index, Length, IsSigned);
-  if (RCKind == InductiveRangeCheck::RANGE_CHECK_UNKNOWN)
+  if (!parseRangeCheckICmp(L, ICI, SE, Index, Length, IsSigned))
     return;
 
   const auto *IndexAddRec = dyn_cast<SCEVAddRecExpr>(SE.getSCEV(Index));
@@ -408,7 +367,6 @@ void InductiveRangeCheck::extractRangeChecksFromCond(
   if (Length)
     End = SE.getSCEV(Length);
   else {
-    assert(RCKind == InductiveRangeCheck::RANGE_CHECK_LOWER && "invariant!");
     // So far we can only reach this point for Signed range check. This may
     // change in future. In this case we will need to pick Unsigned max for the
     // unsigned range check.
@@ -422,7 +380,6 @@ void InductiveRangeCheck::extractRangeChecksFromCond(
   IRC.Begin = IndexAddRec->getStart();
   IRC.Step = IndexAddRec->getStepRecurrence(SE);
   IRC.CheckUse = &ConditionUse;
-  IRC.Kind = RCKind;
   IRC.IsSigned = IsSigned;
   Checks.push_back(IRC);
 }
