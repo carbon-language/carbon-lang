@@ -3569,6 +3569,7 @@ let TargetPrefix = "x86" in {
 
 // Gather and Scatter ops
 let TargetPrefix = "x86" in {
+  // NOTE: These are deprecated in favor of the versions that take a vXi1 mask.
   def int_x86_avx512_gather_dpd_512  : GCCBuiltin<"__builtin_ia32_gathersiv8df">,
           Intrinsic<[llvm_v8f64_ty], [llvm_v8f64_ty, llvm_ptr_ty,
                      llvm_v8i32_ty, llvm_i8_ty, llvm_i32_ty],
@@ -3701,6 +3702,7 @@ let TargetPrefix = "x86" in {
           [IntrReadMem, IntrArgMemOnly]>;
 
 // scatter
+  // NOTE: These are deprecated in favor of the versions that take a vXi1 mask.
   def int_x86_avx512_scatter_dpd_512  : GCCBuiltin<"__builtin_ia32_scattersiv8df">,
           Intrinsic<[], [llvm_ptr_ty, llvm_i8_ty,
                         llvm_v8i32_ty, llvm_v8f64_ty, llvm_i32_ty],
@@ -3861,7 +3863,7 @@ let TargetPrefix = "x86" in {
                      llvm_i32_ty, llvm_i32_ty], [IntrArgMemOnly]>;
 }
 
-// AVX512 gather intrinsics that use vXi1 masks.
+// AVX512 gather/scatter intrinsics that use vXi1 masks.
 let TargetPrefix = "x86" in {
   def int_x86_avx512_mask_gather_dpd_512  :
           Intrinsic<[llvm_v8f64_ty], [llvm_v8f64_ty, llvm_ptr_ty,
@@ -3977,6 +3979,121 @@ let TargetPrefix = "x86" in {
           Intrinsic<[llvm_v8i32_ty],
           [llvm_v8i32_ty, llvm_ptr_ty, llvm_v8i32_ty, llvm_v8i1_ty, llvm_i32_ty],
           [IntrReadMem, IntrArgMemOnly]>;
+
+  def int_x86_avx512_mask_scatter_dpd_512  :
+          Intrinsic<[], [llvm_ptr_ty, llvm_v8i1_ty,
+                        llvm_v8i32_ty, llvm_v8f64_ty, llvm_i32_ty],
+                    [IntrArgMemOnly]>;
+  def int_x86_avx512_mask_scatter_dps_512  :
+          Intrinsic<[], [llvm_ptr_ty, llvm_v16i1_ty,
+                       llvm_v16i32_ty, llvm_v16f32_ty, llvm_i32_ty],
+                    [IntrArgMemOnly]>;
+  def int_x86_avx512_mask_scatter_qpd_512  :
+          Intrinsic<[], [llvm_ptr_ty, llvm_v8i1_ty,
+                     llvm_v8i64_ty, llvm_v8f64_ty, llvm_i32_ty],
+                    [IntrArgMemOnly]>;
+  def int_x86_avx512_mask_scatter_qps_512  :
+          Intrinsic<[], [llvm_ptr_ty, llvm_v8i1_ty,
+                     llvm_v8i64_ty, llvm_v8f32_ty, llvm_i32_ty],
+                    [IntrArgMemOnly]>;
+
+
+  def int_x86_avx512_mask_scatter_dpq_512  :
+          Intrinsic<[], [llvm_ptr_ty, llvm_v8i1_ty,
+                         llvm_v8i32_ty, llvm_v8i64_ty, llvm_i32_ty],
+                    [IntrArgMemOnly]>;
+  def int_x86_avx512_mask_scatter_dpi_512  :
+          Intrinsic<[], [llvm_ptr_ty, llvm_v16i1_ty,
+                     llvm_v16i32_ty, llvm_v16i32_ty, llvm_i32_ty],
+                    [IntrArgMemOnly]>;
+  def int_x86_avx512_mask_scatter_qpq_512  :
+          Intrinsic<[], [llvm_ptr_ty, llvm_v8i1_ty,llvm_v8i64_ty, llvm_v8i64_ty,
+                         llvm_i32_ty],
+                    [IntrArgMemOnly]>;
+  def int_x86_avx512_mask_scatter_qpi_512  :
+          Intrinsic<[], [llvm_ptr_ty, llvm_v8i1_ty, llvm_v8i64_ty, llvm_v8i32_ty,
+                         llvm_i32_ty],
+                    [IntrArgMemOnly]>;
+
+  def int_x86_avx512_mask_scatterdiv2_df :
+        Intrinsic<[],
+        [llvm_ptr_ty, llvm_v2i1_ty, llvm_v2i64_ty, llvm_v2f64_ty, llvm_i32_ty],
+        [IntrArgMemOnly]>;
+
+  def int_x86_avx512_mask_scatterdiv2_di :
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_v2i1_ty, llvm_v2i64_ty, llvm_v2i64_ty, llvm_i32_ty],
+          [IntrArgMemOnly]>;
+
+  def int_x86_avx512_mask_scatterdiv4_df :
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_v4i1_ty, llvm_v4i64_ty, llvm_v4f64_ty, llvm_i32_ty],
+          [IntrArgMemOnly]>;
+
+  def int_x86_avx512_mask_scatterdiv4_di :
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_v4i1_ty, llvm_v4i64_ty, llvm_v4i64_ty, llvm_i32_ty],
+          [IntrArgMemOnly]>;
+
+  def int_x86_avx512_mask_scatterdiv4_sf :
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_v2i1_ty, llvm_v2i64_ty, llvm_v4f32_ty, llvm_i32_ty],
+          [IntrArgMemOnly]>;
+
+  def int_x86_avx512_mask_scatterdiv4_si :
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_v2i1_ty, llvm_v2i64_ty, llvm_v4i32_ty, llvm_i32_ty],
+          [IntrArgMemOnly]>;
+
+  def int_x86_avx512_mask_scatterdiv8_sf :
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_v4i1_ty, llvm_v4i64_ty, llvm_v4f32_ty, llvm_i32_ty],
+          [IntrArgMemOnly]>;
+
+  def int_x86_avx512_mask_scatterdiv8_si :
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_v4i1_ty, llvm_v4i64_ty, llvm_v4i32_ty, llvm_i32_ty],
+          [IntrArgMemOnly]>;
+
+  def int_x86_avx512_mask_scattersiv2_df :
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_v2i1_ty, llvm_v4i32_ty, llvm_v2f64_ty, llvm_i32_ty],
+          [IntrArgMemOnly]>;
+
+  def int_x86_avx512_mask_scattersiv2_di :
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_v2i1_ty, llvm_v4i32_ty, llvm_v2i64_ty, llvm_i32_ty],
+          [IntrArgMemOnly]>;
+
+  def int_x86_avx512_mask_scattersiv4_df :
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_v4i1_ty, llvm_v4i32_ty, llvm_v4f64_ty, llvm_i32_ty],
+          [IntrArgMemOnly]>;
+
+  def int_x86_avx512_mask_scattersiv4_di :
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_v4i1_ty, llvm_v4i32_ty, llvm_v4i64_ty, llvm_i32_ty],
+          [IntrArgMemOnly]>;
+
+  def int_x86_avx512_mask_scattersiv4_sf :
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_v4i1_ty, llvm_v4i32_ty, llvm_v4f32_ty, llvm_i32_ty],
+          [IntrArgMemOnly]>;
+
+  def int_x86_avx512_mask_scattersiv4_si :
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_v4i1_ty, llvm_v4i32_ty, llvm_v4i32_ty, llvm_i32_ty],
+          [IntrArgMemOnly]>;
+
+  def int_x86_avx512_mask_scattersiv8_sf :
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_v8i1_ty, llvm_v8i32_ty, llvm_v8f32_ty, llvm_i32_ty],
+          [IntrArgMemOnly]>;
+
+  def int_x86_avx512_mask_scattersiv8_si :
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_v8i1_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_i32_ty],
+          [IntrArgMemOnly]>;
 }
 
 // AVX-512 conflict detection instruction

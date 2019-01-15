@@ -22361,9 +22361,13 @@ static SDValue getScatterNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
                               Src.getSimpleValueType().getVectorNumElements());
   MVT MaskVT = MVT::getVectorVT(MVT::i1, MinElts);
 
-  SDValue VMask = getMaskNode(Mask, MaskVT, Subtarget, DAG, dl);
+  // We support two versions of the scatter intrinsics. One with scalar mask and
+  // one with vXi1 mask. Convert scalar to vXi1 if necessary.
+  if (Mask.getValueType() != MaskVT)
+    Mask = getMaskNode(Mask, MaskVT, Subtarget, DAG, dl);
+
   SDVTList VTs = DAG.getVTList(MaskVT, MVT::Other);
-  SDValue Ops[] = {Base, Scale, Index, Disp, Segment, VMask, Src, Chain};
+  SDValue Ops[] = {Base, Scale, Index, Disp, Segment, Mask, Src, Chain};
   SDNode *Res = DAG.getMachineNode(Opc, dl, VTs, Ops);
   return SDValue(Res, 1);
 }
