@@ -435,35 +435,6 @@ void ASTDumper::dumpAttr(const Attr *A) {
   });
 }
 
-static void dumpPreviousDeclImpl(raw_ostream &OS, ...) {}
-
-template<typename T>
-static void dumpPreviousDeclImpl(raw_ostream &OS, const Mergeable<T> *D) {
-  const T *First = D->getFirstDecl();
-  if (First != D)
-    OS << " first " << First;
-}
-
-template<typename T>
-static void dumpPreviousDeclImpl(raw_ostream &OS, const Redeclarable<T> *D) {
-  const T *Prev = D->getPreviousDecl();
-  if (Prev)
-    OS << " prev " << Prev;
-}
-
-/// Dump the previous declaration in the redeclaration chain for a declaration,
-/// if any.
-static void dumpPreviousDecl(raw_ostream &OS, const Decl *D) {
-  switch (D->getKind()) {
-#define DECL(DERIVED, BASE) \
-  case Decl::DERIVED: \
-    return dumpPreviousDeclImpl(OS, cast<DERIVED##Decl>(D));
-#define ABSTRACT_DECL(DECL)
-#include "clang/AST/DeclNodes.inc"
-  }
-  llvm_unreachable("Decl that isn't part of DeclNodes.inc!");
-}
-
 //===----------------------------------------------------------------------===//
 //  C++ Utilities
 //===----------------------------------------------------------------------===//
@@ -536,46 +507,9 @@ void ASTDumper::dumpObjCTypeParamList(const ObjCTypeParamList *typeParams) {
 
 void ASTDumper::dumpDecl(const Decl *D) {
   dumpChild([=] {
-    if (!D) {
-      ColorScope Color(OS, ShowColors, NullColor);
-      OS << "<<<NULL>>>";
+    NodeDumper.Visit(D);
+    if (!D)
       return;
-    }
-
-    {
-      ColorScope Color(OS, ShowColors, DeclKindNameColor);
-      OS << D->getDeclKindName() << "Decl";
-    }
-    NodeDumper.dumpPointer(D);
-    if (D->getLexicalDeclContext() != D->getDeclContext())
-      OS << " parent " << cast<Decl>(D->getDeclContext());
-    dumpPreviousDecl(OS, D);
-    NodeDumper.dumpSourceRange(D->getSourceRange());
-    OS << ' ';
-    NodeDumper.dumpLocation(D->getLocation());
-    if (D->isFromASTFile())
-      OS << " imported";
-    if (Module *M = D->getOwningModule())
-      OS << " in " << M->getFullModuleName();
-    if (auto *ND = dyn_cast<NamedDecl>(D))
-      for (Module *M : D->getASTContext().getModulesWithMergedDefinition(
-               const_cast<NamedDecl *>(ND)))
-        dumpChild([=] { OS << "also in " << M->getFullModuleName(); });
-    if (const NamedDecl *ND = dyn_cast<NamedDecl>(D))
-      if (ND->isHidden())
-        OS << " hidden";
-    if (D->isImplicit())
-      OS << " implicit";
-    if (D->isUsed())
-      OS << " used";
-    else if (D->isThisDeclarationReferenced())
-      OS << " referenced";
-    if (D->isInvalidDecl())
-      OS << " invalid";
-    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-      if (FD->isConstexpr())
-        OS << " constexpr";
-
 
     ConstDeclVisitor<ASTDumper>::Visit(D);
 

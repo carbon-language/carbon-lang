@@ -165,6 +165,8 @@ public:
 
   void Visit(QualType T);
 
+  void Visit(const Decl *D);
+
   void dumpPointer(const void *Ptr);
   void dumpLocation(SourceLocation Loc);
   void dumpSourceRange(SourceRange R);
