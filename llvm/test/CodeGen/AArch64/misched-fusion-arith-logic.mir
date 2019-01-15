@@ -74,38 +74,38 @@ body: |
     ; Shifted register.
     %0:gpr32 = SUBWrr undef $w0, undef $w1
     %1:gpr32 = SUBWrs %0, undef $w2, 1
-    ; CHECKSU(0)%0:gpr32 = SUBWrr undef $w0, undef $w1
-    ; CHECKSuccessors:
-    ; CHECK-NOTSU(1)Ord  Latency=0 Cluster
-    ; CHECKSU(1)dead %1:gpr32 = SUBWrs %0:gpr32, undef $w2, 1
+    ; CHECK: SU(0): %0:gpr32 = SUBWrr undef $w0, undef $w1
+    ; CHECK: Successors:
+    ; CHECK-NOT: SU(1): Ord  Latency=0 Cluster
+    ; CHECK: SU(1): dead %1:gpr32 = SUBWrs %0:gpr32, undef $w2, 1
 
     ; Multiple successors.
     %2:gpr64 = ADDXrr undef $x0, undef $x1
     %3:gpr32 = EXTRACT_SUBREG %2, %subreg.sub_32
     %4:gpr32 = ANDWrs %3, undef $w2, 0
     %5:gpr64 = ADDSXrr %2, undef $x3, implicit-def $nzcv
-    ; CHECKSU(2)%2:gpr64 = ADDXrr undef $x0, undef $x1
-    ; CHECKSuccessors:
-    ; CHECK-NOTSU(3)Ord  Latency=0 Cluster
-    ; CHECKSU(5)Ord  Latency=0 Cluster
-    ; CHECKSU(3)%3:gpr32 = EXTRACT_SUBREG %2:gpr64, %subreg.sub_32
-    ; CHECKSU(5)dead %5:gpr64 = ADDSXrr %2:gpr64, undef $x3, implicit-def $nzcv
+    ; CHECK: SU(2): %2:gpr64 = ADDXrr undef $x0, undef $x1
+    ; CHECK: Successors:
+    ; CHECK-NOT: SU(3): Ord  Latency=0 Cluster
+    ; CHECK: SU(5): Ord  Latency=0 Cluster
+    ; CHECK: SU(3): %3:gpr32 = EXTRACT_SUBREG %2:gpr64, %subreg.sub_32
+    ; CHECK: SU(5): dead %5:gpr64 = ADDSXrr %2:gpr64, undef $x3, implicit-def $nzcv
 
     ; Different register sizes.
     %6:gpr32 = SUBWrr undef $w0, undef $w1
     %7:gpr64 = ADDXrr undef $x1, undef $x2
     %8:gpr64 = SUBXrr %7, undef $x3
     %9:gpr32 = ADDWrr %6, undef $w4
-    ; CHECKSU(6)%6:gpr32 = SUBWrr undef $w0, undef $w1
-    ; CHECKSuccessors:
-    ; CHECK-NOTSU(8)Ord  Latency=0 Cluster
-    ; CHECKSU(7)%7:gpr64 = ADDXrr undef $x1, undef $x2
-    ; CHECKSuccessors:
-    ; CHECK-NOTSU(9)Ord  Latency=0 Cluster
-    ; CHECKSU(8)dead %8:gpr64 = SUBXrr %7:gpr64, undef $x3
-    ; CHECKPredecessors:
-    ; CHECKSU(7)Ord  Latency=0 Cluster
-    ; CHECKSU(9)dead %9:gpr32 = ADDWrr %6:gpr32, undef $w4
-    ; CHECKPredecessors:
-    ; CHECKSU(6)Ord  Latency=0 Cluster
+    ; CHECK: SU(6): %6:gpr32 = SUBWrr undef $w0, undef $w1
+    ; CHECK: Successors:
+    ; CHECK-NOT: SU(8): Ord  Latency=0 Cluster
+    ; CHECK: SU(7): %7:gpr64 = ADDXrr undef $x1, undef $x2
+    ; CHECK: Successors:
+    ; CHECK-NOT: SU(9): Ord  Latency=0 Cluster
+    ; CHECK: SU(8): dead %8:gpr64 = SUBXrr %7:gpr64, undef $x3
+    ; CHECK: Predecessors:
+    ; CHECK: SU(7): Ord  Latency=0 Cluster
+    ; CHECK: SU(9): dead %9:gpr32 = ADDWrr %6:gpr32, undef $w4
+    ; CHECK: Predecessors:
+    ; CHECK: SU(6): Ord  Latency=0 Cluster
 ...
