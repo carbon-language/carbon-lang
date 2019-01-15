@@ -1,6 +1,7 @@
 import("//llvm/utils/gn/build/buildflags.gni")
 import("//llvm/utils/gn/build/mac_sdk.gni")
 import("//llvm/utils/gn/build/toolchain/compiler.gni")
+import("//llvm/utils/gn/build/toolchain/target_flags.gni")
 
 config("compiler_defaults") {
   defines = []
@@ -9,7 +10,8 @@ config("compiler_defaults") {
     defines += [ "NDEBUG" ]
   }
 
-  cflags = []
+  cflags = target_flags + target_cflags
+  ldflags = target_flags + target_ldflags
 
   if (host_os == "mac" && clang_base_path != "") {
     cflags += [
@@ -103,6 +105,10 @@ config("compiler_defaults") {
       # warning.
       cflags += [ "-Wno-nonportable-include-path" ]
     }
+  }
+
+  if (use_lld) {
+    ldflags += [ "-fuse-ld=lld" ]
   }
 }
 
