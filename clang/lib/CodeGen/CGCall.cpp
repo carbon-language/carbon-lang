@@ -2410,10 +2410,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
           if (!AVAttr)
             if (const auto *TOTy = dyn_cast<TypedefType>(OTy))
               AVAttr = TOTy->getDecl()->getAttr<AlignValueAttr>();
-          if (AVAttr && !SanOpts.has(SanitizerKind::Alignment)) {
-            // If alignment-assumption sanitizer is enabled, we do *not* add
-            // alignment attribute here, but emit normal alignment assumption,
-            // so the UBSAN check could function.
+          if (AVAttr) {
             llvm::Value *AlignmentValue =
               EmitScalarExpr(AVAttr->getAlignment());
             llvm::ConstantInt *AlignmentCI =
@@ -4538,14 +4535,13 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
       llvm::Value *Alignment = EmitScalarExpr(AA->getAlignment());
       llvm::ConstantInt *AlignmentCI = cast<llvm::ConstantInt>(Alignment);
-      EmitAlignmentAssumption(Ret.getScalarVal(), RetTy, Loc, AA->getLocation(),
-                              AlignmentCI->getZExtValue(), OffsetValue);
+      EmitAlignmentAssumption(Ret.getScalarVal(), AlignmentCI->getZExtValue(),
+                              OffsetValue);
     } else if (const auto *AA = TargetDecl->getAttr<AllocAlignAttr>()) {
-      llvm::Value *AlignmentVal = CallArgs[AA->getParamIndex().getLLVMIndex()]
-                                      .getRValue(*this)
-                                      .getScalarVal();
-      EmitAlignmentAssumption(Ret.getScalarVal(), RetTy, Loc, AA->getLocation(),
-                              AlignmentVal);
+      llvm::Value *ParamVal =
+          CallArgs[AA->getParamIndex().getLLVMIndex()].getRValue(
+              *this).getScalarVal();
+      EmitAlignmentAssumption(Ret.getScalarVal(), ParamVal);
     }
   }
 
