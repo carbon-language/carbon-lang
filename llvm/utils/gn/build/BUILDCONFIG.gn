@@ -33,6 +33,13 @@ if (current_os == "") {
   current_os = target_os
 }
 
+if (target_cpu == "") {
+  target_cpu = host_cpu
+}
+if (current_cpu == "") {
+  current_cpu = target_cpu
+}
+
 if (host_os == "win") {
   host_toolchain = "//llvm/utils/gn/build/toolchain:win"
 } else {

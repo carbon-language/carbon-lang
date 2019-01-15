@@ -153,6 +153,7 @@ unix_toolchain("unix") {
 
   toolchain_args = {
     current_os = host_os
+    current_cpu = host_cpu
   }
 }
 
@@ -171,6 +172,7 @@ if (android_ndk_path != "") {
 
     toolchain_args = {
       current_os = "android"
+      current_cpu = "arm64"
     }
 
     libcxx_path = "$android_ndk_path/sources/cxx-stl/llvm-libc++"
@@ -293,5 +295,6 @@ toolchain("win") {
 
   toolchain_args = {
     current_os = "win"
+    current_cpu = host_cpu
   }
 }
