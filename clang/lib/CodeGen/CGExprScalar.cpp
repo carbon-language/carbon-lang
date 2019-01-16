@@ -125,6 +125,13 @@ struct BinOpInfo {
         return CFP->isZero();
     return true;
   }
+
+  /// Check if either operand is a fixed point type, in which case, this
+  /// operation did not follow usual arithmetic conversion and both operands may
+  /// not be the same.
+  bool isFixedPointBinOp() const {
+    return isa<BinaryOperator>(E) && Ty->isFixedPointType();
+  }
 };
 
 static bool MustVisitNullValue(const Expr *E) {
@@ -350,6 +357,9 @@ public:
                        ScalarConversionOpts Opts = ScalarConversionOpts());
 
   Value *EmitFixedPointConversion(Value *Src, QualType SrcTy, QualType DstTy,
+                                  SourceLocation Loc);
+  Value *EmitFixedPointConversion(Value *Src, FixedPointSemantics &SrcFixedSema,
+                                  FixedPointSemantics &DstFixedSema,
                                   SourceLocation Loc);
 
   /// Emit a conversion from the specified complex type to the specified
@@ -728,6 +738,9 @@ public:
   Value *EmitOr (const BinOpInfo &Ops) {
     return Builder.CreateOr(Ops.LHS, Ops.RHS, "or");
   }
+
+  // Helper functions for fixed point binary operations.
+  Value *EmitFixedPointAdd(const BinOpInfo &Ops);
 
   BinOpInfo EmitBinOps(const BinaryOperator *E);
   LValue EmitCompoundAssignLValue(const CompoundAssignOperator *E,
@@ -1423,10 +1436,6 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
 Value *ScalarExprEmitter::EmitFixedPointConversion(Value *Src, QualType SrcTy,
                                                    QualType DstTy,
                                                    SourceLocation Loc) {
-  using llvm::APInt;
-  using llvm::ConstantInt;
-  using llvm::Value;
-
   assert(SrcTy->isFixedPointType());
   assert(DstTy->isFixedPointType());
 
@@ -1434,6 +1443,16 @@ Value *ScalarExprEmitter::EmitFixedPointConversion(Value *Src, QualType SrcTy,
       CGF.getContext().getFixedPointSemantics(SrcTy);
   FixedPointSemantics DstFPSema =
       CGF.getContext().getFixedPointSemantics(DstTy);
+  return EmitFixedPointConversion(Src, SrcFPSema, DstFPSema, Loc);
+}
+
+Value *ScalarExprEmitter::EmitFixedPointConversion(
+    Value *Src, FixedPointSemantics &SrcFPSema, FixedPointSemantics &DstFPSema,
+    SourceLocation Loc) {
+  using llvm::APInt;
+  using llvm::ConstantInt;
+  using llvm::Value;
+
   unsigned SrcWidth = SrcFPSema.getWidth();
   unsigned DstWidth = DstFPSema.getWidth();
   unsigned SrcScale = SrcFPSema.getScale();
@@ -1462,7 +1481,8 @@ Value *ScalarExprEmitter::EmitFixedPointConversion(Value *Src, QualType SrcTy,
   } else {
     // Adjust the number of fractional bits.
     if (DstScale > SrcScale) {
-      ResultWidth = SrcWidth + DstScale - SrcScale;
+      // Compare to DstWidth to prevent resizing twice.
+      ResultWidth = std::max(SrcWidth + DstScale - SrcScale, DstWidth);
       llvm::Type *UpscaledTy = Builder.getIntNTy(ResultWidth);
       Result = Builder.CreateIntCast(Result, UpscaledTy, SrcIsSigned, "resize");
       Result = Builder.CreateShl(Result, DstScale - SrcScale, "upscale");
@@ -1493,7 +1513,8 @@ Value *ScalarExprEmitter::EmitFixedPointConversion(Value *Src, QualType SrcTy,
     }
 
     // Resize the integer part to get the final destination size.
-    Result = Builder.CreateIntCast(Result, DstIntTy, SrcIsSigned, "resize");
+    if (ResultWidth != DstWidth)
+      Result = Builder.CreateIntCast(Result, DstIntTy, SrcIsSigned, "resize");
   }
   return Result;
 }
@@ -3338,7 +3359,56 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &op) {
     return propagateFMFlags(V, op);
   }
 
+  if (op.isFixedPointBinOp())
+    return EmitFixedPointAdd(op);
+
   return Builder.CreateAdd(op.LHS, op.RHS, "add");
+}
+
+/// The resulting value must be calculated with exact precision, so the operands
+/// may not be the same type.
+Value *ScalarExprEmitter::EmitFixedPointAdd(const BinOpInfo &op) {
+  using llvm::APSInt;
+  using llvm::ConstantInt;
+
+  const auto *BinOp = cast<BinaryOperator>(op.E);
+  assert(BinOp->getOpcode() == BO_Add && "Expected operation to be addition");
+
+  // The result is a fixed point type and at least one of the operands is fixed
+  // point while the other is either fixed point or an int. This resulting type
+  // should be determined by Sema::handleFixedPointConversions().
+  QualType ResultTy = op.Ty;
+  QualType LHSTy = BinOp->getLHS()->getType();
+  QualType RHSTy = BinOp->getRHS()->getType();
+  ASTContext &Ctx = CGF.getContext();
+  Value *LHS = op.LHS;
+  Value *RHS = op.RHS;
+
+  auto LHSFixedSema = Ctx.getFixedPointSemantics(LHSTy);
+  auto RHSFixedSema = Ctx.getFixedPointSemantics(RHSTy);
+  auto ResultFixedSema = Ctx.getFixedPointSemantics(ResultTy);
+  auto CommonFixedSema = LHSFixedSema.getCommonSemantics(RHSFixedSema);
+
+  // Convert the operands to the full precision type.
+  Value *FullLHS = EmitFixedPointConversion(LHS, LHSFixedSema, CommonFixedSema,
+                                            BinOp->getExprLoc());
+  Value *FullRHS = EmitFixedPointConversion(RHS, RHSFixedSema, CommonFixedSema,
+                                            BinOp->getExprLoc());
+
+  // Perform the actual addition.
+  Value *Result;
+  if (ResultFixedSema.isSaturated()) {
+    llvm::Intrinsic::ID IID = ResultFixedSema.isSigned()
+                                  ? llvm::Intrinsic::sadd_sat
+                                  : llvm::Intrinsic::uadd_sat;
+    Result = Builder.CreateBinaryIntrinsic(IID, FullLHS, FullRHS);
+  } else {
+    Result = Builder.CreateAdd(FullLHS, FullRHS);
+  }
+
+  // Convert to the result type.
+  return EmitFixedPointConversion(Result, CommonFixedSema, ResultFixedSema,
+                                  BinOp->getExprLoc());
 }
 
 Value *ScalarExprEmitter::EmitSub(const BinOpInfo &op) {

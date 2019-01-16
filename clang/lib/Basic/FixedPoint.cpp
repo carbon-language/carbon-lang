@@ -112,4 +112,29 @@ APFixedPoint APFixedPoint::getMin(const FixedPointSemantics &Sema) {
   return APFixedPoint(Val, Sema);
 }
 
+FixedPointSemantics FixedPointSemantics::getCommonSemantics(
+    const FixedPointSemantics &Other) const {
+  unsigned CommonScale = std::max(getScale(), Other.getScale());
+  unsigned CommonWidth =
+      std::max(getIntegralBits(), Other.getIntegralBits()) + CommonScale;
+
+  bool ResultIsSigned = isSigned() || Other.isSigned();
+  bool ResultIsSaturated = isSaturated() || Other.isSaturated();
+  bool ResultHasUnsignedPadding = false;
+  if (!ResultIsSigned) {
+    // Both are unsigned.
+    ResultHasUnsignedPadding = hasUnsignedPadding() &&
+                               Other.hasUnsignedPadding() && !ResultIsSaturated;
+  }
+
+  // If the result is signed, add an extra bit for the sign. Otherwise, if it is
+  // unsigned and has unsigned padding, we only need to add the extra padding
+  // bit back if we are not saturating.
+  if (ResultIsSigned || ResultHasUnsignedPadding)
+    CommonWidth++;
+
+  return FixedPointSemantics(CommonWidth, CommonScale, ResultIsSigned,
+                             ResultIsSaturated, ResultHasUnsignedPadding);
+}
+
 }  // namespace clang

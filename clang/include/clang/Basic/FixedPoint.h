@@ -18,6 +18,7 @@
 #define LLVM_CLANG_BASIC_FIXEDPOINT_H
 
 #include "llvm/ADT/APSInt.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace clang {
 
@@ -36,6 +37,8 @@ public:
       : Width(Width), Scale(Scale), IsSigned(IsSigned),
         IsSaturated(IsSaturated), HasUnsignedPadding(HasUnsignedPadding) {
     assert(Width >= Scale && "Not enough room for the scale");
+    assert(!(IsSigned && HasUnsignedPadding) &&
+           "Cannot have unsigned padding on a signed type.");
   }
 
   unsigned getWidth() const { return Width; }
@@ -46,11 +49,29 @@ public:
 
   void setSaturated(bool Saturated) { IsSaturated = Saturated; }
 
+  /// Return the number of integral bits represented by these semantics. These
+  /// are separate from the fractional bits and do not include the sign or
+  /// padding bit.
   unsigned getIntegralBits() const {
     if (IsSigned || (!IsSigned && HasUnsignedPadding))
       return Width - Scale - 1;
     else
       return Width - Scale;
+  }
+
+  /// Return the FixedPointSemantics that allows for calculating the full
+  /// precision semantic that can precisely represent the precision and ranges
+  /// of both input values. This does not compute the resulting semantics for a
+  /// given binary operation.
+  FixedPointSemantics
+  getCommonSemantics(const FixedPointSemantics &Other) const;
+
+  /// Return the FixedPointSemantics for an integer type.
+  static FixedPointSemantics GetIntegerSemantics(unsigned Width,
+                                                 bool IsSigned) {
+    return FixedPointSemantics(Width, /*Scale=*/0, IsSigned,
+                               /*IsSaturated=*/false,
+                               /*HasUnsignedPadding=*/false);
   }
 
 private:
