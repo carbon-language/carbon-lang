@@ -227,16 +227,6 @@ struct FilterUnusedFlags {
   }
 };
 
-std::string GetClangToolCommand() {
-  static int Dummy;
-  std::string ClangExecutable =
-      llvm::sys::fs::getMainExecutable("clang", (void *)&Dummy);
-  SmallString<128> ClangToolPath;
-  ClangToolPath = llvm::sys::path::parent_path(ClangExecutable);
-  llvm::sys::path::append(ClangToolPath, "clang-tool");
-  return ClangToolPath.str();
-}
-
 } // namespace
 
 /// Strips any positional args and possible argv[0] from a command-line
@@ -276,9 +266,9 @@ static bool stripPositionalArgs(std::vector<const char *> Args,
       Diagnostics));
   NewDriver->setCheckInputsExist(false);
 
-  // This becomes the new argv[0]. The value is used to detect libc++ include
-  // dirs on Mac, it isn't used for other platforms.
-  Args.insert(Args.begin(), GetClangToolCommand().c_str());
+  // This becomes the new argv[0]. The value is actually not important as it
+  // isn't used for invoking Tools.
+  Args.insert(Args.begin(), "clang-tool");
 
   // By adding -c, we force the driver to treat compilation as the last phase.
   // It will then issue warnings via Diagnostics about un-used options that
@@ -376,7 +366,7 @@ FixedCompilationDatabase::loadFromFile(StringRef Path, std::string &ErrorMsg) {
 
 FixedCompilationDatabase::
 FixedCompilationDatabase(Twine Directory, ArrayRef<std::string> CommandLine) {
-  std::vector<std::string> ToolCommandLine(1, GetClangToolCommand());
+  std::vector<std::string> ToolCommandLine(1, "clang-tool");
   ToolCommandLine.insert(ToolCommandLine.end(),
                          CommandLine.begin(), CommandLine.end());
   CompileCommands.emplace_back(Directory, StringRef(),

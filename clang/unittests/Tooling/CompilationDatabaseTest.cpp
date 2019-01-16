@@ -14,14 +14,10 @@
 #include "clang/Tooling/JSONCompilationDatabase.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/Support/Path.h"
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace clang {
 namespace tooling {
-
-using testing::ElementsAre;
-using testing::EndsWith;
 
 static void expectFailure(StringRef JSONDatabase, StringRef Explanation) {
   std::string ErrorMessage;
@@ -471,15 +467,21 @@ TEST(unescapeJsonCommandLine, ParsesSingleQuotedString) {
 }
 
 TEST(FixedCompilationDatabase, ReturnsFixedCommandLine) {
-  FixedCompilationDatabase Database(".", /*CommandLine*/ {"one", "two"});
+  std::vector<std::string> CommandLine;
+  CommandLine.push_back("one");
+  CommandLine.push_back("two");
+  FixedCompilationDatabase Database(".", CommandLine);
   StringRef FileName("source");
   std::vector<CompileCommand> Result =
     Database.getCompileCommands(FileName);
   ASSERT_EQ(1ul, Result.size());
+  std::vector<std::string> ExpectedCommandLine(1, "clang-tool");
+  ExpectedCommandLine.insert(ExpectedCommandLine.end(),
+                             CommandLine.begin(), CommandLine.end());
+  ExpectedCommandLine.push_back("source");
   EXPECT_EQ(".", Result[0].Directory);
   EXPECT_EQ(FileName, Result[0].Filename);
-  EXPECT_THAT(Result[0].CommandLine,
-              ElementsAre(EndsWith("clang-tool"), "one", "two", "source"));
+  EXPECT_EQ(ExpectedCommandLine, Result[0].CommandLine);
 }
 
 TEST(FixedCompilationDatabase, GetAllFiles) {
@@ -535,8 +537,12 @@ TEST(ParseFixedCompilationDatabase, ReturnsArgumentsAfterDoubleDash) {
     Database->getCompileCommands("source");
   ASSERT_EQ(1ul, Result.size());
   ASSERT_EQ(".", Result[0].Directory);
-  ASSERT_THAT(Result[0].CommandLine, ElementsAre(EndsWith("clang-tool"),
-                                                 "-DDEF3", "-DDEF4", "source"));
+  std::vector<std::string> CommandLine;
+  CommandLine.push_back("clang-tool");
+  CommandLine.push_back("-DDEF3");
+  CommandLine.push_back("-DDEF4");
+  CommandLine.push_back("source");
+  ASSERT_EQ(CommandLine, Result[0].CommandLine);
   EXPECT_EQ(2, Argc);
 }
 
@@ -552,8 +558,10 @@ TEST(ParseFixedCompilationDatabase, ReturnsEmptyCommandLine) {
     Database->getCompileCommands("source");
   ASSERT_EQ(1ul, Result.size());
   ASSERT_EQ(".", Result[0].Directory);
-  ASSERT_THAT(Result[0].CommandLine,
-              ElementsAre(EndsWith("clang-tool"), "source"));
+  std::vector<std::string> CommandLine;
+  CommandLine.push_back("clang-tool");
+  CommandLine.push_back("source");
+  ASSERT_EQ(CommandLine, Result[0].CommandLine);
   EXPECT_EQ(2, Argc);
 }
 
@@ -569,8 +577,12 @@ TEST(ParseFixedCompilationDatabase, HandlesPositionalArgs) {
     Database->getCompileCommands("source");
   ASSERT_EQ(1ul, Result.size());
   ASSERT_EQ(".", Result[0].Directory);
-  ASSERT_THAT(Result[0].CommandLine,
-              ElementsAre(EndsWith("clang-tool"), "-c", "-DDEF3", "source"));
+  std::vector<std::string> Expected;
+  Expected.push_back("clang-tool");
+  Expected.push_back("-c");
+  Expected.push_back("-DDEF3");
+  Expected.push_back("source");
+  ASSERT_EQ(Expected, Result[0].CommandLine);
   EXPECT_EQ(2, Argc);
 }
 
@@ -587,9 +599,12 @@ TEST(ParseFixedCompilationDatabase, HandlesPositionalArgsSyntaxOnly) {
   std::vector<CompileCommand> Result = Database->getCompileCommands("source");
   ASSERT_EQ(1ul, Result.size());
   ASSERT_EQ(".", Result[0].Directory);
-  ASSERT_THAT(
-      Result[0].CommandLine,
-      ElementsAre(EndsWith("clang-tool"), "-fsyntax-only", "-DDEF3", "source"));
+  std::vector<std::string> Expected;
+  Expected.push_back("clang-tool");
+  Expected.push_back("-fsyntax-only");
+  Expected.push_back("-DDEF3");
+  Expected.push_back("source");
+  ASSERT_EQ(Expected, Result[0].CommandLine);
 }
 
 TEST(ParseFixedCompilationDatabase, HandlesArgv0) {
@@ -605,8 +620,9 @@ TEST(ParseFixedCompilationDatabase, HandlesArgv0) {
   ASSERT_EQ(1ul, Result.size());
   ASSERT_EQ(".", Result[0].Directory);
   std::vector<std::string> Expected;
-  ASSERT_THAT(Result[0].CommandLine,
-              ElementsAre(EndsWith("clang-tool"), "source"));
+  Expected.push_back("clang-tool");
+  Expected.push_back("source");
+  ASSERT_EQ(Expected, Result[0].CommandLine);
   EXPECT_EQ(2, Argc);
 }
 
