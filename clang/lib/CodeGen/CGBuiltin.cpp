@@ -10073,6 +10073,114 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_compressstoreqi512_mask:
     return EmitX86CompressStore(*this, Ops);
 
+  case X86::BI__builtin_ia32_gather3div2df:
+  case X86::BI__builtin_ia32_gather3div2di:
+  case X86::BI__builtin_ia32_gather3div4df:
+  case X86::BI__builtin_ia32_gather3div4di:
+  case X86::BI__builtin_ia32_gather3div4sf:
+  case X86::BI__builtin_ia32_gather3div4si:
+  case X86::BI__builtin_ia32_gather3div8sf:
+  case X86::BI__builtin_ia32_gather3div8si:
+  case X86::BI__builtin_ia32_gather3siv2df:
+  case X86::BI__builtin_ia32_gather3siv2di:
+  case X86::BI__builtin_ia32_gather3siv4df:
+  case X86::BI__builtin_ia32_gather3siv4di:
+  case X86::BI__builtin_ia32_gather3siv4sf:
+  case X86::BI__builtin_ia32_gather3siv4si:
+  case X86::BI__builtin_ia32_gather3siv8sf:
+  case X86::BI__builtin_ia32_gather3siv8si:
+  case X86::BI__builtin_ia32_gathersiv8df:
+  case X86::BI__builtin_ia32_gathersiv16sf:
+  case X86::BI__builtin_ia32_gatherdiv8df:
+  case X86::BI__builtin_ia32_gatherdiv16sf:
+  case X86::BI__builtin_ia32_gathersiv8di:
+  case X86::BI__builtin_ia32_gathersiv16si:
+  case X86::BI__builtin_ia32_gatherdiv8di:
+  case X86::BI__builtin_ia32_gatherdiv16si: {
+    Intrinsic::ID IID;
+    switch (BuiltinID) {
+    default: llvm_unreachable("Unexpected builtin");
+    case X86::BI__builtin_ia32_gather3div2df:
+      IID = Intrinsic::x86_avx512_mask_gather3div2_df;
+      break;
+    case X86::BI__builtin_ia32_gather3div2di:
+      IID = Intrinsic::x86_avx512_mask_gather3div2_di;
+      break;
+    case X86::BI__builtin_ia32_gather3div4df:
+      IID = Intrinsic::x86_avx512_mask_gather3div4_df;
+      break;
+    case X86::BI__builtin_ia32_gather3div4di:
+      IID = Intrinsic::x86_avx512_mask_gather3div4_di;
+      break;
+    case X86::BI__builtin_ia32_gather3div4sf:
+      IID = Intrinsic::x86_avx512_mask_gather3div4_sf;
+      break;
+    case X86::BI__builtin_ia32_gather3div4si:
+      IID = Intrinsic::x86_avx512_mask_gather3div4_si;
+      break;
+    case X86::BI__builtin_ia32_gather3div8sf:
+      IID = Intrinsic::x86_avx512_mask_gather3div8_sf;
+      break;
+    case X86::BI__builtin_ia32_gather3div8si:
+      IID = Intrinsic::x86_avx512_mask_gather3div8_si;
+      break;
+    case X86::BI__builtin_ia32_gather3siv2df:
+      IID = Intrinsic::x86_avx512_mask_gather3siv2_df;
+      break;
+    case X86::BI__builtin_ia32_gather3siv2di:
+      IID = Intrinsic::x86_avx512_mask_gather3siv2_di;
+      break;
+    case X86::BI__builtin_ia32_gather3siv4df:
+      IID = Intrinsic::x86_avx512_mask_gather3siv4_df;
+      break;
+    case X86::BI__builtin_ia32_gather3siv4di:
+      IID = Intrinsic::x86_avx512_mask_gather3siv4_di;
+      break;
+    case X86::BI__builtin_ia32_gather3siv4sf:
+      IID = Intrinsic::x86_avx512_mask_gather3siv4_sf;
+      break;
+    case X86::BI__builtin_ia32_gather3siv4si:
+      IID = Intrinsic::x86_avx512_mask_gather3siv4_si;
+      break;
+    case X86::BI__builtin_ia32_gather3siv8sf:
+      IID = Intrinsic::x86_avx512_mask_gather3siv8_sf;
+      break;
+    case X86::BI__builtin_ia32_gather3siv8si:
+      IID = Intrinsic::x86_avx512_mask_gather3siv8_si;
+      break;
+    case X86::BI__builtin_ia32_gathersiv8df:
+      IID = Intrinsic::x86_avx512_mask_gather_dpd_512;
+      break;
+    case X86::BI__builtin_ia32_gathersiv16sf:
+      IID = Intrinsic::x86_avx512_mask_gather_dps_512;
+      break;
+    case X86::BI__builtin_ia32_gatherdiv8df:
+      IID = Intrinsic::x86_avx512_mask_gather_qpd_512;
+      break;
+    case X86::BI__builtin_ia32_gatherdiv16sf:
+      IID = Intrinsic::x86_avx512_mask_gather_qps_512;
+      break;
+    case X86::BI__builtin_ia32_gathersiv8di:
+      IID = Intrinsic::x86_avx512_mask_gather_dpq_512;
+      break;
+    case X86::BI__builtin_ia32_gathersiv16si:
+      IID = Intrinsic::x86_avx512_mask_gather_dpi_512;
+      break;
+    case X86::BI__builtin_ia32_gatherdiv8di:
+      IID = Intrinsic::x86_avx512_mask_gather_qpq_512;
+      break;
+    case X86::BI__builtin_ia32_gatherdiv16si:
+      IID = Intrinsic::x86_avx512_mask_gather_qpi_512;
+      break;
+    }
+
+    unsigned MinElts = std::min(Ops[0]->getType()->getVectorNumElements(),
+                                Ops[2]->getType()->getVectorNumElements());
+    Ops[3] = getMaskVecValue(*this, Ops[3], MinElts);
+    Function *Intr = CGM.getIntrinsic(IID);
+    return Builder.CreateCall(Intr, Ops);
+  }
+
   case X86::BI__builtin_ia32_storehps:
   case X86::BI__builtin_ia32_storelps: {
     llvm::Type *PtrTy = llvm::PointerType::getUnqual(Int64Ty);
