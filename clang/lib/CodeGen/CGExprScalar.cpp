@@ -740,7 +740,7 @@ public:
   }
 
   // Helper functions for fixed point binary operations.
-  Value *EmitFixedPointAdd(const BinOpInfo &Ops);
+  Value *EmitFixedPointBinOp(const BinOpInfo &Ops);
 
   BinOpInfo EmitBinOps(const BinaryOperator *E);
   LValue EmitCompoundAssignLValue(const CompoundAssignOperator *E,
@@ -3360,19 +3360,20 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &op) {
   }
 
   if (op.isFixedPointBinOp())
-    return EmitFixedPointAdd(op);
+    return EmitFixedPointBinOp(op);
 
   return Builder.CreateAdd(op.LHS, op.RHS, "add");
 }
 
 /// The resulting value must be calculated with exact precision, so the operands
 /// may not be the same type.
-Value *ScalarExprEmitter::EmitFixedPointAdd(const BinOpInfo &op) {
+Value *ScalarExprEmitter::EmitFixedPointBinOp(const BinOpInfo &op) {
   using llvm::APSInt;
   using llvm::ConstantInt;
 
   const auto *BinOp = cast<BinaryOperator>(op.E);
-  assert(BinOp->getOpcode() == BO_Add && "Expected operation to be addition");
+  assert((BinOp->getOpcode() == BO_Add || BinOp->getOpcode() == BO_Sub) &&
+         "Expected operation to be addition or subtraction");
 
   // The result is a fixed point type and at least one of the operands is fixed
   // point while the other is either fixed point or an int. This resulting type
@@ -3397,13 +3398,62 @@ Value *ScalarExprEmitter::EmitFixedPointAdd(const BinOpInfo &op) {
 
   // Perform the actual addition.
   Value *Result;
-  if (ResultFixedSema.isSaturated()) {
-    llvm::Intrinsic::ID IID = ResultFixedSema.isSigned()
-                                  ? llvm::Intrinsic::sadd_sat
-                                  : llvm::Intrinsic::uadd_sat;
-    Result = Builder.CreateBinaryIntrinsic(IID, FullLHS, FullRHS);
-  } else {
-    Result = Builder.CreateAdd(FullLHS, FullRHS);
+  switch (BinOp->getOpcode()) {
+  case BO_Add: {
+    if (ResultFixedSema.isSaturated()) {
+      llvm::Intrinsic::ID IID = ResultFixedSema.isSigned()
+                                    ? llvm::Intrinsic::sadd_sat
+                                    : llvm::Intrinsic::uadd_sat;
+      Result = Builder.CreateBinaryIntrinsic(IID, FullLHS, FullRHS);
+    } else {
+      Result = Builder.CreateAdd(FullLHS, FullRHS);
+    }
+    break;
+  }
+  case BO_Sub: {
+    if (ResultFixedSema.isSaturated()) {
+      llvm::Intrinsic::ID IID = ResultFixedSema.isSigned()
+                                    ? llvm::Intrinsic::ssub_sat
+                                    : llvm::Intrinsic::usub_sat;
+      Result = Builder.CreateBinaryIntrinsic(IID, FullLHS, FullRHS);
+    } else {
+      Result = Builder.CreateSub(FullLHS, FullRHS);
+    }
+    break;
+  }
+  case BO_Mul:
+  case BO_Div:
+  case BO_Shl:
+  case BO_Shr:
+  case BO_Cmp:
+  case BO_LT:
+  case BO_GT:
+  case BO_LE:
+  case BO_GE:
+  case BO_EQ:
+  case BO_NE:
+  case BO_LAnd:
+  case BO_LOr:
+  case BO_MulAssign:
+  case BO_DivAssign:
+  case BO_AddAssign:
+  case BO_SubAssign:
+  case BO_ShlAssign:
+  case BO_ShrAssign:
+    llvm_unreachable("Found unimplemented fixed point binary operation");
+  case BO_PtrMemD:
+  case BO_PtrMemI:
+  case BO_Rem:
+  case BO_Xor:
+  case BO_And:
+  case BO_Or:
+  case BO_Assign:
+  case BO_RemAssign:
+  case BO_AndAssign:
+  case BO_XorAssign:
+  case BO_OrAssign:
+  case BO_Comma:
+    llvm_unreachable("Found unsupported binary operation for fixed point types.");
   }
 
   // Convert to the result type.
@@ -3441,6 +3491,9 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &op) {
       Value *V = Builder.CreateFSub(op.LHS, op.RHS, "sub");
       return propagateFMFlags(V, op);
     }
+
+    if (op.isFixedPointBinOp())
+      return EmitFixedPointBinOp(op);
 
     return Builder.CreateSub(op.LHS, op.RHS, "sub");
   }
