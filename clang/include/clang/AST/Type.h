@@ -6848,6 +6848,8 @@ QualType DecayedType::getPointeeType() const {
 
 // Get the decimal string representation of a fixed point type, represented
 // as a scaled integer.
+// TODO: At some point, we should change the arguments to instead just accept an
+// APFixedPoint instead of APSInt and scale.
 void FixedPointValueToString(SmallVectorImpl<char> &Str, llvm::APSInt Val,
                              unsigned Scale);
 

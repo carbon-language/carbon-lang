@@ -18,6 +18,7 @@
 #define LLVM_CLANG_BASIC_FIXEDPOINT_H
 
 #include "llvm/ADT/APSInt.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace clang {
@@ -104,19 +105,25 @@ class APFixedPoint {
        : APFixedPoint(llvm::APInt(Sema.getWidth(), Val, Sema.isSigned()),
                       Sema) {}
 
+   // Zero initialization.
+   APFixedPoint(const FixedPointSemantics &Sema) : APFixedPoint(0, Sema) {}
+
    llvm::APSInt getValue() const { return llvm::APSInt(Val, !Sema.isSigned()); }
    inline unsigned getWidth() const { return Sema.getWidth(); }
    inline unsigned getScale() const { return Sema.getScale(); }
    inline bool isSaturated() const { return Sema.isSaturated(); }
    inline bool isSigned() const { return Sema.isSigned(); }
    inline bool hasPadding() const { return Sema.hasUnsignedPadding(); }
+   FixedPointSemantics getSemantics() const { return Sema; }
+
+   bool getBoolValue() const { return Val.getBoolValue(); }
 
    // Convert this number to match the semantics provided.
    APFixedPoint convert(const FixedPointSemantics &DstSema) const;
 
    APFixedPoint shr(unsigned Amt) const {
      return APFixedPoint(Val >> Amt, Sema);
-  }
+   }
 
   APFixedPoint shl(unsigned Amt) const {
     return APFixedPoint(Val << Amt, Sema);
@@ -127,6 +134,13 @@ class APFixedPoint {
       return -(-Val >> getScale());
     else
       return Val >> getScale();
+  }
+
+  void toString(llvm::SmallVectorImpl<char> &Str) const;
+  std::string toString() const {
+    llvm::SmallString<40> S;
+    toString(S);
+    return S.str();
   }
 
   // If LHS > RHS, return 1. If LHS == RHS, return 0. If LHS < RHS, return -1.
@@ -153,6 +167,12 @@ private:
   llvm::APSInt Val;
   FixedPointSemantics Sema;
 };
+
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
+                                     const APFixedPoint &FX) {
+  OS << FX.toString();
+  return OS;
+}
 
 }  // namespace clang
 
