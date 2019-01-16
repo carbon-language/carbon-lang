@@ -1,5 +1,5 @@
 # RUN: yaml2obj %s > %t
-# RUN: llvm-elfabi --elf %t --emit-tbe=- | FileCheck %s
+# RUN: not llvm-elfabi --elf %t --emit-tbe=%t.tbe 2>&1 | FileCheck %s
 
 !ELF
 FileHeader:
@@ -11,37 +11,34 @@ Sections:
   - Name:            .dynstr
     Type:            SHT_STRTAB
     Flags:           [ SHF_ALLOC ]
-    Address:         0x0000
+    Address:         0x1000
     Content:         "00"
   - Name:            .dynamic
     Type:            SHT_DYNAMIC
     Flags:           [ SHF_ALLOC ]
-    Address:         0x0008
+    Address:         0x1008
     AddressAlign:    8
-    Content:         "0a0000000000000001000000000000000500000000000000000000000000000000000000000000000000000000000000"
-      # DT_STRSZ      1 (0x1)
-      # DT_STRTAB     0x0
+    Content:         "0e0000000000000000000000000000000a0000000000000001000000000000000500000000000000600200000000000000000000000000000000000000000000"
+      # DT_SONAME     0
+      # DT_STRSZ      1
+      # DT_STRTAB     0x0260 # Bad vaddr (no PT_LOAD for 0x0000 to 0x0FFF)
       # DT_NULL       0x0
-    Size:            48
+    Size:            64
     Link:            .dynstr
 ProgramHeaders:
   - Type: PT_LOAD
     Flags: [ PF_R ]
-    VAddr: 0x0000
-    PAddr: 0x0000
+    VAddr: 0x1000
+    PAddr: 0x1000
     Align: 8
     Sections:
       - Section: .dynstr
       - Section: .dynamic
   - Type: PT_DYNAMIC
     Flags: [ PF_X, PF_R ]
-    VAddr: 0x0008
-    PAddr: 0x0008
+    VAddr: 0x1008
+    PAddr: 0x1008
     Sections:
       - Section: .dynamic
 
-# CHECK:      --- !tapi-tbe
-# CHECK-NEXT: TbeVersion: {{[1-9]\d*\.(0|([1-9]\d*))}}
-# CHECK-NEXT: Arch: x86_64
-# CHECK-NEXT: Symbols: {}
-# CHECK-NEXT: ...
+# CHECK: Virtual address is not in any segment when locating .dynstr section contents

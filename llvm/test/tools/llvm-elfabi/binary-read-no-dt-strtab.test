@@ -1,5 +1,5 @@
 # RUN: yaml2obj %s > %t
-# RUN: llvm-elfabi --elf %t --emit-tbe=- | FileCheck %s
+# RUN: not llvm-elfabi --elf %t --emit-tbe=%t.tbe 2>&1 | FileCheck %s
 
 !ELF
 FileHeader:
@@ -18,11 +18,10 @@ Sections:
     Flags:           [ SHF_ALLOC ]
     Address:         0x0008
     AddressAlign:    8
-    Content:         "0a0000000000000001000000000000000500000000000000000000000000000000000000000000000000000000000000"
+    Content:         "0a00000000000000010000000000000000000000000000000000000000000000"
       # DT_STRSZ      1 (0x1)
-      # DT_STRTAB     0x0
       # DT_NULL       0x0
-    Size:            48
+    Size:            32
     Link:            .dynstr
 ProgramHeaders:
   - Type: PT_LOAD
@@ -40,8 +39,4 @@ ProgramHeaders:
     Sections:
       - Section: .dynamic
 
-# CHECK:      --- !tapi-tbe
-# CHECK-NEXT: TbeVersion: {{[1-9]\d*\.(0|([1-9]\d*))}}
-# CHECK-NEXT: Arch: x86_64
-# CHECK-NEXT: Symbols: {}
-# CHECK-NEXT: ...
+# CHECK: Couldn't locate dynamic string table (no DT_STRTAB entry)
