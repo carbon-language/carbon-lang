@@ -123,6 +123,16 @@ private:
   friend std::ostream &operator<<(std::ostream &, const EntityDetails &);
 };
 
+// Symbol is associated with a name or expression in a SELECT TYPE or ASSOCIATE.
+class AssocEntityDetails : public EntityDetails {
+public:
+  AssocEntityDetails(SomeExpr &&expr) : expr_{std::move(expr)} {}
+  const SomeExpr &expr() const { return expr_; }
+
+private:
+  SomeExpr expr_;
+};
+
 // An entity known to be an object.
 class ObjectEntityDetails : public EntityDetails {
 public:
@@ -241,7 +251,8 @@ class FinalProcDetails {};
 class MiscDetails {
 public:
   ENUM_CLASS(Kind, None, ConstructName, ScopeName, PassName, ComplexPartRe,
-      ComplexPartIm, KindParamInquiry, LenParamInquiry);
+      ComplexPartIm, KindParamInquiry, LenParamInquiry,
+      SelectTypeAssociateName);
   MiscDetails(Kind kind) : kind_{kind} {}
   Kind kind() const { return kind_; }
 
@@ -340,9 +351,10 @@ class UnknownDetails {};
 
 using Details = std::variant<UnknownDetails, MainProgramDetails, ModuleDetails,
     SubprogramDetails, SubprogramNameDetails, EntityDetails,
-    ObjectEntityDetails, ProcEntityDetails, DerivedTypeDetails, UseDetails,
-    UseErrorDetails, HostAssocDetails, GenericDetails, ProcBindingDetails,
-    GenericBindingDetails, FinalProcDetails, TypeParamDetails, MiscDetails>;
+    ObjectEntityDetails, ProcEntityDetails, AssocEntityDetails,
+    DerivedTypeDetails, UseDetails, UseErrorDetails, HostAssocDetails,
+    GenericDetails, ProcBindingDetails, GenericBindingDetails, FinalProcDetails,
+    TypeParamDetails, MiscDetails>;
 std::ostream &operator<<(std::ostream &, const Details &);
 std::string DetailsToString(const Details &);
 

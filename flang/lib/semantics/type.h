@@ -85,8 +85,8 @@ private:
 // A type parameter value: integer expression or assumed or deferred.
 class ParamValue {
 public:
-  static const ParamValue Assumed() { return Category::Assumed; }
-  static const ParamValue Deferred() { return Category::Deferred; }
+  static ParamValue Assumed() { return Category::Assumed; }
+  static ParamValue Deferred() { return Category::Deferred; }
   explicit ParamValue(MaybeIntExpr &&expr);
   explicit ParamValue(std::int64_t);
   bool isExplicit() const { return category_ == Category::Explicit; }
@@ -242,7 +242,7 @@ public:
   // character
   DeclTypeSpec(CharacterTypeSpec &);
   // TYPE(derived-type-spec) or CLASS(derived-type-spec)
-  DeclTypeSpec(Category, DerivedTypeSpec &);
+  DeclTypeSpec(Category, const DerivedTypeSpec &);
   // TYPE(*) or CLASS(*)
   DeclTypeSpec(Category);
   DeclTypeSpec() = delete;
@@ -258,7 +258,6 @@ public:
   const LogicalTypeSpec &logicalTypeSpec() const;
   const CharacterTypeSpec &characterTypeSpec() const;
   const DerivedTypeSpec &derivedTypeSpec() const;
-  DerivedTypeSpec &derivedTypeSpec();
   void set_category(Category category) { category_ = category; }
 
 private:
@@ -267,12 +266,12 @@ private:
     TypeSpec() : derived{nullptr} {}
     TypeSpec(NumericTypeSpec numeric) : numeric{numeric} {}
     TypeSpec(LogicalTypeSpec logical) : logical{logical} {}
-    TypeSpec(CharacterTypeSpec *character) : character{character} {}
-    TypeSpec(DerivedTypeSpec *derived) : derived{derived} {}
+    TypeSpec(const CharacterTypeSpec *character) : character{character} {}
+    TypeSpec(const DerivedTypeSpec *derived) : derived{derived} {}
     NumericTypeSpec numeric;
     LogicalTypeSpec logical;
-    CharacterTypeSpec *character;
-    DerivedTypeSpec *derived;
+    const CharacterTypeSpec *character;
+    const DerivedTypeSpec *derived;
   } typeSpec_;
 };
 std::ostream &operator<<(std::ostream &, const DeclTypeSpec &);

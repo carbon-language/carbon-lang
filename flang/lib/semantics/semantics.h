@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -67,8 +67,8 @@ public:
     return *this;
   }
 
-  DeclTypeSpec &MakeNumericType(TypeCategory, int kind = 0);
-  DeclTypeSpec &MakeLogicalType(int kind = 0);
+  const DeclTypeSpec &MakeNumericType(TypeCategory, int kind = 0);
+  const DeclTypeSpec &MakeLogicalType(int kind = 0);
 
   bool AnyFatalError() const;
   template<typename... A> parser::Message &Say(A... args) {

@@ -70,21 +70,21 @@ bool Scope::AddSubmodule(const SourceName &name, Scope &submodule) {
   return submodules_.emplace(name, &submodule).second;
 }
 
-DeclTypeSpec &Scope::MakeNumericType(TypeCategory category, int kind) {
+const DeclTypeSpec &Scope::MakeNumericType(TypeCategory category, int kind) {
   return MakeLengthlessType(NumericTypeSpec{category, kind});
 }
-DeclTypeSpec &Scope::MakeLogicalType(int kind) {
+const DeclTypeSpec &Scope::MakeLogicalType(int kind) {
   return MakeLengthlessType(LogicalTypeSpec{kind});
 }
-DeclTypeSpec &Scope::MakeTypeStarType() {
+const DeclTypeSpec &Scope::MakeTypeStarType() {
   return MakeLengthlessType(DeclTypeSpec{DeclTypeSpec::TypeStar});
 }
-DeclTypeSpec &Scope::MakeClassStarType() {
+const DeclTypeSpec &Scope::MakeClassStarType() {
   return MakeLengthlessType(DeclTypeSpec{DeclTypeSpec::ClassStar});
 }
 // Types that can't have length parameters can be reused without having to
 // compare length expressions. They are stored in the global scope.
-DeclTypeSpec &Scope::MakeLengthlessType(const DeclTypeSpec &type) {
+const DeclTypeSpec &Scope::MakeLengthlessType(const DeclTypeSpec &type) {
   auto it{std::find(declTypeSpecs_.begin(), declTypeSpecs_.end(), type)};
   if (it != declTypeSpecs_.end()) {
     return *it;
@@ -94,15 +94,18 @@ DeclTypeSpec &Scope::MakeLengthlessType(const DeclTypeSpec &type) {
   }
 }
 
-DeclTypeSpec &Scope::MakeCharacterType(ParamValue &&length, int kind) {
+const DeclTypeSpec &Scope::MakeCharacterType(ParamValue &&length, int kind) {
   characterTypeSpecs_.emplace_back(std::move(length), kind);
   declTypeSpecs_.emplace_back(characterTypeSpecs_.back());
   return declTypeSpecs_.back();
 }
 
-DeclTypeSpec &Scope::MakeDerivedType(const Symbol &typeSymbol) {
-  DerivedTypeSpec &spec{derivedTypeSpecs_.emplace_back(typeSymbol)};
-  return declTypeSpecs_.emplace_back(DeclTypeSpec::TypeDerived, spec);
+DerivedTypeSpec &Scope::MakeDerivedType(const Symbol &typeSymbol) {
+  return derivedTypeSpecs_.emplace_back(typeSymbol);
+}
+const DeclTypeSpec &Scope::MakeDerivedType(
+    DeclTypeSpec::Category category, const DerivedTypeSpec &derived) {
+  return declTypeSpecs_.emplace_back(category, derived);
 }
 
 Scope::ImportKind Scope::GetImportKind() const {

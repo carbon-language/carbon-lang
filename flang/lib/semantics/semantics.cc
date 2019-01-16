@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,14 +37,14 @@ SemanticsContext::SemanticsContext(
     foldingContext_{evaluate::FoldingContext{
         parser::ContextualMessages{parser::CharBlock{}, &messages_}}} {}
 
-DeclTypeSpec &SemanticsContext::MakeNumericType(
+const DeclTypeSpec &SemanticsContext::MakeNumericType(
     TypeCategory category, int kind) {
   if (kind == 0) {
     kind = defaultKinds_.GetDefaultKind(category);
   }
   return globalScope_.MakeNumericType(category, kind);
 }
-DeclTypeSpec &SemanticsContext::MakeLogicalType(int kind) {
+const DeclTypeSpec &SemanticsContext::MakeLogicalType(int kind) {
   if (kind == 0) {
     kind = defaultKinds_.GetDefaultKind(TypeCategory::Logical);
   }

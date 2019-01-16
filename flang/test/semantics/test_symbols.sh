@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ sed -e 's/!\([DR]EF:\)/KEEP \1/' \
 egrep -v '^ *!' $src1 > $src2  # strip out meaningful comments
 $CMD $src2 > $src3  # compile, inserting comments for symbols
 
-if diff -U999999 $src1 $src3 > $diffs; then
+if diff -w -U999999 $src1 $src3 > $diffs; then
   echo PASS
 else
   sed '1,/^\@\@/d' $diffs

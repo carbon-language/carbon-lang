@@ -74,9 +74,7 @@ void EntityDetails::set_type(const DeclTypeSpec &type) {
   type_ = &type;
 }
 
-void EntityDetails::ReplaceType(const DeclTypeSpec &type) {
-  type_ = &type;
-}
+void EntityDetails::ReplaceType(const DeclTypeSpec &type) { type_ = &type; }
 
 void ObjectEntityDetails::set_shape(const ArraySpec &shape) {
   CHECK(shape_.empty());
@@ -198,7 +196,7 @@ std::string DetailsToString(const Details &details) {
           [](const FinalProcDetails &) { return "FinalProc"; },
           [](const TypeParamDetails &) { return "TypeParam"; },
           [](const MiscDetails &) { return "Misc"; },
-          [](const auto &) { return "unknown"; },
+          [](const AssocEntityDetails &) { return "AssocEntity"; },
       },
       details);
 }
@@ -253,6 +251,7 @@ const DeclTypeSpec *Symbol::GetType() const {
       common::visitors{
           [](const EntityDetails &x) { return x.type(); },
           [](const ObjectEntityDetails &x) { return x.type(); },
+          [](const AssocEntityDetails &x) { return x.type(); },
           [](const ProcEntityDetails &x) { return x.interface().type(); },
           [](const TypeParamDetails &x) { return x.type(); },
           [](const auto &) -> const DeclTypeSpec * { return nullptr; },
@@ -265,6 +264,7 @@ void Symbol::SetType(const DeclTypeSpec &type) {
       common::visitors{
           [&](EntityDetails &x) { x.set_type(type); },
           [&](ObjectEntityDetails &x) { x.set_type(type); },
+          [&](AssocEntityDetails &x) { x.set_type(type); },
           [&](ProcEntityDetails &x) { x.interface().set_type(type); },
           [&](TypeParamDetails &x) { x.set_type(type); },
           [](auto &) {},
@@ -366,6 +366,12 @@ std::ostream &operator<<(std::ostream &os, const ObjectEntityDetails &x) {
   return os;
 }
 
+std::ostream &operator<<(std::ostream &os, const AssocEntityDetails &x) {
+  os << *static_cast<const EntityDetails *>(&x);
+  x.expr().AsFortran(os << ' ');
+  return os;
+}
+
 bool ProcEntityDetails::HasExplicitInterface() const {
   if (auto *symbol{interface_.symbol()}) {
     return symbol->HasExplicitInterface();
@@ -451,10 +457,6 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
           [&](const SubprogramNameDetails &x) {
             os << ' ' << EnumToString(x.kind());
           },
-          [&](const EntityDetails &x) { os << x; },
-          [&](const ObjectEntityDetails &x) { os << x; },
-          [&](const ProcEntityDetails &x) { os << x; },
-          [&](const DerivedTypeDetails &x) { os << x; },
           [&](const UseDetails &x) {
             os << " from " << x.symbol().name() << " in " << x.module().name();
           },
@@ -497,6 +499,7 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
           [&](const MiscDetails &x) {
             os << ' ' << MiscDetails::EnumToString(x.kind());
           },
+          [&](const auto &x) { os << x; },
       },
       details);
   return os;

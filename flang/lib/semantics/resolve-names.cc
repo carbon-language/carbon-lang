@@ -39,6 +39,7 @@ namespace Fortran::semantics {
 
 using namespace parser::literals;
 
+template<typename T> using Indirection = common::Indirection<T>;
 using Message = parser::Message;
 using Messages = parser::Messages;
 using MessageFixedText = parser::MessageFixedText;
@@ -248,6 +249,7 @@ public:
   void Post(const parser::IntrinsicTypeSpec::Complex &);
   void Post(const parser::IntrinsicTypeSpec::DoublePrecision &);
   void Post(const parser::IntrinsicTypeSpec::DoubleComplex &);
+  bool Pre(const parser::DeclarationTypeSpec::Class &);
   void Post(const parser::DeclarationTypeSpec::ClassStar &);
   void Post(const parser::DeclarationTypeSpec::TypeStar &);
   void Post(const parser::TypeParamSpec &);
@@ -258,17 +260,19 @@ public:
 protected:
   struct State {
     bool expectDeclTypeSpec{false};  // should only see decl-type-spec when true
-    DeclTypeSpec *declTypeSpec{nullptr};
-    const parser::Name *derivedTypeName{nullptr};
+    const DeclTypeSpec *declTypeSpec{nullptr};
+    struct {
+      DerivedTypeSpec *type{nullptr};
+      DeclTypeSpec::Category category{DeclTypeSpec::TypeDerived};
+    } derived;
   };
 
-  DeclTypeSpec *GetDeclTypeSpec();
+  const DeclTypeSpec *GetDeclTypeSpec();
   void BeginDeclTypeSpec();
   void EndDeclTypeSpec();
   State SetDeclTypeSpecState(State);
-  const parser::Name *derivedTypeName() const { return state_.derivedTypeName; }
-  void SetDeclTypeSpec(const parser::Name &, DeclTypeSpec &);
-  void SetDeclTypeSpec(DeclTypeSpec &);
+  void SetDeclTypeSpec(const DeclTypeSpec &);
+  DerivedTypeSpec &SetDerivedTypeSpec(Scope &, const parser::Name &);
   ParamValue GetParamValue(const parser::TypeParamValue &);
 
 private:
@@ -624,7 +628,6 @@ public:
   void Post(const parser::CharSelector::LengthAndKind &);
   void Post(const parser::CharLength &);
   void Post(const parser::LengthSelector &);
-  void Post(const parser::DeclarationTypeSpec::Class &);
   bool Pre(const parser::DeclarationTypeSpec::Record &);
   bool Pre(const parser::DerivedTypeSpec &);
   void Post(const parser::DerivedTypeDef &x);
@@ -691,7 +694,7 @@ private:
   Symbol &DeclareObjectEntity(const parser::Name &, Attrs);
   Symbol &DeclareProcEntity(const parser::Name &, Attrs, const ProcInterface &);
   void SetType(const parser::Name &, const DeclTypeSpec &);
-  const Symbol *ResolveDerivedType(const parser::Name * = nullptr);
+  const Symbol *ResolveDerivedType(const parser::Name &);
   bool CanBeTypeBoundProc(const Symbol &);
   Symbol *FindExplicitInterface(const parser::Name &);
   const Symbol *FindTypeSymbol(const parser::Name &);
@@ -757,17 +760,21 @@ public:
   void Post(const parser::ForallStmt &);
   bool Pre(const parser::BlockStmt &);
   bool Pre(const parser::EndBlockStmt &);
+  void Post(const parser::Selector &);
+  bool Pre(const parser::AssociateStmt &);
+  void Post(const parser::EndAssociateStmt &);
+  void Post(const parser::Association &);
+  void Post(const parser::SelectTypeStmt &);
+  bool Pre(const parser::SelectTypeConstruct::TypeCase &);
+  void Post(const parser::SelectTypeConstruct::TypeCase &);
+  void Post(const parser::TypeGuardStmt::Guard &);
 
   // Definitions of construct names
   bool Pre(const parser::WhereConstructStmt &x) { return CheckDef(x.t); }
   bool Pre(const parser::ForallConstructStmt &x) { return CheckDef(x.t); }
-  bool Pre(const parser::AssociateStmt &x) { return CheckDef(x.t); }
   bool Pre(const parser::ChangeTeamStmt &x) { return CheckDef(x.t); }
   bool Pre(const parser::CriticalStmt &x) { return CheckDef(x.t); }
-  bool Pre(const parser::LabelDoStmt &x) {
-    CHECK(false);
-    return false;
-  }
+  bool Pre(const parser::LabelDoStmt &x) { common::die("should not happen"); }
   bool Pre(const parser::NonLabelDoStmt &x) { return CheckDef(x.t); }
   bool Pre(const parser::IfThenStmt &x) { return CheckDef(x.t); }
   bool Pre(const parser::SelectCaseStmt &x) { return CheckDef(x.t); }
@@ -777,12 +784,12 @@ public:
   bool Pre(const parser::SelectTypeStmt &x) {
     return CheckDef(std::get<0>(x.t));
   }
+
   // References to construct names
   void Post(const parser::MaskedElsewhereStmt &x) { CheckRef(x.t); }
   void Post(const parser::ElsewhereStmt &x) { CheckRef(x.v); }
   void Post(const parser::EndWhereStmt &x) { CheckRef(x.v); }
   void Post(const parser::EndForallStmt &x) { CheckRef(x.v); }
-  void Post(const parser::EndAssociateStmt &x) { CheckRef(x.v); }
   void Post(const parser::EndChangeTeamStmt &x) { CheckRef(x.t); }
   void Post(const parser::EndCriticalStmt &x) { CheckRef(x.v); }
   void Post(const parser::EndDoStmt &x) { CheckRef(x.v); }
@@ -797,6 +804,14 @@ public:
   void Post(const parser::ExitStmt &x) { CheckRef(x.v); }
 
 private:
+  // The represents: associate-name => expr | variable
+  // expr is set unless there were errors
+  struct {
+    const parser::Name *name{nullptr};
+    const parser::Name *variable{nullptr};
+    MaybeExpr expr;
+  } association_;
+
   template<typename T> bool CheckDef(const T &t) {
     return CheckDef(std::get<std::optional<parser::Name>>(t));
   }
@@ -806,6 +821,10 @@ private:
   bool CheckDef(const std::optional<parser::Name> &);
   void CheckRef(const std::optional<parser::Name> &);
   void CheckIntegerType(const Symbol &);
+  const DeclTypeSpec &ToDeclTypeSpec(const evaluate::DynamicType &);
+  Symbol *MakeAssocEntity();
+  void SetTypeFromAssociation(Symbol &);
+  void SetAttrsFromAssociation(Symbol &);
 };
 
 // Walk the parse tree and resolve names to symbols.
@@ -1069,7 +1088,7 @@ bool AttrsVisitor::Pre(const parser::Pass &x) {
 
 // DeclTypeSpecVisitor implementation
 
-DeclTypeSpec *DeclTypeSpecVisitor::GetDeclTypeSpec() {
+const DeclTypeSpec *DeclTypeSpecVisitor::GetDeclTypeSpec() {
   return state_.declTypeSpec;
 }
 
@@ -1089,7 +1108,8 @@ DeclTypeSpecVisitor::State DeclTypeSpecVisitor::SetDeclTypeSpecState(State x) {
 }
 
 void DeclTypeSpecVisitor::Post(const parser::TypeParamSpec &x) {
-  DerivedTypeSpec &derivedTypeSpec{state_.declTypeSpec->derivedTypeSpec()};
+  CHECK(state_.derived.type);
+  DerivedTypeSpec &derivedTypeSpec{*state_.derived.type};
   const auto &value{std::get<parser::TypeParamValue>(x.t)};
   if (const auto &keyword{std::get<std::optional<parser::Keyword>>(x.t)}) {
     derivedTypeSpec.AddParamValue(keyword->v.source, GetParamValue(value));
@@ -1163,6 +1183,10 @@ void DeclTypeSpecVisitor::MakeNumericType(TypeCategory category, int kind) {
   SetDeclTypeSpec(context().MakeNumericType(category, kind));
 }
 
+bool DeclTypeSpecVisitor::Pre(const parser::DeclarationTypeSpec::Class &x) {
+  state_.derived.category = DeclTypeSpec::ClassDerived;
+  return true;
+}
 void DeclTypeSpecVisitor::Post(const parser::DeclarationTypeSpec::ClassStar &) {
   SetDeclTypeSpec(context().globalScope().MakeClassStarType());
 }
@@ -1172,16 +1196,19 @@ void DeclTypeSpecVisitor::Post(const parser::DeclarationTypeSpec::TypeStar &) {
 
 // Check that we're expecting to see a DeclTypeSpec (and haven't seen one yet)
 // and save it in state_.declTypeSpec.
-void DeclTypeSpecVisitor::SetDeclTypeSpec(DeclTypeSpec &declTypeSpec) {
+void DeclTypeSpecVisitor::SetDeclTypeSpec(const DeclTypeSpec &declTypeSpec) {
   CHECK(state_.expectDeclTypeSpec);
   CHECK(!state_.declTypeSpec);
   state_.declTypeSpec = &declTypeSpec;
 }
-// Set both the derived type name and corresponding DeclTypeSpec.
-void DeclTypeSpecVisitor::SetDeclTypeSpec(
-    const parser::Name &name, DeclTypeSpec &declTypeSpec) {
-  state_.derivedTypeName = &name;
-  SetDeclTypeSpec(declTypeSpec);
+
+// Set the current DeclTypeSpec to a derived type created from this name.
+DerivedTypeSpec &DeclTypeSpecVisitor::SetDerivedTypeSpec(
+    Scope &scope, const parser::Name &typeName) {
+  DerivedTypeSpec &derived{scope.MakeDerivedType(*typeName.symbol)};
+  SetDeclTypeSpec(scope.MakeDerivedType(state_.derived.category, derived));
+  state_.derived.type = &derived;
+  return derived;
 }
 
 int DeclTypeSpecVisitor::GetKindParamValue(
@@ -1607,7 +1634,7 @@ bool ScopeHandler::ConvertToProcEntity(Symbol &symbol) {
 bool ModuleVisitor::Pre(const parser::Only &x) {
   std::visit(
       common::visitors{
-          [&](const common::Indirection<parser::GenericSpec> &generic) {
+          [&](const Indirection<parser::GenericSpec> &generic) {
             std::visit(
                 common::visitors{
                     [&](const parser::Name &name) { AddUse(name); },
@@ -2510,20 +2537,14 @@ void DeclarationVisitor::Post(const parser::LengthSelector &x) {
   }
 }
 
-void DeclarationVisitor::Post(const parser::DeclarationTypeSpec::Class &x) {
-  // created by default with TypeDerived; change to ClassDerived
-  GetDeclTypeSpec()->set_category(DeclTypeSpec::ClassDerived);
-}
-
 bool DeclarationVisitor::Pre(const parser::DeclarationTypeSpec::Record &) {
   return true;  // TODO
 }
 
 bool DeclarationVisitor::Pre(const parser::DerivedTypeSpec &x) {
   const auto &typeName{std::get<parser::Name>(x.t)};
-  if (const auto *symbol{ResolveDerivedType(&typeName)}) {
-    SetDeclTypeSpec(typeName, currScope().MakeDerivedType(*symbol));
-    GetDeclTypeSpec()->derivedTypeSpec().set_scope(*symbol->scope());
+  if (const auto *symbol{ResolveDerivedType(typeName)}) {
+    SetDerivedTypeSpec(currScope(), typeName).set_scope(*symbol->scope());
   }
   return true;
 }
@@ -2581,16 +2602,17 @@ void DeclarationVisitor::Post(const parser::DerivedTypeStmt &x) {
   auto &symbol{MakeSymbol(name, GetAttrs(), DerivedTypeDetails{})};
   PushScope(Scope::Kind::DerivedType, &symbol);
   if (auto *extendsName{derivedTypeInfo_.extends}) {
-    if (const Symbol * extends{ResolveDerivedType(extendsName)}) {
+    if (const Symbol * extends{ResolveDerivedType(*extendsName)}) {
       symbol.get<DerivedTypeDetails>().set_extends(extendsName->source);
       // Declare the "parent component"; private if the type is
       if (OkToAddComponent(*extendsName, extends)) {
         auto &comp{DeclareEntity<ObjectEntityDetails>(*extendsName, Attrs{})};
         comp.attrs().set(Attr::PRIVATE, extends->attrs().test(Attr::PRIVATE));
         comp.set(Symbol::Flag::ParentComp);
-        auto &type{currScope().MakeDerivedType(*extends)};
-        type.derivedTypeSpec().set_scope(currScope());
-        comp.SetType(type);
+        DerivedTypeSpec &derived{currScope().MakeDerivedType(*extends)};
+        derived.set_scope(currScope());
+        comp.SetType(
+            currScope().MakeDerivedType(DeclTypeSpec::TypeDerived, derived));
       }
     }
   }
@@ -2748,8 +2770,7 @@ void DeclarationVisitor::Post(const parser::FinalProcedureStmt &x) {
 }
 
 bool DeclarationVisitor::Pre(const parser::TypeBoundGenericStmt &x) {
-  const auto &genericSpec{
-      std::get<common::Indirection<parser::GenericSpec>>(x.t)};
+  const auto &genericSpec{std::get<Indirection<parser::GenericSpec>>(x.t)};
   const auto *genericName{GetGenericSpecName(*genericSpec)};
   if (!genericName) {
     return false;
@@ -2808,7 +2829,6 @@ bool DeclarationVisitor::Pre(const parser::AllocateStmt &) {
   return true;
 }
 void DeclarationVisitor::Post(const parser::AllocateStmt &) {
-  ResolveDerivedType();
   EndDeclTypeSpec();
 }
 
@@ -2817,7 +2837,6 @@ bool DeclarationVisitor::Pre(const parser::StructureConstructor &x) {
   BeginDeclTypeSpec();
   Walk(std::get<parser::DerivedTypeSpec>(x.t));
   Walk(std::get<std::list<parser::ComponentSpec>>(x.t));
-  ResolveDerivedType();
   EndDeclTypeSpec();
   SetDeclTypeSpecState(savedState);
   return false;
@@ -2868,20 +2887,14 @@ void DeclarationVisitor::SetType(
   }
 }
 
-// Find the Symbol for this derived type; derivedTypeName if not specified.
-const Symbol *DeclarationVisitor::ResolveDerivedType(const parser::Name *name) {
-  if (name == nullptr) {
-    name = derivedTypeName();
-    if (name == nullptr) {
-      return nullptr;
-    }
-  }
-  const auto *symbol{FindSymbol(*name)};
+// Find the Symbol for this derived type.
+const Symbol *DeclarationVisitor::ResolveDerivedType(const parser::Name &name) {
+  const auto *symbol{FindSymbol(name)};
   if (!symbol) {
-    Say(*name, "Derived type '%s' not found"_err_en_US);
+    Say(name, "Derived type '%s' not found"_err_en_US);
     return nullptr;
   }
-  if (CheckUseError(*name)) {
+  if (CheckUseError(name)) {
     return nullptr;
   }
   if (auto *details{symbol->detailsIf<UseDetails>()}) {
@@ -2893,7 +2906,7 @@ const Symbol *DeclarationVisitor::ResolveDerivedType(const parser::Name *name) {
     }
   }
   if (!symbol->has<DerivedTypeDetails>()) {
-    Say(*name, "'%s' is not a derived type"_err_en_US);
+    Say(name, "'%s' is not a derived type"_err_en_US);
     return nullptr;
   }
   return symbol;
@@ -3108,6 +3121,87 @@ bool ConstructVisitor::Pre(const parser::EndBlockStmt &x) {
   return false;
 }
 
+void ConstructVisitor::Post(const parser::Selector &x) {
+  association_ = {};
+  const parser::Name *variable{nullptr};
+  MaybeExpr expr{std::visit(
+      common::visitors{
+          [&](const parser::Expr &y) { return EvaluateExpr(y); },
+          [&](const parser::Variable &y) {
+            if (const auto *des{
+                    std::get_if<Indirection<parser::Designator>>(&y.u)}) {
+              if (const auto *dr{std::get_if<parser::DataRef>(&(*des)->u)}) {
+                variable = std::get_if<parser::Name>(&dr->u);
+                if (variable && !FindSymbol(*variable)) {
+                  variable = nullptr;
+                  return MaybeExpr{};
+                }
+              }
+            }
+            return std::visit(
+                [&](const auto &z) { return EvaluateExpr(*z); }, y.u);
+          },
+      },
+      x.u)};
+  if (expr) {
+    association_.expr = std::move(expr);
+    association_.variable = variable;
+  }
+}
+
+bool ConstructVisitor::Pre(const parser::AssociateStmt &x) {
+  CheckDef(x.t);
+  PushScope(Scope::Kind::Block, nullptr);
+  return true;
+}
+void ConstructVisitor::Post(const parser::EndAssociateStmt &x) {
+  PopScope();
+  CheckRef(x.v);
+}
+
+void ConstructVisitor::Post(const parser::Association &x) {
+  const auto &name{std::get<parser::Name>(x.t)};
+  association_.name = &name;
+  if (auto *symbol{MakeAssocEntity()}) {
+    SetTypeFromAssociation(*symbol);
+    SetAttrsFromAssociation(*symbol);
+  }
+}
+
+void ConstructVisitor::Post(const parser::SelectTypeStmt &x) {
+  if (!association_.expr) {
+    return;  // reported error in expression evaluation
+  }
+  if (const std::optional<parser::Name> &name{std::get<1>(x.t)}) {
+    // This isn't a name in the current scope, it is in each TypeGuardStmt
+    MakePlaceholder(*name, MiscDetails::Kind::SelectTypeAssociateName);
+    association_.name = &*name;
+  } else if (!association_.variable) {
+    Say("Selector is not a named variable: 'associate-name =>' is required"_err_en_US);
+    association_ = {};
+    return;
+  }
+}
+
+bool ConstructVisitor::Pre(const parser::SelectTypeConstruct::TypeCase &) {
+  PushScope(Scope::Kind::Block, nullptr);
+  return true;
+}
+void ConstructVisitor::Post(const parser::SelectTypeConstruct::TypeCase &) {
+  PopScope();
+}
+
+void ConstructVisitor::Post(const parser::TypeGuardStmt::Guard &x) {
+  if (auto *symbol{MakeAssocEntity()}) {
+    if (std::holds_alternative<parser::Default>(x.u)) {
+      SetTypeFromAssociation(*symbol);
+    } else if (const auto *type{GetDeclTypeSpec()}) {
+      symbol->SetType(*type);
+    }
+    SetAttrsFromAssociation(*symbol);
+  }
+}
+
 bool ConstructVisitor::CheckDef(const std::optional<parser::Name> &x) {
   if (x) {
     MakeSymbol(*x, MiscDetails{MiscDetails::Kind::ConstructName});
@@ -3127,6 +3221,72 @@ void ConstructVisitor::CheckIntegerType(const Symbol &symbol) {
     if (!type->IsNumeric(TypeCategory::Integer)) {
       Say(symbol.name(), "Variable '%s' is not scalar integer"_err_en_US);
     }
+  }
+}
+
+// Make a symbol representing an associating entity from association_.
+Symbol *ConstructVisitor::MakeAssocEntity() {
+  if (!association_.name) {
+    return nullptr;
+  }
+  auto &symbol{MakeSymbol(*association_.name, UnknownDetails{})};
+  if (symbol.has<AssocEntityDetails>() && symbol.owner() == currScope()) {
+    Say(*association_.name,  // C1104
+        "The associate name '%s' is already used in this associate statement"_err_en_US);
+    return nullptr;
+  }
+  if (auto &expr{association_.expr}) {
+    symbol.set_details(AssocEntityDetails{std::move(*expr)});
+  }
+  return &symbol;
+}
+
+// Set the type of symbol based on the current association variable or expr.
+void ConstructVisitor::SetTypeFromAssociation(Symbol &symbol) {
+  if (association_.variable) {
+    if (const Symbol * varSymbol{association_.variable->symbol}) {
+      if (const DeclTypeSpec * type{varSymbol->GetType()}) {
+        symbol.SetType(*type);
+      }
+    }
+  } else if (const auto &expr{association_.expr}) {
+    if (std::optional<evaluate::DynamicType> type{expr->GetType()}) {
+      symbol.SetType(ToDeclTypeSpec(*type));
+    }
+  }
+}
+
+// If current selector is a variable, set some of its attributes on symbol.
+void ConstructVisitor::SetAttrsFromAssociation(Symbol &symbol) {
+  if (association_.variable) {
+    if (const auto *varSymbol{association_.variable->symbol}) {
+      symbol.attrs() |= varSymbol->attrs() &
+          Attrs{Attr::TARGET, Attr::ASYNCHRONOUS, Attr::VOLATILE,
+              Attr::CONTIGUOUS};
+      if (varSymbol->attrs().test(Attr::POINTER)) {
+        symbol.attrs().set(Attr::TARGET);
+      }
+    }
+  }
+}
+
+const DeclTypeSpec &ConstructVisitor::ToDeclTypeSpec(
+    const evaluate::DynamicType &type) {
+  switch (type.category) {
+  case common::TypeCategory::Integer:
+  case common::TypeCategory::Real:
+  case common::TypeCategory::Complex:
+    return context().MakeNumericType(type.category, type.kind);
+  case common::TypeCategory::Logical:
+    return context().MakeLogicalType(type.kind);
+  case common::TypeCategory::Character:
+    // TODO: need length from DynamicType
+    return currScope().MakeCharacterType(ParamValue::Deferred(), type.kind);
+  case common::TypeCategory::Derived:
+    CHECK(type.derived);
+    return currScope().MakeDerivedType(
+        DeclTypeSpec::TypeDerived, *type.derived);
+  default: CRASH_NO_CASE;
   }
 }
 
@@ -3222,13 +3382,13 @@ const parser::Name *ResolveNamesVisitor::ResolveDataRef(
   return std::visit(
       common::visitors{
           [=](const parser::Name &y) { return ResolveName(y); },
-          [=](const common::Indirection<parser::StructureComponent> &y) {
+          [=](const Indirection<parser::StructureComponent> &y) {
             return ResolveStructureComponent(*y);
           },
-          [=](const common::Indirection<parser::ArrayElement> &y) {
+          [=](const Indirection<parser::ArrayElement> &y) {
             return ResolveArrayElement(*y);
           },
-          [=](const common::Indirection<parser::CoindexedNamedObject> &y) {
+          [=](const Indirection<parser::CoindexedNamedObject> &y) {
             return ResolveCoindexedNamedObject(*y);
           },
       },
@@ -3267,7 +3427,7 @@ const parser::Name *ResolveNamesVisitor::FindComponent(
     return nullptr;
   }
   auto &symbol{*base->symbol};
-  if (!ConvertToObjectEntity(symbol)) {
+  if (!symbol.has<AssocEntityDetails>() && !ConvertToObjectEntity(symbol)) {
     Say2(*base, "'%s' is an invalid base for a component reference"_err_en_US,
         symbol, "Declaration of '%s'"_en_US);
     return nullptr;
@@ -3454,7 +3614,7 @@ bool ModuleVisitor::Pre(const parser::AccessStmt &x) {
       std::visit(
           common::visitors{
               [=](const parser::Name &y) { SetAccess(y, accessAttr); },
-              [=](const common::Indirection<parser::GenericSpec> &y) {
+              [=](const Indirection<parser::GenericSpec> &y) {
                 std::visit(
                     common::visitors{
                         [=](const parser::Name &z) {
@@ -3576,6 +3736,7 @@ bool ResolveNamesVisitor::Pre(const parser::ImplicitStmt &x) {
   }
   return ImplicitRulesVisitor::Pre(x);
 }
+
 void ResolveNamesVisitor::Post(const parser::PointerObject &x) {
   std::visit(
       common::visitors{

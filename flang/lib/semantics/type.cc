@@ -134,7 +134,7 @@ DeclTypeSpec::DeclTypeSpec(const LogicalTypeSpec &typeSpec)
   : category_{Logical}, typeSpec_{typeSpec} {}
 DeclTypeSpec::DeclTypeSpec(CharacterTypeSpec &typeSpec)
   : category_{Character}, typeSpec_{&typeSpec} {}
-DeclTypeSpec::DeclTypeSpec(Category category, DerivedTypeSpec &typeSpec)
+DeclTypeSpec::DeclTypeSpec(Category category, const DerivedTypeSpec &typeSpec)
   : category_{category}, typeSpec_{&typeSpec} {
   CHECK(category == TypeDerived || category == ClassDerived);
 }
@@ -170,10 +170,6 @@ const LogicalTypeSpec &DeclTypeSpec::logicalTypeSpec() const {
 const CharacterTypeSpec &DeclTypeSpec::characterTypeSpec() const {
   CHECK(category_ == Character);
   return *typeSpec_.character;
-}
-DerivedTypeSpec &DeclTypeSpec::derivedTypeSpec() {
-  CHECK(category_ == TypeDerived || category_ == ClassDerived);
-  return *typeSpec_.derived;
 }
 const DerivedTypeSpec &DeclTypeSpec::derivedTypeSpec() const {
   CHECK(category_ == TypeDerived || category_ == ClassDerived);
