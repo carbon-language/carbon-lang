@@ -804,7 +804,7 @@ public:
   void Post(const parser::ExitStmt &x) { CheckRef(x.v); }
 
 private:
-  // The represents: associate-name => expr | variable
+  // This represents: associate-name => expr | variable
   // expr is set unless there were errors
   struct {
     const parser::Name *name{nullptr};
