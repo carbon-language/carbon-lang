@@ -223,9 +223,7 @@ public:
     Body = Body.ltrim('/');
     llvm::SmallVector<char, 16> Path(Body.begin(), Body.end());
     path::native(Path);
-    auto Err = fs::make_absolute(TestScheme::TestDir, Path);
-    if (Err)
-      llvm_unreachable("Failed to make absolute path in test scheme.");
+    fs::make_absolute(TestScheme::TestDir, Path);
     return std::string(Path.begin(), Path.end());
   }
 
