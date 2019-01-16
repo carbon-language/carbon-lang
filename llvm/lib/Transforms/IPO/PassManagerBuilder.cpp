@@ -162,7 +162,7 @@ PassManagerBuilder::PassManagerBuilder() {
     MergeFunctions = false;
     PrepareForLTO = false;
     EnablePGOInstrGen = false;
-    PGOInstrGen = false;
+    PGOInstrGen = "";
     PGOInstrUse = "";
     PGOSampleUse = "";
     PrepareForThinLTO = EnablePrepareForThinLTO;
