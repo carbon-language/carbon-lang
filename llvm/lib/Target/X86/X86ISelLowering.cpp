@@ -33923,8 +33923,8 @@ combineVSelectWithAllOnesOrZeros(SDNode *N, SelectionDAG &DAG,
   bool FValIsAllZeros = ISD::isBuildVectorAllZeros(RHS.getNode());
 
   // Try to invert the condition if true value is not all 1s and false value is
-  // not all 0s.
-  if (!TValIsAllOnes && !FValIsAllZeros &&
+  // not all 0s. Only do this if the condition has one use.
+  if (!TValIsAllOnes && !FValIsAllZeros && Cond.hasOneUse() &&
       // Check if the selector will be produced by CMPP*/PCMP*.
       Cond.getOpcode() == ISD::SETCC &&
       // Check if SETCC has already been promoted.
