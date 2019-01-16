@@ -417,11 +417,11 @@ int main(int argc, char *argv[]) {
 
   std::unique_ptr<Transport> TransportLayer;
   if (getenv("CLANGD_AS_XPC_SERVICE")) {
-#ifdef CLANGD_BUILD_XPC
+#if CLANGD_BUILD_XPC
     TransportLayer = newXPCTransport();
 #else
-    errs() << "This clangd binary wasn't built with XPC support.\n";
-    return ErrorResultCode::CantRunAsXPCService;
+    llvm::errs() << "This clangd binary wasn't built with XPC support.\n";
+    return (int)ErrorResultCode::CantRunAsXPCService;
 #endif
   } else {
     TransportLayer = newJSONTransport(
