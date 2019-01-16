@@ -381,11 +381,13 @@ TimeRewrite("time-rewrite",
 // Check against lists of functions from options if we should
 // optimize the function with a given name.
 bool shouldProcess(const BinaryFunction &Function) {
-  if (opts::MaxFunctions && Function.getFunctionNumber() >= opts::MaxFunctions) {
-    if (Function.getFunctionNumber() == opts::MaxFunctions)
+  if (opts::MaxFunctions &&
+      Function.getFunctionNumber() >= opts::MaxFunctions) {
+    if (Function.getFunctionNumber() == opts::MaxFunctions) {
       dbgs() << "BOLT-INFO: processing ending on " << Function << "\n";
-    else
+    } else {
       return false;
+    }
   }
 
   auto populateFunctionNames = [](cl::opt<std::string> &FunctionNamesFile,
@@ -786,6 +788,20 @@ void RewriteInstance::reset() {
   LocationListWriter.reset();
 }
 
+bool RewriteInstance::shouldDisassemble(BinaryFunction &BF) const {
+  // If we have to relocate the code we have to disassemble all functions.
+  if (!BF.getBinaryContext().HasRelocations && !opts::shouldProcess(BF)) {
+    DEBUG(dbgs() << "BOLT: skipping processing function " << BF
+                 << " per user request.\n");
+    return false;
+  }
+
+  if (opts::AggregateOnly && !BF.hasProfileAvailable())
+    return false;
+
+  return true;
+}
+
 void RewriteInstance::discoverStorage() {
   NamedRegionTimer T("discoverStorage", "discover storage", TimerGroupName,
                      TimerGroupDesc, opts::TimeRewrite);
@@ -987,6 +1003,7 @@ void RewriteInstance::run() {
     readSpecialSections();
     adjustCommandLineOptions();
     discoverFileObjects();
+    preprocessProfileData();
     readDebugInfo();
     disassembleFunctions();
     processProfileData();
@@ -2411,11 +2428,20 @@ void RewriteInstance::readDebugInfo() {
   BC->preprocessDebugInfo(BinaryFunctions);
 }
 
+void RewriteInstance::preprocessProfileData() {
+  if (!DA.started())
+    return;
+
+  NamedRegionTimer T("preprocessprofile", "pre-process profile data",
+                     TimerGroupName, TimerGroupDesc, opts::TimeRewrite);
+  DA.parseProfile(*BC.get(), BinaryFunctions);
+}
+
 void RewriteInstance::processProfileData() {
+  NamedRegionTimer T("processprofile", "process profile data", TimerGroupName,
+                     TimerGroupDesc, opts::TimeRewrite);
   if (DA.started()) {
-    NamedRegionTimer T("aggregate", "aggregate data", TimerGroupName,
-                       TimerGroupDesc, opts::TimeRewrite);
-    DA.aggregate(*BC.get(), BinaryFunctions);
+    DA.processProfile(*BC.get(), BinaryFunctions);
 
     for (auto &BFI : BinaryFunctions) {
       auto &Function = BFI.second;
@@ -2428,9 +2454,6 @@ void RewriteInstance::processProfileData() {
       }
     }
   } else {
-    NamedRegionTimer T("readprofile", "read profile data", TimerGroupName,
-                       TimerGroupDesc, opts::TimeRewrite);
-
     if (!opts::BoltProfile.empty()) {
       ProfileReader PR;
       auto EC = PR.readProfile(opts::BoltProfile, BinaryFunctions);
@@ -2473,10 +2496,8 @@ void RewriteInstance::disassembleFunctions() {
   for (auto &BFI : BinaryFunctions) {
     BinaryFunction &Function = BFI.second;
 
-    // If we have to relocate the code we have to disassemble all functions.
-    if (!BC->HasRelocations && !opts::shouldProcess(Function)) {
-      DEBUG(dbgs() << "BOLT: skipping processing function "
-                   << Function << " per user request.\n");
+    if (!shouldDisassemble(Function)) {
+      Function.setSimple(false);
       continue;
     }
 
@@ -2567,11 +2588,8 @@ void RewriteInstance::disassembleFunctions() {
   for (auto &BFI : BinaryFunctions) {
     BinaryFunction &Function = BFI.second;
 
-    if (!BC->HasRelocations && !opts::shouldProcess(Function)) {
-      DEBUG(dbgs() << "BOLT: skipping processing function "
-                   << Function << " per user request.\n");
+    if (!shouldDisassemble(Function))
       continue;
-    }
 
     if (!Function.isSimple()) {
       assert((!BC->HasRelocations || Function.getSize() == 0) &&

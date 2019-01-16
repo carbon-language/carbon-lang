@@ -142,6 +142,9 @@ public:
   /// Read information from debug sections.
   void readDebugInfo();
 
+  /// Read profile data without having disassembled functions available.
+  void preprocessProfileData();
+
   /// Associate profile data with binary objects.
   void processProfileData();
 
@@ -380,6 +383,9 @@ private:
                                        bool IsSimple,
                                        uint64_t SymbolSize = 0,
                                        uint16_t Alignment = 0);
+
+  /// Return true if the function \p BF should be disassembled.
+  bool shouldDisassemble(BinaryFunction &BF) const;
 
 public:
   /// When updating debug info, these are the sections we overwrite.

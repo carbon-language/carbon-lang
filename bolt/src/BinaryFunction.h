@@ -315,6 +315,11 @@ private:
   /// True if the function has more than one entry point.
   bool IsMultiEntry{false};
 
+  /// True if the function might have a profile available externally.
+  /// Used to check if processing of the function is required under certain
+  /// conditions.
+  bool HasProfileAvailable{false};
+
   /// Indicate if the function body was folded into another function. Used
   /// for ICF optimization without relocations.
   bool IsFolded{false};
@@ -1266,6 +1271,12 @@ public:
     return IsMultiEntry;
   }
 
+  /// Return true if the function might have a profile available externally,
+  /// but not yet populated into the function.
+  bool hasProfileAvailable() const {
+    return HasProfileAvailable;
+  }
+
   bool isFolded() const {
     return IsFolded;
   }
@@ -1598,6 +1609,11 @@ public:
 
   BinaryFunction &setUsesGnuArgsSize(bool Uses = true) {
     UsesGnuArgsSize = Uses;
+    return *this;
+  }
+
+  BinaryFunction &setHasProfileAvailable(bool V = true) {
+    HasProfileAvailable = V;
     return *this;
   }
 

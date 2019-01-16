@@ -16,7 +16,6 @@
 
 #include "BinaryPasses.h"
 #include "DataflowInfoManager.h"
-#include "DataReader.h"
 
 namespace llvm {
 namespace bolt {

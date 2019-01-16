@@ -15,7 +15,6 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_INDIRECT_CALL_PROMOTION_H
 
 #include "BinaryPasses.h"
-#include "DataReader.h"
 
 namespace llvm {
 namespace bolt {
