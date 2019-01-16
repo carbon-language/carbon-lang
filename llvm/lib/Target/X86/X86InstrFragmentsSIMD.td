@@ -448,6 +448,12 @@ def X86VBroadcast : SDNode<"X86ISD::VBROADCAST", SDTVBroadcast>;
 def X86VBroadcastm : SDNode<"X86ISD::VBROADCASTM", SDTVBroadcastm>;
 
 def X86Blendi    : SDNode<"X86ISD::BLENDI",   SDTBlend>;
+def X86Blendv    : SDNode<"X86ISD::BLENDV",
+                     SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisInt<1>,
+                                          SDTCisSameAs<0, 2>,
+                                          SDTCisSameAs<2, 3>,
+                                          SDTCisSameNumEltsAs<0, 1>,
+                                          SDTCisSameSizeAs<0, 1>]>>;
 
 def X86Addsub    : SDNode<"X86ISD::ADDSUB", SDTFPBinOp>;
 

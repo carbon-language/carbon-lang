@@ -204,7 +204,8 @@ namespace llvm {
       /// Dynamic (non-constant condition) vector blend where only the sign bits
       /// of the condition elements are used. This is used to enforce that the
       /// condition mask is not valid for generic VSELECT optimizations. This
-      /// can also be used to implement the intrinsics.
+      /// is also used to implement the intrinsics.
+      /// Operands are in VSELECT order: MASK, TRUE, FALSE
       BLENDV,
 
       /// Combined add and sub on an FP vector.

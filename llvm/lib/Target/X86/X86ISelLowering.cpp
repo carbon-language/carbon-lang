@@ -21840,6 +21840,17 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                                               Src1, Src2, Src3),
                                   Mask, PassThru, Subtarget, DAG);
     }
+    case BLENDV: {
+      SDValue Src1 = Op.getOperand(1);
+      SDValue Src2 = Op.getOperand(2);
+      SDValue Src3 = Op.getOperand(3);
+
+      EVT MaskVT = Src3.getValueType().changeVectorElementTypeToInteger();
+      Src3 = DAG.getBitcast(MaskVT, Src3);
+
+      // Reverse the operands to match VSELECT order.
+      return DAG.getNode(IntrData->Opc0, dl, VT, Src3, Src2, Src1);
+    }
     case VPERM_2OP : {
       SDValue Src1 = Op.getOperand(1);
       SDValue Src2 = Op.getOperand(2);
