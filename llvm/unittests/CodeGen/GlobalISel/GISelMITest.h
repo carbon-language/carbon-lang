@@ -1,4 +1,4 @@
-//===- LegalizerHelperTest.h
+//===- GISelMITest.h
 //-----------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -7,6 +7,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+#ifndef LLVM_UNITTEST_CODEGEN_GLOBALISEL_GISELMI_H
+#define LLVM_UNITTEST_CODEGEN_GLOBALISEL_GISELMI_H
 
 #include "llvm/CodeGen/GlobalISel/GISelChangeObserver.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerHelper.h"
@@ -32,7 +34,7 @@
 using namespace llvm;
 using namespace MIPatternMatch;
 
-void initLLVM() {
+static inline void initLLVM() {
   InitializeAllTargets();
   InitializeAllTargetMCs();
   InitializeAllAsmPrinters();
@@ -45,7 +47,7 @@ void initLLVM() {
 
 /// Create a TargetMachine. As we lack a dedicated always available target for
 /// unittests, we go for "AArch64".
-std::unique_ptr<LLVMTargetMachine> createTargetMachine() {
+static std::unique_ptr<LLVMTargetMachine> createTargetMachine() {
   Triple TargetTriple("aarch64--");
   std::string Error;
   const Target *T = TargetRegistry::lookupTarget("", TargetTriple, Error);
@@ -53,15 +55,16 @@ std::unique_ptr<LLVMTargetMachine> createTargetMachine() {
     return nullptr;
 
   TargetOptions Options;
-  return std::unique_ptr<LLVMTargetMachine>(static_cast<LLVMTargetMachine*>(
-      T->createTargetMachine("AArch64", "", "", Options, None, None,
-                             CodeGenOpt::Aggressive)));
+  return std::unique_ptr<LLVMTargetMachine>(
+      static_cast<LLVMTargetMachine *>(T->createTargetMachine(
+          "AArch64", "", "", Options, None, None, CodeGenOpt::Aggressive)));
 }
 
-std::unique_ptr<Module> parseMIR(LLVMContext &Context,
-                                 std::unique_ptr<MIRParser> &MIR,
-                                 const TargetMachine &TM, StringRef MIRCode,
-                                 const char *FuncName, MachineModuleInfo &MMI) {
+static std::unique_ptr<Module> parseMIR(LLVMContext &Context,
+                                        std::unique_ptr<MIRParser> &MIR,
+                                        const TargetMachine &TM,
+                                        StringRef MIRCode, const char *FuncName,
+                                        MachineModuleInfo &MMI) {
   SMDiagnostic Diagnostic;
   std::unique_ptr<MemoryBuffer> MBuffer = MemoryBuffer::getMemBuffer(MIRCode);
   MIR = createMIRParser(std::move(MBuffer), Context);
@@ -80,7 +83,7 @@ std::unique_ptr<Module> parseMIR(LLVMContext &Context,
   return M;
 }
 
-std::pair<std::unique_ptr<Module>, std::unique_ptr<MachineModuleInfo>>
+static std::pair<std::unique_ptr<Module>, std::unique_ptr<MachineModuleInfo>>
 createDummyModule(LLVMContext &Context, const LLVMTargetMachine &TM,
                   StringRef MIRFunc) {
   SmallString<512> S;
@@ -123,9 +126,9 @@ static void collectCopies(SmallVectorImpl<unsigned> &Copies,
     }
 }
 
-class LegalizerHelperTest : public ::testing::Test {
+class GISelMITest : public ::testing::Test {
 protected:
-  LegalizerHelperTest() : ::testing::Test() {
+  GISelMITest() : ::testing::Test() {
     TM = createTargetMachine();
     if (!TM)
       return;
@@ -168,8 +171,8 @@ protected:
     }                                                                          \
   };
 
-static bool CheckMachineFunction(const MachineFunction &MF,
-                                 StringRef CheckStr) {
+static inline bool CheckMachineFunction(const MachineFunction &MF,
+                                        StringRef CheckStr) {
   SmallString<512> Msg;
   raw_svector_ostream OS(Msg);
   MF.print(OS);
@@ -190,3 +193,4 @@ static bool CheckMachineFunction(const MachineFunction &MF,
   SM.AddNewSourceBuffer(std::move(OutputBuf), SMLoc());
   return FC.CheckInput(SM, OutBuffer, CheckStrings);
 }
+#endif
