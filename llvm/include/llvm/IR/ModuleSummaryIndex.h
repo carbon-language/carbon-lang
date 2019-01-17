@@ -666,6 +666,12 @@ template <> struct DenseMapInfo<FunctionSummary::ConstVCall> {
   }
 };
 
+/// Pair of function ValueInfo and offset within a vtable definition
+/// initializer array.
+using VirtFuncOffsetPair = std::pair<ValueInfo, uint64_t>;
+/// List of functions referenced by a particular vtable definition.
+using VTableFuncList = std::vector<VirtFuncOffsetPair>;
+
 /// Global variable summary information to aid decisions and
 /// implementation of importing.
 ///
@@ -673,6 +679,11 @@ template <> struct DenseMapInfo<FunctionSummary::ConstVCall> {
 /// modified during the program run or not. This affects ThinLTO
 /// internalization
 class GlobalVarSummary : public GlobalValueSummary {
+private:
+  /// For vtable definitions this holds the list of functions and
+  /// their corresponding offsets within the initializer array.
+  std::unique_ptr<VTableFuncList> VTableFuncs;
+
 public:
   struct GVarFlags {
     GVarFlags(bool ReadOnly = false) : ReadOnly(ReadOnly) {}
@@ -693,6 +704,17 @@ public:
   GVarFlags varflags() const { return VarFlags; }
   void setReadOnly(bool RO) { VarFlags.ReadOnly = RO; }
   bool isReadOnly() const { return VarFlags.ReadOnly; }
+
+  void setVTableFuncs(VTableFuncList Funcs) {
+    assert(!VTableFuncs);
+    VTableFuncs = llvm::make_unique<VTableFuncList>(std::move(Funcs));
+  }
+
+  ArrayRef<VirtFuncOffsetPair> vTableFuncs() const {
+    if (VTableFuncs)
+      return *VTableFuncs;
+    return {};
+  }
 };
 
 struct TypeTestResolution {
@@ -791,6 +813,14 @@ using GVSummaryMapTy = DenseMap<GlobalValue::GUID, GlobalValueSummary *>;
 using TypeIdSummaryMapTy =
     std::multimap<GlobalValue::GUID, std::pair<std::string, TypeIdSummary>>;
 
+/// Holds information about vtable definitions decorated with type metadata:
+/// the vtable definition value and its offset in the corresponding type
+/// metadata.
+using TypeIdOffsetGVPair = std::pair<uint64_t, ValueInfo>;
+/// List of vtable definitions decorated by the same type id metadata,
+/// and their corresponding offsets in the type id metadata.
+using TypeIdGVInfo = std::vector<TypeIdOffsetGVPair>;
+
 /// Class to hold module path string table and global value map,
 /// and encapsulate methods for operating on them.
 class ModuleSummaryIndex {
@@ -803,8 +833,13 @@ private:
   ModulePathStringTableTy ModulePathStringTable;
 
   /// Mapping from type identifier GUIDs to type identifier and its summary
-  /// information.
+  /// information. Produced by thin link.
   TypeIdSummaryMapTy TypeIdMap;
+
+  /// Mapping from type identifier to information about vtables decorated
+  /// with that type identifier's metadata. Produced by per module summary
+  /// analysis and consumed by thin link.
+  std::map<std::string, TypeIdGVInfo> TypeIdMetadataMap;
 
   /// Mapping from original ID to GUID. If original ID can map to multiple
   /// GUIDs, it will be mapped to 0.
@@ -1161,6 +1196,27 @@ public:
       if (It->second.first == TypeId)
         return &It->second.second;
     return nullptr;
+  }
+
+  const std::map<std::string, TypeIdGVInfo> &typeIdMetadataMap() const {
+    return TypeIdMetadataMap;
+  }
+
+  /// Return an existing or new TypeIdMetadataMap entry for \p TypeId.
+  /// This accessor can mutate the map and therefore should not be used in
+  /// the ThinLTO backends.
+  TypeIdGVInfo &getOrInsertTypeIdMetadataSummary(StringRef TypeId) {
+    return TypeIdMetadataMap[TypeId];
+  }
+
+  /// For the given \p TypeId, this returns either a pointer to the
+  /// TypeIdMetadataMap entry (if present in the summary map) or null
+  /// (if not present). This may be used when importing.
+  const TypeIdGVInfo *getTypeIdMetadataSummary(StringRef TypeId) const {
+    auto I = TypeIdMetadataMap.find(TypeId);
+    if (I == TypeIdMetadataMap.end())
+      return nullptr;
+    return &I->second;
   }
 
   /// Collect for the given module the list of functions it defines

@@ -264,10 +264,25 @@ enum GlobalValueSummarySymtabCodes {
   // Index-wide flags
   FS_FLAGS = 20,
   // Maps type identifier to summary information for that type identifier.
+  // Produced by the thin link (only lives in combined index).
   // TYPE_ID: [typeid, kind, bitwidth, align, size, bitmask, inlinebits,
   //           n x (typeid, kind, name, numrba,
   //                numrba x (numarg, numarg x arg, kind, info, byte, bit))]
   FS_TYPE_ID = 21,
+  // Maps type identifier to summary information for that type identifier
+  // computed from type metadata: the valueid of each vtable definition
+  // decorated with a type metadata for that identifier, and the offset from
+  // the corresponding type metadata.
+  // Exists in the per-module summary to provide information to thin link
+  // for index-based whole program devirtualization.
+  // TYPE_ID_METADATA: [typeid, n x (valueid, offset)]
+  FS_TYPE_ID_METADATA = 22,
+  // Summarizes vtable definition for use in index-based whole program
+  // devirtualization during the thin link.
+  // PERMODULE_VTABLE_GLOBALVAR_INIT_REFS: [valueid, flags, varflags,
+  //                                        numrefs, numrefs x valueid,
+  //                                        n x (valueid, offset)]
+  FS_PERMODULE_VTABLE_GLOBALVAR_INIT_REFS = 23,
 };
 
 enum MetadataCodes {
