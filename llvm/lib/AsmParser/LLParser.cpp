@@ -822,9 +822,6 @@ bool LLParser::ParseSummaryEntry() {
   case lltok::kw_typeid:
     return ParseTypeIdEntry(SummaryID);
     break;
-  case lltok::kw_typeidMetadata:
-    return ParseTypeIdMetadataEntry(SummaryID);
-    break;
   default:
     return Error(Lex.getLoc(), "unexpected summary kind");
   }
@@ -7260,90 +7257,6 @@ bool LLParser::ParseTypeIdSummary(TypeIdSummary &TIS) {
   return false;
 }
 
-static ValueInfo EmptyVI =
-    ValueInfo(false, (GlobalValueSummaryMapTy::value_type *)-8);
-
-/// TypeIdMetadataEntry
-///   ::= 'typeidMetadata' ':' '(' 'name' ':' STRINGCONSTANT ',' TypeIdGVInfo
-///   ')'
-bool LLParser::ParseTypeIdMetadataEntry(unsigned ID) {
-  assert(Lex.getKind() == lltok::kw_typeidMetadata);
-  Lex.Lex();
-
-  std::string Name;
-  if (ParseToken(lltok::colon, "expected ':' here") ||
-      ParseToken(lltok::lparen, "expected '(' here") ||
-      ParseToken(lltok::kw_name, "expected 'name' here") ||
-      ParseToken(lltok::colon, "expected ':' here") ||
-      ParseStringConstant(Name))
-    return true;
-
-  TypeIdGVInfo &TI = Index->getOrInsertTypeIdMetadataSummary(Name);
-  if (ParseToken(lltok::comma, "expected ',' here") ||
-      ParseToken(lltok::kw_summary, "expected 'summary' here") ||
-      ParseToken(lltok::colon, "expected ':' here") ||
-      ParseToken(lltok::lparen, "expected '(' here"))
-    return true;
-
-  IdToIndexMapType IdToIndexMap;
-  // Parse each call edge
-  do {
-    uint64_t Offset;
-    if (ParseToken(lltok::lparen, "expected '(' here") ||
-        ParseToken(lltok::kw_offset, "expected 'offset' here") ||
-        ParseToken(lltok::colon, "expected ':' here") || ParseUInt64(Offset) ||
-        ParseToken(lltok::comma, "expected ',' here"))
-      return true;
-
-    LocTy Loc = Lex.getLoc();
-    unsigned GVId;
-    ValueInfo VI;
-    if (ParseGVReference(VI, GVId))
-      return true;
-
-    // Keep track of the TypeIdGVInfo array index needing a forward reference.
-    // We will save the location of the ValueInfo needing an update, but
-    // can only do so once the std::vector is finalized.
-    if (VI == EmptyVI)
-      IdToIndexMap[GVId].push_back(std::make_pair(TI.size(), Loc));
-    TI.push_back({Offset, VI});
-
-    if (ParseToken(lltok::rparen, "expected ')' in call"))
-      return true;
-  } while (EatIfPresent(lltok::comma));
-
-  // Now that the TI vector is finalized, it is safe to save the locations
-  // of any forward GV references that need updating later.
-  for (auto I : IdToIndexMap) {
-    for (auto P : I.second) {
-      assert(TI[P.first].second == EmptyVI &&
-             "Forward referenced ValueInfo expected to be empty");
-      auto FwdRef = ForwardRefValueInfos.insert(std::make_pair(
-          I.first, std::vector<std::pair<ValueInfo *, LocTy>>()));
-      FwdRef.first->second.push_back(
-          std::make_pair(&TI[P.first].second, P.second));
-    }
-  }
-
-  if (ParseToken(lltok::rparen, "expected ')' here") ||
-      ParseToken(lltok::rparen, "expected ')' here"))
-    return true;
-
-  // Check if this ID was forward referenced, and if so, update the
-  // corresponding GUIDs.
-  auto FwdRefTIDs = ForwardRefTypeIds.find(ID);
-  if (FwdRefTIDs != ForwardRefTypeIds.end()) {
-    for (auto TIDRef : FwdRefTIDs->second) {
-      assert(!*TIDRef.first &&
-             "Forward referenced type id GUID expected to be 0");
-      *TIDRef.first = GlobalValue::getGUID(Name);
-    }
-    ForwardRefTypeIds.erase(FwdRefTIDs);
-  }
-
-  return false;
-}
-
 /// TypeTestResolution
 ///   ::= 'typeTestRes' ':' '(' 'kind' ':'
 ///         ( 'unsat' | 'byteArray' | 'inline' | 'single' | 'allOnes' ) ','
@@ -7851,7 +7764,6 @@ bool LLParser::ParseVariableSummary(std::string Name, GlobalValue::GUID GUID,
       /*Live=*/false, /*IsLocal=*/false);
   GlobalVarSummary::GVarFlags GVarFlags(/*ReadOnly*/ false);
   std::vector<ValueInfo> Refs;
-  VTableFuncList VTableFuncs;
   if (ParseToken(lltok::colon, "expected ':' here") ||
       ParseToken(lltok::lparen, "expected '(' here") ||
       ParseModuleReference(ModulePath) ||
@@ -7860,20 +7772,10 @@ bool LLParser::ParseVariableSummary(std::string Name, GlobalValue::GUID GUID,
       ParseGVarFlags(GVarFlags))
     return true;
 
-  // Parse optional fields
-  while (EatIfPresent(lltok::comma)) {
-    switch (Lex.getKind()) {
-    case lltok::kw_vTableFuncs:
-      if (ParseOptionalVTableFuncs(VTableFuncs))
-        return true;
-      break;
-    case lltok::kw_refs:
-      if (ParseOptionalRefs(Refs))
-        return true;
-      break;
-    default:
-      return Error(Lex.getLoc(), "expected optional variable summary field");
-    }
+  // Parse optional refs field
+  if (EatIfPresent(lltok::comma)) {
+    if (ParseOptionalRefs(Refs))
+      return true;
   }
 
   if (ParseToken(lltok::rparen, "expected ')' here"))
@@ -7883,7 +7785,6 @@ bool LLParser::ParseVariableSummary(std::string Name, GlobalValue::GUID GUID,
       llvm::make_unique<GlobalVarSummary>(GVFlags, GVarFlags, std::move(Refs));
 
   GS->setModulePath(ModulePath);
-  GS->setVTableFuncs(std::move(VTableFuncs));
 
   AddGlobalValueToIndex(Name, GUID, (GlobalValue::LinkageTypes)GVFlags.Linkage,
                         ID, std::move(GS));
@@ -8098,67 +7999,6 @@ bool LLParser::ParseHotness(CalleeInfo::HotnessType &Hotness) {
     return Error(Lex.getLoc(), "invalid call edge hotness");
   }
   Lex.Lex();
-  return false;
-}
-
-/// OptionalVTableFuncs
-///   := 'vTableFuncs' ':' '(' VTableFunc [',' VTableFunc]* ')'
-/// VTableFunc ::= '(' 'virtFunc' ':' GVReference ',' 'offset' ':' UInt64 ')'
-bool LLParser::ParseOptionalVTableFuncs(VTableFuncList &VTableFuncs) {
-  assert(Lex.getKind() == lltok::kw_vTableFuncs);
-  Lex.Lex();
-
-  if (ParseToken(lltok::colon, "expected ':' in vTableFuncs") |
-      ParseToken(lltok::lparen, "expected '(' in vTableFuncs"))
-    return true;
-
-  IdToIndexMapType IdToIndexMap;
-  // Parse each virtual function pair
-  do {
-    ValueInfo VI;
-    if (ParseToken(lltok::lparen, "expected '(' in vTableFunc") ||
-        ParseToken(lltok::kw_virtFunc, "expected 'callee' in vTableFunc") ||
-        ParseToken(lltok::colon, "expected ':'"))
-      return true;
-
-    LocTy Loc = Lex.getLoc();
-    unsigned GVId;
-    if (ParseGVReference(VI, GVId))
-      return true;
-
-    uint64_t Offset;
-    if (ParseToken(lltok::comma, "expected comma") ||
-        ParseToken(lltok::kw_offset, "expected offset") ||
-        ParseToken(lltok::colon, "expected ':'") || ParseUInt64(Offset))
-      return true;
-
-    // Keep track of the VTableFuncs array index needing a forward reference.
-    // We will save the location of the ValueInfo needing an update, but
-    // can only do so once the std::vector is finalized.
-    if (VI == EmptyVI)
-      IdToIndexMap[GVId].push_back(std::make_pair(VTableFuncs.size(), Loc));
-    VTableFuncs.push_back(std::make_pair(VI, Offset));
-
-    if (ParseToken(lltok::rparen, "expected ')' in vTableFunc"))
-      return true;
-  } while (EatIfPresent(lltok::comma));
-
-  // Now that the VTableFuncs vector is finalized, it is safe to save the
-  // locations of any forward GV references that need updating later.
-  for (auto I : IdToIndexMap) {
-    for (auto P : I.second) {
-      assert(VTableFuncs[P.first].first == EmptyVI &&
-             "Forward referenced ValueInfo expected to be empty");
-      auto FwdRef = ForwardRefValueInfos.insert(std::make_pair(
-          I.first, std::vector<std::pair<ValueInfo *, LocTy>>()));
-      FwdRef.first->second.push_back(
-          std::make_pair(&VTableFuncs[P.first].first, P.second));
-    }
-  }
-
-  if (ParseToken(lltok::rparen, "expected ')' in vTableFuncs"))
-    return true;
-
   return false;
 }
 

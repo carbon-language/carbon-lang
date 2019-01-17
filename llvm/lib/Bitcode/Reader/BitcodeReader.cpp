@@ -748,9 +748,6 @@ private:
                                                     bool HasRelBF);
   Error parseEntireSummary(unsigned ID);
   Error parseModuleStringTable();
-  void parseTypeIdMetadataSummaryRecord(ArrayRef<uint64_t> Record);
-  void parseTypeIdGVInfo(ArrayRef<uint64_t> Record, size_t &Slot,
-                         TypeIdGVInfo &TypeId);
 
   std::pair<ValueInfo, GlobalValue::GUID>
   getValueInfoFromValueId(unsigned ValueId);
@@ -5227,24 +5224,6 @@ static void parseTypeIdSummaryRecord(ArrayRef<uint64_t> Record,
     parseWholeProgramDevirtResolution(Record, Strtab, Slot, TypeId);
 }
 
-void ModuleSummaryIndexBitcodeReader::parseTypeIdGVInfo(
-    ArrayRef<uint64_t> Record, size_t &Slot, TypeIdGVInfo &TypeId) {
-  uint64_t Offset = Record[Slot++];
-  ValueInfo Callee = getValueInfoFromValueId(Record[Slot++]).first;
-  TypeId.push_back({Offset, Callee});
-}
-
-void ModuleSummaryIndexBitcodeReader::parseTypeIdMetadataSummaryRecord(
-    ArrayRef<uint64_t> Record) {
-  size_t Slot = 0;
-  TypeIdGVInfo &TypeId = TheIndex.getOrInsertTypeIdMetadataSummary(
-      {Strtab.data() + Record[Slot], static_cast<size_t>(Record[Slot + 1])});
-  Slot += 2;
-
-  while (Slot < Record.size())
-    parseTypeIdGVInfo(Record, Slot, TypeId);
-}
-
 static void setImmutableRefs(std::vector<ValueInfo> &Refs, unsigned Count) {
   // Read-only refs are in the end of the refs list.
   for (unsigned RefNo = Refs.size() - Count; RefNo < Refs.size(); ++RefNo)
@@ -5462,34 +5441,6 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(unsigned ID) {
       TheIndex.addGlobalValueSummary(GUID.first, std::move(FS));
       break;
     }
-    // FS_PERMODULE_VTABLE_GLOBALVAR_INIT_REFS: [valueid, flags, varflags,
-    //                        numrefs, numrefs x valueid,
-    //                        n x (valueid, offset)]
-    case bitc::FS_PERMODULE_VTABLE_GLOBALVAR_INIT_REFS: {
-      unsigned ValueID = Record[0];
-      uint64_t RawFlags = Record[1];
-      GlobalVarSummary::GVarFlags GVF = getDecodedGVarFlags(Record[2]);
-      unsigned NumRefs = Record[3];
-      unsigned RefListStartIndex = 4;
-      unsigned VTableListStartIndex = RefListStartIndex + NumRefs;
-      auto Flags = getDecodedGVSummaryFlags(RawFlags, Version);
-      std::vector<ValueInfo> Refs = makeRefList(
-          ArrayRef<uint64_t>(Record).slice(RefListStartIndex, NumRefs));
-      VTableFuncList VTableFuncs;
-      for (unsigned I = VTableListStartIndex, E = Record.size(); I != E; ++I) {
-        ValueInfo Callee = getValueInfoFromValueId(Record[I]).first;
-        uint64_t Offset = Record[++I];
-        VTableFuncs.push_back({Callee, Offset});
-      }
-      auto VS =
-          llvm::make_unique<GlobalVarSummary>(Flags, GVF, std::move(Refs));
-      VS->setModulePath(getThisModule()->first());
-      VS->setVTableFuncs(VTableFuncs);
-      auto GUID = getValueInfoFromValueId(ValueID);
-      VS->setOriginalName(GUID.second);
-      TheIndex.addGlobalValueSummary(GUID.first, std::move(VS));
-      break;
-    }
     // FS_COMBINED: [valueid, modid, flags, instcount, fflags, numrefs,
     //               numrefs x valueid, n x (valueid)]
     // FS_COMBINED_PROFILE: [valueid, modid, flags, instcount, fflags, numrefs,
@@ -5658,10 +5609,6 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(unsigned ID) {
 
     case bitc::FS_TYPE_ID:
       parseTypeIdSummaryRecord(Record, Strtab, TheIndex);
-      break;
-
-    case bitc::FS_TYPE_ID_METADATA:
-      parseTypeIdMetadataSummaryRecord(Record);
       break;
     }
   }
