@@ -32,9 +32,9 @@ If CMake is configured with ``CLANG_ENABLE_STATIC_ANALYZER``,
 ``clang-analyzer-*`` checks or the ``mpi-*`` checks.
 
 
-.. _AST Matchers: http://clang.llvm.org/docs/LibASTMatchers.html
-.. _PPCallbacks: http://clang.llvm.org/doxygen/classclang_1_1PPCallbacks.html
-.. _clang-check: http://clang.llvm.org/docs/ClangCheck.html
+.. _AST Matchers: https://clang.llvm.org/docs/LibASTMatchers.html
+.. _PPCallbacks: https://clang.llvm.org/doxygen/classclang_1_1PPCallbacks.html
+.. _clang-check: https://clang.llvm.org/docs/ClangCheck.html
 
 
 Choosing the Right Place for your Check
@@ -66,8 +66,9 @@ CMake.
 Once you are done, change to the ``llvm/tools/clang/tools/extra`` directory, and
 let's start!
 
-.. _Getting Started with the LLVM System: http://llvm.org/docs/GettingStarted.html
-.. _Using Clang Tools: http://clang.llvm.org/docs/ClangTools.html
+.. _Getting Started with the LLVM System: https://llvm.org/docs/GettingStarted.html
+.. _Using Clang Tools: https://clang.llvm.org/docs/ClangTools.html
+.. _How To Setup Clang Tooling For LLVM: https://clang.llvm.org/docs/HowToSetupToolingForLLVM.html
 
 
 The Directory Structure
@@ -120,13 +121,13 @@ Started with LLVM`_ document for instructions on setting up your workflow and
 the `LLVM Coding Standards`_ document to familiarize yourself with the coding
 style used in the project. For code reviews we mostly use `LLVM Phabricator`_.
 
-.. _Getting Started with LLVM: http://llvm.org/docs/GettingStarted.html
-.. _LLVM Coding Standards: http://llvm.org/docs/CodingStandards.html
-.. _LLVM Phabricator: http://llvm.org/docs/Phabricator.html
+.. _Getting Started with LLVM: https://llvm.org/docs/GettingStarted.html
+.. _LLVM Coding Standards: https://llvm.org/docs/CodingStandards.html
+.. _LLVM Phabricator: https://llvm.org/docs/Phabricator.html
 
 Next, you need to decide which module the check belongs to. Modules
 are located in subdirectories of `clang-tidy/
-<http://reviews.llvm.org/diffusion/L/browse/clang-tools-extra/trunk/clang-tidy/>`_
+<https://reviews.llvm.org/diffusion/L/browse/clang-tools-extra/trunk/clang-tidy/>`_
 and contain checks targeting a certain aspect of code quality (performance,
 readability, etc.), certain coding style or standard (Google, LLVM, CERT, etc.)
 or a widely used API (e.g. MPI). Their names are same as user-facing check
@@ -209,9 +210,9 @@ can further inspect them and report diagnostics.
 
 (If you want to see an example of a useful check, look at
 `clang-tidy/google/ExplicitConstructorCheck.h
-<http://reviews.llvm.org/diffusion/L/browse/clang-tools-extra/trunk/clang-tidy/google/ExplicitConstructorCheck.h>`_
+<https://reviews.llvm.org/diffusion/L/browse/clang-tools-extra/trunk/clang-tidy/google/ExplicitConstructorCheck.h>`_
 and `clang-tidy/google/ExplicitConstructorCheck.cpp
-<http://reviews.llvm.org/diffusion/L/browse/clang-tools-extra/trunk/clang-tidy/google/ExplicitConstructorCheck.cpp>`_).
+<https://reviews.llvm.org/diffusion/L/browse/clang-tools-extra/trunk/clang-tidy/google/ExplicitConstructorCheck.cpp>`_).
 
 
 Registering your Check
@@ -409,9 +410,9 @@ most frequent pitfalls are macros and templates:
    macro expansions/template instantiations, but easily break some other
    expansions/instantiations.
 
-.. _lit: http://llvm.org/docs/CommandGuide/lit.html
-.. _FileCheck: http://llvm.org/docs/CommandGuide/FileCheck.html
-.. _test/clang-tidy/google-readability-casting.cpp: http://reviews.llvm.org/diffusion/L/browse/clang-tools-extra/trunk/test/clang-tidy/google-readability-casting.cpp
+.. _lit: https://llvm.org/docs/CommandGuide/lit.html
+.. _FileCheck: https://llvm.org/docs/CommandGuide/FileCheck.html
+.. _test/clang-tidy/google-readability-casting.cpp: https://reviews.llvm.org/diffusion/L/browse/clang-tools-extra/trunk/test/clang-tidy/google-readability-casting.cpp
 
 
 Running clang-tidy on LLVM
