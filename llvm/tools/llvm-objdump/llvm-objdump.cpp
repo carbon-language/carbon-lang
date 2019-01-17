@@ -463,21 +463,6 @@ bool llvm::isRelocAddressLess(RelocationRef A, RelocationRef B) {
   return A.getOffset() < B.getOffset();
 }
 
-static std::string demangle(StringRef Name) {
-  char *Demangled = nullptr;
-  if (Name.startswith("_Z"))
-    Demangled = itaniumDemangle(Name.data(), Demangled, nullptr, nullptr);
-  else if (Name.startswith("?"))
-    Demangled = microsoftDemangle(Name.data(), Demangled, nullptr, nullptr);
-
-  if (!Demangled)
-    return Name;
-
-  std::string Ret = Demangled;
-  free(Demangled);
-  return Ret;
-}
-
 template <class ELFT>
 static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
                                                 const RelocationRef &RelRef,
