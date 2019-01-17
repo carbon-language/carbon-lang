@@ -205,6 +205,7 @@ std::ostream &operator<<(std::ostream &o, const ShapeSpec &x) {
 }
 
 ParamValue::ParamValue(MaybeIntExpr &&expr) : expr_{std::move(expr)} {}
+ParamValue::ParamValue(SomeIntExpr &&expr) : expr_{std::move(expr)} {}
 ParamValue::ParamValue(std::int64_t value)
   : ParamValue(SomeIntExpr{evaluate::Expr<evaluate::SubscriptInteger>{value}}) {
 }

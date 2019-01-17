@@ -134,13 +134,16 @@ public:
   Scope *FindSubmodule(const SourceName &) const;
   bool AddSubmodule(const SourceName &, Scope &);
 
-  DeclTypeSpec &MakeDerivedType(const Symbol &);
-
   const DeclTypeSpec &MakeNumericType(TypeCategory, KindExpr &&kind);
   const DeclTypeSpec &MakeLogicalType(KindExpr &&kind);
   const DeclTypeSpec &MakeCharacterType(
       ParamValue &&length, KindExpr &&kind = KindExpr{0});
-  const DeclTypeSpec &MakeDerivedType(DeclTypeSpec::Category, DerivedTypeSpec &&);
+  const DeclTypeSpec &MakeDerivedType(
+      DeclTypeSpec::Category, DerivedTypeSpec &&);
+  const DeclTypeSpec &MakeDerivedType(
+      DeclTypeSpec::Category, DerivedTypeSpec &&, evaluate::FoldingContext &);
+  DeclTypeSpec &MakeDerivedType(const Symbol &);
+  DeclTypeSpec &MakeDerivedType(DerivedTypeSpec &&, DeclTypeSpec::Category);
   const DeclTypeSpec &MakeTypeStarType();
   const DeclTypeSpec &MakeClassStarType();
 
@@ -205,7 +208,7 @@ private:
   static Symbols<1024> allSymbols;
 
   bool CanImport(const SourceName &) const;
-  const DeclTypeSpec &MakeLengthlessType(const DeclTypeSpec &);
+  const DeclTypeSpec &MakeLengthlessType(DeclTypeSpec &&);
 
   friend std::ostream &operator<<(std::ostream &, const Scope &);
 };

@@ -113,10 +113,10 @@ using BOZLiteralConstant = typename LargestReal::Scalar::Word;
 // from it via its derived() member function with compile-time type safety.
 template<typename DERIVED, typename RESULT, typename... OPERANDS>
 class Operation {
-  // The extra "int" member is a dummy that allows a safe unused reference
+  // The extra final member is a dummy that allows a safe unused reference
   // to element 1 to arise indirectly in the definition of "right()" below
   // when the operation has but a single operand.
-  using OperandTypes = std::tuple<OPERANDS..., int>;
+  using OperandTypes = std::tuple<OPERANDS..., std::monostate>;
 
 public:
   using Derived = DERIVED;

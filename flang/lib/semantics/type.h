@@ -90,10 +90,11 @@ private:
 // A type parameter value: integer expression or assumed or deferred.
 class ParamValue {
 public:
-  static constexpr ParamValue Assumed() { return Category::Assumed; }
-  static constexpr ParamValue Deferred() { return Category::Deferred; }
+  static ParamValue Assumed() { return Category::Assumed; }
+  static ParamValue Deferred() { return Category::Deferred; }
   ParamValue(const ParamValue &) = default;
   explicit ParamValue(MaybeIntExpr &&);
+  explicit ParamValue(SomeIntExpr &&);
   explicit ParamValue(std::int64_t);
   bool isExplicit() const { return category_ == Category::Explicit; }
   bool isAssumed() const { return category_ == Category::Assumed; }

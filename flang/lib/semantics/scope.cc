@@ -72,7 +72,8 @@ bool Scope::AddSubmodule(const SourceName &name, Scope &submodule) {
   return submodules_.emplace(name, &submodule).second;
 }
 
-const DeclTypeSpec &Scope::MakeNumericType(TypeCategory category, KindExpr &&kind) {
+const DeclTypeSpec &Scope::MakeNumericType(
+    TypeCategory category, KindExpr &&kind) {
   return MakeLengthlessType(NumericTypeSpec{category, std::move(kind)});
 }
 const DeclTypeSpec &Scope::MakeLogicalType(KindExpr &&kind) {
@@ -95,14 +96,23 @@ const DeclTypeSpec &Scope::MakeLengthlessType(DeclTypeSpec &&type) {
   }
 }
 
-const DeclTypeSpec &Scope::MakeCharacterType(ParamValue &&length, KindExpr &&kind) {
+const DeclTypeSpec &Scope::MakeCharacterType(
+    ParamValue &&length, KindExpr &&kind) {
   return declTypeSpecs_.emplace_back(
       CharacterTypeSpec{std::move(length), std::move(kind)});
 }
 
 const DeclTypeSpec &Scope::MakeDerivedType(
-    DeclTypeSpec::Category category, const DerivedTypeSpec &derived) {
-  return declTypeSpecs_.emplace_back(category, derived);
+    DeclTypeSpec::Category category, DerivedTypeSpec &&spec) {
+  return MakeDerivedType(std::move(spec), category);
+}
+
+const DeclTypeSpec &Scope::MakeDerivedType(DeclTypeSpec::Category category,
+    DerivedTypeSpec &&instance, evaluate::FoldingContext &foldingContext) {
+  DeclTypeSpec &type{declTypeSpecs_.emplace_back(
+      category, DerivedTypeSpec{std::move(instance)})};
+  type.derivedTypeSpec().Instantiate(*this, foldingContext);
+  return type;
 }
 
 DeclTypeSpec &Scope::MakeDerivedType(const Symbol &typeSymbol) {
@@ -113,9 +123,9 @@ DeclTypeSpec &Scope::MakeDerivedType(const Symbol &typeSymbol) {
 }
 
 DeclTypeSpec &Scope::MakeDerivedType(
-    DerivedTypeSpec &&instance, DeclTypeSpec::Category category) {
+    DerivedTypeSpec &&spec, DeclTypeSpec::Category category) {
   return declTypeSpecs_.emplace_back(
-      category, DerivedTypeSpec{std::move(instance)});
+      category, DerivedTypeSpec{std::move(spec)});
 }
 
 Scope::ImportKind Scope::GetImportKind() const {

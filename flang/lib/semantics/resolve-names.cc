@@ -481,9 +481,10 @@ protected:
   bool ConvertToObjectEntity(Symbol &);
   bool ConvertToProcEntity(Symbol &);
 
-  DeclTypeSpec &MakeNumericType(
+  const DeclTypeSpec &MakeNumericType(
       TypeCategory, const std::optional<parser::KindSelector> &);
-  DeclTypeSpec &MakeLogicalType(const std::optional<parser::KindSelector> &);
+  const DeclTypeSpec &MakeLogicalType(
+      const std::optional<parser::KindSelector> &);
 
   // Walk the ModuleSubprogramPart or InternalSubprogramPart collecting names.
   template<typename T>
@@ -845,7 +846,9 @@ private:
   bool CheckDef(const std::optional<parser::Name> &);
   void CheckRef(const std::optional<parser::Name> &);
   void CheckIntegerType(const Symbol &);
-  const DeclTypeSpec &ToDeclTypeSpec(const evaluate::DynamicType &);
+  const DeclTypeSpec &ToDeclTypeSpec(evaluate::DynamicType &&);
+  const DeclTypeSpec &ToDeclTypeSpec(
+      evaluate::DynamicType &&, SubscriptIntExpr &&length);
   Symbol *MakeAssocEntity();
   void SetTypeFromAssociation(Symbol &);
   void SetAttrsFromAssociation(Symbol &);
@@ -1124,8 +1127,8 @@ void DeclTypeSpecVisitor::EndDeclTypeSpec() {
   CHECK(state_.expectDeclTypeSpec);
   state_ = {};
 }
-DeclTypeSpecVisitor::State DeclTypeSpecVisitor::SetDeclTypeSpecState(
-    const State &x) {
+
+DeclTypeSpecVisitor::State DeclTypeSpecVisitor::SetDeclTypeSpecState(State x) {
   auto result{state_};
   state_ = x;
   return result;
@@ -1611,7 +1614,7 @@ bool ScopeHandler::ConvertToProcEntity(Symbol &symbol) {
   return true;
 }
 
-DeclTypeSpec &ScopeHandler::MakeNumericType(
+const DeclTypeSpec &ScopeHandler::MakeNumericType(
     TypeCategory category, const std::optional<parser::KindSelector> &kind) {
   KindExpr value{GetKindParamExpr(category, kind)};
   if (auto known{evaluate::ToInt64(value)}) {
@@ -1621,7 +1624,7 @@ DeclTypeSpec &ScopeHandler::MakeNumericType(
   }
 }
 
-DeclTypeSpec &ScopeHandler::MakeLogicalType(
+const DeclTypeSpec &ScopeHandler::MakeLogicalType(
     const std::optional<parser::KindSelector> &kind) {
   KindExpr value{GetKindParamExpr(TypeCategory::Logical, kind)};
   if (auto known{evaluate::ToInt64(value)}) {
@@ -2562,7 +2565,7 @@ bool DeclarationVisitor::Pre(const parser::DeclarationTypeSpec::Record &) {
 
 void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
   const auto &typeName{std::get<parser::Name>(x.t)};
-  const Symbol *typeSymbol{ResolveDerivedType(&typeName)};
+  const Symbol *typeSymbol{ResolveDerivedType(typeName)};
   if (typeSymbol == nullptr) {
     return;
   }
@@ -3007,7 +3010,6 @@ void DeclarationVisitor::SetType(
 
 // Find the Symbol for this derived type.
 const Symbol *DeclarationVisitor::ResolveDerivedType(const parser::Name &name) {
-  const auto *symbol{FindSymbol(name)};
   const Symbol *symbol{FindSymbol(name)};
   if (!symbol) {
     Say(name, "Derived type '%s' not found"_err_en_US);
@@ -3356,6 +3358,7 @@ Symbol *ConstructVisitor::MakeAssocEntity() {
   }
   if (auto &expr{association_.expr}) {
     symbol.set_details(AssocEntityDetails{std::move(*expr)});
+    expr = std::nullopt;
   }
   return &symbol;
 }
@@ -3370,7 +3373,15 @@ void ConstructVisitor::SetTypeFromAssociation(Symbol &symbol) {
     }
   } else if (const auto &expr{association_.expr}) {
     if (std::optional<evaluate::DynamicType> type{expr->GetType()}) {
-      symbol.SetType(ToDeclTypeSpec(*type));
+      if (const auto *charExpr{
+              evaluate::UnwrapExpr<evaluate::Expr<evaluate::SomeCharacter>>(
+                  *expr)}) {
+        symbol.SetType(ToDeclTypeSpec(std::move(*type),
+            std::visit([](const auto &kindChar) { return kindChar.LEN(); },
+                charExpr->u)));
+      } else {
+        symbol.SetType(ToDeclTypeSpec(std::move(*type)));
+      }
     }
   }
 }
@@ -3390,7 +3401,7 @@ void ConstructVisitor::SetAttrsFromAssociation(Symbol &symbol) {
 }
 
 const DeclTypeSpec &ConstructVisitor::ToDeclTypeSpec(
-    const evaluate::DynamicType &type) {
+    evaluate::DynamicType &&type) {
   switch (type.category) {
   case common::TypeCategory::Integer:
   case common::TypeCategory::Real:
@@ -3398,15 +3409,20 @@ const DeclTypeSpec &ConstructVisitor::ToDeclTypeSpec(
     return context().MakeNumericType(type.category, type.kind);
   case common::TypeCategory::Logical:
     return context().MakeLogicalType(type.kind);
-  case common::TypeCategory::Character:
-    // TODO: need length from DynamicType
-    return currScope().MakeCharacterType(ParamValue::Deferred(), type.kind);
   case common::TypeCategory::Derived:
-    CHECK(type.derived);
+    CHECK(type.derived != nullptr);
     return currScope().MakeDerivedType(
-        DeclTypeSpec::TypeDerived, *type.derived);
+        DeclTypeSpec::TypeDerived, DerivedTypeSpec{*type.derived});
+  case common::TypeCategory::Character:
   default: CRASH_NO_CASE;
   }
+}
+
+const DeclTypeSpec &ConstructVisitor::ToDeclTypeSpec(
+    evaluate::DynamicType &&type, SubscriptIntExpr &&length) {
+  CHECK(type.category == common::TypeCategory::Character);
+  return currScope().MakeCharacterType(
+      ParamValue{SomeIntExpr{std::move(length)}}, KindExpr{type.kind});
 }
 
 // ResolveNamesVisitor implementation
