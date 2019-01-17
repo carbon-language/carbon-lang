@@ -298,4 +298,23 @@ define float @extract_lane_insertps_6123(<4 x float> %a0, <4 x float> *%p1) {
   ret float %ext
 }
 
+; PR40340
+define <4 x float> @commute_load_insertps(<4 x float>, <4 x float>* nocapture readonly) {
+; SSE-LABEL: commute_load_insertps:
+; SSE:       # %bb.0:
+; SSE-NEXT:    movaps (%rdi), %xmm1
+; SSE-NEXT:    insertps {{.*#+}} xmm1 = zero,xmm0[1],zero,xmm1[3]
+; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: commute_load_insertps:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vmovaps (%rdi), %xmm1
+; AVX-NEXT:    vinsertps {{.*#+}} xmm0 = zero,xmm0[1],zero,xmm1[3]
+; AVX-NEXT:    retq
+  %3 = load <4 x float>, <4 x float>* %1
+  %4 = tail call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %3, <4 x float> %0, i8 85)
+  ret <4 x float> %4
+}
+
 declare <4 x float> @llvm.x86.sse41.insertps(<4 x float>, <4 x float>, i8) nounwind readnone
