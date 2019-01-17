@@ -540,19 +540,19 @@ bool ARMCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
 
   // Create the call instruction so we can add the implicit uses of arg
   // registers, but don't insert it yet.
-  bool isDirect = !Callee.isReg();
-  auto CallOpcode = getCallOpcode(STI, isDirect);
+  bool IsDirect = !Callee.isReg();
+  auto CallOpcode = getCallOpcode(STI, IsDirect);
   auto MIB = MIRBuilder.buildInstrNoInsert(CallOpcode);
 
-  bool isThumb = STI.isThumb();
-  if (isThumb)
+  bool IsThumb = STI.isThumb();
+  if (IsThumb)
     MIB.add(predOps(ARMCC::AL));
 
   MIB.add(Callee);
-  if (!isDirect) {
+  if (!IsDirect) {
     auto CalleeReg = Callee.getReg();
     if (CalleeReg && !TRI->isPhysicalRegister(CalleeReg)) {
-      unsigned CalleeIdx = isThumb ? 2 : 0;
+      unsigned CalleeIdx = IsThumb ? 2 : 0;
       MIB->getOperand(CalleeIdx).setReg(constrainOperandRegClass(
           MF, *TRI, MRI, *STI.getInstrInfo(), *STI.getRegBankInfo(),
           *MIB.getInstr(), MIB->getDesc(), Callee, CalleeIdx));
