@@ -59,8 +59,9 @@ Preparing your Workspace
 ------------------------
 
 If you are new to LLVM development, you should read the `Getting Started with
-the LLVM System`_, `Using Clang Tools`_ and `How To Setup Tooling For LLVM`_
-documents to check out and build LLVM, Clang and Clang Extra Tools with CMake.
+the LLVM System`_, `Using Clang Tools`_ and `How To Setup Clang Tooling For
+LLVM`_ documents to check out and build LLVM, Clang and Clang Extra Tools with
+CMake.
 
 Once you are done, change to the ``llvm/tools/clang/tools/extra`` directory, and
 let's start!
