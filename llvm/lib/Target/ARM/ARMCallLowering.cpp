@@ -561,13 +561,14 @@ bool ARMCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
 
   MIB.addRegMask(TRI->getCallPreservedMask(MF, CallConv));
 
+  bool IsVarArg = false;
   SmallVector<ArgInfo, 8> ArgInfos;
   for (auto Arg : OrigArgs) {
     if (!isSupportedType(DL, TLI, Arg.Ty))
       return false;
 
     if (!Arg.IsFixed)
-      return false;
+      IsVarArg = true;
 
     if (Arg.Flags.isByVal())
       return false;
@@ -581,7 +582,7 @@ bool ARMCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
       MIRBuilder.buildUnmerge(Regs, Arg.Reg);
   }
 
-  auto ArgAssignFn = TLI.CCAssignFnForCall(CallConv, /*IsVarArg=*/false);
+  auto ArgAssignFn = TLI.CCAssignFnForCall(CallConv, IsVarArg);
   OutgoingValueHandler ArgHandler(MIRBuilder, MRI, MIB, ArgAssignFn);
   if (!handleAssignments(MIRBuilder, ArgInfos, ArgHandler))
     return false;
@@ -600,7 +601,7 @@ bool ARMCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
                         SplitRegs.push_back(Reg);
                       });
 
-    auto RetAssignFn = TLI.CCAssignFnForReturn(CallConv, /*IsVarArg=*/false);
+    auto RetAssignFn = TLI.CCAssignFnForReturn(CallConv, IsVarArg);
     CallReturnHandler RetHandler(MIRBuilder, MRI, MIB, RetAssignFn);
     if (!handleAssignments(MIRBuilder, ArgInfos, RetHandler))
       return false;
