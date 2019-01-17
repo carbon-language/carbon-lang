@@ -91,6 +91,7 @@ public:
   }
 
   std::optional<Expr<SomeType>> Analyze(const parser::Expr &);
+  std::optional<Expr<SomeType>> Analyze(const parser::Variable &);
   int Analyze(common::TypeCategory category,
       const std::optional<parser::KindSelector> &);
 
@@ -108,6 +109,10 @@ std::optional<Expr<SomeType>> AnalyzeExpr(
 inline std::optional<Expr<SomeType>> AnalyzeExpr(
     ExpressionAnalysisContext &context, const parser::Expr &expr) {
   return context.Analyze(expr);
+}
+inline std::optional<Expr<SomeType>> AnalyzeExpr(
+    ExpressionAnalysisContext &context, const parser::Variable &variable) {
+  return context.Analyze(variable);
 }
 
 // Forward declarations of exposed specializations

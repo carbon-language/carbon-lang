@@ -3138,8 +3138,7 @@ void ConstructVisitor::Post(const parser::Selector &x) {
                 }
               }
             }
-            return std::visit(
-                [&](const auto &z) { return EvaluateExpr(*z); }, y.u);
+            return EvaluateExpr(y);
           },
       },
       x.u)};

@@ -1413,6 +1413,9 @@ MaybeExpr ExpressionAnalysisContext::Analyze(const parser::Expr &expr) {
     return AnalyzeExpr(*this, expr.u);
   }
 }
+MaybeExpr ExpressionAnalysisContext::Analyze(const parser::Variable &variable) {
+  return AnalyzeExpr(*this, variable.u);
+}
 
 int ExpressionAnalysisContext::Analyze(TypeCategory category,
     const std::optional<parser::KindSelector> &selector) {
