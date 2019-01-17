@@ -99,7 +99,6 @@ public:
 
   const WasmSection *CodeSection = nullptr;
   const WasmSection *DataSection = nullptr;
-  const WasmSection *ProducersSection = nullptr;
 
   // Maps input type indices to output type indices
   std::vector<uint32_t> TypeMap;
@@ -140,7 +139,7 @@ public:
 };
 
 // Will report a fatal() error if the input buffer is not a valid bitcode
-// or wasm object file.
+// or was object file.
 InputFile *createObjectFile(MemoryBufferRef MB);
 
 // Opens a given file.
