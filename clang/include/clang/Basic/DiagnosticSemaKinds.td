@@ -6817,7 +6817,7 @@ def ext_typecheck_convert_int_pointer : ExtWarn<
   "; take the address with &|"
   "; remove *|"
   "; remove &}3">,
-  InGroup<IntConversion>;
+  InGroup<IntConversion>, SFINAEFailure;
 def ext_typecheck_convert_pointer_void_func : Extension<
   "%select{%diff{assigning to $ from $|assigning to different types}0,1"
   "|%diff{passing $ to parameter of type $|"
