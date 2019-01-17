@@ -498,7 +498,7 @@ static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
   // requires the relocation to be associated with a symbol.
   //
   // In SHT_REL case we would need to read the addend from section data.
-  // GNU objdump does not do that and we just follow for simplicity atm.
+  // GNU objdump does not do that and we just follow for simplicity.
   bool Undef = false;
   if ((*SecOrErr)->sh_type == ELF::SHT_RELA) {
     const Elf_Rela *ERela = Obj->getRela(Rel);
