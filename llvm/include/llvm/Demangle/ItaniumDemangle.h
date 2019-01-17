@@ -5143,7 +5143,7 @@ AbstractManglingParser<Derived, Alloc>::parseTemplateArgs(bool TagTemplates) {
 // extension      ::= ___Z <encoding> _block_invoke_<decimal-digit>+
 template <typename Derived, typename Alloc>
 Node *AbstractManglingParser<Derived, Alloc>::parse() {
-  if (consumeIf("_Z")) {
+  if (consumeIf("_Z") || consumeIf("__Z")) {
     Node *Encoding = getDerived().parseEncoding();
     if (Encoding == nullptr)
       return nullptr;
@@ -5156,7 +5156,7 @@ Node *AbstractManglingParser<Derived, Alloc>::parse() {
     return Encoding;
   }
 
-  if (consumeIf("___Z")) {
+  if (consumeIf("___Z") || consumeIf("____Z")) {
     Node *Encoding = getDerived().parseEncoding();
     if (Encoding == nullptr || !consumeIf("_block_invoke"))
       return nullptr;
