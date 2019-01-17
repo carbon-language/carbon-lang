@@ -402,9 +402,10 @@ private:
         LI.erase(LI.getLoopFor(BB));
       }
       LI.removeBlock(BB);
-      DeleteDeadBlock(BB, &DTU);
-      ++NumLoopBlocksDeleted;
     }
+
+    DeleteDeadBlocks(DeadLoopBlocks, &DTU);
+    NumLoopBlocksDeleted += DeadLoopBlocks.size();
   }
 
   /// Constant-fold terminators of blocks acculumated in FoldCandidates into the
