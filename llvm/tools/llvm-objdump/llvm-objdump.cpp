@@ -1605,6 +1605,12 @@ static void disassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
       raw_ostream &DebugOut = nulls();
 #endif
 
+      // Some targets (like WebAssembly) have a special prelude at the start
+      // of each symbol.
+      DisAsm->onSymbolStart(SymbolName, Size, Bytes.slice(Start, End - Start),
+                            SectionAddr + Start, DebugOut, CommentStream);
+      Start += Size;
+
       for (Index = Start; Index < End; Index += Size) {
         MCInst Inst;
 
