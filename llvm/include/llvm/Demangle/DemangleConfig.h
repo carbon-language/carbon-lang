@@ -62,6 +62,8 @@
 #define DEMANGLE_UNREACHABLE __builtin_unreachable()
 #elif defined(_MSC_VER)
 #define DEMANGLE_UNREACHABLE __assume(false)
+#else
+#define DEMANGLE_UNREACHABLE
 #endif
 
 #if __has_attribute(noinline) || DEMANGLE_GNUC_PREREQ(3, 4, 0)
