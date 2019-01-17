@@ -2480,6 +2480,12 @@ AbstractManglingParser<Derived, Alloc>::parseUnnamedTypeName(NameState *) {
       return nullptr;
     return make<ClosureTypeName>(Params, Count);
   }
+  if (consumeIf("Ub")) {
+    (void)parseNumber();
+    if (!consumeIf('_'))
+      return nullptr;
+    return make<NameType>("'block-literal'");
+  }
   return nullptr;
 }
 
