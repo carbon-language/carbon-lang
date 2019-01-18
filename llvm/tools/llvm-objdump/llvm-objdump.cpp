@@ -2036,8 +2036,8 @@ int main(int argc, char **argv) {
     InputFilenames.push_back("a.out");
 
   if (AllHeaders)
-    FileHeaders = PrivateHeaders = Relocations = SectionHeaders = SymbolTable =
-        true;
+    ArchiveHeaders = FileHeaders = PrivateHeaders = Relocations =
+        SectionHeaders = SymbolTable = true;
 
   if (DisassembleAll || PrintSource || PrintLines)
     Disassemble = true;
