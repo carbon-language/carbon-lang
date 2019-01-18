@@ -83,53 +83,11 @@ void ObjectEntityDetails::set_shape(const ArraySpec &shape) {
   }
 }
 
-bool ObjectEntityDetails::IsDescriptor() const {
-  if (const auto *type{this->type()}) {
-    if (const IntrinsicTypeSpec * typeSpec{type->AsIntrinsic()}) {
-      if (typeSpec->category() == TypeCategory::Character) {
-        // TODO maybe character lengths won't be in descriptors
-        return true;
-      }
-    } else if (const DerivedTypeSpec * typeSpec{type->AsDerived()}) {
-      if (isDummy()) {
-        return true;
-      }
-      // Any length type parameter?
-      if (const Scope * scope{typeSpec->scope()}) {
-        if (const Symbol * symbol{scope->symbol()}) {
-          if (const auto *details{symbol->detailsIf<DerivedTypeDetails>()}) {
-            for (const Symbol *param : details->paramDecls()) {
-              if (const auto *details{param->detailsIf<TypeParamDetails>()}) {
-                if (details->attr() == common::TypeParamAttr::Len) {
-                  return true;
-                }
-              }
-            }
-          }
-        }
-      }
-    } else if (type->category() == DeclTypeSpec::Category::TypeStar ||
-        type->category() == DeclTypeSpec::Category::ClassStar) {
-      return true;
-    }
-  }
-  if (IsAssumedShape() || IsDeferredShape() || IsAssumedRank()) {
-    return true;
-  }
-  // TODO: Explicit shape component array dependent on length parameter
-  // TODO: Automatic (adjustable) arrays
-  return false;
-}
-
 ProcEntityDetails::ProcEntityDetails(EntityDetails &&d) : EntityDetails(d) {
   if (type()) {
     interface_.set_type(*type());
   }
 }
-
-// A procedure pointer or dummy procedure must be a descriptor if
-// and only if it requires a static link.
-bool ProcEntityDetails::IsDescriptor() const { return HasExplicitInterface(); }
 
 const Symbol &UseDetails::module() const {
   // owner is a module so it must have a symbol:
@@ -229,7 +187,7 @@ bool Symbol::CanReplaceDetails(const Details &details) const {
 }
 
 Symbol &Symbol::GetUltimate() {
-  return const_cast<Symbol &>(static_cast<const Symbol *>(this)->GetUltimate());
+  return const_cast<Symbol &>(const_cast<const Symbol *>(this)->GetUltimate());
 }
 const Symbol &Symbol::GetUltimate() const {
   if (const auto *details{detailsIf<UseDetails>()}) {
@@ -239,24 +197,6 @@ const Symbol &Symbol::GetUltimate() const {
   } else {
     return *this;
   }
-}
-
-DeclTypeSpec *Symbol::GetType() {
-  return const_cast<DeclTypeSpec *>(
-      const_cast<const Symbol *>(this)->GetType());
-}
-
-const DeclTypeSpec *Symbol::GetType() const {
-  return std::visit(
-      common::visitors{
-          [](const EntityDetails &x) { return x.type(); },
-          [](const ObjectEntityDetails &x) { return x.type(); },
-          [](const AssocEntityDetails &x) { return x.type(); },
-          [](const ProcEntityDetails &x) { return x.interface().type(); },
-          [](const TypeParamDetails &x) { return x.type(); },
-          [](const auto &) -> const DeclTypeSpec * { return nullptr; },
-      },
-      details_);
 }
 
 void Symbol::SetType(const DeclTypeSpec &type) {
@@ -284,18 +224,6 @@ bool Symbol::IsSubprogram() const {
       details_);
 }
 
-bool Symbol::HasExplicitInterface() const {
-  return std::visit(
-      common::visitors{
-          [](const SubprogramDetails &) { return true; },
-          [](const SubprogramNameDetails &) { return true; },
-          [](const ProcEntityDetails &x) { return x.HasExplicitInterface(); },
-          [](const UseDetails &x) { return x.symbol().HasExplicitInterface(); },
-          [](const auto &) { return false; },
-      },
-      details_);
-}
-
 bool Symbol::IsSeparateModuleProc() const {
   if (attrs().test(Attr::MODULE)) {
     if (auto *details{detailsIf<SubprogramDetails>()}) {
@@ -303,40 +231,6 @@ bool Symbol::IsSeparateModuleProc() const {
     }
   }
   return false;
-}
-
-bool Symbol::IsDescriptor() const {
-  if (const auto *objectDetails{detailsIf<ObjectEntityDetails>()}) {
-    return objectDetails->IsDescriptor();
-  } else if (const auto *procDetails{detailsIf<ProcEntityDetails>()}) {
-    if (attrs_.test(Attr::POINTER) || attrs_.test(Attr::EXTERNAL)) {
-      return procDetails->IsDescriptor();
-    }
-  }
-  return false;
-}
-
-int Symbol::Rank() const {
-  return std::visit(
-      common::visitors{
-          [](const SubprogramDetails &sd) {
-            if (sd.isFunction()) {
-              return sd.result().Rank();
-            } else {
-              return 0;
-            }
-          },
-          [](const GenericDetails &) {
-            return 0; /*TODO*/
-          },
-          [](const UseDetails &x) { return x.symbol().Rank(); },
-          [](const HostAssocDetails &x) { return x.symbol().Rank(); },
-          [](const ObjectEntityDetails &oed) {
-            return static_cast<int>(oed.shape().size());
-          },
-          [](const auto &) { return 0; },
-      },
-      details_);
 }
 
 ObjectEntityDetails::ObjectEntityDetails(EntityDetails &&d)
@@ -372,13 +266,6 @@ std::ostream &operator<<(std::ostream &os, const AssocEntityDetails &x) {
     x.expr()->AsFortran(os << ' ');
   }
   return os;
-}
-
-bool ProcEntityDetails::HasExplicitInterface() const {
-  if (auto *symbol{interface_.symbol()}) {
-    return symbol->HasExplicitInterface();
-  }
-  return false;
 }
 
 std::ostream &operator<<(std::ostream &os, const ProcEntityDetails &x) {

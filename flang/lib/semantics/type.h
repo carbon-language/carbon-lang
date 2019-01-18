@@ -229,7 +229,14 @@ public:
   bool HasActualParameters() const { return !parameters_.empty(); }
   ParamValue &AddParamValue(SourceName, ParamValue &&);
   ParamValue *FindParameter(SourceName);
-  const ParamValue *FindParameter(SourceName) const;
+  const ParamValue *FindParameter(SourceName target) const {
+    auto iter{parameters_.find(target)};
+    if (iter != parameters_.end()) {
+      return &iter->second;
+    } else {
+      return nullptr;
+    }
+  }
   void FoldParameterExpressions(evaluate::FoldingContext &);
   void Instantiate(Scope &, evaluate::FoldingContext &);
   bool operator==(const DerivedTypeSpec &) const;  // for std::find()
@@ -271,14 +278,29 @@ public:
   Category category() const { return category_; }
   void set_category(Category category) { category_ = category; }
   bool IsNumeric(TypeCategory) const;
-  IntrinsicTypeSpec *AsIntrinsic();
-  const IntrinsicTypeSpec *AsIntrinsic() const;
-  const DerivedTypeSpec *AsDerived() const;
   const NumericTypeSpec &numericTypeSpec() const;
   const LogicalTypeSpec &logicalTypeSpec() const;
   const CharacterTypeSpec &characterTypeSpec() const;
   const DerivedTypeSpec &derivedTypeSpec() const;
   DerivedTypeSpec &derivedTypeSpec();
+
+  IntrinsicTypeSpec *AsIntrinsic();
+  const IntrinsicTypeSpec *AsIntrinsic() const {
+    switch (category_) {
+    case Numeric: return &std::get<NumericTypeSpec>(typeSpec_);
+    case Logical: return &std::get<LogicalTypeSpec>(typeSpec_);
+    case Character: return &std::get<CharacterTypeSpec>(typeSpec_);
+    default: return nullptr;
+    }
+  }
+
+  const DerivedTypeSpec *AsDerived() const {
+    switch (category_) {
+    case TypeDerived:
+    case ClassDerived: return &std::get<DerivedTypeSpec>(typeSpec_);
+    default: return nullptr;
+    }
+  }
 
 private:
   Category category_;

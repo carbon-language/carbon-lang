@@ -15,6 +15,7 @@
 #include "type.h"
 #include "fold.h"
 #include "../common/idioms.h"
+#include "../semantics/scope.h"
 #include "../semantics/symbol.h"
 #include "../semantics/type.h"
 #include <algorithm>
@@ -22,6 +23,66 @@
 #include <string>
 
 using namespace std::literals::string_literals;
+
+// IsDescriptor() predicate
+namespace Fortran::semantics {
+static bool IsDescriptor(const ObjectEntityDetails &details) {
+  if (const auto *type{details.type()}) {
+    if (const IntrinsicTypeSpec * typeSpec{type->AsIntrinsic()}) {
+      if (typeSpec->category() == TypeCategory::Character) {
+        // TODO maybe character lengths won't be in descriptors
+        return true;
+      }
+    } else if (const DerivedTypeSpec * typeSpec{type->AsDerived()}) {
+      if (details.isDummy()) {
+        return true;
+      }
+      // Any length type parameter?
+      if (const Scope * scope{typeSpec->scope()}) {
+        if (const Symbol * symbol{scope->symbol()}) {
+          if (const auto *details{symbol->detailsIf<DerivedTypeDetails>()}) {
+            for (const Symbol *param : details->paramDecls()) {
+              if (const auto *details{param->detailsIf<TypeParamDetails>()}) {
+                if (details->attr() == common::TypeParamAttr::Len) {
+                  return true;
+                }
+              }
+            }
+          }
+        }
+      }
+    } else if (type->category() == DeclTypeSpec::Category::TypeStar ||
+        type->category() == DeclTypeSpec::Category::ClassStar) {
+      return true;
+    }
+  }
+  if (details.IsAssumedShape() || details.IsDeferredShape() ||
+      details.IsAssumedRank()) {
+    return true;
+  }
+  // TODO: Explicit shape component array dependent on length parameter
+  // TODO: Automatic (adjustable) arrays
+  return false;
+}
+
+static bool IsDescriptor(const ProcEntityDetails &details) {
+  // A procedure pointer or dummy procedure must be a descriptor if
+  // and only if it requires a static link.
+  return details.HasExplicitInterface();
+}
+
+static bool IsDescriptor(const Symbol &symbol) {
+  if (const auto *objectDetails{symbol.detailsIf<ObjectEntityDetails>()}) {
+    return IsDescriptor(*objectDetails);
+  } else if (const auto *procDetails{symbol.detailsIf<ProcEntityDetails>()}) {
+    if (symbol.attrs().test(Attr::POINTER) ||
+        symbol.attrs().test(Attr::EXTERNAL)) {
+      return IsDescriptor(*procDetails);
+    }
+  }
+  return false;
+}
+}
 
 namespace Fortran::evaluate {
 
@@ -38,7 +99,7 @@ std::optional<DynamicType> GetSymbolType(const semantics::Symbol *symbol) {
           TypeCategory category{intrinsic->category()};
           if (IsValidKindOfIntrinsicType(category, *kind)) {
             DynamicType dyType{category, static_cast<int>(*kind)};
-            if (symbol->IsDescriptor()) {
+            if (semantics::IsDescriptor(*symbol)) {
               dyType.descriptor = symbol;
             }
             return std::make_optional(std::move(dyType));
@@ -46,7 +107,7 @@ std::optional<DynamicType> GetSymbolType(const semantics::Symbol *symbol) {
         }
       } else if (const auto *derived{type->AsDerived()}) {
         DynamicType dyType{TypeCategory::Derived, 0, derived};
-        if (symbol->IsDescriptor()) {
+        if (semantics::IsDescriptor(*symbol)) {
           dyType.descriptor = symbol;
         }
         return std::make_optional(std::move(dyType));

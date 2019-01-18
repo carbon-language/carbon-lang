@@ -35,9 +35,6 @@ Scope &Scope::MakeScope(Kind kind, Symbol *symbol) {
 Scope::iterator Scope::find(const SourceName &name) {
   return symbols_.find(name);
 }
-Scope::const_iterator Scope::find(const SourceName &name) const {
-  return symbols_.find(name);
-}
 Scope::size_type Scope::erase(const SourceName &name) {
   auto it{symbols_.find(name)};
   if (it != end()) {

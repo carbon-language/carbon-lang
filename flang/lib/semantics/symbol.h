@@ -168,7 +168,6 @@ public:
     return isDummy() && IsArray() && shape_.back().ubound().isAssumed() &&
         shape_.back().lbound().isAssumed();
   }
-  bool IsDescriptor() const;
 
 private:
   MaybeExpr init_;
@@ -185,10 +184,9 @@ public:
   const ProcInterface &interface() const { return interface_; }
   ProcInterface &interface() { return interface_; }
   void set_interface(const ProcInterface &interface) { interface_ = interface; }
-  bool HasExplicitInterface() const;
-  bool IsDescriptor() const;
   const std::optional<SourceName> &passName() const { return passName_; }
   void set_passName(const SourceName &passName) { passName_ = passName; }
+  inline bool HasExplicitInterface() const;
 
 private:
   ProcInterface interface_;
@@ -403,15 +401,12 @@ public:
 
   // Return a reference to the details which must be of type D.
   template<typename D> D &get() {
-    return const_cast<D &>(static_cast<const Symbol *>(this)->get<D>());
+    return const_cast<D &>(const_cast<const Symbol *>(this)->get<D>());
   }
   template<typename D> const D &get() const {
-    if (const auto p{detailsIf<D>()}) {
-      return *p;
-    } else {
-      common::die("unexpected %s details at %s(%d)", GetDetailsName().c_str(),
-          __FILE__, __LINE__);
-    }
+    const auto *p{detailsIf<D>()};
+    CHECK(p != nullptr);
+    return *p;
   }
 
   Details &details() { return details_; }
@@ -427,19 +422,67 @@ public:
   Symbol &GetUltimate();
   const Symbol &GetUltimate() const;
 
-  DeclTypeSpec *GetType();
-  const DeclTypeSpec *GetType() const;
+  DeclTypeSpec *GetType() {
+    return const_cast<DeclTypeSpec *>(
+        const_cast<const Symbol *>(this)->GetType());
+  }
+
+  const DeclTypeSpec *GetType() const {
+    return std::visit(
+        common::visitors{
+            [](const EntityDetails &x) { return x.type(); },
+            [](const ObjectEntityDetails &x) { return x.type(); },
+            [](const AssocEntityDetails &x) { return x.type(); },
+            [](const ProcEntityDetails &x) { return x.interface().type(); },
+            [](const TypeParamDetails &x) { return x.type(); },
+            [](const auto &) -> const DeclTypeSpec * { return nullptr; },
+        },
+        details_);
+  }
+
   void SetType(const DeclTypeSpec &);
 
   bool IsSubprogram() const;
-  bool HasExplicitInterface() const;
   bool IsSeparateModuleProc() const;
-  bool IsDescriptor() const;
+  bool HasExplicitInterface() const {
+    return std::visit(
+        common::visitors{
+            [](const SubprogramDetails &) { return true; },
+            [](const SubprogramNameDetails &) { return true; },
+            [](const ProcEntityDetails &x) { return x.HasExplicitInterface(); },
+            [](const UseDetails &x) {
+              return x.symbol().HasExplicitInterface();
+            },
+            [](const auto &) { return false; },
+        },
+        details_);
+  }
 
   bool operator==(const Symbol &that) const { return this == &that; }
   bool operator!=(const Symbol &that) const { return this != &that; }
 
-  int Rank() const;
+  int Rank() const {
+    return std::visit(
+        common::visitors{
+            [](const SubprogramDetails &sd) {
+              if (sd.isFunction()) {
+                return sd.result().Rank();
+              } else {
+                return 0;
+              }
+            },
+            [](const GenericDetails &) {
+              return 0; /*TODO*/
+            },
+            [](const UseDetails &x) { return x.symbol().Rank(); },
+            [](const HostAssocDetails &x) { return x.symbol().Rank(); },
+            [](const ObjectEntityDetails &oed) {
+              return static_cast<int>(oed.shape().size());
+            },
+            [](const auto &) { return 0; },
+        },
+        details_);
+  }
 
   // Clones the Symbol in the context of a parameterized derived type instance
   Symbol &Instantiate(Scope &, evaluate::FoldingContext &) const;
@@ -506,5 +549,16 @@ private:
     return result;
   }
 };
+
+// Define a few member functions here in the header so that they
+// can be used by lib/evaluate without inducing a dependence cycle
+// between the two shared libraries.
+
+inline bool ProcEntityDetails::HasExplicitInterface() const {
+  if (auto *symbol{interface_.symbol()}) {
+    return symbol->HasExplicitInterface();
+  }
+  return false;
+}
 }
 #endif  // FORTRAN_SEMANTICS_SYMBOL_H_

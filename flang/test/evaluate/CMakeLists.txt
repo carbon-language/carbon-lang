@@ -1,4 +1,4 @@
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ add_executable(leading-zero-bit-count-test
 )
 
 target_link_libraries(leading-zero-bit-count-test
-  FortranEvaluate
   FortranEvaluateTesting
+  FortranEvaluate
 )
 
 add_executable(bit-population-count-test
@@ -31,8 +31,8 @@ add_executable(bit-population-count-test
 )
 
 target_link_libraries(bit-population-count-test
-  FortranEvaluate
   FortranEvaluateTesting
+  FortranEvaluate
 )
 
 add_executable(expression-test
@@ -41,10 +41,9 @@ add_executable(expression-test
 
 target_link_libraries(expression-test
   FortranEvaluateTesting
-  FortranEvaluate
-  FortranParser
   FortranSemantics
   FortranEvaluate
+  FortranParser
 )
 
 add_executable(integer-test
@@ -52,8 +51,8 @@ add_executable(integer-test
 )
 
 target_link_libraries(integer-test
-  FortranEvaluate
   FortranEvaluateTesting
+  FortranEvaluate
 )
 
 add_executable(intrinsics-test
@@ -62,9 +61,9 @@ add_executable(intrinsics-test
 
 target_link_libraries(intrinsics-test
   FortranEvaluateTesting
+  FortranSemantics
   FortranEvaluate
   FortranParser
-  FortranSemantics
   FortranRuntime
 )
 
@@ -73,8 +72,8 @@ add_executable(logical-test
 )
 
 target_link_libraries(logical-test
-  FortranEvaluate
   FortranEvaluateTesting
+  FortranEvaluate
 )
 
 add_executable(real-test
@@ -82,8 +81,8 @@ add_executable(real-test
 )
 
 target_link_libraries(real-test
-  FortranEvaluate
   FortranEvaluateTesting
+  FortranEvaluate
   m
 )
 
@@ -92,9 +91,9 @@ add_executable(reshape-test
 )
 
 target_link_libraries(reshape-test
+  FortranEvaluateTesting
   FortranSemantics
   FortranEvaluate
-  FortranEvaluateTesting
   FortranRuntime
 )
 
@@ -103,17 +102,17 @@ add_executable(ISO-Fortran-binding-test
 )
 
 target_link_libraries(ISO-Fortran-binding-test
-  FortranEvaluate
   FortranEvaluateTesting
+  FortranEvaluate
   FortranRuntime
 )
 
-add_test(NAME Expression COMMAND expression-test)
-add_test(NAME Leadz COMMAND leading-zero-bit-count-test)
-add_test(NAME PopPar COMMAND bit-population-count-test)
-add_test(NAME Integer COMMAND integer-test)
-add_test(NAME Intrinsics COMMAND intrinsics-test)
-add_test(NAME Logical COMMAND logical-test)
-add_test(NAME Real COMMAND real-test)
-add_test(NAME RESHAPE COMMAND reshape-test)
-add_test(NAME ISO-Fortran-binding COMMAND ISO-Fortran-binding-test)
+add_test(Expression expression-test)
+add_test(Leadz leading-zero-bit-count-test)
+add_test(PopPar bit-population-count-test)
+add_test(Integer integer-test)
+add_test(Intrinsics intrinsics-test)
+add_test(Logical logical-test)
+add_test(Real real-test)
+add_test(RESHAPE reshape-test)
+add_test(ISO-binding ISO-Fortran-binding-test)

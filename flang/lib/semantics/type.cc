@@ -50,21 +50,8 @@ ParamValue &DerivedTypeSpec::AddParamValue(
 }
 
 ParamValue *DerivedTypeSpec::FindParameter(SourceName target) {
-  auto iter{parameters_.find(target)};
-  if (iter != parameters_.end()) {
-    return &iter->second;
-  } else {
-    return nullptr;
-  }
-}
-
-const ParamValue *DerivedTypeSpec::FindParameter(SourceName target) const {
-  auto iter{parameters_.find(target)};
-  if (iter != parameters_.end()) {
-    return &iter->second;
-  } else {
-    return nullptr;
-  }
+  return const_cast<ParamValue *>(
+      const_cast<const DerivedTypeSpec *>(this)->FindParameter(target));
 }
 
 void DerivedTypeSpec::FoldParameterExpressions(
@@ -278,27 +265,8 @@ bool DeclTypeSpec::IsNumeric(TypeCategory tc) const {
   return category_ == Numeric && numericTypeSpec().category() == tc;
 }
 IntrinsicTypeSpec *DeclTypeSpec::AsIntrinsic() {
-  switch (category_) {
-  case Numeric: return &std::get<NumericTypeSpec>(typeSpec_);
-  case Logical: return &std::get<LogicalTypeSpec>(typeSpec_);
-  case Character: return &std::get<CharacterTypeSpec>(typeSpec_);
-  default: return nullptr;
-  }
-}
-const IntrinsicTypeSpec *DeclTypeSpec::AsIntrinsic() const {
-  switch (category_) {
-  case Numeric: return &std::get<NumericTypeSpec>(typeSpec_);
-  case Logical: return &std::get<LogicalTypeSpec>(typeSpec_);
-  case Character: return &std::get<CharacterTypeSpec>(typeSpec_);
-  default: return nullptr;
-  }
-}
-const DerivedTypeSpec *DeclTypeSpec::AsDerived() const {
-  switch (category_) {
-  case TypeDerived:
-  case ClassDerived: return &std::get<DerivedTypeSpec>(typeSpec_);
-  default: return nullptr;
-  }
+  return const_cast<IntrinsicTypeSpec *>(
+      const_cast<const DeclTypeSpec *>(this)->AsIntrinsic());
 }
 const NumericTypeSpec &DeclTypeSpec::numericTypeSpec() const {
   CHECK(category_ == Numeric);

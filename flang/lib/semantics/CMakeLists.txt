@@ -32,5 +32,6 @@ add_library(FortranSemantics
 
 target_link_libraries(FortranSemantics
   FortranCommon
+  FortranEvaluate
   clangBasic
 )

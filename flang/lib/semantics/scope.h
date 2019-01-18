@@ -91,7 +91,9 @@ public:
   const_iterator cend() const { return symbols_.cend(); }
 
   iterator find(const SourceName &name);
-  const_iterator find(const SourceName &name) const;
+  const_iterator find(const SourceName &name) const {
+    return symbols_.find(name);
+  }
   size_type erase(const SourceName &);
   size_type size() const { return symbols_.size(); }
   bool empty() const { return symbols_.empty(); }
