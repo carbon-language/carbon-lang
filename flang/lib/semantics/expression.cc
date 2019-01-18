@@ -285,6 +285,8 @@ static MaybeExpr CompleteSubscripts(
   if (subscripts != symbolRank) {
     context.Say("reference to rank-%d object '%s' has %d subscripts"_err_en_US,
         symbolRank, symbol.name().ToString().data(), subscripts);
+  } else if (subscripts == 0) {
+    // nothing to check
   } else if (Component * component{std::get_if<Component>(&ref.u)}) {
     int baseRank{component->Rank()};
     if (baseRank > 0) {
