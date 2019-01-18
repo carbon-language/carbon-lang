@@ -633,13 +633,18 @@ void ASTDumper::VisitFunctionDecl(const FunctionDecl *D) {
     }
   }
 
+  // Since NumParams comes from the FunctionProtoType of the FunctionDecl and
+  // the Params are set later, it is possible for a dump during debugging to
+  // encounter a FunctionDecl that has been created but hasn't been assigned
+  // ParmVarDecls yet.
+  if (!D->param_empty() && !D->param_begin())
+    OS << " <<<NULL params x " << D->getNumParams() << ">>>";
+
   if (const auto *FTSI = D->getTemplateSpecializationInfo())
     dumpTemplateArgumentList(*FTSI->TemplateArguments);
 
-  if (!D->param_begin() && D->getNumParams())
-    dumpChild([=] { OS << "<<NULL params x " << D->getNumParams() << ">>"; });
-  else
-    for (const ParmVarDecl *Parameter : D->parameters())
+  if (D->param_begin())
+    for (const auto *Parameter : D->parameters())
       dumpDecl(Parameter);
 
   if (const auto *C = dyn_cast<CXXConstructorDecl>(D))
