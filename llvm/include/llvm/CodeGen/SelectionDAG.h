@@ -1154,6 +1154,11 @@ public:
                                SDValue Op3, SDValue Op4, SDValue Op5);
   SDNode *UpdateNodeOperands(SDNode *N, ArrayRef<SDValue> Ops);
 
+  /// Creates a new TokenFactor containing \p Vals. If \p Vals contains 64k
+  /// values or more, move values into new TokenFactors in 64k-1 blocks, until
+  /// the final TokenFactor has less than 64k operands.
+  SDValue getTokenFactor(const SDLoc &DL, SmallVectorImpl<SDValue> &Vals);
+
   /// *Mutate* the specified machine node's memory references to the provided
   /// list.
   void setNodeMemRefs(MachineSDNode *N,
