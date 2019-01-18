@@ -164,8 +164,6 @@ namespace  {
       VisitFunctionType(T);
       for (QualType PT : T->getParamTypes())
         dumpTypeAsChild(PT);
-      if (T->getExtProtoInfo().Variadic)
-        dumpChild([=] { OS << "..."; });
     }
     void VisitTypeOfExprType(const TypeOfExprType *T) {
       dumpStmt(T->getUnderlyingExpr());
@@ -1236,15 +1234,15 @@ void ASTDumper::VisitObjCMethodDecl(const ObjCMethodDecl *D) {
   NodeDumper.dumpName(D);
   NodeDumper.dumpType(D->getReturnType());
 
+  if (D->isVariadic())
+    OS << " variadic";
+
   if (D->isThisDeclarationADefinition()) {
     dumpDeclContext(D);
   } else {
     for (const ParmVarDecl *Parameter : D->parameters())
       dumpDecl(Parameter);
   }
-
-  if (D->isVariadic())
-    dumpChild([=] { OS << "..."; });
 
   if (D->hasBody())
     dumpStmt(D->getBody());
@@ -1378,11 +1376,11 @@ void ASTDumper::Visit(const BlockDecl::Capture &C) {
 }
 
 void ASTDumper::VisitBlockDecl(const BlockDecl *D) {
+  if (D->isVariadic())
+    OS << " variadic";
+
   for (auto I : D->parameters())
     dumpDecl(I);
-
-  if (D->isVariadic())
-    dumpChild([=]{ OS << "..."; });
 
   if (D->capturesCXXThis())
     dumpChild([=]{ OS << "capture this"; });
