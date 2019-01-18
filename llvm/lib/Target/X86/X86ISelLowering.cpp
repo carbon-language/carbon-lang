@@ -32966,7 +32966,7 @@ static SDValue combineBitcastvxi1(SelectionDAG &DAG, SDValue BitCast,
                                   const X86Subtarget &Subtarget) {
   EVT VT = BitCast.getValueType();
   SDValue N0 = BitCast.getOperand(0);
-  EVT VecVT = N0->getValueType(0);
+  EVT VecVT = N0.getValueType();
 
   if (!VT.isScalarInteger() || !VecVT.isSimple())
     return SDValue();
@@ -33006,8 +33006,8 @@ static SDValue combineBitcastvxi1(SelectionDAG &DAG, SDValue BitCast,
     SExtVT = MVT::v4i32;
     // For cases such as (i4 bitcast (v4i1 setcc v4i64 v1, v2))
     // sign-extend to a 256-bit operation to avoid truncation.
-    if (N0->getOpcode() == ISD::SETCC && Subtarget.hasAVX() &&
-        N0->getOperand(0).getValueType().is256BitVector()) {
+    if (N0.getOpcode() == ISD::SETCC && Subtarget.hasAVX() &&
+        N0.getOperand(0).getValueType().is256BitVector()) {
       SExtVT = MVT::v4i64;
     }
     break;
@@ -33018,9 +33018,9 @@ static SDValue combineBitcastvxi1(SelectionDAG &DAG, SDValue BitCast,
     // If the setcc operand is 128-bit, prefer sign-extending to 128-bit over
     // 256-bit because the shuffle is cheaper than sign extending the result of
     // the compare.
-    if (N0->getOpcode() == ISD::SETCC && Subtarget.hasAVX() &&
-        (N0->getOperand(0).getValueType().is256BitVector() ||
-         N0->getOperand(0).getValueType().is512BitVector())) {
+    if (N0.getOpcode() == ISD::SETCC && Subtarget.hasAVX() &&
+        (N0.getOperand(0).getValueType().is256BitVector() ||
+         N0.getOperand(0).getValueType().is512BitVector())) {
       SExtVT = MVT::v8i32;
     }
     break;
@@ -35765,8 +35765,8 @@ static SDValue combineVectorPack(SDNode *N, SelectionDAG &DAG,
   // Constant Folding.
   APInt UndefElts0, UndefElts1;
   SmallVector<APInt, 32> EltBits0, EltBits1;
-  if ((N0->isUndef() || N->isOnlyUserOf(N0.getNode())) &&
-      (N1->isUndef() || N->isOnlyUserOf(N1.getNode())) &&
+  if ((N0.isUndef() || N->isOnlyUserOf(N0.getNode())) &&
+      (N1.isUndef() || N->isOnlyUserOf(N1.getNode())) &&
       getTargetConstantBitsFromNode(N0, SrcBitsPerElt, UndefElts0, EltBits0) &&
       getTargetConstantBitsFromNode(N1, SrcBitsPerElt, UndefElts1, EltBits1)) {
     unsigned NumLanes = VT.getSizeInBits() / 128;
@@ -35974,8 +35974,8 @@ static SDValue combineCompareEqual(SDNode *N, SelectionDAG &DAG,
   if (Subtarget.hasSSE2() && isAndOrOfSetCCs(SDValue(N, 0U), opcode)) {
     SDValue N0 = N->getOperand(0);
     SDValue N1 = N->getOperand(1);
-    SDValue CMP0 = N0->getOperand(1);
-    SDValue CMP1 = N1->getOperand(1);
+    SDValue CMP0 = N0.getOperand(1);
+    SDValue CMP1 = N1.getOperand(1);
     SDLoc DL(N);
 
     // The SETCCs should both refer to the same CMP.
@@ -36126,7 +36126,7 @@ static SDValue PromoteMaskArithmetic(SDNode *N, SelectionDAG &DAG,
     return SDValue();
 
   // The type of the truncated inputs.
-  if (N0->getOperand(0).getValueType() != VT)
+  if (N0.getOperand(0).getValueType() != VT)
     return SDValue();
 
   // The right side has to be a 'trunc' or a constant vector.
@@ -36142,9 +36142,9 @@ static SDValue PromoteMaskArithmetic(SDNode *N, SelectionDAG &DAG,
     return SDValue();
 
   // Set N0 and N1 to hold the inputs to the new wide operation.
-  N0 = N0->getOperand(0);
+  N0 = N0.getOperand(0);
   if (RHSTrunc)
-    N1 = N1->getOperand(0);
+    N1 = N1.getOperand(0);
   else
     N1 = DAG.getNode(ISD::ZERO_EXTEND, DL, VT, N1);
 
@@ -39531,7 +39531,7 @@ static SDValue combineExtSetcc(SDNode *N, SelectionDAG &DAG,
   SDLoc dl(N);
 
   // Only do this combine with AVX512 for vector extends.
-  if (!Subtarget.hasAVX512() || !VT.isVector() || N0->getOpcode() != ISD::SETCC)
+  if (!Subtarget.hasAVX512() || !VT.isVector() || N0.getOpcode() != ISD::SETCC)
     return SDValue();
 
   // Only combine legal element types.
@@ -39547,7 +39547,7 @@ static SDValue combineExtSetcc(SDNode *N, SelectionDAG &DAG,
 
   // Don't fold if the condition code can't be handled by PCMPEQ/PCMPGT since
   // that's the only integer compares with we have.
-  ISD::CondCode CC = cast<CondCodeSDNode>(N0->getOperand(2))->get();
+  ISD::CondCode CC = cast<CondCodeSDNode>(N0.getOperand(2))->get();
   if (ISD::isUnsignedIntSetCC(CC))
     return SDValue();
 
