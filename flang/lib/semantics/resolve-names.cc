@@ -146,9 +146,12 @@ public:
   // It is not in any scope and always has MiscDetails.
   void MakePlaceholder(const parser::Name &, MiscDetails::Kind);
 
+  template<typename T> auto FoldExpr(T &&expr) -> T {
+    return evaluate::Fold(GetFoldingContext(), std::move(expr));
+  }
+
   template<typename T> MaybeExpr EvaluateExpr(const T &expr) {
-    auto maybeExpr{AnalyzeExpr(*context_, expr)};
-    return evaluate::Fold(GetFoldingContext(), std::move(maybeExpr));
+    return FoldExpr(AnalyzeExpr(*context_, expr));
   }
 
   template<typename T> MaybeIntExpr EvaluateIntExpr(const T &expr) {
@@ -163,9 +166,8 @@ public:
   template<typename T>
   MaybeSubscriptIntExpr EvaluateSubscriptIntExpr(const T &expr) {
     if (MaybeIntExpr maybeIntExpr{EvaluateIntExpr(expr)}) {
-      return evaluate::Fold(GetFoldingContext(),
-          evaluate::ConvertToType<evaluate::SubscriptInteger>(
-              std::move(*maybeIntExpr)));
+      return FoldExpr(evaluate::ConvertToType<evaluate::SubscriptInteger>(
+          std::move(*maybeIntExpr)));
     } else {
       return std::nullopt;
     }
@@ -736,7 +738,7 @@ private:
     } else if (symbol.has<UnknownDetails>()) {
       symbol.set_details(T{});
     } else if (auto *details{symbol.detailsIf<EntityDetails>()}) {
-      symbol.set_details(T{details});
+      symbol.set_details(T{std::move(*details)});
     } else if (std::is_same_v<EntityDetails, T> &&
         (symbol.has<ObjectEntityDetails>() ||
             symbol.has<ProcEntityDetails>())) {
@@ -3358,7 +3360,9 @@ Symbol *ConstructVisitor::MakeAssocEntity() {
   }
   if (auto &expr{association_.expr}) {
     symbol.set_details(AssocEntityDetails{std::move(*expr)});
-    expr = std::nullopt;
+    association_.expr.reset();
+  } else {
+    symbol.set_details(AssocEntityDetails{});
   }
   return &symbol;
 }
@@ -3371,16 +3375,23 @@ void ConstructVisitor::SetTypeFromAssociation(Symbol &symbol) {
         symbol.SetType(*type);
       }
     }
-  } else if (const auto &expr{association_.expr}) {
-    if (std::optional<evaluate::DynamicType> type{expr->GetType()}) {
-      if (const auto *charExpr{
-              evaluate::UnwrapExpr<evaluate::Expr<evaluate::SomeCharacter>>(
-                  *expr)}) {
-        symbol.SetType(ToDeclTypeSpec(std::move(*type),
-            std::visit([](const auto &kindChar) { return kindChar.LEN(); },
-                charExpr->u)));
+  } else {
+    auto &details{symbol.get<AssocEntityDetails>()};
+    if (const MaybeExpr & expr{details.expr()}) {
+      if (std::optional<evaluate::DynamicType> type{expr->GetType()}) {
+        if (const auto *charExpr{
+                evaluate::UnwrapExpr<evaluate::Expr<evaluate::SomeCharacter>>(
+                    *expr)}) {
+          symbol.SetType(ToDeclTypeSpec(std::move(*type),
+              FoldExpr(std::visit(
+                  [](const auto &kindChar) { return kindChar.LEN(); },
+                  charExpr->u))));
+        } else {
+          symbol.SetType(ToDeclTypeSpec(std::move(*type)));
+        }
       } else {
-        symbol.SetType(ToDeclTypeSpec(std::move(*type)));
+        // BOZ literal not acceptable
+        Say(symbol.name(), "Associate name '%s' must have a type"_err_en_US);
       }
     }
   }

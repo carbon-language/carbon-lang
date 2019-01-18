@@ -108,7 +108,7 @@ private:
 // A name from an entity-decl -- could be object or function.
 class EntityDetails {
 public:
-  EntityDetails(bool isDummy = false) : isDummy_{isDummy} {}
+  explicit EntityDetails(bool isDummy = false) : isDummy_{isDummy} {}
   const DeclTypeSpec *type() const { return type_; }
   void set_type(const DeclTypeSpec &);
   void ReplaceType(const DeclTypeSpec &);
@@ -126,11 +126,16 @@ private:
 // Symbol is associated with a name or expression in a SELECT TYPE or ASSOCIATE.
 class AssocEntityDetails : public EntityDetails {
 public:
-  AssocEntityDetails(SomeExpr &&expr) : expr_{std::move(expr)} {}
-  const SomeExpr &expr() const { return expr_; }
+  AssocEntityDetails() {}
+  explicit AssocEntityDetails(SomeExpr &&expr) : expr_{std::move(expr)} {}
+  AssocEntityDetails(const AssocEntityDetails &) = default;
+  AssocEntityDetails(AssocEntityDetails &&) = default;
+  AssocEntityDetails &operator=(const AssocEntityDetails &) = default;
+  AssocEntityDetails &operator=(AssocEntityDetails &&) = default;
+  const MaybeExpr &expr() const { return expr_; }
 
 private:
-  SomeExpr expr_;
+  MaybeExpr expr_;
 };
 
 // An entity known to be an object.
@@ -175,7 +180,7 @@ private:
 class ProcEntityDetails : public EntityDetails {
 public:
   ProcEntityDetails() = default;
-  ProcEntityDetails(EntityDetails &&d);
+  explicit ProcEntityDetails(EntityDetails &&d);
 
   const ProcInterface &interface() const { return interface_; }
   ProcInterface &interface() { return interface_; }

@@ -30,7 +30,7 @@ type(t( &
 !ERROR: Must have INTEGER type
   .true.)) :: w
 !ERROR: Must have INTEGER type
-real :: w(l*2)
+real :: u(l*2)
 !ERROR: Must have INTEGER type
 character(len=l) :: v
 end

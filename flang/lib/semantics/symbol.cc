@@ -368,7 +368,9 @@ std::ostream &operator<<(std::ostream &os, const ObjectEntityDetails &x) {
 
 std::ostream &operator<<(std::ostream &os, const AssocEntityDetails &x) {
   os << *static_cast<const EntityDetails *>(&x);
-  x.expr().AsFortran(os << ' ');
+  if (x.expr().has_value()) {
+    x.expr()->AsFortran(os << ' ');
+  }
   return os;
 }
 
