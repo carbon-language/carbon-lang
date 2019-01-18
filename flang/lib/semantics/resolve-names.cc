@@ -263,7 +263,6 @@ public:
   using AttrsVisitor::Pre;
   void Post(const parser::IntrinsicTypeSpec::DoublePrecision &);
   void Post(const parser::IntrinsicTypeSpec::DoubleComplex &);
-  bool Pre(const parser::DeclarationTypeSpec::Class &);
   void Post(const parser::DeclarationTypeSpec::ClassStar &);
   void Post(const parser::DeclarationTypeSpec::TypeStar &);
   bool Pre(const parser::TypeGuardStmt &);
@@ -1176,10 +1175,6 @@ void DeclTypeSpecVisitor::MakeNumericType(TypeCategory category, int kind) {
   SetDeclTypeSpec(context().MakeNumericType(category, kind));
 }
 
-bool DeclTypeSpecVisitor::Pre(const parser::DeclarationTypeSpec::Class &x) {
-  state_.derived.category = DeclTypeSpec::ClassDerived;
-  return true;
-}
 void DeclTypeSpecVisitor::Post(const parser::DeclarationTypeSpec::ClassStar &) {
   SetDeclTypeSpec(context().globalScope().MakeClassStarType());
 }
