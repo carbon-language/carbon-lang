@@ -2489,6 +2489,10 @@ static bool mergeDeclAttribute(Sema &S, NamedDecl *D,
   else if (const auto *UA = dyn_cast<UuidAttr>(Attr))
     NewAttr = S.mergeUuidAttr(D, UA->getRange(), AttrSpellingListIndex,
                               UA->getGuid());
+  else if (const auto *SLHA = dyn_cast<SpeculativeLoadHardeningAttr>(Attr))
+    NewAttr = S.mergeSpeculativeLoadHardeningAttr(D, *SLHA);
+  else if (const auto *SLHA = dyn_cast<NoSpeculativeLoadHardeningAttr>(Attr))
+    NewAttr = S.mergeNoSpeculativeLoadHardeningAttr(D, *SLHA);
   else if (Attr->shouldInheritEvenIfAlreadyPresent() || !DeclHasAttr(D, Attr))
     NewAttr = cast<InheritableAttr>(Attr->clone(S.Context));
 
