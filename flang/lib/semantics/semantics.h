@@ -23,6 +23,10 @@
 #include <string>
 #include <vector>
 
+namespace Fortran::common {
+class IntrinsicTypeDefaultKinds;
+}
+
 namespace Fortran::parser {
 struct Program;
 class CookedSource;
@@ -30,13 +34,11 @@ class CookedSource;
 
 namespace Fortran::semantics {
 
-class IntrinsicTypeDefaultKinds;
-
 class SemanticsContext {
 public:
-  SemanticsContext(const IntrinsicTypeDefaultKinds &);
+  SemanticsContext(const common::IntrinsicTypeDefaultKinds &);
 
-  const IntrinsicTypeDefaultKinds &defaultKinds() const {
+  const common::IntrinsicTypeDefaultKinds &defaultKinds() const {
     return defaultKinds_;
   }
   const std::vector<std::string> &searchDirectories() const {
@@ -76,7 +78,7 @@ public:
   }
 
 private:
-  const IntrinsicTypeDefaultKinds &defaultKinds_;
+  const common::IntrinsicTypeDefaultKinds &defaultKinds_;
   std::vector<std::string> searchDirectories_;
   std::string moduleDirectory_{"."s};
   bool warningsAreErrors_{false};

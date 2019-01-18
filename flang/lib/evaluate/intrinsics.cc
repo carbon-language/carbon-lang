@@ -20,7 +20,6 @@
 #include "../common/enum-set.h"
 #include "../common/fortran.h"
 #include "../common/idioms.h"
-#include "../semantics/default-kinds.h"
 #include <algorithm>
 #include <map>
 #include <ostream>
@@ -206,7 +205,7 @@ struct IntrinsicInterface {
   TypePattern result;
   Rank rank{Rank::elemental};
   std::optional<SpecificCall> Match(const CallCharacteristics &,
-      const semantics::IntrinsicTypeDefaultKinds &, ActualArguments &,
+      const common::IntrinsicTypeDefaultKinds &, ActualArguments &,
       parser::ContextualMessages &messages) const;
   std::ostream &Dump(std::ostream &) const;
 };
@@ -757,7 +756,7 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
 // procedure reference.
 std::optional<SpecificCall> IntrinsicInterface::Match(
     const CallCharacteristics &call,
-    const semantics::IntrinsicTypeDefaultKinds &defaults,
+    const common::IntrinsicTypeDefaultKinds &defaults,
     ActualArguments &arguments, parser::ContextualMessages &messages) const {
   // Attempt to construct a 1-1 correspondence between the dummy arguments in
   // a particular intrinsic procedure's generic interface and the actual
@@ -1158,7 +1157,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
 }
 
 struct IntrinsicProcTable::Implementation {
-  explicit Implementation(const semantics::IntrinsicTypeDefaultKinds &dfts)
+  explicit Implementation(const common::IntrinsicTypeDefaultKinds &dfts)
     : defaults{dfts} {
     for (const IntrinsicInterface &f : genericIntrinsicFunction) {
       genericFuncs.insert(std::make_pair(std::string{f.name}, &f));
@@ -1171,7 +1170,7 @@ struct IntrinsicProcTable::Implementation {
   std::optional<SpecificCall> Probe(const CallCharacteristics &,
       ActualArguments &, parser::ContextualMessages *) const;
 
-  semantics::IntrinsicTypeDefaultKinds defaults;
+  common::IntrinsicTypeDefaultKinds defaults;
   std::multimap<std::string, const IntrinsicInterface *> genericFuncs;
   std::multimap<std::string, const SpecificIntrinsicInterface *> specificFuncs;
   std::ostream &Dump(std::ostream &) const;
@@ -1253,7 +1252,7 @@ IntrinsicProcTable::~IntrinsicProcTable() {
 }
 
 IntrinsicProcTable IntrinsicProcTable::Configure(
-    const semantics::IntrinsicTypeDefaultKinds &defaults) {
+    const common::IntrinsicTypeDefaultKinds &defaults) {
   IntrinsicProcTable result;
   result.impl_ = new IntrinsicProcTable::Implementation(defaults);
   return result;

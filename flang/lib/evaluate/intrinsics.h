@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 #define FORTRAN_EVALUATE_INTRINSICS_H_
 
 #include "call.h"
+#include "../common/default-kinds.h"
 #include "../parser/char-block.h"
 #include "../parser/message.h"
-#include "../semantics/default-kinds.h"
 #include <optional>
 #include <ostream>
 
@@ -43,7 +43,7 @@ private:
 public:
   ~IntrinsicProcTable();
   static IntrinsicProcTable Configure(
-      const semantics::IntrinsicTypeDefaultKinds &);
+      const common::IntrinsicTypeDefaultKinds &);
 
   // Probe the intrinsics for a match against a specific call.
   // On success, the actual arguments are transferred to the result

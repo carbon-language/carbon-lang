@@ -14,7 +14,6 @@
 
 #include "resolve-names.h"
 #include "attr.h"
-#include "default-kinds.h"
 #include "expression.h"
 #include "mod-file.h"
 #include "rewrite-parse-tree.h"
@@ -22,6 +21,7 @@
 #include "semantics.h"
 #include "symbol.h"
 #include "type.h"
+#include "../common/default-kinds.h"
 #include "../common/fortran.h"
 #include "../common/indirection.h"
 #include "../evaluate/common.h"

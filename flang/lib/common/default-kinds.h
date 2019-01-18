@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,17 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_DEFAULT_KINDS_H_
-#define FORTRAN_DEFAULT_KINDS_H_
+#ifndef FORTRAN_COMMON_DEFAULT_KINDS_H_
+#define FORTRAN_COMMON_DEFAULT_KINDS_H_
 
 #include "../common/fortran.h"
 
 // Represent the default values of the kind parameters of the
 // various intrinsic types.  These can be configured by means of
 // the compiler command line.
-namespace Fortran::semantics {
-
-using Fortran::common::TypeCategory;
+namespace Fortran::common {
 
 class IntrinsicTypeDefaultKinds {
 public:
@@ -56,4 +54,4 @@ private:
   int defaultLogicalKind_{defaultIntegerKind_};
 };
 }
-#endif  // FORTRAN_DEFAULT_KINDS_H_
+#endif  // FORTRAN_COMMON_DEFAULT_KINDS_H_

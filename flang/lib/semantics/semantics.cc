@@ -16,7 +16,6 @@
 #include "assignment.h"
 #include "canonicalize-do.h"
 #include "check-do-concurrent.h"
-#include "default-kinds.h"
 #include "expression.h"
 #include "mod-file.h"
 #include "resolve-labels.h"
@@ -24,6 +23,7 @@
 #include "rewrite-parse-tree.h"
 #include "scope.h"
 #include "symbol.h"
+#include "../common/default-kinds.h"
 #include <ostream>
 
 namespace Fortran::semantics {
@@ -32,7 +32,7 @@ static void DoDumpSymbols(std::ostream &, const Scope &, int indent = 0);
 static void PutIndent(std::ostream &, int indent);
 
 SemanticsContext::SemanticsContext(
-    const IntrinsicTypeDefaultKinds &defaultKinds)
+    const common::IntrinsicTypeDefaultKinds &defaultKinds)
   : defaultKinds_{defaultKinds},
     intrinsics_{evaluate::IntrinsicProcTable::Configure(defaultKinds)},
     foldingContext_{evaluate::FoldingContext{

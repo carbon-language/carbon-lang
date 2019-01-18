@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 
 // Temporary Fortran front end driver main program for development scaffolding.
 
+#include "../../lib/common/default-kinds.h"
 #include "../../lib/parser/characters.h"
 #include "../../lib/parser/features.h"
 #include "../../lib/parser/message.h"
@@ -22,7 +23,6 @@
 #include "../../lib/parser/parsing.h"
 #include "../../lib/parser/provenance.h"
 #include "../../lib/parser/unparse.h"
-#include "../../lib/semantics/default-kinds.h"
 #include "../../lib/semantics/dump-parse-tree.h"
 #include "../../lib/semantics/expression.h"
 #include "../../lib/semantics/semantics.h"
@@ -319,7 +319,7 @@ int main(int argc, char *const argv[]) {
   options.predefinitions.emplace_back("__F18_MINOR__", "1");
   options.predefinitions.emplace_back("__F18_PATCHLEVEL__", "1");
 
-  Fortran::semantics::IntrinsicTypeDefaultKinds defaultKinds;
+  Fortran::common::IntrinsicTypeDefaultKinds defaultKinds;
 
   std::vector<std::string> fortranSources, otherSources, relocatables;
   bool anyFiles{false};
