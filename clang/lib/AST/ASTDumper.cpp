@@ -1242,12 +1242,11 @@ void ASTDumper::VisitObjCMethodDecl(const ObjCMethodDecl *D) {
   if (D->isVariadic())
     OS << " variadic";
 
-  if (D->isThisDeclarationADefinition()) {
+  if (D->isThisDeclarationADefinition())
     dumpDeclContext(D);
-  } else {
+  else
     for (const ParmVarDecl *Parameter : D->parameters())
       dumpDecl(Parameter);
-  }
 
   if (D->hasBody())
     dumpStmt(D->getBody());
