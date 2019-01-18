@@ -245,8 +245,10 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     Atomics.legalFor({{S32, FlatPtr}, {S64, FlatPtr}});
   }
 
-  setAction({G_SELECT, S32}, Legal);
-  setAction({G_SELECT, 1, S1}, Legal);
+  // TODO: Pointer types, any 32-bit or 64-bit vector
+  getActionDefinitionsBuilder(G_SELECT)
+    .legalFor({{S32, S1}, {S64, S1}, {V2S32, S1}, {V2S16, S1}})
+    .clampScalar(0, S32, S64);
 
   setAction({G_SHL, S32}, Legal);
 
