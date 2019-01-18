@@ -513,8 +513,7 @@ void ASTDumper::dumpDecl(const Decl *D) {
 
     // Decls within functions are visited by the body.
     if (!isa<FunctionDecl>(*D) && !isa<ObjCMethodDecl>(*D)) {
-      auto DC = dyn_cast<DeclContext>(D);
-      if (DC)
+      if (const auto *DC = dyn_cast<DeclContext>(D))
         dumpDeclContext(DC);
     }
   });
