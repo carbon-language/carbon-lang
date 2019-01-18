@@ -1379,11 +1379,11 @@ void ASTDumper::VisitBlockDecl(const BlockDecl *D) {
   if (D->isVariadic())
     OS << " variadic";
 
+  if (D->capturesCXXThis())
+    OS << " captures_this";
+
   for (auto I : D->parameters())
     dumpDecl(I);
-
-  if (D->capturesCXXThis())
-    dumpChild([=]{ OS << "capture this"; });
 
   for (const auto &I : D->captures())
     Visit(I);
