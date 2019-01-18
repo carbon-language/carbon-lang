@@ -1022,6 +1022,19 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
              MI);
     break;
   }
+  case TargetOpcode::G_BITCAST: {
+    LLT DstTy = MRI->getType(MI->getOperand(0).getReg());
+    LLT SrcTy = MRI->getType(MI->getOperand(1).getReg());
+    if (!DstTy.isValid() || !SrcTy.isValid())
+      break;
+
+    if (SrcTy.isPointer() != DstTy.isPointer())
+      report("bitcast cannot convert between pointers and other types", MI);
+
+    if (SrcTy.getSizeInBits() != DstTy.getSizeInBits())
+      report("bitcast sizes must match", MI);
+    break;
+  }
   case TargetOpcode::G_SEXT:
   case TargetOpcode::G_ZEXT:
   case TargetOpcode::G_ANYEXT:
