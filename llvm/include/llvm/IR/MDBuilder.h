@@ -95,6 +95,17 @@ public:
   MDNode *createCallees(ArrayRef<Function *> Callees);
 
   //===------------------------------------------------------------------===//
+  // Callback metadata.
+  //===------------------------------------------------------------------===//
+
+  /// Return metadata describing a callback (see llvm::AbstractCallSite).
+  MDNode *createCallbackEncoding(unsigned CalleeArgNo, ArrayRef<int> Arguments,
+                                 bool VarArgsArePassed);
+
+  /// Merge the new callback encoding \p NewCB into \p ExistingCallbacks.
+  MDNode *mergeCallbackEncodings(MDNode *ExistingCallbacks, MDNode *NewCB);
+
+  //===------------------------------------------------------------------===//
   // AA metadata.
   //===------------------------------------------------------------------===//
 

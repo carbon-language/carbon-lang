@@ -107,6 +107,50 @@ MDNode *MDBuilder::createCallees(ArrayRef<Function *> Callees) {
   return MDNode::get(Context, Ops);
 }
 
+MDNode *MDBuilder::createCallbackEncoding(unsigned CalleeArgNo,
+                                          ArrayRef<int> Arguments,
+                                          bool VarArgArePassed) {
+  SmallVector<Metadata *, 4> Ops;
+
+  Type *Int64 = Type::getInt64Ty(Context);
+  Ops.push_back(createConstant(ConstantInt::get(Int64, CalleeArgNo)));
+
+  for (int ArgNo : Arguments)
+    Ops.push_back(createConstant(ConstantInt::get(Int64, ArgNo, true)));
+
+  Type *Int1 = Type::getInt1Ty(Context);
+  Ops.push_back(createConstant(ConstantInt::get(Int1, VarArgArePassed)));
+
+  return MDNode::get(Context, Ops);
+}
+
+MDNode *MDBuilder::mergeCallbackEncodings(MDNode *ExistingCallbacks,
+                                          MDNode *NewCB) {
+  if (!ExistingCallbacks)
+    return MDNode::get(Context, {NewCB});
+
+  auto *NewCBCalleeIdxAsCM = cast<ConstantAsMetadata>(NewCB->getOperand(0));
+  uint64_t NewCBCalleeIdx =
+      cast<ConstantInt>(NewCBCalleeIdxAsCM->getValue())->getZExtValue();
+
+  SmallVector<Metadata *, 4> Ops;
+  unsigned NumExistingOps = ExistingCallbacks->getNumOperands();
+  Ops.resize(NumExistingOps + 1);
+
+  for (unsigned u = 0; u < NumExistingOps; u++) {
+    Ops[u] = ExistingCallbacks->getOperand(u);
+
+    auto *OldCBCalleeIdxAsCM = cast<ConstantAsMetadata>(Ops[u]);
+    uint64_t OldCBCalleeIdx =
+      cast<ConstantInt>(OldCBCalleeIdxAsCM->getValue())->getZExtValue();
+    assert(NewCBCalleeIdx != OldCBCalleeIdx &&
+           "Cannot map a callback callee index twice!");
+  }
+
+  Ops[NumExistingOps] = NewCB;
+  return MDNode::get(Context, Ops);
+}
+
 MDNode *MDBuilder::createAnonymousAARoot(StringRef Name, MDNode *Extra) {
   // To ensure uniqueness the root node is self-referential.
   auto Dummy = MDNode::getTemporary(Context, None);

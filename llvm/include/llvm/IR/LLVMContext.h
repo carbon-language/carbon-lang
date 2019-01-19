@@ -103,6 +103,7 @@ public:
     MD_callees = 23,                  // "callees"
     MD_irr_loop = 24,                 // "irr_loop"
     MD_access_group = 25,             // "llvm.access.group"
+    MD_callback = 26,                 // "callback"
   };
 
   /// Known operand bundle tag IDs, which always have the same value.  All
