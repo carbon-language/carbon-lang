@@ -9,7 +9,7 @@
 //
 /// \file Reaching Defs Analysis pass.
 ///
-/// This pass tracks for each instruction what is the “closest” reaching def of
+/// This pass tracks for each instruction what is the "closest" reaching def of
 /// a given register. It is used by BreakFalseDeps (for clearance calculation)
 /// and ExecutionDomainFix (for arbitrating conflicting domains).
 ///
