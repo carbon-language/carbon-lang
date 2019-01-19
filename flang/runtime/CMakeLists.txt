@@ -1,4 +1,4 @@
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(FortranRuntime
+add_library(FortranRuntime SHARED
   ISO_Fortran_binding.cc
   derived-type.cc
   descriptor.cc
