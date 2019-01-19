@@ -312,8 +312,6 @@ bool X86FastISel::isTypeLegal(Type *Ty, MVT &VT, bool AllowI1) {
   return (AllowI1 && VT == MVT::i1) || TLI.isTypeLegal(VT);
 }
 
-#include "X86GenCallingConv.inc"
-
 /// X86FastEmitLoad - Emit a machine instruction to load a value of type VT.
 /// The address is either pre-computed, i.e. Ptr, or a GlobalAddress, i.e. GV.
 /// Return true and the result register by reference if it is possible.

@@ -2347,8 +2347,6 @@ bool X86TargetLowering::isNoopAddrSpaceCast(unsigned SrcAS,
 //               Return Value Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
-#include "X86GenCallingConv.inc"
-
 bool X86TargetLowering::CanLowerReturn(
     CallingConv::ID CallConv, MachineFunction &MF, bool isVarArg,
     const SmallVectorImpl<ISD::OutputArg> &Outs, LLVMContext &Context) const {

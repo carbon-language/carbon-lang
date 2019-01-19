@@ -48,8 +48,6 @@
 
 using namespace llvm;
 
-#include "X86GenCallingConv.inc"
-
 X86CallLowering::X86CallLowering(const X86TargetLowering &TLI)
     : CallLowering(&TLI) {}
 

@@ -160,6 +160,11 @@ class CCDelegateTo<CallingConv cc> : CCAction {
 /// that the target supports.
 class CallingConv<list<CCAction> actions> {
   list<CCAction> Actions = actions;
+
+  /// If true, this calling convention will be emitted as externally visible in
+  /// the llvm namespaces instead of as a static function.
+  bit Entry = 0;
+
   bit Custom = 0;
 }
 
