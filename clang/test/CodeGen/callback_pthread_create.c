@@ -1,6 +1,9 @@
 // RUN: %clang -O1 %s -S -c -emit-llvm -o - | FileCheck %s
 // RUN: %clang -O1 %s -S -c -emit-llvm -o - | opt -ipconstprop -S | FileCheck --check-prefix=IPCP %s
 
+// This is a linux only test for now due to the include.
+// UNSUPPORTED: !linux
+
 // CHECK: declare !callback ![[cid:[0-9]+]] {{.*}}i32 @pthread_create
 // CHECK: ![[cid]] = !{![[cidb:[0-9]+]]}
 // CHECK: ![[cidb]] = !{i64 2, i64 3, i1 false}
