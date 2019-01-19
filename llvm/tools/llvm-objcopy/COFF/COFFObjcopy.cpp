@@ -33,6 +33,12 @@ static bool isDebugSection(const Section &Sec) {
 static Error handleArgs(const CopyConfig &Config, Object &Obj) {
   // Perform the actual section removals.
   Obj.removeSections([&Config](const Section &Sec) {
+    // Contrary to --only-keep-debug, --only-section fully removes sections that
+    // aren't mentioned.
+    if (!Config.OnlySection.empty() &&
+        !is_contained(Config.OnlySection, Sec.Name))
+      return true;
+
     if (Config.StripDebug || Config.StripAll || Config.StripAllGNU ||
         Config.DiscardAll || Config.StripUnneeded) {
       if (isDebugSection(Sec) &&
