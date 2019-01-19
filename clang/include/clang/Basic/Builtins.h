@@ -194,6 +194,12 @@ public:
   /// argument and whether this function as a va_list argument.
   bool isScanfLike(unsigned ID, unsigned &FormatIdx, bool &HasVAListArg);
 
+  /// Determine whether this builtin has callback behavior (see
+  /// llvm::AbstractCallSites for details). If so, add the index to the
+  /// callback callee argument and the callback payload arguments.
+  bool performsCallback(unsigned ID,
+                        llvm::SmallVectorImpl<int> &Encoding) const;
+
   /// Return true if this function has no side effects and doesn't
   /// read memory, except for possibly errno.
   ///

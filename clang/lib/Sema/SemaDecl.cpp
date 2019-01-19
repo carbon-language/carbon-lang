@@ -1927,10 +1927,13 @@ static void LookupPredefedObjCSuperType(Sema &ThisSema, Scope *S,
       Context.setObjCSuperType(Context.getTagDeclType(TD));
 }
 
-static StringRef getHeaderName(ASTContext::GetBuiltinTypeError Error) {
+static StringRef getHeaderName(Builtin::Context &BuiltinInfo, unsigned ID,
+                               ASTContext::GetBuiltinTypeError Error) {
   switch (Error) {
   case ASTContext::GE_None:
     return "";
+  case ASTContext::GE_Missing_type:
+    return BuiltinInfo.getHeaderName(ID);
   case ASTContext::GE_Missing_stdio:
     return "stdio.h";
   case ASTContext::GE_Missing_setjmp:
@@ -1955,7 +1958,8 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID,
   if (Error) {
     if (ForRedeclaration)
       Diag(Loc, diag::warn_implicit_decl_requires_sysheader)
-          << getHeaderName(Error) << Context.BuiltinInfo.getName(ID);
+          << getHeaderName(Context.BuiltinInfo, ID, Error)
+          << Context.BuiltinInfo.getName(ID);
     return nullptr;
   }
 
@@ -13579,6 +13583,13 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
                                               HasVAListArg ? 0 : FormatIdx+2,
                                               FD->getLocation()));
     }
+
+    // Handle automatically recognized callbacks.
+    SmallVector<int, 4> Encoding;
+    if (!FD->hasAttr<CallbackAttr>() &&
+        Context.BuiltinInfo.performsCallback(BuiltinID, Encoding))
+      FD->addAttr(CallbackAttr::CreateImplicit(
+          Context, Encoding.data(), Encoding.size(), FD->getLocation()));
 
     // Mark const if we don't care about errno and that is the only thing
     // preventing the function from being const. This allows IRgen to use LLVM

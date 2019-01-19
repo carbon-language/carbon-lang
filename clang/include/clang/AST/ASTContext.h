@@ -2003,6 +2003,9 @@ public:
     /// No error
     GE_None,
 
+    /// Missing a type
+    GE_Missing_type,
+
     /// Missing a type from <stdio.h>
     GE_Missing_stdio,
 

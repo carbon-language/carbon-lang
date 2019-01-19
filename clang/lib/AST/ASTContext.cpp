@@ -9518,6 +9518,10 @@ QualType ASTContext::GetBuiltinType(unsigned Id,
                                     GetBuiltinTypeError &Error,
                                     unsigned *IntegerConstantArgs) const {
   const char *TypeStr = BuiltinInfo.getTypeString(Id);
+  if (TypeStr[0] == '\0') {
+    Error = GE_Missing_type;
+    return {};
+  }
 
   SmallVector<QualType, 8> ArgTypes;
 

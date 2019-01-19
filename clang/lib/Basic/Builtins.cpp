@@ -156,6 +156,33 @@ bool Builtin::Context::isScanfLike(unsigned ID, unsigned &FormatIdx,
   return isLike(ID, FormatIdx, HasVAListArg, "sS");
 }
 
+bool Builtin::Context::performsCallback(unsigned ID,
+                                        SmallVectorImpl<int> &Encoding) const {
+  const char *CalleePos = ::strchr(getRecord(ID).Attributes, 'C');
+  if (!CalleePos)
+    return false;
+
+  ++CalleePos;
+  assert(*CalleePos == '<' &&
+         "Callback callee specifier must be followed by a '<'");
+  ++CalleePos;
+
+  char *EndPos;
+  int CalleeIdx = ::strtol(CalleePos, &EndPos, 10);
+  assert(CalleeIdx >= 0 && "Callee index is supposed to be positive!");
+  Encoding.push_back(CalleeIdx);
+
+  while (*EndPos == ',') {
+    const char *PayloadPos = EndPos + 1;
+
+    int PayloadIdx = ::strtol(PayloadPos, &EndPos, 10);
+    Encoding.push_back(PayloadIdx);
+  }
+
+  assert(*EndPos == '>' && "Callback callee specifier must end with a '>'");
+  return true;
+}
+
 bool Builtin::Context::canBeRedeclared(unsigned ID) const {
   return ID == Builtin::NotBuiltin ||
          ID == Builtin::BI__va_start ||
