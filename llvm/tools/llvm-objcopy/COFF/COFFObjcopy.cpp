@@ -27,9 +27,17 @@ using namespace object;
 using namespace COFF;
 
 static Error handleArgs(const CopyConfig &Config, Object &Obj) {
+  // Perform the actual section removals.
+  Obj.removeSections([&Config](const Section &Sec) {
+    if (is_contained(Config.ToRemove, Sec.Name))
+      return true;
+
+    return false;
+  });
+
   // StripAll removes all symbols and thus also removes all relocations.
   if (Config.StripAll || Config.StripAllGNU)
-    for (Section &Sec : Obj.Sections)
+    for (Section &Sec : Obj.getMutableSections())
       Sec.Relocs.clear();
 
   // If we need to do per-symbol removals, initialize the Referenced field.
