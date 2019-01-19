@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(FortranSemantics SHARED
+add_library(FortranSemantics
   assignment.cc
   attr.cc
   canonicalize-do.cc

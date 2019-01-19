@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(FortranRuntime SHARED
+add_library(FortranRuntime
   ISO_Fortran_binding.cc
   derived-type.cc
   descriptor.cc

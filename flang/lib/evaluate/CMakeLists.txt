@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(FortranEvaluate SHARED
+add_library(FortranEvaluate
   call.cc
   common.cc
   complex.cc

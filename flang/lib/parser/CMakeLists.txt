@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(FortranParser SHARED
+add_library(FortranParser
   char-buffer.cc
   char-set.cc
   characters.cc
