@@ -93,6 +93,7 @@ struct Object {
 
   void addSections(ArrayRef<Section> NewSections);
   void removeSections(function_ref<bool(const Section &)> ToRemove);
+  void truncateSections(function_ref<bool(const Section &)> ToTruncate);
 
 private:
   std::vector<Symbol> Symbols;

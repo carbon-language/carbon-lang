@@ -127,6 +127,16 @@ void Object::removeSections(function_ref<bool(const Section &)> ToRemove) {
   updateSymbols();
 }
 
+void Object::truncateSections(function_ref<bool(const Section &)> ToTruncate) {
+  for (Section &Sec : Sections) {
+    if (ToTruncate(Sec)) {
+      Sec.Contents = ArrayRef<uint8_t>();
+      Sec.Relocs.clear();
+      Sec.Header.SizeOfRawData = 0;
+    }
+  }
+}
+
 } // end namespace coff
 } // end namespace objcopy
 } // end namespace llvm

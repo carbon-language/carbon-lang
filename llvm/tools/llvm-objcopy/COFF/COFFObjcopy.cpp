@@ -46,6 +46,16 @@ static Error handleArgs(const CopyConfig &Config, Object &Obj) {
     return false;
   });
 
+  if (Config.OnlyKeepDebug) {
+    // For --only-keep-debug, we keep all other sections, but remove their
+    // content. The VirtualSize field in the section header is kept intact.
+    Obj.truncateSections([](const Section &Sec) {
+      return !isDebugSection(Sec) && Sec.Name != ".buildid" &&
+             ((Sec.Header.Characteristics &
+               (IMAGE_SCN_CNT_CODE | IMAGE_SCN_CNT_INITIALIZED_DATA)) != 0);
+    });
+  }
+
   // StripAll removes all symbols and thus also removes all relocations.
   if (Config.StripAll || Config.StripAllGNU)
     for (Section &Sec : Obj.getMutableSections())
