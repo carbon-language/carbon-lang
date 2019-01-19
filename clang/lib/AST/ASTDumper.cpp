@@ -359,13 +359,6 @@ void ASTDumper::dumpDeclContext(const DeclContext *DC) {
 
   for (auto *D : (Deserialize ? DC->decls() : DC->noload_decls()))
     dumpDecl(D);
-
-  if (DC->hasExternalLexicalStorage()) {
-    dumpChild([=] {
-      ColorScope Color(OS, ShowColors, UndeserializedColor);
-      OS << "<undeserialized declarations>";
-    });
-  }
 }
 
 void ASTDumper::dumpLookups(const DeclContext *DC, bool DumpDecls) {
