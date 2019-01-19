@@ -78,7 +78,7 @@ static Error handleArgs(const CopyConfig &Config, Object &Obj) {
 }
 
 void executeObjcopyOnBinary(const CopyConfig &Config,
-                            object::COFFObjectFile &In, Buffer &Out) {
+                            COFFObjectFile &In, Buffer &Out) {
   COFFReader Reader(In);
   Expected<std::unique_ptr<Object>> ObjOrErr = Reader.create();
   if (!ObjOrErr)
