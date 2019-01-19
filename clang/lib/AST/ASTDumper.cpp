@@ -442,15 +442,14 @@ void ASTDumper::dumpTemplateParameters(const TemplateParameterList *TPL) {
   if (!TPL)
     return;
 
-  for (TemplateParameterList::const_iterator I = TPL->begin(), E = TPL->end();
-       I != E; ++I)
-    dumpDecl(*I);
+  for (const auto &TP : *TPL)
+    dumpDecl(TP);
 }
 
 void ASTDumper::dumpTemplateArgumentListInfo(
     const TemplateArgumentListInfo &TALI) {
-  for (unsigned i = 0, e = TALI.size(); i < e; ++i)
-    dumpTemplateArgumentLoc(TALI[i]);
+  for (const auto &TA : TALI.arguments())
+    dumpTemplateArgumentLoc(TA);
 }
 
 void ASTDumper::dumpTemplateArgumentLoc(const TemplateArgumentLoc &A,
@@ -495,9 +494,8 @@ void ASTDumper::dumpDecl(const Decl *D) {
 
     ConstDeclVisitor<ASTDumper>::Visit(D);
 
-    for (Decl::attr_iterator I = D->attr_begin(), E = D->attr_end(); I != E;
-         ++I)
-      dumpAttr(*I);
+    for (const auto &A : D->attrs())
+      dumpAttr(A);
 
     if (const FullComment *Comment =
             D->getASTContext().getLocalCommentForDeclUncached(D))
@@ -1264,10 +1262,8 @@ void ASTDumper::VisitObjCCategoryDecl(const ObjCCategoryDecl *D) {
   NodeDumper.dumpName(D);
   NodeDumper.dumpDeclRef(D->getClassInterface());
   NodeDumper.dumpDeclRef(D->getImplementation());
-  for (ObjCCategoryDecl::protocol_iterator I = D->protocol_begin(),
-                                           E = D->protocol_end();
-       I != E; ++I)
-    NodeDumper.dumpDeclRef(*I);
+  for (const auto *P : D->protocols())
+    NodeDumper.dumpDeclRef(P);
   dumpObjCTypeParamList(D->getTypeParamList());
 }
 
@@ -1298,10 +1294,8 @@ void ASTDumper::VisitObjCImplementationDecl(const ObjCImplementationDecl *D) {
   NodeDumper.dumpName(D);
   NodeDumper.dumpDeclRef(D->getSuperClass(), "super");
   NodeDumper.dumpDeclRef(D->getClassInterface());
-  for (ObjCImplementationDecl::init_const_iterator I = D->init_begin(),
-                                                   E = D->init_end();
-       I != E; ++I)
-    dumpCXXCtorInitializer(*I);
+  for (const auto &I : D->inits())
+    dumpCXXCtorInitializer(I);
 }
 
 void ASTDumper::VisitObjCCompatibleAliasDecl(const ObjCCompatibleAliasDecl *D) {
@@ -1407,17 +1401,13 @@ void ASTDumper::dumpStmt(const Stmt *S, StringRef Label) {
 }
 
 void ASTDumper::VisitDeclStmt(const DeclStmt *Node) {
-  for (DeclStmt::const_decl_iterator I = Node->decl_begin(),
-                                     E = Node->decl_end();
-       I != E; ++I)
-    dumpDecl(*I);
+  for (const auto &D : Node->decls())
+    dumpDecl(D);
 }
 
 void ASTDumper::VisitAttributedStmt(const AttributedStmt *Node) {
-  for (ArrayRef<const Attr *>::iterator I = Node->getAttrs().begin(),
-                                        E = Node->getAttrs().end();
-       I != E; ++I)
-    dumpAttr(*I);
+  for (const auto *A : Node->getAttrs())
+    dumpAttr(A);
 }
 
 void ASTDumper::VisitCXXCatchStmt(const CXXCatchStmt *Node) {
