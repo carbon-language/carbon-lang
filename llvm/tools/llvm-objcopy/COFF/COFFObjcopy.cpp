@@ -26,9 +26,20 @@ namespace coff {
 using namespace object;
 using namespace COFF;
 
+static bool isDebugSection(const Section &Sec) {
+  return Sec.Name.startswith(".debug");
+}
+
 static Error handleArgs(const CopyConfig &Config, Object &Obj) {
   // Perform the actual section removals.
   Obj.removeSections([&Config](const Section &Sec) {
+    if (Config.StripDebug || Config.StripAll || Config.StripAllGNU ||
+        Config.DiscardAll || Config.StripUnneeded) {
+      if (isDebugSection(Sec) &&
+          (Sec.Header.Characteristics & IMAGE_SCN_MEM_DISCARDABLE) != 0)
+        return true;
+    }
+
     if (is_contained(Config.ToRemove, Sec.Name))
       return true;
 
