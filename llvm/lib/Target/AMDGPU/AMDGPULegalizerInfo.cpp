@@ -22,6 +22,7 @@
 
 using namespace llvm;
 using namespace LegalizeActions;
+using namespace LegalityPredicates;
 
 AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
                                          const GCNTargetMachine &TM) {
@@ -103,11 +104,12 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
                                G_UADDE, G_SADDE, G_USUBE, G_SSUBE})
     .legalFor({{S32, S1}});
 
-  setAction({G_BITCAST, V2S16}, Legal);
-  setAction({G_BITCAST, 1, S32}, Legal);
-
-  setAction({G_BITCAST, S32}, Legal);
-  setAction({G_BITCAST, 1, V2S16}, Legal);
+  getActionDefinitionsBuilder(G_BITCAST)
+    .legalForCartesianProduct({S32, V2S16})
+    .legalForCartesianProduct({S64, V2S32, V4S16})
+    .legalForCartesianProduct({V2S64, V4S32})
+    // Don't worry about the size constraint.
+    .legalIf(all(isPointer(0), isPointer(1)));
 
   getActionDefinitionsBuilder(G_FCONSTANT)
     .legalFor({S32, S64, S16});
