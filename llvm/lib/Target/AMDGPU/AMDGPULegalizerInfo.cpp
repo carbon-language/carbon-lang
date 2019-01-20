@@ -140,6 +140,10 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   getActionDefinitionsBuilder(G_FPTRUNC)
     .legalFor({{S32, S64}});
 
+  getActionDefinitionsBuilder(G_FPEXT)
+    .legalFor({{S64, S32}, {S32, S16}})
+    .lowerFor({{S64, S16}}); // FIXME: Implement
+
   // Use actual fsub instruction
   setAction({G_FSUB, S32}, Legal);
 
@@ -150,16 +154,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   setAction({G_FCMP, 1, S32}, Legal);
   setAction({G_FCMP, 1, S64}, Legal);
 
-  setAction({G_ZEXT, S64}, Legal);
-  setAction({G_ZEXT, 1, S32}, Legal);
-
-  setAction({G_SEXT, S64}, Legal);
-  setAction({G_SEXT, 1, S32}, Legal);
-
-  setAction({G_ANYEXT, S64}, Legal);
-  setAction({G_ANYEXT, S32}, Legal);
-  setAction({G_ANYEXT, 1, S32}, Legal);
-  setAction({G_ANYEXT, 1, S16}, Legal);
+  getActionDefinitionsBuilder({G_SEXT, G_ZEXT, G_ANYEXT})
+    .legalFor({{S64, S32}, {S32, S16}, {S64, S16}});
 
   setAction({G_FPTOSI, S32}, Legal);
   setAction({G_FPTOSI, 1, S32}, Legal);
