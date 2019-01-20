@@ -35,6 +35,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   const LLT S16 = LLT::scalar(16);
   const LLT S32 = LLT::scalar(32);
   const LLT S64 = LLT::scalar(64);
+  const LLT S256 = LLT::scalar(256);
   const LLT S512 = LLT::scalar(512);
 
   const LLT V2S16 = LLT::vector(2, 16);
@@ -298,25 +299,85 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     unsigned BigTyIdx = Op == G_MERGE_VALUES ? 0 : 1;
     unsigned LitTyIdx = Op == G_MERGE_VALUES ? 1 : 0;
 
+    auto notValidElt = [=](const LegalityQuery &Query, unsigned TypeIdx) {
+      const LLT &Ty = Query.Types[TypeIdx];
+      if (Ty.isVector()) {
+        const LLT &EltTy = Ty.getElementType();
+        if (EltTy.getSizeInBits() < 8 || EltTy.getSizeInBits() > 64)
+          return true;
+        if (!isPowerOf2_32(EltTy.getSizeInBits()))
+          return true;
+      }
+      return false;
+    };
+
+    auto scalarize =
+      [=](const LegalityQuery &Query, unsigned TypeIdx) {
+      const LLT &Ty = Query.Types[TypeIdx];
+      return std::make_pair(TypeIdx, Ty.getElementType());
+    };
+
     getActionDefinitionsBuilder(Op)
+      // Break up vectors with weird elements into scalars
+      .fewerElementsIf(
+        [=](const LegalityQuery &Query) { return notValidElt(Query, 0); },
+        [=](const LegalityQuery &Query) { return scalarize(Query, 0); })
+      .fewerElementsIf(
+        [=](const LegalityQuery &Query) { return notValidElt(Query, 1); },
+        [=](const LegalityQuery &Query) { return scalarize(Query, 1); })
+      .clampScalar(BigTyIdx, S32, S512)
+      .widenScalarIf(
+        [=](const LegalityQuery &Query) {
+          const LLT &Ty = Query.Types[BigTyIdx];
+          return !isPowerOf2_32(Ty.getSizeInBits()) &&
+                 Ty.getSizeInBits() % 16 != 0;
+        },
+        [=](const LegalityQuery &Query) {
+          // Pick the next power of 2, or a multiple of 64 over 128.
+          // Whichever is smaller.
+          const LLT &Ty = Query.Types[BigTyIdx];
+          unsigned NewSizeInBits = 1 << Log2_32_Ceil(Ty.getSizeInBits() + 1);
+          if (NewSizeInBits >= 256) {
+            unsigned RoundedTo = alignTo<64>(Ty.getSizeInBits() + 1);
+            if (RoundedTo < NewSizeInBits)
+              NewSizeInBits = RoundedTo;
+          }
+          return std::make_pair(BigTyIdx, LLT::scalar(NewSizeInBits));
+        })
+      .widenScalarToNextPow2(LitTyIdx, /*Min*/ 16)
+      // Clamp the little scalar to s8-s256 and make it a power of 2. It's not
+      // worth considering the multiples of 64 since 2*192 and 2*384 are not
+      // valid.
+      .clampScalar(LitTyIdx, S16, S256)
+      .widenScalarToNextPow2(LitTyIdx, /*Min*/ 32)
       .legalIf([=](const LegalityQuery &Query) {
           const LLT &BigTy = Query.Types[BigTyIdx];
           const LLT &LitTy = Query.Types[LitTyIdx];
-          return BigTy.getSizeInBits() % 32 == 0 &&
-                 LitTy.getSizeInBits() % 32 == 0 &&
+
+          if (BigTy.isVector() && BigTy.getSizeInBits() < 32)
+            return false;
+          if (LitTy.isVector() && LitTy.getSizeInBits() < 32)
+            return false;
+
+          return BigTy.getSizeInBits() % 16 == 0 &&
+                 LitTy.getSizeInBits() % 16 == 0 &&
                  BigTy.getSizeInBits() <= 512;
         })
       // Any vectors left are the wrong size. Scalarize them.
-      .fewerElementsIf([](const LegalityQuery &Query) { return true; },
-                       [](const LegalityQuery &Query) {
-                         return std::make_pair(
-                           0, Query.Types[0].getElementType());
-                       })
-      .fewerElementsIf([](const LegalityQuery &Query) { return true; },
-                       [](const LegalityQuery &Query) {
-                         return std::make_pair(
-                           1, Query.Types[1].getElementType());
-                       });
+      .fewerElementsIf([](const LegalityQuery &Query) {
+          return Query.Types[0].isVector();
+        },
+        [](const LegalityQuery &Query) {
+          return std::make_pair(
+            0, Query.Types[0].getElementType());
+        })
+      .fewerElementsIf([](const LegalityQuery &Query) {
+          return Query.Types[1].isVector();
+        },
+        [](const LegalityQuery &Query) {
+          return std::make_pair(
+            1, Query.Types[1].getElementType());
+        });
 
   }
 
