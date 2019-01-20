@@ -11662,12 +11662,12 @@ class SequenceChecker : public EvaluatedExprVisitor<SequenceChecker> {
     class Seq {
       friend class SequenceTree;
 
-      unsigned Index = 0;
+      unsigned Index;
 
       explicit Seq(unsigned N) : Index(N) {}
 
     public:
-      Seq() = default;
+      Seq() : Index(0) {}
     };
 
     SequenceTree() { Values.push_back(Value(0)); }
