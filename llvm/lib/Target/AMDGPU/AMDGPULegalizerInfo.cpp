@@ -158,7 +158,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   setAction({G_FCMP, 1, S64}, Legal);
 
   getActionDefinitionsBuilder({G_SEXT, G_ZEXT, G_ANYEXT})
-    .legalFor({{S64, S32}, {S32, S16}, {S64, S16}});
+    .legalFor({{S64, S32}, {S32, S16}, {S64, S16},
+               {S32, S1}, {S64, S1}, {S16, S1}});
 
   setAction({G_FPTOSI, S32}, Legal);
   setAction({G_FPTOSI, 1, S32}, Legal);
