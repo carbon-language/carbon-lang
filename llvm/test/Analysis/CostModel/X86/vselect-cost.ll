@@ -3,9 +3,129 @@
 ; RUN: opt < %s -cost-model -analyze -mtriple=x86_64-unknown-linux-gnu -mattr=+sse4.1 | FileCheck %s -check-prefixes=CHECK,SSE,SSE41
 ; RUN: opt < %s -cost-model -analyze -mtriple=x86_64-unknown-linux-gnu -mattr=+avx | FileCheck %s -check-prefixes=CHECK,AVX,AVX1
 ; RUN: opt < %s -cost-model -analyze -mtriple=x86_64-unknown-linux-gnu -mattr=+avx2 | FileCheck %s -check-prefixes=CHECK,AVX,AVX2
-
+; RUN: opt < %s -cost-model -analyze -mtriple=x86_64-unknown-linux-gnu -mattr=+avx512f,+avx512vl  | FileCheck %s -check-prefixes=CHECK,AVX,AVX512,AVX512F
+; RUN: opt < %s -cost-model -analyze -mtriple=x86_64-unknown-linux-gnu -mattr=+avx512bw,+avx512vl | FileCheck %s -check-prefixes=CHECK,AVX,AVX512,AVX512BW
 
 ; Verify the cost of vector select instructions.
+
+define i32 @test_select() {
+; SSE-LABEL: 'test_select'
+; SSE-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %I64 = select i1 undef, i64 undef, i64 undef
+; SSE-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V2I64 = select <2 x i1> undef, <2 x i64> undef, <2 x i64> undef
+; SSE-NEXT:  Cost Model: Found an estimated cost of 2 for instruction: %V4I64 = select <4 x i1> undef, <4 x i64> undef, <4 x i64> undef
+; SSE-NEXT:  Cost Model: Found an estimated cost of 4 for instruction: %V8I64 = select <8 x i1> undef, <8 x i64> undef, <8 x i64> undef
+; SSE-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %I32 = select i1 undef, i32 undef, i32 undef
+; SSE-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V4I32 = select <4 x i1> undef, <4 x i32> undef, <4 x i32> undef
+; SSE-NEXT:  Cost Model: Found an estimated cost of 2 for instruction: %V8I32 = select <8 x i1> undef, <8 x i32> undef, <8 x i32> undef
+; SSE-NEXT:  Cost Model: Found an estimated cost of 4 for instruction: %V16I32 = select <16 x i1> undef, <16 x i32> undef, <16 x i32> undef
+; SSE-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %I16 = select i1 undef, i16 undef, i16 undef
+; SSE-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V8I16 = select <8 x i1> undef, <8 x i16> undef, <8 x i16> undef
+; SSE-NEXT:  Cost Model: Found an estimated cost of 2 for instruction: %V16I16 = select <16 x i1> undef, <16 x i16> undef, <16 x i16> undef
+; SSE-NEXT:  Cost Model: Found an estimated cost of 4 for instruction: %V32I16 = select <32 x i1> undef, <32 x i16> undef, <32 x i16> undef
+; SSE-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %I8 = select i1 undef, i8 undef, i8 undef
+; SSE-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V16I8 = select <16 x i1> undef, <16 x i8> undef, <16 x i8> undef
+; SSE-NEXT:  Cost Model: Found an estimated cost of 2 for instruction: %V32I8 = select <32 x i1> undef, <32 x i8> undef, <32 x i8> undef
+; SSE-NEXT:  Cost Model: Found an estimated cost of 4 for instruction: %V64I8 = select <64 x i1> undef, <64 x i8> undef, <64 x i8> undef
+; SSE-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: ret i32 undef
+;
+; AVX1-LABEL: 'test_select'
+; AVX1-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %I64 = select i1 undef, i64 undef, i64 undef
+; AVX1-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V2I64 = select <2 x i1> undef, <2 x i64> undef, <2 x i64> undef
+; AVX1-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V4I64 = select <4 x i1> undef, <4 x i64> undef, <4 x i64> undef
+; AVX1-NEXT:  Cost Model: Found an estimated cost of 2 for instruction: %V8I64 = select <8 x i1> undef, <8 x i64> undef, <8 x i64> undef
+; AVX1-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %I32 = select i1 undef, i32 undef, i32 undef
+; AVX1-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V4I32 = select <4 x i1> undef, <4 x i32> undef, <4 x i32> undef
+; AVX1-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V8I32 = select <8 x i1> undef, <8 x i32> undef, <8 x i32> undef
+; AVX1-NEXT:  Cost Model: Found an estimated cost of 2 for instruction: %V16I32 = select <16 x i1> undef, <16 x i32> undef, <16 x i32> undef
+; AVX1-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %I16 = select i1 undef, i16 undef, i16 undef
+; AVX1-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V8I16 = select <8 x i1> undef, <8 x i16> undef, <8 x i16> undef
+; AVX1-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V16I16 = select <16 x i1> undef, <16 x i16> undef, <16 x i16> undef
+; AVX1-NEXT:  Cost Model: Found an estimated cost of 2 for instruction: %V32I16 = select <32 x i1> undef, <32 x i16> undef, <32 x i16> undef
+; AVX1-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %I8 = select i1 undef, i8 undef, i8 undef
+; AVX1-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V16I8 = select <16 x i1> undef, <16 x i8> undef, <16 x i8> undef
+; AVX1-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V32I8 = select <32 x i1> undef, <32 x i8> undef, <32 x i8> undef
+; AVX1-NEXT:  Cost Model: Found an estimated cost of 2 for instruction: %V64I8 = select <64 x i1> undef, <64 x i8> undef, <64 x i8> undef
+; AVX1-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: ret i32 undef
+;
+; AVX2-LABEL: 'test_select'
+; AVX2-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %I64 = select i1 undef, i64 undef, i64 undef
+; AVX2-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V2I64 = select <2 x i1> undef, <2 x i64> undef, <2 x i64> undef
+; AVX2-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V4I64 = select <4 x i1> undef, <4 x i64> undef, <4 x i64> undef
+; AVX2-NEXT:  Cost Model: Found an estimated cost of 2 for instruction: %V8I64 = select <8 x i1> undef, <8 x i64> undef, <8 x i64> undef
+; AVX2-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %I32 = select i1 undef, i32 undef, i32 undef
+; AVX2-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V4I32 = select <4 x i1> undef, <4 x i32> undef, <4 x i32> undef
+; AVX2-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V8I32 = select <8 x i1> undef, <8 x i32> undef, <8 x i32> undef
+; AVX2-NEXT:  Cost Model: Found an estimated cost of 2 for instruction: %V16I32 = select <16 x i1> undef, <16 x i32> undef, <16 x i32> undef
+; AVX2-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %I16 = select i1 undef, i16 undef, i16 undef
+; AVX2-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V8I16 = select <8 x i1> undef, <8 x i16> undef, <8 x i16> undef
+; AVX2-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V16I16 = select <16 x i1> undef, <16 x i16> undef, <16 x i16> undef
+; AVX2-NEXT:  Cost Model: Found an estimated cost of 2 for instruction: %V32I16 = select <32 x i1> undef, <32 x i16> undef, <32 x i16> undef
+; AVX2-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %I8 = select i1 undef, i8 undef, i8 undef
+; AVX2-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V16I8 = select <16 x i1> undef, <16 x i8> undef, <16 x i8> undef
+; AVX2-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V32I8 = select <32 x i1> undef, <32 x i8> undef, <32 x i8> undef
+; AVX2-NEXT:  Cost Model: Found an estimated cost of 2 for instruction: %V64I8 = select <64 x i1> undef, <64 x i8> undef, <64 x i8> undef
+; AVX2-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: ret i32 undef
+;
+; AVX512F-LABEL: 'test_select'
+; AVX512F-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %I64 = select i1 undef, i64 undef, i64 undef
+; AVX512F-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V2I64 = select <2 x i1> undef, <2 x i64> undef, <2 x i64> undef
+; AVX512F-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V4I64 = select <4 x i1> undef, <4 x i64> undef, <4 x i64> undef
+; AVX512F-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V8I64 = select <8 x i1> undef, <8 x i64> undef, <8 x i64> undef
+; AVX512F-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %I32 = select i1 undef, i32 undef, i32 undef
+; AVX512F-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V4I32 = select <4 x i1> undef, <4 x i32> undef, <4 x i32> undef
+; AVX512F-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V8I32 = select <8 x i1> undef, <8 x i32> undef, <8 x i32> undef
+; AVX512F-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V16I32 = select <16 x i1> undef, <16 x i32> undef, <16 x i32> undef
+; AVX512F-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %I16 = select i1 undef, i16 undef, i16 undef
+; AVX512F-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V8I16 = select <8 x i1> undef, <8 x i16> undef, <8 x i16> undef
+; AVX512F-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V16I16 = select <16 x i1> undef, <16 x i16> undef, <16 x i16> undef
+; AVX512F-NEXT:  Cost Model: Found an estimated cost of 2 for instruction: %V32I16 = select <32 x i1> undef, <32 x i16> undef, <32 x i16> undef
+; AVX512F-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %I8 = select i1 undef, i8 undef, i8 undef
+; AVX512F-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V16I8 = select <16 x i1> undef, <16 x i8> undef, <16 x i8> undef
+; AVX512F-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V32I8 = select <32 x i1> undef, <32 x i8> undef, <32 x i8> undef
+; AVX512F-NEXT:  Cost Model: Found an estimated cost of 2 for instruction: %V64I8 = select <64 x i1> undef, <64 x i8> undef, <64 x i8> undef
+; AVX512F-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: ret i32 undef
+;
+; AVX512BW-LABEL: 'test_select'
+; AVX512BW-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %I64 = select i1 undef, i64 undef, i64 undef
+; AVX512BW-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V2I64 = select <2 x i1> undef, <2 x i64> undef, <2 x i64> undef
+; AVX512BW-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V4I64 = select <4 x i1> undef, <4 x i64> undef, <4 x i64> undef
+; AVX512BW-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V8I64 = select <8 x i1> undef, <8 x i64> undef, <8 x i64> undef
+; AVX512BW-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %I32 = select i1 undef, i32 undef, i32 undef
+; AVX512BW-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V4I32 = select <4 x i1> undef, <4 x i32> undef, <4 x i32> undef
+; AVX512BW-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V8I32 = select <8 x i1> undef, <8 x i32> undef, <8 x i32> undef
+; AVX512BW-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V16I32 = select <16 x i1> undef, <16 x i32> undef, <16 x i32> undef
+; AVX512BW-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %I16 = select i1 undef, i16 undef, i16 undef
+; AVX512BW-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V8I16 = select <8 x i1> undef, <8 x i16> undef, <8 x i16> undef
+; AVX512BW-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V16I16 = select <16 x i1> undef, <16 x i16> undef, <16 x i16> undef
+; AVX512BW-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V32I16 = select <32 x i1> undef, <32 x i16> undef, <32 x i16> undef
+; AVX512BW-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %I8 = select i1 undef, i8 undef, i8 undef
+; AVX512BW-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V16I8 = select <16 x i1> undef, <16 x i8> undef, <16 x i8> undef
+; AVX512BW-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V32I8 = select <32 x i1> undef, <32 x i8> undef, <32 x i8> undef
+; AVX512BW-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %V64I8 = select <64 x i1> undef, <64 x i8> undef, <64 x i8> undef
+; AVX512BW-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: ret i32 undef
+;
+  %I64 = select i1 undef, i64 undef, i64 undef
+  %V2I64 = select <2 x i1> undef, <2 x i64> undef, <2 x i64> undef
+  %V4I64 = select <4 x i1> undef, <4 x i64> undef, <4 x i64> undef
+  %V8I64 = select <8 x i1> undef, <8 x i64> undef, <8 x i64> undef
+
+  %I32 = select i1 undef, i32 undef, i32 undef
+  %V4I32 = select <4 x i1> undef, <4 x i32> undef, <4 x i32> undef
+  %V8I32 = select <8 x i1> undef, <8 x i32> undef, <8 x i32> undef
+  %V16I32 = select <16 x i1> undef, <16 x i32> undef, <16 x i32> undef
+
+  %I16 = select i1 undef, i16 undef, i16 undef
+  %V8I16 = select <8 x i1> undef, <8 x i16> undef, <8 x i16> undef
+  %V16I16 = select <16 x i1> undef, <16 x i16> undef, <16 x i16> undef
+  %V32I16 = select <32 x i1> undef, <32 x i16> undef, <32 x i16> undef
+
+  %I8 = select i1 undef, i8 undef, i8 undef
+  %V16I8 = select <16 x i1> undef, <16 x i8> undef, <16 x i8> undef
+  %V32I8 = select <32 x i1> undef, <32 x i8> undef, <32 x i8> undef
+  %V64I8 = select <64 x i1> undef, <64 x i8> undef, <64 x i8> undef
+
+  ret i32 undef
+}
 
 ; SSE41 added blend instructions with an immediate for <2 x double> and
 ; <4 x float>. Integers of the same size should also use those instructions.
