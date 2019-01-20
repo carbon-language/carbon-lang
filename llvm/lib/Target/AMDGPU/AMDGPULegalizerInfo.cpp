@@ -139,7 +139,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     .legalFor({S32, S64});
 
   getActionDefinitionsBuilder(G_FPTRUNC)
-    .legalFor({{S32, S64}});
+    .legalFor({{S32, S64}, {S16, S32}});
 
   getActionDefinitionsBuilder(G_FPEXT)
     .legalFor({{S64, S32}, {S32, S16}})
