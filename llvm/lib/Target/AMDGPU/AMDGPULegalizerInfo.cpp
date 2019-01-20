@@ -136,7 +136,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
 
   getActionDefinitionsBuilder(
     { G_FADD, G_FMUL, G_FNEG, G_FABS, G_FMA})
-    .legalFor({S32, S64});
+    .legalFor({S32, S64})
+    .clampScalar(0, S32, S64);
 
   getActionDefinitionsBuilder(G_FPTRUNC)
     .legalFor({{S32, S64}, {S16, S32}});
@@ -145,11 +146,12 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     .legalFor({{S64, S32}, {S32, S16}})
     .lowerFor({{S64, S16}}); // FIXME: Implement
 
-  // Use actual fsub instruction
-  setAction({G_FSUB, S32}, Legal);
-
-  // Must use fadd + fneg
-  setAction({G_FSUB, S64}, Lower);
+  getActionDefinitionsBuilder(G_FSUB)
+    // Use actual fsub instruction
+    .legalFor({S32})
+    // Must use fadd + fneg
+    .lowerFor({S64, S16})
+    .clampScalar(0, S32, S64);
 
   setAction({G_FCMP, S1}, Legal);
   setAction({G_FCMP, 1, S32}, Legal);
