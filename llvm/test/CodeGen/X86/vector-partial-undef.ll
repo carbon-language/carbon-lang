@@ -23,6 +23,25 @@ define <4 x i64> @xor_insert_insert(<2 x i64> %x, <2 x i64> %y) {
   ret <4 x i64> %r
 }
 
+define <4 x i64> @xor_insert_insert_high_half(<2 x i64> %x, <2 x i64> %y) {
+; SSE-LABEL: xor_insert_insert_high_half:
+; SSE:       # %bb.0:
+; SSE-NEXT:    xorps %xmm0, %xmm1
+; SSE-NEXT:    xorps %xmm0, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: xor_insert_insert_high_half:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; AVX-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm1
+; AVX-NEXT:    vxorps %ymm1, %ymm0, %ymm0
+; AVX-NEXT:    retq
+  %xw = shufflevector <2 x i64> %x, <2 x i64> undef, <4 x i32> <i32 undef, i32 undef, i32 0, i32 1>
+  %yw = shufflevector <2 x i64> %y, <2 x i64> undef, <4 x i32> <i32 undef, i32 undef, i32 0, i32 1>
+  %r = xor <4 x i64> %xw, %yw
+  ret <4 x i64> %r
+}
+
 ; All elements of the add are undefined:
 ;  x[0] , x[1] , x[2] , x[3],  u ,   u  ,   u  ,  u
 ; +  u  ,   u  ,   u  ,   u , 42 ,  43  ,  44  , 45
