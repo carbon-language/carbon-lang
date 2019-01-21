@@ -57,6 +57,7 @@ using namespace __asan;
   GET_STACK_TRACE_FREE; \
   ReportMacMzReallocUnknown((uptr)ptr, (uptr)zone_ptr, zone_name, &stack);
 #define COMMON_MALLOC_NAMESPACE __asan
+#define COMMON_MALLOC_HAS_ZONE_ENUMERATOR 0
 
 #include "sanitizer_common/sanitizer_malloc_mac.inc"
 

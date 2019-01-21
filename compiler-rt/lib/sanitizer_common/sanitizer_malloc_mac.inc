@@ -280,13 +280,28 @@ void __sanitizer_mz_free_definite_size(
 }
 #endif
 
-kern_return_t mi_enumerator(task_t task, void *,
-                            unsigned type_mask, vm_address_t zone_address,
-                            memory_reader_t reader,
+#ifndef COMMON_MALLOC_HAS_ZONE_ENUMERATOR
+#error "COMMON_MALLOC_HAS_ZONE_ENUMERATOR must be defined"
+#endif
+static_assert((COMMON_MALLOC_HAS_ZONE_ENUMERATOR) == 0 ||
+                  (COMMON_MALLOC_HAS_ZONE_ENUMERATOR) == 1,
+              "COMMON_MALLOC_HAS_ZONE_ENUMERATOR must be 0 or 1");
+
+#if COMMON_MALLOC_HAS_ZONE_ENUMERATOR
+// Forward declare and expect the implementation to provided by
+// includer.
+kern_return_t mi_enumerator(task_t task, void *, unsigned type_mask,
+                            vm_address_t zone_address, memory_reader_t reader,
+                            vm_range_recorder_t recorder);
+#else
+// Provide stub implementation that fails.
+kern_return_t mi_enumerator(task_t task, void *, unsigned type_mask,
+                            vm_address_t zone_address, memory_reader_t reader,
                             vm_range_recorder_t recorder) {
-  // Should enumerate all the pointers we have.  Seems like a lot of work.
+  // Not supported.
   return KERN_FAILURE;
 }
+#endif
 
 size_t mi_good_size(malloc_zone_t *zone, size_t size) {
   // I think it's always safe to return size, but we maybe could do better.
