@@ -24,6 +24,10 @@
 #include <lwp.h>
 #endif
 
+#if SANITIZER_FREEBSD
+#include <sys/thr.h>
+#endif
+
 namespace safestack {
 
 using ThreadId = uint64_t;
