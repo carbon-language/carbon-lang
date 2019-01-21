@@ -40,7 +40,8 @@
       parameter(omp_control_tool_result_kind=omp_integer_kind)
       integer omp_allocator_kind
       parameter(omp_allocator_kind=int_ptr_kind())
-      integer, parameter :: omp_pause_resource_kind = omp_integer_kind
+      integer omp_pause_resource_kind
+      parameter(omp_pause_resource_kind=omp_integer_kind)
 
       integer(kind=omp_integer_kind)openmp_version
       parameter(openmp_version=@LIBOMP_OMP_YEAR_MONTH@)
