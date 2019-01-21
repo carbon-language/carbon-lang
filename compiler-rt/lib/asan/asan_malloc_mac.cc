@@ -58,6 +58,7 @@ using namespace __asan;
   ReportMacMzReallocUnknown((uptr)ptr, (uptr)zone_ptr, zone_name, &stack);
 #define COMMON_MALLOC_NAMESPACE __asan
 #define COMMON_MALLOC_HAS_ZONE_ENUMERATOR 0
+#define COMMON_MALLOC_HAS_EXTRA_INTROSPECTION_INIT 0
 
 #include "sanitizer_common/sanitizer_malloc_mac.inc"
 
