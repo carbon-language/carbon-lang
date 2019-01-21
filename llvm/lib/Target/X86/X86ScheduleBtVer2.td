@@ -577,7 +577,7 @@ defm : JWriteResFpuPair<WriteAESDecEnc,   [JFPU01, JVALU, JFPU0, JVIMUL], 3, [1,
 
 defm : JWriteResFpuPair<WriteFHAdd,         [JFPU0, JFPA], 4>;            // +1cy latency.
 defm : JWriteResYMMPair<WriteFHAddY,        [JFPU0, JFPA], 4, [2,2], 2>;  // +1cy latency.
-defm : JWriteResFpuPair<WritePHAdd,         [JFPU01, JVALU], 2>;          // +1cy latency.
+defm : JWriteResFpuPair<WritePHAdd,         [JFPU01, JVALU], 1>;
 defm : JWriteResFpuPair<WritePHAddX,        [JFPU01, JVALU], 2>;          // +1cy latency.
 defm : X86WriteResPairUnsupported<WritePHAddY>;
 
