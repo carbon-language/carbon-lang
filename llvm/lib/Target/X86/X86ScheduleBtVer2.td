@@ -263,14 +263,13 @@ defm : X86WriteRes<WriteSHDmrcl,[JLAGU, JALU01], 9, [1, 22], 8>;
 // Loads, stores, and moves, not folded with other operations.
 ////////////////////////////////////////////////////////////////////////////////
 
-def : WriteRes<WriteLoad,    [JLAGU]> { let Latency = 5; }
+def : WriteRes<WriteLoad,    [JLAGU]> { let Latency = 3; }
 def : WriteRes<WriteStore,   [JSAGU]>;
 def : WriteRes<WriteStoreNT, [JSAGU]>;
 def : WriteRes<WriteMove,    [JALU01]>;
 
 // Load/store MXCSR.
-// FIXME: These are copy and pasted from WriteLoad/Store.
-def : WriteRes<WriteLDMXCSR, [JLAGU]> { let Latency = 5; }
+def : WriteRes<WriteLDMXCSR, [JLAGU]> { let Latency = 3; }
 def : WriteRes<WriteSTMXCSR, [JSAGU]>;
 
 // Treat misc copies as a move.
