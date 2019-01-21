@@ -126,7 +126,7 @@ def X86vfpext  : SDNode<"X86ISD::VFPEXT",
 def X86vfpround: SDNode<"X86ISD::VFPROUND",
                         SDTypeProfile<1, 1, [SDTCVecEltisVT<0, f32>,
                                              SDTCVecEltisVT<1, f64>,
-                                             SDTCisSameSizeAs<0, 1>]>>;
+                                             SDTCisOpSmallerThanOp<0, 1>]>>;
 
 def X86froundRnd: SDNode<"X86ISD::VFPROUNDS_RND",
                         SDTypeProfile<1, 3, [SDTCVecEltisVT<0, f32>,
