@@ -1423,7 +1423,7 @@ TEST_F(ScalarEvolutionsTest, SCEVComputeExpressionSize) {
   Builder.CreateBr(Exit);
 
   Builder.SetInsertPoint(Exit);
-  auto *R = cast<Instruction>(Builder.CreateRetVoid());
+  Builder.CreateRetVoid();
 
   ScalarEvolution SE = buildSE(*F);
   // Get S2 first to move it to cache.
@@ -1432,11 +1432,11 @@ TEST_F(ScalarEvolutionsTest, SCEVComputeExpressionSize) {
   const SCEV *CS = SE.getSCEV(C);
   const SCEV *S1S = SE.getSCEV(S1);
   const SCEV *S2S = SE.getSCEV(S2);
-  EXPECT_EQ(AS->getExpressionSize(), 1);
-  EXPECT_EQ(BS->getExpressionSize(), 1);
-  EXPECT_EQ(CS->getExpressionSize(), 1);
-  EXPECT_EQ(S1S->getExpressionSize(), 3);
-  EXPECT_EQ(S2S->getExpressionSize(), 5);
+  EXPECT_EQ(AS->getExpressionSize(), 1u);
+  EXPECT_EQ(BS->getExpressionSize(), 1u);
+  EXPECT_EQ(CS->getExpressionSize(), 1u);
+  EXPECT_EQ(S1S->getExpressionSize(), 3u);
+  EXPECT_EQ(S2S->getExpressionSize(), 5u);
 }
 
 }  // end anonymous namespace
