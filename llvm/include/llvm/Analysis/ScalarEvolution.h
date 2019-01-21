@@ -150,7 +150,7 @@ public:
   // SCEV and all its operands recursively. We may use it to avoid performing
   // heavy transformations on SCEVs of excessive size for sake of saving the
   // compilation time.
-  unsigned getExpressionSize() const {
+  unsigned short getExpressionSize() const {
     return ExpressionSize;
   }
 
