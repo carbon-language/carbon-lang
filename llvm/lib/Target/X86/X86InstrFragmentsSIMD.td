@@ -524,10 +524,14 @@ def X86RndScalesRnd : SDNode<"X86ISD::VRNDSCALES_RND", SDTFPBinOpImmRound>;
 def X86ReducesRnd   : SDNode<"X86ISD::VREDUCES_RND",   SDTFPBinOpImmRound>;
 def X86GetMantsRnd  : SDNode<"X86ISD::VGETMANTS_RND",  SDTFPBinOpImmRound>;
 
-def X86compress: SDNode<"X86ISD::COMPRESS", SDTypeProfile<1, 1,
-                              [SDTCisSameAs<0, 1>, SDTCisVec<1>]>, []>;
-def X86expand  : SDNode<"X86ISD::EXPAND", SDTypeProfile<1, 1,
-                              [SDTCisSameAs<0, 1>, SDTCisVec<1>]>, []>;
+def X86compress: SDNode<"X86ISD::COMPRESS", SDTypeProfile<1, 3,
+                              [SDTCisSameAs<0, 1>, SDTCisVec<1>,
+                               SDTCisSameAs<0, 2>, SDTCVecEltisVT<3, i1>,
+                               SDTCisSameNumEltsAs<0, 3>]>, []>;
+def X86expand  : SDNode<"X86ISD::EXPAND", SDTypeProfile<1, 3,
+                              [SDTCisSameAs<0, 1>, SDTCisVec<1>,
+                               SDTCisSameAs<0, 2>, SDTCVecEltisVT<3, i1>,
+                               SDTCisSameNumEltsAs<0, 3>]>, []>;
 
 // vpshufbitqmb
 def X86Vpshufbitqmb : SDNode<"X86ISD::VPSHUFBITQMB",

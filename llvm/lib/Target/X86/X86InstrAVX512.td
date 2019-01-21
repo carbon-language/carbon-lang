@@ -10546,7 +10546,7 @@ multiclass compress_by_vec_width_common<bits<8> opc, X86VectorVTInfo _,
                                  string OpcodeStr, X86FoldableSchedWrite sched> {
   defm rr : AVX512_maskable<opc, MRMDestReg, _, (outs _.RC:$dst),
               (ins _.RC:$src1), OpcodeStr, "$src1", "$src1",
-              (_.VT (X86compress _.RC:$src1))>, AVX5128IBase,
+              (null_frag)>, AVX5128IBase,
               Sched<[sched]>;
 
   let mayStore = 1, hasSideEffects = 0 in
@@ -10568,6 +10568,13 @@ multiclass compress_by_vec_width_lowering<X86VectorVTInfo _, string Name> {
   def : Pat<(X86mCompressingStore (_.VT _.RC:$src), addr:$dst, _.KRCWM:$mask),
             (!cast<Instruction>(Name#_.ZSuffix##mrk)
                             addr:$dst, _.KRCWM:$mask, _.RC:$src)>;
+
+  def : Pat<(X86compress (_.VT _.RC:$src), _.RC:$src0, _.KRCWM:$mask),
+            (!cast<Instruction>(Name#_.ZSuffix##rrk)
+                            _.RC:$src0, _.KRCWM:$mask, _.RC:$src)>;
+  def : Pat<(X86compress (_.VT _.RC:$src), _.ImmAllZerosV, _.KRCWM:$mask),
+            (!cast<Instruction>(Name#_.ZSuffix##rrkz)
+                            _.KRCWM:$mask, _.RC:$src)>;
 }
 
 multiclass compress_by_elt_width<bits<8> opc, string OpcodeStr,
@@ -10601,13 +10608,12 @@ multiclass expand_by_vec_width<bits<8> opc, X86VectorVTInfo _,
                                  string OpcodeStr, X86FoldableSchedWrite sched> {
   defm rr : AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
               (ins _.RC:$src1), OpcodeStr, "$src1", "$src1",
-              (_.VT (X86expand _.RC:$src1))>, AVX5128IBase,
+              (null_frag)>, AVX5128IBase,
               Sched<[sched]>;
 
   defm rm : AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
               (ins _.MemOp:$src1), OpcodeStr, "$src1", "$src1",
-              (_.VT (X86expand (_.VT (bitconvert
-                                      (_.LdFrag addr:$src1)))))>,
+              (null_frag)>,
             AVX5128IBase, EVEX_CD8<_.EltSize, CD8VT1>,
             Sched<[sched.Folded, sched.ReadAfterFold]>;
 }
@@ -10626,6 +10632,13 @@ multiclass expand_by_vec_width_lowering<X86VectorVTInfo _, string Name> {
                                                (_.VT _.RC:$src0))),
             (!cast<Instruction>(Name#_.ZSuffix##rmk)
                             _.RC:$src0, _.KRCWM:$mask, addr:$src)>;
+
+  def : Pat<(X86expand (_.VT _.RC:$src), _.RC:$src0, _.KRCWM:$mask),
+            (!cast<Instruction>(Name#_.ZSuffix##rrk)
+                            _.RC:$src0, _.KRCWM:$mask, _.RC:$src)>;
+  def : Pat<(X86expand (_.VT _.RC:$src), _.ImmAllZerosV, _.KRCWM:$mask),
+            (!cast<Instruction>(Name#_.ZSuffix##rrkz)
+                            _.KRCWM:$mask, _.RC:$src)>;
 }
 
 multiclass expand_by_elt_width<bits<8> opc, string OpcodeStr,
