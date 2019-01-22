@@ -9,7 +9,7 @@
 #ifndef LLVM_CLANG_TOOLS_EXTRA_CLANGD_CLANGDUNIT_H
 #define LLVM_CLANG_TOOLS_EXTRA_CLANGD_CLANGDUNIT_H
 
-#include "../clang-tidy/ClangTidyOptions.h"
+#include "Compiler.h"
 #include "Diagnostics.h"
 #include "FS.h"
 #include "Function.h"
@@ -58,14 +58,6 @@ struct PreambleData {
   // Cache of FS operations performed when building the preamble.
   // When reusing a preamble, this cache can be consumed to save IO.
   std::unique_ptr<PreambleFileStatusCache> StatCache;
-};
-
-/// Information required to run clang, e.g. to parse AST or do code completion.
-struct ParseInputs {
-  tooling::CompileCommand CompileCommand;
-  IntrusiveRefCntPtr<llvm::vfs::FileSystem> FS;
-  std::string Contents;
-  tidy::ClangTidyOptions ClangTidyOpts;
 };
 
 /// Stores and provides access to parsed AST.
@@ -136,10 +128,6 @@ private:
 
 using PreambleParsedCallback =
     std::function<void(ASTContext &, std::shared_ptr<clang::Preprocessor>)>;
-
-/// Builds compiler invocation that could be used to build AST or preamble.
-std::unique_ptr<CompilerInvocation>
-buildCompilerInvocation(const ParseInputs &Inputs);
 
 /// Rebuild the preamble for the new inputs unless the old one can be reused.
 /// If \p OldPreamble can be reused, it is returned unchanged.
