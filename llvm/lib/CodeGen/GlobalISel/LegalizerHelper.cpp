@@ -282,10 +282,6 @@ LegalizerHelper::libcall(MachineInstr &MI) {
 LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
                                                               unsigned TypeIdx,
                                                               LLT NarrowTy) {
-  // FIXME: Don't know how to handle secondary types yet.
-  if (TypeIdx != 0 && MI.getOpcode() != TargetOpcode::G_EXTRACT)
-    return UnableToLegalize;
-
   MIRBuilder.setInstr(MI);
 
   uint64_t SizeOp0 = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
@@ -408,6 +404,10 @@ LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
     return Legalized;
   }
   case TargetOpcode::G_INSERT: {
+    // FIXME: Don't know how to handle secondary types yet.
+    if (TypeIdx != 0)
+      return UnableToLegalize;
+
     // FIXME: add support for when SizeOp0 isn't an exact multiple of
     // NarrowSize.
     if (SizeOp0 % NarrowSize != 0)
@@ -659,6 +659,14 @@ LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
     MI.eraseFromParent();
     return Legalized;
   }
+  case TargetOpcode::G_SHL:
+  case TargetOpcode::G_LSHR:
+  case TargetOpcode::G_ASHR: {
+    if (TypeIdx != 1)
+      return UnableToLegalize; // TODO
+    narrowScalarSrc(MI, NarrowTy, 2);
+    return Legalized;
+  }
   }
 }
 
@@ -666,6 +674,14 @@ void LegalizerHelper::widenScalarSrc(MachineInstr &MI, LLT WideTy,
                                      unsigned OpIdx, unsigned ExtOpcode) {
   MachineOperand &MO = MI.getOperand(OpIdx);
   auto ExtB = MIRBuilder.buildInstr(ExtOpcode, {WideTy}, {MO.getReg()});
+  MO.setReg(ExtB->getOperand(0).getReg());
+}
+
+void LegalizerHelper::narrowScalarSrc(MachineInstr &MI, LLT NarrowTy,
+                                      unsigned OpIdx) {
+  MachineOperand &MO = MI.getOperand(OpIdx);
+  auto ExtB = MIRBuilder.buildInstr(TargetOpcode::G_TRUNC, {NarrowTy},
+                                    {MO.getReg()});
   MO.setReg(ExtB->getOperand(0).getReg());
 }
 
@@ -766,12 +782,18 @@ LegalizerHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx, LLT WideTy) {
     return Legalized;
 
   case TargetOpcode::G_SHL:
-    Observer.changingInstr(MI);
-    widenScalarSrc(MI, WideTy, 1, TargetOpcode::G_ANYEXT);
-    // The "number of bits to shift" operand must preserve its value as an
-    // unsigned integer:
-    widenScalarSrc(MI, WideTy, 2, TargetOpcode::G_ZEXT);
-    widenScalarDst(MI, WideTy);
+      Observer.changingInstr(MI);
+
+    if (TypeIdx == 0) {
+      widenScalarSrc(MI, WideTy, 1, TargetOpcode::G_ANYEXT);
+      widenScalarDst(MI, WideTy);
+    } else {
+      assert(TypeIdx == 1);
+      // The "number of bits to shift" operand must preserve its value as an
+      // unsigned integer:
+      widenScalarSrc(MI, WideTy, 2, TargetOpcode::G_ZEXT);
+    }
+
     Observer.changedInstr(MI);
     return Legalized;
 
@@ -785,18 +807,26 @@ LegalizerHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx, LLT WideTy) {
     return Legalized;
 
   case TargetOpcode::G_ASHR:
+  case TargetOpcode::G_LSHR:
     Observer.changingInstr(MI);
-    widenScalarSrc(MI, WideTy, 1, TargetOpcode::G_SEXT);
-    // The "number of bits to shift" operand must preserve its value as an
-    // unsigned integer:
-    widenScalarSrc(MI, WideTy, 2, TargetOpcode::G_ZEXT);
-    widenScalarDst(MI, WideTy);
+
+    if (TypeIdx == 0) {
+      unsigned CvtOp = MI.getOpcode() == TargetOpcode::G_ASHR ?
+        TargetOpcode::G_SEXT : TargetOpcode::G_ZEXT;
+
+      widenScalarSrc(MI, WideTy, 1, CvtOp);
+      widenScalarDst(MI, WideTy);
+    } else {
+      assert(TypeIdx == 1);
+      // The "number of bits to shift" operand must preserve its value as an
+      // unsigned integer:
+      widenScalarSrc(MI, WideTy, 2, TargetOpcode::G_ZEXT);
+    }
+
     Observer.changedInstr(MI);
     return Legalized;
-
   case TargetOpcode::G_UDIV:
   case TargetOpcode::G_UREM:
-  case TargetOpcode::G_LSHR:
     Observer.changingInstr(MI);
     widenScalarSrc(MI, WideTy, 1, TargetOpcode::G_ZEXT);
     widenScalarSrc(MI, WideTy, 2, TargetOpcode::G_ZEXT);
