@@ -83,7 +83,28 @@ define <8 x i32> @sub_undef_elts(<4 x i32> %x) {
   ret <8 x i32> %arbitrary_shuf
 }
 
-; Verify that different types work.
+; and undef, C --> 0, so this tests that we are tracking known zero lanes.
+
+define <4 x i64> @and_undef_elts(<2 x i64> %x) {
+; SSE-LABEL: and_undef_elts:
+; SSE:       # %bb.0:
+; SSE-NEXT:    xorps %xmm0, %xmm0
+; SSE-NEXT:    xorps %xmm1, %xmm1
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: and_undef_elts:
+; AVX:       # %bb.0:
+; AVX-NEXT:    # kill: def $xmm0 killed $xmm0 def $ymm0
+; AVX-NEXT:    vandps {{.*}}(%rip), %ymm0, %ymm0
+; AVX-NEXT:    vpermpd {{.*#+}} ymm0 = ymm0[3,0,1,2]
+; AVX-NEXT:    retq
+  %extend = shufflevector <2 x i64> %x, <2 x i64> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+  %bogus_bo = and <4 x i64> %extend, <i64 undef, i64 undef, i64 42, i64 43>
+  %arbitrary_shuf = shufflevector <4 x i64> %bogus_bo, <4 x i64> undef, <4 x i32> <i32 3, i32 0, i32 1, i32 2>
+  ret <4 x i64> %arbitrary_shuf
+}
+
+; or undef, C --> -1, so this tests that we are tracking known all-ones lanes.
 
 define <4 x i64> @or_undef_elts(<2 x i64> %x) {
 ; SSE-LABEL: or_undef_elts:
