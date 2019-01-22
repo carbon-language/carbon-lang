@@ -176,7 +176,7 @@ public:
 private:
   bool isFunctionCold(const Function &F) const;
   bool shouldOutlineFrom(const Function &F) const;
-  bool outlineColdRegions(Function &F);
+  bool outlineColdRegions(Function &F, bool HasProfileSummary);
   Function *extractColdRegion(const BlockSequence &Region, DominatorTree &DT,
                               BlockFrequencyInfo *BFI, TargetTransformInfo &TTI,
                               OptimizationRemarkEmitter &ORE, unsigned Count);
@@ -448,7 +448,7 @@ public:
 };
 } // namespace
 
-bool HotColdSplitting::outlineColdRegions(Function &F) {
+bool HotColdSplitting::outlineColdRegions(Function &F, bool HasProfileSummary) {
   bool Changed = false;
 
   // The set of cold blocks.
@@ -466,7 +466,13 @@ bool HotColdSplitting::outlineColdRegions(Function &F) {
   std::unique_ptr<DominatorTree> DT;
   std::unique_ptr<PostDominatorTree> PDT;
 
-  BlockFrequencyInfo *BFI = GetBFI(F);
+  // Calculate BFI lazily (it's only used to query ProfileSummaryInfo). This
+  // reduces compile-time significantly. TODO: When we *do* use BFI, we should
+  // be able to salvage its domtrees instead of recomputing them.
+  BlockFrequencyInfo *BFI = nullptr;
+  if (HasProfileSummary)
+    BFI = GetBFI(F);
+
   TargetTransformInfo &TTI = GetTTI(F);
   OptimizationRemarkEmitter &ORE = (*GetORE)(F);
 
@@ -476,7 +482,7 @@ bool HotColdSplitting::outlineColdRegions(Function &F) {
     if (ColdBlocks.count(BB))
       continue;
 
-    bool Cold = PSI->isColdBlock(BB, BFI) ||
+    bool Cold = (BFI && PSI->isColdBlock(BB, BFI)) ||
                 (EnableStaticAnalyis && unlikelyExecuted(*BB));
     if (!Cold)
       continue;
@@ -550,6 +556,7 @@ bool HotColdSplitting::outlineColdRegions(Function &F) {
 
 bool HotColdSplitting::run(Module &M) {
   bool Changed = false;
+  bool HasProfileSummary = M.getProfileSummary();
   for (auto It = M.begin(), End = M.end(); It != End; ++It) {
     Function &F = *It;
 
@@ -573,7 +580,7 @@ bool HotColdSplitting::run(Module &M) {
     }
 
     LLVM_DEBUG(llvm::dbgs() << "Outlining in " << F.getName() << "\n");
-    Changed |= outlineColdRegions(F);
+    Changed |= outlineColdRegions(F, HasProfileSummary);
   }
   return Changed;
 }
