@@ -1019,8 +1019,9 @@ bool semaCodeComplete(std::unique_ptr<CodeCompleteConsumer> Consumer,
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> VFS = Input.VFS;
   if (Input.Preamble && Input.Preamble->StatCache)
     VFS = Input.Preamble->StatCache->getConsumingFS(std::move(VFS));
-  auto CI =
-      buildCompilerInvocation(ParseInputs{Input.Command, VFS, Input.Contents});
+  auto CI = buildCompilerInvocation(
+      ParseInputs{Input.Command, VFS, Input.Contents,
+                  tidy::ClangTidyOptions::getDefaults()});
   if (!CI) {
     elog("Couldn't create CompilerInvocation");
     return false;
