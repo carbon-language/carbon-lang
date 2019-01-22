@@ -77,8 +77,8 @@ Error COFFReader::readSections(Object &Obj) const {
     if (auto EC = COFFObj.getSectionName(Sec, S.Name))
       return errorCodeToError(EC);
     if (Sec->hasExtendedRelocations())
-      return make_error<StringError>("Extended relocations not supported yet",
-                                     object_error::parse_failed);
+      return createStringError(object_error::parse_failed,
+                               "Extended relocations not supported yet");
   }
   Obj.addSections(Sections);
   return Error::success();
@@ -116,16 +116,16 @@ Error COFFReader::readSymbols(Object &Obj, bool IsBigObj) const {
              Sections.size())
       Sym.TargetSectionId = Sections[SymRef.getSectionNumber() - 1].UniqueId;
     else
-      return make_error<StringError>("Section number out of range",
-                                     object_error::parse_failed);
+      return createStringError(object_error::parse_failed,
+                               "Section number out of range");
     // For section definitions, check if it is comdat associative, and if
     // it is, find the target section unique id.
     const coff_aux_section_definition *SD = SymRef.getSectionDefinition();
     if (SD && SD->Selection == IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
       int32_t Index = SD->getNumber(IsBigObj);
       if (Index <= 0 || static_cast<uint32_t>(Index - 1) >= Sections.size())
-        return make_error<StringError>("Unexpected associative section index",
-                                       object_error::parse_failed);
+        return createStringError(object_error::parse_failed,
+                                 "Unexpected associative section index");
       Sym.AssociativeComdatTargetSectionId = Sections[Index - 1].UniqueId;
     }
     I += 1 + SymRef.getNumberOfAuxSymbols();
@@ -144,12 +144,12 @@ Error COFFReader::setRelocTargets(Object &Obj) const {
   for (Section &Sec : Obj.getMutableSections()) {
     for (Relocation &R : Sec.Relocs) {
       if (R.Reloc.SymbolTableIndex >= RawSymbolTable.size())
-        return make_error<StringError>("SymbolTableIndex out of range",
-                                       object_error::parse_failed);
+        return createStringError(object_error::parse_failed,
+                                 "SymbolTableIndex out of range");
       const Symbol *Sym = RawSymbolTable[R.Reloc.SymbolTableIndex];
       if (Sym == nullptr)
-        return make_error<StringError>("Invalid SymbolTableIndex",
-                                       object_error::parse_failed);
+        return createStringError(object_error::parse_failed,
+                                 "Invalid SymbolTableIndex");
       R.Target = Sym->UniqueId;
       R.TargetName = Sym->Name;
     }
@@ -169,8 +169,8 @@ Expected<std::unique_ptr<Object>> COFFReader::create() const {
     Obj->CoffFileHeader = *CFH;
   } else {
     if (!CBFH)
-      return make_error<StringError>("No COFF file header returned",
-                                     object_error::parse_failed);
+      return createStringError(object_error::parse_failed,
+                               "No COFF file header returned");
     // Only copying the few fields from the bigobj header that we need
     // and won't recreate in the end.
     Obj->CoffFileHeader.Machine = CBFH->Machine;

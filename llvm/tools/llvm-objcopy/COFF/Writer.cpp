@@ -29,10 +29,9 @@ Error COFFWriter::finalizeRelocTargets() {
     for (Relocation &R : Sec.Relocs) {
       const Symbol *Sym = Obj.findSymbol(R.Target);
       if (Sym == nullptr)
-        return make_error<StringError>("Relocation target " + R.TargetName +
-                                           " (" + Twine(R.Target) +
-                                           ") not found",
-                                       object_error::invalid_symbol_index);
+        return createStringError(object_error::invalid_symbol_index,
+                                 "Relocation target '%s' (%zu) not found",
+                                 R.TargetName.str().c_str(), R.Target);
       R.Reloc.SymbolTableIndex = Sym->RawIndex;
     }
   }
@@ -48,9 +47,9 @@ Error COFFWriter::finalizeSectionNumbers() {
     } else {
       const Section *Sec = Obj.findSection(Sym.TargetSectionId);
       if (Sec == nullptr)
-        return make_error<StringError>("Symbol " + Sym.Name +
-                                           " points to a removed section",
-                                       object_error::invalid_symbol_index);
+        return createStringError(object_error::invalid_symbol_index,
+                                 "Symbol '%s' points to a removed section",
+                                 Sym.Name.str().c_str());
       Sym.Sym.SectionNumber = Sec->Index;
 
       if (Sym.Sym.NumberOfAuxSymbols == 1 &&
@@ -65,9 +64,10 @@ Error COFFWriter::finalizeSectionNumbers() {
         } else {
           Sec = Obj.findSection(Sym.AssociativeComdatTargetSectionId);
           if (Sec == nullptr)
-            return make_error<StringError>(
-                "Symbol " + Sym.Name + " is associative to a removed section",
-                object_error::invalid_symbol_index);
+            return createStringError(
+                object_error::invalid_symbol_index,
+                "Symbol '%s' is associative to a removed section",
+                Sym.Name.str().c_str());
           SDSectionNumber = Sec->Index;
         }
         // Update the section definition with the new section number.
@@ -343,9 +343,8 @@ Error COFFWriter::patchDebugDirectory() {
             S.Header.VirtualAddress + S.Header.SizeOfRawData) {
       if (Dir->RelativeVirtualAddress + Dir->Size >
           S.Header.VirtualAddress + S.Header.SizeOfRawData)
-        return make_error<StringError>(
-            "Debug directory extends past end of section",
-            object_error::parse_failed);
+        return createStringError(object_error::parse_failed,
+                                 "Debug directory extends past end of section");
 
       size_t Offset = Dir->RelativeVirtualAddress - S.Header.VirtualAddress;
       uint8_t *Ptr = Buf.getBufferStart() + S.Header.PointerToRawData + Offset;
@@ -361,15 +360,15 @@ Error COFFWriter::patchDebugDirectory() {
       return Error::success();
     }
   }
-  return make_error<StringError>("Debug directory not found",
-                                 object_error::parse_failed);
+  return createStringError(object_error::parse_failed,
+                           "Debug directory not found");
 }
 
 Error COFFWriter::write() {
   bool IsBigObj = Obj.getSections().size() > MaxNumberOfSections16;
   if (IsBigObj && Obj.IsPE)
-    return make_error<StringError>("Too many sections for executable",
-                                   object_error::parse_failed);
+    return createStringError(object_error::parse_failed,
+                             "Too many sections for executable");
   return write(IsBigObj);
 }
 
