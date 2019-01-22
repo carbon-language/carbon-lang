@@ -724,14 +724,8 @@ public:
     /// *p = old <unsigned v ? old : v
     UMin,
 
-    /// *p = old + v
-    FAdd,
-
-    /// *p = old - v
-    FSub,
-
     FIRST_BINOP = Xchg,
-    LAST_BINOP = FSub,
+    LAST_BINOP = UMin,
     BAD_BINOP
   };
 
@@ -752,16 +746,6 @@ public:
   }
 
   static StringRef getOperationName(BinOp Op);
-
-  static bool isFPOperation(BinOp Op) {
-    switch (Op) {
-    case AtomicRMWInst::FAdd:
-    case AtomicRMWInst::FSub:
-      return true;
-    default:
-      return false;
-    }
-  }
 
   void setOperation(BinOp Operation) {
     unsigned short SubclassData = getSubclassDataFromInstruction();
@@ -818,10 +802,6 @@ public:
   /// Returns the address space of the pointer operand.
   unsigned getPointerAddressSpace() const {
     return getPointerOperand()->getType()->getPointerAddressSpace();
-  }
-
-  bool isFloatingPointOperation() const {
-    return isFPOperation(getOperation());
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
