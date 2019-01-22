@@ -516,6 +516,33 @@ LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
     MI.eraseFromParent();
     return Legalized;
   }
+  case TargetOpcode::G_ZEXTLOAD:
+  case TargetOpcode::G_SEXTLOAD: {
+    bool ZExt = MI.getOpcode() == TargetOpcode::G_ZEXTLOAD;
+    unsigned DstReg = MI.getOperand(0).getReg();
+    unsigned PtrReg = MI.getOperand(1).getReg();
+
+    unsigned TmpReg = MRI.createGenericVirtualRegister(NarrowTy);
+    auto &MMO = **MI.memoperands_begin();
+    if (MMO.getSize() * 8 == NarrowSize) {
+      MIRBuilder.buildLoad(TmpReg, PtrReg, MMO);
+    } else {
+      unsigned ExtLoad = ZExt ? TargetOpcode::G_ZEXTLOAD
+        : TargetOpcode::G_SEXTLOAD;
+      MIRBuilder.buildInstr(ExtLoad)
+        .addDef(TmpReg)
+        .addUse(PtrReg)
+        .addMemOperand(&MMO);
+    }
+
+    if (ZExt)
+      MIRBuilder.buildZExt(DstReg, TmpReg);
+    else
+      MIRBuilder.buildSExt(DstReg, TmpReg);
+
+    MI.eraseFromParent();
+    return Legalized;
+  }
   case TargetOpcode::G_STORE: {
     // FIXME: add support for when SizeOp0 isn't an exact multiple of
     // NarrowSize.

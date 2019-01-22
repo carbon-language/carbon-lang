@@ -229,6 +229,24 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
       });
 
 
+  auto &ExtLoads = getActionDefinitionsBuilder({G_SEXTLOAD, G_ZEXTLOAD})
+    .legalForTypesWithMemSize({
+        {S32, GlobalPtr, 8},
+        {S32, GlobalPtr, 16},
+        {S32, LocalPtr, 8},
+        {S32, LocalPtr, 16},
+        {S32, PrivatePtr, 8},
+        {S32, PrivatePtr, 16}});
+  if (ST.hasFlatAddressSpace()) {
+    ExtLoads.legalForTypesWithMemSize({{S32, FlatPtr, 8},
+                                       {S32, FlatPtr, 16}});
+  }
+
+  ExtLoads.clampScalar(0, S32, S32)
+          .widenScalarToNextPow2(0)
+          .unsupportedIfMemSizeNotPow2()
+          .lower();
+
   auto &Atomics = getActionDefinitionsBuilder(
     {G_ATOMICRMW_XCHG, G_ATOMICRMW_ADD, G_ATOMICRMW_SUB,
      G_ATOMICRMW_AND, G_ATOMICRMW_OR, G_ATOMICRMW_XOR,
