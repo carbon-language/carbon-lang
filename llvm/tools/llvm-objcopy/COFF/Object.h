@@ -35,35 +35,11 @@ struct Relocation {
 
 struct Section {
   object::coff_section Header;
+  ArrayRef<uint8_t> Contents;
   std::vector<Relocation> Relocs;
   StringRef Name;
   ssize_t UniqueId;
   size_t Index;
-
-  ArrayRef<uint8_t> getContents() const {
-    if (!OwnedContents.empty())
-      return OwnedContents;
-    return ContentsRef;
-  }
-
-  void setContentsRef(ArrayRef<uint8_t> Data) {
-    OwnedContents.clear();
-    ContentsRef = Data;
-  }
-
-  void setOwnedContents(std::vector<uint8_t> &&Data) {
-    ContentsRef = ArrayRef<uint8_t>();
-    OwnedContents = std::move(Data);
-  }
-
-  void clearContents() {
-    ContentsRef = ArrayRef<uint8_t>();
-    OwnedContents.clear();
-  }
-
-private:
-  ArrayRef<uint8_t> ContentsRef;
-  std::vector<uint8_t> OwnedContents;
 };
 
 struct Symbol {
