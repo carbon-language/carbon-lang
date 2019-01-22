@@ -6,6 +6,7 @@
 ; CHECK: .param .b32 b_param_0
 ; CHECK: )
 ; CHECK: {
+; CHECK: .loc 1 1 0
 ; CHECK: Lfunc_begin0:
 ; CHECK: .loc 1 1 0
 ; CHECK: .loc 1 1 0
@@ -27,6 +28,7 @@
 ; CHECK: .param .b32 d_param_0
 ; CHECK: )
 ; CHECK: {
+; CHECK: .loc 1 3 0
 ; CHECK: Lfunc_begin2:
 ; CHECK: .loc 1 3 0
 ; CHECK: ret;

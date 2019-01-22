@@ -11,8 +11,9 @@
 
 ; CHECK: .visible .func  (.param .b32 func_retval0) _Z3bari(
 ; CHECK: {
-; CHECK: Lfunc_begin0:
 ; CHECK: .loc [[CU1:[0-9]+]] 1 0
+; CHECK: Lfunc_begin0:
+; CHECK: .loc [[CU1]] 1 0
 
 ; CHECK: //DEBUG_VALUE: bar:b <- {{[0-9]+}}
 ; CHECK: //DEBUG_VALUE: bar:b <- {{[0-9]+}}
@@ -39,8 +40,9 @@ declare void @llvm.dbg.value(metadata, metadata, metadata) #1
 
 ; CHECK: .visible .func _Z3baz1A(
 ; CHECK: {
-; CHECK: Lfunc_begin1:
 ; CHECK: .loc [[CU2:[0-9]+]] 6 0
+; CHECK: Lfunc_begin1:
+; CHECK: .loc [[CU2]] 6 0
 ; CHECK: //DEBUG_VALUE: baz:z <- {{[0-9]+}}
 ; CHECK: //DEBUG_VALUE: baz:z <- {{[0-9]+}}
 ; CHECK: .loc [[CU2]] 10 0
