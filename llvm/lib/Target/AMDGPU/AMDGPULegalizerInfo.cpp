@@ -274,10 +274,15 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     .legalFor({{S32, S1}, {S64, S1}, {V2S32, S1}, {V2S16, S1}})
     .clampScalar(0, S32, S64);
 
-  getActionDefinitionsBuilder({G_SHL, G_LSHR, G_ASHR})
-    .legalFor({{S32, S32}, {S64, S32}})
-    .clampScalar(1, S32, S32);
-
+  // TODO: Only the low 4/5/6 bits of the shift amount are observed, so we can
+  // be more flexible with the shift amount type.
+  auto &Shifts = getActionDefinitionsBuilder({G_SHL, G_LSHR, G_ASHR})
+    .legalFor({{S32, S32}, {S64, S32}});
+  if (ST.has16BitInsts())
+    Shifts.legalFor({{S16, S32}, {S16, S16}});
+  else
+    Shifts.clampScalar(0, S32, S64);
+  Shifts.clampScalar(1, S32, S32);
 
   // FIXME: When RegBankSelect inserts copies, it will only create new
   // registers with scalar types.  This means we can end up with
