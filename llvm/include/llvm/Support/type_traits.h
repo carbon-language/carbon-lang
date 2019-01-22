@@ -162,6 +162,10 @@ class is_trivially_copyable {
       (has_deleted_move_constructor || has_trivial_move_constructor) &&
       (has_deleted_copy_assign || has_trivial_copy_assign) &&
       (has_deleted_copy_constructor || has_trivial_copy_constructor);
+
+#if (__has_feature(is_trivially_copyable) || (defined(__GNUC__) && __GNUC__ >= 5))
+  static_assert(value == std::is_trivially_copyable<T>::value, "inconsistent behavior between llvm:: and std:: implementation of is_trivially_copyable");
+#endif
 };
 
 
