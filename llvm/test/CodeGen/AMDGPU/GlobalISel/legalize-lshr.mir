@@ -2,71 +2,71 @@
 # RUN: llc -mtriple=amdgcn-mesa-mesa3d -mcpu=fiji -O0 -run-pass=legalizer %s -o - | FileCheck %s
 
 ---
-name: test_ashr_i32_i32
+name: test_lshr_i32_i32
 body: |
   bb.0:
     liveins: $vgpr0, $vgpr1
 
-    ; CHECK-LABEL: name: test_ashr_i32_i32
+    ; CHECK-LABEL: name: test_lshr_i32_i32
     ; CHECK: [[COPY:%[0-9]+]]:_(s32) = COPY $vgpr0
     ; CHECK: [[COPY1:%[0-9]+]]:_(s32) = COPY $vgpr1
-    ; CHECK: [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[COPY]], [[COPY1]](s32)
-    ; CHECK: $vgpr0 = COPY [[ASHR]](s32)
+    ; CHECK: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[COPY]], [[COPY1]](s32)
+    ; CHECK: $vgpr0 = COPY [[LSHR]](s32)
     %0:_(s32) = COPY $vgpr0
     %1:_(s32) = COPY $vgpr1
-    %2:_(s32) = G_ASHR %0, %1
+    %2:_(s32) = G_LSHR %0, %1
     $vgpr0 = COPY %2
 ...
 ---
-name: test_ashr_i64_i64
+name: test_lshr_i64_i64
 body: |
   bb.0:
     liveins: $vgpr0_vgpr1, $vgpr2_vgpr3
 
-    ; CHECK-LABEL: name: test_ashr_i64_i64
+    ; CHECK-LABEL: name: test_lshr_i64_i64
     ; CHECK: [[COPY:%[0-9]+]]:_(s64) = COPY $vgpr0_vgpr1
     ; CHECK: [[COPY1:%[0-9]+]]:_(s64) = COPY $vgpr2_vgpr3
     ; CHECK: [[TRUNC:%[0-9]+]]:_(s32) = G_TRUNC [[COPY1]](s64)
-    ; CHECK: [[ASHR:%[0-9]+]]:_(s64) = G_ASHR [[COPY]], [[TRUNC]](s32)
-    ; CHECK: $vgpr0_vgpr1 = COPY [[ASHR]](s64)
+    ; CHECK: [[LSHR:%[0-9]+]]:_(s64) = G_LSHR [[COPY]], [[TRUNC]](s32)
+    ; CHECK: $vgpr0_vgpr1 = COPY [[LSHR]](s64)
     %0:_(s64) = COPY $vgpr0_vgpr1
     %1:_(s64) = COPY $vgpr2_vgpr3
-    %2:_(s64) = G_ASHR %0, %1
+    %2:_(s64) = G_LSHR %0, %1
     $vgpr0_vgpr1 = COPY %2
 ...
 ---
-name: test_ashr_i64_i32
+name: test_lshr_i64_i32
 body: |
   bb.0:
     liveins: $vgpr0_vgpr1, $vgpr2
 
-    ; CHECK-LABEL: name: test_ashr_i64_i32
+    ; CHECK-LABEL: name: test_lshr_i64_i32
     ; CHECK: [[COPY:%[0-9]+]]:_(s64) = COPY $vgpr0_vgpr1
     ; CHECK: [[COPY1:%[0-9]+]]:_(s32) = COPY $vgpr2
-    ; CHECK: [[ASHR:%[0-9]+]]:_(s64) = G_ASHR [[COPY]], [[COPY1]](s32)
-    ; CHECK: $vgpr0_vgpr1 = COPY [[ASHR]](s64)
+    ; CHECK: [[LSHR:%[0-9]+]]:_(s64) = G_LSHR [[COPY]], [[COPY1]](s32)
+    ; CHECK: $vgpr0_vgpr1 = COPY [[LSHR]](s64)
     %0:_(s64) = COPY $vgpr0_vgpr1
     %1:_(s32) = COPY $vgpr2
-    %2:_(s64) = G_ASHR %0, %1
+    %2:_(s64) = G_LSHR %0, %1
     $vgpr0_vgpr1 = COPY %2
 ...
 ---
-name: test_ashr_i64_i16
+name: test_lshr_i64_i16
 body: |
   bb.0:
     liveins: $vgpr0_vgpr1, $vgpr2
 
-    ; CHECK-LABEL: name: test_ashr_i64_i16
+    ; CHECK-LABEL: name: test_lshr_i64_i16
     ; CHECK: [[COPY:%[0-9]+]]:_(s64) = COPY $vgpr0_vgpr1
     ; CHECK: [[COPY1:%[0-9]+]]:_(s32) = COPY $vgpr2
     ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 65535
     ; CHECK: [[COPY2:%[0-9]+]]:_(s32) = COPY [[COPY1]](s32)
     ; CHECK: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY2]], [[C]]
-    ; CHECK: [[ASHR:%[0-9]+]]:_(s64) = G_ASHR [[COPY]], [[AND]](s32)
-    ; CHECK: $vgpr0_vgpr1 = COPY [[ASHR]](s64)
+    ; CHECK: [[LSHR:%[0-9]+]]:_(s64) = G_LSHR [[COPY]], [[AND]](s32)
+    ; CHECK: $vgpr0_vgpr1 = COPY [[LSHR]](s64)
     %0:_(s64) = COPY $vgpr0_vgpr1
     %1:_(s32) = COPY $vgpr2
     %2:_(s16) = G_TRUNC %1
-    %3:_(s64) = G_ASHR %0, %2
+    %3:_(s64) = G_LSHR %0, %2
     $vgpr0_vgpr1 = COPY %3
 ...

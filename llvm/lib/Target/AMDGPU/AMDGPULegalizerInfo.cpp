@@ -274,8 +274,9 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     .legalFor({{S32, S1}, {S64, S1}, {V2S32, S1}, {V2S16, S1}})
     .clampScalar(0, S32, S64);
 
-  setAction({G_SHL, S32}, Legal);
-  setAction({G_SHL, 1, S32}, Legal);
+  getActionDefinitionsBuilder({G_SHL, G_LSHR, G_ASHR})
+    .legalFor({{S32, S32}, {S64, S32}})
+    .clampScalar(1, S32, S32);
 
 
   // FIXME: When RegBankSelect inserts copies, it will only create new
