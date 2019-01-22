@@ -9,6 +9,7 @@
 #ifndef LLVM_CLANG_TOOLS_EXTRA_CLANGD_CLANGDUNIT_H
 #define LLVM_CLANG_TOOLS_EXTRA_CLANGD_CLANGDUNIT_H
 
+#include "../clang-tidy/ClangTidyOptions.h"
 #include "Diagnostics.h"
 #include "FS.h"
 #include "Function.h"
@@ -64,6 +65,7 @@ struct ParseInputs {
   tooling::CompileCommand CompileCommand;
   IntrusiveRefCntPtr<llvm::vfs::FileSystem> FS;
   std::string Contents;
+  tidy::ClangTidyOptions ClangTidyOpts;
 };
 
 /// Stores and provides access to parsed AST.
@@ -76,7 +78,8 @@ public:
         std::shared_ptr<const PreambleData> Preamble,
         std::unique_ptr<llvm::MemoryBuffer> Buffer,
         std::shared_ptr<PCHContainerOperations> PCHs,
-        IntrusiveRefCntPtr<llvm::vfs::FileSystem> VFS);
+        IntrusiveRefCntPtr<llvm::vfs::FileSystem> VFS,
+        const tidy::ClangTidyOptions &ClangTidyOpts);
 
   ParsedAST(ParsedAST &&Other);
   ParsedAST &operator=(ParsedAST &&Other);
