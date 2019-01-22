@@ -1206,7 +1206,8 @@ LegalizerHelper::fewerElementsVector(MachineInstr &MI, unsigned TypeIdx,
     return UnableToLegalize;
 
   MIRBuilder.setInstr(MI);
-  switch (MI.getOpcode()) {
+  unsigned Opc = MI.getOpcode();
+  switch (Opc) {
   default:
     return UnableToLegalize;
   case TargetOpcode::G_IMPLICIT_DEF: {
@@ -1235,9 +1236,18 @@ LegalizerHelper::fewerElementsVector(MachineInstr &MI, unsigned TypeIdx,
     MI.eraseFromParent();
     return Legalized;
   }
-  case TargetOpcode::G_ADD: {
+  case TargetOpcode::G_ADD:
+  case TargetOpcode::G_FADD:
+  case TargetOpcode::G_FMUL:
+  case TargetOpcode::G_FSUB:
+  case TargetOpcode::G_FNEG:
+  case TargetOpcode::G_FABS:
+  case TargetOpcode::G_FDIV:
+  case TargetOpcode::G_FREM:
+  case TargetOpcode::G_FMA: {
     unsigned NarrowSize = NarrowTy.getSizeInBits();
     unsigned DstReg = MI.getOperand(0).getReg();
+    unsigned Flags = MI.getFlags();
     unsigned Size = MRI.getType(DstReg).getSizeInBits();
     int NumParts = Size / NarrowSize;
     // FIXME: Don't know how to handle the situation where the small vectors
@@ -1245,17 +1255,37 @@ LegalizerHelper::fewerElementsVector(MachineInstr &MI, unsigned TypeIdx,
     if (Size % NarrowSize != 0)
       return UnableToLegalize;
 
-    SmallVector<unsigned, 2> Src1Regs, Src2Regs, DstRegs;
-    extractParts(MI.getOperand(1).getReg(), NarrowTy, NumParts, Src1Regs);
-    extractParts(MI.getOperand(2).getReg(), NarrowTy, NumParts, Src2Regs);
+    unsigned NumOps = MI.getNumOperands() - 1;
+    SmallVector<unsigned, 2> DstRegs, Src0Regs, Src1Regs, Src2Regs;
+
+    extractParts(MI.getOperand(1).getReg(), NarrowTy, NumParts, Src0Regs);
+
+    if (NumOps >= 2)
+      extractParts(MI.getOperand(2).getReg(), NarrowTy, NumParts, Src1Regs);
+
+    if (NumOps >= 3)
+      extractParts(MI.getOperand(3).getReg(), NarrowTy, NumParts, Src2Regs);
 
     for (int i = 0; i < NumParts; ++i) {
       unsigned DstReg = MRI.createGenericVirtualRegister(NarrowTy);
-      MIRBuilder.buildAdd(DstReg, Src1Regs[i], Src2Regs[i]);
+
+      if (NumOps == 1)
+        MIRBuilder.buildInstr(Opc, {DstReg}, {Src0Regs[i]}, Flags);
+      else if (NumOps == 2) {
+        MIRBuilder.buildInstr(Opc, {DstReg}, {Src0Regs[i], Src1Regs[i]}, Flags);
+      } else if (NumOps == 3) {
+        MIRBuilder.buildInstr(Opc, {DstReg},
+                              {Src0Regs[i], Src1Regs[i], Src2Regs[i]}, Flags);
+      }
+
       DstRegs.push_back(DstReg);
     }
 
-    MIRBuilder.buildConcatVectors(DstReg, DstRegs);
+    if (NarrowTy.isVector())
+      MIRBuilder.buildConcatVectors(DstReg, DstRegs);
+    else
+      MIRBuilder.buildBuildVector(DstReg, DstRegs);
+
     MI.eraseFromParent();
     return Legalized;
   }

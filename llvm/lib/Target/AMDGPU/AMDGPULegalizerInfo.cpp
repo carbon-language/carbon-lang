@@ -28,6 +28,11 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
                                          const GCNTargetMachine &TM) {
   using namespace TargetOpcode;
 
+  auto scalarize = [=](const LegalityQuery &Query, unsigned TypeIdx) {
+    const LLT &Ty = Query.Types[TypeIdx];
+    return std::make_pair(TypeIdx, Ty.getElementType());
+  };
+
   auto GetAddrSpacePtr = [&TM](unsigned AS) {
     return LLT::pointer(AS, TM.getPointerSizeInBits(AS));
   };
@@ -136,10 +141,12 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
 
   setAction({G_FRAME_INDEX, PrivatePtr}, Legal);
 
-  getActionDefinitionsBuilder(
-    { G_FADD, G_FMUL, G_FNEG, G_FABS, G_FMA})
-    .legalFor({S32, S64})
-    .clampScalar(0, S32, S64);
+  getActionDefinitionsBuilder({G_FADD, G_FMUL, G_FNEG, G_FABS, G_FMA})
+      .legalFor({S32, S64})
+      .fewerElementsIf(
+          [=](const LegalityQuery &Query) { return Query.Types[0].isVector(); },
+          [=](const LegalityQuery &Query) { return scalarize(Query, 0); })
+      .clampScalar(0, S32, S64);
 
   getActionDefinitionsBuilder(G_FPTRUNC)
     .legalFor({{S32, S64}, {S16, S32}});
@@ -149,11 +156,14 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     .lowerFor({{S64, S16}}); // FIXME: Implement
 
   getActionDefinitionsBuilder(G_FSUB)
-    // Use actual fsub instruction
-    .legalFor({S32})
-    // Must use fadd + fneg
-    .lowerFor({S64, S16})
-    .clampScalar(0, S32, S64);
+      // Use actual fsub instruction
+      .legalFor({S32})
+      // Must use fadd + fneg
+      .lowerFor({S64, S16, V2S16})
+      .fewerElementsIf(
+          [=](const LegalityQuery &Query) { return Query.Types[0].isVector(); },
+          [=](const LegalityQuery &Query) { return scalarize(Query, 0); })
+      .clampScalar(0, S32, S64);
 
   setAction({G_FCMP, S1}, Legal);
   setAction({G_FCMP, 1, S32}, Legal);
@@ -295,11 +305,15 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
       });
 
   getActionDefinitionsBuilder(G_BUILD_VECTOR)
-    .legalForCartesianProduct(AllS32Vectors, {S32})
-    .legalForCartesianProduct(AllS64Vectors, {S64})
-    .clampNumElements(0, V16S32, V16S32)
-    .clampNumElements(0, V2S64, V8S64)
-    .minScalarSameAs(1, 0);
+      .legalForCartesianProduct(AllS32Vectors, {S32})
+      .legalForCartesianProduct(AllS64Vectors, {S64})
+      .clampNumElements(0, V16S32, V16S32)
+      .clampNumElements(0, V2S64, V8S64)
+      .minScalarSameAs(1, 0)
+      // FIXME: Sort of a hack to make progress on other legalizations.
+      .legalIf([=](const LegalityQuery &Query) {
+        return Query.Types[0].getScalarSizeInBits() < 32;
+      });
 
   // TODO: Support any combination of v2s32
   getActionDefinitionsBuilder(G_CONCAT_VECTORS)
@@ -326,12 +340,6 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
           return true;
       }
       return false;
-    };
-
-    auto scalarize =
-      [=](const LegalityQuery &Query, unsigned TypeIdx) {
-      const LLT &Ty = Query.Types[TypeIdx];
-      return std::make_pair(TypeIdx, Ty.getElementType());
     };
 
     getActionDefinitionsBuilder(Op)
