@@ -130,7 +130,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   // between these two scenarios.
   // FIXME: Pointer types
   getActionDefinitionsBuilder(G_CONSTANT)
-    .legalFor({S1, S32, S64, V2S32, V2S16})
+    .legalFor({S1, S32, S64})
     .clampScalar(0, S32, S64)
     .widenScalarToNextPow2(0);
 
