@@ -124,7 +124,7 @@ struct is_trivially_move_constructible<T &&> : std::true_type {};
 template <typename T>
 struct is_copy_assignable {
   template<class F>
-    static auto get(F*) -> decltype(std::declval<T &>() = std::declval<const T &>(), std::true_type{});
+    static auto get(F*) -> decltype(std::declval<F &>() = std::declval<const F &>(), std::true_type{});
     static std::false_type get(...);
     static constexpr bool value = decltype(get((T*)nullptr))::value;
 };
@@ -132,7 +132,7 @@ struct is_copy_assignable {
 template <typename T>
 struct is_move_assignable {
   template<class F>
-    static auto get(F*) -> decltype(std::declval<T &>() = std::declval<T &&>(), std::true_type{});
+    static auto get(F*) -> decltype(std::declval<F &>() = std::declval<F &&>(), std::true_type{});
     static std::false_type get(...);
     static constexpr bool value = decltype(get((T*)nullptr))::value;
 };
