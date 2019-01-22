@@ -92,12 +92,14 @@ def G_BITCAST : GenericInstruction {
   let hasSideEffects = 0;
 }
 
+// Only supports scalar result types
 def G_CONSTANT : GenericInstruction {
   let OutOperandList = (outs type0:$dst);
   let InOperandList = (ins unknown:$imm);
   let hasSideEffects = 0;
 }
 
+// Only supports scalar result types
 def G_FCONSTANT : GenericInstruction {
   let OutOperandList = (outs type0:$dst);
   let InOperandList = (ins unknown:$imm);

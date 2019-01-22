@@ -243,10 +243,8 @@ MachineInstrBuilder MachineIRBuilder::buildConstant(const DstOp &Res,
                                                     const ConstantInt &Val) {
   LLT Ty = Res.getLLTTy(*getMRI());
 
-  assert((Ty.isScalar() || Ty.isPointer()) && "invalid operand type");
-
   const ConstantInt *NewVal = &Val;
-  if (Ty.getSizeInBits() != Val.getBitWidth())
+  if (Ty.getScalarSizeInBits() != Val.getBitWidth())
     NewVal = ConstantInt::get(getMF().getFunction().getContext(),
                               Val.getValue().sextOrTrunc(Ty.getSizeInBits()));
 
@@ -266,7 +264,7 @@ MachineInstrBuilder MachineIRBuilder::buildConstant(const DstOp &Res,
 
 MachineInstrBuilder MachineIRBuilder::buildFConstant(const DstOp &Res,
                                                      const ConstantFP &Val) {
-  assert(Res.getLLTTy(*getMRI()).isScalar() && "invalid operand type");
+  assert(!Res.getLLTTy(*getMRI()).isPointer() && "invalid operand type");
 
   auto MIB = buildInstr(TargetOpcode::G_FCONSTANT);
   Res.addDefToMIB(*getMRI(), MIB);
