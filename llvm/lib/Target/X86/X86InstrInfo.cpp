@@ -1582,7 +1582,7 @@ MachineInstr *X86InstrInfo::commuteInstructionImpl(MachineInstr &MI, bool NewMI,
     if (DstIdx == SrcIdx && (ZMask & (1 << DstIdx)) == 0 &&
         countPopulation(ZMask) == 2) {
       unsigned AltIdx = findFirstSet((ZMask | (1 << DstIdx)) ^ 15);
-      assert(0 <= AltIdx && AltIdx < 4 && "Illegal insertion index");
+      assert(AltIdx < 4 && "Illegal insertion index");
       unsigned AltImm = (AltIdx << 6) | (AltIdx << 4) | ZMask;
       auto &WorkingMI = cloneIfNew(MI);
       WorkingMI.getOperand(MI.getNumOperands() - 1).setImm(AltImm);
