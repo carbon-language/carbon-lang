@@ -103,7 +103,7 @@ ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Add(
     }
     if (order == Ordering::Equal) {
       // x + (-x) -> +0.0 unless rounding is directed downwards
-      if (rounding == Rounding::Down) {
+      if (rounding.mode == RoundingMode::Down) {
         result.value.word_ = result.value.word_.IBSET(bits - 1);  // -0.0
       }
       return result;
@@ -287,10 +287,10 @@ RealFlags Real<W, P, IM>::Normalize(bool negative, int exponent,
   }
   if (exponent >= maxExponent) {
     // Infinity or overflow
-    if (rounding == Rounding::TiesToEven ||
-        rounding == Rounding::TiesAwayFromZero ||
-        (rounding == Rounding::Up && !negative) ||
-        (rounding == Rounding::Down && negative)) {
+    if (rounding.mode == RoundingMode::TiesToEven ||
+        rounding.mode == RoundingMode::TiesAwayFromZero ||
+        (rounding.mode == RoundingMode::Up && !negative) ||
+        (rounding.mode == RoundingMode::Down && negative)) {
       word_ = Word{maxExponent}.SHIFTL(significandBits);  // Inf
     } else {
       // directed rounding: round to largest finite value rather than infinity
@@ -351,21 +351,18 @@ RealFlags Real<W, P, IM>::Round(
     flags |= Normalize(IsNegative(), newExponent, sum.value);
   }
   if (inexact && origExponent == 0) {
-    // inexact denormal input
-    if (Exponent() == 0) {
-      flags.set(RealFlag::Underflow);  // output still denormal -> Underflow
+    // inexact subnormal input: signal Underflow unless in an x86-specific
+    // edge case
+    if (rounding.x86CompatibleBehavior && Exponent() != 0 && multiply &&
+        bits.sticky() &&
+        (bits.guard() ||
+            (rounding.mode != RoundingMode::Up &&
+                rounding.mode != RoundingMode::Down))) {
+      // x86 edge case in which Underflow fails to signal when a subnormal
+      // inexact multiplication product rounds to a normal result when
+      // the guard bit is set or we're not using directed rounding
     } else {
-      // Rounding went up to the smallest normal number.
-      // Still signal Underflow unless we're in a weird x86 edge case with
-      // multiplication: if the sticky bit is set (i.e., the lower half of
-      // the full product had bits below the top 2), Underflow gets set in
-      // a directed rounding mode only if the guard bit was also set.
-      if (multiply && bits.sticky() &&
-          (bits.guard() ||
-              !(rounding == Rounding::Up || rounding == Rounding::Down))) {
-      } else {
-        flags.set(RealFlag::Underflow);
-      }
+      flags.set(RealFlag::Underflow);
     }
   }
   return flags;

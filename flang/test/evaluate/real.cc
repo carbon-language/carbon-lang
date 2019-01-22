@@ -532,10 +532,10 @@ int main() {
     // Use 8192 or 16384 for more exhaustive testing.
     opds = std::atol(p);
   }
-  roundTest(0, Rounding::TiesToEven, opds);
-  roundTest(1, Rounding::ToZero, opds);
-  roundTest(2, Rounding::Up, opds);
-  roundTest(3, Rounding::Down, opds);
+  roundTest(0, Rounding{RoundingMode::TiesToEven}, opds);
+  roundTest(1, Rounding{RoundingMode::ToZero}, opds);
+  roundTest(2, Rounding{RoundingMode::Up}, opds);
+  roundTest(3, Rounding{RoundingMode::Down}, opds);
   // TODO: how to test Rounding::TiesAwayFromZero on x86?
   return testing::Complete();
 }

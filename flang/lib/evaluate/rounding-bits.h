@@ -83,14 +83,14 @@ public:
   constexpr bool MustRound(
       Rounding rounding, bool isNegative, bool isOdd) const {
     bool round{false};  // to dodge bogus g++ warning about missing return
-    switch (rounding) {
-    case Rounding::TiesToEven:
+    switch (rounding.mode) {
+    case RoundingMode::TiesToEven:
       round = guard_ && (round_ | sticky_ | isOdd);
       break;
-    case Rounding::ToZero: break;
-    case Rounding::Down: round = isNegative && !empty(); break;
-    case Rounding::Up: round = !isNegative && !empty(); break;
-    case Rounding::TiesAwayFromZero: round = guard_; break;
+    case RoundingMode::ToZero: break;
+    case RoundingMode::Down: round = isNegative && !empty(); break;
+    case RoundingMode::Up: round = !isNegative && !empty(); break;
+    case RoundingMode::TiesAwayFromZero: round = guard_; break;
     }
     return round;
   }

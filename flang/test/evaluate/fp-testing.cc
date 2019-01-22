@@ -30,7 +30,7 @@ ScopedHostFloatingPointEnvironment::ScopedHostFloatingPointEnvironment(
     std::fprintf(stderr, "fegetenv() failed: %s\n", std::strerror(errno));
     std::abort();
   }
-#if defined __x86_64__
+#if __x86_64__
   if (treatDenormalOperandsAsZero) {
     currentFenv_.__mxcsr |= 0x0040;
   } else {
@@ -85,12 +85,12 @@ RealFlags ScopedHostFloatingPointEnvironment::CurrentFlags() {
 }
 
 void ScopedHostFloatingPointEnvironment::SetRounding(Rounding rounding) {
-  switch (rounding) {
-  case Rounding::TiesToEven: fesetround(FE_TONEAREST); break;
-  case Rounding::ToZero: fesetround(FE_TOWARDZERO); break;
-  case Rounding::Up: fesetround(FE_UPWARD); break;
-  case Rounding::Down: fesetround(FE_DOWNWARD); break;
-  case Rounding::TiesAwayFromZero:
+  switch (rounding.mode) {
+  case RoundingMode::TiesToEven: fesetround(FE_TONEAREST); break;
+  case RoundingMode::ToZero: fesetround(FE_TOWARDZERO); break;
+  case RoundingMode::Up: fesetround(FE_UPWARD); break;
+  case RoundingMode::Down: fesetround(FE_DOWNWARD); break;
+  case RoundingMode::TiesAwayFromZero:
     std::fprintf(stderr, "SetRounding: TiesAwayFromZero not available");
     std::abort();
     break;

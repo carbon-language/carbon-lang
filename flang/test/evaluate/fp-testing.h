@@ -20,6 +20,7 @@
 
 using Fortran::evaluate::RealFlags;
 using Fortran::evaluate::Rounding;
+using Fortran::evaluate::RoundingMode;
 
 class ScopedHostFloatingPointEnvironment {
 public:
