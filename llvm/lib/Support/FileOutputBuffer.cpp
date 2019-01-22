@@ -87,6 +87,12 @@ public:
   size_t getBufferSize() const override { return Buffer.size(); }
 
   Error commit() override {
+    if (FinalPath == "-") {
+      llvm::outs() << StringRef((const char *)Buffer.base(), Buffer.size());
+      llvm::outs().flush();
+      return Error::success();
+    }
+
     using namespace sys::fs;
     int FD;
     std::error_code EC;
@@ -149,6 +155,10 @@ createOnDiskBuffer(StringRef Path, size_t Size, unsigned Mode) {
 // Create an instance of FileOutputBuffer.
 Expected<std::unique_ptr<FileOutputBuffer>>
 FileOutputBuffer::create(StringRef Path, size_t Size, unsigned Flags) {
+  // Handle "-" as stdout just like llvm::raw_ostream does.
+  if (Path == "-")
+    return createInMemoryBuffer("-", Size, /*Mode=*/0);
+
   unsigned Mode = fs::all_read | fs::all_write;
   if (Flags & F_executable)
     Mode |= fs::all_exe;
