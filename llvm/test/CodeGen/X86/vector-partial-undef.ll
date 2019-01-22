@@ -13,9 +13,7 @@ define <4 x i64> @xor_insert_insert(<2 x i64> %x, <2 x i64> %y) {
 ;
 ; AVX-LABEL: xor_insert_insert:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    # kill: def $xmm1 killed $xmm1 def $ymm1
-; AVX-NEXT:    # kill: def $xmm0 killed $xmm0 def $ymm0
-; AVX-NEXT:    vxorps %ymm1, %ymm0, %ymm0
+; AVX-NEXT:    vxorps %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %xw = shufflevector <2 x i64> %x, <2 x i64> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
   %yw = shufflevector <2 x i64> %y, <2 x i64> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
@@ -32,9 +30,9 @@ define <4 x i64> @xor_insert_insert_high_half(<2 x i64> %x, <2 x i64> %y) {
 ;
 ; AVX-LABEL: xor_insert_insert_high_half:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
-; AVX-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm1
-; AVX-NEXT:    vxorps %ymm1, %ymm0, %ymm0
+; AVX-NEXT:    vxorps %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    vxorps %xmm1, %xmm1, %xmm1
+; AVX-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; AVX-NEXT:    retq
   %xw = shufflevector <2 x i64> %x, <2 x i64> undef, <4 x i32> <i32 undef, i32 undef, i32 0, i32 1>
   %yw = shufflevector <2 x i64> %y, <2 x i64> undef, <4 x i32> <i32 undef, i32 undef, i32 0, i32 1>
