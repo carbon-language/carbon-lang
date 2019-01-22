@@ -285,15 +285,28 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   setAction({G_GEP, S64}, Legal);
 
   for (unsigned Op : {G_EXTRACT_VECTOR_ELT, G_INSERT_VECTOR_ELT}) {
+    unsigned VecTypeIdx = Op == G_EXTRACT_VECTOR_ELT ? 1 : 0;
+    unsigned EltTypeIdx = Op == G_EXTRACT_VECTOR_ELT ? 0 : 1;
+    unsigned IdxTypeIdx = 2;
+
     getActionDefinitionsBuilder(Op)
       .legalIf([=](const LegalityQuery &Query) {
-          const LLT &VecTy = Query.Types[1];
-          const LLT &IdxTy = Query.Types[2];
+          const LLT &VecTy = Query.Types[VecTypeIdx];
+          const LLT &IdxTy = Query.Types[IdxTypeIdx];
           return VecTy.getSizeInBits() % 32 == 0 &&
             VecTy.getSizeInBits() <= 512 &&
             IdxTy.getSizeInBits() == 32;
-        });
+        })
+      .clampScalar(EltTypeIdx, S32, S64)
+      .clampScalar(VecTypeIdx, S32, S64)
+      .clampScalar(IdxTypeIdx, S32, S32);
   }
+
+  getActionDefinitionsBuilder(G_EXTRACT_VECTOR_ELT)
+    .unsupportedIf([=](const LegalityQuery &Query) {
+        const LLT &EltTy = Query.Types[1].getElementType();
+        return Query.Types[0] != EltTy;
+      });
 
   // FIXME: Doesn't handle extract of illegal sizes.
   getActionDefinitionsBuilder({G_EXTRACT, G_INSERT})

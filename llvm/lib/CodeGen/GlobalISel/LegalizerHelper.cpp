@@ -973,13 +973,28 @@ LegalizerHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx, LLT WideTy) {
     Observer.changedInstr(MI);
     return Legalized;
   }
-  case TargetOpcode::G_EXTRACT_VECTOR_ELT:
+  case TargetOpcode::G_EXTRACT_VECTOR_ELT: {
+    if (TypeIdx == 0) {
+      unsigned VecReg = MI.getOperand(1).getReg();
+      LLT VecTy = MRI.getType(VecReg);
+      Observer.changingInstr(MI);
+
+      widenScalarSrc(MI, LLT::vector(VecTy.getNumElements(),
+                                     WideTy.getSizeInBits()),
+                     1, TargetOpcode::G_SEXT);
+
+      widenScalarDst(MI, WideTy, 0);
+      Observer.changedInstr(MI);
+      return Legalized;
+    }
+
     if (TypeIdx != 2)
       return UnableToLegalize;
     Observer.changingInstr(MI);
     widenScalarSrc(MI, WideTy, 2, TargetOpcode::G_SEXT);
     Observer.changedInstr(MI);
     return Legalized;
+  }
   case TargetOpcode::G_FADD:
   case TargetOpcode::G_FMUL:
   case TargetOpcode::G_FSUB:
