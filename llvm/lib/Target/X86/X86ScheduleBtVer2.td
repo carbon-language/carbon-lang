@@ -400,8 +400,8 @@ defm : X86WriteResPairUnsupported<WriteFTestZ>;
 defm : JWriteResFpuPair<WriteFShuffle,    [JFPU01, JFPX],  1>;
 defm : JWriteResYMMPair<WriteFShuffleY,   [JFPU01, JFPX],  1, [2, 2], 2>;
 defm : X86WriteResPairUnsupported<WriteFShuffleZ>;
-defm : JWriteResFpuPair<WriteFVarShuffle, [JFPU01, JFPX],  2, [1, 4], 3>;
-defm : JWriteResYMMPair<WriteFVarShuffleY,[JFPU01, JFPX],  3, [2, 6], 6>;
+defm : JWriteResFpuPair<WriteFVarShuffle, [JFPU01, JFPX],  3, [1, 4], 3>; // +1cy latency.
+defm : JWriteResYMMPair<WriteFVarShuffleY,[JFPU01, JFPX],  4, [2, 6], 6>; // +1cy latency.
 defm : X86WriteResPairUnsupported<WriteFVarShuffleZ>;
 defm : JWriteResFpuPair<WriteFBlend,      [JFPU01, JFPX],  1>;
 defm : JWriteResYMMPair<WriteFBlendY,     [JFPU01, JFPX],  1, [2, 2], 2>;

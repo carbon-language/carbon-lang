@@ -1433,20 +1433,20 @@ vzeroupper
 # CHECK-NEXT:  2      6     1.00    *                   vperm2f128	$1, (%rax), %ymm1, %ymm2
 # CHECK-NEXT:  1      1     0.50                        vpermilpd	$1, %xmm0, %xmm2
 # CHECK-NEXT:  1      6     1.00    *                   vpermilpd	$1, (%rax), %xmm2
-# CHECK-NEXT:  3      2     2.00                        vpermilpd	%xmm0, %xmm1, %xmm2
-# CHECK-NEXT:  3      7     2.00    *                   vpermilpd	(%rax), %xmm1, %xmm2
+# CHECK-NEXT:  3      3     2.00                        vpermilpd	%xmm0, %xmm1, %xmm2
+# CHECK-NEXT:  3      8     2.00    *                   vpermilpd	(%rax), %xmm1, %xmm2
 # CHECK-NEXT:  2      1     1.00                        vpermilpd	$1, %ymm0, %ymm2
 # CHECK-NEXT:  2      6     2.00    *                   vpermilpd	$1, (%rax), %ymm2
-# CHECK-NEXT:  6      3     3.00                        vpermilpd	%ymm0, %ymm1, %ymm2
-# CHECK-NEXT:  6      8     3.00    *                   vpermilpd	(%rax), %ymm1, %ymm2
+# CHECK-NEXT:  6      4     3.00                        vpermilpd	%ymm0, %ymm1, %ymm2
+# CHECK-NEXT:  6      9     3.00    *                   vpermilpd	(%rax), %ymm1, %ymm2
 # CHECK-NEXT:  1      1     0.50                        vpermilps	$1, %xmm0, %xmm2
 # CHECK-NEXT:  1      6     1.00    *                   vpermilps	$1, (%rax), %xmm2
-# CHECK-NEXT:  3      2     2.00                        vpermilps	%xmm0, %xmm1, %xmm2
-# CHECK-NEXT:  3      7     2.00    *                   vpermilps	(%rax), %xmm1, %xmm2
+# CHECK-NEXT:  3      3     2.00                        vpermilps	%xmm0, %xmm1, %xmm2
+# CHECK-NEXT:  3      8     2.00    *                   vpermilps	(%rax), %xmm1, %xmm2
 # CHECK-NEXT:  2      1     1.00                        vpermilps	$1, %ymm0, %ymm2
 # CHECK-NEXT:  2      6     2.00    *                   vpermilps	$1, (%rax), %ymm2
-# CHECK-NEXT:  6      3     3.00                        vpermilps	%ymm0, %ymm1, %ymm2
-# CHECK-NEXT:  6      8     3.00    *                   vpermilps	(%rax), %ymm1, %ymm2
+# CHECK-NEXT:  6      4     3.00                        vpermilps	%ymm0, %ymm1, %ymm2
+# CHECK-NEXT:  6      9     3.00    *                   vpermilps	(%rax), %ymm1, %ymm2
 # CHECK-NEXT:  1      3     1.00                        vpextrb	$1, %xmm0, %ecx
 # CHECK-NEXT:  1      3     1.00           *            vpextrb	$1, %xmm0, (%rax)
 # CHECK-NEXT:  1      3     1.00                        vpextrd	$1, %xmm0, %ecx
