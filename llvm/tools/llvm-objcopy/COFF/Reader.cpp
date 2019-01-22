@@ -121,12 +121,18 @@ Error COFFReader::readSymbols(Object &Obj, bool IsBigObj) const {
     // For section definitions, check if it is comdat associative, and if
     // it is, find the target section unique id.
     const coff_aux_section_definition *SD = SymRef.getSectionDefinition();
+    const coff_aux_weak_external *WE = SymRef.getWeakExternal();
     if (SD && SD->Selection == IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
       int32_t Index = SD->getNumber(IsBigObj);
       if (Index <= 0 || static_cast<uint32_t>(Index - 1) >= Sections.size())
         return createStringError(object_error::parse_failed,
                                  "Unexpected associative section index");
       Sym.AssociativeComdatTargetSectionId = Sections[Index - 1].UniqueId;
+    } else if (WE) {
+      // This is a raw symbol index for now, but store it in the Symbol
+      // until we've added them to the Object, which assigns the final
+      // unique ids.
+      Sym.WeakTargetSymbolId = WE->TagIndex;
     }
     I += 1 + SymRef.getNumberOfAuxSymbols();
   }
@@ -134,12 +140,26 @@ Error COFFReader::readSymbols(Object &Obj, bool IsBigObj) const {
   return Error::success();
 }
 
-Error COFFReader::setRelocTargets(Object &Obj) const {
+Error COFFReader::setSymbolTargets(Object &Obj) const {
   std::vector<const Symbol *> RawSymbolTable;
   for (const Symbol &Sym : Obj.getSymbols()) {
     RawSymbolTable.push_back(&Sym);
     for (size_t I = 0; I < Sym.Sym.NumberOfAuxSymbols; I++)
       RawSymbolTable.push_back(nullptr);
+  }
+  for (Symbol &Sym : Obj.getMutableSymbols()) {
+    // Convert WeakTargetSymbolId from the original raw symbol index to
+    // a proper unique id.
+    if (Sym.WeakTargetSymbolId) {
+      if (*Sym.WeakTargetSymbolId >= RawSymbolTable.size())
+        return createStringError(object_error::parse_failed,
+                                 "Weak external reference out of range");
+      const Symbol *Target = RawSymbolTable[*Sym.WeakTargetSymbolId];
+      if (Target == nullptr)
+        return createStringError(object_error::parse_failed,
+                                 "Invalid SymbolTableIndex");
+      Sym.WeakTargetSymbolId = Target->UniqueId;
+    }
   }
   for (Section &Sec : Obj.getMutableSections()) {
     for (Relocation &R : Sec.Relocs) {
@@ -184,7 +204,7 @@ Expected<std::unique_ptr<Object>> COFFReader::create() const {
     return std::move(E);
   if (Error E = readSymbols(*Obj, IsBigObj))
     return std::move(E);
-  if (Error E = setRelocTargets(*Obj))
+  if (Error E = setSymbolTargets(*Obj))
     return std::move(E);
 
   return std::move(Obj);

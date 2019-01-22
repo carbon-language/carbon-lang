@@ -38,7 +38,7 @@ Error COFFWriter::finalizeRelocTargets() {
   return Error::success();
 }
 
-Error COFFWriter::finalizeSectionNumbers() {
+Error COFFWriter::finalizeSymbolContents() {
   for (Symbol &Sym : Obj.getMutableSymbols()) {
     if (Sym.TargetSectionId <= 0) {
       // Undefined, or a special kind of symbol. These negative values
@@ -74,6 +74,18 @@ Error COFFWriter::finalizeSectionNumbers() {
         SD->NumberLowPart = static_cast<uint16_t>(SDSectionNumber);
         SD->NumberHighPart = static_cast<uint16_t>(SDSectionNumber >> 16);
       }
+    }
+    // Check that we actually have got AuxData to match the weak symbol target
+    // we want to set. Only >= 1 would be required, but only == 1 makes sense.
+    if (Sym.WeakTargetSymbolId && Sym.Sym.NumberOfAuxSymbols == 1) {
+      coff_aux_weak_external *WE =
+          reinterpret_cast<coff_aux_weak_external *>(Sym.AuxData.data());
+      const Symbol *Target = Obj.findSymbol(*Sym.WeakTargetSymbolId);
+      if (Target == nullptr)
+        return createStringError(object_error::invalid_symbol_index,
+                                 "Symbol '%s' is missing its weak target",
+                                 Sym.Name.str().c_str());
+      WE->TagIndex = Target->RawIndex;
     }
   }
   return Error::success();
@@ -137,7 +149,7 @@ std::pair<size_t, size_t> COFFWriter::finalizeSymbolTable() {
 Error COFFWriter::finalize(bool IsBigObj) {
   if (Error E = finalizeRelocTargets())
     return E;
-  if (Error E = finalizeSectionNumbers())
+  if (Error E = finalizeSymbolContents())
     return E;
 
   size_t SizeOfHeaders = 0;
