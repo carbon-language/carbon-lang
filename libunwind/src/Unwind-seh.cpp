@@ -68,7 +68,6 @@ static void _unw_seh_set_disp_ctx(unw_cursor_t *cursor, DISPATCHER_CONTEXT *disp
 _LIBUNWIND_EXPORT EXCEPTION_DISPOSITION
 _GCC_specific_handler(PEXCEPTION_RECORD ms_exc, PVOID frame, PCONTEXT ms_ctx,
                       DISPATCHER_CONTEXT *disp, __personality_routine pers) {
-  unw_context_t uc;
   unw_cursor_t cursor;
   _Unwind_Exception *exc;
   _Unwind_Action action;
