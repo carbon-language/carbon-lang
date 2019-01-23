@@ -9,7 +9,7 @@
 
 # RUN: ld.lld %t.o -o %t2
 
-# FIXME: Add "RUN:" in front of this line once the test passes on Windows
+# FIXME: Add "RUN" in front of this line once the test passes on Windows
 # with it.
 # diff %t1 %t2
 
