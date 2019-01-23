@@ -17,9 +17,9 @@
   define float @fun(i1 %cmp, float %arg0, float %arg1, float %arg2, float %arg3, float %arg4) #0 {
     %fs0 = select i1 %cmp, float %arg0, float %arg1
     ; Keep the dbg metadata live by referencing it in the IR.
-    call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !7, metadata !DIExpression())
+    call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !7, metadata !DIExpression()), !dbg !9
     %fs1 = select i1 %cmp, float %arg2, float %arg3
-    call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !7, metadata !DIExpression())
+    call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !7, metadata !DIExpression()), !dbg !9
     %fs2 = select i1 %cmp, float %arg0, float %arg3
     %s0 = fadd float %fs0, %fs1
     %s1 = fadd float %s0, %fs2
