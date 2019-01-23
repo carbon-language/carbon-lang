@@ -73,6 +73,10 @@ Improvements to clang-tidy
   Checks for casts of ``absl::Duration`` conversion functions, and recommends
   the right conversion function instead.
 
+- The :option:`Acronyms` and :option:`IncludeDefaultAcronyms` options for the
+  :doc:`objc-property-declaration <clang-tidy/checks/objc-property-declaration>`
+  check have been removed.
+
 Improvements to include-fixer
 -----------------------------
 
