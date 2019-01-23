@@ -25,7 +25,7 @@ Performance
 
 The performance overhead of the SafeStack instrumentation is less than 0.1% on
 average across a variety of benchmarks (see the `Code-Pointer Integrity
-<https://dslab.epfl.ch/pubs/cpi.pdf>`_ paper for details). This is mainly
+<https://dslab.epfl.ch/pubs/cpi.pdf>`__ paper for details). This is mainly
 because most small functions do not have any variables that require the unsafe
 stack and, hence, do not need unsafe stack frames to be created. The cost of
 creating unsafe stack frames for large functions is amortized by the cost of
@@ -186,7 +186,7 @@ Deprecated: This builtin function is an alias for
 Design
 ======
 
-Please refer to the `Code-Pointer Integrity <https://dslab.epfl.ch/proj/cpi/>`_
+Please refer to the `Code-Pointer Integrity <https://dslab.epfl.ch/proj/cpi/>`__
 project page for more information about the design of the SafeStack and its
 related technologies.
 
@@ -204,7 +204,7 @@ in the function ``SafeStack::createStackRestorePoints``.
 Publications
 ------------
 
-`Code-Pointer Integrity <https://dslab.epfl.ch/pubs/cpi.pdf>`_.
+`Code-Pointer Integrity <https://dslab.epfl.ch/pubs/cpi.pdf>`__.
 Volodymyr Kuznetsov, Laszlo Szekeres, Mathias Payer, George Candea, R. Sekar, Dawn Song.
 USENIX Symposium on Operating Systems Design and Implementation
 (`OSDI <https://www.usenix.org/conference/osdi14>`_), Broomfield, CO, October 2014
