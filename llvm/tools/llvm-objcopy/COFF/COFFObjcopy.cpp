@@ -37,7 +37,7 @@ static uint64_t getNextRVA(const Object &Obj) {
     return 0;
   const Section &Last = Obj.getSections().back();
   return alignTo(Last.Header.VirtualAddress + Last.Header.VirtualSize,
-                 Obj.PeHeader.SectionAlignment);
+                 Obj.IsPE ? Obj.PeHeader.SectionAlignment : 1);
 }
 
 static uint32_t getCRC32(StringRef Data) {
@@ -74,8 +74,8 @@ static void addGnuDebugLink(Object &Obj, StringRef DebugLinkFile) {
   Sec.Name = ".gnu_debuglink";
   Sec.Header.VirtualSize = Sec.getContents().size();
   Sec.Header.VirtualAddress = StartRVA;
-  Sec.Header.SizeOfRawData =
-      alignTo(Sec.Header.VirtualSize, Obj.PeHeader.FileAlignment);
+  Sec.Header.SizeOfRawData = alignTo(Sec.Header.VirtualSize,
+                                     Obj.IsPE ? Obj.PeHeader.FileAlignment : 1);
   // Sec.Header.PointerToRawData is filled in by the writer.
   Sec.Header.PointerToRelocations = 0;
   Sec.Header.PointerToLinenumbers = 0;
