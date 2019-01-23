@@ -285,7 +285,7 @@ struct FuncSampleData {
   /// Aggregation helper
   DenseMap<uint64_t, size_t> Index;
 
-  void bumpCount(uint64_t Offset);
+  void bumpCount(uint64_t Offset, uint64_t Count);
 };
 
 //===----------------------------------------------------------------------===//

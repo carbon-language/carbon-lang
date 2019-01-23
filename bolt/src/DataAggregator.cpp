@@ -46,6 +46,13 @@ BasicAggregation("nl",
   cl::cat(AggregatorCategory));
 
 static cl::opt<bool>
+WriteAutoFDOData("autofdo",
+  cl::desc("generate autofdo textual data instead of bolt data"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(AggregatorCategory));
+
+static cl::opt<bool>
 ReadPreAggregated("pa",
   cl::desc("skip perf and read data from a pre-aggregated file format"),
   cl::init(false),
@@ -123,7 +130,7 @@ void DataAggregator::start(StringRef PerfDataFilename) {
   } else {
     launchPerfProcess("branch events",
                       MainEventsPPI,
-                      "script -F pid,brstack",
+                      "script -F pid,ip,brstack",
                       /*Wait = */false);
   }
 
@@ -323,6 +330,75 @@ void DataAggregator::parsePreAggregated() {
   }
 }
 
+std::error_code DataAggregator::writeAutoFDOData() {
+  outs() << "PERF2BOLT: writing data for autofdo tools...\n";
+  NamedRegionTimer T("writeAutoFDO", "Processing branch events",
+                     TimerGroupName, TimerGroupDesc, opts::TimeAggregator);
+
+  std::error_code EC;
+  raw_fd_ostream OutFile(OutputFDataName, EC, sys::fs::OpenFlags::F_None);
+  if (EC)
+    return EC;
+
+  // Format:
+  // number of unique traces
+  // from_1-to_1:count_1
+  // from_2-to_2:count_2
+  // ......
+  // from_n-to_n:count_n
+  // number of unique sample addresses
+  // addr_1:count_1
+  // addr_2:count_2
+  // ......
+  // addr_n:count_n
+  // number of unique LBR entries
+  // src_1->dst_1:count_1
+  // src_2->dst_2:count_2
+  // ......
+  // src_n->dst_n:count_n
+
+  const uint64_t FirstAllocAddress = this->BC->FirstAllocAddress;
+
+  // AutoFDO addresses are relative to the first allocated loadable program
+  // segment
+  auto filterAddress = [&FirstAllocAddress](uint64_t Address) -> uint64_t {
+    if (Address < FirstAllocAddress)
+      return 0;
+    return Address - FirstAllocAddress;
+  };
+
+  OutFile << FallthroughLBRs.size() << "\n";
+  for (const auto &AggrLBR : FallthroughLBRs) {
+    auto &Trace = AggrLBR.first;
+    auto &Info = AggrLBR.second;
+    OutFile << Twine::utohexstr(filterAddress(Trace.From)) << "-"
+            << Twine::utohexstr(filterAddress(Trace.To)) << ":"
+            << (Info.InternCount + Info.ExternCount) << "\n";
+  }
+
+  OutFile << BasicSamples.size() << "\n";
+  for (const auto &Sample : BasicSamples) {
+    auto PC = Sample.first;
+    auto HitCount = Sample.second;
+    OutFile << Twine::utohexstr(filterAddress(PC)) << ":" << HitCount << "\n";
+  }
+
+  OutFile << BranchLBRs.size() << "\n";
+  for (const auto &AggrLBR : BranchLBRs) {
+    auto &Trace = AggrLBR.first;
+    auto &Info = AggrLBR.second;
+    OutFile << Twine::utohexstr(filterAddress(Trace.From)) << "->"
+            << Twine::utohexstr(filterAddress(Trace.To)) << ":"
+            << Info.TakenCount << "\n";
+  }
+
+  outs() << "PERF2BOLT: wrote " << FallthroughLBRs.size() << " unique traces, "
+         << BasicSamples.size() << " sample addresses and " << BranchLBRs.size()
+         << " unique branches to " << OutputFDataName << "\n";
+
+  return std::error_code();
+}
+
 void DataAggregator::parseProfile(
     BinaryContext &BC,
     std::map<uint64_t, BinaryFunction> &BFs) {
@@ -386,6 +462,15 @@ void DataAggregator::parseProfile(
   if ((!opts::BasicAggregation && parseBranchEvents()) ||
       (opts::BasicAggregation && parseBasicEvents())) {
     errs() << "PERF2BOLT: failed to parse samples\n";
+  }
+
+  // We can finish early if the goal is just to generate data for autofdo
+  if (opts::WriteAutoFDOData) {
+    if (std::error_code EC = writeAutoFDOData()) {
+      errs() << "Error writing autofdo data to file: " << EC.message() << "\n";
+    }
+    deleteTempFiles();
+    exit(0);
   }
 
   // Special handling for memory events
@@ -475,8 +560,8 @@ DataAggregator::getBinaryFunctionContainingAddress(uint64_t Address) {
   return &FI->second;
 }
 
-bool
-DataAggregator::doSample(BinaryFunction &Func, uint64_t Address) {
+bool DataAggregator::doSample(BinaryFunction &Func, uint64_t Address,
+                              uint64_t Count) {
   auto I = FuncsToSamples.find(Func.getNames()[0]);
   if (I == FuncsToSamples.end()) {
     bool Success;
@@ -485,7 +570,7 @@ DataAggregator::doSample(BinaryFunction &Func, uint64_t Address) {
         FuncSampleData(Func.getNames()[0], FuncSampleData::ContainerTy())));
   }
 
-  I->second.bumpCount(Address - Func.getAddress());
+  I->second.bumpCount(Address - Func.getAddress(), Count);
   return true;
 }
 
@@ -681,6 +766,16 @@ ErrorOr<DataAggregator::PerfBranchSample> DataAggregator::parseBranchSample() {
     consumeRestOfLine();
     return Res;
   }
+
+  while (checkAndConsumeFS()) {}
+
+  auto PCRes = parseHexField(FieldSeparator, true);
+  if (std::error_code EC = PCRes.getError())
+    return EC;
+  Res.PC = PCRes.get();
+
+  if (checkAndConsumeNewLine())
+    return Res;
 
   while (!checkAndConsumeNewLine()) {
     checkAndConsumeFS();
@@ -890,6 +985,9 @@ std::error_code DataAggregator::parseBranchEvents() {
       return EC;
 
     auto &Sample = SampleRes.get();
+    if (opts::WriteAutoFDOData)
+      ++BasicSamples[Sample.PC];
+
     if (Sample.LBR.empty())
       continue;
 
@@ -1041,7 +1139,8 @@ std::error_code DataAggregator::parseBasicEvents() {
     if (auto *BF = getBinaryFunctionContainingAddress(Sample->PC))
       BF->setHasProfileAvailable();
 
-    BasicSamples.emplace_back(std::move(Sample.get()));
+    ++BasicSamples[Sample->PC];
+    EventNames.insert(Sample->EventName);
   }
 
   return std::error_code();
@@ -1052,17 +1151,19 @@ void DataAggregator::processBasicEvents() {
   NamedRegionTimer T("processBasic", "Processing basic events",
                      TimerGroupName, TimerGroupDesc, opts::TimeAggregator);
   uint64_t OutOfRangeSamples{0};
+  uint64_t NumSamples{0};
   for (auto &Sample : BasicSamples) {
-    auto *Func = getBinaryFunctionContainingAddress(Sample.PC);
+    const auto PC = Sample.first;
+    const auto HitCount = Sample.second;
+    NumSamples += HitCount;
+    auto *Func = getBinaryFunctionContainingAddress(PC);
     if (!Func) {
-      ++OutOfRangeSamples;
+      OutOfRangeSamples += HitCount;
       continue;
     }
 
-    doSample(*Func, Sample.PC);
-    EventNames.insert(Sample.EventName);
+    doSample(*Func, PC, HitCount);
   }
-  const auto NumSamples = BasicSamples.size();
   outs() << "PERF2BOLT: read " << NumSamples << " samples\n";
 
   outs() << "PERF2BOLT: out of range samples recorded in unknown regions: "

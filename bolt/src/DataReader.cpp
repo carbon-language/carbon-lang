@@ -118,15 +118,15 @@ FuncSampleData::getSamples(uint64_t Start, uint64_t End) const {
   return Result;
 }
 
-void FuncSampleData::bumpCount(uint64_t Offset) {
+void FuncSampleData::bumpCount(uint64_t Offset, uint64_t Count) {
   auto Iter = Index.find(Offset);
   if (Iter == Index.end()) {
-    Data.emplace_back(Location(true, Name, Offset), 1);
+    Data.emplace_back(Location(true, Name, Offset), Count);
     Index[Offset] = Data.size() - 1;
     return;
   }
   auto &SI = Data[Iter->second];
-  ++SI.Hits;
+  SI.Hits += Count;
 }
 
 void FuncBranchData::bumpBranchCount(uint64_t OffsetFrom, uint64_t OffsetTo,
