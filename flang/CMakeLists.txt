@@ -29,7 +29,7 @@ if(BUILD_WITH_CLANG)
   endif()
 endif()
 
-# Set RPATH in every executable (overriding default setting)
+# Set RPATH in every executable, overriding the default setting.
 # If you set this first variable back to true (the default),
 # also set the second one.
 set(CMAKE_SKIP_BUILD_RPATH false)
@@ -87,6 +87,14 @@ if(CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
    set(CMAKE_CXX_FLAGS_RELEASE    "-O2 -DDEBUG")
    set(CMAKE_CXX_FLAGS_MINSIZEREL "-O2 '-DCHECK=(void)'")
    set(CMAKE_CXX_FLAGS_DEBUG      "-g -DDEBUG")
+
+   # Building shared libraries is death on performance with GCC by default
+   # due to the need to preserve the right to override external entry points
+   # at dynamic link time.  -fno-semantic-interposition waives that right and
+   # recovers a little bit of that performance.
+   if (BUILD_SHARED_LIBS)
+     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-semantic-interposition")
+   endif()
 endif()
 
 set(FLANG_VERSION_MAJOR      "0")
