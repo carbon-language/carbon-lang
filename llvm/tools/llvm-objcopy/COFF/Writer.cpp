@@ -286,14 +286,15 @@ void COFFWriter::writeHeaders(bool IsBigObj) {
 void COFFWriter::writeSections() {
   for (const auto &S : Obj.getSections()) {
     uint8_t *Ptr = Buf.getBufferStart() + S.Header.PointerToRawData;
-    std::copy(S.Contents.begin(), S.Contents.end(), Ptr);
+    ArrayRef<uint8_t> Contents = S.getContents();
+    std::copy(Contents.begin(), Contents.end(), Ptr);
 
     // For executable sections, pad the remainder of the raw data size with
     // 0xcc, which is int3 on x86.
     if ((S.Header.Characteristics & IMAGE_SCN_CNT_CODE) &&
-        S.Header.SizeOfRawData > S.Contents.size())
-      memset(Ptr + S.Contents.size(), 0xcc,
-             S.Header.SizeOfRawData - S.Contents.size());
+        S.Header.SizeOfRawData > Contents.size())
+      memset(Ptr + Contents.size(), 0xcc,
+             S.Header.SizeOfRawData - Contents.size());
 
     Ptr += S.Header.SizeOfRawData;
     for (const auto &R : S.Relocs) {
