@@ -10,6 +10,8 @@
 #define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_OBJC_PROPERTY_DECLARATION_H
 
 #include "../ClangTidy.h"
+#include <string>
+#include <vector>
 
 namespace clang {
 namespace tidy {
@@ -25,10 +27,15 @@ namespace objc {
 /// http://clang.llvm.org/extra/clang-tidy/checks/objc-property-declaration.html
 class PropertyDeclarationCheck : public ClangTidyCheck {
 public:
-  PropertyDeclarationCheck(StringRef Name, ClangTidyContext *Context)
-      : ClangTidyCheck(Name, Context) {}
+  PropertyDeclarationCheck(StringRef Name, ClangTidyContext *Context);
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
+  void storeOptions(ClangTidyOptions::OptionMap &Options) override;
+
+private:
+  const std::vector<std::string> SpecialAcronyms;
+  const bool IncludeDefaultAcronyms;
+  std::vector<std::string> EscapedAcronyms;
 };
 
 } // namespace objc

@@ -97,6 +97,14 @@ bool prefixedPropertyNameValid(llvm::StringRef PropertyName) {
 }
 }  // namespace
 
+PropertyDeclarationCheck::PropertyDeclarationCheck(StringRef Name,
+                                                   ClangTidyContext *Context)
+    : ClangTidyCheck(Name, Context),
+      SpecialAcronyms(
+          utils::options::parseStringList(Options.get("Acronyms", ""))),
+      IncludeDefaultAcronyms(Options.get("IncludeDefaultAcronyms", true)),
+      EscapedAcronyms() {}
+
 void PropertyDeclarationCheck::registerMatchers(MatchFinder *Finder) {
   // this check should only be applied to ObjC sources.
   if (!getLangOpts().ObjC) return;
@@ -135,6 +143,12 @@ void PropertyDeclarationCheck::check(const MatchFinder::MatchResult &Result) {
        "a category, according to the Apple Coding Guidelines")
       << MatchedDecl->getName()
       << generateFixItHint(MatchedDecl, StandardProperty);
+}
+
+void PropertyDeclarationCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
+  Options.store(Opts, "Acronyms",
+                utils::options::serializeStringList(SpecialAcronyms));
+  Options.store(Opts, "IncludeDefaultAcronyms", IncludeDefaultAcronyms);
 }
 
 }  // namespace objc
