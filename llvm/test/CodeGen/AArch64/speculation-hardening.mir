@@ -1,6 +1,5 @@
 # RUN: llc -verify-machineinstrs -mtriple=aarch64-none-linux-gnu \
 # RUN:     -start-before aarch64-speculation-hardening -o - %s \
-# RUN:     -debug-only=aarch64-speculation-hardening \
 # RUN:   | FileCheck %s --dump-input-on-failure
 
 # Check that the speculation hardening pass generates code as expected for
