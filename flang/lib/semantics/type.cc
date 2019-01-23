@@ -276,10 +276,6 @@ const LogicalTypeSpec &DeclTypeSpec::logicalTypeSpec() const {
   CHECK(category_ == Logical);
   return std::get<LogicalTypeSpec>(typeSpec_);
 }
-const CharacterTypeSpec &DeclTypeSpec::characterTypeSpec() const {
-  CHECK(category_ == Character);
-  return std::get<CharacterTypeSpec>(typeSpec_);
-}
 const DerivedTypeSpec &DeclTypeSpec::derivedTypeSpec() const {
   CHECK(category_ == TypeDerived || category_ == ClassDerived);
   return std::get<DerivedTypeSpec>(typeSpec_);

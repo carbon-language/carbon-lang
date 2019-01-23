@@ -38,7 +38,7 @@ class Scope {
 
 public:
   ENUM_CLASS(Kind, System, Global, Module, MainProgram, Subprogram, DerivedType,
-      Block, Forall)
+      Block, Forall, ImpliedDos)
   using ImportKind = common::ImportKind;
 
   // Create the Global scope -- the root of the scope tree

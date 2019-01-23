@@ -29,17 +29,17 @@ namespace Fortran::evaluate {
 
 // Constructors, accessors, mutators
 
+Triplet::Triplet() : stride_{Expr<SubscriptInteger>{1}} {}
+
 Triplet::Triplet(std::optional<Expr<SubscriptInteger>> &&l,
     std::optional<Expr<SubscriptInteger>> &&u,
-    std::optional<Expr<SubscriptInteger>> &&s) {
+    std::optional<Expr<SubscriptInteger>> &&s)
+  : stride_{s.has_value() ? std::move(*s) : Expr<SubscriptInteger>{1}} {
   if (l.has_value()) {
-    lower_ = IndirectSubscriptIntegerExpr::Make(std::move(*l));
+    lower_.emplace(std::move(*l));
   }
   if (u.has_value()) {
-    upper_ = IndirectSubscriptIntegerExpr::Make(std::move(*u));
-  }
-  if (s.has_value()) {
-    stride_ = IndirectSubscriptIntegerExpr::Make(std::move(*s));
+    upper_.emplace(std::move(*u));
   }
 }
 
@@ -57,11 +57,14 @@ std::optional<Expr<SubscriptInteger>> Triplet::upper() const {
   return std::nullopt;
 }
 
-std::optional<Expr<SubscriptInteger>> Triplet::stride() const {
-  if (stride_) {
-    return {**stride_};
+const Expr<SubscriptInteger> &Triplet::stride() const { return *stride_; }
+
+bool Triplet::IsStrideOne() const {
+  if (auto stride{ToInt64(*stride_)}) {
+    return stride == 1;
+  } else {
+    return false;
   }
-  return std::nullopt;
 }
 
 CoarrayRef::CoarrayRef(std::vector<const Symbol *> &&c,
@@ -90,13 +93,13 @@ std::optional<Expr<SomeInteger>> CoarrayRef::team() const {
 
 CoarrayRef &CoarrayRef::set_stat(Expr<SomeInteger> &&v) {
   CHECK(IsVariable(v));
-  stat_ = CopyableIndirection<Expr<SomeInteger>>::Make(std::move(v));
+  stat_.emplace(std::move(v));
   return *this;
 }
 
 CoarrayRef &CoarrayRef::set_team(Expr<SomeInteger> &&v, bool isTeamNumber) {
   CHECK(IsVariable(v));
-  team_ = CopyableIndirection<Expr<SomeInteger>>::Make(std::move(v));
+  team_.emplace(std::move(v));
   teamIsTeamNumber_ = isTeamNumber;
   return *this;
 }
@@ -104,10 +107,10 @@ CoarrayRef &CoarrayRef::set_team(Expr<SomeInteger> &&v, bool isTeamNumber) {
 void Substring::SetBounds(std::optional<Expr<SubscriptInteger>> &lower,
     std::optional<Expr<SubscriptInteger>> &upper) {
   if (lower.has_value()) {
-    lower_ = IndirectSubscriptIntegerExpr::Make(std::move(*lower));
+    lower_.emplace(std::move(*lower));
   }
   if (upper.has_value()) {
-    upper_ = IndirectSubscriptIntegerExpr::Make(std::move(*upper));
+    upper_.emplace(std::move(*upper));
   }
 }
 
@@ -156,8 +159,12 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
     std::optional<std::int64_t> length;
     if (literal != nullptr) {
       length = (*literal)->data().size();
-    } else {
-      // TODO pmk: get max character length from symbol
+    } else if (const Symbol * symbol{GetLastSymbol()}) {
+      if (const semantics::DeclTypeSpec * type{symbol->GetType()}) {
+        if (type->category() == semantics::DeclTypeSpec::Character) {
+          length = ToInt64(type->characterTypeSpec().length().GetExplicit());
+        }
+      }
     }
     if (*ubi < 1 || (lbi.has_value() && *ubi < *lbi)) {
       // Zero-length string: canonicalize
@@ -298,9 +305,7 @@ std::ostream &Component::AsFortran(std::ostream &o) const {
 std::ostream &Triplet::AsFortran(std::ostream &o) const {
   Emit(o, lower_) << ':';
   Emit(o, upper_);
-  if (stride_) {
-    Emit(o << ':', stride_);
-  }
+  Emit(o << ':', *stride_);
   return o;
 }
 
@@ -657,7 +662,7 @@ bool TypeParamInquiry<KIND>::operator==(
 }
 bool Triplet::operator==(const Triplet &that) const {
   return lower_ == that.lower_ && upper_ == that.upper_ &&
-      stride_ == that.stride_;
+      *stride_ == *that.stride_;
 }
 bool ArrayRef::operator==(const ArrayRef &that) const {
   return u == that.u && subscript == that.subscript;

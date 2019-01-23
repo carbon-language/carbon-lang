@@ -29,8 +29,7 @@ namespace Fortran::common {
 // SearchTypeList<PREDICATE, TYPES...> scans a list of types.  The zero-based
 // index of the first type T in the list for which PREDICATE<T>::value() is
 // true is returned, or -1 if the predicate is false for every type in the list.
-// This is a compile-time operation; see SearchDynamicTypes below for a
-// run-time form.
+// This is a compile-time operation; see SearchTypes below for a run-time form.
 template<int N, template<typename> class PREDICATE, typename TUPLE>
 struct SearchTypeListHelper {
   static constexpr int value() {
@@ -245,28 +244,29 @@ std::optional<R> MapOptional(
 // Given a VISITOR class of the general form
 //   struct VISITOR {
 //     using Result = ...;
-//     static constexpr std::size_t Types{...};
-//     template<std::size_t J> static Result Test();
+//     using Types = std::tuple<...>;
+//     template<typename T> Result Test() { ... }
 //   };
-// SearchDynamicTypes will traverse the indices 0 .. (Types-1) and
-// invoke VISITOR::Test<J>() until it returns a value that casts
-// to true.  If no invocation of Test succeeds, it returns a
-// default-constructed Result.
+// SearchTypes will traverse the element types in the tuple in order
+// and invoke VISITOR::Test<T>() on each until it returns a value that
+// casts to true.  If no invocation of Test succeeds, SearchTypes will
+// return a default-constructed value VISITOR::Result{}.
 template<std::size_t J, typename VISITOR>
-typename VISITOR::Result SearchDynamicTypesHelper(VISITOR &&visitor) {
-  if constexpr (J < VISITOR::Types) {
-    if (auto result{visitor.template Test<J>()}) {
+typename VISITOR::Result SearchTypesHelper(VISITOR &&visitor) {
+  using Tuple = typename VISITOR::Types;
+  if constexpr (J < std::tuple_size_v<Tuple>) {
+    if (auto result{visitor.template Test<std::tuple_element_t<J, Tuple>>()}) {
       return result;
     }
-    return SearchDynamicTypesHelper<J + 1, VISITOR>(std::move(visitor));
+    return SearchTypesHelper<J + 1, VISITOR>(std::move(visitor));
   } else {
     return typename VISITOR::Result{};
   }
 }
 
 template<typename VISITOR>
-typename VISITOR::Result SearchDynamicTypes(VISITOR &&visitor) {
-  return SearchDynamicTypesHelper<0, VISITOR>(std::move(visitor));
+typename VISITOR::Result SearchTypes(VISITOR &&visitor) {
+  return SearchTypesHelper<0, VISITOR>(std::move(visitor));
 }
 }
 #endif  // FORTRAN_COMMON_TEMPLATE_H_

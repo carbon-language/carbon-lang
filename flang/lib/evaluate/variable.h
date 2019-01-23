@@ -21,6 +21,8 @@
 // Fortran 2018 language standard (q.v.) and uses strong typing to ensure
 // that only admissable combinations can be constructed.
 
+// TODO pmk: convert remaining structs to classes
+
 #include "call.h"
 #include "common.h"
 #include "static-data.h"
@@ -120,19 +122,21 @@ EXPAND_FOR_EACH_INTEGER_KIND(
 // R921 subscript-triplet
 class Triplet {
 public:
-  Triplet() {}
+  Triplet();
   DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(Triplet)
   Triplet(std::optional<Expr<SubscriptInteger>> &&,
       std::optional<Expr<SubscriptInteger>> &&,
       std::optional<Expr<SubscriptInteger>> &&);
   std::optional<Expr<SubscriptInteger>> lower() const;
   std::optional<Expr<SubscriptInteger>> upper() const;
-  std::optional<Expr<SubscriptInteger>> stride() const;
+  const Expr<SubscriptInteger> &stride() const;
   bool operator==(const Triplet &) const;
+  bool IsStrideOne() const;
   std::ostream &AsFortran(std::ostream &) const;
 
 private:
-  std::optional<IndirectSubscriptIntegerExpr> lower_, upper_, stride_;
+  std::optional<IndirectSubscriptIntegerExpr> lower_, upper_;
+  IndirectSubscriptIntegerExpr stride_;
 };
 
 // R919 subscript when rank 0, R923 vector-subscript when rank 1

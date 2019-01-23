@@ -28,16 +28,3 @@ subroutine s2
     y = 1
   end block
 end
-
-subroutine s3
-  integer j
-  block
-    import, only: j
-    type t
-      !ERROR: 'i' from host scoping unit is not accessible due to IMPORT
-      real :: x(10) = [(i, &
-        !ERROR: 'i' from host scoping unit is not accessible due to IMPORT
-        i=1,10)]
-    end type
-  end block
-end subroutine

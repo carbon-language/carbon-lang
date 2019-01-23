@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "expression.h"
-#include "dump-parse-tree.h"  // TODO pmk temporary
 #include "scope.h"
 #include "semantics.h"
 #include "symbol.h"
@@ -27,7 +26,12 @@
 #include <functional>
 #include <optional>
 
-#include <iostream>  // TODO pmk rm
+// TODO pmk remove when scaffolding is obsolete
+#define PMKDEBUG 1
+#if PMKDEBUG
+#include "dump-parse-tree.h"
+#include <iostream>
+#endif
 
 // Typedef for optional generic expressions (ubiquitous in this file)
 using MaybeExpr =
@@ -109,9 +113,50 @@ struct CallAndArguments {
   ActualArguments arguments;
 };
 
+struct DynamicTypeWithLength : public DynamicType {
+  std::optional<Expr<SubscriptInteger>> length;
+};
+
+std::optional<DynamicTypeWithLength> AnalyzeTypeSpec(
+    ExpressionAnalysisContext &context,
+    const std::optional<parser::TypeSpec> &spec) {
+  if (spec.has_value()) {
+    if (const semantics::DeclTypeSpec * typeSpec{spec->declTypeSpec}) {
+      // Name resolution sets TypeSpec::declTypeSpec only when it's valid
+      // (viz., an intrinsic type with valid known kind or a non-polymorphic
+      // & non-ABSTRACT derived type).
+      if (const semantics::IntrinsicTypeSpec *
+          intrinsic{typeSpec->AsIntrinsic()}) {
+        TypeCategory category{intrinsic->category()};
+        if (auto kind{ToInt64(intrinsic->kind())}) {
+          DynamicTypeWithLength result{category, static_cast<int>(*kind)};
+          if (category == TypeCategory::Character) {
+            const semantics::CharacterTypeSpec &cts{
+                typeSpec->characterTypeSpec()};
+            const semantics::ParamValue len{cts.length()};
+            // N.B. CHARACTER(LEN=*) is allowed in type-specs in ALLOCATE() &
+            // type guards, but not in array constructors.
+            if (len.GetExplicit().has_value()) {
+              Expr<SomeInteger> copy{*len.GetExplicit()};
+              result.length = ConvertToType<SubscriptInteger>(std::move(copy));
+            }
+          }
+          return result;
+        }
+      } else if (const semantics::DerivedTypeSpec *
+          derived{typeSpec->AsDerived()}) {
+        return DynamicTypeWithLength{TypeCategory::Derived, 0, derived};
+      }
+    }
+  }
+  return std::nullopt;
+}
+
 // Forward declarations of additional AnalyzeExpr specializations and overloads
 template<typename... As>
 MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &, const std::variant<As...> &);
+template<typename A>
+MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &, const std::optional<A> &);
 static MaybeExpr AnalyzeExpr(
     ExpressionAnalysisContext &, const parser::Designator &);
 static MaybeExpr AnalyzeExpr(
@@ -217,11 +262,20 @@ MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context, const A &x) {
 // Definitions of AnalyzeExpr() specializations follow.
 // Helper subroutines are intermixed.
 
-// Variants are silently traversed by AnalyzeExpr().
+// Variants and optionals are silently traversed by AnalyzeExpr().
 template<typename... As>
 MaybeExpr AnalyzeExpr(
     ExpressionAnalysisContext &context, const std::variant<As...> &u) {
   return std::visit([&](const auto &x) { return AnalyzeExpr(context, x); }, u);
+}
+template<typename A>
+MaybeExpr AnalyzeExpr(
+    ExpressionAnalysisContext &context, const std::optional<A> &x) {
+  if (x.has_value()) {
+    return AnalyzeExpr(context, *x);
+  } else {
+    return std::nullopt;
+  }
 }
 
 // Wraps a object in an explicitly typed representation (e.g., Designator<>
@@ -230,7 +284,7 @@ MaybeExpr AnalyzeExpr(
 template<TypeCategory CATEGORY, template<typename> typename WRAPPER,
     typename WRAPPED>
 MaybeExpr WrapperHelper(int kind, WRAPPED &&x) {
-  return common::SearchDynamicTypes(
+  return common::SearchTypes(
       TypeKindVisitor<CATEGORY, WRAPPER, WRAPPED>{kind, std::move(x)});
 }
 
@@ -269,8 +323,44 @@ static MaybeExpr Designate(DataRef &&dataRef) {
   return std::nullopt;
 }
 
+// Catch and resolve the ambiguous parse of a substring reference
+// that looks like a 1-D array element or section.
+static MaybeExpr ResolveAmbiguousSubstring(
+    ExpressionAnalysisContext &context, ArrayRef &&ref) {
+  const Symbol &symbol{ref.GetLastSymbol()};
+  if (std::optional<DynamicType> dyType{GetSymbolType(&symbol)}) {
+    if (dyType->category == TypeCategory::Character &&
+        ref.subscript.size() == 1) {
+      DataRef base{std::visit(
+          [](auto &&y) { return DataRef{std::move(y)}; }, std::move(ref.u))};
+      std::optional<Expr<SubscriptInteger>> lower, upper;
+      if (std::visit(
+              common::visitors{
+                  [&](IndirectSubscriptIntegerExpr &&x) {
+                    lower = std::move(*x);
+                    return true;
+                  },
+                  [&](Triplet &&triplet) {
+                    lower = triplet.lower();
+                    upper = triplet.upper();
+                    return triplet.IsStrideOne();
+                  },
+              },
+              std::move(ref.subscript[0].u))) {
+        return WrapperHelper<TypeCategory::Character, Designator, Substring>(
+            dyType->kind,
+            Substring{std::move(base), std::move(lower), std::move(upper)});
+      }
+    }
+  }
+
+  return std::nullopt;
+}
+
 // Some subscript semantic checks must be deferred until all of the
-// subscripts are in hand.
+// subscripts are in hand.  This is also where we can catch the
+// ambiguous parse of a substring reference that looks like a 1-D array
+// element or section.
 static MaybeExpr CompleteSubscripts(
     ExpressionAnalysisContext &context, ArrayRef &&ref) {
   const Symbol &symbol{ref.GetLastSymbol()};
@@ -283,7 +373,11 @@ static MaybeExpr CompleteSubscripts(
   }
   int subscripts = ref.subscript.size();
   if (subscripts != symbolRank) {
-    context.Say("reference to rank-%d object '%s' has %d subscripts"_err_en_US,
+    if (MaybeExpr substring{
+            ResolveAmbiguousSubstring(context, std::move(ref))}) {
+      return substring;
+    }
+    context.Say("Reference to rank-%d object '%s' has %d subscripts"_err_en_US,
         symbolRank, symbol.name().ToString().data(), subscripts);
   } else if (subscripts == 0) {
     // nothing to check
@@ -292,8 +386,8 @@ static MaybeExpr CompleteSubscripts(
     if (baseRank > 0) {
       int rank{ref.Rank()};
       if (rank > 0) {
-        context.Say(
-            "subscripts of rank-%d component reference have rank %d, but must all be scalar"_err_en_US,
+        context.Say("Subscripts of rank-%d component reference have rank %d, "
+                    "but must all be scalar"_err_en_US,
             baseRank, rank);
       }
     }
@@ -302,8 +396,8 @@ static MaybeExpr CompleteSubscripts(
     // C928 & C1002
     if (Triplet * last{std::get_if<Triplet>(&ref.subscript.back().u)}) {
       if (!last->upper().has_value() && details->IsAssumedSize()) {
-        context.Say(
-            "assumed-size array '%s' must have explicit final subscript upper bound value"_err_en_US,
+        context.Say("Assumed-size array '%s' must have explicit final "
+                    "subscript upper bound value"_err_en_US,
             symbol.name().ToString().data());
       }
     }
@@ -433,7 +527,7 @@ MaybeExpr IntLiteralConstant(
       AnalyzeKindParam(context, std::get<std::optional<parser::KindParam>>(x.t),
           context.GetDefaultKind(TypeCategory::Integer))};
   auto value{std::get<0>(x.t)};  // std::(u)int64_t
-  auto result{common::SearchDynamicTypes(
+  auto result{common::SearchTypes(
       TypeKindVisitor<TypeCategory::Integer, Constant, std::int64_t>{
           kind, static_cast<std::int64_t>(value)})};
   if (!result.has_value()) {
@@ -468,15 +562,14 @@ Constant<TYPE> ReadRealLiteral(
 
 struct RealTypeVisitor {
   using Result = std::optional<Expr<SomeReal>>;
-  static constexpr std::size_t Types{std::tuple_size_v<RealTypes>};
+  using Types = RealTypes;
 
   RealTypeVisitor(int k, parser::CharBlock lit, FoldingContext &ctx)
     : kind{k}, literal{lit}, context{ctx} {}
 
-  template<std::size_t J> Result Test() {
-    using Ty = std::tuple_element_t<J, RealTypes>;
-    if (kind == Ty::kind) {
-      return {AsCategoryExpr(ReadRealLiteral<Ty>(literal, context))};
+  template<typename T> Result Test() {
+    if (kind == T::kind) {
+      return {AsCategoryExpr(ReadRealLiteral<T>(literal, context))};
     }
     return std::nullopt;
   }
@@ -520,7 +613,7 @@ static MaybeExpr AnalyzeExpr(
     context.Say(
         "explicit kind parameter on real constant disagrees with exponent letter"_en_US);
   }
-  auto result{common::SearchDynamicTypes(
+  auto result{common::SearchTypes(
       RealTypeVisitor{kind, x.real.source, context.GetFoldingContext()})};
   if (!result.has_value()) {
     context.Say("unsupported REAL(KIND=%d)"_err_en_US, kind);
@@ -610,7 +703,7 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
       AnalyzeKindParam(context, std::get<std::optional<parser::KindParam>>(x.t),
           context.GetDefaultKind(TypeCategory::Logical))};
   bool value{std::get<bool>(x.t)};
-  auto result{common::SearchDynamicTypes(
+  auto result{common::SearchTypes(
       TypeKindVisitor<TypeCategory::Logical, Constant, bool>{
           kind, std::move(value)})};
   if (!result.has_value()) {
@@ -645,19 +738,17 @@ static MaybeExpr AnalyzeExpr(
   return {AsGenericExpr(std::move(value.value))};
 }
 
-// For use with SearchDynamicTypes to create a TypeParamInquiry with the
+// For use with SearchTypes to create a TypeParamInquiry with the
 // right integer kind.
 struct TypeParamInquiryVisitor {
   using Result = std::optional<Expr<SomeInteger>>;
-  static constexpr std::size_t Types{
-      std::tuple_size_v<CategoryTypes<TypeCategory::Integer>>};
+  using Types = IntegerTypes;
   TypeParamInquiryVisitor(int k, SymbolOrComponent &&b, const Symbol &param)
     : kind{k}, base{std::move(b)}, parameter{param} {}
-  template<std::size_t J> Result Test() {
-    using Ty = std::tuple_element_t<J, CategoryTypes<TypeCategory::Integer>>;
-    if (kind == Ty::kind) {
+  template<typename T> Result Test() {
+    if (kind == T::kind) {
       return Expr<SomeInteger>{
-          Expr<Ty>{TypeParamInquiry<Ty::kind>{std::move(base), parameter}}};
+          Expr<T>{TypeParamInquiry<T::kind>{std::move(base), parameter}}};
     }
     return std::nullopt;
   }
@@ -670,7 +761,7 @@ static std::optional<Expr<SomeInteger>> MakeTypeParamInquiry(
     const Symbol *symbol) {
   if (std::optional<DynamicType> dyType{GetSymbolType(symbol)}) {
     if (dyType->category == TypeCategory::Integer) {
-      return common::SearchDynamicTypes(TypeParamInquiryVisitor{
+      return common::SearchTypes(TypeParamInquiryVisitor{
           dyType->kind, SymbolOrComponent{nullptr}, *symbol});
     }
   }
@@ -680,7 +771,10 @@ static std::optional<Expr<SomeInteger>> MakeTypeParamInquiry(
 // Names and named constants
 static MaybeExpr AnalyzeExpr(
     ExpressionAnalysisContext &context, const parser::Name &n) {
-  if (n.symbol == nullptr) {
+  if (std::optional<int> kind{context.IsAcImpliedDo(n.source)}) {
+    return AsMaybeExpr(ConvertToKind<TypeCategory::Integer>(
+        *kind, AsExpr(ImpliedDoIndex{n.source})));
+  } else if (n.symbol == nullptr) {
     context.Say(
         n.source, "TODO INTERNAL: name was not resolved to a symbol"_err_en_US);
   } else if (n.symbol->attrs().test(semantics::Attr::PARAMETER)) {
@@ -944,7 +1038,7 @@ static MaybeExpr AnalyzeExpr(
           CHECK(dyType.has_value());
           CHECK(dyType->category == TypeCategory::Integer);
           return AsMaybeExpr(
-              common::SearchDynamicTypes(TypeParamInquiryVisitor{dyType->kind,
+              common::SearchTypes(TypeParamInquiryVisitor{dyType->kind,
                   IgnoreAnySubscripts(std::move(*designator)), *sym}));
         } else {
           context.Say(name,
@@ -1015,9 +1109,221 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
   return std::nullopt;
 }
 
-static MaybeExpr AnalyzeExpr(
-    ExpressionAnalysisContext &context, const parser::ArrayConstructor &) {
-  context.Say("TODO: ArrayConstructor unimplemented"_en_US);
+static int IntegerTypeSpecKind(
+    ExpressionAnalysisContext &context, const parser::IntegerTypeSpec &spec) {
+  Expr<SubscriptInteger> value{context.Analyze(TypeCategory::Integer, spec.v)};
+  if (auto kind{ToInt64(value)}) {
+    return static_cast<int>(*kind);
+  }
+  context.SayAt(spec, "Constant INTEGER kind value required here"_err_en_US);
+  return context.GetDefaultKind(TypeCategory::Integer);
+}
+
+template<int KIND, typename A>
+std::optional<Expr<Type<TypeCategory::Integer, KIND>>> GetSpecificIntExpr(
+    ExpressionAnalysisContext &context, const A &x) {
+  if (MaybeExpr y{AnalyzeExpr(context, x)}) {
+    Expr<SomeInteger> *intExpr{UnwrapExpr<Expr<SomeInteger>>(*y)};
+    CHECK(intExpr != nullptr);
+    return ConvertToType<Type<TypeCategory::Integer, KIND>>(
+        std::move(*intExpr));
+  }
+  return std::nullopt;
+}
+
+// Array constructors
+
+struct ArrayConstructorContext {
+  void Push(MaybeExpr &&);
+  void Add(const parser::AcValue &);
+  ExpressionAnalysisContext &exprContext;
+  std::optional<DynamicTypeWithLength> &type;
+  bool typesMustMatch{false};
+  ArrayConstructorValues<SomeType> values;
+};
+
+void ArrayConstructorContext::Push(MaybeExpr &&x) {
+  if (x.has_value()) {
+    DynamicTypeWithLength xType;
+    if (auto dyType{x->GetType()}) {
+      *static_cast<DynamicType *>(&xType) = *dyType;
+    }
+    if (Expr<SomeCharacter> * charExpr{UnwrapExpr<Expr<SomeCharacter>>(*x)}) {
+      CHECK(xType.category == TypeCategory::Character);
+      xType.length =
+          std::visit([](const auto &kc) { return kc.LEN(); }, charExpr->u);
+    }
+    if (!type.has_value()) {
+      // If there is no explicit type-spec in an array constructor, the type
+      // of the array is the declared type of all of the elements, which must
+      // be well-defined.
+      // TODO: Possible language extension: use the most general type of
+      // the values as the type of a numeric constructed array, convert all
+      // of the other values to that type.  Alternative: let the first value
+      // determine the type, and convert the others to that type.
+      type = std::move(xType);
+      values.Push(std::move(*x));
+    } else if (typesMustMatch) {
+      if (static_cast<const DynamicType &>(*type) ==
+          static_cast<const DynamicType &>(xType)) {
+        values.Push(std::move(*x));
+      } else {
+        exprContext.Say(
+            "Values in array constructor must have the same declared type when no explicit type appears"_err_en_US);
+      }
+    } else {
+      if (auto cast{ConvertToType(*type, std::move(*x))}) {
+        values.Push(std::move(*cast));
+      } else {
+        exprContext.Say(
+            "Value in array constructor could not be converted to the type of the array"_err_en_US);
+      }
+    }
+  }
+}
+
+void ArrayConstructorContext::Add(const parser::AcValue &x) {
+  using IntType = ResultType<ImpliedDoIndex>;
+  std::visit(
+      common::visitors{
+          [&](const parser::AcValue::Triplet &triplet) {
+            // Transform l:u(:s) into (_,_=l,u(,s)) with an anonymous index '_'
+            std::optional<Expr<IntType>> lower{
+                GetSpecificIntExpr<IntType::kind>(
+                    exprContext, std::get<0>(triplet.t))};
+            std::optional<Expr<IntType>> upper{
+                GetSpecificIntExpr<IntType::kind>(
+                    exprContext, std::get<1>(triplet.t))};
+            std::optional<Expr<IntType>> stride{
+                GetSpecificIntExpr<IntType::kind>(
+                    exprContext, std::get<2>(triplet.t))};
+            if (lower.has_value() && upper.has_value()) {
+              if (!stride.has_value()) {
+                stride = Expr<IntType>{1};
+              }
+              if (!type.has_value()) {
+                type = DynamicTypeWithLength{IntType::GetType()};
+              }
+              ArrayConstructorContext nested{exprContext, type, typesMustMatch};
+              parser::CharBlock name;
+              nested.Push(Expr<SomeType>{
+                  Expr<SomeInteger>{Expr<IntType>{ImpliedDoIndex{name}}}});
+              values.Push(ImpliedDo<SomeType>{name, std::move(*lower),
+                  std::move(*upper), std::move(*stride),
+                  std::move(nested.values)});
+            }
+          },
+          [&](const common::Indirection<parser::Expr> &expr) {
+            if (MaybeExpr v{exprContext.Analyze(*expr)}) {
+              Push(std::move(*v));
+            }
+          },
+          [&](const common::Indirection<parser::AcImpliedDo> &impliedDo) {
+            const auto &control{
+                std::get<parser::AcImpliedDoControl>(impliedDo->t)};
+            const auto &bounds{
+                std::get<parser::LoopBounds<parser::ScalarIntExpr>>(control.t)};
+            parser::CharBlock name{bounds.name.thing.thing.source};
+            int kind{IntType::kind};
+            if (auto &its{std::get<std::optional<parser::IntegerTypeSpec>>(
+                    control.t)}) {
+              kind = IntegerTypeSpecKind(exprContext, *its);
+            }
+            bool inserted{exprContext.AddAcImpliedDo(name, kind)};
+            if (!inserted) {
+              exprContext.SayAt(name,
+                  "Implied DO index is active in surrounding implied DO loop and cannot have the same name"_err_en_US);
+            }
+            std::optional<Expr<IntType>> lower{
+                GetSpecificIntExpr<IntType::kind>(exprContext, bounds.lower)};
+            std::optional<Expr<IntType>> upper{
+                GetSpecificIntExpr<IntType::kind>(exprContext, bounds.upper)};
+            std::optional<Expr<IntType>> stride{
+                GetSpecificIntExpr<IntType::kind>(exprContext, bounds.step)};
+            ArrayConstructorContext nested{exprContext, type, typesMustMatch};
+            for (const auto &value :
+                std::get<std::list<parser::AcValue>>(impliedDo->t)) {
+              nested.Add(value);
+            }
+            if (lower.has_value() && upper.has_value()) {
+              if (!stride.has_value()) {
+                stride = Expr<IntType>{1};
+              }
+              values.Push(ImpliedDo<SomeType>{name, std::move(*lower),
+                  std::move(*upper), std::move(*stride),
+                  std::move(nested.values)});
+            }
+            if (inserted) {
+              exprContext.RemoveAcImpliedDo(name);
+            }
+          },
+      },
+      x.u);
+}
+
+// Inverts a collection of generic ArrayConstructorValues<SomeType> that
+// all happen to have or be convertible to the same actual type T into
+// one ArrayConstructor<T>.
+template<typename T>
+ArrayConstructorValues<T> MakeSpecific(
+    ArrayConstructorValues<SomeType> &&from) {
+  ArrayConstructorValues<T> to;
+  for (ArrayConstructorValue<SomeType> &x : from.values) {
+    std::visit(
+        common::visitors{
+            [&](CopyableIndirection<Expr<SomeType>> &&expr) {
+              auto *typed{UnwrapExpr<Expr<T>>(*expr)};
+              CHECK(typed != nullptr);
+              to.Push(std::move(*typed));
+            },
+            [&](ImpliedDo<SomeType> &&impliedDo) {
+              to.Push(ImpliedDo<T>{impliedDo.controlVariableName,
+                  std::move(*impliedDo.lower), std::move(*impliedDo.upper),
+                  std::move(*impliedDo.stride),
+                  MakeSpecific<T>(std::move(*impliedDo.values))});
+            },
+        },
+        std::move(x.u));
+  }
+  return to;
+}
+
+struct ArrayConstructorTypeVisitor {
+  using Result = MaybeExpr;
+  using Types = LengthlessIntrinsicTypes;
+  template<typename T> Result Test() {
+    if (type.category == T::category && type.kind == T::kind) {
+      if constexpr (T::category == TypeCategory::Character) {
+        CHECK(type.length.has_value());
+        return AsMaybeExpr(ArrayConstructor<T>{
+            MakeSpecific<T>(std::move(values)), std::move(*type.length)});
+      } else {
+        return AsMaybeExpr(
+            ArrayConstructor<T>{T{}, MakeSpecific<T>(std::move(values))});
+      }
+    } else {
+      return std::nullopt;
+    }
+  }
+  DynamicTypeWithLength type;
+  ArrayConstructorValues<SomeType> values;
+};
+
+static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &exprContext,
+    const parser::ArrayConstructor &array) {
+  const parser::AcSpec &acSpec{array.v};
+  std::optional<DynamicTypeWithLength> type{
+      AnalyzeTypeSpec(exprContext, acSpec.type)};
+  bool typesMustMatch{!type.has_value()};
+  ArrayConstructorContext context{exprContext, type, typesMustMatch};
+  for (const parser::AcValue &value : acSpec.values) {
+    context.Add(value);
+  }
+  if (type.has_value()) {
+    ArrayConstructorTypeVisitor visitor{
+        std::move(*type), std::move(context.values)};
+    return common::SearchTypes(std::move(visitor));
+  }
   return std::nullopt;
 }
 
@@ -1502,6 +1808,28 @@ DynamicType ExpressionAnalysisContext::GetDefaultKindOfType(
     common::TypeCategory category) {
   return {category, GetDefaultKind(category)};
 }
+
+bool ExpressionAnalysisContext::AddAcImpliedDo(
+    parser::CharBlock name, int kind) {
+  return acImpliedDos_.insert(std::make_pair(name, kind)).second;
+}
+
+void ExpressionAnalysisContext::RemoveAcImpliedDo(parser::CharBlock name) {
+  auto iter{acImpliedDos_.find(name)};
+  if (iter != acImpliedDos_.end()) {
+    acImpliedDos_.erase(iter);
+  }
+}
+
+std::optional<int> ExpressionAnalysisContext::IsAcImpliedDo(
+    parser::CharBlock name) const {
+  auto iter{acImpliedDos_.find(name)};
+  if (iter != acImpliedDos_.cend()) {
+    return {iter->second};
+  } else {
+    return std::nullopt;
+  }
+}
 }
 
 namespace Fortran::semantics {
@@ -1517,12 +1845,16 @@ public:
   bool Pre(const parser::Expr &expr) {
     if (expr.typedExpr.get() == nullptr) {
       if (MaybeExpr checked{AnalyzeExpr(context_, expr)}) {
-        // checked->AsFortran(std::cout << "pmk: checked expression: ") << '\n';
+#if PMKDEBUG
+//      checked->AsFortran(std::cout << "checked expression: ") << '\n';
+#endif
         expr.typedExpr.reset(
             new evaluate::GenericExprWrapper{std::move(*checked)});
       } else {
+#if PMKDEBUG
         std::cout << "TODO: expression analysis failed for this expression: ";
         DumpTree(std::cout, expr);
+#endif
       }
     }
     return false;

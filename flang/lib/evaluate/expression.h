@@ -31,6 +31,7 @@
 #include "../lib/parser/char-block.h"
 #include "../lib/parser/message.h"
 #include <algorithm>
+#include <list>
 #include <ostream>
 #include <tuple>
 #include <type_traits>
@@ -58,7 +59,7 @@ using common::RelationalOperator;
 // Everything that can appear in, or as, a valid Fortran expression must be
 // represented with an instance of some class containing a Result typedef that
 // maps to some instantiation of Type<CATEGORY, KIND>, SomeKind<CATEGORY>,
-// or SomeType.
+// or SomeType.  (Exception: BOZ literal constants in generic Expr<SomeType>.)
 template<typename A> using ResultType = typename std::decay_t<A>::Result;
 
 // Common Expr<> behaviors: every Expr<T> derives from ExpressionBase<T>.
@@ -212,7 +213,8 @@ private:
 // dynamic kind.
 template<typename TO, TypeCategory FROMCAT>
 struct Convert : public Operation<Convert<TO, FROMCAT>, TO, SomeKind<FROMCAT>> {
-  // Fortran doesn't have conversions between kinds of CHARACTER.
+  // Fortran doesn't have conversions between kinds of CHARACTER apart from
+  // assignments, and in those the data must be convertible to/from 7-bit ASCII.
   // Conversions between kinds of COMPLEX are represented piecewise.
   static_assert(((TO::category == TypeCategory::Integer ||
                      TO::category == TypeCategory::Real) &&
@@ -392,47 +394,67 @@ struct LogicalOperation
 
 template<typename RESULT> struct ArrayConstructorValues;
 
-template<typename VALUES, typename OPERAND> struct ImpliedDo {
-  using Values = VALUES;
-  using Operand = OPERAND;
-  using Result = ResultType<Values>;
-  static_assert(Operand::category == TypeCategory::Integer);
+struct ImpliedDoIndex {
+  using Result = SubscriptInteger;
+  bool operator==(const ImpliedDoIndex &) const;
+  static constexpr int Rank() { return 0; }
+  parser::CharBlock name;  // nested implied DOs must use distinct names
+};
+
+template<typename RESULT> struct ImpliedDo {
+  using Result = RESULT;
   bool operator==(const ImpliedDo &) const;
   parser::CharBlock controlVariableName;
-  CopyableIndirection<Expr<Operand>> lower, upper, stride;
-  CopyableIndirection<Values> values;
+  CopyableIndirection<Expr<ResultType<ImpliedDoIndex>>> lower, upper, stride;
+  CopyableIndirection<ArrayConstructorValues<RESULT>> values;
 };
 
 template<typename RESULT> struct ArrayConstructorValue {
   using Result = RESULT;
   EVALUATE_UNION_CLASS_BOILERPLATE(ArrayConstructorValue)
-  template<typename INT>
-  using ImpliedDo = ImpliedDo<ArrayConstructorValues<Result>, INT>;
-  common::CombineVariants<std::variant<CopyableIndirection<Expr<Result>>>,
-      common::MapTemplate<ImpliedDo, IntegerTypes>>
-      u;
+  std::variant<CopyableIndirection<Expr<Result>>, ImpliedDo<Result>> u;
 };
 
 template<typename RESULT> struct ArrayConstructorValues {
   using Result = RESULT;
-  CLASS_BOILERPLATE(ArrayConstructorValues)
-  template<typename A> void Push(A &&x) { values.emplace_back(std::move(x)); }
+  DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(ArrayConstructorValues)
+  ArrayConstructorValues() {}
   bool operator==(const ArrayConstructorValues &) const;
+  template<typename A> void Push(A &&x) { values.emplace_back(std::move(x)); }
   std::vector<ArrayConstructorValue<Result>> values;
 };
 
-template<typename RESULT>
-struct ArrayConstructor : public ArrayConstructorValues<RESULT> {
+template<typename RESULT> struct ArrayConstructor {
   using Result = RESULT;
-  using ArrayConstructorValues<Result>::ArrayConstructorValues;
-  DynamicType GetType() const;
+  CLASS_BOILERPLATE(ArrayConstructor)
+  ArrayConstructor(Result &&t, ArrayConstructorValues<Result> &&v)
+    : type{std::move(t)}, values{std::move(v)} {
+    CHECK(type.category != TypeCategory::Character);
+  }
+  bool operator==(const ArrayConstructor<RESULT> &) const;
+  DynamicType GetType() const { return type.GetType(); }
   static constexpr int Rank() { return 1; }
-  Expr<SubscriptInteger> LEN() const;
-  bool operator==(const ArrayConstructor &) const;
   std::ostream &AsFortran(std::ostream &) const;
+  Result type;
+  ArrayConstructorValues<Result> values;
+};
 
-  Result result;
-  std::vector<Expr<SubscriptInteger>> typeParameterValues;
+template<int KIND>
+struct ArrayConstructor<Type<TypeCategory::Character, KIND>> {
+  using Result = Type<TypeCategory::Character, KIND>;
+  CLASS_BOILERPLATE(ArrayConstructor)
+  ArrayConstructor(
+      ArrayConstructorValues<Result> &&v, Expr<SubscriptInteger> &&len)
+    : values{std::move(v)}, length{std::move(len)} {}
+  ~ArrayConstructor();
+  bool operator==(const ArrayConstructor<Result> &) const;
+  static constexpr DynamicType GetType() { return Result::GetType(); }
+  static constexpr int Rank() { return 1; }
+  std::ostream &AsFortran(std::ostream &) const;
+  const Expr<SubscriptInteger> &LEN() const { return *length; }
+
+  ArrayConstructorValues<Result> values;
+  CopyableIndirection<Expr<SubscriptInteger>> length;
 };
 
 // Expression representations for each type category.
@@ -450,16 +472,20 @@ public:
     : u{Constant<Result>{n}} {}
 
 private:
-  using Conversions = std::variant<Convert<Result, TypeCategory::Integer>,
+  using Conversions = std::tuple<Convert<Result, TypeCategory::Integer>,
       Convert<Result, TypeCategory::Real>>;
-  using Operations = std::variant<Parentheses<Result>, Negate<Result>,
+  using Operations = std::tuple<Parentheses<Result>, Negate<Result>,
       Add<Result>, Subtract<Result>, Multiply<Result>, Divide<Result>,
       Power<Result>, Extremum<Result>>;
-  using Others = std::variant<Constant<Result>, ArrayConstructor<Result>,
+  using Indices = std::conditional_t<KIND == ImpliedDoIndex::Result::kind,
+      std::tuple<ImpliedDoIndex>, std::tuple<>>;
+  using Others = std::tuple<Constant<Result>, ArrayConstructor<Result>,
       TypeParamInquiry<KIND>, Designator<Result>, FunctionRef<Result>>;
 
 public:
-  common::CombineVariants<Operations, Conversions, Others> u;
+  common::TupleToVariant<
+      common::CombineTuples<Operations, Conversions, Indices, Others>>
+      u;
 };
 
 template<int KIND>
@@ -592,15 +618,16 @@ public:
   explicit Expr(bool x) : u{Constant<Result>{x}} {}
 
 private:
-  using Operations = std::variant<Convert<Result, TypeCategory::Logical>,
+  using Operations = std::tuple<Convert<Result, TypeCategory::Logical>,
       Parentheses<Result>, Not<KIND>, LogicalOperation<KIND>>;
   using Relations = std::conditional_t<KIND == LogicalResult::kind,
-      std::variant<Relational<SomeType>>, std::variant<>>;
-  using Others = std::variant<Constant<Result>, ArrayConstructor<Result>,
+      std::tuple<Relational<SomeType>>, std::tuple<>>;
+  using Others = std::tuple<Constant<Result>, ArrayConstructor<Result>,
       Designator<Result>, FunctionRef<Result>>;
 
 public:
-  common::CombineVariants<Operations, Relations, Others> u;
+  common::TupleToVariant<common::CombineTuples<Operations, Relations, Others>>
+      u;
 };
 
 FOR_EACH_LOGICAL_KIND(extern template class Expr)

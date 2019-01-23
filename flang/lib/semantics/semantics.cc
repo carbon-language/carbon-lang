@@ -71,9 +71,6 @@ bool Semantics::Perform() {
   if (AnyFatalError()) {
     return false;
   }
-  if (AnyFatalError()) {
-    return false;
-  }
   CheckDoConcurrentConstraints(context_.messages(), program_);
   if (AnyFatalError()) {
     return false;
@@ -83,10 +80,8 @@ bool Semantics::Perform() {
   if (AnyFatalError()) {
     return false;
   }
-  if (context_.debugExpressions()) {
-    AnalyzeExpressions(program_, context_);
-    AnalyzeAssignments(program_, context_);
-  }
+  AnalyzeExpressions(program_, context_);
+  AnalyzeAssignments(program_, context_);
   return !AnyFatalError();
 }
 

@@ -164,6 +164,16 @@ Expr<TO> ConvertToType(Expr<SomeKind<FROMCAT>> &&x) {
       Scalar<Part> zero;
       return Expr<TO>{ComplexConstructor<TO::kind>{
           ConvertToType<Part>(std::move(x)), Expr<Part>{Constant<Part>{zero}}}};
+    } else if constexpr (FROMCAT == TypeCategory::Complex) {
+      // Extract and convert the real component of a complex value
+      return std::visit(
+          [&](auto &&z) {
+            using ZType = ResultType<decltype(z)>;
+            using Part = typename ZType::Part;
+            return ConvertToType<TO, TypeCategory::Real>(Expr<SomeReal>{
+                Expr<Part>{ComplexComponent<Part::kind>{false, std::move(z)}}});
+          },
+          std::move(x.u));
     } else {
       return Expr<TO>{Convert<TO, FROMCAT>{std::move(x)}};
     }
@@ -194,6 +204,11 @@ Expr<TO> ConvertToType(Expr<SomeKind<FROMCAT>> &&x) {
   }
 }
 
+template<typename TO, TypeCategory FROMCAT, int FROMKIND>
+Expr<TO> ConvertToType(Expr<Type<FROMCAT, FROMKIND>> &&x) {
+  return ConvertToType<TO, FROMCAT>(Expr<SomeKind<FROMCAT>>{std::move(x)});
+}
+
 template<typename TO> Expr<TO> ConvertToType(BOZLiteralConstant &&x) {
   static_assert(IsSpecificIntrinsicType<TO>);
   using Value = typename Constant<TO>::Value;
@@ -206,21 +221,20 @@ template<typename TO> Expr<TO> ConvertToType(BOZLiteralConstant &&x) {
   }
 }
 
-template<TypeCategory TC, int TK, TypeCategory FC>
-Expr<Type<TC, TK>> ConvertTo(
-    const Expr<Type<TC, TK>> &, Expr<SomeKind<FC>> &&x) {
+// Conversions to dynamic types
+std::optional<Expr<SomeType>> ConvertToType(
+    const DynamicType &, Expr<SomeType> &&);
+std::optional<Expr<SomeType>> ConvertToType(
+    const DynamicType &, std::optional<Expr<SomeType>> &&);
+
+// Conversions to the type of another expression
+template<TypeCategory TC, int TK, typename FROM>
+Expr<Type<TC, TK>> ConvertTo(const Expr<Type<TC, TK>> &, FROM &&x) {
   return ConvertToType<Type<TC, TK>>(std::move(x));
 }
 
-template<TypeCategory TC, int TK, TypeCategory FC, int FK>
-Expr<Type<TC, TK>> ConvertTo(
-    const Expr<Type<TC, TK>> &, Expr<Type<FC, FK>> &&x) {
-  return AsExpr(ConvertToType<Type<TC, TK>>(AsCategoryExpr(std::move(x))));
-}
-
-template<TypeCategory TC, TypeCategory FC>
-Expr<SomeKind<TC>> ConvertTo(
-    const Expr<SomeKind<TC>> &to, Expr<SomeKind<FC>> &&from) {
+template<TypeCategory TC, typename FROM>
+Expr<SomeKind<TC>> ConvertTo(const Expr<SomeKind<TC>> &to, FROM &&from) {
   return std::visit(
       [&](const auto &toKindExpr) {
         using KindExpr = std::decay_t<decltype(toKindExpr)>;
@@ -230,28 +244,11 @@ Expr<SomeKind<TC>> ConvertTo(
       to.u);
 }
 
-template<TypeCategory TC, TypeCategory FC, int FK>
-Expr<SomeKind<TC>> ConvertTo(
-    const Expr<SomeKind<TC>> &to, Expr<Type<FC, FK>> &&from) {
-  return ConvertTo(to, AsCategoryExpr(std::move(from)));
-}
-
-template<typename FT>
-Expr<SomeType> ConvertTo(const Expr<SomeType> &to, Expr<FT> &&from) {
+template<typename FROM>
+Expr<SomeType> ConvertTo(const Expr<SomeType> &to, FROM &&from) {
   return std::visit(
       [&](const auto &toCatExpr) {
         return AsGenericExpr(ConvertTo(toCatExpr, std::move(from)));
-      },
-      to.u);
-}
-
-template<TypeCategory CAT>
-Expr<SomeKind<CAT>> ConvertTo(
-    const Expr<SomeKind<CAT>> &to, BOZLiteralConstant &&from) {
-  return std::visit(
-      [&](const auto &tok) {
-        using Ty = ResultType<decltype(tok)>;
-        return AsCategoryExpr(ConvertToType<Ty>(std::move(from)));
       },
       to.u);
 }
@@ -260,13 +257,12 @@ Expr<SomeKind<CAT>> ConvertTo(
 // kind of some category (usually but not necessarily distinct).
 template<TypeCategory TOCAT, typename VALUE> struct ConvertToKindHelper {
   using Result = std::optional<Expr<SomeKind<TOCAT>>>;
-  static constexpr std::size_t Types{std::tuple_size_v<CategoryTypes<TOCAT>>};
+  using Types = CategoryTypes<TOCAT>;
   ConvertToKindHelper(int k, VALUE &&x) : kind{k}, value{std::move(x)} {}
-  template<std::size_t J> Result Test() {
-    using Ty = std::tuple_element_t<J, CategoryTypes<TOCAT>>;
-    if (kind == Ty::kind) {
+  template<typename T> Result Test() {
+    if (kind == T::kind) {
       return std::make_optional(
-          AsCategoryExpr(ConvertToType<Ty>(std::move(value))));
+          AsCategoryExpr(ConvertToType<T>(std::move(value))));
     }
     return std::nullopt;
   }
@@ -276,7 +272,7 @@ template<TypeCategory TOCAT, typename VALUE> struct ConvertToKindHelper {
 
 template<TypeCategory TOCAT, typename VALUE>
 Expr<SomeKind<TOCAT>> ConvertToKind(int kind, VALUE &&x) {
-  return common::SearchDynamicTypes(
+  return common::SearchTypes(
       ConvertToKindHelper<TOCAT, VALUE>{kind, std::move(x)})
       .value();
 }
@@ -501,21 +497,20 @@ Expr<SomeKind<CAT>> operator/(
   return PromoteAndCombine<Divide, CAT>(std::move(x), std::move(y));
 }
 
-// A utility for use with common::SearchDynamicTypes to create generic
-// expressions when an intrinsic type category for (say) a variable is known
+// A utility for use with common::SearchTypes to create generic expressions
+// when an intrinsic type category for (say) a variable is known
 // but the kind parameter value is not.
 template<TypeCategory CAT, template<typename> class TEMPLATE, typename VALUE>
 struct TypeKindVisitor {
   using Result = std::optional<Expr<SomeType>>;
-  static constexpr std::size_t Types{std::tuple_size_v<CategoryTypes<CAT>>};
+  using Types = CategoryTypes<CAT>;
 
   TypeKindVisitor(int k, VALUE &&x) : kind{k}, value{std::move(x)} {}
   TypeKindVisitor(int k, const VALUE &x) : kind{k}, value{x} {}
 
-  template<std::size_t J> Result Test() {
-    using Ty = std::tuple_element_t<J, CategoryTypes<CAT>>;
-    if (kind == Ty::kind) {
-      return AsGenericExpr(TEMPLATE<Ty>{std::move(value)});
+  template<typename T> Result Test() {
+    if (kind == T::kind) {
+      return AsGenericExpr(TEMPLATE<T>{std::move(value)});
     }
     return std::nullopt;
   }

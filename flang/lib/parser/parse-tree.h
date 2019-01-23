@@ -60,6 +60,7 @@ CLASS_TRAIT(TupleTrait)
 // here.
 namespace Fortran::semantics {
 class Symbol;
+class DeclTypeSpec;
 }
 
 // Expressions in the parse tree have owning pointers that can be set to
@@ -700,6 +701,7 @@ struct DerivedTypeSpec {
 // R702 type-spec -> intrinsic-type-spec | derived-type-spec
 struct TypeSpec {
   UNION_CLASS_BOILERPLATE(TypeSpec);
+  mutable const semantics::DeclTypeSpec *declTypeSpec{nullptr};
   std::variant<IntrinsicTypeSpec, DerivedTypeSpec> u;
 };
 
@@ -1693,9 +1695,9 @@ struct Expr {
   explicit Expr(Designator &&);
   explicit Expr(FunctionReference &&);
 
-  // Filled in later during semantic analysis of the expression.
-  // TODO: May be temporary; remove if caching no longer required.
+  // Filled in after successful semantic analysis of the expression.
   mutable common::OwningPointer<evaluate::GenericExprWrapper> typedExpr;
+
   CharBlock source;
 
   std::variant<common::Indirection<CharLiteralConstantSubstring>,

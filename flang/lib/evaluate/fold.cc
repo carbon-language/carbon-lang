@@ -68,7 +68,7 @@ Component FoldOperation(FoldingContext &context, Component &&component) {
 
 Triplet FoldOperation(FoldingContext &context, Triplet &&triplet) {
   return {Fold(context, triplet.lower()), Fold(context, triplet.upper()),
-      Fold(context, triplet.stride())};
+      Fold(context, Expr<SubscriptInteger>{triplet.stride()})};
 }
 
 Subscript FoldOperation(FoldingContext &context, Subscript &&subscript) {
@@ -660,14 +660,16 @@ bool IsConstExpr(ConstExprContext &, const Symbol *symbol) {
   return symbol->attrs().test(semantics::Attr::PARAMETER);
 }
 bool IsConstExpr(ConstExprContext &, const CoarrayRef &) { return false; }
+bool IsConstExpr(ConstExprContext &, const ImpliedDoIndex &) {
+  return true;  // only tested when bounds are constant
+}
 
 // Prototypes for mutual recursion
 template<typename D, typename R, typename O1>
 bool IsConstExpr(ConstExprContext &, const Operation<D, R, O1> &);
 template<typename D, typename R, typename O1, typename O2>
 bool IsConstExpr(ConstExprContext &, const Operation<D, R, O1, O2> &);
-template<typename V, typename O>
-bool IsConstExpr(ConstExprContext &, const ImpliedDo<V, O> &);
+template<typename V> bool IsConstExpr(ConstExprContext &, const ImpliedDo<V> &);
 template<typename A>
 bool IsConstExpr(ConstExprContext &, const ArrayConstructorValue<A> &);
 template<typename A>
@@ -709,8 +711,8 @@ bool IsConstExpr(
   return IsConstExpr(context, operation.left()) &&
       IsConstExpr(context, operation.right());
 }
-template<typename V, typename O>
-bool IsConstExpr(ConstExprContext &context, const ImpliedDo<V, O> &impliedDo) {
+template<typename V>
+bool IsConstExpr(ConstExprContext &context, const ImpliedDo<V> &impliedDo) {
   if (!IsConstExpr(context, impliedDo.lower) ||
       !IsConstExpr(context, impliedDo.upper) ||
       !IsConstExpr(context, impliedDo.stride)) {
@@ -732,8 +734,7 @@ bool IsConstExpr(
 }
 template<typename A>
 bool IsConstExpr(ConstExprContext &context, const ArrayConstructor<A> &array) {
-  return IsConstExpr(context, array.values) &&
-      IsConstExpr(context, array.typeParameterValues);
+  return IsConstExpr(context, array.values);
 }
 bool IsConstExpr(ConstExprContext &context, const BaseObject &base) {
   return IsConstExpr(context, base.u);

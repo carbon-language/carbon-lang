@@ -267,7 +267,7 @@ public:
   void Post(const parser::DeclarationTypeSpec::TypeStar &);
   bool Pre(const parser::TypeGuardStmt &);
   void Post(const parser::TypeGuardStmt &);
-  bool Pre(const parser::AcSpec &);
+  void Post(const parser::TypeSpec &);
 
 protected:
   struct State {
@@ -687,10 +687,14 @@ public:
 protected:
   bool BeginDecl();
   void EndDecl();
-  // Declare a construct or statement entity. If there isn't a type specified
+  // Declare a construct entity. If there isn't a type specified
   // it comes from the entity in the containing scope, or implicit rules.
   // Return pointer to the new symbol, or nullptr on error.
   Symbol *DeclareConstructEntity(const parser::Name &);
+  // Declare a statement entity (e.g., an implied DO loop index).
+  // If there isn't a type specified, implicit rules apply.
+  // Return pointer to the new symbol, or nullptr on error.
+  Symbol *DeclareStatementEntity(const parser::Name &);
   bool CheckUseError(const parser::Name &);
   void CheckAccessibility(const parser::Name &, bool, const Symbol &);
 
@@ -774,9 +778,11 @@ public:
   bool Pre(const parser::LocalitySpec::Local &);
   bool Pre(const parser::LocalitySpec::LocalInit &);
   bool Pre(const parser::LocalitySpec::Shared &);
+  bool Pre(const parser::AcSpec &);
+  bool Pre(const parser::AcImpliedDo &);
   bool Pre(const parser::DataImpliedDo &);
-  bool Pre(const parser::DataStmt &);
-  void Post(const parser::DataStmt &);
+  bool Pre(const parser::DataStmtSet &);
+  void Post(const parser::DataStmtSet &);
   bool Pre(const parser::DoConstruct &);
   void Post(const parser::DoConstruct &);
   void Post(const parser::ConcurrentControl &);
@@ -846,7 +852,7 @@ private:
   }
   bool CheckDef(const std::optional<parser::Name> &);
   void CheckRef(const std::optional<parser::Name> &);
-  void CheckIntegerType(const Symbol &);
+  void CheckScalarIntegerType(const Symbol &);
   const DeclTypeSpec &ToDeclTypeSpec(evaluate::DynamicType &&);
   const DeclTypeSpec &ToDeclTypeSpec(
       evaluate::DynamicType &&, SubscriptIntExpr &&length);
@@ -1150,15 +1156,27 @@ void DeclTypeSpecVisitor::Post(const parser::TypeGuardStmt &) {
   EndDeclTypeSpec();
 }
 
-bool DeclTypeSpecVisitor::Pre(const parser::AcSpec &x) {
-  // AcSpec can occur within a TypeDeclarationStmt: save and restore state
-  auto savedState{SetDeclTypeSpecState({})};
-  BeginDeclTypeSpec();
-  Walk(x.type);
-  Walk(x.values);
-  EndDeclTypeSpec();
-  SetDeclTypeSpecState(savedState);
-  return false;
+void DeclTypeSpecVisitor::Post(const parser::TypeSpec &typeSpec) {
+  // Record the resolved DeclTypeSpec in the parse tree for use by
+  // expression semantics if the DeclTypeSpec is a valid TypeSpec.
+  // The grammar ensures that it's an intrinsic or derived type spec,
+  // not TYPE(*) or CLASS(*) or CLASS(T).
+  if (const DeclTypeSpec * spec{state_.declTypeSpec}) {
+    switch (spec->category()) {
+    case DeclTypeSpec::Numeric:
+    case DeclTypeSpec::Logical:
+    case DeclTypeSpec::Character: typeSpec.declTypeSpec = spec; break;
+    case DeclTypeSpec::TypeDerived:
+      if (const DerivedTypeSpec * derived{spec->AsDerived()}) {
+        if (derived->typeSymbol().attrs().test(Attr::ABSTRACT)) {
+          Say("ABSTRACT derived type may not be used here"_err_en_US);
+        }
+        typeSpec.declTypeSpec = spec;
+      }
+      break;
+    default: CRASH_NO_CASE;
+    }
+  }
 }
 
 void DeclTypeSpecVisitor::Post(
@@ -2985,6 +3003,26 @@ Symbol *DeclarationVisitor::DeclareConstructEntity(const parser::Name &name) {
   return &symbol;
 }
 
+Symbol *DeclarationVisitor::DeclareStatementEntity(const parser::Name &name) {
+  if (auto *prev{FindSymbol(name)}) {
+    if (prev->owner() == currScope()) {
+      SayAlreadyDeclared(name, *prev);
+      return nullptr;
+    }
+    name.symbol = nullptr;
+  }
+  Symbol &symbol{DeclareEntity<ObjectEntityDetails>(name, {})};
+  if (symbol.has<ObjectEntityDetails>()) {
+    if (auto *type{GetDeclTypeSpec()}) {
+      SetType(name, *type);
+    } else {
+      ApplyImplicitRules(symbol);
+    }
+    return Resolve(name, &symbol);
+  }
+  return nullptr;
+}
+
 // Set the type of an entity or report an error.
 void DeclarationVisitor::SetType(
     const parser::Name &name, const DeclTypeSpec &type) {
@@ -3173,6 +3211,39 @@ bool ConstructVisitor::Pre(const parser::LocalitySpec::Shared &x) {
   return false;
 }
 
+bool ConstructVisitor::Pre(const parser::AcSpec &x) {
+  // AcSpec can occur within a TypeDeclarationStmt: save and restore state
+  auto savedState{SetDeclTypeSpecState({})};
+  BeginDeclTypeSpec();
+  Walk(x.type);
+  EndDeclTypeSpec();
+  SetDeclTypeSpecState(savedState);
+  PushScope(Scope::Kind::ImpliedDos, nullptr);
+  Walk(x.values);
+  PopScope();
+  return false;
+}
+
+bool ConstructVisitor::Pre(const parser::AcImpliedDo &x) {
+  auto &values{std::get<std::list<parser::AcValue>>(x.t)};
+  auto &control{std::get<parser::AcImpliedDoControl>(x.t)};
+  auto &type{std::get<std::optional<parser::IntegerTypeSpec>>(control.t)};
+  auto &bounds{std::get<parser::LoopBounds<parser::ScalarIntExpr>>(control.t)};
+  if (type) {
+    BeginDeclTypeSpec();
+    DeclarationVisitor::Post(*type);
+  }
+  if (auto *symbol{DeclareStatementEntity(bounds.name.thing.thing)}) {
+    CheckScalarIntegerType(*symbol);
+  }
+  if (type) {
+    EndDeclTypeSpec();
+  }
+  Walk(bounds);
+  Walk(values);
+  return false;
+}
+
 bool ConstructVisitor::Pre(const parser::DataImpliedDo &x) {
   auto &objects{std::get<std::list<parser::DataIDoObject>>(x.t)};
   auto &type{std::get<std::optional<parser::IntegerTypeSpec>>(x.t)};
@@ -3182,8 +3253,8 @@ bool ConstructVisitor::Pre(const parser::DataImpliedDo &x) {
     BeginDeclTypeSpec();
     DeclarationVisitor::Post(*type);
   }
-  if (auto *symbol{DeclareConstructEntity(bounds.name.thing.thing)}) {
-    CheckIntegerType(*symbol);
+  if (auto *symbol{DeclareStatementEntity(bounds.name.thing.thing)}) {
+    CheckScalarIntegerType(*symbol);
   }
   if (type) {
     EndDeclTypeSpec();
@@ -3193,11 +3264,11 @@ bool ConstructVisitor::Pre(const parser::DataImpliedDo &x) {
   return false;
 }
 
-bool ConstructVisitor::Pre(const parser::DataStmt &) {
-  PushScope(Scope::Kind::Block, nullptr);
+bool ConstructVisitor::Pre(const parser::DataStmtSet &) {
+  PushScope(Scope::Kind::ImpliedDos, nullptr);
   return true;
 }
-void ConstructVisitor::Post(const parser::DataStmt &) { PopScope(); }
+void ConstructVisitor::Post(const parser::DataStmtSet &) { PopScope(); }
 
 bool ConstructVisitor::Pre(const parser::DoConstruct &x) {
   if (x.IsDoConcurrent()) {
@@ -3214,7 +3285,7 @@ void ConstructVisitor::Post(const parser::DoConstruct &x) {
 void ConstructVisitor::Post(const parser::ConcurrentControl &x) {
   auto &name{std::get<parser::Name>(x.t)};
   if (auto *symbol{DeclareConstructEntity(name)}) {
-    CheckIntegerType(*symbol);
+    CheckScalarIntegerType(*symbol);
   }
 }
 
@@ -3334,10 +3405,17 @@ void ConstructVisitor::CheckRef(const std::optional<parser::Name> &x) {
   }
 }
 
-void ConstructVisitor::CheckIntegerType(const Symbol &symbol) {
+void ConstructVisitor::CheckScalarIntegerType(const Symbol &symbol) {
+  if (const auto *details{symbol.detailsIf<ObjectEntityDetails>()}) {
+    if (details->IsArray()) {
+      Say(symbol.name(), "Variable '%s' is not scalar"_err_en_US);
+      return;
+    }
+  }
   if (auto *type{symbol.GetType()}) {
     if (!type->IsNumeric(TypeCategory::Integer)) {
-      Say(symbol.name(), "Variable '%s' is not scalar integer"_err_en_US);
+      Say(symbol.name(), "Variable '%s' is not integer"_err_en_US);
+      return;
     }
   }
 }

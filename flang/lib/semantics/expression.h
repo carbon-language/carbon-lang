@@ -21,8 +21,10 @@
 #include "../evaluate/expression.h"
 #include "../evaluate/tools.h"
 #include "../evaluate/type.h"
+#include "../parser/char-block.h"
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
+#include <map>
 #include <optional>
 #include <variant>
 
@@ -98,8 +100,14 @@ public:
   int GetDefaultKind(common::TypeCategory);
   DynamicType GetDefaultKindOfType(common::TypeCategory);
 
+  // Manage a set of active array constructor implied DO loops.
+  bool AddAcImpliedDo(parser::CharBlock, int);
+  void RemoveAcImpliedDo(parser::CharBlock);
+  std::optional<int> IsAcImpliedDo(parser::CharBlock) const;
+
 private:
   semantics::SemanticsContext &context_;
+  std::map<parser::CharBlock, int> acImpliedDos_;  // values are INTEGER kinds
 };
 
 template<typename PARSED>

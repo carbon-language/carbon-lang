@@ -149,7 +149,7 @@ public:
   CharacterTypeSpec(ParamValue &&length, KindExpr &&kind)
     : IntrinsicTypeSpec(TypeCategory::Character, std::move(kind)),
       length_{std::move(length)} {}
-  const ParamValue length() const { return length_; }
+  const ParamValue &length() const { return length_; }
 
 private:
   ParamValue length_;
@@ -280,7 +280,10 @@ public:
   bool IsNumeric(TypeCategory) const;
   const NumericTypeSpec &numericTypeSpec() const;
   const LogicalTypeSpec &logicalTypeSpec() const;
-  const CharacterTypeSpec &characterTypeSpec() const;
+  const CharacterTypeSpec &characterTypeSpec() const {
+    CHECK(category_ == Character);
+    return std::get<CharacterTypeSpec>(typeSpec_);
+  }
   const DerivedTypeSpec &derivedTypeSpec() const;
   DerivedTypeSpec &derivedTypeSpec();
 

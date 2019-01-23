@@ -45,13 +45,18 @@ end
 subroutine s4
   real :: a(10), b(10)
   complex :: x
-  !ERROR: Variable 'x' is not scalar integer
+  integer :: i(2)
+  !ERROR: Variable 'x' is not integer
   forall(x=1:10)
     a(x) = b(x)
   end forall
-  !ERROR: Variable 'y' is not scalar integer
+  !ERROR: Variable 'y' is not integer
   forall(y=1:10)
     a(y) = b(y)
+  end forall
+  !ERROR: Variable 'i' is not scalar
+  forall(i=1:10)
+    a(i) = b(i)
   end forall
 end
 
@@ -68,7 +73,7 @@ subroutine s6
   real, dimension(n) :: x
   data(x(i), i=1, n) / n * 0.0 /
   !ERROR: Index name 't' conflicts with existing identifier
-  data(x(t), t=1, n) / n * 0.0 /
+  forall(t=1:n) x(t) = 0.0
 contains
   subroutine t
   end

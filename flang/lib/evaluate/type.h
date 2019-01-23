@@ -44,26 +44,34 @@ namespace Fortran::evaluate {
 
 using common::TypeCategory;
 
+// Specific intrinsic types are represented by specializations of
+// this class template Type<CATEGORY, KIND>.
+template<TypeCategory CATEGORY, int KIND = 0> class Type;
+
+using SubscriptInteger = Type<TypeCategory::Integer, 8>;
+using LogicalResult = Type<TypeCategory::Logical, 1>;
+using LargestReal = Type<TypeCategory::Real, 16>;
+
 // DynamicType is suitable for use as the result type for
-// GetType() functions and member functions.
+// GetType() functions and member functions.  It does *not*
+// hold CHARACTER length type parameter expressions -- those
+// must be derived via LEN() member functions or packaged
+// elsewhere (e.g. as in ArrayConstructor).
 struct DynamicType {
-  bool operator==(const DynamicType &that) const;
+  bool operator==(const DynamicType &) const;
   std::string AsFortran() const;
+  std::string AsFortran(std::string &&charLenExpr) const;
   DynamicType ResultTypeForMultiply(const DynamicType &) const;
 
   TypeCategory category;
   int kind{0};  // set only for intrinsic types
-  const semantics::DerivedTypeSpec *derived{nullptr};
-  const semantics::Symbol *descriptor{nullptr};
+  const semantics::DerivedTypeSpec *derived{nullptr};  // TYPE(T), CLASS(T)
+  const semantics::Symbol *descriptor{nullptr};  // CHARACTER, CLASS(T/*)
 };
 
 // Result will be missing when a symbol is absent or
 // has an erroneous type, e.g., REAL(KIND=666).
 std::optional<DynamicType> GetSymbolType(const semantics::Symbol *);
-
-// Specific intrinsic types are represented by specializations of
-// this class template Type<CATEGORY, KIND>.
-template<TypeCategory CATEGORY, int KIND = 0> class Type;
 
 template<TypeCategory CATEGORY, int KIND = 0> struct TypeBase {
   static constexpr TypeCategory category{CATEGORY};
@@ -171,10 +179,6 @@ template<typename T> using Scalar = typename std::decay_t<T>::Scalar;
 // Given a specific type, find the type of the same kind in another category.
 template<TypeCategory CATEGORY, typename T>
 using SameKind = Type<CATEGORY, std::decay_t<T>::kind>;
-
-using SubscriptInteger = Type<TypeCategory::Integer, 8>;
-using LogicalResult = Type<TypeCategory::Logical, 1>;
-using LargestReal = Type<TypeCategory::Real, 16>;
 
 // Many expressions, including subscripts, CHARACTER lengths, array bounds,
 // and effective type parameter values, are of a maximal kind of INTEGER.

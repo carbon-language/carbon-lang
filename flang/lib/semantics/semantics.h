@@ -46,7 +46,6 @@ public:
   }
   const std::string &moduleDirectory() const { return moduleDirectory_; }
   const bool warningsAreErrors() const { return warningsAreErrors_; }
-  const bool debugExpressions() const { return debugExpressions_; }
   const evaluate::IntrinsicProcTable &intrinsics() const { return intrinsics_; }
   Scope &globalScope() { return globalScope_; }
   parser::Messages &messages() { return messages_; }
@@ -64,10 +63,6 @@ public:
     warningsAreErrors_ = x;
     return *this;
   }
-  SemanticsContext &set_debugExpressions(bool x) {
-    debugExpressions_ = x;
-    return *this;
-  }
 
   const DeclTypeSpec &MakeNumericType(TypeCategory, int kind = 0);
   const DeclTypeSpec &MakeLogicalType(int kind = 0);
@@ -82,7 +77,6 @@ private:
   std::vector<std::string> searchDirectories_;
   std::string moduleDirectory_{"."s};
   bool warningsAreErrors_{false};
-  bool debugExpressions_{false};
   const evaluate::IntrinsicProcTable intrinsics_;
   Scope globalScope_;
   parser::Messages messages_;

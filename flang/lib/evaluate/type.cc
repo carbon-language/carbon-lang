@@ -118,12 +118,20 @@ std::optional<DynamicType> GetSymbolType(const semantics::Symbol *symbol) {
 }
 
 std::string DynamicType::AsFortran() const {
-  if (category == TypeCategory::Derived) {
-    // TODO: derived type parameters
+  if (derived != nullptr) {
+    CHECK(category == TypeCategory::Derived);
     return "TYPE("s + derived->typeSymbol().name().ToString() + ')';
   } else {
-    // TODO: CHARACTER length
     return EnumToString(category) + '(' + std::to_string(kind) + ')';
+  }
+}
+
+std::string DynamicType::AsFortran(std::string &&charLenExpr) const {
+  if (!charLenExpr.empty() && category == TypeCategory::Character) {
+    return "CHARACTER(KIND=" + std::to_string(kind) +
+        ",len=" + std::move(charLenExpr) + ')';
+  } else {
+    return AsFortran();
   }
 }
 

@@ -494,4 +494,66 @@ Expr<SomeLogical> BinaryLogicalOperation(
       },
       AsSameKindExprs(std::move(x), std::move(y)));
 }
+
+template<TypeCategory TO>
+std::optional<Expr<SomeType>> ConvertToNumeric(int kind, Expr<SomeType> &&x) {
+  static_assert(common::IsNumericTypeCategory(TO));
+  return std::visit(
+      [=](auto &&cx) -> std::optional<Expr<SomeType>> {
+        using cxType = std::decay_t<decltype(cx)>;
+        if constexpr (!std::is_same_v<cxType, BOZLiteralConstant>) {
+          if constexpr (IsNumericTypeCategory(ResultType<cxType>::category)) {
+            return std::make_optional(
+                Expr<SomeType>{ConvertToKind<TO>(kind, std::move(cx))});
+          }
+        }
+        return std::nullopt;
+      },
+      std::move(x.u));
+}
+
+std::optional<Expr<SomeType>> ConvertToType(
+    const DynamicType &type, Expr<SomeType> &&x) {
+  switch (type.category) {
+  case TypeCategory::Integer:
+    return ConvertToNumeric<TypeCategory::Integer>(type.kind, std::move(x));
+  case TypeCategory::Real:
+    return ConvertToNumeric<TypeCategory::Real>(type.kind, std::move(x));
+  case TypeCategory::Complex:
+    return ConvertToNumeric<TypeCategory::Complex>(type.kind, std::move(x));
+  case TypeCategory::Character:
+    if (auto fromType{x.GetType()}) {
+      if (fromType->category == TypeCategory::Character &&
+          fromType->kind == type.kind) {
+        // TODO pmk: adjusting CHARACTER length via conversion
+        return std::move(x);
+      }
+    }
+    break;
+  case TypeCategory::Logical:
+    if (auto *cx{UnwrapExpr<Expr<SomeLogical>>(x)}) {
+      return Expr<SomeType>{
+          ConvertToKind<TypeCategory::Logical>(type.kind, std::move(*cx))};
+    }
+    break;
+  case TypeCategory::Derived:
+    if (auto fromType{x.GetType()}) {
+      if (type == fromType) {
+        return std::move(x);
+      }
+    }
+    break;
+  default: CRASH_NO_CASE;
+  }
+  return std::nullopt;
+}
+
+std::optional<Expr<SomeType>> ConvertToType(
+    const DynamicType &type, std::optional<Expr<SomeType>> &&x) {
+  if (x.has_value()) {
+    return ConvertToType(type, std::move(*x));
+  } else {
+    return std::nullopt;
+  }
+}
 }

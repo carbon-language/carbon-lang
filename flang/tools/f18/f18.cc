@@ -92,7 +92,6 @@ struct DriverOptions {
   bool dumpUnparseWithSymbols{false};
   bool dumpParseTree{false};
   bool dumpSymbols{false};
-  bool debugExpressions{false};
   bool debugResolveNames{false};
   bool debugSemantics{false};
   bool measureTree{false};
@@ -213,7 +212,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   }
   // TODO: Change this predicate to just "if (!driver.debugNoSemantics)"
   if (driver.debugSemantics || driver.debugResolveNames || driver.dumpSymbols ||
-      driver.dumpUnparseWithSymbols || driver.debugExpressions) {
+      driver.dumpUnparseWithSymbols) {
     Fortran::semantics::Semantics semantics{
         semanticsContext, parseTree, parsing.cooked()};
     semantics.Perform();
@@ -392,8 +391,6 @@ int main(int argc, char *const argv[]) {
       driver.dumpParseTree = true;
     } else if (arg == "-fdebug-dump-symbols") {
       driver.dumpSymbols = true;
-    } else if (arg == "-fdebug-expressions") {
-      driver.debugExpressions = true;
     } else if (arg == "-fdebug-resolve-names") {
       driver.debugResolveNames = true;
     } else if (arg == "-fdebug-measure-parse-tree") {
@@ -494,8 +491,7 @@ int main(int argc, char *const argv[]) {
   Fortran::semantics::SemanticsContext semanticsContext{defaultKinds};
   semanticsContext.set_moduleDirectory(driver.moduleDirectory)
       .set_searchDirectories(driver.searchDirectories)
-      .set_warningsAreErrors(driver.warningsAreErrors)
-      .set_debugExpressions(driver.debugExpressions);
+      .set_warningsAreErrors(driver.warningsAreErrors);
 
   if (!anyFiles) {
     driver.measureTree = true;
