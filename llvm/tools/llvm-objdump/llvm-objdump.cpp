@@ -890,9 +890,6 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
                               const MCInstrAnalysis *MIA, MCInstPrinter *IP,
                               const MCSubtargetInfo *STI, PrettyPrinter &PIP,
                               SourcePrinter &SP, bool InlineRelocs) {
-  StringRef Fmt = Obj->getBytesInAddress() > 4 ? "\t\t%016" PRIx64 ":  "
-                                               : "\t\t\t%08" PRIx64 ":  ";
-
   std::map<SectionRef, std::vector<RelocationRef>> RelocMap;
   if (InlineRelocs)
     RelocMap = getRelocsMap(*Obj);
@@ -1338,7 +1335,10 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
         outs() << "\n";
 
         // Hexagon does this in pretty printer
-        if (Obj->getArch() != Triple::hexagon)
+        if (Obj->getArch() != Triple::hexagon) {
+          StringRef Fmt = Obj->getBytesInAddress() > 4 ? "\t\t%016" PRIx64 ":  "
+                                                       : "\t\t\t%08" PRIx64
+                                                         ":  ";
           // Print relocation for instruction.
           while (RelCur != RelEnd) {
             uint64_t Addr = RelCur->getOffset();
@@ -1360,6 +1360,7 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
                    << Val << "\n";
             ++RelCur;
           }
+        }
       }
     }
   }
