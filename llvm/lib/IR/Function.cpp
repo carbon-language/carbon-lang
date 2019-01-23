@@ -948,10 +948,9 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
   case IITDescriptor::SameVecWidthArgument: {
     Type *EltTy = DecodeFixedType(Infos, Tys, Context);
     Type *Ty = Tys[D.getArgumentNumber()];
-    if (VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+    if (auto *VTy = dyn_cast<VectorType>(Ty))
       return VectorType::get(EltTy, VTy->getNumElements());
-    }
-    llvm_unreachable("unhandled");
+    return EltTy;
   }
   case IITDescriptor::PtrToArgument: {
     Type *Ty = Tys[D.getArgumentNumber()];
@@ -1135,15 +1134,19 @@ bool Intrinsic::matchIntrinsicType(Type *Ty, ArrayRef<Intrinsic::IITDescriptor> 
     case IITDescriptor::SameVecWidthArgument: {
       if (D.getArgumentNumber() >= ArgTys.size())
         return true;
-      VectorType * ReferenceType =
-        dyn_cast<VectorType>(ArgTys[D.getArgumentNumber()]);
-      VectorType *ThisArgType = dyn_cast<VectorType>(Ty);
-      if (!ThisArgType || !ReferenceType ||
-          (ReferenceType->getVectorNumElements() !=
-           ThisArgType->getVectorNumElements()))
+      auto *ReferenceType = dyn_cast<VectorType>(ArgTys[D.getArgumentNumber()]);
+      auto *ThisArgType = dyn_cast<VectorType>(Ty);
+      // Both must be vectors of the same number of elements or neither.
+      if ((ReferenceType != nullptr) != (ThisArgType != nullptr))
         return true;
-      return matchIntrinsicType(ThisArgType->getVectorElementType(),
-                                Infos, ArgTys);
+      Type *EltTy = Ty;
+      if (ThisArgType) {
+        if (ReferenceType->getVectorNumElements() !=
+            ThisArgType->getVectorNumElements())
+          return true;
+        EltTy = ThisArgType->getVectorElementType();
+      }
+      return matchIntrinsicType(EltTy, Infos, ArgTys);
     }
     case IITDescriptor::PtrToArgument: {
       if (D.getArgumentNumber() >= ArgTys.size())
