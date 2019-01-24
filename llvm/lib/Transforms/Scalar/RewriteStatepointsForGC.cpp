@@ -2601,6 +2601,34 @@ bool RewriteStatepointsForGC::runOnFunction(Function &F, DominatorTree &DT,
       }
   }
 
+  // Nasty workaround - The base computation code in the main algorithm doesn't
+  // consider the fact that a GEP can be used to convert a scalar to a vector.
+  // The right fix for this is to integrate GEPs into the base rewriting
+  // algorithm properly, this is just a short term workaround to prevent
+  // crashes by canonicalizing such GEPs into fully vector GEPs.
+  for (Instruction &I : instructions(F)) {
+    if (!isa<GetElementPtrInst>(I))
+      continue;
+
+    unsigned VF = 0;
+    bool HasScalarOperand = false;
+    for (unsigned i = 0; i < I.getNumOperands(); i++)
+      if (I.getOperand(i)->getType()->isVectorTy())
+        VF = I.getOperand(i)->getType()->getVectorNumElements();
+      else
+        HasScalarOperand = true;
+
+    if (HasScalarOperand && VF != 0) {
+      IRBuilder<> B(&I);
+      for (unsigned i = 0; i < I.getNumOperands(); i++)
+        if (!I.getOperand(i)->getType()->isVectorTy()) {
+          auto *Splat = B.CreateVectorSplat(VF, I.getOperand(i));
+          I.setOperand(i, Splat);
+          MadeChange = true;
+        }
+    }
+  }
+
   MadeChange |= insertParsePoints(F, DT, TTI, ParsePointNeeded);
   return MadeChange;
 }

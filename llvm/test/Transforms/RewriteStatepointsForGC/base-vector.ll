@@ -253,7 +253,7 @@ define void @test11(<4 x i64 addrspace(1)*> %vec1) gc "statepoint-example" {
 ; CHECK: @llvm.experimental.gc.statepoint.p0f_isVoidf{{.*}}<4 x i64 addrspace(1)*> %vec1)
 ; CHECK: %vec1.relocated = call coldcc <4 x i8 addrspace(1)*> @llvm.experimental.gc.relocate.v4p1i8
 ; CHECK: %vec1.relocated.casted = bitcast <4 x i8 addrspace(1)*> %vec1.relocated to <4 x i64 addrspace(1)*>
-; CHECK: %vec2.remat = getelementptr i64, <4 x i64 addrspace(1)*> %vec1.relocated.casted, i32 1024
+; CHECK: %vec2.remat = getelementptr i64, <4 x i64 addrspace(1)*> %vec1.relocated.casted, <4 x i32> <i32 1024, i32 1024, i32 1024, i32 1024>
 ; CHECK: call void @use_vec(<4 x i64 addrspace(1)*> %vec2.remat)
 entry:
   %vec2 = getelementptr i64, <4 x i64 addrspace(1)*> %vec1, i32 1024
