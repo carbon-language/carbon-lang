@@ -62,7 +62,7 @@ const Scalar<T> *GetScalarConstantValue(const Expr<T> &expr) {
 template<typename T>
 const Scalar<T> *GetScalarConstantValue(
     const Expr<SomeKind<T::category>> &expr) {
-  if (const auto *kindExpr{UnwrapExpr<Expr<T>>(expr.u)}) {
+  if (const auto *kindExpr{UnwrapExpr<Expr<T>>(expr)}) {
     return GetScalarConstantValue<T>(*kindExpr);
   }
   return nullptr;
@@ -70,7 +70,7 @@ const Scalar<T> *GetScalarConstantValue(
 
 template<typename T>
 const Scalar<T> *GetScalarConstantValue(const Expr<SomeType> &expr) {
-  if (const auto *kindExpr{UnwrapExpr<Expr<T>>(expr.u)}) {
+  if (const auto *kindExpr{UnwrapExpr<Expr<T>>(expr)}) {
     return GetScalarConstantValue<T>(*kindExpr);
   }
   return nullptr;
