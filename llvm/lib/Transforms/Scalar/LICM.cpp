@@ -867,6 +867,11 @@ bool llvm::hoistRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
                           << HoistPoint->getParent()->getName()
                           << ": " << *I << "\n");
         moveInstructionBefore(*I, *HoistPoint, *SafetyInfo);
+        if (MSSAU)
+          if (MemoryUseOrDef *OldMemAcc = cast_or_null<MemoryUseOrDef>(
+                  MSSAU->getMemorySSA()->getMemoryAccess(I)))
+            MSSAU->moveToPlace(OldMemAcc, HoistPoint->getParent(),
+                               MemorySSA::End);
         HoistPoint = I;
         Changed = true;
       }
