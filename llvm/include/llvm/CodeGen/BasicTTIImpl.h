@@ -1115,6 +1115,7 @@ public:
   unsigned getIntrinsicInstrCost(
       Intrinsic::ID IID, Type *RetTy, ArrayRef<Type *> Tys, FastMathFlags FMF,
       unsigned ScalarizationCostPassed = std::numeric_limits<unsigned>::max()) {
+    unsigned RetVF = (RetTy->isVectorTy() ? RetTy->getVectorNumElements() : 1);
     auto *ConcreteTTI = static_cast<T *>(this);
 
     SmallVector<unsigned, 2> ISDs;
@@ -1265,6 +1266,24 @@ public:
       return ConcreteTTI->getMinMaxReductionCost(
           Tys[0], CmpInst::makeCmpResultType(Tys[0]), /*IsPairwiseForm=*/false,
           /*IsSigned=*/false);
+    case Intrinsic::uadd_sat:
+    case Intrinsic::usub_sat: {
+      Type *CondTy = Type::getInt1Ty(RetTy->getContext());
+      if (RetVF > 1)
+        CondTy = VectorType::get(CondTy, RetVF);
+
+      Type *OpTy = StructType::create({RetTy, CondTy});
+      Intrinsic::ID OverflowOp = IID == Intrinsic::uadd_sat
+                                     ? Intrinsic::uadd_with_overflow
+                                     : Intrinsic::usub_with_overflow;
+
+      unsigned Cost = 0;
+      Cost += ConcreteTTI->getIntrinsicInstrCost(
+          OverflowOp, OpTy, {RetTy, RetTy}, FMF, ScalarizationCostPassed);
+      Cost += ConcreteTTI->getCmpSelInstrCost(BinaryOperator::Select, RetTy,
+                                              CondTy, nullptr);
+      return Cost;
+    }
     case Intrinsic::uadd_with_overflow:
     case Intrinsic::usub_with_overflow: {
       Type *SumTy = RetTy->getContainedType(0);
