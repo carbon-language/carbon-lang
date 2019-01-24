@@ -396,6 +396,7 @@ static unsigned selectLoadStoreUIOp(unsigned GenericOpc, unsigned RegBankID,
   return GenericOpc;
 }
 
+#ifndef NDEBUG
 /// Helper function that verifies that we have a valid copy at the end of
 /// selectCopy. Verifies that the source and dest have the expected sizes and
 /// then returns true.
@@ -426,6 +427,7 @@ static bool isValidCopy(const MachineInstr &I, const RegisterBank &DstBank,
 
   return true;
 }
+#endif
 
 /// Helper function for selectCopy. Inserts a subregister copy from
 /// \p *From to \p *To, linking it up to \p I.
