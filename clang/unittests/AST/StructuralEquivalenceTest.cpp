@@ -370,6 +370,31 @@ TEST_F(StructuralEquivalenceFunctionTest, NameInParenWithConst) {
   EXPECT_FALSE(testStructuralMatch(t));
 }
 
+TEST_F(StructuralEquivalenceFunctionTest, FunctionsWithDifferentNoreturnAttr) {
+  auto t = makeNamedDecls(
+      "__attribute__((noreturn)) void foo();",
+      "                          void foo();",
+      Lang_C);
+  EXPECT_TRUE(testStructuralMatch(t));
+}
+
+TEST_F(StructuralEquivalenceFunctionTest,
+    FunctionsWithDifferentCallingConventions) {
+  auto t = makeNamedDecls(
+      "__attribute__((fastcall)) void foo();",
+      "__attribute__((ms_abi))   void foo();",
+      Lang_C);
+  EXPECT_FALSE(testStructuralMatch(t));
+}
+
+TEST_F(StructuralEquivalenceFunctionTest, FunctionsWithDifferentSavedRegsAttr) {
+  auto t = makeNamedDecls(
+      "__attribute__((no_caller_saved_registers)) void foo();",
+      "                                           void foo();",
+      Lang_C);
+  EXPECT_FALSE(testStructuralMatch(t));
+}
+
 struct StructuralEquivalenceCXXMethodTest : StructuralEquivalenceTest {
 };
 
