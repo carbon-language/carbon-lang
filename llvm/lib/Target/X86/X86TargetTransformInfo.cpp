@@ -2038,12 +2038,16 @@ int X86TTIImpl::getIntrinsicInstrCost(Intrinsic::ID IID, Type *RetTy,
   };
   static const CostTblEntry X64CostTbl[] = { // 64-bit targets
     { ISD::BITREVERSE, MVT::i64,    14 },
+    { ISD::SADDO,      MVT::i64,     1 },
     { ISD::UADDO,      MVT::i64,     1 },
   };
   static const CostTblEntry X86CostTbl[] = { // 32 or 64-bit targets
     { ISD::BITREVERSE, MVT::i32,    14 },
     { ISD::BITREVERSE, MVT::i16,    14 },
     { ISD::BITREVERSE, MVT::i8,     11 },
+    { ISD::SADDO,      MVT::i32,     1 },
+    { ISD::SADDO,      MVT::i16,     1 },
+    { ISD::SADDO,      MVT::i8,      1 },
     { ISD::UADDO,      MVT::i32,     1 },
     { ISD::UADDO,      MVT::i16,     1 },
     { ISD::UADDO,      MVT::i8,      1 },
@@ -2083,6 +2087,12 @@ int X86TTIImpl::getIntrinsicInstrCost(Intrinsic::ID IID, Type *RetTy,
     break;
   case Intrinsic::sqrt:
     ISD = ISD::FSQRT;
+    break;
+  case Intrinsic::sadd_with_overflow:
+  case Intrinsic::ssub_with_overflow:
+    // SSUBO has same costs so don't duplicate.
+    ISD = ISD::SADDO;
+    OpTy = RetTy->getContainedType(0);
     break;
   case Intrinsic::uadd_with_overflow:
   case Intrinsic::usub_with_overflow:

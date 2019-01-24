@@ -1284,6 +1284,32 @@ public:
                                               CondTy, nullptr);
       return Cost;
     }
+    case Intrinsic::sadd_with_overflow:
+    case Intrinsic::ssub_with_overflow: {
+      Type *SumTy = RetTy->getContainedType(0);
+      Type *OverflowTy = RetTy->getContainedType(1);
+      unsigned Opcode = IID == Intrinsic::sadd_with_overflow
+                            ? BinaryOperator::Add
+                            : BinaryOperator::Sub;
+
+      //   LHSSign -> LHS >= 0
+      //   RHSSign -> RHS >= 0
+      //   SumSign -> Sum >= 0
+      //
+      //   Add:
+      //   Overflow -> (LHSSign == RHSSign) && (LHSSign != SumSign)
+      //   Sub:
+      //   Overflow -> (LHSSign != RHSSign) && (LHSSign != SumSign)
+      unsigned Cost = 0;
+      Cost += ConcreteTTI->getArithmeticInstrCost(Opcode, SumTy);
+      Cost += 3 * ConcreteTTI->getCmpSelInstrCost(BinaryOperator::ICmp, SumTy,
+                                                  OverflowTy, nullptr);
+      Cost += 2 * ConcreteTTI->getCmpSelInstrCost(
+                      BinaryOperator::ICmp, OverflowTy, OverflowTy, nullptr);
+      Cost +=
+          ConcreteTTI->getArithmeticInstrCost(BinaryOperator::And, OverflowTy);
+      return Cost;
+    }
     case Intrinsic::uadd_with_overflow:
     case Intrinsic::usub_with_overflow: {
       Type *SumTy = RetTy->getContainedType(0);
