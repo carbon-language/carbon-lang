@@ -771,6 +771,8 @@ class LLVM_LIBRARY_VISIBILITY WebAssemblyOSTargetInfo
     // Follow g++ convention and predefine _GNU_SOURCE for C++.
     if (Opts.CPlusPlus)
       Builder.defineMacro("_GNU_SOURCE");
+    // Indicate that we have __float128.
+    Builder.defineMacro("__FLOAT128__");
   }
 
 public:
@@ -779,6 +781,7 @@ public:
       : OSTargetInfo<Target>(Triple, Opts) {
     this->MCountName = "__mcount";
     this->TheCXXABI.set(TargetCXXABI::WebAssembly);
+    this->HasFloat128 = true;
   }
 };
 
