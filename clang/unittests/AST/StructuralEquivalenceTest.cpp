@@ -378,14 +378,17 @@ TEST_F(StructuralEquivalenceFunctionTest, FunctionsWithDifferentNoreturnAttr) {
   EXPECT_TRUE(testStructuralMatch(t));
 }
 
+// These calling conventions may not be available on certain platforms.
+#if defined(__x86_64__) && defined(__linux__)
 TEST_F(StructuralEquivalenceFunctionTest,
     FunctionsWithDifferentCallingConventions) {
   auto t = makeNamedDecls(
-      "__attribute__((fastcall)) void foo();",
+      "__attribute__((preserve_all)) void foo();",
       "__attribute__((ms_abi))   void foo();",
       Lang_C);
   EXPECT_FALSE(testStructuralMatch(t));
 }
+#endif
 
 TEST_F(StructuralEquivalenceFunctionTest, FunctionsWithDifferentSavedRegsAttr) {
   auto t = makeNamedDecls(
