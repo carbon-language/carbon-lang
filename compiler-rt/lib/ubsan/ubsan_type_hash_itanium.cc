@@ -117,7 +117,7 @@ static bool isDerivedFromAtOffset(const abi::__class_type_info *Derived,
                                   const abi::__class_type_info *Base,
                                   sptr Offset) {
   if (Derived->__type_name == Base->__type_name ||
-      (SANITIZER_NON_UNIQUE_TYPEINFO &&
+      (Derived->__type_name[0] != '*' &&
        !internal_strcmp(Derived->__type_name, Base->__type_name)))
     return Offset == 0;
 
