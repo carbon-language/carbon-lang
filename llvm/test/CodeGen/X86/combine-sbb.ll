@@ -11,13 +11,13 @@ define void @PR25858_i32(%WideUInt32* sret, %WideUInt32*, %WideUInt32*) nounwind
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %ecx
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %edx
-; X86-NEXT:    movl (%edx), %esi
-; X86-NEXT:    movl 4(%edx), %edx
-; X86-NEXT:    subl 4(%ecx), %edx
-; X86-NEXT:    subl (%ecx), %esi
-; X86-NEXT:    sbbl $0, %edx
+; X86-NEXT:    movl (%ecx), %esi
+; X86-NEXT:    movl 4(%ecx), %ecx
+; X86-NEXT:    subl 4(%edx), %ecx
+; X86-NEXT:    subl (%edx), %esi
+; X86-NEXT:    sbbl $0, %ecx
 ; X86-NEXT:    movl %esi, (%eax)
-; X86-NEXT:    movl %edx, 4(%eax)
+; X86-NEXT:    movl %ecx, 4(%eax)
 ; X86-NEXT:    popl %esi
 ; X86-NEXT:    retl $4
 ;
