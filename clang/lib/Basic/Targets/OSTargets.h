@@ -763,8 +763,9 @@ public:
 template <typename Target>
 class LLVM_LIBRARY_VISIBILITY WebAssemblyOSTargetInfo
     : public OSTargetInfo<Target> {
+protected:
   void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
-                    MacroBuilder &Builder) const final {
+                    MacroBuilder &Builder) const {
     // A common platform macro.
     if (Opts.POSIXThreads)
       Builder.defineMacro("_REENTRANT");
@@ -783,6 +784,21 @@ public:
     this->TheCXXABI.set(TargetCXXABI::WebAssembly);
     this->HasFloat128 = true;
   }
+};
+
+// WASI target
+template <typename Target>
+class LLVM_LIBRARY_VISIBILITY WASITargetInfo
+    : public WebAssemblyOSTargetInfo<Target> {
+  void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
+                    MacroBuilder &Builder) const final {
+    WebAssemblyOSTargetInfo<Target>::getOSDefines(Opts, Triple, Builder);
+    Builder.defineMacro("__wasi__");
+  }
+
+public:
+  explicit WASITargetInfo(const llvm::Triple &Triple, const TargetOptions &Opts)
+      : WebAssemblyOSTargetInfo<Target>(Triple, Opts) {}
 };
 
 } // namespace targets
