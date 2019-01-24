@@ -14315,6 +14315,62 @@ static SDValue lowerShuffleByMerging128BitLanes(
   return DAG.getVectorShuffle(VT, DL, NewV1, NewV2, NewMask);
 }
 
+/// If the input shuffle mask results in a vector that is undefined in all upper
+/// or lower half elements and that mask accesses only 2 halves of the
+/// shuffle's operands, return true. A mask of half the width with mask indexes
+/// adjusted to access the extracted halves of the original shuffle operands is
+/// returned in HalfMask. HalfIdx1 and HalfIdx2 return whether the upper or
+/// lower half of each input operand is accessed.
+static bool
+getHalfShuffleMask(ArrayRef<int> Mask, MutableArrayRef<int> HalfMask,
+                   int &HalfIdx1, int &HalfIdx2) {
+  assert((Mask.size() == HalfMask.size() * 2) &&
+         "Expected input mask to be twice as long as output");
+
+  // Exactly one half of the result must be undef to allow narrowing.
+  bool UndefLower = isUndefLowerHalf(Mask);
+  bool UndefUpper = isUndefUpperHalf(Mask);
+  if (UndefLower == UndefUpper)
+    return false;
+
+  unsigned HalfNumElts = HalfMask.size();
+  unsigned MaskIndexOffset = UndefLower ? HalfNumElts : 0;
+  HalfIdx1 = -1;
+  HalfIdx2 = -1;
+  for (unsigned i = 0; i != HalfNumElts; ++i) {
+    int M = Mask[i + MaskIndexOffset];
+    if (M < 0) {
+      HalfMask[i] = M;
+      continue;
+    }
+
+    // Determine which of the 4 half vectors this element is from.
+    // i.e. 0 = Lower V1, 1 = Upper V1, 2 = Lower V2, 3 = Upper V2.
+    int HalfIdx = M / HalfNumElts;
+
+    // Determine the element index into its half vector source.
+    int HalfElt = M % HalfNumElts;
+
+    // We can shuffle with up to 2 half vectors, set the new 'half'
+    // shuffle mask accordingly.
+    if (HalfIdx1 < 0 || HalfIdx1 == HalfIdx) {
+      HalfMask[i] = HalfElt;
+      HalfIdx1 = HalfIdx;
+      continue;
+    }
+    if (HalfIdx2 < 0 || HalfIdx2 == HalfIdx) {
+      HalfMask[i] = HalfElt + HalfNumElts;
+      HalfIdx2 = HalfIdx;
+      continue;
+    }
+
+    // Too many half vectors referenced.
+    return false;
+  }
+
+  return true;
+}
+
 /// Lower shuffles where an entire half of a 256 or 512-bit vector is UNDEF.
 /// This allows for fast cases such as subvector extraction/insertion
 /// or shuffling smaller vector types which can lower more efficiently.
@@ -14354,42 +14410,11 @@ static SDValue lowerShuffleWithUndefHalf(const SDLoc &DL, MVT VT, SDValue V1,
                        DAG.getIntPtrConstant(HalfNumElts, DL));
   }
 
-  // If the shuffle only uses two of the four halves of the input operands,
-  // then extract them and perform the 'half' shuffle at half width.
-  // e.g. vector_shuffle <X, X, X, X, u, u, u, u> or <X, X, u, u>
-  int HalfIdx1 = -1, HalfIdx2 = -1;
+  int HalfIdx1, HalfIdx2;
   SmallVector<int, 8> HalfMask(HalfNumElts);
-  unsigned Offset = UndefLower ? HalfNumElts : 0;
-  for (unsigned i = 0; i != HalfNumElts; ++i) {
-    int M = Mask[i + Offset];
-    if (M < 0) {
-      HalfMask[i] = M;
-      continue;
-    }
-
-    // Determine which of the 4 half vectors this element is from.
-    // i.e. 0 = Lower V1, 1 = Upper V1, 2 = Lower V2, 3 = Upper V2.
-    int HalfIdx = M / HalfNumElts;
-
-    // Determine the element index into its half vector source.
-    int HalfElt = M % HalfNumElts;
-
-    // We can shuffle with up to 2 half vectors, set the new 'half'
-    // shuffle mask accordingly.
-    if (HalfIdx1 < 0 || HalfIdx1 == HalfIdx) {
-      HalfMask[i] = HalfElt;
-      HalfIdx1 = HalfIdx;
-      continue;
-    }
-    if (HalfIdx2 < 0 || HalfIdx2 == HalfIdx) {
-      HalfMask[i] = HalfElt + HalfNumElts;
-      HalfIdx2 = HalfIdx;
-      continue;
-    }
-
-    // Too many half vectors referenced.
+  if (!getHalfShuffleMask(Mask, HalfMask, HalfIdx1, HalfIdx2))
     return SDValue();
-  }
+
   assert(HalfMask.size() == HalfNumElts && "Unexpected shuffle mask length");
 
   // Only shuffle the halves of the inputs when useful.
@@ -14435,6 +14460,7 @@ static SDValue lowerShuffleWithUndefHalf(const SDLoc &DL, MVT VT, SDValue V1,
   SDValue Half1 = GetHalfVector(HalfIdx1);
   SDValue Half2 = GetHalfVector(HalfIdx2);
   SDValue V = DAG.getVectorShuffle(HalfVT, DL, Half1, Half2, HalfMask);
+  unsigned Offset = UndefLower ? HalfNumElts : 0;
   return DAG.getNode(ISD::INSERT_SUBVECTOR, DL, VT, DAG.getUNDEF(VT), V,
                      DAG.getIntPtrConstant(Offset, DL));
 }
