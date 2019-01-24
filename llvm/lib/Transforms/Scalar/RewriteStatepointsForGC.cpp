@@ -2611,21 +2611,20 @@ bool RewriteStatepointsForGC::runOnFunction(Function &F, DominatorTree &DT,
       continue;
 
     unsigned VF = 0;
-    bool HasScalarOperand = false;
     for (unsigned i = 0; i < I.getNumOperands(); i++)
-      if (I.getOperand(i)->getType()->isVectorTy())
+      if (I.getOperand(i)->getType()->isVectorTy()) {
+        assert(VF == 0 ||
+               VF == I.getOperand(i)->getType()->getVectorNumElements());
         VF = I.getOperand(i)->getType()->getVectorNumElements();
-      else
-        HasScalarOperand = true;
+      }
 
-    if (HasScalarOperand && VF != 0) {
+    // It's the vector to scalar traversal through the pointer operand which
+    // confuses base pointer rewriting, so limit ourselves to that case.
+    if (!I.getOperand(0)->getType()->isVectorTy() && VF != 0) {
       IRBuilder<> B(&I);
-      for (unsigned i = 0; i < I.getNumOperands(); i++)
-        if (!I.getOperand(i)->getType()->isVectorTy()) {
-          auto *Splat = B.CreateVectorSplat(VF, I.getOperand(i));
-          I.setOperand(i, Splat);
-          MadeChange = true;
-        }
+      auto *Splat = B.CreateVectorSplat(VF, I.getOperand(0));
+      I.setOperand(0, Splat);
+      MadeChange = true;
     }
   }
 
