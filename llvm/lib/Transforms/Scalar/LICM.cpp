@@ -1318,7 +1318,7 @@ static void moveInstructionBefore(Instruction &I, Instruction &Dest,
   if (MSSAU)
     if (MemoryUseOrDef *OldMemAcc = cast_or_null<MemoryUseOrDef>(
             MSSAU->getMemorySSA()->getMemoryAccess(&I)))
-      MSSAU->moveToPlace(OldMemAcc, Dest->getParent(), MemorySSA::End);
+      MSSAU->moveToPlace(OldMemAcc, Dest.getParent(), MemorySSA::End);
 }
 
 static Instruction *sinkThroughTriviallyReplaceablePHI(
