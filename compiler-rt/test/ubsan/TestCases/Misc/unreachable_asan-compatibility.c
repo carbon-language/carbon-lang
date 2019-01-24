@@ -1,7 +1,7 @@
 // Ensure compatiblity of UBSan unreachable with ASan in the presence of
 // noreturn functions
 // RUN: %clang -O2 -fPIC -fsanitize=address,unreachable %s -emit-llvm -S -o - | FileCheck %s
-// REQUIRES: ubsan-asan
+// REQUIRES: ubsan-asan, deactivate
 
 void bar(void) __attribute__((noreturn));
 
