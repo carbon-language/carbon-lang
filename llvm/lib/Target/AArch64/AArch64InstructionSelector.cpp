@@ -485,7 +485,7 @@ static bool selectCopy(MachineInstr &I, const TargetInstrInfo &TII,
   // Returns true, or asserts if something we don't expect happens. Instead of
   // returning true, we return isValidCopy() to ensure that we verify the
   // result.
-  auto CheckCopy = [&I, &DstRegBank, &MRI, &TRI, &RBI, &KnownValid]() {
+  auto CheckCopy = [&]() {
     // If we have a bitcast or something, we can't have physical registers.
     assert(
         I.isCopy() ||
