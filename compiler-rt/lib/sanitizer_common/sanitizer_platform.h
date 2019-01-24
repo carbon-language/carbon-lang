@@ -285,6 +285,12 @@
 # define MSC_PREREQ(version) 0
 #endif
 
+#if defined(__arm64__) && SANITIZER_IOS
+# define SANITIZER_NON_UNIQUE_TYPEINFO 1
+#else
+# define SANITIZER_NON_UNIQUE_TYPEINFO 0
+#endif
+
 // On linux, some architectures had an ABI transition from 64-bit long double
 // (ie. same as double) to 128-bit long double.  On those, glibc symbols
 // involving long doubles come in two versions, and we need to pass the
