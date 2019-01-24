@@ -78,8 +78,6 @@ public:
 
   bool isBranchOffsetInRange(unsigned BranchOpc,
                              int64_t BrOffset) const override;
-
-  bool isAsCheapAsAMove(const MachineInstr &MI) const override;
 };
 }
 #endif
