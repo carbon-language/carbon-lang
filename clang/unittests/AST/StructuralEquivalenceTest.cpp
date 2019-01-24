@@ -378,7 +378,7 @@ TEST_F(StructuralEquivalenceFunctionTest, FunctionsWithDifferentNoreturnAttr) {
   EXPECT_TRUE(testStructuralMatch(t));
 }
 
-// These calling conventions may not be available on certain platforms.
+// These attributes may not be available on certain platforms.
 #if defined(__x86_64__) && defined(__linux__)
 TEST_F(StructuralEquivalenceFunctionTest,
     FunctionsWithDifferentCallingConventions) {
@@ -388,7 +388,6 @@ TEST_F(StructuralEquivalenceFunctionTest,
       Lang_C);
   EXPECT_FALSE(testStructuralMatch(t));
 }
-#endif
 
 TEST_F(StructuralEquivalenceFunctionTest, FunctionsWithDifferentSavedRegsAttr) {
   auto t = makeNamedDecls(
@@ -397,6 +396,7 @@ TEST_F(StructuralEquivalenceFunctionTest, FunctionsWithDifferentSavedRegsAttr) {
       Lang_C);
   EXPECT_FALSE(testStructuralMatch(t));
 }
+#endif
 
 struct StructuralEquivalenceCXXMethodTest : StructuralEquivalenceTest {
 };
