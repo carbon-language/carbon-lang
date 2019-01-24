@@ -107,6 +107,15 @@ target_link_libraries(ISO-Fortran-binding-test
   FortranRuntime
 )
 
+add_executable(folding-test
+  folding.cc
+)
+
+target_link_libraries(folding-test
+  FortranEvaluateTesting
+  FortranEvaluate
+)
+
 add_test(Expression expression-test)
 add_test(Leadz leading-zero-bit-count-test)
 add_test(PopPar bit-population-count-test)
@@ -116,3 +125,4 @@ add_test(Logical logical-test)
 add_test(Real real-test)
 add_test(RESHAPE reshape-test)
 add_test(ISO-binding ISO-Fortran-binding-test)
+add_test(folding folding-test)
