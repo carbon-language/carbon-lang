@@ -2037,14 +2037,19 @@ int X86TTIImpl::getIntrinsicInstrCost(Intrinsic::ID IID, Type *RetTy,
     { ISD::FSQRT,      MVT::v4f32,  56 }, // Pentium III from http://www.agner.org/
   };
   static const CostTblEntry X64CostTbl[] = { // 64-bit targets
-    { ISD::BITREVERSE, MVT::i64,    14 }
+    { ISD::BITREVERSE, MVT::i64,    14 },
+    { ISD::UADDO,      MVT::i64,     1 },
   };
   static const CostTblEntry X86CostTbl[] = { // 32 or 64-bit targets
     { ISD::BITREVERSE, MVT::i32,    14 },
     { ISD::BITREVERSE, MVT::i16,    14 },
-    { ISD::BITREVERSE, MVT::i8,     11 }
+    { ISD::BITREVERSE, MVT::i8,     11 },
+    { ISD::UADDO,      MVT::i32,     1 },
+    { ISD::UADDO,      MVT::i16,     1 },
+    { ISD::UADDO,      MVT::i8,      1 },
   };
 
+  Type *OpTy = RetTy;
   unsigned ISD = ISD::DELETED_NODE;
   switch (IID) {
   default:
@@ -2079,11 +2084,17 @@ int X86TTIImpl::getIntrinsicInstrCost(Intrinsic::ID IID, Type *RetTy,
   case Intrinsic::sqrt:
     ISD = ISD::FSQRT;
     break;
+  case Intrinsic::uadd_with_overflow:
+  case Intrinsic::usub_with_overflow:
+    // USUBO has same costs so don't duplicate.
+    ISD = ISD::UADDO;
+    OpTy = RetTy->getContainedType(0);
+    break;
   }
 
   if (ISD != ISD::DELETED_NODE) {
     // Legalize the type.
-    std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, RetTy);
+    std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, OpTy);
     MVT MTy = LT.second;
 
     // Attempt to lookup cost.

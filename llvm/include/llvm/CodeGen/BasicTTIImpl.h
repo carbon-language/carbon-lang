@@ -1265,6 +1265,20 @@ public:
       return ConcreteTTI->getMinMaxReductionCost(
           Tys[0], CmpInst::makeCmpResultType(Tys[0]), /*IsPairwiseForm=*/false,
           /*IsSigned=*/false);
+    case Intrinsic::uadd_with_overflow:
+    case Intrinsic::usub_with_overflow: {
+      Type *SumTy = RetTy->getContainedType(0);
+      Type *OverflowTy = RetTy->getContainedType(1);
+      unsigned Opcode = IID == Intrinsic::uadd_with_overflow
+                            ? BinaryOperator::Add
+                            : BinaryOperator::Sub;
+
+      unsigned Cost = 0;
+      Cost += ConcreteTTI->getArithmeticInstrCost(Opcode, SumTy);
+      Cost += ConcreteTTI->getCmpSelInstrCost(BinaryOperator::ICmp, SumTy,
+                                              OverflowTy, nullptr);
+      return Cost;
+    }
     case Intrinsic::ctpop:
       ISDs.push_back(ISD::CTPOP);
       // In case of legalization use TCC_Expensive. This is cheaper than a
