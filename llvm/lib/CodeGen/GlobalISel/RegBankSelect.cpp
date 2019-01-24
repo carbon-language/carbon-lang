@@ -185,7 +185,7 @@ bool RegBankSelect::repairReg(
       unsigned MergeOp = RegTy.isScalar() ?
         TargetOpcode::G_MERGE_VALUES : TargetOpcode::G_BUILD_VECTOR;
 
-      auto &MergeBuilder =
+      auto MergeBuilder =
         MIRBuilder.buildInstrNoInsert(MergeOp)
         .addDef(MO.getReg());
 
