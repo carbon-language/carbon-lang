@@ -767,7 +767,7 @@ void InnerLoopVectorizer::setDebugLocFromInst(IRBuilder<> &B, const Value *Ptr) 
     const DILocation *DIL = Inst->getDebugLoc();
     if (DIL && Inst->getFunction()->isDebugInfoForProfiling() &&
         !isa<DbgInfoIntrinsic>(Inst)) {
-      auto NewDIL = DIL->cloneWithDuplicationFactor(UF * VF);
+      auto NewDIL = DIL->cloneByMultiplyingDuplicationFactor(UF * VF);
       if (NewDIL)
         B.SetCurrentDebugLocation(NewDIL.getValue());
       else
