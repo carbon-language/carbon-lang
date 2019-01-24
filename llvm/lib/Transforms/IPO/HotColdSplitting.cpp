@@ -168,11 +168,8 @@ public:
   HotColdSplitting(ProfileSummaryInfo *ProfSI,
                    function_ref<BlockFrequencyInfo *(Function &)> GBFI,
                    function_ref<TargetTransformInfo &(Function &)> GTTI,
-                   function_ref<DominatorTree *(Function &)> GetDT,
-                   function_ref<PostDominatorTree *(Function &)> GetPDT,
                    std::function<OptimizationRemarkEmitter &(Function &)> *GORE)
-      : PSI(ProfSI), GetBFI(GBFI), GetTTI(GTTI), GetDT(GetDT), GetPDT(GetPDT),
-        GetORE(GORE) {}
+      : PSI(ProfSI), GetBFI(GBFI), GetTTI(GTTI), GetORE(GORE) {}
   bool run(Module &M);
 
 private:
@@ -185,8 +182,6 @@ private:
   ProfileSummaryInfo *PSI;
   function_ref<BlockFrequencyInfo *(Function &)> GetBFI;
   function_ref<TargetTransformInfo &(Function &)> GetTTI;
-  function_ref<DominatorTree *(Function &)> GetDT;
-  function_ref<PostDominatorTree *(Function &)> GetPDT;
   std::function<OptimizationRemarkEmitter &(Function &)> *GetORE;
 };
 
@@ -200,8 +195,6 @@ public:
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<AssumptionCacheTracker>();
     AU.addRequired<BlockFrequencyInfoWrapperPass>();
-    AU.addRequired<DominatorTreeWrapperPass>();
-    AU.addRequired<PostDominatorTreeWrapperPass>();
     AU.addRequired<ProfileSummaryInfoWrapperPass>();
     AU.addRequired<TargetTransformInfoWrapperPass>();
   }
@@ -469,11 +462,12 @@ bool HotColdSplitting::outlineColdRegions(Function &F, bool HasProfileSummary) {
   ReversePostOrderTraversal<Function *> RPOT(&F);
 
   // Calculate domtrees lazily. This reduces compile-time significantly.
-  DominatorTree *DT = nullptr;
-  PostDominatorTree *PDT = nullptr;
+  std::unique_ptr<DominatorTree> DT;
+  std::unique_ptr<PostDominatorTree> PDT;
 
   // Calculate BFI lazily (it's only used to query ProfileSummaryInfo). This
-  // reduces compile-time significantly.
+  // reduces compile-time significantly. TODO: When we *do* use BFI, we should
+  // be able to salvage its domtrees instead of recomputing them.
   BlockFrequencyInfo *BFI = nullptr;
   if (HasProfileSummary)
     BFI = GetBFI(F);
@@ -498,9 +492,9 @@ bool HotColdSplitting::outlineColdRegions(Function &F, bool HasProfileSummary) {
     });
 
     if (!DT)
-      DT = GetDT(F);
+      DT = make_unique<DominatorTree>(F);
     if (!PDT)
-      PDT = GetPDT(F);
+      PDT = make_unique<PostDominatorTree>(F);
 
     auto Region = OutliningRegion::create(*BB, *DT, *PDT);
     if (Region.empty())
@@ -601,13 +595,6 @@ bool HotColdSplittingLegacyPass::runOnModule(Module &M) {
   auto GBFI = [this](Function &F) {
     return &this->getAnalysis<BlockFrequencyInfoWrapperPass>(F).getBFI();
   };
-  auto GetDT = [this](Function &F) {
-    return &this->getAnalysis<DominatorTreeWrapperPass>(F).getDomTree();
-  };
-  auto GetPDT = [this](Function &F) {
-    return &this->getAnalysis<PostDominatorTreeWrapperPass>(F).getPostDomTree();
-  };
-
   std::unique_ptr<OptimizationRemarkEmitter> ORE;
   std::function<OptimizationRemarkEmitter &(Function &)> GetORE =
       [&ORE](Function &F) -> OptimizationRemarkEmitter & {
@@ -615,7 +602,7 @@ bool HotColdSplittingLegacyPass::runOnModule(Module &M) {
     return *ORE.get();
   };
 
-  return HotColdSplitting(PSI, GBFI, GTTI, GetDT, GetPDT, &GetORE).run(M);
+  return HotColdSplitting(PSI, GBFI, GTTI, &GetORE).run(M);
 }
 
 PreservedAnalyses
@@ -636,14 +623,6 @@ HotColdSplittingPass::run(Module &M, ModuleAnalysisManager &AM) {
     return FAM.getResult<TargetIRAnalysis>(F);
   };
 
-  auto GetDT = [&FAM](Function &F) {
-    return &FAM.getResult<DominatorTreeAnalysis>(F);
-  };
-
-  auto GetPDT = [&FAM](Function &F) {
-    return &FAM.getResult<PostDominatorTreeAnalysis>(F);
-  };
-
   std::unique_ptr<OptimizationRemarkEmitter> ORE;
   std::function<OptimizationRemarkEmitter &(Function &)> GetORE =
       [&ORE](Function &F) -> OptimizationRemarkEmitter & {
@@ -653,7 +632,7 @@ HotColdSplittingPass::run(Module &M, ModuleAnalysisManager &AM) {
 
   ProfileSummaryInfo *PSI = &AM.getResult<ProfileSummaryAnalysis>(M);
 
-  if (HotColdSplitting(PSI, GBFI, GTTI, GetDT, GetPDT, &GetORE).run(M))
+  if (HotColdSplitting(PSI, GBFI, GTTI, &GetORE).run(M))
     return PreservedAnalyses::none();
   return PreservedAnalyses::all();
 }
@@ -663,8 +642,6 @@ INITIALIZE_PASS_BEGIN(HotColdSplittingLegacyPass, "hotcoldsplit",
                       "Hot Cold Splitting", false, false)
 INITIALIZE_PASS_DEPENDENCY(ProfileSummaryInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(BlockFrequencyInfoWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(PostDominatorTreeWrapperPass)
 INITIALIZE_PASS_END(HotColdSplittingLegacyPass, "hotcoldsplit",
                     "Hot Cold Splitting", false, false)
 
