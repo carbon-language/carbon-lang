@@ -14386,13 +14386,15 @@ static SDValue lowerShuffleWithUndefHalf(const SDLoc &DL, MVT VT, SDValue V1,
   MVT HalfVT = MVT::getVectorVT(VT.getVectorElementType(), HalfNumElts);
 
   bool UndefLower = isUndefLowerHalf(Mask);
-  bool UndefUpper = isUndefUpperHalf(Mask);
-  if (!UndefLower && !UndefUpper)
+  if (!UndefLower && !isUndefUpperHalf(Mask))
     return SDValue();
+
+  assert((!UndefLower || !isUndefUpperHalf(Mask)) &&
+         "Completely undef shuffle mask should have been simplified already");
 
   // Upper half is undef and lower half is whole upper subvector.
   // e.g. vector_shuffle <4, 5, 6, 7, u, u, u, u> or <2, 3, u, u>
-  if (UndefUpper &&
+  if (!UndefLower &&
       isSequentialOrUndefInRange(Mask, 0, HalfNumElts, HalfNumElts)) {
     SDValue Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, HalfVT, V1,
                              DAG.getIntPtrConstant(HalfNumElts, DL));
@@ -14428,24 +14430,24 @@ static SDValue lowerShuffleWithUndefHalf(const SDLoc &DL, MVT VT, SDValue V1,
     return SDValue();
 
   // XXXXuuuu - don't extract both uppers, instead shuffle and then extract.
-  if (UndefUpper && NumUpperHalves == 2)
+  if (!UndefLower && NumUpperHalves == 2)
     return SDValue();
 
   // AVX2 - XXXXuuuu - always extract lowers.
-  if (Subtarget.hasAVX2() && !(UndefUpper && NumUpperHalves == 0)) {
+  if (Subtarget.hasAVX2() && (UndefLower || NumUpperHalves != 0)) {
     // AVX2 supports efficient immediate 64-bit element cross-lane shuffles.
     if (VT == MVT::v4f64 || VT == MVT::v4i64)
       return SDValue();
     // AVX2 supports variable 32-bit element cross-lane shuffles.
     if (VT == MVT::v8f32 || VT == MVT::v8i32) {
       // XXXXuuuu - don't extract lowers and uppers.
-      if (UndefUpper && NumLowerHalves != 0 && NumUpperHalves != 0)
+      if (!UndefLower && NumLowerHalves != 0 && NumUpperHalves != 0)
         return SDValue();
     }
   }
 
   // AVX512 - XXXXuuuu - always extract lowers.
-  if (VT.is512BitVector() && !(UndefUpper && NumUpperHalves == 0))
+  if (VT.is512BitVector() && (UndefLower || NumUpperHalves != 0))
     return SDValue();
 
   auto GetHalfVector = [&](int HalfIdx) {
