@@ -36,7 +36,12 @@ enum NodeType : unsigned {
   // instructions.
   SLLW,
   SRAW,
-  SRLW
+  SRLW,
+  // 32-bit operations from RV64M that can't be simply matched with a pattern
+  // at instruction selection time.
+  DIVW,
+  DIVUW,
+  REMUW
 };
 }
 
