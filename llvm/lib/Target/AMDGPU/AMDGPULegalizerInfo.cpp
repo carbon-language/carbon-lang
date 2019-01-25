@@ -97,7 +97,10 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   setAction({G_ASHR, S32}, Legal);
   setAction({G_ASHR, 1, S32}, Legal);
   setAction({G_SUB, S32}, Legal);
-  setAction({G_MUL, S32}, Legal);
+
+  getActionDefinitionsBuilder({G_MUL, G_UMULH, G_SMULH})
+    .legalFor({S32})
+    .scalarize(0);
 
   // FIXME: 64-bit ones only legal for scalar
   getActionDefinitionsBuilder({G_AND, G_OR, G_XOR})

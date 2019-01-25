@@ -1396,6 +1396,9 @@ LegalizerHelper::fewerElementsVector(MachineInstr &MI, unsigned TypeIdx,
     return Legalized;
   }
   case TargetOpcode::G_ADD:
+  case TargetOpcode::G_MUL:
+  case TargetOpcode::G_SMULH:
+  case TargetOpcode::G_UMULH:
   case TargetOpcode::G_FADD:
   case TargetOpcode::G_FMUL:
   case TargetOpcode::G_FSUB:
