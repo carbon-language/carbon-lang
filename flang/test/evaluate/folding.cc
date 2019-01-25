@@ -20,30 +20,26 @@
 
 using namespace Fortran::evaluate;
 
-// helpers to call functions on all types from tuple
-template<typename... T> static void VariadicCallHelper(const T... args) {
-  return;
-}
-
+// helper to call functions on all types from tuple
+template<typename... T> struct RunOnTypes {};
 template<typename Test, typename... T>
-static void VariadicCallHelper(const std::tuple<T...> dummy) {
-  VariadicCallHelper(Test::template Run<T>()...);
-  return;
-}
+struct RunOnTypes<Test, std::tuple<T...>> {
+  static void Run() { (..., Test::template Run<T>()); }
+};
 
 struct TestGetScalarConstantValue {
-  template<typename T> static bool Run() {
+  template<typename T> static void Run() {
     Expr<T> exprFullyTyped{Constant<T>{Scalar<T>{}}};
     Expr<SomeKind<T::category>> exprSomeKind{exprFullyTyped};
     Expr<SomeType> exprSomeType{exprSomeKind};
     TEST(GetScalarConstantValue<T>(exprFullyTyped) != nullptr);
     TEST(GetScalarConstantValue<T>(exprSomeKind) != nullptr);
     TEST(GetScalarConstantValue<T>(exprSomeType) != nullptr);
-    return true;
   }
 };
 
 int main() {
-  VariadicCallHelper<TestGetScalarConstantValue>(AllIntrinsicTypes{});
+  using TestTypes = AllIntrinsicTypes;
+  RunOnTypes<TestGetScalarConstantValue, TestTypes>::Run();
   return testing::Complete();
 }
