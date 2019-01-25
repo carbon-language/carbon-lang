@@ -37,6 +37,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   const LLT S16 = LLT::scalar(16);
   const LLT S32 = LLT::scalar(32);
   const LLT S64 = LLT::scalar(64);
+  const LLT S128 = LLT::scalar(128);
   const LLT S256 = LLT::scalar(256);
   const LLT S512 = LLT::scalar(512);
 
@@ -148,7 +149,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
 
   getActionDefinitionsBuilder(G_FPEXT)
     .legalFor({{S64, S32}, {S32, S16}})
-    .lowerFor({{S64, S16}}); // FIXME: Implement
+    .lowerFor({{S64, S16}}) // FIXME: Implement
+    .scalarize(0);
 
   getActionDefinitionsBuilder(G_FSUB)
       // Use actual fsub instruction
@@ -164,7 +166,10 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
 
   getActionDefinitionsBuilder({G_SEXT, G_ZEXT, G_ANYEXT})
     .legalFor({{S64, S32}, {S32, S16}, {S64, S16},
-               {S32, S1}, {S64, S1}, {S16, S1}});
+               {S32, S1}, {S64, S1}, {S16, S1},
+               // FIXME: Hack
+               {S128, S32}})
+    .scalarize(0);
 
   getActionDefinitionsBuilder({G_SITOFP, G_UITOFP})
     .legalFor({{S32, S32}, {S64, S32}});
