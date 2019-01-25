@@ -176,10 +176,6 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   getActionDefinitionsBuilder({G_FPTOSI, G_FPTOUI})
     .legalFor({{S32, S32}, {S32, S64}});
 
-  setAction({G_FPOW, S32}, Legal);
-  setAction({G_FEXP2, S32}, Legal);
-  setAction({G_FLOG2, S32}, Legal);
-
   getActionDefinitionsBuilder({G_INTRINSIC_TRUNC, G_INTRINSIC_ROUND})
     .legalFor({S32, S64});
 
@@ -198,7 +194,11 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     .clampMaxNumElements(0, S1, 1)
     .clampMaxNumElements(1, S32, 1);
 
-
+  // FIXME: fexp, flog2, flog10 needs to be custom lowered.
+  getActionDefinitionsBuilder({G_FPOW, G_FEXP, G_FEXP2,
+                               G_FLOG, G_FLOG2, G_FLOG10})
+    .legalFor({S32})
+    .scalarize(0);
 
   setAction({G_CTLZ, S32}, Legal);
   setAction({G_CTLZ_ZERO_UNDEF, S32}, Legal);
