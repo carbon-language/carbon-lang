@@ -1284,6 +1284,73 @@ LegalizerHelper::fewerElementsVectorCasts(MachineInstr &MI, unsigned TypeIdx,
   }
 
   if (NarrowTy.isVector())
+        MIRBuilder.buildConcatVectors(DstReg, DstRegs);
+  else
+    MIRBuilder.buildBuildVector(DstReg, DstRegs);
+
+  MI.eraseFromParent();
+  return Legalized;
+}
+
+LegalizerHelper::LegalizeResult
+LegalizerHelper::fewerElementsVectorCmp(MachineInstr &MI, unsigned TypeIdx,
+                                        LLT NarrowTy) {
+  unsigned DstReg = MI.getOperand(0).getReg();
+  unsigned Src0Reg = MI.getOperand(2).getReg();
+  LLT DstTy = MRI.getType(DstReg);
+  LLT SrcTy = MRI.getType(Src0Reg);
+
+  unsigned NumParts;
+  LLT NarrowTy0, NarrowTy1;
+
+  if (TypeIdx == 0) {
+    unsigned NewElts = NarrowTy.isVector() ? NarrowTy.getNumElements() : 1;
+    unsigned OldElts = DstTy.getNumElements();
+
+    NarrowTy0 = NarrowTy;
+    NumParts = NarrowTy.isVector() ? (OldElts / NewElts) : DstTy.getNumElements();
+    NarrowTy1 = NarrowTy.isVector() ?
+      LLT::vector(NarrowTy.getNumElements(), SrcTy.getScalarSizeInBits()) :
+      SrcTy.getElementType();
+
+  } else {
+    unsigned NewElts = NarrowTy.isVector() ? NarrowTy.getNumElements() : 1;
+    unsigned OldElts = SrcTy.getNumElements();
+
+    NumParts = NarrowTy.isVector() ? (OldElts / NewElts) :
+      NarrowTy.getNumElements();
+    NarrowTy0 = LLT::vector(NarrowTy.getNumElements(),
+                            DstTy.getScalarSizeInBits());
+    NarrowTy1 = NarrowTy;
+  }
+
+  // FIXME: Don't know how to handle the situation where the small vectors
+  // aren't all the same size yet.
+  if (NarrowTy1.isVector() &&
+      NarrowTy1.getNumElements() * NumParts != DstTy.getNumElements())
+    return UnableToLegalize;
+
+  CmpInst::Predicate Pred
+    = static_cast<CmpInst::Predicate>(MI.getOperand(1).getPredicate());
+
+  SmallVector<unsigned, 2> Src1Regs, Src2Regs, DstRegs;
+  extractParts(MI.getOperand(2).getReg(), NarrowTy1, NumParts, Src1Regs);
+  extractParts(MI.getOperand(3).getReg(), NarrowTy1, NumParts, Src2Regs);
+
+  for (unsigned I = 0; I < NumParts; ++I) {
+    unsigned DstReg = MRI.createGenericVirtualRegister(NarrowTy0);
+    DstRegs.push_back(DstReg);
+
+    if (MI.getOpcode() == TargetOpcode::G_ICMP)
+      MIRBuilder.buildICmp(Pred, DstReg, Src1Regs[I], Src2Regs[I]);
+    else {
+      MachineInstr *NewCmp
+        = MIRBuilder.buildFCmp(Pred, DstReg, Src1Regs[I], Src2Regs[I]);
+      NewCmp->setFlags(MI.getFlags());
+    }
+  }
+
+  if (NarrowTy0.isVector())
     MIRBuilder.buildConcatVectors(DstReg, DstRegs);
   else
     MIRBuilder.buildBuildVector(DstReg, DstRegs);
@@ -1295,9 +1362,7 @@ LegalizerHelper::fewerElementsVectorCasts(MachineInstr &MI, unsigned TypeIdx,
 LegalizerHelper::LegalizeResult
 LegalizerHelper::fewerElementsVector(MachineInstr &MI, unsigned TypeIdx,
                                      LLT NarrowTy) {
-  // FIXME: Don't know how to handle secondary types yet.
-  if (TypeIdx != 0)
-    return UnableToLegalize;
+  using namespace TargetOpcode;
 
   MIRBuilder.setInstr(MI);
   unsigned Opc = MI.getOpcode();
@@ -1384,8 +1449,15 @@ LegalizerHelper::fewerElementsVector(MachineInstr &MI, unsigned TypeIdx,
     MI.eraseFromParent();
     return Legalized;
   }
+  case TargetOpcode::G_ICMP:
+  case TargetOpcode::G_FCMP:
+    return fewerElementsVectorCmp(MI, TypeIdx, NarrowTy);
   case TargetOpcode::G_LOAD:
   case TargetOpcode::G_STORE: {
+    // FIXME: Don't know how to handle secondary types yet.
+    if (TypeIdx != 0)
+      return UnableToLegalize;
+
     bool IsLoad = MI.getOpcode() == TargetOpcode::G_LOAD;
     unsigned ValReg = MI.getOperand(0).getReg();
     unsigned AddrReg = MI.getOperand(1).getReg();
