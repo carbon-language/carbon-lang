@@ -93,9 +93,6 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
 
   setAction({G_BRCOND, S1}, Legal);
 
-  setAction({G_ASHR, S32}, Legal);
-  setAction({G_ASHR, 1, S32}, Legal);
-
   getActionDefinitionsBuilder({G_ADD, G_SUB, G_MUL, G_UMULH, G_SMULH})
     .legalFor({S32})
     .scalarize(0);
@@ -185,6 +182,14 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     setAction({G_GEP, PtrTy}, Legal);
     setAction({G_GEP, 1, IdxTy}, Legal);
   }
+
+  // FIXME: When RegBankSelect inserts copies, it will only create new registers
+  // with scalar types. This means we can end up with G_LOAD/G_STORE/G_GEP
+  // instruction with scalar types for their pointer operands. In assert builds,
+  // the instruction selector will assert if it sees a generic instruction which
+  // isn't legal, so we need to tell it that scalar types are legal for pointer
+  // operands
+  setAction({G_GEP, S64}, Legal);
 
   setAction({G_BLOCK_ADDR, CodePtr}, Legal);
 
@@ -287,14 +292,6 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   else
     Shifts.clampScalar(0, S32, S64);
   Shifts.clampScalar(1, S32, S32);
-
-  // FIXME: When RegBankSelect inserts copies, it will only create new
-  // registers with scalar types.  This means we can end up with
-  // G_LOAD/G_STORE/G_GEP instruction with scalar types for their pointer
-  // operands.  In assert builds, the instruction selector will assert
-  // if it sees a generic instruction which isn't legal, so we need to
-  // tell it that scalar types are legal for pointer operands
-  setAction({G_GEP, S64}, Legal);
 
   for (unsigned Op : {G_EXTRACT_VECTOR_ELT, G_INSERT_VECTOR_ELT}) {
     unsigned VecTypeIdx = Op == G_EXTRACT_VECTOR_ELT ? 1 : 0;
