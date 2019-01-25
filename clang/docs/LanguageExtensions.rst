@@ -516,8 +516,8 @@ arithmetic conversions is ``float``.
 
 A literal can be given ``_Float16`` type using the suffix ``f16``; for example:
 ```
-  3.14f16
-  ```
+3.14f16
+```
 
 Because default argument promotion only applies to the standard floating-point
 types, ``_Float16`` values are not promoted to ``double`` when passed as variadic
