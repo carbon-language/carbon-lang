@@ -6,13 +6,11 @@ define i32 @test_addcarry_32_x_0_false(i32 %a0)  {
 ; X86-LABEL: test_addcarry_32_x_0_false:
 ; X86:       # %bb.0:
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X86-NEXT:    addl $0, %eax
 ; X86-NEXT:    retl
 ;
 ; X64-LABEL: test_addcarry_32_x_0_false:
 ; X64:       # %bb.0:
-; X64-NEXT:    # kill: def $edi killed $edi def $rdi
-; X64-NEXT:    leal (%rdi), %eax
+; X64-NEXT:    movl %edi, %eax
 ; X64-NEXT:    retq
   %1 = tail call { i8, i32 } @llvm.x86.addcarry.32(i8 0, i32 %a0, i32 0)
   %2 = extractvalue { i8, i32 } %1, 1
@@ -22,14 +20,12 @@ define i32 @test_addcarry_32_x_0_false(i32 %a0)  {
 define i32 @test_addcarry_32_0_x_false(i32 %a0)  {
 ; X86-LABEL: test_addcarry_32_0_x_false:
 ; X86:       # %bb.0:
-; X86-NEXT:    xorl %eax, %eax
-; X86-NEXT:    addl {{[0-9]+}}(%esp), %eax
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X86-NEXT:    retl
 ;
 ; X64-LABEL: test_addcarry_32_0_x_false:
 ; X64:       # %bb.0:
-; X64-NEXT:    # kill: def $edi killed $edi def $rdi
-; X64-NEXT:    leal (%rdi), %eax
+; X64-NEXT:    movl %edi, %eax
 ; X64-NEXT:    retq
   %1 = tail call { i8, i32 } @llvm.x86.addcarry.32(i8 0, i32 0, i32 %a0)
   %2 = extractvalue { i8, i32 } %1, 1
@@ -40,13 +36,11 @@ define i32 @test_subborrow_32_x_0_false(i32 %a0)  {
 ; X86-LABEL: test_subborrow_32_x_0_false:
 ; X86:       # %bb.0:
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X86-NEXT:    subl $0, %eax
 ; X86-NEXT:    retl
 ;
 ; X64-LABEL: test_subborrow_32_x_0_false:
 ; X64:       # %bb.0:
 ; X64-NEXT:    movl %edi, %eax
-; X64-NEXT:    subl $0, %eax
 ; X64-NEXT:    retq
   %1 = tail call { i8, i32 } @llvm.x86.subborrow.32(i8 0, i32 %a0, i32 0)
   %2 = extractvalue { i8, i32 } %1, 1
