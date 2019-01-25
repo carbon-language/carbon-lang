@@ -93,12 +93,10 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
 
   setAction({G_BRCOND, S1}, Legal);
 
-  setAction({G_ADD, S32}, Legal);
   setAction({G_ASHR, S32}, Legal);
   setAction({G_ASHR, 1, S32}, Legal);
-  setAction({G_SUB, S32}, Legal);
 
-  getActionDefinitionsBuilder({G_MUL, G_UMULH, G_SMULH})
+  getActionDefinitionsBuilder({G_ADD, G_SUB, G_MUL, G_UMULH, G_SMULH})
     .legalFor({S32})
     .scalarize(0);
 
