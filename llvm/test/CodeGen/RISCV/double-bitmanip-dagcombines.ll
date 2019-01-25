@@ -78,3 +78,51 @@ define double @fabs(double %a) nounwind {
   %1 = call double @llvm.fabs.f64(double %a)
   ret double %1
 }
+
+declare double @llvm.copysign.f64(double, double)
+
+; DAGTypeLegalizer::SoftenFloatRes_FCOPYSIGN will convert to bitwise
+; operations if floating point isn't supported. A combine could be written to
+; do the same even when f64 is legal.
+
+define double @fcopysign_fneg(double %a, double %b) nounwind {
+; RV32I-LABEL: fcopysign_fneg:
+; RV32I:       # %bb.0:
+; RV32I-NEXT:    not a2, a3
+; RV32I-NEXT:    lui a3, 524288
+; RV32I-NEXT:    and a2, a2, a3
+; RV32I-NEXT:    addi a3, a3, -1
+; RV32I-NEXT:    and a1, a1, a3
+; RV32I-NEXT:    or a1, a1, a2
+; RV32I-NEXT:    ret
+;
+; RV32IFD-LABEL: fcopysign_fneg:
+; RV32IFD:       # %bb.0:
+; RV32IFD-NEXT:    addi sp, sp, -16
+; RV32IFD-NEXT:    sw a2, 8(sp)
+; RV32IFD-NEXT:    sw a3, 12(sp)
+; RV32IFD-NEXT:    fld ft0, 8(sp)
+; RV32IFD-NEXT:    sw a0, 8(sp)
+; RV32IFD-NEXT:    sw a1, 12(sp)
+; RV32IFD-NEXT:    fld ft1, 8(sp)
+; RV32IFD-NEXT:    fsgnjn.d ft0, ft1, ft0
+; RV32IFD-NEXT:    fsd ft0, 8(sp)
+; RV32IFD-NEXT:    lw a0, 8(sp)
+; RV32IFD-NEXT:    lw a1, 12(sp)
+; RV32IFD-NEXT:    addi sp, sp, 16
+; RV32IFD-NEXT:    ret
+;
+; RV64I-LABEL: fcopysign_fneg:
+; RV64I:       # %bb.0:
+; RV64I-NEXT:    addi a2, zero, -1
+; RV64I-NEXT:    slli a2, a2, 63
+; RV64I-NEXT:    not a1, a1
+; RV64I-NEXT:    and a1, a1, a2
+; RV64I-NEXT:    addi a2, a2, -1
+; RV64I-NEXT:    and a0, a0, a2
+; RV64I-NEXT:    or a0, a0, a1
+; RV64I-NEXT:    ret
+  %1 = fneg double %b
+  %2 = call double @llvm.copysign.f64(double %a, double %1)
+  ret double %2
+}
