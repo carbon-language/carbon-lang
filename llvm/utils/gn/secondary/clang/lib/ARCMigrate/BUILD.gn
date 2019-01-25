@@ -11,6 +11,7 @@ static_library("ARCMigrate") {
     "//clang/lib/Rewrite",
     "//clang/lib/Sema",
     "//clang/lib/Serialization",
+    "//clang/lib/StaticAnalyzer/Checkers",
     "//llvm/lib/Support",
   ]
   sources = [
