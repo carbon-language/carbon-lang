@@ -3105,6 +3105,10 @@ void ento::registerNewDeleteLeaksChecker(CheckerManager &mgr) {
   }
 }
 
+bool ento::shouldRegisterNewDeleteLeaksChecker(const LangOptions &LO) {
+  return true;
+}
+
 // Intended to be used in InnerPointerChecker to register the part of
 // MallocChecker connected to it.
 void ento::registerInnerPointerCheckerAux(CheckerManager &mgr) {
@@ -3125,6 +3129,10 @@ void ento::registerInnerPointerCheckerAux(CheckerManager &mgr) {
         "Optimistic", false, checker);                                         \
     checker->ChecksEnabled[MallocChecker::CK_##name] = true;                   \
     checker->CheckNames[MallocChecker::CK_##name] = mgr.getCurrentCheckName(); \
+  }                                                                            \
+                                                                               \
+  bool ento::shouldRegister##name(const LangOptions &LO) {                     \
+    return true;                                                               \
   }
 
 REGISTER_CHECKER(MallocChecker)

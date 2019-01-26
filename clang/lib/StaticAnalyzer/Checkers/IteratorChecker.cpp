@@ -2399,6 +2399,10 @@ bool compare(ProgramStateRef State, NonLoc NL1, NonLoc NL2,
     checker->ChecksEnabled[IteratorChecker::CK_##name] = true;                 \
     checker->CheckNames[IteratorChecker::CK_##name] =                          \
         Mgr.getCurrentCheckName();                                             \
+  }                                                                            \
+                                                                               \
+  bool ento::shouldRegister##name(const LangOptions &LO) {                     \
+    return true;                                                               \
   }
 
 REGISTER_CHECKER(IteratorRangeChecker)

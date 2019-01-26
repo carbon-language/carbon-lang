@@ -472,6 +472,10 @@ void UnixAPIChecker::checkPreStmt(const CallExpr *CE,
 #define REGISTER_CHECKER(Name)                                                 \
   void ento::registerUnixAPI##Name##Checker(CheckerManager &mgr) {             \
     mgr.registerChecker<UnixAPIChecker>()->Check##Name = true;                 \
+  }                                                                            \
+                                                                               \
+  bool ento::shouldRegisterUnixAPI##Name##Checker(const LangOptions &LO) {     \
+    return true;                                                               \
   }
 
 REGISTER_CHECKER(Misuse)
