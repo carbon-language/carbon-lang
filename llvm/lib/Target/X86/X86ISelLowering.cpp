@@ -34901,7 +34901,8 @@ static SDValue combineCarryThroughADD(SDValue EFLAGS, SelectionDAG &DAG) {
           // Do not flip "e > c", where "c" is a constant, because Cmp
           // instruction cannot take an immediate as its first operand.
           //
-          if (CarryOp1.getOpcode() == X86ISD::SUB && CarryOp1.hasOneUse() &&
+          if (CarryOp1.getOpcode() == X86ISD::SUB &&
+              CarryOp1.getNode()->hasOneUse() &&
               CarryOp1.getValueType().isInteger() &&
               !isa<ConstantSDNode>(CarryOp1.getOperand(1))) {
             SDValue SubCommute =
@@ -40716,7 +40717,7 @@ static SDValue combineAddOrSubToADCOrSBB(SDNode *N, SelectionDAG &DAG) {
     // Do not flip "e > c", where "c" is a constant, because Cmp instruction
     // cannot take an immediate as its first operand.
     //
-    if (EFLAGS.getOpcode() == X86ISD::SUB && EFLAGS.hasOneUse() &&
+    if (EFLAGS.getOpcode() == X86ISD::SUB && EFLAGS.getNode()->hasOneUse() &&
         EFLAGS.getValueType().isInteger() &&
         !isa<ConstantSDNode>(EFLAGS.getOperand(1))) {
       SDValue NewSub = DAG.getNode(X86ISD::SUB, SDLoc(EFLAGS),
