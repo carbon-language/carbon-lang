@@ -122,3 +122,38 @@ top:
 }
 
 declare  { i64, i1 } @llvm.usub.with.overflow.i64(i64, i64)
+
+; PR24545 less_than_ideal()
+define i8 @PR24545(i32, i32, i32* nocapture readonly) {
+; X86-LABEL: PR24545:
+; X86:       # %bb.0:
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X86-NEXT:    movl (%ecx), %edx
+; X86-NEXT:    cmpl {{[0-9]+}}(%esp), %edx
+; X86-NEXT:    seta %dl
+; X86-NEXT:    addb $-1, %dl
+; X86-NEXT:    sbbl 4(%ecx), %eax
+; X86-NEXT:    setb %al
+; X86-NEXT:    retl
+;
+; X64-LABEL: PR24545:
+; X64:       # %bb.0:
+; X64-NEXT:    cmpl %edi, (%rdx)
+; X64-NEXT:    seta %al
+; X64-NEXT:    addb $-1, %al
+; X64-NEXT:    sbbl 4(%rdx), %esi
+; X64-NEXT:    setb %al
+; X64-NEXT:    retq
+  %4 = load i32, i32* %2
+  %5 = icmp ugt i32 %4, %0
+  %6 = zext i1 %5 to i8
+  %7 = getelementptr inbounds i32, i32* %2, i32 1
+  %8 = load i32, i32* %7
+  %9 = tail call { i8, i32 } @llvm.x86.subborrow.32(i8 %6, i32 %1, i32 %8)
+  %10 = extractvalue { i8, i32 } %9, 0
+  %11 = icmp ne i8 %10, 0
+  %12 = zext i1 %11 to i8
+  ret i8 %12
+}
+declare { i8, i32 } @llvm.x86.subborrow.32(i8, i32, i32)
