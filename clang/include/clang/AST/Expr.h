@@ -5013,9 +5013,13 @@ public:
 /// which names a dependent type in its association list is result-dependent,
 /// which means that the choice of result expression is dependent.
 /// Result-dependent generic associations are both type- and value-dependent.
-class GenericSelectionExpr : public Expr {
+class GenericSelectionExpr final
+    : public Expr,
+      private llvm::TrailingObjects<GenericSelectionExpr, Stmt *,
+                                    TypeSourceInfo *> {
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
+  friend TrailingObjects;
 
   /// The number of association expressions and the index of the result
   /// expression in the case where the generic selection expression is not
@@ -5028,13 +5032,27 @@ class GenericSelectionExpr : public Expr {
     AssocExprStartIndex = 1
   };
 
-  /// The location of the "_Generic", "default" and of the right parenthesis.
-  SourceLocation GenericLoc, DefaultLoc, RParenLoc;
+  /// The location of the "default" and of the right parenthesis.
+  SourceLocation DefaultLoc, RParenLoc;
 
-  TypeSourceInfo **AssocTypes;
-  Stmt **SubExprs;
+  // GenericSelectionExpr is followed by several trailing objects.
+  // They are (in order):
+  //
+  // * A single Stmt * for the controlling expression.
+  // * An array of getNumAssocs() Stmt * for the association expressions.
+  // * An array of getNumAssocs() TypeSourceInfo *, one for each of the
+  //   association expressions.
+  unsigned numTrailingObjects(OverloadToken<Stmt *>) const {
+    // Add one to account for the controlling expression; the remainder
+    // are the associated expressions.
+    return 1 + getNumAssocs();
+  }
 
-public:
+  unsigned numTrailingObjects(OverloadToken<TypeSourceInfo *>) const {
+    return getNumAssocs();
+  }
+
+  /// Build a non-result-dependent generic selection expression.
   GenericSelectionExpr(const ASTContext &Context, SourceLocation GenericLoc,
                        Expr *ControllingExpr,
                        ArrayRef<TypeSourceInfo *> AssocTypes,
@@ -5043,7 +5061,7 @@ public:
                        bool ContainsUnexpandedParameterPack,
                        unsigned ResultIndex);
 
-  /// This constructor is used in the result-dependent case.
+  /// Build a result-dependent generic selection expression.
   GenericSelectionExpr(const ASTContext &Context, SourceLocation GenericLoc,
                        Expr *ControllingExpr,
                        ArrayRef<TypeSourceInfo *> AssocTypes,
@@ -5051,8 +5069,28 @@ public:
                        SourceLocation RParenLoc,
                        bool ContainsUnexpandedParameterPack);
 
-  explicit GenericSelectionExpr(EmptyShell Empty)
-      : Expr(GenericSelectionExprClass, Empty) {}
+  /// Build an empty generic selection expression for deserialization.
+  explicit GenericSelectionExpr(EmptyShell Empty, unsigned NumAssocs);
+
+public:
+  /// Create a non-result-dependent generic selection expression.
+  static GenericSelectionExpr *
+  Create(const ASTContext &Context, SourceLocation GenericLoc,
+         Expr *ControllingExpr, ArrayRef<TypeSourceInfo *> AssocTypes,
+         ArrayRef<Expr *> AssocExprs, SourceLocation DefaultLoc,
+         SourceLocation RParenLoc, bool ContainsUnexpandedParameterPack,
+         unsigned ResultIndex);
+
+  /// Create a result-dependent generic selection expression.
+  static GenericSelectionExpr *
+  Create(const ASTContext &Context, SourceLocation GenericLoc,
+         Expr *ControllingExpr, ArrayRef<TypeSourceInfo *> AssocTypes,
+         ArrayRef<Expr *> AssocExprs, SourceLocation DefaultLoc,
+         SourceLocation RParenLoc, bool ContainsUnexpandedParameterPack);
+
+  /// Create an empty generic selection expression for deserialization.
+  static GenericSelectionExpr *CreateEmpty(const ASTContext &Context,
+                                           unsigned NumAssocs);
 
   /// The number of association expressions.
   unsigned getNumAssocs() const { return NumAssocs; }
@@ -5070,38 +5108,45 @@ public:
   bool isResultDependent() const { return ResultIndex == ResultDependentIndex; }
 
   /// Return the controlling expression of this generic selection expression.
-  Expr *getControllingExpr() { return cast<Expr>(SubExprs[ControllingIndex]); }
+  Expr *getControllingExpr() {
+    return cast<Expr>(getTrailingObjects<Stmt *>()[ControllingIndex]);
+  }
   const Expr *getControllingExpr() const {
-    return cast<Expr>(SubExprs[ControllingIndex]);
+    return cast<Expr>(getTrailingObjects<Stmt *>()[ControllingIndex]);
   }
 
   /// Return the result expression of this controlling expression. Defined if
   /// and only if the generic selection expression is not result-dependent.
   Expr *getResultExpr() {
-    return cast<Expr>(SubExprs[AssocExprStartIndex + getResultIndex()]);
+    return cast<Expr>(
+        getTrailingObjects<Stmt *>()[AssocExprStartIndex + getResultIndex()]);
   }
   const Expr *getResultExpr() const {
-    return cast<Expr>(SubExprs[AssocExprStartIndex + getResultIndex()]);
+    return cast<Expr>(
+        getTrailingObjects<Stmt *>()[AssocExprStartIndex + getResultIndex()]);
   }
 
   ArrayRef<Expr *> getAssocExprs() const {
-    return {reinterpret_cast<Expr *const *>(SubExprs + AssocExprStartIndex),
+    return {reinterpret_cast<Expr *const *>(getTrailingObjects<Stmt *>() +
+                                            AssocExprStartIndex),
             NumAssocs};
   }
   ArrayRef<TypeSourceInfo *> getAssocTypeSourceInfos() const {
-    return {AssocTypes, NumAssocs};
+    return {getTrailingObjects<TypeSourceInfo *>(), NumAssocs};
   }
 
   Expr *getAssocExpr(unsigned i) {
-    return cast<Expr>(SubExprs[AssocExprStartIndex + i]);
+    return cast<Expr>(getTrailingObjects<Stmt *>()[AssocExprStartIndex + i]);
   }
   const Expr *getAssocExpr(unsigned i) const {
-    return cast<Expr>(SubExprs[AssocExprStartIndex + i]);
+    return cast<Expr>(getTrailingObjects<Stmt *>()[AssocExprStartIndex + i]);
   }
 
-  TypeSourceInfo *getAssocTypeSourceInfo(unsigned i) { return AssocTypes[i]; }
+  TypeSourceInfo *getAssocTypeSourceInfo(unsigned i) {
+    return getTrailingObjects<TypeSourceInfo *>()[i];
+  }
   const TypeSourceInfo *getAssocTypeSourceInfo(unsigned i) const {
-    return AssocTypes[i];
+    return getTrailingObjects<TypeSourceInfo *>()[i];
   }
 
   QualType getAssocType(unsigned i) const {
@@ -5109,7 +5154,9 @@ public:
     return TSI ? TSI->getType() : QualType();
   }
 
-  SourceLocation getGenericLoc() const { return GenericLoc; }
+  SourceLocation getGenericLoc() const {
+    return GenericSelectionExprBits.GenericLoc;
+  }
   SourceLocation getDefaultLoc() const { return DefaultLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
   SourceLocation getBeginLoc() const { return getGenericLoc(); }
@@ -5120,11 +5167,14 @@ public:
   }
 
   child_range children() {
-    return child_range(SubExprs, SubExprs + AssocExprStartIndex + NumAssocs);
+    return child_range(getTrailingObjects<Stmt *>(),
+                       getTrailingObjects<Stmt *>() +
+                           numTrailingObjects(OverloadToken<Stmt *>()));
   }
   const_child_range children() const {
-    return const_child_range(SubExprs,
-                             SubExprs + AssocExprStartIndex + NumAssocs);
+    return const_child_range(getTrailingObjects<Stmt *>(),
+                             getTrailingObjects<Stmt *>() +
+                                 numTrailingObjects(OverloadToken<Stmt *>()));
   }
 };
 

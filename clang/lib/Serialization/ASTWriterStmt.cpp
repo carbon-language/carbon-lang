@@ -968,18 +968,24 @@ void ASTStmtWriter::VisitBlockExpr(BlockExpr *E) {
 
 void ASTStmtWriter::VisitGenericSelectionExpr(GenericSelectionExpr *E) {
   VisitExpr(E);
+
   Record.push_back(E->getNumAssocs());
   Record.push_back(E->ResultIndex);
-
-  Record.AddStmt(E->getControllingExpr());
-  for (unsigned I = 0, N = E->getNumAssocs(); I != N; ++I) {
-    Record.AddTypeSourceInfo(E->getAssocTypeSourceInfo(I));
-    Record.AddStmt(E->getAssocExpr(I));
-  }
-
   Record.AddSourceLocation(E->getGenericLoc());
   Record.AddSourceLocation(E->getDefaultLoc());
   Record.AddSourceLocation(E->getRParenLoc());
+
+  Stmt **Stmts = E->getTrailingObjects<Stmt *>();
+  // Add 1 to account for the controlling expression which is the first
+  // expression in the trailing array of Stmt *. This is not needed for
+  // the trailing array of TypeSourceInfo *.
+  for (unsigned I = 0, N = E->getNumAssocs() + 1; I < N; ++I)
+    Record.AddStmt(Stmts[I]);
+
+  TypeSourceInfo **TSIs = E->getTrailingObjects<TypeSourceInfo *>();
+  for (unsigned I = 0, N = E->getNumAssocs(); I < N; ++I)
+    Record.AddTypeSourceInfo(TSIs[I]);
+
   Code = serialization::EXPR_GENERIC_SELECTION;
 }
 

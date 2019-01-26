@@ -3775,7 +3775,7 @@ void ShuffleVectorExpr::setExprs(const ASTContext &C, ArrayRef<Expr *> Exprs) {
 }
 
 GenericSelectionExpr::GenericSelectionExpr(
-    const ASTContext &Context, SourceLocation GenericLoc, Expr *ControllingExpr,
+    const ASTContext &, SourceLocation GenericLoc, Expr *ControllingExpr,
     ArrayRef<TypeSourceInfo *> AssocTypes, ArrayRef<Expr *> AssocExprs,
     SourceLocation DefaultLoc, SourceLocation RParenLoc,
     bool ContainsUnexpandedParameterPack, unsigned ResultIndex)
@@ -3787,18 +3787,18 @@ GenericSelectionExpr::GenericSelectionExpr(
            AssocExprs[ResultIndex]->isInstantiationDependent(),
            ContainsUnexpandedParameterPack),
       NumAssocs(AssocExprs.size()), ResultIndex(ResultIndex),
-      AssocTypes(new (Context) TypeSourceInfo *[AssocTypes.size()]),
-      SubExprs(new (Context) Stmt *[AssocExprStartIndex + AssocExprs.size()]),
-      GenericLoc(GenericLoc), DefaultLoc(DefaultLoc), RParenLoc(RParenLoc) {
+      DefaultLoc(DefaultLoc), RParenLoc(RParenLoc) {
   assert(AssocTypes.size() == AssocExprs.size() &&
          "Must have the same number of association expressions"
          " and TypeSourceInfo!");
   assert(ResultIndex < NumAssocs && "ResultIndex is out-of-bounds!");
 
-  SubExprs[ControllingIndex] = ControllingExpr;
-  std::copy(AssocTypes.begin(), AssocTypes.end(), this->AssocTypes);
+  GenericSelectionExprBits.GenericLoc = GenericLoc;
+  getTrailingObjects<Stmt *>()[ControllingIndex] = ControllingExpr;
   std::copy(AssocExprs.begin(), AssocExprs.end(),
-            SubExprs + AssocExprStartIndex);
+            getTrailingObjects<Stmt *>() + AssocExprStartIndex);
+  std::copy(AssocTypes.begin(), AssocTypes.end(),
+            getTrailingObjects<TypeSourceInfo *>());
 }
 
 GenericSelectionExpr::GenericSelectionExpr(
@@ -3812,17 +3812,57 @@ GenericSelectionExpr::GenericSelectionExpr(
            /*isValueDependent=*/true,
            /*isInstantiationDependent=*/true, ContainsUnexpandedParameterPack),
       NumAssocs(AssocExprs.size()), ResultIndex(ResultDependentIndex),
-      AssocTypes(new (Context) TypeSourceInfo *[AssocTypes.size()]),
-      SubExprs(new (Context) Stmt *[AssocExprStartIndex + AssocExprs.size()]),
-      GenericLoc(GenericLoc), DefaultLoc(DefaultLoc), RParenLoc(RParenLoc) {
+      DefaultLoc(DefaultLoc), RParenLoc(RParenLoc) {
   assert(AssocTypes.size() == AssocExprs.size() &&
          "Must have the same number of association expressions"
          " and TypeSourceInfo!");
 
-  SubExprs[ControllingIndex] = ControllingExpr;
-  std::copy(AssocTypes.begin(), AssocTypes.end(), this->AssocTypes);
+  GenericSelectionExprBits.GenericLoc = GenericLoc;
+  getTrailingObjects<Stmt *>()[ControllingIndex] = ControllingExpr;
   std::copy(AssocExprs.begin(), AssocExprs.end(),
-            SubExprs + AssocExprStartIndex);
+            getTrailingObjects<Stmt *>() + AssocExprStartIndex);
+  std::copy(AssocTypes.begin(), AssocTypes.end(),
+            getTrailingObjects<TypeSourceInfo *>());
+}
+
+GenericSelectionExpr::GenericSelectionExpr(EmptyShell Empty, unsigned NumAssocs)
+    : Expr(GenericSelectionExprClass, Empty), NumAssocs(NumAssocs) {}
+
+GenericSelectionExpr *GenericSelectionExpr::Create(
+    const ASTContext &Context, SourceLocation GenericLoc, Expr *ControllingExpr,
+    ArrayRef<TypeSourceInfo *> AssocTypes, ArrayRef<Expr *> AssocExprs,
+    SourceLocation DefaultLoc, SourceLocation RParenLoc,
+    bool ContainsUnexpandedParameterPack, unsigned ResultIndex) {
+  unsigned NumAssocs = AssocExprs.size();
+  void *Mem = Context.Allocate(
+      totalSizeToAlloc<Stmt *, TypeSourceInfo *>(1 + NumAssocs, NumAssocs),
+      alignof(GenericSelectionExpr));
+  return new (Mem) GenericSelectionExpr(
+      Context, GenericLoc, ControllingExpr, AssocTypes, AssocExprs, DefaultLoc,
+      RParenLoc, ContainsUnexpandedParameterPack, ResultIndex);
+}
+
+GenericSelectionExpr *GenericSelectionExpr::Create(
+    const ASTContext &Context, SourceLocation GenericLoc, Expr *ControllingExpr,
+    ArrayRef<TypeSourceInfo *> AssocTypes, ArrayRef<Expr *> AssocExprs,
+    SourceLocation DefaultLoc, SourceLocation RParenLoc,
+    bool ContainsUnexpandedParameterPack) {
+  unsigned NumAssocs = AssocExprs.size();
+  void *Mem = Context.Allocate(
+      totalSizeToAlloc<Stmt *, TypeSourceInfo *>(1 + NumAssocs, NumAssocs),
+      alignof(GenericSelectionExpr));
+  return new (Mem) GenericSelectionExpr(
+      Context, GenericLoc, ControllingExpr, AssocTypes, AssocExprs, DefaultLoc,
+      RParenLoc, ContainsUnexpandedParameterPack);
+}
+
+GenericSelectionExpr *
+GenericSelectionExpr::CreateEmpty(const ASTContext &Context,
+                                  unsigned NumAssocs) {
+  void *Mem = Context.Allocate(
+      totalSizeToAlloc<Stmt *, TypeSourceInfo *>(1 + NumAssocs, NumAssocs),
+      alignof(GenericSelectionExpr));
+  return new (Mem) GenericSelectionExpr(EmptyShell(), NumAssocs);
 }
 
 //===----------------------------------------------------------------------===//
