@@ -2475,6 +2475,14 @@ void CStringChecker::checkDeadSymbols(SymbolReaper &SR,
   C.addTransition(state);
 }
 
+void ento::registerCStringModeling(CheckerManager &Mgr) {
+  Mgr.registerChecker<CStringChecker>();
+}
+
+bool ento::shouldRegisterCStringModeling(const LangOptions &LO) {
+  return true;
+}
+
 #define REGISTER_CHECKER(name)                                                 \
   void ento::register##name(CheckerManager &mgr) {                             \
     CStringChecker *checker = mgr.registerChecker<CStringChecker>();           \
@@ -2490,7 +2498,3 @@ void CStringChecker::checkDeadSymbols(SymbolReaper &SR,
   REGISTER_CHECKER(CStringOutOfBounds)
   REGISTER_CHECKER(CStringBufferOverlap)
 REGISTER_CHECKER(CStringNotNullTerm)
-
-  void ento::registerCStringCheckerBasic(CheckerManager &Mgr) {
-    Mgr.registerChecker<CStringChecker>();
-  }
