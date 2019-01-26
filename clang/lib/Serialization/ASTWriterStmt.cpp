@@ -969,13 +969,13 @@ void ASTStmtWriter::VisitBlockExpr(BlockExpr *E) {
 void ASTStmtWriter::VisitGenericSelectionExpr(GenericSelectionExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getNumAssocs());
+  Record.push_back(E->ResultIndex);
 
   Record.AddStmt(E->getControllingExpr());
   for (unsigned I = 0, N = E->getNumAssocs(); I != N; ++I) {
     Record.AddTypeSourceInfo(E->getAssocTypeSourceInfo(I));
     Record.AddStmt(E->getAssocExpr(I));
   }
-  Record.push_back(E->isResultDependent() ? -1U : E->getResultIndex());
 
   Record.AddSourceLocation(E->getGenericLoc());
   Record.AddSourceLocation(E->getDefaultLoc());

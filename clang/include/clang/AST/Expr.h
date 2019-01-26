@@ -5014,98 +5014,118 @@ public:
 /// which means that the choice of result expression is dependent.
 /// Result-dependent generic associations are both type- and value-dependent.
 class GenericSelectionExpr : public Expr {
-  enum { CONTROLLING, END_EXPR };
-  TypeSourceInfo **AssocTypes;
-  Stmt **SubExprs;
+  friend class ASTStmtReader;
+  friend class ASTStmtWriter;
+
+  /// The number of association expressions and the index of the result
+  /// expression in the case where the generic selection expression is not
+  /// result-dependent. The result index is equal to ResultDependentIndex
+  /// if and only if the generic selection expression is result-dependent.
   unsigned NumAssocs, ResultIndex;
+  enum : unsigned {
+    ResultDependentIndex = std::numeric_limits<unsigned>::max(),
+    ControllingIndex = 0,
+    AssocExprStartIndex = 1
+  };
+
+  /// The location of the "_Generic", "default" and of the right parenthesis.
   SourceLocation GenericLoc, DefaultLoc, RParenLoc;
 
+  TypeSourceInfo **AssocTypes;
+  Stmt **SubExprs;
+
 public:
-  GenericSelectionExpr(const ASTContext &Context,
-                       SourceLocation GenericLoc, Expr *ControllingExpr,
-                       ArrayRef<TypeSourceInfo*> AssocTypes,
-                       ArrayRef<Expr*> AssocExprs,
-                       SourceLocation DefaultLoc, SourceLocation RParenLoc,
+  GenericSelectionExpr(const ASTContext &Context, SourceLocation GenericLoc,
+                       Expr *ControllingExpr,
+                       ArrayRef<TypeSourceInfo *> AssocTypes,
+                       ArrayRef<Expr *> AssocExprs, SourceLocation DefaultLoc,
+                       SourceLocation RParenLoc,
                        bool ContainsUnexpandedParameterPack,
                        unsigned ResultIndex);
 
   /// This constructor is used in the result-dependent case.
-  GenericSelectionExpr(const ASTContext &Context,
-                       SourceLocation GenericLoc, Expr *ControllingExpr,
-                       ArrayRef<TypeSourceInfo*> AssocTypes,
-                       ArrayRef<Expr*> AssocExprs,
-                       SourceLocation DefaultLoc, SourceLocation RParenLoc,
+  GenericSelectionExpr(const ASTContext &Context, SourceLocation GenericLoc,
+                       Expr *ControllingExpr,
+                       ArrayRef<TypeSourceInfo *> AssocTypes,
+                       ArrayRef<Expr *> AssocExprs, SourceLocation DefaultLoc,
+                       SourceLocation RParenLoc,
                        bool ContainsUnexpandedParameterPack);
 
   explicit GenericSelectionExpr(EmptyShell Empty)
-    : Expr(GenericSelectionExprClass, Empty) { }
+      : Expr(GenericSelectionExprClass, Empty) {}
 
+  /// The number of association expressions.
   unsigned getNumAssocs() const { return NumAssocs; }
-
-  SourceLocation getGenericLoc() const { return GenericLoc; }
-  SourceLocation getDefaultLoc() const { return DefaultLoc; }
-  SourceLocation getRParenLoc() const { return RParenLoc; }
-
-  const Expr *getAssocExpr(unsigned i) const {
-    return cast<Expr>(SubExprs[END_EXPR+i]);
-  }
-  Expr *getAssocExpr(unsigned i) { return cast<Expr>(SubExprs[END_EXPR+i]); }
-  ArrayRef<Expr *> getAssocExprs() const {
-    return NumAssocs
-               ? llvm::makeArrayRef(
-                     &reinterpret_cast<Expr **>(SubExprs)[END_EXPR], NumAssocs)
-               : None;
-  }
-  const TypeSourceInfo *getAssocTypeSourceInfo(unsigned i) const {
-    return AssocTypes[i];
-  }
-  TypeSourceInfo *getAssocTypeSourceInfo(unsigned i) { return AssocTypes[i]; }
-  ArrayRef<TypeSourceInfo *> getAssocTypeSourceInfos() const {
-    return NumAssocs ? llvm::makeArrayRef(&AssocTypes[0], NumAssocs) : None;
-  }
-
-  QualType getAssocType(unsigned i) const {
-    if (const TypeSourceInfo *TS = getAssocTypeSourceInfo(i))
-      return TS->getType();
-    else
-      return QualType();
-  }
-
-  const Expr *getControllingExpr() const {
-    return cast<Expr>(SubExprs[CONTROLLING]);
-  }
-  Expr *getControllingExpr() { return cast<Expr>(SubExprs[CONTROLLING]); }
-
-  /// Whether this generic selection is result-dependent.
-  bool isResultDependent() const { return ResultIndex == -1U; }
 
   /// The zero-based index of the result expression's generic association in
   /// the generic selection's association list.  Defined only if the
   /// generic selection is not result-dependent.
   unsigned getResultIndex() const {
-    assert(!isResultDependent() && "Generic selection is result-dependent");
+    assert(!isResultDependent() &&
+           "Generic selection is result-dependent but getResultIndex called!");
     return ResultIndex;
   }
 
-  /// The generic selection's result expression.  Defined only if the
-  /// generic selection is not result-dependent.
-  const Expr *getResultExpr() const { return getAssocExpr(getResultIndex()); }
-  Expr *getResultExpr() { return getAssocExpr(getResultIndex()); }
+  /// Whether this generic selection is result-dependent.
+  bool isResultDependent() const { return ResultIndex == ResultDependentIndex; }
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return GenericLoc; }
-  SourceLocation getEndLoc() const LLVM_READONLY { return RParenLoc; }
+  /// Return the controlling expression of this generic selection expression.
+  Expr *getControllingExpr() { return cast<Expr>(SubExprs[ControllingIndex]); }
+  const Expr *getControllingExpr() const {
+    return cast<Expr>(SubExprs[ControllingIndex]);
+  }
+
+  /// Return the result expression of this controlling expression. Defined if
+  /// and only if the generic selection expression is not result-dependent.
+  Expr *getResultExpr() {
+    return cast<Expr>(SubExprs[AssocExprStartIndex + getResultIndex()]);
+  }
+  const Expr *getResultExpr() const {
+    return cast<Expr>(SubExprs[AssocExprStartIndex + getResultIndex()]);
+  }
+
+  ArrayRef<Expr *> getAssocExprs() const {
+    return {reinterpret_cast<Expr *const *>(SubExprs + AssocExprStartIndex),
+            NumAssocs};
+  }
+  ArrayRef<TypeSourceInfo *> getAssocTypeSourceInfos() const {
+    return {AssocTypes, NumAssocs};
+  }
+
+  Expr *getAssocExpr(unsigned i) {
+    return cast<Expr>(SubExprs[AssocExprStartIndex + i]);
+  }
+  const Expr *getAssocExpr(unsigned i) const {
+    return cast<Expr>(SubExprs[AssocExprStartIndex + i]);
+  }
+
+  TypeSourceInfo *getAssocTypeSourceInfo(unsigned i) { return AssocTypes[i]; }
+  const TypeSourceInfo *getAssocTypeSourceInfo(unsigned i) const {
+    return AssocTypes[i];
+  }
+
+  QualType getAssocType(unsigned i) const {
+    const TypeSourceInfo *TSI = getAssocTypeSourceInfo(i);
+    return TSI ? TSI->getType() : QualType();
+  }
+
+  SourceLocation getGenericLoc() const { return GenericLoc; }
+  SourceLocation getDefaultLoc() const { return DefaultLoc; }
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  SourceLocation getBeginLoc() const { return getGenericLoc(); }
+  SourceLocation getEndLoc() const { return getRParenLoc(); }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == GenericSelectionExprClass;
   }
 
   child_range children() {
-    return child_range(SubExprs, SubExprs+END_EXPR+NumAssocs);
+    return child_range(SubExprs, SubExprs + AssocExprStartIndex + NumAssocs);
   }
   const_child_range children() const {
-    return const_child_range(SubExprs, SubExprs + END_EXPR + NumAssocs);
+    return const_child_range(SubExprs,
+                             SubExprs + AssocExprStartIndex + NumAssocs);
   }
-  friend class ASTStmtReader;
 };
 
 //===----------------------------------------------------------------------===//

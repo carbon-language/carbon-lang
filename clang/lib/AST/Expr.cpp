@@ -3774,55 +3774,55 @@ void ShuffleVectorExpr::setExprs(const ASTContext &C, ArrayRef<Expr *> Exprs) {
   memcpy(SubExprs, Exprs.data(), sizeof(Expr *) * Exprs.size());
 }
 
-GenericSelectionExpr::GenericSelectionExpr(const ASTContext &Context,
-                               SourceLocation GenericLoc, Expr *ControllingExpr,
-                               ArrayRef<TypeSourceInfo*> AssocTypes,
-                               ArrayRef<Expr*> AssocExprs,
-                               SourceLocation DefaultLoc,
-                               SourceLocation RParenLoc,
-                               bool ContainsUnexpandedParameterPack,
-                               unsigned ResultIndex)
-  : Expr(GenericSelectionExprClass,
-         AssocExprs[ResultIndex]->getType(),
-         AssocExprs[ResultIndex]->getValueKind(),
-         AssocExprs[ResultIndex]->getObjectKind(),
-         AssocExprs[ResultIndex]->isTypeDependent(),
-         AssocExprs[ResultIndex]->isValueDependent(),
-         AssocExprs[ResultIndex]->isInstantiationDependent(),
-         ContainsUnexpandedParameterPack),
-    AssocTypes(new (Context) TypeSourceInfo*[AssocTypes.size()]),
-    SubExprs(new (Context) Stmt*[END_EXPR+AssocExprs.size()]),
-    NumAssocs(AssocExprs.size()), ResultIndex(ResultIndex),
-    GenericLoc(GenericLoc), DefaultLoc(DefaultLoc), RParenLoc(RParenLoc) {
-  SubExprs[CONTROLLING] = ControllingExpr;
-  assert(AssocTypes.size() == AssocExprs.size());
+GenericSelectionExpr::GenericSelectionExpr(
+    const ASTContext &Context, SourceLocation GenericLoc, Expr *ControllingExpr,
+    ArrayRef<TypeSourceInfo *> AssocTypes, ArrayRef<Expr *> AssocExprs,
+    SourceLocation DefaultLoc, SourceLocation RParenLoc,
+    bool ContainsUnexpandedParameterPack, unsigned ResultIndex)
+    : Expr(GenericSelectionExprClass, AssocExprs[ResultIndex]->getType(),
+           AssocExprs[ResultIndex]->getValueKind(),
+           AssocExprs[ResultIndex]->getObjectKind(),
+           AssocExprs[ResultIndex]->isTypeDependent(),
+           AssocExprs[ResultIndex]->isValueDependent(),
+           AssocExprs[ResultIndex]->isInstantiationDependent(),
+           ContainsUnexpandedParameterPack),
+      NumAssocs(AssocExprs.size()), ResultIndex(ResultIndex),
+      AssocTypes(new (Context) TypeSourceInfo *[AssocTypes.size()]),
+      SubExprs(new (Context) Stmt *[AssocExprStartIndex + AssocExprs.size()]),
+      GenericLoc(GenericLoc), DefaultLoc(DefaultLoc), RParenLoc(RParenLoc) {
+  assert(AssocTypes.size() == AssocExprs.size() &&
+         "Must have the same number of association expressions"
+         " and TypeSourceInfo!");
+  assert(ResultIndex < NumAssocs && "ResultIndex is out-of-bounds!");
+
+  SubExprs[ControllingIndex] = ControllingExpr;
   std::copy(AssocTypes.begin(), AssocTypes.end(), this->AssocTypes);
-  std::copy(AssocExprs.begin(), AssocExprs.end(), SubExprs+END_EXPR);
+  std::copy(AssocExprs.begin(), AssocExprs.end(),
+            SubExprs + AssocExprStartIndex);
 }
 
-GenericSelectionExpr::GenericSelectionExpr(const ASTContext &Context,
-                               SourceLocation GenericLoc, Expr *ControllingExpr,
-                               ArrayRef<TypeSourceInfo*> AssocTypes,
-                               ArrayRef<Expr*> AssocExprs,
-                               SourceLocation DefaultLoc,
-                               SourceLocation RParenLoc,
-                               bool ContainsUnexpandedParameterPack)
-  : Expr(GenericSelectionExprClass,
-         Context.DependentTy,
-         VK_RValue,
-         OK_Ordinary,
-         /*isTypeDependent=*/true,
-         /*isValueDependent=*/true,
-         /*isInstantiationDependent=*/true,
-         ContainsUnexpandedParameterPack),
-    AssocTypes(new (Context) TypeSourceInfo*[AssocTypes.size()]),
-    SubExprs(new (Context) Stmt*[END_EXPR+AssocExprs.size()]),
-    NumAssocs(AssocExprs.size()), ResultIndex(-1U), GenericLoc(GenericLoc),
-    DefaultLoc(DefaultLoc), RParenLoc(RParenLoc) {
-  SubExprs[CONTROLLING] = ControllingExpr;
-  assert(AssocTypes.size() == AssocExprs.size());
+GenericSelectionExpr::GenericSelectionExpr(
+    const ASTContext &Context, SourceLocation GenericLoc, Expr *ControllingExpr,
+    ArrayRef<TypeSourceInfo *> AssocTypes, ArrayRef<Expr *> AssocExprs,
+    SourceLocation DefaultLoc, SourceLocation RParenLoc,
+    bool ContainsUnexpandedParameterPack)
+    : Expr(GenericSelectionExprClass, Context.DependentTy, VK_RValue,
+           OK_Ordinary,
+           /*isTypeDependent=*/true,
+           /*isValueDependent=*/true,
+           /*isInstantiationDependent=*/true, ContainsUnexpandedParameterPack),
+      NumAssocs(AssocExprs.size()), ResultIndex(ResultDependentIndex),
+      AssocTypes(new (Context) TypeSourceInfo *[AssocTypes.size()]),
+      SubExprs(new (Context) Stmt *[AssocExprStartIndex + AssocExprs.size()]),
+      GenericLoc(GenericLoc), DefaultLoc(DefaultLoc), RParenLoc(RParenLoc) {
+  assert(AssocTypes.size() == AssocExprs.size() &&
+         "Must have the same number of association expressions"
+         " and TypeSourceInfo!");
+
+  SubExprs[ControllingIndex] = ControllingExpr;
   std::copy(AssocTypes.begin(), AssocTypes.end(), this->AssocTypes);
-  std::copy(AssocExprs.begin(), AssocExprs.end(), SubExprs+END_EXPR);
+  std::copy(AssocExprs.begin(), AssocExprs.end(),
+            SubExprs + AssocExprStartIndex);
 }
 
 //===----------------------------------------------------------------------===//
