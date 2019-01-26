@@ -14371,6 +14371,38 @@ getHalfShuffleMask(ArrayRef<int> Mask, MutableArrayRef<int> HalfMask,
   return true;
 }
 
+/// Given the output values from getHalfShuffleMask(), create a half width
+/// shuffle of extracted vectors followed by an insert back to full width.
+static SDValue getShuffleHalfVectors(const SDLoc &DL, SDValue V1, SDValue V2,
+                                     ArrayRef<int> HalfMask, int HalfIdx1,
+                                     int HalfIdx2, bool UndefLower,
+                                     SelectionDAG &DAG) {
+  assert(V1.getValueType() == V2.getValueType() && "Different sized vectors?");
+  assert(V1.getValueType().isSimple() && "Expecting only simple types");
+
+  MVT VT = V1.getSimpleValueType();
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned HalfNumElts = NumElts / 2;
+  MVT HalfVT = MVT::getVectorVT(VT.getVectorElementType(), HalfNumElts);
+
+  auto getHalfVector = [&](int HalfIdx) {
+    if (HalfIdx < 0)
+      return DAG.getUNDEF(HalfVT);
+    SDValue V = (HalfIdx < 2 ? V1 : V2);
+    HalfIdx = (HalfIdx % 2) * HalfNumElts;
+    return DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, HalfVT, V,
+                       DAG.getIntPtrConstant(HalfIdx, DL));
+  };
+
+  // ins undef, (shuf (ext V1, HalfIdx1), (ext V2, HalfIdx2), HalfMask), Offset
+  SDValue Half1 = getHalfVector(HalfIdx1);
+  SDValue Half2 = getHalfVector(HalfIdx2);
+  SDValue V = DAG.getVectorShuffle(HalfVT, DL, Half1, Half2, HalfMask);
+  unsigned Offset = UndefLower ? HalfNumElts : 0;
+  return DAG.getNode(ISD::INSERT_SUBVECTOR, DL, VT, DAG.getUNDEF(VT), V,
+                     DAG.getIntPtrConstant(Offset, DL));
+}
+
 /// Lower shuffles where an entire half of a 256 or 512-bit vector is UNDEF.
 /// This allows for fast cases such as subvector extraction/insertion
 /// or shuffling smaller vector types which can lower more efficiently.
@@ -14450,21 +14482,8 @@ static SDValue lowerShuffleWithUndefHalf(const SDLoc &DL, MVT VT, SDValue V1,
   if (VT.is512BitVector() && (UndefLower || NumUpperHalves != 0))
     return SDValue();
 
-  auto GetHalfVector = [&](int HalfIdx) {
-    if (HalfIdx < 0)
-      return DAG.getUNDEF(HalfVT);
-    SDValue V = (HalfIdx < 2 ? V1 : V2);
-    HalfIdx = (HalfIdx % 2) * HalfNumElts;
-    return DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, HalfVT, V,
-                       DAG.getIntPtrConstant(HalfIdx, DL));
-  };
-
-  SDValue Half1 = GetHalfVector(HalfIdx1);
-  SDValue Half2 = GetHalfVector(HalfIdx2);
-  SDValue V = DAG.getVectorShuffle(HalfVT, DL, Half1, Half2, HalfMask);
-  unsigned Offset = UndefLower ? HalfNumElts : 0;
-  return DAG.getNode(ISD::INSERT_SUBVECTOR, DL, VT, DAG.getUNDEF(VT), V,
-                     DAG.getIntPtrConstant(Offset, DL));
+  return getShuffleHalfVectors(DL, V1, V2, HalfMask, HalfIdx1, HalfIdx2,
+                               UndefLower, DAG);
 }
 
 /// Test whether the specified input (0 or 1) is in-place blended by the
@@ -32353,22 +32372,14 @@ static SDValue narrowShuffle(ShuffleVectorSDNode *Shuf, SelectionDAG &DAG) {
       (HalfIdx1 % 2 == 1) || (HalfIdx2 % 2 == 1))
     return SDValue();
 
-  // Create 4 instructions to replace the unnecessarily wide shuffle.
+  // Create a half-width shuffle to replace the unnecessarily wide shuffle.
   // The trick is knowing that all of the insert/extract are actually free
-  // subregister (zmm->ymm or ymm->xmm) ops. That leaves us with a shuffle
+  // subregister (zmm<->ymm or ymm<->xmm) ops. That leaves us with a shuffle
   // of narrow inputs into a narrow output, and that is always cheaper than
   // the wide shuffle that we started with.
-  unsigned NumElts = Mask.size();
-  SDValue Op0 = Shuf->getOperand(0);
-  SDValue Op1 = Shuf->getOperand(1);
-  SDLoc DL(Shuf);
-  SDValue Index0 = DAG.getIntPtrConstant(0, DL);
-  MVT HalfVT = MVT::getVectorVT(VT.getVectorElementType(), NumElts / 2);
-  SDValue Extr0 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, HalfVT, Op0, Index0);
-  SDValue Extr1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, HalfVT, Op1, Index0);
-  SDValue NewShuf = DAG.getVectorShuffle(HalfVT, DL, Extr0, Extr1, HalfMask);
-  SDValue UndefV = DAG.getUNDEF(VT);
-  return DAG.getNode(ISD::INSERT_SUBVECTOR, DL, VT, UndefV, NewShuf, Index0);
+  return getShuffleHalfVectors(SDLoc(Shuf), Shuf->getOperand(0),
+                               Shuf->getOperand(1), HalfMask, HalfIdx1,
+                               HalfIdx2, false, DAG);
 }
 
 static SDValue combineShuffle(SDNode *N, SelectionDAG &DAG,
