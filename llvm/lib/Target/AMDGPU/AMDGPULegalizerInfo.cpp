@@ -201,8 +201,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     .legalFor({{S1, S32}, {S1, S64}})
     .widenScalarToNextPow2(1)
     .clampScalar(1, S32, S64)
-    .clampMaxNumElements(0, S1, 1)
-    .clampMaxNumElements(1, S32, 1);
+    .scalarize(0);
 
   // FIXME: fexp, flog2, flog10 needs to be custom lowered.
   getActionDefinitionsBuilder({G_FPOW, G_FEXP, G_FEXP2,
