@@ -13,11 +13,10 @@ define void @PR25858_i32(%WideUInt32* sret, %WideUInt32*, %WideUInt32*) nounwind
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %edx
 ; X86-NEXT:    movl (%ecx), %esi
 ; X86-NEXT:    movl 4(%ecx), %ecx
-; X86-NEXT:    subl 4(%edx), %ecx
 ; X86-NEXT:    subl (%edx), %esi
-; X86-NEXT:    sbbl $0, %ecx
-; X86-NEXT:    movl %esi, (%eax)
+; X86-NEXT:    sbbl 4(%edx), %ecx
 ; X86-NEXT:    movl %ecx, 4(%eax)
+; X86-NEXT:    movl %esi, (%eax)
 ; X86-NEXT:    popl %esi
 ; X86-NEXT:    retl $4
 ;
@@ -26,11 +25,10 @@ define void @PR25858_i32(%WideUInt32* sret, %WideUInt32*, %WideUInt32*) nounwind
 ; X64-NEXT:    movq %rdi, %rax
 ; X64-NEXT:    movl (%rsi), %ecx
 ; X64-NEXT:    movl 4(%rsi), %esi
-; X64-NEXT:    subl 4(%rdx), %esi
 ; X64-NEXT:    subl (%rdx), %ecx
-; X64-NEXT:    sbbl $0, %esi
-; X64-NEXT:    movl %ecx, (%rdi)
+; X64-NEXT:    sbbl 4(%rdx), %esi
 ; X64-NEXT:    movl %esi, 4(%rdi)
+; X64-NEXT:    movl %ecx, (%rdi)
 ; X64-NEXT:    retq
 top:
   %3 = bitcast %WideUInt32* %1 to i32*
@@ -94,11 +92,10 @@ define void @PR25858_i64(%WideUInt64* sret, %WideUInt64*, %WideUInt64*) nounwind
 ; X64-NEXT:    movq %rdi, %rax
 ; X64-NEXT:    movq (%rsi), %rcx
 ; X64-NEXT:    movq 8(%rsi), %rsi
-; X64-NEXT:    subq 8(%rdx), %rsi
 ; X64-NEXT:    subq (%rdx), %rcx
-; X64-NEXT:    sbbq $0, %rsi
-; X64-NEXT:    movq %rcx, (%rdi)
+; X64-NEXT:    sbbq 8(%rdx), %rsi
 ; X64-NEXT:    movq %rsi, 8(%rdi)
+; X64-NEXT:    movq %rcx, (%rdi)
 ; X64-NEXT:    retq
 top:
   %3 = bitcast %WideUInt64* %1 to i64*
