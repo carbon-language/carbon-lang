@@ -19604,17 +19604,20 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget &Subtarget,
       TLI.isOperationLegal(ISD::UMIN, VT)) {
     // If we have a constant operand, increment/decrement it and change the
     // condition to avoid an invert.
-    // TODO: This could be extended to handle a non-splat constant by checking
-    // that each element of the constant is not the max/null value.
-    APInt C;
-    if (Cond == ISD::SETUGT && isConstantSplat(Op1, C) && !C.isMaxValue()) {
+    if (Cond == ISD::SETUGT &&
+        ISD::matchUnaryPredicate(Op1, [](ConstantSDNode *C) {
+          return !C->getAPIntValue().isMaxValue();
+        })) {
       // X > C --> X >= (C+1) --> X == umax(X, C+1)
-      Op1 = DAG.getConstant(C + 1, dl, VT);
+      Op1 = DAG.getNode(ISD::ADD, dl, VT, Op1, DAG.getConstant(1, dl, VT));
       Cond = ISD::SETUGE;
     }
-    if (Cond == ISD::SETULT && isConstantSplat(Op1, C) && !C.isNullValue()) {
+    if (Cond == ISD::SETULT &&
+        ISD::matchUnaryPredicate(Op1, [](ConstantSDNode *C) {
+          return !C->getAPIntValue().isNullValue();
+        })) {
       // X < C --> X <= (C-1) --> X == umin(X, C-1)
-      Op1 = DAG.getConstant(C - 1, dl, VT);
+      Op1 = DAG.getNode(ISD::SUB, dl, VT, Op1, DAG.getConstant(1, dl, VT));
       Cond = ISD::SETULE;
     }
     bool Invert = false;
