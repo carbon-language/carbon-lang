@@ -223,8 +223,6 @@ define <4 x float>@test_int_x86_avx512_mask_cvt_qq2ps_128_zext(<2 x i64> %x0, <4
 ; X86:       # %bb.0:
 ; X86-NEXT:    kmovb {{[0-9]+}}(%esp), %k1 # encoding: [0xc5,0xf9,0x90,0x4c,0x24,0x04]
 ; X86-NEXT:    vcvtqq2ps %xmm0, %xmm1 {%k1} # encoding: [0x62,0xf1,0xfc,0x09,0x5b,0xc8]
-; X86-NEXT:    vmovq %xmm1, %xmm1 # EVEX TO VEX Compression encoding: [0xc5,0xfa,0x7e,0xc9]
-; X86-NEXT:    # xmm1 = xmm1[0],zero
 ; X86-NEXT:    vcvtqq2ps %xmm0, %xmm0 # encoding: [0x62,0xf1,0xfc,0x08,0x5b,0xc0]
 ; X86-NEXT:    vaddps %xmm0, %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc5,0xf0,0x58,0xc0]
 ; X86-NEXT:    retl # encoding: [0xc3]
@@ -233,8 +231,6 @@ define <4 x float>@test_int_x86_avx512_mask_cvt_qq2ps_128_zext(<2 x i64> %x0, <4
 ; X64:       # %bb.0:
 ; X64-NEXT:    kmovw %edi, %k1 # encoding: [0xc5,0xf8,0x92,0xcf]
 ; X64-NEXT:    vcvtqq2ps %xmm0, %xmm1 {%k1} # encoding: [0x62,0xf1,0xfc,0x09,0x5b,0xc8]
-; X64-NEXT:    vmovq %xmm1, %xmm1 # EVEX TO VEX Compression encoding: [0xc5,0xfa,0x7e,0xc9]
-; X64-NEXT:    # xmm1 = xmm1[0],zero
 ; X64-NEXT:    vcvtqq2ps %xmm0, %xmm0 # encoding: [0x62,0xf1,0xfc,0x08,0x5b,0xc0]
 ; X64-NEXT:    vaddps %xmm0, %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc5,0xf0,0x58,0xc0]
 ; X64-NEXT:    retq # encoding: [0xc3]
@@ -445,8 +441,6 @@ define <4 x float>@test_int_x86_avx512_mask_cvt_uqq2ps_128_zext(<2 x i64> %x0, <
 ; X86:       # %bb.0:
 ; X86-NEXT:    kmovb {{[0-9]+}}(%esp), %k1 # encoding: [0xc5,0xf9,0x90,0x4c,0x24,0x04]
 ; X86-NEXT:    vcvtuqq2ps %xmm0, %xmm1 {%k1} # encoding: [0x62,0xf1,0xff,0x09,0x7a,0xc8]
-; X86-NEXT:    vmovq %xmm1, %xmm1 # EVEX TO VEX Compression encoding: [0xc5,0xfa,0x7e,0xc9]
-; X86-NEXT:    # xmm1 = xmm1[0],zero
 ; X86-NEXT:    vcvtuqq2ps %xmm0, %xmm0 # encoding: [0x62,0xf1,0xff,0x08,0x7a,0xc0]
 ; X86-NEXT:    vaddps %xmm0, %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc5,0xf0,0x58,0xc0]
 ; X86-NEXT:    retl # encoding: [0xc3]
@@ -455,8 +449,6 @@ define <4 x float>@test_int_x86_avx512_mask_cvt_uqq2ps_128_zext(<2 x i64> %x0, <
 ; X64:       # %bb.0:
 ; X64-NEXT:    kmovw %edi, %k1 # encoding: [0xc5,0xf8,0x92,0xcf]
 ; X64-NEXT:    vcvtuqq2ps %xmm0, %xmm1 {%k1} # encoding: [0x62,0xf1,0xff,0x09,0x7a,0xc8]
-; X64-NEXT:    vmovq %xmm1, %xmm1 # EVEX TO VEX Compression encoding: [0xc5,0xfa,0x7e,0xc9]
-; X64-NEXT:    # xmm1 = xmm1[0],zero
 ; X64-NEXT:    vcvtuqq2ps %xmm0, %xmm0 # encoding: [0x62,0xf1,0xff,0x08,0x7a,0xc0]
 ; X64-NEXT:    vaddps %xmm0, %xmm1, %xmm0 # EVEX TO VEX Compression encoding: [0xc5,0xf0,0x58,0xc0]
 ; X64-NEXT:    retq # encoding: [0xc3]
