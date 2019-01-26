@@ -126,19 +126,15 @@ define i8 @PR24545(i32, i32, i32* nocapture readonly) {
 ; X86:       # %bb.0:
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %ecx
-; X86-NEXT:    movl (%ecx), %edx
-; X86-NEXT:    cmpl {{[0-9]+}}(%esp), %edx
-; X86-NEXT:    seta %dl
-; X86-NEXT:    addb $-1, %dl
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %edx
+; X86-NEXT:    cmpl (%ecx), %edx
 ; X86-NEXT:    sbbl 4(%ecx), %eax
 ; X86-NEXT:    setb %al
 ; X86-NEXT:    retl
 ;
 ; X64-LABEL: PR24545:
 ; X64:       # %bb.0:
-; X64-NEXT:    cmpl %edi, (%rdx)
-; X64-NEXT:    seta %al
-; X64-NEXT:    addb $-1, %al
+; X64-NEXT:    cmpl (%rdx), %edi
 ; X64-NEXT:    sbbl 4(%rdx), %esi
 ; X64-NEXT:    setb %al
 ; X64-NEXT:    retq

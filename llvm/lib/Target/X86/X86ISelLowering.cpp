@@ -34876,7 +34876,7 @@ static bool checkBoolTestAndOrSetCCCombine(SDValue Cond, X86::CondCode &CC0,
 // When legalizing carry, we create carries via add X, -1
 // If that comes from an actual carry, via setcc, we use the
 // carry directly.
-static SDValue combineCarryThroughADD(SDValue EFLAGS) {
+static SDValue combineCarryThroughADD(SDValue EFLAGS, SelectionDAG &DAG) {
   if (EFLAGS.getOpcode() == X86ISD::ADD) {
     if (isAllOnesConstant(EFLAGS.getOperand(1))) {
       SDValue Carry = EFLAGS.getOperand(0);
@@ -34889,8 +34889,27 @@ static SDValue combineCarryThroughADD(SDValue EFLAGS) {
         Carry = Carry.getOperand(0);
       if (Carry.getOpcode() == X86ISD::SETCC ||
           Carry.getOpcode() == X86ISD::SETCC_CARRY) {
-        if (Carry.getConstantOperandVal(0) == X86::COND_B)
-          return Carry.getOperand(1);
+        // TODO: Merge this code with equivalent in combineAddOrSubToADCOrSBB?
+        uint64_t CarryCC = Carry.getConstantOperandVal(0);
+        SDValue CarryOp1 = Carry.getOperand(1);
+        if (CarryCC == X86::COND_B)
+          return CarryOp1;
+        if (CarryCC == X86::COND_A) {
+          // Try to convert COND_A into COND_B in an attempt to facilitate
+          // materializing "setb reg".
+          //
+          // Do not flip "e > c", where "c" is a constant, because Cmp
+          // instruction cannot take an immediate as its first operand.
+          //
+          if (CarryOp1.getOpcode() == X86ISD::SUB && CarryOp1.hasOneUse() &&
+              CarryOp1.getValueType().isInteger() &&
+              !isa<ConstantSDNode>(CarryOp1.getOperand(1))) {
+            SDValue SubCommute =
+                DAG.getNode(X86ISD::SUB, SDLoc(CarryOp1), CarryOp1->getVTList(),
+                            CarryOp1.getOperand(1), CarryOp1.getOperand(0));
+            return SDValue(SubCommute.getNode(), CarryOp1.getResNo());
+          }
+        }
       }
     }
   }
@@ -34905,7 +34924,7 @@ static SDValue combineSetCCEFLAGS(SDValue EFLAGS, X86::CondCode &CC,
                                   SelectionDAG &DAG,
                                   const X86Subtarget &Subtarget) {
   if (CC == X86::COND_B)
-    if (SDValue Flags = combineCarryThroughADD(EFLAGS))
+    if (SDValue Flags = combineCarryThroughADD(EFLAGS, DAG))
       return Flags;
 
   if (SDValue R = checkBoolTestSetCCCombine(EFLAGS, CC))
@@ -40558,7 +40577,7 @@ static SDValue combineX86AddSub(SDNode *N, SelectionDAG &DAG) {
 }
 
 static SDValue combineSBB(SDNode *N, SelectionDAG &DAG) {
-  if (SDValue Flags = combineCarryThroughADD(N->getOperand(2))) {
+  if (SDValue Flags = combineCarryThroughADD(N->getOperand(2), DAG)) {
     MVT VT = N->getSimpleValueType(0);
     SDVTList VTs = DAG.getVTList(VT, MVT::i32);
     return DAG.getNode(X86ISD::SBB, SDLoc(N), VTs,
@@ -40601,7 +40620,7 @@ static SDValue combineADC(SDNode *N, SelectionDAG &DAG,
     return DCI.CombineTo(N, Res1, CarryOut);
   }
 
-  if (SDValue Flags = combineCarryThroughADD(N->getOperand(2))) {
+  if (SDValue Flags = combineCarryThroughADD(N->getOperand(2), DAG)) {
     MVT VT = N->getSimpleValueType(0);
     SDVTList VTs = DAG.getVTList(VT, MVT::i32);
     return DAG.getNode(X86ISD::ADC, SDLoc(N), VTs,
