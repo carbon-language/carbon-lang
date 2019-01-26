@@ -317,8 +317,7 @@ bool ento::shouldRegisterNSOrCFErrorDerefChecker(const LangOptions &LO) {
 
 void ento::registerNSErrorChecker(CheckerManager &mgr) {
   mgr.registerChecker<NSErrorMethodChecker>();
-  NSOrCFErrorDerefChecker *checker =
-      mgr.registerChecker<NSOrCFErrorDerefChecker>();
+  NSOrCFErrorDerefChecker *checker = mgr.getChecker<NSOrCFErrorDerefChecker>();
   checker->ShouldCheckNSError = true;
 }
 
@@ -328,8 +327,7 @@ bool ento::shouldRegisterNSErrorChecker(const LangOptions &LO) {
 
 void ento::registerCFErrorChecker(CheckerManager &mgr) {
   mgr.registerChecker<CFErrorFunctionChecker>();
-  NSOrCFErrorDerefChecker *checker =
-      mgr.registerChecker<NSOrCFErrorDerefChecker>();
+  NSOrCFErrorDerefChecker *checker = mgr.getChecker<NSOrCFErrorDerefChecker>();
   checker->ShouldCheckCFError = true;
 }
 

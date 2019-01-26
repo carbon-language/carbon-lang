@@ -1464,7 +1464,7 @@ bool ento::shouldRegisterRetainCountBase(const LangOptions &LO) {
 }
 
 void ento::registerRetainCountChecker(CheckerManager &Mgr) {
-  auto *Chk = Mgr.registerChecker<RetainCountChecker>();
+  auto *Chk = Mgr.getChecker<RetainCountChecker>();
   Chk->TrackObjCAndCFObjects = true;
 }
 
@@ -1484,7 +1484,7 @@ static bool hasPrevCheckOSObjectOptionDisabled(AnalyzerOptions &Options) {
 }
 
 void ento::registerOSObjectRetainCountChecker(CheckerManager &Mgr) {
-  auto *Chk = Mgr.registerChecker<RetainCountChecker>();
+  auto *Chk = Mgr.getChecker<RetainCountChecker>();
   if (!hasPrevCheckOSObjectOptionDisabled(Mgr.getAnalyzerOptions()))
     Chk->TrackOSObjects = true;
 }
