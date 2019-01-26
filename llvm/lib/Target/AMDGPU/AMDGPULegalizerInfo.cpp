@@ -97,9 +97,12 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     .legalFor({S32})
     .scalarize(0);
 
-  // FIXME: 64-bit ones only legal for scalar
+  // Report legal for any types we can handle anywhere. For the cases only legal
+  // on the SALU, RegBankSelect will be able to re-legalize.
   getActionDefinitionsBuilder({G_AND, G_OR, G_XOR})
-    .legalFor({S32, S1, S64, V2S32});
+    .legalFor({S32, S1, S64, V2S32, V2S16, V4S16})
+    .clampScalar(0, S32, S64)
+    .scalarize(0);
 
   getActionDefinitionsBuilder({G_UADDO, G_SADDO, G_USUBO, G_SSUBO,
                                G_UADDE, G_SADDE, G_USUBE, G_SSUBE})
@@ -323,8 +326,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     .legalIf([=](const LegalityQuery &Query) {
         const LLT &Ty0 = Query.Types[0];
         const LLT &Ty1 = Query.Types[1];
-        return (Ty0.getSizeInBits() % 32 == 0) &&
-               (Ty1.getSizeInBits() % 32 == 0);
+        return (Ty0.getSizeInBits() % 16 == 0) &&
+               (Ty1.getSizeInBits() % 16 == 0);
       });
 
   getActionDefinitionsBuilder(G_BUILD_VECTOR)
