@@ -45,23 +45,15 @@ define <2 x double> @unpckh_unary_extracted_v8f64(<4 x double> %x) {
   ret <2 x double> %r
 }
 
-; FIXME: vpermps requires a constant load for the index op. It's unlikely to be profitable.
+; vpermps requires a constant load for the index op. It's unlikely to be profitable.
 
 define <4 x i32> @unpckh_unary_extracted_v8i32(<8 x i32> %x) {
-; AVX1-LABEL: unpckh_unary_extracted_v8i32:
-; AVX1:       # %bb.0:
-; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; AVX1-NEXT:    vunpckhps {{.*#+}} xmm0 = xmm0[2],xmm1[2],xmm0[3],xmm1[3]
-; AVX1-NEXT:    vzeroupper
-; AVX1-NEXT:    retq
-;
-; AVX2OR512VL-LABEL: unpckh_unary_extracted_v8i32:
-; AVX2OR512VL:       # %bb.0:
-; AVX2OR512VL-NEXT:    vmovaps {{.*#+}} ymm1 = <2,6,3,7,u,u,u,u>
-; AVX2OR512VL-NEXT:    vpermps %ymm0, %ymm1, %ymm0
-; AVX2OR512VL-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
-; AVX2OR512VL-NEXT:    vzeroupper
-; AVX2OR512VL-NEXT:    retq
+; ALL-LABEL: unpckh_unary_extracted_v8i32:
+; ALL:       # %bb.0:
+; ALL-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; ALL-NEXT:    vunpckhps {{.*#+}} xmm0 = xmm0[2],xmm1[2],xmm0[3],xmm1[3]
+; ALL-NEXT:    vzeroupper
+; ALL-NEXT:    retq
   %extrl = shufflevector <8 x i32> %x, <8 x i32> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
   %extrh = shufflevector <8 x i32> %x, <8 x i32> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
   %r = shufflevector <4 x i32> %extrl, <4 x i32> %extrh, <4 x i32> <i32 2, i32 6, i32 3, i32 7>
@@ -69,20 +61,12 @@ define <4 x i32> @unpckh_unary_extracted_v8i32(<8 x i32> %x) {
 }
 
 define <4 x float> @unpckh_unary_extracted_v8f32(<8 x float> %x) {
-; AVX1-LABEL: unpckh_unary_extracted_v8f32:
-; AVX1:       # %bb.0:
-; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; AVX1-NEXT:    vunpckhps {{.*#+}} xmm0 = xmm0[2],xmm1[2],xmm0[3],xmm1[3]
-; AVX1-NEXT:    vzeroupper
-; AVX1-NEXT:    retq
-;
-; AVX2OR512VL-LABEL: unpckh_unary_extracted_v8f32:
-; AVX2OR512VL:       # %bb.0:
-; AVX2OR512VL-NEXT:    vmovaps {{.*#+}} ymm1 = <2,6,3,7,u,u,u,u>
-; AVX2OR512VL-NEXT:    vpermps %ymm0, %ymm1, %ymm0
-; AVX2OR512VL-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
-; AVX2OR512VL-NEXT:    vzeroupper
-; AVX2OR512VL-NEXT:    retq
+; ALL-LABEL: unpckh_unary_extracted_v8f32:
+; ALL:       # %bb.0:
+; ALL-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; ALL-NEXT:    vunpckhps {{.*#+}} xmm0 = xmm0[2],xmm1[2],xmm0[3],xmm1[3]
+; ALL-NEXT:    vzeroupper
+; ALL-NEXT:    retq
   %extrl = shufflevector <8 x float> %x, <8 x float> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
   %extrh = shufflevector <8 x float> %x, <8 x float> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
   %r = shufflevector <4 x float> %extrl, <4 x float> %extrh, <4 x i32> <i32 2, i32 6, i32 3, i32 7>
@@ -169,23 +153,15 @@ define <2 x double> @unpckl_unary_extracted_v8f64(<4 x double> %x) {
   ret <2 x double> %r
 }
 
-; FIXME: vpermps requires a constant load for the index op. It's unlikely to be profitable.
+; vpermps requires a constant load for the index op. It's unlikely to be profitable.
 
 define <4 x i32> @unpckl_unary_extracted_v8i32(<8 x i32> %x) {
-; AVX1-LABEL: unpckl_unary_extracted_v8i32:
-; AVX1:       # %bb.0:
-; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; AVX1-NEXT:    vunpcklps {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
-; AVX1-NEXT:    vzeroupper
-; AVX1-NEXT:    retq
-;
-; AVX2OR512VL-LABEL: unpckl_unary_extracted_v8i32:
-; AVX2OR512VL:       # %bb.0:
-; AVX2OR512VL-NEXT:    vmovaps {{.*#+}} ymm1 = <0,4,1,5,u,u,u,u>
-; AVX2OR512VL-NEXT:    vpermps %ymm0, %ymm1, %ymm0
-; AVX2OR512VL-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
-; AVX2OR512VL-NEXT:    vzeroupper
-; AVX2OR512VL-NEXT:    retq
+; ALL-LABEL: unpckl_unary_extracted_v8i32:
+; ALL:       # %bb.0:
+; ALL-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; ALL-NEXT:    vunpcklps {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
+; ALL-NEXT:    vzeroupper
+; ALL-NEXT:    retq
   %extrl = shufflevector <8 x i32> %x, <8 x i32> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
   %extrh = shufflevector <8 x i32> %x, <8 x i32> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
   %r = shufflevector <4 x i32> %extrl, <4 x i32> %extrh, <4 x i32> <i32 0, i32 4, i32 1, i32 5>
@@ -193,20 +169,12 @@ define <4 x i32> @unpckl_unary_extracted_v8i32(<8 x i32> %x) {
 }
 
 define <4 x float> @unpckl_unary_extracted_v8f32(<8 x float> %x) {
-; AVX1-LABEL: unpckl_unary_extracted_v8f32:
-; AVX1:       # %bb.0:
-; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; AVX1-NEXT:    vunpcklps {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
-; AVX1-NEXT:    vzeroupper
-; AVX1-NEXT:    retq
-;
-; AVX2OR512VL-LABEL: unpckl_unary_extracted_v8f32:
-; AVX2OR512VL:       # %bb.0:
-; AVX2OR512VL-NEXT:    vmovaps {{.*#+}} ymm1 = <0,4,1,5,u,u,u,u>
-; AVX2OR512VL-NEXT:    vpermps %ymm0, %ymm1, %ymm0
-; AVX2OR512VL-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
-; AVX2OR512VL-NEXT:    vzeroupper
-; AVX2OR512VL-NEXT:    retq
+; ALL-LABEL: unpckl_unary_extracted_v8f32:
+; ALL:       # %bb.0:
+; ALL-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; ALL-NEXT:    vunpcklps {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
+; ALL-NEXT:    vzeroupper
+; ALL-NEXT:    retq
   %extrl = shufflevector <8 x float> %x, <8 x float> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
   %extrh = shufflevector <8 x float> %x, <8 x float> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
   %r = shufflevector <4 x float> %extrl, <4 x float> %extrh, <4 x i32> <i32 0, i32 4, i32 1, i32 5>
