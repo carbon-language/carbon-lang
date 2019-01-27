@@ -2725,3 +2725,47 @@ entry:
   %2 = add <32 x i16> %1, <i16 -1, i16 2200, i16 50, i16 114, i16 77, i16 70, i16 -123, i16 -9800, i16 -635, i16 -19567, i16 22, i16 -100, i16 -2534, i16 -34, i16 -55, i16 -70, i16 -1, i16 2200, i16 50, i16 114, i16 77, i16 70, i16 -123, i16 -9805, i16 -635, i16 -19567, i16 22, i16 -100, i16 -2534, i16 -346, i16 -55, i16 -70>
   ret <32 x i16> %2
 }
+
+; PR40083
+define i64 @test30(<8 x i16> %x) {
+; SSE2-LABEL: test30:
+; SSE2:       # %bb.0: # %entry
+; SSE2-NEXT:    movdqa {{.*#+}} xmm1 = [32768,32768,32768,32768,32768,32768,32768,32768]
+; SSE2-NEXT:    pxor %xmm1, %xmm0
+; SSE2-NEXT:    pmaxsw {{.*}}(%rip), %xmm0
+; SSE2-NEXT:    pxor %xmm1, %xmm0
+; SSE2-NEXT:    paddw {{.*}}(%rip), %xmm0
+; SSE2-NEXT:    movq %xmm0, %rax
+; SSE2-NEXT:    retq
+;
+; SSSE3-LABEL: test30:
+; SSSE3:       # %bb.0: # %entry
+; SSSE3-NEXT:    movdqa {{.*#+}} xmm1 = [32768,32768,32768,32768,32768,32768,32768,32768]
+; SSSE3-NEXT:    pxor %xmm1, %xmm0
+; SSSE3-NEXT:    pmaxsw {{.*}}(%rip), %xmm0
+; SSSE3-NEXT:    pxor %xmm1, %xmm0
+; SSSE3-NEXT:    paddw {{.*}}(%rip), %xmm0
+; SSSE3-NEXT:    movq %xmm0, %rax
+; SSSE3-NEXT:    retq
+;
+; SSE41-LABEL: test30:
+; SSE41:       # %bb.0: # %entry
+; SSE41-NEXT:    pmaxuw {{.*}}(%rip), %xmm0
+; SSE41-NEXT:    paddw {{.*}}(%rip), %xmm0
+; SSE41-NEXT:    movq %xmm0, %rax
+; SSE41-NEXT:    retq
+;
+; AVX-LABEL: test30:
+; AVX:       # %bb.0: # %entry
+; AVX-NEXT:    vpmaxuw {{.*}}(%rip), %xmm0, %xmm0
+; AVX-NEXT:    vpaddw {{.*}}(%rip), %xmm0, %xmm0
+; AVX-NEXT:    vmovq %xmm0, %rax
+; AVX-NEXT:    retq
+entry:
+  %0 = icmp ugt <8 x i16> %x, <i16 1, i16 -2200, i16 -50, i16 -114, i16 undef, i16 undef, i16 undef, i16 undef>
+  %1 = select <8 x i1> %0, <8 x i16> %x, <8 x i16> <i16 1, i16 -2200, i16 -50, i16 -114, i16 undef, i16 undef, i16 undef, i16 undef>
+  %2 = add <8 x i16> %1, <i16 -1, i16 2200, i16 50, i16 114, i16 undef, i16 undef, i16 undef, i16 undef>
+  %3 = bitcast <8 x i16> %2 to <2 x i64>
+  %4 = extractelement <2 x i64> %3, i32 0
+  ret i64 %4
+}
