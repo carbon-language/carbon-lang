@@ -179,7 +179,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     .scalarize(0);
 
   getActionDefinitionsBuilder({G_INTRINSIC_TRUNC, G_INTRINSIC_ROUND})
-    .legalFor({S32, S64});
+    .legalFor({S32, S64})
+    .scalarize(0);
 
   for (LLT PtrTy : AddrSpaces) {
     LLT IdxTy = LLT::scalar(PtrTy.getSizeInBits());

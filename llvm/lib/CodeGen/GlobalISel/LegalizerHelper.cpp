@@ -1417,7 +1417,9 @@ LegalizerHelper::fewerElementsVector(MachineInstr &MI, unsigned TypeIdx,
   case TargetOpcode::G_FLOG:
   case TargetOpcode::G_FLOG2:
   case TargetOpcode::G_FLOG10:
-  case TargetOpcode::G_FCEIL: {
+  case TargetOpcode::G_FCEIL:
+  case TargetOpcode::G_INTRINSIC_ROUND:
+  case TargetOpcode::G_INTRINSIC_TRUNC: {
     unsigned NarrowSize = NarrowTy.getSizeInBits();
     unsigned DstReg = MI.getOperand(0).getReg();
     unsigned Flags = MI.getFlags();
