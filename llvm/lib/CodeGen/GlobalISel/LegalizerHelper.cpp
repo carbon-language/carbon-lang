@@ -1445,6 +1445,14 @@ LegalizerHelper::fewerElementsVectorLoadStore(MachineInstr &MI, unsigned TypeIdx
   if (TypeIdx != 0)
     return UnableToLegalize;
 
+  MachineMemOperand *MMO = *MI.memoperands_begin();
+
+  // This implementation doesn't work for atomics. Give up instead of doing
+  // something invalid.
+  if (MMO->getOrdering() != AtomicOrdering::NotAtomic ||
+      MMO->getFailureOrdering() != AtomicOrdering::NotAtomic)
+    return UnableToLegalize;
+
   bool IsLoad = MI.getOpcode() == TargetOpcode::G_LOAD;
   unsigned ValReg = MI.getOperand(0).getReg();
   unsigned AddrReg = MI.getOperand(1).getReg();
@@ -1459,7 +1467,7 @@ LegalizerHelper::fewerElementsVectorLoadStore(MachineInstr &MI, unsigned TypeIdx
   const LLT OffsetTy =
     LLT::scalar(MRI.getType(AddrReg).getScalarSizeInBits());
   MachineFunction &MF = *MI.getMF();
-  MachineMemOperand *MMO = *MI.memoperands_begin();
+
   for (unsigned Idx = 0; Idx < NumParts; ++Idx) {
     unsigned Adjustment = Idx * NarrowTy.getSizeInBits() / 8;
     unsigned Alignment = MinAlign(MMO->getAlignment(), Adjustment);
