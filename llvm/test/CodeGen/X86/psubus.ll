@@ -2752,38 +2752,15 @@ entry:
 define i64 @test31(<2 x i64> %x) {
 ; SSE-LABEL: test31:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    movdqa {{.*#+}} xmm1 = <70,70,70,70,70,70,70,70,u,u,u,u,u,u,u,u>
-; SSE-NEXT:    pminub %xmm0, %xmm1
-; SSE-NEXT:    pcmpeqb %xmm0, %xmm1
-; SSE-NEXT:    paddb {{.*}}(%rip), %xmm0
-; SSE-NEXT:    pandn %xmm0, %xmm1
-; SSE-NEXT:    movq %xmm1, %rax
+; SSE-NEXT:    psubusb {{.*}}(%rip), %xmm0
+; SSE-NEXT:    movq %xmm0, %rax
 ; SSE-NEXT:    retq
 ;
-; AVX1-LABEL: test31:
-; AVX1:       # %bb.0:
-; AVX1-NEXT:    vpminub {{.*}}(%rip), %xmm0, %xmm1
-; AVX1-NEXT:    vpcmpeqb %xmm1, %xmm0, %xmm1
-; AVX1-NEXT:    vpaddb {{.*}}(%rip), %xmm0, %xmm0
-; AVX1-NEXT:    vpandn %xmm0, %xmm1, %xmm0
-; AVX1-NEXT:    vmovq %xmm0, %rax
-; AVX1-NEXT:    retq
-;
-; AVX2-LABEL: test31:
-; AVX2:       # %bb.0:
-; AVX2-NEXT:    vpminub {{.*}}(%rip), %xmm0, %xmm1
-; AVX2-NEXT:    vpcmpeqb %xmm1, %xmm0, %xmm1
-; AVX2-NEXT:    vpaddb {{.*}}(%rip), %xmm0, %xmm0
-; AVX2-NEXT:    vpandn %xmm0, %xmm1, %xmm0
-; AVX2-NEXT:    vmovq %xmm0, %rax
-; AVX2-NEXT:    retq
-;
-; AVX512-LABEL: test31:
-; AVX512:       # %bb.0:
-; AVX512-NEXT:    vpcmpnleub {{.*}}(%rip), %xmm0, %k1
-; AVX512-NEXT:    vpaddb {{.*}}(%rip), %xmm0, %xmm0 {%k1} {z}
-; AVX512-NEXT:    vmovq %xmm0, %rax
-; AVX512-NEXT:    retq
+; AVX-LABEL: test31:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vpsubusb {{.*}}(%rip), %xmm0, %xmm0
+; AVX-NEXT:    vmovq %xmm0, %rax
+; AVX-NEXT:    retq
   %t0 = bitcast <2 x i64> %x to <16 x i8>
   %cmp = icmp ugt <16 x i8> %t0, <i8 70, i8 70, i8 70, i8 70, i8 70, i8 70, i8 70, i8 70, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef>
   %bop = add <16 x i8> %t0, <i8 -71, i8 -71, i8 -71, i8 -71, i8 -71, i8 -71, i8 -71, i8 -71, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef>
