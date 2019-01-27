@@ -1003,7 +1003,11 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
   case TargetOpcode::G_LOAD:
   case TargetOpcode::G_STORE:
   case TargetOpcode::G_ZEXTLOAD:
-  case TargetOpcode::G_SEXTLOAD:
+  case TargetOpcode::G_SEXTLOAD: {
+    LLT PtrTy = MRI->getType(MI->getOperand(1).getReg());
+    if (!PtrTy.isPointer())
+      report("Generic memory instruction must access a pointer", MI);
+
     // Generic loads and stores must have a single MachineMemOperand
     // describing that access.
     if (!MI->hasOneMemOperand()) {
@@ -1021,6 +1025,7 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
     }
 
     break;
+  }
   case TargetOpcode::G_PHI: {
     LLT DstTy = MRI->getType(MI->getOperand(0).getReg());
     if (!DstTy.isValid() ||
