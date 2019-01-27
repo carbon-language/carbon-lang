@@ -2728,37 +2728,15 @@ entry:
 
 ; PR40083
 define i64 @test30(<8 x i16> %x) {
-; SSE2-LABEL: test30:
-; SSE2:       # %bb.0: # %entry
-; SSE2-NEXT:    movdqa {{.*#+}} xmm1 = [32768,32768,32768,32768,32768,32768,32768,32768]
-; SSE2-NEXT:    pxor %xmm1, %xmm0
-; SSE2-NEXT:    pmaxsw {{.*}}(%rip), %xmm0
-; SSE2-NEXT:    pxor %xmm1, %xmm0
-; SSE2-NEXT:    paddw {{.*}}(%rip), %xmm0
-; SSE2-NEXT:    movq %xmm0, %rax
-; SSE2-NEXT:    retq
-;
-; SSSE3-LABEL: test30:
-; SSSE3:       # %bb.0: # %entry
-; SSSE3-NEXT:    movdqa {{.*#+}} xmm1 = [32768,32768,32768,32768,32768,32768,32768,32768]
-; SSSE3-NEXT:    pxor %xmm1, %xmm0
-; SSSE3-NEXT:    pmaxsw {{.*}}(%rip), %xmm0
-; SSSE3-NEXT:    pxor %xmm1, %xmm0
-; SSSE3-NEXT:    paddw {{.*}}(%rip), %xmm0
-; SSSE3-NEXT:    movq %xmm0, %rax
-; SSSE3-NEXT:    retq
-;
-; SSE41-LABEL: test30:
-; SSE41:       # %bb.0: # %entry
-; SSE41-NEXT:    pmaxuw {{.*}}(%rip), %xmm0
-; SSE41-NEXT:    paddw {{.*}}(%rip), %xmm0
-; SSE41-NEXT:    movq %xmm0, %rax
-; SSE41-NEXT:    retq
+; SSE-LABEL: test30:
+; SSE:       # %bb.0: # %entry
+; SSE-NEXT:    psubusw {{.*}}(%rip), %xmm0
+; SSE-NEXT:    movq %xmm0, %rax
+; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test30:
 ; AVX:       # %bb.0: # %entry
-; AVX-NEXT:    vpmaxuw {{.*}}(%rip), %xmm0, %xmm0
-; AVX-NEXT:    vpaddw {{.*}}(%rip), %xmm0, %xmm0
+; AVX-NEXT:    vpsubusw {{.*}}(%rip), %xmm0, %xmm0
 ; AVX-NEXT:    vmovq %xmm0, %rax
 ; AVX-NEXT:    retq
 entry:

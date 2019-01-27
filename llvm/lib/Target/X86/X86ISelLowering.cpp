@@ -41106,11 +41106,12 @@ static SDValue combineAddToSUBUS(SDNode *N, SelectionDAG &DAG,
     return SDValue();
 
   // The add should have a constant that is the negative of the max.
-  // TODO: Handle build_vectors with undef elements.
   auto MatchUSUBSAT = [](ConstantSDNode *Max, ConstantSDNode *Op) {
-    return Max->getAPIntValue() == (-Op->getAPIntValue());
+    return (!Max && !Op) ||
+           (Max && Op && Max->getAPIntValue() == (-Op->getAPIntValue()));
   };
-  if (!ISD::matchBinaryPredicate(Op0.getOperand(1), Op1, MatchUSUBSAT))
+  if (!ISD::matchBinaryPredicate(Op0.getOperand(1), Op1, MatchUSUBSAT,
+                                 /*AllowUndefs*/ true))
     return SDValue();
 
   SDLoc DL(N);
