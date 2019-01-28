@@ -30,17 +30,25 @@ define %v4f16 @test_v4f16.powi(%v4f16 %a, i32 %b) {
   %1 = call %v4f16 @llvm.powi.v4f16(%v4f16 %a, i32 %b)
   ret %v4f16 %1
 }
+
+; FALLBACK-NOT: remark{{.*}}test_v4f16.sin
 define %v4f16 @test_v4f16.sin(%v4f16 %a) {
   ; This operation is expanded, whether with or without +fullfp16.
   ; CHECK-LABEL:   test_v4f16.sin:
   ; CHECK-COUNT-4: bl sinf
+  ; GISEL-LABEL:   test_v4f16.sin:
+  ; GISEL-COUNT-4: bl sinf
   %1 = call %v4f16 @llvm.sin.v4f16(%v4f16 %a)
   ret %v4f16 %1
 }
+
+; FALLBACK-NOT: remark{{.*}}test_v4f16.cos
 define %v4f16 @test_v4f16.cos(%v4f16 %a) {
   ; This operation is expanded, whether with or without +fullfp16.
   ; CHECK-LABEL:   test_v4f16.cos:
   ; CHECK-COUNT-4: bl cosf
+  ; GISEL-LABEL:   test_v4f16.cos:
+  ; GISEL-COUNT-4: bl cosf
   %1 = call %v4f16 @llvm.cos.v4f16(%v4f16 %a)
   ret %v4f16 %1
 }
@@ -193,17 +201,25 @@ define %v8f16 @test_v8f16.powi(%v8f16 %a, i32 %b) {
   %1 = call %v8f16 @llvm.powi.v8f16(%v8f16 %a, i32 %b)
   ret %v8f16 %1
 }
+
+; FALLBACK-NOT: remark{{.*}}test_v8f16.sin
 define %v8f16 @test_v8f16.sin(%v8f16 %a) {
   ; This operation is expanded, whether with or without +fullfp16.
   ; CHECK-LABEL:   test_v8f16.sin:
   ; CHECK-COUNT-8: bl sinf
+  ; GISEL-LABEL:   test_v8f16.sin:
+  ; GISEL-COUNT-8: bl sinf
   %1 = call %v8f16 @llvm.sin.v8f16(%v8f16 %a)
   ret %v8f16 %1
 }
+
+; FALLBACK-NOT: remark{{.*}}test_v8f16.cos
 define %v8f16 @test_v8f16.cos(%v8f16 %a) {
   ; This operation is expanded, whether with or without +fullfp16.
   ; CHECK-LABEL:   test_v8f16.cos:
   ; CHECK-COUNT-8: bl cosf
+  ; GISEL-LABEL:   test_v8f16.cos:
+  ; GISEL-COUNT-8: bl cosf
   %1 = call %v8f16 @llvm.cos.v8f16(%v8f16 %a)
   ret %v8f16 %1
 }
@@ -352,15 +368,21 @@ define %v2f32 @test_v2f32.powi(%v2f32 %a, i32 %b) {
   %1 = call %v2f32 @llvm.powi.v2f32(%v2f32 %a, i32 %b)
   ret %v2f32 %1
 }
+
+; FALLBACK-NOT: remark{{.*}}test_v2f32.sin
 ; CHECK: test_v2f32.sin:
 define %v2f32 @test_v2f32.sin(%v2f32 %a) {
   ; CHECK: sin
+  ; GISEL: sin
   %1 = call %v2f32 @llvm.sin.v2f32(%v2f32 %a)
   ret %v2f32 %1
 }
+
+; FALLBACK-NOT: remark{{.*}}test_v2f32.cos
 ; CHECK: test_v2f32.cos:
 define %v2f32 @test_v2f32.cos(%v2f32 %a) {
   ; CHECK: cos
+  ; GISEL: cos
   %1 = call %v2f32 @llvm.cos.v2f32(%v2f32 %a)
   ret %v2f32 %1
 }
@@ -480,15 +502,21 @@ define %v4f32 @test_v4f32.powi(%v4f32 %a, i32 %b) {
   %1 = call %v4f32 @llvm.powi.v4f32(%v4f32 %a, i32 %b)
   ret %v4f32 %1
 }
+
+; FALLBACK-NOT: remark{{.*}}test_v4f32.sin
 ; CHECK: test_v4f32.sin:
 define %v4f32 @test_v4f32.sin(%v4f32 %a) {
   ; CHECK: sin
+  ; GISEL: sin
   %1 = call %v4f32 @llvm.sin.v4f32(%v4f32 %a)
   ret %v4f32 %1
 }
+
+; FALLBACK-NOT: remark{{.*}}test_v4f32.cos
 ; CHECK: test_v4f32.cos:
 define %v4f32 @test_v4f32.cos(%v4f32 %a) {
   ; CHECK: cos
+  ; GISEL: cos
   %1 = call %v4f32 @llvm.cos.v4f32(%v4f32 %a)
   ret %v4f32 %1
 }
@@ -607,15 +635,21 @@ define %v2f64 @test_v2f64.powi(%v2f64 %a, i32 %b) {
   %1 = call %v2f64 @llvm.powi.v2f64(%v2f64 %a, i32 %b)
   ret %v2f64 %1
 }
+
+; FALLBACK-NOT: remark{{.*}}test_v2f64.sin
 ; CHECK: test_v2f64.sin:
 define %v2f64 @test_v2f64.sin(%v2f64 %a) {
   ; CHECK: sin
+  ; GISEL: sin
   %1 = call %v2f64 @llvm.sin.v2f64(%v2f64 %a)
   ret %v2f64 %1
 }
+
+; FALLBACK-NOT: remark{{.*}}test_v2f64.cos
 ; CHECK: test_v2f64.cos:
 define %v2f64 @test_v2f64.cos(%v2f64 %a) {
   ; CHECK: cos
+  ; GISEL: cos
   %1 = call %v2f64 @llvm.cos.v2f64(%v2f64 %a)
   ret %v2f64 %1
 }

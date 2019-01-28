@@ -334,10 +334,10 @@
 # DEBUG: .. type index coverage check SKIPPED: user-defined predicate detected
 #
 # DEBUG-NEXT: G_FCOS (opcode {{[0-9]+}}): 1 type index
-# DEBUG:      .. type index coverage check SKIPPED: no rules defined
+# DEBUG: .. the first uncovered type index: 1, OK
 #
 # DEBUG-NEXT: G_FSIN (opcode {{[0-9]+}}): 1 type index
-# DEBUG:      .. type index coverage check SKIPPED: no rules defined
+# DEBUG: .. the first uncovered type index: 1, OK
 
 # CHECK-NOT: ill-defined
 
