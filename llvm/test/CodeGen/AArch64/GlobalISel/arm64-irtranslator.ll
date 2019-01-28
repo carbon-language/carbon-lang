@@ -2293,3 +2293,19 @@ define <2 x double> @test_ceil_v2f64(<2 x double> %x) {
   %y = call <2 x double> @llvm.ceil.v2f64(<2 x double> %x)
   ret <2 x double> %y
 }
+
+declare float @llvm.cos.f32(float)
+define float @test_cos_f32(float %x) {
+  ; CHECK-LABEL: name:            test_cos_f32
+  ; CHECK: %{{[0-9]+}}:_(s32) = G_FCOS %{{[0-9]+}}
+  %y = call float @llvm.cos.f32(float %x)
+  ret float %y
+}
+
+declare float @llvm.sin.f32(float)
+define float @test_sin_f32(float %x) {
+  ; CHECK-LABEL: name:            test_sin_f32
+  ; CHECK: %{{[0-9]+}}:_(s32) = G_FSIN %{{[0-9]+}}
+  %y = call float @llvm.sin.f32(float %x)
+  ret float %y
+}
