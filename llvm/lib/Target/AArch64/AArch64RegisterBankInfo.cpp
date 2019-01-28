@@ -392,6 +392,7 @@ static bool isPreISelGenericFloatingPointOpcode(unsigned Opc) {
   case TargetOpcode::G_FPEXT:
   case TargetOpcode::G_FPTRUNC:
   case TargetOpcode::G_FCEIL:
+  case TargetOpcode::G_FNEG:
     return true;
   }
   return false;
