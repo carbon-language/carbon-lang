@@ -3757,7 +3757,7 @@ void BinaryFunction::emitJumpTables(MCStreamer *Streamer) {
     auto &JT = *JTI.second;
     if (opts::PrintJumpTables)
       JT.print(outs());
-    if (opts::JumpTables == JTS_BASIC && BC.HasRelocations) {
+    if ((opts::JumpTables == JTS_BASIC || !isSimple()) && BC.HasRelocations) {
       JT.updateOriginal();
     } else {
       MCSection *HotSection, *ColdSection;
