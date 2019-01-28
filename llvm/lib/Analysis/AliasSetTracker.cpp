@@ -301,10 +301,12 @@ AliasSet *AliasSetTracker::mergeAliasSetsForPointer(const Value *Ptr,
     iterator Cur = I++;
     if (Cur->Forward || !Cur->aliasesPointer(Ptr, Size, AAInfo, AA)) continue;
 
-    if (!FoundSet) {      // If this is the first alias set ptr can go into.
-      FoundSet = &*Cur;   // Remember it.
-    } else {              // Otherwise, we must merge the sets.
-      FoundSet->mergeSetIn(*Cur, *this);     // Merge in contents.
+    if (!FoundSet) {
+      // If this is the first alias set ptr can go into, remember it.
+      FoundSet = &*Cur;
+    } else {
+      // Otherwise, we must merge the sets.
+      FoundSet->mergeSetIn(*Cur, *this);
     }
   }
 
