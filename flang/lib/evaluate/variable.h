@@ -25,6 +25,7 @@
 
 #include "call.h"
 #include "common.h"
+#include "constant.h"
 #include "static-data.h"
 #include "type.h"
 #include "../common/idioms.h"

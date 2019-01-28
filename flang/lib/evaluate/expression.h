@@ -23,6 +23,7 @@
 // for equality.
 
 #include "common.h"
+#include "constant.h"
 #include "type.h"
 #include "variable.h"
 #include "../lib/common/fortran.h"

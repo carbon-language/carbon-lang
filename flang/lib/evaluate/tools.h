@@ -15,6 +15,7 @@
 #ifndef FORTRAN_EVALUATE_TOOLS_H_
 #define FORTRAN_EVALUATE_TOOLS_H_
 
+#include "constant.h"
 #include "expression.h"
 #include "../common/idioms.h"
 #include "../common/unwrap.h"

@@ -890,10 +890,11 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
             using Result = ResultType<decltype(ckExpr)>;
             auto *cp{std::get_if<Constant<Result>>(&ckExpr.u)};
             CHECK(cp != nullptr);  // the parent was parsed as a constant string
+            CHECK(cp->size() == 1);
             StaticDataObject::Pointer staticData{StaticDataObject::Create()};
             staticData->set_alignment(Result::kind)
                 .set_itemBytes(Result::kind)
-                .Push(cp->value);
+                .Push(**cp);
             Substring substring{std::move(staticData), std::move(lower.value()),
                 std::move(upper.value())};
             return AsGenericExpr(Expr<SomeCharacter>{

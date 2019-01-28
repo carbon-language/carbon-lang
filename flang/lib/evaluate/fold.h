@@ -19,6 +19,7 @@
 // evaluation.
 
 #include "common.h"
+#include "constant.h"
 #include "expression.h"
 #include "tools.h"
 #include "type.h"
@@ -51,7 +52,11 @@ std::optional<Expr<T>> Fold(
 template<typename T>
 const Scalar<T> *GetScalarConstantValue(const Expr<T> &expr) {
   if (const auto *c{UnwrapExpr<Constant<T>>(expr)}) {
-    return &c->value;
+    if (c->size() == 1) {
+      return &**c;
+    } else {
+      return nullptr;
+    }
   } else if (const auto *parens{UnwrapExpr<Parentheses<T>>(expr)}) {
     return GetScalarConstantValue<T>(parens->left());
   } else {

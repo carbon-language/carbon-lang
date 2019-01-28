@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -232,7 +232,7 @@ using AllIntrinsicTypes = common::CombineTuples<RelationalTypes, LogicalTypes>;
 using LengthlessIntrinsicTypes =
     common::CombineTuples<NumericTypes, LogicalTypes>;
 
-// Predicate: does a type represent a specific intrinsic type?
+// Predicates: does a type represent a specific intrinsic type?
 template<typename T>
 constexpr bool IsSpecificIntrinsicType{common::HasMember<T, AllIntrinsicTypes>};
 
@@ -352,29 +352,5 @@ struct SomeType {};
 #define FOR_EACH_TYPE_AND_KIND(PREFIX) \
   FOR_EACH_INTRINSIC_KIND(PREFIX) \
   FOR_EACH_CATEGORY_TYPE(PREFIX)
-
-// Wraps a constant scalar value of a specific intrinsic type
-// in a class with its resolved type.
-// N.B. Array constants are represented as array constructors
-// and derived type constants are structure constructors; generic
-// constants are generic expressions wrapping these constants.
-template<typename T> struct Constant {
-  static_assert(IsSpecificIntrinsicType<T>);
-  using Result = T;
-  using Value = Scalar<Result>;
-
-  CLASS_BOILERPLATE(Constant)
-  template<typename A> Constant(const A &x) : value{x} {}
-  template<typename A>
-  Constant(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
-    : value(std::move(x)) {}
-
-  constexpr DynamicType GetType() const { return Result::GetType(); }
-  int Rank() const { return 0; }
-  bool operator==(const Constant &that) const { return value == that.value; }
-  std::ostream &AsFortran(std::ostream &) const;
-
-  Value value;
-};
 }
 #endif  // FORTRAN_EVALUATE_TYPE_H_

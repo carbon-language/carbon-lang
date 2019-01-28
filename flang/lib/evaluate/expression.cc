@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 #include "tools.h"
 #include "variable.h"
 #include "../common/idioms.h"
-#include "../parser/characters.h"
 #include "../parser/message.h"
 #include <ostream>
 #include <sstream>
@@ -81,27 +80,6 @@ std::ostream &LogicalOperation<KIND>::Infix(std::ostream &o) const {
   case LogicalOperator::Neqv: o << ".neqv."; break;
   }
   return o;
-}
-
-template<typename T>
-std::ostream &Constant<T>::AsFortran(std::ostream &o) const {
-  if constexpr (T::category == TypeCategory::Integer) {
-    return o << value.SignedDecimal() << '_' << T::kind;
-  } else if constexpr (T::category == TypeCategory::Real ||
-      T::category == TypeCategory::Complex) {
-    return value.AsFortran(o, T::kind);
-  } else if constexpr (T::category == TypeCategory::Character) {
-    return o << T::kind << '_' << parser::QuoteCharacterLiteral(value);
-  } else if constexpr (T::category == TypeCategory::Logical) {
-    if (value.IsTrue()) {
-      o << ".true.";
-    } else {
-      o << ".false.";
-    }
-    return o << '_' << Result::kind;
-  } else {
-    return value.u.AsFortran(o);
-  }
 }
 
 template<typename T>
@@ -172,7 +150,7 @@ Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
   return std::visit(
       common::visitors{
           [](const Constant<Result> &c) {
-            return AsExpr(Constant<SubscriptInteger>{c.value.size()});
+            return AsExpr(Constant<SubscriptInteger>{c.LEN()});
           },
           [](const ArrayConstructor<Result> &a) { return a.LEN(); },
           [](const Parentheses<Result> &x) { return x.left().LEN(); },
