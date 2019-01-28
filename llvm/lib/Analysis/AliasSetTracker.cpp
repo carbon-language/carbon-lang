@@ -317,10 +317,13 @@ AliasSet *AliasSetTracker::findAliasSetForUnknownInst(Instruction *Inst) {
     iterator Cur = I++;
     if (Cur->Forward || !Cur->aliasesUnknownInst(Inst, AA))
       continue;
-    if (!FoundSet)            // If this is the first alias set ptr can go into.
-      FoundSet = &*Cur;       // Remember it.
-    else   // Otherwise, we must merge the sets.
-      FoundSet->mergeSetIn(*Cur, *this);     // Merge in contents.
+    if (!FoundSet) {
+      // If this is the first alias set ptr can go into, remember it.
+      FoundSet = &*Cur;
+    } else {
+      // Otherwise, we must merge the sets.
+      FoundSet->mergeSetIn(*Cur, *this);
+    }
   }
   return FoundSet;
 }
@@ -330,7 +333,7 @@ AliasSet &AliasSetTracker::getAliasSetFor(const MemoryLocation &MemLoc) {
   Value * const Pointer = const_cast<Value*>(MemLoc.Ptr);
   const LocationSize Size = MemLoc.Size;
   const AAMDNodes &AAInfo = MemLoc.AATags;
-  
+
   AliasSet::PointerRec &Entry = getEntryFor(Pointer);
 
   if (AliasAnyAS) {
