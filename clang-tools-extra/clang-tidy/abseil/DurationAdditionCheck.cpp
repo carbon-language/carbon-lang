@@ -54,7 +54,7 @@ void DurationAdditionCheck::check(const MatchFinder::MatchResult &Result) {
          rewriteExprFromNumberToDuration(Result, *Scale, Binop->getRHS()) + ")")
             .str());
   } else {
-    assert(Call == Binop->getRHS()->IgnoreParenImpCast() &&
+    assert(Call == Binop->getRHS()->IgnoreParenImpCasts() &&
            "Call should be found on the RHS");
     Hint = FixItHint::CreateReplacement(
         Binop->getSourceRange(),
