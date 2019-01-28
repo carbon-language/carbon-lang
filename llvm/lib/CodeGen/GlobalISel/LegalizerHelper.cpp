@@ -130,6 +130,10 @@ static RTLIB::Libcall getRTLibDesc(unsigned Opcode, unsigned Size) {
     assert((Size == 32 || Size == 64 || Size == 128) && "Unsupported size");
     return Size == 128 ? RTLIB::COS_F128
                        : Size == 64 ? RTLIB::COS_F64 : RTLIB::COS_F32;
+  case TargetOpcode::G_FLOG10:
+    assert((Size == 32 || Size == 64 || Size == 128) && "Unsupported size");
+    return Size == 128 ? RTLIB::LOG10_F128
+                       : Size == 64 ? RTLIB::LOG10_F64 : RTLIB::LOG10_F32;
   }
   llvm_unreachable("Unknown libcall function");
 }
@@ -223,7 +227,8 @@ LegalizerHelper::libcall(MachineInstr &MI) {
   case TargetOpcode::G_FPOW:
   case TargetOpcode::G_FREM:
   case TargetOpcode::G_FCOS:
-  case TargetOpcode::G_FSIN: {
+  case TargetOpcode::G_FSIN:
+  case TargetOpcode::G_FLOG10: {
     if (Size > 64) {
       LLVM_DEBUG(dbgs() << "Size " << Size << " too large to legalize.\n");
       return UnableToLegalize;
@@ -1084,6 +1089,7 @@ LegalizerHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx, LLT WideTy) {
   case TargetOpcode::G_FCEIL:
   case TargetOpcode::G_FCOS:
   case TargetOpcode::G_FSIN:
+  case TargetOpcode::G_FLOG10:
     assert(TypeIdx == 0);
     Observer.changingInstr(MI);
 
