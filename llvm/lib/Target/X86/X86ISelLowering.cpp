@@ -14487,8 +14487,10 @@ static SDValue lowerShuffleWithUndefHalf(const SDLoc &DL, MVT VT, SDValue V1,
     if (NumUpperHalves == 1) {
       // AVX2 has efficient 32/64-bit element cross-lane shuffles.
       if (Subtarget.hasAVX2()) {
+        // extract128 + vunpckhps, is better than vblend + vpermps.
         // TODO: Refine to account for unary shuffle, splat, and other masks?
-        if (EltWidth == 32 && NumLowerHalves == 1)
+        if (EltWidth == 32 && NumLowerHalves &&
+            HalfVT.is128BitVector() && !is128BitUnpackShuffleMask(HalfMask))
           return SDValue();
         if (EltWidth == 64)
           return SDValue();
