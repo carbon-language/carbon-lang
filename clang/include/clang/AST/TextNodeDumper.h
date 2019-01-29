@@ -172,6 +172,8 @@ public:
 
   void Visit(const BlockDecl::Capture &C);
 
+  void Visit(const GenericSelectionExpr::ConstAssociation &A);
+
   void dumpPointer(const void *Ptr);
   void dumpLocation(SourceLocation Loc);
   void dumpSourceRange(SourceRange R);
