@@ -230,6 +230,19 @@ defm "" : Splat<v2i64, "i64x2", I64, splat2, 15>;
 defm "" : Splat<v4f32, "f32x4", F32, splat4, 18>;
 defm "" : Splat<v2f64, "f64x2", F64, splat2, 21>;
 
+// scalar_to_vector leaves high lanes undefined, so can be a splat
+class ScalarSplatPat<ValueType vec_t, ValueType lane_t,
+                     WebAssemblyRegClass reg_t> :
+  Pat<(vec_t (scalar_to_vector (lane_t reg_t:$x))),
+      (!cast<Instruction>("SPLAT_"#vec_t) reg_t:$x)>;
+
+def : ScalarSplatPat<v16i8, i32, I32>;
+def : ScalarSplatPat<v8i16, i32, I32>;
+def : ScalarSplatPat<v4i32, i32, I32>;
+def : ScalarSplatPat<v2i64, i64, I64>;
+def : ScalarSplatPat<v4f32, f32, F32>;
+def : ScalarSplatPat<v2f64, f64, F64>;
+
 //===----------------------------------------------------------------------===//
 // Accessing lanes
 //===----------------------------------------------------------------------===//
