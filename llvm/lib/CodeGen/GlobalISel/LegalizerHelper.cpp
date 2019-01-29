@@ -795,13 +795,12 @@ LegalizerHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx, LLT WideTy) {
 
     unsigned NumSrc = MI.getNumOperands() - 1;
     unsigned EltSize = DstTy.getSizeInBits() / NumSrc;
-    LLT EltTy = LLT::scalar(EltSize);
 
     unsigned ResultReg = MRI.createGenericVirtualRegister(DstTy);
     unsigned Offset = 0;
     for (unsigned I = 1, E = MI.getNumOperands(); I != E; ++I,
            Offset += EltSize) {
-      assert(MRI.getType(MI.getOperand(I).getReg()) == EltTy);
+      assert(MRI.getType(MI.getOperand(I).getReg()) == LLT::scalar(EltSize));
 
       unsigned ShiftAmt = MRI.createGenericVirtualRegister(DstTy);
       unsigned Shl = MRI.createGenericVirtualRegister(DstTy);
