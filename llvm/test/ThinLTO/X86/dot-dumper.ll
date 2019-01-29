@@ -12,9 +12,9 @@
 
 ; Never assume specific order of clusters, nodes or edges
 ; RUN: cat %t1.dot | FileCheck --check-prefix=STRUCTURE1 %s
-; RUN: cat %t1.dot | FileCheck --check-prefix=CLUSTER0 %s
+; RUN: cat %t1.dot | FileCheck --check-prefix=CLUSTER0 --check-prefix=PERMODULE0 %s
 ; RUN: cat %t2.dot | FileCheck --check-prefix=STRUCTURE2 %s
-; RUN: cat %t2.dot | FileCheck --check-prefix=CLUSTER1 %s
+; RUN: cat %t2.dot | FileCheck --check-prefix=CLUSTER1 --check-prefix=PERMODULE1 %s
 ; RUN: cat %t3.index.dot | FileCheck --check-prefix=STRUCTURE %s
 ; RUN: cat %t3.index.dot | FileCheck --check-prefix=CLUSTER0 --check-prefix=COMBINED0 %s
 ; RUN: cat %t3.index.dot | FileCheck --check-prefix=CLUSTER1 --check-prefix=COMBINED1 %s
@@ -46,7 +46,8 @@
 ; STRUCTURE-DAG:      M0_{{[0-9]+}} -> M1_{{[0-9]+}} [{{.*}}]; // const-ref
 ; STRUCTURE-NEXT:   }
 
-; CLUSTER0:         // Module: {{.*}}
+; PERMODULE0:       // Module:
+; COMBINED0:	    // Module: {{.*}}1.bc
 ; CLUSTER0-NEXT:    subgraph cluster_[[ID0:[0-1]]] {
 ; CLUSTER0-DAG:       M[[ID0]]_[[MAIN_ALIAS:[0-9]+]] [{{.*}}main_alias{{.*}}]; // alias, dead
 ; CLUSTER0-DAG:       M[[ID0]]_[[MAIN:[0-9]+]] [{{.*}}main|extern{{.*}}]; // function
@@ -54,10 +55,8 @@
 ; COMBINED0-NEXT:     M[[ID0]]_[[MAIN_ALIAS]] -> M[[ID0]]_[[MAIN]] [{{.*}}]; // alias
 ; CLUSTER0-NEXT:    }
 
-; For the combined index make sure we match the second cluster.
-; COMBINED1:	    // Module: {{.*}}1.bc
-; CLUSTER1:         // Module:
-; COMBINED1-SAME:	{{.*}}2.bc
+; PERMODULE1:       // Module:
+; COMBINED1:	    // Module: {{.*}}2.bc
 ; CLUSTER1-NEXT:    subgraph cluster_[[ID1:[0-1]]] {
 ; CLUSTER1-DAG:       M[[ID1]]_[[A:[0-9]+]] [{{.*}}A|extern{{.*}}]; // variable
 ; COMBINED1-SAME:	, immutable
