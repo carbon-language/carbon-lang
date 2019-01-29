@@ -23,15 +23,6 @@
 #include "FuzzerValueBitMap.h"
 #include <set>
 
-// The coverage counters and PCs.
-// These are declared as global variables named "__sancov_*" to simplify
-// experiments with inlined instrumentation.
-alignas(64) ATTRIBUTE_INTERFACE
-uint8_t __sancov_trace_pc_guard_8bit_counters[fuzzer::TracePC::kNumPCs];
-
-ATTRIBUTE_INTERFACE
-uintptr_t __sancov_trace_pc_pcs[fuzzer::TracePC::kNumPCs];
-
 // Used by -fsanitize-coverage=stack-depth to track stack depth
 ATTRIBUTES_INTERFACE_TLS_INITIAL_EXEC uintptr_t __sancov_lowest_stack;
 
@@ -39,13 +30,9 @@ namespace fuzzer {
 
 TracePC TPC;
 
-uint8_t *TracePC::Counters() const {
-  return __sancov_trace_pc_guard_8bit_counters;
-}
+/// ZZZ uint8_t *TracePC::Counters() const {
 
-uintptr_t *TracePC::PCs() const {
-  return __sancov_trace_pc_pcs;
-}
+/// ZZZ uintptr_t *TracePC::PCs() const {
 
 size_t TracePC::GetTotalPCCoverage() {
   if (ObservedPCs.size())
@@ -96,13 +83,6 @@ void TracePC::HandleInit(uint32_t *Start, uint32_t *Stop) {
 }
 
 void TracePC::PrintModuleInfo() {
-  if (NumGuards) {
-    Printf("INFO: Loaded %zd modules   (%zd guards): ", NumModules, NumGuards);
-    for (size_t i = 0; i < NumModules; i++)
-      Printf("%zd [%p, %p), ", Modules[i].Stop - Modules[i].Start,
-             Modules[i].Start, Modules[i].Stop);
-    Printf("\n");
-  }
   if (NumModulesWithInline8bitCounters) {
     Printf("INFO: Loaded %zd modules   (%zd inline 8-bit counters): ",
            NumModulesWithInline8bitCounters, NumInline8bitCounters);
@@ -120,8 +100,7 @@ void TracePC::PrintModuleInfo() {
     }
     Printf("\n");
 
-    if ((NumGuards && NumGuards != NumPCsInPCTables) ||
-        (NumInline8bitCounters && NumInline8bitCounters != NumPCsInPCTables)) {
+    if (NumInline8bitCounters && NumInline8bitCounters != NumPCsInPCTables) {
       Printf("ERROR: The size of coverage PC tables does not match the\n"
              "number of instrumented PCs. This might be a compiler bug,\n"
              "please contact the libFuzzer developers.\n"
@@ -198,17 +177,6 @@ void TracePC::UpdateObservedPCs() {
                (size_t)(ModulePCTable[i].Stop - ModulePCTable[i].Start));
         for (size_t j = 0; j < Size; j++)
           if (Beg[j])
-            Observe(ModulePCTable[i].Start[j]);
-      }
-    } else if (NumGuards == NumPCsInPCTables) {
-      size_t GuardIdx = 1;
-      for (size_t i = 0; i < NumModules; i++) {
-        uint32_t *Beg = Modules[i].Start;
-        size_t Size = Modules[i].Stop - Beg;
-        assert(Size ==
-               (size_t)(ModulePCTable[i].Stop - ModulePCTable[i].Start));
-        for (size_t j = 0; j < Size; j++, GuardIdx++)
-          if (Counters()[GuardIdx])
             Observe(ModulePCTable[i].Start[j]);
       }
     }
