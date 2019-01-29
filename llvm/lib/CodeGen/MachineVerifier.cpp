@@ -1056,6 +1056,50 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
       report("bitcast sizes must match", MI);
     break;
   }
+  case TargetOpcode::G_INTTOPTR:
+  case TargetOpcode::G_PTRTOINT:
+  case TargetOpcode::G_ADDRSPACE_CAST: {
+    LLT DstTy = MRI->getType(MI->getOperand(0).getReg());
+    LLT SrcTy = MRI->getType(MI->getOperand(1).getReg());
+    if (!DstTy.isValid() || !SrcTy.isValid())
+      break;
+
+    if (DstTy.isVector() != SrcTy.isVector())
+      report("pointer casts must be all-vector or all-scalar", MI);
+    else {
+      if (DstTy.isVector() ) {
+        if (DstTy.getNumElements() != SrcTy.getNumElements()) {
+          report("pointer casts must preserve number of elements", MI);
+          break;
+        }
+      }
+    }
+
+    DstTy = DstTy.getScalarType();
+    SrcTy = SrcTy.getScalarType();
+
+    if (MI->getOpcode() == TargetOpcode::G_INTTOPTR) {
+      if (!DstTy.isPointer())
+        report("inttoptr result type must be a pointer", MI);
+      if (SrcTy.isPointer())
+        report("inttoptr source type must not be a pointer", MI);
+    } else if (MI->getOpcode() == TargetOpcode::G_PTRTOINT) {
+      if (!SrcTy.isPointer())
+        report("ptrtoint source type must be a pointer", MI);
+      if (DstTy.isPointer())
+        report("ptrtoint result type must not be a pointer", MI);
+    } else {
+      assert(MI->getOpcode() == TargetOpcode::G_ADDRSPACE_CAST);
+      if (!SrcTy.isPointer() || !DstTy.isPointer())
+        report("addrspacecast types must be pointers", MI);
+      else {
+        if (SrcTy.getAddressSpace() == DstTy.getAddressSpace())
+          report("addrspacecast must convert different address spaces", MI);
+      }
+    }
+
+    break;
+  }
   case TargetOpcode::G_SEXT:
   case TargetOpcode::G_ZEXT:
   case TargetOpcode::G_ANYEXT:
