@@ -14,7 +14,7 @@
 #include <functional>
 #include <memory>
 
-LLVM_INSTANTIATE_REGISTRY(llvm::Registry<clang::clangd::Tweak>);
+LLVM_INSTANTIATE_REGISTRY(llvm::Registry<clang::clangd::Tweak>)
 
 namespace clang {
 namespace clangd {
