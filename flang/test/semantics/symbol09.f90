@@ -63,8 +63,8 @@ subroutine s3
  !DEF: /s3/x ObjectEntity REAL(4)
  real, dimension(n,n) :: x
  !REF: /s3/x
- !DEF: /s3/Block1/k (implicit) ObjectEntity INTEGER(4)
- !DEF: /s3/Block1/j ObjectEntity INTEGER(8)
+ !DEF: /s3/ImpliedDos1/k (implicit) ObjectEntity INTEGER(4)
+ !DEF: /s3/ImpliedDos1/j ObjectEntity INTEGER(8)
  !REF: /s3/n
  !REF: /s3/n2
  data ((x(k,j),integer(kind=8)::j=1,n),k=1,n)/n2*3.0/

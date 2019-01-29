@@ -1,4 +1,4 @@
-! Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ subroutine s3
   !DEF: /s3/Block1/t DerivedType
   type :: t
    !DEF: /s3/Block1/t/x ObjectEntity REAL(4)
-   !DEF: /s3/i (implicit) ObjectEntity INTEGER(4)
+   !DEF: /s3/Block1/t/ImpliedDos1/i (implicit) ObjectEntity INTEGER(4)
    real :: x(10) = [(i, i=1,10)]
   end type
  end block

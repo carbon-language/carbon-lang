@@ -687,10 +687,11 @@ public:
 protected:
   bool BeginDecl();
   void EndDecl();
-  // Declare a construct entity. If there isn't a type specified
+  Symbol &DeclareObjectEntity(const parser::Name &, Attrs);
+  // Declare a LOCAL/LOCAL_INIT entity. If there isn't a type specified
   // it comes from the entity in the containing scope, or implicit rules.
   // Return pointer to the new symbol, or nullptr on error.
-  Symbol *DeclareConstructEntity(const parser::Name &);
+  Symbol *DeclareLocalEntity(const parser::Name &);
   // Declare a statement entity (e.g., an implied DO loop index).
   // If there isn't a type specified, implicit rules apply.
   // Return pointer to the new symbol, or nullptr on error.
@@ -698,6 +699,7 @@ protected:
       const parser::Name &, const std::optional<parser::IntegerTypeSpec> &);
   bool CheckUseError(const parser::Name &);
   void CheckAccessibility(const parser::Name &, bool, const Symbol &);
+  void CheckScalarIntegerType(const parser::Name &);
 
 private:
   // The attribute corresponding to the statement containing an ObjectDecl
@@ -722,7 +724,6 @@ private:
   bool HandleAttributeStmt(Attr, const std::list<parser::Name> &);
   Symbol &HandleAttributeStmt(Attr, const parser::Name &);
   Symbol &DeclareUnknownEntity(const parser::Name &, Attrs);
-  Symbol &DeclareObjectEntity(const parser::Name &, Attrs);
   Symbol &DeclareProcEntity(const parser::Name &, Attrs, const ProcInterface &);
   void SetType(const parser::Name &, const DeclTypeSpec &);
   const Symbol *ResolveDerivedType(const parser::Name &);
@@ -853,7 +854,6 @@ private:
   }
   bool CheckDef(const std::optional<parser::Name> &);
   void CheckRef(const std::optional<parser::Name> &);
-  void CheckScalarIntegerType(const Symbol &);
   const DeclTypeSpec &ToDeclTypeSpec(evaluate::DynamicType &&);
   const DeclTypeSpec &ToDeclTypeSpec(
       evaluate::DynamicType &&, SubscriptIntExpr &&length);
@@ -2345,6 +2345,24 @@ void DeclarationVisitor::CheckAccessibility(
   }
 }
 
+void DeclarationVisitor::CheckScalarIntegerType(const parser::Name &name) {
+  if (name.symbol != nullptr) {
+    const Symbol &symbol{*name.symbol};
+    if (const auto *details{symbol.detailsIf<ObjectEntityDetails>()}) {
+      if (details->IsArray()) {
+        Say(name, "Variable '%s' is not scalar"_err_en_US);
+        return;
+      }
+    }
+    if (auto *type{symbol.GetType()}) {
+      if (!type->IsNumeric(TypeCategory::Integer)) {
+        Say(name, "Variable '%s' is not integer"_err_en_US);
+        return;
+      }
+    }
+  }
+}
+
 void DeclarationVisitor::Post(const parser::DimensionStmt::Declaration &x) {
   const auto &name{std::get<parser::Name>(x.t)};
   DeclareObjectEntity(name, Attrs{});
@@ -2979,27 +2997,33 @@ bool DeclarationVisitor::Pre(const parser::StructureConstructor &x) {
   return false;
 }
 
-Symbol *DeclarationVisitor::DeclareConstructEntity(const parser::Name &name) {
+Symbol *DeclarationVisitor::DeclareLocalEntity(const parser::Name &name) {
   auto *prev{FindSymbol(name)};
-  if (prev) {
-    if (prev->owner().kind() == Scope::Kind::Forall ||
-        prev->owner() == currScope()) {
-      SayAlreadyDeclared(name, *prev);
-      return nullptr;
-    }
-    name.symbol = nullptr;
+  bool implicit{false};
+  if (prev == nullptr) {
+    // Declare the name as an object in the enclosing scope so that
+    // the name can't be repurposed there later as something else.
+    prev = &MakeSymbol(InclusiveScope(), name.source, Attrs{});
+    ApplyImplicitRules(*prev);
+    implicit = true;
   }
-  auto &symbol{DeclareObjectEntity(name, {})};
-  if (symbol.GetType()) {
-    // type came from explicit type-spec
-  } else if (!prev) {
-    ApplyImplicitRules(symbol);
-  } else if (!prev->has<ObjectEntityDetails>() && !prev->has<EntityDetails>()) {
-    Say2(name, "Index name '%s' conflicts with existing identifier"_err_en_US,
-        *prev, "Previous declaration of '%s'"_en_US);
+  if (!ConvertToObjectEntity(*prev)) {
+    Say2(name, "Locality attribute not allowed on '%s'"_err_en_US, *prev,
+        "Declaration of '%s'"_en_US);
     return nullptr;
-  } else if (auto *type{prev->GetType()}) {
-    symbol.SetType(*type);
+  }
+  if (prev->owner() == currScope()) {
+    SayAlreadyDeclared(name, *prev);
+    return nullptr;
+  }
+  name.symbol = nullptr;
+  Symbol &symbol{DeclareEntity<ObjectEntityDetails>(name, {})};
+  if (auto *type{prev->GetType()}) {
+    if (implicit) {
+      ApplyImplicitRules(symbol);
+    } else {
+      symbol.SetType(*type);
+    }
   }
   return &symbol;
 }
@@ -3027,6 +3051,7 @@ Symbol *DeclarationVisitor::DeclareStatementEntity(const parser::Name &name,
     } else {
       ApplyImplicitRules(symbol);
     }
+    CheckScalarIntegerType(name);
     return Resolve(name, &symbol);
   }
   return nullptr;
@@ -3191,7 +3216,7 @@ void ConstructVisitor::Post(const parser::ConcurrentHeader &) {
 
 bool ConstructVisitor::Pre(const parser::LocalitySpec::Local &x) {
   for (auto &name : x.v) {
-    if (auto *symbol{DeclareConstructEntity(name)}) {
+    if (auto *symbol{DeclareLocalEntity(name)}) {
       symbol->set(Symbol::Flag::LocalityLocal);
     }
   }
@@ -3199,7 +3224,7 @@ bool ConstructVisitor::Pre(const parser::LocalitySpec::Local &x) {
 }
 bool ConstructVisitor::Pre(const parser::LocalitySpec::LocalInit &x) {
   for (auto &name : x.v) {
-    if (auto *symbol{DeclareConstructEntity(name)}) {
+    if (auto *symbol{DeclareLocalEntity(name)}) {
       symbol->set(Symbol::Flag::LocalityLocalInit);
     }
   }
@@ -3238,9 +3263,7 @@ bool ConstructVisitor::Pre(const parser::AcImpliedDo &x) {
   auto &control{std::get<parser::AcImpliedDoControl>(x.t)};
   auto &type{std::get<std::optional<parser::IntegerTypeSpec>>(control.t)};
   auto &bounds{std::get<parser::LoopBounds<parser::ScalarIntExpr>>(control.t)};
-  if (auto *symbol{DeclareStatementEntity(bounds.name.thing.thing, type)}) {
-    CheckScalarIntegerType(*symbol);
-  }
+  DeclareStatementEntity(bounds.name.thing.thing, type);
   Walk(bounds);
   Walk(values);
   return false;
@@ -3251,9 +3274,7 @@ bool ConstructVisitor::Pre(const parser::DataImpliedDo &x) {
   auto &type{std::get<std::optional<parser::IntegerTypeSpec>>(x.t)};
   auto &bounds{
       std::get<parser::LoopBounds<parser::ScalarIntConstantExpr>>(x.t)};
-  if (auto *symbol{DeclareStatementEntity(bounds.name.thing.thing, type)}) {
-    CheckScalarIntegerType(*symbol);
-  }
+  DeclareStatementEntity(bounds.name.thing.thing, type);
   Walk(bounds);
   Walk(objects);
   return false;
@@ -3278,10 +3299,37 @@ void ConstructVisitor::Post(const parser::DoConstruct &x) {
 }
 
 void ConstructVisitor::Post(const parser::ConcurrentControl &x) {
-  auto &name{std::get<parser::Name>(x.t)};
-  if (auto *symbol{DeclareConstructEntity(name)}) {
-    CheckScalarIntegerType(*symbol);
+  const auto &name{std::get<parser::Name>(x.t)};
+  auto *prev{FindSymbol(name)};
+  if (prev) {
+    if (prev->owner().kind() == Scope::Kind::Forall ||
+        prev->owner() == currScope()) {
+      SayAlreadyDeclared(name, *prev);
+      return;
+    }
+    name.symbol = nullptr;
   }
+  auto &symbol{DeclareObjectEntity(name, {})};
+  if (symbol.GetType()) {
+    // type came from explicit type-spec
+  } else if (!prev) {
+    ApplyImplicitRules(symbol);
+  } else if (!prev->has<ObjectEntityDetails>() && !prev->has<EntityDetails>()) {
+    Say2(name, "Index name '%s' conflicts with existing identifier"_err_en_US,
+        *prev, "Previous declaration of '%s'"_en_US);
+    return;
+  } else {
+    if (auto *type{prev->GetType()}) {
+      symbol.SetType(*type);
+    }
+    if (const auto *details{prev->detailsIf<ObjectEntityDetails>()}) {
+      if (details->IsArray()) {
+        Say2(name, "Index variable '%s' is not scalar"_err_en_US, *prev,
+            "Declaration of '%s'"_en_US);
+      }
+    }
+  }
+  CheckScalarIntegerType(name);
 }
 
 bool ConstructVisitor::Pre(const parser::ForallConstruct &) {
@@ -3397,21 +3445,6 @@ void ConstructVisitor::CheckRef(const std::optional<parser::Name> &x) {
   if (x) {
     // Just add an occurrence of this name; checking is done in ValidateLabels
     FindSymbol(*x);
-  }
-}
-
-void ConstructVisitor::CheckScalarIntegerType(const Symbol &symbol) {
-  if (const auto *details{symbol.detailsIf<ObjectEntityDetails>()}) {
-    if (details->IsArray()) {
-      Say(symbol.name(), "Variable '%s' is not scalar"_err_en_US);
-      return;
-    }
-  }
-  if (auto *type{symbol.GetType()}) {
-    if (!type->IsNumeric(TypeCategory::Integer)) {
-      Say(symbol.name(), "Variable '%s' is not integer"_err_en_US);
-      return;
-    }
   }
 }
 

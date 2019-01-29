@@ -27,7 +27,7 @@
 #include <optional>
 
 // TODO pmk remove when scaffolding is obsolete
-#define PMKDEBUG 1
+#undef PMKDEBUG
 #if PMKDEBUG
 #include "dump-parse-tree.h"
 #include <iostream>
@@ -1330,7 +1330,7 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &exprContext,
 
 static MaybeExpr AnalyzeExpr(
     ExpressionAnalysisContext &context, const parser::StructureConstructor &) {
-  context.Say("TODO: StructureConstructor unimplemented"_err_en_US);
+  context.Say("TODO: StructureConstructor unimplemented"_en_US);
   return std::nullopt;
 }
 

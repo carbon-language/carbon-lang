@@ -1,4 +1,4 @@
-! Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -150,6 +150,7 @@ end subroutine do_loop09
 #endif
 
 subroutine goto10(a,b,n)
+  dimension :: a(3), b(3)
   goto 10
 10 print *,"x"
 4 labelit: if (a(n-1) .ne. b(n-2)) then
