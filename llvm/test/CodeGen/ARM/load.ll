@@ -608,9 +608,8 @@ entry:
 define i32 @ldrb_ri_negative(i8* %p) {
 ; CHECK-T1-LABEL: ldrb_ri_negative:
 ; CHECK-T1:       @ %bb.0: @ %entry
-; CHECK-T1-NEXT:    movs r1, #0
-; CHECK-T1-NEXT:    mvns r1, r1
-; CHECK-T1-NEXT:    ldrb r0, [r0, r1]
+; CHECK-T1-NEXT:    subs r0, r0, #1
+; CHECK-T1-NEXT:    ldrb r0, [r0]
 ; CHECK-T1-NEXT:    bx lr
 ;
 ; CHECK-T2-LABEL: ldrb_ri_negative:
@@ -627,9 +626,8 @@ entry:
 define i32 @ldrh_ri_negative(i8* %p) {
 ; CHECK-T1-LABEL: ldrh_ri_negative:
 ; CHECK-T1:       @ %bb.0: @ %entry
-; CHECK-T1-NEXT:    movs r1, #0
-; CHECK-T1-NEXT:    mvns r1, r1
-; CHECK-T1-NEXT:    ldrh r0, [r0, r1]
+; CHECK-T1-NEXT:    subs r0, r0, #1
+; CHECK-T1-NEXT:    ldrh r0, [r0]
 ; CHECK-T1-NEXT:    bx lr
 ;
 ; CHECK-T2-LABEL: ldrh_ri_negative:
@@ -647,9 +645,8 @@ entry:
 define i32 @ldr_ri_negative(i8* %p) {
 ; CHECK-T1-LABEL: ldr_ri_negative:
 ; CHECK-T1:       @ %bb.0: @ %entry
-; CHECK-T1-NEXT:    movs r1, #0
-; CHECK-T1-NEXT:    mvns r1, r1
-; CHECK-T1-NEXT:    ldr r0, [r0, r1]
+; CHECK-T1-NEXT:    subs r0, r0, #1
+; CHECK-T1-NEXT:    ldr r0, [r0]
 ; CHECK-T1-NEXT:    bx lr
 ;
 ; CHECK-T2-LABEL: ldr_ri_negative:
@@ -666,9 +663,8 @@ entry:
 define void @strb_ri_negative(i8* %p, i32 %x) {
 ; CHECK-T1-LABEL: strb_ri_negative:
 ; CHECK-T1:       @ %bb.0: @ %entry
-; CHECK-T1-NEXT:    movs r2, #0
-; CHECK-T1-NEXT:    mvns r2, r2
-; CHECK-T1-NEXT:    strb r1, [r0, r2]
+; CHECK-T1-NEXT:    subs r0, r0, #1
+; CHECK-T1-NEXT:    strb r1, [r0]
 ; CHECK-T1-NEXT:    bx lr
 ;
 ; CHECK-T2-LABEL: strb_ri_negative:
@@ -685,9 +681,8 @@ entry:
 define void @strh_ri_negative(i8* %p, i32 %x) {
 ; CHECK-T1-LABEL: strh_ri_negative:
 ; CHECK-T1:       @ %bb.0: @ %entry
-; CHECK-T1-NEXT:    movs r2, #0
-; CHECK-T1-NEXT:    mvns r2, r2
-; CHECK-T1-NEXT:    strh r1, [r0, r2]
+; CHECK-T1-NEXT:    subs r0, r0, #1
+; CHECK-T1-NEXT:    strh r1, [r0]
 ; CHECK-T1-NEXT:    bx lr
 ;
 ; CHECK-T2-LABEL: strh_ri_negative:
@@ -705,9 +700,8 @@ entry:
 define void @str_ri_negative(i8* %p, i32 %x) {
 ; CHECK-T1-LABEL: str_ri_negative:
 ; CHECK-T1:       @ %bb.0: @ %entry
-; CHECK-T1-NEXT:    movs r2, #0
-; CHECK-T1-NEXT:    mvns r2, r2
-; CHECK-T1-NEXT:    str r1, [r0, r2]
+; CHECK-T1-NEXT:    subs r0, r0, #1
+; CHECK-T1-NEXT:    str r1, [r0]
 ; CHECK-T1-NEXT:    bx lr
 ;
 ; CHECK-T2-LABEL: str_ri_negative:
@@ -766,9 +760,8 @@ entry:
 define i32 @ldrb_ri_negative255(i8* %p) {
 ; CHECK-T1-LABEL: ldrb_ri_negative255:
 ; CHECK-T1:       @ %bb.0: @ %entry
-; CHECK-T1-NEXT:    movs r1, #254
-; CHECK-T1-NEXT:    mvns r1, r1
-; CHECK-T1-NEXT:    ldrb r0, [r0, r1]
+; CHECK-T1-NEXT:    subs r0, #255
+; CHECK-T1-NEXT:    ldrb r0, [r0]
 ; CHECK-T1-NEXT:    bx lr
 ;
 ; CHECK-T2-LABEL: ldrb_ri_negative255:
@@ -785,9 +778,8 @@ entry:
 define i32 @ldrh_ri_negative255(i8* %p) {
 ; CHECK-T1-LABEL: ldrh_ri_negative255:
 ; CHECK-T1:       @ %bb.0: @ %entry
-; CHECK-T1-NEXT:    movs r1, #254
-; CHECK-T1-NEXT:    mvns r1, r1
-; CHECK-T1-NEXT:    ldrh r0, [r0, r1]
+; CHECK-T1-NEXT:    subs r0, #255
+; CHECK-T1-NEXT:    ldrh r0, [r0]
 ; CHECK-T1-NEXT:    bx lr
 ;
 ; CHECK-T2-LABEL: ldrh_ri_negative255:
@@ -805,9 +797,8 @@ entry:
 define i32 @ldr_ri_negative255(i8* %p) {
 ; CHECK-T1-LABEL: ldr_ri_negative255:
 ; CHECK-T1:       @ %bb.0: @ %entry
-; CHECK-T1-NEXT:    movs r1, #254
-; CHECK-T1-NEXT:    mvns r1, r1
-; CHECK-T1-NEXT:    ldr r0, [r0, r1]
+; CHECK-T1-NEXT:    subs r0, #255
+; CHECK-T1-NEXT:    ldr r0, [r0]
 ; CHECK-T1-NEXT:    bx lr
 ;
 ; CHECK-T2-LABEL: ldr_ri_negative255:
@@ -824,9 +815,8 @@ entry:
 define void @strb_ri_negative255(i8* %p, i32 %x) {
 ; CHECK-T1-LABEL: strb_ri_negative255:
 ; CHECK-T1:       @ %bb.0: @ %entry
-; CHECK-T1-NEXT:    movs r2, #254
-; CHECK-T1-NEXT:    mvns r2, r2
-; CHECK-T1-NEXT:    strb r1, [r0, r2]
+; CHECK-T1-NEXT:    subs r0, #255
+; CHECK-T1-NEXT:    strb r1, [r0]
 ; CHECK-T1-NEXT:    bx lr
 ;
 ; CHECK-T2-LABEL: strb_ri_negative255:
@@ -843,9 +833,8 @@ entry:
 define void @strh_ri_negative255(i8* %p, i32 %x) {
 ; CHECK-T1-LABEL: strh_ri_negative255:
 ; CHECK-T1:       @ %bb.0: @ %entry
-; CHECK-T1-NEXT:    movs r2, #254
-; CHECK-T1-NEXT:    mvns r2, r2
-; CHECK-T1-NEXT:    strh r1, [r0, r2]
+; CHECK-T1-NEXT:    subs r0, #255
+; CHECK-T1-NEXT:    strh r1, [r0]
 ; CHECK-T1-NEXT:    bx lr
 ;
 ; CHECK-T2-LABEL: strh_ri_negative255:
@@ -863,9 +852,8 @@ entry:
 define void @str_ri_negative255(i8* %p, i32 %x) {
 ; CHECK-T1-LABEL: str_ri_negative255:
 ; CHECK-T1:       @ %bb.0: @ %entry
-; CHECK-T1-NEXT:    movs r2, #254
-; CHECK-T1-NEXT:    mvns r2, r2
-; CHECK-T1-NEXT:    str r1, [r0, r2]
+; CHECK-T1-NEXT:    subs r0, #255
+; CHECK-T1-NEXT:    str r1, [r0]
 ; CHECK-T1-NEXT:    bx lr
 ;
 ; CHECK-T2-LABEL: str_ri_negative255:
