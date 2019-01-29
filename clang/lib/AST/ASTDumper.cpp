@@ -1467,8 +1467,6 @@ void ASTDumper::Visit(const GenericSelectionExpr::ConstAssociation &A) {
 }
 
 void ASTDumper::VisitGenericSelectionExpr(const GenericSelectionExpr *E) {
-  if (E->isResultDependent())
-    OS << " result_dependent";
   dumpStmt(E->getControllingExpr());
   dumpTypeAsChild(E->getControllingExpr()->getType()); // FIXME: remove
 

@@ -776,6 +776,11 @@ void TextNodeDumper::VisitInitListExpr(const InitListExpr *ILE) {
   }
 }
 
+void TextNodeDumper::VisitGenericSelectionExpr(const GenericSelectionExpr *E) {
+  if (E->isResultDependent())
+    OS << " result_dependent";
+}
+
 void TextNodeDumper::VisitUnaryOperator(const UnaryOperator *Node) {
   OS << " " << (Node->isPostfix() ? "postfix" : "prefix") << " '"
      << UnaryOperator::getOpcodeStr(Node->getOpcode()) << "'";
