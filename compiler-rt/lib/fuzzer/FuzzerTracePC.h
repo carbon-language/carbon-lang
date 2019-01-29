@@ -69,11 +69,6 @@ struct MemMemTable {
 
 class TracePC {
  public:
-  static const size_t kNumPCs = 1 << 21;
-  // How many bits of PC are used from __sanitizer_cov_trace_pc.
-  static const size_t kTracePcBits = 18;
-
-  void HandleInit(uint32_t *Start, uint32_t *Stop);
   void HandleInline8bitCountersInit(uint8_t *Start, uint8_t *Stop);
   void HandlePCsInit(const uintptr_t *Start, const uintptr_t *Stop);
   void HandleCallerCallee(uintptr_t Caller, uintptr_t Callee);
@@ -88,8 +83,6 @@ class TracePC {
 
   void ResetMaps() {
     ValueProfileMap.Reset();
-    if (NumModules)
-      memset(Counters(), 0, GetNumPCs());
     ClearExtraCounters();
     ClearInlineCounters();
   }
@@ -102,7 +95,6 @@ class TracePC {
   void PrintModuleInfo();
 
   void PrintCoverage();
-  void DumpCoverage();
 
   template<class CallBack>
   void IterateCoveredFunctions(CallBack CB);
@@ -114,14 +106,6 @@ class TracePC {
   TableOfRecentCompares<uint64_t, 32> TORC8;
   TableOfRecentCompares<Word, 32> TORCW;
   MemMemTable<1024> MMT;
-
-  size_t GetNumPCs() const {
-    return NumGuards == 0 ? (1 << kTracePcBits) : Min(kNumPCs, NumGuards + 1);
-  }
-  uintptr_t GetPC(size_t Idx) {
-    assert(Idx < GetNumPCs());
-    return PCs()[Idx];
-  }
 
   void RecordInitialStack();
   uintptr_t GetMaxStackOffset() const;
@@ -141,14 +125,6 @@ private:
   bool DoPrintNewPCs = false;
   size_t NumPrintNewFuncs = 0;
 
-  struct Module {
-    uint32_t *Start, *Stop;
-  };
-
-  Module Modules[4096];
-  size_t NumModules;  // linker-initialized.
-  size_t NumGuards;  // linker-initialized.
-
   struct { uint8_t *Start, *Stop; } ModuleCounters[4096];
   size_t NumModulesWithInline8bitCounters;  // linker-initialized.
   size_t NumInline8bitCounters;
@@ -160,9 +136,6 @@ private:
   struct { const PCTableEntry *Start, *Stop; } ModulePCTable[4096];
   size_t NumPCTables;
   size_t NumPCsInPCTables;
-
-  uint8_t *Counters() const;
-  uintptr_t *PCs() const;
 
   Set<uintptr_t> ObservedPCs;
   std::unordered_map<uintptr_t, uintptr_t> ObservedFuncs;  // PC => Counter.
@@ -230,8 +203,6 @@ template <class Callback>  // void Callback(size_t Feature)
 ATTRIBUTE_NO_SANITIZE_ADDRESS
 ATTRIBUTE_NOINLINE
 void TracePC::CollectFeatures(Callback HandleFeature) const {
-  uint8_t *Counters = this->Counters();
-  size_t N = GetNumPCs();
   auto Handle8bitCounter = [&](size_t FirstFeature,
                                size_t Idx, uint8_t Counter) {
     if (UseCounters)
@@ -241,11 +212,6 @@ void TracePC::CollectFeatures(Callback HandleFeature) const {
   };
 
   size_t FirstFeature = 0;
-
-  if (!NumInline8bitCounters) {
-    ForEachNonZeroByte(Counters, Counters + N, FirstFeature, Handle8bitCounter);
-    FirstFeature += N * 8;
-  }
 
   if (NumInline8bitCounters) {
     for (size_t i = 0; i < NumModulesWithInline8bitCounters; i++) {
