@@ -416,16 +416,20 @@ uintptr_t TracePC::GetMaxStackOffset() const {
   return InitialStack - __sancov_lowest_stack;  // Stack grows down
 }
 
+void WarnAboutDeprecatedInstrumentation(const char *flag) {
+  Printf("libFuzzer does not support %s any more.\n"
+         "Please either migrate to a compiler that supports -fsanitize=fuzzer\n"
+         "or use an older version of libFuzzer\n", flag);
+  exit(1);
+}
+
 } // namespace fuzzer
 
 extern "C" {
 ATTRIBUTE_INTERFACE
 ATTRIBUTE_NO_SANITIZE_ALL
 void __sanitizer_cov_trace_pc_guard(uint32_t *Guard) {
-  uintptr_t PC = reinterpret_cast<uintptr_t>(GET_CALLER_PC());
-  uint32_t Idx = *Guard;
-  __sancov_trace_pc_pcs[Idx] = PC;
-  __sancov_trace_pc_guard_8bit_counters[Idx]++;
+  fuzzer::WarnAboutDeprecatedInstrumentation("-fsanitize-coverage=trace-pc");
 }
 
 // Best-effort support for -fsanitize-coverage=trace-pc, which is available
@@ -433,15 +437,14 @@ void __sanitizer_cov_trace_pc_guard(uint32_t *Guard) {
 ATTRIBUTE_INTERFACE
 ATTRIBUTE_NO_SANITIZE_ALL
 void __sanitizer_cov_trace_pc() {
-  uintptr_t PC = reinterpret_cast<uintptr_t>(GET_CALLER_PC());
-  uintptr_t Idx = PC & (((uintptr_t)1 << fuzzer::TracePC::kTracePcBits) - 1);
-  __sancov_trace_pc_pcs[Idx] = PC;
-  __sancov_trace_pc_guard_8bit_counters[Idx]++;
+  fuzzer::WarnAboutDeprecatedInstrumentation(
+      "-fsanitize-coverage=trace-pc-guard");
 }
 
 ATTRIBUTE_INTERFACE
 void __sanitizer_cov_trace_pc_guard_init(uint32_t *Start, uint32_t *Stop) {
-  fuzzer::TPC.HandleInit(Start, Stop);
+  fuzzer::WarnAboutDeprecatedInstrumentation(
+      "-fsanitize-coverage=trace-pc-guard");
 }
 
 ATTRIBUTE_INTERFACE
