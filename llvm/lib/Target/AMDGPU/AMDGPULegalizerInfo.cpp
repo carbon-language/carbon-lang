@@ -168,7 +168,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     .legalFor({{S64, S32}, {S32, S16}, {S64, S16},
                {S32, S1}, {S64, S1}, {S16, S1},
                // FIXME: Hack
-               {S128, S32}})
+               {S128, S32}, {S128, S64}, {S32, LLT::scalar(24)}})
     .scalarize(0);
 
   getActionDefinitionsBuilder({G_SITOFP, G_UITOFP})
@@ -390,6 +390,13 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     };
 
     getActionDefinitionsBuilder(Op)
+      .widenScalarToNextPow2(LitTyIdx, /*Min*/ 16)
+      // Clamp the little scalar to s8-s256 and make it a power of 2. It's not
+      // worth considering the multiples of 64 since 2*192 and 2*384 are not
+      // valid.
+      .clampScalar(LitTyIdx, S16, S256)
+      .widenScalarToNextPow2(LitTyIdx, /*Min*/ 32)
+
       // Break up vectors with weird elements into scalars
       .fewerElementsIf(
         [=](const LegalityQuery &Query) { return notValidElt(Query, 0); },
@@ -416,12 +423,6 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
           }
           return std::make_pair(BigTyIdx, LLT::scalar(NewSizeInBits));
         })
-      .widenScalarToNextPow2(LitTyIdx, /*Min*/ 16)
-      // Clamp the little scalar to s8-s256 and make it a power of 2. It's not
-      // worth considering the multiples of 64 since 2*192 and 2*384 are not
-      // valid.
-      .clampScalar(LitTyIdx, S16, S256)
-      .widenScalarToNextPow2(LitTyIdx, /*Min*/ 32)
       .legalIf([=](const LegalityQuery &Query) {
           const LLT &BigTy = Query.Types[BigTyIdx];
           const LLT &LitTy = Query.Types[LitTyIdx];

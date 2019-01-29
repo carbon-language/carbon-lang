@@ -784,6 +784,46 @@ LegalizerHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx, LLT WideTy) {
   switch (MI.getOpcode()) {
   default:
     return UnableToLegalize;
+  case TargetOpcode::G_MERGE_VALUES: {
+    if (TypeIdx != 1)
+      return UnableToLegalize;
+
+    unsigned DstReg = MI.getOperand(0).getReg();
+    LLT DstTy = MRI.getType(DstReg);
+    if (!DstTy.isScalar())
+      return UnableToLegalize;
+
+    unsigned NumSrc = MI.getNumOperands() - 1;
+    unsigned EltSize = DstTy.getSizeInBits() / NumSrc;
+    LLT EltTy = LLT::scalar(EltSize);
+
+    unsigned ResultReg = MRI.createGenericVirtualRegister(DstTy);
+    unsigned Offset = 0;
+    for (unsigned I = 1, E = MI.getNumOperands(); I != E; ++I,
+           Offset += EltSize) {
+      assert(MRI.getType(MI.getOperand(I).getReg()) == EltTy);
+
+      unsigned ShiftAmt = MRI.createGenericVirtualRegister(DstTy);
+      unsigned Shl = MRI.createGenericVirtualRegister(DstTy);
+      unsigned ZextInput = MRI.createGenericVirtualRegister(DstTy);
+      MIRBuilder.buildZExt(ZextInput, MI.getOperand(I).getReg());
+
+      if (Offset != 0) {
+        unsigned NextResult = I + 1 == E ? DstReg :
+          MRI.createGenericVirtualRegister(DstTy);
+
+        MIRBuilder.buildConstant(ShiftAmt, Offset);
+        MIRBuilder.buildShl(Shl, ZextInput, ShiftAmt);
+        MIRBuilder.buildOr(NextResult, ResultReg, Shl);
+        ResultReg = NextResult;
+      } else {
+        ResultReg = ZextInput;
+      }
+    }
+
+    MI.eraseFromParent();
+    return Legalized;
+  }
   case TargetOpcode::G_UADDO:
   case TargetOpcode::G_USUBO: {
     if (TypeIdx == 1)
