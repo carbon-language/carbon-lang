@@ -67,7 +67,7 @@ llvm::Expected<std::unique_ptr<Tweak>> prepareTweak(TweakID ID,
   if (!T->prepare(S))
     return llvm::createStringError(llvm::inconvertibleErrorCode(),
                                    "failed to prepare() a check");
-  return T;
+  return std::move(T);
 }
 
 } // namespace clangd
