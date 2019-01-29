@@ -345,6 +345,8 @@ public:
   /// This is only meaningful if the summary applies to CXXMethodDecl*.
   ArgEffect getThisEffect() const { return This; }
 
+  ArgEffect getDefaultEffect() const { return DefaultArgEffect; }
+
   /// Set the effect of the method on "this".
   void setThisEffect(ArgEffect e) { This = e; }
 
@@ -709,6 +711,9 @@ private:
   /// RetainCount checker to report leaks and use-after-free if SelfInit checker
   /// is turned off.
   void updateSummaryForReceiverUnconsumedSelf(const RetainSummary *&S);
+
+  /// Set argument types for arguments which are not doing anything.
+  void updateSummaryForArgumentTypes(const AnyCall &C, const RetainSummary *&RS);
 
   /// Determine whether a declaration {@code D} of correspondent type (return
   /// type for functions/methods) {@code QT} has any of the given attributes,
