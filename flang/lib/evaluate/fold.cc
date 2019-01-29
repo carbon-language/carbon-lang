@@ -223,14 +223,14 @@ Expr<ImpliedDoIndex::Result> FoldOperation(
 
 template<typename T> class ArrayConstructorFolder {
 public:
-  explicit ArrayConstructorFolder(const FoldingContext &c) : context_{c} {
-    context_.impliedDos.clear();
-  }
+  explicit ArrayConstructorFolder(const FoldingContext &c) : context_{c} {}
+
   Expr<T> FoldArray(ArrayConstructor<T> &&array) {
     if (FoldArray(array.values)) {
       std::int64_t n = elements_.size();
-      return Expr<T>{
+      Expr<T> result{
           Constant<T>{std::move(elements_), std::vector<std::int64_t>{n}}};
+      return result;
     } else {
       return Expr<T>{std::move(array)};
     }
@@ -246,7 +246,10 @@ private:
       std::vector<std::int64_t> index(shape.size(), 1);
       for (std::size_t n{c->size()}; n-- > 0;) {
         elements_.push_back(c->At(index));
-        for (int d{0}; d < rank && ++index[d] <= shape[d]; ++d) {
+        for (int d{0}; d < rank; ++d) {
+          if (++index[d] <= shape[d]) {
+            break;
+          }
           index[d] = 1;
         }
       }
@@ -302,7 +305,6 @@ Expr<T> FoldOperation(FoldingContext &context, ArrayConstructor<T> &&array) {
 
 Expr<SomeDerived> FoldOperation(
     FoldingContext &context, ArrayConstructor<SomeDerived> &&array) {
-  // TODO pmk: derived type array constructor folding (no Scalar<T> to use)
   return Expr<SomeDerived>{std::move(array)};
 }
 

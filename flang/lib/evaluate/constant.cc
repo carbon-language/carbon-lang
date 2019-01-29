@@ -19,10 +19,19 @@
 namespace Fortran::evaluate {
 template<typename T>
 std::ostream &Constant<T>::AsFortran(std::ostream &o) const {
-  if (Rank() > 0) {
-    o << "reshape([" << GetType().AsFortran() << "::";
+  if (Rank() > 1) {
+    o << "reshape(";
   }
+  if (Rank() > 0) {
+    o << '[' << GetType().AsFortran() << "::";
+  }
+  bool first{true};
   for (const auto &value : values_) {
+    if (first) {
+      first = false;
+    } else {
+      o << ',';
+    }
     if constexpr (T::category == TypeCategory::Integer) {
       o << value.SignedDecimal() << '_' << T::kind;
     } else if constexpr (T::category == TypeCategory::Real ||
@@ -42,7 +51,10 @@ std::ostream &Constant<T>::AsFortran(std::ostream &o) const {
     }
   }
   if (Rank() > 0) {
-    o << "],shape=";
+    o << ']';
+  }
+  if (Rank() > 1) {
+    o << ",shape=";
     char ch{'['};
     for (auto dim : shape_) {
       o << ch << dim;
