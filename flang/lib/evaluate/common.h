@@ -22,6 +22,7 @@
 #include "../parser/char-block.h"
 #include "../parser/message.h"
 #include <cinttypes>
+#include <map>
 
 namespace Fortran::semantics {
 class DerivedTypeSpec;
@@ -199,19 +200,20 @@ struct FoldingContext {
     : messages{m}, rounding{round}, flushSubnormalsToZero{flush} {}
   FoldingContext(const FoldingContext &that)
     : messages{that.messages}, rounding{that.rounding},
-      flushSubnormalsToZero{that.flushSubnormalsToZero}, pdtInstance{
-                                                           that.pdtInstance} {}
+      flushDenormalsToZero{that.flushDenormalsToZero},
+      pdtInstance{that.pdtInstance}, impliedDos{that.impliedDos} {}
   FoldingContext(
       const FoldingContext &that, const parser::ContextualMessages &m)
     : messages{m}, rounding{that.rounding},
-      flushSubnormalsToZero{that.flushSubnormalsToZero}, pdtInstance{
-                                                           that.pdtInstance} {}
+      flushDenormalsToZero{that.flushDenormalsToZero},
+      pdtInstance{that.pdtInstance}, impliedDos{that.impliedDos} {}
 
   parser::ContextualMessages messages;
   Rounding rounding{defaultRounding};
   bool flushSubnormalsToZero{false};
   bool bigEndian{false};
   const semantics::DerivedTypeSpec *pdtInstance{nullptr};
+  std::map<parser::CharBlock, std::int64_t> impliedDos;
 };
 
 void RealFlagWarnings(FoldingContext &, const RealFlags &, const char *op);

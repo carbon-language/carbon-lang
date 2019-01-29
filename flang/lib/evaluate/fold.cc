@@ -14,6 +14,7 @@
 
 #include "fold.h"
 #include "common.h"
+#include "constant.h"
 #include "expression.h"
 #include "int-power.h"
 #include "tools.h"
@@ -54,6 +55,8 @@ template<typename T> Expr<T> FoldOperation(FoldingContext &, Designator<T> &&);
 template<int KIND>
 Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
     FoldingContext &, TypeParamInquiry<KIND> &&);
+template<typename T>
+Expr<T> FoldOperation(FoldingContext &, ArrayConstructor<T> &&);
 
 // Overloads, instantiations, and specializations of FoldOperation().
 
@@ -207,6 +210,100 @@ Expr<T> FoldOperation(FoldingContext &context, Designator<T> &&designator) {
           },
       },
       std::move(designator.u));
+}
+
+// Array constructor folding
+
+Expr<ImpliedDoIndex::Result> FoldOperation(
+    FoldingContext &context, ImpliedDoIndex &&iDo) {
+  auto iter{context.impliedDos.find(iDo.name)};
+  CHECK(iter != context.impliedDos.end());
+  return Expr<ImpliedDoIndex::Result>{iter->second};
+}
+
+template<typename T> class ArrayConstructorFolder {
+public:
+  explicit ArrayConstructorFolder(const FoldingContext &c) : context_{c} {
+    context_.impliedDos.clear();
+  }
+  Expr<T> FoldArray(ArrayConstructor<T> &&array) {
+    if (FoldArray(array.values)) {
+      std::int64_t n = elements_.size();
+      return Expr<T>{
+          Constant<T>{std::move(elements_), std::vector<std::int64_t>{n}}};
+    } else {
+      return Expr<T>{std::move(array)};
+    }
+  }
+
+private:
+  bool FoldArray(const CopyableIndirection<Expr<T>> &expr) {
+    Expr<T> folded{Fold(context_, Expr<T>{*expr})};
+    if (auto *c{UnwrapExpr<Constant<T>>(folded)}) {
+      // Copy elements in Fortran array element order
+      std::vector<std::int64_t> shape{c->shape()};
+      int rank{c->Rank()};
+      std::vector<std::int64_t> index(shape.size(), 1);
+      for (std::size_t n{c->size()}; n-- > 0;) {
+        elements_.push_back(c->At(index));
+        for (int d{0}; d < rank && ++index[d] <= shape[d]; ++d) {
+          index[d] = 1;
+        }
+      }
+      return true;
+    } else {
+      return false;
+    }
+  }
+  bool FoldArray(const ImpliedDo<T> &iDo) {
+    Expr<SubscriptInteger> lower{
+        Fold(context_, Expr<SubscriptInteger>{*iDo.lower})};
+    Expr<SubscriptInteger> upper{
+        Fold(context_, Expr<SubscriptInteger>{*iDo.upper})};
+    Expr<SubscriptInteger> stride{
+        Fold(context_, Expr<SubscriptInteger>{*iDo.stride})};
+    std::optional<std::int64_t> start{ToInt64(lower)}, end{ToInt64(upper)},
+        step{ToInt64(stride)};
+    if (start.has_value() && end.has_value() && step.has_value()) {
+      auto pair{context_.impliedDos.insert(
+          std::make_pair(iDo.controlVariableName, *start))};
+      CHECK(pair.second);
+      bool result{true};
+      for (std::int64_t &j{pair.first->second}; j <= *end; j += *step) {
+        result &= FoldArray(*iDo.values);
+      }
+      context_.impliedDos.erase(pair.first);
+      return result;
+    } else {
+      return false;
+    }
+  }
+  bool FoldArray(const ArrayConstructorValue<T> &x) {
+    return std::visit([&](const auto &y) { return FoldArray(y); }, x.u);
+  }
+  bool FoldArray(const ArrayConstructorValues<T> &xs) {
+    for (const auto &x : xs.values) {
+      if (!FoldArray(x)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  FoldingContext context_;
+  std::vector<Scalar<T>> elements_;
+};
+
+template<typename T>
+Expr<T> FoldOperation(FoldingContext &context, ArrayConstructor<T> &&array) {
+  ArrayConstructorFolder<T> folder{context};
+  return folder.FoldArray(std::move(array));
+}
+
+Expr<SomeDerived> FoldOperation(
+    FoldingContext &context, ArrayConstructor<SomeDerived> &&array) {
+  // TODO pmk: derived type array constructor folding (no Scalar<T> to use)
+  return Expr<SomeDerived>{std::move(array)};
 }
 
 // Substitute a bare type parameter reference with its value if it has one now

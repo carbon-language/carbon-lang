@@ -694,7 +694,8 @@ protected:
   // Declare a statement entity (e.g., an implied DO loop index).
   // If there isn't a type specified, implicit rules apply.
   // Return pointer to the new symbol, or nullptr on error.
-  Symbol *DeclareStatementEntity(const parser::Name &);
+  Symbol *DeclareStatementEntity(
+      const parser::Name &, const std::optional<parser::IntegerTypeSpec> &);
   bool CheckUseError(const parser::Name &);
   void CheckAccessibility(const parser::Name &, bool, const Symbol &);
 
@@ -3003,7 +3004,8 @@ Symbol *DeclarationVisitor::DeclareConstructEntity(const parser::Name &name) {
   return &symbol;
 }
 
-Symbol *DeclarationVisitor::DeclareStatementEntity(const parser::Name &name) {
+Symbol *DeclarationVisitor::DeclareStatementEntity(const parser::Name &name,
+    const std::optional<parser::IntegerTypeSpec> &type) {
   if (auto *prev{FindSymbol(name)}) {
     if (prev->owner() == currScope()) {
       SayAlreadyDeclared(name, *prev);
@@ -3013,8 +3015,15 @@ Symbol *DeclarationVisitor::DeclareStatementEntity(const parser::Name &name) {
   }
   Symbol &symbol{DeclareEntity<ObjectEntityDetails>(name, {})};
   if (symbol.has<ObjectEntityDetails>()) {
-    if (auto *type{GetDeclTypeSpec()}) {
-      SetType(name, *type);
+    const DeclTypeSpec *declTypeSpec{nullptr};
+    if (type.has_value()) {
+      BeginDeclTypeSpec();
+      DeclarationVisitor::Post(*type);
+      declTypeSpec = GetDeclTypeSpec();
+      EndDeclTypeSpec();
+    }
+    if (declTypeSpec != nullptr) {
+      SetType(name, *declTypeSpec);
     } else {
       ApplyImplicitRules(symbol);
     }
@@ -3229,15 +3238,8 @@ bool ConstructVisitor::Pre(const parser::AcImpliedDo &x) {
   auto &control{std::get<parser::AcImpliedDoControl>(x.t)};
   auto &type{std::get<std::optional<parser::IntegerTypeSpec>>(control.t)};
   auto &bounds{std::get<parser::LoopBounds<parser::ScalarIntExpr>>(control.t)};
-  if (type) {
-    BeginDeclTypeSpec();
-    DeclarationVisitor::Post(*type);
-  }
-  if (auto *symbol{DeclareStatementEntity(bounds.name.thing.thing)}) {
+  if (auto *symbol{DeclareStatementEntity(bounds.name.thing.thing, type)}) {
     CheckScalarIntegerType(*symbol);
-  }
-  if (type) {
-    EndDeclTypeSpec();
   }
   Walk(bounds);
   Walk(values);
@@ -3249,15 +3251,8 @@ bool ConstructVisitor::Pre(const parser::DataImpliedDo &x) {
   auto &type{std::get<std::optional<parser::IntegerTypeSpec>>(x.t)};
   auto &bounds{
       std::get<parser::LoopBounds<parser::ScalarIntConstantExpr>>(x.t)};
-  if (type) {
-    BeginDeclTypeSpec();
-    DeclarationVisitor::Post(*type);
-  }
-  if (auto *symbol{DeclareStatementEntity(bounds.name.thing.thing)}) {
+  if (auto *symbol{DeclareStatementEntity(bounds.name.thing.thing, type)}) {
     CheckScalarIntegerType(*symbol);
-  }
-  if (type) {
-    EndDeclTypeSpec();
   }
   Walk(bounds);
   Walk(objects);
