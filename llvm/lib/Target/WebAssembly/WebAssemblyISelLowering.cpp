@@ -131,6 +131,13 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
       for (auto T : {MVT::v16i8, MVT::v8i16})
         setOperationAction(Op, T, Legal);
 
+    // Custom lower BUILD_VECTORs to minimize number of replace_lanes
+    for (auto T : {MVT::v16i8, MVT::v8i16, MVT::v4i32, MVT::v4f32})
+      setOperationAction(ISD::BUILD_VECTOR, T, Custom);
+    if (Subtarget->hasUnimplementedSIMD128())
+      for (auto T : {MVT::v2i64, MVT::v2f64})
+        setOperationAction(ISD::BUILD_VECTOR, T, Custom);
+
     // We have custom shuffle lowering to expose the shuffle mask
     for (auto T : {MVT::v16i8, MVT::v8i16, MVT::v4i32, MVT::v4f32})
       setOperationAction(ISD::VECTOR_SHUFFLE, T, Custom);
@@ -886,6 +893,8 @@ SDValue WebAssemblyTargetLowering::LowerOperation(SDValue Op,
     return LowerINTRINSIC_VOID(Op, DAG);
   case ISD::SIGN_EXTEND_INREG:
     return LowerSIGN_EXTEND_INREG(Op, DAG);
+  case ISD::BUILD_VECTOR:
+    return LowerBUILD_VECTOR(Op, DAG);
   case ISD::VECTOR_SHUFFLE:
     return LowerVECTOR_SHUFFLE(Op, DAG);
   case ISD::SHL:
@@ -1101,6 +1110,107 @@ WebAssemblyTargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op,
     return Op;
   // Otherwise expand
   return SDValue();
+}
+
+SDValue WebAssemblyTargetLowering::LowerBUILD_VECTOR(SDValue Op,
+                                                     SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  const EVT VecT = Op.getValueType();
+  const EVT LaneT = Op.getOperand(0).getValueType();
+  const size_t Lanes = Op.getNumOperands();
+  auto IsConstant = [](const SDValue &V) {
+    return V.getOpcode() == ISD::Constant || V.getOpcode() == ISD::ConstantFP;
+  };
+
+  // Find the most common operand, which is approximately the best to splat
+  using Entry = std::pair<SDValue, size_t>;
+  SmallVector<Entry, 16> ValueCounts;
+  size_t NumConst = 0, NumDynamic = 0;
+  for (const SDValue &Lane : Op->op_values()) {
+    if (Lane.isUndef()) {
+      continue;
+    } else if (IsConstant(Lane)) {
+      NumConst++;
+    } else {
+      NumDynamic++;
+    }
+    auto CountIt = std::find_if(ValueCounts.begin(), ValueCounts.end(),
+                                [&Lane](Entry A) { return A.first == Lane; });
+    if (CountIt == ValueCounts.end()) {
+      ValueCounts.emplace_back(Lane, 1);
+    } else {
+      CountIt->second++;
+    }
+  }
+  auto CommonIt =
+      std::max_element(ValueCounts.begin(), ValueCounts.end(),
+                       [](Entry A, Entry B) { return A.second < B.second; });
+  assert(CommonIt != ValueCounts.end() && "Unexpected all-undef build_vector");
+  SDValue SplatValue = CommonIt->first;
+  size_t NumCommon = CommonIt->second;
+
+  // If v128.const is available, consider using it instead of a splat
+  if (Subtarget->hasUnimplementedSIMD128()) {
+    // {i32,i64,f32,f64}.const opcode, and value
+    const size_t ConstBytes = 1 + std::max(size_t(4), 16 / Lanes);
+    // SIMD prefix and opcode
+    const size_t SplatBytes = 2;
+    const size_t SplatConstBytes = SplatBytes + ConstBytes;
+    // SIMD prefix, opcode, and lane index
+    const size_t ReplaceBytes = 3;
+    const size_t ReplaceConstBytes = ReplaceBytes + ConstBytes;
+    // SIMD prefix, v128.const opcode, and 128-bit value
+    const size_t VecConstBytes = 18;
+    // Initial v128.const and a replace_lane for each non-const operand
+    const size_t ConstInitBytes = VecConstBytes + NumDynamic * ReplaceBytes;
+    // Initial splat and all necessary replace_lanes
+    const size_t SplatInitBytes =
+        IsConstant(SplatValue)
+            // Initial constant splat
+            ? (SplatConstBytes +
+               // Constant replace_lanes
+               (NumConst - NumCommon) * ReplaceConstBytes +
+               // Dynamic replace_lanes
+               (NumDynamic * ReplaceBytes))
+            // Initial dynamic splat
+            : (SplatBytes +
+               // Constant replace_lanes
+               (NumConst * ReplaceConstBytes) +
+               // Dynamic replace_lanes
+               (NumDynamic - NumCommon) * ReplaceBytes);
+    if (ConstInitBytes < SplatInitBytes) {
+      // Create build_vector that will lower to initial v128.const
+      SmallVector<SDValue, 16> ConstLanes;
+      for (const SDValue &Lane : Op->op_values()) {
+        if (IsConstant(Lane)) {
+          ConstLanes.push_back(Lane);
+        } else if (LaneT.isFloatingPoint()) {
+          ConstLanes.push_back(DAG.getConstantFP(0, DL, LaneT));
+        } else {
+          ConstLanes.push_back(DAG.getConstant(0, DL, LaneT));
+        }
+      }
+      SDValue Result = DAG.getBuildVector(VecT, DL, ConstLanes);
+      // Add replace_lane instructions for non-const lanes
+      for (size_t I = 0; I < Lanes; ++I) {
+        const SDValue &Lane = Op->getOperand(I);
+        if (!Lane.isUndef() && !IsConstant(Lane))
+          Result = DAG.getNode(ISD::INSERT_VECTOR_ELT, DL, VecT, Result, Lane,
+                               DAG.getConstant(I, DL, MVT::i32));
+      }
+      return Result;
+    }
+  }
+  // Use a splat for the initial vector
+  SDValue Result = DAG.getSplatBuildVector(VecT, DL, SplatValue);
+  // Add replace_lane instructions for other values
+  for (size_t I = 0; I < Lanes; ++I) {
+    const SDValue &Lane = Op->getOperand(I);
+    if (Lane != SplatValue)
+      Result = DAG.getNode(ISD::INSERT_VECTOR_ELT, DL, VecT, Result, Lane,
+                           DAG.getConstant(I, DL, MVT::i32));
+  }
+  return Result;
 }
 
 SDValue
