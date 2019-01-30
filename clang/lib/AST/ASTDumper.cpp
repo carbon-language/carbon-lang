@@ -57,14 +57,6 @@ namespace  {
 
     const bool ShowColors;
 
-    /// Dump a child of the current node.
-    template<typename Fn> void dumpChild(Fn DoDumpChild) {
-      NodeDumper.AddChild(DoDumpChild);
-    }
-    template <typename Fn> void dumpChild(StringRef Label, Fn DoDumpChild) {
-      NodeDumper.AddChild(Label, DoDumpChild);
-    }
-
   public:
     ASTDumper(raw_ostream &OS, const CommandTraits *Traits,
               const SourceManager *SM)
@@ -306,14 +298,14 @@ void ASTDumper::dumpTypeAsChild(QualType T) {
   if (!SQT.Quals.hasQualifiers())
     return dumpTypeAsChild(SQT.Ty);
 
-  dumpChild([=] {
+  NodeDumper.AddChild([=] {
     NodeDumper.Visit(T);
     dumpTypeAsChild(T.split().Ty);
   });
 }
 
 void ASTDumper::dumpTypeAsChild(const Type *T) {
-  dumpChild([=] {
+  NodeDumper.AddChild([=] {
     NodeDumper.Visit(T);
     if (!T)
       return;
@@ -335,7 +327,7 @@ void ASTDumper::dumpDeclContext(const DeclContext *DC) {
 }
 
 void ASTDumper::dumpLookups(const DeclContext *DC, bool DumpDecls) {
-  dumpChild([=] {
+  NodeDumper.AddChild([=] {
     OS << "StoredDeclsMap ";
     NodeDumper.dumpBareDeclRef(cast<Decl>(DC));
 
@@ -354,7 +346,7 @@ void ASTDumper::dumpLookups(const DeclContext *DC, bool DumpDecls) {
       DeclarationName Name = I.getLookupName();
       DeclContextLookupResult R = *I;
 
-      dumpChild([=] {
+      NodeDumper.AddChild([=] {
         OS << "DeclarationName ";
         {
           ColorScope Color(OS, ShowColors, DeclNameColor);
@@ -363,7 +355,7 @@ void ASTDumper::dumpLookups(const DeclContext *DC, bool DumpDecls) {
 
         for (DeclContextLookupResult::iterator RI = R.begin(), RE = R.end();
              RI != RE; ++RI) {
-          dumpChild([=] {
+          NodeDumper.AddChild([=] {
             NodeDumper.dumpBareDeclRef(*RI);
 
             if ((*RI)->isHidden())
@@ -385,7 +377,7 @@ void ASTDumper::dumpLookups(const DeclContext *DC, bool DumpDecls) {
     }
 
     if (HasUndeserializedLookups) {
-      dumpChild([=] {
+      NodeDumper.AddChild([=] {
         ColorScope Color(OS, ShowColors, UndeserializedColor);
         OS << "<undeserialized lookups>";
       });
@@ -394,7 +386,7 @@ void ASTDumper::dumpLookups(const DeclContext *DC, bool DumpDecls) {
 }
 
 void ASTDumper::dumpAttr(const Attr *A) {
-  dumpChild([=] {
+  NodeDumper.AddChild([=] {
     NodeDumper.Visit(A);
     ConstAttrVisitor<ASTDumper>::Visit(A);
   });
@@ -405,7 +397,7 @@ void ASTDumper::dumpAttr(const Attr *A) {
 //===----------------------------------------------------------------------===//
 
 void ASTDumper::dumpCXXCtorInitializer(const CXXCtorInitializer *Init) {
-  dumpChild([=] {
+  NodeDumper.AddChild([=] {
     NodeDumper.Visit(Init);
     dumpStmt(Init->getInit());
   });
@@ -437,7 +429,7 @@ void ASTDumper::dumpTemplateArgumentList(const TemplateArgumentList &TAL) {
 
 void ASTDumper::dumpTemplateArgument(const TemplateArgument &A, SourceRange R,
                                      const Decl *From, const char *Label) {
-  dumpChild([=] {
+  NodeDumper.AddChild([=] {
     NodeDumper.Visit(A, R, From, Label);
     ConstTemplateArgumentVisitor<ASTDumper>::Visit(A);
   });
@@ -460,7 +452,7 @@ void ASTDumper::dumpObjCTypeParamList(const ObjCTypeParamList *typeParams) {
 //===----------------------------------------------------------------------===//
 
 void ASTDumper::dumpDecl(const Decl *D) {
-  dumpChild([=] {
+  NodeDumper.AddChild([=] {
     NodeDumper.Visit(D);
     if (!D)
       return;
@@ -741,7 +733,7 @@ void ASTDumper::VisitObjCImplementationDecl(const ObjCImplementationDecl *D) {
 }
 
 void ASTDumper::Visit(const BlockDecl::Capture &C) {
-  dumpChild([=] {
+  NodeDumper.AddChild([=] {
     NodeDumper.Visit(C);
     if (C.hasCopyExpr())
       dumpStmt(C.getCopyExpr());
@@ -762,7 +754,7 @@ void ASTDumper::VisitBlockDecl(const BlockDecl *D) {
 //===----------------------------------------------------------------------===//
 
 void ASTDumper::dumpStmt(const Stmt *S, StringRef Label) {
-  dumpChild(Label, [=] {
+  NodeDumper.AddChild(Label, [=] {
     NodeDumper.Visit(S);
 
     if (!S) {
@@ -804,7 +796,7 @@ void ASTDumper::VisitCapturedStmt(const CapturedStmt *Node) {
 //===----------------------------------------------------------------------===//
 
 void ASTDumper::Visit(const OMPClause *C) {
-  dumpChild([=] {
+  NodeDumper.AddChild([=] {
     NodeDumper.Visit(C);
     for (const auto *S : C->children())
       dumpStmt(S);
@@ -838,7 +830,7 @@ void ASTDumper::VisitOpaqueValueExpr(const OpaqueValueExpr *Node) {
 }
 
 void ASTDumper::Visit(const GenericSelectionExpr::ConstAssociation &A) {
-  dumpChild([=] {
+  NodeDumper.AddChild([=] {
     NodeDumper.Visit(A);
     if (const TypeSourceInfo *TSI = A.getTypeSourceInfo())
       dumpTypeAsChild(TSI->getType());
@@ -879,7 +871,7 @@ void ASTDumper::VisitObjCAtCatchStmt(const ObjCAtCatchStmt *Node) {
 //===----------------------------------------------------------------------===//
 
 void ASTDumper::dumpComment(const Comment *C, const FullComment *FC) {
-  dumpChild([=] {
+  NodeDumper.AddChild([=] {
     NodeDumper.Visit(C, FC);
     if (!C) {
       return;
