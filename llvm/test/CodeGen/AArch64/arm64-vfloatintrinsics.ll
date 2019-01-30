@@ -65,10 +65,14 @@ define %v4f16 @test_v4f16.pow(%v4f16 %a, %v4f16 %b) {
   %1 = call %v4f16 @llvm.pow.v4f16(%v4f16 %a, %v4f16 %b)
   ret %v4f16 %1
 }
+
+; FALLBACK-NOT: remark{{.*}}test_v4f16.exp
 define %v4f16 @test_v4f16.exp(%v4f16 %a) {
   ; This operation is expanded, whether with or without +fullfp16.
   ; CHECK-LABEL:   test_v4f16.exp:
   ; CHECK-COUNT-4: bl exp
+  ; GISEL-LABEL:   test_v4f16.exp:
+  ; GISEL-COUNT-4: bl exp
   %1 = call %v4f16 @llvm.exp.v4f16(%v4f16 %a)
   ret %v4f16 %1
 }
@@ -262,10 +266,14 @@ define %v8f16 @test_v8f16.pow(%v8f16 %a, %v8f16 %b) {
   %1 = call %v8f16 @llvm.pow.v8f16(%v8f16 %a, %v8f16 %b)
   ret %v8f16 %1
 }
+
+; FALLBACK-NOT: remark{{.*}}test_v8f16.exp
 define %v8f16 @test_v8f16.exp(%v8f16 %a) {
   ; This operation is expanded, whether with or without +fullfp16.
   ; CHECK-LABEL:   test_v8f16.exp:
   ; CHECK-COUNT-8: bl exp
+  ; GISEL-LABEL:   test_v8f16.exp:
+  ; GISEL-COUNT-8: bl exp
   %1 = call %v8f16 @llvm.exp.v8f16(%v8f16 %a)
   ret %v8f16 %1
 }
@@ -447,9 +455,13 @@ define %v2f32 @test_v2f32.pow(%v2f32 %a, %v2f32 %b) {
   %1 = call %v2f32 @llvm.pow.v2f32(%v2f32 %a, %v2f32 %b)
   ret %v2f32 %1
 }
+
+; FALLBACK-NOT: remark{{.*}}test_v2f32.exp
 ; CHECK: test_v2f32.exp:
+; GISEL: test_v2f32.exp:
 define %v2f32 @test_v2f32.exp(%v2f32 %a) {
   ; CHECK: exp
+  ; GISEL: exp
   %1 = call %v2f32 @llvm.exp.v2f32(%v2f32 %a)
   ret %v2f32 %1
 }
@@ -599,9 +611,13 @@ define %v4f32 @test_v4f32.pow(%v4f32 %a, %v4f32 %b) {
   %1 = call %v4f32 @llvm.pow.v4f32(%v4f32 %a, %v4f32 %b)
   ret %v4f32 %1
 }
+
+; FALLBACK-NOT: remark{{.*}}test_v4f32.exp
 ; CHECK: test_v4f32.exp:
+; GISEL: test_v4f32.exp:
 define %v4f32 @test_v4f32.exp(%v4f32 %a) {
   ; CHECK: exp
+  ; GISEL: exp
   %1 = call %v4f32 @llvm.exp.v4f32(%v4f32 %a)
   ret %v4f32 %1
 }
@@ -749,9 +765,13 @@ define %v2f64 @test_v2f64.pow(%v2f64 %a, %v2f64 %b) {
   %1 = call %v2f64 @llvm.pow.v2f64(%v2f64 %a, %v2f64 %b)
   ret %v2f64 %1
 }
+
+; FALLBACK-NOT: remark{{.*}}test_v2f64.exp
 ; CHECK: test_v2f64.exp:
+; GISEL: test_v2f64.exp:
 define %v2f64 @test_v2f64.exp(%v2f64 %a) {
   ; CHECK: exp
+  ; GISEL: exp
   %1 = call %v2f64 @llvm.exp.v2f64(%v2f64 %a)
   ret %v2f64 %1
 }

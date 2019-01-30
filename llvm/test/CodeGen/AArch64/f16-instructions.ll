@@ -886,6 +886,9 @@ define half @test_pow(half %a, half %b) #0 {
   ret half %r
 }
 
+; FALLBACK-NOT: remark:{{.*}}test_exp
+; FALLBACK-FP16-NOT: remark:{{.*}}test_exp
+
 ; CHECK-COMMON-LABEL: test_exp:
 ; CHECK-COMMON-NEXT: stp x29, x30, [sp, #-16]!
 ; CHECK-COMMON-NEXT: mov  x29, sp
@@ -894,6 +897,15 @@ define half @test_pow(half %a, half %b) #0 {
 ; CHECK-COMMON-NEXT: fcvt h0, s0
 ; CHECK-COMMON-NEXT: ldp x29, x30, [sp], #16
 ; CHECK-COMMON-NEXT: ret
+
+; GISEL-LABEL: test_exp:
+; GISEL-NEXT: stp x29, x30, [sp, #-16]!
+; GISEL-NEXT: mov  x29, sp
+; GISEL-NEXT: fcvt s0, h0
+; GISEL-NEXT: bl {{_?}}expf
+; GISEL-NEXT: fcvt h0, s0
+; GISEL-NEXT: ldp x29, x30, [sp], #16
+; GISEL-NEXT: ret
 define half @test_exp(half %a) #0 {
   %r = call half @llvm.exp.f16(half %a)
   ret half %r
