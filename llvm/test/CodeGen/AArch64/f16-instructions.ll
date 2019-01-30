@@ -964,6 +964,9 @@ define half @test_log10(half %a) #0 {
   ret half %r
 }
 
+; FALLBACK-NOT: remark:{{.*}}test_log2
+; FALLBACK-FP16-NOT: remark:{{.*}}test_log2
+
 ; CHECK-COMMON-LABEL: test_log2:
 ; CHECK-COMMON-NEXT: stp x29, x30, [sp, #-16]!
 ; CHECK-COMMON-NEXT: mov  x29, sp
@@ -972,6 +975,16 @@ define half @test_log10(half %a) #0 {
 ; CHECK-COMMON-NEXT: fcvt h0, s0
 ; CHECK-COMMON-NEXT: ldp x29, x30, [sp], #16
 ; CHECK-COMMON-NEXT: ret
+
+; GISEL-LABEL: test_log2:
+; GISEL-NEXT: stp x29, x30, [sp, #-16]!
+; GISEL-NEXT: mov  x29, sp
+; GISEL-NEXT: fcvt s0, h0
+; GISEL-NEXT: bl {{_?}}log2f
+; GISEL-NEXT: fcvt h0, s0
+; GISEL-NEXT: ldp x29, x30, [sp], #16
+; GISEL-NEXT: ret
+
 define half @test_log2(half %a) #0 {
   %r = call half @llvm.log2.f16(half %a)
   ret half %r

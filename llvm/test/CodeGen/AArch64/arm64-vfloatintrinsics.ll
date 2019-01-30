@@ -101,10 +101,14 @@ define %v4f16 @test_v4f16.log10(%v4f16 %a) {
   %1 = call %v4f16 @llvm.log10.v4f16(%v4f16 %a)
   ret %v4f16 %1
 }
+
+; FALLBACK-NOT: remark{{.*}}test_v4f16.log2
 define %v4f16 @test_v4f16.log2(%v4f16 %a) {
   ; This operation is expanded, whether with or without +fullfp16.
   ; CHECK-LABEL:   test_v4f16.log2:
   ; CHECK-COUNT-4: bl log2
+  ; GISEL-LABEL:   test_v4f16.log2:
+  ; GISEL-COUNT-4: bl log2
   %1 = call %v4f16 @llvm.log2.v4f16(%v4f16 %a)
   ret %v4f16 %1
 }
@@ -286,10 +290,14 @@ define %v8f16 @test_v8f16.log10(%v8f16 %a) {
   %1 = call %v8f16 @llvm.log10.v8f16(%v8f16 %a)
   ret %v8f16 %1
 }
+
+; FALLBACK-NOT: remark{{.*}}test_v8f16.log2
 define %v8f16 @test_v8f16.log2(%v8f16 %a) {
   ; This operation is expanded, whether with or without +fullfp16.
   ; CHECK-LABEL:   test_v8f16.log2:
   ; CHECK-COUNT-8: bl log2
+  ; GISEL-LABEL:   test_v8f16.log2:
+  ; GISEL-COUNT-8: bl log2
   %1 = call %v8f16 @llvm.log2.v8f16(%v8f16 %a)
   ret %v8f16 %1
 }
@@ -454,9 +462,13 @@ define %v2f32 @test_v2f32.log10(%v2f32 %a) {
   %1 = call %v2f32 @llvm.log10.v2f32(%v2f32 %a)
   ret %v2f32 %1
 }
+
+; FALLBACK-NOT: remark{{.*}}test_v2f32.log2
 ; CHECK: test_v2f32.log2:
+; GISEL: test_v2f32.log2:
 define %v2f32 @test_v2f32.log2(%v2f32 %a) {
   ; CHECK: log
+  ; GISEL: log
   %1 = call %v2f32 @llvm.log2.v2f32(%v2f32 %a)
   ret %v2f32 %1
 }
@@ -597,9 +609,13 @@ define %v4f32 @test_v4f32.log10(%v4f32 %a) {
   %1 = call %v4f32 @llvm.log10.v4f32(%v4f32 %a)
   ret %v4f32 %1
 }
+
+; FALLBACK-NOT: remark{{.*}}test_v4f32.log2
 ; CHECK: test_v4f32.log2:
+; GISEL: test_v4f32.log2:
 define %v4f32 @test_v4f32.log2(%v4f32 %a) {
   ; CHECK: log
+  ; GISEL: log
   %1 = call %v4f32 @llvm.log2.v4f32(%v4f32 %a)
   ret %v4f32 %1
 }
@@ -740,9 +756,13 @@ define %v2f64 @test_v2f64.log10(%v2f64 %a) {
   %1 = call %v2f64 @llvm.log10.v2f64(%v2f64 %a)
   ret %v2f64 %1
 }
+
+; FALLBACK-NOT: remark{{.*}}test_v2f64.log2
 ; CHECK: test_v2f64.log2:
+; GISEL: test_v2f64.log2:
 define %v2f64 @test_v2f64.log2(%v2f64 %a) {
   ; CHECK: log
+  ; GISEL: log
   %1 = call %v2f64 @llvm.log2.v2f64(%v2f64 %a)
   ret %v2f64 %1
 }
