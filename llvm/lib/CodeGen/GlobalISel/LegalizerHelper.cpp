@@ -779,9 +779,11 @@ LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
   case TargetOpcode::G_SHL:
   case TargetOpcode::G_LSHR:
   case TargetOpcode::G_ASHR: {
+    Observer.changingInstr(MI);
     if (TypeIdx != 1)
       return UnableToLegalize; // TODO
     narrowScalarSrc(MI, NarrowTy, 2);
+    Observer.changedInstr(MI);
     return Legalized;
   }
   }
