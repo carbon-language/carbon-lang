@@ -1017,6 +1017,19 @@ define half @test_fma(half %a, half %b, half %c) #0 {
 ; CHECK-FP16-NEXT: fabs h0, h0
 ; CHECK-FP16-NEXT: ret
 
+; FALLBACK-NOT: remark:{{.*}}test_fabs
+; FALLBACK-FP16-NOT: remark:{{.*}}test_fabs
+
+; GISEL-CVT-LABEL: test_fabs:
+; GISEL-CVT-NEXT: fcvt s0, h0
+; GISEL-CVT-NEXT: fabs s0, s0
+; GISEL-CVT-NEXT: fcvt h0, s0
+; GISEL-CVT-NEXT: ret
+
+; GISEL-FP16-LABEL: test_fabs:
+; GISEL-FP16-NEXT: fabs h0, h0
+; GISEL-FP16-NEXT: ret
+
 define half @test_fabs(half %a) #0 {
   %r = call half @llvm.fabs.f16(half %a)
   ret half %r
