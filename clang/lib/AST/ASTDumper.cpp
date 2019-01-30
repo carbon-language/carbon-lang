@@ -96,12 +96,6 @@ namespace  {
                                  const Decl *From = nullptr,
                                  const char *Label = nullptr);
     void dumpTemplateArgumentList(const TemplateArgumentList &TAL);
-    template <typename SpecializationDecl>
-    void dumpTemplateDeclSpecialization(const SpecializationDecl *D,
-                                        bool DumpExplicitInst,
-                                        bool DumpRefOnly);
-    template <typename TemplateDecl>
-    void dumpTemplateDecl(const TemplateDecl *D, bool DumpExplicitInst);
 
     // Objective-C utilities.
     void dumpObjCTypeParamList(const ObjCTypeParamList *typeParams);
@@ -215,6 +209,13 @@ namespace  {
     void VisitOMPDeclareReductionDecl(const OMPDeclareReductionDecl *D);
     void VisitOMPCapturedExprDecl(const OMPCapturedExprDecl *D);
 
+    template <typename SpecializationDecl>
+    void dumpTemplateDeclSpecialization(const SpecializationDecl *D,
+                                        bool DumpExplicitInst,
+                                        bool DumpRefOnly);
+    template <typename TemplateDecl>
+    void dumpTemplateDecl(const TemplateDecl *D, bool DumpExplicitInst);
+
     // C++ Decls
     void VisitTypeAliasDecl(const TypeAliasDecl *D);
     void VisitTypeAliasTemplateDecl(const TypeAliasTemplateDecl *D);
@@ -227,8 +228,8 @@ namespace  {
         const ClassTemplatePartialSpecializationDecl *D);
     void VisitClassScopeFunctionSpecializationDecl(
         const ClassScopeFunctionSpecializationDecl *D);
-    void VisitBuiltinTemplateDecl(const BuiltinTemplateDecl *D);
     void VisitVarTemplateDecl(const VarTemplateDecl *D);
+    void VisitBuiltinTemplateDecl(const BuiltinTemplateDecl *D);
     void VisitVarTemplateSpecializationDecl(
         const VarTemplateSpecializationDecl *D);
     void VisitVarTemplatePartialSpecializationDecl(
@@ -605,20 +606,6 @@ void ASTDumper::VisitOMPCapturedExprDecl(const OMPCapturedExprDecl *D) {
 // C++ Declarations
 //===----------------------------------------------------------------------===//
 
-void ASTDumper::VisitTypeAliasDecl(const TypeAliasDecl *D) {
-  Visit(D->getUnderlyingType());
-}
-
-void ASTDumper::VisitTypeAliasTemplateDecl(const TypeAliasTemplateDecl *D) {
-  dumpTemplateParameters(D->getTemplateParameters());
-  Visit(D->getTemplatedDecl());
-}
-
-void ASTDumper::VisitStaticAssertDecl(const StaticAssertDecl *D) {
-  Visit(D->getAssertExpr());
-  Visit(D->getMessage());
-}
-
 template <typename SpecializationDecl>
 void ASTDumper::dumpTemplateDeclSpecialization(const SpecializationDecl *D,
                                                bool DumpExplicitInst,
@@ -670,6 +657,20 @@ void ASTDumper::dumpTemplateDecl(const TemplateDecl *D, bool DumpExplicitInst) {
   for (const auto *Child : D->specializations())
     dumpTemplateDeclSpecialization(Child, DumpExplicitInst,
                                    !D->isCanonicalDecl());
+}
+
+void ASTDumper::VisitTypeAliasDecl(const TypeAliasDecl *D) {
+  Visit(D->getUnderlyingType());
+}
+
+void ASTDumper::VisitTypeAliasTemplateDecl(const TypeAliasTemplateDecl *D) {
+  dumpTemplateParameters(D->getTemplateParameters());
+  Visit(D->getTemplatedDecl());
+}
+
+void ASTDumper::VisitStaticAssertDecl(const StaticAssertDecl *D) {
+  Visit(D->getAssertExpr());
+  Visit(D->getMessage());
 }
 
 void ASTDumper::VisitFunctionTemplateDecl(const FunctionTemplateDecl *D) {
