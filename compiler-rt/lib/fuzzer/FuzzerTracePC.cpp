@@ -37,12 +37,34 @@ size_t TracePC::GetTotalPCCoverage() {
 
 void TracePC::HandleInline8bitCountersInit(uint8_t *Start, uint8_t *Stop) {
   if (Start == Stop) return;
-  if (NumModulesWithInline8bitCounters &&
-      ModuleCounters[NumModulesWithInline8bitCounters-1].Start == Start) return;
-  assert(NumModulesWithInline8bitCounters <
-         sizeof(ModuleCounters) / sizeof(ModuleCounters[0]));
-  ModuleCounters[NumModulesWithInline8bitCounters++] = {Start, Stop};
-  NumInline8bitCounters += Stop - Start;
+  if (NumModules &&
+      Modules[NumModules - 1].Start() == Start)
+    return;
+  assert(NumModules <
+         sizeof(Modules) / sizeof(Modules[0]));
+  auto &M = Modules[NumModules++];
+  uint8_t *AlignedStart = RoundUpByPage(Start);
+  uint8_t *AlignedStop  = RoundDownByPage(Stop);
+  size_t NumFullPages = AlignedStop > AlignedStart ?
+                        (AlignedStop - AlignedStart) / PageSize() : 0;
+  bool NeedFirst = Start < AlignedStart || !NumFullPages;
+  bool NeedLast  = Stop > AlignedStop && AlignedStop >= AlignedStart;
+  M.NumRegions = NumFullPages + NeedFirst + NeedLast;;
+  assert(M.NumRegions > 0);
+  M.Regions = new Module::Region[M.NumRegions];
+  assert(M.Regions);
+  size_t R = 0;
+  if (NeedFirst)
+    M.Regions[R++] = {Start, std::min(Stop, AlignedStart), true, false};
+  for (uint8_t *P = AlignedStart; P < AlignedStop; P += PageSize())
+    M.Regions[R++] = {P, P + PageSize(), true, true};
+  if (NeedLast)
+    M.Regions[R++] = {AlignedStop, Stop, true, false};
+  assert(R == M.NumRegions);
+  assert(M.Size() == (size_t)(Stop - Start));
+  assert(M.Stop() == Stop);
+  assert(M.Start() == Start);
+  NumInline8bitCounters += M.Size();
 }
 
 void TracePC::HandlePCsInit(const uintptr_t *Start, const uintptr_t *Stop) {
@@ -55,12 +77,12 @@ void TracePC::HandlePCsInit(const uintptr_t *Start, const uintptr_t *Stop) {
 }
 
 void TracePC::PrintModuleInfo() {
-  if (NumModulesWithInline8bitCounters) {
+  if (NumModules) {
     Printf("INFO: Loaded %zd modules   (%zd inline 8-bit counters): ",
-           NumModulesWithInline8bitCounters, NumInline8bitCounters);
-    for (size_t i = 0; i < NumModulesWithInline8bitCounters; i++)
-      Printf("%zd [%p, %p), ", ModuleCounters[i].Stop - ModuleCounters[i].Start,
-             ModuleCounters[i].Start, ModuleCounters[i].Stop);
+           NumModules, NumInline8bitCounters);
+    for (size_t i = 0; i < NumModules; i++)
+      Printf("%zd [%p, %p), ", Modules[i].Size(), Modules[i].Start(),
+             Modules[i].Stop());
     Printf("\n");
   }
   if (NumPCTables) {
@@ -142,14 +164,17 @@ void TracePC::UpdateObservedPCs() {
 
   if (NumPCsInPCTables) {
     if (NumInline8bitCounters == NumPCsInPCTables) {
-      for (size_t i = 0; i < NumModulesWithInline8bitCounters; i++) {
-        uint8_t *Beg = ModuleCounters[i].Start;
-        size_t Size = ModuleCounters[i].Stop - Beg;
-        assert(Size ==
+      for (size_t i = 0; i < NumModules; i++) {
+        auto &M = Modules[i];
+        assert(M.Size() ==
                (size_t)(ModulePCTable[i].Stop - ModulePCTable[i].Start));
-        for (size_t j = 0; j < Size; j++)
-          if (Beg[j])
-            Observe(ModulePCTable[i].Start[j]);
+        for (size_t r = 0; r < M.NumRegions; r++) {
+          auto &R = M.Regions[r];
+          if (!R.Enabled) continue;
+          for (uint8_t *P = R.Start; P < R.Stop; P++)
+            if (*P)
+              Observe(ModulePCTable[i].Start[M.Idx(P)]);
+        }
       }
     }
   }
@@ -192,10 +217,10 @@ void TracePC::IterateCoveredFunctions(CallBack CB) {
 
 void TracePC::SetFocusFunction(const std::string &FuncName) {
   // This function should be called once.
-  assert(FocusFunction.first > NumModulesWithInline8bitCounters);
+  assert(!FocusFunctionCounterPtr);
   if (FuncName.empty())
     return;
-  for (size_t M = 0; M < NumModulesWithInline8bitCounters; M++) {
+  for (size_t M = 0; M < NumModules; M++) {
     auto &PCTE = ModulePCTable[M];
     size_t N = PCTE.Stop - PCTE.Start;
     for (size_t I = 0; I < N; I++) {
@@ -205,22 +230,14 @@ void TracePC::SetFocusFunction(const std::string &FuncName) {
         Name = Name.substr(3, std::string::npos);
       if (FuncName != Name) continue;
       Printf("INFO: Focus function is set to '%s'\n", Name.c_str());
-      FocusFunction = {M, I};
+      FocusFunctionCounterPtr = Modules[M].Start() + I;
       return;
     }
   }
 }
 
 bool TracePC::ObservedFocusFunction() {
-  size_t I = FocusFunction.first;
-  size_t J = FocusFunction.second;
-  if (I >= NumModulesWithInline8bitCounters)
-    return false;
-  auto &MC = ModuleCounters[I];
-  size_t Size = MC.Stop - MC.Start;
-  if (J >= Size)
-    return false;
-  return MC.Start[J] != 0;
+  return FocusFunctionCounterPtr && *FocusFunctionCounterPtr;
 }
 
 void TracePC::PrintCoverage() {
@@ -330,11 +347,10 @@ static size_t InternalStrnlen2(const char *S1, const char *S2) {
 }
 
 void TracePC::ClearInlineCounters() {
-  for (size_t i = 0; i < NumModulesWithInline8bitCounters; i++) {
-    uint8_t *Beg = ModuleCounters[i].Start;
-    size_t Size = ModuleCounters[i].Stop - Beg;
-    memset(Beg, 0, Size);
-  }
+  IterateCounterRegions([](const Module::Region &R){
+    if (R.Enabled)
+      memset(R.Start, 0, R.Stop - R.Start);
+  });
 }
 
 ATTRIBUTE_NO_SANITIZE_ALL
