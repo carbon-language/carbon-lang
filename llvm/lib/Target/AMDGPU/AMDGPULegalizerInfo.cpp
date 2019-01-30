@@ -320,9 +320,10 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   // be more flexible with the shift amount type.
   auto &Shifts = getActionDefinitionsBuilder({G_SHL, G_LSHR, G_ASHR})
     .legalFor({{S32, S32}, {S64, S32}});
-  if (ST.has16BitInsts())
+  if (ST.has16BitInsts()) {
     Shifts.legalFor({{S16, S32}, {S16, S16}});
-  else
+    Shifts.clampScalar(0, S16, S64);
+  } else
     Shifts.clampScalar(0, S32, S64);
   Shifts.clampScalar(1, S32, S32);
 
