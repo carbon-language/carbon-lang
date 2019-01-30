@@ -314,7 +314,26 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   getActionDefinitionsBuilder(G_SELECT)
     .legalFor({{S32, S1}, {S64, S1}, {V2S32, S1}, {V2S16, S1}})
     .clampScalar(0, S32, S64)
-    .scalarize(0);
+    .fewerElementsIf(
+      [=](const LegalityQuery &Query) {
+        if (Query.Types[1].isVector())
+          return true;
+
+        LLT Ty = Query.Types[0];
+
+        // FIXME: Hack until odd splits handled
+        return Ty.isVector() &&
+          (Ty.getScalarSizeInBits() > 32 || Ty.getNumElements() % 2 != 0);
+      },
+      scalarize(0))
+    // FIXME: Handle 16-bit vectors better
+    .fewerElementsIf(
+      [=](const LegalityQuery &Query) {
+        return Query.Types[0].isVector() &&
+               Query.Types[0].getElementType().getSizeInBits() < 32;},
+      scalarize(0))
+    .scalarize(1)
+    .clampMaxNumElements(0, S32, 2);
 
   // TODO: Only the low 4/5/6 bits of the shift amount are observed, so we can
   // be more flexible with the shift amount type.
