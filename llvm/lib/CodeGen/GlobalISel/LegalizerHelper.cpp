@@ -995,8 +995,9 @@ LegalizerHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx, LLT WideTy) {
       widenScalarSrc(MI, WideTy, 3, TargetOpcode::G_ANYEXT);
       widenScalarDst(MI, WideTy);
     } else {
+      bool IsVec = MRI.getType(MI.getOperand(1).getReg()).isVector();
       // Explicit extension is required here since high bits affect the result.
-      widenScalarSrc(MI, WideTy, 1, TargetOpcode::G_ZEXT);
+      widenScalarSrc(MI, WideTy, 1, MIRBuilder.getBoolExtOp(IsVec, false));
     }
     Observer.changedInstr(MI);
     return Legalized;
