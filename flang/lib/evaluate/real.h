@@ -114,15 +114,10 @@ public:
       const Real &, Rounding rounding = defaultRounding) const;
 
   template<typename INT> constexpr INT EXPONENT() const {
-    int exponent{Exponent()};
-    if (exponent == maxExponent) {
+    if (Exponent() == maxExponent) {
       return INT::HUGE();
     } else {
-      int result{exponent - exponentBias};
-      if (IsSubnormal()) {
-        ++result;
-      }
-      return {result};
+      return {UnbiasedExponent()};
     }
   }
 
@@ -277,12 +272,11 @@ public:
       absX = x.Negate();
     }
     ValueWithRealFlags<Real> result;
-    int exponent{exponentBias + x.Exponent() - A::exponentBias};
+    int exponent{exponentBias + x.UnbiasedExponent()};
     int bitsLost{A::precision - precision};
-    if (exponent < 0) {
-      // Make result Denormal
-      bitsLost += -exponent;
-      exponent = 0;
+    if (exponent < 1) {
+      bitsLost += 1 - exponent;
+      exponent = 1;
     }
     typename A::Fraction xFraction{x.GetFraction()};
     if (bitsLost <= 0) {
@@ -322,9 +316,9 @@ public:
   }
 
   // Extracts unbiased exponent value.
+  // Corrects the exponent value of a subnormal number.
   constexpr int UnbiasedExponent() const {
-    int exponent =
-        word_.IBITS(significandBits, exponentBits).ToUInt64() - exponentBias;
+    int exponent{Exponent() - exponentBias};
     if (IsSubnormal()) {
       ++exponent;
     }
