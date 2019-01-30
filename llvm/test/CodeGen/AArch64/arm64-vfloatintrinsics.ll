@@ -14,12 +14,18 @@
 
 %v4f16 = type <4 x half>
 
+; FALLBACK-NOT: remark{{.*}}test_v4f16.sqrt
 define %v4f16 @test_v4f16.sqrt(%v4f16 %a) {
   ; CHECK-LABEL:          test_v4f16.sqrt:
   ; CHECK-NOFP16-COUNT-4: fsqrt s{{[0-9]+}}, s{{[0-9]+}}
   ; CHECK-FP16-NOT:       fcvt
   ; CHECK-FP16:           fsqrt.4h
   ; CHECK-FP16-NEXT:      ret
+  ; GISEL-LABEL:          test_v4f16.sqrt:
+  ; GISEL-NOFP16-COUNT-4: fsqrt s{{[0-9]+}}, s{{[0-9]+}}
+  ; GISEL-FP16-NOT:       fcvt
+  ; GISEL-FP16:           fsqrt.4h
+  ; GISEL-FP16-NEXT:      ret
   %1 = call %v4f16 @llvm.sqrt.v4f16(%v4f16 %a)
   ret %v4f16 %1
 }
@@ -193,12 +199,18 @@ declare %v4f16 @llvm.nearbyint.v4f16(%v4f16) #0
 
 %v8f16 = type <8 x half>
 
+; FALLBACK-NOT: remark{{.*}}test_v8f16.sqrt
 define %v8f16 @test_v8f16.sqrt(%v8f16 %a) {
   ; CHECK-LABEL:          test_v8f16.sqrt:
   ; CHECK-NOFP16-COUNT-8: fsqrt s{{[0-9]+}}, s{{[0-9]+}}
   ; CHECK-FP16-NOT:       fcvt
   ; CHECK-FP16:           fsqrt.8h
   ; CHECK-FP16-NEXT:      ret
+  ; GISEL-LABEL:          test_v8f16.sqrt:
+  ; GISEL-NOFP16-COUNT-8: fsqrt s{{[0-9]+}}, s{{[0-9]+}}
+  ; GISEL-FP16-NOT:       fcvt
+  ; GISEL-FP16:           fsqrt.8h
+  ; GISEL-FP16-NEXT:      ret
   %1 = call %v8f16 @llvm.sqrt.v8f16(%v8f16 %a)
   ret %v8f16 %1
 }
@@ -372,9 +384,12 @@ declare %v8f16 @llvm.nearbyint.v8f16(%v8f16) #0
 
 %v2f32 = type <2 x float>
 
+; FALLBACK-NOT: remark{{.*}}test_v2f32.sqrt
 ; CHECK-LABEL: test_v2f32.sqrt:
+; GISEL-LABEL: test_v2f32.sqrt:
 define %v2f32 @test_v2f32.sqrt(%v2f32 %a) {
   ; CHECK: fsqrt.2s
+  ; GISEL: fsqrt.2s
   %1 = call %v2f32 @llvm.sqrt.v2f32(%v2f32 %a)
   ret %v2f32 %1
 }
@@ -513,9 +528,12 @@ declare %v2f32 @llvm.nearbyint.v2f32(%v2f32) #0
 
 %v4f32 = type <4 x float>
 
+; FALLBACK-NOT: remark{{.*}}test_v4f32.sqrt
 ; CHECK: test_v4f32.sqrt:
+; GISEL: test_v4f32.sqrt:
 define %v4f32 @test_v4f32.sqrt(%v4f32 %a) {
   ; CHECK: fsqrt.4s
+  ; GISEL: fsqrt.4s
   %1 = call %v4f32 @llvm.sqrt.v4f32(%v4f32 %a)
   ret %v4f32 %1
 }
@@ -652,9 +670,12 @@ declare %v4f32 @llvm.nearbyint.v4f32(%v4f32) #0
 ;;; Double vector
 
 %v2f64 = type <2 x double>
+; FALLBACK-NOT: remark{{.*}}test_v2f64.sqrt
 ; CHECK: test_v2f64.sqrt:
+; GISEL: test_v2f64.sqrt:
 define %v2f64 @test_v2f64.sqrt(%v2f64 %a) {
   ; CHECK: fsqrt.2d
+  ; GISEL: fsqrt.2d
   %1 = call %v2f64 @llvm.sqrt.v2f64(%v2f64 %a)
   ret %v2f64 %1
 }

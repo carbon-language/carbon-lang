@@ -1197,6 +1197,7 @@ LegalizerHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx, LLT WideTy) {
   case TargetOpcode::G_FSIN:
   case TargetOpcode::G_FLOG10:
   case TargetOpcode::G_FLOG:
+  case TargetOpcode::G_FSQRT:
     assert(TypeIdx == 0);
     Observer.changingInstr(MI);
 
@@ -1842,6 +1843,7 @@ LegalizerHelper::fewerElementsVector(MachineInstr &MI, unsigned TypeIdx,
   case G_INTRINSIC_TRUNC:
   case G_FCOS:
   case G_FSIN:
+  case G_FSQRT:
     return fewerElementsVectorBasic(MI, TypeIdx, NarrowTy);
   case G_ZEXT:
   case G_SEXT:
