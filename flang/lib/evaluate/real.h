@@ -279,9 +279,15 @@ public:
     ValueWithRealFlags<Real> result;
     int exponent{exponentBias + x.Exponent() - A::exponentBias};
     int bitsLost{A::precision - precision};
+    if (exponent < 0) {
+      // Make result Denormal
+      bitsLost += -exponent;
+      exponent = 0;
+    }
     typename A::Fraction xFraction{x.GetFraction()};
     if (bitsLost <= 0) {
-      Fraction fraction{Fraction::ConvertUnsigned(xFraction).value};
+      Fraction fraction{
+          Fraction::ConvertUnsigned(xFraction).value.SHIFTL(-bitsLost)};
       result.flags |= result.value.Normalize(isNegative, exponent, fraction);
     } else {
       Fraction fraction{
