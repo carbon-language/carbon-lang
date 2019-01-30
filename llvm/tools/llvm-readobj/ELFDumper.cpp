@@ -2700,16 +2700,14 @@ template <class ELFT> void GNUStyle<ELFT>::printGroupSections(const ELFO *Obj) {
 template <class ELFT>
 void GNUStyle<ELFT>::printRelocation(const ELFO *Obj, const Elf_Shdr *SymTab,
                                      const Elf_Rela &R, bool IsRela) {
-  SmallString<32> RelocName;
-  std::string TargetName;
-  const Elf_Sym *Sym = nullptr;
-
   // First two fields are bit width dependent. The rest of them are after are
   // fixed width.
   unsigned Bias = ELFT::Is64Bits ? 8 : 0;
   Field Fields[5] = {0, 10 + Bias, 19 + 2 * Bias, 42 + 2 * Bias, 53 + 2 * Bias};
+  SmallString<32> RelocName;
   Obj->getRelocationTypeName(R.getType(Obj->isMips64EL()), RelocName);
-  Sym = unwrapOrError(Obj->getRelocationSymbol(&R, SymTab));
+  const Elf_Sym *Sym = unwrapOrError(Obj->getRelocationSymbol(&R, SymTab));
+  std::string TargetName;
   if (Sym && Sym->getType() == ELF::STT_SECTION) {
     const Elf_Shdr *Sec = unwrapOrError(
         Obj->getSection(Sym, SymTab, this->dumper()->getShndxTable()));
@@ -2737,12 +2735,9 @@ void GNUStyle<ELFT>::printRelocation(const ELFO *Obj, const Elf_Shdr *SymTab,
       Addend = " + ";
   }
 
-  int64_t RelAddend = R.r_addend;
   if (IsRela)
-    Addend += to_hexString(std::abs(RelAddend), false);
-  OS << Addend;
-
-  OS << "\n";
+    Addend += to_hexString(std::abs(R.r_addend), false);
+  OS << Addend << "\n";
 }
 
 template <class ELFT> void GNUStyle<ELFT>::printRelocHeader(unsigned SType) {
@@ -3092,21 +3087,15 @@ template <class ELFT>
 void GNUStyle<ELFT>::printHashedSymbol(const ELFO *Obj, const Elf_Sym *FirstSym,
                                        uint32_t Sym, StringRef StrTable,
                                        uint32_t Bucket) {
-  unsigned Width, Bias = 0;
-  if (ELFT::Is64Bits) {
-    Bias = 8;
-    Width = 16;
-  } else {
-    Bias = 0;
-    Width = 8;
-  }
+  unsigned Bias = ELFT::Is64Bits ? 8 : 0;
   Field Fields[9] = {0,         6,         11,        20 + Bias, 25 + Bias,
                      34 + Bias, 41 + Bias, 49 + Bias, 53 + Bias};
   Fields[0].Str = to_string(format_decimal(Sym, 5));
   Fields[1].Str = to_string(format_decimal(Bucket, 3)) + ":";
 
   const auto Symbol = FirstSym + Sym;
-  Fields[2].Str = to_string(format_hex_no_prefix(Symbol->st_value, Width));
+  Fields[2].Str = to_string(
+      format_hex_no_prefix(Symbol->st_value, ELFT::Is64Bits ? 18 : 8));
   Fields[3].Str = to_string(format_decimal(Symbol->st_size, 5));
 
   unsigned char SymbolType = Symbol->getType();
@@ -3144,10 +3133,9 @@ template <class ELFT> void GNUStyle<ELFT>::printHashSymbols(const ELFO *Obj) {
     return;
   auto StringTable = this->dumper()->getDynamicStringTable();
   auto DynSyms = this->dumper()->dynamic_symbols();
-  auto SysVHash = this->dumper()->getHashTable();
 
   // Try printing .hash
-  if (SysVHash) {
+  if (auto SysVHash = this->dumper()->getHashTable()) {
     OS << "\n Symbol table of .hash for image:\n";
     if (ELFT::Is64Bits)
       OS << "  Num Buc:    Value          Size   Type   Bind Vis      Ndx Name";
@@ -3155,14 +3143,12 @@ template <class ELFT> void GNUStyle<ELFT>::printHashSymbols(const ELFO *Obj) {
       OS << "  Num Buc:    Value  Size   Type   Bind Vis      Ndx Name";
     OS << "\n";
 
-    uint32_t NBuckets = SysVHash->nbucket;
-    uint32_t NChains = SysVHash->nchain;
     auto Buckets = SysVHash->buckets();
     auto Chains = SysVHash->chains();
-    for (uint32_t Buc = 0; Buc < NBuckets; Buc++) {
+    for (uint32_t Buc = 0; Buc < SysVHash->nbucket; Buc++) {
       if (Buckets[Buc] == ELF::STN_UNDEF)
         continue;
-      for (uint32_t Ch = Buckets[Buc]; Ch < NChains; Ch = Chains[Ch]) {
+      for (uint32_t Ch = Buckets[Buc]; Ch < SysVHash->nchain; Ch = Chains[Ch]) {
         if (Ch == ELF::STN_UNDEF)
           break;
         printHashedSymbol(Obj, &DynSyms[0], Ch, StringTable, Buc);
@@ -3171,17 +3157,15 @@ template <class ELFT> void GNUStyle<ELFT>::printHashSymbols(const ELFO *Obj) {
   }
 
   // Try printing .gnu.hash
-  auto GnuHash = this->dumper()->getGnuHashTable();
-  if (GnuHash) {
+  if (auto GnuHash = this->dumper()->getGnuHashTable()) {
     OS << "\n Symbol table of .gnu.hash for image:\n";
     if (ELFT::Is64Bits)
       OS << "  Num Buc:    Value          Size   Type   Bind Vis      Ndx Name";
     else
       OS << "  Num Buc:    Value  Size   Type   Bind Vis      Ndx Name";
     OS << "\n";
-    uint32_t NBuckets = GnuHash->nbuckets;
     auto Buckets = GnuHash->buckets();
-    for (uint32_t Buc = 0; Buc < NBuckets; Buc++) {
+    for (uint32_t Buc = 0; Buc < GnuHash->nbuckets; Buc++) {
       if (Buckets[Buc] == ELF::STN_UNDEF)
         continue;
       uint32_t Index = Buckets[Buc];
@@ -3267,9 +3251,6 @@ bool GNUStyle<ELFT>::checkPTDynamic(const Elf_Phdr &Phdr, const Elf_Shdr &Sec) {
 template <class ELFT>
 void GNUStyle<ELFT>::printProgramHeaders(const ELFO *Obj) {
   unsigned Bias = ELFT::Is64Bits ? 8 : 0;
-  unsigned Width = ELFT::Is64Bits ? 18 : 10;
-  unsigned SizeWidth = ELFT::Is64Bits ? 8 : 7;
-
   const Elf_Ehdr *Header = Obj->getHeader();
   Field Fields[8] = {2,         17,        26,        37 + Bias,
                      48 + Bias, 56 + Bias, 64 + Bias, 68 + Bias};
@@ -3285,6 +3266,9 @@ void GNUStyle<ELFT>::printProgramHeaders(const ELFO *Obj) {
   else
     OS << "  Type           Offset   VirtAddr   PhysAddr   FileSiz "
        << "MemSiz  Flg Align\n";
+
+  unsigned Width = ELFT::Is64Bits ? 18 : 10;
+  unsigned SizeWidth = ELFT::Is64Bits ? 8 : 7;
   for (const auto &Phdr : unwrapOrError(Obj->program_headers())) {
     Fields[0].Str = getElfPtType(Header->e_machine, Phdr.p_type);
     Fields[1].Str = to_string(format_hex(Phdr.p_offset, 8));
@@ -3364,9 +3348,7 @@ void GNUStyle<ELFT>::printDynamicRelocation(const ELFO *Obj, Elf_Rela R,
 
   if (IsRela)
     Addend += to_string(format_hex_no_prefix(std::abs(RelAddend), 1));
-  OS << Addend;
-
-  OS << "\n";
+  OS << Addend << "\n";
 }
 
 template <class ELFT>
@@ -3438,12 +3420,8 @@ void GNUStyle<ELFT>::printDynamicRelocations(const ELFO *Obj) {
 // Additionally cumulative coverage of symbols for each set of buckets.
 template <class ELFT>
 void GNUStyle<ELFT>::printHashHistogram(const ELFFile<ELFT> *Obj) {
-
-  const Elf_Hash *HashTable = this->dumper()->getHashTable();
-  const Elf_GnuHash *GnuHashTable = this->dumper()->getGnuHashTable();
-
   // Print histogram for .hash section
-  if (HashTable) {
+  if (const Elf_Hash *HashTable = this->dumper()->getHashTable()) {
     size_t NBucket = HashTable->nbucket;
     size_t NChain = HashTable->nchain;
     ArrayRef<Elf_Word> Buckets = HashTable->buckets();
@@ -3487,7 +3465,7 @@ void GNUStyle<ELFT>::printHashHistogram(const ELFFile<ELFT> *Obj) {
   }
 
   // Print histogram for .gnu.hash section
-  if (GnuHashTable) {
+  if (const Elf_GnuHash *GnuHashTable = this->dumper()->getGnuHashTable()) {
     size_t NBucket = GnuHashTable->nbuckets;
     ArrayRef<Elf_Word> Buckets = GnuHashTable->buckets();
     unsigned NumSyms = this->dumper()->dynamic_symbols().size();
@@ -3856,9 +3834,6 @@ static AMDGPUNote getAMDGPUNote(uint32_t NoteType, ArrayRef<uint8_t> Desc) {
 
 template <class ELFT>
 void GNUStyle<ELFT>::printNotes(const ELFFile<ELFT> *Obj) {
-  const Elf_Ehdr *e = Obj->getHeader();
-  bool IsCore = e->e_type == ELF::ET_CORE;
-
   auto PrintHeader = [&](const typename ELFT::Off Offset,
                          const typename ELFT::Addr Size) {
     OS << "Displaying notes found at file offset " << format_hex(Offset, 10)
@@ -3895,7 +3870,7 @@ void GNUStyle<ELFT>::printNotes(const ELFFile<ELFT> *Obj) {
     OS << '\n';
   };
 
-  if (IsCore) {
+  if (Obj->getHeader()->e_type == ELF::ET_CORE) {
     for (const auto &P : unwrapOrError(Obj->program_headers())) {
       if (P.p_type != PT_NOTE)
         continue;
@@ -4039,21 +4014,21 @@ void GNUStyle<ELFT>::printMipsPLT(const MipsGOTParser<ELFT> &Parser) {
 }
 
 template <class ELFT> void LLVMStyle<ELFT>::printFileHeaders(const ELFO *Obj) {
-  const Elf_Ehdr *e = Obj->getHeader();
+  const Elf_Ehdr *E = Obj->getHeader();
   {
     DictScope D(W, "ElfHeader");
     {
       DictScope D(W, "Ident");
-      W.printBinary("Magic", makeArrayRef(e->e_ident).slice(ELF::EI_MAG0, 4));
-      W.printEnum("Class", e->e_ident[ELF::EI_CLASS], makeArrayRef(ElfClass));
-      W.printEnum("DataEncoding", e->e_ident[ELF::EI_DATA],
+      W.printBinary("Magic", makeArrayRef(E->e_ident).slice(ELF::EI_MAG0, 4));
+      W.printEnum("Class", E->e_ident[ELF::EI_CLASS], makeArrayRef(ElfClass));
+      W.printEnum("DataEncoding", E->e_ident[ELF::EI_DATA],
                   makeArrayRef(ElfDataEncoding));
-      W.printNumber("FileVersion", e->e_ident[ELF::EI_VERSION]);
+      W.printNumber("FileVersion", E->e_ident[ELF::EI_VERSION]);
 
       auto OSABI = makeArrayRef(ElfOSABI);
-      if (e->e_ident[ELF::EI_OSABI] >= ELF::ELFOSABI_FIRST_ARCH &&
-          e->e_ident[ELF::EI_OSABI] <= ELF::ELFOSABI_LAST_ARCH) {
-        switch (e->e_machine) {
+      if (E->e_ident[ELF::EI_OSABI] >= ELF::ELFOSABI_FIRST_ARCH &&
+          E->e_ident[ELF::EI_OSABI] <= ELF::ELFOSABI_LAST_ARCH) {
+        switch (E->e_machine) {
         case ELF::EM_AMDGPU:
           OSABI = makeArrayRef(AMDGPUElfOSABI);
           break;
@@ -4065,32 +4040,32 @@ template <class ELFT> void LLVMStyle<ELFT>::printFileHeaders(const ELFO *Obj) {
           break;
         }
       }
-      W.printEnum("OS/ABI", e->e_ident[ELF::EI_OSABI], OSABI);
-      W.printNumber("ABIVersion", e->e_ident[ELF::EI_ABIVERSION]);
-      W.printBinary("Unused", makeArrayRef(e->e_ident).slice(ELF::EI_PAD));
+      W.printEnum("OS/ABI", E->e_ident[ELF::EI_OSABI], OSABI);
+      W.printNumber("ABIVersion", E->e_ident[ELF::EI_ABIVERSION]);
+      W.printBinary("Unused", makeArrayRef(E->e_ident).slice(ELF::EI_PAD));
     }
 
-    W.printEnum("Type", e->e_type, makeArrayRef(ElfObjectFileType));
-    W.printEnum("Machine", e->e_machine, makeArrayRef(ElfMachineType));
-    W.printNumber("Version", e->e_version);
-    W.printHex("Entry", e->e_entry);
-    W.printHex("ProgramHeaderOffset", e->e_phoff);
-    W.printHex("SectionHeaderOffset", e->e_shoff);
-    if (e->e_machine == EM_MIPS)
-      W.printFlags("Flags", e->e_flags, makeArrayRef(ElfHeaderMipsFlags),
+    W.printEnum("Type", E->e_type, makeArrayRef(ElfObjectFileType));
+    W.printEnum("Machine", E->e_machine, makeArrayRef(ElfMachineType));
+    W.printNumber("Version", E->e_version);
+    W.printHex("Entry", E->e_entry);
+    W.printHex("ProgramHeaderOffset", E->e_phoff);
+    W.printHex("SectionHeaderOffset", E->e_shoff);
+    if (E->e_machine == EM_MIPS)
+      W.printFlags("Flags", E->e_flags, makeArrayRef(ElfHeaderMipsFlags),
                    unsigned(ELF::EF_MIPS_ARCH), unsigned(ELF::EF_MIPS_ABI),
                    unsigned(ELF::EF_MIPS_MACH));
-    else if (e->e_machine == EM_AMDGPU)
-      W.printFlags("Flags", e->e_flags, makeArrayRef(ElfHeaderAMDGPUFlags),
+    else if (E->e_machine == EM_AMDGPU)
+      W.printFlags("Flags", E->e_flags, makeArrayRef(ElfHeaderAMDGPUFlags),
                    unsigned(ELF::EF_AMDGPU_MACH));
-    else if (e->e_machine == EM_RISCV)
-      W.printFlags("Flags", e->e_flags, makeArrayRef(ElfHeaderRISCVFlags));
+    else if (E->e_machine == EM_RISCV)
+      W.printFlags("Flags", E->e_flags, makeArrayRef(ElfHeaderRISCVFlags));
     else
-      W.printFlags("Flags", e->e_flags);
-    W.printNumber("HeaderSize", e->e_ehsize);
-    W.printNumber("ProgramHeaderEntrySize", e->e_phentsize);
-    W.printNumber("ProgramHeaderCount", e->e_phnum);
-    W.printNumber("SectionHeaderEntrySize", e->e_shentsize);
+      W.printFlags("Flags", E->e_flags);
+    W.printNumber("HeaderSize", E->e_ehsize);
+    W.printNumber("ProgramHeaderEntrySize", E->e_phentsize);
+    W.printNumber("ProgramHeaderCount", E->e_phnum);
+    W.printNumber("SectionHeaderEntrySize", E->e_shentsize);
     W.printString("SectionHeaderCount", getSectionHeadersNumString(Obj));
     W.printString("StringTableSectionIndex", getSectionHeaderTableIndexString(Obj));
   }
@@ -4537,8 +4512,6 @@ static void printGNUNoteLLVMStyle(uint32_t NoteType,
 template <class ELFT>
 void LLVMStyle<ELFT>::printNotes(const ELFFile<ELFT> *Obj) {
   ListScope L(W, "Notes");
-  const Elf_Ehdr *e = Obj->getHeader();
-  bool IsCore = e->e_type == ELF::ET_CORE;
 
   auto PrintHeader = [&](const typename ELFT::Off Offset,
                          const typename ELFT::Addr Size) {
@@ -4574,7 +4547,7 @@ void LLVMStyle<ELFT>::printNotes(const ELFFile<ELFT> *Obj) {
     }
   };
 
-  if (IsCore) {
+  if (Obj->getHeader()->e_type == ELF::ET_CORE) {
     for (const auto &P : unwrapOrError(Obj->program_headers())) {
       if (P.p_type != PT_NOTE)
         continue;
