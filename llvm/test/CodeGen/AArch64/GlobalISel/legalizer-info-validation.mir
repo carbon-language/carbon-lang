@@ -338,6 +338,9 @@
 #
 # DEBUG-NEXT: G_FSIN (opcode {{[0-9]+}}): 1 type index
 # DEBUG: .. the first uncovered type index: 1, OK
+#
+# DEBUG-NEXT: G_FSQRT (opcode {{[0-9]+}}): 1 type index
+# DEBUG: .. the first uncovered type index: 1, OK
 
 # CHECK-NOT: ill-defined
 
