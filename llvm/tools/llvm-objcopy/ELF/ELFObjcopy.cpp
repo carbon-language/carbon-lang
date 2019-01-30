@@ -337,9 +337,11 @@ static Error handleArgs(const CopyConfig &Config, Object &Obj,
           (Config.KeepFileSymbols && Sym.Type == STT_FILE))
         return false;
 
-      if (Config.DiscardAll && Sym.Binding == STB_LOCAL &&
-          Sym.getShndx() != SHN_UNDEF && Sym.Type != STT_FILE &&
-          Sym.Type != STT_SECTION)
+      if ((Config.DiscardMode == DiscardType::All ||
+           (Config.DiscardMode == DiscardType::Locals &&
+            StringRef(Sym.Name).startswith(".L"))) &&
+          Sym.Binding == STB_LOCAL && Sym.getShndx() != SHN_UNDEF &&
+          Sym.Type != STT_FILE && Sym.Type != STT_SECTION)
         return true;
 
       if (Config.StripAll || Config.StripAllGNU)
