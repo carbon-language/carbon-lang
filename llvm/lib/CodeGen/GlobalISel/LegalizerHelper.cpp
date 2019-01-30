@@ -1022,12 +1022,19 @@ LegalizerHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx, LLT WideTy) {
     return Legalized;
 
   case TargetOpcode::G_STORE: {
-    if (MRI.getType(MI.getOperand(0).getReg()) != LLT::scalar(1) ||
-        WideTy != LLT::scalar(8))
+    if (TypeIdx != 0)
+      return UnableToLegalize;
+
+    LLT Ty = MRI.getType(MI.getOperand(0).getReg());
+    if (!isPowerOf2_32(Ty.getSizeInBits()))
       return UnableToLegalize;
 
     Observer.changingInstr(MI);
-    widenScalarSrc(MI, WideTy, 0, TargetOpcode::G_ZEXT);
+
+    unsigned ExtType = Ty.getScalarSizeInBits() == 1 ?
+      TargetOpcode::G_ZEXT : TargetOpcode::G_ANYEXT;
+    widenScalarSrc(MI, WideTy, 0, ExtType);
+
     Observer.changedInstr(MI);
     return Legalized;
   }
