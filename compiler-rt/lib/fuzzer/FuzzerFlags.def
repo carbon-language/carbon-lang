@@ -145,8 +145,6 @@ FUZZER_FLAG_INT(ignore_remaining_args, 0, "If 1, ignore all arguments passed "
 FUZZER_FLAG_STRING(focus_function, "Experimental. "
      "Fuzzing will focus on inputs that trigger calls to this function")
 
-FUZZER_DEPRECATED_FLAG(run_equivalence_server)
-FUZZER_DEPRECATED_FLAG(use_equivalence_server)
 FUZZER_FLAG_INT(analyze_dict, 0, "Experimental")
 FUZZER_DEPRECATED_FLAG(use_clang_coverage)
 FUZZER_FLAG_STRING(data_flow_trace, "Experimental: use the data flow trace")
