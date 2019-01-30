@@ -20,7 +20,7 @@
 using Fortran::evaluate::RealFlag;
 
 ScopedHostFloatingPointEnvironment::ScopedHostFloatingPointEnvironment(
-    bool treatDenormalOperandsAsZero, bool flushDenormalResultsToZero) {
+    bool treatSubnormalOperandsAsZero, bool flushSubnormalResultsToZero) {
   errno = 0;
   if (feholdexcept(&originalFenv_) != 0) {
     std::fprintf(stderr, "feholdexcept() failed: %s\n", std::strerror(errno));
@@ -31,12 +31,12 @@ ScopedHostFloatingPointEnvironment::ScopedHostFloatingPointEnvironment(
     std::abort();
   }
 #if __x86_64__
-  if (treatDenormalOperandsAsZero) {
+  if (treatSubnormalOperandsAsZero) {
     currentFenv_.__mxcsr |= 0x0040;
   } else {
     currentFenv_.__mxcsr &= ~0x0040;
   }
-  if (flushDenormalResultsToZero) {
+  if (flushSubnormalResultsToZero) {
     currentFenv_.__mxcsr |= 0x8000;
   } else {
     currentFenv_.__mxcsr &= ~0x8000;

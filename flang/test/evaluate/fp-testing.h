@@ -24,8 +24,8 @@ using Fortran::evaluate::RoundingMode;
 
 class ScopedHostFloatingPointEnvironment {
 public:
-  ScopedHostFloatingPointEnvironment(bool treatDenormalOperandsAsZero = false,
-      bool flushDenormalResultsToZero = false);
+  ScopedHostFloatingPointEnvironment(bool treatSubnormalOperandsAsZero = false,
+      bool flushSubnormalResultsToZero = false);
   ~ScopedHostFloatingPointEnvironment();
   void ClearFlags() const;
   static RealFlags CurrentFlags();

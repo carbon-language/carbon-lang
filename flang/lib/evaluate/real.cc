@@ -116,7 +116,7 @@ ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Add(
   Fraction yFraction{y.GetFraction()};
   int rshift = exponent - yExponent;
   if (exponent > 0 && yExponent == 0) {
-    --rshift;  // correct overshift when only y is denormal
+    --rshift;  // correct overshift when only y is subnormal
   }
   RoundingBits roundingBits{yFraction, rshift};
   yFraction = yFraction.SHIFTR(rshift);
@@ -236,7 +236,7 @@ ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Divide(
       Fraction quotient;
       bool msb{false};
       if (!top.BTEST(top.bits - 1) || !divisor.BTEST(divisor.bits - 1)) {
-        // One or two denormals
+        // One or two subnormals
         int topLshift{top.LEADZ()};
         top = top.SHIFTL(topLshift);
         int divisorLshift{divisor.LEADZ()};

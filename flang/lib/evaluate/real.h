@@ -86,7 +86,7 @@ public:
   constexpr bool IsZero() const {
     return Exponent() == 0 && GetSignificand().IsZero();
   }
-  constexpr bool IsDenormal() const {
+  constexpr bool IsSubnormal() const {
     return Exponent() == 0 && !GetSignificand().IsZero();
   }
 
@@ -119,7 +119,7 @@ public:
       return INT::HUGE();
     } else {
       int result{exponent - exponentBias};
-      if (IsDenormal()) {
+      if (IsSubnormal()) {
         ++result;
       }
       return {result};
@@ -132,8 +132,8 @@ public:
     return epsilon;
   }
 
-  constexpr Real FlushDenormalToZero() const {
-    if (IsDenormal()) {
+  constexpr Real FlushSubnormalToZero() const {
+    if (IsSubnormal()) {
       return Real{};
     }
     return *this;
@@ -319,7 +319,7 @@ public:
   constexpr int UnbiasedExponent() const {
     int exponent =
         word_.IBITS(significandBits, exponentBits).ToUInt64() - exponentBias;
-    if (IsDenormal()) {
+    if (IsSubnormal()) {
       ++exponent;
     }
     return exponent;

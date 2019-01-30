@@ -196,20 +196,20 @@ template<typename A> class Expr;
 struct FoldingContext {
   explicit FoldingContext(const parser::ContextualMessages &m,
       Rounding round = defaultRounding, bool flush = false)
-    : messages{m}, rounding{round}, flushDenormalsToZero{flush} {}
+    : messages{m}, rounding{round}, flushSubnormalsToZero{flush} {}
   FoldingContext(const FoldingContext &that)
     : messages{that.messages}, rounding{that.rounding},
-      flushDenormalsToZero{that.flushDenormalsToZero}, pdtInstance{
+      flushSubnormalsToZero{that.flushSubnormalsToZero}, pdtInstance{
                                                            that.pdtInstance} {}
   FoldingContext(
       const FoldingContext &that, const parser::ContextualMessages &m)
     : messages{m}, rounding{that.rounding},
-      flushDenormalsToZero{that.flushDenormalsToZero}, pdtInstance{
+      flushSubnormalsToZero{that.flushSubnormalsToZero}, pdtInstance{
                                                            that.pdtInstance} {}
 
   parser::ContextualMessages messages;
   Rounding rounding{defaultRounding};
-  bool flushDenormalsToZero{false};
+  bool flushSubnormalsToZero{false};
   bool bigEndian{false};
   const semantics::DerivedTypeSpec *pdtInstance{nullptr};
 };

@@ -78,8 +78,8 @@ public:
   ValueWithRealFlags<Complex> Divide(
       const Complex &, Rounding rounding = defaultRounding) const;
 
-  constexpr Complex FlushDenormalToZero() const {
-    return {re_.FlushDenormalToZero(), im_.FlushDenormalToZero()};
+  constexpr Complex FlushSubnormalToZero() const {
+    return {re_.FlushSubnormalToZero(), im_.FlushSubnormalToZero()};
   }
 
   static constexpr Complex NotANumber() {

@@ -297,8 +297,8 @@ Expr<TO> FoldOperation(
                     "REAL(%d) to REAL(%d) conversion", Operand::kind, TO::kind);
                 RealFlagWarnings(context, converted.flags, buffer);
               }
-              if (context.flushDenormalsToZero) {
-                converted.value = converted.value.FlushDenormalToZero();
+              if (context.flushSubnormalsToZero) {
+                converted.value = converted.value.FlushSubnormalToZero();
               }
               return Expr<TO>{Constant<TO>{std::move(converted.value)}};
             }
@@ -398,8 +398,8 @@ Expr<T> FoldOperation(FoldingContext &context, Add<T> &&x) {
     } else {
       auto sum{folded->first.Add(folded->second, context.rounding)};
       RealFlagWarnings(context, sum.flags, "addition");
-      if (context.flushDenormalsToZero) {
-        sum.value = sum.value.FlushDenormalToZero();
+      if (context.flushSubnormalsToZero) {
+        sum.value = sum.value.FlushSubnormalToZero();
       }
       return Expr<T>{Constant<T>{sum.value}};
     }
@@ -420,8 +420,8 @@ Expr<T> FoldOperation(FoldingContext &context, Subtract<T> &&x) {
     } else {
       auto difference{folded->first.Subtract(folded->second, context.rounding)};
       RealFlagWarnings(context, difference.flags, "subtraction");
-      if (context.flushDenormalsToZero) {
-        difference.value = difference.value.FlushDenormalToZero();
+      if (context.flushSubnormalsToZero) {
+        difference.value = difference.value.FlushSubnormalToZero();
       }
       return Expr<T>{Constant<T>{difference.value}};
     }
@@ -442,8 +442,8 @@ Expr<T> FoldOperation(FoldingContext &context, Multiply<T> &&x) {
     } else {
       auto product{folded->first.Multiply(folded->second, context.rounding)};
       RealFlagWarnings(context, product.flags, "multiplication");
-      if (context.flushDenormalsToZero) {
-        product.value = product.value.FlushDenormalToZero();
+      if (context.flushSubnormalsToZero) {
+        product.value = product.value.FlushSubnormalToZero();
       }
       return Expr<T>{Constant<T>{product.value}};
     }
@@ -466,8 +466,8 @@ Expr<T> FoldOperation(FoldingContext &context, Divide<T> &&x) {
     } else {
       auto quotient{folded->first.Divide(folded->second, context.rounding)};
       RealFlagWarnings(context, quotient.flags, "division");
-      if (context.flushDenormalsToZero) {
-        quotient.value = quotient.value.FlushDenormalToZero();
+      if (context.flushSubnormalsToZero) {
+        quotient.value = quotient.value.FlushSubnormalToZero();
       }
       return Expr<T>{Constant<T>{quotient.value}};
     }
@@ -503,8 +503,8 @@ Expr<T> FoldOperation(FoldingContext &context, RealToIntPower<T> &&x) {
         if (auto folded{FoldOperands(context, x.left(), y)}) {
           auto power{evaluate::IntPower(folded->first, folded->second)};
           RealFlagWarnings(context, power.flags, "power with INTEGER exponent");
-          if (context.flushDenormalsToZero) {
-            power.value = power.value.FlushDenormalToZero();
+          if (context.flushSubnormalsToZero) {
+            power.value = power.value.FlushSubnormalToZero();
           }
           return Expr<T>{Constant<T>{power.value}};
         } else {

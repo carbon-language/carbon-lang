@@ -460,8 +460,8 @@ Constant<TYPE> ReadRealLiteral(
   CHECK(p == source.end());
   RealFlagWarnings(context, valWithFlags.flags, "conversion of REAL literal");
   auto value{valWithFlags.value};
-  if (context.flushDenormalsToZero) {
-    value = value.FlushDenormalToZero();
+  if (context.flushSubnormalsToZero) {
+    value = value.FlushSubnormalToZero();
   }
   return {value};
 }
