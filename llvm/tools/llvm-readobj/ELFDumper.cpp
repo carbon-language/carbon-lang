@@ -381,11 +381,11 @@ public:
 
 private:
   struct Field {
-    StringRef Str;
+    std::string Str;
     unsigned Column;
 
     Field(StringRef S, unsigned Col) : Str(S), Column(Col) {}
-    Field(unsigned Col) : Str(""), Column(Col) {}
+    Field(unsigned Col) : Column(Col) {}
   };
 
   template <typename T, typename TEnum>
@@ -2700,15 +2700,13 @@ template <class ELFT> void GNUStyle<ELFT>::printGroupSections(const ELFO *Obj) {
 template <class ELFT>
 void GNUStyle<ELFT>::printRelocation(const ELFO *Obj, const Elf_Shdr *SymTab,
                                      const Elf_Rela &R, bool IsRela) {
-  std::string Offset, Info, Addend, Value;
   SmallString<32> RelocName;
   std::string TargetName;
   const Elf_Sym *Sym = nullptr;
-  unsigned Width = ELFT::Is64Bits ? 16 : 8;
-  unsigned Bias = ELFT::Is64Bits ? 8 : 0;
 
   // First two fields are bit width dependent. The rest of them are after are
   // fixed width.
+  unsigned Bias = ELFT::Is64Bits ? 8 : 0;
   Field Fields[5] = {0, 10 + Bias, 19 + 2 * Bias, 42 + 2 * Bias, 53 + 2 * Bias};
   Obj->getRelocationTypeName(R.getType(Obj->isMips64EL()), RelocName);
   Sym = unwrapOrError(Obj->getRelocationSymbol(&R, SymTab));
@@ -2721,6 +2719,17 @@ void GNUStyle<ELFT>::printRelocation(const ELFO *Obj, const Elf_Shdr *SymTab,
     TargetName = maybeDemangle(unwrapOrError(Sym->getName(StrTable)));
   }
 
+  unsigned Width = ELFT::Is64Bits ? 16 : 8;
+  Fields[0].Str = to_string(format_hex_no_prefix(R.r_offset, Width));
+  Fields[1].Str = to_string(format_hex_no_prefix(R.r_info, Width));
+  Fields[2].Str = RelocName.str();
+  if (Sym)
+    Fields[3].Str = to_string(format_hex_no_prefix(Sym->getValue(), Width));
+  Fields[4].Str = TargetName;
+  for (auto &F : Fields)
+    printField(F);
+
+  std::string Addend;
   if (Sym && IsRela) {
     if (R.r_addend < 0)
       Addend = " - ";
@@ -2728,24 +2737,11 @@ void GNUStyle<ELFT>::printRelocation(const ELFO *Obj, const Elf_Shdr *SymTab,
       Addend = " + ";
   }
 
-  Offset = to_string(format_hex_no_prefix(R.r_offset, Width));
-  Info = to_string(format_hex_no_prefix(R.r_info, Width));
-
   int64_t RelAddend = R.r_addend;
   if (IsRela)
     Addend += to_hexString(std::abs(RelAddend), false);
-
-  if (Sym)
-    Value = to_string(format_hex_no_prefix(Sym->getValue(), Width));
-
-  Fields[0].Str = Offset;
-  Fields[1].Str = Info;
-  Fields[2].Str = RelocName;
-  Fields[3].Str = Value;
-  Fields[4].Str = TargetName;
-  for (auto &field : Fields)
-    printField(field);
   OS << Addend;
+
   OS << "\n";
 }
 
@@ -2944,62 +2940,37 @@ std::string getSectionTypeString(unsigned Arch, unsigned Type) {
 
 template <class ELFT>
 void GNUStyle<ELFT>::printSectionHeaders(const ELFO *Obj) {
-  size_t SectionIndex = 0;
-  std::string Number, Type, Size, Address, Offset, Flags, Link, Info, EntrySize,
-      Alignment;
-  unsigned Bias;
-  unsigned Width;
-
-  if (ELFT::Is64Bits) {
-    Bias = 0;
-    Width = 16;
-  } else {
-    Bias = 8;
-    Width = 8;
-  }
-
+  unsigned Bias = ELFT::Is64Bits ? 0 : 8;
   ArrayRef<Elf_Shdr> Sections = unwrapOrError(Obj->sections());
   OS << "There are " << to_string(Sections.size())
      << " section headers, starting at offset "
      << "0x" << to_hexString(Obj->getHeader()->e_shoff, false) << ":\n\n";
   OS << "Section Headers:\n";
-  Field Fields[11] = {{"[Nr]", 2},
-                      {"Name", 7},
-                      {"Type", 25},
-                      {"Address", 41},
-                      {"Off", 58 - Bias},
-                      {"Size", 65 - Bias},
-                      {"ES", 72 - Bias},
-                      {"Flg", 75 - Bias},
-                      {"Lk", 79 - Bias},
-                      {"Inf", 82 - Bias},
-                      {"Al", 86 - Bias}};
-  for (auto &f : Fields)
-    printField(f);
+  Field Fields[11] = {
+      {"[Nr]", 2},        {"Name", 7},        {"Type", 25},
+      {"Address", 41},    {"Off", 58 - Bias}, {"Size", 65 - Bias},
+      {"ES", 72 - Bias},  {"Flg", 75 - Bias}, {"Lk", 79 - Bias},
+      {"Inf", 82 - Bias}, {"Al", 86 - Bias}};
+  for (auto &F : Fields)
+    printField(F);
   OS << "\n";
 
+  size_t SectionIndex = 0;
   for (const Elf_Shdr &Sec : Sections) {
-    Number = to_string(SectionIndex);
-    Fields[0].Str = Number;
+    Fields[0].Str = to_string(SectionIndex);
     Fields[1].Str = unwrapOrError(Obj->getSectionName(&Sec));
-    Type = getSectionTypeString(Obj->getHeader()->e_machine, Sec.sh_type);
-    Fields[2].Str = Type;
-    Address = to_string(format_hex_no_prefix(Sec.sh_addr, Width));
-    Fields[3].Str = Address;
-    Offset = to_string(format_hex_no_prefix(Sec.sh_offset, 6));
-    Fields[4].Str = Offset;
-    Size = to_string(format_hex_no_prefix(Sec.sh_size, 6));
-    Fields[5].Str = Size;
-    EntrySize = to_string(format_hex_no_prefix(Sec.sh_entsize, 2));
-    Fields[6].Str = EntrySize;
-    Flags = getGNUFlags(Sec.sh_flags);
-    Fields[7].Str = Flags;
-    Link = to_string(Sec.sh_link);
-    Fields[8].Str = Link;
-    Info = to_string(Sec.sh_info);
-    Fields[9].Str = Info;
-    Alignment = to_string(Sec.sh_addralign);
-    Fields[10].Str = Alignment;
+    Fields[2].Str =
+        getSectionTypeString(Obj->getHeader()->e_machine, Sec.sh_type);
+    Fields[3].Str =
+        to_string(format_hex_no_prefix(Sec.sh_addr, ELFT::Is64Bits ? 16 : 8));
+    Fields[4].Str = to_string(format_hex_no_prefix(Sec.sh_offset, 6));
+    Fields[5].Str = to_string(format_hex_no_prefix(Sec.sh_size, 6));
+    Fields[6].Str = to_string(format_hex_no_prefix(Sec.sh_entsize, 2));
+    Fields[7].Str = getGNUFlags(Sec.sh_flags);
+    Fields[8].Str = to_string(Sec.sh_link);
+    Fields[9].Str = to_string(Sec.sh_info);
+    Fields[10].Str = to_string(Sec.sh_addralign);
+
     OS.PadToColumn(Fields[0].Column);
     OS << "[" << right_justify(Fields[0].Str, 2) << "]";
     for (int i = 1; i < 7; i++)
@@ -3081,7 +3052,6 @@ void GNUStyle<ELFT>::printSymbol(const ELFO *Obj, const Elf_Sym *Symbol,
                                  bool IsDynamic) {
   static int Idx = 0;
   static bool Dynamic = true;
-  size_t Width;
 
   // If this function was called with a different value from IsDynamic
   // from last call, happens when we move from dynamic to static symbol
@@ -3090,48 +3060,38 @@ void GNUStyle<ELFT>::printSymbol(const ELFO *Obj, const Elf_Sym *Symbol,
     Idx = 0;
     Dynamic = false;
   }
-  std::string Num, Name, Value, Size, Binding, Type, Visibility, Section;
-  unsigned Bias = 0;
-  if (ELFT::Is64Bits) {
-    Bias = 8;
-    Width = 16;
-  } else {
-    Bias = 0;
-    Width = 8;
-  }
+
+  unsigned Bias = ELFT::Is64Bits ? 8 : 0;
   Field Fields[8] = {0,         8,         17 + Bias, 23 + Bias,
                      31 + Bias, 38 + Bias, 47 + Bias, 51 + Bias};
-  Num = to_string(format_decimal(Idx++, 6)) + ":";
-  Value = to_string(format_hex_no_prefix(Symbol->st_value, Width));
-  Size = to_string(format_decimal(Symbol->st_size, 5));
+  Fields[0].Str = to_string(format_decimal(Idx++, 6)) + ":";
+  Fields[1].Str = to_string(
+      format_hex_no_prefix(Symbol->st_value, ELFT::Is64Bits ? 16 : 8));
+  Fields[2].Str = to_string(format_decimal(Symbol->st_size, 5));
+
   unsigned char SymbolType = Symbol->getType();
   if (Obj->getHeader()->e_machine == ELF::EM_AMDGPU &&
       SymbolType >= ELF::STT_LOOS && SymbolType < ELF::STT_HIOS)
-    Type = printEnum(SymbolType, makeArrayRef(AMDGPUSymbolTypes));
+    Fields[3].Str = printEnum(SymbolType, makeArrayRef(AMDGPUSymbolTypes));
   else
-    Type = printEnum(SymbolType, makeArrayRef(ElfSymbolTypes));
-  unsigned Vis = Symbol->getVisibility();
-  Binding = printEnum(Symbol->getBinding(), makeArrayRef(ElfSymbolBindings));
-  Visibility = printEnum(Vis, makeArrayRef(ElfSymbolVisibilities));
-  Section = getSymbolSectionNdx(Obj, Symbol, FirstSym);
-  Name = this->dumper()->getFullSymbolName(Symbol, StrTable, IsDynamic);
-  Fields[0].Str = Num;
-  Fields[1].Str = Value;
-  Fields[2].Str = Size;
-  Fields[3].Str = Type;
-  Fields[4].Str = Binding;
-  Fields[5].Str = Visibility;
-  Fields[6].Str = Section;
-  Fields[7].Str = Name;
+    Fields[3].Str = printEnum(SymbolType, makeArrayRef(ElfSymbolTypes));
+
+  Fields[4].Str =
+      printEnum(Symbol->getBinding(), makeArrayRef(ElfSymbolBindings));
+  Fields[5].Str =
+      printEnum(Symbol->getVisibility(), makeArrayRef(ElfSymbolVisibilities));
+  Fields[6].Str = getSymbolSectionNdx(Obj, Symbol, FirstSym);
+  Fields[7].Str =
+      this->dumper()->getFullSymbolName(Symbol, StrTable, IsDynamic);
   for (auto &Entry : Fields)
     printField(Entry);
   OS << "\n";
 }
+
 template <class ELFT>
 void GNUStyle<ELFT>::printHashedSymbol(const ELFO *Obj, const Elf_Sym *FirstSym,
                                        uint32_t Sym, StringRef StrTable,
                                        uint32_t Bucket) {
-  std::string Num, Buc, Name, Value, Size, Binding, Type, Visibility, Section;
   unsigned Width, Bias = 0;
   if (ELFT::Is64Bits) {
     Bias = 8;
@@ -3142,32 +3102,27 @@ void GNUStyle<ELFT>::printHashedSymbol(const ELFO *Obj, const Elf_Sym *FirstSym,
   }
   Field Fields[9] = {0,         6,         11,        20 + Bias, 25 + Bias,
                      34 + Bias, 41 + Bias, 49 + Bias, 53 + Bias};
-  Num = to_string(format_decimal(Sym, 5));
-  Buc = to_string(format_decimal(Bucket, 3)) + ":";
+  Fields[0].Str = to_string(format_decimal(Sym, 5));
+  Fields[1].Str = to_string(format_decimal(Bucket, 3)) + ":";
 
   const auto Symbol = FirstSym + Sym;
-  Value = to_string(format_hex_no_prefix(Symbol->st_value, Width));
-  Size = to_string(format_decimal(Symbol->st_size, 5));
+  Fields[2].Str = to_string(format_hex_no_prefix(Symbol->st_value, Width));
+  Fields[3].Str = to_string(format_decimal(Symbol->st_size, 5));
+
   unsigned char SymbolType = Symbol->getType();
   if (Obj->getHeader()->e_machine == ELF::EM_AMDGPU &&
       SymbolType >= ELF::STT_LOOS && SymbolType < ELF::STT_HIOS)
-    Type = printEnum(SymbolType, makeArrayRef(AMDGPUSymbolTypes));
+    Fields[4].Str = printEnum(SymbolType, makeArrayRef(AMDGPUSymbolTypes));
   else
-    Type = printEnum(SymbolType, makeArrayRef(ElfSymbolTypes));
-  unsigned Vis = Symbol->getVisibility();
-  Binding = printEnum(Symbol->getBinding(), makeArrayRef(ElfSymbolBindings));
-  Visibility = printEnum(Vis, makeArrayRef(ElfSymbolVisibilities));
-  Section = getSymbolSectionNdx(Obj, Symbol, FirstSym);
-  Name = this->dumper()->getFullSymbolName(Symbol, StrTable, true);
-  Fields[0].Str = Num;
-  Fields[1].Str = Buc;
-  Fields[2].Str = Value;
-  Fields[3].Str = Size;
-  Fields[4].Str = Type;
-  Fields[5].Str = Binding;
-  Fields[6].Str = Visibility;
-  Fields[7].Str = Section;
-  Fields[8].Str = Name;
+    Fields[4].Str = printEnum(SymbolType, makeArrayRef(ElfSymbolTypes));
+
+  Fields[5].Str =
+      printEnum(Symbol->getBinding(), makeArrayRef(ElfSymbolBindings));
+  Fields[6].Str =
+      printEnum(Symbol->getVisibility(), makeArrayRef(ElfSymbolVisibilities));
+  Fields[7].Str = getSymbolSectionNdx(Obj, Symbol, FirstSym);
+  Fields[8].Str = this->dumper()->getFullSymbolName(Symbol, StrTable, true);
+
   for (auto &Entry : Fields)
     printField(Entry);
   OS << "\n";
@@ -3314,7 +3269,6 @@ void GNUStyle<ELFT>::printProgramHeaders(const ELFO *Obj) {
   unsigned Bias = ELFT::Is64Bits ? 8 : 0;
   unsigned Width = ELFT::Is64Bits ? 18 : 10;
   unsigned SizeWidth = ELFT::Is64Bits ? 8 : 7;
-  std::string Type, Offset, VMA, LMA, FileSz, MemSz, Flag, Align;
 
   const Elf_Ehdr *Header = Obj->getHeader();
   Field Fields[8] = {2,         17,        26,        37 + Bias,
@@ -3332,22 +3286,14 @@ void GNUStyle<ELFT>::printProgramHeaders(const ELFO *Obj) {
     OS << "  Type           Offset   VirtAddr   PhysAddr   FileSiz "
        << "MemSiz  Flg Align\n";
   for (const auto &Phdr : unwrapOrError(Obj->program_headers())) {
-    Type = getElfPtType(Header->e_machine, Phdr.p_type);
-    Offset = to_string(format_hex(Phdr.p_offset, 8));
-    VMA = to_string(format_hex(Phdr.p_vaddr, Width));
-    LMA = to_string(format_hex(Phdr.p_paddr, Width));
-    FileSz = to_string(format_hex(Phdr.p_filesz, SizeWidth));
-    MemSz = to_string(format_hex(Phdr.p_memsz, SizeWidth));
-    Flag = printPhdrFlags(Phdr.p_flags);
-    Align = to_string(format_hex(Phdr.p_align, 1));
-    Fields[0].Str = Type;
-    Fields[1].Str = Offset;
-    Fields[2].Str = VMA;
-    Fields[3].Str = LMA;
-    Fields[4].Str = FileSz;
-    Fields[5].Str = MemSz;
-    Fields[6].Str = Flag;
-    Fields[7].Str = Align;
+    Fields[0].Str = getElfPtType(Header->e_machine, Phdr.p_type);
+    Fields[1].Str = to_string(format_hex(Phdr.p_offset, 8));
+    Fields[2].Str = to_string(format_hex(Phdr.p_vaddr, Width));
+    Fields[3].Str = to_string(format_hex(Phdr.p_paddr, Width));
+    Fields[4].Str = to_string(format_hex(Phdr.p_filesz, SizeWidth));
+    Fields[5].Str = to_string(format_hex(Phdr.p_memsz, SizeWidth));
+    Fields[6].Str = printPhdrFlags(Phdr.p_flags);
+    Fields[7].Str = to_string(format_hex(Phdr.p_align, 1));
     for (auto Field : Fields)
       printField(Field);
     if (Phdr.p_type == ELF::PT_INTERP) {
@@ -3382,24 +3328,33 @@ void GNUStyle<ELFT>::printProgramHeaders(const ELFO *Obj) {
 template <class ELFT>
 void GNUStyle<ELFT>::printDynamicRelocation(const ELFO *Obj, Elf_Rela R,
                                             bool IsRela) {
-  SmallString<32> RelocName;
-  std::string SymbolName;
-  unsigned Width = ELFT::Is64Bits ? 16 : 8;
   unsigned Bias = ELFT::Is64Bits ? 8 : 0;
   // First two fields are bit width dependent. The rest of them are after are
   // fixed width.
   Field Fields[5] = {0, 10 + Bias, 19 + 2 * Bias, 42 + 2 * Bias, 53 + 2 * Bias};
 
+  unsigned Width = ELFT::Is64Bits ? 16 : 8;
+  Fields[0].Str = to_string(format_hex_no_prefix(R.r_offset, Width));
+  Fields[1].Str = to_string(format_hex_no_prefix(R.r_info, Width));
+
   uint32_t SymIndex = R.getSymbol(Obj->isMips64EL());
   const Elf_Sym *Sym = this->dumper()->dynamic_symbols().begin() + SymIndex;
+  SmallString<32> RelocName;
   Obj->getRelocationTypeName(R.getType(Obj->isMips64EL()), RelocName);
-  SymbolName = maybeDemangle(
+  Fields[2].Str = RelocName.c_str();
+
+  std::string SymbolName = maybeDemangle(
       unwrapOrError(Sym->getName(this->dumper()->getDynamicStringTable())));
-  std::string Addend, Info, Offset, Value;
-  Offset = to_string(format_hex_no_prefix(R.r_offset, Width));
-  Info = to_string(format_hex_no_prefix(R.r_info, Width));
-  Value = to_string(format_hex_no_prefix(Sym->getValue(), Width));
+
+  if (!SymbolName.empty() || Sym->getValue() != 0)
+    Fields[3].Str = to_string(format_hex_no_prefix(Sym->getValue(), Width));
+
+  Fields[4].Str = SymbolName;
+  for (auto &Field : Fields)
+    printField(Field);
+
   int64_t RelAddend = R.r_addend;
+  std::string Addend;
   if (!SymbolName.empty() && IsRela) {
     if (R.r_addend < 0)
       Addend = " - ";
@@ -3407,21 +3362,10 @@ void GNUStyle<ELFT>::printDynamicRelocation(const ELFO *Obj, Elf_Rela R,
       Addend = " + ";
   }
 
-  if (SymbolName.empty() && Sym->getValue() == 0)
-    Value = "";
-
   if (IsRela)
     Addend += to_string(format_hex_no_prefix(std::abs(RelAddend), 1));
-
-
-  Fields[0].Str = Offset;
-  Fields[1].Str = Info;
-  Fields[2].Str = RelocName.c_str();
-  Fields[3].Str = Value;
-  Fields[4].Str = SymbolName;
-  for (auto &Field : Fields)
-    printField(Field);
   OS << Addend;
+
   OS << "\n";
 }
 
