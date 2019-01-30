@@ -188,19 +188,20 @@ static Error handleArgs(const CopyConfig &Config, Object &Obj) {
   return Error::success();
 }
 
-void executeObjcopyOnBinary(const CopyConfig &Config,
-                            COFFObjectFile &In, Buffer &Out) {
+Error executeObjcopyOnBinary(const CopyConfig &Config, COFFObjectFile &In,
+                             Buffer &Out) {
   COFFReader Reader(In);
   Expected<std::unique_ptr<Object>> ObjOrErr = Reader.create();
   if (!ObjOrErr)
-    reportError(Config.InputFilename, ObjOrErr.takeError());
+    return createFileError(Config.InputFilename, ObjOrErr.takeError());
   Object *Obj = ObjOrErr->get();
   assert(Obj && "Unable to deserialize COFF object");
   if (Error E = handleArgs(Config, *Obj))
-    reportError(Config.InputFilename, std::move(E));
+    return createFileError(Config.InputFilename, std::move(E));
   COFFWriter Writer(*Obj, Out);
   if (Error E = Writer.write())
-    reportError(Config.OutputFilename, std::move(E));
+    return createFileError(Config.OutputFilename, std::move(E));
+  return Error::success();
 }
 
 } // end namespace coff
