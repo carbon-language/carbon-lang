@@ -76,24 +76,26 @@ namespace  {
 
     void Visit(const Decl *D);
     void Visit(const Stmt *S, StringRef Label = {});
-
-    // Utilities
     void Visit(QualType T);
     void Visit(const Type *T);
-    void dumpDeclContext(const DeclContext *DC);
-    void dumpLookups(const DeclContext *DC, bool DumpDecls);
     void Visit(const Attr *A);
+    void Visit(const CXXCtorInitializer *Init);
+    void Visit(const TemplateArgument &A, SourceRange R = SourceRange(),
+               const Decl *From = nullptr, const char *Label = nullptr);
+    void Visit(const BlockDecl::Capture &C);
+    void Visit(const OMPClause *C);
+    void Visit(const GenericSelectionExpr::ConstAssociation &A);
+    void Visit(const Comment *C, const FullComment *FC);
 
     // C++ Utilities
-    void Visit(const CXXCtorInitializer *Init);
+    void dumpDeclContext(const DeclContext *DC);
+    void dumpLookups(const DeclContext *DC, bool DumpDecls);
     void dumpTemplateParameters(const TemplateParameterList *TPL);
     void dumpTemplateArgumentListInfo(const TemplateArgumentListInfo &TALI);
     void dumpTemplateArgumentLoc(const TemplateArgumentLoc &A,
                                  const Decl *From = nullptr,
                                  const char *Label = nullptr);
     void dumpTemplateArgumentList(const TemplateArgumentList &TAL);
-    void Visit(const TemplateArgument &A, SourceRange R = SourceRange(),
-               const Decl *From = nullptr, const char *Label = nullptr);
     template <typename SpecializationDecl>
     void dumpTemplateDeclSpecialization(const SpecializationDecl *D,
                                         bool DumpExplicitInst,
@@ -242,7 +244,6 @@ namespace  {
     void VisitObjCCategoryDecl(const ObjCCategoryDecl *D);
     void VisitObjCInterfaceDecl(const ObjCInterfaceDecl *D);
     void VisitObjCImplementationDecl(const ObjCImplementationDecl *D);
-    void Visit(const BlockDecl::Capture &C);
     void VisitBlockDecl(const BlockDecl *D);
 
     // Stmts.
@@ -252,14 +253,12 @@ namespace  {
     void VisitCapturedStmt(const CapturedStmt *Node);
 
     // OpenMP
-    void Visit(const OMPClause *C);
     void VisitOMPExecutableDirective(const OMPExecutableDirective *Node);
 
     // Exprs
     void VisitInitListExpr(const InitListExpr *ILE);
     void VisitBlockExpr(const BlockExpr *Node);
     void VisitOpaqueValueExpr(const OpaqueValueExpr *Node);
-    void Visit(const GenericSelectionExpr::ConstAssociation &A);
     void VisitGenericSelectionExpr(const GenericSelectionExpr *E);
 
     // C++
@@ -270,9 +269,6 @@ namespace  {
 
     // ObjC
     void VisitObjCAtCatchStmt(const ObjCAtCatchStmt *Node);
-
-    // Comments.
-    void Visit(const Comment *C, const FullComment *FC);
 
     void VisitExpressionTemplateArgument(const TemplateArgument &TA) {
       Visit(TA.getAsExpr());
@@ -290,6 +286,49 @@ namespace  {
 //===----------------------------------------------------------------------===//
 //  Utilities
 //===----------------------------------------------------------------------===//
+
+void ASTDumper::Visit(const Decl *D) {
+  NodeDumper.AddChild([=] {
+    NodeDumper.Visit(D);
+    if (!D)
+      return;
+
+    ConstDeclVisitor<ASTDumper>::Visit(D);
+
+    for (const auto &A : D->attrs())
+      Visit(A);
+
+    if (const FullComment *Comment =
+            D->getASTContext().getLocalCommentForDeclUncached(D))
+      Visit(Comment, Comment);
+
+    // Decls within functions are visited by the body.
+    if (!isa<FunctionDecl>(*D) && !isa<ObjCMethodDecl>(*D)) {
+      if (const auto *DC = dyn_cast<DeclContext>(D))
+        dumpDeclContext(DC);
+    }
+  });
+}
+
+void ASTDumper::Visit(const Stmt *S, StringRef Label) {
+  NodeDumper.AddChild(Label, [=] {
+    NodeDumper.Visit(S);
+
+    if (!S) {
+      return;
+    }
+
+    ConstStmtVisitor<ASTDumper>::Visit(S);
+
+    // Some statements have custom mechanisms for dumping their children.
+    if (isa<DeclStmt>(S) || isa<GenericSelectionExpr>(S)) {
+      return;
+    }
+
+    for (const Stmt *SubStmt : S->children())
+      Visit(SubStmt);
+  });
+}
 
 void ASTDumper::Visit(QualType T) {
   SplitQualType SQT = T.split();
@@ -313,6 +352,66 @@ void ASTDumper::Visit(const Type *T) {
         T->getLocallyUnqualifiedSingleStepDesugaredType();
     if (SingleStepDesugar != QualType(T, 0))
       Visit(SingleStepDesugar);
+  });
+}
+
+void ASTDumper::Visit(const Attr *A) {
+  NodeDumper.AddChild([=] {
+    NodeDumper.Visit(A);
+    ConstAttrVisitor<ASTDumper>::Visit(A);
+  });
+}
+
+void ASTDumper::Visit(const CXXCtorInitializer *Init) {
+  NodeDumper.AddChild([=] {
+    NodeDumper.Visit(Init);
+    Visit(Init->getInit());
+  });
+}
+
+void ASTDumper::Visit(const TemplateArgument &A, SourceRange R,
+                      const Decl *From, const char *Label) {
+  NodeDumper.AddChild([=] {
+    NodeDumper.Visit(A, R, From, Label);
+    ConstTemplateArgumentVisitor<ASTDumper>::Visit(A);
+  });
+}
+
+void ASTDumper::Visit(const BlockDecl::Capture &C) {
+  NodeDumper.AddChild([=] {
+    NodeDumper.Visit(C);
+    if (C.hasCopyExpr())
+      Visit(C.getCopyExpr());
+  });
+}
+
+void ASTDumper::Visit(const OMPClause *C) {
+  NodeDumper.AddChild([=] {
+    NodeDumper.Visit(C);
+    for (const auto *S : C->children())
+      Visit(S);
+  });
+}
+
+void ASTDumper::Visit(const GenericSelectionExpr::ConstAssociation &A) {
+  NodeDumper.AddChild([=] {
+    NodeDumper.Visit(A);
+    if (const TypeSourceInfo *TSI = A.getTypeSourceInfo())
+      Visit(TSI->getType());
+    Visit(A.getAssociationExpr());
+  });
+}
+
+void ASTDumper::Visit(const Comment *C, const FullComment *FC) {
+  NodeDumper.AddChild([=] {
+    NodeDumper.Visit(C, FC);
+    if (!C) {
+      return;
+    }
+    ConstCommentVisitor<ASTDumper, void, const FullComment *>::visit(C, FC);
+    for (Comment::child_iterator I = C->child_begin(), E = C->child_end();
+         I != E; ++I)
+      Visit(*I, FC);
   });
 }
 
@@ -383,23 +482,9 @@ void ASTDumper::dumpLookups(const DeclContext *DC, bool DumpDecls) {
   });
 }
 
-void ASTDumper::Visit(const Attr *A) {
-  NodeDumper.AddChild([=] {
-    NodeDumper.Visit(A);
-    ConstAttrVisitor<ASTDumper>::Visit(A);
-  });
-}
-
 //===----------------------------------------------------------------------===//
 //  C++ Utilities
 //===----------------------------------------------------------------------===//
-
-void ASTDumper::Visit(const CXXCtorInitializer *Init) {
-  NodeDumper.AddChild([=] {
-    NodeDumper.Visit(Init);
-    Visit(Init->getInit());
-  });
-}
 
 void ASTDumper::dumpTemplateParameters(const TemplateParameterList *TPL) {
   if (!TPL)
@@ -425,14 +510,6 @@ void ASTDumper::dumpTemplateArgumentList(const TemplateArgumentList &TAL) {
     Visit(TAL[i]);
 }
 
-void ASTDumper::Visit(const TemplateArgument &A, SourceRange R,
-                      const Decl *From, const char *Label) {
-  NodeDumper.AddChild([=] {
-    NodeDumper.Visit(A, R, From, Label);
-    ConstTemplateArgumentVisitor<ASTDumper>::Visit(A);
-  });
-}
-
 //===----------------------------------------------------------------------===//
 //  Objective-C Utilities
 //===----------------------------------------------------------------------===//
@@ -448,29 +525,6 @@ void ASTDumper::dumpObjCTypeParamList(const ObjCTypeParamList *typeParams) {
 //===----------------------------------------------------------------------===//
 //  Decl dumping methods.
 //===----------------------------------------------------------------------===//
-
-void ASTDumper::Visit(const Decl *D) {
-  NodeDumper.AddChild([=] {
-    NodeDumper.Visit(D);
-    if (!D)
-      return;
-
-    ConstDeclVisitor<ASTDumper>::Visit(D);
-
-    for (const auto &A : D->attrs())
-      Visit(A);
-
-    if (const FullComment *Comment =
-            D->getASTContext().getLocalCommentForDeclUncached(D))
-      Visit(Comment, Comment);
-
-    // Decls within functions are visited by the body.
-    if (!isa<FunctionDecl>(*D) && !isa<ObjCMethodDecl>(*D)) {
-      if (const auto *DC = dyn_cast<DeclContext>(D))
-        dumpDeclContext(DC);
-    }
-  });
-}
 
 void ASTDumper::VisitTypedefDecl(const TypedefDecl *D) {
   Visit(D->getUnderlyingType());
@@ -728,14 +782,6 @@ void ASTDumper::VisitObjCImplementationDecl(const ObjCImplementationDecl *D) {
     Visit(I);
 }
 
-void ASTDumper::Visit(const BlockDecl::Capture &C) {
-  NodeDumper.AddChild([=] {
-    NodeDumper.Visit(C);
-    if (C.hasCopyExpr())
-      Visit(C.getCopyExpr());
-  });
-}
-
 void ASTDumper::VisitBlockDecl(const BlockDecl *D) {
   for (const auto &I : D->parameters())
     Visit(I);
@@ -748,26 +794,6 @@ void ASTDumper::VisitBlockDecl(const BlockDecl *D) {
 //===----------------------------------------------------------------------===//
 //  Stmt dumping methods.
 //===----------------------------------------------------------------------===//
-
-void ASTDumper::Visit(const Stmt *S, StringRef Label) {
-  NodeDumper.AddChild(Label, [=] {
-    NodeDumper.Visit(S);
-
-    if (!S) {
-      return;
-    }
-
-    ConstStmtVisitor<ASTDumper>::Visit(S);
-
-    // Some statements have custom mechanisms for dumping their children.
-    if (isa<DeclStmt>(S) || isa<GenericSelectionExpr>(S)) {
-      return;
-    }
-
-    for (const Stmt *SubStmt : S->children())
-      Visit(SubStmt);
-  });
-}
 
 void ASTDumper::VisitDeclStmt(const DeclStmt *Node) {
   for (const auto &D : Node->decls())
@@ -790,14 +816,6 @@ void ASTDumper::VisitCapturedStmt(const CapturedStmt *Node) {
 //===----------------------------------------------------------------------===//
 //  OpenMP dumping methods.
 //===----------------------------------------------------------------------===//
-
-void ASTDumper::Visit(const OMPClause *C) {
-  NodeDumper.AddChild([=] {
-    NodeDumper.Visit(C);
-    for (const auto *S : C->children())
-      Visit(S);
-  });
-}
 
 void ASTDumper::VisitOMPExecutableDirective(
     const OMPExecutableDirective *Node) {
@@ -823,15 +841,6 @@ void ASTDumper::VisitBlockExpr(const BlockExpr *Node) {
 void ASTDumper::VisitOpaqueValueExpr(const OpaqueValueExpr *Node) {
   if (Expr *Source = Node->getSourceExpr())
     Visit(Source);
-}
-
-void ASTDumper::Visit(const GenericSelectionExpr::ConstAssociation &A) {
-  NodeDumper.AddChild([=] {
-    NodeDumper.Visit(A);
-    if (const TypeSourceInfo *TSI = A.getTypeSourceInfo())
-      Visit(TSI->getType());
-    Visit(A.getAssociationExpr());
-  });
 }
 
 void ASTDumper::VisitGenericSelectionExpr(const GenericSelectionExpr *E) {
@@ -860,23 +869,6 @@ void ASTDumper::VisitSizeOfPackExpr(const SizeOfPackExpr *Node) {
 void ASTDumper::VisitObjCAtCatchStmt(const ObjCAtCatchStmt *Node) {
   if (const VarDecl *CatchParam = Node->getCatchParamDecl())
     Visit(CatchParam);
-}
-
-//===----------------------------------------------------------------------===//
-// Comments
-//===----------------------------------------------------------------------===//
-
-void ASTDumper::Visit(const Comment *C, const FullComment *FC) {
-  NodeDumper.AddChild([=] {
-    NodeDumper.Visit(C, FC);
-    if (!C) {
-      return;
-    }
-    ConstCommentVisitor<ASTDumper, void, const FullComment *>::visit(C, FC);
-    for (Comment::child_iterator I = C->child_begin(), E = C->child_end();
-         I != E; ++I)
-      Visit(*I, FC);
-  });
 }
 
 //===----------------------------------------------------------------------===//
