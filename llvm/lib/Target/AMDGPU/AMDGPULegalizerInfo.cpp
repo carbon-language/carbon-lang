@@ -237,6 +237,14 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
       [](const LegalityQuery &Query) {
         return std::make_pair(0, LLT::scalar(32));
       })
+    .fewerElementsIf([=, &ST](const LegalityQuery &Query) {
+        unsigned MemSize = Query.MMODescrs[0].SizeInBits;
+        return Query.Types[0].isVector() && (MemSize == 96) &&
+               ST.getGeneration() < AMDGPUSubtarget::SEA_ISLANDS;
+      },
+      [=](const LegalityQuery &Query) {
+        return std::make_pair(0, V2S32);
+      })
     .legalIf([=, &ST](const LegalityQuery &Query) {
         const LLT &Ty0 = Query.Types[0];
 

@@ -531,14 +531,15 @@ LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
     return Legalized;
   }
   case TargetOpcode::G_LOAD: {
-    // FIXME: add support for when SizeOp0 isn't an exact multiple of
-    // NarrowSize.
-    if (SizeOp0 % NarrowSize != 0)
-      return UnableToLegalize;
-
     const auto &MMO = **MI.memoperands_begin();
     unsigned DstReg = MI.getOperand(0).getReg();
     LLT DstTy = MRI.getType(DstReg);
+    int NumParts = SizeOp0 / NarrowSize;
+    unsigned HandledSize = NumParts * NarrowTy.getSizeInBits();
+    unsigned LeftoverBits = DstTy.getSizeInBits() - HandledSize;
+
+    if (DstTy.isVector() && LeftoverBits != 0)
+      return UnableToLegalize;
 
     if (8 * MMO.getSize() != DstTy.getSizeInBits()) {
       unsigned TmpReg = MRI.createGenericVirtualRegister(NarrowTy);
@@ -555,13 +556,12 @@ LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
         MMO.getFailureOrdering() != AtomicOrdering::NotAtomic)
       return UnableToLegalize;
 
-    int NumParts = SizeOp0 / NarrowSize;
     LLT OffsetTy = LLT::scalar(
         MRI.getType(MI.getOperand(1).getReg()).getScalarSizeInBits());
 
     SmallVector<unsigned, 2> DstRegs;
     for (int i = 0; i < NumParts; ++i) {
-      unsigned DstReg = MRI.createGenericVirtualRegister(NarrowTy);
+      unsigned PartDstReg = MRI.createGenericVirtualRegister(NarrowTy);
       unsigned SrcReg = 0;
       unsigned Adjustment = i * NarrowSize / 8;
       unsigned Alignment = MinAlign(MMO.getAlignment(), Adjustment);
@@ -574,15 +574,44 @@ LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
       MIRBuilder.materializeGEP(SrcReg, MI.getOperand(1).getReg(), OffsetTy,
                                 Adjustment);
 
-      MIRBuilder.buildLoad(DstReg, SrcReg, *SplitMMO);
+      MIRBuilder.buildLoad(PartDstReg, SrcReg, *SplitMMO);
 
-      DstRegs.push_back(DstReg);
+      DstRegs.push_back(PartDstReg);
     }
 
+    unsigned MergeResultReg = LeftoverBits == 0 ? DstReg :
+      MRI.createGenericVirtualRegister(LLT::scalar(HandledSize));
+
+    // For the leftover piece, still create the merge and insert it.
+    // TODO: Would it be better to directly insert the intermediate pieces?
     if (DstTy.isVector())
-      MIRBuilder.buildBuildVector(DstReg, DstRegs);
+      MIRBuilder.buildBuildVector(MergeResultReg, DstRegs);
     else
-      MIRBuilder.buildMerge(DstReg, DstRegs);
+      MIRBuilder.buildMerge(MergeResultReg, DstRegs);
+
+    if (LeftoverBits == 0) {
+      MI.eraseFromParent();
+      return Legalized;
+    }
+
+    unsigned ImpDefReg = MRI.createGenericVirtualRegister(DstTy);
+    unsigned Insert0Reg = MRI.createGenericVirtualRegister(DstTy);
+    MIRBuilder.buildUndef(ImpDefReg);
+    MIRBuilder.buildInsert(Insert0Reg, ImpDefReg, MergeResultReg, 0);
+
+    unsigned PartDstReg
+      = MRI.createGenericVirtualRegister(LLT::scalar(LeftoverBits));
+    unsigned Offset = HandledSize / 8;
+
+    MachineMemOperand *SplitMMO = MIRBuilder.getMF().getMachineMemOperand(
+      &MMO, Offset, LeftoverBits / 8);
+
+    unsigned SrcReg = 0;
+    MIRBuilder.materializeGEP(SrcReg, MI.getOperand(1).getReg(), OffsetTy,
+                              Offset);
+    MIRBuilder.buildLoad(PartDstReg, SrcReg, *SplitMMO);
+    MIRBuilder.buildInsert(DstReg, Insert0Reg, PartDstReg, HandledSize);
+
     MI.eraseFromParent();
     return Legalized;
   }
