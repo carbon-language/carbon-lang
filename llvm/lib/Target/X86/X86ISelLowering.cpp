@@ -41651,12 +41651,11 @@ static SDValue combineInsertSubvector(SDNode *N, SelectionDAG &DAG,
         if (SubVec2 == SubVec && ISD::isNormalLoad(Ld) && Vec.hasOneUse())
           return DAG.getNode(X86ISD::SUBV_BROADCAST, dl, OpVT, SubVec);
 
-      // If this is subv_broadcast insert into both halves, use a larger
-      // subv_broadcast.
-      // TODO - handle X86ISD::VBROADCAST as well?
-      if (SubVec.getOpcode() == X86ISD::SUBV_BROADCAST && SubVec == SubVec2)
-        return DAG.getNode(X86ISD::SUBV_BROADCAST, dl, OpVT,
-                           SubVec.getOperand(0));
+      // If this broadcast/subv_broadcast is inserted into both halves, use a
+      // larger broadcast/subv_broadcast.
+      if (SubVec == SubVec2 && (SubVec.getOpcode() == X86ISD::VBROADCAST ||
+                                SubVec.getOpcode() == X86ISD::SUBV_BROADCAST))
+        return DAG.getNode(SubVec.getOpcode(), dl, OpVT, SubVec.getOperand(0));
 
       // If we're inserting all zeros into the upper half, change this to
       // an insert into an all zeros vector. We will match this to a move
