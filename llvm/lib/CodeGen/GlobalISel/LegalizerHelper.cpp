@@ -568,20 +568,18 @@ LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
     LLT OffsetTy = LLT::scalar(
         MRI.getType(MI.getOperand(1).getReg()).getScalarSizeInBits());
 
+    MachineFunction &MF = MIRBuilder.getMF();
     SmallVector<unsigned, 2> DstRegs;
     for (int i = 0; i < NumParts; ++i) {
       unsigned PartDstReg = MRI.createGenericVirtualRegister(NarrowTy);
       unsigned SrcReg = 0;
-      unsigned Adjustment = i * NarrowSize / 8;
-      unsigned Alignment = MinAlign(MMO.getAlignment(), Adjustment);
+      unsigned Offset = i * NarrowSize / 8;
 
-      MachineMemOperand *SplitMMO = MIRBuilder.getMF().getMachineMemOperand(
-          MMO.getPointerInfo().getWithOffset(Adjustment), MMO.getFlags(),
-          NarrowSize / 8, Alignment, MMO.getAAInfo(), MMO.getRanges(),
-          MMO.getSyncScopeID(), MMO.getOrdering(), MMO.getFailureOrdering());
+      MachineMemOperand *SplitMMO =
+          MF.getMachineMemOperand(&MMO, Offset, NarrowSize / 8);
 
       MIRBuilder.materializeGEP(SrcReg, MI.getOperand(1).getReg(), OffsetTy,
-                                Adjustment);
+                                Offset);
 
       MIRBuilder.buildLoad(PartDstReg, SrcReg, *SplitMMO);
 
@@ -684,18 +682,16 @@ LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
     SmallVector<unsigned, 2> SrcRegs;
     extractParts(MI.getOperand(0).getReg(), NarrowTy, NumParts, SrcRegs);
 
+    MachineFunction &MF = MIRBuilder.getMF();
     for (int i = 0; i < NumParts; ++i) {
       unsigned DstReg = 0;
-      unsigned Adjustment = i * NarrowSize / 8;
-      unsigned Alignment = MinAlign(MMO.getAlignment(), Adjustment);
+      unsigned Offset = i * NarrowSize / 8;
 
-      MachineMemOperand *SplitMMO = MIRBuilder.getMF().getMachineMemOperand(
-          MMO.getPointerInfo().getWithOffset(Adjustment), MMO.getFlags(),
-          NarrowSize / 8, Alignment, MMO.getAAInfo(), MMO.getRanges(),
-          MMO.getSyncScopeID(), MMO.getOrdering(), MMO.getFailureOrdering());
+      MachineMemOperand *SplitMMO =
+          MF.getMachineMemOperand(&MMO, Offset, NarrowSize / 8);
 
       MIRBuilder.materializeGEP(DstReg, MI.getOperand(1).getReg(), OffsetTy,
-                                Adjustment);
+                                Offset);
 
       MIRBuilder.buildStore(SrcRegs[i], DstReg, *SplitMMO);
     }
