@@ -1,27 +1,13 @@
-RUN: rm -rf %t
-RUN: mkdir -p %t
 RUN: echo "%p/Inputs/dwarfdump-test.elf-x86-64 0x40113f" > %t.input
-RUN: echo "%p/Inputs/dwarfdump-test.elf-x86-64.debuglink 0x40113f" >> %t.input
 RUN: echo "%p/Inputs/dwarfdump-test.elf-x86-64 0x401020" >> %t.input
 RUN: echo "%p/Inputs/dwarfdump-test.elf-x86-64 0x40110e" >> %t.input
 RUN: echo "%p/Inputs/dwarfdump-test.elf-x86-64 0x401160" >> %t.input
 RUN: echo "%p/Inputs/dwarfdump-test2.elf-x86-64 0x4004e8" >> %t.input
 RUN: echo "%p/Inputs/dwarfdump-test2.elf-x86-64 0x4004f4" >> %t.input
 RUN: echo "%p/Inputs/dwarfdump-test4.elf-x86-64 0x62c" >> %t.input
-RUN: echo "%p/Inputs/dwarfdump-inl-test.elf-x86-64 0x8dc" >> %t.input
-RUN: echo "%p/Inputs/dwarfdump-inl-test.elf-x86-64 0xa05" >> %t.input
-RUN: echo "%p/Inputs/dwarfdump-inl-test.elf-x86-64 0x987" >> %t.input
-RUN: cp "%p/Inputs/dwarfdump-test3.elf-x86-64-space" "%t/dwarfdump-test3.elf-x86-64 space"
-RUN: echo "\"%t/dwarfdump-test3.elf-x86-64 space\" 0x640" >> %t.input
-RUN: echo "\"%t/dwarfdump-test3.elf-x86-64 space\" 0x633" >> %t.input
-RUN: echo "\"%t/dwarfdump-test3.elf-x86-64 space\" 0x62d" >> %t.input
 
-RUN: cd %t
 RUN: llvm-symbolizer --functions=linkage --inlining --demangle=false \
 RUN:    < %t.input | FileCheck --check-prefix=CHECK --check-prefix=SPLIT --check-prefix=DWO %s
-
-CHECK:       main
-CHECK-NEXT: /tmp/dbginfo{{[/\\]}}dwarfdump-test.cc:16
 
 CHECK:       main
 CHECK-NEXT: /tmp/dbginfo{{[/\\]}}dwarfdump-test.cc:16
@@ -42,38 +28,3 @@ CHECK-NEXT: /tmp/dbginfo{{[/\\]}}dwarfdump-test2-main.cc:4
 
 CHECK:      _Z1cv
 CHECK-NEXT: /tmp/dbginfo{{[/\\]}}dwarfdump-test4-part1.cc:2
-
-CHECK:      inlined_h
-CHECK-NEXT: dwarfdump-inl-test.h:2
-CHECK-NEXT: inlined_g
-CHECK-NEXT: dwarfdump-inl-test.h:7
-CHECK-NEXT: inlined_f
-CHECK-NEXT: dwarfdump-inl-test.cc:3
-CHECK-NEXT: main
-CHECK-NEXT: dwarfdump-inl-test.cc:8
-
-CHECK:      inlined_g
-CHECK-NEXT: dwarfdump-inl-test.h:7
-CHECK-NEXT: inlined_f
-CHECK-NEXT: dwarfdump-inl-test.cc:3
-CHECK-NEXT: main
-CHECK-NEXT: dwarfdump-inl-test.cc:8
-
-CHECK:      inlined_f
-CHECK-NEXT: dwarfdump-inl-test.cc:3
-CHECK-NEXT: main
-CHECK-NEXT: dwarfdump-inl-test.cc:8
-
-CHECK: C
-CHECK-NEXT: /tmp/dbginfo{{[/\\]}}dwarfdump-test3.cc:3
-
-CHECK: _Z3do1v
-CHECK-NEXT: /tmp/include{{[/\\]}}dwarfdump-test3-decl.h:7
-
-CHECK: _Z3do2v
-CHECK-NEXT: /tmp/dbginfo{{[/\\]}}include{{[/\\]}}dwarfdump-test3-decl2.h:1
-
-RUN: echo "unexisting-file 0x1234" > %t.input2
-RUN: llvm-symbolizer < %t.input2 2>&1 | FileCheck %s --check-prefix=MISSING-FILE
-
-MISSING-FILE: LLVMSymbolizer: error reading file: {{[Nn]}}o such file or directory
