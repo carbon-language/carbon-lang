@@ -8,6 +8,5 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../..)
 # $<TARGET_OBJECTS:obj.clangDaemonTweaks> to a list of sources, see
 # clangd/tool/CMakeLists.txt for an example.
 add_clang_library(clangDaemonTweaks OBJECT
-  Dummy.cpp # FIXME: to avoid CMake errors due to empty inputs, remove when a
-            #        first tweak lands.
+  SwapIfBranches.cpp
   )
