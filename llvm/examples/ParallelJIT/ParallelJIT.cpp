@@ -49,11 +49,10 @@ using namespace llvm;
 static Function* createAdd1(Module *M) {
   // Create the add1 function entry and insert this entry into module M.  The
   // function will have a return type of "int" and take an argument of "int".
-  // The '0' terminates the list of argument types.
   Function *Add1F =
-    cast<Function>(M->getOrInsertFunction("add1",
-                                          Type::getInt32Ty(M->getContext()),
-                                          Type::getInt32Ty(M->getContext())));
+      Function::Create(FunctionType::get(Type::getInt32Ty(Context),
+                                         {Type::getInt32Ty(Context)}, false),
+                       Function::ExternalLinkage, "add1", M);
 
   // Add a basic block to the function. As before, it automatically inserts
   // because of the last argument.
@@ -80,10 +79,10 @@ static Function* createAdd1(Module *M) {
 static Function *CreateFibFunction(Module *M) {
   // Create the fib function and insert it into module M.  This function is said
   // to return an int and take an int parameter.
-  Function *FibF = 
-    cast<Function>(M->getOrInsertFunction("fib",
-                                          Type::getInt32Ty(M->getContext()),
-                                          Type::getInt32Ty(M->getContext())));
+  FunctionType *FibFTy = FunctionType::get(Type::getInt32Ty(Context),
+                                           {Type::getInt32Ty(Context)}, false);
+  Function *FibF =
+      Function::Create(FibFTy, Function::ExternalLinkage, "fib", M);
 
   // Add a basic block to the function.
   BasicBlock *BB = BasicBlock::Create(M->getContext(), "EntryBlock", FibF);
