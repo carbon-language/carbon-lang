@@ -98,7 +98,8 @@ define i64 @t4(<2 x double>* %a) {
 ;
 ; X64-AVX-LABEL: t4:
 ; X64-AVX:       # %bb.0:
-; X64-AVX-NEXT:    movq (%rdi), %rax
+; X64-AVX-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
+; X64-AVX-NEXT:    vpextrq $1, %xmm0, %rax
 ; X64-AVX-NEXT:    retq
   %b = load <2 x double>, <2 x double>* %a, align 16
   %c = shufflevector <2 x double> %b, <2 x double> %b, <2 x i32> <i32 1, i32 0>

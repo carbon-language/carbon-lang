@@ -596,8 +596,7 @@ define <2 x i64> @G(i64* %ptr) nounwind uwtable readnone ssp {
 ;
 ; X64-LABEL: G:
 ; X64:       ## %bb.0: ## %entry
-; X64-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; X64-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,1,0,1]
+; X64-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
 ; X64-NEXT:    retq
 entry:
   %q = load i64, i64* %ptr, align 8

@@ -31035,15 +31035,27 @@ static SDValue combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
     }
 
     // Attempt to match against broadcast-from-vector.
-    // TODO: Add (partial) AVX1 support.
-    if (Subtarget.hasAVX2() && (!IsEVEXShuffle || NumRootElts == NumMaskElts)) {
+    // Limit AVX1 to cases where we're loading+broadcasting a scalar element.
+    if ((Subtarget.hasAVX2() || (Subtarget.hasAVX() && 32 <= MaskEltSizeInBits))
+        && (!IsEVEXShuffle || NumRootElts == NumMaskElts)) {
       SmallVector<int, 64> BroadcastMask(NumMaskElts, 0);
       if (isTargetShuffleEquivalent(Mask, BroadcastMask)) {
-        if (Depth == 1 && Root.getOpcode() == X86ISD::VBROADCAST)
-          return SDValue(); // Nothing to do!
-        Res = DAG.getBitcast(MaskVT, V1);
-        Res = DAG.getNode(X86ISD::VBROADCAST, DL, MaskVT, Res);
-        return DAG.getBitcast(RootVT, Res);
+        if (V1.getValueType() == MaskVT &&
+            V1.getOpcode() == ISD::SCALAR_TO_VECTOR &&
+            MayFoldLoad(V1.getOperand(0))) {
+          if (Depth == 1 && Root.getOpcode() == X86ISD::VBROADCAST)
+            return SDValue(); // Nothing to do!
+          Res = V1.getOperand(0);
+          Res = DAG.getNode(X86ISD::VBROADCAST, DL, MaskVT, Res);
+          return DAG.getBitcast(RootVT, Res);
+        }
+        if (Subtarget.hasAVX2()) {
+          if (Depth == 1 && Root.getOpcode() == X86ISD::VBROADCAST)
+            return SDValue(); // Nothing to do!
+          Res = DAG.getBitcast(MaskVT, V1);
+          Res = DAG.getNode(X86ISD::VBROADCAST, DL, MaskVT, Res);
+          return DAG.getBitcast(RootVT, Res);
+        }
       }
     }
 

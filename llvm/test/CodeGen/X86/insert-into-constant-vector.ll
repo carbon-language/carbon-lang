@@ -273,8 +273,7 @@ define <8 x i32> @elt7_v8i32(i32 %x) {
 ;
 ; X32AVX1-LABEL: elt7_v8i32:
 ; X32AVX1:       # %bb.0:
-; X32AVX1-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; X32AVX1-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,1,2,0]
+; X32AVX1-NEXT:    vbroadcastss {{[0-9]+}}(%esp), %xmm0
 ; X32AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
 ; X32AVX1-NEXT:    vblendps {{.*#+}} ymm0 = mem[0,1,2,3,4,5,6],ymm0[7]
 ; X32AVX1-NEXT:    retl
