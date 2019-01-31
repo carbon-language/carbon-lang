@@ -194,18 +194,19 @@ template<typename A> using CopyableIndirection = common::Indirection<A, true>;
 // definition
 template<typename A> class Expr;
 
+// TODO pmk: convert to a class
 struct FoldingContext {
   explicit FoldingContext(const parser::ContextualMessages &m,
       Rounding round = defaultRounding, bool flush = false)
     : messages{m}, rounding{round}, flushSubnormalsToZero{flush} {}
   FoldingContext(const FoldingContext &that)
     : messages{that.messages}, rounding{that.rounding},
-      flushDenormalsToZero{that.flushDenormalsToZero},
+      flushSubnormalsToZero{that.flushSubnormalsToZero},
       pdtInstance{that.pdtInstance}, impliedDos{that.impliedDos} {}
   FoldingContext(
       const FoldingContext &that, const parser::ContextualMessages &m)
     : messages{m}, rounding{that.rounding},
-      flushDenormalsToZero{that.flushDenormalsToZero},
+      flushSubnormalsToZero{that.flushSubnormalsToZero},
       pdtInstance{that.pdtInstance}, impliedDos{that.impliedDos} {}
 
   parser::ContextualMessages messages;

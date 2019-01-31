@@ -94,8 +94,8 @@ template<typename T>
 std::ostream &Emit(std::ostream &o, const ImpliedDo<T> &implDo) {
   o << '(';
   Emit(o, *implDo.values);
-  o << ',' << ImpliedDoIndex::Result::AsFortran() << "::";
-  o << '=';
+  o << ',' << ImpliedDoIndex::Result::AsFortran()
+    << "::" << implDo.name.ToString() << '=';
   implDo.lower->AsFortran(o) << ',';
   implDo.upper->AsFortran(o) << ',';
   implDo.stride->AsFortran(o) << ')';
@@ -222,9 +222,8 @@ bool ImpliedDoIndex::operator==(const ImpliedDoIndex &that) const {
 
 template<typename T>
 bool ImpliedDo<T>::operator==(const ImpliedDo<T> &that) const {
-  return controlVariableName == that.controlVariableName &&
-      lower == that.lower && upper == that.upper && stride == that.stride &&
-      values == that.values;
+  return name == that.name && lower == that.lower && upper == that.upper &&
+      stride == that.stride && values == that.values;
 }
 
 template<typename R>

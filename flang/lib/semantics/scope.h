@@ -25,12 +25,9 @@
 #include <set>
 #include <string>
 
-namespace Fortran::evaluate {
-struct FoldingContext;
-}
-
 namespace Fortran::semantics {
 
+class SemanticsContext;
 using namespace parser::literals;
 
 class Scope {
@@ -143,7 +140,7 @@ public:
   const DeclTypeSpec &MakeDerivedType(
       DeclTypeSpec::Category, DerivedTypeSpec &&);
   const DeclTypeSpec &MakeDerivedType(
-      DeclTypeSpec::Category, DerivedTypeSpec &&, evaluate::FoldingContext &);
+      DeclTypeSpec::Category, DerivedTypeSpec &&, SemanticsContext &);
   DeclTypeSpec &MakeDerivedType(const Symbol &);
   DeclTypeSpec &MakeDerivedType(DerivedTypeSpec &&, DeclTypeSpec::Category);
   const DeclTypeSpec &MakeTypeStarType();
@@ -181,13 +178,13 @@ public:
   // Returns a matching derived type instance if one exists, otherwise
   // creates one
   const DeclTypeSpec &FindOrInstantiateDerivedType(
-      DerivedTypeSpec &&, DeclTypeSpec::Category, evaluate::FoldingContext &);
+      DerivedTypeSpec &&, DeclTypeSpec::Category, SemanticsContext &);
 
   // Clones a DerivedType scope into a new derived type instance's scope.
-  void InstantiateDerivedType(Scope &, evaluate::FoldingContext &) const;
+  void InstantiateDerivedType(Scope &, SemanticsContext &) const;
 
   const DeclTypeSpec &InstantiateIntrinsicType(
-      const DeclTypeSpec &, evaluate::FoldingContext &);
+      const DeclTypeSpec &, SemanticsContext &);
 
 private:
   Scope &parent_;  // this is enclosing scope, not extended derived type base

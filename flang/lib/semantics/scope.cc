@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "scope.h"
+#include "semantics.h"
 #include "symbol.h"
 #include "type.h"
 #include "../evaluate/fold.h"
@@ -105,10 +106,10 @@ const DeclTypeSpec &Scope::MakeDerivedType(
 }
 
 const DeclTypeSpec &Scope::MakeDerivedType(DeclTypeSpec::Category category,
-    DerivedTypeSpec &&instance, evaluate::FoldingContext &foldingContext) {
+    DerivedTypeSpec &&instance, SemanticsContext &semanticsContext) {
   DeclTypeSpec &type{declTypeSpecs_.emplace_back(
       category, DerivedTypeSpec{std::move(instance)})};
-  type.derivedTypeSpec().Instantiate(*this, foldingContext);
+  type.derivedTypeSpec().Instantiate(*this, semanticsContext);
   return type;
 }
 
@@ -234,29 +235,29 @@ const DeclTypeSpec *Scope::FindInstantiatedDerivedType(
 }
 
 const DeclTypeSpec &Scope::FindOrInstantiateDerivedType(DerivedTypeSpec &&spec,
-    DeclTypeSpec::Category category, evaluate::FoldingContext &foldingContext) {
-  spec.FoldParameterExpressions(foldingContext);
+    DeclTypeSpec::Category category, SemanticsContext &semanticsContext) {
+  spec.FoldParameterExpressions(semanticsContext.foldingContext());
   if (const DeclTypeSpec * type{FindInstantiatedDerivedType(spec, category)}) {
     return *type;
   }
   // Create a new instantiation of this parameterized derived type
   // for this particular distinct set of actual parameter values.
   DeclTypeSpec &type{MakeDerivedType(std::move(spec), category)};
-  type.derivedTypeSpec().Instantiate(*this, foldingContext);
+  type.derivedTypeSpec().Instantiate(*this, semanticsContext);
   return type;
 }
 
 void Scope::InstantiateDerivedType(
-    Scope &clone, evaluate::FoldingContext &foldingContext) const {
+    Scope &clone, SemanticsContext &semanticsContext) const {
   clone.sourceRange_ = sourceRange_;
   clone.chars_ = chars_;
   for (const auto &pair : symbols_) {
-    pair.second->Instantiate(clone, foldingContext);
+    pair.second->Instantiate(clone, semanticsContext);
   }
 }
 
 const DeclTypeSpec &Scope::InstantiateIntrinsicType(
-    const DeclTypeSpec &spec, evaluate::FoldingContext &foldingContext) {
+    const DeclTypeSpec &spec, SemanticsContext &semanticsContext) {
   const IntrinsicTypeSpec *intrinsic{spec.AsIntrinsic()};
   CHECK(intrinsic != nullptr);
   if (evaluate::ToInt64(intrinsic->kind()).has_value()) {
@@ -265,27 +266,34 @@ const DeclTypeSpec &Scope::InstantiateIntrinsicType(
   // The expression was not originally constant, but now it must be so
   // in the context of a parameterized derived type instantiation.
   KindExpr copy{intrinsic->kind()};
+  evaluate::FoldingContext &foldingContext{semanticsContext.foldingContext()};
   copy = evaluate::Fold(foldingContext, std::move(copy));
-  auto value{evaluate::ToInt64(copy)};
-  CHECK(value.has_value() &&
-      "KIND parameter of intrinsic type did not resolve to a "
-      "constant INTEGER value in a parameterized derived type instance");
-  if (!evaluate::IsValidKindOfIntrinsicType(intrinsic->category(), *value)) {
+  int kind{
+      semanticsContext.defaultKinds().GetDefaultKind(intrinsic->category())};
+  if (auto value{evaluate::ToInt64(copy)}) {
+    if (evaluate::IsValidKindOfIntrinsicType(intrinsic->category(), *value)) {
+      kind = *value;
+    } else {
+      foldingContext.messages.Say(
+          "KIND parameter value (%jd) of intrinsic type %s did not resolve to a supported value"_err_en_US,
+          static_cast<std::intmax_t>(*value),
+          parser::ToUpperCaseLetters(
+              common::EnumToString(intrinsic->category()))
+              .data());
+    }
+  } else {
     foldingContext.messages.Say(
-        "KIND parameter value (%jd) of intrinsic type %s did not resolve to a supported value"_err_en_US,
-        static_cast<std::intmax_t>(*value),
-        parser::ToUpperCaseLetters(common::EnumToString(intrinsic->category()))
-            .data());
+        "KIND parameter value did not resolve to a constant value"_err_en_US);
   }
   switch (spec.category()) {
   case DeclTypeSpec::Numeric:
     return declTypeSpecs_.emplace_back(
-        NumericTypeSpec{intrinsic->category(), KindExpr{*value}});
+        NumericTypeSpec{intrinsic->category(), KindExpr{kind}});
   case DeclTypeSpec::Logical:
-    return declTypeSpecs_.emplace_back(LogicalTypeSpec{KindExpr{*value}});
+    return declTypeSpecs_.emplace_back(LogicalTypeSpec{KindExpr{kind}});
   case DeclTypeSpec::Character:
     return declTypeSpecs_.emplace_back(CharacterTypeSpec{
-        ParamValue{spec.characterTypeSpec().length()}, KindExpr{*value}});
+        ParamValue{spec.characterTypeSpec().length()}, KindExpr{kind}});
   default: CRASH_NO_CASE;
   }
 }

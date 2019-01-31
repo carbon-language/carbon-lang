@@ -2696,7 +2696,7 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
       // values, and check constraints.
       auto inLocation{
           GetFoldingContext().messages.SetLocation(*currStmtSource())};
-      type.derivedTypeSpec().Instantiate(currScope(), GetFoldingContext());
+      type.derivedTypeSpec().Instantiate(currScope(), context());
     }
     SetDeclTypeSpec(type);
   }

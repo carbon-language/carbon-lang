@@ -462,20 +462,16 @@ int BaseObject::Rank() const {
 }
 
 int Component::Rank() const {
-  int baseRank{base_->Rank()};
-  int symbolRank{symbol_->Rank()};
-  CHECK(baseRank == 0 || symbolRank == 0);
-  return baseRank + symbolRank;
+  if (int rank{symbol_->Rank()}; rank > 0) {
+    return rank;
+  }
+  return base_->Rank();
 }
 
 int Subscript::Rank() const {
   return std::visit(
       common::visitors{
-          [](const IndirectSubscriptIntegerExpr &x) {
-            int rank{x->Rank()};
-            CHECK(rank <= 1);
-            return rank;
-          },
+          [](const IndirectSubscriptIntegerExpr &x) { return x->Rank(); },
           [](const Triplet &) { return 1; },
       },
       u);
@@ -483,22 +479,24 @@ int Subscript::Rank() const {
 
 int ArrayRef::Rank() const {
   int rank{0};
-  for (std::size_t j{0}; j < subscript.size(); ++j) {
-    rank += subscript[j].Rank();
+  for (const auto &expr : subscript) {
+    rank += expr.Rank();
   }
-  if (std::holds_alternative<const Symbol *>(u)) {
+  if (rank > 0) {
     return rank;
-  } else {
-    int baseRank{std::get_if<Component>(&u)->Rank()};
-    CHECK(rank == 0 || baseRank == 0);
-    return baseRank + rank;
   }
+  return std::visit(
+      common::visitors{
+          [=](const Symbol *s) { return 0; },
+          [=](const Component &c) { return c.Rank(); },
+      },
+      u);
 }
 
 int CoarrayRef::Rank() const {
   int rank{0};
-  for (std::size_t j{0}; j < subscript_.size(); ++j) {
-    rank += subscript_[j].Rank();
+  for (const auto &expr : subscript_) {
+    rank += expr.Rank();
   }
   return rank;
 }

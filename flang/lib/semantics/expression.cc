@@ -129,7 +129,7 @@ std::optional<DynamicTypeWithLength> AnalyzeTypeSpec(
           intrinsic{typeSpec->AsIntrinsic()}) {
         TypeCategory category{intrinsic->category()};
         if (auto kind{ToInt64(intrinsic->kind())}) {
-          DynamicTypeWithLength result{category, static_cast<int>(*kind)};
+          DynamicTypeWithLength result{{category, static_cast<int>(*kind)}};
           if (category == TypeCategory::Character) {
             const semantics::CharacterTypeSpec &cts{
                 typeSpec->characterTypeSpec()};
@@ -145,7 +145,7 @@ std::optional<DynamicTypeWithLength> AnalyzeTypeSpec(
         }
       } else if (const semantics::DerivedTypeSpec *
           derived{typeSpec->AsDerived()}) {
-        return DynamicTypeWithLength{TypeCategory::Derived, 0, derived};
+        return DynamicTypeWithLength{{TypeCategory::Derived, 0, derived}};
       }
     }
   }
@@ -382,13 +382,16 @@ static MaybeExpr CompleteSubscripts(
   } else if (subscripts == 0) {
     // nothing to check
   } else if (Component * component{std::get_if<Component>(&ref.u)}) {
-    int baseRank{component->Rank()};
+    int baseRank{component->base().Rank()};
     if (baseRank > 0) {
-      int rank{ref.Rank()};
-      if (rank > 0) {
-        context.Say("Subscripts of rank-%d component reference have rank %d, "
-                    "but must all be scalar"_err_en_US,
-            baseRank, rank);
+      int subscriptRank{0};
+      for (const auto &expr : ref.subscript) {
+        subscriptRank += expr.Rank();
+      }
+      if (subscriptRank > 0) {
+        context.Say("Subscripts of component '%s' of rank-%d derived type "
+                    "array have rank %d but must all be scalar"_err_en_US,
+            symbol.name().ToString().data(), baseRank, subscriptRank);
       }
     }
   } else if (const auto *details{
@@ -1035,12 +1038,14 @@ static MaybeExpr AnalyzeExpr(
       }
       if (sym->detailsIf<semantics::TypeParamDetails>()) {
         if (auto *designator{UnwrapExpr<Designator<SomeDerived>>(*dtExpr)}) {
-          std::optional<DynamicType> dyType{GetSymbolType(sym)};
-          CHECK(dyType.has_value());
-          CHECK(dyType->category == TypeCategory::Integer);
-          return AsMaybeExpr(
-              common::SearchTypes(TypeParamInquiryVisitor{dyType->kind,
-                  IgnoreAnySubscripts(std::move(*designator)), *sym}));
+          if (std::optional<DynamicType> dyType{GetSymbolType(sym)}) {
+            if (dyType->category == TypeCategory::Integer) {
+              return AsMaybeExpr(
+                  common::SearchTypes(TypeParamInquiryVisitor{dyType->kind,
+                      IgnoreAnySubscripts(std::move(*designator)), *sym}));
+            }
+          }
+          context.Say(name, "type parameter is not INTEGER"_err_en_US);
         } else {
           context.Say(name,
               "type parameter inquiry must be applied to a designator"_err_en_US);
@@ -1263,8 +1268,7 @@ void ArrayConstructorContext::Add(const parser::AcValue &x) {
 }
 
 // Inverts a collection of generic ArrayConstructorValues<SomeType> that
-// all happen to have or be convertible to the same actual type T into
-// one ArrayConstructor<T>.
+// all happen to have the same actual type T into one ArrayConstructor<T>.
 template<typename T>
 ArrayConstructorValues<T> MakeSpecific(
     ArrayConstructorValues<SomeType> &&from) {
@@ -1278,9 +1282,8 @@ ArrayConstructorValues<T> MakeSpecific(
               to.Push(std::move(*typed));
             },
             [&](ImpliedDo<SomeType> &&impliedDo) {
-              to.Push(ImpliedDo<T>{impliedDo.controlVariableName,
-                  std::move(*impliedDo.lower), std::move(*impliedDo.upper),
-                  std::move(*impliedDo.stride),
+              to.Push(ImpliedDo<T>{impliedDo.name, std::move(*impliedDo.lower),
+                  std::move(*impliedDo.upper), std::move(*impliedDo.stride),
                   MakeSpecific<T>(std::move(*impliedDo.values))});
             },
         },

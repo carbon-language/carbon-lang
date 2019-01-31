@@ -217,8 +217,11 @@ Expr<T> FoldOperation(FoldingContext &context, Designator<T> &&designator) {
 Expr<ImpliedDoIndex::Result> FoldOperation(
     FoldingContext &context, ImpliedDoIndex &&iDo) {
   auto iter{context.impliedDos.find(iDo.name)};
-  CHECK(iter != context.impliedDos.end());
-  return Expr<ImpliedDoIndex::Result>{iter->second};
+  if (iter != context.impliedDos.end()) {
+    return Expr<ImpliedDoIndex::Result>{iter->second};
+  } else {
+    return Expr<ImpliedDoIndex::Result>{std::move(iDo)};
+  }
 }
 
 template<typename T> class ArrayConstructorFolder {
@@ -268,8 +271,7 @@ private:
     std::optional<std::int64_t> start{ToInt64(lower)}, end{ToInt64(upper)},
         step{ToInt64(stride)};
     if (start.has_value() && end.has_value() && step.has_value()) {
-      auto pair{context_.impliedDos.insert(
-          std::make_pair(iDo.controlVariableName, *start))};
+      auto pair{context_.impliedDos.insert(std::make_pair(iDo.name, *start))};
       CHECK(pair.second);
       bool result{true};
       for (std::int64_t &j{pair.first->second}; j <= *end; j += *step) {
@@ -300,9 +302,12 @@ private:
 template<typename T>
 Expr<T> FoldOperation(FoldingContext &context, ArrayConstructor<T> &&array) {
   ArrayConstructorFolder<T> folder{context};
-  return folder.FoldArray(std::move(array));
+  Expr<T> result{folder.FoldArray(std::move(array))};
+  return result;
 }
 
+// TODO this specializations is a placeholder: don't fold array constructors
+// of derived type for now
 Expr<SomeDerived> FoldOperation(
     FoldingContext &context, ArrayConstructor<SomeDerived> &&array) {
   return Expr<SomeDerived>{std::move(array)};
@@ -326,21 +331,20 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
     if (iter != scope->end()) {
       const Symbol &symbol{*iter->second};
       const auto *details{symbol.detailsIf<semantics::TypeParamDetails>()};
-      CHECK(details != nullptr);
-      CHECK(details->init().has_value());
-      Expr<SomeInteger> expr{*details->init()};
-      return Fold(context,
-          Expr<IntKIND>{
-              Convert<IntKIND, TypeCategory::Integer>(std::move(expr))});
-    } else {
+      if (details && details->init().has_value()) {
+        Expr<SomeInteger> expr{*details->init()};
+        return Fold(context,
+            Expr<IntKIND>{
+                Convert<IntKIND, TypeCategory::Integer>(std::move(expr))});
+      }
+    } else if (const auto *value{context.pdtInstance->FindParameter(
+                   inquiry.parameter->name())}) {
       // Parameter of a parent derived type; these are saved in the spec.
-      const auto *value{
-          context.pdtInstance->FindParameter(inquiry.parameter->name())};
-      CHECK(value != nullptr);
-      CHECK(value->isExplicit());
-      return Fold(context,
-          Expr<IntKIND>{Convert<IntKIND, TypeCategory::Integer>(
-              value->GetExplicit().value())});
+      if (value->isExplicit()) {
+        return Fold(context,
+            Expr<IntKIND>{Convert<IntKIND, TypeCategory::Integer>(
+                value->GetExplicit().value())});
+      }
     }
   }
   return Expr<IntKIND>{std::move(inquiry)};
@@ -818,7 +822,7 @@ bool IsConstExpr(ConstExprContext &context, const ImpliedDo<V> &impliedDo) {
     return false;
   }
   ConstExprContext newContext{context};
-  newContext.constantNames.insert(impliedDo.controlVariableName);
+  newContext.constantNames.insert(impliedDo.name);
   return IsConstExpr(newContext, impliedDo.values);
 }
 template<typename A>

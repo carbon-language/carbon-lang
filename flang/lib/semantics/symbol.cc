@@ -14,6 +14,7 @@
 
 #include "symbol.h"
 #include "scope.h"
+#include "semantics.h"
 #include "../common/idioms.h"
 #include "../evaluate/fold.h"
 #include <ostream>
@@ -480,7 +481,8 @@ std::ostream &DumpForUnparse(
 }
 
 Symbol &Symbol::Instantiate(
-    Scope &scope, evaluate::FoldingContext &foldingContext) const {
+    Scope &scope, SemanticsContext &semanticsContext) const {
+  evaluate::FoldingContext foldingContext{semanticsContext.foldingContext()};
   CHECK(foldingContext.pdtInstance != nullptr);
   const DerivedTypeSpec &instanceSpec{*foldingContext.pdtInstance};
   auto pair{scope.try_emplace(name_, attrs_)};
@@ -513,11 +515,12 @@ Symbol &Symbol::Instantiate(
                     }
                   }
                 }
-                details.ReplaceType(scope.FindOrInstantiateDerivedType(
-                    std::move(newSpec), origType->category(), foldingContext));
+                details.ReplaceType(
+                    scope.FindOrInstantiateDerivedType(std::move(newSpec),
+                        origType->category(), semanticsContext));
               } else if (origType->AsIntrinsic() != nullptr) {
-                const DeclTypeSpec &newType{
-                    scope.InstantiateIntrinsicType(*origType, foldingContext)};
+                const DeclTypeSpec &newType{scope.InstantiateIntrinsicType(
+                    *origType, semanticsContext)};
                 details.ReplaceType(newType);
               } else {
                 common::die("instantiated component has type that is "
@@ -540,13 +543,14 @@ Symbol &Symbol::Instantiate(
           },
           [&](const ProcBindingDetails &that) {
             symbol.details_ = ProcBindingDetails{
-                that.symbol().Instantiate(scope, foldingContext)};
+                that.symbol().Instantiate(scope, semanticsContext)};
           },
           [&](const GenericBindingDetails &that) {
             symbol.details_ = GenericBindingDetails{};
             GenericBindingDetails &details{symbol.get<GenericBindingDetails>()};
             for (const Symbol *sym : that.specificProcs()) {
-              details.add_specificProc(sym->Instantiate(scope, foldingContext));
+              details.add_specificProc(
+                  sym->Instantiate(scope, semanticsContext));
             }
           },
           [&](const TypeParamDetails &that) {

@@ -238,7 +238,7 @@ public:
     }
   }
   void FoldParameterExpressions(evaluate::FoldingContext &);
-  void Instantiate(Scope &, evaluate::FoldingContext &);
+  void Instantiate(Scope &, SemanticsContext &);
   bool operator==(const DerivedTypeSpec &) const;  // for std::find()
 
 private:

@@ -405,7 +405,7 @@ struct ImpliedDoIndex {
 template<typename RESULT> struct ImpliedDo {
   using Result = RESULT;
   bool operator==(const ImpliedDo &) const;
-  parser::CharBlock controlVariableName;
+  parser::CharBlock name;
   CopyableIndirection<Expr<ResultType<ImpliedDoIndex>>> lower, upper, stride;
   CopyableIndirection<ArrayConstructorValues<RESULT>> values;
 };
