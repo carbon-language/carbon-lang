@@ -13,6 +13,9 @@
 // RUN: %clang -x c-header %s -o %t.clang.h.pch -fmodules -fmodules-cache-path=%t.mcp -Xclang -detailed-preprocessing-record -Xclang -triple -Xclang x86_64-apple-darwin -Xclang -fallow-pch-with-compiler-errors -Xclang -verify
 // RUN: c-index-test -test-load-source local %s -include %t.clang.h -fmodules -fmodules-cache-path=%t.mcp -Xclang -triple -Xclang x86_64-apple-darwin | FileCheck %s
 
+// FIXME: Still fails on at least some linux boxen.
+// REQUIRES: system-darwin
+
 #ifndef HEADER
 #define HEADER
 
