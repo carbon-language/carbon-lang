@@ -786,6 +786,18 @@ LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
     Observer.changedInstr(MI);
     return Legalized;
   }
+  case TargetOpcode::G_CTLZ:
+  case TargetOpcode::G_CTLZ_ZERO_UNDEF:
+  case TargetOpcode::G_CTTZ:
+  case TargetOpcode::G_CTTZ_ZERO_UNDEF:
+  case TargetOpcode::G_CTPOP:
+    if (TypeIdx != 0)
+      return UnableToLegalize; // TODO
+
+    Observer.changingInstr(MI);
+    narrowScalarDst(MI, NarrowTy, 0, TargetOpcode::G_ZEXT);
+    Observer.changedInstr(MI);
+    return Legalized;
   }
 }
 
@@ -811,6 +823,15 @@ void LegalizerHelper::widenScalarDst(MachineInstr &MI, LLT WideTy,
   MIRBuilder.setInsertPt(MIRBuilder.getMBB(), ++MIRBuilder.getInsertPt());
   MIRBuilder.buildInstr(TruncOpcode, {MO.getReg()}, {DstExt});
   MO.setReg(DstExt);
+}
+
+void LegalizerHelper::narrowScalarDst(MachineInstr &MI, LLT NarrowTy,
+                                      unsigned OpIdx, unsigned ExtOpcode) {
+  MachineOperand &MO = MI.getOperand(OpIdx);
+  unsigned DstTrunc = MRI.createGenericVirtualRegister(NarrowTy);
+  MIRBuilder.setInsertPt(MIRBuilder.getMBB(), ++MIRBuilder.getInsertPt());
+  MIRBuilder.buildInstr(ExtOpcode, {MO.getReg()}, {DstTrunc});
+  MO.setReg(DstTrunc);
 }
 
 LegalizerHelper::LegalizeResult
@@ -890,6 +911,11 @@ LegalizerHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx, LLT WideTy) {
   case TargetOpcode::G_CTLZ:
   case TargetOpcode::G_CTLZ_ZERO_UNDEF:
   case TargetOpcode::G_CTPOP: {
+    if (TypeIdx == 0) {
+      widenScalarDst(MI, WideTy, 0);
+      return Legalized;
+    }
+
     // First ZEXT the input.
     auto MIBSrc = MIRBuilder.buildZExt(WideTy, MI.getOperand(1).getReg());
     LLT CurTy = MRI.getType(MI.getOperand(0).getReg());
@@ -1943,7 +1969,7 @@ LegalizerHelper::lowerBitCount(MachineInstr &MI, unsigned TypeIdx, LLT Ty) {
   case TargetOpcode::G_CTLZ: {
     unsigned SrcReg = MI.getOperand(1).getReg();
     unsigned Len = Ty.getSizeInBits();
-    if (isSupported({TargetOpcode::G_CTLZ_ZERO_UNDEF, {Ty}})) {
+    if (isSupported({TargetOpcode::G_CTLZ_ZERO_UNDEF, {Ty, Ty}})) {
       // If CTLZ_ZERO_UNDEF is supported, emit that and a select for zero.
       auto MIBCtlzZU = MIRBuilder.buildInstr(TargetOpcode::G_CTLZ_ZERO_UNDEF,
                                              {Ty}, {SrcReg});
@@ -1993,7 +2019,7 @@ LegalizerHelper::lowerBitCount(MachineInstr &MI, unsigned TypeIdx, LLT Ty) {
   case TargetOpcode::G_CTTZ: {
     unsigned SrcReg = MI.getOperand(1).getReg();
     unsigned Len = Ty.getSizeInBits();
-    if (isSupported({TargetOpcode::G_CTTZ_ZERO_UNDEF, {Ty}})) {
+    if (isSupported({TargetOpcode::G_CTTZ_ZERO_UNDEF, {Ty, Ty}})) {
       // If CTTZ_ZERO_UNDEF is legal or custom, emit that and a select with
       // zero.
       auto MIBCttzZU = MIRBuilder.buildInstr(TargetOpcode::G_CTTZ_ZERO_UNDEF,
@@ -2018,8 +2044,8 @@ LegalizerHelper::lowerBitCount(MachineInstr &MI, unsigned TypeIdx, LLT Ty) {
         TargetOpcode::G_AND, {Ty},
         {MIBNot, MIRBuilder.buildInstr(TargetOpcode::G_ADD, {Ty},
                                        {SrcReg, MIBCstNeg1})});
-    if (!isSupported({TargetOpcode::G_CTPOP, {Ty}}) &&
-        isSupported({TargetOpcode::G_CTLZ, {Ty}})) {
+    if (!isSupported({TargetOpcode::G_CTPOP, {Ty, Ty}}) &&
+        isSupported({TargetOpcode::G_CTLZ, {Ty, Ty}})) {
       auto MIBCstLen = MIRBuilder.buildConstant(Ty, Len);
       MIRBuilder.buildInstr(
           TargetOpcode::G_SUB, {MI.getOperand(0).getReg()},

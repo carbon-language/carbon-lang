@@ -211,12 +211,17 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     .legalFor({S32})
     .scalarize(0);
 
-  setAction({G_CTLZ, S32}, Legal);
-  setAction({G_CTLZ_ZERO_UNDEF, S32}, Legal);
-  setAction({G_CTTZ, S32}, Legal);
-  setAction({G_CTTZ_ZERO_UNDEF, S32}, Legal);
+  // The 64-bit versions produce 32-bit results, but only on the SALU.
+  getActionDefinitionsBuilder({G_CTLZ, G_CTLZ_ZERO_UNDEF,
+                               G_CTTZ, G_CTTZ_ZERO_UNDEF,
+                               G_CTPOP})
+    .legalFor({{S32, S32}, {S32, S64}})
+    .clampScalar(0, S32, S32)
+    .clampScalar(1, S32, S64);
+  // TODO: Scalarize
+
+
   setAction({G_BSWAP, S32}, Legal);
-  setAction({G_CTPOP, S32}, Legal);
 
   getActionDefinitionsBuilder(G_INTTOPTR)
     .legalIf([](const LegalityQuery &Query) {

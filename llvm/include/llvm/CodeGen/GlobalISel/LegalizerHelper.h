@@ -114,6 +114,12 @@ private:
   void widenScalarDst(MachineInstr &MI, LLT WideTy, unsigned OpIdx = 0,
                       unsigned TruncOpcode = TargetOpcode::G_TRUNC);
 
+  // Legalize a single operand \p OpIdx of the machine instruction \p MI as a
+  // Def by truncating the operand's type to \p NarrowTy, replacing in place and
+  // extending back with \p ExtOpcode.
+  void narrowScalarDst(MachineInstr &MI, LLT NarrowTy, unsigned OpIdx,
+                       unsigned ExtOpcode);
+
   /// Helper function to split a wide generic register into bitwise blocks with
   /// the given Type (which implies the number of blocks needed). The generic
   /// registers created are appended to Ops, starting at bit 0 of Reg.
