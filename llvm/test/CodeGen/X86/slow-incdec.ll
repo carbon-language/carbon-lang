@@ -53,3 +53,33 @@ define i32 @dec_size(i32 %x) optsize {
   %r = add i32 %x, -1
   ret i32 %r
 }
+
+declare {i32, i1} @llvm.uadd.with.overflow.i32(i32, i32)
+declare void @other(i32* ) nounwind;
+
+define void @cond_ae_to_cond_ne(i32* %p) nounwind {
+; CHECK-LABEL: cond_ae_to_cond_ne:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    addl $1, (%eax)
+; CHECK-NEXT:    jae .LBB4_1
+; CHECK-NEXT:  # %bb.2: # %if.end4
+; CHECK-NEXT:    jmp other # TAILCALL
+; CHECK-NEXT:  .LBB4_1: # %return
+; CHECK-NEXT:    retl
+entry:
+  %t0 = load i32, i32* %p, align 8
+  %add_ov = call {i32, i1} @llvm.uadd.with.overflow.i32(i32 %t0, i32 1)
+  %inc = extractvalue { i32, i1 } %add_ov, 0
+  store i32 %inc, i32* %p, align 8
+  %ov = extractvalue { i32, i1 } %add_ov, 1
+  br i1 %ov, label %if.end4, label %return
+
+if.end4:
+  tail call void @other(i32* %p) nounwind
+  br label %return
+
+return:
+  ret void
+}
+
