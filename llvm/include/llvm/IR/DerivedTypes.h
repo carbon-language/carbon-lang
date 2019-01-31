@@ -166,7 +166,7 @@ public:
   // Allow implicit conversion from types which have a getFunctionType member
   // (e.g. Function and InlineAsm).
   template <typename T,
-            typename U = std::enable_if<&T::getFunctionType != nullptr, void>>
+            typename U = std::enable_if<(&T::getFunctionType != nullptr), void>>
   FunctionCallee(T *Fn)
       : FnTy(Fn ? Fn->getFunctionType() : nullptr), Callee(Fn) {}
 
