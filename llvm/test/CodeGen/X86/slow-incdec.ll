@@ -83,3 +83,46 @@ return:
   ret void
 }
 
+@a = common global i8 0, align 1
+@d = common global i8 0, align 1
+
+declare void @external_a()
+declare void @external_b()
+declare {i8, i1} @llvm.uadd.with.overflow.i8(i8, i8)
+
+define void @test_tail_call(i32* %ptr) nounwind optsize {
+; CHECK-LABEL: test_tail_call:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    addl $1, (%eax)
+; CHECK-NEXT:    setae %al
+; CHECK-NEXT:    addb $1, a
+; CHECK-NEXT:    setb d
+; CHECK-NEXT:    testb %al, %al
+; CHECK-NEXT:    jne external_b # TAILCALL
+; CHECK-NEXT:  # %bb.1: # %then
+; CHECK-NEXT:    jmp external_a # TAILCALL
+entry:
+  %val = load i32, i32* %ptr
+  %add_ov = call {i32, i1} @llvm.uadd.with.overflow.i32(i32 %val, i32 1)
+  %inc = extractvalue { i32, i1 } %add_ov, 0
+  store i32 %inc, i32* %ptr
+  %cmp = extractvalue { i32, i1 } %add_ov, 1
+  %aval = load volatile i8, i8* @a
+  %add_ov2 = call {i8, i1} @llvm.uadd.with.overflow.i8(i8 %aval, i8 1)
+  %inc2 = extractvalue { i8, i1 } %add_ov2, 0
+  store volatile i8 %inc2, i8* @a
+  %cmp2 = extractvalue { i8, i1 } %add_ov2, 1
+  %conv5 = zext i1 %cmp2 to i8
+  store i8 %conv5, i8* @d
+  br i1 %cmp, label %then, label %else
+
+then:
+  tail call void @external_a()
+  ret void
+
+else:
+  tail call void @external_b()
+  ret void
+}
+
