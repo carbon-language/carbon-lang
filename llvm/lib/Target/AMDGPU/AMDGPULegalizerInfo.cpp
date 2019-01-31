@@ -248,7 +248,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
       })
     .fewerElementsIf([=, &ST](const LegalityQuery &Query) {
         unsigned MemSize = Query.MMODescrs[0].SizeInBits;
-        return Query.Types[0].isVector() && (MemSize == 96) &&
+        return (MemSize == 96) &&
+               Query.Types[0].isVector() &&
                ST.getGeneration() < AMDGPUSubtarget::SEA_ISLANDS;
       },
       [=](const LegalityQuery &Query) {
