@@ -33861,15 +33861,19 @@ static SDValue combineExtractWithShuffle(SDNode *N, SelectionDAG &DAG,
   if (SrcSVT == MVT::i1 || !isa<ConstantSDNode>(Idx))
     return SDValue();
 
+  SDValue SrcBC = peekThroughBitcasts(Src);
+
   // Handle extract(broadcast(scalar_value)), it doesn't matter what index is.
-  if (X86ISD::VBROADCAST == Src.getOpcode() &&
-      Src.getOperand(0).getValueType() == VT)
-    return Src.getOperand(0);
+  if (X86ISD::VBROADCAST == SrcBC.getOpcode()) {
+    SDValue SrcOp = SrcBC.getOperand(0);
+    if (SrcOp.getValueSizeInBits() == VT.getSizeInBits())
+      return DAG.getBitcast(VT, SrcOp);
+  }
 
   // Resolve the target shuffle inputs and mask.
   SmallVector<int, 16> Mask;
   SmallVector<SDValue, 2> Ops;
-  if (!resolveTargetShuffleInputs(peekThroughBitcasts(Src), Ops, Mask, DAG))
+  if (!resolveTargetShuffleInputs(SrcBC, Ops, Mask, DAG))
     return SDValue();
 
   // Attempt to narrow/widen the shuffle mask to the correct size.
