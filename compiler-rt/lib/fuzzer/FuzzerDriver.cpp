@@ -628,6 +628,7 @@ int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
     Options.FocusFunction = Flags.focus_function;
   if (Flags.data_flow_trace)
     Options.DataFlowTrace = Flags.data_flow_trace;
+  Options.LazyCounters = Flags.lazy_counters;
 
   unsigned Seed = Flags.seed;
   // Initialize Seed.
@@ -658,10 +659,7 @@ int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
   Options.HandleXfsz = Flags.handle_xfsz;
   Options.HandleUsr1 = Flags.handle_usr1;
   Options.HandleUsr2 = Flags.handle_usr2;
-  Options.LazyCounters = Flags.lazy_counters;
   SetSignalHandler(Options);
-  if (Options.LazyCounters)
-    TPC.ProtectLazyCounters();
 
   std::atexit(Fuzzer::StaticExitCallback);
 

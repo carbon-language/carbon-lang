@@ -205,11 +205,6 @@ void Fuzzer::StaticCrashSignalCallback() {
   F->CrashCallback();
 }
 
-void Fuzzer::StaticSegvSignalCallback(void *Addr) {
-  if (TPC.UnprotectLazyCounters(Addr)) return;
-  StaticCrashSignalCallback();
-}
-
 void Fuzzer::StaticExitCallback() {
   assert(F);
   F->ExitCallback();
@@ -719,6 +714,10 @@ void Fuzzer::ReadAndExecuteSeedCorpora(const Vector<std::string> &CorpusDirs) {
   // Test the callback with empty input and never try it again.
   uint8_t dummy = 0;
   ExecuteCallback(&dummy, 0);
+
+  // Protect lazy counters here, after the once-init code has been executed.
+  if (Options.LazyCounters)
+    TPC.ProtectLazyCounters();
 
   if (SizedFiles.empty()) {
     Printf("INFO: A corpus is not provided, starting from an empty corpus\n");

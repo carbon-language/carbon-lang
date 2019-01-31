@@ -59,7 +59,6 @@ public:
   size_t getTotalNumberOfRuns() { return TotalNumberOfRuns; }
 
   static void StaticAlarmCallback();
-  static void StaticSegvSignalCallback(void *Addr);
   static void StaticCrashSignalCallback();
   static void StaticExitCallback();
   static void StaticInterruptCallback();
