@@ -18,6 +18,7 @@
 #include <iomanip>
 #include <signal.h>
 #include <stdio.h>
+#include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/syscall.h>
 #include <sys/time.h>
@@ -29,6 +30,11 @@ namespace fuzzer {
 
 static void AlarmHandler(int, siginfo_t *, void *) {
   Fuzzer::StaticAlarmCallback();
+}
+
+static void SegvHandler(int, siginfo_t *si, void *) {
+  assert(si->si_signo == SIGSEGV);
+  Fuzzer::StaticSegvSignalCallback(si->si_addr);
 }
 
 static void CrashHandler(int, siginfo_t *, void *) {
@@ -64,6 +70,7 @@ static void SetSigaction(int signum,
   }
 
   sigact = {};
+  sigact.sa_flags = SA_SIGINFO;
   sigact.sa_sigaction = callback;
   if (sigaction(signum, &sigact, 0)) {
     Printf("libFuzzer: sigaction failed with %d\n", errno);
@@ -82,6 +89,11 @@ void SetTimer(int Seconds) {
   SetSigaction(SIGALRM, AlarmHandler);
 }
 
+bool Mprotect(void *Ptr, size_t Size, bool AllowReadWrite) {
+  return 0 == mprotect(Ptr, Size,
+                       AllowReadWrite ? (PROT_READ | PROT_WRITE) : PROT_NONE);
+}
+
 void SetSignalHandler(const FuzzingOptions& Options) {
   if (Options.UnitTimeoutSec > 0)
     SetTimer(Options.UnitTimeoutSec / 2 + 1);
@@ -90,7 +102,7 @@ void SetSignalHandler(const FuzzingOptions& Options) {
   if (Options.HandleTerm)
     SetSigaction(SIGTERM, InterruptHandler);
   if (Options.HandleSegv)
-    SetSigaction(SIGSEGV, CrashHandler);
+    SetSigaction(SIGSEGV, SegvHandler);
   if (Options.HandleBus)
     SetSigaction(SIGBUS, CrashHandler);
   if (Options.HandleAbrt)

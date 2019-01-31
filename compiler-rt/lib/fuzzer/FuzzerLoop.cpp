@@ -205,6 +205,11 @@ void Fuzzer::StaticCrashSignalCallback() {
   F->CrashCallback();
 }
 
+void Fuzzer::StaticSegvSignalCallback(void *Addr) {
+  if (TPC.UnprotectLazyCounters(Addr)) return;
+  StaticCrashSignalCallback();
+}
+
 void Fuzzer::StaticExitCallback() {
   assert(F);
   F->ExitCallback();
