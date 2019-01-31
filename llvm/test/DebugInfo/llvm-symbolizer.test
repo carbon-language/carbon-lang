@@ -15,13 +15,10 @@ RUN: cp "%p/Inputs/dwarfdump-test3.elf-x86-64-space" "%t/dwarfdump-test3.elf-x86
 RUN: echo "\"%t/dwarfdump-test3.elf-x86-64 space\" 0x640" >> %t.input
 RUN: echo "\"%t/dwarfdump-test3.elf-x86-64 space\" 0x633" >> %t.input
 RUN: echo "\"%t/dwarfdump-test3.elf-x86-64 space\" 0x62d" >> %t.input
-RUN: echo "%p/Inputs/macho-universal 0x1f84" >> %t.input
-RUN: echo "%p/Inputs/macho-universal:i386 0x1f67" >> %t.input
-RUN: echo "%p/Inputs/macho-universal:x86_64 0x100000f05" >> %t.input
 
 RUN: cd %t
 RUN: llvm-symbolizer --functions=linkage --inlining --demangle=false \
-RUN:    --default-arch=i386 < %t.input | FileCheck --check-prefix=CHECK --check-prefix=SPLIT --check-prefix=DWO %s
+RUN:    < %t.input | FileCheck --check-prefix=CHECK --check-prefix=SPLIT --check-prefix=DWO %s
 
 CHECK:       main
 CHECK-NEXT: /tmp/dbginfo{{[/\\]}}dwarfdump-test.cc:16
@@ -76,58 +73,7 @@ CHECK-NEXT: /tmp/include{{[/\\]}}dwarfdump-test3-decl.h:7
 CHECK: _Z3do2v
 CHECK-NEXT: /tmp/dbginfo{{[/\\]}}include{{[/\\]}}dwarfdump-test3-decl2.h:1
 
-CHECK:      main
-CHECK:      _Z3inci
-CHECK:      _Z3inci
-
 RUN: echo "unexisting-file 0x1234" > %t.input2
 RUN: llvm-symbolizer < %t.input2 2>&1 | FileCheck %s --check-prefix=MISSING-FILE
 
 MISSING-FILE: LLVMSymbolizer: error reading file: {{[Nn]}}o such file or directory
-
-RUN: echo "%p/Inputs/macho-universal 0x1f84" > %t.input3
-RUN: llvm-symbolizer < %t.input3 | FileCheck %s --check-prefix=UNKNOWN-ARCH
-
-UNKNOWN-ARCH-NOT: main
-UNKNOWN-ARCH: ??
-UNKNOWN-ARCH-NOT: main
-
-RUN: echo "0x40113f" > %t.input4
-RUN: echo "0x401020" >> %t.input4
-RUN: llvm-symbolizer --obj %p/Inputs/dwarfdump-test.elf-x86-64 < %t.input4 \
-RUN:   | FileCheck %s --check-prefix=BINARY
-
-BINARY:       main
-BINARY-NEXT: /tmp/dbginfo{{[/\\]}}dwarfdump-test.cc:16
-BINARY:      _start
-
-RUN: echo "0x401140" > %t.input5
-RUN: echo "0x401020" >> %t.input5
-RUN: echo "0x401120" >> %t.input5
-RUN: llvm-symbolizer --obj %p/Inputs/llvm-symbolizer-test.elf-x86-64 < %t.input5 \
-RUN:   | FileCheck %s --check-prefix=BINARY_C
-
-BINARY_C:       main
-BINARY_C-NEXT: /tmp/dbginfo{{[/\\]}}llvm-symbolizer-test.c:10
-BINARY_C:      _start
-BINARY_C:      {{g$}}
-
-; Check that the last of --demangle and --no-demangle wins.
-RUN: echo "%p/Inputs/dwarfdump-test4.elf-x86-64 0x62c" > %t.input7
-RUN: llvm-symbolizer --demangle < %t.input7 \
-RUN:    | FileCheck %s --check-prefix=DEMANGLED_FUNCTION_NAME
-RUN: llvm-symbolizer -C < %t.input7 \
-RUN:    | FileCheck %s --check-prefix=DEMANGLED_FUNCTION_NAME
-RUN: llvm-symbolizer --no-demangle < %t.input7 \
-RUN:    | FileCheck %s --check-prefix=MANGLED_FUNCTION_NAME
-RUN: llvm-symbolizer --demangle --no-demangle < %t.input7 \
-RUN:    | FileCheck %s --check-prefix=MANGLED_FUNCTION_NAME
-RUN: llvm-symbolizer -C --no-demangle < %t.input7 \
-RUN:    | FileCheck %s --check-prefix=MANGLED_FUNCTION_NAME
-RUN: llvm-symbolizer --no-demangle --demangle < %t.input7 \
-RUN:    | FileCheck %s --check-prefix=DEMANGLED_FUNCTION_NAME
-RUN: llvm-symbolizer --no-demangle -C < %t.input7 \
-RUN:    | FileCheck %s --check-prefix=DEMANGLED_FUNCTION_NAME
-
-MANGLED_FUNCTION_NAME: _Z1cv
-DEMANGLED_FUNCTION_NAME: c()
