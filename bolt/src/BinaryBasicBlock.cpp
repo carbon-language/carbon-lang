@@ -321,7 +321,7 @@ void BinaryBasicBlock::removeDuplicateConditionalSuccessor(MCInst *CondBranch) {
   const auto CondBI = BranchInfo[0];
   const auto UncondBI = BranchInfo[1];
 
-  eraseInstruction(CondBranch);
+  eraseInstruction(findInstruction(CondBranch));
 
   Successors.clear();
   BranchInfo.clear();
@@ -332,6 +332,23 @@ void BinaryBasicBlock::removeDuplicateConditionalSuccessor(MCInst *CondBranch) {
   if (CondBI.Count != COUNT_NO_PROFILE && UncondBI.Count != COUNT_NO_PROFILE)
     Count = CondBI.Count + UncondBI.Count;
   BranchInfo.push_back({Count, 0});
+}
+
+void BinaryBasicBlock::adjustExecutionCount(double Ratio) {
+  auto adjustedCount = [&](uint64_t Count) -> uint64_t {
+    auto NewCount = Count * Ratio;
+    if (!NewCount && Count && (Ratio > 0.0))
+      NewCount = 1;
+    return NewCount;
+  };
+
+  setExecutionCount(adjustedCount(getKnownExecutionCount()));
+  for (auto &BI : branch_info()) {
+    if (BI.Count != COUNT_NO_PROFILE)
+      BI.Count = adjustedCount(BI.Count);
+    if (BI.MispredictedCount != COUNT_INFERRED)
+      BI.MispredictedCount = adjustedCount(BI.MispredictedCount);
+  }
 }
 
 bool BinaryBasicBlock::analyzeBranch(const MCSymbol *&TBB,
@@ -541,6 +558,26 @@ BinaryBasicBlock::getBranchInfo(const MCSymbol *Label) {
 
   llvm_unreachable("Invalid successor");
   return *BI;
+}
+
+BinaryBasicBlock *BinaryBasicBlock::splitAt(iterator II) {
+  assert(II != end() && "expected iterator pointing to instruction");
+
+  auto *NewBlock = getFunction()->addBasicBlock(0);
+
+  // Adjust successors/predecessors and propagate the execution count.
+  moveAllSuccessorsTo(NewBlock);
+  addSuccessor(NewBlock, getExecutionCount(), 0);
+
+  // Set correct CFI state for the new block.
+  NewBlock->setCFIState(getCFIStateAtInstr(&*II));
+
+  // Move instructions over.
+  adjustNumPseudos(II, end(), -1);
+  NewBlock->addInstructions(II, end());
+  Instructions.erase(II, end());
+
+  return NewBlock;
 }
 
 } // namespace bolt

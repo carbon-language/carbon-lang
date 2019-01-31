@@ -589,7 +589,7 @@ bool LongJmpPass::relax(BinaryFunction &Func) {
       continue;
     std::vector<std::unique_ptr<BinaryBasicBlock>> NewBBs;
     NewBBs.emplace_back(std::move(Elmt.second));
-    Func.insertBasicBlocks(Elmt.first, std::move(NewBBs), true, true);
+    Func.insertBasicBlocks(Elmt.first, std::move(NewBBs), true);
   }
 
   return Modified;

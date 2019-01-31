@@ -676,6 +676,16 @@ public:
   /// size is for the cold one.
   std::pair<size_t, size_t> calculateEmittedSize(BinaryFunction &BF);
 
+  /// Calculate the size of the instruction \p Inst.
+  uint64_t computeInstructionSize(const MCInst &Inst) const {
+    SmallString<256> Code;
+    SmallVector<MCFixup, 4> Fixups;
+    raw_svector_ostream VecOS(Code);
+    MCE->encodeInstruction(Inst, VecOS, Fixups, *STI);
+
+    return Code.size();
+  }
+
   /// Compute the native code size for a range of instructions.
   /// Note: this can be imprecise wrt the final binary since happening prior to
   /// relaxation, as well as wrt the original binary because of opcode
@@ -684,16 +694,9 @@ public:
   uint64_t computeCodeSize(Itr Beg, Itr End) const {
     uint64_t Size = 0;
     while (Beg != End) {
-      // Calculate the size of the instruction.
-      SmallString<256> Code;
-      SmallVector<MCFixup, 4> Fixups;
-      raw_svector_ostream VecOS(Code);
-      if (MIB->isCFI(*Beg) || MIB->isEHLabel(*Beg)) {
-        ++Beg;
-        continue;
-      }
-      MCE->encodeInstruction(*Beg++, VecOS, Fixups, *STI);
-      Size += Code.size();
+      if (!MII->get(Beg->getOpcode()).isPseudo())
+        Size += computeInstructionSize(*Beg);
+      ++Beg;
     }
     return Size;
   }

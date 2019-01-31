@@ -92,7 +92,7 @@ void AllocCombinerPass::combineAdjustments(BinaryContext &BC,
         Inst.dump();
       });
 
-      BB.eraseInstruction(Prev);
+      BB.eraseInstruction(BB.findInstruction(Prev));
       ++NumCombined;
       FuncsChanged.insert(&BF);
       Prev = &Inst;

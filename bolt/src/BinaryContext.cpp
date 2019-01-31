@@ -876,15 +876,14 @@ void BinaryContext::printInstruction(raw_ostream &OS,
     if (MIB->isTailCall(Instruction))
       OS << " # TAILCALL ";
     if (MIB->isInvoke(Instruction)) {
-      if (const auto EHInfo = MIB->getEHInfo(Instruction)) {
-        OS << " # handler: ";
-        if (EHInfo->first)
-          OS << *EHInfo->first;
-        else
-          OS << '0';
-        OS << "; action: " << EHInfo->second;
-      }
-      auto GnuArgsSize = MIB->getGnuArgsSize(Instruction);
+      const auto EHInfo = MIB->getEHInfo(Instruction);
+      OS << " # handler: ";
+      if (EHInfo->first)
+        OS << *EHInfo->first;
+      else
+        OS << '0';
+      OS << "; action: " << EHInfo->second;
+      const auto GnuArgsSize = MIB->getGnuArgsSize(Instruction);
       if (GnuArgsSize >= 0)
         OS << "; GNU_args_size = " << GnuArgsSize;
     }

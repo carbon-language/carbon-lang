@@ -122,6 +122,11 @@ public:
 #define Radd(a, b) (a + b)
 #define Rsub(a, b) (a - b)
     DYNO_STATS
+#undef Rsub
+#undef Radd
+#undef F
+#undef Fsub
+#undef Fadd
 #undef Fn
 #undef D
     default:
@@ -433,9 +438,6 @@ private:
   /// Synchronize branch instructions with CFG.
   void postProcessBranches();
 
-  /// Recompute landing pad information for the function and all its blocks.
-  void recomputeLandingPads();
-
   /// Temporary holder of offsets that are potentially entry points.
   std::unordered_set<uint64_t> EntryOffsets;
 
@@ -670,6 +672,9 @@ private:
     Instructions.emplace(Offset, std::forward<MCInst>(Instruction));
   }
 
+  /// Convert CFI instructions to a standard form (remove remember/restore).
+  void normalizeCFIState();
+
   /// Analyze and process indirect branch \p Instruction before it is
   /// added to Instructions list.
   IndirectBranchType processIndirectBranch(MCInst &Instruction,
@@ -747,6 +752,12 @@ public:
         BinaryBasicBlock &front()        { return *BasicBlocks.front(); }
   const BinaryBasicBlock & back() const  { return *BasicBlocks.back(); }
         BinaryBasicBlock & back()        { return *BasicBlocks.back(); }
+  inline iterator_range<iterator> blocks() {
+    return iterator_range<iterator>(begin(), end());
+  }
+  inline iterator_range<const_iterator> blocks() const {
+    return iterator_range<const_iterator>(begin(), end());
+  }
 
   order_iterator       layout_begin()    { return BasicBlocksLayout.begin(); }
   const_order_iterator layout_begin()    const
@@ -821,6 +832,9 @@ public:
       BasicBlocksLayout.swap(NewLayout);
     }
   }
+
+  /// Recompute landing pad information for the function and all its blocks.
+  void recomputeLandingPads();
 
   /// Return current basic block layout.
   const BasicBlockOrderType &getLayout() const {
@@ -1360,18 +1374,25 @@ public:
   /// on the alignment of the existing offset.
   ///
   /// Returns NULL if basic block already exists at the \p Offset.
-  BinaryBasicBlock *addBasicBlock(uint64_t Offset, MCSymbol *Label,
+  BinaryBasicBlock *addBasicBlock(uint64_t Offset, MCSymbol *Label = nullptr,
                                   bool DeriveAlignment = false) {
     assert((CurrentState == State::CFG || !getBasicBlockAtOffset(Offset)) &&
            "basic block already exists in pre-CFG state");
+
+    if (!Label)
+      Label = BC.Ctx->createTempSymbol("BB", true);
+
     auto BBPtr = createBasicBlock(Offset, Label, DeriveAlignment);
     BasicBlocks.emplace_back(BBPtr.release());
 
-    auto BB = BasicBlocks.back();
+    auto *BB = BasicBlocks.back();
     BB->setIndex(BasicBlocks.size() - 1);
 
     if (CurrentState == State::Disassembled) {
       BasicBlockOffsets.emplace_back(std::make_pair(Offset, BB));
+    } else if (CurrentState == State::CFG) {
+      BB->setLayoutIndex(layout_size());
+      BasicBlocksLayout.emplace_back(BB);
     }
 
     assert(CurrentState == State::CFG ||
@@ -1685,6 +1706,13 @@ public:
     ExecutionCount = Count;
     return *this;
   }
+
+  /// Adjust execution count for the function by a given \p Count. The value
+  /// \p Count will be subtracted from the current function count.
+  ///
+  /// The function will proportionally adjust execution count for all
+  /// basic blocks and edges in the control flow graph.
+  void adjustExecutionCount(uint64_t Count);
 
   /// Set LSDA address for the function.
   BinaryFunction &setLSDAAddress(uint64_t Address) {
@@ -2048,7 +2076,7 @@ public:
 
   /// After reordering, this function checks the state of CFI and fixes it if it
   /// is corrupted. If it is unable to fix it, it returns false.
-  bool fixCFIState();
+  bool finalizeCFIState();
 
   /// Adjust branch instructions to match the CFG.
   ///

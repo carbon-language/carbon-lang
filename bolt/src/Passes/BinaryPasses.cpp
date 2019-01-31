@@ -14,7 +14,7 @@
 #include "llvm/Support/Options.h"
 #include <numeric>
 
-#define DEBUG_TYPE "bolt"
+#define DEBUG_TYPE "bolt-opts"
 
 using namespace llvm;
 
@@ -255,88 +255,6 @@ bool BinaryFunctionPass::shouldOptimize(const BinaryFunction &BF) const {
 
 bool BinaryFunctionPass::shouldPrint(const BinaryFunction &BF) const {
   return BF.isSimple() && opts::shouldProcess(BF);
-}
-
-void OptimizeBodylessFunctions::analyze(
-    BinaryFunction &BF,
-    BinaryContext &BC,
-    std::map<uint64_t, BinaryFunction> &BFs) {
-  if (BF.size() != 1 || BF.front().getNumNonPseudos() != 1)
-    return;
-
-  const auto *FirstInstr = BF.front().getFirstNonPseudoInstr();
-  if (!FirstInstr)
-    return;
-  if (!BC.MIB->isTailCall(*FirstInstr))
-    return;
-  const auto *TargetSymbol = BC.MIB->getTargetSymbol(*FirstInstr);
-  if (!TargetSymbol)
-    return;
-  const auto *Function = BC.getFunctionForSymbol(TargetSymbol);
-  if (!Function)
-    return;
-
-  EquivalentCallTarget[BF.getSymbol()] = Function;
-}
-
-void OptimizeBodylessFunctions::optimizeCalls(BinaryFunction &BF,
-                                              BinaryContext &BC) {
-  for (auto *BB : BF.layout()) {
-    for (auto &Inst : *BB) {
-      if (!BC.MIB->isCall(Inst))
-        continue;
-      const auto *OriginalTarget = BC.MIB->getTargetSymbol(Inst);
-      if (!OriginalTarget)
-        continue;
-      const auto *Target = OriginalTarget;
-      // Iteratively update target since we could have f1() calling f2()
-      // calling f3() calling f4() and we want to output f1() directly
-      // calling f4().
-      unsigned CallSites = 0;
-      while (EquivalentCallTarget.count(Target)) {
-        Target = EquivalentCallTarget.find(Target)->second->getSymbol();
-        ++CallSites;
-      }
-      if (Target == OriginalTarget)
-        continue;
-      DEBUG(dbgs() << "BOLT-DEBUG: Optimizing " << BB->getName()
-                   << " (executed " << BB->getKnownExecutionCount()
-                   << " times) in " << BF
-                   << ": replacing call to " << OriginalTarget->getName()
-                   << " by call to " << Target->getName()
-                   << " while folding " << CallSites << " call sites\n");
-      BC.MIB->replaceBranchTarget(Inst, Target, BC.Ctx.get());
-
-      NumOptimizedCallSites += CallSites;
-      if (BB->hasProfile()) {
-        NumEliminatedCalls += CallSites * BB->getExecutionCount();
-      }
-    }
-  }
-}
-
-void OptimizeBodylessFunctions::runOnFunctions(
-    BinaryContext &BC,
-    std::map<uint64_t, BinaryFunction> &BFs,
-    std::set<uint64_t> &) {
-  for (auto &It : BFs) {
-    auto &Function = It.second;
-    if (shouldOptimize(Function)) {
-      analyze(Function, BC, BFs);
-    }
-  }
-  for (auto &It : BFs) {
-    auto &Function = It.second;
-    if (shouldOptimize(Function)) {
-      optimizeCalls(Function, BC);
-    }
-  }
-
-  if (NumEliminatedCalls || NumOptimizedCallSites) {
-    outs() << "BOLT-INFO: optimized " << NumOptimizedCallSites
-           << " redirect call sites to eliminate " << NumEliminatedCalls
-           << " dynamic calls.\n";
-  }
 }
 
 void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
@@ -660,7 +578,7 @@ void FinalizeFunctions::runOnFunctions(
       continue;
 
     // Fix the CFI state.
-    if (ShouldOptimize && !Function.fixCFIState()) {
+    if (ShouldOptimize && !Function.finalizeCFIState()) {
       if (BC.HasRelocations) {
         errs() << "BOLT-ERROR: unable to fix CFI state for function "
                << Function << ". Exiting.\n";
@@ -779,7 +697,7 @@ uint64_t fixDoubleJumps(BinaryContext &BC,
         if (Branch && BC.MIB->isUnconditionalBranch(*Branch)) {
           assert(BC.MIB->getTargetSymbol(*Branch) == BB.getLabel());
           Pred->removeSuccessor(&BB);
-          Pred->eraseInstruction(Branch);
+          Pred->eraseInstruction(Pred->findInstruction(Branch));
           Pred->addTailCallInstruction(SuccSym);
         } else {
           return false;
@@ -1029,7 +947,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
 
     if (UncondBranch) {
       if (HasFallthrough)
-        PredBB->eraseInstruction(UncondBranch);
+        PredBB->eraseInstruction(PredBB->findInstruction(UncondBranch));
       else
         MIB->replaceBranchTarget(*UncondBranch,
                                  CondSucc->getLabel(),
@@ -1388,7 +1306,7 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC,
                 );
       auto SFI = ProfiledFunctions.begin();
       auto SFIend = ProfiledFunctions.end();
-      for (auto i = 0u; i < opts::TopCalledLimit && SFI != SFIend; ++SFI, ++i) {
+      for (auto I = 0u; I < opts::TopCalledLimit && SFI != SFIend; ++SFI, ++I) {
         outs() << "  " << **SFI << " : "
                << (*SFI)->getExecutionCount() << '\n';
       }
@@ -1458,7 +1376,7 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC,
 
     outs() << " are:\n";
     auto SFI = Functions.begin();
-    for (unsigned i = 0; i < 100 && SFI != Functions.end(); ++SFI, ++i) {
+    for (unsigned I = 0; I < 100 && SFI != Functions.end(); ++SFI, ++I) {
       const auto Stats = (*SFI)->getDynoStats();
       outs() << "  " << **SFI;
       if (!SortAll) {

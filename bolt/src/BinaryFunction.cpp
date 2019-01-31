@@ -1882,6 +1882,8 @@ bool BinaryFunction::buildCFG() {
 
   updateLayoutIndices();
 
+  normalizeCFIState();
+
   // Clean-up memory taken by intermediate structures.
   //
   // NB: don't clear Labels list as we may need them if we mark the function
@@ -2543,33 +2545,23 @@ BinaryFunction::unwindCFIState(int32_t FromState, int32_t ToState,
   return NewStates;
 }
 
-bool BinaryFunction::fixCFIState() {
-  DEBUG(dbgs() << "Trying to fix CFI states for each BB after reordering.\n");
-  DEBUG(dbgs() << "This is the list of CFI states for each BB of " << *this
-               << ": ");
-
-  std::stack<int32_t> Stack;
-  auto &OriginalBBOrder = BasicBlocksPreviousLayout.empty()
-                              ? BasicBlocksLayout
-                              : BasicBlocksPreviousLayout;
-
+void BinaryFunction::normalizeCFIState() {
   // Reordering blocks with remember-restore state instructions can be specially
   // tricky. When rewriting the CFI, we omit remember-restore state instructions
   // entirely. For restore state, we build a map expanding each restore to the
   // equivalent unwindCFIState sequence required at that point to achieve the
   // same effect of the restore. All remember state are then just ignored.
-  for (BinaryBasicBlock *CurBB : OriginalBBOrder) {
+  std::stack<int32_t> Stack;
+  for (BinaryBasicBlock *CurBB : BasicBlocksLayout) {
     for (auto II = CurBB->begin(); II != CurBB->end(); ++II) {
       if (auto *CFI = getCFIFor(*II)) {
         if (CFI->getOperation() == MCCFIInstruction::OpRememberState) {
           Stack.push(II->getOperand(0).getImm());
-          BC.MIB->addAnnotation(*II, "DeleteMe", 0U);
           continue;
         }
         if (CFI->getOperation() == MCCFIInstruction::OpRestoreState) {
           const int32_t RememberState = Stack.top();
           const int32_t CurState = II->getOperand(0).getImm();
-          BC.MIB->addAnnotation(*II, "DeleteMe", 0U);
           FrameRestoreEquivalents[CurState] =
               unwindCFIState(CurState, RememberState, CurBB, II);
           Stack.pop();
@@ -2577,6 +2569,12 @@ bool BinaryFunction::fixCFIState() {
       }
     }
   }
+}
+
+bool BinaryFunction::finalizeCFIState() {
+  DEBUG(dbgs() << "Trying to fix CFI states for each BB after reordering.\n");
+  DEBUG(dbgs() << "This is the list of CFI states for each BB of " << *this
+               << ": ");
 
   int32_t State = 0;
   bool SeenCold = false;
@@ -2614,10 +2612,18 @@ bool BinaryFunction::fixCFIState() {
   }
   DEBUG(dbgs() << "\n");
 
-  for (auto BB : BasicBlocksLayout)
-    for (auto I = BB->rbegin(), E = BB->rend(); I != E; ++I)
-      if (BC.MIB->hasAnnotation(*I, "DeleteMe"))
-        BB->eraseInstruction(&*I);
+  for (auto BB : BasicBlocksLayout) {
+    for (auto II = BB->begin(); II != BB->end(); ) {
+      auto CFI = getCFIFor(*II);
+      if (CFI &&
+          (CFI->getOperation() == MCCFIInstruction::OpRememberState ||
+           CFI->getOperation() == MCCFIInstruction::OpRestoreState)) {
+        II = BB->eraseInstruction(II);
+      } else {
+        ++II;
+      }
+    }
+  }
 
   return true;
 }
@@ -3225,7 +3231,7 @@ void BinaryFunction::fixBranches() {
 
     // We will create unconditional branch with correct destination if needed.
     if (UncondBranch)
-      BB->eraseInstruction(UncondBranch);
+      BB->eraseInstruction(BB->findInstruction(UncondBranch));
 
     // Basic block that follows the current one in the final layout.
     const BinaryBasicBlock *NextBB = nullptr;
@@ -3238,7 +3244,7 @@ void BinaryFunction::fixBranches() {
       // one valid successor. Since behaviour is undefined - we replace
       // the conditional branch with an unconditional if required.
       if (CondBranch)
-        BB->eraseInstruction(CondBranch);
+        BB->eraseInstruction(BB->findInstruction(CondBranch));
       if (BB->getSuccessor() == NextBB)
         continue;
       BB->addBranchInstruction(BB->getSuccessor());
@@ -3736,6 +3742,23 @@ SMLoc BinaryFunction::emitLineInfo(SMLoc NewLoc, SMLoc PrevLoc) const {
   BC.Ctx->setDwarfCompileUnitID(FunctionUnitIndex);
 
   return NewLoc;
+}
+
+void BinaryFunction::adjustExecutionCount(uint64_t Count) {
+  if (getKnownExecutionCount() == 0 || Count == 0)
+    return;
+
+  if (ExecutionCount < Count)
+    Count = ExecutionCount;
+
+  double AdjustmentRatio = ((double) ExecutionCount - Count) / ExecutionCount;
+  if (AdjustmentRatio < 0.0)
+    AdjustmentRatio = 0.0;
+
+  for (auto &BB : layout())
+    BB->adjustExecutionCount(AdjustmentRatio);
+
+  ExecutionCount -= Count;
 }
 
 BinaryFunction::~BinaryFunction() {

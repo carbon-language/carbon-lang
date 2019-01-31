@@ -427,7 +427,7 @@ public:
   }
 
   /// Add instruction at the end of this basic block.
-  /// Returns the index of the instruction in the Instructions vector of the BB.
+  /// Returns iterator pointing to the inserted instruction.
   iterator addInstruction(MCInst &&Inst) {
     adjustNumPseudos(Inst, 1);
     Instructions.emplace_back(Inst);
@@ -435,7 +435,7 @@ public:
   }
 
   /// Add instruction at the end of this basic block.
-  /// Returns the index of the instruction in the Instructions vector of the BB.
+  /// Returns iterator pointing to the inserted instruction.
   iterator addInstruction(const MCInst &Inst) {
     adjustNumPseudos(Inst, 1);
     Instructions.push_back(Inst);
@@ -486,6 +486,10 @@ public:
   /// Return a pointer to the last non-pseudo instruction in this basic
   /// block.  Returns nullptr if none exists.
   MCInst *getLastNonPseudoInstr() {
+    auto RII = getLastNonPseudo();
+    return RII == Instructions.rend() ? nullptr : &*RII;
+  }
+  const MCInst *getLastNonPseudoInstr() const {
     auto RII = getLastNonPseudo();
     return RII == Instructions.rend() ? nullptr : &*RII;
   }
@@ -633,6 +637,9 @@ public:
     ExecutionCount = Count;
   }
 
+  /// Apply a given \p Ratio to the profile information of this basic block.
+  void adjustExecutionCount(double Ratio);
+
   bool isEntryPoint() const {
     return IsEntryPoint;
   }
@@ -670,18 +677,14 @@ public:
   }
 
   /// Erase pseudo instruction at a given iterator.
+  /// Return iterator following the removed instruction.
   iterator erasePseudoInstruction(iterator II) {
     --NumPseudos;
     return Instructions.erase(II);
   }
 
-  /// Erase given (non-pseudo) instruction if found.
-  /// Warning: this will invalidate succeeding instruction pointers.
-  bool eraseInstruction(MCInst *Inst) {
-    return replaceInstruction(Inst, std::vector<MCInst>());
-  }
-
   /// Erase non-pseudo instruction at a given iterator \p II.
+  /// Return iterator following the removed instruction.
   iterator eraseInstruction(iterator II) {
     adjustNumPseudos(*II, -1);
     return Instructions.erase(II);
@@ -691,11 +694,11 @@ public:
   template <typename ItrType>
   void eraseInstructions(ItrType Begin, ItrType End) {
     while (End > Begin) {
-      eraseInstruction(*--End);
+      eraseInstruction(findInstruction(*--End));
     }
   }
 
-  /// Erase all instructions
+  /// Erase all instructions.
   void clear() {
     Instructions.clear();
     NumPseudos = 0;
@@ -711,25 +714,9 @@ public:
                                         : Instructions.begin() + Index;
   }
 
-  /// Replace an instruction with a sequence of instructions. Returns true
-  /// if the instruction to be replaced was found and replaced.
-  template <typename Itr>
-  bool replaceInstruction(const MCInst *Inst, Itr Begin, Itr End) {
-    auto I = findInstruction(Inst);
-    if (I != Instructions.end()) {
-      adjustNumPseudos(*Inst, -1);
-      Instructions.insert(Instructions.erase(I), Begin, End);
-      adjustNumPseudos(Begin, End, 1);
-      return true;
-    }
-    return false;
-  }
-
-  bool replaceInstruction(const MCInst *Inst,
-                          const std::vector<MCInst> &Replacement) {
-    return replaceInstruction(Inst, Replacement.begin(), Replacement.end());
-  }
-
+  /// Replace instruction referenced by iterator \II with a sequence of
+  /// instructions defined by [\p Begin, \p End] range.
+  ///
   /// Return iterator pointing to the first inserted instruction.
   template <typename Itr>
   iterator replaceInstruction(iterator II, Itr Begin, Itr End) {
@@ -778,6 +765,13 @@ public:
     adjustNumPseudos(Instructions.begin(), Instructions.end(), 1);
     return SplitInst;
   }
+
+  /// Split basic block at the instruction pointed to by II.
+  /// All iterators pointing after II get invalidated.
+  ///
+  /// Return the new basic block that starts with the instruction
+  /// at the split point.
+  BinaryBasicBlock *splitAt(iterator II);
 
   /// Sets address of the basic block in the output.
   void setOutputStartAddress(uint64_t Address) {

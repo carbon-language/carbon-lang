@@ -95,37 +95,6 @@ public:
   }
 };
 
-/// Detects functions that simply do a tail call when they are called and
-/// optimizes calls to these functions.
-class OptimizeBodylessFunctions : public BinaryFunctionPass {
-private:
-  /// EquivalentCallTarget[F] = G ==> function F is simply a tail call to G,
-  /// thus calls to F can be optimized to calls to G.
-  std::unordered_map<const MCSymbol *, const BinaryFunction *>
-    EquivalentCallTarget;
-
-  void analyze(BinaryFunction &BF,
-               BinaryContext &BC,
-               std::map<uint64_t, BinaryFunction> &BFs);
-
-  void optimizeCalls(BinaryFunction &BF,
-                     BinaryContext &BC);
-
-  /// Stats for eliminated calls.
-  uint64_t NumEliminatedCalls{0};
-  uint64_t NumOptimizedCallSites{0};
-
-public:
-  explicit OptimizeBodylessFunctions(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) { }
-  const char *getName() const override {
-    return "optimize-bodyless";
-  }
-  void runOnFunctions(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs,
-                      std::set<uint64_t> &LargeFunctions) override;
-};
-
 /// Detect and eliminate unreachable basic blocks. We could have those
 /// filled with nops and they are used for alignment.
 class EliminateUnreachableBlocks : public BinaryFunctionPass {

@@ -249,6 +249,14 @@ void MCPlusBuilder::removeAllAnnotations(MCInst &Inst) {
   Inst.erase(std::prev(Inst.end()));
 }
 
+void MCPlusBuilder::stripAnnotations(MCInst &Inst) {
+  auto *AnnotationInst = getAnnotationInst(Inst);
+  if (!AnnotationInst)
+    return;
+
+  Inst.erase(std::prev(Inst.end()));
+}
+
 void
 MCPlusBuilder::printAnnotations(const MCInst &Inst, raw_ostream &OS) const {
   const auto *AnnotationInst = getAnnotationInst(Inst);
@@ -351,6 +359,24 @@ void MCPlusBuilder::getUsedRegs(const MCInst &Inst, BitVector &Regs) const {
       continue;
     Regs |= getAliases(Inst.getOperand(I).getReg(), /*OnlySmaller=*/true);
   }
+}
+
+bool MCPlusBuilder::hasDefOfPhysReg(const MCInst &MI, unsigned Reg) const {
+  const auto &InstInfo = Info->get(MI.getOpcode());
+  return InstInfo.hasDefOfPhysReg(MI, Reg, *RegInfo);
+}
+
+bool MCPlusBuilder::hasUseOfPhysReg(const MCInst &MI, unsigned Reg) const {
+  const auto &InstInfo = Info->get(MI.getOpcode());
+  for (int I = InstInfo.NumDefs; I < InstInfo.NumOperands; ++I)
+    if (MI.getOperand(I).isReg() &&
+        RegInfo->isSubRegisterEq(Reg, MI.getOperand(I).getReg()))
+      return true;
+  if (const uint16_t *ImpUses = InstInfo.ImplicitUses)
+    for (; *ImpUses; ++ImpUses)
+      if (*ImpUses == Reg || RegInfo->isSubRegister(Reg, *ImpUses))
+        return true;
+  return false;
 }
 
 const BitVector &

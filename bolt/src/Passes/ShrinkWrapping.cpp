@@ -1592,10 +1592,14 @@ void ShrinkWrapping::rebuildCFIForSP() {
     PrevBB = BB;
   }
 
-  for (auto &BB : BF)
-    for (auto I = BB.rbegin(), E = BB.rend(); I != E; ++I)
+  for (auto &BB : BF) {
+    for (auto I = BB.begin(); I != BB.end(); ) {
       if (BC.MIB->hasAnnotation(*I, "DeleteMe"))
-        BB.eraseInstruction(&*I);
+        I = BB.eraseInstruction(I);
+      else
+        ++I;
+    }
+  }
 }
 
 MCInst ShrinkWrapping::createStackAccess(int SPVal, int FPVal,

@@ -728,7 +728,7 @@ IndirectCallPromotion::rewriteCall(
     IndCallBlock->addInstructions(ICPcode.front().second.begin(),
                                   ICPcode.front().second.end());
   } else {
-    IndCallBlock->replaceInstruction(&IndCallBlock->back(),
+    IndCallBlock->replaceInstruction(std::prev(IndCallBlock->end()),
                                      ICPcode.front().second);
   }
   IndCallBlock->addInstructions(TailInsts.begin(), TailInsts.end());

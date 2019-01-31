@@ -7,11 +7,26 @@
 //
 //===----------------------------------------------------------------------===//
 //
+// The current inliner has a limited callee support
+// (see Inliner::getInliningInfo() for the most up-to-date details):
+//
+//  * No exception handling
+//  * No jump tables
+//  * Single entry point
+//  * CFI update not supported - breaks unwinding
+//  * Regular Call Sites:
+//    - only leaf functions (or callees with only tail calls)
+//      * no invokes (they can't be tail calls)
+//    - no direct use of %rsp
+//  * Tail Call Sites:
+//    - since the stack is unmodified, the regular call limitations are lifted
+//
 //===----------------------------------------------------------------------===//
 
 #include "Inliner.h"
 #include "MCPlus.h"
 #include "llvm/Support/Options.h"
+#include <map>
 
 #define DEBUG_TYPE "bolt-inliner"
 
@@ -22,10 +37,9 @@ namespace opts {
 extern cl::OptionCategory BoltOptCategory;
 
 static cl::opt<bool>
-AggressiveInlining("aggressive-inlining",
-  cl::desc("perform aggressive inlining"),
+AdjustProfile("inline-ap",
+  cl::desc("adjust function profile after inlining"),
   cl::ZeroOrMore,
-  cl::Hidden,
   cl::cat(BoltOptCategory));
 
 static cl::list<std::string>
@@ -36,581 +50,544 @@ ForceInlineFunctions("force-inline",
   cl::Hidden,
   cl::cat(BoltOptCategory));
 
+static cl::opt<bool>
+InlineAll("inline-all",
+  cl::desc("inline all functions"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+InlineIgnoreLeafCFI("inline-ignore-leaf-cfi",
+  cl::desc("inline leaf functions with CFI programs (can break unwinding)"),
+  cl::init(true),
+  cl::ZeroOrMore,
+  cl::ReallyHidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+InlineIgnoreCFI("inline-ignore-cfi",
+  cl::desc("inline functions with CFI programs (can break exception handling)"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::ReallyHidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<unsigned>
+InlineLimit("inline-limit",
+  cl::desc("maximum number of call sites to inline"),
+  cl::init(0),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<unsigned>
+InlineMaxIters("inline-max-iters",
+  cl::desc("maximum number of inline iterations"),
+  cl::init(3),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+InlineSmallFunctions("inline-small-functions",
+  cl::desc("inline functions if increase in size is less than defined by "
+           "-inline-small-functions-bytes"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<unsigned>
+InlineSmallFunctionsBytes("inline-small-functions-bytes",
+  cl::desc("max number of bytes for the function to be considered small for "
+           "inlining purposes"),
+  cl::init(4),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+NoInline("no-inline",
+  cl::desc("disable all inlining (overrides other inlining options)"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+/// This function returns true if any of inlining options are specified and the
+/// inlining pass should be executed. Whenever a new inlining option is added,
+/// this function should reflect the change.
+bool inliningEnabled() {
+  return !NoInline &&
+    (InlineAll ||
+     InlineSmallFunctions ||
+     !ForceInlineFunctions.empty());
 }
 
-namespace llvm {
-namespace bolt {
-
-void InlineSmallFunctions::findInliningCandidates(
-    BinaryContext &BC,
-    const std::map<uint64_t, BinaryFunction> &BFs) {
-  for (const auto &BFIt : BFs) {
-    const auto &Function = BFIt.second;
-    if (!shouldOptimize(Function) || Function.size() != 1)
-      continue;
-    auto &BB = *Function.begin();
-    const auto &LastInstruction = *BB.rbegin();
-    // Check if the function is small enough, doesn't do a tail call
-    // and doesn't throw exceptions.
-    if (BB.size() > 0 &&
-        BB.getNumNonPseudos() <= kMaxInstructions &&
-        BB.lp_empty() &&
-        BC.MIB->isReturn(LastInstruction) &&
-        !BC.MIB->isTailCall(LastInstruction)) {
-      InliningCandidates.insert(&Function);
-    }
-  }
-
-  DEBUG(dbgs() << "BOLT-DEBUG: " << InliningCandidates.size()
-               << " inlineable functions.\n");
-}
-
-void InlineSmallFunctions::findInliningCandidatesAggressive(
-    BinaryContext &BC,
-    const std::map<uint64_t, BinaryFunction> &BFs) {
-  std::set<std::string> OverwrittenFunctions = {
-    "_ZN4HPHP13hash_string_iEPKcj",
-    "_ZN4HPHP21hash_string_cs_unsafeEPKcj",
-    "_ZN4HPHP14hash_string_csEPKcj",
-    "_ZN4HPHP20hash_string_i_unsafeEPKcj",
-    "_ZNK4HPHP10StringData10hashHelperEv"
-  };
-  for (const auto &BFIt : BFs) {
-    const auto &Function = BFIt.second;
-    if (!shouldOptimize(Function) ||
-        OverwrittenFunctions.count(Function.getSymbol()->getName()) ||
-        Function.hasEHRanges())
-      continue;
-    uint64_t FunctionSize = 0;
-    for (const auto *BB : Function.layout()) {
-      FunctionSize += BC.computeCodeSize(BB->begin(), BB->end());
-    }
-    assert(FunctionSize > 0 && "found empty function");
-    if (FunctionSize > kMaxSize)
-      continue;
-    bool FoundCFI = false;
-    for (const auto BB : Function.layout()) {
-      for (const auto &Inst : *BB) {
-        if (BC.MIB->isEHLabel(Inst) || BC.MIB->isCFI(Inst)) {
-          FoundCFI = true;
-          break;
-        }
-      }
-    }
-    if (!FoundCFI)
-      InliningCandidates.insert(&Function);
-  }
-
-  DEBUG(dbgs() << "BOLT-DEBUG: " << InliningCandidates.size()
-               << " inlineable functions.\n");
-}
-
-namespace {
-
-/// Returns whether a function creates a stack frame for itself or not.
-/// If so, we need to manipulate the stack pointer when calling this function.
-/// Since we're only inlining very small functions, we return false for now, but
-/// we could for instance check if the function starts with 'push ebp'.
-/// TODO generalize this.
-bool createsStackFrame(const BinaryBasicBlock &) {
-  return false;
-}
-
-} // namespace
-
-void InlineSmallFunctions::inlineCall(
-    BinaryContext &BC,
-    BinaryBasicBlock &BB,
-    MCInst *CallInst,
-    const BinaryBasicBlock &InlinedFunctionBB) {
-  assert(BC.MIB->isCall(*CallInst) && "Can only inline a call.");
-  assert(BC.MIB->isReturn(*InlinedFunctionBB.rbegin()) &&
-         "Inlined function should end with a return.");
-
-  std::vector<MCInst> InlinedInstance;
-
-  bool ShouldAdjustStack = createsStackFrame(InlinedFunctionBB);
-
-  // Move stack like 'call' would if needed.
-  if (ShouldAdjustStack) {
-    MCInst StackInc;
-    BC.MIB->createStackPointerIncrement(StackInc);
-    InlinedInstance.push_back(StackInc);
-  }
-
-  for (auto Instruction : InlinedFunctionBB) {
-    if (BC.MIB->isReturn(Instruction)) {
-      break;
-    }
-    if (!BC.MIB->isEHLabel(Instruction) &&
-        !BC.MIB->isCFI(Instruction)) {
-      InlinedInstance.push_back(Instruction);
-    }
-  }
-
-  // Move stack pointer like 'ret' would.
-  if (ShouldAdjustStack) {
-    MCInst StackDec;
-    BC.MIB->createStackPointerDecrement(StackDec);
-    InlinedInstance.push_back(StackDec);
-  }
-
-  BB.replaceInstruction(CallInst, InlinedInstance);
-}
-
-std::pair<BinaryBasicBlock *, unsigned>
-InlineSmallFunctions::inlineCall(
-    BinaryContext &BC,
-    BinaryFunction &CallerFunction,
-    BinaryBasicBlock *CallerBB,
-    const unsigned CallInstIndex,
-    const BinaryFunction &InlinedFunction) {
-  // Get the instruction to be replaced with inlined code.
-  MCInst &CallInst = CallerBB->getInstructionAtIndex(CallInstIndex);
-  assert(BC.MIB->isCall(CallInst) && "Can only inline a call.");
-
-  // Point in the function after the inlined code.
-  BinaryBasicBlock *AfterInlinedBB = nullptr;
-  unsigned AfterInlinedIstrIndex = 0;
-
-  // In case of a tail call we should not remove any ret instructions from the
-  // inlined instance.
-  bool IsTailCall = BC.MIB->isTailCall(CallInst);
-
-  // The first block of the function to be inlined can be merged with the caller
-  // basic block. This cannot happen if there are jumps to the first block.
-  bool CanMergeFirstInlinedBlock = (*InlinedFunction.begin()).pred_size() == 0;
-
-  // If the call to be inlined is not at the end of its basic block and we have
-  // to inline more than one basic blocks (or even just one basic block that
-  // cannot be merged into the caller block), then the caller's basic block
-  // should be split.
-  bool ShouldSplitCallerBB =
-    CallInstIndex < CallerBB->size() - 1 &&
-    (InlinedFunction.size() > 1 || !CanMergeFirstInlinedBlock);
-
-  // Copy inlined function's basic blocks into a vector of basic blocks that
-  // will be inserted in the caller function (the inlined instance). Also, we
-  // keep a mapping from basic block index to the corresponding block in the
-  // inlined instance.
-  std::vector<std::unique_ptr<BinaryBasicBlock>> InlinedInstance;
-  std::unordered_map<const BinaryBasicBlock *, BinaryBasicBlock *> InlinedBBMap;
-
-  for (const auto InlinedFunctionBB : InlinedFunction.layout()) {
-    InlinedInstance.emplace_back(CallerFunction.createBasicBlock(0));
-    InlinedBBMap[InlinedFunctionBB] = InlinedInstance.back().get();
-    if (InlinedFunction.hasValidProfile()) {
-      const auto Count = InlinedFunctionBB->getExecutionCount();
-      InlinedInstance.back()->setExecutionCount(Count);
-    }
-  }
-  if (ShouldSplitCallerBB) {
-    // Add one extra block at the inlined instance for the removed part of the
-    // caller block.
-    InlinedInstance.emplace_back(CallerFunction.createBasicBlock(0));
-    if (CallerFunction.hasValidProfile()) {
-      const auto Count = CallerBB->getExecutionCount();
-      InlinedInstance.back()->setExecutionCount(Count);
-    }
-  }
-
-  // Copy instructions to the basic blocks of the inlined instance.
-  bool First = true;
-  for (const auto InlinedFunctionBB : InlinedFunction.layout()) {
-    // Get the corresponding block of the inlined instance.
-    auto *InlinedInstanceBB = InlinedBBMap.at(InlinedFunctionBB);
-    bool IsExitingBlock = false;
-
-    // Copy instructions into the inlined instance.
-    for (auto Instruction : *InlinedFunctionBB) {
-      if (!IsTailCall &&
-          BC.MIB->isReturn(Instruction) &&
-          !BC.MIB->isTailCall(Instruction)) {
-        // Skip returns when the caller does a normal call as opposed to a tail
-        // call.
-        IsExitingBlock = true;
-        continue;
-      }
-      if (!IsTailCall &&
-          BC.MIB->isTailCall(Instruction)) {
-        // Convert tail calls to normal calls when the caller does a normal
-        // call.
-        if (!BC.MIB->convertTailCallToCall(Instruction))
-           assert(false && "unexpected tail call opcode found");
-        IsExitingBlock = true;
-      }
-      if (BC.MIB->isBranch(Instruction) &&
-          !BC.MIB->isIndirectBranch(Instruction)) {
-        // Convert the branch targets in the branch instructions that will be
-        // added to the inlined instance.
-        const MCSymbol *OldTargetLabel = nullptr;
-        const MCSymbol *OldFTLabel = nullptr;
-        MCInst *CondBranch = nullptr;
-        MCInst *UncondBranch = nullptr;
-        const bool Result = BC.MIB->analyzeBranch(&Instruction,
-                                                  &Instruction + 1,
-                                                  OldTargetLabel,
-                                                  OldFTLabel, CondBranch,
-                                                  UncondBranch);
-        (void)Result;
-        assert(Result &&
-               "analyzeBranch failed on instruction guaranteed to be a branch");
-        assert(OldTargetLabel);
-        const MCSymbol *NewTargetLabel = nullptr;
-        for (const auto SuccBB : InlinedFunctionBB->successors()) {
-          if (SuccBB->getLabel() == OldTargetLabel) {
-            NewTargetLabel = InlinedBBMap.at(SuccBB)->getLabel();
-            break;
-          }
-        }
-        assert(NewTargetLabel);
-        BC.MIB->replaceBranchTarget(Instruction, NewTargetLabel, BC.Ctx.get());
-      }
-      // TODO; Currently we simply ignore CFI instructions but we need to
-      // address them for correctness.
-      if (!BC.MIB->isEHLabel(Instruction) &&
-          !BC.MIB->isCFI(Instruction)) {
-        InlinedInstanceBB->addInstruction(std::move(Instruction));
-      }
-    }
-
-    // Add CFG edges to the basic blocks of the inlined instance.
-    std::vector<BinaryBasicBlock *>
-      Successors(InlinedFunctionBB->succ_size(), nullptr);
-
-    std::transform(
-        InlinedFunctionBB->succ_begin(),
-        InlinedFunctionBB->succ_end(),
-        Successors.begin(),
-        [&InlinedBBMap](const BinaryBasicBlock *BB) {
-          return InlinedBBMap.at(BB);
-        });
-
-    if (InlinedFunction.hasValidProfile()) {
-      InlinedInstanceBB->addSuccessors(
-          Successors.begin(),
-          Successors.end(),
-          InlinedFunctionBB->branch_info_begin(),
-          InlinedFunctionBB->branch_info_end());
-    } else {
-      InlinedInstanceBB->addSuccessors(
-          Successors.begin(),
-          Successors.end());
-    }
-
-    if (IsExitingBlock) {
-      assert(Successors.size() == 0);
-      if (ShouldSplitCallerBB) {
-        if (InlinedFunction.hasValidProfile()) {
-          InlinedInstanceBB->addSuccessor(
-              InlinedInstance.back().get(),
-              InlinedInstanceBB->getExecutionCount());
-        } else {
-          InlinedInstanceBB->addSuccessor(InlinedInstance.back().get());
-        }
-        InlinedInstanceBB->addBranchInstruction(InlinedInstance.back().get());
-      } else if (!First || !CanMergeFirstInlinedBlock) {
-        assert(CallInstIndex == CallerBB->size() - 1);
-        assert(CallerBB->succ_size() <= 1);
-        if (CallerBB->succ_size() == 1) {
-          if (InlinedFunction.hasValidProfile()) {
-            InlinedInstanceBB->addSuccessor(
-                *CallerBB->succ_begin(),
-                InlinedInstanceBB->getExecutionCount());
-          } else {
-            InlinedInstanceBB->addSuccessor(*CallerBB->succ_begin());
-          }
-          InlinedInstanceBB->addBranchInstruction(*CallerBB->succ_begin());
-        }
-      }
-    }
-
-    First = false;
-  }
-
-  if (ShouldSplitCallerBB) {
-    // Split the basic block that contains the call and add the removed
-    // instructions in the last block of the inlined instance.
-    // (Is it OK to have a basic block with just CFI instructions?)
-    std::vector<MCInst> TrailInstructions =
-        CallerBB->splitInstructions(&CallInst);
-    assert(TrailInstructions.size() > 0);
-    InlinedInstance.back()->addInstructions(
-        TrailInstructions.begin(),
-        TrailInstructions.end());
-    // Add CFG edges for the block with the removed instructions.
-    if (CallerFunction.hasValidProfile()) {
-      InlinedInstance.back()->addSuccessors(
-          CallerBB->succ_begin(),
-          CallerBB->succ_end(),
-          CallerBB->branch_info_begin(),
-          CallerBB->branch_info_end());
-    } else {
-      InlinedInstance.back()->addSuccessors(
-          CallerBB->succ_begin(),
-          CallerBB->succ_end());
-    }
-    // Update the after-inlined point.
-    AfterInlinedBB = InlinedInstance.back().get();
-    AfterInlinedIstrIndex = 0;
-  }
-
-  assert(InlinedInstance.size() > 0 && "found function with no basic blocks");
-  assert(InlinedInstance.front()->size() > 0 &&
-         "found function with empty basic block");
-
-  // If the inlining cannot happen as a simple instruction insertion into
-  // CallerBB, we remove the outgoing CFG edges of the caller block.
-  if (InlinedInstance.size() > 1 || !CanMergeFirstInlinedBlock) {
-    CallerBB->removeAllSuccessors();
-    if (!ShouldSplitCallerBB) {
-      // Update the after-inlined point.
-      AfterInlinedBB = CallerFunction.getBasicBlockAfter(CallerBB);
-      AfterInlinedIstrIndex = 0;
-    }
-  } else {
-    assert(!ShouldSplitCallerBB);
-    // Update the after-inlined point.
-    if (CallInstIndex < CallerBB->size() - 1) {
-      AfterInlinedBB = CallerBB;
-      AfterInlinedIstrIndex =
-        CallInstIndex + InlinedInstance.front()->size();
-    } else {
-      AfterInlinedBB = CallerFunction.getBasicBlockAfter(CallerBB);
-      AfterInlinedIstrIndex = 0;
-    }
-  }
-
-  // Do the inlining by merging the first block of the inlined instance into
-  // the caller basic block if possible and adding the rest of the inlined
-  // instance basic blocks in the caller function.
-  if (CanMergeFirstInlinedBlock) {
-    CallerBB->replaceInstruction(
-        &CallInst,
-        InlinedInstance.front()->begin(),
-        InlinedInstance.front()->end());
-    if (InlinedInstance.size() > 1) {
-      auto FirstBB = InlinedInstance.begin()->get();
-      if (InlinedFunction.hasValidProfile()) {
-        CallerBB->addSuccessors(
-            FirstBB->succ_begin(),
-            FirstBB->succ_end(),
-            FirstBB->branch_info_begin(),
-            FirstBB->branch_info_end());
-      } else {
-        CallerBB->addSuccessors(
-            FirstBB->succ_begin(),
-            FirstBB->succ_end());
-      }
-      FirstBB->removeAllSuccessors();
-    }
-    InlinedInstance.erase(InlinedInstance.begin());
-  } else {
-    CallerBB->eraseInstruction(&CallInst);
-    if (CallerFunction.hasValidProfile()) {
-      CallerBB->addSuccessor(InlinedInstance.front().get(),
-                             CallerBB->getExecutionCount());
-    } else {
-      CallerBB->addSuccessor(InlinedInstance.front().get(),
-                             CallerBB->getExecutionCount());
-    }
-  }
-  CallerFunction.insertBasicBlocks(CallerBB, std::move(InlinedInstance));
-
-  return std::make_pair(AfterInlinedBB, AfterInlinedIstrIndex);
-}
-
-bool InlineSmallFunctions::inlineCallsInFunction(
-    BinaryContext &BC,
-    BinaryFunction &Function) {
-  std::vector<BinaryBasicBlock *> Blocks(Function.layout().begin(),
-                                         Function.layout().end());
-  std::sort(Blocks.begin(), Blocks.end(),
-      [](const BinaryBasicBlock *BB1, const BinaryBasicBlock *BB2) {
-        return BB1->getExecutionCount() > BB2->getExecutionCount();
-      });
-  uint32_t ExtraSize = 0;
-
-  for (auto BB : Blocks) {
-    for (auto InstIt = BB->begin(), End = BB->end(); InstIt != End; ++InstIt) {
-      auto &Inst = *InstIt;
-      if (BC.MIB->isCall(Inst)) {
-        TotalDynamicCalls += BB->getExecutionCount();
-      }
-    }
-  }
-
-  bool DidInlining = false;
-
-  for (auto BB : Blocks) {
-    if (BB->isCold())
-      continue;
-
-    for (auto InstIt = BB->begin(), End = BB->end(); InstIt != End; ) {
-      auto &Inst = *InstIt;
-      if (BC.MIB->isCall(Inst) &&
-          !BC.MIB->isTailCall(Inst) &&
-          MCPlus::getNumPrimeOperands(Inst) == 1 &&
-          Inst.getOperand(0).isExpr()) {
-        const auto *TargetSymbol = BC.MIB->getTargetSymbol(Inst);
-        assert(TargetSymbol && "target symbol expected for direct call");
-        const auto *TargetFunction = BC.getFunctionForSymbol(TargetSymbol);
-        if (TargetFunction) {
-          bool CallToInlineableFunction =
-            InliningCandidates.count(TargetFunction);
-
-          TotalInlineableCalls +=
-            CallToInlineableFunction * BB->getExecutionCount();
-
-          if (CallToInlineableFunction &&
-              TargetFunction->getSize() + ExtraSize
-                + Function.estimateHotSize() < Function.getMaxSize()) {
-            auto NextInstIt = std::next(InstIt);
-            inlineCall(BC, *BB, &Inst, *TargetFunction->begin());
-            DidInlining = true;
-            DEBUG(dbgs() << "BOLT-DEBUG: Inlining call to "
-                         << *TargetFunction << " in "
-                         << Function << "\n");
-            InstIt = NextInstIt;
-            ExtraSize += TargetFunction->getSize();
-            InlinedDynamicCalls += BB->getExecutionCount();
-            continue;
-          }
-        }
-      }
-
-      ++InstIt;
-    }
-  }
-
-  return DidInlining;
-}
-
-bool InlineSmallFunctions::inlineCallsInFunctionAggressive(
-    BinaryContext &BC,
-    BinaryFunction &Function) {
-  std::vector<BinaryBasicBlock *> Blocks(Function.layout().begin(),
-                                         Function.layout().end());
-  std::sort(Blocks.begin(), Blocks.end(),
-      [](const BinaryBasicBlock *BB1, const BinaryBasicBlock *BB2) {
-        return BB1->getExecutionCount() > BB2->getExecutionCount();
-      });
-  uint32_t ExtraSize = 0;
-
-  for (auto BB : Blocks) {
-    for (auto InstIt = BB->begin(), End = BB->end(); InstIt != End; ++InstIt) {
-      auto &Inst = *InstIt;
-      if (BC.MIB->isCall(Inst)) {
-        TotalDynamicCalls += BB->getExecutionCount();
-      }
-    }
-  }
-
-  bool DidInlining = false;
-
-  for (auto BB : Blocks) {
-    if (BB->isCold())
-      continue;
-
-    unsigned InstIndex = 0;
-    for (auto InstIt = BB->begin(); InstIt != BB->end(); ) {
-      auto &Inst = *InstIt;
-      if (BC.MIB->isCall(Inst) &&
-          MCPlus::getNumPrimeOperands(Inst) == 1 &&
-          Inst.getOperand(0).isExpr()) {
-        assert(!BC.MIB->isInvoke(Inst));
-        const auto *TargetSymbol = BC.MIB->getTargetSymbol(Inst);
-        assert(TargetSymbol && "target symbol expected for direct call");
-        const auto *TargetFunction = BC.getFunctionForSymbol(TargetSymbol);
-        if (TargetFunction) {
-          bool CallToInlineableFunction =
-            InliningCandidates.count(TargetFunction);
-
-          TotalInlineableCalls +=
-            CallToInlineableFunction * BB->getExecutionCount();
-
-          if (CallToInlineableFunction &&
-              TargetFunction->getSize() + ExtraSize
-              + Function.estimateHotSize() < Function.getMaxSize()) {
-            unsigned NextInstIndex = 0;
-            BinaryBasicBlock *NextBB = nullptr;
-            std::tie(NextBB, NextInstIndex) =
-              inlineCall(BC, Function, BB, InstIndex, *TargetFunction);
-            DidInlining = true;
-            DEBUG(dbgs() << "BOLT-DEBUG: Inlining call to "
-                         << *TargetFunction << " in "
-                         << Function << "\n");
-            InstIndex = NextBB == BB ? NextInstIndex : BB->size();
-            InstIt = NextBB == BB ? BB->begin() + NextInstIndex : BB->end();
-            ExtraSize += TargetFunction->getSize();
-            InlinedDynamicCalls += BB->getExecutionCount();
-            continue;
-          }
-        }
-      }
-
-      ++InstIndex;
-      ++InstIt;
-    }
-  }
-
-  return DidInlining;
-}
-
-bool InlineSmallFunctions::mustConsider(const BinaryFunction &BF) {
+bool mustConsider(const llvm::bolt::BinaryFunction &Function) {
   for (auto &Name : opts::ForceInlineFunctions) {
-    if (BF.hasName(Name))
+    if (Function.hasName(Name))
       return true;
   }
   return false;
 }
 
-void InlineSmallFunctions::runOnFunctions(
-    BinaryContext &BC,
-    std::map<uint64_t, BinaryFunction> &BFs,
-    std::set<uint64_t> &) {
+void syncOptions() {
+  if (opts::InlineIgnoreCFI)
+    opts::InlineIgnoreLeafCFI = true;
 
-  if (opts::AggressiveInlining)
-    findInliningCandidatesAggressive(BC, BFs);
-  else
-    findInliningCandidates(BC, BFs);
+  if (opts::InlineAll)
+    opts::InlineSmallFunctions = true;
+}
 
-  std::vector<BinaryFunction *> ConsideredFunctions;
-  for (auto &It : BFs) {
-    auto &Function = It.second;
-    if (!shouldOptimize(Function) ||
-        (Function.getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE &&
-         !mustConsider(Function)))
-      continue;
-    ConsideredFunctions.push_back(&Function);
-  }
-  std::sort(ConsideredFunctions.begin(), ConsideredFunctions.end(),
-            [](BinaryFunction *A, BinaryFunction *B) {
-              return B->getExecutionCount() < A->getExecutionCount();
-            });
-  unsigned ModifiedFunctions = 0;
-  for (unsigned i = 0; i < ConsideredFunctions.size() &&
-                       ModifiedFunctions <= kMaxFunctions; ++i) {
-    auto &Function = *ConsideredFunctions[i];
+} // namespace opts
 
-    const bool DidInline = opts::AggressiveInlining
-      ? inlineCallsInFunctionAggressive(BC, Function)
-      : inlineCallsInFunction(BC, Function);
+namespace llvm {
+namespace bolt {
 
-    if (DidInline) {
-      Modified.insert(&Function);
-      ++ModifiedFunctions;
+uint64_t Inliner::SizeOfCallInst;
+uint64_t Inliner::SizeOfTailCallInst;
+
+uint64_t Inliner::getSizeOfCallInst(const BinaryContext &BC) {
+  if (SizeOfCallInst)
+    return SizeOfCallInst;
+
+  MCInst Inst;
+  BC.MIB->createCall(Inst, BC.Ctx->createTempSymbol(), BC.Ctx.get());
+  SizeOfCallInst = BC.computeInstructionSize(Inst);
+
+  return SizeOfCallInst;
+}
+
+uint64_t Inliner::getSizeOfTailCallInst(const BinaryContext &BC) {
+  if (SizeOfTailCallInst)
+    return SizeOfTailCallInst;
+
+  MCInst Inst;
+  BC.MIB->createTailCall(Inst, BC.Ctx->createTempSymbol(), BC.Ctx.get());
+  SizeOfTailCallInst = BC.computeInstructionSize(Inst);
+
+  return SizeOfTailCallInst;
+}
+
+Inliner::InliningInfo Inliner::getInliningInfo(const BinaryFunction &BF) const {
+  if (!shouldOptimize(BF))
+    return INL_NONE;
+
+  auto &BC = BF.getBinaryContext();
+  bool DirectSP = false;
+  bool HasCFI = false;
+  bool IsLeaf = true;
+
+  // Perform necessary checks unless the option overrides it.
+  if (!opts::mustConsider(BF)) {
+    if (BF.hasEHRanges())
+      return INL_NONE;
+
+    if (BF.isMultiEntry())
+      return INL_NONE;
+
+    if (BF.hasJumpTables())
+      return INL_NONE;
+
+    const auto SPReg = BC.MIB->getStackPointer();
+    for (const auto *BB : BF.layout()) {
+      for (auto &Inst : *BB) {
+        // Tail calls are marked as implicitly using the stack pointer and they
+        // could be inlined.
+        if (BC.MIB->isTailCall(Inst))
+          break;
+
+        if (BC.MIB->isCFI(Inst)) {
+          HasCFI = true;
+          continue;
+        }
+
+        if (BC.MIB->isCall(Inst))
+          IsLeaf = false;
+
+        // Push/pop instructions are straightforward to handle.
+        if (BC.MIB->isPush(Inst) || BC.MIB->isPop(Inst))
+          continue;
+
+        DirectSP |= BC.MIB->hasDefOfPhysReg(Inst, SPReg) ||
+                    BC.MIB->hasUseOfPhysReg(Inst, SPReg);
+      }
     }
   }
 
-  DEBUG(dbgs() << "BOLT-INFO: Inlined " << InlinedDynamicCalls << " of "
-               << TotalDynamicCalls << " function calls in the profile.\n"
-               << "BOLT-INFO: Inlined calls represent "
-               << format("%.1f",
-                         100.0 * InlinedDynamicCalls / TotalInlineableCalls)
-               << "% of all inlineable calls in the profile.\n");
+  if (HasCFI) {
+    if (!opts::InlineIgnoreLeafCFI)
+      return INL_NONE;
+
+    if (!IsLeaf && !opts::InlineIgnoreCFI)
+      return INL_NONE;
+  }
+
+  InliningInfo Info(DirectSP ? INL_TAILCALL : INL_ANY);
+
+  auto Size = BF.estimateSize();
+
+  Info.SizeAfterInlining = Size;
+  Info.SizeAfterTailCallInlining = Size;
+
+  // Handle special case of the known size reduction.
+  if (BF.size() == 1) {
+    // For a regular call the last return instruction could be removed
+    // (or converted to a branch).
+    const auto *LastInst = BF.back().getLastNonPseudoInstr();
+    if (LastInst &&
+        BC.MIB->isReturn(*LastInst) &&
+        !BC.MIB->isTailCall(*LastInst)) {
+      const auto RetInstSize = BC.computeInstructionSize(*LastInst);
+      assert(Size >= RetInstSize);
+      Info.SizeAfterInlining -= RetInstSize;
+    }
+  }
+
+  return Info;
 }
 
+void
+Inliner::findInliningCandidates(BinaryContext &BC,
+                                const std::map<uint64_t, BinaryFunction> &BFs) {
+  for (const auto &BFI : BFs) {
+    const auto &Function = BFI.second;
+    const auto InlInfo = getInliningInfo(Function);
+    if (InlInfo.Type != INL_NONE)
+      InliningCandidates[&Function] = InlInfo;
+  }
+}
+
+std::pair<BinaryBasicBlock *, BinaryBasicBlock::iterator>
+Inliner::inlineCall(BinaryBasicBlock &CallerBB,
+                    BinaryBasicBlock::iterator CallInst,
+                    const BinaryFunction &Callee) {
+  auto &CallerFunction = *CallerBB.getFunction();
+  auto &BC = CallerFunction.getBinaryContext();
+  auto &MIB = *BC.MIB;
+
+  assert(MIB.isCall(*CallInst) && "can only inline a call or a tail call");
+  assert(!Callee.isMultiEntry() &&
+         "cannot inline function with multiple entries");
+  assert(!Callee.hasJumpTables() &&
+         "cannot inline function with jump table(s)");
+
+  // Get information about the call site.
+  const auto CSIsInvoke = BC.MIB->isInvoke(*CallInst);
+  const auto CSIsTailCall = BC.MIB->isTailCall(*CallInst);
+  const auto CSGNUArgsSize = BC.MIB->getGnuArgsSize(*CallInst);
+  const auto CSEHInfo = BC.MIB->getEHInfo(*CallInst);
+
+  // Split basic block at the call site if there will be more incoming edges
+  // coming from the callee.
+  BinaryBasicBlock *FirstInlinedBB = &CallerBB;
+  if (Callee.front().pred_size() && CallInst != CallerBB.begin()) {
+    FirstInlinedBB = CallerBB.splitAt(CallInst);
+    CallInst = FirstInlinedBB->begin();
+  }
+
+  // Split basic block after the call instruction unless the callee is trivial
+  // (i.e. consists of a single basic block). If necessary, obtain a basic block
+  // for return instructions in the callee to redirect to.
+  BinaryBasicBlock *NextBB = nullptr;
+  if (Callee.size() > 1) {
+    if (std::next(CallInst) != FirstInlinedBB->end()) {
+      NextBB = FirstInlinedBB->splitAt(std::next(CallInst));
+    } else {
+      NextBB = FirstInlinedBB->getSuccessor();
+    }
+  }
+  if (NextBB)
+    FirstInlinedBB->removeSuccessor(NextBB);
+
+  // Remove the call instruction.
+  auto InsertII = FirstInlinedBB->eraseInstruction(CallInst);
+
+  double ProfileRatio = 0;
+  if (auto CalleeExecCount = Callee.getKnownExecutionCount()) {
+    ProfileRatio =
+      (double) FirstInlinedBB->getKnownExecutionCount() / CalleeExecCount;
+  }
+
+  // Save execution count of the first block as we don't want it to change
+  // later due to profile adjustment rounding errors.
+  const auto FirstInlinedBBCount = FirstInlinedBB->getKnownExecutionCount();
+
+  // Copy basic blocks and maintain a map from their origin.
+  std::unordered_map<const BinaryBasicBlock *, BinaryBasicBlock *> InlinedBBMap;
+  InlinedBBMap[&Callee.front()] = FirstInlinedBB;
+  for (auto BBI = std::next(Callee.begin()); BBI != Callee.end(); ++BBI) {
+    auto *InlinedBB = CallerFunction.addBasicBlock(0);
+    InlinedBBMap[&*BBI] = InlinedBB;
+    InlinedBB->setCFIState(FirstInlinedBB->getCFIState());
+    if (Callee.hasValidProfile()) {
+      InlinedBB->setExecutionCount(BBI->getKnownExecutionCount());
+    } else {
+      InlinedBB->setExecutionCount(FirstInlinedBBCount);
+    }
+  }
+
+  // Copy over instructions and edges.
+  for (const auto &BB : Callee) {
+    auto *InlinedBB = InlinedBBMap[&BB];
+
+    if (InlinedBB != FirstInlinedBB)
+      InsertII = InlinedBB->begin();
+
+    // Copy over instructions making any necessary mods.
+    for (auto Inst : BB) {
+      if (MIB.isPseudo(Inst))
+        continue;
+
+      MIB.stripAnnotations(Inst);
+
+      // Fix branch target. Strictly speaking, we don't have to do this as
+      // targets of direct branches will be fixed later and don't matter
+      // in the CFG state. However, disassembly may look misleading, and
+      // hence we do the fixing.
+      if (MIB.isBranch(Inst)) {
+        assert(!MIB.isIndirectBranch(Inst) &&
+               "unexpected indirect branch in callee");
+        const auto *TargetBB =
+            Callee.getBasicBlockForLabel(MIB.getTargetSymbol(Inst));
+        assert(TargetBB && "cannot find target block in callee");
+        MIB.replaceBranchTarget(Inst, InlinedBBMap[TargetBB]->getLabel(),
+                                BC.Ctx.get());
+      }
+
+      if (CSIsTailCall || (!MIB.isCall(Inst) && !MIB.isReturn(Inst))) {
+        InsertII = std::next(InlinedBB->insertInstruction(InsertII,
+                                                          std::move(Inst)));
+        continue;
+      }
+
+      // Handle special instructions for a non-tail call site.
+      if (!MIB.isCall(Inst)) {
+        // Returns are removed.
+        break;
+      }
+
+      MIB.convertTailCallToCall(Inst);
+
+      // Propagate EH-related info to call instructions.
+      if (CSIsInvoke) {
+        MIB.addEHInfo(Inst, *CSEHInfo);
+        if (CSGNUArgsSize >= 0)
+          MIB.addGnuArgsSize(Inst, CSGNUArgsSize);
+      }
+
+      InsertII = std::next(InlinedBB->insertInstruction(InsertII,
+                                                        std::move(Inst)));
+    }
+
+    // Add CFG edges to the basic blocks of the inlined instance.
+    std::vector<BinaryBasicBlock *> Successors(BB.succ_size());
+    std::transform(
+        BB.succ_begin(),
+        BB.succ_end(),
+        Successors.begin(),
+        [&InlinedBBMap](const BinaryBasicBlock *BB) {
+          return InlinedBBMap.at(BB);
+        });
+
+    if (CallerFunction.hasValidProfile() && Callee.hasValidProfile()) {
+      InlinedBB->addSuccessors(
+          Successors.begin(),
+          Successors.end(),
+          BB.branch_info_begin(),
+          BB.branch_info_end());
+    } else {
+      InlinedBB->addSuccessors(
+          Successors.begin(),
+          Successors.end());
+    }
+
+    if (!CSIsTailCall && BB.succ_size() == 0 && NextBB) {
+      // Either it's a return block or the last instruction never returns.
+      InlinedBB->addSuccessor(NextBB, InlinedBB->getExecutionCount());
+    }
+
+    // Scale profiling info for blocks and edges after inlining.
+    if (CallerFunction.hasValidProfile() && Callee.size() > 1) {
+      if (opts::AdjustProfile) {
+        InlinedBB->adjustExecutionCount(ProfileRatio);
+      } else {
+        InlinedBB->setExecutionCount(
+            InlinedBB->getKnownExecutionCount() * ProfileRatio);
+      }
+    }
+  }
+
+  // Restore the original execution count of the first inlined basic block.
+  FirstInlinedBB->setExecutionCount(FirstInlinedBBCount);
+
+  CallerFunction.recomputeLandingPads();
+
+  if (NextBB)
+    return std::make_pair(NextBB, NextBB->begin());
+
+  if (Callee.size() == 1)
+    return std::make_pair(FirstInlinedBB, InsertII);
+
+  return std::make_pair(FirstInlinedBB, FirstInlinedBB->end());
+}
+
+bool Inliner::inlineCallsInFunction(BinaryFunction &Function) {
+  auto &BC = Function.getBinaryContext();
+  std::vector<BinaryBasicBlock *> Blocks(Function.layout().begin(),
+                                         Function.layout().end());
+  std::sort(Blocks.begin(), Blocks.end(),
+      [](const BinaryBasicBlock *BB1, const BinaryBasicBlock *BB2) {
+        return BB1->getKnownExecutionCount() > BB2->getKnownExecutionCount();
+      });
+
+  bool DidInlining = false;
+  for (auto *BB : Blocks) {
+    for (auto InstIt = BB->begin(); InstIt != BB->end(); ) {
+      auto &Inst = *InstIt;
+      if (!BC.MIB->isCall(Inst) || MCPlus::getNumPrimeOperands(Inst) != 1 ||
+          !Inst.getOperand(0).isExpr()) {
+        ++InstIt;
+        continue;
+      }
+
+      const auto *TargetSymbol = BC.MIB->getTargetSymbol(Inst);
+      assert(TargetSymbol && "target symbol expected for direct call");
+      auto *TargetFunction = BC.getFunctionForSymbol(TargetSymbol);
+      if (!TargetFunction) {
+        ++InstIt;
+        continue;
+      }
+
+      // Don't do recursive inlining.
+      if (TargetFunction == &Function) {
+        ++InstIt;
+        continue;
+      }
+
+      auto IInfo = InliningCandidates.find(TargetFunction);
+      if (IInfo == InliningCandidates.end()) {
+        ++InstIt;
+        continue;
+      }
+
+      const auto IsTailCall = BC.MIB->isTailCall(Inst);
+      if (!IsTailCall && IInfo->second.Type == INL_TAILCALL) {
+        ++InstIt;
+        continue;
+      }
+
+      int64_t SizeAfterInlining;
+      if (IsTailCall) {
+        SizeAfterInlining = IInfo->second.SizeAfterTailCallInlining -
+                            getSizeOfTailCallInst(BC);
+      } else {
+        SizeAfterInlining = IInfo->second.SizeAfterInlining -
+                            getSizeOfCallInst(BC);
+      }
+
+      if (!opts::InlineAll && !opts::mustConsider(*TargetFunction)) {
+        if (!opts::InlineSmallFunctions ||
+            SizeAfterInlining > opts::InlineSmallFunctionsBytes) {
+          ++InstIt;
+          continue;
+        }
+      }
+
+      DEBUG(dbgs() << "BOLT-DEBUG: inlining call to " << *TargetFunction
+                   << " in " << Function << " : " << BB->getName()
+                   << ". Count: " << BB->getKnownExecutionCount()
+                   << ". Size change: " << SizeAfterInlining << " bytes.\n");
+
+      std::tie(BB, InstIt) = inlineCall(*BB, InstIt, *TargetFunction);
+
+      DidInlining = true;
+      TotalInlinedBytes += SizeAfterInlining;
+
+      ++NumInlinedCallSites;
+      NumInlinedDynamicCalls += BB->getExecutionCount();
+
+      // Subtract basic block execution count from the callee execution count.
+      if (opts::AdjustProfile) {
+        TargetFunction->adjustExecutionCount(BB->getKnownExecutionCount());
+      }
+
+      // Check if the caller inlining status has to be adjusted.
+      if (IInfo->second.Type == INL_TAILCALL) {
+        auto CallerIInfo = InliningCandidates.find(&Function);
+        if (CallerIInfo != InliningCandidates.end() &&
+            CallerIInfo->second.Type == INL_ANY) {
+          DEBUG(dbgs() << "adjusting inlining status for function " << Function
+                       << '\n');
+          CallerIInfo->second.Type = INL_TAILCALL;
+        }
+      }
+
+      if (NumInlinedCallSites == opts::InlineLimit) {
+        return true;
+      }
+    }
+  }
+
+  return DidInlining;
+}
+
+void Inliner::runOnFunctions(BinaryContext &BC,
+                             std::map<uint64_t, BinaryFunction> &BFs,
+                             std::set<uint64_t> &) {
+  opts::syncOptions();
+
+  if (!opts::inliningEnabled())
+    return;
+
+  uint64_t TotalSize = 0;
+  for (auto &BFI : BFs)
+    TotalSize += BFI.second.getSize();
+
+  bool InlinedOnce;
+  unsigned NumIters = 0;
+  do {
+    if (opts::InlineLimit && NumInlinedCallSites >= opts::InlineLimit)
+      break;
+
+    InlinedOnce = false;
+
+    InliningCandidates.clear();
+    findInliningCandidates(BC, BFs);
+
+    std::vector<BinaryFunction *> ConsideredFunctions;
+    for (auto &BFI : BFs) {
+      auto &Function = BFI.second;
+      if (!shouldOptimize(Function))
+        continue;
+      ConsideredFunctions.push_back(&Function);
+    }
+    std::sort(ConsideredFunctions.begin(), ConsideredFunctions.end(),
+        [](const BinaryFunction *A, const BinaryFunction *B) {
+        return B->getKnownExecutionCount() < A->getKnownExecutionCount();
+    });
+    for (auto *Function : ConsideredFunctions) {
+      if (opts::InlineLimit && NumInlinedCallSites >= opts::InlineLimit)
+        break;
+
+      const auto DidInline = inlineCallsInFunction(*Function);
+
+      if (DidInline)
+        Modified.insert(Function);
+
+      InlinedOnce |= DidInline;
+    }
+
+    ++NumIters;
+  } while (InlinedOnce && NumIters < opts::InlineMaxIters);
+
+  if (NumInlinedCallSites) {
+    outs() << "BOLT-INFO: inlined " << NumInlinedDynamicCalls << " calls at "
+           << NumInlinedCallSites << " call sites in " << NumIters
+           << " iteration(s). Change in binary size: " << TotalInlinedBytes
+           << " bytes.\n";
+  }
+}
 
 } // namespace bolt
 } // namespace llvm

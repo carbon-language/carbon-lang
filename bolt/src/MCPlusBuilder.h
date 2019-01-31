@@ -334,6 +334,11 @@ public:
     return false;
   }
 
+  /// Return true of the instruction is of pseudo kind.
+  bool isPseudo(const MCInst &Inst) const {
+    return Info->get(Inst.getOpcode()).isPseudo();
+  }
+
   /// Creates x86 pause instruction.
   virtual void createPause(MCInst &Inst) const {
     llvm_unreachable("not implemented");
@@ -1093,6 +1098,14 @@ public:
   /// but only if they are strictly smaller than the actual reg
   virtual void getUsedRegs(const MCInst &Inst, BitVector &Regs) const;
 
+  /// Return true if this instruction defines the specified physical
+  /// register either explicitly or implicitly.
+  virtual bool hasDefOfPhysReg(const MCInst &MI, unsigned Reg) const;
+
+  /// Return true if this instruction uses the specified physical
+  /// register either explicitly or implicitly.
+  virtual bool hasUseOfPhysReg(const MCInst &MI, unsigned Reg) const;
+
   /// Replace displacement in compound memory operand with given \p Label.
   bool replaceMemOperandDisp(MCInst &Inst, const MCSymbol *Label,
                              MCContext *Ctx) const {
@@ -1227,7 +1240,6 @@ public:
 
   virtual int getShortJmpEncodingSize() const {
     llvm_unreachable("not implemented");
-    return 0;
   }
 
   virtual int getUncondBranchEncodingSize() const {
@@ -1253,6 +1265,16 @@ public:
   /// Returns true on success.
   virtual bool createUncondBranch(MCInst &Inst, const MCSymbol *TBB,
                                   MCContext *Ctx) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Creates a new call instruction in Inst and sets its operand to
+  /// Target.
+  ///
+  /// Returns true on success.
+  virtual bool createCall(MCInst &Inst, const MCSymbol *Target,
+                          MCContext *Ctx) {
     llvm_unreachable("not implemented");
     return false;
   }
@@ -1561,6 +1583,9 @@ public:
 
   /// Remove all meta-data annotations from Inst.
   void removeAllAnnotations(MCInst &Inst);
+
+  /// Remove meta-data, but don't destroy it.
+  void stripAnnotations(MCInst &Inst);
 
   /// This method takes an indirect call instruction and splits it up into an
   /// equivalent set of instructions that use direct calls for target

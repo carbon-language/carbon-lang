@@ -114,9 +114,7 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
       // accumulate the number of calls from the callsite into the function
       // samples.  Results from perfomance testing seem to favor the zero
       // count though, so I'm leaving it this way for now.
-      const auto Samples =
-        Function->hasProfile() ? Function->getExecutionCount() : 0;
-      return Cg.addNode(Function, Size, Samples);
+      return Cg.addNode(Function, Size, Function->getKnownExecutionCount());
     } else {
       return Id;
     }

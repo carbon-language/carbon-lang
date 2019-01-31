@@ -124,7 +124,8 @@ void JTFootprintReduction::checkOpportunities(BinaryContext &BC,
 }
 
 bool JTFootprintReduction::tryOptimizeNonPIC(
-    BinaryContext &BC, BinaryBasicBlock &BB, MCInst &Inst, uint64_t JTAddr,
+    BinaryContext &BC, BinaryBasicBlock &BB,
+    BinaryBasicBlock::iterator Inst, uint64_t JTAddr,
     JumpTable *JumpTable, DataflowInfoManager &Info) {
   if (opts::JTFootprintOnlyPIC)
     return false;
@@ -137,7 +138,7 @@ bool JTFootprintReduction::tryOptimizeNonPIC(
       BC.MIB->matchAnyOperand(Base), BC.MIB->matchImm(Scale),
       BC.MIB->matchReg(Index), BC.MIB->matchAnyOperand(Offset));
   if (!IndJmpMatcher->match(*BC.MRI, *BC.MIB,
-                            MutableArrayRef<MCInst>(&*BB.begin(), &Inst + 1),
+                            MutableArrayRef<MCInst>(&*BB.begin(), &*Inst + 1),
                             -1)) {
     return false;
   }
@@ -148,7 +149,7 @@ bool JTFootprintReduction::tryOptimizeNonPIC(
   IndJmpMatcher->annotate(*BC.MIB, "DeleteMe");
 
   auto &LA = Info.getLivenessAnalysis();
-  MCPhysReg Reg = LA.scavengeRegAfter(&Inst);
+  MCPhysReg Reg = LA.scavengeRegAfter(&*Inst);
   assert(Reg != 0 && "Register scavenger failed!");
   auto RegOp = MCOperand::createReg(Reg);
   SmallVector<MCInst, 4> NewFrag;
@@ -159,12 +160,13 @@ bool JTFootprintReduction::tryOptimizeNonPIC(
 
   JumpTable->OutputEntrySize = 4;
 
-  BB.replaceInstruction(&Inst, NewFrag.begin(), NewFrag.end());
+  BB.replaceInstruction(Inst, NewFrag.begin(), NewFrag.end());
   return true;
 }
 
 bool JTFootprintReduction::tryOptimizePIC(
-    BinaryContext &BC, BinaryBasicBlock &BB, MCInst &Inst, uint64_t JTAddr,
+    BinaryContext &BC, BinaryBasicBlock &BB,
+    BinaryBasicBlock::iterator Inst, uint64_t JTAddr,
     JumpTable *JumpTable, DataflowInfoManager &Info) {
   MCPhysReg BaseReg;
   uint64_t Scale;
@@ -176,7 +178,7 @@ bool JTFootprintReduction::tryOptimizePIC(
       BC.MIB->matchLoad(BC.MIB->matchReg(BaseReg), BC.MIB->matchImm(Scale),
                         BC.MIB->matchReg(Index), BC.MIB->matchAnyOperand())));
   if (!PICIndJmpMatcher->match(*BC.MRI, *BC.MIB,
-                               MutableArrayRef<MCInst>(&*BB.begin(), &Inst + 1),
+                              MutableArrayRef<MCInst>(&*BB.begin(), &*Inst + 1),
                                -1)) {
     return false;
   }
@@ -197,7 +199,7 @@ bool JTFootprintReduction::tryOptimizePIC(
   // DePICify
   JumpTable->Type = JumpTable::JTT_NORMAL;
 
-  BB.replaceInstruction(&Inst, NewFrag.begin(), NewFrag.end());
+  BB.replaceInstruction(Inst, NewFrag.begin(), NewFrag.end());
   return true;
 }
 
@@ -208,13 +210,14 @@ void JTFootprintReduction::optimizeFunction(BinaryContext &BC,
     if (!BB.getNumNonPseudos())
       continue;
 
-    MCInst &IndJmp = *BB.getLastNonPseudo();
-    uint64_t JTAddr = BC.MIB->getJumpTable(IndJmp);
+    auto IndJmpRI = BB.getLastNonPseudo();
+    auto IndJmp = std::prev(IndJmpRI.base());
+    const auto JTAddr = BC.MIB->getJumpTable(*IndJmp);
 
     if (!JTAddr)
       continue;
 
-    auto *JumpTable = Function.getJumpTable(IndJmp);
+    auto *JumpTable = Function.getJumpTable(*IndJmp);
     if (BlacklistedJTs.count(JumpTable))
       continue;
 
@@ -231,9 +234,11 @@ void JTFootprintReduction::optimizeFunction(BinaryContext &BC,
     return;
 
   for (auto &BB : Function) {
-    for (auto I = BB.rbegin(), E = BB.rend(); I != E; ++I) {
+    for (auto I = BB.begin(); I != BB.end(); ) {
       if (BC.MIB->hasAnnotation(*I, "DeleteMe"))
-        BB.eraseInstruction(&*I);
+        I = BB.eraseInstruction(I);
+      else
+        ++I;
     }
   }
 }

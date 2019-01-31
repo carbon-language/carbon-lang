@@ -48,13 +48,15 @@ class JTFootprintReduction : public BinaryFunctionPass {
   /// sequence from a single jmp * instruction to a pair of load32zext-jmp
   /// instructions that depend on the availability of an extra register.
   /// This saves dcache/dTLB at the expense of icache.
-  bool tryOptimizeNonPIC(BinaryContext &BC, BinaryBasicBlock &BB, MCInst &Inst,
+  bool tryOptimizeNonPIC(BinaryContext &BC, BinaryBasicBlock &BB,
+                         BinaryBasicBlock::iterator Inst,
                          uint64_t JTAddr, JumpTable *JumpTable,
                          DataflowInfoManager &Info);
 
   /// The PIC jump table optimization consists of "de-pic-ifying" it, since the
   /// PIC jump sequence is larger than its non-PIC counterpart, saving icache.
-  bool tryOptimizePIC(BinaryContext &BC, BinaryBasicBlock &BB, MCInst &Inst,
+  bool tryOptimizePIC(BinaryContext &BC, BinaryBasicBlock &BB,
+                      BinaryBasicBlock::iterator Inst,
                       uint64_t JTAddr, JumpTable *JumpTable,
                       DataflowInfoManager &Info);
 

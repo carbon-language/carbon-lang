@@ -34,7 +34,6 @@
 #include "MCTargetDesc/X86MCTargetDesc.h"
 #include "MCTargetDesc/X86BaseInfo.h"
 #include "MCTargetDesc/X86MCAsmInfo.h"
-#include <unordered_map>
 
 #define DEBUG_TYPE "bolt-x86"
 
@@ -2677,7 +2676,7 @@ public:
   bool createLoad(MCInst &Inst, const MCPhysReg &BaseReg, int64_t Scale,
                   const MCPhysReg &IndexReg, int64_t Offset,
                   const MCExpr *OffsetExpr, const MCPhysReg &AddrSegmentReg,
-                  const MCPhysReg &DstReg, int Size) const {
+                  const MCPhysReg &DstReg, int Size) const override {
     unsigned NewOpcode;
     switch (Size) {
       default:
@@ -2794,6 +2793,14 @@ public:
     Inst.setOpcode(X86::JMP_1);
     Inst.addOperand(MCOperand::createExpr(
         MCSymbolRefExpr::create(TBB, MCSymbolRefExpr::VK_None, *Ctx)));
+    return true;
+  }
+
+  bool createCall(MCInst &Inst, const MCSymbol *Target,
+                  MCContext *Ctx) override {
+    Inst.setOpcode(X86::CALL64pcrel32);
+    Inst.addOperand(MCOperand::createExpr(
+        MCSymbolRefExpr::create(Target, MCSymbolRefExpr::VK_None, *Ctx)));
     return true;
   }
 

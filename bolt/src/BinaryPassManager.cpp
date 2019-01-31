@@ -64,12 +64,6 @@ ICF("icf",
   cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
-InlineSmallFunctions("inline-small-functions",
-  cl::desc("inline functions with a single basic block"),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-static cl::opt<bool>
 JTFootprintReductionFlag("jt-footprint-reduction",
   cl::desc("make jump tables size smaller at the cost of using more "
            "instructions at jump sites"),
@@ -88,12 +82,6 @@ NeverPrint("never-print",
   cl::init(false),
   cl::ZeroOrMore,
   cl::ReallyHidden,
-  cl::cat(BoltOptCategory));
-
-static cl::opt<bool>
-OptimizeBodylessFunctions("optimize-bodyless-functions",
-  cl::desc("optimize functions that just do a tail call"),
-  cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
@@ -398,19 +386,14 @@ void BinaryFunctionPassManager::runAllPasses(
       llvm::make_unique<JTFootprintReduction>(PrintJTFootprintReduction),
       opts::JTFootprintReductionFlag);
 
-  Manager.registerPass(llvm::make_unique<InlineSmallFunctions>(PrintInline),
-                       opts::InlineSmallFunctions);
-
-  Manager.registerPass(
-    llvm::make_unique<OptimizeBodylessFunctions>(PrintOptimizeBodyless),
-    opts::OptimizeBodylessFunctions);
-
   Manager.registerPass(
     llvm::make_unique<SimplifyRODataLoads>(PrintSimplifyROLoads),
     opts::SimplifyRODataLoads);
 
   Manager.registerPass(llvm::make_unique<RegReAssign>(PrintRegReAssign),
                        opts::RegReAssign);
+
+  Manager.registerPass(llvm::make_unique<Inliner>(PrintInline));
 
   Manager.registerPass(llvm::make_unique<IdenticalCodeFolding>(PrintICF),
                        opts::ICF);

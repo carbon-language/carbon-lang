@@ -154,7 +154,7 @@ void FrameOptimizerPass::removeUnnecessaryLoads(const RegAnalysis &RA,
   // TODO: Implement an interface of eraseInstruction that works out the
   // complete list of elements to remove.
   for (auto I : ToErase) {
-    I.first->eraseInstruction(I.second);
+    I.first->eraseInstruction(I.first->findInstruction(I.second));
   }
 }
 
@@ -214,7 +214,7 @@ void FrameOptimizerPass::removeUnusedStores(const FrameAnalysis &FA,
   }
 
   for (auto I : ToErase) {
-    I.first->eraseInstruction(I.second);
+    I.first->eraseInstruction(I.first->findInstruction(I.second));
   }
   if (Changed) {
     DEBUG(dbgs() << "FOP modified \"" << BF.getPrintName() << "\"\n");
