@@ -10348,6 +10348,11 @@ public:
   /// Copies target attributes from the template TD to the function FD.
   void inheritCUDATargetAttrs(FunctionDecl *FD, const FunctionTemplateDecl &TD);
 
+  /// Returns the name of the launch configuration function.  This is the name
+  /// of the function that will be called to configure kernel call, with the
+  /// parameters specified via <<<>>>.
+  std::string getCudaConfigureFuncName() const;
+
   /// \name Code completion
   //@{
   /// Describes the context in which code completion occurs.
