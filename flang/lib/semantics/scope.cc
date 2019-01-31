@@ -249,6 +249,7 @@ const DeclTypeSpec &Scope::FindOrInstantiateDerivedType(DerivedTypeSpec &&spec,
 
 void Scope::InstantiateDerivedType(
     Scope &clone, SemanticsContext &semanticsContext) const {
+  CHECK(kind_ == Kind::DerivedType);
   clone.sourceRange_ = sourceRange_;
   clone.chars_ = chars_;
   for (const auto &pair : symbols_) {
@@ -275,15 +276,13 @@ const DeclTypeSpec &Scope::InstantiateIntrinsicType(
       kind = *value;
     } else {
       foldingContext.messages.Say(
-          "KIND parameter value (%jd) of intrinsic type %s did not resolve to a supported value"_err_en_US,
+          "KIND parameter value (%jd) of intrinsic type %s "
+          "did not resolve to a supported value"_err_en_US,
           static_cast<std::intmax_t>(*value),
           parser::ToUpperCaseLetters(
               common::EnumToString(intrinsic->category()))
               .data());
     }
-  } else {
-    foldingContext.messages.Say(
-        "KIND parameter value did not resolve to a constant value"_err_en_US);
   }
   switch (spec.category()) {
   case DeclTypeSpec::Numeric:

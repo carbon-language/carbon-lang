@@ -490,7 +490,7 @@ Symbol &Symbol::Instantiate(
   if (!pair.second) {
     // Symbol was already present in the scope, which can only happen
     // in the case of type parameters with actual or default values.
-    get<TypeParamDetails>();  // confirm or crash with message
+    CHECK(has<TypeParamDetails>());
     return symbol;
   }
   symbol.attrs_ = attrs_;
@@ -541,18 +541,8 @@ Symbol &Symbol::Instantiate(
             }
             // TODO: fold cobounds too once we can represent them
           },
-          [&](const ProcBindingDetails &that) {
-            symbol.details_ = ProcBindingDetails{
-                that.symbol().Instantiate(scope, semanticsContext)};
-          },
-          [&](const GenericBindingDetails &that) {
-            symbol.details_ = GenericBindingDetails{};
-            GenericBindingDetails &details{symbol.get<GenericBindingDetails>()};
-            for (const Symbol *sym : that.specificProcs()) {
-              details.add_specificProc(
-                  sym->Instantiate(scope, semanticsContext));
-            }
-          },
+          [&](const ProcBindingDetails &that) { symbol.details_ = that; },
+          [&](const GenericBindingDetails &that) { symbol.details_ = that; },
           [&](const TypeParamDetails &that) {
             // LEN type parameter, or error recovery on a KIND type parameter
             // with no corresponding actual argument or default
