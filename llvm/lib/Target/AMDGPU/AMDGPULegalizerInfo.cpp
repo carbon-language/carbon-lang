@@ -220,8 +220,12 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     .clampScalar(1, S32, S64);
   // TODO: Scalarize
 
+  // TODO: Expand for > s32
+  getActionDefinitionsBuilder(G_BSWAP)
+    .legalFor({S32})
+    .clampScalar(0, S32, S32)
+    .scalarize(0);
 
-  setAction({G_BSWAP, S32}, Legal);
 
   getActionDefinitionsBuilder(G_INTTOPTR)
     .legalIf([](const LegalityQuery &Query) {

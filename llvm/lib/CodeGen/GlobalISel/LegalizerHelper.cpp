@@ -948,7 +948,31 @@ LegalizerHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx, LLT WideTy) {
     Observer.changedInstr(MI);
     return Legalized;
   }
+  case TargetOpcode::G_BSWAP: {
+    Observer.changingInstr(MI);
+    unsigned DstReg = MI.getOperand(0).getReg();
 
+    unsigned ShrReg = MRI.createGenericVirtualRegister(WideTy);
+    unsigned DstExt = MRI.createGenericVirtualRegister(WideTy);
+    unsigned ShiftAmtReg = MRI.createGenericVirtualRegister(WideTy);
+    widenScalarSrc(MI, WideTy, 1, TargetOpcode::G_ANYEXT);
+
+    MI.getOperand(0).setReg(DstExt);
+
+    MIRBuilder.setInsertPt(MIRBuilder.getMBB(), ++MIRBuilder.getInsertPt());
+
+    LLT Ty = MRI.getType(DstReg);
+    unsigned DiffBits = WideTy.getScalarSizeInBits() - Ty.getScalarSizeInBits();
+    MIRBuilder.buildConstant(ShiftAmtReg, DiffBits);
+    MIRBuilder.buildInstr(TargetOpcode::G_LSHR)
+      .addDef(ShrReg)
+      .addUse(DstExt)
+      .addUse(ShiftAmtReg);
+
+    MIRBuilder.buildTrunc(DstReg, ShrReg);
+    Observer.changedInstr(MI);
+    return Legalized;
+  }
   case TargetOpcode::G_ADD:
   case TargetOpcode::G_AND:
   case TargetOpcode::G_MUL:
@@ -1879,6 +1903,7 @@ LegalizerHelper::fewerElementsVector(MachineInstr &MI, unsigned TypeIdx,
   case G_FCOS:
   case G_FSIN:
   case G_FSQRT:
+  case G_BSWAP:
     return fewerElementsVectorBasic(MI, TypeIdx, NarrowTy);
   case G_ZEXT:
   case G_SEXT:
