@@ -1608,6 +1608,8 @@ bool ScopeHandler::ConvertToObjectEntity(Symbol &symbol) {
     symbol.set_details(ObjectEntityDetails{});
   } else if (auto *details{symbol.detailsIf<EntityDetails>()}) {
     symbol.set_details(ObjectEntityDetails{std::move(*details)});
+  } else if (auto *useDetails{symbol.detailsIf<UseDetails>()}) {
+    return useDetails->symbol().has<ObjectEntityDetails>();
   } else {
     return false;
   }
@@ -3065,6 +3067,8 @@ void DeclarationVisitor::SetType(
   auto *prevType{symbol.GetType()};
   if (!prevType) {
     symbol.SetType(type);
+  } else if (symbol.has<UseDetails>()) {
+    // error recovery case, redeclaration of use-associated name
   } else if (!symbol.test(Symbol::Flag::Implicit)) {
     Say2(name, "The type of '%s' has already been declared"_err_en_US, symbol,
         "Declaration of '%s'"_en_US);

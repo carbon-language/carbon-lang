@@ -432,6 +432,7 @@ public:
             [](const AssocEntityDetails &x) { return x.type(); },
             [](const ProcEntityDetails &x) { return x.interface().type(); },
             [](const TypeParamDetails &x) { return x.type(); },
+            [](const UseDetails &x) { return x.symbol().GetType(); },
             [](const auto &) -> const DeclTypeSpec * { return nullptr; },
         },
         details_);
