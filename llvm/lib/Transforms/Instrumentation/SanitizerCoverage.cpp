@@ -483,6 +483,37 @@ static bool shouldInstrumentBlock(const Function &F, const BasicBlock *BB,
     && !(isFullPostDominator(BB, PDT) && !BB->getSinglePredecessor());
 }
 
+
+// Returns true iff From->To is a backedge.
+// A twist here is that we treat From->To as a backedge if
+//   * To dominates From or
+//   * To->UniqueSuccessor dominates From
+static bool IsBackEdge(BasicBlock *From, BasicBlock *To,
+                       const DominatorTree *DT) {
+  if (DT->dominates(To, From))
+    return true;
+  if (auto Next = To->getUniqueSuccessor())
+    if (DT->dominates(Next, From))
+      return true;
+  return false;
+}
+
+// Prunes uninteresting Cmp instrumentation:
+//   * CMP instructions that feed into loop backedge branch.
+//
+// Note that Cmp pruning is controlled by the same flag as the
+// BB pruning.
+static bool IsInterestingCmp(ICmpInst *CMP, const DominatorTree *DT,
+                             const SanitizerCoverageOptions &Options) {
+  if (!Options.NoPrune)
+    if (CMP->hasOneUse())
+      if (auto BR = dyn_cast<BranchInst>(CMP->user_back()))
+        for (BasicBlock *B : BR->successors())
+          if (IsBackEdge(BR->getParent(), B, DT))
+            return false;
+  return true;
+}
+
 bool SanitizerCoverageModule::runOnFunction(Function &F) {
   if (F.empty())
     return false;
@@ -531,8 +562,9 @@ bool SanitizerCoverageModule::runOnFunction(Function &F) {
           IndirCalls.push_back(&Inst);
       }
       if (Options.TraceCmp) {
-        if (isa<ICmpInst>(&Inst))
-          CmpTraceTargets.push_back(&Inst);
+        if (ICmpInst *CMP = dyn_cast<ICmpInst>(&Inst))
+          if (IsInterestingCmp(CMP, DT, Options))
+            CmpTraceTargets.push_back(&Inst);
         if (isa<SwitchInst>(&Inst))
           SwitchTraceTargets.push_back(&Inst);
       }
