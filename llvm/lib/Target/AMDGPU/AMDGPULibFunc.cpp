@@ -960,8 +960,8 @@ Function *AMDGPULibFunc::getFunction(Module *M, const AMDGPULibFunc &fInfo) {
   return nullptr;
 }
 
-FunctionCallee AMDGPULibFunc::getOrInsertFunction(Module *M,
-                                                  const AMDGPULibFunc &fInfo) {
+Function *AMDGPULibFunc::getOrInsertFunction(Module *M,
+                                             const AMDGPULibFunc &fInfo) {
   std::string const FuncName = fInfo.mangle();
   Function *F = dyn_cast_or_null<Function>(
     M->getValueSymbolTable().lookup(FuncName));
@@ -987,7 +987,7 @@ FunctionCallee AMDGPULibFunc::getOrInsertFunction(Module *M,
     }
   }
 
-  FunctionCallee C;
+  Constant *C = nullptr;
   if (hasPtr) {
     // Do not set extra attributes for functions with pointer arguments.
     C = M->getOrInsertFunction(FuncName, FuncTy);
@@ -1001,7 +1001,7 @@ FunctionCallee AMDGPULibFunc::getOrInsertFunction(Module *M,
     C = M->getOrInsertFunction(FuncName, FuncTy, Attr);
   }
 
-  return C;
+  return cast<Function>(C);
 }
 
 bool UnmangledFuncInfo::lookup(StringRef Name, ID &Id) {

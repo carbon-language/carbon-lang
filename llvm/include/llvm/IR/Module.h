@@ -332,18 +332,16 @@ public:
   /// Look up the specified function in the module symbol table. Four
   /// possibilities:
   ///   1. If it does not exist, add a prototype for the function and return it.
-  ///   2. Otherwise, if the existing function has the correct prototype, return
+  ///   2. If it exists, and has a local linkage, the existing function is
+  ///      renamed and a new one is inserted.
+  ///   3. Otherwise, if the existing function has the correct prototype, return
   ///      the existing function.
-  ///   3. Finally, the function exists but has the wrong prototype: return the
+  ///   4. Finally, the function exists but has the wrong prototype: return the
   ///      function with a constantexpr cast to the right prototype.
-  ///
-  /// In all cases, the returned value is a FunctionCallee wrapper around the
-  /// 'FunctionType *T' passed in, as well as a 'Value*' either of the Function or
-  /// the bitcast to the function.
-  FunctionCallee getOrInsertFunction(StringRef Name, FunctionType *T,
-                                     AttributeList AttributeList);
+  Constant *getOrInsertFunction(StringRef Name, FunctionType *T,
+                                AttributeList AttributeList);
 
-  FunctionCallee getOrInsertFunction(StringRef Name, FunctionType *T);
+  Constant *getOrInsertFunction(StringRef Name, FunctionType *T);
 
   /// Look up the specified function in the module symbol table. If it does not
   /// exist, add a prototype for the function and return it. This function
@@ -351,10 +349,11 @@ public:
   /// or a ConstantExpr BitCast of that type if the named function has a
   /// different type. This version of the method takes a list of
   /// function arguments, which makes it easier for clients to use.
-  template <typename... ArgsTy>
-  FunctionCallee getOrInsertFunction(StringRef Name,
-                                     AttributeList AttributeList, Type *RetTy,
-                                     ArgsTy... Args) {
+  template<typename... ArgsTy>
+  Constant *getOrInsertFunction(StringRef Name,
+                                AttributeList AttributeList,
+                                Type *RetTy, ArgsTy... Args)
+  {
     SmallVector<Type*, sizeof...(ArgsTy)> ArgTys{Args...};
     return getOrInsertFunction(Name,
                                FunctionType::get(RetTy, ArgTys, false),
@@ -362,17 +361,15 @@ public:
   }
 
   /// Same as above, but without the attributes.
-  template <typename... ArgsTy>
-  FunctionCallee getOrInsertFunction(StringRef Name, Type *RetTy,
-                                     ArgsTy... Args) {
+  template<typename... ArgsTy>
+  Constant *getOrInsertFunction(StringRef Name, Type *RetTy, ArgsTy... Args) {
     return getOrInsertFunction(Name, AttributeList{}, RetTy, Args...);
   }
 
   // Avoid an incorrect ordering that'd otherwise compile incorrectly.
   template <typename... ArgsTy>
-  FunctionCallee
-  getOrInsertFunction(StringRef Name, AttributeList AttributeList,
-                      FunctionType *Invalid, ArgsTy... Args) = delete;
+  Constant *getOrInsertFunction(StringRef Name, AttributeList AttributeList,
+                                FunctionType *Invalid, ArgsTy... Args) = delete;
 
   /// Look up the specified function in the module symbol table. If it does not
   /// exist, return null.

@@ -69,9 +69,8 @@ int main() {
   // Create the add1 function entry and insert this entry into module M.  The
   // function will have a return type of "int" and take an argument of "int".
   Function *Add1F =
-      Function::Create(FunctionType::get(Type::getInt32Ty(Context),
-                                         {Type::getInt32Ty(Context)}, false),
-                       Function::ExternalLinkage, "add1", M);
+    cast<Function>(M->getOrInsertFunction("add1", Type::getInt32Ty(Context),
+                                          Type::getInt32Ty(Context)));
 
   // Add a basic block to the function. As before, it automatically inserts
   // because of the last argument.
@@ -100,8 +99,7 @@ int main() {
   // Now we're going to create function `foo', which returns an int and takes no
   // arguments.
   Function *FooF =
-      Function::Create(FunctionType::get(Type::getInt32Ty(Context), {}, false),
-                       Function::ExternalLinkage, "foo", M);
+    cast<Function>(M->getOrInsertFunction("foo", Type::getInt32Ty(Context)));
 
   // Add a basic block to the FooF function.
   BB = BasicBlock::Create(Context, "EntryBlock", FooF);

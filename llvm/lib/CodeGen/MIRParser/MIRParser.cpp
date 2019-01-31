@@ -270,9 +270,8 @@ bool MIRParserImpl::parseMachineFunctions(Module &M, MachineModuleInfo &MMI) {
 /// Create an empty function with the given name.
 static Function *createDummyFunction(StringRef Name, Module &M) {
   auto &Context = M.getContext();
-  Function *F =
-      Function::Create(FunctionType::get(Type::getVoidTy(Context), false),
-                       Function::ExternalLinkage, Name, M);
+  Function *F = cast<Function>(M.getOrInsertFunction(
+      Name, FunctionType::get(Type::getVoidTy(Context), false)));
   BasicBlock *BB = BasicBlock::Create(Context, "entry", F);
   new UnreachableInst(Context, BB);
   return F;

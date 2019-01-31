@@ -1480,9 +1480,8 @@ makeStatepointExplicitImpl(const CallSite CS, /* to replace */
       // calls to @llvm.experimental.deoptimize with different argument types in
       // the same module.  This is fine -- we assume the frontend knew what it
       // was doing when generating this kind of IR.
-      CallTarget = F->getParent()
-                       ->getOrInsertFunction("__llvm_deoptimize", FTy)
-                       .getCallee();
+      CallTarget =
+          F->getParent()->getOrInsertFunction("__llvm_deoptimize", FTy);
 
       IsDeoptimize = true;
     }
@@ -1901,8 +1900,8 @@ static void insertUseHolderAfter(CallSite &CS, const ArrayRef<Value *> Values,
 
   Module *M = CS.getInstruction()->getModule();
   // Use a dummy vararg function to actually hold the values live
-  FunctionCallee Func = M->getOrInsertFunction(
-      "__tmp_use", FunctionType::get(Type::getVoidTy(M->getContext()), true));
+  Function *Func = cast<Function>(M->getOrInsertFunction(
+      "__tmp_use", FunctionType::get(Type::getVoidTy(M->getContext()), true)));
   if (CS.isCall()) {
     // For call safepoints insert dummy calls right after safepoint
     Holders.push_back(CallInst::Create(Func, Values, "",

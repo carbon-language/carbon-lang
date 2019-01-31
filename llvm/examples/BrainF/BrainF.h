@@ -78,9 +78,9 @@ class BrainF {
     CompileFlags comflag;
     std::istream *in;
     Module *module;
-    FunctionCallee brainf_func;
-    FunctionCallee getchar_func;
-    FunctionCallee putchar_func;
+    Function *brainf_func;
+    Function *getchar_func;
+    Function *putchar_func;
     Value *ptr_arr;
     Value *ptr_arrmax;
     BasicBlock *endbb;

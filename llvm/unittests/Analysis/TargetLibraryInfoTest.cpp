@@ -67,7 +67,7 @@ TEST_F(TargetLibraryInfoTest, InvalidProto) {
   for (unsigned FI = 0; FI != LibFunc::NumLibFuncs; ++FI) {
     LibFunc LF = (LibFunc)FI;
     auto *F = cast<Function>(
-        M->getOrInsertFunction(TLI.getName(LF), InvalidFTy).getCallee());
+        M->getOrInsertFunction(TLI.getName(LF), InvalidFTy));
     EXPECT_FALSE(isLibFunc(F, LF));
   }
 }

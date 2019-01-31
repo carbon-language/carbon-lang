@@ -508,16 +508,13 @@ bool InstrProfiling::run(Module &M, const TargetLibraryInfo &TLI) {
   return true;
 }
 
-static FunctionCallee
-getOrInsertValueProfilingCall(Module &M, const TargetLibraryInfo &TLI,
-                              bool IsRange = false) {
+static Constant *getOrInsertValueProfilingCall(Module &M,
+                                               const TargetLibraryInfo &TLI,
+                                               bool IsRange = false) {
   LLVMContext &Ctx = M.getContext();
   auto *ReturnTy = Type::getVoidTy(M.getContext());
 
-  AttributeList AL;
-  if (auto AK = TLI.getExtAttrForI32Param(false))
-    AL = AL.addParamAttribute(M.getContext(), 2, AK);
-
+  Constant *Res;
   if (!IsRange) {
     Type *ParamTypes[] = {
 #define VALUE_PROF_FUNC_PARAM(ParamType, ParamName, ParamLLVMType) ParamLLVMType
@@ -525,8 +522,8 @@ getOrInsertValueProfilingCall(Module &M, const TargetLibraryInfo &TLI,
     };
     auto *ValueProfilingCallTy =
         FunctionType::get(ReturnTy, makeArrayRef(ParamTypes), false);
-    return M.getOrInsertFunction(getInstrProfValueProfFuncName(),
-                                 ValueProfilingCallTy, AL);
+    Res = M.getOrInsertFunction(getInstrProfValueProfFuncName(),
+                                ValueProfilingCallTy);
   } else {
     Type *RangeParamTypes[] = {
 #define VALUE_RANGE_PROF 1
@@ -536,9 +533,15 @@ getOrInsertValueProfilingCall(Module &M, const TargetLibraryInfo &TLI,
     };
     auto *ValueRangeProfilingCallTy =
         FunctionType::get(ReturnTy, makeArrayRef(RangeParamTypes), false);
-    return M.getOrInsertFunction(getInstrProfValueRangeProfFuncName(),
-                                 ValueRangeProfilingCallTy, AL);
+    Res = M.getOrInsertFunction(getInstrProfValueRangeProfFuncName(),
+                                ValueRangeProfilingCallTy);
   }
+
+  if (Function *FunRes = dyn_cast<Function>(Res)) {
+    if (auto AK = TLI.getExtAttrForI32Param(false))
+      FunRes->addParamAttr(2, AK);
+  }
+  return Res;
 }
 
 void InstrProfiling::computeNumValueSiteCounts(InstrProfValueProfileInst *Ind) {

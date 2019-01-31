@@ -51,10 +51,9 @@ using namespace llvm;
 static Function *CreateFibFunction(Module *M, LLVMContext &Context) {
   // Create the fib function and insert it into module M. This function is said
   // to return an int and take an int parameter.
-  FunctionType *FibFTy = FunctionType::get(Type::getInt32Ty(Context),
-                                           {Type::getInt32Ty(Context)}, false);
   Function *FibF =
-      Function::Create(FibFTy, Function::ExternalLinkage, "fib", M);
+    cast<Function>(M->getOrInsertFunction("fib", Type::getInt32Ty(Context),
+                                          Type::getInt32Ty(Context)));
 
   // Add a basic block to the function.
   BasicBlock *BB = BasicBlock::Create(Context, "EntryBlock", FibF);

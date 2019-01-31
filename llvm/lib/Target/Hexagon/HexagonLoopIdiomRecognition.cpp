@@ -2253,8 +2253,10 @@ CleanupAndExit:
       Type *Int32PtrTy = Type::getInt32PtrTy(Ctx);
       Type *VoidTy = Type::getVoidTy(Ctx);
       Module *M = Func->getParent();
-      FunctionCallee Fn = M->getOrInsertFunction(
-          HexagonVolatileMemcpyName, VoidTy, Int32PtrTy, Int32PtrTy, Int32Ty);
+      Constant *CF = M->getOrInsertFunction(HexagonVolatileMemcpyName, VoidTy,
+                                            Int32PtrTy, Int32PtrTy, Int32Ty);
+      Function *Fn = cast<Function>(CF);
+      Fn->setLinkage(Function::ExternalLinkage);
 
       const SCEV *OneS = SE->getConstant(Int32Ty, 1);
       const SCEV *BECount32 = SE->getTruncateOrZeroExtend(BECount, Int32Ty);

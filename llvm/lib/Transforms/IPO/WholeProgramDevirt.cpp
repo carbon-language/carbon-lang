@@ -1494,10 +1494,8 @@ void DevirtModule::importResolution(VTableSlot Slot, VTableSlotInfo &SlotInfo) {
   if (Res.TheKind == WholeProgramDevirtResolution::SingleImpl) {
     // The type of the function in the declaration is irrelevant because every
     // call site will cast it to the correct type.
-    Constant *SingleImpl =
-        cast<Constant>(M.getOrInsertFunction(Res.SingleImplName,
-                                             Type::getVoidTy(M.getContext()))
-                           .getCallee());
+    auto *SingleImpl = M.getOrInsertFunction(
+        Res.SingleImplName, Type::getVoidTy(M.getContext()));
 
     // This is the import phase so we should not be exporting anything.
     bool IsExported = false;
@@ -1539,12 +1537,8 @@ void DevirtModule::importResolution(VTableSlot Slot, VTableSlotInfo &SlotInfo) {
   }
 
   if (Res.TheKind == WholeProgramDevirtResolution::BranchFunnel) {
-    // The type of the function is irrelevant, because it's bitcast at calls
-    // anyhow.
-    Constant *JT = cast<Constant>(
-        M.getOrInsertFunction(getGlobalName(Slot, {}, "branch_funnel"),
-                              Type::getVoidTy(M.getContext()))
-            .getCallee());
+    auto *JT = M.getOrInsertFunction(getGlobalName(Slot, {}, "branch_funnel"),
+                                     Type::getVoidTy(M.getContext()));
     bool IsExported = false;
     applyICallBranchFunnel(SlotInfo, JT, IsExported);
     assert(!IsExported);

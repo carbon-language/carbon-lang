@@ -18,7 +18,7 @@
 #include "llvm/IR/Module.h"
 using namespace llvm;
 
-static FunctionCallee getDefaultPersonalityFn(Module *M) {
+static Constant *getDefaultPersonalityFn(Module *M) {
   LLVMContext &C = M->getContext();
   Triple T(M->getTargetTriple());
   EHPersonality Pers = getDefaultEHPersonality(T);
@@ -68,8 +68,8 @@ IRBuilder<> *EscapeEnumerator::Next() {
   BasicBlock *CleanupBB = BasicBlock::Create(C, CleanupBBName, &F);
   Type *ExnTy = StructType::get(Type::getInt8PtrTy(C), Type::getInt32Ty(C));
   if (!F.hasPersonalityFn()) {
-    FunctionCallee PersFn = getDefaultPersonalityFn(F.getParent());
-    F.setPersonalityFn(cast<Constant>(PersFn.getCallee()));
+    Constant *PersFn = getDefaultPersonalityFn(F.getParent());
+    F.setPersonalityFn(PersFn);
   }
 
   if (isScopedEHPersonality(classifyEHPersonality(F.getPersonalityFn()))) {

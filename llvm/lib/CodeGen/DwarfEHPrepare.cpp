@@ -45,7 +45,7 @@ namespace {
 
   class DwarfEHPrepare : public FunctionPass {
     // RewindFunction - _Unwind_Resume or the target equivalent.
-    FunctionCallee RewindFunction = nullptr;
+    Constant *RewindFunction = nullptr;
 
     DominatorTree *DT = nullptr;
     const TargetLowering *TLI = nullptr;

@@ -2279,13 +2279,12 @@ void X86TargetLowering::insertSSPDeclarations(Module &M) const {
                         Type::getInt8PtrTy(M.getContext()));
 
     // MSVC CRT has a function to validate security cookie.
-    FunctionCallee SecurityCheckCookie = M.getOrInsertFunction(
-        "__security_check_cookie", Type::getVoidTy(M.getContext()),
-        Type::getInt8PtrTy(M.getContext()));
-    if (Function *F = dyn_cast<Function>(SecurityCheckCookie.getCallee())) {
-      F->setCallingConv(CallingConv::X86_FastCall);
-      F->addAttribute(1, Attribute::AttrKind::InReg);
-    }
+    auto *SecurityCheckCookie = cast<Function>(
+        M.getOrInsertFunction("__security_check_cookie",
+                              Type::getVoidTy(M.getContext()),
+                              Type::getInt8PtrTy(M.getContext())));
+    SecurityCheckCookie->setCallingConv(CallingConv::X86_FastCall);
+    SecurityCheckCookie->addAttribute(1, Attribute::AttrKind::InReg);
     return;
   }
   // glibc, bionic, and Fuchsia have a special slot for the stack guard.

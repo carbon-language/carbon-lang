@@ -72,13 +72,11 @@ JIT("jit", cl::desc("Run program Just-In-Time"));
 //Add main function so can be fully compiled
 void addMainFunction(Module *mod) {
   //define i32 @main(i32 %argc, i8 **%argv)
-  FunctionType *main_func_fty = FunctionType::get(
-      Type::getInt32Ty(mod->getContext()),
-      {Type::getInt32Ty(mod->getContext()),
-       Type::getInt8Ty(mod->getContext())->getPointerTo()->getPointerTo()});
-  Function *main_func =
-      Function::create(main_func_fty, Function::ExternalLinkage, "main", mod);
-
+  Function *main_func = cast<Function>(mod->
+    getOrInsertFunction("main", IntegerType::getInt32Ty(mod->getContext()),
+                        IntegerType::getInt32Ty(mod->getContext()),
+                        PointerType::getUnqual(PointerType::getUnqual(
+                          IntegerType::getInt8Ty(mod->getContext())))));
   {
     Function::arg_iterator args = main_func->arg_begin();
     Value *arg_0 = &*args++;

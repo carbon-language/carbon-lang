@@ -517,7 +517,7 @@ static Instruction *createMalloc(Instruction *InsertBefore,
   BasicBlock *BB = InsertBefore ? InsertBefore->getParent() : InsertAtEnd;
   Module *M = BB->getParent()->getParent();
   Type *BPTy = Type::getInt8PtrTy(BB->getContext());
-  FunctionCallee MallocFunc = MallocF;
+  Value *MallocFunc = MallocF;
   if (!MallocFunc)
     // prototype malloc as "void *malloc(size_t)"
     MallocFunc = M->getOrInsertFunction("malloc", BPTy, IntPtrTy);
@@ -541,7 +541,7 @@ static Instruction *createMalloc(Instruction *InsertBefore,
     }
   }
   MCall->setTailCall();
-  if (Function *F = dyn_cast<Function>(MallocFunc.getCallee())) {
+  if (Function *F = dyn_cast<Function>(MallocFunc)) {
     MCall->setCallingConv(F->getCallingConv());
     if (!F->returnDoesNotAlias())
       F->setReturnDoesNotAlias();
@@ -614,7 +614,7 @@ static Instruction *createFree(Value *Source,
   Type *VoidTy = Type::getVoidTy(M->getContext());
   Type *IntPtrTy = Type::getInt8PtrTy(M->getContext());
   // prototype free as "void free(void*)"
-  FunctionCallee FreeFunc = M->getOrInsertFunction("free", VoidTy, IntPtrTy);
+  Value *FreeFunc = M->getOrInsertFunction("free", VoidTy, IntPtrTy);
   CallInst *Result = nullptr;
   Value *PtrCast = Source;
   if (InsertBefore) {
@@ -627,7 +627,7 @@ static Instruction *createFree(Value *Source,
     Result = CallInst::Create(FreeFunc, PtrCast, Bundles, "");
   }
   Result->setTailCall();
-  if (Function *F = dyn_cast<Function>(FreeFunc.getCallee()))
+  if (Function *F = dyn_cast<Function>(FreeFunc))
     Result->setCallingConv(F->getCallingConv());
 
   return Result;
