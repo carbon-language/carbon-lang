@@ -3491,11 +3491,17 @@ Important Public Members of the ``Module`` class
   Look up the specified function in the ``Module`` SymbolTable_.  If it does not
   exist, return ``null``.
 
-* ``Function *getOrInsertFunction(const std::string &Name, const FunctionType
-  *T)``
+* ``FunctionCallee getOrInsertFunction(const std::string &Name,
+  const FunctionType *T)``
 
-  Look up the specified function in the ``Module`` SymbolTable_.  If it does not
-  exist, add an external declaration for the function and return it.
+  Look up the specified function in the ``Module`` SymbolTable_.  If
+  it does not exist, add an external declaration for the function and
+  return it. Note that the function signature already present may not
+  match the requested signature. Thus, in order to enable the common
+  usage of passing the result directly to EmitCall, the return type is
+  a struct of ``{FunctionType *T, Constant *FunctionPtr}``, rather
+  than simply the ``Function*`` with potentially an unexpected
+  signature.
 
 * ``std::string getTypeName(const Type *Ty)``
 
