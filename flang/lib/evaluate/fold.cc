@@ -16,6 +16,7 @@
 #include "common.h"
 #include "constant.h"
 #include "expression.h"
+#include "host.h"
 #include "int-power.h"
 #include "tools.h"
 #include "traversal.h"
@@ -26,6 +27,8 @@
 #include "../parser/message.h"
 #include "../semantics/scope.h"
 #include "../semantics/symbol.h"
+#include <cmath>
+#include <complex>
 #include <cstdio>
 #include <optional>
 #include <type_traits>
@@ -50,7 +53,9 @@ CoarrayRef FoldOperation(FoldingContext &, CoarrayRef &&);
 DataRef FoldOperation(FoldingContext &, DataRef &&);
 Substring FoldOperation(FoldingContext &, Substring &&);
 ComplexPart FoldOperation(FoldingContext &, ComplexPart &&);
-template<typename T> Expr<T> FoldOperation(FoldingContext &, FunctionRef<T> &&);
+template<int KIND>
+Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
+    FunctionRef<Type<TypeCategory::Integer, KIND>> &&funcRef);
 template<typename T> Expr<T> FoldOperation(FoldingContext &, Designator<T> &&);
 template<int KIND>
 Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
@@ -156,10 +161,84 @@ ComplexPart FoldOperation(FoldingContext &context, ComplexPart &&complexPart) {
       FoldOperation(context, std::move(complex)), complexPart.part()};
 }
 
-template<typename T>
-Expr<T> FoldOperation(FoldingContext &context, FunctionRef<T> &&funcRef) {
-  ActualArguments args{std::move(funcRef.arguments())};
-  for (std::optional<ActualArgument> &arg : args) {
+// helpers to fold intrinsic function references
+namespace intrinsicHelper {
+// helper to produce hash of intrinsic names based the first 3 letters. All
+// intrinsic names are longer than 3 letters
+static constexpr inline std::int32_t CommonHash(const char *s, std::size_t n) {
+  if (n < 3) {
+    return 0;
+  }
+  return (((static_cast<std::int32_t>(s[0]) << 8) + s[1]) << 8) + s[2];
+}
+
+static constexpr std::int32_t operator"" _hash(const char *s, std::size_t n) {
+  return CommonHash(s, n);
+}
+
+static std::int32_t DynamicHash(const std::string &s) {
+  return CommonHash(s.data(), s.size());
+}
+
+// Define function pointer and callable types used in a common utility that
+// takes care of array and cast/conversion aspects for elemental intrinsics
+// Note: math complex functions from <complex> are passing arg as const ref
+template<typename TR, typename... TA> using FuncPointer = TR (*)(TA...);
+
+template<typename TR, typename... TA>
+using HostFuncPointer = FuncPointer<Host::HostType<TR>,
+    std::conditional_t<TA::category == TypeCategory::Complex,
+        const Host::HostType<TA> &, Host::HostType<TA>>...>;
+
+template<typename TR, typename... TArgs>
+using ScalarFunc = std::function<Scalar<TR>(const Scalar<TArgs> &...)>;
+
+// Helper that build std::function operating on Scalar types from host runtime
+// function. There is version that only works if the scalar has a matching host
+// type and one that allow conversions of scalar types toward "bigger" host
+// types. By "bigger", it is meant that all the scalar types can be converted to
+// and from this host type without any precision loss. The purpose of this is
+// mainly to allow folding of 16 bits float intrinsic function with the host
+// runtime for 32bit floats when it is acceptable (e.g acos).
+template<typename TR, typename... TA>
+static constexpr inline ScalarFunc<TR, TA...> HostFuncWrap(
+    HostFuncPointer<TR, TA...> func) {
+  return [=](const Scalar<TA> &... x) -> Scalar<TR> {
+    // TODO fp-exception
+    return Host::CastHostToFortran<TR>(func(Host::CastFortranToHost<TA>(x)...));
+  };
+}
+
+// A utility that applies a scalar function over arrays or scalar for elemental
+// intrinsics.
+template<typename TR, typename... TA, std::size_t... I>
+static inline Expr<TR> FoldElementalIntrinsicHelper(FunctionRef<TR> &&funcRef,
+    ScalarFunc<TR, TA...> scalarFunc, std::index_sequence<I...>) {
+  static_assert(
+      (... && IsSpecificIntrinsicType<TA>));  // TODO derived types for MERGE?
+  std::tuple<const std::optional<Scalar<TA>>...> scalars{
+      GetScalarConstantValue<TA>(*funcRef.arguments()[I]->value)...};
+  if ((... && std::get<I>(scalars).has_value())) {
+    return Expr<TR>{Constant<TR>{scalarFunc(*std::get<I>(scalars)...)}};
+  }
+  // TODO: handle arrays when Constant<T> can represent them
+  return Expr<TR>{std::move(funcRef)};
+}
+
+template<typename TR, typename... TA>
+static Expr<TR> FoldElementalIntrinsic(
+    FunctionRef<TR> &&funcRef, ScalarFunc<TR, TA...> scalarFunc) {
+  return FoldElementalIntrinsicHelper<TR, TA...>(
+      std::move(funcRef), scalarFunc, std::index_sequence_for<TA...>{});
+}
+}
+
+template<int KIND>
+Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
+    FunctionRef<Type<TypeCategory::Integer, KIND>> &&funcRef) {
+  using namespace intrinsicHelper;
+  using T = Type<TypeCategory::Integer, KIND>;
+  for (std::optional<ActualArgument> &arg : funcRef.arguments()) {
     if (arg.has_value()) {
       arg.value().value() =
           FoldOperation(context, std::move(arg.value().value()));
@@ -167,25 +246,291 @@ Expr<T> FoldOperation(FoldingContext &context, FunctionRef<T> &&funcRef) {
   }
   if (auto *intrinsic{std::get_if<SpecificIntrinsic>(&funcRef.proc().u)}) {
     std::string name{intrinsic->name};
-    if (name == "kind") {
-      if constexpr (common::HasMember<T, IntegerTypes>) {
-        return Expr<T>{args[0].value().GetType()->kind};
-      } else {
-        common::die("kind() result not integral");
-      }
-    } else if (name == "len") {
-      if constexpr (std::is_same_v<T, SubscriptInteger>) {
-        if (auto *charExpr{UnwrapExpr<Expr<SomeCharacter>>(args[0].value())}) {
-          return std::visit([](auto &kx) { return kx.LEN(); }, charExpr->u);
+    switch (DynamicHash(name)) {
+    case "kin"_hash:
+      if (name == "kind") {
+        if constexpr (common::HasMember<T, IntegerTypes>) {
+          return Expr<T>{funcRef.arguments()[0]->value()->GetType()->kind};
+        } else {
+          common::die("kind() result not integral");
         }
-      } else {
-        common::die("len() result not SubscriptInteger");
       }
-    } else {
+      break;
+    case "len"_hash:
+      if (name == "len") {
+        if constexpr (std::is_same_v<T, SubscriptInteger>) {
+          if (auto *charExpr{UnwrapExpr<Expr<SomeCharacter>>(
+                  *funcRef.arguments()[0]->value())}) {
+            return std::visit([](auto &kx) { return kx.LEN(); }, charExpr->u);
+          }
+        } else {
+          common::die("len() result not SubscriptInteger");
+        }
+      }
+      break;
+    case "ian"_hash:
+      if (name == "iand") {
+        if (auto *x{std::get_if<BOZLiteralConstant>(
+                &funcRef.arguments()[0]->value->u)}) {
+          *funcRef.arguments()[0]->value =
+              Fold(context, ConvertToType<T>(std::move(*x)));
+        }
+        if (auto *x{std::get_if<BOZLiteralConstant>(
+                &funcRef.arguments()[1]->value->u)}) {
+          *funcRef.arguments()[1]->value =
+              Fold(context, ConvertToType<T>(std::move(*x)));
+        }
+        return FoldElementalIntrinsic<T, T, T>(
+            std::move(funcRef), ScalarFunc<T, T, T>(&Scalar<T>::IAND));
+      }
+      break;
+    case "int"_hash:
+      if (name == "int") {
+        return std::visit(
+            [&](auto &&x) -> Expr<T> {
+              using From = std::decay_t<decltype(x)>;
+              if constexpr (std::is_same_v<From, BOZLiteralConstant> ||
+                  std::is_same_v<From, Expr<SomeReal>> ||
+                  std::is_same_v<From, Expr<SomeInteger>> ||
+                  std::is_same_v<From, Expr<SomeComplex>>) {
+                return Fold(context, ConvertToType<T>(std::move(x)));
+              } else {
+                common::die("int() argument type not valid");
+                return Expr<T>{std::move(funcRef)};  // unreachable
+              }
+            },
+            std::move(funcRef.arguments()[0]->value->u));
+      }
+      break;
+    default:
       // TODO: many more intrinsic functions
+      break;
     }
   }
-  return Expr<T>{FunctionRef<T>{std::move(funcRef.proc()), std::move(args)}};
+  return Expr<T>{std::move(funcRef)};
+}
+
+template<int KIND>
+Expr<Type<TypeCategory::Real, KIND>> FoldOperation(FoldingContext &context,
+    FunctionRef<Type<TypeCategory::Real, KIND>> &&funcRef) {
+  using namespace intrinsicHelper;
+  using T = Type<TypeCategory::Real, KIND>;
+  for (std::optional<ActualArgument> &arg : funcRef.arguments()) {
+    if (arg.has_value()) {
+      *arg->value = FoldOperation(context, std::move(*arg->value));
+    }
+  }
+  if (auto *intrinsic{std::get_if<SpecificIntrinsic>(&funcRef.proc().u)}) {
+    std::string name{intrinsic->name};
+    switch (DynamicHash(name)) {
+    case "aco"_hash:
+      if (name == "acos") {
+        if constexpr (Host::HostTypeExists<T>()) {
+          return FoldElementalIntrinsic<T, T>(std::move(funcRef),
+              HostFuncWrap<T, T>(HostFuncPointer<T, T>{std::acos}));
+        } else {
+          context.messages().Say(
+              "acos(real(kind=%d)) cannot be folded on host"_en_US, KIND);
+        }
+      } else if (name == "acosh") {
+        if constexpr (Host::HostTypeExists<T>()) {
+          return FoldElementalIntrinsic<T, T>(std::move(funcRef),
+              HostFuncWrap<T, T>(HostFuncPointer<T, T>{std::acosh}));
+        } else {
+          context.messages().Say(
+              "acosh(real(kind=%d)) cannot be folded on host"_en_US, KIND);
+        }
+      }
+    case "bes"_hash:
+      if (name == "bessel_jn" || name == "bessel_yn") {
+        if (funcRef.arguments().size() == 2) {  // elemental
+          if constexpr (Host::HostTypeExists<T>()) {
+            // TODO mapping to <cmath> function to be tested.<cmath> func takes
+            // real arg for n
+            if (auto *n{std::get_if<Expr<SomeInteger>>(
+                    &funcRef.arguments()[0]->value->u)}) {
+              *funcRef.arguments()[0]->value =
+                  Fold(context, ConvertToType<T>(std::move(*n)));
+            }
+            auto hostFunc{name == "bessel_jn"
+                    ? HostFuncPointer<T, T, T>{std::cyl_bessel_j}
+                    : HostFuncPointer<T, T, T>{std::cyl_neumann}};
+            return FoldElementalIntrinsic<T, T, T>(
+                std::move(funcRef), HostFuncWrap<T, T, T>(hostFunc));
+          }
+        }
+      }
+      break;
+    case "dpr"_hash:
+      if (name == "dprod") {
+        if (auto *x{std::get_if<Expr<SomeReal>>(
+                &funcRef.arguments()[0]->value->u)}) {
+          if (auto *y{std::get_if<Expr<SomeReal>>(
+                  &funcRef.arguments()[1]->value->u)}) {
+            return Fold(context,
+                Expr<T>{Multiply<T>{ConvertToType<T>(std::move(*x)),
+                    ConvertToType<T>(std::move(*y))}});
+          }
+        }
+        common::die("Wrong argument type in dprod()");
+        break;
+      }
+      break;
+    case "rea"_hash:
+      if (name == "real") {
+        return std::visit(
+            [&](auto &&x) -> Expr<T> {
+              using From = std::decay_t<decltype(x)>;
+              if constexpr (std::is_same_v<From, BOZLiteralConstant>) {
+                typename T::Scalar::Word::ValueWithOverflow result{
+                    T::Scalar::Word::ConvertUnsigned(x)};
+                if (result.overflow) {  // C1601
+                  context.messages().Say(
+                      "Non null truncated bits of boz literal constant in REAL intrinsic"_en_US);
+                }
+                return Expr<T>{Constant<T>{Scalar<T>(std::move(result.value))}};
+              } else if constexpr (std::is_same_v<From, Expr<SomeReal>> ||
+                  std::is_same_v<From, Expr<SomeInteger>> ||
+                  std::is_same_v<From, Expr<SomeComplex>>) {
+                return Fold(context, ConvertToType<T>(std::move(x)));
+              } else {
+                common::die("real() argument type not valid");
+                return Expr<T>{std::move(funcRef)};  // unreachable
+              }
+            },
+            std::move(funcRef.arguments()[0]->value->u));
+      }
+      break;
+    default:
+      // TODO: many more intrinsic functions
+      break;
+    }
+  }
+  return Expr<T>{std::move(funcRef)};
+}
+
+template<int KIND>
+Expr<Type<TypeCategory::Complex, KIND>> FoldOperation(FoldingContext &context,
+    FunctionRef<Type<TypeCategory::Complex, KIND>> &&funcRef) {
+  using namespace intrinsicHelper;
+  using T = Type<TypeCategory::Complex, KIND>;
+  for (std::optional<ActualArgument> &arg : funcRef.arguments()) {
+    if (arg.has_value()) {
+      *arg->value = FoldOperation(context, std::move(*arg->value));
+    }
+  }
+  if (auto *intrinsic{std::get_if<SpecificIntrinsic>(&funcRef.proc().u)}) {
+    std::string name{intrinsic->name};
+    switch (DynamicHash(name)) {
+    case "aco"_hash:
+      if (name == "acos") {
+        if constexpr (Host::HostTypeExists<T>()) {
+          return FoldElementalIntrinsic<T, T>(std::move(funcRef),
+              HostFuncWrap<T, T>(HostFuncPointer<T, T>{std::acos}));
+        } else {
+          context.messages().Say(
+              "acos(complex(kind=%d)) cannot be folded on host"_en_US, KIND);
+        }
+      } else if (name == "acosh") {
+        if constexpr (Host::HostTypeExists<T>()) {
+          return FoldElementalIntrinsic<T, T>(std::move(funcRef),
+              HostFuncWrap<T, T>(HostFuncPointer<T, T>{std::acosh}));
+        } else {
+          context.messages().Say(
+              "acosh(complex(kind=%d)) cannot be folded on host"_en_US, KIND);
+        }
+      }
+    case "cmp"_hash:
+      if (name == "cmplx") {
+        if (funcRef.arguments().size() == 2) {
+          if (auto *x{std::get_if<Expr<SomeComplex>>(
+                  &funcRef.arguments()[0]->value->u)}) {
+            return Fold(context, ConvertToType<T>(std::move(*x)));
+          } else {
+            common::die("x must be complex in cmplx(x[, kind])");
+          }
+        } else {
+          CHECK(funcRef.arguments().size() == 3);
+          using Part = typename T::Part;
+          Expr<SomeType> im{funcRef.arguments()[1].has_value()
+                  ? std::move(*funcRef.arguments()[1]->value)
+                  : AsGenericExpr(Constant<Part>{Scalar<Part>{}})};
+          Expr<SomeType> re{std::move(*funcRef.arguments()[0]->value)};
+          int reRank{re.Rank()};
+          int imRank{im.Rank()};
+          semantics::Attrs attrs;
+          attrs.set(semantics::Attr::ELEMENTAL);
+          auto reReal{
+              FunctionRef<Part>{ProcedureDesignator{SpecificIntrinsic{
+                                    "real", Part::GetType(), reRank, attrs}},
+                  ActualArguments{ActualArgument{std::move(re)}}}};
+          auto imReal{
+              FunctionRef<Part>{ProcedureDesignator{SpecificIntrinsic{
+                                    "real", Part::GetType(), imRank, attrs}},
+                  ActualArguments{ActualArgument{std::move(im)}}}};
+          return Fold(context,
+              Expr<T>{ComplexConstructor<T::kind>{Expr<Part>{std::move(reReal)},
+                  Expr<Part>{std::move(imReal)}}});
+        }
+      }
+      break;
+    default:
+      // TODO: many more intrinsic functions
+      break;
+    }
+  }
+  return Expr<T>{std::move(funcRef)};
+}
+
+template<int KIND>
+Expr<Type<TypeCategory::Logical, KIND>> FoldOperation(FoldingContext &context,
+    FunctionRef<Type<TypeCategory::Logical, KIND>> &&funcRef) {
+  using namespace intrinsicHelper;
+  using T = Type<TypeCategory::Logical, KIND>;
+  for (std::optional<ActualArgument> &arg : funcRef.arguments()) {
+    if (arg.has_value()) {
+      *arg->value = FoldOperation(context, std::move(*arg->value));
+    }
+  }
+  if (auto *intrinsic{std::get_if<SpecificIntrinsic>(&funcRef.proc().u)}) {
+    std::string name{intrinsic->name};
+    switch (DynamicHash(name)) {
+    case "bge"_hash:
+      if (name == "bge") {
+        using LargestInt = Type<TypeCategory::Integer, 16>;
+        static_assert(std::is_same_v<Scalar<LargestInt>, BOZLiteralConstant>);
+        if (auto *x{std::get_if<Expr<SomeInteger>>(
+                &funcRef.arguments()[0]->value->u)}) {
+          *funcRef.arguments()[0]->value =
+              Fold(context, ConvertToType<LargestInt>(std::move(*x)));
+        } else if (auto *x{std::get_if<BOZLiteralConstant>(
+                       &funcRef.arguments()[0]->value->u)}) {
+          *funcRef.arguments()[0]->value =
+              AsGenericExpr(Constant<LargestInt>{std::move(*x)});
+        }
+        if (auto *x{std::get_if<Expr<SomeInteger>>(
+                &funcRef.arguments()[1]->value->u)}) {
+          *funcRef.arguments()[1]->value =
+              Fold(context, ConvertToType<LargestInt>(std::move(*x)));
+        } else if (auto *x{std::get_if<BOZLiteralConstant>(
+                       &funcRef.arguments()[1]->value->u)}) {
+          *funcRef.arguments()[1]->value =
+              AsGenericExpr(Constant<LargestInt>{std::move(*x)});
+        }
+        return FoldElementalIntrinsic<T, LargestInt, LargestInt>(
+            std::move(funcRef),
+            ScalarFunc<T, LargestInt, LargestInt>(
+                [](const Scalar<LargestInt> &i, const Scalar<LargestInt> &j) {
+                  return Scalar<T>{i.BGE(j)};
+                }));
+      }
+      break;
+    default:
+      // TODO: many more intrinsic functions
+      break;
+    }
+  }
+  return Expr<T>{std::move(funcRef)};
 }
 
 template<typename T>

@@ -13,9 +13,9 @@
 // limitations under the License.
 
 #include "testing.h"
+#include "../../lib/evaluate/call.h"
 #include "../../lib/evaluate/expression.h"
 #include "../../lib/evaluate/fold.h"
-#include "../../lib/evaluate/type.h"
 #include <tuple>
 
 using namespace Fortran::evaluate;
@@ -27,6 +27,14 @@ struct RunOnTypes<Test, std::tuple<T...>> {
   static void Run() { (..., Test::template Run<T>()); }
 };
 
+// helper to get an empty context to give to fold
+FoldingContext getTestFoldingContext(Fortran::parser::Messages &m) {
+  Fortran::parser::CharBlock at{};
+  Fortran::parser::ContextualMessages cm{at, &m};
+  return Fortran::evaluate::FoldingContext(cm);
+}
+
+// test for fold.h GetScalarConstantValue function
 struct TestGetScalarConstantValue {
   template<typename T> static void Run() {
     Expr<T> exprFullyTyped{Constant<T>{Scalar<T>{}}};
@@ -39,7 +47,6 @@ struct TestGetScalarConstantValue {
 };
 
 int main() {
-  using TestTypes = AllIntrinsicTypes;
-  RunOnTypes<TestGetScalarConstantValue, TestTypes>::Run();
+  RunOnTypes<TestGetScalarConstantValue, AllIntrinsicTypes>::Run();
   return testing::Complete();
 }
