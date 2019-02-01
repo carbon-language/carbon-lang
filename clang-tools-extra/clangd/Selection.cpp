@@ -112,9 +112,15 @@ private:
   // An optimization for a common case: nodes outside macro expansions that
   // don't intersect the selection may be recursively skipped.
   bool canSafelySkipNode(SourceRange S) {
+<<<<<<< HEAD
     auto B = SM.getDecomposedLoc(S.getBegin());
     auto E = SM.getDecomposedLoc(S.getEnd());
     if (B.first != SelFile || E.first != SelFile)
+=======
+    auto B = SM.getDecomposedLoc(S.getBegin()),
+         E = SM.getDecomposedLoc(S.getEnd());
+    if (B.first != SM.getMainFileID() || E.first != SM.getMainFileID())
+>>>>>>> [clangd] Lib to compute and represent selection under cursor.
       return false;
     return B.second >= SelEnd || E.second < SelBeginTokenStart;
   }
@@ -156,6 +162,7 @@ private:
     //     LOOP_FOREVER( ++x; )
     //   }
     // Selecting "++x" or "x" will do the right thing.
+<<<<<<< HEAD
     auto B = SM.getDecomposedLoc(SM.getTopMacroCallerLoc(S.getBegin()));
     auto E = SM.getDecomposedLoc(SM.getTopMacroCallerLoc(S.getEnd()));
     // Otherwise, nodes in macro expansions can't be selected.
@@ -164,6 +171,16 @@ private:
     // Cheap test: is there any overlap at all between the selection and range?
     // Note that E.second is the *start* of the last token, which is why we
     // compare against the "rounded-down" SelBegin.
+=======
+    auto B = SM.getDecomposedLoc(SM.getTopMacroCallerLoc(S.getBegin())),
+         E = SM.getDecomposedLoc(SM.getTopMacroCallerLoc(S.getEnd()));
+    // Otherwise, nodes in macro expansions can't be selected.
+    if (B.first != SM.getMainFileID() || E.first != SM.getMainFileID())
+      return SelectionTree::Unselected;
+    // Cheap test: is there any overlap at all between the selection and range?
+    // Note that E.second is the *start* of the last token, which is why we
+    // compare against the "rounded-down" MinOffset.
+>>>>>>> [clangd] Lib to compute and represent selection under cursor.
     if (B.second >= SelEnd || E.second < SelBeginTokenStart)
       return SelectionTree::Unselected;
 
@@ -196,7 +213,11 @@ private:
       CharSourceRange R = SM.getExpansionRange(N->ASTNode.getSourceRange());
       auto B = SM.getDecomposedLoc(R.getBegin());
       auto E = SM.getDecomposedLoc(R.getEnd());
+<<<<<<< HEAD
       if (B.first != SelFile || E.first != SelFile)
+=======
+      if (B.first != SM.getMainFileID() || E.first != SM.getMainFileID())
+>>>>>>> [clangd] Lib to compute and represent selection under cursor.
         continue;
       assert(R.isTokenRange());
       // Try to cover up to the next token, spaces between children don't count.
@@ -222,6 +243,7 @@ private:
   SourceManager &SM;
   const LangOptions &LangOpts;
   std::stack<Node *> Stack;
+<<<<<<< HEAD
   std::deque<Node> Nodes; // Stable pointers as we add more nodes.
   // Half-open selection range.
   unsigned SelBegin;
@@ -233,6 +255,10 @@ private:
   // range.end + measureToken(range.end) < SelBegin (assuming range.end points
   // to a token), and it saves a lex every time.
   unsigned SelBeginTokenStart;
+=======
+  std::deque<Node> Nodes;
+  unsigned SelBegin, SelEnd, SelBeginTokenStart;
+>>>>>>> [clangd] Lib to compute and represent selection under cursor.
 };
 
 } // namespace
@@ -252,9 +278,16 @@ void SelectionTree::print(llvm::raw_ostream &OS, const SelectionTree::Node &N,
 }
 
 // Decide which selection emulates a "point" query in between characters.
+<<<<<<< HEAD
 static std::pair<unsigned, unsigned> pointBounds(unsigned Offset, FileID FID,
                                                  ASTContext &AST) {
   StringRef Buf = AST.getSourceManager().getBufferData(FID);
+=======
+static std::pair<unsigned, unsigned> pointBounds(unsigned Offset,
+                                                 ASTContext &AST) {
+  StringRef Buf = AST.getSourceManager().getBufferData(
+      AST.getSourceManager().getMainFileID());
+>>>>>>> [clangd] Lib to compute and represent selection under cursor.
   // Edge-cases where the choice is forced.
   if (Buf.size() == 0)
     return {0, 0};
@@ -272,6 +305,7 @@ static std::pair<unsigned, unsigned> pointBounds(unsigned Offset, FileID FID,
 
 SelectionTree::SelectionTree(ASTContext &AST, unsigned Begin, unsigned End)
     : PrintPolicy(AST.getLangOpts()) {
+<<<<<<< HEAD
   // No fundamental reason the selection needs to be in the main file,
   // but that's all clangd has needed so far.
   FileID FID = AST.getSourceManager().getMainFileID();
@@ -286,6 +320,16 @@ SelectionTree::SelectionTree(ASTContext &AST, unsigned Begin, unsigned End)
 SelectionTree::SelectionTree(ASTContext &AST, unsigned Offset)
     : SelectionTree(AST, Offset, Offset) {}
 
+=======
+  if (Begin == End)
+    std::tie(Begin, End) = pointBounds(Begin, AST);
+  PrintPolicy.TerseOutput = true;
+
+  Nodes = SelectionVisitor(AST, Begin, End).take();
+  Root = Nodes.empty() ? nullptr : &Nodes.front();
+}
+
+>>>>>>> [clangd] Lib to compute and represent selection under cursor.
 const Node *SelectionTree::commonAncestor() const {
   if (!Root)
     return nullptr;
@@ -297,5 +341,11 @@ const Node *SelectionTree::commonAncestor() const {
   }
 }
 
+<<<<<<< HEAD
+=======
+SelectionTree::SelectionTree(ASTContext &AST, unsigned Offset)
+    : SelectionTree(AST, Offset, Offset) {}
+
+>>>>>>> [clangd] Lib to compute and represent selection under cursor.
 } // namespace clangd
 } // namespace clang
