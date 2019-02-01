@@ -34,7 +34,7 @@ namespace {
 ///   if (foo) { continue; } else { return 10; }
 class SwapIfBranches : public Tweak {
 public:
-  TweakID id() const override final;
+  const char *id() const override final;
 
   bool prepare(const Selection &Inputs) override;
   Expected<tooling::Replacements> apply(const Selection &Inputs) override;

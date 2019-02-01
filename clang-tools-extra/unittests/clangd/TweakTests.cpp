@@ -24,8 +24,6 @@
 using llvm::Failed;
 using llvm::HasValue;
 using llvm::Succeeded;
-using ::testing::IsEmpty;
-using ::testing::Not;
 
 namespace clang {
 namespace clangd {
@@ -43,7 +41,7 @@ std::string markRange(llvm::StringRef Code, Range R) {
       .str();
 }
 
-void checkAvailable(TweakID ID, llvm::StringRef Input, bool Available) {
+void checkAvailable(StringRef ID, llvm::StringRef Input, bool Available) {
   Annotations Code(Input);
   ASSERT_TRUE(0 < Code.points().size() || 0 < Code.ranges().size())
       << "no points of interest specified";
@@ -71,15 +69,15 @@ void checkAvailable(TweakID ID, llvm::StringRef Input, bool Available) {
 }
 
 /// Checks action is available at every point and range marked in \p Input.
-void checkAvailable(TweakID ID, llvm::StringRef Input) {
+void checkAvailable(StringRef ID, llvm::StringRef Input) {
   return checkAvailable(ID, Input, /*Available=*/true);
 }
 
 /// Same as checkAvailable, but checks the action is not available.
-void checkNotAvailable(TweakID ID, llvm::StringRef Input) {
+void checkNotAvailable(StringRef ID, llvm::StringRef Input) {
   return checkAvailable(ID, Input, /*Available=*/false);
 }
-llvm::Expected<std::string> apply(TweakID ID, llvm::StringRef Input) {
+llvm::Expected<std::string> apply(StringRef ID, llvm::StringRef Input) {
   Annotations Code(Input);
   Range SelectionRng;
   if (Code.points().size() != 0) {
