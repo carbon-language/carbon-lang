@@ -743,7 +743,8 @@ bool ScalarizerVisitor::visitLoadInst(LoadInst &LI) {
   Res.resize(NumElems);
 
   for (unsigned I = 0; I < NumElems; ++I)
-    Res[I] = Builder.CreateAlignedLoad(Ptr[I], Layout.getElemAlign(I),
+    Res[I] = Builder.CreateAlignedLoad(Layout.VecTy->getElementType(), Ptr[I],
+                                       Layout.getElemAlign(I),
                                        LI.getName() + ".i" + Twine(I));
   gather(&LI, Res);
   return true;

@@ -4404,7 +4404,7 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       unsigned Align;
       if (Error Err = parseAlignmentValue(Record[OpNum], Align))
         return Err;
-      I = new LoadInst(Op, "", Record[OpNum+1], Align, Ordering, SSID);
+      I = new LoadInst(Ty, Op, "", Record[OpNum + 1], Align, Ordering, SSID);
 
       InstructionList.push_back(I);
       break;

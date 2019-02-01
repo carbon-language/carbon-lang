@@ -93,7 +93,7 @@ static BasicBlock *createResumeEntryBlock(Function &F, coro::Shape &Shape) {
   auto *FrameTy = Shape.FrameTy;
   auto *GepIndex = Builder.CreateConstInBoundsGEP2_32(
       FrameTy, FramePtr, 0, coro::Shape::IndexField, "index.addr");
-  auto *Index = Builder.CreateLoad(GepIndex, "index");
+  auto *Index = Builder.CreateLoad(Shape.getIndexType(), GepIndex, "index");
   auto *Switch =
       Builder.CreateSwitch(Index, UnreachBB, Shape.CoroSuspends.size());
   Shape.ResumeSwitch = Switch;
@@ -229,7 +229,8 @@ static void handleFinalSuspend(IRBuilder<> &Builder, Value *FramePtr,
     Builder.SetInsertPoint(OldSwitchBB->getTerminator());
     auto *GepIndex = Builder.CreateConstInBoundsGEP2_32(Shape.FrameTy, FramePtr,
                                                         0, 0, "ResumeFn.addr");
-    auto *Load = Builder.CreateLoad(GepIndex);
+    auto *Load = Builder.CreateLoad(
+        Shape.FrameTy->getElementType(coro::Shape::ResumeField), GepIndex);
     auto *NullPtr =
         ConstantPointerNull::get(cast<PointerType>(Load->getType()));
     auto *Cond = Builder.CreateICmpEQ(Load, NullPtr);

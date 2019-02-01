@@ -195,6 +195,7 @@ public:
       // block.
       Value *LiveInValue = SSA.GetValueInMiddleOfBlock(ExitBlock);
       Value *Addr = cast<StoreInst>(Store)->getPointerOperand();
+      Type *Ty = LiveInValue->getType();
       IRBuilder<> Builder(InsertPos);
       if (AtomicCounterUpdatePromoted)
         // automic update currently can only be promoted across the current
@@ -202,7 +203,7 @@ public:
         Builder.CreateAtomicRMW(AtomicRMWInst::Add, Addr, LiveInValue,
                                 AtomicOrdering::SequentiallyConsistent);
       else {
-        LoadInst *OldVal = Builder.CreateLoad(Addr, "pgocount.promoted");
+        LoadInst *OldVal = Builder.CreateLoad(Ty, Addr, "pgocount.promoted");
         auto *NewVal = Builder.CreateAdd(OldVal, LiveInValue);
         auto *NewStore = Builder.CreateStore(NewVal, Addr);
 
@@ -603,7 +604,8 @@ void InstrProfiling::lowerIncrement(InstrProfIncrementInst *Inc) {
     Builder.CreateAtomicRMW(AtomicRMWInst::Add, Addr, Inc->getStep(),
                             AtomicOrdering::Monotonic);
   } else {
-    Value *Load = Builder.CreateLoad(Addr, "pgocount");
+    Value *IncStep = Inc->getStep();
+    Value *Load = Builder.CreateLoad(IncStep->getType(), Addr, "pgocount");
     auto *Count = Builder.CreateAdd(Load, Inc->getStep());
     auto *Store = Builder.CreateStore(Count, Addr);
     if (isCounterPromotionEnabled())
@@ -950,7 +952,7 @@ bool InstrProfiling::emitRuntimeHook() {
     User->setComdat(M->getOrInsertComdat(User->getName()));
 
   IRBuilder<> IRB(BasicBlock::Create(M->getContext(), "", User));
-  auto *Load = IRB.CreateLoad(Var);
+  auto *Load = IRB.CreateLoad(Int32Ty, Var);
   IRB.CreateRet(Load);
 
   // Mark the user variable as used so that it isn't stripped out.

@@ -432,7 +432,7 @@ void WinEHStatePass::linkExceptionRegistration(IRBuilder<> &Builder,
   // Next = [fs:00]
   Constant *FSZero =
       Constant::getNullValue(LinkTy->getPointerTo()->getPointerTo(257));
-  Value *Next = Builder.CreateLoad(FSZero);
+  Value *Next = Builder.CreateLoad(LinkTy->getPointerTo(), FSZero);
   Builder.CreateStore(Next, Builder.CreateStructGEP(LinkTy, Link, 0));
   // [fs:00] = Link
   Builder.CreateStore(Link, FSZero);
@@ -447,8 +447,8 @@ void WinEHStatePass::unlinkExceptionRegistration(IRBuilder<> &Builder) {
   }
   Type *LinkTy = getEHLinkRegistrationType();
   // [fs:00] = Link->Next
-  Value *Next =
-      Builder.CreateLoad(Builder.CreateStructGEP(LinkTy, Link, 0));
+  Value *Next = Builder.CreateLoad(LinkTy->getPointerTo(),
+                                   Builder.CreateStructGEP(LinkTy, Link, 0));
   Constant *FSZero =
       Constant::getNullValue(LinkTy->getPointerTo()->getPointerTo(257));
   Builder.CreateStore(Next, FSZero);
@@ -783,7 +783,7 @@ void WinEHStatePass::addStateStores(Function &F, WinEHFuncInfo &FuncInfo) {
     if (InCleanup) {
       Value *StateField =
           Builder.CreateStructGEP(nullptr, RegNode, StateFieldIndex);
-      State = Builder.CreateLoad(StateField);
+      State = Builder.CreateLoad(Builder.getInt32Ty(), StateField);
     } else {
       State = Builder.getInt32(getStateForCallSite(BlockColors, FuncInfo, CS));
     }

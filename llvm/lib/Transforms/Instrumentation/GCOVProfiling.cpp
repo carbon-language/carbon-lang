@@ -817,7 +817,7 @@ bool GCOVProfiler::emitProfileArcs() {
 
           // Skip phis, landingpads.
           IRBuilder<> Builder(&*BB.getFirstInsertionPt());
-          Value *Count = Builder.CreateLoad(Phi);
+          Value *Count = Builder.CreateLoad(Builder.getInt64Ty(), Phi);
           Count = Builder.CreateAdd(Count, Builder.getInt64(1));
           Builder.CreateStore(Count, Phi);
 
@@ -828,7 +828,7 @@ bool GCOVProfiler::emitProfileArcs() {
             const unsigned Edge = It->second;
             Value *Counter =
                 Builder.CreateConstInBoundsGEP2_64(Counters, 0, Edge);
-            Value *Count = Builder.CreateLoad(Counter);
+            Value *Count = Builder.CreateLoad(Builder.getInt64Ty(), Counter);
             Count = Builder.CreateAdd(Count, Builder.getInt64(1));
             Builder.CreateStore(Count, Counter);
           }
@@ -1089,17 +1089,20 @@ Function *GCOVProfiler::insertCounterWriteout(
   auto *StartFileCallArgsPtr = Builder.CreateStructGEP(FileInfoPtr, 0);
   auto *StartFileCall = Builder.CreateCall(
       StartFile,
-      {Builder.CreateLoad(Builder.CreateStructGEP(StartFileCallArgsPtr, 0)),
-       Builder.CreateLoad(Builder.CreateStructGEP(StartFileCallArgsPtr, 1)),
-       Builder.CreateLoad(Builder.CreateStructGEP(StartFileCallArgsPtr, 2))});
+      {Builder.CreateLoad(StartFileCallArgsTy->getElementType(0),
+                          Builder.CreateStructGEP(StartFileCallArgsPtr, 0)),
+       Builder.CreateLoad(StartFileCallArgsTy->getElementType(1),
+                          Builder.CreateStructGEP(StartFileCallArgsPtr, 1)),
+       Builder.CreateLoad(StartFileCallArgsTy->getElementType(2),
+                          Builder.CreateStructGEP(StartFileCallArgsPtr, 2))});
   if (auto AK = TLI->getExtAttrForI32Param(false))
     StartFileCall->addParamAttr(2, AK);
-  auto *NumCounters =
-      Builder.CreateLoad(Builder.CreateStructGEP(FileInfoPtr, 1));
-  auto *EmitFunctionCallArgsArray =
-      Builder.CreateLoad(Builder.CreateStructGEP(FileInfoPtr, 2));
-  auto *EmitArcsCallArgsArray =
-      Builder.CreateLoad(Builder.CreateStructGEP(FileInfoPtr, 3));
+  auto *NumCounters = Builder.CreateLoad(
+      FileInfoTy->getElementType(1), Builder.CreateStructGEP(FileInfoPtr, 1));
+  auto *EmitFunctionCallArgsArray = Builder.CreateLoad(
+      FileInfoTy->getElementType(2), Builder.CreateStructGEP(FileInfoPtr, 2));
+  auto *EmitArcsCallArgsArray = Builder.CreateLoad(
+      FileInfoTy->getElementType(3), Builder.CreateStructGEP(FileInfoPtr, 3));
   auto *EnterCounterLoopCond =
       Builder.CreateICmpSLT(Builder.getInt32(0), NumCounters);
   Builder.CreateCondBr(EnterCounterLoopCond, CounterLoopHeader, FileLoopLatch);
@@ -1111,11 +1114,16 @@ Function *GCOVProfiler::insertCounterWriteout(
       Builder.CreateInBoundsGEP(EmitFunctionCallArgsArray, {JV});
   auto *EmitFunctionCall = Builder.CreateCall(
       EmitFunction,
-      {Builder.CreateLoad(Builder.CreateStructGEP(EmitFunctionCallArgsPtr, 0)),
-       Builder.CreateLoad(Builder.CreateStructGEP(EmitFunctionCallArgsPtr, 1)),
-       Builder.CreateLoad(Builder.CreateStructGEP(EmitFunctionCallArgsPtr, 2)),
-       Builder.CreateLoad(Builder.CreateStructGEP(EmitFunctionCallArgsPtr, 3)),
+      {Builder.CreateLoad(EmitFunctionCallArgsTy->getElementType(0),
+                          Builder.CreateStructGEP(EmitFunctionCallArgsPtr, 0)),
+       Builder.CreateLoad(EmitFunctionCallArgsTy->getElementType(1),
+                          Builder.CreateStructGEP(EmitFunctionCallArgsPtr, 1)),
+       Builder.CreateLoad(EmitFunctionCallArgsTy->getElementType(2),
+                          Builder.CreateStructGEP(EmitFunctionCallArgsPtr, 2)),
+       Builder.CreateLoad(EmitFunctionCallArgsTy->getElementType(3),
+                          Builder.CreateStructGEP(EmitFunctionCallArgsPtr, 3)),
        Builder.CreateLoad(
+           EmitFunctionCallArgsTy->getElementType(4),
            Builder.CreateStructGEP(EmitFunctionCallArgsPtr, 4))});
   if (auto AK = TLI->getExtAttrForI32Param(false)) {
     EmitFunctionCall->addParamAttr(0, AK);
@@ -1127,8 +1135,10 @@ Function *GCOVProfiler::insertCounterWriteout(
       Builder.CreateInBoundsGEP(EmitArcsCallArgsArray, {JV});
   auto *EmitArcsCall = Builder.CreateCall(
       EmitArcs,
-      {Builder.CreateLoad(Builder.CreateStructGEP(EmitArcsCallArgsPtr, 0)),
-       Builder.CreateLoad(Builder.CreateStructGEP(EmitArcsCallArgsPtr, 1))});
+      {Builder.CreateLoad(EmitArcsCallArgsTy->getElementType(0),
+                          Builder.CreateStructGEP(EmitArcsCallArgsPtr, 0)),
+       Builder.CreateLoad(EmitArcsCallArgsTy->getElementType(1),
+                          Builder.CreateStructGEP(EmitArcsCallArgsPtr, 1))});
   if (auto AK = TLI->getExtAttrForI32Param(false))
     EmitArcsCall->addParamAttr(0, AK);
   auto *NextJV = Builder.CreateAdd(JV, Builder.getInt32(1));

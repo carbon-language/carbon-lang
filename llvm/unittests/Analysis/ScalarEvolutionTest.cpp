@@ -407,9 +407,11 @@ TEST_F(ScalarEvolutionsTest, CompareValueComplexity) {
 
   const int ValueDepth = 10;
   for (int i = 0; i < ValueDepth; i++) {
-    X = new LoadInst(new IntToPtrInst(X, IntPtrPtrTy, "", EntryBB), "",
+    X = new LoadInst(IntPtrTy, new IntToPtrInst(X, IntPtrPtrTy, "", EntryBB),
+                     "",
                      /*isVolatile*/ false, EntryBB);
-    Y = new LoadInst(new IntToPtrInst(Y, IntPtrPtrTy, "", EntryBB), "",
+    Y = new LoadInst(IntPtrTy, new IntToPtrInst(Y, IntPtrPtrTy, "", EntryBB),
+                     "",
                      /*isVolatile*/ false, EntryBB);
   }
 

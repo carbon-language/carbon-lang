@@ -132,6 +132,7 @@ bool AMDGPULowerKernelArguments::runOnFunction(Function &F) {
                                       KernArgBaseAlign);
 
     Value *ArgPtr;
+    Type *AdjustedArgTy;
     if (DoShiftOpt) { // FIXME: Handle aggregate types
       // Since we don't have sub-dword scalar loads, avoid doing an extload by
       // loading earlier than the argument address, and extracting the relevant
@@ -144,25 +145,25 @@ bool AMDGPULowerKernelArguments::runOnFunction(Function &F) {
         KernArgSegment,
         AlignDownOffset,
         Arg.getName() + ".kernarg.offset.align.down");
-      ArgPtr = Builder.CreateBitCast(ArgPtr,
-                                     Builder.getInt32Ty()->getPointerTo(AS),
-                                     ArgPtr->getName() + ".cast");
+      AdjustedArgTy = Builder.getInt32Ty();
     } else {
       ArgPtr = Builder.CreateConstInBoundsGEP1_64(
         KernArgSegment,
         EltOffset,
         Arg.getName() + ".kernarg.offset");
-      ArgPtr = Builder.CreateBitCast(ArgPtr, ArgTy->getPointerTo(AS),
-                                     ArgPtr->getName() + ".cast");
+      AdjustedArgTy = ArgTy;
     }
 
     if (IsV3 && Size >= 32) {
       V4Ty = VectorType::get(VT->getVectorElementType(), 4);
       // Use the hack that clang uses to avoid SelectionDAG ruining v3 loads
-      ArgPtr = Builder.CreateBitCast(ArgPtr, V4Ty->getPointerTo(AS));
+      AdjustedArgTy = V4Ty;
     }
 
-    LoadInst *Load = Builder.CreateAlignedLoad(ArgPtr, AdjustedAlign);
+    ArgPtr = Builder.CreateBitCast(ArgPtr, AdjustedArgTy->getPointerTo(AS),
+                                   ArgPtr->getName() + ".cast");
+    LoadInst *Load =
+        Builder.CreateAlignedLoad(AdjustedArgTy, ArgPtr, AdjustedAlign);
     Load->setMetadata(LLVMContext::MD_invariant_load, MDNode::get(Ctx, {}));
 
     MDBuilder MDB(Ctx);

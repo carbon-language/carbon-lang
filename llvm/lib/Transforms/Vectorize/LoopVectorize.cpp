@@ -2100,8 +2100,8 @@ void InnerLoopVectorizer::vectorizeInterleaveGroup(Instruction *Instr,
                                      GroupMask, UndefVec, "wide.masked.vec");
       }
       else
-        NewLoad = Builder.CreateAlignedLoad(NewPtrs[Part], 
-          Group->getAlignment(), "wide.vec");
+        NewLoad = Builder.CreateAlignedLoad(VecTy, NewPtrs[Part],
+                                            Group->getAlignment(), "wide.vec");
       Group->addMetadata(NewLoad);
       NewLoads.push_back(NewLoad);
     }
@@ -2312,7 +2312,8 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr,
                                          UndefValue::get(DataTy),
                                          "wide.masked.load");
       else
-        NewLI = Builder.CreateAlignedLoad(VecPtr, Alignment, "wide.load");
+        NewLI =
+            Builder.CreateAlignedLoad(DataTy, VecPtr, Alignment, "wide.load");
 
       // Add metadata to the load, but setVectorValue to the reverse shuffle.
       addMetadata(NewLI, LI);
