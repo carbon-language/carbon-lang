@@ -761,7 +761,6 @@ static Value *simplifyX86addcarry(const IntrinsicInst &II,
   assert(RetTy->getStructElementType(0)->isIntegerTy(8) &&
          RetTy->getStructElementType(1) == OpTy && OpTy == Op2->getType() &&
          "Unexpected types for x86 addcarry");
-  (void)RetTy;
 
   // If carry-in is zero, this is just an unsigned add with overflow.
   if (match(CarryIn, m_ZeroInt())) {
@@ -771,7 +770,7 @@ static Value *simplifyX86addcarry(const IntrinsicInst &II,
     Value *UAddResult = Builder.CreateExtractValue(UAdd, 0);
     Value *UAddOV = Builder.CreateZExt(Builder.CreateExtractValue(UAdd, 1),
                                        Builder.getInt8Ty());
-    Value *Res = UndefValue::get(II.getType());
+    Value *Res = UndefValue::get(RetTy);
     Res = Builder.CreateInsertValue(Res, UAddOV, 0);
     return Builder.CreateInsertValue(Res, UAddResult, 1);
   }
