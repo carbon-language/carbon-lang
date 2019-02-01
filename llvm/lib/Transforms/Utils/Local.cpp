@@ -1936,8 +1936,8 @@ static void changeToCall(InvokeInst *II, DomTreeUpdater *DTU = nullptr) {
   SmallVector<Value*, 8> Args(II->arg_begin(), II->arg_end());
   SmallVector<OperandBundleDef, 1> OpBundles;
   II->getOperandBundlesAsDefs(OpBundles);
-  CallInst *NewCall = CallInst::Create(II->getCalledValue(), Args, OpBundles,
-                                       "", II);
+  CallInst *NewCall = CallInst::Create(
+      II->getFunctionType(), II->getCalledValue(), Args, OpBundles, "", II);
   NewCall->takeName(II);
   NewCall->setCallingConv(II->getCallingConv());
   NewCall->setAttributes(II->getAttributes());

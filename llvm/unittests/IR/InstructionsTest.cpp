@@ -504,14 +504,15 @@ TEST(InstructionsTest, CloneCall) {
   LLVMContext C;
   Type *Int32Ty = Type::getInt32Ty(C);
   Type *ArgTys[] = {Int32Ty, Int32Ty, Int32Ty};
-  Type *FnTy = FunctionType::get(Int32Ty, ArgTys, /*isVarArg=*/false);
+  FunctionType *FnTy = FunctionType::get(Int32Ty, ArgTys, /*isVarArg=*/false);
   Value *Callee = Constant::getNullValue(FnTy->getPointerTo());
   Value *Args[] = {
     ConstantInt::get(Int32Ty, 1),
     ConstantInt::get(Int32Ty, 2),
     ConstantInt::get(Int32Ty, 3)
   };
-  std::unique_ptr<CallInst> Call(CallInst::Create(Callee, Args, "result"));
+  std::unique_ptr<CallInst> Call(
+      CallInst::Create(FnTy, Callee, Args, "result"));
 
   // Test cloning the tail call kind.
   CallInst::TailCallKind Kinds[] = {CallInst::TCK_None, CallInst::TCK_Tail,
@@ -537,12 +538,12 @@ TEST(InstructionsTest, CloneCall) {
 TEST(InstructionsTest, AlterCallBundles) {
   LLVMContext C;
   Type *Int32Ty = Type::getInt32Ty(C);
-  Type *FnTy = FunctionType::get(Int32Ty, Int32Ty, /*isVarArg=*/false);
+  FunctionType *FnTy = FunctionType::get(Int32Ty, Int32Ty, /*isVarArg=*/false);
   Value *Callee = Constant::getNullValue(FnTy->getPointerTo());
   Value *Args[] = {ConstantInt::get(Int32Ty, 42)};
   OperandBundleDef OldBundle("before", UndefValue::get(Int32Ty));
   std::unique_ptr<CallInst> Call(
-      CallInst::Create(Callee, Args, OldBundle, "result"));
+      CallInst::Create(FnTy, Callee, Args, OldBundle, "result"));
   Call->setTailCallKind(CallInst::TailCallKind::TCK_NoTail);
   AttrBuilder AB;
   AB.addAttribute(Attribute::Cold);
