@@ -80,8 +80,7 @@ void DerivedTypeSpec::Instantiate(
   // The folded values of the expressions replace the init() expressions
   // of the parameters' symbols in the instantiation's scope.
   evaluate::FoldingContext &foldingContext{semanticsContext.foldingContext()};
-  auto savePDTInstance{common::ScopedSet(
-      foldingContext.pdtInstance, const_cast<const DerivedTypeSpec *>(this))};
+  auto restorer{foldingContext.WithPDTInstance(*this)};
 
   for (Symbol *symbol : typeDetails.OrderParameterDeclarations(typeSymbol_)) {
     const SourceName &name{symbol->name()};
@@ -104,7 +103,7 @@ void DerivedTypeSpec::Instantiate(
             !evaluate::ToInt64(expr).has_value()) {
           std::stringstream fortran;
           expr->AsFortran(fortran);
-          if (auto *msg{foldingContext.messages.Say(
+          if (auto *msg{foldingContext.messages().Say(
                   "Value of kind type parameter '%s' (%s) is not "
                   "scalar INTEGER constant"_err_en_US,
                   name.ToString().data(), fortran.str().data())}) {

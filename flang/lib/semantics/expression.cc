@@ -329,10 +329,9 @@ static MaybeExpr ResolveAmbiguousSubstring(
     ExpressionAnalysisContext &context, ArrayRef &&ref) {
   const Symbol &symbol{ref.GetLastSymbol()};
   if (std::optional<DynamicType> dyType{GetSymbolType(&symbol)}) {
-    if (dyType->category == TypeCategory::Character &&
-        ref.subscript.size() == 1) {
-      DataRef base{std::visit(
-          [](auto &&y) { return DataRef{std::move(y)}; }, std::move(ref.u))};
+    if (dyType->category == TypeCategory::Character && ref.size() == 1) {
+      DataRef base{std::visit([](auto &&y) { return DataRef{std::move(y)}; },
+          std::move(ref.base()))};
       std::optional<Expr<SubscriptInteger>> lower, upper;
       if (std::visit(
               common::visitors{
@@ -346,7 +345,7 @@ static MaybeExpr ResolveAmbiguousSubstring(
                     return triplet.IsStrideOne();
                   },
               },
-              std::move(ref.subscript[0].u))) {
+              std::move(ref.at(0).u))) {
         return WrapperHelper<TypeCategory::Character, Designator, Substring>(
             dyType->kind,
             Substring{std::move(base), std::move(lower), std::move(upper)});
@@ -365,13 +364,13 @@ static MaybeExpr CompleteSubscripts(
     ExpressionAnalysisContext &context, ArrayRef &&ref) {
   const Symbol &symbol{ref.GetLastSymbol()};
   int symbolRank{symbol.Rank()};
-  if (ref.subscript.empty()) {
+  int subscripts = ref.size();
+  if (subscripts == 0) {
     // A -> A(:,:)
-    for (int j{0}; j < symbolRank; ++j) {
-      ref.subscript.emplace_back(Subscript{Triplet{}});
+    for (; subscripts < symbolRank; ++subscripts) {
+      ref.emplace_back(Triplet{});
     }
   }
-  int subscripts = ref.subscript.size();
   if (subscripts != symbolRank) {
     if (MaybeExpr substring{
             ResolveAmbiguousSubstring(context, std::move(ref))}) {
@@ -381,11 +380,11 @@ static MaybeExpr CompleteSubscripts(
         symbolRank, symbol.name().ToString().data(), subscripts);
   } else if (subscripts == 0) {
     // nothing to check
-  } else if (Component * component{std::get_if<Component>(&ref.u)}) {
+  } else if (Component * component{std::get_if<Component>(&ref.base())}) {
     int baseRank{component->base().Rank()};
     if (baseRank > 0) {
       int subscriptRank{0};
-      for (const auto &expr : ref.subscript) {
+      for (const auto &expr : ref.subscript()) {
         subscriptRank += expr.Rank();
       }
       if (subscriptRank > 0) {
@@ -397,7 +396,7 @@ static MaybeExpr CompleteSubscripts(
   } else if (const auto *details{
                  symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     // C928 & C1002
-    if (Triplet * last{std::get_if<Triplet>(&ref.subscript.back().u)}) {
+    if (Triplet * last{std::get_if<Triplet>(&ref.subscript().back().u)}) {
       if (!last->upper().has_value() && details->IsAssumedSize()) {
         context.Say("Assumed-size array '%s' must have explicit final "
                     "subscript upper bound value"_err_en_US,
@@ -417,12 +416,12 @@ static MaybeExpr ApplySubscripts(ExpressionAnalysisContext &context,
             return CompleteSubscripts(
                 context, ArrayRef{*symbol, std::move(subscripts)});
           },
-          [&](auto &&base) -> MaybeExpr {
-            using Ty = std::decay_t<decltype(base)>;
-            if constexpr (common::HasMember<Ty, decltype(ArrayRef::u)>) {
-              return CompleteSubscripts(
-                  context, ArrayRef{std::move(base), std::move(subscripts)});
-            }
+          [&](Component &&c) {
+            return CompleteSubscripts(
+                context, ArrayRef{std::move(c), std::move(subscripts)});
+          },
+          [&](auto &&) -> MaybeExpr {
+            CHECK(!"bad base for ArrayRef");
             return std::nullopt;
           },
       },
@@ -553,11 +552,11 @@ template<typename TYPE>
 Constant<TYPE> ReadRealLiteral(
     parser::CharBlock source, FoldingContext &context) {
   const char *p{source.begin()};
-  auto valWithFlags{Scalar<TYPE>::Read(p, context.rounding)};
+  auto valWithFlags{Scalar<TYPE>::Read(p, context.rounding())};
   CHECK(p == source.end());
   RealFlagWarnings(context, valWithFlags.flags, "conversion of REAL literal");
   auto value{valWithFlags.value};
-  if (context.flushSubnormalsToZero) {
+  if (context.flushSubnormalsToZero()) {
     value = value.FlushSubnormalToZero();
   }
   return {value};
@@ -998,7 +997,7 @@ static SymbolOrComponent IgnoreAnySubscripts(
       common::visitors{
           [](const Symbol *symbol) { return SymbolOrComponent{symbol}; },
           [](Component &&component) { return SymbolOrComponent{component}; },
-          [](ArrayRef &&arrayRef) { return std::move(arrayRef.u); },
+          [](ArrayRef &&arrayRef) { return std::move(arrayRef.base()); },
           [](CoarrayRef &&coarrayRef) {
             return SymbolOrComponent{&coarrayRef.GetLastSymbol()};
           },
@@ -1744,7 +1743,7 @@ MaybeExpr ExpressionAnalysisContext::Analyze(const parser::Expr &expr) {
   } else if (!expr.source.empty()) {
     // Analyze the expression in a specified source position context for better
     // error reporting.
-    auto save{GetFoldingContext().messages.SetLocation(expr.source)};
+    auto save{GetFoldingContext().messages().SetLocation(expr.source)};
     return AnalyzeExpr(*this, expr.u);
   } else {
     return AnalyzeExpr(*this, expr.u);

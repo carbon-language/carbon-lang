@@ -81,7 +81,7 @@ public:
   }
 
   parser::ContextualMessages &GetContextualMessages() {
-    return GetFoldingContext().messages;
+    return GetFoldingContext().messages();
   }
 
   template<typename... A> void Say(A... args) {

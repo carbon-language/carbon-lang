@@ -2696,8 +2696,7 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
       // context of a parameterized derived type definition, so we need to
       // clone its contents, specialize them with the actual type parameter
       // values, and check constraints.
-      auto inLocation{
-          GetFoldingContext().messages.SetLocation(*currStmtSource())};
+      auto save{GetFoldingContext().messages().SetLocation(*currStmtSource())};
       type.derivedTypeSpec().Instantiate(currScope(), context());
     }
     SetDeclTypeSpec(type);

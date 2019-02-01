@@ -19,6 +19,7 @@
 #include "../common/fortran.h"
 #include "../common/idioms.h"
 #include "../common/indirection.h"
+#include "../common/restorer.h"
 #include "../parser/char-block.h"
 #include "../parser/message.h"
 #include <cinttypes>
@@ -194,27 +195,47 @@ template<typename A> using CopyableIndirection = common::Indirection<A, true>;
 // definition
 template<typename A> class Expr;
 
-// TODO pmk: convert to a class
-struct FoldingContext {
+class FoldingContext {
+public:
   explicit FoldingContext(const parser::ContextualMessages &m,
       Rounding round = defaultRounding, bool flush = false)
-    : messages{m}, rounding{round}, flushSubnormalsToZero{flush} {}
+    : messages_{m}, rounding_{round}, flushSubnormalsToZero_{flush} {}
   FoldingContext(const FoldingContext &that)
-    : messages{that.messages}, rounding{that.rounding},
-      flushSubnormalsToZero{that.flushSubnormalsToZero},
-      pdtInstance{that.pdtInstance}, impliedDos{that.impliedDos} {}
+    : messages_{that.messages_}, rounding_{that.rounding_},
+      flushSubnormalsToZero_{that.flushSubnormalsToZero_},
+      pdtInstance_{that.pdtInstance_}, impliedDos_{that.impliedDos_} {}
   FoldingContext(
       const FoldingContext &that, const parser::ContextualMessages &m)
-    : messages{m}, rounding{that.rounding},
-      flushSubnormalsToZero{that.flushSubnormalsToZero},
-      pdtInstance{that.pdtInstance}, impliedDos{that.impliedDos} {}
+    : messages_{m}, rounding_{that.rounding_},
+      flushSubnormalsToZero_{that.flushSubnormalsToZero_},
+      pdtInstance_{that.pdtInstance_}, impliedDos_{that.impliedDos_} {}
 
-  parser::ContextualMessages messages;
-  Rounding rounding{defaultRounding};
-  bool flushSubnormalsToZero{false};
-  bool bigEndian{false};
-  const semantics::DerivedTypeSpec *pdtInstance{nullptr};
-  std::map<parser::CharBlock, std::int64_t> impliedDos;
+  parser::ContextualMessages &messages() { return messages_; }
+  Rounding rounding() const { return rounding_; }
+  bool flushSubnormalsToZero() const { return flushSubnormalsToZero_; }
+  bool bigEndian() const { return bigEndian_; }
+  const semantics::DerivedTypeSpec *pdtInstance() const { return pdtInstance_; }
+
+  std::int64_t &StartImpliedDo(parser::CharBlock, std::int64_t = 1);
+  std::optional<std::int64_t> GetImpliedDo(parser::CharBlock) const;
+  void EndImpliedDo(parser::CharBlock);
+
+  std::map<parser::CharBlock, std::int64_t> &impliedDos() {
+    return impliedDos_;
+  }
+
+  common::Restorer<const semantics::DerivedTypeSpec *> WithPDTInstance(
+      const semantics::DerivedTypeSpec &spec) {
+    return common::ScopedSet(pdtInstance_, &spec);
+  }
+
+private:
+  parser::ContextualMessages messages_;
+  Rounding rounding_{defaultRounding};
+  bool flushSubnormalsToZero_{false};
+  bool bigEndian_{false};
+  const semantics::DerivedTypeSpec *pdtInstance_{nullptr};
+  std::map<parser::CharBlock, std::int64_t> impliedDos_;
 };
 
 void RealFlagWarnings(FoldingContext &, const RealFlags &, const char *op);

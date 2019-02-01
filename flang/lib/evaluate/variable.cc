@@ -144,7 +144,7 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
   *lower_ = evaluate::Fold(context, std::move(**lower_));
   std::optional<std::int64_t> lbi{ToInt64(**lower_)};
   if (lbi.has_value() && *lbi < 1) {
-    context.messages.Say(
+    context.messages().Say(
         "lower bound (%jd) on substring is less than one"_en_US,
         static_cast<std::intmax_t>(*lbi));
     *lbi = 1;
@@ -172,8 +172,8 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
       lower_ = AsExpr(Constant<SubscriptInteger>{*lbi});
       upper_ = AsExpr(Constant<SubscriptInteger>{*ubi});
     } else if (length.has_value() && *ubi > *length) {
-      context.messages.Say("upper bound (&jd) on substring is greater "
-                           "than character length (%jd)"_en_US,
+      context.messages().Say("upper bound (&jd) on substring is greater "
+                             "than character length (%jd)"_en_US,
           static_cast<std::intmax_t>(*ubi), static_cast<std::int64_t>(*length));
       *ubi = *length;
     }
@@ -293,8 +293,8 @@ std::ostream &TypeParamInquiry<KIND>::AsFortran(std::ostream &o) const {
           },
           [&](const Component &comp) { Emit(o, comp) << '%'; },
       },
-      u);
-  return Emit(o, *parameter);
+      base_);
+  return Emit(o, *parameter_);
 }
 
 std::ostream &Component::AsFortran(std::ostream &o) const {
@@ -312,9 +312,9 @@ std::ostream &Triplet::AsFortran(std::ostream &o) const {
 std::ostream &Subscript::AsFortran(std::ostream &o) const { return Emit(o, u); }
 
 std::ostream &ArrayRef::AsFortran(std::ostream &o) const {
-  Emit(o, u);
+  Emit(o, base_);
   char separator{'('};
-  for (const Subscript &ss : subscript) {
+  for (const Subscript &ss : subscript_) {
     ss.AsFortran(o << separator);
     separator = ',';
   }
@@ -401,7 +401,7 @@ Expr<SubscriptInteger> ArrayRef::LEN() const {
           [](const Symbol *symbol) { return SymbolLEN(*symbol); },
           [](const Component &component) { return component.LEN(); },
       },
-      u);
+      base_);
 }
 
 Expr<SubscriptInteger> CoarrayRef::LEN() const {
@@ -479,7 +479,7 @@ int Subscript::Rank() const {
 
 int ArrayRef::Rank() const {
   int rank{0};
-  for (const auto &expr : subscript) {
+  for (const auto &expr : subscript_) {
     rank += expr.Rank();
   }
   if (rank > 0) {
@@ -490,7 +490,7 @@ int ArrayRef::Rank() const {
           [=](const Symbol *s) { return 0; },
           [=](const Component &c) { return c.Rank(); },
       },
-      u);
+      base_);
 }
 
 int CoarrayRef::Rank() const {
@@ -549,7 +549,7 @@ const Symbol &ArrayRef::GetFirstSymbol() const {
             return &component.GetFirstSymbol();
           },
       },
-      u);
+      base_);
 }
 
 const Symbol &ArrayRef::GetLastSymbol() const {
@@ -560,7 +560,7 @@ const Symbol &ArrayRef::GetLastSymbol() const {
             return &component.GetLastSymbol();
           },
       },
-      u);
+      base_);
 }
 
 const Symbol &DataRef::GetFirstSymbol() const {
@@ -656,14 +656,14 @@ bool Component::operator==(const Component &that) const {
 template<int KIND>
 bool TypeParamInquiry<KIND>::operator==(
     const TypeParamInquiry<KIND> &that) const {
-  return parameter == that.parameter && u == that.u;
+  return parameter_ == that.parameter_ && base_ == that.base_;
 }
 bool Triplet::operator==(const Triplet &that) const {
   return lower_ == that.lower_ && upper_ == that.upper_ &&
       *stride_ == *that.stride_;
 }
 bool ArrayRef::operator==(const ArrayRef &that) const {
-  return u == that.u && subscript == that.subscript;
+  return base_ == that.base_ && subscript_ == that.subscript_;
 }
 bool CoarrayRef::operator==(const CoarrayRef &that) const {
   return base_ == that.base_ && subscript_ == that.subscript_ &&
@@ -682,6 +682,6 @@ bool ProcedureRef::operator==(const ProcedureRef &that) const {
 }
 
 EXPAND_FOR_EACH_INTEGER_KIND(
-    TEMPLATE_INSTANTIATION, template struct TypeParamInquiry)
+    TEMPLATE_INSTANTIATION, template class TypeParamInquiry)
 FOR_EACH_SPECIFIC_TYPE(template class Designator)
 }

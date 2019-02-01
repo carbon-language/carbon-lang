@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "common.h"
+#include "../common/idioms.h"
 
 using namespace Fortran::parser::literals;
 
@@ -21,16 +22,39 @@ namespace Fortran::evaluate {
 void RealFlagWarnings(
     FoldingContext &context, const RealFlags &flags, const char *operation) {
   if (flags.test(RealFlag::Overflow)) {
-    context.messages.Say("overflow on %s"_en_US, operation);
+    context.messages().Say("overflow on %s"_en_US, operation);
   }
   if (flags.test(RealFlag::DivideByZero)) {
-    context.messages.Say("division by zero on %s"_en_US, operation);
+    context.messages().Say("division by zero on %s"_en_US, operation);
   }
   if (flags.test(RealFlag::InvalidArgument)) {
-    context.messages.Say("invalid argument on %s"_en_US, operation);
+    context.messages().Say("invalid argument on %s"_en_US, operation);
   }
   if (flags.test(RealFlag::Underflow)) {
-    context.messages.Say("underflow on %s"_en_US, operation);
+    context.messages().Say("underflow on %s"_en_US, operation);
+  }
+}
+
+std::int64_t &FoldingContext::StartImpliedDo(
+    parser::CharBlock name, std::int64_t n) {
+  auto pair{impliedDos_.insert(std::make_pair(name, n))};
+  CHECK(pair.second);
+  return pair.first->second;
+}
+
+std::optional<std::int64_t> FoldingContext::GetImpliedDo(
+    parser::CharBlock name) const {
+  if (auto iter{impliedDos_.find(name)}; iter != impliedDos_.cend()) {
+    return {iter->second};
+  } else {
+    return std::nullopt;
+  }
+}
+
+void FoldingContext::EndImpliedDo(parser::CharBlock name) {
+  auto iter{impliedDos_.find(name)};
+  if (iter != impliedDos_.end()) {
+    impliedDos_.erase(iter);
   }
 }
 }

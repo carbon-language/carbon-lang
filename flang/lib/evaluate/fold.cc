@@ -89,20 +89,20 @@ Subscript FoldOperation(FoldingContext &context, Subscript &&subscript) {
 }
 
 ArrayRef FoldOperation(FoldingContext &context, ArrayRef &&arrayRef) {
-  for (Subscript &subscript : arrayRef.subscript) {
+  for (Subscript &subscript : arrayRef.subscript()) {
     subscript = FoldOperation(context, std::move(subscript));
   }
   return std::visit(
       common::visitors{
           [&](const Symbol *symbol) {
-            return ArrayRef{*symbol, std::move(arrayRef.subscript)};
+            return ArrayRef{*symbol, std::move(arrayRef.subscript())};
           },
           [&](Component &&component) {
             return ArrayRef{FoldOperation(context, std::move(component)),
-                std::move(arrayRef.subscript)};
+                std::move(arrayRef.subscript())};
           },
       },
-      std::move(arrayRef.u));
+      std::move(arrayRef.base()));
 }
 
 CoarrayRef FoldOperation(FoldingContext &context, CoarrayRef &&coarrayRef) {
@@ -216,9 +216,8 @@ Expr<T> FoldOperation(FoldingContext &context, Designator<T> &&designator) {
 
 Expr<ImpliedDoIndex::Result> FoldOperation(
     FoldingContext &context, ImpliedDoIndex &&iDo) {
-  auto iter{context.impliedDos.find(iDo.name)};
-  if (iter != context.impliedDos.end()) {
-    return Expr<ImpliedDoIndex::Result>{iter->second};
+  if (std::optional<std::int64_t> value{context.GetImpliedDo(iDo.name)}) {
+    return Expr<ImpliedDoIndex::Result>{*value};
   } else {
     return Expr<ImpliedDoIndex::Result>{std::move(iDo)};
   }
@@ -271,13 +270,12 @@ private:
     std::optional<std::int64_t> start{ToInt64(lower)}, end{ToInt64(upper)},
         step{ToInt64(stride)};
     if (start.has_value() && end.has_value() && step.has_value()) {
-      auto pair{context_.impliedDos.insert(std::make_pair(iDo.name, *start))};
-      CHECK(pair.second);
       bool result{true};
-      for (std::int64_t &j{pair.first->second}; j <= *end; j += *step) {
+      for (std::int64_t &j{context_.StartImpliedDo(iDo.name, *start)};
+           j <= *end; j += *step) {
         result &= FoldArray(*iDo.values);
       }
-      context_.impliedDos.erase(pair.first);
+      context_.EndImpliedDo(iDo.name);
       return result;
     } else {
       return false;
@@ -318,16 +316,16 @@ template<int KIND>
 Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
     FoldingContext &context, TypeParamInquiry<KIND> &&inquiry) {
   using IntKIND = Type<TypeCategory::Integer, KIND>;
-  if (Component * component{common::Unwrap<Component>(inquiry.u)}) {
+  if (Component * component{common::Unwrap<Component>(inquiry.base())}) {
     return Expr<IntKIND>{TypeParamInquiry<KIND>{
-        FoldOperation(context, std::move(*component)), *inquiry.parameter}};
+        FoldOperation(context, std::move(*component)), inquiry.parameter()}};
   }
-  if (context.pdtInstance != nullptr &&
-      std::get<const Symbol *>(inquiry.u) == nullptr) {
+  if (context.pdtInstance() != nullptr &&
+      std::get<const Symbol *>(inquiry.base()) == nullptr) {
     // "bare" type parameter: replace with actual value
-    const semantics::Scope *scope{context.pdtInstance->scope()};
+    const semantics::Scope *scope{context.pdtInstance()->scope()};
     CHECK(scope != nullptr);
-    auto iter{scope->find(inquiry.parameter->name())};
+    auto iter{scope->find(inquiry.parameter().name())};
     if (iter != scope->end()) {
       const Symbol &symbol{*iter->second};
       const auto *details{symbol.detailsIf<semantics::TypeParamDetails>()};
@@ -337,8 +335,8 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
             Expr<IntKIND>{
                 Convert<IntKIND, TypeCategory::Integer>(std::move(expr))});
       }
-    } else if (const auto *value{context.pdtInstance->FindParameter(
-                   inquiry.parameter->name())}) {
+    } else if (const auto *value{context.pdtInstance()->FindParameter(
+                   inquiry.parameter().name())}) {
       // Parameter of a parent derived type; these are saved in the spec.
       if (value->isExplicit()) {
         return Fold(context,
@@ -365,7 +363,7 @@ Expr<TO> FoldOperation(
             if constexpr (Operand::category == TypeCategory::Integer) {
               auto converted{Scalar<TO>::ConvertSigned(*value)};
               if (converted.overflow) {
-                context.messages.Say(
+                context.messages().Say(
                     "INTEGER(%d) to INTEGER(%d) conversion overflowed"_en_US,
                     Operand::kind, TO::kind);
               }
@@ -373,11 +371,11 @@ Expr<TO> FoldOperation(
             } else if constexpr (Operand::category == TypeCategory::Real) {
               auto converted{value->template ToInteger<Scalar<TO>>()};
               if (converted.flags.test(RealFlag::InvalidArgument)) {
-                context.messages.Say(
+                context.messages().Say(
                     "REAL(%d) to INTEGER(%d) conversion: invalid argument"_en_US,
                     Operand::kind, TO::kind);
               } else if (converted.flags.test(RealFlag::Overflow)) {
-                context.messages.Say(
+                context.messages().Say(
                     "REAL(%d) to INTEGER(%d) conversion overflowed"_en_US,
                     Operand::kind, TO::kind);
               }
@@ -400,7 +398,7 @@ Expr<TO> FoldOperation(
                     "REAL(%d) to REAL(%d) conversion", Operand::kind, TO::kind);
                 RealFlagWarnings(context, converted.flags, buffer);
               }
-              if (context.flushSubnormalsToZero) {
+              if (context.flushSubnormalsToZero()) {
                 converted.value = converted.value.FlushSubnormalToZero();
               }
               return Expr<TO>{Constant<TO>{std::move(converted.value)}};
@@ -434,7 +432,8 @@ Expr<T> FoldOperation(FoldingContext &context, Negate<T> &&x) {
     if constexpr (T::category == TypeCategory::Integer) {
       auto negated{value->Negate()};
       if (negated.overflow) {
-        context.messages.Say("INTEGER(%d) negation overflowed"_en_US, T::kind);
+        context.messages().Say(
+            "INTEGER(%d) negation overflowed"_en_US, T::kind);
       }
       return Expr<T>{Constant<T>{std::move(negated.value)}};
     } else {
@@ -495,13 +494,14 @@ Expr<T> FoldOperation(FoldingContext &context, Add<T> &&x) {
     if constexpr (T::category == TypeCategory::Integer) {
       auto sum{folded->first.AddSigned(folded->second)};
       if (sum.overflow) {
-        context.messages.Say("INTEGER(%d) addition overflowed"_en_US, T::kind);
+        context.messages().Say(
+            "INTEGER(%d) addition overflowed"_en_US, T::kind);
       }
       return Expr<T>{Constant<T>{sum.value}};
     } else {
-      auto sum{folded->first.Add(folded->second, context.rounding)};
+      auto sum{folded->first.Add(folded->second, context.rounding())};
       RealFlagWarnings(context, sum.flags, "addition");
-      if (context.flushSubnormalsToZero) {
+      if (context.flushSubnormalsToZero()) {
         sum.value = sum.value.FlushSubnormalToZero();
       }
       return Expr<T>{Constant<T>{sum.value}};
@@ -516,14 +516,15 @@ Expr<T> FoldOperation(FoldingContext &context, Subtract<T> &&x) {
     if constexpr (T::category == TypeCategory::Integer) {
       auto difference{folded->first.SubtractSigned(folded->second)};
       if (difference.overflow) {
-        context.messages.Say(
+        context.messages().Say(
             "INTEGER(%d) subtraction overflowed"_en_US, T::kind);
       }
       return Expr<T>{Constant<T>{difference.value}};
     } else {
-      auto difference{folded->first.Subtract(folded->second, context.rounding)};
+      auto difference{
+          folded->first.Subtract(folded->second, context.rounding())};
       RealFlagWarnings(context, difference.flags, "subtraction");
-      if (context.flushSubnormalsToZero) {
+      if (context.flushSubnormalsToZero()) {
         difference.value = difference.value.FlushSubnormalToZero();
       }
       return Expr<T>{Constant<T>{difference.value}};
@@ -538,14 +539,14 @@ Expr<T> FoldOperation(FoldingContext &context, Multiply<T> &&x) {
     if constexpr (T::category == TypeCategory::Integer) {
       auto product{folded->first.MultiplySigned(folded->second)};
       if (product.SignedMultiplicationOverflowed()) {
-        context.messages.Say(
+        context.messages().Say(
             "INTEGER(%d) multiplication overflowed"_en_US, T::kind);
       }
       return Expr<T>{Constant<T>{product.lower}};
     } else {
-      auto product{folded->first.Multiply(folded->second, context.rounding)};
+      auto product{folded->first.Multiply(folded->second, context.rounding())};
       RealFlagWarnings(context, product.flags, "multiplication");
-      if (context.flushSubnormalsToZero) {
+      if (context.flushSubnormalsToZero()) {
         product.value = product.value.FlushSubnormalToZero();
       }
       return Expr<T>{Constant<T>{product.value}};
@@ -560,16 +561,17 @@ Expr<T> FoldOperation(FoldingContext &context, Divide<T> &&x) {
     if constexpr (T::category == TypeCategory::Integer) {
       auto quotAndRem{folded->first.DivideSigned(folded->second)};
       if (quotAndRem.divisionByZero) {
-        context.messages.Say("INTEGER(%d) division by zero"_en_US, T::kind);
+        context.messages().Say("INTEGER(%d) division by zero"_en_US, T::kind);
       }
       if (quotAndRem.overflow) {
-        context.messages.Say("INTEGER(%d) division overflowed"_en_US, T::kind);
+        context.messages().Say(
+            "INTEGER(%d) division overflowed"_en_US, T::kind);
       }
       return Expr<T>{Constant<T>{quotAndRem.quotient}};
     } else {
-      auto quotient{folded->first.Divide(folded->second, context.rounding)};
+      auto quotient{folded->first.Divide(folded->second, context.rounding())};
       RealFlagWarnings(context, quotient.flags, "division");
-      if (context.flushSubnormalsToZero) {
+      if (context.flushSubnormalsToZero()) {
         quotient.value = quotient.value.FlushSubnormalToZero();
       }
       return Expr<T>{Constant<T>{quotient.value}};
@@ -584,12 +586,13 @@ Expr<T> FoldOperation(FoldingContext &context, Power<T> &&x) {
     if constexpr (T::category == TypeCategory::Integer) {
       auto power{folded->first.Power(folded->second)};
       if (power.divisionByZero) {
-        context.messages.Say(
+        context.messages().Say(
             "INTEGER(%d) zero to negative power"_en_US, T::kind);
       } else if (power.overflow) {
-        context.messages.Say("INTEGER(%d) power overflowed"_en_US, T::kind);
+        context.messages().Say("INTEGER(%d) power overflowed"_en_US, T::kind);
       } else if (power.zeroToZero) {
-        context.messages.Say("INTEGER(%d) 0**0 is not defined"_en_US, T::kind);
+        context.messages().Say(
+            "INTEGER(%d) 0**0 is not defined"_en_US, T::kind);
       }
       return Expr<T>{Constant<T>{power.power}};
     } else {
@@ -606,7 +609,7 @@ Expr<T> FoldOperation(FoldingContext &context, RealToIntPower<T> &&x) {
         if (auto folded{FoldOperands(context, x.left(), y)}) {
           auto power{evaluate::IntPower(folded->first, folded->second)};
           RealFlagWarnings(context, power.flags, "power with INTEGER exponent");
-          if (context.flushSubnormalsToZero) {
+          if (context.flushSubnormalsToZero()) {
             power.value = power.value.FlushSubnormalToZero();
           }
           return Expr<T>{Constant<T>{power.value}};
@@ -756,7 +759,8 @@ bool IsConstExpr(ConstExprContext &, const StaticDataObject::Pointer) {
 }
 template<int KIND>
 bool IsConstExpr(ConstExprContext &, const TypeParamInquiry<KIND> &inquiry) {
-  return inquiry.parameter->template get<semantics::TypeParamDetails>()
+  return inquiry.parameter()
+             .template get<semantics::TypeParamDetails>()
              .attr() == common::TypeParamAttr::Kind;
 }
 bool IsConstExpr(ConstExprContext &, const Symbol *symbol) {
@@ -854,8 +858,8 @@ bool IsConstExpr(ConstExprContext &context, const Subscript &subscript) {
   return IsConstExpr(context, subscript.u);
 }
 bool IsConstExpr(ConstExprContext &context, const ArrayRef &arrayRef) {
-  return IsConstExpr(context, arrayRef.u) &&
-      IsConstExpr(context, arrayRef.subscript);
+  return IsConstExpr(context, arrayRef.base()) &&
+      IsConstExpr(context, arrayRef.subscript());
 }
 bool IsConstExpr(ConstExprContext &context, const DataRef &dataRef) {
   return IsConstExpr(context, dataRef.u);

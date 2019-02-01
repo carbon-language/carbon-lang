@@ -16,6 +16,7 @@
 #define FORTRAN_EVALUATE_CALL_H_
 
 #include "common.h"
+#include "constant.h"
 #include "type.h"
 #include "../common/indirection.h"
 #include "../parser/char-block.h"
@@ -93,5 +94,41 @@ struct ProcedureDesignator {
   // TODO: When calling X%F, pass X as PASS argument unless NOPASS
   std::variant<SpecificIntrinsic, const semantics::Symbol *> u;
 };
+
+class ProcedureRef {
+public:
+  CLASS_BOILERPLATE(ProcedureRef)
+  ProcedureRef(ProcedureDesignator &&p, ActualArguments &&a)
+    : proc_{std::move(p)}, arguments_(std::move(a)) {}
+
+  ProcedureDesignator &proc() { return proc_; }
+  const ProcedureDesignator &proc() const { return proc_; }
+  ActualArguments &arguments() { return arguments_; }
+  const ActualArguments &arguments() const { return arguments_; }
+
+  Expr<SubscriptInteger> LEN() const;
+  int Rank() const { return proc_.Rank(); }
+  bool IsElemental() const { return proc_.IsElemental(); }
+  bool operator==(const ProcedureRef &) const;
+  std::ostream &AsFortran(std::ostream &) const;
+
+protected:
+  ProcedureDesignator proc_;
+  ActualArguments arguments_;
+};
+
+template<typename A> class FunctionRef : public ProcedureRef {
+public:
+  using Result = A;
+  CLASS_BOILERPLATE(FunctionRef)
+  FunctionRef(ProcedureRef &&pr) : ProcedureRef{std::move(pr)} {}
+  FunctionRef(ProcedureDesignator &&p, ActualArguments &&a)
+    : ProcedureRef{std::move(p), std::move(a)} {}
+
+  std::optional<DynamicType> GetType() const { return proc_.GetType(); }
+  std::optional<Constant<Result>> Fold(FoldingContext &);  // for intrinsics
+};
+
+FOR_EACH_SPECIFIC_TYPE(extern template class FunctionRef)
 }
 #endif  // FORTRAN_EVALUATE_CALL_H_

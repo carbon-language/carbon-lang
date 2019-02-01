@@ -483,8 +483,8 @@ std::ostream &DumpForUnparse(
 Symbol &Symbol::Instantiate(
     Scope &scope, SemanticsContext &semanticsContext) const {
   evaluate::FoldingContext foldingContext{semanticsContext.foldingContext()};
-  CHECK(foldingContext.pdtInstance != nullptr);
-  const DerivedTypeSpec &instanceSpec{*foldingContext.pdtInstance};
+  CHECK(foldingContext.pdtInstance() != nullptr);
+  const DerivedTypeSpec &instanceSpec{*foldingContext.pdtInstance()};
   auto pair{scope.try_emplace(name_, attrs_)};
   Symbol &symbol{*pair.first->second};
   if (!pair.second) {

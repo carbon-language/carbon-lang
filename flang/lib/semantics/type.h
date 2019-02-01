@@ -34,7 +34,7 @@ struct Expr;
 }
 
 namespace Fortran::evaluate {
-struct FoldingContext;
+class FoldingContext;
 }
 
 namespace Fortran::semantics {

@@ -117,5 +117,5 @@ Expr<SubscriptInteger> ProcedureRef::LEN() const {
   return proc_.LEN();
 }
 
-FOR_EACH_SPECIFIC_TYPE(template struct FunctionRef)
+FOR_EACH_SPECIFIC_TYPE(template class FunctionRef)
 }

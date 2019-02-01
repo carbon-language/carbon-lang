@@ -21,11 +21,8 @@
 // Fortran 2018 language standard (q.v.) and uses strong typing to ensure
 // that only admissable combinations can be constructed.
 
-// TODO pmk: convert remaining structs to classes
-
 #include "call.h"
 #include "common.h"
-#include "constant.h"
 #include "static-data.h"
 #include "type.h"
 #include "../common/idioms.h"
@@ -99,26 +96,33 @@ using SymbolOrComponent = std::variant<const Symbol *, Component>;
 // KIND(x), which is then folded to a constant value.
 // "Bare" type parameter references within a derived type definition do
 // not have base objects here, only symbols.
-template<int KIND> struct TypeParamInquiry {
+template<int KIND> class TypeParamInquiry {
+public:
   using Result = Type<TypeCategory::Integer, KIND>;
   CLASS_BOILERPLATE(TypeParamInquiry)
   TypeParamInquiry(const Symbol &symbol, const Symbol &param)
-    : u{&symbol}, parameter{&param} {}
+    : base_{&symbol}, parameter_{&param} {}
   TypeParamInquiry(Component &&component, const Symbol &param)
-    : u{component}, parameter{&param} {}
+    : base_{std::move(component)}, parameter_{&param} {}
   TypeParamInquiry(SymbolOrComponent &&x, const Symbol &param)
-    : u{x}, parameter{&param} {}
-  explicit TypeParamInquiry(const Symbol &param) : parameter{&param} {}
+    : base_{std::move(x)}, parameter_{&param} {}
+  explicit TypeParamInquiry(const Symbol &param) : parameter_{&param} {}
+
+  SymbolOrComponent &base() { return base_; }
+  const SymbolOrComponent &base() const { return base_; }
+  const Symbol &parameter() const { return *parameter_; }
+
   static constexpr int Rank() { return 0; }  // always scalar
   bool operator==(const TypeParamInquiry &) const;
   std::ostream &AsFortran(std::ostream &) const;
 
-  SymbolOrComponent u{nullptr};
-  const Symbol *parameter;
+private:
+  SymbolOrComponent base_{nullptr};
+  const Symbol *parameter_;
 };
 
 EXPAND_FOR_EACH_INTEGER_KIND(
-    TEMPLATE_INSTANTIATION, extern template struct TypeParamInquiry)
+    TEMPLATE_INSTANTIATION, extern template class TypeParamInquiry)
 
 // R921 subscript-triplet
 class Triplet {
@@ -155,12 +159,25 @@ struct Subscript {
 // as a ComplexPart instead.  C919 & C925 require that at most one set of
 // subscripts have rank greater than 0, but that is not explicit in
 // these types.
-struct ArrayRef {
+class ArrayRef {
+public:
   CLASS_BOILERPLATE(ArrayRef)
   ArrayRef(const Symbol &symbol, std::vector<Subscript> &&ss)
-    : u{&symbol}, subscript(std::move(ss)) {}
+    : base_{&symbol}, subscript_(std::move(ss)) {}
   ArrayRef(Component &&c, std::vector<Subscript> &&ss)
-    : u{std::move(c)}, subscript(std::move(ss)) {}
+    : base_{std::move(c)}, subscript_(std::move(ss)) {}
+
+  SymbolOrComponent &base() { return base_; }
+  const SymbolOrComponent &base() const { return base_; }
+  std::vector<Subscript> &subscript() { return subscript_; }
+  const std::vector<Subscript> &subscript() const { return subscript_; }
+
+  int size() const { return static_cast<int>(subscript_.size()); }
+  Subscript &at(int n) { return subscript_.at(n); }
+  const Subscript &at(int n) const { return subscript_.at(n); }
+  template<typename A> Subscript &emplace_back(A &&x) {
+    return subscript_.emplace_back(std::move(x));
+  }
 
   int Rank() const;
   const Symbol &GetFirstSymbol() const;
@@ -169,8 +186,9 @@ struct ArrayRef {
   bool operator==(const ArrayRef &) const;
   std::ostream &AsFortran(std::ostream &) const;
 
-  SymbolOrComponent u;
-  std::vector<Subscript> subscript;
+private:
+  SymbolOrComponent base_;
+  std::vector<Subscript> subscript_;
 };
 
 // R914 coindexed-named-object
@@ -330,41 +348,6 @@ public:
 };
 
 FOR_EACH_CHARACTER_KIND(extern template class Designator)
-
-class ProcedureRef {
-public:
-  CLASS_BOILERPLATE(ProcedureRef)
-  ProcedureRef(ProcedureDesignator &&p, ActualArguments &&a)
-    : proc_{std::move(p)}, arguments_(std::move(a)) {}
-
-  ProcedureDesignator &proc() { return proc_; }
-  const ProcedureDesignator &proc() const { return proc_; }
-  ActualArguments &arguments() { return arguments_; }
-  const ActualArguments &arguments() const { return arguments_; }
-
-  Expr<SubscriptInteger> LEN() const;
-  int Rank() const { return proc_.Rank(); }
-  bool IsElemental() const { return proc_.IsElemental(); }
-  bool operator==(const ProcedureRef &) const;
-  std::ostream &AsFortran(std::ostream &) const;
-
-protected:
-  ProcedureDesignator proc_;
-  ActualArguments arguments_;
-};
-
-template<typename A> struct FunctionRef : public ProcedureRef {
-  using Result = A;
-  CLASS_BOILERPLATE(FunctionRef)
-  FunctionRef(ProcedureRef &&pr) : ProcedureRef{std::move(pr)} {}
-  FunctionRef(ProcedureDesignator &&p, ActualArguments &&a)
-    : ProcedureRef{std::move(p), std::move(a)} {}
-
-  std::optional<DynamicType> GetType() const { return proc_.GetType(); }
-  std::optional<Constant<Result>> Fold(FoldingContext &);  // for intrinsics
-};
-
-FOR_EACH_SPECIFIC_TYPE(extern template struct FunctionRef)
 
 template<typename A> struct Variable {
   using Result = A;

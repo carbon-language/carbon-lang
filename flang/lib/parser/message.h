@@ -23,6 +23,7 @@
 #include "provenance.h"
 #include "../common/idioms.h"
 #include "../common/reference-counted.h"
+#include "../common/restorer.h"
 #include <cstddef>
 #include <cstring>
 #include <forward_list>
@@ -240,16 +241,6 @@ private:
 
 class ContextualMessages {
 public:
-  class SavedState {
-  public:
-    SavedState(ContextualMessages &, CharBlock);
-    ~SavedState();
-
-  private:
-    ContextualMessages &msgs_;
-    CharBlock at_;
-  };
-
   ContextualMessages(CharBlock at, Messages *m) : at_{at}, messages_{m} {}
   ContextualMessages(const ContextualMessages &that)
     : at_{that.at_}, messages_{that.messages_} {}
@@ -258,7 +249,9 @@ public:
   Messages *messages() const { return messages_; }
 
   // Set CharBlock for messages; restore when the returned value is deleted
-  SavedState SetLocation(const CharBlock &);
+  common::Restorer<CharBlock> SetLocation(CharBlock at) {
+    return common::ScopedSet(at_, std::move(at));
+  }
 
   template<typename... A> Message *Say(CharBlock at, A &&... args) {
     if (messages_ != nullptr) {

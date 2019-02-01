@@ -275,7 +275,7 @@ const DeclTypeSpec &Scope::InstantiateIntrinsicType(
     if (evaluate::IsValidKindOfIntrinsicType(intrinsic->category(), *value)) {
       kind = *value;
     } else {
-      foldingContext.messages.Say(
+      foldingContext.messages().Say(
           "KIND parameter value (%jd) of intrinsic type %s "
           "did not resolve to a supported value"_err_en_US,
           static_cast<std::intmax_t>(*value),
