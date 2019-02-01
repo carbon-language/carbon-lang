@@ -41,7 +41,7 @@ using namespace lld::wasm;
 
 static std::unique_ptr<lto::LTO> createLTO() {
   lto::Config C;
-  C.Options = InitTargetOptionsFromCodeGenFlags();
+  C.Options = initTargetOptionsFromCodeGenFlags();
 
   // Always emit a section per function/data with LTO.
   C.Options.FunctionSections = true;
@@ -53,7 +53,7 @@ static std::unique_ptr<lto::LTO> createLTO() {
   C.DisableVerify = Config->DisableVerify;
   C.DiagHandler = diagnosticHandler;
   C.OptLevel = Config->LTOO;
-  C.MAttrs = GetMAttrs();
+  C.MAttrs = getMAttrs();
   C.CGOptLevel = args::getCGOptLevel(Config->LTOO);
 
   if (Config->Relocatable)
