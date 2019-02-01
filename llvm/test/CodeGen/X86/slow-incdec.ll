@@ -90,7 +90,7 @@ declare void @external_a()
 declare void @external_b()
 declare {i8, i1} @llvm.uadd.with.overflow.i8(i8, i8)
 
-define void @test_tail_call(i32* %ptr) nounwind optsize {
+define void @test_tail_call(i32* %ptr) nounwind {
 ; CHECK-LABEL: test_tail_call:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -99,9 +99,11 @@ define void @test_tail_call(i32* %ptr) nounwind optsize {
 ; CHECK-NEXT:    addb $1, a
 ; CHECK-NEXT:    setb d
 ; CHECK-NEXT:    testb %al, %al
-; CHECK-NEXT:    jne external_b # TAILCALL
+; CHECK-NEXT:    jne .LBB5_2
 ; CHECK-NEXT:  # %bb.1: # %then
 ; CHECK-NEXT:    jmp external_a # TAILCALL
+; CHECK-NEXT:  .LBB5_2: # %else
+; CHECK-NEXT:    jmp external_b # TAILCALL
 entry:
   %val = load i32, i32* %ptr
   %add_ov = call {i32, i1} @llvm.uadd.with.overflow.i32(i32 %val, i32 1)
