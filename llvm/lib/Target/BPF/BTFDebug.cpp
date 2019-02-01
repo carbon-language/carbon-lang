@@ -493,7 +493,7 @@ std::string BTFDebug::populateFileContent(const DISubprogram *SP) {
   auto File = SP->getFile();
   std::string FileName;
 
-  if (!File->getFilename().startswith("/") && File->getDirectory().size())
+  if (File->getDirectory().size())
     FileName = File->getDirectory().str() + "/" + File->getFilename().str();
   else
     FileName = File->getFilename();
