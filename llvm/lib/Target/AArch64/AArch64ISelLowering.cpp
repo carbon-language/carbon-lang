@@ -8398,8 +8398,9 @@ bool AArch64TargetLowering::lowerInterleavedLoad(
     // If we're generating more than one load, compute the base address of
     // subsequent loads as an offset from the previous.
     if (LoadCount > 0)
-      BaseAddr = Builder.CreateConstGEP1_32(
-          BaseAddr, VecTy->getVectorNumElements() * Factor);
+      BaseAddr =
+          Builder.CreateConstGEP1_32(VecTy->getVectorElementType(), BaseAddr,
+                                     VecTy->getVectorNumElements() * Factor);
 
     CallInst *LdN = Builder.CreateCall(
         LdNFunc, Builder.CreateBitCast(BaseAddr, PtrTy), "ldN");
@@ -8561,7 +8562,8 @@ bool AArch64TargetLowering::lowerInterleavedStore(StoreInst *SI,
     // If we generating more than one store, we compute the base address of
     // subsequent stores as an offset from the previous.
     if (StoreCount > 0)
-      BaseAddr = Builder.CreateConstGEP1_32(BaseAddr, LaneLen * Factor);
+      BaseAddr = Builder.CreateConstGEP1_32(SubVecTy->getVectorElementType(),
+                                            BaseAddr, LaneLen * Factor);
 
     Ops.push_back(Builder.CreateBitCast(BaseAddr, PtrTy));
     Builder.CreateCall(StNFunc, Ops);
@@ -11717,8 +11719,9 @@ static Value *UseTlsOffset(IRBuilder<> &IRB, unsigned Offset) {
   Function *ThreadPointerFunc =
       Intrinsic::getDeclaration(M, Intrinsic::thread_pointer);
   return IRB.CreatePointerCast(
-      IRB.CreateConstGEP1_32(IRB.CreateCall(ThreadPointerFunc), Offset),
-      Type::getInt8PtrTy(IRB.getContext())->getPointerTo(0));
+      IRB.CreateConstGEP1_32(IRB.getInt8Ty(), IRB.CreateCall(ThreadPointerFunc),
+                             Offset),
+      IRB.getInt8PtrTy()->getPointerTo(0));
 }
 
 Value *AArch64TargetLowering::getIRStackGuard(IRBuilder<> &IRB) const {

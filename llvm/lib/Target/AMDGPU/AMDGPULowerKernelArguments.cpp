@@ -140,17 +140,14 @@ bool AMDGPULowerKernelArguments::runOnFunction(Function &F) {
       //
       // Additionally widen any sub-dword load to i32 even if suitably aligned,
       // so that CSE between different argument loads works easily.
-
       ArgPtr = Builder.CreateConstInBoundsGEP1_64(
-        KernArgSegment,
-        AlignDownOffset,
-        Arg.getName() + ".kernarg.offset.align.down");
+          Builder.getInt8Ty(), KernArgSegment, AlignDownOffset,
+          Arg.getName() + ".kernarg.offset.align.down");
       AdjustedArgTy = Builder.getInt32Ty();
     } else {
       ArgPtr = Builder.CreateConstInBoundsGEP1_64(
-        KernArgSegment,
-        EltOffset,
-        Arg.getName() + ".kernarg.offset");
+          Builder.getInt8Ty(), KernArgSegment, EltOffset,
+          Arg.getName() + ".kernarg.offset");
       AdjustedArgTy = ArgTy;
     }
 

@@ -1392,7 +1392,7 @@ static void instrumentMaskedLoadOrStore(AddressSanitizer *Pass,
 
     IRBuilder<> IRB(InsertBefore);
     InstrumentedAddress =
-        IRB.CreateGEP(Addr, {Zero, ConstantInt::get(IntptrTy, Idx)});
+        IRB.CreateGEP(VTy, Addr, {Zero, ConstantInt::get(IntptrTy, Idx)});
     doInstrumentAddress(Pass, I, InsertBefore, InstrumentedAddress, Alignment,
                         Granularity, ElemTypeSize, IsWrite, SizeArgument,
                         UseCalls, Exp);

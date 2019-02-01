@@ -212,8 +212,8 @@ static Instruction *simplifyAllocaArraySize(InstCombiner &IC, AllocaInst &AI) {
       Type *IdxTy = IC.getDataLayout().getIntPtrType(AI.getType());
       Value *NullIdx = Constant::getNullValue(IdxTy);
       Value *Idx[2] = {NullIdx, NullIdx};
-      Instruction *GEP =
-          GetElementPtrInst::CreateInBounds(New, Idx, New->getName() + ".sub");
+      Instruction *GEP = GetElementPtrInst::CreateInBounds(
+          NewTy, New, Idx, New->getName() + ".sub");
       IC.InsertNewInstBefore(GEP, *It);
 
       // Now make everything use the getelementptr instead of the original

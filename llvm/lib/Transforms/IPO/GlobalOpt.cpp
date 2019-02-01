@@ -729,7 +729,8 @@ static bool OptimizeAwayTrappingUsesOfValue(Value *V, Constant *NewV) {
           break;
       if (Idxs.size() == GEPI->getNumOperands()-1)
         Changed |= OptimizeAwayTrappingUsesOfValue(
-            GEPI, ConstantExpr::getGetElementPtr(nullptr, NewV, Idxs));
+            GEPI, ConstantExpr::getGetElementPtr(GEPI->getSourceElementType(),
+                                                 NewV, Idxs));
       if (GEPI->use_empty()) {
         Changed = true;
         GEPI->eraseFromParent();

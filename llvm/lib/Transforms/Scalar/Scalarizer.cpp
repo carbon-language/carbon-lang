@@ -245,14 +245,13 @@ Value *Scatterer::operator[](unsigned I) {
     return CV[I];
   IRBuilder<> Builder(BB, BBI);
   if (PtrTy) {
+    Type *ElTy = PtrTy->getElementType()->getVectorElementType();
     if (!CV[0]) {
-      Type *Ty =
-        PointerType::get(PtrTy->getElementType()->getVectorElementType(),
-                         PtrTy->getAddressSpace());
-      CV[0] = Builder.CreateBitCast(V, Ty, V->getName() + ".i0");
+      Type *NewPtrTy = PointerType::get(ElTy, PtrTy->getAddressSpace());
+      CV[0] = Builder.CreateBitCast(V, NewPtrTy, V->getName() + ".i0");
     }
     if (I != 0)
-      CV[I] = Builder.CreateConstGEP1_32(nullptr, CV[0], I,
+      CV[I] = Builder.CreateConstGEP1_32(ElTy, CV[0], I,
                                          V->getName() + ".i" + Twine(I));
   } else {
     // Search through a chain of InsertElementInsts looking for element I.

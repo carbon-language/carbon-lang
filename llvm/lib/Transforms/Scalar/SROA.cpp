@@ -1371,8 +1371,8 @@ static Value *buildGEP(IRBuilderTy &IRB, Value *BasePtr,
   if (Indices.size() == 1 && cast<ConstantInt>(Indices.back())->isZero())
     return BasePtr;
 
-  return IRB.CreateInBoundsGEP(nullptr, BasePtr, Indices,
-                               NamePrefix + "sroa_idx");
+  return IRB.CreateInBoundsGEP(BasePtr->getType()->getPointerElementType(),
+                               BasePtr, Indices, NamePrefix + "sroa_idx");
 }
 
 /// Get a natural GEP off of the BasePtr walking through Ty toward
@@ -3298,7 +3298,7 @@ private:
       assert(Ty->isSingleValueType());
       // Load the single value and insert it using the indices.
       Value *GEP =
-          IRB.CreateInBoundsGEP(nullptr, Ptr, GEPIndices, Name + ".gep");
+          IRB.CreateInBoundsGEP(BaseTy, Ptr, GEPIndices, Name + ".gep");
       LoadInst *Load = IRB.CreateAlignedLoad(Ty, GEP, Align, Name + ".load");
       if (AATags)
         Load->setAAMetadata(AATags);
@@ -3343,7 +3343,7 @@ private:
       Value *ExtractValue =
           IRB.CreateExtractValue(Agg, Indices, Name + ".extract");
       Value *InBoundsGEP =
-          IRB.CreateInBoundsGEP(nullptr, Ptr, GEPIndices, Name + ".gep");
+          IRB.CreateInBoundsGEP(BaseTy, Ptr, GEPIndices, Name + ".gep");
       StoreInst *Store =
           IRB.CreateAlignedStore(ExtractValue, InBoundsGEP, Align);
       if (AATags)

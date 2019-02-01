@@ -598,7 +598,8 @@ void InstrProfiling::lowerIncrement(InstrProfIncrementInst *Inc) {
 
   IRBuilder<> Builder(Inc);
   uint64_t Index = Inc->getIndex()->getZExtValue();
-  Value *Addr = Builder.CreateConstInBoundsGEP2_64(Counters, 0, Index);
+  Value *Addr = Builder.CreateConstInBoundsGEP2_64(Counters->getValueType(),
+                                                   Counters, 0, Index);
 
   if (Options.Atomic || AtomicCounterUpdateAll) {
     Builder.CreateAtomicRMW(AtomicRMWInst::Add, Addr, Inc->getStep(),

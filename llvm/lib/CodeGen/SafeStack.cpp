@@ -550,7 +550,7 @@ Value *SafeStack::moveStaticAllocasToUnsafeStack(
 
   if (StackGuardSlot) {
     unsigned Offset = SSL.getObjectOffset(StackGuardSlot);
-    Value *Off = IRB.CreateGEP(BasePointer, // BasePointer is i8*
+    Value *Off = IRB.CreateGEP(Int8Ty, BasePointer, // BasePointer is i8*
                                ConstantInt::get(Int32Ty, -Offset));
     Value *NewAI =
         IRB.CreateBitCast(Off, StackGuardSlot->getType(), "StackGuardSlot");
@@ -569,7 +569,7 @@ Value *SafeStack::moveStaticAllocasToUnsafeStack(
     if (Size == 0)
       Size = 1; // Don't create zero-sized stack objects.
 
-    Value *Off = IRB.CreateGEP(BasePointer, // BasePointer is i8*
+    Value *Off = IRB.CreateGEP(Int8Ty, BasePointer, // BasePointer is i8*
                                ConstantInt::get(Int32Ty, -Offset));
     Value *NewArg = IRB.CreateBitCast(Off, Arg->getType(),
                                      Arg->getName() + ".unsafe-byval");
@@ -609,7 +609,7 @@ Value *SafeStack::moveStaticAllocasToUnsafeStack(
         InsertBefore = User;
 
       IRBuilder<> IRBUser(InsertBefore);
-      Value *Off = IRBUser.CreateGEP(BasePointer, // BasePointer is i8*
+      Value *Off = IRBUser.CreateGEP(Int8Ty, BasePointer, // BasePointer is i8*
                                      ConstantInt::get(Int32Ty, -Offset));
       Value *Replacement = IRBUser.CreateBitCast(Off, AI->getType(), Name);
 
@@ -637,7 +637,7 @@ Value *SafeStack::moveStaticAllocasToUnsafeStack(
   IRB.SetInsertPoint(BasePointer->getNextNode());
 
   Value *StaticTop =
-      IRB.CreateGEP(BasePointer, ConstantInt::get(Int32Ty, -FrameSize),
+      IRB.CreateGEP(Int8Ty, BasePointer, ConstantInt::get(Int32Ty, -FrameSize),
                     "unsafe_stack_static_top");
   IRB.CreateStore(StaticTop, UnsafeStackPtr);
   return StaticTop;

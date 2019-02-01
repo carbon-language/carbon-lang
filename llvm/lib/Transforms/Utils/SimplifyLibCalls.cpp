@@ -737,7 +737,8 @@ Value *LibCallSimplifier::optimizeStrStr(CallInst *CI, IRBuilder<> &B) {
 
     // strstr("abcd", "bc") -> gep((char*)"abcd", 1)
     Value *Result = castToCStr(CI->getArgOperand(0), B);
-    Result = B.CreateConstInBoundsGEP1_64(Result, Offset, "strstr");
+    Result =
+        B.CreateConstInBoundsGEP1_64(B.getInt8Ty(), Result, Offset, "strstr");
     return B.CreateBitCast(Result, CI->getType());
   }
 

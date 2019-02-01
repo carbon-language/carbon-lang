@@ -213,7 +213,8 @@ void X86InterleavedAccessGroup::decompose(
   // Generate N loads of T type.
   for (unsigned i = 0; i < NumLoads; i++) {
     // TODO: Support inbounds GEP.
-    Value *NewBasePtr = Builder.CreateGEP(VecBasePtr, Builder.getInt32(i));
+    Value *NewBasePtr =
+        Builder.CreateGEP(VecBaseTy, VecBasePtr, Builder.getInt32(i));
     Instruction *NewLoad =
         Builder.CreateAlignedLoad(VecBaseTy, NewBasePtr, LI->getAlignment());
     DecomposedVectors.push_back(NewLoad);

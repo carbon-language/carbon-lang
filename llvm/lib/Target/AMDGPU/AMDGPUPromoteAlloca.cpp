@@ -244,10 +244,10 @@ AMDGPUPromoteAlloca::getLocalSizeYZ(IRBuilder<> &Builder) {
   // We could do a single 64-bit load here, but it's likely that the basic
   // 32-bit and extract sequence is already present, and it is probably easier
   // to CSE this. The loads should be mergable later anyway.
-  Value *GEPXY = Builder.CreateConstInBoundsGEP1_64(CastDispatchPtr, 1);
+  Value *GEPXY = Builder.CreateConstInBoundsGEP1_64(I32Ty, CastDispatchPtr, 1);
   LoadInst *LoadXY = Builder.CreateAlignedLoad(I32Ty, GEPXY, 4);
 
-  Value *GEPZU = Builder.CreateConstInBoundsGEP1_64(CastDispatchPtr, 2);
+  Value *GEPZU = Builder.CreateConstInBoundsGEP1_64(I32Ty, CastDispatchPtr, 2);
   LoadInst *LoadZU = Builder.CreateAlignedLoad(I32Ty, GEPZU, 4);
 
   MDNode *MD = MDNode::get(Mod->getContext(), None);

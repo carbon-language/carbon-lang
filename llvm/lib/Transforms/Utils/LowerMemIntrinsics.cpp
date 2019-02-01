@@ -332,9 +332,10 @@ static void createMemMoveLoop(Instruction *InsertBefore,
   Value *IndexPtr = LoopBuilder.CreateSub(
       LoopPhi, ConstantInt::get(TypeOfCopyLen, 1), "index_ptr");
   Value *Element = LoopBuilder.CreateLoad(
-      EltTy, LoopBuilder.CreateInBoundsGEP(SrcAddr, IndexPtr), "element");
-  LoopBuilder.CreateStore(Element,
-                          LoopBuilder.CreateInBoundsGEP(DstAddr, IndexPtr));
+      EltTy, LoopBuilder.CreateInBoundsGEP(EltTy, SrcAddr, IndexPtr),
+      "element");
+  LoopBuilder.CreateStore(
+      Element, LoopBuilder.CreateInBoundsGEP(EltTy, DstAddr, IndexPtr));
   LoopBuilder.CreateCondBr(
       LoopBuilder.CreateICmpEQ(IndexPtr, ConstantInt::get(TypeOfCopyLen, 0)),
       ExitBB, LoopBB);
@@ -349,9 +350,10 @@ static void createMemMoveLoop(Instruction *InsertBefore,
   IRBuilder<> FwdLoopBuilder(FwdLoopBB);
   PHINode *FwdCopyPhi = FwdLoopBuilder.CreatePHI(TypeOfCopyLen, 0, "index_ptr");
   Value *FwdElement = FwdLoopBuilder.CreateLoad(
-      EltTy, FwdLoopBuilder.CreateInBoundsGEP(SrcAddr, FwdCopyPhi), "element");
+      EltTy, FwdLoopBuilder.CreateInBoundsGEP(EltTy, SrcAddr, FwdCopyPhi),
+      "element");
   FwdLoopBuilder.CreateStore(
-      FwdElement, FwdLoopBuilder.CreateInBoundsGEP(DstAddr, FwdCopyPhi));
+      FwdElement, FwdLoopBuilder.CreateInBoundsGEP(EltTy, DstAddr, FwdCopyPhi));
   Value *FwdIndexPtr = FwdLoopBuilder.CreateAdd(
       FwdCopyPhi, ConstantInt::get(TypeOfCopyLen, 1), "index_increment");
   FwdLoopBuilder.CreateCondBr(FwdLoopBuilder.CreateICmpEQ(FwdIndexPtr, CopyLen),

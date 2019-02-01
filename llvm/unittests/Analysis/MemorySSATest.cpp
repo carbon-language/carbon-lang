@@ -1227,7 +1227,7 @@ TEST_F(MemorySSATest, LifetimeMarkersAreClobbers) {
   B.SetInsertPoint(Entry);
   Value *Foo = &*F->arg_begin();
 
-  Value *Bar = B.CreateGEP(Foo, B.getInt64(1), "bar");
+  Value *Bar = B.CreateGEP(B.getInt8Ty(), Foo, B.getInt64(1), "bar");
 
   B.CreateStore(B.getInt8(0), Foo);
   B.CreateStore(B.getInt8(0), Bar);

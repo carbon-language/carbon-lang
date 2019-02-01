@@ -773,7 +773,8 @@ TEST_F(ScalarEvolutionsTest, SCEVZeroExtendExprNonIntegral) {
   Phi->addIncoming(Add, L);
 
   Builder.SetInsertPoint(Post);
-  Value *GepBase = Builder.CreateGEP(Arg, ConstantInt::get(T_int64, 1));
+  Value *GepBase =
+      Builder.CreateGEP(T_int64, Arg, ConstantInt::get(T_int64, 1));
   Instruction *Ret = Builder.CreateRetVoid();
 
   ScalarEvolution SE = buildSE(*F);

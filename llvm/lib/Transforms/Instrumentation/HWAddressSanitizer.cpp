@@ -789,7 +789,8 @@ Value *HWAddressSanitizer::getHwasanThreadSlotPtr(IRBuilder<> &IRB, Type *Ty) {
     Function *ThreadPointerFunc =
         Intrinsic::getDeclaration(M, Intrinsic::thread_pointer);
     Value *SlotPtr = IRB.CreatePointerCast(
-        IRB.CreateConstGEP1_32(IRB.CreateCall(ThreadPointerFunc), 0x30),
+        IRB.CreateConstGEP1_32(IRB.getInt8Ty(),
+                               IRB.CreateCall(ThreadPointerFunc), 0x30),
         Ty->getPointerTo(0));
     return SlotPtr;
   }

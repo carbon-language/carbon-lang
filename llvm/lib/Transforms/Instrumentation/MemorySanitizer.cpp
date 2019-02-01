@@ -557,6 +557,7 @@ private:
   FunctionCallee MemmoveFn, MemcpyFn, MemsetFn;
 
   /// KMSAN callback for task-local function argument shadow.
+  StructType *MsanContextStateTy;
   FunctionCallee MsanGetContextStateFn;
 
   /// Functions for poisoning/unpoisoning local variables
@@ -677,18 +678,15 @@ void MemorySanitizer::createKernelApi(Module &M) {
                                     IRB.getInt32Ty());
   // Requests the per-task context state (kmsan_context_state*) from the
   // runtime library.
+  MsanContextStateTy = StructType::get(
+      ArrayType::get(IRB.getInt64Ty(), kParamTLSSize / 8),
+      ArrayType::get(IRB.getInt64Ty(), kRetvalTLSSize / 8),
+      ArrayType::get(IRB.getInt64Ty(), kParamTLSSize / 8),
+      ArrayType::get(IRB.getInt64Ty(), kParamTLSSize / 8), /* va_arg_origin */
+      IRB.getInt64Ty(), ArrayType::get(OriginTy, kParamTLSSize / 4), OriginTy,
+      OriginTy);
   MsanGetContextStateFn = M.getOrInsertFunction(
-      "__msan_get_context_state",
-      PointerType::get(
-          StructType::get(ArrayType::get(IRB.getInt64Ty(), kParamTLSSize / 8),
-                          ArrayType::get(IRB.getInt64Ty(), kRetvalTLSSize / 8),
-                          ArrayType::get(IRB.getInt64Ty(), kParamTLSSize / 8),
-                          ArrayType::get(IRB.getInt64Ty(),
-                                         kParamTLSSize / 8), /* va_arg_origin */
-                          IRB.getInt64Ty(),
-                          ArrayType::get(OriginTy, kParamTLSSize / 4), OriginTy,
-                          OriginTy),
-          0));
+      "__msan_get_context_state", PointerType::get(MsanContextStateTy, 0));
 
   Type *RetTy = StructType::get(PointerType::get(IRB.getInt8Ty(), 0),
                                 PointerType::get(IRB.getInt32Ty(), 0));
@@ -1096,7 +1094,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
     for (unsigned i = Ofs; i < (Size + kOriginSize - 1) / kOriginSize; ++i) {
       Value *GEP =
-          i ? IRB.CreateConstGEP1_32(nullptr, OriginPtr, i) : OriginPtr;
+          i ? IRB.CreateConstGEP1_32(MS.OriginTy, OriginPtr, i) : OriginPtr;
       IRB.CreateAlignedStore(Origin, GEP, CurrentAlignment);
       CurrentAlignment = kMinOriginAlignment;
     }
@@ -1241,20 +1239,22 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     IRBuilder<> IRB(F.getEntryBlock().getFirstNonPHI());
     Value *ContextState = IRB.CreateCall(MS.MsanGetContextStateFn, {});
     Constant *Zero = IRB.getInt32(0);
-    MS.ParamTLS =
-        IRB.CreateGEP(ContextState, {Zero, IRB.getInt32(0)}, "param_shadow");
-    MS.RetvalTLS =
-        IRB.CreateGEP(ContextState, {Zero, IRB.getInt32(1)}, "retval_shadow");
-    MS.VAArgTLS =
-        IRB.CreateGEP(ContextState, {Zero, IRB.getInt32(2)}, "va_arg_shadow");
-    MS.VAArgOriginTLS =
-        IRB.CreateGEP(ContextState, {Zero, IRB.getInt32(3)}, "va_arg_origin");
-    MS.VAArgOverflowSizeTLS = IRB.CreateGEP(
-        ContextState, {Zero, IRB.getInt32(4)}, "va_arg_overflow_size");
-    MS.ParamOriginTLS =
-        IRB.CreateGEP(ContextState, {Zero, IRB.getInt32(5)}, "param_origin");
+    MS.ParamTLS = IRB.CreateGEP(MS.MsanContextStateTy, ContextState,
+                                {Zero, IRB.getInt32(0)}, "param_shadow");
+    MS.RetvalTLS = IRB.CreateGEP(MS.MsanContextStateTy, ContextState,
+                                 {Zero, IRB.getInt32(1)}, "retval_shadow");
+    MS.VAArgTLS = IRB.CreateGEP(MS.MsanContextStateTy, ContextState,
+                                {Zero, IRB.getInt32(2)}, "va_arg_shadow");
+    MS.VAArgOriginTLS = IRB.CreateGEP(MS.MsanContextStateTy, ContextState,
+                                      {Zero, IRB.getInt32(3)}, "va_arg_origin");
+    MS.VAArgOverflowSizeTLS =
+        IRB.CreateGEP(MS.MsanContextStateTy, ContextState,
+                      {Zero, IRB.getInt32(4)}, "va_arg_overflow_size");
+    MS.ParamOriginTLS = IRB.CreateGEP(MS.MsanContextStateTy, ContextState,
+                                      {Zero, IRB.getInt32(5)}, "param_origin");
     MS.RetvalOriginTLS =
-        IRB.CreateGEP(ContextState, {Zero, IRB.getInt32(6)}, "retval_origin");
+        IRB.CreateGEP(MS.MsanContextStateTy, ContextState,
+                      {Zero, IRB.getInt32(6)}, "retval_origin");
     return ret;
   }
 

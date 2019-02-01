@@ -1015,7 +1015,8 @@ Value *DFSanFunction::getRetvalTLS() {
 
 Value *DFSanFunction::getArgTLS(unsigned Idx, Instruction *Pos) {
   IRBuilder<> IRB(Pos);
-  return IRB.CreateConstGEP2_64(getArgTLSPtr(), 0, Idx);
+  return IRB.CreateConstGEP2_64(ArrayType::get(DFS.ShadowTy, 64),
+                                getArgTLSPtr(), 0, Idx);
 }
 
 Value *DFSanFunction::getShadow(Value *V) {
