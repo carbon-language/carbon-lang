@@ -29,7 +29,7 @@ extern "C" int LLVMFuzzerTestOneInput(uint8_t *data, size_t size) {
   std::FILE *In = fmemopen(data, size, "r");
   auto Transport = newJSONTransport(In, llvm::nulls(),
                                     /*InMirror=*/nullptr, /*Pretty=*/false,
-                                    /*Style=*/JSONStreamStyle::Standard);
+                                    /*Style=*/JSONStreamStyle::Delimited);
   RealFileSystemProvider FS;
   CodeCompleteOptions CCOpts;
   CCOpts.EnableSnippets = false;
