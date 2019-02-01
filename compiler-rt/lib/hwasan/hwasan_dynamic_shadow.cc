@@ -121,7 +121,7 @@ decltype(__hwasan_shadow)* __hwasan_premap_shadow() {
 INTERFACE_ATTRIBUTE __attribute__((ifunc("__hwasan_premap_shadow")))
 void __hwasan_shadow();
 
-extern __attribute((visibility("hidden"))) ElfW(Rela) __rela_iplt_start[],
+extern __attribute((weak, visibility("hidden"))) ElfW(Rela) __rela_iplt_start[],
     __rela_iplt_end[];
 
 }  // extern "C"
