@@ -53,9 +53,11 @@ using LogicalResult = Type<TypeCategory::Logical, 1>;
 using LargestReal = Type<TypeCategory::Real, 16>;
 
 // DynamicType is suitable for use as the result type for
-// GetType() functions and member functions.  It does *not*
-// hold CHARACTER length type parameter expressions -- those
-// must be derived via LEN() member functions or packaged
+// GetType() functions and member functions; consequently,
+// it must be capable of being used in a constexpr context.
+// So it does *not* hold anything requiring a destructor,
+// such as a CHARACTER length type parameter expression.
+// Those must be derived via LEN() member functions or packaged
 // elsewhere (e.g. as in ArrayConstructor).
 struct DynamicType {
   bool operator==(const DynamicType &) const;

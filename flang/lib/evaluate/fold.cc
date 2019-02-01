@@ -191,7 +191,7 @@ Expr<T> FoldOperation(FoldingContext &context, Designator<T> &&designator) {
   if constexpr (T::category == TypeCategory::Character) {
     if (auto *substring{common::Unwrap<Substring>(designator.u)}) {
       if (std::optional<Expr<SomeCharacter>> folded{substring->Fold(context)}) {
-        if (const auto *value{GetScalarConstantValue<T>(*folded)}) {
+        if (auto value{GetScalarConstantValue<T>(*folded)}) {
           return Expr<T>{*value};
         }
       }
@@ -304,7 +304,7 @@ Expr<T> FoldOperation(FoldingContext &context, ArrayConstructor<T> &&array) {
   return result;
 }
 
-// TODO this specializations is a placeholder: don't fold array constructors
+// TODO this specialization is a placeholder: don't fold array constructors
 // of derived type for now
 Expr<SomeDerived> FoldOperation(
     FoldingContext &context, ArrayConstructor<SomeDerived> &&array) {
@@ -358,7 +358,7 @@ Expr<TO> FoldOperation(
         kindExpr = Fold(context, std::move(kindExpr));
         using Operand = ResultType<decltype(kindExpr)>;
         char buffer[64];
-        if (const auto *value{GetScalarConstantValue<Operand>(kindExpr)}) {
+        if (auto value{GetScalarConstantValue<Operand>(kindExpr)}) {
           if constexpr (TO::category == TypeCategory::Integer) {
             if constexpr (Operand::category == TypeCategory::Integer) {
               auto converted{Scalar<TO>::ConvertSigned(*value)};
@@ -417,7 +417,7 @@ template<typename T>
 Expr<T> FoldOperation(FoldingContext &context, Parentheses<T> &&x) {
   auto &operand{x.left()};
   operand = Fold(context, std::move(operand));
-  if (const auto *value{GetScalarConstantValue<T>(operand)}) {
+  if (auto value{GetScalarConstantValue<T>(operand)}) {
     // Preserve parentheses, even around constants.
     return Expr<T>{Parentheses<T>{Expr<T>{Constant<T>{*value}}}};
   }
@@ -428,7 +428,7 @@ template<typename T>
 Expr<T> FoldOperation(FoldingContext &context, Negate<T> &&x) {
   auto &operand{x.left()};
   operand = Fold(context, std::move(operand));
-  if (const auto *value{GetScalarConstantValue<T>(operand)}) {
+  if (auto value{GetScalarConstantValue<T>(operand)}) {
     if constexpr (T::category == TypeCategory::Integer) {
       auto negated{value->Negate()};
       if (negated.overflow) {
@@ -451,7 +451,7 @@ Expr<Type<TypeCategory::Real, KIND>> FoldOperation(
   using Part = Type<TypeCategory::Real, KIND>;
   auto &operand{x.left()};
   operand = Fold(context, std::move(operand));
-  if (const auto *value{GetScalarConstantValue<Operand>(operand)}) {
+  if (auto value{GetScalarConstantValue<Operand>(operand)}) {
     if (x.isImaginaryPart) {
       return Expr<Part>{Constant<Part>{value->AIMAG()}};
     } else {
@@ -467,7 +467,7 @@ Expr<Type<TypeCategory::Logical, KIND>> FoldOperation(
   using Ty = Type<TypeCategory::Logical, KIND>;
   auto &operand{x.left()};
   operand = Fold(context, std::move(operand));
-  if (const auto *value{GetScalarConstantValue<Ty>(operand)}) {
+  if (auto value{GetScalarConstantValue<Ty>(operand)}) {
     return Expr<Ty>{Constant<Ty>{value->IsTrue()}};
   }
   return Expr<Ty>{x};
@@ -480,8 +480,8 @@ std::optional<std::pair<Scalar<T1>, Scalar<T2>>> FoldOperands(
     FoldingContext &context, Expr<T1> &x, Expr<T2> &y) {
   x = Fold(context, std::move(x));  // use of std::move() on &x is intentional
   y = Fold(context, std::move(y));
-  if (const auto *xvalue{GetScalarConstantValue<T1>(x)}) {
-    if (const auto *yvalue{GetScalarConstantValue<T2>(y)}) {
+  if (auto xvalue{GetScalarConstantValue<T1>(x)}) {
+    if (auto yvalue{GetScalarConstantValue<T2>(y)}) {
       return {std::make_pair(*xvalue, *yvalue)};
     }
   }

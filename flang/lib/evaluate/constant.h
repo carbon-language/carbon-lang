@@ -19,6 +19,7 @@
 #include <ostream>
 
 namespace Fortran::evaluate {
+
 // Wraps a constant value in a class templated by its resolved type.
 // N.B. Generic constants are represented by generic expressions
 // (like Expr<SomeInteger> & Expr<SomeType>) wrapping the appropriate
@@ -43,35 +44,17 @@ public:
   bool operator==(const Constant &that) const {
     return shape_ == that.shape_ && values_ == that.values_;
   }
+  bool empty() const { return values_.empty(); }
   std::size_t size() const { return values_.size(); }
   const std::vector<std::int64_t> &shape() const { return shape_; }
-  std::int64_t LEN() const {
-    if constexpr (T::category != TypeCategory::Character) {
-      common::die("LEN() of non-character Constant");
-    } else if (values_.empty()) {
-      return 0;
-    } else {
-      return static_cast<std::int64_t>(values_[0].size());
-    }
-  }
 
-  const Value &operator*() const {
+  Value operator*() const {
     CHECK(values_.size() == 1);
     return values_.at(0);
   }
 
-  const Value &At(const std::vector<std::int64_t> &index) {
-    CHECK(index.size() == static_cast<std::size_t>(Rank()));
-    std::int64_t stride{1}, offset{0};
-    int dim{0};
-    for (std::int64_t j : index) {
-      std::int64_t bound{shape_[dim++]};
-      CHECK(j >= 1 && j <= bound);
-      offset += stride * (j - 1);
-      stride *= bound;
-    }
-    return values_.at(offset);
-  }
+  // Apply 1-based subscripts
+  Value At(const std::vector<std::int64_t> &) const;
 
   Constant<SubscriptInteger> SHAPE() const;
   std::ostream &AsFortran(std::ostream &) const;
@@ -79,8 +62,21 @@ public:
 private:
   std::vector<Value> values_;
   std::vector<std::int64_t> shape_;
-  // TODO pmk: make CHARACTER values contiguous
+  // TODO pmk: make CHARACTER values contiguous (they're strings now)
 };
+
+// Would prefer to have this be a member function of Constant enabled
+// only for CHARACTER, but std::enable_if<> isn't effective in that context.
+template<int KIND>
+std::int64_t ConstantLEN(
+    const Constant<Type<TypeCategory::Character, KIND>> &c) {
+  if (c.empty()) {
+    return 0;
+  } else {
+    std::vector<std::int64_t> ones(c.Rank(), 1);
+    return c.At(ones).size();
+  }
+}
 
 FOR_EACH_INTRINSIC_KIND(extern template class Constant)
 }

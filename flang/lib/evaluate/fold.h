@@ -50,35 +50,44 @@ std::optional<Expr<T>> Fold(
 // GetScalarConstantValue() isolates the known constant value of
 // an expression, if it has one.  The value can be parenthesized.
 template<typename T>
-const Scalar<T> *GetScalarConstantValue(const Expr<T> &expr) {
+std::optional<Scalar<T>> GetScalarConstantValue(const Expr<T> &expr) {
   if (const auto *c{UnwrapExpr<Constant<T>>(expr)}) {
     if (c->size() == 1) {
-      return &**c;
+      return **c;
     } else {
-      return nullptr;
+      return std::nullopt;
     }
   } else if (const auto *parens{UnwrapExpr<Parentheses<T>>(expr)}) {
     return GetScalarConstantValue<T>(parens->left());
   } else {
-    return nullptr;
+    return std::nullopt;
   }
 }
 
 template<typename T>
-const Scalar<T> *GetScalarConstantValue(
+std::optional<Scalar<T>> GetScalarConstantValue(
     const Expr<SomeKind<T::category>> &expr) {
   if (const auto *kindExpr{UnwrapExpr<Expr<T>>(expr)}) {
     return GetScalarConstantValue<T>(*kindExpr);
   }
-  return nullptr;
+  return std::nullopt;
 }
 
 template<typename T>
-const Scalar<T> *GetScalarConstantValue(const Expr<SomeType> &expr) {
+std::optional<Scalar<T>> GetScalarConstantValue(const Expr<SomeType> &expr) {
   if (const auto *kindExpr{UnwrapExpr<Expr<T>>(expr)}) {
     return GetScalarConstantValue<T>(*kindExpr);
   }
-  return nullptr;
+  return std::nullopt;
+}
+
+template<typename T, typename A>
+std::optional<Scalar<T>> GetScalarConstantValue(const std::optional<A> &expr) {
+  if (expr.has_value()) {
+    return GetScalarConstantValue(*expr);
+  } else {
+    return std::nullopt;
+  }
 }
 
 // Predicate: true when an expression is a constant expression (in the
@@ -92,8 +101,7 @@ bool IsConstantExpr(const Expr<SomeType> &);
 template<int KIND>
 std::optional<std::int64_t> ToInt64(
     const Expr<Type<TypeCategory::Integer, KIND>> &expr) {
-  using Ty = Type<TypeCategory::Integer, KIND>;
-  if (const Scalar<Ty> *scalar{GetScalarConstantValue(expr)}) {
+  if (auto scalar{GetScalarConstantValue(expr)}) {
     return {scalar->ToInt64()};
   } else {
     return std::nullopt;

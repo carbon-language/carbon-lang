@@ -65,6 +65,20 @@ std::ostream &Constant<T>::AsFortran(std::ostream &o) const {
   return o;
 }
 
+template<typename T>
+auto Constant<T>::At(const std::vector<std::int64_t> &index) const -> Value {
+  CHECK(index.size() == static_cast<std::size_t>(Rank()));
+  std::int64_t stride{1}, offset{0};
+  int dim{0};
+  for (std::int64_t j : index) {
+    std::int64_t bound{shape_[dim++]};
+    CHECK(j >= 1 && j <= bound);
+    offset += stride * (j - 1);
+    stride *= bound;
+  }
+  return values_.at(offset);
+}
+
 template<typename T> Constant<SubscriptInteger> Constant<T>::SHAPE() const {
   using IntType = Scalar<SubscriptInteger>;
   std::vector<IntType> result;

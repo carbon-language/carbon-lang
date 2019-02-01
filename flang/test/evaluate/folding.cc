@@ -32,9 +32,9 @@ struct TestGetScalarConstantValue {
     Expr<T> exprFullyTyped{Constant<T>{Scalar<T>{}}};
     Expr<SomeKind<T::category>> exprSomeKind{exprFullyTyped};
     Expr<SomeType> exprSomeType{exprSomeKind};
-    TEST(GetScalarConstantValue<T>(exprFullyTyped) != nullptr);
-    TEST(GetScalarConstantValue<T>(exprSomeKind) != nullptr);
-    TEST(GetScalarConstantValue<T>(exprSomeType) != nullptr);
+    TEST(GetScalarConstantValue<T>(exprFullyTyped).has_value());
+    TEST(GetScalarConstantValue<T>(exprSomeKind).has_value());
+    TEST(GetScalarConstantValue<T>(exprSomeType).has_value());
   }
 };
 
