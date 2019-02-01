@@ -13,7 +13,6 @@
 #include "Headers.h"
 #include "SourceCode.h"
 #include "Trace.h"
-#include "XRefs.h"
 #include "index/FileIndex.h"
 #include "index/Merge.h"
 #include "refactor/Tweak.h"
@@ -400,13 +399,13 @@ void ClangdServer::dumpAST(PathRef File,
   WorkScheduler.runWithAST("DumpAST", File, Bind(Action, std::move(Callback)));
 }
 
-void ClangdServer::findDefinitions(PathRef File, Position Pos,
-                                   Callback<std::vector<Location>> CB) {
-  auto Action = [Pos, this](Callback<std::vector<Location>> CB,
+void ClangdServer::locateSymbolAt(PathRef File, Position Pos,
+                                  Callback<std::vector<LocatedSymbol>> CB) {
+  auto Action = [Pos, this](decltype(CB) CB,
                             llvm::Expected<InputsAndAST> InpAST) {
     if (!InpAST)
       return CB(InpAST.takeError());
-    CB(clangd::findDefinitions(InpAST->AST, Pos, Index));
+    CB(clangd::locateSymbolAt(InpAST->AST, Pos, Index));
   };
 
   WorkScheduler.runWithAST("Definitions", File, Bind(Action, std::move(CB)));
