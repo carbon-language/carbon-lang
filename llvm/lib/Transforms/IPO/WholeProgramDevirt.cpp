@@ -936,7 +936,7 @@ void DevirtModule::applyICallBranchFunnel(VTableSlotInfo &SlotInfo,
         NewCS = IRB.CreateCall(NewFT, IRB.CreateBitCast(JT, NewFTPtr), Args);
       else
         NewCS = IRB.CreateInvoke(
-            IRB.CreateBitCast(JT, NewFTPtr),
+            NewFT, IRB.CreateBitCast(JT, NewFTPtr),
             cast<InvokeInst>(CS.getInstruction())->getNormalDest(),
             cast<InvokeInst>(CS.getInstruction())->getUnwindDest(), Args);
       NewCS.setCallingConv(CS.getCallingConv());

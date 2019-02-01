@@ -565,14 +565,15 @@ TEST(InstructionsTest, AlterCallBundles) {
 TEST(InstructionsTest, AlterInvokeBundles) {
   LLVMContext C;
   Type *Int32Ty = Type::getInt32Ty(C);
-  Type *FnTy = FunctionType::get(Int32Ty, Int32Ty, /*isVarArg=*/false);
+  FunctionType *FnTy = FunctionType::get(Int32Ty, Int32Ty, /*isVarArg=*/false);
   Value *Callee = Constant::getNullValue(FnTy->getPointerTo());
   Value *Args[] = {ConstantInt::get(Int32Ty, 42)};
   std::unique_ptr<BasicBlock> NormalDest(BasicBlock::Create(C));
   std::unique_ptr<BasicBlock> UnwindDest(BasicBlock::Create(C));
   OperandBundleDef OldBundle("before", UndefValue::get(Int32Ty));
-  std::unique_ptr<InvokeInst> Invoke(InvokeInst::Create(
-      Callee, NormalDest.get(), UnwindDest.get(), Args, OldBundle, "result"));
+  std::unique_ptr<InvokeInst> Invoke(
+      InvokeInst::Create(FnTy, Callee, NormalDest.get(), UnwindDest.get(), Args,
+                         OldBundle, "result"));
   AttrBuilder AB;
   AB.addAttribute(Attribute::Cold);
   Invoke->setAttributes(

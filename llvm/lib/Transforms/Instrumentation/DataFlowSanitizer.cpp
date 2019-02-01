@@ -1724,8 +1724,8 @@ void DFSanVisitor::visitCallSite(CallSite CS) {
 
     CallSite NewCS;
     if (InvokeInst *II = dyn_cast<InvokeInst>(CS.getInstruction())) {
-      NewCS = IRB.CreateInvoke(Func, II->getNormalDest(), II->getUnwindDest(),
-                               Args);
+      NewCS = IRB.CreateInvoke(NewFT, Func, II->getNormalDest(),
+                               II->getUnwindDest(), Args);
     } else {
       NewCS = IRB.CreateCall(NewFT, Func, Args);
     }

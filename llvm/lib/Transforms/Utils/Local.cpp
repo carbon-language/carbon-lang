@@ -1980,8 +1980,9 @@ BasicBlock *llvm::changeToInvokeAndSplitBasicBlock(CallInst *CI,
   // can potentially be avoided with a cleverer API design that we do not have
   // as of this time.
 
-  InvokeInst *II = InvokeInst::Create(CI->getCalledValue(), Split, UnwindEdge,
-                                      InvokeArgs, OpBundles, CI->getName(), BB);
+  InvokeInst *II =
+      InvokeInst::Create(CI->getFunctionType(), CI->getCalledValue(), Split,
+                         UnwindEdge, InvokeArgs, OpBundles, CI->getName(), BB);
   II->setDebugLoc(CI->getDebugLoc());
   II->setCallingConv(CI->getCallingConv());
   II->setAttributes(CI->getAttributes());
