@@ -78,7 +78,7 @@ class BrainF {
     CompileFlags comflag;
     std::istream *in;
     Module *module;
-    FunctionCallee brainf_func;
+    Function *brainf_func;
     FunctionCallee getchar_func;
     FunctionCallee putchar_func;
     Value *ptr_arr;

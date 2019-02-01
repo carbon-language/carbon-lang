@@ -82,7 +82,8 @@ void BrainF::header(LLVMContext& C) {
   //Function header
 
   //define void @brainf()
-  brainf_func = module->getOrInsertFunction("brainf", Type::getVoidTy(C));
+  brainf_func = Function::Create(FunctionType::get(Type::getVoidTy(C), false),
+                                 Function::ExternalLinkage, "brainf", module);
 
   builder = new IRBuilder<>(BasicBlock::Create(C, label, brainf_func));
 

@@ -75,9 +75,10 @@ void addMainFunction(Module *mod) {
   FunctionType *main_func_fty = FunctionType::get(
       Type::getInt32Ty(mod->getContext()),
       {Type::getInt32Ty(mod->getContext()),
-       Type::getInt8Ty(mod->getContext())->getPointerTo()->getPointerTo()});
+       Type::getInt8Ty(mod->getContext())->getPointerTo()->getPointerTo()},
+      false);
   Function *main_func =
-      Function::create(main_func_fty, Function::ExternalLinkage, "main", mod);
+      Function::Create(main_func_fty, Function::ExternalLinkage, "main", mod);
 
   {
     Function::arg_iterator args = main_func->arg_begin();
