@@ -6592,7 +6592,6 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
   case ISD::INSERT_SUBVECTOR: {
     // Handle INSERT_SUBVECTOR(SRC0, SHUFFLE(EXTRACT_SUBVECTOR(SRC1)) where
     // SRC0/SRC1 are both of the same valuetype VT.
-    // TODO - add peekThroughOneUseBitcasts support.
     SDValue Src = N.getOperand(0);
     SDValue Sub = N.getOperand(1);
     EVT SubVT = Sub.getValueType();
@@ -6602,8 +6601,10 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
       return false;
     SmallVector<int, 64> SubMask;
     SmallVector<SDValue, 2> SubInputs;
-    if (!resolveTargetShuffleInputs(Sub, SubInputs, SubMask, DAG) ||
-        SubMask.size() != NumSubElts)
+    if (!resolveTargetShuffleInputs(peekThroughOneUseBitcasts(Sub), SubInputs,
+                                    SubMask, DAG))
+      return false;
+    if (SubMask.size() != NumSubElts)
       return false;
     Ops.push_back(Src);
     for (SDValue &SubInput : SubInputs) {
