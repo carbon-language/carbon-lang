@@ -4394,8 +4394,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
     // Strip away the noreturn attribute to better diagnose unreachable UB.
     if (SanOpts.has(SanitizerKind::Unreachable)) {
-      // Also remove from function since CI->hasFnAttr(..) also checks attributes
-      // of the called function.
+      // Also remove from function since CallBase::hasFnAttr additionally checks
+      // attributes of the called function.
       if (auto *F = CI->getCalledFunction())
         F->removeFnAttr(llvm::Attribute::NoReturn);
       CI->removeAttribute(llvm::AttributeList::FunctionIndex,
