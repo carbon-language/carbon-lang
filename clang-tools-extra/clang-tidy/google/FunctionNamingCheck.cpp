@@ -93,16 +93,12 @@ void FunctionNamingCheck::registerMatchers(MatchFinder *Finder) {
   if (!getLangOpts().ObjC)
     return;
 
-  // Enforce Objective-C function naming conventions on all functions except:
-  // • Functions defined in system headers.
-  // • C++ member functions.
-  // • Namespaced functions.
-  // • Implicitly defined functions.
-  // • The main function.
+  // Match function declarations that are not in system headers and are not
+  // main.
   Finder->addMatcher(
       functionDecl(
           unless(anyOf(isExpansionInSystemHeader(), cxxMethodDecl(),
-                       hasAncestor(namespaceDecl()), isMain(), isImplicit(),
+                       hasAncestor(namespaceDecl()), isMain(),
                        matchesName(validFunctionNameRegex(true)),
                        allOf(isStaticStorageClass(),
                              matchesName(validFunctionNameRegex(false))))))
