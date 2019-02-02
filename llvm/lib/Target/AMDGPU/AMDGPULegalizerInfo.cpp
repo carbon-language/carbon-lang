@@ -200,7 +200,16 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
 
   setAction({G_BLOCK_ADDR, CodePtr}, Legal);
 
-  getActionDefinitionsBuilder({G_ICMP, G_FCMP})
+  getActionDefinitionsBuilder(G_ICMP)
+    .legalForCartesianProduct(
+      {S1}, {S32, S64, GlobalPtr, LocalPtr, ConstantPtr, PrivatePtr, FlatPtr})
+    .legalFor({{S1, S32}, {S1, S64}})
+    .widenScalarToNextPow2(1)
+    .clampScalar(1, S32, S64)
+    .scalarize(0)
+    .legalIf(all(typeIs(0, S1), isPointer(1)));
+
+  getActionDefinitionsBuilder(G_FCMP)
     .legalFor({{S1, S32}, {S1, S64}})
     .widenScalarToNextPow2(1)
     .clampScalar(1, S32, S64)
