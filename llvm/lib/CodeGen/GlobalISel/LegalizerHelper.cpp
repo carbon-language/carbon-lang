@@ -883,6 +883,22 @@ LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
     narrowScalarDst(MI, NarrowTy, 0, TargetOpcode::G_ZEXT);
     Observer.changedInstr(MI);
     return Legalized;
+  case TargetOpcode::G_INTTOPTR:
+    if (TypeIdx != 1)
+      return UnableToLegalize;
+
+    Observer.changingInstr(MI);
+    narrowScalarSrc(MI, NarrowTy, 1);
+    Observer.changedInstr(MI);
+    return Legalized;
+  case TargetOpcode::G_PTRTOINT:
+    if (TypeIdx != 0)
+      return UnableToLegalize;
+
+    Observer.changingInstr(MI);
+    narrowScalarDst(MI, NarrowTy, 0, TargetOpcode::G_ZEXT);
+    Observer.changedInstr(MI);
+    return Legalized;
   }
 }
 
@@ -1351,6 +1367,22 @@ LegalizerHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx, LLT WideTy) {
     widenScalarDst(MI, WideTy, 0, TargetOpcode::G_FPTRUNC);
     Observer.changedInstr(MI);
     return Legalized;
+  case TargetOpcode::G_INTTOPTR:
+    if (TypeIdx != 1)
+      return UnableToLegalize;
+
+    Observer.changingInstr(MI);
+    widenScalarSrc(MI, WideTy, 1, TargetOpcode::G_ZEXT);
+    Observer.changedInstr(MI);
+    return Legalized;
+  case TargetOpcode::G_PTRTOINT:
+    if (TypeIdx != 0)
+      return UnableToLegalize;
+
+    Observer.changingInstr(MI);
+    widenScalarDst(MI, WideTy, 0);
+    Observer.changedInstr(MI);
+    return Legalized;
   }
 }
 
@@ -1722,16 +1754,16 @@ LegalizerHelper::fewerElementsVectorCasts(MachineInstr &MI, unsigned TypeIdx,
   LLT NarrowTy1;
   unsigned NumParts;
 
-  if (NarrowTy.isScalar()) {
-    NumParts = DstTy.getNumElements();
-    NarrowTy1 = SrcTy.getElementType();
-  } else {
+  if (NarrowTy.isVector()) {
     // Uneven breakdown not handled.
     NumParts = DstTy.getNumElements() / NarrowTy.getNumElements();
     if (NumParts * NarrowTy.getNumElements() != DstTy.getNumElements())
       return UnableToLegalize;
 
     NarrowTy1 = LLT::vector(NumParts, SrcTy.getElementType().getSizeInBits());
+  } else {
+    NumParts = DstTy.getNumElements();
+    NarrowTy1 = SrcTy.getElementType();
   }
 
   SmallVector<unsigned, 4> SrcRegs, DstRegs;
@@ -2057,6 +2089,8 @@ LegalizerHelper::fewerElementsVector(MachineInstr &MI, unsigned TypeIdx,
   case G_UITOFP:
   case G_FPTOSI:
   case G_FPTOUI:
+  case G_INTTOPTR:
+  case G_PTRTOINT:
     return fewerElementsVectorCasts(MI, TypeIdx, NarrowTy);
   case G_ICMP:
   case G_FCMP:

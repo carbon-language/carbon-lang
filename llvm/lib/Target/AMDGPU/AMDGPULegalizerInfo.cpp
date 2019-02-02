@@ -227,15 +227,52 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     .scalarize(0);
 
 
+  auto smallerThan = [](unsigned TypeIdx0, unsigned TypeIdx1) {
+    return [=](const LegalityQuery &Query) {
+      return Query.Types[TypeIdx0].getSizeInBits() <
+             Query.Types[TypeIdx1].getSizeInBits();
+    };
+  };
+
+  auto greaterThan = [](unsigned TypeIdx0, unsigned TypeIdx1) {
+    return [=](const LegalityQuery &Query) {
+      return Query.Types[TypeIdx0].getSizeInBits() >
+             Query.Types[TypeIdx1].getSizeInBits();
+    };
+  };
+
   getActionDefinitionsBuilder(G_INTTOPTR)
-    .legalIf([](const LegalityQuery &Query) {
-      return true;
-    });
+    // List the common cases
+    .legalForCartesianProduct({GlobalPtr, ConstantPtr, FlatPtr}, {S64})
+    .legalForCartesianProduct({LocalPtr, PrivatePtr}, {S32})
+    .scalarize(0)
+    // Accept any address space as long as the size matches
+    .legalIf(sameSize(0, 1))
+    .widenScalarIf(smallerThan(1, 0),
+      [](const LegalityQuery &Query) {
+        return std::make_pair(1, LLT::scalar(Query.Types[0].getSizeInBits()));
+      })
+    .narrowScalarIf(greaterThan(1, 0),
+      [](const LegalityQuery &Query) {
+        return std::make_pair(1, LLT::scalar(Query.Types[0].getSizeInBits()));
+      });
 
   getActionDefinitionsBuilder(G_PTRTOINT)
-    .legalIf([](const LegalityQuery &Query) {
-      return true;
-    });
+    // List the common cases
+    .legalForCartesianProduct({GlobalPtr, ConstantPtr, FlatPtr}, {S64})
+    .legalForCartesianProduct({LocalPtr, PrivatePtr}, {S32})
+    .scalarize(0)
+    // Accept any address space as long as the size matches
+    .legalIf(sameSize(0, 1))
+    .widenScalarIf(smallerThan(0, 1),
+      [](const LegalityQuery &Query) {
+        return std::make_pair(0, LLT::scalar(Query.Types[1].getSizeInBits()));
+      })
+    .narrowScalarIf(
+      greaterThan(0, 1),
+      [](const LegalityQuery &Query) {
+        return std::make_pair(0, LLT::scalar(Query.Types[1].getSizeInBits()));
+      });
 
   getActionDefinitionsBuilder({G_LOAD, G_STORE})
     .narrowScalarIf([](const LegalityQuery &Query) {
@@ -389,6 +426,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
                (Ty1.getSizeInBits() % 16 == 0);
       });
 
+  // TODO: vectors of pointers
   getActionDefinitionsBuilder(G_BUILD_VECTOR)
       .legalForCartesianProduct(AllS32Vectors, {S32})
       .legalForCartesianProduct(AllS64Vectors, {S64})
