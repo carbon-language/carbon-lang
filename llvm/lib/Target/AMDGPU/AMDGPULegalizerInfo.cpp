@@ -307,7 +307,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
 
         unsigned Size = Ty0.getSizeInBits();
         unsigned MemSize = Query.MMODescrs[0].SizeInBits;
-        if (Size > 32 && MemSize < Size)
+        if (Size < 32 || (Size > 32 && MemSize < Size))
           return false;
 
         if (Ty0.isVector() && Size != MemSize)
