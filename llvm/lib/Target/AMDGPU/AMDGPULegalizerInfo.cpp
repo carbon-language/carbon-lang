@@ -134,11 +134,12 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   // FIXME: i1 operands to intrinsics should always be legal, but other i1
   // values may not be legal.  We need to figure out how to distinguish
   // between these two scenarios.
-  // FIXME: Pointer types
   getActionDefinitionsBuilder(G_CONSTANT)
-    .legalFor({S1, S32, S64})
+    .legalFor({S1, S32, S64, GlobalPtr,
+               LocalPtr, ConstantPtr, PrivatePtr, FlatPtr })
     .clampScalar(0, S32, S64)
-    .widenScalarToNextPow2(0);
+    .widenScalarToNextPow2(0)
+    .legalIf(isPointer(0));
 
   setAction({G_FRAME_INDEX, PrivatePtr}, Legal);
 
