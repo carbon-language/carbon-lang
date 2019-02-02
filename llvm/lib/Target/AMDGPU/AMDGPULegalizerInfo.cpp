@@ -439,6 +439,24 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
         const LLT &Ty1 = Query.Types[1];
         return (Ty0.getSizeInBits() % 16 == 0) &&
                (Ty1.getSizeInBits() % 16 == 0);
+      })
+    .widenScalarIf(
+      [=](const LegalityQuery &Query) {
+        const LLT &Ty0 = Query.Types[0];
+        const LLT &Ty1 = Query.Types[1];
+        return (Ty1.getScalarSizeInBits() < 16);
+      },
+      // TODO Use generic LegalizeMutation
+      [](const LegalityQuery &Query) {
+        LLT Ty1 = Query.Types[1];
+        unsigned NewEltSizeInBits =
+          std::max(1 << Log2_32_Ceil(Ty1.getScalarSizeInBits()), 16);
+        if (Ty1.isVector()) {
+          return std::make_pair(1, LLT::vector(Ty1.getNumElements(),
+                                               NewEltSizeInBits));
+        }
+
+        return std::make_pair(1, LLT::scalar(NewEltSizeInBits));
       });
 
   // TODO: vectors of pointers

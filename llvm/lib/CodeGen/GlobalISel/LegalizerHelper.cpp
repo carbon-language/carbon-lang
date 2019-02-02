@@ -942,6 +942,32 @@ LegalizerHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx, LLT WideTy) {
   switch (MI.getOpcode()) {
   default:
     return UnableToLegalize;
+  case TargetOpcode::G_EXTRACT: {
+    if (TypeIdx != 1)
+      return UnableToLegalize;
+
+    unsigned SrcReg = MI.getOperand(1).getReg();
+    LLT SrcTy = MRI.getType(SrcReg);
+    if (!SrcTy.isVector())
+      return UnableToLegalize;
+
+    unsigned DstReg = MI.getOperand(0).getReg();
+    LLT DstTy = MRI.getType(DstReg);
+    if (DstTy != SrcTy.getElementType())
+      return UnableToLegalize;
+
+    unsigned Offset = MI.getOperand(2).getImm();
+    if (Offset % SrcTy.getScalarSizeInBits() != 0)
+      return UnableToLegalize;
+
+    widenScalarSrc(MI, WideTy, 1, TargetOpcode::G_ANYEXT);
+
+    MI.getOperand(2).setImm((WideTy.getSizeInBits() / SrcTy.getSizeInBits()) *
+                            Offset);
+    widenScalarDst(MI, WideTy.getScalarType(), 0);
+
+    return Legalized;
+  }
   case TargetOpcode::G_MERGE_VALUES: {
     if (TypeIdx != 1)
       return UnableToLegalize;
