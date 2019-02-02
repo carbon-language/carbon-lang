@@ -23,10 +23,6 @@
 
 using namespace libunwind;
 
-// libunwind does not and should not depend on C++ library which means that we
-// need our own declaration of global placement new.
-void *operator new(size_t, void*);
-
 /// internal object to represent this processes address space
 LocalAddressSpace LocalAddressSpace::sThisAddressSpace;
 
@@ -70,8 +66,9 @@ _LIBUNWIND_EXPORT int unw_init_local(unw_cursor_t *cursor,
 # error Architecture not supported
 #endif
   // Use "placement new" to allocate UnwindCursor in the cursor buffer.
-  new ((void *)cursor) UnwindCursor<LocalAddressSpace, REGISTER_KIND>(
-                                 context, LocalAddressSpace::sThisAddressSpace);
+  new (reinterpret_cast<UnwindCursor<LocalAddressSpace, REGISTER_KIND> *>(cursor))
+      UnwindCursor<LocalAddressSpace, REGISTER_KIND>(
+          context, LocalAddressSpace::sThisAddressSpace);
 #undef REGISTER_KIND
   AbstractUnwindCursor *co = (AbstractUnwindCursor *)cursor;
   co->setInfoBasedOnIPRegister();
