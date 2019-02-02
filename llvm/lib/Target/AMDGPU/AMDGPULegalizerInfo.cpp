@@ -359,7 +359,9 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
 
   // TODO: Pointer types, any 32-bit or 64-bit vector
   getActionDefinitionsBuilder(G_SELECT)
-    .legalFor({{S32, S1}, {S64, S1}, {V2S32, S1}, {V2S16, S1}})
+    .legalForCartesianProduct({S32, S64, V2S32, V2S16, GlobalPtr, LocalPtr,
+          FlatPtr, PrivatePtr, LLT::vector(2, LocalPtr),
+          LLT::vector(2, PrivatePtr)}, {S1})
     .clampScalar(0, S32, S64)
     .fewerElementsIf(
       [=](const LegalityQuery &Query) {
@@ -380,7 +382,10 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
                Query.Types[0].getElementType().getSizeInBits() < 32;},
       scalarize(0))
     .scalarize(1)
-    .clampMaxNumElements(0, S32, 2);
+    .clampMaxNumElements(0, S32, 2)
+    .clampMaxNumElements(0, LocalPtr, 2)
+    .clampMaxNumElements(0, PrivatePtr, 2)
+    .legalIf(all(isPointer(0), typeIs(1, S1)));
 
   // TODO: Only the low 4/5/6 bits of the shift amount are observed, so we can
   // be more flexible with the shift amount type.
@@ -435,7 +440,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
       .minScalarSameAs(1, 0)
       // FIXME: Sort of a hack to make progress on other legalizations.
       .legalIf([=](const LegalityQuery &Query) {
-        return Query.Types[0].getScalarSizeInBits() < 32;
+        return Query.Types[0].getScalarSizeInBits() <= 32 ||
+               Query.Types[0].getScalarSizeInBits() == 64;
       });
 
   // TODO: Support any combination of v2s32
@@ -446,7 +452,9 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
                {V4S64, V2S64},
                {V4S16, V2S16},
                {V8S16, V2S16},
-               {V8S16, V4S16}});
+               {V8S16, V4S16},
+               {LLT::vector(4, LocalPtr), LLT::vector(2, LocalPtr)},
+               {LLT::vector(4, PrivatePtr), LLT::vector(2, PrivatePtr)}});
 
   // Merge/Unmerge
   for (unsigned Op : {G_MERGE_VALUES, G_UNMERGE_VALUES}) {
