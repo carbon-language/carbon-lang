@@ -11778,13 +11778,11 @@ static SDValue lowerShuffleOfExtractsAsVperm(const SDLoc &DL, SDValue N0,
   // if the extract of the low half is N1.
   unsigned NumElts = VT.getVectorNumElements();
   SmallVector<int, 4> NewMask(Mask.begin(), Mask.end());
-  APInt ExtIndex0 = cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue();
-  APInt ExtIndex1 = cast<ConstantSDNode>(N1.getOperand(1))->getAPIntValue();
-  if (ExtIndex1 == 0 && ExtIndex0 == NumElts) {
-    std::swap(ExtIndex0, ExtIndex1);
+  const APInt &ExtIndex0 = N0.getConstantOperandAPInt(1);
+  const APInt &ExtIndex1 = N1.getConstantOperandAPInt(1);
+  if (ExtIndex1 == 0 && ExtIndex0 == NumElts)
     ShuffleVectorSDNode::commuteMask(NewMask);
-  }
-  if (ExtIndex0 != 0 || ExtIndex1 != NumElts)
+  else if (ExtIndex0 != 0 || ExtIndex1 != NumElts)
     return SDValue();
 
   // Final bailout: if the mask is simple, we are better off using an extract
@@ -30462,7 +30460,7 @@ unsigned X86TargetLowering::ComputeNumSignBitsForTargetNode(
 
   case X86ISD::VSHLI: {
     SDValue Src = Op.getOperand(0);
-    APInt ShiftVal = cast<ConstantSDNode>(Op.getOperand(1))->getAPIntValue();
+    const APInt &ShiftVal = Op.getConstantOperandAPInt(1);
     if (ShiftVal.uge(VTBits))
       return VTBits; // Shifted all bits out --> zero.
     unsigned Tmp = DAG.ComputeNumSignBits(Src, DemandedElts, Depth + 1);
@@ -30473,7 +30471,7 @@ unsigned X86TargetLowering::ComputeNumSignBitsForTargetNode(
 
   case X86ISD::VSRAI: {
     SDValue Src = Op.getOperand(0);
-    APInt ShiftVal = cast<ConstantSDNode>(Op.getOperand(1))->getAPIntValue();
+    APInt ShiftVal = Op.getConstantOperandAPInt(1);
     if (ShiftVal.uge(VTBits - 1))
       return VTBits; // Sign splat.
     unsigned Tmp = DAG.ComputeNumSignBits(Src, DemandedElts, Depth + 1);
@@ -34079,8 +34077,7 @@ static SDValue combineExtractVectorElt(SDNode *N, SelectionDAG &DAG,
       isa<ConstantSDNode>(EltIdx) &&
       isa<ConstantSDNode>(InputVector.getOperand(0))) {
     uint64_t ExtractedElt = N->getConstantOperandVal(1);
-    auto *InputC = cast<ConstantSDNode>(InputVector.getOperand(0));
-    const APInt &InputValue = InputC->getAPIntValue();
+    const APInt &InputValue = InputVector.getConstantOperandAPInt(0);
     uint64_t Res = InputValue[ExtractedElt];
     return DAG.getConstant(Res, dl, MVT::i1);
   }
@@ -35808,7 +35805,7 @@ static SDValue combineShiftLeft(SDNode *N, SelectionDAG &DAG) {
       N1C && N0.getOpcode() == ISD::AND &&
       N0.getOperand(1).getOpcode() == ISD::Constant) {
     SDValue N00 = N0.getOperand(0);
-    APInt Mask = cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue();
+    APInt Mask = N0.getConstantOperandAPInt(1);
     Mask <<= N1C->getAPIntValue();
     bool MaskOK = false;
     // We can handle cases concerning bit-widening nodes containing setcc_c if
@@ -40253,9 +40250,8 @@ static SDValue combineMOVMSK(SDNode *N, SelectionDAG &DAG,
     assert(VT== MVT::i32 && "Unexpected result type");
     APInt Imm(32, 0);
     for (unsigned Idx = 0, e = Src.getNumOperands(); Idx < e; ++Idx) {
-      SDValue In = Src.getOperand(Idx);
-      if (!In.isUndef() &&
-          cast<ConstantSDNode>(In)->getAPIntValue().isNegative())
+      if (!Src.getOperand(Idx).isUndef() &&
+          Src.getConstantOperandAPInt(Idx).isNegative())
         Imm.setBit(Idx);
     }
     return DAG.getConstant(Imm, SDLoc(N), VT);
@@ -41510,7 +41506,7 @@ static SDValue combineSub(SDNode *N, SelectionDAG &DAG,
     // X-Y -> X+~Y+1, saving one register.
     if (Op1->hasOneUse() && Op1.getOpcode() == ISD::XOR &&
         isa<ConstantSDNode>(Op1.getOperand(1))) {
-      APInt XorC = cast<ConstantSDNode>(Op1.getOperand(1))->getAPIntValue();
+      const APInt &XorC = Op1.getConstantOperandAPInt(1);
       EVT VT = Op0.getValueType();
       SDValue NewXor = DAG.getNode(ISD::XOR, SDLoc(Op1), VT,
                                    Op1.getOperand(0),
