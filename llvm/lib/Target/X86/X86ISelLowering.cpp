@@ -6773,6 +6773,26 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
     }
     return true;
   }
+  case X86ISD::VBROADCAST: {
+    SDValue Src = N.getOperand(0);
+    MVT SrcVT = Src.getSimpleValueType();
+    if (!SrcVT.isVector())
+      return false;
+
+    if (NumSizeInBits != SrcVT.getSizeInBits()) {
+      assert((NumSizeInBits % SrcVT.getSizeInBits()) == 0 &&
+             "Illegal broadcast type");
+      SrcVT = MVT::getVectorVT(SrcVT.getScalarType(),
+                               NumSizeInBits / SrcVT.getScalarSizeInBits());
+      Src = DAG.getNode(ISD::INSERT_SUBVECTOR, SDLoc(N), SrcVT,
+                        DAG.getUNDEF(SrcVT), Src,
+                        DAG.getIntPtrConstant(0, SDLoc(N)));
+    }
+
+    Ops.push_back(Src);
+    Mask.append(NumElts, 0);
+    return true;
+  }
   case ISD::ZERO_EXTEND_VECTOR_INREG:
   case ISD::ZERO_EXTEND: {
     SDValue Src = N.getOperand(0);
