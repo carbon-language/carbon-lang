@@ -32004,12 +32004,13 @@ static SDValue combineTargetShuffle(SDValue N, SelectionDAG &DAG,
 
   switch (Opcode) {
   case X86ISD::VBROADCAST: {
-    // If broadcasting from another shuffle, attempt to simplify it.
-    // TODO - we really need a general SimplifyDemandedVectorElts mechanism.
     SDValue Src = N.getOperand(0);
     SDValue BC = peekThroughBitcasts(Src);
     EVT SrcVT = Src.getValueType();
     EVT BCVT = BC.getValueType();
+
+    // If broadcasting from another shuffle, attempt to simplify it.
+    // TODO - we really need a general SimplifyDemandedVectorElts mechanism.
     if (isTargetShuffle(BC.getOpcode()) &&
         VT.getScalarSizeInBits() % BCVT.getScalarSizeInBits() == 0) {
       unsigned Scale = VT.getScalarSizeInBits() / BCVT.getScalarSizeInBits();
@@ -32023,6 +32024,7 @@ static SDValue combineTargetShuffle(SDValue N, SelectionDAG &DAG,
         return DAG.getNode(X86ISD::VBROADCAST, DL, VT,
                            DAG.getBitcast(SrcVT, Res));
     }
+
     // broadcast(bitcast(src)) -> bitcast(broadcast(src))
     // 32-bit targets have to bitcast i64 to f64, so better to bitcast upward.
     if (Src.getOpcode() == ISD::BITCAST &&
@@ -32031,6 +32033,16 @@ static SDValue combineTargetShuffle(SDValue N, SelectionDAG &DAG,
                                    VT.getVectorNumElements());
       return DAG.getBitcast(VT, DAG.getNode(X86ISD::VBROADCAST, DL, NewVT, BC));
     }
+
+    // Reduce broadcast source vector to lowest 128-bits.
+    if (SrcVT.getSizeInBits() > 128)
+      return DAG.getNode(X86ISD::VBROADCAST, DL, VT,
+                         extract128BitVector(Src, 0, DAG, DL));
+
+    // broadcast(scalar_to_vector(x)) -> broadcast(x).
+    if (Src.getOpcode() == ISD::SCALAR_TO_VECTOR)
+      return DAG.getNode(X86ISD::VBROADCAST, DL, VT, Src.getOperand(0));
+
     return SDValue();
   }
   case X86ISD::PSHUFD:
