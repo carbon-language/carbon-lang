@@ -163,11 +163,10 @@ define i1 @uaddo_i16_increment_noncanonical_3(i16 %x, i16* %p) {
 
 define i1 @uaddo_i42_increment_illegal_type(i42 %x, i42* %p) {
 ; CHECK-LABEL: @uaddo_i42_increment_illegal_type(
-; CHECK-NEXT:    [[UADD_OVERFLOW:%.*]] = call { i42, i1 } @llvm.uadd.with.overflow.i42(i42 [[X:%.*]], i42 1)
-; CHECK-NEXT:    [[UADD:%.*]] = extractvalue { i42, i1 } [[UADD_OVERFLOW]], 0
-; CHECK-NEXT:    [[OVERFLOW:%.*]] = extractvalue { i42, i1 } [[UADD_OVERFLOW]], 1
-; CHECK-NEXT:    store i42 [[UADD]], i42* [[P:%.*]]
-; CHECK-NEXT:    ret i1 [[OVERFLOW]]
+; CHECK-NEXT:    [[A:%.*]] = add i42 [[X:%.*]], 1
+; CHECK-NEXT:    [[OV:%.*]] = icmp eq i42 [[A]], 0
+; CHECK-NEXT:    store i42 [[A]], i42* [[P:%.*]]
+; CHECK-NEXT:    ret i1 [[OV]]
 ;
   %a = add i42 %x, 1
   %ov = icmp eq i42 %a, 0
