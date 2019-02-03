@@ -34,6 +34,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   };
 
   const LLT S1 = LLT::scalar(1);
+  const LLT S8 = LLT::scalar(8);
   const LLT S16 = LLT::scalar(16);
   const LLT S32 = LLT::scalar(32);
   const LLT S64 = LLT::scalar(64);
@@ -169,7 +170,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     .legalFor({{S64, S32}, {S32, S16}, {S64, S16},
                {S32, S1}, {S64, S1}, {S16, S1},
                // FIXME: Hack
-               {S128, S32}, {S128, S64}, {S32, LLT::scalar(24)}})
+               {S32, S8}, {S128, S32}, {S128, S64}, {S32, LLT::scalar(24)}})
     .scalarize(0);
 
   getActionDefinitionsBuilder({G_SITOFP, G_UITOFP})
