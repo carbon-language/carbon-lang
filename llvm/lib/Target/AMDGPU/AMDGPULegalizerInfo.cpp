@@ -443,7 +443,6 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
       })
     .widenScalarIf(
       [=](const LegalityQuery &Query) {
-        const LLT &Ty0 = Query.Types[0];
         const LLT &Ty1 = Query.Types[1];
         return (Ty1.getScalarSizeInBits() < 16);
       },
