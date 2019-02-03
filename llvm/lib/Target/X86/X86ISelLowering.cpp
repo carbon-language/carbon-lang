@@ -6775,13 +6775,21 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
   }
   case ISD::ZERO_EXTEND_VECTOR_INREG:
   case ISD::ZERO_EXTEND: {
-    // TODO - add support for VPMOVZX with smaller input vector types.
     SDValue Src = N.getOperand(0);
     MVT SrcVT = Src.getSimpleValueType();
-    if (NumSizeInBits != SrcVT.getSizeInBits())
-      break;
-    DecodeZeroExtendMask(SrcVT.getScalarSizeInBits(), NumBitsPerElt, NumElts,
-                         Mask);
+    unsigned NumSrcBitsPerElt = SrcVT.getScalarSizeInBits();
+    DecodeZeroExtendMask(NumSrcBitsPerElt, NumBitsPerElt, NumElts, Mask);
+
+    if (NumSizeInBits != SrcVT.getSizeInBits()) {
+      assert((NumSizeInBits % SrcVT.getSizeInBits()) == 0 &&
+             "Illegal zero-extension type");
+      SrcVT = MVT::getVectorVT(SrcVT.getScalarType(),
+                               NumSizeInBits / NumSrcBitsPerElt);
+      Src = DAG.getNode(ISD::INSERT_SUBVECTOR, SDLoc(N), SrcVT,
+                        DAG.getUNDEF(SrcVT), Src,
+                        DAG.getIntPtrConstant(0, SDLoc(N)));
+    }
+
     Ops.push_back(Src);
     return true;
   }
