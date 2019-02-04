@@ -3008,7 +3008,7 @@ Symbol *DeclarationVisitor::DeclareLocalEntity(const parser::Name &name) {
     ApplyImplicitRules(*prev);
     implicit = true;
   }
-  if (!ConvertToObjectEntity(*prev)) {
+  if (!ConvertToObjectEntity(*prev) || prev->attrs().test(Attr::PARAMETER)) {
     Say2(name, "Locality attribute not allowed on '%s'"_err_en_US, *prev,
         "Declaration of '%s'"_en_US);
     return nullptr;
@@ -3329,6 +3329,7 @@ void ConstructVisitor::Post(const parser::ConcurrentControl &x) {
       if (details->IsArray()) {
         Say2(name, "Index variable '%s' is not scalar"_err_en_US, *prev,
             "Declaration of '%s'"_en_US);
+        return;
       }
     }
   }

@@ -100,3 +100,22 @@ subroutine s8
     local_init(k)
   end do
 end
+
+subroutine s9
+  external bad1
+  real, parameter :: bad2
+  x = cos(0.)
+  do concurrent(i=1:2) &
+    !ERROR: Locality attribute not allowed on 'bad1'
+    local(bad1) &
+    !ERROR: Locality attribute not allowed on 'bad2'
+    local(bad2) &
+    !ERROR: Locality attribute not allowed on 'bad3'
+    local(bad3) &
+    !ERROR: Locality attribute not allowed on 'cos'
+    local(cos)
+  end do
+contains
+  subroutine bad3
+  end
+end
