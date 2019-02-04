@@ -335,9 +335,9 @@ define double @log2_test2(float %f)   {
 
 define float @logb_test1(float %f)   {
 ; CHECK-LABEL: @logb_test1(
-; LIN64-NEXT:    [[LOGBF:%.*]] = call fast float @logbf(float [[F:%.*]])
-; LIN64-NEXT:    ret float [[LOGBF]]
-; WIN32:         [[LOGBF:%.*]] = call fast double @logb(double [[F:%.*]])
+; LINUX-NEXT:    [[LOGBF:%.*]] = call fast float @logbf(float [[F:%.*]])
+; LINUX-NEXT:    ret float [[LOGBF]]
+; WIN96:         [[LOGBF:%.*]] = call fast double @logb(double [[F:%.*]])
 ;
   %conv = fpext float %f to double
   %call = call fast double @logb(double %conv)
@@ -498,9 +498,9 @@ define double @tanh_test2(float %f) {
 ; flags are propagated for shrunken *binary* double FP calls.
 define float @max1(float %a, float %b) {
 ; CHECK-LABEL: @max1(
-; LINUX-NEXT:    [[FMAXF:%.*]] = call arcp float @fmaxf(float [[A:%.*]], float [[B:%.*]])
-; LINUX-NEXT:    ret float [[FMAXF]]
-; WIN96:         [[FMAXF:%.*]] = call arcp double @fmax(double [[A:%.*]], double [[B:%.*]])
+; LIN64-NEXT:    [[FMAXF:%.*]] = call arcp float @fmaxf(float [[A:%.*]], float [[B:%.*]])
+; LIN64-NEXT:    ret float [[FMAXF]]
+; WIN32:         [[FMAXF:%.*]] = call arcp double @fmax(double [[A:%.*]], double [[B:%.*]])
 ;
   %c = fpext float %a to double
   %d = fpext float %b to double

@@ -1,11 +1,11 @@
-; RUN: opt < %s -O2 -S -mtriple=i386-pc-win32     | FileCheck %s --check-prefixes=CHECK,WIN32
-; RUN: opt < %s -O2 -S -mtriple=x86_64-pc-win32   | FileCheck %s --check-prefixes=CHECK,WIN64
-; RUN: opt < %s -O2 -S -mtriple=i386-pc-mingw32   | FileCheck %s --check-prefixes=CHECK,MINGW32
-; RUN: opt < %s -O2 -S -mtriple=x86_64-pc-mingw32 | FileCheck %s --check-prefixes=CHECK,MINGW64
+; RUN: opt -O2 -S -mtriple=i386-pc-win32 < %s     | FileCheck %s --check-prefixes=CHECK,WIN32
+; RUN: opt -O2 -S -mtriple=x86_64-pc-win32 < %s   | FileCheck %s --check-prefixes=CHECK,WIN64
+; RUN: opt -O2 -S -mtriple=i386-pc-mingw32 < %s   | FileCheck %s --check-prefixes=CHECK,MINGW32
+; RUN: opt -O2 -S -mtriple=x86_64-pc-mingw32 < %s | FileCheck %s --check-prefixes=CHECK,MINGW64
 
 ; x86 win32 msvcrt does not provide entry points for single-precision libm.
-; x86-64 win32 msvcrt does, but with exceptions
-; msvcrt does not provide all of C99 math, but mingw32 does.
+; x86-64 win32 msvcrt does (except for fabsf)
+; msvcrt does not provide C99 math, but mingw32 does.
 
 declare double @acos(double %x)
 define float @float_acos(float %x) nounwind readnone {
@@ -188,19 +188,6 @@ define float @float_log(float %x) nounwind readnone {
     ret float %3
 }
 
-declare double @logb(double %x)
-define float @float_logb(float %x) nounwind readnone {
-; CHECK-LABEL: @float_logb(
-; WIN32-NOT: float @logbf
-; WIN32: double @logb
-; WIN64-NOT: float @logbf
-; WIN64: double @logb
-    %1 = fpext float %x to double
-    %2 = call double @logb(double %1)
-    %3 = fptrunc double %2 to float
-    ret float %3
-}
-
 declare double @pow(double %x, double %y)
 define float @float_pow(float %x, float %y) nounwind readnone {
 ; CHECK-LABEL: @float_pow(
@@ -284,14 +271,14 @@ define float @float_tanh(float %x) nounwind readnone {
     ret float %3
 }
 
-; win32 does not have roundf; mingw32 does
+; win32 does not have round; mingw32 does
 declare double @round(double %x)
 define float @float_round(float %x) nounwind readnone {
 ; CHECK-LABEL: @float_round(
-; WIN32-NOT: double @round
-; WIN32: float @llvm.round.f32
-; WIN64-NOT: double @round
-; WIN64: float @llvm.round.f32
+; WIN32-NOT: float @roundf
+; WIN32: double @round
+; WIN64-NOT: float @roundf
+; WIN64: double @round
 ; MINGW32-NOT: double @round
 ; MINGW32: float @llvm.round.f32
 ; MINGW64-NOT: double @round
@@ -304,7 +291,7 @@ define float @float_round(float %x) nounwind readnone {
 
 declare float @powf(float, float)
 
-; win32 lacks sqrtf & fabsf, win64 lacks fabsf, but
+; win32 lacks sqrtf&fabsf, win64 lacks fabsf, but
 ; calls to the intrinsics can be emitted instead.
 define float @float_powsqrt(float %x) nounwind readnone {
 ; CHECK-LABEL: @float_powsqrt(
