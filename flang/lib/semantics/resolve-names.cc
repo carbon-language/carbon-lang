@@ -3057,9 +3057,29 @@ bool DeclarationVisitor::Pre(const parser::StructureConstructor &x) {
   auto savedState{SetDeclTypeSpecState({})};
   BeginDeclTypeSpec();
   Walk(std::get<parser::DerivedTypeSpec>(x.t));
-  Walk(std::get<std::list<parser::ComponentSpec>>(x.t));
+  const DeclTypeSpec *type{GetDeclTypeSpec()};
   EndDeclTypeSpec();
   SetDeclTypeSpecState(savedState);
+  bool anyKeyword{false};
+  for (const auto &component :
+      std::get<std::list<parser::ComponentSpec>>(x.t)) {
+    Walk(component);
+    Symbol *symbol{nullptr};
+    const parser::Expr &value{
+        *std::get<parser::ComponentDataSource>(component.t).v};
+    if (const auto &kw{std::get<std::optional<parser::Keyword>>(component.t)}) {
+      symbol = kw->v.symbol;
+      anyKeyword = true;
+    } else if (anyKeyword) {
+      Say(value.source,
+          "Component value lacks a required component name"_err_en_US);
+    } else {
+      // TODO: keyword = next component in component order
+    }
+    MaybeExpr expr{EvaluateExpr(value)};
+    if (type != nullptr && symbol != nullptr && expr.has_value()) {
+    }
+  }
   return false;
 }
 

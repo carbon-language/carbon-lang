@@ -84,7 +84,8 @@ void DerivedTypeSpec::Instantiate(
   evaluate::FoldingContext &foldingContext{semanticsContext.foldingContext()};
   auto restorer{foldingContext.WithPDTInstance(*this)};
 
-  for (Symbol *symbol : typeDetails.OrderParameterDeclarations(typeSymbol_)) {
+  for (const Symbol *symbol :
+      typeDetails.OrderParameterDeclarations(typeSymbol_)) {
     const SourceName &name{symbol->name()};
     const TypeParamDetails &details{symbol->get<TypeParamDetails>()};
     MaybeIntExpr expr;

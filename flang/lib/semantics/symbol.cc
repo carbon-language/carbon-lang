@@ -616,15 +616,15 @@ std::list<SourceName> DerivedTypeDetails::OrderParameterNames(
   return result;
 }
 
-std::list<Symbol *> DerivedTypeDetails::OrderParameterDeclarations(
+std::list<const Symbol *> DerivedTypeDetails::OrderParameterDeclarations(
     const Symbol &type) const {
-  std::list<Symbol *> result;
+  std::list<const Symbol *> result;
   if (const DerivedTypeSpec * spec{type.GetParentTypeSpec()}) {
     const DerivedTypeDetails &details{
         spec->typeSymbol().get<DerivedTypeDetails>()};
     result = details.OrderParameterDeclarations(spec->typeSymbol());
   }
-  for (Symbol *symbol : paramDecls_) {
+  for (const Symbol *symbol : paramDecls_) {
     result.push_back(symbol);
   }
   return result;

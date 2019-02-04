@@ -194,11 +194,13 @@ private:
 class DerivedTypeDetails {
 public:
   const std::list<SourceName> &paramNames() const { return paramNames_; }
-  const std::list<Symbol *> &paramDecls() const { return paramDecls_; }
+  const std::list<const Symbol *> &paramDecls() const { return paramDecls_; }
   SourceName extends() const { return extends_; }
   bool sequence() const { return sequence_; }
   void add_paramName(const SourceName &name) { paramNames_.emplace_back(name); }
-  void add_paramDecl(Symbol &symbol) { paramDecls_.emplace_back(&symbol); }
+  void add_paramDecl(const Symbol &symbol) {
+    paramDecls_.emplace_back(&symbol);
+  }
   void set_extends(const SourceName &name) { extends_ = name; }
   void set_sequence(bool x = true) { sequence_ = x; }
 
@@ -209,14 +211,18 @@ public:
   // Returns the complete list of derived type parameter symbols in
   // the order in which their declarations appear in the derived type
   // definitions (parents first).
-  std::list<Symbol *> OrderParameterDeclarations(const Symbol &) const;
+  std::list<const Symbol *> OrderParameterDeclarations(const Symbol &) const;
 
 private:
-  // These are the names of the derived type parameters in (1) the order
-  // in which they appear on the type definition statement, and (2) the
-  // order in which their declarations appear in the derived type definition.
+  // These are (1) the names of the derived type parameters in the order
+  // in which they appear on the type definition statement(s), and (2) the
+  // symbols that correspond to those names in the order in which their
+  // declarations appear in the derived type definition(s).
   std::list<SourceName> paramNames_;
-  std::list<Symbol *> paramDecls_;
+  std::list<const Symbol *> paramDecls_;
+  // These are the declarations of the derived type's components in component
+  // order.  A parent component, if any, appears first in this list.
+  std::list<const Symbol *> components_;
   SourceName extends_;
   bool sequence_{false};
 };
