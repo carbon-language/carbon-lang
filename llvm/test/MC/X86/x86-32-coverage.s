@@ -2876,35 +2876,35 @@
 // CHECK:  encoding: [0x0f,0x0b]
         	ud2
 
-// CHECK: fcmovb	%st(2), %st
+// CHECK: fcmovb	%st(2), %st(0)
 // CHECK:  encoding: [0xda,0xc2]
         	fcmovb	%st(2),%st
 
-// CHECK: fcmove	%st(2), %st
+// CHECK: fcmove	%st(2), %st(0)
 // CHECK:  encoding: [0xda,0xca]
         	fcmove	%st(2),%st
 
-// CHECK: fcmovbe	%st(2), %st
+// CHECK: fcmovbe	%st(2), %st(0)
 // CHECK:  encoding: [0xda,0xd2]
         	fcmovbe	%st(2),%st
 
-// CHECK: fcmovu	 %st(2), %st
+// CHECK: fcmovu	 %st(2), %st(0)
 // CHECK:  encoding: [0xda,0xda]
         	fcmovu	%st(2),%st
 
-// CHECK: fcmovnb	%st(2), %st
+// CHECK: fcmovnb	%st(2), %st(0)
 // CHECK:  encoding: [0xdb,0xc2]
         	fcmovnb	%st(2),%st
 
-// CHECK: fcmovne	%st(2), %st
+// CHECK: fcmovne	%st(2), %st(0)
 // CHECK:  encoding: [0xdb,0xca]
         	fcmovne	%st(2),%st
 
-// CHECK: fcmovnbe	%st(2), %st
+// CHECK: fcmovnbe	%st(2), %st(0)
 // CHECK:  encoding: [0xdb,0xd2]
         	fcmovnbe	%st(2),%st
 
-// CHECK: fcmovnu	%st(2), %st
+// CHECK: fcmovnu	%st(2), %st(0)
 // CHECK:  encoding: [0xdb,0xda]
         	fcmovnu	%st(2),%st
 

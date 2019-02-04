@@ -75,23 +75,24 @@ define void @test6(double %A, double %B, double %C, double %D, double %E) nounwi
 ; CHECK-NEXT:    fldl {{[0-9]+}}(%esp)
 ; CHECK-NEXT:    fldl {{[0-9]+}}(%esp)
 ; CHECK-NEXT:    ## InlineAsm Start
-; CHECK-NEXT:    foo %st %st
+; CHECK-NEXT:    foo %st(0) %st(0)
 ; CHECK-NEXT:    ## InlineAsm End
-; CHECK-NEXT:    fstp %st
+; CHECK-NEXT:    fstp %st(0)
 ; CHECK-NEXT:    ## InlineAsm Start
-; CHECK-NEXT:    bar %st(1) %st
+; CHECK-NEXT:    bar %st(1) %st(0)
 ; CHECK-NEXT:    ## InlineAsm End
 ; CHECK-NEXT:    fstp %st(1)
-; CHECK-NEXT:    fstp %st
+; CHECK-NEXT:    fstp %st(0)
 ; CHECK-NEXT:    ## InlineAsm Start
-; CHECK-NEXT:    baz %st(1) %st
+; CHECK-NEXT:    baz %st(1) %st(0)
 ; CHECK-NEXT:    ## InlineAsm End
-; CHECK-NEXT:    fstp %st
+; CHECK-NEXT:    fstp %st(0)
 ; CHECK-NEXT:    ## InlineAsm Start
-; CHECK-NEXT:    baz %st
+; CHECK-NEXT:    baz %st(0)
 ; CHECK-NEXT:    ## InlineAsm End
-; CHECK-NEXT:    fstp %st
+; CHECK-NEXT:    fstp %st(0)
 ; CHECK-NEXT:    retl
+; CHECK-NEXT:    ## -- End function
 entry:
 ; Uses the same value twice, should have one fstp after the asm.
   tail call void asm sideeffect "foo $0 $1", "f,f,~{dirflag},~{fpsr},~{flags}"( double %A, double %A ) nounwind
@@ -114,12 +115,12 @@ define void @testPR4185() {
 ; CHECK-LABEL: testPR4185:
 ; CHECK:       ## %bb.0: ## %return
 ; CHECK-NEXT:    flds LCPI6_0
-; CHECK-NEXT:    fld %st
+; CHECK-NEXT:    fld %st(0)
 ; CHECK-NEXT:    ## InlineAsm Start
-; CHECK-NEXT:    fistpl %st
+; CHECK-NEXT:    fistpl %st(0)
 ; CHECK-NEXT:    ## InlineAsm End
 ; CHECK-NEXT:    ## InlineAsm Start
-; CHECK-NEXT:    fistpl %st
+; CHECK-NEXT:    fistpl %st(0)
 ; CHECK-NEXT:    ## InlineAsm End
 ; CHECK-NEXT:    retl
 return:
@@ -137,10 +138,10 @@ define void @testPR4185b() {
 ; CHECK:       ## %bb.0: ## %return
 ; CHECK-NEXT:    flds LCPI7_0
 ; CHECK-NEXT:    ## InlineAsm Start
-; CHECK-NEXT:    fistl %st
+; CHECK-NEXT:    fistl %st(0)
 ; CHECK-NEXT:    ## InlineAsm End
 ; CHECK-NEXT:    ## InlineAsm Start
-; CHECK-NEXT:    fistpl %st
+; CHECK-NEXT:    fistpl %st(0)
 ; CHECK-NEXT:    ## InlineAsm End
 ; CHECK-NEXT:    retl
 return:
@@ -159,10 +160,10 @@ define void @testPR4459(x86_fp80 %a) {
 ; CHECK-NEXT:    fldt {{[0-9]+}}(%esp)
 ; CHECK-NEXT:    fstpt (%esp)
 ; CHECK-NEXT:    calll _ceil
-; CHECK-NEXT:    fld %st
+; CHECK-NEXT:    fld %st(0)
 ; CHECK-NEXT:    fxch %st(1)
 ; CHECK-NEXT:    ## InlineAsm Start
-; CHECK-NEXT:    fistpl %st
+; CHECK-NEXT:    fistpl %st(0)
 ; CHECK-NEXT:    ## InlineAsm End
 ; CHECK-NEXT:    fstpt (%esp)
 ; CHECK-NEXT:    calll _test3
@@ -186,11 +187,11 @@ define void @testPR4484(x86_fp80 %a) {
 ; CHECK-NEXT:    subl $28, %esp
 ; CHECK-NEXT:    .cfi_def_cfa_offset 32
 ; CHECK-NEXT:    fldt {{[0-9]+}}(%esp)
-; CHECK-NEXT:    fstpt {{[-0-9]+}}(%e{{[sb]}}p) ## 10-byte Folded Spill
+; CHECK-NEXT:    fstpt {{[0-9]+}}(%esp) ## 10-byte Folded Spill
 ; CHECK-NEXT:    calll _test1
-; CHECK-NEXT:    fldt {{[-0-9]+}}(%e{{[sb]}}p) ## 10-byte Folded Reload
+; CHECK-NEXT:    fldt {{[0-9]+}}(%esp) ## 10-byte Folded Reload
 ; CHECK-NEXT:    ## InlineAsm Start
-; CHECK-NEXT:    fistpl %st
+; CHECK-NEXT:    fistpl %st(0)
 ; CHECK-NEXT:    ## InlineAsm End
 ; CHECK-NEXT:    fstpt (%esp)
 ; CHECK-NEXT:    calll _test3
@@ -210,18 +211,18 @@ define void @testPR4485(x86_fp80* %a) {
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; CHECK-NEXT:    fldt (%eax)
 ; CHECK-NEXT:    flds LCPI10_0
-; CHECK-NEXT:    fmul %st, %st(1)
+; CHECK-NEXT:    fmul %st(0), %st(1)
 ; CHECK-NEXT:    flds LCPI10_1
-; CHECK-NEXT:    fmul %st, %st(2)
+; CHECK-NEXT:    fmul %st(0), %st(2)
 ; CHECK-NEXT:    fxch %st(2)
 ; CHECK-NEXT:    ## InlineAsm Start
-; CHECK-NEXT:    fistpl %st
+; CHECK-NEXT:    fistpl %st(0)
 ; CHECK-NEXT:    ## InlineAsm End
 ; CHECK-NEXT:    fldt (%eax)
 ; CHECK-NEXT:    fmulp %st(1)
 ; CHECK-NEXT:    fmulp %st(1)
 ; CHECK-NEXT:    ## InlineAsm Start
-; CHECK-NEXT:    fistpl %st
+; CHECK-NEXT:    fistpl %st(0)
 ; CHECK-NEXT:    ## InlineAsm End
 ; CHECK-NEXT:    retl
 entry:
@@ -253,8 +254,9 @@ define void @fist1(x86_fp80 %x, i32* %p) nounwind ssp {
 ; CHECK-NEXT:    ## InlineAsm Start
 ; CHECK-NEXT:    fistl (%eax)
 ; CHECK-NEXT:    ## InlineAsm End
-; CHECK-NEXT:    fstp %st
+; CHECK-NEXT:    fstp %st(0)
 ; CHECK-NEXT:    retl
+; CHECK-NEXT:    ## -- End function
 entry:
   tail call void asm sideeffect "fistl $1", "{st},*m,~{memory},~{dirflag},~{fpsr},~{flags}"(x86_fp80 %x, i32* %p) nounwind
   ret void
@@ -277,6 +279,7 @@ define x86_fp80 @fist2(x86_fp80 %x, i32* %p) nounwind ssp {
 ; CHECK-NEXT:    fistl (%eax)
 ; CHECK-NEXT:    ## InlineAsm End
 ; CHECK-NEXT:    retl
+; CHECK-NEXT:    ## -- End function
 entry:
   %0 = tail call x86_fp80 asm "fistl $2", "=&{st},0,*m,~{memory},~{dirflag},~{fpsr},~{flags}"(x86_fp80 %x, i32* %p) nounwind
   ret x86_fp80 %0
@@ -296,8 +299,9 @@ define void @fucomp1(x86_fp80 %x, x86_fp80 %y) nounwind ssp {
 ; CHECK-NEXT:    ## InlineAsm Start
 ; CHECK-NEXT:    fucomp %st(1)
 ; CHECK-NEXT:    ## InlineAsm End
-; CHECK-NEXT:    fstp %st
+; CHECK-NEXT:    fstp %st(0)
 ; CHECK-NEXT:    retl
+; CHECK-NEXT:    ## -- End function
 entry:
   tail call void asm sideeffect "fucomp $1", "{st},f,~{st},~{dirflag},~{fpsr},~{flags}"(x86_fp80 %x, x86_fp80 %y) nounwind
   ret void
@@ -322,8 +326,9 @@ define void @fucomp2(x86_fp80 %x, x86_fp80 %y) nounwind ssp {
 ; CHECK-NEXT:    ## InlineAsm Start
 ; CHECK-NEXT:    fucomp %st(1)
 ; CHECK-NEXT:    ## InlineAsm End
-; CHECK-NEXT:    fstp %st
+; CHECK-NEXT:    fstp %st(0)
 ; CHECK-NEXT:    retl
+; CHECK-NEXT:    ## -- End function
 entry:
   tail call void asm sideeffect "fucomp $1", "{st},{st(1)},~{st},~{dirflag},~{fpsr},~{flags}"(x86_fp80 %x, x86_fp80 %y) nounwind
   ret void
@@ -339,6 +344,7 @@ define void @fucomp3(x86_fp80 %x, x86_fp80 %y) nounwind ssp {
 ; CHECK-NEXT:    fucompp %st(1)
 ; CHECK-NEXT:    ## InlineAsm End
 ; CHECK-NEXT:    retl
+; CHECK-NEXT:    ## -- End function
 entry:
   tail call void asm sideeffect "fucompp $1", "{st},{st(1)},~{st},~{st(1)},~{dirflag},~{fpsr},~{flags}"(x86_fp80 %x, x86_fp80 %y) nounwind
   ret void
@@ -355,6 +361,7 @@ define float @sincos1(float %x) nounwind ssp {
 ; CHECK-NEXT:    ## InlineAsm End
 ; CHECK-NEXT:    fstp %st(1)
 ; CHECK-NEXT:    retl
+; CHECK-NEXT:    ## -- End function
 entry:
   %0 = tail call %complex asm "sincos", "={st},={st(1)},0,~{dirflag},~{fpsr},~{flags}"(float %x) nounwind
   %asmresult = extractvalue %complex %0, 0
@@ -371,6 +378,7 @@ define float @sincos2(float %x) nounwind ssp {
 ; CHECK-NEXT:    ## InlineAsm End
 ; CHECK-NEXT:    fstp %st(1)
 ; CHECK-NEXT:    retl
+; CHECK-NEXT:    ## -- End function
 entry:
   %0 = tail call %complex asm "sincos", "={st(1)},={st},1,~{dirflag},~{fpsr},~{flags}"(float %x) nounwind
   %asmresult = extractvalue %complex %0, 1
@@ -386,18 +394,19 @@ define float @sincos3(float %x) nounwind ssp {
 ; CHECK-LABEL: sincos3:
 ; CHECK:       ## %bb.0: ## %entry
 ; CHECK-NEXT:    flds {{[0-9]+}}(%esp)
-; CHECK-NEXT:    fld %st
+; CHECK-NEXT:    fld %st(0)
 ; CHECK-NEXT:    ## InlineAsm Start
 ; CHECK-NEXT:    sincos
 ; CHECK-NEXT:    ## InlineAsm End
-; CHECK-NEXT:    fstp %st
+; CHECK-NEXT:    fstp %st(0)
 ; CHECK-NEXT:    fxch %st(1)
 ; CHECK-NEXT:    ## InlineAsm Start
 ; CHECK-NEXT:    sincos
 ; CHECK-NEXT:    ## InlineAsm End
 ; CHECK-NEXT:    fstp %st(1)
-; CHECK-NEXT:    fstp %st
+; CHECK-NEXT:    fstp %st(0)
 ; CHECK-NEXT:    retl
+; CHECK-NEXT:    ## -- End function
 entry:
   %0 = tail call %complex asm sideeffect "sincos", "={st(1)},={st},1,~{dirflag},~{fpsr},~{flags}"(float %x) nounwind
   %1 = tail call %complex asm sideeffect "sincos", "={st(1)},={st},1,~{dirflag},~{fpsr},~{flags}"(float %x) nounwind
@@ -410,14 +419,15 @@ define i32 @PR10602() nounwind ssp {
 ; CHECK-LABEL: PR10602:
 ; CHECK:       ## %bb.0: ## %entry
 ; CHECK-NEXT:    flds LCPI19_0
-; CHECK-NEXT:    fld %st
+; CHECK-NEXT:    fld %st(0)
 ; CHECK-NEXT:    fxch %st(1)
 ; CHECK-NEXT:    ## InlineAsm Start
-; CHECK-NEXT:    fcomi %st(1), %st; pushf; pop %eax
+; CHECK-NEXT:    fcomi %st(1), %st(0); pushf; pop %eax
 ; CHECK-NEXT:    ## InlineAsm End
-; CHECK-NEXT:    fstp %st
-; CHECK-NEXT:    fstp %st
+; CHECK-NEXT:    fstp %st(0)
+; CHECK-NEXT:    fstp %st(0)
 ; CHECK-NEXT:    retl
+; CHECK-NEXT:    ## -- End function
 entry:
   %0 = tail call i32 asm "fcomi $2, $1; pushf; pop $0", "=r,{st},{st(1)},~{dirflag},~{fpsr},~{flags}"(double 2.000000e+00, double 2.000000e+00) nounwind
   ret i32 %0
@@ -495,7 +505,7 @@ define double @test_operand_rewrite() {
 ; CHECK-LABEL: test_operand_rewrite:
 ; CHECK:       ## %bb.0: ## %entry
 ; CHECK-NEXT:    ## InlineAsm Start
-; CHECK-NEXT:    foo %st, %st(1)
+; CHECK-NEXT:    foo %st(0), %st(1)
 ; CHECK-NEXT:    ## InlineAsm End
 ; CHECK-NEXT:    fsubp %st(1)
 ; CHECK-NEXT:    retl
