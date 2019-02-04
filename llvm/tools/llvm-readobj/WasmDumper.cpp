@@ -219,7 +219,7 @@ namespace llvm {
 std::error_code createWasmDumper(const object::ObjectFile *Obj,
                                  ScopedPrinter &Writer,
                                  std::unique_ptr<ObjDumper> &Result) {
-  const WasmObjectFile *WasmObj = dyn_cast<WasmObjectFile>(Obj);
+  const auto *WasmObj = dyn_cast<WasmObjectFile>(Obj);
   assert(WasmObj && "createWasmDumper called with non-wasm object");
 
   Result.reset(new WasmDumper(WasmObj, Writer));
