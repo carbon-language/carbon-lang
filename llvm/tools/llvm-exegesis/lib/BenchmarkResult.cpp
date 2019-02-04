@@ -40,7 +40,7 @@ struct YamlContext {
   }
 
   void deserializeMCInst(llvm::StringRef String, llvm::MCInst &Value) {
-    llvm::SmallVector<llvm::StringRef, 8> Pieces;
+    llvm::SmallVector<llvm::StringRef, 16> Pieces;
     String.split(Pieces, " ", /* MaxSplit */ -1, /* KeepEmpty */ false);
     if (Pieces.empty()) {
       ErrorStream << "Unknown Instruction: '" << String << "'";
