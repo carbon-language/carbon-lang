@@ -28,8 +28,6 @@ entry:
 ; ASM-NEXT: 	.functype	foo (i32) -> ()
 ; ASM-NEXT: 	call	bar@FUNCTION
 ; ASM-NEXT: 	end_function
-; ASM-NEXT: .Lfunc_end0:
-; ASM-NEXT: 	.size	foo, .Lfunc_end0-foo
 ; ASM:       	.functype	bar () -> ()
 
 
