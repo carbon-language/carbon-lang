@@ -1083,23 +1083,27 @@ LegalizerHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx, LLT WideTy) {
   case TargetOpcode::G_CTLZ_ZERO_UNDEF:
   case TargetOpcode::G_CTPOP: {
     if (TypeIdx == 0) {
+      Observer.changingInstr(MI);
       widenScalarDst(MI, WideTy, 0);
+      Observer.changedInstr(MI);
       return Legalized;
     }
 
+    unsigned SrcReg = MI.getOperand(1).getReg();
+
     // First ZEXT the input.
-    auto MIBSrc = MIRBuilder.buildZExt(WideTy, MI.getOperand(1).getReg());
-    LLT CurTy = MRI.getType(MI.getOperand(0).getReg());
+    auto MIBSrc = MIRBuilder.buildZExt(WideTy, SrcReg);
+    LLT CurTy = MRI.getType(SrcReg);
     if (MI.getOpcode() == TargetOpcode::G_CTTZ) {
       // The count is the same in the larger type except if the original
       // value was zero.  This can be handled by setting the bit just off
       // the top of the original type.
       auto TopBit =
           APInt::getOneBitSet(WideTy.getSizeInBits(), CurTy.getSizeInBits());
-      MIBSrc = MIRBuilder.buildInstr(
-          TargetOpcode::G_OR, {WideTy},
-          {MIBSrc, MIRBuilder.buildConstant(WideTy, TopBit.getSExtValue())});
+      MIBSrc = MIRBuilder.buildOr(
+        WideTy, MIBSrc, MIRBuilder.buildConstant(WideTy, TopBit));
     }
+
     // Perform the operation at the larger size.
     auto MIBNewOp = MIRBuilder.buildInstr(MI.getOpcode(), {WideTy}, {MIBSrc});
     // This is already the correct result for CTPOP and CTTZs
@@ -1111,12 +1115,9 @@ LegalizerHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx, LLT WideTy) {
           TargetOpcode::G_SUB, {WideTy},
           {MIBNewOp, MIRBuilder.buildConstant(WideTy, SizeDiff)});
     }
-    auto &TII = *MI.getMF()->getSubtarget().getInstrInfo();
-    // Make the original instruction a trunc now, and update its source.
-    Observer.changingInstr(MI);
-    MI.setDesc(TII.get(TargetOpcode::G_TRUNC));
-    MI.getOperand(1).setReg(MIBNewOp->getOperand(0).getReg());
-    Observer.changedInstr(MI);
+
+    MIRBuilder.buildZExtOrTrunc(MI.getOperand(0), MIBNewOp);
+    MI.eraseFromParent();
     return Legalized;
   }
   case TargetOpcode::G_BSWAP: {
