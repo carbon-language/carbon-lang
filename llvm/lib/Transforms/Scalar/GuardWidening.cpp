@@ -162,13 +162,10 @@ class GuardWideningImpl {
   static StringRef scoreTypeToString(WideningScore WS);
 
   /// Compute the score for widening the condition in \p DominatedGuard
-  /// (contained in \p DominatedGuardLoop) into \p DominatingGuard (contained in
-  /// \p DominatingGuardLoop). If \p InvertCond is set, then we widen the
+  /// into \p DominatingGuard. If \p InvertCond is set, then we widen the
   /// inverted condition of the dominating guard.
   WideningScore computeWideningScore(Instruction *DominatedGuard,
-                                     Loop *DominatedGuardLoop,
                                      Instruction *DominatingGuard,
-                                     Loop *DominatingGuardLoop,
                                      bool InvertCond);
 
   /// Helper to check if \p V can be hoisted to \p InsertPos.
@@ -349,7 +346,6 @@ bool GuardWideningImpl::eliminateGuardViaWidening(
 
   Instruction *BestSoFar = nullptr;
   auto BestScoreSoFar = WS_IllegalOrNegative;
-  auto *GuardInstLoop = LI.getLoopFor(GuardInst->getParent());
 
   // In the set of dominating guards, find the one we can merge GuardInst with
   // for the most profit.
@@ -357,7 +353,6 @@ bool GuardWideningImpl::eliminateGuardViaWidening(
     auto *CurBB = DFSI.getPath(i)->getBlock();
     if (!BlockFilter(CurBB))
       break;
-    auto *CurLoop = LI.getLoopFor(CurBB);
     assert(GuardsInBlock.count(CurBB) && "Must have been populated by now!");
     const auto &GuardsInCurBB = GuardsInBlock.find(CurBB)->second;
 
@@ -390,9 +385,7 @@ bool GuardWideningImpl::eliminateGuardViaWidening(
     }
 
     for (auto *Candidate : make_range(I, E)) {
-      auto Score =
-          computeWideningScore(GuardInst, GuardInstLoop, Candidate, CurLoop,
-                               InvertCondition);
+      auto Score = computeWideningScore(GuardInst, Candidate, InvertCondition);
       LLVM_DEBUG(dbgs() << "Score between " << *getCondition(GuardInst)
                         << " and " << *getCondition(Candidate) << " is "
                         << scoreTypeToString(Score) << "\n");
@@ -424,9 +417,12 @@ bool GuardWideningImpl::eliminateGuardViaWidening(
   return true;
 }
 
-GuardWideningImpl::WideningScore GuardWideningImpl::computeWideningScore(
-    Instruction *DominatedGuard, Loop *DominatedGuardLoop,
-    Instruction *DominatingGuard, Loop *DominatingGuardLoop, bool InvertCond) {
+GuardWideningImpl::WideningScore
+GuardWideningImpl::computeWideningScore(Instruction *DominatedGuard,
+                                        Instruction *DominatingGuard,
+                                        bool InvertCond) {
+  Loop *DominatedGuardLoop = LI.getLoopFor(DominatedGuard->getParent());
+  Loop *DominatingGuardLoop = LI.getLoopFor(DominatingGuard->getParent());
   bool HoistingOutOfLoop = false;
 
   if (DominatingGuardLoop != DominatedGuardLoop) {
