@@ -1469,23 +1469,17 @@ static StringRef getValueStr(const Option &O, StringRef DefaultMsg) {
   return O.ValueStr;
 }
 
-static StringRef ArgPrefix = "  -";
-static StringRef ArgHelpPrefix = " - ";
-static size_t ArgPrefixesSize = ArgPrefix.size() + ArgHelpPrefix.size();
-
 //===----------------------------------------------------------------------===//
 // cl::alias class implementation
 //
 
 // Return the width of the option tag for printing...
-size_t alias::getOptionWidth() const { return ArgStr.size() + ArgPrefixesSize; }
+size_t alias::getOptionWidth() const { return ArgStr.size() + 6; }
 
 void Option::printHelpStr(StringRef HelpStr, size_t Indent,
-                          size_t FirstLineIndentedBy) {
-  assert(Indent >= FirstLineIndentedBy);
+                                 size_t FirstLineIndentedBy) {
   std::pair<StringRef, StringRef> Split = HelpStr.split('\n');
-  outs().indent(Indent - FirstLineIndentedBy)
-      << ArgHelpPrefix << Split.first << "\n";
+  outs().indent(Indent - FirstLineIndentedBy) << " - " << Split.first << "\n";
   while (!Split.second.empty()) {
     Split = Split.second.split('\n');
     outs().indent(Indent) << Split.first << "\n";
@@ -1494,8 +1488,8 @@ void Option::printHelpStr(StringRef HelpStr, size_t Indent,
 
 // Print out the option for the alias.
 void alias::printOptionInfo(size_t GlobalWidth) const {
-  outs() << ArgPrefix << ArgStr;
-  printHelpStr(HelpStr, GlobalWidth, ArgStr.size() + ArgPrefixesSize);
+  outs() << "  -" << ArgStr;
+  printHelpStr(HelpStr, GlobalWidth, ArgStr.size() + 6);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1516,7 +1510,7 @@ size_t basic_parser_impl::getOptionWidth(const Option &O) const {
     Len += getValueStr(O, ValName).size() + FormattingLen;
   }
 
-  return Len + ArgPrefixesSize;
+  return Len + 6;
 }
 
 // printOptionInfo - Print out information about this option.  The
@@ -1524,7 +1518,7 @@ size_t basic_parser_impl::getOptionWidth(const Option &O) const {
 //
 void basic_parser_impl::printOptionInfo(const Option &O,
                                         size_t GlobalWidth) const {
-  outs() << ArgPrefix << O.ArgStr;
+  outs() << "  -" << O.ArgStr;
 
   auto ValName = getValueName();
   if (!ValName.empty()) {
@@ -1540,7 +1534,7 @@ void basic_parser_impl::printOptionInfo(const Option &O,
 
 void basic_parser_impl::printOptionName(const Option &O,
                                         size_t GlobalWidth) const {
-  outs() << ArgPrefix << O.ArgStr;
+  outs() << "  -" << O.ArgStr;
   outs().indent(GlobalWidth - O.ArgStr.size());
 }
 
@@ -1648,28 +1642,12 @@ unsigned generic_parser_base::findOption(StringRef Name) {
   return e;
 }
 
-static StringRef EqValue = "=<value>";
-static StringRef EmptyOption = "<empty>";
-static StringRef OptionPrefix = "    =";
-static size_t OptionPrefixesSize = OptionPrefix.size() + ArgHelpPrefix.size();
-
-static bool shouldPrintOption(StringRef Name, StringRef Description,
-                              const Option &O) {
-  return O.getValueExpectedFlag() != ValueOptional || !Name.empty() ||
-         !Description.empty();
-}
-
 // Return the width of the option tag for printing...
 size_t generic_parser_base::getOptionWidth(const Option &O) const {
   if (O.hasArgStr()) {
-    size_t Size = O.ArgStr.size() + ArgPrefixesSize + EqValue.size();
-    for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
-      StringRef Name = getOption(i);
-      if (!shouldPrintOption(Name, getDescription(i), O))
-        continue;
-      size_t NameSize = Name.empty() ? EmptyOption.size() : Name.size();
-      Size = std::max(Size, NameSize + OptionPrefixesSize);
-    }
+    size_t Size = O.ArgStr.size() + 6;
+    for (unsigned i = 0, e = getNumOptions(); i != e; ++i)
+      Size = std::max(Size, getOption(i).size() + 8);
     return Size;
   } else {
     size_t BaseSize = 0;
@@ -1685,38 +1663,13 @@ size_t generic_parser_base::getOptionWidth(const Option &O) const {
 void generic_parser_base::printOptionInfo(const Option &O,
                                           size_t GlobalWidth) const {
   if (O.hasArgStr()) {
-    // When the value is optional, first print a line just describing the
-    // option without values.
-    if (O.getValueExpectedFlag() == ValueOptional) {
-      for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
-        if (getOption(i).empty()) {
-          outs() << ArgPrefix << O.ArgStr;
-          Option::printHelpStr(O.HelpStr, GlobalWidth,
-                               O.ArgStr.size() + ArgPrefixesSize);
-          break;
-        }
-      }
-    }
+    outs() << "  -" << O.ArgStr;
+    Option::printHelpStr(O.HelpStr, GlobalWidth, O.ArgStr.size() + 6);
 
-    outs() << ArgPrefix << O.ArgStr << EqValue;
-    Option::printHelpStr(O.HelpStr, GlobalWidth,
-                         O.ArgStr.size() + EqValue.size() + ArgPrefixesSize);
     for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
-      StringRef OptionName = getOption(i);
-      StringRef Description = getDescription(i);
-      if (!shouldPrintOption(OptionName, Description, O))
-        continue;
-      assert(GlobalWidth >= OptionName.size() + OptionPrefixesSize);
-      size_t NumSpaces = GlobalWidth - OptionName.size() - OptionPrefixesSize;
-      outs() << OptionPrefix << OptionName;
-      if (OptionName.empty()) {
-        outs() << EmptyOption;
-        assert(NumSpaces >= EmptyOption.size());
-        NumSpaces -= EmptyOption.size();
-      }
-      if (!Description.empty())
-        outs().indent(NumSpaces) << ArgHelpPrefix << "  " << Description;
-      outs() << '\n';
+      size_t NumSpaces = GlobalWidth - getOption(i).size() - 8;
+      outs() << "    =" << getOption(i);
+      outs().indent(NumSpaces) << " -   " << getDescription(i) << '\n';
     }
   } else {
     if (!O.HelpStr.empty())
