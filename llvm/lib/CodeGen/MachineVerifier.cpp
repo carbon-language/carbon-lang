@@ -974,6 +974,29 @@ void MachineVerifier::verifyPreISelGenericInstruction(const MachineInstr *MI) {
     LLT DstTy = MRI->getType(MI->getOperand(0).getReg());
     if (DstTy.isVector())
       report("Instruction cannot use a vector result type", MI);
+
+    if (MI->getOpcode() == TargetOpcode::G_CONSTANT) {
+      if (!MI->getOperand(1).isCImm()) {
+        report("G_CONSTANT operand must be cimm", MI);
+        break;
+      }
+
+      const ConstantInt *CI = MI->getOperand(1).getCImm();
+      if (CI->getBitWidth() != DstTy.getSizeInBits())
+        report("inconsistent constant size", MI);
+    } else {
+      if (!MI->getOperand(1).isFPImm()) {
+        report("G_FCONSTANT operand must be fpimm", MI);
+        break;
+      }
+      const ConstantFP *CF = MI->getOperand(1).getFPImm();
+
+      if (APFloat::getSizeInBits(CF->getValueAPF().getSemantics()) !=
+          DstTy.getSizeInBits()) {
+        report("inconsistent constant size", MI);
+      }
+    }
+
     break;
   }
   case TargetOpcode::G_LOAD:
