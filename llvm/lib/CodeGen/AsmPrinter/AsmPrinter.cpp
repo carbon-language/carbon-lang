@@ -1286,9 +1286,19 @@ void AsmPrinter::emitGlobalIndirectSymbol(Module &M,
   else
     assert(GIS.hasLocalLinkage() && "Invalid alias or ifunc linkage");
 
+  bool IsFunction = GIS.getType()->getPointerElementType()->isFunctionTy();
+
+  // Treat bitcasts of functions as functions also. This is important at least
+  // on WebAssembly where object and function addresses can't alias each other.
+  if (!IsFunction)
+    if (auto *CE = dyn_cast<ConstantExpr>(GIS.getIndirectSymbol()))
+      if (CE->getOpcode() == Instruction::BitCast)
+        IsFunction =
+          CE->getOperand(0)->getType()->getPointerElementType()->isFunctionTy();
+
   // Set the symbol type to function if the alias has a function type.
   // This affects codegen when the aliasee is not a function.
-  if (GIS.getType()->getPointerElementType()->isFunctionTy()) {
+  if (IsFunction) {
     OutStreamer->EmitSymbolAttribute(Name, MCSA_ELF_TypeFunction);
     if (isa<GlobalIFunc>(GIS))
       OutStreamer->EmitSymbolAttribute(Name, MCSA_ELF_TypeIndFunction);
