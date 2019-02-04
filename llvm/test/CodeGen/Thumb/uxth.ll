@@ -68,24 +68,18 @@ for.cond.cleanup:
 
 define void @uxth_loop_2(i32* %a, i32 %n) {
 ; V6M-LABEL: uxth_loop_2:
-; V6M:         .save {r4, r5, r7, lr}
-; V6M-NEXT:    push {r4, r5, r7, lr}
-; V6M-NEXT:    movs r3, #0
-; V6M-NEXT:    ldr r2, .LCPI5_0
+; V6M:         .save {r4, lr}
+; V6M-NEXT:    push {r4, lr}
+; V6M-NEXT:    movs r2, #0
 ; V6M-NEXT:  .LBB5_1:
-; V6M-NEXT:    adds r4, r3, #1
-; V6M-NEXT:    ands r3, r2
-; V6M-NEXT:    ldr r5, [r0]
-; V6M-NEXT:    ands r5, r2
-; V6M-NEXT:    muls r5, r3, r5
-; V6M-NEXT:    stm r0!, {r5}
-; V6M-NEXT:    cmp r1, r4
-; V6M-NEXT:    mov r3, r4
+; V6M-NEXT:    uxth r3, r2
+; V6M-NEXT:    ldrh r4, [r0]
+; V6M-NEXT:    muls r4, r3, r4
+; V6M-NEXT:    stm r0!, {r4}
+; V6M-NEXT:    adds r2, r2, #1
+; V6M-NEXT:    cmp r1, r2
 ; V6M-NEXT:    bne .LBB5_1
-; V6M-NEXT:    pop {r4, r5, r7, pc}
-; V6M-NEXT:    .p2align 2
-; V6M-NEXT:  .LCPI5_0:
-; V6M-NEXT:    .long 65535
+; V6M-NEXT:    pop {r4, pc}
 entry:
   br label %for.body
 
