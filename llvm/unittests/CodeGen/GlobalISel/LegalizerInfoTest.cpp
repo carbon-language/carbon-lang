@@ -41,6 +41,12 @@ operator<<(std::ostream &OS, const llvm::LLT Ty) {
   OS << SS.str();
   return OS;
 }
+
+std::ostream &operator<<(std::ostream &OS, const llvm::LegalizeActionStep Ty) {
+  OS << "LegalizeActionStep(" << Ty.Action << ", " << Ty.TypeIdx << ", "
+     << Ty.NewType << ')';
+  return OS;
+}
 }
 
 namespace {
@@ -197,4 +203,38 @@ TEST(LegalizerInfoTest, SizeChangeStrategy) {
   ASSERT_EQ(L.getAction({G_UREM, {LLT::scalar(33)}}),
             LegalizeActionStep(Unsupported, 0, LLT::scalar(33)));
 }
+}
+
+#define EXPECT_ACTION(Action, Index, Type, Query)                              \
+  do {                                                                         \
+    auto A = LI.getAction(Query);                                              \
+    EXPECT_EQ(LegalizeActionStep(Action, Index, Type), A) << A;                \
+  } while (0)
+
+TEST(LegalizerInfoTest, RuleSets) {
+  using namespace TargetOpcode;
+
+  const LLT s32 = LLT::scalar(32);
+
+  const LLT v2s32 = LLT::vector(2, 32);
+  const LLT v3s32 = LLT::vector(3, 32);
+  const LLT v4s32 = LLT::vector(4, 32);
+
+  const LLT p0 = LLT::pointer(0, 32);
+  const LLT v3p0 = LLT::vector(3, p0);
+  const LLT v4p0 = LLT::vector(4, p0);
+
+  {
+    LegalizerInfo LI;
+
+    LI.getActionDefinitionsBuilder(G_IMPLICIT_DEF)
+      .legalFor({v4s32, v4p0})
+      .moreElementsToNextPow2(0);
+    LI.computeTables();
+
+    EXPECT_ACTION(Unsupported, 0, LLT(), LegalityQuery(G_IMPLICIT_DEF, {s32}));
+    EXPECT_ACTION(Unsupported, 0, LLT(), LegalityQuery(G_IMPLICIT_DEF, {v2s32}));
+    EXPECT_ACTION(MoreElements, 0, v4p0, LegalityQuery(G_IMPLICIT_DEF, {v3p0}));
+    EXPECT_ACTION(MoreElements, 0, v4s32, LegalityQuery(G_IMPLICIT_DEF, {v3s32}));
+  }
 }
