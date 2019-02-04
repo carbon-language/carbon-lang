@@ -231,6 +231,7 @@ namespace {
     void visitMachineBasicBlockBefore(const MachineBasicBlock *MBB);
     void visitMachineBundleBefore(const MachineInstr *MI);
 
+    bool verifyVectorElementMatch(LLT Ty0, LLT Ty1, const MachineInstr *MI);
     void verifyPreISelGenericInstruction(const MachineInstr *MI);
     void visitMachineInstrBefore(const MachineInstr *MI);
     void visitMachineOperand(const MachineOperand *MO, unsigned MONum);
@@ -890,6 +891,29 @@ void MachineVerifier::verifyInlineAsm(const MachineInstr *MI) {
   }
 }
 
+/// Check that types are consistent when two operands need to have the same
+/// number of vector elements.
+/// \return true if the types are valid.
+bool MachineVerifier::verifyVectorElementMatch(LLT Ty0, LLT Ty1,
+                                               const MachineInstr *MI) {
+  if (Ty0.isVector() != Ty1.isVector()) {
+    report("operand types must be all-vector or all-scalar", MI);
+    // Generally we try to report as many issues as possible at once, but in
+    // this case it's not clear what should we be comparing the size of the
+    // scalar with: the size of the whole vector or its lane. Instead of
+    // making an arbitrary choice and emitting not so helpful message, let's
+    // avoid the extra noise and stop here.
+    return false;
+  }
+
+  if (Ty0.isVector() && Ty0.getNumElements() != Ty1.getNumElements()) {
+    report("operand types must preserve number of vector elements", MI);
+    return false;
+  }
+
+  return true;
+}
+
 void MachineVerifier::verifyPreISelGenericInstruction(const MachineInstr *MI) {
   if (isFunctionSelected)
     report("Unexpected generic instruction in a Selected function", MI);
@@ -1021,16 +1045,7 @@ void MachineVerifier::verifyPreISelGenericInstruction(const MachineInstr *MI) {
     if (!DstTy.isValid() || !SrcTy.isValid())
       break;
 
-    if (DstTy.isVector() != SrcTy.isVector())
-      report("pointer casts must be all-vector or all-scalar", MI);
-    else {
-      if (DstTy.isVector() ) {
-        if (DstTy.getNumElements() != SrcTy.getNumElements()) {
-          report("pointer casts must preserve number of elements", MI);
-          break;
-        }
-      }
-    }
+    verifyVectorElementMatch(DstTy, SrcTy, MI);
 
     DstTy = DstTy.getScalarType();
     SrcTy = SrcTy.getScalarType();
@@ -1074,23 +1089,13 @@ void MachineVerifier::verifyPreISelGenericInstruction(const MachineInstr *MI) {
     if (!DstTy.isValid() || !SrcTy.isValid())
       break;
 
-    LLT DstElTy = DstTy.isVector() ? DstTy.getElementType() : DstTy;
-    LLT SrcElTy = SrcTy.isVector() ? SrcTy.getElementType() : SrcTy;
+    LLT DstElTy = DstTy.getScalarType();
+    LLT SrcElTy = SrcTy.getScalarType();
     if (DstElTy.isPointer() || SrcElTy.isPointer())
       report("Generic extend/truncate can not operate on pointers", MI);
 
-    if (DstTy.isVector() != SrcTy.isVector()) {
-      report("Generic extend/truncate must be all-vector or all-scalar", MI);
-      // Generally we try to report as many issues as possible at once, but in
-      // this case it's not clear what should we be comparing the size of the
-      // scalar with: the size of the whole vector or its lane. Instead of
-      // making an arbitrary choice and emitting not so helpful message, let's
-      // avoid the extra noise and stop here.
-      break;
-    }
-    if (DstTy.isVector() && DstTy.getNumElements() != SrcTy.getNumElements())
-      report("Generic vector extend/truncate must preserve number of lanes",
-             MI);
+    verifyVectorElementMatch(DstTy, SrcTy, MI);
+
     unsigned DstSize = DstElTy.getSizeInBits();
     unsigned SrcSize = SrcElTy.getSizeInBits();
     switch (MI->getOpcode()) {
@@ -1105,6 +1110,17 @@ void MachineVerifier::verifyPreISelGenericInstruction(const MachineInstr *MI) {
                MI);
       break;
     }
+    break;
+  }
+  case TargetOpcode::G_SELECT: {
+    LLT SelTy = MRI->getType(MI->getOperand(0).getReg());
+    LLT CondTy = MRI->getType(MI->getOperand(1).getReg());
+    if (!SelTy.isValid() || !CondTy.isValid())
+      break;
+
+    // Scalar condition select on a vector is valid.
+    if (CondTy.isVector())
+      verifyVectorElementMatch(SelTy, CondTy, MI);
     break;
   }
   case TargetOpcode::G_MERGE_VALUES: {
