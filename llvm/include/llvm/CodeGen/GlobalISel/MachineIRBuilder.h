@@ -711,7 +711,7 @@ public:
   MachineInstrBuilder buildBuildVector(const DstOp &Res,
                                        ArrayRef<unsigned> Ops);
 
-  /// Build and insert \p Res = G_BUILD_VECTOR with \p Src0 replicated to fill
+  /// Build and insert \p Res = G_BUILD_VECTOR with \p Src replicated to fill
   /// the number of elements
   MachineInstrBuilder buildSplatVector(const DstOp &Res,
                                        const SrcOp &Src);
