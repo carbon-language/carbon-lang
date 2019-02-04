@@ -73,11 +73,9 @@ define float @test_simplify3(float %x) {
 
 define double @test_simplify3n(double %x) {
 ; CHECK-LABEL: @test_simplify3n(
-; ANY-NEXT:    [[MUL:%.*]] = fmul double [[X:%.*]], -2.000000e+00
-; ANY-NEXT:    [[EXP2:%.*]] = call double @exp2(double [[MUL]]) [[NUW_RO]]
-; ANY-NEXT:    ret double [[EXP2]]
-; WIN-NEXT:    [[POW:%.*]] = call double @pow(double 2.500000e-01, double [[X:%.*]])
-; WIN-NEXT:    ret double [[POW]]
+; CHECK-NEXT:  [[MUL:%.*]] = fmul double [[X:%.*]], -2.000000e+00
+; CHECK-NEXT:  [[EXP2:%.*]] = call double @exp2(double [[MUL]]) [[NUW_RO:#[0-9]+]]
+; CHECK-NEXT:  ret double [[EXP2]]
 ;
   %retval = call double @pow(double 0.25, double %x)
   ret double %retval
@@ -108,10 +106,8 @@ define <2 x double> @test_simplify3vn(<2 x double> %x) {
 
 define double @test_simplify4(double %x) {
 ; CHECK-LABEL: @test_simplify4(
-; ANY-NEXT:    [[EXP2:%.*]] = call double @exp2(double [[X:%.*]]) [[NUW_RO]]
-; ANY-NEXT:    ret double [[EXP2]]
-; WIN-NEXT:    [[POW:%.*]] = call double @pow(double 2.000000e+00, double [[X:%.*]])
-; WIN-NEXT:    ret double [[POW]]
+; CHECK-NEXT:  [[EXP2:%.*]] = call double @exp2(double [[X:%.*]]) [[NUW_RO]]
+; CHECK-NEXT:  ret double [[EXP2]]
 ;
   %retval = call double @pow(double 2.0, double %x)
   ret double %retval
@@ -195,7 +191,7 @@ define <2 x double> @test_simplify6v(<2 x double> %x) {
 define float @test_simplify7(float %x) {
 ; CHECK-LABEL: @test_simplify7(
 ; ANY-NEXT:    [[SQRTF:%.*]] = call float @sqrtf(float [[X:%.*]]) [[NUW_RO]]
-; WIN-NEXT:    [[SQRTF:%.*]] = call float @sqrtf(float [[X:%.*]]) [[NUW_RO:#[0-9]+]]
+; WIN-NEXT:    [[SQRTF:%.*]] = call float @sqrtf(float [[X:%.*]]) [[NUW_RO]]
 ; CHECK-NEXT:  [[ABS:%.*]] = call float @llvm.fabs.f32(float [[SQRTF]])
 ; CHECK-NEXT:  [[ISINF:%.*]] = fcmp oeq float [[X]], 0xFFF0000000000000
 ; CHECK-NEXT:  [[TMP1:%.*]] = select i1 [[ISINF]], float 0x7FF0000000000000, float [[ABS]]
