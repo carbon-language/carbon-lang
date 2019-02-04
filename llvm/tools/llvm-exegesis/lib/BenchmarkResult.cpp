@@ -32,7 +32,8 @@ struct YamlContext {
   YamlContext(const exegesis::LLVMState &State)
       : State(&State), ErrorStream(LastError),
         OpcodeNameToOpcodeIdx(
-            generateOpcodeNameToOpcodeIdxMapping(State.getInstrInfo())) {}
+            generateOpcodeNameToOpcodeIdxMapping(State.getInstrInfo())),
+        RegNameToRegNo(generateRegNameToRegNoMapping(State.getRegInfo())) {}
 
   static llvm::StringMap<unsigned>
   generateOpcodeNameToOpcodeIdxMapping(const llvm::MCInstrInfo &InstrInfo) {
@@ -40,6 +41,15 @@ struct YamlContext {
     for (unsigned I = 0, E = InstrInfo.getNumOpcodes(); I < E; ++I)
       Map[InstrInfo.getName(I)] = I;
     assert(Map.size() == InstrInfo.getNumOpcodes() && "Size prediction failed");
+    return Map;
+  };
+
+  llvm::StringMap<unsigned>
+  generateRegNameToRegNoMapping(const llvm::MCRegisterInfo &RegInfo) {
+    llvm::StringMap<unsigned> Map(RegInfo.getNumRegs());
+    for (unsigned I = 0, E = RegInfo.getNumRegs(); I < E; ++I)
+      Map[RegInfo.getName(I)] = I;
+    assert(Map.size() == RegInfo.getNumRegs() && "Size prediction failed");
     return Map;
   };
 
@@ -80,10 +90,9 @@ struct YamlContext {
   }
 
   unsigned getRegNo(llvm::StringRef RegName) {
-    const llvm::MCRegisterInfo &RegInfo = State->getRegInfo();
-    for (unsigned E = RegInfo.getNumRegs(), I = 0; I < E; ++I)
-      if (RegInfo.getName(I) == RegName)
-        return I;
+    auto Iter = RegNameToRegNo.find(RegName);
+    if (Iter != RegNameToRegNo.end())
+      return Iter->second;
     ErrorStream << "No register with name " << RegName;
     return 0;
   }
@@ -159,6 +168,7 @@ private:
   std::string LastError;
   llvm::raw_string_ostream ErrorStream;
   const llvm::StringMap<unsigned> OpcodeNameToOpcodeIdx;
+  const llvm::StringMap<unsigned> RegNameToRegNo;
 };
 } // namespace
 
