@@ -1014,7 +1014,7 @@ public:
   bool isInlineAsm() const { return getOpcode() == TargetOpcode::INLINEASM; }
 
   bool isMSInlineAsm() const {
-    return getOpcode() == TargetOpcode::INLINEASM && getInlineAsmDialect();
+    return isInlineAsm() && getInlineAsmDialect() == InlineAsm::AD_Intel;
   }
 
   bool isStackAligningInlineAsm() const;
