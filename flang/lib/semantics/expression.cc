@@ -428,30 +428,28 @@ static MaybeExpr ApplySubscripts(ExpressionAnalysisContext &context,
       std::move(dataRef.u));
 }
 
-// Ensure that a whole component reference made to an array of derived type
-// does not also reference an array (e.g., A(:)%ARRAY is invalid).
-static void CheckUnsubscriptedComponent(
-    ExpressionAnalysisContext &context, const Component &component) {
-  int baseRank{component.base().Rank()};
-  if (baseRank > 0) {
-    const Symbol &symbol{component.GetLastSymbol()};
-    int componentRank{symbol.Rank()};
-    if (componentRank > 0) {
-      context.Say("reference to whole rank-%d component '%%%s' of "
-                  "rank-%d array of derived type is not allowed"_err_en_US,
-          componentRank, symbol.name().ToString().data(), baseRank);
-    }
-  }
-}
-
 // Top-level checks for data references.  Unsubscripted whole array references
 // get expanded -- e.g., MATRIX becomes MATRIX(:,:).
 static MaybeExpr TopLevelChecks(
     ExpressionAnalysisContext &context, DataRef &&dataRef) {
+  bool addSubscripts{false};
   if (Component * component{std::get_if<Component>(&dataRef.u)}) {
-    CheckUnsubscriptedComponent(context, *component);
+    const Symbol &symbol{component->GetLastSymbol()};
+    int componentRank{symbol.Rank()};
+    if (componentRank > 0) {
+      int baseRank{component->base().Rank()};
+      if (baseRank > 0) {
+        context.Say("reference to whole rank-%d component '%%%s' of "
+                    "rank-%d array of derived type is not allowed"_err_en_US,
+            componentRank, symbol.name().ToString().data(), baseRank);
+      } else {
+        addSubscripts = true;
+      }
+    }
+  } else if (const Symbol **symbol{std::get_if<const Symbol *>(&dataRef.u)}) {
+    addSubscripts = (*symbol)->Rank() > 0;
   }
-  if (dataRef.Rank() > 0) {
+  if (addSubscripts) {
     if (MaybeExpr subscripted{ApplySubscripts(
             context, std::move(dataRef), std::vector<Subscript>{})}) {
       return subscripted;
@@ -1109,7 +1107,6 @@ static MaybeExpr AnalyzeExpr(
 
 static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
     const parser::CoindexedNamedObject &co) {
-  // TODO: CheckUnsubscriptedComponent or its equivalent
   context.Say("TODO: CoindexedNamedObject unimplemented"_err_en_US);
   return std::nullopt;
 }
