@@ -222,6 +222,9 @@ class DataAggregator : public DataReader {
   /// everything
   bool hasData();
 
+  /// Print heat map based on LBR samples.
+  std::error_code printLBRHeatMap();
+
   /// Parse a single perf sample containing a PID associated with a sequence of
   /// LBR entries
   ErrorOr<PerfBranchSample> parseBranchSample();

@@ -15,6 +15,7 @@
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
 #include "DataAggregator.h"
+#include "Heatmap.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Options.h"
@@ -37,24 +38,12 @@ using namespace bolt;
 namespace opts {
 
 extern cl::OptionCategory AggregatorCategory;
+extern bool HeatmapMode;
+extern cl::SubCommand HeatmapCommand;
 
 static cl::opt<bool>
 BasicAggregation("nl",
   cl::desc("aggregate basic samples (without LBR info)"),
-  cl::init(false),
-  cl::ZeroOrMore,
-  cl::cat(AggregatorCategory));
-
-static cl::opt<bool>
-WriteAutoFDOData("autofdo",
-  cl::desc("generate autofdo textual data instead of bolt data"),
-  cl::init(false),
-  cl::ZeroOrMore,
-  cl::cat(AggregatorCategory));
-
-static cl::opt<bool>
-ReadPreAggregated("pa",
-  cl::desc("skip perf and read data from a pre-aggregated file format"),
   cl::init(false),
   cl::ZeroOrMore,
   cl::cat(AggregatorCategory));
@@ -65,9 +54,43 @@ IgnoreBuildID("ignore-build-id",
   cl::init(false),
   cl::cat(AggregatorCategory));
 
+static cl::opt<unsigned>
+HeatmapBlock("block-size",
+  cl::desc("size of a heat map block in bytes (default 64)"),
+  cl::init(64),
+  cl::sub(HeatmapCommand));
+
+static cl::opt<std::string>
+HeatmapFile("o",
+  cl::init("-"),
+  cl::desc("heatmap output file (default stdout)"),
+  cl::Optional,
+  cl::sub(HeatmapCommand));
+
+static cl::opt<unsigned long long>
+HeatmapMaxAddress("max-address",
+  cl::init(0xffffffff),
+  cl::desc("maximum address considered valid for heatmap (default 4GB)"),
+  cl::Optional,
+  cl::sub(HeatmapCommand));
+
+static cl::opt<bool>
+ReadPreAggregated("pa",
+  cl::desc("skip perf and read data from a pre-aggregated file format"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(AggregatorCategory));
+
 static cl::opt<bool>
 TimeAggregator("time-aggr",
   cl::desc("time BOLT aggregator"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(AggregatorCategory));
+
+static cl::opt<bool>
+WriteAutoFDOData("autofdo",
+  cl::desc("generate autofdo textual data instead of bolt data"),
   cl::init(false),
   cl::ZeroOrMore,
   cl::cat(AggregatorCategory));
@@ -459,6 +482,15 @@ void DataAggregator::parseProfile(
   }
 
   prepareToParse("events", MainEventsPPI);
+
+  if (opts::HeatmapMode) {
+    if (auto EC = printLBRHeatMap()) {
+      errs() << "ERROR: failed to print heat map: " << EC.message() << '\n';
+      exit(1);
+    }
+    exit(0);
+  }
+
   if ((!opts::BasicAggregation && parseBranchEvents()) ||
       (opts::BasicAggregation && parseBasicEvents())) {
     errs() << "PERF2BOLT: failed to parse samples\n";
@@ -965,6 +997,70 @@ bool DataAggregator::hasData() {
     return false;
 
   return true;
+}
+
+std::error_code DataAggregator::printLBRHeatMap() {
+  outs() << "PERF2BOLT: parse branch events...\n";
+  NamedRegionTimer T("parseBranch", "Parsing branch events", TimerGroupName,
+                     TimerGroupDesc, opts::TimeAggregator);
+
+  Heatmap HM(opts::HeatmapBlock, opts::HeatmapMaxAddress);
+  uint64_t NumTotalSamples{0};
+
+  while (hasData()) {
+    auto SampleRes = parseBranchSample();
+    if (std::error_code EC = SampleRes.getError())
+      return EC;
+
+    auto &Sample = SampleRes.get();
+
+    // LBRs are stored in reverse execution order. NextLBR refers to the next
+    // executed branch record.
+    const LBREntry *NextLBR{nullptr};
+    for (const auto &LBR : Sample.LBR) {
+      if (NextLBR) {
+        // Record fall-through trace.
+        const auto TraceFrom = LBR.To;
+        const auto TraceTo = NextLBR->From;
+        ++FallthroughLBRs[Trace(TraceFrom, TraceTo)].InternCount;
+      }
+      NextLBR = &LBR;
+    }
+    if (!Sample.LBR.empty()) {
+      HM.registerAddress(Sample.LBR.front().To);
+      HM.registerAddress(Sample.LBR.back().From);
+    }
+    NumTotalSamples += Sample.LBR.size();
+  }
+
+  if (!NumTotalSamples) {
+    errs() << "HEATMAP-ERROR: no LBR traces detected in profile. "
+              "Cannot build heatmap.\n";
+    exit(1);
+  }
+
+  outs() << "HEATMAP: read " << NumTotalSamples << " LBR samples\n";
+  outs() << "HEATMAP: " << FallthroughLBRs.size() << " unique traces\n";
+
+  outs() << "HEATMAP: building heat map...\n";
+
+  for (const auto &LBR : FallthroughLBRs) {
+    const auto &Trace = LBR.first;
+    const auto &Info = LBR.second;
+    HM.registerAddressRange(Trace.From, Trace.To, Info.InternCount);
+  }
+
+  if (HM.getNumInvalidRanges())
+    outs() << "HEATMAP: invalid traces: " << HM.getNumInvalidRanges() << '\n';
+
+  if (!HM.size()) {
+    errs() << "HEATMAP-ERROR: no valid traces registered\n";
+    exit(1);
+  }
+
+  HM.print(opts::HeatmapFile);
+
+  return std::error_code();
 }
 
 std::error_code DataAggregator::parseBranchEvents() {

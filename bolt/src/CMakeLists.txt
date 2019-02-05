@@ -77,6 +77,7 @@ add_llvm_tool(llvm-bolt
   DebugData.cpp
   DWARFRewriter.cpp
   Exceptions.cpp
+  Heatmap.cpp
   JumpTable.cpp
   MCPlusBuilder.cpp
   ProfileReader.cpp
@@ -90,3 +91,4 @@ add_llvm_tool(llvm-bolt
 
 add_llvm_tool_symlink(perf2bolt llvm-bolt)
 add_llvm_tool_symlink(llvm-boltdiff llvm-bolt)
+add_llvm_tool_symlink(llvm-bolt-heatmap llvm-bolt)

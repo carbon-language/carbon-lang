@@ -28,35 +28,7 @@ class RewriteInstance;
 /// BinaryFunction, as well as rewriting CFI sections.
 class CFIReaderWriter {
 public:
-  explicit CFIReaderWriter(const DWARFDebugFrame &EHFrame) {
-    // Prepare FDEs for fast lookup
-    for (const auto &Entry : EHFrame.entries()) {
-      const auto *CurFDE = dyn_cast<dwarf::FDE>(&Entry);
-      // Skip CIEs.
-      if (!CurFDE)
-        continue;
-      // There could me multiple FDEs with the same initial address, but
-      // different size (address range). Make sure the sizes match if they
-      // are non-zero. Ignore zero-sized ones.
-      auto FDEI = FDEs.lower_bound(CurFDE->getInitialLocation());
-      if (FDEI != FDEs.end() &&
-          FDEI->first == CurFDE->getInitialLocation()) {
-        if (FDEI->second->getAddressRange() != 0 &&
-            CurFDE->getAddressRange() != 0 &&
-            CurFDE->getAddressRange() != FDEI->second->getAddressRange()) {
-          errs() << "BOLT-ERROR: input FDEs for function at 0x"
-                 << Twine::utohexstr(FDEI->first)
-                 << " have conflicting sizes: "
-                 << FDEI->second->getAddressRange() << " and "
-                 << CurFDE->getAddressRange() << '\n';
-        } else if (FDEI->second->getAddressRange() == 0) {
-          FDEI->second = CurFDE;
-        }
-        continue;
-      }
-      FDEs.emplace_hint(FDEI, CurFDE->getInitialLocation(), CurFDE);
-    }
-  }
+  explicit CFIReaderWriter(const DWARFDebugFrame &EHFrame);
 
   bool fillCFIInfoFor(BinaryFunction &Function) const;
 

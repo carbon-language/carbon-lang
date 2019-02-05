@@ -75,6 +75,8 @@ using namespace bolt;
 
 namespace opts {
 
+extern bool HeatmapMode;
+
 extern cl::OptionCategory BoltCategory;
 extern cl::OptionCategory BoltDiffCategory;
 extern cl::OptionCategory BoltOptCategory;
@@ -357,7 +359,8 @@ Verbosity("v",
   cl::desc("set verbosity level for diagnostic output"),
   cl::init(0),
   cl::ZeroOrMore,
-  cl::cat(BoltCategory));
+  cl::cat(BoltCategory),
+  cl::sub(*cl::AllSubCommands));
 
 cl::opt<bool>
 AggregateOnly("aggregate-only",
@@ -857,8 +860,9 @@ void RewriteInstance::discoverStorage() {
         SectionContents.data() - InputFile->getData().data();
     }
 
-    if (SectionName.startswith(OrgSecPrefix) ||
-        SectionName.startswith(BOLTSecPrefix)) {
+    if (!opts::HeatmapMode &&
+        (SectionName.startswith(OrgSecPrefix) ||
+         SectionName.startswith(BOLTSecPrefix))) {
       errs() << "BOLT-ERROR: input file was processed by BOLT. "
                 "Cannot re-optimize.\n";
       exit(1);
@@ -1778,11 +1782,6 @@ void RewriteInstance::readSpecialSections() {
 
   if (opts::PrintSections) {
     outs() << "BOLT-INFO: Sections from original binary:\n";
-    BC->printSections(outs());
-  }
-
-  if (opts::PrintSections) {
-    outs() << "BOLT-INFO: Sections:\n";
     BC->printSections(outs());
   }
 

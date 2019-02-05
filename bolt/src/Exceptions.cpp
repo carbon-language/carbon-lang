@@ -661,6 +661,34 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer, bool EmitColdPart) {
 
 const uint8_t DWARF_CFI_PRIMARY_OPCODE_MASK = 0xc0;
 
+CFIReaderWriter::CFIReaderWriter(const DWARFDebugFrame &EHFrame) {
+  // Prepare FDEs for fast lookup
+  for (const auto &Entry : EHFrame.entries()) {
+    const auto *CurFDE = dyn_cast<dwarf::FDE>(&Entry);
+    // Skip CIEs.
+    if (!CurFDE)
+      continue;
+    // There could me multiple FDEs with the same initial address, and perhaps
+    // different sizes (address ranges). Use the first entry with non-zero size.
+    auto FDEI = FDEs.lower_bound(CurFDE->getInitialLocation());
+    if (FDEI != FDEs.end() && FDEI->first == CurFDE->getInitialLocation()) {
+      if (CurFDE->getAddressRange()) {
+        if (FDEI->second->getAddressRange() == 0) {
+          FDEI->second = CurFDE;
+        } else if (opts::Verbosity > 0) {
+          errs() << "BOLT-WARNING: different FDEs for function at 0x"
+                 << Twine::utohexstr(FDEI->first)
+                 << " detected; sizes: "
+                 << FDEI->second->getAddressRange() << " and "
+                 << CurFDE->getAddressRange() << '\n';
+        }
+      }
+    } else {
+      FDEs.emplace_hint(FDEI, CurFDE->getInitialLocation(), CurFDE);
+    }
+  }
+}
+
 bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
   uint64_t Address = Function.getAddress();
   auto I = FDEs.find(Address);
