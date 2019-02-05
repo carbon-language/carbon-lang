@@ -64,11 +64,7 @@ void WriteState::addUser(ReadState *User, int ReadAdvance) {
     return;
   }
 
-  if (llvm::find_if(Users, [&User](const std::pair<ReadState *, int> &Use) {
-        return Use.first == User;
-      }) == Users.end()) {
-    Users.emplace_back(User, ReadAdvance);
-  }
+  Users.emplace_back(User, ReadAdvance);
 }
 
 void WriteState::addUser(WriteState *User) {
