@@ -1328,7 +1328,8 @@ void SampleProfileLoader::propagateWeights(Function &F) {
                             SortedCallTargets.size());
         } else if (!dyn_cast<IntrinsicInst>(&I)) {
           I.setMetadata(LLVMContext::MD_prof,
-                        MDB.createBranchWeights({BlockWeights[BB]}));
+                        MDB.createBranchWeights(
+                            {static_cast<uint32_t>(BlockWeights[BB])}));
         }
       }
     }
