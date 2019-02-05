@@ -685,6 +685,8 @@ public:
   bool Pre(const parser::AllocateStmt &);
   void Post(const parser::AllocateStmt &);
   bool Pre(const parser::StructureConstructor &);
+  bool Pre(const parser::NamelistStmt::Group &);
+  bool Pre(const parser::IoControlSpec &);
 
 protected:
   bool BeginDecl();
@@ -3000,6 +3002,49 @@ bool DeclarationVisitor::Pre(const parser::StructureConstructor &x) {
   EndDeclTypeSpec();
   SetDeclTypeSpecState(savedState);
   return false;
+}
+
+bool DeclarationVisitor::Pre(const parser::NamelistStmt::Group &x) {
+  if (currScope().kind() == Scope::Kind::Block) {
+    Say("NAMELIST statement is not allowed in a BLOCK construct"_err_en_US);
+    return false;
+  }
+
+  NamelistDetails details;
+  for (const auto &name : std::get<std::list<parser::Name>>(x.t)) {
+    auto *symbol{FindSymbol(name)};
+    if (!symbol) {
+      symbol = &MakeSymbol(name, ObjectEntityDetails{});
+      ApplyImplicitRules(*symbol);
+    } else if (!ConvertToObjectEntity(*symbol)) {
+      SayWithDecl(name, *symbol, "'%s' is not a variable"_err_en_US);
+    }
+    details.add_object(*symbol);
+  }
+
+  const auto &groupName{std::get<parser::Name>(x.t)};
+  auto *groupSymbol{FindInScope(currScope(), groupName)};
+  if (!groupSymbol) {
+    groupSymbol = &MakeSymbol(groupName, std::move(details));
+  } else if (groupSymbol->has<NamelistDetails>()) {
+    groupSymbol->get<NamelistDetails>().add_objects(details.objects());
+  } else {
+    SayAlreadyDeclared(groupName, *groupSymbol);
+  }
+  return false;
+}
+
+bool DeclarationVisitor::Pre(const parser::IoControlSpec &x) {
+  if (const auto *name{std::get_if<parser::Name>(&x.u)}) {
+    auto *symbol{FindSymbol(*name)};
+    if (!symbol) {
+      Say(*name, "Namelist group '%s' not found"_err_en_US);
+    } else if (!symbol->GetUltimate().has<NamelistDetails>()) {
+      SayWithDecl(
+          *name, *symbol, "'%s' is not the name of a namelist group"_err_en_US);
+    }
+  }
+  return true;
 }
 
 Symbol *DeclarationVisitor::DeclareLocalEntity(const parser::Name &name) {

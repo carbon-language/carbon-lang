@@ -164,6 +164,15 @@ void ModFileWriter::PutSymbol(
               PutLower(typeBindings << "=>", *proc) << '\n';
             }
           },
+          [&](const NamelistDetails &x) {
+            PutLower(decls_ << "namelist/", symbol);
+            char sep = '/';
+            for (const auto *object : x.objects()) {
+              PutLower(decls_ << sep, *object);
+              sep = ',';
+            }
+            decls_ << '\n';
+          },
           [&](const FinalProcDetails &) {
             PutLower(typeBindings << "final::", symbol) << '\n';
           },
@@ -280,6 +289,7 @@ void ModFileWriter::PutUseExtraAttr(
 }
 
 // Collect the symbols of this scope sorted by their original order, not name.
+// Namelists are an exception: they are sorted to the end.
 std::vector<const Symbol *> CollectSymbols(const Scope &scope) {
   std::set<const Symbol *> symbols;  // to prevent duplicates
   std::vector<const Symbol *> sorted;
@@ -293,7 +303,13 @@ std::vector<const Symbol *> CollectSymbols(const Scope &scope) {
     }
   }
   std::sort(sorted.begin(), sorted.end(), [](const Symbol *x, const Symbol *y) {
-    return x->name().begin() < y->name().begin();
+    bool xIsNml{x->has<NamelistDetails>()};
+    bool yIsNml{y->has<NamelistDetails>()};
+    if (xIsNml != yIsNml) {
+      return xIsNml < yIsNml;
+    } else {
+      return x->name().begin() < y->name().begin();
+    }
   });
   return sorted;
 }

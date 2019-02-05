@@ -246,6 +246,18 @@ private:
   SymbolList specificProcs_;
 };
 
+class NamelistDetails {
+public:
+  const SymbolList &objects() const { return objects_; }
+  void add_object(const Symbol &object) { objects_.push_back(&object); }
+  void add_objects(const SymbolList &objects) {
+    objects_.insert(objects_.end(), objects.begin(), objects.end());
+  }
+
+private:
+  SymbolList objects_;
+};
+
 class FinalProcDetails {};
 
 class MiscDetails {
@@ -353,8 +365,8 @@ using Details = std::variant<UnknownDetails, MainProgramDetails, ModuleDetails,
     SubprogramDetails, SubprogramNameDetails, EntityDetails,
     ObjectEntityDetails, ProcEntityDetails, AssocEntityDetails,
     DerivedTypeDetails, UseDetails, UseErrorDetails, HostAssocDetails,
-    GenericDetails, ProcBindingDetails, GenericBindingDetails, FinalProcDetails,
-    TypeParamDetails, MiscDetails>;
+    GenericDetails, ProcBindingDetails, GenericBindingDetails, NamelistDetails,
+    FinalProcDetails, TypeParamDetails, MiscDetails>;
 std::ostream &operator<<(std::ostream &, const Details &);
 std::string DetailsToString(const Details &);
 
