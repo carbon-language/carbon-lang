@@ -1566,9 +1566,8 @@ void ItaniumCXXABI::EmitDestructorCall(CodeGenFunction &CGF,
     Callee = CGCallee::forDirect(
         CGM.getAddrOfCXXStructor(DD, getFromDtorType(Type)), GD);
 
-  CGF.EmitCXXMemberOrOperatorCall(DD, Callee, ReturnValueSlot(),
-                                  This.getPointer(), VTT, VTTTy,
-                                  nullptr, nullptr);
+  CGF.EmitCXXDestructorCall(DD, Callee, This.getPointer(), VTT, VTTTy, nullptr,
+                            getFromDtorType(Type));
 }
 
 void ItaniumCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,
@@ -1766,9 +1765,8 @@ llvm::Value *ItaniumCXXABI::EmitVirtualDestructorCall(
   CGCallee Callee =
       CGCallee::forVirtual(CE, GlobalDecl(Dtor, DtorType), This, Ty);
 
-  CGF.EmitCXXMemberOrOperatorCall(Dtor, Callee, ReturnValueSlot(),
-                                  This.getPointer(), /*ImplicitParam=*/nullptr,
-                                  QualType(), CE, nullptr);
+  CGF.EmitCXXDestructorCall(Dtor, Callee, This.getPointer(), nullptr,
+                            QualType(), nullptr, getFromDtorType(DtorType));
   return nullptr;
 }
 

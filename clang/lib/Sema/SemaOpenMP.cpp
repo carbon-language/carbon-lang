@@ -10747,7 +10747,8 @@ buildDeclareReductionRef(Sema &SemaRef, SourceLocation Loc, SourceRange Range,
               return D;
             return nullptr;
           }))
-    return SemaRef.BuildDeclRefExpr(VD, Ty, VK_LValue, Loc);
+    return SemaRef.BuildDeclRefExpr(VD, VD->getType().getNonReferenceType(),
+                                    VK_LValue, Loc);
   if (auto *VD = filterLookupForUDR<ValueDecl *>(
           Lookups, [&SemaRef, Ty, Loc](ValueDecl *D) -> ValueDecl * {
             if (!D->isInvalidDecl() &&
@@ -10765,7 +10766,8 @@ buildDeclareReductionRef(Sema &SemaRef, SourceLocation Loc, SourceRange Range,
                                          /*DiagID=*/0) !=
             Sema::AR_inaccessible) {
           SemaRef.BuildBasePathArray(Paths, BasePath);
-          return SemaRef.BuildDeclRefExpr(VD, Ty, VK_LValue, Loc);
+          return SemaRef.BuildDeclRefExpr(
+              VD, VD->getType().getNonReferenceType(), VK_LValue, Loc);
         }
       }
     }
