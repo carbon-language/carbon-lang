@@ -77,8 +77,8 @@ define <8 x i16> @test3_x86_sse41_pblend_w(<8 x i16> %a0) {
   ret <8 x i16> %1
 }
 
-define double @demanded_blendvpd(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2) {
-; CHECK-LABEL: demanded_blendvpd:
+define double @demandedelts_blendvpd(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2) {
+; CHECK-LABEL: demandedelts_blendvpd:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    movapd %xmm0, %xmm3
 ; CHECK-NEXT:    movaps %xmm2, %xmm0
@@ -93,8 +93,8 @@ define double @demanded_blendvpd(<2 x double> %a0, <2 x double> %a1, <2 x double
   ret double %5
 }
 
-define float @demanded_blendvps(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2) {
-; CHECK-LABEL: demanded_blendvps:
+define float @demandedelts_blendvps(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2) {
+; CHECK-LABEL: demandedelts_blendvps:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    movaps %xmm0, %xmm3
 ; CHECK-NEXT:    movaps %xmm2, %xmm0
@@ -109,8 +109,8 @@ define float @demanded_blendvps(<4 x float> %a0, <4 x float> %a1, <4 x float> %a
   ret float %5
 }
 
-define <16 x i8> @demanded_pblendvb(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> %a2) {
-; CHECK-LABEL: demanded_pblendvb:
+define <16 x i8> @demandedelts_pblendvb(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> %a2) {
+; CHECK-LABEL: demandedelts_pblendvb:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    movdqa %xmm0, %xmm3
 ; CHECK-NEXT:    movdqa %xmm2, %xmm0
