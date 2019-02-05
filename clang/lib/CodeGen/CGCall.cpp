@@ -3688,15 +3688,15 @@ CodeGenFunction::AddObjCARCExceptionMetadata(llvm::Instruction *Inst) {
 
 /// Emits a call to the given no-arguments nounwind runtime function.
 llvm::CallInst *
-CodeGenFunction::EmitNounwindRuntimeCall(llvm::Value *callee,
+CodeGenFunction::EmitNounwindRuntimeCall(llvm::FunctionCallee callee,
                                          const llvm::Twine &name) {
   return EmitNounwindRuntimeCall(callee, None, name);
 }
 
 /// Emits a call to the given nounwind runtime function.
 llvm::CallInst *
-CodeGenFunction::EmitNounwindRuntimeCall(llvm::Value *callee,
-                                         ArrayRef<llvm::Value*> args,
+CodeGenFunction::EmitNounwindRuntimeCall(llvm::FunctionCallee callee,
+                                         ArrayRef<llvm::Value *> args,
                                          const llvm::Twine &name) {
   llvm::CallInst *call = EmitRuntimeCall(callee, args, name);
   call->setDoesNotThrow();
@@ -3705,9 +3705,8 @@ CodeGenFunction::EmitNounwindRuntimeCall(llvm::Value *callee,
 
 /// Emits a simple call (never an invoke) to the given no-arguments
 /// runtime function.
-llvm::CallInst *
-CodeGenFunction::EmitRuntimeCall(llvm::Value *callee,
-                                 const llvm::Twine &name) {
+llvm::CallInst *CodeGenFunction::EmitRuntimeCall(llvm::FunctionCallee callee,
+                                                 const llvm::Twine &name) {
   return EmitRuntimeCall(callee, None, name);
 }
 
@@ -3731,21 +3730,20 @@ CodeGenFunction::getBundlesForFunclet(llvm::Value *Callee) {
 }
 
 /// Emits a simple call (never an invoke) to the given runtime function.
-llvm::CallInst *
-CodeGenFunction::EmitRuntimeCall(llvm::Value *callee,
-                                 ArrayRef<llvm::Value*> args,
-                                 const llvm::Twine &name) {
-  llvm::CallInst *call =
-      Builder.CreateCall(callee, args, getBundlesForFunclet(callee), name);
+llvm::CallInst *CodeGenFunction::EmitRuntimeCall(llvm::FunctionCallee callee,
+                                                 ArrayRef<llvm::Value *> args,
+                                                 const llvm::Twine &name) {
+  llvm::CallInst *call = Builder.CreateCall(
+      callee, args, getBundlesForFunclet(callee.getCallee()), name);
   call->setCallingConv(getRuntimeCC());
   return call;
 }
 
 /// Emits a call or invoke to the given noreturn runtime function.
-void CodeGenFunction::EmitNoreturnRuntimeCallOrInvoke(llvm::Value *callee,
-                                               ArrayRef<llvm::Value*> args) {
+void CodeGenFunction::EmitNoreturnRuntimeCallOrInvoke(
+    llvm::FunctionCallee callee, ArrayRef<llvm::Value *> args) {
   SmallVector<llvm::OperandBundleDef, 1> BundleList =
-      getBundlesForFunclet(callee);
+      getBundlesForFunclet(callee.getCallee());
 
   if (getInvokeDest()) {
     llvm::InvokeInst *invoke =
@@ -3765,14 +3763,17 @@ void CodeGenFunction::EmitNoreturnRuntimeCallOrInvoke(llvm::Value *callee,
 }
 
 /// Emits a call or invoke instruction to the given nullary runtime function.
-llvm::CallBase *CodeGenFunction::EmitRuntimeCallOrInvoke(llvm::Value *callee,
-                                                         const Twine &name) {
+llvm::CallBase *
+CodeGenFunction::EmitRuntimeCallOrInvoke(llvm::FunctionCallee callee,
+                                         const Twine &name) {
   return EmitRuntimeCallOrInvoke(callee, None, name);
 }
 
 /// Emits a call or invoke instruction to the given runtime function.
-llvm::CallBase *CodeGenFunction::EmitRuntimeCallOrInvoke(
-    llvm::Value *callee, ArrayRef<llvm::Value *> args, const Twine &name) {
+llvm::CallBase *
+CodeGenFunction::EmitRuntimeCallOrInvoke(llvm::FunctionCallee callee,
+                                         ArrayRef<llvm::Value *> args,
+                                         const Twine &name) {
   llvm::CallBase *call = EmitCallOrInvoke(callee, args, name);
   call->setCallingConv(getRuntimeCC());
   return call;
@@ -3780,12 +3781,12 @@ llvm::CallBase *CodeGenFunction::EmitRuntimeCallOrInvoke(
 
 /// Emits a call or invoke instruction to the given function, depending
 /// on the current state of the EH stack.
-llvm::CallBase *CodeGenFunction::EmitCallOrInvoke(llvm::Value *Callee,
+llvm::CallBase *CodeGenFunction::EmitCallOrInvoke(llvm::FunctionCallee Callee,
                                                   ArrayRef<llvm::Value *> Args,
                                                   const Twine &Name) {
   llvm::BasicBlock *InvokeDest = getInvokeDest();
   SmallVector<llvm::OperandBundleDef, 1> BundleList =
-      getBundlesForFunclet(Callee);
+      getBundlesForFunclet(Callee.getCallee());
 
   llvm::CallBase *Inst;
   if (!InvokeDest)
@@ -4432,7 +4433,8 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
         llvm::IRBuilder<>::InsertPointGuard IPGuard(Builder);
         Builder.SetInsertPoint(CI);
         auto *FnType = llvm::FunctionType::get(CGM.VoidTy, /*isVarArg=*/false);
-        auto *Fn = CGM.CreateRuntimeFunction(FnType, "__asan_handle_no_return");
+        llvm::FunctionCallee Fn =
+            CGM.CreateRuntimeFunction(FnType, "__asan_handle_no_return");
         EmitNounwindRuntimeCall(Fn);
       }
     }
