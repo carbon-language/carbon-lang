@@ -195,8 +195,9 @@ void ModFileWriter::PutSymbol(
 void ModFileWriter::PutDerivedType(const Symbol &typeSymbol) {
   auto &details{typeSymbol.get<DerivedTypeDetails>()};
   PutAttrs(decls_ << "type", typeSymbol.attrs(), ","s, ""s);
-  if (!details.extends().empty()) {
-    PutLower(decls_ << ",extends(", details.extends().ToString()) << ')';
+  if (const DerivedTypeSpec * extends{typeSymbol.GetParentTypeSpec()}) {
+    PutLower(decls_ << ",extends(", extends->typeSymbol().name().ToString())
+        << ')';
   }
   PutLower(decls_ << "::", typeSymbol);
   auto &typeScope{*typeSymbol.scope()};

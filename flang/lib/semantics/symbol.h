@@ -191,17 +191,19 @@ private:
   friend std::ostream &operator<<(std::ostream &, const ProcEntityDetails &);
 };
 
+// These derived type details represent the characteristics of a derived
+// type definition that are shared by all instantiations of that type.
+// The DerivedTypeSpec instances whose type symbols share these details
+// each own a scope into which the components' symbols have been cloned
+// and specialized for each distinct set of type parameter values.
 class DerivedTypeDetails {
 public:
   const std::list<SourceName> &paramNames() const { return paramNames_; }
-  const std::list<const Symbol *> &paramDecls() const { return paramDecls_; }
-  SourceName extends() const { return extends_; }
+  const SymbolList &paramDecls() const { return paramDecls_; }
   bool sequence() const { return sequence_; }
-  void add_paramName(const SourceName &name) { paramNames_.emplace_back(name); }
-  void add_paramDecl(const Symbol &symbol) {
-    paramDecls_.emplace_back(&symbol);
-  }
-  void set_extends(const SourceName &name) { extends_ = name; }
+  void add_paramName(const SourceName &name) { paramNames_.push_back(name); }
+  void add_paramDecl(const Symbol &symbol) { paramDecls_.push_back(&symbol); }
+  void add_component(const Symbol &);
   void set_sequence(bool x = true) { sequence_ = x; }
 
   // Returns the complete list of derived type parameter names in the
@@ -211,7 +213,15 @@ public:
   // Returns the complete list of derived type parameter symbols in
   // the order in which their declarations appear in the derived type
   // definitions (parents first).
-  std::list<const Symbol *> OrderParameterDeclarations(const Symbol &) const;
+  SymbolList OrderParameterDeclarations(const Symbol &) const;
+
+  // Returns the complete list of derived type components in the order
+  // in which their declarations appear in the derived type definitions
+  // (parents first).  Parent components appear in the list immediately
+  // after the components that belong to them.
+  SymbolList OrderComponents(const Scope &) const;
+
+  const Symbol *GetParentComponent(const Scope &) const;
 
 private:
   // These are (1) the names of the derived type parameters in the order
@@ -219,12 +229,12 @@ private:
   // symbols that correspond to those names in the order in which their
   // declarations appear in the derived type definition(s).
   std::list<SourceName> paramNames_;
-  std::list<const Symbol *> paramDecls_;
-  // These are the declarations of the derived type's components in component
+  SymbolList paramDecls_;
+  // These are the names of the derived type's components in component
   // order.  A parent component, if any, appears first in this list.
-  std::list<const Symbol *> components_;
-  SourceName extends_;
+  std::list<SourceName> components_;
   bool sequence_{false};
+  friend std::ostream &operator<<(std::ostream &, const DerivedTypeDetails &);
 };
 
 class ProcBindingDetails {

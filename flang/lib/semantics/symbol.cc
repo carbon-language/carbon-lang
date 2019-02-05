@@ -292,11 +292,14 @@ std::ostream &operator<<(std::ostream &os, const ProcEntityDetails &x) {
 }
 
 std::ostream &operator<<(std::ostream &os, const DerivedTypeDetails &x) {
-  if (!x.extends().empty()) {
-    os << " extends:" << x.extends().ToString();
-  }
-  if (x.sequence()) {
+  if (x.sequence_) {
     os << " sequence";
+  }
+  if (!x.components_.empty()) {
+    os << " components:";
+    for (auto name : x.components_) {
+      os << ' ' << name.ToString();
+    }
   }
   return os;
 }
@@ -576,19 +579,11 @@ Symbol &Symbol::Instantiate(
 }
 
 const Symbol *Symbol::GetParentComponent(const Scope *scope) const {
-  const auto &details{get<DerivedTypeDetails>()};
   if (scope == nullptr) {
     CHECK(scope_ != nullptr);
     scope = scope_;
   }
-  if (details.extends().empty()) {
-    return nullptr;
-  }
-  auto iter{scope->find(details.extends())};
-  CHECK(iter != scope->end());
-  const Symbol &parentComp{*iter->second};
-  CHECK(parentComp.test(Symbol::Flag::ParentComp));
-  return &parentComp;
+  return get<DerivedTypeDetails>().GetParentComponent(*scope);
 }
 
 const DerivedTypeSpec *Symbol::GetParentTypeSpec(const Scope *scope) const {
@@ -600,6 +595,13 @@ const DerivedTypeSpec *Symbol::GetParentTypeSpec(const Scope *scope) const {
   } else {
     return nullptr;
   }
+}
+
+void DerivedTypeDetails::add_component(const Symbol &symbol) {
+  if (symbol.test(Symbol::Flag::ParentComp)) {
+    CHECK(components_.empty());
+  }
+  components_.push_back(symbol.name());
 }
 
 std::list<SourceName> DerivedTypeDetails::OrderParameterNames(
@@ -616,9 +618,9 @@ std::list<SourceName> DerivedTypeDetails::OrderParameterNames(
   return result;
 }
 
-std::list<const Symbol *> DerivedTypeDetails::OrderParameterDeclarations(
+SymbolList DerivedTypeDetails::OrderParameterDeclarations(
     const Symbol &type) const {
-  std::list<const Symbol *> result;
+  SymbolList result;
   if (const DerivedTypeSpec * spec{type.GetParentTypeSpec()}) {
     const DerivedTypeDetails &details{
         spec->typeSymbol().get<DerivedTypeDetails>()};
@@ -628,6 +630,41 @@ std::list<const Symbol *> DerivedTypeDetails::OrderParameterDeclarations(
     result.push_back(symbol);
   }
   return result;
+}
+
+SymbolList DerivedTypeDetails::OrderComponents(const Scope &scope) const {
+  SymbolList result;
+  for (SourceName name : components_) {
+    auto iter{scope.find(name)};
+    if (iter != scope.cend()) {
+      const Symbol &symbol{*iter->second};
+      if (symbol.test(Symbol::Flag::ParentComp)) {
+        CHECK(result.empty());
+        const Symbol &typeSymbol{symbol.get<ObjectEntityDetails>()
+                                     .type()
+                                     ->AsDerived()
+                                     ->typeSymbol()};
+        result = typeSymbol.get<DerivedTypeDetails>().OrderComponents(
+            *typeSymbol.scope());
+      }
+      result.push_back(&symbol);
+    }
+  }
+  return result;
+}
+
+const Symbol *DerivedTypeDetails::GetParentComponent(const Scope &scope) const {
+  if (!components_.empty()) {
+    SourceName extends{components_.front()};
+    auto iter{scope.find(extends)};
+    if (iter != scope.cend()) {
+      const Symbol &symbol{*iter->second};
+      if (symbol.test(Symbol::Flag::ParentComp)) {
+        return &symbol;
+      }
+    }
+  }
+  return nullptr;
 }
 
 void TypeParamDetails::set_type(const DeclTypeSpec &type) {

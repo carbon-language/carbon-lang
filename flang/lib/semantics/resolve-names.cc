@@ -2827,13 +2827,14 @@ void DeclarationVisitor::Post(const parser::DerivedTypeStmt &x) {
     if (const Symbol * extends{ResolveDerivedType(*extendsName)}) {
       // Declare the "parent component"; private if the type is
       if (OkToAddComponent(*extendsName, extends)) {
-        symbol.get<DerivedTypeDetails>().set_extends(extendsName->source);
         auto &comp{DeclareEntity<ObjectEntityDetails>(*extendsName, Attrs{})};
         comp.attrs().set(Attr::PRIVATE, extends->attrs().test(Attr::PRIVATE));
         comp.set(Symbol::Flag::ParentComp);
         DeclTypeSpec &type{currScope().MakeDerivedType(*extends)};
         type.derivedTypeSpec().set_scope(*extends->scope());
         comp.SetType(type);
+        DerivedTypeDetails &details{symbol.get<DerivedTypeDetails>()};
+        details.add_component(comp);
       }
     }
   }
@@ -2894,6 +2895,7 @@ void DeclarationVisitor::Post(const parser::ComponentDecl &x) {
         }
       }
     }
+    currScope().symbol()->get<DerivedTypeDetails>().add_component(symbol);
   }
   ClearArraySpec();
 }
