@@ -633,11 +633,7 @@ LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
     const auto &MMO = **MI.memoperands_begin();
     unsigned DstReg = MI.getOperand(0).getReg();
     LLT DstTy = MRI.getType(DstReg);
-    int NumParts = SizeOp0 / NarrowSize;
-    unsigned HandledSize = NumParts * NarrowTy.getSizeInBits();
-    unsigned LeftoverBits = DstTy.getSizeInBits() - HandledSize;
-
-    if (DstTy.isVector() && LeftoverBits != 0)
+    if (DstTy.isVector())
       return UnableToLegalize;
 
     if (8 * MMO.getSize() != DstTy.getSizeInBits()) {
@@ -649,68 +645,7 @@ LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
       return Legalized;
     }
 
-    // This implementation doesn't work for atomics. Give up instead of doing
-    // something invalid.
-    if (MMO.getOrdering() != AtomicOrdering::NotAtomic ||
-        MMO.getFailureOrdering() != AtomicOrdering::NotAtomic)
-      return UnableToLegalize;
-
-    LLT OffsetTy = LLT::scalar(
-        MRI.getType(MI.getOperand(1).getReg()).getScalarSizeInBits());
-
-    MachineFunction &MF = MIRBuilder.getMF();
-    SmallVector<unsigned, 2> DstRegs;
-    for (int i = 0; i < NumParts; ++i) {
-      unsigned PartDstReg = MRI.createGenericVirtualRegister(NarrowTy);
-      unsigned SrcReg = 0;
-      unsigned Offset = i * NarrowSize / 8;
-
-      MachineMemOperand *SplitMMO =
-          MF.getMachineMemOperand(&MMO, Offset, NarrowSize / 8);
-
-      MIRBuilder.materializeGEP(SrcReg, MI.getOperand(1).getReg(), OffsetTy,
-                                Offset);
-
-      MIRBuilder.buildLoad(PartDstReg, SrcReg, *SplitMMO);
-
-      DstRegs.push_back(PartDstReg);
-    }
-
-    unsigned MergeResultReg = LeftoverBits == 0 ? DstReg :
-      MRI.createGenericVirtualRegister(LLT::scalar(HandledSize));
-
-    // For the leftover piece, still create the merge and insert it.
-    // TODO: Would it be better to directly insert the intermediate pieces?
-    if (DstTy.isVector())
-      MIRBuilder.buildBuildVector(MergeResultReg, DstRegs);
-    else
-      MIRBuilder.buildMerge(MergeResultReg, DstRegs);
-
-    if (LeftoverBits == 0) {
-      MI.eraseFromParent();
-      return Legalized;
-    }
-
-    unsigned ImpDefReg = MRI.createGenericVirtualRegister(DstTy);
-    unsigned Insert0Reg = MRI.createGenericVirtualRegister(DstTy);
-    MIRBuilder.buildUndef(ImpDefReg);
-    MIRBuilder.buildInsert(Insert0Reg, ImpDefReg, MergeResultReg, 0);
-
-    unsigned PartDstReg
-      = MRI.createGenericVirtualRegister(LLT::scalar(LeftoverBits));
-    unsigned Offset = HandledSize / 8;
-
-    MachineMemOperand *SplitMMO = MIRBuilder.getMF().getMachineMemOperand(
-      &MMO, Offset, LeftoverBits / 8);
-
-    unsigned SrcReg = 0;
-    MIRBuilder.materializeGEP(SrcReg, MI.getOperand(1).getReg(), OffsetTy,
-                              Offset);
-    MIRBuilder.buildLoad(PartDstReg, SrcReg, *SplitMMO);
-    MIRBuilder.buildInsert(DstReg, Insert0Reg, PartDstReg, HandledSize);
-
-    MI.eraseFromParent();
-    return Legalized;
+    return reduceLoadStoreWidth(MI, TypeIdx, NarrowTy);
   }
   case TargetOpcode::G_ZEXTLOAD:
   case TargetOpcode::G_SEXTLOAD: {
@@ -740,15 +675,18 @@ LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
     return Legalized;
   }
   case TargetOpcode::G_STORE: {
-    // FIXME: add support for when SizeOp0 isn't an exact multiple of
-    // NarrowSize.
-    if (SizeOp0 % NarrowSize != 0)
-      return UnableToLegalize;
-
     const auto &MMO = **MI.memoperands_begin();
 
     unsigned SrcReg = MI.getOperand(0).getReg();
     LLT SrcTy = MRI.getType(SrcReg);
+    if (SrcTy.isVector())
+      return UnableToLegalize;
+
+    int NumParts = SizeOp0 / NarrowSize;
+    unsigned HandledSize = NumParts * NarrowTy.getSizeInBits();
+    unsigned LeftoverBits = SrcTy.getSizeInBits() - HandledSize;
+    if (SrcTy.isVector() && LeftoverBits != 0)
+      return UnableToLegalize;
 
     if (8 * MMO.getSize() != SrcTy.getSizeInBits()) {
       unsigned TmpReg = MRI.createGenericVirtualRegister(NarrowTy);
@@ -759,34 +697,7 @@ LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
       return Legalized;
     }
 
-    // This implementation doesn't work for atomics. Give up instead of doing
-    // something invalid.
-    if (MMO.getOrdering() != AtomicOrdering::NotAtomic ||
-        MMO.getFailureOrdering() != AtomicOrdering::NotAtomic)
-      return UnableToLegalize;
-
-    int NumParts = SizeOp0 / NarrowSize;
-    LLT OffsetTy = LLT::scalar(
-        MRI.getType(MI.getOperand(1).getReg()).getScalarSizeInBits());
-
-    SmallVector<unsigned, 2> SrcRegs;
-    extractParts(MI.getOperand(0).getReg(), NarrowTy, NumParts, SrcRegs);
-
-    MachineFunction &MF = MIRBuilder.getMF();
-    for (int i = 0; i < NumParts; ++i) {
-      unsigned DstReg = 0;
-      unsigned Offset = i * NarrowSize / 8;
-
-      MachineMemOperand *SplitMMO =
-          MF.getMachineMemOperand(&MMO, Offset, NarrowSize / 8);
-
-      MIRBuilder.materializeGEP(DstReg, MI.getOperand(1).getReg(), OffsetTy,
-                                Offset);
-
-      MIRBuilder.buildStore(SrcRegs[i], DstReg, *SplitMMO);
-    }
-    MI.eraseFromParent();
-    return Legalized;
+    return reduceLoadStoreWidth(MI, 0, NarrowTy);
   }
   case TargetOpcode::G_CONSTANT: {
     // FIXME: add support for when SizeOp0 isn't an exact multiple of
@@ -2036,8 +1947,8 @@ static int getNarrowTypeBreakDown(LLT OrigTy, LLT NarrowTy, LLT &LeftoverTy) {
 }
 
 LegalizerHelper::LegalizeResult
-LegalizerHelper::fewerElementsVectorLoadStore(MachineInstr &MI, unsigned TypeIdx,
-                                              LLT NarrowTy) {
+LegalizerHelper::reduceLoadStoreWidth(MachineInstr &MI, unsigned TypeIdx,
+                                      LLT NarrowTy) {
   // FIXME: Don't know how to handle secondary types yet.
   if (TypeIdx != 0)
     return UnableToLegalize;
@@ -2177,7 +2088,7 @@ LegalizerHelper::fewerElementsVector(MachineInstr &MI, unsigned TypeIdx,
     return fewerElementsVectorSelect(MI, TypeIdx, NarrowTy);
   case G_LOAD:
   case G_STORE:
-    return fewerElementsVectorLoadStore(MI, TypeIdx, NarrowTy);
+    return reduceLoadStoreWidth(MI, TypeIdx, NarrowTy);
   default:
     return UnableToLegalize;
   }
