@@ -139,6 +139,11 @@ void LegalizerHelper::insertParts(unsigned DstReg,
   if (!LeftoverTy.isValid()) {
     assert(LeftoverRegs.empty());
 
+    if (!ResultTy.isVector()) {
+      MIRBuilder.buildMerge(DstReg, PartRegs);
+      return;
+    }
+
     if (PartTy.isVector())
       MIRBuilder.buildConcatVectors(DstReg, PartRegs);
     else
@@ -808,6 +813,8 @@ LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
     MI.eraseFromParent();
     return Legalized;
   }
+  case TargetOpcode::G_SELECT:
+    return narrowScalarSelect(MI, TypeIdx, NarrowTy);
   case TargetOpcode::G_AND:
   case TargetOpcode::G_OR:
   case TargetOpcode::G_XOR: {
@@ -2217,6 +2224,52 @@ LegalizerHelper::narrowScalarMul(MachineInstr &MI, unsigned TypeIdx, LLT NewTy) 
 
   MIRBuilder.buildZExt(ExtLo, Lo);
   MIRBuilder.buildOr(DstReg, ExtLo, ShiftedHi);
+  MI.eraseFromParent();
+  return Legalized;
+}
+
+LegalizerHelper::LegalizeResult
+LegalizerHelper::narrowScalarSelect(MachineInstr &MI, unsigned TypeIdx,
+                                    LLT NarrowTy) {
+  if (TypeIdx != 0)
+    return UnableToLegalize;
+
+  unsigned CondReg = MI.getOperand(1).getReg();
+  LLT CondTy = MRI.getType(CondReg);
+  if (CondTy.isVector()) // TODO: Handle vselect
+    return UnableToLegalize;
+
+  unsigned DstReg = MI.getOperand(0).getReg();
+  LLT DstTy = MRI.getType(DstReg);
+
+  SmallVector<unsigned, 4> DstRegs, DstLeftoverRegs;
+  SmallVector<unsigned, 4> Src1Regs, Src1LeftoverRegs;
+  SmallVector<unsigned, 4> Src2Regs, Src2LeftoverRegs;
+  LLT LeftoverTy;
+  if (!extractParts(MI.getOperand(2).getReg(), DstTy, NarrowTy, LeftoverTy,
+                    Src1Regs, Src1LeftoverRegs))
+    return UnableToLegalize;
+
+  LLT Unused;
+  if (!extractParts(MI.getOperand(3).getReg(), DstTy, NarrowTy, Unused,
+                    Src2Regs, Src2LeftoverRegs))
+    llvm_unreachable("inconsistent extractParts result");
+
+  for (unsigned I = 0, E = Src1Regs.size(); I != E; ++I) {
+    auto Select = MIRBuilder.buildSelect(NarrowTy,
+                                         CondReg, Src1Regs[I], Src2Regs[I]);
+    DstRegs.push_back(Select->getOperand(0).getReg());
+  }
+
+  for (unsigned I = 0, E = Src1LeftoverRegs.size(); I != E; ++I) {
+    auto Select = MIRBuilder.buildSelect(
+      LeftoverTy, CondReg, Src1LeftoverRegs[I], Src2LeftoverRegs[I]);
+    DstLeftoverRegs.push_back(Select->getOperand(0).getReg());
+  }
+
+  insertParts(DstReg, DstTy, NarrowTy, DstRegs,
+              LeftoverTy, DstLeftoverRegs);
+
   MI.eraseFromParent();
   return Legalized;
 }
