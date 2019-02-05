@@ -7067,7 +7067,9 @@ StmtResult Sema::ActOnOpenMPTargetDirective(ArrayRef<OMPClause *> Clauses,
       auto I = CS->body_begin();
       while (I != CS->body_end()) {
         const auto *OED = dyn_cast<OMPExecutableDirective>(*I);
-        if (!OED || !isOpenMPTeamsDirective(OED->getDirectiveKind())) {
+        if (!OED || !isOpenMPTeamsDirective(OED->getDirectiveKind()) ||
+            OMPTeamsFound) {
+
           OMPTeamsFound = false;
           break;
         }
