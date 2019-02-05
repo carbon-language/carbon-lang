@@ -95,16 +95,16 @@ let Uses = [SP32, SP64], isCall = 1 in {
 
   let IsCanonical = 1 in {
   defm CALL_VOID : I<(outs), (ins function32_op:$callee, variable_ops),
-                    (outs), (ins function32_op:$callee),
-                    [(WebAssemblycall0 (i32 imm:$callee))],
-                    "call    \t$callee", "call\t$callee", 0x10>;
+                     (outs), (ins function32_op:$callee),
+                     [(WebAssemblycall0 (i32 imm:$callee))],
+                     "call    \t$callee", "call\t$callee", 0x10>;
 
   let isCodeGenOnly = 1 in {
     defm PCALL_INDIRECT_VOID : I<(outs), (ins I32:$callee, variable_ops),
-                                (outs), (ins I32:$callee),
-                                [(WebAssemblycall0 I32:$callee)],
-                                "PSEUDO CALL INDIRECT\t$callee",
-                                "PSEUDO CALL INDIRECT\t$callee">;
+                                 (outs), (ins I32:$callee),
+                                 [(WebAssemblycall0 I32:$callee)],
+                                 "PSEUDO CALL INDIRECT\t$callee",
+                                 "PSEUDO CALL INDIRECT\t$callee">;
   } // isCodeGenOnly = 1
 
   defm CALL_INDIRECT_VOID : I<(outs),
