@@ -1943,7 +1943,7 @@ debug
 ^^^^^
 
 Checkers used for debugging the analyzer.
-:doc:`DebugChecks` page contains a detailed description.
+:doc:`developer-docs/DebugChecks` page contains a detailed description.
 
 debug.AnalysisOrder
 """""""""""""""""""
