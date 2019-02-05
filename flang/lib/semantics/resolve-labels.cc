@@ -143,7 +143,7 @@ constexpr Legality IsLegalBranchTarget(
 }
 
 template<typename A>
-constexpr LabeledStmtClassificationSet constructBranchTargetFlags(
+constexpr LabeledStmtClassificationSet ConstructBranchTargetFlags(
     const parser::Statement<A> &statement) {
   LabeledStmtClassificationSet labeledStmtClassificationSet{};
   if (IsLegalDoTerm(statement) == Legality::always) {
@@ -222,30 +222,33 @@ public:
     currentPosition_ = statement.source;
     if (statement.label.has_value()) {
       addTargetLabelDefinition(
-          statement.label.value(), constructBranchTargetFlags(statement));
+          statement.label.value(), ConstructBranchTargetFlags(statement));
     }
     return true;
   }
 
   // see 11.1.1
   bool Pre(const parser::ProgramUnit &) { return PushNewScope(); }
+  bool Pre(const parser::FunctionSubprogram &) { return PushNewScope(); }
+  bool Pre(const parser::SubroutineSubprogram &) { return PushNewScope(); }
+  bool Pre(const parser::SeparateModuleSubprogram &) { return PushNewScope(); }
   bool Pre(const parser::AssociateConstruct &associateConstruct) {
-    return pushConstructName(associateConstruct);
+    return PushConstructName(associateConstruct);
   }
   bool Pre(const parser::BlockConstruct &blockConstruct) {
-    return pushConstructName(blockConstruct);
+    return PushConstructName(blockConstruct);
   }
   bool Pre(const parser::ChangeTeamConstruct &changeTeamConstruct) {
-    return pushConstructName(changeTeamConstruct);
+    return PushConstructName(changeTeamConstruct);
   }
   bool Pre(const parser::CriticalConstruct &criticalConstruct) {
-    return pushConstructName(criticalConstruct);
+    return PushConstructName(criticalConstruct);
   }
   bool Pre(const parser::DoConstruct &doConstruct) {
-    return pushConstructName(doConstruct);
+    return PushConstructName(doConstruct);
   }
   bool Pre(const parser::IfConstruct &ifConstruct) {
-    return pushConstructName(ifConstruct);
+    return PushConstructName(ifConstruct);
   }
   bool Pre(const parser::IfConstruct::ElseIfBlock &) {
     return switchToNewScope();
@@ -254,62 +257,62 @@ public:
     return switchToNewScope();
   }
   bool Pre(const parser::CaseConstruct &caseConstruct) {
-    return pushConstructName(caseConstruct);
+    return PushConstructName(caseConstruct);
   }
   bool Pre(const parser::CaseConstruct::Case &) { return switchToNewScope(); }
   bool Pre(const parser::SelectRankConstruct &selectRankConstruct) {
-    return pushConstructName(selectRankConstruct);
+    return PushConstructName(selectRankConstruct);
   }
   bool Pre(const parser::SelectRankConstruct::RankCase &) {
     return switchToNewScope();
   }
   bool Pre(const parser::SelectTypeConstruct &selectTypeConstruct) {
-    return pushConstructName(selectTypeConstruct);
+    return PushConstructName(selectTypeConstruct);
   }
   bool Pre(const parser::SelectTypeConstruct::TypeCase &) {
     return switchToNewScope();
   }
   bool Pre(const parser::WhereConstruct &whereConstruct) {
-    return pushConstructNameWithoutBlock(whereConstruct);
+    return PushConstructNameWithoutBlock(whereConstruct);
   }
   bool Pre(const parser::ForallConstruct &forallConstruct) {
-    return pushConstructNameWithoutBlock(forallConstruct);
+    return PushConstructNameWithoutBlock(forallConstruct);
   }
 
   void Post(const parser::ProgramUnit &) { PopScope(); }
   void Post(const parser::AssociateConstruct &associateConstruct) {
-    popConstructName(associateConstruct);
+    PopConstructName(associateConstruct);
   }
   void Post(const parser::BlockConstruct &blockConstruct) {
-    popConstructName(blockConstruct);
+    PopConstructName(blockConstruct);
   }
   void Post(const parser::ChangeTeamConstruct &changeTeamConstruct) {
-    popConstructName(changeTeamConstruct);
+    PopConstructName(changeTeamConstruct);
   }
   void Post(const parser::CriticalConstruct &criticalConstruct) {
-    popConstructName(criticalConstruct);
+    PopConstructName(criticalConstruct);
   }
   void Post(const parser::DoConstruct &doConstruct) {
-    popConstructName(doConstruct);
+    PopConstructName(doConstruct);
   }
   void Post(const parser::IfConstruct &ifConstruct) {
-    popConstructName(ifConstruct);
+    PopConstructName(ifConstruct);
   }
   void Post(const parser::CaseConstruct &caseConstruct) {
-    popConstructName(caseConstruct);
+    PopConstructName(caseConstruct);
   }
   void Post(const parser::SelectRankConstruct &selectRankConstruct) {
-    popConstructName(selectRankConstruct);
+    PopConstructName(selectRankConstruct);
   }
   void Post(const parser::SelectTypeConstruct &selectTypeConstruct) {
-    popConstructName(selectTypeConstruct);
+    PopConstructName(selectTypeConstruct);
   }
 
   void Post(const parser::WhereConstruct &whereConstruct) {
-    popConstructNameWithoutBlock(whereConstruct);
+    PopConstructNameWithoutBlock(whereConstruct);
   }
   void Post(const parser::ForallConstruct &forallConstruct) {
-    popConstructNameWithoutBlock(forallConstruct);
+    PopConstructNameWithoutBlock(forallConstruct);
   }
 
   // Checks for missing or mismatching names on various constructs (e.g., IF)
@@ -350,6 +353,7 @@ public:
     CheckOptionalName<parser::FunctionStmt>("FUNCTION", functionSubprogram,
         std::get<parser::Statement<parser::EndFunctionStmt>>(
             functionSubprogram.t));
+    PopScope();
   }
   void Post(const parser::InterfaceBlock &interfaceBlock) {
     auto &interfaceStmt{
@@ -394,6 +398,7 @@ public:
         separateModuleSubprogram,
         std::get<parser::Statement<parser::EndMpSubprogramStmt>>(
             separateModuleSubprogram.t));
+    PopScope();
   }
 
   // C1401
@@ -428,6 +433,7 @@ public:
         subroutineSubprogram,
         std::get<parser::Statement<parser::EndSubroutineStmt>>(
             subroutineSubprogram.t));
+    PopScope();
   }
 
   // C739
@@ -484,40 +490,40 @@ public:
   parser::Messages &errorHandler() { return errorHandler_; }
 
 private:
-  bool pushSubscope() {
+  bool PushSubscope() {
     programUnits_.back().scopeModel.push_back(currentScope_);
     currentScope_ = programUnits_.back().scopeModel.size() - 1;
     return true;
   }
   bool PushNewScope() {
     programUnits_.emplace_back(UnitAnalysis{});
-    return pushSubscope();
+    return PushSubscope();
   }
   void PopScope() {
     currentScope_ = programUnits_.back().scopeModel[currentScope_];
   }
   bool switchToNewScope() {
     PopScope();
-    return pushSubscope();
+    return PushSubscope();
   }
 
-  template<typename A> bool pushConstructName(const A &a) {
+  template<typename A> bool PushConstructName(const A &a) {
     const auto &optionalName{std::get<0>(std::get<0>(a.t).statement.t)};
     if (optionalName.has_value()) {
       constructNames_.emplace_back(optionalName->ToString());
     }
-    return pushSubscope();
+    return PushSubscope();
   }
-  bool pushConstructName(const parser::BlockConstruct &blockConstruct) {
+  bool PushConstructName(const parser::BlockConstruct &blockConstruct) {
     const auto &optionalName{
         std::get<parser::Statement<parser::BlockStmt>>(blockConstruct.t)
             .statement.v};
     if (optionalName.has_value()) {
       constructNames_.emplace_back(optionalName->ToString());
     }
-    return pushSubscope();
+    return PushSubscope();
   }
-  template<typename A> bool pushConstructNameWithoutBlock(const A &a) {
+  template<typename A> bool PushConstructNameWithoutBlock(const A &a) {
     const auto &optionalName{std::get<0>(std::get<0>(a.t).statement.t)};
     if (optionalName.has_value()) {
       constructNames_.emplace_back(optionalName->ToString());
@@ -525,17 +531,17 @@ private:
     return true;
   }
 
-  template<typename A> void popConstructNameWithoutBlock(const A &a) {
+  template<typename A> void PopConstructNameWithoutBlock(const A &a) {
     CheckName(a);
-    popConstructNameIfPresent(a);
+    PopConstructNameIfPresent(a);
   }
-  template<typename A> void popConstructNameIfPresent(const A &a) {
+  template<typename A> void PopConstructNameIfPresent(const A &a) {
     const auto &optionalName{std::get<0>(std::get<0>(a.t).statement.t)};
     if (optionalName.has_value()) {
       constructNames_.pop_back();
     }
   }
-  void popConstructNameIfPresent(const parser::BlockConstruct &blockConstruct) {
+  void PopConstructNameIfPresent(const parser::BlockConstruct &blockConstruct) {
     const auto &optionalName{
         std::get<parser::Statement<parser::BlockStmt>>(blockConstruct.t)
             .statement.v};
@@ -544,10 +550,10 @@ private:
     }
   }
 
-  template<typename A> void popConstructName(const A &a) {
+  template<typename A> void PopConstructName(const A &a) {
     CheckName(a);
     PopScope();
-    popConstructNameIfPresent(a);
+    PopConstructNameIfPresent(a);
   }
 
   template<typename FIRST, typename CASEBLOCK, typename CASE,
@@ -561,31 +567,31 @@ private:
   }
 
   // C1144
-  void popConstructName(const parser::CaseConstruct &caseConstruct) {
+  void PopConstructName(const parser::CaseConstruct &caseConstruct) {
     CheckSelectNames<parser::SelectCaseStmt, parser::CaseConstruct::Case,
         parser::CaseStmt>("SELECT CASE", caseConstruct);
     PopScope();
-    popConstructNameIfPresent(caseConstruct);
+    PopConstructNameIfPresent(caseConstruct);
   }
 
   // C1154, C1156
-  void popConstructName(
+  void PopConstructName(
       const parser::SelectRankConstruct &selectRankConstruct) {
     CheckSelectNames<parser::SelectRankStmt,
         parser::SelectRankConstruct::RankCase, parser::SelectRankCaseStmt>(
         "SELECT RANK", selectRankConstruct);
     PopScope();
-    popConstructNameIfPresent(selectRankConstruct);
+    PopConstructNameIfPresent(selectRankConstruct);
   }
 
   // C1165
-  void popConstructName(
+  void PopConstructName(
       const parser::SelectTypeConstruct &selectTypeConstruct) {
     CheckSelectNames<parser::SelectTypeStmt,
         parser::SelectTypeConstruct::TypeCase, parser::TypeGuardStmt>(
         "SELECT TYPE", selectTypeConstruct);
     PopScope();
-    popConstructNameIfPresent(selectTypeConstruct);
+    PopConstructNameIfPresent(selectTypeConstruct);
   }
 
   // Checks for missing or mismatching names on various constructs (e.g., BLOCK)
