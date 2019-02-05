@@ -123,7 +123,7 @@ void WriteRef::dump() const {
 
 void Instruction::dispatch(unsigned RCUToken) {
   assert(Stage == IS_INVALID);
-  Stage = IS_AVAILABLE;
+  Stage = IS_DISPATCHED;
   RCUTokenID = RCUToken;
 
   // Check if input operands are already available.
