@@ -933,6 +933,11 @@ void MachineVerifier::verifyPreISelGenericInstruction(const MachineInstr *MI) {
     Types.resize(std::max(TypeIdx + 1, Types.size()));
 
     const MachineOperand *MO = &MI->getOperand(I);
+    if (!MO->isReg()) {
+      report("generic instruction must use register operands", MI);
+      continue;
+    }
+
     LLT OpTy = MRI->getType(MO->getReg());
     // Don't report a type mismatch if there is no actual mismatch, only a
     // type missing, to reduce noise:
@@ -1517,7 +1522,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
           return;
         }
         if (SubIdx)  {
-          report("Generic virtual register does not subregister index", MO,
+          report("Generic virtual register does not allow subregister index", MO,
                  MONum);
           return;
         }
