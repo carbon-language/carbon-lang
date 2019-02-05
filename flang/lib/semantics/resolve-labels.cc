@@ -221,7 +221,7 @@ public:
   template<typename A> bool Pre(const parser::Statement<A> &statement) {
     currentPosition_ = statement.source;
     if (statement.label.has_value()) {
-      addTargetLabelDefinition(
+      AddTargetLabelDefinition(
           statement.label.value(), ConstructBranchTargetFlags(statement));
     }
     return true;
@@ -251,26 +251,26 @@ public:
     return PushConstructName(ifConstruct);
   }
   bool Pre(const parser::IfConstruct::ElseIfBlock &) {
-    return switchToNewScope();
+    return SwitchToNewScope();
   }
   bool Pre(const parser::IfConstruct::ElseBlock &) {
-    return switchToNewScope();
+    return SwitchToNewScope();
   }
   bool Pre(const parser::CaseConstruct &caseConstruct) {
     return PushConstructName(caseConstruct);
   }
-  bool Pre(const parser::CaseConstruct::Case &) { return switchToNewScope(); }
+  bool Pre(const parser::CaseConstruct::Case &) { return SwitchToNewScope(); }
   bool Pre(const parser::SelectRankConstruct &selectRankConstruct) {
     return PushConstructName(selectRankConstruct);
   }
   bool Pre(const parser::SelectRankConstruct::RankCase &) {
-    return switchToNewScope();
+    return SwitchToNewScope();
   }
   bool Pre(const parser::SelectTypeConstruct &selectTypeConstruct) {
     return PushConstructName(selectTypeConstruct);
   }
   bool Pre(const parser::SelectTypeConstruct::TypeCase &) {
-    return switchToNewScope();
+    return SwitchToNewScope();
   }
   bool Pre(const parser::WhereConstruct &whereConstruct) {
     return PushConstructNameWithoutBlock(whereConstruct);
@@ -444,33 +444,33 @@ public:
   }
 
   void Post(const parser::LabelDoStmt &labelDoStmt) {
-    addLabelReferenceFromDoStmt(std::get<parser::Label>(labelDoStmt.t));
+    AddLabelReferenceFromDoStmt(std::get<parser::Label>(labelDoStmt.t));
   }
-  void Post(const parser::GotoStmt &gotoStmt) { addLabelReference(gotoStmt.v); }
+  void Post(const parser::GotoStmt &gotoStmt) { AddLabelReference(gotoStmt.v); }
   void Post(const parser::ComputedGotoStmt &computedGotoStmt) {
-    addLabelReference(std::get<std::list<parser::Label>>(computedGotoStmt.t));
+    AddLabelReference(std::get<std::list<parser::Label>>(computedGotoStmt.t));
   }
   void Post(const parser::ArithmeticIfStmt &arithmeticIfStmt) {
-    addLabelReference(std::get<1>(arithmeticIfStmt.t));
-    addLabelReference(std::get<2>(arithmeticIfStmt.t));
-    addLabelReference(std::get<3>(arithmeticIfStmt.t));
+    AddLabelReference(std::get<1>(arithmeticIfStmt.t));
+    AddLabelReference(std::get<2>(arithmeticIfStmt.t));
+    AddLabelReference(std::get<3>(arithmeticIfStmt.t));
   }
   void Post(const parser::AssignStmt &assignStmt) {
-    addLabelReference(std::get<parser::Label>(assignStmt.t));
+    AddLabelReference(std::get<parser::Label>(assignStmt.t));
   }
   void Post(const parser::AssignedGotoStmt &assignedGotoStmt) {
-    addLabelReference(std::get<std::list<parser::Label>>(assignedGotoStmt.t));
+    AddLabelReference(std::get<std::list<parser::Label>>(assignedGotoStmt.t));
   }
   void Post(const parser::AltReturnSpec &altReturnSpec) {
-    addLabelReference(altReturnSpec.v);
+    AddLabelReference(altReturnSpec.v);
   }
 
-  void Post(const parser::ErrLabel &errLabel) { addLabelReference(errLabel.v); }
-  void Post(const parser::EndLabel &endLabel) { addLabelReference(endLabel.v); }
-  void Post(const parser::EorLabel &eorLabel) { addLabelReference(eorLabel.v); }
+  void Post(const parser::ErrLabel &errLabel) { AddLabelReference(errLabel.v); }
+  void Post(const parser::EndLabel &endLabel) { AddLabelReference(endLabel.v); }
+  void Post(const parser::EorLabel &eorLabel) { AddLabelReference(eorLabel.v); }
   void Post(const parser::Format &format) {
     if (const auto *labelPointer{std::get_if<parser::Label>(&format.u)}) {
-      addLabelReferenceToFormatStmt(*labelPointer);
+      AddLabelReferenceToFormatStmt(*labelPointer);
     }
   }
   void Post(const parser::CycleStmt &cycleStmt) {
@@ -484,10 +484,10 @@ public:
     }
   }
 
-  const std::vector<UnitAnalysis> &programUnits() const {
+  const std::vector<UnitAnalysis> &ProgramUnits() const {
     return programUnits_;
   }
-  parser::Messages &errorHandler() { return errorHandler_; }
+  parser::Messages &ErrorHandler() { return errorHandler_; }
 
 private:
   bool PushSubscope() {
@@ -502,7 +502,7 @@ private:
   void PopScope() {
     currentScope_ = programUnits_.back().scopeModel[currentScope_];
   }
-  bool switchToNewScope() {
+  bool SwitchToNewScope() {
     PopScope();
     return PushSubscope();
   }
@@ -718,7 +718,7 @@ private:
   }
 
   // 6.2.5., paragraph 2
-  void addTargetLabelDefinition(parser::Label label,
+  void AddTargetLabelDefinition(parser::Label label,
       LabeledStmtClassificationSet labeledStmtClassificationSet) {
     CheckLabelInRange(label);
     const auto pair{programUnits_.back().targetStmts.emplace(label,
@@ -731,27 +731,27 @@ private:
     }
   }
 
-  void addLabelReferenceFromDoStmt(parser::Label label) {
+  void AddLabelReferenceFromDoStmt(parser::Label label) {
     CheckLabelInRange(label);
     programUnits_.back().doStmtSources.emplace_back(
         label, currentScope_, currentPosition_);
   }
 
-  void addLabelReferenceToFormatStmt(parser::Label label) {
+  void AddLabelReferenceToFormatStmt(parser::Label label) {
     CheckLabelInRange(label);
     programUnits_.back().formatStmtSources.emplace_back(
         label, currentScope_, currentPosition_);
   }
 
-  void addLabelReference(parser::Label label) {
+  void AddLabelReference(parser::Label label) {
     CheckLabelInRange(label);
     programUnits_.back().otherStmtSources.emplace_back(
         label, currentScope_, currentPosition_);
   }
 
-  void addLabelReference(const std::list<parser::Label> &labels) {
+  void AddLabelReference(const std::list<parser::Label> &labels) {
     for (const parser::Label &label : labels) {
-      addLabelReference(label);
+      AddLabelReference(label);
     }
   }
 
@@ -981,8 +981,8 @@ void CheckDataTransferConstraints(const SourceStmtList &dataTransfers,
 }
 
 bool CheckConstraints(ParseTreeAnalyzer &&parseTreeAnalysis) {
-  auto &errorHandler{parseTreeAnalysis.errorHandler()};
-  for (const auto &programUnit : parseTreeAnalysis.programUnits()) {
+  auto &errorHandler{parseTreeAnalysis.ErrorHandler()};
+  for (const auto &programUnit : parseTreeAnalysis.ProgramUnits()) {
     const auto &dos{programUnit.doStmtSources};
     const auto &branches{programUnit.otherStmtSources};
     const auto &labels{programUnit.targetStmts};
