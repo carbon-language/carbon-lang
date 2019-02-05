@@ -80,9 +80,8 @@ define <8 x i16> @test3_x86_sse41_pblend_w(<8 x i16> %a0) {
 define double @demanded_blendvpd(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2) {
 ; CHECK-LABEL: demanded_blendvpd:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    movddup {{.*#+}} xmm3 = xmm0[0,0]
-; CHECK-NEXT:    movddup {{.*#+}} xmm1 = xmm1[0,0]
-; CHECK-NEXT:    movddup {{.*#+}} xmm0 = xmm2[0,0]
+; CHECK-NEXT:    movapd %xmm0, %xmm3
+; CHECK-NEXT:    movaps %xmm2, %xmm0
 ; CHECK-NEXT:    blendvpd %xmm0, %xmm1, %xmm3
 ; CHECK-NEXT:    movapd %xmm3, %xmm0
 ; CHECK-NEXT:    retq
@@ -98,9 +97,6 @@ define float @demanded_blendvps(<4 x float> %a0, <4 x float> %a1, <4 x float> %a
 ; CHECK-LABEL: demanded_blendvps:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    movaps %xmm0, %xmm3
-; CHECK-NEXT:    shufps {{.*#+}} xmm3 = xmm3[0,0],xmm0[0,0]
-; CHECK-NEXT:    shufps {{.*#+}} xmm1 = xmm1[0,0,0,0]
-; CHECK-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,0,0,0]
 ; CHECK-NEXT:    movaps %xmm2, %xmm0
 ; CHECK-NEXT:    blendvps %xmm0, %xmm1, %xmm3
 ; CHECK-NEXT:    movaps %xmm3, %xmm0
@@ -117,13 +113,10 @@ define <16 x i8> @demanded_pblendvb(<16 x i8> %a0, <16 x i8> %a1, <16 x i8> %a2)
 ; CHECK-LABEL: demanded_pblendvb:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    movdqa %xmm0, %xmm3
-; CHECK-NEXT:    pxor %xmm4, %xmm4
-; CHECK-NEXT:    pshufb %xmm4, %xmm3
-; CHECK-NEXT:    pshufb %xmm4, %xmm1
-; CHECK-NEXT:    pshufb %xmm4, %xmm2
 ; CHECK-NEXT:    movdqa %xmm2, %xmm0
 ; CHECK-NEXT:    pblendvb %xmm0, %xmm1, %xmm3
-; CHECK-NEXT:    pshufb %xmm4, %xmm3
+; CHECK-NEXT:    pxor %xmm0, %xmm0
+; CHECK-NEXT:    pshufb %xmm0, %xmm3
 ; CHECK-NEXT:    movdqa %xmm3, %xmm0
 ; CHECK-NEXT:    retq
   %1 = shufflevector <16 x i8> %a0, <16 x i8> undef, <16 x i32> zeroinitializer

@@ -32838,6 +32838,27 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
       return true;
     break;
   }
+  case X86ISD::BLENDV: {
+    APInt SelUndef, SelZero;
+    if (SimplifyDemandedVectorElts(Op.getOperand(0), DemandedElts, SelUndef,
+                                   SelZero, TLO, Depth + 1))
+      return true;
+
+    // TODO: Use SelZero to adjust LHS/RHS DemandedElts.
+    APInt LHSUndef, LHSZero;
+    if (SimplifyDemandedVectorElts(Op.getOperand(1), DemandedElts, LHSUndef,
+                                   LHSZero, TLO, Depth + 1))
+      return true;
+
+    APInt RHSUndef, RHSZero;
+    if (SimplifyDemandedVectorElts(Op.getOperand(2), DemandedElts, RHSUndef,
+                                   RHSZero, TLO, Depth + 1))
+      return true;
+
+    KnownZero = LHSZero & RHSZero;
+    KnownUndef = LHSUndef & RHSUndef;
+    break;
+  }
   case X86ISD::VBROADCAST: {
     SDValue Src = Op.getOperand(0);
     MVT SrcVT = Src.getSimpleValueType();
