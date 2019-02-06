@@ -1140,6 +1140,7 @@ WRAPPER_CLASS(ComponentDataSource, common::Indirection<Expr>);
 // R757 component-spec -> [keyword =] component-data-source
 struct ComponentSpec {
   TUPLE_CLASS_BOILERPLATE(ComponentSpec);
+  mutable const semantics::Symbol *symbol{nullptr};  // completed by semantics
   std::tuple<std::optional<Keyword>, ComponentDataSource> t;
 };
 

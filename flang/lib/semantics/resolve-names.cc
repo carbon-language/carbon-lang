@@ -3058,28 +3058,106 @@ void DeclarationVisitor::Post(const parser::AllocateStmt &) {
 bool DeclarationVisitor::Pre(const parser::StructureConstructor &x) {
   auto savedState{SetDeclTypeSpecState({})};
   BeginDeclTypeSpec();
-  Walk(std::get<parser::DerivedTypeSpec>(x.t));
+  auto &parsedType{std::get<parser::DerivedTypeSpec>(x.t)};
+  auto &typeName{std::get<parser::Name>(parsedType.t)};
+  Walk(parsedType);
   const DeclTypeSpec *type{GetDeclTypeSpec()};
+  const DerivedTypeSpec *spec{type ? type->AsDerived() : nullptr};
+  const Symbol *typeSymbol{spec ? &spec->typeSymbol() : nullptr};
+  const Scope *typeScope{spec ? spec->scope() : nullptr};
   EndDeclTypeSpec();
   SetDeclTypeSpecState(savedState);
+
+  bool ok{typeSymbol != nullptr && typeScope != nullptr};
+  SymbolList components;
+  if (ok) {
+    // This list holds all of the components in the derived type and its
+    // parents.  The symbols for whole parent components appear after their
+    // own components and before the components of the types that extend them.
+    // E.g., TYPE :: A; REAL X; END TYPE
+    //       TYPE, EXTENDS(A) :: B; REAL Y; END TYPE
+    // produces the component list X, A, Y.
+    // The order is important below because a structure constructor can
+    // initialize X or A by name, but not both.
+    components =
+        typeSymbol->get<DerivedTypeDetails>().OrderComponents(*typeScope);
+  }
+
+  std::set<SourceName> unavailable;
+  auto nextAnonymous{components.begin()};
   bool anyKeyword{false};
   for (const auto &component :
       std::get<std::list<parser::ComponentSpec>>(x.t)) {
     Walk(component);
-    Symbol *symbol{nullptr};
     const parser::Expr &value{
         *std::get<parser::ComponentDataSource>(component.t).v};
-    if (const auto &kw{std::get<std::optional<parser::Keyword>>(component.t)}) {
+    const auto &kw{std::get<std::optional<parser::Keyword>>(component.t)};
+    const Symbol *symbol{nullptr};
+    if (kw.has_value()) {
       symbol = kw->v.symbol;
       anyKeyword = true;
     } else if (anyKeyword) {
       Say(value.source,
           "Component value lacks a required component name"_err_en_US);
-    } else {
-      // TODO: keyword = next component in component order
     }
-    MaybeExpr expr{EvaluateExpr(value)};
-    if (type != nullptr && symbol != nullptr && expr.has_value()) {
+    if (symbol != nullptr) {
+      if (unavailable.find(symbol->name()) != unavailable.cend()) {
+        Say(kw->v.source,
+            "Component '%s' conflicts with another component earlier in the constructor"_err_en_US);
+      } else {
+        auto iter{std::find(components.begin(), components.end(), symbol)};
+        if (iter == components.end()) {
+          Say(kw->v.source,
+              "Component '%s' is not a component of this derived type"_err_en_US);
+          symbol = nullptr;
+        } else if (symbol->test(Symbol::Flag::ParentComp)) {
+          // Make earlier components unavailable once a whole parent appears.
+          for (auto it{components.begin()}; it != iter; ++it) {
+            unavailable.insert((*it)->name());
+          }
+        } else {
+          // Make whole parent components unavailable after any of their
+          // constituents appear.
+          for (auto it{iter}; it != components.end(); ++it) {
+            if ((*it)->test(Symbol::Flag::ParentComp)) {
+              unavailable.insert((*it)->name());
+            }
+          }
+        }
+      }
+    } else {
+      while (nextAnonymous != components.end()) {
+        symbol = *nextAnonymous++;
+        if (symbol->test(Symbol::Flag::ParentComp)) {
+          symbol = nullptr;
+        } else {
+          break;
+        }
+      }
+      if (symbol == nullptr) {
+        Say(value.source,
+            "Unexpected value does not correspond to any component"_err_en_US);
+        break;
+      }
+    }
+    // Save the resolved component's symbol (if any) in the parse tree.
+    if (symbol != nullptr) {
+      component.symbol = symbol;
+      unavailable.insert(symbol->name());
+    }
+  }
+  // Ensure that unmentioned component objects have default initializers.
+  for (const Symbol *symbol : components) {
+    if (!symbol->test(Symbol::Flag::ParentComp) &&
+        unavailable.find(symbol->name()) == unavailable.cend() &&
+        !symbol->attrs().test(Attr::POINTER) &&
+        !symbol->attrs().test(Attr::ALLOCATABLE)) {
+      if (const auto *details{symbol->detailsIf<ObjectEntityDetails>()}) {
+        if (!details->init().has_value()) {
+          Say2(typeName, "Structure constructor lacks a value"_err_en_US,
+              *symbol, "Absent component"_en_US);
+        }
+      }
     }
   }
   return false;
