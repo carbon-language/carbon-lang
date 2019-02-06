@@ -7688,11 +7688,9 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
 
     switch (OpInfo.Type) {
     case InlineAsm::isOutput:
-      if (OpInfo.ConstraintType != TargetLowering::C_RegisterClass &&
-          OpInfo.ConstraintType != TargetLowering::C_Register) {
-        // Memory output, or 'other' output (e.g. 'X' constraint).
-        assert(OpInfo.isIndirect && "Memory output must be indirect operand");
-
+      if (OpInfo.ConstraintType == TargetLowering::C_Memory ||
+          (OpInfo.ConstraintType == TargetLowering::C_Other &&
+           OpInfo.isIndirect)) {
         unsigned ConstraintID =
             TLI.getInlineAsmMemConstraint(OpInfo.ConstraintCode);
         assert(ConstraintID != InlineAsm::Constraint_Unknown &&
@@ -7705,12 +7703,13 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
                                                         MVT::i32));
         AsmNodeOperands.push_back(OpInfo.CallOperand);
         break;
-      } else if (OpInfo.ConstraintType == TargetLowering::C_Register ||
+      } else if ((OpInfo.ConstraintType == TargetLowering::C_Other &&
+                  !OpInfo.isIndirect) ||
+                 OpInfo.ConstraintType == TargetLowering::C_Register ||
                  OpInfo.ConstraintType == TargetLowering::C_RegisterClass) {
-        // Otherwise, this is a register or register class output.
-
-        // Copy the output from the appropriate register.  Find a register that
-        // we can use.
+        // Otherwise, this outputs to a register (directly for C_Register /
+        // C_RegisterClass, and a target-defined fashion for C_Other). Find a
+        // register that we can use.
         if (OpInfo.AssignedRegs.Regs.empty()) {
           emitInlineAsmError(
               CS, "couldn't allocate output register for constraint '" +
@@ -7941,13 +7940,16 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
             DAG, FuncInfo, getCurSDLoc(), Chain, &Flag, CS.getInstruction());
         break;
       case TargetLowering::C_Other:
+        Val = TLI.LowerAsmOutputForConstraint(Chain, &Flag, getCurSDLoc(),
+                                              OpInfo, DAG);
+        break;
       case TargetLowering::C_Memory:
         break; // Already handled.
       case TargetLowering::C_Unknown:
         assert(false && "Unexpected unknown constraint");
       }
 
-      // Indirect output are manifest as stores. Record output chains.
+      // Indirect output manifest as stores. Record output chains.
       if (OpInfo.isIndirect) {
 
         const Value *Ptr = OpInfo.CallOperandVal;

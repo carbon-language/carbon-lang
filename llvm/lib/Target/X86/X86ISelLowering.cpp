@@ -42494,6 +42494,40 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
   return false;
 }
 
+static X86::CondCode parseConstraintCode(llvm::StringRef Constraint) {
+  X86::CondCode Cond = StringSwitch<X86::CondCode>(Constraint)
+                           .Case("{@cca}", X86::COND_A)
+                           .Case("{@ccae}", X86::COND_AE)
+                           .Case("{@ccb}", X86::COND_B)
+                           .Case("{@ccbe}", X86::COND_BE)
+                           .Case("{@ccc}", X86::COND_B)
+                           .Case("{@cce}", X86::COND_E)
+                           .Case("{@ccz}", X86::COND_NE)
+                           .Case("{@ccg}", X86::COND_G)
+                           .Case("{@ccge}", X86::COND_GE)
+                           .Case("{@ccl}", X86::COND_L)
+                           .Case("{@ccle}", X86::COND_LE)
+                           .Case("{@ccna}", X86::COND_BE)
+                           .Case("{@ccnae}", X86::COND_B)
+                           .Case("{@ccnb}", X86::COND_AE)
+                           .Case("{@ccnbe}", X86::COND_A)
+                           .Case("{@ccnc}", X86::COND_AE)
+                           .Case("{@ccne}", X86::COND_NE)
+                           .Case("{@ccnz}", X86::COND_NE)
+                           .Case("{@ccng}", X86::COND_LE)
+                           .Case("{@ccnge}", X86::COND_L)
+                           .Case("{@ccnl}", X86::COND_GE)
+                           .Case("{@ccnle}", X86::COND_G)
+                           .Case("{@ccno}", X86::COND_NO)
+                           .Case("{@ccnp}", X86::COND_P)
+                           .Case("{@ccns}", X86::COND_NS)
+                           .Case("{@cco}", X86::COND_O)
+                           .Case("{@ccp}", X86::COND_P)
+                           .Case("{@ccs}", X86::COND_S)
+                           .Default(X86::COND_INVALID);
+  return Cond;
+}
+
 /// Given a constraint letter, return the type of constraint for this target.
 X86TargetLowering::ConstraintType
 X86TargetLowering::getConstraintType(StringRef Constraint) const {
@@ -42554,7 +42588,8 @@ X86TargetLowering::getConstraintType(StringRef Constraint) const {
         return C_RegisterClass;
       }
     }
-  }
+  } else if (parseConstraintCode(Constraint) != X86::COND_INVALID)
+    return C_Other;
   return TargetLowering::getConstraintType(Constraint);
 }
 
@@ -42723,6 +42758,33 @@ LowerXConstraint(EVT ConstraintVT) const {
   }
 
   return TargetLowering::LowerXConstraint(ConstraintVT);
+}
+
+// Lower @cc targets via setcc.
+SDValue X86TargetLowering::LowerAsmOutputForConstraint(
+    SDValue &Chain, SDValue *Flag, SDLoc DL, const AsmOperandInfo &OpInfo,
+    SelectionDAG &DAG) const {
+  X86::CondCode Cond = parseConstraintCode(OpInfo.ConstraintCode);
+  if (Cond == X86::COND_INVALID)
+    return SDValue();
+  // Check that return type is valid.
+  if (OpInfo.ConstraintVT.isVector() || !OpInfo.ConstraintVT.isInteger() ||
+      OpInfo.ConstraintVT.getSizeInBits() < 8)
+    report_fatal_error("Flag output operand is of invalid type");
+
+  // Get EFLAGS register. Only update chain when copyfrom is glued.
+  SDValue EFlags;
+  if (Flag) {
+    EFlags = DAG.getCopyFromReg(Chain, DL, X86::EFLAGS, MVT::i32, *Flag);
+    Chain = EFlags.getValue(1);
+  } else
+    EFlags = DAG.getCopyFromReg(Chain, DL, X86::EFLAGS, MVT::i32);
+  // Extract CC code.
+  SDValue CC = getSETCC(Cond, EFlags, DL, DAG);
+  // Extend to 32-bits
+  SDValue Result = DAG.getNode(ISD::ZERO_EXTEND, DL, OpInfo.ConstraintVT, CC);
+
+  return Result;
 }
 
 /// Lower the specified operand into the Ops vector.
@@ -43080,6 +43142,9 @@ X86TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
       break;
     }
   }
+
+  if (parseConstraintCode(Constraint) != X86::COND_INVALID)
+    return std::make_pair(0U, &X86::GR32RegClass);
 
   // Use the default implementation in TargetLowering to convert the register
   // constraint into a member of a register class.
