@@ -21,8 +21,10 @@
         "LLVM"
     ],
     "activationEvents": [
+        "onLanguage:c",
         "onLanguage:cpp",
-        "onLanguage:c"
+        "onLanguage:objective-c",
+        "onLanguage:objective-cpp"
     ],
     "main": "./out/src/extension",
     "scripts": {
