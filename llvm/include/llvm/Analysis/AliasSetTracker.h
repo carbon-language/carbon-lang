@@ -36,6 +36,8 @@ namespace llvm {
 class AliasSetTracker;
 class BasicBlock;
 class LoadInst;
+class Loop;
+class MemorySSA;
 class AnyMemSetInst;
 class AnyMemTransferInst;
 class raw_ostream;
@@ -341,6 +343,8 @@ class AliasSetTracker {
   struct ASTCallbackVHDenseMapInfo : public DenseMapInfo<Value *> {};
 
   AliasAnalysis &AA;
+  MemorySSA *MSSA;
+  Loop *L;
   ilist<AliasSet> AliasSets;
 
   using PointerMapType = DenseMap<ASTCallbackVH, AliasSet::PointerRec *,
@@ -353,6 +357,8 @@ public:
   /// Create an empty collection of AliasSets, and use the specified alias
   /// analysis object to disambiguate load and store addresses.
   explicit AliasSetTracker(AliasAnalysis &aa) : AA(aa) {}
+  explicit AliasSetTracker(AliasAnalysis &aa, MemorySSA *mssa, Loop *l)
+      : AA(aa), MSSA(mssa), L(l) {}
   ~AliasSetTracker() { clear(); }
 
   /// These methods are used to add different types of instructions to the alias
@@ -377,6 +383,7 @@ public:
   void add(BasicBlock &BB);       // Add all instructions in basic block
   void add(const AliasSetTracker &AST); // Add alias relations from another AST
   void addUnknown(Instruction *I);
+  void addAllInstructionsInLoopUsingMSSA();
 
   void clear();
 
