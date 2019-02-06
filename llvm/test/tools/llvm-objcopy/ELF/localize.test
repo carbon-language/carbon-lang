@@ -7,7 +7,7 @@
 # RUN:     -L GlobalCommon \
 # RUN:     %t %t2
 # RUN: llvm-readobj --symbols %t2 | FileCheck %s
-# RUN: llvm-objcopy --regex -L '.*' %t %t3
+# RUN: llvm-objcopy --regex --localize-symbol='.*' %t %t3
 # RUN: cmp %t2 %t3
 
 !ELF
