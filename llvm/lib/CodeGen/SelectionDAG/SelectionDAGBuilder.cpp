@@ -7926,25 +7926,38 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
     ResultValues.push_back(V);
   };
 
-  // Deal with assembly output fixups.
+  // Deal with output operands.
   for (SDISelAsmOperandInfo &OpInfo : ConstraintOperands) {
-    if (OpInfo.Type == InlineAsm::isOutput &&
-        (OpInfo.ConstraintType == TargetLowering::C_Register ||
-         OpInfo.ConstraintType == TargetLowering::C_RegisterClass)) {
+    if (OpInfo.Type == InlineAsm::isOutput) {
+      SDValue Val;
+      // Skip trivial output operands.
+      if (OpInfo.AssignedRegs.Regs.empty())
+        continue;
+
+      switch (OpInfo.ConstraintType) {
+      case TargetLowering::C_Register:
+      case TargetLowering::C_RegisterClass:
+        Val = OpInfo.AssignedRegs.getCopyFromRegs(
+            DAG, FuncInfo, getCurSDLoc(), Chain, &Flag, CS.getInstruction());
+        break;
+      case TargetLowering::C_Other:
+      case TargetLowering::C_Memory:
+        break; // Already handled.
+      case TargetLowering::C_Unknown:
+        assert(false && "Unexpected unknown constraint");
+      }
+
+      // Indirect output are manifest as stores. Record output chains.
       if (OpInfo.isIndirect) {
-        // Register indirect are manifest as stores.
-        const RegsForValue &OutRegs = OpInfo.AssignedRegs;
+
         const Value *Ptr = OpInfo.CallOperandVal;
-        SDValue OutVal = OutRegs.getCopyFromRegs(DAG, FuncInfo, getCurSDLoc(),
-                                                 Chain, &Flag, IA);
-        SDValue Val = DAG.getStore(Chain, getCurSDLoc(), OutVal, getValue(Ptr),
-                                   MachinePointerInfo(Ptr));
-        OutChains.push_back(Val);
+        assert(Ptr && "Expected value CallOperandVal for indirect asm operand");
+        SDValue Store = DAG.getStore(Chain, getCurSDLoc(), Val, getValue(Ptr),
+                                     MachinePointerInfo(Ptr));
+        OutChains.push_back(Store);
       } else {
         // generate CopyFromRegs to associated registers.
         assert(!CS.getType()->isVoidTy() && "Bad inline asm!");
-        SDValue Val = OpInfo.AssignedRegs.getCopyFromRegs(
-            DAG, FuncInfo, getCurSDLoc(), Chain, &Flag, CS.getInstruction());
         if (Val.getOpcode() == ISD::MERGE_VALUES) {
           for (const SDValue &V : Val->op_values())
             handleRegAssign(V);
