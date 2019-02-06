@@ -48,11 +48,10 @@
 using namespace llvm;
 
 void llvm::DeleteDeadBlock(BasicBlock *BB, DomTreeUpdater *DTU) {
-  SmallVector<BasicBlock *, 1> BBs = {BB};
-  DeleteDeadBlocks(BBs, DTU);
+  DeleteDeadBlocks({BB}, DTU);
 }
 
-void llvm::DeleteDeadBlocks(SmallVectorImpl <BasicBlock *> &BBs,
+void llvm::DeleteDeadBlocks(ArrayRef <BasicBlock *> BBs,
                             DomTreeUpdater *DTU) {
 #ifndef NDEBUG
   // Make sure that all predecessors of each dead block is also dead.
