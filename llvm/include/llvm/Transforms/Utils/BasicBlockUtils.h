@@ -39,6 +39,12 @@ class ReturnInst;
 class TargetLibraryInfo;
 class Value;
 
+/// Replace contents of every block in \p BBs with single unreachable
+/// instruction. If \p Updates is specified, collect all necessary DT updates
+/// into this vector.
+void DetatchDeadBlocks(ArrayRef <BasicBlock *> BBs,
+                       SmallVectorImpl<DominatorTree::UpdateType> *Updates);
+
 /// Delete the specified block, which must have no predecessors.
 void DeleteDeadBlock(BasicBlock *BB, DomTreeUpdater *DTU = nullptr);
 
