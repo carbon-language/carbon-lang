@@ -2169,8 +2169,8 @@ define <2 x i1> @or63_ne63_vec(<2 x i8> %x) {
 
 define i1 @orC_eqC(i32 %x) {
 ; CHECK-LABEL: @orC_eqC(
-; CHECK-NEXT:    [[T0:%.*]] = or i32 [[X:%.*]], 42
-; CHECK-NEXT:    [[T1:%.*]] = icmp eq i32 [[T0]], 42
+; CHECK-NEXT:    [[TMP1:%.*]] = and i32 [[X:%.*]], -43
+; CHECK-NEXT:    [[T1:%.*]] = icmp eq i32 [[TMP1]], 0
 ; CHECK-NEXT:    ret i1 [[T1]]
 ;
   %t0 = or i32 %x, 42
@@ -2182,8 +2182,8 @@ define i1 @orC_eqC(i32 %x) {
 
 define <2 x i1> @orC_eqC_vec(<2 x i8> %x) {
 ; CHECK-LABEL: @orC_eqC_vec(
-; CHECK-NEXT:    [[T0:%.*]] = or <2 x i8> [[X:%.*]], <i8 43, i8 43>
-; CHECK-NEXT:    [[T1:%.*]] = icmp eq <2 x i8> [[T0]], <i8 43, i8 43>
+; CHECK-NEXT:    [[TMP1:%.*]] = and <2 x i8> [[X:%.*]], <i8 -44, i8 -44>
+; CHECK-NEXT:    [[T1:%.*]] = icmp eq <2 x i8> [[TMP1]], zeroinitializer
 ; CHECK-NEXT:    ret <2 x i1> [[T1]]
 ;
   %t0 = or <2 x i8> %x, <i8 43, i8 43>
@@ -2195,8 +2195,8 @@ define <2 x i1> @orC_eqC_vec(<2 x i8> %x) {
 
 define i1 @orC_neC(i32 %x) {
 ; CHECK-LABEL: @orC_neC(
-; CHECK-NEXT:    [[T0:%.*]] = or i32 [[X:%.*]], -42
-; CHECK-NEXT:    [[T1:%.*]] = icmp ne i32 [[T0]], -42
+; CHECK-NEXT:    [[TMP1:%.*]] = and i32 [[X:%.*]], 41
+; CHECK-NEXT:    [[T1:%.*]] = icmp ne i32 [[TMP1]], 0
 ; CHECK-NEXT:    ret i1 [[T1]]
 ;
   %t0 = or i32 %x, -42
@@ -2208,8 +2208,8 @@ define i1 @orC_neC(i32 %x) {
 
 define <2 x i1> @orC_neC_vec(<2 x i8> %x) {
 ; CHECK-LABEL: @orC_neC_vec(
-; CHECK-NEXT:    [[T0:%.*]] = or <2 x i8> [[X:%.*]], <i8 -43, i8 -43>
-; CHECK-NEXT:    [[T1:%.*]] = icmp ne <2 x i8> [[T0]], <i8 -43, i8 -43>
+; CHECK-NEXT:    [[TMP1:%.*]] = and <2 x i8> [[X:%.*]], <i8 42, i8 42>
+; CHECK-NEXT:    [[T1:%.*]] = icmp ne <2 x i8> [[TMP1]], zeroinitializer
 ; CHECK-NEXT:    ret <2 x i1> [[T1]]
 ;
   %t0 = or <2 x i8> %x, <i8 -43, i8 -43>
