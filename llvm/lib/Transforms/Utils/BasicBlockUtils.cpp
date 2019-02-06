@@ -47,15 +47,12 @@
 
 using namespace llvm;
 
-void llvm::DeleteDeadBlock(
-    BasicBlock *BB, DomTreeUpdater *DTU,
-    SmallVectorImpl<DominatorTree::UpdateType> *DTUpdates) {
-  DeleteDeadBlocks({BB}, DTU, DTUpdates);
+void llvm::DeleteDeadBlock(BasicBlock *BB, DomTreeUpdater *DTU) {
+  DeleteDeadBlocks({BB}, DTU);
 }
 
-void llvm::DeleteDeadBlocks(
-    ArrayRef<BasicBlock *> BBs, DomTreeUpdater *DTU,
-    SmallVectorImpl<DominatorTree::UpdateType> *DTUpdates) {
+void llvm::DeleteDeadBlocks(ArrayRef <BasicBlock *> BBs,
+                            DomTreeUpdater *DTU) {
 #ifndef NDEBUG
   // Make sure that all predecessors of each dead block is also dead.
   SmallPtrSet<BasicBlock *, 4> Dead(BBs.begin(), BBs.end());
@@ -71,7 +68,7 @@ void llvm::DeleteDeadBlocks(
     // of their predecessors is going away.
     for (BasicBlock *Succ : successors(BB)) {
       Succ->removePredecessor(BB);
-      if (DTU || DTUpdates)
+      if (DTU)
         Updates.push_back({DominatorTree::Delete, BB, Succ});
     }
 
@@ -95,8 +92,6 @@ void llvm::DeleteDeadBlocks(
   }
   if (DTU)
     DTU->applyUpdates(Updates, /*ForceRemoveDuplicates*/ true);
-  if (DTUpdates)
-    DTUpdates->append(Updates.begin(), Updates.end());
 
   for (BasicBlock *BB : BBs)
     if (DTU)
