@@ -214,6 +214,11 @@ void Symbol::SetType(const DeclTypeSpec &type) {
       details_);
 }
 
+bool Symbol::IsArray() const {
+  const auto *details{std::get_if<ObjectEntityDetails>(&details_)};
+  return details && details->IsArray();
+}
+
 bool Symbol::IsSubprogram() const {
   return std::visit(
       common::visitors{

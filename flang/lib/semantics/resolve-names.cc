@@ -2358,11 +2358,9 @@ void DeclarationVisitor::CheckAccessibility(
 void DeclarationVisitor::CheckScalarIntegerType(const parser::Name &name) {
   if (name.symbol != nullptr) {
     const Symbol &symbol{*name.symbol};
-    if (const auto *details{symbol.detailsIf<ObjectEntityDetails>()}) {
-      if (details->IsArray()) {
-        Say(name, "Variable '%s' is not scalar"_err_en_US);
-        return;
-      }
+    if (symbol.IsArray()) {
+      Say(name, "Variable '%s' is not scalar"_err_en_US);
+      return;
     }
     if (auto *type{symbol.GetType()}) {
       if (!type->IsNumeric(TypeCategory::Integer)) {
@@ -2536,7 +2534,7 @@ Symbol &DeclarationVisitor::DeclareObjectEntity(
       SetType(name, *type);
     }
     if (!arraySpec().empty()) {
-      if (!details->shape().empty()) {
+      if (details->IsArray()) {
         Say(name,
             "The dimensions of '%s' have already been declared"_err_en_US);
       } else {
@@ -3372,11 +3370,9 @@ void ConstructVisitor::Post(const parser::ConcurrentControl &x) {
     if (auto *type{prev->GetType()}) {
       symbol.SetType(*type);
     }
-    if (const auto *details{prev->detailsIf<ObjectEntityDetails>()}) {
-      if (details->IsArray()) {
-        SayWithDecl(name, *prev, "Index variable '%s' is not scalar"_err_en_US);
-        return;
-      }
+    if (prev->IsArray()) {
+      SayWithDecl(name, *prev, "Index variable '%s' is not scalar"_err_en_US);
+      return;
     }
   }
   CheckScalarIntegerType(name);
