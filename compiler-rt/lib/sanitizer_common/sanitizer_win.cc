@@ -243,11 +243,12 @@ void *MmapFixedOrDie(uptr fixed_addr, uptr size, const char *name) {
 
 // Uses fixed_addr for now.
 // Will use offset instead once we've implemented this function for real.
-uptr ReservedAddressRange::Map(uptr fixed_addr, uptr size) {
+uptr ReservedAddressRange::Map(uptr fixed_addr, uptr size, const char *name) {
   return reinterpret_cast<uptr>(MmapFixedOrDieOnFatalError(fixed_addr, size));
 }
 
-uptr ReservedAddressRange::MapOrDie(uptr fixed_addr, uptr size) {
+uptr ReservedAddressRange::MapOrDie(uptr fixed_addr, uptr size,
+                                    const char *name) {
   return reinterpret_cast<uptr>(MmapFixedOrDie(fixed_addr, size));
 }
 
