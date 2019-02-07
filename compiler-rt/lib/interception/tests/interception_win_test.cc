@@ -589,7 +589,7 @@ TEST(Interception, PatchableFunctionWithHotPatch) {
   EXPECT_FALSE(TestFunctionPatching(kPatchableCode2, override, prefix));
   EXPECT_FALSE(TestFunctionPatching(kPatchableCode3, override, prefix));
   EXPECT_FALSE(TestFunctionPatching(kPatchableCode4, override, prefix));
-#ifdef _WIN64
+#if SANITIZER_WINDOWS64
   EXPECT_TRUE(TestFunctionPatching(kPatchableCode6, override, prefix));
   EXPECT_TRUE(TestFunctionPatching(kPatchableCode7, override, prefix));
   EXPECT_TRUE(TestFunctionPatching(kPatchableCode8, override, prefix));
