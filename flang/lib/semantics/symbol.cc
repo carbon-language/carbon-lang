@@ -214,7 +214,7 @@ void Symbol::SetType(const DeclTypeSpec &type) {
       details_);
 }
 
-bool Symbol::IsArray() const {
+bool Symbol::IsObjectArray() const {
   const auto *details{std::get_if<ObjectEntityDetails>(&details_)};
   return details && details->IsArray();
 }

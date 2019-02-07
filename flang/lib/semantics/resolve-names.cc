@@ -2358,7 +2358,7 @@ void DeclarationVisitor::CheckAccessibility(
 void DeclarationVisitor::CheckScalarIntegerType(const parser::Name &name) {
   if (name.symbol != nullptr) {
     const Symbol &symbol{*name.symbol};
-    if (symbol.IsArray()) {
+    if (symbol.IsObjectArray()) {
       Say(name, "Variable '%s' is not scalar"_err_en_US);
       return;
     }
@@ -3389,7 +3389,7 @@ void ConstructVisitor::Post(const parser::ConcurrentControl &x) {
     if (auto *type{prev->GetType()}) {
       symbol.SetType(*type);
     }
-    if (prev->IsArray()) {
+    if (prev->IsObjectArray()) {
       SayWithDecl(name, *prev, "Index variable '%s' is not scalar"_err_en_US);
       return;
     }

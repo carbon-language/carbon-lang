@@ -289,7 +289,7 @@ void ModFileWriter::PutUseExtraAttr(
 }
 
 // Collect the symbols of this scope sorted by their original order, not name.
-// Namelists are an exception: they are sorted to the end.
+// Namelists are an exception: they are sorted after other symbols.
 std::vector<const Symbol *> CollectSymbols(const Scope &scope) {
   std::set<const Symbol *> symbols;  // to prevent duplicates
   std::vector<const Symbol *> sorted;

@@ -452,7 +452,7 @@ public:
 
   void SetType(const DeclTypeSpec &);
 
-  bool IsArray() const;
+  bool IsObjectArray() const;
   bool IsSubprogram() const;
   bool IsSeparateModuleProc() const;
   bool HasExplicitInterface() const {
