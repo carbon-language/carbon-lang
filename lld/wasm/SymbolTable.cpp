@@ -338,7 +338,8 @@ Symbol *SymbolTable::addDefinedEvent(StringRef Name, uint32_t Flags,
   return S;
 }
 
-Symbol *SymbolTable::addUndefinedFunction(StringRef Name, StringRef Module,
+Symbol *SymbolTable::addUndefinedFunction(StringRef Name, StringRef ImportName,
+                                          StringRef ImportModule,
                                           uint32_t Flags, InputFile *File,
                                           const WasmSignature *Sig) {
   LLVM_DEBUG(dbgs() << "addUndefinedFunction: " << Name <<
@@ -349,7 +350,8 @@ Symbol *SymbolTable::addUndefinedFunction(StringRef Name, StringRef Module,
   std::tie(S, WasInserted) = insert(Name, File);
 
   if (WasInserted)
-    replaceSymbol<UndefinedFunction>(S, Name, Module, Flags, File, Sig);
+    replaceSymbol<UndefinedFunction>(S, Name, ImportName, ImportModule, Flags,
+                                     File, Sig);
   else if (auto *Lazy = dyn_cast<LazySymbol>(S))
     Lazy->fetch();
   else
@@ -375,7 +377,8 @@ Symbol *SymbolTable::addUndefinedData(StringRef Name, uint32_t Flags,
   return S;
 }
 
-Symbol *SymbolTable::addUndefinedGlobal(StringRef Name, uint32_t Flags,
+Symbol *SymbolTable::addUndefinedGlobal(StringRef Name, StringRef ImportName,
+                                        StringRef ImportModule, uint32_t Flags,
                                         InputFile *File,
                                         const WasmGlobalType *Type) {
   LLVM_DEBUG(dbgs() << "addUndefinedGlobal: " << Name << "\n");
@@ -385,7 +388,8 @@ Symbol *SymbolTable::addUndefinedGlobal(StringRef Name, uint32_t Flags,
   std::tie(S, WasInserted) = insert(Name, File);
 
   if (WasInserted)
-    replaceSymbol<UndefinedGlobal>(S, Name, Flags, File, Type);
+    replaceSymbol<UndefinedGlobal>(S, Name, ImportName, ImportModule, Flags,
+                                   File, Type);
   else if (auto *Lazy = dyn_cast<LazySymbol>(S))
     Lazy->fetch();
   else if (S->isDefined())
