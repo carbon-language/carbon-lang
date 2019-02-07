@@ -17,10 +17,14 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/RangedConstraintManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SMTConv.h"
 
+typedef llvm::ImmutableSet<
+    std::pair<clang::ento::SymbolRef, const clang::ento::SMTExpr *>>
+    ConstraintSMTTy;
+REGISTER_TRAIT_WITH_PROGRAMSTATE(ConstraintSMT, ConstraintSMTTy)
+
 namespace clang {
 namespace ento {
 
-template <typename ConstraintSMT, typename SMTExprTy>
 class SMTConstraintManager : public clang::ento::SimpleConstraintManager {
   SMTSolverRef &Solver;
 
@@ -212,7 +216,7 @@ public:
     OS << nl << sep << "Constraints:";
     for (auto I = CZ.begin(), E = CZ.end(); I != E; ++I) {
       OS << nl << ' ' << I->first << " : ";
-      I->second.print(OS);
+      I->second->print(OS);
     }
     OS << nl;
   }
@@ -272,8 +276,7 @@ protected:
                                      const SMTExprRef &Exp) {
     // Check the model, avoid simplifying AST to save time
     if (checkModel(State, Sym, Exp).isConstrainedTrue())
-      return State->add<ConstraintSMT>(
-          std::make_pair(Sym, static_cast<const SMTExprTy &>(*Exp)));
+      return State->add<ConstraintSMT>(std::make_pair(Sym, Exp));
 
     return nullptr;
   }
@@ -289,9 +292,9 @@ protected:
     if (I != IE) {
       std::vector<SMTExprRef> ASTs;
 
-      SMTExprRef Constraint = Solver->newExprRef(I++->second);
+      SMTExprRef Constraint = I++->second;
       while (I != IE) {
-        Constraint = Solver->mkAnd(Constraint, Solver->newExprRef(I++->second));
+        Constraint = Solver->mkAnd(Constraint, I++->second);
       }
 
       Solver->addConstraint(Constraint);
@@ -301,8 +304,8 @@ protected:
   // Generate and check a Z3 model, using the given constraint.
   ConditionTruthVal checkModel(ProgramStateRef State, SymbolRef Sym,
                                const SMTExprRef &Exp) const {
-    ProgramStateRef NewState = State->add<ConstraintSMT>(
-        std::make_pair(Sym, static_cast<const SMTExprTy &>(*Exp)));
+    ProgramStateRef NewState =
+        State->add<ConstraintSMT>(std::make_pair(Sym, Exp));
 
     llvm::FoldingSetNodeID ID;
     NewState->get<ConstraintSMT>().Profile(ID);

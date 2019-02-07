@@ -70,9 +70,6 @@ public:
   // Returns an appropriate sort for the given AST.
   virtual SMTSortRef getSort(const SMTExprRef &AST) = 0;
 
-  // Returns a new SMTExprRef from an SMTExpr
-  virtual SMTExprRef newExprRef(const SMTExpr &E) const = 0;
-
   /// Given a constraint, adds it to the solver
   virtual void addConstraint(const SMTExprRef &Exp) const = 0;
 

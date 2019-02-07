@@ -52,6 +52,15 @@ public:
     return Size;
   };
 
+  virtual void Profile(llvm::FoldingSetNodeID &ID) const = 0;
+
+  bool operator<(const SMTSort &Other) const {
+    llvm::FoldingSetNodeID ID1, ID2;
+    Profile(ID1);
+    Other.Profile(ID2);
+    return ID1 < ID2;
+  }
+
   friend bool operator==(SMTSort const &LHS, SMTSort const &RHS) {
     return LHS.equal_to(RHS);
   }
@@ -82,7 +91,7 @@ protected:
 };
 
 /// Shared pointer for SMTSorts, used by SMTSolver API.
-using SMTSortRef = std::shared_ptr<SMTSort>;
+using SMTSortRef = const SMTSort *;
 
 } // namespace ento
 } // namespace clang

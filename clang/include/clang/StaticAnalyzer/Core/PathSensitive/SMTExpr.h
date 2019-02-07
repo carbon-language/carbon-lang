@@ -33,10 +33,7 @@ public:
     return ID1 < ID2;
   }
 
-  virtual void Profile(llvm::FoldingSetNodeID &ID) const {
-    static int Tag = 0;
-    ID.AddPointer(&Tag);
-  }
+  virtual void Profile(llvm::FoldingSetNodeID &ID) const = 0;
 
   friend bool operator==(SMTExpr const &LHS, SMTExpr const &RHS) {
     return LHS.equal_to(RHS);
@@ -53,7 +50,7 @@ protected:
 };
 
 /// Shared pointer for SMTExprs, used by SMTSolver API.
-using SMTExprRef = std::shared_ptr<SMTExpr>;
+using SMTExprRef = const SMTExpr *;
 
 } // namespace ento
 } // namespace clang
