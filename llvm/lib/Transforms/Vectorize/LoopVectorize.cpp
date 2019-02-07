@@ -7357,7 +7357,6 @@ bool LoopVectorizePass::processLoop(Loop *L) {
         "InterleavingAvoided",
         "Ignoring UserIC, because interleaving was avoided up front");
     InterleaveLoop = false;
-    UserIC = 1;
   } else if (IC == 1 && UserIC <= 1) {
     // Tell the user interleaving is not beneficial.
     LLVM_DEBUG(dbgs() << "LV: Interleaving is not beneficial.\n");
