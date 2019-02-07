@@ -228,6 +228,8 @@ INTERCEPTOR(int, pthread_create, pthread_t *thread,
   size = RoundUpTo(size, kStackAlign);
 
   void *addr = unsafe_stack_alloc(size, guard);
+  // Put tinfo at the end of the buffer. guard may be not page aligned.
+  // If that is so then some bytes after addr can be mprotected.
   struct tinfo *tinfo =
       (struct tinfo *)(((char *)addr) + size - sizeof(struct tinfo));
   tinfo->start_routine = start_routine;
