@@ -29,6 +29,7 @@ template<typename A> class Restorer {
 public:
   explicit Restorer(A &p) : p_{p}, original_{std::move(p)} {}
   ~Restorer() { p_ = std::move(original_); }
+
 private:
   A &p_;
   A original_;
