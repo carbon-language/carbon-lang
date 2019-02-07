@@ -79,9 +79,14 @@ public:
   DefinedFunction *addSyntheticFunction(StringRef Name, uint32_t Flags,
                                         InputFunction *Function);
 
+  void handleWeakUndefines();
+
 private:
-  std::pair<Symbol *, bool> insert(StringRef Name, InputFile *File);
+  std::pair<Symbol *, bool> insert(StringRef Name, const InputFile *File);
   std::pair<Symbol *, bool> insertName(StringRef Name);
+
+  InputFunction *replaceWithUnreachable(Symbol *Sym, const WasmSignature &Sig,
+                                        StringRef DebugName);
 
   // Maps symbol names to index into the SymVector.  -1 means that symbols
   // is to not yet in the vector but it should have tracing enabled if it is

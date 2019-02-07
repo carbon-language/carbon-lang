@@ -102,7 +102,8 @@ std::pair<Symbol *, bool> SymbolTable::insertName(StringRef Name) {
   return {Sym, true};
 }
 
-std::pair<Symbol *, bool> SymbolTable::insert(StringRef Name, InputFile *File) {
+std::pair<Symbol *, bool> SymbolTable::insert(StringRef Name,
+                                              const InputFile *File) {
   Symbol *S;
   bool WasInserted;
   std::tie(S, WasInserted) = insertName(Name);
@@ -441,4 +442,59 @@ bool SymbolTable::addComdat(StringRef Name) {
 // if a new symbol with the same name is inserted into the symbol table.
 void SymbolTable::trace(StringRef Name) {
   SymMap.insert({CachedHashStringRef(Name), -1});
+}
+
+static const uint8_t UnreachableFn[] = {
+    0x03 /* ULEB length */, 0x00 /* ULEB num locals */,
+    0x00 /* opcode unreachable */, 0x0b /* opcode end */
+};
+
+// Replace the given symbol body with an unreachable function.
+// This is used by handleWeakUndefines in order to generate a callable
+// equivalent of an undefined function.
+InputFunction *SymbolTable::replaceWithUnreachable(Symbol *Sym,
+                                                   const WasmSignature &Sig,
+                                                   StringRef DebugName) {
+  auto *Func = make<SyntheticFunction>(Sig, Sym->getName(), DebugName);
+  Func->setBody(UnreachableFn);
+  SyntheticFunctions.emplace_back(Func);
+  replaceSymbol<DefinedFunction>(Sym, Sym->getName(), Sym->getFlags(), nullptr, Func);
+  return Func;
+}
+
+// For weak undefined functions, there may be "call" instructions that reference
+// the symbol. In this case, we need to synthesise a dummy/stub function that
+// will abort at runtime, so that relocations can still provided an operand to
+// the call instruction that passes Wasm validation.
+void SymbolTable::handleWeakUndefines() {
+  for (Symbol *Sym : getSymbols()) {
+    if (!Sym->isUndefWeak())
+      continue;
+
+    const WasmSignature *Sig = nullptr;
+
+    if (auto *FuncSym = dyn_cast<FunctionSymbol>(Sym)) {
+      // It is possible for undefined functions not to have a signature (eg. if
+      // added via "--undefined"), but weak undefined ones do have a signature.
+      assert(FuncSym->Signature);
+      Sig = FuncSym->Signature;
+    } else if (auto *LazySym = dyn_cast<LazySymbol>(Sym)) {
+      // Lazy symbols may not be functions and therefore can have a null
+      // signature.
+      Sig = LazySym->Signature;
+    }
+
+    if (!Sig)
+      continue;
+
+    // Add a synthetic dummy for weak undefined functions.  These dummies will
+    // be GC'd if not used as the target of any "call" instructions.
+    StringRef DebugName = Saver.save("undefined:" + toString(*Sym));
+    InputFunction* Func = replaceWithUnreachable(Sym, *Sig, DebugName);
+    // Ensure it compares equal to the null pointer, and so that table relocs
+    // don't pull in the stub body (only call-operand relocs should do that).
+    Func->setTableIndex(0);
+    // Hide our dummy to prevent export.
+    Sym->setHidden(true);
+  }
 }

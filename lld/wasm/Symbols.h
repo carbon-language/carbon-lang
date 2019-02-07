@@ -76,6 +76,8 @@ public:
   // Returns the file from which this symbol was created.
   InputFile *getFile() const { return File; }
 
+  uint32_t getFlags() const { return Flags; }
+
   InputChunk *getChunk() const;
 
   // Indicates that the section or import for this symbol will be included in
