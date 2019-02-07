@@ -161,6 +161,18 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     .scalarize(0)
     .clampScalar(0, ST.has16BitInsts() ? S16 : S32, S64);
 
+  if (ST.has16BitInsts()) {
+    getActionDefinitionsBuilder(G_FSQRT)
+      .legalFor({S32, S64, S16})
+      .scalarize(0)
+      .clampScalar(0, S16, S64);
+  } else {
+    getActionDefinitionsBuilder(G_FSQRT)
+      .legalFor({S32, S64})
+      .scalarize(0)
+      .clampScalar(0, S32, S64);
+  }
+
   getActionDefinitionsBuilder(G_FPTRUNC)
     .legalFor({{S32, S64}, {S16, S32}})
     .scalarize(0);
