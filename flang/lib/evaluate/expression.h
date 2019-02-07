@@ -633,14 +633,47 @@ public:
 
 FOR_EACH_LOGICAL_KIND(extern template class Expr)
 
+class StructureConstructor {
+public:
+  using Values = std::list<std::pair<const semantics::Symbol *,
+      CopyableIndirection<Expr<SomeType>>>>;
+
+  // N.B. CLASS_BOILERPLATE() can't be used here due to forward reference
+  // to Expr<SomeType> preventing the use of "= default" constructors and
+  // assignment operators.
+  StructureConstructor() = delete;
+  explicit StructureConstructor(const semantics::DerivedTypeSpec &spec)
+    : derivedTypeSpec_{&spec} {}
+  StructureConstructor(const StructureConstructor &);
+  StructureConstructor(StructureConstructor &&);
+  ~StructureConstructor();
+  StructureConstructor &operator=(const StructureConstructor &);
+  StructureConstructor &operator=(StructureConstructor &&);
+
+  const semantics::DerivedTypeSpec &derivedTypeSpec() const {
+    return *derivedTypeSpec_;
+  }
+  Values &values() { return values_; }
+  const Values &values() const { return values_; }
+  bool operator==(const StructureConstructor &) const;
+
+  StructureConstructor &Add(const semantics::Symbol &, Expr<SomeType> &&);
+  int Rank() const { return 0; }
+  DynamicType GetType() const;
+  std::ostream &AsFortran(std::ostream &) const;
+
+private:
+  const semantics::DerivedTypeSpec *derivedTypeSpec_;
+  Values values_;
+};
+
 // An expression whose result has a derived type.
 template<> class Expr<SomeDerived> : public ExpressionBase<SomeDerived> {
 public:
   using Result = SomeDerived;
   EVALUATE_UNION_CLASS_BOILERPLATE(Expr)
-  // TODO: structure constructor
-  std::variant<Designator<Result>, ArrayConstructor<Result>,
-      FunctionRef<Result>>
+  std::variant<Constant<Result>, ArrayConstructor<Result>, StructureConstructor,
+      Designator<Result>, FunctionRef<Result>>
       u;
 };
 

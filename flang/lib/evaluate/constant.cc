@@ -13,12 +13,16 @@
 // limitations under the License.
 
 #include "constant.h"
+#include "expression.h"
 #include "type.h"
 #include "../parser/characters.h"
 
 namespace Fortran::evaluate {
+
+template<typename T> ConstantBase<T>::~ConstantBase() {}
+
 template<typename T>
-std::ostream &Constant<T>::AsFortran(std::ostream &o) const {
+std::ostream &ConstantBase<T>::AsFortran(std::ostream &o) const {
   if (Rank() > 1) {
     o << "reshape(";
   }
@@ -47,7 +51,7 @@ std::ostream &Constant<T>::AsFortran(std::ostream &o) const {
       }
       o << '_' << Result::kind;
     } else {
-      value.u.AsFortran(o);
+      value.AsFortran(o);
     }
   }
   if (Rank() > 0) {
@@ -66,7 +70,8 @@ std::ostream &Constant<T>::AsFortran(std::ostream &o) const {
 }
 
 template<typename T>
-auto Constant<T>::At(const std::vector<std::int64_t> &index) const -> Value {
+auto ConstantBase<T>::At(const std::vector<std::int64_t> &index) const
+    -> Value {
   CHECK(index.size() == static_cast<std::size_t>(Rank()));
   std::int64_t stride{1}, offset{0};
   int dim{0};
@@ -79,7 +84,7 @@ auto Constant<T>::At(const std::vector<std::int64_t> &index) const -> Value {
   return values_.at(offset);
 }
 
-template<typename T> Constant<SubscriptInteger> Constant<T>::SHAPE() const {
+template<typename T> Constant<SubscriptInteger> ConstantBase<T>::SHAPE() const {
   using IntType = Scalar<SubscriptInteger>;
   std::vector<IntType> result;
   for (std::int64_t dim : shape_) {
@@ -88,5 +93,10 @@ template<typename T> Constant<SubscriptInteger> Constant<T>::SHAPE() const {
   return {std::move(result), std::vector<std::int64_t>{Rank()}};
 }
 
+Constant<SomeDerived>::Constant(const semantics::DerivedTypeSpec &spec,
+    std::vector<StructureConstructor> &&x, std::vector<std::int64_t> &&s)
+  : Base{std::move(x), std::move(s)}, spec_{&spec} {}
+
+FOR_EACH_SPECIFIC_TYPE(template class ConstantBase)
 FOR_EACH_INTRINSIC_KIND(template class Constant)
 }

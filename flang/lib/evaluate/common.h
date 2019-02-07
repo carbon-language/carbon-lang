@@ -29,10 +29,6 @@ namespace Fortran::semantics {
 class DerivedTypeSpec;
 }
 
-namespace Fortran::semantics {
-class DerivedTypeSpec;
-}
-
 namespace Fortran::evaluate {
 
 using common::RelationalOperator;

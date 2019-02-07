@@ -150,7 +150,7 @@ Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
   return std::visit(
       common::visitors{
           [](const Constant<Result> &c) {
-            return AsExpr(Constant<SubscriptInteger>{ConstantLEN(c)});
+            return AsExpr(Constant<SubscriptInteger>{c.LEN()});
           },
           [](const ArrayConstructor<Result> &a) { return a.LEN(); },
           [](const Parentheses<Result> &x) { return x.left().LEN(); },

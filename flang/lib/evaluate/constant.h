@@ -24,24 +24,24 @@ namespace Fortran::evaluate {
 // N.B. Generic constants are represented by generic expressions
 // (like Expr<SomeInteger> & Expr<SomeType>) wrapping the appropriate
 // instantiations of Constant.
-template<typename T> class Constant {
-  static_assert(std::is_same_v<T, SomeDerived> || IsSpecificIntrinsicType<T>);
 
+template<typename> class Constant;
+
+template<typename RESULT> class ConstantBase {
 public:
-  using Result = T;
+  using Result = RESULT;
   using Value = Scalar<Result>;
 
-  CLASS_BOILERPLATE(Constant)
-  template<typename A> Constant(const A &x) : values_{x} {}
+  template<typename A> ConstantBase(const A &x) : values_{x} {}
   template<typename A>
-  Constant(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
+  ConstantBase(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
     : values_{std::move(x)} {}
-  Constant(std::vector<Value> &&x, std::vector<std::int64_t> &&s)
+  ConstantBase(std::vector<Value> &&x, std::vector<std::int64_t> &&s)
     : values_(std::move(x)), shape_(std::move(s)) {}
+  ~ConstantBase();
 
-  constexpr DynamicType GetType() const { return Result::GetType(); }
   int Rank() const { return static_cast<int>(shape_.size()); }
-  bool operator==(const Constant &that) const {
+  bool operator==(const ConstantBase &that) const {
     return shape_ == that.shape_ && values_ == that.values_;
   }
   bool empty() const { return values_.empty(); }
@@ -59,25 +59,68 @@ public:
   Constant<SubscriptInteger> SHAPE() const;
   std::ostream &AsFortran(std::ostream &) const;
 
-private:
+protected:
   std::vector<Value> values_;
   std::vector<std::int64_t> shape_;
+
+private:
+  const Constant<Result> &AsConstant() const {
+    return *static_cast<const Constant<Result> *>(this);
+  }
+
+  DynamicType GetType() const { return AsConstant().GetType(); }
+};
+
+template<typename T> class Constant : public ConstantBase<T> {
+public:
+  using Result = T;
+  using ConstantBase<Result>::ConstantBase;
+  CLASS_BOILERPLATE(Constant)
+  static constexpr DynamicType GetType() { return Result::GetType(); }
+};
+
+template<int KIND>
+class Constant<Type<TypeCategory::Character, KIND>>
+  : public ConstantBase<Type<TypeCategory::Character, KIND>> {
+public:
+  using Result = Type<TypeCategory::Character, KIND>;
+  using ConstantBase<Result>::ConstantBase;
+  CLASS_BOILERPLATE(Constant)
+  static constexpr DynamicType GetType() { return Result::GetType(); }
+  std::int64_t LEN() const {
+    if (this->values_.empty()) {
+      return 0;
+    } else {
+      return static_cast<std::int64_t>(this->values_.front().size());
+    }
+  }
   // TODO pmk: make CHARACTER values contiguous (they're strings now)
 };
 
-// Would prefer to have this be a member function of Constant enabled
-// only for CHARACTER, but std::enable_if<> isn't effective in that context.
-template<int KIND>
-std::int64_t ConstantLEN(
-    const Constant<Type<TypeCategory::Character, KIND>> &c) {
-  if (c.empty()) {
-    return 0;
-  } else {
-    std::vector<std::int64_t> ones(c.Rank(), 1);
-    return c.At(ones).size();
-  }
-}
+template<> class Constant<SomeDerived> : public ConstantBase<SomeDerived> {
+public:
+  using Result = SomeDerived;
+  using Base = ConstantBase<Result>;
+  template<typename A>
+  Constant(const semantics::DerivedTypeSpec &spec, const A &x)
+    : Base{x}, spec_{&spec} {}
+  template<typename A>
+  Constant(const semantics::DerivedTypeSpec &spec,
+      std::enable_if_t<!std::is_reference_v<A>, A> &&x)
+    : Base{std::move(x)}, spec_{&spec} {}
+  Constant(const semantics::DerivedTypeSpec &, std::vector<Value> &&,
+      std::vector<std::int64_t> &&);
 
+  CLASS_BOILERPLATE(Constant)
+  DynamicType GetType() const {
+    return DynamicType{TypeCategory::Derived, 0, spec_};
+  }
+
+private:
+  const semantics::DerivedTypeSpec *spec_;
+};
+
+FOR_EACH_SPECIFIC_TYPE(extern template class ConstantBase)
 FOR_EACH_INTRINSIC_KIND(extern template class Constant)
 }
 #endif  // FORTRAN_EVALUATE_CONSTANT_H_

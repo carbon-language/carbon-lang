@@ -33,6 +33,7 @@
 #include <cinttypes>
 #include <optional>
 #include <string>
+#include <type_traits>
 #include <variant>
 
 namespace Fortran::semantics {
@@ -176,8 +177,6 @@ public:
 
 // Type functions
 
-template<typename T> using Scalar = typename std::decay_t<T>::Scalar;
-
 // Given a specific type, find the type of the same kind in another category.
 template<TypeCategory CATEGORY, typename T>
 using SameKind = Type<CATEGORY, std::decay_t<T>::kind>;
@@ -245,33 +244,22 @@ template<typename T>
 constexpr bool IsLengthlessIntrinsicType{
     common::HasMember<T, LengthlessIntrinsicTypes>};
 
-// When Scalar<T> is S, then TypeOf<S> is T.
-// TypeOf is implemented by scanning all supported types for a match
-// with Type<T>::Scalar.
-template<typename CONST> struct TypeOfHelper {
-  template<typename T> struct Predicate {
-    static constexpr bool value() {
-      return std::is_same_v<std::decay_t<CONST>,
-          std::decay_t<typename T::Scalar>>;
-    }
-  };
-  static constexpr int index{
-      common::SearchMembers<Predicate, AllIntrinsicTypes>};
-  using type = std::conditional_t<index >= 0,
-      std::tuple_element_t<index, AllIntrinsicTypes>, void>;
-};
-
-template<typename CONST> using TypeOf = typename TypeOfHelper<CONST>::type;
-
 // Represents a type of any supported kind within a particular category.
 template<TypeCategory CATEGORY> struct SomeKind {
   static constexpr TypeCategory category{CATEGORY};
   constexpr bool operator==(const SomeKind &) const { return true; }
 };
 
+// Represents a completely generic type (but not typeless).
+struct SomeType {};
+
+// Represents a derived type
+class StructureConstructor;
+
 template<> class SomeKind<TypeCategory::Derived> {
 public:
   static constexpr TypeCategory category{TypeCategory::Derived};
+  using Scalar = StructureConstructor;
 
   CLASS_BOILERPLATE(SomeKind)
   explicit SomeKind(const semantics::DerivedTypeSpec &dts,
@@ -297,11 +285,28 @@ using SomeComplex = SomeKind<TypeCategory::Complex>;
 using SomeCharacter = SomeKind<TypeCategory::Character>;
 using SomeLogical = SomeKind<TypeCategory::Logical>;
 using SomeDerived = SomeKind<TypeCategory::Derived>;
-
-// Represents a completely generic type (but not typeless).
 using SomeCategory = std::tuple<SomeInteger, SomeReal, SomeComplex,
     SomeCharacter, SomeLogical, SomeDerived>;
-struct SomeType {};
+
+template<typename T> using Scalar = typename std::decay_t<T>::Scalar;
+
+// When Scalar<T> is S, then TypeOf<S> is T.
+// TypeOf is implemented by scanning all supported types for a match
+// with Type<T>::Scalar.
+template<typename CONST> struct TypeOfHelper {
+  template<typename T> struct Predicate {
+    static constexpr bool value() {
+      return std::is_same_v<std::decay_t<CONST>,
+          std::decay_t<typename T::Scalar>>;
+    }
+  };
+  static constexpr int index{
+      common::SearchMembers<Predicate, AllIntrinsicTypes>};
+  using type = std::conditional_t<index >= 0,
+      std::tuple_element_t<index, AllIntrinsicTypes>, void>;
+};
+
+template<typename CONST> using TypeOf = typename TypeOfHelper<CONST>::type;
 
 // For generating "[extern] template class", &c. boilerplate
 #define EXPAND_FOR_EACH_INTEGER_KIND(M, P) \

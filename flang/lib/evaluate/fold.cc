@@ -57,6 +57,7 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
     FoldingContext &, TypeParamInquiry<KIND> &&);
 template<typename T>
 Expr<T> FoldOperation(FoldingContext &, ArrayConstructor<T> &&);
+Expr<SomeDerived> FoldOperation(FoldingContext &, StructureConstructor &&);
 
 // Overloads, instantiations, and specializations of FoldOperation().
 
@@ -230,9 +231,13 @@ public:
   Expr<T> FoldArray(ArrayConstructor<T> &&array) {
     if (FoldArray(array.values)) {
       std::int64_t n = elements_.size();
-      Expr<T> result{
-          Constant<T>{std::move(elements_), std::vector<std::int64_t>{n}}};
-      return result;
+      if constexpr (std::is_same_v<T, SomeDerived>) {
+        return Expr<T>{Constant<T>{array.type.spec(), std::move(elements_),
+            std::vector<std::int64_t>{n}}};
+      } else {
+        return Expr<T>{
+            Constant<T>{std::move(elements_), std::vector<std::int64_t>{n}}};
+      }
     } else {
       return Expr<T>{std::move(array)};
     }
@@ -304,11 +309,14 @@ Expr<T> FoldOperation(FoldingContext &context, ArrayConstructor<T> &&array) {
   return result;
 }
 
-// TODO this specialization is a placeholder: don't fold array constructors
-// of derived type for now
 Expr<SomeDerived> FoldOperation(
-    FoldingContext &context, ArrayConstructor<SomeDerived> &&array) {
-  return Expr<SomeDerived>{std::move(array)};
+    FoldingContext &context, StructureConstructor &&structure) {
+  StructureConstructor result{structure.derivedTypeSpec()};
+  for (auto &&[symbol, value] : std::move(structure.values())) {
+    result.Add(*symbol, Fold(context, std::move(*value)));
+  }
+  return Expr<SomeDerived>{
+      Constant<SomeDerived>{result.derivedTypeSpec(), result}};
 }
 
 // Substitute a bare type parameter reference with its value if it has one now
@@ -783,6 +791,8 @@ template<typename A>
 bool IsConstExpr(ConstExprContext &, const ArrayConstructorValues<A> &);
 template<typename A>
 bool IsConstExpr(ConstExprContext &, const ArrayConstructor<A> &);
+bool IsConstExpr(ConstExprContext &, const semantics::DerivedTypeSpec &);
+bool IsConstExpr(ConstExprContext &, const StructureConstructor &);
 bool IsConstExpr(ConstExprContext &, const BaseObject &);
 bool IsConstExpr(ConstExprContext &, const Component &);
 bool IsConstExpr(ConstExprContext &, const Triplet &);
@@ -842,6 +852,29 @@ bool IsConstExpr(
 template<typename A>
 bool IsConstExpr(ConstExprContext &context, const ArrayConstructor<A> &array) {
   return IsConstExpr(context, array.values);
+}
+bool IsConstExpr(
+    ConstExprContext &context, const semantics::DerivedTypeSpec &spec) {
+  for (const auto &nameValue : spec.parameters()) {
+    const auto &value{nameValue.second};
+    if (!value.isExplicit() || !value.GetExplicit().has_value() ||
+        !IsConstExpr(context, *value.GetExplicit())) {
+      return false;
+    }
+  }
+  return true;
+}
+bool IsConstExpr(
+    ConstExprContext &context, const StructureConstructor &structure) {
+  if (!IsConstExpr(context, structure.derivedTypeSpec())) {
+    return false;
+  }
+  for (const auto &symbolExpr : structure.values()) {
+    if (!IsConstExpr(context, symbolExpr.second)) {
+      return false;
+    }
+  }
+  return true;
 }
 bool IsConstExpr(ConstExprContext &context, const BaseObject &base) {
   return IsConstExpr(context, base.u);

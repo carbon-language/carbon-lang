@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "type.h"
+#include "expression.h"
 #include "fold.h"
 #include "../common/idioms.h"
 #include "../semantics/scope.h"
@@ -20,6 +21,8 @@
 #include "../semantics/type.h"
 #include <algorithm>
 #include <optional>
+#include <ostream>
+#include <sstream>
 #include <string>
 
 using namespace std::literals::string_literals;
@@ -182,7 +185,69 @@ bool SomeKind<TypeCategory::Derived>::operator==(
   return spec_ == that.spec_ && descriptor_ == that.descriptor_;
 }
 
+static std::ostream &DerivedTypeSpecAsFortran(
+    std::ostream &o, const semantics::DerivedTypeSpec &spec) {
+  o << "TYPE("s << spec.typeSymbol().name().ToString();
+  if (!spec.parameters().empty()) {
+    char ch{'('};
+    for (const auto &[name, value] : spec.parameters()) {
+      value.GetExplicit()->AsFortran(o << ch << name.ToString() << '=');
+      ch = ',';
+    }
+    o << ')';
+  }
+  return o;
+}
+
 std::string SomeDerived::AsFortran() const {
-  return "TYPE("s + spec().typeSymbol().name().ToString() + ')';
+  std::stringstream out;
+  DerivedTypeSpecAsFortran(out, spec());
+  return out.str();
+}
+
+StructureConstructor::StructureConstructor(const StructureConstructor &that)
+  : derivedTypeSpec_{that.derivedTypeSpec_}, values_{that.values_} {}
+StructureConstructor::StructureConstructor(StructureConstructor &&that)
+  : derivedTypeSpec_{that.derivedTypeSpec_}, values_{std::move(that.values_)} {}
+StructureConstructor::~StructureConstructor() {}
+StructureConstructor &StructureConstructor::operator=(
+    const StructureConstructor &that) {
+  derivedTypeSpec_ = that.derivedTypeSpec_;
+  values_ = that.values_;
+  return *this;
+}
+StructureConstructor &StructureConstructor::operator=(
+    StructureConstructor &&that) {
+  derivedTypeSpec_ = that.derivedTypeSpec_;
+  values_ = std::move(that.values_);
+  return *this;
+}
+
+bool StructureConstructor::operator==(const StructureConstructor &that) const {
+  return derivedTypeSpec_ == that.derivedTypeSpec_ && values_ == that.values_;
+}
+
+DynamicType StructureConstructor::GetType() const {
+  return {TypeCategory::Derived, 0, derivedTypeSpec_};
+}
+
+StructureConstructor &StructureConstructor::Add(
+    const Symbol &symbol, Expr<SomeType> &&expr) {
+  values_.emplace_back(&symbol, std::move(expr));
+  return *this;
+}
+
+std::ostream &StructureConstructor::AsFortran(std::ostream &o) const {
+  DerivedTypeSpecAsFortran(o, *derivedTypeSpec_);
+  if (values_.empty()) {
+    o << '(';
+  } else {
+    char ch{'('};
+    for (const auto &[symbol, value] : values_) {
+      value->AsFortran(o << ch << symbol->name().ToString() << '=');
+      ch = ',';
+    }
+  }
+  return o << ')';
 }
 }
