@@ -14600,7 +14600,11 @@ static SDValue lowerShuffleWithUndefHalf(const SDLoc &DL, MVT VT, SDValue V1,
         if (EltWidth == 32 && NumLowerHalves &&
             HalfVT.is128BitVector() && !is128BitUnpackShuffleMask(HalfMask))
           return SDValue();
-        if (EltWidth == 64)
+        // If this is a unary shuffle (assume that the 2nd operand is
+        // canonicalized to undef), then we can use vpermpd. Otherwise, we
+        // are better off extracting the upper half of 1 operand and using a
+        // narrow shuffle.
+        if (EltWidth == 64 && V2.isUndef())
           return SDValue();
       }
       // AVX512 has efficient cross-lane shuffles for all legal 512-bit types.
