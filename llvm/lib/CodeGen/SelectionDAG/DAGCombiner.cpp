@@ -13123,30 +13123,42 @@ SDValue DAGCombiner::ForwardStoreValueToDirectLoad(LoadSDNode *LD) {
   if (LD->getBasePtr().isUndef() || Offset != 0)
     return SDValue();
   // Model necessary truncations / extenstions.
-  SDValue Val;
+  SmallVector<SDNode *, 4> Vals; // Temporaries which may need to be deleted.
+  SDValue Val, RV;
   // Truncate Value To Stored Memory Size.
   do {
     if (!getTruncatedStoreValue(ST, Val))
       continue;
+    if (Vals.empty() || Vals.back() != Val.getNode())
+      Vals.push_back(Val.getNode());
     if (!isTypeLegal(LDMemType))
       continue;
     if (STMemType != LDMemType) {
       // TODO: Support vectors? This requires extract_subvector/bitcast.
       if (!STMemType.isVector() && !LDMemType.isVector() &&
-          STMemType.isInteger() && LDMemType.isInteger())
+          STMemType.isInteger() && LDMemType.isInteger()) {
+        Vals.push_back(Val.getNode());
         Val = DAG.getNode(ISD::TRUNCATE, SDLoc(LD), LDMemType, Val);
-      else
+      } else
         continue;
     }
-    if (!extendLoadedValueToExtension(LD, Val))
-      continue;
-    return ReplaceLd(LD, Val, Chain);
+    if (Vals.empty() || Vals.back() != Val.getNode())
+      Vals.push_back(Val.getNode());
+    if (extendLoadedValueToExtension(LD, Val))
+      RV = ReplaceLd(LD, Val, Chain);
+    else if (Vals.empty() || Vals.back() != Val.getNode())
+      Vals.push_back(Val.getNode());
   } while (false);
 
   // On failure, cleanup dead nodes we may have created.
-  if (Val->use_empty())
-    deleteAndRecombine(Val.getNode());
-  return SDValue();
+  if (Vals.empty() || Vals.back() != Val.getNode())
+    Vals.push_back(Val.getNode());
+  while (!Vals.empty()) {
+    SDNode *Val = Vals.pop_back_val();
+    if (Val->use_empty())
+      recursivelyDeleteUnusedNodes(Val);
+  }
+  return RV;
 }
 
 SDValue DAGCombiner::visitLOAD(SDNode *N) {
