@@ -25,6 +25,16 @@ using namespace LegalizeActions;
 using namespace LegalizeMutations;
 using namespace LegalityPredicates;
 
+
+static LegalityPredicate isMultiple32(unsigned TypeIdx,
+                                      unsigned MaxSize = 512) {
+  return [=](const LegalityQuery &Query) {
+    const LLT Ty = Query.Types[TypeIdx];
+    const LLT EltTy = Ty.getScalarType();
+    return Ty.getSizeInBits() <= MaxSize && EltTy.getSizeInBits() % 32 == 0;
+  };
+}
+
 AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
                                          const GCNTargetMachine &TM) {
   using namespace TargetOpcode;
@@ -121,15 +131,12 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   getActionDefinitionsBuilder(G_FCONSTANT)
     .legalFor({S32, S64, S16});
 
-  // G_IMPLICIT_DEF is a no-op so we can make it legal for any value type that
-  // can fit in a register.
-  // FIXME: We need to legalize several more operations before we can add
-  // a test case for size > 512.
   getActionDefinitionsBuilder(G_IMPLICIT_DEF)
-    .legalIf([=](const LegalityQuery &Query) {
-        return Query.Types[0].getSizeInBits() <= 512;
-    })
-    .clampScalar(0, S1, S512);
+    .legalFor({S1, S32, S64, V2S32, V4S32, V2S16, V4S16, GlobalPtr,
+               ConstantPtr, LocalPtr, FlatPtr, PrivatePtr})
+    .legalFor({LLT::vector(3, 16)})// FIXME: Hack
+    .clampScalarOrElt(0, S32, S512)
+    .legalIf(isMultiple32(0));
 
 
   // FIXME: i1 operands to intrinsics should always be legal, but other i1
