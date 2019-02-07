@@ -82,9 +82,6 @@ const unsigned kStackAlign = 16;
 /// size rlimit is set to infinity.
 const unsigned kDefaultUnsafeStackSize = 0x2800000;
 
-/// Runtime page size obtained through sysconf
-unsigned pageSize;
-
 // Per-thread unsafe stack information. It's not frequently accessed, so there
 // it can be kept out of the tcb in normal thread-local variables.
 __thread void *unsafe_stack_start = nullptr;
@@ -93,8 +90,8 @@ __thread size_t unsafe_stack_guard = 0;
 
 inline void *unsafe_stack_alloc(size_t size, size_t guard) {
   SFS_CHECK(size + guard >= size);
-  void *addr = Mmap(nullptr, RoundUpTo(size + guard, pageSize),
-                    PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+  void *addr = Mmap(nullptr, size + guard, PROT_READ | PROT_WRITE,
+                    MAP_PRIVATE | MAP_ANON, -1, 0);
   SFS_CHECK(MAP_FAILED != addr);
   Mprotect(addr, guard, PROT_NONE);
   return (char *)addr + guard;
@@ -229,7 +226,6 @@ INTERCEPTOR(int, pthread_create, pthread_t *thread,
 
   SFS_CHECK(size);
   size = RoundUpTo(size, kStackAlign);
-  SFS_CHECK((guard & (pageSize - 1)) == 0);
 
   void *addr = unsafe_stack_alloc(size, guard);
   struct tinfo *tinfo =
@@ -265,8 +261,6 @@ extern "C" __attribute__((visibility("default")))
 __attribute__((constructor(0)))
 #endif
 void __safestack_init() {
-  pageSize = sysconf(_SC_PAGESIZE);
-
   // Determine the stack size for the main thread.
   size_t size = kDefaultUnsafeStackSize;
   size_t guard = 4096;
@@ -277,7 +271,6 @@ void __safestack_init() {
 
   // Allocate unsafe stack for main thread
   void *addr = unsafe_stack_alloc(size, guard);
-
   unsafe_stack_setup(addr, size, guard);
 
   // Setup the cleanup handler
