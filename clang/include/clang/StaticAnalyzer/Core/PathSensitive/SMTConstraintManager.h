@@ -26,12 +26,11 @@ namespace clang {
 namespace ento {
 
 class SMTConstraintManager : public clang::ento::SimpleConstraintManager {
-  SMTSolverRef &Solver;
+  mutable SMTSolverRef Solver = CreateZ3Solver();
 
 public:
-  SMTConstraintManager(clang::ento::SubEngine *SE, clang::ento::SValBuilder &SB,
-                       SMTSolverRef &S)
-      : SimpleConstraintManager(SE, SB), Solver(S) {}
+  SMTConstraintManager(clang::ento::SubEngine *SE, clang::ento::SValBuilder &SB)
+      : SimpleConstraintManager(SE, SB) {}
   virtual ~SMTConstraintManager() = default;
 
   //===------------------------------------------------------------------===//

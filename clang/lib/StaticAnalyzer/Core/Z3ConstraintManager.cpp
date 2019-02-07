@@ -814,14 +814,6 @@ public:
   }
 }; // end class Z3Solver
 
-class Z3ConstraintManager : public SMTConstraintManager {
-  SMTSolverRef Solver = CreateZ3Solver();
-
-public:
-  Z3ConstraintManager(SubEngine *SE, SValBuilder &SB)
-      : SMTConstraintManager(SE, SB, Solver) {}
-}; // end class Z3ConstraintManager
-
 } // end anonymous namespace
 
 #endif
@@ -839,12 +831,5 @@ SMTSolverRef clang::ento::CreateZ3Solver() {
 
 std::unique_ptr<ConstraintManager>
 ento::CreateZ3ConstraintManager(ProgramStateManager &StMgr, SubEngine *Eng) {
-#if CLANG_ANALYZER_WITH_Z3
-  return llvm::make_unique<Z3ConstraintManager>(Eng, StMgr.getSValBuilder());
-#else
-  llvm::report_fatal_error("Clang was not compiled with Z3 support, rebuild "
-                           "with -DCLANG_ANALYZER_ENABLE_Z3_SOLVER=ON",
-                           false);
-  return nullptr;
-#endif
+  return llvm::make_unique<SMTConstraintManager>(Eng, StMgr.getSValBuilder());
 }
