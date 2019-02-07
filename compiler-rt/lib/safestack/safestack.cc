@@ -228,7 +228,7 @@ INTERCEPTOR(int, pthread_create, pthread_t *thread,
   }
 
   SFS_CHECK(size);
-  SFS_CHECK((size & (kStackAlign - 1)) == 0);
+  size = RoundUpTo(size, kStackAlign);
   SFS_CHECK((guard & (pageSize - 1)) == 0);
 
   void *addr = unsafe_stack_alloc(size, guard);
