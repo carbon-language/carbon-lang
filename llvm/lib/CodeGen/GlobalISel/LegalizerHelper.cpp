@@ -2219,11 +2219,11 @@ LegalizerHelper::narrowScalarShiftByConstant(MachineInstr &MI, const APInt &Amt,
       Hi = InL;
     } else {
       Lo = MIRBuilder.buildShl(NVT, InL, MIRBuilder.buildConstant(AmtTy, Amt));
-      Hi = MIRBuilder.buildOr(
-          NVT,
-          MIRBuilder.buildShl(NVT, InH, MIRBuilder.buildConstant(AmtTy, Amt)),
-          MIRBuilder.buildLShr(
-              NVT, InL, MIRBuilder.buildConstant(AmtTy, -Amt + NVTBits)));
+      auto OrLHS =
+          MIRBuilder.buildShl(NVT, InH, MIRBuilder.buildConstant(AmtTy, Amt));
+      auto OrRHS = MIRBuilder.buildLShr(
+          NVT, InL, MIRBuilder.buildConstant(AmtTy, -Amt + NVTBits));
+      Hi = MIRBuilder.buildOr(NVT, OrLHS, OrRHS);
     }
   } else if (MI.getOpcode() == TargetOpcode::G_LSHR) {
     if (Amt.ugt(VTBits)) {
