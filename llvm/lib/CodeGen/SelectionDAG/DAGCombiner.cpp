@@ -2159,6 +2159,18 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
                          DAG.getNode(ISD::ADD, SDLoc(N1), VT, N01, N11));
   }
 
+  // fold (add (umax X, C), -C) --> (usubsat X, C)
+  if (N0.getOpcode() == ISD::UMAX && hasOperation(ISD::USUBSAT, VT)) {
+    auto MatchUSUBSAT = [](ConstantSDNode *Max, ConstantSDNode *Op) {
+      return (!Max && !Op) ||
+             (Max && Op && Max->getAPIntValue() == (-Op->getAPIntValue()));
+    };
+    if (ISD::matchBinaryPredicate(N0.getOperand(1), N1, MatchUSUBSAT,
+                                  /*AllowUndefs*/ true))
+      return DAG.getNode(ISD::USUBSAT, DL, VT, N0.getOperand(0),
+                         N0.getOperand(1));
+  }
+
   if (SDValue V = foldAddSubBoolOfMaskedVal(N, DAG))
     return V;
 
