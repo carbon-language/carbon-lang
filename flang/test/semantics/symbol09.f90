@@ -128,3 +128,28 @@ subroutine s6
   a(i) = j+1
  end do
 end subroutine
+
+!DEF: /s7 Subprogram
+subroutine s7
+ !DEF: /s7/one PARAMETER ObjectEntity REAL(4)
+ real, parameter :: one = 1.0
+ !DEF: /s7/z ObjectEntity COMPLEX(4)
+ !REF: /s7/one
+ complex :: z = (one, -one)
+end subroutine
+
+!DEF: /s8 Subprogram
+subroutine s8
+ !DEF: /s8/one PARAMETER ObjectEntity REAL(4)
+ real, parameter :: one = 1.0
+ !DEF: /s8/y ObjectEntity REAL(4)
+ !DEF: /s8/z ObjectEntity REAL(4)
+ real y(10), z(10)
+ !REF: /s8/y
+ !DEF: /s8/ImpliedDos1/i (implicit) ObjectEntity INTEGER(4)
+ !REF: /s8/z
+ !DEF: /s8/ImpliedDos2/i (implicit) ObjectEntity INTEGER(4)
+ !DEF: /s8/x (implicit) ObjectEntity REAL(4)
+ !REF: /s8/one
+ data (y(i),i=1,10),(z(i),i=1,10),x/21*one/
+end subroutine

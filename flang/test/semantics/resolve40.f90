@@ -74,3 +74,15 @@ subroutine s7
   !ERROR: EXTERNAL attribute not allowed on 'x'
   external x
 end
+
+subroutine s8
+  data x/1.0/
+  !ERROR: The type of 'x' has already been implicitly declared
+  integer x
+end
+
+subroutine s9
+  real :: x(4)
+  !ERROR: 'i' is already declared in this scoping unit
+  data ((x(i,i),i=1,2),i=1,2)/4*0.0/
+end

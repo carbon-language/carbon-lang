@@ -623,7 +623,8 @@ public:
   bool Pre(const parser::BindStmt &) { return BeginAttrs(); }
   void Post(const parser::BindStmt &) { EndAttrs(); }
   bool Pre(const parser::BindEntity &);
-  void Post(const parser::NamedConstantDef &);
+  bool Pre(const parser::NamedConstantDef &);
+  bool Pre(const parser::NamedConstant &);
   bool Pre(const parser::AsynchronousStmt &);
   bool Pre(const parser::ContiguousStmt &);
   bool Pre(const parser::ExternalStmt &);
@@ -787,8 +788,7 @@ public:
   bool Pre(const parser::AcSpec &);
   bool Pre(const parser::AcImpliedDo &);
   bool Pre(const parser::DataImpliedDo &);
-  bool Pre(const parser::DataStmtSet &);
-  void Post(const parser::DataStmtSet &);
+  bool Pre(const parser::DataStmtObject &);
   bool Pre(const parser::DoConstruct &);
   void Post(const parser::DoConstruct &);
   void Post(const parser::ConcurrentControl &);
@@ -2406,17 +2406,28 @@ bool DeclarationVisitor::Pre(const parser::BindEntity &x) {
   }
   return false;
 }
-void DeclarationVisitor::Post(const parser::NamedConstantDef &x) {
+bool DeclarationVisitor::Pre(const parser::NamedConstantDef &x) {
   auto &name{std::get<parser::NamedConstant>(x.t).v};
   auto &symbol{HandleAttributeStmt(Attr::PARAMETER, name)};
   if (!ConvertToObjectEntity(symbol)) {
     SayWithDecl(
         name, symbol, "PARAMETER attribute not allowed on '%s'"_err_en_US);
-    return;
+    return false;
   }
   const auto &expr{std::get<parser::ConstantExpr>(x.t)};
+  Walk(expr);
   symbol.get<ObjectEntityDetails>().set_init(EvaluateExpr(expr));
   ApplyImplicitRules(symbol);
+  return false;
+}
+bool DeclarationVisitor::Pre(const parser::NamedConstant &x) {
+  const parser::Name &name{x.v};
+  if (!FindSymbol(name)) {
+    Say(name, "Named constant '%s' not found"_err_en_US);
+  } else {
+    CheckUseError(name);
+  }
+  return false;
 }
 bool DeclarationVisitor::Pre(const parser::AsynchronousStmt &x) {
   return HandleAttributeStmt(Attr::ASYNCHRONOUS, x.v);
@@ -3328,11 +3339,19 @@ bool ConstructVisitor::Pre(const parser::DataImpliedDo &x) {
   return false;
 }
 
-bool ConstructVisitor::Pre(const parser::DataStmtSet &) {
-  PushScope(Scope::Kind::ImpliedDos, nullptr);
-  return true;
+bool ConstructVisitor::Pre(const parser::DataStmtObject &x) {
+  std::visit(
+      common::visitors{
+          [&](const common::Indirection<parser::Variable> &y) { Walk(*y); },
+          [&](const parser::DataImpliedDo &y) {
+            PushScope(Scope::Kind::ImpliedDos, nullptr);
+            Walk(y);
+            PopScope();
+          },
+      },
+      x.u);
+  return false;
 }
-void ConstructVisitor::Post(const parser::DataStmtSet &) { PopScope(); }
 
 bool ConstructVisitor::Pre(const parser::DoConstruct &x) {
   if (x.IsDoConcurrent()) {
