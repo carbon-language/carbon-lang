@@ -403,11 +403,16 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   auto &Shifts = getActionDefinitionsBuilder({G_SHL, G_LSHR, G_ASHR})
     .legalFor({{S32, S32}, {S64, S32}});
   if (ST.has16BitInsts()) {
-    Shifts.legalFor({{S16, S32}, {S16, S16}});
+    if (ST.hasVOP3PInsts()) {
+      Shifts.legalFor({{S16, S32}, {S16, S16}, {V2S16, V2S16}})
+            .clampMaxNumElements(0, S16, 2);
+    } else
+      Shifts.legalFor({{S16, S32}, {S16, S16}});
     Shifts.clampScalar(0, S16, S64);
   } else
     Shifts.clampScalar(0, S32, S64);
-  Shifts.clampScalar(1, S32, S32);
+  Shifts.clampScalar(1, S32, S32)
+        .scalarize(0);
 
   for (unsigned Op : {G_EXTRACT_VECTOR_ELT, G_INSERT_VECTOR_ELT}) {
     unsigned VecTypeIdx = Op == G_EXTRACT_VECTOR_ELT ? 1 : 0;
