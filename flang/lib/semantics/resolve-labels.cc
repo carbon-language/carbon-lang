@@ -229,9 +229,9 @@ public:
 
   // see 11.1.1
   bool Pre(const parser::ProgramUnit &) { return PushNewScope(); }
-  bool Pre(const parser::FunctionSubprogram &) { return PushNewScope(); }
-  bool Pre(const parser::SubroutineSubprogram &) { return PushNewScope(); }
-  bool Pre(const parser::SeparateModuleSubprogram &) { return PushNewScope(); }
+  bool Pre(const parser::FunctionSubprogram &) { return PushSubscope(); }
+  bool Pre(const parser::SubroutineSubprogram &) { return PushSubscope(); }
+  bool Pre(const parser::SeparateModuleSubprogram &) { return PushSubscope(); }
   bool Pre(const parser::AssociateConstruct &associateConstruct) {
     return PushConstructName(associateConstruct);
   }
