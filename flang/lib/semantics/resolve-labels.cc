@@ -228,10 +228,13 @@ public:
   }
 
   // see 11.1.1
-  bool Pre(const parser::ProgramUnit &) { return PushNewScope(); }
-  bool Pre(const parser::FunctionSubprogram &) { return PushSubscope(); }
-  bool Pre(const parser::SubroutineSubprogram &) { return PushSubscope(); }
-  bool Pre(const parser::SeparateModuleSubprogram &) { return PushSubscope(); }
+  bool Pre(const parser::ProgramUnit &) { return InitializeNewScopeContext(); }
+  bool Pre(const parser::InternalSubprogram &) {
+    return InitializeNewScopeContext();
+  }
+  bool Pre(const parser::ModuleSubprogram &) {
+    return InitializeNewScopeContext();
+  }
   bool Pre(const parser::AssociateConstruct &associateConstruct) {
     return PushConstructName(associateConstruct);
   }
@@ -279,7 +282,6 @@ public:
     return PushConstructNameWithoutBlock(forallConstruct);
   }
 
-  void Post(const parser::ProgramUnit &) { PopScope(); }
   void Post(const parser::AssociateConstruct &associateConstruct) {
     PopConstructName(associateConstruct);
   }
@@ -353,7 +355,6 @@ public:
     CheckOptionalName<parser::FunctionStmt>("FUNCTION", functionSubprogram,
         std::get<parser::Statement<parser::EndFunctionStmt>>(
             functionSubprogram.t));
-    PopScope();
   }
   void Post(const parser::InterfaceBlock &interfaceBlock) {
     auto &interfaceStmt{
@@ -398,7 +399,6 @@ public:
         separateModuleSubprogram,
         std::get<parser::Statement<parser::EndMpSubprogramStmt>>(
             separateModuleSubprogram.t));
-    PopScope();
   }
 
   // C1401
@@ -433,7 +433,6 @@ public:
         subroutineSubprogram,
         std::get<parser::Statement<parser::EndSubroutineStmt>>(
             subroutineSubprogram.t));
-    PopScope();
   }
 
   // C739
@@ -495,8 +494,9 @@ private:
     currentScope_ = programUnits_.back().scopeModel.size() - 1;
     return true;
   }
-  bool PushNewScope() {
+  bool InitializeNewScopeContext() {
     programUnits_.emplace_back(UnitAnalysis{});
+    currentScope_ = 0u;
     return PushSubscope();
   }
   void PopScope() {
@@ -758,7 +758,7 @@ private:
   std::vector<UnitAnalysis> programUnits_;
   parser::Messages &errorHandler_;
   parser::CharBlock currentPosition_{nullptr};
-  ProxyForScope currentScope_{0};
+  ProxyForScope currentScope_;
   std::vector<std::string> constructNames_;
 };
 
