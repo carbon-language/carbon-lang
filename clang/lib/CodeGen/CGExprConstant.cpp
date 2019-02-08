@@ -1649,16 +1649,6 @@ private:
 llvm::Constant *ConstantLValueEmitter::tryEmit() {
   const APValue::LValueBase &base = Value.getLValueBase();
 
-  // Certain special array initializers are represented in APValue
-  // as l-values referring to the base expression which generates the
-  // array.  This happens with e.g. string literals.  These should
-  // probably just get their own representation kind in APValue.
-  if (DestType->isArrayType()) {
-    assert(!hasNonZeroOffset() && "offset on array initializer");
-    auto expr = const_cast<Expr*>(base.get<const Expr*>());
-    return ConstExprEmitter(Emitter).Visit(expr, DestType);
-  }
-
   // Otherwise, the destination type should be a pointer or reference
   // type, but it might also be a cast thereof.
   //
