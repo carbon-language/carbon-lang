@@ -6912,7 +6912,7 @@ assembly to jump to.
 Example:
 """"""""
 
-.. code-block:: llvm
+.. code-block:: text
 
       callbr void asm "", "r,x"(i32 %x, i8 *blockaddress(@foo, %fail))
                   to label %normal or jump [label %fail]
