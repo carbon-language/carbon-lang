@@ -19,10 +19,11 @@
 
 namespace Fortran::evaluate {
 
-template<typename T> ConstantBase<T>::~ConstantBase() {}
+template<typename RESULT, typename VALUE>
+ConstantBase<RESULT, VALUE>::~ConstantBase() {}
 
-template<typename T>
-std::ostream &ConstantBase<T>::AsFortran(std::ostream &o) const {
+template<typename RESULT, typename VALUE>
+std::ostream &ConstantBase<RESULT, VALUE>::AsFortran(std::ostream &o) const {
   if (Rank() > 1) {
     o << "reshape(";
   }
@@ -36,14 +37,14 @@ std::ostream &ConstantBase<T>::AsFortran(std::ostream &o) const {
     } else {
       o << ',';
     }
-    if constexpr (T::category == TypeCategory::Integer) {
-      o << value.SignedDecimal() << '_' << T::kind;
-    } else if constexpr (T::category == TypeCategory::Real ||
-        T::category == TypeCategory::Complex) {
-      value.AsFortran(o, T::kind);
-    } else if constexpr (T::category == TypeCategory::Character) {
-      o << T::kind << '_' << parser::QuoteCharacterLiteral(value);
-    } else if constexpr (T::category == TypeCategory::Logical) {
+    if constexpr (Result::category == TypeCategory::Integer) {
+      o << value.SignedDecimal() << '_' << Result::kind;
+    } else if constexpr (Result::category == TypeCategory::Real ||
+        Result::category == TypeCategory::Complex) {
+      value.AsFortran(o, Result::kind);
+    } else if constexpr (Result::category == TypeCategory::Character) {
+      o << Result::kind << '_' << parser::QuoteCharacterLiteral(value);
+    } else if constexpr (Result::category == TypeCategory::Logical) {
       if (value.IsTrue()) {
         o << ".true.";
       } else {
@@ -51,7 +52,7 @@ std::ostream &ConstantBase<T>::AsFortran(std::ostream &o) const {
       }
       o << '_' << Result::kind;
     } else {
-      value.AsFortran(o);
+      StructureConstructor{AsConstant().derivedTypeSpec(), value}.AsFortran(o);
     }
   }
   if (Rank() > 0) {
@@ -69,9 +70,9 @@ std::ostream &ConstantBase<T>::AsFortran(std::ostream &o) const {
   return o;
 }
 
-template<typename T>
-auto ConstantBase<T>::At(const std::vector<std::int64_t> &index) const
-    -> Value {
+template<typename RESULT, typename VALUE>
+auto ConstantBase<RESULT, VALUE>::At(
+    const std::vector<std::int64_t> &index) const -> Value {
   CHECK(index.size() == static_cast<std::size_t>(Rank()));
   std::int64_t stride{1}, offset{0};
   int dim{0};
@@ -84,7 +85,8 @@ auto ConstantBase<T>::At(const std::vector<std::int64_t> &index) const
   return values_.at(offset);
 }
 
-template<typename T> Constant<SubscriptInteger> ConstantBase<T>::SHAPE() const {
+template<typename RESULT, typename VALUE>
+Constant<SubscriptInteger> ConstantBase<RESULT, VALUE>::SHAPE() const {
   using IntType = Scalar<SubscriptInteger>;
   std::vector<IntType> result;
   for (std::int64_t dim : shape_) {
@@ -93,10 +95,30 @@ template<typename T> Constant<SubscriptInteger> ConstantBase<T>::SHAPE() const {
   return {std::move(result), std::vector<std::int64_t>{Rank()}};
 }
 
+Constant<SomeDerived>::Constant(const StructureConstructor &x)
+  : Base{x.values()}, derivedTypeSpec_{&x.derivedTypeSpec()} {}
+
+Constant<SomeDerived>::Constant(StructureConstructor &&x)
+  : Base{std::move(x.values())}, derivedTypeSpec_{&x.derivedTypeSpec()} {}
+
+Constant<SomeDerived>::Constant(const semantics::DerivedTypeSpec &spec,
+    std::vector<StructureConstructorValues> &&x, std::vector<std::int64_t> &&s)
+  : Base{std::move(x), std::move(s)}, derivedTypeSpec_{&spec} {}
+
+static std::vector<StructureConstructorValues> GetValues(
+    std::vector<StructureConstructor> &&x) {
+  std::vector<StructureConstructorValues> result;
+  for (auto &&structure : std::move(x)) {
+    result.emplace_back(std::move(structure.values()));
+  }
+  return result;
+}
+
 Constant<SomeDerived>::Constant(const semantics::DerivedTypeSpec &spec,
     std::vector<StructureConstructor> &&x, std::vector<std::int64_t> &&s)
-  : Base{std::move(x), std::move(s)}, spec_{&spec} {}
+  : Base{GetValues(std::move(x)), std::move(s)}, derivedTypeSpec_{&spec} {}
 
-FOR_EACH_SPECIFIC_TYPE(template class ConstantBase)
+FOR_EACH_INTRINSIC_KIND(template class ConstantBase)
+template class ConstantBase<SomeDerived, StructureConstructorValues>;
 FOR_EACH_INTRINSIC_KIND(template class Constant)
 }

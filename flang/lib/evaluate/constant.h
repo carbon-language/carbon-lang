@@ -16,6 +16,7 @@
 #define FORTRAN_EVALUATE_CONSTANT_H_
 
 #include "type.h"
+#include <map>
 #include <ostream>
 
 namespace Fortran::evaluate {
@@ -27,10 +28,10 @@ namespace Fortran::evaluate {
 
 template<typename> class Constant;
 
-template<typename RESULT> class ConstantBase {
+template<typename RESULT, typename VALUE = Scalar<RESULT>> class ConstantBase {
 public:
   using Result = RESULT;
-  using Value = Scalar<Result>;
+  using Value = VALUE;
 
   template<typename A> ConstantBase(const A &x) : values_{x} {}
   template<typename A>
@@ -97,30 +98,37 @@ public:
   // TODO pmk: make CHARACTER values contiguous (they're strings now)
 };
 
-template<> class Constant<SomeDerived> : public ConstantBase<SomeDerived> {
+using StructureConstructorValues =
+    std::map<const semantics::Symbol *, CopyableIndirection<Expr<SomeType>>>;
+
+template<>
+class Constant<SomeDerived>
+  : public ConstantBase<SomeDerived, StructureConstructorValues> {
 public:
   using Result = SomeDerived;
-  using Base = ConstantBase<Result>;
-  template<typename A>
-  Constant(const semantics::DerivedTypeSpec &spec, const A &x)
-    : Base{x}, spec_{&spec} {}
-  template<typename A>
-  Constant(const semantics::DerivedTypeSpec &spec,
-      std::enable_if_t<!std::is_reference_v<A>, A> &&x)
-    : Base{std::move(x)}, spec_{&spec} {}
+  using Base = ConstantBase<Result, StructureConstructorValues>;
+  Constant(const StructureConstructor &);
+  Constant(StructureConstructor &&);
   Constant(const semantics::DerivedTypeSpec &, std::vector<Value> &&,
       std::vector<std::int64_t> &&);
-
+  Constant(const semantics::DerivedTypeSpec &,
+      std::vector<StructureConstructor> &&, std::vector<std::int64_t> &&);
   CLASS_BOILERPLATE(Constant)
+
+  const semantics::DerivedTypeSpec &derivedTypeSpec() const {
+    return *derivedTypeSpec_;
+  }
+
   DynamicType GetType() const {
-    return DynamicType{TypeCategory::Derived, 0, spec_};
+    return DynamicType{TypeCategory::Derived, 0, derivedTypeSpec_};
   }
 
 private:
-  const semantics::DerivedTypeSpec *spec_;
+  const semantics::DerivedTypeSpec *derivedTypeSpec_;
 };
 
-FOR_EACH_SPECIFIC_TYPE(extern template class ConstantBase)
+FOR_EACH_INTRINSIC_KIND(extern template class ConstantBase)
+extern template class ConstantBase<SomeDerived, StructureConstructorValues>;
 FOR_EACH_INTRINSIC_KIND(extern template class Constant)
 }
 #endif  // FORTRAN_EVALUATE_CONSTANT_H_

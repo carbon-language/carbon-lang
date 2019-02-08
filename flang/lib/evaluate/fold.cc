@@ -230,10 +230,10 @@ public:
 
   Expr<T> FoldArray(ArrayConstructor<T> &&array) {
     if (FoldArray(array.values)) {
-      std::int64_t n = elements_.size();
+      auto n{static_cast<std::int64_t>(elements_.size())};
       if constexpr (std::is_same_v<T, SomeDerived>) {
-        return Expr<T>{Constant<T>{array.type.spec(), std::move(elements_),
-            std::vector<std::int64_t>{n}}};
+        return Expr<T>{Constant<T>{array.derivedTypeSpec(),
+            std::move(elements_), std::vector<std::int64_t>{n}}};
       } else {
         return Expr<T>{
             Constant<T>{std::move(elements_), std::vector<std::int64_t>{n}}};
@@ -252,7 +252,11 @@ private:
       int rank{c->Rank()};
       std::vector<std::int64_t> index(shape.size(), 1);
       for (std::size_t n{c->size()}; n-- > 0;) {
-        elements_.push_back(c->At(index));
+        if constexpr (std::is_same_v<T, SomeDerived>) {
+          elements_.emplace_back(c->derivedTypeSpec(), c->At(index));
+        } else {
+          elements_.emplace_back(c->At(index));
+        }
         for (int d{0}; d < rank; ++d) {
           if (++index[d] <= shape[d]) {
             break;
@@ -315,8 +319,7 @@ Expr<SomeDerived> FoldOperation(
   for (auto &&[symbol, value] : std::move(structure.values())) {
     result.Add(*symbol, Fold(context, std::move(*value)));
   }
-  return Expr<SomeDerived>{
-      Constant<SomeDerived>{result.derivedTypeSpec(), result}};
+  return Expr<SomeDerived>{Constant<SomeDerived>{result}};
 }
 
 // Substitute a bare type parameter reference with its value if it has one now

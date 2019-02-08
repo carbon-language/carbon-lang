@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 -->
 
 As a general principle, this compiler will accept by default and
@@ -79,3 +79,4 @@ Extensions and legacy features deliberately not supported
 * `B` suffix on unquoted octal constants
 * `Z` prefix on unquoted hexadecimal constants (dangerous)
 * `T` and `F` as abbreviations for `.TRUE.` and `.FALSE.` (dangerous)
+* Use of host FORMAT labels in internal subprograms (PGI-only feature)

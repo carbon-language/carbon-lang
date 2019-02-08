@@ -1284,20 +1284,25 @@ ArrayConstructorValues<T> MakeSpecific(
 
 struct ArrayConstructorTypeVisitor {
   using Result = MaybeExpr;
-  using Types = LengthlessIntrinsicTypes;
+  using Types = AllTypes;
   template<typename T> Result Test() {
-    if (type.category == T::category && type.kind == T::kind) {
-      if constexpr (T::category == TypeCategory::Character) {
-        CHECK(type.length.has_value());
+    if (type.category == T::category) {
+      if constexpr (T::category == TypeCategory::Derived) {
+        CHECK(type.derived != nullptr);
         return AsMaybeExpr(ArrayConstructor<T>{
-            MakeSpecific<T>(std::move(values)), std::move(*type.length)});
-      } else {
-        return AsMaybeExpr(
-            ArrayConstructor<T>{T{}, MakeSpecific<T>(std::move(values))});
+            *type.derived, MakeSpecific<T>(std::move(values))});
+      } else if (type.kind == T::kind) {
+        if constexpr (T::category == TypeCategory::Character) {
+          CHECK(type.length.has_value());
+          return AsMaybeExpr(ArrayConstructor<T>{
+              std::move(*type.length), MakeSpecific<T>(std::move(values))});
+        } else {
+          return AsMaybeExpr(
+              ArrayConstructor<T>{MakeSpecific<T>(std::move(values))});
+        }
       }
-    } else {
-      return std::nullopt;
     }
+    return std::nullopt;
   }
   DynamicTypeWithLength type;
   ArrayConstructorValues<SomeType> values;

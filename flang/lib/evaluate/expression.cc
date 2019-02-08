@@ -130,6 +130,12 @@ std::ostream &ArrayConstructor<Type<TypeCategory::Character, KIND>>::AsFortran(
   return o << ']';
 }
 
+std::ostream &ArrayConstructor<SomeDerived>::AsFortran(std::ostream &o) const {
+  o << '[' << GetType().AsFortran() << "::";
+  Emit(o, values);
+  return o << ']';
+}
+
 template<typename RESULT>
 std::ostream &ExpressionBase<RESULT>::AsFortran(std::ostream &o) const {
   std::visit(
@@ -234,13 +240,85 @@ bool ArrayConstructorValues<R>::operator==(
 
 template<typename R>
 bool ArrayConstructor<R>::operator==(const ArrayConstructor<R> &that) const {
-  return type == that.type && values == that.values;
+  return values == that.values;
 }
 
 template<int KIND>
 bool ArrayConstructor<Type<TypeCategory::Character, KIND>>::operator==(
     const ArrayConstructor<Type<TypeCategory::Character, KIND>> &that) const {
   return length == that.length && values == that.values;
+}
+
+bool ArrayConstructor<SomeDerived>::operator==(
+    const ArrayConstructor<SomeDerived> &that) const {
+  return derivedTypeSpec_ == that.derivedTypeSpec_ && values == that.values;
+}
+
+StructureConstructor::StructureConstructor(
+    const semantics::DerivedTypeSpec &spec,
+    const StructureConstructorValues &values)
+  : derivedTypeSpec_{&spec}, values_{values} {}
+StructureConstructor::StructureConstructor(
+    const semantics::DerivedTypeSpec &spec, StructureConstructorValues &&values)
+  : derivedTypeSpec_{&spec}, values_{std::move(values)} {}
+StructureConstructor::StructureConstructor(const StructureConstructor &that)
+  : derivedTypeSpec_{that.derivedTypeSpec_}, values_{that.values_} {}
+StructureConstructor::StructureConstructor(StructureConstructor &&that)
+  : derivedTypeSpec_{that.derivedTypeSpec_}, values_{std::move(that.values_)} {}
+StructureConstructor::~StructureConstructor() {}
+StructureConstructor &StructureConstructor::operator=(
+    const StructureConstructor &that) {
+  derivedTypeSpec_ = that.derivedTypeSpec_;
+  values_ = that.values_;
+  return *this;
+}
+StructureConstructor &StructureConstructor::operator=(
+    StructureConstructor &&that) {
+  derivedTypeSpec_ = that.derivedTypeSpec_;
+  values_ = std::move(that.values_);
+  return *this;
+}
+
+bool StructureConstructor::operator==(const StructureConstructor &that) const {
+  return derivedTypeSpec_ == that.derivedTypeSpec_ && values_ == that.values_;
+}
+
+DynamicType StructureConstructor::GetType() const {
+  return {TypeCategory::Derived, 0, derivedTypeSpec_};
+}
+
+StructureConstructor &StructureConstructor::Add(
+    const Symbol &symbol, Expr<SomeType> &&expr) {
+  values_.emplace(&symbol, std::move(expr));
+  return *this;
+}
+
+std::ostream &StructureConstructor::AsFortran(std::ostream &o) const {
+  DerivedTypeSpecAsFortran(o, *derivedTypeSpec_);
+  if (values_.empty()) {
+    o << '(';
+  } else {
+    char ch{'('};
+    for (const auto &[symbol, value] : values_) {
+      value->AsFortran(o << ch << symbol->name().ToString() << '=');
+      ch = ',';
+    }
+  }
+  return o << ')';
+}
+
+std::ostream &DerivedTypeSpecAsFortran(
+    std::ostream &o, const semantics::DerivedTypeSpec &spec) {
+  o << "TYPE("s << spec.typeSymbol().name().ToString();
+  if (!spec.parameters().empty()) {
+    char ch{'('};
+    for (const auto &[name, value] : spec.parameters()) {
+      value.GetExplicit()->AsFortran(o << ch << name.ToString() << '=');
+      ch = ',';
+    }
+    o << ')';
+  }
+  return o;
 }
 
 bool GenericExprWrapper::operator==(const GenericExprWrapper &that) const {
@@ -257,7 +335,7 @@ FOR_EACH_REAL_KIND(template struct Relational)
 FOR_EACH_CHARACTER_KIND(template struct Relational)
 template struct Relational<SomeType>;
 FOR_EACH_TYPE_AND_KIND(template class ExpressionBase)
-FOR_EACH_SPECIFIC_TYPE(template struct ArrayConstructor)
+FOR_EACH_INTRINSIC_KIND(template struct ArrayConstructor)
 }
 
 // For reclamation of analyzed expressions to which owning pointers have

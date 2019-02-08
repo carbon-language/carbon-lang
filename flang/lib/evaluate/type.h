@@ -288,6 +288,9 @@ using SomeDerived = SomeKind<TypeCategory::Derived>;
 using SomeCategory = std::tuple<SomeInteger, SomeReal, SomeComplex,
     SomeCharacter, SomeLogical, SomeDerived>;
 
+using AllTypes =
+    common::CombineTuples<AllIntrinsicTypes, std::tuple<SomeDerived>>;
+
 template<typename T> using Scalar = typename std::decay_t<T>::Scalar;
 
 // When Scalar<T> is S, then TypeOf<S> is T.
