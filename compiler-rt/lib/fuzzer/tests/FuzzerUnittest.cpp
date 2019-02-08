@@ -645,10 +645,7 @@ static void Merge(const std::string &Input,
   Merger M;
   Vector<std::string> NewFiles;
   EXPECT_TRUE(M.Parse(Input, true));
-  std::stringstream SS;
-  M.PrintSummary(SS);
   EXPECT_EQ(NumNewFeatures, M.Merge({}, &NewFiles));
-  EXPECT_EQ(M.AllFeatures(), M.ParseSummary(SS));
   EQ(NewFiles, Result);
 }
 

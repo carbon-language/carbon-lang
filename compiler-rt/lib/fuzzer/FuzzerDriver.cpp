@@ -478,8 +478,7 @@ void FuzzWithFork(const FuzzingOptions &Options,
   auto CFPath = TempPath(".fork");
   Printf("INFO: -fork=1: doing fuzzing in a separate process in order to "
          "be more resistant to crashes, timeouts, and OOMs\n");
-  auto Files =
-      CrashResistantMerge(Args, Corpora, CFPath, nullptr, nullptr);
+  auto Files = CrashResistantMerge(Args, Corpora, CFPath);
   Printf("INFO: -fork=1: seed corpus analyzed, %zd seeds chosen, starting to "
          "fuzz in separate processes\n", Files.size());
 
@@ -738,9 +737,7 @@ int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
     }
     std::string CFPath =
         Flags.merge_control_file ? Flags.merge_control_file : TempPath(".txt");
-    auto Files =
-        CrashResistantMerge(Args, *Inputs, CFPath, Flags.load_coverage_summary,
-                            Flags.save_coverage_summary);
+    auto Files = CrashResistantMerge(Args, *Inputs, CFPath);
     for (auto &Path : Files)
       F->WriteToOutputCorpus(FileToVector(Path, Options.MaxLen));
     // We are done, delete the control file if it was a temporary one.

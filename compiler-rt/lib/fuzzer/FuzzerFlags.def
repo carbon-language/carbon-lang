@@ -52,13 +52,6 @@ FUZZER_FLAG_STRING(merge_control_file,
                    "If a merge process gets killed it tries to leave this file "
                    "in a state suitable for resuming the merge. "
                    "By default a temporary file will be used.")
-FUZZER_FLAG_STRING(save_coverage_summary, "Experimental:"
-                   " save coverage summary to a given file."
-                   " Used with -merge=1")
-FUZZER_FLAG_STRING(load_coverage_summary, "Experimental:"
-                   " load coverage summary from a given file."
-                   " Treat this coverage as belonging to the first corpus. "
-                   " Used with -merge=1")
 FUZZER_FLAG_INT(minimize_crash, 0, "If 1, minimizes the provided"
   " crash input. Use with -runs=N or -max_total_time=N to limit "
   "the number attempts."
