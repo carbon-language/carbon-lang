@@ -7,7 +7,6 @@
 # RUN: echo "empty" >> %t.rename.txt
 # RUN: not llvm-objcopy --redefine-syms %t.rename.txt %t %t3 2>&1 | FileCheck %s --check-prefix=MISSING-SYM-NAME
 # RUN: not llvm-objcopy --redefine-syms %t.rename-none.txt %t %t-none 2>&1 | FileCheck %s --check-prefix=NO-FILE
-# RUN: cmp %t2 %t3
 # RUN: echo "  bar   rab #rename bar  " > %t.rename2.txt
 # RUN: echo "  foo   oof #rename foo  " > %t.rename3.txt
 # RUN: echo "  empty   ytpme #rename empty  " >> %t.rename3.txt
