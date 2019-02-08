@@ -3289,7 +3289,8 @@ void TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
   switch (ConstraintLetter) {
   default: break;
   case 'X':     // Allows any operand; labels (basic block) use this.
-    if (Op.getOpcode() == ISD::BasicBlock) {
+    if (Op.getOpcode() == ISD::BasicBlock ||
+        Op.getOpcode() == ISD::TargetBlockAddress) {
       Ops.push_back(Op);
       return;
     }
@@ -3775,6 +3776,9 @@ void TargetLowering::ComputeConstraintToUse(AsmOperandInfo &OpInfo,
       OpInfo.CallOperandVal = v;
       return;
     }
+
+    if (Op.getNode() && Op.getOpcode() == ISD::TargetBlockAddress)
+      return;
 
     // Otherwise, try to resolve it to something we know about by looking at
     // the actual operand type.
