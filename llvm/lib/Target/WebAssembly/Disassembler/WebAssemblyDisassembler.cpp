@@ -108,7 +108,7 @@ template <typename T>
 bool parseImmediate(MCInst &MI, uint64_t &Size, ArrayRef<uint8_t> Bytes) {
   if (Size + sizeof(T) > Bytes.size())
     return false;
-  T Val = support::endian::read<T, support::endianness::little, alignof(T)>(
+  T Val = support::endian::read<T, support::endianness::little, 1>(
       Bytes.data() + Size);
   Size += sizeof(T);
   if (std::is_floating_point<T>::value) {
