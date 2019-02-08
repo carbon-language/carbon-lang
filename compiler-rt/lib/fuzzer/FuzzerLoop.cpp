@@ -256,9 +256,9 @@ void Fuzzer::ExitCallback() {
 }
 
 void Fuzzer::MaybeExitGracefully() {
-  if (!GracefulExitRequested) return;
+  if (!F->GracefulExitRequested) return;
   Printf("==%lu== INFO: libFuzzer: exiting as requested\n", GetPid());
-  PrintFinalStats();
+  F->PrintFinalStats();
   _Exit(0);
 }
 

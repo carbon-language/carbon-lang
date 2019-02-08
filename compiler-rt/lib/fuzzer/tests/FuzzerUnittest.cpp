@@ -647,7 +647,7 @@ static void Merge(const std::string &Input,
   EXPECT_TRUE(M.Parse(Input, true));
   std::stringstream SS;
   M.PrintSummary(SS);
-  EXPECT_EQ(NumNewFeatures, M.Merge(&NewFiles));
+  EXPECT_EQ(NumNewFeatures, M.Merge({}, &NewFiles));
   EXPECT_EQ(M.AllFeatures(), M.ParseSummary(SS));
   EQ(NewFiles, Result);
 }
@@ -705,7 +705,7 @@ TEST(Merge, Good) {
   EQ(M.Files[0].Features, {1, 2, 3});
   EQ(M.Files[1].Features, {4, 5, 6});
   EQ(M.Files[2].Features, {1, 3, 6});
-  EXPECT_EQ(0U, M.Merge(&NewFiles));
+  EXPECT_EQ(0U, M.Merge({}, &NewFiles));
   EQ(NewFiles, {});
 
   EXPECT_TRUE(M.Parse("3\n1\nA\nB\nC\n"
@@ -716,7 +716,7 @@ TEST(Merge, Good) {
   EQ(M.Files[0].Features, {1, 2, 3});
   EQ(M.Files[1].Features, {4, 5, 6});
   EQ(M.Files[2].Features, {1, 3, 6});
-  EXPECT_EQ(3U, M.Merge(&NewFiles));
+  EXPECT_EQ(3U, M.Merge({}, &NewFiles));
   EQ(NewFiles, {"B"});
 
   // Same as the above, but with InitialFeatures.

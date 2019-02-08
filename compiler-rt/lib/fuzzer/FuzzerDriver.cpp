@@ -16,6 +16,7 @@
 #include "FuzzerMutate.h"
 #include "FuzzerRandom.h"
 #include "FuzzerTracePC.h"
+#include "FuzzerMerge.h"
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -24,6 +25,7 @@
 #include <mutex>
 #include <string>
 #include <thread>
+#include <fstream>
 
 // This function should be present in the libFuzzer so that the client
 // binary can test for its existence.
@@ -304,6 +306,11 @@ static std::string GetDedupTokenFromFile(const std::string &Path) {
   return S.substr(Beg, End - Beg);
 }
 
+static std::string TempPath(const char *Extension) {
+  return DirPlusFile(TmpDir(),
+                     "libFuzzerTemp." + std::to_string(GetPid()) + Extension);
+}
+
 int CleanseCrashInput(const Vector<std::string> &Args,
                        const FuzzingOptions &Options) {
   if (Inputs->size() != 1 || !Flags.exact_artifact_path) {
@@ -319,10 +326,8 @@ int CleanseCrashInput(const Vector<std::string> &Args,
   assert(Cmd.hasArgument(InputFilePath));
   Cmd.removeArgument(InputFilePath);
 
-  auto LogFilePath = DirPlusFile(
-      TmpDir(), "libFuzzerTemp." + std::to_string(GetPid()) + ".txt");
-  auto TmpFilePath = DirPlusFile(
-      TmpDir(), "libFuzzerTemp." + std::to_string(GetPid()) + ".repro");
+  auto LogFilePath = TempPath(".txt");
+  auto TmpFilePath = TempPath(".repro");
   Cmd.addArgument(TmpFilePath);
   Cmd.setOutputFile(LogFilePath);
   Cmd.combineOutAndErr();
@@ -382,8 +387,7 @@ int MinimizeCrashInput(const Vector<std::string> &Args,
     BaseCmd.addFlag("max_total_time", "600");
   }
 
-  auto LogFilePath = DirPlusFile(
-      TmpDir(), "libFuzzerTemp." + std::to_string(GetPid()) + ".txt");
+  auto LogFilePath = TempPath(".txt");
   BaseCmd.setOutputFile(LogFilePath);
   BaseCmd.combineOutAndErr();
 
@@ -465,6 +469,36 @@ int MinimizeCrashInputInternalStep(Fuzzer *F, InputCorpus *Corpus) {
   Printf("INFO: Done MinimizeCrashInputInternalStep, no crashes found\n");
   exit(0);
   return 0;
+}
+
+// This is just a sceleton of an experimental -fork=1 feature.
+void FuzzWithFork(const FuzzingOptions &Options,
+                  const Vector<std::string> &Args,
+                  const Vector<std::string> &Corpora) {
+  auto CFPath = TempPath(".fork");
+  Printf("INFO: -fork=1: doing fuzzing in a separate process in order to "
+         "be more resistant to crashes, timeouts, and OOMs\n");
+  auto Files =
+      CrashResistantMerge(Args, Corpora, CFPath, nullptr, nullptr);
+  Printf("INFO: -fork=1: seed corpus analyzed, %zd seeds chosen, starting to "
+         "fuzz in separate processes\n", Files.size());
+
+  Command Cmd(Args);
+  Cmd.removeFlag("fork");
+  if (Files.size() >= 2)
+    Cmd.addFlag("seed_inputs",
+                Files.back() + "," + Files[Files.size() - 2]);
+  Cmd.addFlag("runs", "1000000");
+  Cmd.addFlag("max_total_time", "30");
+  for (size_t i = 0; i < 1000; i++) {
+    Printf("RUN %s\n", Cmd.toString().c_str());
+    int ExitCode = ExecuteCommand(Cmd);
+    // TODO: sniff the crash, ignore OOMs and timeouts.
+    if (ExitCode != 0) break;
+  }
+
+  RemoveFile(CFPath);
+  exit(0);
 }
 
 int AnalyzeDictionary(Fuzzer *F, const Vector<Unit>& Dict,
@@ -694,11 +728,25 @@ int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
     exit(0);
   }
 
+  if (Flags.fork)
+    FuzzWithFork(Options, Args, *Inputs);
+
   if (Flags.merge) {
-    F->CrashResistantMerge(Args, *Inputs,
-                           Flags.load_coverage_summary,
-                           Flags.save_coverage_summary,
-                           Flags.merge_control_file);
+    if (Inputs->size() < 2) {
+      Printf("INFO: Merge requires two or more corpus dirs\n");
+      exit(0);
+    }
+    std::string CFPath =
+        Flags.merge_control_file ? Flags.merge_control_file : TempPath(".txt");
+    auto Files =
+        CrashResistantMerge(Args, *Inputs, CFPath, Flags.load_coverage_summary,
+                            Flags.save_coverage_summary);
+    for (auto &Path : Files)
+      F->WriteToOutputCorpus(FileToVector(Path, Options.MaxLen));
+    // We are done, delete the control file if it was a temporary one.
+    if (!Flags.merge_control_file)
+      RemoveFile(CFPath);
+
     exit(0);
   }
 

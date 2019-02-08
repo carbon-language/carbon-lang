@@ -122,7 +122,7 @@ size_t Merger::ApproximateMemoryConsumption() const  {
 
 // Decides which files need to be merged (add thost to NewFiles).
 // Returns the number of new features added.
-size_t Merger::Merge(const Set<uint32_t> &InitialFeatures,
+size_t Merger::Merge(const Set<uint32_t> &InitialFeatures, 
                      Vector<std::string> *NewFiles) {
   NewFiles->clear();
   assert(NumFilesInFirstCorpus <= Files.size());
@@ -223,7 +223,7 @@ void Fuzzer::CrashResistantMergeInternalStep(const std::string &CFPath) {
   std::ofstream OF(CFPath, std::ofstream::out | std::ofstream::app);
   Set<size_t> AllFeatures;
   for (size_t i = M.FirstNotProcessedFile; i < M.Files.size(); i++) {
-    MaybeExitGracefully();
+    Fuzzer::MaybeExitGracefully();
     auto U = FileToVector(M.Files[i].Name);
     if (U.size() > MaxInputLen) {
       U.resize(MaxInputLen);
@@ -275,27 +275,18 @@ static void WriteNewControlFile(const std::string &CFPath,
 }
 
 // Outer process. Does not call the target code and thus sohuld not fail.
-void Fuzzer::CrashResistantMerge(const Vector<std::string> &Args,
-                                 const Vector<std::string> &Corpora,
-                                 const char *CoverageSummaryInputPathOrNull,
-                                 const char *CoverageSummaryOutputPathOrNull,
-                                 const char *MergeControlFilePathOrNull) {
-  if (Corpora.size() <= 1) {
-    Printf("Merge requires two or more corpus dirs\n");
-    return;
-  }
-  auto CFPath =
-      MergeControlFilePathOrNull
-          ? MergeControlFilePathOrNull
-          : DirPlusFile(TmpDir(),
-                        "libFuzzerTemp." + std::to_string(GetPid()) + ".txt");
-
+Vector<std::string>
+CrashResistantMerge(const Vector<std::string> &Args,
+                    const Vector<std::string> &Corpora,
+                    const std::string &CFPath,
+                    const char *CoverageSummaryInputPathOrNull,
+                    const char *CoverageSummaryOutputPathOrNull) {
   size_t NumAttempts = 0;
-  if (MergeControlFilePathOrNull && FileSize(MergeControlFilePathOrNull)) {
+  if (FileSize(CFPath)) {
     Printf("MERGE-OUTER: non-empty control file provided: '%s'\n",
-           MergeControlFilePathOrNull);
+           CFPath.c_str());
     Merger M;
-    std::ifstream IF(MergeControlFilePathOrNull);
+    std::ifstream IF(CFPath);
     if (M.Parse(IF, /*ParseCoverage=*/false)) {
       Printf("MERGE-OUTER: control file ok, %zd files total,"
              " first not processed file %zd\n",
@@ -334,9 +325,10 @@ void Fuzzer::CrashResistantMerge(const Vector<std::string> &Args,
   // Every inner process should execute at least one input.
   Command BaseCmd(Args);
   BaseCmd.removeFlag("merge");
+  BaseCmd.removeFlag("fork");
   bool Success = false;
   for (size_t Attempt = 1; Attempt <= NumAttempts; Attempt++) {
-    MaybeExitGracefully();
+    Fuzzer::MaybeExitGracefully();
     Printf("MERGE-OUTER: attempt %zd\n", Attempt);
     Command Cmd(BaseCmd);
     Cmd.addFlag("merge_control_file", CFPath);
@@ -368,7 +360,6 @@ void Fuzzer::CrashResistantMerge(const Vector<std::string> &Args,
     std::ofstream SummaryOut(CoverageSummaryOutputPathOrNull);
     M.PrintSummary(SummaryOut);
   }
-  Vector<std::string> NewFiles;
   Set<uint32_t> InitialFeatures;
   if (CoverageSummaryInputPathOrNull) {
     std::ifstream SummaryIn(CoverageSummaryInputPathOrNull);
@@ -376,14 +367,11 @@ void Fuzzer::CrashResistantMerge(const Vector<std::string> &Args,
     Printf("MERGE-OUTER: coverage summary loaded from %s, %zd features found\n",
            CoverageSummaryInputPathOrNull, InitialFeatures.size());
   }
+  Vector<std::string> NewFiles;
   size_t NumNewFeatures = M.Merge(InitialFeatures, &NewFiles);
   Printf("MERGE-OUTER: %zd new files with %zd new features added\n",
          NewFiles.size(), NumNewFeatures);
-  for (auto &F: NewFiles)
-    WriteToOutputCorpus(FileToVector(F, MaxInputLen));
-  // We are done, delete the control file if it was a temporary one.
-  if (!MergeControlFilePathOrNull)
-    RemoveFile(CFPath);
+  return NewFiles;
 }
 
 } // namespace fuzzer
