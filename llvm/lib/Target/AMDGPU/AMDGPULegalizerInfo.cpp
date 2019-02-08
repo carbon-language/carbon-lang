@@ -707,7 +707,7 @@ bool AMDGPULegalizerInfo::legalizeAddrSpaceCast(
 
   const GCNSubtarget &ST = MF.getSubtarget<GCNSubtarget>();
   if (ST.getTargetLowering()->isNoopAddrSpaceCast(SrcAS, DestAS)) {
-    MI.setDesc(MIRBuilder.getTII().get(TargetOpcode::COPY));
+    MI.setDesc(MIRBuilder.getTII().get(TargetOpcode::G_BITCAST));
     return true;
   }
 
