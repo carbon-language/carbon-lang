@@ -414,8 +414,9 @@ public:
   Symbol *FindInScope(const Scope &, const parser::Name &);
   Symbol *FindInScope(const Scope &, const SourceName &);
   // Search for name in a derived type scope and its parents.
-  Symbol *FindInTypeOrParents(SourceName);
   Symbol *FindInTypeOrParents(const Scope &, SourceName);
+  Symbol *FindInTypeOrParents(const Scope &, const parser::Name &);
+  Symbol *FindInTypeOrParents(const parser::Name &);
   void EraseSymbol(const parser::Name &);
   // Record that name resolved to symbol
   Symbol *Resolve(const parser::Name &, Symbol *);
@@ -1553,9 +1554,6 @@ Symbol *ScopeHandler::FindInScope(const Scope &scope, const SourceName &name) {
 }
 
 // Find a component or type parameter by name in a derived type or its parents.
-Symbol *ScopeHandler::FindInTypeOrParents(SourceName name) {
-  return FindInTypeOrParents(currScope(), name);
-}
 Symbol *ScopeHandler::FindInTypeOrParents(const Scope &scope, SourceName name) {
   if (scope.kind() == Scope::Kind::DerivedType) {
     if (Symbol * symbol{FindInScope(scope, name)}) {
@@ -1566,6 +1564,13 @@ Symbol *ScopeHandler::FindInTypeOrParents(const Scope &scope, SourceName name) {
     }
   }
   return nullptr;
+}
+Symbol *ScopeHandler::FindInTypeOrParents(
+    const Scope &scope, const parser::Name &name) {
+  return Resolve(name, FindInTypeOrParents(scope, name.source));
+}
+Symbol *ScopeHandler::FindInTypeOrParents(const parser::Name &name) {
+  return FindInTypeOrParents(currScope(), name);
 }
 
 void ScopeHandler::EraseSymbol(const parser::Name &name) {
@@ -2641,6 +2646,7 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
   // derived type is an extension.
   const DerivedTypeDetails &typeDetails{typeSymbol->get<DerivedTypeDetails>()};
   auto parameterNames{typeDetails.OrderParameterNames(*typeSymbol)};
+  auto parameterDecls{typeDetails.OrderParameterDeclarations(*typeSymbol)};
   auto nextNameIter{parameterNames.begin()};
   bool seenAnyName{false};
   for (const auto &typeParamSpec :
@@ -2651,10 +2657,13 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
     if (optKeyword.has_value()) {
       seenAnyName = true;
       name = optKeyword->v.source;
-      if (std::find(parameterNames.begin(), parameterNames.end(), name) ==
-          parameterNames.end()) {
+      auto it{std::find_if(parameterDecls.begin(), parameterDecls.end(),
+          [&](Symbol *symbol) { return symbol->name() == name; })};
+      if (it == parameterDecls.end()) {
         Say(name,
             "'%s' is not the name of a parameter for this type"_err_en_US);
+      } else {
+        Resolve(optKeyword->v, *it);
       }
     } else if (seenAnyName) {
       Say(typeName.source, "Type parameter value must have a name"_err_en_US);
@@ -2684,13 +2693,15 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
   CHECK(typeScope != nullptr);
   for (const SourceName &name : parameterNames) {
     if (!spec.FindParameter(name)) {
-      const Symbol *symbol{FindInTypeOrParents(*typeScope, name)};
-      CHECK(symbol != nullptr);
-      const auto *details{symbol->detailsIf<TypeParamDetails>()};
+      auto it{std::find_if(parameterDecls.begin(), parameterDecls.end(),
+          [&](Symbol *symbol) { return symbol->name() == name; })};
+      CHECK(it != parameterDecls.end());
+      auto &symbol{**it};
+      const auto *details{symbol.detailsIf<TypeParamDetails>()};
       if (details == nullptr || !details->init().has_value()) {
         Say(typeName.source,
             "Type parameter '%s' lacks a value and has no default"_err_en_US,
-            symbol->name());
+            symbol.name());
       }
     }
   }
@@ -2941,23 +2952,35 @@ void DeclarationVisitor::Post(const parser::FinalProcedureStmt &x) {
 }
 
 bool DeclarationVisitor::Pre(const parser::TypeBoundGenericStmt &x) {
+  const auto &accessSpec{std::get<std::optional<parser::AccessSpec>>(x.t)};
   const auto &genericSpec{std::get<Indirection<parser::GenericSpec>>(x.t)};
+  const auto &bindingNames{std::get<std::list<parser::Name>>(x.t)};
+  SymbolList specificProcs;
+  for (const auto &bindingName : bindingNames) {
+    const auto *symbol{FindInTypeOrParents(bindingName)};
+    if (!symbol) {
+      Say(bindingName,
+          "Binding name '%s' not found in this derived type"_err_en_US);
+    } else if (!symbol->has<ProcBindingDetails>()) {
+      SayWithDecl(bindingName, *symbol,
+          "'%s' is not the name of a specific binding of this type"_err_en_US);
+    } else {
+      specificProcs.push_back(symbol);
+    }
+  }
   const auto *genericName{GetGenericSpecName(*genericSpec)};
   if (!genericName) {
     return false;
   }
-  bool isPrivate{derivedTypeInfo_.privateBindings};
-  if (auto &accessSpec{std::get<std::optional<parser::AccessSpec>>(x.t)}) {
-    isPrivate = accessSpec->v == parser::AccessSpec::Kind::Private;
-  }
+  bool isPrivate{accessSpec ? accessSpec->v == parser::AccessSpec::Kind::Private
+                            : derivedTypeInfo_.privateBindings};
   const SymbolList *inheritedProcs{nullptr};  // specific procs from parent type
   auto *genericSymbol{FindInScope(currScope(), *genericName)};
   if (genericSymbol) {
     if (!genericSymbol->has<GenericBindingDetails>()) {
       genericSymbol = nullptr;  // MakeTypeSymbol will report the error below
     }
-  } else if (const auto *inheritedSymbol{
-                 FindInTypeOrParents(genericName->source)}) {
+  } else if (const auto *inheritedSymbol{FindInTypeOrParents(*genericName)}) {
     // look in parent types:
     if (inheritedSymbol->has<GenericBindingDetails>()) {
       inheritedProcs =
@@ -2980,18 +3003,7 @@ bool DeclarationVisitor::Pre(const parser::TypeBoundGenericStmt &x) {
   if (inheritedProcs) {
     details.add_specificProcs(*inheritedProcs);
   }
-  for (const auto &bindingName : std::get<std::list<parser::Name>>(x.t)) {
-    const auto *symbol{FindInTypeOrParents(bindingName.source)};
-    if (!symbol) {
-      Say(bindingName,
-          "Binding name '%s' not found in this derived type"_err_en_US);
-    } else if (!symbol->has<ProcBindingDetails>()) {
-      SayWithDecl(bindingName, *symbol,
-          "'%s' is not the name of a specific binding of this type"_err_en_US);
-    } else {
-      details.add_specificProc(*symbol);
-    }
-  }
+  details.add_specificProcs(specificProcs);
   return false;
 }
 
@@ -3773,7 +3785,7 @@ const parser::Name *ResolveNamesVisitor::FindComponent(
     }
   } else if (const DerivedTypeSpec * derived{type->AsDerived()}) {
     if (const Scope * scope{derived->scope()}) {
-      if (Resolve(component, FindInTypeOrParents(*scope, component.source))) {
+      if (FindInTypeOrParents(*scope, component)) {
         if (CheckAccessibleComponent(component)) {
           return &component;
         }
