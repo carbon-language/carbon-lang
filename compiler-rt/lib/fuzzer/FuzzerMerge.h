@@ -71,7 +71,8 @@ struct Merger {
 
 Vector<std::string>
 CrashResistantMerge(const Vector<std::string> &Args,
-                    const Vector<std::string> &Corpora,
+                    const Vector<SizedFile> &OldCorpus,
+                    const Vector<SizedFile> &NewCorpus,
                     const std::string &CFPath);
 
 }  // namespace fuzzer

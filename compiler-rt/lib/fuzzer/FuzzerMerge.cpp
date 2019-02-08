@@ -230,13 +230,15 @@ void Fuzzer::CrashResistantMergeInternalStep(const std::string &CFPath) {
 }
 
 static void WriteNewControlFile(const std::string &CFPath,
-                                const Vector<SizedFile> &AllFiles,
-                                size_t NumFilesInFirstCorpus) {
+                                const Vector<SizedFile> &OldCorpus,
+                                const Vector<SizedFile> &NewCorpus) {
   RemoveFile(CFPath);
   std::ofstream ControlFile(CFPath);
-  ControlFile << AllFiles.size() << "\n";
-  ControlFile << NumFilesInFirstCorpus << "\n";
-  for (auto &SF: AllFiles)
+  ControlFile << (OldCorpus.size() + NewCorpus.size()) << "\n";
+  ControlFile << OldCorpus.size() << "\n";
+  for (auto &SF: OldCorpus)
+    ControlFile << SF.File << "\n";
+  for (auto &SF: NewCorpus)
     ControlFile << SF.File << "\n";
   if (!ControlFile) {
     Printf("MERGE-OUTER: failed to write to the control file: %s\n",
@@ -245,10 +247,11 @@ static void WriteNewControlFile(const std::string &CFPath,
   }
 }
 
-// Outer process. Does not call the target code and thus sohuld not fail.
+// Outer process. Does not call the target code and thus should not fail.
 Vector<std::string>
 CrashResistantMerge(const Vector<std::string> &Args,
-                    const Vector<std::string> &Corpora,
+                    const Vector<SizedFile> &OldCorpus,
+                    const Vector<SizedFile> &NewCorpus,
                     const std::string &CFPath) {
   size_t NumAttempts = 0;
   if (FileSize(CFPath)) {
@@ -277,17 +280,10 @@ CrashResistantMerge(const Vector<std::string> &Args,
 
   if (!NumAttempts) {
     // The supplied control file is empty or bad, create a fresh one.
-    Vector<SizedFile> AllFiles;
-    GetSizedFilesFromDir(Corpora[0], &AllFiles);
-    size_t NumFilesInFirstCorpus = AllFiles.size();
-    std::sort(AllFiles.begin(), AllFiles.end());
-    for (size_t i = 1; i < Corpora.size(); i++)
-      GetSizedFilesFromDir(Corpora[i], &AllFiles);
-    std::sort(AllFiles.begin() + NumFilesInFirstCorpus, AllFiles.end());
-    Printf("MERGE-OUTER: %zd files, %zd in the initial corpus\n",
-           AllFiles.size(), NumFilesInFirstCorpus);
-    WriteNewControlFile(CFPath, AllFiles, NumFilesInFirstCorpus);
-    NumAttempts = AllFiles.size();
+    NumAttempts = OldCorpus.size() + NewCorpus.size();
+    Printf("MERGE-OUTER: %zd files, %zd in the initial corpus\n", NumAttempts,
+           OldCorpus.size());
+    WriteNewControlFile(CFPath, OldCorpus, NewCorpus);
   }
 
   // Execute the inner process until it passes.

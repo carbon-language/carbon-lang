@@ -471,14 +471,21 @@ int MinimizeCrashInputInternalStep(Fuzzer *F, InputCorpus *Corpus) {
   return 0;
 }
 
-// This is just a sceleton of an experimental -fork=1 feature.
+// This is just a skeleton of an experimental -fork=1 feature.
 void FuzzWithFork(const FuzzingOptions &Options,
                   const Vector<std::string> &Args,
                   const Vector<std::string> &Corpora) {
   auto CFPath = TempPath(".fork");
   Printf("INFO: -fork=1: doing fuzzing in a separate process in order to "
          "be more resistant to crashes, timeouts, and OOMs\n");
-  auto Files = CrashResistantMerge(Args, Corpora, CFPath);
+
+
+  Vector<SizedFile> Corpus;
+  for (auto &Dir : Corpora)
+    GetSizedFilesFromDir(Dir, &Corpus);
+  std::sort(Corpus.begin(), Corpus.end());
+
+  auto Files = CrashResistantMerge(Args, {}, Corpus, CFPath);
   Printf("INFO: -fork=1: seed corpus analyzed, %zd seeds chosen, starting to "
          "fuzz in separate processes\n", Files.size());
 
@@ -497,6 +504,31 @@ void FuzzWithFork(const FuzzingOptions &Options,
   }
 
   RemoveFile(CFPath);
+  exit(0);
+}
+
+void Merge(Fuzzer *F, FuzzingOptions &Options, const Vector<std::string> &Args,
+           const Vector<std::string> &Corpora, const char *CFPathOrNull) {
+  if (Corpora.size() < 2) {
+    Printf("INFO: Merge requires two or more corpus dirs\n");
+    exit(0);
+  }
+
+  Vector<SizedFile> OldCorpus, NewCorpus;
+  GetSizedFilesFromDir(Corpora[0], &OldCorpus);
+  for (size_t i = 1; i < Corpora.size(); i++)
+    GetSizedFilesFromDir(Corpora[i], &NewCorpus);
+  std::sort(OldCorpus.begin(), OldCorpus.end());
+  std::sort(NewCorpus.begin(), NewCorpus.end());
+
+  std::string CFPath = CFPathOrNull ? CFPathOrNull : TempPath(".txt");
+  auto Files = CrashResistantMerge(Args, OldCorpus, NewCorpus, CFPath);
+  for (auto &Path : Files)
+    F->WriteToOutputCorpus(FileToVector(Path, Options.MaxLen));
+  // We are done, delete the control file if it was a temporary one.
+  if (!Flags.merge_control_file)
+    RemoveFile(CFPath);
+
   exit(0);
 }
 
@@ -730,22 +762,8 @@ int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
   if (Flags.fork)
     FuzzWithFork(Options, Args, *Inputs);
 
-  if (Flags.merge) {
-    if (Inputs->size() < 2) {
-      Printf("INFO: Merge requires two or more corpus dirs\n");
-      exit(0);
-    }
-    std::string CFPath =
-        Flags.merge_control_file ? Flags.merge_control_file : TempPath(".txt");
-    auto Files = CrashResistantMerge(Args, *Inputs, CFPath);
-    for (auto &Path : Files)
-      F->WriteToOutputCorpus(FileToVector(Path, Options.MaxLen));
-    // We are done, delete the control file if it was a temporary one.
-    if (!Flags.merge_control_file)
-      RemoveFile(CFPath);
-
-    exit(0);
-  }
+  if (Flags.merge)
+    Merge(F, Options, Args, *Inputs, Flags.merge_control_file);
 
   if (Flags.merge_inner) {
     const size_t kDefaultMaxMergeLen = 1 << 20;
