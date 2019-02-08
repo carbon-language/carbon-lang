@@ -2174,6 +2174,7 @@ LegalizerHelper::fewerElementsVector(MachineInstr &MI, unsigned TypeIdx,
   case G_FPTOUI:
   case G_INTTOPTR:
   case G_PTRTOINT:
+  case G_ADDRSPACE_CAST:
     return fewerElementsVectorCasts(MI, TypeIdx, NarrowTy);
   case G_ICMP:
   case G_FCMP:
