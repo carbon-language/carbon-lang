@@ -762,3 +762,12 @@ X86RegisterInfo::getPtrSizedFrameRegister(const MachineFunction &MF) const {
     FrameReg = getX86SubSuperRegister(FrameReg, 32);
   return FrameReg;
 }
+
+unsigned
+X86RegisterInfo::getPtrSizedStackRegister(const MachineFunction &MF) const {
+  const X86Subtarget &Subtarget = MF.getSubtarget<X86Subtarget>();
+  unsigned StackReg = getStackRegister();
+  if (Subtarget.isTarget64BitILP32())
+    StackReg = getX86SubSuperRegister(StackReg, 32);
+  return StackReg;
+}

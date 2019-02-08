@@ -22558,8 +22558,13 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     unsigned Reg;
     if (RegInfo->hasBasePointer(MF))
       Reg = RegInfo->getBaseRegister();
-    else // This function handles the SP or FP case.
-      Reg = RegInfo->getPtrSizedFrameRegister(MF);
+    else { // Handles the SP or FP case.
+      bool CantUseFP = RegInfo->needsStackRealignment(MF);
+      if (CantUseFP)
+        Reg = RegInfo->getPtrSizedStackRegister(MF);
+      else
+        Reg = RegInfo->getPtrSizedFrameRegister(MF);
+    }
     return DAG.getCopyFromReg(DAG.getEntryNode(), dl, Reg, VT);
   }
   }
