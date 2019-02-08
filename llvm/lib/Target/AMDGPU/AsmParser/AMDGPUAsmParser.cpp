@@ -923,6 +923,10 @@ public:
         MCSymbol *Sym =
             Ctx.getOrCreateSymbol(Twine(".amdgcn.gfx_generation_number"));
         Sym->setVariableValue(MCConstantExpr::create(ISA.Major, Ctx));
+        Sym = Ctx.getOrCreateSymbol(Twine(".amdgcn.gfx_generation_minor"));
+        Sym->setVariableValue(MCConstantExpr::create(ISA.Minor, Ctx));
+        Sym = Ctx.getOrCreateSymbol(Twine(".amdgcn.gfx_generation_stepping"));
+        Sym->setVariableValue(MCConstantExpr::create(ISA.Stepping, Ctx));
       } else {
         MCSymbol *Sym =
             Ctx.getOrCreateSymbol(Twine(".option.machine_version_major"));
