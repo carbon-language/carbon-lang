@@ -474,47 +474,50 @@ class SubtargetFeatureISAVersion <int Major, int Minor, int Stepping,
   Implies
 >;
 
-def FeatureISAVersion6_0_0 : SubtargetFeatureISAVersion <6,0,0,
-  [FeatureSouthernIslands,
+class FeatureSet<list<SubtargetFeature> Features_> {
+  list<SubtargetFeature> Features = Features_;
+}
+
+def FeatureISAVersion6_0_0 : FeatureSet<[FeatureSouthernIslands,
    FeatureFastFMAF32,
    HalfRate64Ops,
    FeatureLDSBankCount32,
    FeatureCodeObjectV3]>;
 
-def FeatureISAVersion6_0_1 : SubtargetFeatureISAVersion <6,0,1,
+def FeatureISAVersion6_0_1 : FeatureSet<
   [FeatureSouthernIslands,
    FeatureLDSBankCount32,
    FeatureCodeObjectV3]>;
 
-def FeatureISAVersion7_0_0 : SubtargetFeatureISAVersion <7,0,0,
+def FeatureISAVersion7_0_0 : FeatureSet<
   [FeatureSeaIslands,
    FeatureLDSBankCount32,
    FeatureCodeObjectV3]>;
 
-def FeatureISAVersion7_0_1 : SubtargetFeatureISAVersion <7,0,1,
+def FeatureISAVersion7_0_1 : FeatureSet<
   [FeatureSeaIslands,
    HalfRate64Ops,
    FeatureLDSBankCount32,
    FeatureFastFMAF32,
    FeatureCodeObjectV3]>;
 
-def FeatureISAVersion7_0_2 : SubtargetFeatureISAVersion <7,0,2,
+def FeatureISAVersion7_0_2 : FeatureSet<
   [FeatureSeaIslands,
    FeatureLDSBankCount16,
    FeatureFastFMAF32,
    FeatureCodeObjectV3]>;
 
-def FeatureISAVersion7_0_3 : SubtargetFeatureISAVersion <7,0,3,
+def FeatureISAVersion7_0_3 : FeatureSet<
   [FeatureSeaIslands,
    FeatureLDSBankCount16,
    FeatureCodeObjectV3]>;
 
-def FeatureISAVersion7_0_4 : SubtargetFeatureISAVersion <7,0,4,
+def FeatureISAVersion7_0_4 : FeatureSet<
   [FeatureSeaIslands,
    FeatureLDSBankCount32,
    FeatureCodeObjectV3]>;
 
-def FeatureISAVersion8_0_1 : SubtargetFeatureISAVersion <8,0,1,
+def FeatureISAVersion8_0_1 : FeatureSet<
   [FeatureVolcanicIslands,
    FeatureFastFMAF32,
    HalfRate64Ops,
@@ -523,45 +526,45 @@ def FeatureISAVersion8_0_1 : SubtargetFeatureISAVersion <8,0,1,
    FeatureUnpackedD16VMem,
    FeatureCodeObjectV3]>;
 
-def FeatureISAVersion8_0_2 : SubtargetFeatureISAVersion <8,0,2,
+def FeatureISAVersion8_0_2 : FeatureSet<
   [FeatureVolcanicIslands,
    FeatureLDSBankCount32,
    FeatureSGPRInitBug,
    FeatureUnpackedD16VMem,
    FeatureCodeObjectV3]>;
 
-def FeatureISAVersion8_0_3 : SubtargetFeatureISAVersion <8,0,3,
+def FeatureISAVersion8_0_3 : FeatureSet<
   [FeatureVolcanicIslands,
    FeatureLDSBankCount32,
    FeatureUnpackedD16VMem,
    FeatureCodeObjectV3]>;
 
-def FeatureISAVersion8_1_0 : SubtargetFeatureISAVersion <8,1,0,
+def FeatureISAVersion8_1_0 : FeatureSet<
   [FeatureVolcanicIslands,
    FeatureLDSBankCount16,
    FeatureXNACK,
    FeatureCodeObjectV3]>;
 
-def FeatureISAVersion9_0_0 : SubtargetFeatureISAVersion <9,0,0,
+def FeatureISAVersion9_0_0 : FeatureSet<
   [FeatureGFX9,
    FeatureMadMixInsts,
    FeatureLDSBankCount32,
    FeatureCodeObjectV3]>;
 
-def FeatureISAVersion9_0_2 : SubtargetFeatureISAVersion <9,0,2,
+def FeatureISAVersion9_0_2 : FeatureSet<
   [FeatureGFX9,
    FeatureMadMixInsts,
    FeatureLDSBankCount32,
    FeatureXNACK,
    FeatureCodeObjectV3]>;
 
-def FeatureISAVersion9_0_4 : SubtargetFeatureISAVersion <9,0,4,
+def FeatureISAVersion9_0_4 : FeatureSet<
   [FeatureGFX9,
    FeatureLDSBankCount32,
    FeatureFmaMixInsts,
    FeatureCodeObjectV3]>;
 
-def FeatureISAVersion9_0_6 : SubtargetFeatureISAVersion <9,0,6,
+def FeatureISAVersion9_0_6 : FeatureSet<
   [FeatureGFX9,
    HalfRate64Ops,
    FeatureFmaMixInsts,
@@ -571,7 +574,7 @@ def FeatureISAVersion9_0_6 : SubtargetFeatureISAVersion <9,0,6,
    FeatureSRAMECC,
    FeatureCodeObjectV3]>;
 
-def FeatureISAVersion9_0_9 : SubtargetFeatureISAVersion <9,0,9,
+def FeatureISAVersion9_0_9 : FeatureSet<
   [FeatureGFX9,
    FeatureMadMixInsts,
    FeatureLDSBankCount32,
