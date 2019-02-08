@@ -139,7 +139,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
                ConstantPtr, LocalPtr, FlatPtr, PrivatePtr})
     .legalFor({LLT::vector(3, 16)})// FIXME: Hack
     .clampScalarOrElt(0, S32, S512)
-    .legalIf(isMultiple32(0));
+    .legalIf(isMultiple32(0))
+    .widenScalarToNextPow2(0, 32);
 
 
   // FIXME: i1 operands to intrinsics should always be legal, but other i1
