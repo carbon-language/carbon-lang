@@ -283,3 +283,17 @@ define i64 @PR40657(i8 %var2, i8 %var9) {
   ret i64 %res.cast
 }
 
+define i64 @sub_to_shift_to_add(i32 %x, i32 %y, i64 %s1, i64 %s2) {
+; CHECK-LABEL: sub_to_shift_to_add:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    movq %rdx, %rax
+; CHECK-NEXT:    addl %esi, %esi
+; CHECK-NEXT:    cmpl %esi, %edi
+; CHECK-NEXT:    cmovneq %rcx, %rax
+; CHECK-NEXT:    retq
+  %sub = sub i32 %x, %y
+  %cmp = icmp eq i32 %sub, %y
+  %r = select i1 %cmp, i64 %s1, i64 %s2
+  ret i64 %r
+}
+
