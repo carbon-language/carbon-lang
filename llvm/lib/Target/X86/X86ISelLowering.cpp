@@ -37277,23 +37277,30 @@ static SDValue combineOr(SDNode *N, SelectionDAG &DAG,
     ShAmt1 = ShAmt1.getOperand(0);
 
   SDLoc DL(N);
-  unsigned Opc = X86ISD::SHLD;
+  unsigned Opc = ISD::FSHL;
   SDValue Op0 = N0.getOperand(0);
   SDValue Op1 = N1.getOperand(0);
-  if (ShAmt0.getOpcode() == ISD::SUB ||
-      ShAmt0.getOpcode() == ISD::XOR) {
-    Opc = X86ISD::SHRD;
+  if (ShAmt0.getOpcode() == ISD::SUB || ShAmt0.getOpcode() == ISD::XOR) {
+    Opc = ISD::FSHR;
     std::swap(Op0, Op1);
     std::swap(ShAmt0, ShAmt1);
     std::swap(ShMsk0, ShMsk1);
   }
 
-  // OR( SHL( X, C ), SRL( Y, 32 - C ) ) -> SHLD( X, Y, C )
-  // OR( SRL( X, C ), SHL( Y, 32 - C ) ) -> SHRD( X, Y, C )
-  // OR( SHL( X, C ), SRL( SRL( Y, 1 ), XOR( C, 31 ) ) ) -> SHLD( X, Y, C )
-  // OR( SRL( X, C ), SHL( SHL( Y, 1 ), XOR( C, 31 ) ) ) -> SHRD( X, Y, C )
-  // OR( SHL( X, AND( C, 31 ) ), SRL( Y, AND( 0 - C, 31 ) ) ) -> SHLD( X, Y, C )
-  // OR( SRL( X, AND( C, 31 ) ), SHL( Y, AND( 0 - C, 31 ) ) ) -> SHRD( X, Y, C )
+  auto GetFunnelShift = [&DAG, &DL, VT, Opc](SDValue Op0, SDValue Op1,
+                                             SDValue Amt) {
+    if (Opc == ISD::FSHR)
+      std::swap(Op0, Op1);
+    return DAG.getNode(Opc, DL, VT, Op0, Op1,
+                       DAG.getNode(ISD::TRUNCATE, DL, MVT::i8, Amt));
+  };
+
+  // OR( SHL( X, C ), SRL( Y, 32 - C ) ) -> FSHL( X, Y, C )
+  // OR( SRL( X, C ), SHL( Y, 32 - C ) ) -> FSHR( Y, X, C )
+  // OR( SHL( X, C ), SRL( SRL( Y, 1 ), XOR( C, 31 ) ) ) -> FSHL( X, Y, C )
+  // OR( SRL( X, C ), SHL( SHL( Y, 1 ), XOR( C, 31 ) ) ) -> FSHR( Y, X, C )
+  // OR( SHL( X, AND( C, 31 ) ), SRL( Y, AND( 0 - C, 31 ) ) ) -> FSHL( X, Y, C )
+  // OR( SRL( X, AND( C, 31 ) ), SHL( Y, AND( 0 - C, 31 ) ) ) -> FSHR( Y, X, C )
   if (ShAmt1.getOpcode() == ISD::SUB) {
     SDValue Sum = ShAmt1.getOperand(0);
     if (auto *SumC = dyn_cast<ConstantSDNode>(Sum)) {
@@ -37303,20 +37310,16 @@ static SDValue combineOr(SDNode *N, SelectionDAG &DAG,
       if ((SumC->getAPIntValue() == Bits ||
            (SumC->getAPIntValue() == 0 && ShMsk1)) &&
           ShAmt1Op1 == ShAmt0)
-        return DAG.getNode(Opc, DL, VT, Op0, Op1,
-                           DAG.getNode(ISD::TRUNCATE, DL, MVT::i8, ShAmt0));
+        return GetFunnelShift(Op0, Op1, ShAmt0);
     }
   } else if (auto *ShAmt1C = dyn_cast<ConstantSDNode>(ShAmt1)) {
     auto *ShAmt0C = dyn_cast<ConstantSDNode>(ShAmt0);
     if (ShAmt0C && (ShAmt0C->getSExtValue() + ShAmt1C->getSExtValue()) == Bits)
-      return DAG.getNode(Opc, DL, VT,
-                         N0.getOperand(0), N1.getOperand(0),
-                         DAG.getNode(ISD::TRUNCATE, DL,
-                                       MVT::i8, ShAmt0));
+      return GetFunnelShift(Op0, Op1, ShAmt0);
   } else if (ShAmt1.getOpcode() == ISD::XOR) {
     SDValue Mask = ShAmt1.getOperand(1);
     if (auto *MaskC = dyn_cast<ConstantSDNode>(Mask)) {
-      unsigned InnerShift = (X86ISD::SHLD == Opc ? ISD::SRL : ISD::SHL);
+      unsigned InnerShift = (ISD::FSHL == Opc ? ISD::SRL : ISD::SHL);
       SDValue ShAmt1Op0 = ShAmt1.getOperand(0);
       if (ShAmt1Op0.getOpcode() == ISD::TRUNCATE)
         ShAmt1Op0 = ShAmt1Op0.getOperand(0);
@@ -37325,14 +37328,12 @@ static SDValue combineOr(SDNode *N, SelectionDAG &DAG,
         if (Op1.getOpcode() == InnerShift &&
             isa<ConstantSDNode>(Op1.getOperand(1)) &&
             Op1.getConstantOperandVal(1) == 1) {
-          return DAG.getNode(Opc, DL, VT, Op0, Op1.getOperand(0),
-                             DAG.getNode(ISD::TRUNCATE, DL, MVT::i8, ShAmt0));
+          return GetFunnelShift(Op0, Op1.getOperand(0), ShAmt0);
         }
         // Test for ADD( Y, Y ) as an equivalent to SHL( Y, 1 ).
         if (InnerShift == ISD::SHL && Op1.getOpcode() == ISD::ADD &&
             Op1.getOperand(0) == Op1.getOperand(1)) {
-          return DAG.getNode(Opc, DL, VT, Op0, Op1.getOperand(0),
-                             DAG.getNode(ISD::TRUNCATE, DL, MVT::i8, ShAmt0));
+          return GetFunnelShift(Op0, Op1.getOperand(0), ShAmt0);
         }
       }
     }
