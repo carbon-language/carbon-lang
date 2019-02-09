@@ -990,8 +990,7 @@ struct NormalizedMips64RelType {
 
 void MappingTraits<ELFYAML::DynamicEntry>::mapping(IO &IO,
                                                    ELFYAML::DynamicEntry &Rel) {
-  const auto *Object = static_cast<ELFYAML::Object *>(IO.getContext());
-  assert(Object && "The IO context is not initialized");
+  assert(IO.getContext() && "The IO context is not initialized");
 
   IO.mapRequired("Tag", Rel.Tag);
   IO.mapRequired("Value", Rel.Val);
