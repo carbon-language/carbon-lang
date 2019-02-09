@@ -594,10 +594,10 @@ void ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
 
   auto &OS = CBA.getOSAndAlignedOffset(SHeader.sh_offset, SHeader.sh_addralign);
   for (const ELFYAML::DynamicEntry &DE : Section.Entries) {
-    uintX_t Tag = DE.Tag;
-    OS.write((const char *)&Tag, sizeof(uintX_t));
-    uintX_t Val = DE.Val;
-    OS.write((const char *)&Val, sizeof(uintX_t));
+    ELFT::Xword Tag = (ELFT::Xword)DE.Tag;
+    OS.write((const char *)&Tag, sizeof(ELFT::Xword));
+    ELFT::Xword Val = (ELFT::Xword)DE.Val;
+    OS.write((const char *)&Val, sizeof(ELFT::Xword));
   }
 }
 
