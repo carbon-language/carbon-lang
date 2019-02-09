@@ -229,7 +229,7 @@ public:
   explicit ArrayConstructorFolder(const FoldingContext &c) : context_{c} {}
 
   Expr<T> FoldArray(ArrayConstructor<T> &&array) {
-    if (FoldArray(array.values)) {
+    if (FoldArray(array)) {
       auto n{static_cast<std::int64_t>(elements_.size())};
       if constexpr (std::is_same_v<T, SomeDerived>) {
         return Expr<T>{Constant<T>{array.derivedTypeSpec(),
@@ -294,7 +294,7 @@ private:
     return std::visit([&](const auto &y) { return FoldArray(y); }, x.u);
   }
   bool FoldArray(const ArrayConstructorValues<T> &xs) {
-    for (const auto &x : xs.values) {
+    for (const auto &x : xs.values()) {
       if (!FoldArray(x)) {
         return false;
       }
@@ -850,11 +850,12 @@ bool IsConstExpr(
 template<typename A>
 bool IsConstExpr(
     ConstExprContext &context, const ArrayConstructorValues<A> &values) {
-  return IsConstExpr(context, values.values);
+  return IsConstExpr(context, values.values());
 }
 template<typename A>
 bool IsConstExpr(ConstExprContext &context, const ArrayConstructor<A> &array) {
-  return IsConstExpr(context, array.values);
+  const typename ArrayConstructor<A>::Base &base{array};
+  return IsConstExpr(context, base);
 }
 bool IsConstExpr(
     ConstExprContext &context, const semantics::DerivedTypeSpec &spec) {

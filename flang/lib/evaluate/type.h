@@ -39,6 +39,7 @@
 namespace Fortran::semantics {
 class DerivedTypeSpec;
 class Symbol;
+bool IsDescriptor(const Symbol &);
 }
 
 namespace Fortran::evaluate {
@@ -69,7 +70,6 @@ struct DynamicType {
   TypeCategory category;
   int kind{0};  // set only for intrinsic types
   const semantics::DerivedTypeSpec *derived{nullptr};  // TYPE(T), CLASS(T)
-  const semantics::Symbol *descriptor{nullptr};  // CHARACTER, CLASS(T/*)
 };
 
 // Result will be missing when a symbol is absent or
@@ -262,21 +262,15 @@ public:
   using Scalar = StructureConstructor;
 
   CLASS_BOILERPLATE(SomeKind)
-  explicit SomeKind(const semantics::DerivedTypeSpec &dts,
-      const semantics::Symbol *sym = nullptr)
-    : spec_{&dts}, descriptor_{sym} {}
+  explicit SomeKind(const semantics::DerivedTypeSpec &dts) : spec_{&dts} {}
 
-  DynamicType GetType() const {
-    return DynamicType{category, 0, spec_, descriptor_};
-  }
+  DynamicType GetType() const { return DynamicType{category, 0, spec_}; }
   const semantics::DerivedTypeSpec &spec() const { return *spec_; }
-  const semantics::Symbol *descriptor() const { return descriptor_; }
   bool operator==(const SomeKind &) const;
   std::string AsFortran() const;
 
 private:
   const semantics::DerivedTypeSpec *spec_;
-  const semantics::Symbol *descriptor_{nullptr};
 };
 
 using SomeInteger = SomeKind<TypeCategory::Integer>;

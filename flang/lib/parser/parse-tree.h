@@ -61,6 +61,7 @@ CLASS_TRAIT(TupleTrait)
 namespace Fortran::semantics {
 class Symbol;
 class DeclTypeSpec;
+class DerivedTypeSpec;
 }
 
 // Expressions in the parse tree have owning pointers that can be set to
@@ -695,6 +696,7 @@ struct TypeParamSpec {
 // R754 derived-type-spec -> type-name [(type-param-spec-list)]
 struct DerivedTypeSpec {
   TUPLE_CLASS_BOILERPLATE(DerivedTypeSpec);
+  mutable const semantics::DerivedTypeSpec *derivedTypeSpec{nullptr};
   std::tuple<Name, std::list<TypeParamSpec>> t;
 };
 

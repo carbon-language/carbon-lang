@@ -1157,6 +1157,7 @@ void ArrayConstructorContext::Push(MaybeExpr &&x) {
       // the values as the type of a numeric constructed array, convert all
       // of the other values to that type.  Alternative: let the first value
       // determine the type, and convert the others to that type.
+      // TODO pmk: better type compatibility checks for derived types
       type = std::move(xType);
       values.Push(std::move(*x));
     } else if (typesMustMatch) {
@@ -1263,7 +1264,7 @@ template<typename T>
 ArrayConstructorValues<T> MakeSpecific(
     ArrayConstructorValues<SomeType> &&from) {
   ArrayConstructorValues<T> to;
-  for (ArrayConstructorValue<SomeType> &x : from.values) {
+  for (ArrayConstructorValue<SomeType> &x : from.values()) {
     std::visit(
         common::visitors{
             [&](CopyableIndirection<Expr<SomeType>> &&expr) {
@@ -1326,9 +1327,33 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &exprContext,
   return std::nullopt;
 }
 
-static MaybeExpr AnalyzeExpr(
-    ExpressionAnalysisContext &context, const parser::StructureConstructor &) {
-  context.Say("TODO: StructureConstructor unimplemented"_en_US);
+static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
+    const parser::StructureConstructor &structure) {
+  if (const auto *spec{
+          std::get<parser::DerivedTypeSpec>(structure.t).derivedTypeSpec}) {
+    bool ok{true};
+    StructureConstructor result{*spec};
+    for (const auto &component :
+        std::get<std::list<parser::ComponentSpec>>(structure.t)) {
+      if (component.symbol != nullptr) {
+        if (MaybeExpr value{AnalyzeExpr(context,
+                *std::get<parser::ComponentDataSource>(component.t).v)}) {
+          // TODO pmk check type compatibility
+          result.Add(*component.symbol, std::move(*value));
+        } else {
+          ok = false;
+        }
+      } else {
+        context.Say("INTERNAL: StructureConstructor lacks symbol"_err_en_US);
+        ok = false;
+      }
+    }
+    if (ok) {
+      return AsMaybeExpr(Expr<SomeDerived>{std::move(result)});
+    }
+  } else {
+    context.Say("INTERNAL: StructureConstructor lacks type"_err_en_US);
+  }
   return std::nullopt;
 }
 

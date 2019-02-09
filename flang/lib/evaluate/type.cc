@@ -26,6 +26,7 @@
 
 using namespace std::literals::string_literals;
 
+// TODO there's probably a better place for this predicate than here
 // IsDescriptor() predicate
 namespace Fortran::semantics {
 static bool IsDescriptor(const ObjectEntityDetails &details) {
@@ -73,7 +74,7 @@ static bool IsDescriptor(const ProcEntityDetails &details) {
   return details.HasExplicitInterface();
 }
 
-static bool IsDescriptor(const Symbol &symbol) {
+bool IsDescriptor(const Symbol &symbol) {
   if (const auto *objectDetails{symbol.detailsIf<ObjectEntityDetails>()}) {
     return IsDescriptor(*objectDetails);
   } else if (const auto *procDetails{symbol.detailsIf<ProcEntityDetails>()}) {
@@ -90,7 +91,7 @@ namespace Fortran::evaluate {
 
 bool DynamicType::operator==(const DynamicType &that) const {
   return category == that.category && kind == that.kind &&
-      derived == that.derived && descriptor == that.descriptor;
+      derived == that.derived;
 }
 
 std::optional<DynamicType> GetSymbolType(const semantics::Symbol *symbol) {
@@ -100,19 +101,11 @@ std::optional<DynamicType> GetSymbolType(const semantics::Symbol *symbol) {
         if (auto kind{ToInt64(intrinsic->kind())}) {
           TypeCategory category{intrinsic->category()};
           if (IsValidKindOfIntrinsicType(category, *kind)) {
-            DynamicType dyType{category, static_cast<int>(*kind)};
-            if (semantics::IsDescriptor(*symbol)) {
-              dyType.descriptor = symbol;
-            }
-            return std::make_optional(std::move(dyType));
+            return DynamicType{category, static_cast<int>(*kind)};
           }
         }
       } else if (const auto *derived{type->AsDerived()}) {
-        DynamicType dyType{TypeCategory::Derived, 0, derived};
-        if (semantics::IsDescriptor(*symbol)) {
-          dyType.descriptor = symbol;
-        }
-        return std::make_optional(std::move(dyType));
+        return DynamicType{TypeCategory::Derived, 0, derived};
       }
     }
   }
@@ -181,7 +174,7 @@ DynamicType DynamicType::ResultTypeForMultiply(const DynamicType &that) const {
 
 bool SomeKind<TypeCategory::Derived>::operator==(
     const SomeKind<TypeCategory::Derived> &that) const {
-  return spec_ == that.spec_ && descriptor_ == that.descriptor_;
+  return spec_ == that.spec_;
 }
 
 std::string SomeDerived::AsFortran() const {

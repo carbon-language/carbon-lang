@@ -2767,6 +2767,9 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
     }
     SetDeclTypeSpec(type);
   }
+  // Capture the DerivedTypeSpec in the parse tree for use in building
+  // structure constructor expressions.
+  x.derivedTypeSpec = &GetDeclTypeSpec()->derivedTypeSpec();
 }
 
 void DeclarationVisitor::Post(const parser::DerivedTypeDef &x) {

@@ -392,8 +392,7 @@ struct LogicalOperation
 };
 
 // Array constructors
-
-template<typename RESULT> struct ArrayConstructorValues;
+template<typename RESULT> class ArrayConstructorValues;
 
 struct ImpliedDoIndex {
   using Result = SubscriptInteger;
@@ -416,62 +415,71 @@ template<typename RESULT> struct ArrayConstructorValue {
   std::variant<CopyableIndirection<Expr<Result>>, ImpliedDo<Result>> u;
 };
 
-template<typename RESULT> struct ArrayConstructorValues {
+template<typename RESULT> class ArrayConstructorValues {
+public:
   using Result = RESULT;
+  using Values = std::vector<ArrayConstructorValue<Result>>;
   DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(ArrayConstructorValues)
   ArrayConstructorValues() {}
   bool operator==(const ArrayConstructorValues &) const;
-  template<typename A> void Push(A &&x) { values.emplace_back(std::move(x)); }
-  std::vector<ArrayConstructorValue<Result>> values;
+  static constexpr int Rank() { return 1; }
+  template<typename A> void Push(A &&x) { values_.emplace_back(std::move(x)); }
+  Values &values() { return values_; }
+  const Values &values() const { return values_; }
+
+protected:
+  Values values_;
 };
 
-// TODO pmk: use a common base class as with Constant
-template<typename RESULT> struct ArrayConstructor {
+template<typename RESULT>
+class ArrayConstructor : public ArrayConstructorValues<RESULT> {
+public:
   using Result = RESULT;
-  CLASS_BOILERPLATE(ArrayConstructor)
-  ArrayConstructor(ArrayConstructorValues<Result> &&v) : values{std::move(v)} {}
-  bool operator==(const ArrayConstructor<RESULT> &) const;
+  using Base = ArrayConstructorValues<Result>;
+  DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(ArrayConstructor)
+  explicit ArrayConstructor(Base &&values) : Base{std::move(values)} {}
   static constexpr DynamicType GetType() { return Result::GetType(); }
-  static constexpr int Rank() { return 1; }
   std::ostream &AsFortran(std::ostream &) const;
-  ArrayConstructorValues<Result> values;
 };
 
 template<int KIND>
-struct ArrayConstructor<Type<TypeCategory::Character, KIND>> {
+class ArrayConstructor<Type<TypeCategory::Character, KIND>>
+  : public ArrayConstructorValues<Type<TypeCategory::Character, KIND>> {
+public:
   using Result = Type<TypeCategory::Character, KIND>;
+  using Base = ArrayConstructorValues<Result>;
   CLASS_BOILERPLATE(ArrayConstructor)
-  ArrayConstructor(
-      Expr<SubscriptInteger> &&len, ArrayConstructorValues<Result> &&v)
-    : length{std::move(len)}, values{std::move(v)} {}
-  ~ArrayConstructor();
-  bool operator==(const ArrayConstructor<Result> &) const;
+  ArrayConstructor(Expr<SubscriptInteger> &&len, Base &&v)
+    : Base{std::move(v)}, length_{std::move(len)} {}
+  bool operator==(const ArrayConstructor &) const;
   static constexpr DynamicType GetType() { return Result::GetType(); }
-  static constexpr int Rank() { return 1; }
   std::ostream &AsFortran(std::ostream &) const;
-  const Expr<SubscriptInteger> &LEN() const { return *length; }
+  const Expr<SubscriptInteger> &LEN() const { return *length_; }
 
-  CopyableIndirection<Expr<SubscriptInteger>> length;
-  ArrayConstructorValues<Result> values;
+private:
+  CopyableIndirection<Expr<SubscriptInteger>> length_;
 };
 
-template<> struct ArrayConstructor<SomeDerived> {
+template<>
+class ArrayConstructor<SomeDerived>
+  : public ArrayConstructorValues<SomeDerived> {
+public:
   using Result = SomeDerived;
+  using Base = ArrayConstructorValues<Result>;
   CLASS_BOILERPLATE(ArrayConstructor)
-  ArrayConstructor(const semantics::DerivedTypeSpec &spec,
-      ArrayConstructorValues<Result> &&v)
-    : derivedTypeSpec_{&spec}, values{std::move(v)} {}
-  bool operator==(const ArrayConstructor<Result> &) const;
+  ArrayConstructor(const semantics::DerivedTypeSpec &spec, Base &&v)
+    : Base{std::move(v)}, derivedTypeSpec_{&spec} {}
+  bool operator==(const ArrayConstructor &) const;
   const semantics::DerivedTypeSpec &derivedTypeSpec() const {
     return *derivedTypeSpec_;
   }
   DynamicType GetType() const {
     return DynamicType{TypeCategory::Derived, 0, derivedTypeSpec_};
   }
-  static constexpr int Rank() { return 1; }
   std::ostream &AsFortran(std::ostream &) const;
+
+private:
   const semantics::DerivedTypeSpec *derivedTypeSpec_;
-  ArrayConstructorValues<Result> values;
 };
 
 // Expression representations for each type category.
@@ -649,23 +657,29 @@ public:
 
 FOR_EACH_LOGICAL_KIND(extern template class Expr)
 
+// StructureConstructor pairs a StructureConstructorValues instance
+// (a map associating symbols with expressions) with a derived type
+// specification.  There are two other similar classes:
+//  - ArrayConstructor<SomeDerived> comprises a derived type spec &
+//    zero or more instances of Expr<SomeDerived>; it has rank 1
+//    but not (in the most general case) a known shape.
+//  - Constant<SomeDerived> comprises a derived type spec, zero or more
+//    homogeneous instances of StructureConstructorValues whose type
+//    parameters and component expressions are all constant, and a
+//    known shape (possibly scalar).
+// StructureConstructor represents a scalar value of derived type that
+// is not necessarily a constant.  It is used only as an Expr<SomeDerived>
+// alternative and as the type Scalar<SomeDerived> (with an assumption
+// of constant component value expressions).
 class StructureConstructor {
 public:
-  // N.B. CLASS_BOILERPLATE() can't be used here due to forward reference
-  // to Expr<SomeType> preventing the use of "= default" constructors and
-  // assignment operators.
-  StructureConstructor() = delete;
   explicit StructureConstructor(const semantics::DerivedTypeSpec &spec)
     : derivedTypeSpec_{&spec} {}
   StructureConstructor(
       const semantics::DerivedTypeSpec &, const StructureConstructorValues &);
   StructureConstructor(
       const semantics::DerivedTypeSpec &, StructureConstructorValues &&);
-  StructureConstructor(const StructureConstructor &);
-  StructureConstructor(StructureConstructor &&);
-  ~StructureConstructor();
-  StructureConstructor &operator=(const StructureConstructor &);
-  StructureConstructor &operator=(StructureConstructor &&);
+  CLASS_BOILERPLATE(StructureConstructor)
 
   const semantics::DerivedTypeSpec &derivedTypeSpec() const {
     return *derivedTypeSpec_;
@@ -763,6 +777,7 @@ std::ostream &DerivedTypeSpecAsFortran(
 
 FOR_EACH_CATEGORY_TYPE(extern template class Expr)
 FOR_EACH_TYPE_AND_KIND(extern template class ExpressionBase)
-FOR_EACH_INTRINSIC_KIND(extern template struct ArrayConstructor)
+FOR_EACH_INTRINSIC_KIND(extern template class ArrayConstructorValues)
+FOR_EACH_INTRINSIC_KIND(extern template class ArrayConstructor)
 }
 #endif  // FORTRAN_EVALUATE_EXPRESSION_H_
