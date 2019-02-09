@@ -475,22 +475,27 @@ int MinimizeCrashInputInternalStep(Fuzzer *F, InputCorpus *Corpus) {
 void FuzzWithFork(const FuzzingOptions &Options,
                   const Vector<std::string> &Args,
                   const Vector<std::string> &Corpora) {
-  auto CFPath = TempPath(".fork");
   Printf("INFO: -fork=1: doing fuzzing in a separate process in order to "
          "be more resistant to crashes, timeouts, and OOMs\n");
-
 
   Vector<SizedFile> Corpus;
   for (auto &Dir : Corpora)
     GetSizedFilesFromDir(Dir, &Corpus);
   std::sort(Corpus.begin(), Corpus.end());
 
-  auto Files = CrashResistantMerge(Args, {}, Corpus, CFPath);
-  Printf("INFO: -fork=1: seed corpus analyzed, %zd seeds chosen, starting to "
-         "fuzz in separate processes\n", Files.size());
+  Vector<std::string> Files;
+  Set<uint32_t> Features;
+  if (!Corpus.empty()) {
+    auto CFPath = TempPath(".fork");
+    CrashResistantMerge(Args, {}, Corpus, &Files, {}, &Features, CFPath);
+    RemoveFile(CFPath);
+  }
+  Printf("INFO: -fork=1: %zd seeds, starting to fuzz\n", Files.size());
 
   Command Cmd(Args);
   Cmd.removeFlag("fork");
+  for (auto &C : Corpora) // Remove all corpora from the args.
+    Cmd.removeArgument(C);
   if (Files.size() >= 2)
     Cmd.addFlag("seed_inputs",
                 Files.back() + "," + Files[Files.size() - 2]);
@@ -499,11 +504,13 @@ void FuzzWithFork(const FuzzingOptions &Options,
   for (size_t i = 0; i < 1000; i++) {
     Printf("RUN %s\n", Cmd.toString().c_str());
     int ExitCode = ExecuteCommand(Cmd);
-    // TODO: sniff the crash, ignore OOMs and timeouts.
+    if (ExitCode == Options.InterruptExitCode)
+      exit(0);
+    if (ExitCode == Options.TimeoutExitCode || ExitCode == Options.OOMExitCode)
+      continue;
     if (ExitCode != 0) break;
   }
 
-  RemoveFile(CFPath);
   exit(0);
 }
 
@@ -522,8 +529,11 @@ void Merge(Fuzzer *F, FuzzingOptions &Options, const Vector<std::string> &Args,
   std::sort(NewCorpus.begin(), NewCorpus.end());
 
   std::string CFPath = CFPathOrNull ? CFPathOrNull : TempPath(".txt");
-  auto Files = CrashResistantMerge(Args, OldCorpus, NewCorpus, CFPath);
-  for (auto &Path : Files)
+  Vector<std::string> NewFiles;
+  Set<uint32_t> NewFeatures;
+  CrashResistantMerge(Args, OldCorpus, NewCorpus, &NewFiles, {}, &NewFeatures,
+                      CFPath);
+  for (auto &Path : NewFiles)
     F->WriteToOutputCorpus(FileToVector(Path, Options.MaxLen));
   // We are done, delete the control file if it was a temporary one.
   if (!Flags.merge_control_file)

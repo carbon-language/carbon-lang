@@ -122,25 +122,26 @@ size_t Merger::ApproximateMemoryConsumption() const  {
 
 // Decides which files need to be merged (add thost to NewFiles).
 // Returns the number of new features added.
-size_t Merger::Merge(const Set<uint32_t> &InitialFeatures, 
+size_t Merger::Merge(const Set<uint32_t> &InitialFeatures,
+                     Set<uint32_t> *AllFeatures,
                      Vector<std::string> *NewFiles) {
   NewFiles->clear();
   assert(NumFilesInFirstCorpus <= Files.size());
-  Set<uint32_t> AllFeatures(InitialFeatures);
+  *AllFeatures = InitialFeatures;
 
   // What features are in the initial corpus?
   for (size_t i = 0; i < NumFilesInFirstCorpus; i++) {
     auto &Cur = Files[i].Features;
-    AllFeatures.insert(Cur.begin(), Cur.end());
+    AllFeatures->insert(Cur.begin(), Cur.end());
   }
-  size_t InitialNumFeatures = AllFeatures.size();
+  size_t InitialNumFeatures = AllFeatures->size();
 
   // Remove all features that we already know from all other inputs.
   for (size_t i = NumFilesInFirstCorpus; i < Files.size(); i++) {
     auto &Cur = Files[i].Features;
     Vector<uint32_t> Tmp;
-    std::set_difference(Cur.begin(), Cur.end(), AllFeatures.begin(),
-                        AllFeatures.end(), std::inserter(Tmp, Tmp.begin()));
+    std::set_difference(Cur.begin(), Cur.end(), AllFeatures->begin(),
+                        AllFeatures->end(), std::inserter(Tmp, Tmp.begin()));
     Cur.swap(Tmp);
   }
 
@@ -160,12 +161,12 @@ size_t Merger::Merge(const Set<uint32_t> &InitialFeatures,
     auto &Cur = Files[i].Features;
     // Printf("%s -> sz %zd ft %zd\n", Files[i].Name.c_str(),
     //       Files[i].Size, Cur.size());
-    size_t OldSize = AllFeatures.size();
-    AllFeatures.insert(Cur.begin(), Cur.end());
-    if (AllFeatures.size() > OldSize)
+    size_t OldSize = AllFeatures->size();
+    AllFeatures->insert(Cur.begin(), Cur.end());
+    if (AllFeatures->size() > OldSize)
       NewFiles->push_back(Files[i].Name);
   }
-  return AllFeatures.size() - InitialNumFeatures;
+  return AllFeatures->size() - InitialNumFeatures;
 }
 
 Set<uint32_t> Merger::AllFeatures() const {
@@ -248,10 +249,12 @@ static void WriteNewControlFile(const std::string &CFPath,
 }
 
 // Outer process. Does not call the target code and thus should not fail.
-Vector<std::string>
-CrashResistantMerge(const Vector<std::string> &Args,
+void CrashResistantMerge(const Vector<std::string> &Args,
                     const Vector<SizedFile> &OldCorpus,
                     const Vector<SizedFile> &NewCorpus,
+                    Vector<std::string> *NewFiles,
+                    const Set<uint32_t> &InitialFeatures,
+                    Set<uint32_t> *NewFeatures,
                     const std::string &CFPath) {
   size_t NumAttempts = 0;
   if (FileSize(CFPath)) {
@@ -319,12 +322,9 @@ CrashResistantMerge(const Vector<std::string> &Args,
   IF.close();
   Printf("MERGE-OUTER: consumed %zdMb (%zdMb rss) to parse the control file\n",
          M.ApproximateMemoryConsumption() >> 20, GetPeakRSSMb());
-  Set<uint32_t> InitialFeatures;
-  Vector<std::string> NewFiles;
-  size_t NumNewFeatures = M.Merge(InitialFeatures, &NewFiles);
+  size_t NumNewFeatures = M.Merge(InitialFeatures, NewFeatures, NewFiles);
   Printf("MERGE-OUTER: %zd new files with %zd new features added\n",
-         NewFiles.size(), NumNewFeatures);
-  return NewFiles;
+         NewFiles->size(), NumNewFeatures);
 }
 
 } // namespace fuzzer
