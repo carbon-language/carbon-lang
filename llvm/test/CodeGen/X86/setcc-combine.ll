@@ -283,6 +283,25 @@ define i64 @PR40657(i8 %var2, i8 %var9) {
   ret i64 %res.cast
 }
 
+; FIXME: This should not get folded to 0.
+
+define i64 @PR40657_commute(i8 %var7, i8 %var8, i8 %var9) {
+; CHECK-LABEL: PR40657_commute:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    xorl %eax, %eax
+; CHECK-NEXT:    retq
+  %var4 = trunc i8 %var9 to i1
+  %var5 = trunc i8 %var8 to i1
+  %var6 = trunc i8 %var7 to i1
+  %var3 = sub nsw nuw i1 %var5, %var6
+  %var0 = sub nuw i1 %var4, %var3
+  %var2 = sub i1 %var3, %var0
+  %var1 = icmp ne i1 %var0, %var2
+  %res = sub nsw nuw i1 %var0, %var1
+  %res.cast = zext i1 %res to i64
+  ret i64 %res.cast
+}
+
 define i64 @sub_to_shift_to_add(i32 %x, i32 %y, i64 %s1, i64 %s2) {
 ; CHECK-LABEL: sub_to_shift_to_add:
 ; CHECK:       # %bb.0:
