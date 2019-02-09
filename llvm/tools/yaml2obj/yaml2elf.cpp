@@ -582,11 +582,11 @@ template <class ELFT>
 void ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
                                          const ELFYAML::DynamicSection &Section,
                                          ContiguousBlobAccumulator &CBA) {
-  typedef typename ELFT::uint uintX_t;
+  typedef typename ELFT::Xword Xword;
   assert(Section.Type == llvm::ELF::SHT_DYNAMIC &&
          "Section type is not SHT_DYNAMIC");
 
-  SHeader.sh_size = 2 * sizeof(uintX_t) * Section.Entries.size();
+  SHeader.sh_size = 2 * sizeof(typename ELFT::uint) * Section.Entries.size();
   if (Section.EntSize)
     SHeader.sh_entsize = *Section.EntSize;
   else
@@ -594,10 +594,10 @@ void ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
 
   auto &OS = CBA.getOSAndAlignedOffset(SHeader.sh_offset, SHeader.sh_addralign);
   for (const ELFYAML::DynamicEntry &DE : Section.Entries) {
-    ELFT::Xword Tag = (ELFT::Xword)DE.Tag;
-    OS.write((const char *)&Tag, sizeof(ELFT::Xword));
-    ELFT::Xword Val = (ELFT::Xword)DE.Val;
-    OS.write((const char *)&Val, sizeof(ELFT::Xword));
+    Xword Tag = (Xword)DE.Tag;
+    OS.write((const char *)&Tag, sizeof(Xword));
+    Xword Val = (Xword)DE.Val;
+    OS.write((const char *)&Val, sizeof(Xword));
   }
 }
 
