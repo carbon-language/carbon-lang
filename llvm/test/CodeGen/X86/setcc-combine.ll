@@ -262,12 +262,15 @@ define void @test_i1_uge(i1 *%A2) {
   ret void
 }
 
-; FIXME: This should not get folded to 0.
+; This should not get folded to 0.
 
 define i64 @PR40657(i8 %var2, i8 %var9) {
 ; CHECK-LABEL: PR40657:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    xorl %eax, %eax
+; CHECK-NEXT:    notb %sil
+; CHECK-NEXT:    addb %dil, %sil
+; CHECK-NEXT:    movzbl %sil, %eax
+; CHECK-NEXT:    andl $1, %eax
 ; CHECK-NEXT:    retq
   %var6 = trunc i8 %var9 to i1
   %var7 = trunc i8 175 to i1
