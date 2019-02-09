@@ -3075,7 +3075,6 @@ SDValue TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
                                 DAG.getConstant(0, dl, N0.getValueType()),
                                 Cond);
           // The shift is not valid if this is a bool (i1).
-          // TODO: This transform needs evidence to justify its existence.
           if (N0.getNode()->hasOneUse() && OpVT.getScalarSizeInBits() != 1) {
             assert(N0.getOpcode() == ISD::SUB && "Unexpected operation!");
             auto &DL = DAG.getDataLayout();
