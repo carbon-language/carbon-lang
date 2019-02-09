@@ -3493,9 +3493,6 @@ void ConstructVisitor::Post(const parser::Association &x) {
 }
 
 void ConstructVisitor::Post(const parser::SelectTypeStmt &x) {
-  if (!association_.expr) {
-    return;  // reported error in expression evaluation
-  }
   if (const std::optional<parser::Name> &name{std::get<1>(x.t)}) {
     // This isn't a name in the current scope, it is in each TypeGuardStmt
     MakePlaceholder(*name, MiscDetails::Kind::SelectTypeAssociateName);
@@ -3503,7 +3500,6 @@ void ConstructVisitor::Post(const parser::SelectTypeStmt &x) {
   } else if (!association_.variable) {
     Say("Selector is not a named variable: 'associate-name =>' is required"_err_en_US);
     association_ = {};
-    return;
   }
 }
 
