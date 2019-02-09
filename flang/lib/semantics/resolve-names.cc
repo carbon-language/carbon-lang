@@ -656,6 +656,7 @@ public:
   void Post(const parser::CharSelector::LengthAndKind &);
   void Post(const parser::CharLength &);
   void Post(const parser::LengthSelector &);
+  bool Pre(const parser::KindParam &);
   bool Pre(const parser::DeclarationTypeSpec::Type &);
   bool Pre(const parser::DeclarationTypeSpec::Class &);
   bool Pre(const parser::DeclarationTypeSpec::Record &);
@@ -2393,6 +2394,8 @@ void DeclarationVisitor::Post(const parser::EntityDecl &x) {
         symbol.get<ObjectEntityDetails>().set_init(EvaluateExpr(*expr));
       }
     }
+  } else if (attrs.test(Attr::PARAMETER)) {
+    Say(name, "Missing initialization for parameter '%s'"_err_en_US);
   }
 }
 
@@ -2604,6 +2607,18 @@ void DeclarationVisitor::Post(const parser::LengthSelector &x) {
   if (const auto *param{std::get_if<parser::TypeParamValue>(&x.u)}) {
     charInfo_.length = GetParamValue(*param);
   }
+}
+
+bool DeclarationVisitor::Pre(const parser::KindParam &x) {
+  if (const auto *kind{std::get_if<
+          parser::Scalar<parser::Integer<parser::Constant<parser::Name>>>>(
+          &x.u)}) {
+    const parser::Name &name{kind->thing.thing.thing};
+    if (!FindSymbol(name)) {
+      Say(name, "Parameter '%s' not found"_err_en_US);
+    }
+  }
+  return false;
 }
 
 bool DeclarationVisitor::Pre(const parser::DeclarationTypeSpec::Type &x) {

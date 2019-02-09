@@ -103,7 +103,7 @@ end
 
 subroutine s9
   external bad1
-  real, parameter :: bad2
+  real, parameter :: bad2 = 1.0
   x = cos(0.)
   do concurrent(i=1:2) &
     !ERROR: Locality attribute not allowed on 'bad1'

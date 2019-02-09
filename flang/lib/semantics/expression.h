@@ -100,6 +100,10 @@ public:
   int GetDefaultKind(common::TypeCategory);
   DynamicType GetDefaultKindOfType(common::TypeCategory);
 
+  // Return false and emit error if these checks fail:
+  bool CheckIntrinsicKind(TypeCategory, std::int64_t kind);
+  bool CheckIntrinsicSize(TypeCategory, std::int64_t size);
+
   // Manage a set of active array constructor implied DO loops.
   bool AddAcImpliedDo(parser::CharBlock, int);
   void RemoveAcImpliedDo(parser::CharBlock);

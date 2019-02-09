@@ -504,8 +504,6 @@ static int AnalyzeKindParam(ExpressionAnalysisContext &context,
                 }
               }
             }
-            context.Say("KIND type parameter on literal must be a scalar "
-                        "integer constant"_err_en_US);
             return defaultKind;
           },
           [&](parser::KindParam::Kanji) {
@@ -527,13 +525,12 @@ MaybeExpr IntLiteralConstant(
       AnalyzeKindParam(context, std::get<std::optional<parser::KindParam>>(x.t),
           context.GetDefaultKind(TypeCategory::Integer))};
   auto value{std::get<0>(x.t)};  // std::(u)int64_t
-  auto result{common::SearchTypes(
-      TypeKindVisitor<TypeCategory::Integer, Constant, std::int64_t>{
-          kind, static_cast<std::int64_t>(value)})};
-  if (!result.has_value()) {
-    context.Say("unsupported INTEGER(KIND=%d)"_err_en_US, kind);
+  if (!context.CheckIntrinsicKind(TypeCategory::Integer, kind)) {
+    return std::nullopt;
   }
-  return result;
+  return common::SearchTypes(
+      TypeKindVisitor<TypeCategory::Integer, Constant, std::int64_t>{
+          kind, static_cast<std::int64_t>(value)});
 }
 
 static MaybeExpr AnalyzeExpr(
@@ -653,8 +650,7 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
 // CHARACTER literal processing.
 static MaybeExpr AnalyzeString(
     ExpressionAnalysisContext &context, std::string &&string, int kind) {
-  if (!IsValidKindOfIntrinsicType(TypeCategory::Character, kind)) {
-    context.Say("unsupported CHARACTER(KIND=%d)"_err_en_US, kind);
+  if (!context.CheckIntrinsicKind(TypeCategory::Character, kind)) {
     return std::nullopt;
   }
   if (kind == 1) {
@@ -775,15 +771,13 @@ static MaybeExpr AnalyzeExpr(
     return AsMaybeExpr(ConvertToKind<TypeCategory::Integer>(
         *kind, AsExpr(ImpliedDoIndex{n.source})));
   } else if (n.symbol == nullptr) {
-    context.Say(
-        n.source, "TODO INTERNAL: name was not resolved to a symbol"_err_en_US);
+    // error should have been reported in name resolution
   } else if (n.symbol->attrs().test(semantics::Attr::PARAMETER)) {
     if (auto *details{n.symbol->detailsIf<semantics::ObjectEntityDetails>()}) {
       if (auto &init{details->init()}) {
         return init;
       }
     }
-    context.Say(n.source, "parameter does not have a value"_err_en_US);
     // TODO: enumerators, do they have the PARAMETER attribute?
   } else if (n.symbol->detailsIf<semantics::TypeParamDetails>()) {
     // A bare reference to a derived type parameter (within a parameterized
@@ -1764,12 +1758,9 @@ Expr<SubscriptInteger> ExpressionAnalysisContext::Analyze(TypeCategory category,
               Expr<SomeType> folded{
                   Fold(GetFoldingContext(), std::move(*kind))};
               if (std::optional<std::int64_t> code{ToInt64(folded)}) {
-                if (IsValidKindOfIntrinsicType(category, *code)) {
+                if (CheckIntrinsicKind(category, *code)) {
                   return Expr<SubscriptInteger>{*code};
                 }
-                SayAt(x, "%s(KIND=%jd) is not a supported type"_err_en_US,
-                    parser::ToUpperCaseLetters(EnumToString(category)).data(),
-                    *code);
               } else if (auto *intExpr{UnwrapExpr<Expr<SomeInteger>>(folded)}) {
                 return ConvertToType<SubscriptInteger>(std::move(*intExpr));
               }
@@ -1779,20 +1770,10 @@ Expr<SubscriptInteger> ExpressionAnalysisContext::Analyze(TypeCategory category,
           [&](const parser::KindSelector::StarSize &x)
               -> Expr<SubscriptInteger> {
             std::intmax_t size = x.v;
-            if (category == TypeCategory::Complex) {
-              // COMPLEX*16 == COMPLEX(KIND=8)
-              if ((size % 2) == 0 &&
-                  evaluate::IsValidKindOfIntrinsicType(category, size / 2)) {
-                size /= 2;
-              } else {
-                Say("COMPLEX*%jd is not a supported type"_err_en_US, size);
-                size = defaultKind;
-              }
-            } else if (!evaluate::IsValidKindOfIntrinsicType(category, size)) {
-              Say("%s*%jd is not a supported type"_err_en_US,
-                  parser::ToUpperCaseLetters(EnumToString(category)).data(),
-                  size);
+            if (!CheckIntrinsicSize(category, size)) {
               size = defaultKind;
+            } else if (category == TypeCategory::Complex) {
+              size /= 2;
             }
             return Expr<SubscriptInteger>{size};
           },
@@ -1807,6 +1788,32 @@ int ExpressionAnalysisContext::GetDefaultKind(common::TypeCategory category) {
 DynamicType ExpressionAnalysisContext::GetDefaultKindOfType(
     common::TypeCategory category) {
   return {category, GetDefaultKind(category)};
+}
+
+bool ExpressionAnalysisContext::CheckIntrinsicKind(
+    TypeCategory category, std::int64_t kind) {
+  if (IsValidKindOfIntrinsicType(category, kind)) {
+    return true;
+  } else {
+    Say("%s(KIND=%jd) is not a supported type"_err_en_US,
+        parser::ToUpperCaseLetters(EnumToString(category)).data(), kind);
+    return false;
+  }
+}
+
+bool ExpressionAnalysisContext::CheckIntrinsicSize(
+    TypeCategory category, std::int64_t size) {
+  if (category == TypeCategory::Complex) {
+    // COMPLEX*16 == COMPLEX(KIND=8)
+    if (size % 2 == 0 && IsValidKindOfIntrinsicType(category, size / 2)) {
+      return true;
+    }
+  } else if (IsValidKindOfIntrinsicType(category, size)) {
+    return true;
+  }
+  Say("%s*%jd is not a supported type"_err_en_US,
+      parser::ToUpperCaseLetters(EnumToString(category)).data(), size);
+  return false;
 }
 
 bool ExpressionAnalysisContext::AddAcImpliedDo(
