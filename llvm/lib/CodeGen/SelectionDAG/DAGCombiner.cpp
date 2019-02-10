@@ -7128,11 +7128,7 @@ SDValue DAGCombiner::visitFunnelShift(SDNode *N) {
       return IsFSHL ? N0 : N1;
 
   auto IsUndefOrZero = [](SDValue V) {
-    if (V.isUndef())
-      return true;
-    if (ConstantSDNode *Cst = isConstOrConstSplat(V, /*AllowUndefs*/true))
-      return Cst->getAPIntValue() == 0;
-    return false;
+    return V.isUndef() || isNullOrNullSplat(V, /*AllowUndefs*/ true);
   };
 
   if (ConstantSDNode *Cst = isConstOrConstSplat(N2)) {
