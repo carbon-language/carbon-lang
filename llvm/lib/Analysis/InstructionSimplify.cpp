@@ -5166,7 +5166,7 @@ static Value *SimplifyCall(ImmutableCallSite CS, Value *V, IterTy ArgBegin,
     if (Value *Ret = simplifyIntrinsic(F, ArgBegin, ArgEnd, Q))
       return Ret;
 
-  if (!canConstantFoldCallTo(CS, F))
+  if (!canConstantFoldCallTo(cast<CallBase>(CS.getInstruction()), F))
     return nullptr;
 
   SmallVector<Constant *, 4> ConstantArgs;
@@ -5178,7 +5178,8 @@ static Value *SimplifyCall(ImmutableCallSite CS, Value *V, IterTy ArgBegin,
     ConstantArgs.push_back(C);
   }
 
-  return ConstantFoldCall(CS, F, ConstantArgs, Q.TLI);
+  return ConstantFoldCall(cast<CallBase>(CS.getInstruction()), F, ConstantArgs,
+                          Q.TLI);
 }
 
 Value *llvm::SimplifyCall(ImmutableCallSite CS, Value *V,
