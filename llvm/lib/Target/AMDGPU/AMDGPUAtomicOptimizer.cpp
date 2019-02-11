@@ -212,8 +212,6 @@ void AMDGPUAtomicOptimizer::optimizeAtomic(Instruction &I,
                                            Instruction::BinaryOps Op,
                                            unsigned ValIdx,
                                            bool ValDivergent) const {
-  LLVMContext &Context = I.getContext();
-
   // Start building just before the instruction.
   IRBuilder<> B(&I);
 
