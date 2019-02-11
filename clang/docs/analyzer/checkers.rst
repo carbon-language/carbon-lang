@@ -566,6 +566,17 @@ security.insecureAPI.vfork (C)
    vfork(); // warn
  }
 
+security.insecureAPI.DeprecatedOrUnsafeBufferHandling (C) 
+""""""""""""""""""""""""""""""
+ Warn on occurrences of unsafe or deprecated buffer handling functions, which now have a secure variant: ``sprintf, vsprintf, scanf, wscanf, fscanf, fwscanf, vscanf, vwscanf, vfscanf, vfwscanf, sscanf, swscanf, vsscanf, vswscanf, swprintf, snprintf, vswprintf, vsnprintf, memcpy, memmove, strncpy, strncat, memset``
+
+.. code-block:: c
+ 
+ void test() {
+   char buf [5];
+   strncpy(buf, "a", 1); // warn
+ }
+
 .. _unix-checkers:
 
 unix
