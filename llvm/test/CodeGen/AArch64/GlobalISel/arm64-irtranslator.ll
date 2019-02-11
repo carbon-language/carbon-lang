@@ -1427,6 +1427,16 @@ define float @test_fabs_intrin(float %a) {
   ret float %res
 }
 
+declare float @llvm.canonicalize.f32(float)
+define float @test_fcanonicalize_intrin(float %a) {
+; CHECK-LABEL: name: test_fcanonicalize_intrin
+; CHECK: [[A:%[0-9]+]]:_(s32) = COPY $s0
+; CHECK: [[RES:%[0-9]+]]:_(s32) = nnan ninf nsz arcp contract afn reassoc G_FCANONICALIZE [[A]]
+; CHECK: $s0 = COPY [[RES]]
+  %res = call nnan ninf nsz arcp contract afn reassoc float @llvm.canonicalize.f32(float %a)
+  ret float %res
+}
+
 declare float @llvm.trunc.f32(float)
 define float @test_intrinsic_trunc(float %a) {
 ; CHECK-LABEL: name: test_intrinsic_trunc

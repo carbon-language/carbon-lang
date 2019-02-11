@@ -1354,6 +1354,7 @@ LegalizerHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx, LLT WideTy) {
   case TargetOpcode::G_FMA:
   case TargetOpcode::G_FNEG:
   case TargetOpcode::G_FABS:
+  case TargetOpcode::G_FCANONICALIZE:
   case TargetOpcode::G_FDIV:
   case TargetOpcode::G_FREM:
   case TargetOpcode::G_FCEIL:
@@ -2135,6 +2136,7 @@ LegalizerHelper::fewerElementsVector(MachineInstr &MI, unsigned TypeIdx,
   case G_FSUB:
   case G_FNEG:
   case G_FABS:
+  case G_FCANONICALIZE:
   case G_FDIV:
   case G_FREM:
   case G_FMA:
