@@ -139,7 +139,8 @@ InstRef Scheduler::select() {
     if (QueueIndex == ReadySet.size() ||
         Strategy->compare(IR, ReadySet[QueueIndex])) {
       const InstrDesc &D = IR.getInstruction()->getDesc();
-      if (Resources->canBeIssued(D))
+      uint64_t BusyResourceMask = Resources->checkAvailability(D);
+      if (!BusyResourceMask)
         QueueIndex = I;
     }
   }
