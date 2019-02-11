@@ -2462,12 +2462,12 @@ unsigned llvm::replaceDominatedUsesWith(Value *From, Value *To,
   return ::replaceDominatedUsesWith(From, To, BB, ProperlyDominates);
 }
 
-bool llvm::callsGCLeafFunction(ImmutableCallSite CS,
+bool llvm::callsGCLeafFunction(const CallBase *Call,
                                const TargetLibraryInfo &TLI) {
   // Check if the function is specifically marked as a gc leaf function.
-  if (CS.hasFnAttr("gc-leaf-function"))
+  if (Call->hasFnAttr("gc-leaf-function"))
     return true;
-  if (const Function *F = CS.getCalledFunction()) {
+  if (const Function *F = Call->getCalledFunction()) {
     if (F->hasFnAttribute("gc-leaf-function"))
       return true;
 
@@ -2481,7 +2481,7 @@ bool llvm::callsGCLeafFunction(ImmutableCallSite CS,
   // marked as 'gc-leaf-function.' All available Libcalls are
   // GC-leaf.
   LibFunc LF;
-  if (TLI.getLibFunc(CS, LF)) {
+  if (TLI.getLibFunc(ImmutableCallSite(Call), LF)) {
     return TLI.has(LF);
   }
 
