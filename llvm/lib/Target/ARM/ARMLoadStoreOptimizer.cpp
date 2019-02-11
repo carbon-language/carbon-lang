@@ -2047,6 +2047,11 @@ char ARMPreAllocLoadStoreOpt::ID = 0;
 INITIALIZE_PASS(ARMPreAllocLoadStoreOpt, "arm-prera-ldst-opt",
                 ARM_PREALLOC_LOAD_STORE_OPT_NAME, false, false)
 
+// Limit the number of instructions to be rescheduled.
+// FIXME: tune this limit, and/or come up with some better heuristics.
+static cl::opt<unsigned> InstReorderLimit("arm-prera-ldst-opt-reorder-limit",
+                                          cl::init(8), cl::Hidden);
+
 bool ARMPreAllocLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
   if (AssumeMisalignedLoadStores || skipFunction(Fn.getFunction()))
     return false;
@@ -2222,7 +2227,7 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
       }
 
       // Don't try to reschedule too many instructions.
-      if (NumMove == 8) // FIXME: Tune this limit.
+      if (NumMove == InstReorderLimit)
         break;
 
       // Found a mergable instruction; save information about it.
