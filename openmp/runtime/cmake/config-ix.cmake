@@ -10,6 +10,7 @@
 
 include(CheckCCompilerFlag)
 include(CheckCSourceCompiles)
+include(CheckCXXSourceCompiles)
 include(CheckCXXCompilerFlag)
 include(CheckIncludeFile)
 include(CheckLibraryExists)
@@ -36,6 +37,42 @@ function(libomp_check_version_symbols retval)
   check_c_source_compiles("${source_code}" ${retval})
   set(${retval} ${${retval}} PARENT_SCOPE)
   file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/__version_script.txt)
+endfunction()
+
+function(libomp_check_attribute_fallthrough retval)
+  set(fallthroughs "[[fallthrough]]" "[[clang::fallthrough]]" "__attribute__((__fallthrough__))")
+  foreach(fallthrough IN LISTS fallthroughs)
+    string(MAKE_C_IDENTIFIER "${fallthrough}" test_name)
+    set(source_code
+      "#include <stdio.h>
+      enum class foo_e { zero, one, two, three, four };
+      int main(int argc, char** argv) {
+        foo_e foo;
+        if (argc == 0) foo = foo_e::zero;
+        else if (argc == 1) foo = foo_e::one;
+        else if (argc == 2) foo = foo_e::two;
+        else if (argc == 3) foo = foo_e::three;
+        else if (argc == 4) foo = foo_e::four;
+        switch (foo) {
+          case foo_e::zero:
+            ${fallthrough}
+          case foo_e::one:
+            return 1;
+          case foo_e::two:
+            return 2;
+          case foo_e::three:
+            return 3;
+          case foo_e::four:
+            return 4;
+        }
+        return 0;
+      }")
+    check_cxx_source_compiles("${source_code}" ${test_name})
+    if(${test_name})
+      set(${retval} ${fallthrough} PARENT_SCOPE)
+      break()
+    endif()
+  endforeach()
 endfunction()
 
 # Includes the architecture flag in both compile and link phase
@@ -172,6 +209,7 @@ endif()
 # Checking features
 # Check if version symbol assembler directives are supported
 libomp_check_version_symbols(LIBOMP_HAVE_VERSION_SYMBOLS)
+libomp_check_attribute_fallthrough(LIBOMP_FALLTHROUGH)
 
 # Check if quad precision types are available
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
