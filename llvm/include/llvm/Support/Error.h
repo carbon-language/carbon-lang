@@ -1195,7 +1195,7 @@ public:
 private:
   FileError(const Twine &F, std::unique_ptr<ErrorInfoBase> E) {
     assert(E && "Cannot create FileError from Error success value.");
-    assert(!F.empty() &&
+    assert(!F.isEmpty() &&
            "The file name provided to FileError must not be empty.");
     FileName = F.str();
     Err = std::move(E);
