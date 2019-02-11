@@ -212,7 +212,7 @@ Expr<TO> ConvertToType(Expr<Type<FROMCAT, FROMKIND>> &&x) {
 
 template<typename TO> Expr<TO> ConvertToType(BOZLiteralConstant &&x) {
   static_assert(IsSpecificIntrinsicType<TO>);
-  using Value = typename Constant<TO>::Value;
+  using Value = typename Constant<TO>::ScalarValue;
   if constexpr (TO::category == TypeCategory::Integer) {
     return Expr<TO>{Constant<TO>{Value::ConvertUnsigned(std::move(x)).value}};
   } else {

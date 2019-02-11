@@ -72,7 +72,7 @@ Component FoldOperation(FoldingContext &context, Component &&component) {
 
 Triplet FoldOperation(FoldingContext &context, Triplet &&triplet) {
   return {Fold(context, triplet.lower()), Fold(context, triplet.upper()),
-      Fold(context, Expr<SubscriptInteger>{triplet.stride()})};
+      Fold(context, common::Clone(triplet.stride()))};
 }
 
 Subscript FoldOperation(FoldingContext &context, Subscript &&subscript) {
@@ -234,18 +234,23 @@ public:
       if constexpr (std::is_same_v<T, SomeDerived>) {
         return Expr<T>{Constant<T>{array.derivedTypeSpec(),
             std::move(elements_), std::vector<std::int64_t>{n}}};
+      } else if constexpr (T::category == TypeCategory::Character) {
+        auto length{Fold(context_, common::Clone(array.LEN()))};
+        if (std::optional<std::int64_t> lengthValue{ToInt64(length)}) {
+          return Expr<T>{Constant<T>{*lengthValue, std::move(elements_),
+              std::vector<std::int64_t>{n}}};
+        }
       } else {
         return Expr<T>{
             Constant<T>{std::move(elements_), std::vector<std::int64_t>{n}}};
       }
-    } else {
-      return Expr<T>{std::move(array)};
     }
+    return Expr<T>{std::move(array)};
   }
 
 private:
   bool FoldArray(const CopyableIndirection<Expr<T>> &expr) {
-    Expr<T> folded{Fold(context_, Expr<T>{*expr})};
+    Expr<T> folded{Fold(context_, common::Clone(*expr))};
     if (auto *c{UnwrapExpr<Constant<T>>(folded)}) {
       // Copy elements in Fortran array element order
       std::vector<std::int64_t> shape{c->shape()};

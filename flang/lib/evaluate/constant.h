@@ -22,23 +22,31 @@
 namespace Fortran::evaluate {
 
 // Wraps a constant value in a class templated by its resolved type.
-// N.B. Generic constants are represented by generic expressions
-// (like Expr<SomeInteger> & Expr<SomeType>) wrapping the appropriate
-// instantiations of Constant.
+// This Constant<> template class should be instantiated only for
+// concrete intrinsic types and SomeDerived.  There is no instance
+// Constant<Expr<SomeType>> since there is no way to constrain each
+// element of its array to hold the same type.  To represent a generic
+// constants, use a generic expression like Expr<SomeInteger> &
+// Expr<SomeType>) to wrap the appropriate instantiation of Constant<>.
 
 template<typename> class Constant;
 
-template<typename RESULT, typename VALUE = Scalar<RESULT>> class ConstantBase {
+// Constant<> is specialized for Character kinds and SomeDerived.
+// The non-Character intrinsic types, and SomeDerived, share enough
+// common behavior that they use this common base class.
+template<typename RESULT, typename SCALAR = Scalar<RESULT>> class ConstantBase {
+  static_assert(RESULT::category != TypeCategory::Character);
+
 public:
   using Result = RESULT;
-  using Value = VALUE;
+  using ScalarValue = SCALAR;
 
   template<typename A> ConstantBase(const A &x) : values_{x} {}
   template<typename A>
   ConstantBase(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
     : values_{std::move(x)} {}
-  ConstantBase(std::vector<Value> &&x, std::vector<std::int64_t> &&s)
-    : values_(std::move(x)), shape_(std::move(s)) {}
+  ConstantBase(std::vector<ScalarValue> &&x, std::vector<std::int64_t> &&dims)
+    : values_(std::move(x)), shape_(std::move(dims)) {}
   ~ConstantBase();
 
   int Rank() const { return static_cast<int>(shape_.size()); }
@@ -49,19 +57,19 @@ public:
   std::size_t size() const { return values_.size(); }
   const std::vector<std::int64_t> &shape() const { return shape_; }
 
-  Value operator*() const {
+  ScalarValue operator*() const {
     CHECK(values_.size() == 1);
     return values_.at(0);
   }
 
   // Apply 1-based subscripts
-  Value At(const std::vector<std::int64_t> &) const;
+  ScalarValue At(const std::vector<std::int64_t> &) const;
 
   Constant<SubscriptInteger> SHAPE() const;
   std::ostream &AsFortran(std::ostream &) const;
 
 protected:
-  std::vector<Value> values_;
+  std::vector<ScalarValue> values_;
   std::vector<std::int64_t> shape_;
 
 private:
@@ -75,27 +83,49 @@ private:
 template<typename T> class Constant : public ConstantBase<T> {
 public:
   using Result = T;
-  using ConstantBase<Result>::ConstantBase;
+  using ScalarValue = Scalar<Result>;
+  using ConstantBase<Result, ScalarValue>::ConstantBase;
   CLASS_BOILERPLATE(Constant)
   static constexpr DynamicType GetType() { return Result::GetType(); }
 };
 
-template<int KIND>
-class Constant<Type<TypeCategory::Character, KIND>>
-  : public ConstantBase<Type<TypeCategory::Character, KIND>> {
+template<int KIND> class Constant<Type<TypeCategory::Character, KIND>> {
 public:
   using Result = Type<TypeCategory::Character, KIND>;
-  using ConstantBase<Result>::ConstantBase;
+  using ScalarValue = Scalar<Result>;
   CLASS_BOILERPLATE(Constant)
-  static constexpr DynamicType GetType() { return Result::GetType(); }
-  std::int64_t LEN() const {
-    if (this->values_.empty()) {
-      return 0;
-    } else {
-      return static_cast<std::int64_t>(this->values_.front().size());
-    }
+  explicit Constant(const ScalarValue &);
+  explicit Constant(ScalarValue &&);
+  Constant(
+      std::int64_t, std::vector<ScalarValue> &&, std::vector<std::int64_t> &&);
+  ~Constant();
+
+  int Rank() const { return static_cast<int>(shape_.size()); }
+  bool operator==(const Constant &that) const {
+    return shape_ == that.shape_ && values_ == that.values_;
   }
-  // TODO pmk: make CHARACTER values contiguous (they're strings now)
+  bool empty() const { return values_.empty(); }
+  std::size_t size() const { return values_.size() / length_; }
+  const std::vector<std::int64_t> &shape() const { return shape_; }
+
+  std::int64_t LEN() const { return length_; }
+
+  ScalarValue operator*() const {
+    CHECK(static_cast<std::int64_t>(values_.size()) == length_);
+    return values_;
+  }
+
+  // Apply 1-based subscripts
+  ScalarValue At(const std::vector<std::int64_t> &) const;
+
+  Constant<SubscriptInteger> SHAPE() const;
+  std::ostream &AsFortran(std::ostream &) const;
+  static constexpr DynamicType GetType() { return Result::GetType(); }
+
+private:
+  ScalarValue values_;  // one contiguous string
+  std::int64_t length_;
+  std::vector<std::int64_t> shape_;
 };
 
 using StructureConstructorValues =
@@ -109,7 +139,7 @@ public:
   using Base = ConstantBase<Result, StructureConstructorValues>;
   Constant(const StructureConstructor &);
   Constant(StructureConstructor &&);
-  Constant(const semantics::DerivedTypeSpec &, std::vector<Value> &&,
+  Constant(const semantics::DerivedTypeSpec &, std::vector<ScalarValue> &&,
       std::vector<std::int64_t> &&);
   Constant(const semantics::DerivedTypeSpec &,
       std::vector<StructureConstructor> &&, std::vector<std::int64_t> &&);
@@ -127,7 +157,7 @@ private:
   const semantics::DerivedTypeSpec *derivedTypeSpec_;
 };
 
-FOR_EACH_INTRINSIC_KIND(extern template class ConstantBase)
+FOR_EACH_LENGTHLESS_INTRINSIC_KIND(extern template class ConstantBase)
 extern template class ConstantBase<SomeDerived, StructureConstructorValues>;
 FOR_EACH_INTRINSIC_KIND(extern template class Constant)
 }
