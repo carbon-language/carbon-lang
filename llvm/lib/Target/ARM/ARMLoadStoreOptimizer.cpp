@@ -2350,10 +2350,13 @@ ARMPreAllocLoadStoreOpt::RescheduleLoadStoreInstrs(MachineBasicBlock *MBB) {
   bool RetVal = false;
 
   DenseMap<MachineInstr*, unsigned> MI2LocMap;
-  DenseMap<unsigned, SmallVector<MachineInstr *, 4>> Base2LdsMap;
-  DenseMap<unsigned, SmallVector<MachineInstr *, 4>> Base2StsMap;
-  SmallVector<unsigned, 4> LdBases;
-  SmallVector<unsigned, 4> StBases;
+  using MapIt = DenseMap<unsigned, SmallVector<MachineInstr *, 4>>::iterator;
+  using Base2InstMap = DenseMap<unsigned, SmallVector<MachineInstr *, 4>>;
+  using BaseVec = SmallVector<unsigned, 4>;
+  Base2InstMap Base2LdsMap;
+  Base2InstMap Base2StsMap;
+  BaseVec LdBases;
+  BaseVec StBases;
 
   unsigned Loc = 0;
   MachineBasicBlock::iterator MBBI = MBB->begin();
@@ -2380,41 +2383,28 @@ ARMPreAllocLoadStoreOpt::RescheduleLoadStoreInstrs(MachineBasicBlock *MBB) {
       bool isLd = isLoadSingle(Opc);
       unsigned Base = MI.getOperand(1).getReg();
       int Offset = getMemoryOpOffset(MI);
-
       bool StopHere = false;
-      if (isLd) {
-        DenseMap<unsigned, SmallVector<MachineInstr *, 4>>::iterator BI =
-          Base2LdsMap.find(Base);
-        if (BI != Base2LdsMap.end()) {
-          for (unsigned i = 0, e = BI->second.size(); i != e; ++i) {
-            if (Offset == getMemoryOpOffset(*BI->second[i])) {
-              StopHere = true;
-              break;
-            }
-          }
-          if (!StopHere)
-            BI->second.push_back(&MI);
-        } else {
-          Base2LdsMap[Base].push_back(&MI);
-          LdBases.push_back(Base);
+      auto FindBases = [&] (Base2InstMap &Base2Ops, BaseVec &Bases) {
+        MapIt BI = Base2Ops.find(Base);
+        if (BI == Base2Ops.end()) {
+          Base2Ops[Base].push_back(&MI);
+          Bases.push_back(Base);
+          return;
         }
-      } else {
-        DenseMap<unsigned, SmallVector<MachineInstr *, 4>>::iterator BI =
-          Base2StsMap.find(Base);
-        if (BI != Base2StsMap.end()) {
-          for (unsigned i = 0, e = BI->second.size(); i != e; ++i) {
-            if (Offset == getMemoryOpOffset(*BI->second[i])) {
-              StopHere = true;
-              break;
-            }
+        for (unsigned i = 0, e = BI->second.size(); i != e; ++i) {
+          if (Offset == getMemoryOpOffset(*BI->second[i])) {
+            StopHere = true;
+            break;
           }
-          if (!StopHere)
-            BI->second.push_back(&MI);
-        } else {
-          Base2StsMap[Base].push_back(&MI);
-          StBases.push_back(Base);
         }
-      }
+        if (!StopHere)
+          BI->second.push_back(&MI);
+      };
+
+      if (isLd)
+        FindBases(Base2LdsMap, LdBases);
+      else
+        FindBases(Base2StsMap, StBases);
 
       if (StopHere) {
         // Found a duplicate (a base+offset combination that's seen earlier).
