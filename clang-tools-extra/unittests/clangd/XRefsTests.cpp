@@ -86,6 +86,10 @@ TEST(HighlightsTest, All) {
           auto *X = &[[foo]];
         }
       )cpp",
+
+      R"cpp(// Function parameter in decl
+        void foo(int [[^bar]]);
+      )cpp",
   };
   for (const char *Test : Tests) {
     Annotations T(Test);
