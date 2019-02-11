@@ -99,6 +99,9 @@ LegalizerHelper::legalizeInstrStep(MachineInstr &MI) {
   case FewerElements:
     LLVM_DEBUG(dbgs() << ".. Reduce number of elements\n");
     return fewerElementsVector(MI, Step.TypeIdx, Step.NewType);
+  case MoreElements:
+    LLVM_DEBUG(dbgs() << ".. Increase number of elements\n");
+    return moreElementsVector(MI, Step.TypeIdx, Step.NewType);
   case Custom:
     LLVM_DEBUG(dbgs() << ".. Custom legalization\n");
     return LI.legalizeCustom(MI, MRI, MIRBuilder, Observer) ? Legalized
@@ -875,6 +878,15 @@ void LegalizerHelper::narrowScalarDst(MachineInstr &MI, LLT NarrowTy,
   MIRBuilder.setInsertPt(MIRBuilder.getMBB(), ++MIRBuilder.getInsertPt());
   MIRBuilder.buildInstr(ExtOpcode, {MO.getReg()}, {DstTrunc});
   MO.setReg(DstTrunc);
+}
+
+void LegalizerHelper::moreElementsVectorDst(MachineInstr &MI, LLT WideTy,
+                                            unsigned OpIdx) {
+  MachineOperand &MO = MI.getOperand(OpIdx);
+  unsigned DstExt = MRI.createGenericVirtualRegister(WideTy);
+  MIRBuilder.setInsertPt(MIRBuilder.getMBB(), ++MIRBuilder.getInsertPt());
+  MIRBuilder.buildExtract(MO.getReg(), DstExt, 0);
+  MO.setReg(DstExt);
 }
 
 LegalizerHelper::LegalizeResult
@@ -2401,6 +2413,23 @@ LegalizerHelper::narrowScalarShift(MachineInstr &MI, unsigned TypeIdx,
   MIRBuilder.buildMerge(DstReg, ResultRegs);
   MI.eraseFromParent();
   return Legalized;
+}
+
+LegalizerHelper::LegalizeResult
+LegalizerHelper::moreElementsVector(MachineInstr &MI, unsigned TypeIdx,
+                                    LLT MoreTy) {
+  MIRBuilder.setInstr(MI);
+  unsigned Opc = MI.getOpcode();
+  switch (Opc) {
+  case TargetOpcode::G_IMPLICIT_DEF: {
+    Observer.changingInstr(MI);
+    moreElementsVectorDst(MI, MoreTy, 0);
+    Observer.changedInstr(MI);
+    return Legalized;
+  }
+  default:
+    return UnableToLegalize;
+  }
 }
 
 LegalizerHelper::LegalizeResult
