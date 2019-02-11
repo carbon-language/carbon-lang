@@ -184,6 +184,26 @@ TEST(LocateSymbol, WithIndex) {
       ElementsAre(Sym("Forward", SymbolHeader.range("forward"), Test.range())));
 }
 
+TEST(LocateSymbol, WithIndexPreferredLocation) {
+  Annotations SymbolHeader(R"cpp(
+        class $[[Proto]] {};
+      )cpp");
+  TestTU TU;
+  TU.HeaderCode = SymbolHeader.code();
+  TU.HeaderFilename = "x.proto"; // Prefer locations in codegen files.
+  auto Index = TU.index();
+
+  Annotations Test(R"cpp(// only declaration in AST.
+        // Shift to make range different.
+        class [[Proto]];
+        P^roto* create();
+      )cpp");
+
+  auto AST = TestTU::withCode(Test.code()).build();
+  auto Locs = clangd::locateSymbolAt(AST, Test.point(), Index.get());
+  EXPECT_THAT(Locs, ElementsAre(Sym("Proto", SymbolHeader.range())));
+}
+
 TEST(LocateSymbol, All) {
   // Ranges in tests:
   //   $decl is the declaration location (if absent, no symbol is located)
