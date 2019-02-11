@@ -981,11 +981,13 @@ LegalizerHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx, LLT WideTy) {
     if (Offset % SrcTy.getScalarSizeInBits() != 0)
       return UnableToLegalize;
 
+    Observer.changingInstr(MI);
     widenScalarSrc(MI, WideTy, 1, TargetOpcode::G_ANYEXT);
 
     MI.getOperand(2).setImm((WideTy.getSizeInBits() / SrcTy.getSizeInBits()) *
                             Offset);
     widenScalarDst(MI, WideTy.getScalarType(), 0);
+    Observer.changedInstr(MI);
 
     return Legalized;
   }
