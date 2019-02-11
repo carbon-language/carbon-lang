@@ -84,12 +84,38 @@ subroutine s3
    !DEF: /s3/Block1/y TARGET AssocEntity TYPE(t2)
    !REF: /s3/t2/a2
    i = y%a2
-   type is (integer(kind=8))
-    !REF: /s3/i
-    !DEF: /s3/Block2/y TARGET AssocEntity INTEGER(8)
-    i = y
-   class default
-    !DEF: /s3/Block3/y TARGET AssocEntity CLASS(t1)
-    print *, y
+  type is (integer(kind=8))
+   !REF: /s3/i
+   !DEF: /s3/Block2/y TARGET AssocEntity INTEGER(8)
+   i = y
+  class default
+   !DEF: /s3/Block3/y TARGET AssocEntity CLASS(t1)
+   print *, y
  end select
+end subroutine
+
+!DEF: /s4 Subprogram
+subroutine s4
+ !DEF: /s4/t1 DerivedType
+ type :: t1
+  !DEF: /s4/t1/a ObjectEntity REAL(4)
+  real :: a
+ end type
+ !DEF: /s4/t2 DerivedType
+ type :: t2
+  !REF: /s4/t1
+  !DEF: /s4/t2/b ObjectEntity TYPE(t1)
+  type(t1) :: b
+ end type
+ !REF: /s4/t2
+ !DEF: /s4/x ObjectEntity TYPE(t2)
+ type(t2) :: x
+ !DEF: /s4/Block1/y AssocEntity TYPE(t1)
+ !REF: /s4/x
+ !REF: /s4/t2/b
+ associate(y => x%b)
+  !REF: /s4/Block1/y
+  !REF: /s4/t1/a
+  y%a = 0.0
+ end associate
 end subroutine

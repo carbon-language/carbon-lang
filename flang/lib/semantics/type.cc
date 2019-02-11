@@ -28,10 +28,13 @@
 namespace Fortran::semantics {
 
 DerivedTypeSpec::DerivedTypeSpec(const DerivedTypeSpec &that)
-  : typeSymbol_{that.typeSymbol_}, parameters_{that.parameters_} {}
+  : typeSymbol_{that.typeSymbol_}, scope_{that.scope_}, parameters_{
+                                                            that.parameters_} {}
 
 DerivedTypeSpec::DerivedTypeSpec(DerivedTypeSpec &&that)
-  : typeSymbol_{that.typeSymbol_}, parameters_{std::move(that.parameters_)} {}
+  : typeSymbol_{that.typeSymbol_}, scope_{that.scope_}, parameters_{std::move(
+                                                            that.parameters_)} {
+}
 
 void DerivedTypeSpec::set_scope(const Scope &scope) {
   CHECK(!scope_);
@@ -66,7 +69,6 @@ void DerivedTypeSpec::FoldParameterExpressions(
 
 void DerivedTypeSpec::Instantiate(
     Scope &containingScope, SemanticsContext &semanticsContext) {
-  CHECK(scope_ == nullptr);
   Scope &newScope{containingScope.MakeScope(Scope::Kind::DerivedType)};
   newScope.set_derivedTypeSpec(*this);
   scope_ = &newScope;
