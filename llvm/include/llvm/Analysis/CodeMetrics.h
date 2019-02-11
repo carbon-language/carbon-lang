@@ -16,7 +16,6 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/IR/CallSite.h"
 
 namespace llvm {
 class AssumptionCache;
