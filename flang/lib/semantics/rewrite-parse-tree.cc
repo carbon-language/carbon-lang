@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -42,11 +42,8 @@ public:
 
   // Name resolution yet implemented:
   bool Pre(parser::CommonStmt &) { return false; }
-  bool Pre(parser::NamelistStmt &) { return false; }
   bool Pre(parser::EquivalenceStmt &) { return false; }
-  bool Pre(parser::BindEntity &) { return false; }
   bool Pre(parser::Keyword &) { return false; }
-  bool Pre(parser::SavedEntity &) { return false; }
   bool Pre(parser::EntryStmt &) { return false; }
 
   // Don't bother resolving names in end statements.
@@ -88,7 +85,7 @@ private:
 // Check that name has been resolved to a symbol
 void RewriteMutator::Post(parser::Name &name) {
   if (name.symbol == nullptr && errorOnUnresolvedName_) {
-    messages_.Say(name.source, "Internal: no symbol found for '%s'"_en_US,
+    messages_.Say(name.source, "Internal: no symbol found for '%s'"_err_en_US,
         name.ToString().c_str());
   }
 }
