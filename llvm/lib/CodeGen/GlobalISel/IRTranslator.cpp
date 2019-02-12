@@ -794,6 +794,8 @@ IRTranslator::getSimpleUnaryIntrinsicOpcode(Intrinsic::ID ID) {
   switch (ID) {
     default:
       break;
+    case Intrinsic::bswap:
+      return TargetOpcode::G_BSWAP;
     case Intrinsic::ceil:
       return TargetOpcode::G_FCEIL;
     case Intrinsic::cos:
