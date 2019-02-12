@@ -113,7 +113,6 @@ Constant<SubscriptInteger> ConstantBase<RESULT, VALUE>::SHAPE() const {
 }
 
 // Constant<Type<TypeCategory::Character, KIND>  specializations
-
 template<int KIND>
 Constant<Type<TypeCategory::Character, KIND>>::Constant(const ScalarValue &str)
   : values_{str}, length_{static_cast<std::int64_t>(values_.size())} {}
@@ -140,6 +139,28 @@ Constant<Type<TypeCategory::Character, KIND>>::Constant(std::int64_t len,
 
 template<int KIND> Constant<Type<TypeCategory::Character, KIND>>::~Constant() {}
 
+static std::int64_t ShapeElements(const std::vector<std::int64_t> &shape) {
+  std::int64_t elements{1};
+  for (auto dim : shape) {
+    elements *= dim;
+  }
+  return elements;
+}
+
+template<int KIND>
+bool Constant<Type<TypeCategory::Character, KIND>>::empty() const {
+  return size() == 0;
+}
+
+template<int KIND>
+std::size_t Constant<Type<TypeCategory::Character, KIND>>::size() const {
+  if (length_ == 0) {
+    return ShapeElements(shape_);
+  } else {
+    return static_cast<std::int64_t>(values_.size()) / length_;
+  }
+}
+
 template<int KIND>
 auto Constant<Type<TypeCategory::Character, KIND>>::At(
     const std::vector<std::int64_t> &index) const -> ScalarValue {
@@ -162,13 +183,10 @@ std::ostream &Constant<Type<TypeCategory::Character, KIND>>::AsFortran(
   if (Rank() > 0) {
     o << '[' << GetType().AsFortran() << "::";
   }
-  bool first{true};
   auto total{static_cast<std::int64_t>(size())};
-  for (std::int64_t at{0}; at < total; at += length_) {
-    ScalarValue value{values_.substr(at, length_)};
-    if (first) {
-      first = false;
-    } else {
+  for (std::int64_t j{0}; j < total; ++j) {
+    ScalarValue value{values_.substr(j * length_, length_)};
+    if (j > 0) {
       o << ',';
     }
     o << Result::kind << '_' << parser::QuoteCharacterLiteral(value);
@@ -181,7 +199,6 @@ std::ostream &Constant<Type<TypeCategory::Character, KIND>>::AsFortran(
 }
 
 // Constant<SomeDerived> specialization
-
 Constant<SomeDerived>::Constant(const StructureConstructor &x)
   : Base{x.values()}, derivedTypeSpec_{&x.derivedTypeSpec()} {}
 

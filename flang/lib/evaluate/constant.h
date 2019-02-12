@@ -104,8 +104,8 @@ public:
   bool operator==(const Constant &that) const {
     return shape_ == that.shape_ && values_ == that.values_;
   }
-  bool empty() const { return values_.empty(); }
-  std::size_t size() const { return values_.size() / length_; }
+  bool empty() const;
+  std::size_t size() const;
   const std::vector<std::int64_t> &shape() const { return shape_; }
 
   std::int64_t LEN() const { return length_; }
