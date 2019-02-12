@@ -418,7 +418,7 @@ private:
       LI.removeBlock(BB);
     }
 
-    DetatchDeadBlocks(DeadLoopBlocks, &DTUpdates);
+    DetatchDeadBlocks(DeadLoopBlocks, &DTUpdates, /*KeepOneInputPHIs*/true);
     DTU.applyUpdates(DTUpdates);
     DTUpdates.clear();
     for (auto *BB : DeadLoopBlocks)
