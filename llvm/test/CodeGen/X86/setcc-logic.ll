@@ -485,11 +485,9 @@ define <4 x i1> @and_eq_vec(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c, <4 x i32> 
 define i1 @or_icmps_const_1bit_diff(i8 %x) {
 ; CHECK-LABEL: or_icmps_const_1bit_diff:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    cmpb $43, %dil
-; CHECK-NEXT:    sete %cl
-; CHECK-NEXT:    cmpb $45, %dil
+; CHECK-NEXT:    addb $-43, %dil
+; CHECK-NEXT:    testb $-3, %dil
 ; CHECK-NEXT:    sete %al
-; CHECK-NEXT:    orb %cl, %al
 ; CHECK-NEXT:    retq
   %a = icmp eq i8 %x, 43
   %b = icmp eq i8 %x, 45
@@ -500,11 +498,9 @@ define i1 @or_icmps_const_1bit_diff(i8 %x) {
 define i1 @and_icmps_const_1bit_diff(i32 %x) {
 ; CHECK-LABEL: and_icmps_const_1bit_diff:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    cmpl $44, %edi
-; CHECK-NEXT:    setne %cl
-; CHECK-NEXT:    cmpl $60, %edi
+; CHECK-NEXT:    addl $-44, %edi
+; CHECK-NEXT:    testl $-17, %edi
 ; CHECK-NEXT:    setne %al
-; CHECK-NEXT:    andb %cl, %al
 ; CHECK-NEXT:    retq
   %a = icmp ne i32 %x, 44
   %b = icmp ne i32 %x, 60
