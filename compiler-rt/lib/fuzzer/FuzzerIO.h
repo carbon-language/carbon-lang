@@ -46,6 +46,7 @@ void DupAndCloseStderr();
 void CloseStdout();
 
 void Printf(const char *Fmt, ...);
+void VPrintf(bool Verbose, const char *Fmt, ...);
 
 // Print using raw syscalls, useful when printing at early init stages.
 void RawPrint(const char *Str);

@@ -125,6 +125,15 @@ void Printf(const char *Fmt, ...) {
   fflush(OutputFile);
 }
 
+void VPrintf(bool Verbose, const char *Fmt, ...) {
+  if (!Verbose) return;
+  va_list ap;
+  va_start(ap, Fmt);
+  vfprintf(OutputFile, Fmt, ap);
+  va_end(ap);
+  fflush(OutputFile);
+}
+
 void RmFilesInDir(const std::string &Path) {
   Vector<std::string> Files;
   ListFilesInDirRecursive(Path, 0, &Files, /*TopDir*/true);

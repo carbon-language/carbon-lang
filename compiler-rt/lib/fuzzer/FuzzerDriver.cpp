@@ -484,11 +484,12 @@ void FuzzWithFork(Fuzzer *F, const FuzzingOptions &Options,
     GetSizedFilesFromDir(Dir, &Corpus);
   std::sort(Corpus.begin(), Corpus.end());
   auto CFPath = TempPath(".fork");
+  auto LogPath = TempPath(".log");
 
   Vector<std::string> Files;
   Set<uint32_t> Features;
   if (!Corpus.empty()) {
-    CrashResistantMerge(Args, {}, Corpus, &Files, {}, &Features, CFPath);
+    CrashResistantMerge(Args, {}, Corpus, &Files, {}, &Features, CFPath, false);
     RemoveFile(CFPath);
   }
   auto TempDir = TempPath("Dir");
@@ -500,8 +501,8 @@ void FuzzWithFork(Fuzzer *F, const FuzzingOptions &Options,
   BaseCmd.removeFlag("fork");
   for (auto &C : Corpora) // Remove all corpora from the args.
     BaseCmd.removeArgument(C);
-  BaseCmd.addFlag("runs", "1000000");
-  BaseCmd.addFlag("max_total_time", "30");
+  if (!BaseCmd.hasFlag("max_total_time"))
+    BaseCmd.addFlag("max_total_time", "60");
   BaseCmd.addArgument(TempDir);
   int ExitCode = 0;
   for (size_t i = 0; i < 1000000; i++) {
@@ -511,10 +512,11 @@ void FuzzWithFork(Fuzzer *F, const FuzzingOptions &Options,
       Cmd.addFlag("seed_inputs",
                   Files[Rand.SkewTowardsLast(Files.size())] + "," +
                       Files[Rand.SkewTowardsLast(Files.size())]);
-    Printf("RUN %s\n", Cmd.toString().c_str());
+    Cmd.setOutputFile(LogPath);
+    Cmd.combineOutAndErr();
     RmFilesInDir(TempDir);
     ExitCode = ExecuteCommand(Cmd);
-    Printf("Exit code: %d\n", ExitCode);
+    // Printf("done [%d] %s\n", ExitCode, Cmd.toString().c_str());
     if (ExitCode == Options.InterruptExitCode)
       break;
     Vector<SizedFile> TempFiles;
@@ -522,7 +524,7 @@ void FuzzWithFork(Fuzzer *F, const FuzzingOptions &Options,
     Set<uint32_t> NewFeatures;
     GetSizedFilesFromDir(TempDir, &TempFiles);
     CrashResistantMerge(Args, {}, TempFiles, &FilesToAdd, Features,
-                        &NewFeatures, CFPath);
+                        &NewFeatures, CFPath, false);
     RemoveFile(CFPath);
     for (auto &Path : FilesToAdd) {
       auto NewPath = F->WriteToOutputCorpus(FileToVector(Path, Options.MaxLen));
@@ -539,7 +541,11 @@ void FuzzWithFork(Fuzzer *F, const FuzzingOptions &Options,
     if (Options.IgnoreOOMs && ExitCode == Options.OOMExitCode)
       continue;
     // And exit if we don't ignore this crash.
-    if (ExitCode != 0) break;
+    if (ExitCode != 0) {
+      Printf("INFO: log from the inner process:\n%s",
+             FileToString(LogPath).c_str());
+      break;
+    }
   }
 
   RmFilesInDir(TempDir);
@@ -568,7 +574,7 @@ void Merge(Fuzzer *F, FuzzingOptions &Options, const Vector<std::string> &Args,
   Vector<std::string> NewFiles;
   Set<uint32_t> NewFeatures;
   CrashResistantMerge(Args, OldCorpus, NewCorpus, &NewFiles, {}, &NewFeatures,
-                      CFPath);
+                      CFPath, true);
   for (auto &Path : NewFiles)
     F->WriteToOutputCorpus(FileToVector(Path, Options.MaxLen));
   // We are done, delete the control file if it was a temporary one.
