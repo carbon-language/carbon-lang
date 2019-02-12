@@ -40,6 +40,7 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/ToolOutputFile.h"
+#include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -726,7 +727,7 @@ int main(int argc, char **argv) {
   for (const auto &ExecFilename : ExecFilenames) {
     auto DWOs = getDWOFilenames(ExecFilename);
     if (!DWOs) {
-      logAllUnhandledErrors(DWOs.takeError(), errs(), "error: ");
+      logAllUnhandledErrors(DWOs.takeError(), WithColor::error());
       return 1;
     }
     DWOFilenames.insert(DWOFilenames.end(),
@@ -735,7 +736,7 @@ int main(int argc, char **argv) {
   }
 
   if (auto Err = write(*MS, DWOFilenames)) {
-    logAllUnhandledErrors(std::move(Err), errs(), "error: ");
+    logAllUnhandledErrors(std::move(Err), WithColor::error());
     return 1;
   }
 
