@@ -7,6 +7,8 @@
 
 ; CHECK-NOT: .debug_{{.*}}.dwo
 
+target triple = "x86_64-pc-linux"
+
 define dso_local void @f1() !dbg !7 {
 entry:
   ret void, !dbg !9
