@@ -4,7 +4,7 @@ Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
 
 # Overview of Compiler Phases
 
-Each phases produces correct output or fatal errors.
+Each phase produces correct output or fatal errors.
 
 ## Prescan and Preprocess
 
@@ -26,7 +26,7 @@ Each phases produces correct output or fatal errors.
 
 **Input:** Cooked character stream.
 
-**Output:** A parse tree representing a syntactially correct program,
+**Output:** A parse tree representing a syntactically correct program,
   rooted at a `parser::Program`.
   See: [parsing.md](parsing.md).
 
@@ -68,7 +68,7 @@ Each phases produces correct output or fatal errors.
 
 **Input:** Parse tree with names resolved.
 
-**Output:** Parse tree with semantically correct DO CONCURRENT loops.have been performed.
+**Output:** Parse tree with semantically correct DO CONCURRENT loops.
 
 ## Write Module Files
 
