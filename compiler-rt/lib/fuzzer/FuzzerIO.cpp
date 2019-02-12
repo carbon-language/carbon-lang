@@ -8,9 +8,10 @@
 // IO functions.
 //===----------------------------------------------------------------------===//
 
-#include "FuzzerIO.h"
 #include "FuzzerDefs.h"
 #include "FuzzerExtFunctions.h"
+#include "FuzzerIO.h"
+#include "FuzzerUtil.h"
 #include <algorithm>
 #include <cstdarg>
 #include <fstream>
@@ -139,6 +140,11 @@ void RmFilesInDir(const std::string &Path) {
   ListFilesInDirRecursive(Path, 0, &Files, /*TopDir*/true);
   for (auto &F : Files)
     RemoveFile(F);
+}
+
+std::string TempPath(const char *Extension) {
+  return DirPlusFile(TmpDir(),
+                     "libFuzzerTemp." + std::to_string(GetPid()) + Extension);
 }
 
 }  // namespace fuzzer
