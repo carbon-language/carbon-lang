@@ -39,6 +39,7 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -700,23 +701,23 @@ int main(int argc, char **argv) {
 
   // Create the output file.
   std::error_code EC;
-  raw_fd_ostream OutFile(OutputFilename, EC, sys::fs::F_None);
+  ToolOutputFile OutFile(OutputFilename, EC, sys::fs::F_None);
   Optional<buffer_ostream> BOS;
   raw_pwrite_stream *OS;
   if (EC)
     return error(Twine(OutputFilename) + ": " + EC.message(), Context);
-  if (OutFile.supportsSeeking()) {
-    OS = &OutFile;
+  if (OutFile.os().supportsSeeking()) {
+    OS = &OutFile.os();
   } else {
-    BOS.emplace(OutFile);
+    BOS.emplace(OutFile.os());
     OS = BOS.getPointer();
   }
 
   MCTargetOptions MCOptions = InitMCTargetOptionsFromFlags();
   std::unique_ptr<MCStreamer> MS(TheTarget->createMCObjectStreamer(
       TheTriple, MC, std::unique_ptr<MCAsmBackend>(MAB),
-      MAB->createObjectWriter(*OS), std::unique_ptr<MCCodeEmitter>(MCE),
-      *MSTI, MCOptions.MCRelaxAll, MCOptions.MCIncrementalLinkerCompatible,
+      MAB->createObjectWriter(*OS), std::unique_ptr<MCCodeEmitter>(MCE), *MSTI,
+      MCOptions.MCRelaxAll, MCOptions.MCIncrementalLinkerCompatible,
       /*DWARFMustBeAtTheEnd*/ false));
   if (!MS)
     return error("no object streamer for target " + TripleName, Context);
@@ -739,4 +740,6 @@ int main(int argc, char **argv) {
   }
 
   MS->Finish();
+  OutFile.keep();
+  return 0;
 }
