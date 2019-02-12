@@ -716,7 +716,7 @@ static void checkAttrArgsAreCapabilityObjs(Sema &S, Decl *D,
         uint64_t ParamIdxFromOne = ArgValue.getZExtValue();
         uint64_t ParamIdxFromZero = ParamIdxFromOne - 1;
         if (!ArgValue.isStrictlyPositive() || ParamIdxFromOne > NumParams) {
-          S.Diag(AL.getLoc(), diag::err_attribute_argument_out_of_range)
+          S.Diag(AL.getLoc(), diag::err_attribute_argument_out_of_bounds)
               << AL << Idx + 1 << NumParams;
           continue;
         }
