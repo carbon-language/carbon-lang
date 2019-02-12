@@ -533,6 +533,12 @@ void FuzzWithFork(Fuzzer *F, const FuzzingOptions &Options,
     Printf("INFO: temp_files: %zd files_added: %zd newft: %zd ft: %zd\n",
            TempFiles.size(), FilesToAdd.size(), NewFeatures.size(),
            Features.size());
+    // Continue if our crash is one of the ignorred ones.
+    if (Options.IgnoreTimeouts && ExitCode == Options.TimeoutExitCode)
+      continue;
+    if (Options.IgnoreOOMs && ExitCode == Options.OOMExitCode)
+      continue;
+    // And exit if we don't ignore this crash.
     if (ExitCode != 0) break;
   }
 
@@ -681,6 +687,8 @@ int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
   Options.UnitTimeoutSec = Flags.timeout;
   Options.ErrorExitCode = Flags.error_exitcode;
   Options.TimeoutExitCode = Flags.timeout_exitcode;
+  Options.IgnoreTimeouts = Flags.ignore_timeouts;
+  Options.IgnoreOOMs = Flags.ignore_ooms;
   Options.MaxTotalTimeSec = Flags.max_total_time;
   Options.DoCrossOver = Flags.cross_over;
   Options.MutateDepth = Flags.mutate_depth;

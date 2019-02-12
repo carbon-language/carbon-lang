@@ -299,7 +299,6 @@ void CrashResistantMerge(const Vector<std::string> &Args,
   Command BaseCmd(Args);
   BaseCmd.removeFlag("merge");
   BaseCmd.removeFlag("fork");
-  bool Success = false;
   for (size_t Attempt = 1; Attempt <= NumAttempts; Attempt++) {
     Fuzzer::MaybeExitGracefully();
     Printf("MERGE-OUTER: attempt %zd\n", Attempt);
@@ -309,13 +308,8 @@ void CrashResistantMerge(const Vector<std::string> &Args,
     auto ExitCode = ExecuteCommand(Cmd);
     if (!ExitCode) {
       Printf("MERGE-OUTER: succesfull in %zd attempt(s)\n", Attempt);
-      Success = true;
       break;
     }
-  }
-  if (!Success) {
-    Printf("MERGE-OUTER: zero succesfull attempts, exiting\n");
-    exit(1);
   }
   // Read the control file and do the merge.
   Merger M;
