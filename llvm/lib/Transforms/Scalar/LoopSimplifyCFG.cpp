@@ -422,7 +422,7 @@ private:
     DTU.applyUpdates(DTUpdates);
     DTUpdates.clear();
     for (auto *BB : DeadLoopBlocks)
-      BB->eraseFromParent();
+      DTU.deleteBB(BB);
 
     NumLoopBlocksDeleted += DeadLoopBlocks.size();
   }
