@@ -711,19 +711,12 @@ static void printVersionDependencySection(ELFDumper<ELFT> *Dumper,
   if (!Sec)
     return;
 
-  unsigned VerNeedNum = 0;
-  for (const typename ELFO::Elf_Dyn &Dyn : Dumper->dynamic_table()) {
-    if (Dyn.d_tag == DT_VERNEEDNUM) {
-      VerNeedNum = Dyn.d_un.d_val;
-      break;
-    }
-  }
-
   const uint8_t *SecData = (const uint8_t *)Obj->base() + Sec->sh_offset;
   const typename ELFO::Elf_Shdr *StrTab =
       unwrapOrError(Obj->getSection(Sec->sh_link));
 
   const uint8_t *P = SecData;
+  unsigned VerNeedNum = Sec->sh_info;
   for (unsigned I = 0; I < VerNeedNum; ++I) {
     const VerNeed *Need = reinterpret_cast<const VerNeed *>(P);
     DictScope Entry(W, "Dependency");
