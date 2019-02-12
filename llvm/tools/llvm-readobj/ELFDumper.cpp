@@ -3670,14 +3670,12 @@ static std::string getGNUProperty(uint32_t Type, uint32_t DataSize,
     return OS.str();
   case GNU_PROPERTY_X86_FEATURE_1_AND:
     OS << "X86 features: ";
-    if (DataSize != 4 && DataSize != 8) {
+    if (DataSize != 4) {
       OS << format("<corrupt length: 0x%x>", DataSize);
       return OS.str();
     }
-    uint64_t CFProtection =
-        (DataSize == 4)
-            ? support::endian::read32<ELFT::TargetEndianness>(Data.data())
-            : support::endian::read64<ELFT::TargetEndianness>(Data.data());
+    uint32_t CFProtection  =
+        support::endian::read32<ELFT::TargetEndianness>(Data.data());
     if (CFProtection == 0) {
       OS << "none";
       return OS.str();
@@ -3695,7 +3693,7 @@ static std::string getGNUProperty(uint32_t Type, uint32_t DataSize,
         OS << ", ";
     }
     if (CFProtection)
-      OS << format("<unknown flags: 0x%llx>", CFProtection);
+      OS << format("<unknown flags: 0x%x>", CFProtection);
     return OS.str();
   }
 }
