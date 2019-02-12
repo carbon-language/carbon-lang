@@ -17672,7 +17672,7 @@ SDValue X86TargetLowering::BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain,
     MMO = cast<LoadSDNode>(StackSlot)->getMemOperand();
     StackSlot = StackSlot.getOperand(1);
   }
-  SDValue Ops[] = { Chain, StackSlot, DAG.getValueType(SrcVT) };
+  SDValue Ops[] = { Chain, StackSlot };
   SDValue Result = DAG.getMemIntrinsicNode(useSSE ? X86ISD::FILD_FLAG :
                                            X86ISD::FILD, DL,
                                            Tys, Ops, SrcVT, MMO);
@@ -17690,9 +17690,7 @@ SDValue X86TargetLowering::BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain,
     auto PtrVT = getPointerTy(MF.getDataLayout());
     SDValue StackSlot = DAG.getFrameIndex(SSFI, PtrVT);
     Tys = DAG.getVTList(MVT::Other);
-    SDValue Ops[] = {
-      Chain, Result, StackSlot, DAG.getValueType(Op.getValueType()), InFlag
-    };
+    SDValue Ops[] = { Chain, Result, StackSlot, InFlag };
     MachineMemOperand *MMO = DAG.getMachineFunction().getMachineMemOperand(
         MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), SSFI),
         MachineMemOperand::MOStore, SSFISize, SSFISize);
@@ -18023,7 +18021,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op,
       MachineMemOperand::MOLoad, 8, 8);
 
   SDVTList Tys = DAG.getVTList(MVT::f80, MVT::Other);
-  SDValue Ops[] = { Store, StackSlot, DAG.getValueType(MVT::i64) };
+  SDValue Ops[] = { Store, StackSlot };
   SDValue Fild = DAG.getMemIntrinsicNode(X86ISD::FILD, dl, Tys, Ops,
                                          MVT::i64, MMO);
 
@@ -18179,9 +18177,7 @@ X86TargetLowering::FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG,
     Chain = DAG.getStore(Chain, DL, Value, StackSlot,
                          MachinePointerInfo::getFixedStack(MF, SSFI));
     SDVTList Tys = DAG.getVTList(TheVT, MVT::Other);
-    SDValue Ops[] = {
-      Chain, StackSlot, DAG.getValueType(TheVT)
-    };
+    SDValue Ops[] = { Chain, StackSlot };
 
     unsigned FLDSize = TheVT.getStoreSize();
     assert(FLDSize <= MemSize && "Stack slot not big enough");
