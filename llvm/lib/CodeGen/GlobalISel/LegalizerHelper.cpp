@@ -1148,14 +1148,19 @@ LegalizerHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx, LLT WideTy) {
     bool LosesInfo;
     switch (WideTy.getSizeInBits()) {
     case 32:
-      Val.convert(APFloat::IEEEsingle(), APFloat::rmTowardZero, &LosesInfo);
+      Val.convert(APFloat::IEEEsingle(), APFloat::rmNearestTiesToEven,
+                  &LosesInfo);
       break;
     case 64:
-      Val.convert(APFloat::IEEEdouble(), APFloat::rmTowardZero, &LosesInfo);
+      Val.convert(APFloat::IEEEdouble(), APFloat::rmNearestTiesToEven,
+                  &LosesInfo);
       break;
     default:
-      llvm_unreachable("Unhandled fp widen type");
+      return UnableToLegalize;
     }
+
+    assert(!LosesInfo && "extend should always be lossless");
+
     Observer.changingInstr(MI);
     SrcMO.setFPImm(ConstantFP::get(Ctx, Val));
 
