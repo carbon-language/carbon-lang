@@ -21,6 +21,12 @@ class ScopedInterceptor {
 
 LibIgnore *libignore();
 
+#if !SANITIZER_GO
+INLINE bool in_symbolizer() {
+  return UNLIKELY(cur_thread()->in_symbolizer);
+}
+#endif
+
 }  // namespace __tsan
 
 #define SCOPED_INTERCEPTOR_RAW(func, ...) \
