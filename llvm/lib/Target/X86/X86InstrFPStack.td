@@ -22,7 +22,6 @@ def SDTX86Fst       : SDTypeProfile<0, 2, [SDTCisFP<0>,
                                            SDTCisPtrTy<1>]>;
 def SDTX86Fild      : SDTypeProfile<1, 1, [SDTCisFP<0>, SDTCisPtrTy<1>]>;
 def SDTX86Fnstsw    : SDTypeProfile<1, 1, [SDTCisVT<0, i16>, SDTCisVT<1, i16>]>;
-def SDTX86FpToIMem  : SDTypeProfile<0, 2, [SDTCisFP<0>, SDTCisPtrTy<1>]>;
 
 def SDTX86CwdStore  : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 
@@ -37,12 +36,8 @@ def X86fildflag     : SDNode<"X86ISD::FILD_FLAG", SDTX86Fild,
                              [SDNPHasChain, SDNPOutGlue, SDNPMayLoad,
                               SDNPMemOperand]>;
 def X86fp_stsw      : SDNode<"X86ISD::FNSTSW16r", SDTX86Fnstsw>;
-def X86fp_to_i16mem : SDNode<"X86ISD::FP_TO_INT16_IN_MEM", SDTX86FpToIMem,
-                             [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
-def X86fp_to_i32mem : SDNode<"X86ISD::FP_TO_INT32_IN_MEM", SDTX86FpToIMem,
-                             [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
-def X86fp_to_i64mem : SDNode<"X86ISD::FP_TO_INT64_IN_MEM", SDTX86FpToIMem,
-                             [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
+def X86fp_to_mem : SDNode<"X86ISD::FP_TO_INT_IN_MEM", SDTX86Fst,
+                          [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
 def X86fp_cwd_get16 : SDNode<"X86ISD::FNSTCW16m",          SDTX86CwdStore,
                              [SDNPHasChain, SDNPMayStore, SDNPSideEffect,
                               SDNPMemOperand]>;
@@ -81,6 +76,19 @@ def X86fild64 : PatFrag<(ops node:$ptr), (X86fild node:$ptr), [{
 }]>;
 
 def X86fildflag64 : PatFrag<(ops node:$ptr), (X86fildflag node:$ptr), [{
+  return cast<MemIntrinsicSDNode>(N)->getMemoryVT() == MVT::i64;
+}]>;
+
+def X86fp_to_i16mem : PatFrag<(ops node:$val, node:$ptr),
+                              (X86fp_to_mem node:$val, node:$ptr), [{
+  return cast<MemIntrinsicSDNode>(N)->getMemoryVT() == MVT::i16;
+}]>;
+def X86fp_to_i32mem : PatFrag<(ops node:$val, node:$ptr),
+                              (X86fp_to_mem node:$val, node:$ptr), [{
+  return cast<MemIntrinsicSDNode>(N)->getMemoryVT() == MVT::i32;
+}]>;
+def X86fp_to_i64mem : PatFrag<(ops node:$val, node:$ptr),
+                              (X86fp_to_mem node:$val, node:$ptr), [{
   return cast<MemIntrinsicSDNode>(N)->getMemoryVT() == MVT::i64;
 }]>;
 

@@ -18111,13 +18111,7 @@ X86TargetLowering::FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG,
   int SSFI = MF.getFrameInfo().CreateStackObject(MemSize, MemSize, false);
   SDValue StackSlot = DAG.getFrameIndex(SSFI, PtrVT);
 
-  unsigned Opc;
-  switch (DstTy.getSimpleVT().SimpleTy) {
-  default: llvm_unreachable("Invalid FP_TO_SINT to lower!");
-  case MVT::i16: Opc = X86ISD::FP_TO_INT16_IN_MEM; break;
-  case MVT::i32: Opc = X86ISD::FP_TO_INT32_IN_MEM; break;
-  case MVT::i64: Opc = X86ISD::FP_TO_INT64_IN_MEM; break;
-  }
+  const unsigned Opc = X86ISD::FP_TO_INT_IN_MEM;
 
   SDValue Chain = DAG.getEntryNode();
   SDValue Value = Op.getOperand(0);
@@ -27372,9 +27366,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FXOR:               return "X86ISD::FXOR";
   case X86ISD::FILD:               return "X86ISD::FILD";
   case X86ISD::FILD_FLAG:          return "X86ISD::FILD_FLAG";
-  case X86ISD::FP_TO_INT16_IN_MEM: return "X86ISD::FP_TO_INT16_IN_MEM";
-  case X86ISD::FP_TO_INT32_IN_MEM: return "X86ISD::FP_TO_INT32_IN_MEM";
-  case X86ISD::FP_TO_INT64_IN_MEM: return "X86ISD::FP_TO_INT64_IN_MEM";
+  case X86ISD::FP_TO_INT_IN_MEM:   return "X86ISD::FP_TO_INT_IN_MEM";
   case X86ISD::FLD:                return "X86ISD::FLD";
   case X86ISD::FST:                return "X86ISD::FST";
   case X86ISD::CALL:               return "X86ISD::CALL";

@@ -598,10 +598,8 @@ namespace llvm {
       /// integer destination in memory and a FP reg source.  This corresponds
       /// to the X86::FIST*m instructions and the rounding mode change stuff. It
       /// has two inputs (token chain and address) and two outputs (int value
-      /// and token chain).
-      FP_TO_INT16_IN_MEM,
-      FP_TO_INT32_IN_MEM,
-      FP_TO_INT64_IN_MEM,
+      /// and token chain). Memory VT specifies the type to store to.
+      FP_TO_INT_IN_MEM,
 
       /// This instruction implements SINT_TO_FP with the
       /// integer source in memory and FP reg result.  This corresponds to the
