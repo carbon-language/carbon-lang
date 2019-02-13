@@ -6422,35 +6422,6 @@ SDValue SelectionDAG::getAtomicCmpSwap(unsigned Opcode, const SDLoc &dl,
 
 SDValue SelectionDAG::getAtomic(unsigned Opcode, const SDLoc &dl, EVT MemVT,
                                 SDValue Chain, SDValue Ptr, SDValue Val,
-                                const Value *PtrVal, unsigned Alignment,
-                                AtomicOrdering Ordering,
-                                SyncScope::ID SSID) {
-  if (Alignment == 0)  // Ensure that codegen never sees alignment 0
-    Alignment = getEVTAlignment(MemVT);
-
-  MachineFunction &MF = getMachineFunction();
-  // An atomic store does not load. An atomic load does not store.
-  // (An atomicrmw obviously both loads and stores.)
-  // For now, atomics are considered to be volatile always, and they are
-  // chained as such.
-  // FIXME: Volatile isn't really correct; we should keep track of atomic
-  // orderings in the memoperand.
-  auto Flags = MachineMemOperand::MOVolatile;
-  if (Opcode != ISD::ATOMIC_STORE)
-    Flags |= MachineMemOperand::MOLoad;
-  if (Opcode != ISD::ATOMIC_LOAD)
-    Flags |= MachineMemOperand::MOStore;
-
-  MachineMemOperand *MMO =
-    MF.getMachineMemOperand(MachinePointerInfo(PtrVal), Flags,
-                            MemVT.getStoreSize(), Alignment, AAMDNodes(),
-                            nullptr, SSID, Ordering);
-
-  return getAtomic(Opcode, dl, MemVT, Chain, Ptr, Val, MMO);
-}
-
-SDValue SelectionDAG::getAtomic(unsigned Opcode, const SDLoc &dl, EVT MemVT,
-                                SDValue Chain, SDValue Ptr, SDValue Val,
                                 MachineMemOperand *MMO) {
   assert((Opcode == ISD::ATOMIC_LOAD_ADD ||
           Opcode == ISD::ATOMIC_LOAD_SUB ||

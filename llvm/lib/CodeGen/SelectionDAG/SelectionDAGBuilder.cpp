@@ -4444,19 +4444,31 @@ void SelectionDAGBuilder::visitAtomicRMW(const AtomicRMWInst &I) {
   case AtomicRMWInst::FAdd: NT = ISD::ATOMIC_LOAD_FADD; break;
   case AtomicRMWInst::FSub: NT = ISD::ATOMIC_LOAD_FSUB; break;
   }
-  AtomicOrdering Order = I.getOrdering();
+  AtomicOrdering Ordering = I.getOrdering();
   SyncScope::ID SSID = I.getSyncScopeID();
 
   SDValue InChain = getRoot();
 
+  auto MemVT = getValue(I.getValOperand()).getSimpleValueType();
+  auto Alignment = DAG.getEVTAlignment(MemVT);
+
+  // For now, atomics are considered to be volatile always, and they are
+  // chained as such.
+  // FIXME: Volatile isn't really correct; we should keep track of atomic
+  // orderings in the memoperand.
+  auto Flags = MachineMemOperand::MOVolatile |
+    MachineMemOperand::MOLoad |  MachineMemOperand::MOStore;
+
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineMemOperand *MMO =
+    MF.getMachineMemOperand(MachinePointerInfo(I.getPointerOperand()), Flags,
+                            MemVT.getStoreSize(), Alignment, AAMDNodes(),
+                            nullptr, SSID, Ordering);
+
   SDValue L =
-    DAG.getAtomic(NT, dl,
-                  getValue(I.getValOperand()).getSimpleValueType(),
-                  InChain,
-                  getValue(I.getPointerOperand()),
-                  getValue(I.getValOperand()),
-                  I.getPointerOperand(),
-                  /* Alignment=*/ 0, Order, SSID);
+    DAG.getAtomic(NT, dl, MemVT, InChain,
+                  getValue(I.getPointerOperand()), getValue(I.getValOperand()),
+                  MMO);
 
   SDValue OutChain = L.getValue(1);
 
@@ -4514,7 +4526,7 @@ void SelectionDAGBuilder::visitAtomicLoad(const LoadInst &I) {
 void SelectionDAGBuilder::visitAtomicStore(const StoreInst &I) {
   SDLoc dl = getCurSDLoc();
 
-  AtomicOrdering Order = I.getOrdering();
+  AtomicOrdering Ordering = I.getOrdering();
   SyncScope::ID SSID = I.getSyncScopeID();
 
   SDValue InChain = getRoot();
@@ -4526,13 +4538,22 @@ void SelectionDAGBuilder::visitAtomicStore(const StoreInst &I) {
   if (I.getAlignment() < VT.getStoreSize())
     report_fatal_error("Cannot generate unaligned atomic store");
 
+  // For now, atomics are considered to be volatile always, and they are
+  // chained as such.
+  // FIXME: Volatile isn't really correct; we should keep track of atomic
+  // orderings in the memoperand.
+  auto Flags = MachineMemOperand::MOVolatile |  MachineMemOperand::MOStore;
+
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineMemOperand *MMO =
+    MF.getMachineMemOperand(MachinePointerInfo(I.getPointerOperand()), Flags,
+                            VT.getStoreSize(), I.getAlignment(), AAMDNodes(),
+                            nullptr, SSID, Ordering);
   SDValue OutChain =
-    DAG.getAtomic(ISD::ATOMIC_STORE, dl, VT,
-                  InChain,
-                  getValue(I.getPointerOperand()),
-                  getValue(I.getValueOperand()),
-                  I.getPointerOperand(), I.getAlignment(),
-                  Order, SSID);
+    DAG.getAtomic(ISD::ATOMIC_STORE, dl, VT, InChain,
+              getValue(I.getPointerOperand()), getValue(I.getValueOperand()),
+              MMO);
+
 
   DAG.setRoot(OutChain);
 }
