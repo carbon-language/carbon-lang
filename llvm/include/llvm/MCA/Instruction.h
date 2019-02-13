@@ -338,6 +338,9 @@ struct InstrDesc {
   // A list of buffered resources consumed by this instruction.
   SmallVector<uint64_t, 4> Buffers;
 
+  unsigned UsedProcResUnits;
+  unsigned UsedProcResGroups;
+
   unsigned MaxLatency;
   // Number of MicroOps for this instruction.
   unsigned NumMicroOps;
