@@ -27,11 +27,13 @@ def wasm_memcpy_t : SDTypeProfile<0, 5,
 def wasm_memcpy : SDNode<"WebAssemblyISD::MEMORY_COPY", wasm_memcpy_t,
                          [SDNPHasChain, SDNPMayLoad, SDNPMayStore]>;
 
-//===----------------------------------------------------------------------===//
-// memory.init
-//===----------------------------------------------------------------------===//
+def wasm_memset_t : SDTypeProfile<0, 4,
+  [SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisInt<2>, SDTCisInt<3>]
+>;
+def wasm_memset : SDNode<"WebAssemblyISD::MEMORY_FILL", wasm_memset_t,
+                         [SDNPHasChain, SDNPMayStore]>;
 
-let mayStore = 1 in
+let mayStore = 1, hasSideEffects = 1 in
 defm MEMORY_INIT :
   BULK_I<(outs),
          (ins i32imm_op:$seg, i32imm_op:$idx, I32:$dest,
@@ -43,18 +45,11 @@ defm MEMORY_INIT :
          "memory.init\t$seg, $idx, $dest, $offset, $size",
          "memory.init\t$seg, $idx", 0x08>;
 
-//===----------------------------------------------------------------------===//
-// data.drop
-//===----------------------------------------------------------------------===//
-
+let hasSideEffects = 1 in
 defm DATA_DROP :
   BULK_I<(outs), (ins i32imm_op:$seg), (outs), (ins i32imm_op:$seg),
          [(int_wasm_data_drop (i32 imm:$seg))],
          "data.drop\t$seg", "data.drop\t$seg", 0x09>;
-
-//===----------------------------------------------------------------------===//
-// memory.copy
-//===----------------------------------------------------------------------===//
 
 let mayLoad = 1, mayStore = 1 in
 defm MEMORY_COPY :
@@ -66,3 +61,11 @@ defm MEMORY_COPY :
          )],
          "memory.copy\t$src_idx, $dst_idx, $dst, $src, $len",
          "memory.copy\t$src_idx, $dst_idx", 0x0a>;
+
+let mayStore = 1 in
+defm MEMORY_FILL :
+  BULK_I<(outs), (ins i32imm_op:$idx, I32:$dst, I32:$value, I32:$size),
+         (outs), (ins i32imm_op:$idx),
+         [(wasm_memset (i32 imm:$idx), I32:$dst, I32:$value, I32:$size)],
+         "memory.fill\t$idx, $dst, $value, $size",
+         "memory.fill\t$idx", 0x0b>;
