@@ -554,7 +554,6 @@ static void LongJmp(ThreadState *thr, uptr *env) {
 
 // FIXME: put everything below into a common extern "C" block?
 extern "C" void __tsan_setjmp(uptr sp, uptr mangled_sp) {
-  cur_thread_init();
   SetJmp(cur_thread(), sp, mangled_sp);
 }
 
@@ -943,7 +942,6 @@ extern "C" void *__tsan_thread_start_func(void *arg) {
   void *param = p->param;
   int tid = 0;
   {
-    cur_thread_init();
     ThreadState *thr = cur_thread();
     // Thread-local state is not initialized yet.
     ScopedIgnoreInterceptors ignore;
@@ -1055,9 +1053,6 @@ TSAN_INTERCEPTOR(int, pthread_detach, void *th) {
 TSAN_INTERCEPTOR(void, pthread_exit, void *retval) {
   {
     SCOPED_INTERCEPTOR_RAW(pthread_exit, retval);
-#if !SANITIZER_MAC && !SANITIZER_ANDROID
-    CHECK_EQ(thr, &cur_thread_placeholder);
-#endif
   }
   REAL(pthread_exit)(retval);
 }
@@ -1986,7 +1981,6 @@ static bool is_sync_signal(ThreadSignalContext *sctx, int sig) {
 void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
                                           __sanitizer_siginfo *info,
                                           void *ctx) {
-  cur_thread_init();
   ThreadState *thr = cur_thread();
   ThreadSignalContext *sctx = SigCtx(thr);
   if (sig < 0 || sig >= kSigCount) {
