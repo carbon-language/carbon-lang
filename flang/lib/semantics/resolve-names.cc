@@ -2733,12 +2733,12 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
       seenAnyName = true;
       name = optKeyword->v.source;
       auto it{std::find_if(parameterDecls.begin(), parameterDecls.end(),
-          [&](Symbol *symbol) { return symbol->name() == name; })};
+          [&](const Symbol *symbol) { return symbol->name() == name; })};
       if (it == parameterDecls.end()) {
         Say(name,
             "'%s' is not the name of a parameter for this type"_err_en_US);
       } else {
-        Resolve(optKeyword->v, *it);
+        Resolve(optKeyword->v, const_cast<Symbol *>(*it));
       }
     } else if (seenAnyName) {
       Say(typeName.source, "Type parameter value must have a name"_err_en_US);
@@ -2769,7 +2769,7 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
   for (const SourceName &name : parameterNames) {
     if (!spec.FindParameter(name)) {
       auto it{std::find_if(parameterDecls.begin(), parameterDecls.end(),
-          [&](Symbol *symbol) { return symbol->name() == name; })};
+          [&](const Symbol *symbol) { return symbol->name() == name; })};
       CHECK(it != parameterDecls.end());
       auto &symbol{**it};
       const auto *details{symbol.detailsIf<TypeParamDetails>()};
