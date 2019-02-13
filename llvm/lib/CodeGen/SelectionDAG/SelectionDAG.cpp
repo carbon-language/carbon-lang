@@ -6382,32 +6382,6 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, const SDLoc &dl, EVT MemVT,
   return SDValue(N, 0);
 }
 
-SDValue SelectionDAG::getAtomicCmpSwap(
-    unsigned Opcode, const SDLoc &dl, EVT MemVT, SDVTList VTs, SDValue Chain,
-    SDValue Ptr, SDValue Cmp, SDValue Swp, MachinePointerInfo PtrInfo,
-    unsigned Alignment, AtomicOrdering SuccessOrdering,
-    AtomicOrdering FailureOrdering, SyncScope::ID SSID) {
-  assert(Opcode == ISD::ATOMIC_CMP_SWAP ||
-         Opcode == ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS);
-  assert(Cmp.getValueType() == Swp.getValueType() && "Invalid Atomic Op Types");
-
-  if (Alignment == 0)  // Ensure that codegen never sees alignment 0
-    Alignment = getEVTAlignment(MemVT);
-
-  MachineFunction &MF = getMachineFunction();
-
-  // FIXME: Volatile isn't really correct; we should keep track of atomic
-  // orderings in the memoperand.
-  auto Flags = MachineMemOperand::MOVolatile | MachineMemOperand::MOLoad |
-               MachineMemOperand::MOStore;
-  MachineMemOperand *MMO =
-    MF.getMachineMemOperand(PtrInfo, Flags, MemVT.getStoreSize(), Alignment,
-                            AAMDNodes(), nullptr, SSID, SuccessOrdering,
-                            FailureOrdering);
-
-  return getAtomicCmpSwap(Opcode, dl, MemVT, VTs, Chain, Ptr, Cmp, Swp, MMO);
-}
-
 SDValue SelectionDAG::getAtomicCmpSwap(unsigned Opcode, const SDLoc &dl,
                                        EVT MemVT, SDVTList VTs, SDValue Chain,
                                        SDValue Ptr, SDValue Cmp, SDValue Swp,

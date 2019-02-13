@@ -981,12 +981,6 @@ public:
   /// a success flag (initially i1), and a chain.
   SDValue getAtomicCmpSwap(unsigned Opcode, const SDLoc &dl, EVT MemVT,
                            SDVTList VTs, SDValue Chain, SDValue Ptr,
-                           SDValue Cmp, SDValue Swp, MachinePointerInfo PtrInfo,
-                           unsigned Alignment, AtomicOrdering SuccessOrdering,
-                           AtomicOrdering FailureOrdering,
-                           SyncScope::ID SSID);
-  SDValue getAtomicCmpSwap(unsigned Opcode, const SDLoc &dl, EVT MemVT,
-                           SDVTList VTs, SDValue Chain, SDValue Ptr,
                            SDValue Cmp, SDValue Swp, MachineMemOperand *MMO);
 
   /// Gets a node for an atomic op, produces result (if relevant)
