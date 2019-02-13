@@ -18093,7 +18093,9 @@ X86TargetLowering::FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG,
                        (!Subtarget.is64Bit() ||
                         !isScalarFPTypeInSSEReg(TheVT));
 
-  if (!IsSigned && DstTy != MVT::i64 && !Subtarget.hasAVX512()) {
+  if (!IsSigned && DstTy != MVT::i64) {
+    assert(!Subtarget.hasAVX512() &&
+           "AVX512 should have already been handled!");
     // Replace the fp-to-uint32 operation with an fp-to-sint64 FIST.
     // The low 32 bits of the fist result will have the correct uint32 result.
     assert(DstTy == MVT::i32 && "Unexpected FP_TO_UINT");
@@ -18731,6 +18733,17 @@ SDValue X86TargetLowering::LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG) const {
   }
 
   assert(!VT.isVector());
+
+  if (!IsSigned && Subtarget.hasAVX512()) {
+    SDValue Src = Op.getOperand(0);
+    // Conversions from f32/f64 should be legal.
+    if (Src.getValueType() != MVT::f80)
+      return Op;
+
+    // Use default expansion.
+    if (VT == MVT::i64)
+      return SDValue();
+  }
 
   if (SDValue V = FP_TO_INTHelper(Op, DAG, IsSigned))
     return V;
