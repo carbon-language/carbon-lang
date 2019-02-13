@@ -498,6 +498,18 @@ template<typename T, typename M> void Walk(LoopBounds<T> &x, M &mutator) {
     mutator.Post(x);
   }
 }
+template<typename V> void Walk(const CommonStmt &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.blocks, visitor);
+    visitor.Post(x);
+  }
+}
+template<typename M> void Walk(CommonStmt &x, M &mutator) {
+  if (mutator.Pre(x)) {
+    Walk(x.blocks, mutator);
+    mutator.Post(x);
+  }
+}
 template<typename V> void Walk(const Expr &x, V &visitor) {
   if (visitor.Pre(x)) {
     Walk(x.source, visitor);

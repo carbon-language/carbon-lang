@@ -27,6 +27,13 @@ ImportStmt::ImportStmt(common::ImportKind &&k, std::list<Name> &&n)
       kind == common::ImportKind::Only || names.empty());
 }
 
+// R873
+CommonStmt::CommonStmt(std::optional<Name> &&name,
+    std::list<CommonBlockObject> &&objects, std::list<Block> &&others) {
+  blocks.emplace_front(std::move(name), std::move(objects));
+  blocks.splice(blocks.end(), std::move(others));
+}
+
 // R901 designator
 bool Designator::EndsInBareName() const {
   return std::visit(

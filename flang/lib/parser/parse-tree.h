@@ -1535,10 +1535,10 @@ struct CommonStmt {
     TUPLE_CLASS_BOILERPLATE(Block);
     std::tuple<std::optional<Name>, std::list<CommonBlockObject>> t;
   };
-  TUPLE_CLASS_BOILERPLATE(CommonStmt);
-  std::tuple<std::optional<Name>, std::list<CommonBlockObject>,
-      std::list<Block>>
-      t;
+  BOILERPLATE(CommonStmt);
+  CommonStmt(std::optional<Name> &&, std::list<CommonBlockObject> &&,
+      std::list<Block> &&);
+  std::list<Block> blocks;
 };
 
 // R872 equivalence-object -> variable-name | array-element | substring
