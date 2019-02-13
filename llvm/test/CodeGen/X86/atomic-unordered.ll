@@ -116,3 +116,178 @@ define void @store_i64(i64* %ptr, i64 %v) {
   store atomic i64 %v, i64* %ptr unordered, align 8
   ret void
 }
+
+;; The next batch of tests are intended to show transforms which we
+;; either *can't* do for legality, or don't currently implement.  The later
+;; are noted carefully where relevant.
+
+; Must use a full width op, not a byte op
+define void @narrow_writeback_or(i64* %ptr) {
+; CHECK-O0-LABEL: narrow_writeback_or:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rax
+; CHECK-O0-NEXT:    orq $7, %rax
+; CHECK-O0-NEXT:    movq %rax, (%rdi)
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: narrow_writeback_or:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    orq $7, (%rdi)
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %ptr unordered, align 8
+  %v.new = or i64 %v, 7
+  store atomic i64 %v.new, i64* %ptr unordered, align 8
+  ret void
+}
+
+; Must use a full width op, not a byte op
+define void @narrow_writeback_and(i64* %ptr) {
+; CHECK-O0-LABEL: narrow_writeback_and:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rax
+; CHECK-O0-NEXT:    movl %eax, %ecx
+; CHECK-O0-NEXT:    andl $-256, %ecx
+; CHECK-O0-NEXT:    movl %ecx, %eax
+; CHECK-O0-NEXT:    movq %rax, (%rdi)
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: narrow_writeback_and:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movl $4294967040, %eax # imm = 0xFFFFFF00
+; CHECK-O3-NEXT:    andq %rax, (%rdi)
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %ptr unordered, align 8
+  %v.new = and i64 %v, 4294967040 ;; 0xFFFF_FF00
+  store atomic i64 %v.new, i64* %ptr unordered, align 8
+  ret void
+}
+
+; Must use a full width op, not a byte op
+define void @narrow_writeback_xor(i64* %ptr) {
+; CHECK-O0-LABEL: narrow_writeback_xor:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rax
+; CHECK-O0-NEXT:    xorq $7, %rax
+; CHECK-O0-NEXT:    movq %rax, (%rdi)
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: narrow_writeback_xor:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    xorq $7, (%rdi)
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %ptr unordered, align 8
+  %v.new = xor i64 %v, 7
+  store atomic i64 %v.new, i64* %ptr unordered, align 8
+  ret void
+}
+
+; Legal if wider type is also atomic (TODO)
+define void @widen_store(i32* %p0, i32 %v1, i32 %v2) {
+; CHECK-O0-LABEL: widen_store:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movl %esi, (%rdi)
+; CHECK-O0-NEXT:    movl %edx, 4(%rdi)
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: widen_store:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movl %esi, (%rdi)
+; CHECK-O3-NEXT:    movl %edx, 4(%rdi)
+; CHECK-O3-NEXT:    retq
+  %p1 = getelementptr i32, i32* %p0, i64 1
+  store atomic i32 %v1, i32* %p0 unordered, align 8
+  store atomic i32 %v2, i32* %p1 unordered, align 4
+  ret void
+}
+
+; Legal if wider type is also atomic (TODO)
+define void @widen_broadcast(i32* %p0, i32 %v) {
+; CHECK-O0-LABEL: widen_broadcast:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movl %esi, (%rdi)
+; CHECK-O0-NEXT:    movl %esi, 4(%rdi)
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: widen_broadcast:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movl %esi, (%rdi)
+; CHECK-O3-NEXT:    movl %esi, 4(%rdi)
+; CHECK-O3-NEXT:    retq
+  %p1 = getelementptr i32, i32* %p0, i64 1
+  store atomic i32 %v, i32* %p0 unordered, align 8
+  store atomic i32 %v, i32* %p1 unordered, align 4
+  ret void
+}
+
+; Legal if wider type is also atomic (TODO)
+define void @vec_store(i32* %p0, <2 x i32> %vec) {
+; CHECK-O0-LABEL: vec_store:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movd %xmm0, %eax
+; CHECK-O0-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
+; CHECK-O0-NEXT:    movd %xmm0, %ecx
+; CHECK-O0-NEXT:    movl %eax, (%rdi)
+; CHECK-O0-NEXT:    movl %ecx, 4(%rdi)
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: vec_store:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movd %xmm0, %eax
+; CHECK-O3-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
+; CHECK-O3-NEXT:    movd %xmm0, %ecx
+; CHECK-O3-NEXT:    movl %eax, (%rdi)
+; CHECK-O3-NEXT:    movl %ecx, 4(%rdi)
+; CHECK-O3-NEXT:    retq
+  %v1 = extractelement <2 x i32> %vec, i32 0
+  %v2 = extractelement <2 x i32> %vec, i32 1
+  %p1 = getelementptr i32, i32* %p0, i64 1
+  store atomic i32 %v1, i32* %p0 unordered, align 8
+  store atomic i32 %v2, i32* %p1 unordered, align 4
+  ret void
+}
+
+
+; Legal if wider type is also atomic (TODO)
+; Also, can avoid register move from xmm to eax (TODO)
+define void @widen_broadcast2(i32* %p0, <2 x i32> %vec) {
+; CHECK-O0-LABEL: widen_broadcast2:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movd %xmm0, %eax
+; CHECK-O0-NEXT:    movl %eax, (%rdi)
+; CHECK-O0-NEXT:    movl %eax, 4(%rdi)
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: widen_broadcast2:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movd %xmm0, %eax
+; CHECK-O3-NEXT:    movl %eax, (%rdi)
+; CHECK-O3-NEXT:    movl %eax, 4(%rdi)
+; CHECK-O3-NEXT:    retq
+  %v1 = extractelement <2 x i32> %vec, i32 0
+  %p1 = getelementptr i32, i32* %p0, i64 1
+  store atomic i32 %v1, i32* %p0 unordered, align 8
+  store atomic i32 %v1, i32* %p1 unordered, align 4
+  ret void
+}
+
+
+; Legal if wider type is also atomic (TODO)
+define void @widen_zero_init(i32* %p0, i32 %v1, i32 %v2) {
+; CHECK-O0-LABEL: widen_zero_init:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movl $0, (%rdi)
+; CHECK-O0-NEXT:    movl $0, 4(%rdi)
+; CHECK-O0-NEXT:    movl %esi, {{[-0-9]+}}(%r{{[sb]}}p) # 4-byte Spill
+; CHECK-O0-NEXT:    movl %edx, {{[-0-9]+}}(%r{{[sb]}}p) # 4-byte Spill
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: widen_zero_init:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movl $0, (%rdi)
+; CHECK-O3-NEXT:    movl $0, 4(%rdi)
+; CHECK-O3-NEXT:    retq
+  %p1 = getelementptr i32, i32* %p0, i64 1
+  store atomic i32 0, i32* %p0 unordered, align 8
+  store atomic i32 0, i32* %p1 unordered, align 4
+  ret void
+}
