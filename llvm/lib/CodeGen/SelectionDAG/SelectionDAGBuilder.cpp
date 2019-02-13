@@ -5492,10 +5492,16 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
       return nullptr;
     }
 
-    // The value is not used in this block yet (or it would have an SDNode).
-    // We still want the value to appear for the user if possible -- if it has
-    // an associated VReg, we can refer to that instead.
-    if (!isa<Argument>(V)) {
+    // Special rules apply for the first dbg.values of parameter variables in a
+    // function. Identify them by the fact they reference Argument Values, that
+    // they're parameters, and they are parameters of the current function. We
+    // need to let them dangle until they get an SDNode.
+    bool IsParamOfFunc = isa<Argument>(V) && Variable->isParameter() &&
+                         !DI.getDebugLoc()->getInlinedAt();
+    if (!IsParamOfFunc) {
+      // The value is not used in this block yet (or it would have an SDNode).
+      // We still want the value to appear for the user if possible -- if it has
+      // an associated VReg, we can refer to that instead.
       auto VMI = FuncInfo.ValueMap.find(V);
       if (VMI != FuncInfo.ValueMap.end()) {
         unsigned Reg = VMI->second;
