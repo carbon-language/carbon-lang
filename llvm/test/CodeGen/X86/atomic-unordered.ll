@@ -291,3 +291,907 @@ define void @widen_zero_init(i32* %p0, i32 %v1, i32 %v2) {
   store atomic i32 0, i32* %p1 unordered, align 4
   ret void
 }
+
+; Legal, as expected
+define i64 @load_fold_add1(i64* %p) {
+; CHECK-O0-LABEL: load_fold_add1:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    addq $15, %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_add1:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    addq $15, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = add i64 %v, 15
+  ret i64 %ret
+}
+
+; Legal, as expected
+define i64 @load_fold_add2(i64* %p, i64 %v2) {
+; CHECK-O0-LABEL: load_fold_add2:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    addq (%rdi), %rsi
+; CHECK-O0-NEXT:    movq %rsi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_add2:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    addq %rsi, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = add i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_add3(i64* %p1, i64* %p2) {
+; CHECK-O0-LABEL: load_fold_add3:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    addq (%rsi), %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_add3:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rcx
+; CHECK-O3-NEXT:    movq (%rsi), %rax
+; CHECK-O3-NEXT:    addq %rcx, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p1 unordered, align 8
+  %v2 = load atomic i64, i64* %p2 unordered, align 8
+  %ret = add i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal, as expected
+define i64 @load_fold_sub1(i64* %p) {
+; CHECK-O0-LABEL: load_fold_sub1:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    subq $15, %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_sub1:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    addq $-15, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = sub i64 %v, 15
+  ret i64 %ret
+}
+
+; Legal, as expected
+define i64 @load_fold_sub2(i64* %p, i64 %v2) {
+; CHECK-O0-LABEL: load_fold_sub2:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    subq %rsi, %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_sub2:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    subq %rsi, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = sub i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_sub3(i64* %p1, i64* %p2) {
+; CHECK-O0-LABEL: load_fold_sub3:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    subq (%rsi), %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_sub3:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    movq (%rsi), %rcx
+; CHECK-O3-NEXT:    subq %rcx, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p1 unordered, align 8
+  %v2 = load atomic i64, i64* %p2 unordered, align 8
+  %ret = sub i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal, as expected
+define i64 @load_fold_mul1(i64* %p) {
+; CHECK-O0-LABEL: load_fold_mul1:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    imulq $15, (%rdi), %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_mul1:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    leaq (%rax,%rax,4), %rax
+; CHECK-O3-NEXT:    leaq (%rax,%rax,2), %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = mul i64 %v, 15
+  ret i64 %ret
+}
+
+; Legal, O0 is better than O3 codegen (TODO)
+define i64 @load_fold_mul2(i64* %p, i64 %v2) {
+; CHECK-O0-LABEL: load_fold_mul2:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    imulq (%rdi), %rsi
+; CHECK-O0-NEXT:    movq %rsi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_mul2:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    imulq %rsi, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = mul i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_mul3(i64* %p1, i64* %p2) {
+; CHECK-O0-LABEL: load_fold_mul3:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    imulq (%rsi), %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_mul3:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rcx
+; CHECK-O3-NEXT:    movq (%rsi), %rax
+; CHECK-O3-NEXT:    imulq %rcx, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p1 unordered, align 8
+  %v2 = load atomic i64, i64* %p2 unordered, align 8
+  %ret = mul i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_sdiv1(i64* %p) {
+; CHECK-O0-LABEL: load_fold_sdiv1:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rax
+; CHECK-O0-NEXT:    cqto
+; CHECK-O0-NEXT:    movl $15, %edi
+; CHECK-O0-NEXT:    idivq %rdi
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_sdiv1:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rcx
+; CHECK-O3-NEXT:    movabsq $-8608480567731124087, %rdx # imm = 0x8888888888888889
+; CHECK-O3-NEXT:    movq %rcx, %rax
+; CHECK-O3-NEXT:    imulq %rdx
+; CHECK-O3-NEXT:    addq %rcx, %rdx
+; CHECK-O3-NEXT:    movq %rdx, %rax
+; CHECK-O3-NEXT:    shrq $63, %rax
+; CHECK-O3-NEXT:    sarq $3, %rdx
+; CHECK-O3-NEXT:    leaq (%rdx,%rax), %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = sdiv i64 %v, 15
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_sdiv2(i64* %p, i64 %v2) {
+; CHECK-O0-LABEL: load_fold_sdiv2:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rax
+; CHECK-O0-NEXT:    cqto
+; CHECK-O0-NEXT:    idivq %rsi
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_sdiv2:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    cqto
+; CHECK-O3-NEXT:    idivq %rsi
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = sdiv i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_sdiv3(i64* %p1, i64* %p2) {
+; CHECK-O0-LABEL: load_fold_sdiv3:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rax
+; CHECK-O0-NEXT:    cqto
+; CHECK-O0-NEXT:    idivq (%rsi)
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_sdiv3:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    movq (%rsi), %rcx
+; CHECK-O3-NEXT:    cqto
+; CHECK-O3-NEXT:    idivq %rcx
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p1 unordered, align 8
+  %v2 = load atomic i64, i64* %p2 unordered, align 8
+  %ret = sdiv i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_udiv1(i64* %p) {
+; CHECK-O0-LABEL: load_fold_udiv1:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rax
+; CHECK-O0-NEXT:    xorl %ecx, %ecx
+; CHECK-O0-NEXT:    movl %ecx, %edx
+; CHECK-O0-NEXT:    movl $15, %edi
+; CHECK-O0-NEXT:    divq %rdi
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_udiv1:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    movabsq $-8608480567731124087, %rcx # imm = 0x8888888888888889
+; CHECK-O3-NEXT:    mulq %rcx
+; CHECK-O3-NEXT:    movq %rdx, %rax
+; CHECK-O3-NEXT:    shrq $3, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = udiv i64 %v, 15
+  ret i64 %ret
+}
+
+; Legal, as expected
+define i64 @load_fold_udiv2(i64* %p, i64 %v2) {
+; CHECK-O0-LABEL: load_fold_udiv2:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rax
+; CHECK-O0-NEXT:    xorl %ecx, %ecx
+; CHECK-O0-NEXT:    movl %ecx, %edx
+; CHECK-O0-NEXT:    divq %rsi
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_udiv2:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    xorl %edx, %edx
+; CHECK-O3-NEXT:    divq %rsi
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = udiv i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_udiv3(i64* %p1, i64* %p2) {
+; CHECK-O0-LABEL: load_fold_udiv3:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rax
+; CHECK-O0-NEXT:    xorl %ecx, %ecx
+; CHECK-O0-NEXT:    movl %ecx, %edx
+; CHECK-O0-NEXT:    divq (%rsi)
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_udiv3:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    movq (%rsi), %rcx
+; CHECK-O3-NEXT:    xorl %edx, %edx
+; CHECK-O3-NEXT:    divq %rcx
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p1 unordered, align 8
+  %v2 = load atomic i64, i64* %p2 unordered, align 8
+  %ret = udiv i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_srem1(i64* %p) {
+; CHECK-O0-LABEL: load_fold_srem1:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rax
+; CHECK-O0-NEXT:    cqto
+; CHECK-O0-NEXT:    movl $15, %edi
+; CHECK-O0-NEXT:    idivq %rdi
+; CHECK-O0-NEXT:    movq %rdx, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_srem1:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rcx
+; CHECK-O3-NEXT:    movabsq $-8608480567731124087, %rdx # imm = 0x8888888888888889
+; CHECK-O3-NEXT:    movq %rcx, %rax
+; CHECK-O3-NEXT:    imulq %rdx
+; CHECK-O3-NEXT:    addq %rcx, %rdx
+; CHECK-O3-NEXT:    movq %rdx, %rax
+; CHECK-O3-NEXT:    shrq $63, %rax
+; CHECK-O3-NEXT:    sarq $3, %rdx
+; CHECK-O3-NEXT:    addq %rax, %rdx
+; CHECK-O3-NEXT:    leaq (%rdx,%rdx,4), %rax
+; CHECK-O3-NEXT:    leaq (%rax,%rax,2), %rax
+; CHECK-O3-NEXT:    subq %rax, %rcx
+; CHECK-O3-NEXT:    movq %rcx, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = srem i64 %v, 15
+  ret i64 %ret
+}
+
+; Legal, as expected
+define i64 @load_fold_srem2(i64* %p, i64 %v2) {
+; CHECK-O0-LABEL: load_fold_srem2:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rax
+; CHECK-O0-NEXT:    cqto
+; CHECK-O0-NEXT:    idivq %rsi
+; CHECK-O0-NEXT:    movq %rdx, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_srem2:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    cqto
+; CHECK-O3-NEXT:    idivq %rsi
+; CHECK-O3-NEXT:    movq %rdx, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = srem i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_srem3(i64* %p1, i64* %p2) {
+; CHECK-O0-LABEL: load_fold_srem3:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rax
+; CHECK-O0-NEXT:    cqto
+; CHECK-O0-NEXT:    idivq (%rsi)
+; CHECK-O0-NEXT:    movq %rdx, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_srem3:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    movq (%rsi), %rcx
+; CHECK-O3-NEXT:    cqto
+; CHECK-O3-NEXT:    idivq %rcx
+; CHECK-O3-NEXT:    movq %rdx, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p1 unordered, align 8
+  %v2 = load atomic i64, i64* %p2 unordered, align 8
+  %ret = srem i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_urem1(i64* %p) {
+; CHECK-O0-LABEL: load_fold_urem1:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rax
+; CHECK-O0-NEXT:    xorl %ecx, %ecx
+; CHECK-O0-NEXT:    movl %ecx, %edx
+; CHECK-O0-NEXT:    movl $15, %edi
+; CHECK-O0-NEXT:    divq %rdi
+; CHECK-O0-NEXT:    movq %rdx, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_urem1:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rcx
+; CHECK-O3-NEXT:    movabsq $-8608480567731124087, %rdx # imm = 0x8888888888888889
+; CHECK-O3-NEXT:    movq %rcx, %rax
+; CHECK-O3-NEXT:    mulq %rdx
+; CHECK-O3-NEXT:    shrq $3, %rdx
+; CHECK-O3-NEXT:    leaq (%rdx,%rdx,4), %rax
+; CHECK-O3-NEXT:    leaq (%rax,%rax,2), %rax
+; CHECK-O3-NEXT:    subq %rax, %rcx
+; CHECK-O3-NEXT:    movq %rcx, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = urem i64 %v, 15
+  ret i64 %ret
+}
+
+; Legal, as expected
+define i64 @load_fold_urem2(i64* %p, i64 %v2) {
+; CHECK-O0-LABEL: load_fold_urem2:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rax
+; CHECK-O0-NEXT:    xorl %ecx, %ecx
+; CHECK-O0-NEXT:    movl %ecx, %edx
+; CHECK-O0-NEXT:    divq %rsi
+; CHECK-O0-NEXT:    movq %rdx, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_urem2:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    xorl %edx, %edx
+; CHECK-O3-NEXT:    divq %rsi
+; CHECK-O3-NEXT:    movq %rdx, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = urem i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_urem3(i64* %p1, i64* %p2) {
+; CHECK-O0-LABEL: load_fold_urem3:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rax
+; CHECK-O0-NEXT:    xorl %ecx, %ecx
+; CHECK-O0-NEXT:    movl %ecx, %edx
+; CHECK-O0-NEXT:    divq (%rsi)
+; CHECK-O0-NEXT:    movq %rdx, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_urem3:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    movq (%rsi), %rcx
+; CHECK-O3-NEXT:    xorl %edx, %edx
+; CHECK-O3-NEXT:    divq %rcx
+; CHECK-O3-NEXT:    movq %rdx, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p1 unordered, align 8
+  %v2 = load atomic i64, i64* %p2 unordered, align 8
+  %ret = urem i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal, as expected
+define i64 @load_fold_shl1(i64* %p) {
+; CHECK-O0-LABEL: load_fold_shl1:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    shlq $15, %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_shl1:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    shlq $15, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = shl i64 %v, 15
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_shl2(i64* %p, i64 %v2) {
+; CHECK-O0-LABEL: load_fold_shl2:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    movq %rsi, %rcx
+; CHECK-O0-NEXT:    # kill: def $cl killed $rcx
+; CHECK-O0-NEXT:    shlq %cl, %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_shl2:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq %rsi, %rcx
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    # kill: def $cl killed $cl killed $rcx
+; CHECK-O3-NEXT:    shlq %cl, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = shl i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_shl3(i64* %p1, i64* %p2) {
+; CHECK-O0-LABEL: load_fold_shl3:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    movq (%rsi), %rcx
+; CHECK-O0-NEXT:    # kill: def $cl killed $rcx
+; CHECK-O0-NEXT:    shlq %cl, %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_shl3:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    movq (%rsi), %rcx
+; CHECK-O3-NEXT:    # kill: def $cl killed $cl killed $rcx
+; CHECK-O3-NEXT:    shlq %cl, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p1 unordered, align 8
+  %v2 = load atomic i64, i64* %p2 unordered, align 8
+  %ret = shl i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal, as expected
+define i64 @load_fold_lshr1(i64* %p) {
+; CHECK-O0-LABEL: load_fold_lshr1:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    shrq $15, %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_lshr1:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    shrq $15, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = lshr i64 %v, 15
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_lshr2(i64* %p, i64 %v2) {
+; CHECK-O0-LABEL: load_fold_lshr2:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    movq %rsi, %rcx
+; CHECK-O0-NEXT:    # kill: def $cl killed $rcx
+; CHECK-O0-NEXT:    shrq %cl, %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_lshr2:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq %rsi, %rcx
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    # kill: def $cl killed $cl killed $rcx
+; CHECK-O3-NEXT:    shrq %cl, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = lshr i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_lshr3(i64* %p1, i64* %p2) {
+; CHECK-O0-LABEL: load_fold_lshr3:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    movq (%rsi), %rcx
+; CHECK-O0-NEXT:    # kill: def $cl killed $rcx
+; CHECK-O0-NEXT:    shrq %cl, %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_lshr3:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    movq (%rsi), %rcx
+; CHECK-O3-NEXT:    # kill: def $cl killed $cl killed $rcx
+; CHECK-O3-NEXT:    shrq %cl, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p1 unordered, align 8
+  %v2 = load atomic i64, i64* %p2 unordered, align 8
+  %ret = lshr i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal, as expected
+define i64 @load_fold_ashr1(i64* %p) {
+; CHECK-O0-LABEL: load_fold_ashr1:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    sarq $15, %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_ashr1:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    sarq $15, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = ashr i64 %v, 15
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_ashr2(i64* %p, i64 %v2) {
+; CHECK-O0-LABEL: load_fold_ashr2:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    movq %rsi, %rcx
+; CHECK-O0-NEXT:    # kill: def $cl killed $rcx
+; CHECK-O0-NEXT:    sarq %cl, %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_ashr2:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq %rsi, %rcx
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    # kill: def $cl killed $cl killed $rcx
+; CHECK-O3-NEXT:    sarq %cl, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = ashr i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_ashr3(i64* %p1, i64* %p2) {
+; CHECK-O0-LABEL: load_fold_ashr3:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    movq (%rsi), %rcx
+; CHECK-O0-NEXT:    # kill: def $cl killed $rcx
+; CHECK-O0-NEXT:    sarq %cl, %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_ashr3:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    movq (%rsi), %rcx
+; CHECK-O3-NEXT:    # kill: def $cl killed $cl killed $rcx
+; CHECK-O3-NEXT:    sarq %cl, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p1 unordered, align 8
+  %v2 = load atomic i64, i64* %p2 unordered, align 8
+  %ret = ashr i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal, as expected
+define i64 @load_fold_and1(i64* %p) {
+; CHECK-O0-LABEL: load_fold_and1:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    andq $15, %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_and1:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    andl $15, %eax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = and i64 %v, 15
+  ret i64 %ret
+}
+
+; Legal, as expected
+define i64 @load_fold_and2(i64* %p, i64 %v2) {
+; CHECK-O0-LABEL: load_fold_and2:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    andq (%rdi), %rsi
+; CHECK-O0-NEXT:    movq %rsi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_and2:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    andq %rsi, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = and i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_and3(i64* %p1, i64* %p2) {
+; CHECK-O0-LABEL: load_fold_and3:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    andq (%rsi), %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_and3:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rcx
+; CHECK-O3-NEXT:    movq (%rsi), %rax
+; CHECK-O3-NEXT:    andq %rcx, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p1 unordered, align 8
+  %v2 = load atomic i64, i64* %p2 unordered, align 8
+  %ret = and i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal, as expected
+define i64 @load_fold_or1(i64* %p) {
+; CHECK-O0-LABEL: load_fold_or1:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    orq $15, %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_or1:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    orq $15, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = or i64 %v, 15
+  ret i64 %ret
+}
+
+; Legal, as expected
+define i64 @load_fold_or2(i64* %p, i64 %v2) {
+; CHECK-O0-LABEL: load_fold_or2:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    orq (%rdi), %rsi
+; CHECK-O0-NEXT:    movq %rsi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_or2:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    orq %rsi, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = or i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_or3(i64* %p1, i64* %p2) {
+; CHECK-O0-LABEL: load_fold_or3:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    orq (%rsi), %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_or3:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rcx
+; CHECK-O3-NEXT:    movq (%rsi), %rax
+; CHECK-O3-NEXT:    orq %rcx, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p1 unordered, align 8
+  %v2 = load atomic i64, i64* %p2 unordered, align 8
+  %ret = or i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal, as expected
+define i64 @load_fold_xor1(i64* %p) {
+; CHECK-O0-LABEL: load_fold_xor1:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    xorq $15, %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_xor1:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    xorq $15, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = xor i64 %v, 15
+  ret i64 %ret
+}
+
+; Legal, as expected
+define i64 @load_fold_xor2(i64* %p, i64 %v2) {
+; CHECK-O0-LABEL: load_fold_xor2:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    xorq (%rdi), %rsi
+; CHECK-O0-NEXT:    movq %rsi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_xor2:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    xorq %rsi, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = xor i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i64 @load_fold_xor3(i64* %p1, i64* %p2) {
+; CHECK-O0-LABEL: load_fold_xor3:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    xorq (%rsi), %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_xor3:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rcx
+; CHECK-O3-NEXT:    movq (%rsi), %rax
+; CHECK-O3-NEXT:    xorq %rcx, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p1 unordered, align 8
+  %v2 = load atomic i64, i64* %p2 unordered, align 8
+  %ret = xor i64 %v, %v2
+  ret i64 %ret
+}
+
+; Legal to fold (TODO)
+define i1 @load_fold_icmp1(i64* %p) {
+; CHECK-O0-LABEL: load_fold_icmp1:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    subq $15, %rdi
+; CHECK-O0-NEXT:    sete %al
+; CHECK-O0-NEXT:    movq %rdi, {{[-0-9]+}}(%r{{[sb]}}p) # 8-byte Spill
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_icmp1:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    cmpq $15, %rax
+; CHECK-O3-NEXT:    sete %al
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = icmp eq i64 %v, 15
+  ret i1 %ret
+}
+
+; Legal to fold (TODO)
+define i1 @load_fold_icmp2(i64* %p, i64 %v2) {
+; CHECK-O0-LABEL: load_fold_icmp2:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    subq %rsi, %rdi
+; CHECK-O0-NEXT:    sete %al
+; CHECK-O0-NEXT:    movq %rdi, {{[-0-9]+}}(%r{{[sb]}}p) # 8-byte Spill
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_icmp2:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    cmpq %rsi, %rax
+; CHECK-O3-NEXT:    sete %al
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  %ret = icmp eq i64 %v, %v2
+  ret i1 %ret
+}
+
+; Legal to fold (TODO)
+define i1 @load_fold_icmp3(i64* %p1, i64* %p2) {
+; CHECK-O0-LABEL: load_fold_icmp3:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    movq (%rsi), %rsi
+; CHECK-O0-NEXT:    subq %rsi, %rdi
+; CHECK-O0-NEXT:    sete %al
+; CHECK-O0-NEXT:    movq %rdi, {{[-0-9]+}}(%r{{[sb]}}p) # 8-byte Spill
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: load_fold_icmp3:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    movq (%rsi), %rcx
+; CHECK-O3-NEXT:    cmpq %rcx, %rax
+; CHECK-O3-NEXT:    sete %al
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p1 unordered, align 8
+  %v2 = load atomic i64, i64* %p2 unordered, align 8
+  %ret = icmp eq i64 %v, %v2
+  ret i1 %ret
+}
