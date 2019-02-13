@@ -1185,6 +1185,98 @@ void SelectionDAGBuilder::resolveDanglingDebugInfo(const Value *V,
   DDIV.clear();
 }
 
+bool SelectionDAGBuilder::handleDebugValue(const Value *V, DILocalVariable *Var,
+                                           DIExpression *Expr, DebugLoc dl,
+                                           DebugLoc InstDL, unsigned Order) {
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  SDDbgValue *SDV;
+  if (isa<ConstantInt>(V) || isa<ConstantFP>(V) || isa<UndefValue>(V) ||
+      isa<ConstantPointerNull>(V)) {
+    SDV = DAG.getConstantDbgValue(Var, Expr, V, dl, SDNodeOrder);
+    DAG.AddDbgValue(SDV, nullptr, false);
+    return true;
+  }
+
+  // If the Value is a frame index, we can create a FrameIndex debug value
+  // without relying on the DAG at all.
+  if (const AllocaInst *AI = dyn_cast<AllocaInst>(V)) {
+    auto SI = FuncInfo.StaticAllocaMap.find(AI);
+    if (SI != FuncInfo.StaticAllocaMap.end()) {
+      auto SDV =
+          DAG.getFrameIndexDbgValue(Var, Expr, SI->second,
+                                    /*IsIndirect*/ false, dl, SDNodeOrder);
+      // Do not attach the SDNodeDbgValue to an SDNode: this variable location
+      // is still available even if the SDNode gets optimized out.
+      DAG.AddDbgValue(SDV, nullptr, false);
+      return true;
+    }
+  }
+
+  // Do not use getValue() in here; we don't want to generate code at
+  // this point if it hasn't been done yet.
+  SDValue N = NodeMap[V];
+  if (!N.getNode() && isa<Argument>(V)) // Check unused arguments map.
+    N = UnusedArgNodeMap[V];
+  if (N.getNode()) {
+    if (EmitFuncArgumentDbgValue(V, Var, Expr, dl, false, N))
+      return true;
+    SDV = getDbgValue(N, Var, Expr, dl, SDNodeOrder);
+    DAG.AddDbgValue(SDV, N.getNode(), false);
+    return true;
+  }
+
+  // Special rules apply for the first dbg.values of parameter variables in a
+  // function. Identify them by the fact they reference Argument Values, that
+  // they're parameters, and they are parameters of the current function. We
+  // need to let them dangle until they get an SDNode.
+  bool IsParamOfFunc = isa<Argument>(V) && Var->isParameter() &&
+                       !InstDL.getInlinedAt();
+  if (!IsParamOfFunc) {
+    // The value is not used in this block yet (or it would have an SDNode).
+    // We still want the value to appear for the user if possible -- if it has
+    // an associated VReg, we can refer to that instead.
+    auto VMI = FuncInfo.ValueMap.find(V);
+    if (VMI != FuncInfo.ValueMap.end()) {
+      unsigned Reg = VMI->second;
+      // If this is a PHI node, it may be split up into several MI PHI nodes
+      // (in FunctionLoweringInfo::set).
+      RegsForValue RFV(V->getContext(), TLI, DAG.getDataLayout(), Reg,
+                       V->getType(), None);
+      if (RFV.occupiesMultipleRegs()) {
+        unsigned Offset = 0;
+        unsigned BitsToDescribe = 0;
+        if (auto VarSize = Var->getSizeInBits())
+          BitsToDescribe = *VarSize;
+        if (auto Fragment = Expr->getFragmentInfo())
+          BitsToDescribe = Fragment->SizeInBits;
+        for (auto RegAndSize : RFV.getRegsAndSizes()) {
+          unsigned RegisterSize = RegAndSize.second;
+          // Bail out if all bits are described already.
+          if (Offset >= BitsToDescribe)
+            break;
+          unsigned FragmentSize = (Offset + RegisterSize > BitsToDescribe)
+              ? BitsToDescribe - Offset
+              : RegisterSize;
+          auto FragmentExpr = DIExpression::createFragmentExpression(
+              Expr, Offset, FragmentSize);
+          if (!FragmentExpr)
+              continue;
+          SDV = DAG.getVRegDbgValue(Var, *FragmentExpr, RegAndSize.first,
+                                    false, dl, SDNodeOrder);
+          DAG.AddDbgValue(SDV, nullptr, false);
+          Offset += RegisterSize;
+        }
+      } else {
+        SDV = DAG.getVRegDbgValue(Var, Expr, Reg, false, dl, SDNodeOrder);
+        DAG.AddDbgValue(SDV, nullptr, false);
+      }
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /// getCopyFromRegs - If there was virtual register allocated for the value V
 /// emit CopyFromReg of the specified type Ty. Return empty SDValue() otherwise.
 SDValue SelectionDAGBuilder::getCopyFromRegs(const Value *V, Type *Ty) {
@@ -5456,91 +5548,9 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     if (!V)
       return nullptr;
 
-    SDDbgValue *SDV;
-    if (isa<ConstantInt>(V) || isa<ConstantFP>(V) || isa<UndefValue>(V) ||
-        isa<ConstantPointerNull>(V)) {
-      SDV = DAG.getConstantDbgValue(Variable, Expression, V, dl, SDNodeOrder);
-      DAG.AddDbgValue(SDV, nullptr, false);
+    if (handleDebugValue(V, Variable, Expression, DI.getDebugLoc(), dl,
+        SDNodeOrder))
       return nullptr;
-    }
-
-    // If the Value is a frame index, we can create a FrameIndex debug value
-    // without relying on the DAG at all.
-    if (const AllocaInst *AI = dyn_cast<AllocaInst>(V)) {
-      auto SI = FuncInfo.StaticAllocaMap.find(AI);
-      if (SI != FuncInfo.StaticAllocaMap.end()) {
-        auto SDV =
-            DAG.getFrameIndexDbgValue(Variable, Expression, SI->second,
-                                      /*IsIndirect*/ false, dl, SDNodeOrder);
-        // Do not attach the SDNodeDbgValue to an SDNode: this variable location
-        // is still available even if the SDNode gets optimized out.
-        DAG.AddDbgValue(SDV, nullptr, false);
-        return nullptr;
-      }
-    }
-
-    // Do not use getValue() in here; we don't want to generate code at
-    // this point if it hasn't been done yet.
-    SDValue N = NodeMap[V];
-    if (!N.getNode() && isa<Argument>(V)) // Check unused arguments map.
-      N = UnusedArgNodeMap[V];
-    if (N.getNode()) {
-      if (EmitFuncArgumentDbgValue(V, Variable, Expression, dl, false, N))
-        return nullptr;
-      SDV = getDbgValue(N, Variable, Expression, dl, SDNodeOrder);
-      DAG.AddDbgValue(SDV, N.getNode(), false);
-      return nullptr;
-    }
-
-    // Special rules apply for the first dbg.values of parameter variables in a
-    // function. Identify them by the fact they reference Argument Values, that
-    // they're parameters, and they are parameters of the current function. We
-    // need to let them dangle until they get an SDNode.
-    bool IsParamOfFunc = isa<Argument>(V) && Variable->isParameter() &&
-                         !DI.getDebugLoc()->getInlinedAt();
-    if (!IsParamOfFunc) {
-      // The value is not used in this block yet (or it would have an SDNode).
-      // We still want the value to appear for the user if possible -- if it has
-      // an associated VReg, we can refer to that instead.
-      auto VMI = FuncInfo.ValueMap.find(V);
-      if (VMI != FuncInfo.ValueMap.end()) {
-        unsigned Reg = VMI->second;
-        // If this is a PHI node, it may be split up into several MI PHI nodes
-        // (in FunctionLoweringInfo::set).
-        RegsForValue RFV(V->getContext(), TLI, DAG.getDataLayout(), Reg,
-                         V->getType(), None);
-        if (RFV.occupiesMultipleRegs()) {
-          unsigned Offset = 0;
-          unsigned BitsToDescribe = 0;
-          if (auto VarSize = Variable->getSizeInBits())
-            BitsToDescribe = *VarSize;
-          if (auto Fragment = Expression->getFragmentInfo())
-            BitsToDescribe = Fragment->SizeInBits;
-          for (auto RegAndSize : RFV.getRegsAndSizes()) {
-            unsigned RegisterSize = RegAndSize.second;
-            // Bail out if all bits are described already.
-            if (Offset >= BitsToDescribe)
-              break;
-            unsigned FragmentSize = (Offset + RegisterSize > BitsToDescribe)
-                ? BitsToDescribe - Offset
-                : RegisterSize;
-            auto FragmentExpr = DIExpression::createFragmentExpression(
-                Expression, Offset, FragmentSize);
-            if (!FragmentExpr)
-                continue;
-            SDV = DAG.getVRegDbgValue(Variable, *FragmentExpr, RegAndSize.first,
-                                      false, dl, SDNodeOrder);
-            DAG.AddDbgValue(SDV, nullptr, false);
-            Offset += RegisterSize;
-          }
-        } else {
-          SDV = DAG.getVRegDbgValue(Variable, Expression, Reg, false, dl,
-                                    SDNodeOrder);
-          DAG.AddDbgValue(SDV, nullptr, false);
-        }
-        return nullptr;
-      }
-    }
 
     // TODO: When we get here we will either drop the dbg.value completely, or
     // we try to move it forward by letting it dangle for awhile. So we should

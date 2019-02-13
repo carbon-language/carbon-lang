@@ -680,6 +680,12 @@ public:
   // structures now that we've seen its definition.
   void resolveDanglingDebugInfo(const Value *V, SDValue Val);
 
+  // For a given Value, attempt to create and record a SDDbgValue in the
+  // SelectionDAG.
+  bool handleDebugValue(const Value *V, DILocalVariable *Var,
+                        DIExpression *Expr, DebugLoc CurDL,
+                        DebugLoc InstDL, unsigned Order);
+
   SDValue getValue(const Value *V);
   bool findValue(const Value *V) const;
 
