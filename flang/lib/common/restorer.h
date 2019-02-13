@@ -35,7 +35,7 @@ private:
   A original_;
 };
 
-template<typename A> Restorer<A> ScopedSet(A &to, A &&from) {
+template<typename A, typename B> Restorer<A> ScopedSet(A &to, B &&from) {
   Restorer<A> result{to};
   to = std::move(from);
   return result;

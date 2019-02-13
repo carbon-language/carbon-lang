@@ -640,12 +640,10 @@ SymbolList DerivedTypeDetails::OrderComponents(const Scope &scope) const {
       const Symbol &symbol{*iter->second};
       if (symbol.test(Symbol::Flag::ParentComp)) {
         CHECK(result.empty());
-        const Symbol &typeSymbol{symbol.get<ObjectEntityDetails>()
-                                     .type()
-                                     ->AsDerived()
-                                     ->typeSymbol()};
-        result = typeSymbol.get<DerivedTypeDetails>().OrderComponents(
-            *typeSymbol.scope());
+        const DerivedTypeSpec &spec{
+            *symbol.get<ObjectEntityDetails>().type()->AsDerived()};
+        result = spec.typeSymbol().get<DerivedTypeDetails>().OrderComponents(
+            *spec.scope());
       }
       result.push_back(&symbol);
     }

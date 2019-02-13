@@ -49,7 +49,7 @@ Symbol *Scope::FindSymbol(const SourceName &name) const {
   if (kind() == Kind::DerivedType) {
     return parent_.FindSymbol(name);
   }
-  const auto it{find(name)};
+  auto it{find(name)};
   if (it != end()) {
     return it->second;
   } else if (CanImport(name)) {
