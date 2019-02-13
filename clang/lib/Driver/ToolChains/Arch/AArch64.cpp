@@ -373,6 +373,9 @@ fp16_fml_fallthrough:
   if (Args.hasArg(options::OPT_ffixed_x24))
     Features.push_back("+reserve-x24");
 
+  if (Args.hasArg(options::OPT_ffixed_x25))
+    Features.push_back("+reserve-x25");
+
   if (Args.hasArg(options::OPT_ffixed_x26))
     Features.push_back("+reserve-x26");
 
