@@ -370,6 +370,7 @@ void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
 
   // Interpret this flag early because error() depends on them.
   errorHandler().ErrorLimit = args::getInteger(Args, OPT_error_limit, 20);
+  checkZOptions(Args);
 
   // Handle -help
   if (Args.hasArg(OPT_help)) {
@@ -410,7 +411,6 @@ void LinkerDriver::main(ArrayRef<const char *> ArgsArr) {
   }
 
   readConfigs(Args);
-  checkZOptions(Args);
 
   // The behavior of -v or --version is a bit strange, but this is
   // needed for compatibility with GNU linkers.
