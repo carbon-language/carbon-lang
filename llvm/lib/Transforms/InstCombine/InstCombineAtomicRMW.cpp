@@ -54,13 +54,21 @@ Instruction *InstCombiner::visitAtomicRMWInst(AtomicRMWInst &RMWI) {
   if (!isIdempotentRMW(RMWI))
     return nullptr;
 
-  // TODO: Canonicalize the operation for an idempotent operation we can't
-  // convert into a simple load.
-
-  // Volatile RMWs perform a load and a store, we cannot replace
-  // this by just a load.
+  // Volatile RMWs perform a load and a store, we cannot replace this by just a
+  // load. We chose not to canonicalize out of general paranoia about user
+  // expectations around volatile. 
   if (RMWI.isVolatile())
     return nullptr;
+
+  // We chose to canonicalize all idempotent operations to an single
+  // operation code and constant.  This makes it easier for the rest of the
+  // optimizer to match easily.  The choice of or w/zero is arbitrary.
+  if (RMWI.getType()->isIntegerTy() &&
+      RMWI.getOperation() != AtomicRMWInst::Or) {
+    RMWI.setOperation(AtomicRMWInst::Or);
+    RMWI.setOperand(1, ConstantInt::get(RMWI.getType(), 0));
+    return &RMWI;
+  }
 
   // Check if the required ordering is compatible with an atomic load.
   AtomicOrdering Ordering = RMWI.getOrdering();

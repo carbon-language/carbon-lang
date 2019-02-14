@@ -87,14 +87,13 @@ define i16 @atomic_syncscope(i16* %addr) {
   ret i16 %res
 }
 
-; Don't transform seq_cst ordering.
 ; By eliminating the store part of the atomicrmw, we would get rid of the
-; release semantic, which is incorrect.
-; CHECK-LABEL: atomic_or_zero_seq_cst
+; release semantic, which is incorrect.  We can canonicalize the operation.
+; CHECK-LABEL: atomic_seq_cst
 ; CHECK-NEXT: %res = atomicrmw or i16* %addr, i16 0 seq_cst
 ; CHECK-NEXT: ret i16 %res
-define i16 @atomic_or_zero_seq_cst(i16* %addr) {
-  %res = atomicrmw or i16* %addr, i16 0 seq_cst
+define i16 @atomic_seq_cst(i16* %addr) {
+  %res = atomicrmw add i16* %addr, i16 0 seq_cst
   ret i16 %res
 }
 
@@ -117,21 +116,21 @@ define i16 @atomic_xor_zero(i16* %addr) {
 }
 
 ; Check that the transformation does not apply when the ordering is
-; incompatible with a load (release).
-; CHECK-LABEL: atomic_or_zero_release
+; incompatible with a load (release).  Do canonicalize.
+; CHECK-LABEL: atomic_release
 ; CHECK-NEXT: %res = atomicrmw or i16* %addr, i16 0 release
 ; CHECK-NEXT: ret i16 %res
-define i16 @atomic_or_zero_release(i16* %addr) {
-  %res = atomicrmw or i16* %addr, i16 0 release
+define i16 @atomic_release(i16* %addr) {
+  %res = atomicrmw sub i16* %addr, i16 0 release
   ret i16 %res
 }
 
 ; Check that the transformation does not apply when the ordering is
-; incompatible with a load (acquire, release).
-; CHECK-LABEL: atomic_or_zero_acq_rel
+; incompatible with a load (acquire, release).  Do canonicalize.
+; CHECK-LABEL: atomic_acq_rel
 ; CHECK-NEXT: %res = atomicrmw or i16* %addr, i16 0 acq_rel
 ; CHECK-NEXT: ret i16 %res
-define i16 @atomic_or_zero_acq_rel(i16* %addr) {
-  %res = atomicrmw or i16* %addr, i16 0 acq_rel
+define i16 @atomic_acq_rel(i16* %addr) {
+  %res = atomicrmw xor i16* %addr, i16 0 acq_rel
   ret i16 %res
 }
