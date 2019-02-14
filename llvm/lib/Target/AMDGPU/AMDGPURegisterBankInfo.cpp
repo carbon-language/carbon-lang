@@ -605,6 +605,7 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     LLVM_FALLTHROUGH;
   }
 
+  case AMDGPU::G_GEP:
   case AMDGPU::G_ADD:
   case AMDGPU::G_SUB:
   case AMDGPU::G_MUL:
@@ -742,16 +743,6 @@ AMDGPURegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     OpdsMapping[1] = nullptr; // Predicate Operand.
     OpdsMapping[2] = AMDGPU::getValueMapping(Op2Bank, Size);
     OpdsMapping[3] = AMDGPU::getValueMapping(AMDGPU::VGPRRegBankID, Size);
-    break;
-  }
-  case AMDGPU::G_GEP: {
-    for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
-      if (!MI.getOperand(i).isReg())
-        continue;
-
-      unsigned Size = MRI.getType(MI.getOperand(i).getReg()).getSizeInBits();
-      OpdsMapping[i] = AMDGPU::getValueMapping(AMDGPU::SGPRRegBankID, Size);
-    }
     break;
   }
   case AMDGPU::G_STORE: {
