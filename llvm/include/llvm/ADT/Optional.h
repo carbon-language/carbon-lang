@@ -116,7 +116,9 @@ template <typename T> struct OptionalStorage<T, true> {
 
   OptionalStorage() = default;
 
-  OptionalStorage(const T &y) : hasVal(true) { new (storage.buffer) T(y); }
+  OptionalStorage(const T &y) : hasVal(true) {
+    std::memcpy(storage.buffer, reinterpret_cast<char const *>(&y), sizeof(T));
+  }
   OptionalStorage(const OptionalStorage &O) = default;
   OptionalStorage(T &&y) : hasVal(true) {
     std::memcpy(storage.buffer, reinterpret_cast<char*>(&y), sizeof(T));
