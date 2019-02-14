@@ -1832,7 +1832,7 @@ InlineResult CallAnalyzer::analyzeCall(CallSite CS) {
     // see an indirect branch that ends up being dead code at a particular call
     // site. If the blockaddress escapes the function, e.g., via a global
     // variable, inlining may lead to an invalid cross-function reference.
-    if (BB->hasAddressTaken() && BB->addressPotentiallyEscapesFunction())
+    if (BB->hasAddressTaken())
       return "blockaddress";
 
     // Analyze the cost of this block. If we blow through the threshold, this
@@ -2082,7 +2082,7 @@ InlineResult llvm::isInlineViable(Function &F) {
     if (isa<IndirectBrInst>(BI->getTerminator()))
       return "contains indirect branches";
 
-    if (BI->hasAddressTaken() && BI->addressPotentiallyEscapesFunction())
+    if (BI->hasAddressTaken())
       return "uses block address";
 
     for (auto &II : *BI) {
