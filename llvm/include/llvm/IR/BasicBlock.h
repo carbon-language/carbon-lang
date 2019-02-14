@@ -390,6 +390,11 @@ public:
   /// direct branches, switches, etc. to it.
   bool hasAddressTaken() const { return getSubclassDataFromValue() != 0; }
 
+  /// Returns true if there are any uses of the address of this basic block
+  /// that are call instructions (which may allow the address of this basic
+  /// block to escape).
+  bool addressPotentiallyEscapesFunction();
+
   /// Update all phi nodes in this basic block's successors to refer to basic
   /// block \p New instead of to it.
   void replaceSuccessorsPhiUsesWith(BasicBlock *New);

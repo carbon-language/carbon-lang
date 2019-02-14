@@ -442,6 +442,14 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I, const Twine &BBName) {
   return New;
 }
 
+bool BasicBlock::addressPotentiallyEscapesFunction() {
+  for (const Use& U : BlockAddress::get(this)->uses())
+    if (const CallInst* CI = dyn_cast<CallInst>(U))
+      if (!CI->paramHasAttr(U.getOperandNo(), Attribute::NoCapture))
+        return true;
+  return false;
+}
+
 void BasicBlock::replaceSuccessorsPhiUsesWith(BasicBlock *New) {
   Instruction *TI = getTerminator();
   if (!TI)
