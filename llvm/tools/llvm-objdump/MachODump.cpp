@@ -59,7 +59,7 @@ using namespace llvm;
 using namespace object;
 
 static cl::opt<bool>
-    UseDbg("g", cl::Grouping,
+    UseDbg("g",
            cl::desc("Print line information from debug info if available"));
 
 static cl::opt<std::string> DSYMFile("dsym",
