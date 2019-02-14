@@ -1340,6 +1340,15 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
   CHECK(spec.scope() != nullptr);
   const Symbol &typeSymbol{spec.typeSymbol()};
 
+  if (typeSymbol.attrs().test(semantics::Attr::ABSTRACT)) {  // C796
+    if (auto *msg{context.Say(typeName,
+            "ABSTRACT derived type '%s' cannot be used in a structure constructor"_err_en_US,
+            typeName.ToString().data())}) {
+      msg->Attach(
+          typeSymbol.name(), "Declaration of ABSTRACT derived type"_en_US);
+    }
+  }
+
   // This list holds all of the components in the derived type and its
   // parents.  The symbols for whole parent components appear after their
   // own components and before the components of the types that extend them.
@@ -1350,14 +1359,7 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
   // initialize X or A by name, but not both.
   const auto &details{typeSymbol.get<semantics::DerivedTypeDetails>()};
   std::list<const Symbol *> components{details.OrderComponents(*spec.scope())};
-  if (typeSymbol.attrs().test(semantics::Attr::ABSTRACT)) {  // C796
-    if (auto *msg{context.Say(typeName,
-            "ABSTRACT derived type '%s' cannot be used in a structure constructor"_err_en_US,
-            typeName.ToString().data())}) {
-      msg->Attach(
-          typeSymbol.name(), "Declaration of ABSTRACT derived type"_en_US);
-    }
-  }
+  auto nextAnonymous{components.begin()};
 
   std::set<parser::CharBlock> unavailable;
   bool anyKeyword{false};
@@ -1369,52 +1371,62 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
     const parser::Expr &expr{
         *std::get<parser::ComponentDataSource>(component.t).v};
     parser::CharBlock source{expr.source};
+    const Symbol *symbol{nullptr};
     if (const auto &kw{std::get<std::optional<parser::Keyword>>(component.t)}) {
       source = kw->v.source;
+      symbol = kw->v.symbol;
       anyKeyword = true;
-    } else if (anyKeyword) {  // C7100
-      context.Say(source,
-          "Value in structure constructor lacks a component name"_err_en_US);
-      checkConflicts = false;  // stem cascade
-    }
-    if (component.symbol == nullptr) {
-      context.Say(
-          source, "INTERNAL: StructureConstructor lacks symbol"_err_en_US);
-      continue;
-    }
-    const Symbol &symbol{*component.symbol};
-    if (symbol.has<semantics::TypeParamDetails>()) {
-      context.Say(source,
-          "Type parameter '%s' cannot be a component of this structure constructor"_err_en_US,
-          symbol.name().ToString().data());
-    } else if (checkConflicts) {
-      auto componentIter{
-          std::find(components.begin(), components.end(), &symbol)};
-      if (unavailable.find(symbol.name()) != unavailable.cend()) {
-        // C797, C798
+    } else {
+      if (anyKeyword) {  // C7100
         context.Say(source,
-            "Component '%s' conflicts with another component earlier in this structure constructor"_err_en_US,
-            symbol.name().ToString().data());
-      } else if (symbol.test(Symbol::Flag::ParentComp)) {
-        // Make earlier components unavailable once a whole parent appears.
-        for (auto it{components.begin()}; it != componentIter; ++it) {
-          unavailable.insert((*it)->name());
+            "Value in structure constructor lacks a component name"_err_en_US);
+        checkConflicts = false;  // stem cascade
+      }
+      while (nextAnonymous != components.end()) {
+        symbol = *nextAnonymous++;
+        if (!symbol->test(Symbol::Flag::ParentComp)) {
+          break;
         }
-      } else {
-        // Make whole parent components unavailable after any of their
-        // constituents appear.
-        for (auto it{componentIter}; it != components.end(); ++it) {
-          if ((*it)->test(Symbol::Flag::ParentComp)) {
+      }
+      if (symbol == nullptr) {
+        context.Say(
+            source, "Unexpected value in structure constructor"_err_en_US);
+      }
+    }
+    if (symbol != nullptr) {
+      if (symbol->has<semantics::TypeParamDetails>()) {
+        context.Say(source,
+            "Type parameter '%s' cannot be a component of this structure constructor"_err_en_US,
+            symbol->name().ToString().data());
+      } else if (checkConflicts) {
+        auto componentIter{
+            std::find(components.begin(), components.end(), symbol)};
+        if (unavailable.find(symbol->name()) != unavailable.cend()) {
+          // C797, C798
+          context.Say(source,
+              "Component '%s' conflicts with another component earlier in this structure constructor"_err_en_US,
+              symbol->name().ToString().data());
+        } else if (symbol->test(Symbol::Flag::ParentComp)) {
+          // Make earlier components unavailable once a whole parent appears.
+          for (auto it{components.begin()}; it != componentIter; ++it) {
             unavailable.insert((*it)->name());
+          }
+        } else {
+          // Make whole parent components unavailable after any of their
+          // constituents appear.
+          for (auto it{componentIter}; it != components.end(); ++it) {
+            if ((*it)->test(Symbol::Flag::ParentComp)) {
+              unavailable.insert((*it)->name());
+            }
           }
         }
       }
-    }
-    unavailable.insert(symbol.name());
-    if (MaybeExpr value{AnalyzeExpr(context, expr)}) {
-      // TODO pmk: C7104, C7105 check that pointer components are
-      // being initialized with data/procedure designators appropriately
-      result.Add(symbol, std::move(*value));
+      unavailable.insert(symbol->name());
+      if (MaybeExpr value{AnalyzeExpr(context, expr)}) {
+        // TODO pmk: C7104, C7105 check that pointer components are
+        // being initialized with data/procedure designators appropriately
+        result.Add(*symbol, std::move(*value));
+      }
     }
   }
 

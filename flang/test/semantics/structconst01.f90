@@ -57,6 +57,8 @@ module module1
     call type1arg(type1(0)(n=1,2))
     !ERROR: Component 'n' conflicts with another component earlier in this structure constructor
     call type1arg(type1(0)(n=1,n=2))
+    !ERROR: Unexpected value in structure constructor
+    call type1arg(type1(0)(1,2))
     call type2arg(type2(0,0)(n=1,m=2))
     call type2arg(type2(0,0)(m=2))
     !ERROR: Structure constructor lacks a value for component 'm'
@@ -73,5 +75,7 @@ module module1
     call type2arg(type2(0,0)(j=1, &
     !ERROR: Type parameter 'k' cannot be a component of this structure constructor
       k=2,m=3))
+    !ERROR: ABSTRACT derived type 'abstract' cannot be used in a structure constructor
+    call abstractarg(abstract(0)(n=1))
   end subroutine errors
 end module module1

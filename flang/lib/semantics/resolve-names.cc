@@ -3109,72 +3109,30 @@ bool DeclarationVisitor::Pre(const parser::StructureConstructor &x) {
   EndDeclTypeSpec();
   SetDeclTypeSpecState(savedState);
 
-  auto &typeName{std::get<parser::Name>(parsedType.t)};
-  const DerivedTypeSpec *spec{type ? type->AsDerived() : nullptr};
-  const Symbol *typeSymbol{spec ? &spec->typeSymbol() : nullptr};
+  if (type == nullptr) {
+    return false;
+  }
+  const DerivedTypeSpec *spec{type->AsDerived()};
   const Scope *typeScope{spec ? spec->scope() : nullptr};
-
-  // This list holds all of the components in the derived type and its
-  // parents.  The symbols for whole parent components appear after their
-  // own components and before the components of the types that extend them.
-  // E.g., TYPE :: A; REAL X; END TYPE
-  //       TYPE, EXTENDS(A) :: B; REAL Y; END TYPE
-  // produces the component list X, A, Y.
-  // The order is important below because a structure constructor can
-  // initialize X or A by name, but not both.
-  SymbolList components;
-  bool ok{typeSymbol != nullptr && typeScope != nullptr};
-  if (ok) {
-    components =
-        typeSymbol->get<DerivedTypeDetails>().OrderComponents(*typeScope);
-    if (typeSymbol->attrs().test(Attr::ABSTRACT)) {  // C796
-      SayWithDecl(typeName, *typeSymbol,
-          "ABSTRACT type cannot be used in a structure constructor"_err_en_US);
-    }
+  if (typeScope == nullptr) {
+    return false;
   }
 
   // N.B C7102 is implicitly enforced by having inaccessible types not
   // being found in resolution.
 
-  auto nextAnonymous{components.begin()};
   for (const auto &component :
       std::get<std::list<parser::ComponentSpec>>(x.t)) {
     // Visit the component spec expression, but not the keyword, since
     // we need to resolve its symbol in the scope of the derived type.
-    const parser::Expr &value{
-        *std::get<parser::ComponentDataSource>(component.t).v};
-    Walk(value);
-    const auto &kw{std::get<std::optional<parser::Keyword>>(component.t)};
-    const Symbol *symbol{nullptr};
-    SourceName source{value.source};
-    if (kw.has_value()) {
-      source = kw->v.source;
-      if (ok) {
-        symbol = FindInTypeOrParents(*typeScope, kw->v);
-        if (symbol == nullptr) {  // C7101
-          Say(source,
-              "Keyword '%s' is not a component of this derived type"_err_en_US);
-          ok = false;
-        }
+    Walk(std::get<parser::ComponentDataSource>(component.t));
+    if (const auto &kw{std::get<std::optional<parser::Keyword>>(component.t)}) {
+      if (const Symbol * symbol{FindInTypeOrParents(*typeScope, kw->v)}) {
+        CheckAccessibleComponent(kw->v.source, *symbol);  // C7102
+      } else {  // C7101
+        Say(kw->v.source,
+            "Keyword '%s' is not a component of this derived type"_err_en_US);
       }
-    } else if (ok) {
-      while (nextAnonymous != components.end()) {
-        symbol = *nextAnonymous++;
-        if (symbol->test(Symbol::Flag::ParentComp)) {
-          symbol = nullptr;
-        } else {
-          break;
-        }
-      }
-      if (symbol == nullptr) {
-        Say(source, "Unexpected value in structure constructor"_err_en_US);
-        break;
-      }
-    }
-    if (symbol != nullptr) {
-      // Save the resolved component's symbol (if any) in the parse tree.
-      component.symbol = symbol;
-      CheckAccessibleComponent(source, *symbol);  // C7102
     }
   }
   return false;
