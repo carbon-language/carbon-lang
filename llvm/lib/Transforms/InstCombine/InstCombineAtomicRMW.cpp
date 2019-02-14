@@ -51,6 +51,12 @@ bool isIdempotentRMW(AtomicRMWInst& RMWI) {
 
 
 Instruction *InstCombiner::visitAtomicRMWInst(AtomicRMWInst &RMWI) {
+  // TODO: Any atomicrmw op which produces a known result in memory can be
+  // replaced w/an atomicrmw xchg. (see getBinOpAbsorber)
+  
+  // TODO: Any atomicrmw xchg with no uses can be converted to a atomic store
+  // if the ordering is compatible.
+  
   if (!isIdempotentRMW(RMWI))
     return nullptr;
 
