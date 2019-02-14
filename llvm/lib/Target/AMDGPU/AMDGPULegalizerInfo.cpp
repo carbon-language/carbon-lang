@@ -397,17 +397,18 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     .clampScalar(0, S32, S64);
 
 
+  // FIXME: Handle alignment requirements.
   auto &ExtLoads = getActionDefinitionsBuilder({G_SEXTLOAD, G_ZEXTLOAD})
-    .legalForTypesWithMemSize({
-        {S32, GlobalPtr, 8},
-        {S32, GlobalPtr, 16},
-        {S32, LocalPtr, 8},
-        {S32, LocalPtr, 16},
-        {S32, PrivatePtr, 8},
-        {S32, PrivatePtr, 16}});
+    .legalForTypesWithMemDesc({
+        {S32, GlobalPtr, 8, 8},
+        {S32, GlobalPtr, 16, 8},
+        {S32, LocalPtr, 8, 8},
+        {S32, LocalPtr, 16, 8},
+        {S32, PrivatePtr, 8, 8},
+        {S32, PrivatePtr, 16, 8}});
   if (ST.hasFlatAddressSpace()) {
-    ExtLoads.legalForTypesWithMemSize({{S32, FlatPtr, 8},
-                                       {S32, FlatPtr, 16}});
+    ExtLoads.legalForTypesWithMemDesc({{S32, FlatPtr, 8, 8},
+                                       {S32, FlatPtr, 16, 8}});
   }
 
   ExtLoads.clampScalar(0, S32, S32)
