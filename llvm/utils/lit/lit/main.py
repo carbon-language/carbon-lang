@@ -321,10 +321,6 @@ def main_with_tmp(builtinParameters):
     debug_group.add_argument("--show-tests", dest="showTests",
                       help="Show all discovered tests",
                       action="store_true", default=False)
-    debug_group.add_argument("--single-process", dest="singleProcess",
-                      help="Don't run tests in parallel.  Intended for debugging "
-                      "single test failures",
-                      action="store_true", default=False)
 
     opts = parser.parse_args()
     args = opts.test_paths
@@ -336,7 +332,9 @@ def main_with_tmp(builtinParameters):
     if not args:
         parser.error('No inputs specified')
 
-    if opts.numThreads is not None and opts.numThreads <= 0:
+    if opts.numThreads is None:
+        opts.numThreads = lit.util.detectCPUs()
+    elif opts.numThreads <= 0:
         parser.error("Option '--threads' or '-j' requires positive integer")
 
     if opts.maxFailures is not None and opts.maxFailures <= 0:
@@ -479,12 +477,6 @@ def main_with_tmp(builtinParameters):
     # Finally limit the number of tests, if desired.
     if opts.maxTests is not None:
         run.tests = run.tests[:opts.maxTests]
-
-    # Determine number of workers to use.
-    if opts.singleProcess:
-        opts.numThreads = 1
-    elif opts.numThreads is None:
-        opts.numThreads = lit.util.detectCPUs()
 
     # Don't create more threads than tests.
     opts.numThreads = min(len(run.tests), opts.numThreads)
