@@ -130,7 +130,7 @@ mark_as_advanced(LLVM_ENABLE_PROJECTS_USED)
 
 if (LLVM_ENABLE_PROJECTS_USED OR NOT LLVM_ENABLE_PROJECTS STREQUAL "")
   set(LLVM_ENABLE_PROJECTS_USED ON CACHE BOOL "" FORCE)
-  foreach(proj ${LLVM_ALL_PROJECTS})
+  foreach(proj ${LLVM_ALL_PROJECTS} ${LLVM_EXTERNAL_PROJECTS})
     string(TOUPPER "${proj}" upper_proj)
     string(REGEX REPLACE "-" "_" upper_proj ${upper_proj})
     if ("${proj}" IN_LIST LLVM_ENABLE_PROJECTS)
