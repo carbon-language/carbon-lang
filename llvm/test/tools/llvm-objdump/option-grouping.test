@@ -1,0 +1,2 @@
+// RUN: llvm-objdump -DRafdghprstux %p/Inputs/private-headers-x86_64.elf 2>&1 | FileCheck %s
+// CHECK-NOT: Unknown command line argument
