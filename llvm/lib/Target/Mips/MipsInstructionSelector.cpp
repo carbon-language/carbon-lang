@@ -153,6 +153,13 @@ bool MipsInstructionSelector::select(MachineInstr &I,
              .addImm(0);
     break;
   }
+  case G_BRCOND: {
+    MI = BuildMI(MBB, I, I.getDebugLoc(), TII.get(Mips::BNE))
+             .add(I.getOperand(0))
+             .addUse(Mips::ZERO)
+             .add(I.getOperand(1));
+    break;
+  }
   case G_STORE:
   case G_LOAD:
   case G_ZEXTLOAD:
