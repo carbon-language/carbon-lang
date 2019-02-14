@@ -134,21 +134,6 @@ struct Relocation {
   Symbol *Sym;
 };
 
-struct RelocationOffsetComparator {
-  bool operator()(const Relocation &Lhs, const Relocation &Rhs) {
-    return Lhs.Offset < Rhs.Offset;
-  }
-
-  // For std::lower_bound, std::upper_bound, std::equal_range.
-  bool operator()(const Relocation &Rel, uint64_t Val) {
-    return Rel.Offset < Val;
-  }
-
-  bool operator()(uint64_t Val, const Relocation &Rel) {
-    return Val < Rel.Offset;
-  }
-};
-
 template <class ELFT> void scanRelocations(InputSectionBase &);
 
 void addIRelativeRelocs();
