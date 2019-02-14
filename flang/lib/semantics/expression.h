@@ -84,12 +84,13 @@ public:
     return GetFoldingContext().messages();
   }
 
-  template<typename... A> void Say(A... args) {
-    GetContextualMessages().Say(std::forward<A>(args)...);
+  template<typename... A> parser::Message *Say(A... args) {
+    return GetContextualMessages().Say(std::forward<A>(args)...);
   }
 
-  template<typename T, typename... A> void SayAt(const T &parsed, A... args) {
-    Say(parser::FindSourceLocation(parsed), std::forward<A>(args)...);
+  template<typename T, typename... A>
+  parser::Message *SayAt(const T &parsed, A... args) {
+    return Say(parser::FindSourceLocation(parsed), std::forward<A>(args)...);
   }
 
   std::optional<Expr<SomeType>> Analyze(const parser::Expr &);

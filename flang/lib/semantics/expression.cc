@@ -25,9 +25,10 @@
 #include "../parser/parse-tree.h"
 #include <functional>
 #include <optional>
+#include <set>
 
 // TODO pmk remove when scaffolding is obsolete
-#undef PMKDEBUG
+#undef PMKDEBUG  // #define PMKDEBUG 1
 #if PMKDEBUG
 #include "dump-parse-tree.h"
 #include <iostream>
@@ -1329,32 +1330,116 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &exprContext,
 
 static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
     const parser::StructureConstructor &structure) {
-  if (const auto *spec{
-          std::get<parser::DerivedTypeSpec>(structure.t).derivedTypeSpec}) {
-    bool ok{true};
-    StructureConstructor result{*spec};
-    for (const auto &component :
-        std::get<std::list<parser::ComponentSpec>>(structure.t)) {
-      if (component.symbol != nullptr) {
-        if (MaybeExpr value{AnalyzeExpr(context,
-                *std::get<parser::ComponentDataSource>(component.t).v)}) {
-          // TODO pmk check type compatibility
-          result.Add(*component.symbol, std::move(*value));
-        } else {
-          ok = false;
+  auto &parsedType{std::get<parser::DerivedTypeSpec>(structure.t)};
+  parser::CharBlock typeName{std::get<parser::Name>(parsedType.t).source};
+  if (parsedType.derivedTypeSpec == nullptr) {
+    context.Say("INTERNAL: StructureConstructor lacks type"_err_en_US);
+    return std::nullopt;
+  }
+  const auto &spec{*parsedType.derivedTypeSpec};
+  CHECK(spec.scope() != nullptr);
+  const Symbol &typeSymbol{spec.typeSymbol()};
+
+  // This list holds all of the components in the derived type and its
+  // parents.  The symbols for whole parent components appear after their
+  // own components and before the components of the types that extend them.
+  // E.g., TYPE :: A; REAL X; END TYPE
+  //       TYPE, EXTENDS(A) :: B; REAL Y; END TYPE
+  // produces the component list X, A, Y.
+  // The order is important below because a structure constructor can
+  // initialize X or A by name, but not both.
+  const auto &details{typeSymbol.get<semantics::DerivedTypeDetails>()};
+  std::list<const Symbol *> components{details.OrderComponents(*spec.scope())};
+  if (typeSymbol.attrs().test(semantics::Attr::ABSTRACT)) {  // C796
+    if (auto *msg{context.Say(typeName,
+            "ABSTRACT derived type '%s' cannot be used in a structure constructor"_err_en_US,
+            typeName.ToString().data())}) {
+      msg->Attach(
+          typeSymbol.name(), "Declaration of ABSTRACT derived type"_en_US);
+    }
+  }
+
+  std::set<parser::CharBlock> unavailable;
+  bool anyKeyword{false};
+  StructureConstructor result{spec};
+  bool checkConflicts{true};
+
+  for (const auto &component :
+      std::get<std::list<parser::ComponentSpec>>(structure.t)) {
+    const parser::Expr &expr{
+        *std::get<parser::ComponentDataSource>(component.t).v};
+    parser::CharBlock source{expr.source};
+    if (const auto &kw{std::get<std::optional<parser::Keyword>>(component.t)}) {
+      source = kw->v.source;
+      anyKeyword = true;
+    } else if (anyKeyword) {  // C7100
+      context.Say(source,
+          "Value in structure constructor lacks a component name"_err_en_US);
+      checkConflicts = false;  // stem cascade
+    }
+    if (component.symbol == nullptr) {
+      context.Say(
+          source, "INTERNAL: StructureConstructor lacks symbol"_err_en_US);
+      continue;
+    }
+    const Symbol &symbol{*component.symbol};
+    if (symbol.has<semantics::TypeParamDetails>()) {
+      context.Say(source,
+          "Type parameter '%s' cannot be a component of this structure constructor"_err_en_US,
+          symbol.name().ToString().data());
+    } else if (checkConflicts) {
+      auto componentIter{
+          std::find(components.begin(), components.end(), &symbol)};
+      if (unavailable.find(symbol.name()) != unavailable.cend()) {
+        // C797, C798
+        context.Say(source,
+            "Component '%s' conflicts with another component earlier in this structure constructor"_err_en_US,
+            symbol.name().ToString().data());
+      } else if (symbol.test(Symbol::Flag::ParentComp)) {
+        // Make earlier components unavailable once a whole parent appears.
+        for (auto it{components.begin()}; it != componentIter; ++it) {
+          unavailable.insert((*it)->name());
         }
       } else {
-        context.Say("INTERNAL: StructureConstructor lacks symbol"_err_en_US);
-        ok = false;
+        // Make whole parent components unavailable after any of their
+        // constituents appear.
+        for (auto it{componentIter}; it != components.end(); ++it) {
+          if ((*it)->test(Symbol::Flag::ParentComp)) {
+            unavailable.insert((*it)->name());
+          }
+        }
       }
     }
-    if (ok) {
-      return AsMaybeExpr(Expr<SomeDerived>{std::move(result)});
+    unavailable.insert(symbol.name());
+    if (MaybeExpr value{AnalyzeExpr(context, expr)}) {
+      // TODO pmk: C7104, C7105 check that pointer components are
+      // being initialized with data/procedure designators appropriately
+      result.Add(symbol, std::move(*value));
     }
-  } else {
-    context.Say("INTERNAL: StructureConstructor lacks type"_err_en_US);
   }
-  return std::nullopt;
+
+  // Ensure that unmentioned component objects have default initializers.
+  for (const Symbol *symbol : components) {
+    if (!symbol->test(Symbol::Flag::ParentComp) &&
+        unavailable.find(symbol->name()) == unavailable.cend() &&
+        !symbol->attrs().test(semantics::Attr::ALLOCATABLE)) {
+      if (const auto *details{
+              symbol->detailsIf<semantics::ObjectEntityDetails>()}) {
+        if (details->init().has_value()) {
+          result.Add(*symbol, common::Clone(*details->init()));
+        } else {  // C799
+          if (auto *msg{context.Say(typeName,
+                  "Structure constructor lacks a value for component '%s'"_err_en_US,
+                  symbol->name().ToString().data())}) {
+            msg->Attach(symbol->name(), "Absent component"_en_US);
+          }
+        }
+      }
+    }
+  }
+
+  // TODO pmk check type compatibility on component expressions
+  return AsMaybeExpr(Expr<SomeDerived>{std::move(result)});
 }
 
 static std::optional<CallAndArguments> Procedure(
@@ -1770,6 +1855,7 @@ MaybeExpr ExpressionAnalysisContext::Analyze(const parser::Expr &expr) {
     return AnalyzeExpr(*this, expr.u);
   }
 }
+
 MaybeExpr ExpressionAnalysisContext::Analyze(const parser::Variable &variable) {
   return AnalyzeExpr(*this, variable.u);
 }
@@ -1883,7 +1969,7 @@ public:
     if (expr.typedExpr.get() == nullptr) {
       if (MaybeExpr checked{AnalyzeExpr(context_, expr)}) {
 #if PMKDEBUG
-//      checked->AsFortran(std::cout << "checked expression: ") << '\n';
+//        checked->AsFortran(std::cout << "checked expression: ") << '\n';
 #endif
         expr.typedExpr.reset(
             new evaluate::GenericExprWrapper{std::move(*checked)});

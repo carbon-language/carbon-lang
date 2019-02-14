@@ -72,16 +72,13 @@ bool Semantics::Perform() {
     return false;
   }
   CheckDoConcurrentConstraints(context_.messages(), program_);
+  AnalyzeExpressions(program_, context_);
+  AnalyzeAssignments(program_, context_);
   if (AnyFatalError()) {
     return false;
   }
   ModFileWriter writer{context_};
   writer.WriteAll();
-  if (AnyFatalError()) {
-    return false;
-  }
-  AnalyzeExpressions(program_, context_);
-  AnalyzeAssignments(program_, context_);
   return !AnyFatalError();
 }
 

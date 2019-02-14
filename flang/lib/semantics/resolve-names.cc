@@ -3104,14 +3104,15 @@ bool DeclarationVisitor::Pre(const parser::StructureConstructor &x) {
   auto savedState{SetDeclTypeSpecState({})};
   BeginDeclTypeSpec();
   auto &parsedType{std::get<parser::DerivedTypeSpec>(x.t)};
-  auto &typeName{std::get<parser::Name>(parsedType.t)};
   Walk(parsedType);
   const DeclTypeSpec *type{GetDeclTypeSpec()};
+  EndDeclTypeSpec();
+  SetDeclTypeSpecState(savedState);
+
+  auto &typeName{std::get<parser::Name>(parsedType.t)};
   const DerivedTypeSpec *spec{type ? type->AsDerived() : nullptr};
   const Symbol *typeSymbol{spec ? &spec->typeSymbol() : nullptr};
   const Scope *typeScope{spec ? spec->scope() : nullptr};
-  EndDeclTypeSpec();
-  SetDeclTypeSpecState(savedState);
 
   // This list holds all of the components in the derived type and its
   // parents.  The symbols for whole parent components appear after their
@@ -3135,9 +3136,7 @@ bool DeclarationVisitor::Pre(const parser::StructureConstructor &x) {
   // N.B C7102 is implicitly enforced by having inaccessible types not
   // being found in resolution.
 
-  std::set<SourceName> unavailable;
   auto nextAnonymous{components.begin()};
-  bool anyKeyword{false};
   for (const auto &component :
       std::get<std::list<parser::ComponentSpec>>(x.t)) {
     // Visit the component spec expression, but not the keyword, since
@@ -3148,46 +3147,14 @@ bool DeclarationVisitor::Pre(const parser::StructureConstructor &x) {
     const auto &kw{std::get<std::optional<parser::Keyword>>(component.t)};
     const Symbol *symbol{nullptr};
     SourceName source{value.source};
-    auto componentIter{components.end()};
     if (kw.has_value()) {
       source = kw->v.source;
-      componentIter = std::find_if(components.begin(), components.end(),
-          [&](const Symbol *s) { return s->name() == source; });
-      if (componentIter != components.end()) {
-        if ((*componentIter)->has<TypeParamDetails>()) {
+      if (ok) {
+        symbol = FindInTypeOrParents(*typeScope, kw->v);
+        if (symbol == nullptr) {  // C7101
           Say(source,
-              "Type parameter '%s' cannot appear in a structure constructor"_err_en_US);
-        } else {
-          symbol = *componentIter;
-        }
-      } else {  // C7101
-        Say(source,
-            "Keyword '%s' is not a component of this derived type"_err_en_US);
-      }
-      anyKeyword = true;
-      ok &= symbol != nullptr;
-    } else if (anyKeyword) {  // C7100
-      Say(source,
-          "Value in structure constructor lacks a required component name"_err_en_US);
-    }
-    if (symbol != nullptr) {
-      CHECK(componentIter != components.end());
-      if (unavailable.find(symbol->name()) != unavailable.cend()) {
-        // C797, C798
-        Say(source,
-            "Component '%s' conflicts with another component earlier in the structure constructor"_err_en_US);
-      } else if (symbol->test(Symbol::Flag::ParentComp)) {
-        // Make earlier components unavailable once a whole parent appears.
-        for (auto it{components.begin()}; it != componentIter; ++it) {
-          unavailable.insert((*it)->name());
-        }
-      } else {
-        // Make whole parent components unavailable after any of their
-        // constituents appear.
-        for (auto it{componentIter}; it != components.end(); ++it) {
-          if ((*it)->test(Symbol::Flag::ParentComp)) {
-            unavailable.insert((*it)->name());
-          }
+              "Keyword '%s' is not a component of this derived type"_err_en_US);
+          ok = false;
         }
       }
     } else if (ok) {
@@ -3207,25 +3174,7 @@ bool DeclarationVisitor::Pre(const parser::StructureConstructor &x) {
     if (symbol != nullptr) {
       // Save the resolved component's symbol (if any) in the parse tree.
       component.symbol = symbol;
-      unavailable.insert(symbol->name());
       CheckAccessibleComponent(source, *symbol);  // C7102
-      // TODO pmk: C7104, C7105 check that pointer components are
-      // being initialized with data/procedure designators appropriately
-    }
-  }
-  // Ensure that unmentioned component objects have default initializers.
-  if (ok) {
-    for (const Symbol *symbol : components) {
-      if (!symbol->test(Symbol::Flag::ParentComp) &&
-          unavailable.find(symbol->name()) == unavailable.cend() &&
-          !symbol->attrs().test(Attr::ALLOCATABLE)) {
-        if (const auto *details{symbol->detailsIf<ObjectEntityDetails>()}) {
-          if (!details->init().has_value()) {  // C799
-            Say2(typeName, "Structure constructor lacks a value"_err_en_US,
-                *symbol, "Absent component"_en_US);
-          }
-        }
-      }
     }
   }
   return false;
