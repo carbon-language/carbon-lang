@@ -160,6 +160,18 @@ bool MipsInstructionSelector::select(MachineInstr &I,
              .add(I.getOperand(1));
     break;
   }
+  case G_PHI: {
+    const unsigned DestReg = I.getOperand(0).getReg();
+    const unsigned DestRegBank = RBI.getRegBank(DestReg, MRI, TRI)->getID();
+    const unsigned OpSize = MRI.getType(DestReg).getSizeInBits();
+
+    if (DestRegBank != Mips::GPRBRegBankID || OpSize != 32)
+      return false;
+
+    const TargetRegisterClass *DefRC = &Mips::GPR32RegClass;
+    I.setDesc(TII.get(TargetOpcode::PHI));
+    return RBI.constrainGenericRegister(DestReg, *DefRC, MRI);
+  }
   case G_STORE:
   case G_LOAD:
   case G_ZEXTLOAD:
