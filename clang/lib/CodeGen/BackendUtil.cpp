@@ -1066,19 +1066,22 @@ void EmitAssemblyHelper::EmitAssemblyWithNewPassManager(
               RequireAnalysisPass<ASanGlobalsMetadataAnalysis, Module>());
         });
         bool Recover = CodeGenOpts.SanitizeRecover.has(SanitizerKind::Address);
+        bool UseAfterScope = CodeGenOpts.SanitizeAddressUseAfterScope;
         PB.registerOptimizerLastEPCallback(
-            [&](FunctionPassManager &FPM,
-                PassBuilder::OptimizationLevel Level) {
+            [Recover, UseAfterScope](FunctionPassManager &FPM,
+                                     PassBuilder::OptimizationLevel Level) {
               FPM.addPass(AddressSanitizerPass(
-                  /*CompileKernel=*/false, Recover,
-                  CodeGenOpts.SanitizeAddressUseAfterScope));
+                  /*CompileKernel=*/false, Recover, UseAfterScope));
             });
         bool ModuleUseAfterScope = asanUseGlobalsGC(TargetTriple, CodeGenOpts);
-        PB.registerPipelineStartEPCallback([&](ModulePassManager &MPM) {
-          MPM.addPass(ModuleAddressSanitizerPass(
-              /*CompileKernel=*/false, Recover, ModuleUseAfterScope,
-              CodeGenOpts.SanitizeAddressUseOdrIndicator));
-        });
+        bool UseOdrIndicator = CodeGenOpts.SanitizeAddressUseOdrIndicator;
+        PB.registerPipelineStartEPCallback(
+            [Recover, ModuleUseAfterScope,
+             UseOdrIndicator](ModulePassManager &MPM) {
+              MPM.addPass(ModuleAddressSanitizerPass(
+                  /*CompileKernel=*/false, Recover, ModuleUseAfterScope,
+                  UseOdrIndicator));
+            });
       }
       if (Optional<GCOVOptions> Options = getGCOVOptions(CodeGenOpts))
         PB.registerPipelineStartEPCallback([Options](ModulePassManager &MPM) {
