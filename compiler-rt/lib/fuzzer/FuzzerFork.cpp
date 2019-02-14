@@ -15,6 +15,7 @@
 #include "FuzzerSHA1.h"
 #include "FuzzerUtil.h"
 
+#include <atomic>
 #include <mutex>
 #include <thread>
 #include <queue>
@@ -121,7 +122,7 @@ struct JobQueue {
 };
 
 void WorkerThread(std::atomic<bool> *Stop, JobQueue *FuzzQ, JobQueue *MergeQ) {
-  while (!*Stop) {
+  while (!Stop->load()) {
     auto Job = FuzzQ->Pop();
     // Printf("WorkerThread: job %p\n", Job);
     if (!Job) {
