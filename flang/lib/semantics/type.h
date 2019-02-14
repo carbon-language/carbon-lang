@@ -212,6 +212,7 @@ private:
 };
 
 using ArraySpec = std::list<ShapeSpec>;
+bool IsExplicit(const ArraySpec &);
 
 class DerivedTypeSpec {
 public:

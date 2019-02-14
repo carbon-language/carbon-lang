@@ -194,6 +194,27 @@ std::ostream &operator<<(std::ostream &o, const ShapeSpec &x) {
   return o;
 }
 
+std::ostream &operator<<(std::ostream &os, const ArraySpec &arraySpec) {
+  char sep{'('};
+  for (auto &shape : arraySpec) {
+    os << sep << shape;
+    sep = ',';
+  }
+  if (sep == ',') {
+    os << ')';
+  }
+  return os;
+}
+
+bool IsExplicit(const ArraySpec &arraySpec) {
+  for (const auto &shapeSpec : arraySpec) {
+    if (!shapeSpec.isExplicit()) {
+      return false;
+    }
+  }
+  return true;
+}
+
 ParamValue::ParamValue(MaybeIntExpr &&expr) : expr_{std::move(expr)} {}
 ParamValue::ParamValue(SomeIntExpr &&expr) : expr_{std::move(expr)} {}
 ParamValue::ParamValue(std::int64_t value)

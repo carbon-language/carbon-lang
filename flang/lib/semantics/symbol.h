@@ -258,6 +258,15 @@ private:
   SymbolList objects_;
 };
 
+class CommonBlockDetails {
+public:
+  SymbolList objects() const { return objects_; }
+  void add_object(Symbol &object) { objects_.push_back(&object); }
+
+private:
+  SymbolList objects_;
+};
+
 class FinalProcDetails {};
 
 class MiscDetails {
@@ -366,7 +375,7 @@ using Details = std::variant<UnknownDetails, MainProgramDetails, ModuleDetails,
     ObjectEntityDetails, ProcEntityDetails, AssocEntityDetails,
     DerivedTypeDetails, UseDetails, UseErrorDetails, HostAssocDetails,
     GenericDetails, ProcBindingDetails, GenericBindingDetails, NamelistDetails,
-    FinalProcDetails, TypeParamDetails, MiscDetails>;
+    CommonBlockDetails, FinalProcDetails, TypeParamDetails, MiscDetails>;
 std::ostream &operator<<(std::ostream &, const Details &);
 std::string DetailsToString(const Details &);
 

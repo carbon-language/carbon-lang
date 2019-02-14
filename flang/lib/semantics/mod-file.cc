@@ -173,6 +173,15 @@ void ModFileWriter::PutSymbol(
             }
             decls_ << '\n';
           },
+          [&](const CommonBlockDetails &x) {
+            PutLower(decls_ << "common/", symbol);
+            char sep = '/';
+            for (const auto *object : x.objects()) {
+              PutLower(decls_ << sep, *object);
+              sep = ',';
+            }
+            decls_ << '\n';
+          },
           [&](const FinalProcDetails &) {
             PutLower(typeBindings << "final::", symbol) << '\n';
           },

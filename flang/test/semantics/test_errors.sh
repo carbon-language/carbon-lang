@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,7 +47,11 @@ fi
 # $actual has errors from the compiler; $expect has them from !ERROR comments in source
 # Format both as "<line>: <text>" so they can be diffed.
 sed -n 's=^[^:]*:\([^:]*\):[^:]*: error: =\1: =p' $log > $actual
-{ echo; cat $src; } | cat -n | sed -n 's=^ *\([0-9]*\). *\!ERROR: *=\1: =p' > $expect
+awk '
+  BEGIN { FS = "!ERROR: "; }
+  /^ *!ERROR: / { errors[nerrors++] = $2; next; }
+  { for (i = 0; i < nerrors; ++i) printf "%d: %s\n", NR, errors[i]; nerrors = 0; }
+' $src > $expect
 
 if diff -U0 $actual $expect > $diffs; then
   echo PASS

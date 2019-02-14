@@ -153,6 +153,7 @@ std::string DetailsToString(const Details &details) {
           [](const ProcBindingDetails &) { return "ProcBinding"; },
           [](const GenericBindingDetails &) { return "GenericBinding"; },
           [](const NamelistDetails &) { return "Namelist"; },
+          [](const CommonBlockDetails &) { return "CommonBlockDetails"; },
           [](const FinalProcDetails &) { return "FinalProc"; },
           [](const TypeParamDetails &) { return "TypeParam"; },
           [](const MiscDetails &) { return "Misc"; },
@@ -383,6 +384,12 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
             }
           },
           [&](const NamelistDetails &x) {
+            os << ": ";
+            for (const auto *object : x.objects()) {
+              os << ' ' << object->name();
+            }
+          },
+          [&](const CommonBlockDetails &x) {
             os << ": ";
             for (const auto *object : x.objects()) {
               os << ' ' << object->name();

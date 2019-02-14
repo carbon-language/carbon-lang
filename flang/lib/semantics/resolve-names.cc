@@ -404,6 +404,8 @@ public:
   void SayAlreadyDeclared(const parser::Name &, const Symbol &);
   void SayWithDecl(const parser::Name &, const Symbol &, MessageFixedText &&);
   void SayDerivedType(const SourceName &, MessageFixedText &&, const Scope &);
+  void Say2(const SourceName &, MessageFixedText &&, const SourceName &,
+      MessageFixedText &&);
   void Say2(const parser::Name &, MessageFixedText &&, const Symbol &,
       MessageFixedText &&);
 
@@ -690,6 +692,10 @@ public:
   bool Pre(const parser::StructureConstructor &);
   bool Pre(const parser::NamelistStmt::Group &);
   bool Pre(const parser::IoControlSpec &);
+  bool Pre(const parser::CommonStmt::Block &);
+  void Post(const parser::CommonStmt::Block &);
+  bool Pre(const parser::CommonBlockObject &);
+  void Post(const parser::CommonBlockObject &);
 
 protected:
   bool BeginDecl();
@@ -707,6 +713,7 @@ protected:
   bool CheckUseError(const parser::Name &);
   void CheckAccessibility(const parser::Name &, bool, const Symbol &);
   void CheckScalarIntegerType(const parser::Name &);
+  void CheckCommonBlocks();
 
 private:
   // The attribute corresponding to the statement containing an ObjectDecl
@@ -724,6 +731,11 @@ private:
     bool sawContains{false};  // currently processing bindings
     bool sequence{false};  // is a sequence type
   } derivedTypeInfo_;
+  // Info about common blocks in the current scope
+  struct {
+    Symbol *curr{nullptr};  // common block currently being processed
+    std::set<SourceName> names;  // names in any common block of scope
+  } commonBlockInfo_;
   // In a ProcedureDeclarationStmt or ProcComponentDefStmt, this is
   // the interface name, if any.
   const parser::Name *interfaceName_{nullptr};
@@ -739,6 +751,7 @@ private:
   Symbol *MakeTypeSymbol(const parser::Name &, Details &&);
   bool OkToAddComponent(const parser::Name &, const Symbol * = nullptr);
   ParamValue GetParamValue(const parser::TypeParamValue &);
+  void CheckCommonBlockDerivedType(const SourceName &, const Symbol &);
 
   // Declare an object or procedure entity.
   // T is one of: EntityDetails, ObjectEntityDetails, ProcEntityDetails
@@ -771,6 +784,14 @@ private:
       } else {
         CHECK(!"unexpected kind");
       }
+    } else if (std::is_same_v<ObjectEntityDetails, T> &&
+        symbol.has<ProcEntityDetails>()) {
+      SayWithDecl(
+          name, symbol, "'%s' is already declared as a procedure"_err_en_US);
+    } else if (std::is_same_v<ProcEntityDetails, T> &&
+        symbol.has<ObjectEntityDetails>()) {
+      SayWithDecl(
+          name, symbol, "'%s' is already declared as an object"_err_en_US);
     } else {
       SayAlreadyDeclared(name, symbol);
     }
@@ -901,8 +922,6 @@ public:
   template<typename T> bool Pre(const T &) { return true; }
   template<typename T> void Post(const T &) {}
 
-  bool Pre(const parser::CommonBlockObject &);
-  void Post(const parser::CommonBlockObject &);
   bool Pre(const parser::PrefixSpec &);
   void Post(const parser::SpecificationPart &);
   bool Pre(const parser::MainProgram &);
@@ -1439,10 +1458,14 @@ void ScopeHandler::SayDerivedType(
       .Attach(typeSymbol->name(), "Declaration of derived type '%s'"_en_US,
           typeSymbol->name().ToString().c_str());
 }
+void ScopeHandler::Say2(const SourceName &name1, MessageFixedText &&msg1,
+    const SourceName &name2, MessageFixedText &&msg2) {
+  Say(name1, std::move(msg1))
+      .Attach(name2, std::move(msg2), name2.ToString().c_str());
+}
 void ScopeHandler::Say2(const parser::Name &name, MessageFixedText &&msg1,
     const Symbol &symbol, MessageFixedText &&msg2) {
-  Say(name.source, std::move(msg1))
-      .Attach(symbol.name(), msg2, symbol.name().ToString().c_str());
+  Say2(name.source, std::move(msg1), symbol.name(), std::move(msg2));
 }
 
 Scope &ScopeHandler::InclusiveScope() {
@@ -1473,8 +1496,8 @@ void ScopeHandler::PushScope(Scope &scope) {
   }
   if (kind != Scope::Kind::DerivedType) {
     if (auto *symbol{scope.symbol()}) {
-      // Create a dummy symbol so we can't create another one with the same name
-      // It might already be there if we previously pushed the scope.
+      // Create a dummy symbol so we can't create another one with the same
+      // name. It might already be there if we previously pushed the scope.
       if (!FindInScope(scope, symbol->name())) {
         auto &newSymbol{CopySymbol(*symbol)};
         if (kind == Scope::Kind::Subprogram) {
@@ -3083,6 +3106,123 @@ bool DeclarationVisitor::Pre(const parser::IoControlSpec &x) {
   return true;
 }
 
+bool DeclarationVisitor::Pre(const parser::CommonStmt::Block &x) {
+  const auto &optName{std::get<std::optional<parser::Name>>(x.t)};
+  parser::Name blankCommon;
+  blankCommon.source = SourceName{currStmtSource()->begin(), std::size_t{0}};
+  const parser::Name &name{optName ? *optName : blankCommon};
+  auto *symbol{FindInScope(currScope(), name)};
+  if (symbol && !symbol->has<CommonBlockDetails>()) {
+    SayAlreadyDeclared(name, *symbol);
+    EraseSymbol(name);
+    symbol = nullptr;
+  }
+  if (!symbol) {
+    symbol = &MakeSymbol(name, CommonBlockDetails{});
+  }
+  CHECK(!commonBlockInfo_.curr);
+  commonBlockInfo_.curr = symbol;
+  return true;
+}
+
+void DeclarationVisitor::Post(const parser::CommonStmt::Block &) {
+  commonBlockInfo_.curr = nullptr;
+}
+
+bool DeclarationVisitor::Pre(const parser::CommonBlockObject &x) {
+  BeginArraySpec();
+  return true;
+}
+
+void DeclarationVisitor::Post(const parser::CommonBlockObject &x) {
+  CHECK(commonBlockInfo_.curr);
+  const auto &name{std::get<parser::Name>(x.t)};
+  auto &symbol{DeclareObjectEntity(name, Attrs{})};
+  ClearArraySpec();
+  if (!symbol.has<ObjectEntityDetails>()) {
+    return;  // error was reported
+  }
+  commonBlockInfo_.curr->get<CommonBlockDetails>().add_object(symbol);
+  if (!IsExplicit(symbol.get<ObjectEntityDetails>().shape())) {
+    Say(name,
+        "The shape of common block object '%s' must be explicit"_err_en_US);
+    return;
+  }
+  auto pair{commonBlockInfo_.names.insert(name.source)};
+  if (!pair.second) {
+    const SourceName &prev{*pair.first};
+    Say2(name.source, "'%s' is already in a COMMON block"_err_en_US, prev,
+        "Previous occurrence of '%s' in a COMMON block"_en_US);
+    return;
+  }
+}
+
+// Check types of common block objects, now that they are known.
+void DeclarationVisitor::CheckCommonBlocks() {
+  for (const auto &name : commonBlockInfo_.names) {
+    const auto *symbol{currScope().FindSymbol(name)};
+    CHECK(symbol);
+    const auto &attrs{symbol->attrs()};
+    if (attrs.test(Attr::ALLOCATABLE)) {
+      Say(name,
+          "ALLOCATABLE object '%s' may not appear in a COMMON block"_err_en_US);
+    } else if (attrs.test(Attr::BIND_C)) {
+      Say(name,
+          "Variable '%s' with BIND attribute may not appear in a COMMON block"_err_en_US);
+    } else if (const auto &details{symbol->get<ObjectEntityDetails>()};
+               details.isDummy()) {
+      Say(name,
+          "Dummy argument '%s' may not appear in a COMMON block"_err_en_US);
+    } else if (const DeclTypeSpec * type{details.type()}) {
+      if (type->category() == DeclTypeSpec::ClassStar) {
+        Say(name,
+            "Unlimited polymorphic pointer '%s' may not appear in a COMMON block"_err_en_US);
+      } else if (const auto *derived{type->AsDerived()}) {
+        auto &typeSymbol{derived->typeSymbol()};
+        if (!typeSymbol.attrs().test(Attr::BIND_C) &&
+            !typeSymbol.get<DerivedTypeDetails>().sequence()) {
+          Say(name,
+              "Derived type '%s' in COMMON block must have the BIND or"
+              " SEQUENCE attribute"_err_en_US);
+        }
+        CheckCommonBlockDerivedType(name, typeSymbol);
+      }
+    }
+  }
+  commonBlockInfo_ = {};
+}
+
+// Check if this derived type can be in a COMMON block.
+void DeclarationVisitor::CheckCommonBlockDerivedType(
+    const SourceName &name, const Symbol &typeSymbol) {
+  if (const auto *scope{typeSymbol.scope()}) {
+    for (const auto &pair : *scope) {
+      const Symbol &component{*pair.second};
+      if (component.attrs().test(Attr::ALLOCATABLE)) {
+        Say2(name,
+            "Derived type variable '%s' may not appear in a COMMON block"
+            " due to ALLOCATABLE component"_err_en_US,
+            component.name(), "Component with ALLOCATABLE attribute"_en_US);
+        return;
+      }
+      if (const auto *details{component.detailsIf<ObjectEntityDetails>()}) {
+        if (details->init()) {
+          Say2(name,
+              "Derived type variable '%s' may not appear in a COMMON block"
+              " due to component with default initialization"_err_en_US,
+              component.name(), "Component with default initialization"_en_US);
+          return;
+        }
+        if (const auto *type{details->type()}) {
+          if (const auto *derived{type->AsDerived()}) {
+            CheckCommonBlockDerivedType(name, derived->typeSymbol());
+          }
+        }
+      }
+    }
+  }
+}
+
 Symbol *DeclarationVisitor::DeclareLocalEntity(const parser::Name &name) {
   auto *prev{FindSymbol(name)};
   bool implicit{false};
@@ -3627,15 +3767,6 @@ const DeclTypeSpec &ConstructVisitor::ToDeclTypeSpec(
 
 // ResolveNamesVisitor implementation
 
-bool ResolveNamesVisitor::Pre(const parser::CommonBlockObject &x) {
-  BeginArraySpec();
-  return true;
-}
-void ResolveNamesVisitor::Post(const parser::CommonBlockObject &x) {
-  ClearArraySpec();
-  // TODO: CommonBlockObject
-}
-
 bool ResolveNamesVisitor::Pre(const parser::PrefixSpec &x) {
   return true;  // TODO
 }
@@ -4005,6 +4136,7 @@ void ResolveNamesVisitor::Post(const parser::SpecificationPart &) {
       symbol.set(Symbol::Flag::Subroutine);
     }
   }
+  CheckCommonBlocks();
 }
 
 void ResolveNamesVisitor::CheckImports() {
