@@ -4,11 +4,13 @@ Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
 
 # Overview of Compiler Phases
 
-Each phase produces correct output or fatal errors.
+Each phase produces either correct output or fatal errors.
 
 ## Prescan and Preprocess
 
-**Input:** Fortran source and header files, command line macro definitions
+**Input:** Fortran source and header files, command line macro definitions,
+  set of enabled compiler directives (to be treated as directives rather than
+  comments).
 
 **Output:**
 - A "cooked" character stream: the entire program as a contiguous stream of
@@ -20,7 +22,7 @@ Each phase produces correct output or fatal errors.
 
 **Entry point:** `parser::Parsing::Prescan`
 
-**Command:** `f18 -E src.f90` dumps the cooked character stream.
+**Command:** `f18 -E src.f90` dumps the cooked character stream
 
 ## Parse
 
@@ -38,7 +40,7 @@ Each phase produces correct output or fatal errors.
 
 ## Validate Labels and Canonicalize Do Statements
 
-**Input:** Parse tree
+**Input:** Parse tree.
 
 **Output:** The parse tree with label constraints and construct names checked,
   and each `LabelDoStmt` converted to a `NonLabelDoStmt`.
@@ -62,7 +64,7 @@ Each phase produces correct output or fatal errors.
 **Entry points:** `semantics::ResolveNames`, `semantics::RewriteParseTree`
 
 **Command:** `f18 -fdebug-dump-symbols -fparse-only src.f90` dumps the
-  tree of scopes and symbols in each
+  tree of scopes and symbols in each scope
 
 ## Check DO CONCURRENT Constraints
 
