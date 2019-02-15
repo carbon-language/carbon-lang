@@ -172,8 +172,7 @@ public:
       : SemaPtr(Other.SemaPtr), NameInfo(Other.NameInfo),
         LookupKind(Other.LookupKind), IDNS(Other.IDNS), Redecl(Other.Redecl),
         ExternalRedecl(Other.ExternalRedecl), HideTags(Other.HideTags),
-        AllowHidden(Other.AllowHidden),
-        TemplateNameLookup(Other.TemplateNameLookup) {}
+        AllowHidden(Other.AllowHidden) {}
 
   // FIXME: Remove these deleted methods once the default build includes
   // -Wdeprecated.
@@ -194,8 +193,7 @@ public:
         HideTags(std::move(Other.HideTags)),
         Diagnose(std::move(Other.Diagnose)),
         AllowHidden(std::move(Other.AllowHidden)),
-        Shadowed(std::move(Other.Shadowed)),
-        TemplateNameLookup(std::move(Other.TemplateNameLookup)) {
+        Shadowed(std::move(Other.Shadowed)) {
     Other.Paths = nullptr;
     Other.Diagnose = false;
   }
@@ -218,7 +216,6 @@ public:
     Diagnose = std::move(Other.Diagnose);
     AllowHidden = std::move(Other.AllowHidden);
     Shadowed = std::move(Other.Shadowed);
-    TemplateNameLookup = std::move(Other.TemplateNameLookup);
     Other.Paths = nullptr;
     Other.Diagnose = false;
     return *this;
@@ -288,15 +285,6 @@ public:
   void setHideTags(bool Hide) {
     HideTags = Hide;
   }
-
-  /// Sets whether this is a template-name lookup. For template-name lookups,
-  /// injected-class-names are treated as naming a template rather than a
-  /// template specialization.
-  void setTemplateNameLookup(bool TemplateName) {
-    TemplateNameLookup = TemplateName;
-  }
-
-  bool isTemplateNameLookup() const { return TemplateNameLookup; }
 
   bool isAmbiguous() const {
     return getResultKind() == Ambiguous;
@@ -751,9 +739,6 @@ private:
   /// declaration that we skipped. This only happens when \c LookupKind
   /// is \c LookupRedeclarationWithLinkage.
   bool Shadowed = false;
-
-  /// True if we're looking up a template-name.
-  bool TemplateNameLookup = false;
 };
 
 /// Consumes visible declarations found when searching for

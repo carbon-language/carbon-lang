@@ -1128,6 +1128,7 @@ static bool checkTupleLikeDecomposition(Sema &S,
         }
       }
     }
+    S.FilterAcceptableTemplateNames(MemberGet);
   }
 
   unsigned I = 0;
