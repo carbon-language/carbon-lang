@@ -26,8 +26,7 @@ bool isIdempotentRMW(AtomicRMWInst& RMWI) {
     // TODO: Handle fadd, fsub?
     return false;
 
-  AtomicRMWInst::BinOp Op = RMWI.getOperation();
-  switch(Op) {
+  switch(RMWI.getOperation()) {
     case AtomicRMWInst::Add:
     case AtomicRMWInst::Sub:
     case AtomicRMWInst::Or:
@@ -55,12 +54,12 @@ bool isSaturating(AtomicRMWInst& RMWI) {
   if(!C)
     return false;
 
-  AtomicRMWInst::BinOp Op = RMWI.getOperation();
-  switch(Op) {
+  switch(RMWI.getOperation()) {
   default:
     // TODO: fadd, fsub w/Nan
-    // Note: We avoid listing xchg to prevent transform cycles.
     return false;
+  case AtomicRMWInst::Xchg:
+    return true;
   case AtomicRMWInst::Or:
     return C->isAllOnesValue();
   case AtomicRMWInst::And:
@@ -87,7 +86,8 @@ Instruction *InstCombiner::visitAtomicRMWInst(AtomicRMWInst &RMWI) {
 
   // Any atomicrmw op which produces a known result in memory can be
   // replaced w/an atomicrmw xchg.
-  if (isSaturating(RMWI)) {
+  if (isSaturating(RMWI) &&
+      RMWI.getOperation() != AtomicRMWInst::Xchg) {
     RMWI.setOperation(AtomicRMWInst::Xchg);
     return &RMWI;
   }
