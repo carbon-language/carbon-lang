@@ -108,6 +108,8 @@ macro(add_clang_library name)
                                  DEPENDS ${name}
                                  COMPONENT ${name})
       endif()
+
+      set_property(GLOBAL APPEND PROPERTY CLANG_LIBS ${name})
     endif()
     set_property(GLOBAL APPEND PROPERTY CLANG_EXPORTS ${name})
   else()
