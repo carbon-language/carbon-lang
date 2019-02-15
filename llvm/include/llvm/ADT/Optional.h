@@ -109,54 +109,6 @@ template <typename T, bool = is_trivially_copyable<T>::value> struct OptionalSto
   }
 };
 
-template <typename T> struct OptionalStorage<T, true> {
-  struct empty_type {};
-  union {
-    empty_type empty;
-    T value;
-  };
-  bool hasVal = false;
-
-  OptionalStorage() : empty{} {}
-
-  OptionalStorage(const T &y) : hasVal(true) {
-    new ((void*)std::addressof(value)) T(y);
-  }
-  OptionalStorage(const OptionalStorage &O) = default;
-  OptionalStorage(T &&y) : hasVal(true) {
-    new ((void*)std::addressof(value)) T(std::move(y));
-  }
-
-  OptionalStorage(OptionalStorage &&O) = default;
-
-  OptionalStorage &operator=(T &&y) {
-    hasVal = true;
-    new ((void*)std::addressof(value)) T(std::move(y));
-    return *this;
-  }
-  OptionalStorage &operator=(OptionalStorage &&O) = default;
-
-  OptionalStorage &operator=(const T &y) {
-    hasVal = true;
-    new ((void*)std::addressof(value)) T(y);
-    return *this;
-  }
-  OptionalStorage &operator=(const OptionalStorage &O) = default;
-
-  ~OptionalStorage() = default;
-
-  T *getPointer() {
-    assert(hasVal);
-    return &value;
-  }
-  const T *getPointer() const {
-    assert(hasVal);
-    return &value;
-  }
-
-  void reset() { hasVal = false; }
-};
-
 } // namespace optional_detail
 
 template <typename T> class Optional {
@@ -201,11 +153,11 @@ public:
 
   const T *getPointer() const {
     assert(Storage.hasVal);
-    return Storage.getPointer();
+    return reinterpret_cast<const T *>(Storage.storage.buffer);
   }
   T *getPointer() {
     assert(Storage.hasVal);
-    return Storage.getPointer();
+    return reinterpret_cast<T *>(Storage.storage.buffer);
   }
   const T &getValue() const LLVM_LVALUE_FUNCTION { return *getPointer(); }
   T &getValue() LLVM_LVALUE_FUNCTION { return *getPointer(); }
