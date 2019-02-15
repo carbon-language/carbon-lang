@@ -540,23 +540,27 @@ TEST(MatcherCXXMemberCallExpr, OnImplicitObjectArgument) {
 }
 
 TEST(Matcher, HasObjectExpr) {
-  auto M = memberExpr(hasObjectExpression(hasType(cxxRecordDecl(hasName("X")))));
-  EXPECT_TRUE(matches(
-      R"cc(
+  auto Snippet1 = R"cc(
         struct X {
           int m;
           int f(X x) { return x.m; }
         };
-      )cc",
-      M));
-  EXPECT_TRUE(notMatches(
-      R"cc(
+      )cc";
+  auto Snippet2 = R"cc(
         struct X {
           int m;
           int f(X x) { return m; }
         };
-      )cc",
-      M));
+      )cc";
+  auto MatchesX =
+      memberExpr(hasObjectExpression(hasType(cxxRecordDecl(hasName("X")))));
+  EXPECT_TRUE(matches(Snippet1, MatchesX));
+  EXPECT_TRUE(notMatches(Snippet2, MatchesX));
+
+  auto MatchesXPointer = memberExpr(
+      hasObjectExpression(hasType(pointsTo(cxxRecordDecl(hasName("X"))))));
+  EXPECT_TRUE(notMatches(Snippet1, MatchesXPointer));
+  EXPECT_TRUE(matches(Snippet2, MatchesXPointer));
 }
 
 TEST(ForEachArgumentWithParam, ReportsNoFalsePositives) {
