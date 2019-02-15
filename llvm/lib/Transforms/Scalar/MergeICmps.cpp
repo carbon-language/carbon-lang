@@ -10,15 +10,35 @@
 // later typically inlined as a chain of efficient hardware comparisons). This
 // typically benefits c++ member or nonmember operator==().
 //
-// The basic idea is to replace a larger chain of integer comparisons loaded
-// from contiguous memory locations into a smaller chain of such integer
+// The basic idea is to replace a longer chain of integer comparisons loaded
+// from contiguous memory locations into a shorter chain of larger integer
 // comparisons. Benefits are double:
 //  - There are less jumps, and therefore less opportunities for mispredictions
 //    and I-cache misses.
 //  - Code size is smaller, both because jumps are removed and because the
 //    encoding of a 2*n byte compare is smaller than that of two n-byte
 //    compares.
-
+//
+// Example:
+//
+//  struct S {
+//    int a;
+//    char b;
+//    char c;
+//    uint16_t d;
+//    bool operator==(const S& o) const {
+//      return a == o.a && b == o.b && c == o.c && d == o.d;
+//    }
+//  };
+//
+//  Is optimized as :
+//
+//    bool S::operator==(const S& o) const {
+//      return memcmp(this, &o, 8) == 0;
+//    }
+//
+//  Which will later be expanded (ExpandMemCmp) as a single 8-bytes icmp.
+//
 //===----------------------------------------------------------------------===//
 
 #include <algorithm>
@@ -49,7 +69,9 @@ static bool isSimpleLoadOrStore(const Instruction *I) {
   return false;
 }
 
-// A BCE atom.
+// A BCE atom "Binary Compare Expression Atom" represents an integer load
+// that is a constant offset from a base value, e.g. `a` or `o.c` in the example
+// at the top.
 struct BCEAtom {
   BCEAtom() : GEP(nullptr), LoadI(nullptr), Offset() {}
 
@@ -118,7 +140,8 @@ BCEAtom visitICmpLoadOperand(Value *const Val) {
   return Result;
 }
 
-// A basic block with a comparison between two BCE atoms.
+// A basic block with a comparison between two BCE atoms, e.g. `a == o.a` in the
+// example at the top.
 // The block might do extra work besides the atom comparison, in which case
 // doesOtherWork() returns true. Under some conditions, the block can be
 // split into the atom comparison part and the "other work" part
