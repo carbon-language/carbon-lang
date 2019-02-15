@@ -45,6 +45,6 @@ end
 !  procedure(real(4)),bind(c, name=1_"ee")::e
 !  procedure(real(4)),bind(c, name=1_"ff")::f
 !contains
-!  subroutine sub(),bind(c, name=1_"sub")
+!  subroutine sub() bind(c, name=1_"sub")
 !  end
 !end

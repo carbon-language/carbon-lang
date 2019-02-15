@@ -1123,10 +1123,9 @@ bool AttrsVisitor::SetBindNameOn(Symbol &symbol) {
 
 void AttrsVisitor::Post(const parser::LanguageBindingSpec &x) {
   CHECK(attrs_);
+  attrs_->set(Attr::BIND_C);
   if (x.v) {
     bindName_ = EvaluateExpr(*x.v);
-  } else {
-    attrs_->set(Attr::BIND_C);
   }
 }
 bool AttrsVisitor::Pre(const parser::AccessSpec &x) {
@@ -2559,8 +2558,9 @@ Symbol &DeclarationVisitor::HandleAttributeStmt(
   } else {
     symbol = &MakeSymbol(name, EntityDetails{});
   }
-  if (attr != Attr::BIND_C || !SetBindNameOn(*symbol)) {
-    symbol->attrs().set(attr);
+  symbol->attrs().set(attr);
+  if (SetBindNameOn(*symbol)) {
+    CHECK(attr == Attr::BIND_C);
   }
   return *symbol;
 }
