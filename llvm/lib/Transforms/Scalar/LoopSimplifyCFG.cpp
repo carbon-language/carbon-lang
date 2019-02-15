@@ -90,6 +90,7 @@ private:
   ScalarEvolution &SE;
   MemorySSAUpdater *MSSAU;
   DomTreeUpdater DTU;
+  LoopBlocksDFS DFS;
   SmallVector<DominatorTree::UpdateType, 16> DTUpdates;
 
   // Whether or not the current loop has irreducible CFG.
@@ -176,7 +177,6 @@ private:
   /// Fill all information about status of blocks and exits of the current loop
   /// if constant folding of all branches will be done.
   void analyze() {
-    LoopBlocksDFS DFS(&L);
     DFS.perform(&LI);
     assert(DFS.isComplete() && "DFS is expected to be finished");
 
@@ -498,7 +498,7 @@ public:
   ConstantTerminatorFoldingImpl(Loop &L, LoopInfo &LI, DominatorTree &DT,
                                 ScalarEvolution &SE,
                                 MemorySSAUpdater *MSSAU)
-      : L(L), LI(LI), DT(DT), SE(SE), MSSAU(MSSAU),
+      : L(L), LI(LI), DT(DT), SE(SE), MSSAU(MSSAU), DFS(&L),
         DTU(DT, DomTreeUpdater::UpdateStrategy::Eager) {}
   bool run() {
     assert(L.getLoopLatch() && "Should be single latch!");
