@@ -106,6 +106,9 @@ private:
     unsigned CMPri;
     unsigned MOVCCr;
 
+    unsigned TSTri;
+    unsigned Bcc;
+
     OpcodeCache(const ARMSubtarget &STI);
   } const Opcodes;
 
@@ -300,6 +303,9 @@ ARMInstructionSelector::OpcodeCache::OpcodeCache(const ARMSubtarget &STI) {
 
   STORE_OPCODE(CMPri, CMPri);
   STORE_OPCODE(MOVCCr, MOVCCr);
+
+  STORE_OPCODE(TSTri, TSTri);
+  STORE_OPCODE(Bcc, Bcc);
 #undef MAP_OPCODE
 }
 
@@ -1008,17 +1014,19 @@ bool ARMInstructionSelector::select(MachineInstr &I,
     }
 
     // Set the flags.
-    auto Test = BuildMI(*I.getParent(), I, I.getDebugLoc(), TII.get(ARM::TSTri))
-                    .addReg(I.getOperand(0).getReg())
-                    .addImm(1)
-                    .add(predOps(ARMCC::AL));
+    auto Test =
+        BuildMI(*I.getParent(), I, I.getDebugLoc(), TII.get(Opcodes.TSTri))
+            .addReg(I.getOperand(0).getReg())
+            .addImm(1)
+            .add(predOps(ARMCC::AL));
     if (!constrainSelectedInstRegOperands(*Test, TII, TRI, RBI))
       return false;
 
     // Branch conditionally.
-    auto Branch = BuildMI(*I.getParent(), I, I.getDebugLoc(), TII.get(ARM::Bcc))
-                      .add(I.getOperand(1))
-                      .add(predOps(ARMCC::NE, ARM::CPSR));
+    auto Branch =
+        BuildMI(*I.getParent(), I, I.getDebugLoc(), TII.get(Opcodes.Bcc))
+            .add(I.getOperand(1))
+            .add(predOps(ARMCC::NE, ARM::CPSR));
     if (!constrainSelectedInstRegOperands(*Branch, TII, TRI, RBI))
       return false;
     I.eraseFromParent();
