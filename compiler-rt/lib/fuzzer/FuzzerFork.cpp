@@ -13,6 +13,7 @@
 #include "FuzzerIO.h"
 #include "FuzzerMerge.h"
 #include "FuzzerSHA1.h"
+#include "FuzzerTracePC.h"
 #include "FuzzerUtil.h"
 
 #include <atomic>
@@ -86,11 +87,13 @@ struct GlobalEnv {
       Cmd.removeArgument(C);
     Cmd.addFlag("reload", "0");  // working in an isolated dir, no reload.
     Cmd.addFlag("print_final_stats", "1");
+    Cmd.addFlag("print_funcs", "0");  // no need to spend time symbolizing.
     Cmd.addFlag("max_total_time", std::to_string(std::min((size_t)300, JobId)));
 
     auto Job = new FuzzJob;
     std::string Seeds;
-    if (size_t CorpusSubsetSize = std::min(Files.size(), (size_t)100))
+    if (size_t CorpusSubsetSize =
+            std::min(Files.size(), (size_t)sqrt(Files.size() + 2)))
       for (size_t i = 0; i < CorpusSubsetSize; i++)
         Seeds += (Seeds.empty() ? "" : ",") +
                  Files[Rand->SkewTowardsLast(Files.size())];
@@ -135,6 +138,12 @@ struct GlobalEnv {
     RmDirRecursive(Job->CorpusDir);
     Features.insert(NewFeatures.begin(), NewFeatures.end());
     Cov.insert(NewCov.begin(), NewCov.end());
+    for (auto Idx : NewCov)
+      if (auto *TE = TPC.PCTableEntryByIdx(Idx))
+        if (TPC.PcIsFuncEntry(TE))
+          PrintPC("  NEW_FUNC: %p %F %L\n", "",
+                  TPC.GetNextInstructionPc(TE->PC));
+
     auto Stats = ParseFinalStatsFromLog(Job->LogPath);
     NumRuns += Stats.number_of_executed_units;
     if (!FilesToAdd.empty())

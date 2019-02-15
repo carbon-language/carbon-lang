@@ -100,7 +100,7 @@ bool Merger::Parse(std::istream &IS, bool ParseCoverage) {
       LastSeenStartMarker = kInvalidStartMarker;
       if (ParseCoverage) {
         TmpFeatures.clear();  // use a vector from outer scope to avoid resizes.
-        while (ISS1 >> std::hex >> N)
+        while (ISS1 >> N)
           TmpFeatures.push_back(N);
         std::sort(TmpFeatures.begin(), TmpFeatures.end());
         Files[CurrentFileIdx].Features = TmpFeatures;
@@ -108,7 +108,7 @@ bool Merger::Parse(std::istream &IS, bool ParseCoverage) {
     } else if (Marker == "COV") {
       size_t CurrentFileIdx = N;
       if (ParseCoverage)
-        while (ISS1 >> std::hex >> N)
+        while (ISS1 >> N)
           if (PCs.insert(N).second)
             Files[CurrentFileIdx].Cov.push_back(N);
     } else {
@@ -220,7 +220,7 @@ void Fuzzer::CrashResistantMergeInternalStep(const std::string &CFPath) {
     }
     std::ostringstream StartedLine;
     // Write the pre-run marker.
-    OF << "STARTED " << std::dec << i << " " << U.size() << "\n";
+    OF << "STARTED " << i << " " << U.size() << "\n";
     OF.flush();  // Flush is important since Command::Execute may crash.
     // Run.
     TPC.ResetMaps();
@@ -242,9 +242,9 @@ void Fuzzer::CrashResistantMergeInternalStep(const std::string &CFPath) {
     // Write the post-run marker and the coverage.
     OF << "FT " << i;
     for (size_t F : UniqFeatures)
-      OF << " " << std::hex << F;
+      OF << " " << F;
     OF << "\n";
-    OF << "COV " << std::dec << i;
+    OF << "COV " << i;
     TPC.ForEachObservedPC([&](const TracePC::PCTableEntry *TE) {
       if (AllPCs.insert(TE).second)
         OF << " " << TPC.PCTableEntryIdx(TE);
