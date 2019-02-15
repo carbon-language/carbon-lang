@@ -488,7 +488,6 @@ TEST(MatcherCXXMemberCallExpr, On) {
   EXPECT_TRUE(notMatches(Snippet2, MatchesY));
 
   auto MatchesX = cxxMemberCallExpr(on(hasType(cxxRecordDecl(hasName("X")))));
-  EXPECT_TRUE(notMatches(Snippet1, MatchesX));
   EXPECT_TRUE(matches(Snippet2, MatchesX));
 
   // Parens are ignored.
