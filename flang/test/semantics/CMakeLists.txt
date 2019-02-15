@@ -115,15 +115,7 @@ set(MODFILE_TESTS
 )
 
 set(LABEL_TESTS
-#  label*.[Ff]90 # 01, 05, 06, 07 loop with current master
-  label02.f90
-  label03.f90
-  label04.f90
-  label08.f90
-  label09.f90
-  label10.f90
-  label11.f90
-  label12.f90
+  label*.[Ff]90
 )
 
 set(DOCONCURRENT_TESTS

@@ -609,7 +609,8 @@ static MaybeExpr AnalyzeExpr(
   auto kind{AnalyzeKindParam(context, x.kind, defaultKind)};
   if (letterKind.has_value() && kind != *letterKind) {
     context.Say(
-        "explicit kind parameter on real constant disagrees with exponent letter"_en_US);
+        "explicit kind parameter on real constant disagrees with "
+        "exponent letter"_en_US);
   }
   auto result{common::SearchTypes(
       RealTypeVisitor{kind, x.real.source, context.GetFoldingContext()})};
@@ -1040,7 +1041,8 @@ static MaybeExpr AnalyzeExpr(
           context.Say(name, "type parameter is not INTEGER"_err_en_US);
         } else {
           context.Say(name,
-              "type parameter inquiry must be applied to a designator"_err_en_US);
+              "type parameter inquiry must be applied to "
+              "a designator"_err_en_US);
         }
       } else if (dtSpec == nullptr || dtSpec->scope() == nullptr) {
         context.Say(name,
@@ -1182,10 +1184,13 @@ void ArrayConstructorContext::Push(MaybeExpr &&x) {
             if (exprContext_.context().warnOnNonstandardUsage() &&
                 *thisLen != *constantLength_) {
               exprContext_.Say(
-                  "Character literal in array constructor without explicit type has different length than earlier element"_en_US);
+                  "Character literal in array constructor without explicit "
+                  "type has different length than earlier element"_en_US);
             }
             if (*thisLen > *constantLength_) {
-              // Language extension (TODO pmk document)
+              // Language extension: use the longest literal to determine the
+              // length of the array constructor's character elements, not the
+              // first, when there is no explicit type.
               *constantLength_ = *thisLen;
               type_->length = std::move(xType.length);
             }
@@ -1196,14 +1201,16 @@ void ArrayConstructorContext::Push(MaybeExpr &&x) {
         }
       } else {
         exprContext_.Say(
-            "Values in array constructor must have the same declared type when no explicit type appears"_err_en_US);
+            "Values in array constructor must have the same declared type "
+            "when no explicit type appears"_err_en_US);
       }
     } else {
       if (auto cast{ConvertToType(*type_, std::move(*x))}) {
         values_.Push(std::move(*cast));
       } else {
         exprContext_.Say(
-            "Value in array constructor could not be converted to the type of the array"_err_en_US);
+            "Value in array constructor could not be converted to the type "
+            "of the array"_err_en_US);
       }
     }
   }
@@ -1261,7 +1268,8 @@ void ArrayConstructorContext::Add(const parser::AcValue &x) {
             bool inserted{exprContext_.AddAcImpliedDo(name, kind)};
             if (!inserted) {
               exprContext_.SayAt(name,
-                  "Implied DO index is active in surrounding implied DO loop and cannot have the same name"_err_en_US);
+                  "Implied DO index is active in surrounding implied DO loop "
+                  "and cannot have the same name"_err_en_US);
             }
             std::optional<Expr<IntType>> lower{
                 GetSpecificIntExpr<IntType::kind>(exprContext_, bounds.lower)};
