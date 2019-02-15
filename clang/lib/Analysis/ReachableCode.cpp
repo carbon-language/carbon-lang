@@ -631,10 +631,6 @@ void DeadCodeScan::reportDeadCode(const CFGBlock *B,
     // a for/for-range loop.  This is the block that contains
     // the increment code.
     if (const Stmt *LoopTarget = B->getLoopTarget()) {
-      // The increment on a foreach statement is not written.
-      if (isa<CXXForRangeStmt>(LoopTarget))
-        return;
-
       SourceLocation Loc = LoopTarget->getBeginLoc();
       SourceRange R1(Loc, Loc), R2;
 

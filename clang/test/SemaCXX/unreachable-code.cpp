@@ -52,11 +52,6 @@ void test3() {
   }
 }
 
-void test4() {
-  for (char c : "abc") // no-warning
-    break;
-}
-
 // PR 6130 - Don't warn about bogus unreachable code with throw's and
 // temporary objects.
 class PR6130 {
