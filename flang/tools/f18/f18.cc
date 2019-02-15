@@ -83,6 +83,7 @@ struct DriverOptions {
   std::vector<std::string> searchDirectories{"."s};  // -I dir
   std::string moduleDirectory{"."s};  // -module dir
   bool forcedForm{false};  // -Mfixed or -Mfree appeared
+  bool warnOnNonstandardUsage{false};  // -Mstandard
   bool warningsAreErrors{false};  // -Werror
   Fortran::parser::Encoding encoding{Fortran::parser::Encoding::UTF8};
   bool parseOnly{false};
@@ -369,7 +370,7 @@ int main(int argc, char *const argv[]) {
       options.features.Enable(
           Fortran::parser::LanguageFeature::BackslashEscapes);
     } else if (arg == "-Mstandard") {
-      options.features.WarnOnAllNonstandard();
+      driver.warnOnNonstandardUsage = true;
     } else if (arg == "-fopenmp") {
       options.features.Enable(Fortran::parser::LanguageFeature::OpenMP);
       options.predefinitions.emplace_back("_OPENMP", "201511");
@@ -480,7 +481,7 @@ int main(int argc, char *const argv[]) {
   }
   driver.encoding = options.encoding;
 
-  if (options.isStrictlyStandard) {
+  if (driver.warnOnNonstandardUsage) {
     options.features.WarnOnAllNonstandard();
   }
   if (!options.features.IsEnabled(
@@ -491,6 +492,7 @@ int main(int argc, char *const argv[]) {
   Fortran::semantics::SemanticsContext semanticsContext{defaultKinds};
   semanticsContext.set_moduleDirectory(driver.moduleDirectory)
       .set_searchDirectories(driver.searchDirectories)
+      .set_warnOnNonstandardUsage(driver.warnOnNonstandardUsage)
       .set_warningsAreErrors(driver.warningsAreErrors);
 
   if (!anyFiles) {

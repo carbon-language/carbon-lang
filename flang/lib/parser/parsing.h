@@ -36,7 +36,6 @@ struct Options {
 
   bool isFixedForm{false};
   int fixedFormColumns{72};
-  bool isStrictlyStandard{false};
   LanguageFeatureControl features;
   Encoding encoding{Encoding::UTF8};
   std::vector<std::string> searchDirectories;

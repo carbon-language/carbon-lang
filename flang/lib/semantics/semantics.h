@@ -45,7 +45,8 @@ public:
     return searchDirectories_;
   }
   const std::string &moduleDirectory() const { return moduleDirectory_; }
-  const bool warningsAreErrors() const { return warningsAreErrors_; }
+  bool warnOnNonstandardUsage() const { return warnOnNonstandardUsage_; }
+  bool warningsAreErrors() const { return warningsAreErrors_; }
   const evaluate::IntrinsicProcTable &intrinsics() const { return intrinsics_; }
   Scope &globalScope() { return globalScope_; }
   parser::Messages &messages() { return messages_; }
@@ -57,6 +58,10 @@ public:
   }
   SemanticsContext &set_moduleDirectory(const std::string &x) {
     moduleDirectory_ = x;
+    return *this;
+  }
+  SemanticsContext &set_warnOnNonstandardUsage(bool x) {
+    warnOnNonstandardUsage_ = x;
     return *this;
   }
   SemanticsContext &set_warningsAreErrors(bool x) {
@@ -76,6 +81,7 @@ private:
   const common::IntrinsicTypeDefaultKinds &defaultKinds_;
   std::vector<std::string> searchDirectories_;
   std::string moduleDirectory_{"."s};
+  bool warnOnNonstandardUsage_{false};
   bool warningsAreErrors_{false};
   const evaluate::IntrinsicProcTable intrinsics_;
   Scope globalScope_;

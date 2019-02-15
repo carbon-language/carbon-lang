@@ -53,6 +53,9 @@ Extensions, deletions, and legacy features supported by default
   could have a label
 * The character `&` in column 1 in fixed form source is a variant form
   of continuation line.
+* Character literals as elements of an array constructor without an explicit
+  type specifier need not have the same length; the longest literal determines
+  the length parameter of the implicit type, not the first.
 
 Extensions supported when enabled by options
 --------------------------------------------

@@ -16,7 +16,6 @@
 #include "expression.h"
 #include "type.h"
 #include "../parser/characters.h"
-#include <algorithm>
 
 namespace Fortran::evaluate {
 
@@ -112,7 +111,7 @@ Constant<SubscriptInteger> ConstantBase<RESULT, VALUE>::SHAPE() const {
   return ShapeAsConstant(shape_);
 }
 
-// Constant<Type<TypeCategory::Character, KIND>  specializations
+// Constant<Type<TypeCategory::Character, KIND> specializations
 template<int KIND>
 Constant<Type<TypeCategory::Character, KIND>>::Constant(const ScalarValue &str)
   : values_{str}, length_{static_cast<std::int64_t>(values_.size())} {}
@@ -130,8 +129,12 @@ Constant<Type<TypeCategory::Character, KIND>>::Constant(std::int64_t len,
       static_cast<typename ScalarValue::value_type>(' '));
   std::int64_t at{0};
   for (const auto &str : strings) {
-    values_.replace(
-        at, std::min(length_, static_cast<std::int64_t>(str.size())), str);
+    auto strLen{static_cast<std::int64_t>(str.size())};
+    if (strLen > length_) {
+      values_.replace(at, length_, str.substr(0, length_));
+    } else {
+      values_.replace(at, strLen, str);
+    }
     at += length_;
   }
   CHECK(at == static_cast<std::int64_t>(values_.size()));
