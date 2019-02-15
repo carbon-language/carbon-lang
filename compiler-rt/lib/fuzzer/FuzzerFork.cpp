@@ -72,7 +72,7 @@ struct GlobalEnv {
   Vector<std::string> CorpusDirs;
   std::string MainCorpusDir;
   std::string TempDir;
-  Set<uint32_t> Features;
+  Set<uint32_t> Features, Cov;
   Vector<std::string> Files;
   Random *Rand;
   int Verbosity = 0;
@@ -122,9 +122,9 @@ struct GlobalEnv {
     GetSizedFilesFromDir(Job->CorpusDir, &TempFiles);
 
     Vector<std::string> FilesToAdd;
-    Set<uint32_t> NewFeatures;
+    Set<uint32_t> NewFeatures, NewCov;
     CrashResistantMerge(Args, {}, TempFiles, &FilesToAdd, Features,
-                        &NewFeatures, Job->CFPath, false);
+                        &NewFeatures, Cov, &NewCov, Job->CFPath, false);
     RemoveFile(Job->CFPath);
     for (auto &Path : FilesToAdd) {
       auto U = FileToVector(Path);
@@ -134,11 +134,12 @@ struct GlobalEnv {
     }
     RmDirRecursive(Job->CorpusDir);
     Features.insert(NewFeatures.begin(), NewFeatures.end());
+    Cov.insert(NewCov.begin(), NewCov.end());
     auto Stats = ParseFinalStatsFromLog(Job->LogPath);
     NumRuns += Stats.number_of_executed_units;
     if (!FilesToAdd.empty())
-      Printf("#%zd: ft: %zd corp: %zd exec/s %zd\n", NumRuns,
-             Features.size(), Files.size(),
+      Printf("#%zd: cov: %zd ft: %zd corp: %zd exec/s %zd\n", NumRuns,
+             Cov.size(), Features.size(), Files.size(),
              Stats.average_exec_per_sec);
   }
 };
@@ -202,6 +203,7 @@ void FuzzWithFork(Random &Rand, const FuzzingOptions &Options,
 
   auto CFPath = DirPlusFile(Env.TempDir, "merge.txt");
   CrashResistantMerge(Env.Args, {}, SeedFiles, &Env.Files, {}, &Env.Features,
+                      {}, &Env.Cov,
                       CFPath, false);
   RemoveFile(CFPath);
   Printf("INFO: -fork=%d: %zd seeds, starting to fuzz; scratch: %s\n",
