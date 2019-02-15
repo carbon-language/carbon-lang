@@ -131,9 +131,10 @@ size_t Merger::ApproximateMemoryConsumption() const  {
 
 // Decides which files need to be merged (add those to NewFiles).
 // Returns the number of new features added.
-void Merger::Merge(const Set<uint32_t> &InitialFeatures,
-                   Set<uint32_t> *NewFeatures, const Set<uint32_t> &InitialCov,
-                   Set<uint32_t> *NewCov, Vector<std::string> *NewFiles) {
+size_t Merger::Merge(const Set<uint32_t> &InitialFeatures,
+                     Set<uint32_t> *NewFeatures,
+                     const Set<uint32_t> &InitialCov, Set<uint32_t> *NewCov,
+                     Vector<std::string> *NewFiles) {
   NewFiles->clear();
   assert(NumFilesInFirstCorpus <= Files.size());
   Set<uint32_t> AllFeatures = InitialFeatures;
@@ -181,6 +182,7 @@ void Merger::Merge(const Set<uint32_t> &InitialFeatures,
       if (InitialCov.find(Cov) == InitialCov.end())
         NewCov->insert(Cov);
   }
+  return NewFeatures->size();
 }
 
 Set<uint32_t> Merger::AllFeatures() const {
