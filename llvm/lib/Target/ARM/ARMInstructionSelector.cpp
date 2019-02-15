@@ -97,6 +97,8 @@ private:
     unsigned STORE8;
     unsigned LOAD8;
 
+    unsigned ADDrr;
+
     // Used for G_ICMP
     unsigned CMPrr;
     unsigned MOVi;
@@ -296,6 +298,8 @@ ARMInstructionSelector::OpcodeCache::OpcodeCache(const ARMSubtarget &STI) {
 
   STORE_OPCODE(STORE8, STRBi12);
   STORE_OPCODE(LOAD8, LDRBi12);
+
+  STORE_OPCODE(ADDrr, ADDrr);
 
   STORE_OPCODE(CMPrr, CMPrr);
   STORE_OPCODE(MOVi, MOVi);
@@ -957,7 +961,7 @@ bool ARMInstructionSelector::select(MachineInstr &I,
     return selectShift(ARM_AM::ShiftOpc::lsl, MIB);
   }
   case G_GEP:
-    I.setDesc(TII.get(STI.isThumb2() ? ARM::t2ADDrr : ARM::ADDrr));
+    I.setDesc(TII.get(Opcodes.ADDrr));
     MIB.add(predOps(ARMCC::AL)).add(condCodeOp());
     break;
   case G_FRAME_INDEX:
