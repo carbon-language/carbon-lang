@@ -470,24 +470,26 @@ TEST(Matcher, isInstanceMessage) {
 }
 
 TEST(MatcherCXXMemberCallExpr, On) {
-  auto MatchesType = cxxMemberCallExpr(on(hasType(cxxRecordDecl(hasName("X")))));
-  EXPECT_TRUE(matches(
-      R"cc(
+  auto Snippet1 = R"cc(
+        struct Y {
+          void m();
+        };
+        void z(Y y) { y.m(); }
+      )cc";
+  auto Snippet2 = R"cc(
         struct Y {
           void m();
         };
         struct X : public Y {};
         void z(X x) { x.m(); }
-      )cc",
-      MatchesType));
-  EXPECT_TRUE(notMatches(
-      R"cc(
-        struct Y {
-          void m();
-        };
-        void z(Y y) { y.m(); }
-      )cc",
-      MatchesType));
+      )cc";
+  auto MatchesY = cxxMemberCallExpr(on(hasType(cxxRecordDecl(hasName("Y")))));
+  EXPECT_TRUE(matches(Snippet1, MatchesY));
+  EXPECT_TRUE(notMatches(Snippet2, MatchesY));
+
+  auto MatchesX = cxxMemberCallExpr(on(hasType(cxxRecordDecl(hasName("X")))));
+  EXPECT_TRUE(notMatches(Snippet1, MatchesX));
+  EXPECT_TRUE(matches(Snippet2, MatchesX));
 
   // Parens are ignored.
   auto MatchesCall = cxxMemberCallExpr(on(callExpr()));
