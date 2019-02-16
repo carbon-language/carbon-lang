@@ -14,14 +14,7 @@
 
 #include <array>
 
-
 using namespace llvm;
-
-static_assert(llvm::is_trivially_copyable<Optional<int>>::value,
-              "trivially copyable");
-
-static_assert(llvm::is_trivially_copyable<Optional<std::array<int, 3>>>::value,
-              "trivially copyable");
 
 namespace {
 
