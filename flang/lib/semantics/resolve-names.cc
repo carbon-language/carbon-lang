@@ -2868,28 +2868,33 @@ bool DeclarationVisitor::Pre(const parser::DerivedTypeStmt &x) {
   return BeginAttrs();
 }
 void DeclarationVisitor::Post(const parser::DerivedTypeStmt &x) {
+  // Resolve the EXTENDS() clause before creating the derived
+  // type's symbol to foil attempts to recursively extend a type.
+  auto *extendsName{derivedTypeInfo_.extends};
+  const Symbol *extendsType{nullptr};
+  if (extendsName != nullptr) {
+    extendsType = ResolveDerivedType(*extendsName);
+  }
   auto &name{std::get<parser::Name>(x.t)};
   auto &symbol{MakeSymbol(name, GetAttrs(), DerivedTypeDetails{})};
   derivedTypeInfo_.type = &symbol;
   PushScope(Scope::Kind::DerivedType, &symbol);
-  if (auto *extendsName{derivedTypeInfo_.extends}) {
-    if (const Symbol * extends{ResolveDerivedType(*extendsName)}) {
-      // Declare the "parent component"; private if the type is
-      // Any symbol stored in the EXTENDS() clause is temporarily
-      // hidden so that a new symbol can be created for the parent
-      // component without producing spurious errors about already
-      // existing.
-      auto restorer{common::ScopedSet(extendsName->symbol, nullptr)};
-      if (OkToAddComponent(*extendsName, extends)) {
-        auto &comp{DeclareEntity<ObjectEntityDetails>(*extendsName, Attrs{})};
-        comp.attrs().set(Attr::PRIVATE, extends->attrs().test(Attr::PRIVATE));
-        comp.set(Symbol::Flag::ParentComp);
-        DeclTypeSpec &type{currScope().MakeDerivedType(*extends)};
-        type.derivedTypeSpec().set_scope(*extends->scope());
-        comp.SetType(type);
-        DerivedTypeDetails &details{symbol.get<DerivedTypeDetails>()};
-        details.add_component(comp);
-      }
+  if (extendsType != nullptr) {
+    // Declare the "parent component"; private if the type is
+    // Any symbol stored in the EXTENDS() clause is temporarily
+    // hidden so that a new symbol can be created for the parent
+    // component without producing spurious errors about already
+    // existing.
+    auto restorer{common::ScopedSet(extendsName->symbol, nullptr)};
+    if (OkToAddComponent(*extendsName, extendsType)) {
+      auto &comp{DeclareEntity<ObjectEntityDetails>(*extendsName, Attrs{})};
+      comp.attrs().set(Attr::PRIVATE, extendsType->attrs().test(Attr::PRIVATE));
+      comp.set(Symbol::Flag::ParentComp);
+      DeclTypeSpec &type{currScope().MakeDerivedType(*extendsType)};
+      type.derivedTypeSpec().set_scope(*extendsType->scope());
+      comp.SetType(type);
+      DerivedTypeDetails &details{symbol.get<DerivedTypeDetails>()};
+      details.add_component(comp);
     }
   }
   EndAttrs();
