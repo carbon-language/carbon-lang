@@ -108,6 +108,59 @@ template <typename T, bool = is_trivially_copyable<T>::value> struct OptionalSto
     return reinterpret_cast<const T *>(storage.buffer);
   }
 };
+template <typename T> struct OptionalStorage<T, true> {
+  AlignedCharArrayUnion<T> storage;
+  bool hasVal = false;
+
+  OptionalStorage() = default;
+
+  OptionalStorage(const T &y) : hasVal(true) { new (storage.buffer) T(y); }
+  OptionalStorage(const OptionalStorage &O)  = default;
+  OptionalStorage(T &&y) : hasVal(true) {
+    new (storage.buffer) T(std::forward<T>(y));
+  }
+  OptionalStorage(OptionalStorage &&O) = default;
+
+  OptionalStorage &operator=(T &&y) {
+    if (hasVal)
+      *getPointer() = std::move(y);
+    else {
+      new (storage.buffer) T(std::move(y));
+      hasVal = true;
+    }
+    return *this;
+  }
+  OptionalStorage &operator=(OptionalStorage &&O) = default;
+
+  OptionalStorage &operator=(const T &y) {
+    if (hasVal)
+      *getPointer() = y;
+    else {
+      new (storage.buffer) T(y);
+      hasVal = true;
+    }
+    return *this;
+  }
+  OptionalStorage &operator=(const OptionalStorage &O) = default;
+
+  ~OptionalStorage() = default;
+
+  void reset() {
+    if (hasVal) {
+      (*getPointer()).~T();
+      hasVal = false;
+    }
+  }
+
+  T *getPointer() {
+    assert(hasVal);
+    return reinterpret_cast<T *>(storage.buffer);
+  }
+  const T *getPointer() const {
+    assert(hasVal);
+    return reinterpret_cast<const T *>(storage.buffer);
+  }
+};
 
 } // namespace optional_detail
 
