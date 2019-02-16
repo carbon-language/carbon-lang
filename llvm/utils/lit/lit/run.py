@@ -32,9 +32,6 @@ class Run(object):
                 {k: multiprocessing.BoundedSemaphore(v) for k, v in
                  self.lit_config.parallelism_groups.items()}
 
-    def execute_test(self, test):
-        return lit.worker._execute_test(test, self.lit_config)
-
     def execute_tests_in_pool(self, jobs, max_time):
         # We need to issue many wait calls, so compute the final deadline and
         # subtract time.time() from that as we go along.
