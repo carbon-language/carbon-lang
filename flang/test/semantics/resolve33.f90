@@ -25,7 +25,7 @@ module m
     integer, kind :: a
     integer, len :: c
   end type
-  !ERROR: 'b' is not defined as a type parameter
+  !ERROR: No definition found for type parameter 'b'
   type t3(a, b)
     integer, kind :: a
     integer :: b

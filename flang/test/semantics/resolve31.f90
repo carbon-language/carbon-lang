@@ -60,10 +60,10 @@ module m4
     sequence
     integer i
   end type
-  !ERROR: A sequence type may not have a CONTAINS statement
   type :: t3
     sequence
     integer i
+  !ERROR: A sequence type may not have a CONTAINS statement
   contains
   end type
 contains
