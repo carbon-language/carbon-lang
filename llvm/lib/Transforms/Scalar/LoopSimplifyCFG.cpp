@@ -90,9 +90,10 @@ static void removeBlockFromLoops(BasicBlock *BB, Loop *FirstLoop,
     Current->removeBlockFromLoop(BB);
 }
 
-/// Find innermost loop that is reachable from \p BBs and contains loop \p L.
-static Loop *getInnermostSuccessorLoop(SmallPtrSetImpl<BasicBlock *> &BBs,
-                                       Loop &L, LoopInfo &LI) {
+/// Find innermost loop that contains at least one block from \p BBs and
+/// contains the header of loop \p L.
+static Loop *getInnermostLoopFor(SmallPtrSetImpl<BasicBlock *> &BBs,
+                                 Loop &L, LoopInfo &LI) {
   Loop *StillReachable = nullptr;
   for (BasicBlock *BB : BBs) {
     Loop *BBL = LI.getLoopFor(BB);
@@ -383,7 +384,7 @@ private:
       // the current loop. We need to fix loop info accordingly. For this, we
       // find the most nested loop that still contains L and remove L from all
       // loops that are inside of it.
-      Loop *StillReachable = getInnermostSuccessorLoop(LiveExitBlocks, L, LI);
+      Loop *StillReachable = getInnermostLoopFor(LiveExitBlocks, L, LI);
 
       // Okay, our loop is no longer in the outer loop (and maybe not in some of
       // its parents as well). Make the fixup.
