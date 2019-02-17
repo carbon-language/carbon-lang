@@ -108,7 +108,7 @@ public:
 
   OptionalStorage &operator=(OptionalStorage &&other) {
     if (other.hasValue())
-      emplace(std::move(other).getValue());
+      emplace(std::move(other.getValue()));
     else
       reset();
     return *this;
@@ -173,8 +173,8 @@ public:
   }
 
 #if LLVM_HAS_RVALUE_REFERENCE_THIS
-  T &&getValue() && { return std::move(Storage).getValue(); }
-  T &&operator*() && { return std::move(Storage).getValue(); }
+  T &&getValue() && { return std::move(Storage.getValue()); }
+  T &&operator*() && { return std::move(Storage.getValue()); }
 
   template <typename U>
   T getValueOr(U &&value) && {
