@@ -30,10 +30,12 @@ class raw_ostream;
 
 namespace optional_detail {
 /// Storage for any type.
-template <typename T, bool = is_trivially_copyable<T>::value> struct OptionalStorage {
+template <typename T, bool = is_trivially_copyable<T>::value>
+class OptionalStorage {
   AlignedCharArrayUnion<T> storage;
   bool hasVal = false;
 
+public:
   OptionalStorage() = default;
 
   OptionalStorage(const T &y) : hasVal(true) { new (storage.buffer) T(y); }
@@ -107,6 +109,14 @@ template <typename T, bool = is_trivially_copyable<T>::value> struct OptionalSto
     assert(hasVal);
     return reinterpret_cast<const T *>(storage.buffer);
   }
+
+  template <typename... ArgTypes> void emplace(ArgTypes &&... Args) {
+    reset();
+    hasVal = true;
+    new (storage.buffer) T(std::forward<ArgTypes>(Args)...);
+  }
+
+  bool hasValue() const { return hasVal; }
 };
 
 } // namespace optional_detail
@@ -134,9 +144,7 @@ public:
 
   /// Create a new object by constructing it in place with the given arguments.
   template <typename... ArgTypes> void emplace(ArgTypes &&... Args) {
-    reset();
-    Storage.hasVal = true;
-    new (getPointer()) T(std::forward<ArgTypes>(Args)...);
+    Storage.emplace(std::forward<ArgTypes>(Args)...);
   }
 
   static inline Optional create(const T *y) {
@@ -151,19 +159,13 @@ public:
 
   void reset() { Storage.reset(); }
 
-  const T *getPointer() const {
-    assert(Storage.hasVal);
-    return reinterpret_cast<const T *>(Storage.storage.buffer);
-  }
-  T *getPointer() {
-    assert(Storage.hasVal);
-    return reinterpret_cast<T *>(Storage.storage.buffer);
-  }
+  const T *getPointer() const { return Storage.getPointer(); }
+  T *getPointer() { return Storage.getPointer(); }
   const T &getValue() const LLVM_LVALUE_FUNCTION { return *getPointer(); }
   T &getValue() LLVM_LVALUE_FUNCTION { return *getPointer(); }
 
-  explicit operator bool() const { return Storage.hasVal; }
-  bool hasValue() const { return Storage.hasVal; }
+  explicit operator bool() const { return hasValue(); }
+  bool hasValue() const { return Storage.hasValue(); }
   const T *operator->() const { return getPointer(); }
   T *operator->() { return getPointer(); }
   const T &operator*() const LLVM_LVALUE_FUNCTION { return *getPointer(); }
