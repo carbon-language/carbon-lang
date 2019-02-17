@@ -641,11 +641,10 @@ define <2 x i8> @test_vector_ssub_neg_nneg(<2 x i8> %a) {
 
 define i32 @uadd_sat(i32 %x, i32 %y) {
 ; CHECK-LABEL: @uadd_sat(
-; CHECK-NEXT:    [[NOTX:%.*]] = xor i32 [[X:%.*]], -1
-; CHECK-NEXT:    [[A:%.*]] = add i32 [[Y:%.*]], [[X]]
-; CHECK-NEXT:    [[C:%.*]] = icmp ult i32 [[NOTX]], [[Y]]
-; CHECK-NEXT:    [[R:%.*]] = select i1 [[C]], i32 -1, i32 [[A]]
-; CHECK-NEXT:    ret i32 [[R]]
+; CHECK-NEXT:    [[A:%.*]] = add i32 [[Y:%.*]], [[X:%.*]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ult i32 [[A]], [[Y]]
+; CHECK-NEXT:    [[TMP2:%.*]] = select i1 [[TMP1]], i32 -1, i32 [[A]]
+; CHECK-NEXT:    ret i32 [[TMP2]]
 ;
   %notx = xor i32 %x, -1
   %a = add i32 %y, %x
@@ -657,11 +656,10 @@ define i32 @uadd_sat(i32 %x, i32 %y) {
 define i32 @uadd_sat_commute1(i32 %xp, i32 %y) {
 ; CHECK-LABEL: @uadd_sat_commute1(
 ; CHECK-NEXT:    [[X:%.*]] = urem i32 42, [[XP:%.*]]
-; CHECK-NEXT:    [[NOTX:%.*]] = xor i32 [[X]], -1
 ; CHECK-NEXT:    [[A:%.*]] = add i32 [[X]], [[Y:%.*]]
-; CHECK-NEXT:    [[C:%.*]] = icmp ult i32 [[NOTX]], [[Y]]
-; CHECK-NEXT:    [[R:%.*]] = select i1 [[C]], i32 -1, i32 [[A]]
-; CHECK-NEXT:    ret i32 [[R]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ult i32 [[A]], [[Y]]
+; CHECK-NEXT:    [[TMP2:%.*]] = select i1 [[TMP1]], i32 -1, i32 [[A]]
+; CHECK-NEXT:    ret i32 [[TMP2]]
 ;
   %x = urem i32 42, %xp ; thwart complexity-based-canonicalization
   %notx = xor i32 %x, -1
