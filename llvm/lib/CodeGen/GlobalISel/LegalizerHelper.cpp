@@ -1596,7 +1596,6 @@ LegalizerHelper::fewerElementsVectorBasic(MachineInstr &MI, unsigned TypeIdx,
       unsigned PartInsertReg = MRI.createGenericVirtualRegister(DstTy);
       MIRBuilder.buildInsert(PartInsertReg, AccumDstReg, PartDstReg, Offset);
       AccumDstReg = PartInsertReg;
-      Offset += NarrowSize;
     }
 
     // Handle the remaining element sized leftover piece.
