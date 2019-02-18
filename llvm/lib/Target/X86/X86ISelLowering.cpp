@@ -4934,6 +4934,13 @@ bool X86TargetLowering::shouldScalarizeBinop(SDValue VecOp) const {
   return isOperationLegalOrCustomOrPromote(VecOp.getOpcode(), ScalarVT);
 }
 
+bool X86TargetLowering::shouldFormOverflowOp(unsigned Opcode, EVT VT) const {
+  // TODO: Allow vectors?
+  if (VT.isVector())
+    return false;
+  return VT.isSimple() || !isOperationExpand(Opcode, VT);
+}
+
 bool X86TargetLowering::isCheapToSpeculateCttz() const {
   // Speculate cttz only if we can directly use TZCNT.
   return Subtarget.hasBMI();
