@@ -655,7 +655,7 @@ public:
   /// \pre \p Res and \p Src must be generic virtual registers.
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildExtract(unsigned Res, unsigned Src, uint64_t Index);
+  MachineInstrBuilder buildExtract(const DstOp &Res, const SrcOp &Src, uint64_t Index);
 
   /// Build and insert \p Res = IMPLICIT_DEF.
   MachineInstrBuilder buildUndef(const DstOp &Res);
