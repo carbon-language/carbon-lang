@@ -709,9 +709,6 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
        << " -> "
        << ASC->getDestAddressSpace()
        << ']';
-  } else if (const LifetimeSDNode *LN = dyn_cast<LifetimeSDNode>(this)) {
-    if (LN->hasOffset())
-      OS << "<" << LN->getOffset() << " to " << LN->getOffset() + LN->getSize() << ">";
   }
 
   if (VerboseDAGDumping) {

@@ -6373,11 +6373,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     if (TM.getOptLevel() == CodeGenOpt::None)
       return nullptr;
 
-    const int64_t ObjectSize =
-        cast<ConstantInt>(I.getArgOperand(0))->getSExtValue();
-    Value *const ObjectPtr = I.getArgOperand(1);
     SmallVector<Value *, 4> Allocas;
-    GetUnderlyingObjects(ObjectPtr, Allocas, *DL);
+    GetUnderlyingObjects(I.getArgOperand(1), Allocas, *DL);
 
     for (SmallVectorImpl<Value*>::iterator Object = Allocas.begin(),
            E = Allocas.end(); Object != E; ++Object) {
@@ -6393,13 +6390,15 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
       if (SI == FuncInfo.StaticAllocaMap.end())
         return nullptr;
 
-      const int FrameIndex = SI->second;
-      int64_t Offset;
-      if (GetPointerBaseWithConstantOffset(
-              ObjectPtr, Offset, DAG.getDataLayout()) != LifetimeObject)
-        Offset = -1; // Cannot determine offset from alloca to lifetime object.
-      Res = DAG.getLifetimeNode(IsStart, sdl, getRoot(), FrameIndex, ObjectSize,
-                                Offset);
+      int FI = SI->second;
+
+      SDValue Ops[2];
+      Ops[0] = getRoot();
+      Ops[1] =
+          DAG.getFrameIndex(FI, TLI.getFrameIndexTy(DAG.getDataLayout()), true);
+      unsigned Opcode = (IsStart ? ISD::LIFETIME_START : ISD::LIFETIME_END);
+
+      Res = DAG.getNode(Opcode, sdl, MVT::Other, Ops);
       DAG.setRoot(Res);
     }
     return nullptr;
