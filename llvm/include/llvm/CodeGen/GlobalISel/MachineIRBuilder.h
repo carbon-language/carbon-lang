@@ -237,6 +237,10 @@ public:
     return *State.MF;
   }
 
+  const DataLayout &getDataLayout() const {
+    return getMF().getFunction().getParent()->getDataLayout();
+  }
+
   /// Getter for DebugLoc
   const DebugLoc &getDL() { return State.DL; }
 
@@ -464,6 +468,11 @@ public:
   ///
   /// \return The newly created instruction.
   MachineInstrBuilder buildSExt(const DstOp &Res, const SrcOp &Op);
+
+  /// Build and insert a G_PTRTOINT instruction.
+  MachineInstrBuilder buildPtrToInt(const DstOp &Dst, const SrcOp &Src) {
+    return buildInstr(TargetOpcode::G_PTRTOINT, {Dst}, {Src});
+  }
 
   /// \return The opcode of the extension the target wants to use for boolean
   /// values.
