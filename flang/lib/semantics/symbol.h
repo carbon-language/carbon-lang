@@ -232,7 +232,7 @@ private:
   SymbolList paramDecls_;
   // These are the names of the derived type's components in component
   // order.  A parent component, if any, appears first in this list.
-  std::list<SourceName> components_;
+  std::list<SourceName> componentNames_;
   bool sequence_{false};
   friend std::ostream &operator<<(std::ostream &, const DerivedTypeDetails &);
 };

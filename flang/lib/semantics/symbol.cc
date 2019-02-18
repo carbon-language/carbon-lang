@@ -295,9 +295,9 @@ std::ostream &operator<<(std::ostream &os, const DerivedTypeDetails &x) {
   if (x.sequence_) {
     os << " sequence";
   }
-  if (!x.components_.empty()) {
+  if (!x.componentNames_.empty()) {
     os << " components:";
-    for (auto name : x.components_) {
+    for (auto name : x.componentNames_) {
       os << ' ' << name.ToString();
     }
   }
@@ -589,9 +589,7 @@ const Symbol *Symbol::GetParentComponent(const Scope *scope) const {
 const DerivedTypeSpec *Symbol::GetParentTypeSpec(const Scope *scope) const {
   if (const Symbol * parentComponent{GetParentComponent(scope)}) {
     const auto &object{parentComponent->get<ObjectEntityDetails>()};
-    const DerivedTypeSpec *spec{object.type()->AsDerived()};
-    CHECK(spec != nullptr);
-    return spec;
+    return &object.type()->derivedTypeSpec();
   } else {
     return nullptr;
   }
@@ -599,9 +597,9 @@ const DerivedTypeSpec *Symbol::GetParentTypeSpec(const Scope *scope) const {
 
 void DerivedTypeDetails::add_component(const Symbol &symbol) {
   if (symbol.test(Symbol::Flag::ParentComp)) {
-    CHECK(components_.empty());
+    CHECK(componentNames_.empty());
   }
-  components_.push_back(symbol.name());
+  componentNames_.push_back(symbol.name());
 }
 
 std::list<SourceName> DerivedTypeDetails::OrderParameterNames(
@@ -634,14 +632,14 @@ SymbolList DerivedTypeDetails::OrderParameterDeclarations(
 
 SymbolList DerivedTypeDetails::OrderComponents(const Scope &scope) const {
   SymbolList result;
-  for (SourceName name : components_) {
+  for (SourceName name : componentNames_) {
     auto iter{scope.find(name)};
     if (iter != scope.cend()) {
       const Symbol &symbol{*iter->second};
       if (symbol.test(Symbol::Flag::ParentComp)) {
         CHECK(result.empty());
         const DerivedTypeSpec &spec{
-            *symbol.get<ObjectEntityDetails>().type()->AsDerived()};
+            symbol.get<ObjectEntityDetails>().type()->derivedTypeSpec()};
         result = spec.typeSymbol().get<DerivedTypeDetails>().OrderComponents(
             *spec.scope());
       }
@@ -652,8 +650,8 @@ SymbolList DerivedTypeDetails::OrderComponents(const Scope &scope) const {
 }
 
 const Symbol *DerivedTypeDetails::GetParentComponent(const Scope &scope) const {
-  if (!components_.empty()) {
-    SourceName extends{components_.front()};
+  if (!componentNames_.empty()) {
+    SourceName extends{componentNames_.front()};
     auto iter{scope.find(extends)};
     if (iter != scope.cend()) {
       const Symbol &symbol{*iter->second};
