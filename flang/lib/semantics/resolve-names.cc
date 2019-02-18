@@ -98,10 +98,9 @@ public:
   const SourceName *currStmtSource() { return currStmtSource_; }
   void set_currStmtSource(const SourceName *);
 
-  // Emit a message
-  Message &Say(Message &&);
   // Emit a message associated with the current statement source.
   Message &Say(MessageFixedText &&);
+  Message &Say(MessageFormattedText &&);
   // Emit a message about a SourceName
   Message &Say(const SourceName &, MessageFixedText &&);
   // Emit a formatted message associated with a source location.
@@ -620,10 +619,10 @@ public:
   using ArraySpecVisitor::Post;
   using ArraySpecVisitor::Pre;
 
+  bool Pre(const parser::ImplicitStmt &);
   void Post(const parser::EntityDecl &);
   void Post(const parser::ObjectDecl &);
   void Post(const parser::PointerDecl &);
-
   bool Pre(const parser::BindStmt &) { return BeginAttrs(); }
   void Post(const parser::BindStmt &) { EndAttrs(); }
   bool Pre(const parser::BindEntity &);
@@ -744,6 +743,7 @@ private:
   // the interface name, if any.
   const parser::Name *interfaceName_{nullptr};
 
+  bool CheckNotInBlock(const char *);
   bool HandleAttributeStmt(Attr, const std::list<parser::Name> &);
   Symbol &HandleAttributeStmt(Attr, const parser::Name &);
   Symbol &DeclareUnknownEntity(const parser::Name &, Attrs);
@@ -755,6 +755,7 @@ private:
   Symbol *MakeTypeSymbol(const parser::Name &, Details &&);
   bool OkToAddComponent(const parser::Name &, const Symbol * = nullptr);
   ParamValue GetParamValue(const parser::TypeParamValue &);
+  Symbol &MakeCommonBlockSymbol(const parser::Name &);
   void CheckCommonBlockDerivedType(const SourceName &, const Symbol &);
 
   // Declare an object or procedure entity.
@@ -931,7 +932,6 @@ public:
   bool Pre(const parser::MainProgram &);
   void Post(const parser::EndProgramStmt &);
   void Post(const parser::Program &);
-  bool Pre(const parser::ImplicitStmt &);
   void Post(const parser::PointerObject &);
   void Post(const parser::AllocateObject &);
   void Post(const parser::PointerAssignmentStmt &);
@@ -1115,6 +1115,7 @@ bool AttrsVisitor::SetBindNameOn(Symbol &symbol) {
           [&](ObjectEntityDetails &x) { x.set_bindName(std::move(bindName_)); },
           [&](ProcEntityDetails &x) { x.set_bindName(std::move(bindName_)); },
           [&](SubprogramDetails &x) { x.set_bindName(std::move(bindName_)); },
+          [&](CommonBlockDetails &x) { x.set_bindName(std::move(bindName_)); },
           [](auto &) { common::die("unexpected bind name"); },
       },
       symbol.details());
@@ -1247,6 +1248,10 @@ void MessageHandler::set_currStmtSource(const SourceName *source) {
   currStmtSource_ = source;
 }
 Message &MessageHandler::Say(MessageFixedText &&msg) {
+  CHECK(currStmtSource_);
+  return messages_->Say(*currStmtSource_, std::move(msg));
+}
+Message &MessageHandler::Say(MessageFormattedText &&msg) {
   CHECK(currStmtSource_);
   return messages_->Say(*currStmtSource_, std::move(msg));
 }
@@ -2443,6 +2448,10 @@ void DeclarationVisitor::Post(const parser::DimensionStmt::Declaration &x) {
   DeclareObjectEntity(name, Attrs{});
 }
 
+bool DeclarationVisitor::Pre(const parser::ImplicitStmt &x) {
+  return CheckNotInBlock("IMPLICIT") && ImplicitRulesVisitor::Pre(x);
+}
+
 void DeclarationVisitor::Post(const parser::EntityDecl &x) {
   // TODO: may be under StructureStmt
   const auto &name{std::get<parser::ObjectName>(x.t)};
@@ -2466,13 +2475,16 @@ void DeclarationVisitor::Post(const parser::PointerDecl &x) {
 }
 
 bool DeclarationVisitor::Pre(const parser::BindEntity &x) {
+  auto kind{std::get<parser::BindEntity::Kind>(x.t)};
   auto &name{std::get<parser::Name>(x.t)};
-  if (std::get<parser::BindEntity::Kind>(x.t) ==
-      parser::BindEntity::Kind::Object) {
-    HandleAttributeStmt(Attr::BIND_C, name);
+  Symbol *symbol;
+  if (kind == parser::BindEntity::Kind::Object) {
+    symbol = &HandleAttributeStmt(Attr::BIND_C, name);
   } else {
-    // TODO: name is common block
+    symbol = &MakeCommonBlockSymbol(name);
+    symbol->attrs().set(Attr::BIND_C);
   }
+  SetBindNameOn(*symbol);
   return false;
 }
 bool DeclarationVisitor::Pre(const parser::NamedConstantDef &x) {
@@ -2518,19 +2530,21 @@ bool DeclarationVisitor::Pre(const parser::ExternalStmt &x) {
 bool DeclarationVisitor::Pre(const parser::IntentStmt &x) {
   auto &intentSpec{std::get<parser::IntentSpec>(x.t)};
   auto &names{std::get<std::list<parser::Name>>(x.t)};
-  return HandleAttributeStmt(IntentSpecToAttr(intentSpec), names);
+  return CheckNotInBlock("INTENT") &&
+      HandleAttributeStmt(IntentSpecToAttr(intentSpec), names);
 }
 bool DeclarationVisitor::Pre(const parser::IntrinsicStmt &x) {
   return HandleAttributeStmt(Attr::INTRINSIC, x.v);
 }
 bool DeclarationVisitor::Pre(const parser::OptionalStmt &x) {
-  return HandleAttributeStmt(Attr::OPTIONAL, x.v);
+  return CheckNotInBlock("OPTIONAL") &&
+      HandleAttributeStmt(Attr::OPTIONAL, x.v);
 }
 bool DeclarationVisitor::Pre(const parser::ProtectedStmt &x) {
   return HandleAttributeStmt(Attr::PROTECTED, x.v);
 }
 bool DeclarationVisitor::Pre(const parser::ValueStmt &x) {
-  return HandleAttributeStmt(Attr::VALUE, x.v);
+  return CheckNotInBlock("VALUE") && HandleAttributeStmt(Attr::VALUE, x.v);
 }
 bool DeclarationVisitor::Pre(const parser::VolatileStmt &x) {
   return HandleAttributeStmt(Attr::VOLATILE, x.v);
@@ -2559,10 +2573,17 @@ Symbol &DeclarationVisitor::HandleAttributeStmt(
     symbol = &MakeSymbol(name, EntityDetails{});
   }
   symbol->attrs().set(attr);
-  if (SetBindNameOn(*symbol)) {
-    CHECK(attr == Attr::BIND_C);
-  }
   return *symbol;
+}
+
+bool DeclarationVisitor::CheckNotInBlock(const char *stmt) {
+  if (currScope().kind() == Scope::Kind::Block) {
+    Say(MessageFormattedText{
+        "%s statement is not allowed in a BLOCK construct"_err_en_US, stmt});
+    return false;
+  } else {
+    return true;
+  }
 }
 
 void DeclarationVisitor::Post(const parser::ObjectDecl &x) {
@@ -3174,8 +3195,7 @@ bool DeclarationVisitor::Pre(const parser::StructureConstructor &x) {
 }
 
 bool DeclarationVisitor::Pre(const parser::NamelistStmt::Group &x) {
-  if (currScope().kind() == Scope::Kind::Block) {
-    Say("NAMELIST statement is not allowed in a BLOCK construct"_err_en_US);
+  if (!CheckNotInBlock("NAMELIST")) {
     return false;
   }
 
@@ -3217,21 +3237,13 @@ bool DeclarationVisitor::Pre(const parser::IoControlSpec &x) {
 }
 
 bool DeclarationVisitor::Pre(const parser::CommonStmt::Block &x) {
+  CheckNotInBlock("COMMON");
   const auto &optName{std::get<std::optional<parser::Name>>(x.t)};
   parser::Name blankCommon;
   blankCommon.source = SourceName{currStmtSource()->begin(), std::size_t{0}};
-  const parser::Name &name{optName ? *optName : blankCommon};
-  auto *symbol{FindInScope(currScope(), name)};
-  if (symbol && !symbol->has<CommonBlockDetails>()) {
-    SayAlreadyDeclared(name, *symbol);
-    EraseSymbol(name);
-    symbol = nullptr;
-  }
-  if (!symbol) {
-    symbol = &MakeSymbol(name, CommonBlockDetails{});
-  }
   CHECK(!commonBlockInfo_.curr);
-  commonBlockInfo_.curr = symbol;
+  commonBlockInfo_.curr =
+      &MakeCommonBlockSymbol(optName ? *optName : blankCommon);
   return true;
 }
 
@@ -3269,9 +3281,22 @@ void DeclarationVisitor::Post(const parser::CommonBlockObject &x) {
 
 // Check types of common block objects, now that they are known.
 void DeclarationVisitor::CheckCommonBlocks() {
+  // check for empty common blocks
+  for (const auto pair : currScope().commonBlocks()) {
+    const auto &symbol{*pair.second};
+    if (symbol.get<CommonBlockDetails>().objects().empty() &&
+        symbol.attrs().test(Attr::BIND_C)) {
+      Say(symbol.name(),
+          "'%s' appears as a COMMON block in a BIND statement but not in"
+          " a COMMON statement"_err_en_US);
+    }
+  }
+  // check objects in common blocks
   for (const auto &name : commonBlockInfo_.names) {
     const auto *symbol{currScope().FindSymbol(name)};
-    CHECK(symbol);
+    if (symbol == nullptr) {
+      continue;
+    }
     const auto &attrs{symbol->attrs()};
     if (attrs.test(Attr::ALLOCATABLE)) {
       Say(name,
@@ -3300,6 +3325,10 @@ void DeclarationVisitor::CheckCommonBlocks() {
     }
   }
   commonBlockInfo_ = {};
+}
+
+Symbol &DeclarationVisitor::MakeCommonBlockSymbol(const parser::Name &name) {
+  return Resolve(name, currScope().MakeCommonBlock(name.source));
 }
 
 // Check if this derived type can be in a COMMON block.
@@ -4270,14 +4299,6 @@ bool ResolveNamesVisitor::Pre(const parser::MainProgram &x) {
 }
 
 void ResolveNamesVisitor::Post(const parser::EndProgramStmt &) { PopScope(); }
-
-bool ResolveNamesVisitor::Pre(const parser::ImplicitStmt &x) {
-  if (currScope().kind() == Scope::Kind::Block) {
-    Say("IMPLICIT statement is not allowed in BLOCK construct"_err_en_US);
-    return false;
-  }
-  return ImplicitRulesVisitor::Pre(x);
-}
 
 void ResolveNamesVisitor::Post(const parser::PointerObject &x) {
   std::visit(

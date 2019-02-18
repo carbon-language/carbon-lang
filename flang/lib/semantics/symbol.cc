@@ -387,13 +387,13 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
             }
           },
           [&](const NamelistDetails &x) {
-            os << ": ";
+            os << ':';
             for (const auto *object : x.objects()) {
               os << ' ' << object->name();
             }
           },
           [&](const CommonBlockDetails &x) {
-            os << ": ";
+            os << ':';
             for (const auto *object : x.objects()) {
               os << ' ' << object->name();
             }

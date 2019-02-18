@@ -119,6 +119,11 @@ public:
     return symbols_.emplace(name, &symbol);
   }
 
+  mapType &commonBlocks() { return commonBlocks_; }
+  const mapType &commonBlocks() const { return commonBlocks_; }
+  Symbol &MakeCommonBlock(const SourceName &);
+  Symbol *FindCommonBlock(const SourceName &);
+
   /// Make a Symbol but don't add it to the scope.
   template<typename D>
   Symbol &MakeSymbol(const SourceName &name, Attrs attrs, D &&details) {
@@ -193,6 +198,7 @@ private:
   Symbol *const symbol_;  // if not null, symbol_->scope() == this
   std::list<Scope> children_;
   mapType symbols_;
+  mapType commonBlocks_;
   std::map<SourceName, Scope *> submodules_;
   std::list<DeclTypeSpec> declTypeSpecs_;
   std::string chars_;

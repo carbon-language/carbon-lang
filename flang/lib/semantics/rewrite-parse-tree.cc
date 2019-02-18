@@ -41,10 +41,10 @@ public:
   void Post(parser::Expr &x) { ConvertFunctionRef(x); }
 
   // Name resolution yet implemented:
-  bool Pre(parser::CommonStmt &) { return false; }
   bool Pre(parser::EquivalenceStmt &) { return false; }
   bool Pre(parser::Keyword &) { return false; }
   bool Pre(parser::EntryStmt &) { return false; }
+  bool Pre(parser::CompilerDirective &) { return false; }
 
   // Don't bother resolving names in end statements.
   bool Pre(parser::EndBlockDataStmt &) { return false; }

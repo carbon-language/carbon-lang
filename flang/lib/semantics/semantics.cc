@@ -117,6 +117,11 @@ void DoDumpSymbols(std::ostream &os, const Scope &scope, int indent) {
       }
     }
   }
+  for (const auto &pair : scope.commonBlocks()) {
+    const auto &symbol{*pair.second};
+    PutIndent(os, indent);
+    os << symbol << '\n';
+  }
   for (const auto &child : scope.children()) {
     DoDumpSymbols(os, child, indent);
   }

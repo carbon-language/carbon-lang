@@ -278,9 +278,12 @@ class CommonBlockDetails {
 public:
   SymbolList objects() const { return objects_; }
   void add_object(Symbol &object) { objects_.push_back(&object); }
+  MaybeExpr bindName() const { return bindName_; }
+  void set_bindName(MaybeExpr &&expr) { bindName_ = std::move(expr); }
 
 private:
   SymbolList objects_;
+  MaybeExpr bindName_;
 };
 
 class FinalProcDetails {};

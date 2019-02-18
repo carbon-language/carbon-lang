@@ -181,6 +181,10 @@ void ModFileWriter::PutSymbol(
               sep = ',';
             }
             decls_ << '\n';
+            if (symbol.attrs().test(Attr::BIND_C)) {
+              PutAttrs(decls_, symbol.attrs(), x.bindName(), ""s);
+              PutLower(decls_ << "::/", symbol) << "/\n";
+            }
           },
           [&](const FinalProcDetails &) {
             PutLower(typeBindings << "final::", symbol) << '\n';
@@ -308,6 +312,12 @@ std::vector<const Symbol *> CollectSymbols(const Scope &scope) {
       if (symbols.insert(symbol).second) {
         sorted.push_back(symbol);
       }
+    }
+  }
+  for (const auto &pair : scope.commonBlocks()) {
+    auto *symbol{pair.second};
+    if (symbols.insert(symbol).second) {
+      sorted.push_back(symbol);
     }
   }
   std::sort(sorted.begin(), sorted.end(), [](const Symbol *x, const Symbol *y) {
