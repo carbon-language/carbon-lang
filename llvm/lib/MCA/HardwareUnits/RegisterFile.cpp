@@ -188,7 +188,7 @@ void RegisterFile::addRegisterWrite(WriteRef Write,
       if (OtherWS && (OtherWrite.getSourceIndex() != Write.getSourceIndex())) {
         // This partial write has a false dependency on RenameAs.
         assert(!IsEliminated && "Unexpected partial update!");
-        OtherWS->addUser(&WS);
+        OtherWS->addUser(OtherWrite.getSourceIndex(), &WS);
       }
     }
   }
@@ -425,7 +425,7 @@ void RegisterFile::addRegisterRead(ReadState &RS,
     WriteState &WS = *WR.getWriteState();
     unsigned WriteResID = WS.getWriteResourceID();
     int ReadAdvance = STI.getReadAdvanceCycles(SC, RD.UseIndex, WriteResID);
-    WS.addUser(&RS, ReadAdvance);
+    WS.addUser(WR.getSourceIndex(), &RS, ReadAdvance);
   }
 }
 
