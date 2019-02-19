@@ -2405,6 +2405,18 @@ LegalizerHelper::moreElementsVector(MachineInstr &MI, unsigned TypeIdx,
     moreElementsVectorSrc(MI, MoreTy, 1);
     Observer.changedInstr(MI);
     return Legalized;
+  case TargetOpcode::G_SELECT:
+    if (TypeIdx != 0)
+      return UnableToLegalize;
+    if (MRI.getType(MI.getOperand(1).getReg()).isVector())
+      return UnableToLegalize;
+
+    Observer.changingInstr(MI);
+    moreElementsVectorSrc(MI, MoreTy, 2);
+    moreElementsVectorSrc(MI, MoreTy, 3);
+    moreElementsVectorDst(MI, MoreTy, 0);
+    Observer.changedInstr(MI);
+    return Legalized;
   default:
     return UnableToLegalize;
   }
