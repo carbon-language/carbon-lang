@@ -526,8 +526,10 @@ public:
     // Collect all available information about status of blocks after constant
     // folding.
     analyze();
+    BasicBlock *Header = L.getHeader();
+    (void)Header;
 
-    LLVM_DEBUG(dbgs() << "In function " << L.getHeader()->getParent()->getName()
+    LLVM_DEBUG(dbgs() << "In function " << Header->getParent()->getName()
                       << ": ");
 
     if (HasIrreducibleCFG) {
@@ -539,7 +541,7 @@ public:
     if (FoldCandidates.empty()) {
       LLVM_DEBUG(
           dbgs() << "No constant terminator folding candidates found in loop "
-                 << L.getHeader()->getName() << "\n");
+                 << Header->getName() << "\n");
       return false;
     }
 
@@ -547,8 +549,7 @@ public:
     if (DeleteCurrentLoop) {
       LLVM_DEBUG(
           dbgs()
-          << "Give up constant terminator folding in loop "
-          << L.getHeader()->getName()
+          << "Give up constant terminator folding in loop " << Header->getName()
           << ": we don't currently support deletion of the current loop.\n");
       return false;
     }
@@ -559,8 +560,7 @@ public:
         L.getNumBlocks()) {
       LLVM_DEBUG(
           dbgs() << "Give up constant terminator folding in loop "
-                 << L.getHeader()->getName()
-                 << ": we don't currently"
+                 << Header->getName() << ": we don't currently"
                     " support blocks that are not dead, but will stop "
                     "being a part of the loop after constant-folding.\n");
       return false;
@@ -571,8 +571,7 @@ public:
     LLVM_DEBUG(dump());
 
     LLVM_DEBUG(dbgs() << "Constant-folding " << FoldCandidates.size()
-                      << " terminators in loop " << L.getHeader()->getName()
-                      << "\n");
+                      << " terminators in loop " << Header->getName() << "\n");
 
     // Make the actual transforms.
     handleDeadExits();
@@ -580,8 +579,7 @@ public:
 
     if (!DeadLoopBlocks.empty()) {
       LLVM_DEBUG(dbgs() << "Deleting " << DeadLoopBlocks.size()
-                    << " dead blocks in loop " << L.getHeader()->getName()
-                    << "\n");
+                    << " dead blocks in loop " << Header->getName() << "\n");
       deleteDeadLoopBlocks();
     } else {
       // If we didn't do updates inside deleteDeadLoopBlocks, do them here.
@@ -592,7 +590,7 @@ public:
 #ifndef NDEBUG
     // Make sure that we have preserved all data structures after the transform.
     assert(DT.verify() && "DT broken after transform!");
-    assert(DT.isReachableFromEntry(L.getHeader()));
+    assert(DT.isReachableFromEntry(Header));
     LI.verify(DT);
 #endif
 
