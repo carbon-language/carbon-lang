@@ -227,6 +227,8 @@ std::optional<Expr<SomeType>> ConvertToType(
     const DynamicType &, Expr<SomeType> &&);
 std::optional<Expr<SomeType>> ConvertToType(
     const DynamicType &, std::optional<Expr<SomeType>> &&);
+std::optional<Expr<SomeType>> ConvertToType(
+    const semantics::Symbol &, Expr<SomeType> &&);
 
 // Conversions to the type of another expression
 template<TypeCategory TC, int TK, typename FROM>
@@ -339,7 +341,7 @@ template<typename A> Expr<TypeOf<A>> ScalarConstantToExpr(const A &x) {
   using Ty = TypeOf<A>;
   static_assert(
       std::is_same_v<Scalar<Ty>, std::decay_t<A>> || !"TypeOf<> is broken");
-  return {Constant<Ty>{x}};
+  return Expr<TypeOf<A>>{Constant<Ty>{x}};
 }
 
 // Combine two expressions of the same specific numeric type with an operation

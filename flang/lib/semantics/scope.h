@@ -144,8 +144,6 @@ public:
       ParamValue &&length, KindExpr &&kind = KindExpr{0});
   const DeclTypeSpec &MakeDerivedType(
       DeclTypeSpec::Category, DerivedTypeSpec &&);
-  const DeclTypeSpec &MakeDerivedType(
-      DeclTypeSpec::Category, DerivedTypeSpec &&, SemanticsContext &);
   DeclTypeSpec &MakeDerivedType(const Symbol &);
   DeclTypeSpec &MakeDerivedType(DerivedTypeSpec &&, DeclTypeSpec::Category);
   const DeclTypeSpec &MakeTypeStarType();

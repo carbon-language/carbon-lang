@@ -84,6 +84,7 @@ struct DynamicType {
 
 // Result will be missing when a symbol is absent or
 // has an erroneous type, e.g., REAL(KIND=666).
+std::optional<DynamicType> GetSymbolType(const semantics::Symbol &);
 std::optional<DynamicType> GetSymbolType(const semantics::Symbol *);
 
 template<TypeCategory CATEGORY, int KIND = 0> struct TypeBase {

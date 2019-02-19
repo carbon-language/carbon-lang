@@ -89,9 +89,14 @@ bool IsDescriptor(const Symbol &symbol) {
 
 namespace Fortran::evaluate {
 
+template<typename A> bool PointeeComparison(const A *x, const A *y) {
+  return x == y || (x != nullptr && y != nullptr && *x == *y);
+}
+
 bool DynamicType::operator==(const DynamicType &that) const {
   return category == that.category && kind == that.kind &&
-      charLength == that.charLength && derived == that.derived;
+      PointeeComparison(charLength, that.charLength) &&
+      PointeeComparison(derived, that.derived);
 }
 
 std::optional<DynamicType> GetSymbolType(const semantics::Symbol *symbol) {
@@ -115,6 +120,14 @@ std::optional<DynamicType> GetSymbolType(const semantics::Symbol *symbol) {
     }
   }
   return std::nullopt;
+}
+
+std::optional<DynamicType> GetSymbolType(const semantics::Symbol *symbol) {
+  if (symbol != nullptr) {
+    return GetSymbolType(*symbol);
+  } else {
+    return std::nullopt;
+  }
 }
 
 std::string DynamicType::AsFortran() const {
@@ -191,7 +204,7 @@ DynamicType DynamicType::ResultTypeForMultiply(const DynamicType &that) const {
 
 bool SomeKind<TypeCategory::Derived>::operator==(
     const SomeKind<TypeCategory::Derived> &that) const {
-  return spec_ == that.spec_;
+  return PointeeComparison(spec_, that.spec_);
 }
 
 std::string SomeDerived::AsFortran() const {

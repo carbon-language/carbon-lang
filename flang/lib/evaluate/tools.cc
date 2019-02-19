@@ -522,12 +522,9 @@ std::optional<Expr<SomeType>> ConvertToType(
   case TypeCategory::Complex:
     return ConvertToNumeric<TypeCategory::Complex>(type.kind, std::move(x));
   case TypeCategory::Character:
-    if (auto fromType{x.GetType()}) {
-      if (fromType->category == TypeCategory::Character &&
-          fromType->kind == type.kind) {
-        // TODO pmk: adjusting CHARACTER length via conversion
-        return std::move(x);
-      }
+    if (auto *cx{UnwrapExpr<Expr<SomeCharacter>>(x)}) {
+      return Expr<SomeType>{
+          ConvertToKind<TypeCategory::Character>(type.kind, std::move(*cx))};
     }
     break;
   case TypeCategory::Logical:
@@ -538,12 +535,26 @@ std::optional<Expr<SomeType>> ConvertToType(
     break;
   case TypeCategory::Derived:
     if (auto fromType{x.GetType()}) {
-      if (type == fromType) {
+      if (type == *fromType) {
         return std::move(x);
       }
     }
     break;
   default: CRASH_NO_CASE;
+  }
+  return std::nullopt;
+}
+
+std::optional<Expr<SomeType>> ConvertToType(
+    const semantics::Symbol &symbol, Expr<SomeType> &&x) {
+  if (int xRank{x.Rank()}; xRank > 0) {
+    if (symbol.Rank() != xRank) {
+      return std::nullopt;
+    }
+  }
+  if (auto symType{GetSymbolType(symbol)}) {
+    // TODO pmk CHARACTER length
+    return ConvertToType(*symType, std::move(x));
   }
   return std::nullopt;
 }

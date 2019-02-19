@@ -638,10 +638,8 @@ template<typename T> const Symbol *Designator<T>::GetLastSymbol() const {
 template<typename T> std::optional<DynamicType> Designator<T>::GetType() const {
   if constexpr (IsLengthlessIntrinsicType<Result>) {
     return {Result::GetType()};
-  } else if (const Symbol * symbol{GetLastSymbol()}) {
-    return GetSymbolType(symbol);
   } else {
-    return std::nullopt;
+    return GetSymbolType(GetLastSymbol());
   }
 }
 

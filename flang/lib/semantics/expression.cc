@@ -325,11 +325,10 @@ MaybeExpr TypedWrapper(const DynamicType &dyType, WRAPPED &&x) {
 }
 
 // Wraps a data reference in a typed Designator<>.
-static MaybeExpr Designate(DataRef &&dataRef) {
-  const Symbol &symbol{dataRef.GetLastSymbol()};
-  if (std::optional<DynamicType> dyType{GetSymbolType(&symbol)}) {
+static MaybeExpr Designate(DataRef &&ref) {
+  if (std::optional<DynamicType> dyType{GetSymbolType(ref.GetLastSymbol())}) {
     return TypedWrapper<Designator, DataRef>(
-        std::move(*dyType), std::move(dataRef));
+        std::move(*dyType), std::move(ref));
   }
   // TODO: graceful errors on CLASS(*) and TYPE(*) misusage
   return std::nullopt;
@@ -339,8 +338,7 @@ static MaybeExpr Designate(DataRef &&dataRef) {
 // that looks like a 1-D array element or section.
 static MaybeExpr ResolveAmbiguousSubstring(
     ExpressionAnalysisContext &context, ArrayRef &&ref) {
-  const Symbol &symbol{ref.GetLastSymbol()};
-  if (std::optional<DynamicType> dyType{GetSymbolType(&symbol)}) {
+  if (std::optional<DynamicType> dyType{GetSymbolType(ref.GetLastSymbol())}) {
     if (dyType->category == TypeCategory::Character && ref.size() == 1) {
       DataRef base{std::visit([](auto &&y) { return DataRef{std::move(y)}; },
           std::move(ref.base()))};
@@ -855,7 +853,7 @@ static MaybeExpr AnalyzeExpr(
           std::optional<Expr<SubscriptInteger>> last{
               GetSubstringBound(context, std::get<1>(range.t))};
           const Symbol &symbol{checked->GetLastSymbol()};
-          if (std::optional<DynamicType> dynamicType{GetSymbolType(&symbol)}) {
+          if (std::optional<DynamicType> dynamicType{GetSymbolType(symbol)}) {
             if (dynamicType->category == TypeCategory::Character) {
               return WrapperHelper<TypeCategory::Character, Designator,
                   Substring>(dynamicType->kind,
@@ -1041,7 +1039,7 @@ static MaybeExpr AnalyzeExpr(
       }
       if (sym->detailsIf<semantics::TypeParamDetails>()) {
         if (auto *designator{UnwrapExpr<Designator<SomeDerived>>(*dtExpr)}) {
-          if (std::optional<DynamicType> dyType{GetSymbolType(sym)}) {
+          if (std::optional<DynamicType> dyType{GetSymbolType(*sym)}) {
             if (dyType->category == TypeCategory::Integer) {
               return AsMaybeExpr(
                   common::SearchTypes(TypeParamInquiryVisitor{dyType->kind,
@@ -1443,15 +1441,19 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
     if (symbol != nullptr) {
       if (symbol->has<semantics::TypeParamDetails>()) {
         context.Say(source,
-            "Type parameter '%s' cannot be a component of this structure constructor"_err_en_US,
+            "Type parameter '%s' cannot be a component of this structure "
+            "constructor"_err_en_US,
             symbol->name().ToString().data());
-      } else if (checkConflicts) {
+        continue;
+      }
+      if (checkConflicts) {
         auto componentIter{
             std::find(components.begin(), components.end(), symbol)};
         if (unavailable.find(symbol->name()) != unavailable.cend()) {
           // C797, C798
           context.Say(source,
-              "Component '%s' conflicts with another component earlier in this structure constructor"_err_en_US,
+              "Component '%s' conflicts with another component earlier in "
+              "this structure constructor"_err_en_US,
               symbol->name().ToString().data());
         } else if (symbol->test(Symbol::Flag::ParentComp)) {
           // Make earlier components unavailable once a whole parent appears.
@@ -1472,7 +1474,14 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
       if (MaybeExpr value{AnalyzeExpr(context, expr)}) {
         // TODO pmk: C7104, C7105 check that pointer components are
         // being initialized with data/procedure designators appropriately
-        result.Add(*symbol, std::move(*value));
+        if (MaybeExpr converted{ConvertToType(*symbol, std::move(*value))}) {
+          result.Add(*symbol, std::move(*converted));
+        } else {
+          if (auto *msg{context.Say(expr.source,
+                  "Structure constructor value is incompatible with component"_err_en_US)}) {
+            msg->Attach(symbol->name(), "Component declaration"_en_US);
+          }
+        }
       }
     }
   }
@@ -1488,7 +1497,8 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
           result.Add(*symbol, common::Clone(*details->init()));
         } else {  // C799
           if (auto *msg{context.Say(typeName,
-                  "Structure constructor lacks a value for component '%s'"_err_en_US,
+                  "Structure constructor lacks a value for "
+                  "component '%s'"_err_en_US,
                   symbol->name().ToString().data())}) {
             msg->Attach(symbol->name(), "Absent component"_en_US);
           }

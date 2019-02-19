@@ -3291,6 +3291,7 @@ void DeclarationVisitor::Post(const parser::AllocateStmt &) {
 bool DeclarationVisitor::Pre(const parser::StructureConstructor &x) {
   auto &parsedType{std::get<parser::DerivedTypeSpec>(x.t)};
   const DeclTypeSpec *type{ProcessTypeSpec(parsedType)};
+
   if (type == nullptr) {
     return false;
   }

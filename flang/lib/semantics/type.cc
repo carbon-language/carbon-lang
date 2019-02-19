@@ -42,10 +42,6 @@ void DerivedTypeSpec::set_scope(const Scope &scope) {
   scope_ = &scope;
 }
 
-bool DerivedTypeSpec::operator==(const DerivedTypeSpec &that) const {
-  return &typeSymbol_ == &that.typeSymbol_ && parameters_ == that.parameters_;
-}
-
 ParamValue &DerivedTypeSpec::AddParamValue(
     SourceName name, ParamValue &&value) {
   auto pair{parameters_.insert(std::make_pair(name, std::move(value)))};
@@ -225,10 +221,6 @@ ParamValue::ParamValue(std::int64_t value)
 void ParamValue::SetExplicit(SomeIntExpr &&x) {
   category_ = Category::Explicit;
   expr_ = std::move(x);
-}
-
-bool ParamValue::operator==(const ParamValue &that) const {
-  return category_ == that.category_ && expr_ == that.expr_;
 }
 
 std::ostream &operator<<(std::ostream &o, const ParamValue &x) {

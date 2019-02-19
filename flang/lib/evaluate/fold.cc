@@ -366,6 +366,23 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
 
 // Unary operations
 
+template<typename TO, typename FROM> std::optional<TO> ConvertString(FROM &&s) {
+  if constexpr (std::is_same_v<TO, FROM>) {
+    return std::make_optional<TO>(std::move(s));
+  } else {
+    // Fortran character conversion is well defined between distinct kinds
+    // only when the actual characters are valid 7-bit ASCII.
+    TO str;
+    for (auto iter{s.cbegin()}; iter != s.cend(); ++iter) {
+      if (static_cast<std::uint64_t>(*iter) > 127) {
+        return std::nullopt;
+      }
+      str.push_back(*iter);
+    }
+    return std::make_optional<TO>(std::move(str));
+  }
+}
+
 template<typename TO, TypeCategory FROMCAT>
 Expr<TO> FoldOperation(
     FoldingContext &context, Convert<TO, FROMCAT> &&convert) {
@@ -383,7 +400,7 @@ Expr<TO> FoldOperation(
                     "INTEGER(%d) to INTEGER(%d) conversion overflowed"_en_US,
                     Operand::kind, TO::kind);
               }
-              return Expr<TO>{Constant<TO>{std::move(converted.value)}};
+              return ScalarConstantToExpr(std::move(converted.value));
             } else if constexpr (Operand::category == TypeCategory::Real) {
               auto converted{value->template ToInteger<Scalar<TO>>()};
               if (converted.flags.test(RealFlag::InvalidArgument)) {
@@ -395,7 +412,7 @@ Expr<TO> FoldOperation(
                     "REAL(%d) to INTEGER(%d) conversion overflowed"_en_US,
                     Operand::kind, TO::kind);
               }
-              return Expr<TO>{Constant<TO>{std::move(converted.value)}};
+              return ScalarConstantToExpr(std::move(converted.value));
             }
           } else if constexpr (TO::category == TypeCategory::Real) {
             if constexpr (Operand::category == TypeCategory::Integer) {
@@ -406,7 +423,7 @@ Expr<TO> FoldOperation(
                     TO::kind);
                 RealFlagWarnings(context, converted.flags, buffer);
               }
-              return Expr<TO>{Constant<TO>{std::move(converted.value)}};
+              return ScalarConstantToExpr(std::move(converted.value));
             } else if constexpr (Operand::category == TypeCategory::Real) {
               auto converted{Scalar<TO>::Convert(*value)};
               if (!converted.flags.empty()) {
@@ -417,11 +434,16 @@ Expr<TO> FoldOperation(
               if (context.flushSubnormalsToZero()) {
                 converted.value = converted.value.FlushSubnormalToZero();
               }
-              return Expr<TO>{Constant<TO>{std::move(converted.value)}};
+              return ScalarConstantToExpr(std::move(converted.value));
+            }
+          } else if constexpr (TO::category == TypeCategory::Character &&
+              Operand::category == TypeCategory::Character) {
+            if (auto converted{ConvertString<Scalar<TO>>(std::move(*value))}) {
+              return ScalarConstantToExpr(std::move(*converted));
             }
           } else if constexpr (TO::category == TypeCategory::Logical &&
               Operand::category == TypeCategory::Logical) {
-            return Expr<TO>{Constant<TO>{value->IsTrue()}};
+            return Expr<TO>{value->IsTrue()};
           }
         }
         return Expr<TO>{std::move(convert)};

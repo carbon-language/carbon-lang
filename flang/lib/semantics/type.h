@@ -101,7 +101,9 @@ public:
   bool isDeferred() const { return category_ == Category::Deferred; }
   const MaybeIntExpr &GetExplicit() const { return expr_; }
   void SetExplicit(SomeIntExpr &&);
-  bool operator==(const ParamValue &) const;
+  bool operator==(const ParamValue &that) const {
+    return category_ == that.category_ && expr_ == that.expr_;
+  }
 
 private:
   enum class Category { Explicit, Deferred, Assumed };
@@ -240,7 +242,9 @@ public:
   }
   void FoldParameterExpressions(evaluate::FoldingContext &);
   void Instantiate(Scope &, SemanticsContext &);
-  bool operator==(const DerivedTypeSpec &) const;  // for std::find()
+  bool operator==(const DerivedTypeSpec &that) const {
+    return &typeSymbol_ == &that.typeSymbol_ && parameters_ == that.parameters_;
+  }
 
 private:
   const Symbol &typeSymbol_;

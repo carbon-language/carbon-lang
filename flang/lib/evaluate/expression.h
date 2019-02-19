@@ -212,7 +212,7 @@ private:
 
 // Conversions to specific types from expressions of known category and
 // dynamic kind.
-template<typename TO, TypeCategory FROMCAT>
+template<typename TO, TypeCategory FROMCAT = TO::category>
 struct Convert : public Operation<Convert<TO, FROMCAT>, TO, SomeKind<FROMCAT>> {
   // Fortran doesn't have conversions between kinds of CHARACTER apart from
   // assignments, and in those the data must be convertible to/from 7-bit ASCII.
@@ -221,6 +221,8 @@ struct Convert : public Operation<Convert<TO, FROMCAT>, TO, SomeKind<FROMCAT>> {
                      TO::category == TypeCategory::Real) &&
                     (FROMCAT == TypeCategory::Integer ||
                         FROMCAT == TypeCategory::Real)) ||
+      (TO::category == TypeCategory::Character &&
+          FROMCAT == TypeCategory::Character) ||
       (TO::category == TypeCategory::Logical &&
           FROMCAT == TypeCategory::Logical));
   using Result = TO;
@@ -572,7 +574,8 @@ public:
   Expr<SubscriptInteger> LEN() const;
 
   std::variant<Constant<Result>, ArrayConstructor<Result>, Designator<Result>,
-      FunctionRef<Result>, Parentheses<Result>, Concat<KIND>, Extremum<Result>>
+      FunctionRef<Result>, Parentheses<Result>, Convert<Result>, Concat<KIND>,
+      Extremum<Result>>
       u;
 };
 
@@ -641,8 +644,8 @@ public:
   explicit Expr(bool x) : u{Constant<Result>{x}} {}
 
 private:
-  using Operations = std::tuple<Convert<Result, TypeCategory::Logical>,
-      Parentheses<Result>, Not<KIND>, LogicalOperation<KIND>>;
+  using Operations = std::tuple<Convert<Result>, Parentheses<Result>, Not<KIND>,
+      LogicalOperation<KIND>>;
   using Relations = std::conditional_t<KIND == LogicalResult::kind,
       std::tuple<Relational<SomeType>>, std::tuple<>>;
   using Others = std::tuple<Constant<Result>, ArrayConstructor<Result>,

@@ -43,15 +43,18 @@ template<typename TO, TypeCategory FROMCAT>
 std::ostream &Convert<TO, FROMCAT>::AsFortran(std::ostream &o) const {
   static_assert(TO::category == TypeCategory::Integer ||
       TO::category == TypeCategory::Real ||
+      TO::category == TypeCategory::Character ||
       TO::category == TypeCategory::Logical || !"Convert<> to bad category!");
-  if constexpr (TO::category == TypeCategory::Integer) {
-    o << "int";
+  if constexpr (TO::category == TypeCategory::Character) {
+    this->left().AsFortran(o << "achar(iachar(") << ')';
+  } else if constexpr (TO::category == TypeCategory::Integer) {
+    this->left().AsFortran(o << "int(");
   } else if constexpr (TO::category == TypeCategory::Real) {
-    o << "real";
-  } else if constexpr (TO::category == TypeCategory::Logical) {
-    o << "logical";
+    this->left().AsFortran(o << "real(");
+  } else {
+    this->left().AsFortran(o << "logical(");
   }
-  return this->left().AsFortran(o << '(') << ",kind=" << TO::kind << ')';
+  return o << ",kind=" << TO::kind << ')';
 }
 
 template<typename A> std::ostream &Relational<A>::Infix(std::ostream &o) const {
@@ -160,6 +163,10 @@ Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
           },
           [](const ArrayConstructor<Result> &a) { return a.LEN(); },
           [](const Parentheses<Result> &x) { return x.left().LEN(); },
+          [](const Convert<Result> &x) {
+            return std::visit(
+                [&](const auto &kx) { return kx.LEN(); }, x.left().u);
+          },
           [](const Concat<KIND> &c) {
             return c.left().LEN() + c.right().LEN();
           },

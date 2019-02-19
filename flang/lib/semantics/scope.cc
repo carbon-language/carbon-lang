@@ -120,14 +120,6 @@ const DeclTypeSpec &Scope::MakeDerivedType(
   return MakeDerivedType(std::move(spec), category);
 }
 
-const DeclTypeSpec &Scope::MakeDerivedType(DeclTypeSpec::Category category,
-    DerivedTypeSpec &&instance, SemanticsContext &semanticsContext) {
-  DeclTypeSpec &type{declTypeSpecs_.emplace_back(
-      category, DerivedTypeSpec{std::move(instance)})};
-  type.derivedTypeSpec().Instantiate(*this, semanticsContext);
-  return type;
-}
-
 DeclTypeSpec &Scope::MakeDerivedType(const Symbol &typeSymbol) {
   CHECK(typeSymbol.has<DerivedTypeDetails>());
   CHECK(typeSymbol.scope() != nullptr);
@@ -250,7 +242,10 @@ const DeclTypeSpec *Scope::FindInstantiatedDerivedType(
   if (typeIter != declTypeSpecs_.end()) {
     return &*typeIter;
   }
-  return nullptr;
+  if (&parent_ == this) {
+    return nullptr;
+  }
+  return parent_.FindInstantiatedDerivedType(spec, category);
 }
 
 const DeclTypeSpec &Scope::FindOrInstantiateDerivedType(DerivedTypeSpec &&spec,
