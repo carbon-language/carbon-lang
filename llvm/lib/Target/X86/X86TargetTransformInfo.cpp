@@ -3065,10 +3065,9 @@ bool X86TTIImpl::areInlineCompatible(const Function *Caller,
   const FeatureBitset &CalleeBits =
       TM.getSubtargetImpl(*Callee)->getFeatureBits();
 
-  // FIXME: This is likely too limiting as it will include subtarget features
-  // that we might not care about for inlining, but it is conservatively
-  // correct.
-  return (CallerBits & CalleeBits) == CalleeBits;
+  FeatureBitset RealCallerBits = CallerBits & ~InlineFeatureIgnoreList;
+  FeatureBitset RealCalleeBits = CalleeBits & ~InlineFeatureIgnoreList;
+  return (RealCallerBits & RealCalleeBits) == RealCalleeBits;
 }
 
 const X86TTIImpl::TTI::MemCmpExpansionOptions *
