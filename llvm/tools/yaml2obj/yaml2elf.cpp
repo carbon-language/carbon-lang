@@ -321,6 +321,15 @@ void ELFState<ELFT>::initSymtabSectionHeader(Elf_Shdr &SHeader,
   SHeader.sh_entsize = sizeof(Elf_Sym);
   SHeader.sh_addralign = 8;
 
+  // If .dynsym section is explicitly described in the YAML
+  // then we want to use its section address.
+  if (!IsStatic) {
+    // Take section index and ignore the SHT_NULL section.
+    unsigned SecNdx = getDotDynSymSecNo() - 1;
+    if (SecNdx < Doc.Sections.size())
+      SHeader.sh_addr = Doc.Sections[SecNdx]->Address;
+  }
+
   std::vector<Elf_Sym> Syms;
   {
     // Ensure STN_UNDEF is present
@@ -358,6 +367,15 @@ void ELFState<ELFT>::initStrtabSectionHeader(Elf_Shdr &SHeader, StringRef Name,
   STB.write(CBA.getOSAndAlignedOffset(SHeader.sh_offset, SHeader.sh_addralign));
   SHeader.sh_size = STB.getSize();
   SHeader.sh_addralign = 1;
+
+  // If .dynstr section is explicitly described in the YAML
+  // then we want to use its section address.
+  if (Name == ".dynstr") {
+    // Take section index and ignore the SHT_NULL section.
+    unsigned SecNdx = getDotDynStrSecNo() - 1;
+    if (SecNdx < Doc.Sections.size())
+      SHeader.sh_addr = Doc.Sections[SecNdx]->Address;
+  }
 }
 
 template <class ELFT>
