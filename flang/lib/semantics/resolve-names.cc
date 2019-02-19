@@ -2815,13 +2815,13 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
 // in this Pre() routine so that recursive use of the derived type can be
 // supported in the components.
 bool DeclarationVisitor::Pre(const parser::DerivedTypeDef &x) {
-  Walk(std::get<parser::Statement<parser::DerivedTypeStmt>>(x.t));
+  auto &stmt{std::get<parser::Statement<parser::DerivedTypeStmt>>(x.t)};
+  Walk(stmt);
   Walk(std::get<std::list<parser::Statement<parser::TypeParamDefStmt>>>(x.t));
   auto &scope{currScope()};
   CHECK(scope.symbol() != nullptr);
   CHECK(scope.symbol()->scope() == &scope);
   auto &details{scope.symbol()->get<DerivedTypeDetails>()};
-  auto &stmt{std::get<parser::Statement<parser::DerivedTypeStmt>>(x.t)};
   std::set<SourceName> paramNames;
   for (auto &paramName : std::get<std::list<parser::Name>>(stmt.statement.t)) {
     details.add_paramName(paramName.source);
@@ -2868,14 +2868,19 @@ bool DeclarationVisitor::Pre(const parser::DerivedTypeStmt &x) {
   return BeginAttrs();
 }
 void DeclarationVisitor::Post(const parser::DerivedTypeStmt &x) {
+  auto &name{std::get<parser::Name>(x.t)};
   // Resolve the EXTENDS() clause before creating the derived
   // type's symbol to foil attempts to recursively extend a type.
   auto *extendsName{derivedTypeInfo_.extends};
   const Symbol *extendsType{nullptr};
   if (extendsName != nullptr) {
-    extendsType = ResolveDerivedType(*extendsName);
+    if (extendsName->source == name.source) {
+      Say(extendsName->source,
+          "Derived type '%s' cannot extend itself"_err_en_US);
+    } else {
+      extendsType = ResolveDerivedType(*extendsName);
+    }
   }
-  auto &name{std::get<parser::Name>(x.t)};
   auto &symbol{MakeSymbol(name, GetAttrs(), DerivedTypeDetails{})};
   derivedTypeInfo_.type = &symbol;
   PushScope(Scope::Kind::DerivedType, &symbol);

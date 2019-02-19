@@ -49,7 +49,7 @@ program main
     class(recursive3), pointer :: ok3
     class(recursive3), allocatable :: ok4
   end type recursive3
-  !ERROR: Derived type 'recursive4' not found
+  !ERROR: Derived type 'recursive4' cannot extend itself
   type, extends(recursive4) :: recursive4
   end type recursive4
 end program main
