@@ -143,6 +143,7 @@
 #define FTN_CAPTURE_AFFINITY omp_capture_affinity
 #define FTN_PAUSE_RESOURCE omp_pause_resource
 #define FTN_PAUSE_RESOURCE_ALL omp_pause_resource_all
+#define FTN_GET_SUPPORTED_ACTIVE_LEVELS omp_get_supported_active_levels
 #endif
 
 #endif /* KMP_FTN_PLAIN */
@@ -274,6 +275,7 @@
 #define FTN_CAPTURE_AFFINITY omp_capture_affinity_
 #define FTN_PAUSE_RESOURCE omp_pause_resource_
 #define FTN_PAUSE_RESOURCE_ALL omp_pause_resource_all_
+#define FTN_GET_SUPPORTED_ACTIVE_LEVELS omp_get_supported_active_levels_
 #endif
 
 #endif /* KMP_FTN_APPEND */
@@ -405,6 +407,7 @@
 #define FTN_CAPTURE_AFFINITY OMP_CAPTURE_AFFINITY
 #define FTN_PAUSE_RESOURCE OMP_PAUSE_RESOURCE
 #define FTN_PAUSE_RESOURCE_ALL OMP_PAUSE_RESOURCE_ALL
+#define FTN_GET_SUPPORTED_ACTIVE_LEVELS OMP_GET_SUPPORTED_ACTIVE_LEVELS
 #endif
 
 #endif /* KMP_FTN_UPPER */
@@ -536,6 +539,7 @@
 #define FTN_CAPTURE_AFFINITY OMP_CAPTURE_AFFINITY_
 #define FTN_PAUSE_RESOURCE OMP_PAUSE_RESOURCE_
 #define FTN_PAUSE_RESOURCE_ALL OMP_PAUSE_RESOURCE_ALL_
+#define FTN_GET_SUPPORTED_ACTIVE_LEVELS OMP_GET_SUPPORTED_ACTIVE_LEVELS_
 #endif
 
 #endif /* KMP_FTN_UAPPEND */
