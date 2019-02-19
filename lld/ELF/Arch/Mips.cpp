@@ -347,8 +347,8 @@ bool MIPS<ELFT>::needsThunk(RelExpr Expr, RelType Type, const InputFile *File,
   // we cannot make the jump directly and need to create a small stubs
   // to save the target function address.
   // See page 3-38 ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
-  if (Type != R_MIPS_26 && Type != R_MICROMIPS_26_S1 &&
-      Type != R_MICROMIPS_PC26_S1)
+  if (Type != R_MIPS_26 && Type != R_MIPS_PC26_S2 &&
+      Type != R_MICROMIPS_26_S1 && Type != R_MICROMIPS_PC26_S1)
     return false;
   auto *F = dyn_cast_or_null<ELFFileBase<ELFT>>(File);
   if (!F)
