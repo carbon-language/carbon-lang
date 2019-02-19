@@ -157,6 +157,9 @@ class ELFState {
   bool writeSectionContent(Elf_Shdr &SHeader, const ELFYAML::Group &Group,
                            ContiguousBlobAccumulator &CBA);
   bool writeSectionContent(Elf_Shdr &SHeader,
+                           const ELFYAML::SymverSection &Section,
+                           ContiguousBlobAccumulator &CBA);
+  bool writeSectionContent(Elf_Shdr &SHeader,
                            const ELFYAML::VerneedSection &Section,
                            ContiguousBlobAccumulator &CBA);
   bool writeSectionContent(Elf_Shdr &SHeader,
@@ -302,6 +305,8 @@ bool ELFState<ELFT>::initSectionHeaders(std::vector<Elf_Shdr> &SHeaders,
       // so just to setup the section offset.
       CBA.getOSAndAlignedOffset(SHeader.sh_offset, SHeader.sh_addralign);
     } else if (auto S = dyn_cast<ELFYAML::DynamicSection>(Sec.get())) {
+      writeSectionContent(SHeader, *S, CBA);
+    } else if (auto S = dyn_cast<ELFYAML::SymverSection>(Sec.get())) {
       writeSectionContent(SHeader, *S, CBA);
     } else if (auto S = dyn_cast<ELFYAML::VerneedSection>(Sec.get())) {
       writeSectionContent(SHeader, *S, CBA);
@@ -564,6 +569,24 @@ bool ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
     SIdx = sectionIndex;
     OS.write((const char *)&SIdx, sizeof(SIdx));
   }
+  return true;
+}
+
+template <class ELFT>
+bool ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
+                                         const ELFYAML::SymverSection &Section,
+                                         ContiguousBlobAccumulator &CBA) {
+  typedef typename ELFT::Half Elf_Half;
+
+  raw_ostream &OS =
+      CBA.getOSAndAlignedOffset(SHeader.sh_offset, SHeader.sh_addralign);
+  for (uint16_t V : Section.Entries) {
+    Elf_Half Version = (Elf_Half)V;
+    OS.write((const char *)&Version, sizeof(Elf_Half));
+  }
+
+  SHeader.sh_size = Section.Entries.size() * sizeof(Elf_Half);
+  SHeader.sh_entsize = sizeof(Elf_Half);
   return true;
 }
 

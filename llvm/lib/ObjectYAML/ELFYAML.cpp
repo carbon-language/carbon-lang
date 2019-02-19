@@ -872,6 +872,11 @@ static void sectionMapping(IO &IO, ELFYAML::NoBitsSection &Section) {
   IO.mapOptional("Size", Section.Size, Hex64(0));
 }
 
+static void sectionMapping(IO &IO, ELFYAML::SymverSection &Section) {
+  commonSectionMapping(IO, Section);
+  IO.mapRequired("Entries", Section.Entries);
+}
+
 static void sectionMapping(IO &IO, ELFYAML::VerneedSection &Section) {
   commonSectionMapping(IO, Section);
   IO.mapRequired("Info", Section.Info);
@@ -954,6 +959,11 @@ void MappingTraits<std::unique_ptr<ELFYAML::Section>>::mapping(
     if (!IO.outputting())
       Section.reset(new ELFYAML::MipsABIFlags());
     sectionMapping(IO, *cast<ELFYAML::MipsABIFlags>(Section.get()));
+    break;
+  case ELF::SHT_GNU_versym:
+    if (!IO.outputting())
+      Section.reset(new ELFYAML::SymverSection());
+    sectionMapping(IO, *cast<ELFYAML::SymverSection>(Section.get()));
     break;
   case ELF::SHT_GNU_verneed:
     if (!IO.outputting())
