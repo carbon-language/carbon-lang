@@ -38615,7 +38615,7 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool IsCommutative) {
       A = LHS.getOperand(0);
     if (!LHS.getOperand(1).isUndef())
       B = LHS.getOperand(1);
-    ArrayRef<int> Mask = cast<ShuffleVectorSDNode>(LHS.getNode())->getMask();
+    ArrayRef<int> Mask = cast<ShuffleVectorSDNode>(LHS)->getMask();
     llvm::copy(Mask, LMask.begin());
   } else {
     A = LHS;
@@ -38632,7 +38632,7 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool IsCommutative) {
       C = RHS.getOperand(0);
     if (!RHS.getOperand(1).isUndef())
       D = RHS.getOperand(1);
-    ArrayRef<int> Mask = cast<ShuffleVectorSDNode>(RHS.getNode())->getMask();
+    ArrayRef<int> Mask = cast<ShuffleVectorSDNode>(RHS)->getMask();
     llvm::copy(Mask, RMask.begin());
   } else {
     C = RHS;
