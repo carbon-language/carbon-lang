@@ -154,3 +154,62 @@ define i8 addrspace(4)* @forward_store_zero(i8 addrspace(4)* addrspace(4)* %loc)
   %ref = load i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* %loc
   ret i8 addrspace(4)* %ref
 }
+
+@NonZeroConstant = constant <4 x i64> <i64 3, i64 3, i64 3, i64 3>
+@ZeroConstant = constant <4 x i64> zeroinitializer
+
+
+; Can't forward as the load might be dead.  (Pretend we wrote out the alwaysfalse idiom above.)
+define i8 addrspace(4)* @neg_forward_memcopy(i8 addrspace(4)* addrspace(4)* %loc) {
+; CHECK-LABEL: @neg_forward_memcopy(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[LOC_BC:%.*]] = bitcast i8 addrspace(4)* addrspace(4)* [[LOC:%.*]] to i8 addrspace(4)*
+; CHECK-NEXT:    call void @llvm.memcpy.p4i8.p0i8.i64(i8 addrspace(4)* align 4 [[LOC_BC]], i8* bitcast (<4 x i64>* @NonZeroConstant to i8*), i64 8, i1 false)
+; CHECK-NEXT:    [[REF:%.*]] = load i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* [[LOC]]
+; CHECK-NEXT:    ret i8 addrspace(4)* [[REF]]
+;
+entry:
+  %loc.bc = bitcast i8 addrspace(4)* addrspace(4)* %loc to i8 addrspace(4)*
+  %src.bc = bitcast <4 x i64>* @NonZeroConstant to i8*
+  call void @llvm.memcpy.p4i8.p0i8.i64(i8 addrspace(4)* align 4 %loc.bc, i8* %src.bc, i64 8, i1 false)
+  %ref = load i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* %loc
+  ret i8 addrspace(4)* %ref
+}
+
+define <1 x i8 addrspace(4)*> @neg_forward_memcpy_vload(<1 x i8 addrspace(4)*> addrspace(4)* %loc) {
+; CHECK-LABEL: @neg_forward_memcpy_vload(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[LOC_BC:%.*]] = bitcast <1 x i8 addrspace(4)*> addrspace(4)* [[LOC:%.*]] to i8 addrspace(4)*
+; CHECK-NEXT:    call void @llvm.memcpy.p4i8.p0i8.i64(i8 addrspace(4)* align 4 [[LOC_BC]], i8* bitcast (<4 x i64>* @NonZeroConstant to i8*), i64 8, i1 false)
+; CHECK-NEXT:    [[REF:%.*]] = load <1 x i8 addrspace(4)*>, <1 x i8 addrspace(4)*> addrspace(4)* [[LOC]]
+; CHECK-NEXT:    ret <1 x i8 addrspace(4)*> [[REF]]
+;
+entry:
+  %loc.bc = bitcast <1 x i8 addrspace(4)*> addrspace(4)* %loc to i8 addrspace(4)*
+  %src.bc = bitcast <4 x i64>* @NonZeroConstant to i8*
+  call void @llvm.memcpy.p4i8.p0i8.i64(i8 addrspace(4)* align 4 %loc.bc, i8* %src.bc, i64 8, i1 false)
+  %ref = load <1 x i8 addrspace(4)*>, <1 x i8 addrspace(4)*> addrspace(4)* %loc
+  ret <1 x i8 addrspace(4)*> %ref
+}
+
+
+; Can forward since we can do so w/o breaking types
+; TODO: missed optimization
+define i8 addrspace(4)* @forward_memcpy_zero(i8 addrspace(4)* addrspace(4)* %loc) {
+; CHECK-LABEL: @forward_memcpy_zero(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[LOC_BC:%.*]] = bitcast i8 addrspace(4)* addrspace(4)* [[LOC:%.*]] to i8 addrspace(4)*
+; CHECK-NEXT:    call void @llvm.memcpy.p4i8.p0i8.i64(i8 addrspace(4)* align 4 [[LOC_BC]], i8* bitcast (<4 x i64>* @ZeroConstant to i8*), i64 8, i1 false)
+; CHECK-NEXT:    [[REF:%.*]] = load i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* [[LOC]]
+; CHECK-NEXT:    ret i8 addrspace(4)* [[REF]]
+;
+entry:
+  %loc.bc = bitcast i8 addrspace(4)* addrspace(4)* %loc to i8 addrspace(4)*
+  %src.bc = bitcast <4 x i64>* @ZeroConstant to i8*
+  call void @llvm.memcpy.p4i8.p0i8.i64(i8 addrspace(4)* align 4 %loc.bc, i8* %src.bc, i64 8, i1 false)
+  %ref = load i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* %loc
+  ret i8 addrspace(4)* %ref
+}
+
+
+declare void @llvm.memcpy.p4i8.p0i8.i64(i8 addrspace(4)* nocapture, i8* nocapture, i64, i1) nounwind
