@@ -596,6 +596,10 @@ public:
 
     return true;
   }
+
+  bool foldingBreaksCurrentLoop() const {
+    return DeleteCurrentLoop;
+  }
 };
 } // namespace
 
@@ -603,7 +607,8 @@ public:
 /// branches.
 static bool constantFoldTerminators(Loop &L, DominatorTree &DT, LoopInfo &LI,
                                     ScalarEvolution &SE,
-                                    MemorySSAUpdater *MSSAU) {
+                                    MemorySSAUpdater *MSSAU,
+                                    bool &IsLoopDeleted) {
   if (!EnableTermFolding)
     return false;
 
@@ -613,7 +618,9 @@ static bool constantFoldTerminators(Loop &L, DominatorTree &DT, LoopInfo &LI,
     return false;
 
   ConstantTerminatorFoldingImpl BranchFolder(L, LI, DT, SE, MSSAU);
-  return BranchFolder.run();
+  bool Changed = BranchFolder.run();
+  IsLoopDeleted = Changed && BranchFolder.foldingBreaksCurrentLoop();
+  return Changed;
 }
 
 static bool mergeBlocksIntoPredecessors(Loop &L, DominatorTree &DT,
@@ -645,11 +652,15 @@ static bool mergeBlocksIntoPredecessors(Loop &L, DominatorTree &DT,
 }
 
 static bool simplifyLoopCFG(Loop &L, DominatorTree &DT, LoopInfo &LI,
-                            ScalarEvolution &SE, MemorySSAUpdater *MSSAU) {
+                            ScalarEvolution &SE, MemorySSAUpdater *MSSAU,
+                            bool &isLoopDeleted) {
   bool Changed = false;
 
   // Constant-fold terminators with known constant conditions.
-  Changed |= constantFoldTerminators(L, DT, LI, SE, MSSAU);
+  Changed |= constantFoldTerminators(L, DT, LI, SE, MSSAU, isLoopDeleted);
+
+  if (isLoopDeleted)
+    return true;
 
   // Eliminate unconditional branches by merging blocks into their predecessors.
   Changed |= mergeBlocksIntoPredecessors(L, DT, LI, MSSAU);
@@ -662,13 +673,18 @@ static bool simplifyLoopCFG(Loop &L, DominatorTree &DT, LoopInfo &LI,
 
 PreservedAnalyses LoopSimplifyCFGPass::run(Loop &L, LoopAnalysisManager &AM,
                                            LoopStandardAnalysisResults &AR,
-                                           LPMUpdater &) {
+                                           LPMUpdater &LPMU) {
   Optional<MemorySSAUpdater> MSSAU;
   if (EnableMSSALoopDependency && AR.MSSA)
     MSSAU = MemorySSAUpdater(AR.MSSA);
+  bool DeleteCurrentLoop = false;
   if (!simplifyLoopCFG(L, AR.DT, AR.LI, AR.SE,
-                       MSSAU.hasValue() ? MSSAU.getPointer() : nullptr))
+                       MSSAU.hasValue() ? MSSAU.getPointer() : nullptr,
+                       DeleteCurrentLoop))
     return PreservedAnalyses::all();
+
+  if (DeleteCurrentLoop)
+    LPMU.markLoopAsDeleted(L, "loop-simplifycfg");
 
   return getLoopPassPreservedAnalyses();
 }
@@ -681,7 +697,7 @@ public:
     initializeLoopSimplifyCFGLegacyPassPass(*PassRegistry::getPassRegistry());
   }
 
-  bool runOnLoop(Loop *L, LPPassManager &) override {
+  bool runOnLoop(Loop *L, LPPassManager &LPM) override {
     if (skipLoop(L))
       return false;
 
@@ -695,8 +711,13 @@ public:
       if (VerifyMemorySSA)
         MSSA->verifyMemorySSA();
     }
-    return simplifyLoopCFG(*L, DT, LI, SE,
-                           MSSAU.hasValue() ? MSSAU.getPointer() : nullptr);
+    bool DeleteCurrentLoop = false;
+    bool Changed = simplifyLoopCFG(
+        *L, DT, LI, SE, MSSAU.hasValue() ? MSSAU.getPointer() : nullptr,
+        DeleteCurrentLoop);
+    if (DeleteCurrentLoop)
+      LPM.markLoopAsDeleted(*L);
+    return Changed;
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
