@@ -55,11 +55,10 @@ User Guides
 
 For those new to the LLVM system.
 
-NOTE: If you are a user who is only interested in using LLVM-based
-compilers, you should look into `Clang <http://clang.llvm.org>`_ or
-`DragonEgg <http://dragonegg.llvm.org>`_ instead. The documentation here is
-intended for users who have a need to work with the intermediate LLVM
-representation.
+NOTE: If you are a user who is only interested in using an LLVM-based compiler,
+you should look into `Clang <http://clang.llvm.org>`_ instead. The
+documentation here is intended for users who have a need to work with the
+intermediate LLVM representation.
 
 .. toctree::
    :hidden:
