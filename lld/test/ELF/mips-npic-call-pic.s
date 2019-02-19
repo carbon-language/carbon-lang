@@ -103,7 +103,7 @@
 
 # REVERSE: __LA25Thunk_foo1b:
 # REV-R2:          20010:       3c 19 00 02     lui     $25, 2
-# REV-R6:          20010:       3c 19 00 02     aui     $25, $zero, 2 
+# REV-R6:          20010:       3c 19 00 02     aui     $25, $zero, 2
 # REVERSE:         20014:       08 00 80 09     j       131108 <foo1b>
 # REVERSE-NEXT:    20018:       27 39 00 24     addiu   $25, $25, 36
 # REVERSE-NEXT:    2001c:       00 00 00 00     nop
@@ -116,7 +116,7 @@
 
 # REVERSE: __LA25Thunk_foo2:
 # REV-R2:          20028:       3c 19 00 02     lui     $25, 2
-# REV-R6:          20028:       3c 19 00 02     aui     $25, $zero, 2 
+# REV-R6:          20028:       3c 19 00 02     aui     $25, $zero, 2
 # REVERSE:         2002c:       08 00 80 10     j       131136 <foo2>
 # REVERSE-NEXT:    20030:       27 39 00 40     addiu   $25, $25, 64
 # REVERSE-NEXT:    20034:       00 00 00 00     nop
@@ -140,7 +140,7 @@
 
 # REVERSE: __LA25Thunk_fpic:
 # REV-R2:          20080:       3c 19 00 02     lui     $25, 2
-# REV-R6:          20080:       3c 19 00 02     aui     $25, $zero, 2 
+# REV-R6:          20080:       3c 19 00 02     aui     $25, $zero, 2
 # REVERSE:         20084:       08 00 80 24     j       131216 <fpic>
 # REVERSE-NEXT:    20088:       27 39 00 90     addiu   $25, $25, 144
 # REVERSE-NEXT:    2008c:       00 00 00 00     nop
