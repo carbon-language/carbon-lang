@@ -36,21 +36,21 @@ define i1 @bad_fcmp_constexpr_bitcast() {
   ret i1 %cmp
 }
 
-; FIXME: If the bitcasts result in a NaN FP value, then "ordered and equal" would be false.
+; Ensure that an "ordered and equal" fcmp of a ConstantExpr to itself is not folded, since the ConstantExpr may be a NaN.
 
 define i1 @fcmp_constexpr_oeq(float %conv) {
 ; CHECK-LABEL: @fcmp_constexpr_oeq(
-; CHECK-NEXT:    ret i1 true
+; CHECK-NEXT:    ret i1 fcmp oeq (float bitcast (i32 ptrtoint (i16* @a to i32) to float), float bitcast (i32 ptrtoint (i16* @a to i32) to float))
 ;
   %cmp = fcmp oeq float bitcast (i32 ptrtoint (i16* @a to i32) to float), bitcast (i32 ptrtoint (i16* @a to i32) to float)
   ret i1 %cmp
 }
 
-; FIXME: If the bitcasts result in a NaN FP value, then "unordered or not equal" would be true.
+; Ensure that an "unordered or not equal" fcmp of a ConstantExpr to itself is not folded, since the ConstantExpr may be a NaN.
 
 define i1 @fcmp_constexpr_une(float %conv) {
 ; CHECK-LABEL: @fcmp_constexpr_une(
-; CHECK-NEXT:    ret i1 false
+; CHECK-NEXT:    ret i1 fcmp une (float bitcast (i32 ptrtoint (i16* @a to i32) to float), float bitcast (i32 ptrtoint (i16* @a to i32) to float))
 ;
   %cmp = fcmp une float bitcast (i32 ptrtoint (i16* @a to i32) to float), bitcast (i32 ptrtoint (i16* @a to i32) to float)
   ret i1 %cmp
