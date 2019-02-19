@@ -31,8 +31,8 @@ bool canCoerceMustAliasedValueToLoad(Value *StoredVal, Type *LoadTy,
     return false;
 
   // Don't coerce non-integral pointers to integers or vice versa.
-  if (DL.isNonIntegralPointerType(StoredVal->getType()) !=
-      DL.isNonIntegralPointerType(LoadTy)) {
+  if (DL.isNonIntegralPointerType(StoredVal->getType()->getScalarType()) !=
+      DL.isNonIntegralPointerType(LoadTy->getScalarType())) {
     // As a special case, allow coercion of memset used to initialize
     // an array w/null.  Despite non-integral pointers not generally having a
     // specific bit pattern, we do assume null is zero.
