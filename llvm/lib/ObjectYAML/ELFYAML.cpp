@@ -1010,8 +1010,7 @@ void MappingTraits<ELFYAML::DynamicEntry>::mapping(IO &IO,
 
 void MappingTraits<ELFYAML::VerneedEntry>::mapping(IO &IO,
                                                    ELFYAML::VerneedEntry &E) {
-  const auto *Object = static_cast<ELFYAML::Object *>(IO.getContext());
-  assert(Object && "The IO context is not initialized");
+  assert(!IO.getContext() && "The IO context is initialized already");
 
   IO.mapRequired("Version", E.Version);
   IO.mapRequired("File", E.File);
@@ -1020,8 +1019,7 @@ void MappingTraits<ELFYAML::VerneedEntry>::mapping(IO &IO,
 
 void MappingTraits<ELFYAML::VernauxEntry>::mapping(IO &IO,
                                                    ELFYAML::VernauxEntry &E) {
-  const auto *Object = static_cast<ELFYAML::Object *>(IO.getContext());
-  assert(Object && "The IO context is not initialized");
+  assert(!IO.getContext() && "The IO context is initialized already");
 
   IO.mapRequired("Name", E.Name);
   IO.mapRequired("Hash", E.Hash);
