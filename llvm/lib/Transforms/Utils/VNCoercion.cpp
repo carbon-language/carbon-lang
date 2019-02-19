@@ -32,9 +32,15 @@ bool canCoerceMustAliasedValueToLoad(Value *StoredVal, Type *LoadTy,
 
   // Don't coerce non-integral pointers to integers or vice versa.
   if (DL.isNonIntegralPointerType(StoredVal->getType()) !=
-      DL.isNonIntegralPointerType(LoadTy))
+      DL.isNonIntegralPointerType(LoadTy)) {
+    // As a special case, allow coercion of memset used to initialize
+    // an array w/null.  Despite non-integral pointers not generally having a
+    // specific bit pattern, we do assume null is zero.
+    if (auto *CI = dyn_cast<ConstantInt>(StoredVal))
+      return CI->isZero();
     return false;
-
+  }
+  
   return true;
 }
 
@@ -264,9 +270,16 @@ int analyzeLoadFromClobberingMemInst(Type *LoadTy, Value *LoadPtr,
 
   // If this is memset, we just need to see if the offset is valid in the size
   // of the memset..
-  if (MI->getIntrinsicID() == Intrinsic::memset)
+  if (MI->getIntrinsicID() == Intrinsic::memset) {
+    Value *StoredVal = cast<MemSetInst>(MI)->getValue();
+    if (DL.isNonIntegralPointerType(LoadTy->getScalarType())) {
+      auto *CI = dyn_cast<ConstantInt>(StoredVal);
+      if (!CI || !CI->isZero())
+        return -1;
+    }
     return analyzeLoadFromClobberingWrite(LoadTy, LoadPtr, MI->getDest(),
                                           MemSizeInBits, DL);
+  }
 
   // If we have a memcpy/memmove, the only case we can handle is if this is a
   // copy from constant memory.  In that case, we can read directly from the

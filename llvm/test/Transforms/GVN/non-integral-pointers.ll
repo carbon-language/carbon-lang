@@ -55,3 +55,71 @@ define i64 @f1(i1 %alwaysFalse, i8 addrspace(4)* %val, i8 addrspace(4)** %loc) {
   alwaysTaken:
   ret i64 42
 }
+
+;; Note: For terseness, we stop using the %alwaysfalse trick for the
+;; tests below and just exercise the bits of forwarding logic directly.
+
+declare void @llvm.memset.p4i8.i64(i8 addrspace(4)* nocapture, i8, i64, i1) nounwind
+
+; Can't forward as the load might be dead.  (Pretend we wrote out the alwaysfalse idiom above.)
+define i8 addrspace(4)* @neg_forward_memset(i8 addrspace(4)* addrspace(4)* %loc) {
+; CHECK-LABEL: @neg_forward_memset(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[LOC_BC:%.*]] = bitcast i8 addrspace(4)* addrspace(4)* [[LOC:%.*]] to i8 addrspace(4)*
+; CHECK-NEXT:    call void @llvm.memset.p4i8.i64(i8 addrspace(4)* align 4 [[LOC_BC]], i8 7, i64 8, i1 false)
+; CHECK-NEXT:    [[REF:%.*]] = load i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* [[LOC]]
+; CHECK-NEXT:    ret i8 addrspace(4)* [[REF]]
+;
+  entry:
+  %loc.bc = bitcast i8 addrspace(4)* addrspace(4)* %loc to i8 addrspace(4)*
+  call void @llvm.memset.p4i8.i64(i8 addrspace(4)* align 4 %loc.bc, i8 7, i64 8, i1 false)
+  %ref = load i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* %loc
+  ret i8 addrspace(4)* %ref
+}
+
+; Can forward since we can do so w/o breaking types
+define i8 addrspace(4)* @forward_memset_zero(i8 addrspace(4)* addrspace(4)* %loc) {
+; CHECK-LABEL: @forward_memset_zero(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[LOC_BC:%.*]] = bitcast i8 addrspace(4)* addrspace(4)* [[LOC:%.*]] to i8 addrspace(4)*
+; CHECK-NEXT:    call void @llvm.memset.p4i8.i64(i8 addrspace(4)* align 4 [[LOC_BC]], i8 0, i64 8, i1 false)
+; CHECK-NEXT:    ret i8 addrspace(4)* null
+;
+  entry:
+  %loc.bc = bitcast i8 addrspace(4)* addrspace(4)* %loc to i8 addrspace(4)*
+  call void @llvm.memset.p4i8.i64(i8 addrspace(4)* align 4 %loc.bc, i8 0, i64 8, i1 false)
+  %ref = load i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* %loc
+  ret i8 addrspace(4)* %ref
+}
+
+; Can't forward as the load might be dead.  (Pretend we wrote out the alwaysfalse idiom above.)
+define i8 addrspace(4)* @neg_forward_store(i8 addrspace(4)* addrspace(4)* %loc) {
+; CHECK-LABEL: @neg_forward_store(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[LOC_BC:%.*]] = bitcast i8 addrspace(4)* addrspace(4)* [[LOC:%.*]] to i64 addrspace(4)*
+; CHECK-NEXT:    store i64 5, i64 addrspace(4)* [[LOC_BC]]
+; CHECK-NEXT:    [[REF:%.*]] = load i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* [[LOC]]
+; CHECK-NEXT:    ret i8 addrspace(4)* [[REF]]
+;
+  entry:
+  %loc.bc = bitcast i8 addrspace(4)* addrspace(4)* %loc to i64 addrspace(4)*
+  store i64 5, i64 addrspace(4)* %loc.bc
+  %ref = load i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* %loc
+  ret i8 addrspace(4)* %ref
+}
+
+; TODO: missed optimization, we can forward the null.
+define i8 addrspace(4)* @forward_store_zero(i8 addrspace(4)* addrspace(4)* %loc) {
+; CHECK-LABEL: @forward_store_zero(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[LOC_BC:%.*]] = bitcast i8 addrspace(4)* addrspace(4)* [[LOC:%.*]] to i64 addrspace(4)*
+; CHECK-NEXT:    store i64 5, i64 addrspace(4)* [[LOC_BC]]
+; CHECK-NEXT:    [[REF:%.*]] = load i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* [[LOC]]
+; CHECK-NEXT:    ret i8 addrspace(4)* [[REF]]
+;
+  entry:
+  %loc.bc = bitcast i8 addrspace(4)* addrspace(4)* %loc to i64 addrspace(4)*
+  store i64 5, i64 addrspace(4)* %loc.bc
+  %ref = load i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* %loc
+  ret i8 addrspace(4)* %ref
+}
