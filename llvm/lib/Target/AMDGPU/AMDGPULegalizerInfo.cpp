@@ -55,6 +55,24 @@ static LegalizeMutation oneMoreElement(unsigned TypeIdx) {
   };
 }
 
+static LegalizeMutation fewerEltsToSize64Vector(unsigned TypeIdx) {
+  return [=](const LegalityQuery &Query) {
+    const LLT Ty = Query.Types[TypeIdx];
+    const LLT EltTy = Ty.getElementType();
+    unsigned Size = Ty.getSizeInBits();
+    unsigned Pieces = (Size + 63) / 64;
+    unsigned NewNumElts = (Ty.getNumElements() + 1) / Pieces;
+    return std::make_pair(TypeIdx, LLT::scalarOrVector(NewNumElts, EltTy));
+  };
+}
+
+static LegalityPredicate vectorWiderThan(unsigned TypeIdx, unsigned Size) {
+  return [=](const LegalityQuery &Query) {
+    const LLT QueryTy = Query.Types[TypeIdx];
+    return QueryTy.isVector() && QueryTy.getSizeInBits() > Size;
+  };
+}
+
 
 AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
                                          const GCNTargetMachine &TM) {
@@ -135,6 +153,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   getActionDefinitionsBuilder({G_AND, G_OR, G_XOR})
     .legalFor({S32, S1, S64, V2S32, V2S16, V4S16})
     .clampScalar(0, S32, S64)
+    .moreElementsIf(isSmallOddVector(0), oneMoreElement(0))
+    .fewerElementsIf(vectorWiderThan(0, 32), fewerEltsToSize64Vector(0))
     .scalarize(0);
 
   getActionDefinitionsBuilder({G_UADDO, G_SADDO, G_USUBO, G_SSUBO,

@@ -764,6 +764,36 @@ void LegalizerHelper::moreElementsVectorDst(MachineInstr &MI, LLT WideTy,
   MO.setReg(DstExt);
 }
 
+void LegalizerHelper::moreElementsVectorSrc(MachineInstr &MI, LLT MoreTy,
+                                            unsigned OpIdx) {
+  MachineOperand &MO = MI.getOperand(OpIdx);
+
+  LLT OldTy = MRI.getType(MO.getReg());
+  unsigned OldElts = OldTy.getNumElements();
+  unsigned NewElts = MoreTy.getNumElements();
+
+  unsigned NumParts = NewElts / OldElts;
+
+  // Use concat_vectors if the result is a multiple of the number of elements.
+  if (NumParts * OldElts == NewElts) {
+    SmallVector<unsigned, 8> Parts;
+    Parts.push_back(MO.getReg());
+
+    unsigned ImpDef = MIRBuilder.buildUndef(OldTy).getReg(0);
+    for (unsigned I = 1; I != NumParts; ++I)
+      Parts.push_back(ImpDef);
+
+    auto Concat = MIRBuilder.buildConcatVectors(MoreTy, Parts);
+    MO.setReg(Concat.getReg(0));
+    return;
+  }
+
+  unsigned MoreReg = MRI.createGenericVirtualRegister(MoreTy);
+  unsigned ImpDef = MIRBuilder.buildUndef(MoreTy).getReg(0);
+  MIRBuilder.buildInsert(MoreReg, ImpDef, MO.getReg(), 0);
+  MO.setReg(MoreReg);
+}
+
 LegalizerHelper::LegalizeResult
 LegalizerHelper::widenScalarMergeValues(MachineInstr &MI, unsigned TypeIdx,
                                         LLT WideTy) {
@@ -2354,6 +2384,16 @@ LegalizerHelper::moreElementsVector(MachineInstr &MI, unsigned TypeIdx,
   switch (Opc) {
   case TargetOpcode::G_IMPLICIT_DEF: {
     Observer.changingInstr(MI);
+    moreElementsVectorDst(MI, MoreTy, 0);
+    Observer.changedInstr(MI);
+    return Legalized;
+  }
+  case TargetOpcode::G_AND:
+  case TargetOpcode::G_OR:
+  case TargetOpcode::G_XOR: {
+    Observer.changingInstr(MI);
+    moreElementsVectorSrc(MI, MoreTy, 1);
+    moreElementsVectorSrc(MI, MoreTy, 2);
     moreElementsVectorDst(MI, MoreTy, 0);
     Observer.changedInstr(MI);
     return Legalized;
