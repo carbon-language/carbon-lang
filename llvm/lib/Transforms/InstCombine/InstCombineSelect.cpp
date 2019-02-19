@@ -695,22 +695,30 @@ static Value *canonicalizeSaturatedAdd(ICmpInst *Cmp, Value *TVal, Value *FVal,
     return Builder.CreateSelect(NewCmp, FVal, TVal);
   }
 
-  // Canonicalize to 'ULT' to simplify matching below.
+  // Match unsigned saturated add of 2 variables with an unnecessary 'not'.
+  // There are 8 commuted variants.
+  // Canonicalize -1 (saturated result) to true value of the select.
+  if (match(FVal, m_AllOnes())) {
+    std::swap(TVal, FVal);
+    std::swap(Cmp0, Cmp1);
+  }
+  if (!match(TVal, m_AllOnes()))
+    return nullptr;
+
+  // Canonicalize predicate to 'ULT'.
   if (Pred == ICmpInst::ICMP_UGT) {
     Pred = ICmpInst::ICMP_ULT;
     std::swap(Cmp0, Cmp1);
   }
-
   if (Pred != ICmpInst::ICMP_ULT)
     return nullptr;
 
   // Match unsigned saturated add of 2 variables with an unnecessary 'not'.
-  // TODO: There are more variations of this pattern.
   Value *Y;
-  if (match(TVal, m_AllOnes()) && match(Cmp0, m_Not(m_Value(X))) &&
+  if (match(Cmp0, m_Not(m_Value(X))) &&
       match(FVal, m_c_Add(m_Specific(X), m_Value(Y))) && Y == Cmp1) {
     // Change the comparison to use the sum (false value of the select). That is
-    // the canonical pattern match form for uadd.with.overflow and eliminates a
+    // a canonical pattern match form for uadd.with.overflow and eliminates a
     // use of the 'not' op:
     // (~X u< Y) ? -1 : (X + Y) --> ((X + Y) u< Y) ? -1 : (X + Y)
     // (~X u< Y) ? -1 : (Y + X) --> ((Y + X) u< Y) ? -1 : (Y + X)
