@@ -1604,10 +1604,15 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
       return;
   }
 
-  // In MinGW, all symbols are automatically exported if no symbols
-  // are chosen to be exported.
-  if (Config->DLL && ((Config->MinGW && Config->Exports.empty()) ||
-                      Args.hasArg(OPT_export_all_symbols))) {
+  // In MinGW, if no symbols are chosen to be exported, then all symbols are
+  // automatically exported by default. This behavior can be forced by the
+  // -export-all-symbols option, so that it happens even when exports are
+  // explicitly specified. The automatic behavior can be disabled using the
+  // -exclude-all-symbols option, so that lld-link behaves like link.exe rather
+  // than MinGW in the case that nothing is explicitly exported.
+  if (Config->MinGW && Config->DLL &&
+      ((Config->Exports.empty() && !Args.hasArg(OPT_exclude_all_symbols)) ||
+       Args.hasArg(OPT_export_all_symbols))) {
     Exporter.initSymbolExcludes();
 
     Symtab->forEachSymbol([=](Symbol *S) {
