@@ -2398,6 +2398,13 @@ LegalizerHelper::moreElementsVector(MachineInstr &MI, unsigned TypeIdx,
     Observer.changedInstr(MI);
     return Legalized;
   }
+  case TargetOpcode::G_EXTRACT:
+    if (TypeIdx != 1)
+      return UnableToLegalize;
+    Observer.changingInstr(MI);
+    moreElementsVectorSrc(MI, MoreTy, 1);
+    Observer.changedInstr(MI);
+    return Legalized;
   default:
     return UnableToLegalize;
   }

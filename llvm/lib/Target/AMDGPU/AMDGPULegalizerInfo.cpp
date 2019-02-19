@@ -533,6 +533,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
         return (Ty0.getSizeInBits() % 16 == 0) &&
                (Ty1.getSizeInBits() % 16 == 0);
       })
+      .moreElementsIf(isSmallOddVector(1), oneMoreElement(1))
       .widenScalarIf(
           [=](const LegalityQuery &Query) {
             const LLT Ty1 = Query.Types[1];
