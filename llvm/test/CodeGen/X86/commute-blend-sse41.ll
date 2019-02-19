@@ -37,11 +37,11 @@ declare <2 x double> @llvm.x86.sse41.blendpd(<2 x double>, <2 x double>, i8) nou
 define <4 x i32> @commute_fold_blend_v4i32(<4 x i32>* %a, <4 x i32> %b) {
 ; CHECK-LABEL: commute_fold_blend_v4i32:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    paddd %xmm0, %xmm0 ; force integer domain
+; CHECK-NEXT:    paddd %xmm0, %xmm0
 ; CHECK-NEXT:    pblendw {{.*#+}} xmm0 = mem[0,1,2,3,4,5],xmm0[6,7]
 ; CHECK-NEXT:    retq
   %1 = load <4 x i32>, <4 x i32>* %a
-  %2 = add <4 x i32> %b, %b
+  %2 = add <4 x i32> %b, %b ; force integer domain
   %3 = shufflevector <4 x i32> %1, <4 x i32> %2, <4 x i32> <i32 0, i32 1, i32 2, i32 7>
   ret <4 x i32> %3
 }
