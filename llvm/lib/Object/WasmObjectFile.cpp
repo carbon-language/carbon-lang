@@ -421,7 +421,7 @@ Error WasmObjectFile::parseLinkingSection(ReadContext &Ctx) {
       for (uint32_t I = 0; I < Count; I++) {
         DataSegments[I].Data.Name = readString(Ctx);
         DataSegments[I].Data.Alignment = readVaruint32(Ctx);
-        DataSegments[I].Data.Flags = readVaruint32(Ctx);
+        DataSegments[I].Data.LinkerFlags = readVaruint32(Ctx);
       }
       break;
     }
@@ -1164,9 +1164,16 @@ Error WasmObjectFile::parseDataSection(ReadContext &Ctx) {
   DataSegments.reserve(Count);
   while (Count--) {
     WasmSegment Segment;
-    Segment.Data.MemoryIndex = readVaruint32(Ctx);
-    if (Error Err = readInitExpr(Segment.Data.Offset, Ctx))
-      return Err;
+    Segment.Data.InitFlags = readVaruint32(Ctx);
+    Segment.Data.MemoryIndex = (Segment.Data.InitFlags & wasm::WASM_SEGMENT_HAS_MEMINDEX)
+                               ? readVaruint32(Ctx) : 0;
+    if ((Segment.Data.InitFlags & wasm::WASM_SEGMENT_IS_PASSIVE) == 0) {
+      if (Error Err = readInitExpr(Segment.Data.Offset, Ctx))
+        return Err;
+    } else {
+      Segment.Data.Offset.Opcode = wasm::WASM_OPCODE_I32_CONST;
+      Segment.Data.Offset.Value.Int32 = 0;
+    }
     uint32_t Size = readVaruint32(Ctx);
     if (Size > (size_t)(Ctx.End - Ctx.Ptr))
       return make_error<GenericBinaryError>("Invalid segment size",
@@ -1175,7 +1182,7 @@ Error WasmObjectFile::parseDataSection(ReadContext &Ctx) {
     // The rest of these Data fields are set later, when reading in the linking
     // metadata section.
     Segment.Data.Alignment = 0;
-    Segment.Data.Flags = 0;
+    Segment.Data.LinkerFlags = 0;
     Segment.Data.Comdat = UINT32_MAX;
     Segment.SectionOffset = Ctx.Ptr - Ctx.Start;
     Ctx.Ptr += Size;
