@@ -771,6 +771,36 @@ define i32 @uadd_sat_commute_select_ugt_commute_add(i32 %xp, i32 %y) {
   ret i32 %r
 }
 
+; Negative test - make sure we have a -1 in the select.
+
+define i32 @not_uadd_sat(i32 %x, i32 %y) {
+; CHECK-LABEL: @not_uadd_sat(
+; CHECK-NEXT:    [[A:%.*]] = add i32 [[X:%.*]], -2
+; CHECK-NEXT:    [[C:%.*]] = icmp ugt i32 [[X]], 1
+; CHECK-NEXT:    [[R:%.*]] = select i1 [[C]], i32 [[A]], i32 [[Y:%.*]]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %a = add i32 %x, -2
+  %c = icmp ugt i32 %x, 1
+  %r = select i1 %c, i32 %a, i32 %y
+  ret i32 %r
+}
+
+; Negative test - make sure the predicate is 'ult'.
+
+define i32 @not_uadd_sat2(i32 %x, i32 %y) {
+; CHECK-LABEL: @not_uadd_sat2(
+; CHECK-NEXT:    [[A:%.*]] = add i32 [[X:%.*]], -2
+; CHECK-NEXT:    [[C:%.*]] = icmp ugt i32 [[X]], 1
+; CHECK-NEXT:    [[R:%.*]] = select i1 [[C]], i32 [[A]], i32 -1
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %a = add i32 %x, -2
+  %c = icmp ugt i32 %x, 1
+  %r = select i1 %c, i32 %a, i32 -1
+  ret i32 %r
+}
+
 define i32 @uadd_sat_constant(i32 %x) {
 ; CHECK-LABEL: @uadd_sat_constant(
 ; CHECK-NEXT:    [[A:%.*]] = add i32 [[X:%.*]], 42
