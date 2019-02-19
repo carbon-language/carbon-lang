@@ -3070,6 +3070,22 @@ bool X86TTIImpl::areInlineCompatible(const Function *Caller,
   return (RealCallerBits & RealCalleeBits) == RealCalleeBits;
 }
 
+bool X86TTIImpl::areFunctionArgsABICompatible(
+    const Function *Caller, const Function *Callee,
+    SmallPtrSetImpl<Argument *> &Args) const {
+  if (!BaseT::areFunctionArgsABICompatible(Caller, Callee, Args))
+    return false;
+
+  // If we get here, we know the target features match. If one function
+  // considers 512-bit vectors legal and the other does not, consider them
+  // incompatible.
+  // FIXME Look at the arguments and only consider 512 bit or larger vectors?
+  const TargetMachine &TM = getTLI()->getTargetMachine();
+
+  return TM.getSubtarget<X86Subtarget>(*Caller).useAVX512Regs() ==
+         TM.getSubtarget<X86Subtarget>(*Callee).useAVX512Regs();
+}
+
 const X86TTIImpl::TTI::MemCmpExpansionOptions *
 X86TTIImpl::enableMemCmpExpansion(bool IsZeroCmp) const {
   // Only enable vector loads for equality comparison.
