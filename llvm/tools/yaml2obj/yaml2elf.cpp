@@ -157,9 +157,6 @@ class ELFState {
   bool writeSectionContent(Elf_Shdr &SHeader, const ELFYAML::Group &Group,
                            ContiguousBlobAccumulator &CBA);
   bool writeSectionContent(Elf_Shdr &SHeader,
-                           const ELFYAML::VerneedSection &Section,
-                           ContiguousBlobAccumulator &CBA);
-  bool writeSectionContent(Elf_Shdr &SHeader,
                            const ELFYAML::MipsABIFlags &Section,
                            ContiguousBlobAccumulator &CBA);
   void writeSectionContent(Elf_Shdr &SHeader,
@@ -185,9 +182,6 @@ class ELFState {
 
 public:
   static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc);
-
-private:
-  void finalizeStrings();
 };
 } // end anonymous namespace
 
@@ -303,8 +297,6 @@ bool ELFState<ELFT>::initSectionHeaders(std::vector<Elf_Shdr> &SHeaders,
       CBA.getOSAndAlignedOffset(SHeader.sh_offset, SHeader.sh_addralign);
     } else if (auto S = dyn_cast<ELFYAML::DynamicSection>(Sec.get())) {
       writeSectionContent(SHeader, *S, CBA);
-    } else if (auto S = dyn_cast<ELFYAML::VerneedSection>(Sec.get())) {
-      writeSectionContent(SHeader, *S, CBA);
     } else
       llvm_unreachable("Unknown section type");
 
@@ -345,6 +337,15 @@ void ELFState<ELFT>::initSymtabSectionHeader(Elf_Shdr &SHeader,
     zero(Sym);
     Syms.push_back(Sym);
   }
+
+  // Add symbol names to .strtab or .dynstr.
+  for (const auto &Sym : Symbols.Local)
+    Strtab.add(Sym.Name);
+  for (const auto &Sym : Symbols.Global)
+    Strtab.add(Sym.Name);
+  for (const auto &Sym : Symbols.Weak)
+    Strtab.add(Sym.Name);
+  Strtab.finalize();
 
   addSymbols(Symbols.Local, Syms, ELF::STB_LOCAL, Strtab);
   addSymbols(Symbols.Global, Syms, ELF::STB_GLOBAL, Strtab);
@@ -569,54 +570,6 @@ bool ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
 
 template <class ELFT>
 bool ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
-                                         const ELFYAML::VerneedSection &Section,
-                                         ContiguousBlobAccumulator &CBA) {
- typedef typename ELFT::Verneed Elf_Verneed;
- typedef typename ELFT::Vernaux Elf_Vernaux;
-
- auto &OS = CBA.getOSAndAlignedOffset(SHeader.sh_offset, SHeader.sh_addralign);
-
- uint64_t AuxCnt = 0;
- for (size_t I = 0; I < Section.VerneedV.size(); ++I) {
-   const ELFYAML::VerneedEntry &VE = Section.VerneedV[I];
-
-   Elf_Verneed VerNeed;
-   VerNeed.vn_version = VE.Version;
-   VerNeed.vn_file = DotDynstr.getOffset(VE.File);
-   if (I == Section.VerneedV.size() - 1)
-     VerNeed.vn_next = 0;
-   else
-     VerNeed.vn_next =
-         sizeof(Elf_Verneed) + VE.AuxV.size() * sizeof(Elf_Vernaux);
-   VerNeed.vn_cnt = VE.AuxV.size();
-   VerNeed.vn_aux = sizeof(Elf_Verneed);
-   OS.write((const char *)&VerNeed, sizeof(Elf_Verneed));
-
-   for (size_t J = 0; J < VE.AuxV.size(); ++J, ++AuxCnt) {
-     const ELFYAML::VernauxEntry &VAuxE = VE.AuxV[J];
-
-     Elf_Vernaux VernAux;
-     VernAux.vna_hash = VAuxE.Hash;
-     VernAux.vna_flags = VAuxE.Flags;
-     VernAux.vna_other = VAuxE.Other;
-     VernAux.vna_name = DotDynstr.getOffset(VAuxE.Name);
-     if (J == VE.AuxV.size() - 1)
-       VernAux.vna_next = 0;
-     else
-       VernAux.vna_next = sizeof(Elf_Vernaux);
-     OS.write((const char *)&VernAux, sizeof(Elf_Vernaux));
-   }
- }
-
- SHeader.sh_size = Section.VerneedV.size() * sizeof(Elf_Verneed) +
-                   AuxCnt * sizeof(Elf_Vernaux);
- SHeader.sh_info = Section.Info;
-
- return true;
-}
-
-template <class ELFT>
-bool ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
                                          const ELFYAML::MipsABIFlags &Section,
                                          ContiguousBlobAccumulator &CBA) {
   assert(Section.Type == llvm::ELF::SHT_MIPS_ABIFLAGS &&
@@ -708,52 +661,9 @@ ELFState<ELFT>::buildSymbolIndex(std::size_t &StartIndex,
   return true;
 }
 
-template <class ELFT> void ELFState<ELFT>::finalizeStrings() {
-  auto AddSymbols = [](StringTableBuilder &StrTab,
-                       const ELFYAML::LocalGlobalWeakSymbols &Symbols) {
-    for (const auto &Sym : Symbols.Local)
-      StrTab.add(Sym.Name);
-    for (const auto &Sym : Symbols.Global)
-      StrTab.add(Sym.Name);
-    for (const auto &Sym : Symbols.Weak)
-      StrTab.add(Sym.Name);
-  };
-
-  // Add the regular symbol names to .strtab section.
-  AddSymbols(DotStrtab, Doc.Symbols);
-  DotStrtab.finalize();
-
-  if (!hasDynamicSymbols())
-    return;
-
-  // Add the dynamic symbol names to .dynstr section.
-  AddSymbols(DotDynstr, Doc.DynamicSymbols);
-
-  // SHT_GNU_verneed section also adds strings to .dynstr section.
-  for (const std::unique_ptr<ELFYAML::Section> &Sec : Doc.Sections) {
-    auto VerNeed = dyn_cast<ELFYAML::VerneedSection>(Sec.get());
-    if (!VerNeed)
-      continue;
-
-    for (const ELFYAML::VerneedEntry &VE : VerNeed->VerneedV) {
-      DotDynstr.add(VE.File);
-      for (const ELFYAML::VernauxEntry &Aux : VE.AuxV)
-        DotDynstr.add(Aux.Name);
-    }
-  }
-
-  DotDynstr.finalize();
-}
-
 template <class ELFT>
 int ELFState<ELFT>::writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   ELFState<ELFT> State(Doc);
-
-  // Finalize .strtab and .dynstr sections. We do that early because want to
-  // finalize the string table builders before writing the content of the
-  // sections that might want to use them.
-  State.finalizeStrings();
-
   if (!State.buildSectionIndex())
     return 1;
 

@@ -121,7 +121,6 @@ struct Section {
     RawContent,
     Relocation,
     NoBits,
-    Verneed,
     MipsABIFlags
   };
   SectionKind Kind;
@@ -165,30 +164,6 @@ struct NoBitsSection : Section {
 
   static bool classof(const Section *S) {
     return S->Kind == SectionKind::NoBits;
-  }
-};
-
-struct VernauxEntry {
-  uint32_t Hash;
-  uint16_t Flags;
-  uint16_t Other;
-  StringRef Name;
-};
-
-struct VerneedEntry {
-  uint16_t Version;
-  StringRef File;
-  std::vector<VernauxEntry> AuxV;
-};
-
-struct VerneedSection : Section {
-  std::vector<VerneedEntry> VerneedV;
-  llvm::yaml::Hex64 Info;
-
-  VerneedSection() : Section(SectionKind::Verneed) {}
-
-  static bool classof(const Section *S) {
-    return S->Kind == SectionKind::Verneed;
   }
 };
 
@@ -263,8 +238,6 @@ LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::ELFYAML::DynamicEntry)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::ELFYAML::ProgramHeader)
 LLVM_YAML_IS_SEQUENCE_VECTOR(std::unique_ptr<llvm::ELFYAML::Section>)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::ELFYAML::Symbol)
-LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::ELFYAML::VernauxEntry)
-LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::ELFYAML::VerneedEntry)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::ELFYAML::Relocation)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::ELFYAML::SectionOrType)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::ELFYAML::SectionName)
@@ -406,14 +379,6 @@ struct MappingTraits<ELFYAML::LocalGlobalWeakSymbols> {
 
 template <> struct MappingTraits<ELFYAML::DynamicEntry> {
   static void mapping(IO &IO, ELFYAML::DynamicEntry &Rel);
-};
-
-template <> struct MappingTraits<ELFYAML::VerneedEntry> {
-  static void mapping(IO &IO, ELFYAML::VerneedEntry &E);
-};
-
-template <> struct MappingTraits<ELFYAML::VernauxEntry> {
-  static void mapping(IO &IO, ELFYAML::VernauxEntry &E);
 };
 
 template <> struct MappingTraits<ELFYAML::Relocation> {
