@@ -306,8 +306,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
                                G_CTPOP})
     .legalFor({{S32, S32}, {S32, S64}})
     .clampScalar(0, S32, S32)
-    .clampScalar(1, S32, S64);
-  // TODO: Scalarize
+    .clampScalar(1, S32, S64)
+    .scalarize(0);
 
   // TODO: Expand for > s32
   getActionDefinitionsBuilder(G_BSWAP)
