@@ -577,8 +577,8 @@ bool ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
                                          ContiguousBlobAccumulator &CBA) {
   raw_ostream &OS =
       CBA.getOSAndAlignedOffset(SHeader.sh_offset, SHeader.sh_addralign);
-  for (uint16_t V : Section.Entries)
-    support::endian::write<uint16_t>(OS, V, ELFT::TargetEndianness);
+  for (uint16_t Version : Section.Entries)
+    support::endian::write<uint16_t>(OS, Version, ELFT::TargetEndianness);
 
   SHeader.sh_entsize = 2;
   SHeader.sh_size = Section.Entries.size() * SHeader.sh_entsize;
