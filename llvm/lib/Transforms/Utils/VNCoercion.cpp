@@ -36,8 +36,8 @@ bool canCoerceMustAliasedValueToLoad(Value *StoredVal, Type *LoadTy,
     // As a special case, allow coercion of memset used to initialize
     // an array w/null.  Despite non-integral pointers not generally having a
     // specific bit pattern, we do assume null is zero.
-    if (auto *CI = dyn_cast<ConstantInt>(StoredVal))
-      return CI->isZero();
+    if (auto *CI = dyn_cast<Constant>(StoredVal))
+      return CI->isNullValue();
     return false;
   }
   
@@ -287,9 +287,8 @@ int analyzeLoadFromClobberingMemInst(Type *LoadTy, Value *LoadPtr,
   // If this is memset, we just need to see if the offset is valid in the size
   // of the memset..
   if (MI->getIntrinsicID() == Intrinsic::memset) {
-    Value *StoredVal = cast<MemSetInst>(MI)->getValue();
     if (DL.isNonIntegralPointerType(LoadTy->getScalarType())) {
-      auto *CI = dyn_cast<ConstantInt>(StoredVal);
+      auto *CI = dyn_cast<ConstantInt>(cast<MemSetInst>(MI)->getValue());
       if (!CI || !CI->isZero())
         return -1;
     }
@@ -316,7 +315,8 @@ int analyzeLoadFromClobberingMemInst(Type *LoadTy, Value *LoadPtr,
   if (Offset == -1)
     return Offset;
 
-  // Don't coerce non-integral pointers to integers or vice versa.
+  // Don't coerce non-integral pointers to integers or vice versa, and the
+  // memtransfer is implicitly a raw byte code
   if (DL.isNonIntegralPointerType(LoadTy->getScalarType()))
     // TODO: Can allow nullptrs from constant zeros
     return -1;

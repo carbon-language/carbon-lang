@@ -139,18 +139,32 @@ define <1 x i8 addrspace(4)*> @neg_forward_store_vload(<1 x i8 addrspace(4)*> ad
   ret <1 x i8 addrspace(4)*> %ref
 }
 
-; TODO: missed optimization, we can forward the null.
+; Nulls have known bit patterns, so we can forward
 define i8 addrspace(4)* @forward_store_zero(i8 addrspace(4)* addrspace(4)* %loc) {
 ; CHECK-LABEL: @forward_store_zero(
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    [[LOC_BC:%.*]] = bitcast i8 addrspace(4)* addrspace(4)* [[LOC:%.*]] to i64 addrspace(4)*
-; CHECK-NEXT:    store i64 5, i64 addrspace(4)* [[LOC_BC]]
-; CHECK-NEXT:    [[REF:%.*]] = load i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* [[LOC]]
-; CHECK-NEXT:    ret i8 addrspace(4)* [[REF]]
+; CHECK-NEXT:    store i64 0, i64 addrspace(4)* [[LOC_BC]]
+; CHECK-NEXT:    ret i8 addrspace(4)* null
 ;
   entry:
   %loc.bc = bitcast i8 addrspace(4)* addrspace(4)* %loc to i64 addrspace(4)*
-  store i64 5, i64 addrspace(4)* %loc.bc
+  store i64 0, i64 addrspace(4)* %loc.bc
+  %ref = load i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* %loc
+  ret i8 addrspace(4)* %ref
+}
+
+; Nulls have known bit patterns, so we can forward
+define i8 addrspace(4)* @forward_store_zero2(i8 addrspace(4)* addrspace(4)* %loc) {
+; CHECK-LABEL: @forward_store_zero2(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[LOC_BC:%.*]] = bitcast i8 addrspace(4)* addrspace(4)* [[LOC:%.*]] to <2 x i32> addrspace(4)*
+; CHECK-NEXT:    store <2 x i32> zeroinitializer, <2 x i32> addrspace(4)* [[LOC_BC]]
+; CHECK-NEXT:    ret i8 addrspace(4)* null
+;
+  entry:
+  %loc.bc = bitcast i8 addrspace(4)* addrspace(4)* %loc to <2 x i32> addrspace(4)*
+  store <2 x i32> zeroinitializer, <2 x i32> addrspace(4)* %loc.bc
   %ref = load i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* %loc
   ret i8 addrspace(4)* %ref
 }
