@@ -31,9 +31,10 @@
 #include <type_traits>
 
 namespace Fortran::evaluate {
-namespace Host {
+namespace host {
 
-struct UnsupportedType {};
+// Type mapping from F18 types to host types
+struct UnsupportedType {};  // There is no host type for the F18 type
 
 template<typename FTN_T> struct HostTypeHelper {
   using Type = UnsupportedType;
@@ -44,8 +45,14 @@ template<typename... T> constexpr inline bool HostTypeExists() {
   return (... && (!std::is_same_v<HostType<T>, UnsupportedType>));
 }
 
+// Type mapping from host types to F18 types FortranType<HOST_T> is defined
+// after all HosTypeHelper definition because it reverses them to avoid
+// duplication.
+
+// Scalar conversion utilities from host scalars to F18 scalars
 template<typename FTN_T>
 inline constexpr Scalar<FTN_T> CastHostToFortran(const HostType<FTN_T> &x) {
+  static_assert(HostTypeExists<FTN_T>());
   if constexpr (FTN_T::category == TypeCategory::Complex &&
       sizeof(Scalar<FTN_T>) != sizeof(HostType<FTN_T>)) {
     // X87 is usually padded to 12 or 16bytes. Need to cast piecewise for
@@ -57,8 +64,10 @@ inline constexpr Scalar<FTN_T> CastHostToFortran(const HostType<FTN_T> &x) {
   }
 }
 
+// Scalar conversion utilities from  F18 scalars to host scalars
 template<typename FTN_T>
 inline constexpr HostType<FTN_T> CastFortranToHost(const Scalar<FTN_T> &x) {
+  static_assert(HostTypeExists<FTN_T>());
   if constexpr (FTN_T::category == TypeCategory::Complex &&
       sizeof(Scalar<FTN_T>) != sizeof(HostType<FTN_T>)) {
     // X87 is usually padded to 12 or 16bytes. Need to cast piecewise for
@@ -79,7 +88,7 @@ template<typename T> struct BiggerOrSameHostTypeHelper {
 template<typename FTN_T>
 using BiggerOrSameHostType = typename BiggerOrSameHostTypeHelper<FTN_T>::Type;
 template<typename FTN_T>
-using BiggerOrSameFortanTypeSupportedOnHost =
+using BiggerOrSameFortranTypeSupportedOnHost =
     typename BiggerOrSameHostTypeHelper<FTN_T>::FortranType;
 
 template<typename... T> constexpr inline bool BiggerOrSameHostTypeExists() {
@@ -155,9 +164,33 @@ template<> struct HostTypeHelper<Type<TypeCategory::Character, 2>> {
   using Type = std::u16string;
 };
 
+// Type mapping from host types to F18 types. This need to be placed after all
+// HostTypeHelper specializations.
+template<typename T, typename... TT> struct IndexInTupleHelper {};
+template<typename T, typename... TT>
+struct IndexInTupleHelper<T, std::tuple<TT...>> {
+  static constexpr int value{common::TypeIndex<T, TT...>};
+};
+struct UnknownType {};  // the host type does not match any F18 types
+template<typename HOST_T> struct FortranTypeHelper {
+  using HostTypeMapping =
+      common::MapTemplate<HostType, AllIntrinsicTypes, std::tuple>;
+  static constexpr int index{
+      IndexInTupleHelper<HOST_T, HostTypeMapping>::value};
+  using Type = std::conditional_t<index >= 0,
+      std::tuple_element_t<index, AllIntrinsicTypes>, UnknownType>;
+};
+
+template<typename HOST_T>
+using FortranType = typename FortranTypeHelper<HOST_T>::Type;
+
+template<typename... HT> constexpr inline bool FortranTypeExists() {
+  return (... && (!std::is_same_v<FortranType<HT>, UnknownType>));
+}
+
 // Utility to find "bigger" types that exist on host. By bigger, it is meant
-// that the bigger type can represent all the values of the smaller types without
-// information loss.
+// that the bigger type can represent all the values of the smaller types
+// without information loss.
 template<TypeCategory cat, int KIND> struct NextBiggerReal {
   using Type = void;
 };

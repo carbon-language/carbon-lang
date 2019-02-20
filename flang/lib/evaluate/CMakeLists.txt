@@ -29,6 +29,7 @@ add_library(FortranEvaluate
   tools.cc
   type.cc
   variable.cc
+  rte.cc
 )
 
 target_link_libraries(FortranEvaluate
