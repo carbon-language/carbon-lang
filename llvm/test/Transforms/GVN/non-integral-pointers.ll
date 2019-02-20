@@ -211,5 +211,63 @@ entry:
   ret i8 addrspace(4)* %ref
 }
 
-
 declare void @llvm.memcpy.p4i8.p0i8.i64(i8 addrspace(4)* nocapture, i8* nocapture, i64, i1) nounwind
+
+
+; Same as the neg_forward_store cases, but for non defs.
+; (Pretend we wrote out the alwaysfalse idiom above.)
+define i8 addrspace(4)* @neg_store_clobber(i8 addrspace(4)* addrspace(4)* %loc) {
+; CHECK-LABEL: @neg_store_clobber(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[LOC_BC:%.*]] = bitcast i8 addrspace(4)* addrspace(4)* [[LOC:%.*]] to <2 x i64> addrspace(4)*
+; CHECK-NEXT:    store <2 x i64> <i64 4, i64 4>, <2 x i64> addrspace(4)* [[LOC_BC]]
+; CHECK-NEXT:    [[LOC_OFF:%.*]] = getelementptr i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* [[LOC]], i64 1
+; CHECK-NEXT:    [[REF:%.*]] = load i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* [[LOC_OFF]]
+; CHECK-NEXT:    ret i8 addrspace(4)* [[REF]]
+;
+entry:
+  %loc.bc = bitcast i8 addrspace(4)* addrspace(4)* %loc to <2 x i64> addrspace(4)*
+  store <2 x i64> <i64 4, i64 4>, <2 x i64> addrspace(4)* %loc.bc
+  %loc.off = getelementptr i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* %loc, i64 1
+  %ref = load i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* %loc.off
+  ret i8 addrspace(4)* %ref
+}
+
+declare void @use(<2 x i64>) inaccessiblememonly
+
+; Same as the neg_forward_store cases, but for non defs.
+; (Pretend we wrote out the alwaysfalse idiom above.)
+define i8 addrspace(4)* @neg_load_clobber(i8 addrspace(4)* addrspace(4)* %loc) {
+; CHECK-LABEL: @neg_load_clobber(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[LOC_BC:%.*]] = bitcast i8 addrspace(4)* addrspace(4)* [[LOC:%.*]] to <2 x i64> addrspace(4)*
+; CHECK-NEXT:    [[V:%.*]] = load <2 x i64>, <2 x i64> addrspace(4)* [[LOC_BC]]
+; CHECK-NEXT:    call void @use(<2 x i64> [[V]])
+; CHECK-NEXT:    [[LOC_OFF:%.*]] = getelementptr i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* [[LOC]], i64 1
+; CHECK-NEXT:    [[REF:%.*]] = load i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* [[LOC_OFF]]
+; CHECK-NEXT:    ret i8 addrspace(4)* [[REF]]
+;
+entry:
+  %loc.bc = bitcast i8 addrspace(4)* addrspace(4)* %loc to <2 x i64> addrspace(4)*
+  %v = load <2 x i64>, <2 x i64> addrspace(4)* %loc.bc
+  call void @use(<2 x i64> %v)
+  %loc.off = getelementptr i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* %loc, i64 1
+  %ref = load i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* %loc.off
+  ret i8 addrspace(4)* %ref
+}
+
+define i8 addrspace(4)* @store_clobber_zero(i8 addrspace(4)* addrspace(4)* %loc) {
+; CHECK-LABEL: @store_clobber_zero(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[LOC_BC:%.*]] = bitcast i8 addrspace(4)* addrspace(4)* [[LOC:%.*]] to <2 x i64> addrspace(4)*
+; CHECK-NEXT:    store <2 x i64> zeroinitializer, <2 x i64> addrspace(4)* [[LOC_BC]]
+; CHECK-NEXT:    [[LOC_OFF:%.*]] = getelementptr i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* [[LOC]], i64 1
+; CHECK-NEXT:    ret i8 addrspace(4)* null
+;
+entry:
+  %loc.bc = bitcast i8 addrspace(4)* addrspace(4)* %loc to <2 x i64> addrspace(4)*
+  store <2 x i64> zeroinitializer, <2 x i64> addrspace(4)* %loc.bc
+  %loc.off = getelementptr i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* %loc, i64 1
+  %ref = load i8 addrspace(4)*, i8 addrspace(4)* addrspace(4)* %loc.off
+  ret i8 addrspace(4)* %ref
+}
