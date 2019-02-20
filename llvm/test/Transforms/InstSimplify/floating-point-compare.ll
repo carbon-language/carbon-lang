@@ -399,7 +399,9 @@ define <2 x i1> @fabs_is_not_negative_poszero(<2 x float> %V) {
 
 define <2 x i1> @fabs_is_not_negative_anyzero(<2 x float> %V) {
 ; CHECK-LABEL: @fabs_is_not_negative_anyzero(
-; CHECK-NEXT:    ret <2 x i1> zeroinitializer
+; CHECK-NEXT:    [[ABS:%.*]] = call <2 x float> @llvm.fabs.v2f32(<2 x float> [[V:%.*]])
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp olt <2 x float> [[ABS]], <float 0.000000e+00, float -0.000000e+00>
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %abs = call <2 x float> @llvm.fabs.v2f32(<2 x float> %V)
   %cmp = fcmp olt <2 x float> %abs, <float 0.0, float -0.0>
@@ -408,7 +410,9 @@ define <2 x i1> @fabs_is_not_negative_anyzero(<2 x float> %V) {
 
 define <3 x i1> @fabs_is_not_negative_negzero_undef(<3 x float> %V) {
 ; CHECK-LABEL: @fabs_is_not_negative_negzero_undef(
-; CHECK-NEXT:    ret <3 x i1> zeroinitializer
+; CHECK-NEXT:    [[ABS:%.*]] = call <3 x float> @llvm.fabs.v3f32(<3 x float> [[V:%.*]])
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp olt <3 x float> [[ABS]], <float -0.000000e+00, float -0.000000e+00, float undef>
+; CHECK-NEXT:    ret <3 x i1> [[CMP]]
 ;
   %abs = call <3 x float> @llvm.fabs.v3f32(<3 x float> %V)
   %cmp = fcmp olt <3 x float> %abs, <float -0.0, float -0.0, float undef>
@@ -417,7 +421,9 @@ define <3 x i1> @fabs_is_not_negative_negzero_undef(<3 x float> %V) {
 
 define <3 x i1> @fabs_is_not_negative_poszero_undef(<3 x float> %V) {
 ; CHECK-LABEL: @fabs_is_not_negative_poszero_undef(
-; CHECK-NEXT:    ret <3 x i1> zeroinitializer
+; CHECK-NEXT:    [[ABS:%.*]] = call <3 x float> @llvm.fabs.v3f32(<3 x float> [[V:%.*]])
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp olt <3 x float> [[ABS]], <float 0.000000e+00, float 0.000000e+00, float undef>
+; CHECK-NEXT:    ret <3 x i1> [[CMP]]
 ;
   %abs = call <3 x float> @llvm.fabs.v3f32(<3 x float> %V)
   %cmp = fcmp olt <3 x float> %abs, <float 0.0, float 0.0, float undef>
@@ -426,7 +432,9 @@ define <3 x i1> @fabs_is_not_negative_poszero_undef(<3 x float> %V) {
 
 define <3 x i1> @fabs_is_not_negative_anyzero_undef(<3 x float> %V) {
 ; CHECK-LABEL: @fabs_is_not_negative_anyzero_undef(
-; CHECK-NEXT:    ret <3 x i1> zeroinitializer
+; CHECK-NEXT:    [[ABS:%.*]] = call <3 x float> @llvm.fabs.v3f32(<3 x float> [[V:%.*]])
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp olt <3 x float> [[ABS]], <float 0.000000e+00, float -0.000000e+00, float undef>
+; CHECK-NEXT:    ret <3 x i1> [[CMP]]
 ;
   %abs = call <3 x float> @llvm.fabs.v3f32(<3 x float> %V)
   %cmp = fcmp olt <3 x float> %abs, <float 0.0, float -0.0, float undef>
