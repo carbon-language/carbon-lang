@@ -337,7 +337,7 @@ multiclass WebAssemblyBinRMW<WebAssemblyRegClass rc, string Name, int Opcode> {
               (ins P2Align:$p2align, offset32_op:$off, I32:$addr, rc:$val),
               (outs), (ins P2Align:$p2align, offset32_op:$off), [],
               !strconcat(Name, "\t$dst, ${off}(${addr})${p2align}, $val"),
-              !strconcat(Name, "\t${off}, ${p2align}"), Opcode>;
+              !strconcat(Name, "\t${off}${p2align}"), Opcode>;
 }
 
 defm ATOMIC_RMW_ADD_I32 : WebAssemblyBinRMW<I32, "i32.atomic.rmw.add", 0xfe1e>;
@@ -668,7 +668,7 @@ multiclass WebAssemblyTerRMW<WebAssemblyRegClass rc, string Name, int Opcode> {
                    rc:$new),
               (outs), (ins P2Align:$p2align, offset32_op:$off), [],
               !strconcat(Name, "\t$dst, ${off}(${addr})${p2align}, $exp, $new"),
-              !strconcat(Name, "\t${off}, ${p2align}"), Opcode>;
+              !strconcat(Name, "\t${off}${p2align}"), Opcode>;
 }
 
 defm ATOMIC_RMW_CMPXCHG_I32 :
@@ -901,20 +901,20 @@ defm ATOMIC_NOTIFY :
     (ins P2Align:$p2align, offset32_op:$off, I32:$addr, I32:$count),
     (outs), (ins P2Align:$p2align, offset32_op:$off), [],
     "atomic.notify \t$dst, ${off}(${addr})${p2align}, $count",
-    "atomic.notify \t${off}, ${p2align}", 0xfe00>;
+    "atomic.notify \t${off}${p2align}", 0xfe00>;
 let mayLoad = 1 in {
 defm ATOMIC_WAIT_I32 :
   I<(outs I32:$dst),
     (ins P2Align:$p2align, offset32_op:$off, I32:$addr, I32:$exp, I64:$timeout),
     (outs), (ins P2Align:$p2align, offset32_op:$off), [],
     "i32.atomic.wait \t$dst, ${off}(${addr})${p2align}, $exp, $timeout",
-    "i32.atomic.wait \t${off}, ${p2align}", 0xfe01>;
+    "i32.atomic.wait \t${off}${p2align}", 0xfe01>;
 defm ATOMIC_WAIT_I64 :
   I<(outs I32:$dst),
     (ins P2Align:$p2align, offset32_op:$off, I32:$addr, I64:$exp, I64:$timeout),
     (outs), (ins P2Align:$p2align, offset32_op:$off), [],
     "i64.atomic.wait \t$dst, ${off}(${addr})${p2align}, $exp, $timeout",
-    "i64.atomic.wait \t${off}, ${p2align}", 0xfe02>;
+    "i64.atomic.wait \t${off}${p2align}", 0xfe02>;
 } // mayLoad = 1
 } // hasSideEffects = 1
 
