@@ -22,13 +22,14 @@
 namespace Fortran::FIR {
 
 /// Sum type over all statement classes
-struct Statement : public SumTypeMixin<std::variant<
+class Statement : public SumTypeMixin<std::variant<
 #define HANDLE_STMT(num, opcode, name) name,
 #define HANDLE_LAST_STMT(num, opcode, name) name
 #include "statement.def"
-                       >>,
-                   public ChildMixin<Statement, BasicBlock>,
-                   public llvm::ilist_node<Statement> {
+                      >>,
+                  public ChildMixin<Statement, BasicBlock>,
+                  public llvm::ilist_node<Statement> {
+public:
   template<typename A>
   Statement(BasicBlock *p, A &&t) : SumTypeMixin{t}, ChildMixin{p} {
     parent->insertBefore(this);

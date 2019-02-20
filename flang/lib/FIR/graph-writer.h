@@ -26,7 +26,8 @@
 
 namespace Fortran::FIR {
 
-struct GraphWriter {
+class GraphWriter {
+public:
   static void setOutput(llvm::raw_ostream *output) { defaultOutput_ = output; }
   static void setOutput(const std::string &filename) {
     std::error_code ec;

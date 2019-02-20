@@ -68,7 +68,7 @@ struct FIRBuilder {
     return Insert(DeallocateStmt::Create(object));
   }
   template<typename A> Statement &CreateExpr(const A *a) {
-    return Insert(ExprStmt::Create(a));
+    return Insert(ApplyExprStmt::Create(a));
   }
   Statement &CreateIOCall(
       InputOutputCallType call, IOCallArguments &&arguments) {

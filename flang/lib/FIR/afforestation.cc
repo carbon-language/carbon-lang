@@ -240,6 +240,7 @@ std::tuple<const parser::Name *, LinearLabelRef, LinearLabelRef> FindStack(
   SEMANTICS_FAILED("construct name not on stack");
   return {};
 }
+
 template<typename T> parser::Label GetErr(const T &stmt) {
   if constexpr (std::is_same_v<T, parser::ReadStmt> ||
       std::is_same_v<T, parser::WriteStmt>) {
@@ -271,6 +272,7 @@ template<typename T> parser::Label GetErr(const T &stmt) {
   }
   return 0;
 }
+
 template<typename T> parser::Label GetEor(const T &stmt) {
   if constexpr (std::is_same_v<T, parser::ReadStmt> ||
       std::is_same_v<T, parser::WriteStmt>) {
@@ -289,6 +291,7 @@ template<typename T> parser::Label GetEor(const T &stmt) {
   }
   return 0;
 }
+
 template<typename T> parser::Label GetEnd(const T &stmt) {
   if constexpr (std::is_same_v<T, parser::ReadStmt> ||
       std::is_same_v<T, parser::WriteStmt>) {
@@ -307,6 +310,7 @@ template<typename T> parser::Label GetEnd(const T &stmt) {
   }
   return 0;
 }
+
 template<typename T>
 void errLabelSpec(const T &s, std::list<LinearOp> &ops,
     const parser::Statement<parser::ActionStmt> &ec, AnalysisData &ad) {
@@ -319,6 +323,7 @@ void errLabelSpec(const T &s, std::list<LinearOp> &ops,
     ops.emplace_back(LinearAction{ec});
   }
 }
+
 template<typename T>
 void threeLabelSpec(const T &s, std::list<LinearOp> &ops,
     const parser::Statement<parser::ActionStmt> &ec, AnalysisData &ad) {
@@ -339,6 +344,7 @@ void threeLabelSpec(const T &s, std::list<LinearOp> &ops,
     ops.emplace_back(LinearAction{ec});
   }
 }
+
 template<typename T>
 std::vector<LinearLabelRef> toLabelRef(AnalysisData &ad, const T &labels) {
   std::vector<LinearLabelRef> result;
@@ -523,12 +529,14 @@ Evaluation GetSwitchCaseSelector(const parser::CaseConstruct *caseConstruct) {
           .statement.t)
                         .thing.typedExpr.get()};
 }
+
 template<typename STMTTYPE, typename CT>
 const std::optional<parser::Name> &GetSwitchAssociateName(
     const CT *selectConstruct) {
   return std::get<1>(
       std::get<parser::Statement<STMTTYPE>>(selectConstruct->t).statement.t);
 }
+
 template<typename CONSTRUCT, typename GSF>
 void DumpSwitchWithSelector(
     const CONSTRUCT *construct, char const *const name, GSF getSelector) {
@@ -845,9 +853,10 @@ struct SwitchTypeArguments {
 };
 
 template<typename T>
-static bool IsDefault(const typename T::ValueType &valueType) {
+bool IsDefault(const typename T::ValueType &valueType) {
   return std::holds_alternative<typename T::Default>(valueType);
 }
+
 template<typename T>
 void cleanupSwitchPairs(LinearLabelRef &defLab,
     std::vector<typename T::ValueType> &values,
@@ -908,6 +917,7 @@ static std::vector<SwitchCaseStmt::ValueType> populateSwitchValues(
   }
   return result;
 }
+
 static std::vector<SwitchRankStmt::ValueType> populateSwitchValues(
     const std::list<parser::SelectRankConstruct::RankCase> &list) {
   std::vector<SwitchRankStmt::ValueType> result;
@@ -932,6 +942,7 @@ static std::vector<SwitchRankStmt::ValueType> populateSwitchValues(
   }
   return result;
 }
+
 static std::vector<SwitchTypeStmt::ValueType> populateSwitchValues(
     const std::list<parser::SelectTypeConstruct::TypeCase> &list) {
   std::vector<SwitchTypeStmt::ValueType> result;
@@ -1036,6 +1047,7 @@ const T *FindReadWriteSpecifier(
   }
   return nullptr;
 }
+
 const parser::IoUnit *FindReadWriteIoUnit(
     const std::optional<parser::IoUnit> &ioUnit,
     const std::list<parser::IoControlSpec> &specifiers) {
@@ -1142,7 +1154,9 @@ struct FortranIRLowering {
   ~FortranIRLowering() { CHECK(!builder_); }
 
   template<typename A> constexpr bool Pre(const A &) { return true; }
+
   template<typename A> constexpr void Post(const A &) {}
+
   void Post(const parser::MainProgram &mainp) {
     std::string mainName{"_MAIN"s};
     if (auto &ps{
@@ -1168,6 +1182,7 @@ struct FortranIRLowering {
   }
 
   Program *program() { return fir_; }
+
   template<typename T>
   void ProcessRoutine(const T &here, const std::string &name) {
     CHECK(!fir_->containsProcedure(name));
@@ -1853,6 +1868,7 @@ struct FortranIRLowering {
           falseBlock, _1));
     }
   }
+
   template<typename SWITCHTYPE, typename F>
   void AddOrQueueSwitch(const Evaluation &condition,
       LinearLabelRef defaultLabel,

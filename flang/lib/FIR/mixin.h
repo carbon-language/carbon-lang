@@ -23,9 +23,11 @@
 
 namespace Fortran::FIR {
 
+inline constexpr bool has_size(std::size_t size) { return size > 0; }
+
 template<typename T, typename E = void> struct SumTypeMixin {};
 template<typename T>  // T must be std::variant<...>
-struct SumTypeMixin<T, std::enable_if_t<std::variant_size_v<T>>> {
+struct SumTypeMixin<T, std::enable_if_t<has_size(std::variant_size_v<T>)>> {
   template<typename A> SumTypeMixin(A &&x) : u{std::move(x)} {}
   using SumTypeTrait = std::true_type;
   SumTypeMixin(SumTypeMixin &&) = default;
@@ -38,7 +40,9 @@ struct SumTypeMixin<T, std::enable_if_t<std::variant_size_v<T>>> {
 
 template<typename T, typename E = void> struct SumTypeCopyMixin {};
 template<typename T>  // T must be std::variant<...>
-struct SumTypeCopyMixin<T, std::enable_if_t<std::variant_size_v<T>>> {
+struct SumTypeCopyMixin<T, std::enable_if_t<has_size(std::variant_size_v<T>)>> {
+  template<typename A> SumTypeCopyMixin(A &&x) : u{std::move(x)} {}
+  template<typename A> SumTypeCopyMixin(const A &x) : u{x} {}
   using CopyableSumTypeTrait = std::true_type;
   SumTypeCopyMixin(SumTypeCopyMixin &&) = default;
   SumTypeCopyMixin &operator=(SumTypeCopyMixin &&) = default;
@@ -47,16 +51,16 @@ struct SumTypeCopyMixin<T, std::enable_if_t<std::variant_size_v<T>>> {
   SumTypeCopyMixin() = delete;
   T u;
 };
-#define SUM_TYPE_COPY_MIXIN(Derived) \
-  Derived(const Derived &derived) : SumTypeCopyMixin(derived) {} \
-  Derived &operator=(const Derived &derived) { \
-    SumTypeCopyMixin::operator=(derived); \
+#define SUM_TYPE_COPY_MIXIN(DT) \
+  DT(const DT &derived) : SumTypeCopyMixin(derived.u) {} \
+  DT &operator=(const DT &derived) { \
+    SumTypeCopyMixin::operator=(derived.u); \
     return *this; \
   }
 
 template<typename T, typename E = void> struct ProductTypeMixin {};
 template<typename T>  // T must be std::tuple<...>
-struct ProductTypeMixin<T, std::enable_if_t<std::tuple_size_v<T>>> {
+struct ProductTypeMixin<T, std::enable_if_t<has_size(std::tuple_size_v<T>)>> {
   template<typename A> ProductTypeMixin(A &&x) : t{std::move(x)} {}
   using ProductTypeTrait = std::true_type;
   ProductTypeMixin(ProductTypeMixin &&) = default;

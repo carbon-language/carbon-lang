@@ -191,7 +191,7 @@ std::string Statement::dump() const {
           },
           [](const LabelAssignStmt &) { return "lblassn"s; },
           [](const DisassociateStmt &) { return "NULLIFY"s; },
-          [](const ExprStmt &expressionStatement) {
+          [](const ApplyExprStmt &applyExpression) {
             return std::visit(
                 common::visitors{
                     [](const parser::AssociateStmt *) {
@@ -215,7 +215,7 @@ std::string Statement::dump() const {
                       return FIR::dump(genericExpressionWrapper);
                     },
                 },
-                expressionStatement.u);
+                applyExpression.u);
           },
           [](const ScopeEnterStmt &) { return "scopeenter"s; },
           [](const ScopeExitStmt &) { return "scopeexit"s; },

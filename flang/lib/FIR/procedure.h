@@ -25,7 +25,7 @@ namespace Fortran::FIR {
 
 class Program;
 class Region;
-struct GraphWriter;
+class GraphWriter;
 
 class Procedure final : public llvm::ilist_node<Procedure>,
                         public ChildMixin<Procedure, Program> {

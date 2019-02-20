@@ -39,8 +39,8 @@
 namespace Fortran::FIR {
 class Statement;
 class BasicBlock;
-struct Program;
-struct GraphWriter;
+class Program;
+class GraphWriter;
 
 struct Attribute {
   enum { IntentIn, IntentOut, IntentInOut } attribute;

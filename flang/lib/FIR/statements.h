@@ -25,17 +25,17 @@ namespace Fortran::FIR {
 #define HANDLE_STMT(num, opcode, name) struct name;
 #include "statement.def"
 
-struct Statement;
+class Statement;
 
 CLASS_TRAIT(StatementTrait)
 CLASS_TRAIT(TerminatorTrait)
 CLASS_TRAIT(ActionTrait)
 
-struct Evaluation
-  : public SumTypeCopyMixin<std::variant<Expression *, Variable *,
-        PathVariable *, const semantics::Symbol *>> {
+class Evaluation : public SumTypeCopyMixin<std::variant<Expression *,
+                       Variable *, PathVariable *, const semantics::Symbol *>> {
+public:
   SUM_TYPE_COPY_MIXIN(Evaluation)
-  Evaluation(PathVariable *pv) : SumTypeCopyMixin{pv} {
+  Evaluation(PathVariable *pv) : SumTypeCopyMixin(pv) {
     if (const auto *designator{
             std::get_if<common::Indirection<parser::Designator>>(&pv->u)}) {
       if (const auto *obj{std::get_if<parser::ObjectName>(&(*designator)->u)}) {
@@ -358,17 +358,18 @@ private:
 };
 
 /// expressions that must be evaluated in various statements
-struct ExprStmt
+struct ApplyExprStmt
   : public ActionStmt_impl,
     public SumTypeCopyMixin<std::variant<const parser::AssociateStmt *,
         const parser::ChangeTeamStmt *, const parser::NonLabelDoStmt *,
         const parser::ForallConstructStmt *, const Expression *>> {
-  template<typename T> static ExprStmt Create(const T *e) {
-    return ExprStmt{e};
+  template<typename T> static ApplyExprStmt Create(const T *e) {
+    return ApplyExprStmt{e};
   }
 
 private:
-  template<typename T> explicit ExprStmt(const T *e) : SumTypeCopyMixin{e} {}
+  template<typename T>
+  explicit ApplyExprStmt(const T *e) : SumTypeCopyMixin{e} {}
   // Evaluation evaluation_;
 };
 

@@ -26,18 +26,18 @@
 #define LAST_TERM_STMT(num)
 #endif
 
-#ifndef FIRST_BINARY_STMT
-#define FIRST_BINARY_STMT(num)
+#ifndef FIRST_COMPUTE_STMT
+#define FIRST_COMPUTE_STMT(num)
 #endif
-#ifndef HANDLE_BINARY_STMT
+#ifndef HANDLE_COMPUTE_STMT
 #ifndef HANDLE_STMT
-#define HANDLE_BINARY_STMT(num, opcode, instclass)
+#define HANDLE_COMPUTE_STMT(num, opcode, instclass)
 #else
-#define HANDLE_BINARY_STMT(num, opcode, Class) HANDLE_STMT(num, opcode, Class)
+#define HANDLE_COMPUTE_STMT(num, opcode, Class) HANDLE_STMT(num, opcode, Class)
 #endif
 #endif
-#ifndef LAST_BINARY_STMT
-#define LAST_BINARY_STMT(num)
+#ifndef LAST_COMPUTE_STMT
+#define LAST_COMPUTE_STMT(num)
 #endif
 
 #ifndef FIRST_MEMORY_STMT
@@ -116,12 +116,12 @@ LAST_TERM_STMT(8)
 
 // Standard actions - These instructions capture computations as
 // evaluate::expressions
-FIRST_BINARY_STMT(9)
-HANDLE_BINARY_STMT(9,  Assign,    AssignmentStmt)
-HANDLE_BINARY_STMT(10, PtrAssign, PointerAssignStmt)
-HANDLE_BINARY_STMT(11, LblAssign, LabelAssignStmt)
-HANDLE_BINARY_STMT(12, Expr,      ExprStmt)
-LAST_BINARY_STMT(12)
+FIRST_COMPUTE_STMT(9)
+HANDLE_COMPUTE_STMT(9,  Assign,    AssignmentStmt)
+HANDLE_COMPUTE_STMT(10, PtrAssign, PointerAssignStmt)
+HANDLE_COMPUTE_STMT(11, LblAssign, LabelAssignStmt)
+HANDLE_COMPUTE_STMT(12, ApplyExpr, ApplyExprStmt)
+LAST_COMPUTE_STMT(12)
 
 // Memory operators - These instructions capture ALLOCATE and DEALLOCATE
 // Fortran statements
@@ -148,9 +148,9 @@ LAST_OTHER_STMT(24)
 #undef HANDLE_TERM_STMT
 #undef LAST_TERM_STMT
 
-#undef FIRST_BINARY_STMT
-#undef HANDLE_BINARY_STMT
-#undef LAST_BINARY_STMT
+#undef FIRST_COMPUTE_STMT
+#undef HANDLE_COMPUTE_STMT
+#undef LAST_COMPUTE_STMT
 
 #undef FIRST_MEMORY_STMT
 #undef HANDLE_MEMORY_STMT

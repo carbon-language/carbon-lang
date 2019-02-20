@@ -18,7 +18,7 @@
 #include <string>
 
 namespace Fortran::parser {
-class Program;
+struct Program;
 }
 
 namespace Fortran::semantics {
@@ -34,4 +34,4 @@ Program *CreateFortranIR(const parser::Program &program,
     semantics::SemanticsContext &semanticsContext, bool debugLinearIR = false);
 }
 
-#endif
+#endif  // FORTRAN_FIR_AFFORESTATION_H_

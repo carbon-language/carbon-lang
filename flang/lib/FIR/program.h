@@ -26,7 +26,7 @@
 namespace Fortran::FIR {
 
 class Procedure;
-struct GraphWriter;
+class GraphWriter;
 
 class Program final {
 public:
