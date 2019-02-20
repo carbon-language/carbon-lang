@@ -8,21 +8,18 @@ declare <2 x i64> @llvm.mips.srli.d(<2 x i64>, i32)
 declare <4 x i32> @llvm.mips.slli.w(<4 x i32>, i32)
 declare <4 x i32> @llvm.mips.srli.w(<4 x i32>, i32)
 
-; fold (shl (srl x, c1), c2) -> (and (srl x, (sub c1, c2), MASK) if C1 < C2
+; do not fold (shl (srl x, c1), c2) -> (and (srl x, (sub c1, c2), MASK) if C1 < C2
 ; MASK_TYPE1 = C2-C1 0s | 1s | ends with C1 0s
-define void @combine_shifts_to_shift_plus_and_mask_type1_i64(<2 x i64>* %a, <2 x i64>* %b) {
-; MIPSEL64R6-LABEL: combine_shifts_to_shift_plus_and_mask_type1_i64:
+define void @avoid_to_combine_shifts_to_shift_plus_and_mask_type1_i64(<2 x i64>* %a, <2 x i64>* %b) {
+; MIPSEL64R6-LABEL: avoid_to_combine_shifts_to_shift_plus_and_mask_type1_i64:
 ; MIPSEL64R6:       # %bb.0: # %entry
 ; MIPSEL64R6-NEXT:    ld.d $w0, 0($4)
-; MIPSEL64R6-NEXT:    srli.d $w0, $w0, 1
-; MIPSEL64R6-NEXT:    lui $1, 32760
-; MIPSEL64R6-NEXT:    dsll32 $1, $1, 0
-; MIPSEL64R6-NEXT:    fill.d $w1, $1
-; MIPSEL64R6-NEXT:    and.v $w0, $w0, $w1
+; MIPSEL64R6-NEXT:    srli.d $w0, $w0, 52
+; MIPSEL64R6-NEXT:    slli.d $w0, $w0, 51
 ; MIPSEL64R6-NEXT:    jr $ra
 ; MIPSEL64R6-NEXT:    st.d $w0, 0($5)
 ;
-; MIPSEL32R5-LABEL: combine_shifts_to_shift_plus_and_mask_type1_i64:
+; MIPSEL32R5-LABEL: avoid_to_combine_shifts_to_shift_plus_and_mask_type1_i64:
 ; MIPSEL32R5:       # %bb.0: # %entry
 ; MIPSEL32R5-NEXT:    ld.d $w0, 0($4)
 ; MIPSEL32R5-NEXT:    srli.d $w0, $w0, 52
@@ -37,23 +34,17 @@ entry:
   ret void
 }
 
-; fold (shl (srl x, c1), c2) -> (and (srl x, (sub c1, c2), MASK) if C1 < C2
-define void @combine_shifts_to_shift_plus_and_mask_type1_i64_long(<2 x i64>* %a, <2 x i64>* %b) {
-; MIPSEL64R6-LABEL: combine_shifts_to_shift_plus_and_mask_type1_i64_long:
+; do not fold (shl (srl x, c1), c2) -> (and (srl x, (sub c1, c2), MASK) if C1 < C2
+define void @avoid_to_combine_shifts_to_shift_plus_and_mask_type1_i64_long(<2 x i64>* %a, <2 x i64>* %b) {
+; MIPSEL64R6-LABEL: avoid_to_combine_shifts_to_shift_plus_and_mask_type1_i64_long:
 ; MIPSEL64R6:       # %bb.0: # %entry
-; MIPSEL64R6-NEXT:    lui $1, 65535
-; MIPSEL64R6-NEXT:    ori $1, $1, 65520
-; MIPSEL64R6-NEXT:    lui $2, 16383
-; MIPSEL64R6-NEXT:    ori $2, $2, 65535
-; MIPSEL64R6-NEXT:    dinsu $1, $2, 32, 32
 ; MIPSEL64R6-NEXT:    ld.d $w0, 0($4)
-; MIPSEL64R6-NEXT:    srli.d $w0, $w0, 2
-; MIPSEL64R6-NEXT:    fill.d $w1, $1
-; MIPSEL64R6-NEXT:    and.v $w0, $w0, $w1
+; MIPSEL64R6-NEXT:    srli.d $w0, $w0, 6
+; MIPSEL64R6-NEXT:    slli.d $w0, $w0, 4
 ; MIPSEL64R6-NEXT:    jr $ra
 ; MIPSEL64R6-NEXT:    st.d $w0, 0($5)
 ;
-; MIPSEL32R5-LABEL: combine_shifts_to_shift_plus_and_mask_type1_i64_long:
+; MIPSEL32R5-LABEL: avoid_to_combine_shifts_to_shift_plus_and_mask_type1_i64_long:
 ; MIPSEL32R5:       # %bb.0: # %entry
 ; MIPSEL32R5-NEXT:    ld.d $w0, 0($4)
 ; MIPSEL32R5-NEXT:    srli.d $w0, $w0, 6
@@ -68,19 +59,18 @@ entry:
   ret void
 }
 
-; fold (shl (srl x, c1), c2) -> (and (shl x, (sub c1, c2), MASK) if C1 >= C2
+; do not fold (shl (srl x, c1), c2) -> (and (shl x, (sub c1, c2), MASK) if C1 >= C2
 ; MASK_TYPE2 = 1s | C1 zeros
-define void @combine_shifts_to_shift_plus_and_mask_type2_i32(<2 x i64>* %a, <2 x i64>* %b) {
-; MIPSEL64R6-LABEL: combine_shifts_to_shift_plus_and_mask_type2_i32:
+define void @avoid_to_combine_shifts_to_shift_plus_and_mask_type2_i32(<2 x i64>* %a, <2 x i64>* %b) {
+; MIPSEL64R6-LABEL: avoid_to_combine_shifts_to_shift_plus_and_mask_type2_i32:
 ; MIPSEL64R6:       # %bb.0: # %entry
 ; MIPSEL64R6-NEXT:    ld.d $w0, 0($4)
-; MIPSEL64R6-NEXT:    slli.d $w0, $w0, 2
-; MIPSEL64R6-NEXT:    ldi.d $w1, -64
-; MIPSEL64R6-NEXT:    and.v $w0, $w0, $w1
+; MIPSEL64R6-NEXT:    srli.d $w0, $w0, 4
+; MIPSEL64R6-NEXT:    slli.d $w0, $w0, 6
 ; MIPSEL64R6-NEXT:    jr $ra
 ; MIPSEL64R6-NEXT:    st.d $w0, 0($5)
 ;
-; MIPSEL32R5-LABEL: combine_shifts_to_shift_plus_and_mask_type2_i32:
+; MIPSEL32R5-LABEL: avoid_to_combine_shifts_to_shift_plus_and_mask_type2_i32:
 ; MIPSEL32R5:       # %bb.0: # %entry
 ; MIPSEL32R5-NEXT:    ld.d $w0, 0($4)
 ; MIPSEL32R5-NEXT:    srli.d $w0, $w0, 4
@@ -95,27 +85,21 @@ entry:
   ret void
 }
 
-; fold (shl (srl x, c1), c2) -> (and (srl x, (sub c1, c2), MASK) if C1 < C2
-define void @combine_shifts_to_shift_plus_and_mask_type1_i32_long(<4 x i32>* %a, <4 x i32>* %b) {
-; MIPSEL64R6-LABEL: combine_shifts_to_shift_plus_and_mask_type1_i32_long:
+; do not fold (shl (srl x, c1), c2) -> (and (srl x, (sub c1, c2), MASK) if C1 < C2
+define void @avoid_to_combine_shifts_to_shift_plus_and_mask_type1_i32_long(<4 x i32>* %a, <4 x i32>* %b) {
+; MIPSEL64R6-LABEL: avoid_to_combine_shifts_to_shift_plus_and_mask_type1_i32_long:
 ; MIPSEL64R6:       # %bb.0: # %entry
 ; MIPSEL64R6-NEXT:    ld.w $w0, 0($4)
-; MIPSEL64R6-NEXT:    srli.w $w0, $w0, 4
-; MIPSEL64R6-NEXT:    lui $1, 4095
-; MIPSEL64R6-NEXT:    ori $1, $1, 65528
-; MIPSEL64R6-NEXT:    fill.w $w1, $1
-; MIPSEL64R6-NEXT:    and.v $w0, $w0, $w1
+; MIPSEL64R6-NEXT:    srli.w $w0, $w0, 7
+; MIPSEL64R6-NEXT:    slli.w $w0, $w0, 3
 ; MIPSEL64R6-NEXT:    jr $ra
 ; MIPSEL64R6-NEXT:    st.w $w0, 0($5)
 ;
-; MIPSEL32R5-LABEL: combine_shifts_to_shift_plus_and_mask_type1_i32_long:
+; MIPSEL32R5-LABEL: avoid_to_combine_shifts_to_shift_plus_and_mask_type1_i32_long:
 ; MIPSEL32R5:       # %bb.0: # %entry
 ; MIPSEL32R5-NEXT:    ld.w $w0, 0($4)
-; MIPSEL32R5-NEXT:    srli.w $w0, $w0, 4
-; MIPSEL32R5-NEXT:    lui $1, 4095
-; MIPSEL32R5-NEXT:    ori $1, $1, 65528
-; MIPSEL32R5-NEXT:    fill.w $w1, $1
-; MIPSEL32R5-NEXT:    and.v $w0, $w0, $w1
+; MIPSEL32R5-NEXT:    srli.w $w0, $w0, 7
+; MIPSEL32R5-NEXT:    slli.w $w0, $w0, 3
 ; MIPSEL32R5-NEXT:    jr $ra
 ; MIPSEL32R5-NEXT:    st.w $w0, 0($5)
 entry:
@@ -126,20 +110,17 @@ entry:
   ret void
 }
 
-; fold (shl (sra x, c1), c1) -> (and x, (shl -1, c1))
-define void @combine_shifts_to_and_mask_type2_i64_long(<2 x i64>* %a, <2 x i64>* %b) {
-; MIPSEL64R6-LABEL: combine_shifts_to_and_mask_type2_i64_long:
+; do not fold (shl (sra x, c1), c1) -> (and x, (shl -1, c1))
+define void @avoid_to_combine_shifts_to_and_mask_type2_i64_long(<2 x i64>* %a, <2 x i64>* %b) {
+; MIPSEL64R6-LABEL: avoid_to_combine_shifts_to_and_mask_type2_i64_long:
 ; MIPSEL64R6:       # %bb.0: # %entry
-; MIPSEL64R6-NEXT:    lui $1, 65535
-; MIPSEL64R6-NEXT:    ori $1, $1, 65472
-; MIPSEL64R6-NEXT:    dsll32 $1, $1, 0
 ; MIPSEL64R6-NEXT:    ld.d $w0, 0($4)
-; MIPSEL64R6-NEXT:    fill.d $w1, $1
-; MIPSEL64R6-NEXT:    and.v $w0, $w0, $w1
+; MIPSEL64R6-NEXT:    srli.d $w0, $w0, 38
+; MIPSEL64R6-NEXT:    slli.d $w0, $w0, 38
 ; MIPSEL64R6-NEXT:    jr $ra
 ; MIPSEL64R6-NEXT:    st.d $w0, 0($5)
 ;
-; MIPSEL32R5-LABEL: combine_shifts_to_and_mask_type2_i64_long:
+; MIPSEL32R5-LABEL: avoid_to_combine_shifts_to_and_mask_type2_i64_long:
 ; MIPSEL32R5:       # %bb.0: # %entry
 ; MIPSEL32R5-NEXT:    ld.d $w0, 0($4)
 ; MIPSEL32R5-NEXT:    srli.d $w0, $w0, 38
@@ -154,17 +135,17 @@ entry:
   ret void
 }
 
-; fold (shl (sra x, c1), c1) -> (and x, (shl -1, c1))
-define void @combine_shifts_to_and_mask_type2_i64(<2 x i64>* %a, <2 x i64>* %b) {
-; MIPSEL64R6-LABEL: combine_shifts_to_and_mask_type2_i64:
+; do not fold (shl (sra x, c1), c1) -> (and x, (shl -1, c1))
+define void @avoid_to_combine_shifts_to_and_mask_type2_i64(<2 x i64>* %a, <2 x i64>* %b) {
+; MIPSEL64R6-LABEL: avoid_to_combine_shifts_to_and_mask_type2_i64:
 ; MIPSEL64R6:       # %bb.0: # %entry
 ; MIPSEL64R6-NEXT:    ld.d $w0, 0($4)
-; MIPSEL64R6-NEXT:    ldi.d $w1, -8
-; MIPSEL64R6-NEXT:    and.v $w0, $w0, $w1
+; MIPSEL64R6-NEXT:    srli.d $w0, $w0, 3
+; MIPSEL64R6-NEXT:    slli.d $w0, $w0, 3
 ; MIPSEL64R6-NEXT:    jr $ra
 ; MIPSEL64R6-NEXT:    st.d $w0, 0($5)
 ;
-; MIPSEL32R5-LABEL: combine_shifts_to_and_mask_type2_i64:
+; MIPSEL32R5-LABEL: avoid_to_combine_shifts_to_and_mask_type2_i64:
 ; MIPSEL32R5:       # %bb.0: # %entry
 ; MIPSEL32R5-NEXT:    ld.d $w0, 0($4)
 ; MIPSEL32R5-NEXT:    srli.d $w0, $w0, 3
@@ -179,21 +160,21 @@ entry:
   ret void
 }
 
-; fold (shl (sra x, c1), c1) -> (and x, (shl -1, c1))
-define void @combine_shifts_to_and_mask_type1_long_i32_a(<4 x i32>* %a, <4 x i32>* %b) {
-; MIPSEL64R6-LABEL: combine_shifts_to_and_mask_type1_long_i32_a:
+; do not fold (shl (sra x, c1), c1) -> (and x, (shl -1, c1))
+define void @avoid_to_combine_shifts_to_and_mask_type1_long_i32_a(<4 x i32>* %a, <4 x i32>* %b) {
+; MIPSEL64R6-LABEL: avoid_to_combine_shifts_to_and_mask_type1_long_i32_a:
 ; MIPSEL64R6:       # %bb.0: # %entry
 ; MIPSEL64R6-NEXT:    ld.w $w0, 0($4)
-; MIPSEL64R6-NEXT:    ldi.w $w1, -32
-; MIPSEL64R6-NEXT:    and.v $w0, $w0, $w1
+; MIPSEL64R6-NEXT:    srli.w $w0, $w0, 5
+; MIPSEL64R6-NEXT:    slli.w $w0, $w0, 5
 ; MIPSEL64R6-NEXT:    jr $ra
 ; MIPSEL64R6-NEXT:    st.w $w0, 0($5)
 ;
-; MIPSEL32R5-LABEL: combine_shifts_to_and_mask_type1_long_i32_a:
+; MIPSEL32R5-LABEL: avoid_to_combine_shifts_to_and_mask_type1_long_i32_a:
 ; MIPSEL32R5:       # %bb.0: # %entry
 ; MIPSEL32R5-NEXT:    ld.w $w0, 0($4)
-; MIPSEL32R5-NEXT:    ldi.w $w1, -32
-; MIPSEL32R5-NEXT:    and.v $w0, $w0, $w1
+; MIPSEL32R5-NEXT:    srli.w $w0, $w0, 5
+; MIPSEL32R5-NEXT:    slli.w $w0, $w0, 5
 ; MIPSEL32R5-NEXT:    jr $ra
 ; MIPSEL32R5-NEXT:    st.w $w0, 0($5)
 entry:
@@ -204,23 +185,21 @@ entry:
   ret void
 }
 
-; fold (shl (sra x, c1), c1) -> (and x, (shl -1, c1))
-define void @combine_shifts_to_and_mask_type1_long_i32_b(<4 x i32>* %a, <4 x i32>* %b) {
-; MIPSEL64R6-LABEL: combine_shifts_to_and_mask_type1_long_i32_b:
+; do not fold (shl (sra x, c1), c1) -> (and x, (shl -1, c1))
+define void @avoid_to_combine_shifts_to_and_mask_type1_long_i32_b(<4 x i32>* %a, <4 x i32>* %b) {
+; MIPSEL64R6-LABEL: avoid_to_combine_shifts_to_and_mask_type1_long_i32_b:
 ; MIPSEL64R6:       # %bb.0: # %entry
-; MIPSEL64R6-NEXT:    lui $1, 49152
-; MIPSEL64R6-NEXT:    fill.w $w0, $1
-; MIPSEL64R6-NEXT:    ld.w $w1, 0($4)
-; MIPSEL64R6-NEXT:    and.v $w0, $w1, $w0
+; MIPSEL64R6-NEXT:    ld.w $w0, 0($4)
+; MIPSEL64R6-NEXT:    srli.w $w0, $w0, 30
+; MIPSEL64R6-NEXT:    slli.w $w0, $w0, 30
 ; MIPSEL64R6-NEXT:    jr $ra
 ; MIPSEL64R6-NEXT:    st.w $w0, 0($5)
 ;
-; MIPSEL32R5-LABEL: combine_shifts_to_and_mask_type1_long_i32_b:
+; MIPSEL32R5-LABEL: avoid_to_combine_shifts_to_and_mask_type1_long_i32_b:
 ; MIPSEL32R5:       # %bb.0: # %entry
-; MIPSEL32R5-NEXT:    lui $1, 49152
-; MIPSEL32R5-NEXT:    fill.w $w0, $1
-; MIPSEL32R5-NEXT:    ld.w $w1, 0($4)
-; MIPSEL32R5-NEXT:    and.v $w0, $w1, $w0
+; MIPSEL32R5-NEXT:    ld.w $w0, 0($4)
+; MIPSEL32R5-NEXT:    srli.w $w0, $w0, 30
+; MIPSEL32R5-NEXT:    slli.w $w0, $w0, 30
 ; MIPSEL32R5-NEXT:    jr $ra
 ; MIPSEL32R5-NEXT:    st.w $w0, 0($5)
 entry:
