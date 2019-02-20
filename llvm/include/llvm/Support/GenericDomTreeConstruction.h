@@ -632,7 +632,9 @@ struct SemiNCAInfo {
         Bucket;
     SmallDenseSet<TreeNodePtr, 8> Visited;
     SmallVector<TreeNodePtr, 8> Affected;
-    SmallVector<TreeNodePtr, 8> VisitedNotAffectedQueue;
+#ifndef NDEBUG
+    SmallVector<TreeNodePtr, 8> VisitedUnaffected;
+#endif
   };
 
   static void InsertEdge(DomTreeT &DT, const BatchUpdatePtr BUI,
@@ -800,8 +802,10 @@ struct SemiNCAInfo {
             // vertices. Store it in UnaffectedOnCurrentLevel.
             LLVM_DEBUG(dbgs() << "\t\tMarking visited not affected "
                               << BlockNamePrinter(Succ) << "\n");
-            II.VisitedNotAffectedQueue.push_back(SuccTN);
             UnaffectedOnCurrentLevel.push_back(SuccTN);
+#ifndef NDEBUG
+            II.VisitedUnaffected.push_back(SuccTN);
+#endif
           } else {
             // The condition is satisfied (Succ is affected). Add Succ to the
             // bucket queue.
@@ -833,20 +837,13 @@ struct SemiNCAInfo {
       TN->setIDom(NCD);
     }
 
-    UpdateLevelsAfterInsertion(II);
+#ifndef NDEBUG
+    for (const TreeNodePtr TN : II.VisitedUnaffected)
+      assert(TN->getLevel() == TN->getIDom()->getLevel() + 1 &&
+             "TN should have been updated by an affected ancestor");
+#endif
+
     if (IsPostDom) UpdateRootsAfterUpdate(DT, BUI);
-  }
-
-  static void UpdateLevelsAfterInsertion(InsertionInfo &II) {
-    LLVM_DEBUG(
-        dbgs() << "Updating levels for visited but not affected nodes\n");
-
-    for (const TreeNodePtr TN : II.VisitedNotAffectedQueue) {
-      LLVM_DEBUG(dbgs() << "\tlevel(" << BlockNamePrinter(TN) << ") = ("
-                        << BlockNamePrinter(TN->getIDom()) << ") "
-                        << TN->getIDom()->getLevel() << " + 1\n");
-      TN->UpdateLevel();
-    }
   }
 
   // Handles insertion to previously unreachable nodes.
