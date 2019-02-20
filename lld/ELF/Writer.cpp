@@ -382,10 +382,8 @@ template <class ELFT> static void createSyntheticSections() {
   In.IgotPlt = make<IgotPltSection>();
   Add(In.IgotPlt);
 
-  if (Config->GdbIndex) {
-    In.GdbIndex = GdbIndexSection::create<ELFT>();
-    Add(In.GdbIndex);
-  }
+  if (Config->GdbIndex)
+    Add(GdbIndexSection::create<ELFT>());
 
   // We always need to add rel[a].plt to output if it has entries.
   // Even for static linking it can contain R_[*]_IRELATIVE relocations.
