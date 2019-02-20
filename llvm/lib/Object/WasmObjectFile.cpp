@@ -1527,7 +1527,7 @@ int WasmSectionOrderChecker::getSectionOrder(unsigned ID,
         .StartsWith("reloc.", WASM_SEC_ORDER_RELOC)
         .Case("name", WASM_SEC_ORDER_NAME)
         .Case("producers", WASM_SEC_ORDER_PRODUCERS)
-        .Default(-1);
+        .Default(WASM_SEC_ORDER_NONE);
   case wasm::WASM_SEC_TYPE:
     return WASM_SEC_ORDER_TYPE;
   case wasm::WASM_SEC_IMPORT:
@@ -1559,15 +1559,68 @@ int WasmSectionOrderChecker::getSectionOrder(unsigned ID,
   }
 }
 
+// Represents the edges in a directed graph where any node B reachable from node
+// A is not allowed to appear before A in the section ordering, but may appear
+// afterward.
+int WasmSectionOrderChecker::DisallowedPredecessors[WASM_NUM_SEC_ORDERS][WASM_NUM_SEC_ORDERS] = {
+  {}, // WASM_SEC_ORDER_NONE
+  {WASM_SEC_ORDER_TYPE, WASM_SEC_ORDER_IMPORT}, // WASM_SEC_ORDER_TYPE,
+  {WASM_SEC_ORDER_IMPORT, WASM_SEC_ORDER_FUNCTION}, // WASM_SEC_ORDER_IMPORT,
+  {WASM_SEC_ORDER_FUNCTION, WASM_SEC_ORDER_TABLE}, // WASM_SEC_ORDER_FUNCTION,
+  {WASM_SEC_ORDER_TABLE, WASM_SEC_ORDER_MEMORY}, // WASM_SEC_ORDER_TABLE,
+  {WASM_SEC_ORDER_MEMORY, WASM_SEC_ORDER_GLOBAL}, // WASM_SEC_ORDER_MEMORY,
+  {WASM_SEC_ORDER_GLOBAL, WASM_SEC_ORDER_EVENT}, // WASM_SEC_ORDER_GLOBAL,
+  {WASM_SEC_ORDER_EVENT, WASM_SEC_ORDER_EXPORT}, // WASM_SEC_ORDER_EVENT,
+  {WASM_SEC_ORDER_EXPORT, WASM_SEC_ORDER_START}, // WASM_SEC_ORDER_EXPORT,
+  {WASM_SEC_ORDER_START, WASM_SEC_ORDER_ELEM}, // WASM_SEC_ORDER_START,
+  {WASM_SEC_ORDER_ELEM, WASM_SEC_ORDER_DATACOUNT}, // WASM_SEC_ORDER_ELEM,
+  {WASM_SEC_ORDER_DATACOUNT, WASM_SEC_ORDER_CODE}, // WASM_SEC_ORDER_DATACOUNT,
+  {WASM_SEC_ORDER_CODE, WASM_SEC_ORDER_DATA}, // WASM_SEC_ORDER_CODE,
+  {WASM_SEC_ORDER_DATA, WASM_SEC_ORDER_LINKING}, // WASM_SEC_ORDER_DATA,
+
+  // Custom Sections
+  {WASM_SEC_ORDER_DYLINK, WASM_SEC_ORDER_TYPE}, // WASM_SEC_ORDER_DYLINK,
+  {WASM_SEC_ORDER_LINKING, WASM_SEC_ORDER_RELOC, WASM_SEC_ORDER_NAME}, // WASM_SEC_ORDER_LINKING,
+  {}, // WASM_SEC_ORDER_RELOC (can be repeated),
+  {WASM_SEC_ORDER_NAME, WASM_SEC_ORDER_PRODUCERS}, // WASM_SEC_ORDER_NAME,
+  {WASM_SEC_ORDER_PRODUCERS}, // WASM_SEC_ORDER_PRODUCERS,
+};
+
 bool WasmSectionOrderChecker::isValidSectionOrder(unsigned ID,
                                                   StringRef CustomSectionName) {
   int Order = getSectionOrder(ID, CustomSectionName);
-  if (Order == -1) // Skip unknown sections
+  if (Order == WASM_SEC_ORDER_NONE)
     return true;
-  // There can be multiple "reloc." sections. Otherwise there shouldn't be any
-  // duplicate section orders.
-  bool IsValid = (LastOrder == Order && Order == WASM_SEC_ORDER_RELOC) ||
-                 LastOrder < Order;
-  LastOrder = Order;
-  return IsValid;
+
+  // Disallowed predecessors we need to check for
+  SmallVector<int, WASM_NUM_SEC_ORDERS> WorkList;
+
+  // Keep track of completed checks to avoid repeating work
+  bool Checked[WASM_NUM_SEC_ORDERS] = {};
+
+  int Curr = Order;
+  while (true) {
+    // Add new disallowed predecessors to work list
+    for (size_t I = 0;; ++I) {
+      int Next = DisallowedPredecessors[Curr][I];
+      if (Next == WASM_SEC_ORDER_NONE)
+        break;
+      if (Checked[Next])
+        continue;
+      WorkList.push_back(Next);
+      Checked[Next] = true;
+    }
+
+    if (WorkList.empty())
+      break;
+
+    // Consider next disallowed predecessor
+    Curr = WorkList.pop_back_val();
+    if (Seen[Curr])
+      return false;
+  }
+
+  // Have not seen any disallowed predecessors
+  Seen[Order] = true;
+  return true;
 }
