@@ -3648,6 +3648,31 @@ static Value *SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   }
 
   // Handle fcmp with constant RHS.
+  if (match(RHS, m_AnyZeroFP())) {
+    switch (Pred) {
+    case FCmpInst::FCMP_OGE:
+      if (FMF.noNaNs() && CannotBeOrderedLessThanZero(LHS, Q.TLI))
+        return getTrue(RetTy);
+      break;
+    case FCmpInst::FCMP_UGE:
+      if (CannotBeOrderedLessThanZero(LHS, Q.TLI))
+        return getTrue(RetTy);
+      break;
+    case FCmpInst::FCMP_ULT:
+      if (FMF.noNaNs() && CannotBeOrderedLessThanZero(LHS, Q.TLI))
+        return getFalse(RetTy);
+      break;
+    case FCmpInst::FCMP_OLT:
+      if (CannotBeOrderedLessThanZero(LHS, Q.TLI))
+        return getFalse(RetTy);
+      break;
+    default:
+      break;
+    }
+  }
+
+  // TODO: Use match with a specific FP value, so these work with vectors with
+  // undef lanes.
   const APFloat *C;
   if (match(RHS, m_APFloat(C))) {
     // Check whether the constant is an infinity.
@@ -3674,28 +3699,6 @@ static Value *SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
         default:
           break;
         }
-      }
-    }
-    if (C->isZero()) {
-      switch (Pred) {
-      case FCmpInst::FCMP_OGE:
-        if (FMF.noNaNs() && CannotBeOrderedLessThanZero(LHS, Q.TLI))
-          return getTrue(RetTy);
-        break;
-      case FCmpInst::FCMP_UGE:
-        if (CannotBeOrderedLessThanZero(LHS, Q.TLI))
-          return getTrue(RetTy);
-        break;
-      case FCmpInst::FCMP_ULT:
-        if (FMF.noNaNs() && CannotBeOrderedLessThanZero(LHS, Q.TLI))
-          return getFalse(RetTy);
-        break;
-      case FCmpInst::FCMP_OLT:
-        if (CannotBeOrderedLessThanZero(LHS, Q.TLI))
-          return getFalse(RetTy);
-        break;
-      default:
-        break;
       }
     } else if (C->isNegative()) {
       assert(!C->isNaN() && "Unexpected NaN constant!");
