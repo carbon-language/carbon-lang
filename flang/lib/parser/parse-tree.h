@@ -1485,7 +1485,7 @@ WRAPPER_CLASS(ProtectedStmt, std::list<Name>);
 // R858 proc-pointer-name -> name
 struct SavedEntity {
   TUPLE_CLASS_BOILERPLATE(SavedEntity);
-  ENUM_CLASS(Kind, Object, ProcPointer, Common)
+  ENUM_CLASS(Kind, Entity, Common)
   std::tuple<Kind, Name> t;
 };
 

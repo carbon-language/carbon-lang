@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1297,8 +1297,7 @@ TYPE_PARSER(construct<SaveStmt>(
 
 // R857 saved-entity -> object-name | proc-pointer-name | / common-block-name /
 // R858 proc-pointer-name -> name
-// TODO: Distinguish Kind::ProcPointer and Kind::Object
-TYPE_PARSER(construct<SavedEntity>(pure(SavedEntity::Kind::Object), name) ||
+TYPE_PARSER(construct<SavedEntity>(pure(SavedEntity::Kind::Entity), name) ||
     construct<SavedEntity>("/" >> pure(SavedEntity::Kind::Common), name / "/"))
 
 // R859 target-stmt -> TARGET [::] target-decl-list
