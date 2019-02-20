@@ -2102,13 +2102,9 @@ SDValue SelectionDAG::GetDemandedBits(SDValue V, const APInt &Mask) {
     break;
   case ISD::AND: {
     // X & -1 -> X (ignoring bits which aren't demanded).
-    // Also handle the case where masked out bits in X are known to be zero.
-    if (ConstantSDNode *RHSC = isConstOrConstSplat(V.getOperand(1))) {
-      const APInt &AndVal = RHSC->getAPIntValue();
-      if (Mask.isSubsetOf(AndVal) ||
-          Mask.isSubsetOf(computeKnownBits(V.getOperand(0)).Zero | AndVal))
-        return V.getOperand(0);
-    }
+    ConstantSDNode *AndVal = isConstOrConstSplat(V.getOperand(1));
+    if (AndVal && Mask.isSubsetOf(AndVal->getAPIntValue()))
+      return V.getOperand(0);
     break;
   }
   case ISD::ANY_EXTEND: {
