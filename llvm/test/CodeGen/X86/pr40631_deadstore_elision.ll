@@ -11,6 +11,7 @@ define i32 @ipt_do_table(%struct.sk_buff* noalias nocapture readonly) {
 ; CHECK-NEXT:    .cfi_def_cfa_offset 48
 ; CHECK-NEXT:    movq (%rdi), %rax
 ; CHECK-NEXT:    xorps %xmm0, %xmm0
+; CHECK-NEXT:    movaps %xmm0, (%rsp)
 ; CHECK-NEXT:    movaps %xmm0, {{[0-9]+}}(%rsp)
 ; CHECK-NEXT:    movq $0, {{[0-9]+}}(%rsp)
 ; CHECK-NEXT:    movaps {{.*#+}} xmm0 = [12297829382473034410,12297829382473034410]
