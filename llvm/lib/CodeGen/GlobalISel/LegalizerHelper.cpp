@@ -2405,6 +2405,14 @@ LegalizerHelper::moreElementsVector(MachineInstr &MI, unsigned TypeIdx,
     moreElementsVectorSrc(MI, MoreTy, 1);
     Observer.changedInstr(MI);
     return Legalized;
+  case TargetOpcode::G_INSERT:
+    if (TypeIdx != 0)
+      return UnableToLegalize;
+    Observer.changingInstr(MI);
+    moreElementsVectorSrc(MI, MoreTy, 1);
+    moreElementsVectorDst(MI, MoreTy, 0);
+    Observer.changedInstr(MI);
+    return Legalized;
   case TargetOpcode::G_SELECT:
     if (TypeIdx != 0)
       return UnableToLegalize;
