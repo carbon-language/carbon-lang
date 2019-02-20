@@ -146,6 +146,7 @@ std::ostream &ExpressionBase<RESULT>::AsFortran(std::ostream &o) const {
           [&](const BOZLiteralConstant &x) {
             o << "z'" << x.Hexadecimal() << "'";
           },
+          [&](const NullPointer &) { o << "NULL()"; },
           [&](const CopyableIndirection<Substring> &s) { s->AsFortran(o); },
           [&](const ImpliedDoIndex &i) { o << i.name.ToString(); },
           [&](const auto &x) { x.AsFortran(o); },
@@ -201,11 +202,13 @@ std::optional<DynamicType> ExpressionBase<A>::GetType() const {
   } else {
     return std::visit(
         [](const auto &x) -> std::optional<DynamicType> {
-          if constexpr (!std::is_same_v<std::decay_t<decltype(x)>,
-                            BOZLiteralConstant>) {
+          using Ty = std::decay_t<decltype(x)>;
+          if constexpr (std::is_same_v<Ty, BOZLiteralConstant> ||
+              std::is_same_v<Ty, NullPointer>) {
+            return std::nullopt;  // typeless really means "no type"
+          } else {
             return x.GetType();
           }
-          return std::nullopt;  // typeless really means "no type"
         },
         derived().u);
   }

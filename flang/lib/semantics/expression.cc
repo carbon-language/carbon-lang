@@ -96,6 +96,7 @@ static std::optional<DataRef> ExtractDataRef(Expr<SomeType> &&expr) {
           [](BOZLiteralConstant &&) -> std::optional<DataRef> {
             return std::nullopt;
           },
+          [](NullPointer &&) -> std::optional<DataRef> { return std::nullopt; },
           [](auto &&catExpr) { return ExtractDataRef(std::move(catExpr)); },
       },
       std::move(expr.u));
@@ -1644,6 +1645,9 @@ static MaybeExpr AnalyzeExpr(
             [&](BOZLiteralConstant &&boz) {
               return operand;  // ignore parentheses around typeless constants
             },
+            [&](NullPointer &&boz) {
+              return operand;  // ignore parentheses around NULL()
+            },
             [&](Expr<SomeDerived> &&) {
               // TODO: parenthesized derived type variable
               return operand;
@@ -1669,6 +1673,9 @@ static MaybeExpr AnalyzeExpr(
     std::visit(
         common::visitors{
             [](const BOZLiteralConstant &) {},  // allow +Z'1', it's harmless
+            [&](const NullPointer &) {
+              context.Say("+NULL() is not allowed"_err_en_US);
+            },
             [&](const auto &catExpr) {
               TypeCategory cat{ResultType<decltype(catExpr)>::category};
               if (cat != TypeCategory::Integer && cat != TypeCategory::Real &&

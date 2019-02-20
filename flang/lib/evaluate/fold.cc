@@ -759,11 +759,14 @@ Expr<T> ExpressionBase<T>::Rewrite(FoldingContext &context, Expr<T> &&expr) {
           return FoldOperation(context, std::move(x));
         } else if constexpr (std::is_same_v<T, SomeDerived>) {
           return FoldOperation(context, std::move(x));
-        } else if constexpr (std::is_same_v<BOZLiteralConstant,
-                                 std::decay_t<decltype(x)>>) {
-          return std::move(expr);
         } else {
-          return Expr<T>{Fold(context, std::move(x))};
+          using Ty = std::decay_t<decltype(x)>;
+          if constexpr (std::is_same_v<Ty, BOZLiteralConstant> ||
+              std::is_same_v<Ty, NullPointer>) {
+            return std::move(expr);
+          } else {
+            return Expr<T>{Fold(context, std::move(x))};
+          }
         }
       },
       std::move(expr.u));
@@ -789,6 +792,7 @@ struct ConstExprContext {
 bool IsConstExpr(ConstExprContext &, const BOZLiteralConstant &) {
   return true;
 }
+bool IsConstExpr(ConstExprContext &, const NullPointer &) { return true; }
 template<typename A> bool IsConstExpr(ConstExprContext &, const Constant<A> &) {
   return true;
 }

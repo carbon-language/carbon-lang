@@ -98,12 +98,6 @@ public:
   static Derived Rewrite(FoldingContext &, Derived &&);
 };
 
-// BOZ literal "typeless" constants must be wide enough to hold a numeric
-// value of any supported kind of INTEGER or REAL.  They must also be
-// distinguishable from other integer constants, since they are permitted
-// to be used in only a few situations.
-using BOZLiteralConstant = typename LargestReal::Scalar::Word;
-
 // Operations always have specific Fortran result types (i.e., with known
 // intrinsic type category and kind parameter value).  The classes that
 // represent the operations all inherit from this Operation<> base class
@@ -725,6 +719,18 @@ public:
   common::MapTemplate<Expr, CategoryTypes<CAT>> u;
 };
 
+// BOZ literal "typeless" constants must be wide enough to hold a numeric
+// value of any supported kind of INTEGER or REAL.  They must also be
+// distinguishable from other integer constants, since they are permitted
+// to be used in only a few situations.
+using BOZLiteralConstant = typename LargestReal::Scalar::Word;
+
+// Null pointers without MOLD= arguments are typed by context.
+struct NullPointer {
+  constexpr bool operator==(const NullPointer &) const { return true; }
+  constexpr int Rank() const { return 0; }
+};
+
 // A completely generic expression, polymorphic across all of the intrinsic type
 // categories and each of their kinds.
 template<> class Expr<SomeType> : public ExpressionBase<SomeType> {
@@ -757,7 +763,7 @@ public:
   }
 
 private:
-  using Others = std::variant<BOZLiteralConstant>;
+  using Others = std::variant<BOZLiteralConstant, NullPointer>;
   using Categories = common::MapTemplate<Expr, SomeCategory>;
 
 public:

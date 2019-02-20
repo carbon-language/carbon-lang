@@ -20,6 +20,7 @@
 #include "../common/idioms.h"
 #include "../common/unwrap.h"
 #include "../parser/message.h"
+#include "../semantics/attr.h"
 #include "../semantics/symbol.h"
 #include <array>
 #include <optional>
@@ -124,6 +125,10 @@ inline Expr<SomeType> AsGenericExpr(BOZLiteralConstant &&x) {
   return Expr<SomeType>{std::move(x)};
 }
 
+inline Expr<SomeType> AsGenericExpr(NullPointer &&x) {
+  return Expr<SomeType>{std::move(x)};
+}
+
 Expr<SomeReal> GetComplexPart(
     const Expr<SomeComplex> &, bool isImaginary = false);
 
@@ -140,7 +145,8 @@ auto UnwrapExpr(B &x) -> common::Constify<A, B> * {
   using Ty = std::decay_t<B>;
   if constexpr (std::is_same_v<A, Ty>) {
     return &x;
-  } else if constexpr (std::is_same_v<Ty, BOZLiteralConstant>) {
+  } else if constexpr (std::is_same_v<Ty, BOZLiteralConstant> ||
+      std::is_same_v<Ty, NullPointer>) {
     return nullptr;
   } else if constexpr (std::is_same_v<Ty, Expr<ResultType<A>>>) {
     return common::Unwrap<A>(x.u);
@@ -521,5 +527,31 @@ struct TypeKindVisitor {
   int kind;
   VALUE value;
 };
+
+template<typename A> const semantics::Symbol *GetLastSymbol(const A &) {
+  return nullptr;
+}
+
+template<typename T>
+const semantics::Symbol *GetLastSymbol(const Designator<T> &x) {
+  return x.GetLastSymbol();
+}
+
+template<typename T> const semantics::Symbol *GetLastSymbol(const Expr<T> &x) {
+  return std::visit([](const auto &y) { return GetLastSymbol(y); }, x.u);
+}
+
+template<typename A> semantics::Attrs GetAttrs(const A &x) {
+  if (const semantics::Symbol * symbol{GetLastSymbol(x)}) {
+    return symbol->attrs();
+  } else {
+    return {};
+  }
+}
+
+template<typename A> bool IsPointerOrAllocatable(const A &x) {
+  return GetAttrs(x).HasAny(
+      semantics::Attrs{semantics::Attr::POINTER, semantics::Attr::ALLOCATABLE});
+}
 }
 #endif  // FORTRAN_EVALUATE_TOOLS_H_
