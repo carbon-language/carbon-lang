@@ -513,8 +513,8 @@ bool SymbolTable::addComdat(StringRef Name) {
 // then unified later in handleSymbolVariants.
 bool SymbolTable::getFunctionVariant(Symbol* Sym, const WasmSignature *Sig,
                                      const InputFile *File, Symbol **Out) {
-  StringRef NewName = getVariantName(Sym->getName(), *Sig);
-  LLVM_DEBUG(dbgs() << "getFunctionVariant: " << Sym->getName() << " -> " << NewName
+  LLVM_DEBUG(dbgs() << "getFunctionVariant: " << Sym->getName() << " -> "
+                    << getVariantName(Sym->getName(), *Sig)
                     << " " << toString(*Sig) << "\n");
   Symbol *Variant = nullptr;
 
