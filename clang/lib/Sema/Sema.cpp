@@ -1487,12 +1487,10 @@ void Sema::markKnownEmitted(
   }
 }
 
-Sema::DeviceDiagBuilder Sema::targetDiag(SourceLocation Loc, unsigned DiagID) {
+Sema::DeviceDiagBuilder Sema::targetDiag(SourceLocation Loc,
+                                         unsigned DiagID) {
   if (LangOpts.OpenMP && LangOpts.OpenMPIsDevice)
     return diagIfOpenMPDeviceCode(Loc, DiagID);
-  if (getLangOpts().CUDA)
-    return getLangOpts().CUDAIsDevice ? CUDADiagIfDeviceCode(Loc, DiagID)
-                                      : CUDADiagIfHostCode(Loc, DiagID);
   return DeviceDiagBuilder(DeviceDiagBuilder::K_Immediate, Loc, DiagID,
                            getCurFunctionDecl(), *this);
 }
