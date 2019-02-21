@@ -41,7 +41,9 @@ void Region::insertBefore(BasicBlock *block, BasicBlock *before) {
 std::vector<BasicBlock *> Region::getBlocks() {
   std::vector<BasicBlock *> result;
   for (auto &block : basicBlockList_) {
-    if (block.getParent() == this) result.push_back(&block);
+    if (block.getParent() == this) {
+      result.push_back(&block);
+    }
   }
   return result;
 }

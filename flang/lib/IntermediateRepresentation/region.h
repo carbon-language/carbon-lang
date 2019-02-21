@@ -21,11 +21,12 @@
 
 namespace Fortran::IntermediateRepresentation {
 
-struct Procedure;
-struct BasicBlock;
+class Procedure;
+class BasicBlock;
 
-struct Region final : public llvm::ilist_node<Region>,
-                      public ChildMixin<Region, Procedure> {
+class Region final : public llvm::ilist_node<Region>,
+                     public ChildMixin<Region, Procedure> {
+public:
   friend Procedure;
   friend BasicBlock;
   using BasicBlockListType = llvm::iplist<BasicBlock>;

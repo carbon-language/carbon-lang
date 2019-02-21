@@ -25,10 +25,11 @@
 
 namespace Fortran::IntermediateRepresentation {
 
-struct Procedure;
+class Procedure;
 struct GraphWriter;
 
-struct Program final {
+class Program final {
+public:
   friend GraphWriter;
   using ProcedureListType = llvm::iplist<Procedure>;
   using ProcedureMapType = llvm::StringMap<Procedure *>;

@@ -21,11 +21,12 @@
 
 namespace Fortran::IntermediateRepresentation {
 
-struct Region;
-struct Statement;
+class Region;
+class Statement;
 
-struct BasicBlock final : public llvm::ilist_node<BasicBlock>,
-                          public ChildMixin<BasicBlock, Region> {
+class BasicBlock final : public llvm::ilist_node<BasicBlock>,
+                         public ChildMixin<BasicBlock, Region> {
+public:
   using StatementListType = llvm::iplist<Statement>;
   using iterator = StatementListType::iterator;
   using const_iterator = StatementListType::const_iterator;
@@ -35,8 +36,12 @@ struct BasicBlock final : public llvm::ilist_node<BasicBlock>,
   BasicBlock(const BasicBlock &) = delete;
   BasicBlock &operator=(const BasicBlock &) = delete;
   ~BasicBlock();
+
+  // callback to allow general access to contained sublist(s)
   StatementListType &getSublist(Statement *) { return Statements(); }
+
   void insertBefore(Statement *stmt, Statement *before = nullptr);
+
   static BasicBlock *Create(
       Region *parentRegion, BasicBlock *insertBefore = nullptr) {
     return new BasicBlock(parentRegion, insertBefore);

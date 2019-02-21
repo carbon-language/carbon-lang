@@ -23,12 +23,13 @@
 
 namespace Fortran::IntermediateRepresentation {
 
-struct Program;
-struct Region;
+class Program;
+class Region;
 struct GraphWriter;
 
-struct Procedure final : public llvm::ilist_node<Procedure>,
-                         public ChildMixin<Procedure, Program> {
+class Procedure final : public llvm::ilist_node<Procedure>,
+                        public ChildMixin<Procedure, Program> {
+public:
   friend GraphWriter;
   friend Program;
   friend Region;
@@ -51,7 +52,7 @@ struct Procedure final : public llvm::ilist_node<Procedure>,
   iterator end() { return basicBlockList_.end(); }
   const_iterator end() const { return basicBlockList_.end(); }
   Region *getLastRegion() { return &regionList_.back(); }
-  BasicBlock *StartBlock() { return &basicBlockList_.front(); }
+  BasicBlock *GetEntryBlock() { return &basicBlockList_.front(); }
   static Procedure *Create(Program *prog, FunctionType *ty,
       LinkageTypes linkage, unsigned addrSpace = 0u,
       const llvm::Twine &name = "", Procedure *before = nullptr) {
