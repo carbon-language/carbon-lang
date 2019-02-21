@@ -591,6 +591,7 @@ Symbol &Symbol::Instantiate(
           },
           [&](const ProcBindingDetails &that) { symbol.details_ = that; },
           [&](const GenericBindingDetails &that) { symbol.details_ = that; },
+          [&](const ProcEntityDetails &that) { symbol.details_ = that; },
           [&](const TypeParamDetails &that) {
             // LEN type parameter, or error recovery on a KIND type parameter
             // with no corresponding actual argument or default

@@ -1473,14 +1473,32 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
       }
       unavailable.insert(symbol->name());
       if (MaybeExpr value{AnalyzeExpr(context, expr)}) {
-        // TODO pmk: C7104, C7105 check that pointer components are
-        // being initialized with data/procedure designators appropriately
-        if (MaybeExpr converted{ConvertToType(*symbol, std::move(*value))}) {
-          result.Add(*symbol, std::move(*converted));
+        bool isNULL{std::holds_alternative<NullPointer>(value->u)};
+        if (symbol->has<semantics::ProcEntityDetails>()) {
+          CHECK(symbol->attrs().test(semantics::Attr::POINTER));
+          if (!isNULL) {
+            // TODO C7104: check that procedure pointer components are
+            // being initialized with compatible procedure designators
+            context.Say(expr.source,
+                "TODO: non-null procedure pointer component value not implemented yet"_err_en_US);
+          }
         } else {
-          if (auto *msg{context.Say(expr.source,
-                  "Structure constructor value is incompatible with component"_err_en_US)}) {
-            msg->Attach(symbol->name(), "Component declaration"_en_US);
+          CHECK(symbol->has<semantics::ObjectEntityDetails>());
+          if (symbol->attrs().test(semantics::Attr::POINTER)) {
+            if (!isNULL) {
+              // TODO C7104: check that object pointer components are
+              // being initialized with compatible object designators
+              context.Say(expr.source,
+                  "TODO: non-null object pointer component value not implemented yet"_err_en_US);
+            }
+          } else if (MaybeExpr converted{
+                         ConvertToType(*symbol, std::move(*value))}) {
+            result.Add(*symbol, std::move(*converted));
+          } else {
+            if (auto *msg{context.Say(expr.source,
+                    "Structure constructor value is incompatible with component"_err_en_US)}) {
+              msg->Attach(symbol->name(), "Component declaration"_en_US);
+            }
           }
         }
       }
@@ -1628,6 +1646,13 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
       return TypedWrapper<FunctionRef, ProcedureRef>(*dyType,
           ProcedureRef{std::move(proc->procedureDesignator),
               std::move(proc->arguments)});
+    } else {
+      if (const auto *intrinsic{
+              std::get_if<SpecificIntrinsic>(&proc->procedureDesignator.u)}) {
+        if (intrinsic->name == "null"s && proc->arguments.empty()) {
+          return {Expr<SomeType>{NullPointer{}}};
+        }
+      }
     }
   }
   return std::nullopt;

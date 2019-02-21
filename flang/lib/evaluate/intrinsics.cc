@@ -1256,7 +1256,6 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
     if (arguments.size() == 0) {
       return std::make_optional<SpecificCall>(
           SpecificIntrinsic{"null"s}, std::move(arguments));
-      // TODO pmk work in progress - fold into NullPointer (where?)
     } else if (arguments.size() > 1) {
       genericErrors.Say("too many arguments to NULL()"_err_en_US);
     } else if (arguments[0].has_value() && arguments[0]->keyword.has_value() &&

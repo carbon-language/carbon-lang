@@ -75,7 +75,7 @@ struct SpecificIntrinsic {
 
   IntrinsicProcedure name;
   bool isRestrictedSpecific{false};  // if true, can only call it
-  std::optional<DynamicType> type;  // absent if and only if subroutine call
+  std::optional<DynamicType> type;  // absent if subroutine call or NULL()
   int rank{0};
   semantics::Attrs attrs;  // ELEMENTAL, POINTER
 };
