@@ -115,11 +115,9 @@ private:
         PaddingInReg(false), InAllocaSRet(false), IndirectByVal(false),
         IndirectRealign(false), SRetAfterThis(false), InReg(false),
         CanBeFlattened(false), SignExt(false), SuppressSRet(false) {}
-}
 
 public : ABIArgInfo()
-    : ABIArgInfo(Direct) {
-}
+    : ABIArgInfo(Direct) {}
 
   static ABIArgInfo getDirect(llvm::Type *T = nullptr, unsigned Offset = 0,
                               llvm::Type *Padding = nullptr,
