@@ -31,7 +31,7 @@ class Program;
 void SetDebugChannel(const std::string &filename);
 
 Program *CreateFortranIR(const parser::Program &program,
-    semantics::SemanticsContext &semanticsContext, bool debugLinearIR);
+    semantics::SemanticsContext &semanticsContext, bool debugLinearIR = false);
 }
 
 #endif
