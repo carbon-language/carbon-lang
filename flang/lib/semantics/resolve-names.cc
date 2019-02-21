@@ -962,11 +962,8 @@ public:
   void Post(const parser::Designator &);
   template<typename T> void Post(const parser::LoopBounds<T> &);
   void Post(const parser::ProcComponentRef &);
-  void Post(const parser::ProcedureDesignator &);
   bool Pre(const parser::FunctionReference &);
-  void Post(const parser::FunctionReference &);
   bool Pre(const parser::CallStmt &);
-  void Post(const parser::CallStmt &);
   bool Pre(const parser::ImportStmt &);
   void Post(const parser::TypeGuardStmt &);
   bool Pre(const parser::StmtFunctionStmt &);
@@ -989,7 +986,9 @@ private:
 
   void CheckImports();
   void CheckImport(const SourceName &, const SourceName &);
-  bool SetProcFlag(const parser::Name &, Symbol &);
+  void HandleCall(Symbol::Flag, const parser::Call &);
+  void HandleProcedureName(Symbol::Flag, const parser::Name &);
+  bool SetProcFlag(const parser::Name &, Symbol &, Symbol::Flag);
 };
 
 // ImplicitRules implementation
@@ -1696,11 +1695,12 @@ bool ScopeHandler::ConvertToProcEntity(Symbol &symbol) {
     symbol.set_details(ProcEntityDetails{});
   } else if (auto *details{symbol.detailsIf<EntityDetails>()}) {
     symbol.set_details(ProcEntityDetails{std::move(*details)});
+    if (symbol.GetType() && !symbol.test(Symbol::Flag::Implicit)) {
+      CHECK(!symbol.test(Symbol::Flag::Subroutine));
+      symbol.set(Symbol::Flag::Function);
+    }
   } else {
     return false;
-  }
-  if (symbol.GetType()) {
-    symbol.set(Symbol::Flag::Function);
   }
   return true;
 }
@@ -4130,19 +4130,13 @@ bool ResolveNamesVisitor::Pre(const parser::PrefixSpec &x) {
   return true;  // TODO
 }
 
-bool ResolveNamesVisitor::Pre(const parser::FunctionReference &) {
-  expectedProcFlag_ = Symbol::Flag::Function;
-  return true;
+bool ResolveNamesVisitor::Pre(const parser::FunctionReference &x) {
+  HandleCall(Symbol::Flag::Function, x.v);
+  return false;
 }
-void ResolveNamesVisitor::Post(const parser::FunctionReference &) {
-  expectedProcFlag_ = std::nullopt;
-}
-bool ResolveNamesVisitor::Pre(const parser::CallStmt &) {
-  expectedProcFlag_ = Symbol::Flag::Subroutine;
-  return true;
-}
-void ResolveNamesVisitor::Post(const parser::CallStmt &) {
-  expectedProcFlag_ = std::nullopt;
+bool ResolveNamesVisitor::Pre(const parser::CallStmt &x) {
+  HandleCall(Symbol::Flag::Subroutine, x.v);
+  return false;
 }
 
 bool ResolveNamesVisitor::Pre(const parser::ImportStmt &x) {
@@ -4307,77 +4301,83 @@ const parser::Name *ResolveNamesVisitor::FindComponent(
   return nullptr;
 }
 
-void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
-  if (const auto *name{std::get_if<parser::Name>(&x.u)}) {
-    auto *symbol{FindSymbol(*name)};
-    if (symbol == nullptr) {
-      symbol = &MakeSymbol(context().globalScope(), name->source, Attrs{});
-      Resolve(*name, *symbol);
-      if (symbol->has<ModuleDetails>()) {
-        SayWithDecl(*name, *symbol,
-            "Use of '%s' as a procedure conflicts with its declaration"_err_en_US);
-        return;
-      }
-      if (isImplicitNoneExternal() && !symbol->attrs().test(Attr::EXTERNAL)) {
-        Say(*name,
-            "'%s' is an external procedure without the EXTERNAL"
-            " attribute in a scope with IMPLICIT NONE(EXTERNAL)"_err_en_US);
-        return;
-      }
-      symbol->attrs().set(Attr::EXTERNAL);
-      if (!symbol->has<ProcEntityDetails>()) {
-        // symbol->set_details(ProcEntityDetails{});
-        ConvertToProcEntity(*symbol);
-      }
-      if (const auto type{GetImplicitType(*symbol)}) {
-        symbol->get<ProcEntityDetails>().interface().set_type(*type);
-      }
-      SetProcFlag(*name, *symbol);
-    } else if (symbol->has<UnknownDetails>()) {
-      CHECK(!"unexpected UnknownDetails");
-    } else if (CheckUseError(*name)) {
-      // error was reported
-    } else {
-      symbol = Resolve(*name, &symbol->GetUltimate());
+void ResolveNamesVisitor::HandleCall(
+    Symbol::Flag procFlag, const parser::Call &call) {
+  std::visit(
+      common::visitors{
+          [&](const parser::Name &x) { HandleProcedureName(procFlag, x); },
+          [&](const parser::ProcComponentRef &x) { Walk(x); },
+      },
+      std::get<parser::ProcedureDesignator>(call.t).u);
+  Walk(std::get<std::list<parser::ActualArgSpec>>(call.t));
+}
+
+void ResolveNamesVisitor::HandleProcedureName(
+    Symbol::Flag flag, const parser::Name &name) {
+  CHECK(flag == Symbol::Flag::Function || flag == Symbol::Flag::Subroutine);
+  auto *symbol{FindSymbol(name)};
+  if (symbol == nullptr) {
+    symbol = &MakeSymbol(context().globalScope(), name.source, Attrs{});
+    Resolve(name, *symbol);
+    if (symbol->has<ModuleDetails>()) {
+      SayWithDecl(name, *symbol,
+          "Use of '%s' as a procedure conflicts with its declaration"_err_en_US);
+      return;
+    }
+    if (isImplicitNoneExternal() && !symbol->attrs().test(Attr::EXTERNAL)) {
+      Say(name,
+          "'%s' is an external procedure without the EXTERNAL"
+          " attribute in a scope with IMPLICIT NONE(EXTERNAL)"_err_en_US);
+      return;
+    }
+    symbol->attrs().set(Attr::EXTERNAL);
+    if (!symbol->has<ProcEntityDetails>()) {
       ConvertToProcEntity(*symbol);
-      if (!SetProcFlag(*name, *symbol)) {
-        return;  // reported error
-      }
-      if (symbol->has<ProcEntityDetails>() ||
-          symbol->has<SubprogramDetails>() ||
-          symbol->has<DerivedTypeDetails>() ||
-          symbol->has<ObjectEntityDetails>() ||
-          symbol->has<SubprogramNameDetails>() ||
-          symbol->has<GenericDetails>()) {
-        // these are all valid as procedure-designators
-      } else if (symbol->test(Symbol::Flag::Implicit)) {
-        Say(*name,
-            "Use of '%s' as a procedure conflicts with its implicit definition"_err_en_US);
-      } else {
-        SayWithDecl(*name, *symbol,
-            "Use of '%s' as a procedure conflicts with its declaration"_err_en_US);
-      }
+    }
+    if (const auto type{GetImplicitType(*symbol)}) {
+      symbol->get<ProcEntityDetails>().interface().set_type(*type);
+    }
+    SetProcFlag(name, *symbol, flag);
+  } else if (symbol->has<UnknownDetails>()) {
+    CHECK(!"unexpected UnknownDetails");
+  } else if (CheckUseError(name)) {
+    // error was reported
+  } else {
+    symbol = Resolve(name, &symbol->GetUltimate());
+    ConvertToProcEntity(*symbol);
+    if (!SetProcFlag(name, *symbol, flag)) {
+      return;  // reported error
+    }
+    if (symbol->has<SubprogramNameDetails>() || symbol->has<GenericDetails>() ||
+        symbol->has<DerivedTypeDetails>() || symbol->has<SubprogramDetails>() ||
+        symbol->has<ProcEntityDetails>() ||
+        symbol->has<ObjectEntityDetails>()) {
+      // these are all valid as procedure-designators
+    } else if (symbol->test(Symbol::Flag::Implicit)) {
+      Say(name,
+          "Use of '%s' as a procedure conflicts with its implicit definition"_err_en_US);
+    } else {
+      SayWithDecl(name, *symbol,
+          "Use of '%s' as a procedure conflicts with its declaration"_err_en_US);
     }
   }
 }
 
 // Check and set the Function or Subroutine flag on symbol; false on error.
 bool ResolveNamesVisitor::SetProcFlag(
-    const parser::Name &name, Symbol &symbol) {
-  CHECK(expectedProcFlag_);
-  if (symbol.test(Symbol::Flag::Function) &&
-      expectedProcFlag_ == Symbol::Flag::Subroutine) {
+    const parser::Name &name, Symbol &symbol, Symbol::Flag flag) {
+  if (symbol.test(Symbol::Flag::Function) && flag == Symbol::Flag::Subroutine) {
     SayWithDecl(
         name, symbol, "Cannot call function '%s' like a subroutine"_err_en_US);
     return false;
   } else if (symbol.test(Symbol::Flag::Subroutine) &&
-      expectedProcFlag_ == Symbol::Flag::Function) {
+      flag == Symbol::Flag::Function) {
     SayWithDecl(
         name, symbol, "Cannot call subroutine '%s' like a function"_err_en_US);
     return false;
   } else if (symbol.has<ProcEntityDetails>()) {
-    symbol.set(*expectedProcFlag_);  // in case it hasn't been set yet
-    if (expectedProcFlag_ == Symbol::Flag::Function) {
+    symbol.set(flag);  // in case it hasn't been set yet
+    if (flag == Symbol::Flag::Function) {
       ApplyImplicitRules(symbol);
     }
   }
