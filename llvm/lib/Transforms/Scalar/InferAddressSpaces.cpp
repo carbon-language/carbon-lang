@@ -221,6 +221,7 @@ static bool isAddressExpression(const Value &V) {
   switch (Op.getOpcode()) {
   case Instruction::PHI:
     assert(Op.getType()->isPointerTy());
+    return true;
   case Instruction::BitCast:
   case Instruction::AddrSpaceCast:
   case Instruction::GetElementPtr:
