@@ -28,7 +28,9 @@ UNKNOWN: Unknown command line argument '--unknown-switch'
 # Test version switch.
 RUN: llvm-readobj --version | FileCheck %s --check-prefix=VERSION
 RUN: llvm-readelf --version | FileCheck %s --check-prefix=VERSION
-VERSION: LLVM version
+# In default configuration we could match "LLVM version", but the "LLVM" part
+# can be changed with PACKAGE_NAME in CMake, so we match only version.
+VERSION: version
 
 # Test help switch.
 RUN: llvm-readobj --help | FileCheck %s --check-prefixes=HELP,USAGE-OBJ
