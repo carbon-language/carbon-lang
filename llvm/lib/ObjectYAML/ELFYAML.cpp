@@ -832,9 +832,6 @@ StringRef MappingTraits<ELFYAML::Symbol>::validate(IO &IO,
   if (Symbol.Index && *Symbol.Index == ELFYAML::ELF_SHN(ELF::SHN_XINDEX)) {
     return "Large indexes are not supported";
   }
-  if (Symbol.Index && *Symbol.Index < ELFYAML::ELF_SHN(ELF::SHN_LORESERVE)) {
-    return "Use a section name to define which section a symbol is defined in";
-  }
   return StringRef();
 }
 
