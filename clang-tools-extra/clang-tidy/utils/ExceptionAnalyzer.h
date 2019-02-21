@@ -109,7 +109,7 @@ public:
 
     /// Keep track if the entity related to this 'ExceptionInfo' can in princple
     /// throw, if it's unknown or if it won't throw.
-    enum State Behaviour : 2;
+    State Behaviour : 2;
 
     /// Keep track if the entity contains any unknown elements to keep track
     /// of the certainty of decisions and/or correct 'Behaviour' transition
