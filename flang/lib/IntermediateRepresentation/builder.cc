@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "builder.h"
-#include <iostream>
+#include <ostream>
 
 namespace Fortran::IntermediateRepresentation {
 
