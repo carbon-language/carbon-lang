@@ -61,6 +61,7 @@ struct Variable {
   common::OverMembers<GVT, evaluate::AllIntrinsicTypes>::type u;
 };
 #endif
+
 using Variable = const semantics::Symbol *;
 using PathVariable = const parser::Variable;
 using Scope = const semantics::Scope;
@@ -104,4 +105,4 @@ enum RuntimeCallType {
 using RuntimeCallArguments = CallArguments;
 }
 
-#endif
+#endif  // FORTRAN_INTERMEDIATEREPRESENTATION_COMMON_H_

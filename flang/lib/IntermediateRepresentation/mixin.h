@@ -24,7 +24,7 @@
 namespace Fortran::IntermediateRepresentation {
 
 template<typename T, typename E = void> struct SumTypeMixin {};
-template<typename T>  // T must be std::optional<...>
+template<typename T>  // T must be std::variant<...>
 struct SumTypeMixin<T, std::enable_if_t<std::variant_size_v<T>>> {
   template<typename A> SumTypeMixin(A &&x) : u{std::move(x)} {}
   using SumTypeTrait = std::true_type;
@@ -37,7 +37,7 @@ struct SumTypeMixin<T, std::enable_if_t<std::variant_size_v<T>>> {
 };
 
 template<typename T, typename E = void> struct SumTypeCopyMixin {};
-template<typename T>  // T must be std::optional<...>
+template<typename T>  // T must be std::variant<...>
 struct SumTypeCopyMixin<T, std::enable_if_t<std::variant_size_v<T>>> {
   using CopyableSumTypeTrait = std::true_type;
   SumTypeCopyMixin(SumTypeCopyMixin &&) = default;
@@ -111,4 +111,4 @@ template<typename A, typename B> B &Unzip(B &out, A first, A last) {
 
 }
 
-#endif
+#endif  // FORTRAN_INTERMEDIATEREPRESENTATION_COMMON_H_
