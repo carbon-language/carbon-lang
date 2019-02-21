@@ -115,7 +115,7 @@ HANDLE_TERM_STMT(8, Unreachable, UnreachableStmt)
 LAST_TERM_STMT(8)
 
 // Standard actions - These instructions capture computations as
-// evalute::expressions
+// evaluate::expressions
 FIRST_BINARY_STMT(9)
 HANDLE_BINARY_STMT(9,  Assign,    AssignmentStmt)
 HANDLE_BINARY_STMT(10, PtrAssign, PointerAssignStmt)
