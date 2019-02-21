@@ -227,10 +227,6 @@ INTERCEPTOR(int, pthread_create, void *th, void *attr,
 }
 #endif
 
-#if HWASAN_WITH_INTERCEPTORS
-DEFINE_REAL(void, vfork);
-#endif
-
 static void BeforeFork() {
   StackDepotLockAll();
 }
@@ -270,7 +266,6 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(fork);
 
 #if HWASAN_WITH_INTERCEPTORS
-  __interception::GetRealFunctionAddress("vfork", (uptr *)&REAL(vfork), 0, 0);
 #if !defined(__aarch64__)
   INTERCEPT_FUNCTION(pthread_create);
 #endif

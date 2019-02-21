@@ -579,8 +579,6 @@ INTERCEPTOR(int, __cxa_atexit, void (*func)(void *), void *arg,
 }
 #endif  // ASAN_INTERCEPT___CXA_ATEXIT
 
-DEFINE_REAL(void, vfork);
-
 // ---------------------- InitializeAsanInterceptors ---------------- {{{1
 namespace __asan {
 void InitializeAsanInterceptors() {
@@ -657,8 +655,6 @@ void InitializeAsanInterceptors() {
 #if ASAN_INTERCEPT___CXA_ATEXIT
   ASAN_INTERCEPT_FUNC(__cxa_atexit);
 #endif
-
-  __interception::GetRealFunctionAddress("vfork", (uptr *)&REAL(vfork), 0, 0);
 
   InitializePlatformInterceptors();
 
