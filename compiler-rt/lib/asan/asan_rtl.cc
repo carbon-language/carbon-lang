@@ -597,6 +597,21 @@ void NOINLINE __asan_handle_no_return() {
     curr_thread->fake_stack()->HandleNoReturn();
 }
 
+void *__asan_extra_spill_area() {
+  AsanThread *t = GetCurrentThread();
+  CHECK(t);
+  return t->extra_spill_area();
+}
+
+void __asan_handle_vfork(void *sp) {
+  AsanThread *t = GetCurrentThread();
+  CHECK(t);
+  uptr PageSize = GetPageSizeCached();
+  uptr top = t->stack_top();
+  uptr bottom = ((uptr)sp - PageSize) & ~(PageSize - 1);
+  PoisonShadow(bottom, top - bottom, 0);
+}
+
 void NOINLINE __asan_set_death_callback(void (*callback)(void)) {
   SetUserDieCallback(callback);
 }
