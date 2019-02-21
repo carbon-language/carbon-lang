@@ -11,13 +11,13 @@
 #include <sanitizer/asan_interface.h>
 
 __attribute__((noinline, no_sanitize("address"))) void child() {
-  char x[10000];
+  alignas(8) char x[100000];
   __asan_poison_memory_region(x, sizeof(x));
   _exit(0);
 }
 
 __attribute__((noinline, no_sanitize("address"))) void parent() {
-  char x[10000];
+  alignas(8) char x[100000];
   assert(__asan_address_is_poisoned(x + 5000) == 0);
 }
 
