@@ -17636,28 +17636,41 @@ static bool useVectorCast(unsigned Opcode, MVT FromVT, MVT ToVT,
 /// round-trip between XMM and GPR.
 static SDValue vectorizeExtractedCast(SDValue Cast, SelectionDAG &DAG,
                                       const X86Subtarget &Subtarget) {
-  // TODO: The limitation for extracting from the 0-element is not required,
-  // but if we extract from some other element, it will require shuffling to
-  // get the result into the right place.
   // TODO: This could be enhanced to handle smaller integer types by peeking
   // through an extend.
   SDValue Extract = Cast.getOperand(0);
   MVT DestVT = Cast.getSimpleValueType();
   if (Extract.getOpcode() != ISD::EXTRACT_VECTOR_ELT ||
-      !isNullConstant(Extract.getOperand(1)))
+      !isa<ConstantSDNode>(Extract.getOperand(1)))
     return SDValue();
 
+  // See if we have a 128-bit vector cast op for this type of cast.
   SDValue VecOp = Extract.getOperand(0);
   MVT FromVT = VecOp.getSimpleValueType();
-  MVT ToVT = MVT::getVectorVT(DestVT, FromVT.getVectorNumElements());
-  if (!useVectorCast(Cast.getOpcode(), FromVT, ToVT, Subtarget))
+  unsigned NumEltsInXMM = 128 / FromVT.getScalarSizeInBits();
+  MVT Vec128VT = MVT::getVectorVT(FromVT.getScalarType(), NumEltsInXMM);
+  MVT ToVT = MVT::getVectorVT(DestVT, NumEltsInXMM);
+  if (!useVectorCast(Cast.getOpcode(), Vec128VT, ToVT, Subtarget))
     return SDValue();
 
-  // cast (extract V, Y) --> extract (cast V), Y
+  // If we are extracting from a non-zero element, first shuffle the source
+  // vector to allow extracting from element zero.
   SDLoc DL(Cast);
+  if (!isNullConstant(Extract.getOperand(1))) {
+    SmallVector<int, 16> Mask(FromVT.getVectorNumElements(), -1);
+    Mask[0] = Extract.getConstantOperandVal(1);
+    VecOp = DAG.getVectorShuffle(FromVT, DL, VecOp, DAG.getUNDEF(FromVT), Mask);
+  }
+  // If the source vector is wider than 128-bits, extract the low part. Do not
+  // create an unnecessarily wide vector cast op.
+  if (FromVT != Vec128VT)
+    VecOp = extract128BitVector(VecOp, 0, DAG, DL);
+
+  // cast (extelt V, 0) --> extelt (cast (extract_subv V)), 0
+  // cast (extelt V, C) --> extelt (cast (extract_subv (shuffle V, [C...]))), 0
   SDValue VCast = DAG.getNode(Cast.getOpcode(), DL, ToVT, VecOp);
   return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, DestVT, VCast,
-                     Extract.getOperand(1));
+                     DAG.getIntPtrConstant(0, DL));
 }
 
 SDValue X86TargetLowering::LowerSINT_TO_FP(SDValue Op,
