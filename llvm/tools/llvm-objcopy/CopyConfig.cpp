@@ -560,7 +560,7 @@ Expected<DriverConfig> parseObjcopyOptions(ArrayRef<const char *> ArgsArr) {
         "LLVM was not compiled with LLVM_ENABLE_ZLIB: cannot decompress");
 
   DC.CopyConfigs.push_back(std::move(Config));
-  return DC;
+  return std::move(DC);
 }
 
 // ParseStripOptions returns the config and sets the input arguments. If a
@@ -653,7 +653,7 @@ Expected<DriverConfig> parseStripOptions(ArrayRef<const char *> ArgsArr) {
     }
   }
 
-  return DC;
+  return std::move(DC);
 }
 
 } // namespace objcopy
