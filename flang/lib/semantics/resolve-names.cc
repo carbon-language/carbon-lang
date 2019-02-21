@@ -697,6 +697,7 @@ public:
   void Post(const parser::CommonStmt::Block &);
   bool Pre(const parser::CommonBlockObject &);
   void Post(const parser::CommonBlockObject &);
+  bool Pre(const parser::SaveStmt &);
 
 protected:
   bool BeginDecl();
@@ -716,6 +717,7 @@ protected:
   bool CheckAccessibleComponent(const SourceName &, const Symbol &);
   void CheckScalarIntegerType(const parser::Name &);
   void CheckCommonBlocks();
+  void CheckSaveStmts();
 
 private:
   // The attribute corresponding to the statement containing an ObjectDecl
@@ -739,6 +741,12 @@ private:
     Symbol *curr{nullptr};  // common block currently being processed
     std::set<SourceName> names;  // names in any common block of scope
   } commonBlockInfo_;
+  // Info about about SAVE statements and attributes in current scope
+  struct {
+    const SourceName *saveAll{nullptr};  // "SAVE" without entity list
+    std::set<SourceName> entities;  // names of entities with save attr
+    std::set<SourceName> commons;  // names of common blocks with save attr
+  } saveInfo_;
   // In a ProcedureDeclarationStmt or ProcComponentDefStmt, this is
   // the interface name, if any.
   const parser::Name *interfaceName_{nullptr};
@@ -757,6 +765,10 @@ private:
   ParamValue GetParamValue(const parser::TypeParamValue &);
   Symbol &MakeCommonBlockSymbol(const parser::Name &);
   void CheckCommonBlockDerivedType(const SourceName &, const Symbol &);
+  std::optional<MessageFixedText> CheckSaveAttr(const Symbol &);
+  Attrs HandleSaveName(const SourceName &, Attrs);
+  void AddSaveName(std::set<SourceName> &, const SourceName &);
+  void SetSaveAttr(Symbol &);
 
   // Declare an object or procedure entity.
   // T is one of: EntityDetails, ObjectEntityDetails, ProcEntityDetails
@@ -2235,6 +2247,7 @@ void SubprogramVisitor::Post(const parser::FunctionStmt &stmt) {
   }
   // add function result to function scope
   EntityDetails funcResultDetails;
+  funcResultDetails.set_funcResult(true);
   if (auto *type{GetDeclTypeSpec()}) {
     funcResultDetails.set_type(*type);
   }
@@ -2456,7 +2469,7 @@ void DeclarationVisitor::Post(const parser::EntityDecl &x) {
   // TODO: may be under StructureStmt
   const auto &name{std::get<parser::ObjectName>(x.t)};
   // TODO: CoarraySpec, CharLength, Initialization
-  Attrs attrs{attrs_ ? *attrs_ : Attrs{}};
+  Attrs attrs{attrs_ ? HandleSaveName(name.source, *attrs_) : Attrs{}};
   Symbol &symbol{DeclareUnknownEntity(name, attrs)};
   if (auto &init{std::get<std::optional<parser::Initialization>>(x.t)}) {
     if (ConvertToObjectEntity(symbol)) {
@@ -2559,7 +2572,7 @@ bool DeclarationVisitor::HandleAttributeStmt(
 }
 Symbol &DeclarationVisitor::HandleAttributeStmt(
     Attr attr, const parser::Name &name) {
-  auto *symbol{FindSymbol(name)};
+  auto *symbol{FindInScope(currScope(), name)};
   if (symbol) {
     // symbol was already there: set attribute on it
     if (attr == Attr::ASYNCHRONOUS || attr == Attr::VOLATILE) {
@@ -2573,6 +2586,7 @@ Symbol &DeclarationVisitor::HandleAttributeStmt(
     symbol = &MakeSymbol(name, EntityDetails{});
   }
   symbol->attrs().set(attr);
+  symbol->attrs() = HandleSaveName(name.source, symbol->attrs());
   return *symbol;
 }
 
@@ -3016,6 +3030,7 @@ void DeclarationVisitor::Post(const parser::ProcInterface &x) {
 }
 
 void DeclarationVisitor::Post(const parser::ProcDecl &x) {
+  const auto &name{std::get<parser::Name>(x.t)};
   ProcInterface interface;
   if (interfaceName_) {
     if (auto *symbol{FindExplicitInterface(*interfaceName_)}) {
@@ -3024,11 +3039,10 @@ void DeclarationVisitor::Post(const parser::ProcDecl &x) {
   } else if (auto *type{GetDeclTypeSpec()}) {
     interface.set_type(*type);
   }
-  auto attrs{GetAttrs()};
+  auto attrs{HandleSaveName(name.source, GetAttrs())};
   if (currScope().kind() != Scope::Kind::DerivedType) {
     attrs.set(Attr::EXTERNAL);
   }
-  const auto &name{std::get<parser::Name>(x.t)};
   DeclareProcEntity(name, attrs, interface);
 }
 
@@ -3279,6 +3293,116 @@ void DeclarationVisitor::Post(const parser::CommonBlockObject &x) {
   }
 }
 
+bool DeclarationVisitor::Pre(const parser::SaveStmt &x) {
+  if (x.v.empty()) {
+    saveInfo_.saveAll = currStmtSource();
+  } else {
+    for (const parser::SavedEntity &y : x.v) {
+      auto kind{std::get<parser::SavedEntity::Kind>(y.t)};
+      const auto &name{std::get<parser::Name>(y.t)};
+      if (kind == parser::SavedEntity::Kind::Common) {
+        MakeCommonBlockSymbol(name);
+        AddSaveName(saveInfo_.commons, name.source);
+      } else {
+        HandleAttributeStmt(Attr::SAVE, name);
+      }
+    }
+  }
+  return false;
+}
+
+void DeclarationVisitor::CheckSaveStmts() {
+  for (const SourceName &name : saveInfo_.entities) {
+    auto *symbol{FindInScope(currScope(), name)};
+    if (!symbol) {
+      // error was reported
+    } else if (saveInfo_.saveAll) {
+      // C889 - note that pgi, ifort, xlf do not enforce this constraint
+      Say2(name,
+          "Explicit SAVE of '%s' is redundant due to global SAVE statement"_err_en_US,
+          *saveInfo_.saveAll, "Global SAVE statement"_en_US);
+    } else if (auto msg{CheckSaveAttr(*symbol)}) {
+      Say(name, *msg);
+    } else {
+      SetSaveAttr(*symbol);
+    }
+  }
+  for (const SourceName &name : saveInfo_.commons) {
+    if (auto *symbol{currScope().FindCommonBlock(name)}) {
+      auto &objects{symbol->get<CommonBlockDetails>().objects()};
+      if (objects.empty()) {
+        Say(name,
+            "'%s' appears as a COMMON block in a SAVE statement but not in"
+            " a COMMON statement"_err_en_US);
+      } else {
+        for (Symbol *object : symbol->get<CommonBlockDetails>().objects()) {
+          SetSaveAttr(*object);
+        }
+      }
+    }
+  }
+  if (saveInfo_.saveAll) {
+    // Apply SAVE attribute to applicable symbols
+    for (auto pair : currScope()) {
+      auto &symbol{*pair.second};
+      if (!CheckSaveAttr(symbol)) {
+        SetSaveAttr(symbol);
+      }
+    }
+  }
+  saveInfo_ = {};
+}
+
+// If SAVE attribute can't be set on symbol, return error message.
+std::optional<MessageFixedText> DeclarationVisitor::CheckSaveAttr(
+    const Symbol &symbol) {
+  std::optional<MessageFixedText> msg;
+  if (symbol.IsDummy()) {
+    return "SAVE attribute may not be applied to dummy argument '%s'"_err_en_US;
+  } else if (symbol.IsFuncResult()) {
+    return "SAVE attribute may not be applied to function result '%s'"_err_en_US;
+  } else if (symbol.has<ProcEntityDetails>() &&
+      !symbol.attrs().test(Attr::POINTER)) {
+    return "Procedure '%s' with SAVE attribute must also have POINTER attribute"_err_en_US;
+  } else {
+    return std::nullopt;
+  }
+}
+
+// Instead of setting SAVE attribute, record the name in saveInfo_.entities.
+Attrs DeclarationVisitor::HandleSaveName(const SourceName &name, Attrs attrs) {
+  if (attrs.test(Attr::SAVE)) {
+    attrs.set(Attr::SAVE, false);
+    AddSaveName(saveInfo_.entities, name);
+  }
+  return attrs;
+}
+
+// Record a name in a set of those to be saved.
+void DeclarationVisitor::AddSaveName(
+    std::set<SourceName> &set, const SourceName &name) {
+  auto pair{set.insert(name)};
+  if (!pair.second) {
+    Say2(name, "SAVE attribute was already specified on '%s'"_err_en_US,
+        *pair.first, "Previous specification of SAVE attribute"_en_US);
+  }
+}
+
+// Set the SAVE attribute on symbol unless it is implicitly saved anyway.
+void DeclarationVisitor::SetSaveAttr(Symbol &symbol) {
+  auto scopeKind{symbol.owner().kind()};
+  if (scopeKind == Scope::Kind::MainProgram ||
+      scopeKind == Scope::Kind::Module) {
+    return;
+  }
+  if (const auto *details{symbol.detailsIf<ObjectEntityDetails>()}) {
+    if (details->init()) {
+      return;
+    }
+  }
+  symbol.attrs().set(Attr::SAVE);
+}
+
 // Check types of common block objects, now that they are known.
 void DeclarationVisitor::CheckCommonBlocks() {
   // check for empty common blocks
@@ -3304,11 +3428,13 @@ void DeclarationVisitor::CheckCommonBlocks() {
     } else if (attrs.test(Attr::BIND_C)) {
       Say(name,
           "Variable '%s' with BIND attribute may not appear in a COMMON block"_err_en_US);
-    } else if (const auto &details{symbol->get<ObjectEntityDetails>()};
-               details.isDummy()) {
+    } else if (symbol->IsDummy()) {
       Say(name,
           "Dummy argument '%s' may not appear in a COMMON block"_err_en_US);
-    } else if (const DeclTypeSpec * type{details.type()}) {
+    } else if (symbol->IsFuncResult()) {
+      Say(name,
+          "Function result '%s' may not appear in a COMMON block"_err_en_US);
+    } else if (const DeclTypeSpec * type{symbol->GetType()}) {
       if (type->category() == DeclTypeSpec::ClassStar) {
         Say(name,
             "Unlimited polymorphic pointer '%s' may not appear in a COMMON block"_err_en_US);
@@ -4106,7 +4232,8 @@ void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
       }
       symbol->attrs().set(Attr::EXTERNAL);
       if (!symbol->has<ProcEntityDetails>()) {
-        symbol->set_details(ProcEntityDetails{});
+        // symbol->set_details(ProcEntityDetails{});
+        ConvertToProcEntity(*symbol);
       }
       if (const auto type{GetImplicitType(*symbol)}) {
         symbol->get<ProcEntityDetails>().interface().set_type(*type);
@@ -4251,6 +4378,7 @@ void ResolveNamesVisitor::Post(const parser::SpecificationPart &) {
       symbol.set(Symbol::Flag::Subroutine);
     }
   }
+  CheckSaveStmts();
   CheckCommonBlocks();
 }
 

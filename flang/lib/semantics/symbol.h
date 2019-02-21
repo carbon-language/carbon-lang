@@ -110,11 +110,14 @@ public:
   void set_type(const DeclTypeSpec &);
   void ReplaceType(const DeclTypeSpec &);
   bool isDummy() const { return isDummy_; }
+  bool isFuncResult() const { return isFuncResult_; }
+  void set_funcResult(bool x) { isFuncResult_ = x; }
   MaybeExpr bindName() const { return bindName_; }
   void set_bindName(MaybeExpr &&expr) { bindName_ = std::move(expr); }
 
 private:
   bool isDummy_;
+  bool isFuncResult_{false};
   const DeclTypeSpec *type_{nullptr};
   MaybeExpr bindName_;
   friend std::ostream &operator<<(std::ostream &, const EntityDetails &);
@@ -276,13 +279,14 @@ private:
 
 class CommonBlockDetails {
 public:
-  SymbolList objects() const { return objects_; }
+  std::list<Symbol *> &objects() { return objects_; }
+  const std::list<Symbol *> &objects() const { return objects_; }
   void add_object(Symbol &object) { objects_.push_back(&object); }
   MaybeExpr bindName() const { return bindName_; }
   void set_bindName(MaybeExpr &&expr) { bindName_ = std::move(expr); }
 
 private:
-  SymbolList objects_;
+  std::list<Symbol *> objects_;
   MaybeExpr bindName_;
 };
 
@@ -480,6 +484,8 @@ public:
 
   void SetType(const DeclTypeSpec &);
 
+  bool IsDummy() const;
+  bool IsFuncResult() const;
   bool IsObjectArray() const;
   bool IsSubprogram() const;
   bool IsSeparateModuleProc() const;

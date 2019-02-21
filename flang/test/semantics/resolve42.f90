@@ -40,11 +40,13 @@ subroutine s5
   real y(2)
 end
 
-subroutine s6(x)
+function f6(x) result(r)
   !ERROR: Dummy argument 'x' may not appear in a COMMON block
   !ERROR: ALLOCATABLE object 'y' may not appear in a COMMON block
   common x,y,z
   allocatable y
+  !ERROR: Function result 'r' may not appear in a COMMON block
+  common r
 end
 
 module m7

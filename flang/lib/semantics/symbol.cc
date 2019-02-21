@@ -215,6 +215,26 @@ void Symbol::SetType(const DeclTypeSpec &type) {
       details_);
 }
 
+bool Symbol::IsDummy() const {
+  return std::visit(
+      common::visitors{[](const EntityDetails &x) { return x.isDummy(); },
+          [](const ObjectEntityDetails &x) { return x.isDummy(); },
+          [](const ProcEntityDetails &x) { return x.isDummy(); },
+          [](const HostAssocDetails &x) { return x.symbol().IsDummy(); },
+          [](const auto &) { return false; }},
+      details_);
+}
+
+bool Symbol::IsFuncResult() const {
+  return std::visit(
+      common::visitors{[](const EntityDetails &x) { return x.isFuncResult(); },
+          [](const ObjectEntityDetails &x) { return x.isFuncResult(); },
+          [](const ProcEntityDetails &x) { return x.isFuncResult(); },
+          [](const HostAssocDetails &x) { return x.symbol().IsFuncResult(); },
+          [](const auto &) { return false; }},
+      details_);
+}
+
 bool Symbol::IsObjectArray() const {
   const auto *details{std::get_if<ObjectEntityDetails>(&details_)};
   return details && details->IsArray();
@@ -245,6 +265,12 @@ ObjectEntityDetails::ObjectEntityDetails(EntityDetails &&d)
   : EntityDetails(d) {}
 
 std::ostream &operator<<(std::ostream &os, const EntityDetails &x) {
+  if (x.isDummy()) {
+    os << " dummy";
+  }
+  if (x.isFuncResult()) {
+    os << " funcResult";
+  }
   if (x.type()) {
     os << " type: " << *x.type();
   }
