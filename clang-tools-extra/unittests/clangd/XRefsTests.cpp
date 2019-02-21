@@ -285,11 +285,15 @@ TEST(LocateSymbol, All) {
         }
       )cpp",
 
-      /* FIXME: clangIndex doesn't handle template type parameters
       R"cpp(// Template type parameter
-        template <[[typename T]]>
+        template <typename [[T]]>
         void foo() { ^T t; }
-      )cpp", */
+      )cpp",
+
+      R"cpp(// Template template type parameter
+        template <template<typename> class [[T]]>
+        void foo() { ^T<int> t; }
+      )cpp",
 
       R"cpp(// Namespace
         namespace $decl[[ns]] {
