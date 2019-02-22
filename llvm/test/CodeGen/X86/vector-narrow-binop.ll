@@ -147,16 +147,15 @@ define <2 x i8> @PR39893_2(<2 x float> %x) {
 ; SSE-NEXT:    xorps %xmm1, %xmm1
 ; SSE-NEXT:    subps %xmm0, %xmm1
 ; SSE-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3],xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
-; SSE-NEXT:    pshufd {{.*#+}} xmm0 = xmm1[0,1,0,3]
-; SSE-NEXT:    pshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,5,5,6,7]
+; SSE-NEXT:    punpcklwd {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3]
+; SSE-NEXT:    pshufd {{.*#+}} xmm0 = xmm1[0,1,1,3]
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: PR39893_2:
 ; AVX:       # %bb.0:
 ; AVX-NEXT:    vxorps %xmm1, %xmm1, %xmm1
 ; AVX-NEXT:    vsubps %xmm0, %xmm1, %xmm0
-; AVX-NEXT:    vpmovzxbw {{.*#+}} xmm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,xmm0[4],zero,xmm0[5],zero,xmm0[6],zero,xmm0[7],zero
-; AVX-NEXT:    vpmovzxwq {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero
+; AVX-NEXT:    vpmovzxbq {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,zero,zero,zero,zero,xmm0[1],zero,zero,zero,zero,zero,zero,zero
 ; AVX-NEXT:    retq
   %fsub = fsub <2 x float> zeroinitializer, %x
   %bc = bitcast <2 x float> %fsub to <8 x i8>
