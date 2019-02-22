@@ -14,7 +14,7 @@
 
 #include "graph-writer.h"
 
-namespace Fortran::IntermediateRepresentation {
+namespace Fortran::FIR {
 
 std::optional<llvm::raw_ostream *> GraphWriter::defaultOutput_{std::nullopt};
 

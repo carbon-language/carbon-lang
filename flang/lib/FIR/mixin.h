@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_INTERMEDIATEREPRESENTATION_MIXIN_H_
-#define FORTRAN_INTERMEDIATEREPRESENTATION_MIXIN_H_
+#ifndef FORTRAN_FIR_MIXIN_H_
+#define FORTRAN_FIR_MIXIN_H_
 
 #include "llvm/ADT/ilist.h"
 #include <optional>
@@ -21,7 +21,7 @@
 #include <type_traits>
 #include <variant>
 
-namespace Fortran::IntermediateRepresentation {
+namespace Fortran::FIR {
 
 template<typename T, typename E = void> struct SumTypeMixin {};
 template<typename T>  // T must be std::variant<...>
@@ -111,4 +111,4 @@ template<typename A, typename B> B &Unzip(B &out, A first, A last) {
 
 }
 
-#endif  // FORTRAN_INTERMEDIATEREPRESENTATION_COMMON_H_
+#endif  // FORTRAN_FIR_COMMON_H_

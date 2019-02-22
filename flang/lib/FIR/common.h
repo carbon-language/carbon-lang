@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_INTERMEDIATEREPRESENTATION_COMMON_H_
-#define FORTRAN_INTERMEDIATEREPRESENTATION_COMMON_H_
+#ifndef FORTRAN_FIR_COMMON_H_
+#define FORTRAN_FIR_COMMON_H_
 
 #include "../common/idioms.h"
 #include "../common/indirection.h"
@@ -36,7 +36,7 @@
   }
 #define WRONG_PATH() DIE("control should not reach here" AT_HERE)
 
-namespace Fortran::IntermediateRepresentation {
+namespace Fortran::FIR {
 class Statement;
 class BasicBlock;
 struct Program;
@@ -105,4 +105,4 @@ enum RuntimeCallType {
 using RuntimeCallArguments = CallArguments;
 }
 
-#endif  // FORTRAN_INTERMEDIATEREPRESENTATION_COMMON_H_
+#endif  // FORTRAN_FIR_COMMON_H_

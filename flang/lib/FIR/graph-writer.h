@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_INTERMEDIATEREPRESENTATION_GRAPH_WRITER_H_
-#define FORTRAN_INTERMEDIATEREPRESENTATION_GRAPH_WRITER_H_
+#ifndef FORTRAN_FIR_GRAPH_WRITER_H_
+#define FORTRAN_FIR_GRAPH_WRITER_H_
 
 #include "program.h"
 #include "llvm/Support/FileSystem.h"
@@ -24,7 +24,7 @@
 #include <sstream>
 #include <string>
 
-namespace Fortran::IntermediateRepresentation {
+namespace Fortran::FIR {
 
 struct GraphWriter {
   static void setOutput(llvm::raw_ostream *output) { defaultOutput_ = output; }
