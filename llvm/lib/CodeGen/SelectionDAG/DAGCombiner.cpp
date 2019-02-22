@@ -15450,16 +15450,17 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
             if (auto *C = dyn_cast<ConstantSDNode>(Value)) {
               APInt Val = C1->getAPIntValue();
               APInt InsertVal = C->getAPIntValue().zextOrTrunc(STByteSize * 8);
-              if (DAG.getDataLayout().isBigEndian())
-                Offset = ChainByteSize - 1 - Offset;
-              Val.insertBits(InsertVal, Offset * 8);
-              SDValue NewSDVal =
-                  DAG.getConstant(Val, SDLoc(C), ChainValue.getValueType(),
-                                  C1->isTargetOpcode(), C1->isOpaque());
-              SDNode *NewST1 = DAG.UpdateNodeOperands(
-                  ST1, ST1->getChain(), NewSDVal, ST1->getOperand(2),
-                  ST1->getOperand(3));
-              return CombineTo(ST, SDValue(NewST1, 0));
+              // FIXME: Handle Big-endian mode.
+              if (!DAG.getDataLayout().isBigEndian()) {
+                Val.insertBits(InsertVal, Offset * 8);
+                SDValue NewSDVal =
+                    DAG.getConstant(Val, SDLoc(C), ChainValue.getValueType(),
+                                    C1->isTargetOpcode(), C1->isOpaque());
+                SDNode *NewST1 = DAG.UpdateNodeOperands(
+                    ST1, ST1->getChain(), NewSDVal, ST1->getOperand(2),
+                    ST1->getOperand(3));
+                return CombineTo(ST, SDValue(NewST1, 0));
+              }
             }
           }
         } // End ST subset of ST1 case.
