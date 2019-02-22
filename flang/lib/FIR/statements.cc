@@ -14,7 +14,7 @@
 
 #include "stmt.h"
 
-namespace Fortran::IntermediateRepresentation {
+namespace Fortran::FIR {
 
 static std::string dump(const Expression *expression) {
   if (expression) {
@@ -81,20 +81,15 @@ static std::string dump(PathVariable *pathVariable) {
 }
 
 std::string Evaluation::dump() const {
-  return std::visit(common::visitors{
-                        [](Expression *expression) {
-                          return IntermediateRepresentation::dump(expression);
-                        },
-                        [](Variable *variable) {
-                          return IntermediateRepresentation::dump(variable);
-                        },
-                        [](PathVariable *pathVariable) {
-                          return IntermediateRepresentation::dump(pathVariable);
-                        },
-                        [](const semantics::Symbol *symbol) {
-                          return symbol->name().ToString();
-                        },
-                    },
+  return std::visit(
+      common::visitors{
+          [](Expression *expression) { return FIR::dump(expression); },
+          [](Variable *variable) { return FIR::dump(variable); },
+          [](PathVariable *pathVariable) { return FIR::dump(pathVariable); },
+          [](const semantics::Symbol *symbol) {
+            return symbol->name().ToString();
+          },
+      },
       u);
 }
 
@@ -162,8 +157,7 @@ std::string Statement::dump() const {
           [](const ReturnStmt &) { return "return"s; },
           [](const BranchStmt &branchStatement) {
             if (branchStatement.hasCondition()) {
-              return "branch ("s +
-                  IntermediateRepresentation::dump(branchStatement.getCond()) +
+              return "branch ("s + FIR::dump(branchStatement.getCond()) +
                   ") "s +
                   std::to_string(reinterpret_cast<std::intptr_t>(
                       branchStatement.getTrueSucc())) +
@@ -183,17 +177,16 @@ std::string Statement::dump() const {
           [](const AllocateStmt &) { return "alloc"s; },
           [](const DeallocateStmt &) { return "dealloc"s; },
           [](const AssignmentStmt &assignmentStatement) {
-            auto computedValue{IntermediateRepresentation::dump(
-                assignmentStatement.GetRightHandSide())};
-            auto address{IntermediateRepresentation::dump(
-                assignmentStatement.GetLeftHandSide())};
+            auto computedValue{
+                FIR::dump(assignmentStatement.GetRightHandSide())};
+            auto address{FIR::dump(assignmentStatement.GetLeftHandSide())};
             return "assign ("s + computedValue + ") to "s + address;
           },
           [](const PointerAssignStmt &pointerAssignmentStatement) {
-            auto computedAddress{IntermediateRepresentation::dump(
-                pointerAssignmentStatement.GetRightHandSide())};
-            auto address{IntermediateRepresentation::dump(
-                pointerAssignmentStatement.GetLeftHandSide())};
+            auto computedAddress{
+                FIR::dump(pointerAssignmentStatement.GetRightHandSide())};
+            auto address{
+                FIR::dump(pointerAssignmentStatement.GetLeftHandSide())};
             return "assign &("s + computedAddress + ") to "s + address;
           },
           [](const LabelAssignStmt &) { return "lblassn"s; },
@@ -219,8 +212,7 @@ std::string Statement::dump() const {
                     },
                     [](const evaluate::GenericExprWrapper
                             *genericExpressionWrapper) {
-                      return IntermediateRepresentation::dump(
-                          genericExpressionWrapper);
+                      return FIR::dump(genericExpressionWrapper);
                     },
                 },
                 expressionStatement.u);

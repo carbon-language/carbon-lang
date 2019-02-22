@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_INTERMEDIATEREPRESENTATION_STATEMENTS_H_
-#define FORTRAN_INTERMEDIATEREPRESENTATION_STATEMENTS_H_
+#ifndef FORTRAN_FIR_STATEMENTS_H_
+#define FORTRAN_FIR_STATEMENTS_H_
 
 #include "common.h"
 #include "mixin.h"
 #include <initializer_list>
 #include <ostream>
 
-namespace Fortran::IntermediateRepresentation {
+namespace Fortran::FIR {
 
 #define HANDLE_STMT(num, opcode, name) struct name;
 #include "statement.def"

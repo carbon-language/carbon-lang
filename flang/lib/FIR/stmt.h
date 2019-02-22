@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_INTERMEDIATEREPRESENTATION_STMT_H_
-#define FORTRAN_INTERMEDIATEREPRESENTATION_STMT_H_
+#ifndef FORTRAN_FIR_STMT_H_
+#define FORTRAN_FIR_STMT_H_
 
 #include "basicblock.h"
 #include "mixin.h"
 #include "statements.h"
 
-namespace Fortran::IntermediateRepresentation {
+namespace Fortran::FIR {
 
 /// Sum type over all statement classes
 struct Statement : public SumTypeMixin<std::variant<
