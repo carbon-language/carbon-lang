@@ -1402,7 +1402,9 @@ Sema::DeviceDiagBuilder::DeviceDiagBuilder(Kind K, SourceLocation Loc,
     break;
   case K_Deferred:
     assert(Fn && "Must have a function to attach the deferred diag to.");
-    PartialDiag.emplace(S.PDiag(DiagID));
+    auto &Diags = S.DeviceDeferredDiags[Fn];
+    PartialDiagId.emplace(Diags.size());
+    Diags.emplace_back(Loc, S.PDiag(DiagID));
     break;
   }
 }
@@ -1416,9 +1418,9 @@ Sema::DeviceDiagBuilder::~DeviceDiagBuilder() {
     ImmediateDiag.reset(); // Emit the immediate diag.
     if (IsWarningOrError && ShowCallStack)
       emitCallStackNotes(S, Fn);
-  } else if (PartialDiag) {
-    assert(ShowCallStack && "Must always show call stack for deferred diags.");
-    S.DeviceDeferredDiags[Fn].push_back({Loc, std::move(*PartialDiag)});
+  } else {
+    assert((!PartialDiagId || ShowCallStack) &&
+           "Must always show call stack for deferred diags.");
   }
 }
 
@@ -1487,10 +1489,12 @@ void Sema::markKnownEmitted(
   }
 }
 
-Sema::DeviceDiagBuilder Sema::targetDiag(SourceLocation Loc,
-                                         unsigned DiagID) {
+Sema::DeviceDiagBuilder Sema::targetDiag(SourceLocation Loc, unsigned DiagID) {
   if (LangOpts.OpenMP && LangOpts.OpenMPIsDevice)
     return diagIfOpenMPDeviceCode(Loc, DiagID);
+  if (getLangOpts().CUDA)
+    return getLangOpts().CUDAIsDevice ? CUDADiagIfDeviceCode(Loc, DiagID)
+                                      : CUDADiagIfHostCode(Loc, DiagID);
   return DeviceDiagBuilder(DeviceDiagBuilder::K_Immediate, Loc, DiagID,
                            getCurFunctionDecl(), *this);
 }
