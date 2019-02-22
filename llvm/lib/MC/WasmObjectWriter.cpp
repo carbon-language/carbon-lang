@@ -558,12 +558,13 @@ void WasmObjectWriter::recordRelocation(MCAssembler &Asm,
 }
 
 static const MCSymbolWasm *resolveSymbol(const MCSymbolWasm &Symbol) {
-  if (Symbol.isVariable()) {
-    const MCExpr *Expr = Symbol.getVariableValue();
+  const MCSymbolWasm* Ret = &Symbol;
+  while (Ret->isVariable()) {
+    const MCExpr *Expr = Ret->getVariableValue();
     auto *Inner = cast<MCSymbolRefExpr>(Expr);
-    return cast<MCSymbolWasm>(&Inner->getSymbol());
+    Ret = cast<MCSymbolWasm>(&Inner->getSymbol());
   }
-  return &Symbol;
+  return Ret;
 }
 
 // Compute a value to write into the code at the location covered
@@ -1422,12 +1423,12 @@ uint64_t WasmObjectWriter::writeObject(MCAssembler &Asm,
     LLVM_DEBUG(dbgs() << WS.getName() << ": weak alias of '" << *ResolvedSym
                       << "'\n");
 
-    if (WS.isFunction()) {
+    if (ResolvedSym->isFunction()) {
       assert(WasmIndices.count(ResolvedSym) > 0);
       uint32_t WasmIndex = WasmIndices.find(ResolvedSym)->second;
       WasmIndices[&WS] = WasmIndex;
       LLVM_DEBUG(dbgs() << "  -> index:" << WasmIndex << "\n");
-    } else if (WS.isData()) {
+    } else if (ResolvedSym->isData()) {
       assert(DataLocations.count(ResolvedSym) > 0);
       const wasm::WasmDataReference &Ref =
           DataLocations.find(ResolvedSym)->second;
