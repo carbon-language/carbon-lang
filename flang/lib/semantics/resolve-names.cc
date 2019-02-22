@@ -1478,7 +1478,9 @@ void ScopeHandler::SayAlreadyDeclared(
 }
 void ScopeHandler::SayWithDecl(
     const parser::Name &name, const Symbol &symbol, MessageFixedText &&msg) {
-  Say2(name, std::move(msg), symbol, "Declaration of '%s'"_en_US);
+  Say2(name, std::move(msg), symbol,
+      symbol.test(Symbol::Flag::Implicit) ? "Implicit declaration of '%s'"_en_US
+                                          : "Declaration of '%s'"_en_US);
 }
 void ScopeHandler::SayDerivedType(
     const SourceName &name, MessageFixedText &&msg, const Scope &type) {
@@ -2340,6 +2342,20 @@ Symbol &SubprogramVisitor::PushSubprogramScope(
     const parser::Name &name, Symbol::Flag subpFlag) {
   auto *symbol{GetSpecificFromGeneric(name)};
   if (!symbol) {
+    if (auto *prev{FindSymbol(name)}) {
+      if (prev->attrs().test(Attr::EXTERNAL) &&
+          prev->has<ProcEntityDetails>()) {
+        // this subprogram was previously called, now being declared
+        if (!prev->test(subpFlag)) {
+          Say2(name,
+              subpFlag == Symbol::Flag::Function
+                  ? "'%s' was previously called as a subroutine"_err_en_US
+                  : "'%s' was previously called as a function"_err_en_US,
+              *prev, "Previous call of '%s'"_en_US);
+        }
+        EraseSymbol(name);
+      }
+    }
     symbol = &MakeSymbol(name, SubprogramDetails{});
     symbol->set(subpFlag);
   }

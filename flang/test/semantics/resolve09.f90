@@ -1,4 +1,4 @@
-! Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -98,4 +98,30 @@ subroutine s5
     !ERROR: Cannot call function 'foo' like a subroutine
     call foo()
   end block
+end
+
+subroutine s6
+  call a6()
+end
+!ERROR: 'a6' was previously called as a subroutine
+function a6()
+  a6 = 0.0
+end
+
+subroutine s7
+  x = a7()
+end
+!ERROR: 'a7' was previously called as a function
+subroutine a7()
+end
+
+!OK: use of a8 and b8 is consistent
+subroutine s8
+  call a8()
+  x = b8()
+end
+subroutine a8()
+end
+function b8()
+  b8 = 0.0
 end
