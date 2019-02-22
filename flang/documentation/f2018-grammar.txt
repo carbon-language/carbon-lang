@@ -83,7 +83,7 @@ R703 declaration-type-spec ->
 R704 intrinsic-type-spec ->
        integer-type-spec | REAL [kind-selector] | DOUBLE PRECISION |
        COMPLEX [kind-selector] | CHARACTER [char-selector] |
-       LOGICAL [kind-selector]
+       LOGICAL [kind-selector] @ DOUBLE COMPLEX
 R705 integer-type-spec -> INTEGER [kind-selector]
 R706 kind-selector ->
        ( [KIND =] scalar-int-constant-expr )  @ * scalar-int-constant-expr
