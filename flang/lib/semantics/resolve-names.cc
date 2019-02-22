@@ -3631,31 +3631,32 @@ Symbol *DeclarationVisitor::DeclareLocalEntity(const parser::Name &name) {
 
 Symbol *DeclarationVisitor::DeclareStatementEntity(const parser::Name &name,
     const std::optional<parser::IntegerTypeSpec> &type) {
+  const DeclTypeSpec *declTypeSpec{nullptr};
   if (auto *prev{FindSymbol(name)}) {
     if (prev->owner() == currScope()) {
       SayAlreadyDeclared(name, *prev);
       return nullptr;
     }
     name.symbol = nullptr;
+    declTypeSpec = prev->GetType();
   }
   Symbol &symbol{DeclareEntity<ObjectEntityDetails>(name, {})};
-  if (symbol.has<ObjectEntityDetails>()) {
-    const DeclTypeSpec *declTypeSpec{nullptr};
-    if (type.has_value()) {
-      BeginDeclTypeSpec();
-      DeclarationVisitor::Post(*type);
-      declTypeSpec = GetDeclTypeSpec();
-      EndDeclTypeSpec();
-    }
-    if (declTypeSpec != nullptr) {
-      SetType(name, *declTypeSpec);
-    } else {
-      ApplyImplicitRules(symbol);
-    }
-    CheckScalarIntegerType(name);
-    return Resolve(name, &symbol);
+  if (!symbol.has<ObjectEntityDetails>()) {
+    return nullptr;  // error was reported in DeclareEntity
   }
-  return nullptr;
+  if (type.has_value()) {
+    BeginDeclTypeSpec();
+    DeclarationVisitor::Post(*type);
+    declTypeSpec = GetDeclTypeSpec();
+    EndDeclTypeSpec();
+  }
+  if (declTypeSpec != nullptr) {
+    SetType(name, *declTypeSpec);
+  } else {
+    ApplyImplicitRules(symbol);
+  }
+  CheckScalarIntegerType(name);
+  return Resolve(name, &symbol);
 }
 
 // Set the type of an entity or report an error.

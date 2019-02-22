@@ -55,12 +55,17 @@ end subroutine
 
 !DEF: /s3 Subprogram
 subroutine s3
+ !DEF: /s3/j ObjectEntity INTEGER(8)
+ integer(kind=8) j
  block
   !DEF: /s3/Block1/t DerivedType
   type :: t
    !DEF: /s3/Block1/t/x ObjectEntity REAL(4)
    !DEF: /s3/Block1/t/ImpliedDos1/i (implicit) ObjectEntity INTEGER(4)
    real :: x(10) = [(i, i=1,10)]
+   !DEF: /s3/Block1/t/y ObjectEntity REAL(4)
+   !DEF: /s3/Block1/t/ImpliedDos2/j ObjectEntity INTEGER(8)
+   real :: y(10) = [(j, j=1,10)]
   end type
  end block
 end subroutine
