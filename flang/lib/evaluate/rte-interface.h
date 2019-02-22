@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,14 +32,14 @@
 #include <vector>
 
 namespace Fortran::evaluate {
-class FoldingContext;  // forward declare
+class FoldingContext;
 namespace rte {
 
 using TypeCode = unsigned char;
 
 template<typename TR, typename... TA> using FuncPointer = TR (*)(TA...);
 
-enum PassBy { Ref, Val };
+enum class PassBy { Ref, Val };
 template<typename TA, PassBy Pass = PassBy::Ref> struct ArgumentInfo {
   using Type = TA;
   static constexpr PassBy pass{Pass};
@@ -98,6 +98,8 @@ struct HostRteProcedureSymbol : RteProcedureSymbol {
   template<typename HostTR, typename... HostTA>
   HostRteProcedureSymbol(const std::string &name,
       FuncPointer<HostTR, HostTA...> func, bool isElemental = false);
+  HostRteProcedureSymbol(const RteProcedureSymbol &rteProc, const void *handle)
+    : RteProcedureSymbol{rteProc}, handle{handle} {}
   const void *handle;
 };
 
@@ -112,7 +114,9 @@ struct HostRte {
     const std::string name{sym.name};
     procedures.insert(std::make_pair(name, std::move(sym)));
   }
+  bool HasEquivalentProcedure(const RteProcedureSymbol &sym) const;
   HostRte() { DefaultInit(); }
+  ~HostRte();
   void DefaultInit();  // load functions from <cmath> and <complex>
   void LoadTargetRteLibrary(const TargetRteLibrary &lib);  // TODO
   template<template<typename> typename ConstantContainer, typename TR,
@@ -122,7 +126,7 @@ struct HostRte {
   // some data structure of HostRteProcedureSymbol
   std::multimap<std::string, const HostRteProcedureSymbol> procedures;
   std::map<std::string, void *>
-      dynamicallyLoadedLibraries;  // keep the handles for dlcose
+      dynamicallyLoadedLibraries;  // keep the handles for dlclose
 };
 
 }

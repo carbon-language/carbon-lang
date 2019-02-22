@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
 #include "host.h"
 #include "rte-interface.h"
 #include "type.h"
-#include "../../lib/common/template.h"
+#include "../common/template.h"
 
 #include <cfenv>
 #include <tuple>
@@ -33,11 +33,9 @@
 
 namespace Fortran::evaluate::rte {
 
-// Defines meaningful types for the runtime
-class Void {};
-class Descriptor {};
-using RteTypes = common::CombineTuples<std::tuple<Void, Descriptor>,
-    evaluate::AllIntrinsicTypes>;
+// Define meaningful types for the runtime
+// TODO: add the support for void and descriptor
+using RteTypes = evaluate::AllIntrinsicTypes;
 
 template<typename T, typename... TT> struct IndexInTupleHelper {};
 template<typename T, typename... TT>

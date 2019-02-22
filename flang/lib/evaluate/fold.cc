@@ -162,11 +162,9 @@ ComplexPart FoldOperation(FoldingContext &context, ComplexPart &&complexPart) {
       FoldOperation(context, std::move(complex)), complexPart.part()};
 }
 
-namespace intrinsicHelper {
 // helpers to fold intrinsic function references
 // Define callable types used in a common utility that
 // takes care of array and cast/conversion aspects for elemental intrinsics
-
 template<typename TR, typename... TArgs>
 using ScalarFunc = std::function<Scalar<TR>(const Scalar<TArgs> &...)>;
 template<typename TR, typename... TArgs>
@@ -191,7 +189,7 @@ static inline Expr<TR> FoldElementalIntrinsicHelper(FoldingContext &context,
       return Expr<TR>{Constant<TR>{func(*std::get<I>(scalars)...)}};
     }
   }
-  // TODO: handle arrays when Constant<T> can represent them
+  // TODO: handle Constant<T> that hold arrays
   return Expr<TR>{std::move(funcRef)};
 }
 
@@ -207,12 +205,10 @@ static Expr<TR> FoldElementalIntrinsic(FoldingContext &context,
   return FoldElementalIntrinsicHelper<ScalarFuncWithContext, TR, TA...>(
       context, std::move(funcRef), func, std::index_sequence_for<TA...>{});
 }
-}
 
 template<int KIND>
 Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
     FunctionRef<Type<TypeCategory::Integer, KIND>> &&funcRef) {
-  using namespace intrinsicHelper;
   using T = Type<TypeCategory::Integer, KIND>;
   for (std::optional<ActualArgument> &arg : funcRef.arguments()) {
     if (arg.has_value()) {
@@ -238,15 +234,13 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
         common::die("len() result not SubscriptInteger");
       }
     } else if (name == "iand") {
-      if (auto *x{std::get_if<BOZLiteralConstant>(
-              &funcRef.arguments()[0]->value->u)}) {
-        *funcRef.arguments()[0]->value =
-            Fold(context, ConvertToType<T>(std::move(*x)));
-      }
-      if (auto *x{std::get_if<BOZLiteralConstant>(
-              &funcRef.arguments()[1]->value->u)}) {
-        *funcRef.arguments()[1]->value =
-            Fold(context, ConvertToType<T>(std::move(*x)));
+      // TODO change intrinsic.cc so that it already has handled BOZ conversions
+      for (int i{0}; i <= 1; ++i) {
+        if (auto *x{std::get_if<BOZLiteralConstant>(
+                &funcRef.arguments()[i]->value->u)}) {
+          *funcRef.arguments()[i]->value =
+              Fold(context, ConvertToType<T>(std::move(*x)));
+        }
       }
       return FoldElementalIntrinsic<T, T, T>(
           context, std::move(funcRef), ScalarFunc<T, T, T>(&Scalar<T>::IAND));
@@ -274,7 +268,6 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
 template<int KIND>
 Expr<Type<TypeCategory::Real, KIND>> FoldOperation(FoldingContext &context,
     FunctionRef<Type<TypeCategory::Real, KIND>> &&funcRef) {
-  using namespace intrinsicHelper;
   using T = Type<TypeCategory::Real, KIND>;
   for (std::optional<ActualArgument> &arg : funcRef.arguments()) {
     if (arg.has_value()) {
@@ -354,7 +347,6 @@ Expr<Type<TypeCategory::Real, KIND>> FoldOperation(FoldingContext &context,
 template<int KIND>
 Expr<Type<TypeCategory::Complex, KIND>> FoldOperation(FoldingContext &context,
     FunctionRef<Type<TypeCategory::Complex, KIND>> &&funcRef) {
-  using namespace intrinsicHelper;
   using T = Type<TypeCategory::Complex, KIND>;
   for (std::optional<ActualArgument> &arg : funcRef.arguments()) {
     if (arg.has_value()) {
@@ -415,7 +407,6 @@ Expr<Type<TypeCategory::Complex, KIND>> FoldOperation(FoldingContext &context,
 template<int KIND>
 Expr<Type<TypeCategory::Logical, KIND>> FoldOperation(FoldingContext &context,
     FunctionRef<Type<TypeCategory::Logical, KIND>> &&funcRef) {
-  using namespace intrinsicHelper;
   using T = Type<TypeCategory::Logical, KIND>;
   for (std::optional<ActualArgument> &arg : funcRef.arguments()) {
     if (arg.has_value()) {

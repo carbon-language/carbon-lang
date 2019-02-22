@@ -152,16 +152,13 @@ template<int KIND> struct HostTypeHelper<Type<TypeCategory::Complex, KIND>> {
       std::complex<HostType<RealT>>, UnsupportedType>;
 };
 
-template<int KIND> struct HostTypeHelper<Type<TypeCategory::Character, KIND>> {
+template<int KIND> struct HostTypeHelper<Type<TypeCategory::Logical, KIND>> {
   using Type = std::conditional_t<KIND <= 8, std::uint8_t, UnsupportedType>;
 };
 
-template<> struct HostTypeHelper<Type<TypeCategory::Character, 1>> {
-  using Type = std::string;
-};
-
-template<> struct HostTypeHelper<Type<TypeCategory::Character, 2>> {
-  using Type = std::u16string;
+template<int KIND> struct HostTypeHelper<Type<TypeCategory::Character, KIND>> {
+  using Type =
+      Scalar<typename Fortran::evaluate::Type<TypeCategory::Character, KIND>>;
 };
 
 // Type mapping from host types to F18 types. This need to be placed after all
@@ -195,13 +192,21 @@ template<TypeCategory cat, int KIND> struct NextBiggerReal {
   using Type = void;
 };
 template<TypeCategory cat> struct NextBiggerReal<cat, 2> {
-  using Type = Fortran::evaluate::Type<cat, 3>;
+  using Type = Fortran::evaluate::Type<cat, 4>;
 };
 template<TypeCategory cat> struct NextBiggerReal<cat, 3> {
   using Type = Fortran::evaluate::Type<cat, 4>;
 };
 template<TypeCategory cat> struct NextBiggerReal<cat, 4> {
   using Type = Fortran::evaluate::Type<cat, 8>;
+};
+
+template<TypeCategory cat> struct NextBiggerReal<cat, 8> {
+  using Type = Fortran::evaluate::Type<cat, 10>;
+};
+
+template<TypeCategory cat> struct NextBiggerReal<cat, 10> {
+  using Type = Fortran::evaluate::Type<cat, 16>;
 };
 
 template<int KIND>
