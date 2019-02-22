@@ -207,8 +207,17 @@ struct IntrinsicInterface {
   std::optional<SpecificCall> Match(const CallCharacteristics &,
       const common::IntrinsicTypeDefaultKinds &, ActualArguments &,
       parser::ContextualMessages &messages) const;
+  int CountArguments() const;
   std::ostream &Dump(std::ostream &) const;
 };
+
+int IntrinsicInterface::CountArguments() const {
+  int n{0};
+  while (n < maxArguments && dummy[n].keyword != nullptr) {
+    ++n;
+  }
+  return n;
+}
 
 // GENERIC INTRINSIC FUNCTION INTERFACES
 // Each entry in this table defines a pattern.  Some intrinsic
@@ -613,10 +622,13 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
 //  EOF, FP_CLASS, INT_PTR_KIND, ISNAN, MALLOC
 //  probably more (these are PGI + Intel, possibly incomplete)
 
+// The following table contains the intrinsic functions listed in
+// Tables 16.2 and 16.3 in Fortran 2018.  The "unrestricted" functions
+// in Table 16.2 can be used as actual arguments, PROCEDURE() interfaces,
+// and procedure pointer targets.
 struct SpecificIntrinsicInterface : public IntrinsicInterface {
   const char *generic{nullptr};
-  bool isRestrictedSpecific{
-      false};  // when true, can only be called, not passed
+  bool isRestrictedSpecific{false};
 };
 
 static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
@@ -1156,24 +1168,32 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       std::move(rearranged)}};
 }
 
-struct IntrinsicProcTable::Implementation {
+class IntrinsicProcTable::Implementation {
+public:
   explicit Implementation(const common::IntrinsicTypeDefaultKinds &dfts)
-    : defaults{dfts} {
+    : defaults_{dfts} {
     for (const IntrinsicInterface &f : genericIntrinsicFunction) {
-      genericFuncs.insert(std::make_pair(std::string{f.name}, &f));
+      genericFuncs_.insert(std::make_pair(std::string{f.name}, &f));
     }
     for (const SpecificIntrinsicInterface &f : specificIntrinsicFunction) {
-      specificFuncs.insert(std::make_pair(std::string{f.name}, &f));
+      specificFuncs_.insert(std::make_pair(std::string{f.name}, &f));
     }
   }
 
   std::optional<SpecificCall> Probe(const CallCharacteristics &,
       ActualArguments &, parser::ContextualMessages *) const;
 
-  common::IntrinsicTypeDefaultKinds defaults;
-  std::multimap<std::string, const IntrinsicInterface *> genericFuncs;
-  std::multimap<std::string, const SpecificIntrinsicInterface *> specificFuncs;
+  std::optional<UnrestrictedSpecificIntrinsicFunctionInterface>
+  IsUnrestrictedSpecificIntrinsicFunction(const std::string &) const;
+
   std::ostream &Dump(std::ostream &) const;
+
+private:
+  common::IntrinsicTypeDefaultKinds defaults_;
+  std::multimap<std::string, const IntrinsicInterface *> genericFuncs_;
+  std::multimap<std::string, const SpecificIntrinsicInterface *> specificFuncs_;
+
+  DynamicType GetSpecificType(const TypePattern &) const;
 };
 
 // Probe the configured intrinsic procedure pattern tables in search of a
@@ -1191,10 +1211,10 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
       messages ? messages->at() : call.name,
       finalBuffer ? &specificBuffer : nullptr};
   std::string name{call.name.ToString()};
-  auto specificRange{specificFuncs.equal_range(name)};
+  auto specificRange{specificFuncs_.equal_range(name)};
   for (auto iter{specificRange.first}; iter != specificRange.second; ++iter) {
     if (auto specificCall{
-            iter->second->Match(call, defaults, arguments, specificErrors)}) {
+            iter->second->Match(call, defaults_, arguments, specificErrors)}) {
       if (const char *genericName{iter->second->generic}) {
         specificCall->specificIntrinsic.name = genericName;
       }
@@ -1208,10 +1228,10 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
   parser::ContextualMessages genericErrors{
       messages ? messages->at() : call.name,
       finalBuffer ? &genericBuffer : nullptr};
-  auto genericRange{genericFuncs.equal_range(name)};
+  auto genericRange{genericFuncs_.equal_range(name)};
   for (auto iter{genericRange.first}; iter != genericRange.second; ++iter) {
     if (auto specificCall{
-            iter->second->Match(call, defaults, arguments, genericErrors)}) {
+            iter->second->Match(call, defaults_, arguments, genericErrors)}) {
       return specificCall;
     }
   }
@@ -1245,6 +1265,36 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
   return std::nullopt;
 }
 
+std::optional<UnrestrictedSpecificIntrinsicFunctionInterface>
+IntrinsicProcTable::Implementation::IsUnrestrictedSpecificIntrinsicFunction(
+    const std::string &name) const {
+  auto specificRange{specificFuncs_.equal_range(name)};
+  for (auto iter{specificRange.first}; iter != specificRange.second; ++iter) {
+    const SpecificIntrinsicInterface &specific{*iter->second};
+    if (!specific.isRestrictedSpecific) {
+      UnrestrictedSpecificIntrinsicFunctionInterface result;
+      if (specific.generic != nullptr) {
+        result.genericName = std::string(specific.generic);
+      } else {
+        result.genericName = name;
+      }
+      result.numArguments = specific.CountArguments();
+      result.argumentType = GetSpecificType(specific.dummy[0].typePattern);
+      result.resultType = GetSpecificType(specific.result);
+      return result;
+    }
+  }
+  return std::nullopt;
+}
+
+DynamicType IntrinsicProcTable::Implementation::GetSpecificType(
+    const TypePattern &pattern) const {
+  const CategorySet &set{pattern.categorySet};
+  CHECK(set.count() == 1);
+  TypeCategory category{set.LeastElement().value()};
+  return DynamicType{category, defaults_.GetDefaultKind(category)};
+}
+
 IntrinsicProcTable::~IntrinsicProcTable() {
   // Discard the configured tables.
   delete impl_;
@@ -1263,6 +1313,13 @@ std::optional<SpecificCall> IntrinsicProcTable::Probe(
     parser::ContextualMessages *messages) const {
   CHECK(impl_ != nullptr || !"IntrinsicProcTable: not configured");
   return impl_->Probe(call, arguments, messages);
+}
+
+std::optional<UnrestrictedSpecificIntrinsicFunctionInterface>
+IntrinsicProcTable::IsUnrestrictedSpecificIntrinsicFunction(
+    const std::string &name) const {
+  CHECK(impl_ != nullptr || !"IntrinsicProcTable: not configured");
+  return impl_->IsUnrestrictedSpecificIntrinsicFunction(name);
 }
 
 std::ostream &TypePattern::Dump(std::ostream &o) const {
@@ -1307,11 +1364,11 @@ std::ostream &IntrinsicInterface::Dump(std::ostream &o) const {
 
 std::ostream &IntrinsicProcTable::Implementation::Dump(std::ostream &o) const {
   o << "generic intrinsic functions:\n";
-  for (const auto &iter : genericFuncs) {
+  for (const auto &iter : genericFuncs_) {
     iter.second->Dump(o << iter.first << ": ") << '\n';
   }
   o << "specific intrinsic functions:\n";
-  for (const auto &iter : specificFuncs) {
+  for (const auto &iter : specificFuncs_) {
     iter.second->Dump(o << iter.first << ": ");
     if (const char *g{iter.second->generic}) {
       o << " -> " << g;

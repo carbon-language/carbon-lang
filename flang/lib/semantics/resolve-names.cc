@@ -27,6 +27,7 @@
 #include "../common/restorer.h"
 #include "../evaluate/common.h"
 #include "../evaluate/fold.h"
+#include "../evaluate/intrinsics.h"
 #include "../evaluate/tools.h"
 #include "../evaluate/type.h"
 #include "../parser/parse-tree-visitor.h"
@@ -473,7 +474,7 @@ public:
       return *symbol;
     } else {
       SayAlreadyDeclared(name, *symbol);
-      // replace the old symbols with a new one with correct details
+      // replace the old symbol with a new one with correct details
       EraseSymbol(name);
       return MakeSymbol(name, attrs, details);
     }
@@ -683,9 +684,10 @@ public:
   void Post(const parser::ProcedureDeclarationStmt &);
   bool Pre(const parser::ProcComponentDefStmt &);
   void Post(const parser::ProcComponentDefStmt &);
-  bool Pre(const parser::ProcInterface &x);
-  void Post(const parser::ProcInterface &x);
-  void Post(const parser::ProcDecl &x);
+  bool Pre(const parser::ProcPointerInit &);
+  bool Pre(const parser::ProcInterface &);
+  void Post(const parser::ProcInterface &);
+  void Post(const parser::ProcDecl &);
   bool Pre(const parser::TypeBoundProcedurePart &);
   void Post(const parser::ContainsStmt &);
   bool Pre(const parser::TypeBoundProcBinding &) { return BeginAttrs(); }
@@ -775,6 +777,7 @@ private:
   Attrs HandleSaveName(const SourceName &, Attrs);
   void AddSaveName(std::set<SourceName> &, const SourceName &);
   void SetSaveAttr(Symbol &);
+  bool HandleUnrestrictedSpecificIntrinsicFunction(const parser::Name &);
 
   // Declare an object or procedure entity.
   // T is one of: EntityDetails, ObjectEntityDetails, ProcEntityDetails
@@ -2550,6 +2553,7 @@ bool DeclarationVisitor::Pre(const parser::IntentStmt &x) {
       HandleAttributeStmt(IntentSpecToAttr(intentSpec), names);
 }
 bool DeclarationVisitor::Pre(const parser::IntrinsicStmt &x) {
+  // TODO pmk: actually look up the intrinsic
   return HandleAttributeStmt(Attr::INTRINSIC, x.v);
 }
 bool DeclarationVisitor::Pre(const parser::OptionalStmt &x) {
@@ -3035,12 +3039,24 @@ bool DeclarationVisitor::Pre(const parser::ProcComponentDefStmt &) {
 void DeclarationVisitor::Post(const parser::ProcComponentDefStmt &) {
   interfaceName_ = nullptr;
 }
+bool DeclarationVisitor::Pre(const parser::ProcPointerInit &x) {
+  if (auto *name{std::get_if<parser::Name>(&x.u)}) {
+    if (FindSymbol(*name) != nullptr) {
+      return false;
+    }
+    if (HandleUnrestrictedSpecificIntrinsicFunction(*name)) {
+      return false;
+    }
+  }
+  return true;
+}
 bool DeclarationVisitor::Pre(const parser::ProcInterface &x) {
   if (auto *name{std::get_if<parser::Name>(&x.u)}) {
-    if (const Symbol * symbol{FindSymbol(*name)}) {
-      if (symbol->HasExplicitInterface()) {
-        return true;
-      }
+    if (FindSymbol(*name) != nullptr) {
+      return false;
+    }
+    if (HandleUnrestrictedSpecificIntrinsicFunction(*name)) {
+      return false;
     }
     // Simple names (lacking parameters and size) of intrinsic types re
     // ambiguous in Fortran when used as instances of proc-interface.
@@ -3071,8 +3087,6 @@ bool DeclarationVisitor::Pre(const parser::ProcInterface &x) {
     } else if (name->source == "ncharacter") {
       proc.u = parser::IntrinsicTypeSpec{
           parser::IntrinsicTypeSpec::NCharacter{std::nullopt}};
-    } else {
-      // TODO pmk: allow intrinsic function names from Table 16.2.
     }
   }
   return true;
@@ -3541,6 +3555,29 @@ void DeclarationVisitor::CheckCommonBlockDerivedType(
         }
       }
     }
+  }
+}
+
+bool DeclarationVisitor::HandleUnrestrictedSpecificIntrinsicFunction(
+    const parser::Name &name) {
+  // TODO pmk: invoke this on unresolved actual arguments, too
+  if (context()
+          .intrinsics()
+          .IsUnrestrictedSpecificIntrinsicFunction(name.source.ToString())
+          .has_value()) {
+    // Unrestricted specific intrinsic function names (e.g., "cos")
+    // are acceptable as procedure interfaces.
+    Scope *scope{&currScope()};
+    if (scope->kind() == Scope::Kind::DerivedType) {
+      scope = &scope->parent();
+    }
+    Symbol &symbol{MakeSymbol(*scope, name.source, Attrs{Attr::INTRINSIC})};
+    symbol.set_details(MiscDetails{MiscDetails::Kind::SpecificIntrinsic});
+    CHECK(symbol.HasExplicitInterface());
+    Resolve(name, symbol);
+    return true;
+  } else {
+    return false;
   }
 }
 

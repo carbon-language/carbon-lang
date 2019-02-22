@@ -315,10 +315,10 @@ private:
 std::ostream &operator<<(std::ostream &, const DeclTypeSpec &);
 
 // This represents a proc-interface in the declaration of a procedure or
-// procedure component. It comprises a symbol (representing the specific
-// interface), a decl-type-spec (representing the function return type),
-// or one of a list of specific intrinsic function names.
-// TODO pmk WIP here
+// procedure component. It comprises a symbol that represents the specific
+// interface or a decl-type-spec that represents the function return type.
+// Approved specific intrinsic functions are represented by symbols with
+// MiscDetails.
 class ProcInterface {
 public:
   const Symbol *symbol() const { return symbol_; }

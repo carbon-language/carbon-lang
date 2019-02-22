@@ -608,9 +608,8 @@ static MaybeExpr AnalyzeExpr(
   }
   auto kind{AnalyzeKindParam(context, x.kind, defaultKind)};
   if (letterKind.has_value() && kind != *letterKind) {
-    context.Say(
-        "explicit kind parameter on real constant disagrees with "
-        "exponent letter"_en_US);
+    context.Say("explicit kind parameter on real constant disagrees with "
+                "exponent letter"_en_US);
   }
   auto result{common::SearchTypes(
       RealTypeVisitor{kind, x.real.source, context.GetFoldingContext()})};
@@ -1542,7 +1541,6 @@ static std::optional<CallAndArguments> Procedure(
             if (MaybeExpr component{AnalyzeExpr(context, pcr.v)}) {
               // TODO distinguish PCR from TBP
               // TODO optional PASS argument for TBP
-              context.Say("TODO: proc component ref"_err_en_US);
               return std::nullopt;
             } else {
               return std::nullopt;
