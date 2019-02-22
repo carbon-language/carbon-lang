@@ -14,10 +14,9 @@
 
 #include "program.h"
 
-namespace Fortran::IntermediateRepresentation {
+namespace Fortran::FIR {
 
 Program::Program(llvm::StringRef id) : name_{id} {}
-Program::~Program() { procedureMap_.clear(); }
 
 void Program::insertBefore(Procedure *subprog, Procedure *before) {
   if (before) {

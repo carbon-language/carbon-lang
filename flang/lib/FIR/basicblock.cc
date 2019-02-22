@@ -15,7 +15,7 @@
 #include "program.h"
 #include "stmt.h"
 
-namespace Fortran::IntermediateRepresentation {
+namespace Fortran::FIR {
 
 BasicBlock::BasicBlock(Region *parentRegion, BasicBlock *insertBefore)
   : ChildMixin{parentRegion} {
@@ -33,10 +33,10 @@ void BasicBlock::insertBefore(Statement *stmt, Statement *before) {
 }
 
 void BasicBlock::addPred(BasicBlock *bb) {
-  for (auto *p : predecessors_) {
+  for (auto *p : preds_) {
     if (p == bb) return;
   }
-  predecessors_.push_back(bb);
+  preds_.push_back(bb);
 }
 
 const Statement *BasicBlock::getTerminator() const {

@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_INTERMEDIATEREPRESENTATION_REGION_H_
-#define FORTRAN_INTERMEDIATEREPRESENTATION_REGION_H_
+#ifndef FORTRAN_FIR_REGION_H_
+#define FORTRAN_FIR_REGION_H_
 
 #include "procedure.h"
 #include "stmt.h"
 #include "../semantics/semantics.h"
 
-namespace Fortran::IntermediateRepresentation {
+namespace Fortran::FIR {
 
 class Procedure;
 class BasicBlock;

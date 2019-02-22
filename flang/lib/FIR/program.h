@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_INTERMEDIATEREPRESENTATION_PROGRAM_H_
-#define FORTRAN_INTERMEDIATEREPRESENTATION_PROGRAM_H_
+#ifndef FORTRAN_FIR_PROGRAM_H_
+#define FORTRAN_FIR_PROGRAM_H_
 
 #include "common.h"
 #include "procedure.h"
@@ -23,7 +23,7 @@
 #include "llvm/ADT/Twine.h"
 #include <string>
 
-namespace Fortran::IntermediateRepresentation {
+namespace Fortran::FIR {
 
 class Procedure;
 struct GraphWriter;
@@ -35,7 +35,6 @@ public:
   using ProcedureMapType = llvm::StringMap<Procedure *>;
 
   explicit Program(llvm::StringRef id);
-  ~Program();
   void insertBefore(Procedure *subprog, Procedure *before = nullptr);
   ProcedureListType &getSublist(Procedure *) { return procedureList_; }
   bool containsProcedure(llvm::StringRef name) {

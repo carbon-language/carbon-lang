@@ -14,7 +14,7 @@
 
 #include "program.h"
 
-namespace Fortran::IntermediateRepresentation {
+namespace Fortran::FIR {
 
 Region::Region(
     Procedure *procedure, Scope *scope, Region *inRegion, Region *insertBefore)

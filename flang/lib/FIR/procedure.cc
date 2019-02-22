@@ -14,7 +14,7 @@
 
 #include "procedure.h"
 
-namespace Fortran::IntermediateRepresentation {
+namespace Fortran::FIR {
 
 Procedure::Procedure(Program *program, FunctionType *ty, LinkageTypes lt,
     unsigned addrSpace, const llvm::Twine &n, Procedure *before)
@@ -63,16 +63,16 @@ void Procedure::FlattenRegions() {
   for (auto &block : GetBlocks()) {
     auto *region{block.GetRegion()};
     if (!region->IsOutermost()) {
-      for (auto *successor : succ_list(block)) {
-        auto *successorRegion{successor->GetRegion()};
-        if (successorRegion != region &&
-            DistinctScopes(successorRegion, region)) {
-          if (IsAncestor(region, successorRegion)) {
-            AddEnterScopes(RegionDepth(region, successorRegion),
-                successor->SplitEdge(&block));
-          } else if (IsAncestor(successorRegion, region)) {
-            AddExitScopes(RegionDepth(successorRegion, region),
-                block.SplitEdge(successor));
+      for (auto *succ : succ_list(block)) {
+        auto *succRegion{succ->GetRegion()};
+        if (succRegion != region &&
+            DistinctScopes(succRegion, region)) {
+          if (IsAncestor(region, succRegion)) {
+            AddEnterScopes(RegionDepth(region, succRegion),
+                succ->SplitEdge(&block));
+          } else if (IsAncestor(succRegion, region)) {
+            AddExitScopes(RegionDepth(succRegion, region),
+                block.SplitEdge(succ));
           } else {
             // TODO: edge to a cousin region
             CHECK(false);

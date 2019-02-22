@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_INTERMEDIATEREPRESENTATION_PROCEDURE_H_
-#define FORTRAN_INTERMEDIATEREPRESENTATION_PROCEDURE_H_
+#ifndef FORTRAN_FIR_PROCEDURE_H_
+#define FORTRAN_FIR_PROCEDURE_H_
 
 #include "mixin.h"
 #include "program.h"
@@ -21,7 +21,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 
-namespace Fortran::IntermediateRepresentation {
+namespace Fortran::FIR {
 
 class Program;
 class Region;

@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_INTERMEDIATEREPRESENTATION_BASICBLOCK_H_
-#define FORTRAN_INTERMEDIATEREPRESENTATION_BASICBLOCK_H_
+#ifndef FORTRAN_FIR_BASICBLOCK_H_
+#define FORTRAN_FIR_BASICBLOCK_H_
 
 #include "mixin.h"
 #include "region.h"
 #include <iostream>
 
-namespace Fortran::IntermediateRepresentation {
+namespace Fortran::FIR {
 
 class Region;
 class Statement;
@@ -54,19 +54,19 @@ public:
   void SetRegion(Region *region) { parent = region; }
   Region *GetRegion() const { return parent; }
   void addPred(BasicBlock *bb);
-  std::vector<BasicBlock *> &Predecessors() { return predecessors_; }
+  std::vector<BasicBlock *> &preds() { return preds_; }
   StatementListType &Statements() { return statementList_; }
   BasicBlock *SplitEdge(BasicBlock *toBlock) { return nullptr; }
 
 private:
   StatementListType statementList_;
-  std::vector<BasicBlock *> predecessors_;
+  std::vector<BasicBlock *> preds_;
   explicit BasicBlock(Region *parentRegion, BasicBlock *insertBefore);
 };
 
 inline std::list<BasicBlock *> pred_list(BasicBlock &block) {
   return std::list<BasicBlock *>{
-      block.Predecessors().begin(), block.Predecessors().end()};
+      block.preds().begin(), block.preds().end()};
 }
 
 }
