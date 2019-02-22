@@ -1409,6 +1409,16 @@ Sema::DeviceDiagBuilder::DeviceDiagBuilder(Kind K, SourceLocation Loc,
   }
 }
 
+Sema::DeviceDiagBuilder::DeviceDiagBuilder(DeviceDiagBuilder &&D)
+    : S(D.S), Loc(D.Loc), DiagID(D.DiagID), Fn(D.Fn),
+      ShowCallStack(D.ShowCallStack), ImmediateDiag(D.ImmediateDiag),
+      PartialDiagId(D.PartialDiagId) {
+  // Clean the previous diagnostics.
+  D.ShowCallStack = false;
+  D.ImmediateDiag.reset();
+  D.PartialDiagId.reset();
+}
+
 Sema::DeviceDiagBuilder::~DeviceDiagBuilder() {
   if (ImmediateDiag) {
     // Emit our diagnostic and, if it was a warning or error, output a callstack

@@ -10189,6 +10189,8 @@ public:
 
     DeviceDiagBuilder(Kind K, SourceLocation Loc, unsigned DiagID,
                       FunctionDecl *Fn, Sema &S);
+    DeviceDiagBuilder(DeviceDiagBuilder &&D);
+    DeviceDiagBuilder(const DeviceDiagBuilder &) = default;
     ~DeviceDiagBuilder();
 
     /// Convertible to bool: True if we immediately emitted an error, false if
