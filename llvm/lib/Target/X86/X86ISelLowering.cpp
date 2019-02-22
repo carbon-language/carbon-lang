@@ -41960,7 +41960,10 @@ static SDValue combineExtractSubvector(SDNode *N, SelectionDAG &DAG,
 
   // Capture the original wide type in the likely case that we need to bitcast
   // back to this type.
-  EVT VT = N->getValueType(0);
+  if (!N->getValueType(0).isSimple())
+    return SDValue();
+
+  MVT VT = N->getSimpleValueType(0);
   EVT WideVecVT = N->getOperand(0).getValueType();
   SDValue WideVec = peekThroughBitcasts(N->getOperand(0));
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
@@ -41986,64 +41989,63 @@ static SDValue combineExtractSubvector(SDNode *N, SelectionDAG &DAG,
   if (DCI.isBeforeLegalizeOps())
     return SDValue();
 
-  MVT OpVT = N->getSimpleValueType(0);
   SDValue InVec = N->getOperand(0);
   unsigned IdxVal = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
 
   if (ISD::isBuildVectorAllZeros(InVec.getNode()))
-    return getZeroVector(OpVT, Subtarget, DAG, SDLoc(N));
+    return getZeroVector(VT, Subtarget, DAG, SDLoc(N));
 
   if (ISD::isBuildVectorAllOnes(InVec.getNode())) {
-    if (OpVT.getScalarType() == MVT::i1)
-      return DAG.getConstant(1, SDLoc(N), OpVT);
-    return getOnesVector(OpVT, DAG, SDLoc(N));
+    if (VT.getScalarType() == MVT::i1)
+      return DAG.getConstant(1, SDLoc(N), VT);
+    return getOnesVector(VT, DAG, SDLoc(N));
   }
 
   if (InVec.getOpcode() == ISD::BUILD_VECTOR)
     return DAG.getBuildVector(
-        OpVT, SDLoc(N),
-        InVec.getNode()->ops().slice(IdxVal, OpVT.getVectorNumElements()));
+        VT, SDLoc(N),
+        InVec.getNode()->ops().slice(IdxVal, VT.getVectorNumElements()));
 
   // If we're extracting the lowest subvector and we're the only user,
   // we may be able to perform this with a smaller vector width.
   if (IdxVal == 0 && InVec.hasOneUse()) {
     unsigned InOpcode = InVec.getOpcode();
-    if (OpVT == MVT::v2f64 && InVec.getValueType() == MVT::v4f64) {
+    if (VT == MVT::v2f64 && InVec.getValueType() == MVT::v4f64) {
       // v2f64 CVTDQ2PD(v4i32).
       if (InOpcode == ISD::SINT_TO_FP &&
           InVec.getOperand(0).getValueType() == MVT::v4i32) {
-        return DAG.getNode(X86ISD::CVTSI2P, SDLoc(N), OpVT, InVec.getOperand(0));
+        return DAG.getNode(X86ISD::CVTSI2P, SDLoc(N), VT, InVec.getOperand(0));
       }
       // v2f64 CVTPS2PD(v4f32).
       if (InOpcode == ISD::FP_EXTEND &&
           InVec.getOperand(0).getValueType() == MVT::v4f32) {
-        return DAG.getNode(X86ISD::VFPEXT, SDLoc(N), OpVT, InVec.getOperand(0));
+        return DAG.getNode(X86ISD::VFPEXT, SDLoc(N), VT, InVec.getOperand(0));
       }
     }
     if ((InOpcode == ISD::ZERO_EXTEND || InOpcode == ISD::SIGN_EXTEND) &&
-        OpVT.is128BitVector() &&
+        VT.is128BitVector() &&
         InVec.getOperand(0).getSimpleValueType().is128BitVector()) {
       unsigned ExtOp =
-        InOpcode == ISD::ZERO_EXTEND ? ISD::ZERO_EXTEND_VECTOR_INREG
-                                     : ISD::SIGN_EXTEND_VECTOR_INREG;
-      return DAG.getNode(ExtOp, SDLoc(N), OpVT, InVec.getOperand(0));
+          InOpcode == ISD::ZERO_EXTEND ? ISD::ZERO_EXTEND_VECTOR_INREG
+                                       : ISD::SIGN_EXTEND_VECTOR_INREG;
+      return DAG.getNode(ExtOp, SDLoc(N), VT, InVec.getOperand(0));
     }
     if ((InOpcode == ISD::ZERO_EXTEND_VECTOR_INREG ||
          InOpcode == ISD::SIGN_EXTEND_VECTOR_INREG) &&
-        OpVT.is128BitVector() &&
+        VT.is128BitVector() &&
         InVec.getOperand(0).getSimpleValueType().is128BitVector()) {
-      return DAG.getNode(InOpcode, SDLoc(N), OpVT, InVec.getOperand(0));
+      return DAG.getNode(InOpcode, SDLoc(N), VT, InVec.getOperand(0));
     }
     if (InOpcode == ISD::BITCAST) {
       // TODO - do this for target shuffles in general.
       SDValue InVecBC = peekThroughOneUseBitcasts(InVec);
-      if (InVecBC.getOpcode() == X86ISD::PSHUFB && OpVT.is128BitVector()) {
+      if (InVecBC.getOpcode() == X86ISD::PSHUFB && VT.is128BitVector()) {
         SDLoc DL(N);
         SDValue SubPSHUFB =
             DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8,
                         extract128BitVector(InVecBC.getOperand(0), 0, DAG, DL),
                         extract128BitVector(InVecBC.getOperand(1), 0, DAG, DL));
-        return DAG.getBitcast(OpVT, SubPSHUFB);
+        return DAG.getBitcast(VT, SubPSHUFB);
       }
     }
   }
