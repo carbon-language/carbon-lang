@@ -1038,10 +1038,6 @@ bool TargetPassConfig::getOptimizeRegAlloc() const {
   llvm_unreachable("Invalid optimize-regalloc state");
 }
 
-/// RegisterRegAlloc's global Registry tracks allocator registration.
-MachinePassRegistry<RegisterRegAlloc::FunctionPassCtor>
-    RegisterRegAlloc::Registry;
-
 /// A dummy default pass factory indicates whether the register allocator is
 /// overridden on the command line.
 static llvm::once_flag InitializeDefaultRegisterAllocatorFlag;
