@@ -10,9 +10,6 @@
 
 // XFAIL: netbsd && !asan
 
-// FIXME(dliew): Make this test work with TSan
-// XFAIL: darwin && tsan
-
 volatile int *null = 0;
 
 namespace Xyz {
