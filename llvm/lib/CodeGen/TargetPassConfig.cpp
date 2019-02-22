@@ -407,7 +407,7 @@ TargetPassConfig::TargetPassConfig(LLVMTargetMachine &TM, PassManagerBase &pm)
     TM.Options.EnableIPRA = EnableIPRA;
   else {
     // If not explicitly specified, use target default.
-    TM.Options.EnableIPRA = TM.useIPRA();
+    TM.Options.EnableIPRA |= TM.useIPRA();
   }
 
   if (TM.Options.EnableIPRA)
