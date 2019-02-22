@@ -619,7 +619,6 @@ public:
   using ArraySpecVisitor::Post;
   using ArraySpecVisitor::Pre;
 
-  bool Pre(const parser::ImplicitStmt &);
   void Post(const parser::EntityDecl &);
   void Post(const parser::ObjectDecl &);
   void Post(const parser::PointerDecl &);
@@ -718,6 +717,7 @@ protected:
   void CheckScalarIntegerType(const parser::Name &);
   void CheckCommonBlocks();
   void CheckSaveStmts();
+  bool CheckNotInBlock(const char *);
 
 private:
   // The attribute corresponding to the statement containing an ObjectDecl
@@ -751,7 +751,6 @@ private:
   // the interface name, if any.
   const parser::Name *interfaceName_{nullptr};
 
-  bool CheckNotInBlock(const char *);
   bool HandleAttributeStmt(Attr, const std::list<parser::Name> &);
   Symbol &HandleAttributeStmt(Attr, const parser::Name &);
   Symbol &DeclareUnknownEntity(const parser::Name &, Attrs);
@@ -944,6 +943,7 @@ public:
   bool Pre(const parser::MainProgram &);
   void Post(const parser::EndProgramStmt &);
   void Post(const parser::Program &);
+  bool Pre(const parser::ImplicitStmt &);
   void Post(const parser::PointerObject &);
   void Post(const parser::AllocateObject &);
   void Post(const parser::PointerAssignmentStmt &);
@@ -2461,10 +2461,6 @@ void DeclarationVisitor::Post(const parser::DimensionStmt::Declaration &x) {
   DeclareObjectEntity(name, Attrs{});
 }
 
-bool DeclarationVisitor::Pre(const parser::ImplicitStmt &x) {
-  return CheckNotInBlock("IMPLICIT") && ImplicitRulesVisitor::Pre(x);
-}
-
 void DeclarationVisitor::Post(const parser::EntityDecl &x) {
   // TODO: may be under StructureStmt
   const auto &name{std::get<parser::ObjectName>(x.t)};
@@ -3356,7 +3352,6 @@ void DeclarationVisitor::CheckSaveStmts() {
 // If SAVE attribute can't be set on symbol, return error message.
 std::optional<MessageFixedText> DeclarationVisitor::CheckSaveAttr(
     const Symbol &symbol) {
-  std::optional<MessageFixedText> msg;
   if (symbol.IsDummy()) {
     return "SAVE attribute may not be applied to dummy argument '%s'"_err_en_US;
   } else if (symbol.IsFuncResult()) {
@@ -4427,6 +4422,10 @@ bool ResolveNamesVisitor::Pre(const parser::MainProgram &x) {
 }
 
 void ResolveNamesVisitor::Post(const parser::EndProgramStmt &) { PopScope(); }
+
+bool ResolveNamesVisitor::Pre(const parser::ImplicitStmt &x) {
+  return CheckNotInBlock("IMPLICIT") && ImplicitRulesVisitor::Pre(x);
+}
 
 void ResolveNamesVisitor::Post(const parser::PointerObject &x) {
   std::visit(
