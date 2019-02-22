@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_INTERMEDIATEREPRESENTATION_AFFORESTATION_H_
-#define FORTRAN_INTERMEDIATEREPRESENTATION_AFFORESTATION_H_
+#ifndef FORTRAN_FIR_AFFORESTATION_H_
+#define FORTRAN_FIR_AFFORESTATION_H_
 
 #include <string>
 
@@ -25,7 +25,7 @@ namespace Fortran::semantics {
 class SemanticsContext;
 }
 
-namespace Fortran::IntermediateRepresentation {
+namespace Fortran::FIR {
 class Program;
 
 void SetDebugChannel(const std::string &filename);

@@ -22,7 +22,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
 
-namespace Fortran::IntermediateRepresentation {
+namespace Fortran::FIR {
 
 static llvm::raw_ostream *debugChannel;
 static llvm::raw_ostream &DebugChannel() {
@@ -1108,22 +1108,22 @@ static Expression *BuildLoopLatchExpression(
   return AlwaysTrueExpression();
 }
 
-static void CreateSwitchHelper(IntermediateRepresentationBuilder *builder,
+static void CreateSwitchHelper(FIRBuilder *builder,
     const Evaluation &condition, BasicBlock *defaultCase,
     const SwitchStmt::ValueSuccPairListType &rest) {
   builder->CreateSwitch(condition, defaultCase, rest);
 }
-static void CreateSwitchCaseHelper(IntermediateRepresentationBuilder *builder,
+static void CreateSwitchCaseHelper(FIRBuilder *builder,
     const Evaluation &condition, BasicBlock *defaultCase,
     const SwitchCaseStmt::ValueSuccPairListType &rest) {
   builder->CreateSwitchCase(condition, defaultCase, rest);
 }
-static void CreateSwitchRankHelper(IntermediateRepresentationBuilder *builder,
+static void CreateSwitchRankHelper(FIRBuilder *builder,
     const Evaluation &condition, BasicBlock *defaultCase,
     const SwitchRankStmt::ValueSuccPairListType &rest) {
   builder->CreateSwitchRank(condition, defaultCase, rest);
 }
-static void CreateSwitchTypeHelper(IntermediateRepresentationBuilder *builder,
+static void CreateSwitchTypeHelper(FIRBuilder *builder,
     const Evaluation &condition, BasicBlock *defaultCase,
     const SwitchTypeStmt::ValueSuccPairListType &rest) {
   builder->CreateSwitchType(condition, defaultCase, rest);
@@ -1135,7 +1135,7 @@ struct FortranIRLowering {
 
   FortranIRLowering(semantics::SemanticsContext &sc, bool debugLinearIR)
     : fir_{new Program("program_name")}, semanticsContext_{sc},
-      debugLinearIntermediateRepresentation_{debugLinearIR} {}
+      debugLinearFIR_{debugLinearIR} {}
   ~FortranIRLowering() { CHECK(!builder_); }
 
   template<typename A> constexpr bool Pre(const A &) { return true; }
@@ -1169,15 +1169,15 @@ struct FortranIRLowering {
   void ProcessRoutine(const T &here, const std::string &name) {
     CHECK(!fir_->containsProcedure(name));
     auto *subp{fir_->getOrInsertProcedure(name, nullptr, {})};
-    builder_ = new IntermediateRepresentationBuilder(
+    builder_ = new FIRBuilder(
         *CreateBlock(subp->getLastRegion()));
     AnalysisData ad;
     ControlFlowAnalyzer linearize{linearOperations_, ad};
     Walk(here, linearize);
-    if (debugLinearIntermediateRepresentation_) {
+    if (debugLinearFIR_) {
       dumpLinearRepresentation();
     }
-    ConstructIntermediateRepresentation(ad);
+    ConstructFIR(ad);
     DrawRemainingArcs();
     Cleanup();
   }
@@ -1539,7 +1539,7 @@ struct FortranIRLowering {
     builder_->CreateExpr(forallConstructStmt);
   }
 
-  void ConstructIntermediateRepresentation(AnalysisData &ad) {
+  void ConstructFIR(AnalysisData &ad) {
     for (auto iter{linearOperations_.begin()}, iend{linearOperations_.end()};
          iter != iend; ++iter) {
       const auto &op{*iter};
@@ -1818,7 +1818,7 @@ struct FortranIRLowering {
     } else {
       using namespace std::placeholders;
       controlFlowEdgesToAdd_.emplace_back(std::bind(
-          [](IntermediateRepresentationBuilder *builder, BasicBlock *block,
+          [](FIRBuilder *builder, BasicBlock *block,
               LinearLabelRef dest, const LabelMapType &map) {
             builder->SetInsertionPoint(block);
             CHECK(map.find(dest) != map.end());
@@ -1837,7 +1837,7 @@ struct FortranIRLowering {
     } else {
       using namespace std::placeholders;
       controlFlowEdgesToAdd_.emplace_back(std::bind(
-          [](IntermediateRepresentationBuilder *builder, BasicBlock *block,
+          [](FIRBuilder *builder, BasicBlock *block,
               Expression *expr, LinearLabelRef trueDest,
               LinearLabelRef falseDest, const LabelMapType &map) {
             builder->SetInsertionPoint(block);
@@ -1876,7 +1876,7 @@ struct FortranIRLowering {
     if (defer) {
       using namespace std::placeholders;
       controlFlowEdgesToAdd_.emplace_back(std::bind(
-          [](IntermediateRepresentationBuilder *builder, BasicBlock *block,
+          [](FIRBuilder *builder, BasicBlock *block,
               const Evaluation &expr, LinearLabelRef defaultDest,
               const std::vector<typename SWITCHTYPE::ValueType> &values,
               const std::vector<LinearLabelRef> &labels, F function,
@@ -1916,7 +1916,7 @@ struct FortranIRLowering {
     if (defer) {
       using namespace std::placeholders;
       controlFlowEdgesToAdd_.emplace_back(std::bind(
-          [](IntermediateRepresentationBuilder *builder, BasicBlock *block,
+          [](FIRBuilder *builder, BasicBlock *block,
               Variable *variable, const std::vector<LinearLabelRef> &fixme,
               const LabelMapType &map) {
             builder->SetInsertionPoint(block);
@@ -1945,13 +1945,13 @@ struct FortranIRLowering {
     blockMap_.clear();
   }
 
-  IntermediateRepresentationBuilder *builder_{nullptr};
+  FIRBuilder *builder_{nullptr};
   Program *fir_;
   std::list<LinearOp> linearOperations_;
   std::list<Closure> controlFlowEdgesToAdd_;
   LabelMapType blockMap_;
   semantics::SemanticsContext &semanticsContext_;
-  bool debugLinearIntermediateRepresentation_;
+  bool debugLinearFIR_;
 };
 
 Program *CreateFortranIR(const parser::Program &program,
