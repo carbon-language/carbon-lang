@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_INTERMEDIATEREPRESENTATION_BUILDER_H_
-#define FORTRAN_INTERMEDIATEREPRESENTATION_BUILDER_H_
+#ifndef FORTRAN_FIR_BUILDER_H_
+#define FORTRAN_FIR_BUILDER_H_
 
 #include "stmt.h"
 #include <initializer_list>
 
-namespace Fortran::IntermediateRepresentation {
+namespace Fortran::FIR {
 
-struct IntermediateRepresentationBuilder {
-  explicit IntermediateRepresentationBuilder(BasicBlock &block)
+struct FIRBuilder {
+  explicit FIRBuilder(BasicBlock &block)
     : cursorRegion_{block.getParent()}, cursorBlock_{&block} {}
   template<typename A> Statement &Insert(A &&s) {
     CHECK(GetInsertionPoint());

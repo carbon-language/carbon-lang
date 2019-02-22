@@ -15,9 +15,9 @@
 #include "builder.h"
 #include <ostream>
 
-namespace Fortran::IntermediateRepresentation {
+namespace Fortran::FIR {
 
-void IntermediateRepresentationBuilder::dump() const {
+void FIRBuilder::dump() const {
   std::cerr << "builder state:\n";
 }
 
