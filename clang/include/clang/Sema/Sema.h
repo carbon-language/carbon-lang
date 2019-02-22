@@ -9471,8 +9471,11 @@ public:
       SourceLocation StartLoc, SourceLocation LParenLoc, SourceLocation MLoc,
       SourceLocation KindLoc, SourceLocation EndLoc);
   /// Called on well-formed 'to' clause.
-  OMPClause *ActOnOpenMPToClause(ArrayRef<Expr *> VarList,
-                                 const OMPVarListLocTy &Locs);
+  OMPClause *
+  ActOnOpenMPToClause(ArrayRef<Expr *> VarList, CXXScopeSpec &MapperIdScopeSpec,
+                      DeclarationNameInfo &MapperId,
+                      const OMPVarListLocTy &Locs,
+                      ArrayRef<Expr *> UnresolvedMappers = llvm::None);
   /// Called on well-formed 'from' clause.
   OMPClause *ActOnOpenMPFromClause(ArrayRef<Expr *> VarList,
                                    const OMPVarListLocTy &Locs);
