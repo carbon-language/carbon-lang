@@ -20,10 +20,75 @@
 #include "rte.h"
 #include <cerrno>
 #include <cfenv>
+#include <sstream>
+#if defined(__APPLE__) || defined(__unix__)
+#define HAS_DLOPEN
+#include <dlfcn.h>
+#endif
 
 namespace Fortran::evaluate::rte {
 
 using namespace Fortran::parser::literals;
+// Note: argument passing is ignored in equivalence
+bool HostRte::HasEquivalentProcedure(const RteProcedureSymbol &sym) const {
+  const auto rteProcRange{procedures.equal_range(sym.name)};
+  const size_t nargs{sym.argumentsType.size()};
+  for (auto iter{rteProcRange.first}; iter != rteProcRange.second; ++iter) {
+    if (nargs == iter->second.argumentsType.size() &&
+        sym.returnType == iter->second.returnType &&
+        (sym.isElemental || iter->second.isElemental)) {
+      bool match{true};
+      int pos{0};
+      for (const auto &type : sym.argumentsType) {
+        if (type != iter->second.argumentsType[pos++]) {
+          match = false;
+          break;
+        }
+      }
+      if (match) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+void HostRte::LoadTargetRteLibrary(const TargetRteLibrary &lib) {
+  if (dynamicallyLoadedLibraries.find(lib.name) !=
+      dynamicallyLoadedLibraries.end()) {
+    return;  // already loaded
+  }
+#ifdef HAS_DLOPEN
+  void *handle = dlopen((lib.name + std::string{".so"}).c_str(), RTLD_LAZY);
+  if (!handle) {
+    return;
+  }
+  dynamicallyLoadedLibraries.insert(std::make_pair(lib.name, handle));
+  for (const auto &sym : lib.procedures) {
+    void *func{dlsym(handle, sym.second.symbol.c_str())};
+    auto error{dlerror()};
+    if (error) {
+    } else {
+      AddProcedure(HostRteProcedureSymbol{sym.second, func});
+    }
+  }
+#else
+  // TODO: systems that do not support dlopen (e.g windows)
+#endif
+}
+
+HostRte::~HostRte() {
+  for (auto iter{dynamicallyLoadedLibraries.begin()};
+       iter != dynamicallyLoadedLibraries.end(); ++iter) {
+#ifdef HAS_DLOPEN
+    (void)dlclose(iter->second);
+#endif
+  }
+}
+
+// Map numerical intrinsic to  <cmath>/<complex> functions (for host folding
+// only)
+
 // TODO mapping to <cmath> function to be tested.<cmath> func takes
 // real arg for n
 template<typename HostT> static HostT Bessel_jn(std::int64_t n, HostT x) {
@@ -47,7 +112,9 @@ template<typename HostT> void AddLibmRealHostProcedure(HostRte &hostRte) {
       {"tan", F{std::tan}, true}, {"tanh", F{std::tanh}, true}};
 
   for (auto sym : libmSymbols) {
-    hostRte.AddProcedure(std::move(sym));
+    if (!hostRte.HasEquivalentProcedure(sym)) {
+      hostRte.AddProcedure(std::move(sym));
+    }
   }
 }
 
@@ -62,11 +129,96 @@ template<typename HostT> void AddLibmComplexHostProcedure(HostRte &hostRte) {
       {"tan", F{std::tan}, true}, {"tanh", F{std::tanh}, true}};
 
   for (auto sym : libmSymbols) {
-    hostRte.AddProcedure(std::move(sym));
+    if (!hostRte.HasEquivalentProcedure(sym)) {
+      hostRte.AddProcedure(std::move(sym));
+    }
   }
 }
 
+// define mapping between numerical intrinsics and libpgmath symbols
+
+enum class MathOption { Fast, Precise, Relaxed };
+
+char constexpr inline EncodePgmMathOption(MathOption m) {
+  switch (m) {
+  case MathOption::Fast: return 'f';
+  case MathOption::Precise: return 'p';
+  case MathOption::Relaxed: return 'r';
+  }
+  return '\0';  // unreachable. Silencing bogus g++ warning
+}
+
+template<typename T> struct EncodePgmTypeHelper {};
+
+template<> struct EncodePgmTypeHelper<Type<TypeCategory::Real, 4>> {
+  static constexpr char value{'s'};
+};
+template<> struct EncodePgmTypeHelper<Type<TypeCategory::Real, 8>> {
+  static constexpr char value{'d'};
+};
+template<> struct EncodePgmTypeHelper<Type<TypeCategory::Complex, 4>> {
+  static constexpr char value{'c'};
+};
+template<> struct EncodePgmTypeHelper<Type<TypeCategory::Complex, 8>> {
+  static constexpr char value{'z'};
+};
+
+template<typename T>
+static constexpr char EncodePgmType{EncodePgmTypeHelper<T>::value};
+
+template<typename T>
+static std::string MakeLibpgmathName(const std::string &name, MathOption m) {
+  std::ostringstream stream;
+  stream << "__" << EncodePgmMathOption(m) << EncodePgmType<T> << "_" << name
+         << "_1";
+  // TODO Take mask and vector length into account
+  return stream.str();
+}
+
+template<typename T>
+static void AddLibpgmathTargetSymbols(TargetRteLibrary &lib, MathOption opt) {
+  using F = Signature<T, ArgumentInfo<T, PassBy::Val>>;
+  const std::string oneArgFuncs[]{"acos", "asin", "atan", "cos", "cosh", "exp",
+      "log", "log10", "sin", "sinh", "tan", "tanh"};
+  for (const std::string &name : oneArgFuncs) {
+    lib.AddProcedure(TargetRteProcedureSymbol{
+        F{name}, MakeLibpgmathName<T>(name, opt), true});
+  }
+
+  if constexpr (T::category == TypeCategory::Real) {
+    using F2 = Signature<T, ArgumentInfo<T, PassBy::Val>,
+        ArgumentInfo<T, PassBy::Val>>;
+    lib.AddProcedure(TargetRteProcedureSymbol{
+        F2{"atan2"}, MakeLibpgmathName<T>("acos", opt), true});
+  } else {
+    const std::string oneArgCmplxFuncs[]{
+        "div", "sqrt"};  // for scalar, only complex available
+    for (const std::string &name : oneArgCmplxFuncs) {
+      lib.AddProcedure(TargetRteProcedureSymbol{
+          F{name}, MakeLibpgmathName<T>(name, opt), true});
+    }
+  }
+}
+
+TargetRteLibrary BuildLibpgmTargetRteLibrary(MathOption opt) {
+  TargetRteLibrary lib{"libpgmath"};
+  AddLibpgmathTargetSymbols<Type<TypeCategory::Real, 4>>(lib, opt);
+  AddLibpgmathTargetSymbols<Type<TypeCategory::Real, 8>>(lib, opt);
+  AddLibpgmathTargetSymbols<Type<TypeCategory::Complex, 4>>(lib, opt);
+  AddLibpgmathTargetSymbols<Type<TypeCategory::Complex, 8>>(lib, opt);
+  return lib;
+}
+
+// Defines which host runtime functions will be used for folding
+
 void HostRte::DefaultInit() {
+  // TODO: when linkage information is available, this needs to be modified to
+  // load runtime accordingly. For now, try loading libpgmath (libpgmath.so
+  // needs to be in a directory from LD_LIBRARY_PATH) and then add libm symbols
+  // when no equivalent symbols were already loaded
+  TargetRteLibrary libpgmath{BuildLibpgmTargetRteLibrary(MathOption::Precise)};
+  LoadTargetRteLibrary(libpgmath);
+
   AddLibmRealHostProcedure<float>(*this);
   AddLibmRealHostProcedure<double>(*this);
   AddLibmRealHostProcedure<long double>(*this);
@@ -100,7 +252,7 @@ void HostFloatingPointEnvironment::SetUpHostFloatingPointEnvironment(
     currentFenv_.__mxcsr &= ~0x0040;  // operands
   }
 #else
-  // TODO other architecture
+  // TODO other architectures
 #endif
   errno = 0;
   if (fesetenv(&currentFenv_) != 0) {
@@ -141,7 +293,7 @@ void HostFloatingPointEnvironment::CheckAndRestoreFloatingPointEnvironment(
     flags.set(RealFlag::Inexact);
   }
 
-  if (!flags.empty()) {
+  if (flags.empty()) {
     if (errnoCapture == EDOM) {
       flags.set(RealFlag::InvalidArgument);
     }
