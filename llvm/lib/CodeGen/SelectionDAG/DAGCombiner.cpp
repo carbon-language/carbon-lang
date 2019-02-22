@@ -15437,6 +15437,32 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
           CombineTo(ST1, ST1->getChain());
           return SDValue();
         }
+
+        // If ST stores to a subset of preceeding store's write set, we may be
+        // able to fold ST's value into the preceeding stored value. As we know
+        // the other uses of ST1's chain are unconcerned with ST, this folding
+        // will not affect those nodes.
+        int64_t Offset;
+        if (ChainBase.contains(ChainByteSize, STBase, STByteSize, DAG,
+                               Offset)) {
+          SDValue ChainValue = ST1->getValue();
+          if (auto *C1 = dyn_cast<ConstantSDNode>(ChainValue)) {
+            if (auto *C = dyn_cast<ConstantSDNode>(Value)) {
+              APInt Val = C1->getAPIntValue();
+              APInt InsertVal = C->getAPIntValue().zextOrTrunc(STByteSize * 8);
+              if (DAG.getDataLayout().isBigEndian())
+                Offset = ChainByteSize - 1 - Offset;
+              Val.insertBits(InsertVal, Offset * 8);
+              SDValue NewSDVal =
+                  DAG.getConstant(Val, SDLoc(C), ChainValue.getValueType(),
+                                  C1->isTargetOpcode(), C1->isOpaque());
+              SDNode *NewST1 = DAG.UpdateNodeOperands(
+                  ST1, ST1->getChain(), NewSDVal, ST1->getOperand(2),
+                  ST1->getOperand(3));
+              return CombineTo(ST, SDValue(NewST1, 0));
+            }
+          }
+        } // End ST subset of ST1 case.
       }
     }
   }
