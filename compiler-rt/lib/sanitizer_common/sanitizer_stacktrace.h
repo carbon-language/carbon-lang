@@ -56,9 +56,11 @@ struct StackTrace {
   void Print() const;
 
   static bool WillUseFastUnwind(bool request_fast_unwind) {
+    static_assert(SANITIZER_CAN_FAST_UNWIND || SANITIZER_CAN_SLOW_UNWIND,
+                  "Neither fast nor slow unwinder is supported");
     if (!SANITIZER_CAN_FAST_UNWIND)
       return false;
-    else if (!SANITIZER_CAN_SLOW_UNWIND)
+    if (!SANITIZER_CAN_SLOW_UNWIND)
       return true;
     return request_fast_unwind;
   }
