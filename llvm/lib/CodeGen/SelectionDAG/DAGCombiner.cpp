@@ -13978,7 +13978,7 @@ CheckForMaskedLoad(SDValue V, SDValue Ptr, SDValue Chain) {
   if (NotMaskTZ && NotMaskTZ/8 % MaskedBytes) return Result;
 
   // For narrowing to be valid, it must be the case that the load the
-  // immediately preceeding memory operation before the store.
+  // immediately preceding memory operation before the store.
   if (LD == Chain.getNode())
     ; // ok.
   else if (Chain->getOpcode() == ISD::TokenFactor &&
@@ -15429,7 +15429,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
         const BaseIndexOffset ChainBase = BaseIndexOffset::match(ST1, DAG);
         unsigned STByteSize = ST->getMemoryVT().getSizeInBits() / 8;
         unsigned ChainByteSize = ST1->getMemoryVT().getSizeInBits() / 8;
-        // If this is a store who's preceeding store to a subset of the current
+        // If this is a store who's preceding store to a subset of the current
         // location and no one other node is chained to that store we can
         // effectively drop the store. Do not remove stores to undef as they may
         // be used as data sinks.
@@ -15438,8 +15438,8 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
           return SDValue();
         }
 
-        // If ST stores to a subset of preceeding store's write set, we may be
-        // able to fold ST's value into the preceeding stored value. As we know
+        // If ST stores to a subset of preceding store's write set, we may be
+        // able to fold ST's value into the preceding stored value. As we know
         // the other uses of ST1's chain are unconcerned with ST, this folding
         // will not affect those nodes.
         int64_t Offset;
