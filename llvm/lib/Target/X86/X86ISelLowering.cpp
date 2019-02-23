@@ -41961,6 +41961,13 @@ static SDValue combineInsertSubvector(SDNode *N, SelectionDAG &DAG,
                                 SubVec.getOpcode() == X86ISD::SUBV_BROADCAST))
         return DAG.getNode(SubVec.getOpcode(), dl, OpVT, SubVec.getOperand(0));
 
+      // concat_vectors(scalar_to_vector(x),scalar_to_vector(x)) -> broadcast(x)
+      if (SubVec == SubVec2 && SubVec.getOpcode() == ISD::SCALAR_TO_VECTOR &&
+          (Subtarget.hasAVX2() || (OpVT.getScalarSizeInBits() >= 32 &&
+                                   MayFoldLoad(SubVec.getOperand(0)))) &&
+          SubVec.getOperand(0).getValueType() == OpVT.getScalarType())
+        return DAG.getNode(X86ISD::VBROADCAST, dl, OpVT, SubVec.getOperand(0));
+
       // If we're inserting all zeros into the upper half, change this to
       // an insert into an all zeros vector. We will match this to a move
       // with implicit upper bit zeroing during isel.
