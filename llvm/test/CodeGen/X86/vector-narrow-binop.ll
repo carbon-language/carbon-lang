@@ -124,7 +124,7 @@ define <2 x i8> @PR39893(<2 x i32> %x, <8 x i8> %y) {
 ; AVX2:       # %bb.0:
 ; AVX2-NEXT:    vpxor %xmm2, %xmm2, %xmm2
 ; AVX2-NEXT:    vpsubd %xmm0, %xmm2, %xmm0
-; AVX2-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[2],zero,xmm0[3],zero,xmm0[2],zero,xmm0[3],zero,xmm0[u,u,u,u,u,u,u,u]
+; AVX2-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[2],zero,xmm0[3],zero,xmm0[2],zero,xmm0[3],zero,xmm0[8],zero,xmm0[9],zero,xmm0[10],zero,xmm0[11],zero
 ; AVX2-NEXT:    vpblendd {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3]
 ; AVX2-NEXT:    retq
 ;
@@ -132,7 +132,7 @@ define <2 x i8> @PR39893(<2 x i32> %x, <8 x i8> %y) {
 ; AVX512:       # %bb.0:
 ; AVX512-NEXT:    vpxor %xmm2, %xmm2, %xmm2
 ; AVX512-NEXT:    vpsubd %xmm0, %xmm2, %xmm0
-; AVX512-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[2],zero,xmm0[3],zero,xmm0[2],zero,xmm0[3],zero,xmm0[u,u,u,u,u,u,u,u]
+; AVX512-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[2],zero,xmm0[3],zero,xmm0[2],zero,xmm0[3],zero,xmm0[8],zero,xmm0[9],zero,xmm0[10],zero,xmm0[11],zero
 ; AVX512-NEXT:    vpblendd {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3]
 ; AVX512-NEXT:    retq
   %sub = sub <2 x i32> <i32 0, i32 undef>, %x
