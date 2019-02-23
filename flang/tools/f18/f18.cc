@@ -14,8 +14,8 @@
 
 // Temporary Fortran front end driver main program for development scaffolding.
 
-#include "../../lib/IntermediateRepresentation/afforestation.h"
-#include "../../lib/IntermediateRepresentation/graph-writer.h"
+#include "../../lib/FIR/afforestation.h"
+#include "../../lib/FIR/graph-writer.h"
 #include "../../lib/common/default-kinds.h"
 #include "../../lib/parser/characters.h"
 #include "../../lib/parser/features.h"
@@ -96,7 +96,7 @@ struct DriverOptions {
   bool dumpParseTree{false};
   bool dumpSymbols{false};
   bool dumpGraph{false};
-  bool debugLinearIntermediateRepresentation{false};
+  bool debugLinearFIR{false};
   bool debugResolveNames{false};
   bool debugSemantics{false};
   bool measureTree{false};
@@ -218,7 +218,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   // TODO: Change this predicate to just "if (!driver.debugNoSemantics)"
   if (driver.debugSemantics || driver.debugResolveNames || driver.dumpSymbols ||
       driver.dumpUnparseWithSymbols ||
-      driver.debugLinearIntermediateRepresentation || driver.dumpGraph) {
+      driver.debugLinearFIR || driver.dumpGraph) {
     Fortran::semantics::Semantics semantics{
         semanticsContext, parseTree, parsing.cooked()};
     semantics.Perform();
@@ -238,9 +238,9 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     }
   }
   if (driver.dumpGraph) {
-    auto *fir{Fortran::IntermediateRepresentation::CreateFortranIR(parseTree,
-        semanticsContext, driver.debugLinearIntermediateRepresentation)};
-    Fortran::IntermediateRepresentation::GraphWriter::print(*fir);
+    auto *fir{Fortran::FIR::CreateFortranIR(parseTree,
+        semanticsContext, driver.debugLinearFIR)};
+    Fortran::FIR::GraphWriter::print(*fir);
     return {};
   }
   if (driver.dumpParseTree) {
@@ -419,7 +419,7 @@ int main(int argc, char *const argv[]) {
     } else if (arg == "-fdotty") {
       driver.dumpGraph = true;
     } else if (arg == "-fdebug-dump-linear-ir") {
-      driver.debugLinearIntermediateRepresentation = true;
+      driver.debugLinearFIR = true;
     } else if (arg == "-fparse-only") {
       driver.parseOnly = true;
     } else if (arg == "-c") {

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-add_library(FortranIntermediateRepresentation
+add_library(FortranFIR
   afforestation.cc
   basicblock.cc
   builder.cc
@@ -24,7 +24,7 @@ add_library(FortranIntermediateRepresentation
   statements.cc
 )
 
-target_link_libraries(FortranIntermediateRepresentation
+target_link_libraries(FortranFIR
   FortranCommon
   clangBasic
 )
