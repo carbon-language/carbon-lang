@@ -1137,13 +1137,11 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::SRA, VT, Custom);
     }
 
-    if (ExperimentalVectorWideningLegalization) {
-      // These types need custom splitting if their input is a 128-bit vector.
-      setOperationAction(ISD::SIGN_EXTEND,       MVT::v8i64,  Custom);
-      setOperationAction(ISD::SIGN_EXTEND,       MVT::v16i32, Custom);
-      setOperationAction(ISD::ZERO_EXTEND,       MVT::v8i64,  Custom);
-      setOperationAction(ISD::ZERO_EXTEND,       MVT::v16i32, Custom);
-    }
+    // These types need custom splitting if their input is a 128-bit vector.
+    setOperationAction(ISD::SIGN_EXTEND,       MVT::v8i64,  Custom);
+    setOperationAction(ISD::SIGN_EXTEND,       MVT::v16i32, Custom);
+    setOperationAction(ISD::ZERO_EXTEND,       MVT::v8i64,  Custom);
+    setOperationAction(ISD::ZERO_EXTEND,       MVT::v16i32, Custom);
 
     setOperationAction(ISD::ROTL,              MVT::v8i32,  Custom);
     setOperationAction(ISD::ROTL,              MVT::v16i16, Custom);
@@ -26886,14 +26884,13 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
   }
   case ISD::SIGN_EXTEND:
   case ISD::ZERO_EXTEND: {
-    if (!ExperimentalVectorWideningLegalization)
-      return;
-
     EVT VT = N->getValueType(0);
     SDValue In = N->getOperand(0);
     EVT InVT = In.getValueType();
     if (!Subtarget.hasSSE41() && VT == MVT::v4i64 &&
-        (InVT == MVT::v4i16 || InVT == MVT::v4i8)) {
+        (InVT == MVT::v4i16 || InVT == MVT::v4i8) &&
+        getTypeAction(*DAG.getContext(), InVT) == TypeWidenVector) {
+      assert(N->getOpcode() == ISD::SIGN_EXTEND && "Unexpected opcode");
       // Custom split this so we can extend i8/i16->i32 invec. This is better
       // since sign_extend_inreg i8/i16->i64 requires an extend to i32 using
       // sra. Then extending from i32 to i64 using pcmpgt. By custom splitting
@@ -26918,7 +26915,21 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
       return;
     }
 
-    if ((VT == MVT::v16i32 || VT == MVT::v8i64) && InVT.is128BitVector()) {
+    if (VT == MVT::v16i32 || VT == MVT::v8i64) {
+      if (!InVT.is128BitVector()) {
+        // Not a 128 bit vector, but maybe type legalization will promote
+        // it to 128 bits.
+        if (getTypeAction(*DAG.getContext(), InVT) != TypePromoteInteger)
+          return;
+        InVT = getTypeToTransformTo(*DAG.getContext(), InVT);
+        if (!InVT.is128BitVector())
+          return;
+
+        // Promote the input to 128 bits. Type legalization will turn this into
+        // zext_inreg/sext_inreg.
+        In = DAG.getNode(N->getOpcode(), dl, InVT, In);
+      }
+
       // Perform custom splitting instead of the two stage extend we would get
       // by default.
       EVT LoVT, HiVT;
