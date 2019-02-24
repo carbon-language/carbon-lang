@@ -695,12 +695,6 @@ void WebAssemblyCFGStackify::rewriteDepthImmediates(MachineFunction &MF) {
       MachineInstr &MI = *I;
       switch (MI.getOpcode()) {
       case WebAssembly::BLOCK:
-        assert(ScopeTops[Stack.back()->getNumber()]->getNumber() <=
-                   MBB.getNumber() &&
-               "Block/try should be balanced");
-        Stack.pop_back();
-        break;
-
       case WebAssembly::TRY:
         assert(ScopeTops[Stack.back()->getNumber()]->getNumber() <=
                    MBB.getNumber() &&
