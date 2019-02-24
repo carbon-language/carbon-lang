@@ -2007,7 +2007,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     unsigned Alignment = (unsigned)AlignmentCI->getZExtValue();
 
     EmitAlignmentAssumption(PtrValue, Ptr,
-				                    /*The expr loc is sufficient.*/ SourceLocation(),
+                            /*The expr loc is sufficient.*/ SourceLocation(),
                             Alignment, OffsetValue);
     return RValue::get(PtrValue);
   }
