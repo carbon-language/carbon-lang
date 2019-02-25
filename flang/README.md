@@ -7,13 +7,17 @@ Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
 F18 is a front-end for Fortran.
 It is intended to replace the existing front-end in the Flang compiler.
 
-Flang is a Fortran compiler targeting LLVM.
-
-Visit the Flang wiki for more information about Flang:
+Flang is a Fortran compiler targeting LLVM.  Visit the Flang wiki for more information about Flang:
 
 https://github.com/flang-compiler/flang/wiki
 
-Read more about f18 in the documentation directory.
+* Read more about f18 in the [documentation directory](documentation).  Start with the [compiler overview](documentation/Overview.md).
+* To better understand Fortran as a language and the specific grammar accepted by f18, read [Fortran For C Programmers](documentation/FortranForCProgrammers.md) and f18's specifications of the [Fortran grammar](documentation/f2018-grammar.txt) and the [OpenMP grammar](documentation/OpenMP-4.5-grammar.txt).  Treatment of language extensions is covered in [this document](documentation/Extensions.md).
+* To understand the compilers handling of intrinsics, see the [discussion of intrinsics](documentation/Intrinsics.md).
+* To understand how an f18 program communicates with libraries at runtime, see the discussion of [runtime descriptors](documentation/RuntimeDescriptor.md).
+* If you're interested in contributing to the compiler, read the [style guide](documentation/C++style.md) and also review [how f18 uses modern C++ features](documentation/C++17.md).
+
+
 
 ## Building F18
 
