@@ -1370,6 +1370,36 @@ public:
                                               OverflowTy, nullptr);
       return Cost;
     }
+    case Intrinsic::smul_with_overflow:
+    case Intrinsic::umul_with_overflow: {
+      Type *MulTy = RetTy->getContainedType(0);
+      Type *OverflowTy = RetTy->getContainedType(1);
+      unsigned ExtSize = MulTy->getScalarSizeInBits() * 2;
+      Type *ExtTy = Type::getIntNTy(RetTy->getContext(), ExtSize);
+      if (MulTy->isVectorTy())
+        ExtTy = VectorType::get(ExtTy, MulTy->getVectorNumElements() );
+
+      unsigned ExtOp =
+          IID == Intrinsic::smul_fix ? Instruction::SExt : Instruction::ZExt;
+
+      unsigned Cost = 0;
+      Cost += 2 * ConcreteTTI->getCastInstrCost(ExtOp, ExtTy, MulTy);
+      Cost += ConcreteTTI->getArithmeticInstrCost(Instruction::Mul, ExtTy);
+      Cost +=
+          2 * ConcreteTTI->getCastInstrCost(Instruction::Trunc, MulTy, ExtTy);
+      Cost += ConcreteTTI->getArithmeticInstrCost(Instruction::LShr, MulTy,
+                                                  TTI::OK_AnyValue,
+                                                  TTI::OK_UniformConstantValue);
+
+      if (IID == Intrinsic::smul_with_overflow)
+        Cost += ConcreteTTI->getArithmeticInstrCost(
+            Instruction::AShr, MulTy, TTI::OK_AnyValue,
+            TTI::OK_UniformConstantValue);
+
+      Cost += ConcreteTTI->getCmpSelInstrCost(BinaryOperator::ICmp, MulTy,
+                                              OverflowTy, nullptr);
+      return Cost;
+    }
     case Intrinsic::ctpop:
       ISDs.push_back(ISD::CTPOP);
       // In case of legalization use TCC_Expensive. This is cheaper than a
