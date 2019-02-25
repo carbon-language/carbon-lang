@@ -3,7 +3,7 @@
 Introduction
 ============
 Welcome to the clang-tools-extra project which contains extra tools built using
-Clang's tooling API's.
+Clang's tooling APIs.
 
 .. toctree::
    :maxdepth: 1
