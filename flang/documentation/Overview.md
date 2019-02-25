@@ -8,6 +8,8 @@ Each phase produces either correct output or fatal errors.
 
 ## Prescan and Preprocess
 
+See: [Preprocessing.md](Preprocessing.md).
+
 **Input:** Fortran source and header files, command line macro definitions,
   set of enabled compiler directives (to be treated as directives rather than
   comments).
@@ -30,7 +32,7 @@ Each phase produces either correct output or fatal errors.
 
 **Output:** A parse tree representing a syntactically correct program,
   rooted at a `parser::Program`.
-  See: [parsing.md](parsing.md).
+  See: [Parsing.md](Parsing.md) and [ParserCombinators.md](ParserCombinators.md).
 
 **Entry point:** `parser::Parsing::Parse`
 
@@ -78,6 +80,7 @@ Each phase produces either correct output or fatal errors.
 
 **Output:** For each module and submodule, a `.mod` file containing a minimal
   Fortran representation suitable for compiling program units that depend on it.
+  See [ModFiles.md](ModFiles.md).
 
 ## Analyze Expressions and Assignments
 
@@ -88,3 +91,9 @@ Each phase produces either correct output or fatal errors.
 
 **Entry points**: `semantics::AnalyzeExpressions`, `semantics::AnalyzeAssignments`
 
+## Produce the Intermediate Representation
+
+**Input:** Parse tree with names and labels resolved.
+
+**Output:** An intermediate representation of the executable program.
+  See [FortranIR.md](FortranIR.md).
