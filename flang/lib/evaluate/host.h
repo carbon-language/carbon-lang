@@ -112,9 +112,16 @@ template<> struct HostTypeHelper<Type<TypeCategory::Integer, 8>> {
   using Type = std::int64_t;
 };
 
-// no int 128bit
+template<> struct HostTypeHelper<Type<TypeCategory::Integer, 16>> {
+#if (defined(__GNUC__) || defined(__clang__)) && defined(__SIZEOF_INT128__)
+  using Type = __int128_t;
+#else
+  using Type = UnsupportedType;
+#endif
+};
 
-// no float 16bits
+// TODO no mapping to host types are defined currently for 16bits float
+// It should be defined when gcc/clang have a better support for it.
 
 template<> struct HostTypeHelper<Type<TypeCategory::Real, 4>> {
   // IEE 754 64bits
