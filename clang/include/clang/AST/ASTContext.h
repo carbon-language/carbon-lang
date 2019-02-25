@@ -2809,46 +2809,46 @@ public:
   //===--------------------------------------------------------------------===//
 
   /// The number of implicitly-declared default constructors.
-  unsigned NumImplicitDefaultConstructors;
+  static unsigned NumImplicitDefaultConstructors;
 
   /// The number of implicitly-declared default constructors for
   /// which declarations were built.
-  unsigned NumImplicitDefaultConstructorsDeclared;
+  static unsigned NumImplicitDefaultConstructorsDeclared;
 
   /// The number of implicitly-declared copy constructors.
-  unsigned NumImplicitCopyConstructors;
+  static unsigned NumImplicitCopyConstructors;
 
   /// The number of implicitly-declared copy constructors for
   /// which declarations were built.
-  unsigned NumImplicitCopyConstructorsDeclared;
+  static unsigned NumImplicitCopyConstructorsDeclared;
 
   /// The number of implicitly-declared move constructors.
-  unsigned NumImplicitMoveConstructors;
+  static unsigned NumImplicitMoveConstructors;
 
   /// The number of implicitly-declared move constructors for
   /// which declarations were built.
-  unsigned NumImplicitMoveConstructorsDeclared;
+  static unsigned NumImplicitMoveConstructorsDeclared;
 
   /// The number of implicitly-declared copy assignment operators.
-  unsigned NumImplicitCopyAssignmentOperators;
+  static unsigned NumImplicitCopyAssignmentOperators;
 
   /// The number of implicitly-declared copy assignment operators for
   /// which declarations were built.
-  unsigned NumImplicitCopyAssignmentOperatorsDeclared;
+  static unsigned NumImplicitCopyAssignmentOperatorsDeclared;
 
   /// The number of implicitly-declared move assignment operators.
-  unsigned NumImplicitMoveAssignmentOperators;
+  static unsigned NumImplicitMoveAssignmentOperators;
 
   /// The number of implicitly-declared move assignment operators for
   /// which declarations were built.
-  unsigned NumImplicitMoveAssignmentOperatorsDeclared;
+  static unsigned NumImplicitMoveAssignmentOperatorsDeclared;
 
   /// The number of implicitly-declared destructors.
-  unsigned NumImplicitDestructors;
+  static unsigned NumImplicitDestructors;
 
   /// The number of implicitly-declared destructors for which
   /// declarations were built.
-  unsigned NumImplicitDestructorsDeclared;
+  static unsigned NumImplicitDestructorsDeclared;
 
 public:
   /// Initialize built-in types.
