@@ -563,6 +563,34 @@ TEST_P(ImportExpr, ImportStringLiteral) {
           stringLiteral(hasType(asString("const char [7]"))))));
 }
 
+TEST_P(ImportExpr, ImportChooseExpr) {
+  MatchVerifier<Decl> Verifier;
+
+  // This case tests C code that is not condition-dependent and has a true
+  // condition.
+  testImport(
+    "void declToImport() { (void)__builtin_choose_expr(1, 2, 3); }",
+    Lang_C, "", Lang_C, Verifier,
+    functionDecl(hasDescendant(chooseExpr())));
+
+  ArgVector Args = getExtraArgs();
+  BindableMatcher<Decl> Matcher =
+      functionTemplateDecl(hasDescendant(chooseExpr()));
+
+  // Don't try to match the template contents if template parsing is delayed.
+  if (llvm::find(Args, "-fdelayed-template-parsing") != Args.end()) {
+    Matcher = functionTemplateDecl();
+  }
+
+  // Make sure that uses of (void)__builtin_choose_expr with dependent types in
+  // the condition are handled properly. This test triggers an assertion if the
+  // ASTImporter incorrectly tries to access isConditionTrue() when
+  // isConditionDependent() is true.
+  testImport("template<int N> void declToImport() { "
+             "(void)__builtin_choose_expr(N, 1, 0); }",
+             Lang_CXX, "", Lang_CXX, Verifier, Matcher);
+}
+
 TEST_P(ImportExpr, ImportGNUNullExpr) {
   MatchVerifier<Decl> Verifier;
   testImport(
@@ -1310,6 +1338,27 @@ TEST_P(ASTImporterOptionSpecificTestBase, ImportCorrectTemplatedDecl) {
       cast<CXXRecordDecl>(Import(From->getTemplatedDecl(), Lang_CXX));
   EXPECT_TRUE(ToTemplated1);
   ASSERT_EQ(ToTemplated1, ToTemplated);
+}
+
+TEST_P(ASTImporterOptionSpecificTestBase, ImportChooseExpr) {
+  // This tests the import of isConditionTrue directly to make sure the importer
+  // gets it right.
+  Decl *From, *To;
+  std::tie(From, To) = getImportedDecl(
+    "void declToImport() { (void)__builtin_choose_expr(1, 0, 1); }",
+    Lang_C, "", Lang_C);
+
+  auto ToResults = match(chooseExpr().bind("choose"), To->getASTContext());
+  auto FromResults = match(chooseExpr().bind("choose"), From->getASTContext());
+
+  const ChooseExpr *FromChooseExpr =
+      selectFirst<ChooseExpr>("choose", FromResults);
+  ASSERT_TRUE(FromChooseExpr);
+
+  const ChooseExpr *ToChooseExpr = selectFirst<ChooseExpr>("choose", ToResults);
+  ASSERT_TRUE(ToChooseExpr);
+
+  EXPECT_EQ(FromChooseExpr->isConditionTrue(), ToChooseExpr->isConditionTrue());
 }
 
 TEST_P(ASTImporterOptionSpecificTestBase,
