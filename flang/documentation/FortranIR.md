@@ -8,7 +8,7 @@ FIR will be an explicit, operational, and strongly-typed representation, which s
 
 ## Requirements
 
-### White Paper: Control Flow Graph<sup>1</sup>
+### White Paper: [Control Flow Graph](ControlFlowGraph.md)<sup>1</sup>
 
 This is a list of requirements extracted from that document, which will be referred to as CFG-WP.
 
