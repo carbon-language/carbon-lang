@@ -6,7 +6,8 @@ Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
 * Use *clang-format* on all C++ source and header files before
   every merge to master.  All code layout should be determined
   by means of clang-format.
-* Where LLVM's C++ style guide is clear on usage, follow it.
+* Where [LLVM's C++ style guide](https://llvm.org/docs/CodingStandards.html#style-issues)
+is clear on usage, follow it.
 * Otherwise, where a clear precedent exists in the project, follow it.
 * Otherwise, where a good public C++ style guide is relevant and clear,
   follow it.  [Google's](https://google.github.io/styleguide/cppguide.html)
@@ -144,7 +145,7 @@ last (_pace_ the standard C library conventions for `memcpy()` & al.).
 We have an `ENUM_CLASS` macro that helps capture the names of constants.
 1. Use `constexpr` and `const` generously.
 1. When a `switch()` statement's labels do not cover all possible case values
-explicitly, it should contains either a `default:;` at its end or a
+explicitly, it should contain either a `default:;` at its end or a
 `default:` label that obviously crashes; we have a `CRASH_NO_CASE` macro
 for such situations.
 1. When using `std::optional` values, avoid unprotected access to their content.
