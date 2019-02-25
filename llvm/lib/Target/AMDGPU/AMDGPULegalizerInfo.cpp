@@ -204,7 +204,8 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
     .moreElementsIf(isSmallOddVector(0), oneMoreElement(0))
     .clampScalarOrElt(0, S32, S512)
     .legalIf(isMultiple32(0))
-    .widenScalarToNextPow2(0, 32);
+    .widenScalarToNextPow2(0, 32)
+    .clampMaxNumElements(0, S32, 16);
 
 
   // FIXME: i1 operands to intrinsics should always be legal, but other i1
