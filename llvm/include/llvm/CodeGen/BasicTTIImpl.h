@@ -1306,6 +1306,30 @@ public:
                                               CondTy, nullptr);
       return Cost;
     }
+    case Intrinsic::smul_fix:
+    case Intrinsic::umul_fix: {
+      unsigned ExtSize = RetTy->getScalarSizeInBits() * 2;
+      Type *ExtTy = Type::getIntNTy(RetTy->getContext(), ExtSize);
+      if (RetVF > 1)
+        ExtTy = VectorType::get(ExtTy, RetVF);
+
+      unsigned ExtOp =
+          IID == Intrinsic::smul_fix ? Instruction::SExt : Instruction::ZExt;
+
+      unsigned Cost = 0;
+      Cost += 2 * ConcreteTTI->getCastInstrCost(ExtOp, ExtTy, RetTy);
+      Cost += ConcreteTTI->getArithmeticInstrCost(Instruction::Mul, ExtTy);
+      Cost +=
+          2 * ConcreteTTI->getCastInstrCost(Instruction::Trunc, RetTy, ExtTy);
+      Cost += ConcreteTTI->getArithmeticInstrCost(Instruction::LShr, RetTy,
+                                                  TTI::OK_AnyValue,
+                                                  TTI::OK_UniformConstantValue);
+      Cost += ConcreteTTI->getArithmeticInstrCost(Instruction::Shl, RetTy,
+                                                  TTI::OK_AnyValue,
+                                                  TTI::OK_UniformConstantValue);
+      Cost += ConcreteTTI->getArithmeticInstrCost(Instruction::Or, RetTy);
+      return Cost;
+    }
     case Intrinsic::sadd_with_overflow:
     case Intrinsic::ssub_with_overflow: {
       Type *SumTy = RetTy->getContainedType(0);
