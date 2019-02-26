@@ -727,7 +727,6 @@ const internal::VariadicDynCastAllOfMatcher<Stmt, CompoundLiteralExpr>
     compoundLiteralExpr;
 const internal::VariadicDynCastAllOfMatcher<Stmt, CXXNullPtrLiteralExpr>
     cxxNullPtrLiteralExpr;
-const internal::VariadicDynCastAllOfMatcher<Stmt, ChooseExpr> chooseExpr;
 const internal::VariadicDynCastAllOfMatcher<Stmt, GNUNullExpr> gnuNullExpr;
 const internal::VariadicDynCastAllOfMatcher<Stmt, AtomicExpr> atomicExpr;
 const internal::VariadicDynCastAllOfMatcher<Stmt, StmtExpr> stmtExpr;
