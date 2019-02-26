@@ -91,7 +91,7 @@ namespace Fortran::evaluate {
 
 bool DynamicType::operator==(const DynamicType &that) const {
   return category == that.category && kind == that.kind &&
-      derived == that.derived;
+      charLength == that.charLength && derived == that.derived;
 }
 
 std::optional<DynamicType> GetSymbolType(const semantics::Symbol *symbol) {
@@ -101,11 +101,16 @@ std::optional<DynamicType> GetSymbolType(const semantics::Symbol *symbol) {
         if (auto kind{ToInt64(intrinsic->kind())}) {
           TypeCategory category{intrinsic->category()};
           if (IsValidKindOfIntrinsicType(category, *kind)) {
-            return DynamicType{category, static_cast<int>(*kind)};
+            if (category == TypeCategory::Character) {
+              const auto &charType{type->characterTypeSpec()};
+              return DynamicType{static_cast<int>(*kind), charType.length()};
+            } else {
+              return DynamicType{category, static_cast<int>(*kind)};
+            }
           }
         }
       } else if (const auto *derived{type->AsDerived()}) {
-        return DynamicType{TypeCategory::Derived, 0, derived};
+        return DynamicType{*derived};
       }
     }
   }
@@ -116,6 +121,18 @@ std::string DynamicType::AsFortran() const {
   if (derived != nullptr) {
     CHECK(category == TypeCategory::Derived);
     return "TYPE("s + derived->typeSymbol().name().ToString() + ')';
+  } else if (charLength != nullptr) {
+    std::string result{"CHARACTER(KIND="s + std::to_string(kind) + ",LEN="};
+    if (charLength->isAssumed()) {
+      result += ",LEN=*";
+    } else if (charLength->isDeferred()) {
+      result += ",LEN=:";
+    } else if (const auto &length{charLength->GetExplicit()}) {
+      std::stringstream ss;
+      length->AsFortran(ss << ",LEN=");
+      result += ss.str();
+    }
+    return result + ')';
   } else {
     return EnumToString(category) + '(' + std::to_string(kind) + ')';
   }
@@ -124,7 +141,7 @@ std::string DynamicType::AsFortran() const {
 std::string DynamicType::AsFortran(std::string &&charLenExpr) const {
   if (!charLenExpr.empty() && category == TypeCategory::Character) {
     return "CHARACTER(KIND=" + std::to_string(kind) +
-        ",len=" + std::move(charLenExpr) + ')';
+        ",LEN=" + std::move(charLenExpr) + ')';
   } else {
     return AsFortran();
   }

@@ -21,10 +21,10 @@
 
 #include "expression.h"
 #include "type.h"
+#include "../common/enum-set.h"
 #include "../common/fortran.h"
 #include "../common/idioms.h"
 #include "../common/indirection.h"
-#include "../common/enum-set.h"
 #include <memory>
 #include <ostream>
 #include <variant>
@@ -42,10 +42,9 @@ namespace Fortran::evaluate::characteristics {
 
 // 15.3.2.2
 struct DummyDataObject {
-  ENUM_CLASS(Attr, AssumedRank, Optional, Allocatable, Asynchronous,
-      Contiguous, Value, Volatile, Polymorphic, Pointer, Target)
+  ENUM_CLASS(Attr, AssumedRank, Optional, Allocatable, Asynchronous, Contiguous,
+      Value, Volatile, Polymorphic, Pointer, Target)
   DynamicType type;
-  std::unique_ptr<Expr<SubscriptInteger>> characterLength;
   std::vector<std::optional<Expr<SubscriptInteger>>> shape;
   std::vector<Expr<SubscriptInteger>> coshape;
   common::Intent intent{common::Intent::Default};
@@ -70,14 +69,14 @@ struct AlternateReturn {
 };
 
 // 15.3.2.1
-using DummyArgument = std::variant<DummyDataObject, DummyProcedure, AlternateReturn>;
+using DummyArgument =
+    std::variant<DummyDataObject, DummyProcedure, AlternateReturn>;
 
 // 15.3.3
 struct FunctionResult {
-  ENUM_CLASS(Attr, Polymorphic, Allocatable, Pointer, Contiguous,
-	     ProcedurePointer)
+  ENUM_CLASS(
+      Attr, Polymorphic, Allocatable, Pointer, Contiguous, ProcedurePointer)
   DynamicType type;
-  std::unique_ptr<Expr<SubscriptInteger>> characterLength;
   int rank{0};
   common::EnumSet<Attr, 32> attrs;
   bool operator==(const FunctionResult &) const;

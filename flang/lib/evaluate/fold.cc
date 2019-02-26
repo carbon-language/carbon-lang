@@ -357,7 +357,7 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
       if (value->isExplicit()) {
         return Fold(context,
             Expr<IntKIND>{Convert<IntKIND, TypeCategory::Integer>(
-                value->GetExplicit().value())});
+                Expr<SomeInteger>{value->GetExplicit().value()})});
       }
     }
   }

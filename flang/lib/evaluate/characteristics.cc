@@ -31,18 +31,7 @@ std::ostream &DummyDataObject::Dump(std::ostream &o) const {
   if (intent != common::Intent::Default) {
     o << "INTENT(" << common::EnumToString(intent) << ')';
   }
-  // TODO pmk WIP: generalize this too
-  if (type.category == common::TypeCategory::Character) {
-    if (characterLength.get() == nullptr) {
-      o << type.AsFortran(":"s);
-    } else {
-      std::stringstream ss;
-      characterLength->AsFortran(ss);
-      o << type.AsFortran(ss.str());
-    }
-  } else {
-    o << type.AsFortran();
-  }
+  o << type.AsFortran();
   if (!shape.empty()) {
     char sep{'('};
     for (const auto &expr : shape) {
@@ -86,18 +75,7 @@ bool FunctionResult::operator==(const FunctionResult &that) const {
 
 std::ostream &FunctionResult::Dump(std::ostream &o) const {
   attrs.Dump(o, EnumToString);
-  if (type.category == TypeCategory::Character) {
-    if (characterLength.get() == nullptr) {
-      o << type.AsFortran("*"s);
-    } else {
-      std::stringstream ss;
-      characterLength->AsFortran(o);
-      o << type.AsFortran(ss.str());
-    }
-  } else {
-    o << type.AsFortran();
-  }
-  return o << " rank " << rank;
+  return o << type.AsFortran() << " rank " << rank;
 }
 
 bool Procedure::operator==(const Procedure &that) const {

@@ -149,9 +149,7 @@ public:
     return *derivedTypeSpec_;
   }
 
-  DynamicType GetType() const {
-    return DynamicType{TypeCategory::Derived, 0, derivedTypeSpec_};
-  }
+  DynamicType GetType() const { return DynamicType{derivedTypeSpec()}; }
 
 private:
   const semantics::DerivedTypeSpec *derivedTypeSpec_;

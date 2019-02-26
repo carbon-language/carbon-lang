@@ -262,7 +262,7 @@ bool StructureConstructor::operator==(const StructureConstructor &that) const {
 }
 
 DynamicType StructureConstructor::GetType() const {
-  return {TypeCategory::Derived, 0, derivedTypeSpec_};
+  return DynamicType{*derivedTypeSpec_};
 }
 
 StructureConstructor &StructureConstructor::Add(
