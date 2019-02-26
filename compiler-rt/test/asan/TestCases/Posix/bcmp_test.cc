@@ -5,6 +5,7 @@
 
 // REQUIRES: compiler-rt-optimized
 // UNSUPPORTED: android
+// XFAIL: darwin
 
 #include <string.h>
 int main(int argc, char **argv) {
