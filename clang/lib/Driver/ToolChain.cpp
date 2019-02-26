@@ -818,23 +818,21 @@ SanitizerMask ToolChain::getSupportedSanitizers() const {
   // Return sanitizers which don't require runtime support and are not
   // platform dependent.
 
-  SanitizerMask Res = (SanitizerKind::Undefined & ~SanitizerKind::Vptr &
-                       ~SanitizerKind::Function) |
-                      (SanitizerKind::CFI & ~SanitizerKind::CFIICall) |
-                      SanitizerKind::CFICastStrict |
-                      SanitizerKind::UnsignedIntegerOverflow |
-                      SanitizerKind::ImplicitConversion |
-                      SanitizerKind::Nullability | SanitizerKind::LocalBounds;
+  using namespace SanitizerKind;
+
+  SanitizerMask Res = (Undefined & ~Vptr & ~Function) | (CFI & ~CFIICall) |
+                      CFICastStrict | UnsignedIntegerOverflow |
+                      ImplicitConversion | Nullability | LocalBounds;
   if (getTriple().getArch() == llvm::Triple::x86 ||
       getTriple().getArch() == llvm::Triple::x86_64 ||
       getTriple().getArch() == llvm::Triple::arm ||
       getTriple().getArch() == llvm::Triple::aarch64 ||
       getTriple().getArch() == llvm::Triple::wasm32 ||
       getTriple().getArch() == llvm::Triple::wasm64)
-    Res |= SanitizerKind::CFIICall;
+    Res |= CFIICall;
   if (getTriple().getArch() == llvm::Triple::x86_64 ||
       getTriple().getArch() == llvm::Triple::aarch64)
-    Res |= SanitizerKind::ShadowCallStack;
+    Res |= ShadowCallStack;
   return Res;
 }
 

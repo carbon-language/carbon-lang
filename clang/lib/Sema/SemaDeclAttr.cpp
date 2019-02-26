@@ -6211,8 +6211,7 @@ static void handleNoSanitizeAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
     if (!S.checkStringLiteralArgumentAttr(AL, I, SanitizerName, &LiteralLoc))
       return;
 
-    if (parseSanitizerValue(SanitizerName, /*AllowGroups=*/true) ==
-        SanitizerMask())
+    if (parseSanitizerValue(SanitizerName, /*AllowGroups=*/true) == 0)
       S.Diag(LiteralLoc, diag::warn_unknown_sanitizer_ignored) << SanitizerName;
     else if (isGlobalVar(D) && SanitizerName != "address")
       S.Diag(D->getLocation(), diag::err_attribute_wrong_decl_type)

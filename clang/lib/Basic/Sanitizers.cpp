@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/Sanitizers.h"
-#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/StringSwitch.h"
 
 using namespace clang;
@@ -20,9 +19,9 @@ SanitizerMask clang::parseSanitizerValue(StringRef Value, bool AllowGroups) {
   SanitizerMask ParsedKind = llvm::StringSwitch<SanitizerMask>(Value)
 #define SANITIZER(NAME, ID) .Case(NAME, SanitizerKind::ID)
 #define SANITIZER_GROUP(NAME, ID, ALIAS)                                       \
-  .Case(NAME, AllowGroups ? SanitizerKind::ID##Group : SanitizerMask())
+  .Case(NAME, AllowGroups ? SanitizerKind::ID##Group : 0)
 #include "clang/Basic/Sanitizers.def"
-    .Default(SanitizerMask());
+    .Default(0);
   return ParsedKind;
 }
 
@@ -34,13 +33,3 @@ SanitizerMask clang::expandSanitizerGroups(SanitizerMask Kinds) {
 #include "clang/Basic/Sanitizers.def"
   return Kinds;
 }
-
-llvm::hash_code SanitizerMask::hash_value() const {
-  return llvm::hash_combine_range(&maskLoToHigh[0], &maskLoToHigh[kNumElem]);
-}
-
-namespace llvm {
-hash_code hash_value(const clang::SanitizerMask &Arg) {
-  return Arg.hash_value();
-}
-} // namespace llvm
