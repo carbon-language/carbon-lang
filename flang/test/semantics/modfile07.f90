@@ -1,4 +1,4 @@
-! Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -37,6 +37,19 @@ contains
   end
 end
 
+module m2
+  interface foo
+    procedure foo
+  end interface
+  type :: foo
+    real :: x
+  end type
+contains
+  complex function foo()
+    foo = 1.0
+  end
+end
+
 !Expect: m.mod
 !module m
 ! generic::foo=>s1,s2
@@ -57,5 +70,17 @@ end
 ! end
 ! subroutine s4(x)
 !  integer(4)::x
+! end
+!end
+
+!Expect: m2.mod
+!module m2
+! generic::foo=>foo
+! type::foo
+!  real(4)::x
+! end type
+!contains
+! function foo()
+!  complex(4)::foo
 ! end
 !end

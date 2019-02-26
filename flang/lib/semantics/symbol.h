@@ -371,6 +371,7 @@ public:
   void add_specificProc(const Symbol &proc) { specificProcs_.push_back(&proc); }
 
   Symbol *specific() { return specific_; }
+  const Symbol *specific() const { return specific_; }
   void set_specific(Symbol &specific);
 
   // Derived type with same name as generic, if any.

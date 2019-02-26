@@ -125,7 +125,7 @@ std::string ModFileWriter::GetAsString(const Symbol &symbol) {
 void ModFileWriter::PutSymbols(const Scope &scope) {
   std::stringstream typeBindings;  // stuff after CONTAINS in derived type
   for (const auto *symbol : CollectSymbols(scope)) {
-    PutSymbol(typeBindings, *symbol);
+    PutSymbol(typeBindings, symbol);
   }
   if (auto str{typeBindings.str()}; !str.empty()) {
     decls_ << "contains\n" << str;
@@ -135,37 +135,44 @@ void ModFileWriter::PutSymbols(const Scope &scope) {
 // Emit a symbol to decls_, except for bindings in a derived type (type-bound
 // procedures, type-bound generics, final procedures) which go to typeBindings.
 void ModFileWriter::PutSymbol(
-    std::stringstream &typeBindings, const Symbol &symbol) {
+    std::stringstream &typeBindings, const Symbol *symbol) {
+  if (symbol == nullptr) {
+    return;
+  }
   std::visit(
       common::visitors{
           [&](const ModuleDetails &) { /* should be current module */ },
-          [&](const DerivedTypeDetails &) { PutDerivedType(symbol); },
-          [&](const SubprogramDetails &) { PutSubprogram(symbol); },
-          [&](const GenericDetails &) { PutGeneric(symbol); },
-          [&](const UseDetails &) { PutUse(symbol); },
+          [&](const DerivedTypeDetails &) { PutDerivedType(*symbol); },
+          [&](const SubprogramDetails &) { PutSubprogram(*symbol); },
+          [&](const GenericDetails &x) {
+            PutGeneric(*symbol);
+            PutSymbol(typeBindings, x.specific());
+            PutSymbol(typeBindings, x.derivedType());
+          },
+          [&](const UseDetails &) { PutUse(*symbol); },
           [](const UseErrorDetails &) {},
           [&](const ProcBindingDetails &x) {
-            bool deferred{symbol.attrs().test(Attr::DEFERRED)};
+            bool deferred{symbol->attrs().test(Attr::DEFERRED)};
             typeBindings << "procedure";
             if (deferred) {
               PutLower(typeBindings << '(', x.symbol()) << ')';
             }
             PutPassName(typeBindings, x.passName());
-            PutAttrs(typeBindings, symbol.attrs());
-            PutLower(typeBindings << "::", symbol);
-            if (!deferred && x.symbol().name() != symbol.name()) {
+            PutAttrs(typeBindings, symbol->attrs());
+            PutLower(typeBindings << "::", *symbol);
+            if (!deferred && x.symbol().name() != symbol->name()) {
               PutLower(typeBindings << "=>", x.symbol());
             }
             typeBindings << '\n';
           },
           [&](const GenericBindingDetails &x) {
             for (const auto *proc : x.specificProcs()) {
-              PutLower(typeBindings << "generic::", symbol);
+              PutLower(typeBindings << "generic::", *symbol);
               PutLower(typeBindings << "=>", *proc) << '\n';
             }
           },
           [&](const NamelistDetails &x) {
-            PutLower(decls_ << "namelist/", symbol);
+            PutLower(decls_ << "namelist/", *symbol);
             char sep{'/'};
             for (const auto *object : x.objects()) {
               PutLower(decls_ << sep, *object);
@@ -174,26 +181,26 @@ void ModFileWriter::PutSymbol(
             decls_ << '\n';
           },
           [&](const CommonBlockDetails &x) {
-            PutLower(decls_ << "common/", symbol);
+            PutLower(decls_ << "common/", *symbol);
             char sep = '/';
             for (const auto *object : x.objects()) {
               PutLower(decls_ << sep, *object);
               sep = ',';
             }
             decls_ << '\n';
-            if (symbol.attrs().test(Attr::BIND_C)) {
-              PutAttrs(decls_, symbol.attrs(), x.bindName(), ""s);
-              PutLower(decls_ << "::/", symbol) << "/\n";
+            if (symbol->attrs().test(Attr::BIND_C)) {
+              PutAttrs(decls_, symbol->attrs(), x.bindName(), ""s);
+              PutLower(decls_ << "::/", *symbol) << "/\n";
             }
           },
           [&](const FinalProcDetails &) {
-            PutLower(typeBindings << "final::", symbol) << '\n';
+            PutLower(typeBindings << "final::", *symbol) << '\n';
           },
           [](const HostAssocDetails &) {},
           [](const MiscDetails &) {},
-          [&](const auto &) { PutEntity(decls_, symbol); },
+          [&](const auto &) { PutEntity(decls_, *symbol); },
       },
-      symbol.details());
+      symbol->details());
 }
 
 void ModFileWriter::PutDerivedType(const Symbol &typeSymbol) {
