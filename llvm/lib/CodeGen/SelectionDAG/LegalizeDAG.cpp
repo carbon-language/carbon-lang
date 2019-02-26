@@ -3261,12 +3261,24 @@ bool SelectionDAGLegalize::ExpandNode(SDNode *Node) {
   case ISD::SSUBO: {
     SDValue LHS = Node->getOperand(0);
     SDValue RHS = Node->getOperand(1);
-    SDValue Sum = DAG.getNode(Node->getOpcode() == ISD::SADDO ?
-                              ISD::ADD : ISD::SUB, dl, LHS.getValueType(),
-                              LHS, RHS);
+    bool IsAdd = Node->getOpcode() == ISD::SADDO;
+
+    SDValue Sum = DAG.getNode(IsAdd ? ISD::ADD : ISD::SUB, dl,
+                              LHS.getValueType(), LHS, RHS);
     Results.push_back(Sum);
+
     EVT ResultType = Node->getValueType(1);
     EVT OType = getSetCCResultType(Node->getValueType(0));
+
+    // If SADDSAT/SSUBSAT is legal, compare results to detect overflow.
+    unsigned OpcSat = IsAdd ? ISD::SADDSAT : ISD::SSUBSAT;
+    if (TLI.isOperationLegalOrCustom(OpcSat, LHS.getValueType())) {
+      SDValue Sat = DAG.getNode(OpcSat, dl, LHS.getValueType(), LHS, RHS);
+      SDValue SetCC = DAG.getSetCC(dl, OType, Sum, Sat, ISD::SETNE);
+      Results.push_back(
+          DAG.getBoolExtOrTrunc(SetCC, dl, ResultType, ResultType));
+      break;
+    }
 
     SDValue Zero = DAG.getConstant(0, dl, LHS.getValueType());
 
@@ -3281,8 +3293,7 @@ bool SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     SDValue LHSSign = DAG.getSetCC(dl, OType, LHS, Zero, ISD::SETGE);
     SDValue RHSSign = DAG.getSetCC(dl, OType, RHS, Zero, ISD::SETGE);
     SDValue SignsMatch = DAG.getSetCC(dl, OType, LHSSign, RHSSign,
-                                      Node->getOpcode() == ISD::SADDO ?
-                                      ISD::SETEQ : ISD::SETNE);
+                                      IsAdd ? ISD::SETEQ : ISD::SETNE);
 
     SDValue SumSign = DAG.getSetCC(dl, OType, Sum, Zero, ISD::SETGE);
     SDValue SumSignNE = DAG.getSetCC(dl, OType, LHSSign, SumSign, ISD::SETNE);
@@ -3296,6 +3307,7 @@ bool SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     SDValue LHS = Node->getOperand(0);
     SDValue RHS = Node->getOperand(1);
     bool IsAdd = Node->getOpcode() == ISD::UADDO;
+
     // If ADD/SUBCARRY is legal, use that instead.
     unsigned OpcCarry = IsAdd ? ISD::ADDCARRY : ISD::SUBCARRY;
     if (TLI.isOperationLegalOrCustom(OpcCarry, Node->getValueType(0))) {
