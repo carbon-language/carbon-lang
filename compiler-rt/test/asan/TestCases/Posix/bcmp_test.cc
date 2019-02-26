@@ -4,6 +4,7 @@
 // RUN: %clangxx_asan -O3 %s -o %t && not %run %t 2>&1 | FileCheck %s
 
 // REQUIRES: compiler-rt-optimized
+// UNSUPPORTED: android
 
 #include <string.h>
 int main(int argc, char **argv) {
