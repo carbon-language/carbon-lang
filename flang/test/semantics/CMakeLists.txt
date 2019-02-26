@@ -89,6 +89,7 @@ set(SYMBOL_TESTS
   symbol11.f90
   kinds01.f90
   kinds03.f90
+  procinterface01.f90
 )
 
 # These test files have expected .mod file contents in the source

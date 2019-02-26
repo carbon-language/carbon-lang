@@ -1555,6 +1555,9 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
   // TODO: C1002: Allow a whole assumed-size array to appear if the dummy
   // argument would accept it.  Handle by special-casing the context
   // ActualArg -> Variable -> Designator.
+  // TODO: Actual arguments that are procedures and procedure pointers need to
+  // be detected and represented (they're not expressions).
+  // TODO: C1534: Don't allow a "restricted" specific intrinsic to be passed.
   ActualArguments arguments;
   for (const auto &arg :
       std::get<std::list<parser::ActualArgSpec>>(funcRef.v.t)) {

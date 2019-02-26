@@ -16,6 +16,7 @@
 #define FORTRAN_EVALUATE_INTRINSICS_H_
 
 #include "call.h"
+#include "characteristics.h"
 #include "type.h"
 #include "../common/default-kinds.h"
 #include "../parser/char-block.h"
@@ -37,13 +38,11 @@ struct SpecificCall {
   ActualArguments arguments;
 };
 
-struct UnrestrictedSpecificIntrinsicFunctionInterface {
+struct UnrestrictedSpecificIntrinsicFunctionInterface
+  : public characteristics::Procedure {
   std::string genericName;
-  int numArguments;  // 1 or 2
-  // These are the types of the argument(s) and the function result.
-  // If there are multiple arguments, they all have the same type.
-  // All are intrinsic types with default kinds.
-  DynamicType argumentType, resultType;
+  // N.B. If there are multiple arguments, they all have the same type.
+  // All argument and result types are intrinsic types with default kinds.
 };
 
 class IntrinsicProcTable {
@@ -54,6 +53,10 @@ public:
   ~IntrinsicProcTable();
   static IntrinsicProcTable Configure(
       const common::IntrinsicTypeDefaultKinds &);
+
+  // Check whether a name should be allowed to appear on an INTRINSIC
+  // statement.
+  bool IsIntrinsic(const std::string &) const;
 
   // Probe the intrinsics for a match against a specific call.
   // On success, the actual arguments are transferred to the result

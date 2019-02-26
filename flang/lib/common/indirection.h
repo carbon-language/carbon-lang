@@ -153,9 +153,12 @@ public:
     p_ = p;
   }
 
+  bool operator==(const A &x) const {
+    return p_ != nullptr && (p_ == &x || *p_ == x);
+  }
   bool operator==(const OwningPointer &that) const {
     return (p_ == nullptr && that.p_ == nullptr) ||
-        (p_ != nullptr && that.p_ != nullptr && *p_ == *that.p_);
+        (that.p_ != nullptr && *this == *that.p_);
   }
 
 private:

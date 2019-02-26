@@ -1180,6 +1180,8 @@ public:
     }
   }
 
+  bool IsIntrinsic(const std::string &) const;
+
   std::optional<SpecificCall> Probe(const CallCharacteristics &,
       ActualArguments &, parser::ContextualMessages *) const;
 
@@ -1195,6 +1197,20 @@ private:
 
   DynamicType GetSpecificType(const TypePattern &) const;
 };
+
+bool IntrinsicProcTable::Implementation::IsIntrinsic(
+    const std::string &name) const {
+  auto specificRange{specificFuncs_.equal_range(name)};
+  if (specificRange.first != specificRange.second) {
+    return true;
+  }
+  auto genericRange{genericFuncs_.equal_range(name)};
+  if (genericRange.first != genericRange.second) {
+    return true;
+  }
+  // special cases
+  return name == "null";  // TODO more
+}
 
 // Probe the configured intrinsic procedure pattern tables in search of a
 // match for a given procedure reference.
@@ -1278,9 +1294,17 @@ IntrinsicProcTable::Implementation::IsUnrestrictedSpecificIntrinsicFunction(
       } else {
         result.genericName = name;
       }
-      result.numArguments = specific.CountArguments();
-      result.argumentType = GetSpecificType(specific.dummy[0].typePattern);
-      result.resultType = GetSpecificType(specific.result);
+      result.attrs.set(characteristics::Procedure::Attr::Pure);
+      result.attrs.set(characteristics::Procedure::Attr::Elemental);
+      int dummies{specific.CountArguments()};
+      for (int j{0}; j < dummies; ++j) {
+        characteristics::DummyDataObject dummy{
+            GetSpecificType(specific.dummy[j].typePattern)};
+        dummy.intent = common::Intent::In;
+        result.dummyArguments.emplace_back(std::move(dummy));
+      }
+      result.functionResult.emplace(
+          characteristics::FunctionResult{GetSpecificType(specific.result)});
       return result;
     }
   }
@@ -1306,6 +1330,11 @@ IntrinsicProcTable IntrinsicProcTable::Configure(
   IntrinsicProcTable result;
   result.impl_ = new IntrinsicProcTable::Implementation(defaults);
   return result;
+}
+
+bool IntrinsicProcTable::IsIntrinsic(const std::string &name) const {
+  CHECK(impl_ != nullptr || !"IntrinsicProcTable: not configured");
+  return impl_->IsIntrinsic(name);
 }
 
 std::optional<SpecificCall> IntrinsicProcTable::Probe(

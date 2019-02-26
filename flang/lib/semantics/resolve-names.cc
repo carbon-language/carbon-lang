@@ -727,6 +727,7 @@ protected:
   void CheckCommonBlocks();
   void CheckSaveStmts();
   bool CheckNotInBlock(const char *);
+  bool NameIsKnownOrIntrinsic(const parser::Name &);
 
 private:
   // The attribute corresponding to the statement containing an ObjectDecl
@@ -956,6 +957,7 @@ public:
   bool Pre(const parser::ImplicitStmt &);
   void Post(const parser::PointerObject &);
   void Post(const parser::AllocateObject &);
+  bool Pre(const parser::PointerAssignmentStmt &);
   void Post(const parser::PointerAssignmentStmt &);
   void Post(const parser::Designator &);
   template<typename T> void Post(const parser::LoopBounds<T> &);
@@ -2553,7 +2555,6 @@ bool DeclarationVisitor::Pre(const parser::IntentStmt &x) {
       HandleAttributeStmt(IntentSpecToAttr(intentSpec), names);
 }
 bool DeclarationVisitor::Pre(const parser::IntrinsicStmt &x) {
-  // TODO pmk: actually look up the intrinsic
   return HandleAttributeStmt(Attr::INTRINSIC, x.v);
 }
 bool DeclarationVisitor::Pre(const parser::OptionalStmt &x) {
@@ -2579,6 +2580,10 @@ bool DeclarationVisitor::HandleAttributeStmt(
 }
 Symbol &DeclarationVisitor::HandleAttributeStmt(
     Attr attr, const parser::Name &name) {
+  if (attr == Attr::INTRINSIC &&
+      !context().intrinsics().IsIntrinsic(name.source.ToString())) {
+    Say(name.source, "'%s' is not a known intrinsic procedure"_err_en_US);
+  }
   auto *symbol{FindInScope(currScope(), name)};
   if (symbol) {
     // symbol was already there: set attribute on it
@@ -3041,52 +3046,45 @@ void DeclarationVisitor::Post(const parser::ProcComponentDefStmt &) {
 }
 bool DeclarationVisitor::Pre(const parser::ProcPointerInit &x) {
   if (auto *name{std::get_if<parser::Name>(&x.u)}) {
-    if (FindSymbol(*name) != nullptr) {
-      return false;
-    }
-    if (HandleUnrestrictedSpecificIntrinsicFunction(*name)) {
-      return false;
-    }
+    return !NameIsKnownOrIntrinsic(*name);
   }
   return true;
 }
 bool DeclarationVisitor::Pre(const parser::ProcInterface &x) {
   if (auto *name{std::get_if<parser::Name>(&x.u)}) {
-    if (FindSymbol(*name) != nullptr) {
-      return false;
-    }
-    if (HandleUnrestrictedSpecificIntrinsicFunction(*name)) {
-      return false;
-    }
-    // Simple names (lacking parameters and size) of intrinsic types re
-    // ambiguous in Fortran when used as instances of proc-interface.
-    // The parser recognizes them as interface-names since they can be
-    // overridden.  When they turn out (here) to not be names of explicit
-    // interfaces, we need to replace their parses.
-    auto &proc{const_cast<parser::ProcInterface &>(x)};
-    if (name->source == "integer"s) {
-      proc.u = parser::IntrinsicTypeSpec{parser::IntegerTypeSpec{std::nullopt}};
-    } else if (name->source == "real") {
-      proc.u = parser::IntrinsicTypeSpec{
-          parser::IntrinsicTypeSpec::Real{std::nullopt}};
-    } else if (name->source == "doubleprecision") {
-      proc.u = parser::IntrinsicTypeSpec{
-          parser::IntrinsicTypeSpec::DoublePrecision{}};
-    } else if (name->source == "complex") {
-      proc.u = parser::IntrinsicTypeSpec{
-          parser::IntrinsicTypeSpec::Complex{std::nullopt}};
-    } else if (name->source == "character") {
-      proc.u = parser::IntrinsicTypeSpec{
-          parser::IntrinsicTypeSpec::Character{std::nullopt}};
-    } else if (name->source == "logical") {
-      proc.u = parser::IntrinsicTypeSpec{
-          parser::IntrinsicTypeSpec::Logical{std::nullopt}};
-    } else if (name->source == "doublecomplex") {
-      proc.u =
-          parser::IntrinsicTypeSpec{parser::IntrinsicTypeSpec::DoubleComplex{}};
-    } else if (name->source == "ncharacter") {
-      proc.u = parser::IntrinsicTypeSpec{
-          parser::IntrinsicTypeSpec::NCharacter{std::nullopt}};
+    if (!FindSymbol(*name) &&
+        !HandleUnrestrictedSpecificIntrinsicFunction(*name)) {
+      // Simple names (lacking parameters and size) of intrinsic types re
+      // ambiguous in Fortran when used as instances of proc-interface.
+      // The parser recognizes them as interface-names since they can be
+      // overridden.  If they turn out (here) to not be names of explicit
+      // interfaces, we need to replace their parses.
+      auto &proc{const_cast<parser::ProcInterface &>(x)};
+      if (name->source == "integer") {
+        proc.u =
+            parser::IntrinsicTypeSpec{parser::IntegerTypeSpec{std::nullopt}};
+      } else if (name->source == "real") {
+        proc.u = parser::IntrinsicTypeSpec{
+            parser::IntrinsicTypeSpec::Real{std::nullopt}};
+      } else if (name->source == "doubleprecision") {
+        proc.u = parser::IntrinsicTypeSpec{
+            parser::IntrinsicTypeSpec::DoublePrecision{}};
+      } else if (name->source == "complex") {
+        proc.u = parser::IntrinsicTypeSpec{
+            parser::IntrinsicTypeSpec::Complex{std::nullopt}};
+      } else if (name->source == "character") {
+        proc.u = parser::IntrinsicTypeSpec{
+            parser::IntrinsicTypeSpec::Character{std::nullopt}};
+      } else if (name->source == "logical") {
+        proc.u = parser::IntrinsicTypeSpec{
+            parser::IntrinsicTypeSpec::Logical{std::nullopt}};
+      } else if (name->source == "doublecomplex") {
+        proc.u = parser::IntrinsicTypeSpec{
+            parser::IntrinsicTypeSpec::DoubleComplex{}};
+      } else if (name->source == "ncharacter") {
+        proc.u = parser::IntrinsicTypeSpec{
+            parser::IntrinsicTypeSpec::NCharacter{std::nullopt}};
+      }
     }
   }
   return true;
@@ -3527,6 +3525,11 @@ Symbol &DeclarationVisitor::MakeCommonBlockSymbol(const parser::Name &name) {
   return Resolve(name, currScope().MakeCommonBlock(name.source));
 }
 
+bool DeclarationVisitor::NameIsKnownOrIntrinsic(const parser::Name &name) {
+  return FindSymbol(name) != nullptr ||
+      HandleUnrestrictedSpecificIntrinsicFunction(name);
+}
+
 // Check if this derived type can be in a COMMON block.
 void DeclarationVisitor::CheckCommonBlockDerivedType(
     const SourceName &name, const Symbol &typeSymbol) {
@@ -3560,7 +3563,6 @@ void DeclarationVisitor::CheckCommonBlockDerivedType(
 
 bool DeclarationVisitor::HandleUnrestrictedSpecificIntrinsicFunction(
     const parser::Name &name) {
-  // TODO pmk: invoke this on unresolved actual arguments, too
   if (context()
           .intrinsics()
           .IsUnrestrictedSpecificIntrinsicFunction(name.source.ToString())
@@ -3568,7 +3570,7 @@ bool DeclarationVisitor::HandleUnrestrictedSpecificIntrinsicFunction(
     // Unrestricted specific intrinsic function names (e.g., "cos")
     // are acceptable as procedure interfaces.
     Scope *scope{&currScope()};
-    if (scope->kind() == Scope::Kind::DerivedType) {
+    while (scope->kind() == Scope::Kind::DerivedType) {
       scope = &scope->parent();
     }
     Symbol &symbol{MakeSymbol(*scope, name.source, Attrs{Attr::INTRINSIC})};
@@ -4544,6 +4546,26 @@ void ResolveNamesVisitor::Post(const parser::AllocateObject &x) {
           },
       },
       x.u);
+}
+bool ResolveNamesVisitor::Pre(const parser::PointerAssignmentStmt &x) {
+  // Resolve unrestricted specific intrinsic procedures as in "p => cos".
+  const auto &expr{std::get<parser::Expr>(x.t)};
+  if (const auto *designator{
+          std::get_if<common::Indirection<parser::Designator>>(&expr.u)}) {
+    if (const parser::Name *
+        name{std::visit(
+            common::visitors{
+                [](const parser::ObjectName &n) { return &n; },
+                [](const parser::DataRef &dataRef) {
+                  return std::get_if<parser::Name>(&dataRef.u);
+                },
+                [](const auto &) -> const parser::Name * { return nullptr; },
+            },
+            (*designator)->u)}) {
+      return !NameIsKnownOrIntrinsic(*name);
+    }
+  }
+  return true;
 }
 void ResolveNamesVisitor::Post(const parser::PointerAssignmentStmt &x) {
   ResolveDataRef(std::get<parser::DataRef>(x.t));

@@ -26,6 +26,8 @@
 #include <cstddef>
 #include <initializer_list>
 #include <optional>
+#include <ostream>
+#include <string>
 #include <type_traits>
 
 namespace Fortran::common {
@@ -193,6 +195,24 @@ public:
       }
       die("EnumSet::LeastElement(): no bit found in non-empty std::bitset");
     }
+  }
+
+  template<typename FUNC> void IterateOverMembers(const FUNC &f) const {
+    EnumSet copy{*this};
+    while (auto least{copy.LeastElement()}) {
+      f(*least);
+      copy.erase(*least);
+    }
+  }
+
+  std::ostream &Dump(
+      std::ostream &o, std::string EnumToString(enumerationType)) const {
+    char sep{'{'};
+    IterateOverMembers([&](auto e) {
+      o << sep << EnumToString(e);
+      sep = ',';
+    });
+    return o << (sep == '{' ? "{}" : "}");
   }
 
 private:

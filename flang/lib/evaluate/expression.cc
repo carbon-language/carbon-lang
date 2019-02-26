@@ -322,9 +322,9 @@ FOR_EACH_INTRINSIC_KIND(template class ArrayConstructor)
 // definitions for all the necessary types are available, to obviate a
 // need to include lib/evaluate/*.h headers in the parser proper.
 namespace Fortran::common {
+template class OwningPointer<evaluate::GenericExprWrapper>;
 template<> OwningPointer<evaluate::GenericExprWrapper>::~OwningPointer() {
   delete p_;
   p_ = nullptr;
 }
-template class OwningPointer<evaluate::GenericExprWrapper>;
 }
