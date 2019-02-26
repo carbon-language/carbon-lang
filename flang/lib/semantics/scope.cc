@@ -145,10 +145,10 @@ Scope::ImportKind Scope::GetImportKind() const {
   if (importKind_) {
     return *importKind_;
   }
-  if (symbol_) {
+  if (symbol_ && !symbol_->attrs().test(Attr::MODULE)) {
     if (auto *details{symbol_->detailsIf<SubprogramDetails>()}) {
       if (details->isInterface()) {
-        return ImportKind::None;  // default for interface body
+        return ImportKind::None;  // default for non-mod-proc interface body
       }
     }
   }

@@ -1,4 +1,4 @@
-! Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -22,6 +22,15 @@ module m
  !REF: /m/t
  !DEF: /m/x PUBLIC ObjectEntity TYPE(t)
  type(t) :: x
+ interface
+  !DEF: /m/s3 MODULE, PUBLIC Subprogram
+  !DEF: /m/s3/y ObjectEntity TYPE(t)
+  module subroutine s3(y)
+   !REF: /m/t
+   !REF: /m/s3/y
+   type(t) :: y
+  end subroutine
+ end interface
 contains
  !DEF: /m/s PUBLIC Subprogram
  subroutine s
