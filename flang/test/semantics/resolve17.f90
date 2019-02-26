@@ -1,4 +1,4 @@
-! Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -27,5 +27,20 @@ module m2
   end interface
 contains
   subroutine s
+  end subroutine
+end module
+
+module m3
+  ! This is okay: so is generic and specific
+  interface s
+    procedure s2
+  end interface
+  interface s
+    procedure s
+  end interface
+contains
+  subroutine s()
+  end subroutine
+  subroutine s2(x)
   end subroutine
 end module

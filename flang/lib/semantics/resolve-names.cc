@@ -414,6 +414,7 @@ public:
 
   // Special messages: already declared; referencing symbol's declaration;
   // about a type; two names & locations
+  void SayAlreadyDeclared(const SourceName &, const Symbol &);
   void SayAlreadyDeclared(const parser::Name &, const Symbol &);
   void SayWithDecl(const parser::Name &, const Symbol &, MessageFixedText &&);
   void SayDerivedType(const SourceName &, MessageFixedText &&, const Scope &);
@@ -561,7 +562,6 @@ private:
 class InterfaceVisitor : public virtual ScopeHandler {
 public:
   bool Pre(const parser::InterfaceStmt &);
-  void Post(const parser::InterfaceStmt &);
   void Post(const parser::EndInterfaceStmt &);
   bool Pre(const parser::GenericSpec &);
   bool Pre(const parser::ProcedureStmt &);
@@ -1483,9 +1483,23 @@ Bound ArraySpecVisitor::GetBound(const parser::SpecificationExpr &x) {
 
 void ScopeHandler::SayAlreadyDeclared(
     const parser::Name &name, const Symbol &prev) {
-  Say2(name, "'%s' is already declared in this scoping unit"_err_en_US, prev,
-      "Previous declaration of '%s'"_en_US);
+  SayAlreadyDeclared(name.source, prev);
 }
+void ScopeHandler::SayAlreadyDeclared(
+    const SourceName &name, const Symbol &prev) {
+  auto &msg{
+      Say(name, "'%s' is already declared in this scoping unit"_err_en_US)};
+  if (const auto *details{prev.detailsIf<UseDetails>()}) {
+    msg.Attach(details->location(),
+        "It is use-associated with '%s' in module '%s'"_err_en_US,
+        details->symbol().name().ToString().c_str(),
+        details->module().name().ToString().c_str());
+  } else {
+    msg.Attach(prev.name(), "Previous declaration of '%s'"_en_US,
+        prev.name().ToString().c_str());
+  }
+}
+
 void ScopeHandler::SayWithDecl(
     const parser::Name &name, const Symbol &symbol, MessageFixedText &&msg) {
   Say2(name, std::move(msg), symbol,
@@ -1945,15 +1959,9 @@ bool InterfaceVisitor::Pre(const parser::InterfaceStmt &x) {
   isAbstract_ = std::holds_alternative<parser::Abstract>(x.u);
   return true;
 }
-void InterfaceVisitor::Post(const parser::InterfaceStmt &) {}
 
 void InterfaceVisitor::Post(const parser::EndInterfaceStmt &) {
-  if (genericName_) {
-    if (const auto *proc{GetGenericDetails().CheckSpecific()}) {
-      SayAlreadyDeclared(*genericName_, *proc);
-    }
-    genericName_ = nullptr;
-  }
+  genericName_ = nullptr;
   inInterfaceBlock_ = false;
   isAbstract_ = false;
 }
@@ -2096,6 +2104,9 @@ void InterfaceVisitor::ResolveSpecificsInGeneric(Symbol &generic) {
 void InterfaceVisitor::CheckGenericProcedures(Symbol &generic) {
   ResolveSpecificsInGeneric(generic);
   auto &details{generic.get<GenericDetails>()};
+  if (const auto *proc{details.CheckSpecific()}) {
+    SayAlreadyDeclared(generic.name(), *proc);
+  }
   auto &specifics{details.specificProcs()};
   if (specifics.empty()) {
     if (details.derivedType()) {
