@@ -3052,8 +3052,7 @@ bool DeclarationVisitor::Pre(const parser::ProcPointerInit &x) {
 }
 bool DeclarationVisitor::Pre(const parser::ProcInterface &x) {
   if (auto *name{std::get_if<parser::Name>(&x.u)}) {
-    if (!FindSymbol(*name) &&
-        !HandleUnrestrictedSpecificIntrinsicFunction(*name)) {
+    if (!NameIsKnownOrIntrinsic(*name)) {
       // Simple names (lacking parameters and size) of intrinsic types re
       // ambiguous in Fortran when used as instances of proc-interface.
       // The parser recognizes them as interface-names since they can be
