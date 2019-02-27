@@ -14,17 +14,6 @@
 #if CAN_SANITIZE_UB
 #include "ubsan_diag.h"
 
-void __sanitizer::GetStackTrace(BufferedStackTrace *stack, uptr max_depth,
-                                uptr pc, uptr bp, void *context, bool fast) {
-  uptr top = 0;
-  uptr bottom = 0;
-  if (StackTrace::WillUseFastUnwind(fast)) {
-    GetThreadStackTopAndBottom(false, &top, &bottom);
-    stack->Unwind(max_depth, pc, bp, nullptr, top, bottom, true);
-  } else
-    stack->Unwind(max_depth, pc, bp, context, 0, 0, false);
-}
-
 using namespace __ubsan;
 
 extern "C" {

@@ -26,6 +26,20 @@
 
 using namespace __ubsan;
 
+// Weak linkage: UBSan is combined with runtimes that already provide this
+// functionality (e.g., ASan) as well as runtimes that lack it (e.g., scudo).
+SANITIZER_WEAK_ATTRIBUTE
+void __sanitizer::GetStackTrace(BufferedStackTrace *stack, uptr max_depth,
+                                uptr pc, uptr bp, void *context, bool fast) {
+  uptr top = 0;
+  uptr bottom = 0;
+  if (StackTrace::WillUseFastUnwind(fast)) {
+    GetThreadStackTopAndBottom(false, &top, &bottom);
+    stack->Unwind(max_depth, pc, bp, nullptr, top, bottom, true);
+  } else
+    stack->Unwind(max_depth, pc, bp, context, 0, 0, false);
+}
+
 static void MaybePrintStackTrace(uptr pc, uptr bp) {
   // We assume that flags are already parsed, as UBSan runtime
   // will definitely be called when we print the first diagnostics message.
