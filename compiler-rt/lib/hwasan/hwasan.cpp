@@ -480,6 +480,30 @@ void __hwasan_handle_longjmp(const void *sp_dst) {
   TagMemory(sp, dst - sp, 0);
 }
 
+void __hwasan_handle_vfork(const void *sp_dst) {
+  uptr sp = (uptr)sp_dst;
+  Thread *t = GetCurrentThread();
+  CHECK(t);
+  uptr top = t->stack_top();
+  uptr bottom = t->stack_bottom();
+  static const uptr kMaxExpectedCleanupSize = 64 << 20;  // 64M
+  if (top == 0 || bottom == 0 || sp < bottom || sp >= top ||
+      sp - bottom > kMaxExpectedCleanupSize) {
+    Report(
+        "WARNING: HWASan is ignoring requested __hwasan_handle_vfork: "
+        "stack top: %zx; current %zx; bottom: %zx \n"
+        "False positive error reports may follow\n",
+        top, sp, bottom);
+    return;
+  }
+  TagMemory(bottom, sp - bottom, 0);
+}
+
+extern "C" void *__hwasan_extra_spill_area() {
+  Thread *t = GetCurrentThread();
+  return &t->vfork_spill();
+}
+
 void __hwasan_print_memory_usage() {
   InternalScopedString s(kMemoryUsageBufferSize);
   HwasanFormatMemoryUsage(s);
