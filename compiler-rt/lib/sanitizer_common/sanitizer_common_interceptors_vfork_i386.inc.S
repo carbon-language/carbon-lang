@@ -31,7 +31,7 @@ ASM_WRAPPER_NAME(vfork):
 
         lea     16(%esp), %ecx
         mov     %ecx, (%esp)
-        call    COMMON_INTERCEPTOR_HANDLE_VFORK
+        call    COMMON_INTERCEPTOR_HANDLE_VFORK@PLT
 
 .L_exit:
         mov     4(%esp), %eax

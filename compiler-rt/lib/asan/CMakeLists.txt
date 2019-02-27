@@ -32,7 +32,7 @@ set(ASAN_SOURCES
   asan_thread.cc
   asan_win.cc)
 
-if (NOT WIN32)
+if (NOT WIN32 AND NOT APPLE)
   list(APPEND ASAN_SOURCES asan_interceptors_vfork.S)
 endif()
 

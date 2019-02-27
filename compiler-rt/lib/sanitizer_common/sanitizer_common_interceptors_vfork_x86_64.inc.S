@@ -28,7 +28,7 @@ ASM_WRAPPER_NAME(vfork):
         je      .L_exit
 
         lea     16(%rsp), %rdi
-        call    COMMON_INTERCEPTOR_HANDLE_VFORK
+        call    COMMON_INTERCEPTOR_HANDLE_VFORK@PLT
 
 .L_exit:
         pop     %rax
