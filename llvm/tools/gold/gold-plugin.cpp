@@ -209,10 +209,6 @@ namespace options {
   static std::string OptRemarksFilename;
   static bool OptRemarksWithHotness = false;
 
-  // Context sensitive PGO options.
-  static std::string cs_profile_path;
-  static bool cs_pgo_gen = false;
-
   static void process_plugin_option(const char *opt_)
   {
     if (opt_ == nullptr)
@@ -272,11 +268,7 @@ namespace options {
     } else if (opt == "disable-verify") {
       DisableVerify = true;
     } else if (opt.startswith("sample-profile=")) {
-      sample_profile = opt.substr(strlen("sample-profile="));
-    } else if (opt == "cs-profile-generate") {
-      cs_pgo_gen = true;
-    } else if (opt.startswith("cs-profile-path=")) {
-      cs_profile_path = opt.substr(strlen("cs-profile-path="));
+      sample_profile= opt.substr(strlen("sample-profile="));
     } else if (opt == "new-pass-manager") {
       new_pass_manager = true;
     } else if (opt == "debug-pass-manager") {
@@ -899,10 +891,6 @@ static std::unique_ptr<LTO> createLTO(IndexWriteCallback OnIndexWrite,
 
   if (!options::sample_profile.empty())
     Conf.SampleProfile = options::sample_profile;
-
-  if (!options::cs_profile_path.empty())
-    Conf.CSIRProfile = options::cs_profile_path;
-  Conf.RunCSIRInstr = options::cs_pgo_gen;
 
   Conf.DwoDir = options::dwo_dir;
 

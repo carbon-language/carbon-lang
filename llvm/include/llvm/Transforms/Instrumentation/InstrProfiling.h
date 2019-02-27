@@ -35,8 +35,7 @@ using LoadStorePair = std::pair<Instruction *, Instruction *>;
 class InstrProfiling : public PassInfoMixin<InstrProfiling> {
 public:
   InstrProfiling() = default;
-  InstrProfiling(const InstrProfOptions &Options, bool IsCS)
-      : Options(Options), IsCS(IsCS) {}
+  InstrProfiling(const InstrProfOptions &Options) : Options(Options) {}
 
   PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
   bool run(Module &M, const TargetLibraryInfo &TLI);
@@ -60,9 +59,6 @@ private:
   std::vector<GlobalVariable *> ReferencedNames;
   GlobalVariable *NamesVar;
   size_t NamesSize;
-
-  // Is this lowering for the context-sensitive instrumentation.
-  bool IsCS;
 
   // vector of counter load/store pairs to be register promoted.
   std::vector<LoadStorePair> PromotionCandidates;

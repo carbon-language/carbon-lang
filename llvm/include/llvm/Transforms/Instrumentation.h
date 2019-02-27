@@ -87,14 +87,10 @@ struct GCOVOptions {
 ModulePass *createGCOVProfilerPass(const GCOVOptions &Options =
                                    GCOVOptions::getDefault());
 
-// PGO Instrumention. Parameter IsCS indicates if this is the context senstive
-// instrumentation.
-ModulePass *createPGOInstrumentationGenLegacyPass(bool IsCS = false);
+// PGO Instrumention
+ModulePass *createPGOInstrumentationGenLegacyPass();
 ModulePass *
-createPGOInstrumentationUseLegacyPass(StringRef Filename = StringRef(""),
-                                      bool IsCS = false);
-ModulePass *createPGOInstrumentationGenCreateVarLegacyPass(
-    StringRef CSInstrName = StringRef(""));
+createPGOInstrumentationUseLegacyPass(StringRef Filename = StringRef(""));
 ModulePass *createPGOIndirectCallPromotionLegacyPass(bool InLTO = false,
                                                      bool SamplePGO = false);
 FunctionPass *createPGOMemOPSizeOptLegacyPass();
@@ -136,19 +132,15 @@ struct InstrProfOptions {
   // Use atomic profile counter increments.
   bool Atomic = false;
 
-  // Use BFI to guide register promotion
-  bool UseBFIInPromotion = false;
-
   // Name of the profile file to use as output
   std::string InstrProfileOutput;
 
   InstrProfOptions() = default;
 };
 
-/// Insert frontend instrumentation based profiling. Parameter IsCS indicates if
-// this is the context senstive instrumentation.
+/// Insert frontend instrumentation based profiling.
 ModulePass *createInstrProfilingLegacyPass(
-    const InstrProfOptions &Options = InstrProfOptions(), bool IsCS = false);
+    const InstrProfOptions &Options = InstrProfOptions());
 
 FunctionPass *createHWAddressSanitizerPass(bool CompileKernel = false,
                                            bool Recover = false);

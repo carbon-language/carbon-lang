@@ -569,8 +569,7 @@ void PassBuilder::addPGOInstrPasses(ModulePassManager &MPM, bool DebugLogging,
     if (!ProfileGenFile.empty())
       Options.InstrProfileOutput = ProfileGenFile;
     Options.DoCounterPromotion = true;
-    Options.UseBFIInPromotion = false;
-    MPM.addPass(InstrProfiling(Options, false));
+    MPM.addPass(InstrProfiling(Options));
   }
 
   if (!ProfileUseFile.empty())

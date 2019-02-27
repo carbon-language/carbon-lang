@@ -18,8 +18,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/Analysis/BlockFrequencyInfo.h"
-#include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/Attributes.h"
@@ -149,8 +147,8 @@ public:
   static char ID;
 
   InstrProfilingLegacyPass() : ModulePass(ID) {}
-  InstrProfilingLegacyPass(const InstrProfOptions &Options, bool IsCS)
-      : ModulePass(ID), InstrProf(Options, IsCS) {}
+  InstrProfilingLegacyPass(const InstrProfOptions &Options)
+      : ModulePass(ID), InstrProf(Options) {}
 
   StringRef getPassName() const override {
     return "Frontend instrumentation-based coverage lowering";
@@ -234,9 +232,9 @@ class PGOCounterPromoter {
 public:
   PGOCounterPromoter(
       DenseMap<Loop *, SmallVector<LoadStorePair, 8>> &LoopToCands,
-      Loop &CurLoop, LoopInfo &LI, BlockFrequencyInfo *BFI)
+      Loop &CurLoop, LoopInfo &LI)
       : LoopToCandidates(LoopToCands), ExitBlocks(), InsertPts(), L(CurLoop),
-        LI(LI), BFI(BFI) {
+        LI(LI) {
 
     SmallVector<BasicBlock *, 8> LoopExitBlocks;
     SmallPtrSet<BasicBlock *, 8> BlockSet;
@@ -264,20 +262,6 @@ public:
       SmallVector<PHINode *, 4> NewPHIs;
       SSAUpdater SSA(&NewPHIs);
       Value *InitVal = ConstantInt::get(Cand.first->getType(), 0);
-
-      // If BFI is set, we will use it to guide the promotions.
-      if (BFI) {
-        auto *BB = Cand.first->getParent();
-        auto InstrCount = BFI->getBlockProfileCount(BB);
-        if (!InstrCount)
-          continue;
-        auto PreheaderCount = BFI->getBlockProfileCount(L.getLoopPreheader());
-        // If the average loop trip count is not greater than 1.5, we skip
-        // promotion.
-        if (PreheaderCount &&
-            (PreheaderCount.getValue() * 3) >= (InstrCount.getValue() * 2))
-          continue;
-      }
 
       PGOCounterPromoterHelper Promoter(Cand.first, Cand.second, SSA, InitVal,
                                         L.getLoopPreheader(), ExitBlocks,
@@ -328,11 +312,6 @@ private:
 
     SmallVector<BasicBlock *, 8> ExitingBlocks;
     LP->getExitingBlocks(ExitingBlocks);
-
-    // If BFI is set, we do more aggressive promotions based on BFI.
-    if (BFI)
-      return (unsigned)-1;
-
     // Not considierered speculative.
     if (ExitingBlocks.size() == 1)
       return MaxNumOfPromotionsPerLoop;
@@ -364,7 +343,6 @@ private:
   SmallVector<Instruction *, 8> InsertPts;
   Loop &L;
   LoopInfo &LI;
-  BlockFrequencyInfo *BFI;
 };
 
 } // end anonymous namespace
@@ -387,9 +365,8 @@ INITIALIZE_PASS_END(
     "Frontend instrumentation-based coverage lowering.", false, false)
 
 ModulePass *
-llvm::createInstrProfilingLegacyPass(const InstrProfOptions &Options,
-                                     bool IsCS) {
-  return new InstrProfilingLegacyPass(Options, IsCS);
+llvm::createInstrProfilingLegacyPass(const InstrProfOptions &Options) {
+  return new InstrProfilingLegacyPass(Options);
 }
 
 static InstrProfIncrementInst *castToIncrementInst(Instruction *Instr) {
@@ -438,13 +415,6 @@ void InstrProfiling::promoteCounterLoadStores(Function *F) {
   LoopInfo LI(DT);
   DenseMap<Loop *, SmallVector<LoadStorePair, 8>> LoopPromotionCandidates;
 
-  std::unique_ptr<BlockFrequencyInfo> BFI;
-  if (Options.UseBFIInPromotion) {
-    std::unique_ptr<BranchProbabilityInfo> BPI;
-    BPI.reset(new BranchProbabilityInfo(*F, LI, TLI));
-    BFI.reset(new BlockFrequencyInfo(*F, *BPI, LI));
-  }
-
   for (const auto &LoadStore : PromotionCandidates) {
     auto *CounterLoad = LoadStore.first;
     auto *CounterStore = LoadStore.second;
@@ -460,7 +430,7 @@ void InstrProfiling::promoteCounterLoadStores(Function *F) {
   // Do a post-order traversal of the loops so that counter updates can be
   // iteratively hoisted outside the loop nest.
   for (auto *Loop : llvm::reverse(Loops)) {
-    PGOCounterPromoter Promoter(LoopPromotionCandidates, *Loop, LI, BFI.get());
+    PGOCounterPromoter Promoter(LoopPromotionCandidates, *Loop, LI);
     Promoter.run(&TotalCountersPromoted);
   }
 }
@@ -711,6 +681,7 @@ static bool needsRuntimeRegistrationOfSectionRange(const Triple &TT) {
   // Don't do this for Darwin.  compiler-rt uses linker magic.
   if (TT.isOSDarwin())
     return false;
+
   // Use linker script magic to get data/cnts/name start/end.
   if (TT.isOSLinux() || TT.isOSFreeBSD() || TT.isOSNetBSD() ||
       TT.isOSFuchsia() || TT.isPS4CPU() || TT.isOSWindows())
@@ -1014,12 +985,8 @@ void InstrProfiling::emitUses() {
 }
 
 void InstrProfiling::emitInitialization() {
-  // Create ProfileFileName variable. Don't don't this for the
-  // context-sensitive instrumentation lowering: This lowering is after
-  // LTO/ThinLTO linking. Pass PGOInstrumentationGenCreateVar should
-  // have already create the variable before LTO/ThinLTO linking.
-  if (!IsCS)
-    createProfileFileNameVar(*M, Options.InstrProfileOutput);
+  // Create variable for profile name.
+  createProfileFileNameVar(*M, Options.InstrProfileOutput);
   Function *RegisterF = M->getFunction(getInstrProfRegFuncsName());
   if (!RegisterF)
     return;
