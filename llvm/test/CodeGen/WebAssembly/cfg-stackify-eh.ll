@@ -88,7 +88,44 @@ try.cont:                                         ; preds = %entry, %catch, %cat
 ; }
 
 ; CHECK-LABEL: test1
-; TODO Fill in CHECK lines once we fix ScopeTops info bug in D58605
+; CHECK: try
+; CHECK:   call      foo
+; CHECK: catch
+; CHECK:   block
+; CHECK:     block
+; CHECK:       br_if     0, {{.*}}                     # 0: down to label7
+; CHECK:       i32.call  $drop=, __cxa_begin_catch
+; CHECK:       try
+; CHECK:         call      foo
+; CHECK:         br        2                           # 2: down to label6
+; CHECK:       catch
+; CHECK:         try
+; CHECK:           block
+; CHECK:             br_if     0, {{.*}}               # 0: down to label11
+; CHECK:             i32.call  $drop=, __cxa_begin_catch
+; CHECK:             try
+; CHECK:               call      foo
+; CHECK:               br        2                     # 2: down to label10
+; CHECK:             catch
+; CHECK:               call      __cxa_end_catch
+; CHECK:               rethrow                         # down to catch3
+; CHECK:             end_try
+; CHECK:           end_block                           # label11:
+; CHECK:           call      __cxa_rethrow
+; CHECK:           unreachable
+; CHECK:         catch     {{.*}}                      # catch3:
+; CHECK:           call      __cxa_end_catch
+; CHECK:           rethrow                             # to caller
+; CHECK:         end_try                               # label10:
+; CHECK:         call      __cxa_end_catch
+; CHECK:         br        2                           # 2: down to label6
+; CHECK:       end_try
+; CHECK:     end_block                                 # label7:
+; CHECK:     call      __cxa_rethrow
+; CHECK:     unreachable
+; CHECK:   end_block                                   # label6:
+; CHECK:   call      __cxa_end_catch
+; CHECK: end_try
 define void @test1() personality i8* bitcast (i32 (...)* @__gxx_wasm_personality_v0 to i8*) {
 entry:
   invoke void @foo()
