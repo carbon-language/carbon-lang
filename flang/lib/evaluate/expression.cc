@@ -177,6 +177,7 @@ Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
           },
           [](const Designator<Result> &dr) { return dr.LEN(); },
           [](const FunctionRef<Result> &fr) { return fr.LEN(); },
+          [](const SetLength<KIND> &x) { return x.right(); },
       },
       u);
 }

@@ -272,6 +272,22 @@ struct Not : public Operation<Not<KIND>, Type<TypeCategory::Logical, KIND>,
   static std::ostream &Prefix(std::ostream &o) { return o << "(.NOT."; }
 };
 
+// Character lengths are determined by context in Fortran and do not
+// have explicit syntax for changing them.  Expressions represent
+// changes of length (e.g., for assignments and structure constructors)
+// with this operation.
+template<int KIND>
+struct SetLength
+  : public Operation<SetLength<KIND>, Type<TypeCategory::Character, KIND>,
+        Type<TypeCategory::Character, KIND>, SubscriptInteger> {
+  using Result = Type<TypeCategory::Character, KIND>;
+  using CharacterOperand = Result;
+  using LengthOperand = SubscriptInteger;
+  using Base = Operation<SetLength, Result, CharacterOperand, LengthOperand>;
+  using Base::Base;
+  static std::ostream &Prefix(std::ostream &o) { return o << "%SET_LENGTH("; }
+};
+
 // Binary operations
 
 template<typename A> struct Add : public Operation<Add<A>, A, A, A> {
@@ -569,7 +585,7 @@ public:
 
   std::variant<Constant<Result>, ArrayConstructor<Result>, Designator<Result>,
       FunctionRef<Result>, Parentheses<Result>, Convert<Result>, Concat<KIND>,
-      Extremum<Result>>
+      Extremum<Result>, SetLength<KIND>>
       u;
 };
 

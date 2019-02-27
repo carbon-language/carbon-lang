@@ -1496,7 +1496,8 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
             result.Add(*symbol, std::move(*converted));
           } else {
             if (auto *msg{context.Say(expr.source,
-                    "Structure constructor value is incompatible with component"_err_en_US)}) {
+                    "Structure constructor value is incompatible with component '%s'"_err_en_US,
+                    symbol->name().ToString().data())}) {
               msg->Attach(symbol->name(), "Component declaration"_en_US);
             }
           }

@@ -99,24 +99,22 @@ bool DynamicType::operator==(const DynamicType &that) const {
       PointeeComparison(derived, that.derived);
 }
 
-std::optional<DynamicType> GetSymbolType(const semantics::Symbol *symbol) {
-  if (symbol != nullptr) {
-    if (const auto *type{symbol->GetType()}) {
-      if (const auto *intrinsic{type->AsIntrinsic()}) {
-        if (auto kind{ToInt64(intrinsic->kind())}) {
-          TypeCategory category{intrinsic->category()};
-          if (IsValidKindOfIntrinsicType(category, *kind)) {
-            if (category == TypeCategory::Character) {
-              const auto &charType{type->characterTypeSpec()};
-              return DynamicType{static_cast<int>(*kind), charType.length()};
-            } else {
-              return DynamicType{category, static_cast<int>(*kind)};
-            }
+std::optional<DynamicType> GetSymbolType(const semantics::Symbol &symbol) {
+  if (const auto *type{symbol.GetType()}) {
+    if (const auto *intrinsic{type->AsIntrinsic()}) {
+      if (auto kind{ToInt64(intrinsic->kind())}) {
+        TypeCategory category{intrinsic->category()};
+        if (IsValidKindOfIntrinsicType(category, *kind)) {
+          if (category == TypeCategory::Character) {
+            const auto &charType{type->characterTypeSpec()};
+            return DynamicType{static_cast<int>(*kind), charType.length()};
+          } else {
+            return DynamicType{category, static_cast<int>(*kind)};
           }
         }
-      } else if (const auto *derived{type->AsDerived()}) {
-        return DynamicType{*derived};
       }
+    } else if (const auto *derived{type->AsDerived()}) {
+      return DynamicType{*derived};
     }
   }
   return std::nullopt;

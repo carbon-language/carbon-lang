@@ -528,8 +528,24 @@ std::optional<Expr<SomeType>> ConvertToType(
     return ConvertToNumeric<TypeCategory::Complex>(type.kind, std::move(x));
   case TypeCategory::Character:
     if (auto *cx{UnwrapExpr<Expr<SomeCharacter>>(x)}) {
-      return Expr<SomeType>{
+      auto converted{
           ConvertToKind<TypeCategory::Character>(type.kind, std::move(*cx))};
+      if (type.charLength != nullptr) {
+        if (const auto &len{type.charLength->GetExplicit()}) {
+          Expr<SomeInteger> lenParam{*len};
+          Expr<SubscriptInteger> length{Convert<SubscriptInteger>{lenParam}};
+          converted = std::visit(
+              [&](auto &&x) {
+                using Ty = std::decay_t<decltype(x)>;
+                using CharacterType = typename Ty::Result;
+                return Expr<SomeCharacter>{
+                    Expr<CharacterType>{SetLength<CharacterType::kind>{
+                        std::move(x), std::move(length)}}};
+              },
+              std::move(converted.u));
+        }
+      }
+      return Expr<SomeType>{std::move(converted)};
     }
     break;
   case TypeCategory::Logical:
@@ -558,7 +574,6 @@ std::optional<Expr<SomeType>> ConvertToType(
     }
   }
   if (auto symType{GetSymbolType(symbol)}) {
-    // TODO pmk CHARACTER length
     return ConvertToType(*symType, std::move(x));
   }
   return std::nullopt;
