@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1621,6 +1621,25 @@ public:
     Word("PROCEDURE ("), Walk(std::get<std::optional<ProcInterface>>(x.t));
     Put(')'), Walk(", ", std::get<std::list<ProcAttrSpec>>(x.t), ", ");
     Put(" :: "), Walk(std::get<std::list<ProcDecl>>(x.t), ", ");
+  }
+  void Unparse(const ProcInterface &x) {  // R1513
+    std::visit(
+        common::visitors{
+            [&](const DeclarationTypeSpec &d) {
+              std::visit(
+                  common::visitors{
+                      [&](const IntrinsicTypeSpec &t) {
+                        // Emit TYPE(REAL) to ensure no conflict with a symbol
+                        // REAL
+                        Word("TYPE("), Walk(t), Word(")");
+                      },
+                      [&](const auto &t) { Walk(t); },
+                  },
+                  d.u);
+            },
+            [&](const Name &n) { Walk(n); },
+        },
+        x.u);
   }
   void Unparse(const ProcDecl &x) {  // R1515
     Walk(std::get<Name>(x.t));
