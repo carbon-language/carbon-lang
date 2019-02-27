@@ -38,6 +38,30 @@ clangd can update the code for you.
 
 :raw-html:`</details>`
 
+**(New in v9)**
+If a missing symbol was seen in a file you've edited recently, clangd will
+suggest inserting it.
+
+clang-tidy checks
+-----------------
+
+**(New in v9)**
+clangd embeds `clang-tidy <https://clang.llvm.org/extra/clang-tidy/>`__
+which provides extra hints about code problems: bug-prone patterns,
+performance traps, and style issues.
+
+:raw-html:`<details><summary markdown="span">Animated demo</summary>`
+
+.. image:: ApplyClangTidyFixInVSCode.gif
+   :align: center
+   :alt: Applying a fix suggested by the compiler
+
+:raw-html:`</details>`
+
+clangd respects your project's ``.clang-tidy`` file which controls the checks
+to run. Not all checks work within clangd.  You must pass the ``-clang-tidy``
+flag to enable this feature.
+
 Code completion
 ===============
 
@@ -92,6 +116,9 @@ The following features let you navigate your codebase.
 If there is no project-wide index, cross-references work across the files
 you have opened.
 
+**(New in v9)**
+clangd will also automatically index your whole project.
+
 Find definition/declaration
 ---------------------------
 
@@ -104,6 +131,13 @@ Jump to the definition or declaration of a symbol under the cursor.
    :alt: Demonstration of the "Go to definition" feature
 
 :raw-html:`</details>`
+
+**(New in v9)**
+Some editors only expose "find definition"; use "find definition" on the
+definition to jump to the declaration.
+
+"Find definition" also works on ``#include`` lines, to jump to the included
+file.
 
 Find references
 ---------------
