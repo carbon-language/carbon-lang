@@ -55,7 +55,10 @@ void GetStackTrace(__sanitizer::BufferedStackTrace *stack,
     stack_bottom = t->stack_begin();
   }
   if (!SANITIZER_MIPS || IsValidFrame(bp, stack_top, stack_bottom)) {
-    stack->Unwind(max_depth, pc, bp, context, stack_top, stack_bottom, fast);
+    if (StackTrace::WillUseFastUnwind(fast))
+      stack->Unwind(max_depth, pc, bp, nullptr, stack_top, stack_bottom, true);
+    else
+      stack->Unwind(max_depth, pc, 0, context, 0, 0, false);
   }
 }
 

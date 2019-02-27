@@ -157,8 +157,11 @@ void GetStackTrace(BufferedStackTrace *stack, uptr max_s, uptr pc, uptr bp,
     SymbolizerScope sym_scope;
     return stack->Unwind(max_s, pc, bp, context, 0, 0, request_fast_unwind);
   }
-  stack->Unwind(max_s, pc, bp, context, t->stack_top(), t->stack_bottom(),
-                request_fast_unwind);
+  if (StackTrace::WillUseFastUnwind(request_fast_unwind))
+    stack->Unwind(max_s, pc, bp, nullptr, t->stack_top(), t->stack_bottom(),
+                  true);
+  else
+    stack->Unwind(max_s, pc, 0, context, 0, 0, false);
 }
 
 static void HWAsanCheckFailed(const char *file, int line, const char *cond,

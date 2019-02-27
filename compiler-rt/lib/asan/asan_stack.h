@@ -33,7 +33,7 @@ ALWAYS_INLINE
 void GetStackTrace(BufferedStackTrace *stack, uptr max_depth, uptr pc, uptr bp,
                    void *context, bool fast) {
 #if SANITIZER_WINDOWS
-  stack->Unwind(max_depth, pc, bp, context, 0, 0, fast);
+  stack->Unwind(max_depth, pc, 0, context, 0, 0, false);
 #else
   AsanThread *t;
   stack->size = 0;
@@ -43,8 +43,11 @@ void GetStackTrace(BufferedStackTrace *stack, uptr max_depth, uptr pc, uptr bp,
       uptr stack_bottom = t->stack_bottom();
       ScopedUnwinding unwind_scope(t);
       if (!SANITIZER_MIPS || IsValidFrame(bp, stack_top, stack_bottom)) {
-        stack->Unwind(max_depth, pc, bp, context, stack_top, stack_bottom,
-                      fast);
+        if (StackTrace::WillUseFastUnwind(fast))
+          stack->Unwind(max_depth, pc, bp, nullptr, stack_top, stack_bottom,
+                      true);
+        else
+          stack->Unwind(max_depth, pc, 0, context, 0, 0, false);
       }
     } else if (!t && !fast) {
       /* If GetCurrentThread() has failed, try to do slow unwind anyways. */
