@@ -1,34 +1,34 @@
-RUN: echo ",,_Z3Foo!" \
-RUN:      "_Z3Foo\""  \
-RUN:      "_Z3Foo\""  \
-RUN:      "_Z3Foo#"   \
-RUN:      "_Z3Foo%"   \
-RUN:      "_Z3Foo&"   \
+UNSUPPORTED: system-windows
+RUN: echo ',,_Z3Foo!' \
+RUN:      '_Z3Foo"'   \
+RUN:      '_Z3Foo#'   \
+RUN:      '_Z3Foo%'   \
+RUN:      '_Z3Foo&'   \
 RUN:      "_Z3Foo'"   \
-RUN:      "_Z3Foo("   \
-RUN:      "_Z3Foo)"   \
-RUN:      "_Z3Foo*"   \
-RUN:      "_Z3Foo+"   \
-RUN:      "_Z3Foo,"   \
-RUN:      "_Z3Foo-"   \
-RUN:      "_Z3Foo/"   \
-RUN:      "_Z3Foo:"   \
-RUN:      "_Z3Foo;"   \
-RUN:      "_Z3Foo<"   \
-RUN:      "_Z3Foo="   \
-RUN:      "_Z3Foo>"   \
-RUN:      "_Z3Foo?"   \
-RUN:      "_Z3Foo@"   \
-RUN:      "_Z3Foo["   \
-RUN:      "_Z3Foo\\"  \
-RUN:      "_Z3Foo]"   \
-RUN:      "_Z3Foo^"   \
-RUN:      "_Z3Foo\`"  \
-RUN:      "_Z3Foo{"   \
-RUN:      "_Z3Foo|"   \
-RUN:      "_Z3Foo}"   \
-RUN:      "_Z3Foo~,," \
-RUN:      "_Z3Foo,,_Z3Bar::_Z3Baz  _Z3Foo,_Z3Bar:_Z3Baz" \
+RUN:      '_Z3Foo('   \
+RUN:      '_Z3Foo)'   \
+RUN:      '_Z3Foo*'   \
+RUN:      '_Z3Foo+'   \
+RUN:      '_Z3Foo,'   \
+RUN:      '_Z3Foo-'   \
+RUN:      '_Z3Foo/'   \
+RUN:      '_Z3Foo:'   \
+RUN:      '_Z3Foo;'   \
+RUN:      '_Z3Foo<'   \
+RUN:      '_Z3Foo='   \
+RUN:      '_Z3Foo>'   \
+RUN:      '_Z3Foo?'   \
+RUN:      '_Z3Foo@'   \
+RUN:      '_Z3Foo['   \
+RUN:      '_Z3Foo\'   \
+RUN:      '_Z3Foo]'   \
+RUN:      '_Z3Foo^'   \
+RUN:      '_Z3Foo`'   \
+RUN:      '_Z3Foo{'   \
+RUN:      '_Z3Foo|'   \
+RUN:      '_Z3Foo}'   \
+RUN:      '_Z3Foo~,,' \
+RUN:      '_Z3Foo,,_Z3Bar::_Z3Baz  _Z3Foo,_Z3Bar:_Z3Baz' \
 RUN:      '_Z3Foo$ ._Z3Foo' | llvm-cxxfilt | FileCheck %s
 
 CHECK: ,,Foo!
