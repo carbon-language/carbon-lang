@@ -1,4 +1,3 @@
-UNSUPPORTED: system-windows
 RUN: echo ',,_Z3Foo!' \
 RUN:      '_Z3Foo"'   \
 RUN:      '_Z3Foo#'   \
