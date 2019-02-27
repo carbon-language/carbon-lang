@@ -18,26 +18,23 @@ target triple = "wasm32-unknown-unknown"
 ; }
 
 ; CHECK-LABEL: test0
-; CHECK: block
-; CHECK:   try
-; CHECK:     call      foo
-; CHECK:     br        0                               # 0: down to label1
-; CHECK:   catch
-; CHECK:     block
-; CHECK:       br_if     0, {{.*}}                     # 0: down to label3
-; CHECK:       i32.call  $drop=, __cxa_begin_catch
-; CHECK:       call      __cxa_end_catch
-; CHECK:       br        1                             # 1: down to label1
-; CHECK:     end_block                                 # label3:
-; CHECK:     block
-; CHECK:       br_if     0, {{.*}}                     # 0: down to label4
-; CHECK:       i32.call  $drop=, __cxa_begin_catch
-; CHECK:       call      __cxa_end_catch
-; CHECK:       br        1                             # 1: down to label1
-; CHECK:     end_block                                 # label4:
-; CHECK:     call      __cxa_rethrow
-; CHECK:   end_try                                     # label1:
-; CHECK: end_block
+; CHECK: try
+; CHECK:   call      foo
+; CHECK: catch
+; CHECK:   block
+; CHECK:     br_if     0, {{.*}}                       # 0: down to label2
+; CHECK:     i32.call  $drop=, __cxa_begin_catch
+; CHECK:     call      __cxa_end_catch
+; CHECK:     br        1                               # 1: down to label0
+; CHECK:   end_block                                   # label2:
+; CHECK:   block
+; CHECK:     br_if     0, {{.*}}                       # 0: down to label3
+; CHECK:     i32.call  $drop=, __cxa_begin_catch
+; CHECK:     call      __cxa_end_catch
+; CHECK:     br        1                               # 1: down to label0
+; CHECK:   end_block                                   # label3:
+; CHECK:   call      __cxa_rethrow
+; CHECK: end_try                                       # label0:
 define void @test0() personality i8* bitcast (i32 (...)* @__gxx_wasm_personality_v0 to i8*) {
 entry:
   invoke void @foo()
@@ -177,39 +174,33 @@ unreachable:                                      ; preds = %rethrow5
 ; }
 
 ; CHECK-LABEL: test2
-; CHECK: block
-; CHECK:   try
-; CHECK:     call      foo
-; CHECK:     br        0                               # 0: down to label17
-; CHECK:   catch
-; CHECK:     i32.call  $drop=, __cxa_begin_catch
-; CHECK:     loop                                      # label19:
+; CHECK: try
+; CHECK:   call      foo
+; CHECK: catch
+; CHECK:   i32.call  $drop=, __cxa_begin_catch
+; CHECK:   loop                                        # label15:
+; CHECK:     block
 ; CHECK:       block
-; CHECK:         block
-; CHECK:           br_if     0, {{.*}}                 # 0: down to label21
+; CHECK:         br_if     0, {{.*}}                   # 0: down to label17
+; CHECK:         try
+; CHECK:           call      foo
+; CHECK:           br        2                         # 2: down to label16
+; CHECK:         catch
 ; CHECK:           try
-; CHECK:             call      foo
-; CHECK:             br        2                       # 2: down to label20
+; CHECK:             call      __cxa_end_catch
 ; CHECK:           catch
-; CHECK:             block
-; CHECK:               try
-; CHECK:                 call      __cxa_end_catch
-; CHECK:                 br        0                   # 0: down to label24
-; CHECK:               catch
-; CHECK:                 call      __clang_call_terminate
-; CHECK:                 unreachable
-; CHECK:               end_try                         # label24:
-; CHECK:             end_block
-; CHECK:             rethrow                           # to caller
+; CHECK:             call      __clang_call_terminate
+; CHECK:             unreachable
 ; CHECK:           end_try
-; CHECK:         end_block                             # label21:
-; CHECK:         call      __cxa_end_catch
-; CHECK:         br        2                           # 2: down to label17
-; CHECK:       end_block                               # label20:
-; CHECK:       br        0                             # 0: up to label19
-; CHECK:     end_loop
-; CHECK:   end_try                                     # label17:
-; CHECK: end_block
+; CHECK:           rethrow                             # to caller
+; CHECK:         end_try
+; CHECK:       end_block                               # label17:
+; CHECK:       call      __cxa_end_catch
+; CHECK:       br        2                             # 2: down to label13
+; CHECK:     end_block                                 # label16:
+; CHECK:     br        0                               # 0: up to label15
+; CHECK:   end_loop
+; CHECK: end_try                                       # label13:
 define void @test2() personality i8* bitcast (i32 (...)* @__gxx_wasm_personality_v0 to i8*) {
 entry:
   invoke void @foo()
