@@ -110,16 +110,16 @@ MemoryBlock Memory::allocateMappedMemory(size_t NumBytes,
     return MemoryBlock();
 
   static size_t DefaultGranularity = getAllocationGranularity();
-  static Optional<size_t> LargePageGranularity = enableProcessLargePages();
+  static size_t LargePageGranularity = enableProcessLargePages();
 
   DWORD AllocType = MEM_RESERVE | MEM_COMMIT;
   bool HugePages = false;
   size_t Granularity = DefaultGranularity;
 
-  if ((Flags & MF_HUGE_HINT) && LargePageGranularity.hasValue()) {
+  if ((Flags & MF_HUGE_HINT) && LargePageGranularity > 0) {
     AllocType |= MEM_LARGE_PAGES;
     HugePages = true;
-    Granularity = *LargePageGranularity;
+    Granularity = LargePageGranularity;
   }
 
   size_t NumBlocks = (NumBytes + Granularity - 1) / Granularity;
