@@ -609,11 +609,11 @@ public:
   void Post(const parser::SeparateModuleSubprogram &);
   bool Pre(const parser::Suffix &);
   bool Pre(const parser::PrefixSpec &);
+  void Post(const parser::ImplicitPart &);
 
 protected:
   // Set when we see a stmt function that is really an array element assignment
   bool badStmtFuncFound_{false};
-  void HandleFunctionPrefixType();
 
 private:
   // Info about the current function: parse tree of the type in the PrefixSpec;
@@ -2196,12 +2196,17 @@ bool SubprogramVisitor::Pre(const parser::Suffix &suffix) {
 
 bool SubprogramVisitor::Pre(const parser::PrefixSpec &x) {
   // Save this to process after UseStmt and ImplicitPart
-  funcInfo_.parsedType = std::get_if<parser::DeclarationTypeSpec>(&x.u);
-  funcInfo_.source = currStmtSource();
-  return funcInfo_.parsedType == nullptr;
+  if (const auto *parsedType{std::get_if<parser::DeclarationTypeSpec>(&x.u)}) {
+    funcInfo_.parsedType = parsedType;
+    funcInfo_.source = currStmtSource();
+    return false;
+  } else {
+    return true;
+  }
 }
 
-void SubprogramVisitor::HandleFunctionPrefixType() {
+void SubprogramVisitor::Post(const parser::ImplicitPart &) {
+  // If the function has a type in the prefix, process it now
   if (funcInfo_.parsedType) {
     messageHandler().set_currStmtSource(funcInfo_.source);
     if (const auto *type{ProcessTypeSpec(*funcInfo_.parsedType)}) {
@@ -4485,7 +4490,6 @@ static bool NeedsExplicitType(const Symbol &symbol) {
 void ResolveNamesVisitor::Post(const parser::SpecificationPart &) {
   badStmtFuncFound_ = false;
   CheckImports();
-  HandleFunctionPrefixType();
   bool inModule{currScope().kind() == Scope::Kind::Module};
   for (auto &pair : currScope()) {
     auto &symbol{*pair.second};
