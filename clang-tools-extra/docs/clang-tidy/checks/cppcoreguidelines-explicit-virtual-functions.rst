@@ -1,6 +1,6 @@
 .. title:: clang-tidy - cppcoreguidelines-explicit-virtual-functions
 .. meta::
-   :http-equiv=refresh: 5;URL=cppcoreguidelines-explicit-virtual-functions.html
+   :http-equiv=refresh: 5;URL=modernize-use-override.html
 
 cppcoreguidelines-explicit-virtual-functions
 ============================================
