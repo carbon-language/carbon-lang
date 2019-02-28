@@ -11,6 +11,7 @@
 #include "CanonicalIncludes.h"
 #include "CodeComplete.h"
 #include "CodeCompletionStrings.h"
+#include "ExpectedTypes.h"
 #include "Logger.h"
 #include "SourceCode.h"
 #include "SymbolLocation.h"
