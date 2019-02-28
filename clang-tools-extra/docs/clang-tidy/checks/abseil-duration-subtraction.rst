@@ -28,6 +28,7 @@ Examples:
   // Suggestion - Subtraction in the absl::Duration domain instead
   double result = absl::ToDoubleSeconds(d1 - d2);
 
+
 Note: As with other ``clang-tidy`` checks, it is possible that multiple fixes
 may overlap (as in the case of nested expressions), so not all occurences can
 be transformed in one run. In particular, this may occur for nested subtraction
