@@ -41888,20 +41888,6 @@ static SDValue combineInsertSubvector(SDNode *N, SelectionDAG &DAG,
                            getZeroVector(OpVT, Subtarget, DAG, dl),
                            Ins.getOperand(1), N->getOperand(2));
     }
-
-    // If we're inserting a bitcast into zeros, rewrite the insert and move the
-    // bitcast to the other side. This helps with detecting zero extending
-    // during isel.
-    // TODO: Is this useful for other indices than 0?
-    if (!IsI1Vector && SubVec.getOpcode() == ISD::BITCAST && IdxVal == 0) {
-      MVT CastVT = SubVec.getOperand(0).getSimpleValueType();
-      unsigned NumElems = OpVT.getSizeInBits() / CastVT.getScalarSizeInBits();
-      MVT NewVT = MVT::getVectorVT(CastVT.getVectorElementType(), NumElems);
-      SDValue Insert = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, NewVT,
-                                   DAG.getBitcast(NewVT, Vec),
-                                   SubVec.getOperand(0), N->getOperand(2));
-      return DAG.getBitcast(OpVT, Insert);
-    }
   }
 
   // Stop here if this is an i1 vector.
