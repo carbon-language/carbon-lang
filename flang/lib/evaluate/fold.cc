@@ -702,6 +702,24 @@ Expr<Type<TypeCategory::Character, KIND>> FoldOperation(
   return Expr<Result>{std::move(x)};
 }
 
+template<int KIND>
+Expr<Type<TypeCategory::Character, KIND>> FoldOperation(
+    FoldingContext &context, SetLength<KIND> &&x) {
+  using Result = Type<TypeCategory::Character, KIND>;
+  if (auto folded{FoldOperands(context, x.left(), x.right())}) {
+    auto oldLength{static_cast<std::int64_t>(folded->first.size())};
+    auto newLength{folded->second.ToInt64()};
+    if (newLength < oldLength) {
+      folded->first.erase(newLength);
+    } else {
+      folded->first.append(newLength - oldLength, ' ');
+    }
+    CHECK(static_cast<std::int64_t>(folded->first.size()) == newLength);
+    return Expr<Result>{Constant<Result>{std::move(folded->first)}};
+  }
+  return Expr<Result>{std::move(x)};
+}
+
 template<typename T>
 Expr<LogicalResult> FoldOperation(
     FoldingContext &context, Relational<T> &&relation) {

@@ -298,7 +298,7 @@ std::ostream &StructureConstructor::AsFortran(std::ostream &o) const {
 
 std::ostream &DerivedTypeSpecAsFortran(
     std::ostream &o, const semantics::DerivedTypeSpec &spec) {
-  o << "TYPE("s << spec.typeSymbol().name().ToString();
+  o << spec.typeSymbol().name().ToString();
   if (!spec.parameters().empty()) {
     char ch{'('};
     for (const auto &[name, value] : spec.parameters()) {

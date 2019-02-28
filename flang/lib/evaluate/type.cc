@@ -207,7 +207,7 @@ bool SomeKind<TypeCategory::Derived>::operator==(
 
 std::string SomeDerived::AsFortran() const {
   std::stringstream out;
-  DerivedTypeSpecAsFortran(out, spec());
+  DerivedTypeSpecAsFortran(out << "TYPE(", spec()) << ')';
   return out.str();
 }
 }
