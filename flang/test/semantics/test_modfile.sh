@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ for src in "$@"; do
     $CMD $src
     ls -1 *.mod | comm -13 prev_files -
   ) > $actual_files
-  expected_files=$(sed -n 's/^!Expect: \(.*\)/\1/p' $src)
+  expected_files=$(sed -n 's/^!Expect: \(.*\)/\1/p' $src | sort)
   extra_files=$(echo "$expected_files" | comm -23 $actual_files -)
   if [[ ! -z "$extra_files" ]]; then
     echo "Unexpected .mod files produced:" $extra_files
