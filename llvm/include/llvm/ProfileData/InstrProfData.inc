@@ -699,13 +699,14 @@ serializeValueProfDataFrom(ValueProfRecordClosure *Closure,
 /* Order file instrumentation. */
 #define INSTR_PROF_ORDERFILE_SECT_NAME                                         \
   INSTR_PROF_QUOTE(INSTR_PROF_ORDERFILE_COMMON)
+#endif
+
 #define INSTR_PROF_ORDERFILE_BUFFER_NAME _llvm_order_file_buffer
 #define INSTR_PROF_ORDERFILE_BUFFER_NAME_STR                                   \
   INSTR_PROF_QUOTE(INSTR_PROF_ORDERFILE_BUFFER_NAME)
 #define INSTR_PROF_ORDERFILE_BUFFER_IDX_NAME _llvm_order_file_buffer_idx
 #define INSTR_PROF_ORDERFILE_BUFFER_IDX_NAME_STR                               \
   INSTR_PROF_QUOTE(INSTR_PROF_ORDERFILE_BUFFER_IDX_NAME)
-#endif
 
 /* Macros to define start/stop section symbol for a given
  * section on Linux. For instance
