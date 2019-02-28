@@ -29,7 +29,6 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "framelowering"
-STATISTIC(NumNoNeedForFrame, "Number of functions without frames");
 STATISTIC(NumPESpillVSR, "Number of spills to vector in prologue");
 STATISTIC(NumPEReloadVSR, "Number of reloads from vector in epilogue");
 
