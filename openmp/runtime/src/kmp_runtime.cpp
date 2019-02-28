@@ -7370,11 +7370,13 @@ void __kmp_internal_join(ident_t *id, int gtid, kmp_team_t *team) {
 
     if (ompt_enabled.ompt_callback_sync_region_wait) {
       ompt_callbacks.ompt_callback(ompt_callback_sync_region_wait)(
-          ompt_sync_region_barrier, ompt_scope_end, NULL, task_data, codeptr);
+          ompt_sync_region_barrier_implicit, ompt_scope_end, NULL, task_data,
+          codeptr);
     }
     if (ompt_enabled.ompt_callback_sync_region) {
       ompt_callbacks.ompt_callback(ompt_callback_sync_region)(
-          ompt_sync_region_barrier, ompt_scope_end, NULL, task_data, codeptr);
+          ompt_sync_region_barrier_implicit, ompt_scope_end, NULL, task_data,
+          codeptr);
     }
 #endif
     if (!KMP_MASTER_TID(ds_tid) && ompt_enabled.ompt_callback_implicit_task) {
