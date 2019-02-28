@@ -51,9 +51,7 @@ RefSlab RefSlab::Builder::build() && {
     SymRefs.erase(std::unique(SymRefs.begin(), SymRefs.end()), SymRefs.end());
 
     NumRefs += SymRefs.size();
-    auto *Array = Arena.Allocate<Ref>(SymRefs.size());
-    std::uninitialized_copy(SymRefs.begin(), SymRefs.end(), Array);
-    Result.emplace_back(Sym.first, llvm::ArrayRef<Ref>(Array, SymRefs.size()));
+    Result.emplace_back(Sym.first, llvm::ArrayRef<Ref>(SymRefs).copy(Arena));
   }
   return RefSlab(std::move(Result), std::move(Arena), NumRefs);
 }
