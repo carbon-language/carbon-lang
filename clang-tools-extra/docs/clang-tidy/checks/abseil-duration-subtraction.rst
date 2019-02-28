@@ -21,7 +21,6 @@ Examples:
   // Suggestion - Subtraction in the absl::Duration domain instead
   double result = absl::ToDoubleSeconds(d - absl::Seconds(x));
 
-
   // Original - Subtraction of two Durations in the double domain
   absl::Duration d1, d2;
   double result = absl::ToDoubleSeconds(d1) - absl::ToDoubleSeconds(d2);
