@@ -94,31 +94,6 @@ inline bool operator<(const SymbolLocation &L, const SymbolLocation &R) {
 }
 llvm::raw_ostream &operator<<(llvm::raw_ostream &, const SymbolLocation &);
 
-} // namespace clangd
-} // namespace clang
-namespace llvm {
-// Support SymbolIDs as DenseMap keys.
-template <> struct DenseMapInfo<clang::clangd::SymbolID> {
-  static inline clang::clangd::SymbolID getEmptyKey() {
-    static clang::clangd::SymbolID EmptyKey("EMPTYKEY");
-    return EmptyKey;
-  }
-  static inline clang::clangd::SymbolID getTombstoneKey() {
-    static clang::clangd::SymbolID TombstoneKey("TOMBSTONEKEY");
-    return TombstoneKey;
-  }
-  static unsigned getHashValue(const clang::clangd::SymbolID &Sym) {
-    return hash_value(Sym);
-  }
-  static bool isEqual(const clang::clangd::SymbolID &LHS,
-                      const clang::clangd::SymbolID &RHS) {
-    return LHS == RHS;
-  }
-};
-} // namespace llvm
-namespace clang {
-namespace clangd {
-
 // Describes the source of information about a symbol.
 // Mainly useful for debugging, e.g. understanding code completion reuslts.
 // This is a bitfield as information can be combined from several sources.
