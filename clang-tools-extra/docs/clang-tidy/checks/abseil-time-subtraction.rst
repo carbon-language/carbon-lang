@@ -8,9 +8,10 @@ in the Time domain instead of the numeric domain.
 
 There are two cases of Time subtraction in which deduce additional type
 information:
- - When the result is an ``absl::Duration`` and the first argument is an
-   ``absl::Time``.
- - When the second argument is a ``absl::Time``.
+
+- When the result is an ``absl::Duration`` and the first argument is an
+  ``absl::Time``.
+- When the second argument is a ``absl::Time``.
 
 In the first case, we must know the result of the operation, since without that
 the second operand could be either an ``absl::Time`` or an ``absl::Duration``.
