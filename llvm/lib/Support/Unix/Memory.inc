@@ -128,6 +128,7 @@ Memory::allocateMappedMemory(size_t NumBytes,
   MemoryBlock Result;
   Result.Address = Addr;
   Result.Size = NumBytes;
+  Result.Flags = PFlags;
 
   // Rely on protectMappedMemory to invalidate instruction cache.
   if (PFlags & MF_EXEC) {
