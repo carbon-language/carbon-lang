@@ -50,24 +50,13 @@ using FunctionType = evaluate::SomeType;  // TODO: what should this be?
 using AttributeList = std::vector<Attribute>;
 enum struct LinkageTypes { Public, Hidden, External };
 using Expression = evaluate::GenericExprWrapper;
-#if 0
-struct Variable {
-  // TODO: should semantics::Symbol be removed?
-  template<typename... Ts> struct GVT {
-    using type =
-        std::variant<const semantics::Symbol *, evaluate::Variable<Ts>...>;
-  };
-  Variable(const semantics::Symbol *symbol) : u{symbol} {}
-  common::OverMembers<GVT, evaluate::AllIntrinsicTypes>::type u;
-};
-#endif
-
 using Variable = const semantics::Symbol *;
 using PathVariable = const parser::Variable;
 using Scope = const semantics::Scope;
 using Value = Expression;
 using PHIPair = std::pair<Value *, BasicBlock *>;
 using CallArguments = std::vector<const Expression *>;
+using Type = const semantics::DeclTypeSpec *;  // FIXME
 
 enum InputOutputCallType {
   InputOutputCallBackspace = 11,

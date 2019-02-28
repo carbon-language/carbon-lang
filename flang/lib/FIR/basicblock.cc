@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "program.h"
-#include "stmt.h"
+#include "statements.h"
 
 namespace Fortran::FIR {
 
@@ -34,7 +34,9 @@ void BasicBlock::insertBefore(Statement *stmt, Statement *before) {
 
 void BasicBlock::addPred(BasicBlock *bb) {
   for (auto *p : preds_) {
-    if (p == bb) return;
+    if (p == bb) {
+      return;
+    }
   }
   preds_.push_back(bb);
 }

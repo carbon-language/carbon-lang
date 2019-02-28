@@ -15,7 +15,7 @@
 #ifndef FORTRAN_FIR_BUILDER_H_
 #define FORTRAN_FIR_BUILDER_H_
 
-#include "stmt.h"
+#include "statements.h"
 #include <initializer_list>
 
 namespace Fortran::FIR {
@@ -42,8 +42,8 @@ struct FIRBuilder {
   void ClearInsertionPoint() { cursorBlock_ = nullptr; }
   BasicBlock *GetInsertionPoint() const { return cursorBlock_; }
 
-  Statement &CreateAlloc(const Expression *object) {
-    return Insert(AllocateStmt::Create(object));
+  Statement &CreateAlloc(Type type) {
+    return Insert(AllocateInsn::Create(type));
   }
   Statement &CreateAssign(const PathVariable *lhs, const Expression *rhs) {
     return Insert(AssignmentStmt::Create(lhs, rhs));
@@ -64,22 +64,20 @@ struct FIRBuilder {
     return InsertTerminator(
         BranchStmt::Create(condition, trueBlock, falseBlock));
   }
-  Statement &CreateDealloc(const Expression *object) {
-    return Insert(DeallocateStmt::Create(object));
+  Statement &CreateDealloc(const AllocateInsn *alloc) {
+    return Insert(DeallocateInsn::Create(alloc));
   }
   template<typename A> Statement &CreateExpr(const A *a) {
     return Insert(ApplyExprStmt::Create(a));
   }
-  Statement &CreateIOCall(
-      InputOutputCallType call, IOCallArguments &&arguments) {
-    return Insert(IORuntimeStmt::Create(call, std::move(arguments)));
+  Statement &CreateIOCall(InputOutputCallType c, IOCallArguments &&a) {
+    return Insert(IORuntimeStmt::Create(c, std::move(a)));
   }
-  Statement &CreateIndirectBr(
-      Variable *var, const std::vector<BasicBlock *> &potentials) {
-    return InsertTerminator(IndirectBrStmt::Create(var, potentials));
+  Statement &CreateIndirectBr(Variable *v, const std::vector<BasicBlock *> &p) {
+    return InsertTerminator(IndirectBranchStmt::Create(v, p));
   }
-  Statement &CreateNullify(const parser::NullifyStmt *statement) {
-    return Insert(DisassociateStmt::Create(statement));
+  Statement &CreateNullify(const parser::NullifyStmt *s) {
+    return Insert(DisassociateInsn::Create(s));
   }
   Statement &CreatePointerAssign(const Expression *lhs, const Expression *rhs) {
     return Insert(PointerAssignStmt::Create(lhs, rhs));
@@ -108,11 +106,9 @@ struct FIRBuilder {
     return InsertTerminator(
         SwitchTypeStmt::Create(condition, defaultCase, rest));
   }
-  Statement &CreateSwitchRank(const Evaluation &condition,
-      BasicBlock *defaultCase,
-      const SwitchRankStmt::ValueSuccPairListType &rest) {
-    return InsertTerminator(
-        SwitchRankStmt::Create(condition, defaultCase, rest));
+  Statement &CreateSwitchRank(const Evaluation &c, BasicBlock *d,
+      const SwitchRankStmt::ValueSuccPairListType &r) {
+    return InsertTerminator(SwitchRankStmt::Create(c, d, r));
   }
   Statement &CreateUnreachable() {
     return InsertTerminator(UnreachableStmt::Create());

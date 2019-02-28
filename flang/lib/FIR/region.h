@@ -16,7 +16,7 @@
 #define FORTRAN_FIR_REGION_H_
 
 #include "procedure.h"
-#include "stmt.h"
+#include "statements.h"
 #include "../semantics/semantics.h"
 
 namespace Fortran::FIR {

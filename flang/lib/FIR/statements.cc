@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "stmt.h"
+#include "statements.h"
 
 namespace Fortran::FIR {
 
@@ -172,10 +172,17 @@ std::string Statement::dump() const {
           [](const SwitchStmt &switchStatement) {
             return "switch("s + switchStatement.getCond().dump() + ")"s;
           },
-          [](const IndirectBrStmt &) { return "ibranch"s; },
+          [](const SwitchCaseStmt &switchCaseStmt) {
+            return "switch-case("s + switchCaseStmt.getCond().dump() + ")"s;
+          },
+          [](const SwitchTypeStmt &switchTypeStmt) {
+            return "switch-type("s + switchTypeStmt.getCond().dump() + ")"s;
+          },
+          [](const SwitchRankStmt &switchRankStmt) {
+            return "switch-rank("s + switchRankStmt.getCond().dump() + ")"s;
+          },
+          [](const IndirectBranchStmt &) { return "ibranch"s; },
           [](const UnreachableStmt &) { return "unreachable"s; },
-          [](const AllocateStmt &) { return "alloc"s; },
-          [](const DeallocateStmt &) { return "dealloc"s; },
           [](const AssignmentStmt &assignmentStatement) {
             auto computedValue{
                 FIR::dump(assignmentStatement.GetRightHandSide())};
@@ -190,7 +197,6 @@ std::string Statement::dump() const {
             return "assign &("s + computedAddress + ") to "s + address;
           },
           [](const LabelAssignStmt &) { return "lblassn"s; },
-          [](const DisassociateStmt &) { return "NULLIFY"s; },
           [](const ApplyExprStmt &applyExpression) {
             return std::visit(
                 common::visitors{
@@ -217,24 +223,19 @@ std::string Statement::dump() const {
                 },
                 applyExpression.u);
           },
-          [](const ScopeEnterStmt &) { return "scopeenter"s; },
-          [](const ScopeExitStmt &) { return "scopeexit"s; },
-          [](const PHIStmt &) { return "PHI"s; },
+          [](const LocateExprStmt &) { return "locate"s; },
+          [](const AllocateInsn &) { return "alloc"s; },
+          [](const DeallocateInsn &) { return "dealloc"s; },
+          [](const AllocateLocalInsn &) { return "alloca"s; },
+          [](const LoadInsn &) { return "load"s; },
+          [](const StoreInsn &) { return "store"s; },
+          [](const DisassociateInsn &) { return "NULLIFY"s; },
           [](const CallStmt &) { return "call"s; },
           [](const RuntimeStmt &) { return "runtime-call()"s; },
           [](const IORuntimeStmt &) { return "io-call()"s; },
-          [](const SwitchCaseStmt &switchCaseStmt) {
-            return "switch-case("s + switchCaseStmt.getCond().dump() + ")"s;
-          },
-          [](const SwitchTypeStmt &switchTypeStmt) {
-            return "switch-type("s + switchTypeStmt.getCond().dump() + ")"s;
-          },
-          [](const SwitchRankStmt &switchRankStmt) {
-            return "switch-rank("s + switchRankStmt.getCond().dump() + ")"s;
-          },
-          [](const AllocLocalInsn &) { return "alloca"s; },
-          [](const LoadInsn &) { return "load"s; },
-          [](const StoreInsn &) { return "store"s; },
+          [](const ScopeEnterStmt &) { return "scopeenter"s; },
+          [](const ScopeExitStmt &) { return "scopeexit"s; },
+          [](const PHIStmt &) { return "PHI"s; },
       },
       u);
 }
