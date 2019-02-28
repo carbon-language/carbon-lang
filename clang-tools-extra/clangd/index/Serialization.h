@@ -23,6 +23,7 @@
 
 #ifndef LLVM_CLANG_TOOLS_EXTRA_CLANGD_INDEX_RIFF_H
 #define LLVM_CLANG_TOOLS_EXTRA_CLANGD_INDEX_RIFF_H
+
 #include "Headers.h"
 #include "Index.h"
 #include "llvm/Support/Error.h"

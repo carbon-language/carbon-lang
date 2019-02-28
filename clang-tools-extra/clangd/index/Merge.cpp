@@ -9,7 +9,7 @@
 #include "Merge.h"
 #include "Logger.h"
 #include "Trace.h"
-#include "index/Index.h"
+#include "index/SymbolLocation.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSet.h"

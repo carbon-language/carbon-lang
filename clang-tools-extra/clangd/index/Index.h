@@ -11,6 +11,7 @@
 
 #include "ExpectedTypes.h"
 #include "SymbolID.h"
+#include "SymbolLocation.h"
 #include "clang/Index/IndexSymbol.h"
 #include "clang/Lex/Lexer.h"
 #include "llvm/ADT/DenseMap.h"
@@ -29,70 +30,6 @@
 
 namespace clang {
 namespace clangd {
-
-struct SymbolLocation {
-  // Specify a position (Line, Column) of symbol. Using Line/Column allows us to
-  // build LSP responses without reading the file content.
-  //
-  // Position is encoded into 32 bits to save space.
-  // If Line/Column overflow, the value will be their maximum value.
-  struct Position {
-    Position() : Line(0), Column(0) {}
-    void setLine(uint32_t Line);
-    uint32_t line() const { return Line; }
-    void setColumn(uint32_t Column);
-    uint32_t column() const { return Column; }
-
-    bool hasOverflow() const {
-      return Line >= MaxLine || Column >= MaxColumn;
-    }
-
-    static constexpr uint32_t MaxLine = (1 << 20) - 1;
-    static constexpr uint32_t MaxColumn = (1 << 12) - 1;
-
-  private:
-    uint32_t Line : 20; // 0-based
-    // Using UTF-16 code units.
-    uint32_t Column : 12; // 0-based
-  };
-
-  /// The symbol range, using half-open range [Start, End).
-  Position Start;
-  Position End;
-
-  explicit operator bool() const { return !StringRef(FileURI).empty(); }
-
-  // The URI of the source file where a symbol occurs.
-  // The string must be null-terminated.
-  //
-  // We avoid using llvm::StringRef here to save memory.
-  // WARNING: unless you know what you are doing, it is recommended to use it
-  // via llvm::StringRef.
-  const char *FileURI = "";
-};
-inline bool operator==(const SymbolLocation::Position &L,
-                       const SymbolLocation::Position &R) {
-  return std::make_tuple(L.line(), L.column()) ==
-         std::make_tuple(R.line(), R.column());
-}
-inline bool operator<(const SymbolLocation::Position &L,
-                      const SymbolLocation::Position &R) {
-  return std::make_tuple(L.line(), L.column()) <
-         std::make_tuple(R.line(), R.column());
-}
-inline bool operator==(const SymbolLocation &L, const SymbolLocation &R) {
-  assert(L.FileURI && R.FileURI);
-  return !std::strcmp(L.FileURI, R.FileURI) &&
-         std::tie(L.Start, L.End) == std::tie(R.Start, R.End);
-}
-inline bool operator<(const SymbolLocation &L, const SymbolLocation &R) {
-  assert(L.FileURI && R.FileURI);
-  int Cmp = std::strcmp(L.FileURI, R.FileURI);
-  if (Cmp != 0)
-    return Cmp < 0;
-  return std::tie(L.Start, L.End) < std::tie(R.Start, R.End);
-}
-llvm::raw_ostream &operator<<(llvm::raw_ostream &, const SymbolLocation &);
 
 // Describes the source of information about a symbol.
 // Mainly useful for debugging, e.g. understanding code completion reuslts.

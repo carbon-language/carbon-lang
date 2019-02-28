@@ -13,6 +13,7 @@
 #include "CodeCompletionStrings.h"
 #include "Logger.h"
 #include "SourceCode.h"
+#include "SymbolLocation.h"
 #include "URI.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclBase.h"

@@ -16,30 +16,6 @@
 namespace clang {
 namespace clangd {
 
-constexpr uint32_t SymbolLocation::Position::MaxLine;
-constexpr uint32_t SymbolLocation::Position::MaxColumn;
-void SymbolLocation::Position::setLine(uint32_t L) {
-  if (L > MaxLine) {
-    Line = MaxLine;
-    return;
-  }
-  Line = L;
-}
-void SymbolLocation::Position::setColumn(uint32_t Col) {
-  if (Col > MaxColumn) {
-    Column = MaxColumn;
-    return;
-  }
-  Column = Col;
-}
-
-llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const SymbolLocation &L) {
-  if (!L)
-    return OS << "(none)";
-  return OS << L.FileURI << "[" << L.Start.line() << ":" << L.Start.column()
-            << "-" << L.End.line() << ":" << L.End.column() << ")";
-}
-
 llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, SymbolOrigin O) {
   if (O == SymbolOrigin::Unknown)
     return OS << "unknown";
