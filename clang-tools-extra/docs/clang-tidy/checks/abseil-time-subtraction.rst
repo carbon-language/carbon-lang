@@ -21,6 +21,7 @@ subtracting an ``absl::Time`` from an ``absl::Duration`` is not defined.
 Examples:
 
 .. code-block:: c++
+
   int x;
   absl::Time t;
 
