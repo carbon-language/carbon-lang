@@ -133,7 +133,6 @@ private:
   BasicBlock *cursorBlock_;
   std::vector<BasicBlock *> blockStack_;
 };
-
 }
 
 #endif

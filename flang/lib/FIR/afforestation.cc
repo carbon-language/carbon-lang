@@ -498,14 +498,15 @@ template<typename STMTTYPE, typename CT>
 Evaluation GetSwitchSelector(const CT *selectConstruct) {
   const auto &selector{std::get<parser::Selector>(
       std::get<parser::Statement<STMTTYPE>>(selectConstruct->t).statement.t)};
-  return std::visit(common::visitors{
-                        [](const parser::Expr &expression) {
-                          return Evaluation{expression.typedExpr.get()};
-                        },
-                        [](const parser::Variable &variable) {
-                          return Evaluation{&variable};
-                        },
-                    },
+  return std::visit(
+      common::visitors{
+          [](const parser::Expr &expression) {
+            return Evaluation{expression.typedExpr.get()};
+          },
+          [](const parser::Variable &variable) {
+            return Evaluation{&variable};
+          },
+      },
       selector.u);
 }
 Evaluation GetSwitchRankSelector(
@@ -914,18 +915,19 @@ static std::vector<SwitchRankStmt::ValueType> populateSwitchValues(
     auto &rank{std::get<parser::SelectRankCaseStmt::Rank>(
         std::get<parser::Statement<parser::SelectRankCaseStmt>>(v.t)
             .statement.t)};
-    std::visit(common::visitors{
-                   [&](const parser::ScalarIntConstantExpr &expression) {
-                     result.emplace_back(SwitchRankStmt::Exactly{
-                         expression.thing.thing.thing->typedExpr.get()});
-                   },
-                   [&](const parser::Star &) {
-                     result.emplace_back(SwitchRankStmt::AssumedSize{});
-                   },
-                   [&](const parser::Default &) {
-                     result.emplace_back(SwitchRankStmt::Default{});
-                   },
-               },
+    std::visit(
+        common::visitors{
+            [&](const parser::ScalarIntConstantExpr &expression) {
+              result.emplace_back(SwitchRankStmt::Exactly{
+                  expression.thing.thing.thing->typedExpr.get()});
+            },
+            [&](const parser::Star &) {
+              result.emplace_back(SwitchRankStmt::AssumedSize{});
+            },
+            [&](const parser::Default &) {
+              result.emplace_back(SwitchRankStmt::Default{});
+            },
+        },
         rank.u);
   }
   return result;
@@ -936,19 +938,20 @@ static std::vector<SwitchTypeStmt::ValueType> populateSwitchValues(
   for (auto &v : list) {
     auto &guard{std::get<parser::TypeGuardStmt::Guard>(
         std::get<parser::Statement<parser::TypeGuardStmt>>(v.t).statement.t)};
-    std::visit(common::visitors{
-                   [&](const parser::TypeSpec &typeSpec) {
-                     result.emplace_back(
-                         SwitchTypeStmt::TypeSpec{typeSpec.declTypeSpec});
-                   },
-                   [&](const parser::DerivedTypeSpec &derivedTypeSpec) {
-                     result.emplace_back(
-                         SwitchTypeStmt::DerivedTypeSpec{nullptr /*FIXME*/});
-                   },
-                   [&](const parser::Default &) {
-                     result.emplace_back(SwitchTypeStmt::Default{});
-                   },
-               },
+    std::visit(
+        common::visitors{
+            [&](const parser::TypeSpec &typeSpec) {
+              result.emplace_back(
+                  SwitchTypeStmt::TypeSpec{typeSpec.declTypeSpec});
+            },
+            [&](const parser::DerivedTypeSpec &derivedTypeSpec) {
+              result.emplace_back(
+                  SwitchTypeStmt::DerivedTypeSpec{nullptr /*FIXME*/});
+            },
+            [&](const parser::Default &) {
+              result.emplace_back(SwitchTypeStmt::Default{});
+            },
+        },
         guard.u);
   }
   return result;
@@ -1003,21 +1006,22 @@ static void buildMultiwayDefaultNext(SwitchArguments &result) {
 }
 static SwitchArguments ComposeSwitchArgs(const LinearSwitch &op) {
   SwitchArguments result{nullptr, unspecifiedLabel, {}, op.refs};
-  std::visit(common::visitors{
-                 [](const auto *) { WRONG_PATH(); },
-                 [&](const parser::ComputedGotoStmt *c) {
-                   result.exp = std::get<parser::ScalarIntExpr>(c->t)
-                                    .thing.thing->typedExpr.get();
-                   buildMultiwayDefaultNext(result);
-                 },
-                 [&](const parser::ArithmeticIfStmt *c) {
-                   result.exp = std::get<parser::Expr>(c->t).typedExpr.get();
-                 },
-                 [&](const parser::CallStmt *c) {
-                   result.exp = nullptr;  // fixme - result of call
-                   buildMultiwayDefaultNext(result);
-                 },
-             },
+  std::visit(
+      common::visitors{
+          [](const auto *) { WRONG_PATH(); },
+          [&](const parser::ComputedGotoStmt *c) {
+            result.exp = std::get<parser::ScalarIntExpr>(c->t)
+                             .thing.thing->typedExpr.get();
+            buildMultiwayDefaultNext(result);
+          },
+          [&](const parser::ArithmeticIfStmt *c) {
+            result.exp = std::get<parser::Expr>(c->t).typedExpr.get();
+          },
+          [&](const parser::CallStmt *c) {
+            result.exp = nullptr;  // fixme - result of call
+            buildMultiwayDefaultNext(result);
+          },
+      },
       op.u);
   return result;
 }
@@ -1108,9 +1112,8 @@ static Expression *BuildLoopLatchExpression(
   return AlwaysTrueExpression();
 }
 
-static void CreateSwitchHelper(FIRBuilder *builder,
-    const Evaluation &condition, BasicBlock *defaultCase,
-    const SwitchStmt::ValueSuccPairListType &rest) {
+static void CreateSwitchHelper(FIRBuilder *builder, const Evaluation &condition,
+    BasicBlock *defaultCase, const SwitchStmt::ValueSuccPairListType &rest) {
   builder->CreateSwitch(condition, defaultCase, rest);
 }
 static void CreateSwitchCaseHelper(FIRBuilder *builder,
@@ -1169,8 +1172,7 @@ struct FortranIRLowering {
   void ProcessRoutine(const T &here, const std::string &name) {
     CHECK(!fir_->containsProcedure(name));
     auto *subp{fir_->getOrInsertProcedure(name, nullptr, {})};
-    builder_ = new FIRBuilder(
-        *CreateBlock(subp->getLastRegion()));
+    builder_ = new FIRBuilder(*CreateBlock(subp->getLastRegion()));
     AnalysisData ad;
     ControlFlowAnalyzer linearize{linearOperations_, ad};
     Walk(here, linearize);
@@ -1565,27 +1567,27 @@ struct FortranIRLowering {
               },
               [&](const LinearReturn &linearReturn) {
                 CheckInsertionPoint();
-                std::visit(common::visitors{
-                               [&](const parser::FailImageStmt *s) {
-                                 builder_->CreateRuntimeCall(
-                                     RuntimeCallFailImage,
-                                     CreateFailImageArguments(*s));
-                                 builder_->CreateUnreachable();
-                               },
-                               [&](const parser::ReturnStmt *s) {
-                                 if (s->v) {
-                                   builder_->CreateReturn(
-                                       s->v->thing.thing->typedExpr.get());
-                                 } else {
-                                   builder_->CreateRetVoid();
-                                 }
-                               },
-                               [&](const parser::StopStmt *s) {
-                                 builder_->CreateRuntimeCall(
-                                     RuntimeCallStop, CreateStopArguments(*s));
-                                 builder_->CreateUnreachable();
-                               },
-                           },
+                std::visit(
+                    common::visitors{
+                        [&](const parser::FailImageStmt *s) {
+                          builder_->CreateRuntimeCall(RuntimeCallFailImage,
+                              CreateFailImageArguments(*s));
+                          builder_->CreateUnreachable();
+                        },
+                        [&](const parser::ReturnStmt *s) {
+                          if (s->v) {
+                            builder_->CreateReturn(
+                                s->v->thing.thing->typedExpr.get());
+                          } else {
+                            builder_->CreateRetVoid();
+                          }
+                        },
+                        [&](const parser::StopStmt *s) {
+                          builder_->CreateRuntimeCall(
+                              RuntimeCallStop, CreateStopArguments(*s));
+                          builder_->CreateUnreachable();
+                        },
+                    },
                     linearReturn.u);
                 builder_->ClearInsertionPoint();
               },
@@ -1647,37 +1649,37 @@ struct FortranIRLowering {
               },
               [&](const LinearSwitch &linearSwitch) {
                 CheckInsertionPoint();
-                std::visit(common::visitors{
-                               [&](auto) {
-                                 auto args{ComposeSwitchArgs(linearSwitch)};
-                                 AddOrQueueSwitch<SwitchStmt>(args.exp,
-                                     args.defLab, args.values, args.labels,
-                                     CreateSwitchHelper);
-                               },
-                               [&](const parser::CaseConstruct *caseConstruct) {
-                                 auto args{ComposeSwitchCaseArguments(
-                                     caseConstruct, linearSwitch.refs)};
-                                 AddOrQueueSwitch<SwitchCaseStmt>(args.exp,
-                                     args.defLab, args.ranges, args.labels,
-                                     CreateSwitchCaseHelper);
-                               },
-                               [&](const parser::SelectRankConstruct
-                                       *selectRankConstruct) {
-                                 auto args{ComposeSwitchRankArguments(
-                                     selectRankConstruct, linearSwitch.refs)};
-                                 AddOrQueueSwitch<SwitchRankStmt>(args.exp,
-                                     args.defLab, args.ranks, args.labels,
-                                     CreateSwitchRankHelper);
-                               },
-                               [&](const parser::SelectTypeConstruct
-                                       *selectTypeConstruct) {
-                                 auto args{ComposeSwitchTypeArguments(
-                                     selectTypeConstruct, linearSwitch.refs)};
-                                 AddOrQueueSwitch<SwitchTypeStmt>(args.exp,
-                                     args.defLab, args.types, args.labels,
-                                     CreateSwitchTypeHelper);
-                               },
-                           },
+                std::visit(
+                    common::visitors{
+                        [&](auto) {
+                          auto args{ComposeSwitchArgs(linearSwitch)};
+                          AddOrQueueSwitch<SwitchStmt>(args.exp, args.defLab,
+                              args.values, args.labels, CreateSwitchHelper);
+                        },
+                        [&](const parser::CaseConstruct *caseConstruct) {
+                          auto args{ComposeSwitchCaseArguments(
+                              caseConstruct, linearSwitch.refs)};
+                          AddOrQueueSwitch<SwitchCaseStmt>(args.exp,
+                              args.defLab, args.ranges, args.labels,
+                              CreateSwitchCaseHelper);
+                        },
+                        [&](const parser::SelectRankConstruct
+                                *selectRankConstruct) {
+                          auto args{ComposeSwitchRankArguments(
+                              selectRankConstruct, linearSwitch.refs)};
+                          AddOrQueueSwitch<SwitchRankStmt>(args.exp,
+                              args.defLab, args.ranks, args.labels,
+                              CreateSwitchRankHelper);
+                        },
+                        [&](const parser::SelectTypeConstruct
+                                *selectTypeConstruct) {
+                          auto args{ComposeSwitchTypeArguments(
+                              selectTypeConstruct, linearSwitch.refs)};
+                          AddOrQueueSwitch<SwitchTypeStmt>(args.exp,
+                              args.defLab, args.types, args.labels,
+                              CreateSwitchTypeHelper);
+                        },
+                    },
                     linearSwitch.u);
                 builder_->ClearInsertionPoint();
               },
@@ -1762,14 +1764,15 @@ struct FortranIRLowering {
                     linearConstruct.u);
                 auto next{iter};
                 const auto &nextOp{*(++next)};
-                std::visit(common::visitors{
-                               [](const auto &) {},
-                               [&](const LinearLabel &linearLabel) {
-                                 blockMap_.insert({linearLabel.get(),
-                                     builder_->GetInsertionPoint()});
-                                 ++iter;
-                               },
-                           },
+                std::visit(
+                    common::visitors{
+                        [](const auto &) {},
+                        [&](const LinearLabel &linearLabel) {
+                          blockMap_.insert({linearLabel.get(),
+                              builder_->GetInsertionPoint()});
+                          ++iter;
+                        },
+                    },
                     nextOp.u);
               },
               [&](const LinearEndConstruct &linearConstruct) {
@@ -1818,8 +1821,8 @@ struct FortranIRLowering {
     } else {
       using namespace std::placeholders;
       controlFlowEdgesToAdd_.emplace_back(std::bind(
-          [](FIRBuilder *builder, BasicBlock *block,
-              LinearLabelRef dest, const LabelMapType &map) {
+          [](FIRBuilder *builder, BasicBlock *block, LinearLabelRef dest,
+              const LabelMapType &map) {
             builder->SetInsertionPoint(block);
             CHECK(map.find(dest) != map.end());
             builder->CreateBranch(map.find(dest)->second);
@@ -1837,9 +1840,9 @@ struct FortranIRLowering {
     } else {
       using namespace std::placeholders;
       controlFlowEdgesToAdd_.emplace_back(std::bind(
-          [](FIRBuilder *builder, BasicBlock *block,
-              Expression *expr, LinearLabelRef trueDest,
-              LinearLabelRef falseDest, const LabelMapType &map) {
+          [](FIRBuilder *builder, BasicBlock *block, Expression *expr,
+              LinearLabelRef trueDest, LinearLabelRef falseDest,
+              const LabelMapType &map) {
             builder->SetInsertionPoint(block);
             CHECK(map.find(trueDest) != map.end());
             CHECK(map.find(falseDest) != map.end());
@@ -1876,8 +1879,8 @@ struct FortranIRLowering {
     if (defer) {
       using namespace std::placeholders;
       controlFlowEdgesToAdd_.emplace_back(std::bind(
-          [](FIRBuilder *builder, BasicBlock *block,
-              const Evaluation &expr, LinearLabelRef defaultDest,
+          [](FIRBuilder *builder, BasicBlock *block, const Evaluation &expr,
+              LinearLabelRef defaultDest,
               const std::vector<typename SWITCHTYPE::ValueType> &values,
               const std::vector<LinearLabelRef> &labels, F function,
               const LabelMapType &map) {
@@ -1916,8 +1919,8 @@ struct FortranIRLowering {
     if (defer) {
       using namespace std::placeholders;
       controlFlowEdgesToAdd_.emplace_back(std::bind(
-          [](FIRBuilder *builder, BasicBlock *block,
-              Variable *variable, const std::vector<LinearLabelRef> &fixme,
+          [](FIRBuilder *builder, BasicBlock *block, Variable *variable,
+              const std::vector<LinearLabelRef> &fixme,
               const LabelMapType &map) {
             builder->SetInsertionPoint(block);
             builder->CreateIndirectBr(variable, {});  // FIXME

@@ -65,14 +65,13 @@ void Procedure::FlattenRegions() {
     if (!region->IsOutermost()) {
       for (auto *succ : succ_list(block)) {
         auto *succRegion{succ->GetRegion()};
-        if (succRegion != region &&
-            DistinctScopes(succRegion, region)) {
+        if (succRegion != region && DistinctScopes(succRegion, region)) {
           if (IsAncestor(region, succRegion)) {
-            AddEnterScopes(RegionDepth(region, succRegion),
-                succ->SplitEdge(&block));
+            AddEnterScopes(
+                RegionDepth(region, succRegion), succ->SplitEdge(&block));
           } else if (IsAncestor(succRegion, region)) {
-            AddExitScopes(RegionDepth(succRegion, region),
-                block.SplitEdge(succ));
+            AddExitScopes(
+                RegionDepth(succRegion, region), block.SplitEdge(succ));
           } else {
             // TODO: edge to a cousin region
             CHECK(false);
@@ -82,5 +81,4 @@ void Procedure::FlattenRegions() {
     }
   }
 }
-
 }

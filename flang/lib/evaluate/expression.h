@@ -26,7 +26,7 @@
 #include "constant.h"
 #include "type.h"
 #include "variable.h"
-#include "../lib/common/fortran.h"
+#include "../lib/common/Fortran.h"
 #include "../lib/common/idioms.h"
 #include "../lib/common/template.h"
 #include "../lib/parser/char-block.h"

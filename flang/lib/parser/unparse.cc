@@ -19,7 +19,7 @@
 #include "characters.h"
 #include "parse-tree-visitor.h"
 #include "parse-tree.h"
-#include "../common/fortran.h"
+#include "../common/Fortran.h"
 #include "../common/idioms.h"
 #include "../common/indirection.h"
 #include <algorithm>

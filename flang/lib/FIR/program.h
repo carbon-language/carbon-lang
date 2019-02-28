@@ -49,7 +49,6 @@ private:
   ProcedureMapType procedureMap_;
   const std::string name_;
 };
-
 }
 
 #endif

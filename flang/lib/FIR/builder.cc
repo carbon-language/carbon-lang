@@ -17,8 +17,5 @@
 
 namespace Fortran::FIR {
 
-void FIRBuilder::dump() const {
-  std::cerr << "builder state:\n";
-}
-
+void FIRBuilder::dump() const { std::cerr << "builder state:\n"; }
 }

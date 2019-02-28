@@ -108,7 +108,6 @@ template<typename A, typename B> B &Unzip(B &out, A first, A last) {
       [](auto &&a) -> decltype(a.second) { return a.second; });
   return out;
 }
-
 }
 
 #endif  // FORTRAN_FIR_COMMON_H_

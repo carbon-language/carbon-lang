@@ -28,7 +28,7 @@
 #include "format-specification.h"
 #include "message.h"
 #include "provenance.h"
-#include "../common/fortran.h"
+#include "../common/Fortran.h"
 #include "../common/idioms.h"
 #include "../common/indirection.h"
 #include <cinttypes>

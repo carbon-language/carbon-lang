@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 -->
 
 ## In brief:
@@ -37,9 +37,10 @@ headers, also alphabetically; then C and system headers.
 1. Don't use `#include <iostream>`.  If you need it for temporary debugging,
 remove the inclusion before committing.
 ### Naming
-1. C++ names that correspond to STL names should look like those STL names
-(e.g., `clear()` and `size()` member functions in a class that implements
-a container).
+1. C++ names that correspond to well-known interfaces from the STL and LLVM
+can and should look like their models when the reader can safely assume that
+they mean the same thing -- e.g., `clear()` and `size()` member functions
+in a class that implements an STL-ish container.
 1. Non-public data members should be named with leading miniscule (lower-case)
 letters, internal camelCase capitalization, and a trailing underscore,
 e.g. `DoubleEntryBookkeepingSystem myLedger_;`.  POD structures with

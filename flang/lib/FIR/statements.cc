@@ -238,5 +238,4 @@ std::string Statement::dump() const {
       },
       u);
 }
-
 }

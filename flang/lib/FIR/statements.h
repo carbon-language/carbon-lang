@@ -464,7 +464,6 @@ private:
 
   std::vector<PHIPair> inputs_;
 };
-
 }
 
 #endif

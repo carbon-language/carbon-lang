@@ -86,7 +86,6 @@ inline unsigned RegionDepth(const Region *fromRegion, const Region *toRegion) {
   }
   return result;
 }
-
 }
 
 #endif

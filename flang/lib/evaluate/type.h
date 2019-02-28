@@ -27,7 +27,7 @@
 #include "integer.h"
 #include "logical.h"
 #include "real.h"
-#include "../common/fortran.h"
+#include "../common/Fortran.h"
 #include "../common/idioms.h"
 #include "../common/template.h"
 #include <cinttypes>

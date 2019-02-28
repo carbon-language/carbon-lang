@@ -15,8 +15,8 @@
 #ifndef FORTRAN_EVALUATE_COMMON_H_
 #define FORTRAN_EVALUATE_COMMON_H_
 
+#include "../common/Fortran.h"
 #include "../common/enum-set.h"
-#include "../common/fortran.h"
 #include "../common/idioms.h"
 #include "../common/indirection.h"
 #include "../common/restorer.h"

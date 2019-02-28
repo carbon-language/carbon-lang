@@ -87,7 +87,6 @@ private:
   std::map<BasicBlock *, unsigned> blockIds_;
   static std::optional<llvm::raw_ostream *> defaultOutput_;
 };
-
 }
 
 #endif

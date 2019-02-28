@@ -47,5 +47,4 @@ std::vector<BasicBlock *> Region::getBlocks() {
   }
   return result;
 }
-
 }

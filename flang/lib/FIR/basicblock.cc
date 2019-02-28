@@ -53,5 +53,4 @@ const Statement *BasicBlock::getTerminator() const {
       },
       lastStmt.u);
 }
-
 }

@@ -17,8 +17,8 @@
 #include "fold.h"
 #include "tools.h"
 #include "type.h"
+#include "../common/Fortran.h"
 #include "../common/enum-set.h"
-#include "../common/fortran.h"
 #include "../common/idioms.h"
 #include <algorithm>
 #include <map>

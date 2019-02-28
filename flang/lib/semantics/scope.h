@@ -17,7 +17,7 @@
 
 #include "attr.h"
 #include "symbol.h"
-#include "../common/fortran.h"
+#include "../common/Fortran.h"
 #include "../common/idioms.h"
 #include "../parser/message.h"
 #include <list>

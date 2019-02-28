@@ -16,7 +16,7 @@
 #define FORTRAN_SEMANTICS_TYPE_H_
 
 #include "attr.h"
-#include "../common/fortran.h"
+#include "../common/Fortran.h"
 #include "../common/idioms.h"
 #include "../common/indirection.h"
 #include "../evaluate/expression.h"

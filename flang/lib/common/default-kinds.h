@@ -15,7 +15,7 @@
 #ifndef FORTRAN_COMMON_DEFAULT_KINDS_H_
 #define FORTRAN_COMMON_DEFAULT_KINDS_H_
 
-#include "../common/fortran.h"
+#include "../common/Fortran.h"
 
 // Represent the default values of the kind parameters of the
 // various intrinsic types.  These can be configured by means of

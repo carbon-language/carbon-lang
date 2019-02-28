@@ -75,7 +75,6 @@ private:
       unsigned addrSpace, const llvm::Twine &n, Procedure *before);
   Region *insertBefore(Region *region, Region *before = nullptr);
 };
-
 }
 
 #endif

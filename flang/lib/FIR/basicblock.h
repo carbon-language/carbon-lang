@@ -65,10 +65,8 @@ private:
 };
 
 inline std::list<BasicBlock *> pred_list(BasicBlock &block) {
-  return std::list<BasicBlock *>{
-      block.preds().begin(), block.preds().end()};
+  return std::list<BasicBlock *>{block.preds().begin(), block.preds().end()};
 }
-
 }
 
 #endif

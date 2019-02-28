@@ -44,7 +44,6 @@ inline std::list<BasicBlock *> succ_list(BasicBlock &block) {
   // CHECK(false && "block does not have terminator");
   return {};
 }
-
 }
 
 #endif

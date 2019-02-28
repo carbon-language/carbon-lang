@@ -118,5 +118,4 @@ void GraphWriter::dumpInternalEdges(BasicBlock &block,
     }
   }
 }
-
 }

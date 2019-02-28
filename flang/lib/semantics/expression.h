@@ -16,7 +16,7 @@
 #define FORTRAN_SEMANTICS_EXPRESSION_H_
 
 #include "semantics.h"
-#include "../common/fortran.h"
+#include "../common/Fortran.h"
 #include "../common/indirection.h"
 #include "../evaluate/expression.h"
 #include "../evaluate/tools.h"
