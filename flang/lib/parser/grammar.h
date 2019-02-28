@@ -745,9 +745,9 @@ TYPE_PARSER(construct<SequenceStmt>("SEQUENCE"_tok))
 // R732 type-param-def-stmt ->
 //        integer-type-spec , type-param-attr-spec :: type-param-decl-list
 // R734 type-param-attr-spec -> KIND | LEN
-TYPE_PARSER(construct<TypeParamDefStmt>(integerTypeSpec / ",",
-    "KIND" >> pure(common::TypeParamAttr::Kind) ||
-        "LEN" >> pure(common::TypeParamAttr::Len),
+constexpr auto kindOrLen{"KIND" >> pure(common::TypeParamAttr::Kind) ||
+    "LEN" >> pure(common::TypeParamAttr::Len)};
+TYPE_PARSER(construct<TypeParamDefStmt>(integerTypeSpec / ",", kindOrLen,
     "::" >> nonemptyList("expected type parameter declarations"_err_en_US,
                 Parser<TypeParamDecl>{})))
 
@@ -784,7 +784,11 @@ TYPE_PARSER(construct<ComponentAttrSpec>(accessSpec) ||
     construct<ComponentAttrSpec>("CODIMENSION" >> coarraySpec) ||
     construct<ComponentAttrSpec>(contiguous) ||
     construct<ComponentAttrSpec>("DIMENSION" >> Parser<ComponentArraySpec>{}) ||
-    construct<ComponentAttrSpec>(pointer))
+    construct<ComponentAttrSpec>(pointer) ||
+    construct<ComponentAttrSpec>(recovery(
+        fail<ErrorRecovery>(
+            "type parameter definitions must appear before component declarations"_err_en_US),
+        kindOrLen >> construct<ErrorRecovery>())))
 
 // R739 component-decl ->
 //        component-name [( component-array-spec )]

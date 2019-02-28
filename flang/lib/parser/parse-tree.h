@@ -954,7 +954,7 @@ EMPTY_CLASS(Contiguous);
 struct ComponentAttrSpec {
   UNION_CLASS_BOILERPLATE(ComponentAttrSpec);
   std::variant<AccessSpec, Allocatable, CoarraySpec, Contiguous,
-      ComponentArraySpec, Pointer>
+      ComponentArraySpec, Pointer, ErrorRecovery>
       u;
 };
 
