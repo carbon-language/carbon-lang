@@ -10,6 +10,7 @@
 #include "Logger.h"
 #include "RIFF.h"
 #include "SymbolLocation.h"
+#include "SymbolOrigin.h"
 #include "Trace.h"
 #include "dex/Dex.h"
 #include "llvm/Support/Compression.h"
