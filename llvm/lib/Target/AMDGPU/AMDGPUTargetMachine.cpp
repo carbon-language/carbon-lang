@@ -427,7 +427,7 @@ R600TargetMachine::R600TargetMachine(const Target &T, const Triple &TT,
     : AMDGPUTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL) {
   setRequiresStructuredCFG(true);
 
-  // Override the default since calls aren't ssupported for r600.
+  // Override the default since calls aren't supported for r600.
   if (EnableFunctionCalls &&
       EnableAMDGPUFunctionCallsOpt.getNumOccurrences() == 0)
     EnableFunctionCalls = false;
