@@ -155,7 +155,9 @@ static bool hasLiveDefs(const MachineInstr &MI, const TargetRegisterInfo *TRI) {
 void BPFMIPreEmitChecking::checkingIllegalXADD(void) {
   for (MachineBasicBlock &MBB : *MF) {
     for (MachineInstr &MI : MBB) {
-      if (MI.getOpcode() != BPF::XADD32 && MI.getOpcode() != BPF::XADD64)
+      if (MI.getOpcode() != BPF::XADDW &&
+          MI.getOpcode() != BPF::XADDD &&
+          MI.getOpcode() != BPF::XADDW32)
         continue;
 
       LLVM_DEBUG(MI.dump());
