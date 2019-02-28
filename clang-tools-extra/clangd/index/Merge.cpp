@@ -9,6 +9,7 @@
 #include "Merge.h"
 #include "Logger.h"
 #include "Trace.h"
+#include "index/Symbol.h"
 #include "index/SymbolLocation.h"
 #include "index/SymbolOrigin.h"
 #include "llvm/ADT/STLExtras.h"

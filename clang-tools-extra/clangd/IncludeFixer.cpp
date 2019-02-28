@@ -13,6 +13,7 @@
 #include "SourceCode.h"
 #include "Trace.h"
 #include "index/Index.h"
+#include "index/Symbol.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/NestedNameSpecifier.h"

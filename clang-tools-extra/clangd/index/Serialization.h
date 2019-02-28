@@ -26,6 +26,7 @@
 
 #include "Headers.h"
 #include "Index.h"
+#include "index/Symbol.h"
 #include "llvm/Support/Error.h"
 
 namespace clang {
