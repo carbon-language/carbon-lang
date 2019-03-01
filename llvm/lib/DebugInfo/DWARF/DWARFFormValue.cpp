@@ -97,11 +97,14 @@ DWARFFormValue DWARFFormValue::createFromBlockValue(dwarf::Form F,
   return DWARFFormValue(F, V);
 }
 
-DWARFFormValue DWARFFormValue::createFromUnit(dwarf::Form F, const DWARFUnit *U,
-                                              uint32_t *OffsetPtr) {
+DWARFFormValue DWARFFormValue::createFromData(dwarf::Form F,
+                                              dwarf::FormParams FormParams,
+                                              const DWARFUnit &U,
+                                              const DWARFDataExtractor &Data,
+                                              uint32_t *OffsetPtr,
+                                              const DWARFContext *Ctx) {
   DWARFFormValue FormValue(F);
-  FormValue.extractValue(U->getDebugInfoExtractor(), OffsetPtr,
-                         U->getFormParams(), U);
+  FormValue.extractValue(Data, OffsetPtr, FormParams, &U, Ctx);
   return FormValue;
 }
 
@@ -231,8 +234,8 @@ bool DWARFFormValue::isFormClass(DWARFFormValue::FormClass FC) const {
 
 bool DWARFFormValue::extractValue(const DWARFDataExtractor &Data,
                                   uint32_t *OffsetPtr, dwarf::FormParams FP,
-                                  const DWARFContext *Ctx,
-                                  const DWARFUnit *CU) {
+                                  const DWARFUnit *CU,
+                                  const DWARFContext *Ctx) {
   if (!Ctx && CU)
     Ctx = &CU->getContext();
   C = Ctx;

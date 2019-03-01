@@ -278,7 +278,8 @@ static void dumpAttribute(raw_ostream &OS, const DWARFDie &Die,
     OS << formatv(" [{0}]", Form);
 
   DWARFUnit *U = Die.getDwarfUnit();
-  DWARFFormValue FormValue = DWARFFormValue::createFromUnit(Form, U, OffsetPtr);
+  DWARFFormValue FormValue = DWARFFormValue::createFromData(
+      Form, U->getFormParams(), *U, U->getDebugInfoExtractor(), OffsetPtr);
 
   OS << "\t(";
 
@@ -686,8 +687,9 @@ void DWARFDie::attribute_iterator::updateForIndex(
     uint32_t ParseOffset = AttrValue.Offset;
     auto U = Die.getDwarfUnit();
     assert(U && "Die must have valid DWARF unit");
-    AttrValue.Value = DWARFFormValue::createFromUnit(
-        AbbrDecl.getFormByIndex(Index), U, &ParseOffset);
+    AttrValue.Value = DWARFFormValue::createFromData(
+        AbbrDecl.getFormByIndex(Index), U->getFormParams(), *U,
+        U->getDebugInfoExtractor(), &ParseOffset);
     AttrValue.ByteSize = ParseOffset - AttrValue.Offset;
   } else {
     assert(Index == NumAttrs && "Indexes should be [0, NumAttrs) only");
