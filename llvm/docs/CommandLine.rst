@@ -1172,7 +1172,8 @@ As usual, you can only specify one of these arguments at most.
   ``ls``) that have lots of single letter arguments, but only require a single
   dash.  For example, the '``ls -labF``' command actually enables four different
   options, all of which are single letters.  Note that **cl::Grouping** options
-  cannot have values.
+  can have values only if they are used separately or at the end of the groups.
+  It is a runtime error if such an option is used elsewhere in the group.
 
 The CommandLine library does not restrict how you use the **cl::Prefix** or
 **cl::Grouping** modifiers, but it is possible to specify ambiguous argument

@@ -671,10 +671,13 @@ HandlePrefixedOrGroupedOption(StringRef &Arg, StringRef &Value,
     StringRef OneArgName = Arg.substr(0, Length);
     Arg = Arg.substr(Length);
 
-    // Because ValueRequired is an invalid flag for grouped arguments,
-    // we don't need to pass argc/argv in.
-    assert(PGOpt->getValueExpectedFlag() != cl::ValueRequired &&
-           "Option can not be cl::Grouping AND cl::ValueRequired!");
+    if (PGOpt->getValueExpectedFlag() == cl::ValueRequired) {
+      ErrorParsing |= PGOpt->error("may not occur within a group!");
+      return nullptr;
+    }
+
+    // Because the value for the option is not required, we don't need to pass
+    // argc/argv in.
     int Dummy = 0;
     ErrorParsing |=
         ProvideOption(PGOpt, OneArgName, StringRef(), 0, nullptr, Dummy);

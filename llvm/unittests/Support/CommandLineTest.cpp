@@ -1128,4 +1128,26 @@ TEST(CommandLineTest, PrefixOptions) {
   EXPECT_TRUE(MacroDefs.front().compare("HAVE_FOO") == 0);
 }
 
+TEST(CommandLineTest, GroupingWithValue) {
+  cl::ResetCommandLineParser();
+
+  StackOption<bool> OptF("f", cl::Grouping, cl::desc("Some flag"));
+  StackOption<std::string> OptV("v", cl::Grouping,
+                                cl::desc("Grouping option with a value"));
+
+  // Should be possible to use an option which requires a value
+  // at the end of a group.
+  const char *args1[] = {"prog", "-fv", "val1"};
+  EXPECT_TRUE(
+      cl::ParseCommandLineOptions(3, args1, StringRef(), &llvm::nulls()));
+  EXPECT_TRUE(OptF);
+  EXPECT_STREQ("val1", OptV.c_str());
+  cl::ResetAllOptionOccurrences();
+
+  // Should not crash if it is accidentally used elsewhere in the group.
+  const char *args2[] = {"prog", "-vf", "val2"};
+  EXPECT_FALSE(
+      cl::ParseCommandLineOptions(3, args2, StringRef(), &llvm::nulls()));
+}
+
 }  // anonymous namespace
