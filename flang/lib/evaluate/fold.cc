@@ -185,7 +185,7 @@ static inline Expr<TR> FoldElementalIntrinsicHelper(FoldingContext &context,
   if ((... && (std::get<I>(args) != nullptr))) {
     // Compute the shape of the result based on shapes of arguments
     std::vector<std::int64_t> shape;
-    int rank;
+    int rank{0};
     const std::vector<std::int64_t> *shapes[sizeof...(TA)]{
         &std::get<I>(args)->shape()...};
     const int ranks[sizeof...(TA)]{std::get<I>(args)->Rank()...};
@@ -207,6 +207,7 @@ static inline Expr<TR> FoldElementalIntrinsicHelper(FoldingContext &context,
         }
       }
     }
+    CHECK(rank == shape.size());
 
     // Compute all the scalar values of the results
     std::size_t size{1};
@@ -214,7 +215,7 @@ static inline Expr<TR> FoldElementalIntrinsicHelper(FoldingContext &context,
       size *= dim;
     }
     std::vector<Scalar<TR>> results;
-    std::vector<std::int64_t> index(shape.size(), 1);
+    std::vector<std::int64_t> index(rank, 1);
     for (std::size_t n{size}; n-- > 0;) {
       if constexpr (std::is_same_v<WrapperType<TR, TA...>,
                         ScalarFuncWithContext<TR, TA...>>) {
