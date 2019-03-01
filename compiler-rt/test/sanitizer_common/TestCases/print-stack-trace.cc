@@ -6,7 +6,7 @@
 // UNSUPPORTED: darwin
 
 // TODO(yln): temporary failing due to refactoring
-// XFAIL: ubsan
+// UNSUPPORTED: ubsan
 
 #include <sanitizer/common_interface_defs.h>
 
