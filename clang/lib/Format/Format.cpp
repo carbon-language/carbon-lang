@@ -718,6 +718,11 @@ FormatStyle getLLVMStyle(FormatStyle::LanguageKind Language) {
   LLVMStyle.StatementMacros.push_back("Q_UNUSED");
   LLVMStyle.StatementMacros.push_back("QT_REQUIRE_VERSION");
 
+  // Defaults that differ when not C++.
+  if (Language == FormatStyle::LK_TableGen) {
+    LLVMStyle.SpacesInContainerLiterals = false;
+  }
+
   return LLVMStyle;
 }
 
