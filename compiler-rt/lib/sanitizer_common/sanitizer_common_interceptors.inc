@@ -238,43 +238,48 @@ bool PlatformHasDifferentMemcpyAndMemmove();
 
 #ifndef COMMON_INTERCEPTOR_MEMSET_IMPL
 #define COMMON_INTERCEPTOR_MEMSET_IMPL(ctx, dst, v, size) \
-  {                                                       \
-    if (COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED)        \
-      return internal_memset(dst, v, size);               \
+  do {                                                    \
+    if (COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED) {      \
+      internal_memset(dst, v, size);                      \
+      break;                                              \
+    }                                                     \
     COMMON_INTERCEPTOR_ENTER(ctx, memset, dst, v, size);  \
     if (common_flags()->intercept_intrin)                 \
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, size);     \
-    return REAL(memset)(dst, v, size);                    \
-  }
+    REAL(memset)(dst, v, size);                           \
+  } while (0)
 #endif
 
 #ifndef COMMON_INTERCEPTOR_MEMMOVE_IMPL
 #define COMMON_INTERCEPTOR_MEMMOVE_IMPL(ctx, dst, src, size) \
-  {                                                          \
-    if (COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED)           \
-      return internal_memmove(dst, src, size);               \
+  do {                                                       \
+    if (COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED) {         \
+      internal_memmove(dst, src, size);                      \
+      break;                                                 \
+    }                                                        \
     COMMON_INTERCEPTOR_ENTER(ctx, memmove, dst, src, size);  \
     if (common_flags()->intercept_intrin) {                  \
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, size);        \
       COMMON_INTERCEPTOR_READ_RANGE(ctx, src, size);         \
     }                                                        \
-    return REAL(memmove)(dst, src, size);                    \
-  }
+    REAL(memmove)(dst, src, size);                           \
+  } while (0)
 #endif
 
 #ifndef COMMON_INTERCEPTOR_MEMCPY_IMPL
 #define COMMON_INTERCEPTOR_MEMCPY_IMPL(ctx, dst, src, size) \
-  {                                                         \
+  do {                                                      \
     if (COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED) {        \
-      return internal_memmove(dst, src, size);              \
+      internal_memmove(dst, src, size);                     \
+      break;                                                \
     }                                                       \
     COMMON_INTERCEPTOR_ENTER(ctx, memcpy, dst, src, size);  \
     if (common_flags()->intercept_intrin) {                 \
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dst, size);       \
       COMMON_INTERCEPTOR_READ_RANGE(ctx, src, size);        \
     }                                                       \
-    return REAL(memcpy)(dst, src, size);                    \
-  }
+    REAL(memcpy)(dst, src, size);                           \
+  } while (0)
 #endif
 
 #ifndef COMMON_INTERCEPTOR_MMAP_IMPL
@@ -771,6 +776,7 @@ INTERCEPTOR(char *, strpbrk, const char *s1, const char *s2) {
 INTERCEPTOR(void *, memset, void *dst, int v, uptr size) {
   void *ctx;
   COMMON_INTERCEPTOR_MEMSET_IMPL(ctx, dst, v, size);
+  return dst;
 }
 
 #define INIT_MEMSET COMMON_INTERCEPT_FUNCTION(memset)
@@ -782,6 +788,7 @@ INTERCEPTOR(void *, memset, void *dst, int v, uptr size) {
 INTERCEPTOR(void *, memmove, void *dst, const void *src, uptr size) {
   void *ctx;
   COMMON_INTERCEPTOR_MEMMOVE_IMPL(ctx, dst, src, size);
+  return dst;
 }
 
 #define INIT_MEMMOVE COMMON_INTERCEPT_FUNCTION(memmove)
@@ -802,6 +809,7 @@ INTERCEPTOR(void *, memcpy, void *dst, const void *src, uptr size) {
   } else {
     COMMON_INTERCEPTOR_MEMMOVE_IMPL(ctx, dst, src, size);
   }
+  return dst;
 }
 
 #define INIT_MEMCPY                                  \
@@ -5446,63 +5454,63 @@ INTERCEPTOR(int, capset, void *hdrp, const void *datap) {
 #endif
 
 #if SANITIZER_INTERCEPT_AEABI_MEM
-INTERCEPTOR(void *, __aeabi_memmove, void *to, const void *from, uptr size) {
+INTERCEPTOR(void, __aeabi_memmove, void *to, const void *from, uptr size) {
   void *ctx;
   COMMON_INTERCEPTOR_MEMMOVE_IMPL(ctx, to, from, size);
 }
 
-INTERCEPTOR(void *, __aeabi_memmove4, void *to, const void *from, uptr size) {
+INTERCEPTOR(void, __aeabi_memmove4, void *to, const void *from, uptr size) {
   void *ctx;
   COMMON_INTERCEPTOR_MEMMOVE_IMPL(ctx, to, from, size);
 }
 
-INTERCEPTOR(void *, __aeabi_memmove8, void *to, const void *from, uptr size) {
+INTERCEPTOR(void, __aeabi_memmove8, void *to, const void *from, uptr size) {
   void *ctx;
   COMMON_INTERCEPTOR_MEMMOVE_IMPL(ctx, to, from, size);
 }
 
-INTERCEPTOR(void *, __aeabi_memcpy, void *to, const void *from, uptr size) {
+INTERCEPTOR(void, __aeabi_memcpy, void *to, const void *from, uptr size) {
   void *ctx;
   COMMON_INTERCEPTOR_MEMCPY_IMPL(ctx, to, from, size);
 }
 
-INTERCEPTOR(void *, __aeabi_memcpy4, void *to, const void *from, uptr size) {
+INTERCEPTOR(void, __aeabi_memcpy4, void *to, const void *from, uptr size) {
   void *ctx;
   COMMON_INTERCEPTOR_MEMCPY_IMPL(ctx, to, from, size);
 }
 
-INTERCEPTOR(void *, __aeabi_memcpy8, void *to, const void *from, uptr size) {
+INTERCEPTOR(void, __aeabi_memcpy8, void *to, const void *from, uptr size) {
   void *ctx;
   COMMON_INTERCEPTOR_MEMCPY_IMPL(ctx, to, from, size);
 }
 
 // Note the argument order.
-INTERCEPTOR(void *, __aeabi_memset, void *block, uptr size, int c) {
+INTERCEPTOR(void, __aeabi_memset, void *block, uptr size, int c) {
   void *ctx;
   COMMON_INTERCEPTOR_MEMSET_IMPL(ctx, block, c, size);
 }
 
-INTERCEPTOR(void *, __aeabi_memset4, void *block, uptr size, int c) {
+INTERCEPTOR(void, __aeabi_memset4, void *block, uptr size, int c) {
   void *ctx;
   COMMON_INTERCEPTOR_MEMSET_IMPL(ctx, block, c, size);
 }
 
-INTERCEPTOR(void *, __aeabi_memset8, void *block, uptr size, int c) {
+INTERCEPTOR(void, __aeabi_memset8, void *block, uptr size, int c) {
   void *ctx;
   COMMON_INTERCEPTOR_MEMSET_IMPL(ctx, block, c, size);
 }
 
-INTERCEPTOR(void *, __aeabi_memclr, void *block, uptr size) {
+INTERCEPTOR(void, __aeabi_memclr, void *block, uptr size) {
   void *ctx;
   COMMON_INTERCEPTOR_MEMSET_IMPL(ctx, block, 0, size);
 }
 
-INTERCEPTOR(void *, __aeabi_memclr4, void *block, uptr size) {
+INTERCEPTOR(void, __aeabi_memclr4, void *block, uptr size) {
   void *ctx;
   COMMON_INTERCEPTOR_MEMSET_IMPL(ctx, block, 0, size);
 }
 
-INTERCEPTOR(void *, __aeabi_memclr8, void *block, uptr size) {
+INTERCEPTOR(void, __aeabi_memclr8, void *block, uptr size) {
   void *ctx;
   COMMON_INTERCEPTOR_MEMSET_IMPL(ctx, block, 0, size);
 }
@@ -5525,7 +5533,7 @@ INTERCEPTOR(void *, __aeabi_memclr8, void *block, uptr size) {
 #endif  // SANITIZER_INTERCEPT_AEABI_MEM
 
 #if SANITIZER_INTERCEPT___BZERO
-INTERCEPTOR(void *, __bzero, void *block, uptr size) {
+INTERCEPTOR(void, __bzero, void *block, uptr size) {
   void *ctx;
   COMMON_INTERCEPTOR_MEMSET_IMPL(ctx, block, 0, size);
 }
