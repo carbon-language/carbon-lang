@@ -1134,3 +1134,37 @@ define <2 x i33> @add_umax_vec(<2 x i33> %x) {
   %r = select <2 x i1> %c, <2 x i33> %a, <2 x i33> <i33 240, i33 240>
   ret <2 x i33> %r
 }
+
+define i8 @PR14613_umin(i8 %x) {
+; CHECK-LABEL: @PR14613_umin(
+; CHECK-NEXT:    [[U4:%.*]] = zext i8 [[X:%.*]] to i32
+; CHECK-NEXT:    [[U5:%.*]] = add nuw nsw i32 [[U4]], 15
+; CHECK-NEXT:    [[U6:%.*]] = icmp ult i32 [[U5]], 255
+; CHECK-NEXT:    [[U7:%.*]] = select i1 [[U6]], i32 [[U5]], i32 255
+; CHECK-NEXT:    [[R:%.*]] = trunc i32 [[U7]] to i8
+; CHECK-NEXT:    ret i8 [[R]]
+;
+  %u4 = zext i8 %x to i32
+  %u5 = add nuw nsw i32 %u4, 15
+  %u6 = icmp ult i32 %u5, 255
+  %u7 = select i1 %u6, i32 %u5, i32 255
+  %r = trunc i32 %u7 to i8
+  ret i8 %r
+}
+
+define i8 @PR14613_umax(i8 %x) {
+; CHECK-LABEL: @PR14613_umax(
+; CHECK-NEXT:    [[U4:%.*]] = zext i8 [[X:%.*]] to i32
+; CHECK-NEXT:    [[U5:%.*]] = add nuw nsw i32 [[U4]], 15
+; CHECK-NEXT:    [[U6:%.*]] = icmp ugt i32 [[U5]], 255
+; CHECK-NEXT:    [[U7:%.*]] = select i1 [[U6]], i32 [[U5]], i32 255
+; CHECK-NEXT:    [[R:%.*]] = trunc i32 [[U7]] to i8
+; CHECK-NEXT:    ret i8 [[R]]
+;
+  %u4 = zext i8 %x to i32
+  %u5 = add nuw nsw i32 %u4, 15
+  %u6 = icmp ugt i32 %u5, 255
+  %u7 = select i1 %u6, i32 %u5, i32 255
+  %r = trunc i32 %u7 to i8
+  ret i8 %r
+}
