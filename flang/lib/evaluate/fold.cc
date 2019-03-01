@@ -207,7 +207,7 @@ static inline Expr<TR> FoldElementalIntrinsicHelper(FoldingContext &context,
         }
       }
     }
-    CHECK(rank == shape.size());
+    CHECK(rank == static_cast<int>(shape.size()));
 
     // Compute all the scalar values of the results
     std::size_t size{1};
