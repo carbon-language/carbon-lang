@@ -29,7 +29,7 @@ add_library(FortranEvaluate
   tools.cc
   type.cc
   variable.cc
-  rte.cc
+  intrinsics-library.cc
 )
 
 target_link_libraries(FortranEvaluate

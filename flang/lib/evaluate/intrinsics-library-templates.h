@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_EVALUATE_RTE_H_
-#define FORTRAN_EVALUATE_RTE_H_
+#ifndef FORTRAN_EVALUATE_INTRINSICS_LIBRARY_TEMPLATES_H_
+#define FORTRAN_EVALUATE_INTRINSICS_LIBRARY_TEMPLATES_H_
 
 // This header defines the actual implementation of the templatized member
-// function of the structures defined in rte-interface.h. It should only be
-// included if these member functions are used, else rte-interface.h is
+// function of the structures defined in intrinsics-library.h. It should only be
+// included if these member functions are used, else intrinsics-library.h is
 // sufficient. This is to avoid circular dependencies. The below implementation
 // cannot be defined in .cc file because it would be too cumbersome to decide
 // which version should be instantiated in a generic way.
 
 #include "host.h"
-#include "rte-interface.h"
+#include "intrinsics-library.h"
 #include "type.h"
 #include "../common/template.h"
 
@@ -31,11 +31,11 @@
 #include <tuple>
 #include <type_traits>
 
-namespace Fortran::evaluate::rte {
+namespace Fortran::evaluate {
 
 // Define meaningful types for the runtime
 // TODO: add the support for void and descriptor
-using RteTypes = evaluate::AllIntrinsicTypes;
+using RuntimeTypes = evaluate::AllIntrinsicTypes;
 
 template<typename T, typename... TT> struct IndexInTupleHelper {};
 template<typename T, typename... TT>
@@ -44,12 +44,14 @@ struct IndexInTupleHelper<T, std::tuple<TT...>> {
 };
 
 static_assert(
-    std::tuple_size_v<RteTypes> < std::numeric_limits<TypeCode>::max(),
+    std::tuple_size_v<RuntimeTypes> < std::numeric_limits<TypeCode>::max(),
     "TypeCode is too small");
 template<typename T>
-inline constexpr TypeCode typeCodeOf{IndexInTupleHelper<T, RteTypes>::value};
+inline constexpr TypeCode typeCodeOf{
+    IndexInTupleHelper<T, RuntimeTypes>::value};
 
-template<TypeCode n> using TypeOf = typename std::tuple_element_t<n, RteTypes>;
+template<TypeCode n>
+using RuntimeTypeOf = typename std::tuple_element_t<n, RuntimeTypes>;
 
 template<typename TA, PassBy Pass>
 using HostArgType = std::conditional_t<Pass == PassBy::Ref,
@@ -84,7 +86,7 @@ template<typename TR, typename... ArgInfo> struct CallableHostWrapper {
       hostFPE.CheckAndRestoreFloatingPointEnvironment(context);
       return host::CastHostToFortran<TR>(res);
     } else {
-      common::die("Internal error: Host does not supports rte functions types. "
+      common::die("Internal error: Host does not supports this function types."
                   "This should not have been called for folding");
       return Scalar<TR>{};  // unreachable
     }
@@ -93,7 +95,7 @@ template<typename TR, typename... ArgInfo> struct CallableHostWrapper {
 };
 
 template<typename TR, typename... ArgInfo>
-RteProcedureSymbol::RteProcedureSymbol(
+IntrinsicProcedureRuntimeDescription::IntrinsicProcedureRuntimeDescription(
     const Signature<TR, ArgInfo...> &signature, bool isElemental)
   : name{signature.name}, returnType{typeCodeOf<TR>},
     argumentsType{typeCodeOf<typename ArgInfo::Type>...},
@@ -119,16 +121,18 @@ using SignatureFromHostFuncPointer =
     Signature<host::FortranType<HostTR>, ArgInfoFromHostType<HostTA>...>;
 
 template<typename HostTR, typename... HostTA>
-HostRteProcedureSymbol::HostRteProcedureSymbol(const std::string &name,
-    FuncPointer<HostTR, HostTA...> func, bool isElemental)
-  : RteProcedureSymbol(
+HostRuntimeIntrinsicProcedure::HostRuntimeIntrinsicProcedure(
+    const std::string &name, FuncPointer<HostTR, HostTA...> func,
+    bool isElemental)
+  : IntrinsicProcedureRuntimeDescription(
         SignatureFromHostFuncPointer<HostTR, HostTA...>{name}, isElemental),
     handle{reinterpret_cast<FuncPointer<void *>>(func)} {}
 
 template<template<typename> typename ConstantContainer, typename TR,
     typename... TA>
 std::optional<HostProcedureWrapper<ConstantContainer, TR, TA...>>
-HostRte::GetHostProcedureWrapper(const std::string &name) {
+HostIntrinsicProceduresLibrary::GetHostProcedureWrapper(
+    const std::string &name) {
   if constexpr (host::HostTypeExists<TR, TA...>()) {
     auto rteProcRange{procedures.equal_range(name)};
     const TypeCode resTypeCode{typeCodeOf<TR>};
@@ -165,10 +169,11 @@ HostRte::GetHostProcedureWrapper(const std::string &name) {
 }
 
 template<typename TR, typename... ArgInfo>
-TargetRteProcedureSymbol::TargetRteProcedureSymbol(
+TargetRuntimeIntrinsicProcedure::TargetRuntimeIntrinsicProcedure(
     const Signature<TR, ArgInfo...> &signature, const std::string &symbolName,
     bool isElemental)
-  : RteProcedureSymbol{signature, isElemental}, symbol{symbolName} {}
+  : IntrinsicProcedureRuntimeDescription{signature, isElemental},
+    symbol{symbolName} {}
 
 }
-#endif  // FORTRAN_EVALUATE_RTE_H_
+#endif  // FORTRAN_EVALUATE_INTRINSICS_LIBRARY_TEMPLATES_H_

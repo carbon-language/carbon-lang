@@ -15,6 +15,7 @@
 #ifndef FORTRAN_EVALUATE_COMMON_H_
 #define FORTRAN_EVALUATE_COMMON_H_
 
+#include "intrinsics-library.h"
 #include "../common/Fortran.h"
 #include "../common/enum-set.h"
 #include "../common/idioms.h"
@@ -22,7 +23,6 @@
 #include "../common/restorer.h"
 #include "../parser/char-block.h"
 #include "../parser/message.h"
-#include "rte-interface.h"
 #include <cinttypes>
 #include <map>
 
@@ -219,7 +219,9 @@ public:
   bool flushSubnormalsToZero() const { return flushSubnormalsToZero_; }
   bool bigEndian() const { return bigEndian_; }
   const semantics::DerivedTypeSpec *pdtInstance() const { return pdtInstance_; }
-  rte::HostRte &hostRte() { return hostRte_; }
+  HostIntrinsicProceduresLibrary &hostIntrinsicsLibrary() {
+    return hostIntrinsicsLibrary_;
+  }
 
   std::int64_t &StartImpliedDo(parser::CharBlock, std::int64_t = 1);
   std::optional<std::int64_t> GetImpliedDo(parser::CharBlock) const;
@@ -241,7 +243,7 @@ private:
   bool bigEndian_{false};
   const semantics::DerivedTypeSpec *pdtInstance_{nullptr};
   std::map<parser::CharBlock, std::int64_t> impliedDos_;
-  rte::HostRte hostRte_;
+  HostIntrinsicProceduresLibrary hostIntrinsicsLibrary_;
 };
 
 void RealFlagWarnings(FoldingContext &, const RealFlags &, const char *op);

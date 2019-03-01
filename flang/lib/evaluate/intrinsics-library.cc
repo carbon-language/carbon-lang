@@ -14,10 +14,10 @@
 
 // This file defines the runtime libraries for the target as well as a default
 // set of host rte functions that can be used for folding.
-// The default HostRte is built with <cmath> and <complex> functions
-// that are guaranteed to exist from the C++ standard.
+// The default HostIntrinsicProceduresLibrary is built with <cmath> and
+// <complex> functions that are guaranteed to exist from the C++ standard.
 
-#include "rte.h"
+#include "intrinsics-library-templates.h"
 #include "../common/idioms.h"
 #include <cerrno>
 #include <cfenv>
@@ -27,11 +27,12 @@
 #include <dlfcn.h>
 #endif
 
-namespace Fortran::evaluate::rte {
+namespace Fortran::evaluate {
 
 using namespace Fortran::parser::literals;
 // Note: argument passing is ignored in equivalence
-bool HostRte::HasEquivalentProcedure(const RteProcedureSymbol &sym) const {
+bool HostIntrinsicProceduresLibrary::HasEquivalentProcedure(
+    const IntrinsicProcedureRuntimeDescription &sym) const {
   const auto rteProcRange{procedures.equal_range(sym.name)};
   const size_t nargs{sym.argumentsType.size()};
   for (auto iter{rteProcRange.first}; iter != rteProcRange.second; ++iter) {
@@ -54,7 +55,8 @@ bool HostRte::HasEquivalentProcedure(const RteProcedureSymbol &sym) const {
   return false;
 }
 
-void HostRte::LoadTargetRteLibrary(const TargetRteLibrary &lib) {
+void HostIntrinsicProceduresLibrary::LoadTargetIntrinsicProceduresLibrary(
+    const TargetIntrinsicProceduresLibrary &lib) {
   if (dynamicallyLoadedLibraries.find(lib.name) !=
       dynamicallyLoadedLibraries.end()) {
     return;  // already loaded
@@ -75,7 +77,7 @@ void HostRte::LoadTargetRteLibrary(const TargetRteLibrary &lib) {
       // is implementation defined whether this is supported. POSIX mandates
       // that such cast from function pointers to void* are defined. Hence this
       // reinterpret_cast is and MUST REMAIN inside ifdef related to POSIX.
-      AddProcedure(HostRteProcedureSymbol{
+      AddProcedure(HostRuntimeIntrinsicProcedure{
           sym.second, reinterpret_cast<FuncPointer<void *>>(func)});
     }
   }
@@ -84,7 +86,7 @@ void HostRte::LoadTargetRteLibrary(const TargetRteLibrary &lib) {
 #endif
 }
 
-HostRte::~HostRte() {
+HostIntrinsicProceduresLibrary::~HostIntrinsicProceduresLibrary() {
   for (auto iter{dynamicallyLoadedLibraries.begin()};
        iter != dynamicallyLoadedLibraries.end(); ++iter) {
 #ifdef IS_POSIX_COMPLIANT
@@ -105,10 +107,12 @@ template<typename HostT> static HostT Bessel_yn(std::int64_t n, HostT x) {
   return std::cyl_neumann(static_cast<HostT>(n), x);
 }
 
-template<typename HostT> void AddLibmRealHostProcedure(HostRte &hostRte) {
+template<typename HostT>
+void AddLibmRealHostProcedure(
+    HostIntrinsicProceduresLibrary &hostIntrinsicLibrary) {
   using F = FuncPointer<HostT, HostT>;
   using F2 = FuncPointer<HostT, HostT, HostT>;
-  HostRteProcedureSymbol libmSymbols[]{{"acos", F{std::acos}, true},
+  HostRuntimeIntrinsicProcedure libmSymbols[]{{"acos", F{std::acos}, true},
       {"acosh", F{std::acosh}, true}, {"asin", F{std::asin}, true},
       {"asinh", F{std::asinh}, true}, {"atan", F{std::atan}, true},
       {"atan", F2{std::atan2}, true}, {"atanh", F{std::atanh}, true},
@@ -119,15 +123,17 @@ template<typename HostT> void AddLibmRealHostProcedure(HostRte &hostRte) {
       {"tan", F{std::tan}, true}, {"tanh", F{std::tanh}, true}};
 
   for (auto sym : libmSymbols) {
-    if (!hostRte.HasEquivalentProcedure(sym)) {
-      hostRte.AddProcedure(std::move(sym));
+    if (!hostIntrinsicLibrary.HasEquivalentProcedure(sym)) {
+      hostIntrinsicLibrary.AddProcedure(std::move(sym));
     }
   }
 }
 
-template<typename HostT> void AddLibmComplexHostProcedure(HostRte &hostRte) {
+template<typename HostT>
+void AddLibmComplexHostProcedure(
+    HostIntrinsicProceduresLibrary &hostIntrinsicLibrary) {
   using F = FuncPointer<std::complex<HostT>, const std::complex<HostT> &>;
-  HostRteProcedureSymbol libmSymbols[]{{"acos", F{std::acos}, true},
+  HostRuntimeIntrinsicProcedure libmSymbols[]{{"acos", F{std::acos}, true},
       {"acosh", F{std::acosh}, true}, {"asin", F{std::asin}, true},
       {"asinh", F{std::asinh}, true}, {"atan", F{std::atan}, true},
       {"atanh", F{std::atanh}, true}, {"cos", F{std::cos}, true},
@@ -136,8 +142,8 @@ template<typename HostT> void AddLibmComplexHostProcedure(HostRte &hostRte) {
       {"tan", F{std::tan}, true}, {"tanh", F{std::tanh}, true}};
 
   for (auto sym : libmSymbols) {
-    if (!hostRte.HasEquivalentProcedure(sym)) {
-      hostRte.AddProcedure(std::move(sym));
+    if (!hostIntrinsicLibrary.HasEquivalentProcedure(sym)) {
+      hostIntrinsicLibrary.AddProcedure(std::move(sym));
     }
   }
 }
@@ -183,32 +189,34 @@ static std::string MakeLibpgmathName(const std::string &name, MathOption m) {
 }
 
 template<typename T>
-static void AddLibpgmathTargetSymbols(TargetRteLibrary &lib, MathOption opt) {
+static void AddLibpgmathTargetSymbols(
+    TargetIntrinsicProceduresLibrary &lib, MathOption opt) {
   using F = Signature<T, ArgumentInfo<T, PassBy::Val>>;
   const std::string oneArgFuncs[]{"acos", "asin", "atan", "cos", "cosh", "exp",
       "log", "log10", "sin", "sinh", "tan", "tanh"};
   for (const std::string &name : oneArgFuncs) {
-    lib.AddProcedure(TargetRteProcedureSymbol{
+    lib.AddProcedure(TargetRuntimeIntrinsicProcedure{
         F{name}, MakeLibpgmathName<T>(name, opt), true});
   }
 
   if constexpr (T::category == TypeCategory::Real) {
     using F2 = Signature<T, ArgumentInfo<T, PassBy::Val>,
         ArgumentInfo<T, PassBy::Val>>;
-    lib.AddProcedure(TargetRteProcedureSymbol{
+    lib.AddProcedure(TargetRuntimeIntrinsicProcedure{
         F2{"atan2"}, MakeLibpgmathName<T>("acos", opt), true});
   } else {
     const std::string oneArgCmplxFuncs[]{
         "div", "sqrt"};  // for scalar, only complex available
     for (const std::string &name : oneArgCmplxFuncs) {
-      lib.AddProcedure(TargetRteProcedureSymbol{
+      lib.AddProcedure(TargetRuntimeIntrinsicProcedure{
           F{name}, MakeLibpgmathName<T>(name, opt), true});
     }
   }
 }
 
-TargetRteLibrary BuildLibpgmTargetRteLibrary(MathOption opt) {
-  TargetRteLibrary lib{"libpgmath"};
+TargetIntrinsicProceduresLibrary BuildLibpgmTargetIntrinsicProceduresLibrary(
+    MathOption opt) {
+  TargetIntrinsicProceduresLibrary lib{"libpgmath"};
   AddLibpgmathTargetSymbols<Type<TypeCategory::Real, 4>>(lib, opt);
   AddLibpgmathTargetSymbols<Type<TypeCategory::Real, 8>>(lib, opt);
   AddLibpgmathTargetSymbols<Type<TypeCategory::Complex, 4>>(lib, opt);
@@ -218,13 +226,14 @@ TargetRteLibrary BuildLibpgmTargetRteLibrary(MathOption opt) {
 
 // Defines which host runtime functions will be used for folding
 
-void HostRte::DefaultInit() {
+void HostIntrinsicProceduresLibrary::DefaultInit() {
   // TODO: when linkage information is available, this needs to be modified to
   // load runtime accordingly. For now, try loading libpgmath (libpgmath.so
   // needs to be in a directory from LD_LIBRARY_PATH) and then add libm symbols
   // when no equivalent symbols were already loaded
-  TargetRteLibrary libpgmath{BuildLibpgmTargetRteLibrary(MathOption::Precise)};
-  LoadTargetRteLibrary(libpgmath);
+  TargetIntrinsicProceduresLibrary libpgmath{
+      BuildLibpgmTargetIntrinsicProceduresLibrary(MathOption::Precise)};
+  LoadTargetIntrinsicProceduresLibrary(libpgmath);
 
   AddLibmRealHostProcedure<float>(*this);
   AddLibmRealHostProcedure<double>(*this);

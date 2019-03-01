@@ -18,7 +18,7 @@
 #include "expression.h"
 #include "host.h"
 #include "int-power.h"
-#include "rte.h"
+#include "intrinsics-library-templates.h"
 #include "tools.h"
 #include "traversal.h"
 #include "type.h"
@@ -331,8 +331,8 @@ Expr<Type<TypeCategory::Real, KIND>> FoldOperation(FoldingContext &context,
     const std::string name{intrinsic->name};
     if (name == "acos" || name == "acosh" ||
         (name == "atan" && funcRef.arguments().size() == 1)) {
-      if (auto callable{
-              context.hostRte().GetHostProcedureWrapper<Scalar, T, T>(name)}) {
+      if (auto callable{context.hostIntrinsicsLibrary()
+                            .GetHostProcedureWrapper<Scalar, T, T>(name)}) {
         return FoldElementalIntrinsic<T, T>(
             context, std::move(funcRef), *callable);
       } else {
@@ -342,9 +342,8 @@ Expr<Type<TypeCategory::Real, KIND>> FoldOperation(FoldingContext &context,
       }
     }
     if (name == "atan") {
-      if (auto callable{
-              context.hostRte().GetHostProcedureWrapper<Scalar, T, T, T>(
-                  name)}) {
+      if (auto callable{context.hostIntrinsicsLibrary()
+                            .GetHostProcedureWrapper<Scalar, T, T, T>(name)}) {
         return FoldElementalIntrinsic<T, T, T>(
             context, std::move(funcRef), *callable);
       } else {
@@ -361,8 +360,8 @@ Expr<Type<TypeCategory::Real, KIND>> FoldOperation(FoldingContext &context,
               Fold(context, ConvertToType<Int8>(std::move(*n)));
         }
         if (auto callable{
-                context.hostRte().GetHostProcedureWrapper<Scalar, T, Int8, T>(
-                    name)}) {
+                context.hostIntrinsicsLibrary()
+                    .GetHostProcedureWrapper<Scalar, T, Int8, T>(name)}) {
           return FoldElementalIntrinsic<T, Int8, T>(
               context, std::move(funcRef), *callable);
         } else {
@@ -423,8 +422,8 @@ Expr<Type<TypeCategory::Complex, KIND>> FoldOperation(FoldingContext &context,
     const std::string name{intrinsic->name};
     if (name == "acos" || name == "acosh" || name == "asin" || name == "atan" ||
         name == "atanh") {
-      if (auto callable{
-              context.hostRte().GetHostProcedureWrapper<Scalar, T, T>(name)}) {
+      if (auto callable{context.hostIntrinsicsLibrary()
+                            .GetHostProcedureWrapper<Scalar, T, T>(name)}) {
         return FoldElementalIntrinsic<T, T>(
             context, std::move(funcRef), *callable);
       } else {
