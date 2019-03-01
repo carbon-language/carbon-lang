@@ -82,8 +82,7 @@ struct AsanInterceptorContext {
   do {                                                                  \
     if (UNLIKELY(!asan_inited)) return internal_memcpy(to, from, size); \
     if (asan_init_is_running) {                                         \
-      REAL(memcpy)(to, from, size);                                     \
-      break;                                                            \
+      return REAL(memcpy)(to, from, size);                              \
     }                                                                   \
     ENSURE_ASAN_INITED();                                               \
     if (flags()->replace_intrin) {                                      \
@@ -93,7 +92,7 @@ struct AsanInterceptorContext {
       ASAN_READ_RANGE(ctx, from, size);                                 \
       ASAN_WRITE_RANGE(ctx, to, size);                                  \
     }                                                                   \
-    REAL(memcpy)(to, from, size);                                       \
+    return REAL(memcpy)(to, from, size);                                \
   } while (0)
 
 // memset is called inside Printf.
@@ -101,14 +100,13 @@ struct AsanInterceptorContext {
   do {                                                                  \
     if (UNLIKELY(!asan_inited)) return internal_memset(block, c, size); \
     if (asan_init_is_running) {                                         \
-      REAL(memset)(block, c, size);                                     \
-      break;                                                            \
+      return REAL(memset)(block, c, size);                              \
     }                                                                   \
     ENSURE_ASAN_INITED();                                               \
     if (flags()->replace_intrin) {                                      \
       ASAN_WRITE_RANGE(ctx, block, size);                               \
     }                                                                   \
-    REAL(memset)(block, c, size);                                       \
+    return REAL(memset)(block, c, size);                                \
   } while (0)
 
 #define ASAN_MEMMOVE_IMPL(ctx, to, from, size)                           \
@@ -119,7 +117,7 @@ struct AsanInterceptorContext {
       ASAN_READ_RANGE(ctx, from, size);                                  \
       ASAN_WRITE_RANGE(ctx, to, size);                                   \
     }                                                                    \
-    internal_memmove(to, from, size);                                    \
+    return internal_memmove(to, from, size);                             \
   } while (0)
 
 #define ASAN_READ_RANGE(ctx, offset, size) \

@@ -1311,17 +1311,17 @@ int OnExit() {
 #define COMMON_INTERCEPTOR_MEMSET_IMPL(ctx, block, c, size) \
   {                                                         \
     (void)ctx;                                              \
-    __msan_memset(block, c, size);                          \
+    return __msan_memset(block, c, size);                   \
   }
 #define COMMON_INTERCEPTOR_MEMMOVE_IMPL(ctx, to, from, size) \
   {                                                          \
     (void)ctx;                                               \
-    __msan_memmove(to, from, size);                          \
+    return __msan_memmove(to, from, size);                   \
   }
 #define COMMON_INTERCEPTOR_MEMCPY_IMPL(ctx, to, from, size) \
   {                                                         \
     (void)ctx;                                              \
-    __msan_memcpy(to, from, size);                          \
+    return __msan_memcpy(to, from, size);                   \
   }
 
 #define COMMON_INTERCEPTOR_COPY_STRING(ctx, to, from, size) \
