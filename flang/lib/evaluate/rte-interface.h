@@ -60,7 +60,7 @@ struct RteProcedureSymbol {
   const std::vector<TypeCode> argumentsType;
   const std::vector<PassBy> argumentsPassedBy;
   const bool isElemental;
-  const void *callable;
+  const FuncPointer<void *> callable;
   // callable only usable by HostRteProcedureSymbol but need to be created in
   // case TargetRteProcedureSymbol is dynamically loaded because creating it
   // dynamically would be too complex
@@ -98,9 +98,10 @@ struct HostRteProcedureSymbol : RteProcedureSymbol {
   template<typename HostTR, typename... HostTA>
   HostRteProcedureSymbol(const std::string &name,
       FuncPointer<HostTR, HostTA...> func, bool isElemental = false);
-  HostRteProcedureSymbol(const RteProcedureSymbol &rteProc, const void *handle)
+  HostRteProcedureSymbol(
+      const RteProcedureSymbol &rteProc, FuncPointer<void *> handle)
     : RteProcedureSymbol{rteProc}, handle{handle} {}
-  const void *handle;
+  const FuncPointer<void *> handle;
 };
 
 // valid ConstantContainer are Scalar (only for elementals) and Constant

@@ -22,7 +22,7 @@
 #include <cfenv>
 #include <sstream>
 #if defined(__APPLE__) || defined(__unix__)
-#define HAS_DLOPEN
+#define IS_POSIX_COMPLIANT
 #include <dlfcn.h>
 #endif
 
@@ -58,7 +58,7 @@ void HostRte::LoadTargetRteLibrary(const TargetRteLibrary &lib) {
       dynamicallyLoadedLibraries.end()) {
     return;  // already loaded
   }
-#ifdef HAS_DLOPEN
+#ifdef IS_POSIX_COMPLIANT
   void *handle = dlopen((lib.name + std::string{".so"}).c_str(), RTLD_LAZY);
   if (!handle) {
     return;
@@ -69,7 +69,13 @@ void HostRte::LoadTargetRteLibrary(const TargetRteLibrary &lib) {
     auto error{dlerror()};
     if (error) {
     } else {
-      AddProcedure(HostRteProcedureSymbol{sym.second, func});
+      // Note: below is the only reinterpret_cast from an object pointer to
+      // function pointer As per C++11 and later rules on reinterpret_cast, it is
+      // implementation defined whether this is supported. POSIX mandates that
+      // such cast from function pointers to void* are defined. Hence this
+      // reinterpret_cast is and MUST REMAIN inside ifdef related to POSIX.
+      AddProcedure(HostRteProcedureSymbol{
+          sym.second, reinterpret_cast<FuncPointer<void *>>(func)});
     }
   }
 #else
@@ -80,7 +86,7 @@ void HostRte::LoadTargetRteLibrary(const TargetRteLibrary &lib) {
 HostRte::~HostRte() {
   for (auto iter{dynamicallyLoadedLibraries.begin()};
        iter != dynamicallyLoadedLibraries.end(); ++iter) {
-#ifdef HAS_DLOPEN
+#ifdef IS_POSIX_COMPLIANT
     (void)dlclose(iter->second);
 #endif
   }

@@ -98,7 +98,7 @@ RteProcedureSymbol::RteProcedureSymbol(
   : name{signature.name}, returnType{typeCodeOf<TR>},
     argumentsType{typeCodeOf<typename ArgInfo::Type>...},
     argumentsPassedBy{ArgInfo::pass...}, isElemental{isElemental},
-    callable{reinterpret_cast<const void *>(
+    callable{reinterpret_cast<FuncPointer<void *>>(
         CallableHostWrapper<TR, ArgInfo...>::MakeScalarCallable())} {}
 
 template<typename HostTA> static constexpr inline PassBy PassByMethod() {
@@ -123,7 +123,7 @@ HostRteProcedureSymbol::HostRteProcedureSymbol(const std::string &name,
     FuncPointer<HostTR, HostTA...> func, bool isElemental)
   : RteProcedureSymbol(
         SignatureFromHostFuncPointer<HostTR, HostTA...>{name}, isElemental),
-    handle{reinterpret_cast<const void *>(func)} {}
+    handle{reinterpret_cast<FuncPointer<void *>>(func)} {}
 
 template<template<typename> typename ConstantContainer, typename TR,
     typename... TA>
@@ -153,7 +153,7 @@ HostRte::GetHostProcedureWrapper(const std::string &name) {
                   const ConstantContainer<TA> &... args) {
                 auto callable{reinterpret_cast<
                     FuncPointer<ConstantContainer<TR>, FoldingContext &,
-                        const void *, const ConstantContainer<TA> &...>>(
+                        FuncPointer<void *>, const ConstantContainer<TA> &...>>(
                     iter->second.callable)};
                 return callable(context, iter->second.handle, args...);
               }}};
