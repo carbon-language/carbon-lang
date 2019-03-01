@@ -139,6 +139,26 @@ bool MipsInstructionSelector::select(MachineInstr &I,
   using namespace TargetOpcode;
 
   switch (I.getOpcode()) {
+  case G_UMULH: {
+    unsigned PseudoMULTuReg = MRI.createVirtualRegister(&Mips::ACC64RegClass);
+    MachineInstr *PseudoMULTu, *PseudoMove;
+
+    PseudoMULTu = BuildMI(MBB, I, I.getDebugLoc(), TII.get(Mips::PseudoMULTu))
+                      .addDef(PseudoMULTuReg)
+                      .add(I.getOperand(1))
+                      .add(I.getOperand(2));
+    if (!constrainSelectedInstRegOperands(*PseudoMULTu, TII, TRI, RBI))
+      return false;
+
+    PseudoMove = BuildMI(MBB, I, I.getDebugLoc(), TII.get(Mips::PseudoMFHI))
+                     .addDef(I.getOperand(0).getReg())
+                     .addUse(PseudoMULTuReg);
+    if (!constrainSelectedInstRegOperands(*PseudoMove, TII, TRI, RBI))
+      return false;
+
+    I.eraseFromParent();
+    return true;
+  }
   case G_GEP: {
     MI = BuildMI(MBB, I, I.getDebugLoc(), TII.get(Mips::ADDu))
              .add(I.getOperand(0))
