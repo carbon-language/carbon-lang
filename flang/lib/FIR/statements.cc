@@ -16,23 +16,47 @@
 
 namespace Fortran::FIR {
 
-static std::string dump(const Expression *expression) {
-  if (expression) {
-    std::stringstream stringStream;
-    expression->v.AsFortran(stringStream);
-    return stringStream.str();
+static Addressable_impl *GetAddressable(Statement *stmt) {
+  return std::visit(
+      [](auto &s) -> Addressable_impl * {
+        if constexpr (std::is_base_of_v<Addressable_impl,
+                          std::decay_t<decltype(s)>>) {
+          return &s;
+        }
+        return nullptr;
+      },
+      stmt->u);
+}
+
+static ApplyExprStmt *GetApplyExpr(Statement *stmt) {
+  return std::visit(common::visitors{
+                        [](ApplyExprStmt &s) { return &s; },
+                        [](auto &) -> ApplyExprStmt * { return nullptr; },
+                    },
+      stmt->u);
+}
+
+static std::string dump(const Expression &e) {
+  std::stringstream stringStream;
+  e.v.AsFortran(stringStream);
+  return stringStream.str();
+}
+
+static std::string dump(const Expression *e) {
+  if (e) {
+    return dump(*e);
   }
   return "<null-expr>"s;
 }
 
-static std::string dump(const Variable *variable) {
+static std::string dump(const Variable *var) {
 #if 0
-  if (auto *var{std::get_if<const semantics::Symbol *>(&variable->u)}) {
+  if (auto *var{std::get_if<const semantics::Symbol *>(&var->u)}) {
     return (*var)->name().ToString();
   }
   return "<var>"s;
 #endif
-  return (*variable)->name().ToString();
+  return (*var)->name().ToString();
 }
 
 static std::string dump(PathVariable *pathVariable) {
@@ -93,13 +117,14 @@ std::string Evaluation::dump() const {
       u);
 }
 
-ReturnStmt::ReturnStmt(Expression *expression) : returnValue_{expression} {}
-
 BranchStmt::BranchStmt(
-    Expression *condition, BasicBlock *trueBlock, BasicBlock *falseBlock)
-  : condition_{condition} {
-  succs_[TrueIndex] = trueBlock;
-  succs_[FalseIndex] = falseBlock;
+    Statement *cond, BasicBlock *trueBlock, BasicBlock *falseBlock)
+  : condition_{cond}, succs_{trueBlock, falseBlock} {
+  CHECK(succs_[TrueIndex]);
+  if (cond) {
+    CHECK(condition_);
+    CHECK(succs_[FalseIndex]);
+  }
 }
 
 template<typename L>
@@ -151,79 +176,74 @@ std::list<BasicBlock *> SwitchRankStmt::succ_blocks() const {
   return SuccBlocks(valueSuccPairs_);
 }
 
+LoadInsn::LoadInsn(Statement *addr) : address_{GetAddressable(addr)} {
+  CHECK(address_);
+}
+
+StoreInsn::StoreInsn(Statement *addr, Statement *val)
+  : address_{GetAddressable(addr)} {
+  CHECK(address_);
+  if (auto *value{GetAddressable(val)}) {
+    value_ = value;
+  } else {
+    auto *expr{GetApplyExpr(val)};
+    CHECK(expr);
+    value_ = expr;
+  }
+}
+
+StoreInsn::StoreInsn(Statement *addr, BasicBlock *val)
+  : address_{GetAddressable(addr)}, value_{val} {
+  CHECK(address_);
+  CHECK(val);
+}
+
+IncrementStmt::IncrementStmt(Statement *v1, Statement *v2) : value_{v1, v2} {}
+
+DoConditionStmt::DoConditionStmt(Statement *dir, Statement *v1, Statement *v2)
+  : value_{dir, v1, v2} {}
+
 std::string Statement::dump() const {
   return std::visit(
       common::visitors{
           [](const ReturnStmt &) { return "return"s; },
-          [](const BranchStmt &branchStatement) {
-            if (branchStatement.hasCondition()) {
-              return "branch ("s + FIR::dump(branchStatement.getCond()) +
-                  ") "s +
-                  std::to_string(reinterpret_cast<std::intptr_t>(
-                      branchStatement.getTrueSucc())) +
-                  " "s +
-                  std::to_string(reinterpret_cast<std::intptr_t>(
-                      branchStatement.getFalseSucc()));
+          [](const BranchStmt &branch) {
+            if (branch.hasCondition()) {
+              std::string cond{"???"};
+              if (auto expr{GetApplyExpr(branch.getCond())}) {
+                cond = FIR::dump(expr->expression());
+              }
+              return "branch (" + cond + ") " +
+                  std::to_string(
+                      reinterpret_cast<std::intptr_t>(branch.getTrueSucc())) +
+                  ' ' +
+                  std::to_string(
+                      reinterpret_cast<std::intptr_t>(branch.getFalseSucc()));
             }
-            return "goto "s +
-                std::to_string(reinterpret_cast<std::intptr_t>(
-                    branchStatement.getTrueSucc()));
+            return "goto " +
+                std::to_string(
+                    reinterpret_cast<std::intptr_t>(branch.getTrueSucc()));
           },
-          [](const SwitchStmt &switchStatement) {
-            return "switch("s + switchStatement.getCond().dump() + ")"s;
+          [](const SwitchStmt &stmt) {
+            return "switch(" + stmt.getCond().dump() + ")";
           },
           [](const SwitchCaseStmt &switchCaseStmt) {
-            return "switch-case("s + switchCaseStmt.getCond().dump() + ")"s;
+            return "switch-case(" + switchCaseStmt.getCond().dump() + ")";
           },
           [](const SwitchTypeStmt &switchTypeStmt) {
-            return "switch-type("s + switchTypeStmt.getCond().dump() + ")"s;
+            return "switch-type(" + switchTypeStmt.getCond().dump() + ")";
           },
           [](const SwitchRankStmt &switchRankStmt) {
-            return "switch-rank("s + switchRankStmt.getCond().dump() + ")"s;
+            return "switch-rank(" + switchRankStmt.getCond().dump() + ")";
           },
           [](const IndirectBranchStmt &) { return "ibranch"s; },
           [](const UnreachableStmt &) { return "unreachable"s; },
-          [](const AssignmentStmt &assignmentStatement) {
-            auto computedValue{
-                FIR::dump(assignmentStatement.GetRightHandSide())};
-            auto address{FIR::dump(assignmentStatement.GetLeftHandSide())};
-            return "assign ("s + computedValue + ") to "s + address;
+          [](const IncrementStmt &) { return "increment"s; },
+          [](const DoConditionStmt &) { return "compare"s; },
+          [](const ApplyExprStmt &e) { return FIR::dump(e.expression()); },
+          [](const LocateExprStmt &e) {
+            return "&" + FIR::dump(e.expression());
           },
-          [](const PointerAssignStmt &pointerAssignmentStatement) {
-            auto computedAddress{
-                FIR::dump(pointerAssignmentStatement.GetRightHandSide())};
-            auto address{
-                FIR::dump(pointerAssignmentStatement.GetLeftHandSide())};
-            return "assign &("s + computedAddress + ") to "s + address;
-          },
-          [](const LabelAssignStmt &) { return "lblassn"s; },
-          [](const ApplyExprStmt &applyExpression) {
-            return std::visit(
-                common::visitors{
-                    [](const parser::AssociateStmt *) {
-                      return "<eavl-associate>"s;
-                    },
-                    [](const parser::ChangeTeamStmt *) {
-                      return "<eval-change-team>"s;
-                    },
-                    [](const parser::NonLabelDoStmt *) { return "<eval-do>"s; },
-                    [](const parser::SelectTypeStmt *) {
-                      return "<eval-select-type>"s;
-                    },
-                    [](const parser::ForallConstructStmt *) {
-                      return "<eval-forall>"s;
-                    },
-                    [](const parser::SelectRankStmt *) {
-                      return "<eval-select-rank>"s;
-                    },
-                    [](const evaluate::GenericExprWrapper
-                            *genericExpressionWrapper) {
-                      return FIR::dump(genericExpressionWrapper);
-                    },
-                },
-                applyExpression.u);
-          },
-          [](const LocateExprStmt &) { return "locate"s; },
           [](const AllocateInsn &) { return "alloc"s; },
           [](const DeallocateInsn &) { return "dealloc"s; },
           [](const AllocateLocalInsn &) { return "alloca"s; },

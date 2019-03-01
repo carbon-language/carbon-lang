@@ -302,5 +302,11 @@ public:
 private:
   SemanticsContext &context_;
 };
+
+MaybeExpr AnalyzeVariable(
+    SemanticsContext &context, const parser::Variable &var);
+MaybeExpr AnalyzeName(SemanticsContext &context, const parser::Name &name);
+MaybeExpr AnalyzeDataRef(
+    SemanticsContext &context, const parser::DataRef &dataRef);
 }  // namespace Fortran::semantics
 #endif  // FORTRAN_SEMANTICS_EXPRESSION_H_

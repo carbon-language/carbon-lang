@@ -40,7 +40,7 @@ static void AddCountScopes(
     unsigned count, BasicBlock *block, T callback, semantics::Scope *scope) {
   for (; count; --count) {
     block->insertBefore(
-        new Statement(block, callback(scope)), block->getTerminator());
+        new Statement(block, callback(scope)), block->terminator());
   }
 }
 

@@ -46,10 +46,10 @@ public:
       Region *parentRegion, BasicBlock *insertBefore = nullptr) {
     return new BasicBlock(parentRegion, insertBefore);
   }
-  const Statement *getTerminator() const;
-  Statement *getTerminator() {
+  const Statement *terminator() const;
+  Statement *terminator() {
     return const_cast<Statement *>(
-        const_cast<const BasicBlock *>(this)->getTerminator());
+        const_cast<const BasicBlock *>(this)->terminator());
   }
   void SetRegion(Region *region) { parent = region; }
   Region *GetRegion() const { return parent; }

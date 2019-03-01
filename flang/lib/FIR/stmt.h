@@ -38,7 +38,7 @@ public:
 };
 
 inline std::list<BasicBlock *> succ_list(BasicBlock &block) {
-  if (auto *terminator{block.getTerminator()}) {
+  if (auto *terminator{block.terminator()}) {
     return reinterpret_cast<const TerminatorStmt_impl *>(&terminator->u)
         ->succ_blocks();
   }
