@@ -32,7 +32,7 @@ void __sanitizer::BufferedStackTrace::UnwindImpl(
     uptr pc, uptr bp, void *context, bool request_fast, u32 max_depth) {
   using namespace __asan;
 #if SANITIZER_WINDOWS
-  stack->Unwind(max_depth, pc, 0, context, 0, 0, false);
+  Unwind(max_depth, pc, 0, context, 0, 0, false);
 #else
   AsanThread *t;
   size = 0;
