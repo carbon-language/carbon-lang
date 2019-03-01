@@ -98,16 +98,9 @@ void ReportMmapWriteExec(int prot) {
   InternalMmapVector<BufferedStackTrace> stack_buffer(1);
   BufferedStackTrace *stack = stack_buffer.data();
   stack->Reset();
-  uptr top = 0;
-  uptr bottom = 0;
-  GET_CALLER_PC_BP_SP;
-  (void)sp;
-  bool fast = common_flags()->fast_unwind_on_fatal;
-  if (StackTrace::WillUseFastUnwind(fast)) {
-    GetThreadStackTopAndBottom(false, &top, &bottom);
-    stack->Unwind(kStackTraceMax, pc, bp, nullptr, top, bottom, true);
-  } else
-    stack->Unwind(kStackTraceMax, pc, 0, nullptr, 0, 0, false);
+
+  GET_CALLER_PC_BP;
+  stack->Unwind(pc, bp, nullptr, common_flags()->fast_unwind_on_fatal);
 
   Printf("%s", d.Warning());
   Report("WARNING: %s: writable-executable page usage\n", SanitizerToolName);
