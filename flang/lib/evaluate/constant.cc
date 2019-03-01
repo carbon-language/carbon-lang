@@ -16,6 +16,7 @@
 #include "expression.h"
 #include "type.h"
 #include "../parser/characters.h"
+#include <string>
 
 namespace Fortran::evaluate {
 
@@ -124,7 +125,7 @@ Constant<Type<TypeCategory::Character, KIND>>::Constant(ScalarValue &&str)
 template<int KIND>
 Constant<Type<TypeCategory::Character, KIND>>::Constant(std::int64_t len,
     std::vector<ScalarValue> &&strings, std::vector<std::int64_t> &&dims)
-  : length_{len} {
+  : length_{len}, shape_{std::move(dims)} {
   values_.assign(strings.size() * length_,
       static_cast<typename ScalarValue::value_type>(' '));
   std::int64_t at{0};
@@ -184,15 +185,17 @@ std::ostream &Constant<Type<TypeCategory::Character, KIND>>::AsFortran(
     o << "reshape(";
   }
   if (Rank() > 0) {
-    o << '[' << GetType().AsFortran() << "::";
+    o << '[' << GetType().AsFortran(std::to_string(length_)) << "::";
   }
   auto total{static_cast<std::int64_t>(size())};
   for (std::int64_t j{0}; j < total; ++j) {
     ScalarValue value{values_.substr(j * length_, length_)};
     if (j > 0) {
       o << ',';
+    } else if (Rank() == 0) {
+      o << Result::kind << '_';
     }
-    o << Result::kind << '_' << parser::QuoteCharacterLiteral(value);
+    o << parser::QuoteCharacterLiteral(value);
   }
   if (Rank() > 0) {
     o << ']';
