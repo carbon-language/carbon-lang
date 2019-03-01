@@ -214,7 +214,7 @@ define i8 @sat_max_smax_char(i8* %addr) {
 }
 
 ; CHECK-LABEL: sat_fadd_nan
-; CHECK-NEXT: %res = atomicrmw fadd double* %addr, double 0x7FF00000FFFFFFFF release
+; CHECK-NEXT: %res = atomicrmw xchg double* %addr, double 0x7FF00000FFFFFFFF release
 ; CHECK-NEXT: ret double %res
 define double @sat_fadd_nan(double* %addr) {
   %res = atomicrmw fadd double* %addr, double 0x7FF00000FFFFFFFF release
@@ -222,7 +222,7 @@ define double @sat_fadd_nan(double* %addr) {
 }
 
 ; CHECK-LABEL: sat_fsub_nan
-; CHECK-NEXT: %res = atomicrmw fsub double* %addr, double 0x7FF00000FFFFFFFF release
+; CHECK-NEXT: %res = atomicrmw xchg double* %addr, double 0x7FF00000FFFFFFFF release
 ; CHECK-NEXT: ret double %res
 define double @sat_fsub_nan(double* %addr) {
   %res = atomicrmw fsub double* %addr, double 0x7FF00000FFFFFFFF release
@@ -230,7 +230,7 @@ define double @sat_fsub_nan(double* %addr) {
 }
 
 ; CHECK-LABEL: sat_fsub_nan_unused
-; CHECK-NEXT: atomicrmw fsub double* %addr, double 0x7FF00000FFFFFFFF monotonic
+; CHECK-NEXT: store atomic double 0x7FF00000FFFFFFFF, double* %addr monotonic, align 8
 ; CHECK-NEXT: ret void
 define void @sat_fsub_nan_unused(double* %addr) {
   atomicrmw fsub double* %addr, double 0x7FF00000FFFFFFFF monotonic
