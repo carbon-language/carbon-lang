@@ -139,6 +139,8 @@ struct BufferedStackTrace : public StackTrace {
 
   BufferedStackTrace(const BufferedStackTrace &) = delete;
   void operator=(const BufferedStackTrace &) = delete;
+
+  friend class FastUnwindTest;
 };
 
 // Check if given pointer points into allocated stack area.
