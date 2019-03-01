@@ -90,6 +90,13 @@ define float @atomic_fsub_canon(float* %addr) {
   %res = atomicrmw fsub float* %addr, float 0.0 release
   ret float %res
 }
+; CHECK-LABEL: atomic_fadd_canon
+; CHECK-NEXT: %res = atomicrmw fadd float* %addr, float -0.000000e+00 release
+; CHECK-NEXT: ret float %res
+define float @atomic_fadd_canon(float* %addr) {
+  %res = atomicrmw fadd float* %addr, float -0.0 release
+  ret float %res
+}
 
 ; Can't replace a volatile w/a load; this would eliminate a volatile store.
 ; CHECK-LABEL: atomic_sub_zero_volatile
@@ -204,6 +211,22 @@ define i8 @sat_min_smin_char(i8* %addr) {
 define i8 @sat_max_smax_char(i8* %addr) {
   %res = atomicrmw max i8* %addr, i8 127 monotonic
   ret i8 %res
+}
+
+; CHECK-LABEL: sat_fadd_nan
+; CHECK-NEXT: %res = atomicrmw fadd double* %addr, double 0x7FF00000FFFFFFFF release
+; CHECK-NEXT: ret double %res
+define double @sat_fadd_nan(double* %addr) {
+  %res = atomicrmw fadd double* %addr, double 0x7FF00000FFFFFFFF release
+  ret double %res
+}
+
+; CHECK-LABEL: sat_fsub_nan
+; CHECK-NEXT: %res = atomicrmw fsub double* %addr, double 0x7FF00000FFFFFFFF release
+; CHECK-NEXT: ret double %res
+define double @sat_fsub_nan(double* %addr) {
+  %res = atomicrmw fsub double* %addr, double 0x7FF00000FFFFFFFF release
+  ret double %res
 }
 
 ; CHECK-LABEL: xchg_unused_monotonic
