@@ -18,6 +18,7 @@
 // that are guaranteed to exist from the C++ standard.
 
 #include "rte.h"
+#include "../common/idioms.h"
 #include <cerrno>
 #include <cfenv>
 #include <sstream>
@@ -70,9 +71,9 @@ void HostRte::LoadTargetRteLibrary(const TargetRteLibrary &lib) {
     if (error) {
     } else {
       // Note: below is the only reinterpret_cast from an object pointer to
-      // function pointer As per C++11 and later rules on reinterpret_cast, it is
-      // implementation defined whether this is supported. POSIX mandates that
-      // such cast from function pointers to void* are defined. Hence this
+      // function pointer As per C++11 and later rules on reinterpret_cast, it
+      // is implementation defined whether this is supported. POSIX mandates
+      // that such cast from function pointers to void* are defined. Hence this
       // reinterpret_cast is and MUST REMAIN inside ifdef related to POSIX.
       AddProcedure(HostRteProcedureSymbol{
           sym.second, reinterpret_cast<FuncPointer<void *>>(func)});
@@ -238,14 +239,12 @@ void HostFloatingPointEnvironment::SetUpHostFloatingPointEnvironment(
     FoldingContext &context) {
   errno = 0;
   if (feholdexcept(&originalFenv_) != 0) {
-    context.messages().Say(
-        "Folding with host runtime: feholdexcept() failed: %s"_en_US,
+    common::die("Folding with host runtime: feholdexcept() failed: %s",
         std::strerror(errno));
     return;
   }
   if (fegetenv(&currentFenv_) != 0) {
-    context.messages().Say(
-        "Folding with host runtime: fegetenv() failed: %s"_en_US,
+    common::die("Folding with host runtime: fegetenv() failed: %s",
         std::strerror(errno));
     return;
   }
@@ -259,10 +258,12 @@ void HostFloatingPointEnvironment::SetUpHostFloatingPointEnvironment(
   }
 #else
   // TODO other architectures
+  context.messages().Say(
+      "TODO: flushing mode for subnormals is not set for this host architecture when folding with host runtime functions"_en_US);
 #endif
   errno = 0;
   if (fesetenv(&currentFenv_) != 0) {
-    context.messages().Say("Folding with host rte: fesetenv() failed: %s"_en_US,
+    common::die("Folding with host runtime: fesetenv() failed: %s",
         std::strerror(errno));
     return;
   }
@@ -272,8 +273,9 @@ void HostFloatingPointEnvironment::SetUpHostFloatingPointEnvironment(
   case RoundingMode::Up: fesetround(FE_UPWARD); break;
   case RoundingMode::Down: fesetround(FE_DOWNWARD); break;
   case RoundingMode::TiesAwayFromZero:
+    fesetround(FE_TONEAREST);
     context.messages().Say(
-        "Folding with host runtime: TiesAwayFromZero rounding not available"_en_US);
+        "TiesAwayFromZero rounding mode is not available not available when folding constants with host runtime. Using TiesToEven instead."_en_US);
     break;
   }
   errno = 0;
@@ -315,8 +317,8 @@ void HostFloatingPointEnvironment::CheckAndRestoreFloatingPointEnvironment(
   errno = 0;
   if (fesetenv(&originalFenv_) != 0) {
     std::fprintf(stderr, "fesetenv() failed: %s\n", std::strerror(errno));
-    context.messages().Say(
-        "Folding with host rte: fesetenv() while restoring fenv failed: %s"_en_US,
+    common::die(
+        "Folding with host runtime: fesetenv() failed while restoring fenv: %s",
         std::strerror(errno));
   }
   errno = 0;
