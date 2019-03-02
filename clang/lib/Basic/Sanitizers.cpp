@@ -20,8 +20,8 @@ using namespace clang;
 // won't need this.
 #define SANITIZER(NAME, ID) const SanitizerMask SanitizerKind::ID;
 #define SANITIZER_GROUP(NAME, ID, ALIAS)                                       \
-  const SanitizerMask SanitizerKind::ID;                                       \
-  const SanitizerMask SanitizerKind::ID##Group;
+  constexpr SanitizerMask SanitizerKind::ID;                                   \
+  constexpr SanitizerMask SanitizerKind::ID##Group;
 #include "clang/Basic/Sanitizers.def"
 
 SanitizerMask clang::parseSanitizerValue(StringRef Value, bool AllowGroups) {
