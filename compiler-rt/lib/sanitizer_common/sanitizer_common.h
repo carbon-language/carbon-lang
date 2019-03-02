@@ -810,7 +810,7 @@ void WriteToSyslog(const char *buffer);
 #define SANITIZER_WIN_TRACE 0
 #endif
 
-#if SANITIZER_LINUX || SANITIZER_WIN_TRACE
+#if SANITIZER_MAC || SANITIZER_WIN_TRACE
 void LogFullErrorReport(const char *buffer);
 #else
 INLINE void LogFullErrorReport(const char *buffer) {}
