@@ -16,6 +16,7 @@
 #include "scope.h"
 #include "semantics.h"
 #include "symbol.h"
+#include "tools.h"
 #include "../common/idioms.h"
 #include "../evaluate/common.h"
 #include "../evaluate/fold.h"
@@ -1484,12 +1485,23 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
           }
         } else {
           CHECK(symbol->has<semantics::ObjectEntityDetails>());
+          // C1594(4)
+          if (!isNULL) {
+            const auto &innermost{context.context().FindScope(expr.source)};
+            if (const auto *pureFunc{
+                    semantics::FindPureFunctionContaining(&innermost)}) {
+              if (semantics::IsOrHasPointerComponent(*symbol) &&
+                  semantics::IsExternallyVisibleObject(*value, *pureFunc)) {
+                context.Say(expr.source,
+                    "Externally visible object must not be associated with a pointer in a PURE function"_err_en_US);
+              }
+            }
+          }
           if (symbol->attrs().test(semantics::Attr::POINTER)) {
             if (!isNULL) {
               // TODO C7104: check that object pointer components are
               // being initialized with compatible object designators
-              context.Say(expr.source,
-                  "TODO: non-null object pointer component value not implemented yet"_err_en_US);
+              // TODO pmk WIP this is next
             }
           } else if (MaybeExpr converted{
                          ConvertToType(*symbol, std::move(*value))}) {
@@ -1527,7 +1539,6 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
     }
   }
 
-  // TODO pmk check type compatibility on component expressions
   return AsMaybeExpr(Expr<SomeDerived>{std::move(result)});
 }
 

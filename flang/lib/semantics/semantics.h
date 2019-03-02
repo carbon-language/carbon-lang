@@ -77,6 +77,8 @@ public:
     return messages_.Say(std::forward<A>(args)...);
   }
 
+  const Scope &FindScope(const parser::CharBlock &) const;
+
 private:
   const common::IntrinsicTypeDefaultKinds &defaultKinds_;
   std::vector<std::string> searchDirectories_;
@@ -99,7 +101,9 @@ public:
 
   SemanticsContext &context() const { return context_; }
   bool Perform();
-  const Scope &FindScope(const parser::CharBlock &) const;
+  const Scope &FindScope(const parser::CharBlock &where) const {
+    return context_.FindScope(where);
+  }
   bool AnyFatalError() const { return context_.AnyFatalError(); }
   void EmitMessages(std::ostream &) const;
   void DumpSymbols(std::ostream &);

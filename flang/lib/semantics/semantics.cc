@@ -57,6 +57,15 @@ bool SemanticsContext::AnyFatalError() const {
       (warningsAreErrors_ || messages_.AnyFatalError());
 }
 
+const Scope &SemanticsContext::FindScope(
+    const parser::CharBlock &source) const {
+  if (const auto *scope{globalScope_.FindScope(source)}) {
+    return *scope;
+  } else {
+    common::die("invalid source location");
+  }
+}
+
 bool Semantics::Perform() {
   ValidateLabels(context_.messages(), program_);
   if (AnyFatalError()) {
@@ -80,14 +89,6 @@ bool Semantics::Perform() {
   ModFileWriter writer{context_};
   writer.WriteAll();
   return !AnyFatalError();
-}
-
-const Scope &Semantics::FindScope(const parser::CharBlock &source) const {
-  if (const auto *scope{context_.globalScope().FindScope(source)}) {
-    return *scope;
-  } else {
-    common::die("invalid source location");
-  }
 }
 
 void Semantics::EmitMessages(std::ostream &os) const {

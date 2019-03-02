@@ -25,6 +25,7 @@ add_library(FortranSemantics
   scope.cc
   semantics.cc
   symbol.cc
+  tools.cc
   type.cc
   unparse-with-symbols.cc
 )
