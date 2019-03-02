@@ -1164,9 +1164,9 @@ define i8 @PR14613_umax(i8 %x) {
 
 define i32 @add_smin(i32 %x) {
 ; CHECK-LABEL: @add_smin(
-; CHECK-NEXT:    [[A:%.*]] = add nsw i32 [[X:%.*]], 15
-; CHECK-NEXT:    [[C:%.*]] = icmp slt i32 [[A]], 42
-; CHECK-NEXT:    [[R:%.*]] = select i1 [[C]], i32 [[A]], i32 42
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp slt i32 [[X:%.*]], 27
+; CHECK-NEXT:    [[TMP2:%.*]] = select i1 [[TMP1]], i32 [[X]], i32 27
+; CHECK-NEXT:    [[R:%.*]] = add nsw i32 [[TMP2]], 15
 ; CHECK-NEXT:    ret i32 [[R]]
 ;
   %a = add nsw i32 %x, 15
@@ -1177,9 +1177,9 @@ define i32 @add_smin(i32 %x) {
 
 define i32 @add_smin_constant_limit(i32 %x) {
 ; CHECK-LABEL: @add_smin_constant_limit(
-; CHECK-NEXT:    [[A:%.*]] = add nsw i32 [[X:%.*]], -3
-; CHECK-NEXT:    [[C:%.*]] = icmp slt i32 [[A]], 2147483643
-; CHECK-NEXT:    [[R:%.*]] = select i1 [[C]], i32 [[A]], i32 2147483643
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp slt i32 [[X:%.*]], 2147483646
+; CHECK-NEXT:    [[TMP2:%.*]] = select i1 [[TMP1]], i32 [[X]], i32 2147483646
+; CHECK-NEXT:    [[R:%.*]] = add nsw i32 [[TMP2]], -3
 ; CHECK-NEXT:    ret i32 [[R]]
 ;
   %a = add nsw i32 %x, -3
@@ -1193,9 +1193,7 @@ define i32 @add_smin_constant_limit(i32 %x) {
 
 define i32 @add_smin_simplify(i32 %x) {
 ; CHECK-LABEL: @add_smin_simplify(
-; CHECK-NEXT:    [[A:%.*]] = add nsw i32 [[X:%.*]], -3
-; CHECK-NEXT:    [[C:%.*]] = icmp slt i32 [[A]], 2147483644
-; CHECK-NEXT:    [[R:%.*]] = select i1 [[C]], i32 [[A]], i32 2147483644
+; CHECK-NEXT:    [[R:%.*]] = add nsw i32 [[X:%.*]], -3
 ; CHECK-NEXT:    ret i32 [[R]]
 ;
   %a = add nsw i32 %x, -3
@@ -1267,9 +1265,9 @@ define i32 @add_smin_extra_use(i32 %x, i32* %p) {
 
 define <2 x i16> @add_smin_vec(<2 x i16> %x) {
 ; CHECK-LABEL: @add_smin_vec(
-; CHECK-NEXT:    [[A:%.*]] = add nsw <2 x i16> [[X:%.*]], <i16 15, i16 15>
-; CHECK-NEXT:    [[C:%.*]] = icmp slt <2 x i16> [[A]], <i16 240, i16 240>
-; CHECK-NEXT:    [[R:%.*]] = select <2 x i1> [[C]], <2 x i16> [[A]], <2 x i16> <i16 240, i16 240>
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp slt <2 x i16> [[X:%.*]], <i16 225, i16 225>
+; CHECK-NEXT:    [[TMP2:%.*]] = select <2 x i1> [[TMP1]], <2 x i16> [[X]], <2 x i16> <i16 225, i16 225>
+; CHECK-NEXT:    [[R:%.*]] = add nsw <2 x i16> [[TMP2]], <i16 15, i16 15>
 ; CHECK-NEXT:    ret <2 x i16> [[R]]
 ;
   %a = add nsw <2 x i16> %x, <i16 15, i16 15>
@@ -1280,9 +1278,9 @@ define <2 x i16> @add_smin_vec(<2 x i16> %x) {
 
 define i37 @add_smax(i37 %x) {
 ; CHECK-LABEL: @add_smax(
-; CHECK-NEXT:    [[A:%.*]] = add nsw i37 [[X:%.*]], 5
-; CHECK-NEXT:    [[C:%.*]] = icmp sgt i37 [[A]], 42
-; CHECK-NEXT:    [[R:%.*]] = select i1 [[C]], i37 [[A]], i37 42
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt i37 [[X:%.*]], 37
+; CHECK-NEXT:    [[TMP2:%.*]] = select i1 [[TMP1]], i37 [[X]], i37 37
+; CHECK-NEXT:    [[R:%.*]] = add nuw nsw i37 [[TMP2]], 5
 ; CHECK-NEXT:    ret i37 [[R]]
 ;
   %a = add nsw i37 %x, 5
@@ -1293,9 +1291,9 @@ define i37 @add_smax(i37 %x) {
 
 define i8 @add_smax_constant_limit(i8 %x) {
 ; CHECK-LABEL: @add_smax_constant_limit(
-; CHECK-NEXT:    [[A:%.*]] = add nsw i8 [[X:%.*]], 125
-; CHECK-NEXT:    [[C:%.*]] = icmp sgt i8 [[A]], -2
-; CHECK-NEXT:    [[R:%.*]] = select i1 [[C]], i8 [[A]], i8 -2
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt i8 [[X:%.*]], -127
+; CHECK-NEXT:    [[TMP2:%.*]] = select i1 [[TMP1]], i8 [[X]], i8 -127
+; CHECK-NEXT:    [[R:%.*]] = add nsw i8 [[TMP2]], 125
 ; CHECK-NEXT:    ret i8 [[R]]
 ;
   %a = add nsw i8 %x, 125
@@ -1309,9 +1307,7 @@ define i8 @add_smax_constant_limit(i8 %x) {
 
 define i8 @add_smax_simplify(i8 %x) {
 ; CHECK-LABEL: @add_smax_simplify(
-; CHECK-NEXT:    [[A:%.*]] = add nsw i8 [[X:%.*]], 126
-; CHECK-NEXT:    [[C:%.*]] = icmp sgt i8 [[A]], -2
-; CHECK-NEXT:    [[R:%.*]] = select i1 [[C]], i8 [[A]], i8 -2
+; CHECK-NEXT:    [[R:%.*]] = add nsw i8 [[X:%.*]], 126
 ; CHECK-NEXT:    ret i8 [[R]]
 ;
   %a = add nsw i8 %x, 126
@@ -1383,9 +1379,9 @@ define i32 @add_smax_extra_use(i32 %x, i32* %p) {
 
 define <2 x i33> @add_smax_vec(<2 x i33> %x) {
 ; CHECK-LABEL: @add_smax_vec(
-; CHECK-NEXT:    [[A:%.*]] = add nsw <2 x i33> [[X:%.*]], <i33 5, i33 5>
-; CHECK-NEXT:    [[C:%.*]] = icmp sgt <2 x i33> [[A]], <i33 240, i33 240>
-; CHECK-NEXT:    [[R:%.*]] = select <2 x i1> [[C]], <2 x i33> [[A]], <2 x i33> <i33 240, i33 240>
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt <2 x i33> [[X:%.*]], <i33 235, i33 235>
+; CHECK-NEXT:    [[TMP2:%.*]] = select <2 x i1> [[TMP1]], <2 x i33> [[X]], <2 x i33> <i33 235, i33 235>
+; CHECK-NEXT:    [[R:%.*]] = add nuw nsw <2 x i33> [[TMP2]], <i33 5, i33 5>
 ; CHECK-NEXT:    ret <2 x i33> [[R]]
 ;
   %a = add nsw <2 x i33> %x, <i33 5, i33 5>
@@ -1396,12 +1392,10 @@ define <2 x i33> @add_smax_vec(<2 x i33> %x) {
 
 define i8 @PR14613_smin(i8 %x) {
 ; CHECK-LABEL: @PR14613_smin(
-; CHECK-NEXT:    [[U4:%.*]] = sext i8 [[X:%.*]] to i32
-; CHECK-NEXT:    [[U5:%.*]] = add nuw nsw i32 [[U4]], 15
-; CHECK-NEXT:    [[U6:%.*]] = icmp slt i32 [[U5]], 55
-; CHECK-NEXT:    [[U7:%.*]] = select i1 [[U6]], i32 [[U5]], i32 55
-; CHECK-NEXT:    [[R:%.*]] = trunc i32 [[U7]] to i8
-; CHECK-NEXT:    ret i8 [[R]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp slt i8 [[X:%.*]], 40
+; CHECK-NEXT:    [[TMP2:%.*]] = select i1 [[TMP1]], i8 [[X]], i8 40
+; CHECK-NEXT:    [[U7:%.*]] = add i8 [[TMP2]], 15
+; CHECK-NEXT:    ret i8 [[U7]]
 ;
   %u4 = sext i8 %x to i32
   %u5 = add nuw nsw i32 %u4, 15
@@ -1413,12 +1407,10 @@ define i8 @PR14613_smin(i8 %x) {
 
 define i8 @PR14613_smax(i8 %x) {
 ; CHECK-LABEL: @PR14613_smax(
-; CHECK-NEXT:    [[U4:%.*]] = sext i8 [[X:%.*]] to i32
-; CHECK-NEXT:    [[U5:%.*]] = add nuw nsw i32 [[U4]], 15
-; CHECK-NEXT:    [[U6:%.*]] = icmp sgt i32 [[U5]], 55
-; CHECK-NEXT:    [[U7:%.*]] = select i1 [[U6]], i32 [[U5]], i32 55
-; CHECK-NEXT:    [[R:%.*]] = trunc i32 [[U7]] to i8
-; CHECK-NEXT:    ret i8 [[R]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt i8 [[X:%.*]], 40
+; CHECK-NEXT:    [[TMP2:%.*]] = select i1 [[TMP1]], i8 [[X]], i8 40
+; CHECK-NEXT:    [[U7:%.*]] = add nuw i8 [[TMP2]], 15
+; CHECK-NEXT:    ret i8 [[U7]]
 ;
   %u4 = sext i8 %x to i32
   %u5 = add nuw nsw i32 %u4, 15
