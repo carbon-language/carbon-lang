@@ -212,14 +212,15 @@ parseV5DirFileTables(const DWARFDataExtractor &DebugLineData,
     if (*OffsetPtr >= EndPrologueOffset)
       return false;
     for (auto Descriptor : DirDescriptors) {
+      DWARFFormValue Value(Descriptor.Form);
       switch (Descriptor.Type) {
       case DW_LNCT_path:
-        IncludeDirectories.push_back(DWARFFormValue::createFromData(
-            Descriptor.Form, FormParams, *U, DebugLineData, OffsetPtr, &Ctx));
+        if (!Value.extractValue(DebugLineData, OffsetPtr, FormParams, &Ctx, U))
+          return false;
+        IncludeDirectories.push_back(Value);
         break;
       default:
-        if (!DWARFFormValue::skipValue(Descriptor.Form, DebugLineData,
-                                       OffsetPtr, FormParams))
+        if (!Value.skipValue(DebugLineData, OffsetPtr, FormParams))
           return false;
       }
     }
@@ -239,8 +240,9 @@ parseV5DirFileTables(const DWARFDataExtractor &DebugLineData,
       return false;
     DWARFDebugLine::FileNameEntry FileEntry;
     for (auto Descriptor : FileDescriptors) {
-      DWARFFormValue Value = DWARFFormValue::createFromData(
-          Descriptor.Form, FormParams, *U, DebugLineData, OffsetPtr, &Ctx);
+      DWARFFormValue Value(Descriptor.Form);
+      if (!Value.extractValue(DebugLineData, OffsetPtr, FormParams, &Ctx, U))
+        return false;
       switch (Descriptor.Type) {
       case DW_LNCT_path:
         FileEntry.Name = Value;

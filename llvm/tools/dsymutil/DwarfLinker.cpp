@@ -584,7 +584,7 @@ unsigned DwarfLinker::shouldKeepVariableDIE(RelocationManager &RelocMgr,
     MyInfo.InDebugMap = true;
     return Flags | TF_Keep;
   }
-
+  
   Optional<uint32_t> LocationIdx =
       Abbrev->findAttributeIndex(dwarf::DW_AT_location);
   if (!LocationIdx)
@@ -754,9 +754,7 @@ void DwarfLinker::keepDIEAndDependencies(
       continue;
     }
 
-    Val = DWARFFormValue::createFromData(AttrSpec.Form, Unit.getFormParams(),
-                                         Unit, Unit.getDebugInfoExtractor(),
-                                         &Offset);
+    Val.extractValue(Data, &Offset, Unit.getFormParams(), &Unit);
     CompileUnit *ReferencedCU;
     if (auto RefDie = resolveDIEReference(*this, DMO, Units, Val, Unit, Die,
                                           ReferencedCU)) {
@@ -1554,9 +1552,9 @@ DIE *DwarfLinker::DIECloner::cloneDIE(
       continue;
     }
 
+    DWARFFormValue Val(AttrSpec.Form);
     uint32_t AttrSize = Offset;
-    DWARFFormValue Val = DWARFFormValue::createFromData(
-        AttrSpec.Form, U.getFormParams(), U, Data, &Offset);
+    Val.extractValue(Data, &Offset, U.getFormParams(), &U);
     AttrSize = Offset - AttrSize;
 
     OutOffset += cloneAttribute(*Die, InputDIE, DMO, Unit, StringPool, Val,

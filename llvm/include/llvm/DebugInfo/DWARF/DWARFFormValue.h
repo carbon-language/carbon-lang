@@ -61,10 +61,6 @@ private:
 
   DWARFFormValue(dwarf::Form F, ValueType V) : Form(F), Value(V) {}
 
-  bool extractValue(const DWARFDataExtractor &Data, uint32_t *OffsetPtr,
-                    dwarf::FormParams FormParams, const DWARFUnit *Unit,
-                    const DWARFContext *Ctx);
-
 public:
   DWARFFormValue(dwarf::Form F = dwarf::Form(0)) : Form(F) {}
 
@@ -73,13 +69,8 @@ public:
   static DWARFFormValue createFromPValue(dwarf::Form F, const char *V);
   static DWARFFormValue createFromBlockValue(dwarf::Form F,
                                              ArrayRef<uint8_t> D);
-
-  /// Creates a from value from the given data. The DWARF context form the unit
-  /// is used, unless one is provided explicitly.
-  static DWARFFormValue
-  createFromData(dwarf::Form F, dwarf::FormParams FormParams,
-                 const DWARFUnit &U, const DWARFDataExtractor &Data,
-                 uint32_t *OffsetPtr, const DWARFContext *Ctx = nullptr);
+  static DWARFFormValue createFromUnit(dwarf::Form F, const DWARFUnit *Unit,
+                                       uint32_t *OffsetPtr);
 
   dwarf::Form getForm() const { return Form; }
   uint64_t getRawUValue() const { return Value.uval; }
@@ -92,10 +83,18 @@ public:
   static void dumpAddressSection(const DWARFObject &Obj, raw_ostream &OS,
                                  DIDumpOptions DumpOpts, uint64_t SectionIndex);
 
-  /// Legacy interface for initializing a DWARFFormValue from data.
+  /// Extracts a value in \p Data at offset \p *OffsetPtr. The information
+  /// in \p FormParams is needed to interpret some forms. The optional
+  /// \p Context and \p Unit allows extracting information if the form refers
+  /// to other sections (e.g., .debug_str).
   bool extractValue(const DWARFDataExtractor &Data, uint32_t *OffsetPtr,
-                    dwarf::FormParams FormParams) {
-    return extractValue(Data, OffsetPtr, FormParams, nullptr, nullptr);
+                    dwarf::FormParams FormParams,
+                    const DWARFContext *Context = nullptr,
+                    const DWARFUnit *Unit = nullptr);
+
+  bool extractValue(const DWARFDataExtractor &Data, uint32_t *OffsetPtr,
+                    dwarf::FormParams FormParams, const DWARFUnit *U) {
+    return extractValue(Data, OffsetPtr, FormParams, nullptr, U);
   }
 
   bool isInlinedCStr() const {
@@ -114,6 +113,20 @@ public:
   Optional<ArrayRef<uint8_t>> getAsBlock() const;
   Optional<uint64_t> getAsCStringOffset() const;
   Optional<uint64_t> getAsReferenceUVal() const;
+
+  /// Skip a form's value in \p DebugInfoData at the offset specified by
+  /// \p OffsetPtr.
+  ///
+  /// Skips the bytes for the current form and updates the offset.
+  ///
+  /// \param DebugInfoData The data where we want to skip the value.
+  /// \param OffsetPtr A reference to the offset that will be updated.
+  /// \param Params DWARF parameters to help interpret forms.
+  /// \returns true on success, false if the form was not skipped.
+  bool skipValue(DataExtractor DebugInfoData, uint32_t *OffsetPtr,
+                 const dwarf::FormParams Params) const {
+    return DWARFFormValue::skipValue(Form, DebugInfoData, OffsetPtr, Params);
+  }
 
   /// Skip a form's value in \p DebugInfoData at the offset specified by
   /// \p OffsetPtr.

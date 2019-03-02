@@ -166,8 +166,10 @@ Optional<DWARFFormValue> DWARFAbbreviationDeclaration::getAttributeValue(
       if (Spec.isImplicitConst())
         return DWARFFormValue::createFromSValue(Spec.Form,
                                                 Spec.getImplicitConstValue());
-      return DWARFFormValue::createFromData(Spec.Form, U.getFormParams(), U,
-                                            U.getDebugInfoExtractor(), &Offset);
+
+      DWARFFormValue FormValue(Spec.Form);
+      if (FormValue.extractValue(DebugInfoData, &Offset, U.getFormParams(), &U))
+        return FormValue;
     }
     // March Offset along until we get to the attribute we want.
     if (auto FixedSize = Spec.getByteSize(U))
