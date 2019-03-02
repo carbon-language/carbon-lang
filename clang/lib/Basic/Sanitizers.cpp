@@ -18,7 +18,7 @@ using namespace clang;
 
 // Once LLVM switches to C++17, the constexpr variables can be inline and we
 // won't need this.
-#define SANITIZER(NAME, ID) const SanitizerMask SanitizerKind::ID;
+#define SANITIZER(NAME, ID) constexpr SanitizerMask SanitizerKind::ID;
 #define SANITIZER_GROUP(NAME, ID, ALIAS)                                       \
   constexpr SanitizerMask SanitizerKind::ID;                                   \
   constexpr SanitizerMask SanitizerKind::ID##Group;
