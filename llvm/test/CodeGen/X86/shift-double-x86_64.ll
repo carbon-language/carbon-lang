@@ -114,3 +114,26 @@ define i64 @test7(i64 %hi, i64 %lo, i64 %bits) nounwind {
   %sh = or i64 %sh_lo, %sh_hi
   ret i64 %sh
 }
+
+define i64 @test8(i64 %hi, i64 %lo, i64 %bits) nounwind {
+; CHECK-LABEL: test8:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    movq %rdi, %rax
+; CHECK-NEXT:    movl %edx, %ecx
+; CHECK-NEXT:    andb $63, %cl
+; CHECK-NEXT:    negb %cl
+; CHECK-NEXT:    shrq %cl, %rsi
+; CHECK-NEXT:    movl %edx, %ecx
+; CHECK-NEXT:    shlq %cl, %rax
+; CHECK-NEXT:    orq %rsi, %rax
+; CHECK-NEXT:    retq
+  %tbits = trunc i64 %bits to i8
+  %tand = and i8 %tbits, 63
+  %tand64 = sub i8 64, %tand
+  %and = zext i8 %tand to i64
+  %and64 = zext i8 %tand64 to i64
+  %sh_lo = lshr i64 %lo, %and64
+  %sh_hi = shl i64 %hi, %and
+  %sh = or i64 %sh_lo, %sh_hi
+  ret i64 %sh
+}
