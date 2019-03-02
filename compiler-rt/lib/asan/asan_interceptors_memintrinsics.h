@@ -78,57 +78,46 @@ struct AsanInterceptorContext {
 // memcpy is called during __asan_init() from the internals of printf(...).
 // We do not treat memcpy with to==from as a bug.
 // See http://llvm.org/bugs/show_bug.cgi?id=11763.
-#define ASAN_MEMCPY_IMPL(ctx, to, from, size)                 \
-  do {                                                        \
-    if (UNLIKELY(!asan_inited)) {                             \
-      internal_memcpy(to, from, size);                        \
-      break;                                                  \
-    }                                                         \
-    if (asan_init_is_running) {                               \
-      REAL(memcpy)(to, from, size);                           \
-      break;                                                  \
-    }                                                         \
-    ENSURE_ASAN_INITED();                                     \
-    if (flags()->replace_intrin) {                            \
-      if (to != from) {                                       \
-        CHECK_RANGES_OVERLAP("memcpy", to, size, from, size); \
-      }                                                       \
-      ASAN_READ_RANGE(ctx, from, size);                       \
-      ASAN_WRITE_RANGE(ctx, to, size);                        \
-    }                                                         \
-    REAL(memcpy)(to, from, size);                             \
+#define ASAN_MEMCPY_IMPL(ctx, to, from, size)                           \
+  do {                                                                  \
+    if (UNLIKELY(!asan_inited)) return internal_memcpy(to, from, size); \
+    if (asan_init_is_running) {                                         \
+      return REAL(memcpy)(to, from, size);                              \
+    }                                                                   \
+    ENSURE_ASAN_INITED();                                               \
+    if (flags()->replace_intrin) {                                      \
+      if (to != from) {                                                 \
+        CHECK_RANGES_OVERLAP("memcpy", to, size, from, size);           \
+      }                                                                 \
+      ASAN_READ_RANGE(ctx, from, size);                                 \
+      ASAN_WRITE_RANGE(ctx, to, size);                                  \
+    }                                                                   \
+    return REAL(memcpy)(to, from, size);                                \
   } while (0)
 
 // memset is called inside Printf.
-#define ASAN_MEMSET_IMPL(ctx, block, c, size) \
-  do {                                        \
-    if (UNLIKELY(!asan_inited)) {             \
-      internal_memset(block, c, size);        \
-      break;                                  \
-    }                                         \
-    if (asan_init_is_running) {               \
-      REAL(memset)(block, c, size);           \
-      break;                                  \
-    }                                         \
-    ENSURE_ASAN_INITED();                     \
-    if (flags()->replace_intrin) {            \
-      ASAN_WRITE_RANGE(ctx, block, size);     \
-    }                                         \
-    REAL(memset)(block, c, size);             \
+#define ASAN_MEMSET_IMPL(ctx, block, c, size)                           \
+  do {                                                                  \
+    if (UNLIKELY(!asan_inited)) return internal_memset(block, c, size); \
+    if (asan_init_is_running) {                                         \
+      return REAL(memset)(block, c, size);                              \
+    }                                                                   \
+    ENSURE_ASAN_INITED();                                               \
+    if (flags()->replace_intrin) {                                      \
+      ASAN_WRITE_RANGE(ctx, block, size);                               \
+    }                                                                   \
+    return REAL(memset)(block, c, size);                                \
   } while (0)
 
-#define ASAN_MEMMOVE_IMPL(ctx, to, from, size) \
-  do {                                         \
-    if (UNLIKELY(!asan_inited)) {              \
-      internal_memmove(to, from, size);        \
-      break;                                   \
-    }                                          \
-    ENSURE_ASAN_INITED();                      \
-    if (flags()->replace_intrin) {             \
-      ASAN_READ_RANGE(ctx, from, size);        \
-      ASAN_WRITE_RANGE(ctx, to, size);         \
-    }                                          \
-    internal_memmove(to, from, size);          \
+#define ASAN_MEMMOVE_IMPL(ctx, to, from, size)                           \
+  do {                                                                   \
+    if (UNLIKELY(!asan_inited)) return internal_memmove(to, from, size); \
+    ENSURE_ASAN_INITED();                                                \
+    if (flags()->replace_intrin) {                                       \
+      ASAN_READ_RANGE(ctx, from, size);                                  \
+      ASAN_WRITE_RANGE(ctx, to, size);                                   \
+    }                                                                    \
+    return internal_memmove(to, from, size);                             \
   } while (0)
 
 #define ASAN_READ_RANGE(ctx, offset, size) \
