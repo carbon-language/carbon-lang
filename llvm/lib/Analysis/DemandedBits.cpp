@@ -339,6 +339,8 @@ void DemandedBits::performAnalysis() {
         Type *T = J->getType();
         if (T->isIntOrIntVectorTy())
           AliveBits[J] = APInt::getAllOnesValue(T->getScalarSizeInBits());
+        else
+          Visited.insert(J);
         Worklist.insert(J);
       }
     }
@@ -354,15 +356,17 @@ void DemandedBits::performAnalysis() {
 
     LLVM_DEBUG(dbgs() << "DemandedBits: Visiting: " << *UserI);
     APInt AOut;
+    bool InputIsKnownDead = false;
     if (UserI->getType()->isIntOrIntVectorTy()) {
       AOut = AliveBits[UserI];
       LLVM_DEBUG(dbgs() << " Alive Out: 0x"
                         << Twine::utohexstr(AOut.getLimitedValue()));
+
+      // If all bits of the output are dead, then all bits of the input
+      // are also dead.
+      InputIsKnownDead = !AOut && !isAlwaysLive(UserI);
     }
     LLVM_DEBUG(dbgs() << "\n");
-
-    if (!UserI->getType()->isIntOrIntVectorTy())
-      Visited.insert(UserI);
 
     KnownBits Known, Known2;
     bool KnownBitsComputed = false;
@@ -380,10 +384,7 @@ void DemandedBits::performAnalysis() {
       if (T->isIntOrIntVectorTy()) {
         unsigned BitWidth = T->getScalarSizeInBits();
         APInt AB = APInt::getAllOnesValue(BitWidth);
-        if (UserI->getType()->isIntOrIntVectorTy() && !AOut &&
-            !isAlwaysLive(UserI)) {
-          // If all bits of the output are dead, then all bits of the input
-          // are also dead.
+        if (InputIsKnownDead) {
           AB = APInt(BitWidth, 0);
         } else {
           // Bits of each operand that are used to compute alive bits of the
@@ -408,7 +409,7 @@ void DemandedBits::performAnalysis() {
             Worklist.insert(I);
           }
         }
-      } else if (I && !Visited.count(I)) {
+      } else if (I && Visited.insert(I).second) {
         Worklist.insert(I);
       }
     }
