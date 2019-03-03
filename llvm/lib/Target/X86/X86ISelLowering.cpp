@@ -6884,6 +6884,29 @@ static SDValue getShuffleScalarElt(SDNode *N, unsigned Index, SelectionDAG &DAG,
                                Depth+1);
   }
 
+  // Recurse into insert_subvector base/sub vector to find scalars.
+  if (Opcode == ISD::INSERT_SUBVECTOR &&
+      isa<ConstantSDNode>(N->getOperand(2))) {
+    SDValue Vec = N->getOperand(0);
+    SDValue Sub = N->getOperand(1);
+    EVT SubVT = Sub.getValueType();
+    unsigned NumSubElts = SubVT.getVectorNumElements();
+    uint64_t SubIdx = N->getConstantOperandVal(2);
+
+    if (SubIdx <= Index && Index < (SubIdx + NumSubElts))
+      return getShuffleScalarElt(Sub.getNode(), Index - SubIdx, DAG, Depth + 1);
+    return getShuffleScalarElt(Vec.getNode(), Index, DAG, Depth + 1);
+  }
+
+  // Recurse into extract_subvector src vector to find scalars.
+  if (Opcode == ISD::EXTRACT_SUBVECTOR &&
+      isa<ConstantSDNode>(N->getOperand(1))) {
+    SDValue Src = N->getOperand(0);
+    EVT SrcVT = Src.getValueType();
+    uint64_t SrcIdx = N->getConstantOperandVal(1);
+    return getShuffleScalarElt(Src.getNode(), Index + SrcIdx, DAG, Depth + 1);
+  }
+
   // Actual nodes that may contain scalar elements
   if (Opcode == ISD::BITCAST) {
     V = V.getOperand(0);
