@@ -402,14 +402,9 @@ void DemandedBits::performAnalysis() {
           // If we've added to the set of alive bits (or the operand has not
           // been previously visited), then re-queue the operand to be visited
           // again.
-          APInt ABPrev(BitWidth, 0);
-          auto ABI = AliveBits.find(I);
-          if (ABI != AliveBits.end())
-            ABPrev = ABI->second;
-
-          APInt ABNew = AB | ABPrev;
-          if (ABNew != ABPrev || ABI == AliveBits.end()) {
-            AliveBits[I] = std::move(ABNew);
+          auto Res = AliveBits.try_emplace(I);
+          if (Res.second || (AB |= Res.first->second) != Res.first->second) {
+            Res.first->second = std::move(AB);
             Worklist.insert(I);
           }
         }
