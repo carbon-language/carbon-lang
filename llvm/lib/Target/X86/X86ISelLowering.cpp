@@ -6902,7 +6902,6 @@ static SDValue getShuffleScalarElt(SDNode *N, unsigned Index, SelectionDAG &DAG,
   if (Opcode == ISD::EXTRACT_SUBVECTOR &&
       isa<ConstantSDNode>(N->getOperand(1))) {
     SDValue Src = N->getOperand(0);
-    EVT SrcVT = Src.getValueType();
     uint64_t SrcIdx = N->getConstantOperandVal(1);
     return getShuffleScalarElt(Src.getNode(), Index + SrcIdx, DAG, Depth + 1);
   }
