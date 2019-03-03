@@ -292,7 +292,6 @@ define i32 @assumption_conflicts_with_known_bits(i32 %a, i32 %b) {
   ret i32 %and1
 }
 
-; FIXME:
 ; PR37726 - https://bugs.llvm.org/show_bug.cgi?id=37726
 ; There's a loophole in eliminating a redundant assumption when
 ; we have conflicting assumptions. Verify that debuginfo doesn't
