@@ -7466,6 +7466,26 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
   return SDValue();
 }
 
+// Combine a vector ops (shuffles etc.) that is equal to build_vector load1,
+// load2, load3, load4, <0, 1, 2, 3> into a vector load if the load addresses
+// are consecutive, non-overlapping, and in the right order.
+static SDValue combineToConsecutiveLoads(EVT VT, SDNode *N, const SDLoc &DL,
+                                         SelectionDAG &DAG,
+                                         const X86Subtarget &Subtarget,
+                                         bool isAfterLegalize) {
+  SmallVector<SDValue, 64> Elts;
+  for (unsigned i = 0, e = VT.getVectorNumElements(); i != e; ++i) {
+    if (SDValue Elt = getShuffleScalarElt(N, i, DAG, 0)) {
+      Elts.push_back(Elt);
+      continue;
+    }
+    return SDValue();
+  }
+  assert(Elts.size() == VT.getVectorNumElements());
+  return EltsFromConsecutiveLoads(VT, Elts, DL, DAG, Subtarget,
+                                  isAfterLegalize);
+}
+
 static Constant *getConstantVector(MVT VT, const APInt &SplatValue,
                                    unsigned SplatBitSize, LLVMContext &C) {
   unsigned ScalarSize = VT.getScalarSizeInBits();
@@ -32762,23 +32782,9 @@ static SDValue combineShuffle(SDNode *N, SelectionDAG &DAG,
     }
   }
 
-  // Combine a vector_shuffle that is equal to build_vector load1, load2, load3,
-  // load4, <0, 1, 2, 3> into a 128-bit load if the load addresses are
-  // consecutive, non-overlapping, and in the right order.
-  SmallVector<SDValue, 16> Elts;
-  for (unsigned i = 0, e = VT.getVectorNumElements(); i != e; ++i) {
-    if (SDValue Elt = getShuffleScalarElt(N, i, DAG, 0)) {
-      Elts.push_back(Elt);
-      continue;
-    }
-    Elts.clear();
-    break;
-  }
-
-  if (Elts.size() == VT.getVectorNumElements())
-    if (SDValue LD =
-            EltsFromConsecutiveLoads(VT, Elts, dl, DAG, Subtarget, true))
-      return LD;
+  // Attempt to combine into a vector load/broadcast.
+  if (SDValue LD = combineToConsecutiveLoads(VT, N, dl, DAG, Subtarget, true))
+    return LD;
 
   // For AVX2, we sometimes want to combine
   // (vector_shuffle <mask> (concat_vectors t1, undef)
