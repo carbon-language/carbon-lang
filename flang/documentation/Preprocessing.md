@@ -28,7 +28,7 @@ Behavior common to (nearly) all compilers:
   old-style C comments in directives.
 * After `#define FALSE TRUE`, `.FALSE.` is replaced by `.TRUE.`;
   i.e., tokenization does not hide the names of operators or logical constants.
-* `#define KWM c` allows the use of `KWM` in column as a fixed form comment
+* `#define KWM c` allows the use of `KWM` in column 1 as a fixed form comment
   line indicator.
 * A `#define` directive intermixed with continuation lines can't
   define a macro that's invoked earlier in the same continued statement.
