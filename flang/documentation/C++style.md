@@ -196,8 +196,8 @@ not copyable, reassignable.
 counting, null by default, shallowly copyable, reassignable, and slow.
 * `OwningPointer<>`: A nullable pointer with ownership, better suited
 for use with forward-defined types than `std::unique_ptr<>` is.
-Null by default, not copyable, reassignable.
-Does not have means for allocating data, and inconveniently requires
+Null by default, optionally copyable, reassignable.
+Does not have direct means for allocating data, and inconveniently requires
 the definition of an external destructor.
 * `Indirection<>`: A non-nullable pointer with ownership and
 optional deep copy semantics; reassignable.
@@ -219,7 +219,7 @@ A feature matrix:
 | `&r`                 | no       | n/a          | no     | no           | shallowly         | yes                |
 | `unique_ptr<>`       | yes      | yes          | yes    | yes          | no                | no                 |
 | `shared_ptr<>`       | yes      | yes          | yes    | yes          | shallowly         | no                 |
-| `OwningPointer<>`    | yes      | yes          | yes    | yes          | no                | yes                |
+| `OwningPointer<>`    | yes      | yes          | yes    | yes          | optionally deeply | yes                |
 | `Indirection<>`      | no       | n/a          | yes    | yes          | optionally deeply | no                 |
 | `CountedReference<>` | yes      | yes          | yes    | yes          | shallowly         | no                 |
 

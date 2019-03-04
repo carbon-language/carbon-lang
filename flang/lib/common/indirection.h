@@ -120,7 +120,8 @@ private:
 
 // A variant of Indirection suitable for use with forward-referenced types.
 // These are nullable pointers, not references.  Allocation is not available,
-// and a single externalized destructor must be defined.
+// and a single externalized destructor must be defined.  Copyable if an
+// external copy constructor and operator= are implemented.
 template<typename A> class OwningPointer {
 public:
   using element_type = A;
@@ -129,11 +130,19 @@ public:
   OwningPointer(OwningPointer &&that) : p_{that.release()} {}
   explicit OwningPointer(std::unique_ptr<A> &&that) : p_{that.release()} {}
   explicit OwningPointer(A *&&p) : p_{p} { p = nullptr; }
-  ~OwningPointer();
   OwningPointer &operator=(OwningPointer &&that) {
     reset(that.release());
     return *this;
   }
+
+  // Must be externally defined; see the macro below.
+  ~OwningPointer();
+
+  // Must be externally defined if copying is needed.
+  OwningPointer(const A &);
+  OwningPointer(const OwningPointer &);
+  OwningPointer &operator=(const A &);
+  OwningPointer &operator=(const OwningPointer &);
 
   A &operator*() { return *p_; }
   const A &operator*() const { return *p_; }
@@ -164,5 +173,40 @@ public:
 private:
   A *p_{nullptr};
 };
+
+// Mandatory instantiation and definition -- put somewhere, not in a namespace
+#define DEFINE_OWNING_POINTER_DESTRUCTOR(A) \
+  namespace Fortran::common { \
+  template class OwningPointer<A>; \
+  template<> OwningPointer<A>::~OwningPointer() { \
+    delete p_; \
+    p_ = nullptr; \
+  } \
+  }
+
+// Optional definitions
+#define DEFINE_OWNING_POINTER_COPY_CONSTRUCTORS(A) \
+  namespace Fortran::common { \
+  template<> \
+  OwningPointer<A>::OwningPointer(const A &that) : p_{new A(that)} {} \
+  template<> \
+  OwningPointer<A>::OwningPointer(const OwningPointer<A> &that) \
+    : p_{that.p_ ? new A(*that.p_) : nullptr} {} \
+  }
+#define DEFINE_OWNING_POINTER_COPY_ASSIGNMENTS(A) \
+  namespace Fortran::common { \
+  template<> OwningPointer<A> &OwningPointer<A>::operator=(const A &that) { \
+    delete p_; \
+    p_ = new A(that); \
+    return *this; \
+  } \
+  template<> \
+  OwningPointer<A> &OwningPointer<A>::operator=( \
+      const OwningPointer<A> &that) { \
+    delete p_; \
+    p_ = that.p_ ? new A(*that.p_) : nullptr; \
+    return *this; \
+  } \
+  }
 }
 #endif  // FORTRAN_COMMON_INDIRECTION_H_

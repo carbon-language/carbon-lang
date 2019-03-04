@@ -100,11 +100,7 @@ std::ostream &Procedure::Dump(std::ostream &o) const {
 }
 }
 
-namespace Fortran::common {
-template class OwningPointer<evaluate::characteristics::Procedure>;
-template<>
-OwningPointer<evaluate::characteristics::Procedure>::~OwningPointer() {
-  delete p_;
-  p_ = nullptr;
-}
-}
+// Define OwningPointer special member functions
+DEFINE_OWNING_POINTER_DESTRUCTOR(evaluate::characteristics::Procedure)
+DEFINE_OWNING_POINTER_COPY_CONSTRUCTORS(evaluate::characteristics::Procedure)
+DEFINE_OWNING_POINTER_COPY_ASSIGNMENTS(evaluate::characteristics::Procedure)

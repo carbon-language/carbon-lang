@@ -19,6 +19,7 @@
 #ifndef FORTRAN_EVALUATE_CHARACTERISTICS_H_
 #define FORTRAN_EVALUATE_CHARACTERISTICS_H_
 
+#include "common.h"
 #include "expression.h"
 #include "type.h"
 #include "../common/Fortran.h"
@@ -44,6 +45,7 @@ namespace Fortran::evaluate::characteristics {
 struct DummyDataObject {
   ENUM_CLASS(Attr, AssumedRank, Optional, Allocatable, Asynchronous, Contiguous,
       Value, Volatile, Polymorphic, Pointer, Target)
+  DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(DummyDataObject)
   DynamicType type;
   std::vector<std::optional<Expr<SubscriptInteger>>> shape;
   std::vector<Expr<SubscriptInteger>> coshape;
@@ -56,6 +58,7 @@ struct DummyDataObject {
 // 15.3.2.3
 struct DummyProcedure {
   ENUM_CLASS(Attr, Pointer, Optional)
+  DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(DummyProcedure)
   common::OwningPointer<Procedure> explicitProcedure;
   common::EnumSet<Attr, 32> attrs;
   bool operator==(const DummyProcedure &) const;
@@ -76,6 +79,7 @@ using DummyArgument =
 struct FunctionResult {
   ENUM_CLASS(
       Attr, Polymorphic, Allocatable, Pointer, Contiguous, ProcedurePointer)
+  DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(FunctionResult)
   DynamicType type;
   int rank{0};
   common::EnumSet<Attr, 32> attrs;
@@ -86,6 +90,8 @@ struct FunctionResult {
 // 15.3.1
 struct Procedure {
   ENUM_CLASS(Attr, Pure, Elemental, Bind_C)
+  Procedure() {}
+  DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(Procedure)
   std::optional<FunctionResult> functionResult;  // absent means subroutine
   std::vector<DummyArgument> dummyArguments;
   common::EnumSet<Attr, 32> attrs;
