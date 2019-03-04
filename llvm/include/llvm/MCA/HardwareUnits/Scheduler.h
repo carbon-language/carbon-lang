@@ -225,9 +225,6 @@ public:
   /// resources are not available.
   InstRef select();
 
-  bool arePipelinesFullyUsed() const {
-    return !Resources->getAvailableProcResUnits();
-  }
   bool isReadySetEmpty() const { return ReadySet.empty(); }
   bool isWaitSetEmpty() const { return WaitSet.empty(); }
 
