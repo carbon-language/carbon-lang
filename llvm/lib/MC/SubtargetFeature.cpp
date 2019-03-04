@@ -232,8 +232,8 @@ SubtargetFeatures::getFeatureBits(StringRef CPU,
     // Check for help
     if (Feature == "+help")
       Help(CPUTable, FeatureTable);
-
-    ApplyFeatureFlag(Bits, Feature, FeatureTable);
+    else
+      ApplyFeatureFlag(Bits, Feature, FeatureTable);
   }
 
   return Bits;
