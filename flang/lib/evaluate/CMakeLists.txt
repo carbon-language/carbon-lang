@@ -35,6 +35,7 @@ add_library(FortranEvaluate
 target_link_libraries(FortranEvaluate
   FortranCommon
   FortranParser
+  m
 )
 
 IF(CMAKE_SYSTEM_NAME STREQUAL Linux)
