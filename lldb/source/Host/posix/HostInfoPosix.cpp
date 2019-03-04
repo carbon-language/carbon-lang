@@ -105,7 +105,7 @@ llvm::Optional<std::string> PosixUserIDResolver::DoGetGroupName(id_t gid) {
 
 static llvm::ManagedStatic<PosixUserIDResolver> g_user_id_resolver;
 
-UserIDResolver &HostInfoPosix::GetUserIDResolver() {
+UserIDResolver &HostInfoBase::GetUserIDResolver() {
   return *g_user_id_resolver;
 }
 
