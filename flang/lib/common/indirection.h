@@ -15,11 +15,20 @@
 #ifndef FORTRAN_COMMON_INDIRECTION_H_
 #define FORTRAN_COMMON_INDIRECTION_H_
 
-// Defines a smart pointer class template that's rather like std::unique_ptr<>
-// but further restricted, like a C++ reference, to be non-null when constructed
-// or assigned.  Users need not check whether these pointers are null.
-// Supports copy construction, too.
-// Intended to be as invisible as a reference, wherever possible.
+// Defines several smart pointer class templates that are rather like
+// std::unique_ptr<>.
+// - Indirection<> is, like a C++ reference type, restricted to be non-null
+//   when constructed or assigned.
+// - OwningPointer<> is like a std::unique_ptr<> with an out-of-line destructor.
+//   This makes it suitable for use with forward-declared content types
+//   in a way that bare C pointers allow but std::unique_ptr<> cannot.
+// - ForwardReference<> is a kind of Indirection<> that, like OwningPointer<>,
+//   accommodates the use of forward declarations.
+// Users of Indirection<> and ForwardReference<> need to check whether their
+// pointers are null.  Like a C++ reference, they are meant to be as invisible
+// as possible.
+// All of these can optionally support copy construction
+// and copy assignment.
 
 #include "../common/idioms.h"
 #include <memory>
@@ -61,6 +70,7 @@ public:
   A *operator->() { return p_; }
   const A *operator->() const { return p_; }
 
+  bool operator==(const A &x) const { return *p_ == x; }
   bool operator==(const Indirection &that) const { return *p_ == *that.p_; }
 
   template<typename... ARGS> static Indirection Make(ARGS &&... args) {
@@ -75,6 +85,7 @@ private:
 template<typename A> class Indirection<A, true> {
 public:
   using element_type = A;
+
   Indirection() = delete;
   Indirection(A *&&p) : p_{p} {
     CHECK(p_ && "assigning null pointer to Indirection");
@@ -114,6 +125,7 @@ public:
   A *operator->() { return p_; }
   const A *operator->() const { return p_; }
 
+  bool operator==(const A &x) const { return *p_ == x; }
   bool operator==(const Indirection &that) const { return *p_ == *that.p_; }
 
   template<typename... ARGS> static Indirection Make(ARGS &&... args) {
@@ -133,15 +145,11 @@ public:
   using element_type = A;
 
   OwningPointer() {}
-  OwningPointer(OwningPointer &&that) : p_{that.release()} {}
+  OwningPointer(OwningPointer &&that) : p_{that.p_} { that.p_ = nullptr; }
   explicit OwningPointer(std::unique_ptr<A> &&that) : p_{that.release()} {}
   explicit OwningPointer(A *&&p) : p_{p} { p = nullptr; }
-  OwningPointer &operator=(OwningPointer &&that) {
-    reset(that.release());
-    return *this;
-  }
 
-  // Must be externally defined; see the macro below.
+  // Must be externally defined; see DEFINE_OWNING_DESTRUCTOR below
   ~OwningPointer();
 
   // Must be externally defined if copying is needed.
@@ -150,6 +158,16 @@ public:
   OwningPointer &operator=(const A &);
   OwningPointer &operator=(const OwningPointer &);
 
+  OwningPointer &operator=(OwningPointer &&that) {
+    auto tmp{p_};
+    p_ = that.p_;
+    that.p_ = tmp;
+    return *this;
+  }
+  OwningPointer &operator=(A *&&p) {
+    return *this = OwningPointer(std::move(p));
+  }
+
   A &operator*() { return *p_; }
   const A &operator*() const { return *p_; }
   A *operator->() { return p_; }
@@ -157,20 +175,7 @@ public:
 
   A *get() const { return p_; }
 
-  A *release() {
-    A *result{p_};
-    p_ = nullptr;
-    return result;
-  }
-
-  void reset(A *p) {
-    this->~OwningPointer();
-    p_ = p;
-  }
-
-  bool operator==(const A &x) const {
-    return p_ != nullptr && (p_ == &x || *p_ == x);
-  }
+  bool operator==(const A &x) const { return p_ != nullptr && *p_ == x; }
   bool operator==(const OwningPointer &that) const {
     return (p_ == nullptr && that.p_ == nullptr) ||
         (that.p_ != nullptr && *this == *that.p_);
@@ -180,46 +185,101 @@ private:
   A *p_{nullptr};
 };
 
+// ForwardReference can be viewed as either a non-nullable variant of
+// OwningPointer or as a variant of Indirection that accommodates use with
+// a forward-declared content type.
+template<typename A> class ForwardReference {
+public:
+  using element_type = A;
+
+  explicit ForwardReference(std::unique_ptr<A> &&that) : p_{that.release()} {}
+  explicit ForwardReference(A *&&p) : p_{p} {
+    CHECK(p_ && "assigning null pointer to ForwardReference");
+    p = nullptr;
+  }
+  ForwardReference(ForwardReference<A> &&that) : p_{that.p_} {
+    CHECK(p_ &&
+        "move construction of ForwardReference from null ForwardReference");
+    that.p_ = nullptr;
+  }
+
+  // Must be externally defined; see DEFINE_OWNING_DESTRUCTOR below
+  ~ForwardReference();
+
+  // Must be externally defined if copying is needed.
+  ForwardReference(const A &);
+  ForwardReference(const ForwardReference &);
+  ForwardReference &operator=(const A &);
+  ForwardReference &operator=(const ForwardReference &);
+
+  ForwardReference &operator=(ForwardReference &&that) {
+    CHECK(that.p_ &&
+        "move assignment of null ForwardReference to ForwardReference");
+    auto tmp{p_};
+    p_ = that.p_;
+    that.p_ = tmp;
+    return *this;
+  }
+  ForwardReference &operator=(A *&&p) {
+    return *this = ForwardReference(std::move(p));
+  }
+
+  A &operator*() { return *p_; }
+  const A &operator*() const { return *p_; }
+  A *operator->() { return p_; }
+  const A *operator->() const { return p_; }
+
+  A &value() { return *p_; }
+  const A &value() const { return *p_; }
+
+  bool operator==(const A &x) const { return *p_ == x; }
+  bool operator==(const ForwardReference &that) const {
+    return *p_ == *that.p_;
+  }
+
+private:
+  A *p_{nullptr};
+};
+}
+
 // Mandatory instantiation and definition -- put somewhere, not in a namespace
-#define DEFINE_OWNING_POINTER_DESTRUCTOR(A) \
+// CLASS here is OwningPointer or ForwardReference.
+#define DEFINE_OWNING_DESTRUCTOR(CLASS, A) \
   namespace Fortran::common { \
-  template class OwningPointer<A>; \
-  template<> OwningPointer<A>::~OwningPointer() { \
+  template class CLASS<A>; \
+  template<> CLASS<A>::~CLASS() { \
     delete p_; \
     p_ = nullptr; \
   } \
   }
 
-// Optional definitions
-#define DEFINE_OWNING_POINTER_COPY_CONSTRUCTORS(A) \
+// Optional definitions for OwningPointer and ForwardReference
+#define DEFINE_OWNING_COPY_CONSTRUCTORS(CLASS, A) \
   namespace Fortran::common { \
+  template<> CLASS<A>::CLASS(const A &that) : p_{new A(that)} {} \
   template<> \
-  OwningPointer<A>::OwningPointer(const A &that) : p_{new A(that)} {} \
-  template<> \
-  OwningPointer<A>::OwningPointer(const OwningPointer<A> &that) \
+  CLASS<A>::CLASS(const CLASS<A> &that) \
     : p_{that.p_ ? new A(*that.p_) : nullptr} {} \
   }
-#define DEFINE_OWNING_POINTER_COPY_ASSIGNMENTS(A) \
+#define DEFINE_OWNING_COPY_ASSIGNMENTS(CLASS, A) \
   namespace Fortran::common { \
-  template<> OwningPointer<A> &OwningPointer<A>::operator=(const A &that) { \
+  template<> CLASS<A> &CLASS<A>::operator=(const A &that) { \
     delete p_; \
     p_ = new A(that); \
     return *this; \
   } \
-  template<> \
-  OwningPointer<A> &OwningPointer<A>::operator=( \
-      const OwningPointer<A> &that) { \
+  template<> CLASS<A> &CLASS<A>::operator=(const CLASS<A> &that) { \
     delete p_; \
     p_ = that.p_ ? new A(*that.p_) : nullptr; \
     return *this; \
   } \
   }
 
-#define DEFINE_OWNING_POINTER_COPY_FUNCTIONS(A) \
-  DEFINE_OWNING_POINTER_COPY_CONSTRUCTORS(A) \
-  DEFINE_OWNING_POINTER_COPY_ASSIGNMENTS(A)
-#define DEFINE_OWNING_POINTER_SPECIAL_FUNCTIONS(A) \
-  DEFINE_OWNING_POINTER_DESTRUCTOR(A) \
-  DEFINE_OWNING_POINTER_COPY_FUNCTIONS(A)
-}
+#define DEFINE_OWNING_COPY_FUNCTIONS(CLASS, A) \
+  DEFINE_OWNING_COPY_CONSTRUCTORS(CLASS, A) \
+  DEFINE_OWNING_COPY_ASSIGNMENTS(CLASS, A)
+#define DEFINE_OWNING_SPECIAL_FUNCTIONS(CLASS, A) \
+  DEFINE_OWNING_DESTRUCTOR(CLASS, A) \
+  DEFINE_OWNING_COPY_FUNCTIONS(CLASS, A)
+
 #endif  // FORTRAN_COMMON_INDIRECTION_H_

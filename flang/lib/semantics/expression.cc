@@ -2032,8 +2032,7 @@ public:
 #if PMKDEBUG
 //        checked->AsFortran(std::cout << "checked expression: ") << '\n';
 #endif
-        expr.typedExpr.reset(
-            new evaluate::GenericExprWrapper{std::move(*checked)});
+        expr.typedExpr = new evaluate::GenericExprWrapper{std::move(*checked)};
       } else {
 #if PMKDEBUG
         std::cout << "TODO: expression analysis failed for this expression: ";

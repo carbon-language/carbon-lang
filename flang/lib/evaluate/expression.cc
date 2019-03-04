@@ -321,4 +321,4 @@ FOR_EACH_INTRINSIC_KIND(template class ArrayConstructor)
 // been embedded in the parse tree.  This destructor appears here, where
 // definitions for all the necessary types are available, to obviate a
 // need to include lib/evaluate/*.h headers in the parser proper.
-DEFINE_OWNING_POINTER_SPECIAL_FUNCTIONS(evaluate::GenericExprWrapper)
+DEFINE_OWNING_SPECIAL_FUNCTIONS(OwningPointer, evaluate::GenericExprWrapper)
