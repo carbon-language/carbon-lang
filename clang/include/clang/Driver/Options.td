@@ -747,6 +747,12 @@ def fprofile_generate : Flag<["-"], "fprofile-generate">,
 def fprofile_generate_EQ : Joined<["-"], "fprofile-generate=">,
     Group<f_Group>, Flags<[DriverOption]>, MetaVarName<"<directory>">,
     HelpText<"Generate instrumented code to collect execution counts into <directory>/default.profraw (overridden by LLVM_PROFILE_FILE env var)">;
+def fcs_profile_generate : Flag<["-"], "fcs-profile-generate">,
+    Group<f_Group>, Flags<[DriverOption]>,
+    HelpText<"Generate instrumented code to collect context sensitive execution counts into default.profraw (overridden by LLVM_PROFILE_FILE env var)">;
+def fcs_profile_generate_EQ : Joined<["-"], "fcs-profile-generate=">,
+    Group<f_Group>, Flags<[DriverOption]>, MetaVarName<"<directory>">,
+    HelpText<"Generate instrumented code to collect context sensitive execution counts into <directory>/default.profraw (overridden by LLVM_PROFILE_FILE env var)">;
 def fprofile_use : Flag<["-"], "fprofile-use">, Group<f_Group>,
     Alias<fprofile_instr_use>;
 def fprofile_use_EQ : Joined<["-"], "fprofile-use=">,
