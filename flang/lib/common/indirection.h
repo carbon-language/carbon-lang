@@ -53,6 +53,9 @@ public:
     that.p_ = tmp;
     return *this;
   }
+
+  A &value() { return *p_; }
+  const A &value() const { return *p_; }
   A &operator*() { return *p_; }
   const A &operator*() const { return *p_; }
   A *operator->() { return p_; }
@@ -103,6 +106,9 @@ public:
     that.p_ = tmp;
     return *this;
   }
+
+  A &value() { return *p_; }
+  const A &value() const { return *p_; }
   A &operator*() { return *p_; }
   const A &operator*() const { return *p_; }
   A *operator->() { return p_; }
@@ -208,7 +214,6 @@ private:
     return *this; \
   } \
   }
-}
 
 #define DEFINE_OWNING_POINTER_COPY_FUNCTIONS(A) \
   DEFINE_OWNING_POINTER_COPY_CONSTRUCTORS(A) \
@@ -216,5 +221,5 @@ private:
 #define DEFINE_OWNING_POINTER_SPECIAL_FUNCTIONS(A) \
   DEFINE_OWNING_POINTER_DESTRUCTOR(A) \
   DEFINE_OWNING_POINTER_COPY_FUNCTIONS(A)
-
+}
 #endif  // FORTRAN_COMMON_INDIRECTION_H_

@@ -199,6 +199,7 @@ for use with forward-defined types than `std::unique_ptr<>` is.
 Null by default, optionally copyable, reassignable.
 Does not have direct means for allocating data, and inconveniently requires
 the definition of an external destructor.
+* `OwningReference<>`: A non-nullable `OwningPointer<>`.
 * `Indirection<>`: A non-nullable pointer with ownership and
 optional deep copy semantics; reassignable.
 Often better than a reference (due to ownership) or `std::unique_ptr<>`
@@ -220,6 +221,7 @@ A feature matrix:
 | `unique_ptr<>`       | yes      | yes          | yes    | yes          | no                | no                 |
 | `shared_ptr<>`       | yes      | yes          | yes    | yes          | shallowly         | no                 |
 | `OwningPointer<>`    | yes      | yes          | yes    | yes          | optionally deeply | yes                |
+| `OwningReference<>`  | no       | yes          | yes    | yes          | optionally deeply | yes                |
 | `Indirection<>`      | no       | n/a          | yes    | yes          | optionally deeply | no                 |
 | `CountedReference<>` | yes      | yes          | yes    | yes          | shallowly         | no                 |
 
