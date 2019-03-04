@@ -416,7 +416,7 @@ static void AddOptimizationPasses(legacy::PassManagerBase &MPM,
   case CSInstrGen:
     Builder.EnablePGOCSInstrGen = true;
     break;
-  case InstrUse:
+  case CSInstrUse:
     Builder.EnablePGOCSInstrUse = true;
     break;
   default:
