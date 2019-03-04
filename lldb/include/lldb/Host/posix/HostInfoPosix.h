@@ -14,6 +14,8 @@
 
 namespace lldb_private {
 
+class UserIDResolver;
+
 class HostInfoPosix : public HostInfoBase {
   friend class HostInfoBase;
 
