@@ -775,6 +775,9 @@ def fprofile_filter_files_EQ : Joined<["-"], "fprofile-filter-files=">,
 def fprofile_exclude_files_EQ : Joined<["-"], "fprofile-exclude-files=">,
     Group<f_Group>, Flags<[CC1Option, CoreOption]>,
     HelpText<"Instrument only functions from files where names don't match all the regexes separated by a semi-colon">;
+def forder_file_instrumentation : Flag<["-"], "forder-file-instrumentation">,
+    Group<f_Group>, Flags<[CC1Option, CoreOption]>,
+    HelpText<"Generate instrumented code to collect order file into default.profraw file (overridden by '=' form of option or LLVM_PROFILE_FILE env var)">;
 
 def faddrsig : Flag<["-"], "faddrsig">, Group<f_Group>, Flags<[CoreOption, CC1Option]>,
   HelpText<"Emit an address-significance table">;
