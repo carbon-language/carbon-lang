@@ -31,15 +31,10 @@
 #include <variant>
 #include <vector>
 
-// Forward declare Procedure so dummy procedures can use it indirectly
 namespace Fortran::evaluate::characteristics {
-struct Procedure;
-}
-namespace Fortran::common {
-extern template class OwningPointer<evaluate::characteristics::Procedure>;
-}
 
-namespace Fortran::evaluate::characteristics {
+// Forward declare Procedure so dummy procedures can use it indirectly
+struct Procedure;
 
 // 15.3.2.2
 struct DummyDataObject {

@@ -101,6 +101,4 @@ std::ostream &Procedure::Dump(std::ostream &o) const {
 }
 
 // Define OwningPointer special member functions
-DEFINE_OWNING_POINTER_DESTRUCTOR(evaluate::characteristics::Procedure)
-DEFINE_OWNING_POINTER_COPY_CONSTRUCTORS(evaluate::characteristics::Procedure)
-DEFINE_OWNING_POINTER_COPY_ASSIGNMENTS(evaluate::characteristics::Procedure)
+DEFINE_OWNING_POINTER_SPECIAL_FUNCTIONS(evaluate::characteristics::Procedure)

@@ -762,7 +762,7 @@ public:
 };
 
 // This wrapper class is used, by means of a forward reference with
-// OwningPointer, to implement owning pointers to analyzed expressions
+// OwningPointer , to implement owning pointers to analyzed expressions
 // from parse tree nodes.
 struct GenericExprWrapper {
   GenericExprWrapper(Expr<SomeType> &&x) : v{std::move(x)} {}
