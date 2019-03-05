@@ -43,15 +43,10 @@ SBFileSpec SBCompileUnit::GetFileSpec() const {
 }
 
 uint32_t SBCompileUnit::GetNumLineEntries() const {
-  Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_API));
   if (m_opaque_ptr) {
     LineTable *line_table = m_opaque_ptr->GetLineTable();
-    if (line_table) {
-      log->Printf("SBCompileUnit(%p)::GetNumLineEntries() => %d",
-                static_cast<void *>(m_opaque_ptr), 
-                (int)line_table->GetSize());
+    if (line_table)
       return line_table->GetSize();
-    }
   }
   return 0;
 }
