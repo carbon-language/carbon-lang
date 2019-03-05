@@ -87,22 +87,25 @@ bool IsUseAssociated(const Symbol &symbol, const Scope &scope) {
       owner != FindProgramUnitContaining(scope);
 }
 
-bool IsAncestor(const Scope *maybeAncestor, const Scope &maybeDescendent) {
-  if (maybeAncestor == nullptr) {
-    return false;
-  }
-  const Scope *scope{&maybeDescendent};
-  while (scope->kind() != Scope::Kind::Global) {
-    scope = &scope->parent();
-    if (scope == maybeAncestor) {
-      return true;
+bool DoesScopeContain(const Scope *maybeAncestor, const Scope &maybeDescendent) {
+  if (maybeAncestor != nullptr) {
+    const Scope *scope{&maybeDescendent};
+    while (scope->kind() != Scope::Kind::Global) {
+      scope = &scope->parent();
+      if (scope == maybeAncestor) {
+        return true;
+      }
     }
   }
   return false;
 }
 
+bool DoesScopeContain(const Scope *maybeAncestor, const Symbol &symbol) {
+  return DoesScopeContain(maybeAncestor, symbol.owner());
+}
+
 bool IsHostAssociated(const Symbol &symbol, const Scope &scope) {
-  return IsAncestor(FindProgramUnitContaining(symbol), scope);
+  return DoesScopeContain(FindProgramUnitContaining(symbol), scope);
 }
 
 bool IsDummy(const Symbol &symbol) {

@@ -35,7 +35,8 @@ const Symbol *FindPointerComponent(const DeclTypeSpec &);
 const Symbol *FindPointerComponent(const Symbol &);
 
 bool IsCommonBlockContaining(const Symbol &block, const Symbol &object);
-bool IsAncestor(const Scope *maybeAncestor, const Scope &maybeDescendent);
+bool DoesScopeContain(const Scope *maybeAncestor, const Scope &maybeDescendent);
+bool DoesScopeContain(const Scope *, const Symbol &);
 bool IsUseAssociated(const Symbol *, const Scope &);
 bool IsHostAssociated(const Symbol &, const Scope &);
 bool IsDummy(const Symbol &);
