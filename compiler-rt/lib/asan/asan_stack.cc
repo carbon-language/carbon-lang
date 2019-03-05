@@ -59,31 +59,22 @@ void __sanitizer::BufferedStackTrace::UnwindImpl(
   size = 0;
   if (UNLIKELY(!asan_inited))
     return;
-#if SANITIZER_WINDOWS
-  Unwind(max_depth, pc, bp, context, 0, 0, false);
-#else
+  request_fast = StackTrace::WillUseFastUnwind(request_fast);
   AsanThread *t = GetCurrentThread();
   ScopedUnwinding unwind_scope(t);
   if (!unwind_scope.CanUnwind())
     return;
-  if (!t) {
-    if (!request_fast) {
-      /* If GetCurrentThread() has failed, try to do slow unwind anyways. */
-      Unwind(max_depth, pc, bp, context, 0, 0, false);
+  if (request_fast) {
+    if (t) {
+      Unwind(max_depth, pc, bp, nullptr, t->stack_top(), t->stack_bottom(),
+             true);
     }
     return;
   }
-
-  uptr stack_top = t->stack_top();
-  uptr stack_bottom = t->stack_bottom();
-
-  if (SANITIZER_MIPS && !IsValidFrame(bp, stack_top, stack_bottom))
+  if (SANITIZER_MIPS && t &&
+      !IsValidFrame(bp, t->stack_top(), t->stack_bottom()))
     return;
-  if (StackTrace::WillUseFastUnwind(request_fast))
-    Unwind(max_depth, pc, bp, nullptr, stack_top, stack_bottom, true);
-  else
-    Unwind(max_depth, pc, bp, context, 0, 0, false);
-#endif // SANITIZER_WINDOWS
+  Unwind(max_depth, pc, bp, context, 0, 0, false);
 }
 
 // ------------------ Interface -------------- {{{1
