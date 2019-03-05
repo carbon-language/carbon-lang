@@ -11846,6 +11846,96 @@ TEST_F(FormatTest, FormatsLambdas) {
   verifyGoogleFormat("auto a = [&b, c](D* d) -> D& {};");
   verifyGoogleFormat("auto a = [&b, c](D* d) -> const D* {};");
   verifyFormat("[a, a]() -> a<1> {};");
+  verifyFormat("[]() -> foo<5 + 2> { return {}; };");
+  verifyFormat("[]() -> foo<5 - 2> { return {}; };");
+  verifyFormat("[]() -> foo<5 / 2> { return {}; };");
+  verifyFormat("[]() -> foo<5 * 2> { return {}; };");
+  verifyFormat("[]() -> foo<5 % 2> { return {}; };");
+  verifyFormat("[]() -> foo<5 << 2> { return {}; };");
+  verifyFormat("[]() -> foo<!5> { return {}; };");
+  verifyFormat("[]() -> foo<~5> { return {}; };");
+  verifyFormat("[]() -> foo<5 | 2> { return {}; };");
+  verifyFormat("[]() -> foo<5 || 2> { return {}; };");
+  verifyFormat("[]() -> foo<5 & 2> { return {}; };");
+  verifyFormat("[]() -> foo<5 && 2> { return {}; };");
+  verifyFormat("[]() -> foo<5 == 2> { return {}; };");
+  verifyFormat("[]() -> foo<5 != 2> { return {}; };");
+  verifyFormat("[]() -> foo<5 >= 2> { return {}; };");
+  verifyFormat("[]() -> foo<5 <= 2> { return {}; };");
+  verifyFormat("[]() -> foo<5 < 2> { return {}; };");
+  verifyFormat("[]() -> foo<2 ? 1 : 0> { return {}; };");
+  verifyFormat("namespace bar {\n"
+              "// broken:\n"
+              "auto foo{[]() -> foo<5 + 2> { return {}; }};\n"
+              "} // namespace bar");
+  verifyFormat("namespace bar {\n"
+              "// broken:\n"
+              "auto foo{[]() -> foo<5 - 2> { return {}; }};\n"
+              "} // namespace bar");
+  verifyFormat("namespace bar {\n"
+              "// broken:\n"
+              "auto foo{[]() -> foo<5 / 2> { return {}; }};\n"
+              "} // namespace bar");
+  verifyFormat("namespace bar {\n"
+              "// broken:\n"
+              "auto foo{[]() -> foo<5 * 2> { return {}; }};\n"
+              "} // namespace bar");
+  verifyFormat("namespace bar {\n"
+              "// broken:\n"
+              "auto foo{[]() -> foo<5 % 2> { return {}; }};\n"
+              "} // namespace bar");
+  verifyFormat("namespace bar {\n"
+              "// broken:\n"
+              "auto foo{[]() -> foo<5 << 2> { return {}; }};\n"
+              "} // namespace bar");
+  verifyFormat("namespace bar {\n"
+              "// broken:\n"
+              "auto foo{[]() -> foo<!5> { return {}; }};\n"
+              "} // namespace bar");
+  verifyFormat("namespace bar {\n"
+              "// broken:\n"
+              "auto foo{[]() -> foo<~5> { return {}; }};\n"
+              "} // namespace bar");
+  verifyFormat("namespace bar {\n"
+              "// broken:\n"
+              "auto foo{[]() -> foo<5 | 2> { return {}; }};\n"
+              "} // namespace bar");
+  verifyFormat("namespace bar {\n"
+              "// broken:\n"
+              "auto foo{[]() -> foo<5 || 2> { return {}; }};\n"
+              "} // namespace bar");
+  verifyFormat("namespace bar {\n"
+              "// broken:\n"
+              "auto foo{[]() -> foo<5 & 2> { return {}; }};\n"
+              "} // namespace bar");
+  verifyFormat("namespace bar {\n"
+              "// broken:\n"
+              "auto foo{[]() -> foo<5 && 2> { return {}; }};\n"
+              "} // namespace bar");
+  verifyFormat("namespace bar {\n"
+              "// broken:\n"
+              "auto foo{[]() -> foo<5 == 2> { return {}; }};\n"
+              "} // namespace bar");
+  verifyFormat("namespace bar {\n"
+              "// broken:\n"
+              "auto foo{[]() -> foo<5 != 2> { return {}; }};\n"
+              "} // namespace bar");
+  verifyFormat("namespace bar {\n"
+              "// broken:\n"
+              "auto foo{[]() -> foo<5 >= 2> { return {}; }};\n"
+              "} // namespace bar");
+  verifyFormat("namespace bar {\n"
+              "// broken:\n"
+              "auto foo{[]() -> foo<5 <= 2> { return {}; }};\n"
+              "} // namespace bar");
+  verifyFormat("namespace bar {\n"
+              "// broken:\n"
+              "auto foo{[]() -> foo<5 < 2> { return {}; }};\n"
+              "} // namespace bar");
+  verifyFormat("namespace bar {\n"
+              "// broken:\n"
+              "auto foo{[]() -> foo<2 ? 1 : 0> { return {}; }};\n"
+              "} // namespace bar");
   verifyFormat("auto aaaaaaaa = [](int i, // break for some reason\n"
                "                   int j) -> int {\n"
                "  return ffffffffffffffffffffffffffffffffffffffffffff(i * j);\n"
