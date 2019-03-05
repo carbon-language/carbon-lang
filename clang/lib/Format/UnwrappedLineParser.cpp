@@ -1442,6 +1442,8 @@ bool UnwrappedLineParser::tryToParseLambda() {
     case tok::lessequal:
     case tok::question:
     case tok::colon:
+    case tok::kw_true:
+    case tok::kw_false:
       nextToken();
       break;
     case tok::arrow:
