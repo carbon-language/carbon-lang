@@ -29,6 +29,44 @@ namespace llvm {
 class MCInst;
 
 //===----------------------------------------------------------------------===//
+
+/// Used to provide key value pairs for feature and CPU bit flags.
+struct SubtargetFeatureKV {
+  const char *Key;                      ///< K-V key string
+  const char *Desc;                     ///< Help descriptor
+  unsigned Value;                       ///< K-V integer value
+  FeatureBitArray Implies;              ///< K-V bit mask
+
+  /// Compare routine for std::lower_bound
+  bool operator<(StringRef S) const {
+    return StringRef(Key) < S;
+  }
+
+  /// Compare routine for std::is_sorted.
+  bool operator<(const SubtargetFeatureKV &Other) const {
+    return StringRef(Key) < StringRef(Other.Key);
+  }
+};
+
+//===----------------------------------------------------------------------===//
+
+/// Used to provide key value pairs for CPU and arbitrary pointers.
+struct SubtargetInfoKV {
+  const char *Key;                      ///< K-V key string
+  const void *Value;                    ///< K-V pointer value
+
+  /// Compare routine for std::lower_bound
+  bool operator<(StringRef S) const {
+    return StringRef(Key) < S;
+  }
+
+  /// Compare routine for std::is_sorted.
+  bool operator<(const SubtargetInfoKV &Other) const {
+    return StringRef(Key) < StringRef(Other.Key);
+  }
+};
+
+//===----------------------------------------------------------------------===//
 ///
 /// Generic base class for all target subtargets.
 ///
