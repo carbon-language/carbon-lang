@@ -40,23 +40,16 @@ while.end:                                        ; preds = %while.cond
 define i32 @used_loop(i32 %size) minsize {
 ; CHECK-LABEL: @used_loop(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[TMP0:%.*]] = sub i32 -1, [[SIZE:%.*]]
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp ugt i32 [[TMP0]], -32
-; CHECK-NEXT:    [[UMAX:%.*]] = select i1 [[TMP1]], i32 [[TMP0]], i32 -32
-; CHECK-NEXT:    [[TMP2:%.*]] = add i32 [[SIZE]], [[UMAX]]
-; CHECK-NEXT:    [[TMP3:%.*]] = add i32 [[TMP2]], 32
-; CHECK-NEXT:    [[TMP4:%.*]] = lshr i32 [[TMP3]], 5
-; CHECK-NEXT:    [[TMP5:%.*]] = shl i32 [[TMP4]], 5
 ; CHECK-NEXT:    br label [[WHILE_COND:%.*]]
 ; CHECK:       while.cond:
-; CHECK-NEXT:    [[SIZE_ADDR_0:%.*]] = phi i32 [ [[SIZE]], [[ENTRY:%.*]] ], [ [[SUB:%.*]], [[WHILE_COND]] ]
+; CHECK-NEXT:    [[SIZE_ADDR_0:%.*]] = phi i32 [ [[SIZE:%.*]], [[ENTRY:%.*]] ], [ [[SUB:%.*]], [[WHILE_COND]] ]
 ; CHECK-NEXT:    tail call void @call()
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp ugt i32 [[SIZE_ADDR_0]], 31
 ; CHECK-NEXT:    [[SUB]] = add i32 [[SIZE_ADDR_0]], -32
 ; CHECK-NEXT:    br i1 [[CMP]], label [[WHILE_COND]], label [[WHILE_END:%.*]]
 ; CHECK:       while.end:
-; CHECK-NEXT:    [[TMP6:%.*]] = sub i32 [[SIZE]], [[TMP5]]
-; CHECK-NEXT:    ret i32 [[TMP6]]
+; CHECK-NEXT:    [[SIZE_LCSSA:%.*]] = phi i32 [ [[SIZE_ADDR_0]], [[WHILE_COND]] ]
+; CHECK-NEXT:    ret i32 [[SIZE_LCSSA]]
 ;
 entry:
   br label %while.cond
@@ -77,16 +70,9 @@ while.end:                                        ; preds = %while.cond
 define i32 @test_signed_while(i32 %S) {
 ; CHECK-LABEL: @test_signed_while(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[TMP0:%.*]] = sub i32 -1, [[S:%.*]]
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt i32 [[TMP0]], -32
-; CHECK-NEXT:    [[SMAX:%.*]] = select i1 [[TMP1]], i32 [[TMP0]], i32 -32
-; CHECK-NEXT:    [[TMP2:%.*]] = add i32 [[S]], [[SMAX]]
-; CHECK-NEXT:    [[TMP3:%.*]] = add i32 [[TMP2]], 32
-; CHECK-NEXT:    [[TMP4:%.*]] = lshr i32 [[TMP3]], 5
-; CHECK-NEXT:    [[TMP5:%.*]] = shl i32 [[TMP4]], 5
 ; CHECK-NEXT:    br label [[WHILE_COND:%.*]]
 ; CHECK:       while.cond:
-; CHECK-NEXT:    [[S_ADDR_0:%.*]] = phi i32 [ [[S]], [[ENTRY:%.*]] ], [ [[SUB:%.*]], [[WHILE_BODY:%.*]] ]
+; CHECK-NEXT:    [[S_ADDR_0:%.*]] = phi i32 [ [[S:%.*]], [[ENTRY:%.*]] ], [ [[SUB:%.*]], [[WHILE_BODY:%.*]] ]
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i32 [[S_ADDR_0]], 31
 ; CHECK-NEXT:    br i1 [[CMP]], label [[WHILE_BODY]], label [[WHILE_END:%.*]]
 ; CHECK:       while.body:
@@ -94,8 +80,8 @@ define i32 @test_signed_while(i32 %S) {
 ; CHECK-NEXT:    tail call void @call()
 ; CHECK-NEXT:    br label [[WHILE_COND]]
 ; CHECK:       while.end:
-; CHECK-NEXT:    [[TMP6:%.*]] = sub i32 [[S]], [[TMP5]]
-; CHECK-NEXT:    ret i32 [[TMP6]]
+; CHECK-NEXT:    [[S_ADDR_0_LCSSA:%.*]] = phi i32 [ [[S_ADDR_0]], [[WHILE_COND]] ]
+; CHECK-NEXT:    ret i32 [[S_ADDR_0_LCSSA]]
 ;
 entry:
   br label %while.cond
@@ -118,23 +104,16 @@ while.end:                                        ; preds = %while.cond
 define i32 @test_signed_do(i32 %S) {
 ; CHECK-LABEL: @test_signed_do(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[TMP0:%.*]] = sub i32 15, [[S:%.*]]
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt i32 [[TMP0]], -16
-; CHECK-NEXT:    [[SMAX:%.*]] = select i1 [[TMP1]], i32 [[TMP0]], i32 -16
-; CHECK-NEXT:    [[TMP2:%.*]] = add i32 [[S]], [[SMAX]]
-; CHECK-NEXT:    [[TMP3:%.*]] = lshr i32 [[TMP2]], 4
-; CHECK-NEXT:    [[TMP4:%.*]] = shl i32 [[TMP3]], 4
 ; CHECK-NEXT:    br label [[DO_BODY:%.*]]
 ; CHECK:       do.body:
-; CHECK-NEXT:    [[S_ADDR_0:%.*]] = phi i32 [ [[S]], [[ENTRY:%.*]] ], [ [[SUB:%.*]], [[DO_BODY]] ]
+; CHECK-NEXT:    [[S_ADDR_0:%.*]] = phi i32 [ [[S:%.*]], [[ENTRY:%.*]] ], [ [[SUB:%.*]], [[DO_BODY]] ]
 ; CHECK-NEXT:    [[SUB]] = add nsw i32 [[S_ADDR_0]], -16
 ; CHECK-NEXT:    tail call void @call()
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i32 [[SUB]], 15
 ; CHECK-NEXT:    br i1 [[CMP]], label [[DO_BODY]], label [[DO_END:%.*]]
 ; CHECK:       do.end:
-; CHECK-NEXT:    [[TMP5:%.*]] = add i32 [[S]], -16
-; CHECK-NEXT:    [[TMP6:%.*]] = sub i32 [[TMP5]], [[TMP4]]
-; CHECK-NEXT:    ret i32 [[TMP6]]
+; CHECK-NEXT:    [[SUB_LCSSA:%.*]] = phi i32 [ [[SUB]], [[DO_BODY]] ]
+; CHECK-NEXT:    ret i32 [[SUB_LCSSA]]
 ;
 entry:
   br label %do.body
@@ -154,16 +133,9 @@ do.end:                                           ; preds = %do.body
 define i32 @test_unsigned_while(i32 %S) {
 ; CHECK-LABEL: @test_unsigned_while(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[TMP0:%.*]] = sub i32 -1, [[S:%.*]]
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp ugt i32 [[TMP0]], -16
-; CHECK-NEXT:    [[UMAX:%.*]] = select i1 [[TMP1]], i32 [[TMP0]], i32 -16
-; CHECK-NEXT:    [[TMP2:%.*]] = add i32 [[S]], [[UMAX]]
-; CHECK-NEXT:    [[TMP3:%.*]] = add i32 [[TMP2]], 16
-; CHECK-NEXT:    [[TMP4:%.*]] = lshr i32 [[TMP3]], 4
-; CHECK-NEXT:    [[TMP5:%.*]] = shl i32 [[TMP4]], 4
 ; CHECK-NEXT:    br label [[WHILE_COND:%.*]]
 ; CHECK:       while.cond:
-; CHECK-NEXT:    [[S_ADDR_0:%.*]] = phi i32 [ [[S]], [[ENTRY:%.*]] ], [ [[SUB:%.*]], [[WHILE_BODY:%.*]] ]
+; CHECK-NEXT:    [[S_ADDR_0:%.*]] = phi i32 [ [[S:%.*]], [[ENTRY:%.*]] ], [ [[SUB:%.*]], [[WHILE_BODY:%.*]] ]
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp ugt i32 [[S_ADDR_0]], 15
 ; CHECK-NEXT:    br i1 [[CMP]], label [[WHILE_BODY]], label [[WHILE_END:%.*]]
 ; CHECK:       while.body:
@@ -171,8 +143,8 @@ define i32 @test_unsigned_while(i32 %S) {
 ; CHECK-NEXT:    tail call void @call()
 ; CHECK-NEXT:    br label [[WHILE_COND]]
 ; CHECK:       while.end:
-; CHECK-NEXT:    [[TMP6:%.*]] = sub i32 [[S]], [[TMP5]]
-; CHECK-NEXT:    ret i32 [[TMP6]]
+; CHECK-NEXT:    [[S_ADDR_0_LCSSA:%.*]] = phi i32 [ [[S_ADDR_0]], [[WHILE_COND]] ]
+; CHECK-NEXT:    ret i32 [[S_ADDR_0_LCSSA]]
 ;
 entry:
   br label %while.cond
@@ -195,23 +167,16 @@ while.end:                                        ; preds = %while.cond
 define i32 @test_unsigned_do(i32 %S) {
 ; CHECK-LABEL: @test_unsigned_do(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[TMP0:%.*]] = sub i32 15, [[S:%.*]]
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp ugt i32 [[TMP0]], -16
-; CHECK-NEXT:    [[UMAX:%.*]] = select i1 [[TMP1]], i32 [[TMP0]], i32 -16
-; CHECK-NEXT:    [[TMP2:%.*]] = add i32 [[S]], [[UMAX]]
-; CHECK-NEXT:    [[TMP3:%.*]] = lshr i32 [[TMP2]], 4
-; CHECK-NEXT:    [[TMP4:%.*]] = shl i32 [[TMP3]], 4
 ; CHECK-NEXT:    br label [[DO_BODY:%.*]]
 ; CHECK:       do.body:
-; CHECK-NEXT:    [[S_ADDR_0:%.*]] = phi i32 [ [[S]], [[ENTRY:%.*]] ], [ [[SUB:%.*]], [[DO_BODY]] ]
+; CHECK-NEXT:    [[S_ADDR_0:%.*]] = phi i32 [ [[S:%.*]], [[ENTRY:%.*]] ], [ [[SUB:%.*]], [[DO_BODY]] ]
 ; CHECK-NEXT:    [[SUB]] = add i32 [[S_ADDR_0]], -16
 ; CHECK-NEXT:    tail call void @call()
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp ugt i32 [[SUB]], 15
 ; CHECK-NEXT:    br i1 [[CMP]], label [[DO_BODY]], label [[DO_END:%.*]]
 ; CHECK:       do.end:
-; CHECK-NEXT:    [[TMP5:%.*]] = add i32 [[S]], -16
-; CHECK-NEXT:    [[TMP6:%.*]] = sub i32 [[TMP5]], [[TMP4]]
-; CHECK-NEXT:    ret i32 [[TMP6]]
+; CHECK-NEXT:    [[SUB_LCSSA:%.*]] = phi i32 [ [[SUB]], [[DO_BODY]] ]
+; CHECK-NEXT:    ret i32 [[SUB_LCSSA]]
 ;
 entry:
   br label %do.body
