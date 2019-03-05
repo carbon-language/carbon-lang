@@ -761,9 +761,11 @@ MachineInstr *X86InstrInfo::convertToThreeAddressWithLEA(
        .addReg(InRegLEA, RegState::Kill).addImm(0).addReg(0);
     break;
   }
+  case X86::INC8r:
   case X86::INC16r:
     addRegOffset(MIB, InRegLEA, true, 1);
     break;
+  case X86::DEC8r:
   case X86::DEC16r:
     addRegOffset(MIB, InRegLEA, true, -1);
     break;
@@ -945,8 +947,6 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     NewMI = addOffset(MIB, 1);
     break;
   }
-  case X86::INC16r:
-    return convertToThreeAddressWithLEA(MIOpc, MFI, MI, LV, Is8BitOp);
   case X86::DEC64r:
   case X86::DEC32r: {
     assert(MI.getNumOperands() >= 2 && "Unknown dec instruction!");
@@ -970,7 +970,12 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
 
     break;
   }
+  case X86::DEC8r:
+  case X86::INC8r:
+    Is8BitOp = true;
+    LLVM_FALLTHROUGH;
   case X86::DEC16r:
+  case X86::INC16r:
     return convertToThreeAddressWithLEA(MIOpc, MFI, MI, LV, Is8BitOp);
   case X86::ADD64rr:
   case X86::ADD64rr_DB:
