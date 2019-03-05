@@ -755,6 +755,7 @@ MachineInstr *X86InstrInfo::convertToThreeAddressWithLEA(
       BuildMI(*MFI, MBBI, MI.getDebugLoc(), get(Opcode), OutRegLEA);
   switch (MIOpc) {
   default: llvm_unreachable("Unreachable!");
+  case X86::SHL8ri:
   case X86::SHL16ri: {
     unsigned ShAmt = MI.getOperand(2).getImm();
     MIB.addReg(0).addImm(1ULL << ShAmt)
@@ -918,6 +919,9 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
 
     break;
   }
+  case X86::SHL8ri:
+    Is8BitOp = true;
+    LLVM_FALLTHROUGH;
   case X86::SHL16ri: {
     assert(MI.getNumOperands() >= 3 && "Unknown shift instruction!");
     unsigned ShAmt = getTruncatedShiftCount(MI, 2);
