@@ -38,20 +38,24 @@ void __sanitizer::BufferedStackTrace::UnwindImpl(
   Unwind(max_depth, pc, bp, context, 0, 0, false);
 #else
   AsanThread *t = GetCurrentThread();
-  if (t && !t->isUnwinding()) {
-    uptr stack_top = t->stack_top();
-    uptr stack_bottom = t->stack_bottom();
-    ScopedUnwinding unwind_scope(t);
-    if (SANITIZER_MIPS && !IsValidFrame(bp, stack_top, stack_bottom))
-      return;
-    if (StackTrace::WillUseFastUnwind(request_fast))
-      Unwind(max_depth, pc, bp, nullptr, stack_top, stack_bottom, true);
-    else
+  if (!t) {
+    if (!request_fast) {
+      /* If GetCurrentThread() has failed, try to do slow unwind anyways. */
       Unwind(max_depth, pc, bp, context, 0, 0, false);
-  } else if (!t && !request_fast) {
-    /* If GetCurrentThread() has failed, try to do slow unwind anyways. */
-    Unwind(max_depth, pc, bp, context, 0, 0, false);
+    }
+    return;
   }
+  if (t->isUnwinding())
+    return;
+  uptr stack_top = t->stack_top();
+  uptr stack_bottom = t->stack_bottom();
+  ScopedUnwinding unwind_scope(t);
+  if (SANITIZER_MIPS && !IsValidFrame(bp, stack_top, stack_bottom))
+    return;
+  if (StackTrace::WillUseFastUnwind(request_fast))
+    Unwind(max_depth, pc, bp, nullptr, stack_top, stack_bottom, true);
+  else
+    Unwind(max_depth, pc, bp, context, 0, 0, false);
 #endif // SANITIZER_WINDOWS
 }
 
