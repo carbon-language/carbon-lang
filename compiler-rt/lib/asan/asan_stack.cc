@@ -35,7 +35,7 @@ void __sanitizer::BufferedStackTrace::UnwindImpl(
   if (UNLIKELY(!asan_inited))
     return;
 #if SANITIZER_WINDOWS
-  Unwind(max_depth, pc, 0, context, 0, 0, false);
+  Unwind(max_depth, pc, bp, context, 0, 0, false);
 #else
   AsanThread *t = GetCurrentThread();
   if (t && !t->isUnwinding()) {
@@ -46,7 +46,7 @@ void __sanitizer::BufferedStackTrace::UnwindImpl(
       if (StackTrace::WillUseFastUnwind(request_fast))
         Unwind(max_depth, pc, bp, nullptr, stack_top, stack_bottom, true);
       else
-        Unwind(max_depth, pc, 0, context, 0, 0, false);
+        Unwind(max_depth, pc, bp, context, 0, 0, false);
     }
   } else if (!t && !request_fast) {
     /* If GetCurrentThread() has failed, try to do slow unwind anyways. */
