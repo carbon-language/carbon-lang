@@ -204,12 +204,11 @@ std::optional<DynamicType> ExpressionBase<A>::GetType() const {
     return std::visit(
         [](const auto &x) -> std::optional<DynamicType> {
           using Ty = std::decay_t<decltype(x)>;
-          if constexpr (std::is_same_v<Ty, BOZLiteralConstant> ||
-              std::is_same_v<Ty, NullPointer>) {
-            return std::nullopt;  // typeless really means "no type"
-          } else {
+          if constexpr (!std::is_same_v<Ty, BOZLiteralConstant> &&
+              !std::is_same_v<Ty, NullPointer>) {
             return x.GetType();
           }
+          return std::nullopt;  // typeless really means "no type"
         },
         derived().u);
   }
