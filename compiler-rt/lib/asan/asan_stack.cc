@@ -26,6 +26,20 @@ u32 GetMallocContextSize() {
   return atomic_load(&malloc_context_size, memory_order_acquire);
 }
 
+namespace {
+
+// ScopedUnwinding is a scope for stacktracing member of a context
+class ScopedUnwinding {
+ public:
+  explicit ScopedUnwinding(AsanThread *t) : thread(t) { t->setUnwinding(true); }
+  ~ScopedUnwinding() { thread->setUnwinding(false); }
+
+ private:
+  AsanThread *thread;
+};
+
+}  // namespace
+
 }  // namespace __asan
 
 void __sanitizer::BufferedStackTrace::UnwindImpl(
