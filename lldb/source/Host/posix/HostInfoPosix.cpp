@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Host/posix/HostInfoPosix.h"
+#include "lldb/Utility/UserIDResolver.h"
 #include "lldb/Utility/Log.h"
 
 #include "llvm/ADT/SmallString.h"
