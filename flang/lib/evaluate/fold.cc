@@ -79,7 +79,7 @@ Subscript FoldOperation(FoldingContext &context, Subscript &&subscript) {
   return std::visit(
       common::visitors{
           [&](IndirectSubscriptIntegerExpr &&expr) {
-            *expr = Fold(context, std::move(*expr));
+            expr.value() = Fold(context, std::move(expr.value()));
             return Subscript(std::move(expr));
           },
           [&](Triplet &&triplet) {
@@ -161,20 +161,21 @@ Expr<T> FoldOperation(FoldingContext &context, FunctionRef<T> &&funcRef) {
   ActualArguments args{std::move(funcRef.arguments())};
   for (std::optional<ActualArgument> &arg : args) {
     if (arg.has_value()) {
-      *arg->value = FoldOperation(context, std::move(*arg->value));
+      arg.value().value() =
+          FoldOperation(context, std::move(arg.value().value()));
     }
   }
   if (auto *intrinsic{std::get_if<SpecificIntrinsic>(&funcRef.proc().u)}) {
     std::string name{intrinsic->name};
     if (name == "kind") {
       if constexpr (common::HasMember<T, IntegerTypes>) {
-        return Expr<T>{args[0]->value->GetType()->kind};
+        return Expr<T>{args[0].value().GetType()->kind};
       } else {
         common::die("kind() result not integral");
       }
     } else if (name == "len") {
       if constexpr (std::is_same_v<T, SubscriptInteger>) {
-        if (auto *charExpr{UnwrapExpr<Expr<SomeCharacter>>(*args[0]->value)}) {
+        if (auto *charExpr{UnwrapExpr<Expr<SomeCharacter>>(args[0].value())}) {
           return std::visit([](auto &kx) { return kx.LEN(); }, charExpr->u);
         }
       } else {
@@ -250,7 +251,7 @@ public:
 
 private:
   bool FoldArray(const CopyableIndirection<Expr<T>> &expr) {
-    Expr<T> folded{Fold(context_, common::Clone(*expr))};
+    Expr<T> folded{Fold(context_, common::Clone(expr.value()))};
     if (auto *c{UnwrapExpr<Constant<T>>(folded)}) {
       // Copy elements in Fortran array element order
       std::vector<std::int64_t> shape{c->shape()};
@@ -276,20 +277,20 @@ private:
   }
   bool FoldArray(const ImpliedDo<T> &iDo) {
     Expr<SubscriptInteger> lower{
-        Fold(context_, Expr<SubscriptInteger>{*iDo.lower})};
+        Fold(context_, Expr<SubscriptInteger>{iDo.lower()})};
     Expr<SubscriptInteger> upper{
-        Fold(context_, Expr<SubscriptInteger>{*iDo.upper})};
+        Fold(context_, Expr<SubscriptInteger>{iDo.upper()})};
     Expr<SubscriptInteger> stride{
-        Fold(context_, Expr<SubscriptInteger>{*iDo.stride})};
+        Fold(context_, Expr<SubscriptInteger>{iDo.stride()})};
     std::optional<std::int64_t> start{ToInt64(lower)}, end{ToInt64(upper)},
         step{ToInt64(stride)};
     if (start.has_value() && end.has_value() && step.has_value()) {
       bool result{true};
-      for (std::int64_t &j{context_.StartImpliedDo(iDo.name, *start)};
+      for (std::int64_t &j{context_.StartImpliedDo(iDo.name(), *start)};
            j <= *end; j += *step) {
-        result &= FoldArray(*iDo.values);
+        result &= FoldArray(iDo.values());
       }
-      context_.EndImpliedDo(iDo.name);
+      context_.EndImpliedDo(iDo.name());
       return result;
     } else {
       return false;
@@ -322,7 +323,7 @@ Expr<SomeDerived> FoldOperation(
     FoldingContext &context, StructureConstructor &&structure) {
   StructureConstructor result{structure.derivedTypeSpec()};
   for (auto &&[symbol, value] : std::move(structure.values())) {
-    result.Add(*symbol, Fold(context, std::move(*value)));
+    result.Add(*symbol, Fold(context, std::move(value.value())));
   }
   return Expr<SomeDerived>{Constant<SomeDerived>{result}};
 }
@@ -882,14 +883,14 @@ bool IsConstExpr(
 }
 template<typename V>
 bool IsConstExpr(ConstExprContext &context, const ImpliedDo<V> &impliedDo) {
-  if (!IsConstExpr(context, impliedDo.lower) ||
-      !IsConstExpr(context, impliedDo.upper) ||
-      !IsConstExpr(context, impliedDo.stride)) {
+  if (!IsConstExpr(context, impliedDo.lower()) ||
+      !IsConstExpr(context, impliedDo.upper()) ||
+      !IsConstExpr(context, impliedDo.stride())) {
     return false;
   }
   ConstExprContext newContext{context};
-  newContext.constantNames.insert(impliedDo.name);
-  return IsConstExpr(newContext, impliedDo.values);
+  newContext.constantNames.insert(impliedDo.name());
+  return IsConstExpr(newContext, impliedDo.values());
 }
 template<typename A>
 bool IsConstExpr(
@@ -967,7 +968,7 @@ bool IsConstExpr(ConstExprContext &context, const Designator<A> &designator) {
   return IsConstExpr(context, designator.u);
 }
 bool IsConstExpr(ConstExprContext &context, const ActualArgument &arg) {
-  return IsConstExpr(context, *arg.value);
+  return IsConstExpr(context, arg.value());
 }
 template<typename A>
 bool IsConstExpr(ConstExprContext &context, const FunctionRef<A> &funcRef) {
@@ -987,7 +988,7 @@ bool IsConstExpr(ConstExprContext &context, const Expr<A> &expr) {
 }
 template<typename A>
 bool IsConstExpr(ConstExprContext &context, const CopyableIndirection<A> &x) {
-  return IsConstExpr(context, *x);
+  return IsConstExpr(context, x.value());
 }
 template<typename A>
 bool IsConstExpr(ConstExprContext &context, const std::optional<A> &maybe) {

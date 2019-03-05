@@ -65,10 +65,6 @@ public:
 
   A &value() { return *p_; }
   const A &value() const { return *p_; }
-  A &operator*() { return *p_; }
-  const A &operator*() const { return *p_; }
-  A *operator->() { return p_; }
-  const A *operator->() const { return p_; }
 
   bool operator==(const A &x) const { return *p_ == x; }
   bool operator==(const Indirection &that) const { return *p_ == *that.p_; }
@@ -120,10 +116,6 @@ public:
 
   A &value() { return *p_; }
   const A &value() const { return *p_; }
-  A &operator*() { return *p_; }
-  const A &operator*() const { return *p_; }
-  A *operator->() { return p_; }
-  const A *operator->() const { return p_; }
 
   bool operator==(const A &x) const { return *p_ == x; }
   bool operator==(const Indirection &that) const { return *p_ == *that.p_; }
@@ -168,12 +160,15 @@ public:
     return *this = OwningPointer(std::move(p));
   }
 
-  A &operator*() { return *p_; }
-  const A &operator*() const { return *p_; }
-  A *operator->() { return p_; }
-  const A *operator->() const { return p_; }
-
-  A *get() const { return p_; }
+  bool has_value() const { return p_ != nullptr; }
+  A &value() {
+    CHECK(p_ != nullptr);
+    return *p_;
+  }
+  const A &value() const {
+    CHECK(p_ != nullptr);
+    return *p_;
+  }
 
   bool operator==(const A &x) const { return p_ != nullptr && *p_ == x; }
   bool operator==(const OwningPointer &that) const {
@@ -223,11 +218,6 @@ public:
   ForwardReference &operator=(A *&&p) {
     return *this = ForwardReference(std::move(p));
   }
-
-  A &operator*() { return *p_; }
-  const A &operator*() const { return *p_; }
-  A *operator->() { return p_; }
-  const A *operator->() const { return p_; }
 
   A &value() { return *p_; }
   const A &value() const { return *p_; }

@@ -87,7 +87,7 @@ std::ostream &LogicalOperation<KIND>::Infix(std::ostream &o) const {
 
 template<typename T>
 std::ostream &Emit(std::ostream &o, const CopyableIndirection<Expr<T>> &expr) {
-  return expr->AsFortran(o);
+  return expr.value().AsFortran(o);
 }
 
 template<typename T>
@@ -96,12 +96,12 @@ std::ostream &Emit(std::ostream &, const ArrayConstructorValues<T> &);
 template<typename T>
 std::ostream &Emit(std::ostream &o, const ImpliedDo<T> &implDo) {
   o << '(';
-  Emit(o, *implDo.values);
+  Emit(o, implDo.values());
   o << ',' << ImpliedDoIndex::Result::AsFortran()
-    << "::" << implDo.name.ToString() << '=';
-  implDo.lower->AsFortran(o) << ',';
-  implDo.upper->AsFortran(o) << ',';
-  implDo.stride->AsFortran(o) << ')';
+    << "::" << implDo.name().ToString() << '=';
+  implDo.lower().AsFortran(o) << ',';
+  implDo.upper().AsFortran(o) << ',';
+  implDo.stride().AsFortran(o) << ')';
   return o;
 }
 
@@ -147,7 +147,9 @@ std::ostream &ExpressionBase<RESULT>::AsFortran(std::ostream &o) const {
             o << "z'" << x.Hexadecimal() << "'";
           },
           [&](const NullPointer &) { o << "NULL()"; },
-          [&](const CopyableIndirection<Substring> &s) { s->AsFortran(o); },
+          [&](const CopyableIndirection<Substring> &s) {
+            s.value().AsFortran(o);
+          },
           [&](const ImpliedDoIndex &i) { o << i.name.ToString(); },
           [&](const auto &x) { x.AsFortran(o); },
       },
@@ -235,8 +237,9 @@ bool ImpliedDoIndex::operator==(const ImpliedDoIndex &that) const {
 
 template<typename T>
 bool ImpliedDo<T>::operator==(const ImpliedDo<T> &that) const {
-  return name == that.name && lower == that.lower && upper == that.upper &&
-      stride == that.stride && values == that.values;
+  return name_ == that.name_ && lower_ == that.lower_ &&
+      upper_ == that.upper_ && stride_ == that.stride_ &&
+      values_ == that.values_;
 }
 
 template<typename R>
@@ -288,7 +291,7 @@ std::ostream &StructureConstructor::AsFortran(std::ostream &o) const {
   } else {
     char ch{'('};
     for (const auto &[symbol, value] : values_) {
-      value->AsFortran(o << ch << symbol->name().ToString() << '=');
+      value.value().AsFortran(o << ch << symbol->name().ToString() << '=');
       ch = ',';
     }
   }

@@ -221,11 +221,11 @@ std::enable_if_t<WrapperTrait<A>> Walk(A &x, M &mutator) {
 
 template<typename T, typename V>
 void Walk(const common::Indirection<T> &x, V &visitor) {
-  Walk(*x, visitor);
+  Walk(x.value(), visitor);
 }
 template<typename T, typename M>
 void Walk(common::Indirection<T> &x, M &mutator) {
-  Walk(*x, mutator);
+  Walk(x.value(), mutator);
 }
 
 // Walk a class with a single field 'thing'.

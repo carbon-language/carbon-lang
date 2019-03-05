@@ -61,8 +61,8 @@ bool DummyProcedure::operator==(const DummyProcedure &that) const {
 
 std::ostream &DummyProcedure::Dump(std::ostream &o) const {
   attrs.Dump(o, EnumToString);
-  if (explicitProcedure.get() != nullptr) {
-    explicitProcedure->Dump(o);
+  if (explicitProcedure.has_value()) {
+    explicitProcedure.value().Dump(o);
   }
   return o;
 }

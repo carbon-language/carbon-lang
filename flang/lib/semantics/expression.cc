@@ -348,7 +348,7 @@ static MaybeExpr ResolveAmbiguousSubstring(
       if (std::visit(
               common::visitors{
                   [&](IndirectSubscriptIntegerExpr &&x) {
-                    lower = std::move(*x);
+                    lower = std::move(x.value());
                     return true;
                   },
                   [&](Triplet &&triplet) {
@@ -1258,15 +1258,15 @@ void ArrayConstructorContext::Add(const parser::AcValue &x) {
             }
           },
           [&](const common::Indirection<parser::Expr> &expr) {
-            auto restorer{
-                exprContext_.GetContextualMessages().SetLocation(expr->source)};
-            if (MaybeExpr v{exprContext_.Analyze(*expr)}) {
+            auto restorer{exprContext_.GetContextualMessages().SetLocation(
+                expr.value().source)};
+            if (MaybeExpr v{exprContext_.Analyze(expr.value())}) {
               Push(std::move(*v));
             }
           },
           [&](const common::Indirection<parser::AcImpliedDo> &impliedDo) {
             const auto &control{
-                std::get<parser::AcImpliedDoControl>(impliedDo->t)};
+                std::get<parser::AcImpliedDoControl>(impliedDo.value().t)};
             const auto &bounds{
                 std::get<parser::LoopBounds<parser::ScalarIntExpr>>(control.t)};
             parser::CharBlock name{bounds.name.thing.thing.source};
@@ -1289,7 +1289,7 @@ void ArrayConstructorContext::Add(const parser::AcValue &x) {
                 GetSpecificIntExpr<IntType::kind>(exprContext_, bounds.step)};
             ArrayConstructorContext nested{*this};
             for (const auto &value :
-                std::get<std::list<parser::AcValue>>(impliedDo->t)) {
+                std::get<std::list<parser::AcValue>>(impliedDo.value().t)) {
               nested.Add(value);
             }
             if (lower.has_value() && upper.has_value()) {
@@ -1318,14 +1318,15 @@ ArrayConstructorValues<T> MakeSpecific(
     std::visit(
         common::visitors{
             [&](CopyableIndirection<Expr<SomeType>> &&expr) {
-              auto *typed{UnwrapExpr<Expr<T>>(*expr)};
+              auto *typed{UnwrapExpr<Expr<T>>(expr.value())};
               CHECK(typed != nullptr);
               to.Push(std::move(*typed));
             },
             [&](ImpliedDo<SomeType> &&impliedDo) {
-              to.Push(ImpliedDo<T>{impliedDo.name, std::move(*impliedDo.lower),
-                  std::move(*impliedDo.upper), std::move(*impliedDo.stride),
-                  MakeSpecific<T>(std::move(*impliedDo.values))});
+              to.Push(ImpliedDo<T>{impliedDo.name(),
+                  std::move(impliedDo.lower()), std::move(impliedDo.upper()),
+                  std::move(impliedDo.stride()),
+                  MakeSpecific<T>(std::move(impliedDo.values()))});
             },
         },
         std::move(x.u));
@@ -1416,7 +1417,7 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
   for (const auto &component :
       std::get<std::list<parser::ComponentSpec>>(structure.t)) {
     const parser::Expr &expr{
-        *std::get<parser::ComponentDataSource>(component.t).v};
+        std::get<parser::ComponentDataSource>(component.t).v.value()};
     parser::CharBlock source{expr.source};
     const Symbol *symbol{nullptr};
     if (const auto &kw{std::get<std::optional<parser::Keyword>>(component.t)}) {
@@ -1627,10 +1628,10 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
     std::visit(
         common::visitors{
             [&](const common::Indirection<parser::Variable> &v) {
-              actualArgExpr = AnalyzeExpr(context, *v);
+              actualArgExpr = AnalyzeExpr(context, v.value());
             },
             [&](const common::Indirection<parser::Expr> &x) {
-              actualArgExpr = AnalyzeExpr(context, *x);
+              actualArgExpr = AnalyzeExpr(context, x.value());
             },
             [&](const parser::Name &n) {
               context.Say("TODO: procedure name actual arg"_err_en_US);
@@ -1687,7 +1688,7 @@ static MaybeExpr AnalyzeExpr(
     ExpressionAnalysisContext &context, const parser::Expr::Parentheses &x) {
   // TODO: C1003: A parenthesized function reference may not return a
   // procedure pointer.
-  if (MaybeExpr operand{AnalyzeExpr(context, *x.v)}) {
+  if (MaybeExpr operand{AnalyzeExpr(context, x.v.value())}) {
     return std::visit(
         common::visitors{
             [&](BOZLiteralConstant &&boz) {
@@ -1716,7 +1717,7 @@ static MaybeExpr AnalyzeExpr(
 
 static MaybeExpr AnalyzeExpr(
     ExpressionAnalysisContext &context, const parser::Expr::UnaryPlus &x) {
-  MaybeExpr value{AnalyzeExpr(context, *x.v)};
+  MaybeExpr value{AnalyzeExpr(context, x.v.value())};
   if (value.has_value()) {
     std::visit(
         common::visitors{
@@ -1740,7 +1741,7 @@ static MaybeExpr AnalyzeExpr(
 
 static MaybeExpr AnalyzeExpr(
     ExpressionAnalysisContext &context, const parser::Expr::Negate &x) {
-  if (MaybeExpr operand{AnalyzeExpr(context, *x.v)}) {
+  if (MaybeExpr operand{AnalyzeExpr(context, x.v.value())}) {
     return Negation(context.GetContextualMessages(), std::move(*operand));
   }
   return std::nullopt;
@@ -1748,7 +1749,7 @@ static MaybeExpr AnalyzeExpr(
 
 static MaybeExpr AnalyzeExpr(
     ExpressionAnalysisContext &context, const parser::Expr::NOT &x) {
-  if (MaybeExpr operand{AnalyzeExpr(context, *x.v)}) {
+  if (MaybeExpr operand{AnalyzeExpr(context, x.v.value())}) {
     return std::visit(
         common::visitors{
             [](Expr<SomeLogical> &&lx) -> MaybeExpr {
@@ -1784,8 +1785,9 @@ static MaybeExpr AnalyzeExpr(
 template<template<typename> class OPR, typename PARSED>
 MaybeExpr BinaryOperationHelper(
     ExpressionAnalysisContext &context, const PARSED &x) {
-  if (auto both{common::AllPresent(AnalyzeExpr(context, *std::get<0>(x.t)),
-          AnalyzeExpr(context, *std::get<1>(x.t)))}) {
+  if (auto both{
+          common::AllPresent(AnalyzeExpr(context, std::get<0>(x.t).value()),
+              AnalyzeExpr(context, std::get<1>(x.t).value()))}) {
     ConformabilityCheck(context.GetContextualMessages(), std::get<0>(*both),
         std::get<1>(*both));
     return NumericOperation<OPR>(context.GetContextualMessages(),
@@ -1822,8 +1824,8 @@ static MaybeExpr AnalyzeExpr(
 
 static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
     const parser::Expr::ComplexConstructor &x) {
-  auto re{AnalyzeExpr(context, *std::get<0>(x.t))};
-  auto im{AnalyzeExpr(context, *std::get<1>(x.t))};
+  auto re{AnalyzeExpr(context, std::get<0>(x.t).value())};
+  auto im{AnalyzeExpr(context, std::get<1>(x.t).value())};
   if (re.has_value() && im.has_value()) {
     ConformabilityCheck(context.GetContextualMessages(), *re, *im);
   }
@@ -1834,8 +1836,9 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
 
 static MaybeExpr AnalyzeExpr(
     ExpressionAnalysisContext &context, const parser::Expr::Concat &x) {
-  if (auto both{common::AllPresent(AnalyzeExpr(context, *std::get<0>(x.t)),
-          AnalyzeExpr(context, *std::get<1>(x.t)))}) {
+  if (auto both{
+          common::AllPresent(AnalyzeExpr(context, std::get<0>(x.t).value()),
+              AnalyzeExpr(context, std::get<1>(x.t).value()))}) {
     ConformabilityCheck(context.GetContextualMessages(), std::get<0>(*both),
         std::get<1>(*both));
     return std::visit(
@@ -1870,8 +1873,9 @@ static MaybeExpr AnalyzeExpr(
 template<typename PARSED>
 MaybeExpr RelationHelper(ExpressionAnalysisContext &context,
     RelationalOperator opr, const PARSED &x) {
-  if (auto both{common::AllPresent(AnalyzeExpr(context, *std::get<0>(x.t)),
-          AnalyzeExpr(context, *std::get<1>(x.t)))}) {
+  if (auto both{
+          common::AllPresent(AnalyzeExpr(context, std::get<0>(x.t).value()),
+              AnalyzeExpr(context, std::get<1>(x.t).value()))}) {
     ConformabilityCheck(context.GetContextualMessages(), std::get<0>(*both),
         std::get<1>(*both));
     return AsMaybeExpr(Relate(context.GetContextualMessages(), opr,
@@ -1914,8 +1918,9 @@ static MaybeExpr AnalyzeExpr(
 template<typename PARSED>
 MaybeExpr LogicalHelper(
     ExpressionAnalysisContext &context, LogicalOperator opr, const PARSED &x) {
-  if (auto both{common::AllPresent(AnalyzeExpr(context, *std::get<0>(x.t)),
-          AnalyzeExpr(context, *std::get<1>(x.t)))}) {
+  if (auto both{
+          common::AllPresent(AnalyzeExpr(context, std::get<0>(x.t).value()),
+              AnalyzeExpr(context, std::get<1>(x.t).value()))}) {
     return std::visit(
         common::visitors{
             [&](Expr<SomeLogical> &&lx, Expr<SomeLogical> &&ly) -> MaybeExpr {
@@ -1969,9 +1974,9 @@ static MaybeExpr AnalyzeExpr(
 }
 
 MaybeExpr ExpressionAnalysisContext::Analyze(const parser::Expr &expr) {
-  if (const auto *typed{expr.typedExpr.get()}) {
+  if (expr.typedExpr.has_value()) {
     // Expression was already checked by AnalyzeExpressions() below.
-    return std::make_optional<Expr<SomeType>>(typed->v);
+    return std::make_optional<Expr<SomeType>>(expr.typedExpr.value().v);
   } else if (!expr.source.empty()) {
     // Analyze the expression in a specified source position context for better
     // error reporting.
@@ -2092,7 +2097,7 @@ public:
   template<typename A> void Post(const A &) {}
 
   bool Pre(const parser::Expr &expr) {
-    if (expr.typedExpr.get() == nullptr) {
+    if (!expr.typedExpr.has_value()) {
       if (MaybeExpr checked{AnalyzeExpr(context_, expr)}) {
 #if PMKDEBUG
 //        checked->AsFortran(std::cout << "checked expression: ") << '\n';

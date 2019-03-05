@@ -31,10 +31,14 @@ class Symbol;
 
 namespace Fortran::evaluate {
 
-struct ActualArgument {
-  explicit ActualArgument(Expr<SomeType> &&x) : value{std::move(x)} {}
+class ActualArgument {
+public:
+  explicit ActualArgument(Expr<SomeType> &&x) : value_{std::move(x)} {}
   explicit ActualArgument(CopyableIndirection<Expr<SomeType>> &&v)
-    : value{std::move(v)} {}
+    : value_{std::move(v)} {}
+
+  Expr<SomeType> &value() { return value_.value(); }
+  const Expr<SomeType> &value() const { return value_.value(); }
 
   std::optional<DynamicType> GetType() const;
   int Rank() const;
@@ -47,12 +51,13 @@ struct ActualArgument {
 
   // TODO: Mark legacy %VAL and %REF arguments
 
+private:
   // Subtlety: There is a distinction that must be maintained here between an
   // actual argument expression that is a variable and one that is not,
   // e.g. between X and (X).  The parser attempts to parse each argument
   // first as a variable, then as an expression, and the distinction appears
   // in the parse tree.
-  CopyableIndirection<Expr<SomeType>> value;
+  CopyableIndirection<Expr<SomeType>> value_;
 };
 
 using ActualArguments = std::vector<std::optional<ActualArgument>>;

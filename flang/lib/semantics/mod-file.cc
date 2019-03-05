@@ -682,7 +682,8 @@ static const SourceName *GetSubmoduleParent(const parser::Program &program) {
   CHECK(program.v.size() == 1);
   auto &unit{program.v.front()};
   auto &submod{std::get<common::Indirection<parser::Submodule>>(unit.u)};
-  auto &stmt{std::get<parser::Statement<parser::SubmoduleStmt>>(submod->t)};
+  auto &stmt{
+      std::get<parser::Statement<parser::SubmoduleStmt>>(submod.value().t)};
   auto &parentId{std::get<parser::ParentIdentifier>(stmt.statement.t)};
   if (auto &parent{std::get<std::optional<parser::Name>>(parentId.t)}) {
     return &parent->source;

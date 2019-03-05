@@ -73,12 +73,12 @@ private:
       return;
     }
     parser::Name *name{std::get_if<parser::Name>(
-        &std::get<parser::ProcedureDesignator>((*funcRef)->v.t).u)};
+        &std::get<parser::ProcedureDesignator>(funcRef->value().v.t).u)};
     if (!name || !name->symbol ||
         !name->symbol->GetUltimate().has<ObjectEntityDetails>()) {
       return;
     }
-    x.u = common::Indirection{(*funcRef)->ConvertToArrayElementRef()};
+    x.u = common::Indirection{funcRef->value().ConvertToArrayElementRef()};
   }
 };
 
@@ -95,7 +95,7 @@ void RewriteMutator::Post(parser::SpecificationPart &x) {
   auto &list{std::get<std::list<parser::DeclarationConstruct>>(x.t)};
   for (auto it{list.begin()}; it != list.end();) {
     if (auto stmt{std::get_if<stmtFuncType>(&it->u)}) {
-      Symbol *symbol{std::get<parser::Name>(stmt->statement->t).symbol};
+      Symbol *symbol{std::get<parser::Name>(stmt->statement.value().t).symbol};
       if (symbol && symbol->has<ObjectEntityDetails>()) {
         // not a stmt func: remove it here and add to ones to convert
         stmtFuncsToConvert_.push_back(std::move(*stmt));
@@ -111,7 +111,7 @@ void RewriteMutator::Post(parser::SpecificationPart &x) {
 bool RewriteMutator::Pre(parser::ExecutionPart &x) {
   auto origFirst{x.v.begin()};  // insert each elem before origFirst
   for (stmtFuncType &sf : stmtFuncsToConvert_) {
-    auto &&stmt = sf.statement->ConvertToAssignment();
+    auto &&stmt = sf.statement.value().ConvertToAssignment();
     stmt.source = sf.source;
     x.v.insert(origFirst,
         parser::ExecutionPartConstruct{parser::ExecutableConstruct{stmt}});

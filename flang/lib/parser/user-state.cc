@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ std::optional<CapturedLabelDoStmt::resultType> CapturedLabelDoStmt::Parse(
   auto result{parser.Parse(state)};
   if (result) {
     if (auto *ustate{state.userState()}) {
-      ustate->NewDoLabel(std::get<Label>(result->statement->t));
+      ustate->NewDoLabel(std::get<Label>(result->statement.value().t));
     }
   }
   return result;

@@ -19,14 +19,14 @@
 namespace Fortran::evaluate {
 
 std::optional<DynamicType> ActualArgument::GetType() const {
-  return value->GetType();
+  return value().GetType();
 }
 
-int ActualArgument::Rank() const { return value->Rank(); }
+int ActualArgument::Rank() const { return value().Rank(); }
 
 bool ActualArgument::operator==(const ActualArgument &that) const {
   return keyword == that.keyword &&
-      isAlternateReturn == that.isAlternateReturn && value == that.value;
+      isAlternateReturn == that.isAlternateReturn && value() == that.value();
 }
 
 std::ostream &ActualArgument::AsFortran(std::ostream &o) const {
@@ -36,7 +36,7 @@ std::ostream &ActualArgument::AsFortran(std::ostream &o) const {
   if (isAlternateReturn) {
     o << '*';
   }
-  return value->AsFortran(o);
+  return value().AsFortran(o);
 }
 
 std::optional<int> ActualArgument::VectorSize() const {

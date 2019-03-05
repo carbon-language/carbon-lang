@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public:
             common::visitors{
                 [](auto &) {},
                 [&](Statement<common::Indirection<LabelDoStmt>> &labelDoStmt) {
-                  auto &label{std::get<Label>(labelDoStmt.statement->t)};
+                  auto &label{std::get<Label>(labelDoStmt.statement.value().t)};
                   stack.push_back(LabelInfo{i, label});
                 },
                 [&](Statement<common::Indirection<EndDoStmt>> &endDoStmt) {
@@ -74,7 +74,8 @@ private:
                 std::move(std::get<std::optional<LoopControl>>(
                     std::get<Statement<common::Indirection<LabelDoStmt>>>(
                         std::get<ExecutableConstruct>(doLoop->u).u)
-                        .statement->t)))}};
+                        .statement.value()
+                        .t)))}};
         nonLabelDoStmt.source = originalSource;
         std::get<ExecutableConstruct>(doLoop->u).u =
             common::Indirection<DoConstruct>{

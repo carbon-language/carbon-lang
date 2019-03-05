@@ -152,7 +152,7 @@ std::optional<Expr<SomeType>> AnalyzeExpr(
 template<typename A>
 std::optional<Expr<SomeType>> AnalyzeExpr(
     ExpressionAnalysisContext &context, const common::Indirection<A> &x) {
-  return AnalyzeExpr(context, *x);
+  return AnalyzeExpr(context, x.value());
 }
 
 // These specializations implement constraint checking.

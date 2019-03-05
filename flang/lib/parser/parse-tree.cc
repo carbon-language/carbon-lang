@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -96,19 +96,19 @@ Designator FunctionReference::ConvertToArrayElementRef() {
     std::visit(
         common::visitors{
             [&](common::Indirection<Expr> &y) {
-              args.push_back(std::move(*y));
+              args.push_back(std::move(y.value()));
             },
             [&](common::Indirection<Variable> &y) {
               args.push_back(std::visit(
                   common::visitors{
                       [&](common::Indirection<Designator> &z) {
-                        return Expr{std::move(*z)};
+                        return Expr{std::move(z.value())};
                       },
                       [&](common::Indirection<FunctionReference> &z) {
-                        return Expr{std::move(*z)};
+                        return Expr{std::move(z.value())};
                       },
                   },
-                  y->u));
+                  y.value().u));
             },
             [&](auto &) { CHECK(!"unexpected kind of ActualArg"); },
         },

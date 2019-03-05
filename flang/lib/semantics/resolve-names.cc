@@ -1762,7 +1762,7 @@ bool ModuleVisitor::Pre(const parser::Only &x) {
                     [&](const parser::Name &name) { AddUse(name); },
                     [](const auto &) { common::die("TODO: GenericSpec"); },
                 },
-                generic->u);
+                generic.value().u);
           },
           [&](const parser::Name &name) { AddUse(name); },
           [&](const parser::Rename &rename) {
@@ -3241,7 +3241,7 @@ bool DeclarationVisitor::Pre(const parser::TypeBoundGenericStmt &x) {
       specificProcs.push_back(symbol);
     }
   }
-  const auto *genericName{GetGenericSpecName(*genericSpec)};
+  const auto *genericName{GetGenericSpecName(genericSpec.value())};
   if (!genericName) {
     return false;
   }
@@ -3906,7 +3906,9 @@ bool ConstructVisitor::Pre(const parser::DataImpliedDo &x) {
 bool ConstructVisitor::Pre(const parser::DataStmtObject &x) {
   std::visit(
       common::visitors{
-          [&](const common::Indirection<parser::Variable> &y) { Walk(*y); },
+          [&](const common::Indirection<parser::Variable> &y) {
+            Walk(y.value());
+          },
           [&](const parser::DataImpliedDo &y) {
             PushScope(Scope::Kind::ImpliedDos, nullptr);
             Walk(y);
@@ -3992,7 +3994,8 @@ void ConstructVisitor::Post(const parser::Selector &x) {
           [&](const parser::Variable &y) {
             if (const auto *des{
                     std::get_if<Indirection<parser::Designator>>(&y.u)}) {
-              if (const auto *dr{std::get_if<parser::DataRef>(&(*des)->u)}) {
+              if (const auto *dr{
+                      std::get_if<parser::DataRef>(&des->value().u)}) {
                 variable = std::get_if<parser::Name>(&dr->u);
                 if (variable && !FindSymbol(*variable)) {
                   variable = nullptr;
@@ -4236,13 +4239,13 @@ const parser::Name *ResolveNamesVisitor::ResolveDataRef(
       common::visitors{
           [=](const parser::Name &y) { return ResolveName(y); },
           [=](const Indirection<parser::StructureComponent> &y) {
-            return ResolveStructureComponent(*y);
+            return ResolveStructureComponent(y.value());
           },
           [=](const Indirection<parser::ArrayElement> &y) {
-            return ResolveArrayElement(*y);
+            return ResolveArrayElement(y.value());
           },
           [=](const Indirection<parser::CoindexedNamedObject> &y) {
-            return ResolveCoindexedNamedObject(*y);
+            return ResolveCoindexedNamedObject(y.value());
           },
       },
       x.u);
@@ -4447,7 +4450,7 @@ bool ModuleVisitor::Pre(const parser::AccessStmt &x) {
                         },
                         [](const auto &) { common::die("TODO: GenericSpec"); },
                     },
-                    y->u);
+                    y.value().u);
               },
           },
           accessId.u);
@@ -4594,7 +4597,7 @@ bool ResolveNamesVisitor::Pre(const parser::PointerAssignmentStmt &x) {
                 },
                 [](const auto &) -> const parser::Name * { return nullptr; },
             },
-            (*designator)->u)}) {
+            designator->value().u)}) {
       return !NameIsKnownOrIntrinsic(*name);
     }
   }

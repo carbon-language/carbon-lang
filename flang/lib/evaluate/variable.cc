@@ -45,22 +45,24 @@ Triplet::Triplet(std::optional<Expr<SubscriptInteger>> &&l,
 
 std::optional<Expr<SubscriptInteger>> Triplet::lower() const {
   if (lower_) {
-    return {**lower_};
+    return {lower_.value().value()};
   }
   return std::nullopt;
 }
 
 std::optional<Expr<SubscriptInteger>> Triplet::upper() const {
   if (upper_) {
-    return {**upper_};
+    return {upper_.value().value()};
   }
   return std::nullopt;
 }
 
-const Expr<SubscriptInteger> &Triplet::stride() const { return *stride_; }
+const Expr<SubscriptInteger> &Triplet::stride() const {
+  return stride_.value();
+}
 
 bool Triplet::IsStrideOne() const {
-  if (auto stride{ToInt64(*stride_)}) {
+  if (auto stride{ToInt64(stride_.value())}) {
     return stride == 1;
   } else {
     return false;
@@ -77,7 +79,7 @@ CoarrayRef::CoarrayRef(std::vector<const Symbol *> &&c,
 
 std::optional<Expr<SomeInteger>> CoarrayRef::stat() const {
   if (stat_.has_value()) {
-    return {**stat_};
+    return {stat_.value().value()};
   } else {
     return std::nullopt;
   }
@@ -85,7 +87,7 @@ std::optional<Expr<SomeInteger>> CoarrayRef::stat() const {
 
 std::optional<Expr<SomeInteger>> CoarrayRef::team() const {
   if (team_.has_value()) {
-    return {**team_};
+    return {team_.value().value()};
   } else {
     return std::nullopt;
   }
@@ -107,16 +109,16 @@ CoarrayRef &CoarrayRef::set_team(Expr<SomeInteger> &&v, bool isTeamNumber) {
 void Substring::SetBounds(std::optional<Expr<SubscriptInteger>> &lower,
     std::optional<Expr<SubscriptInteger>> &upper) {
   if (lower.has_value()) {
-    lower_.emplace(std::move(*lower));
+    lower_.emplace(std::move(lower.value()));
   }
   if (upper.has_value()) {
-    upper_.emplace(std::move(*upper));
+    upper_.emplace(std::move(upper.value()));
   }
 }
 
 Expr<SubscriptInteger> Substring::lower() const {
   if (lower_.has_value()) {
-    return **lower_;
+    return lower_.value().value();
   } else {
     return AsExpr(Constant<SubscriptInteger>{1});
   }
@@ -124,7 +126,7 @@ Expr<SubscriptInteger> Substring::lower() const {
 
 Expr<SubscriptInteger> Substring::upper() const {
   if (upper_.has_value()) {
-    return **upper_;
+    return upper_.value().value();
   } else {
     return std::visit(
         common::visitors{
@@ -141,8 +143,8 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
   if (!lower_.has_value()) {
     lower_ = AsExpr(Constant<SubscriptInteger>{1});
   }
-  *lower_ = evaluate::Fold(context, std::move(**lower_));
-  std::optional<std::int64_t> lbi{ToInt64(**lower_)};
+  lower_.value() = evaluate::Fold(context, std::move(lower_.value().value()));
+  std::optional<std::int64_t> lbi{ToInt64(lower_.value().value())};
   if (lbi.has_value() && *lbi < 1) {
     context.messages().Say(
         "lower bound (%jd) on substring is less than one"_en_US,
@@ -153,8 +155,8 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
   if (!upper_.has_value()) {
     upper_ = upper();
   }
-  *upper_ = evaluate::Fold(context, std::move(**upper_));
-  if (std::optional<std::int64_t> ubi{ToInt64(**upper_)}) {
+  upper_.value() = evaluate::Fold(context, std::move(upper_.value().value()));
+  if (std::optional<std::int64_t> ubi{ToInt64(upper_.value().value())}) {
     auto *literal{std::get_if<StaticDataObject::Pointer>(&parent_)};
     std::optional<std::int64_t> length;
     if (literal != nullptr) {
@@ -262,7 +264,7 @@ std::ostream &Emit(std::ostream &o, const CopyableIndirection<A> &p,
   if (kw != nullptr) {
     o << kw;
   }
-  Emit(o, *p);
+  Emit(o, p.value());
   return o;
 }
 
@@ -298,14 +300,14 @@ std::ostream &TypeParamInquiry<KIND>::AsFortran(std::ostream &o) const {
 }
 
 std::ostream &Component::AsFortran(std::ostream &o) const {
-  base_->AsFortran(o);
+  base_.value().AsFortran(o);
   return Emit(o << '%', *symbol_);
 }
 
 std::ostream &Triplet::AsFortran(std::ostream &o) const {
   Emit(o, lower_) << ':';
   Emit(o, upper_);
-  Emit(o << ':', *stride_);
+  Emit(o << ':', stride_.value());
   return o;
 }
 
@@ -465,13 +467,15 @@ int Component::Rank() const {
   if (int rank{symbol_->Rank()}; rank > 0) {
     return rank;
   }
-  return base_->Rank();
+  return base_.value().Rank();
 }
 
 int Subscript::Rank() const {
   return std::visit(
       common::visitors{
-          [](const IndirectSubscriptIntegerExpr &x) { return x->Rank(); },
+          [](const IndirectSubscriptIntegerExpr &x) {
+            return x.value().Rank();
+          },
           [](const Triplet &) { return 1; },
       },
       u);
@@ -538,7 +542,7 @@ template<typename T> int Designator<T>::Rank() const {
 
 // GetBaseObject(), GetFirstSymbol(), & GetLastSymbol()
 const Symbol &Component::GetFirstSymbol() const {
-  return base_->GetFirstSymbol();
+  return base_.value().GetFirstSymbol();
 }
 
 const Symbol &ArrayRef::GetFirstSymbol() const {
@@ -658,7 +662,7 @@ bool TypeParamInquiry<KIND>::operator==(
 }
 bool Triplet::operator==(const Triplet &that) const {
   return lower_ == that.lower_ && upper_ == that.upper_ &&
-      *stride_ == *that.stride_;
+      stride_ == that.stride_;
 }
 bool ArrayRef::operator==(const ArrayRef &that) const {
   return base_ == that.base_ && subscript_ == that.subscript_;

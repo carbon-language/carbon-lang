@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -345,8 +345,8 @@ public:
         auto &logicalExpr{
             std::get<parser::ScalarLogicalExpr>(optionalLoopControl->u)
                 .thing.thing};
-        if (!ExpressionHasTypeCategory(
-                *logicalExpr->typedExpr, common::TypeCategory::Logical)) {
+        if (!ExpressionHasTypeCategory(logicalExpr.value().typedExpr.value(),
+                common::TypeCategory::Logical)) {
           messages_.Say(currentStatementSourcePosition_,
               "DO WHERE must have LOGICAL expression"_err_en_US);
         }
@@ -392,7 +392,7 @@ private:
   }
   void CheckMaskIsPure(const parser::ScalarLogicalExpr &mask) const {
     // C1121 - procedures in mask must be pure
-    CS references{GatherReferencesFromExpression(*mask.thing.thing)};
+    CS references{GatherReferencesFromExpression(mask.thing.thing.value())};
     for (auto *r : references) {
       if (isProcedure(r->flags()) && !isPure(r->attrs())) {
         messages_.Say(currentStatementSourcePosition_,
@@ -415,7 +415,8 @@ private:
   }
   void HasNoReferences(
       const CS &indexNames, const parser::ScalarIntExpr &expression) const {
-    CS references{GatherReferencesFromExpression(*expression.thing.thing)};
+    CS references{
+        GatherReferencesFromExpression(expression.thing.thing.value())};
     CheckNoCollisions(references, indexNames,
         "concurrent-control expression references index-name"_err_en_US);
   }
@@ -435,7 +436,7 @@ private:
   void CheckMaskDoesNotReferenceLocal(
       const parser::ScalarLogicalExpr &mask, const CS &symbols) const {
     // C1129
-    CheckNoCollisions(GatherReferencesFromExpression(*mask.thing.thing),
+    CheckNoCollisions(GatherReferencesFromExpression(mask.thing.thing.value()),
         symbols,
         "concurrent-header mask-expr references name"
         " in locality-spec"_err_en_US);
@@ -478,8 +479,8 @@ private:
         // C1123
         HasNoReferences(indexNames, std::get<1>(c.t));
         HasNoReferences(indexNames, std::get<2>(c.t));
-        auto &expression{std::get<std::optional<parser::ScalarIntExpr>>(c.t)};
-        if (expression) {
+        if (auto &expression{
+                std::get<std::optional<parser::ScalarIntExpr>>(c.t)}) {
           HasNoReferences(indexNames, *expression);
         }
       }

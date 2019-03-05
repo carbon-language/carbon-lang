@@ -944,7 +944,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
   for (std::size_t j{0}; j < dummies; ++j) {
     const IntrinsicDummyArgument &d{dummy[std::min(j, dummyArgPatterns - 1)]};
     if (const ActualArgument * arg{actualForDummy[j]}) {
-      if (IsAssumedRank(*arg->value) && d.rank != Rank::anyOrAssumedRank) {
+      if (IsAssumedRank(arg->value()) && d.rank != Rank::anyOrAssumedRank) {
         messages.Say("assumed-rank array cannot be forwarded to "
                      "'%s=' argument"_err_en_US,
             d.keyword);
@@ -1069,7 +1069,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       CHECK(kindDummyArg != nullptr);
       CHECK(result.categorySet == CategorySet{resultType->category});
       if (kindArg != nullptr) {
-        auto &expr{*kindArg->value};
+        auto &expr{kindArg->value()};
         CHECK(expr.Rank() == 0);
         if (auto code{ToInt64(expr)}) {
           if (IsValidKindOfIntrinsicType(resultType->category, *code)) {
@@ -1263,7 +1263,7 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
       genericErrors.Say("unknown argument '%s' to NULL()"_err_en_US,
           arguments[0]->keyword->ToString().data());
     } else {
-      Expr<SomeType> &mold{*arguments[0]->value};
+      Expr<SomeType> &mold{arguments[0]->value()};
       if (IsPointerOrAllocatable(mold)) {
         return std::make_optional<SpecificCall>(
             SpecificIntrinsic{"null"s, mold.GetType(), mold.Rank(),

@@ -103,7 +103,7 @@ public:
     nested.Analyze(stmt.statement);
   }
   template<typename A> void Analyze(const common::Indirection<A> &x) {
-    Analyze(*x);
+    Analyze(x.value());
   }
   template<typename... As> void Analyze(const std::variant<As...> &u) {
     std::visit([&](const auto &x) { Analyze(x); }, u);

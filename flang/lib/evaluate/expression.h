@@ -145,17 +145,17 @@ public:
   template<int J> Expr<Operand<J>> &operand() {
     if constexpr (operands == 1) {
       static_assert(J == 0);
-      return *operand_;
+      return operand_.value();
     } else {
-      return *std::get<J>(operand_);
+      return std::get<J>(operand_).value();
     }
   }
   template<int J> const Expr<Operand<J>> &operand() const {
     if constexpr (operands == 1) {
       static_assert(J == 0);
-      return *operand_;
+      return operand_.value();
     } else {
-      return *std::get<J>(operand_);
+      return std::get<J>(operand_).value();
     }
   }
 
@@ -413,12 +413,32 @@ struct ImpliedDoIndex {
   parser::CharBlock name;  // nested implied DOs must use distinct names
 };
 
-template<typename RESULT> struct ImpliedDo {
+template<typename RESULT> class ImpliedDo {
+public:
   using Result = RESULT;
+  using Index = ResultType<ImpliedDoIndex>;
+  ImpliedDo(parser::CharBlock name, Expr<Index> &&lower, Expr<Index> &&upper,
+      Expr<Index> &&stride, ArrayConstructorValues<Result> &&values)
+    : name_{name}, lower_{std::move(lower)}, upper_{std::move(upper)},
+      stride_{std::move(stride)}, values_{std::move(values)} {}
+  DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(ImpliedDo)
   bool operator==(const ImpliedDo &) const;
-  parser::CharBlock name;
-  CopyableIndirection<Expr<ResultType<ImpliedDoIndex>>> lower, upper, stride;
-  CopyableIndirection<ArrayConstructorValues<RESULT>> values;
+  parser::CharBlock name() const { return name_; }
+  Expr<Index> &lower() { return lower_.value(); }
+  const Expr<Index> &lower() const { return lower_.value(); }
+  Expr<Index> &upper() { return upper_.value(); }
+  const Expr<Index> &upper() const { return upper_.value(); }
+  Expr<Index> &stride() { return stride_.value(); }
+  const Expr<Index> &stride() const { return stride_.value(); }
+  ArrayConstructorValues<Result> &values() { return values_.value(); }
+  const ArrayConstructorValues<Result> &values() const {
+    return values_.value();
+  }
+
+private:
+  parser::CharBlock name_;
+  CopyableIndirection<Expr<Index>> lower_, upper_, stride_;
+  CopyableIndirection<ArrayConstructorValues<Result>> values_;
 };
 
 template<typename RESULT> struct ArrayConstructorValue {
@@ -466,7 +486,7 @@ public:
   bool operator==(const ArrayConstructor &) const;
   static constexpr DynamicType GetType() { return Result::GetType(); }
   std::ostream &AsFortran(std::ostream &) const;
-  const Expr<SubscriptInteger> &LEN() const { return *length_; }
+  const Expr<SubscriptInteger> &LEN() const { return length_.value(); }
 
 private:
   CopyableIndirection<Expr<SubscriptInteger>> length_;
