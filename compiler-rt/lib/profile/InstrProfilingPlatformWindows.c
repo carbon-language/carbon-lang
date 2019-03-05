@@ -29,6 +29,7 @@
 #pragma section(".lprfd$Z", read, write)
 #pragma section(".lprfc$A", read, write)
 #pragma section(".lprfc$Z", read, write)
+#pragma section(".lorderfile$A", read, write)
 #pragma section(".lprfnd$A", read, write)
 #pragma section(".lprfnd$Z", read, write)
 #endif
