@@ -31,11 +31,22 @@ namespace {
 // ScopedUnwinding is a scope for stacktracing member of a context
 class ScopedUnwinding {
  public:
-  explicit ScopedUnwinding(AsanThread *t) : thread(t) { t->setUnwinding(true); }
-  ~ScopedUnwinding() { thread->setUnwinding(false); }
+  explicit ScopedUnwinding(AsanThread *t) : thread(t) {
+    if (thread) {
+      can_unwind = !thread->isUnwinding();
+      thread->setUnwinding(true);
+    }
+  }
+  ~ScopedUnwinding() {
+    if (thread)
+      thread->setUnwinding(false);
+  }
+
+  bool CanUnwind() const { return can_unwind; }
 
  private:
-  AsanThread *thread;
+  AsanThread *thread = nullptr;
+  bool can_unwind = true;
 };
 
 }  // namespace
@@ -52,6 +63,9 @@ void __sanitizer::BufferedStackTrace::UnwindImpl(
   Unwind(max_depth, pc, bp, context, 0, 0, false);
 #else
   AsanThread *t = GetCurrentThread();
+  ScopedUnwinding unwind_scope(t);
+  if (!unwind_scope.CanUnwind())
+    return;
   if (!t) {
     if (!request_fast) {
       /* If GetCurrentThread() has failed, try to do slow unwind anyways. */
@@ -59,11 +73,10 @@ void __sanitizer::BufferedStackTrace::UnwindImpl(
     }
     return;
   }
-  if (t->isUnwinding())
-    return;
+
   uptr stack_top = t->stack_top();
   uptr stack_bottom = t->stack_bottom();
-  ScopedUnwinding unwind_scope(t);
+
   if (SANITIZER_MIPS && !IsValidFrame(bp, stack_top, stack_bottom))
     return;
   if (StackTrace::WillUseFastUnwind(request_fast))
