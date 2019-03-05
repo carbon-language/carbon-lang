@@ -15,11 +15,25 @@ using namespace lldb_private::formatters;
 
 bool lldb_private::formatters::LibCxxAtomicSummaryProvider(
     ValueObject &valobj, Stream &stream, const TypeSummaryOptions &options) {
-  static ConstString g___a_("__a_");
 
-  if (ValueObjectSP child = valobj.GetChildMemberWithName(g___a_, true)) {
+  ValueObjectSP non_sythetic = valobj.GetNonSyntheticValue();
+  if (!non_sythetic)
+    return false;
+
+  ValueObjectSP index_zero = non_sythetic->GetChildAtIndex(0, true);
+  if (!index_zero)
+    return false;
+
+  ValueObjectSP member__a_ =
+      index_zero->GetChildMemberWithName(ConstString("__a_"), true);
+  if (!member__a_)
+    return false;
+
+  if (ValueObjectSP member__a_value =
+          member__a_->GetChildMemberWithName(ConstString("__a_value"), true)) {
     std::string summary;
-    if (child->GetSummaryAsCString(summary, options) && summary.size() > 0) {
+    if (member__a_value->GetSummaryAsCString(summary, options) &&
+        summary.size() > 0) {
       stream.Printf("%s", summary.c_str());
       return true;
     }
@@ -59,9 +73,17 @@ lldb_private::formatters::LibcxxStdAtomicSyntheticFrontEnd::
     : SyntheticChildrenFrontEnd(*valobj_sp), m_real_child(nullptr) {}
 
 bool lldb_private::formatters::LibcxxStdAtomicSyntheticFrontEnd::Update() {
-  static ConstString g___a_("__a_");
+  ValueObjectSP index_zero = m_backend.GetChildAtIndex(0, true);
+  if (!index_zero)
+    return false;
 
-  m_real_child = m_backend.GetChildMemberWithName(g___a_, true).get();
+  ValueObjectSP member__a_ =
+      index_zero->GetChildMemberWithName(ConstString("__a_"), true);
+  if (!member__a_)
+    return false;
+
+  m_real_child =
+      member__a_->GetChildMemberWithName(ConstString("__a_value"), true).get();
 
   return false;
 }
