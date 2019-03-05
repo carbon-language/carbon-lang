@@ -16,7 +16,7 @@ using namespace llvm;
 
 TargetSubtargetInfo::TargetSubtargetInfo(
     const Triple &TT, StringRef CPU, StringRef FS,
-    ArrayRef<SubtargetFeatureKV> PF, ArrayRef<SubtargetFeatureKV> PD,
+    ArrayRef<SubtargetFeatureKV> PF, ArrayRef<SubtargetSubTypeKV> PD,
     const SubtargetInfoKV *ProcSched, const MCWriteProcResEntry *WPR,
     const MCWriteLatencyEntry *WL, const MCReadAdvanceEntry *RA,
     const InstrStage *IS, const unsigned *OC, const unsigned *FP)

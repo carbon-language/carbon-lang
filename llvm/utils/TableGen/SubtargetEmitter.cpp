@@ -257,7 +257,7 @@ SubtargetEmitter::CPUKeyValues(raw_ostream &OS,
 
   // Begin processor table
   OS << "// Sorted (by key) array of values for CPU subtype.\n"
-     << "extern const llvm::SubtargetFeatureKV " << Target
+     << "extern const llvm::SubtargetSubTypeKV " << Target
      << "SubTypeKV[] = {\n";
 
   // For each processor
@@ -266,10 +266,8 @@ SubtargetEmitter::CPUKeyValues(raw_ostream &OS,
     RecVec FeatureList = Processor->getValueAsListOfDefs("Features");
 
     // Emit as { "cpu", "description", 0, { f1 , f2 , ... fn } },
-    // The 0 is for the feature id which isn't used for CPUs.
     OS << " { "
-       << "\"" << Name << "\", "
-       << "\"Select the " << Name << " processor\", 0, ";
+       << "\"" << Name << "\", ";
 
     printFeatureMask(OS, FeatureList, FeatureMap);
 
@@ -1760,7 +1758,7 @@ void SubtargetEmitter::emitGenMCSubtargetInfo(raw_ostream &OS) {
      << "GenMCSubtargetInfo : public MCSubtargetInfo {\n";
   OS << "  " << Target << "GenMCSubtargetInfo(const Triple &TT, \n"
      << "    StringRef CPU, StringRef FS, ArrayRef<SubtargetFeatureKV> PF,\n"
-     << "    ArrayRef<SubtargetFeatureKV> PD,\n"
+     << "    ArrayRef<SubtargetSubTypeKV> PD,\n"
      << "    const SubtargetInfoKV *ProcSched,\n"
      << "    const MCWriteProcResEntry *WPR,\n"
      << "    const MCWriteLatencyEntry *WL,\n"
@@ -1917,7 +1915,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
   OS << "#include \"llvm/CodeGen/TargetSchedule.h\"\n\n";
   OS << "namespace llvm {\n";
   OS << "extern const llvm::SubtargetFeatureKV " << Target << "FeatureKV[];\n";
-  OS << "extern const llvm::SubtargetFeatureKV " << Target << "SubTypeKV[];\n";
+  OS << "extern const llvm::SubtargetSubTypeKV " << Target << "SubTypeKV[];\n";
   OS << "extern const llvm::SubtargetInfoKV " << Target << "ProcSchedKV[];\n";
   OS << "extern const llvm::MCWriteProcResEntry "
      << Target << "WriteProcResTable[];\n";

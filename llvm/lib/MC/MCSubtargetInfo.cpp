@@ -21,8 +21,8 @@
 using namespace llvm;
 
 /// Find KV in array using binary search.
-static const SubtargetFeatureKV *Find(StringRef S,
-                                      ArrayRef<SubtargetFeatureKV> A) {
+template <typename T>
+static const T *Find(StringRef S, ArrayRef<T> A) {
   // Binary search the array
   auto F = std::lower_bound(A.begin(), A.end(), S);
   // If not found then return NULL
@@ -84,7 +84,8 @@ static void ApplyFeatureFlag(FeatureBitset &Bits, StringRef Feature,
 }
 
 /// Return the length of the longest entry in the table.
-static size_t getLongestEntryLength(ArrayRef<SubtargetFeatureKV> Table) {
+template <typename T>
+static size_t getLongestEntryLength(ArrayRef<T> Table) {
   size_t MaxLen = 0;
   for (auto &I : Table)
     MaxLen = std::max(MaxLen, std::strlen(I.Key));
@@ -92,7 +93,7 @@ static size_t getLongestEntryLength(ArrayRef<SubtargetFeatureKV> Table) {
 }
 
 /// Display help for feature choices.
-static void Help(ArrayRef<SubtargetFeatureKV> CPUTable,
+static void Help(ArrayRef<SubtargetSubTypeKV> CPUTable,
                  ArrayRef<SubtargetFeatureKV> FeatTable) {
   // Determine the length of the longest CPU and Feature entries.
   unsigned MaxCPULen  = getLongestEntryLength(CPUTable);
@@ -101,7 +102,8 @@ static void Help(ArrayRef<SubtargetFeatureKV> CPUTable,
   // Print the CPU table.
   errs() << "Available CPUs for this target:\n\n";
   for (auto &CPU : CPUTable)
-    errs() << format("  %-*s - %s.\n", MaxCPULen, CPU.Key, CPU.Desc);
+    errs() << format("  %-*s - Select the %s processor.\n", MaxCPULen, CPU.Key,
+                     CPU.Key);
   errs() << '\n';
 
   // Print the Feature table.
@@ -115,7 +117,7 @@ static void Help(ArrayRef<SubtargetFeatureKV> CPUTable,
 }
 
 static FeatureBitset getFeatures(StringRef CPU, StringRef FS,
-                                 ArrayRef<SubtargetFeatureKV> ProcDesc,
+                                 ArrayRef<SubtargetSubTypeKV> ProcDesc,
                                  ArrayRef<SubtargetFeatureKV> ProcFeatures) {
   SubtargetFeatures Features(FS);
 
@@ -135,7 +137,7 @@ static FeatureBitset getFeatures(StringRef CPU, StringRef FS,
 
   // Find CPU entry if CPU name is specified.
   else if (!CPU.empty()) {
-    const SubtargetFeatureKV *CPUEntry = Find(CPU, ProcDesc);
+    const SubtargetSubTypeKV *CPUEntry = Find(CPU, ProcDesc);
 
     // If there is a match
     if (CPUEntry) {
@@ -173,7 +175,7 @@ void MCSubtargetInfo::setDefaultFeatures(StringRef CPU, StringRef FS) {
 
 MCSubtargetInfo::MCSubtargetInfo(
     const Triple &TT, StringRef C, StringRef FS,
-    ArrayRef<SubtargetFeatureKV> PF, ArrayRef<SubtargetFeatureKV> PD,
+    ArrayRef<SubtargetFeatureKV> PF, ArrayRef<SubtargetSubTypeKV> PD,
     const SubtargetInfoKV *ProcSched, const MCWriteProcResEntry *WPR,
     const MCWriteLatencyEntry *WL, const MCReadAdvanceEntry *RA,
     const InstrStage *IS, const unsigned *OC, const unsigned *FP)

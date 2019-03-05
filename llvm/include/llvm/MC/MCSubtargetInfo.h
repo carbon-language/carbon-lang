@@ -50,6 +50,24 @@ struct SubtargetFeatureKV {
 
 //===----------------------------------------------------------------------===//
 
+/// Used to provide key value pairs for feature and CPU bit flags.
+struct SubtargetSubTypeKV {
+  const char *Key;                      ///< K-V key string
+  FeatureBitArray Implies;              ///< K-V bit mask
+
+  /// Compare routine for std::lower_bound
+  bool operator<(StringRef S) const {
+    return StringRef(Key) < S;
+  }
+
+  /// Compare routine for std::is_sorted.
+  bool operator<(const SubtargetSubTypeKV &Other) const {
+    return StringRef(Key) < StringRef(Other.Key);
+  }
+};
+
+//===----------------------------------------------------------------------===//
+
 /// Used to provide key value pairs for CPU and arbitrary pointers.
 struct SubtargetInfoKV {
   const char *Key;                      ///< K-V key string
@@ -74,7 +92,7 @@ class MCSubtargetInfo {
   Triple TargetTriple;
   std::string CPU; // CPU being targeted.
   ArrayRef<SubtargetFeatureKV> ProcFeatures;  // Processor feature list
-  ArrayRef<SubtargetFeatureKV> ProcDesc;  // Processor descriptions
+  ArrayRef<SubtargetSubTypeKV> ProcDesc;  // Processor descriptions
 
   // Scheduler machine model
   const SubtargetInfoKV *ProcSchedModels;
@@ -92,7 +110,7 @@ public:
   MCSubtargetInfo(const MCSubtargetInfo &) = default;
   MCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS,
                   ArrayRef<SubtargetFeatureKV> PF,
-                  ArrayRef<SubtargetFeatureKV> PD,
+                  ArrayRef<SubtargetSubTypeKV> PD,
                   const SubtargetInfoKV *ProcSched,
                   const MCWriteProcResEntry *WPR, const MCWriteLatencyEntry *WL,
                   const MCReadAdvanceEntry *RA, const InstrStage *IS,
