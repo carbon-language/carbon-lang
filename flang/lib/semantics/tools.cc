@@ -143,70 +143,84 @@ bool IsPureFunction(const Scope &scope) {
   }
 }
 
-static bool HasPointerComponent(
+static const Symbol *FindPointerComponent(
     const Scope &scope, std::set<const Scope *> &visited) {
   if (scope.kind() != Scope::Kind::DerivedType) {
-    return false;
+    return nullptr;
   }
   if (!visited.insert(&scope).second) {
-    return false;
+    return nullptr;
   }
+  // If there's a top-level pointer component, return it for clearer error
+  // messaging.
   for (const auto &pair : scope) {
     const Symbol &symbol{*pair.second};
     if (symbol.attrs().test(Attr::POINTER)) {
-      return true;
+      return &symbol;
     }
+  }
+  for (const auto &pair : scope) {
+    const Symbol &symbol{*pair.second};
     if (const auto *details{symbol.detailsIf<ObjectEntityDetails>()}) {
       if (const DeclTypeSpec * type{details->type()}) {
         if (const DerivedTypeSpec * derived{type->AsDerived()}) {
           if (const Scope * nested{derived->scope()}) {
-            if (HasPointerComponent(*nested, visited)) {
-              return true;
+            if (const Symbol *
+                pointer{FindPointerComponent(*nested, visited)}) {
+              return pointer;
             }
           }
         }
       }
     }
   }
-  return false;
+  return nullptr;
 }
 
-bool HasPointerComponent(const Scope &scope) {
+const Symbol *FindPointerComponent(const Scope &scope) {
   std::set<const Scope *> visited;
-  return HasPointerComponent(scope, visited);
+  return FindPointerComponent(scope, visited);
 }
 
-bool HasPointerComponent(const DerivedTypeSpec &derived) {
+const Symbol *FindPointerComponent(const DerivedTypeSpec &derived) {
   if (const Scope * scope{derived.scope()}) {
-    return HasPointerComponent(*scope);
+    return FindPointerComponent(*scope);
   } else {
-    return false;
+    return nullptr;
   }
 }
 
-bool HasPointerComponent(const DeclTypeSpec &type) {
+const Symbol *FindPointerComponent(const DeclTypeSpec &type) {
   if (const DerivedTypeSpec * derived{type.AsDerived()}) {
-    return HasPointerComponent(*derived);
+    return FindPointerComponent(*derived);
   } else {
-    return false;
+    return nullptr;
   }
 }
 
-bool HasPointerComponent(const DeclTypeSpec *type) {
-  return type != nullptr && HasPointerComponent(*type);
+const Symbol *FindPointerComponent(const DeclTypeSpec *type) {
+  return type ? FindPointerComponent(*type) : nullptr;
 }
 
-bool IsOrHasPointerComponent(const Symbol &symbol) {
-  return symbol.attrs().test(Attr::POINTER) ||
-      HasPointerComponent(symbol.GetType());
+const Symbol *FindPointerComponent(const Symbol &symbol) {
+  return symbol.attrs().test(Attr::POINTER)
+      ? &symbol
+      : FindPointerComponent(symbol.GetType());
 }
 
 // C1594 specifies several ways by which an object might be globally visible.
-bool IsExternallyVisibleObject(const Symbol &object, const Scope &scope) {
-  return IsUseAssociated(object, scope) || IsHostAssociated(object, scope) ||
+const Symbol *FindExternallyVisibleObject(
+    const Symbol &object, const Scope &scope) {
+  // TODO: Storage association with any object for which this predicate holds,
+  // once EQUIVALENCE is supported.
+  if (IsUseAssociated(object, scope) || IsHostAssociated(object, scope) ||
       (IsPureFunction(scope) && IsPointerDummy(object)) ||
-      (object.attrs().test(Attr::INTENT_IN) && IsDummy(object)) ||
-      FindCommonBlockContaining(object) != nullptr;
-  // TODO: Storage association with any object for which this predicate holds
+      (object.attrs().test(Attr::INTENT_IN) && IsDummy(object))) {
+    return &object;
+  } else if (const Symbol * block{FindCommonBlockContaining(object)}) {
+    return block;
+  } else {
+    return nullptr;
+  }
 }
 }

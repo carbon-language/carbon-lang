@@ -29,6 +29,10 @@ const Symbol *FindCommonBlockContaining(const Symbol &object);
 const Scope *FindProgramUnitContaining(const Scope &);
 const Scope *FindProgramUnitContaining(const Symbol &);
 const Scope *FindPureFunctionContaining(const Scope *);
+const Symbol *FindPointerComponent(const Scope &);
+const Symbol *FindPointerComponent(const DerivedTypeSpec &);
+const Symbol *FindPointerComponent(const DeclTypeSpec &);
+const Symbol *FindPointerComponent(const Symbol &);
 
 bool IsCommonBlockContaining(const Symbol &block, const Symbol &object);
 bool IsAncestor(const Scope *maybeAncestor, const Scope &maybeDescendent);
@@ -39,35 +43,35 @@ bool IsPointerDummy(const Symbol &);
 bool IsFunction(const Symbol &);
 bool IsPureFunction(const Symbol &);
 bool IsPureFunction(const Scope &);
-bool HasPointerComponent(const Scope &);
-bool HasPointerComponent(const DerivedTypeSpec &);
-bool HasPointerComponent(const DeclTypeSpec &);
-bool IsOrHasPointerComponent(const Symbol &);
 
 // Determines whether an object might be visible outside a
-// PURE function (C1594)
-bool IsExternallyVisibleObject(const Symbol &, const Scope &);
+// PURE function (C1594); returns a non-null Symbol pointer for
+// diagnostic purposes if so.
+const Symbol *FindExternallyVisibleObject(const Symbol &, const Scope &);
 
-template<typename A> bool IsExternallyVisibleObject(const A &, const Scope &) {
-  return false;  // default base case
+template<typename A>
+const Symbol *FindExternallyVisibleObject(const A &, const Scope &) {
+  return nullptr;  // default base case
 }
 
 template<typename T>
-bool IsExternallyVisibleObject(
+const Symbol *FindExternallyVisibleObject(
     const evaluate::Designator<T> &designator, const Scope &scope) {
   if (const Symbol * symbol{designator.GetBaseObject().symbol()}) {
-    return IsExternallyVisibleObject(*symbol, scope);
-  } else {
+    return FindExternallyVisibleObject(*symbol, scope);
+  } else if (std::holds_alternative<evaluate::CoarrayRef>(designator.u)) {
     // Coindexed values are visible even if their image-local objects are not.
-    return std::holds_alternative<evaluate::CoarrayRef>(designator.u);
+    return designator.GetBaseObject().symbol();
+  } else {
+    return nullptr;
   }
 }
 
 template<typename T>
-bool IsExternallyVisibleObject(
+const Symbol *FindExternallyVisibleObject(
     const evaluate::Expr<T> &expr, const Scope &scope) {
   return std::visit(
-      [&](const auto &x) { return IsExternallyVisibleObject(x, scope); },
+      [&](const auto &x) { return FindExternallyVisibleObject(x, scope); },
       expr.u);
 }
 }

@@ -1490,10 +1490,21 @@ static MaybeExpr AnalyzeExpr(ExpressionAnalysisContext &context,
             const auto &innermost{context.context().FindScope(expr.source)};
             if (const auto *pureFunc{
                     semantics::FindPureFunctionContaining(&innermost)}) {
-              if (semantics::IsOrHasPointerComponent(*symbol) &&
-                  semantics::IsExternallyVisibleObject(*value, *pureFunc)) {
-                context.Say(expr.source,
-                    "Externally visible object must not be associated with a pointer in a PURE function"_err_en_US);
+              if (const Symbol *
+                  pointer{semantics::FindPointerComponent(*symbol)}) {
+                if (const Symbol *
+                    object{semantics::FindExternallyVisibleObject(
+                        *value, *pureFunc)}) {
+                  if (auto *msg{context.Say(expr.source,
+                          "Externally visible object '%s' must not be "
+                          "associated with pointer component '%s' in a "
+                          "PURE function"_err_en_US,
+                          object->name().ToString().data(),
+                          pointer->name().ToString().data())}) {
+                    msg->Attach(object->name(), "Object declaration"_en_US)
+                        .Attach(pointer->name(), "Pointer declaration"_en_US);
+                  }
+                }
               }
             }
           }

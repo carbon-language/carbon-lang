@@ -23,11 +23,11 @@ module module1
   use usefrom
   implicit none
   type :: has_pointer1
-    real, pointer :: p
-    type(has_pointer1), allocatable :: link1
+    real, pointer :: ptop
+    type(has_pointer1), allocatable :: link1 ! don't loop during analysis
   end type has_pointer1
   type :: has_pointer2
-    type(has_pointer1) :: p
+    type(has_pointer1) :: pnested
     type(has_pointer2), allocatable :: link2
   end type has_pointer2
   type, extends(has_pointer2) :: has_pointer3
@@ -35,7 +35,7 @@ module module1
   end type has_pointer3
   type :: t1(k)
     integer, kind :: k
-    real, pointer :: p
+    real, pointer :: pt1
     type(t1(k)), allocatable :: link
   end type t1
   type :: t2(k)
@@ -54,11 +54,9 @@ module module1
     type(t4(k)), allocatable :: link
   end type t4
   real :: modulevar1
-  real :: commonvar1
-  type(has_pointer1) :: modulevar2, commonvar2
-  type(has_pointer2) :: modulevar3, commonvar3
-  type(has_pointer3) :: modulevar4, commonvar4
-  common /cblock/ commonvar1
+  type(has_pointer1) :: modulevar2
+  type(has_pointer2) :: modulevar3
+  type(has_pointer3) :: modulevar4
 
  contains
 
@@ -72,35 +70,31 @@ module module1
     real, intent(inout) :: dummy2
     real, pointer :: dummy3
     real, intent(inout) :: dummy4[*]
+    real :: commonvar1
+    common /cblock/ commonvar1
     pf1 = 0.
     x1 = t1(0)(local1)
-    !ERROR: Externally visible object must not be associated with a pointer in a PURE function
+    !ERROR: Externally visible object 'usedfrom1' must not be associated with pointer component 'pt1' in a PURE function
     x1 = t1(0)(usedfrom1)
-    !ERROR: Externally visible object must not be associated with a pointer in a PURE function
+    !ERROR: Externally visible object 'modulevar1' must not be associated with pointer component 'pt1' in a PURE function
     x1 = t1(0)(modulevar1)
-    !ERROR: Externally visible object must not be associated with a pointer in a PURE function
+    !ERROR: Externally visible object 'cblock' must not be associated with pointer component 'pt1' in a PURE function
     x1 = t1(0)(commonvar1)
-    !ERROR: Externally visible object must not be associated with a pointer in a PURE function
+    !ERROR: Externally visible object 'dummy1' must not be associated with pointer component 'pt1' in a PURE function
     x1 = t1(0)(dummy1)
     x1 = t1(0)(dummy2)
-    !ERROR: Externally visible object must not be associated with a pointer in a PURE function
+    !ERROR: Externally visible object 'dummy3' must not be associated with pointer component 'pt1' in a PURE function
     x1 = t1(0)(dummy3)
 ! TODO when semantics handles coindexing:
 ! TODO !ERROR: Externally visible object must not be associated with a pointer in a PURE function
 ! TODO x1 = t1(0)(dummy4[0])
     x1 = t1(0)(dummy4)
-    !ERROR: Externally visible object must not be associated with a pointer in a PURE function
+    !ERROR: Externally visible object 'modulevar2' must not be associated with pointer component 'ptop' in a PURE function
     x2 = t2(0)(modulevar2)
-    !ERROR: Externally visible object must not be associated with a pointer in a PURE function
-    x2 = t2(0)(commonvar2)
-    !ERROR: Externally visible object must not be associated with a pointer in a PURE function
+    !ERROR: Externally visible object 'modulevar3' must not be associated with pointer component 'ptop' in a PURE function
     x3 = t3(0)(modulevar3)
-    !ERROR: Externally visible object must not be associated with a pointer in a PURE function
-    x3 = t3(0)(commonvar3)
-    !ERROR: Externally visible object must not be associated with a pointer in a PURE function
+    !ERROR: Externally visible object 'modulevar4' must not be associated with pointer component 'ptop' in a PURE function
     x4 = t4(0)(modulevar4)
-    !ERROR: Externally visible object must not be associated with a pointer in a PURE function
-    x4 = t4(0)(commonvar4)
    contains
     subroutine subr(dummy1a, dummy2a, dummy3a, dummy4a)
       real :: local1a
@@ -113,37 +107,31 @@ module module1
       real, pointer :: dummy3a
       real, intent(inout) :: dummy4a[*]
       x1a = t1(0)(local1a)
-      !ERROR: Externally visible object must not be associated with a pointer in a PURE function
+      !ERROR: Externally visible object 'usedfrom1' must not be associated with pointer component 'pt1' in a PURE function
       x1a = t1(0)(usedfrom1)
-      !ERROR: Externally visible object must not be associated with a pointer in a PURE function
+      !ERROR: Externally visible object 'modulevar1' must not be associated with pointer component 'pt1' in a PURE function
       x1a = t1(0)(modulevar1)
-      !ERROR: Externally visible object must not be associated with a pointer in a PURE function
+      !ERROR: Externally visible object 'cblock' must not be associated with pointer component 'pt1' in a PURE function
       x1a = t1(0)(commonvar1)
-      !ERROR: Externally visible object must not be associated with a pointer in a PURE function
+      !ERROR: Externally visible object 'dummy1' must not be associated with pointer component 'pt1' in a PURE function
       x1a = t1(0)(dummy1)
-      !ERROR: Externally visible object must not be associated with a pointer in a PURE function
+      !ERROR: Externally visible object 'dummy1a' must not be associated with pointer component 'pt1' in a PURE function
       x1a = t1(0)(dummy1a)
       x1a = t1(0)(dummy2a)
-      !ERROR: Externally visible object must not be associated with a pointer in a PURE function
+      !ERROR: Externally visible object 'dummy3' must not be associated with pointer component 'pt1' in a PURE function
       x1a = t1(0)(dummy3)
-      !ERROR: Externally visible object must not be associated with a pointer in a PURE function
+      !ERROR: Externally visible object 'dummy3a' must not be associated with pointer component 'pt1' in a PURE function
       x1a = t1(0)(dummy3a)
 ! TODO when semantics handles coindexing:
 ! TODO !ERROR: Externally visible object must not be associated with a pointer in a PURE function
 ! TODO x1a = t1(0)(dummy4a[0])
       x1a = t1(0)(dummy4a)
-      !ERROR: Externally visible object must not be associated with a pointer in a PURE function
+      !ERROR: Externally visible object 'modulevar2' must not be associated with pointer component 'ptop' in a PURE function
       x2a = t2(0)(modulevar2)
-      !ERROR: Externally visible object must not be associated with a pointer in a PURE function
-      x2a = t2(0)(commonvar2)
-      !ERROR: Externally visible object must not be associated with a pointer in a PURE function
+      !ERROR: Externally visible object 'modulevar3' must not be associated with pointer component 'ptop' in a PURE function
       x3a = t3(0)(modulevar3)
-      !ERROR: Externally visible object must not be associated with a pointer in a PURE function
-      x3a = t3(0)(commonvar3)
-      !ERROR: Externally visible object must not be associated with a pointer in a PURE function
+      !ERROR: Externally visible object 'modulevar4' must not be associated with pointer component 'ptop' in a PURE function
       x4a = t4(0)(modulevar4)
-      !ERROR: Externally visible object must not be associated with a pointer in a PURE function
-      x4a = t4(0)(commonvar4)
     end subroutine subr
   end function pf1
 
@@ -157,6 +145,8 @@ module module1
     real, intent(inout) :: dummy2
     real, pointer :: dummy3
     real, intent(inout) :: dummy4[*]
+    real :: commonvar1
+    common /cblock/ commonvar1
     ipf1 = 0.
     x1 = t1(0)(local1)
     x1 = t1(0)(usedfrom1)
@@ -169,10 +159,7 @@ module module1
 ! TODO x1 = t1(0)(dummy4[0])
     x1 = t1(0)(dummy4)
     x2 = t2(0)(modulevar2)
-    x2 = t2(0)(commonvar2)
     x3 = t3(0)(modulevar3)
-    x3 = t3(0)(commonvar3)
     x4 = t4(0)(modulevar4)
-    x4 = t4(0)(commonvar4)
   end function ipf1
 end module module1
