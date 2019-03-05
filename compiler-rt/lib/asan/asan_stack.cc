@@ -31,26 +31,26 @@ u32 GetMallocContextSize() {
 void __sanitizer::BufferedStackTrace::UnwindImpl(
     uptr pc, uptr bp, void *context, bool request_fast, u32 max_depth) {
   using namespace __asan;
+  size = 0;
+  if (UNLIKELY(!asan_inited))
+    return;
 #if SANITIZER_WINDOWS
   Unwind(max_depth, pc, 0, context, 0, 0, false);
 #else
-  AsanThread *t;
-  size = 0;
-  if (LIKELY(asan_inited)) {
-    if ((t = GetCurrentThread()) && !t->isUnwinding()) {
-      uptr stack_top = t->stack_top();
-      uptr stack_bottom = t->stack_bottom();
-      ScopedUnwinding unwind_scope(t);
-      if (!SANITIZER_MIPS || IsValidFrame(bp, stack_top, stack_bottom)) {
-        if (StackTrace::WillUseFastUnwind(request_fast))
-          Unwind(max_depth, pc, bp, nullptr, stack_top, stack_bottom, true);
-        else
-          Unwind(max_depth, pc, 0, context, 0, 0, false);
-      }
-    } else if (!t && !request_fast) {
-      /* If GetCurrentThread() has failed, try to do slow unwind anyways. */
-      Unwind(max_depth, pc, bp, context, 0, 0, false);
+  AsanThread *t = GetCurrentThread();
+  if (t && !t->isUnwinding()) {
+    uptr stack_top = t->stack_top();
+    uptr stack_bottom = t->stack_bottom();
+    ScopedUnwinding unwind_scope(t);
+    if (!SANITIZER_MIPS || IsValidFrame(bp, stack_top, stack_bottom)) {
+      if (StackTrace::WillUseFastUnwind(request_fast))
+        Unwind(max_depth, pc, bp, nullptr, stack_top, stack_bottom, true);
+      else
+        Unwind(max_depth, pc, 0, context, 0, 0, false);
     }
+  } else if (!t && !request_fast) {
+    /* If GetCurrentThread() has failed, try to do slow unwind anyways. */
+    Unwind(max_depth, pc, bp, context, 0, 0, false);
   }
 #endif // SANITIZER_WINDOWS
 }
