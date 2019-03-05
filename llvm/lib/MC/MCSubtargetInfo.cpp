@@ -176,11 +176,11 @@ void MCSubtargetInfo::setDefaultFeatures(StringRef CPU, StringRef FS) {
 MCSubtargetInfo::MCSubtargetInfo(
     const Triple &TT, StringRef C, StringRef FS,
     ArrayRef<SubtargetFeatureKV> PF, ArrayRef<SubtargetSubTypeKV> PD,
-    const SubtargetInfoKV *ProcSched, const MCWriteProcResEntry *WPR,
+    const MCWriteProcResEntry *WPR,
     const MCWriteLatencyEntry *WL, const MCReadAdvanceEntry *RA,
     const InstrStage *IS, const unsigned *OC, const unsigned *FP)
     : TargetTriple(TT), CPU(C), ProcFeatures(PF), ProcDesc(PD),
-      ProcSchedModels(ProcSched), WriteProcResTable(WPR), WriteLatencyTable(WL),
+      WriteProcResTable(WPR), WriteLatencyTable(WL),
       ReadAdvanceTable(RA), Stages(IS), OperandCycles(OC), ForwardingPaths(FP) {
   InitMCProcessorInfo(CPU, FS);
 }
@@ -238,25 +238,21 @@ bool MCSubtargetInfo::checkFeatures(StringRef FS) const {
 }
 
 const MCSchedModel &MCSubtargetInfo::getSchedModelForCPU(StringRef CPU) const {
-  assert(ProcSchedModels && "Processor machine model not available!");
-
-  ArrayRef<SubtargetInfoKV> SchedModels(ProcSchedModels, ProcDesc.size());
-
-  assert(std::is_sorted(SchedModels.begin(), SchedModels.end()) &&
+  assert(std::is_sorted(ProcDesc.begin(), ProcDesc.end()) &&
          "Processor machine model table is not sorted");
 
   // Find entry
-  auto Found =
-    std::lower_bound(SchedModels.begin(), SchedModels.end(), CPU);
-  if (Found == SchedModels.end() || StringRef(Found->Key) != CPU) {
+  const SubtargetSubTypeKV *CPUEntry = Find(CPU, ProcDesc);
+
+  if (!CPUEntry) {
     if (CPU != "help") // Don't error if the user asked for help.
       errs() << "'" << CPU
              << "' is not a recognized processor for this target"
              << " (ignoring processor)\n";
     return MCSchedModel::GetDefaultSchedModel();
   }
-  assert(Found->Value && "Missing processor SchedModel value");
-  return *(const MCSchedModel *)Found->Value;
+  assert(CPUEntry->SchedModel && "Missing processor SchedModel value");
+  return *CPUEntry->SchedModel;
 }
 
 InstrItineraryData
