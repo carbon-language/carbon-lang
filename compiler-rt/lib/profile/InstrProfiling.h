@@ -64,7 +64,6 @@ uint64_t *__llvm_profile_begin_counters(void);
 uint64_t *__llvm_profile_end_counters(void);
 ValueProfNode *__llvm_profile_begin_vnodes();
 ValueProfNode *__llvm_profile_end_vnodes();
-uint32_t *__llvm_profile_begin_orderfile();
 
 /*!
  * \brief Clear profile counters to zero.
@@ -121,7 +120,6 @@ void __llvm_profile_instrument_target_value(uint64_t TargetValue, void *Data,
  */
 int __llvm_profile_write_file(void);
 
-int __llvm_orderfile_write_file(void);
 /*!
  * \brief this is a wrapper interface to \c __llvm_profile_write_file.
  * After this interface is invoked, a arleady dumped flag will be set
@@ -143,8 +141,6 @@ int __llvm_orderfile_write_file(void);
  *  for different regions before dumping to avoid profile write clobbering.
  */
 int __llvm_profile_dump(void);
-
-int __llvm_orderfile_dump(void);
 
 /*!
  * \brief Set the filename for writing instrumentation data.
