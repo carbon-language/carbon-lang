@@ -19,7 +19,7 @@
 using namespace llvm;
 
 namespace {
-struct RemarkParser {
+struct YAMLRemarkParser {
   /// Source manager for better error messages.
   SourceMgr SM;
   /// Stream for yaml parsing.
@@ -59,10 +59,10 @@ struct RemarkParser {
   /// Set to `true` if we had any errors during parsing.
   bool HadAnyErrors = false;
 
-  RemarkParser(StringRef Buf)
+  YAMLRemarkParser(StringRef Buf)
       : SM(), Stream(Buf, SM), ErrorString(), ErrorStream(ErrorString),
         DI(Stream.begin()), LastRemark(), TmpArgs(), State(TmpArgs) {
-    SM.setDiagHandler(RemarkParser::HandleDiagnostic, this);
+    SM.setDiagHandler(YAMLRemarkParser::HandleDiagnostic, this);
   }
 
   /// Parse a YAML element.
@@ -83,10 +83,10 @@ private:
   Error parseArg(SmallVectorImpl<LLVMRemarkArg> &TmpArgs, yaml::Node &Node);
 
   /// Handle a diagnostic from the YAML stream. Records the error in the
-  /// RemarkParser class.
+  /// YAMLRemarkParser class.
   static void HandleDiagnostic(const SMDiagnostic &Diag, void *Ctx) {
     assert(Ctx && "Expected non-null Ctx in diagnostic handler.");
-    auto *Parser = static_cast<RemarkParser *>(Ctx);
+    auto *Parser = static_cast<YAMLRemarkParser *>(Ctx);
     Diag.print(/*ProgName=*/nullptr, Parser->ErrorStream, /*ShowColors*/ false,
                /*ShowKindLabels*/ true);
   }
@@ -118,7 +118,7 @@ static LLVMRemarkStringRef toRemarkStr(StringRef Str) {
   return {Str.data(), static_cast<uint32_t>(Str.size())};
 }
 
-Error RemarkParser::parseKey(StringRef &Result, yaml::KeyValueNode &Node) {
+Error YAMLRemarkParser::parseKey(StringRef &Result, yaml::KeyValueNode &Node) {
   auto *Key = dyn_cast<yaml::ScalarNode>(Node.getKey());
   if (!Key)
     return make_error<ParseError>("key is not a string.", Node);
@@ -127,7 +127,8 @@ Error RemarkParser::parseKey(StringRef &Result, yaml::KeyValueNode &Node) {
   return Error::success();
 }
 
-Error RemarkParser::parseValue(StringRef &Result, yaml::KeyValueNode &Node) {
+Error YAMLRemarkParser::parseValue(StringRef &Result,
+                                   yaml::KeyValueNode &Node) {
   auto *Value = dyn_cast<yaml::ScalarNode>(Node.getValue());
   if (!Value)
     return make_error<ParseError>("expected a value of scalar type.", Node);
@@ -142,8 +143,8 @@ Error RemarkParser::parseValue(StringRef &Result, yaml::KeyValueNode &Node) {
   return Error::success();
 }
 
-Error RemarkParser::parseValue(Optional<unsigned> &Result,
-                               yaml::KeyValueNode &Node) {
+Error YAMLRemarkParser::parseValue(Optional<unsigned> &Result,
+                                   yaml::KeyValueNode &Node) {
   SmallVector<char, 4> Tmp;
   auto *Value = dyn_cast<yaml::ScalarNode>(Node.getValue());
   if (!Value)
@@ -155,10 +156,10 @@ Error RemarkParser::parseValue(Optional<unsigned> &Result,
   return Error::success();
 }
 
-Error RemarkParser::parseDebugLoc(Optional<StringRef> &File,
-                                  Optional<unsigned> &Line,
-                                  Optional<unsigned> &Column,
-                                  yaml::KeyValueNode &Node) {
+Error YAMLRemarkParser::parseDebugLoc(Optional<StringRef> &File,
+                                      Optional<unsigned> &Line,
+                                      Optional<unsigned> &Column,
+                                      yaml::KeyValueNode &Node) {
   auto *DebugLoc = dyn_cast<yaml::MappingNode>(Node.getValue());
   if (!DebugLoc)
     return make_error<ParseError>("expected a value of mapping type.", Node);
@@ -190,8 +191,8 @@ Error RemarkParser::parseDebugLoc(Optional<StringRef> &File,
   return Error::success();
 }
 
-Error RemarkParser::parseArg(SmallVectorImpl<LLVMRemarkArg> &Args,
-                             yaml::Node &Node) {
+Error YAMLRemarkParser::parseArg(SmallVectorImpl<LLVMRemarkArg> &Args,
+                                 yaml::Node &Node) {
   auto *ArgMap = dyn_cast<yaml::MappingNode>(&Node);
   if (!ArgMap)
     return make_error<ParseError>("expected a value of mapping type.", Node);
@@ -245,7 +246,7 @@ Error RemarkParser::parseArg(SmallVectorImpl<LLVMRemarkArg> &Args,
   return Error::success();
 }
 
-Error RemarkParser::parseYAMLElement(yaml::Document &Remark) {
+Error YAMLRemarkParser::parseYAMLElement(yaml::Document &Remark) {
   // Parsing a new remark, clear the previous one.
   LastRemark = None;
   State = ParseState(TmpArgs);
@@ -318,17 +319,17 @@ Error RemarkParser::parseYAMLElement(yaml::Document &Remark) {
 } // namespace
 
 // Create wrappers for C Binding types (see CBindingWrapping.h).
-DEFINE_SIMPLE_CONVERSION_FUNCTIONS(RemarkParser, LLVMRemarkParserRef)
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(YAMLRemarkParser, LLVMRemarkParserRef)
 
 extern "C" LLVMRemarkParserRef LLVMRemarkParserCreate(const void *Buf,
                                                       uint64_t Size) {
   return wrap(
-      new RemarkParser(StringRef(static_cast<const char *>(Buf), Size)));
+      new YAMLRemarkParser(StringRef(static_cast<const char *>(Buf), Size)));
 }
 
 extern "C" LLVMRemarkEntry *
 LLVMRemarkParserGetNext(LLVMRemarkParserRef Parser) {
-  RemarkParser &TheParser = *unwrap(Parser);
+  YAMLRemarkParser &TheParser = *unwrap(Parser);
   // Check for EOF.
   if (TheParser.HadAnyErrors || TheParser.DI == TheParser.Stream.end())
     return nullptr;
