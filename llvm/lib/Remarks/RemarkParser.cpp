@@ -1,4 +1,4 @@
-//===- OptRemarksParser.cpp -----------------------------------------------===//
+//===- RemarkParser.cpp --------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -7,11 +7,11 @@
 //===----------------------------------------------------------------------===//
 //
 // This file provides utility methods used by clients that want to use the
-// parser for optimization remarks in LLVM.
+// parser for remark diagnostics in LLVM.
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm-c/OptRemarks.h"
+#include "llvm-c/Remarks.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/YAMLTraits.h"
@@ -31,14 +31,14 @@ struct RemarkParser {
   /// Iterator in the YAML stream.
   yaml::document_iterator DI;
   /// The parsed remark (if any).
-  Optional<LLVMOptRemarkEntry> LastRemark;
+  Optional<LLVMRemarkEntry> LastRemark;
   /// Temporary parsing buffer for the arguments.
-  SmallVector<LLVMOptRemarkArg, 8> TmpArgs;
+  SmallVector<LLVMRemarkArg, 8> TmpArgs;
   /// The state used by the parser to parse a remark entry. Invalidated with
   /// every call to `parseYAMLElement`.
   struct ParseState {
     /// Temporary parsing buffer for the arguments.
-    SmallVectorImpl<LLVMOptRemarkArg> *Args;
+    SmallVectorImpl<LLVMRemarkArg> *Args;
     StringRef Type;
     StringRef Pass;
     StringRef Name;
@@ -49,7 +49,7 @@ struct RemarkParser {
     Optional<unsigned> Column;
     Optional<unsigned> Hotness;
 
-    ParseState(SmallVectorImpl<LLVMOptRemarkArg> &Args) : Args(&Args) {}
+    ParseState(SmallVectorImpl<LLVMRemarkArg> &Args) : Args(&Args) {}
     /// Use Args only as a **temporary** buffer.
     ~ParseState() { Args->clear(); }
   };
@@ -80,7 +80,7 @@ private:
   Error parseDebugLoc(Optional<StringRef> &File, Optional<unsigned> &Line,
                       Optional<unsigned> &Column, yaml::KeyValueNode &Node);
   /// Parse an argument.
-  Error parseArg(SmallVectorImpl<LLVMOptRemarkArg> &TmpArgs, yaml::Node &Node);
+  Error parseArg(SmallVectorImpl<LLVMRemarkArg> &TmpArgs, yaml::Node &Node);
 
   /// Handle a diagnostic from the YAML stream. Records the error in the
   /// RemarkParser class.
@@ -114,7 +114,7 @@ private:
 
 char ParseError::ID = 0;
 
-static LLVMOptRemarkStringRef toOptRemarkStr(StringRef Str) {
+static LLVMRemarkStringRef toRemarkStr(StringRef Str) {
   return {Str.data(), static_cast<uint32_t>(Str.size())};
 }
 
@@ -190,7 +190,7 @@ Error RemarkParser::parseDebugLoc(Optional<StringRef> &File,
   return Error::success();
 }
 
-Error RemarkParser::parseArg(SmallVectorImpl<LLVMOptRemarkArg> &Args,
+Error RemarkParser::parseArg(SmallVectorImpl<LLVMRemarkArg> &Args,
                              yaml::Node &Node) {
   auto *ArgMap = dyn_cast<yaml::MappingNode>(&Node);
   if (!ArgMap)
@@ -237,10 +237,10 @@ Error RemarkParser::parseArg(SmallVectorImpl<LLVMOptRemarkArg> &Args,
   if (ValueStr.empty())
     return make_error<ParseError>("argument value is missing.", *ArgMap);
 
-  Args.push_back(LLVMOptRemarkArg{
-      toOptRemarkStr(KeyStr), toOptRemarkStr(ValueStr),
-      LLVMOptRemarkDebugLoc{toOptRemarkStr(File.getValueOr(StringRef())),
-                            Line.getValueOr(0), Column.getValueOr(0)}});
+  Args.push_back(LLVMRemarkArg{
+      toRemarkStr(KeyStr), toRemarkStr(ValueStr),
+      LLVMRemarkDebugLoc{toRemarkStr(File.getValueOr(StringRef())),
+                         Line.getValueOr(0), Column.getValueOr(0)}});
 
   return Error::success();
 }
@@ -302,14 +302,13 @@ Error RemarkParser::parseYAMLElement(yaml::Document &Remark) {
     return make_error<ParseError>("Type, Pass, Name or Function missing.",
                                   *Remark.getRoot());
 
-  LastRemark = LLVMOptRemarkEntry{
-      toOptRemarkStr(State.Type),
-      toOptRemarkStr(State.Pass),
-      toOptRemarkStr(State.Name),
-      toOptRemarkStr(State.Function),
-      LLVMOptRemarkDebugLoc{toOptRemarkStr(State.File.getValueOr(StringRef())),
-                            State.Line.getValueOr(0),
-                            State.Column.getValueOr(0)},
+  LastRemark = LLVMRemarkEntry{
+      toRemarkStr(State.Type),
+      toRemarkStr(State.Pass),
+      toRemarkStr(State.Name),
+      toRemarkStr(State.Function),
+      LLVMRemarkDebugLoc{toRemarkStr(State.File.getValueOr(StringRef())),
+                         State.Line.getValueOr(0), State.Column.getValueOr(0)},
       State.Hotness.getValueOr(0),
       static_cast<uint32_t>(State.Args->size()),
       State.Args->data()};
@@ -319,16 +318,16 @@ Error RemarkParser::parseYAMLElement(yaml::Document &Remark) {
 } // namespace
 
 // Create wrappers for C Binding types (see CBindingWrapping.h).
-DEFINE_SIMPLE_CONVERSION_FUNCTIONS(RemarkParser, LLVMOptRemarkParserRef)
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(RemarkParser, LLVMRemarkParserRef)
 
-extern "C" LLVMOptRemarkParserRef LLVMOptRemarkParserCreate(const void *Buf,
-                                                            uint64_t Size) {
+extern "C" LLVMRemarkParserRef LLVMRemarkParserCreate(const void *Buf,
+                                                      uint64_t Size) {
   return wrap(
       new RemarkParser(StringRef(static_cast<const char *>(Buf), Size)));
 }
 
-extern "C" LLVMOptRemarkEntry *
-LLVMOptRemarkParserGetNext(LLVMOptRemarkParserRef Parser) {
+extern "C" LLVMRemarkEntry *
+LLVMRemarkParserGetNext(LLVMRemarkParserRef Parser) {
   RemarkParser &TheParser = *unwrap(Parser);
   // Check for EOF.
   if (TheParser.HadAnyErrors || TheParser.DI == TheParser.Stream.end())
@@ -348,20 +347,20 @@ LLVMOptRemarkParserGetNext(LLVMOptRemarkParserRef Parser) {
   ++TheParser.DI;
 
   // Return the just-parsed remark.
-  if (Optional<LLVMOptRemarkEntry> &Entry = TheParser.LastRemark)
+  if (Optional<LLVMRemarkEntry> &Entry = TheParser.LastRemark)
     return &*Entry;
   return nullptr;
 }
 
-extern "C" LLVMBool LLVMOptRemarkParserHasError(LLVMOptRemarkParserRef Parser) {
+extern "C" LLVMBool LLVMRemarkParserHasError(LLVMRemarkParserRef Parser) {
   return unwrap(Parser)->HadAnyErrors;
 }
 
 extern "C" const char *
-LLVMOptRemarkParserGetErrorMessage(LLVMOptRemarkParserRef Parser) {
+LLVMRemarkParserGetErrorMessage(LLVMRemarkParserRef Parser) {
   return unwrap(Parser)->ErrorStream.str().c_str();
 }
 
-extern "C" void LLVMOptRemarkParserDispose(LLVMOptRemarkParserRef Parser) {
+extern "C" void LLVMRemarkParserDispose(LLVMRemarkParserRef Parser) {
   delete unwrap(Parser);
 }
