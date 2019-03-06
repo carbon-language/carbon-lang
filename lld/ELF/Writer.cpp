@@ -1723,7 +1723,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     return;
 
   if (In.MipsGot)
-    In.MipsGot->build<ELFT>();
+    In.MipsGot->build();
 
   removeUnusedSyntheticSections();
 
@@ -1835,7 +1835,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // at the end because some tags like RELSZ depend on result
   // of finalizing other sections.
   for (OutputSection *Sec : OutputSections)
-    Sec->finalize<ELFT>();
+    Sec->finalize();
 }
 
 // Ensure data sections are not mixed with executable sections when

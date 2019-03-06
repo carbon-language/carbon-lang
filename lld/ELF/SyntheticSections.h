@@ -190,7 +190,7 @@ public:
 
   // Join separate GOTs built for each input file to generate
   // primary and optional multiple secondary GOTs.
-  template <class ELFT> void build();
+  void build();
 
   void addEntry(InputFile &File, Symbol &Sym, int64_t Addend, RelExpr Expr);
   void addDynTlsEntry(InputFile &File, Symbol &Sym);
