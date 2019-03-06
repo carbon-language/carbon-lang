@@ -5393,10 +5393,8 @@ SDValue TargetLowering::expandAddSubSat(SDNode *Node, SelectionDAG &DAG) const {
   EVT VT = LHS.getValueType();
   SDLoc dl(Node);
 
-  assert(LHS.getValueType().isInteger() && "Expected operands to be integers");
-  assert(RHS.getValueType().isInteger() && "Expected operands to be integers");
-  assert(LHS.getValueType() == RHS.getValueType() &&
-         "Expected both operands to be the same type");
+  assert(VT == RHS.getValueType() && "Expected operands to be the same type");
+  assert(VT.isInteger() && "Expected operands to be integers");
 
   // usub.sat(a, b) -> umax(a, b) - b
   if (Opcode == ISD::USUBSAT && isOperationLegalOrCustom(ISD::UMAX, VT)) {
@@ -5430,32 +5428,30 @@ SDValue TargetLowering::expandAddSubSat(SDNode *Node, SelectionDAG &DAG) const {
   }
 
   unsigned BitWidth = LHS.getScalarValueSizeInBits();
-  EVT ResultType = LHS.getValueType();
-  EVT BoolVT =
-      getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), ResultType);
-  SDValue Result =
-      DAG.getNode(OverflowOp, dl, DAG.getVTList(ResultType, BoolVT), LHS, RHS);
+  EVT BoolVT = getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), VT);
+  SDValue Result = DAG.getNode(OverflowOp, dl, DAG.getVTList(VT, BoolVT),
+                               LHS, RHS);
   SDValue SumDiff = Result.getValue(0);
   SDValue Overflow = Result.getValue(1);
-  SDValue Zero = DAG.getConstant(0, dl, ResultType);
-  SDValue AllOnes = DAG.getAllOnesConstant(dl, ResultType);
+  SDValue Zero = DAG.getConstant(0, dl, VT);
+  SDValue AllOnes = DAG.getAllOnesConstant(dl, VT);
 
   if (Opcode == ISD::UADDSAT) {
     // Overflow ? 0xffff.... : (LHS + RHS)
-    return DAG.getSelect(dl, ResultType, Overflow, AllOnes, SumDiff);
+    return DAG.getSelect(dl, VT, Overflow, AllOnes, SumDiff);
   } else if (Opcode == ISD::USUBSAT) {
     // Overflow ? 0 : (LHS - RHS)
-    return DAG.getSelect(dl, ResultType, Overflow, Zero, SumDiff);
+    return DAG.getSelect(dl, VT, Overflow, Zero, SumDiff);
   } else {
     // SatMax -> Overflow && SumDiff < 0
     // SatMin -> Overflow && SumDiff >= 0
     APInt MinVal = APInt::getSignedMinValue(BitWidth);
     APInt MaxVal = APInt::getSignedMaxValue(BitWidth);
-    SDValue SatMin = DAG.getConstant(MinVal, dl, ResultType);
-    SDValue SatMax = DAG.getConstant(MaxVal, dl, ResultType);
+    SDValue SatMin = DAG.getConstant(MinVal, dl, VT);
+    SDValue SatMax = DAG.getConstant(MaxVal, dl, VT);
     SDValue SumNeg = DAG.getSetCC(dl, BoolVT, SumDiff, Zero, ISD::SETLT);
-    Result = DAG.getSelect(dl, ResultType, SumNeg, SatMax, SatMin);
-    return DAG.getSelect(dl, ResultType, Overflow, Result, SumDiff);
+    Result = DAG.getSelect(dl, VT, SumNeg, SatMax, SatMin);
+    return DAG.getSelect(dl, VT, Overflow, Result, SumDiff);
   }
 }
 
