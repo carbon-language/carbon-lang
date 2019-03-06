@@ -14,7 +14,6 @@
 
 #include "check-do-concurrent.h"
 #include "attr.h"
-#include "expression.h"
 #include "scope.h"
 #include "semantics.h"
 #include "symbol.h"
@@ -220,6 +219,13 @@ private:
 
 using CS = std::vector<const Symbol *>;
 
+struct GatherSymbols {
+  CS symbols;
+  template<typename T> constexpr bool Pre(const T &) { return true; }
+  template<typename T> constexpr void Post(const T &) {}
+  void Post(const parser::Name &name) { symbols.push_back(name.symbol); }
+};
+
 static bool IntegerVariable(const Symbol &variable) {
   return variable.GetType()->IsNumeric(common::TypeCategory::Integer);
 }
@@ -306,12 +312,7 @@ static CS GatherReferencesFromExpression(const parser::Expr &expression) {
     return evaluate::Traversal<CS, CollectSymbols>{0}.Traverse(
         expression.typedExpr.value());
   } else {
-    struct GatherSymbols {
-      CS symbols;
-      template<typename T> constexpr bool Pre(const T &) { return true; }
-      template<typename T> constexpr void Post(const T &) {}
-      void Post(const parser::Name &name) { symbols.push_back(name.symbol); }
-    } gatherSymbols;
+    GatherSymbols gatherSymbols;
     parser::Walk(expression, gatherSymbols);
     return gatherSymbols.symbols;
   }
