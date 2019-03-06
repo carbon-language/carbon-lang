@@ -1,3 +1,5 @@
+; REQUIRES: x86-registered-target
+
 ; RUN: opt -module-summary %s -o %t1.bc
 ; RUN: opt -module-summary %S/Inputs/thinlto_cspgo_bar_gen.ll -o %t2.bc
 ; RUN: llvm-lto2 run -lto-cspgo-profile-file=alloc -lto-cspgo-gen -save-temps -o %t %t1.bc %t2.bc \

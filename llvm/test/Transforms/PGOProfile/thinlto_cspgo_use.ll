@@ -1,3 +1,5 @@
+; REQUIRES: x86-registered-target
+
 ; RUN: opt -module-summary %s -o %t1.bc
 ; RUN: opt -module-summary %S/Inputs/thinlto_cspgo_bar_use.ll -o %t2.bc
 ; RUN: llvm-profdata merge %S/Inputs/thinlto_cs.proftext -o %t3.profdata
