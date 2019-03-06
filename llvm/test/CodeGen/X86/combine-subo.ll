@@ -62,18 +62,10 @@ define i32 @combine_usub_zero(i32 %a0, i32 %a1) {
 define <4 x i32> @combine_vec_usub_zero(<4 x i32> %a0, <4 x i32> %a1) {
 ; SSE-LABEL: combine_vec_usub_zero:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    movdqa %xmm0, %xmm2
-; SSE-NEXT:    pminud %xmm0, %xmm0
-; SSE-NEXT:    pcmpeqd %xmm2, %xmm0
-; SSE-NEXT:    blendvps %xmm0, %xmm2, %xmm1
-; SSE-NEXT:    movaps %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_vec_usub_zero:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vpminud %xmm0, %xmm0, %xmm2
-; AVX-NEXT:    vpcmpeqd %xmm2, %xmm0, %xmm2
-; AVX-NEXT:    vblendvps %xmm2, %xmm0, %xmm1, %xmm0
 ; AVX-NEXT:    retq
   %1 = call {<4 x i32>, <4 x i1>} @llvm.usub.with.overflow.v4i32(<4 x i32> %a0, <4 x i32> zeroinitializer)
   %2 = extractvalue {<4 x i32>, <4 x i1>} %1, 0
@@ -138,20 +130,12 @@ define i32 @combine_usub_self(i32 %a0, i32 %a1) {
 define <4 x i32> @combine_vec_usub_self(<4 x i32> %a0, <4 x i32> %a1) {
 ; SSE-LABEL: combine_vec_usub_self:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    movdqa %xmm0, %xmm2
-; SSE-NEXT:    psubd %xmm0, %xmm2
-; SSE-NEXT:    pminud %xmm2, %xmm0
-; SSE-NEXT:    pcmpeqd %xmm2, %xmm0
-; SSE-NEXT:    blendvps %xmm0, %xmm2, %xmm1
-; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    xorps %xmm0, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_vec_usub_self:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vpsubd %xmm0, %xmm0, %xmm2
-; AVX-NEXT:    vpminud %xmm0, %xmm2, %xmm0
-; AVX-NEXT:    vpcmpeqd %xmm0, %xmm2, %xmm0
-; AVX-NEXT:    vblendvps %xmm0, %xmm2, %xmm1, %xmm0
+; AVX-NEXT:    vxorps %xmm0, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %1 = call {<4 x i32>, <4 x i1>} @llvm.usub.with.overflow.v4i32(<4 x i32> %a0, <4 x i32> %a0)
   %2 = extractvalue {<4 x i32>, <4 x i1>} %1, 0
@@ -183,22 +167,14 @@ define i32 @combine_usub_negone(i32 %a0, i32 %a1) {
 define <4 x i32> @combine_vec_usub_negone(<4 x i32> %a0, <4 x i32> %a1) {
 ; SSE-LABEL: combine_vec_usub_negone:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    movdqa %xmm0, %xmm2
-; SSE-NEXT:    pcmpeqd %xmm0, %xmm0
-; SSE-NEXT:    pxor %xmm0, %xmm2
-; SSE-NEXT:    pminud %xmm2, %xmm0
-; SSE-NEXT:    pcmpeqd %xmm2, %xmm0
-; SSE-NEXT:    blendvps %xmm0, %xmm2, %xmm1
-; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    pcmpeqd %xmm1, %xmm1
+; SSE-NEXT:    pxor %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_vec_usub_negone:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vpcmpeqd %xmm2, %xmm2, %xmm2
-; AVX-NEXT:    vpxor %xmm2, %xmm0, %xmm0
-; AVX-NEXT:    vpminud %xmm2, %xmm0, %xmm2
-; AVX-NEXT:    vpcmpeqd %xmm2, %xmm0, %xmm2
-; AVX-NEXT:    vblendvps %xmm2, %xmm0, %xmm1, %xmm0
+; AVX-NEXT:    vpcmpeqd %xmm1, %xmm1, %xmm1
+; AVX-NEXT:    vpxor %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %1 = call {<4 x i32>, <4 x i1>} @llvm.usub.with.overflow.v4i32(<4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>, <4 x i32> %a0)
   %2 = extractvalue {<4 x i32>, <4 x i1>} %1, 0

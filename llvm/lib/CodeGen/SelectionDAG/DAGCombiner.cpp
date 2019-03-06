@@ -2443,8 +2443,6 @@ SDValue DAGCombiner::visitUADDO(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
   EVT VT = N0.getValueType();
-  if (VT.isVector())
-    return SDValue();
 
   EVT CarryVT = N->getValueType(1);
   SDLoc DL(N);
@@ -2455,13 +2453,12 @@ SDValue DAGCombiner::visitUADDO(SDNode *N) {
                      DAG.getUNDEF(CarryVT));
 
   // canonicalize constant to RHS.
-  ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
-  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
-  if (N0C && !N1C)
+  if (DAG.isConstantIntBuildVectorOrConstantInt(N0) &&
+      !DAG.isConstantIntBuildVectorOrConstantInt(N1))
     return DAG.getNode(ISD::UADDO, DL, N->getVTList(), N1, N0);
 
   // fold (uaddo x, 0) -> x + no carry out
-  if (isNullConstant(N1))
+  if (isNullOrNullSplat(N1))
     return CombineTo(N, N0, DAG.getConstant(0, DL, CarryVT));
 
   // If it cannot overflow, transform into an add.
@@ -2488,7 +2485,9 @@ SDValue DAGCombiner::visitUADDO(SDNode *N) {
 }
 
 SDValue DAGCombiner::visitUADDOLike(SDValue N0, SDValue N1, SDNode *N) {
-  auto VT = N0.getValueType();
+  EVT VT = N0.getValueType();
+  if (VT.isVector())
+    return SDValue();
 
   // (uaddo X, (addcarry Y, 0, Carry)) -> (addcarry X, Y, Carry)
   // If Y + 1 cannot overflow.
@@ -2952,8 +2951,6 @@ SDValue DAGCombiner::visitUSUBO(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
   EVT VT = N0.getValueType();
-  if (VT.isVector())
-    return SDValue();
 
   EVT CarryVT = N->getValueType(1);
   SDLoc DL(N);
@@ -2969,11 +2966,11 @@ SDValue DAGCombiner::visitUSUBO(SDNode *N) {
                      DAG.getConstant(0, DL, CarryVT));
 
   // fold (usubo x, 0) -> x + no borrow
-  if (isNullConstant(N1))
+  if (isNullOrNullSplat(N1))
     return CombineTo(N, N0, DAG.getConstant(0, DL, CarryVT));
 
   // Canonicalize (usubo -1, x) -> ~x, i.e. (xor x, -1) + no borrow
-  if (isAllOnesConstant(N0))
+  if (isAllOnesOrAllOnesSplat(N0))
     return CombineTo(N, DAG.getNode(ISD::XOR, DL, VT, N1, N0),
                      DAG.getConstant(0, DL, CarryVT));
 
