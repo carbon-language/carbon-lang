@@ -182,13 +182,6 @@ getDecompressedSizeAndAlignment(ArrayRef<uint8_t> Data) {
 
 template <class ELFT>
 void ELFSectionWriter<ELFT>::visit(const DecompressedSection &Sec) {
-  uint8_t *Buf = Out.getBufferStart() + Sec.Offset;
-
-  if (!zlib::isAvailable()) {
-    std::copy(Sec.OriginalData.begin(), Sec.OriginalData.end(), Buf);
-    return;
-  }
-
   const size_t DataOffset = isDataGnuCompressed(Sec.OriginalData)
                                 ? (ZlibGnuMagic.size() + sizeof(Sec.Size))
                                 : sizeof(Elf_Chdr_Impl<ELFT>);
@@ -202,6 +195,7 @@ void ELFSectionWriter<ELFT>::visit(const DecompressedSection &Sec) {
                                  static_cast<size_t>(Sec.Size)))
     reportError(Sec.Name, std::move(E));
 
+  uint8_t *Buf = Out.getBufferStart() + Sec.Offset;
   std::copy(DecompressedContent.begin(), DecompressedContent.end(), Buf);
 }
 
