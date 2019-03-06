@@ -57,10 +57,16 @@ SBFileSpec SBCompileUnit::GetFileSpec() const {
 uint32_t SBCompileUnit::GetNumLineEntries() const {
   LLDB_RECORD_METHOD_CONST_NO_ARGS(uint32_t, SBCompileUnit, GetNumLineEntries);
 
+  Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_API));
   if (m_opaque_ptr) {
     LineTable *line_table = m_opaque_ptr->GetLineTable();
-    if (line_table)
+    if (line_table) {
+      if (log)
+        log->Printf("SBCompileUnit(%p)::GetNumLineEntries() => %d",
+                    static_cast<void *>(m_opaque_ptr),
+                    (int)line_table->GetSize());
       return line_table->GetSize();
+    }
   }
   return 0;
 }
