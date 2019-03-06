@@ -295,9 +295,11 @@ namespace {
     SDValue visitADDSAT(SDNode *N);
     SDValue visitSUBSAT(SDNode *N);
     SDValue visitADDC(SDNode *N);
+    SDValue visitSADDO(SDNode *N);
     SDValue visitUADDO(SDNode *N);
     SDValue visitUADDOLike(SDValue N0, SDValue N1, SDNode *N);
     SDValue visitSUBC(SDNode *N);
+    SDValue visitSSUBO(SDNode *N);
     SDValue visitUSUBO(SDNode *N);
     SDValue visitADDE(SDNode *N);
     SDValue visitADDCARRY(SDNode *N);
@@ -1492,8 +1494,10 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::SSUBSAT:
   case ISD::USUBSAT:            return visitSUBSAT(N);
   case ISD::ADDC:               return visitADDC(N);
+  case ISD::SADDO:              return visitSADDO(N);
   case ISD::UADDO:              return visitUADDO(N);
   case ISD::SUBC:               return visitSUBC(N);
+  case ISD::SSUBO:              return visitSSUBO(N);
   case ISD::USUBO:              return visitUSUBO(N);
   case ISD::ADDE:               return visitADDE(N);
   case ISD::ADDCARRY:           return visitADDCARRY(N);
@@ -2410,6 +2414,31 @@ static bool isBooleanFlip(SDValue V, EVT VT, const TargetLowering &TLI) {
   llvm_unreachable("Unsupported boolean content");
 }
 
+// TODO: merge this with DAGCombiner::visitUADDO
+SDValue DAGCombiner::visitSADDO(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  EVT VT = N0.getValueType();
+  EVT CarryVT = N->getValueType(1);
+  SDLoc DL(N);
+
+  // If the flag result is dead, turn this into an ADD.
+  if (!N->hasAnyUseOfValue(1))
+    return CombineTo(N, DAG.getNode(ISD::ADD, DL, VT, N0, N1),
+                     DAG.getUNDEF(CarryVT));
+
+  // canonicalize constant to RHS.
+  if (DAG.isConstantIntBuildVectorOrConstantInt(N0) &&
+      !DAG.isConstantIntBuildVectorOrConstantInt(N1))
+    return DAG.getNode(ISD::SADDO, DL, N->getVTList(), N1, N0);
+
+  // fold (saddo x, 0) -> x + no carry out
+  if (isNullOrNullSplat(N1))
+    return CombineTo(N, N0, DAG.getConstant(0, DL, CarryVT));
+
+  return SDValue();
+}
+
 SDValue DAGCombiner::visitUADDO(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
@@ -2890,6 +2919,31 @@ SDValue DAGCombiner::visitSUBC(SDNode *N) {
   if (isAllOnesConstant(N0))
     return CombineTo(N, DAG.getNode(ISD::XOR, DL, VT, N1, N0),
                      DAG.getNode(ISD::CARRY_FALSE, DL, MVT::Glue));
+
+  return SDValue();
+}
+
+// TODO: merge this with DAGCombiner::visitUSUBO
+SDValue DAGCombiner::visitSSUBO(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  EVT VT = N0.getValueType();
+  EVT CarryVT = N->getValueType(1);
+  SDLoc DL(N);
+
+  // If the flag result is dead, turn this into an SUB.
+  if (!N->hasAnyUseOfValue(1))
+    return CombineTo(N, DAG.getNode(ISD::SUB, DL, VT, N0, N1),
+                     DAG.getUNDEF(CarryVT));
+
+  // fold (ssubo x, x) -> 0 + no borrow
+  if (N0 == N1)
+    return CombineTo(N, DAG.getConstant(0, DL, VT),
+                     DAG.getConstant(0, DL, CarryVT));
+
+  // fold (ssubo x, 0) -> x + no borrow
+  if (isNullOrNullSplat(N1))
+    return CombineTo(N, N0, DAG.getConstant(0, DL, CarryVT));
 
   return SDValue();
 }

@@ -13,15 +13,11 @@ define i32 @combine_sadd_zero(i32 %a0, i32 %a1) {
 ; SSE-LABEL: combine_sadd_zero:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    movl %edi, %eax
-; SSE-NEXT:    addl $0, %eax
-; SSE-NEXT:    cmovol %esi, %eax
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_sadd_zero:
 ; AVX:       # %bb.0:
 ; AVX-NEXT:    movl %edi, %eax
-; AVX-NEXT:    addl $0, %eax
-; AVX-NEXT:    cmovol %esi, %eax
 ; AVX-NEXT:    retq
   %1 = call {i32, i1} @llvm.sadd.with.overflow.i32(i32 %a0, i32 zeroinitializer)
   %2 = extractvalue {i32, i1} %1, 0
@@ -33,28 +29,10 @@ define i32 @combine_sadd_zero(i32 %a0, i32 %a1) {
 define <4 x i32> @combine_vec_sadd_zero(<4 x i32> %a0, <4 x i32> %a1) {
 ; SSE-LABEL: combine_vec_sadd_zero:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    movdqa %xmm0, %xmm2
-; SSE-NEXT:    pxor %xmm0, %xmm0
-; SSE-NEXT:    pcmpgtd %xmm2, %xmm0
-; SSE-NEXT:    pcmpeqd %xmm3, %xmm3
-; SSE-NEXT:    pxor %xmm3, %xmm0
-; SSE-NEXT:    pcmpeqd %xmm0, %xmm3
-; SSE-NEXT:    pcmpeqd %xmm0, %xmm0
-; SSE-NEXT:    pandn %xmm3, %xmm0
-; SSE-NEXT:    blendvps %xmm0, %xmm1, %xmm2
-; SSE-NEXT:    movaps %xmm2, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_vec_sadd_zero:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vpxor %xmm2, %xmm2, %xmm2
-; AVX-NEXT:    vpcmpgtd %xmm0, %xmm2, %xmm2
-; AVX-NEXT:    vpcmpeqd %xmm3, %xmm3, %xmm3
-; AVX-NEXT:    vpxor %xmm3, %xmm2, %xmm2
-; AVX-NEXT:    vpcmpeqd %xmm3, %xmm2, %xmm3
-; AVX-NEXT:    vpcmpeqd %xmm2, %xmm2, %xmm2
-; AVX-NEXT:    vpandn %xmm3, %xmm2, %xmm2
-; AVX-NEXT:    vblendvps %xmm2, %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %1 = call {<4 x i32>, <4 x i1>} @llvm.sadd.with.overflow.v4i32(<4 x i32> %a0, <4 x i32> zeroinitializer)
   %2 = extractvalue {<4 x i32>, <4 x i1>} %1, 0
