@@ -36,8 +36,8 @@
 // and call:
 //   RESULT result{t.Traverse(topLevelExpr)};
 // Within the callback routines (Handle, Pre, Post), one may call
-//   void Stop();  // to end traversal
-//   void Return(...);  // to emplace-construct the result and end traversal
+//   void Return(RESULT &&);  // to define the result and end traversal
+//   void Return();  // to end traversal with current result
 //   RESULT &result();  // to reference the result to define or update it
 // For any given expression object type T for which a callback is defined
 // in any visitor class, the callback must be distinct from all others.
@@ -58,10 +58,10 @@ public:
   template<typename A> std::nullptr_t Pre(const A &) { return nullptr; }
   template<typename A> std::nullptr_t Post(const A &) { return nullptr; }
 
-  void Stop() { done_ = true; }
+  void Return() { done_ = true; }
   void Return(RESULT &&x) {
     result_ = std::move(x);
-    Stop();
+    done_ = true;
   }
 
 protected:
@@ -69,140 +69,9 @@ protected:
   Result result_;
 };
 
-// Descend() is a helper function template for Traversal::Visit().
-// Do not use directly.
 namespace descend {
 template<typename VISITOR, typename EXPR>
 void Descend(VISITOR &, const EXPR &) {}
-template<typename V, typename A> void Descend(V &visitor, const A *p) {
-  if (p != nullptr) {
-    visitor.Visit(*p);
-  }
-}
-template<typename V, typename A>
-void Descend(V &visitor, const std::optional<A> *o) {
-  if (o.has_value()) {
-    visitor.Visit(*o);
-  }
-}
-template<typename V, typename A>
-void Descend(V &visitor, const CopyableIndirection<A> &p) {
-  visitor.Visit(p.value());
-}
-template<typename V, typename... A>
-void Descend(V &visitor, const std::variant<A...> &u) {
-  std::visit([&](const auto &x) { visitor.Visit(x); }, u);
-}
-template<typename V, typename A>
-void Descend(V &visitor, const std::vector<A> &xs) {
-  for (const auto &x : xs) {
-    visitor.Visit(x);
-  }
-}
-template<typename V, typename T> void Descend(V &visitor, const Expr<T> &expr) {
-  visitor.Visit(expr.u);
-}
-template<typename V, typename D, typename R, typename... O>
-void Descend(V &visitor, const Operation<D, R, O...> &op) {
-  visitor.Visit(op.left());
-  if constexpr (op.operands > 1) {
-    visitor.Visit(op.right());
-  }
-}
-template<typename V, typename R>
-void Descend(V &visitor, const ImpliedDo<R> &ido) {
-  visitor.Visit(ido.lower());
-  visitor.Visit(ido.upper());
-  visitor.Visit(ido.stride());
-  visitor.Visit(ido.values());
-}
-template<typename V, typename R>
-void Descend(V &visitor, const ArrayConstructorValue<R> &av) {
-  visitor.Visit(av.u);
-}
-template<typename V, typename R>
-void Descend(V &visitor, const ArrayConstructorValues<R> &avs) {
-  visitor.Visit(avs.values());
-}
-template<typename V, int KIND>
-void Descend(V &visitor,
-    const ArrayConstructor<Type<TypeCategory::Character, KIND>> &ac) {
-  visitor.Visit(
-      static_cast<ArrayConstructorValues<Type<TypeCategory::Character, KIND>>>(
-          ac));
-  visitor.Visit(ac.LEN());
-}
-template<typename V>
-void Descend(V &visitor, const semantics::ParamValue &param) {
-  visitor.Visit(param.GetExplicit());
-}
-template<typename V>
-void Descend(V &visitor, const semantics::DerivedTypeSpec &derived) {
-  for (const auto &pair : derived.parameters()) {
-    visitor.Visit(pair.second);
-  }
-}
-template<typename V> void Descend(V &visitor, const StructureConstructor &sc) {
-  visitor.Visit(sc.derivedTypeSpec());
-  for (const auto &pair : sc.values()) {
-    visitor.Visit(pair.second);
-  }
-}
-template<typename V> void Descend(V &visitor, const BaseObject &object) {
-  visitor.Visit(object.u);
-}
-template<typename V> void Descend(V &visitor, const Component &component) {
-  visitor.Visit(component.base());
-  visitor.Visit(component.GetLastSymbol());
-}
-template<typename V, int KIND>
-void Descend(V &visitor, const TypeParamInquiry<KIND> &inq) {
-  visitor.Visit(inq.base());
-  visitor.Visit(inq.parameter());
-}
-template<typename V> void Descend(V &visitor, const Triplet &triplet) {
-  visitor.Visit(triplet.lower());
-  visitor.Visit(triplet.upper());
-  visitor.Visit(triplet.stride());
-}
-template<typename V> void Descend(V &visitor, const Subscript &sscript) {
-  visitor.Visit(sscript.u);
-}
-template<typename V> void Descend(V &visitor, const ArrayRef &aref) {
-  visitor.Visit(aref.base());
-  visitor.Visit(aref.subscript());
-}
-template<typename V> void Descend(V &visitor, const CoarrayRef &caref) {
-  visitor.Visit(caref.base());
-  visitor.Visit(caref.subscript());
-  visitor.Visit(caref.cosubscript());
-  visitor.Visit(caref.stat());
-  visitor.Visit(caref.team());
-}
-template<typename V> void Descend(V &visitor, const DataRef &data) {
-  visitor.Visit(data.u);
-}
-template<typename V> void Descend(V &visitor, const ComplexPart &z) {
-  visitor.Visit(z.complex());
-}
-template<typename V, typename T>
-void Descend(V &visitor, const Designator<T> &designator) {
-  visitor.Visit(designator.u);
-}
-template<typename V, typename T>
-void Descend(V &visitor, const Variable<T> &var) {
-  visitor.Visit(var.u);
-}
-template<typename V> void Descend(V &visitor, const ActualArgument &arg) {
-  visitor.Visit(arg.value());
-}
-template<typename V> void Descend(V &visitor, const ProcedureDesignator &p) {
-  visitor.Visit(p.u);
-}
-template<typename V> void Descend(V &visitor, const ProcedureRef &call) {
-  visitor.Visit(call.proc());
-  visitor.Visit(call.arguments());
-}
 }
 
 template<typename RESULT, typename... A>
@@ -223,7 +92,7 @@ public:
     return std::move(result_);
   }
 
-  // TODO: make private, make Descend instances friends
+private:
   template<typename B> void Visit(const B &x) {
     if (!done_) {
       if constexpr (std::is_same_v<std::decay_t<decltype(Handle(x))>,
@@ -245,6 +114,11 @@ public:
       }
     }
   }
+
+  template<typename B> friend void descend::Descend(Traversal &, const B &);
 };
 }
+
+// Helper friend function template definitions
+#include "traversal-descend.h"
 #endif  // FORTRAN_EVALUATE_TRAVERSAL_H_
