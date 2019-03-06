@@ -332,16 +332,16 @@ template <class ELFT> static void createSyntheticSections() {
     In.DynSymTab = make<SymbolTableSection<ELFT>>(*In.DynStrTab);
     Add(In.DynSymTab);
 
-    InX<ELFT>::VerSym = make<VersionTableSection<ELFT>>();
-    Add(InX<ELFT>::VerSym);
+    In.VerSym = make<VersionTableSection>();
+    Add(In.VerSym);
 
     if (!Config->VersionDefinitions.empty()) {
       In.VerDef = make<VersionDefinitionSection>();
       Add(In.VerDef);
     }
 
-    InX<ELFT>::VerNeed = make<VersionNeedSection<ELFT>>();
-    Add(InX<ELFT>::VerNeed);
+    In.VerNeed = make<VersionNeedSection<ELFT>>();
+    Add(In.VerNeed);
 
     if (Config->GnuHash) {
       In.GnuHashTab = make<GnuHashTableSection>();
@@ -1714,7 +1714,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
       In.DynSymTab->addSymbol(Sym);
       if (auto *File = dyn_cast_or_null<SharedFile<ELFT>>(Sym->File))
         if (File->IsNeeded && !Sym->isUndefined())
-          InX<ELFT>::VerNeed->addSymbol(Sym);
+          In.VerNeed->addSymbol(Sym);
     }
   }
 
@@ -1804,8 +1804,8 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   finalizeSynthetic(In.Plt);
   finalizeSynthetic(In.Iplt);
   finalizeSynthetic(In.EhFrameHdr);
-  finalizeSynthetic(InX<ELFT>::VerSym);
-  finalizeSynthetic(InX<ELFT>::VerNeed);
+  finalizeSynthetic(In.VerSym);
+  finalizeSynthetic(In.VerNeed);
   finalizeSynthetic(In.Dynamic);
 
   if (!Script->HasSectionsCommand && !Config->Relocatable)
