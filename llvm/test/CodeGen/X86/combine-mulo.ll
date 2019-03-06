@@ -44,10 +44,8 @@ define <4 x i32> @combine_vec_smul_two(<4 x i32> %a0, <4 x i32> %a1) {
 ; SSE-NEXT:    movdqa %xmm2, %xmm0
 ; SSE-NEXT:    psrad $31, %xmm0
 ; SSE-NEXT:    pcmpeqd %xmm3, %xmm0
-; SSE-NEXT:    pcmpeqd %xmm3, %xmm3
-; SSE-NEXT:    pxor %xmm3, %xmm0
-; SSE-NEXT:    blendvps %xmm0, %xmm1, %xmm2
-; SSE-NEXT:    movaps %xmm2, %xmm0
+; SSE-NEXT:    blendvps %xmm0, %xmm2, %xmm1
+; SSE-NEXT:    movaps %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_vec_smul_two:
@@ -61,9 +59,7 @@ define <4 x i32> @combine_vec_smul_two(<4 x i32> %a0, <4 x i32> %a1) {
 ; AVX-NEXT:    vpaddd %xmm0, %xmm0, %xmm0
 ; AVX-NEXT:    vpsrad $31, %xmm0, %xmm3
 ; AVX-NEXT:    vpcmpeqd %xmm3, %xmm2, %xmm2
-; AVX-NEXT:    vpcmpeqd %xmm3, %xmm3, %xmm3
-; AVX-NEXT:    vpxor %xmm3, %xmm2, %xmm2
-; AVX-NEXT:    vblendvps %xmm2, %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    vblendvps %xmm2, %xmm0, %xmm1, %xmm0
 ; AVX-NEXT:    retq
   %1 = call {<4 x i32>, <4 x i1>} @llvm.smul.with.overflow.v4i32(<4 x i32> %a0, <4 x i32> <i32 2, i32 2, i32 2, i32 2>)
   %2 = extractvalue {<4 x i32>, <4 x i1>} %1, 0
@@ -104,13 +100,11 @@ define <4 x i32> @combine_vec_umul_two(<4 x i32> %a0, <4 x i32> %a1) {
 ; SSE-NEXT:    pmuludq %xmm2, %xmm3
 ; SSE-NEXT:    pshufd {{.*#+}} xmm3 = xmm3[1,1,3,3]
 ; SSE-NEXT:    pblendw {{.*#+}} xmm3 = xmm3[0,1],xmm0[2,3],xmm3[4,5],xmm0[6,7]
-; SSE-NEXT:    pxor %xmm4, %xmm4
-; SSE-NEXT:    pcmpeqd %xmm3, %xmm4
-; SSE-NEXT:    pcmpeqd %xmm0, %xmm0
-; SSE-NEXT:    pxor %xmm4, %xmm0
+; SSE-NEXT:    pxor %xmm0, %xmm0
+; SSE-NEXT:    pcmpeqd %xmm3, %xmm0
 ; SSE-NEXT:    paddd %xmm2, %xmm2
-; SSE-NEXT:    blendvps %xmm0, %xmm1, %xmm2
-; SSE-NEXT:    movaps %xmm2, %xmm0
+; SSE-NEXT:    blendvps %xmm0, %xmm2, %xmm1
+; SSE-NEXT:    movaps %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_vec_umul_two:
@@ -123,10 +117,8 @@ define <4 x i32> @combine_vec_umul_two(<4 x i32> %a0, <4 x i32> %a1) {
 ; AVX-NEXT:    vpblendd {{.*#+}} xmm2 = xmm3[0],xmm2[1],xmm3[2],xmm2[3]
 ; AVX-NEXT:    vpxor %xmm3, %xmm3, %xmm3
 ; AVX-NEXT:    vpcmpeqd %xmm3, %xmm2, %xmm2
-; AVX-NEXT:    vpcmpeqd %xmm3, %xmm3, %xmm3
-; AVX-NEXT:    vpxor %xmm3, %xmm2, %xmm2
 ; AVX-NEXT:    vpaddd %xmm0, %xmm0, %xmm0
-; AVX-NEXT:    vblendvps %xmm2, %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    vblendvps %xmm2, %xmm0, %xmm1, %xmm0
 ; AVX-NEXT:    retq
   %1 = call {<4 x i32>, <4 x i1>} @llvm.umul.with.overflow.v4i32(<4 x i32> %a0, <4 x i32> <i32 2, i32 2, i32 2, i32 2>)
   %2 = extractvalue {<4 x i32>, <4 x i1>} %1, 0
