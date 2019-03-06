@@ -802,9 +802,6 @@ FOR_EACH_TYPE_AND_KIND(template class ExpressionBase)
 
 class IsConstantExprVisitor : public virtual TraversalBase<bool> {
 public:
-  using Base = TraversalBase<bool>;
-  using Base::Handle, Base::Pre, Base::Post;
-
   explicit IsConstantExprVisitor(std::nullptr_t) {}
 
   template<int KIND> void Handle(const TypeParamInquiry<KIND> &inq) {

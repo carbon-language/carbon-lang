@@ -155,9 +155,11 @@ template<typename V> void Descend(V &visitor, const ProcedureRef &call) {
 }
 
 template<typename RESULT, typename... A>
-class Traversal : public virtual TraversalBase<RESULT>, public virtual A... {
+class Traversal : public virtual TraversalBase<RESULT>, public A... {
 public:
   using Result = RESULT;
+  using Base = TraversalBase<Result>;
+  using Base::Handle, Base::Pre, Base::Post;
   using A::Handle..., A::Pre..., A::Post...;
 private:
   using TraversalBase<Result>::result_, TraversalBase<Result>::defaultHandle_;
