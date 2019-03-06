@@ -33,7 +33,6 @@
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/LegacyPassNameParser.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/RemarkStreamer.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/InitializePasses.h"
@@ -564,8 +563,8 @@ int main(int argc, char **argv) {
       errs() << EC.message() << '\n';
       return 1;
     }
-    Context.setRemarkStreamer(llvm::make_unique<RemarkStreamer>(
-        RemarksFilename, OptRemarkFile->os()));
+    Context.setDiagnosticsOutputFile(
+        llvm::make_unique<yaml::Output>(OptRemarkFile->os()));
   }
 
   // Load the input module...

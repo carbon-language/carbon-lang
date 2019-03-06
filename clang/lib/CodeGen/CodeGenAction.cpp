@@ -30,7 +30,6 @@
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/RemarkStreamer.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Linker/Linker.h"
 #include "llvm/Pass.h"
@@ -277,8 +276,8 @@ namespace clang {
           return;
         }
 
-        Ctx.setRemarkStreamer(llvm::make_unique<RemarkStreamer>(
-            CodeGenOpts.OptRecordFile, OptRecordFile->os()));
+        Ctx.setDiagnosticsOutputFile(
+            llvm::make_unique<yaml::Output>(OptRecordFile->os()));
 
         if (CodeGenOpts.getProfileUse() != CodeGenOptions::ProfileNone)
           Ctx.setDiagnosticsHotnessRequested(true);
