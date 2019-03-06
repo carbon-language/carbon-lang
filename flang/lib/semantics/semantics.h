@@ -122,8 +122,8 @@ private:
 
 // Base class for semantics checkers.
 struct BaseChecker {
-  template<typename C> void Enter(const C &x) {}
-  template<typename C> void Leave(const C &x) {}
+  template<typename N> void Enter(const N &) {}
+  template<typename N> void Leave(const N &) {}
 };
 
 }

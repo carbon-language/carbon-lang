@@ -48,10 +48,12 @@ template<typename... C> struct SemanticsVisitor : public virtual C... {
     return true;
   }
   template<typename N> void Post(const N &node) { Leave(node); }
+  void Walk(const parser::Program &program) { parser::Walk(program, *this); }
 };
 
-using StatementSemantics =
-    SemanticsVisitor<ExprChecker, AssignmentChecker, DoConcurrentChecker>;
+using StatementSemanticsPass1 = SemanticsVisitor<ExprChecker>;
+using StatementSemanticsPass2 =
+    SemanticsVisitor<AssignmentChecker, DoConcurrentChecker>;
 
 SemanticsContext::SemanticsContext(
     const common::IntrinsicTypeDefaultKinds &defaultKinds)
@@ -102,8 +104,11 @@ bool Semantics::Perform() {
   if (AnyFatalError()) {
     return false;
   }
-  StatementSemantics visitor{context_};
-  parser::Walk(program_, visitor);
+  StatementSemanticsPass1{context_}.Walk(program_);
+  if (AnyFatalError()) {
+    return false;
+  }
+  StatementSemanticsPass2{context_}.Walk(program_);
   if (AnyFatalError()) {
     return false;
   }
