@@ -19,22 +19,54 @@
 #include <type_traits>
 
 // Implements an expression traversal utility framework.
+// See fold.cc to see how this framework is used to implement detection
+// of constant expressions.
+//
+// To use, define one or more client visitation classes of the form:
+//   class MyVisitor : public virtual TraversalBase<RESULT> {
+//     explicit MyVisitor(ARGTYPE);  // single-argument constructor
+//     void Handle(const T1 &);  // callback for type T1 objects
+//     void Pre(const T2 &);  // callback before visiting T2
+//     void Post(const T2 &);  // callback after visiting T2
+//     ...
+//   };
+// RESULT should have some default-constructible type.
+// Then instantiate and construct a Traversal and its embedded MyVisitor via:
+//   Traversal<RESULT, MyVisitor, ...> t{value};  // value is ARGTYPE &&
+// and call:
+//   RESULT result{t.Traverse(topLevelExpr)};
+// Within the callback routines (Handle, Pre, Post), one may call
+//   void Stop();  // to end traversal
+//   void Return(...);  // to emplace-construct the result and end traversal
+//   RESULT &result();  // to reference the result to define or update it
+// For any given expression object type T for which a callback is defined
+// in any visitor class, the callback must be distinct from all others.
+// Further, if there is a Handle(const T &) callback, there cannot be a
+// Pre() or a Post().
+
 namespace Fortran::evaluate {
 
 template<typename RESULT> class TraversalBase {
 public:
   using Result = RESULT;
-  // Note the weird return type; it distinguishes this default Handle
-  // from any void-valued override.
+
+  Result &result() { return result_; }
+
+  // Note the odd return type; it distinguishes these default callbacks
+  // from any void-valued client callback.
   template<typename A> std::nullptr_t Handle(const A &) { return nullptr; }
-  template<typename A> void Pre(const A &) {}
-  template<typename A> void Post(const A &) {}
-  template<typename... A> void Return(A &&... x) {
-    result_.emplace(std::move(x)...);
+  template<typename A> std::nullptr_t Pre(const A &) { return nullptr; }
+  template<typename A> std::nullptr_t Post(const A &) { return nullptr; }
+
+  void Stop() { done_ = true; }
+  void Return(RESULT &&x) {
+    result_ = std::move(x);
+    Stop();
   }
 
 protected:
-  std::optional<Result> result_;
+  bool done_{false};
+  Result result_;
 };
 
 // Descend() is a helper function template for Traversal::Visit().
@@ -182,29 +214,33 @@ public:
   using A::Handle..., A::Pre..., A::Post...;
 
 private:
-  using TraversalBase<Result>::result_;
+  using TraversalBase<Result>::done_, TraversalBase<Result>::result_;
 
 public:
   template<typename... B> Traversal(B... x) : A{x}... {}
-  template<typename B> std::optional<Result> Traverse(const B &x) {
+  template<typename B> Result Traverse(const B &x) {
     Visit(x);
     return std::move(result_);
   }
 
   // TODO: make private, make Descend instances friends
   template<typename B> void Visit(const B &x) {
-    if (!result_.has_value()) {
+    if (!done_) {
       if constexpr (std::is_same_v<std::decay_t<decltype(Handle(x))>,
                         std::nullptr_t>) {
         // No visitation class defines Handle(B), so try Pre()/Post().
         Pre(x);
-        if (!result_.has_value()) {
+        if (!done_) {
           descend::Descend(*this, x);
-          if (!result_.has_value()) {
+          if (!done_) {
             Post(x);
           }
         }
       } else {
+        static_assert(
+            std::is_same_v<std::decay_t<decltype(Pre(x))>, std::nullptr_t>);
+        static_assert(
+            std::is_same_v<std::decay_t<decltype(Post(x))>, std::nullptr_t>);
         Handle(x);
       }
     }

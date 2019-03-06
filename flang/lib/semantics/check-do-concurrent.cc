@@ -14,10 +14,12 @@
 
 #include "check-do-concurrent.h"
 #include "attr.h"
+#include "expression.h"
 #include "scope.h"
 #include "semantics.h"
 #include "symbol.h"
 #include "type.h"
+#include "../evaluate/traversal.h"
 #include "../parser/message.h"
 #include "../parser/parse-tree-visitor.h"
 
@@ -218,13 +220,6 @@ private:
 
 using CS = std::vector<const Symbol *>;
 
-struct GatherSymbols {
-  CS symbols;
-  template<typename T> constexpr bool Pre(const T &) { return true; }
-  template<typename T> constexpr void Post(const T &) {}
-  void Post(const parser::Name &name) { symbols.push_back(name.symbol); }
-};
-
 static bool IntegerVariable(const Symbol &variable) {
   return variable.GetType()->IsNumeric(common::TypeCategory::Integer);
 }
@@ -300,10 +295,26 @@ static CS GatherLocalVariableNames(
   }
   return names;
 }
+
 static CS GatherReferencesFromExpression(const parser::Expr &expression) {
-  GatherSymbols gatherSymbols;
-  parser::Walk(expression, gatherSymbols);
-  return gatherSymbols.symbols;
+  // Use the new expression traversal framework if possible, for testing.
+  if (expression.typedExpr.has_value()) {
+    struct CollectSymbols : public virtual evaluate::TraversalBase<CS> {
+      explicit CollectSymbols(int) {}
+      void Handle(const Symbol *symbol) { result().push_back(symbol); }
+    };
+    return evaluate::Traversal<CS, CollectSymbols>{0}.Traverse(
+        expression.typedExpr.value());
+  } else {
+    struct GatherSymbols {
+      CS symbols;
+      template<typename T> constexpr bool Pre(const T &) { return true; }
+      template<typename T> constexpr void Post(const T &) {}
+      void Post(const parser::Name &name) { symbols.push_back(name.symbol); }
+    } gatherSymbols;
+    parser::Walk(expression, gatherSymbols);
+    return gatherSymbols.symbols;
+  }
 }
 
 // Find a canonical DO CONCURRENT and enforce semantics checks on its body

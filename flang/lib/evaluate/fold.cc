@@ -802,7 +802,7 @@ FOR_EACH_TYPE_AND_KIND(template class ExpressionBase)
 
 class IsConstantExprVisitor : public virtual TraversalBase<bool> {
 public:
-  explicit IsConstantExprVisitor(std::nullptr_t) {}
+  explicit IsConstantExprVisitor(int) { result() = true; }
 
   template<int KIND> void Handle(const TypeParamInquiry<KIND> &inq) {
     Check(inq.parameter().template get<semantics::TypeParamDetails>().attr() ==
@@ -833,8 +833,7 @@ private:
 };
 
 bool IsConstantExpr(const Expr<SomeType> &expr) {
-  Traversal<bool, IsConstantExprVisitor> traverser{nullptr};
-  return !traverser.Traverse(expr).has_value();  // only no news is good news
+  return Traversal<bool, IsConstantExprVisitor>{0}.Traverse(expr);
 }
 
 std::optional<std::int64_t> ToInt64(const Expr<SomeInteger> &expr) {
