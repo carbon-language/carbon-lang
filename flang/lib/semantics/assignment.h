@@ -15,6 +15,9 @@
 #ifndef FORTRAN_SEMANTICS_ASSIGNMENT_H_
 #define FORTRAN_SEMANTICS_ASSIGNMENT_H_
 
+#include "semantics.h"
+#include "../common/indirection.h"
+
 namespace Fortran::parser {
 template<typename> struct Statement;
 struct AssignmentStmt;
@@ -23,10 +26,27 @@ struct ForallStmt;
 struct PointerAssignmentStmt;
 struct Program;
 struct WhereStmt;
+struct WhereConstruct;
+struct ForallStmt;
+struct ForallConstruct;
 }
 
 namespace Fortran::semantics {
-class SemanticsContext;
+class AssignmentContext;
+
+class AssignmentChecker : public virtual BaseChecker {
+public:
+  explicit AssignmentChecker(SemanticsContext &);
+  void Enter(const parser::AssignmentStmt &);
+  void Enter(const parser::PointerAssignmentStmt &);
+  void Enter(const parser::WhereStmt &);
+  void Enter(const parser::WhereConstruct &);
+  void Enter(const parser::ForallStmt &);
+  void Enter(const parser::ForallConstruct &);
+
+private:
+  common::ForwardReference<AssignmentContext> context_;
+};
 
 // Semantic analysis of an assignment statement or WHERE/FORALL construct.
 void AnalyzeAssignment(
@@ -43,7 +63,5 @@ void AnalyzeAssignment(
 void AnalyzeConcurrentHeader(
     SemanticsContext &, const parser::ConcurrentHeader &);
 
-// Semantic analysis of all assignment statements and related constructs.
-void AnalyzeAssignments(parser::Program &, SemanticsContext &);
 }
 #endif  // FORTRAN_SEMANTICS_ASSIGNMENT_H_

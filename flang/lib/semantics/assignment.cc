@@ -14,7 +14,6 @@
 
 #include "assignment.h"
 #include "expression.h"
-#include "semantics.h"
 #include "symbol.h"
 #include "../common/idioms.h"
 #include "../evaluate/expression.h"
@@ -82,13 +81,13 @@ public:
   explicit AssignmentContext(
       SemanticsContext &c, parser::CharBlock at = parser::CharBlock{})
     : context_{c}, messages_{at, &c.messages()} {}
-  AssignmentContext(const AssignmentContext &that, parser::CharBlock at)
-    : context_{that.context_}, messages_{at, that.messages_.messages()},
-      where_{that.where_}, forall_{that.forall_} {}
   AssignmentContext(const AssignmentContext &c, WhereContext &w)
     : context_{c.context_}, messages_{c.messages_}, where_{&w} {}
   AssignmentContext(const AssignmentContext &c, ForallContext &f)
     : context_{c.context_}, messages_{c.messages_}, forall_{&f} {}
+
+  bool operator==(const AssignmentContext &x) const { return this == &x; }
+  bool operator!=(const AssignmentContext &x) const { return this != &x; }
 
   void Analyze(const parser::AssignmentStmt &);
   void Analyze(const parser::PointerAssignmentStmt &);
@@ -99,8 +98,10 @@ public:
   void Analyze(const parser::ConcurrentHeader &);
 
   template<typename A> void Analyze(const parser::Statement<A> &stmt) {
-    AssignmentContext nested{*this, stmt.source};
-    nested.Analyze(stmt.statement);
+    const auto *saveLocation{context_.location()};
+    context_.set_location(&stmt.source);
+    Analyze(stmt.statement);
+    context_.set_location(saveLocation);
   }
   template<typename A> void Analyze(const common::Indirection<A> &x) {
     Analyze(x.value());
@@ -128,6 +129,12 @@ private:
   WhereContext *where_{nullptr};
   ForallContext *forall_{nullptr};
 };
+
+}  // namespace Fortran::semantics
+
+DEFINE_OWNING_DESTRUCTOR(ForwardReference, semantics::AssignmentContext)
+
+namespace Fortran::semantics {
 
 void AssignmentContext::Analyze(const parser::AssignmentStmt &stmt) {
   if (forall_ != nullptr) {
@@ -194,10 +201,10 @@ void AssignmentContext::Analyze(const parser::ForallConstruct &construct) {
   ForallContext forall{forall_};
   AssignmentContext nested{*this, forall};
   const auto &forallStmt{
-      std::get<parser::Statement<parser::ForallConstructStmt>>(construct.t)
-          .statement};
-  nested.Analyze(
-      std::get<common::Indirection<parser::ConcurrentHeader>>(forallStmt.t));
+      std::get<parser::Statement<parser::ForallConstructStmt>>(construct.t)};
+  context_.set_location(&forallStmt.source);
+  nested.Analyze(std::get<common::Indirection<parser::ConcurrentHeader>>(
+      forallStmt.statement.t));
   for (const auto &body :
       std::get<std::list<parser::ForallBodyConstruct>>(construct.t)) {
     nested.Analyze(body.u);
@@ -209,6 +216,7 @@ void AssignmentContext::Analyze(
   CHECK(where_ != nullptr);
   const auto &elsewhereStmt{
       std::get<parser::Statement<parser::MaskedElsewhereStmt>>(elsewhere.t)};
+  context_.set_location(&elsewhereStmt.source);
   MaskExpr mask{
       GetMask(std::get<parser::LogicalExpr>(elsewhereStmt.statement.t))};
   MaskExpr copyCumulative{where_->cumulativeMaskExpr};
@@ -264,7 +272,7 @@ int AssignmentContext::GetIntegerKind(
     const std::optional<parser::IntegerTypeSpec> &spec) {
   std::optional<parser::KindSelector> empty;
   evaluate::Expr<evaluate::SubscriptInteger> kind{AnalyzeKindSelector(
-      context_, messages_.at(), TypeCategory::Integer, spec ? spec->v : empty)};
+      context_, TypeCategory::Integer, spec ? spec->v : empty)};
   if (auto value{evaluate::ToInt64(kind)}) {
     return static_cast<int>(*value);
   } else {
@@ -288,6 +296,27 @@ MaskExpr AssignmentContext::GetMask(
 void AnalyzeConcurrentHeader(
     SemanticsContext &context, const parser::ConcurrentHeader &header) {
   AssignmentContext{context}.Analyze(header);
+}
+
+AssignmentChecker::AssignmentChecker(SemanticsContext &context)
+  : context_{new AssignmentContext{context}} {}
+void AssignmentChecker::Enter(const parser::AssignmentStmt &x) {
+  context_.value().Analyze(x);
+}
+void AssignmentChecker::Enter(const parser::PointerAssignmentStmt &x) {
+  context_.value().Analyze(x);
+}
+void AssignmentChecker::Enter(const parser::WhereStmt &x) {
+  context_.value().Analyze(x);
+}
+void AssignmentChecker::Enter(const parser::WhereConstruct &x) {
+  context_.value().Analyze(x);
+}
+void AssignmentChecker::Enter(const parser::ForallStmt &x) {
+  context_.value().Analyze(x);
+}
+void AssignmentChecker::Enter(const parser::ForallConstruct &x) {
+  context_.value().Analyze(x);
 }
 
 namespace {
@@ -326,10 +355,7 @@ public:
 private:
   SemanticsContext &context_;
 };
+
 }
 
-void AnalyzeAssignments(parser::Program &program, SemanticsContext &context) {
-  Visitor visitor{context};
-  parser::Walk(program, visitor);
-}
-}
+}  // namespace Fortran::semantics

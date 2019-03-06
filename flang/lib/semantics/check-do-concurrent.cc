@@ -15,6 +15,7 @@
 #include "check-do-concurrent.h"
 #include "attr.h"
 #include "scope.h"
+#include "semantics.h"
 #include "symbol.h"
 #include "type.h"
 #include "../parser/message.h"
@@ -306,12 +307,15 @@ static CS GatherReferencesFromExpression(const parser::Expr &expression) {
 }
 
 // Find a canonical DO CONCURRENT and enforce semantics checks on its body
-class FindDoConcurrentLoops {
+class DoConcurrentContext {
 public:
-  FindDoConcurrentLoops(parser::Messages &messages) : messages_{messages} {}
-  template<typename T> constexpr bool Pre(const T &) { return true; }
-  template<typename T> constexpr void Post(const T &) {}
-  void Post(const parser::DoConstruct &doConstruct) {
+  DoConcurrentContext(SemanticsContext &context)
+    : messages_{context.messages()} {}
+
+  bool operator==(const DoConcurrentContext &x) const { return this == &x; }
+  bool operator!=(const DoConcurrentContext &x) const { return this != &x; }
+
+  void Check(const parser::DoConstruct &doConstruct) {
     auto &doStmt{
         std::get<parser::Statement<parser::NonLabelDoStmt>>(doConstruct.t)};
     auto &optionalLoopControl{
@@ -510,10 +514,18 @@ private:
   parser::CharBlock currentStatementSourcePosition_;
 };
 
+}  // namespace Fortran::semantics
+
+DEFINE_OWNING_DESTRUCTOR(ForwardReference, semantics::DoConcurrentContext)
+
+namespace Fortran::semantics {
+
+DoConcurrentChecker::DoConcurrentChecker(SemanticsContext &context)
+  : context_{new DoConcurrentContext{context}} {}
+
 // DO loops must be canonicalized prior to calling
-void CheckDoConcurrentConstraints(
-    parser::Messages &messages, const parser::Program &program) {
-  FindDoConcurrentLoops findDoConcurrentLoops{messages};
-  Walk(program, findDoConcurrentLoops);
+void DoConcurrentChecker::Leave(const parser::DoConstruct &x) {
+  context_.value().Check(x);
 }
-}
+
+}  // namespace Fortran::semantics

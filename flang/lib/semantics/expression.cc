@@ -1975,7 +1975,7 @@ static MaybeExpr AnalyzeExpr(
 
 MaybeExpr ExpressionAnalysisContext::Analyze(const parser::Expr &expr) {
   if (expr.typedExpr.has_value()) {
-    // Expression was already checked by AnalyzeExpressions() below.
+    // Expression was already checked by ExprChecker
     return std::make_optional<Expr<SomeType>>(expr.typedExpr.value().v);
   } else if (!expr.source.empty()) {
     // Analyze the expression in a specified source position context for better
@@ -2088,47 +2088,29 @@ std::optional<int> ExpressionAnalysisContext::IsAcImpliedDo(
 
 namespace Fortran::semantics {
 
-namespace {
-class Visitor {
-public:
-  Visitor(SemanticsContext &context) : context_{context} {}
+evaluate::Expr<evaluate::SubscriptInteger> AnalyzeKindSelector(
+    SemanticsContext &context, common::TypeCategory category,
+    const std::optional<parser::KindSelector> &selector) {
+  evaluate::ExpressionAnalysisContext exprContext{context};
+  auto save{
+      exprContext.GetContextualMessages().SetLocation(*context.location())};
+  return exprContext.Analyze(category, selector);
+}
 
-  template<typename A> bool Pre(const A &) { return true /* visit children */; }
-  template<typename A> void Post(const A &) {}
-
-  bool Pre(const parser::Expr &expr) {
-    if (!expr.typedExpr.has_value()) {
-      if (MaybeExpr checked{AnalyzeExpr(context_, expr)}) {
+void ExprChecker::Enter(const parser::Expr &expr) {
+  if (!expr.typedExpr.has_value()) {
+    if (MaybeExpr checked{AnalyzeExpr(context_, expr)}) {
 #if PMKDEBUG
 //        checked->AsFortran(std::cout << "checked expression: ") << '\n';
 #endif
-        expr.typedExpr = new evaluate::GenericExprWrapper{std::move(*checked)};
-      } else {
+      expr.typedExpr = new evaluate::GenericExprWrapper{std::move(*checked)};
+    } else {
 #if PMKDEBUG
-        std::cout << "TODO: expression analysis failed for this expression: ";
-        DumpTree(std::cout, expr);
+      std::cout << "TODO: expression analysis failed for this expression: ";
+      DumpTree(std::cout, expr);
 #endif
-      }
     }
-    return false;
   }
-
-private:
-  SemanticsContext &context_;
-};
 }
 
-void AnalyzeExpressions(parser::Program &program, SemanticsContext &context) {
-  Visitor visitor{context};
-  parser::Walk(program, visitor);
-}
-
-evaluate::Expr<evaluate::SubscriptInteger> AnalyzeKindSelector(
-    SemanticsContext &context, parser::CharBlock source,
-    common::TypeCategory category,
-    const std::optional<parser::KindSelector> &selector) {
-  evaluate::ExpressionAnalysisContext exprContext{context};
-  auto save{exprContext.GetContextualMessages().SetLocation(source)};
-  return exprContext.Analyze(category, selector);
-}
 }

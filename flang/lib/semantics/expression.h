@@ -241,7 +241,8 @@ void ConformabilityCheck(
         left.Rank(), right.Rank());
   }
 }
-}
+
+}  // namespace Fortran::evaluate
 
 namespace Fortran::semantics {
 
@@ -253,13 +254,22 @@ std::optional<evaluate::Expr<evaluate::SomeType>> AnalyzeExpr(
   return AnalyzeExpr(exprContext, expr);
 }
 
-// Semantic analysis of all expressions in a parse tree, which is
-// decorated with typed representations for top-level expressions.
-void AnalyzeExpressions(parser::Program &, SemanticsContext &);
-
 // Semantic analysis of an intrinsic type's KIND parameter expression.
 evaluate::Expr<evaluate::SubscriptInteger> AnalyzeKindSelector(
-    SemanticsContext &, parser::CharBlock, common::TypeCategory,
+    SemanticsContext &, common::TypeCategory,
     const std::optional<parser::KindSelector> &);
-}
+
+// Semantic analysis of all expressions in a parse tree, which is
+// decorated with typed representations for top-level expressions.
+class ExprChecker : public virtual BaseChecker {
+public:
+  explicit ExprChecker(SemanticsContext &context) : context_{context} {}
+  void Enter(const parser::Expr &);
+
+private:
+  SemanticsContext &context_;
+};
+
+}  // namespace Fortran::semantics
+
 #endif  // FORTRAN_SEMANTICS_EXPRESSION_H_

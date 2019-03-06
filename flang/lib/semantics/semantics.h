@@ -41,6 +41,7 @@ public:
   const common::IntrinsicTypeDefaultKinds &defaultKinds() const {
     return defaultKinds_;
   }
+  const parser::CharBlock *location() const { return location_; }
   const std::vector<std::string> &searchDirectories() const {
     return searchDirectories_;
   }
@@ -52,6 +53,10 @@ public:
   parser::Messages &messages() { return messages_; }
   evaluate::FoldingContext &foldingContext() { return foldingContext_; }
 
+  SemanticsContext &set_location(const parser::CharBlock *location) {
+    location_ = location;
+    return *this;
+  }
   SemanticsContext &set_searchDirectories(const std::vector<std::string> &x) {
     searchDirectories_ = x;
     return *this;
@@ -81,6 +86,7 @@ public:
 
 private:
   const common::IntrinsicTypeDefaultKinds &defaultKinds_;
+  const parser::CharBlock *location_{nullptr};
   std::vector<std::string> searchDirectories_;
   std::string moduleDirectory_{"."s};
   bool warnOnNonstandardUsage_{false};
@@ -113,6 +119,12 @@ private:
   parser::Program &program_;
   const parser::CookedSource &cooked_;
 };
-}
 
+// Base class for semantics checkers.
+struct BaseChecker {
+  template<typename C> void Enter(const C &x) {}
+  template<typename C> void Leave(const C &x) {}
+};
+
+}
 #endif

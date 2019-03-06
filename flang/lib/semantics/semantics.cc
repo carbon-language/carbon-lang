@@ -24,12 +24,34 @@
 #include "scope.h"
 #include "symbol.h"
 #include "../common/default-kinds.h"
+#include "../parser/parse-tree-visitor.h"
 #include <ostream>
 
 namespace Fortran::semantics {
 
 static void DoDumpSymbols(std::ostream &, const Scope &, int indent = 0);
 static void PutIndent(std::ostream &, int indent);
+
+// A parse tree visitor that calls Enter/Leave functions from each checker
+// class C supplied as template parameters. Enter is called before the node's
+// children are visited, Leave is called after. No two checkers may have the
+// same Enter or Leave function. Each checker must be constructible from
+// SemanticsContext and have BaseChecker as a virtual base class.
+template<typename... C> struct SemanticsVisitor : public virtual C... {
+  using C::Enter...;
+  using C::Leave...;
+  using BaseChecker::Enter;
+  using BaseChecker::Leave;
+  SemanticsVisitor(SemanticsContext &context) : C{context}... {}
+  template<typename N> bool Pre(const N &node) {
+    Enter(node);
+    return true;
+  }
+  template<typename N> void Post(const N &node) { Leave(node); }
+};
+
+using StatementSemantics =
+    SemanticsVisitor<ExprChecker, AssignmentChecker, DoConcurrentChecker>;
 
 SemanticsContext::SemanticsContext(
     const common::IntrinsicTypeDefaultKinds &defaultKinds)
@@ -80,9 +102,8 @@ bool Semantics::Perform() {
   if (AnyFatalError()) {
     return false;
   }
-  CheckDoConcurrentConstraints(context_.messages(), program_);
-  AnalyzeExpressions(program_, context_);
-  AnalyzeAssignments(program_, context_);
+  StatementSemantics visitor{context_};
+  parser::Walk(program_, visitor);
   if (AnyFatalError()) {
     return false;
   }
@@ -134,4 +155,5 @@ static void PutIndent(std::ostream &os, int indent) {
     os << "  ";
   }
 }
+
 }

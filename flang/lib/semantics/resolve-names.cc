@@ -94,10 +94,12 @@ private:
 // Track statement source locations and save messages.
 class MessageHandler {
 public:
-  Messages &messages() { return *messages_; };
-  void set_messages(Messages &messages) { messages_ = &messages; }
-  const SourceName *currStmtSource() { return currStmtSource_; }
-  void set_currStmtSource(const SourceName *);
+  Messages &messages() { return context_->messages(); };
+  void set_context(SemanticsContext &context) { context_ = &context; }
+  const SourceName *currStmtSource() { return context_->location(); }
+  void set_currStmtSource(const SourceName *source) {
+    context_->set_location(source);
+  }
 
   // Emit a message associated with the current statement source.
   Message &Say(MessageFixedText &&);
@@ -110,10 +112,7 @@ public:
       const SourceName &);
 
 private:
-  // Where messages are emitted:
-  Messages *messages_{nullptr};
-  // Source location of current statement; null if not in a statement
-  const SourceName *currStmtSource_{nullptr};
+  SemanticsContext *context_{nullptr};
 };
 
 // Inheritance graph for the parse tree visitation classes that follow:
@@ -136,7 +135,7 @@ public:
   void set_this(ResolveNamesVisitor *x) { this_ = x; }
 
   MessageHandler &messageHandler() { return messageHandler_; }
-  const SourceName *currStmtSource();
+  const SourceName *currStmtSource() { return context_->location(); }
   SemanticsContext &context() const { return *context_; }
   void set_context(SemanticsContext &);
   evaluate::FoldingContext &GetFoldingContext() const {
@@ -1093,13 +1092,9 @@ template<typename T> void BaseVisitor::Walk(const T &x) {
   parser::Walk(x, *this_);
 }
 
-const SourceName *BaseVisitor::currStmtSource() {
-  return messageHandler_.currStmtSource();
-}
-
 void BaseVisitor::set_context(SemanticsContext &context) {
   context_ = &context;
-  messageHandler_.set_messages(context.messages());
+  messageHandler_.set_context(context);
 }
 
 void BaseVisitor::MakePlaceholder(
@@ -1272,32 +1267,27 @@ void DeclTypeSpecVisitor::SetDeclTypeSpec(const DeclTypeSpec &declTypeSpec) {
 
 KindExpr DeclTypeSpecVisitor::GetKindParamExpr(
     TypeCategory category, const std::optional<parser::KindSelector> &kind) {
-  return AnalyzeKindSelector(context(), *currStmtSource(), category, kind);
+  return AnalyzeKindSelector(context(), category, kind);
 }
 
 // MessageHandler implementation
 
-void MessageHandler::set_currStmtSource(const SourceName *source) {
-  currStmtSource_ = source;
-}
 Message &MessageHandler::Say(MessageFixedText &&msg) {
-  CHECK(currStmtSource_);
-  return messages_->Say(*currStmtSource_, std::move(msg));
+  return context_->Say(*currStmtSource(), std::move(msg));
 }
 Message &MessageHandler::Say(MessageFormattedText &&msg) {
-  CHECK(currStmtSource_);
-  return messages_->Say(*currStmtSource_, std::move(msg));
+  return context_->Say(*currStmtSource(), std::move(msg));
 }
 Message &MessageHandler::Say(const SourceName &name, MessageFixedText &&msg) {
   return Say(name, std::move(msg), name);
 }
 Message &MessageHandler::Say(const SourceName &location, MessageFixedText &&msg,
     const SourceName &arg1) {
-  return messages_->Say(location, std::move(msg), arg1.ToString().c_str());
+  return context_->Say(location, std::move(msg), arg1.ToString().c_str());
 }
 Message &MessageHandler::Say(const SourceName &location, MessageFixedText &&msg,
     const SourceName &arg1, const SourceName &arg2) {
-  return messages_->Say(location, std::move(msg), arg1.ToString().c_str(),
+  return context_->Say(location, std::move(msg), arg1.ToString().c_str(),
       arg2.ToString().c_str());
 }
 
