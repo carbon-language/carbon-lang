@@ -356,8 +356,8 @@ public:
 
 FOR_EACH_CHARACTER_KIND(extern template class Designator)
 
-template<typename A> struct Variable {
-  using Result = A;
+template<typename T> struct Variable {
+  using Result = T;
   static_assert(IsSpecificIntrinsicType<Result> ||
       std::is_same_v<Result, SomeKind<TypeCategory::Derived>>);
   EVALUATE_UNION_CLASS_BOILERPLATE(Variable)

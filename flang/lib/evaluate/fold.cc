@@ -18,6 +18,7 @@
 #include "expression.h"
 #include "int-power.h"
 #include "tools.h"
+#include "traversal.h"
 #include "type.h"
 #include "../common/indirection.h"
 #include "../common/template.h"
@@ -27,7 +28,6 @@
 #include "../semantics/symbol.h"
 #include <cstdio>
 #include <optional>
-#include <set>
 #include <type_traits>
 #include <variant>
 
@@ -799,221 +799,45 @@ FOR_EACH_TYPE_AND_KIND(template class ExpressionBase)
 // able to fold it (yet) into a known constant value; specifically,
 // the expression may reference derived type kind parameters whose values
 // are not yet known.
-//
-// The implementation uses mutually recursive helper function overloadings and
-// templates.
 
-struct ConstExprContext {
-  std::set<parser::CharBlock> constantNames;
+class IsConstantExprVisitor : public virtual TraversalBase<bool> {
+public:
+  using Base = TraversalBase<bool>;
+  using Base::Handle, Base::Pre, Base::Post;
+
+  explicit IsConstantExprVisitor(std::nullptr_t) {}
+
+  template<int KIND> void Handle(const TypeParamInquiry<KIND> &inq) {
+    Check(inq.parameter().template get<semantics::TypeParamDetails>().attr() ==
+        common::TypeParamAttr::Kind);
+  }
+  void Handle(const semantics::Symbol &symbol) {
+    Check(symbol.attrs().test(semantics::Attr::PARAMETER));
+  }
+  void Handle(const CoarrayRef &) { NotConstant(); }
+  void Pre(const semantics::ParamValue &param) { Check(param.isExplicit()); }
+  template<typename T> void Pre(const FunctionRef<T> &call) {
+    if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&call.proc().u)}) {
+      Check(intrinsic->name == "kind");
+      // TODO: Obviously many other intrinsics can be allowed
+    } else {
+      NotConstant();
+    }
+  }
+
+private:
+  void NotConstant() { Return(false); }
+
+  void Check(bool ok) {
+    if (!ok) {
+      NotConstant();
+    }
+  }
 };
 
-// Base cases
-bool IsConstExpr(ConstExprContext &, const BOZLiteralConstant &) {
-  return true;
-}
-bool IsConstExpr(ConstExprContext &, const NullPointer &) { return true; }
-template<typename A> bool IsConstExpr(ConstExprContext &, const Constant<A> &) {
-  return true;
-}
-bool IsConstExpr(ConstExprContext &, const StaticDataObject::Pointer) {
-  return true;
-}
-template<int KIND>
-bool IsConstExpr(ConstExprContext &, const TypeParamInquiry<KIND> &inquiry) {
-  return inquiry.parameter()
-             .template get<semantics::TypeParamDetails>()
-             .attr() == common::TypeParamAttr::Kind;
-}
-bool IsConstExpr(ConstExprContext &, const Symbol *symbol) {
-  return symbol->attrs().test(semantics::Attr::PARAMETER);
-}
-bool IsConstExpr(ConstExprContext &, const CoarrayRef &) { return false; }
-bool IsConstExpr(ConstExprContext &, const ImpliedDoIndex &) {
-  return true;  // only tested when bounds are constant
-}
-
-// Prototypes for mutual recursion
-template<typename D, typename R, typename O1>
-bool IsConstExpr(ConstExprContext &, const Operation<D, R, O1> &);
-template<typename D, typename R, typename O1, typename O2>
-bool IsConstExpr(ConstExprContext &, const Operation<D, R, O1, O2> &);
-template<typename V> bool IsConstExpr(ConstExprContext &, const ImpliedDo<V> &);
-template<typename A>
-bool IsConstExpr(ConstExprContext &, const ArrayConstructorValue<A> &);
-template<typename A>
-bool IsConstExpr(ConstExprContext &, const ArrayConstructorValues<A> &);
-template<typename A>
-bool IsConstExpr(ConstExprContext &, const ArrayConstructor<A> &);
-bool IsConstExpr(ConstExprContext &, const semantics::DerivedTypeSpec &);
-bool IsConstExpr(ConstExprContext &, const StructureConstructor &);
-bool IsConstExpr(ConstExprContext &, const BaseObject &);
-bool IsConstExpr(ConstExprContext &, const Component &);
-bool IsConstExpr(ConstExprContext &, const Triplet &);
-bool IsConstExpr(ConstExprContext &, const Subscript &);
-bool IsConstExpr(ConstExprContext &, const ArrayRef &);
-bool IsConstExpr(ConstExprContext &, const DataRef &);
-bool IsConstExpr(ConstExprContext &, const Substring &);
-bool IsConstExpr(ConstExprContext &, const ComplexPart &);
-template<typename A>
-bool IsConstExpr(ConstExprContext &, const Designator<A> &);
-bool IsConstExpr(ConstExprContext &, const ActualArgument &);
-template<typename A>
-bool IsConstExpr(ConstExprContext &, const FunctionRef<A> &);
-template<typename A> bool IsConstExpr(ConstExprContext &, const Expr<A> &);
-template<typename A>
-bool IsConstExpr(ConstExprContext &, const CopyableIndirection<A> &);
-template<typename A>
-bool IsConstExpr(ConstExprContext &, const std::optional<A> &);
-template<typename A>
-bool IsConstExpr(ConstExprContext &, const std::vector<A> &);
-template<typename... As>
-bool IsConstExpr(ConstExprContext &, const std::variant<As...> &);
-bool IsConstExpr(ConstExprContext &, const Relational<SomeType> &);
-
-template<typename D, typename R, typename O1>
-bool IsConstExpr(
-    ConstExprContext &context, const Operation<D, R, O1> &operation) {
-  return IsConstExpr(context, operation.left());
-}
-template<typename D, typename R, typename O1, typename O2>
-bool IsConstExpr(
-    ConstExprContext &context, const Operation<D, R, O1, O2> &operation) {
-  return IsConstExpr(context, operation.left()) &&
-      IsConstExpr(context, operation.right());
-}
-template<typename V>
-bool IsConstExpr(ConstExprContext &context, const ImpliedDo<V> &impliedDo) {
-  if (!IsConstExpr(context, impliedDo.lower()) ||
-      !IsConstExpr(context, impliedDo.upper()) ||
-      !IsConstExpr(context, impliedDo.stride())) {
-    return false;
-  }
-  ConstExprContext newContext{context};
-  newContext.constantNames.insert(impliedDo.name());
-  return IsConstExpr(newContext, impliedDo.values());
-}
-template<typename A>
-bool IsConstExpr(
-    ConstExprContext &context, const ArrayConstructorValue<A> &value) {
-  return IsConstExpr(context, value.u);
-}
-template<typename A>
-bool IsConstExpr(
-    ConstExprContext &context, const ArrayConstructorValues<A> &values) {
-  return IsConstExpr(context, values.values());
-}
-template<typename A>
-bool IsConstExpr(ConstExprContext &context, const ArrayConstructor<A> &array) {
-  const typename ArrayConstructor<A>::Base &base{array};
-  return IsConstExpr(context, base);
-}
-bool IsConstExpr(
-    ConstExprContext &context, const semantics::DerivedTypeSpec &spec) {
-  for (const auto &nameValue : spec.parameters()) {
-    const auto &value{nameValue.second};
-    if (!value.isExplicit() || !value.GetExplicit().has_value() ||
-        !IsConstExpr(context, *value.GetExplicit())) {
-      return false;
-    }
-  }
-  return true;
-}
-bool IsConstExpr(
-    ConstExprContext &context, const StructureConstructor &structure) {
-  if (!IsConstExpr(context, structure.derivedTypeSpec())) {
-    return false;
-  }
-  for (const auto &symbolExpr : structure.values()) {
-    if (!IsConstExpr(context, symbolExpr.second)) {
-      return false;
-    }
-  }
-  return true;
-}
-bool IsConstExpr(ConstExprContext &context, const BaseObject &base) {
-  return IsConstExpr(context, base.u);
-}
-bool IsConstExpr(ConstExprContext &context, const Component &component) {
-  return IsConstExpr(context, component.base());
-}
-bool IsConstExpr(ConstExprContext &context, const Triplet &triplet) {
-  return IsConstExpr(context, triplet.lower()) &&
-      IsConstExpr(context, triplet.upper()) &&
-      IsConstExpr(context, triplet.stride());
-}
-bool IsConstExpr(ConstExprContext &context, const Subscript &subscript) {
-  return IsConstExpr(context, subscript.u);
-}
-bool IsConstExpr(ConstExprContext &context, const ArrayRef &arrayRef) {
-  return IsConstExpr(context, arrayRef.base()) &&
-      IsConstExpr(context, arrayRef.subscript());
-}
-bool IsConstExpr(ConstExprContext &context, const DataRef &dataRef) {
-  return IsConstExpr(context, dataRef.u);
-}
-bool IsConstExpr(ConstExprContext &context, const Substring &substring) {
-  if (const auto *dataRef{substring.GetParentIf<DataRef>()}) {
-    if (!IsConstExpr(context, *dataRef)) {
-      return false;
-    }
-  }
-  return IsConstExpr(context, substring.lower()) &&
-      IsConstExpr(context, substring.upper());
-}
-bool IsConstExpr(ConstExprContext &context, const ComplexPart &complexPart) {
-  return IsConstExpr(context, complexPart.complex());
-}
-template<typename A>
-bool IsConstExpr(ConstExprContext &context, const Designator<A> &designator) {
-  return IsConstExpr(context, designator.u);
-}
-bool IsConstExpr(ConstExprContext &context, const ActualArgument &arg) {
-  return IsConstExpr(context, arg.value());
-}
-template<typename A>
-bool IsConstExpr(ConstExprContext &context, const FunctionRef<A> &funcRef) {
-  if (const auto *intrinsic{
-          std::get_if<SpecificIntrinsic>(&funcRef.proc().u)}) {
-    if (intrinsic->name == "kind") {
-      return true;
-    }
-    // TODO: This is a placeholder with obvious false positives
-    return IsConstExpr(context, funcRef.arguments());
-  }
-  return false;
-}
-template<typename A>
-bool IsConstExpr(ConstExprContext &context, const Expr<A> &expr) {
-  return IsConstExpr(context, expr.u);
-}
-template<typename A>
-bool IsConstExpr(ConstExprContext &context, const CopyableIndirection<A> &x) {
-  return IsConstExpr(context, x.value());
-}
-template<typename A>
-bool IsConstExpr(ConstExprContext &context, const std::optional<A> &maybe) {
-  return !maybe.has_value() || IsConstExpr(context, *maybe);
-}
-template<typename A>
-bool IsConstExpr(ConstExprContext &context, const std::vector<A> &v) {
-  for (const auto &x : v) {
-    if (!IsConstExpr(context, x)) {
-      return false;
-    }
-  }
-  return true;
-}
-template<typename... As>
-bool IsConstExpr(ConstExprContext &context, const std::variant<As...> &u) {
-  return std::visit([&](const auto &x) { return IsConstExpr(context, x); }, u);
-}
-bool IsConstExpr(ConstExprContext &context, const Relational<SomeType> &rel) {
-  return IsConstExpr(context, rel.u);
-}
-
 bool IsConstantExpr(const Expr<SomeType> &expr) {
-  ConstExprContext context;
-  return IsConstExpr(context, expr);
+  Traversal<bool, IsConstantExprVisitor> traverser{nullptr};
+  return !traverser.Traverse(expr).has_value();  // only no news is good news
 }
 
 std::optional<std::int64_t> ToInt64(const Expr<SomeInteger> &expr) {
