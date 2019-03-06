@@ -2901,8 +2901,6 @@ const char *SBReproducer::Replay(const char *path) {
     return error.c_str();
   }
 
-  // FIXME: Enable the following code once the SB reproducer has landed.
-#if 0
   FileSpec file = loader->GetFile<SBInfo>();
   if (!file) {
     error = "unable to get replay data from reproducer.";
@@ -2911,7 +2909,6 @@ const char *SBReproducer::Replay(const char *path) {
 
   SBRegistry registry;
   registry.Replay(file);
-#endif
 
   return nullptr;
 }
