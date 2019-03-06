@@ -1111,7 +1111,8 @@ SectionBase &ELFBuilder<ELFT>::makeSection(const Elf_Shdr &Shdr) {
   default: {
     Data = unwrapOrError(ElfFile.getSectionContents(&Shdr));
 
-    if (isDataGnuCompressed(Data) || (Shdr.sh_flags & ELF::SHF_COMPRESSED)) {
+    StringRef Name = unwrapOrError(ElfFile.getSectionName(&Shdr));
+    if (Name.startswith(".zdebug") || (Shdr.sh_flags & ELF::SHF_COMPRESSED)) {
       uint64_t DecompressedSize, DecompressedAlign;
       std::tie(DecompressedSize, DecompressedAlign) =
           getDecompressedSizeAndAlignment<ELFT>(Data);
