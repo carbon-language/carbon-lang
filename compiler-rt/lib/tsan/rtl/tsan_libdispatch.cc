@@ -1,4 +1,4 @@
-//===-- tsan_libdispatch_mac.cc -------------------------------------------===//
+//===-- tsan_libdispatch.cc -----------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -8,11 +8,10 @@
 //
 // This file is a part of ThreadSanitizer (TSan), a race detector.
 //
-// Mac-specific libdispatch (GCD) support.
+// Support for intercepting libdispatch (GCD).
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_common/sanitizer_platform.h"
-#if SANITIZER_MAC
 
 #include "sanitizer_common/sanitizer_common.h"
 #include "interception/interception.h"
@@ -24,7 +23,7 @@
 #include <dispatch/dispatch.h>
 #include <pthread.h>
 
-// DISPATCH_NOESCAPE is not defined prior to XCode 8.
+// DISPATCH_NOESCAPE is only defined on Apple platforms with at least Xcode 8.
 #ifndef DISPATCH_NOESCAPE
 #define DISPATCH_NOESCAPE
 #endif
@@ -722,5 +721,3 @@ TSAN_INTERCEPTOR(void, dispatch_resume, dispatch_object_t o) {
 }
 
 }  // namespace __tsan
-
-#endif  // SANITIZER_MAC
