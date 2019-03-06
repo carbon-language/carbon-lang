@@ -811,23 +811,21 @@ public:
   void Handle(const semantics::Symbol &symbol) {
     Check(symbol.attrs().test(semantics::Attr::PARAMETER));
   }
-  void Handle(const CoarrayRef &) { NotConstant(); }
+  void Handle(const CoarrayRef &) { Return(false); }
   void Pre(const semantics::ParamValue &param) { Check(param.isExplicit()); }
   template<typename T> void Pre(const FunctionRef<T> &call) {
     if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&call.proc().u)}) {
       Check(intrinsic->name == "kind");
       // TODO: Obviously many other intrinsics can be allowed
     } else {
-      NotConstant();
+      Return(false);
     }
   }
 
 private:
-  void NotConstant() { Return(false); }
-
   void Check(bool ok) {
     if (!ok) {
-      NotConstant();
+      Return(false);
     }
   }
 };

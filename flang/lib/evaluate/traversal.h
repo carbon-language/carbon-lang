@@ -69,11 +69,6 @@ protected:
   Result result_;
 };
 
-namespace descend {
-template<typename VISITOR, typename EXPR>
-void Descend(VISITOR &, const EXPR &) {}
-}
-
 template<typename RESULT, typename... A>
 class Traversal : public virtual TraversalBase<RESULT>, public A... {
 public:
@@ -100,7 +95,7 @@ private:
         // No visitation class defines Handle(B), so try Pre()/Post().
         Pre(x);
         if (!done_) {
-          descend::Descend(*this, x);
+          Descend(x);
           if (!done_) {
             Post(x);
           }
@@ -115,10 +110,108 @@ private:
     }
   }
 
-  template<typename B> friend void descend::Descend(Traversal &, const B &);
+  template<typename X> void Descend(const X &) {}  // default case
+
+  template<typename X> void Descend(const X *p) {
+    if (p != nullptr) {
+      Visit(*p);
+    }
+  }
+  template<typename X> void Descend(const std::optional<X> &o) {
+    if (o.has_value()) {
+      Visit(*o);
+    }
+  }
+  template<typename X> void Descend(const CopyableIndirection<X> &p) {
+    Visit(p.value());
+  }
+  template<typename... X> void Descend(const std::variant<X...> &u) {
+    std::visit([&](const auto &x) { Visit(x); }, u);
+  }
+  template<typename X> void Descend(const std::vector<X> &xs) {
+    for (const auto &x : xs) {
+      Visit(x);
+    }
+  }
+  template<typename T> void Descend(const Expr<T> &expr) { Visit(expr.u); }
+  template<typename D, typename R, typename... O>
+  void Descend(const Operation<D, R, O...> &op) {
+    Visit(op.left());
+    if constexpr (op.operands > 1) {
+      Visit(op.right());
+    }
+  }
+  template<typename R> void Descend(const ImpliedDo<R> &ido) {
+    Visit(ido.lower());
+    Visit(ido.upper());
+    Visit(ido.stride());
+    Visit(ido.values());
+  }
+  template<typename R> void Descend(const ArrayConstructorValue<R> &av) {
+    Visit(av.u);
+  }
+  template<typename R> void Descend(const ArrayConstructorValues<R> &avs) {
+    Visit(avs.values());
+  }
+  template<int KIND>
+  void Descend(
+      const ArrayConstructor<Type<TypeCategory::Character, KIND>> &ac) {
+    Visit(static_cast<
+        ArrayConstructorValues<Type<TypeCategory::Character, KIND>>>(ac));
+    Visit(ac.LEN());
+  }
+  void Descend(const semantics::ParamValue &param) {
+    Visit(param.GetExplicit());
+  }
+  void Descend(const semantics::DerivedTypeSpec &derived) {
+    for (const auto &pair : derived.parameters()) {
+      Visit(pair.second);
+    }
+  }
+  void Descend(const StructureConstructor &sc) {
+    Visit(sc.derivedTypeSpec());
+    for (const auto &pair : sc.values()) {
+      Visit(pair.second);
+    }
+  }
+  void Descend(const BaseObject &object) { Visit(object.u); }
+  void Descend(const Component &component) {
+    Visit(component.base());
+    Visit(component.GetLastSymbol());
+  }
+  template<int KIND> void Descend(const TypeParamInquiry<KIND> &inq) {
+    Visit(inq.base());
+    Visit(inq.parameter());
+  }
+  void Descend(const Triplet &triplet) {
+    Visit(triplet.lower());
+    Visit(triplet.upper());
+    Visit(triplet.stride());
+  }
+  void Descend(const Subscript &sscript) { Visit(sscript.u); }
+  void Descend(const ArrayRef &aref) {
+    Visit(aref.base());
+    Visit(aref.subscript());
+  }
+  void Descend(const CoarrayRef &caref) {
+    Visit(caref.base());
+    Visit(caref.subscript());
+    Visit(caref.cosubscript());
+    Visit(caref.stat());
+    Visit(caref.team());
+  }
+  void Descend(const DataRef &data) { Visit(data.u); }
+  void Descend(const ComplexPart &z) { Visit(z.complex()); }
+  template<typename T> void Descend(const Designator<T> &designator) {
+    Visit(designator.u);
+  }
+  template<typename T> void Descend(const Variable<T> &var) { Visit(var.u); }
+  void Descend(const ActualArgument &arg) { Visit(arg.value()); }
+  void Descend(const ProcedureDesignator &p) { Visit(p.u); }
+  void Descend(const ProcedureRef &call) {
+    Visit(call.proc());
+    Visit(call.arguments());
+  }
 };
 }
-
-// Helper friend function template definitions
-#include "traversal-descend.h"
 #endif  // FORTRAN_EVALUATE_TRAVERSAL_H_
