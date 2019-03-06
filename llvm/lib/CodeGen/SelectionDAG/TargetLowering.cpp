@@ -5438,17 +5438,14 @@ SDValue TargetLowering::expandAddSubSat(SDNode *Node, SelectionDAG &DAG) const {
   SDValue SumDiff = Result.getValue(0);
   SDValue Overflow = Result.getValue(1);
   SDValue Zero = DAG.getConstant(0, dl, ResultType);
+  SDValue AllOnes = DAG.getAllOnesConstant(dl, ResultType);
 
   if (Opcode == ISD::UADDSAT) {
-    // Just need to check overflow for SatMax.
-    APInt MaxVal = APInt::getMaxValue(BitWidth);
-    SDValue SatMax = DAG.getConstant(MaxVal, dl, ResultType);
-    return DAG.getSelect(dl, ResultType, Overflow, SatMax, SumDiff);
+    // Overflow ? 0xffff.... : (LHS + RHS)
+    return DAG.getSelect(dl, ResultType, Overflow, AllOnes, SumDiff);
   } else if (Opcode == ISD::USUBSAT) {
-    // Just need to check overflow for SatMin.
-    APInt MinVal = APInt::getMinValue(BitWidth);
-    SDValue SatMin = DAG.getConstant(MinVal, dl, ResultType);
-    return DAG.getSelect(dl, ResultType, Overflow, SatMin, SumDiff);
+    // Overflow ? 0 : (LHS - RHS)
+    return DAG.getSelect(dl, ResultType, Overflow, Zero, SumDiff);
   } else {
     // SatMax -> Overflow && SumDiff < 0
     // SatMin -> Overflow && SumDiff >= 0
