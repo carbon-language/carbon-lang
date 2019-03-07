@@ -57,22 +57,18 @@ using namespace Fortran::parser::literals;
 // namespace Fortran::evaluate, but the exposed API to it is in the
 // namespace Fortran::semantics (below).
 //
-// The template function AnalyzeExpr() is an internal interface
-// between the implementation and the API used by semantic analysis.
-// This template function has a few specializations here in the header
-// file to handle what semantics might want to pass in as a top-level
-// expression; other specializations appear in the implementation.
-//
-// The ExpressionAnalysisContext wraps a SemanticsContext reference
+// The ExpressionAnalyzer wraps a SemanticsContext reference
 // and implements constraint checking on expressions using the
 // parse tree node wrappers that mirror the grammar annotations used
 // in the Fortran standard (i.e., scalar-, constant-, &c.).
 
 namespace Fortran::evaluate {
-class ExpressionAnalysisContext {
+class ExpressionAnalyzer {
 public:
-  explicit ExpressionAnalysisContext(semantics::SemanticsContext &sc)
-    : context_{sc} {}
+  using MaybeExpr = std::optional<Expr<SomeType>>;
+
+  explicit ExpressionAnalyzer(semantics::SemanticsContext &sc) : context_{sc} {}
+  ExpressionAnalyzer(ExpressionAnalyzer &) = default;
 
   semantics::SemanticsContext &context() const { return context_; }
 
@@ -93,11 +89,6 @@ public:
     return Say(parser::FindSourceLocation(parsed), std::forward<A>(args)...);
   }
 
-  std::optional<Expr<SomeType>> Analyze(const parser::Expr &);
-  std::optional<Expr<SomeType>> Analyze(const parser::Variable &);
-  Expr<SubscriptInteger> Analyze(common::TypeCategory category,
-      const std::optional<parser::KindSelector> &);
-
   int GetDefaultKind(common::TypeCategory);
   DynamicType GetDefaultKindOfType(common::TypeCategory);
 
@@ -110,118 +101,161 @@ public:
   void RemoveAcImpliedDo(parser::CharBlock);
   std::optional<int> IsAcImpliedDo(parser::CharBlock) const;
 
+  Expr<SubscriptInteger> AnalyzeKindSelector(common::TypeCategory category,
+      const std::optional<parser::KindSelector> &);
+
+  MaybeExpr Analyze(const parser::Expr &);
+  MaybeExpr Analyze(const parser::Variable &);
+
+  template<typename A> MaybeExpr Analyze(const common::Indirection<A> &x) {
+    return Analyze(x.value());
+  }
+  template<typename A> MaybeExpr Analyze(const std::optional<A> &x) {
+    if (x.has_value()) {
+      return Analyze(*x);
+    } else {
+      return std::nullopt;
+    }
+  }
+
+  // Implement constraint-checking wrappers from the Fortran grammar
+  template<typename A> MaybeExpr Analyze(const parser::Scalar<A> &x) {
+    auto result{Analyze(x.thing)};
+    if (result.has_value()) {
+      if (int rank{result->Rank()}; rank != 0) {
+        SayAt(x, "Must be a scalar value, but is a rank-%d array"_err_en_US,
+            rank);
+      }
+    }
+    return result;
+  }
+  template<typename A> MaybeExpr Analyze(const parser::Constant<A> &x) {
+    auto result{Analyze(x.thing)};
+    if (result.has_value()) {
+      *result = Fold(GetFoldingContext(), std::move(*result));
+      if (!IsConstantExpr(*result)) {
+        SayAt(x, "Must be a constant value"_err_en_US);
+      }
+    }
+    return result;
+  }
+  template<typename A> MaybeExpr Analyze(const parser::Integer<A> &x) {
+    auto result{Analyze(x.thing)};
+    if (result.has_value()) {
+      if (!std::holds_alternative<Expr<SomeInteger>>(result->u)) {
+        SayAt(x, "Must have INTEGER type"_err_en_US);
+      }
+    }
+    return result;
+  }
+  template<typename A> MaybeExpr Analyze(const parser::Logical<A> &x) {
+    auto result{Analyze(x.thing)};
+    if (result.has_value()) {
+      if (!std::holds_alternative<Expr<SomeLogical>>(result->u)) {
+        SayAt(x, "Must have LOGICAL type"_err_en_US);
+      }
+    }
+    return result;
+  }
+  template<typename A> MaybeExpr Analyze(const parser::DefaultChar<A> &x) {
+    auto result{Analyze(x.thing)};
+    if (result.has_value()) {
+      if (auto *charExpr{std::get_if<Expr<SomeCharacter>>(&result->u)}) {
+        if (charExpr->GetKind() ==
+            context().defaultKinds().GetDefaultKind(TypeCategory::Character)) {
+          return result;
+        }
+      }
+      SayAt(x, "Must have default CHARACTER type"_err_en_US);
+    }
+    return result;
+  }
+
+protected:
+  int IntegerTypeSpecKind(const parser::IntegerTypeSpec &);
+
 private:
+  MaybeExpr Analyze(const parser::Designator &);
+  MaybeExpr Analyze(const parser::IntLiteralConstant &);
+  MaybeExpr Analyze(const parser::SignedIntLiteralConstant &);
+  MaybeExpr Analyze(const parser::RealLiteralConstant &);
+  MaybeExpr Analyze(const parser::SignedRealLiteralConstant &);
+  MaybeExpr Analyze(const parser::ComplexPart &);
+  MaybeExpr Analyze(const parser::ComplexLiteralConstant &);
+  MaybeExpr Analyze(const parser::LogicalLiteralConstant &);
+  MaybeExpr Analyze(const parser::CharLiteralConstant &);
+  MaybeExpr Analyze(const parser::HollerithLiteralConstant &);
+  MaybeExpr Analyze(const parser::BOZLiteralConstant &);
+  MaybeExpr Analyze(const parser::Name &);
+  MaybeExpr Analyze(const parser::NamedConstant &);
+  MaybeExpr Analyze(const parser::Substring &);
+  MaybeExpr Analyze(const parser::ArrayElement &);
+  MaybeExpr Analyze(const parser::StructureComponent &);
+  MaybeExpr Analyze(const parser::CoindexedNamedObject &);
+  MaybeExpr Analyze(const parser::CharLiteralConstantSubstring &);
+  MaybeExpr Analyze(const parser::ArrayConstructor &);
+  MaybeExpr Analyze(const parser::StructureConstructor &);
+  MaybeExpr Analyze(const parser::FunctionReference &);
+  MaybeExpr Analyze(const parser::Expr::Parentheses &);
+  MaybeExpr Analyze(const parser::Expr::UnaryPlus &);
+  MaybeExpr Analyze(const parser::Expr::Negate &);
+  MaybeExpr Analyze(const parser::Expr::NOT &);
+  MaybeExpr Analyze(const parser::Expr::PercentLoc &);
+  MaybeExpr Analyze(const parser::Expr::DefinedUnary &);
+  MaybeExpr Analyze(const parser::Expr::Power &);
+  MaybeExpr Analyze(const parser::Expr::Multiply &);
+  MaybeExpr Analyze(const parser::Expr::Divide &);
+  MaybeExpr Analyze(const parser::Expr::Add &);
+  MaybeExpr Analyze(const parser::Expr::Subtract &);
+  MaybeExpr Analyze(const parser::Expr::ComplexConstructor &);
+  MaybeExpr Analyze(const parser::Expr::Concat &);
+  MaybeExpr Analyze(const parser::Expr::LT &);
+  MaybeExpr Analyze(const parser::Expr::LE &);
+  MaybeExpr Analyze(const parser::Expr::EQ &);
+  MaybeExpr Analyze(const parser::Expr::NE &);
+  MaybeExpr Analyze(const parser::Expr::GE &);
+  MaybeExpr Analyze(const parser::Expr::GT &);
+  MaybeExpr Analyze(const parser::Expr::AND &);
+  MaybeExpr Analyze(const parser::Expr::OR &);
+  MaybeExpr Analyze(const parser::Expr::EQV &);
+  MaybeExpr Analyze(const parser::Expr::NEQV &);
+  MaybeExpr Analyze(const parser::Expr::XOR &);
+  MaybeExpr Analyze(const parser::Expr::DefinedBinary &);
+  template<typename A> MaybeExpr Analyze(const A &x) {
+    return Analyze(x.u);  // default case
+  }
+  template<typename... As> MaybeExpr Analyze(const std::variant<As...> &u) {
+    return std::visit([&](const auto &x) { return Analyze(x); }, u);
+  }
+
+  // Analysis subroutines
+  int AnalyzeKindParam(const std::optional<parser::KindParam> &,
+      int defaultKind, int kanjiKind = -1);
+  template<typename PARSED> MaybeExpr IntLiteralConstant(const PARSED &);
+  MaybeExpr AnalyzeString(std::string &&, int kind);
+  std::optional<Expr<SubscriptInteger>> AsSubscript(MaybeExpr &&);
+  std::optional<Expr<SubscriptInteger>> TripletPart(
+      const std::optional<parser::Subscript> &);
+  std::optional<Subscript> AnalyzeSectionSubscript(
+      const parser::SectionSubscript &);
+  std::vector<Subscript> AnalyzeSectionSubscripts(
+      const std::list<parser::SectionSubscript> &);
+  MaybeExpr CompleteSubscripts(ArrayRef &&);
+  MaybeExpr ApplySubscripts(DataRef &&, std::vector<Subscript> &&);
+  MaybeExpr TopLevelChecks(DataRef &&);
+  std::optional<Expr<SubscriptInteger>> GetSubstringBound(
+      const std::optional<parser::ScalarIntExpr> &);
+
+  struct CallAndArguments {
+    ProcedureDesignator procedureDesignator;
+    ActualArguments arguments;
+  };
+  std::optional<CallAndArguments> Procedure(
+      const parser::ProcedureDesignator &, ActualArguments &);
+
   semantics::SemanticsContext &context_;
   std::map<parser::CharBlock, int> acImpliedDos_;  // values are INTEGER kinds
 };
-
-template<typename PARSED>
-std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &, const PARSED &);
-
-inline std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &context, const parser::Expr &expr) {
-  return context.Analyze(expr);
-}
-inline std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &context, const parser::Variable &variable) {
-  return context.Analyze(variable);
-}
-
-// Forward declarations of exposed specializations
-template<typename A>
-std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &, const common::Indirection<A> &);
-template<typename A>
-std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &, const parser::Scalar<A> &);
-template<typename A>
-std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &, const parser::Constant<A> &);
-template<typename A>
-std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &, const parser::Integer<A> &);
-template<typename A>
-std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &, const parser::Logical<A> &);
-template<typename A>
-std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &, const parser::DefaultChar<A> &);
-
-// Indirections are silently traversed by AnalyzeExpr().
-template<typename A>
-std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &context, const common::Indirection<A> &x) {
-  return AnalyzeExpr(context, x.value());
-}
-
-// These specializations implement constraint checking.
-
-template<typename A>
-std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &context, const parser::Scalar<A> &x) {
-  auto result{AnalyzeExpr(context, x.thing)};
-  if (result.has_value()) {
-    if (int rank{result->Rank()}; rank != 0) {
-      context.SayAt(
-          x, "Must be a scalar value, but is a rank-%d array"_err_en_US, rank);
-    }
-  }
-  return result;
-}
-
-template<typename A>
-std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &context, const parser::Constant<A> &x) {
-  auto result{AnalyzeExpr(context, x.thing)};
-  if (result.has_value()) {
-    *result = Fold(context.GetFoldingContext(), std::move(*result));
-    if (!IsConstantExpr(*result)) {
-      context.SayAt(x, "Must be a constant value"_err_en_US);
-    }
-  }
-  return result;
-}
-
-template<typename A>
-std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &context, const parser::Integer<A> &x) {
-  auto result{AnalyzeExpr(context, x.thing)};
-  if (result.has_value()) {
-    if (!std::holds_alternative<Expr<SomeInteger>>(result->u)) {
-      context.SayAt(x, "Must have INTEGER type"_err_en_US);
-    }
-  }
-  return result;
-}
-
-template<typename A>
-std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &context, const parser::Logical<A> &x) {
-  auto result{AnalyzeExpr(context, x.thing)};
-  if (result.has_value()) {
-    if (!std::holds_alternative<Expr<SomeLogical>>(result->u)) {
-      context.SayAt(x, "Must have LOGICAL type"_err_en_US);
-    }
-  }
-  return result;
-}
-template<typename A>
-std::optional<Expr<SomeType>> AnalyzeExpr(
-    ExpressionAnalysisContext &context, const parser::DefaultChar<A> &x) {
-  auto result{AnalyzeExpr(context, x.thing)};
-  if (result.has_value()) {
-    if (auto *charExpr{std::get_if<Expr<SomeCharacter>>(&result->u)}) {
-      if (charExpr->GetKind() ==
-          context.context().defaultKinds().GetDefaultKind(
-              TypeCategory::Character)) {
-        return result;
-      }
-    }
-    context.SayAt(x, "Must have default CHARACTER type"_err_en_US);
-  }
-  return result;
-}
 
 template<typename L, typename R>
 bool AreConformable(const L &left, const R &right) {
@@ -241,7 +275,6 @@ void ConformabilityCheck(
         left.Rank(), right.Rank());
   }
 }
-
 }  // namespace Fortran::evaluate
 
 namespace Fortran::semantics {
@@ -250,8 +283,7 @@ namespace Fortran::semantics {
 template<typename A>
 std::optional<evaluate::Expr<evaluate::SomeType>> AnalyzeExpr(
     SemanticsContext &context, const A &expr) {
-  evaluate::ExpressionAnalysisContext exprContext{context};
-  return AnalyzeExpr(exprContext, expr);
+  return evaluate::ExpressionAnalyzer{context}.Analyze(expr);
 }
 
 // Semantic analysis of an intrinsic type's KIND parameter expression.
@@ -259,7 +291,7 @@ evaluate::Expr<evaluate::SubscriptInteger> AnalyzeKindSelector(
     SemanticsContext &, common::TypeCategory,
     const std::optional<parser::KindSelector> &);
 
-// Semantic analysis of all expressions in a parse tree, which is
+// Semantic analysis of all expressions in a parse tree, which becomes
 // decorated with typed representations for top-level expressions.
 class ExprChecker : public virtual BaseChecker {
 public:
@@ -269,7 +301,5 @@ public:
 private:
   SemanticsContext &context_;
 };
-
 }  // namespace Fortran::semantics
-
 #endif  // FORTRAN_SEMANTICS_EXPRESSION_H_
