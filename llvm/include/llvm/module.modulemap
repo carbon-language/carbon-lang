@@ -353,6 +353,10 @@ module LLVM_Utils {
     exclude header "Support/PluginLoader.h"
     exclude header "Support/Solaris/sys/regset.h"
 
+    // FIXME: The function bodies in this header pull in
+    //        unwanted dependencies that cause linker errors.
+    exclude header "Support/GenericDomTreeConstruction.h"
+
     // These are intended for textual inclusion.
     textual header "Support/ARMTargetParser.def"
     textual header "Support/AArch64TargetParser.def"
