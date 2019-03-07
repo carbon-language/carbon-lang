@@ -556,7 +556,7 @@ TEST(ConstantsTest, DontFoldFunctionPtrIfNoModule) {
   ASSERT_FALSE(foldFuncPtrAndConstToNull(Context, nullptr, 2, 4));
 }
 
-TEST(ConstantsTest, FoldGlobalVariablePtr) {
+TEST(ConstantsTest, DISABLED_FoldGlobalVariablePtr) {
   LLVMContext Context;
 
 
