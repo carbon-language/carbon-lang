@@ -800,7 +800,7 @@ FOR_EACH_TYPE_AND_KIND(template class ExpressionBase)
 // the expression may reference derived type kind parameters whose values
 // are not yet known.
 
-class IsConstantExprVisitor : public virtual TraversalBase<bool> {
+class IsConstantExprVisitor : public virtual VisitorBase<bool> {
 public:
   explicit IsConstantExprVisitor(int) { result() = true; }
 
@@ -831,7 +831,7 @@ private:
 };
 
 bool IsConstantExpr(const Expr<SomeType> &expr) {
-  return Traversal<bool, IsConstantExprVisitor>{0}.Traverse(expr);
+  return Visitor<bool, IsConstantExprVisitor>{0}.Traverse(expr);
 }
 
 std::optional<std::int64_t> ToInt64(const Expr<SomeInteger> &expr) {
