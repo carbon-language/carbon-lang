@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,8 +27,9 @@ namespace Fortran::semantics {
 
 class SemanticsContext;
 
-void ResolveNames(SemanticsContext &, const parser::Program &);
+bool ResolveNames(SemanticsContext &, const parser::Program &);
 void DumpSymbols(std::ostream &);
+
 }
 
 #endif  // FORTRAN_SEMANTICS_RESOLVE_NAMES_H_

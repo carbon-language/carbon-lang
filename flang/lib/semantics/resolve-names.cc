@@ -4637,8 +4637,9 @@ void ResolveNamesVisitor::Post(const parser::Program &) {
   CHECK(!GetDeclTypeSpec());
 }
 
-void ResolveNames(SemanticsContext &context, const parser::Program &program) {
+bool ResolveNames(SemanticsContext &context, const parser::Program &program) {
   ResolveNamesVisitor{context}.Walk(program);
+  return !context.AnyFatalError();
 }
 
 // Get the Name out of a GenericSpec, or nullptr if none.

@@ -59,7 +59,10 @@ static bool FileContentsMatch(
 static std::string GetHeader(const std::string &);
 static std::size_t GetFileSize(const std::string &);
 
-void ModFileWriter::WriteAll() { WriteAll(context_.globalScope()); }
+bool ModFileWriter::WriteAll() {
+  WriteAll(context_.globalScope());
+  return !context_.AnyFatalError();
+}
 
 void ModFileWriter::WriteAll(const Scope &scope) {
   for (const auto &child : scope.children()) {

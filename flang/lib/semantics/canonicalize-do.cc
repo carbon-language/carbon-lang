@@ -89,8 +89,10 @@ private:
   }
 };
 
-void CanonicalizeDo(Program &program) {
+bool CanonicalizeDo(Program &program) {
   CanonicalizationOfDoLoops canonicalizationOfDoLoops;
   Walk(program, canonicalizationOfDoLoops);
+  return true;
 }
+
 }

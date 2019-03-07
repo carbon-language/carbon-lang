@@ -120,8 +120,10 @@ bool RewriteMutator::Pre(parser::ExecutionPart &x) {
   return true;
 }
 
-void RewriteParseTree(SemanticsContext &context, parser::Program &program) {
+bool RewriteParseTree(SemanticsContext &context, parser::Program &program) {
   RewriteMutator mutator{context.messages()};
   parser::Walk(program, mutator);
+  return !context.AnyFatalError();
 }
+
 }

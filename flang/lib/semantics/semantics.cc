@@ -37,18 +37,26 @@ static void PutIndent(std::ostream &, int indent);
 // children are visited, Leave is called after. No two checkers may have the
 // same Enter or Leave function. Each checker must be constructible from
 // SemanticsContext and have BaseChecker as a virtual base class.
-template<typename... C> struct SemanticsVisitor : public virtual C... {
+template<typename... C> class SemanticsVisitor : public virtual C... {
+public:
   using C::Enter...;
   using C::Leave...;
   using BaseChecker::Enter;
   using BaseChecker::Leave;
-  SemanticsVisitor(SemanticsContext &context) : C{context}... {}
+  SemanticsVisitor(SemanticsContext &context)
+    : C{context}..., context_{context} {}
   template<typename N> bool Pre(const N &node) {
     Enter(node);
     return true;
   }
   template<typename N> void Post(const N &node) { Leave(node); }
-  void Walk(const parser::Program &program) { parser::Walk(program, *this); }
+  bool Walk(const parser::Program &program) {
+    parser::Walk(program, *this);
+    return !context_.AnyFatalError();
+  }
+
+private:
+  SemanticsContext &context_;
 };
 
 using StatementSemanticsPass1 = SemanticsVisitor<ExprChecker>;
@@ -91,30 +99,13 @@ const Scope &SemanticsContext::FindScope(
 }
 
 bool Semantics::Perform() {
-  ValidateLabels(context_.messages(), program_);
-  if (AnyFatalError()) {
-    return false;
-  }
-  parser::CanonicalizeDo(program_);
-  ResolveNames(context_, program_);
-  if (AnyFatalError()) {
-    return false;
-  }
-  RewriteParseTree(context_, program_);
-  if (AnyFatalError()) {
-    return false;
-  }
-  StatementSemanticsPass1{context_}.Walk(program_);
-  if (AnyFatalError()) {
-    return false;
-  }
-  StatementSemanticsPass2{context_}.Walk(program_);
-  if (AnyFatalError()) {
-    return false;
-  }
-  ModFileWriter writer{context_};
-  writer.WriteAll();
-  return !AnyFatalError();
+  return ValidateLabels(context_.messages(), program_) &&
+      parser::CanonicalizeDo(program_) &&  // force line break
+      ResolveNames(context_, program_) &&
+      RewriteParseTree(context_, program_) &&
+      StatementSemanticsPass1{context_}.Walk(program_) &&
+      StatementSemanticsPass2{context_}.Walk(program_) &&
+      ModFileWriter{context_}.WriteAll();
 }
 
 void Semantics::EmitMessages(std::ostream &os) const {
