@@ -1848,4 +1848,34 @@ def: InstRW<[HWWriteResGroup192], (instrs VGATHERQPSrm,
 
 def: InstRW<[WriteZero], (instrs CLC)>;
 
+// The 0x83 ADC/SBB opcodes have special support for immediate 0 to only require
+// a single uop. It does not apply to the GR8 encoding. And only applies to the
+// 8-bit immediate since using larger immediate for 0 would be silly.
+// Unfortunately, this optimization does not apply to the AX/EAX/RAX short
+// encodings we convert to in MCInstLowering so we exclude AX/EAX/RAX here since
+// we schedule before that point.
+// TODO: Should we disable using the short encodings on these CPUs?
+def HWFastADC0 : MCSchedPredicate<
+  CheckAll<[
+    CheckImmOperand<2, 0>,              // Second MCOperand is Imm and has value 0.
+    CheckNot<CheckRegOperand<1, AX>>,   // First MCOperand is not register AX
+    CheckNot<CheckRegOperand<1, EAX>>,  // First MCOperand is not register EAX
+    CheckNot<CheckRegOperand<1, RAX>>   // First MCOperand is not register RAX
+  ]>
+>;
+
+def HWWriteADC0 : SchedWriteRes<[HWPort06]> {
+  let Latency = 1;
+  let NumMicroOps = 1;
+  let ResourceCycles = [1];
+}
+
+def HWWriteADC : SchedWriteVariant<[
+  SchedVar<HWFastADC0, [HWWriteADC0]>,
+  SchedVar<NoSchedPred, [WriteADC]>
+]>;
+
+def : InstRW<[HWWriteADC], (instrs ADC16ri8, ADC32ri8, ADC64ri8,
+                                      SBB16ri8, SBB32ri8, SBB64ri8)>;
+
 } // SchedModel
