@@ -353,9 +353,6 @@ module LLVM_Utils {
     exclude header "Support/PluginLoader.h"
     exclude header "Support/Solaris/sys/regset.h"
 
-    // This header uses the LLVM_DEBUG macro in function bodies.
-    textual header "Support/GenericDomTreeConstruction.h"
-
     // These are intended for textual inclusion.
     textual header "Support/ARMTargetParser.def"
     textual header "Support/AArch64TargetParser.def"
