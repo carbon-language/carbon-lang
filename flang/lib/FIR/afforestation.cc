@@ -25,6 +25,10 @@
 
 namespace Fortran::FIR {
 namespace {
+template<typename A> Expression *ExprRef(const A &a) {
+  return &a.typedExpr.value();
+}
+
 struct LinearOp;
 
 using LinearLabelRef = unsigned;
@@ -402,97 +406,102 @@ struct LinearOp
         common::visitors{
             [&](const auto &s) { ops.emplace_back(LinearAction{ec}); },
             [&](const common::Indirection<parser::CallStmt> &s) {
-              if (hasAltReturns(*s)) {
+              if (hasAltReturns(s.value())) {
                 auto next{BuildNewLabel(ad)};
-                auto labels{toLabelRef(ad, getAltReturnLabels(s->v))};
+                auto labels{toLabelRef(ad, getAltReturnLabels(s.value().v))};
                 labels.push_back(next);
-                ops.emplace_back(LinearSwitch{*s, std::move(labels)});
+                ops.emplace_back(LinearSwitch{s.value(), std::move(labels)});
                 ops.emplace_back(next);
               } else {
                 ops.emplace_back(LinearAction{ec});
               }
             },
             [&](const common::Indirection<parser::AssignStmt> &s) {
-              AddAssign(ad, std::get<parser::Name>(s->t).symbol,
-                  std::get<parser::Label>(s->t));
+              AddAssign(ad, std::get<parser::Name>(s.value().t).symbol,
+                  std::get<parser::Label>(s.value().t));
               ops.emplace_back(LinearAction{ec});
             },
             [&](const common::Indirection<parser::CycleStmt> &s) {
-              ops.emplace_back(LinearGoto{*s,
-                  s->v ? std::get<2>(FindStack(ad.nameStack, &*s->v))
-                       : NearestEnclosingDoConstruct(ad)});
+              ops.emplace_back(LinearGoto{s.value(),
+                  s.value().v ? std::get<2>(FindStack(
+                                    ad.nameStack, &s.value().v.value()))
+                              : NearestEnclosingDoConstruct(ad)});
             },
             [&](const common::Indirection<parser::ExitStmt> &s) {
-              ops.emplace_back(LinearGoto{*s,
-                  s->v ? std::get<1>(FindStack(ad.nameStack, &*s->v))
-                       : NearestEnclosingDoConstruct(ad)});
+              ops.emplace_back(LinearGoto{s.value(),
+                  s.value().v ? std::get<1>(FindStack(
+                                    ad.nameStack, &s.value().v.value()))
+                              : NearestEnclosingDoConstruct(ad)});
             },
             [&](const common::Indirection<parser::GotoStmt> &s) {
-              ops.emplace_back(LinearGoto{*s, FetchLabel(ad, s->v).get()});
+              ops.emplace_back(
+                  LinearGoto{s.value(), FetchLabel(ad, s.value().v).get()});
             },
             [&](const parser::FailImageStmt &s) {
               ops.emplace_back(LinearReturn{s});
             },
             [&](const common::Indirection<parser::ReturnStmt> &s) {
-              ops.emplace_back(LinearReturn{*s});
+              ops.emplace_back(LinearReturn{s.value()});
             },
             [&](const common::Indirection<parser::StopStmt> &s) {
               ops.emplace_back(LinearAction{ec});
-              ops.emplace_back(LinearReturn{*s});
+              ops.emplace_back(LinearReturn{s.value()});
             },
             [&](const common::Indirection<const parser::ReadStmt> &s) {
-              threeLabelSpec(*s, ops, ec, ad);
+              threeLabelSpec(s.value(), ops, ec, ad);
             },
             [&](const common::Indirection<const parser::WriteStmt> &s) {
-              threeLabelSpec(*s, ops, ec, ad);
+              threeLabelSpec(s.value(), ops, ec, ad);
             },
             [&](const common::Indirection<const parser::WaitStmt> &s) {
-              threeLabelSpec(*s, ops, ec, ad);
+              threeLabelSpec(s.value(), ops, ec, ad);
             },
             [&](const common::Indirection<const parser::OpenStmt> &s) {
-              errLabelSpec(*s, ops, ec, ad);
+              errLabelSpec(s.value(), ops, ec, ad);
             },
             [&](const common::Indirection<const parser::CloseStmt> &s) {
-              errLabelSpec(*s, ops, ec, ad);
+              errLabelSpec(s.value(), ops, ec, ad);
             },
             [&](const common::Indirection<const parser::BackspaceStmt> &s) {
-              errLabelSpec(*s, ops, ec, ad);
+              errLabelSpec(s.value(), ops, ec, ad);
             },
             [&](const common::Indirection<const parser::EndfileStmt> &s) {
-              errLabelSpec(*s, ops, ec, ad);
+              errLabelSpec(s.value(), ops, ec, ad);
             },
             [&](const common::Indirection<const parser::RewindStmt> &s) {
-              errLabelSpec(*s, ops, ec, ad);
+              errLabelSpec(s.value(), ops, ec, ad);
             },
             [&](const common::Indirection<const parser::FlushStmt> &s) {
-              errLabelSpec(*s, ops, ec, ad);
+              errLabelSpec(s.value(), ops, ec, ad);
             },
             [&](const common::Indirection<const parser::InquireStmt> &s) {
-              errLabelSpec(*s, ops, ec, ad);
+              errLabelSpec(s.value(), ops, ec, ad);
             },
             [&](const common::Indirection<parser::ComputedGotoStmt> &s) {
               auto next{BuildNewLabel(ad)};
-              auto labels{
-                  toLabelRef(ad, std::get<std::list<parser::Label>>(s->t))};
+              auto labels{toLabelRef(
+                  ad, std::get<std::list<parser::Label>>(s.value().t))};
               labels.push_back(next);
-              ops.emplace_back(LinearSwitch{*s, std::move(labels)});
+              ops.emplace_back(LinearSwitch{s.value(), std::move(labels)});
               ops.emplace_back(next);
             },
             [&](const common::Indirection<parser::ArithmeticIfStmt> &s) {
-              ops.emplace_back(LinearSwitch{*s,
+              ops.emplace_back(LinearSwitch{s.value(),
                   toLabelRef(ad,
-                      std::list{std::get<1>(s->t), std::get<2>(s->t),
-                          std::get<3>(s->t)})});
+                      std::list{std::get<1>(s.value().t),
+                          std::get<2>(s.value().t),
+                          std::get<3>(s.value().t)})});
             },
             [&](const common::Indirection<parser::AssignedGotoStmt> &s) {
-              ops.emplace_back(LinearIndirectGoto{
-                  std::get<parser::Name>(s->t).symbol,
-                  toLabelRef(ad, std::get<std::list<parser::Label>>(s->t))});
+              ops.emplace_back(
+                  LinearIndirectGoto{std::get<parser::Name>(s.value().t).symbol,
+                      toLabelRef(ad,
+                          std::get<std::list<parser::Label>>(s.value().t))});
             },
             [&](const common::Indirection<parser::IfStmt> &s) {
               auto then{BuildNewLabel(ad)};
               auto endif{BuildNewLabel(ad)};
-              ops.emplace_back(LinearConditionalGoto{*s, then, endif});
+              ops.emplace_back(LinearConditionalGoto{s.value(), then, endif});
               ops.emplace_back(then);
               ops.emplace_back(LinearAction{ec});
               ops.emplace_back(endif);
@@ -506,14 +515,13 @@ template<typename STMTTYPE, typename CT>
 Evaluation GetSwitchSelector(const CT *selectConstruct) {
   const auto &selector{std::get<parser::Selector>(
       std::get<parser::Statement<STMTTYPE>>(selectConstruct->t).statement.t)};
-  return std::visit(common::visitors{
-                        [](const parser::Expr &expression) {
-                          return Evaluation{expression.typedExpr.get()};
-                        },
-                        [](const parser::Variable &variable) {
-                          return Evaluation{&variable};
-                        },
-                    },
+  return std::visit(
+      common::visitors{
+          [](const parser::Expr &e) { return Evaluation{ExprRef(e)}; },
+          [](const parser::Variable &variable) {
+            return Evaluation{&variable};
+          },
+      },
       selector.u);
 }
 Evaluation GetSwitchRankSelector(
@@ -524,11 +532,10 @@ Evaluation GetSwitchTypeSelector(
     const parser::SelectTypeConstruct *selectTypeConstruct) {
   return GetSwitchSelector<parser::SelectTypeStmt>(selectTypeConstruct);
 }
-Evaluation GetSwitchCaseSelector(const parser::CaseConstruct *caseConstruct) {
-  return Evaluation{std::get<parser::Scalar<parser::Expr>>(
-      std::get<parser::Statement<parser::SelectCaseStmt>>(caseConstruct->t)
-          .statement.t)
-                        .thing.typedExpr.get()};
+Evaluation GetSwitchCaseSelector(const parser::CaseConstruct *construct) {
+  auto &s{std::get<parser::Statement<parser::SelectCaseStmt>>(construct->t)};
+  return Evaluation{
+      ExprRef(std::get<parser::Scalar<parser::Expr>>(s.statement.t).thing)};
 }
 
 template<typename STMTTYPE, typename CT>
@@ -900,22 +907,22 @@ static std::vector<SwitchCaseStmt::ValueType> populateSwitchValues(
         std::visit(
             common::visitors{
                 [&](const parser::CaseValue &caseValue) {
-                  valueList.emplace_back(SwitchCaseStmt::Exactly{
-                      caseValue.thing.thing->typedExpr.get()});
+                  const auto &e{caseValue.thing.thing.value()};
+                  valueList.emplace_back(SwitchCaseStmt::Exactly{ExprRef(e)});
                 },
                 [&](const parser::CaseValueRange::Range &range) {
                   if (range.lower.has_value()) {
                     if (range.upper.has_value()) {
                       valueList.emplace_back(SwitchCaseStmt::InclusiveRange{
-                          range.lower->thing.thing->typedExpr.get(),
-                          range.upper->thing.thing->typedExpr.get()});
+                          ExprRef(range.lower->thing.thing.value()),
+                          ExprRef(range.upper->thing.thing.value())});
                     } else {
                       valueList.emplace_back(SwitchCaseStmt::InclusiveAbove{
-                          range.lower->thing.thing->typedExpr.get()});
+                          ExprRef(range.lower->thing.thing.value())});
                     }
                   } else {
                     valueList.emplace_back(SwitchCaseStmt::InclusiveBelow{
-                        range.upper->thing.thing->typedExpr.get()});
+                        ExprRef(range.upper->thing.thing.value())});
                   }
                 },
             },
@@ -935,9 +942,9 @@ static std::vector<SwitchRankStmt::ValueType> populateSwitchValues(
         std::get<parser::Statement<parser::SelectRankCaseStmt>>(v.t)
             .statement.t)};
     std::visit(common::visitors{
-                   [&](const parser::ScalarIntConstantExpr &expression) {
-                     result.emplace_back(SwitchRankStmt::Exactly{
-                         expression.thing.thing.thing->typedExpr.get()});
+                   [&](const parser::ScalarIntConstantExpr &exp) {
+                     const auto &e{exp.thing.thing.thing.value()};
+                     result.emplace_back(SwitchRankStmt::Exactly{ExprRef(e)});
                    },
                    [&](const parser::Star &) {
                      result.emplace_back(SwitchRankStmt::AssumedSize{});
@@ -1025,19 +1032,19 @@ static void buildMultiwayDefaultNext(SwitchArguments &result) {
 static SwitchArguments ComposeSwitchArgs(const LinearSwitch &op) {
   SwitchArguments result{nullptr, unspecifiedLabel, {}, op.refs};
   std::visit(common::visitors{
-                 [](const auto *) { WRONG_PATH(); },
                  [&](const parser::ComputedGotoStmt *c) {
-                   result.exp = std::get<parser::ScalarIntExpr>(c->t)
-                                    .thing.thing->typedExpr.get();
+                   const auto &e{std::get<parser::ScalarIntExpr>(c->t)};
+                   result.exp = ExprRef(e.thing.thing.value());
                    buildMultiwayDefaultNext(result);
                  },
                  [&](const parser::ArithmeticIfStmt *c) {
-                   result.exp = std::get<parser::Expr>(c->t).typedExpr.get();
+                   result.exp = ExprRef(std::get<parser::Expr>(c->t));
                  },
                  [&](const parser::CallStmt *c) {
                    result.exp = nullptr;  // fixme - result of call
                    buildMultiwayDefaultNext(result);
                  },
+                 [](const auto *) { WRONG_PATH(); },
              },
       op.u);
   return result;
@@ -1349,8 +1356,7 @@ public:
 
   void handleIntrinsicAssignmentStmt(const parser::AssignmentStmt &stmt) {
     // TODO: check if allocation or reallocation should happen, etc.
-    auto *value{
-        builder_->CreateExpr(std::get<parser::Expr>(stmt.t).typedExpr.get())};
+    auto *value{builder_->CreateExpr(ExprRef(std::get<parser::Expr>(stmt.t)))};
     auto *addr{builder_->CreateAddr(
         VariableToExpression(std::get<parser::Variable>(stmt.t)))};
     builder_->CreateStore(addr, value);
@@ -1379,10 +1385,10 @@ public:
     for (auto &allocOpt : std::get<std::list<parser::AllocOpt>>(stmt.t)) {
       std::visit(common::visitors{
                      [&](const parser::AllocOpt::Mold &m) {
-                       opts.mold = m.v->typedExpr.get();
+                       opts.mold = ExprRef(m.v.value());
                      },
                      [&](const parser::AllocOpt::Source &s) {
-                       opts.source = s.v->typedExpr.get();
+                       opts.source = ExprRef(s.v.value());
                      },
                      [&](const parser::StatOrErrmsg &var) {
                        std::visit(common::visitors{
@@ -1412,25 +1418,26 @@ public:
     std::visit(
         common::visitors{
             [&](const common::Indirection<parser::AllocateStmt> &s) {
-              handleAllocateStmt(*s);
+              handleAllocateStmt(s.value());
             },
             [&](const common::Indirection<parser::AssignmentStmt> &s) {
-              handleAssignmentStmt(*s);
+              handleAssignmentStmt(s.value());
             },
             [&](const common::Indirection<parser::BackspaceStmt> &s) {
-              builder_->CreateIOCall(
-                  InputOutputCallBackspace, CreateBackspaceArguments(s->v));
+              builder_->CreateIOCall(InputOutputCallBackspace,
+                  CreateBackspaceArguments(s.value().v));
             },
             [&](const common::Indirection<parser::CallStmt> &s) {
               builder_->CreateCall(nullptr,
                   CreateCalleeValue(
-                      std::get<parser::ProcedureDesignator>(s->v.t)),
+                      std::get<parser::ProcedureDesignator>(s.value().v.t)),
                   CreateCallArguments(
-                      std::get<std::list<parser::ActualArgSpec>>(s->v.t)));
+                      std::get<std::list<parser::ActualArgSpec>>(
+                          s.value().v.t)));
             },
             [&](const common::Indirection<parser::CloseStmt> &s) {
               builder_->CreateIOCall(
-                  InputOutputCallClose, CreateCloseArguments(s->v));
+                  InputOutputCallClose, CreateCloseArguments(s.value().v));
             },
             [](const parser::ContinueStmt &) { WRONG_PATH(); },
             [](const common::Indirection<parser::CycleStmt> &) {
@@ -1438,21 +1445,22 @@ public:
             },
             [&](const common::Indirection<parser::DeallocateStmt> &s) {
               for (auto &alloc :
-                  std::get<std::list<parser::AllocateObject>>(s->t)) {
-                builder_->CreateDealloc(CreateDeallocationValue(&alloc, &*s));
+                  std::get<std::list<parser::AllocateObject>>(s.value().t)) {
+                builder_->CreateDealloc(
+                    CreateDeallocationValue(&alloc, &s.value()));
               }
             },
             [&](const common::Indirection<parser::EndfileStmt> &s) {
               builder_->CreateIOCall(
-                  InputOutputCallEndfile, CreateEndfileArguments(s->v));
+                  InputOutputCallEndfile, CreateEndfileArguments(s.value().v));
             },
             [&](const common::Indirection<parser::EventPostStmt> &s) {
               builder_->CreateRuntimeCall(
-                  RuntimeCallEventPost, CreateEventPostArguments(*s));
+                  RuntimeCallEventPost, CreateEventPostArguments(s.value()));
             },
             [&](const common::Indirection<parser::EventWaitStmt> &s) {
               builder_->CreateRuntimeCall(
-                  RuntimeCallEventWait, CreateEventWaitArguments(*s));
+                  RuntimeCallEventWait, CreateEventWaitArguments(s.value()));
             },
             [](const common::Indirection<parser::ExitStmt> &) { WRONG_PATH(); },
             [&](const parser::FailImageStmt &s) {
@@ -1461,11 +1469,11 @@ public:
             },
             [&](const common::Indirection<parser::FlushStmt> &s) {
               builder_->CreateIOCall(
-                  InputOutputCallFlush, CreateFlushArguments(s->v));
+                  InputOutputCallFlush, CreateFlushArguments(s.value().v));
             },
             [&](const common::Indirection<parser::FormTeamStmt> &s) {
               builder_->CreateRuntimeCall(
-                  RuntimeCallFormTeam, CreateFormTeamArguments(*s));
+                  RuntimeCallFormTeam, CreateFormTeamArguments(s.value()));
             },
             [](const common::Indirection<parser::GotoStmt> &) { WRONG_PATH(); },
             [](const common::Indirection<parser::IfStmt> &) { WRONG_PATH(); },
@@ -1481,75 +1489,75 @@ public:
                             CreateInquireArguments(iolength));
                       },
                   },
-                  s->u);
+                  s.value().u);
             },
             [&](const common::Indirection<parser::LockStmt> &s) {
               builder_->CreateRuntimeCall(
-                  RuntimeCallLock, CreateLockArguments(*s));
+                  RuntimeCallLock, CreateLockArguments(s.value()));
             },
             [&](const common::Indirection<parser::NullifyStmt> &s) {
-              builder_->CreateNullify(&*s);
+              builder_->CreateNullify(&s.value());
             },
             [&](const common::Indirection<parser::OpenStmt> &s) {
               builder_->CreateIOCall(
-                  InputOutputCallOpen, CreateOpenArguments(s->v));
+                  InputOutputCallOpen, CreateOpenArguments(s.value().v));
             },
             [&](const common::Indirection<parser::PointerAssignmentStmt> &s) {
-              auto *value{CreatePointerValue(*s)};
+              auto *value{CreatePointerValue(s.value())};
               auto *addr{builder_->CreateAddr(
-                  std::get<parser::Expr>(s->t).typedExpr.get())};
+                  ExprRef(std::get<parser::Expr>(s.value().t)))};
               builder_->CreateStore(addr, value);
             },
             [&](const common::Indirection<parser::PrintStmt> &s) {
               builder_->CreateIOCall(InputOutputCallPrint,
-                  CreatePrintArguments(std::get<parser::Format>(s->t),
-                      std::get<std::list<parser::OutputItem>>(s->t)));
+                  CreatePrintArguments(std::get<parser::Format>(s.value().t),
+                      std::get<std::list<parser::OutputItem>>(s.value().t)));
             },
             [&](const common::Indirection<parser::ReadStmt> &s) {
               builder_->CreateIOCall(InputOutputCallRead,
-                  CreateReadArguments(
-                      s->iounit, s->format, s->controls, s->items));
+                  CreateReadArguments(s.value().iounit, s.value().format,
+                      s.value().controls, s.value().items));
             },
             [](const common::Indirection<parser::ReturnStmt> &) {
               WRONG_PATH();
             },
             [&](const common::Indirection<parser::RewindStmt> &s) {
               builder_->CreateIOCall(
-                  InputOutputCallRewind, CreateRewindArguments(s->v));
+                  InputOutputCallRewind, CreateRewindArguments(s.value().v));
             },
             [&](const common::Indirection<parser::StopStmt> &s) {
               builder_->CreateRuntimeCall(
-                  RuntimeCallStop, CreateStopArguments(*s));
+                  RuntimeCallStop, CreateStopArguments(s.value()));
             },
             [&](const common::Indirection<parser::SyncAllStmt> &s) {
               builder_->CreateRuntimeCall(
-                  RuntimeCallSyncAll, CreateSyncAllArguments(*s));
+                  RuntimeCallSyncAll, CreateSyncAllArguments(s.value()));
             },
             [&](const common::Indirection<parser::SyncImagesStmt> &s) {
               builder_->CreateRuntimeCall(
-                  RuntimeCallSyncImages, CreateSyncImagesArguments(*s));
+                  RuntimeCallSyncImages, CreateSyncImagesArguments(s.value()));
             },
             [&](const common::Indirection<parser::SyncMemoryStmt> &s) {
               builder_->CreateRuntimeCall(
-                  RuntimeCallSyncMemory, CreateSyncMemoryArguments(*s));
+                  RuntimeCallSyncMemory, CreateSyncMemoryArguments(s.value()));
             },
             [&](const common::Indirection<parser::SyncTeamStmt> &s) {
               builder_->CreateRuntimeCall(
-                  RuntimeCallSyncTeam, CreateSyncTeamArguments(*s));
+                  RuntimeCallSyncTeam, CreateSyncTeamArguments(s.value()));
             },
             [&](const common::Indirection<parser::UnlockStmt> &s) {
               builder_->CreateRuntimeCall(
-                  RuntimeCallUnlock, CreateUnlockArguments(*s));
+                  RuntimeCallUnlock, CreateUnlockArguments(s.value()));
             },
             [&](const common::Indirection<parser::WaitStmt> &s) {
               builder_->CreateIOCall(
-                  InputOutputCallWait, CreateWaitArguments(s->v));
+                  InputOutputCallWait, CreateWaitArguments(s.value().v));
             },
             [](const common::Indirection<parser::WhereStmt> &) { /*fixme*/ },
             [&](const common::Indirection<parser::WriteStmt> &s) {
               builder_->CreateIOCall(InputOutputCallWrite,
-                  CreateWriteArguments(
-                      s->iounit, s->format, s->controls, s->items));
+                  CreateWriteArguments(s.value().iounit, s.value().format,
+                      s.value().controls, s.value().items));
             },
             [](const common::Indirection<parser::ComputedGotoStmt> &) {
               WRONG_PATH();
@@ -1560,10 +1568,11 @@ public:
             },
             [&](const common::Indirection<parser::AssignStmt> &s) {
               auto *addr{builder_->CreateAddr(
-                  NameToExpression(std::get<parser::Name>(s->t)))};
+                  NameToExpression(std::get<parser::Name>(s.value().t)))};
               auto *block{
                   blockMap_
-                      .find(FetchLabel(ad, std::get<parser::Label>(s->t)).get())
+                      .find(FetchLabel(ad, std::get<parser::Label>(s.value().t))
+                                .get())
                       ->second};
               builder_->CreateStore(addr, block);
             },
@@ -1572,7 +1581,7 @@ public:
             },
             [&](const common::Indirection<parser::PauseStmt> &s) {
               builder_->CreateRuntimeCall(
-                  RuntimeCallPause, CreatePauseArguments(*s));
+                  RuntimeCallPause, CreatePauseArguments(s.value()));
             },
         },
         stmt.statement.u);
@@ -1624,27 +1633,25 @@ public:
   }
 
   // InitiateConstruct - many constructs require some initial setup
-  void InitiateConstruct(const parser::AssociateStmt *associateStmt) {
-    for (auto &association :
-        std::get<std::list<parser::Association>>(associateStmt->t)) {
-      auto &selector{std::get<parser::Selector>(association.t)};
-      auto *expr{builder_->CreateExpr(std::visit(
-          common::visitors{
-              [&](const parser::Variable &v) {
-                return VariableToExpression(v);
-              },
-              [](const parser::Expr &e) { return *e.typedExpr.get(); },
-          },
-          selector.u))};
+  void InitiateConstruct(const parser::AssociateStmt *stmt) {
+    for (auto &assoc : std::get<std::list<parser::Association>>(stmt->t)) {
+      auto &selector{std::get<parser::Selector>(assoc.t)};
+      auto *expr{builder_->CreateExpr(
+          std::visit(common::visitors{
+                         [&](const parser::Variable &v) {
+                           return VariableToExpression(v);
+                         },
+                         [](const parser::Expr &e) { return *ExprRef(e); },
+                     },
+              selector.u))};
       auto *name{builder_->CreateAddr(
-          NameToExpression(std::get<parser::Name>(association.t)))};
+          NameToExpression(std::get<parser::Name>(assoc.t)))};
       builder_->CreateStore(name, expr);
     }
   }
-  void InitiateConstruct(const parser::SelectCaseStmt *selectCaseStmt) {
+  void InitiateConstruct(const parser::SelectCaseStmt *stmt) {
     builder_->CreateExpr(
-        std::get<parser::Scalar<parser::Expr>>(selectCaseStmt->t)
-            .thing.typedExpr.get());
+        ExprRef(std::get<parser::Scalar<parser::Expr>>(stmt->t).thing));
   }
   void InitiateConstruct(const parser::ChangeTeamStmt *changeTeamStmt) {
     // FIXME
@@ -1659,13 +1666,13 @@ public:
                     NameToExpression(bounds.name.thing.thing));
                 // evaluate e1, e2 [, e3] ...
                 auto *e1{builder_->CreateExpr(
-                    bounds.lower.thing.thing->typedExpr.release())};
+                    ExprRef(bounds.lower.thing.thing.value()))};
                 auto *e2{builder_->CreateExpr(
-                    bounds.upper.thing.thing->typedExpr.release())};
+                    ExprRef(bounds.upper.thing.thing.value()))};
                 Statement *e3;
                 if (bounds.step.has_value()) {
                   e3 = builder_->CreateExpr(
-                      bounds.step->thing.thing->typedExpr.release());
+                      ExprRef(bounds.step->thing.thing.value()));
                 } else {
                   e3 = builder_->CreateExpr(CreateConstant(1));
                 }
@@ -1698,12 +1705,12 @@ public:
   }
 
   void InitiateConstruct(const parser::IfThenStmt *ifThenStmt) {
-    builder_->CreateExpr(std::get<parser::ScalarLogicalExpr>(ifThenStmt->t)
-                             .thing.thing->typedExpr.get());
+    const auto &e{std::get<parser::ScalarLogicalExpr>(ifThenStmt->t).thing};
+    builder_->CreateExpr(ExprRef(e.thing.value()));
   }
   void InitiateConstruct(const parser::WhereConstructStmt *whereConstructStmt) {
-    builder_->CreateExpr(std::get<parser::LogicalExpr>(whereConstructStmt->t)
-                             .thing->typedExpr.get());
+    const auto &e{std::get<parser::LogicalExpr>(whereConstructStmt->t)};
+    builder_->CreateExpr(ExprRef(e.thing.value()));
   }
   void InitiateConstruct(
       const parser::ForallConstructStmt *forallConstructStmt) {
@@ -1718,11 +1725,10 @@ public:
               [&](const parser::LoopBounds<parser::ScalarIntExpr> &) {
                 return doMap_.find(stmt)->second.condition;
               },
-              [&](const parser::ScalarLogicalExpr &scalarLogicalExpr) {
-                auto &expression{scalarLogicalExpr.thing.thing};
-                SEMANTICS_CHECK(
-                    expression->typedExpr.get(), "DO WHILE condition missing");
-                return builder_->CreateExpr(expression->typedExpr.get());
+              [&](const parser::ScalarLogicalExpr &sle) {
+                auto &exp{sle.thing.thing.value()};
+                SEMANTICS_CHECK(ExprRef(exp), "DO WHILE condition missing");
+                return builder_->CreateExpr(ExprRef(exp));
               },
               [&](const parser::LoopControl::Concurrent &concurrent) {
                 // FIXME - how do we want to lower DO CONCURRENT?
@@ -1770,7 +1776,7 @@ public:
                                [&](const parser::ReturnStmt *s) {
                                  if (s->v) {
                                    builder_->CreateReturn(
-                                       s->v->thing.thing->typedExpr.get());
+                                       ExprRef(s->v->thing.thing.value()));
                                  } else {
                                    builder_->CreateRetVoid();
                                  }
@@ -1791,33 +1797,30 @@ public:
                         [&](const parser::Statement<parser::IfThenStmt> *s) {
                           const auto &exp{std::get<parser::ScalarLogicalExpr>(
                               s->statement.t)
-                                              .thing.thing};
-                          SEMANTICS_CHECK(exp->typedExpr.get(),
+                                              .thing.thing.value()};
+                          SEMANTICS_CHECK(ExprRef(exp),
                               "IF THEN condition expression missing");
-                          auto *cond{
-                              builder_->CreateExpr(exp->typedExpr.release())};
+                          auto *cond{builder_->CreateExpr(ExprRef(exp))};
                           AddOrQueueCGoto(cond, linearConditionalGoto.trueLabel,
                               linearConditionalGoto.falseLabel);
                         },
                         [&](const parser::Statement<parser::ElseIfStmt> *s) {
                           const auto &exp{std::get<parser::ScalarLogicalExpr>(
                               s->statement.t)
-                                              .thing.thing};
-                          SEMANTICS_CHECK(exp->typedExpr.get(),
+                                              .thing.thing.value()};
+                          SEMANTICS_CHECK(ExprRef(exp),
                               "ELSE IF condition expression missing");
-                          auto *cond{
-                              builder_->CreateExpr(exp->typedExpr.release())};
+                          auto *cond{builder_->CreateExpr(ExprRef(exp))};
                           AddOrQueueCGoto(cond, linearConditionalGoto.trueLabel,
                               linearConditionalGoto.falseLabel);
                         },
                         [&](const parser::IfStmt *s) {
                           const auto &exp{
                               std::get<parser::ScalarLogicalExpr>(s->t)
-                                  .thing.thing};
-                          SEMANTICS_CHECK(exp->typedExpr.get(),
-                              "IF condition expression missing");
-                          auto *cond{
-                              builder_->CreateExpr(exp->typedExpr.release())};
+                                  .thing.thing.value()};
+                          SEMANTICS_CHECK(
+                              ExprRef(exp), "IF condition expression missing");
+                          auto *cond{builder_->CreateExpr(ExprRef(exp))};
                           AddOrQueueCGoto(cond, linearConditionalGoto.trueLabel,
                               linearConditionalGoto.falseLabel);
                         },

@@ -94,10 +94,11 @@ static std::string dump(PathVariable *pathVariable) {
                         return "<substring>"s;
                       },
                   },
-                  designator->u);
+                  designator.value().u);
             },
-            [](const common::Indirection<parser::FunctionReference>
-                    &functionReference) { return "<function-reference>"s; },
+            [](const common::Indirection<parser::FunctionReference> &) {
+              return "<function-reference>"s;
+            },
         },
         pathVariable->u);
   }

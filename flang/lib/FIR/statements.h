@@ -61,7 +61,8 @@ public:
   Evaluation(PathVariable *pv) : SumTypeCopyMixin(pv) {
     if (const auto *designator{
             std::get_if<common::Indirection<parser::Designator>>(&pv->u)}) {
-      if (const auto *obj{std::get_if<parser::ObjectName>(&(*designator)->u)}) {
+      if (const auto *obj{
+              std::get_if<parser::ObjectName>(&designator->value().u)}) {
         u = obj->symbol;
       }
     }
