@@ -584,7 +584,6 @@ inline std::list<BasicBlock *> succ_list(BasicBlock &block) {
   // CHECK(false && "block does not have terminator");
   return {};
 }
-
 }
 
 #endif  // FORTRAN_FIR_STATEMENTS_H_

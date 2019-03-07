@@ -941,18 +941,19 @@ static std::vector<SwitchRankStmt::ValueType> populateSwitchValues(
     auto &rank{std::get<parser::SelectRankCaseStmt::Rank>(
         std::get<parser::Statement<parser::SelectRankCaseStmt>>(v.t)
             .statement.t)};
-    std::visit(common::visitors{
-                   [&](const parser::ScalarIntConstantExpr &exp) {
-                     const auto &e{exp.thing.thing.thing.value()};
-                     result.emplace_back(SwitchRankStmt::Exactly{ExprRef(e)});
-                   },
-                   [&](const parser::Star &) {
-                     result.emplace_back(SwitchRankStmt::AssumedSize{});
-                   },
-                   [&](const parser::Default &) {
-                     result.emplace_back(SwitchRankStmt::Default{});
-                   },
-               },
+    std::visit(
+        common::visitors{
+            [&](const parser::ScalarIntConstantExpr &exp) {
+              const auto &e{exp.thing.thing.thing.value()};
+              result.emplace_back(SwitchRankStmt::Exactly{ExprRef(e)});
+            },
+            [&](const parser::Star &) {
+              result.emplace_back(SwitchRankStmt::AssumedSize{});
+            },
+            [&](const parser::Default &) {
+              result.emplace_back(SwitchRankStmt::Default{});
+            },
+        },
         rank.u);
   }
   return result;
@@ -964,19 +965,20 @@ static std::vector<SwitchTypeStmt::ValueType> populateSwitchValues(
   for (auto &v : list) {
     auto &guard{std::get<parser::TypeGuardStmt::Guard>(
         std::get<parser::Statement<parser::TypeGuardStmt>>(v.t).statement.t)};
-    std::visit(common::visitors{
-                   [&](const parser::TypeSpec &typeSpec) {
-                     result.emplace_back(
-                         SwitchTypeStmt::TypeSpec{typeSpec.declTypeSpec});
-                   },
-                   [&](const parser::DerivedTypeSpec &derivedTypeSpec) {
-                     result.emplace_back(
-                         SwitchTypeStmt::DerivedTypeSpec{nullptr /*FIXME*/});
-                   },
-                   [&](const parser::Default &) {
-                     result.emplace_back(SwitchTypeStmt::Default{});
-                   },
-               },
+    std::visit(
+        common::visitors{
+            [&](const parser::TypeSpec &typeSpec) {
+              result.emplace_back(
+                  SwitchTypeStmt::TypeSpec{typeSpec.declTypeSpec});
+            },
+            [&](const parser::DerivedTypeSpec &derivedTypeSpec) {
+              result.emplace_back(
+                  SwitchTypeStmt::DerivedTypeSpec{nullptr /*FIXME*/});
+            },
+            [&](const parser::Default &) {
+              result.emplace_back(SwitchTypeStmt::Default{});
+            },
+        },
         guard.u);
   }
   return result;
@@ -1031,21 +1033,22 @@ static void buildMultiwayDefaultNext(SwitchArguments &result) {
 }
 static SwitchArguments ComposeSwitchArgs(const LinearSwitch &op) {
   SwitchArguments result{nullptr, unspecifiedLabel, {}, op.refs};
-  std::visit(common::visitors{
-                 [&](const parser::ComputedGotoStmt *c) {
-                   const auto &e{std::get<parser::ScalarIntExpr>(c->t)};
-                   result.exp = ExprRef(e.thing.thing.value());
-                   buildMultiwayDefaultNext(result);
-                 },
-                 [&](const parser::ArithmeticIfStmt *c) {
-                   result.exp = ExprRef(std::get<parser::Expr>(c->t));
-                 },
-                 [&](const parser::CallStmt *c) {
-                   result.exp = nullptr;  // fixme - result of call
-                   buildMultiwayDefaultNext(result);
-                 },
-                 [](const auto *) { WRONG_PATH(); },
-             },
+  std::visit(
+      common::visitors{
+          [&](const parser::ComputedGotoStmt *c) {
+            const auto &e{std::get<parser::ScalarIntExpr>(c->t)};
+            result.exp = ExprRef(e.thing.thing.value());
+            buildMultiwayDefaultNext(result);
+          },
+          [&](const parser::ArithmeticIfStmt *c) {
+            result.exp = ExprRef(std::get<parser::Expr>(c->t));
+          },
+          [&](const parser::CallStmt *c) {
+            result.exp = nullptr;  // fixme - result of call
+            buildMultiwayDefaultNext(result);
+          },
+          [](const auto *) { WRONG_PATH(); },
+      },
       op.u);
   return result;
 }
@@ -1383,27 +1386,27 @@ public:
     // extract options from list -> opts
     AllocOpts opts;
     for (auto &allocOpt : std::get<std::list<parser::AllocOpt>>(stmt.t)) {
-      std::visit(common::visitors{
-                     [&](const parser::AllocOpt::Mold &m) {
-                       opts.mold = ExprRef(m.v.value());
-                     },
-                     [&](const parser::AllocOpt::Source &s) {
-                       opts.source = ExprRef(s.v.value());
-                     },
-                     [&](const parser::StatOrErrmsg &var) {
-                       std::visit(common::visitors{
-                                      [&](const parser::StatVariable &sv) {
-                                        opts.stat = VariableToExpression(
-                                            sv.v.thing.thing);
-                                      },
-                                      [&](const parser::MsgVariable &mv) {
-                                        opts.errmsg = VariableToExpression(
-                                            mv.v.thing.thing);
-                                      },
-                                  },
-                           var.u);
-                     },
-                 },
+      std::visit(
+          common::visitors{
+              [&](const parser::AllocOpt::Mold &m) {
+                opts.mold = ExprRef(m.v.value());
+              },
+              [&](const parser::AllocOpt::Source &s) {
+                opts.source = ExprRef(s.v.value());
+              },
+              [&](const parser::StatOrErrmsg &var) {
+                std::visit(
+                    common::visitors{
+                        [&](const parser::StatVariable &sv) {
+                          opts.stat = VariableToExpression(sv.v.thing.thing);
+                        },
+                        [&](const parser::MsgVariable &mv) {
+                          opts.errmsg = VariableToExpression(mv.v.thing.thing);
+                        },
+                    },
+                    var.u);
+              },
+          },
           allocOpt.u);
     }
     // process the list of allocations
@@ -1636,14 +1639,14 @@ public:
   void InitiateConstruct(const parser::AssociateStmt *stmt) {
     for (auto &assoc : std::get<std::list<parser::Association>>(stmt->t)) {
       auto &selector{std::get<parser::Selector>(assoc.t)};
-      auto *expr{builder_->CreateExpr(
-          std::visit(common::visitors{
-                         [&](const parser::Variable &v) {
-                           return VariableToExpression(v);
-                         },
-                         [](const parser::Expr &e) { return *ExprRef(e); },
-                     },
-              selector.u))};
+      auto *expr{builder_->CreateExpr(std::visit(
+          common::visitors{
+              [&](const parser::Variable &v) {
+                return VariableToExpression(v);
+              },
+              [](const parser::Expr &e) { return *ExprRef(e); },
+          },
+          selector.u))};
       auto *name{builder_->CreateAddr(
           NameToExpression(std::get<parser::Name>(assoc.t)))};
       builder_->CreateStore(name, expr);
@@ -1692,14 +1695,15 @@ public:
   void FinishConstruct(const parser::NonLabelDoStmt *stmt) {
     auto &ctrl{std::get<std::optional<parser::LoopControl>>(stmt->t)};
     if (ctrl.has_value()) {
-      std::visit(common::visitors{
-                     [&](const parser::LoopBounds<parser::ScalarIntExpr> &) {
-                       PopDoContext(stmt);
-                     },
-                     [&](auto &) {
-                       // do nothing
-                     },
-                 },
+      std::visit(
+          common::visitors{
+              [&](const parser::LoopBounds<parser::ScalarIntExpr> &) {
+                PopDoContext(stmt);
+              },
+              [&](auto &) {
+                // do nothing
+              },
+          },
           ctrl->u);
     }
   }
@@ -1766,27 +1770,27 @@ public:
               },
               [&](const LinearReturn &linearReturn) {
                 CheckInsertionPoint();
-                std::visit(common::visitors{
-                               [&](const parser::FailImageStmt *s) {
-                                 builder_->CreateRuntimeCall(
-                                     RuntimeCallFailImage,
-                                     CreateFailImageArguments(*s));
-                                 builder_->CreateUnreachable();
-                               },
-                               [&](const parser::ReturnStmt *s) {
-                                 if (s->v) {
-                                   builder_->CreateReturn(
-                                       ExprRef(s->v->thing.thing.value()));
-                                 } else {
-                                   builder_->CreateRetVoid();
-                                 }
-                               },
-                               [&](const parser::StopStmt *s) {
-                                 builder_->CreateRuntimeCall(
-                                     RuntimeCallStop, CreateStopArguments(*s));
-                                 builder_->CreateUnreachable();
-                               },
-                           },
+                std::visit(
+                    common::visitors{
+                        [&](const parser::FailImageStmt *s) {
+                          builder_->CreateRuntimeCall(RuntimeCallFailImage,
+                              CreateFailImageArguments(*s));
+                          builder_->CreateUnreachable();
+                        },
+                        [&](const parser::ReturnStmt *s) {
+                          if (s->v) {
+                            builder_->CreateReturn(
+                                ExprRef(s->v->thing.thing.value()));
+                          } else {
+                            builder_->CreateRetVoid();
+                          }
+                        },
+                        [&](const parser::StopStmt *s) {
+                          builder_->CreateRuntimeCall(
+                              RuntimeCallStop, CreateStopArguments(*s));
+                          builder_->CreateUnreachable();
+                        },
+                    },
                     linearReturn.u);
                 builder_->ClearInsertionPoint();
               },
@@ -1842,37 +1846,37 @@ public:
               },
               [&](const LinearSwitch &linearSwitch) {
                 CheckInsertionPoint();
-                std::visit(common::visitors{
-                               [&](auto) {
-                                 auto args{ComposeSwitchArgs(linearSwitch)};
-                                 AddOrQueueSwitch<SwitchStmt>(args.exp,
-                                     args.defLab, args.values, args.labels,
-                                     CreateSwitchHelper);
-                               },
-                               [&](const parser::CaseConstruct *caseConstruct) {
-                                 auto args{ComposeSwitchCaseArguments(
-                                     caseConstruct, linearSwitch.refs)};
-                                 AddOrQueueSwitch<SwitchCaseStmt>(args.exp,
-                                     args.defLab, args.ranges, args.labels,
-                                     CreateSwitchCaseHelper);
-                               },
-                               [&](const parser::SelectRankConstruct
-                                       *selectRankConstruct) {
-                                 auto args{ComposeSwitchRankArguments(
-                                     selectRankConstruct, linearSwitch.refs)};
-                                 AddOrQueueSwitch<SwitchRankStmt>(args.exp,
-                                     args.defLab, args.ranks, args.labels,
-                                     CreateSwitchRankHelper);
-                               },
-                               [&](const parser::SelectTypeConstruct
-                                       *selectTypeConstruct) {
-                                 auto args{ComposeSwitchTypeArguments(
-                                     selectTypeConstruct, linearSwitch.refs)};
-                                 AddOrQueueSwitch<SwitchTypeStmt>(args.exp,
-                                     args.defLab, args.types, args.labels,
-                                     CreateSwitchTypeHelper);
-                               },
-                           },
+                std::visit(
+                    common::visitors{
+                        [&](auto) {
+                          auto args{ComposeSwitchArgs(linearSwitch)};
+                          AddOrQueueSwitch<SwitchStmt>(args.exp, args.defLab,
+                              args.values, args.labels, CreateSwitchHelper);
+                        },
+                        [&](const parser::CaseConstruct *caseConstruct) {
+                          auto args{ComposeSwitchCaseArguments(
+                              caseConstruct, linearSwitch.refs)};
+                          AddOrQueueSwitch<SwitchCaseStmt>(args.exp,
+                              args.defLab, args.ranges, args.labels,
+                              CreateSwitchCaseHelper);
+                        },
+                        [&](const parser::SelectRankConstruct
+                                *selectRankConstruct) {
+                          auto args{ComposeSwitchRankArguments(
+                              selectRankConstruct, linearSwitch.refs)};
+                          AddOrQueueSwitch<SwitchRankStmt>(args.exp,
+                              args.defLab, args.ranks, args.labels,
+                              CreateSwitchRankHelper);
+                        },
+                        [&](const parser::SelectTypeConstruct
+                                *selectTypeConstruct) {
+                          auto args{ComposeSwitchTypeArguments(
+                              selectTypeConstruct, linearSwitch.refs)};
+                          AddOrQueueSwitch<SwitchTypeStmt>(args.exp,
+                              args.defLab, args.types, args.labels,
+                              CreateSwitchTypeHelper);
+                        },
+                    },
                     linearSwitch.u);
                 builder_->ClearInsertionPoint();
               },
@@ -1965,14 +1969,15 @@ public:
                     linearConstruct.u);
                 auto next{iter};
                 const auto &nextOp{*(++next)};
-                std::visit(common::visitors{
-                               [](const auto &) {},
-                               [&](const LinearLabel &linearLabel) {
-                                 blockMap_.insert({linearLabel.get(),
-                                     builder_->GetInsertionPoint()});
-                                 ++iter;
-                               },
-                           },
+                std::visit(
+                    common::visitors{
+                        [](const auto &) {},
+                        [&](const LinearLabel &linearLabel) {
+                          blockMap_.insert({linearLabel.get(),
+                              builder_->GetInsertionPoint()});
+                          ++iter;
+                        },
+                    },
                     nextOp.u);
               },
               [&](const LinearEndConstruct &linearConstruct) {

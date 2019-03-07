@@ -29,10 +29,11 @@ static Addressable_impl *GetAddressable(Statement *stmt) {
 }
 
 static ApplyExprStmt *GetApplyExpr(Statement *stmt) {
-  return std::visit(common::visitors{
-                        [](ApplyExprStmt &s) { return &s; },
-                        [](auto &) -> ApplyExprStmt * { return nullptr; },
-                    },
+  return std::visit(
+      common::visitors{
+          [](ApplyExprStmt &s) { return &s; },
+          [](auto &) -> ApplyExprStmt * { return nullptr; },
+      },
       stmt->u);
 }
 
