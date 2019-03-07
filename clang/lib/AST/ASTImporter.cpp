@@ -4943,15 +4943,15 @@ ASTNodeImporter::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
   return ToD;
 }
 
-// Returns the definition for a (forward) declaration of a ClassTemplateDecl, if
+// Returns the definition for a (forward) declaration of a TemplateDecl, if
 // it has any definition in the redecl chain.
-static ClassTemplateDecl *getDefinition(ClassTemplateDecl *D) {
-  CXXRecordDecl *ToTemplatedDef = D->getTemplatedDecl()->getDefinition();
+template <typename T> static auto getTemplateDefinition(T *D) -> T * {
+  assert(D->getTemplatedDecl() && "Should be called on templates only");
+  auto *ToTemplatedDef = D->getTemplatedDecl()->getDefinition();
   if (!ToTemplatedDef)
     return nullptr;
-  ClassTemplateDecl *TemplateWithDef =
-      ToTemplatedDef->getDescribedClassTemplate();
-  return TemplateWithDef;
+  auto *TemplateWithDef = ToTemplatedDef->getDescribedTemplate();
+  return cast_or_null<T>(TemplateWithDef);
 }
 
 ExpectedDecl ASTNodeImporter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
@@ -4983,7 +4983,8 @@ ExpectedDecl ASTNodeImporter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
       if (FoundTemplate) {
 
         if (IsStructuralMatch(D, FoundTemplate)) {
-          ClassTemplateDecl *TemplateWithDef = getDefinition(FoundTemplate);
+          ClassTemplateDecl *TemplateWithDef =
+              getTemplateDefinition(FoundTemplate);
           if (D->isThisDeclarationADefinition() && TemplateWithDef) {
             return Importer.MapImported(D, TemplateWithDef);
           }
@@ -5046,6 +5047,8 @@ ExpectedDecl ASTNodeImporter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
     // and this time the lookup finds the previous fwd friend class template.
     // In this case we must set up the previous decl for the templated decl.
     if (!ToTemplated->getPreviousDecl()) {
+      assert(FoundByLookup->getTemplatedDecl() &&
+             "Found decl must have its templated decl set");
       CXXRecordDecl *PrevTemplated =
           FoundByLookup->getTemplatedDecl()->getMostRecentDecl();
       if (ToTemplated != PrevTemplated)
@@ -5508,8 +5511,11 @@ ASTNodeImporter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   if (ToD)
     return ToD;
 
+  const FunctionTemplateDecl *FoundByLookup = nullptr;
+
   // Try to find a function in our own ("to") context with the same name, same
   // type, and in the same context as the function we're importing.
+  // FIXME Split this into a separate function.
   if (!LexicalDC->isFunctionOrMethod()) {
     unsigned IDNS = Decl::IDNS_Ordinary | Decl::IDNS_OrdinaryFriend;
     auto FoundDecls = Importer.findDeclsInToCtx(DC, Name);
@@ -5517,18 +5523,21 @@ ASTNodeImporter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
       if (!FoundDecl->isInIdentifierNamespace(IDNS))
         continue;
 
-      if (auto *FoundFunction =
-          dyn_cast<FunctionTemplateDecl>(FoundDecl)) {
-        if (FoundFunction->hasExternalFormalLinkage() &&
+      if (auto *FoundTemplate = dyn_cast<FunctionTemplateDecl>(FoundDecl)) {
+        if (FoundTemplate->hasExternalFormalLinkage() &&
             D->hasExternalFormalLinkage()) {
-          if (IsStructuralMatch(D, FoundFunction)) {
-            Importer.MapImported(D, FoundFunction);
-            // FIXME: Actually try to merge the body and other attributes.
-            return FoundFunction;
+          if (IsStructuralMatch(D, FoundTemplate)) {
+            FunctionTemplateDecl *TemplateWithDef =
+                getTemplateDefinition(FoundTemplate);
+            if (D->isThisDeclarationADefinition() && TemplateWithDef) {
+              return Importer.MapImported(D, TemplateWithDef);
+            }
+            FoundByLookup = FoundTemplate;
+            break;
           }
+          // TODO: handle conflicting names
         }
       }
-      // TODO: handle conflicting names
     }
   }
 
@@ -5547,10 +5556,25 @@ ASTNodeImporter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
     return ToFunc;
 
   TemplatedFD->setDescribedFunctionTemplate(ToFunc);
+
   ToFunc->setAccess(D->getAccess());
   ToFunc->setLexicalDeclContext(LexicalDC);
-
   LexicalDC->addDeclInternal(ToFunc);
+
+  if (FoundByLookup) {
+    auto *Recent =
+        const_cast<FunctionTemplateDecl *>(FoundByLookup->getMostRecentDecl());
+    if (!TemplatedFD->getPreviousDecl()) {
+      assert(FoundByLookup->getTemplatedDecl() &&
+             "Found decl must have its templated decl set");
+      auto *PrevTemplated =
+          FoundByLookup->getTemplatedDecl()->getMostRecentDecl();
+      if (TemplatedFD != PrevTemplated)
+        TemplatedFD->setPreviousDecl(PrevTemplated);
+    }
+    ToFunc->setPreviousDecl(Recent);
+  }
+
   return ToFunc;
 }
 
