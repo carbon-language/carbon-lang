@@ -26,5 +26,4 @@ add_library(FortranFIR
 
 target_link_libraries(FortranFIR
   FortranCommon
-  clangBasic
 )

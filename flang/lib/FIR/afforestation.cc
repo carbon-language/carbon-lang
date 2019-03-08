@@ -23,10 +23,31 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
 
+namespace Fortran::howdowedothis {
+
+// need to be able to convert variable-like things to Expressions, or forego
+// using Expressions entirely. The .typedExpr data member is only on
+// parser::Expr nodes, which is not sufficient.
+
+semantics::MaybeExpr AnalyzeVariable(
+    semantics::SemanticsContext &context, const parser::Variable &var) {
+  return {};
+}
+semantics::MaybeExpr AnalyzeName(
+    semantics::SemanticsContext &context, const parser::Name &name) {
+  return {};
+}
+semantics::MaybeExpr AnalyzeDataRef(
+    semantics::SemanticsContext &context, const parser::DataRef &dataRef) {
+  return {};
+}
+}
+
 namespace Fortran::FIR {
 namespace {
-template<typename A> Expression *ExprRef(const A &a) {
-  return &a.typedExpr.value();
+Expression *ExprRef(const parser::Expr &a) { return &a.typedExpr.value(); }
+Expression *ExprRef(const common::Indirection<parser::Expr> &a) {
+  return &a.value().typedExpr.value();
 }
 
 struct LinearOp;
@@ -914,15 +935,15 @@ static std::vector<SwitchCaseStmt::ValueType> populateSwitchValues(
                   if (range.lower.has_value()) {
                     if (range.upper.has_value()) {
                       valueList.emplace_back(SwitchCaseStmt::InclusiveRange{
-                          ExprRef(range.lower->thing.thing.value()),
-                          ExprRef(range.upper->thing.thing.value())});
+                          ExprRef(range.lower->thing.thing),
+                          ExprRef(range.upper->thing.thing)});
                     } else {
                       valueList.emplace_back(SwitchCaseStmt::InclusiveAbove{
-                          ExprRef(range.lower->thing.thing.value())});
+                          ExprRef(range.lower->thing.thing)});
                     }
                   } else {
                     valueList.emplace_back(SwitchCaseStmt::InclusiveBelow{
-                        ExprRef(range.upper->thing.thing.value())});
+                        ExprRef(range.upper->thing.thing)});
                   }
                 },
             },
@@ -983,6 +1004,7 @@ static std::vector<SwitchTypeStmt::ValueType> populateSwitchValues(
   }
   return result;
 }
+
 static SwitchCaseArguments ComposeSwitchCaseArguments(
     const parser::CaseConstruct *caseConstruct,
     const std::vector<LinearLabelRef> &refs) {
@@ -994,6 +1016,7 @@ static SwitchCaseArguments ComposeSwitchCaseArguments(
       result.defLab, result.ranges, result.labels);
   return result;
 }
+
 static SwitchRankArguments ComposeSwitchRankArguments(
     const parser::SelectRankConstruct *selectRankConstruct,
     const std::vector<LinearLabelRef> &refs) {
@@ -1037,7 +1060,7 @@ static SwitchArguments ComposeSwitchArgs(const LinearSwitch &op) {
       common::visitors{
           [&](const parser::ComputedGotoStmt *c) {
             const auto &e{std::get<parser::ScalarIntExpr>(c->t)};
-            result.exp = ExprRef(e.thing.thing.value());
+            result.exp = ExprRef(e.thing.thing);
             buildMultiwayDefaultNext(result);
           },
           [&](const parser::ArithmeticIfStmt *c) {
@@ -1076,6 +1099,7 @@ const parser::IoUnit *FindReadWriteIoUnit(
   SEMANTICS_FAILED("no UNIT spec");
   return {};
 }
+
 const parser::Format *FindReadWriteFormat(
     const std::optional<parser::Format> &format,
     const std::list<parser::IoControlSpec> &specifiers) {
@@ -1086,20 +1110,14 @@ const parser::Format *FindReadWriteFormat(
 }
 
 static Expression AlwaysTrueExpression() {
-  auto result{common::SearchTypes(
-      evaluate::TypeKindVisitor<evaluate::TypeCategory::Logical,
-          evaluate::Constant, bool>{1, true})};
-  CHECK(result.has_value());
-  return {std::move(*result)};
+  using T = evaluate::Type<evaluate::TypeCategory::Logical, 1>;
+  return {evaluate::AsGenericExpr(evaluate::Constant<T>{true})};
 }
 
 // create an integer constant as an expression
-static Expression CreateConstant(int value) {
-  auto result{common::SearchTypes(
-      evaluate::TypeKindVisitor<evaluate::TypeCategory::Integer,
-          evaluate::Constant, bool>{value, true})};
-  CHECK(result.has_value());
-  return {std::move(*result)};
+static Expression CreateConstant(int64_t value) {
+  using T = evaluate::SubscriptInteger;
+  return {evaluate::AsGenericExpr(evaluate::Constant<T>{value})};
 }
 
 static void CreateSwitchHelper(FIRBuilder *builder, const Evaluation &condition,
@@ -1345,16 +1363,16 @@ public:
   }
 
   Expression VariableToExpression(const parser::Variable &var) {
-    auto maybe{semantics::AnalyzeVariable(semanticsContext_, var)};
-    return {std::move(*maybe)};
+    auto maybe{howdowedothis::AnalyzeVariable(semanticsContext_, var)};
+    return {std::move(maybe.value())};
   }
   Expression DataRefToExpression(const parser::DataRef &dr) {
-    auto maybe{semantics::AnalyzeDataRef(semanticsContext_, dr)};
-    return {std::move(*maybe)};
+    auto maybe{howdowedothis::AnalyzeDataRef(semanticsContext_, dr)};
+    return {std::move(maybe.value())};
   }
   Expression NameToExpression(const parser::Name &name) {
-    auto maybe{semantics::AnalyzeName(semanticsContext_, name)};
-    return {std::move(*maybe)};
+    auto maybe{howdowedothis::AnalyzeName(semanticsContext_, name)};
+    return {std::move(maybe.value())};
   }
 
   void handleIntrinsicAssignmentStmt(const parser::AssignmentStmt &stmt) {
@@ -1389,10 +1407,10 @@ public:
       std::visit(
           common::visitors{
               [&](const parser::AllocOpt::Mold &m) {
-                opts.mold = ExprRef(m.v.value());
+                opts.mold = ExprRef(m.v);
               },
               [&](const parser::AllocOpt::Source &s) {
-                opts.source = ExprRef(s.v.value());
+                opts.source = ExprRef(s.v);
               },
               [&](const parser::StatOrErrmsg &var) {
                 std::visit(
@@ -1659,6 +1677,19 @@ public:
   void InitiateConstruct(const parser::ChangeTeamStmt *changeTeamStmt) {
     // FIXME
   }
+  void InitiateConstruct(const parser::IfThenStmt *ifThenStmt) {
+    const auto &e{std::get<parser::ScalarLogicalExpr>(ifThenStmt->t).thing};
+    builder_->CreateExpr(ExprRef(e.thing));
+  }
+  void InitiateConstruct(const parser::WhereConstructStmt *whereConstructStmt) {
+    const auto &e{std::get<parser::LogicalExpr>(whereConstructStmt->t)};
+    builder_->CreateExpr(ExprRef(e.thing));
+  }
+  void InitiateConstruct(
+      const parser::ForallConstructStmt *forallConstructStmt) {
+    // FIXME
+  }
+
   void InitiateConstruct(const parser::NonLabelDoStmt *stmt) {
     auto &ctrl{std::get<std::optional<parser::LoopControl>>(stmt->t)};
     if (ctrl.has_value()) {
@@ -1668,14 +1699,13 @@ public:
                 auto *var = builder_->CreateAddr(
                     NameToExpression(bounds.name.thing.thing));
                 // evaluate e1, e2 [, e3] ...
-                auto *e1{builder_->CreateExpr(
-                    ExprRef(bounds.lower.thing.thing.value()))};
-                auto *e2{builder_->CreateExpr(
-                    ExprRef(bounds.upper.thing.thing.value()))};
+                auto *e1{
+                    builder_->CreateExpr(ExprRef(bounds.lower.thing.thing))};
+                auto *e2{
+                    builder_->CreateExpr(ExprRef(bounds.upper.thing.thing))};
                 Statement *e3;
                 if (bounds.step.has_value()) {
-                  e3 = builder_->CreateExpr(
-                      ExprRef(bounds.step->thing.thing.value()));
+                  e3 = builder_->CreateExpr(ExprRef(bounds.step->thing.thing));
                 } else {
                   e3 = builder_->CreateExpr(CreateConstant(1));
                 }
@@ -1706,19 +1736,6 @@ public:
           },
           ctrl->u);
     }
-  }
-
-  void InitiateConstruct(const parser::IfThenStmt *ifThenStmt) {
-    const auto &e{std::get<parser::ScalarLogicalExpr>(ifThenStmt->t).thing};
-    builder_->CreateExpr(ExprRef(e.thing.value()));
-  }
-  void InitiateConstruct(const parser::WhereConstructStmt *whereConstructStmt) {
-    const auto &e{std::get<parser::LogicalExpr>(whereConstructStmt->t)};
-    builder_->CreateExpr(ExprRef(e.thing.value()));
-  }
-  void InitiateConstruct(
-      const parser::ForallConstructStmt *forallConstructStmt) {
-    // FIXME
   }
 
   Statement *BuildLoopLatchExpression(const parser::NonLabelDoStmt *stmt) {
@@ -1779,8 +1796,7 @@ public:
                         },
                         [&](const parser::ReturnStmt *s) {
                           if (s->v) {
-                            builder_->CreateReturn(
-                                ExprRef(s->v->thing.thing.value()));
+                            builder_->CreateReturn(ExprRef(s->v->thing.thing));
                           } else {
                             builder_->CreateRetVoid();
                           }
@@ -2110,10 +2126,12 @@ public:
       function(builder_, condition, defaultIter->second, cases);
     }
   }
+
   Variable *ConvertToVariable(const semantics::Symbol *symbol) {
     // FIXME: how to convert semantics::Symbol to evaluate::Variable?
     return new Variable(symbol);
   }
+
   void AddOrQueueIGoto(AnalysisData &ad, const semantics::Symbol *symbol,
       const std::vector<LinearLabelRef> &labels) {
     auto useLabels{labels.empty() ? GetAssign(ad, symbol) : labels};

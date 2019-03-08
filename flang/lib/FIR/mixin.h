@@ -15,6 +15,11 @@
 #ifndef FORTRAN_FIR_MIXIN_H_
 #define FORTRAN_FIR_MIXIN_H_
 
+// Mixin classes are "partial" classes (not used standalone) that can be used to
+// add a repetitive (ad hoc) interface (and implementation) to a class.  It's
+// better to think of these as "included in" a class, rather than as an
+// "inherited from" base class.
+
 #include "llvm/ADT/ilist.h"
 #include <optional>
 #include <tuple>
@@ -25,6 +30,7 @@ namespace Fortran::FIR {
 
 inline constexpr bool has_size(std::size_t size) { return size > 0; }
 
+// implementation of a (moveable) sum type (variant)
 template<typename T, typename E = void> struct SumTypeMixin {};
 template<typename T>  // T must be std::variant<...>
 struct SumTypeMixin<T, std::enable_if_t<has_size(std::variant_size_v<T>)>> {
@@ -38,6 +44,7 @@ struct SumTypeMixin<T, std::enable_if_t<has_size(std::variant_size_v<T>)>> {
   T u;
 };
 
+// implementation of a copyable sum type
 template<typename T, typename E = void> struct SumTypeCopyMixin {};
 template<typename T>  // T must be std::variant<...>
 struct SumTypeCopyMixin<T, std::enable_if_t<has_size(std::variant_size_v<T>)>> {
@@ -58,6 +65,7 @@ struct SumTypeCopyMixin<T, std::enable_if_t<has_size(std::variant_size_v<T>)>> {
     return *this; \
   }
 
+// implementation of a (moveable) product type (tuple)
 template<typename T, typename E = void> struct ProductTypeMixin {};
 template<typename T>  // T must be std::tuple<...>
 struct ProductTypeMixin<T, std::enable_if_t<has_size(std::tuple_size_v<T>)>> {
@@ -71,6 +79,7 @@ struct ProductTypeMixin<T, std::enable_if_t<has_size(std::tuple_size_v<T>)>> {
   T t;
 };
 
+// implementation of a (moveable) maybe type
 template<typename T, typename E = void> struct MaybeMixin {};
 template<typename T>  // T must be std::optional<...>
 struct MaybeMixin<T,
@@ -86,6 +95,7 @@ struct MaybeMixin<T,
   T o;
 };
 
+// implementation of a child type (composable hierarchy)
 template<typename T, typename P> struct ChildMixin {
 protected:
   P *parent;
@@ -97,6 +107,7 @@ public:
   llvm::iplist<T> &getList() { return parent->getSublist(this); }
 };
 
+// zip :: ([a],[b]) -> [(a,b)]
 template<typename A, typename B, typename C>
 C Zip(C out, A first, A last, B other) {
   std::transform(first, last, other, out,
@@ -105,6 +116,8 @@ C Zip(C out, A first, A last, B other) {
       });
   return out;
 }
+
+// unzip :: [(a,b)] -> ([a],[b])
 template<typename A, typename B> B &Unzip(B &out, A first, A last) {
   std::transform(first, last, std::back_inserter(out.first),
       [](auto &&a) -> decltype(a.first) { return a.first; });
