@@ -1944,7 +1944,7 @@ Check for out-of-bounds access in string functions; applies to:`` strncopy, strn
  }
 
 alpha.nondeterminism.PointerSorting (C++)
-"""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""""""""
 Check for non-determinism caused by sorting of pointers.
 
 .. code-block:: c
