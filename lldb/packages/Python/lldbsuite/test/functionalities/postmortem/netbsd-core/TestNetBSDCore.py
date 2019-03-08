@@ -130,8 +130,8 @@ class NetBSDCoreCommonTestCase(TestBase):
         for i in range(len(backtrace)):
             frame = thread.GetFrameAtIndex(i)
             self.assertTrue(frame)
-            self.assertEqual(frame.GetFunctionName(), backtrace[i])
             if not backtrace[i].startswith('_'):
+                self.assertEqual(frame.GetFunctionName(), backtrace[i])
                 self.assertEqual(frame.GetLineEntry().GetLine(),
                                  line_number(src, "Frame " + backtrace[i]))
                 self.assertEqual(
