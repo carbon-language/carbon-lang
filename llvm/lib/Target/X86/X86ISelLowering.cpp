@@ -9850,11 +9850,16 @@ static bool is128BitUnpackShuffleMask(ArrayRef<int> Mask) {
   MVT EltVT = MVT::getIntegerVT(128 / Mask.size());
   MVT VT = MVT::getVectorVT(EltVT, Mask.size());
 
+  // We can't assume a canonical shuffle mask, so try the commuted version too.
+  SmallVector<int, 4> CommutedMask(Mask.begin(), Mask.end());
+  ShuffleVectorSDNode::commuteMask(CommutedMask);
+
   // Match any of unary/binary or low/high.
   for (unsigned i = 0; i != 4; ++i) {
     SmallVector<int, 16> UnpackMask;
     createUnpackShuffleMask(VT, UnpackMask, (i >> 1) % 2, i % 2);
-    if (isTargetShuffleEquivalent(Mask, UnpackMask))
+    if (isTargetShuffleEquivalent(Mask, UnpackMask) ||
+        isTargetShuffleEquivalent(CommutedMask, UnpackMask))
       return true;
   }
   return false;
