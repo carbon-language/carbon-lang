@@ -297,6 +297,7 @@ class ExprChecker : public virtual BaseChecker {
 public:
   explicit ExprChecker(SemanticsContext &context) : context_{context} {}
   void Enter(const parser::Expr &);
+  void Enter(const parser::Variable &);
 
 private:
   SemanticsContext &context_;

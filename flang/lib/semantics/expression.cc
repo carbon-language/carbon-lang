@@ -196,7 +196,8 @@ MaybeExpr TypedWrapper(const DynamicType &dyType, WRAPPED &&x) {
 
 // Wraps a data reference in a typed Designator<>.
 static MaybeExpr Designate(DataRef &&ref) {
-  if (std::optional<DynamicType> dyType{GetSymbolType(ref.GetLastSymbol())}) {
+  if (std::optional<DynamicType> dyType{
+          GetSymbolType(ref.GetLastSymbol().GetUltimate())}) {
     return TypedWrapper<Designator, DataRef>(
         std::move(*dyType), std::move(ref));
   }
@@ -205,7 +206,8 @@ static MaybeExpr Designate(DataRef &&ref) {
 }
 
 // Catch and resolve the ambiguous parse of a substring reference
-// that looks like a 1-D array element or section.
+// that looks like a 1-D array element or section.  The parse tree is
+// not adjusted.
 static MaybeExpr ResolveAmbiguousSubstring(ArrayRef &&ref) {
   if (std::optional<DynamicType> dyType{GetSymbolType(ref.GetLastSymbol())}) {
     if (dyType->category == TypeCategory::Character && ref.size() == 1) {
@@ -240,7 +242,7 @@ static MaybeExpr ResolveAmbiguousSubstring(ArrayRef &&ref) {
 // ambiguous parse of a substring reference that looks like a 1-D array
 // element or section.
 MaybeExpr ExpressionAnalyzer::CompleteSubscripts(ArrayRef &&ref) {
-  const Symbol &symbol{ref.GetLastSymbol()};
+  const Symbol &symbol{ref.GetLastSymbol().GetUltimate()};
   int symbolRank{symbol.Rank()};
   int subscripts = ref.size();
   if (subscripts == 0) {
@@ -627,23 +629,24 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Name &n) {
   if (std::optional<int> kind{IsAcImpliedDo(n.source)}) {
     return AsMaybeExpr(ConvertToKind<TypeCategory::Integer>(
         *kind, AsExpr(ImpliedDoIndex{n.source})));
-  } else if (n.symbol == nullptr) {
-    // error should have been reported in name resolution
-  } else if (n.symbol->attrs().test(semantics::Attr::PARAMETER)) {
-    if (auto *details{n.symbol->detailsIf<semantics::ObjectEntityDetails>()}) {
-      if (auto &init{details->init()}) {
-        return init;
+  } else if (n.symbol != nullptr) {
+    const Symbol &ultimate{n.symbol->GetUltimate()};
+    if (ultimate.attrs().test(semantics::Attr::PARAMETER)) {
+      if (auto *details{ultimate.detailsIf<semantics::ObjectEntityDetails>()}) {
+        if (auto &init{details->init()}) {
+          return init;
+        }
       }
+      // TODO: enumerators, do they have the PARAMETER attribute?
+    } else if (ultimate.detailsIf<semantics::TypeParamDetails>()) {
+      // A bare reference to a derived type parameter (within a parameterized
+      // derived type definition)
+      return AsMaybeExpr(MakeTypeParamInquiry(&ultimate));
+    } else if (MaybeExpr result{Designate(DataRef{*n.symbol})}) {
+      return result;
+    } else {
+      Say(n.source, "not of a supported type and kind"_err_en_US);
     }
-    // TODO: enumerators, do they have the PARAMETER attribute?
-  } else if (n.symbol->detailsIf<semantics::TypeParamDetails>()) {
-    // A bare reference to a derived type parameter (within a parameterized
-    // derived type definition)
-    return AsMaybeExpr(MakeTypeParamInquiry(n.symbol));
-  } else if (MaybeExpr result{Designate(DataRef{*n.symbol})}) {
-    return result;
-  } else {
-    Say(n.source, "not of a supported type and kind"_err_en_US);
   }
   return std::nullopt;
 }
@@ -1382,38 +1385,31 @@ auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
                   n.ToString().data());
               return std::nullopt;
             }
-            return std::visit(
-                common::visitors{
-                    [&](const semantics::ProcEntityDetails &p)
-                        -> std::optional<CallAndArguments> {
-                      if (p.HasExplicitInterface()) {
-                        // TODO: check actual arguments vs. interface
-                      } else {
-                        CallCharacteristics cc{n.source};
-                        if (std::optional<SpecificCall> specificCall{
-                                context().intrinsics().Probe(
-                                    cc, arguments, &GetContextualMessages())}) {
-                          return {CallAndArguments{
-                              ProcedureDesignator{
-                                  std::move(specificCall->specificIntrinsic)},
-                              std::move(specificCall->arguments)}};
-                        } else {
-                          // TODO: if name is not INTRINSIC, call with implicit
-                          // interface
-                        }
-                      }
-                      return {CallAndArguments{ProcedureDesignator{*n.symbol},
-                          std::move(arguments)}};
-                    },
-                    [&](const auto &) -> std::optional<CallAndArguments> {
-                      // TODO pmk WIP: resolve ambiguous array reference or
-                      // structure constructor usage that reach here
-                      Say("TODO: unimplemented/invalid kind of symbol as procedure designator '%s'"_err_en_US,
-                          n.ToString().data());
-                      return std::nullopt;
-                    },
-                },
-                n.symbol->details());
+            const Symbol &ultimate{n.symbol->GetUltimate()};
+            if (const auto *proc{
+                    ultimate.detailsIf<semantics::ProcEntityDetails>()}) {
+              if (proc->HasExplicitInterface()) {
+                // TODO: check actual arguments vs. interface
+              } else {
+                CallCharacteristics cc{n.source};
+                if (std::optional<SpecificCall> specificCall{
+                        context().intrinsics().Probe(
+                            cc, arguments, &GetContextualMessages())}) {
+                  return {
+                      CallAndArguments{ProcedureDesignator{std::move(
+                                           specificCall->specificIntrinsic)},
+                          std::move(specificCall->arguments)}};
+                } else {
+                  // TODO: if name is not INTRINSIC, call with implicit
+                  // interface
+                }
+              }
+              return {CallAndArguments{
+                  ProcedureDesignator{*n.symbol}, std::move(arguments)}};
+            } else {
+              Say(n.source, "not a procedure"_err_en_US);
+              return std::nullopt;
+            }
           },
           [&](const parser::ProcComponentRef &pcr)
               -> std::optional<CallAndArguments> {
@@ -1756,21 +1752,60 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::DefinedBinary &) {
   return std::nullopt;
 }
 
+// Converts, if appropriate, a misparse of the ambiguous syntax A(1) as
+// a function reference into an array reference or a structure constructor.
+template<typename... A>
+void FixMisparsedFunctionReference(const std::variant<A...> &constU) {
+  // The parse tree is updated in situ when resolving an ambiguous parse.
+  using uType = std::decay_t<decltype(constU)>;
+  auto &u{const_cast<uType &>(constU)};
+  if (auto *func{
+          std::get_if<common::Indirection<parser::FunctionReference>>(&u)}) {
+    parser::FunctionReference &funcRef{func->value()};
+    auto &proc{std::get<parser::ProcedureDesignator>(funcRef.v.t)};
+    if (auto *name{std::get_if<parser::Name>(&proc.u)}) {
+      if (name->symbol == nullptr) {
+        return;
+      }
+      Symbol &symbol{name->symbol->GetUltimate()};
+      if constexpr (common::HasMember<common::Indirection<parser::Designator>,
+                        uType>) {
+        if (symbol.has<semantics::ObjectEntityDetails>()) {
+          u = common::Indirection{funcRef.ConvertToArrayElementRef()};
+          return;
+          // N.B. Expression semantics will reinterpret an array element
+          // reference as a single-character substring elsewhere if necessary.
+        }
+      }
+      if constexpr (common::HasMember<StructureConstructor, uType>) {
+        if (symbol.has<semantics::DerivedTypeDetails>()) {
+          u = funcRef.ConvertToStructureConstructor();
+          return;
+        }
+      }
+    }
+  }
+}
+
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr &expr) {
   if (expr.typedExpr.has_value()) {
     // Expression was already checked by ExprChecker
     return std::make_optional<Expr<SomeType>>(expr.typedExpr.value().v);
-  } else if (!expr.source.empty()) {
-    // Analyze the expression in a specified source position context for better
-    // error reporting.
-    auto save{GetFoldingContext().messages().SetLocation(expr.source)};
-    return Analyze(expr.u);
   } else {
-    return Analyze(expr.u);
+    FixMisparsedFunctionReference(expr.u);
+    if (!expr.source.empty()) {
+      // Analyze the expression in a specified source position context for
+      // better error reporting.
+      auto save{GetFoldingContext().messages().SetLocation(expr.source)};
+      return Analyze(expr.u);
+    } else {
+      return Analyze(expr.u);
+    }
   }
 }
 
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::Variable &variable) {
+  FixMisparsedFunctionReference(variable.u);
   return Analyze(variable.u);
 }
 
@@ -1892,6 +1927,21 @@ void ExprChecker::Enter(const parser::Expr &expr) {
       DumpTree(std::cout, expr);
 #endif
     }
+  }
+}
+
+void ExprChecker::Enter(const parser::Variable &var) {
+#if PMKDEBUG
+  if (MaybeExpr checked{AnalyzeExpr(context_, var)}) {
+//    checked->AsFortran(std::cout << "checked variable: ") << '\n';
+#else
+  if (AnalyzeExpr(context_, var)) {
+#endif
+  } else {
+#if PMKDEBUG
+    std::cout << "TODO: expression analysis failed for this variable: ";
+    DumpTree(std::cout, var);
+#endif
   }
 }
 }

@@ -37,8 +37,6 @@ public:
   void Post(parser::Name &);
   void Post(parser::SpecificationPart &);
   bool Pre(parser::ExecutionPart &);
-  void Post(parser::Variable &x) { ConvertFunctionRef(x); }
-  void Post(parser::Expr &x) { ConvertFunctionRef(x); }
 
   // Name resolution yet implemented:
   bool Pre(parser::EquivalenceStmt &) { return false; }
@@ -62,24 +60,6 @@ private:
   bool errorOnUnresolvedName_{true};
   parser::Messages &messages_;
   std::list<stmtFuncType> stmtFuncsToConvert_;
-
-  // For T = Variable or Expr, if x has a function reference that really
-  // should be an array element reference (i.e. the name occurs in an
-  // entity declaration, convert it.
-  template<typename T> void ConvertFunctionRef(T &x) {
-    auto *funcRef{
-        std::get_if<common::Indirection<parser::FunctionReference>>(&x.u)};
-    if (!funcRef) {
-      return;
-    }
-    parser::Name *name{std::get_if<parser::Name>(
-        &std::get<parser::ProcedureDesignator>(funcRef->value().v.t).u)};
-    if (!name || !name->symbol ||
-        !name->symbol->GetUltimate().has<ObjectEntityDetails>()) {
-      return;
-    }
-    x.u = common::Indirection{funcRef->value().ConvertToArrayElementRef()};
-  }
 };
 
 // Check that name has been resolved to a symbol
