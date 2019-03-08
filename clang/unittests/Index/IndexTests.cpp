@@ -91,10 +91,15 @@ public:
     return true;
   }
 
-  bool handleMacroOccurence(const IdentifierInfo *Name, const MacroInfo *,
-                            SymbolRoleSet, SourceLocation) override {
+  bool handleMacroOccurence(const IdentifierInfo *Name, const MacroInfo *MI,
+                            SymbolRoleSet Roles, SourceLocation Loc) override {
     TestSymbol S;
+    S.SymInfo = getSymbolInfoForMacro(*MI);
     S.QName = Name->getName();
+    S.WrittenPos = Position::fromSourceLocation(Loc, AST->getSourceManager());
+    S.DeclPos = Position::fromSourceLocation(MI->getDefinitionLoc(),
+                                             AST->getSourceManager());
+    S.Roles = Roles;
     Symbols.push_back(std::move(S));
     return true;
   }
