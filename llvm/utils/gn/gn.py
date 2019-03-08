@@ -16,7 +16,8 @@ ROOT_DIR = os.path.join(THIS_DIR, '..', '..', '..')
 
 
 def get_platform():
-    if os.uname()[4] != 'x86_64':
+    import platform
+    if platform.machine() not in ('AMD64', 'x86_64'):
         return None
     if sys.platform.startswith('linux'):
         return 'linux-amd64'
@@ -46,7 +47,7 @@ def main():
         if not platform:
             return print_no_gn(mention_get=False)
         gn = os.path.join(os.path.dirname(__file__), 'bin', platform, 'gn')
-        if not os.path.exists(gn + ('.exe' if platform == 'windows' else '')):
+        if not os.path.exists(gn + ('.exe' if sys.platform == 'win32' else '')):
             return print_no_gn(mention_get=True)
 
     # Compute --dotfile= and --root= args to add.
