@@ -132,9 +132,8 @@ define double @frem_v4f64(<4 x double> %x, <4 x double> %y) nounwind {
 define i1 @fcmp_v4f32(<4 x float> %x, <4 x float> %y) nounwind {
 ; CHECK-LABEL: fcmp_v4f32:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    vcmpltps %xmm0, %xmm1, %xmm0
-; CHECK-NEXT:    vpextrb $0, %xmm0, %eax
-; CHECK-NEXT:    # kill: def $al killed $al killed $eax
+; CHECK-NEXT:    vucomiss %xmm1, %xmm0
+; CHECK-NEXT:    seta %al
 ; CHECK-NEXT:    retq
   %v = fcmp ogt <4 x float> %x, %y
   %r = extractelement <4 x i1> %v, i32 0
@@ -144,9 +143,8 @@ define i1 @fcmp_v4f32(<4 x float> %x, <4 x float> %y) nounwind {
 define i1 @fcmp_v4f64(<4 x double> %x, <4 x double> %y) nounwind {
 ; CHECK-LABEL: fcmp_v4f64:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    vcmpnlepd %ymm1, %ymm0, %ymm0
-; CHECK-NEXT:    vpextrb $0, %xmm0, %eax
-; CHECK-NEXT:    # kill: def $al killed $al killed $eax
+; CHECK-NEXT:    vucomisd %xmm0, %xmm1
+; CHECK-NEXT:    setb %al
 ; CHECK-NEXT:    vzeroupper
 ; CHECK-NEXT:    retq
   %v = fcmp ugt <4 x double> %x, %y
