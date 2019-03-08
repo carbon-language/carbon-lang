@@ -315,8 +315,7 @@ namespace {
     SDValue visitMULHS(SDNode *N);
     SDValue visitSMUL_LOHI(SDNode *N);
     SDValue visitUMUL_LOHI(SDNode *N);
-    SDValue visitSMULO(SDNode *N);
-    SDValue visitUMULO(SDNode *N);
+    SDValue visitMULO(SDNode *N);
     SDValue visitIMINMAX(SDNode *N);
     SDValue visitAND(SDNode *N);
     SDValue visitANDLike(SDValue N0, SDValue N1, SDNode *N);
@@ -1510,8 +1509,8 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::MULHS:              return visitMULHS(N);
   case ISD::SMUL_LOHI:          return visitSMUL_LOHI(N);
   case ISD::UMUL_LOHI:          return visitUMUL_LOHI(N);
-  case ISD::SMULO:              return visitSMULO(N);
-  case ISD::UMULO:              return visitUMULO(N);
+  case ISD::SMULO:
+  case ISD::UMULO:              return visitMULO(N);
   case ISD::SMIN:
   case ISD::SMAX:
   case ISD::UMIN:
@@ -3806,22 +3805,14 @@ SDValue DAGCombiner::visitUMUL_LOHI(SDNode *N) {
   return SDValue();
 }
 
-SDValue DAGCombiner::visitSMULO(SDNode *N) {
-  // (smulo x, 2) -> (saddo x, x)
+SDValue DAGCombiner::visitMULO(SDNode *N) {
+  bool IsSigned = (ISD::SMULO == N->getOpcode());
+
+  // (mulo x, 2) -> (addo x, x)
   if (ConstantSDNode *C2 = isConstOrConstSplat(N->getOperand(1)))
     if (C2->getAPIntValue() == 2)
-      return DAG.getNode(ISD::SADDO, SDLoc(N), N->getVTList(),
-                         N->getOperand(0), N->getOperand(0));
-
-  return SDValue();
-}
-
-SDValue DAGCombiner::visitUMULO(SDNode *N) {
-  // (umulo x, 2) -> (uaddo x, x)
-  if (ConstantSDNode *C2 = isConstOrConstSplat(N->getOperand(1)))
-    if (C2->getAPIntValue() == 2)
-      return DAG.getNode(ISD::UADDO, SDLoc(N), N->getVTList(),
-                         N->getOperand(0), N->getOperand(0));
+      return DAG.getNode(IsSigned ? ISD::SADDO : ISD::UADDO, SDLoc(N),
+                         N->getVTList(), N->getOperand(0), N->getOperand(0));
 
   return SDValue();
 }
