@@ -167,7 +167,7 @@ bool SIInstrInfo::areLoadsFromSameBasePtr(SDNode *Load0, SDNode *Load1,
       return false;
 
     // Check base reg.
-    if (Load0->getOperand(1) != Load1->getOperand(1))
+    if (Load0->getOperand(0) != Load1->getOperand(0))
       return false;
 
     // Check chain.
@@ -181,8 +181,8 @@ bool SIInstrInfo::areLoadsFromSameBasePtr(SDNode *Load0, SDNode *Load1,
         AMDGPU::getNamedOperandIdx(Opc1, AMDGPU::OpName::data1) != -1)
       return false;
 
-    Offset0 = cast<ConstantSDNode>(Load0->getOperand(2))->getZExtValue();
-    Offset1 = cast<ConstantSDNode>(Load1->getOperand(2))->getZExtValue();
+    Offset0 = cast<ConstantSDNode>(Load0->getOperand(1))->getZExtValue();
+    Offset1 = cast<ConstantSDNode>(Load1->getOperand(1))->getZExtValue();
     return true;
   }
 
@@ -232,7 +232,7 @@ bool SIInstrInfo::areLoadsFromSameBasePtr(SDNode *Load0, SDNode *Load1,
       return false;
 
     // getNamedOperandIdx returns the index for MachineInstrs.  Since they
-    // inlcude the output in the operand list, but SDNodes don't, we need to
+    // include the output in the operand list, but SDNodes don't, we need to
     // subtract the index by one.
     --OffIdx0;
     --OffIdx1;
