@@ -48,11 +48,8 @@ endif()
 
 message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}" )
 
-find_package(Clang REQUIRED CONFIG)
-include_directories(${CLANG_INSTALL_PREFIX/include})
-message(STATUS "Found Clang in ${CLANG_INSTALL_PREFIX}")
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+find_package(LLVM REQUIRED CONFIG)
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION} in ${LLVM_INSTALL_PREFIX}")
 
 # Get names for the LLVM libraries
 #
@@ -73,7 +70,8 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 include_directories(${LLVM_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
-llvm_map_components_to_libnames(LLVM_COMMON_LIBS support target option)
+llvm_map_components_to_libnames(LLVM_COMMON_LIBS support)
+message(STATUS "LLVM libraries: ${LLVM_COMMON_LIBS}")
 
 if(CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
