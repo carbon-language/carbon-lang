@@ -89,7 +89,8 @@ static Designator MakeArrayElementRef(Name &name, std::list<Expr> &subscripts) {
   return Designator{DataRef{common::Indirection{std::move(arrayElement)}}};
 }
 
-static std::optional<Expr> ActualArgToExpr(ActualArgSpec &arg) {
+static std::optional<Expr> ActualArgToExpr(
+    parser::CharBlock at, ActualArgSpec &arg) {
   return std::visit(
       common::visitors{
           [&](common::Indirection<Expr> &y) {
@@ -98,8 +99,9 @@ static std::optional<Expr> ActualArgToExpr(ActualArgSpec &arg) {
           [&](common::Indirection<Variable> &y) {
             return std::visit(
                 [&](auto &indirection) {
-                  return std::make_optional<Expr>(
-                      std::move(indirection.value()));
+                  std::optional<Expr> result{std::move(indirection.value())};
+                  result->source = at;
+                  return result;
                 },
                 y.value().u);
           },
@@ -112,12 +114,13 @@ Designator FunctionReference::ConvertToArrayElementRef() {
   auto &name{std::get<parser::Name>(std::get<ProcedureDesignator>(v.t).u)};
   std::list<Expr> args;
   for (auto &arg : std::get<std::list<ActualArgSpec>>(v.t)) {
-    args.emplace_back(std::move(ActualArgToExpr(arg).value()));
+    args.emplace_back(std::move(ActualArgToExpr(name.source, arg).value()));
   }
   return MakeArrayElementRef(name, args);
 }
 
-StructureConstructor FunctionReference::ConvertToStructureConstructor() {
+StructureConstructor FunctionReference::ConvertToStructureConstructor(
+    const semantics::DerivedTypeSpec &derived) {
   Name name{std::get<parser::Name>(std::get<ProcedureDesignator>(v.t).u)};
   std::list<ComponentSpec> components;
   for (auto &arg : std::get<std::list<ActualArgSpec>>(v.t)) {
@@ -125,12 +128,12 @@ StructureConstructor FunctionReference::ConvertToStructureConstructor() {
     if (auto &kw{std::get<std::optional<Keyword>>(arg.t)}) {
       keyword.emplace(Keyword{Name{kw->v}});
     }
-    components.emplace_back(
-        std::move(keyword), ComponentDataSource{ActualArgToExpr(arg).value()});
+    components.emplace_back(std::move(keyword),
+        ComponentDataSource{ActualArgToExpr(name.source, arg).value()});
   }
-  return StructureConstructor{
-      DerivedTypeSpec{std::move(name), std::list<TypeParamSpec>{}},
-      std::move(components)};
+  DerivedTypeSpec spec{std::move(name), std::list<TypeParamSpec>{}};
+  spec.derivedTypeSpec = &derived;
+  return StructureConstructor{std::move(spec), std::move(components)};
 }
 
 // R1544 stmt-function-stmt

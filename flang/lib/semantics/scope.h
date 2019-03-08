@@ -175,8 +175,8 @@ public:
   const Scope *FindScope(const parser::CharBlock &) const;
 
   // Attempts to find a match for a derived type instance
-  const DeclTypeSpec *FindInstantiatedDerivedType(
-      const DerivedTypeSpec &, DeclTypeSpec::Category) const;
+  const DeclTypeSpec *FindInstantiatedDerivedType(const DerivedTypeSpec &,
+      DeclTypeSpec::Category = DeclTypeSpec::TypeDerived) const;
 
   // Returns a matching derived type instance if one exists, otherwise
   // creates one

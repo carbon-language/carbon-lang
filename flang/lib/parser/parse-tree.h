@@ -3092,7 +3092,8 @@ struct Call {
 struct FunctionReference {
   WRAPPER_CLASS_BOILERPLATE(FunctionReference, Call);
   Designator ConvertToArrayElementRef();
-  StructureConstructor ConvertToStructureConstructor();
+  StructureConstructor ConvertToStructureConstructor(
+      const semantics::DerivedTypeSpec &);
 };
 
 // R1521 call-stmt -> CALL procedure-designator [( [actual-arg-spec-list] )]

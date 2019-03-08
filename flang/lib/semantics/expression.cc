@@ -1204,7 +1204,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
   auto &parsedType{std::get<parser::DerivedTypeSpec>(structure.t)};
   parser::CharBlock typeName{std::get<parser::Name>(parsedType.t).source};
   if (parsedType.derivedTypeSpec == nullptr) {
-    Say("INTERNAL: StructureConstructor lacks type"_err_en_US);
+    Say("INTERNAL: parser::StructureConstructor lacks type"_err_en_US);
     return std::nullopt;
   }
   const auto &spec{*parsedType.derivedTypeSpec};
@@ -1213,7 +1213,8 @@ MaybeExpr ExpressionAnalyzer::Analyze(
 
   if (typeSymbol.attrs().test(semantics::Attr::ABSTRACT)) {  // C796
     if (auto *msg{Say(typeName,
-            "ABSTRACT derived type '%s' cannot be used in a structure constructor"_err_en_US,
+            "ABSTRACT derived type '%s' cannot be used in a "
+            "structure constructor"_err_en_US,
             typeName.ToString().data())}) {
       msg->Attach(
           typeSymbol.name(), "Declaration of ABSTRACT derived type"_en_US);
@@ -1752,8 +1753,9 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::DefinedBinary &) {
   return std::nullopt;
 }
 
-// Converts, if appropriate, a misparse of the ambiguous syntax A(1) as
-// a function reference into an array reference or a structure constructor.
+// Converts, if appropriate, an original misparse of ambiguous syntax like
+// A(1) as a function reference into an array reference or a structure
+// constructor.
 template<typename... A>
 void FixMisparsedFunctionReference(const std::variant<A...> &constU) {
   // The parse tree is updated in situ when resolving an ambiguous parse.
@@ -1768,19 +1770,25 @@ void FixMisparsedFunctionReference(const std::variant<A...> &constU) {
         return;
       }
       Symbol &symbol{name->symbol->GetUltimate()};
-      if constexpr (common::HasMember<common::Indirection<parser::Designator>,
-                        uType>) {
-        if (symbol.has<semantics::ObjectEntityDetails>()) {
+      if (symbol.has<semantics::ObjectEntityDetails>()) {
+        if constexpr (common::HasMember<common::Indirection<parser::Designator>,
+                          uType>) {
           u = common::Indirection{funcRef.ConvertToArrayElementRef()};
-          return;
           // N.B. Expression semantics will reinterpret an array element
           // reference as a single-character substring elsewhere if necessary.
+        } else {
+          common::die("can't fix misparsed function as array reference");
         }
-      }
-      if constexpr (common::HasMember<StructureConstructor, uType>) {
-        if (symbol.has<semantics::DerivedTypeDetails>()) {
-          u = funcRef.ConvertToStructureConstructor();
-          return;
+      } else if (symbol.has<semantics::DerivedTypeDetails>()) {
+        if constexpr (common::HasMember<parser::StructureConstructor, uType>) {
+          CHECK(symbol.scope() != nullptr);
+          const semantics::DeclTypeSpec *type{
+              symbol.scope()->FindInstantiatedDerivedType(
+                  semantics::DerivedTypeSpec{symbol})};
+          CHECK(type != nullptr);
+          u = funcRef.ConvertToStructureConstructor(type->derivedTypeSpec());
+        } else {
+          common::die("can't fix misparsed function as structure constructor");
         }
       }
     }

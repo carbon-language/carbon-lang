@@ -75,6 +75,7 @@ set(ERROR_TESTS
   structconst01.f90
   structconst02.f90
   structconst03.f90
+  structconst04.f90
   assign01.f90
 )
 

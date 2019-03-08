@@ -14,8 +14,7 @@
 
 ! Error tests for structure constructors: C1594 violations
 ! from assigning globally-visible data to POINTER components.
-! test/semantics/structconst04.f90 is this same test without type
-! parameters.
+! This test is structconst03.f90 with the type parameters removed.
 
 module usefrom
   real :: usedfrom1
@@ -35,25 +34,21 @@ module module1
   type, extends(has_pointer2) :: has_pointer3
     type(has_pointer3), allocatable :: link3
   end type has_pointer3
-  type :: t1(k)
-    integer, kind :: k
+  type :: t1
     real, pointer :: pt1
-    type(t1(k)), allocatable :: link
+    type(t1), allocatable :: link
   end type t1
-  type :: t2(k)
-    integer, kind :: k
+  type :: t2
     type(has_pointer1) :: hp1
-    type(t2(k)), allocatable :: link
+    type(t2), allocatable :: link
   end type t2
-  type :: t3(k)
-    integer, kind :: k
+  type :: t3
     type(has_pointer2) :: hp2
-    type(t3(k)), allocatable :: link
+    type(t3), allocatable :: link
   end type t3
-  type :: t4(k)
-    integer, kind :: k
+  type :: t4
     type(has_pointer3) :: hp3
-    type(t4(k)), allocatable :: link
+    type(t4), allocatable :: link
   end type t4
   real :: modulevar1
   type(has_pointer1) :: modulevar2
@@ -64,10 +59,10 @@ module module1
 
   pure real function pf1(dummy1, dummy2, dummy3, dummy4)
     real :: local1
-    type(t1(0)) :: x1
-    type(t2(0)) :: x2
-    type(t3(0)) :: x3
-    type(t4(0)) :: x4
+    type(t1) :: x1
+    type(t2) :: x2
+    type(t3) :: x3
+    type(t4) :: x4
     real, intent(in) :: dummy1
     real, intent(inout) :: dummy2
     real, pointer :: dummy3
@@ -75,74 +70,74 @@ module module1
     real :: commonvar1
     common /cblock/ commonvar1
     pf1 = 0.
-    x1 = t1(0)(local1)
+    x1 = t1(local1)
     !ERROR: Externally visible object 'usedfrom1' must not be associated with pointer component 'pt1' in a PURE function
-    x1 = t1(0)(usedfrom1)
+    x1 = t1(usedfrom1)
     !ERROR: Externally visible object 'modulevar1' must not be associated with pointer component 'pt1' in a PURE function
-    x1 = t1(0)(modulevar1)
+    x1 = t1(modulevar1)
     !ERROR: Externally visible object 'cblock' must not be associated with pointer component 'pt1' in a PURE function
-    x1 = t1(0)(commonvar1)
+    x1 = t1(commonvar1)
     !ERROR: Externally visible object 'dummy1' must not be associated with pointer component 'pt1' in a PURE function
-    x1 = t1(0)(dummy1)
-    x1 = t1(0)(dummy2)
+    x1 = t1(dummy1)
+    x1 = t1(dummy2)
     !ERROR: Externally visible object 'dummy3' must not be associated with pointer component 'pt1' in a PURE function
-    x1 = t1(0)(dummy3)
+    x1 = t1(dummy3)
 ! TODO when semantics handles coindexing:
 ! TODO !ERROR: Externally visible object must not be associated with a pointer in a PURE function
-! TODO x1 = t1(0)(dummy4[0])
-    x1 = t1(0)(dummy4)
+! TODO x1 = t1(dummy4[0])
+    x1 = t1(dummy4)
     !ERROR: Externally visible object 'modulevar2' must not be associated with pointer component 'ptop' in a PURE function
-    x2 = t2(0)(modulevar2)
+    x2 = t2(modulevar2)
     !ERROR: Externally visible object 'modulevar3' must not be associated with pointer component 'ptop' in a PURE function
-    x3 = t3(0)(modulevar3)
+    x3 = t3(modulevar3)
     !ERROR: Externally visible object 'modulevar4' must not be associated with pointer component 'ptop' in a PURE function
-    x4 = t4(0)(modulevar4)
+    x4 = t4(modulevar4)
    contains
     subroutine subr(dummy1a, dummy2a, dummy3a, dummy4a)
       real :: local1a
-      type(t1(0)) :: x1a
-      type(t2(0)) :: x2a
-      type(t3(0)) :: x3a
-      type(t4(0)) :: x4a
+      type(t1) :: x1a
+      type(t2) :: x2a
+      type(t3) :: x3a
+      type(t4) :: x4a
       real, intent(in) :: dummy1a
       real, intent(inout) :: dummy2a
       real, pointer :: dummy3a
       real, intent(inout) :: dummy4a[*]
-      x1a = t1(0)(local1a)
+      x1a = t1(local1a)
       !ERROR: Externally visible object 'usedfrom1' must not be associated with pointer component 'pt1' in a PURE function
-      x1a = t1(0)(usedfrom1)
+      x1a = t1(usedfrom1)
       !ERROR: Externally visible object 'modulevar1' must not be associated with pointer component 'pt1' in a PURE function
-      x1a = t1(0)(modulevar1)
+      x1a = t1(modulevar1)
       !ERROR: Externally visible object 'cblock' must not be associated with pointer component 'pt1' in a PURE function
-      x1a = t1(0)(commonvar1)
+      x1a = t1(commonvar1)
       !ERROR: Externally visible object 'dummy1' must not be associated with pointer component 'pt1' in a PURE function
-      x1a = t1(0)(dummy1)
+      x1a = t1(dummy1)
       !ERROR: Externally visible object 'dummy1a' must not be associated with pointer component 'pt1' in a PURE function
-      x1a = t1(0)(dummy1a)
-      x1a = t1(0)(dummy2a)
+      x1a = t1(dummy1a)
+      x1a = t1(dummy2a)
       !ERROR: Externally visible object 'dummy3' must not be associated with pointer component 'pt1' in a PURE function
-      x1a = t1(0)(dummy3)
+      x1a = t1(dummy3)
       !ERROR: Externally visible object 'dummy3a' must not be associated with pointer component 'pt1' in a PURE function
-      x1a = t1(0)(dummy3a)
+      x1a = t1(dummy3a)
 ! TODO when semantics handles coindexing:
 ! TODO !ERROR: Externally visible object must not be associated with a pointer in a PURE function
-! TODO x1a = t1(0)(dummy4a[0])
-      x1a = t1(0)(dummy4a)
+! TODO x1a = t1(dummy4a[0])
+      x1a = t1(dummy4a)
       !ERROR: Externally visible object 'modulevar2' must not be associated with pointer component 'ptop' in a PURE function
-      x2a = t2(0)(modulevar2)
+      x2a = t2(modulevar2)
       !ERROR: Externally visible object 'modulevar3' must not be associated with pointer component 'ptop' in a PURE function
-      x3a = t3(0)(modulevar3)
+      x3a = t3(modulevar3)
       !ERROR: Externally visible object 'modulevar4' must not be associated with pointer component 'ptop' in a PURE function
-      x4a = t4(0)(modulevar4)
+      x4a = t4(modulevar4)
     end subroutine subr
   end function pf1
 
   impure real function ipf1(dummy1, dummy2, dummy3, dummy4)
     real :: local1
-    type(t1(0)) :: x1
-    type(t2(0)) :: x2
-    type(t3(0)) :: x3
-    type(t4(0)) :: x4
+    type(t1) :: x1
+    type(t2) :: x2
+    type(t3) :: x3
+    type(t4) :: x4
     real, intent(in) :: dummy1
     real, intent(inout) :: dummy2
     real, pointer :: dummy3
@@ -150,18 +145,18 @@ module module1
     real :: commonvar1
     common /cblock/ commonvar1
     ipf1 = 0.
-    x1 = t1(0)(local1)
-    x1 = t1(0)(usedfrom1)
-    x1 = t1(0)(modulevar1)
-    x1 = t1(0)(commonvar1)
-    x1 = t1(0)(dummy1)
-    x1 = t1(0)(dummy2)
-    x1 = t1(0)(dummy3)
+    x1 = t1(local1)
+    x1 = t1(usedfrom1)
+    x1 = t1(modulevar1)
+    x1 = t1(commonvar1)
+    x1 = t1(dummy1)
+    x1 = t1(dummy2)
+    x1 = t1(dummy3)
 ! TODO when semantics handles coindexing:
-! TODO x1 = t1(0)(dummy4[0])
-    x1 = t1(0)(dummy4)
-    x2 = t2(0)(modulevar2)
-    x3 = t3(0)(modulevar3)
-    x4 = t4(0)(modulevar4)
+! TODO x1 = t1(dummy4[0])
+    x1 = t1(dummy4)
+    x2 = t2(modulevar2)
+    x3 = t3(modulevar3)
+    x4 = t4(modulevar4)
   end function ipf1
 end module module1
