@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=amdgcn-amd-amdhsa -mcpu=gfx900 -verify-machineinstrs < %s | FileCheck -check-prefix=GCN %s
+; RUN: llc -mtriple=amdgcn-amd-amdhsa -mcpu=gfx900 -verify-machineinstrs < %s | FileCheck -check-prefixes=GCN,GFX900 %s
 
 ; GCN-LABEL: {{^}}chain_hi_to_lo_private:
 ; GCN: buffer_load_ushort [[DST:v[0-9]+]], off, [[RSRC:s\[[0-9]+:[0-9]+\]]], [[SOFF:s[0-9]+]] offset:2
@@ -174,4 +174,129 @@ entry:
   store <2 x i16> %loc.2., <2 x i16> addrspace(1)* %arrayidx6, align 4
   %loc.0.sroa_cast2 = bitcast [3 x i16] addrspace(5)* %loc to i8 addrspace(5)*
   ret void
+}
+
+; There is another instruction between the misordered instruction and
+; the value dependent load, so a simple operand check is insufficient.
+; GCN-LABEL: {{^}}chain_hi_to_lo_group_other_dep:
+; GFX900: ds_read_u16_d16_hi v1, v0
+; GFX900-NEXT: s_waitcnt lgkmcnt(0)
+; GFX900-NEXT: v_pk_add_u16 v1, v1, 12 op_sel_hi:[1,0]
+; GFX900-NEXT: ds_read_u16_d16 v1, v0 offset:2
+; GFX900-NEXT: s_waitcnt lgkmcnt(0)
+; GFX900-NEXT: v_mov_b32_e32 v0, v1
+; GFX900-NEXT: s_setpc_b64
+define <2 x i16> @chain_hi_to_lo_group_other_dep(i16 addrspace(3)* %ptr) {
+bb:
+  %gep_lo = getelementptr inbounds i16, i16 addrspace(3)* %ptr, i64 1
+  %load_lo = load i16, i16 addrspace(3)* %gep_lo
+  %gep_hi = getelementptr inbounds i16, i16 addrspace(3)* %ptr, i64 0
+  %load_hi = load i16, i16 addrspace(3)* %gep_hi
+  %to.hi = insertelement <2 x i16> undef, i16 %load_hi, i32 1
+  %op.hi = add <2 x i16> %to.hi, <i16 12, i16 12>
+  %result = insertelement <2 x i16> %op.hi, i16 %load_lo, i32 0
+  ret <2 x i16> %result
+}
+
+; The volatile operations aren't put on the same chain
+; GCN-LABEL: {{^}}chain_hi_to_lo_group_other_dep_multi_chain:
+; GFX900: ds_read_u16 v1, v0 offset:2
+; GFX900-NEXT: ds_read_u16_d16_hi v0, v0
+; GFX900-NEXT: v_mov_b32_e32 [[MASK:v[0-9]+]], 0xffff
+; GFX900-NEXT: s_waitcnt lgkmcnt(0)
+; GFX900-NEXT: v_pk_add_u16 v0, v0, 12 op_sel_hi:[1,0]
+; GFX900-NEXT: v_bfi_b32 v0, [[MASK]], v1, v0
+; GFX900-NEXT: s_setpc_b64
+define <2 x i16> @chain_hi_to_lo_group_other_dep_multi_chain(i16 addrspace(3)* %ptr) {
+bb:
+  %gep_lo = getelementptr inbounds i16, i16 addrspace(3)* %ptr, i64 1
+  %load_lo = load volatile i16, i16 addrspace(3)* %gep_lo
+  %gep_hi = getelementptr inbounds i16, i16 addrspace(3)* %ptr, i64 0
+  %load_hi = load volatile i16, i16 addrspace(3)* %gep_hi
+  %to.hi = insertelement <2 x i16> undef, i16 %load_hi, i32 1
+  %op.hi = add <2 x i16> %to.hi, <i16 12, i16 12>
+  %result = insertelement <2 x i16> %op.hi, i16 %load_lo, i32 0
+  ret <2 x i16> %result
+}
+
+; GCN-LABEL: {{^}}chain_hi_to_lo_private_other_dep:
+; GFX900: buffer_load_short_d16_hi v1, v0, s[0:3], s4 offen
+; GFX900-NEXT: s_waitcnt vmcnt(0)
+; GFX900-NEXT: v_pk_add_u16 v1, v1, 12 op_sel_hi:[1,0]
+; GFX900-NEXT: buffer_load_short_d16 v1, v0, s[0:3], s4 offen offset:2
+; GFX900-NEXT: s_waitcnt vmcnt(0)
+; GFX900-NEXT: v_mov_b32_e32 v0, v1
+; GFX900-NEXT: s_setpc_b64
+define <2 x i16> @chain_hi_to_lo_private_other_dep(i16 addrspace(5)* %ptr) {
+bb:
+  %gep_lo = getelementptr inbounds i16, i16 addrspace(5)* %ptr, i64 1
+  %load_lo = load i16, i16 addrspace(5)* %gep_lo
+  %gep_hi = getelementptr inbounds i16, i16 addrspace(5)* %ptr, i64 0
+  %load_hi = load i16, i16 addrspace(5)* %gep_hi
+  %to.hi = insertelement <2 x i16> undef, i16 %load_hi, i32 1
+  %op.hi = add <2 x i16> %to.hi, <i16 12, i16 12>
+  %result = insertelement <2 x i16> %op.hi, i16 %load_lo, i32 0
+  ret <2 x i16> %result
+}
+
+; GCN-LABEL: {{^}}chain_hi_to_lo_global_other_dep:
+; GFX900: global_load_ushort v2, v[0:1], off offset:2
+; GFX900-NEXT: global_load_short_d16_hi v0, v[0:1], off
+; GFX900-NEXT: v_mov_b32_e32 [[MASK:v[0-9]+]], 0xffff
+; GFX900-NEXT: s_waitcnt vmcnt(0)
+; GFX900-NEXT: v_pk_add_u16 v0, v0, 12 op_sel_hi:[1,0]
+; GFX900-NEXT: v_bfi_b32 v0, [[MASK]], v2, v0
+; GFX900-NEXT: s_setpc_b64
+define <2 x i16> @chain_hi_to_lo_global_other_dep(i16 addrspace(1)* %ptr) {
+bb:
+  %gep_lo = getelementptr inbounds i16, i16 addrspace(1)* %ptr, i64 1
+  %load_lo = load volatile i16, i16 addrspace(1)* %gep_lo
+  %gep_hi = getelementptr inbounds i16, i16 addrspace(1)* %ptr, i64 0
+  %load_hi = load volatile i16, i16 addrspace(1)* %gep_hi
+  %to.hi = insertelement <2 x i16> undef, i16 %load_hi, i32 1
+  %op.hi = add <2 x i16> %to.hi, <i16 12, i16 12>
+  %result = insertelement <2 x i16> %op.hi, i16 %load_lo, i32 0
+  ret <2 x i16> %result
+}
+
+; GCN-LABEL: {{^}}chain_hi_to_lo_flat_other_dep:
+; GFX900: flat_load_ushort v2, v[0:1] offset:2
+; GFX900-NEXT: flat_load_short_d16_hi v0, v[0:1]
+; GFX900-NEXT: v_mov_b32_e32 [[MASK:v[0-9]+]], 0xffff
+; GFX900-NEXT: s_waitcnt vmcnt(0) lgkmcnt(0)
+; GFX900-NEXT: v_pk_add_u16 v0, v0, 12 op_sel_hi:[1,0]
+; GFX900-NEXT: v_bfi_b32 v0, v1, v2, v0
+; GFX900-NEXT: s_setpc_b64
+define <2 x i16> @chain_hi_to_lo_flat_other_dep(i16 addrspace(0)* %ptr) {
+bb:
+  %gep_lo = getelementptr inbounds i16, i16 addrspace(0)* %ptr, i64 1
+  %load_lo = load volatile i16, i16 addrspace(0)* %gep_lo
+  %gep_hi = getelementptr inbounds i16, i16 addrspace(0)* %ptr, i64 0
+  %load_hi = load volatile i16, i16 addrspace(0)* %gep_hi
+  %to.hi = insertelement <2 x i16> undef, i16 %load_hi, i32 1
+  %op.hi = add <2 x i16> %to.hi, <i16 12, i16 12>
+  %result = insertelement <2 x i16> %op.hi, i16 %load_lo, i32 0
+  ret <2 x i16> %result
+}
+
+; GCN-LABEL: {{^}}chain_hi_to_lo_group_may_alias_store:
+; GFX900: v_mov_b32_e32 [[K:v[0-9]+]], 0x7b
+; GFX900-NEXT: ds_read_u16 v3, v0
+; GFX900-NEXT: ds_write_b16 v1, [[K]]
+; GFX900-NEXT: ds_read_u16 v0, v0 offset:2
+; GFX900-NEXT: s_waitcnt lgkmcnt(0)
+; GFX900-NEXT: v_and_b32_e32 v0, 0xffff, v0
+; GFX900-NEXT: v_lshl_or_b32 v0, v3, 16, v0
+; GFX900-NEXT: s_setpc_b64
+define <2 x i16> @chain_hi_to_lo_group_may_alias_store(i16 addrspace(3)* %ptr, i16 addrspace(3)* %may.alias) {
+bb:
+  %gep_lo = getelementptr inbounds i16, i16 addrspace(3)* %ptr, i64 1
+  %gep_hi = getelementptr inbounds i16, i16 addrspace(3)* %ptr, i64 0
+  %load_hi = load i16, i16 addrspace(3)* %gep_hi
+  store i16 123, i16 addrspace(3)* %may.alias
+  %load_lo = load i16, i16 addrspace(3)* %gep_lo
+
+  %to.hi = insertelement <2 x i16> undef, i16 %load_hi, i32 1
+  %result = insertelement <2 x i16> %to.hi, i16 %load_lo, i32 0
+  ret <2 x i16> %result
 }

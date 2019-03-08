@@ -880,6 +880,21 @@ entry:
   ret <2 x i16> %build1
 }
 
+; FIXME: Remove and
+; GCN-LABEL: {{^}}load_local_v2i16_broadcast:
+; GCN: ds_read_u16 [[LOAD:v[0-9]+]]
+; GCN-NOT: ds_read
+; GFX9: v_and_b32_e32 [[AND:v[0-9]+]], 0xffff, [[LOAD]]
+; GFX9: v_lshl_or_b32 v0, [[LOAD]], 16, [[AND]]
+define <2 x i16> @load_local_v2i16_broadcast(i16 addrspace(3)* %in) #0 {
+entry:
+  %gep = getelementptr inbounds i16, i16 addrspace(3)* %in, i32 1
+  %load0 = load i16, i16 addrspace(3)* %in
+  %build0 = insertelement <2 x i16> undef, i16 %load0, i32 0
+  %build1 = insertelement <2 x i16> %build0, i16 %load0, i32 1
+  ret <2 x i16> %build1
+}
+
 ; GCN-LABEL: {{^}}load_local_lo_hi_v2i16_side_effect:
 ; GFX900: ds_read_u16 [[LOAD0:v[0-9]+]], v0
 ; GFX900: ds_write_b16
