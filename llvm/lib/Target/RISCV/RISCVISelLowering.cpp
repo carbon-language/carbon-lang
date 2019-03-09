@@ -42,6 +42,12 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
                                          const RISCVSubtarget &STI)
     : TargetLowering(TM), Subtarget(STI) {
 
+  RISCVABI::ABI ABI = Subtarget.getTargetABI();
+  assert(ABI != RISCVABI::ABI_Unknown && "Improperly initialised target ABI");
+
+  if (ABI != RISCVABI::ABI_ILP32 && ABI != RISCVABI::ABI_LP64)
+    report_fatal_error("Don't know how to lower this ABI");
+
   MVT XLenVT = Subtarget.getXLenVT();
 
   // Set up the register classes.
