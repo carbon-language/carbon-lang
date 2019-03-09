@@ -1810,6 +1810,7 @@ struct ArrayElement {
   BOILERPLATE(ArrayElement);
   ArrayElement(DataRef &&dr, std::list<SectionSubscript> &&ss)
     : base{std::move(dr)}, subscripts(std::move(ss)) {}
+  Substring ConvertToSubstring();
   DataRef base;
   std::list<SectionSubscript> subscripts;
 };

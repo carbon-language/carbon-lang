@@ -136,6 +136,17 @@ StructureConstructor FunctionReference::ConvertToStructureConstructor(
   return StructureConstructor{std::move(spec), std::move(components)};
 }
 
+Substring ArrayElement::ConvertToSubstring() {
+  auto iter{subscripts.begin()};
+  CHECK(iter != subscripts.end());
+  auto &triplet{std::get<SubscriptTriplet>(iter->u)};
+  SubstringRange range{
+      std::move(std::get<0>(triplet.t)), std::move(std::get<1>(triplet.t))};
+  CHECK(!std::get<2>(triplet.t).has_value());
+  CHECK(++iter == subscripts.end());
+  return Substring{std::move(base), std::move(range)};
+}
+
 // R1544 stmt-function-stmt
 // Convert this stmt-function-stmt to an array element assignment statement.
 Statement<ActionStmt> StmtFunctionStmt::ConvertToAssignment() {
