@@ -27,18 +27,13 @@ define i32 @test1(i32 %a, i1 %x) nounwind {
 
 declare %umul.ty @llvm.umul.with.overflow.i32(i32, i32) nounwind readnone
 
-define i32 @test2(i32 %argc, i8** %argv) ssp {
+define i32 @test2(i32* %m_degree) ssp {
 ; CHECK-LABEL: test2:
 ; CHECK:       @ %bb.0:
 ; CHECK-NEXT:    push {r4, lr}
-; CHECK-NEXT:    sub sp, #16
-; CHECK-NEXT:    str r0, [sp, #8]
-; CHECK-NEXT:    movs r4, #0
-; CHECK-NEXT:    str r4, [sp, #12]
-; CHECK-NEXT:    str r1, [sp, #4]
-; CHECK-NEXT:    movs r0, #10
-; CHECK-NEXT:    str r0, [sp]
+; CHECK-NEXT:    ldr r0, [r0]
 ; CHECK-NEXT:    movs r2, #8
+; CHECK-NEXT:    movs r4, #0
 ; CHECK-NEXT:    mov r1, r4
 ; CHECK-NEXT:    mov r3, r4
 ; CHECK-NEXT:    bl __muldi3
@@ -54,23 +49,13 @@ define i32 @test2(i32 %argc, i8** %argv) ssp {
 ; CHECK-NEXT:  .LBB1_4:
 ; CHECK-NEXT:    bl _Znam
 ; CHECK-NEXT:    mov r0, r4
-; CHECK-NEXT:    add sp, #16
 ; CHECK-NEXT:    pop {r4, pc}
-%1 = alloca i32, align 4
-%2 = alloca i32, align 4
-%3 = alloca i8**, align 4
-%m_degree = alloca i32, align 4
-store i32 0, i32* %1
-store i32 %argc, i32* %2, align 4
-store i8** %argv, i8*** %3, align 4
-store i32 10, i32* %m_degree, align 4
-%4 = load i32, i32* %m_degree, align 4
-%5 = call %umul.ty @llvm.umul.with.overflow.i32(i32 %4, i32 8)
-%6 = extractvalue %umul.ty %5, 1
-%7 = extractvalue %umul.ty %5, 0
-%8 = select i1 %6, i32 -1, i32 %7
-%9 = call noalias i8* @_Znam(i32 %8)
-%10 = bitcast i8* %9 to double*
+%val = load i32, i32* %m_degree, align 4
+%res = call %umul.ty @llvm.umul.with.overflow.i32(i32 %val, i32 8)
+%ov = extractvalue %umul.ty %res, 1
+%mul = extractvalue %umul.ty %res, 0
+%sel = select i1 %ov, i32 -1, i32 %mul
+%ret = call noalias i8* @_Znam(i32 %sel)
 ret i32 0
 }
 
