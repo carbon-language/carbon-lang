@@ -322,16 +322,13 @@ static void FixMisparsedSubstring(const parser::Designator &d) {
                     },
                     arrElement.base.u)}) {
               const Symbol &ultimate{symbol->GetUltimate()};
-              if (const auto *details{
-                      ultimate.detailsIf<semantics::ObjectEntityDetails>()}) {
-                if (const semantics::DeclTypeSpec * type{details->type()}) {
-                  if (!details->IsArray() &&
-                      type->category() == semantics::DeclTypeSpec::Character) {
-                    // The ambiguous S(j:k) was parsed as an array section
-                    // reference, but it's now clear that it's a substring.
-                    // Fix the parse tree in situ.
-                    mutate.u = arrElement.ConvertToSubstring();
-                  }
+              if (const semantics::DeclTypeSpec *type{ultimate.GetType()}) {
+                if (!ultimate.IsObjectArray() &&
+                    type->category() == semantics::DeclTypeSpec::Character) {
+                  // The ambiguous S(j:k) was parsed as an array section
+                  // reference, but it's now clear that it's a substring.
+                  // Fix the parse tree in situ.
+                  mutate.u = arrElement.ConvertToSubstring();
                 }
               }
             }
