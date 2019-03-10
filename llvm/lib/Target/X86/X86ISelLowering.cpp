@@ -34341,9 +34341,9 @@ static SDValue scalarizeExtEltFP(SDNode *ExtElt, SelectionDAG &DAG) {
   if (VT != MVT::f32 && VT != MVT::f64)
     return SDValue();
 
-  // TODO: This switch could include FNEG, the x86-specific FP logic ops
-  // (FAND, FANDN, FOR, FXOR), FRSQRT/FRCP and other FP math ops. But that may
-  // require enhancements to avoid missed load folding and fma+fneg combining.
+  // TODO: This switch could include FNEG and the x86-specific FP logic ops
+  // (FAND, FANDN, FOR, FXOR). But that may require enhancements to avoid 
+  // missed load folding and fma+fneg combining.
   switch (Vec.getOpcode()) {
   case ISD::FMA: // Begin 3 operands
   case ISD::FMAD:
@@ -34359,6 +34359,8 @@ static SDValue scalarizeExtEltFP(SDNode *ExtElt, SelectionDAG &DAG) {
   case ISD::FMAXNUM_IEEE:
   case ISD::FMAXIMUM:
   case ISD::FMINIMUM:
+  case X86ISD::FMAX:
+  case X86ISD::FMIN:
   case ISD::FABS: // Begin 1 operand
   case ISD::FSQRT:
   case ISD::FRINT:
@@ -34366,7 +34368,9 @@ static SDValue scalarizeExtEltFP(SDNode *ExtElt, SelectionDAG &DAG) {
   case ISD::FTRUNC:
   case ISD::FNEARBYINT:
   case ISD::FROUND:
-  case ISD::FFLOOR: {
+  case ISD::FFLOOR:
+  case X86ISD::FRCP:
+  case X86ISD::FRSQRT: {
     // extract (fp X, Y, ...), 0 --> fp (extract X, 0), (extract Y, 0), ...
     SDLoc DL(ExtElt);
     SmallVector<SDValue, 4> ExtOps;
