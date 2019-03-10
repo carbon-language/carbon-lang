@@ -22192,7 +22192,6 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
 
     case CMP_MASK_CC: {
       MVT MaskVT = Op.getSimpleValueType();
-      SDValue Cmp;
       SDValue CC = Op.getOperand(3);
       CC = DAG.getNode(ISD::TRUNCATE, dl, MVT::i8, CC);
       // We specify 2 possible opcodes for intrinsics with rounding modes.
