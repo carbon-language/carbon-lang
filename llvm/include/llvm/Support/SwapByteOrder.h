@@ -115,6 +115,13 @@ inline double getSwappedBytes(double C) {
   return out.d;
 }
 
+template <typename T>
+inline typename std::enable_if<std::is_enum<T>::value, T>::type
+getSwappedBytes(T C) {
+  return static_cast<T>(
+      getSwappedBytes(static_cast<typename std::underlying_type<T>::type>(C)));
+}
+
 template<typename T>
 inline void swapByteOrder(T &Value) {
   Value = getSwappedBytes(Value);
