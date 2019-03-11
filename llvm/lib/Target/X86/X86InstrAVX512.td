@@ -2055,8 +2055,7 @@ multiclass avx512_cmp_scalar<X86VectorVTInfo _, SDNode OpNode, SDNode OpNodeRnd,
                      "{sae}, $src2, $src1", "$src1, $src2, {sae}",
                      (OpNodeRnd (_.VT _.RC:$src1),
                                 (_.VT _.RC:$src2),
-                                imm:$cc,
-                                (i32 FROUND_NO_EXC))>,
+                                imm:$cc)>,
                      EVEX_4V, EVEX_B, Sched<[sched]>;
   // Accept explicit immediate argument form instead of comparison code.
   let isAsmParserOnly = 1, hasSideEffects = 0 in {
@@ -2108,10 +2107,10 @@ multiclass avx512_cmp_scalar<X86VectorVTInfo _, SDNode OpNode, SDNode OpNodeRnd,
 
 let Predicates = [HasAVX512] in {
   let ExeDomain = SSEPackedSingle in
-  defm VCMPSSZ : avx512_cmp_scalar<f32x_info, X86cmpms, X86cmpmsRnd,
+  defm VCMPSSZ : avx512_cmp_scalar<f32x_info, X86cmpms, X86cmpmsSAE,
                                    SchedWriteFCmp.Scl>, AVX512XSIi8Base;
   let ExeDomain = SSEPackedDouble in
-  defm VCMPSDZ : avx512_cmp_scalar<f64x_info, X86cmpms, X86cmpmsRnd,
+  defm VCMPSDZ : avx512_cmp_scalar<f64x_info, X86cmpms, X86cmpmsSAE,
                                    SchedWriteFCmp.Scl>, AVX512XDIi8Base, VEX_W;
 }
 
@@ -2597,10 +2596,9 @@ multiclass avx512_vcmp_sae<X86FoldableSchedWrite sched, X86VectorVTInfo _> {
                      (outs _.KRC:$dst),(ins _.RC:$src1, _.RC:$src2, AVXCC:$cc),
                      "vcmp${cc}"#_.Suffix,
                      "{sae}, $src2, $src1", "$src1, $src2, {sae}",
-                     (X86cmpmRnd (_.VT _.RC:$src1),
+                     (X86cmpmSAE (_.VT _.RC:$src1),
                                     (_.VT _.RC:$src2),
-                                    imm:$cc,
-                                (i32 FROUND_NO_EXC))>,
+                                    imm:$cc)>,
                      EVEX_B, Sched<[sched]>;
 
   let isAsmParserOnly = 1, hasSideEffects = 0 in {

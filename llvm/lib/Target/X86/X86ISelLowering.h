@@ -109,8 +109,8 @@ namespace llvm {
       FSETCC,
 
       /// X86 FP SETCC, similar to above, but with output as an i1 mask and
-      /// with optional rounding mode.
-      FSETCCM, FSETCCM_RND,
+      /// and a version with SAE.
+      FSETCCM, FSETCCM_SAE,
 
       /// X86 conditional moves. Operand 0 and operand 1 are the two values
       /// to select from. Operand 2 is the condition code, and operand 3 is the
@@ -341,8 +341,8 @@ namespace llvm {
       /// Vector comparison generating mask bits for fp and
       /// integer signed and unsigned data types.
       CMPM,
-      // Vector comparison with rounding mode for FP values
-      CMPM_RND,
+      // Vector comparison with SAE for FP values
+      CMPM_SAE,
 
       // Arithmetic operations with FLAGS results.
       ADD, SUB, ADC, SBB, SMUL, UMUL,

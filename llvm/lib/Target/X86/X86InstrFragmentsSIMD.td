@@ -163,25 +163,14 @@ def X86CmpMaskCC :
       SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCVecEltisVT<0, i1>,
                        SDTCisVec<1>, SDTCisSameAs<2, 1>,
                        SDTCisSameNumEltsAs<0, 1>, SDTCisVT<3, i8>]>;
-def X86CmpMaskCCRound :
-      SDTypeProfile<1, 4, [SDTCisVec<0>,SDTCVecEltisVT<0, i1>,
-                       SDTCisVec<1>, SDTCisFP<1>, SDTCisSameAs<2, 1>,
-                       SDTCisSameNumEltsAs<0, 1>, SDTCisVT<3, i8>,
-                       SDTCisVT<4, i32>]>;
 def X86CmpMaskCCScalar :
       SDTypeProfile<1, 3, [SDTCisInt<0>, SDTCisFP<1>, SDTCisSameAs<1, 2>,
                            SDTCisVT<3, i8>]>;
 
-def X86CmpMaskCCScalarRound :
-      SDTypeProfile<1, 4, [SDTCisInt<0>, SDTCisFP<1>, SDTCisSameAs<1, 2>,
-                           SDTCisVT<3, i8>, SDTCisVT<4, i32>]>;
-
 def X86cmpm     : SDNode<"X86ISD::CMPM",     X86CmpMaskCC>;
-// Hack to make CMPM commutable in tablegen patterns for load folding.
-def X86cmpm_c   : SDNode<"X86ISD::CMPM",     X86CmpMaskCC, [SDNPCommutative]>;
-def X86cmpmRnd  : SDNode<"X86ISD::CMPM_RND", X86CmpMaskCCRound>;
+def X86cmpmSAE  : SDNode<"X86ISD::CMPM_SAE", X86CmpMaskCC>;
 def X86cmpms    : SDNode<"X86ISD::FSETCCM",   X86CmpMaskCCScalar>;
-def X86cmpmsRnd : SDNode<"X86ISD::FSETCCM_RND",   X86CmpMaskCCScalarRound>;
+def X86cmpmsSAE : SDNode<"X86ISD::FSETCCM_SAE",   X86CmpMaskCCScalar>;
 
 def X86phminpos: SDNode<"X86ISD::PHMINPOS", 
                  SDTypeProfile<1, 1, [SDTCisVT<0, v8i16>, SDTCisVT<1, v8i16>]>>;
