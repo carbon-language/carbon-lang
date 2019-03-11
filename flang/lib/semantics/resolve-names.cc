@@ -3190,10 +3190,17 @@ void DeclarationVisitor::Post(const parser::ProcDecl &x) {
     }
   }
   auto attrs{HandleSaveName(name.source, GetAttrs())};
-  if (currScope().kind() != Scope::Kind::DerivedType) {
+  DerivedTypeDetails *dtDetails{nullptr};
+  if (Symbol * symbol{currScope().symbol()}) {
+    dtDetails = symbol->detailsIf<DerivedTypeDetails>();
+  }
+  if (dtDetails == nullptr) {
     attrs.set(Attr::EXTERNAL);
   }
-  DeclareProcEntity(name, attrs, interface);
+  Symbol &symbol{DeclareProcEntity(name, attrs, interface)};
+  if (dtDetails != nullptr) {
+    dtDetails->add_component(symbol);
+  }
 }
 
 bool DeclarationVisitor::Pre(const parser::TypeBoundProcedurePart &x) {
@@ -3317,7 +3324,6 @@ void DeclarationVisitor::Post(const parser::AllocateStmt &) {
 bool DeclarationVisitor::Pre(const parser::StructureConstructor &x) {
   auto &parsedType{std::get<parser::DerivedTypeSpec>(x.t)};
   const DeclTypeSpec *type{ProcessTypeSpec(parsedType)};
-
   if (type == nullptr) {
     return false;
   }
@@ -3329,18 +3335,20 @@ bool DeclarationVisitor::Pre(const parser::StructureConstructor &x) {
 
   // N.B C7102 is implicitly enforced by having inaccessible types not
   // being found in resolution.
-
+  // More constraints are enforced in expression.cc so that they
+  // can apply to structure constructors that have been converted
+  // from misparsed function references.
   for (const auto &component :
       std::get<std::list<parser::ComponentSpec>>(x.t)) {
     // Visit the component spec expression, but not the keyword, since
     // we need to resolve its symbol in the scope of the derived type.
     Walk(std::get<parser::ComponentDataSource>(component.t));
     if (const auto &kw{std::get<std::optional<parser::Keyword>>(component.t)}) {
-      if (const Symbol * symbol{FindInTypeOrParents(*typeScope, kw->v)}) {
-        CheckAccessibleComponent(kw->v.source, *symbol);  // C7102
-      } else {  // C7101
-        Say(kw->v.source,
-            "Keyword '%s' is not a component of this derived type"_err_en_US);
+      if (Symbol * symbol{FindInTypeOrParents(*typeScope, kw->v)}) {
+        if (kw->v.symbol == nullptr) {
+          kw->v.symbol = symbol;
+        }
+        CheckAccessibleComponent(kw->v.source, *symbol);
       }
     }
   }

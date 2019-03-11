@@ -18,7 +18,7 @@
 ! parameters.
 
 module usefrom
-  real :: usedfrom1
+  real, target :: usedfrom1
 end module usefrom
 
 module module1
@@ -55,7 +55,7 @@ module module1
     type(has_pointer3) :: hp3
     type(t4(k)), allocatable :: link
   end type t4
-  real :: modulevar1
+  real, target :: modulevar1
   type(has_pointer1) :: modulevar2
   type(has_pointer2) :: modulevar3
   type(has_pointer3) :: modulevar4
@@ -63,16 +63,16 @@ module module1
  contains
 
   pure real function pf1(dummy1, dummy2, dummy3, dummy4)
-    real :: local1
+    real, target :: local1
     type(t1(0)) :: x1
     type(t2(0)) :: x2
     type(t3(0)) :: x3
     type(t4(0)) :: x4
-    real, intent(in) :: dummy1
-    real, intent(inout) :: dummy2
+    real, intent(in), target :: dummy1
+    real, intent(inout), target :: dummy2
     real, pointer :: dummy3
-    real, intent(inout) :: dummy4[*]
-    real :: commonvar1
+    real, intent(inout), target :: dummy4[*]
+    real, target :: commonvar1
     common /cblock/ commonvar1
     pf1 = 0.
     x1 = t1(0)(local1)
@@ -99,15 +99,15 @@ module module1
     x4 = t4(0)(modulevar4)
    contains
     subroutine subr(dummy1a, dummy2a, dummy3a, dummy4a)
-      real :: local1a
+      real, target :: local1a
       type(t1(0)) :: x1a
       type(t2(0)) :: x2a
       type(t3(0)) :: x3a
       type(t4(0)) :: x4a
-      real, intent(in) :: dummy1a
-      real, intent(inout) :: dummy2a
+      real, intent(in), target :: dummy1a
+      real, intent(inout), target :: dummy2a
       real, pointer :: dummy3a
-      real, intent(inout) :: dummy4a[*]
+      real, intent(inout), target :: dummy4a[*]
       x1a = t1(0)(local1a)
       !ERROR: Externally visible object 'usedfrom1' must not be associated with pointer component 'pt1' in a PURE function
       x1a = t1(0)(usedfrom1)
@@ -138,16 +138,16 @@ module module1
   end function pf1
 
   impure real function ipf1(dummy1, dummy2, dummy3, dummy4)
-    real :: local1
+    real, target :: local1
     type(t1(0)) :: x1
     type(t2(0)) :: x2
     type(t3(0)) :: x3
     type(t4(0)) :: x4
-    real, intent(in) :: dummy1
-    real, intent(inout) :: dummy2
+    real, intent(in), target :: dummy1
+    real, intent(inout), target :: dummy2
     real, pointer :: dummy3
-    real, intent(inout) :: dummy4[*]
-    real :: commonvar1
+    real, intent(inout), target :: dummy4[*]
+    real, target :: commonvar1
     common /cblock/ commonvar1
     ipf1 = 0.
     x1 = t1(0)(local1)

@@ -33,8 +33,10 @@ struct ForallConstruct;
 }
 
 namespace Fortran::evaluate {
-void CheckPointerAssignment(parser::ContextualMessages &, const Symbol &,
-    const evaluate::Expr<evaluate::SomeType> &);
+class IntrinsicProcTable;
+void CheckPointerAssignment(parser::ContextualMessages &,
+    const IntrinsicProcTable &, const Symbol &lhs,
+    const evaluate::Expr<evaluate::SomeType> &rhs);
 }
 
 namespace Fortran::semantics {

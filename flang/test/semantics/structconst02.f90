@@ -44,11 +44,11 @@ module module1
 !    call scalararg(scalar(4)(5.,6,(7._8,8._2),4_'b',.true._4))
     call scalararg(scalar(4)(ix=5.,rx=6,zx=(7._8,8._2),cx=4_'b',lx=.true.))
     call scalararg(scalar(4)(5.,6,(7._8,8._2),4_'b',.true.))
-    !ERROR: Structure constructor value is incompatible with component 'ix'
+    !ERROR: Value in structure constructor is incompatible with component 'ix'
     call scalararg(scalar(4)(ix='a'))
-    !ERROR: Structure constructor value is incompatible with component 'ix'
+    !ERROR: Value in structure constructor is incompatible with component 'ix'
     call scalararg(scalar(4)(ix=.false.))
-    !ERROR: Structure constructor value is incompatible with component 'ix'
+    !ERROR: Value in structure constructor is incompatible with component 'ix'
     call scalararg(scalar(4)(ix=[1]))
     !TODO more!
   end subroutine errors

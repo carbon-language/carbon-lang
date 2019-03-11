@@ -50,15 +50,15 @@ module module1
  !DEF: /module1/derived1 PUBLIC DerivedType
  type :: derived1
   !DEF: /module1/abstract1 ELEMENTAL, PUBLIC Subprogram REAL(4)
-  !DEF: /module1/derived1/p1 NOPASS, POINTER ProcEntity
+  !DEF: /module1/derived1/p1 NOPASS, POINTER ProcEntity REAL(4)
   !DEF: /module1/nested1 ELEMENTAL, PUBLIC Subprogram REAL(4)
   procedure(abstract1), pointer, nopass :: p1 => nested1
   !DEF: /module1/explicit1 ELEMENTAL, EXTERNAL, PUBLIC Subprogram REAL(4)
-  !DEF: /module1/derived1/p2 NOPASS, POINTER ProcEntity
+  !DEF: /module1/derived1/p2 NOPASS, POINTER ProcEntity REAL(4)
   !REF: /module1/nested1
   procedure(explicit1), pointer, nopass :: p2 => nested1
   !DEF: /module1/logical EXTERNAL, PUBLIC Subprogram INTEGER(4)
-  !DEF: /module1/derived1/p3 NOPASS, POINTER ProcEntity
+  !DEF: /module1/derived1/p3 NOPASS, POINTER ProcEntity INTEGER(4)
   !DEF: /module1/nested2 PUBLIC Subprogram INTEGER(4)
   procedure(logical), pointer, nopass :: p3 => nested2
   !DEF: /module1/derived1/p4 NOPASS, POINTER ProcEntity LOGICAL(4)
@@ -76,7 +76,7 @@ module module1
   !DEF: /module1/derived1/p7 NOPASS, POINTER ProcEntity
   procedure(sin), pointer, nopass :: p7 => cos
   !DEF: /module1/tan EXTERNAL, PUBLIC Subprogram CHARACTER(1_4,1)
-  !DEF: /module1/derived1/p8 NOPASS, POINTER ProcEntity
+  !DEF: /module1/derived1/p8 NOPASS, POINTER ProcEntity CHARACTER(1_4,1)
   !DEF: /module1/nested5 PUBLIC Subprogram CHARACTER(1_8,1)
   procedure(tan), pointer, nopass :: p8 => nested5
  end type derived1

@@ -194,9 +194,7 @@ struct Procedure {
   DummyArguments dummyArguments;
   Attrs attrs;
 
-// TODO pmk: restore private accessibility after merging
-// changes to lib/semantics
-// private:
+private:
   Procedure() {}
 };
 }

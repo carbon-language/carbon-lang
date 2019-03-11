@@ -42,7 +42,7 @@ module module1
     call type1arg(type1(0)())
     call type1arg(type1(0)(1))
     call type1arg(type1(0)(n=1))
-    !ERROR: Keyword 'bad' is not a component of this derived type
+    !ERROR: Keyword 'bad=' does not name a component of derived type 'type1'
     call type1arg(type1(0)(bad=1))
     call type2arg(type2(0,0)(n=1,m=2))
     call type2arg(type2(0,0)(m=2))

@@ -159,11 +159,10 @@ public:
   const semantics::DerivedTypeSpec *derived{nullptr};  // TYPE(T), CLASS(T)
   bool isPolymorphic{false};  // CLASS(T), CLASS(*)
 
-// TODO pmk: restore private accessibility once changes are
-// merged into lib/semantics
-// private:
+private:
   constexpr DynamicType() {}
 };
+
 
 template<TypeCategory CATEGORY, int KIND = 0> struct TypeBase {
   static constexpr TypeCategory category{CATEGORY};

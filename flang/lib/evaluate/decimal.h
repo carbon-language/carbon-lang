@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
 
 // This is a helper class for use in floating-point conversions
 // to and from decimal representations.  It holds a multiple-precision
-// integer value using digits in radix that is a large power of ten.
+// integer value using digits of a radix that is a large power of ten.
 // (A radix of 10**18 (one quintillion) is the largest that could be used
 // because this radix is the largest power of ten such that 10 times that
 // value will fit in an unsigned 64-bit binary integer; a radix of 10**8,

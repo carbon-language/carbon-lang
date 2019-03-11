@@ -611,18 +611,22 @@ Symbol &Symbol::Instantiate(
   return symbol;
 }
 
-const Symbol *Symbol::GetParentComponent(const Scope *scope) const {
-  if (scope == nullptr) {
-    CHECK(scope_ != nullptr);
-    scope = scope_;
-  }
-  return get<DerivedTypeDetails>().GetParentComponent(*scope);
-}
-
 const DerivedTypeSpec *Symbol::GetParentTypeSpec(const Scope *scope) const {
   if (const Symbol * parentComponent{GetParentComponent(scope)}) {
     const auto &object{parentComponent->get<ObjectEntityDetails>()};
     return &object.type()->derivedTypeSpec();
+  } else {
+    return nullptr;
+  }
+}
+
+const Symbol *Symbol::GetParentComponent(const Scope *scope) const {
+  if (const auto *dtDetails{detailsIf<DerivedTypeDetails>()}) {
+    if (scope == nullptr) {
+      CHECK(scope_ != nullptr);
+      scope = scope_;
+    }
+    return dtDetails->GetParentComponent(*scope);
   } else {
     return nullptr;
   }
@@ -670,7 +674,7 @@ SymbolList DerivedTypeDetails::OrderComponents(const Scope &scope) const {
     if (iter != scope.cend()) {
       const Symbol &symbol{*iter->second};
       if (symbol.test(Symbol::Flag::ParentComp)) {
-        CHECK(result.empty());
+        CHECK(result.empty());  // parent component must appear first
         const DerivedTypeSpec &spec{
             symbol.get<ObjectEntityDetails>().type()->derivedTypeSpec()};
         result = spec.typeSymbol().get<DerivedTypeDetails>().OrderComponents(
@@ -683,12 +687,10 @@ SymbolList DerivedTypeDetails::OrderComponents(const Scope &scope) const {
 }
 
 const Symbol *DerivedTypeDetails::GetParentComponent(const Scope &scope) const {
-  if (!componentNames_.empty()) {
-    SourceName extends{componentNames_.front()};
-    auto iter{scope.find(extends)};
-    if (iter != scope.cend()) {
-      const Symbol &symbol{*iter->second};
-      if (symbol.test(Symbol::Flag::ParentComp)) {
+  if (auto extends{GetParentComponentName()}) {
+    if (auto iter{scope.find(*extends)}; iter != scope.cend()) {
+      if (const Symbol & symbol{*iter->second};
+          symbol.test(Symbol::Flag::ParentComp)) {
         return &symbol;
       }
     }

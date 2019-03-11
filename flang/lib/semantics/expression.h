@@ -18,6 +18,7 @@
 #include "semantics.h"
 #include "../common/Fortran.h"
 #include "../common/indirection.h"
+#include "../evaluate/characteristics.h"
 #include "../evaluate/expression.h"
 #include "../evaluate/fold.h"
 #include "../evaluate/tools.h"
@@ -83,6 +84,8 @@ using namespace Fortran::parser::literals;
 // in the Fortran standard (i.e., scalar-, constant-, &c.).
 
 namespace Fortran::evaluate {
+
+class IntrinsicProcTable;
 
 struct ResetExprHelper {
   void Reset(parser::Expr::TypedExpr &x) { x->v = std::nullopt; }
@@ -284,6 +287,7 @@ private:
       const parser::SectionSubscript &);
   std::vector<Subscript> AnalyzeSectionSubscripts(
       const std::list<parser::SectionSubscript> &);
+  MaybeExpr Designate(DataRef &&);
   MaybeExpr CompleteSubscripts(ArrayRef &&);
   MaybeExpr ApplySubscripts(DataRef &&, std::vector<Subscript> &&);
   MaybeExpr TopLevelChecks(DataRef &&);
@@ -292,14 +296,18 @@ private:
 
   std::optional<ProcedureDesignator> AnalyzeProcedureComponentRef(
       const parser::ProcComponentRef &);
-  struct CallAndArguments {
+
+  struct CalleeAndArguments {
     ProcedureDesignator procedureDesignator;
     ActualArguments arguments;
   };
-  std::optional<CallAndArguments> Procedure(
+  std::optional<CalleeAndArguments> Procedure(
       const parser::ProcedureDesignator &, ActualArguments &);
   bool EnforceTypeConstraint(parser::CharBlock, const MaybeExpr &, TypeCategory,
       bool defaultKind = false);
+  MaybeExpr MakeFunctionRef(ProcedureDesignator &&, ActualArguments &&);
+  MaybeExpr MakeFunctionRef(CalleeAndArguments &&);
+  MaybeExpr MakeFunctionRef(parser::CharBlock intrinsic, ActualArguments &&);
 
   semantics::SemanticsContext &context_;
   std::map<parser::CharBlock, int> acImpliedDos_;  // values are INTEGER kinds
@@ -324,6 +332,11 @@ void ConformabilityCheck(
         left.Rank(), right.Rank());
   }
 }
+
+std::optional<characteristics::Procedure> Characterize(
+    const ProcedureDesignator &, const IntrinsicProcTable &);
+std::optional<characteristics::Procedure> Characterize(
+    const ProcedureRef &, const IntrinsicProcTable &);
 }  // namespace Fortran::evaluate
 
 namespace Fortran::semantics {

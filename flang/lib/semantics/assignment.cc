@@ -17,6 +17,7 @@
 #include "symbol.h"
 #include "tools.h"
 #include "../common/idioms.h"
+#include "../evaluate/characteristics.h"
 #include "../evaluate/expression.h"
 #include "../evaluate/fold.h"
 #include "../evaluate/tools.h"
@@ -25,8 +26,217 @@
 #include "../parser/parse-tree.h"
 #include <optional>
 #include <set>
+#include <type_traits>
 
 using namespace Fortran::parser::literals;
+
+namespace Fortran::evaluate {
+
+template<typename A>
+void CheckPointerAssignment(parser::ContextualMessages &messages,
+    const IntrinsicProcTable &, const Symbol &symbol, const A &) {
+  // Default catch-all when RHS of pointer assignment isn't recognized
+  messages.Say("Pointer target assigned to '%s' must be a designator or "
+               "a call to a pointer-valued function"_err_en_US,
+      symbol.name().ToString().c_str());
+}
+
+void CheckPointerAssignment(parser::ContextualMessages &messages,
+    const IntrinsicProcTable &intrinsics, const Symbol &lhs,
+    const NullPointer &f) {
+  // LHS = NULL() without MOLD=; this is always fine
+}
+
+template<typename T>
+void CheckPointerAssignment(parser::ContextualMessages &messages,
+    const IntrinsicProcTable &intrinsics, const Symbol &lhs,
+    const FunctionRef<T> &f) {
+  const Symbol *ultimate{nullptr};
+  std::string funcName;
+  if (const auto *symbol{f.proc().GetSymbol()}) {
+    funcName = symbol->name().ToString();
+    ultimate = &symbol->GetUltimate();
+  } else if (const auto *intrinsic{f.proc().GetSpecificIntrinsic()}) {
+    funcName = intrinsic->name;
+  }
+  if (auto proc{Characterize(f.proc(), intrinsics)}) {
+    std::optional<parser::MessageFixedText> error;
+    if (const auto &funcResult{proc->functionResult}) {
+      const auto *frProc{funcResult->IsProcedurePointer()};
+      if (IsProcedurePointer(lhs)) {
+        // Shouldn't be here in this function unless lhs
+        // is an object pointer.
+        error = "Procedure pointer '%s' assigned with result of "
+                "reference to function '%s' that does not return a "
+                "procedure pointer"_err_en_US;
+      } else if (frProc != nullptr) {
+        error = "Object pointer '%s' assigned with result of "
+                "reference to function '%s' that is a procedure "
+                "pointer"_err_en_US;
+      } else if (!funcResult->attrs.test(
+                     characteristics::FunctionResult::Attr::Pointer)) {
+        error = "Pointer '%s' assigned with result of "
+                "reference to function '%s' that is a not a "
+                "pointer"_err_en_US;
+      } else if (lhs.attrs().test(semantics::Attr::CONTIGUOUS) &&
+          !funcResult->attrs.test(
+              characteristics::FunctionResult::Attr::Contiguous)) {
+        error = "Contiguous pointer '%s' assigned with result of "
+                "reference to function '%s' that is not "
+                "contiguous"_err_en_US;
+      } else if (auto lhsTypeAndShape{
+                     characteristics::TypeAndShape::Characterize(lhs)}) {
+        const auto *frTypeAndShape{funcResult->GetTypeAndShape()};
+        CHECK(frTypeAndShape != nullptr);
+        if (!lhsTypeAndShape->IsCompatibleWith(messages, *frTypeAndShape)) {
+          error = "Pointer '%s' assigned with result of reference to "
+                  "function '%s' whose pointer result has an "
+                  "incompatible type or shape"_err_en_US;
+        }
+      }
+    } else {
+      error = "Pointer assigned with non-existent "
+              "result of reference to procedure"_err_en_US;
+    }
+    if (error.has_value()) {
+      if (auto *msg{messages.Say(
+              *error, lhs.name().ToString().c_str(), funcName.c_str())}) {
+        msg->Attach(lhs.name(), "Declaration of pointer"_en_US);
+        if (ultimate != nullptr) {
+          msg->Attach(ultimate->name(), "Declaration of function"_en_US);
+        }
+      }
+    }
+  }
+}
+
+template<typename T>
+void CheckPointerAssignment(parser::ContextualMessages &messages,
+    const IntrinsicProcTable &intrinsics, const Symbol &lhs,
+    const Designator<T> &d) {
+  if (const auto *symbol{d.GetBaseObject().symbol()}) {
+    const Symbol &ultimate{symbol->GetUltimate()};
+    std::optional<parser::MessageFixedText> error;
+    if (IsProcedurePointer(lhs)) {
+      // Shouldn't be here in this function unless lhs is an
+      // object pointer.
+      error = "In assignment to procedure pointer '%s', the "
+              "target is not a procedure or procedure pointer"_err_en_US;
+    } else if (!ultimate.template has<semantics::ObjectEntityDetails>() ||
+        !ultimate.attrs().HasAny(semantics::Attrs(
+            {semantics::Attr::POINTER, semantics::Attr::TARGET}))) {
+      error = "In assignment to object pointer '%s', the target '%s' "
+              "is not an object with POINTER or TARGET attributes"_err_en_US;
+    } else if (auto rhsTypeAndShape{characteristics::TypeAndShape::Characterize(
+                   d.GetLastSymbol())}) {
+      if (auto lhsTypeAndShape{
+              characteristics::TypeAndShape::Characterize(lhs)}) {
+        if (!lhsTypeAndShape->IsCompatibleWith(messages, *rhsTypeAndShape)) {
+          error = "Pointer '%s' assigned to object '%s' with "
+                  "incompatible type or shape"_err_en_US;
+        }
+      }
+    }
+    if (error.has_value()) {
+      if (auto *msg{messages.Say(*error, lhs.name().ToString().c_str(),
+              ultimate.name().ToString().c_str())}) {
+        msg->Attach(lhs.name(), "Declaration of pointer being assigned"_en_US)
+            .Attach(ultimate.name(), "Declaration of pointer target"_en_US);
+      }
+    }
+  } else {
+    // P => "character literal"(1:3)
+    messages.Say("Pointer target is not a named entity"_err_en_US);
+  }
+}
+
+// Common handling for procedure pointer right-hand sides
+void CheckPointerAssignment(parser::ContextualMessages &messages,
+    const IntrinsicProcTable &intrinsics, const Symbol &lhs,
+    parser::CharBlock rhsName, bool isCall,
+    std::optional<characteristics::Procedure> &&targetChars) {
+  std::optional<parser::MessageFixedText> error;
+  if (IsProcedurePointer(lhs)) {
+    if (auto ptrProc{
+            characteristics::Procedure::Characterize(lhs, intrinsics)}) {
+      if (targetChars.has_value()) {
+        if (!(*ptrProc == *targetChars)) {
+          if (isCall) {
+            error = "Procedure pointer '%s' assigned with result of "
+                    "reference to function '%s' that is an incompatible "
+                    "procedure pointer"_err_en_US;
+          } else {
+            error = "Procedure pointer '%s' assigned to incompatible "
+                    "procedure designator '%s'"_err_en_US;
+          }
+        }
+      } else {
+        error = "In assignment to procedure pointer '%s', the "
+                "characteristics of the target procedure '%s' could "
+                "not be determined"_err_en_US;
+      }
+    } else {
+      error = "In assignment to procedure pointer '%s', its "
+              "characteristics could not be determined"_err_en_US;
+    }
+  } else {
+    error = "In assignment to object pointer '%s', the target '%s' "
+            "is a procedure designator"_err_en_US;
+  }
+  if (error.has_value()) {
+    if (auto *msg{messages.Say(*error, lhs.name().ToString().c_str(),
+            rhsName.ToString().c_str())}) {
+      msg->Attach(lhs.name(), "Declaration of pointer being assigned"_en_US);
+    }
+  }
+}
+
+void CheckPointerAssignment(parser::ContextualMessages &messages,
+    const IntrinsicProcTable &intrinsics, const Symbol &lhs,
+    const ProcedureDesignator &d) {
+  CheckPointerAssignment(messages, intrinsics, lhs, d.GetName(), false,
+      Characterize(d, intrinsics));
+}
+
+void CheckPointerAssignment(parser::ContextualMessages &messages,
+    const IntrinsicProcTable &intrinsics, const Symbol &lhs,
+    const ProcedureRef &ref) {
+  auto chars{Characterize(ref, intrinsics)};
+  if (chars.has_value()) {
+    if (chars->functionResult.has_value()) {
+      if (const auto *proc{chars->functionResult->IsProcedurePointer()}) {
+        characteristics::Procedure rChars{std::move(*proc)};
+        chars = std::move(rChars);
+      }
+    }
+  }
+  CheckPointerAssignment(
+      messages, intrinsics, lhs, ref.proc().GetName(), true, std::move(chars));
+}
+
+template<typename T>
+void CheckPointerAssignment(parser::ContextualMessages &messages,
+    const IntrinsicProcTable &intrinsics, const Symbol &lhs, const Expr<T> &x) {
+  std::visit(
+      [&](const auto &x) {
+        CheckPointerAssignment(messages, intrinsics, lhs, x);
+      },
+      x.u);
+}
+
+void CheckPointerAssignment(parser::ContextualMessages &messages,
+    const IntrinsicProcTable &intrinsics, const Symbol &lhs,
+    const evaluate::Expr<evaluate::SomeType> &rhs) {
+  // TODO: Acquire values of deferred type parameters &/or array bounds
+  // from the RHS.
+  const Symbol &ultimate{lhs.GetUltimate()};
+  std::visit(
+      [&](const auto &x) {
+        CheckPointerAssignment(messages, intrinsics, ultimate, x);
+      },
+      rhs.u);
+}
+}
 
 namespace Fortran::semantics {
 
@@ -47,7 +257,6 @@ struct Control {
 struct ForallContext {
   explicit ForallContext(const ForallContext *that) : outer{that} {}
 
-  // TODO pmk: Is this needed?  Does semantics already track these kinds?
   std::optional<int> GetActiveIntKind(const parser::CharBlock &name) const {
     const auto iter{activeNames.find(name)};
     if (iter != activeNames.cend()) {
@@ -71,7 +280,7 @@ struct WhereContext {
   explicit WhereContext(MaskExpr &&x) : thisMaskExpr{std::move(x)} {}
 
   const WhereContext *outer{nullptr};
-  const ForallContext *forall{nullptr};  // innermost FORALL
+  const ForallContext *forall{nullptr};  // innermost enclosing FORALL
   std::optional<parser::CharBlock> constructName;
   MaskExpr thisMaskExpr;  // independent of outer WHERE, if any
   MaskExpr cumulativeMaskExpr{thisMaskExpr};
@@ -88,7 +297,6 @@ public:
     : context_{c.context_}, messages_{c.messages_}, forall_{&f} {}
 
   bool operator==(const AssignmentContext &x) const { return this == &x; }
-  bool operator!=(const AssignmentContext &x) const { return this != &x; }
 
   void Analyze(const parser::AssignmentStmt &);
   void Analyze(const parser::PointerAssignmentStmt &);
@@ -133,9 +341,6 @@ private:
 
 }  // namespace Fortran::semantics
 
-template class Fortran::common::Indirection<
-    Fortran::semantics::AssignmentContext>;
-
 namespace Fortran::semantics {
 
 void AssignmentContext::Analyze(const parser::AssignmentStmt &stmt) {
@@ -153,6 +358,7 @@ void AssignmentContext::Analyze(const parser::PointerAssignmentStmt &stmt) {
     // TODO: Warn if some name in forall_->activeNames or its outer
     // contexts does not appear on LHS
   }
+  // TODO continue here, using CheckPointerAssignment()
 }
 
 void AssignmentContext::Analyze(const parser::WhereStmt &stmt) {
@@ -363,7 +569,7 @@ public:
 private:
   SemanticsContext &context_;
 };
-
 }
-
-}  // namespace Fortran::semantics
+}
+template class Fortran::common::Indirection<
+    Fortran::semantics::AssignmentContext>;

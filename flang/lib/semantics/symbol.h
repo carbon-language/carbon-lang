@@ -234,6 +234,7 @@ public:
   // after the components that belong to them.
   SymbolList OrderComponents(const Scope &) const;
 
+  // If this derived type extends another, locate the parent component's symbol.
   const Symbol *GetParentComponent(const Scope &) const;
 
   std::optional<SourceName> GetParentComponentName() const {
@@ -510,7 +511,13 @@ public:
             [](const SubprogramDetails &x) {
               return x.isFunction() ? x.result().GetType() : nullptr;
             },
-            [](const ProcEntityDetails &x) { return x.interface().type(); },
+            [](const ProcEntityDetails &x) {
+              if (const Symbol * symbol{x.interface().symbol()}) {
+                return symbol->GetType();
+              } else {
+                return x.interface().type();
+              }
+            },
             [](const TypeParamDetails &x) { return x.type(); },
             [](const UseDetails &x) { return x.symbol().GetType(); },
             [](const auto &) -> const DeclTypeSpec * { return nullptr; },
@@ -586,8 +593,7 @@ public:
   // Clones the Symbol in the context of a parameterized derived type instance
   Symbol &Instantiate(Scope &, SemanticsContext &) const;
 
-  // If there is a parent component, return a pointer to its
-  // derived type spec.
+  // If there is a parent component, return a pointer to its derived type spec.
   // The Scope * argument defaults to this->scope_ but should be overridden
   // for a parameterized derived type instantiation with the instance's scope.
   const DerivedTypeSpec *GetParentTypeSpec(const Scope * = nullptr) const;
@@ -605,8 +611,9 @@ private:
   friend std::ostream &operator<<(std::ostream &, const Symbol &);
   friend std::ostream &DumpForUnparse(std::ostream &, const Symbol &, bool);
 
-  // If the symbol refers to a derived type with a parent component,
-  // return that parent component's symbol.
+  // If a derived type's symbol refers to an extended derived type,
+  // return the parent component's symbol.  The scope of the derived type
+  // can be overridden.
   const Symbol *GetParentComponent(const Scope * = nullptr) const;
 
   template<std::size_t> friend class Symbols;

@@ -20,8 +20,8 @@ module m
   logical, parameter :: test_not1 = .NOT..false.
   logical, parameter :: test_not2 = .NOT..NOT..true.
 
-  logical, parameter :: test_parantheses1 = .NOT.(.false.)
-  logical, parameter :: test_parantheses2 = .NOT..NOT.(.true.)
+  logical, parameter :: test_parentheses1 = .NOT.(.false.)
+  logical, parameter :: test_parentheses2 = .NOT..NOT.(.true.)
 
   logical, parameter :: test_and1 = .true..AND..true.
   logical, parameter :: test_and2 = .NOT.(.false..AND..true.)
