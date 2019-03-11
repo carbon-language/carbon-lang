@@ -8867,8 +8867,7 @@ multiclass avx512_cvtph2ps_sae<X86VectorVTInfo _dest, X86VectorVTInfo _src,
   defm rrb : AVX512_maskable<0x13, MRMSrcReg, _dest, (outs _dest.RC:$dst),
                              (ins _src.RC:$src), "vcvtph2ps",
                              "{sae}, $src", "$src, {sae}",
-                             (X86cvtph2psRnd (_src.VT _src.RC:$src),
-                                             (i32 FROUND_NO_EXC))>,
+                             (X86cvtph2psSAE (_src.VT _src.RC:$src))>,
                              T8PD, EVEX_B, Sched<[sched]>;
 }
 

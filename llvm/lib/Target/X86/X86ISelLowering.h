@@ -562,7 +562,7 @@ namespace llvm {
       RSQRT28, RSQRT28S, RCP28, RCP28S, EXP2,
 
       // Conversions between float and half-float.
-      CVTPS2PH, CVTPH2PS, CVTPH2PS_RND,
+      CVTPS2PH, CVTPH2PS, CVTPH2PS_SAE,
 
       // Masked version of above.
       // SRC, RND, PASSTHRU, MASK
