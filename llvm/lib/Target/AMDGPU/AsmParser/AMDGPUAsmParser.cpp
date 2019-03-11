@@ -4490,8 +4490,8 @@ AMDGPUAsmParser::parseSwizzleQuadPerm(int64_t &Imm) {
   if (parseSwizzleOperands(LANE_NUM, Lane, 0, LANE_MAX,
                            "expected a 2-bit lane id")) {
     Imm = QUAD_PERM_ENC;
-    for (auto i = 0; i < LANE_NUM; ++i) {
-      Imm |= Lane[i] << (LANE_SHIFT * i);
+    for (unsigned I = 0; I < LANE_NUM; ++I) {
+      Imm |= Lane[I] << (LANE_SHIFT * I);
     }
     return true;
   }
