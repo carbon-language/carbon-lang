@@ -299,11 +299,6 @@ def SDTFPBinOpImm: SDTypeProfile<1, 3, [SDTCisFP<0>, SDTCisVec<0>,
                                         SDTCisSameAs<0,1>,
                                         SDTCisSameAs<0,2>,
                                         SDTCisVT<3, i32>]>;
-def SDTFPBinOpImmRound: SDTypeProfile<1, 4, [SDTCisFP<0>, SDTCisVec<0>,
-                                             SDTCisSameAs<0,1>,
-                                             SDTCisSameAs<0,2>,
-                                             SDTCisVT<3, i32>,
-                                             SDTCisVT<4, i32>]>;
 def SDTFPTernaryOpImm: SDTypeProfile<1, 4, [SDTCisFP<0>, SDTCisSameAs<0,1>,
                                             SDTCisSameAs<0,2>,
                                             SDTCisInt<3>,
@@ -313,10 +308,6 @@ def SDTFPTernaryOpImm: SDTypeProfile<1, 4, [SDTCisFP<0>, SDTCisSameAs<0,1>,
 def SDTFPUnaryOpImm: SDTypeProfile<1, 2, [SDTCisFP<0>, SDTCisVec<0>,
                                           SDTCisSameAs<0,1>,
                                           SDTCisVT<2, i32>]>;
-def SDTFPUnaryOpImmRound: SDTypeProfile<1, 3, [SDTCisFP<0>, SDTCisVec<0>,
-                                               SDTCisSameAs<0,1>,
-                                               SDTCisVT<2, i32>,
-                                               SDTCisVT<3, i32>]>;
 
 def SDTVBroadcast  : SDTypeProfile<1, 1, [SDTCisVec<0>]>;
 def SDTVBroadcastm : SDTypeProfile<1, 1, [SDTCisVec<0>,
@@ -425,13 +416,13 @@ def X86VFixupimmSAE  : SDNode<"X86ISD::VFIXUPIMM_SAE", SDTFPTernaryOpImm>;
 def X86VFixupimms    : SDNode<"X86ISD::VFIXUPIMMS", SDTFPTernaryOpImm>;
 def X86VFixupimmSAEs : SDNode<"X86ISD::VFIXUPIMMS_SAE", SDTFPTernaryOpImm>;
 def X86VRange      : SDNode<"X86ISD::VRANGE",        SDTFPBinOpImm>;
-def X86VRangeRnd   : SDNode<"X86ISD::VRANGE_RND",    SDTFPBinOpImmRound>;
+def X86VRangeSAE   : SDNode<"X86ISD::VRANGE_SAE",    SDTFPBinOpImm>;
 def X86VReduce     : SDNode<"X86ISD::VREDUCE",       SDTFPUnaryOpImm>;
-def X86VReduceRnd  : SDNode<"X86ISD::VREDUCE_RND",   SDTFPUnaryOpImmRound>;
+def X86VReduceSAE  : SDNode<"X86ISD::VREDUCE_SAE",   SDTFPUnaryOpImm>;
 def X86VRndScale   : SDNode<"X86ISD::VRNDSCALE",     SDTFPUnaryOpImm>;
-def X86VRndScaleRnd: SDNode<"X86ISD::VRNDSCALE_RND", SDTFPUnaryOpImmRound>;
+def X86VRndScaleSAE: SDNode<"X86ISD::VRNDSCALE_SAE", SDTFPUnaryOpImm>;
 def X86VGetMant    : SDNode<"X86ISD::VGETMANT",      SDTFPUnaryOpImm>;
-def X86VGetMantRnd : SDNode<"X86ISD::VGETMANT_RND",  SDTFPUnaryOpImmRound>;
+def X86VGetMantSAE : SDNode<"X86ISD::VGETMANT_SAE",  SDTFPUnaryOpImm>;
 def X86Vfpclass    : SDNode<"X86ISD::VFPCLASS",
                        SDTypeProfile<1, 2, [SDTCVecEltisVT<0, i1>,
                                             SDTCisFP<1>,
@@ -524,10 +515,10 @@ def X86Ranges    : SDNode<"X86ISD::VRANGES",    SDTFPBinOpImm>;
 def X86RndScales : SDNode<"X86ISD::VRNDSCALES", SDTFPBinOpImm>;
 def X86Reduces   : SDNode<"X86ISD::VREDUCES",   SDTFPBinOpImm>;
 def X86GetMants  : SDNode<"X86ISD::VGETMANTS",  SDTFPBinOpImm>;
-def X86RangesRnd    : SDNode<"X86ISD::VRANGES_RND",    SDTFPBinOpImmRound>;
-def X86RndScalesRnd : SDNode<"X86ISD::VRNDSCALES_RND", SDTFPBinOpImmRound>;
-def X86ReducesRnd   : SDNode<"X86ISD::VREDUCES_RND",   SDTFPBinOpImmRound>;
-def X86GetMantsRnd  : SDNode<"X86ISD::VGETMANTS_RND",  SDTFPBinOpImmRound>;
+def X86RangesSAE    : SDNode<"X86ISD::VRANGES_SAE",    SDTFPBinOpImm>;
+def X86RndScalesSAE : SDNode<"X86ISD::VRNDSCALES_SAE", SDTFPBinOpImm>;
+def X86ReducesSAE   : SDNode<"X86ISD::VREDUCES_SAE",   SDTFPBinOpImm>;
+def X86GetMantsSAE  : SDNode<"X86ISD::VGETMANTS_SAE",  SDTFPBinOpImm>;
 
 def X86compress: SDNode<"X86ISD::COMPRESS", SDTypeProfile<1, 3,
                               [SDTCisSameAs<0, 1>, SDTCisVec<1>,

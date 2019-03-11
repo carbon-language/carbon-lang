@@ -22083,17 +22083,15 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       assert(Op.getNumOperands() == (6U + HasRounding) &&
              "Unexpected intrinsic form");
       SDValue RoundingMode = Op.getOperand(5);
+      unsigned Opc = IntrData->Opc0;
       if (HasRounding) {
         SDValue Sae = Op.getOperand(6);
         if (isRoundModeSAE(Sae))
-          return getScalarMaskingNode(DAG.getNode(IntrWithRoundingModeOpcode,
-                                                  dl, VT, Src1, Src2,
-                                                  RoundingMode, Sae),
-                                      Mask, passThru, Subtarget, DAG);
-        if (!isRoundModeCurDirection(Sae))
+          Opc = IntrWithRoundingModeOpcode;
+        else if (!isRoundModeCurDirection(Sae))
           return SDValue();
       }
-      return getScalarMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src1,
+      return getScalarMaskingNode(DAG.getNode(Opc, dl, VT, Src1,
                                               Src2, RoundingMode),
                                   Mask, passThru, Subtarget, DAG);
     }
@@ -22142,30 +22140,6 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                                               Rnd),
                                   Mask, Src0, Subtarget, DAG);
     }
-    case INTR_TYPE_2OP_MASK: {
-      SDValue Src1 = Op.getOperand(1);
-      SDValue Src2 = Op.getOperand(2);
-      SDValue PassThru = Op.getOperand(3);
-      SDValue Mask = Op.getOperand(4);
-
-      // We specify 2 possible opcodes for intrinsics with rounding modes.
-      // First, we check if the intrinsic may have non-default rounding mode,
-      // (IntrData->Opc1 != 0), then we check the rounding mode operand.
-      unsigned IntrWithRoundingModeOpcode = IntrData->Opc1;
-      if (IntrWithRoundingModeOpcode != 0) {
-        SDValue Rnd = Op.getOperand(5);
-        if (isRoundModeSAEToX(Rnd))
-          return getVectorMaskingNode(DAG.getNode(IntrWithRoundingModeOpcode,
-                                      dl, Op.getValueType(),
-                                      Src1, Src2, Rnd),
-                                      Mask, PassThru, Subtarget, DAG);
-        if (!isRoundModeCurDirection(Rnd))
-          return SDValue();
-      }
-      // TODO: Intrinsics should have fast-math-flags to propagate.
-      return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT,Src1,Src2),
-                                  Mask, PassThru, Subtarget, DAG);
-    }
     case INTR_TYPE_2OP_MASK_RM: {
       SDValue Src1 = Op.getOperand(1);
       SDValue Src2 = Op.getOperand(2);
@@ -22184,50 +22158,58 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                                               Src1, Src2, Rnd),
                                   Mask, PassThru, Subtarget, DAG);
     }
-    case INTR_TYPE_3OP_SCALAR_MASK: {
+    case INTR_TYPE_2OP_MASK_SAE: {
       SDValue Src1 = Op.getOperand(1);
       SDValue Src2 = Op.getOperand(2);
-      SDValue Src3 = Op.getOperand(3);
-      SDValue PassThru = Op.getOperand(4);
-      SDValue Mask = Op.getOperand(5);
+      SDValue PassThru = Op.getOperand(3);
+      SDValue Mask = Op.getOperand(4);
 
-      unsigned IntrWithRoundingModeOpcode = IntrData->Opc1;
-      if (IntrWithRoundingModeOpcode != 0) {
-        SDValue Rnd = Op.getOperand(6);
-        if (isRoundModeSAEToX(Rnd))
-          return getScalarMaskingNode(DAG.getNode(IntrWithRoundingModeOpcode,
-                                                  dl, VT, Src1, Src2, Src3, Rnd),
-                                      Mask, PassThru, Subtarget, DAG);
-        if (!isRoundModeCurDirection(Rnd))
+      unsigned Opc = IntrData->Opc0;
+      if (IntrData->Opc1 != 0) {
+        SDValue Sae = Op.getOperand(5);
+        if (isRoundModeSAE(Sae))
+          Opc = IntrData->Opc1;
+        else if (!isRoundModeCurDirection(Sae))
           return SDValue();
       }
-      return getScalarMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src1,
-                                              Src2, Src3),
+
+      return getVectorMaskingNode(DAG.getNode(Opc, dl, VT, Src1, Src2),
                                   Mask, PassThru, Subtarget, DAG);
     }
-    case INTR_TYPE_3OP_MASK: {
+    case INTR_TYPE_3OP_SCALAR_MASK_SAE: {
+      SDValue Src1 = Op.getOperand(1);
+      SDValue Src2 = Op.getOperand(2);
+      SDValue Src3 = Op.getOperand(3);
+      SDValue PassThru = Op.getOperand(4);
+      SDValue Mask = Op.getOperand(5);
+      SDValue Sae = Op.getOperand(6);
+      unsigned Opc;
+      if (isRoundModeCurDirection(Sae))
+        Opc = IntrData->Opc0;
+      else if (isRoundModeSAE(Sae))
+        Opc = IntrData->Opc1;
+      else
+        return SDValue();
+
+      return getScalarMaskingNode(DAG.getNode(Opc, dl, VT, Src1, Src2, Src3),
+                                  Mask, PassThru, Subtarget, DAG);
+    }
+    case INTR_TYPE_3OP_MASK_SAE: {
       SDValue Src1 = Op.getOperand(1);
       SDValue Src2 = Op.getOperand(2);
       SDValue Src3 = Op.getOperand(3);
       SDValue PassThru = Op.getOperand(4);
       SDValue Mask = Op.getOperand(5);
 
-      // We specify 2 possible opcodes for intrinsics with rounding modes.
-      // First, we check if the intrinsic may have non-default rounding mode,
-      // (IntrData->Opc1 != 0), then we check the rounding mode operand.
-      unsigned IntrWithRoundingModeOpcode = IntrData->Opc1;
-      if (IntrWithRoundingModeOpcode != 0) {
-        SDValue Rnd = Op.getOperand(6);
-        if (isRoundModeSAEToX(Rnd))
-          return getVectorMaskingNode(DAG.getNode(IntrWithRoundingModeOpcode,
-                                      dl, Op.getValueType(),
-                                      Src1, Src2, Src3, Rnd),
-                                      Mask, PassThru, Subtarget, DAG);
-        if (!isRoundModeCurDirection(Rnd))
+      unsigned Opc = IntrData->Opc0;
+      if (IntrData->Opc1 != 0) {
+        SDValue Sae = Op.getOperand(6);
+        if (isRoundModeSAE(Sae))
+          Opc = IntrData->Opc1;
+        else if (!isRoundModeCurDirection(Sae))
           return SDValue();
       }
-      return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT,
-                                              Src1, Src2, Src3),
+      return getVectorMaskingNode(DAG.getNode(Opc, dl, VT, Src1, Src2, Src3),
                                   Mask, PassThru, Subtarget, DAG);
     }
     case BLENDV: {
@@ -27723,9 +27705,9 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VFIXUPIMMS:         return "X86ISD::VFIXUPIMMS";
   case X86ISD::VFIXUPIMMS_SAE:     return "X86ISD::VFIXUPIMMS_SAE";
   case X86ISD::VRANGE:             return "X86ISD::VRANGE";
-  case X86ISD::VRANGE_RND:         return "X86ISD::VRANGE_RND";
+  case X86ISD::VRANGE_SAE:         return "X86ISD::VRANGE_SAE";
   case X86ISD::VRANGES:            return "X86ISD::VRANGES";
-  case X86ISD::VRANGES_RND:        return "X86ISD::VRANGES_RND";
+  case X86ISD::VRANGES_SAE:        return "X86ISD::VRANGES_SAE";
   case X86ISD::PMULUDQ:            return "X86ISD::PMULUDQ";
   case X86ISD::PMULDQ:             return "X86ISD::PMULDQ";
   case X86ISD::PSADBW:             return "X86ISD::PSADBW";
@@ -27760,17 +27742,17 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VPMADD52H:          return "X86ISD::VPMADD52H";
   case X86ISD::VPMADD52L:          return "X86ISD::VPMADD52L";
   case X86ISD::VRNDSCALE:          return "X86ISD::VRNDSCALE";
-  case X86ISD::VRNDSCALE_RND:      return "X86ISD::VRNDSCALE_RND";
+  case X86ISD::VRNDSCALE_SAE:      return "X86ISD::VRNDSCALE_SAE";
   case X86ISD::VRNDSCALES:         return "X86ISD::VRNDSCALES";
-  case X86ISD::VRNDSCALES_RND:     return "X86ISD::VRNDSCALES_RND";
+  case X86ISD::VRNDSCALES_SAE:     return "X86ISD::VRNDSCALES_SAE";
   case X86ISD::VREDUCE:            return "X86ISD::VREDUCE";
-  case X86ISD::VREDUCE_RND:        return "X86ISD::VREDUCE_RND";
+  case X86ISD::VREDUCE_SAE:        return "X86ISD::VREDUCE_SAE";
   case X86ISD::VREDUCES:           return "X86ISD::VREDUCES";
-  case X86ISD::VREDUCES_RND:       return "X86ISD::VREDUCES_RND";
+  case X86ISD::VREDUCES_SAE:       return "X86ISD::VREDUCES_SAE";
   case X86ISD::VGETMANT:           return "X86ISD::VGETMANT";
-  case X86ISD::VGETMANT_RND:       return "X86ISD::VGETMANT_RND";
+  case X86ISD::VGETMANT_SAE:       return "X86ISD::VGETMANT_SAE";
   case X86ISD::VGETMANTS:          return "X86ISD::VGETMANTS";
-  case X86ISD::VGETMANTS_RND:      return "X86ISD::VGETMANTS_RND";
+  case X86ISD::VGETMANTS_SAE:      return "X86ISD::VGETMANTS_SAE";
   case X86ISD::PCMPESTR:           return "X86ISD::PCMPESTR";
   case X86ISD::PCMPISTR:           return "X86ISD::PCMPISTR";
   case X86ISD::XTEST:              return "X86ISD::XTEST";
