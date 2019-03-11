@@ -545,6 +545,8 @@ def X86Vpshufbitqmb : SDNode<"X86ISD::VPSHUFBITQMB",
                                                   SDTCVecEltisVT<0,i1>,
                                                   SDTCisSameNumEltsAs<0,1>]>>;
 
+def SDTintToFP: SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisFP<0>,
+                                     SDTCisSameAs<0,1>, SDTCisInt<2>]>;
 def SDTintToFPRound: SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisFP<0>,
                                           SDTCisSameAs<0,1>, SDTCisInt<2>,
                                           SDTCisVT<3, i32>]>;
@@ -566,7 +568,9 @@ def SDTVintToFPRound: SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>,
                                            SDTCisVT<2, i32>]>;
 
 // Scalar
+def X86SintToFp     : SDNode<"X86ISD::SCALAR_SINT_TO_FP",      SDTintToFP>;
 def X86SintToFpRnd  : SDNode<"X86ISD::SCALAR_SINT_TO_FP_RND",  SDTintToFPRound>;
+def X86UintToFp     : SDNode<"X86ISD::SCALAR_UINT_TO_FP",      SDTintToFP>;
 def X86UintToFpRnd  : SDNode<"X86ISD::SCALAR_UINT_TO_FP_RND",  SDTintToFPRound>;
 
 def X86cvtts2Int  : SDNode<"X86ISD::CVTTS2SI",  SDTSFloatToInt>;
@@ -931,9 +935,6 @@ def I8Imm : SDNodeXForm<imm, [{
   // Transformation function: get the low 8 bits.
   return getI8Imm((uint8_t)N->getZExtValue(), SDLoc(N));
 }]>;
-
-def FROUND_NO_EXC : PatLeaf<(i32 8)>;
-def FROUND_CURRENT : PatLeaf<(i32 4)>;
 
 // BYTE_imm - Transform bit immediates into byte immediates.
 def BYTE_imm  : SDNodeXForm<imm, [{
