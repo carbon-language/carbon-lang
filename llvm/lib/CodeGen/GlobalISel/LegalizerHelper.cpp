@@ -535,6 +535,7 @@ LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
     return Legalized;
   }
   case TargetOpcode::G_MUL:
+  case TargetOpcode::G_UMULH:
     return narrowScalarMul(MI, NarrowTy);
   case TargetOpcode::G_EXTRACT:
     return narrowScalarExtract(MI, TypeIdx, NarrowTy);
@@ -2625,13 +2626,18 @@ LegalizerHelper::narrowScalarMul(MachineInstr &MI, LLT NarrowTy) {
 
   unsigned NumDstParts = DstSize / NarrowSize;
   unsigned NumSrcParts = SrcSize / NarrowSize;
+  bool IsMulHigh = MI.getOpcode() == TargetOpcode::G_UMULH;
+  unsigned DstTmpParts = NumDstParts * (IsMulHigh ? 2 : 1);
 
-  SmallVector<unsigned, 2> Src1Parts, Src2Parts, DstRegs;
+  SmallVector<unsigned, 2> Src1Parts, Src2Parts, DstTmpRegs;
   extractParts(Src1, NarrowTy, NumSrcParts, Src1Parts);
   extractParts(Src2, NarrowTy, NumSrcParts, Src2Parts);
-  DstRegs.resize(NumDstParts);
-  multiplyRegisters(DstRegs, Src1Parts, Src2Parts, NarrowTy);
+  DstTmpRegs.resize(DstTmpParts);
+  multiplyRegisters(DstTmpRegs, Src1Parts, Src2Parts, NarrowTy);
 
+  // Take only high half of registers if this is high mul.
+  ArrayRef<unsigned> DstRegs(
+      IsMulHigh ? &DstTmpRegs[DstTmpParts / 2] : &DstTmpRegs[0], NumDstParts);
   MIRBuilder.buildMerge(DstReg, DstRegs);
   MI.eraseFromParent();
   return Legalized;
