@@ -28,8 +28,6 @@
 namespace Fortran {
 namespace ISO {
 inline namespace Fortran_2018 {
-#else
-#define CFI_ISO_FORTRAN_BINDING_FLEXIBLE_ARRAY
 #endif
 
 /* 18.5.4 */
