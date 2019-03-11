@@ -25,9 +25,6 @@
  */
 
 #ifdef __cplusplus
-// C++ does not support flexible array members, so they have to be
-// declared with single elements.
-#define CFI_ISO_FORTRAN_BINDING_FLEXIBLE_ARRAY 1
 namespace Fortran {
 namespace ISO {
 inline namespace Fortran_2018 {
@@ -112,6 +109,19 @@ typedef struct CFI_dim_t {
   CFI_index_t sm; /* memory stride in bytes */
 } CFI_dim_t;
 
+#ifdef __cplusplus
+// C++ does not support flexible array.
+// The below structure emulate a flexible array. This structure does not take
+// care of getting the memory storage. Note that it already contains one element
+// because a struct cannot be empty.
+struct CFI_dim_t_cpp_flexible_array : CFI_dim_t {
+  CFI_dim_t &operator[](int index) { return *(this + index); }
+  const CFI_dim_t &operator[](int index) const { return *(this + index); }
+  operator CFI_dim_t *() { return this; }
+  operator const CFI_dim_t *() const { return this; }
+};
+#endif
+
 /* 18.5.3 generic data descriptor */
 typedef struct CFI_cdesc_t {
   /* These three members must appear first, in exactly this order. */
@@ -122,13 +132,17 @@ typedef struct CFI_cdesc_t {
   CFI_type_t type;
   CFI_attribute_t attribute;
   unsigned char f18Addendum;
-  CFI_dim_t dim[CFI_ISO_FORTRAN_BINDING_FLEXIBLE_ARRAY]; /* must appear last */
+#ifdef __cplusplus
+  CFI_dim_t_cpp_flexible_array dim;
+#else
+  CFI_dim_t dim[]; /* must appear last */
+#endif
 } CFI_cdesc_t;
 
 /* 18.5.4 */
 #ifdef __cplusplus
-// C++ does not support zero-sized array (rank=0)
-// Also, CFI_cdesc_t already contains 1 dim in cpp
+// The struct below take care of getting the memory storage for C++ CFI_cdesc_t
+// that contain an emulated flexible array.
 namespace cfi_internal {
 template<int r> struct CdescStorage : public CFI_cdesc_t {
   static_assert((r > 1 && r <= CFI_MAX_RANK), "CFI_INVALID_RANK");
@@ -170,7 +184,5 @@ int CFI_setpointer(
 }
 }
 #endif
-
-#undef CFI_ISO_FORTRAN_BINDING_FLEXIBLE_ARRAY
 
 #endif /* CFI_ISO_FORTRAN_BINDING_H_ */
