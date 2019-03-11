@@ -21943,6 +21943,20 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       return DAG.getNode(IntrData->Opc0, dl, Op.getValueType(),
                          Op.getOperand(1), Src2);
     }
+    case INTR_TYPE_2OP_SAE: {
+      SDValue Sae = Op.getOperand(3);
+
+      unsigned Opc;
+      if (isRoundModeCurDirection(Sae))
+        Opc = IntrData->Opc0;
+      else if (isRoundModeSAE(Sae))
+        Opc = IntrData->Opc1;
+      else
+        return SDValue();
+
+      return DAG.getNode(Opc, dl, Op.getValueType(), Op.getOperand(1),
+                         Op.getOperand(2));
+    }
     case INTR_TYPE_3OP:
     case INTR_TYPE_3OP_IMM8: {
       SDValue Src1 = Op.getOperand(1);
@@ -22051,6 +22065,23 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       }
       return getScalarMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src1,
                                               Src2, RoundingMode),
+                                  Mask, passThru, Subtarget, DAG);
+    }
+    case INTR_TYPE_SCALAR_MASK_SAE: {
+      SDValue Src1 = Op.getOperand(1);
+      SDValue Src2 = Op.getOperand(2);
+      SDValue passThru = Op.getOperand(3);
+      SDValue Mask = Op.getOperand(4);
+      SDValue Sae = Op.getOperand(5);
+      unsigned Opc;
+      if (isRoundModeCurDirection(Sae))
+        Opc = IntrData->Opc0;
+      else if (isRoundModeSAE(Sae))
+        Opc = IntrData->Opc1;
+      else
+        return SDValue();
+
+      return getScalarMaskingNode(DAG.getNode(Opc, dl, VT, Src1, Src2),
                                   Mask, passThru, Subtarget, DAG);
     }
     case INTR_TYPE_SCALAR_MASK_RM: {
@@ -27516,12 +27547,12 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::CONFLICT:           return "X86ISD::CONFLICT";
   case X86ISD::FMAX:               return "X86ISD::FMAX";
   case X86ISD::FMAXS:              return "X86ISD::FMAXS";
-  case X86ISD::FMAX_RND:           return "X86ISD::FMAX_RND";
-  case X86ISD::FMAXS_RND:          return "X86ISD::FMAX_RND";
+  case X86ISD::FMAX_SAE:           return "X86ISD::FMAX_SAE";
+  case X86ISD::FMAXS_SAE:          return "X86ISD::FMAXS_SAE";
   case X86ISD::FMIN:               return "X86ISD::FMIN";
   case X86ISD::FMINS:              return "X86ISD::FMINS";
-  case X86ISD::FMIN_RND:           return "X86ISD::FMIN_RND";
-  case X86ISD::FMINS_RND:          return "X86ISD::FMINS_RND";
+  case X86ISD::FMIN_SAE:           return "X86ISD::FMIN_SAE";
+  case X86ISD::FMINS_SAE:          return "X86ISD::FMINS_SAE";
   case X86ISD::FMAXC:              return "X86ISD::FMAXC";
   case X86ISD::FMINC:              return "X86ISD::FMINC";
   case X86ISD::FRSQRT:             return "X86ISD::FRSQRT";
@@ -27708,14 +27739,19 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::RSQRT28:            return "X86ISD::RSQRT28";
   case X86ISD::RSQRT28S:           return "X86ISD::RSQRT28S";
   case X86ISD::FADD_RND:           return "X86ISD::FADD_RND";
+  case X86ISD::FADDS:              return "X86ISD::FADDS";
   case X86ISD::FADDS_RND:          return "X86ISD::FADDS_RND";
   case X86ISD::FSUB_RND:           return "X86ISD::FSUB_RND";
+  case X86ISD::FSUBS:              return "X86ISD::FSUBS";
   case X86ISD::FSUBS_RND:          return "X86ISD::FSUBS_RND";
   case X86ISD::FMUL_RND:           return "X86ISD::FMUL_RND";
+  case X86ISD::FMULS:              return "X86ISD::FMULS";
   case X86ISD::FMULS_RND:          return "X86ISD::FMULS_RND";
   case X86ISD::FDIV_RND:           return "X86ISD::FDIV_RND";
+  case X86ISD::FDIVS:              return "X86ISD::FDIVS";
   case X86ISD::FDIVS_RND:          return "X86ISD::FDIVS_RND";
   case X86ISD::FSQRT_RND:          return "X86ISD::FSQRT_RND";
+  case X86ISD::FSQRTS:             return "X86ISD::FSQRTS";
   case X86ISD::FSQRTS_RND:         return "X86ISD::FSQRTS_RND";
   case X86ISD::FGETEXP_RND:        return "X86ISD::FGETEXP_RND";
   case X86ISD::FGETEXPS_RND:       return "X86ISD::FGETEXPS_RND";

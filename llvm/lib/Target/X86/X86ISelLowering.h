@@ -211,13 +211,13 @@ namespace llvm {
       ADDSUB,
 
       //  FP vector ops with rounding mode.
-      FADD_RND, FADDS_RND,
-      FSUB_RND, FSUBS_RND,
-      FMUL_RND, FMULS_RND,
-      FDIV_RND, FDIVS_RND,
-      FMAX_RND, FMAXS_RND,
-      FMIN_RND, FMINS_RND,
-      FSQRT_RND, FSQRTS_RND,
+      FADD_RND, FADDS, FADDS_RND,
+      FSUB_RND, FSUBS, FSUBS_RND,
+      FMUL_RND, FMULS, FMULS_RND,
+      FDIV_RND, FDIVS, FDIVS_RND,
+      FMAX_SAE, FMAXS_SAE,
+      FMIN_SAE, FMINS_SAE,
+      FSQRT_RND, FSQRTS, FSQRTS_RND,
 
       // FP vector get exponent.
       FGETEXP_RND, FGETEXPS_RND,
