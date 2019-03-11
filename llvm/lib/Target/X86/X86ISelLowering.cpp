@@ -21924,6 +21924,19 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       }
       return DAG.getNode(IntrData->Opc0, dl, Op.getValueType(), Op.getOperand(1));
     }
+    case INTR_TYPE_1OP_SAE: {
+      SDValue Sae = Op.getOperand(2);
+
+      unsigned Opc;
+      if (isRoundModeCurDirection(Sae))
+        Opc = IntrData->Opc0;
+      else if (isRoundModeSAE(Sae))
+        Opc = IntrData->Opc1;
+      else
+        return SDValue();
+
+      return DAG.getNode(Opc, dl, Op.getValueType(), Op.getOperand(1));
+    }
     case INTR_TYPE_2OP: {
       SDValue Src2 = Op.getOperand(2);
 
@@ -22025,6 +22038,23 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src),
                                   Mask, PassThru, Subtarget, DAG);
     }
+    case INTR_TYPE_1OP_MASK_SAE: {
+      SDValue Src = Op.getOperand(1);
+      SDValue PassThru = Op.getOperand(2);
+      SDValue Mask = Op.getOperand(3);
+      SDValue Rnd = Op.getOperand(4);
+
+      unsigned Opc;
+      if (isRoundModeCurDirection(Rnd))
+        Opc = IntrData->Opc0;
+      else if (isRoundModeSAE(Rnd))
+        Opc = IntrData->Opc1;
+      else
+        return SDValue();
+
+      return getVectorMaskingNode(DAG.getNode(Opc, dl, VT, Src),
+                                  Mask, PassThru, Subtarget, DAG);
+    }
     case INTR_TYPE_SCALAR_MASK: {
       SDValue Src1 = Op.getOperand(1);
       SDValue Src2 = Op.getOperand(2);
@@ -22066,6 +22096,23 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       return getScalarMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src1,
                                               Src2, RoundingMode),
                                   Mask, passThru, Subtarget, DAG);
+    }
+    case INTR_TYPE_SCALAR_MASK_RND: {
+      SDValue Src1 = Op.getOperand(1);
+      SDValue Src2 = Op.getOperand(2);
+      SDValue passThru = Op.getOperand(3);
+      SDValue Mask = Op.getOperand(4);
+      SDValue Rnd = Op.getOperand(5);
+
+      SDValue NewOp;
+      if (isRoundModeCurDirection(Rnd))
+        NewOp = DAG.getNode(IntrData->Opc0, dl, VT, Src1, Src2);
+      else if (isRoundModeSAEToX(Rnd))
+        NewOp = DAG.getNode(IntrData->Opc1, dl, VT, Src1, Src2, Rnd);
+      else
+        return SDValue();
+
+      return getScalarMaskingNode(NewOp, Mask, passThru, Subtarget, DAG);
     }
     case INTR_TYPE_SCALAR_MASK_SAE: {
       SDValue Src1 = Op.getOperand(1);
@@ -27593,11 +27640,13 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VMTRUNCSTORES:      return "X86ISD::VMTRUNCSTORES";
   case X86ISD::VMTRUNCSTOREUS:     return "X86ISD::VMTRUNCSTOREUS";
   case X86ISD::VFPEXT:             return "X86ISD::VFPEXT";
-  case X86ISD::VFPEXT_RND:         return "X86ISD::VFPEXT_RND";
-  case X86ISD::VFPEXTS_RND:        return "X86ISD::VFPEXTS_RND";
+  case X86ISD::VFPEXT_SAE:         return "X86ISD::VFPEXT_SAE";
+  case X86ISD::VFPEXTS:            return "X86ISD::VFPEXTS";
+  case X86ISD::VFPEXTS_SAE:        return "X86ISD::VFPEXTS_SAE";
   case X86ISD::VFPROUND:           return "X86ISD::VFPROUND";
   case X86ISD::VMFPROUND:          return "X86ISD::VMFPROUND";
   case X86ISD::VFPROUND_RND:       return "X86ISD::VFPROUND_RND";
+  case X86ISD::VFPROUNDS:          return "X86ISD::VFPROUNDS";
   case X86ISD::VFPROUNDS_RND:      return "X86ISD::VFPROUNDS_RND";
   case X86ISD::VSHLDQ:             return "X86ISD::VSHLDQ";
   case X86ISD::VSRLDQ:             return "X86ISD::VSRLDQ";
@@ -27765,12 +27814,12 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::CVTTP2UI:           return "X86ISD::CVTTP2UI";
   case X86ISD::MCVTTP2SI:          return "X86ISD::MCVTTP2SI";
   case X86ISD::MCVTTP2UI:          return "X86ISD::MCVTTP2UI";
-  case X86ISD::CVTTP2SI_RND:       return "X86ISD::CVTTP2SI_RND";
-  case X86ISD::CVTTP2UI_RND:       return "X86ISD::CVTTP2UI_RND";
+  case X86ISD::CVTTP2SI_SAE:       return "X86ISD::CVTTP2SI_SAE";
+  case X86ISD::CVTTP2UI_SAE:       return "X86ISD::CVTTP2UI_SAE";
   case X86ISD::CVTTS2SI:           return "X86ISD::CVTTS2SI";
   case X86ISD::CVTTS2UI:           return "X86ISD::CVTTS2UI";
-  case X86ISD::CVTTS2SI_RND:       return "X86ISD::CVTTS2SI_RND";
-  case X86ISD::CVTTS2UI_RND:       return "X86ISD::CVTTS2UI_RND";
+  case X86ISD::CVTTS2SI_SAE:       return "X86ISD::CVTTS2SI_SAE";
+  case X86ISD::CVTTS2UI_SAE:       return "X86ISD::CVTTS2UI_SAE";
   case X86ISD::CVTSI2P:            return "X86ISD::CVTSI2P";
   case X86ISD::CVTUI2P:            return "X86ISD::CVTUI2P";
   case X86ISD::MCVTSI2P:           return "X86ISD::MCVTSI2P";
