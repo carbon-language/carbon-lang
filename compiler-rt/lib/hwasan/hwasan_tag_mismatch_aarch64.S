@@ -100,12 +100,6 @@ __hwasan_tag_mismatch:
 .Lfunc_end0:
   .size __hwasan_tag_mismatch, .Lfunc_end0-__hwasan_tag_mismatch
 
-// Address significance tables cannot be emitted on gcc. Some buildbots
-// (clang-cmake-aarch64-lld) use gcc to build compiler-rt.
-#if __clang__
-.addrsig
-#endif  // __clang__
-
 #endif  // defined(__aarch64__)
 
 // We do not need executable stack.
