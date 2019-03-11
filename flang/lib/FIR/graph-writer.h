@@ -82,7 +82,7 @@ private:
   bool isEntry_{false};
   bool isExit_{false};
   std::map<BasicBlock *, unsigned> blockIds_;
-  static llvm::raw_ostream * defaultOutput_;
+  static llvm::raw_ostream *defaultOutput_;
 };
 }
 

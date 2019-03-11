@@ -1239,10 +1239,10 @@ public:
     // TODO: build an expression for the allocation
     return nullptr;
   }
-  const AllocateInsn *CreateDeallocationValue(
+  AllocateInsn *CreateDeallocationValue(
       const parser::AllocateObject *allocateObject,
       const parser::DeallocateStmt *statement) {
-    // TODO: build an expression for the allocation
+    // TODO: build an expression for the deallocation
     return nullptr;
   }
 

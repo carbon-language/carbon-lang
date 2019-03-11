@@ -74,6 +74,7 @@ public:
 class Stmt_impl {
 public:
   using StatementTrait = std::true_type;
+  virtual ~Stmt_impl() {}
 };
 
 // Every basic block must end in a terminator
@@ -250,6 +251,8 @@ public:
     return IndirectBranchStmt{variable, potentialTargets};
   }
 
+  Variable *variable() const { return variable_; }
+
 private:
   explicit IndirectBranchStmt(
       Variable *variable, const TargetListType &potentialTargets)
@@ -355,6 +358,9 @@ public:
     return AllocateInsn{type, alignment};
   }
 
+  Type type() const { return type_; }
+  int alignment() const { return alignment_; }
+
 private:
   explicit AllocateInsn(Type type, int alignment)
     : type_{type}, alignment_{alignment} {}
@@ -366,13 +372,15 @@ private:
 // Deallocate storage (per DEALLOCATE)
 class DeallocateInsn : public MemoryStmt_impl {
 public:
-  static DeallocateInsn Create(const AllocateInsn *alloc) {
+  static DeallocateInsn Create(AllocateInsn *alloc) {
     return DeallocateInsn{alloc};
   }
 
+  AllocateInsn *alloc() { return alloc_; }
+
 private:
-  explicit DeallocateInsn(const AllocateInsn *alloc) : alloc_{alloc} {}
-  const AllocateInsn *alloc_;
+  explicit DeallocateInsn(AllocateInsn *alloc) : alloc_{alloc} {}
+  AllocateInsn *alloc_;
 };
 
 // Allocate space for a temporary by its Type. The lifetime of the temporary
@@ -386,6 +394,9 @@ public:
     }
     return AllocateLocalInsn{type, alignment};
   }
+
+  Type type() const { return type_; }
+  int alignment() const { return alignment_; }
 
 private:
   explicit AllocateLocalInsn(Type type, int alignment, const Expression &expr)
@@ -432,6 +443,9 @@ public:
     return DisassociateInsn{n};
   }
 
+  // FIXME - remove parse tree reference
+  const parser::NullifyStmt *disassociate() { return disassociate_; }
+
 private:
   DisassociateInsn(const parser::NullifyStmt *n) : disassociate_{n} {}
   const parser::NullifyStmt *disassociate_;
@@ -477,6 +491,8 @@ public:
     return RuntimeStmt{call, std::move(argument)};
   }
 
+  RuntimeCallType call() const { return call_; }
+
 private:
   explicit RuntimeStmt(RuntimeCallType call, RuntimeCallArguments &&arguments)
     : CallStmt_impl{nullptr, nullptr, std::move(arguments)}, call_{call} {}
@@ -492,6 +508,8 @@ public:
       InputOutputCallType call, IOCallArguments &&arguments) {
     return IORuntimeStmt{call, std::move(arguments)};
   }
+
+  InputOutputCallType call() const { return call_; }
 
 private:
   explicit IORuntimeStmt(InputOutputCallType call, IOCallArguments &&arguments)

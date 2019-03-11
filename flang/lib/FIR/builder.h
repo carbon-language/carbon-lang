@@ -59,7 +59,7 @@ struct FIRBuilder {
     return InsertTerminator(
         BranchStmt::Create(condition, trueBlock, falseBlock));
   }
-  Statement *CreateDealloc(const AllocateInsn *alloc) {
+  Statement *CreateDealloc(AllocateInsn *alloc) {
     return Insert(DeallocateInsn::Create(alloc));
   }
   Statement *CreateExpr(const Expression *e) {
