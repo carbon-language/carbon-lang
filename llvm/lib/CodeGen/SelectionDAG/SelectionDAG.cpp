@@ -1970,7 +1970,7 @@ SDValue SelectionDAG::FoldSetCC(EVT VT, SDValue N1, SDValue N2,
   case ISD::SETUO:
   case ISD::SETUEQ:
   case ISD::SETUNE:
-    assert(!N1.getValueType().isInteger() && "Illegal setcc for integer!");
+    assert(!OpVT.isInteger() && "Illegal setcc for integer!");
     break;
   }
 
@@ -2054,11 +2054,10 @@ SDValue SelectionDAG::FoldSetCC(EVT VT, SDValue N1, SDValue N2,
     case ISD::SETUGE: return getBoolConstant(R!=APFloat::cmpLessThan, dl, VT,
                                              OpVT);
     }
-  } else if (N1CFP) {
+  } else if (N1CFP && OpVT.isSimple()) {
     // Ensure that the constant occurs on the RHS.
     ISD::CondCode SwappedCond = ISD::getSetCCSwappedOperands(Cond);
-    MVT CompVT = N1.getValueType().getSimpleVT();
-    if (!TLI->isCondCodeLegal(SwappedCond, CompVT))
+    if (!TLI->isCondCodeLegal(SwappedCond, OpVT.getSimpleVT()))
       return SDValue();
     return getSetCC(dl, VT, N2, N1, SwappedCond);
   } else if (N2CFP && N2CFP->getValueAPF().isNaN()) {
