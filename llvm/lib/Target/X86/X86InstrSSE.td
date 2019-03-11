@@ -5495,18 +5495,6 @@ let ExeDomain = SSEPackedSingle in {
   defm EXTRACTPS   : SS41I_extractf32<0x17, "extractps">;
 }
 
-// Also match an EXTRACTPS store when the store is done as f32 instead of i32.
-def : Pat<(store (f32 (bitconvert (extractelt (bc_v4i32 (v4f32 VR128:$src1)),
-                                              imm:$src2))),
-                 addr:$dst),
-          (VEXTRACTPSmr addr:$dst, VR128:$src1, imm:$src2)>,
-          Requires<[HasAVX]>;
-def : Pat<(store (f32 (bitconvert (extractelt (bc_v4i32 (v4f32 VR128:$src1)),
-                                              imm:$src2))),
-                 addr:$dst),
-          (EXTRACTPSmr addr:$dst, VR128:$src1, imm:$src2)>,
-          Requires<[UseSSE41]>;
-
 //===----------------------------------------------------------------------===//
 // SSE4.1 - Insert Instructions
 //===----------------------------------------------------------------------===//
