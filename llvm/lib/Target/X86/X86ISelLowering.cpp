@@ -21999,24 +21999,6 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     case INTR_TYPE_4OP:
       return DAG.getNode(IntrData->Opc0, dl, Op.getValueType(), Op.getOperand(1),
         Op.getOperand(2), Op.getOperand(3), Op.getOperand(4));
-    case INTR_TYPE_1OP_MASK_RM: {
-      SDValue Src = Op.getOperand(1);
-      SDValue PassThru = Op.getOperand(2);
-      SDValue Mask = Op.getOperand(3);
-      SDValue RoundingMode;
-      // We always add rounding mode to the Node.
-      // If the rounding mode is not specified, we add the
-      // "current direction" mode.
-      if (Op.getNumOperands() == 4)
-        RoundingMode =
-          DAG.getConstant(X86::STATIC_ROUNDING::CUR_DIRECTION, dl, MVT::i32);
-      else
-        RoundingMode = Op.getOperand(4);
-      assert(IntrData->Opc1 == 0 && "Unexpected second opcode!");
-      return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src,
-                                              RoundingMode),
-                                  Mask, PassThru, Subtarget, DAG);
-    }
     case INTR_TYPE_1OP_MASK: {
       SDValue Src = Op.getOperand(1);
       SDValue PassThru = Op.getOperand(2);
@@ -27763,12 +27745,17 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::RCP14:              return "X86ISD::RCP14";
   case X86ISD::RCP14S:             return "X86ISD::RCP14S";
   case X86ISD::RCP28:              return "X86ISD::RCP28";
+  case X86ISD::RCP28_SAE:          return "X86ISD::RCP28_SAE";
   case X86ISD::RCP28S:             return "X86ISD::RCP28S";
+  case X86ISD::RCP28S_SAE:         return "X86ISD::RCP28S_SAE";
   case X86ISD::EXP2:               return "X86ISD::EXP2";
+  case X86ISD::EXP2_SAE:           return "X86ISD::EXP2_SAE";
   case X86ISD::RSQRT14:            return "X86ISD::RSQRT14";
   case X86ISD::RSQRT14S:           return "X86ISD::RSQRT14S";
   case X86ISD::RSQRT28:            return "X86ISD::RSQRT28";
+  case X86ISD::RSQRT28_SAE:        return "X86ISD::RSQRT28_SAE";
   case X86ISD::RSQRT28S:           return "X86ISD::RSQRT28S";
+  case X86ISD::RSQRT28S_SAE:       return "X86ISD::RSQRT28S_SAE";
   case X86ISD::FADD_RND:           return "X86ISD::FADD_RND";
   case X86ISD::FADDS:              return "X86ISD::FADDS";
   case X86ISD::FADDS_RND:          return "X86ISD::FADDS_RND";
@@ -27784,8 +27771,10 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FSQRT_RND:          return "X86ISD::FSQRT_RND";
   case X86ISD::FSQRTS:             return "X86ISD::FSQRTS";
   case X86ISD::FSQRTS_RND:         return "X86ISD::FSQRTS_RND";
-  case X86ISD::FGETEXP_RND:        return "X86ISD::FGETEXP_RND";
-  case X86ISD::FGETEXPS_RND:       return "X86ISD::FGETEXPS_RND";
+  case X86ISD::FGETEXP:            return "X86ISD::FGETEXP";
+  case X86ISD::FGETEXP_SAE:        return "X86ISD::FGETEXP_SAE";
+  case X86ISD::FGETEXPS:           return "X86ISD::FGETEXPS";
+  case X86ISD::FGETEXPS_SAE:       return "X86ISD::FGETEXPS_SAE";
   case X86ISD::SCALEF:             return "X86ISD::SCALEF";
   case X86ISD::SCALEFS:            return "X86ISD::SCALEFS";
   case X86ISD::AVG:                return "X86ISD::AVG";

@@ -220,7 +220,7 @@ namespace llvm {
       FSQRT_RND, FSQRTS, FSQRTS_RND,
 
       // FP vector get exponent.
-      FGETEXP_RND, FGETEXPS_RND,
+      FGETEXP, FGETEXP_SAE, FGETEXPS, FGETEXPS_SAE,
       // Extract Normalized Mantissas.
       VGETMANT, VGETMANT_SAE, VGETMANTS, VGETMANTS_SAE,
       // FP Scale.
@@ -559,7 +559,8 @@ namespace llvm {
       XTEST,
 
       // ERI instructions.
-      RSQRT28, RSQRT28S, RCP28, RCP28S, EXP2,
+      RSQRT28, RSQRT28_SAE, RSQRT28S, RSQRT28S_SAE,
+      RCP28, RCP28_SAE, RCP28S, RCP28S_SAE, EXP2, EXP2_SAE,
 
       // Conversions between float and half-float.
       CVTPS2PH, CVTPH2PS, CVTPH2PS_SAE,
