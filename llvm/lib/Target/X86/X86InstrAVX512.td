@@ -7464,7 +7464,7 @@ defm VCVTSI2SSZ  : avx512_vcvtsi_common<0x2A, X86SintToFpRnd, WriteCvtI2SS, GR32
 defm VCVTSI642SSZ: avx512_vcvtsi_common<0x2A, X86SintToFpRnd, WriteCvtI2SS, GR64,
                                  v4f32x_info, i64mem, loadi64, "cvtsi2ss{q}">,
                                  XS, VEX_W, EVEX_CD8<64, CD8VT1>;
-defm VCVTSI2SDZ  : avx512_vcvtsi_common<0x2A, X86SintToFpRnd, WriteCvtI2SD, GR32,
+defm VCVTSI2SDZ  : avx512_vcvtsi<0x2A, X86SintToFpRnd, WriteCvtI2SD, GR32,
                                  v2f64x_info, i32mem, loadi32, "cvtsi2sd{l}">,
                                  XD, EVEX_CD8<32, CD8VT1>;
 defm VCVTSI642SDZ: avx512_vcvtsi_common<0x2A, X86SintToFpRnd, WriteCvtI2SD, GR64,
