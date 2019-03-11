@@ -1103,7 +1103,7 @@ public:
   // and the const expression results are available after a process is gone, we
   // provide a way for expressions to be evaluated from the Target itself. If
   // an expression is going to be run, then it should have a frame filled in in
-  // th execution context.
+  // the execution context.
   lldb::ExpressionResults EvaluateExpression(
       llvm::StringRef expression, ExecutionContextScope *exe_scope,
       lldb::ValueObjectSP &result_valobj_sp,

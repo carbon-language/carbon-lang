@@ -422,7 +422,7 @@ public:
   /// \return
   ///     Returns \b true if the load address was resolved to be
   ///     section/offset, \b false otherwise. It is often ok for an
-  ///     address no not resolve to a section in a module, this often
+  ///     address to not resolve to a section in a module, this often
   ///     happens for JIT'ed code, or any load addresses on the stack
   ///     or heap.
   //------------------------------------------------------------------
