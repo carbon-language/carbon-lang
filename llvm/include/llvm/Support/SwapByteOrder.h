@@ -17,6 +17,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
 #include <cstddef>
+#include <type_traits>
 #if defined(_MSC_VER) && !defined(_DEBUG)
 #include <stdlib.h>
 #endif
