@@ -5617,3 +5617,61 @@ bool TargetLowering::expandMULO(SDNode *Node, SDValue &Result,
          "Unexpected result type for S/UMULO legalization");
   return true;
 }
+
+SDValue TargetLowering::expandVecReduce(SDNode *Node, SelectionDAG &DAG) const {
+  SDLoc dl(Node);
+  bool NoNaN = Node->getFlags().hasNoNaNs();
+  unsigned BaseOpcode = 0;
+  switch (Node->getOpcode()) {
+  default: llvm_unreachable("Expected VECREDUCE opcode");
+  case ISD::VECREDUCE_FADD: BaseOpcode = ISD::FADD; break;
+  case ISD::VECREDUCE_FMUL: BaseOpcode = ISD::FMUL; break;
+  case ISD::VECREDUCE_ADD:  BaseOpcode = ISD::ADD; break;
+  case ISD::VECREDUCE_MUL:  BaseOpcode = ISD::MUL; break;
+  case ISD::VECREDUCE_AND:  BaseOpcode = ISD::AND; break;
+  case ISD::VECREDUCE_OR:   BaseOpcode = ISD::OR; break;
+  case ISD::VECREDUCE_XOR:  BaseOpcode = ISD::XOR; break;
+  case ISD::VECREDUCE_SMAX: BaseOpcode = ISD::SMAX; break;
+  case ISD::VECREDUCE_SMIN: BaseOpcode = ISD::SMIN; break;
+  case ISD::VECREDUCE_UMAX: BaseOpcode = ISD::UMAX; break;
+  case ISD::VECREDUCE_UMIN: BaseOpcode = ISD::UMIN; break;
+  case ISD::VECREDUCE_FMAX:
+    BaseOpcode = NoNaN ? ISD::FMAXNUM : ISD::FMAXIMUM;
+    break;
+  case ISD::VECREDUCE_FMIN:
+    BaseOpcode = NoNaN ? ISD::FMINNUM : ISD::FMINIMUM;
+    break;
+  }
+
+  SDValue Op = Node->getOperand(0);
+  EVT VT = Op.getValueType();
+
+  // Try to use a shuffle reduction for power of two vectors.
+  if (VT.isPow2VectorType()) {
+    while (VT.getVectorNumElements() > 1) {
+      EVT HalfVT = VT.getHalfNumVectorElementsVT(*DAG.getContext());
+      if (!isOperationLegalOrCustom(BaseOpcode, HalfVT))
+        break;
+
+      SDValue Lo, Hi;
+      std::tie(Lo, Hi) = DAG.SplitVector(Op, dl);
+      Op = DAG.getNode(BaseOpcode, dl, HalfVT, Lo, Hi);
+      VT = HalfVT;
+    }
+  }
+
+  EVT EltVT = VT.getVectorElementType();
+  unsigned NumElts = VT.getVectorNumElements();
+
+  SmallVector<SDValue, 8> Ops;
+  DAG.ExtractVectorElements(Op, Ops, 0, NumElts);
+
+  SDValue Res = Ops[0];
+  for (unsigned i = 1; i < NumElts; i++)
+    Res = DAG.getNode(BaseOpcode, dl, EltVT, Res, Ops[i], Node->getFlags());
+
+  // Result type may be wider than element type.
+  if (EltVT != Node->getValueType(0))
+    Res = DAG.getNode(ISD::ANY_EXTEND, dl, Node->getValueType(0), Res);
+  return Res;
+}
