@@ -2944,21 +2944,7 @@ SDValue TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
 
   if (!isa<ConstantFPSDNode>(N0) && isa<ConstantFPSDNode>(N1)) {
     auto *CFP = cast<ConstantFPSDNode>(N1);
-
-    // If the RHS of an FP comparison is a constant, simplify it away in
-    // some cases.
-    if (CFP->getValueAPF().isNaN()) {
-      // If an operand is known to be a nan, we can fold it.
-      switch (ISD::getUnorderedFlavor(Cond)) {
-      default: llvm_unreachable("Unknown flavor!");
-      case 0:  // Known false.
-        return DAG.getBoolConstant(false, dl, VT, OpVT);
-      case 1:  // Known true.
-        return DAG.getBoolConstant(true, dl, VT, OpVT);
-      case 2:  // Undefined.
-        return DAG.getUNDEF(VT);
-      }
-    }
+    assert(!CFP->getValueAPF().isNaN() && "Unexpected NaN value");
 
     // Otherwise, we know the RHS is not a NaN.  Simplify the node to drop the
     // constant if knowing that the operand is non-nan is enough.  We prefer to
