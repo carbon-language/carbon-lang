@@ -2581,7 +2581,7 @@ void LegalizerHelper::multiplyRegisters(SmallVectorImpl<unsigned> &DstRegs,
       Factors.push_back(CarrySumPrevDstIdx);
     }
 
-    unsigned CarrySum;
+    unsigned CarrySum = 0;
     // Add all factors and accumulate all carries into CarrySum.
     if (DstIdx != DstParts - 1) {
       MachineInstrBuilder Uaddo =
