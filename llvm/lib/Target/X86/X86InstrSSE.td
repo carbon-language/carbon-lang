@@ -1215,28 +1215,28 @@ def VCVTSD2SSrr_Int: I<0x5A, MRMSrcReg,
                        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                        "vcvtsd2ss\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                        [(set VR128:$dst,
-                         (int_x86_sse2_cvtsd2ss VR128:$src1, VR128:$src2))]>,
-                       XD, VEX_4V, VEX_WIG, Requires<[HasAVX]>,
+                         (v4f32 (X86frounds VR128:$src1, (v2f64 VR128:$src2))))]>,
+                       XD, VEX_4V, VEX_WIG, Requires<[UseAVX]>,
                        Sched<[WriteCvtSD2SS]>;
 def VCVTSD2SSrm_Int: I<0x5A, MRMSrcMem,
                        (outs VR128:$dst), (ins VR128:$src1, sdmem:$src2),
                        "vcvtsd2ss\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtsd2ss
-                                          VR128:$src1, sse_load_f64:$src2))]>,
-                       XD, VEX_4V, VEX_WIG, Requires<[HasAVX]>,
+                       [(set VR128:$dst,
+                         (v4f32 (X86frounds VR128:$src1, sse_load_f64:$src2)))]>,
+                       XD, VEX_4V, VEX_WIG, Requires<[UseAVX]>,
                        Sched<[WriteCvtSD2SS.Folded, WriteCvtSD2SS.ReadAfterFold]>;
 let Constraints = "$src1 = $dst" in {
 def CVTSD2SSrr_Int: I<0x5A, MRMSrcReg,
                        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
                        "cvtsd2ss\t{$src2, $dst|$dst, $src2}",
                        [(set VR128:$dst,
-                         (int_x86_sse2_cvtsd2ss VR128:$src1, VR128:$src2))]>,
+                         (v4f32 (X86frounds VR128:$src1, (v2f64 VR128:$src2))))]>,
                        XD, Requires<[UseSSE2]>, Sched<[WriteCvtSD2SS]>;
 def CVTSD2SSrm_Int: I<0x5A, MRMSrcMem,
                        (outs VR128:$dst), (ins VR128:$src1, sdmem:$src2),
                        "cvtsd2ss\t{$src2, $dst|$dst, $src2}",
-                       [(set VR128:$dst, (int_x86_sse2_cvtsd2ss
-                                          VR128:$src1, sse_load_f64:$src2))]>,
+                       [(set VR128:$dst,
+                         (v4f32 (X86frounds VR128:$src1,sse_load_f64:$src2)))]>,
                        XD, Requires<[UseSSE2]>,
                        Sched<[WriteCvtSD2SS.Folded, WriteCvtSD2SS.ReadAfterFold]>;
 }
