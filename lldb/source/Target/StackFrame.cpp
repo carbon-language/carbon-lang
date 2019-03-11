@@ -642,7 +642,12 @@ ValueObjectSP StackFrame::GetValueForVariableExpressionPath(
         valobj_sp = valobj_sp->Dereference(deref_error);
         if (error.Fail()) {
           error.SetErrorStringWithFormatv(
-              "Failed to dereference sythetic value: %s", deref_error);
+              "Failed to dereference sythetic value: {0}", deref_error);
+          return ValueObjectSP();
+        }
+        // Some synthetic plug-ins fail to set the error in Dereference
+        if (!valobj_sp) {
+          error.SetErrorString("Failed to dereference sythetic value");
           return ValueObjectSP();
         }
         expr_is_ptr = false;
