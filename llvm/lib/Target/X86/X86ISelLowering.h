@@ -224,8 +224,8 @@ namespace llvm {
       // Extract Normalized Mantissas.
       VGETMANT, VGETMANT_SAE, VGETMANTS, VGETMANTS_SAE,
       // FP Scale.
-      SCALEF,
-      SCALEFS,
+      SCALEF, SCALEF_RND,
+      SCALEFS, SCALEFS_RND,
 
       // Unsigned Integer average.
       AVG,

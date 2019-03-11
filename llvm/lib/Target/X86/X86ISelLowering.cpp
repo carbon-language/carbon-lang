@@ -22111,34 +22111,22 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       return getScalarMaskingNode(DAG.getNode(Opc, dl, VT, Src1, Src2),
                                   Mask, passThru, Subtarget, DAG);
     }
-    case INTR_TYPE_SCALAR_MASK_RM: {
-      assert(Op.getNumOperands() == 6 && "Unexpected number of operands");
-      SDValue Src1 = Op.getOperand(1);
-      SDValue Src2 = Op.getOperand(2);
-      SDValue Src0 = Op.getOperand(3);
-      SDValue Mask = Op.getOperand(4);
-      SDValue Rnd  = Op.getOperand(5);
-      return getScalarMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src1, Src2,
-                                              Rnd),
-                                  Mask, Src0, Subtarget, DAG);
-    }
-    case INTR_TYPE_2OP_MASK_RM: {
+    case INTR_TYPE_2OP_MASK: {
       SDValue Src1 = Op.getOperand(1);
       SDValue Src2 = Op.getOperand(2);
       SDValue PassThru = Op.getOperand(3);
       SDValue Mask = Op.getOperand(4);
-      // We specify 2 possible modes for intrinsics, with/without rounding
-      // modes.
-      // First, we check if the intrinsic have rounding mode (6 operands),
-      // if not, we set rounding mode to "current".
-      SDValue Rnd;
-      if (Op.getNumOperands() == 6)
-        Rnd = Op.getOperand(5);
-      else
-        Rnd = DAG.getConstant(X86::STATIC_ROUNDING::CUR_DIRECTION, dl, MVT::i32);
-      return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT,
-                                              Src1, Src2, Rnd),
-                                  Mask, PassThru, Subtarget, DAG);
+      SDValue NewOp;
+      if (IntrData->Opc1 != 0) {
+        SDValue Rnd = Op.getOperand(5);
+        if (isRoundModeSAEToX(Rnd))
+          NewOp = DAG.getNode(IntrData->Opc1, dl, VT, Src1, Src2, Rnd);
+        else if (!isRoundModeCurDirection(Rnd))
+          return SDValue();
+      }
+      if (!NewOp)
+        NewOp = DAG.getNode(IntrData->Opc0, dl, VT, Src1, Src2);
+      return getVectorMaskingNode(NewOp, Mask, PassThru, Subtarget, DAG);
     }
     case INTR_TYPE_2OP_MASK_SAE: {
       SDValue Src1 = Op.getOperand(1);
@@ -27776,7 +27764,9 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FGETEXPS:           return "X86ISD::FGETEXPS";
   case X86ISD::FGETEXPS_SAE:       return "X86ISD::FGETEXPS_SAE";
   case X86ISD::SCALEF:             return "X86ISD::SCALEF";
+  case X86ISD::SCALEF_RND:         return "X86ISD::SCALEF_RND";
   case X86ISD::SCALEFS:            return "X86ISD::SCALEFS";
+  case X86ISD::SCALEFS_RND:        return "X86ISD::SCALEFS_RND";
   case X86ISD::AVG:                return "X86ISD::AVG";
   case X86ISD::MULHRS:             return "X86ISD::MULHRS";
   case X86ISD::SINT_TO_FP_RND:     return "X86ISD::SINT_TO_FP_RND";
