@@ -305,13 +305,12 @@ def SDTFPBinOpImmRound: SDTypeProfile<1, 4, [SDTCisFP<0>, SDTCisVec<0>,
                                              SDTCisSameAs<0,2>,
                                              SDTCisVT<3, i32>,
                                              SDTCisVT<4, i32>]>;
-def SDTFPTernaryOpImmRound: SDTypeProfile<1, 5, [SDTCisFP<0>, SDTCisSameAs<0,1>,
-                                                 SDTCisSameAs<0,2>,
-                                                 SDTCisInt<3>,
-                                                 SDTCisSameSizeAs<0, 3>,
-                                                 SDTCisSameNumEltsAs<0, 3>,
-                                                 SDTCisVT<4, i32>,
-                                                 SDTCisVT<5, i32>]>;
+def SDTFPTernaryOpImm: SDTypeProfile<1, 4, [SDTCisFP<0>, SDTCisSameAs<0,1>,
+                                            SDTCisSameAs<0,2>,
+                                            SDTCisInt<3>,
+                                            SDTCisSameSizeAs<0, 3>,
+                                            SDTCisSameNumEltsAs<0, 3>,
+                                            SDTCisVT<4, i32>]>;
 def SDTFPUnaryOpImm: SDTypeProfile<1, 2, [SDTCisFP<0>, SDTCisVec<0>,
                                           SDTCisSameAs<0,1>,
                                           SDTCisVT<2, i32>]>;
@@ -422,8 +421,10 @@ def X86vpternlog  : SDNode<"X86ISD::VPTERNLOG", SDTTernlog>;
 
 def X86VPerm2x128 : SDNode<"X86ISD::VPERM2X128", SDTShuff3OpI>;
 
-def X86VFixupimm   : SDNode<"X86ISD::VFIXUPIMM", SDTFPTernaryOpImmRound>;
-def X86VFixupimmScalar   : SDNode<"X86ISD::VFIXUPIMMS", SDTFPTernaryOpImmRound>;
+def X86VFixupimm     : SDNode<"X86ISD::VFIXUPIMM", SDTFPTernaryOpImm>;
+def X86VFixupimmSAE  : SDNode<"X86ISD::VFIXUPIMM_SAE", SDTFPTernaryOpImm>;
+def X86VFixupimms    : SDNode<"X86ISD::VFIXUPIMMS", SDTFPTernaryOpImm>;
+def X86VFixupimmSAEs : SDNode<"X86ISD::VFIXUPIMMS_SAE", SDTFPTernaryOpImm>;
 def X86VRange      : SDNode<"X86ISD::VRANGE",        SDTFPBinOpImm>;
 def X86VRangeRnd   : SDNode<"X86ISD::VRANGE_RND",    SDTFPBinOpImmRound>;
 def X86VReduce     : SDNode<"X86ISD::VREDUCE",       SDTFPUnaryOpImm>;

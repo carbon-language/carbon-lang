@@ -12174,58 +12174,55 @@ let Predicates = [HasVLX] in {
 // AVX-512 - FixupImm
 //===----------------------------------------------------------------------===//
 
-multiclass avx512_fixupimm_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
+multiclass avx512_fixupimm_packed<bits<8> opc, string OpcodeStr,
                                   X86FoldableSchedWrite sched, X86VectorVTInfo _,
                                   X86VectorVTInfo TblVT>{
   let Constraints = "$src1 = $dst", ExeDomain = _.ExeDomain in {
     defm rri : AVX512_maskable_3src<opc, MRMSrcReg, _, (outs _.RC:$dst),
                         (ins _.RC:$src2, _.RC:$src3, i32u8imm:$src4),
                          OpcodeStr##_.Suffix, "$src4, $src3, $src2", "$src2, $src3, $src4",
-                        (OpNode (_.VT _.RC:$src1),
-                                (_.VT _.RC:$src2),
-                                (TblVT.VT _.RC:$src3),
-                                (i32 imm:$src4),
-                                (i32 FROUND_CURRENT))>, Sched<[sched]>;
+                        (X86VFixupimm (_.VT _.RC:$src1),
+                                      (_.VT _.RC:$src2),
+                                      (TblVT.VT _.RC:$src3),
+                                      (i32 imm:$src4))>, Sched<[sched]>;
     defm rmi : AVX512_maskable_3src<opc, MRMSrcMem, _, (outs _.RC:$dst),
                       (ins _.RC:$src2, _.MemOp:$src3, i32u8imm:$src4),
                       OpcodeStr##_.Suffix, "$src4, $src3, $src2", "$src2, $src3, $src4",
-                      (OpNode (_.VT _.RC:$src1),
-                              (_.VT _.RC:$src2),
-                              (TblVT.VT (bitconvert (TblVT.LdFrag addr:$src3))),
-                              (i32 imm:$src4),
-                              (i32 FROUND_CURRENT))>,
+                      (X86VFixupimm (_.VT _.RC:$src1),
+                                    (_.VT _.RC:$src2),
+                                    (TblVT.VT (bitconvert (TblVT.LdFrag addr:$src3))),
+                                    (i32 imm:$src4))>,
                       Sched<[sched.Folded, sched.ReadAfterFold]>;
     defm rmbi : AVX512_maskable_3src<opc, MRMSrcMem, _, (outs _.RC:$dst),
                       (ins _.RC:$src2, _.ScalarMemOp:$src3, i32u8imm:$src4),
                     OpcodeStr##_.Suffix, "$src4, ${src3}"##_.BroadcastStr##", $src2",
                     "$src2, ${src3}"##_.BroadcastStr##", $src4",
-                      (OpNode (_.VT _.RC:$src1),
-                              (_.VT _.RC:$src2),
-                              (TblVT.VT (X86VBroadcast(TblVT.ScalarLdFrag addr:$src3))),
-                              (i32 imm:$src4),
-                              (i32 FROUND_CURRENT))>,
+                      (X86VFixupimm (_.VT _.RC:$src1),
+                                    (_.VT _.RC:$src2),
+                                    (TblVT.VT (X86VBroadcast(TblVT.ScalarLdFrag addr:$src3))),
+                                    (i32 imm:$src4))>,
                     EVEX_B, Sched<[sched.Folded, sched.ReadAfterFold]>;
   } // Constraints = "$src1 = $dst"
 }
 
 multiclass avx512_fixupimm_packed_sae<bits<8> opc, string OpcodeStr,
-                                      SDNode OpNode, X86FoldableSchedWrite sched,
-                                      X86VectorVTInfo _, X86VectorVTInfo TblVT>{
+                                      X86FoldableSchedWrite sched,
+                                      X86VectorVTInfo _, X86VectorVTInfo TblVT>
+  : avx512_fixupimm_packed<opc, OpcodeStr, sched, _, TblVT> {
 let Constraints = "$src1 = $dst", ExeDomain = _.ExeDomain in {
   defm rrib : AVX512_maskable_3src<opc, MRMSrcReg, _, (outs _.RC:$dst),
                       (ins _.RC:$src2, _.RC:$src3, i32u8imm:$src4),
                       OpcodeStr##_.Suffix, "$src4, {sae}, $src3, $src2",
                       "$src2, $src3, {sae}, $src4",
-                      (OpNode (_.VT _.RC:$src1),
-                                (_.VT _.RC:$src2),
-                                (TblVT.VT _.RC:$src3),
-                                (i32 imm:$src4),
-                                (i32 FROUND_NO_EXC))>,
+                      (X86VFixupimmSAE (_.VT _.RC:$src1),
+                                       (_.VT _.RC:$src2),
+                                       (TblVT.VT _.RC:$src3),
+                                       (i32 imm:$src4))>,
                       EVEX_B, Sched<[sched]>;
   }
 }
 
-multiclass avx512_fixupimm_scalar<bits<8> opc, string OpcodeStr, SDNode OpNode,
+multiclass avx512_fixupimm_scalar<bits<8> opc, string OpcodeStr,
                                   X86FoldableSchedWrite sched, X86VectorVTInfo _,
                                   X86VectorVTInfo _src3VT> {
   let Constraints = "$src1 = $dst" , Predicates = [HasAVX512],
@@ -12233,30 +12230,27 @@ multiclass avx512_fixupimm_scalar<bits<8> opc, string OpcodeStr, SDNode OpNode,
     defm rri : AVX512_maskable_3src_scalar<opc, MRMSrcReg, _, (outs _.RC:$dst),
                       (ins _.RC:$src2, _.RC:$src3, i32u8imm:$src4),
                       OpcodeStr##_.Suffix, "$src4, $src3, $src2", "$src2, $src3, $src4",
-                      (OpNode (_.VT _.RC:$src1),
-                              (_.VT _.RC:$src2),
-                              (_src3VT.VT _src3VT.RC:$src3),
-                              (i32 imm:$src4),
-                              (i32 FROUND_CURRENT))>, Sched<[sched]>;
+                      (X86VFixupimms (_.VT _.RC:$src1),
+                                     (_.VT _.RC:$src2),
+                                     (_src3VT.VT _src3VT.RC:$src3),
+                                     (i32 imm:$src4))>, Sched<[sched]>;
     defm rrib : AVX512_maskable_3src_scalar<opc, MRMSrcReg, _, (outs _.RC:$dst),
                       (ins _.RC:$src2, _.RC:$src3, i32u8imm:$src4),
                       OpcodeStr##_.Suffix, "$src4, {sae}, $src3, $src2",
                       "$src2, $src3, {sae}, $src4",
-                      (OpNode (_.VT _.RC:$src1),
-                              (_.VT _.RC:$src2),
-                              (_src3VT.VT _src3VT.RC:$src3),
-                              (i32 imm:$src4),
-                              (i32 FROUND_NO_EXC))>,
+                      (X86VFixupimmSAEs (_.VT _.RC:$src1),
+                                        (_.VT _.RC:$src2),
+                                        (_src3VT.VT _src3VT.RC:$src3),
+                                        (i32 imm:$src4))>,
                       EVEX_B, Sched<[sched.Folded, sched.ReadAfterFold]>;
     defm rmi : AVX512_maskable_3src_scalar<opc, MRMSrcMem, _, (outs _.RC:$dst),
                      (ins _.RC:$src2, _.ScalarMemOp:$src3, i32u8imm:$src4),
                      OpcodeStr##_.Suffix, "$src4, $src3, $src2", "$src2, $src3, $src4",
-                     (OpNode (_.VT _.RC:$src1),
-                             (_.VT _.RC:$src2),
-                             (_src3VT.VT (scalar_to_vector
-                                       (_src3VT.ScalarLdFrag addr:$src3))),
-                             (i32 imm:$src4),
-                             (i32 FROUND_CURRENT))>,
+                     (X86VFixupimms (_.VT _.RC:$src1),
+                                    (_.VT _.RC:$src2),
+                                    (_src3VT.VT (scalar_to_vector
+                                              (_src3VT.ScalarLdFrag addr:$src3))),
+                                    (i32 imm:$src4))>,
                      Sched<[sched.Folded, sched.ReadAfterFold]>;
   }
 }
@@ -12265,25 +12259,23 @@ multiclass avx512_fixupimm_packed_all<X86SchedWriteWidths sched,
                                       AVX512VLVectorVTInfo _Vec, 
                                       AVX512VLVectorVTInfo _Tbl> {
   let Predicates = [HasAVX512] in
-    defm Z    : avx512_fixupimm_packed<0x54, "vfixupimm", X86VFixupimm, sched.ZMM,
-                                       _Vec.info512, _Tbl.info512>,
-                avx512_fixupimm_packed_sae<0x54, "vfixupimm", X86VFixupimm, sched.ZMM,
+    defm Z    : avx512_fixupimm_packed_sae<0x54, "vfixupimm", sched.ZMM,
                                 _Vec.info512, _Tbl.info512>, AVX512AIi8Base,
                                 EVEX_4V, EVEX_V512;
   let Predicates = [HasAVX512, HasVLX] in {
-    defm Z128 : avx512_fixupimm_packed<0x54, "vfixupimm", X86VFixupimm, sched.XMM,
+    defm Z128 : avx512_fixupimm_packed<0x54, "vfixupimm", sched.XMM,
                             _Vec.info128, _Tbl.info128>, AVX512AIi8Base,
                             EVEX_4V, EVEX_V128;
-    defm Z256 : avx512_fixupimm_packed<0x54, "vfixupimm", X86VFixupimm, sched.YMM,
+    defm Z256 : avx512_fixupimm_packed<0x54, "vfixupimm", sched.YMM,
                             _Vec.info256, _Tbl.info256>, AVX512AIi8Base,
                             EVEX_4V, EVEX_V256;
   }
 }
 
-defm VFIXUPIMMSSZ : avx512_fixupimm_scalar<0x55, "vfixupimm", X86VFixupimmScalar,
+defm VFIXUPIMMSSZ : avx512_fixupimm_scalar<0x55, "vfixupimm",
                                            SchedWriteFAdd.Scl, f32x_info, v4i32x_info>,
                           AVX512AIi8Base, VEX_LIG, EVEX_4V, EVEX_CD8<32, CD8VT1>;
-defm VFIXUPIMMSDZ : avx512_fixupimm_scalar<0x55, "vfixupimm", X86VFixupimmScalar,
+defm VFIXUPIMMSDZ : avx512_fixupimm_scalar<0x55, "vfixupimm",
                                            SchedWriteFAdd.Scl, f64x_info, v2i64x_info>,
                           AVX512AIi8Base, VEX_LIG, EVEX_4V, EVEX_CD8<64, CD8VT1>, VEX_W;
 defm VFIXUPIMMPS : avx512_fixupimm_packed_all<SchedWriteFAdd, avx512vl_f32_info,

@@ -417,8 +417,8 @@ namespace llvm {
       // Bitwise ternary logic.
       VPTERNLOG,
       // Fix Up Special Packed Float32/64 values.
-      VFIXUPIMM,
-      VFIXUPIMMS,
+      VFIXUPIMM, VFIXUPIMM_SAE,
+      VFIXUPIMMS, VFIXUPIMMS_SAE,
       // Range Restriction Calculation For Packed Pairs of Float32/64 values.
       VRANGE, VRANGE_RND, VRANGES, VRANGES_RND,
       // Reduce - Perform Reduction Transformation on scalar\packed FP.
