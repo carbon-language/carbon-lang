@@ -28,6 +28,13 @@ namespace Fortran::FIR {
 class Procedure;
 class GraphWriter;
 
+// FIR is a composable hierarchy of owned objects meant to represent a Fortran
+// compilation unit operationally.  At this point, the top-level object is a
+// Program.  A Program owns a list of Procedures and a list of data objects, all
+// with process lifetimes (to-do).  These objects are referenced by pointers.  A
+// Procedure owns a list of BasicBlocks.  A BasicBlock is referenced by a
+// pointer.  A BasicBlock owns a list of Statements.  A Statement is referenced
+// by a pointer.
 class Program final {
 public:
   friend GraphWriter;

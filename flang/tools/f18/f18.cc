@@ -468,6 +468,8 @@ int main(int argc, char *const argv[]) {
           << "  -fdebug-resolve-names\n"
           << "  -fdebug-instrumented-parse\n"
           << "  -fdebug-semantics    perform semantic checks\n"
+          << "  -fdotty              print FIR as a dotty graph\n"
+          << "  -fdebug-dump-linear-ir dump the flat linear FIR for debug\n"
           << "  -v -c -o -I -D -U    have their usual meanings\n"
           << "  -help                print this again\n"
           << "Other options are passed through to the compiler.\n";
