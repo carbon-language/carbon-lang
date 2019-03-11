@@ -2353,14 +2353,9 @@ SDValue TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
   SelectionDAG &DAG = DCI.DAG;
   EVT OpVT = N0.getValueType();
 
-  // These setcc operations always fold.
-  switch (Cond) {
-  default: break;
-  case ISD::SETFALSE:
-  case ISD::SETFALSE2: return DAG.getBoolConstant(false, dl, VT, OpVT);
-  case ISD::SETTRUE:
-  case ISD::SETTRUE2:  return DAG.getBoolConstant(true, dl, VT, OpVT);
-  }
+  // Constant fold or commute setcc.
+  if (SDValue Fold = DAG.FoldSetCC(VT, N0, N1, Cond, dl))
+    return Fold;
 
   // Ensure that the constant occurs on the RHS and fold constant comparisons.
   // TODO: Handle non-splat vector constants. All undef causes trouble.
@@ -2947,11 +2942,9 @@ SDValue TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
     }
   }
 
-  if (isa<ConstantFPSDNode>(N0.getNode())) {
-    // Constant fold or commute setcc.
-    SDValue O = DAG.FoldSetCC(VT, N0, N1, Cond, dl);
-    if (O.getNode()) return O;
-  } else if (auto *CFP = dyn_cast<ConstantFPSDNode>(N1.getNode())) {
+  if (!isa<ConstantFPSDNode>(N0) && isa<ConstantFPSDNode>(N1)) {
+    auto *CFP = cast<ConstantFPSDNode>(N1);
+
     // If the RHS of an FP comparison is a constant, simplify it away in
     // some cases.
     if (CFP->getValueAPF().isNaN()) {
