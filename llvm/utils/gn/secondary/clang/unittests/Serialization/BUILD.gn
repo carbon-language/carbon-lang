@@ -1,17 +1,17 @@
 import("//llvm/utils/unittest/unittest.gni")
 
-unittest("BasicTests") {
+unittest("SerializationTests") {
   configs += [ "//llvm/utils/gn/build:clang_code" ]
   deps = [
+    "//clang/lib/AST",
     "//clang/lib/Basic",
     "//clang/lib/Lex",
+    "//clang/lib/Sema",
+    "//clang/lib/Serialization",
+    "//llvm/lib/Bitcode/Reader",
     "//llvm/lib/Support",
   ]
   sources = [
-    "CharInfoTest.cpp",
-    "DiagnosticTest.cpp",
-    "FileManagerTest.cpp",
-    "FixedPointTest.cpp",
-    "SourceManagerTest.cpp",
+    "InMemoryModuleCacheTest.cpp",
   ]
 }
