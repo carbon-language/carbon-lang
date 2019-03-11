@@ -108,16 +108,18 @@ typedef struct CFI_dim_t {
 } CFI_dim_t;
 
 #ifdef __cplusplus
+namespace cfi_internal {
 // C++ does not support flexible array.
-// The below structure emulate a flexible array. This structure does not take
+// The below structure emulates a flexible array. This structure does not take
 // care of getting the memory storage. Note that it already contains one element
 // because a struct cannot be empty.
-struct CFI_dim_t_cpp_flexible_array : CFI_dim_t {
-  CFI_dim_t &operator[](int index) { return *(this + index); }
-  const CFI_dim_t &operator[](int index) const { return *(this + index); }
-  operator CFI_dim_t *() { return this; }
-  operator const CFI_dim_t *() const { return this; }
+template<typename T> struct FlexibleArray : T {
+  T &operator[](int index) { return *(this + index); }
+  const T &operator[](int index) const { return *(this + index); }
+  operator T *() { return this; }
+  operator const T *() const { return this; }
 };
+}
 #endif
 
 /* 18.5.3 generic data descriptor */
@@ -131,7 +133,7 @@ typedef struct CFI_cdesc_t {
   CFI_attribute_t attribute;
   unsigned char f18Addendum;
 #ifdef __cplusplus
-  CFI_dim_t_cpp_flexible_array dim;
+  cfi_internal::FlexibleArray<CFI_dim_t> dim;
 #else
   CFI_dim_t dim[]; /* must appear last */
 #endif
