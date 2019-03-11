@@ -21,5 +21,6 @@ target_link_libraries(f18
   FortranParser
   FortranEvaluate
   FortranSemantics
+  FortranFIR
   ${LLVM_COMMON_LIBS}
 )

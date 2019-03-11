@@ -49,12 +49,8 @@ public:
 
 private:
   GraphWriter(llvm::raw_ostream &output) : output_{output} {}
-  ~GraphWriter() {
-    if (defaultOutput_) {
-      delete *defaultOutput_;
-      defaultOutput_ = std::nullopt;
-    }
-  }
+  ~GraphWriter();
+
   void dump(Program &program);
   void dump(Procedure &procedure, bool box = false);
   void dump(Region &region, bool box = false);
@@ -77,7 +73,7 @@ private:
     return buffer.str();
   }
   static llvm::raw_ostream &getOutput() {
-    return defaultOutput_ ? *defaultOutput_.value() : llvm::outs();
+    return defaultOutput_ ? *defaultOutput_ : llvm::outs();
   }
 
   unsigned count_{0u};
@@ -86,7 +82,7 @@ private:
   bool isEntry_{false};
   bool isExit_{false};
   std::map<BasicBlock *, unsigned> blockIds_;
-  static std::optional<llvm::raw_ostream *> defaultOutput_;
+  static llvm::raw_ostream * defaultOutput_;
 };
 }
 

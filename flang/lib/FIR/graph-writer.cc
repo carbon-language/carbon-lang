@@ -16,7 +16,13 @@
 
 namespace Fortran::FIR {
 
-std::optional<llvm::raw_ostream *> GraphWriter::defaultOutput_{std::nullopt};
+llvm::raw_ostream *GraphWriter::defaultOutput_;
+
+GraphWriter::~GraphWriter() {
+  if (defaultOutput_) {
+    defaultOutput_->flush();
+  }
+}
 
 void GraphWriter::dumpHeader() { output_ << "digraph G {\n"; }
 void GraphWriter::dumpFooter() { output_ << "}\n"; }
