@@ -1188,20 +1188,28 @@ void BitcodeFile::parse(DenseSet<CachedHashStringRef> &ComdatGroups) {
     Symbols.push_back(createBitcodeSymbol<ELFT>(KeptComdats, ObjSym, *this));
 }
 
-static ELFKind getELFKind(MemoryBufferRef MB) {
+static ELFKind getELFKind(MemoryBufferRef MB, StringRef ArchiveName) {
   unsigned char Size;
   unsigned char Endian;
   std::tie(Size, Endian) = getElfArchType(MB.getBuffer());
 
+  auto Fatal = [&](StringRef Msg) {
+    StringRef Filename = MB.getBufferIdentifier();
+    if (ArchiveName.empty())
+      fatal(Filename + ": corrupted ELF file: " + Msg);
+    else
+      fatal(ArchiveName + "(" + Filename + "): corrupted ELF file: " + Msg);
+  };
+
   if (Endian != ELFDATA2LSB && Endian != ELFDATA2MSB)
-    fatal(MB.getBufferIdentifier() + ": invalid data encoding");
+    Fatal("invalid data encoding");
   if (Size != ELFCLASS32 && Size != ELFCLASS64)
-    fatal(MB.getBufferIdentifier() + ": invalid file class");
+    Fatal("invalid file class");
 
   size_t BufSize = MB.getBuffer().size();
   if ((Size == ELFCLASS32 && BufSize < sizeof(Elf32_Ehdr)) ||
       (Size == ELFCLASS64 && BufSize < sizeof(Elf64_Ehdr)))
-    fatal(MB.getBufferIdentifier() + ": file is too short");
+    Fatal("file is too short");
 
   if (Size == ELFCLASS32)
     return (Endian == ELFDATA2LSB) ? ELF32LEKind : ELF32BEKind;
@@ -1236,7 +1244,7 @@ InputFile *elf::createObjectFile(MemoryBufferRef MB, StringRef ArchiveName,
   if (isBitcode(MB))
     return make<BitcodeFile>(MB, ArchiveName, OffsetInArchive);
 
-  switch (getELFKind(MB)) {
+  switch (getELFKind(MB, ArchiveName)) {
   case ELF32LEKind:
     return make<ObjFile<ELF32LE>>(MB, ArchiveName);
   case ELF32BEKind:
@@ -1251,7 +1259,7 @@ InputFile *elf::createObjectFile(MemoryBufferRef MB, StringRef ArchiveName,
 }
 
 InputFile *elf::createSharedFile(MemoryBufferRef MB, StringRef DefaultSoName) {
-  switch (getELFKind(MB)) {
+  switch (getELFKind(MB, "")) {
   case ELF32LEKind:
     return make<SharedFile<ELF32LE>>(MB, DefaultSoName);
   case ELF32BEKind:
@@ -1293,7 +1301,7 @@ template <class ELFT> void LazyObjFile::parse() {
     return;
   }
 
-  if (getELFKind(this->MB) != Config->EKind) {
+  if (getELFKind(this->MB, ArchiveName) != Config->EKind) {
     error("incompatible file: " + this->MB.getBufferIdentifier());
     return;
   }
