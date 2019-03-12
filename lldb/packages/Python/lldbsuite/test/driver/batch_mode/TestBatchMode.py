@@ -45,8 +45,6 @@ class DriverBatchModeTest (TestBase):
         self.build()
         self.setTearDownCleanup()
 
-        self.runCmd("log enable lldb expr")
-        
         import pexpect
         exe = self.getBuildArtifact("a.out")
         prompt = "(lldb) "
@@ -87,8 +85,6 @@ class DriverBatchModeTest (TestBase):
         self.build()
         self.setTearDownCleanup()
 
-        self.runCmd("log enable lldb expr")
-        
         import pexpect
         exe = self.getBuildArtifact("a.out")
         prompt = "(lldb) "
@@ -133,8 +129,6 @@ class DriverBatchModeTest (TestBase):
         self.build()
         self.setTearDownCleanup()
 
-        self.runCmd("log enable lldb expr")
-        
         import pexpect
         exe = self.getBuildArtifact("a.out")
         prompt = "(lldb) "
