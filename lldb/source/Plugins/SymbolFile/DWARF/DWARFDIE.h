@@ -81,7 +81,7 @@ public:
   //----------------------------------------------------------------------
   // DeclContext related functions
   //----------------------------------------------------------------------
-  void GetDeclContextDIEs(DWARFDIECollection &decl_context_dies) const;
+  std::vector<DWARFDIE> GetDeclContextDIEs() const;
 
   void GetDWARFDeclContext(DWARFDeclContext &dwarf_decl_ctx) const;
 

@@ -18,7 +18,6 @@
 #include "lldb/Utility/Stream.h"
 
 #include "DWARFUnit.h"
-#include "DWARFDIECollection.h"
 #include "DWARFDebugAbbrev.h"
 #include "DWARFDebugAranges.h"
 #include "DWARFDebugInfo.h"
@@ -1381,11 +1380,11 @@ void DWARFDebugInfoEntry::BuildFunctionAddressRangeTable(
   }
 }
 
-void DWARFDebugInfoEntry::GetDeclContextDIEs(
-    DWARFUnit *cu, DWARFDIECollection &decl_context_dies) const {
+std::vector<DWARFDIE>
+DWARFDebugInfoEntry::GetDeclContextDIEs(DWARFUnit *cu) const {
 
   DWARFDIE die(cu, const_cast<DWARFDebugInfoEntry *>(this));
-  die.GetDeclContextDIEs(decl_context_dies);
+  return die.GetDeclContextDIEs();
 }
 
 void DWARFDebugInfoEntry::GetDWARFDeclContext(

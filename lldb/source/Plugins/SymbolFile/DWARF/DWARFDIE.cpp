@@ -9,7 +9,6 @@
 #include "DWARFDIE.h"
 
 #include "DWARFASTParser.h"
-#include "DWARFDIECollection.h"
 #include "DWARFDebugInfo.h"
 #include "DWARFDebugInfoEntry.h"
 #include "DWARFDeclContext.h"
@@ -200,15 +199,18 @@ lldb_private::Type *DWARFDIE::ResolveTypeUID(const DIERef &die_ref) const {
     return nullptr;
 }
 
-void DWARFDIE::GetDeclContextDIEs(DWARFDIECollection &decl_context_dies) const {
-  if (IsValid()) {
-    DWARFDIE parent_decl_ctx_die =
-        m_die->GetParentDeclContextDIE(GetDWARF(), GetCU());
-    if (parent_decl_ctx_die && parent_decl_ctx_die.GetDIE() != GetDIE()) {
-      decl_context_dies.Append(parent_decl_ctx_die);
-      parent_decl_ctx_die.GetDeclContextDIEs(decl_context_dies);
-    }
+std::vector<DWARFDIE> DWARFDIE::GetDeclContextDIEs() const {
+  if (!IsValid())
+    return {};
+
+  std::vector<DWARFDIE> result;
+  DWARFDIE parent = GetParentDeclContextDIE();
+  while (parent.IsValid() && parent.GetDIE() != GetDIE()) {
+    result.push_back(std::move(parent));
+    parent = parent.GetParentDeclContextDIE();
   }
+
+  return result;
 }
 
 void DWARFDIE::GetDWARFDeclContext(DWARFDeclContext &dwarf_decl_ctx) const {
