@@ -613,13 +613,11 @@ public:
     int Idx = -1;
     /// The operand index of the use.
     unsigned EdgeIdx = UINT_MAX;
-#ifndef NDEBUG
+
     /// Debug print.
     void dump(raw_ostream &OS) const {
       OS << "{User:" << Idx << " EdgeIdx:" << EdgeIdx << "}";
     }
-    LLVM_DUMP_METHOD void dump() const { dump(dbgs()); }
-#endif
   };
 
 private:
