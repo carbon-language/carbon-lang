@@ -6849,6 +6849,7 @@ bool CodeGenPrepare::optimizeInst(Instruction *I, DominatorTree &DT,
     // to introduce PHI nodes too late to be cleaned up.  If we detect such a
     // trivial PHI, go ahead and zap it here.
     if (Value *V = SimplifyInstruction(P, {*DL, TLInfo})) {
+      LargeOffsetGEPMap.erase(P);
       P->replaceAllUsesWith(V);
       P->eraseFromParent();
       ++NumPHIsElim;
