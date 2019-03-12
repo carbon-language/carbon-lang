@@ -429,9 +429,8 @@ Error lto::backend(Config &C, AddStreamFn AddStream,
   std::unique_ptr<TargetMachine> TM = createTargetMachine(C, *TOrErr, *Mod);
 
   // Setup optimization remarks.
-  auto DiagFileOrErr =
-      lto::setupOptimizationRemarks(Mod->getContext(), C.RemarksFilename,
-                                    C.RemarksPasses, C.RemarksWithHotness);
+  auto DiagFileOrErr = lto::setupOptimizationRemarks(
+      Mod->getContext(), C.RemarksFilename, C.RemarksWithHotness);
   if (!DiagFileOrErr)
     return DiagFileOrErr.takeError();
   auto DiagnosticOutputFile = std::move(*DiagFileOrErr);
@@ -485,8 +484,7 @@ Error lto::thinBackend(Config &Conf, unsigned Task, AddStreamFn AddStream,
 
   // Setup optimization remarks.
   auto DiagFileOrErr = lto::setupOptimizationRemarks(
-      Mod.getContext(), Conf.RemarksFilename, Conf.RemarksPasses,
-      Conf.RemarksWithHotness, Task);
+      Mod.getContext(), Conf.RemarksFilename, Conf.RemarksWithHotness, Task);
   if (!DiagFileOrErr)
     return DiagFileOrErr.takeError();
   auto DiagnosticOutputFile = std::move(*DiagFileOrErr);
