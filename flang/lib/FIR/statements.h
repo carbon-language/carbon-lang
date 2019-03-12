@@ -74,13 +74,13 @@ public:
 class Stmt_impl {
 public:
   using StatementTrait = std::true_type;
-  virtual ~Stmt_impl() {}
 };
 
 // Every basic block must end in a terminator
 class TerminatorStmt_impl : public Stmt_impl {
 public:
   virtual std::list<BasicBlock *> succ_blocks() const { return {}; }
+  virtual ~TerminatorStmt_impl() {}
   using TerminatorTrait = std::true_type;
 };
 
