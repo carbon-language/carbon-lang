@@ -932,8 +932,16 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
 
     return Type;
   }
-  assert(!Value || BC.getSectionForAddress(Value));
-  BC.InterproceduralReferences.insert(Value);
+
+  // We have a possible tail call, so let's add the value read from the possible
+  // memory location as a reference. Only do that if the address we read is sane
+  // enough (is inside an allocatable section). It is possible that we read
+  // garbage if the load instruction we analyzed is in a basic block different
+  // than the one where the indirect jump is. However, later,
+  // postProcessIndirectBranches() is going to mark the function as non-simple
+  // in this case.
+  if (Value && BC.getSectionForAddress(Value))
+    BC.InterproceduralReferences.insert(Value);
 
   return IndirectBranchType::POSSIBLE_TAIL_CALL;
 }
