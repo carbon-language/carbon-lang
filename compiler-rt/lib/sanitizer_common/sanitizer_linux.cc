@@ -1030,6 +1030,8 @@ uptr GetMaxVirtualAddress() {
   return (1ULL << 40) - 1;  // 0x000000ffffffffffUL;
 # elif defined(__s390x__)
   return (1ULL << 53) - 1;  // 0x001fffffffffffffUL;
+#elif defined(__sparc__)
+  return ~(uptr)0;
 # else
   return (1ULL << 47) - 1;  // 0x00007fffffffffffUL;
 # endif
