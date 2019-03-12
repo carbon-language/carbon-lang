@@ -1196,20 +1196,22 @@ static ELFKind getELFKind(MemoryBufferRef MB, StringRef ArchiveName) {
   auto Fatal = [&](StringRef Msg) {
     StringRef Filename = MB.getBufferIdentifier();
     if (ArchiveName.empty())
-      fatal(Filename + ": corrupted ELF file: " + Msg);
+      fatal(Filename + ": " + Msg);
     else
-      fatal(ArchiveName + "(" + Filename + "): corrupted ELF file: " + Msg);
+      fatal(ArchiveName + "(" + Filename + "): " + Msg);
   };
 
+  if (!MB.getBuffer().startswith(ElfMagic))
+    Fatal("not an ELF file");
   if (Endian != ELFDATA2LSB && Endian != ELFDATA2MSB)
-    Fatal("invalid data encoding");
+    Fatal("corrupted ELF file: invalid data encoding");
   if (Size != ELFCLASS32 && Size != ELFCLASS64)
-    Fatal("invalid file class");
+    Fatal("corrupted ELF file: invalid file class");
 
   size_t BufSize = MB.getBuffer().size();
   if ((Size == ELFCLASS32 && BufSize < sizeof(Elf32_Ehdr)) ||
       (Size == ELFCLASS64 && BufSize < sizeof(Elf64_Ehdr)))
-    Fatal("file is too short");
+    Fatal("corrupted ELF file: file is too short");
 
   if (Size == ELFCLASS32)
     return (Endian == ELFDATA2LSB) ? ELF32LEKind : ELF32BEKind;
