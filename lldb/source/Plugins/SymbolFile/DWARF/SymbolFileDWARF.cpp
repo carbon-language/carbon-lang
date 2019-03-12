@@ -3253,8 +3253,7 @@ VariableSP SymbolFileDWARF::ParseVariableDIE(const SymbolContext &sc,
                 // Retrieve the value as a data expression.
                 DWARFFormValue::FixedFormSizes fixed_form_sizes =
                     DWARFFormValue::GetFixedFormSizesForAddressSize(
-                        attributes.CompileUnitAtIndex(i)->GetAddressByteSize(),
-                        attributes.CompileUnitAtIndex(i)->IsDWARF64());
+                        attributes.CompileUnitAtIndex(i)->GetAddressByteSize());
                 uint32_t data_offset = attributes.DIEOffsetAtIndex(i);
                 uint32_t data_length =
                     fixed_form_sizes.GetSize(form_value.Form());
@@ -3276,8 +3275,7 @@ VariableSP SymbolFileDWARF::ParseVariableDIE(const SymbolContext &sc,
                   DWARFFormValue::FixedFormSizes fixed_form_sizes =
                       DWARFFormValue::GetFixedFormSizesForAddressSize(
                           attributes.CompileUnitAtIndex(i)
-                              ->GetAddressByteSize(),
-                          attributes.CompileUnitAtIndex(i)->IsDWARF64());
+                              ->GetAddressByteSize());
                   uint32_t data_offset = attributes.DIEOffsetAtIndex(i);
                   uint32_t data_length =
                       fixed_form_sizes.GetSize(form_value.Form());
