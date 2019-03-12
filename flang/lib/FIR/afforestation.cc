@@ -23,26 +23,6 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
 
-namespace Fortran::howdowedothis {
-
-// need to be able to convert variable-like things to Expressions, or forego
-// using Expressions entirely. The .typedExpr data member is only on
-// parser::Expr nodes, which is not sufficient.
-
-semantics::MaybeExpr AnalyzeVariable(
-    semantics::SemanticsContext &context, const parser::Variable &var) {
-  return {};
-}
-semantics::MaybeExpr AnalyzeName(
-    semantics::SemanticsContext &context, const parser::Name &name) {
-  return {};
-}
-semantics::MaybeExpr AnalyzeDataRef(
-    semantics::SemanticsContext &context, const parser::DataRef &dataRef) {
-  return {};
-}
-}
-
 namespace Fortran::FIR {
 namespace {
 Expression *ExprRef(const parser::Expr &a) { return &a.typedExpr.value(); }
@@ -66,7 +46,9 @@ struct LinearLabelBuilder {
   LinearLabelRef getNext() {
     LinearLabelRef next{counter++};
     auto cap{referenced.capacity()};
-    if (cap < counter) referenced.reserve(2 * cap);
+    if (cap < counter) {
+      referenced.reserve(2 * cap);
+    }
     referenced[next] = false;
     return next;
   }
@@ -108,8 +90,8 @@ struct LinearGoto {
 };
 
 struct LinearReturn
-  : public SumTypeCopyMixin<std::variant<const parser::FailImageStmt *,
-        const parser::ReturnStmt *, const parser::StopStmt *>> {
+  : public SumTypeCopyMixin<const parser::FailImageStmt *,
+        const parser::ReturnStmt *, const parser::StopStmt *> {
   SUM_TYPE_COPY_MIXIN(LinearReturn)
   template<typename T> LinearReturn(const T &stmt) : SumTypeCopyMixin{&stmt} {}
 };
@@ -172,24 +154,24 @@ struct LinearAction {
   const parser::Statement<parser::ActionStmt> *v;
 };
 
-using ConstructVariant = std::variant<const parser::AssociateConstruct *,
-    const parser::BlockConstruct *, const parser::CaseConstruct *,
-    const parser::ChangeTeamConstruct *, const parser::CriticalConstruct *,
-    const parser::DoConstruct *, const parser::IfConstruct *,
-    const parser::SelectRankConstruct *, const parser::SelectTypeConstruct *,
-    const parser::WhereConstruct *, const parser::ForallConstruct *,
-    const parser::CompilerDirective *, const parser::OpenMPConstruct *,
-    const parser::OpenMPEndLoopDirective *>;
+#define WRAP(T) const parser::T *
+#define CONSTRUCT_TYPES \
+  WRAP(AssociateConstruct), WRAP(BlockConstruct), WRAP(CaseConstruct), \
+      WRAP(ChangeTeamConstruct), WRAP(CriticalConstruct), WRAP(DoConstruct), \
+      WRAP(IfConstruct), WRAP(SelectRankConstruct), WRAP(SelectTypeConstruct), \
+      WRAP(WhereConstruct), WRAP(ForallConstruct), WRAP(CompilerDirective), \
+      WRAP(OpenMPConstruct), WRAP(OpenMPEndLoopDirective)
 
-struct LinearBeginConstruct : public SumTypeCopyMixin<ConstructVariant> {
+struct LinearBeginConstruct : public SumTypeCopyMixin<CONSTRUCT_TYPES> {
   SUM_TYPE_COPY_MIXIN(LinearBeginConstruct)
   template<typename T>
   LinearBeginConstruct(const T &c) : SumTypeCopyMixin{&c} {}
 };
-struct LinearEndConstruct : public SumTypeCopyMixin<ConstructVariant> {
+struct LinearEndConstruct : public SumTypeCopyMixin<CONSTRUCT_TYPES> {
   SUM_TYPE_COPY_MIXIN(LinearEndConstruct)
   template<typename T> LinearEndConstruct(const T &c) : SumTypeCopyMixin{&c} {}
 };
+
 struct LinearDoIncrement {
   LinearDoIncrement(const parser::DoConstruct &stmt) : v{&stmt} {}
   const parser::DoConstruct *v;
@@ -413,11 +395,10 @@ LinearLabelRef NearestEnclosingDoConstruct(AnalysisData &ad) {
   return unspecifiedLabel;
 }
 
-struct LinearOp
-  : public SumTypeMixin<std::variant<LinearLabel, LinearGoto, LinearReturn,
-        LinearConditionalGoto, LinearSwitchingIO, LinearSwitch, LinearAction,
-        LinearBeginConstruct, LinearEndConstruct, LinearIndirectGoto,
-        LinearDoIncrement, LinearDoCompare>> {
+struct LinearOp : public SumTypeMixin<LinearLabel, LinearGoto, LinearReturn,
+                      LinearConditionalGoto, LinearSwitchingIO, LinearSwitch,
+                      LinearAction, LinearBeginConstruct, LinearEndConstruct,
+                      LinearIndirectGoto, LinearDoIncrement, LinearDoCompare> {
   template<typename T> LinearOp(const T &thing) : SumTypeMixin{thing} {}
   void dump() const;
 
@@ -533,44 +514,17 @@ struct LinearOp
 };
 
 template<typename STMTTYPE, typename CT>
-Evaluation GetSwitchSelector(const CT *selectConstruct) {
-  const auto &selector{std::get<parser::Selector>(
-      std::get<parser::Statement<STMTTYPE>>(selectConstruct->t).statement.t)};
-  return std::visit(
-      common::visitors{
-          [](const parser::Expr &e) { return Evaluation{ExprRef(e)}; },
-          [](const parser::Variable &variable) {
-            return Evaluation{&variable};
-          },
-      },
-      selector.u);
-}
-Evaluation GetSwitchRankSelector(
-    const parser::SelectRankConstruct *selectRankConstruct) {
-  return GetSwitchSelector<parser::SelectRankStmt>(selectRankConstruct);
-}
-Evaluation GetSwitchTypeSelector(
-    const parser::SelectTypeConstruct *selectTypeConstruct) {
-  return GetSwitchSelector<parser::SelectTypeStmt>(selectTypeConstruct);
-}
-Evaluation GetSwitchCaseSelector(const parser::CaseConstruct *construct) {
-  auto &s{std::get<parser::Statement<parser::SelectCaseStmt>>(construct->t)};
-  return Evaluation{
-      ExprRef(std::get<parser::Scalar<parser::Expr>>(s.statement.t).thing)};
-}
-
-template<typename STMTTYPE, typename CT>
 const std::optional<parser::Name> &GetSwitchAssociateName(
     const CT *selectConstruct) {
   return std::get<1>(
       std::get<parser::Statement<STMTTYPE>>(selectConstruct->t).statement.t);
 }
 
-template<typename CONSTRUCT, typename GSF>
+template<typename CONSTRUCT>
 void DumpSwitchWithSelector(
-    const CONSTRUCT *construct, char const *const name, GSF getSelector) {
-  auto selector{getSelector(construct)};
-  DebugChannel() << name << "(" << selector.dump();
+    const CONSTRUCT *construct, char const *const name) {
+  /// auto selector{getSelector(construct)};
+  DebugChannel() << name << "(";  // << selector.dump()
 }
 
 void LinearOp::dump() const {
@@ -599,16 +553,13 @@ void LinearOp::dump() const {
             std::visit(
                 common::visitors{
                     [](const parser::CaseConstruct *caseConstruct) {
-                      DumpSwitchWithSelector(
-                          caseConstruct, "case", GetSwitchCaseSelector);
+                      DumpSwitchWithSelector(caseConstruct, "case");
                     },
                     [](const parser::SelectRankConstruct *selectRankConstruct) {
-                      DumpSwitchWithSelector(
-                          selectRankConstruct, "rank", GetSwitchRankSelector);
+                      DumpSwitchWithSelector(selectRankConstruct, "rank");
                     },
                     [](const parser::SelectTypeConstruct *selectTypeConstruct) {
-                      DumpSwitchWithSelector(
-                          selectTypeConstruct, "type", GetSwitchTypeSelector);
+                      DumpSwitchWithSelector(selectTypeConstruct, "type");
                     },
                     [](const parser::ComputedGotoStmt *computedGotoStmt) {
                       DebugChannel() << "igoto(?";
@@ -865,30 +816,16 @@ struct ControlFlowAnalyzer {
   AnalysisData &ad;
 };
 
-struct SwitchArguments {
-  Evaluation exp;
+template<typename T> struct SwitchArgs {
+  Value exp;
   LinearLabelRef defLab;
-  std::vector<SwitchStmt::ValueType> values;
+  std::vector<T> values;
   std::vector<LinearLabelRef> labels;
 };
-struct SwitchCaseArguments {
-  Evaluation exp;
-  LinearLabelRef defLab;
-  std::vector<SwitchCaseStmt::ValueType> ranges;
-  std::vector<LinearLabelRef> labels;
-};
-struct SwitchRankArguments {
-  Evaluation exp;
-  LinearLabelRef defLab;
-  std::vector<SwitchRankStmt::ValueType> ranks;
-  std::vector<LinearLabelRef> labels;
-};
-struct SwitchTypeArguments {
-  Evaluation exp;
-  LinearLabelRef defLab;
-  std::vector<SwitchTypeStmt::ValueType> types;
-  std::vector<LinearLabelRef> labels;
-};
+struct SwitchArguments : public SwitchArgs<SwitchStmt::ValueType> {};
+struct SwitchCaseArguments : public SwitchArgs<SwitchCaseStmt::ValueType> {};
+struct SwitchRankArguments : public SwitchArgs<SwitchRankStmt::ValueType> {};
+struct SwitchTypeArguments : public SwitchArgs<SwitchTypeStmt::ValueType> {};
 
 template<typename T> bool IsDefault(const typename T::ValueType &valueType) {
   return std::holds_alternative<typename T::Default>(valueType);
@@ -914,7 +851,7 @@ void cleanupSwitchPairs(LinearLabelRef &defLab,
 }
 
 static std::vector<SwitchCaseStmt::ValueType> populateSwitchValues(
-    const std::list<parser::CaseConstruct::Case> &list) {
+    FIRBuilder *builder, const std::list<parser::CaseConstruct::Case> &list) {
   std::vector<SwitchCaseStmt::ValueType> result;
   for (auto &v : list) {
     auto &caseSelector{std::get<parser::CaseSelector>(
@@ -929,21 +866,28 @@ static std::vector<SwitchCaseStmt::ValueType> populateSwitchValues(
             common::visitors{
                 [&](const parser::CaseValue &caseValue) {
                   const auto &e{caseValue.thing.thing.value()};
-                  valueList.emplace_back(SwitchCaseStmt::Exactly{ExprRef(e)});
+                  auto *app{builder->MakeAsExpr(ExprRef(e))};
+                  valueList.emplace_back(SwitchCaseStmt::Exactly{app});
                 },
                 [&](const parser::CaseValueRange::Range &range) {
                   if (range.lower.has_value()) {
                     if (range.upper.has_value()) {
-                      valueList.emplace_back(SwitchCaseStmt::InclusiveRange{
-                          ExprRef(range.lower->thing.thing),
-                          ExprRef(range.upper->thing.thing)});
+                      auto *appl{builder->MakeAsExpr(
+                          ExprRef(range.lower->thing.thing))};
+                      auto *apph{builder->MakeAsExpr(
+                          ExprRef(range.upper->thing.thing))};
+                      valueList.emplace_back(
+                          SwitchCaseStmt::InclusiveRange{appl, apph});
                     } else {
-                      valueList.emplace_back(SwitchCaseStmt::InclusiveAbove{
-                          ExprRef(range.lower->thing.thing)});
+                      auto *app{builder->MakeAsExpr(
+                          ExprRef(range.lower->thing.thing))};
+                      valueList.emplace_back(
+                          SwitchCaseStmt::InclusiveAbove{app});
                     }
                   } else {
-                    valueList.emplace_back(SwitchCaseStmt::InclusiveBelow{
-                        ExprRef(range.upper->thing.thing)});
+                    auto *app{
+                        builder->MakeAsExpr(ExprRef(range.upper->thing.thing))};
+                    valueList.emplace_back(SwitchCaseStmt::InclusiveBelow{app});
                   }
                 },
             },
@@ -1005,75 +949,9 @@ static std::vector<SwitchTypeStmt::ValueType> populateSwitchValues(
   return result;
 }
 
-static SwitchCaseArguments ComposeSwitchCaseArguments(
-    const parser::CaseConstruct *caseConstruct,
-    const std::vector<LinearLabelRef> &refs) {
-  auto &cases{
-      std::get<std::list<parser::CaseConstruct::Case>>(caseConstruct->t)};
-  SwitchCaseArguments result{GetSwitchCaseSelector(caseConstruct),
-      unspecifiedLabel, populateSwitchValues(cases), std::move(refs)};
-  cleanupSwitchPairs<SwitchCaseStmt>(
-      result.defLab, result.ranges, result.labels);
-  return result;
-}
-
-static SwitchRankArguments ComposeSwitchRankArguments(
-    const parser::SelectRankConstruct *selectRankConstruct,
-    const std::vector<LinearLabelRef> &refs) {
-  auto &ranks{std::get<std::list<parser::SelectRankConstruct::RankCase>>(
-      selectRankConstruct->t)};
-  SwitchRankArguments result{GetSwitchRankSelector(selectRankConstruct),
-      unspecifiedLabel, populateSwitchValues(ranks), std::move(refs)};
-  if (auto &name{GetSwitchAssociateName<parser::SelectRankStmt>(
-          selectRankConstruct)}) {
-    (void)name;  // get rid of warning
-    // TODO: handle associate-name -> Add an assignment stmt?
-  }
-  cleanupSwitchPairs<SwitchRankStmt>(
-      result.defLab, result.ranks, result.labels);
-  return result;
-}
-static SwitchTypeArguments ComposeSwitchTypeArguments(
-    const parser::SelectTypeConstruct *selectTypeConstruct,
-    const std::vector<LinearLabelRef> &refs) {
-  auto &types{std::get<std::list<parser::SelectTypeConstruct::TypeCase>>(
-      selectTypeConstruct->t)};
-  SwitchTypeArguments result{GetSwitchTypeSelector(selectTypeConstruct),
-      unspecifiedLabel, populateSwitchValues(types), std::move(refs)};
-  if (auto &name{GetSwitchAssociateName<parser::SelectTypeStmt>(
-          selectTypeConstruct)}) {
-    (void)name;  // get rid of warning
-    // TODO: handle associate-name -> Add an assignment stmt?
-  }
-  cleanupSwitchPairs<SwitchTypeStmt>(
-      result.defLab, result.types, result.labels);
-  return result;
-}
-
 static void buildMultiwayDefaultNext(SwitchArguments &result) {
   result.defLab = result.labels.back();
   result.labels.pop_back();
-}
-static SwitchArguments ComposeSwitchArgs(const LinearSwitch &op) {
-  SwitchArguments result{nullptr, unspecifiedLabel, {}, op.refs};
-  std::visit(
-      common::visitors{
-          [&](const parser::ComputedGotoStmt *c) {
-            const auto &e{std::get<parser::ScalarIntExpr>(c->t)};
-            result.exp = ExprRef(e.thing.thing);
-            buildMultiwayDefaultNext(result);
-          },
-          [&](const parser::ArithmeticIfStmt *c) {
-            result.exp = ExprRef(std::get<parser::Expr>(c->t));
-          },
-          [&](const parser::CallStmt *c) {
-            result.exp = nullptr;  // fixme - result of call
-            buildMultiwayDefaultNext(result);
-          },
-          [](const auto *) { WRONG_PATH(); },
-      },
-      op.u);
-  return result;
 }
 
 template<typename T>
@@ -1120,22 +998,22 @@ static Expression CreateConstant(int64_t value) {
   return {evaluate::AsGenericExpr(evaluate::Constant<T>{value})};
 }
 
-static void CreateSwitchHelper(FIRBuilder *builder, const Evaluation &condition,
+static void CreateSwitchHelper(FIRBuilder *builder, Value condition,
     BasicBlock *defaultCase, const SwitchStmt::ValueSuccPairListType &rest) {
   builder->CreateSwitch(condition, defaultCase, rest);
 }
-static void CreateSwitchCaseHelper(FIRBuilder *builder,
-    const Evaluation &condition, BasicBlock *defaultCase,
+static void CreateSwitchCaseHelper(FIRBuilder *builder, Value condition,
+    BasicBlock *defaultCase,
     const SwitchCaseStmt::ValueSuccPairListType &rest) {
   builder->CreateSwitchCase(condition, defaultCase, rest);
 }
-static void CreateSwitchRankHelper(FIRBuilder *builder,
-    const Evaluation &condition, BasicBlock *defaultCase,
+static void CreateSwitchRankHelper(FIRBuilder *builder, Value condition,
+    BasicBlock *defaultCase,
     const SwitchRankStmt::ValueSuccPairListType &rest) {
   builder->CreateSwitchRank(condition, defaultCase, rest);
 }
-static void CreateSwitchTypeHelper(FIRBuilder *builder,
-    const Evaluation &condition, BasicBlock *defaultCase,
+static void CreateSwitchTypeHelper(FIRBuilder *builder, Value condition,
+    BasicBlock *defaultCase,
     const SwitchTypeStmt::ValueSuccPairListType &rest) {
   builder->CreateSwitchType(condition, defaultCase, rest);
 }
@@ -1353,26 +1231,127 @@ public:
   }
 
   // CALL translations ...
-  const Value *CreateCalleeValue(
-      const parser::ProcedureDesignator &designator) {
-    return nullptr;
+  const Value CreateCalleeValue(const parser::ProcedureDesignator &designator) {
+    return NOTHING;
   }
   CallArguments CreateCallArguments(
       const std::list<parser::ActualArgSpec> &arguments) {
     return CallArguments{};
   }
 
+  template<typename STMTTYPE, typename CT>
+  Statement *GetSwitchSelector(const CT *selectConstruct) {
+    return std::visit(
+        common::visitors{
+            [&](const parser::Expr &e) {
+              return builder_->CreateExpr(ExprRef(e));
+            },
+            [&](const parser::Variable &v) {
+              return builder_->CreateExpr(VariableToExpression(v));
+            },
+        },
+        std::get<parser::Selector>(
+            std::get<parser::Statement<STMTTYPE>>(selectConstruct->t)
+                .statement.t)
+            .u);
+  }
+  Statement *GetSwitchRankSelector(
+      const parser::SelectRankConstruct *selectRankConstruct) {
+    return GetSwitchSelector<parser::SelectRankStmt>(selectRankConstruct);
+  }
+  Statement *GetSwitchTypeSelector(
+      const parser::SelectTypeConstruct *selectTypeConstruct) {
+    return GetSwitchSelector<parser::SelectTypeStmt>(selectTypeConstruct);
+  }
+  Statement *GetSwitchCaseSelector(const parser::CaseConstruct *construct) {
+    const auto &x{std::get<parser::Scalar<parser::Expr>>(
+        std::get<parser::Statement<parser::SelectCaseStmt>>(construct->t)
+            .statement.t)};
+    return builder_->CreateExpr(ExprRef(x.thing));
+  }
+  SwitchArguments ComposeSwitchArgs(const LinearSwitch &op) {
+    SwitchArguments result{NOTHING, unspecifiedLabel, {}, op.refs};
+    std::visit(
+        common::visitors{
+            [&](const parser::ComputedGotoStmt *c) {
+              const auto &e{std::get<parser::ScalarIntExpr>(c->t)};
+              result.exp = builder_->CreateExpr(ExprRef(e.thing.thing));
+              buildMultiwayDefaultNext(result);
+            },
+            [&](const parser::ArithmeticIfStmt *c) {
+              result.exp =
+                  builder_->CreateExpr(ExprRef(std::get<parser::Expr>(c->t)));
+            },
+            [&](const parser::CallStmt *c) {
+              result.exp = NOTHING;  // fixme - result of call
+              buildMultiwayDefaultNext(result);
+            },
+            [](const auto *) { WRONG_PATH(); },
+        },
+        op.u);
+    return result;
+  }
+  SwitchCaseArguments ComposeSwitchCaseArguments(
+      const parser::CaseConstruct *caseConstruct,
+      const std::vector<LinearLabelRef> &refs) {
+    auto &cases{
+        std::get<std::list<parser::CaseConstruct::Case>>(caseConstruct->t)};
+    SwitchCaseArguments result{GetSwitchCaseSelector(caseConstruct),
+        unspecifiedLabel, populateSwitchValues(builder_, cases),
+        std::move(refs)};
+    cleanupSwitchPairs<SwitchCaseStmt>(
+        result.defLab, result.values, result.labels);
+    return result;
+  }
+  SwitchRankArguments ComposeSwitchRankArguments(
+      const parser::SelectRankConstruct *selectRankConstruct,
+      const std::vector<LinearLabelRef> &refs) {
+    auto &ranks{std::get<std::list<parser::SelectRankConstruct::RankCase>>(
+        selectRankConstruct->t)};
+    SwitchRankArguments result{GetSwitchRankSelector(selectRankConstruct),
+        unspecifiedLabel, populateSwitchValues(ranks), std::move(refs)};
+    if (auto &name{GetSwitchAssociateName<parser::SelectRankStmt>(
+            selectRankConstruct)}) {
+      (void)name;  // get rid of warning
+      // TODO: handle associate-name -> Add an assignment stmt?
+    }
+    cleanupSwitchPairs<SwitchRankStmt>(
+        result.defLab, result.values, result.labels);
+    return result;
+  }
+  SwitchTypeArguments ComposeSwitchTypeArguments(
+      const parser::SelectTypeConstruct *selectTypeConstruct,
+      const std::vector<LinearLabelRef> &refs) {
+    auto &types{std::get<std::list<parser::SelectTypeConstruct::TypeCase>>(
+        selectTypeConstruct->t)};
+    SwitchTypeArguments result{GetSwitchTypeSelector(selectTypeConstruct),
+        unspecifiedLabel, populateSwitchValues(types), std::move(refs)};
+    if (auto &name{GetSwitchAssociateName<parser::SelectTypeStmt>(
+            selectTypeConstruct)}) {
+      (void)name;  // get rid of warning
+      // TODO: handle associate-name -> Add an assignment stmt?
+    }
+    cleanupSwitchPairs<SwitchTypeStmt>(
+        result.defLab, result.values, result.labels);
+    return result;
+  }
+
   Expression VariableToExpression(const parser::Variable &var) {
-    auto maybe{howdowedothis::AnalyzeVariable(semanticsContext_, var)};
-    return {std::move(maybe.value())};
+    evaluate::ExpressionAnalyzer analyzer{semanticsContext_};
+    return {std::move(analyzer.Analyze(var).value())};
   }
   Expression DataRefToExpression(const parser::DataRef &dr) {
-    auto maybe{howdowedothis::AnalyzeDataRef(semanticsContext_, dr)};
-    return {std::move(maybe.value())};
+    evaluate::ExpressionAnalyzer analyzer{semanticsContext_};
+    return {std::move(analyzer.Analyze(dr).value())};
   }
   Expression NameToExpression(const parser::Name &name) {
-    auto maybe{howdowedothis::AnalyzeName(semanticsContext_, name)};
-    return {std::move(maybe.value())};
+    evaluate::ExpressionAnalyzer analyzer{semanticsContext_};
+    return {std::move(analyzer.Analyze(name).value())};
+  }
+  Expression StructureComponentToExpression(
+      const parser::StructureComponent &sc) {
+    evaluate::ExpressionAnalyzer analyzer{semanticsContext_};
+    return {std::move(analyzer.Analyze(sc).value())};
   }
 
   void handleIntrinsicAssignmentStmt(const parser::AssignmentStmt &stmt) {
@@ -1395,8 +1374,8 @@ public:
   }
 
   struct AllocOpts {
-    std::optional<Expression *> mold;
-    std::optional<Expression *> source;
+    std::optional<Expression> mold;
+    std::optional<Expression> source;
     std::optional<Expression> stat;
     std::optional<Expression> errmsg;
   };
@@ -1407,10 +1386,10 @@ public:
       std::visit(
           common::visitors{
               [&](const parser::AllocOpt::Mold &m) {
-                opts.mold = ExprRef(m.v);
+                opts.mold = *ExprRef(m.v);
               },
               [&](const parser::AllocOpt::Source &s) {
-                opts.source = ExprRef(s.v);
+                opts.source = *ExprRef(s.v);
               },
               [&](const parser::StatOrErrmsg &var) {
                 std::visit(
@@ -1517,7 +1496,21 @@ public:
                   RuntimeCallLock, CreateLockArguments(s.value()));
             },
             [&](const common::Indirection<parser::NullifyStmt> &s) {
-              builder_->CreateNullify(&s.value());
+              for (auto &obj : s.value().v) {
+                std::visit(
+                    common::visitors{
+                        [&](const parser::Name &n) {
+                          auto *s{builder_->CreateAddr(NameToExpression(n))};
+                          builder_->CreateNullify(s);
+                        },
+                        [&](const parser::StructureComponent &sc) {
+                          auto *s{builder_->CreateAddr(
+                              StructureComponentToExpression(sc))};
+                          builder_->CreateNullify(s);
+                        },
+                    },
+                    obj.u);
+              }
             },
             [&](const common::Indirection<parser::OpenStmt> &s) {
               builder_->CreateIOCall(
@@ -1795,10 +1788,14 @@ public:
                           builder_->CreateUnreachable();
                         },
                         [&](const parser::ReturnStmt *s) {
+                          // alt-return
                           if (s->v) {
-                            builder_->CreateReturn(ExprRef(s->v->thing.thing));
+                            auto *app{builder_->CreateExpr(
+                                ExprRef(s->v->thing.thing))};
+                            builder_->CreateReturn(app);
                           } else {
-                            builder_->CreateRetVoid();
+                            auto *zero{builder_->CreateExpr(CreateConstant(0))};
+                            builder_->CreateReturn(zero);
                           }
                         },
                         [&](const parser::StopStmt *s) {
@@ -1857,7 +1854,7 @@ public:
               [&](const LinearSwitchingIO &linearIO) {
                 CheckInsertionPoint();
                 AddOrQueueSwitch<SwitchStmt>(
-                    nullptr, linearIO.next, {}, {}, CreateSwitchHelper);
+                    NOTHING, linearIO.next, {}, {}, CreateSwitchHelper);
                 builder_->ClearInsertionPoint();
               },
               [&](const LinearSwitch &linearSwitch) {
@@ -1873,7 +1870,7 @@ public:
                           auto args{ComposeSwitchCaseArguments(
                               caseConstruct, linearSwitch.refs)};
                           AddOrQueueSwitch<SwitchCaseStmt>(args.exp,
-                              args.defLab, args.ranges, args.labels,
+                              args.defLab, args.values, args.labels,
                               CreateSwitchCaseHelper);
                         },
                         [&](const parser::SelectRankConstruct
@@ -1881,7 +1878,7 @@ public:
                           auto args{ComposeSwitchRankArguments(
                               selectRankConstruct, linearSwitch.refs)};
                           AddOrQueueSwitch<SwitchRankStmt>(args.exp,
-                              args.defLab, args.ranks, args.labels,
+                              args.defLab, args.values, args.labels,
                               CreateSwitchRankHelper);
                         },
                         [&](const parser::SelectTypeConstruct
@@ -1889,7 +1886,7 @@ public:
                           auto args{ComposeSwitchTypeArguments(
                               selectTypeConstruct, linearSwitch.refs)};
                           AddOrQueueSwitch<SwitchTypeStmt>(args.exp,
-                              args.defLab, args.types, args.labels,
+                              args.defLab, args.values, args.labels,
                               CreateSwitchTypeHelper);
                         },
                     },
@@ -2082,8 +2079,7 @@ public:
   }
 
   template<typename SWITCHTYPE, typename F>
-  void AddOrQueueSwitch(const Evaluation &condition,
-      LinearLabelRef defaultLabel,
+  void AddOrQueueSwitch(Value condition, LinearLabelRef defaultLabel,
       const std::vector<typename SWITCHTYPE::ValueType> &values,
       const std::vector<LinearLabelRef> &labels, F function) {
     auto defer{false};
@@ -2107,7 +2103,7 @@ public:
     if (defer) {
       using namespace std::placeholders;
       controlFlowEdgesToAdd_.emplace_back(std::bind(
-          [](FIRBuilder *builder, BasicBlock *block, const Evaluation &expr,
+          [](FIRBuilder *builder, BasicBlock *block, Value expr,
               LinearLabelRef defaultDest,
               const std::vector<typename SWITCHTYPE::ValueType> &values,
               const std::vector<LinearLabelRef> &labels, F function,

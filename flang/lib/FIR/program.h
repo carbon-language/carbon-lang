@@ -15,8 +15,7 @@
 #ifndef FORTRAN_FIR_PROGRAM_H_
 #define FORTRAN_FIR_PROGRAM_H_
 
-#include "common.h"
-#include "procedure.h"
+#include "value.h"
 #include "../evaluate/type.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"

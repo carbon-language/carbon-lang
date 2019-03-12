@@ -37,13 +37,30 @@
 #define WRONG_PATH() DIE("control should not reach here" AT_HERE)
 
 namespace Fortran::FIR {
+
+CLASS_TRAIT(ValueTrait)
+
+class Value_impl {
+public:
+  using ValueTrait = std::true_type;
+
+  std::string dump() const { return {}; }
+};
+
+struct Nothing {};
+constexpr Nothing NOTHING{};
+
+class Value;
 class Statement;
 class BasicBlock;
+class Region;
+class Procedure;
 class Program;
 class GraphWriter;
+class DataObject;
 
 struct Attribute {
-  enum { IntentIn, IntentOut, IntentInOut } attribute;
+  enum { IntentIn, IntentOut, IntentInOut, Value } attribute;
   unsigned short position;
 };
 using FunctionType = evaluate::SomeType;  // TODO: what should this be?
@@ -53,9 +70,8 @@ using Expression = evaluate::GenericExprWrapper;
 using Variable = const semantics::Symbol *;
 using PathVariable = const parser::Variable;
 using Scope = const semantics::Scope;
-using Value = Expression;
-using PHIPair = std::pair<Value *, BasicBlock *>;
-using CallArguments = std::vector<const Expression *>;
+using PHIPair = std::pair<Value, BasicBlock *>;
+using CallArguments = std::vector<Expression>;
 using Type = const semantics::DeclTypeSpec *;  // FIXME
 
 enum InputOutputCallType {

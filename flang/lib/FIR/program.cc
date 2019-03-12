@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "program.h"
+#include "basicblock.h"
 
 namespace Fortran::FIR {
 

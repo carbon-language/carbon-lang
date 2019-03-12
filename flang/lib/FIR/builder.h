@@ -50,14 +50,13 @@ struct FIRBuilder {
   Statement *CreateBranch(BasicBlock *block) {
     return InsertTerminator(BranchStmt::Create(block));
   }
-  Statement *CreateCall(const FunctionType *type, const Value *callee,
-      CallArguments &&arguments) {
-    return Insert(CallStmt::Create(type, callee, std::move(arguments)));
+  Statement *CreateCall(
+      const FunctionType *type, const Value callee, CallArguments &&args) {
+    return Insert(CallStmt::Create(type, callee, std::move(args)));
   }
   Statement *CreateConditionalBranch(
-      Statement *condition, BasicBlock *trueBlock, BasicBlock *falseBlock) {
-    return InsertTerminator(
-        BranchStmt::Create(condition, trueBlock, falseBlock));
+      Statement *cond, BasicBlock *trueBlock, BasicBlock *falseBlock) {
+    return InsertTerminator(BranchStmt::Create(cond, trueBlock, falseBlock));
   }
   Statement *CreateDealloc(AllocateInsn *alloc) {
     return Insert(DeallocateInsn::Create(alloc));
@@ -67,6 +66,9 @@ struct FIRBuilder {
   }
   Statement *CreateExpr(Expression &&e) {
     return Insert(ApplyExprStmt::Create(std::move(e)));
+  }
+  ApplyExprStmt *MakeAsExpr(const Expression *e) {
+    return GetApplyExpr(CreateExpr(e));
   }
   Statement *CreateAddr(const Expression *e) {
     return Insert(LocateExprStmt::Create(e));
@@ -95,35 +97,32 @@ struct FIRBuilder {
   Statement *CreateIndirectBr(Variable *v, const std::vector<BasicBlock *> &p) {
     return InsertTerminator(IndirectBranchStmt::Create(v, p));
   }
-  Statement *CreateNullify(const parser::NullifyStmt *s) {
+  Statement *CreateNullify(Statement *s) {
     return Insert(DisassociateInsn::Create(s));
   }
-  Statement *CreateRetVoid() { return InsertTerminator(ReturnStmt::Create()); }
-  template<typename A> Statement *CreateReturn(A *expr) {
+  Statement *CreateReturn(Statement *expr) {
     return InsertTerminator(ReturnStmt::Create(expr));
   }
   Statement *CreateRuntimeCall(
       RuntimeCallType call, RuntimeCallArguments &&arguments) {
     return Insert(RuntimeStmt::Create(call, std::move(arguments)));
   }
-  Statement *CreateSwitch(const Evaluation &condition, BasicBlock *defaultCase,
+  Statement *CreateSwitch(Value condition, BasicBlock *defaultCase,
       const SwitchStmt::ValueSuccPairListType &rest) {
     return InsertTerminator(SwitchStmt::Create(condition, defaultCase, rest));
   }
-  Statement *CreateSwitchCase(const Evaluation &condition,
-      BasicBlock *defaultCase,
+  Statement *CreateSwitchCase(Value condition, BasicBlock *defaultCase,
       const SwitchCaseStmt::ValueSuccPairListType &rest) {
     return InsertTerminator(
         SwitchCaseStmt::Create(condition, defaultCase, rest));
   }
-  Statement *CreateSwitchType(const Evaluation &condition,
-      BasicBlock *defaultCase,
+  Statement *CreateSwitchType(Value condition, BasicBlock *defaultCase,
       const SwitchTypeStmt::ValueSuccPairListType &rest) {
     return InsertTerminator(
         SwitchTypeStmt::Create(condition, defaultCase, rest));
   }
-  Statement *CreateSwitchRank(const Evaluation &c, BasicBlock *d,
-      const SwitchRankStmt::ValueSuccPairListType &r) {
+  Statement *CreateSwitchRank(
+      Value c, BasicBlock *d, const SwitchRankStmt::ValueSuccPairListType &r) {
     return InsertTerminator(SwitchRankStmt::Create(c, d, r));
   }
   Statement *CreateUnreachable() {

@@ -15,20 +15,15 @@
 #ifndef FORTRAN_FIR_PROCEDURE_H_
 #define FORTRAN_FIR_PROCEDURE_H_
 
-#include "mixin.h"
 #include "program.h"
-#include "region.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 
 namespace Fortran::FIR {
 
-class Program;
-class Region;
-class GraphWriter;
-
 class Procedure final : public llvm::ilist_node<Procedure>,
-                        public ChildMixin<Procedure, Program> {
+                        public ChildMixin<Procedure, Program>,
+                        public Value_impl {
 public:
   friend GraphWriter;
   friend Program;
@@ -62,6 +57,8 @@ public:
   bool hasName() const { return !getName().empty(); }
   llvm::StringRef getName() const { return name_; }
   void FlattenRegions();
+
+  static Value CreateIntrinsicProcedure(int value);
 
 private:
   RegionListType regionList_;

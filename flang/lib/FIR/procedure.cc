@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "procedure.h"
+#include "statements.h"
 
 namespace Fortran::FIR {
 
@@ -80,5 +81,9 @@ void Procedure::FlattenRegions() {
       }
     }
   }
+}
+
+Value Procedure::CreateIntrinsicProcedure(int value) {
+  return {NOTHING};  // FIXME
 }
 }

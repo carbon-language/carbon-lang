@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "graph-writer.h"
+#include "statements.h"
 
 namespace Fortran::FIR {
 

@@ -170,6 +170,11 @@ public:
     }
     return result;
   }
+  MaybeExpr Analyze(const parser::Name &);
+  MaybeExpr Analyze(const parser::DataRef &dr) {
+    return Analyze<parser::DataRef>(dr);
+  }
+  MaybeExpr Analyze(const parser::StructureComponent &);
 
 protected:
   int IntegerTypeSpecKind(const parser::IntegerTypeSpec &);
@@ -186,11 +191,9 @@ private:
   MaybeExpr Analyze(const parser::CharLiteralConstant &);
   MaybeExpr Analyze(const parser::HollerithLiteralConstant &);
   MaybeExpr Analyze(const parser::BOZLiteralConstant &);
-  MaybeExpr Analyze(const parser::Name &);
   MaybeExpr Analyze(const parser::NamedConstant &);
   MaybeExpr Analyze(const parser::Substring &);
   MaybeExpr Analyze(const parser::ArrayElement &);
-  MaybeExpr Analyze(const parser::StructureComponent &);
   MaybeExpr Analyze(const parser::CoindexedNamedObject &);
   MaybeExpr Analyze(const parser::CharLiteralConstantSubstring &);
   MaybeExpr Analyze(const parser::ArrayConstructor &);

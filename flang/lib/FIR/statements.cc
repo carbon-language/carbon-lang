@@ -16,7 +16,7 @@
 
 namespace Fortran::FIR {
 
-static Addressable_impl *GetAddressable(Statement *stmt) {
+Addressable_impl *GetAddressable(Statement *stmt) {
   return std::visit(
       [](auto &s) -> Addressable_impl * {
         if constexpr (std::is_base_of_v<Addressable_impl,
@@ -28,99 +28,14 @@ static Addressable_impl *GetAddressable(Statement *stmt) {
       stmt->u);
 }
 
-static ApplyExprStmt *GetApplyExpr(Statement *stmt) {
-  return std::visit(
-      common::visitors{
-          [](ApplyExprStmt &s) { return &s; },
-          [](auto &) -> ApplyExprStmt * { return nullptr; },
-      },
-      stmt->u);
-}
-
 static std::string dump(const Expression &e) {
   std::stringstream stringStream;
   e.v.AsFortran(stringStream);
   return stringStream.str();
 }
 
-static std::string dump(const Expression *e) {
-  if (e) {
-    return dump(*e);
-  }
-  return "<null-expr>"s;
-}
-
-static std::string dump(const Variable *var) {
-#if 0
-  if (auto *var{std::get_if<const semantics::Symbol *>(&var->u)}) {
-    return (*var)->name().ToString();
-  }
-  return "<var>"s;
-#endif
-  return (*var)->name().ToString();
-}
-
-static std::string dump(PathVariable *pathVariable) {
-  if (pathVariable) {
-    return std::visit(
-        common::visitors{
-            [](const common::Indirection<parser::Designator> &designator) {
-              return std::visit(
-                  common::visitors{
-                      [](const parser::ObjectName &objectName) {
-                        return objectName.symbol->name().ToString();
-                      },
-                      [](const parser::DataRef &dataRef) {
-                        return std::visit(
-                            common::visitors{
-                                [](const parser::Name &name) {
-                                  return name.symbol->name().ToString();
-                                },
-                                [](const common::Indirection<
-                                    parser::StructureComponent> &) {
-                                  return "<structure-component>"s;
-                                },
-                                [](const common::Indirection<
-                                    parser::ArrayElement> &) {
-                                  return "<array-element>"s;
-                                },
-                                [](const common::Indirection<
-                                    parser::CoindexedNamedObject> &) {
-                                  return "<coindexed-named-object>"s;
-                                },
-                            },
-                            dataRef.u);
-                      },
-                      [](const parser::Substring &substring) {
-                        return "<substring>"s;
-                      },
-                  },
-                  designator.value().u);
-            },
-            [](const common::Indirection<parser::FunctionReference> &) {
-              return "<function-reference>"s;
-            },
-        },
-        pathVariable->u);
-  }
-  return "<emty>"s;
-}
-
-std::string Evaluation::dump() const {
-  return std::visit(
-      common::visitors{
-          [](Expression *expression) { return FIR::dump(expression); },
-          [](Variable *variable) { return FIR::dump(variable); },
-          [](PathVariable *pathVariable) { return FIR::dump(pathVariable); },
-          [](const semantics::Symbol *symbol) {
-            return symbol->name().ToString();
-          },
-      },
-      u);
-}
-
-BranchStmt::BranchStmt(
-    Statement *cond, BasicBlock *trueBlock, BasicBlock *falseBlock)
+BranchStmt::BranchStmt(const std::optional<Value> &cond, BasicBlock *trueBlock,
+    BasicBlock *falseBlock)
   : condition_{cond}, succs_{trueBlock, falseBlock} {
   CHECK(succs_[TrueIndex]);
   if (cond) {
@@ -130,56 +45,68 @@ BranchStmt::BranchStmt(
 }
 
 template<typename L>
-static std::list<BasicBlock *> SuccBlocks(const L &valueSuccPairList) {
-  std::list<BasicBlock *> result;
-  for (auto &p : valueSuccPairList) {
-    result.push_back(p.second);
-  }
-  return result;
+static std::list<BasicBlock *> SuccBlocks(
+    const typename L::ValueSuccPairListType &valueSuccPairList) {
+  std::pair<std::list<typename L::ValueType>, std::list<BasicBlock *>> result;
+  UnzipSnd(result, valueSuccPairList.begin(), valueSuccPairList.end());
+  return result.second;
 }
 
-SwitchStmt::SwitchStmt(const Evaluation &condition, BasicBlock *defaultBlock,
+ReturnStmt::ReturnStmt(Statement *exp) : returnValue_{GetApplyExpr(exp)} {
+  CHECK(returnValue_);
+}
+
+SwitchStmt::SwitchStmt(const Value &cond, BasicBlock *defaultBlock,
     const ValueSuccPairListType &args)
-  : condition_{condition} {
-  valueSuccPairs_.push_back({nullptr, defaultBlock});
+  : condition_{cond} {
+  valueSuccPairs_.push_back({NOTHING, defaultBlock});
   valueSuccPairs_.insert(valueSuccPairs_.end(), args.begin(), args.end());
 }
 std::list<BasicBlock *> SwitchStmt::succ_blocks() const {
-  return SuccBlocks(valueSuccPairs_);
+  return SuccBlocks<SwitchStmt>(valueSuccPairs_);
 }
 
-SwitchCaseStmt::SwitchCaseStmt(const Evaluation &condition,
-    BasicBlock *defaultBlock, const ValueSuccPairListType &args)
-  : condition_{condition} {
+SwitchCaseStmt::SwitchCaseStmt(
+    Value cond, BasicBlock *defaultBlock, const ValueSuccPairListType &args)
+  : condition_{cond} {
   valueSuccPairs_.push_back({SwitchCaseStmt::Default{}, defaultBlock});
   valueSuccPairs_.insert(valueSuccPairs_.end(), args.begin(), args.end());
 }
 std::list<BasicBlock *> SwitchCaseStmt::succ_blocks() const {
-  return SuccBlocks(valueSuccPairs_);
+  return SuccBlocks<SwitchCaseStmt>(valueSuccPairs_);
 }
 
-SwitchTypeStmt::SwitchTypeStmt(const Evaluation &condition,
-    BasicBlock *defaultBlock, const ValueSuccPairListType &args)
-  : condition_{condition} {
+SwitchTypeStmt::SwitchTypeStmt(
+    Value cond, BasicBlock *defaultBlock, const ValueSuccPairListType &args)
+  : condition_{cond} {
   valueSuccPairs_.push_back({SwitchTypeStmt::Default{}, defaultBlock});
   valueSuccPairs_.insert(valueSuccPairs_.end(), args.begin(), args.end());
 }
 std::list<BasicBlock *> SwitchTypeStmt::succ_blocks() const {
-  return SuccBlocks(valueSuccPairs_);
+  return SuccBlocks<SwitchTypeStmt>(valueSuccPairs_);
 }
 
-SwitchRankStmt ::SwitchRankStmt(const Evaluation &condition,
-    BasicBlock *defaultBlock, const ValueSuccPairListType &args)
-  : condition_{condition} {
+SwitchRankStmt ::SwitchRankStmt(
+    Value cond, BasicBlock *defaultBlock, const ValueSuccPairListType &args)
+  : condition_{cond} {
   valueSuccPairs_.push_back({SwitchRankStmt::Default{}, defaultBlock});
   valueSuccPairs_.insert(valueSuccPairs_.end(), args.begin(), args.end());
 }
 std::list<BasicBlock *> SwitchRankStmt::succ_blocks() const {
-  return SuccBlocks(valueSuccPairs_);
+  return SuccBlocks<SwitchRankStmt>(valueSuccPairs_);
+}
+
+template<typename T> bool PointerNotNull(const T &variant) {
+  return std::visit(
+      common::visitors{
+          [](const Addressable_impl *p) { return p != nullptr; },
+          [](const Value &value) { return !IsNothing(value); },
+      },
+      variant);
 }
 
 LoadInsn::LoadInsn(Statement *addr) : address_{GetAddressable(addr)} {
-  CHECK(address_);
+  CHECK(PointerNotNull(address_));
 }
 
 StoreInsn::StoreInsn(Statement *addr, Statement *val)
@@ -200,9 +127,9 @@ StoreInsn::StoreInsn(Statement *addr, BasicBlock *val)
   CHECK(val);
 }
 
-IncrementStmt::IncrementStmt(Statement *v1, Statement *v2) : value_{v1, v2} {}
+IncrementStmt::IncrementStmt(Value v1, Value v2) : value_{v1, v2} {}
 
-DoConditionStmt::DoConditionStmt(Statement *dir, Statement *v1, Statement *v2)
+DoConditionStmt::DoConditionStmt(Value dir, Value v1, Value v2)
   : value_{dir, v1, v2} {}
 
 std::string Statement::dump() const {
@@ -212,9 +139,11 @@ std::string Statement::dump() const {
           [](const BranchStmt &branch) {
             if (branch.hasCondition()) {
               std::string cond{"???"};
+#if 0
               if (auto expr{GetApplyExpr(branch.getCond())}) {
                 cond = FIR::dump(expr->expression());
               }
+#endif
               return "branch (" + cond + ") " +
                   std::to_string(
                       reinterpret_cast<std::intptr_t>(branch.getTrueSucc())) +
@@ -227,16 +156,20 @@ std::string Statement::dump() const {
                     reinterpret_cast<std::intptr_t>(branch.getTrueSucc()));
           },
           [](const SwitchStmt &stmt) {
-            return "switch(" + stmt.getCond().dump() + ")";
+            // return "switch(" + stmt.getCond().dump() + ")";
+            return "switch(?)"s;
           },
           [](const SwitchCaseStmt &switchCaseStmt) {
-            return "switch-case(" + switchCaseStmt.getCond().dump() + ")";
+            // return "switch-case(" + switchCaseStmt.getCond().dump() + ")";
+            return "switch-case(?)"s;
           },
           [](const SwitchTypeStmt &switchTypeStmt) {
-            return "switch-type(" + switchTypeStmt.getCond().dump() + ")";
+            // return "switch-type(" + switchTypeStmt.getCond().dump() + ")";
+            return "switch-type(?)"s;
           },
           [](const SwitchRankStmt &switchRankStmt) {
-            return "switch-rank(" + switchRankStmt.getCond().dump() + ")";
+            // return "switch-rank(" + switchRankStmt.getCond().dump() + ")";
+            return "switch-rank(?)"s;
           },
           [](const IndirectBranchStmt &) { return "ibranch"s; },
           [](const UnreachableStmt &) { return "unreachable"s; },
