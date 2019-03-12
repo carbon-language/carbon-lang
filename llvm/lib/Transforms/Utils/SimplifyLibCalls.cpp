@@ -2387,18 +2387,14 @@ Value *LibCallSimplifier::optimizeFRead(CallInst *CI, IRBuilder<> &B) {
 }
 
 Value *LibCallSimplifier::optimizePuts(CallInst *CI, IRBuilder<> &B) {
-  // Check for a constant string.
-  StringRef Str;
-  if (!getConstantStringInfo(CI->getArgOperand(0), Str))
+  if (!CI->use_empty())
     return nullptr;
 
-  if (Str.empty() && CI->use_empty()) {
-    // puts("") -> putchar('\n')
-    Value *Res = emitPutChar(B.getInt32('\n'), B, TLI);
-    if (CI->use_empty() || !Res)
-      return Res;
-    return B.CreateIntCast(Res, CI->getType(), true);
-  }
+  // Check for a constant string.
+  // puts("") -> putchar('\n')
+  StringRef Str;
+  if (getConstantStringInfo(CI->getArgOperand(0), Str) && Str.empty())
+    return emitPutChar(B.getInt32('\n'), B, TLI);
 
   return nullptr;
 }
