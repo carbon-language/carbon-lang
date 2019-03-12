@@ -8,25 +8,22 @@ define void @test() #0 comdat {
 ; CHECK-LABEL: test:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    mflr 0
-; CHECK-NEXT:    .cfi_def_cfa_offset 80
+; CHECK-NEXT:    .cfi_def_cfa_offset 64
 ; CHECK-NEXT:    .cfi_offset lr, 16
-; CHECK-NEXT:    .cfi_offset r29, -32
-; CHECK-NEXT:    .cfi_offset r30, -24
-; CHECK-NEXT:    .cfi_offset f31, -8
-; CHECK-NEXT:    std 29, -32(1) # 8-byte Folded Spill
-; CHECK-NEXT:    std 30, -24(1) # 8-byte Folded Spill
-; CHECK-NEXT:    stfd 31, -8(1) # 8-byte Folded Spill
+; CHECK-NEXT:    .cfi_offset r29, -24
+; CHECK-NEXT:    .cfi_offset r30, -16
+; CHECK-NEXT:    std 29, -24(1) # 8-byte Folded Spill
+; CHECK-NEXT:    std 30, -16(1) # 8-byte Folded Spill
 ; CHECK-NEXT:    std 0, 16(1)
-; CHECK-NEXT:    stdu 1, -80(1)
+; CHECK-NEXT:    stdu 1, -64(1)
 ; CHECK-NEXT:    ld 29, 0(3)
-; CHECK-NEXT:    ld 30, 40(1)
-; CHECK-NEXT:    xxlxor 31, 31, 31
+; CHECK-NEXT:    ld 30, 32(1)
 ; CHECK-NEXT:    cmpld 30, 29
 ; CHECK-NEXT:    bge- 0, .LBB0_2
 ; CHECK-NEXT:    .p2align 5
 ; CHECK-NEXT:  .LBB0_1: # %bounds.ok
-; CHECK:         fmr 1, 31
-; CHECK-NEXT:    lfsx 2, 0, 3
+; CHECK:         lfsx 2, 0, 3
+; CHECK-NEXT:    xxlxor 1, 1, 1
 ; CHECK-NEXT:    bl fmodf
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    addi 30, 30, 1
@@ -34,7 +31,7 @@ define void @test() #0 comdat {
 ; CHECK-NEXT:    cmpld 30, 29
 ; CHECK-NEXT:    blt+ 0, .LBB0_1
 ; CHECK-NEXT:  .LBB0_2: # %bounds.fail
-; CHECK-NEXT:    std 30, 40(1)
+; CHECK-NEXT:    std 30, 32(1)
   %pos = alloca i64, align 8
   br label %forcond
 
