@@ -71,6 +71,17 @@ private:
                                    const TargetRegisterClass *DstRC,
                                    unsigned Scalar,
                                    MachineIRBuilder &MIRBuilder) const;
+
+  /// Emit a lane insert into \p DstReg, or a new vector register if None is
+  /// provided.
+  ///
+  /// The lane inserted into is defined by \p LaneIdx. The vector source
+  /// register is given by \p SrcReg. The register containing the element is
+  /// given by \p EltReg.
+  MachineInstr *emitLaneInsert(Optional<unsigned> DstReg, unsigned SrcReg,
+                               unsigned EltReg, unsigned LaneIdx,
+                               const RegisterBank &RB,
+                               MachineIRBuilder &MIRBuilder) const;
   bool selectBuildVector(MachineInstr &I, MachineRegisterInfo &MRI) const;
   bool selectMergeValues(MachineInstr &I, MachineRegisterInfo &MRI) const;
   bool selectUnmergeValues(MachineInstr &I, MachineRegisterInfo &MRI) const;
@@ -2304,6 +2315,37 @@ bool AArch64InstructionSelector::selectShuffleVector(
   return true;
 }
 
+MachineInstr *AArch64InstructionSelector::emitLaneInsert(
+    Optional<unsigned> DstReg, unsigned SrcReg, unsigned EltReg,
+    unsigned LaneIdx, const RegisterBank &RB,
+    MachineIRBuilder &MIRBuilder) const {
+  MachineInstr *InsElt = nullptr;
+  const TargetRegisterClass *DstRC = &AArch64::FPR128RegClass;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  // Create a register to define with the insert if one wasn't passed in.
+  if (!DstReg)
+    DstReg = MRI.createVirtualRegister(DstRC);
+
+  unsigned EltSize = MRI.getType(EltReg).getSizeInBits();
+  unsigned Opc = getInsertVecEltOpInfo(RB, EltSize).first;
+
+  if (RB.getID() == AArch64::FPRRegBankID) {
+    auto InsSub = emitScalarToVector(EltSize, DstRC, EltReg, MIRBuilder);
+    InsElt = MIRBuilder.buildInstr(Opc, {*DstReg}, {SrcReg})
+                 .addImm(LaneIdx)
+                 .addUse(InsSub->getOperand(0).getReg())
+                 .addImm(0);
+  } else {
+    InsElt = MIRBuilder.buildInstr(Opc, {*DstReg}, {SrcReg})
+                 .addImm(LaneIdx)
+                 .addUse(EltReg);
+  }
+
+  constrainSelectedInstRegOperands(*InsElt, TII, TRI, RBI);
+  return InsElt;
+}
+
 bool AArch64InstructionSelector::selectBuildVector(
     MachineInstr &I, MachineRegisterInfo &MRI) const {
   assert(I.getOpcode() == TargetOpcode::G_BUILD_VECTOR);
@@ -2315,11 +2357,6 @@ bool AArch64InstructionSelector::selectBuildVector(
   if (EltSize < 16 || EltSize > 64)
     return false; // Don't support all element types yet.
   const RegisterBank &RB = *RBI.getRegBank(I.getOperand(1).getReg(), MRI, TRI);
-  unsigned Opc;
-  unsigned SubregIdx;
-
-  std::tie(Opc, SubregIdx) = getInsertVecEltOpInfo(RB, EltSize);
-
   MachineIRBuilder MIRBuilder(I);
 
   const TargetRegisterClass *DstRC = &AArch64::FPR128RegClass;
@@ -2336,34 +2373,11 @@ bool AArch64InstructionSelector::selectBuildVector(
   // a copy using it.
   MachineInstr *PrevMI = nullptr;
   for (unsigned i = 2, e = DstSize / EltSize + 1; i < e; ++i) {
-    // Note that if we don't do a subregister copy, we end up making one more
-    // of these than we need.
-    unsigned InsDef = MRI.createVirtualRegister(DstRC);
-    unsigned LaneIdx = i - 1;
-    if (RB.getID() == AArch64::FPRRegBankID) {
-      auto ImpDef =
-          MIRBuilder.buildInstr(TargetOpcode::IMPLICIT_DEF, {DstRC}, {});
-      auto InsSub = MIRBuilder
-                        .buildInstr(TargetOpcode::INSERT_SUBREG, {DstRC},
-                                    {ImpDef, I.getOperand(i)})
-                        .addImm(SubregIdx);
-      auto InsElt = MIRBuilder.buildInstr(Opc, {InsDef}, {DstVec})
-                        .addImm(LaneIdx)
-                        .addUse(InsSub.getReg(0))
-                        .addImm(0);
-      constrainSelectedInstRegOperands(*ImpDef, TII, TRI, RBI);
-      constrainSelectedInstRegOperands(*InsSub, TII, TRI, RBI);
-      constrainSelectedInstRegOperands(*InsElt, TII, TRI, RBI);
-      DstVec = InsDef;
-      PrevMI = &*InsElt;
-    } else {
-      auto Ins = MIRBuilder.buildInstr(Opc, {InsDef}, {DstVec})
-                     .addImm(LaneIdx)
-                     .addUse(I.getOperand(i).getReg());
-      constrainSelectedInstRegOperands(*Ins, TII, TRI, RBI);
-      DstVec = InsDef;
-      PrevMI = &*Ins;
-    }
+    // Note that if we don't do a subregister copy, we can end up making an
+    // extra register.
+    PrevMI = &*emitLaneInsert(None, DstVec, I.getOperand(i).getReg(), i - 1, RB,
+                              MIRBuilder);
+    DstVec = PrevMI->getOperand(0).getReg();
   }
 
   // If DstTy's size in bits is less than 128, then emit a subregister copy
