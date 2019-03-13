@@ -39,13 +39,14 @@ define i32 @t2(i32 %x) nounwind readnone ssp {
   ret i32 %if
 }
 
-define i32 @t3(i32 %x) nounwind readonly {
+define i32 @t3(i32 %x, i64 %y) nounwind readonly {
 ; X32-LABEL: t3:
 ; X32:       # %bb.0: # %entry
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    cmpl $1, {{[0-9]+}}(%esp)
-; X32-NEXT:    sbbl %eax, %eax
-; X32-NEXT:    cmpl %eax, %eax
-; X32-NEXT:    sbbl %eax, %eax
+; X32-NEXT:    sbbl %ecx, %ecx
+; X32-NEXT:    cmpl %ecx, {{[0-9]+}}(%esp)
+; X32-NEXT:    sbbl %ecx, %eax
 ; X32-NEXT:    xorl %eax, %eax
 ; X32-NEXT:    retl
 ;
@@ -55,7 +56,7 @@ define i32 @t3(i32 %x) nounwind readonly {
 ; X64-NEXT:    testl %edi, %edi
 ; X64-NEXT:    sete %al
 ; X64-NEXT:    negq %rax
-; X64-NEXT:    cmpq %rax, %rax
+; X64-NEXT:    cmpq %rax, %rsi
 ; X64-NEXT:    xorl %eax, %eax
 ; X64-NEXT:    retq
 entry:
@@ -63,7 +64,7 @@ entry:
   %cond = sext i1 %not.tobool to i32
   %conv = sext i1 %not.tobool to i64
   %add13 = add i64 0, %conv
-  %cmp = icmp ult i64 undef, %add13
+  %cmp = icmp ult i64 %y, %add13
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:
