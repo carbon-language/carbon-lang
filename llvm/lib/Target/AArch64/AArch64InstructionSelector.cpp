@@ -2383,28 +2383,24 @@ bool AArch64InstructionSelector::selectBuildVector(
   // If DstTy's size in bits is less than 128, then emit a subregister copy
   // from DstVec to the last register we've defined.
   if (DstSize < 128) {
-    unsigned SubReg = 0;
-
-    // Helper lambda to decide on a register class and subregister for the
-    // subregister copy.
-    auto GetRegInfoForCopy = [&SubReg,
-                              &DstSize]() -> const TargetRegisterClass * {
-      switch (DstSize) {
-      default:
-        LLVM_DEBUG(dbgs() << "Unknown destination size (" << DstSize << ")\n");
-        return nullptr;
-      case 32:
-        SubReg = AArch64::ssub;
-        return &AArch64::FPR32RegClass;
-      case 64:
-        SubReg = AArch64::dsub;
-        return &AArch64::FPR64RegClass;
-      }
-    };
-
-    const TargetRegisterClass *RC = GetRegInfoForCopy();
+    // Force this to be FPR using the destination vector.
+    const TargetRegisterClass *RC =
+        getMinClassForRegBank(*RBI.getRegBank(DstVec, MRI, TRI), DstSize);
     if (!RC)
       return false;
+    if (RC != &AArch64::FPR32RegClass && RC != &AArch64::FPR64RegClass) {
+      LLVM_DEBUG(dbgs() << "Unsupported register class!\n");
+      return false;
+    }
+
+    unsigned SubReg = 0;
+    if (!getSubRegForClass(RC, TRI, SubReg))
+      return false;
+    if (SubReg != AArch64::ssub && SubReg != AArch64::dsub) {
+      LLVM_DEBUG(dbgs() << "Unsupported destination size! (" << DstSize
+                        << "\n");
+      return false;
+    }
 
     unsigned Reg = MRI.createVirtualRegister(RC);
     unsigned DstReg = I.getOperand(0).getReg();
