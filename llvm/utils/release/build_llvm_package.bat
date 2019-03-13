@@ -42,13 +42,13 @@ mkdir %build_dir%
 cd %build_dir%
 
 echo Checking out %branch% at r%revision%...
-REM svn.exe export -r %revision% http://llvm.org/svn/llvm-project/llvm/%branch% llvm || exit /b
-REM svn.exe export -r %revision% http://llvm.org/svn/llvm-project/cfe/%branch% llvm/tools/clang || exit /b
-REM svn.exe export -r %revision% http://llvm.org/svn/llvm-project/clang-tools-extra/%branch% llvm/tools/clang/tools/extra || exit /b
-REM svn.exe export -r %revision% http://llvm.org/svn/llvm-project/lld/%branch% llvm/tools/lld || exit /b
-REM svn.exe export -r %revision% http://llvm.org/svn/llvm-project/compiler-rt/%branch% llvm/projects/compiler-rt || exit /b
-REM svn.exe export -r %revision% http://llvm.org/svn/llvm-project/openmp/%branch% llvm/projects/openmp || exit /b
-REM svn.exe export -r %revision% http://llvm.org/svn/llvm-project/lldb/%branch% llvm/tools/lldb || exit /b
+svn.exe export -r %revision% http://llvm.org/svn/llvm-project/llvm/%branch% llvm || exit /b
+svn.exe export -r %revision% http://llvm.org/svn/llvm-project/cfe/%branch% llvm/tools/clang || exit /b
+svn.exe export -r %revision% http://llvm.org/svn/llvm-project/clang-tools-extra/%branch% llvm/tools/clang/tools/extra || exit /b
+svn.exe export -r %revision% http://llvm.org/svn/llvm-project/lld/%branch% llvm/tools/lld || exit /b
+svn.exe export -r %revision% http://llvm.org/svn/llvm-project/compiler-rt/%branch% llvm/projects/compiler-rt || exit /b
+svn.exe export -r %revision% http://llvm.org/svn/llvm-project/openmp/%branch% llvm/projects/openmp || exit /b
+svn.exe export -r %revision% http://llvm.org/svn/llvm-project/lldb/%branch% llvm/tools/lldb || exit /b
 
 
 REM Setting CMAKE_CL_SHOWINCLUDES_PREFIX to work around PR27226.
