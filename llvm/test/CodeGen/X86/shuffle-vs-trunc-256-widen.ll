@@ -1179,7 +1179,7 @@ define void @trunc_v4i64_to_v4i8(<32 x i8>* %L, <4 x i8>* %S) nounwind {
 ;
 ; AVX512F-LABEL: trunc_v4i64_to_v4i8:
 ; AVX512F:       # %bb.0:
-; AVX512F-NEXT:    vbroadcasti64x4 {{.*#+}} zmm0 = mem[0,1,2,3,0,1,2,3]
+; AVX512F-NEXT:    vmovdqa (%rdi), %ymm0
 ; AVX512F-NEXT:    vpmovqb %zmm0, %xmm0
 ; AVX512F-NEXT:    vmovd %xmm0, (%rsi)
 ; AVX512F-NEXT:    vzeroupper
@@ -1194,7 +1194,7 @@ define void @trunc_v4i64_to_v4i8(<32 x i8>* %L, <4 x i8>* %S) nounwind {
 ;
 ; AVX512BW-LABEL: trunc_v4i64_to_v4i8:
 ; AVX512BW:       # %bb.0:
-; AVX512BW-NEXT:    vbroadcasti64x4 {{.*#+}} zmm0 = mem[0,1,2,3,0,1,2,3]
+; AVX512BW-NEXT:    vmovdqa (%rdi), %ymm0
 ; AVX512BW-NEXT:    vpmovqb %zmm0, %xmm0
 ; AVX512BW-NEXT:    vmovd %xmm0, (%rsi)
 ; AVX512BW-NEXT:    vzeroupper
