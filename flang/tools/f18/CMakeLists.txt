@@ -29,3 +29,12 @@ target_link_libraries(f18
   ${FORTRAN_FIR_LIB}
   ${LLVM_COMMON_LIBS}
 )
+
+add_executable(f18-parse-demo
+  f18-parse-demo.cc
+)
+
+target_link_libraries(f18-parse-demo
+  FortranParser
+  FortranSemantics
+)
