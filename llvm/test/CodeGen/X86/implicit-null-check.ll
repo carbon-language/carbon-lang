@@ -28,10 +28,9 @@ define i32 @imp_null_check_load(i32* %x) {
 define i32 @imp_null_check_unordered_load(i32* %x) {
 ; CHECK-LABEL: imp_null_check_unordered_load:
 ; CHECK:       ## %bb.0: ## %entry
-; CHECK-NEXT:    testq %rdi, %rdi
-; CHECK-NEXT:    je LBB1_1
+; CHECK-NEXT:  Ltmp1:
+; CHECK-NEXT:    movl (%rdi), %eax ## on-fault: LBB1_1
 ; CHECK-NEXT:  ## %bb.2: ## %not_null
-; CHECK-NEXT:    movl (%rdi), %eax
 ; CHECK-NEXT:    retq
 ; CHECK-NEXT:  LBB1_1: ## %is_null
 ; CHECK-NEXT:    movl $42, %eax
@@ -103,7 +102,7 @@ define i32 @imp_null_check_volatile_load(i32* %x) {
 define i8 @imp_null_check_load_i8(i8* %x) {
 ; CHECK-LABEL: imp_null_check_load_i8:
 ; CHECK:       ## %bb.0: ## %entry
-; CHECK-NEXT:  Ltmp1:
+; CHECK-NEXT:  Ltmp2:
 ; CHECK-NEXT:    movb (%rdi), %al ## on-fault: LBB4_1
 ; CHECK-NEXT:  ## %bb.2: ## %not_null
 ; CHECK-NEXT:    retq
@@ -127,7 +126,7 @@ define i256 @imp_null_check_load_i256(i256* %x) {
 ; CHECK-LABEL: imp_null_check_load_i256:
 ; CHECK:       ## %bb.0: ## %entry
 ; CHECK-NEXT:    movq %rdi, %rax
-; CHECK-NEXT:  Ltmp2:
+; CHECK-NEXT:  Ltmp3:
 ; CHECK-NEXT:    movq (%rsi), %rcx ## on-fault: LBB5_1
 ; CHECK-NEXT:  ## %bb.2: ## %not_null
 ; CHECK-NEXT:    movq 8(%rsi), %rdx
@@ -162,7 +161,7 @@ define i256 @imp_null_check_load_i256(i256* %x) {
 define i32 @imp_null_check_gep_load(i32* %x) {
 ; CHECK-LABEL: imp_null_check_gep_load:
 ; CHECK:       ## %bb.0: ## %entry
-; CHECK-NEXT:  Ltmp3:
+; CHECK-NEXT:  Ltmp4:
 ; CHECK-NEXT:    movl 128(%rdi), %eax ## on-fault: LBB6_1
 ; CHECK-NEXT:  ## %bb.2: ## %not_null
 ; CHECK-NEXT:    retq
@@ -186,7 +185,7 @@ define i32 @imp_null_check_gep_load(i32* %x) {
 define i32 @imp_null_check_add_result(i32* %x, i32 %p) {
 ; CHECK-LABEL: imp_null_check_add_result:
 ; CHECK:       ## %bb.0: ## %entry
-; CHECK-NEXT:  Ltmp4:
+; CHECK-NEXT:  Ltmp5:
 ; CHECK-NEXT:    addl (%rdi), %esi ## on-fault: LBB7_1
 ; CHECK-NEXT:  ## %bb.2: ## %not_null
 ; CHECK-NEXT:    movl %esi, %eax
@@ -211,7 +210,7 @@ define i32 @imp_null_check_add_result(i32* %x, i32 %p) {
 define i32 @imp_null_check_sub_result(i32* %x, i32 %p) {
 ; CHECK-LABEL: imp_null_check_sub_result:
 ; CHECK:       ## %bb.0: ## %entry
-; CHECK-NEXT:  Ltmp5:
+; CHECK-NEXT:  Ltmp6:
 ; CHECK-NEXT:    movl (%rdi), %eax ## on-fault: LBB8_1
 ; CHECK-NEXT:  ## %bb.2: ## %not_null
 ; CHECK-NEXT:    subl %esi, %eax
@@ -236,7 +235,7 @@ define i32 @imp_null_check_sub_result(i32* %x, i32 %p) {
 define i32 @imp_null_check_mul_result(i32* %x, i32 %p) {
 ; CHECK-LABEL: imp_null_check_mul_result:
 ; CHECK:       ## %bb.0: ## %entry
-; CHECK-NEXT:  Ltmp6:
+; CHECK-NEXT:  Ltmp7:
 ; CHECK-NEXT:    imull (%rdi), %esi ## on-fault: LBB9_1
 ; CHECK-NEXT:  ## %bb.2: ## %not_null
 ; CHECK-NEXT:    movl %esi, %eax
@@ -261,7 +260,7 @@ define i32 @imp_null_check_mul_result(i32* %x, i32 %p) {
 define i32 @imp_null_check_udiv_result(i32* %x, i32 %p) {
 ; CHECK-LABEL: imp_null_check_udiv_result:
 ; CHECK:       ## %bb.0: ## %entry
-; CHECK-NEXT:  Ltmp7:
+; CHECK-NEXT:  Ltmp8:
 ; CHECK-NEXT:    movl (%rdi), %eax ## on-fault: LBB10_1
 ; CHECK-NEXT:  ## %bb.2: ## %not_null
 ; CHECK-NEXT:    xorl %edx, %edx
@@ -287,7 +286,7 @@ define i32 @imp_null_check_udiv_result(i32* %x, i32 %p) {
 define i32 @imp_null_check_shl_result(i32* %x, i32 %p) {
 ; CHECK-LABEL: imp_null_check_shl_result:
 ; CHECK:       ## %bb.0: ## %entry
-; CHECK-NEXT:  Ltmp8:
+; CHECK-NEXT:  Ltmp9:
 ; CHECK-NEXT:    movl (%rdi), %eax ## on-fault: LBB11_1
 ; CHECK-NEXT:  ## %bb.2: ## %not_null
 ; CHECK-NEXT:    movl %esi, %ecx
@@ -313,7 +312,7 @@ define i32 @imp_null_check_shl_result(i32* %x, i32 %p) {
 define i32 @imp_null_check_lshr_result(i32* %x, i32 %p) {
 ; CHECK-LABEL: imp_null_check_lshr_result:
 ; CHECK:       ## %bb.0: ## %entry
-; CHECK-NEXT:  Ltmp9:
+; CHECK-NEXT:  Ltmp10:
 ; CHECK-NEXT:    movl (%rdi), %eax ## on-fault: LBB12_1
 ; CHECK-NEXT:  ## %bb.2: ## %not_null
 ; CHECK-NEXT:    movl %esi, %ecx
@@ -342,7 +341,7 @@ define i32 @imp_null_check_lshr_result(i32* %x, i32 %p) {
 define i32 @imp_null_check_hoist_over_unrelated_load(i32* %x, i32* %y, i32* %z) {
 ; CHECK-LABEL: imp_null_check_hoist_over_unrelated_load:
 ; CHECK:       ## %bb.0: ## %entry
-; CHECK-NEXT:  Ltmp10:
+; CHECK-NEXT:  Ltmp11:
 ; CHECK-NEXT:    movl (%rdi), %eax ## on-fault: LBB13_1
 ; CHECK-NEXT:  ## %bb.2: ## %not_null
 ; CHECK-NEXT:    movl (%rsi), %ecx
@@ -369,7 +368,7 @@ define i32 @imp_null_check_hoist_over_unrelated_load(i32* %x, i32* %y, i32* %z) 
 define i32 @imp_null_check_via_mem_comparision(i32* %x, i32 %val) {
 ; CHECK-LABEL: imp_null_check_via_mem_comparision:
 ; CHECK:       ## %bb.0: ## %entry
-; CHECK-NEXT:  Ltmp11:
+; CHECK-NEXT:  Ltmp12:
 ; CHECK-NEXT:    cmpl %esi, 4(%rdi) ## on-fault: LBB14_3
 ; CHECK-NEXT:  ## %bb.1: ## %not_null
 ; CHECK-NEXT:    jge LBB14_2
@@ -407,7 +406,7 @@ define i32 @imp_null_check_gep_load_with_use_dep(i32* %x, i32 %a) {
 ; CHECK-LABEL: imp_null_check_gep_load_with_use_dep:
 ; CHECK:       ## %bb.0: ## %entry
 ; CHECK-NEXT:    ## kill: def $esi killed $esi def $rsi
-; CHECK-NEXT:  Ltmp12:
+; CHECK-NEXT:  Ltmp13:
 ; CHECK-NEXT:    movl (%rdi), %eax ## on-fault: LBB15_1
 ; CHECK-NEXT:  ## %bb.2: ## %not_null
 ; CHECK-NEXT:    addl %edi, %esi
@@ -436,7 +435,7 @@ define i32 @imp_null_check_gep_load_with_use_dep(i32* %x, i32 %a) {
 define void @imp_null_check_store(i32* %x) {
 ; CHECK-LABEL: imp_null_check_store:
 ; CHECK:       ## %bb.0: ## %entry
-; CHECK-NEXT:  Ltmp13:
+; CHECK-NEXT:  Ltmp14:
 ; CHECK-NEXT:    movl $1, (%rdi) ## on-fault: LBB16_1
 ; CHECK-NEXT:  ## %bb.2: ## %not_null
 ; CHECK-NEXT:    retq
@@ -459,10 +458,9 @@ define void @imp_null_check_store(i32* %x) {
 define void @imp_null_check_unordered_store(i32* %x) {
 ; CHECK-LABEL: imp_null_check_unordered_store:
 ; CHECK:       ## %bb.0: ## %entry
-; CHECK-NEXT:    testq %rdi, %rdi
-; CHECK-NEXT:    je LBB17_1
+; CHECK-NEXT:  Ltmp15:
+; CHECK-NEXT:    movl $1, (%rdi) ## on-fault: LBB17_1
 ; CHECK-NEXT:  ## %bb.2: ## %not_null
-; CHECK-NEXT:    movl $1, (%rdi)
 ; CHECK-NEXT:    retq
 ; CHECK-NEXT:  LBB17_1: ## %is_null
 ; CHECK-NEXT:    retq
@@ -482,7 +480,7 @@ define void @imp_null_check_unordered_store(i32* %x) {
 define i32 @imp_null_check_neg_gep_load(i32* %x) {
 ; CHECK-LABEL: imp_null_check_neg_gep_load:
 ; CHECK:       ## %bb.0: ## %entry
-; CHECK-NEXT:  Ltmp14:
+; CHECK-NEXT:  Ltmp16:
 ; CHECK-NEXT:    movl -128(%rdi), %eax ## on-fault: LBB18_1
 ; CHECK-NEXT:  ## %bb.2: ## %not_null
 ; CHECK-NEXT:    retq
