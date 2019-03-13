@@ -14,6 +14,8 @@
 
 cmake_minimum_required(VERSION 3.9.0)
 
+option(LINK_WITH_FIR "Link driver with FIR and LLVM" OFF)
+
 # Pass -DGCC=... to cmake to use a specific gcc installation.
 if( GCC )
   set(CMAKE_CXX_COMPILER "${GCC}/bin/g++")
@@ -49,7 +51,7 @@ endif()
 message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}" )
 
 find_package(LLVM REQUIRED CONFIG)
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION} in ${LLVM_INSTALL_PREFIX}")
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION} in ${LLVM_DIR}")
 
 # Get names for the LLVM libraries
 #
@@ -70,8 +72,11 @@ message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION} in ${LLVM_INSTALL_PREFIX}")
 include_directories(${LLVM_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
-llvm_map_components_to_libnames(LLVM_COMMON_LIBS support)
-message(STATUS "LLVM libraries: ${LLVM_COMMON_LIBS}")
+if(LINK_WITH_FIR)
+  message(STATUS "Linking driver with FIR and LLVM")
+  llvm_map_components_to_libnames(LLVM_COMMON_LIBS support)
+  message(STATUS "LLVM libraries: ${LLVM_COMMON_LIBS}")
+endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")

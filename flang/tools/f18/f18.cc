@@ -14,7 +14,7 @@
 
 // Temporary Fortran front end driver main program for development scaffolding.
 
-#ifdef FIR
+#ifdef LINK_WITH_FIR
 #include "../../lib/FIR/afforestation.h"
 #include "../../lib/FIR/graph-writer.h"
 #endif
@@ -240,9 +240,9 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     }
   }
   if (driver.dumpGraph) {
-#ifdef FIR
-    auto *fir{Fortran::FIR::CreateFortranIR(parseTree,
-        semanticsContext, driver.debugLinearFIR)};
+#ifdef LINK_WITH_FIR
+    auto *fir{Fortran::FIR::CreateFortranIR(
+        parseTree, semanticsContext, driver.debugLinearFIR)};
     Fortran::FIR::GraphWriter::print(*fir);
 #endif
     return {};
