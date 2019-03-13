@@ -7,7 +7,6 @@ add_llvm_unittest(BinaryFormatTests
   MachOTest.cpp
   MsgPackDocumentTest.cpp
   MsgPackReaderTest.cpp
-  MsgPackTypesTest.cpp
   MsgPackWriterTest.cpp
   TestFileMagic.cpp
   )

@@ -5,7 +5,6 @@ add_llvm_library(LLVMBinaryFormat
   MsgPackDocument.cpp
   MsgPackDocumentYAML.cpp
   MsgPackReader.cpp
-  MsgPackTypes.cpp
   MsgPackWriter.cpp
   Wasm.cpp
 
