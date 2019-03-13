@@ -654,7 +654,7 @@ def LWGP_MM : LoadGPMM16<"lw", GPRMM16Opnd, II_LW, mem_mm_gp_simm7_lsl2>,
                          LOAD_GP_FM_MM16<0x19>, ISA_MICROMIPS;
 def LWSP_MM : LoadSPMM16<"lw", GPR32Opnd, II_LW, mem_mm_sp_imm5_lsl2>,
               LOAD_STORE_SP_FM_MM16<0x12>, ISA_MICROMIPS;
-def SWSP_MM : StoreSPMM16<"sw", GPR32Opnd, II_SW, mem_mm_sp_imm5_lsl2>,
+def SWSP_MM : StoreSPMM16<"swsp", GPR32Opnd, II_SW, mem_mm_sp_imm5_lsl2>,
               LOAD_STORE_SP_FM_MM16<0x32>, ISA_MICROMIPS32_NOT_MIPS32R6;
 def ADDIUR1SP_MM : AddImmUR1SP<"addiur1sp", GPRMM16Opnd>, ADDIUR1SP_FM_MM16,
                    ISA_MICROMIPS;
@@ -1453,3 +1453,6 @@ def : MipsInstAlias<"mtgc0 $rt, $rs",
 def : MipsInstAlias<"mthgc0 $rt, $rs",
                     (MTHGC0_MM COP0Opnd:$rs, GPR32Opnd:$rt, 0), 0>,
                     ISA_MICROMIPS32R5, ASE_VIRT;
+def : MipsInstAlias<"sw $rt, $offset",
+                    (SWSP_MM GPR32Opnd:$rt, mem_mm_sp_imm5_lsl2:$offset), 1>,
+                    ISA_MICROMIPS;
