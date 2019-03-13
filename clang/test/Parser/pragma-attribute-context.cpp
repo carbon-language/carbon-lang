@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -verify -std=c++11 %s
-// RUN: %clang_cc1 -xobjective-c++ -verify -std=c++11 %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9.0.0 -verify -std=c++11 %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9.0.0 -xobjective-c++ -verify -std=c++11 %s
 
 #define BEGIN_PRAGMA _Pragma("clang attribute push (__attribute__((availability(macos, introduced=1000))), apply_to=function)")
 #define END_PRAGMA _Pragma("clang attribute pop")
