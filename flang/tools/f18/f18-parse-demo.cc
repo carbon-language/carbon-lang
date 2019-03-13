@@ -82,7 +82,6 @@ struct DriverOptions {
   bool compileOnly{false};  // -c
   std::string outputPath;  // -o path
   std::vector<std::string> searchDirectories{"."s};  // -I dir
-  std::string moduleDirectory{"."s};  // -module dir
   bool forcedForm{false};  // -Mfixed or -Mfree appeared
   bool warnOnNonstandardUsage{false};  // -Mstandard
   bool warningsAreErrors{false};  // -Werror
@@ -91,7 +90,6 @@ struct DriverOptions {
   bool dumpProvenance{false};
   bool dumpCookedChars{false};
   bool dumpUnparse{false};
-  bool dumpUnparseWithSymbols{false};
   bool dumpParseTree{false};
   bool timeParse{false};
   std::vector<std::string> fcArgs;
@@ -435,10 +433,6 @@ int main(int argc, char *const argv[]) {
         args.pop_front();
       } else if (arg.substr(0, 2) == "-I") {
         driver.searchDirectories.push_back(arg.substr(2));
-      } else if (arg == "-module") {
-        driver.moduleDirectory = args.front();
-        driver.fcArgs.push_back(driver.moduleDirectory);
-        args.pop_front();
       }
     }
   }
