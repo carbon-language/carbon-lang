@@ -9,23 +9,22 @@
 
 @var = global [32 x i32] zeroinitializer
 
-; TODO: s0 need not be reserved if the function doesn't use a framepointer.
-
 define void @foo() {
 ; RV32I-LABEL: foo:
 ; RV32I:       # %bb.0:
 ; RV32I-NEXT:    addi sp, sp, -80
-; RV32I-NEXT:    sw s1, 76(sp)
-; RV32I-NEXT:    sw s2, 72(sp)
-; RV32I-NEXT:    sw s3, 68(sp)
-; RV32I-NEXT:    sw s4, 64(sp)
-; RV32I-NEXT:    sw s5, 60(sp)
-; RV32I-NEXT:    sw s6, 56(sp)
-; RV32I-NEXT:    sw s7, 52(sp)
-; RV32I-NEXT:    sw s8, 48(sp)
-; RV32I-NEXT:    sw s9, 44(sp)
-; RV32I-NEXT:    sw s10, 40(sp)
-; RV32I-NEXT:    sw s11, 36(sp)
+; RV32I-NEXT:    sw s0, 76(sp)
+; RV32I-NEXT:    sw s1, 72(sp)
+; RV32I-NEXT:    sw s2, 68(sp)
+; RV32I-NEXT:    sw s3, 64(sp)
+; RV32I-NEXT:    sw s4, 60(sp)
+; RV32I-NEXT:    sw s5, 56(sp)
+; RV32I-NEXT:    sw s6, 52(sp)
+; RV32I-NEXT:    sw s7, 48(sp)
+; RV32I-NEXT:    sw s8, 44(sp)
+; RV32I-NEXT:    sw s9, 40(sp)
+; RV32I-NEXT:    sw s10, 36(sp)
+; RV32I-NEXT:    sw s11, 32(sp)
 ; RV32I-NEXT:    lui a0, %hi(var)
 ; RV32I-NEXT:    addi a1, a0, %lo(var)
 ;
@@ -52,17 +51,18 @@ define void @foo() {
 ; RV64I-LABEL: foo:
 ; RV64I:       # %bb.0:
 ; RV64I-NEXT:    addi sp, sp, -144
-; RV64I-NEXT:    sd s1, 136(sp)
-; RV64I-NEXT:    sd s2, 128(sp)
-; RV64I-NEXT:    sd s3, 120(sp)
-; RV64I-NEXT:    sd s4, 112(sp)
-; RV64I-NEXT:    sd s5, 104(sp)
-; RV64I-NEXT:    sd s6, 96(sp)
-; RV64I-NEXT:    sd s7, 88(sp)
-; RV64I-NEXT:    sd s8, 80(sp)
-; RV64I-NEXT:    sd s9, 72(sp)
-; RV64I-NEXT:    sd s10, 64(sp)
-; RV64I-NEXT:    sd s11, 56(sp)
+; RV64I-NEXT:    sd s0, 136(sp)
+; RV64I-NEXT:    sd s1, 128(sp)
+; RV64I-NEXT:    sd s2, 120(sp)
+; RV64I-NEXT:    sd s3, 112(sp)
+; RV64I-NEXT:    sd s4, 104(sp)
+; RV64I-NEXT:    sd s5, 96(sp)
+; RV64I-NEXT:    sd s6, 88(sp)
+; RV64I-NEXT:    sd s7, 80(sp)
+; RV64I-NEXT:    sd s8, 72(sp)
+; RV64I-NEXT:    sd s9, 64(sp)
+; RV64I-NEXT:    sd s10, 56(sp)
+; RV64I-NEXT:    sd s11, 48(sp)
 ; RV64I-NEXT:    lui a0, %hi(var)
 ; RV64I-NEXT:    addi a1, a0, %lo(var)
 ;
