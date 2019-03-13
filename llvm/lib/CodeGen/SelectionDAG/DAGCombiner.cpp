@@ -1709,6 +1709,12 @@ SDValue DAGCombiner::visitTokenFactor(SDNode *N) {
   if (OptLevel == CodeGenOpt::None)
     return SDValue();
 
+  // If this is used only a single token factor, we should make sure we have a
+  // chance to merge them together. This prevents TF chains from inhibiting
+  // optimizations.
+  if (N->hasOneUse() && N->use_begin()->getOpcode() == ISD::TokenFactor)
+    AddToWorklist(*(N->use_begin()));
+
   SmallVector<SDNode *, 8> TFs;     // List of token factors to visit.
   SmallVector<SDValue, 8> Ops;      // Ops for replacing token factor.
   SmallPtrSet<SDNode*, 16> SeenOps;
