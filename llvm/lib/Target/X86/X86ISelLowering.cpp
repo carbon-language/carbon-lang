@@ -34349,7 +34349,7 @@ static SDValue scalarizeExtEltFP(SDNode *ExtElt, SelectionDAG &DAG) {
 
   // Vector FP compares don't fit the pattern of FP math ops (propagate, not
   // extract, the condition code), so deal with those as a special-case.
-  if (Vec.getOpcode() == ISD::SETCC) {
+  if (Vec.getOpcode() == ISD::SETCC && VT == MVT::i1) {
     EVT OpVT = Vec.getOperand(0).getValueType().getScalarType();
     if (OpVT != MVT::f32 && OpVT != MVT::f64)
       return SDValue();
