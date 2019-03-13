@@ -1815,6 +1815,40 @@ static bool getLaneCopyOpcode(unsigned &CopyOpc, unsigned &ExtractSubReg,
   return true;
 }
 
+/// Given a register \p Reg, find the value of a constant defining \p Reg.
+/// Return true if one could be found, and store it in \p Val. Return false
+/// otherwise.
+static bool getConstantValueForReg(unsigned Reg, MachineRegisterInfo &MRI,
+                                   unsigned &Val) {
+  // Look at the def of the register.
+  MachineInstr *Def = MRI.getVRegDef(Reg);
+  if (!Def)
+    return false;
+
+  // Find the first definition which isn't a copy.
+  if (Def->isCopy()) {
+    Reg = Def->getOperand(1).getReg();
+    auto It = find_if_not(MRI.reg_nodbg_instructions(Reg),
+                          [](const MachineInstr &MI) { return MI.isCopy(); });
+    if (It == MRI.reg_instr_nodbg_end()) {
+      LLVM_DEBUG(dbgs() << "Couldn't find non-copy def for register\n");
+      return false;
+    }
+    Def = &*It;
+  }
+
+  // TODO: Handle opcodes other than G_CONSTANT.
+  if (Def->getOpcode() != TargetOpcode::G_CONSTANT) {
+    LLVM_DEBUG(dbgs() << "VRegs defined by anything other than G_CONSTANT "
+                         "currently unsupported.\n");
+    return false;
+  }
+
+  // Return the constant value associated with the operand.
+  Val = Def->getOperand(1).getCImm()->getLimitedValue();
+  return true;
+}
+
 bool AArch64InstructionSelector::selectExtractElt(
     MachineInstr &I, MachineRegisterInfo &MRI) const {
   assert(I.getOpcode() == TargetOpcode::G_EXTRACT_VECTOR_ELT &&
@@ -1837,30 +1871,11 @@ bool AArch64InstructionSelector::selectExtractElt(
     return false;
   }
 
-  // Find the instruction that defines the constant to extract from. There could
-  // be any number of copies between the instruction and the definition of the
-  // index. Skip them.
-  MachineInstr *LaneDefInst = nullptr;
-  for (LaneDefInst = MRI.getVRegDef(LaneIdxOp.getReg());
-       LaneDefInst && LaneDefInst->isCopy();
-       LaneDefInst = MRI.getVRegDef(LaneDefInst->getOperand(1).getReg())) {
-  }
-
-  // Did we find a def in the first place? If not, bail.
-  if (!LaneDefInst) {
-    LLVM_DEBUG(dbgs() << "Did not find VReg definition for " << LaneIdxOp
-                      << "\n");
+  // Find the index to extract from.
+  unsigned LaneIdx = 0;
+  if (!getConstantValueForReg(LaneIdxOp.getReg(), MRI, LaneIdx))
     return false;
-  }
 
-  // TODO: Handle extracts that don't use G_CONSTANT.
-  if (LaneDefInst->getOpcode() != TargetOpcode::G_CONSTANT) {
-    LLVM_DEBUG(dbgs() << "VRegs defined by anything other than G_CONSTANT "
-                         "currently unsupported.\n");
-    return false;
-  }
-
-  unsigned LaneIdx = LaneDefInst->getOperand(1).getCImm()->getLimitedValue();
   unsigned CopyOpc = 0;
   unsigned ExtractSubReg = 0;
   if (!getLaneCopyOpcode(CopyOpc, ExtractSubReg, NarrowTy.getSizeInBits())) {
