@@ -3154,17 +3154,16 @@ struct StmtFunctionStmt {
 };
 
 // Compiler directives
-// !DIR$ IVDEP
 // !DIR$ IGNORE_TKR [ [(tkr...)] name ]...
+// !DIR$ name...
 struct CompilerDirective {
   UNION_CLASS_BOILERPLATE(CompilerDirective);
   struct IgnoreTKR {
     TUPLE_CLASS_BOILERPLATE(IgnoreTKR);
     std::tuple<std::list<const char *>, Name> t;
   };
-  EMPTY_CLASS(IVDEP);
   CharBlock source;
-  std::variant<std::list<IgnoreTKR>, IVDEP> u;
+  std::variant<std::list<IgnoreTKR>, std::list<Name>> u;
 };
 
 // Legacy extensions

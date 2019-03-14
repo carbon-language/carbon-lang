@@ -1746,10 +1746,10 @@ public:
     std::visit(
         common::visitors{
             [&](const std::list<CompilerDirective::IgnoreTKR> &tkr) {
-              Word("!DIR$ IGNORE_TKR");
+              Word("!DIR$ IGNORE_TKR");  // emitted even if tkr list is empty
               Walk(" ", tkr, ", ");
             },
-            [&](const CompilerDirective::IVDEP &) { Word("!DIR$ IVDEP\n"); },
+            [&](const std::list<Name> &names) { Walk("!DIR$ ", names, " "); },
         },
         x.u);
     Put('\n');

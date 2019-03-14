@@ -139,7 +139,6 @@ public:
   NODE(parser, CommonStmt)
   NODE(parser::CommonStmt, Block)
   NODE(parser, CompilerDirective)
-  NODE(parser::CompilerDirective, IVDEP)
   NODE(parser::CompilerDirective, IgnoreTKR)
   NODE(parser, ComplexLiteralConstant)
   NODE(parser, ComplexPart)

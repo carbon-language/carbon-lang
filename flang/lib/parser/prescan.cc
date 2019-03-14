@@ -96,11 +96,12 @@ void Prescanner::Statement() {
   LineClassification line{ClassifyLine(lineStart_)};
   switch (line.kind) {
   case LineClassification::Kind::Comment: NextLine(); return;
-  case LineClassification::Kind::Include:
+  case LineClassification::Kind::IncludeLine:
     FortranInclude(lineStart_ + line.payloadOffset);
     NextLine();
     return;
   case LineClassification::Kind::ConditionalCompilationDirective:
+  case LineClassification::Kind::IncludeDirective:
   case LineClassification::Kind::PreprocessorDirective:
     preprocessor_.Directive(TokenizePreprocessorDirective(), this);
     return;
@@ -161,12 +162,14 @@ void Prescanner::Statement() {
     preprocessed->CloseToken();
     const char *ppd{preprocessed->ToCharBlock().begin()};
     LineClassification ppl{ClassifyLine(ppd)};
+    preprocessed->ReopenLastToken();  // remove the newline
     switch (ppl.kind) {
     case LineClassification::Kind::Comment: break;
-    case LineClassification::Kind::Include:
+    case LineClassification::Kind::IncludeLine:
       FortranInclude(ppd + ppl.payloadOffset);
       break;
     case LineClassification::Kind::ConditionalCompilationDirective:
+    case LineClassification::Kind::IncludeDirective:
     case LineClassification::Kind::PreprocessorDirective:
       Say(preprocessed->GetProvenanceRange(),
           "preprocessed line resembles a preprocessor directive"_en_US);
@@ -200,6 +203,10 @@ void Prescanner::Statement() {
       SourceFormChange(tokens.ToString());
     }
     tokens.Emit(cooked_);
+  }
+  if (omitNewline_) {
+    omitNewline_ = false;
+  } else {
     cooked_.Put('\n', newlineProvenance);
   }
   directiveSentinel_ = nullptr;
@@ -668,21 +675,34 @@ bool Prescanner::IsNextLinePreprocessorDirective() const {
   return IsPreprocessorDirectiveLine(lineStart_) != nullptr;
 }
 
-bool Prescanner::SkipCommentLine() {
+bool Prescanner::SkipCommentLine(bool afterAmpersand) {
   if (lineStart_ >= limit_) {
+    if (afterAmpersand && prescannerNesting_ > 0) {
+      // A continuation marker at the end of the last line in an
+      // include file inhibits the newline.
+      SkipToEndOfLine();
+      omitNewline_ = true;
+    }
     return false;
   }
   auto lineClass{ClassifyLine(lineStart_)};
   if (lineClass.kind == LineClassification::Kind::Comment) {
     NextLine();
     return true;
-  } else if (!inPreprocessorDirective_ &&
-      lineClass.kind ==
-          LineClassification::Kind::ConditionalCompilationDirective) {
+  } else if (inPreprocessorDirective_) {
+    return false;
+  } else if (lineClass.kind ==
+      LineClassification::Kind::ConditionalCompilationDirective) {
     // Allow conditional compilation directives (e.g., #ifdef) to affect
     // continuation lines.
     preprocessor_.Directive(TokenizePreprocessorDirective(), this);
     return true;
+  } else if (afterAmpersand &&
+      (lineClass.kind == LineClassification::Kind::IncludeDirective ||
+          lineClass.kind == LineClassification::Kind::IncludeLine)) {
+    SkipToEndOfLine();
+    omitNewline_ = true;
+    return false;
   } else {
     return false;
   }
@@ -783,7 +803,7 @@ const char *Prescanner::FreeFormContinuationLine(bool ampersand) {
   } else {
     if (*p == '&') {
       return p + 1;
-    } else if (*p == '!' || *p == '\n') {
+    } else if (*p == '!' || *p == '\n' || *p == '#') {
       return nullptr;
     } else if (ampersand || delimiterNesting_ > 0) {
       if (p > lineStart_) {
@@ -811,7 +831,7 @@ bool Prescanner::FixedFormContinuation(bool mightNeedSpace) {
       NextLine();
       return true;
     }
-  } while (SkipCommentLine());
+  } while (SkipCommentLine(false));
   return false;
 }
 
@@ -830,7 +850,7 @@ bool Prescanner::FreeFormContinuation() {
       NextLine();
       return true;
     }
-  } while (SkipCommentLine());
+  } while (SkipCommentLine(ampersand));
   return false;
 }
 
@@ -953,12 +973,14 @@ Prescanner::LineClassification Prescanner::ClassifyLine(
     }
   }
   if (std::optional<std::size_t> quoteOffset{IsIncludeLine(start)}) {
-    return {LineClassification::Kind::Include, *quoteOffset};
+    return {LineClassification::Kind::IncludeLine, *quoteOffset};
   }
   if (const char *dir{IsPreprocessorDirectiveLine(start)}) {
     if (std::memcmp(dir, "if", 2) == 0 || std::memcmp(dir, "elif", 4) == 0 ||
         std::memcmp(dir, "else", 4) == 0 || std::memcmp(dir, "endif", 5) == 0) {
       return {LineClassification::Kind::ConditionalCompilationDirective};
+    } else if (std::memcmp(dir, "include", 7) == 0) {
+      return {LineClassification::Kind::IncludeDirective};
     } else {
       return {LineClassification::Kind::PreprocessorDirective};
     }

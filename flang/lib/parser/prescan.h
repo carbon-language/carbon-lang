@@ -82,8 +82,9 @@ private:
     enum class Kind {
       Comment,
       ConditionalCompilationDirective,
+      IncludeDirective,  // #include
       PreprocessorDirective,
-      Include,
+      IncludeLine,  // Fortran INCLUDE
       CompilerDirective,
       Source
     };
@@ -149,7 +150,7 @@ private:
   void QuotedCharacterLiteral(TokenSequence &);
   void Hollerith(TokenSequence &, int count, const char *start);
   bool PadOutCharacterLiteral(TokenSequence &);
-  bool SkipCommentLine();
+  bool SkipCommentLine(bool afterAmpersand);
   bool IsFixedFormCommentLine(const char *) const;
   bool IsFreeFormComment(const char *) const;
   std::optional<std::size_t> IsIncludeLine(const char *) const;
@@ -197,6 +198,13 @@ private:
   // is necessary to treat the line break as a space character by
   // setting this flag, which is cleared by EmitChar().
   bool insertASpace_{false};
+
+  // When a free form continuation marker (&) appears at the end of a line
+  // before a INCLUDE or #include, we delete it and omit the newline, so
+  // that the first line of the included file is truly a continuation of
+  // the line before.  Also used when the & appears at the end of the last
+  // line in an include file.
+  bool omitNewline_{false};
 
   const Provenance spaceProvenance_{
       cooked_.allSources().CompilerInsertionProvenance(' ')};
