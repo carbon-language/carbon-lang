@@ -18,6 +18,7 @@
 #include "AArch64Subtarget.h"
 #include "AArch64TargetMachine.h"
 #include "MCTargetDesc/AArch64AddressingModes.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelectorImpl.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
@@ -91,11 +92,15 @@ private:
                                  SmallVectorImpl<int> &Idxs) const;
   bool selectShuffleVector(MachineInstr &I, MachineRegisterInfo &MRI) const;
   bool selectExtractElt(MachineInstr &I, MachineRegisterInfo &MRI) const;
+  bool selectConcatVectors(MachineInstr &I, MachineRegisterInfo &MRI) const;
 
   unsigned emitConstantPoolEntry(Constant *CPVal, MachineFunction &MF) const;
   MachineInstr *emitLoadFromConstantPool(Constant *CPVal,
                                          MachineIRBuilder &MIRBuilder) const;
-  MachineInstr *emitVectorConcat(unsigned Op1, unsigned Op2,
+
+  // Emit a vector concat operation.
+  MachineInstr *emitVectorConcat(Optional<unsigned> Dst, unsigned Op1,
+                                 unsigned Op2,
                                  MachineIRBuilder &MIRBuilder) const;
 
   ComplexRendererFns selectArithImmed(MachineOperand &Root) const;
@@ -1726,6 +1731,8 @@ bool AArch64InstructionSelector::select(MachineInstr &I,
     return selectExtractElt(I, MRI);
   case TargetOpcode::G_INSERT_VECTOR_ELT:
     return selectInsertElt(I, MRI);
+  case TargetOpcode::G_CONCAT_VECTORS:
+    return selectConcatVectors(I, MRI);
   }
 
   return false;
@@ -2067,6 +2074,21 @@ bool AArch64InstructionSelector::selectUnmergeValues(
   return true;
 }
 
+bool AArch64InstructionSelector::selectConcatVectors(
+    MachineInstr &I, MachineRegisterInfo &MRI) const {
+  assert(I.getOpcode() == TargetOpcode::G_CONCAT_VECTORS &&
+         "Unexpected opcode");
+  unsigned Dst = I.getOperand(0).getReg();
+  unsigned Op1 = I.getOperand(1).getReg();
+  unsigned Op2 = I.getOperand(2).getReg();
+  MachineIRBuilder MIRBuilder(I);
+  MachineInstr *ConcatMI = emitVectorConcat(Dst, Op1, Op2, MIRBuilder);
+  if (!ConcatMI)
+    return false;
+  I.eraseFromParent();
+  return true;
+}
+
 void AArch64InstructionSelector::collectShuffleMaskIndices(
     MachineInstr &I, MachineRegisterInfo &MRI,
     SmallVectorImpl<int> &Idxs) const {
@@ -2169,7 +2191,8 @@ getInsertVecEltOpInfo(const RegisterBank &RB, unsigned EltSize) {
 }
 
 MachineInstr *AArch64InstructionSelector::emitVectorConcat(
-    unsigned Op1, unsigned Op2, MachineIRBuilder &MIRBuilder) const {
+    Optional<unsigned> Dst, unsigned Op1, unsigned Op2,
+    MachineIRBuilder &MIRBuilder) const {
   // We implement a vector concat by:
   // 1. Use scalar_to_vector to insert the lower vector into the larger dest
   // 2. Insert the upper vector into the destination's upper element
@@ -2215,13 +2238,14 @@ MachineInstr *AArch64InstructionSelector::emitVectorConcat(
   std::tie(InsertOpc, InsSubRegIdx) =
       getInsertVecEltOpInfo(FPRBank, ScalarTy.getSizeInBits());
 
+  if (!Dst)
+    Dst = MRI.createVirtualRegister(DstRC);
   auto InsElt =
       MIRBuilder
-          .buildInstr(InsertOpc, {DstRC}, {WidenedOp1->getOperand(0).getReg()})
+          .buildInstr(InsertOpc, {*Dst}, {WidenedOp1->getOperand(0).getReg()})
           .addImm(1) /* Lane index */
           .addUse(WidenedOp2->getOperand(0).getReg())
           .addImm(0);
-
   constrainSelectedInstRegOperands(*InsElt, TII, TRI, RBI);
   return &*InsElt;
 }
@@ -2276,7 +2300,7 @@ bool AArch64InstructionSelector::selectShuffleVector(
   if (DstTy.getSizeInBits() != 128) {
     assert(DstTy.getSizeInBits() == 64 && "Unexpected shuffle result ty");
     // This case can be done with TBL1.
-    MachineInstr *Concat = emitVectorConcat(Src1Reg, Src2Reg, MIRBuilder);
+    MachineInstr *Concat = emitVectorConcat(None, Src1Reg, Src2Reg, MIRBuilder);
     if (!Concat) {
       LLVM_DEBUG(dbgs() << "Could not do vector concat for tbl1");
       return false;

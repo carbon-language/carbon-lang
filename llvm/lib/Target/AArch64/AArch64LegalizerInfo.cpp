@@ -500,6 +500,9 @@ AArch64LegalizerInfo::AArch64LegalizerInfo(const AArch64Subtarget &ST) {
       .clampNumElements(0, v4s32, v4s32)
       .clampNumElements(0, v2s64, v2s64);
 
+  getActionDefinitionsBuilder(G_CONCAT_VECTORS)
+      .legalFor({{v4s32, v2s32}, {v8s16, v4s16}});
+
   computeTables();
   verify(*ST.getInstrInfo());
 }
