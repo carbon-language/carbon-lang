@@ -892,8 +892,7 @@ static std::string getMacroNameAndPrintExpansion(
 
     // If this token is a macro that should be expanded inside the current
     // macro.
-    if (const MacroInfo *MI =
-                         getMacroInfoForLocation(PP, SM, II, T.getLocation())) {
+    if (getMacroInfoForLocation(PP, SM, II, T.getLocation())) {
       getMacroNameAndPrintExpansion(Printer, T.getLocation(), PP, Info.Args,
                                     AlreadyProcessedTokens);
 
