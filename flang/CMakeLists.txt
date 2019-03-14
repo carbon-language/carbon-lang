@@ -14,7 +14,7 @@
 
 cmake_minimum_required(VERSION 3.9.0)
 
-option(LINK_WITH_FIR "Link driver with FIR and LLVM" OFF)
+option(LINK_WITH_FIR "Link driver with FIR and LLVM" ON)
 
 # Pass -DGCC=... to cmake to use a specific gcc installation.
 if( GCC )
