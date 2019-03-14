@@ -364,7 +364,7 @@ public:
         if (!ExpressionHasTypeCategory(logicalExpr.value().typedExpr.value(),
                 common::TypeCategory::Logical)) {
           messages_.Say(currentStatementSourcePosition_,
-              "DO WHERE must have LOGICAL expression"_err_en_US);
+              "DO WHILE must have LOGICAL expression"_err_en_US);
         }
       }
     }
