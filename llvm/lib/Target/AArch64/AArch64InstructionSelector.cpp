@@ -82,6 +82,7 @@ private:
                                unsigned EltReg, unsigned LaneIdx,
                                const RegisterBank &RB,
                                MachineIRBuilder &MIRBuilder) const;
+  bool selectInsertElt(MachineInstr &I, MachineRegisterInfo &MRI) const;
   bool selectBuildVector(MachineInstr &I, MachineRegisterInfo &MRI) const;
   bool selectMergeValues(MachineInstr &I, MachineRegisterInfo &MRI) const;
   bool selectUnmergeValues(MachineInstr &I, MachineRegisterInfo &MRI) const;
@@ -1723,6 +1724,8 @@ bool AArch64InstructionSelector::select(MachineInstr &I,
     return selectShuffleVector(I, MRI);
   case TargetOpcode::G_EXTRACT_VECTOR_ELT:
     return selectExtractElt(I, MRI);
+  case TargetOpcode::G_INSERT_VECTOR_ELT:
+    return selectInsertElt(I, MRI);
   }
 
   return false;
@@ -2344,6 +2347,42 @@ MachineInstr *AArch64InstructionSelector::emitLaneInsert(
 
   constrainSelectedInstRegOperands(*InsElt, TII, TRI, RBI);
   return InsElt;
+}
+
+bool AArch64InstructionSelector::selectInsertElt(
+    MachineInstr &I, MachineRegisterInfo &MRI) const {
+  assert(I.getOpcode() == TargetOpcode::G_INSERT_VECTOR_ELT);
+
+  // Get information on the destination.
+  unsigned DstReg = I.getOperand(0).getReg();
+  const LLT DstTy = MRI.getType(DstReg);
+  if (DstTy.getSizeInBits() < 128) {
+    // TODO: Handle unpacked vectors.
+    LLVM_DEBUG(dbgs() << "Unpacked vectors not supported yet!");
+    return false;
+  }
+
+  // Get information on the element we want to insert into the destination.
+  unsigned EltReg = I.getOperand(2).getReg();
+  const LLT EltTy = MRI.getType(EltReg);
+  unsigned EltSize = EltTy.getSizeInBits();
+  if (EltSize < 16 || EltSize > 64)
+    return false; // Don't support all element types yet.
+
+  // Find the definition of the index. Bail out if it's not defined by a
+  // G_CONSTANT.
+  unsigned IdxReg = I.getOperand(3).getReg();
+  unsigned LaneIdx = 0;
+  if (!getConstantValueForReg(IdxReg, MRI, LaneIdx))
+    return false;
+
+  // Perform the lane insert.
+  unsigned SrcReg = I.getOperand(1).getReg();
+  const RegisterBank &EltRB = *RBI.getRegBank(EltReg, MRI, TRI);
+  MachineIRBuilder MIRBuilder(I);
+  emitLaneInsert(DstReg, SrcReg, EltReg, LaneIdx, EltRB, MIRBuilder);
+  I.eraseFromParent();
+  return true;
 }
 
 bool AArch64InstructionSelector::selectBuildVector(
