@@ -29,6 +29,7 @@
 
 #include "../../lib/common/default-kinds.h"
 #include "../../lib/parser/characters.h"
+#include "../../lib/parser/dump-parse-tree.h"
 #include "../../lib/parser/features.h"
 #include "../../lib/parser/message.h"
 #include "../../lib/parser/parse-tree-visitor.h"
@@ -36,7 +37,6 @@
 #include "../../lib/parser/parsing.h"
 #include "../../lib/parser/provenance.h"
 #include "../../lib/parser/unparse.h"
-#include "../../lib/semantics/dump-parse-tree.h"
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
@@ -208,7 +208,7 @@ std::string CompileFortran(
   }
   auto &parseTree{*parsing.parseTree()};
   if (driver.dumpParseTree) {
-    Fortran::semantics::DumpTree(std::cout, parseTree);
+    Fortran::parser::DumpTree(std::cout, parseTree);
     return {};
   }
   if (driver.dumpUnparse) {

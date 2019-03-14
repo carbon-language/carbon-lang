@@ -20,6 +20,7 @@
 #endif
 #include "../../lib/common/default-kinds.h"
 #include "../../lib/parser/characters.h"
+#include "../../lib/parser/dump-parse-tree.h"
 #include "../../lib/parser/features.h"
 #include "../../lib/parser/message.h"
 #include "../../lib/parser/parse-tree-visitor.h"
@@ -27,7 +28,6 @@
 #include "../../lib/parser/parsing.h"
 #include "../../lib/parser/provenance.h"
 #include "../../lib/parser/unparse.h"
-#include "../../lib/semantics/dump-parse-tree.h"
 #include "../../lib/semantics/expression.h"
 #include "../../lib/semantics/semantics.h"
 #include "../../lib/semantics/unparse-with-symbols.h"
@@ -249,7 +249,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     return {};
   }
   if (driver.dumpParseTree) {
-    Fortran::semantics::DumpTree(std::cout, parseTree);
+    Fortran::parser::DumpTree(std::cout, parseTree);
   }
   if (driver.dumpUnparse) {
     Unparse(std::cout, parseTree, driver.encoding, true /*capitalize*/,

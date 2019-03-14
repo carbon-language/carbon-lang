@@ -31,7 +31,7 @@
 // TODO pmk remove when scaffolding is obsolete
 #undef PMKDEBUG  // #define PMKDEBUG 1
 #if PMKDEBUG
-#include "dump-parse-tree.h"
+#include "../parser/dump-parse-tree.h"
 #include <iostream>
 #endif
 
@@ -322,7 +322,7 @@ static void FixMisparsedSubstring(const parser::Designator &d) {
                     },
                     arrElement.base.u)}) {
               const Symbol &ultimate{symbol->GetUltimate()};
-              if (const semantics::DeclTypeSpec *type{ultimate.GetType()}) {
+              if (const semantics::DeclTypeSpec * type{ultimate.GetType()}) {
                 if (!ultimate.IsObjectArray() &&
                     type->category() == semantics::DeclTypeSpec::Character) {
                   // The ambiguous S(j:k) was parsed as an array section
@@ -1935,7 +1935,7 @@ void ExprChecker::Enter(const parser::Expr &expr) {
     } else {
 #if PMKDEBUG
       std::cout << "TODO: expression analysis failed for this expression: ";
-      DumpTree(std::cout, expr);
+      parser::DumpTree(std::cout, expr);
 #endif
     }
   }

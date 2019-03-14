@@ -11,19 +11,18 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef FORTRAN_SEMANTICS_DUMP_PARSE_TREE_H_
-#define FORTRAN_SEMANTICS_DUMP_PARSE_TREE_H_
+#ifndef FORTRAN_PARSER_DUMP_PARSE_TREE_H_
+#define FORTRAN_PARSER_DUMP_PARSE_TREE_H_
 
-#include "symbol.h"
+#include "format-specification.h"
+#include "parse-tree-visitor.h"
+#include "parse-tree.h"
 #include "../common/idioms.h"
 #include "../common/indirection.h"
-#include "../parser/format-specification.h"
-#include "../parser/parse-tree-visitor.h"
-#include "../parser/parse-tree.h"
 #include <ostream>
 #include <string>
 
-namespace Fortran::semantics {
+namespace Fortran::parser {
 
 using namespace std::string_literals;
 
@@ -733,23 +732,19 @@ public:
     }
   }
 
-  bool PutName(const std::string &name, const semantics::Symbol *symbol) {
+  bool PutName(const std::string &name) {
     IndentEmptyLine();
-    if (symbol != nullptr) {
-      out_ << "symbol = " << *symbol;
-    } else {
-      out_ << "Name = '" << name << '\'';
-    }
+    out_ << "Name = '" << name << '\'';
     ++indent_;
     EndLine();
     return true;
   }
 
-  bool Pre(const parser::Name &x) { return PutName(x.ToString(), x.symbol); }
+  bool Pre(const parser::Name &x) { return PutName(x.ToString()); }
 
   void Post(const parser::Name &) { --indent_; }
 
-  bool Pre(const std::string &x) { return PutName(x, nullptr); }
+  bool Pre(const std::string &x) { return PutName(x); }
 
   void Post(const std::string &x) { --indent_; }
 
@@ -874,4 +869,4 @@ template<typename T> void DumpTree(std::ostream &out, const T &x) {
   parser::Walk(x, dumper);
 }
 }
-#endif  // FORTRAN_SEMANTICS_DUMP_PARSE_TREE_H_
+#endif  // FORTRAN_PARSER_DUMP_PARSE_TREE_H_
