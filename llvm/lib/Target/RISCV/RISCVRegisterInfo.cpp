@@ -36,7 +36,7 @@ RISCVRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   if (MF->getFunction().hasFnAttribute("interrupt")) {
     if (Subtarget.hasStdExtD())
       return CSR_XLEN_F64_Interrupt_SaveList;
-    if (Subtarget..hasStdExtF())
+    if (Subtarget.hasStdExtF())
       return CSR_XLEN_F32_Interrupt_SaveList;
     return CSR_Interrupt_SaveList;
   }
@@ -119,7 +119,7 @@ unsigned RISCVRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
 const uint32_t *
 RISCVRegisterInfo::getCallPreservedMask(const MachineFunction & MF,
                                         CallingConv::ID /*CC*/) const {
-  auto &Subtarget = MF->getSubtarget<RISCVSubtarget>();
+  auto &Subtarget = MF.getSubtarget<RISCVSubtarget>();
   if (MF.getFunction().hasFnAttribute("interrupt")) {
     if (Subtarget.hasStdExtD())
       return CSR_XLEN_F64_Interrupt_RegMask;
