@@ -22,27 +22,35 @@ define void @test(i8* %x) uwtable ssp {
 ; CHECK:       ## %bb.0: ## %entry
 ; CHECK-NEXT:    pushq %rbp
 ; CHECK-NEXT:    .cfi_def_cfa_offset 16
-; CHECK-NEXT:    pushq %r14
+; CHECK-NEXT:    pushq %r15
 ; CHECK-NEXT:    .cfi_def_cfa_offset 24
-; CHECK-NEXT:    pushq %rbx
+; CHECK-NEXT:    pushq %r14
 ; CHECK-NEXT:    .cfi_def_cfa_offset 32
-; CHECK-NEXT:    .cfi_offset %rbx, -32
-; CHECK-NEXT:    .cfi_offset %r14, -24
+; CHECK-NEXT:    pushq %rbx
+; CHECK-NEXT:    .cfi_def_cfa_offset 40
+; CHECK-NEXT:    pushq %rax
+; CHECK-NEXT:    .cfi_def_cfa_offset 48
+; CHECK-NEXT:    .cfi_offset %rbx, -40
+; CHECK-NEXT:    .cfi_offset %r14, -32
+; CHECK-NEXT:    .cfi_offset %r15, -24
 ; CHECK-NEXT:    .cfi_offset %rbp, -16
 ; CHECK-NEXT:    movq %rdi, %rbx
 ; CHECK-NEXT:    movl $10000, %ebp ## imm = 0x2710
-; CHECK-NEXT:    movq _objc_msgSend@{{.*}}(%rip), %r14
+; CHECK-NEXT:    movq {{.*}}(%rip), %r14
+; CHECK-NEXT:    movq _objc_msgSend@{{.*}}(%rip), %r15
 ; CHECK-NEXT:    .p2align 4, 0x90
 ; CHECK-NEXT:  LBB0_1: ## %for.body
 ; CHECK-NEXT:    ## =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    movq {{.*}}(%rip), %rsi
 ; CHECK-NEXT:    movq %rbx, %rdi
-; CHECK-NEXT:    callq *%r14
+; CHECK-NEXT:    movq %r14, %rsi
+; CHECK-NEXT:    callq *%r15
 ; CHECK-NEXT:    decl %ebp
 ; CHECK-NEXT:    jne LBB0_1
 ; CHECK-NEXT:  ## %bb.2: ## %for.end
+; CHECK-NEXT:    addq $8, %rsp
 ; CHECK-NEXT:    popq %rbx
 ; CHECK-NEXT:    popq %r14
+; CHECK-NEXT:    popq %r15
 ; CHECK-NEXT:    popq %rbp
 ; CHECK-NEXT:    retq
 entry:
@@ -50,7 +58,7 @@ entry:
 
 for.body:                                         ; preds = %for.body, %entry
   %i.01 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
-  %0 = load atomic i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_" unordered, align 8, !invariant.load !0
+  %0 = load i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_", align 8, !invariant.load !0
   %call = tail call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* %x, i8* %0)
   %inc = add i32 %i.01, 1
   %exitcond = icmp eq i32 %inc, 10000
