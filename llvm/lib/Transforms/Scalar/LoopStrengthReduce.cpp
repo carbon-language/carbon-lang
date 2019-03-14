@@ -1017,15 +1017,13 @@ namespace {
 class Cost {
   const Loop *L = nullptr;
   ScalarEvolution *SE = nullptr;
-  DominatorTree *DT = nullptr;
   const TargetTransformInfo *TTI = nullptr;
   TargetTransformInfo::LSRCost C;
 
 public:
   Cost() = delete;
-  Cost(const Loop *L, ScalarEvolution &SE, DominatorTree &DT,
-       const TargetTransformInfo &TTI) :
-    L(L), SE(&SE), DT(&DT), TTI(&TTI) {
+  Cost(const Loop *L, ScalarEvolution &SE, const TargetTransformInfo &TTI) :
+    L(L), SE(&SE), TTI(&TTI) {
     C.Insns = 0;
     C.NumRegs = 0;
     C.AddRecCost = 0;
@@ -4317,7 +4315,7 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
       // avoids the need to recompute this information across formulae using the
       // same bad AddRec. Passing LoserRegs is also essential unless we remove
       // the corresponding bad register from the Regs set.
-      Cost CostF(L, SE, DT, TTI);
+      Cost CostF(L, SE, TTI);
       Regs.clear();
       CostF.RateFormula(F, Regs, VisitedRegs, LU, &LoserRegs);
       if (CostF.isLoser()) {
@@ -4350,7 +4348,7 @@ void LSRInstance::FilterOutUndesirableDedicatedRegisters() {
 
         Formula &Best = LU.Formulae[P.first->second];
 
-        Cost CostBest(L, SE, DT, TTI);
+        Cost CostBest(L, SE, TTI);
         Regs.clear();
         CostBest.RateFormula(Best, Regs, VisitedRegs, LU);
         if (CostF.isLess(CostBest))
@@ -4601,8 +4599,8 @@ void LSRInstance::NarrowSearchSpaceByFilterFormulaWithSameScaledReg() {
 
       // If the new register numbers are the same, choose the Formula with
       // less Cost.
-      Cost CostFA(L, SE, DT, TTI);
-      Cost CostFB(L, SE, DT, TTI);
+      Cost CostFA(L, SE, TTI);
+      Cost CostFB(L, SE, TTI);
       Regs.clear();
       CostFA.RateFormula(FA, Regs, VisitedRegs, LU);
       Regs.clear();
@@ -4893,7 +4891,7 @@ void LSRInstance::SolveRecurse(SmallVectorImpl<const Formula *> &Solution,
       ReqRegs.insert(S);
 
   SmallPtrSet<const SCEV *, 16> NewRegs;
-  Cost NewCost(L, SE, DT, TTI);
+  Cost NewCost(L, SE, TTI);
   for (const Formula &F : LU.Formulae) {
     // Ignore formulae which may not be ideal in terms of register reuse of
     // ReqRegs.  The formula should use all required registers before
@@ -4944,9 +4942,9 @@ void LSRInstance::SolveRecurse(SmallVectorImpl<const Formula *> &Solution,
 /// vector.
 void LSRInstance::Solve(SmallVectorImpl<const Formula *> &Solution) const {
   SmallVector<const Formula *, 8> Workspace;
-  Cost SolutionCost(L, SE, DT, TTI);
+  Cost SolutionCost(L, SE, TTI);
   SolutionCost.Lose();
-  Cost CurCost(L, SE, DT, TTI);
+  Cost CurCost(L, SE, TTI);
   SmallPtrSet<const SCEV *, 16> CurRegs;
   DenseSet<const SCEV *> VisitedRegs;
   Workspace.reserve(Uses.size());
