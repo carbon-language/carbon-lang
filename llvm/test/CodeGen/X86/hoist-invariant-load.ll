@@ -68,6 +68,135 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 
+define void @test_unordered(i8* %x) uwtable ssp {
+; CHECK-LABEL: test_unordered:
+; CHECK:       ## %bb.0: ## %entry
+; CHECK-NEXT:    pushq %rbp
+; CHECK-NEXT:    .cfi_def_cfa_offset 16
+; CHECK-NEXT:    pushq %r14
+; CHECK-NEXT:    .cfi_def_cfa_offset 24
+; CHECK-NEXT:    pushq %rbx
+; CHECK-NEXT:    .cfi_def_cfa_offset 32
+; CHECK-NEXT:    .cfi_offset %rbx, -32
+; CHECK-NEXT:    .cfi_offset %r14, -24
+; CHECK-NEXT:    .cfi_offset %rbp, -16
+; CHECK-NEXT:    movq %rdi, %rbx
+; CHECK-NEXT:    movl $10000, %ebp ## imm = 0x2710
+; CHECK-NEXT:    movq _objc_msgSend@{{.*}}(%rip), %r14
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  LBB1_1: ## %for.body
+; CHECK-NEXT:    ## =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    movq {{.*}}(%rip), %rsi
+; CHECK-NEXT:    movq %rbx, %rdi
+; CHECK-NEXT:    callq *%r14
+; CHECK-NEXT:    decl %ebp
+; CHECK-NEXT:    jne LBB1_1
+; CHECK-NEXT:  ## %bb.2: ## %for.end
+; CHECK-NEXT:    popq %rbx
+; CHECK-NEXT:    popq %r14
+; CHECK-NEXT:    popq %rbp
+; CHECK-NEXT:    retq
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %i.01 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %0 = load atomic i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_" unordered, align 8, !invariant.load !0
+  %call = tail call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* %x, i8* %0)
+  %inc = add i32 %i.01, 1
+  %exitcond = icmp eq i32 %inc, 10000
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body
+  ret void
+}
+
+define void @test_volatile(i8* %x) uwtable ssp {
+; CHECK-LABEL: test_volatile:
+; CHECK:       ## %bb.0: ## %entry
+; CHECK-NEXT:    pushq %rbp
+; CHECK-NEXT:    .cfi_def_cfa_offset 16
+; CHECK-NEXT:    pushq %r14
+; CHECK-NEXT:    .cfi_def_cfa_offset 24
+; CHECK-NEXT:    pushq %rbx
+; CHECK-NEXT:    .cfi_def_cfa_offset 32
+; CHECK-NEXT:    .cfi_offset %rbx, -32
+; CHECK-NEXT:    .cfi_offset %r14, -24
+; CHECK-NEXT:    .cfi_offset %rbp, -16
+; CHECK-NEXT:    movq %rdi, %rbx
+; CHECK-NEXT:    movl $10000, %ebp ## imm = 0x2710
+; CHECK-NEXT:    movq _objc_msgSend@{{.*}}(%rip), %r14
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  LBB2_1: ## %for.body
+; CHECK-NEXT:    ## =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    movq {{.*}}(%rip), %rsi
+; CHECK-NEXT:    movq %rbx, %rdi
+; CHECK-NEXT:    callq *%r14
+; CHECK-NEXT:    decl %ebp
+; CHECK-NEXT:    jne LBB2_1
+; CHECK-NEXT:  ## %bb.2: ## %for.end
+; CHECK-NEXT:    popq %rbx
+; CHECK-NEXT:    popq %r14
+; CHECK-NEXT:    popq %rbp
+; CHECK-NEXT:    retq
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %i.01 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %0 = load volatile i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_", align 8, !invariant.load !0
+  %call = tail call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* %x, i8* %0)
+  %inc = add i32 %i.01, 1
+  %exitcond = icmp eq i32 %inc, 10000
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body
+  ret void
+}
+
+define void @test_seq_cst(i8* %x) uwtable ssp {
+; CHECK-LABEL: test_seq_cst:
+; CHECK:       ## %bb.0: ## %entry
+; CHECK-NEXT:    pushq %rbp
+; CHECK-NEXT:    .cfi_def_cfa_offset 16
+; CHECK-NEXT:    pushq %r14
+; CHECK-NEXT:    .cfi_def_cfa_offset 24
+; CHECK-NEXT:    pushq %rbx
+; CHECK-NEXT:    .cfi_def_cfa_offset 32
+; CHECK-NEXT:    .cfi_offset %rbx, -32
+; CHECK-NEXT:    .cfi_offset %r14, -24
+; CHECK-NEXT:    .cfi_offset %rbp, -16
+; CHECK-NEXT:    movq %rdi, %rbx
+; CHECK-NEXT:    movl $10000, %ebp ## imm = 0x2710
+; CHECK-NEXT:    movq _objc_msgSend@{{.*}}(%rip), %r14
+; CHECK-NEXT:    .p2align 4, 0x90
+; CHECK-NEXT:  LBB3_1: ## %for.body
+; CHECK-NEXT:    ## =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    movq {{.*}}(%rip), %rsi
+; CHECK-NEXT:    movq %rbx, %rdi
+; CHECK-NEXT:    callq *%r14
+; CHECK-NEXT:    decl %ebp
+; CHECK-NEXT:    jne LBB3_1
+; CHECK-NEXT:  ## %bb.2: ## %for.end
+; CHECK-NEXT:    popq %rbx
+; CHECK-NEXT:    popq %r14
+; CHECK-NEXT:    popq %rbp
+; CHECK-NEXT:    retq
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %i.01 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %0 = load atomic i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_" seq_cst, align 8, !invariant.load !0
+  %call = tail call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* %x, i8* %0)
+  %inc = add i32 %i.01, 1
+  %exitcond = icmp eq i32 %inc, 10000
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body
+  ret void
+}
+
 declare i8* @objc_msgSend(i8*, i8*, ...) nonlazybind
 
 define void @test_multi_def(i64* dereferenceable(8) %x1,
@@ -78,18 +207,18 @@ define void @test_multi_def(i64* dereferenceable(8) %x1,
 ; CHECK-NEXT:    movq (%rdi), %rdi
 ; CHECK-NEXT:    movq (%rsi), %rsi
 ; CHECK-NEXT:    .p2align 4, 0x90
-; CHECK-NEXT:  LBB1_2: ## %for.body
+; CHECK-NEXT:  LBB4_2: ## %for.body
 ; CHECK-NEXT:    ## =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    movq %rdi, %rax
 ; CHECK-NEXT:    mulq %rsi
 ; CHECK-NEXT:    addq %rax, (%r8)
 ; CHECK-NEXT:    adcq %rdx, 8(%r8)
 ; CHECK-NEXT:  ## %bb.1: ## %for.check
-; CHECK-NEXT:    ## in Loop: Header=BB1_2 Depth=1
+; CHECK-NEXT:    ## in Loop: Header=BB4_2 Depth=1
 ; CHECK-NEXT:    incq %r9
 ; CHECK-NEXT:    addq $16, %r8
 ; CHECK-NEXT:    cmpq %rcx, %r9
-; CHECK-NEXT:    jl LBB1_2
+; CHECK-NEXT:    jl LBB4_2
 ; CHECK-NEXT:  ## %bb.3: ## %exit
 ; CHECK-NEXT:    retq
                             i64* dereferenceable(8) %x2,
@@ -127,17 +256,17 @@ define void @test_div_def(i32* dereferenceable(8) %x1,
 ; CHECK-NEXT:    movl (%rdi), %edi
 ; CHECK-NEXT:    movl (%rsi), %esi
 ; CHECK-NEXT:    .p2align 4, 0x90
-; CHECK-NEXT:  LBB2_2: ## %for.body
+; CHECK-NEXT:  LBB5_2: ## %for.body
 ; CHECK-NEXT:    ## =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    movl %edi, %eax
 ; CHECK-NEXT:    xorl %edx, %edx
 ; CHECK-NEXT:    divl %esi
 ; CHECK-NEXT:    addl %eax, (%r8,%r9,4)
 ; CHECK-NEXT:  ## %bb.1: ## %for.check
-; CHECK-NEXT:    ## in Loop: Header=BB2_2 Depth=1
+; CHECK-NEXT:    ## in Loop: Header=BB5_2 Depth=1
 ; CHECK-NEXT:    incq %r9
 ; CHECK-NEXT:    cmpl %ecx, %r9d
-; CHECK-NEXT:    jl LBB2_2
+; CHECK-NEXT:    jl LBB5_2
 ; CHECK-NEXT:  ## %bb.3: ## %exit
 ; CHECK-NEXT:    retq
                           i32* dereferenceable(8) %x2,
