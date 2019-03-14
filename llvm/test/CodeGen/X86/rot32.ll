@@ -472,67 +472,157 @@ define i32 @fshl_load(i32* %p) nounwind {
 }
 
 define i32 @fshr(i32 %x) nounwind {
-; CHECK32-LABEL: fshr:
-; CHECK32:       # %bb.0:
-; CHECK32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; CHECK32-NEXT:    rorl $7, %eax
-; CHECK32-NEXT:    retl
+; X86-LABEL: fshr:
+; X86:       # %bb.0:
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NEXT:    rorl $7, %eax
+; X86-NEXT:    retl
 ;
-; CHECK64-LABEL: fshr:
-; CHECK64:       # %bb.0:
-; CHECK64-NEXT:    movl %edi, %eax
-; CHECK64-NEXT:    rorl $7, %eax
-; CHECK64-NEXT:    retq
+; SHLD-LABEL: fshr:
+; SHLD:       # %bb.0:
+; SHLD-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; SHLD-NEXT:    shrdl $7, %eax, %eax
+; SHLD-NEXT:    retl
+;
+; BMI2-LABEL: fshr:
+; BMI2:       # %bb.0:
+; BMI2-NEXT:    rorxl $7, {{[0-9]+}}(%esp), %eax
+; BMI2-NEXT:    retl
+;
+; X64-LABEL: fshr:
+; X64:       # %bb.0:
+; X64-NEXT:    movl %edi, %eax
+; X64-NEXT:    rorl $7, %eax
+; X64-NEXT:    retq
+;
+; SHLD64-LABEL: fshr:
+; SHLD64:       # %bb.0:
+; SHLD64-NEXT:    movl %edi, %eax
+; SHLD64-NEXT:    shrdl $7, %edi, %eax
+; SHLD64-NEXT:    retq
+;
+; BMI264-LABEL: fshr:
+; BMI264:       # %bb.0:
+; BMI264-NEXT:    rorxl $7, %edi, %eax
+; BMI264-NEXT:    retq
   %f = call i32 @llvm.fshr.i32(i32 %x, i32 %x, i32 7)
   ret i32 %f
 }
 declare i32 @llvm.fshr.i32(i32, i32, i32)
 
 define i32 @fshr1(i32 %x) nounwind {
-; CHECK32-LABEL: fshr1:
-; CHECK32:       # %bb.0:
-; CHECK32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; CHECK32-NEXT:    rorl $1, %eax
-; CHECK32-NEXT:    retl
+; X86-LABEL: fshr1:
+; X86:       # %bb.0:
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NEXT:    rorl $1, %eax
+; X86-NEXT:    retl
 ;
-; CHECK64-LABEL: fshr1:
-; CHECK64:       # %bb.0:
-; CHECK64-NEXT:    movl %edi, %eax
-; CHECK64-NEXT:    rorl $1, %eax
-; CHECK64-NEXT:    retq
+; SHLD-LABEL: fshr1:
+; SHLD:       # %bb.0:
+; SHLD-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; SHLD-NEXT:    shrdl $1, %eax, %eax
+; SHLD-NEXT:    retl
+;
+; BMI2-LABEL: fshr1:
+; BMI2:       # %bb.0:
+; BMI2-NEXT:    rorxl $1, {{[0-9]+}}(%esp), %eax
+; BMI2-NEXT:    retl
+;
+; X64-LABEL: fshr1:
+; X64:       # %bb.0:
+; X64-NEXT:    movl %edi, %eax
+; X64-NEXT:    rorl $1, %eax
+; X64-NEXT:    retq
+;
+; SHLD64-LABEL: fshr1:
+; SHLD64:       # %bb.0:
+; SHLD64-NEXT:    movl %edi, %eax
+; SHLD64-NEXT:    shrdl $1, %edi, %eax
+; SHLD64-NEXT:    retq
+;
+; BMI264-LABEL: fshr1:
+; BMI264:       # %bb.0:
+; BMI264-NEXT:    rorxl $1, %edi, %eax
+; BMI264-NEXT:    retq
   %f = call i32 @llvm.fshr.i32(i32 %x, i32 %x, i32 1)
   ret i32 %f
 }
 
 define i32 @fshr31(i32 %x) nounwind {
-; CHECK32-LABEL: fshr31:
-; CHECK32:       # %bb.0:
-; CHECK32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; CHECK32-NEXT:    rorl $31, %eax
-; CHECK32-NEXT:    retl
+; X86-LABEL: fshr31:
+; X86:       # %bb.0:
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NEXT:    roll %eax
+; X86-NEXT:    retl
 ;
-; CHECK64-LABEL: fshr31:
-; CHECK64:       # %bb.0:
-; CHECK64-NEXT:    movl %edi, %eax
-; CHECK64-NEXT:    rorl $31, %eax
-; CHECK64-NEXT:    retq
+; SHLD-LABEL: fshr31:
+; SHLD:       # %bb.0:
+; SHLD-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; SHLD-NEXT:    shrdl $31, %eax, %eax
+; SHLD-NEXT:    retl
+;
+; BMI2-LABEL: fshr31:
+; BMI2:       # %bb.0:
+; BMI2-NEXT:    rorxl $31, {{[0-9]+}}(%esp), %eax
+; BMI2-NEXT:    retl
+;
+; X64-LABEL: fshr31:
+; X64:       # %bb.0:
+; X64-NEXT:    movl %edi, %eax
+; X64-NEXT:    roll %eax
+; X64-NEXT:    retq
+;
+; SHLD64-LABEL: fshr31:
+; SHLD64:       # %bb.0:
+; SHLD64-NEXT:    movl %edi, %eax
+; SHLD64-NEXT:    shrdl $31, %edi, %eax
+; SHLD64-NEXT:    retq
+;
+; BMI264-LABEL: fshr31:
+; BMI264:       # %bb.0:
+; BMI264-NEXT:    rorxl $31, %edi, %eax
+; BMI264-NEXT:    retq
   %f = call i32 @llvm.fshr.i32(i32 %x, i32 %x, i32 31)
   ret i32 %f
 }
 
 define i32 @fshr_load(i32* %p) nounwind {
-; CHECK32-LABEL: fshr_load:
-; CHECK32:       # %bb.0:
-; CHECK32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; CHECK32-NEXT:    movl (%eax), %eax
-; CHECK32-NEXT:    rorl $7, %eax
-; CHECK32-NEXT:    retl
+; X86-LABEL: fshr_load:
+; X86:       # %bb.0:
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NEXT:    movl (%eax), %eax
+; X86-NEXT:    rorl $7, %eax
+; X86-NEXT:    retl
 ;
-; CHECK64-LABEL: fshr_load:
-; CHECK64:       # %bb.0:
-; CHECK64-NEXT:    movl (%rdi), %eax
-; CHECK64-NEXT:    rorl $7, %eax
-; CHECK64-NEXT:    retq
+; SHLD-LABEL: fshr_load:
+; SHLD:       # %bb.0:
+; SHLD-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; SHLD-NEXT:    movl (%eax), %eax
+; SHLD-NEXT:    shrdl $7, %eax, %eax
+; SHLD-NEXT:    retl
+;
+; BMI2-LABEL: fshr_load:
+; BMI2:       # %bb.0:
+; BMI2-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; BMI2-NEXT:    rorxl $7, (%eax), %eax
+; BMI2-NEXT:    retl
+;
+; X64-LABEL: fshr_load:
+; X64:       # %bb.0:
+; X64-NEXT:    movl (%rdi), %eax
+; X64-NEXT:    rorl $7, %eax
+; X64-NEXT:    retq
+;
+; SHLD64-LABEL: fshr_load:
+; SHLD64:       # %bb.0:
+; SHLD64-NEXT:    movl (%rdi), %eax
+; SHLD64-NEXT:    shrdl $7, %eax, %eax
+; SHLD64-NEXT:    retq
+;
+; BMI264-LABEL: fshr_load:
+; BMI264:       # %bb.0:
+; BMI264-NEXT:    rorxl $7, (%rdi), %eax
+; BMI264-NEXT:    retq
   %x = load i32, i32* %p
   %f = call i32 @llvm.fshr.i32(i32 %x, i32 %x, i32 7)
   ret i32 %f

@@ -278,42 +278,86 @@ define i64 @fshl_load(i64* %p) nounwind {
 }
 
 define i64 @fshr(i64 %x) nounwind {
-; ALL-LABEL: fshr:
-; ALL:       # %bb.0:
-; ALL-NEXT:    movq %rdi, %rax
-; ALL-NEXT:    rorq $7, %rax
-; ALL-NEXT:    retq
+; X64-LABEL: fshr:
+; X64:       # %bb.0:
+; X64-NEXT:    movq %rdi, %rax
+; X64-NEXT:    rorq $7, %rax
+; X64-NEXT:    retq
+;
+; SHLD-LABEL: fshr:
+; SHLD:       # %bb.0:
+; SHLD-NEXT:    movq %rdi, %rax
+; SHLD-NEXT:    shrdq $7, %rdi, %rax
+; SHLD-NEXT:    retq
+;
+; BMI2-LABEL: fshr:
+; BMI2:       # %bb.0:
+; BMI2-NEXT:    rorxq $7, %rdi, %rax
+; BMI2-NEXT:    retq
   %f = call i64 @llvm.fshr.i64(i64 %x, i64 %x, i64 7)
   ret i64 %f
 }
 declare i64 @llvm.fshr.i64(i64, i64, i64)
 
 define i64 @fshr1(i64 %x) nounwind {
-; ALL-LABEL: fshr1:
-; ALL:       # %bb.0:
-; ALL-NEXT:    movq %rdi, %rax
-; ALL-NEXT:    rorq $1, %rax
-; ALL-NEXT:    retq
+; X64-LABEL: fshr1:
+; X64:       # %bb.0:
+; X64-NEXT:    movq %rdi, %rax
+; X64-NEXT:    rorq $1, %rax
+; X64-NEXT:    retq
+;
+; SHLD-LABEL: fshr1:
+; SHLD:       # %bb.0:
+; SHLD-NEXT:    movq %rdi, %rax
+; SHLD-NEXT:    shrdq $1, %rdi, %rax
+; SHLD-NEXT:    retq
+;
+; BMI2-LABEL: fshr1:
+; BMI2:       # %bb.0:
+; BMI2-NEXT:    rorxq $1, %rdi, %rax
+; BMI2-NEXT:    retq
   %f = call i64 @llvm.fshr.i64(i64 %x, i64 %x, i64 1)
   ret i64 %f
 }
 
 define i64 @fshr63(i64 %x) nounwind {
-; ALL-LABEL: fshr63:
-; ALL:       # %bb.0:
-; ALL-NEXT:    movq %rdi, %rax
-; ALL-NEXT:    rorq $63, %rax
-; ALL-NEXT:    retq
+; X64-LABEL: fshr63:
+; X64:       # %bb.0:
+; X64-NEXT:    movq %rdi, %rax
+; X64-NEXT:    rolq %rax
+; X64-NEXT:    retq
+;
+; SHLD-LABEL: fshr63:
+; SHLD:       # %bb.0:
+; SHLD-NEXT:    movq %rdi, %rax
+; SHLD-NEXT:    shrdq $63, %rdi, %rax
+; SHLD-NEXT:    retq
+;
+; BMI2-LABEL: fshr63:
+; BMI2:       # %bb.0:
+; BMI2-NEXT:    rorxq $63, %rdi, %rax
+; BMI2-NEXT:    retq
   %f = call i64 @llvm.fshr.i64(i64 %x, i64 %x, i64 63)
   ret i64 %f
 }
 
 define i64 @fshr_load(i64* %p) nounwind {
-; ALL-LABEL: fshr_load:
-; ALL:       # %bb.0:
-; ALL-NEXT:    movq (%rdi), %rax
-; ALL-NEXT:    rorq $7, %rax
-; ALL-NEXT:    retq
+; X64-LABEL: fshr_load:
+; X64:       # %bb.0:
+; X64-NEXT:    movq (%rdi), %rax
+; X64-NEXT:    rorq $7, %rax
+; X64-NEXT:    retq
+;
+; SHLD-LABEL: fshr_load:
+; SHLD:       # %bb.0:
+; SHLD-NEXT:    movq (%rdi), %rax
+; SHLD-NEXT:    shrdq $7, %rax, %rax
+; SHLD-NEXT:    retq
+;
+; BMI2-LABEL: fshr_load:
+; BMI2:       # %bb.0:
+; BMI2-NEXT:    rorxq $7, (%rdi), %rax
+; BMI2-NEXT:    retq
   %x = load i64, i64* %p
   %f = call i64 @llvm.fshr.i64(i64 %x, i64 %x, i64 7)
   ret i64 %f
