@@ -1333,6 +1333,43 @@ bool AArch64InstructionSelector::select(MachineInstr &I,
     return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
   }
 
+  case TargetOpcode::G_UADDO: {
+    // TODO: Support other types.
+    unsigned OpSize = Ty.getSizeInBits();
+    if (OpSize != 32 && OpSize != 64) {
+      LLVM_DEBUG(
+          dbgs()
+          << "G_UADDO currently only supported for 32 and 64 b types.\n");
+      return false;
+    }
+
+    // TODO: Support vectors.
+    if (Ty.isVector()) {
+      LLVM_DEBUG(dbgs() << "G_UADDO currently only supported for scalars.\n");
+      return false;
+    }
+
+    // Add and set the set condition flag.
+    unsigned AddsOpc = OpSize == 32 ? AArch64::ADDSWrr : AArch64::ADDSXrr;
+    MachineIRBuilder MIRBuilder(I);
+    auto AddsMI = MIRBuilder.buildInstr(
+        AddsOpc, {I.getOperand(0).getReg()},
+        {I.getOperand(2).getReg(), I.getOperand(3).getReg()});
+    constrainSelectedInstRegOperands(*AddsMI, TII, TRI, RBI);
+
+    // Now, put the overflow result in the register given by the first operand
+    // to the G_UADDO. CSINC increments the result when the predicate is false,
+    // so to get the increment when it's true, we need to use the inverse. In
+    // this case, we want to increment when carry is set.
+    auto CsetMI = MIRBuilder
+                      .buildInstr(AArch64::CSINCWr, {I.getOperand(1).getReg()},
+                                  {AArch64::WZR, AArch64::WZR})
+                      .addImm(getInvertedCondCode(AArch64CC::HS));
+    constrainSelectedInstRegOperands(*CsetMI, TII, TRI, RBI);
+    I.eraseFromParent();
+    return true;
+  }
+
   case TargetOpcode::G_PTR_MASK: {
     uint64_t Align = I.getOperand(2).getImm();
     if (Align >= 64 || Align == 0)
