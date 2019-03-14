@@ -2134,5 +2134,76 @@ define void @dead_store(i64* %p, i64 %v) {
   ret void
 }
 
+;; The next batch of tests ensure that we don't try to fold a load into a
+;; use where the code motion implied for the load is prevented by a fence.
+;; Note: We're checking that the load doesn't get moved below the fence as
+;; part of folding, but is technically legal to lift the add above the fence.
+;; If that were to happen, please rewrite the test to ensure load movement
+;; isn't violated.
+
+define i64 @nofold_fence(i64* %p) {
+; CHECK-O0-LABEL: nofold_fence:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    mfence
+; CHECK-O0-NEXT:    addq $15, %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: nofold_fence:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    mfence
+; CHECK-O3-NEXT:    addq $15, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  fence seq_cst
+  %ret = add i64 %v, 15
+  ret i64 %ret
+}
+
+define i64 @nofold_fence_acquire(i64* %p) {
+; CHECK-O0-LABEL: nofold_fence_acquire:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    #MEMBARRIER
+; CHECK-O0-NEXT:    addq $15, %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: nofold_fence_acquire:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    #MEMBARRIER
+; CHECK-O3-NEXT:    addq $15, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  fence acquire
+  %ret = add i64 %v, 15
+  ret i64 %ret
+}
+
+
+define i64 @nofold_stfence(i64* %p) {
+; CHECK-O0-LABEL: nofold_stfence:
+; CHECK-O0:       # %bb.0:
+; CHECK-O0-NEXT:    movq (%rdi), %rdi
+; CHECK-O0-NEXT:    #MEMBARRIER
+; CHECK-O0-NEXT:    addq $15, %rdi
+; CHECK-O0-NEXT:    movq %rdi, %rax
+; CHECK-O0-NEXT:    retq
+;
+; CHECK-O3-LABEL: nofold_stfence:
+; CHECK-O3:       # %bb.0:
+; CHECK-O3-NEXT:    movq (%rdi), %rax
+; CHECK-O3-NEXT:    #MEMBARRIER
+; CHECK-O3-NEXT:    addq $15, %rax
+; CHECK-O3-NEXT:    retq
+  %v = load atomic i64, i64* %p unordered, align 8
+  fence syncscope("singlethread") seq_cst
+  %ret = add i64 %v, 15
+  ret i64 %ret
+}
+
 
 
