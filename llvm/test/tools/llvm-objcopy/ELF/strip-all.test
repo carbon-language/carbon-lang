@@ -57,10 +57,6 @@ FileHeader:
   Type:            ET_REL
   Machine:         EM_X86_64
 Sections:
-  - Name:            non_alloc_in_segment
-    Type:            SHT_PROGBITS
-    Flags:           [ ]
-    Size:            4
   - Name:            .bss
     Type:            SHT_NOBITS
     Flags:           [ SHF_ALLOC ]
@@ -72,15 +68,9 @@ Sections:
     Flags:           [ ]
   - Name:            .gnu.warning.foo
     Type:            SHT_PROGBITS
-ProgramHeaders:
-  # Use an arbitrary segment type to show that the segment type is unimportant.
-  - Type: 0x61234567
-    Sections:
-      - Section: non_alloc_in_segment
 
-# CHECK: SectionHeaderCount: 6
+# CHECK: SectionHeaderCount: 5
 
-# CHECK: Name: non_alloc_in_segment
 # CHECK: Name: .bss
 # CHECK: Name: .text
 # CHECK: Name: .gnu.warning.foo

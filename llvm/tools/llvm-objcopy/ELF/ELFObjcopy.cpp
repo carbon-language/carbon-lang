@@ -403,7 +403,7 @@ static Error handleArgs(const CopyConfig &Config, Object &Obj,
 
   if (Config.StripSections) {
     RemovePred = [RemovePred](const SectionBase &Sec) {
-      return RemovePred(Sec) || Sec.ParentSegment == nullptr;
+      return RemovePred(Sec) || (Sec.Flags & SHF_ALLOC) == 0;
     };
   }
 
@@ -419,7 +419,7 @@ static Error handleArgs(const CopyConfig &Config, Object &Obj,
         return true;
       if (&Sec == Obj.SectionNames)
         return false;
-      return (Sec.Flags & SHF_ALLOC) == 0 && Sec.ParentSegment == nullptr;
+      return (Sec.Flags & SHF_ALLOC) == 0;
     };
 
   if (Config.StripAll)
@@ -429,8 +429,6 @@ static Error handleArgs(const CopyConfig &Config, Object &Obj,
       if (&Sec == Obj.SectionNames)
         return false;
       if (StringRef(Sec.Name).startswith(".gnu.warning"))
-        return false;
-      if (Sec.ParentSegment != nullptr)
         return false;
       return (Sec.Flags & SHF_ALLOC) == 0;
     };
