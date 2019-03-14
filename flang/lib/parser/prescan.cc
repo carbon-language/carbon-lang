@@ -40,6 +40,7 @@ Prescanner::Prescanner(const Prescanner &that)
     inFixedForm_{that.inFixedForm_},
     fixedFormColumnLimit_{that.fixedFormColumnLimit_},
     encoding_{that.encoding_}, prescannerNesting_{that.prescannerNesting_ + 1},
+    skipLeadingAmpersand_{that.skipLeadingAmpersand_},
     compilerDirectiveBloomFilter_{that.compilerDirectiveBloomFilter_},
     compilerDirectiveSentinels_{that.compilerDirectiveSentinels_} {}
 
@@ -145,6 +146,13 @@ void Prescanner::Statement() {
     BeginSourceLineAndAdvance();
     if (inFixedForm_) {
       LabelField(tokens);
+    } else if (skipLeadingAmpersand_) {
+      skipLeadingAmpersand_ = false;
+      const char *p{SkipWhiteSpace(at_)};
+      if (p < limit_ && *p == '&') {
+        column_ += ++p - at_;
+        at_ = p;
+      }
     } else {
       SkipSpaces();
     }
@@ -679,7 +687,7 @@ bool Prescanner::SkipCommentLine(bool afterAmpersand) {
   if (lineStart_ >= limit_) {
     if (afterAmpersand && prescannerNesting_ > 0) {
       // A continuation marker at the end of the last line in an
-      // include file inhibits the newline.
+      // include file inhibits the newline for that line.
       SkipToEndOfLine();
       omitNewline_ = true;
     }
@@ -702,6 +710,7 @@ bool Prescanner::SkipCommentLine(bool afterAmpersand) {
           lineClass.kind == LineClassification::Kind::IncludeLine)) {
     SkipToEndOfLine();
     omitNewline_ = true;
+    skipLeadingAmpersand_ = true;
     return false;
   } else {
     return false;
@@ -841,8 +850,12 @@ bool Prescanner::FreeFormContinuation() {
   if (ampersand) {
     p = SkipWhiteSpace(p + 1);
   }
-  if (*p != '\n' && (inCharLiteral_ || *p != '!')) {
-    return false;
+  if (*p != '\n') {
+    if (inCharLiteral_) {
+      return false;
+    } else if (*p != '!') {
+      Say(GetProvenance(p), "treated as comment after &"_en_US);
+    }
   }
   do {
     if (const char *cont{FreeFormContinuationLine(ampersand)}) {

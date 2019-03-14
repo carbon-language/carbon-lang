@@ -190,6 +190,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     return {};
   }
   if (driver.dumpCookedChars) {
+    parsing.messages().Emit(std::cerr, parsing.cooked());
     parsing.DumpCookedChars(std::cout);
     return {};
   }
@@ -219,8 +220,8 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   }
   // TODO: Change this predicate to just "if (!driver.debugNoSemantics)"
   if (driver.debugSemantics || driver.debugResolveNames || driver.dumpSymbols ||
-      driver.dumpUnparseWithSymbols ||
-      driver.debugLinearFIR || driver.dumpGraph) {
+      driver.dumpUnparseWithSymbols || driver.debugLinearFIR ||
+      driver.dumpGraph) {
     Fortran::semantics::Semantics semantics{
         semanticsContext, parseTree, parsing.cooked()};
     semantics.Perform();

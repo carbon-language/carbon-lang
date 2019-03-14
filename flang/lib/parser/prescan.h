@@ -205,6 +205,7 @@ private:
   // the line before.  Also used when the & appears at the end of the last
   // line in an include file.
   bool omitNewline_{false};
+  bool skipLeadingAmpersand_{false};
 
   const Provenance spaceProvenance_{
       cooked_.allSources().CompilerInsertionProvenance(' ')};
