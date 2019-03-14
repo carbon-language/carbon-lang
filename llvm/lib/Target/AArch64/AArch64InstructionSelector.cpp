@@ -93,6 +93,8 @@ private:
   bool selectShuffleVector(MachineInstr &I, MachineRegisterInfo &MRI) const;
   bool selectExtractElt(MachineInstr &I, MachineRegisterInfo &MRI) const;
   bool selectConcatVectors(MachineInstr &I, MachineRegisterInfo &MRI) const;
+  bool selectSplitVectorUnmerge(MachineInstr &I,
+                                MachineRegisterInfo &MRI) const;
 
   unsigned emitConstantPoolEntry(Constant *CPVal, MachineFunction &MF) const;
   MachineInstr *emitLoadFromConstantPool(Constant *CPVal,
@@ -102,6 +104,10 @@ private:
   MachineInstr *emitVectorConcat(Optional<unsigned> Dst, unsigned Op1,
                                  unsigned Op2,
                                  MachineIRBuilder &MIRBuilder) const;
+  MachineInstr *emitExtractVectorElt(Optional<unsigned> DstReg,
+                                     const RegisterBank &DstRB, LLT ScalarTy,
+                                     unsigned VecReg, unsigned LaneIdx,
+                                     MachineIRBuilder &MIRBuilder) const;
 
   ComplexRendererFns selectArithImmed(MachineOperand &Root) const;
 
@@ -1870,6 +1876,68 @@ static bool getConstantValueForReg(unsigned Reg, MachineRegisterInfo &MRI,
   return true;
 }
 
+MachineInstr *AArch64InstructionSelector::emitExtractVectorElt(
+    Optional<unsigned> DstReg, const RegisterBank &DstRB, LLT ScalarTy,
+    unsigned VecReg, unsigned LaneIdx, MachineIRBuilder &MIRBuilder) const {
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+  unsigned CopyOpc = 0;
+  unsigned ExtractSubReg = 0;
+  if (!getLaneCopyOpcode(CopyOpc, ExtractSubReg, ScalarTy.getSizeInBits())) {
+    LLVM_DEBUG(
+        dbgs() << "Couldn't determine lane copy opcode for instruction.\n");
+    return nullptr;
+  }
+
+  const TargetRegisterClass *DstRC =
+      getRegClassForTypeOnBank(ScalarTy, DstRB, RBI, true);
+  if (!DstRC) {
+    LLVM_DEBUG(dbgs() << "Could not determine destination register class.\n");
+    return nullptr;
+  }
+
+  const RegisterBank &VecRB = *RBI.getRegBank(VecReg, MRI, TRI);
+  const LLT &VecTy = MRI.getType(VecReg);
+  const TargetRegisterClass *VecRC =
+      getRegClassForTypeOnBank(VecTy, VecRB, RBI, true);
+  if (!VecRC) {
+    LLVM_DEBUG(dbgs() << "Could not determine source register class.\n");
+    return nullptr;
+  }
+
+  // The register that we're going to copy into.
+  unsigned InsertReg = VecReg;
+  if (!DstReg)
+    DstReg = MRI.createVirtualRegister(DstRC);
+  // If the lane index is 0, we just use a subregister COPY.
+  if (LaneIdx == 0) {
+    auto CopyMI =
+        BuildMI(MIRBuilder.getMBB(), MIRBuilder.getInsertPt(),
+                MIRBuilder.getDL(), TII.get(TargetOpcode::COPY), *DstReg)
+            .addUse(VecReg, 0, ExtractSubReg);
+    RBI.constrainGenericRegister(*DstReg, *DstRC, MRI);
+    return &*CopyMI;
+  }
+
+  // Lane copies require 128-bit wide registers. If we're dealing with an
+  // unpacked vector, then we need to move up to that width. Insert an implicit
+  // def and a subregister insert to get us there.
+  if (VecTy.getSizeInBits() != 128) {
+    MachineInstr *ScalarToVector = emitScalarToVector(
+        VecTy.getSizeInBits(), &AArch64::FPR128RegClass, VecReg, MIRBuilder);
+    if (!ScalarToVector)
+      return nullptr;
+    InsertReg = ScalarToVector->getOperand(0).getReg();
+  }
+
+  MachineInstr *LaneCopyMI =
+      MIRBuilder.buildInstr(CopyOpc, {*DstReg}, {InsertReg}).addImm(LaneIdx);
+  constrainSelectedInstRegOperands(*LaneCopyMI, TII, TRI, RBI);
+
+  // Make sure that we actually constrain the initial copy.
+  RBI.constrainGenericRegister(*DstReg, *DstRC, MRI);
+  return LaneCopyMI;
+}
+
 bool AArch64InstructionSelector::selectExtractElt(
     MachineInstr &I, MachineRegisterInfo &MRI) const {
   assert(I.getOpcode() == TargetOpcode::G_EXTRACT_VECTOR_ELT &&
@@ -1878,7 +1946,7 @@ bool AArch64InstructionSelector::selectExtractElt(
   const LLT NarrowTy = MRI.getType(DstReg);
   const unsigned SrcReg = I.getOperand(1).getReg();
   const LLT WideTy = MRI.getType(SrcReg);
-
+  (void)WideTy;
   assert(WideTy.getSizeInBits() >= NarrowTy.getSizeInBits() &&
          "source register size too small!");
   assert(NarrowTy.isScalar() && "cannot extract vector into vector!");
@@ -1897,63 +1965,44 @@ bool AArch64InstructionSelector::selectExtractElt(
   if (!getConstantValueForReg(LaneIdxOp.getReg(), MRI, LaneIdx))
     return false;
 
-  unsigned CopyOpc = 0;
-  unsigned ExtractSubReg = 0;
-  if (!getLaneCopyOpcode(CopyOpc, ExtractSubReg, NarrowTy.getSizeInBits())) {
-    LLVM_DEBUG(
-        dbgs() << "Couldn't determine lane copy opcode for instruction.\n");
-    return false;
-  }
-
-  const RegisterBank &DstRB = *RBI.getRegBank(DstReg, MRI, TRI);
-  const TargetRegisterClass *DstRC =
-      getRegClassForTypeOnBank(NarrowTy, DstRB, RBI, true);
-  if (!DstRC) {
-    LLVM_DEBUG(dbgs() << "Could not determine destination register class.\n");
-    return false;
-  }
-
-  const RegisterBank &SrcRB = *RBI.getRegBank(SrcReg, MRI, TRI);
-  const TargetRegisterClass *SrcRC =
-      getRegClassForTypeOnBank(WideTy, SrcRB, RBI, true);
-  if (!SrcRC) {
-    LLVM_DEBUG(dbgs() << "Could not determine source register class.\n");
-    return false;
-  }
-
-  // The register that we're going to copy into.
-  unsigned InsertReg = SrcReg;
   MachineIRBuilder MIRBuilder(I);
 
-  // If the lane index is 0, we just use a subregister COPY.
-  if (LaneIdx == 0) {
-    unsigned CopyTo = I.getOperand(0).getReg();
-    BuildMI(*I.getParent(), I, I.getDebugLoc(), TII.get(TargetOpcode::COPY),
-            CopyTo)
-        .addUse(SrcReg, 0, ExtractSubReg);
-    RBI.constrainGenericRegister(CopyTo, *DstRC, MRI);
-    I.eraseFromParent();
-    return true;
+  const RegisterBank &DstRB = *RBI.getRegBank(DstReg, MRI, TRI);
+  MachineInstr *Extract = emitExtractVectorElt(DstReg, DstRB, NarrowTy, SrcReg,
+                                               LaneIdx, MIRBuilder);
+  if (!Extract)
+    return false;
+
+  I.eraseFromParent();
+  return true;
+}
+
+bool AArch64InstructionSelector::selectSplitVectorUnmerge(
+    MachineInstr &I, MachineRegisterInfo &MRI) const {
+  unsigned NumElts = I.getNumOperands() - 1;
+  unsigned SrcReg = I.getOperand(NumElts).getReg();
+  const LLT NarrowTy = MRI.getType(I.getOperand(0).getReg());
+  const LLT SrcTy = MRI.getType(SrcReg);
+
+  assert(NarrowTy.isVector() && "Expected an unmerge into vectors");
+  if (SrcTy.getSizeInBits() > 128) {
+    LLVM_DEBUG(dbgs() << "Unexpected vector type for vec split unmerge");
+    return false;
   }
 
-  // Lane copies require 128-bit wide registers. If we're dealing with an
-  // unpacked vector, then we need to move up to that width. Insert an implicit
-  // def and a subregister insert to get us there.
-  if (WideTy.getSizeInBits() != 128) {
-    MachineInstr *ScalarToVector = emitScalarToVector(
-        WideTy.getSizeInBits(), &AArch64::FPR128RegClass, SrcReg, MIRBuilder);
-    if (!ScalarToVector)
+  MachineIRBuilder MIB(I);
+
+  // We implement a split vector operation by treating the sub-vectors as
+  // scalars and extracting them.
+  const RegisterBank &DstRB =
+      *RBI.getRegBank(I.getOperand(0).getReg(), MRI, TRI);
+  for (unsigned OpIdx = 0; OpIdx < NumElts; ++OpIdx) {
+    unsigned Dst = I.getOperand(OpIdx).getReg();
+    MachineInstr *Extract =
+        emitExtractVectorElt(Dst, DstRB, NarrowTy, SrcReg, OpIdx, MIB);
+    if (!Extract)
       return false;
-    InsertReg = ScalarToVector->getOperand(0).getReg();
   }
-
-  MachineInstr *LaneCopyMI =
-      MIRBuilder.buildInstr(CopyOpc, {DstReg}, {InsertReg}).addImm(LaneIdx);
-  constrainSelectedInstRegOperands(*LaneCopyMI, TII, TRI, RBI);
-
-  // Make sure that we actually constrain the initial copy.
-  RBI.constrainGenericRegister(DstReg, *DstRC, MRI);
-
   I.eraseFromParent();
   return true;
 }
@@ -1984,11 +2033,8 @@ bool AArch64InstructionSelector::selectUnmergeValues(
   assert(WideTy.getSizeInBits() > NarrowTy.getSizeInBits() &&
          "source register size too small!");
 
-  // TODO: Handle unmerging into vectors.
-  if (!NarrowTy.isScalar()) {
-    LLVM_DEBUG(dbgs() << "Vector-to-vector unmerges not supported yet.\n");
-    return false;
-  }
+  if (!NarrowTy.isScalar())
+    return selectSplitVectorUnmerge(I, MRI);
 
   // Choose a lane copy opcode and subregister based off of the size of the
   // vector's elements.
