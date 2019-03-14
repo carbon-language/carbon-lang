@@ -54,7 +54,7 @@ for.body:
 ; CHECK: ldr [[B:r[0-9]+]],{{.*}}, #2]!
 ; CHECK: smlad [[ACC:r[0-9]+]], [[B]], [[A]], [[ACC]]
 ; CHECK: sxth [[SXT:r[0-9]+]], [[A]]
-; CHECK: mul [[COUNT:r[0-9]+]], [[SXT]], [[COUNT]]
+; CHECK: mul [[COUNT:r[0-9]+]],{{.*}}[[SXT]]
 define i32 @mul_bottom_user(i32 %arg, i32* nocapture readnone %arg1, i16* nocapture readonly %arg2, i16* nocapture readonly %arg3) {
 entry:
   %cmp24 = icmp sgt i32 %arg, 0
@@ -102,8 +102,8 @@ for.body:
 ; CHECK: ldr [[A:[rl0-9]+]],{{.*}}, #2]!
 ; CHECK: ldr [[B:[rl0-9]+]],{{.*}}, #2]!
 ; CHECK: smlad [[ACC:[rl0-9]+]], [[B]], [[A]], [[ACC]]
-; CHECK: asr.w [[ASR:[rl0-9]+]], [[ASR]], #16
-; CHECK: mul [[COUNT:[rl0-9]+]], [[ASR]], [[COUNT]]
+; CHECK: asr.w [[ASR:[rl0-9]+]], [[B]], #16
+; CHECK: mul [[COUNT:[rl0-9]+]],{{.}}[[ASR]]
 define i32 @mul_top_user(i32 %arg, i32* nocapture readnone %arg1, i16* nocapture readonly %arg2, i16* nocapture readonly %arg3) {
 entry:
   %cmp24 = icmp sgt i32 %arg, 0
@@ -152,7 +152,7 @@ for.body:
 ; CHECK: ldr [[B:r[0-9]+]],{{.*}}, #2]!
 ; CHECK: smlad [[ACC:r[0-9]+]], [[B]], [[A]], [[ACC]]
 ; CHECK: uxth [[UXT:r[0-9]+]], [[A]]
-; CHECK: mul [[MUL:r[0-9]+]], [[UXT]], [[MUL]]
+; CHECK: mul [[MUL:r[0-9]+]],{{.*}}[[UXT]]
 define i32 @and_user(i32 %arg, i32* nocapture readnone %arg1, i16* nocapture readonly %arg2, i16* nocapture readonly %arg3) {
 entry:
   %cmp24 = icmp sgt i32 %arg, 0
@@ -203,7 +203,7 @@ for.body:
 ; CHECK: smlad [[ACC:[rl0-9]+]], [[B]], [[A]], [[ACC]]
 ; CHECK: sxth [[SXT:r[0-9]+]], [[A]]
 ; CHECK: eor.w [[EOR:r[0-9]+]], [[SXT]], [[SHIFT:r[0-9]+]]
-; CHECK: mul [[MUL:r[0-9]+]], [[EOR]], [[SXT]]
+; CHECK: mul [[MUL:r[0-9]+]],{{.*}}[[SXT]]
 ; CHECK: lsl.w [[SHIFT]], [[MUL]], #16
 define i32 @multi_uses(i32 %arg, i32* nocapture readnone %arg1, i16* nocapture readonly %arg2, i16* nocapture readonly %arg3) {
 entry:
