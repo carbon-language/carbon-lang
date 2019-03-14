@@ -56,6 +56,8 @@ Extensions, deletions, and legacy features supported by default
 * Character literals as elements of an array constructor without an explicit
   type specifier need not have the same length; the longest literal determines
   the length parameter of the implicit type, not the first.
+* Outside a character literal, a comment after a continuation marker (&)
+  need not begin with a comment marker (!).
 
 Extensions supported when enabled by options
 --------------------------------------------

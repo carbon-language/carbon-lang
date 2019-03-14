@@ -29,7 +29,8 @@ ENUM_CLASS(LanguageFeature, BackslashEscapes, OldDebugLines,
     OldStyleParameter, ComplexConstructor, PercentLOC, SignedPrimary, FileName,
     Convert, Dispose, IOListLeadingComma, AbbreviatedEditDescriptor,
     ProgramParentheses, PercentRefAndVal, OmitFunctionDummies, CrayPointer,
-    Hollerith, ArithmeticIF, Assign, AssignedGOTO, Pause, OpenMP)
+    Hollerith, ArithmeticIF, Assign, AssignedGOTO, Pause, OpenMP,
+    CruftAfterAmpersand)
 
 using LanguageFeatures =
     common::EnumSet<LanguageFeature, LanguageFeature_enumSize>;

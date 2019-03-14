@@ -853,8 +853,9 @@ bool Prescanner::FreeFormContinuation() {
   if (*p != '\n') {
     if (inCharLiteral_) {
       return false;
-    } else if (*p != '!') {
-      Say(GetProvenance(p), "treated as comment after &"_en_US);
+    } else if (*p != '!' &&
+        features_.ShouldWarn(LanguageFeature::CruftAfterAmpersand)) {
+      Say(GetProvenance(p), "missing ! before comment after &"_en_US);
     }
   }
   do {

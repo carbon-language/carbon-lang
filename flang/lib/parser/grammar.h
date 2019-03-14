@@ -3092,7 +3092,8 @@ TYPE_PARSER(construct<UseStmt>("USE" >> optionalBeforeColons(moduleNature),
                 name, ", ONLY :" >> optionalList(Parser<Only>{})) ||
     construct<UseStmt>("USE" >> optionalBeforeColons(moduleNature), name,
         defaulted("," >>
-            nonemptyList("expected renamings"_err_en_US, Parser<Rename>{}))))
+            nonemptyList("expected renamings"_err_en_US, Parser<Rename>{})) /
+            lookAhead(endOfStmt)))
 
 // R1411 rename ->
 //         local-name => use-name |
