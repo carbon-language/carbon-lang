@@ -2854,6 +2854,7 @@ void RewriteInstance::emitSections() {
 
 void RewriteInstance::emitFunctions(MCStreamer *Streamer) {
   auto *TextSection = BC->MOFI->getTextSection();
+  TextSection->setAlignment(BC->PageAlign);
   auto *ColdSection =
       BC->Ctx->getELFSection(".text.cold",
                              ELF::SHT_PROGBITS,
@@ -2960,44 +2961,64 @@ void RewriteInstance::emitFunctions(MCStreamer *Streamer) {
 }
 
 void RewriteInstance::mapFileSections(orc::VModuleKey Key) {
-  mapTextSections(Key);
+  mapCodeSections(Key);
   mapDataSections(Key);
 }
 
-void RewriteInstance::mapTextSections(orc::VModuleKey Key) {
+void RewriteInstance::mapCodeSections(orc::VModuleKey Key) {
   if (BC->HasRelocations) {
-    uint64_t AllocationAddress{0};
-    auto TextSection = BC->getUniqueSectionByName(".text");
-    assert(TextSection && ".text not found in output");
-    auto ColdSection = BC->getUniqueSectionByName(".text.cold");
+    // Populate the list of sections to be allocated.
+    std::vector<BinarySection *> CodeSections;
+    for (auto &Section : BC->textSections()) {
+      if (Section.hasValidSectionID())
+        CodeSections.emplace_back(&Section);
+    };
 
-    DEBUG(
-      for (auto &Section : BC->textSections()) {
-        dbgs() << "code section : " << Section.getName()
-               << "; valid ID : " << Section.hasValidSectionID() << '\n';
+    // Determine the order of sections.
+    std::stable_sort(CodeSections.begin(), CodeSections.end(),
+                     [&](const BinarySection *A, const BinarySection *B) {
+                       if (opts::HotFunctionsAtEnd) {
+                         return B->getName() == ".text";
+                       } else {
+                         return A->getName() == ".text";
+                       }
+                     });
+
+    DEBUG(dbgs() << "Code section in the order of output:\n";
+      for (const auto *Section : CodeSections) {
+        dbgs() << Section->getName() << '\n';
       });
 
-    auto CodeSize = TextSection->getOutputSize();
-    if (ColdSection) {
-      CodeSize = alignTo(CodeSize, ColdSection->getAlignment());
-      CodeSize += ColdSection->getOutputSize();
+    // Beginning address for placing code.
+    uint64_t AllocationAddress{0};
+    uint64_t CodeSize{0};
+
+    // Check if we can fit code in the original .text
+    if (opts::UseOldText) {
+      auto Code = BC->OldTextSectionAddress;
+      for (const auto *CodeSection : CodeSections) {
+        Code = alignTo(Code, CodeSection->getAlignment());
+        Code += CodeSection->getOutputSize();
+      }
+      CodeSize = Code - BC->OldTextSectionAddress;
+
+      if (CodeSize <= BC->OldTextSectionSize) {
+        outs() << "BOLT-INFO: using original .text for new code with 0x"
+               << Twine::utohexstr(BC->PageAlign) << " alignment\n";
+        AllocationAddress = BC->OldTextSectionAddress;
+      }
     }
-    auto Padding = OffsetToAlignment(BC->OldTextSectionAddress, BC->PageAlign);
-    if (opts::UseOldText && Padding + CodeSize <= BC->OldTextSectionSize) {
-      // Utilize the original .text for storage.
-      outs() << "BOLT-INFO: using original .text for new code with 0x"
-             << Twine::utohexstr(BC->PageAlign) << " alignment\n";
-      AllocationAddress = BC->OldTextSectionAddress + Padding;
-    } else {
+
+    if (!AllocationAddress) {
       if (opts::UseOldText) {
         errs() << "BOLT-WARNING: original .text too small to fit the new code"
                << " using 0x" << Twine::utohexstr(BC->PageAlign)
-               << " aligment. " << Padding + CodeSize
+               << " page alignment. " << CodeSize
                << " bytes needed, have " << BC->OldTextSectionSize
                << " bytes available.\n";
         opts::UseOldText = false;
       }
-      AllocationAddress = alignTo(NextAvailableAddress, BC->PageAlign);
+      AllocationAddress = NextAvailableAddress;
     }
 
     auto mapSection = [&](BinarySection &Section) {
@@ -3012,9 +3033,9 @@ void RewriteInstance::mapTextSections(orc::VModuleKey Key) {
       AllocationAddress += Section.getOutputSize();
     };
 
-    mapSection(*TextSection);
-    if (ColdSection)
-      mapSection(*ColdSection);
+    for (auto *CodeSection : CodeSections) {
+      mapSection(*CodeSection);
+    }
 
     if (!opts::UseOldText) {
       NextAvailableAddress = AllocationAddress;

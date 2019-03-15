@@ -121,7 +121,7 @@ public:
                            std::vector<const BinaryFunction *> FunctionStack);
 
   /// Map all sections to their final addresses.
-  void mapTextSections(orc::VModuleKey ObjectsHandle);
+  void mapCodeSections(orc::VModuleKey ObjectsHandle);
   void mapDataSections(orc::VModuleKey ObjectsHandle);
   void mapFileSections(orc::VModuleKey ObjectsHandle);
 
