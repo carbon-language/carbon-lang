@@ -822,10 +822,10 @@ template<typename T> struct SwitchArgs {
   std::vector<T> values;
   std::vector<LinearLabelRef> labels;
 };
-struct SwitchArguments : public SwitchArgs<SwitchStmt::ValueType> {};
-struct SwitchCaseArguments : public SwitchArgs<SwitchCaseStmt::ValueType> {};
-struct SwitchRankArguments : public SwitchArgs<SwitchRankStmt::ValueType> {};
-struct SwitchTypeArguments : public SwitchArgs<SwitchTypeStmt::ValueType> {};
+using SwitchArguments = SwitchArgs<SwitchStmt::ValueType>;
+using SwitchCaseArguments = SwitchArgs<SwitchCaseStmt::ValueType>;
+using SwitchRankArguments = SwitchArgs<SwitchRankStmt::ValueType>;
+using SwitchTypeArguments = SwitchArgs<SwitchTypeStmt::ValueType>;
 
 template<typename T> bool IsDefault(const typename T::ValueType &valueType) {
   return std::holds_alternative<typename T::Default>(valueType);

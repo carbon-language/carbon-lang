@@ -33,17 +33,11 @@ public:
   SUM_TYPE_COPY_MIXIN(Value)
   template<typename A> Value(A *a) : SumTypeCopyMixin{a} {}
   Value(const Nothing &n) : SumTypeCopyMixin{n} {}
-  Value(Nothing &&n) : SumTypeCopyMixin{std::move(n)} {}
   Value() : SumTypeCopyMixin{NOTHING} {}
 };
 
 inline bool IsNothing(Value value) {
-  return std::visit(
-      common::visitors{
-          [](Nothing &) { return true; },
-          [](auto *) { return false; },
-      },
-      value.u);
+  return std::holds_alternative<Nothing>(value.u);
 }
 }
 

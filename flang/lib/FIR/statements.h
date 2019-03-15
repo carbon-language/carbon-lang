@@ -604,12 +604,7 @@ inline Statement *ReturnStmt::returnValue() const {
 }
 
 inline ApplyExprStmt *GetApplyExpr(Statement *stmt) {
-  return std::visit(
-      common::visitors{
-          [](ApplyExprStmt &s) { return &s; },
-          [](auto &) -> ApplyExprStmt * { return nullptr; },
-      },
-      stmt->u);
+  return std::get_if<ApplyExprStmt>(&stmt->u);
 }
 
 Addressable_impl *GetAddressable(Statement *stmt);
