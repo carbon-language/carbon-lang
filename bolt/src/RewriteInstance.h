@@ -94,10 +94,13 @@ public:
   /// Run optimizations that operate at the binary, or post-linker, level.
   void runOptimizationPasses();
 
-  /// Write all functions to an intermediary object file, map virtual to real
-  /// addresses and link this object file, resolving all relocations and
+  /// Write code and data into an intermediary object file, map virtual to real
+  /// addresses and link the object file, resolving all relocations and
   /// performing final relaxation.
-  void emitFunctions();
+  void emitSections();
+
+  /// Emit function code.
+  void emitFunctions(MCStreamer *Streamer);
 
   /// Emit data \p Section, possibly with relocations. Use name \p Name if
   /// non-empty.
@@ -253,15 +256,17 @@ private:
   /// Finalize memory image of section header string table.
   ELF_FUNCTION(finalizeSectionStringTable);
 
-  /// Get a list of all the sections to include in the output binary along
-  /// with a map of input to output indices.  Optionally produce a mapping
-  /// of section name to new section index in /p OutputSectionNameMap.
+  /// Return a name of the input file section in the output file.
+  template<typename ELFObjType, typename ELFShdrTy>
+  std::string getOutputSectionName(const ELFObjType *Obj,
+                                   const ELFShdrTy &Section);
+
+  /// Return a list of all sections to include in the output binary.
+  /// Populate \p NewSectionIndex with a map of input to output indices.
   template <typename ELFT,
             typename ELFShdrTy = typename ELFObjectFile<ELFT>::Elf_Shdr>
-  std::vector<uint32_t> getOutputSections(
-     ELFObjectFile<ELFT> *File,
-     std::vector<ELFShdrTy> *OutputSections = nullptr,
-     std::map<std::string, uint32_t> *OutputSectionNameMap = nullptr);
+  std::vector<ELFShdrTy> getOutputSections(
+      ELFObjectFile<ELFT> *File, std::vector<uint32_t> &NewSectionIndex);
 
   /// Add a notes section containing the BOLT revision and command line options.
   void addBoltInfoSection();
@@ -290,7 +295,7 @@ private:
   /// DW_AT_low/high_pc or DW_AT_ranges (i.e. functions, lexical blocks, etc).
   /// \p DebugRangesOffset is the offset in .debug_ranges of the object's
   /// new address ranges in the output binary.
-  /// \p Unit Compile uniit the object belongs to.
+  /// \p Unit Compile unit the object belongs to.
   /// \p DIE is the object's DIE in the input binary.
   void updateDWARFObjectAddressRanges(const DWARFDie DIE,
                                       uint64_t DebugRangesOffset);
@@ -415,10 +420,6 @@ private:
   /// Patchers used to apply simple changes to sections of the input binary.
   /// Maps section name -> patcher.
   std::map<std::string, std::unique_ptr<BinaryPatcher>> SectionPatchers;
-
-  uint64_t NewTextSectionStartAddress{0};
-
-  uint64_t NewTextSectionIndex{0};
 
   /// Number of local symbols in newly written symbol table.
   uint64_t NumLocalSymbols{0};

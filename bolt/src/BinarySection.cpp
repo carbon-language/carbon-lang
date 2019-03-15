@@ -78,7 +78,7 @@ void BinarySection::print(raw_ostream &OS) const {
   OS << getName() << ", "
      << "0x" << Twine::utohexstr(getAddress()) << ", "
      << getSize()
-     << " (0x" << Twine::utohexstr(getFileAddress()) << ", "
+     << " (0x" << Twine::utohexstr(getOutputAddress()) << ", "
      << getOutputSize() << ")"
      << ", data = " << getData()
      << ", output data = " << getOutputData();

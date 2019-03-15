@@ -67,14 +67,6 @@ PrintMemData("print-mem-data",
   cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
-cl::opt<bool>
-HotFunctionsAtEnd(
-  "hot-functions-at-end",
-  cl::desc(
-      "if reorder-functions is used, order functions putting hottest last"),
-  cl::ZeroOrMore,
-  cl::cat(BoltCategory));
-
 } // namespace opts
 
 BinaryContext::BinaryContext(std::unique_ptr<MCContext> Ctx,
@@ -696,15 +688,6 @@ unsigned BinaryContext::addDebugFilenameToUnit(const uint32_t DestCUID,
   return cantFail(Ctx->getDwarfFile(Dir, FileName, 0, nullptr, None, DestCUID));
 }
 
-template <bool FuncsAtEnd>
-bool Comparator(const BinaryFunction *A, const BinaryFunction *B) {
-  if (A->hasValidIndex() && B->hasValidIndex()) {
-    return A->getIndex() < B->getIndex();
-  } else {
-    return FuncsAtEnd ? B->hasValidIndex() : A->hasValidIndex();
-  }
-}
-
 std::vector<BinaryFunction *> BinaryContext::getSortedFunctions(
     std::map<uint64_t, BinaryFunction> &BinaryFunctions) {
   std::vector<BinaryFunction *> SortedFunctions(BinaryFunctions.size());
@@ -714,14 +697,13 @@ std::vector<BinaryFunction *> BinaryContext::getSortedFunctions(
                    return &BFI.second;
                  });
 
-  if (opts::HotFunctionsAtEnd) {
-    std::stable_sort(SortedFunctions.begin(), SortedFunctions.end(),
-                     Comparator</*FuncsAtEnd=*/true>);
-    return SortedFunctions;
-  }
-
   std::stable_sort(SortedFunctions.begin(), SortedFunctions.end(),
-                   Comparator</*FuncsAtEnd=*/false>);
+                   [] (const BinaryFunction *A, const BinaryFunction *B) {
+                     if (A->hasValidIndex() && B->hasValidIndex()) {
+                       return A->getIndex() < B->getIndex();
+                     }
+                     return A->hasValidIndex();
+                   });
   return SortedFunctions;
 }
 

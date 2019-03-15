@@ -18,6 +18,7 @@
 #include "BinaryBasicBlock.h"
 #include "BinaryContext.h"
 #include "BinaryLoop.h"
+#include "BinarySection.h"
 #include "DataReader.h"
 #include "DebugData.h"
 #include "JumpTable.h"
@@ -1240,14 +1241,29 @@ public:
   /// Get data used by this function.
   std::set<BinaryData *> dataUses(bool OnlyHot) const;
 
+  /// Return then name of the section this function originated from.
+  StringRef getOriginSectionName() const {
+    return getSection().getName();
+  }
+
   /// Return internal section name for this function.
   StringRef getCodeSectionName() const {
     return StringRef(CodeSectionName);
   }
 
+  /// Get output code section.
+  ErrorOr<BinarySection &> getCodeSection() const {
+    return BC.getUniqueSectionByName(getCodeSectionName());
+  }
+
   /// Return cold code section name for the function.
   StringRef getColdCodeSectionName() const {
     return StringRef(ColdCodeSectionName);
+  }
+
+  /// Get output code section for cold code of this function.
+  ErrorOr<BinarySection &> getColdCodeSection() const {
+    return BC.getUniqueSectionByName(getColdCodeSectionName());
   }
 
   /// Return true iif the function will halt execution on entry.

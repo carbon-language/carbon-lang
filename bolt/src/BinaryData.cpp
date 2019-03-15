@@ -73,8 +73,8 @@ StringRef BinaryData::getOutputSectionName() const {
 }
 
 uint64_t BinaryData::getOutputAddress() const {
-  assert(OutputSection->getFileAddress());
-  return OutputSection->getFileAddress() + OutputOffset;
+  assert(OutputSection->getOutputAddress());
+  return OutputSection->getOutputAddress() + OutputOffset;
 }
 
 uint64_t BinaryData::getOffset() const {

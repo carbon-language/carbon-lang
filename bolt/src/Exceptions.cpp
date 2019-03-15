@@ -526,42 +526,19 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer, bool EmitColdPart) {
   // a landing pad, this means that the first landing pad offset will be 0.
   // As a result, an exception handling runtime will ignore this landing pad,
   // because zero offset denotes the absence of a landing pad.
+  // For this reason, we emit LPStart value of 0 and output an absolute value
+  // of the landing pad in the table.
   //
-  // To workaround this issue, we issue a special LPStart for cold fragments
-  // that is equal to FDE start minus 1 byte.
-  //
-  // Note that main function fragment cannot start with a landing pad and we
-  // omit LPStart.
-  const MCExpr *LPStartExpr = nullptr;
-  std::function<void(const MCSymbol *)> emitLandingPad;
-  if (EmitColdPart) {
-    Streamer->EmitIntValue(dwarf::DW_EH_PE_udata4, 1); // LPStart format
-    LPStartExpr = MCBinaryExpr::createSub(
-                          MCSymbolRefExpr::create(StartSymbol, *BC.Ctx.get()),
-                          MCConstantExpr::create(1, *BC.Ctx.get()),
-                          *BC.Ctx.get());
-    Streamer->EmitValue(LPStartExpr, 4);
-    emitLandingPad = [&](const MCSymbol *LPSymbol) {
-      if (!LPSymbol) {
-        Streamer->EmitIntValue(0, 4);
-        return;
-      }
-      Streamer->EmitValue(MCBinaryExpr::createSub(
-                              MCSymbolRefExpr::create(LPSymbol, *BC.Ctx.get()),
-                              LPStartExpr,
-                              *BC.Ctx.get()),
-                          4);
-    };
-  } else {
-    Streamer->EmitIntValue(dwarf::DW_EH_PE_omit, 1); // LPStart format
-    emitLandingPad = [&](const MCSymbol *LPSymbol) {
-      if (!LPSymbol) {
-        Streamer->EmitIntValue(0, 4);
-        return;
-      }
-      Streamer->emitAbsoluteSymbolDiff(LPSymbol, StartSymbol, 4);
-    };
-  }
+  // FIXME: this may break PIEs and DSOs where the base address is not 0.
+  Streamer->EmitIntValue(dwarf::DW_EH_PE_udata4, 1); // LPStart format
+  Streamer->EmitIntValue(0, 4);
+  auto emitLandingPad = [&](const MCSymbol *LPSymbol) {
+    if (!LPSymbol) {
+      Streamer->EmitIntValue(0, 4);
+      return;
+    }
+    Streamer->EmitSymbolValue(LPSymbol, 4);
+  };
 
   Streamer->EmitIntValue(TTypeEncoding, 1);        // TType format
 

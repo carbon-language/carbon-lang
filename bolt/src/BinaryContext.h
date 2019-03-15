@@ -448,6 +448,14 @@ public:
     return Itr != GlobalSymbols.end() ? Itr->second : nullptr;
   }
 
+  MCSymbol *getHotTextStartSymbol() const {
+    return Ctx->getOrCreateSymbol("__hot_start");
+  }
+
+  MCSymbol *getHotTextEndSymbol() const {
+    return Ctx->getOrCreateSymbol("__hot_end");
+  }
+
   /// Perform any necessary post processing on the symbol table after
   /// function disassembly is complete.  This processing fixes top
   /// level data holes and makes sure the symbol table is valid.
@@ -535,6 +543,19 @@ public:
                                               Sections.end()));
   }
 
+  /// Iterate over all registered code sections.
+  iterator_range<FilteredSectionIterator> textSections() {
+    auto isText = [](const SectionIterator &Itr) {
+      return *Itr && Itr->isAllocatable() && Itr->isText();
+    };
+    return make_range(FilteredSectionIterator(isText,
+                                              Sections.begin(),
+                                              Sections.end()),
+                      FilteredSectionIterator(isText,
+                                              Sections.end(),
+                                              Sections.end()));
+  }
+
   /// Iterate over all registered allocatable sections.
   iterator_range<FilteredSectionConstIterator> allocatableSections() const {
     return const_cast<BinaryContext *>(this)->allocatableSections();
@@ -598,18 +619,10 @@ public:
     return make_range(NameToSection.equal_range(Name));
   }
 
-  /// Return the unique (allocatable) section associated with given \p Name.
+  /// Return the unique section associated with given \p Name.
   /// If there is more than one section with the same name, return an error
   /// object.
-  ErrorOr<BinarySection &> getUniqueSectionByName(StringRef SectionName) {
-    auto Sections = getSectionByName(SectionName);
-    if (Sections.begin() != Sections.end() &&
-        std::next(Sections.begin()) == Sections.end())
-      return *Sections.begin()->second;
-    return std::make_error_code(std::errc::bad_address);
-  }
-  ErrorOr<const BinarySection &>
-  getUniqueSectionByName(StringRef SectionName) const {
+  ErrorOr<BinarySection &> getUniqueSectionByName(StringRef SectionName) const {
     auto Sections = getSectionByName(SectionName);
     if (Sections.begin() != Sections.end() &&
         std::next(Sections.begin()) == Sections.end())
