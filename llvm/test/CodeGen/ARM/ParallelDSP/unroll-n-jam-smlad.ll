@@ -1,9 +1,14 @@
 ; RUN: llc -O3 -mtriple=thumbv7em %s -o - | FileCheck %s
+; RUN: llc -O3 -mtriple=thumbv7eb %s -o - | FileCheck %s --check-prefix=CHECK-UNSUPPORTED
 ; RUN: llc -O3 -mtriple=thumbv8m.main -mattr=+dsp %s -o - | FileCheck %s
+
+; CHECK-UNSUPPORTED-LABEL: unroll_n_jam_smlad
+; CHECK-UNSUPPORTED-NOT: smlad r{{.}}
 
 ; Test that the duplicate loads are removed, which allows parallel dsp to find
 ; the parallel operations.
 
+; CHECK-LABEL: unroll_n_jam_smlad
 define void @unroll_n_jam_smlad(i32* %res, i16* %A, i16* %B, i32 %N, i32 %idx) {
 entry:
   %xtraiter306.i = and i32 %N, 3
