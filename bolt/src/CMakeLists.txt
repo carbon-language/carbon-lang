@@ -77,6 +77,7 @@ add_llvm_tool(llvm-bolt
   DebugData.cpp
   DWARFRewriter.cpp
   Exceptions.cpp
+  ExecutableFileMemoryManager.cpp
   Heatmap.cpp
   JumpTable.cpp
   MCPlusBuilder.cpp

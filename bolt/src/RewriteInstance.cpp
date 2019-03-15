@@ -18,6 +18,7 @@
 #include "DataAggregator.h"
 #include "DataReader.h"
 #include "Exceptions.h"
+#include "ExecutableFileMemoryManager.h"
 #include "MCPlusBuilder.h"
 #include "ProfileReader.h"
 #include "ProfileWriter.h"
@@ -537,88 +538,6 @@ bool refersToReorderedSection(ErrorOr<BinarySection &> Section) {
                           });
   return Itr != opts::ReorderData.end();
 }
-
-}
-
-uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
-                                                      unsigned Alignment,
-                                                      unsigned SectionID,
-                                                      StringRef SectionName,
-                                                      bool IsCode,
-                                                      bool IsReadOnly) {
-  // Register as note section (non-allocatable) if we recognize it as so
-  for (auto &OverwriteName : RewriteInstance::SectionsToOverwrite) {
-    if (SectionName == OverwriteName) {
-      uint8_t *DataCopy = new uint8_t[Size];
-      auto &Section = BC.registerOrUpdateNoteSection(SectionName,
-                                                     DataCopy,
-                                                     Size,
-                                                     Alignment);
-      Section.setSectionID(SectionID);
-      assert(!Section.isAllocatable() && "note sections cannot be allocatable");
-      return DataCopy;
-    }
-  }
-
-  uint8_t *Ret;
-  if (IsCode) {
-    Ret = SectionMemoryManager::allocateCodeSection(Size, Alignment,
-                                                    SectionID, SectionName);
-  } else {
-    Ret = SectionMemoryManager::allocateDataSection(Size, Alignment,
-                                                    SectionID, SectionName,
-                                                    IsReadOnly);
-  }
-
-  const auto Flags = BinarySection::getFlags(IsReadOnly, IsCode, true);
-  auto &Section = BC.registerOrUpdateSection(SectionName,
-                                             ELF::SHT_PROGBITS,
-                                             Flags,
-                                             Ret,
-                                             Size,
-                                             Alignment);
-  Section.setSectionID(SectionID);
-  assert(Section.isAllocatable() &&
-         "verify that allocatable is marked as allocatable");
-
-  DEBUG(dbgs() << "BOLT: allocating " << (Section.isLocal() ? "local " : "")
-               << (IsCode ? "code" : (IsReadOnly ? "read-only data" : "data"))
-               << " section : " << SectionName
-               << " with size " << Size << ", alignment " << Alignment
-               << " at 0x" << Ret << ", ID = " << SectionID << "\n");
-
-  return Ret;
-}
-
-/// Notifier for non-allocatable (note) section.
-uint8_t *ExecutableFileMemoryManager::recordNoteSection(
-    const uint8_t *Data,
-    uintptr_t Size,
-    unsigned Alignment,
-    unsigned SectionID,
-    StringRef SectionName) {
-  DEBUG(dbgs() << "BOLT: note section "
-               << SectionName
-               << " with size " << Size << ", alignment " << Alignment
-               << " at 0x"
-               << Twine::utohexstr(reinterpret_cast<uint64_t>(Data)) << '\n');
-  auto &Section = BC.registerOrUpdateNoteSection(SectionName,
-                                                 copyByteArray(Data, Size),
-                                                 Size,
-                                                 Alignment);
-  Section.setSectionID(SectionID);
-  assert(!Section.isAllocatable() && "note sections cannot be allocatable");
-  return Section.getOutputData();
-}
-
-bool ExecutableFileMemoryManager::finalizeMemory(std::string *ErrMsg) {
-  DEBUG(dbgs() << "BOLT: finalizeMemory()\n");
-  return SectionMemoryManager::finalizeMemory(ErrMsg);
-}
-
-ExecutableFileMemoryManager::~ExecutableFileMemoryManager() { }
-
-namespace {
 
 StringRef getSectionName(SectionRef Section) {
   StringRef SectionName;
