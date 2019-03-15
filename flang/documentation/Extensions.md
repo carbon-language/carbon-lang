@@ -58,6 +58,8 @@ Extensions, deletions, and legacy features supported by default
   the length parameter of the implicit type, not the first.
 * Outside a character literal, a comment after a continuation marker (&)
   need not begin with a comment marker (!).
+* Classic C-style /*comments*/ are skipped, so multi-language header
+  files are easier to write and use.
 
 Extensions supported when enabled by options
 --------------------------------------------
