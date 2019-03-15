@@ -581,9 +581,8 @@ public:
   }
   std::string dump() const;
 
-  static constexpr std::size_t offsetof_impl() {
-    Statement *s{nullptr};
-    return reinterpret_cast<char *>(&s->u) - reinterpret_cast<char *>(s);
+  static std::size_t offsetof_impl() {
+    return reinterpret_cast<std::size_t>(&static_cast<Statement *>(nullptr)->u);
   }
   static Statement *From(Stmt_impl *stmt) {
     return reinterpret_cast<Statement *>(
