@@ -1318,9 +1318,9 @@ static void TestOverflowExhaustive(Fn1 OverflowFn, Fn2 MayOverflowFn) {
           bool RangeHasOverflow = false;
           bool RangeHasNoOverflow = false;
           APInt N1(Bits, Lo1);
-          for (unsigned I1 = 0; I1 < Size1; I1++, N1++) {
+          for (unsigned I1 = 0; I1 < Size1; ++I1, ++N1) {
             APInt N2(Bits, Lo2);
-            for (unsigned I2 = 0; I2 < Size2; I2++, N2++) {
+            for (unsigned I2 = 0; I2 < Size2; ++I2, ++N2) {
               assert(CR1.contains(N1));
               assert(CR2.contains(N2));
 
@@ -1351,8 +1351,6 @@ static void TestOverflowExhaustive(Fn1 OverflowFn, Fn2 MayOverflowFn) {
               EXPECT_TRUE(RangeHasOverflow);
               EXPECT_TRUE(RangeHasNoOverflow);
               break;
-            default:
-              llvm_unreachable("Invalid enum return value");
           }
         }
       }
@@ -1364,7 +1362,7 @@ TEST_F(ConstantRangeTest, UnsignedAddOverflowExhautive) {
   TestOverflowExhaustive(
       [](const APInt &N1, const APInt &N2) {
         bool Overflow;
-        N1.uadd_ov(N2, Overflow);
+        (void) N1.uadd_ov(N2, Overflow);
         return Overflow;
       },
       [](const ConstantRange &CR1, const ConstantRange &CR2) {
@@ -1376,7 +1374,7 @@ TEST_F(ConstantRangeTest, UnsignedSubOverflowExhautive) {
   TestOverflowExhaustive(
       [](const APInt &N1, const APInt &N2) {
         bool Overflow;
-        N1.usub_ov(N2, Overflow);
+        (void) N1.usub_ov(N2, Overflow);
         return Overflow;
       },
       [](const ConstantRange &CR1, const ConstantRange &CR2) {
@@ -1388,7 +1386,7 @@ TEST_F(ConstantRangeTest, SignedAddOverflowExhautive) {
   TestOverflowExhaustive(
       [](const APInt &N1, const APInt &N2) {
         bool Overflow;
-        N1.sadd_ov(N2, Overflow);
+        (void) N1.sadd_ov(N2, Overflow);
         return Overflow;
       },
       [](const ConstantRange &CR1, const ConstantRange &CR2) {
@@ -1400,7 +1398,7 @@ TEST_F(ConstantRangeTest, SignedSubOverflowExhautive) {
   TestOverflowExhaustive(
       [](const APInt &N1, const APInt &N2) {
         bool Overflow;
-        N1.ssub_ov(N2, Overflow);
+        (void) N1.ssub_ov(N2, Overflow);
         return Overflow;
       },
       [](const ConstantRange &CR1, const ConstantRange &CR2) {
