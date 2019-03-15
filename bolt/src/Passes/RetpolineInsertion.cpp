@@ -138,9 +138,10 @@ BinaryFunction *createNewRetpoline(BinaryContext &BC,
       BB2.addInstruction(PushR11);
 
       MCInst LoadCalleeAddrs;
-      MIB.createLoad(LoadCalleeAddrs, BrInfo.BaseRegNum, BrInfo.ScaleValue,
-                     BrInfo.IndexRegNum, BrInfo.DispValue, BrInfo.DispExpr,
-                     BrInfo.SegRegNum, MIB.getX86R11(), 8);
+      const auto &MemRef = BrInfo.Memory;
+      MIB.createLoad(LoadCalleeAddrs, MemRef.BaseRegNum, MemRef.ScaleValue,
+                     MemRef.IndexRegNum, MemRef.DispValue, MemRef.DispExpr,
+                     MemRef.SegRegNum, MIB.getX86R11(), 8);
 
       BB2.addInstruction(LoadCalleeAddrs);
 
@@ -186,27 +187,29 @@ std::string createRetpolineFunctionTag(BinaryContext &BC,
 
   std::string Tag = "__retpoline_mem_";
 
+  const auto &MemRef = BrInfo.Memory;
+
   std::string DispExprStr;
-  if (BrInfo.DispExpr) {
+  if (MemRef.DispExpr) {
     llvm::raw_string_ostream Ostream(DispExprStr);
-    BrInfo.DispExpr->print(Ostream, BC.AsmInfo.get());
+    MemRef.DispExpr->print(Ostream, BC.AsmInfo.get());
     Ostream.flush();
   }
 
-  Tag += BrInfo.BaseRegNum != BC.MIB->getX86NoRegister()
-             ? "r" + to_string(BrInfo.BaseRegNum)
+  Tag += MemRef.BaseRegNum != BC.MIB->getX86NoRegister()
+             ? "r" + to_string(MemRef.BaseRegNum)
              : "";
 
   Tag +=
-      BrInfo.DispExpr ? "+" + DispExprStr : "+" + to_string(BrInfo.DispValue);
+      MemRef.DispExpr ? "+" + DispExprStr : "+" + to_string(MemRef.DispValue);
 
-  Tag += BrInfo.IndexRegNum != BC.MIB->getX86NoRegister()
-             ? "+" + to_string(BrInfo.ScaleValue) + "*" +
-                   to_string(BrInfo.IndexRegNum)
+  Tag += MemRef.IndexRegNum != BC.MIB->getX86NoRegister()
+             ? "+" + to_string(MemRef.ScaleValue) + "*" +
+                   to_string(MemRef.IndexRegNum)
              : "";
 
-  Tag += BrInfo.SegRegNum != BC.MIB->getX86NoRegister()
-             ? "_seg_" + to_string(BrInfo.SegRegNum)
+  Tag += MemRef.SegRegNum != BC.MIB->getX86NoRegister()
+             ? "_seg_" + to_string(MemRef.SegRegNum)
              : "";
 
   return Tag;
@@ -232,10 +235,11 @@ void createBranchReplacement(BinaryContext &BC,
   auto &MIB = *BC.MIB;
   // Load the branch address in r11 if available
   if (BrInfo.isMem() && R11Available) {
+    const auto &MemRef = BrInfo.Memory;
     MCInst LoadCalleeAddrs;
-    MIB.createLoad(LoadCalleeAddrs, BrInfo.BaseRegNum, BrInfo.ScaleValue,
-                   BrInfo.IndexRegNum, BrInfo.DispValue, BrInfo.DispExpr,
-                   BrInfo.SegRegNum, MIB.getX86R11(), 8);
+    MIB.createLoad(LoadCalleeAddrs, MemRef.BaseRegNum, MemRef.ScaleValue,
+                   MemRef.IndexRegNum, MemRef.DispValue, MemRef.DispExpr,
+                   MemRef.SegRegNum, MIB.getX86R11(), 8);
     Replacement.push_back(LoadCalleeAddrs);
   }
 
@@ -255,9 +259,10 @@ IndirectBranchInfo::IndirectBranchInfo(MCInst &Inst, MCPlusBuilder &MIB) {
 
   if (MIB.isBranchOnMem(Inst)) {
     IsMem = true;
-    if (!MIB.evaluateX86MemoryOperand(Inst, &BaseRegNum, &ScaleValue,
-                                      &IndexRegNum, &DispValue, &SegRegNum,
-                                      &DispExpr)) {
+    if (!MIB.evaluateX86MemoryOperand(Inst, &Memory.BaseRegNum,
+                                      &Memory.ScaleValue,
+                                      &Memory.IndexRegNum, &Memory.DispValue,
+                                      &Memory.SegRegNum, &Memory.DispExpr)) {
       llvm_unreachable("not expected");
     }
   } else if (MIB.isBranchOnReg(Inst)) {
@@ -309,12 +314,13 @@ void RetpolineInsertion::runOnFunctions(BinaryContext &BC,
         // If the instruction addressing pattern uses rsp and the retpoline
         // loads the callee address then displacement needs to be updated
         if (BrInfo.isMem() && !R11Available) {
+          auto &MemRef = BrInfo.Memory;
           auto Addend = (BrInfo.isJump() || BrInfo.isTailCall()) ? 8 : 16;
-          if (BrInfo.BaseRegNum == MIB.getStackPointer()) {
-            BrInfo.DispValue += Addend;
+          if (MemRef.BaseRegNum == MIB.getStackPointer()) {
+            MemRef.DispValue += Addend;
           }
-          if (BrInfo.IndexRegNum == MIB.getStackPointer())
-            BrInfo.DispValue += Addend * BrInfo.ScaleValue;
+          if (MemRef.IndexRegNum == MIB.getStackPointer())
+            MemRef.DispValue += Addend * MemRef.ScaleValue;
         }
 
         TargetRetpoline = getOrCreateRetpoline(BC, BrInfo, R11Available);

@@ -290,7 +290,7 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC,
       opts::ReorderFunctions != RT_USER) {
     Cg = buildCallGraph(BC,
                         BFs,
-                        [this](const BinaryFunction &BF) {
+                        [](const BinaryFunction &BF) {
                           if (!BF.hasProfile())
                             return true;
                           if (BF.getState() != BinaryFunction::State::CFG)
