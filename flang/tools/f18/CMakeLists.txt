@@ -32,9 +32,9 @@ target_link_libraries(f18
 
 add_executable(f18-parse-demo
   f18-parse-demo.cc
+  stub-evaluate.cc
 )
 
 target_link_libraries(f18-parse-demo
   FortranParser
-  FortranEvaluate
 )

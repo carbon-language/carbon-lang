@@ -459,17 +459,22 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
       }
     }
   } else if (dirName == "ifdef" || dirName == "ifndef") {
+    bool doThen{false};
     if (nameToken.empty()) {
+      // Warning, not error, in PGI.
+      // This misusage appears in WRF & other SPEC codes (might be a local mod).
       prescanner->Say(
           dir.GetIntervalProvenanceRange(dirOffset, tokens - dirOffset),
-          "#%s: missing name"_err_en_US, dirName.data());
-      return;
+          "#%s: missing name"_en_US, dirName.data());
+    } else {
+      j = dir.SkipBlanks(j + 1);
+      if (j != tokens) {
+        prescanner->Say(dir.GetIntervalProvenanceRange(j, tokens - j),
+            "#%s: excess tokens at end of directive"_en_US, dirName.data());
+      }
+      doThen = IsNameDefined(nameToken) == (dirName == "ifdef");
     }
-    j = dir.SkipBlanks(j + 1);
-    if (j != tokens) {
-      prescanner->Say(dir.GetIntervalProvenanceRange(j, tokens - j),
-          "#%s: excess tokens at end of directive"_err_en_US, dirName.data());
-    } else if (IsNameDefined(nameToken) == (dirName == "ifdef")) {
+    if (doThen) {
       ifStack_.push(CanDeadElseAppear::Yes);
     } else {
       SkipDisabledConditionalCode(dirName, IsElseActive::Yes, prescanner,
