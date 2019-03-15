@@ -31,15 +31,11 @@ entry:
   %inc11.us.i.3.i = add i32 %idx, 4
   br label %for.body
 
+; TODO: CSE, or something similar, is required to remove the duplicate loads.
 ; CHECK: %for.body
 ; CHECK: smlad
 ; CHECK: smlad
-; CHECK: smlad
-; CHECK: smlad
-; CHECK: smlad
-; CHECK: smlad
-; CHECK: smlad
-; CHECK: smlad
+; CHECK-NOT: smlad r{{.*}}
 
 for.body:
   %A3 = phi i32 [ %add9.us.i.3361.i, %for.body ], [ 0, %entry ]
