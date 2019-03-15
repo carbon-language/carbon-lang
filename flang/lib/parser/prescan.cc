@@ -96,7 +96,10 @@ void Prescanner::Statement() {
   TokenSequence tokens;
   LineClassification line{ClassifyLine(lineStart_)};
   switch (line.kind) {
-  case LineClassification::Kind::Comment: NextLine(); return;
+  case LineClassification::Kind::Comment:
+    lineStart_ += line.payloadOffset;  // advance to '!' or newline
+    NextLine();
+    return;
   case LineClassification::Kind::IncludeLine:
     FortranInclude(lineStart_ + line.payloadOffset);
     NextLine();
@@ -283,19 +286,7 @@ void Prescanner::NextChar() {
   CHECK(*at_ != '\n');
   ++at_, ++column_;
   if (inPreprocessorDirective_) {
-    while (*at_ == '/' && at_[1] == '*') {
-      char star{' '}, slash{' '};
-      at_ += 2;
-      column_ += 2;
-      while ((*at_ != '\n' || slash == '\\') && (star != '*' || slash != '/')) {
-        star = slash;
-        slash = *at_++;
-        ++column_;
-      }
-    }
-    while (*at_ == '\\' && at_ + 2 < limit_ && at_[1] == '\n') {
-      BeginSourceLineAndAdvance();
-    }
+    SkipCComments();
   } else {
     bool rightMarginClip{
         inFixedForm_ && column_ > fixedFormColumnLimit_ && !tabInCurrentLine_};
@@ -319,6 +310,28 @@ void Prescanner::NextChar() {
   }
 }
 
+void Prescanner::SkipCComments() {
+  while (true) {
+    if (IsCComment(at_)) {
+      if (const char *after{SkipCComment(at_)}) {
+        column_ += after - at_;
+        // May have skipped over one or more newlines; relocate the start of
+        // the next line.
+        lineStart_ = at_ = after;
+        NextLine();
+      } else {
+        Say(GetProvenance(at_), "unclosed C-style comment"_err_en_US);
+        break;
+      }
+    } else if (inPreprocessorDirective_ && at_[0] == '\\' && at_ + 2 < limit_ &&
+        at_[1] == '\n' && lineStart_ < limit_) {
+      BeginSourceLineAndAdvance();
+    } else {
+      break;
+    }
+  }
+}
+
 void Prescanner::SkipSpaces() {
   while (*at_ == ' ' || *at_ == '\t') {
     NextChar();
@@ -333,20 +346,60 @@ const char *Prescanner::SkipWhiteSpace(const char *p) {
   return p;
 }
 
+const char *Prescanner::SkipWhiteSpaceAndCComments(const char *p) const {
+  while (true) {
+    if (*p == ' ' || *p == '\t') {
+      ++p;
+    } else if (IsCComment(p)) {
+      if (const char *after{SkipCComment(p)}) {
+        p = after;
+      } else {
+        break;
+      }
+    } else {
+      break;
+    }
+  }
+  return p;
+}
+
+const char *Prescanner::SkipCComment(const char *p) const {
+  char star{' '}, slash{' '};
+  p += 2;
+  while (star != '*' || slash != '/') {
+    if (p >= limit_) {
+      return nullptr;  // signifies an unterminated comment
+    }
+    star = slash;
+    slash = *p++;
+  }
+  return p;
+}
+
 bool Prescanner::NextToken(TokenSequence &tokens) {
   CHECK(at_ >= start_ && at_ < limit_);
   if (InFixedFormSource()) {
     SkipSpaces();
-  } else if (*at_ == ' ' || *at_ == '\t') {
-    // Compress white space into a single space character.
-    // Discard white space at the end of a line.
-    const auto theSpace{at_};
-    NextChar();
-    SkipSpaces();
-    if (*at_ != '\n') {
-      tokens.PutNextTokenChar(' ', GetProvenance(theSpace));
-      tokens.CloseToken();
-      return true;
+  } else {
+    if (*at_ == '/' && IsCComment(at_)) {
+      // Recognize and skip over classic C style /*comments*/ when
+      // outside a character literal.
+      if (features_.ShouldWarn(LanguageFeature::ClassicCComments)) {
+        Say(GetProvenance(at_), "nonstandard usage: C-style comment"_en_US);
+      }
+      SkipCComments();
+    }
+    if (*at_ == ' ' || *at_ == '\t') {
+      // Compress free-form white space into a single space character.
+      // Discard white space at the end of a line.
+      const auto theSpace{at_};
+      NextChar();
+      SkipSpaces();
+      if (*at_ != '\n') {
+        tokens.PutNextTokenChar(' ', GetProvenance(theSpace));
+        tokens.CloseToken();
+        return true;
+      }
     }
   }
   if (insertASpace_) {
@@ -592,9 +645,13 @@ bool Prescanner::IsFixedFormCommentLine(const char *start) const {
   return *p == '\n';
 }
 
-bool Prescanner::IsFreeFormComment(const char *p) const {
-  p = SkipWhiteSpace(p);
-  return *p == '!' || *p == '\n';
+const char *Prescanner::IsFreeFormComment(const char *p) const {
+  p = SkipWhiteSpaceAndCComments(p);
+  if (*p == '!' || *p == '\n') {
+    return p;
+  } else {
+    return nullptr;
+  }
 }
 
 std::optional<std::size_t> Prescanner::IsIncludeLine(const char *start) const {
@@ -982,8 +1039,9 @@ Prescanner::LineClassification Prescanner::ClassifyLine(
             IsFreeFormCompilerDirectiveLine(start)}) {
       return std::move(*lc);
     }
-    if (IsFreeFormComment(start)) {
-      return {LineClassification::Kind::Comment};
+    if (const char *bang{IsFreeFormComment(start)}) {
+      return {LineClassification::Kind::Comment,
+          static_cast<std::size_t>(bang - start)};
     }
   }
   if (std::optional<std::size_t> quoteOffset{IsIncludeLine(start)}) {

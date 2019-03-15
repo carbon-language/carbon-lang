@@ -140,11 +140,21 @@ private:
     return inFixedForm_ && !inPreprocessorDirective_ && !InCompilerDirective();
   }
 
+  bool IsCComment(const char *p) const {
+    return p[0] == '/' && p[1] == '*' &&
+        (inPreprocessorDirective_ ||
+            (!inCharLiteral_ &&
+                features_.IsEnabled(LanguageFeature::ClassicCComments)));
+  }
+
   void LabelField(TokenSequence &, int outCol = 1);
   void SkipToEndOfLine();
   void NextChar();
+  void SkipCComments();
   void SkipSpaces();
   static const char *SkipWhiteSpace(const char *);
+  const char *SkipWhiteSpaceAndCComments(const char *) const;
+  const char *SkipCComment(const char *) const;
   bool NextToken(TokenSequence &);
   bool ExponentAndKind(TokenSequence &);
   void QuotedCharacterLiteral(TokenSequence &);
@@ -152,7 +162,7 @@ private:
   bool PadOutCharacterLiteral(TokenSequence &);
   bool SkipCommentLine(bool afterAmpersand);
   bool IsFixedFormCommentLine(const char *) const;
-  bool IsFreeFormComment(const char *) const;
+  const char *IsFreeFormComment(const char *) const;
   std::optional<std::size_t> IsIncludeLine(const char *) const;
   void FortranInclude(const char *quote);
   const char *IsPreprocessorDirectiveLine(const char *) const;

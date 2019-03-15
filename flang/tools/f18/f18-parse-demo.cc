@@ -70,7 +70,8 @@ void CleanUpAtExit() {
   }
 }
 
-#if _POSIX_C_SOURCE >= 199309L && defined CLOCK_PROCESS_CPUTIME_ID
+#if _POSIX_C_SOURCE >= 199309L && _POSIX_TIMERS > 0 && _POSIX_CPUTIME && \
+    defined CLOCK_PROCESS_CPUTIME_ID
 static constexpr bool canTime{true};
 double CPUseconds() {
   struct timespec tspec;

@@ -461,11 +461,9 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
   } else if (dirName == "ifdef" || dirName == "ifndef") {
     bool doThen{false};
     if (nameToken.empty()) {
-      // Warning, not error, in PGI.
-      // This misusage appears in WRF & other SPEC codes (might be a local mod).
       prescanner->Say(
           dir.GetIntervalProvenanceRange(dirOffset, tokens - dirOffset),
-          "#%s: missing name"_en_US, dirName.data());
+          "#%s: missing name"_err_en_US, dirName.data());
     } else {
       j = dir.SkipBlanks(j + 1);
       if (j != tokens) {
