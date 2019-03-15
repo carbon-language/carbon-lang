@@ -20530,8 +20530,15 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
     }
   }
 
-  // Promote i16 cmovs if it won't prevent folding a load.
-  if (Op.getValueType() == MVT::i16 && !MayFoldLoad(Op1) && !MayFoldLoad(Op2)) {
+  // Or finally, promote i8 cmovs if we have CMOV,
+  //                 or i16 cmovs if it won't prevent folding a load.
+  // FIXME: we should not limit promotion of i8 case to only when the CMOV is
+  //        legal, but EmitLoweredSelect() can not deal with these extensions
+  //        being inserted between two CMOV's. (in i16 case too TBN)
+  //        https://bugs.llvm.org/show_bug.cgi?id=40974
+  if ((Op.getValueType() == MVT::i8 && Subtarget.hasCMov()) ||
+      (Op.getValueType() == MVT::i16 && !MayFoldLoad(Op1) &&
+       !MayFoldLoad(Op2))) {
     Op1 = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i32, Op1);
     Op2 = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i32, Op2);
     SDValue Ops[] = { Op2, Op1, CC, Cond };
