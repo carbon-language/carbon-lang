@@ -1253,6 +1253,11 @@ public:
     return StringRef(CodeSectionName);
   }
 
+  /// Assign a code section name to the function.
+  void setCodeSectionName(StringRef Name) {
+    CodeSectionName = Name;
+  }
+
   /// Get output code section.
   ErrorOr<BinarySection &> getCodeSection() const {
     return BC.getUniqueSectionByName(getCodeSectionName());
@@ -1261,6 +1266,11 @@ public:
   /// Return cold code section name for the function.
   StringRef getColdCodeSectionName() const {
     return StringRef(ColdCodeSectionName);
+  }
+
+  /// Assign a section name for the cold part of the function.
+  void setColdCodeSectionName(StringRef Name) {
+    ColdCodeSectionName = Name;
   }
 
   /// Get output code section for cold code of this function.

@@ -462,7 +462,10 @@ void BinaryFunctionPassManager::runAllPasses(
   Manager.registerPass(
       llvm::make_unique<RetpolineInsertion>(PrintRetpolineInsertion));
 
-  // Thighten branches according to offset differences between branch and
+  // Assign each function an output section.
+  Manager.registerPass(llvm::make_unique<AssignSections>());
+
+  // Tighten branches according to offset differences between branch and
   // targets. No extra instructions after this pass, otherwise we may have
   // relocations out of range and crash during linking.
   if (BC.isAArch64())

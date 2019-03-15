@@ -56,6 +56,7 @@ extern cl::opt<unsigned> Verbosity;
 extern cl::opt<bool> SplitEH;
 extern cl::opt<bolt::BinaryFunction::SplittingType> SplitFunctions;
 extern bool shouldProcess(const bolt::BinaryFunction &Function);
+extern bool isHotTextMover(const bolt::BinaryFunction &Function);
 
 enum DynoStatsSortOrder : char {
   Ascending,
@@ -1214,6 +1215,40 @@ void SimplifyRODataLoads::runOnFunctions(
          << "BOLT-INFO: dynamic loads simplified: " << NumDynamicLoadsSimplified
          << "\n"
          << "BOLT-INFO: dynamic loads found: " << NumDynamicLoadsFound << "\n";
+}
+
+void AssignSections::runOnFunctions(BinaryContext &BC,
+                                    std::map<uint64_t, BinaryFunction> &BFs,
+                                    std::set<uint64_t> &) {
+  for (auto *Function : BC.getInjectedBinaryFunctions()) {
+    Function->setCodeSectionName(BC.getInjectedCodeSectionName());
+    Function->setColdCodeSectionName(BC.getInjectedColdCodeSectionName());
+  }
+
+  // In non-relocation mode functions have pre-assigned section names.
+  if (!BC.HasRelocations)
+    return;
+
+  const auto UseColdSection = BC.NumProfiledFuncs > 0;
+  for (auto &BFI : BFs) {
+    auto &Function = BFI.second;
+    if (opts::isHotTextMover(Function)) {
+      Function.setCodeSectionName(BC.getHotTextMoverSectionName());
+      Function.setColdCodeSectionName(BC.getHotTextMoverSectionName());
+      continue;
+    }
+
+    if (!UseColdSection ||
+        Function.hasValidIndex() ||
+        Function.hasValidProfile()) {
+      Function.setCodeSectionName(BC.getMainCodeSectionName());
+    } else {
+      Function.setCodeSectionName(BC.getColdCodeSectionName());
+    }
+
+    if (Function.isSplit())
+      Function.setColdCodeSectionName(BC.getColdCodeSectionName());
+  }
 }
 
 void

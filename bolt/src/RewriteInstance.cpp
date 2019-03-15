@@ -197,6 +197,16 @@ HotText("hot-text",
   cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
+static cl::list<std::string>
+HotTextMoveSections("hot-text-move-sections",
+  cl::desc("list of sections containing functions used for hugifying hot text. "
+           "BOLT makes sure these functions are not placed on the same page as "
+           "the hot text. (default=\'.stub,.mover\')."),
+  cl::value_desc("sec1,sec2,sec3,..."),
+  cl::CommaSeparated,
+  cl::ZeroOrMore,
+  cl::cat(BoltCategory));
+
 static cl::opt<bool>
 HotData("hot-data",
   cl::desc("hot data symbols support (relocation mode)"),
@@ -388,6 +398,15 @@ TimeRewrite("time-rewrite",
   cl::ZeroOrMore,
   cl::Hidden,
   cl::cat(BoltCategory));
+
+bool isHotTextMover(const BinaryFunction &Function) {
+  for (auto &SectionName : opts::HotTextMoveSections) {
+    if (Function.getOriginSectionName() == SectionName)
+      return true;
+  }
+
+  return false;
+}
 
 // Check against lists of functions from options if we should
 // optimize the function with a given name.
@@ -1750,16 +1769,19 @@ void RewriteInstance::adjustCommandLineOptions() {
     outs() << "BOLT-INFO: disabling -align-macro-fusion on non-x86 platform\n";
     opts::AlignMacroOpFusion = MFT_NONE;
   }
+
   if (opts::AlignMacroOpFusion != MFT_NONE &&
       !BC->HasRelocations) {
     outs() << "BOLT-INFO: disabling -align-macro-fusion in non-relocation "
               "mode\n";
     opts::AlignMacroOpFusion = MFT_NONE;
   }
+
   if (opts::SplitEH && !BC->HasRelocations) {
     outs() << "BOLT-WARNING: disabling -split-eh in non-relocation mode\n";
     opts::SplitEH = false;
   }
+
   if (BC->isX86() && BC->HasRelocations &&
       opts::AlignMacroOpFusion == MFT_HOT &&
       !DA.started() && BC->DR.getAllFuncsData().empty() &&
@@ -1772,6 +1794,11 @@ void RewriteInstance::adjustCommandLineOptions() {
   if (opts::HotText && !BC->HasRelocations) {
     outs() << "BOLT-WARNING: hot text is disabled in non-relocation mode\n";
     opts::HotText = false;
+  }
+
+  if (opts::HotText && opts::HotTextMoveSections.getNumOccurrences() == 0) {
+    opts::HotTextMoveSections.addValue(".stub");
+    opts::HotTextMoveSections.addValue(".mover");
   }
 }
 
@@ -2600,15 +2627,12 @@ void RewriteInstance::emitFunction(MCStreamer &Streamer,
   if (Function.getState() == BinaryFunction::State::Empty)
     return;
 
-  auto *Section = static_cast<MCSectionELF *>(Streamer.getCurrentSectionOnly());
+  auto *Section =
+      BC->getCodeSection(EmitColdPart ? Function.getColdCodeSectionName()
+                                      : Function.getCodeSectionName());
+  Streamer.SwitchSection(Section);
   Section->setHasInstructions(true);
   BC->Ctx->addGenDwarfSection(Section);
-
-  if (EmitColdPart) {
-    Function.ColdCodeSectionName = Section->getSectionName();
-  } else {
-    Function.CodeSectionName = Section->getSectionName();
-  }
 
   if (BC->HasRelocations) {
     Streamer.EmitCodeAlignment(BinaryFunction::MinAlign);
@@ -2744,6 +2768,8 @@ void RewriteInstance::emitSections() {
 
   Streamer->InitSections(false);
 
+  BC->getTextSection()->setAlignment(BC->PageAlign);
+
   emitFunctions(Streamer.get());
 
   if (!BC->HasRelocations && opts::UpdateDebugSections)
@@ -2853,110 +2879,41 @@ void RewriteInstance::emitSections() {
 }
 
 void RewriteInstance::emitFunctions(MCStreamer *Streamer) {
-  auto *TextSection = BC->MOFI->getTextSection();
-  TextSection->setAlignment(BC->PageAlign);
-  auto *ColdSection =
-      BC->Ctx->getELFSection(".text.cold",
-                             ELF::SHT_PROGBITS,
-                             ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
-  ColdSection->setAlignment(64);
+  auto emit = [&](const std::vector<BinaryFunction *> &Functions) {
+    for (auto *Function : Functions) {
+      if (!BC->HasRelocations &&
+          (!Function->isSimple() || !opts::shouldProcess(*Function)))
+        continue;
 
-  // Sort functions for the output.
-  std::vector<BinaryFunction *> SortedFunctions =
-      BinaryContext::getSortedFunctions(BinaryFunctions);
+      DEBUG(dbgs() << "BOLT: generating code for function \""
+                   << *Function << "\" : "
+                   << Function->getFunctionNumber() << '\n');
 
-  DEBUG(
-    if (!BC->HasRelocations) {
-      auto SortedIt = SortedFunctions.begin();
-      for (auto &It : BinaryFunctions) {
-        assert(&It.second == *SortedIt);
-        ++SortedIt;
-      }
-    });
+      emitFunction(*Streamer, *Function, /*EmitColdPart=*/false);
 
-  // Emit a set of functions at the boundary of hot and cold code.
-  auto emitBoundaryFunctions = [&]() {
-    // Emit injected functions hot parts
-    for (auto *InjectedFunction : BC->getInjectedBinaryFunctions())
-      emitFunction(*Streamer, *InjectedFunction, /*EmitColdPart=*/false);
-
-    // Emit injected functions cold parts
-    for (auto *InjectedFunction : BC->getInjectedBinaryFunctions())
-      emitFunction(*Streamer, *InjectedFunction, /*EmitColdPart=*/true);
-
-    if (opts::SplitFunctions != BinaryFunction::ST_NONE) {
-      DEBUG(dbgs() << "BOLT-DEBUG: generating code for split functions\n");
-      for (auto *FPtr : SortedFunctions) {
-        if (!FPtr->isSplit() || !FPtr->isSimple())
-          continue;
-        emitFunction(*Streamer, *FPtr, /*EmitColdPart=*/true);
-      }
+      if (Function->isSplit())
+        emitFunction(*Streamer, *Function, /*EmitColdPart=*/true);
     }
   };
 
+  // Mark the start of hot text.
   if (opts::HotText) {
-    Streamer->SwitchSection(TextSection);
-    Streamer->EmitCodeAlignment(BC->PageAlign);
+    Streamer->SwitchSection(BC->getTextSection());
     Streamer->EmitLabel(BC->getHotTextStartSymbol());
   }
 
-  if (BC->HasRelocations) {
-    Streamer->SwitchSection(ColdSection);
-    emitBoundaryFunctions();
-  }
+  // Emit functions in sorted order.
+  std::vector<BinaryFunction *> SortedFunctions =
+      BinaryContext::getSortedFunctions(BinaryFunctions);
+  emit(SortedFunctions);
 
-  bool UseColdSection = SortedFunctions.front()->hasValidIndex();
+  // Emit functions added by BOLT.
+  emit(BC->getInjectedBinaryFunctions());
 
-  // Output functions one by one.
-  for (auto *FunctionPtr : SortedFunctions) {
-    auto &Function = *FunctionPtr;
-
-    if (!BC->HasRelocations &&
-        (!Function.isSimple() || !opts::shouldProcess(Function)))
-      continue;
-
-    MCSection *Section;
-    if (BC->HasRelocations) {
-      if (UseColdSection && !Function.hasValidIndex()) {
-        Section = ColdSection;
-      } else {
-        Section = TextSection;
-      }
-    } else {
-      Section =
-        BC->Ctx->getELFSection(Function.getCodeSectionName(),
-                               ELF::SHT_PROGBITS,
-                               ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
-    }
-    Streamer->SwitchSection(Section);
-
-    DEBUG(dbgs() << "BOLT: generating code for function \""
-                 << Function << "\" : "
-                 << Function.getFunctionNumber() << '\n');
-
-    emitFunction(*Streamer, Function, /*EmitColdPart=*/false);
-
-    if (!BC->HasRelocations && Function.isSplit()) {
-      Streamer->SwitchSection(
-          BC->Ctx->getELFSection(Function.getColdCodeSectionName(),
-                                 ELF::SHT_PROGBITS,
-                                 ELF::SHF_EXECINSTR | ELF::SHF_ALLOC));
-      emitFunction(*Streamer, Function, /*EmitColdPart=*/true);
-    }
-  }
-
+  // Mark the end of hot text.
   if (opts::HotText) {
-    Streamer->SwitchSection(TextSection);
+    Streamer->SwitchSection(BC->getTextSection());
     Streamer->EmitLabel(BC->getHotTextEndSymbol());
-  }
-
-  // Emit injected functions in non-reloc mode
-  if (!BC->HasRelocations) {
-    Streamer->SwitchSection(TextSection);
-    for (auto *InjectedFunction : BC->getInjectedBinaryFunctions()){
-      emitFunction(*Streamer, *InjectedFunction, /*EmitColdPart=*/false);
-      emitFunction(*Streamer, *InjectedFunction, /*EmitColdPart=*/true);
-    }
   }
 }
 
@@ -2965,25 +2922,39 @@ void RewriteInstance::mapFileSections(orc::VModuleKey Key) {
   mapDataSections(Key);
 }
 
+std::vector<BinarySection *>
+RewriteInstance::getCodeSections() {
+  std::vector<BinarySection *> CodeSections;
+  for (auto &Section : BC->textSections()) {
+    if (Section.hasValidSectionID())
+      CodeSections.emplace_back(&Section);
+  };
+
+  auto compareSections = [&](const BinarySection *A, const BinarySection *B) {
+    // Place movers before anything else.
+    if (A->getName() == BC->getHotTextMoverSectionName())
+      return true;
+    if (B->getName() == BC->getHotTextMoverSectionName())
+      return false;
+
+    // Depending on the option, put main text at the beginning or at the end.
+    if (opts::HotFunctionsAtEnd) {
+      return B->getName() == BC->getMainCodeSectionName();
+    } else {
+      return A->getName() == BC->getMainCodeSectionName();
+    }
+  };
+
+  // Determine the order of sections.
+  std::stable_sort(CodeSections.begin(), CodeSections.end(), compareSections);
+
+  return CodeSections;
+}
+
 void RewriteInstance::mapCodeSections(orc::VModuleKey Key) {
   if (BC->HasRelocations) {
     // Populate the list of sections to be allocated.
-    std::vector<BinarySection *> CodeSections;
-    for (auto &Section : BC->textSections()) {
-      if (Section.hasValidSectionID())
-        CodeSections.emplace_back(&Section);
-    };
-
-    // Determine the order of sections.
-    std::stable_sort(CodeSections.begin(), CodeSections.end(),
-                     [&](const BinarySection *A, const BinarySection *B) {
-                       if (opts::HotFunctionsAtEnd) {
-                         return B->getName() == ".text";
-                       } else {
-                         return A->getName() == ".text";
-                       }
-                     });
-
+    auto CodeSections = getCodeSections();
     DEBUG(dbgs() << "Code section in the order of output:\n";
       for (const auto *Section : CodeSections) {
         dbgs() << Section->getName() << '\n';

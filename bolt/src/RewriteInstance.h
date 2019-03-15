@@ -120,6 +120,9 @@ public:
   void updateUnitDebugInfo(const DWARFDie DIE,
                            std::vector<const BinaryFunction *> FunctionStack);
 
+  /// Return the list of code sections in the output order.
+  std::vector<BinarySection *> getCodeSections();
+
   /// Map all sections to their final addresses.
   void mapCodeSections(orc::VModuleKey ObjectsHandle);
   void mapDataSections(orc::VModuleKey ObjectsHandle);

@@ -323,7 +323,7 @@ public:
 ///
 ///      mov 0x12f(%rip), %eax
 ///
-/// to their counterparts that use immediate opreands instead of memory loads:
+/// to their counterparts that use immediate operands instead of memory loads:
 ///
 ///     mov $0x4007dc, %eax
 ///
@@ -347,6 +347,21 @@ public:
   }
   bool shouldPrint(const BinaryFunction &BF) const override {
     return BinaryFunctionPass::shouldPrint(BF) && Modified.count(&BF) > 0;
+  }
+  void runOnFunctions(BinaryContext &BC,
+                      std::map<uint64_t, BinaryFunction> &BFs,
+                      std::set<uint64_t> &LargeFunctions) override;
+};
+
+/// Assign output sections to all functions.
+class AssignSections : public BinaryFunctionPass {
+ public:
+  explicit AssignSections()
+    : BinaryFunctionPass(false) {
+  }
+
+  const char *getName() const override {
+    return "assign-sections";
   }
   void runOnFunctions(BinaryContext &BC,
                       std::map<uint64_t, BinaryFunction> &BFs,

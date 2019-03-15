@@ -32,6 +32,7 @@
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Object/ObjectFile.h"
@@ -455,6 +456,42 @@ public:
   MCSymbol *getHotTextEndSymbol() const {
     return Ctx->getOrCreateSymbol("__hot_end");
   }
+
+  MCSection *getTextSection() const {
+    return MOFI->getTextSection();
+  }
+
+  /// Return code section with a given name.
+  MCSection *getCodeSection(StringRef SectionName) const {
+    return Ctx->getELFSection(SectionName,
+                              ELF::SHT_PROGBITS,
+                              ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
+  }
+
+  /// \name Pre-assigned Section Names
+  /// @{
+
+  const char *getMainCodeSectionName() const {
+    return ".text";
+  }
+
+  const char *getColdCodeSectionName() const {
+    return ".text.cold";
+  }
+
+  const char *getHotTextMoverSectionName() const {
+    return ".text.mover";
+  }
+
+  const char *getInjectedCodeSectionName() const {
+    return ".text.injected";
+  }
+
+  const char *getInjectedColdCodeSectionName() const {
+    return ".text.injected.cold";
+  }
+
+  /// @}
 
   /// Perform any necessary post processing on the symbol table after
   /// function disassembly is complete.  This processing fixes top
