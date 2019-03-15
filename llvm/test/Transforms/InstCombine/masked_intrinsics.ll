@@ -35,6 +35,15 @@ define <2 x double> @load_undefmask(<2 x double>* %ptr, <2 x double> %passthru) 
 
 }
 
+define <2 x double> @load_cemask(<2 x double>* %ptr, <2 x double> %passthru)  {
+; CHECK-LABEL: @load_cemask(
+; CHECK-NEXT:    [[RES:%.*]] = call <2 x double> @llvm.masked.load.v2f64.p0v2f64(<2 x double>* [[PTR:%.*]], i32 2, <2 x i1> <i1 true, i1 false>, <2 x double> [[PASSTHRU:%.*]])
+; CHECK-NEXT:    ret <2 x double> [[RES]]
+;
+  %res = call <2 x double> @llvm.masked.load.v2f64.p0v2f64(<2 x double>* %ptr, i32 2, <2 x i1> <i1 1, i1 trunc (i32 0 to i1)>, <2 x double> %passthru)
+  ret <2 x double> %res
+}
+
 define <2 x double> @load_lane0(<2 x double>* %ptr, double %pt)  {
 ; CHECK-LABEL: @load_lane0(
 ; CHECK-NEXT:    [[PTV1:%.*]] = insertelement <2 x double> undef, double [[PT:%.*]], i64 0
@@ -48,7 +57,6 @@ define <2 x double> @load_lane0(<2 x double>* %ptr, double %pt)  {
   ret <2 x double> %res
 
 }
-
 
 define void @store_zeromask(<2 x double>* %ptr, <2 x double> %val)  {
 ; CHECK-LABEL: @store_zeromask(
