@@ -152,10 +152,9 @@ define i16 @cmov_spromotion_8_to_16(i1 %c) {
 ; CMOV-LABEL: cmov_spromotion_8_to_16:
 ; CMOV:       # %bb.0:
 ; CMOV-NEXT:    testb $1, %dil
-; CMOV-NEXT:    movl $117, %eax
-; CMOV-NEXT:    movl $237, %ecx
-; CMOV-NEXT:    cmovnel %eax, %ecx
-; CMOV-NEXT:    movsbl %cl, %eax
+; CMOV-NEXT:    movl $117, %ecx
+; CMOV-NEXT:    movl $65517, %eax # imm = 0xFFED
+; CMOV-NEXT:    cmovnel %ecx, %eax
 ; CMOV-NEXT:    # kill: def $ax killed $ax killed $eax
 ; CMOV-NEXT:    retq
 ;
@@ -179,10 +178,9 @@ define i32 @cmov_spromotion_8_to_32(i1 %c) {
 ; CMOV-LABEL: cmov_spromotion_8_to_32:
 ; CMOV:       # %bb.0:
 ; CMOV-NEXT:    testb $1, %dil
-; CMOV-NEXT:    movl $126, %eax
-; CMOV-NEXT:    movl $255, %ecx
-; CMOV-NEXT:    cmovnel %eax, %ecx
-; CMOV-NEXT:    movsbl %cl, %eax
+; CMOV-NEXT:    movl $126, %ecx
+; CMOV-NEXT:    movl $-1, %eax
+; CMOV-NEXT:    cmovnel %ecx, %eax
 ; CMOV-NEXT:    retq
 ;
 ; NO_CMOV-LABEL: cmov_spromotion_8_to_32:
@@ -204,10 +202,9 @@ define i64 @cmov_spromotion_8_to_64(i1 %c) {
 ; CMOV-LABEL: cmov_spromotion_8_to_64:
 ; CMOV:       # %bb.0:
 ; CMOV-NEXT:    testb $1, %dil
-; CMOV-NEXT:    movl $126, %eax
-; CMOV-NEXT:    movl $255, %ecx
-; CMOV-NEXT:    cmovnel %eax, %ecx
-; CMOV-NEXT:    movsbq %cl, %rax
+; CMOV-NEXT:    movl $126, %ecx
+; CMOV-NEXT:    movq $-1, %rax
+; CMOV-NEXT:    cmovneq %rcx, %rax
 ; CMOV-NEXT:    retq
 ;
 ; NO_CMOV-LABEL: cmov_spromotion_8_to_64:
