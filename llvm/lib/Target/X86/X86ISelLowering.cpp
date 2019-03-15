@@ -42402,6 +42402,7 @@ static SDValue combineExtractSubvector(SDNode *N, SelectionDAG &DAG,
 static SDValue combineScalarToVector(SDNode *N, SelectionDAG &DAG) {
   EVT VT = N->getValueType(0);
   SDValue Src = N->getOperand(0);
+  SDLoc DL(N);
 
   // If this is a scalar to vector to v1i1 from an AND with 1, bypass the and.
   // This occurs frequently in our masked scalar intrinsic code and our
@@ -42410,7 +42411,7 @@ static SDValue combineScalarToVector(SDNode *N, SelectionDAG &DAG) {
   if (VT == MVT::v1i1 && Src.getOpcode() == ISD::AND && Src.hasOneUse())
     if (auto *C = dyn_cast<ConstantSDNode>(Src.getOperand(1)))
       if (C->getAPIntValue().isOneValue())
-        return DAG.getNode(ISD::SCALAR_TO_VECTOR, SDLoc(N), MVT::v1i1,
+        return DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, MVT::v1i1,
                            Src.getOperand(0));
 
   // Combine scalar_to_vector of an extract_vector_elt into an extract_subvec.
@@ -42419,8 +42420,17 @@ static SDValue combineScalarToVector(SDNode *N, SelectionDAG &DAG) {
       Src.getOperand(0).getValueType().getVectorElementType() == MVT::i1)
     if (auto *C = dyn_cast<ConstantSDNode>(Src.getOperand(1)))
       if (C->isNullValue())
-        return DAG.getNode(ISD::EXTRACT_SUBVECTOR, SDLoc(N), VT,
-                           Src.getOperand(0), Src.getOperand(1));
+        return DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, VT, Src.getOperand(0),
+                           Src.getOperand(1));
+
+  // Reduce v2i64 to v4i32 if we don't need the upper bits.
+  // TODO: Move to DAGCombine?
+  if (VT == MVT::v2i64 && Src.getOpcode() == ISD::ANY_EXTEND &&
+      Src.getValueType() == MVT::i64 && Src.hasOneUse() &&
+      Src.getOperand(0).getScalarValueSizeInBits() <= 32)
+    return DAG.getBitcast(
+        VT, DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, MVT::v4i32,
+                        DAG.getAnyExtOrTrunc(Src.getOperand(0), DL, MVT::i32)));
 
   return SDValue();
 }
