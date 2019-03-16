@@ -79,9 +79,6 @@ public:
   ConstraintManager() = default;
   virtual ~ConstraintManager();
 
-  virtual bool haveEqualConstraints(ProgramStateRef S1,
-                                    ProgramStateRef S2) const = 0;
-
   virtual ProgramStateRef assume(ProgramStateRef state,
                                  DefinedSVal Cond,
                                  bool Assumption) = 0;
