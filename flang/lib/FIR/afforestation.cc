@@ -1270,7 +1270,7 @@ public:
     return builder_->CreateExpr(ExprRef(x.thing));
   }
   SwitchArguments ComposeSwitchArgs(const LinearSwitch &op) {
-    SwitchArguments result{{NOTHING, unspecifiedLabel, {}, op.refs}};
+    SwitchArguments result{NOTHING, unspecifiedLabel, {}, op.refs};
     std::visit(
         common::visitors{
             [&](const parser::ComputedGotoStmt *c) {
@@ -1297,8 +1297,8 @@ public:
     auto &cases{
         std::get<std::list<parser::CaseConstruct::Case>>(caseConstruct->t)};
     SwitchCaseArguments result{
-        {GetSwitchCaseSelector(caseConstruct), unspecifiedLabel,
-            populateSwitchValues(builder_, cases), std::move(refs)}};
+        GetSwitchCaseSelector(caseConstruct), unspecifiedLabel,
+            populateSwitchValues(builder_, cases), std::move(refs)};
     cleanupSwitchPairs<SwitchCaseStmt>(
         result.defLab, result.values, result.labels);
     return result;
@@ -1308,8 +1308,8 @@ public:
       const std::vector<LinearLabelRef> &refs) {
     auto &ranks{std::get<std::list<parser::SelectRankConstruct::RankCase>>(
         selectRankConstruct->t)};
-    SwitchRankArguments result{{GetSwitchRankSelector(selectRankConstruct),
-        unspecifiedLabel, populateSwitchValues(ranks), std::move(refs)}};
+    SwitchRankArguments result{GetSwitchRankSelector(selectRankConstruct),
+        unspecifiedLabel, populateSwitchValues(ranks), std::move(refs)};
     if (auto &name{GetSwitchAssociateName<parser::SelectRankStmt>(
             selectRankConstruct)}) {
       (void)name;  // get rid of warning
@@ -1324,8 +1324,8 @@ public:
       const std::vector<LinearLabelRef> &refs) {
     auto &types{std::get<std::list<parser::SelectTypeConstruct::TypeCase>>(
         selectTypeConstruct->t)};
-    SwitchTypeArguments result{{GetSwitchTypeSelector(selectTypeConstruct),
-        unspecifiedLabel, populateSwitchValues(types), std::move(refs)}};
+    SwitchTypeArguments result{GetSwitchTypeSelector(selectTypeConstruct),
+        unspecifiedLabel, populateSwitchValues(types), std::move(refs)};
     if (auto &name{GetSwitchAssociateName<parser::SelectTypeStmt>(
             selectTypeConstruct)}) {
       (void)name;  // get rid of warning
