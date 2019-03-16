@@ -34552,22 +34552,40 @@ static SDValue combineExtractVectorElt(SDNode *N, SelectionDAG &DAG,
   if (SDValue NewOp = combineExtractWithShuffle(N, DAG, DCI, Subtarget))
     return NewOp;
 
-  // TODO - Remove this once we can handle the implicit zero-extension of
-  // X86ISD::PEXTRW/X86ISD::PEXTRB in:
-  // XFormVExtractWithShuffleIntoLoad, combineHorizontalPredicateResult and
-  // combineBasicSADPattern.
-  if (N->getOpcode() != ISD::EXTRACT_VECTOR_ELT)
-    return SDValue();
-
-  if (SDValue NewOp = XFormVExtractWithShuffleIntoLoad(N, DAG, DCI))
-    return NewOp;
-
   SDValue InputVector = N->getOperand(0);
   SDValue EltIdx = N->getOperand(1);
+  auto *CIdx = dyn_cast<ConstantSDNode>(EltIdx);
 
   EVT SrcVT = InputVector.getValueType();
   EVT VT = N->getValueType(0);
   SDLoc dl(InputVector);
+  bool IsPextr = N->getOpcode() != ISD::EXTRACT_VECTOR_ELT;
+
+  // Integer Constant Folding.
+  if (VT.isInteger() && CIdx &&
+      CIdx->getAPIntValue().ult(SrcVT.getVectorNumElements())) {
+    APInt UndefVecElts;
+    SmallVector<APInt, 16> EltBits;
+    unsigned VecEltBitWidth = SrcVT.getScalarSizeInBits();
+    if (getTargetConstantBitsFromNode(InputVector, VecEltBitWidth, UndefVecElts,
+                                      EltBits, true, false)) {
+      uint64_t Idx = CIdx->getZExtValue();
+      if (UndefVecElts[Idx])
+        return IsPextr ? DAG.getConstant(0, dl, VT) : DAG.getUNDEF(VT);
+      return DAG.getConstant(EltBits[Idx].zextOrSelf(VT.getScalarSizeInBits()),
+                             dl, VT);
+    }
+  }
+
+  // TODO - Remove this once we can handle the implicit zero-extension of
+  // X86ISD::PEXTRW/X86ISD::PEXTRB in:
+  // XFormVExtractWithShuffleIntoLoad, combineHorizontalPredicateResult and
+  // combineBasicSADPattern.
+  if (IsPextr)
+    return SDValue();
+
+  if (SDValue NewOp = XFormVExtractWithShuffleIntoLoad(N, DAG, DCI))
+    return NewOp;
 
   // Detect mmx extraction of all bits as a i64. It works better as a bitcast.
   if (InputVector.getOpcode() == ISD::BITCAST && InputVector.hasOneUse() &&
@@ -34587,15 +34605,6 @@ static SDValue combineExtractVectorElt(SDNode *N, SelectionDAG &DAG,
     // The bitcast source is a direct mmx result.
     if (MMXSrc.getValueType() == MVT::x86mmx)
       return DAG.getNode(X86ISD::MMX_MOVD2W, dl, MVT::i32, MMXSrc);
-  }
-
-  if (VT == MVT::i1 && InputVector.getOpcode() == ISD::BITCAST &&
-      isa<ConstantSDNode>(EltIdx) &&
-      isa<ConstantSDNode>(InputVector.getOperand(0))) {
-    uint64_t ExtractedElt = N->getConstantOperandVal(1);
-    const APInt &InputValue = InputVector.getConstantOperandAPInt(0);
-    uint64_t Res = InputValue[ExtractedElt];
-    return DAG.getConstant(Res, dl, MVT::i1);
   }
 
   // Check whether this extract is the root of a sum of absolute differences
