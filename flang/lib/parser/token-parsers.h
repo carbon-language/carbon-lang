@@ -704,10 +704,22 @@ constexpr auto rawName{nonDigitIdChar >> many(nonDigitIdChar || digit)};
 TYPE_PARSER(space >> sourced(rawName >> construct<Name>()))
 constexpr auto keyword{construct<Keyword>(name)};
 
+constexpr auto logicalTRUE{
+    (".TRUE."_tok ||
+        extension<LanguageFeature::LogicalAbbreviations>(".T."_tok)) >>
+    pure(true)};
+constexpr auto logicalFALSE{
+    (".FALSE."_tok ||
+        extension<LanguageFeature::LogicalAbbreviations>(".F."_tok)) >>
+    pure(false)};
+
 // R1003 defined-unary-op -> . letter [letter]... .
 // R1023 defined-binary-op -> . letter [letter]... .
 // R1414 local-defined-operator -> defined-unary-op | defined-binary-op
 // R1415 use-defined-operator -> defined-unary-op | defined-binary-op
+// C1003 A defined operator must be distinct from logical literal constants
+// and intrinsic operator names; this is handled by attempting their parses
+// first, and by name resolution on their definitions, for best errors.
 // N.B. The name of the operator is captured without the periods around it.
 constexpr auto definedOpNameChar{
     letter || extension<LanguageFeature::PunctuationInNames>("$@"_ch)};

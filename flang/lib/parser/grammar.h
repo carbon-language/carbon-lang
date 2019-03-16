@@ -688,17 +688,10 @@ TYPE_CONTEXT_PARSER(
 // R725 logical-literal-constant ->
 //        .TRUE. [_ kind-param] | .FALSE. [_ kind-param]
 // Also accept .T. and .F. as extensions.
-TYPE_PARSER(
+TYPE_PARSER(construct<LogicalLiteralConstant>(
+                logicalTRUE, maybe(underscore >> kindParam)) ||
     construct<LogicalLiteralConstant>(
-        (".TRUE."_tok ||
-            extension<LanguageFeature::LogicalAbbreviations>(".T."_tok)) >>
-            pure(true),
-        maybe(underscore >> kindParam)) ||
-    construct<LogicalLiteralConstant>(
-        (".FALSE."_tok ||
-            extension<LanguageFeature::LogicalAbbreviations>(".F."_tok)) >>
-            pure(false),
-        maybe(underscore >> kindParam)))
+        logicalFALSE, maybe(underscore >> kindParam)))
 
 // R726 derived-type-def ->
 //        derived-type-stmt [type-param-def-stmt]...
@@ -1625,13 +1618,13 @@ constexpr auto primary{instrumented("primary"_en_US,
 
 // R1002 level-1-expr -> [defined-unary-op] primary
 // TODO: Reasonable extension: permit multiple defined-unary-ops
-constexpr auto level1Expr{sourced(first(
-    construct<Expr>(construct<Expr::DefinedUnary>(definedOpName, primary)),
-    primary,
-    extension<LanguageFeature::SignedPrimary>(
-        construct<Expr>(construct<Expr::UnaryPlus>("+" >> primary))),
-    extension<LanguageFeature::SignedPrimary>(
-        construct<Expr>(construct<Expr::Negate>("-" >> primary)))))};
+constexpr auto level1Expr{sourced(
+    first(primary,  // must come before define op to resolve .TRUE._8 ambiguity
+        construct<Expr>(construct<Expr::DefinedUnary>(definedOpName, primary)),
+        extension<LanguageFeature::SignedPrimary>(
+            construct<Expr>(construct<Expr::UnaryPlus>("+" >> primary))),
+        extension<LanguageFeature::SignedPrimary>(
+            construct<Expr>(construct<Expr::Negate>("-" >> primary)))))};
 
 // R1004 mult-operand -> level-1-expr [power-op mult-operand]
 // R1007 power-op -> **

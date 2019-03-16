@@ -279,7 +279,7 @@ MaybeExpr ExpressionAnalyzer::TopLevelChecks(DataRef &&dataRef) {
     if (componentRank > 0) {
       int baseRank{component->base().Rank()};
       if (baseRank > 0) {
-        Say("reference to whole rank-%d component '%%%s' of "
+        Say("Reference to whole rank-%d component '%%%s' of "
             "rank-%d array of derived type is not allowed"_err_en_US,
             componentRank, symbol.name().ToString().data(), baseRank);
       } else {
