@@ -1815,6 +1815,12 @@ std::shared_ptr<PathDiagnosticPiece>
 ConditionBRVisitor::VisitNodeImpl(const ExplodedNode *N,
                                   BugReporterContext &BRC, BugReport &BR) {
   ProgramPoint progPoint = N->getLocation();
+  ProgramStateRef CurrentState = N->getState();
+  ProgramStateRef PreviousState = N->getFirstPred()->getState();
+
+  // If the constraint information does not changed there is no assumption.
+  if (BRC.getStateManager().haveEqualConstraints(CurrentState, PreviousState))
+    return nullptr;
 
   // If an assumption was made on a branch, it should be caught
   // here by looking at the state transition.
@@ -1883,8 +1889,6 @@ std::shared_ptr<PathDiagnosticPiece> ConditionBRVisitor::VisitTerminator(
     break;
   }
 
-  Cond = Cond->IgnoreParens();
-
   // However, when we encounter a logical operator as a branch condition,
   // then the condition is actually its RHS, because LHS would be
   // the condition for the logical operator terminator.
@@ -1904,18 +1908,6 @@ std::shared_ptr<PathDiagnosticPiece>
 ConditionBRVisitor::VisitTrueTest(const Expr *Cond, bool tookTrue,
                                   BugReporterContext &BRC, BugReport &R,
                                   const ExplodedNode *N) {
-  ProgramStateRef CurrentState = N->getState();
-  ProgramStateRef PreviousState = N->getFirstPred()->getState();
-  const LocationContext *LCtx = N->getLocationContext();
-
-  // If the constraint information is changed between the current and the
-  // previous program state we assuming the newly seen constraint information.
-  // If we cannot evaluate the condition (and the constraints are the same)
-  // the analyzer has no information about the value and just assuming it.
-  if (BRC.getStateManager().haveEqualConstraints(CurrentState, PreviousState) &&
-      CurrentState->getSVal(Cond, LCtx).isValid())
-    return nullptr;
-
   // These will be modified in code below, but we need to preserve the original
   //  values in case we want to throw the generic message.
   const Expr *CondTmp = Cond;
@@ -1951,6 +1943,7 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond, bool tookTrue,
 
   // Condition too complex to explain? Just say something so that the user
   // knew we've made some path decision at this point.
+  const LocationContext *LCtx = N->getLocationContext();
   PathDiagnosticLocation Loc(Cond, BRC.getSourceManager(), LCtx);
   if (!Loc.isValid() || !Loc.asLocation().isValid())
     return nullptr;
