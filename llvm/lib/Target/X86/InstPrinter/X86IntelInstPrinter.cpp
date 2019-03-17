@@ -84,7 +84,7 @@ bool X86IntelInstPrinter::printVecCompareInstr(const MCInst *MI, raw_ostream &OS
       printOperand(MI, 1, OS);
       OS << ", ";
       if ((Desc.TSFlags & X86II::FormMask) == X86II::MRMSrcMem)
-        printi128mem(MI, 2, OS);
+        printxmmwordmem(MI, 2, OS);
       else
         printOperand(MI, 2, OS);
       return true;
@@ -172,9 +172,9 @@ bool X86IntelInstPrinter::printVecCompareInstr(const MCInst *MI, raw_ostream &OS
           // Broadcast form.
           // Load size is based on W-bit as only D and Q are supported.
           if (Desc.TSFlags & X86II::VEX_W)
-            printi64mem(MI, CurOp++, OS);
+            printqwordmem(MI, CurOp++, OS);
           else
-            printi32mem(MI, CurOp++, OS);
+            printdwordmem(MI, CurOp++, OS);
 
           // Print the number of elements broadcasted.
           unsigned NumElts;
@@ -187,11 +187,11 @@ bool X86IntelInstPrinter::printVecCompareInstr(const MCInst *MI, raw_ostream &OS
           OS << "{1to" << NumElts << "}";
         } else {
           if (Desc.TSFlags & X86II::EVEX_L2)
-            printi512mem(MI, CurOp++, OS);
+            printzmmwordmem(MI, CurOp++, OS);
           else if (Desc.TSFlags & X86II::VEX_L)
-            printi256mem(MI, CurOp++, OS);
+            printymmwordmem(MI, CurOp++, OS);
           else
-            printi128mem(MI, CurOp++, OS);
+            printxmmwordmem(MI, CurOp++, OS);
         }
       } else {
         printOperand(MI, CurOp++, OS);

@@ -53,43 +53,28 @@ public:
     printMemReference(MI, OpNo, O);
   }
 
-  void printi8mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+  void printbytemem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     printMemReference(MI, OpNo, O);
   }
-  void printi16mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+  void printwordmem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     printMemReference(MI, OpNo, O);
   }
-  void printi32mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+  void printdwordmem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     printMemReference(MI, OpNo, O);
   }
-  void printi64mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+  void printqwordmem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     printMemReference(MI, OpNo, O);
   }
-  void printi128mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+  void printxmmwordmem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     printMemReference(MI, OpNo, O);
   }
-  void printi256mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+  void printymmwordmem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     printMemReference(MI, OpNo, O);
   }
-  void printi512mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+  void printzmmwordmem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     printMemReference(MI, OpNo, O);
   }
-  void printf32mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    printMemReference(MI, OpNo, O);
-  }
-  void printf64mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    printMemReference(MI, OpNo, O);
-  }
-  void printf80mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    printMemReference(MI, OpNo, O);
-  }
-  void printf128mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    printMemReference(MI, OpNo, O);
-  }
-  void printf256mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    printMemReference(MI, OpNo, O);
-  }
-  void printf512mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+  void printtbytemem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     printMemReference(MI, OpNo, O);
   }
 
