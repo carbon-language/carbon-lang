@@ -64,19 +64,33 @@ void X86InstPrinterCommon::printSSEAVXCC(const MCInst *MI, unsigned Op,
   }
 }
 
-void X86InstPrinterCommon::printXOPCC(const MCInst *MI, unsigned Op,
-                                      raw_ostream &O) {
-  int64_t Imm = MI->getOperand(Op).getImm();
+void X86InstPrinterCommon::printVPCOMMnemonic(const MCInst *MI,
+                                              raw_ostream &OS) {
+  OS << "vpcom";
+
+  int64_t Imm = MI->getOperand(MI->getNumOperands() - 1).getImm();
   switch (Imm) {
-  default: llvm_unreachable("Invalid xopcc argument!");
-  case 0: O << "lt"; break;
-  case 1: O << "le"; break;
-  case 2: O << "gt"; break;
-  case 3: O << "ge"; break;
-  case 4: O << "eq"; break;
-  case 5: O << "neq"; break;
-  case 6: O << "false"; break;
-  case 7: O << "true"; break;
+  default: llvm_unreachable("Invalid vpcom argument!");
+  case 0: OS << "lt"; break;
+  case 1: OS << "le"; break;
+  case 2: OS << "gt"; break;
+  case 3: OS << "ge"; break;
+  case 4: OS << "eq"; break;
+  case 5: OS << "neq"; break;
+  case 6: OS << "false"; break;
+  case 7: OS << "true"; break;
+  }
+
+  switch (MI->getOpcode()) {
+  default: llvm_unreachable("Unexpected opcode!");
+  case X86::VPCOMBmi:  case X86::VPCOMBri:  OS << "b\t";  break;
+  case X86::VPCOMDmi:  case X86::VPCOMDri:  OS << "d\t";  break;
+  case X86::VPCOMQmi:  case X86::VPCOMQri:  OS << "q\t";  break;
+  case X86::VPCOMUBmi: case X86::VPCOMUBri: OS << "ub\t"; break;
+  case X86::VPCOMUDmi: case X86::VPCOMUDri: OS << "ud\t"; break;
+  case X86::VPCOMUQmi: case X86::VPCOMUQri: OS << "uq\t"; break;
+  case X86::VPCOMUWmi: case X86::VPCOMUWri: OS << "uw\t"; break;
+  case X86::VPCOMWmi:  case X86::VPCOMWri:  OS << "w\t";  break;
   }
 }
 

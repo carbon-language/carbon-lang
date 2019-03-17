@@ -617,11 +617,6 @@ def AVX512ICC : Operand<i8> {
   let OperandType = "OPERAND_IMMEDIATE";
 }
 
-def XOPCC : Operand<i8> {
-  let PrintMethod = "printXOPCC";
-  let OperandType = "OPERAND_IMMEDIATE";
-}
-
 class ImmSExtAsmOperandClass : AsmOperandClass {
   let SuperClasses = [ImmAsmOperand];
   let RenderMethod = "addImmOperands";

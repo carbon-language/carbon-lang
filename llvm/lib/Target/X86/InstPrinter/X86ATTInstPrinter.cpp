@@ -67,11 +67,53 @@ void X86ATTInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
    OS << "\tdata32";
   }
   // Try to print any aliases first.
-  else if (!printAliasInstr(MI, OS))
+  else if (!printAliasInstr(MI, OS) &&
+           !printVecCompareInstr(MI, OS))
     printInstruction(MI, OS);
 
   // Next always print the annotation.
   printAnnotation(OS, Annot);
+}
+
+bool X86ATTInstPrinter::printVecCompareInstr(const MCInst *MI,
+                                             raw_ostream &OS) {
+  if (MI->getNumOperands() == 0 ||
+      !MI->getOperand(MI->getNumOperands() - 1).isImm())
+    return false;
+
+  unsigned Imm = MI->getOperand(MI->getNumOperands() - 1).getImm();
+
+  const MCInstrDesc &Desc = MII.get(MI->getOpcode());
+
+  // Custom print the vector compare instructions to get the immediate
+  // translated into the mnemonic.
+  switch (MI->getOpcode()) {
+  case X86::VPCOMBmi:  case X86::VPCOMBri:
+  case X86::VPCOMDmi:  case X86::VPCOMDri:
+  case X86::VPCOMQmi:  case X86::VPCOMQri:
+  case X86::VPCOMUBmi: case X86::VPCOMUBri:
+  case X86::VPCOMUDmi: case X86::VPCOMUDri:
+  case X86::VPCOMUQmi: case X86::VPCOMUQri:
+  case X86::VPCOMUWmi: case X86::VPCOMUWri:
+  case X86::VPCOMWmi:  case X86::VPCOMWri:
+    if (Imm >= 0 && Imm <= 7) {
+      printVPCOMMnemonic(MI, OS);
+
+      if ((Desc.TSFlags & X86II::FormMask) == X86II::MRMSrcMem)
+        printi128mem(MI, 2, OS);
+      else
+        printOperand(MI, 2, OS);
+
+      OS << ", ";
+      printOperand(MI, 1, OS);
+      OS << ", ";
+      printOperand(MI, 0, OS);
+      return true;
+    }
+    break;
+  }
+
+  return false;
 }
 
 void X86ATTInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
