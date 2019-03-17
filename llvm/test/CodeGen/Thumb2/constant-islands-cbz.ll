@@ -31,10 +31,9 @@ define i32* @test(i32* returned %this, i32 %event_size, i8* %event_pointer) {
 ; CHECK-T2-NEXT:    mov r4, r0
 ; CHECK-T2-NEXT:    movs r0, #0
 ; CHECK-T2-NEXT:    strd r0, r0, [r4, #4]
-; CHECK-T2-NEXT:    cmp r2, #0
 ; CHECK-T2-NEXT:    strd r0, r0, [r4, #12]
 ; CHECK-T2-NEXT:    mov r0, r4
-; CHECK-T2-NEXT:    beq .LBB0_2
+; CHECK-T2-NEXT:    cbz r2, .LBB0_2
 ; CHECK-T2-NEXT:  @ %bb.1: @ %if.else
 ; CHECK-T2-NEXT:    bl equeue_create_inplace
 ; CHECK-T2-NEXT:    mov r0, r4
