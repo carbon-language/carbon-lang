@@ -4077,13 +4077,6 @@ static OverflowResult mapOverflowResult(ConstantRange::OverflowResult OR) {
   llvm_unreachable("Unknown OverflowResult");
 }
 
-static ConstantRange constantRangeFromKnownBits(const KnownBits &Known) {
-  if (Known.isUnknown())
-    return ConstantRange(Known.getBitWidth(), /* full */ true);
-
-  return ConstantRange(Known.One, ~Known.Zero + 1);
-}
-
 OverflowResult llvm::computeOverflowForUnsignedAdd(
     const Value *LHS, const Value *RHS, const DataLayout &DL,
     AssumptionCache *AC, const Instruction *CxtI, const DominatorTree *DT,
@@ -4092,8 +4085,10 @@ OverflowResult llvm::computeOverflowForUnsignedAdd(
                                         nullptr, UseInstrInfo);
   KnownBits RHSKnown = computeKnownBits(RHS, DL, /*Depth=*/0, AC, CxtI, DT,
                                         nullptr, UseInstrInfo);
-  ConstantRange LHSRange = constantRangeFromKnownBits(LHSKnown);
-  ConstantRange RHSRange = constantRangeFromKnownBits(RHSKnown);
+  ConstantRange LHSRange =
+      ConstantRange::fromKnownBits(LHSKnown, /*signed*/ false);
+  ConstantRange RHSRange =
+      ConstantRange::fromKnownBits(RHSKnown, /*signed*/ false);
   return mapOverflowResult(LHSRange.unsignedAddMayOverflow(RHSRange));
 }
 
@@ -4208,8 +4203,10 @@ OverflowResult llvm::computeOverflowForUnsignedSub(const Value *LHS,
                                                    const DominatorTree *DT) {
   KnownBits LHSKnown = computeKnownBits(LHS, DL, /*Depth=*/0, AC, CxtI, DT);
   KnownBits RHSKnown = computeKnownBits(RHS, DL, /*Depth=*/0, AC, CxtI, DT);
-  ConstantRange LHSRange = constantRangeFromKnownBits(LHSKnown);
-  ConstantRange RHSRange = constantRangeFromKnownBits(RHSKnown);
+  ConstantRange LHSRange =
+      ConstantRange::fromKnownBits(LHSKnown, /*signed*/ false);
+  ConstantRange RHSRange =
+      ConstantRange::fromKnownBits(RHSKnown, /*signed*/ false);
   return mapOverflowResult(LHSRange.unsignedSubMayOverflow(RHSRange));
 }
 
