@@ -111,6 +111,116 @@ bool X86ATTInstPrinter::printVecCompareInstr(const MCInst *MI,
       return true;
     }
     break;
+
+  case X86::VPCMPBZ128rmi:   case X86::VPCMPBZ128rri:
+  case X86::VPCMPBZ256rmi:   case X86::VPCMPBZ256rri:
+  case X86::VPCMPBZrmi:      case X86::VPCMPBZrri:
+  case X86::VPCMPDZ128rmi:   case X86::VPCMPDZ128rri:
+  case X86::VPCMPDZ256rmi:   case X86::VPCMPDZ256rri:
+  case X86::VPCMPDZrmi:      case X86::VPCMPDZrri:
+  case X86::VPCMPQZ128rmi:   case X86::VPCMPQZ128rri:
+  case X86::VPCMPQZ256rmi:   case X86::VPCMPQZ256rri:
+  case X86::VPCMPQZrmi:      case X86::VPCMPQZrri:
+  case X86::VPCMPUBZ128rmi:  case X86::VPCMPUBZ128rri:
+  case X86::VPCMPUBZ256rmi:  case X86::VPCMPUBZ256rri:
+  case X86::VPCMPUBZrmi:     case X86::VPCMPUBZrri:
+  case X86::VPCMPUDZ128rmi:  case X86::VPCMPUDZ128rri:
+  case X86::VPCMPUDZ256rmi:  case X86::VPCMPUDZ256rri:
+  case X86::VPCMPUDZrmi:     case X86::VPCMPUDZrri:
+  case X86::VPCMPUQZ128rmi:  case X86::VPCMPUQZ128rri:
+  case X86::VPCMPUQZ256rmi:  case X86::VPCMPUQZ256rri:
+  case X86::VPCMPUQZrmi:     case X86::VPCMPUQZrri:
+  case X86::VPCMPUWZ128rmi:  case X86::VPCMPUWZ128rri:
+  case X86::VPCMPUWZ256rmi:  case X86::VPCMPUWZ256rri:
+  case X86::VPCMPUWZrmi:     case X86::VPCMPUWZrri:
+  case X86::VPCMPWZ128rmi:   case X86::VPCMPWZ128rri:
+  case X86::VPCMPWZ256rmi:   case X86::VPCMPWZ256rri:
+  case X86::VPCMPWZrmi:      case X86::VPCMPWZrri:
+  case X86::VPCMPBZ128rmik:  case X86::VPCMPBZ128rrik:
+  case X86::VPCMPBZ256rmik:  case X86::VPCMPBZ256rrik:
+  case X86::VPCMPBZrmik:     case X86::VPCMPBZrrik:
+  case X86::VPCMPDZ128rmik:  case X86::VPCMPDZ128rrik:
+  case X86::VPCMPDZ256rmik:  case X86::VPCMPDZ256rrik:
+  case X86::VPCMPDZrmik:     case X86::VPCMPDZrrik:
+  case X86::VPCMPQZ128rmik:  case X86::VPCMPQZ128rrik:
+  case X86::VPCMPQZ256rmik:  case X86::VPCMPQZ256rrik:
+  case X86::VPCMPQZrmik:     case X86::VPCMPQZrrik:
+  case X86::VPCMPUBZ128rmik: case X86::VPCMPUBZ128rrik:
+  case X86::VPCMPUBZ256rmik: case X86::VPCMPUBZ256rrik:
+  case X86::VPCMPUBZrmik:    case X86::VPCMPUBZrrik:
+  case X86::VPCMPUDZ128rmik: case X86::VPCMPUDZ128rrik:
+  case X86::VPCMPUDZ256rmik: case X86::VPCMPUDZ256rrik:
+  case X86::VPCMPUDZrmik:    case X86::VPCMPUDZrrik:
+  case X86::VPCMPUQZ128rmik: case X86::VPCMPUQZ128rrik:
+  case X86::VPCMPUQZ256rmik: case X86::VPCMPUQZ256rrik:
+  case X86::VPCMPUQZrmik:    case X86::VPCMPUQZrrik:
+  case X86::VPCMPUWZ128rmik: case X86::VPCMPUWZ128rrik:
+  case X86::VPCMPUWZ256rmik: case X86::VPCMPUWZ256rrik:
+  case X86::VPCMPUWZrmik:    case X86::VPCMPUWZrrik:
+  case X86::VPCMPWZ128rmik:  case X86::VPCMPWZ128rrik:
+  case X86::VPCMPWZ256rmik:  case X86::VPCMPWZ256rrik:
+  case X86::VPCMPWZrmik:     case X86::VPCMPWZrrik:
+  case X86::VPCMPDZ128rmib:  case X86::VPCMPDZ128rmibk:
+  case X86::VPCMPDZ256rmib:  case X86::VPCMPDZ256rmibk:
+  case X86::VPCMPDZrmib:     case X86::VPCMPDZrmibk:
+  case X86::VPCMPQZ128rmib:  case X86::VPCMPQZ128rmibk:
+  case X86::VPCMPQZ256rmib:  case X86::VPCMPQZ256rmibk:
+  case X86::VPCMPQZrmib:     case X86::VPCMPQZrmibk:
+  case X86::VPCMPUDZ128rmib: case X86::VPCMPUDZ128rmibk:
+  case X86::VPCMPUDZ256rmib: case X86::VPCMPUDZ256rmibk:
+  case X86::VPCMPUDZrmib:    case X86::VPCMPUDZrmibk:
+  case X86::VPCMPUQZ128rmib: case X86::VPCMPUQZ128rmibk:
+  case X86::VPCMPUQZ256rmib: case X86::VPCMPUQZ256rmibk:
+  case X86::VPCMPUQZrmib:    case X86::VPCMPUQZrmibk:
+    if ((Imm >= 0 && Imm <= 2) || (Imm >= 4 && Imm <= 6)) {
+      printVPCMPMnemonic(MI, OS);
+
+      unsigned CurOp = (Desc.TSFlags & X86II::EVEX_K) ? 3 : 2;
+
+      if ((Desc.TSFlags & X86II::FormMask) == X86II::MRMSrcMem) {
+        if (Desc.TSFlags & X86II::EVEX_B) {
+          // Broadcast form.
+          // Load size is based on W-bit as only D and Q are supported.
+          if (Desc.TSFlags & X86II::VEX_W)
+            printi64mem(MI, CurOp--, OS);
+          else
+            printi32mem(MI, CurOp--, OS);
+
+          // Print the number of elements broadcasted.
+          unsigned NumElts;
+          if (Desc.TSFlags & X86II::EVEX_L2)
+            NumElts = (Desc.TSFlags & X86II::VEX_W) ? 8 : 16;
+          else if (Desc.TSFlags & X86II::VEX_L)
+            NumElts = (Desc.TSFlags & X86II::VEX_W) ? 4 : 8;
+          else
+            NumElts = (Desc.TSFlags & X86II::VEX_W) ? 2 : 4;
+          OS << "{1to" << NumElts << "}";
+        } else {
+          if (Desc.TSFlags & X86II::EVEX_L2)
+            printi512mem(MI, CurOp--, OS);
+          else if (Desc.TSFlags & X86II::VEX_L)
+            printi256mem(MI, CurOp--, OS);
+          else
+            printi128mem(MI, CurOp--, OS);
+        }
+      } else {
+        printOperand(MI, CurOp--, OS);
+      }
+
+      OS << ", ";
+      printOperand(MI, CurOp--, OS);
+      OS << ", ";
+      printOperand(MI, 0, OS);
+      if (CurOp > 0) {
+        // Print mask operand.
+        OS << " {";
+        printOperand(MI, CurOp--, OS);
+        OS << "}";
+      }
+
+      return true;
+    }
+    break;
   }
 
   return false;

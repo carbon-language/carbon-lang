@@ -2387,13 +2387,15 @@ bool X86AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
     }
   }
 
+  unsigned ComparisonCode = ~0U;
+
   // FIXME: Hack to recognize vpcmp<comparison code>{ub,uw,ud,uq,b,w,d,q}.
   if (PatchedName.startswith("vpcmp") &&
-      (PatchedName.endswith("b") || PatchedName.endswith("w") ||
-       PatchedName.endswith("d") || PatchedName.endswith("q"))) {
-    unsigned CCIdx = PatchedName.drop_back().back() == 'u' ? 2 : 1;
-    unsigned ComparisonCode = StringSwitch<unsigned>(
-      PatchedName.slice(5, PatchedName.size() - CCIdx))
+      (PatchedName.back() == 'b' || PatchedName.back() == 'w' ||
+       PatchedName.back() == 'd' || PatchedName.back() == 'q')) {
+    unsigned SuffixSize = PatchedName.drop_back().back() == 'u' ? 2 : 1;
+    unsigned CC = StringSwitch<unsigned>(
+      PatchedName.slice(5, PatchedName.size() - SuffixSize))
       .Case("eq",    0x0) // Only allowed on unsigned. Checked below.
       .Case("lt",    0x1)
       .Case("le",    0x2)
@@ -2403,18 +2405,18 @@ bool X86AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
       .Case("nle",   0x6)
       //.Case("true",  0x7) // Not a documented alias.
       .Default(~0U);
-    if (ComparisonCode != ~0U && (ComparisonCode != 0 || CCIdx == 2)) {
-      Operands.push_back(X86Operand::CreateToken("vpcmp", NameLoc));
-
-      const MCExpr *ImmOp = MCConstantExpr::create(ComparisonCode,
-                                                   getParser().getContext());
-      Operands.push_back(X86Operand::CreateImm(ImmOp, NameLoc, NameLoc));
-
-      PatchedName = PatchedName.substr(PatchedName.size() - CCIdx);
+    if (CC != ~0U && (CC != 0 || SuffixSize == 2)) {
+      switch (PatchedName.back()) {
+      default: llvm_unreachable("Unexpected character!");
+      case 'b': PatchedName = SuffixSize == 2 ? "vpcmpub" : "vpcmpb"; break;
+      case 'w': PatchedName = SuffixSize == 2 ? "vpcmpuw" : "vpcmpw"; break;
+      case 'd': PatchedName = SuffixSize == 2 ? "vpcmpud" : "vpcmpd"; break;
+      case 'q': PatchedName = SuffixSize == 2 ? "vpcmpuq" : "vpcmpq"; break;
+      }
+      // Set up the immediate to push into the operands later.
+      ComparisonCode = CC;
     }
   }
-
-  unsigned ComparisonCode = ~0U;
 
   // FIXME: Hack to recognize vpcom<comparison code>{ub,uw,ud,uq,b,w,d,q}.
   if (PatchedName.startswith("vpcom") &&
