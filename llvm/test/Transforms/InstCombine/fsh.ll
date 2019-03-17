@@ -399,7 +399,7 @@ define <2 x i31> @rotl_constant_shift_amount_vec(<2 x i31> %x) {
 
 define i33 @rotr_constant_shift_amount(i33 %x) {
 ; CHECK-LABEL: @rotr_constant_shift_amount(
-; CHECK-NEXT:    [[R:%.*]] = call i33 @llvm.fshr.i33(i33 [[X:%.*]], i33 [[X]], i33 1)
+; CHECK-NEXT:    [[R:%.*]] = call i33 @llvm.fshl.i33(i33 [[X:%.*]], i33 [[X]], i33 32)
 ; CHECK-NEXT:    ret i33 [[R]]
 ;
   %r = call i33 @llvm.fshr.i33(i33 %x, i33 %x, i33 34)
@@ -408,7 +408,7 @@ define i33 @rotr_constant_shift_amount(i33 %x) {
 
 define <2 x i32> @rotr_constant_shift_amount_vec(<2 x i32> %x) {
 ; CHECK-LABEL: @rotr_constant_shift_amount_vec(
-; CHECK-NEXT:    [[R:%.*]] = call <2 x i32> @llvm.fshr.v2i32(<2 x i32> [[X:%.*]], <2 x i32> [[X]], <2 x i32> <i32 1, i32 31>)
+; CHECK-NEXT:    [[R:%.*]] = call <2 x i32> @llvm.fshl.v2i32(<2 x i32> [[X:%.*]], <2 x i32> [[X]], <2 x i32> <i32 31, i32 1>)
 ; CHECK-NEXT:    ret <2 x i32> [[R]]
 ;
   %r = call <2 x i32> @llvm.fshr.v2i32(<2 x i32> %x, <2 x i32> %x, <2 x i32> <i32 33, i32 -1>)
@@ -467,7 +467,7 @@ define i33 @fshr_known_bits(i33 %x, i33 %y) {
 
 define i33 @fshr_multi_use(i33 %a) {
 ; CHECK-LABEL: @fshr_multi_use(
-; CHECK-NEXT:    [[B:%.*]] = tail call i33 @llvm.fshr.i33(i33 [[A:%.*]], i33 [[A]], i33 1)
+; CHECK-NEXT:    [[B:%.*]] = call i33 @llvm.fshl.i33(i33 [[A:%.*]], i33 [[A]], i33 32)
 ; CHECK-NEXT:    [[C:%.*]] = lshr i33 [[B]], 23
 ; CHECK-NEXT:    [[D:%.*]] = xor i33 [[C]], [[B]]
 ; CHECK-NEXT:    [[E:%.*]] = and i33 [[D]], 31
@@ -516,7 +516,7 @@ define i16 @fshl_bswap(i16 %x) {
 
 define i16 @fshr_bswap(i16 %x) {
 ; CHECK-LABEL: @fshr_bswap(
-; CHECK-NEXT:    [[R:%.*]] = call i16 @llvm.fshr.i16(i16 [[X:%.*]], i16 [[X]], i16 8)
+; CHECK-NEXT:    [[R:%.*]] = call i16 @llvm.fshl.i16(i16 [[X:%.*]], i16 [[X]], i16 8)
 ; CHECK-NEXT:    ret i16 [[R]]
 ;
   %r = call i16 @llvm.fshr.i16(i16 %x, i16 %x, i16 8)
