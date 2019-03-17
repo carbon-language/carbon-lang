@@ -1,7 +1,7 @@
 ; RUN: opt -cost-model -analyze -mtriple=amdgcn-unknown-amdhsa -mcpu=hawaii -mattr=+half-rate-64-ops < %s | FileCheck -check-prefixes=ALL,CIFASTF64,NOFP32DENORM,NOFP16,NOFP16-NOFP32DENORM %s
 ; RUN: opt -cost-model -analyze -mtriple=amdgcn-unknown-amdhsa -mcpu=kaveri -mattr=-half-rate-64-ops < %s | FileCheck -check-prefixes=ALL,CISLOWF64,NOFP32DENORM,NOFP16,NOFP16-NOFP32DENORM  %s
-; RUN: opt -cost-model -analyze -mtriple=amdgcn-unknown-amdhsa -mcpu=tahiti -mattr=+half-rate-64-ops < %s | FileCheck -check-prefixes=ALL,SIFASTF64,NOFP32DENORM,NOFP16,NOFP16-NOFP32DENORM  %s
-; RUN: opt -cost-model -analyze -mtriple=amdgcn-unknown-amdhsa -mcpu=verde -mattr=-half-rate-64-ops < %s | FileCheck -check-prefixes=ALL,SISLOWF64,NOFP32DENORM,NOFP16,NOFP16-NOFP32DENORM  %s
+; RUN: opt -cost-model -analyze -mtriple=amdgcn-mesa-mesa3d -mcpu=tahiti -mattr=+half-rate-64-ops < %s | FileCheck -check-prefixes=ALL,SIFASTF64,NOFP32DENORM,NOFP16,NOFP16-NOFP32DENORM  %s
+; RUN: opt -cost-model -analyze -mtriple=amdgcn-mesa-mesa3d -mcpu=verde -mattr=-half-rate-64-ops < %s | FileCheck -check-prefixes=ALL,SISLOWF64,NOFP32DENORM,NOFP16,NOFP16-NOFP32DENORM  %s
 ; RUN: opt -cost-model -analyze -mtriple=amdgcn-unknown-amdhsa -mcpu=hawaii -mattr=+fp32-denormals < %s | FileCheck -check-prefixes=ALL,FP32DENORMS,SLOWFP32DENORMS,NOFP16,NOFP16-FP32DENORM %s
 ; RUN: opt -cost-model -analyze -mtriple=amdgcn-unknown-amdhsa -mcpu=gfx900 -mattr=+fp32-denormals < %s | FileCheck -check-prefixes=ALL,FP32DENORMS,FASTFP32DENORMS,FP16 %s
 
