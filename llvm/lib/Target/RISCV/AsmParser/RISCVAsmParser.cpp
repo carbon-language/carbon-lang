@@ -916,12 +916,14 @@ bool RISCVAsmParser::ParseRegister(unsigned &RegNo, SMLoc &StartLoc,
   RegNo = 0;
   StringRef Name = getLexer().getTok().getIdentifier();
 
-  if (!MatchRegisterName(Name) || !MatchRegisterAltName(Name)) {
-    getParser().Lex(); // Eat identifier token.
-    return false;
-  }
+  RegNo = MatchRegisterName(Name);
+  if (RegNo == 0)
+    RegNo = MatchRegisterAltName(Name);
+  if (RegNo == 0)
+    return Error(StartLoc, "invalid register name");
 
-  return Error(StartLoc, "invalid register name");
+  getParser().Lex(); // Eat identifier token.
+  return false;
 }
 
 OperandMatchResultTy RISCVAsmParser::parseRegister(OperandVector &Operands,
