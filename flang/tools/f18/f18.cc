@@ -511,7 +511,8 @@ int main(int argc, char *const argv[]) {
     driver.pgf90Args.push_back("-Mbackslash");
   }
 
-  Fortran::semantics::SemanticsContext semanticsContext{defaultKinds};
+  Fortran::semantics::SemanticsContext semanticsContext{
+      defaultKinds, options.features};
   semanticsContext.set_moduleDirectory(driver.moduleDirectory)
       .set_searchDirectories(driver.searchDirectories)
       .set_warnOnNonstandardUsage(driver.warnOnNonstandardUsage)

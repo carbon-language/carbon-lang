@@ -3187,8 +3187,8 @@ TYPE_PARSER(construct<ProcedureStmt>("MODULE PROCEDURE"_sptok >>
 // R1509 defined-io-generic-spec ->
 //         READ ( FORMATTED ) | READ ( UNFORMATTED ) |
 //         WRITE ( FORMATTED ) | WRITE ( UNFORMATTED )
-TYPE_PARSER(first(construct<GenericSpec>(
-                      "OPERATOR" >> parenthesized(Parser<DefinedOperator>{})),
+TYPE_PARSER(sourced(first(construct<GenericSpec>("OPERATOR" >>
+                              parenthesized(Parser<DefinedOperator>{})),
     construct<GenericSpec>(
         construct<GenericSpec::Assignment>("ASSIGNMENT ( = )"_tok)),
     construct<GenericSpec>(
@@ -3199,7 +3199,7 @@ TYPE_PARSER(first(construct<GenericSpec>(
         construct<GenericSpec::WriteFormatted>("WRITE ( FORMATTED )"_tok)),
     construct<GenericSpec>(
         construct<GenericSpec::WriteUnformatted>("WRITE ( UNFORMATTED )"_tok)),
-    construct<GenericSpec>(name)))
+    construct<GenericSpec>(name))))
 
 // R1510 generic-stmt ->
 //         GENERIC [, access-spec] :: generic-spec => specific-procedure-list

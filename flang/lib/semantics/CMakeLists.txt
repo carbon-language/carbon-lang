@@ -21,6 +21,7 @@ add_library(FortranSemantics
   mod-file.cc
   resolve-labels.cc
   resolve-names.cc
+  resolve-names-utils.cc
   rewrite-parse-tree.cc
   scope.cc
   semantics.cc

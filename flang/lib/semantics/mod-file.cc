@@ -277,8 +277,13 @@ void ModFileWriter::PutSubprogram(const Symbol &symbol) {
 void ModFileWriter::PutGeneric(const Symbol &symbol) {
   auto &details{symbol.get<GenericDetails>()};
   decls_ << "generic";
-  PutAttrs(decls_, symbol.attrs());
-  PutLower(decls_ << "::", symbol) << "=>";
+  PutAttrs(decls_, symbol.attrs()) << "::";
+  if (details.kind() == GenericKind::DefinedOp) {
+    PutLower(decls_ << "operator(", symbol) << ')';
+  } else {
+    PutLower(decls_, symbol);
+  }
+  decls_ << "=>";
   int n = 0;
   for (auto *specific : details.specificProcs()) {
     if (n++ > 0) decls_ << ',';

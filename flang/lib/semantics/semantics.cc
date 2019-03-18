@@ -63,12 +63,20 @@ using StatementSemanticsPass1 = SemanticsVisitor<ExprChecker>;
 using StatementSemanticsPass2 =
     SemanticsVisitor<AssignmentChecker, DoConcurrentChecker>;
 
-SemanticsContext::SemanticsContext(
-    const common::IntrinsicTypeDefaultKinds &defaultKinds)
-  : defaultKinds_{defaultKinds},
+SemanticsContext::SemanticsContext(const common::IntrinsicTypeDefaultKinds
+        &defaultKinds, const parser::LanguageFeatureControl &languageFeatures)
+  : defaultKinds_{defaultKinds}, languageFeatures_{languageFeatures},
     intrinsics_{evaluate::IntrinsicProcTable::Configure(defaultKinds)},
     foldingContext_{evaluate::FoldingContext{
         parser::ContextualMessages{parser::CharBlock{}, &messages_}}} {}
+
+bool SemanticsContext::IsEnabled(parser::LanguageFeature feature) const {
+  return languageFeatures_.IsEnabled(feature);
+}
+
+bool SemanticsContext::ShouldWarn(parser::LanguageFeature feature) const {
+  return languageFeatures_.ShouldWarn(feature);
+}
 
 const DeclTypeSpec &SemanticsContext::MakeNumericType(
     TypeCategory category, int kind) {

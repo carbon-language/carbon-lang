@@ -720,12 +720,11 @@ constexpr auto logicalFALSE{
 // C1003 A defined operator must be distinct from logical literal constants
 // and intrinsic operator names; this is handled by attempting their parses
 // first, and by name resolution on their definitions, for best errors.
-// N.B. The name of the operator is captured without the periods around it.
+// N.B. The name of the operator is captured with the dots around it.
 constexpr auto definedOpNameChar{
     letter || extension<LanguageFeature::PunctuationInNames>("$@"_ch)};
-TYPE_PARSER(space >> "."_ch >>
-    construct<DefinedOpName>(
-        sourced(some(definedOpNameChar) >> construct<Name>())) /
-        "."_ch)
+TYPE_PARSER(
+    space >> construct<DefinedOpName>(sourced("."_ch >>
+                 some(definedOpNameChar) >> construct<Name>() / "."_ch)))
 }
 #endif  // FORTRAN_PARSER_TOKEN_PARSERS_H_

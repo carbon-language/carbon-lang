@@ -553,7 +553,7 @@ WRAPPER_CLASS(NamedConstant, Name);
 // R1023 defined-binary-op -> . letter [letter]... .
 // R1414 local-defined-operator -> defined-unary-op | defined-binary-op
 // R1415 use-defined-operator -> defined-unary-op | defined-binary-op
-// The Name here is stored without the dots; e.g., FOO, not .FOO.
+// The Name here is stored with the dots; e.g., .FOO.
 WRAPPER_CLASS(DefinedOpName, Name);
 
 // R608 intrinsic-operator ->
@@ -2881,6 +2881,7 @@ struct GenericSpec {
   EMPTY_CLASS(ReadUnformatted);
   EMPTY_CLASS(WriteFormatted);
   EMPTY_CLASS(WriteUnformatted);
+  CharBlock source;
   std::variant<Name, DefinedOperator, Assignment, ReadFormatted,
       ReadUnformatted, WriteFormatted, WriteUnformatted>
       u;

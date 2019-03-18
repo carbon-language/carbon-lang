@@ -25,15 +25,31 @@ module m
     procedure s1
   end interface
   interface
-    subroutine s4(x)
-      real x
+    subroutine s4(x,y)
+      real x,y
     end subroutine
-    subroutine s2(x)
-      complex x
+    subroutine s2(x,y)
+      complex x,y
     end subroutine
   end interface
   generic :: bar => s4
   generic :: bar => s2
   !ERROR: Procedure 's4' is already specified in generic 'bar'
   generic :: bar => s4
+
+  generic :: operator(.foo.)=> s4
+  generic :: operator(.foo.)=> s2
+  !ERROR: Procedure 's4' is already specified in generic operator '.foo.'
+  generic :: operator(.foo.)=> s4
 end module
+
+module m2
+  interface
+    integer function f(x, y)
+      integer, intent(in) :: x, y
+    end function
+  end interface
+  generic :: operator(+)=> f
+  !ERROR: Procedure 'f' is already specified in generic 'operator(+)'
+  generic :: operator(+)=> f
+end

@@ -252,9 +252,18 @@ private:
   std::optional<SourceName> passName_;  // name in PASS attribute
 };
 
+ENUM_CLASS(GenericKind, // Kinds of generic-spec
+    Name, DefinedOp,  // these have a Name associated with them
+    Assignment,  // user-defined assignment
+    OpPower, OpMultiply, OpDivide, OpAdd, OpSubtract, OpConcat, OpLT, OpLE,
+    OpEQ, OpNE, OpGE, OpGT, OpNOT, OpAND, OpOR, OpXOR, OpEQV, OpNEQV,
+    ReadFormatted, ReadUnformatted, WriteFormatted, WriteUnformatted)
+
 class GenericBindingDetails {
 public:
   GenericBindingDetails() {}
+  GenericKind kind() const { return kind_; }
+  void set_kind(GenericKind kind) { kind_ = kind; }
   const SymbolList &specificProcs() const { return specificProcs_; }
   void add_specificProc(const Symbol &proc) { specificProcs_.push_back(&proc); }
   void add_specificProcs(const SymbolList &procs) {
@@ -262,6 +271,7 @@ public:
   }
 
 private:
+  GenericKind kind_{GenericKind::Name};
   SymbolList specificProcs_;
 };
 
@@ -366,8 +376,10 @@ public:
   GenericDetails(const SymbolList &specificProcs);
   GenericDetails(Symbol *specific) : specific_{specific} {}
 
-  const SymbolList specificProcs() const { return specificProcs_; }
+  GenericKind kind() const { return kind_; }
+  void set_kind(GenericKind kind) { kind_ = kind; }
 
+  const SymbolList specificProcs() const { return specificProcs_; }
   void add_specificProc(const Symbol &proc) { specificProcs_.push_back(&proc); }
 
   Symbol *specific() { return specific_; }
@@ -384,6 +396,7 @@ public:
   const Symbol *CheckSpecific() const;
 
 private:
+  GenericKind kind_{GenericKind::Name};
   // all of the specific procedures for this generic
   SymbolList specificProcs_;
   // a specific procedure with the same name as this generic, if any
@@ -468,7 +481,6 @@ public:
     return const_cast<DeclTypeSpec *>(
         const_cast<const Symbol *>(this)->GetType());
   }
-
   const DeclTypeSpec *GetType() const {
     return std::visit(
         common::visitors{

@@ -394,6 +394,7 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
           },
           [](const HostAssocDetails &) {},
           [&](const GenericDetails &x) {
+            os << ' ' << EnumToString(x.kind());
             for (const auto *proc : x.specificProcs()) {
               os << ' ' << proc->name();
             }

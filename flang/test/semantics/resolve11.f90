@@ -20,3 +20,22 @@ module m
   !The accessibility of 'j' has already been specified as PRIVATE
   private j
 end
+
+module m2
+  interface operator(.foo.)
+    module procedure ifoo
+  end interface
+  public :: operator(.foo.)
+  !ERROR: The accessibility of operator '.foo.' has already been specified as PUBLIC
+  private :: operator(.foo.)
+  interface operator(+)
+    module procedure ifoo
+  end interface
+  public :: operator(+)
+  !ERROR: The accessibility of 'operator(+)' has already been specified as PUBLIC
+  private :: operator(+)
+contains
+  integer function ifoo(x, y)
+    integer, intent(in) :: x, y
+  end
+end module

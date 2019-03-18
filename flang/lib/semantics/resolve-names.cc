@@ -16,6 +16,7 @@
 #include "attr.h"
 #include "expression.h"
 #include "mod-file.h"
+#include "resolve-names-utils.h"
 #include "rewrite-parse-tree.h"
 #include "scope.h"
 #include "semantics.h"
@@ -49,8 +50,6 @@ using MessageFixedText = parser::MessageFixedText;
 using MessageFormattedText = parser::MessageFormattedText;
 
 class ResolveNamesVisitor;
-
-static const parser::Name *GetGenericSpecName(const parser::GenericSpec &);
 
 // ImplicitRules maps initial character of identifier to the DeclTypeSpec
 // representing the implicit type; std::nullopt if none.
@@ -419,6 +418,8 @@ public:
   void SayDerivedType(const SourceName &, MessageFixedText &&, const Scope &);
   void Say2(const SourceName &, MessageFixedText &&, const SourceName &,
       MessageFixedText &&);
+  void Say2(const SourceName &, MessageFixedText &&, const Symbol &,
+      MessageFixedText &&);
   void Say2(const parser::Name &, MessageFixedText &&, const Symbol &,
       MessageFixedText &&);
 
@@ -433,14 +434,14 @@ public:
   Symbol *FindInTypeOrParents(const Scope &, const parser::Name &);
   Symbol *FindInTypeOrParents(const parser::Name &);
   void EraseSymbol(const parser::Name &);
+  void EraseSymbol(const Symbol &symbol) { currScope().erase(symbol.name()); }
   // Record that name resolved to symbol
-  Symbol *Resolve(const parser::Name &, Symbol *);
-  Symbol &Resolve(const parser::Name &, Symbol &);
   // Make a new symbol with the name and attrs of an existing one
   Symbol &CopySymbol(const Symbol &);
 
   // Make symbols in the current or named scope
   Symbol &MakeSymbol(Scope &, const SourceName &, Attrs);
+  Symbol &MakeSymbol(const SourceName &, Attrs = Attrs{});
   Symbol &MakeSymbol(const parser::Name &, Attrs = Attrs{});
 
   template<typename D>
@@ -451,6 +452,11 @@ public:
   template<typename D>
   Symbol &MakeSymbol(
       const parser::Name &name, const Attrs &attrs, D &&details) {
+    return Resolve(name, MakeSymbol(name.source, attrs, std::move(details)));
+  }
+
+  template<typename D>
+  Symbol &MakeSymbol(const SourceName &name, const Attrs &attrs, D &&details) {
     // Note: don't use FindSymbol here. If this is a derived type scope,
     // we want to detect whether the name is already declared as a component.
     auto *symbol{FindInScope(currScope(), name)};
@@ -465,7 +471,7 @@ public:
         auto *derivedType{d->derivedType()};
         if (!derivedType) {
           derivedType =
-              &currScope().MakeSymbol(name.source, attrs, std::move(details));
+              &currScope().MakeSymbol(name, attrs, std::move(details));
           d->set_derivedType(*derivedType);
         } else {
           SayAlreadyDeclared(name, *derivedType);
@@ -484,7 +490,7 @@ public:
     } else {
       SayAlreadyDeclared(name, *symbol);
       // replace the old symbol with a new one with correct details
-      EraseSymbol(name);
+      EraseSymbol(*symbol);
       return MakeSymbol(name, attrs, details);
     }
   }
@@ -534,6 +540,7 @@ public:
   bool Pre(const parser::AccessStmt &);
   bool Pre(const parser::Only &);
   bool Pre(const parser::Rename::Names &);
+  bool Pre(const parser::Rename::Operators &);
   bool Pre(const parser::UseStmt &);
   void Post(const parser::UseStmt &);
 
@@ -545,14 +552,19 @@ private:
   // The scope of the module during a UseStmt
   const Scope *useModuleScope_{nullptr};
 
-  void SetAccess(const parser::Name &, Attr);
+  Symbol &SetAccess(const SourceName &, Attr);
   void ApplyDefaultAccess();
   void AddUse(const parser::Rename::Names &);
-  void AddUse(const parser::Name &);
-  // Record a use from useModuleScope_ of useName as localName. location is
-  // where it occurred (either the module or the rename) for error reporting.
-  void AddUse(const SourceName &, const parser::Name &, const parser::Name &);
-  void AddUse(const SourceName &, const Symbol &, Symbol &);
+  void AddUse(const parser::Rename::Operators &);
+  Symbol *AddUse(const SourceName &);
+  // A rename in a USE statement: local => use
+  struct SymbolRename {
+    Symbol *local{nullptr};
+    Symbol *use{nullptr};
+  };
+  // Record a use from useModuleScope_ of use Name/Symbol as local Name/Symbol
+  SymbolRename AddUse(const SourceName &localName, const SourceName &useName);
+  void AddUse(const SourceName &, Symbol &localSymbol, const Symbol &useSymbol);
   Symbol &BeginModule(const parser::Name &, bool isSubmodule,
       const std::optional<parser::ModuleSubprogramPart> &);
   Scope *FindModule(const parser::Name &, Scope *ancestor = nullptr);
@@ -567,7 +579,7 @@ public:
   void Post(const parser::GenericStmt &);
 
   bool inInterfaceBlock() const { return inInterfaceBlock_; }
-  bool isGeneric() const { return genericName_ != nullptr; }
+  bool isGeneric() const { return genericSymbol_ != nullptr; }
   bool isAbstract() const { return isAbstract_; }
 
 protected:
@@ -578,7 +590,7 @@ protected:
 private:
   bool inInterfaceBlock_{false};  // set when in interface block
   bool isAbstract_{false};  // set when in abstract interface block
-  const parser::Name *genericName_{nullptr};  // set in generic interface block
+  Symbol *genericSymbol_{nullptr};  // set in generic interface block
   using ProcedureKind = parser::ProcedureStmt::Kind;
   // mapping of generic to its specific proc names and kinds
   std::multimap<Symbol *, std::pair<const parser::Name *, ProcedureKind>>
@@ -737,7 +749,7 @@ protected:
   Symbol *DeclareStatementEntity(
       const parser::Name &, const std::optional<parser::IntegerTypeSpec> &);
   bool CheckUseError(const parser::Name &);
-  void CheckAccessibility(const parser::Name &, bool, const Symbol &);
+  void CheckAccessibility(const SourceName &, bool, const Symbol &);
   bool CheckAccessibleComponent(const SourceName &, const Symbol &);
   void CheckScalarIntegerType(const parser::Name &);
   void CheckCommonBlocks();
@@ -785,6 +797,7 @@ private:
   const Symbol *ResolveDerivedType(const parser::Name &);
   bool CanBeTypeBoundProc(const Symbol &);
   Symbol *FindExplicitInterface(const parser::Name &);
+  Symbol *MakeTypeSymbol(const SourceName &, Details &&);
   Symbol *MakeTypeSymbol(const parser::Name &, Details &&);
   bool OkToAddComponent(const parser::Name &, const Symbol * = nullptr);
   ParamValue GetParamValue(const parser::TypeParamValue &);
@@ -982,6 +995,7 @@ public:
   bool Pre(const parser::ImportStmt &);
   void Post(const parser::TypeGuardStmt &);
   bool Pre(const parser::StmtFunctionStmt &);
+  bool Pre(const parser::DefinedOpName &);
 
 private:
   // Kind of procedure we are expecting to see in a ProcedureDesignator
@@ -1509,6 +1523,10 @@ void ScopeHandler::Say2(const SourceName &name1, MessageFixedText &&msg1,
   Say(name1, std::move(msg1))
       .Attach(name2, std::move(msg2), name2.ToString().c_str());
 }
+void ScopeHandler::Say2(const SourceName &name, MessageFixedText &&msg1,
+    const Symbol &symbol, MessageFixedText &&msg2) {
+  Say2(name, std::move(msg1), symbol.name(), std::move(msg2));
+}
 void ScopeHandler::Say2(const parser::Name &name, MessageFixedText &&msg1,
     const Symbol &symbol, MessageFixedText &&msg2) {
   Say2(name.source, std::move(msg1), symbol.name(), std::move(msg2));
@@ -1580,21 +1598,6 @@ Symbol *ScopeHandler::FindSymbol(const Scope &scope, const parser::Name &name) {
   return Resolve(name, scope.FindSymbol(name.source));
 }
 
-Symbol &ScopeHandler::Resolve(const parser::Name &name, Symbol &symbol) {
-  return *Resolve(name, &symbol);
-}
-Symbol *ScopeHandler::Resolve(const parser::Name &name, Symbol *symbol) {
-  if (symbol) {
-    // TODO: Should name.symbol be unconditionally updated?
-    // Or should it be an internal error if name.symbol is
-    // set to a distinct symbol?
-    if (name.symbol == nullptr) {
-      name.symbol = symbol;
-    }
-  }
-  return symbol;
-}
-
 Symbol &ScopeHandler::MakeSymbol(
     Scope &scope, const SourceName &name, Attrs attrs) {
   auto *symbol{FindInScope(scope, name)};
@@ -1607,8 +1610,11 @@ Symbol &ScopeHandler::MakeSymbol(
   }
   return *symbol;
 }
+Symbol &ScopeHandler::MakeSymbol(const SourceName &name, Attrs attrs) {
+  return MakeSymbol(currScope(), name, attrs);
+}
 Symbol &ScopeHandler::MakeSymbol(const parser::Name &name, Attrs attrs) {
-  return Resolve(name, MakeSymbol(currScope(), name.source, attrs));
+  return Resolve(name, MakeSymbol(name.source, attrs));
 }
 Symbol &ScopeHandler::CopySymbol(const Symbol &symbol) {
   CHECK(!FindInScope(currScope(), symbol.name()));
@@ -1747,21 +1753,15 @@ bool ModuleVisitor::Pre(const parser::Only &x) {
   std::visit(
       common::visitors{
           [&](const Indirection<parser::GenericSpec> &generic) {
-            std::visit(
-                common::visitors{
-                    [&](const parser::Name &name) { AddUse(name); },
-                    [](const auto &) { common::die("TODO: GenericSpec"); },
-                },
-                generic.value().u);
+            auto info{GenericSpecInfo{generic.value()}};
+            info.Resolve(AddUse(info.symbolName()));
           },
-          [&](const parser::Name &name) { AddUse(name); },
+          [&](const parser::Name &name) { Resolve(name, AddUse(name.source)); },
           [&](const parser::Rename &rename) {
             std::visit(
                 common::visitors{
                     [&](const parser::Rename::Names &names) { AddUse(names); },
-                    [&](const parser::Rename::Operators &ops) {
-                      common::die("TODO: Rename::Operators");
-                    },
+                    [&](const parser::Rename::Operators &ops) { AddUse(ops); },
                 },
                 rename.u);
           },
@@ -1771,6 +1771,10 @@ bool ModuleVisitor::Pre(const parser::Only &x) {
 }
 
 bool ModuleVisitor::Pre(const parser::Rename::Names &x) {
+  AddUse(x);
+  return false;
+}
+bool ModuleVisitor::Pre(const parser::Rename::Operators &x) {
   AddUse(x);
   return false;
 }
@@ -1792,7 +1796,7 @@ void ModuleVisitor::Post(const parser::UseStmt &x) {
                 useNames.insert(std::get<1>(names.t).source);
               },
               [&](const parser::Rename::Operators &ops) {
-                CHECK(!"TODO: Rename::Operators");
+                useNames.insert(std::get<1>(ops.t).v.source);
               },
           },
           rename.u);
@@ -1805,7 +1809,7 @@ void ModuleVisitor::Post(const parser::UseStmt &x) {
           if (!localSymbol) {
             localSymbol = &CopySymbol(*symbol);
           }
-          AddUse(x.moduleName.source, *symbol, *localSymbol);
+          AddUse(x.moduleName.source, *localSymbol, *symbol);
         }
       }
     }
@@ -1814,35 +1818,64 @@ void ModuleVisitor::Post(const parser::UseStmt &x) {
 }
 
 void ModuleVisitor::AddUse(const parser::Rename::Names &names) {
-  const auto &useName{std::get<0>(names.t)};
-  const auto &localName{std::get<1>(names.t)};
-  AddUse(useName.source, useName, localName);
-}
-void ModuleVisitor::AddUse(const parser::Name &useName) {
-  AddUse(useName.source, useName, useName);
+  const auto &localName{std::get<0>(names.t)};
+  const auto &useName{std::get<1>(names.t)};
+  SymbolRename rename{AddUse(localName.source, useName.source)};
+  Resolve(useName, rename.use);
+  Resolve(localName, rename.local);
 }
 
-void ModuleVisitor::AddUse(const SourceName &location,
-    const parser::Name &localName, const parser::Name &useName) {
+void ModuleVisitor::AddUse(const parser::Rename::Operators &ops) {
+  const parser::DefinedOpName &local{std::get<0>(ops.t)};
+  const parser::DefinedOpName &use{std::get<1>(ops.t)};
+  GenericSpecInfo localInfo{local};
+  GenericSpecInfo useInfo{use};
+  if (IsInstrinsicOperator(context(), local.v.source)) {
+    Say(local.v,
+        "Intrinsic operator '%s' may not be used as a defined operator"_err_en_US);
+  } else if (IsLogicalConstant(context(), local.v.source)) {
+    Say(local.v,
+        "Logical constant '%s' may not be used as a defined operator"_err_en_US);
+  } else {
+    SymbolRename rename{AddUse(localInfo.symbolName(), useInfo.symbolName())};
+    useInfo.Resolve(rename.use);
+    localInfo.Resolve(rename.local);
+  }
+}
+
+Symbol *ModuleVisitor::AddUse(const SourceName &useName) {
+  return AddUse(useName, useName).use;
+}
+
+ModuleVisitor::SymbolRename ModuleVisitor::AddUse(
+    const SourceName &localName, const SourceName &useName) {
   if (!useModuleScope_) {
-    return;  // error occurred finding module
+    return {};  // error occurred finding module
   }
   auto *useSymbol{FindInScope(*useModuleScope_, useName)};
   if (!useSymbol) {
-    Say(useName, "'%s' not found in module '%s'"_err_en_US, useName.source,
-        useModuleScope_->name());
-    return;
+    Say(useName,
+        IsDefinedOperator(useName)
+            ? "Operator '%s' not found in module '%s'"_err_en_US
+            : "'%s' not found in module '%s'"_err_en_US,
+        useName, useModuleScope_->name());
+    return {};
   }
   if (useSymbol->attrs().test(Attr::PRIVATE)) {
-    Say(useName, "'%s' is PRIVATE in '%s'"_err_en_US, useName.source,
-        useModuleScope_->name());
-    return;
+    Say(useName,
+        IsDefinedOperator(useName)
+            ? "Operator '%s' is PRIVATE in '%s'"_err_en_US
+            : "'%s' is PRIVATE in '%s'"_err_en_US,
+        useName, useModuleScope_->name());
+    return {};
   }
-  AddUse(location, *useSymbol, MakeSymbol(localName));
+  auto &localSymbol{MakeSymbol(localName)};
+  AddUse(useName, localSymbol, *useSymbol);
+  return {&localSymbol, useSymbol};
 }
 
 void ModuleVisitor::AddUse(
-    const SourceName &location, const Symbol &useSymbol, Symbol &localSymbol) {
+    const SourceName &location, Symbol &localSymbol, const Symbol &useSymbol) {
   localSymbol.attrs() = useSymbol.attrs();
   localSymbol.attrs() &= ~Attrs{Attr::PUBLIC, Attr::PRIVATE};
   localSymbol.flags() = useSymbol.flags();
@@ -1951,63 +1984,66 @@ bool InterfaceVisitor::Pre(const parser::InterfaceStmt &x) {
 }
 
 void InterfaceVisitor::Post(const parser::EndInterfaceStmt &) {
-  genericName_ = nullptr;
+  genericSymbol_ = nullptr;
   inInterfaceBlock_ = false;
   isAbstract_ = false;
 }
 
-// Create a symbol for the name in this GenericSpec, if any.
+// Create a symbol in genericSymbol_ for this GenericSpec.
 bool InterfaceVisitor::Pre(const parser::GenericSpec &x) {
-  genericName_ = GetGenericSpecName(x);
-  if (!genericName_) {
+  auto info{GenericSpecInfo{x}};
+  const SourceName &symbolName{info.symbolName()};
+  if (IsLogicalConstant(context(), symbolName)) {
+    Say(symbolName,
+        "Logical constant '%s' may not be used as a defined operator"_err_en_US);
     return false;
   }
-  auto *genericSymbol{FindSymbol(*genericName_)};
-  if (genericSymbol) {
-    if (genericSymbol->has<DerivedTypeDetails>()) {
+  genericSymbol_ = currScope().FindSymbol(symbolName);
+  if (genericSymbol_) {
+    if (genericSymbol_->has<DerivedTypeDetails>()) {
       // A generic and derived type with same name: create a generic symbol
       // and save derived type in it.
-      CHECK(genericSymbol->scope()->symbol() == genericSymbol);
+      CHECK(genericSymbol_->scope()->symbol() == genericSymbol_);
       GenericDetails details;
-      details.set_derivedType(*genericSymbol);
-      EraseSymbol(*genericName_);
-      genericSymbol = &MakeSymbol(*genericName_);
-      genericSymbol->set_details(details);
-    } else if (!genericSymbol->IsSubprogram()) {
-      SayAlreadyDeclared(*genericName_, *genericSymbol);
-      EraseSymbol(*genericName_);
-      genericSymbol = nullptr;
-    } else if (genericSymbol->has<UseDetails>()) {
+      details.set_derivedType(*genericSymbol_);
+      EraseSymbol(*genericSymbol_);
+      genericSymbol_ = &MakeSymbol(symbolName);
+      genericSymbol_->set_details(details);
+    } else if (!genericSymbol_->IsSubprogram()) {
+      SayAlreadyDeclared(symbolName, *genericSymbol_);
+      EraseSymbol(*genericSymbol_);
+      genericSymbol_ = nullptr;
+    } else if (genericSymbol_->has<UseDetails>()) {
       // copy the USEd symbol into this scope so we can modify it
-      const Symbol &ultimate{genericSymbol->GetUltimate()};
-      EraseSymbol(*genericName_);
-      genericSymbol = &CopySymbol(ultimate);
-      genericName_->symbol = genericSymbol;
+      const Symbol &ultimate{genericSymbol_->GetUltimate()};
+      EraseSymbol(*genericSymbol_);
+      genericSymbol_ = &CopySymbol(ultimate);
       if (const auto *details{ultimate.detailsIf<GenericDetails>()}) {
-        genericSymbol->set_details(GenericDetails{details->specificProcs()});
+        genericSymbol_->set_details(GenericDetails{details->specificProcs()});
       } else if (const auto *details{ultimate.detailsIf<SubprogramDetails>()}) {
-        genericSymbol->set_details(SubprogramDetails{*details});
+        genericSymbol_->set_details(SubprogramDetails{*details});
       } else {
         common::die("unexpected kind of symbol");
       }
     }
   }
-  if (!genericSymbol) {
-    genericSymbol = &MakeSymbol(*genericName_);
-    genericSymbol->set_details(GenericDetails{});
+  if (!genericSymbol_) {
+    genericSymbol_ = &MakeSymbol(symbolName);
+    genericSymbol_->set_details(GenericDetails{});
   }
-  if (genericSymbol->has<GenericDetails>()) {
+  if (genericSymbol_->has<GenericDetails>()) {
     // okay
-  } else if (genericSymbol->has<SubprogramDetails>() ||
-      genericSymbol->has<SubprogramNameDetails>()) {
+  } else if (genericSymbol_->has<SubprogramDetails>() ||
+      genericSymbol_->has<SubprogramNameDetails>()) {
     GenericDetails genericDetails;
-    genericDetails.set_specific(*genericSymbol);
-    EraseSymbol(*genericName_);
-    genericSymbol = &MakeSymbol(*genericName_, genericDetails);
+    genericDetails.set_specific(*genericSymbol_);
+    EraseSymbol(*genericSymbol_);
+    genericSymbol_ = &MakeSymbol(symbolName);
+    genericSymbol_->set_details(genericDetails);
   } else {
     common::die("unexpected kind of symbol");
   }
-  CHECK(genericName_->symbol == genericSymbol);
+  info.Resolve(genericSymbol_);
   return false;
 }
 
@@ -2024,28 +2060,29 @@ bool InterfaceVisitor::Pre(const parser::ProcedureStmt &x) {
 
 void InterfaceVisitor::Post(const parser::GenericStmt &x) {
   if (auto &accessSpec{std::get<std::optional<parser::AccessSpec>>(x.t)}) {
-    genericName_->symbol->attrs().set(AccessSpecToAttr(*accessSpec));
+    genericSymbol_->attrs().set(AccessSpecToAttr(*accessSpec));
   }
   const auto &names{std::get<std::list<parser::Name>>(x.t)};
   AddSpecificProcs(names, ProcedureKind::Procedure);
+  genericSymbol_ = nullptr;
 }
 
 GenericDetails &InterfaceVisitor::GetGenericDetails() {
-  CHECK(genericName_);
-  CHECK(genericName_->symbol);
-  return genericName_->symbol->get<GenericDetails>();
+  CHECK(genericSymbol_);
+  return genericSymbol_->get<GenericDetails>();
 }
 
 void InterfaceVisitor::AddSpecificProcs(
     const std::list<parser::Name> &names, ProcedureKind kind) {
   for (const auto &name : names) {
-    specificProcs_.emplace(genericName_->symbol, std::make_pair(&name, kind));
+    specificProcs_.emplace(genericSymbol_, std::make_pair(&name, kind));
   }
 }
 
 // By now we should have seen all specific procedures referenced by name in
 // this generic interface. Resolve those names to symbols.
 void InterfaceVisitor::ResolveSpecificsInGeneric(Symbol &generic) {
+  CHECK(!genericSymbol_);
   auto &details{generic.get<GenericDetails>()};
   std::set<SourceName> namesSeen;  // to check for duplicate names
   for (const auto *symbol : details.specificProcs()) {
@@ -2079,7 +2116,9 @@ void InterfaceVisitor::ResolveSpecificsInGeneric(Symbol &generic) {
     }
     if (!namesSeen.insert(name->source).second) {
       Say(*name,
-          "Procedure '%s' is already specified in generic '%s'"_err_en_US,
+          IsDefinedOperator(generic.name())
+              ? "Procedure '%s' is already specified in generic operator '%s'"_err_en_US
+              : "Procedure '%s' is already specified in generic '%s'"_err_en_US,
           name->source, generic.name());
       continue;
     }
@@ -2453,7 +2492,7 @@ bool DeclarationVisitor::CheckUseError(const parser::Name &name) {
 
 // Report error if accessibility of symbol doesn't match isPrivate.
 void DeclarationVisitor::CheckAccessibility(
-    const parser::Name &name, bool isPrivate, const Symbol &symbol) {
+    const SourceName &name, bool isPrivate, const Symbol &symbol) {
   if (symbol.attrs().test(Attr::PRIVATE) != isPrivate) {
     Say2(name,
         "'%s' does not have the same accessibility as its previous declaration"_err_en_US,
@@ -3231,30 +3270,29 @@ bool DeclarationVisitor::Pre(const parser::TypeBoundGenericStmt &x) {
       specificProcs.push_back(symbol);
     }
   }
-  const auto *genericName{GetGenericSpecName(genericSpec.value())};
-  if (!genericName) {
-    return false;
-  }
+  auto info{GenericSpecInfo{genericSpec.value()}};
+  const SourceName &symbolName{info.symbolName()};
   bool isPrivate{accessSpec ? accessSpec->v == parser::AccessSpec::Kind::Private
                             : derivedTypeInfo_.privateBindings};
   const SymbolList *inheritedProcs{nullptr};  // specific procs from parent type
-  auto *genericSymbol{FindInScope(currScope(), *genericName)};
+  auto *genericSymbol{FindInScope(currScope(), symbolName)};
   if (genericSymbol) {
     if (!genericSymbol->has<GenericBindingDetails>()) {
       genericSymbol = nullptr;  // MakeTypeSymbol will report the error below
     }
-  } else if (const auto *inheritedSymbol{FindInTypeOrParents(*genericName)}) {
+  } else if (const auto *inheritedSymbol{
+                 FindInTypeOrParents(currScope(), symbolName)}) {
     // look in parent types:
     if (inheritedSymbol->has<GenericBindingDetails>()) {
       inheritedProcs =
           &inheritedSymbol->get<GenericBindingDetails>().specificProcs();
-      CheckAccessibility(*genericName, isPrivate, *inheritedSymbol);
+      CheckAccessibility(symbolName, isPrivate, *inheritedSymbol);
     }
   }
   if (genericSymbol) {
-    CheckAccessibility(*genericName, isPrivate, *genericSymbol);
+    CheckAccessibility(symbolName, isPrivate, *genericSymbol);
   } else {
-    genericSymbol = MakeTypeSymbol(*genericName, GenericBindingDetails{});
+    genericSymbol = MakeTypeSymbol(symbolName, GenericBindingDetails{});
     if (!genericSymbol) {
       return false;
     }
@@ -3267,6 +3305,7 @@ bool DeclarationVisitor::Pre(const parser::TypeBoundGenericStmt &x) {
     details.add_specificProcs(*inheritedProcs);
   }
   details.add_specificProcs(specificProcs);
+  info.Resolve(genericSymbol);
   return false;
 }
 
@@ -3750,6 +3789,10 @@ Symbol *DeclarationVisitor::FindExplicitInterface(const parser::Name &name) {
 // the current derived type scope. Return false on error.
 Symbol *DeclarationVisitor::MakeTypeSymbol(
     const parser::Name &name, Details &&details) {
+  return Resolve(name, MakeTypeSymbol(name.source, std::move(details)));
+}
+Symbol *DeclarationVisitor::MakeTypeSymbol(
+    const SourceName &name, Details &&details) {
   Scope &derivedType{currScope()};
   CHECK(derivedType.kind() == Scope::Kind::DerivedType);
   if (auto *symbol{FindInScope(derivedType, name)}) {
@@ -4431,16 +4474,12 @@ bool ModuleVisitor::Pre(const parser::AccessStmt &x) {
     for (const auto &accessId : accessIds) {
       std::visit(
           common::visitors{
-              [=](const parser::Name &y) { SetAccess(y, accessAttr); },
+              [=](const parser::Name &y) {
+                Resolve(y, SetAccess(y.source, accessAttr));
+              },
               [=](const Indirection<parser::GenericSpec> &y) {
-                std::visit(
-                    common::visitors{
-                        [=](const parser::Name &z) {
-                          SetAccess(z, accessAttr);
-                        },
-                        [](const auto &) { common::die("TODO: GenericSpec"); },
-                    },
-                    y.value().u);
+                auto info{GenericSpecInfo{y.value()}};
+                info.Resolve(&SetAccess(info.symbolName(), accessAttr));
               },
           },
           accessId.u);
@@ -4450,20 +4489,20 @@ bool ModuleVisitor::Pre(const parser::AccessStmt &x) {
 }
 
 // Set the access specification for this name.
-void ModuleVisitor::SetAccess(const parser::Name &name, Attr attr) {
+Symbol &ModuleVisitor::SetAccess(const SourceName &name, Attr attr) {
   Symbol &symbol{MakeSymbol(name)};
   Attrs &attrs{symbol.attrs()};
   if (attrs.HasAny({Attr::PUBLIC, Attr::PRIVATE})) {
     // PUBLIC/PRIVATE already set: make it a fatal error if it changed
     Attr prev = attrs.test(Attr::PUBLIC) ? Attr::PUBLIC : Attr::PRIVATE;
-    Say(name,
-        attr == prev
-            ? "The accessibility of '%s' has already been specified as %s"_en_US
-            : "The accessibility of '%s' has already been specified as %s"_err_en_US,
-        name.source, EnumToString(prev));
+    auto msg{IsDefinedOperator(name)
+            ? "The accessibility of operator '%s' has already been specified as %s"_en_US
+            : "The accessibility of '%s' has already been specified as %s"_en_US};
+    Say(name, WithIsFatal(msg, attr != prev), name, EnumToString(prev));
   } else {
     attrs.set(attr);
   }
+  return symbol;
 }
 
 static bool NeedsExplicitType(const Symbol &symbol) {
@@ -4631,6 +4670,19 @@ bool ResolveNamesVisitor::Pre(const parser::StmtFunctionStmt &x) {
   return true;
 }
 
+bool ResolveNamesVisitor::Pre(const parser::DefinedOpName &x) {
+  const parser::Name &name{x.v};
+  if (FindSymbol(name)) {
+    // OK
+  } else if (IsLogicalConstant(context(), name.source)) {
+    Say(name,
+        "Logical constant '%s' may not be used as a defined operator"_err_en_US);
+  } else {
+    Say(name, "Defined operator '%s' not found"_err_en_US);
+  }
+  return false;
+}
+
 void ResolveNamesVisitor::Post(const parser::Program &) {
   // ensure that all temps were deallocated
   CHECK(!attrs_);
@@ -4642,15 +4694,4 @@ bool ResolveNames(SemanticsContext &context, const parser::Program &program) {
   return !context.AnyFatalError();
 }
 
-// Get the Name out of a GenericSpec, or nullptr if none.
-static const parser::Name *GetGenericSpecName(const parser::GenericSpec &x) {
-  const auto *op{std::get_if<parser::DefinedOperator>(&x.u)};
-  if (!op) {
-    return std::get_if<parser::Name>(&x.u);
-  } else if (const auto *opName{std::get_if<parser::DefinedOpName>(&op->u)}) {
-    return &opName->v;
-  } else {
-    return nullptr;
-  }
-}
 }

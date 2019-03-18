@@ -19,6 +19,7 @@
 #include "../evaluate/common.h"
 #include "../evaluate/intrinsics.h"
 #include "../parser/message.h"
+#include "../parser/features.h"
 #include <iosfwd>
 #include <string>
 #include <vector>
@@ -36,11 +37,14 @@ namespace Fortran::semantics {
 
 class SemanticsContext {
 public:
-  SemanticsContext(const common::IntrinsicTypeDefaultKinds &);
+  SemanticsContext(const common::IntrinsicTypeDefaultKinds &,
+      const parser::LanguageFeatureControl &);
 
   const common::IntrinsicTypeDefaultKinds &defaultKinds() const {
     return defaultKinds_;
   }
+  bool IsEnabled(parser::LanguageFeature) const;
+  bool ShouldWarn(parser::LanguageFeature) const;
   const parser::CharBlock *location() const { return location_; }
   const std::vector<std::string> &searchDirectories() const {
     return searchDirectories_;
@@ -86,6 +90,7 @@ public:
 
 private:
   const common::IntrinsicTypeDefaultKinds &defaultKinds_;
+  const parser::LanguageFeatureControl &languageFeatures_;
   const parser::CharBlock *location_{nullptr};
   std::vector<std::string> searchDirectories_;
   std::string moduleDirectory_{"."s};
