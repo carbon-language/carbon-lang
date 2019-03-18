@@ -693,7 +693,9 @@ void SIInstrInfo::insertVectorSelect(MachineBasicBlock &MBB,
     BuildMI(MBB, I, DL, get(AMDGPU::COPY), SReg)
       .add(Cond[0]);
     BuildMI(MBB, I, DL, get(AMDGPU::V_CNDMASK_B32_e64), DstReg)
+      .addImm(0)
       .addReg(FalseReg)
+      .addImm(0)
       .addReg(TrueReg)
       .addReg(SReg);
   } else if (Cond.size() == 2) {
@@ -705,7 +707,9 @@ void SIInstrInfo::insertVectorSelect(MachineBasicBlock &MBB,
         .addImm(-1)
         .addImm(0);
       BuildMI(MBB, I, DL, get(AMDGPU::V_CNDMASK_B32_e64), DstReg)
+        .addImm(0)
         .addReg(FalseReg)
+        .addImm(0)
         .addReg(TrueReg)
         .addReg(SReg);
       break;
@@ -716,7 +720,9 @@ void SIInstrInfo::insertVectorSelect(MachineBasicBlock &MBB,
         .addImm(0)
         .addImm(-1);
       BuildMI(MBB, I, DL, get(AMDGPU::V_CNDMASK_B32_e64), DstReg)
+        .addImm(0)
         .addReg(FalseReg)
+        .addImm(0)
         .addReg(TrueReg)
         .addReg(SReg);
       break;
@@ -728,7 +734,9 @@ void SIInstrInfo::insertVectorSelect(MachineBasicBlock &MBB,
       BuildMI(MBB, I, DL, get(AMDGPU::COPY), SReg)
         .add(RegOp);
       BuildMI(MBB, I, DL, get(AMDGPU::V_CNDMASK_B32_e64), DstReg)
+          .addImm(0)
           .addReg(FalseReg)
+          .addImm(0)
           .addReg(TrueReg)
           .addReg(SReg);
       break;
@@ -740,7 +748,9 @@ void SIInstrInfo::insertVectorSelect(MachineBasicBlock &MBB,
       BuildMI(MBB, I, DL, get(AMDGPU::COPY), SReg)
         .add(RegOp);
       BuildMI(MBB, I, DL, get(AMDGPU::V_CNDMASK_B32_e64), DstReg)
+          .addImm(0)
           .addReg(TrueReg)
+          .addImm(0)
           .addReg(FalseReg)
           .addReg(SReg);
       break;
@@ -754,7 +764,9 @@ void SIInstrInfo::insertVectorSelect(MachineBasicBlock &MBB,
         .addImm(-1)
         .addImm(0);
       BuildMI(MBB, I, DL, get(AMDGPU::V_CNDMASK_B32_e64), DstReg)
+        .addImm(0)
         .addReg(FalseReg)
+        .addImm(0)
         .addReg(TrueReg)
         .addReg(SReg);
       break;
@@ -768,7 +780,9 @@ void SIInstrInfo::insertVectorSelect(MachineBasicBlock &MBB,
         .addImm(0)
         .addImm(-1);
       BuildMI(MBB, I, DL, get(AMDGPU::V_CNDMASK_B32_e64), DstReg)
+        .addImm(0)
         .addReg(FalseReg)
+        .addImm(0)
         .addReg(TrueReg)
         .addReg(SReg);
       llvm_unreachable("Unhandled branch predicate EXECZ");
@@ -2579,7 +2593,8 @@ bool SIInstrInfo::canShrink(const MachineInstr &MI,
   // Can't shrink instruction with three operands.
   // FIXME: v_cndmask_b32 has 3 operands and is shrinkable, but we need to add
   // a special case for it.  It can only be shrunk if the third operand
-  // is vcc.  We should handle this the same way we handle vopc, by addding
+  // is vcc, and src0_modifiers and src1_modifiers are not set.
+  // We should handle this the same way we handle vopc, by addding
   // a register allocation hint pre-regalloc and then do the shrinking
   // post-regalloc.
   if (Src2) {

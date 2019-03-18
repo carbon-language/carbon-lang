@@ -245,7 +245,8 @@ def VOP_MADMK_F32 : VOP_MADMK <f32>;
 class VOP_MAC <ValueType vt> : VOPProfile <[vt, vt, vt, vt]> {
   let Ins32 = (ins Src0RC32:$src0, Src1RC32:$src1, VGPR_32:$src2);
   let Ins64 = getIns64<Src0RC64, Src1RC64, RegisterOperand<VGPR_32>, 3,
-                       0, HasModifiers, HasOMod, Src0Mod, Src1Mod, Src2Mod>.ret;
+                       0, HasModifiers, HasModifiers, HasOMod,
+                       Src0Mod, Src1Mod, Src2Mod>.ret;
   let InsDPP = (ins Src0ModDPP:$src0_modifiers, Src0DPP:$src0,
                     Src1ModDPP:$src1_modifiers, Src1DPP:$src1,
                     VGPR_32:$src2, // stub argument
@@ -324,11 +325,12 @@ def VOP2b_I32_I1_I32_I32_I1 : VOPProfile<[i32, i32, i32, i1]> {
   let HasExtSDWA9 = 1;
 }
 
-// Read in from vcc or arbitrary SGPR
-def VOP2e_I32_I32_I32_I1 : VOPProfile<[i32, i32, i32, i1]> {
+// Read in from vcc or arbitrary SGPR.
+// Enable f32 source modifiers on i32 input type.
+def VOP2e_I32_I32_I32_I1 : VOPProfile<[i32, i32, i32, i1], /*EnableF32SrcMods=*/1> {
   let Src0RC32 = VCSrc_b32; // See comment in def VOP2b_I32_I1_I32_I32_I1 above.
   let Asm32 = "$vdst, $src0, $src1, vcc";
-  let Asm64 = "$vdst, $src0, $src1, $src2";
+  let Asm64 = "$vdst, $src0_modifiers, $src1_modifiers, $src2";
   let AsmSDWA = "$vdst, $src0_modifiers, $src1_modifiers, vcc $clamp $dst_sel $dst_unused $src0_sel $src1_sel";
   let AsmSDWA9 = "$vdst, $src0_modifiers, $src1_modifiers, vcc $clamp $dst_sel $dst_unused $src0_sel $src1_sel";
   let AsmDPP = "$vdst, $src0, $src1, vcc $dpp_ctrl$row_mask$bank_mask$bound_ctrl";
@@ -347,8 +349,8 @@ def VOP2e_I32_I32_I32_I1 : VOPProfile<[i32, i32, i32, i1]> {
                      src0_sel:$src0_sel, src1_sel:$src1_sel);
 
   let InsDPP = (ins DstRCDPP:$old,
-                    Src0DPP:$src0,
-                    Src1DPP:$src1,
+                    Src0ModDPP:$src0_modifiers, Src0DPP:$src0,
+                    Src1ModDPP:$src1_modifiers, Src1DPP:$src1,
                     dpp_ctrl:$dpp_ctrl, row_mask:$row_mask,
                     bank_mask:$bank_mask, bound_ctrl:$bound_ctrl);
   let HasExt = 1;
@@ -644,7 +646,9 @@ def : GCNPat<
 
 class ZExt_i16_i1_Pat <SDNode ext> : GCNPat <
   (i16 (ext i1:$src)),
-  (V_CNDMASK_B32_e64 (i32 0), (i32 1), $src)
+  (V_CNDMASK_B32_e64 (i32 0/*src0mod*/), (i32 0/*src0*/),
+                     (i32 0/*src1mod*/), (i32 1/*src1*/),
+                     $src)
 >;
 
 let Predicates = [Has16BitInsts] in {
@@ -681,7 +685,8 @@ def : ZExt_i16_i1_Pat<anyext>;
 
 def : GCNPat <
   (i16 (sext i1:$src)),
-  (V_CNDMASK_B32_e64 (i32 0), (i32 -1), $src)
+  (V_CNDMASK_B32_e64 /*src0mod*/(i32 0), /*src0*/(i32 0),
+                     /*src1mod*/(i32 0), /*src1*/(i32 -1), $src)
 >;
 
 // Undo sub x, c -> add x, -c canonicalization since c is more likely
