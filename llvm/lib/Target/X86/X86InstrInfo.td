@@ -993,9 +993,6 @@ def relocImm16_su : PatLeaf<(i16 relocImm), [{
 def relocImm32_su : PatLeaf<(i32 relocImm), [{
     return !shouldAvoidImmediateInstFormsForSize(N);
 }]>;
-def i64immSExt32_su : PatLeaf<(i64immSExt32), [{
-    return !shouldAvoidImmediateInstFormsForSize(N);
-}]>;
 
 def i16immSExt8_su : PatLeaf<(i16immSExt8), [{
     return !shouldAvoidImmediateInstFormsForSize(N);
@@ -1503,7 +1500,7 @@ def MOV32mi : Ii32<0xC7, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src),
                    [(store (i32 relocImm32_su:$src), addr:$dst)]>, OpSize32;
 def MOV64mi32 : RIi32S<0xC7, MRM0m, (outs), (ins i64mem:$dst, i64i32imm:$src),
                        "mov{q}\t{$src, $dst|$dst, $src}",
-                       [(store i64immSExt32_su:$src, addr:$dst)]>,
+                       [(store i64relocImmSExt32_su:$src, addr:$dst)]>,
                        Requires<[In64BitMode]>;
 } // SchedRW
 
