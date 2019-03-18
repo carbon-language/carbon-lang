@@ -91,6 +91,15 @@ inline void MissingSpace(ParseState &state) {
   }
 }
 
+// Skips a space that is in invalid in free form but unambiguously safe to
+// ignore (e.g., in a multi-character operator or delimiter.)  Always succeeds.
+inline void UnexpectedSpace(ParseState &state) {
+  if (!state.inFixedForm()) {
+    state.Nonstandard(
+        LanguageFeature::OptionalFreeFormSpace, "unexpected space"_en_US);
+  }
+}
+
 constexpr struct SpaceCheck {
   using resultType = Success;
   constexpr SpaceCheck() {}
@@ -123,10 +132,13 @@ class TokenStringMatch {
 public:
   using resultType = Success;
   constexpr TokenStringMatch(const TokenStringMatch &) = default;
-  constexpr TokenStringMatch(const char *str, std::size_t n, bool mandatory)
-    : str_{str}, bytes_{n}, mandatoryFreeFormSpace_{mandatory} {}
-  constexpr TokenStringMatch(const char *str, bool mandatory)
-    : str_{str}, mandatoryFreeFormSpace_{mandatory} {}
+  constexpr TokenStringMatch(
+      const char *str, std::size_t n, bool mandatory = false, bool warn = false)
+    : str_{str}, bytes_{n}, mandatoryFreeFormSpace_{mandatory}, warnOnSpaces_{
+                                                                    warn} {}
+  constexpr explicit TokenStringMatch(
+      const char *str, bool mandatory = false, bool warn = false)
+    : str_{str}, mandatoryFreeFormSpace_{mandatory}, warnOnSpaces_{warn} {}
   std::optional<Success> Parse(ParseState &state) const {
     space.Parse(state);
     const char *start{state.GetLocation()};
@@ -157,6 +169,12 @@ public:
         // 'at' remains full for next iteration
       } else if (**at == ToLowerCaseLetter(*p)) {
         at.reset();
+      } else if (**at == ' ' && warnOnSpaces_) {
+        at = nextCh.Parse(state);
+        if (!at.has_value()) {
+          return std::nullopt;
+        }
+        UnexpectedSpace(state);
       } else {
         state.Say(start, MessageExpectedText{str_, bytes_});
         return std::nullopt;
@@ -174,27 +192,31 @@ private:
   const char *const str_;
   const std::size_t bytes_{std::string::npos};
   const bool mandatoryFreeFormSpace_;
+  const bool warnOnSpaces_;
 };
 
 constexpr TokenStringMatch operator""_tok(const char str[], std::size_t n) {
-  return TokenStringMatch{str, n, false};
+  return TokenStringMatch{str, n};
 }
 
 constexpr TokenStringMatch operator""_sptok(const char str[], std::size_t n) {
   return TokenStringMatch{str, n, true};
 }
 
+constexpr TokenStringMatch operator""_wsptok(const char str[], std::size_t n) {
+  return TokenStringMatch{str, n, false, true};
+}
+
 template<class PA, std::enable_if_t<std::is_class<PA>::value, int> = 0>
 inline constexpr SequenceParser<TokenStringMatch, PA> operator>>(
     const char *str, const PA &p) {
-  return SequenceParser<TokenStringMatch, PA>{TokenStringMatch{str, false}, p};
+  return SequenceParser<TokenStringMatch, PA>{TokenStringMatch{str}, p};
 }
 
 template<class PA, std::enable_if_t<std::is_class<PA>::value, int> = 0>
 inline constexpr InvertedSequenceParser<PA, TokenStringMatch> operator/(
     const PA &p, const char *str) {
-  return InvertedSequenceParser<PA, TokenStringMatch>{
-      p, TokenStringMatch{str, false}};
+  return InvertedSequenceParser<PA, TokenStringMatch>{p, TokenStringMatch{str}};
 }
 
 template<class PA>

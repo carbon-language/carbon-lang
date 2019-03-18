@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -391,11 +391,24 @@ bool Prescanner::NextToken(TokenSequence &tokens) {
     }
     if (*at_ == ' ' || *at_ == '\t') {
       // Compress free-form white space into a single space character.
-      // Discard white space at the end of a line.
       const auto theSpace{at_};
+      char previous{at_ <= start_ ? ' ' : at_[-1]};
       NextChar();
       SkipSpaces();
-      if (*at_ != '\n') {
+      if (*at_ == '\n') {
+        // Discard white space at the end of a line.
+      } else if (!inPreprocessorDirective_ &&
+          (previous == '(' || *at_ == ')')) {
+        // Discard white space before/after parentheses, unless in a
+        // preprocessor directive.  This helps yield space-free contiguous
+        // names for generic interfaces like OPERATOR( + ) and
+        // READ ( UNFORMATTED ), without misinterpreting #define f (notAnArg).
+        // This has the effect of silently ignoring the illegal spaces in
+        // the array constructor ( /1,2/ ) but that seems benign; it's
+        // hard to avoid that while still removing spaces from OPERATOR( / )
+        // and OPERATOR( // ).
+      } else {
+        // Preserve the squashed white space as a single space character.
         tokens.PutNextTokenChar(' ', GetProvenance(theSpace));
         tokens.CloseToken();
         return true;
