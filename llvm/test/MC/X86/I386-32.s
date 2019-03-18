@@ -1,5 +1,13 @@
 // RUN: llvm-mc -triple i386-unknown-unknown --show-encoding %s | FileCheck %s
 
+// CHECK: bsfw %ax, %ax 
+// CHECK: encoding: [0x66,0x0f,0xbc,0xc0]        
+bsfw %ax, %ax 
+
+// CHECK: bsrw %ax, %ax 
+// CHECK: encoding: [0x66,0x0f,0xbd,0xc0]        
+bsrw %ax, %ax 
+
 // CHECK: bsfl %eax, %eax 
 // CHECK: encoding: [0x0f,0xbc,0xc0]        
 bsfl %eax, %eax 
@@ -7,6 +15,70 @@ bsfl %eax, %eax
 // CHECK: bsrl %eax, %eax 
 // CHECK: encoding: [0x0f,0xbd,0xc0]        
 bsrl %eax, %eax 
+
+// CHECK: btcw $0, %ax 
+// CHECK: encoding: [0x66,0x0f,0xba,0xf8,0x00]        
+btcw $0, %ax 
+
+// CHECK: btcw $255, %ax 
+// CHECK: encoding: [0x66,0x0f,0xba,0xf8,0xff]        
+btcw $-1, %ax 
+
+// CHECK: btcw $255, %ax 
+// CHECK: encoding: [0x66,0x0f,0xba,0xf8,0xff]        
+btcw $255, %ax 
+
+// CHECK: btcw %ax, %ax 
+// CHECK: encoding: [0x66,0x0f,0xbb,0xc0]        
+btcw %ax, %ax 
+
+// CHECK: btw $0, %ax 
+// CHECK: encoding: [0x66,0x0f,0xba,0xe0,0x00]        
+btw $0, %ax 
+
+// CHECK: btw $255, %ax 
+// CHECK: encoding: [0x66,0x0f,0xba,0xe0,0xff]        
+btw $-1, %ax 
+
+// CHECK: btw $255, %ax 
+// CHECK: encoding: [0x66,0x0f,0xba,0xe0,0xff]        
+btw $255, %ax 
+
+// CHECK: btw %ax, %ax 
+// CHECK: encoding: [0x66,0x0f,0xa3,0xc0]        
+btw %ax, %ax 
+
+// CHECK: btrw $0, %ax 
+// CHECK: encoding: [0x66,0x0f,0xba,0xf0,0x00]        
+btrw $0, %ax 
+
+// CHECK: btrw $255, %ax 
+// CHECK: encoding: [0x66,0x0f,0xba,0xf0,0xff]        
+btrw $-1, %ax 
+
+// CHECK: btrw $255, %ax 
+// CHECK: encoding: [0x66,0x0f,0xba,0xf0,0xff]        
+btrw $255, %ax 
+
+// CHECK: btrw %ax, %ax 
+// CHECK: encoding: [0x66,0x0f,0xb3,0xc0]        
+btrw %ax, %ax 
+
+// CHECK: btsw $0, %ax 
+// CHECK: encoding: [0x66,0x0f,0xba,0xe8,0x00]        
+btsw $0, %ax 
+
+// CHECK: btsw $255, %ax 
+// CHECK: encoding: [0x66,0x0f,0xba,0xe8,0xff]        
+btsw $-1, %ax 
+
+// CHECK: btsw $255, %ax 
+// CHECK: encoding: [0x66,0x0f,0xba,0xe8,0xff]        
+btsw $255, %ax 
+
+// CHECK: btsw %ax, %ax 
+// CHECK: encoding: [0x66,0x0f,0xab,0xc0]        
+btsw %ax, %ax 
 
 // CHECK: btcl $0, %eax 
 // CHECK: encoding: [0x0f,0xba,0xf8,0x00]        
@@ -72,10 +144,6 @@ btsl $255, %eax
 // CHECK: encoding: [0x0f,0xab,0xc0]        
 btsl %eax, %eax 
 
-// CHECK: cltd 
-// CHECK: encoding: [0x99]          
-cltd 
-
 // CHECK: cmpsb %es:(%edi), %es:(%esi) 
 // CHECK: encoding: [0x26,0xa6]        
 cmpsb %es:(%edi), %es:(%esi) 
@@ -87,14 +155,6 @@ cmpsl %es:(%edi), %es:(%esi)
 // CHECK: cmpsw %es:(%edi), %es:(%esi) 
 // CHECK: encoding: [0x66,0x26,0xa7]        
 cmpsw %es:(%edi), %es:(%esi) 
-
-// CHECK: cwtd 
-// CHECK: encoding: [0x66,0x99]          
-cwtd 
-
-// CHECK: cwtl 
-// CHECK: encoding: [0x98]          
-cwtl 
 
 // CHECK: insb %dx, %es:(%edi) 
 // CHECK: encoding: [0x6c]        
