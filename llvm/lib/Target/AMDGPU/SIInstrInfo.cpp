@@ -1092,7 +1092,8 @@ unsigned SIInstrInfo::calculateLDSSpillAddress(
       // (NGROUPS.Z * TIDIG.Y + (NGROUPS.X * NGROPUS.Y * TIDIG.X)) + TIDIG.Z
       getAddNoCarry(Entry, Insert, DL, TIDReg)
         .addReg(TIDReg)
-        .addReg(TIDIGZReg);
+        .addReg(TIDIGZReg)
+        .addImm(0); // clamp bit
     } else {
       // Get the wave id
       BuildMI(Entry, Insert, DL, get(AMDGPU::V_MBCNT_LO_U32_B32_e64),
@@ -1117,7 +1118,8 @@ unsigned SIInstrInfo::calculateLDSSpillAddress(
   unsigned LDSOffset = MFI->getLDSSize() + (FrameOffset * WorkGroupSize);
   getAddNoCarry(MBB, MI, DL, TmpReg)
     .addImm(LDSOffset)
-    .addReg(TIDReg);
+    .addReg(TIDReg)
+    .addImm(0); // clamp bit
 
   return TmpReg;
 }
@@ -4443,6 +4445,7 @@ bool SIInstrInfo::moveScalarAddSub(SetVectorType &Worklist, MachineInstr &Inst,
     Inst.RemoveOperand(3);
 
     Inst.setDesc(get(NewOpc));
+    Inst.addOperand(MachineOperand::CreateImm(0)); // clamp bit
     Inst.addImplicitDefUseOperands(*MBB.getParent());
     MRI.replaceRegWith(OldDstReg, ResultReg);
     legalizeOperands(Inst, MDT);
@@ -4703,7 +4706,8 @@ void SIInstrInfo::splitScalar64BitAddSub(SetVectorType &Worklist,
     BuildMI(MBB, MII, DL, get(LoOpc), DestSub0)
     .addReg(CarryReg, RegState::Define)
     .add(SrcReg0Sub0)
-    .add(SrcReg1Sub0);
+    .add(SrcReg1Sub0)
+    .addImm(0); // clamp bit
 
   unsigned HiOpc = IsAdd ? AMDGPU::V_ADDC_U32_e64 : AMDGPU::V_SUBB_U32_e64;
   MachineInstr *HiHalf =
@@ -4711,7 +4715,8 @@ void SIInstrInfo::splitScalar64BitAddSub(SetVectorType &Worklist,
     .addReg(DeadCarryReg, RegState::Define | RegState::Dead)
     .add(SrcReg0Sub1)
     .add(SrcReg1Sub1)
-    .addReg(CarryReg, RegState::Kill);
+    .addReg(CarryReg, RegState::Kill)
+    .addImm(0); // clamp bit
 
   BuildMI(MBB, MII, DL, get(TargetOpcode::REG_SEQUENCE), FullDestReg)
     .addReg(DestSub0)
