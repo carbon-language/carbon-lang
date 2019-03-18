@@ -497,8 +497,7 @@ TYPE_PARSER(construct<TypeParamValue>(scalarIntExpr) ||
 // to disambiguate the cases where a derived type name begins with the name
 // of an intrinsic type, e.g., REALITY.
 TYPE_CONTEXT_PARSER("type spec"_en_US,
-    construct<TypeSpec>(
-        intrinsicTypeSpec / lookAhead("::"_wsptok || ")"_tok)) ||
+    construct<TypeSpec>(intrinsicTypeSpec / lookAhead("::"_tok || ")"_tok)) ||
         construct<TypeSpec>(derivedTypeSpec))
 
 // R703 declaration-type-spec ->
@@ -742,9 +741,8 @@ TYPE_PARSER(construct<SequenceStmt>("SEQUENCE"_tok))
 constexpr auto kindOrLen{"KIND" >> pure(common::TypeParamAttr::Kind) ||
     "LEN" >> pure(common::TypeParamAttr::Len)};
 TYPE_PARSER(construct<TypeParamDefStmt>(integerTypeSpec / ",", kindOrLen,
-    "::"_wsptok >>
-        nonemptyList("expected type parameter declarations"_err_en_US,
-            Parser<TypeParamDecl>{})))
+    "::" >> nonemptyList("expected type parameter declarations"_err_en_US,
+                Parser<TypeParamDecl>{})))
 
 // R733 type-param-decl -> type-param-name [= scalar-int-constant-expr]
 TYPE_PARSER(construct<TypeParamDecl>(name, maybe("=" >> scalarIntConstantExpr)))
@@ -810,7 +808,7 @@ TYPE_CONTEXT_PARSER("PROCEDURE component definition statement"_en_US,
         localRecovery("expected PROCEDURE component attributes"_err_en_US,
             "," >> nonemptyList(Parser<ProcComponentAttrSpec>{}), ok),
         localRecovery("expected PROCEDURE declarations"_err_en_US,
-            "::"_wsptok >> nonemptyList(procDecl), SkipTo<'\n'>{})))
+            "::" >> nonemptyList(procDecl), SkipTo<'\n'>{})))
 
 // R742 proc-component-attr-spec ->
 //        access-spec | NOPASS | PASS [(arg-name)] | POINTER
@@ -829,8 +827,8 @@ constexpr auto initialDataTarget{indirect(designator)};
 // R805 initialization ->
 //        = constant-expr | => null-init | => initial-data-target
 // Universal extension: initialization -> / data-stmt-value-list /
-TYPE_PARSER(construct<Initialization>("=>"_wsptok >> nullInit) ||
-    construct<Initialization>("=>"_wsptok >> initialDataTarget) ||
+TYPE_PARSER(construct<Initialization>("=>" >> nullInit) ||
+    construct<Initialization>("=>" >> initialDataTarget) ||
     construct<Initialization>("=" >> constantExpr) ||
     extension<LanguageFeature::SlashInitialization>(construct<Initialization>(
         "/" >> nonemptyList("expected values"_err_en_US,
@@ -870,7 +868,7 @@ TYPE_CONTEXT_PARSER("type bound PROCEDURE statement"_en_US,
                  localRecovery("expected list of binding attributes"_err_en_US,
                      "," >> nonemptyList(Parser<BindAttr>{}), ok),
                  localRecovery("expected list of binding names"_err_en_US,
-                     "::"_wsptok >> listOfNames, SkipTo<'\n'>{}))) ||
+                     "::" >> listOfNames, SkipTo<'\n'>{}))) ||
             construct<TypeBoundProcedureStmt>(
                 construct<TypeBoundProcedureStmt::WithoutInterface>(
                     optionalListBeforeColons(Parser<BindAttr>{}),
@@ -879,13 +877,13 @@ TYPE_CONTEXT_PARSER("type bound PROCEDURE statement"_en_US,
                         Parser<TypeBoundProcDecl>{})))))
 
 // R750 type-bound-proc-decl -> binding-name [=> procedure-name]
-TYPE_PARSER(construct<TypeBoundProcDecl>(name, maybe("=>"_wsptok >> name)))
+TYPE_PARSER(construct<TypeBoundProcDecl>(name, maybe("=>" >> name)))
 
 // R751 type-bound-generic-stmt ->
 //        GENERIC [, access-spec] :: generic-spec => binding-name-list
 TYPE_CONTEXT_PARSER("type bound GENERIC statement"_en_US,
     construct<TypeBoundGenericStmt>("GENERIC" >> maybe("," >> accessSpec),
-        "::"_wsptok >> indirect(genericSpec), "=>"_wsptok >> listOfNames))
+        "::" >> indirect(genericSpec), "=>" >> listOfNames))
 
 // R752 bind-attr ->
 //        access-spec | DEFERRED | NON_OVERRIDABLE | NOPASS | PASS [(arg-name)]
@@ -897,7 +895,7 @@ TYPE_PARSER(construct<BindAttr>(accessSpec) ||
 
 // R753 final-procedure-stmt -> FINAL [::] final-subroutine-name-list
 TYPE_CONTEXT_PARSER("FINAL statement"_en_US,
-    construct<FinalProcedureStmt>("FINAL" >> maybe("::"_wsptok) >> listOfNames))
+    construct<FinalProcedureStmt>("FINAL" >> maybe("::"_tok) >> listOfNames))
 
 // R754 derived-type-spec -> type-name [(type-param-spec-list)]
 TYPE_PARSER(construct<DerivedTypeSpec>(name,
@@ -939,7 +937,7 @@ TYPE_PARSER(construct<EnumDefStmt>("ENUM , BIND ( C )"_tok))
 
 // R761 enumerator-def-stmt -> ENUMERATOR [::] enumerator-list
 TYPE_CONTEXT_PARSER("ENUMERATOR statement"_en_US,
-    construct<EnumeratorDefStmt>("ENUMERATOR" >> maybe("::"_wsptok) >>
+    construct<EnumeratorDefStmt>("ENUMERATOR" >> maybe("::"_tok) >>
         nonemptyList("expected enumerators"_err_en_US, Parser<Enumerator>{})))
 
 // R762 enumerator -> named-constant [= scalar-int-constant-expr]
@@ -968,18 +966,15 @@ template<typename PA> inline constexpr auto loopBounds(const PA &p) {
 }
 
 // R769 array-constructor -> (/ ac-spec /) | lbracket ac-spec rbracket
-// Note: _wsptok is used here only for consistency; no warnings will
-// issue on "( /" or "/ )" because the prescanner removes free-form
-// spaces after '(' and before ')'.
 TYPE_CONTEXT_PARSER("array constructor"_en_US,
-    construct<ArrayConstructor>("(/"_wsptok >> Parser<AcSpec>{} / "/)"_wsptok ||
-        bracketed(Parser<AcSpec>{})))
+    construct<ArrayConstructor>(
+        "(/" >> Parser<AcSpec>{} / "/)" || bracketed(Parser<AcSpec>{})))
 
 // R770 ac-spec -> type-spec :: | [type-spec ::] ac-value-list
-TYPE_PARSER(construct<AcSpec>(maybe(typeSpec / "::"_wsptok),
+TYPE_PARSER(construct<AcSpec>(maybe(typeSpec / "::"),
                 nonemptyList("expected array constructor values"_err_en_US,
                     Parser<AcValue>{})) ||
-    construct<AcSpec>(typeSpec / "::"_wsptok))
+    construct<AcSpec>(typeSpec / "::"))
 
 // R773 ac-value -> expr | ac-implied-do
 TYPE_PARSER(
@@ -1000,7 +995,7 @@ TYPE_PARSER(parenthesized(
 //        scalar-int-expr [, scalar-int-expr]
 // R776 ac-do-variable -> do-variable
 TYPE_PARSER(construct<AcImpliedDoControl>(
-    maybe(integerTypeSpec / "::"_wsptok), loopBounds(scalarIntExpr)))
+    maybe(integerTypeSpec / "::"), loopBounds(scalarIntExpr)))
 
 // R801 type-declaration-stmt ->
 //        declaration-type-spec [[, attr-spec]... ::] entity-decl-list
@@ -1139,7 +1134,7 @@ TYPE_PARSER(construct<IntentSpec>("IN OUT" >> pure(IntentSpec::Intent::InOut) ||
 
 // R827 access-stmt -> access-spec [[::] access-id-list]
 TYPE_PARSER(construct<AccessStmt>(accessSpec,
-    defaulted(maybe("::"_wsptok) >>
+    defaulted(maybe("::"_tok) >>
         nonemptyList("expected names and generic specifications"_err_en_US,
             Parser<AccessId>{}))))
 
@@ -1148,7 +1143,7 @@ TYPE_PARSER(construct<AccessId>(indirect(genericSpec)) ||
     construct<AccessId>(name))  // initially ambiguous with genericSpec
 
 // R829 allocatable-stmt -> ALLOCATABLE [::] allocatable-decl-list
-TYPE_PARSER(construct<AllocatableStmt>("ALLOCATABLE" >> maybe("::"_wsptok) >>
+TYPE_PARSER(construct<AllocatableStmt>("ALLOCATABLE" >> maybe("::"_tok) >>
     nonemptyList(
         "expected object declarations"_err_en_US, Parser<ObjectDecl>{})))
 
@@ -1160,11 +1155,11 @@ TYPE_PARSER(
     construct<ObjectDecl>(objectName, maybe(arraySpec), maybe(coarraySpec)))
 
 // R831 asynchronous-stmt -> ASYNCHRONOUS [::] object-name-list
-TYPE_PARSER(construct<AsynchronousStmt>("ASYNCHRONOUS" >> maybe("::"_wsptok) >>
+TYPE_PARSER(construct<AsynchronousStmt>("ASYNCHRONOUS" >> maybe("::"_tok) >>
     nonemptyList("expected object names"_err_en_US, objectName)))
 
 // R832 bind-stmt -> language-binding-spec [::] bind-entity-list
-TYPE_PARSER(construct<BindStmt>(languageBindingSpec / maybe("::"_wsptok),
+TYPE_PARSER(construct<BindStmt>(languageBindingSpec / maybe("::"_tok),
     nonemptyList("expected bind entities"_err_en_US, Parser<BindEntity>{})))
 
 // R833 bind-entity -> entity-name | / common-block-name /
@@ -1172,7 +1167,7 @@ TYPE_PARSER(construct<BindEntity>(pure(BindEntity::Kind::Object), name) ||
     construct<BindEntity>("/" >> pure(BindEntity::Kind::Common), name / "/"))
 
 // R834 codimension-stmt -> CODIMENSION [::] codimension-decl-list
-TYPE_PARSER(construct<CodimensionStmt>("CODIMENSION" >> maybe("::"_wsptok) >>
+TYPE_PARSER(construct<CodimensionStmt>("CODIMENSION" >> maybe("::"_tok) >>
     nonemptyList("expected codimension declarations"_err_en_US,
         Parser<CodimensionDecl>{})))
 
@@ -1180,7 +1175,7 @@ TYPE_PARSER(construct<CodimensionStmt>("CODIMENSION" >> maybe("::"_wsptok) >>
 TYPE_PARSER(construct<CodimensionDecl>(name, coarraySpec))
 
 // R836 contiguous-stmt -> CONTIGUOUS [::] object-name-list
-TYPE_PARSER(construct<ContiguousStmt>("CONTIGUOUS" >> maybe("::"_wsptok) >>
+TYPE_PARSER(construct<ContiguousStmt>("CONTIGUOUS" >> maybe("::"_tok) >>
     nonemptyList("expected object names"_err_en_US, objectName)))
 
 // R837 data-stmt -> DATA data-stmt-set [[,] data-stmt-set]...
@@ -1208,7 +1203,7 @@ TYPE_PARSER(construct<DataStmtObject>(indirect(variable)) ||
 // R842 data-i-do-variable -> do-variable
 TYPE_PARSER(parenthesized(construct<DataImpliedDo>(
     nonemptyList(Parser<DataIDoObject>{} / lookAhead(","_tok)) / ",",
-    maybe(integerTypeSpec / "::"_wsptok), loopBounds(scalarIntConstantExpr))))
+    maybe(integerTypeSpec / "::"), loopBounds(scalarIntConstantExpr))))
 
 // R841 data-i-do-object ->
 //        array-element | scalar-structure-component | data-implied-do
@@ -1252,19 +1247,18 @@ TYPE_PARSER(first(construct<DataStmtConstant>(scalar(Parser<ConstantValue>{})),
 //        DIMENSION [::] array-name ( array-spec )
 //        [, array-name ( array-spec )]...
 TYPE_CONTEXT_PARSER("DIMENSION statement"_en_US,
-    construct<DimensionStmt>("DIMENSION" >> maybe("::"_wsptok) >>
+    construct<DimensionStmt>("DIMENSION" >> maybe("::"_tok) >>
         nonemptyList("expected array specifications"_err_en_US,
             construct<DimensionStmt::Declaration>(name, arraySpec))))
 
 // R849 intent-stmt -> INTENT ( intent-spec ) [::] dummy-arg-name-list
 TYPE_CONTEXT_PARSER("INTENT statement"_en_US,
     construct<IntentStmt>(
-        "INTENT" >> parenthesized(intentSpec) / maybe("::"_wsptok),
-        listOfNames))
+        "INTENT" >> parenthesized(intentSpec) / maybe("::"_tok), listOfNames))
 
 // R850 optional-stmt -> OPTIONAL [::] dummy-arg-name-list
 TYPE_PARSER(
-    construct<OptionalStmt>("OPTIONAL" >> maybe("::"_wsptok) >> listOfNames))
+    construct<OptionalStmt>("OPTIONAL" >> maybe("::"_tok) >> listOfNames))
 
 // R851 parameter-stmt -> PARAMETER ( named-constant-def-list )
 // Legacy extension: omitted parentheses, no implicit typing from names
@@ -1279,7 +1273,7 @@ TYPE_CONTEXT_PARSER("old style PARAMETER statement"_en_US,
 TYPE_PARSER(construct<NamedConstantDef>(namedConstant, "=" >> constantExpr))
 
 // R853 pointer-stmt -> POINTER [::] pointer-decl-list
-TYPE_PARSER(construct<PointerStmt>("POINTER" >> maybe("::"_wsptok) >>
+TYPE_PARSER(construct<PointerStmt>("POINTER" >> maybe("::"_tok) >>
     nonemptyList(
         "expected pointer declarations"_err_en_US, Parser<PointerDecl>{})))
 
@@ -1290,11 +1284,11 @@ TYPE_PARSER(
 
 // R855 protected-stmt -> PROTECTED [::] entity-name-list
 TYPE_PARSER(
-    construct<ProtectedStmt>("PROTECTED" >> maybe("::"_wsptok) >> listOfNames))
+    construct<ProtectedStmt>("PROTECTED" >> maybe("::"_tok) >> listOfNames))
 
 // R856 save-stmt -> SAVE [[::] saved-entity-list]
 TYPE_PARSER(construct<SaveStmt>(
-    "SAVE" >> defaulted(maybe("::"_wsptok) >>
+    "SAVE" >> defaulted(maybe("::"_tok) >>
                   nonemptyList("expected SAVE entities"_err_en_US,
                       Parser<SavedEntity>{}))))
 
@@ -1304,14 +1298,14 @@ TYPE_PARSER(construct<SavedEntity>(pure(SavedEntity::Kind::Entity), name) ||
     construct<SavedEntity>("/" >> pure(SavedEntity::Kind::Common), name / "/"))
 
 // R859 target-stmt -> TARGET [::] target-decl-list
-TYPE_PARSER(construct<TargetStmt>("TARGET" >> maybe("::"_wsptok) >>
+TYPE_PARSER(construct<TargetStmt>("TARGET" >> maybe("::"_tok) >>
     nonemptyList("expected objects"_err_en_US, Parser<ObjectDecl>{})))
 
 // R861 value-stmt -> VALUE [::] dummy-arg-name-list
-TYPE_PARSER(construct<ValueStmt>("VALUE" >> maybe("::"_wsptok) >> listOfNames))
+TYPE_PARSER(construct<ValueStmt>("VALUE" >> maybe("::"_tok) >> listOfNames))
 
 // R862 volatile-stmt -> VOLATILE [::] object-name-list
-TYPE_PARSER(construct<VolatileStmt>("VOLATILE" >> maybe("::"_wsptok) >>
+TYPE_PARSER(construct<VolatileStmt>("VOLATILE" >> maybe("::"_tok) >>
     nonemptyList("expected object names"_err_en_US, objectName)))
 
 // R866 implicit-name-spec -> EXTERNAL | TYPE
@@ -1371,7 +1365,7 @@ TYPE_CONTEXT_PARSER("IMPORT statement"_en_US,
         construct<ImportStmt>(
             "IMPORT , ALL" >> pure(common::ImportKind::All)) ||
         construct<ImportStmt>(
-            "IMPORT" >> maybe("::"_wsptok) >> optionalList(name)))
+            "IMPORT" >> maybe("::"_tok) >> optionalList(name)))
 
 // R868 namelist-stmt ->
 //        NAMELIST / namelist-group-name / namelist-group-object-list
@@ -1483,7 +1477,7 @@ TYPE_PARSER(
 // R912 part-ref -> part-name [( section-subscript-list )] [image-selector]
 TYPE_PARSER(construct<PartRef>(name,
     defaulted(
-        parenthesized(nonemptyList(Parser<SectionSubscript>{})) / !"=>"_wsptok),
+        parenthesized(nonemptyList(Parser<SectionSubscript>{})) / !"=>"_tok),
     maybe(Parser<ImageSelector>{})))
 
 // R913 structure-component -> data-ref
@@ -1928,11 +1922,10 @@ TYPE_CONTEXT_PARSER("assignment statement"_en_US,
 // and proc-target.
 TYPE_CONTEXT_PARSER("pointer assignment statement"_en_US,
     construct<PointerAssignmentStmt>(dataRef,
-        parenthesized(nonemptyList(Parser<BoundsRemapping>{})),
-        "=>"_wsptok >> expr) ||
+        parenthesized(nonemptyList(Parser<BoundsRemapping>{})), "=>" >> expr) ||
         construct<PointerAssignmentStmt>(dataRef,
             defaulted(parenthesized(nonemptyList(Parser<BoundsSpec>{}))),
-            "=>"_wsptok >> expr))
+            "=>" >> expr))
 
 // R1035 bounds-spec -> lower-bound-expr :
 TYPE_PARSER(construct<BoundsSpec>(boundExpr / ":"))
@@ -2041,7 +2034,7 @@ TYPE_CONTEXT_PARSER("ASSOCIATE statement"_en_US,
         "ASSOCIATE" >> parenthesized(nonemptyList(Parser<Association>{}))))
 
 // R1104 association -> associate-name => selector
-TYPE_PARSER(construct<Association>(name, "=>"_wsptok >> selector))
+TYPE_PARSER(construct<Association>(name, "=>" >> selector))
 
 // R1105 selector -> expr | variable
 TYPE_PARSER(construct<Selector>(variable) / lookAhead(","_tok || ")"_tok) ||
@@ -2093,8 +2086,8 @@ TYPE_CONTEXT_PARSER("CHANGE TEAM statement"_en_US,
         ")")
 
 // R1113 coarray-association -> codimension-decl => selector
-TYPE_PARSER(construct<CoarrayAssociation>(
-    Parser<CodimensionDecl>{}, "=>"_wsptok >> selector))
+TYPE_PARSER(
+    construct<CoarrayAssociation>(Parser<CodimensionDecl>{}, "=>" >> selector))
 
 // R1114 end-change-team-stmt ->
 //         END TEAM [( [sync-stat-list] )] [team-construct-name]
@@ -2268,8 +2261,7 @@ TYPE_CONTEXT_PARSER("SELECT RANK construct"_en_US,
 //         ( [associate-name =>] selector )
 TYPE_CONTEXT_PARSER("SELECT RANK statement"_en_US,
     construct<SelectRankStmt>(maybe(name / ":"),
-        "SELECT RANK"_sptok >> "("_tok >> maybe(name / "=>"_wsptok),
-        selector / ")"))
+        "SELECT RANK"_sptok >> "("_tok >> maybe(name / "=>"), selector / ")"))
 
 // R1150 select-rank-case-stmt ->
 //         RANK ( scalar-int-constant-expr ) [select-construct-name] |
@@ -2296,7 +2288,7 @@ TYPE_CONTEXT_PARSER("SELECT TYPE construct"_en_US,
 //         ( [associate-name =>] selector )
 TYPE_CONTEXT_PARSER("SELECT TYPE statement"_en_US,
     construct<SelectTypeStmt>(maybe(name / ":"),
-        "SELECT TYPE (" >> maybe(name / "=>"_wsptok), selector / ")"))
+        "SELECT TYPE (" >> maybe(name / "=>"), selector / ")"))
 
 // R1154 type-guard-stmt ->
 //         TYPE IS ( type-spec ) [select-construct-name] |
@@ -3103,7 +3095,7 @@ TYPE_PARSER(construct<UseStmt>("USE" >> optionalBeforeColons(moduleNature),
 TYPE_PARSER(construct<Rename>("OPERATOR (" >>
                 construct<Rename::Operators>(
                     definedOpName / ") => OPERATOR (", definedOpName / ")")) ||
-    construct<Rename>(construct<Rename::Names>(name, "=>"_wsptok >> name)))
+    construct<Rename>(construct<Rename::Names>(name, "=>" >> name)))
 
 // R1412 only -> generic-spec | only-use-name | rename
 // R1413 only-use-name -> use-name
@@ -3184,10 +3176,10 @@ constexpr auto specificProcedures{
 // R1506 procedure-stmt -> [MODULE] PROCEDURE [::] specific-procedure-list
 TYPE_PARSER(construct<ProcedureStmt>("MODULE PROCEDURE"_sptok >>
                     pure(ProcedureStmt::Kind::ModuleProcedure),
-                maybe("::"_wsptok) >> specificProcedures) ||
+                maybe("::"_tok) >> specificProcedures) ||
     construct<ProcedureStmt>(
         "PROCEDURE" >> pure(ProcedureStmt::Kind::Procedure),
-        maybe("::"_wsptok) >> specificProcedures))
+        maybe("::"_tok) >> specificProcedures))
 
 // R1508 generic-spec ->
 //         generic-name | OPERATOR ( defined-operator ) |
@@ -3212,11 +3204,11 @@ TYPE_PARSER(first(construct<GenericSpec>(
 // R1510 generic-stmt ->
 //         GENERIC [, access-spec] :: generic-spec => specific-procedure-list
 TYPE_PARSER(construct<GenericStmt>("GENERIC" >> maybe("," >> accessSpec),
-    "::"_wsptok >> genericSpec, "=>"_wsptok >> specificProcedures))
+    "::" >> genericSpec, "=>" >> specificProcedures))
 
 // R1511 external-stmt -> EXTERNAL [::] external-name-list
 TYPE_PARSER(
-    "EXTERNAL" >> maybe("::"_wsptok) >> construct<ExternalStmt>(listOfNames))
+    "EXTERNAL" >> maybe("::"_tok) >> construct<ExternalStmt>(listOfNames))
 
 // R1512 procedure-declaration-stmt ->
 //         PROCEDURE ( [proc-interface] ) [[, proc-attr-spec]... ::]
@@ -3242,8 +3234,7 @@ TYPE_PARSER(construct<ProcAttrSpec>(accessSpec) ||
     construct<ProcAttrSpec>(protectedAttr) || construct<ProcAttrSpec>(save))
 
 // R1515 proc-decl -> procedure-entity-name [=> proc-pointer-init]
-TYPE_PARSER(
-    construct<ProcDecl>(name, maybe("=>"_wsptok >> Parser<ProcPointerInit>{})))
+TYPE_PARSER(construct<ProcDecl>(name, maybe("=>" >> Parser<ProcPointerInit>{})))
 
 // R1517 proc-pointer-init -> null-init | initial-proc-target
 // R1518 initial-proc-target -> procedure-name
@@ -3252,7 +3243,7 @@ TYPE_PARSER(
 
 // R1519 intrinsic-stmt -> INTRINSIC [::] intrinsic-procedure-name-list
 TYPE_PARSER(
-    "INTRINSIC" >> maybe("::"_wsptok) >> construct<IntrinsicStmt>(listOfNames))
+    "INTRINSIC" >> maybe("::"_tok) >> construct<IntrinsicStmt>(listOfNames))
 
 // R1520 function-reference -> procedure-designator ( [actual-arg-spec-list] )
 TYPE_CONTEXT_PARSER("function reference"_en_US,

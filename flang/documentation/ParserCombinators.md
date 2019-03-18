@@ -143,8 +143,6 @@ is built.  All of the following parsers consume characters acquired from
   the combinator `/`.
 * `"..."_sptok` is a string match in which the spaces are required in
    free form source.
-* `"..."_wsptok` is a string match in which the spaces are not allowed in
-   free form source, but safe to ignore with a warning when they do appear.
 * `parenthesized(p)` is shorthand for `"(" >> p / ")"`.
 * `bracketed(p)` is shorthand for `"[" >> p / "]"`.
 * `nonEmptyList(p)` matches a comma-separated list of one or more
