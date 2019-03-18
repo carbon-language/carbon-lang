@@ -398,7 +398,7 @@ bool Prescanner::NextToken(TokenSequence &tokens) {
       if (*at_ == '\n') {
         // Discard white space at the end of a line.
       } else if (!inPreprocessorDirective_ &&
-          (previous == '(' || *at_ == ')')) {
+          (previous == '(' || *at_ == '(' || *at_ == ')')) {
         // Discard white space before/after parentheses, unless in a
         // preprocessor directive.  This helps yield space-free contiguous
         // names for generic interfaces like OPERATOR( + ) and
