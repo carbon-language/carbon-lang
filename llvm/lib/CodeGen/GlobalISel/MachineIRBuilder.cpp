@@ -912,10 +912,8 @@ MachineInstrBuilder MachineIRBuilder::buildInstr(unsigned Opc,
   }
   case TargetOpcode::COPY:
     assert(DstOps.size() == 1 && "Invalid Dst");
-    assert(SrcOps.size() == 1 && "Invalid Srcs");
-    assert(DstOps[0].getLLTTy(*getMRI()) == LLT() ||
-           SrcOps[0].getLLTTy(*getMRI()) == LLT() ||
-           DstOps[0].getLLTTy(*getMRI()) == SrcOps[0].getLLTTy(*getMRI()));
+    // If the caller wants to add a subreg source it has to be done separately
+    // so we may not have any SrcOps at this point yet.
     break;
   case TargetOpcode::G_FCMP:
   case TargetOpcode::G_ICMP: {
