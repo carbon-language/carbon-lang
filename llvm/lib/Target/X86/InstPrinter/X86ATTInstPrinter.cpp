@@ -97,6 +97,7 @@ bool X86ATTInstPrinter::printVecCompareInstr(const MCInst *MI,
   case X86::VPCOMUWmi: case X86::VPCOMUWri:
   case X86::VPCOMWmi:  case X86::VPCOMWri:
     if (Imm >= 0 && Imm <= 7) {
+      OS << '\t';
       printVPCOMMnemonic(MI, OS);
 
       if ((Desc.TSFlags & X86II::FormMask) == X86II::MRMSrcMem)
@@ -173,6 +174,7 @@ bool X86ATTInstPrinter::printVecCompareInstr(const MCInst *MI,
   case X86::VPCMPUQZ256rmib: case X86::VPCMPUQZ256rmibk:
   case X86::VPCMPUQZrmib:    case X86::VPCMPUQZrmibk:
     if ((Imm >= 0 && Imm <= 2) || (Imm >= 4 && Imm <= 6)) {
+      OS << '\t';
       printVPCMPMnemonic(MI, OS);
 
       unsigned CurOp = (Desc.TSFlags & X86II::EVEX_K) ? 3 : 2;
