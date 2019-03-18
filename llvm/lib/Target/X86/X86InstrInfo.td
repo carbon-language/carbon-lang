@@ -600,16 +600,6 @@ def offset64_32 : X86MemOffsOperand<i64imm, "printMemOffs32",
 def offset64_64 : X86MemOffsOperand<i64imm, "printMemOffs64",
                                     X86MemOffs64_64AsmOperand>;
 
-def SSECC : Operand<i8> {
-  let PrintMethod = "printSSEAVXCC";
-  let OperandType = "OPERAND_IMMEDIATE";
-}
-
-def AVXCC : Operand<i8> {
-  let PrintMethod = "printSSEAVXCC";
-  let OperandType = "OPERAND_IMMEDIATE";
-}
-
 class ImmSExtAsmOperandClass : AsmOperandClass {
   let SuperClasses = [ImmAsmOperand];
   let RenderMethod = "addImmOperands";
