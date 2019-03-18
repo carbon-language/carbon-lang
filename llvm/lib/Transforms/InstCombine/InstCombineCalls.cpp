@@ -2006,28 +2006,29 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         II->setArgOperand(2, ModuloC);
         return II;
       }
-      // Canonicalize rotate right by constant to rotate left. This is not
-      // entirely arbitrary. For historical reasons, the backend may recognize
-      // rotate left patterns but miss rotate right patterns.
-      if (II->getIntrinsicID() == Intrinsic::fshr && Op0 == Op1) {
-        // fshr X, X, C --> fshl X, X, (BitWidth - C)
+      // Canonicalize funnel shift right by constant to funnel shift left. This
+      // is not entirely arbitrary. For historical reasons, the backend may
+      // recognize rotate left patterns but miss rotate right patterns.
+      if (II->getIntrinsicID() == Intrinsic::fshr) {
+        // fshr X, Y, C --> fshl X, Y, (BitWidth - C)
         assert(ConstantExpr::getICmp(ICmpInst::ICMP_UGT, WidthC, ShAmtC) ==
                ConstantInt::getTrue(CmpInst::makeCmpResultType(Ty)) &&
                "Shift amount expected to be modulo bitwidth");
         Constant *LeftShiftC = ConstantExpr::getSub(WidthC, ShAmtC);
         Module *Mod = II->getModule();
         Function *Fshl = Intrinsic::getDeclaration(Mod, Intrinsic::fshl, Ty);
-        return CallInst::Create(Fshl, { Op0, Op0, LeftShiftC });
+        return CallInst::Create(Fshl, { Op0, Op1, LeftShiftC });
       }
     }
 
+    // TODO: Pull this into the block above. We can handle semi-arbitrary vector
+    // shift amount constants as well as splats.
     const APInt *SA;
     if (match(II->getArgOperand(2), m_APInt(SA))) {
       uint64_t ShiftAmt = SA->urem(BitWidth);
       assert(ShiftAmt != 0 && "SimplifyCall should have handled zero shift");
-      // Normalize to funnel shift left.
-      if (II->getIntrinsicID() == Intrinsic::fshr)
-        ShiftAmt = BitWidth - ShiftAmt;
+      assert(II->getIntrinsicID() == Intrinsic::fshl &&
+             "All funnel shifts by simple constants should go left");
 
       // fshl(X, 0, C) -> shl X, C
       // fshl(X, undef, C) -> shl X, C
