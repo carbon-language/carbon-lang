@@ -5680,28 +5680,7 @@ static void setLimitsForSelectPattern(const SelectInst &SI, APInt &Lower,
     return;
   }
 
-  const APInt *C;
-  if (!match(LHS, m_APInt(C)) && !match(RHS, m_APInt(C)))
-    return;
-
-  switch (R.Flavor) {
-    case SPF_UMIN:
-      Upper = *C + 1;
-      break;
-    case SPF_UMAX:
-      Lower = *C;
-      break;
-    case SPF_SMIN:
-      Lower = APInt::getSignedMinValue(BitWidth);
-      Upper = *C + 1;
-      break;
-    case SPF_SMAX:
-      Lower = *C;
-      Upper = APInt::getSignedMaxValue(BitWidth) + 1;
-      break;
-    default:
-      break;
-  }
+  // TODO Handle min/max flavors.
 }
 
 ConstantRange llvm::computeConstantRange(const Value *V, bool UseInstrInfo) {
