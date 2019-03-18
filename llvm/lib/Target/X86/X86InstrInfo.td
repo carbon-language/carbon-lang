@@ -695,9 +695,25 @@ def u8imm : Operand<i8> {
   let OperandType = "OPERAND_IMMEDIATE";
 }
 
+// 16-bit immediate but only 8-bits are significant and they are unsigned.
+// Used by BT instructions.
+def i16u8imm : Operand<i16> {
+  let PrintMethod = "printU8Imm";
+  let ParserMatchClass = ImmUnsignedi8AsmOperand;
+  let OperandType = "OPERAND_IMMEDIATE";
+}
+
 // 32-bit immediate but only 8-bits are significant and they are unsigned.
 // Used by some SSE/AVX instructions that use intrinsics.
 def i32u8imm : Operand<i32> {
+  let PrintMethod = "printU8Imm";
+  let ParserMatchClass = ImmUnsignedi8AsmOperand;
+  let OperandType = "OPERAND_IMMEDIATE";
+}
+
+// 64-bit immediate but only 8-bits are significant and they are unsigned.
+// Used by BT instructions.
+def i64u8imm : Operand<i64> {
   let PrintMethod = "printU8Imm";
   let ParserMatchClass = ImmUnsignedi8AsmOperand;
   let OperandType = "OPERAND_IMMEDIATE";
@@ -1747,36 +1763,36 @@ let mayLoad = 1, hasSideEffects = 0, SchedRW = [WriteBitTestRegLd] in {
 }
 
 let SchedRW = [WriteBitTest] in {
-def BT16ri8 : Ii8<0xBA, MRM4r, (outs), (ins GR16:$src1, i16i8imm:$src2),
+def BT16ri8 : Ii8<0xBA, MRM4r, (outs), (ins GR16:$src1, i16u8imm:$src2),
                 "bt{w}\t{$src2, $src1|$src1, $src2}",
-                [(set EFLAGS, (X86bt GR16:$src1, i16immSExt8:$src2))]>,
+                [(set EFLAGS, (X86bt GR16:$src1, imm:$src2))]>,
                 OpSize16, TB;
-def BT32ri8 : Ii8<0xBA, MRM4r, (outs), (ins GR32:$src1, i32i8imm:$src2),
+def BT32ri8 : Ii8<0xBA, MRM4r, (outs), (ins GR32:$src1, i32u8imm:$src2),
                 "bt{l}\t{$src2, $src1|$src1, $src2}",
-                [(set EFLAGS, (X86bt GR32:$src1, i32immSExt8:$src2))]>,
+                [(set EFLAGS, (X86bt GR32:$src1, imm:$src2))]>,
                 OpSize32, TB;
-def BT64ri8 : RIi8<0xBA, MRM4r, (outs), (ins GR64:$src1, i64i8imm:$src2),
+def BT64ri8 : RIi8<0xBA, MRM4r, (outs), (ins GR64:$src1, i64u8imm:$src2),
                 "bt{q}\t{$src2, $src1|$src1, $src2}",
-                [(set EFLAGS, (X86bt GR64:$src1, i64immSExt8:$src2))]>, TB;
+                [(set EFLAGS, (X86bt GR64:$src1, imm:$src2))]>, TB;
 } // SchedRW
 
 // Note that these instructions aren't slow because that only applies when the
 // other operand is in a register. When it's an immediate, bt is still fast.
 let SchedRW = [WriteBitTestImmLd] in {
-def BT16mi8 : Ii8<0xBA, MRM4m, (outs), (ins i16mem:$src1, i16i8imm:$src2),
+def BT16mi8 : Ii8<0xBA, MRM4m, (outs), (ins i16mem:$src1, i16u8imm:$src2),
                   "bt{w}\t{$src2, $src1|$src1, $src2}",
                   [(set EFLAGS, (X86bt (loadi16 addr:$src1),
-                                       i16immSExt8:$src2))]>,
+                                       imm:$src2))]>,
                   OpSize16, TB;
-def BT32mi8 : Ii8<0xBA, MRM4m, (outs), (ins i32mem:$src1, i32i8imm:$src2),
+def BT32mi8 : Ii8<0xBA, MRM4m, (outs), (ins i32mem:$src1, i32u8imm:$src2),
                   "bt{l}\t{$src2, $src1|$src1, $src2}",
                   [(set EFLAGS, (X86bt (loadi32 addr:$src1),
-                                       i32immSExt8:$src2))]>,
+                                       imm:$src2))]>,
                   OpSize32, TB;
-def BT64mi8 : RIi8<0xBA, MRM4m, (outs), (ins i64mem:$src1, i64i8imm:$src2),
+def BT64mi8 : RIi8<0xBA, MRM4m, (outs), (ins i64mem:$src1, i64u8imm:$src2),
                 "bt{q}\t{$src2, $src1|$src1, $src2}",
                 [(set EFLAGS, (X86bt (loadi64 addr:$src1),
-                                     i64immSExt8:$src2))]>, TB,
+                                     imm:$src2))]>, TB,
                 Requires<[In64BitMode]>;
 } // SchedRW
 
@@ -1806,20 +1822,20 @@ def BTC64mr : RI<0xBB, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
 }
 
 let SchedRW = [WriteBitTestSet], Constraints = "$src1 = $dst" in {
-def BTC16ri8 : Ii8<0xBA, MRM7r, (outs GR16:$dst), (ins GR16:$src1, i16i8imm:$src2),
+def BTC16ri8 : Ii8<0xBA, MRM7r, (outs GR16:$dst), (ins GR16:$src1, i16u8imm:$src2),
                     "btc{w}\t{$src2, $src1|$src1, $src2}", []>, OpSize16, TB;
-def BTC32ri8 : Ii8<0xBA, MRM7r, (outs GR32:$dst), (ins GR32:$src1, i32i8imm:$src2),
+def BTC32ri8 : Ii8<0xBA, MRM7r, (outs GR32:$dst), (ins GR32:$src1, i32u8imm:$src2),
                     "btc{l}\t{$src2, $src1|$src1, $src2}", []>, OpSize32, TB;
-def BTC64ri8 : RIi8<0xBA, MRM7r, (outs GR64:$dst), (ins GR64:$src1, i64i8imm:$src2),
+def BTC64ri8 : RIi8<0xBA, MRM7r, (outs GR64:$dst), (ins GR64:$src1, i64u8imm:$src2),
                     "btc{q}\t{$src2, $src1|$src1, $src2}", []>, TB;
 } // SchedRW
 
 let mayLoad = 1, mayStore = 1, SchedRW = [WriteBitTestSetImmRMW] in {
-def BTC16mi8 : Ii8<0xBA, MRM7m, (outs), (ins i16mem:$src1, i16i8imm:$src2),
+def BTC16mi8 : Ii8<0xBA, MRM7m, (outs), (ins i16mem:$src1, i16u8imm:$src2),
                     "btc{w}\t{$src2, $src1|$src1, $src2}", []>, OpSize16, TB;
-def BTC32mi8 : Ii8<0xBA, MRM7m, (outs), (ins i32mem:$src1, i32i8imm:$src2),
+def BTC32mi8 : Ii8<0xBA, MRM7m, (outs), (ins i32mem:$src1, i32u8imm:$src2),
                     "btc{l}\t{$src2, $src1|$src1, $src2}", []>, OpSize32, TB;
-def BTC64mi8 : RIi8<0xBA, MRM7m, (outs), (ins i64mem:$src1, i64i8imm:$src2),
+def BTC64mi8 : RIi8<0xBA, MRM7m, (outs), (ins i64mem:$src1, i64u8imm:$src2),
                     "btc{q}\t{$src2, $src1|$src1, $src2}", []>, TB,
                     Requires<[In64BitMode]>;
 }
@@ -1849,24 +1865,24 @@ def BTR64mr : RI<0xB3, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
 }
 
 let SchedRW = [WriteBitTestSet], Constraints = "$src1 = $dst" in {
-def BTR16ri8 : Ii8<0xBA, MRM6r, (outs GR16:$dst), (ins GR16:$src1, i16i8imm:$src2),
+def BTR16ri8 : Ii8<0xBA, MRM6r, (outs GR16:$dst), (ins GR16:$src1, i16u8imm:$src2),
                     "btr{w}\t{$src2, $src1|$src1, $src2}", []>,
                     OpSize16, TB;
-def BTR32ri8 : Ii8<0xBA, MRM6r, (outs GR32:$dst), (ins GR32:$src1, i32i8imm:$src2),
+def BTR32ri8 : Ii8<0xBA, MRM6r, (outs GR32:$dst), (ins GR32:$src1, i32u8imm:$src2),
                     "btr{l}\t{$src2, $src1|$src1, $src2}", []>,
                     OpSize32, TB;
-def BTR64ri8 : RIi8<0xBA, MRM6r, (outs GR64:$dst), (ins GR64:$src1, i64i8imm:$src2),
+def BTR64ri8 : RIi8<0xBA, MRM6r, (outs GR64:$dst), (ins GR64:$src1, i64u8imm:$src2),
                     "btr{q}\t{$src2, $src1|$src1, $src2}", []>, TB;
 } // SchedRW
 
 let mayLoad = 1, mayStore = 1, SchedRW = [WriteBitTestSetImmRMW] in {
-def BTR16mi8 : Ii8<0xBA, MRM6m, (outs), (ins i16mem:$src1, i16i8imm:$src2),
+def BTR16mi8 : Ii8<0xBA, MRM6m, (outs), (ins i16mem:$src1, i16u8imm:$src2),
                     "btr{w}\t{$src2, $src1|$src1, $src2}", []>,
                     OpSize16, TB;
-def BTR32mi8 : Ii8<0xBA, MRM6m, (outs), (ins i32mem:$src1, i32i8imm:$src2),
+def BTR32mi8 : Ii8<0xBA, MRM6m, (outs), (ins i32mem:$src1, i32u8imm:$src2),
                     "btr{l}\t{$src2, $src1|$src1, $src2}", []>,
                     OpSize32, TB;
-def BTR64mi8 : RIi8<0xBA, MRM6m, (outs), (ins i64mem:$src1, i64i8imm:$src2),
+def BTR64mi8 : RIi8<0xBA, MRM6m, (outs), (ins i64mem:$src1, i64u8imm:$src2),
                     "btr{q}\t{$src2, $src1|$src1, $src2}", []>, TB,
                     Requires<[In64BitMode]>;
 }
@@ -1896,20 +1912,20 @@ def BTS64mr : RI<0xAB, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
 }
 
 let SchedRW = [WriteBitTestSet], Constraints = "$src1 = $dst" in {
-def BTS16ri8 : Ii8<0xBA, MRM5r, (outs GR16:$dst), (ins GR16:$src1, i16i8imm:$src2),
+def BTS16ri8 : Ii8<0xBA, MRM5r, (outs GR16:$dst), (ins GR16:$src1, i16u8imm:$src2),
                     "bts{w}\t{$src2, $src1|$src1, $src2}", []>, OpSize16, TB;
-def BTS32ri8 : Ii8<0xBA, MRM5r, (outs GR32:$dst), (ins GR32:$src1, i32i8imm:$src2),
+def BTS32ri8 : Ii8<0xBA, MRM5r, (outs GR32:$dst), (ins GR32:$src1, i32u8imm:$src2),
                     "bts{l}\t{$src2, $src1|$src1, $src2}", []>, OpSize32, TB;
-def BTS64ri8 : RIi8<0xBA, MRM5r, (outs GR64:$dst), (ins GR64:$src1, i64i8imm:$src2),
+def BTS64ri8 : RIi8<0xBA, MRM5r, (outs GR64:$dst), (ins GR64:$src1, i64u8imm:$src2),
                     "bts{q}\t{$src2, $src1|$src1, $src2}", []>, TB;
 } // SchedRW
 
 let mayLoad = 1, mayStore = 1, SchedRW = [WriteBitTestSetImmRMW] in {
-def BTS16mi8 : Ii8<0xBA, MRM5m, (outs), (ins i16mem:$src1, i16i8imm:$src2),
+def BTS16mi8 : Ii8<0xBA, MRM5m, (outs), (ins i16mem:$src1, i16u8imm:$src2),
                     "bts{w}\t{$src2, $src1|$src1, $src2}", []>, OpSize16, TB;
-def BTS32mi8 : Ii8<0xBA, MRM5m, (outs), (ins i32mem:$src1, i32i8imm:$src2),
+def BTS32mi8 : Ii8<0xBA, MRM5m, (outs), (ins i32mem:$src1, i32u8imm:$src2),
                     "bts{l}\t{$src2, $src1|$src1, $src2}", []>, OpSize32, TB;
-def BTS64mi8 : RIi8<0xBA, MRM5m, (outs), (ins i64mem:$src1, i64i8imm:$src2),
+def BTS64mi8 : RIi8<0xBA, MRM5m, (outs), (ins i64mem:$src1, i64u8imm:$src2),
                     "bts{q}\t{$src2, $src1|$src1, $src2}", []>, TB,
                     Requires<[In64BitMode]>;
 }

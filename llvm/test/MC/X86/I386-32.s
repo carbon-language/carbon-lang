@@ -12,6 +12,14 @@ bsrl %eax, %eax
 // CHECK: encoding: [0x0f,0xba,0xf8,0x00]        
 btcl $0, %eax 
 
+// CHECK: btcl $255, %eax 
+// CHECK: encoding: [0x0f,0xba,0xf8,0xff]        
+btcl $-1, %eax 
+
+// CHECK: btcl $255, %eax 
+// CHECK: encoding: [0x0f,0xba,0xf8,0xff]        
+btcl $255, %eax 
+
 // CHECK: btcl %eax, %eax 
 // CHECK: encoding: [0x0f,0xbb,0xc0]        
 btcl %eax, %eax 
@@ -19,6 +27,14 @@ btcl %eax, %eax
 // CHECK: btl $0, %eax 
 // CHECK: encoding: [0x0f,0xba,0xe0,0x00]        
 btl $0, %eax 
+
+// CHECK: btl $255, %eax 
+// CHECK: encoding: [0x0f,0xba,0xe0,0xff]        
+btl $-1, %eax 
+
+// CHECK: btl $255, %eax 
+// CHECK: encoding: [0x0f,0xba,0xe0,0xff]        
+btl $255, %eax 
 
 // CHECK: btl %eax, %eax 
 // CHECK: encoding: [0x0f,0xa3,0xc0]        
@@ -28,6 +44,14 @@ btl %eax, %eax
 // CHECK: encoding: [0x0f,0xba,0xf0,0x00]        
 btrl $0, %eax 
 
+// CHECK: btrl $255, %eax 
+// CHECK: encoding: [0x0f,0xba,0xf0,0xff]        
+btrl $-1, %eax 
+
+// CHECK: btrl $255, %eax 
+// CHECK: encoding: [0x0f,0xba,0xf0,0xff]        
+btrl $255, %eax 
+
 // CHECK: btrl %eax, %eax 
 // CHECK: encoding: [0x0f,0xb3,0xc0]        
 btrl %eax, %eax 
@@ -35,6 +59,14 @@ btrl %eax, %eax
 // CHECK: btsl $0, %eax 
 // CHECK: encoding: [0x0f,0xba,0xe8,0x00]        
 btsl $0, %eax 
+
+// CHECK: btsl $255, %eax 
+// CHECK: encoding: [0x0f,0xba,0xe8,0xff]        
+btsl $-1, %eax 
+
+// CHECK: btsl $255, %eax 
+// CHECK: encoding: [0x0f,0xba,0xe8,0xff]        
+btsl $255, %eax 
 
 // CHECK: btsl %eax, %eax 
 // CHECK: encoding: [0x0f,0xab,0xc0]        

@@ -12,6 +12,14 @@ bsrl %r13d, %r13d
 // CHECK: encoding: [0x41,0x0f,0xba,0xfd,0x00]        
 btcl $0, %r13d 
 
+// CHECK: btcl $255, %r13d 
+// CHECK: encoding: [0x41,0x0f,0xba,0xfd,0xff]        
+btcl $-1, %r13d 
+
+// CHECK: btcl $255, %r13d 
+// CHECK: encoding: [0x41,0x0f,0xba,0xfd,0xff]        
+btcl $255, %r13d 
+
 // CHECK: btcl %r13d, %r13d 
 // CHECK: encoding: [0x45,0x0f,0xbb,0xed]        
 btcl %r13d, %r13d 
@@ -19,6 +27,14 @@ btcl %r13d, %r13d
 // CHECK: btl $0, %r13d 
 // CHECK: encoding: [0x41,0x0f,0xba,0xe5,0x00]        
 btl $0, %r13d 
+
+// CHECK: btl $255, %r13d 
+// CHECK: encoding: [0x41,0x0f,0xba,0xe5,0xff]        
+btl $-1, %r13d 
+
+// CHECK: btl $255, %r13d 
+// CHECK: encoding: [0x41,0x0f,0xba,0xe5,0xff]        
+btl $255, %r13d 
 
 // CHECK: btl %r13d, %r13d 
 // CHECK: encoding: [0x45,0x0f,0xa3,0xed]        
@@ -28,6 +44,14 @@ btl %r13d, %r13d
 // CHECK: encoding: [0x41,0x0f,0xba,0xf5,0x00]        
 btrl $0, %r13d 
 
+// CHECK: btrl $255, %r13d 
+// CHECK: encoding: [0x41,0x0f,0xba,0xf5,0xff]        
+btrl $-1, %r13d 
+
+// CHECK: btrl $255, %r13d 
+// CHECK: encoding: [0x41,0x0f,0xba,0xf5,0xff]        
+btrl $255, %r13d 
+
 // CHECK: btrl %r13d, %r13d 
 // CHECK: encoding: [0x45,0x0f,0xb3,0xed]        
 btrl %r13d, %r13d 
@@ -35,6 +59,14 @@ btrl %r13d, %r13d
 // CHECK: btsl $0, %r13d 
 // CHECK: encoding: [0x41,0x0f,0xba,0xed,0x00]        
 btsl $0, %r13d 
+
+// CHECK: btsl $255, %r13d 
+// CHECK: encoding: [0x41,0x0f,0xba,0xed,0xff]        
+btsl $-1, %r13d 
+
+// CHECK: btsl $255, %r13d 
+// CHECK: encoding: [0x41,0x0f,0xba,0xed,0xff]        
+btsl $255, %r13d 
 
 // CHECK: btsl %r13d, %r13d 
 // CHECK: encoding: [0x45,0x0f,0xab,0xed]        
