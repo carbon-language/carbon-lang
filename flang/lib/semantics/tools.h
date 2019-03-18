@@ -98,5 +98,7 @@ const Symbol *FindExternallyVisibleObject(
 
 bool ExprHasTypeCategory(
     const evaluate::GenericExprWrapper &expr, const common::TypeCategory &type);
+bool ExprHasTypeKind(const evaluate::GenericExprWrapper &expr, int kind);
+bool ExprIsScalar(const evaluate::GenericExprWrapper &expr);
 }
 #endif  // FORTRAN_SEMANTICS_TOOLS_H_

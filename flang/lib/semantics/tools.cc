@@ -280,4 +280,12 @@ bool ExprHasTypeCategory(const evaluate::GenericExprWrapper &expr,
   auto dynamicType{expr.v.GetType()};
   return dynamicType.has_value() && dynamicType->category == type;
 }
+bool ExprHasTypeKind(const evaluate::GenericExprWrapper &expr, int kind) {
+  auto dynamicType{expr.v.GetType()};
+  return dynamicType.has_value() && dynamicType->kind == kind;
+}
+
+bool ExprIsScalar(const evaluate::GenericExprWrapper &expr) {
+  return !(expr.v.Rank() > 0);
+}
 }

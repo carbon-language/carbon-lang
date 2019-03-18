@@ -24,6 +24,7 @@ add_library(FortranSemantics
   check-if-stmt.cc
   check-nullify.cc
   check-return.cc
+  check-stop.cc
   expression.cc
   mod-file.cc
   resolve-labels.cc

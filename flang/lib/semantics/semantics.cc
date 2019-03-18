@@ -23,6 +23,7 @@
 #include "check-if-stmt.h"
 #include "check-nullify.h"
 #include "check-return.h"
+#include "check-stop.h"
 #include "expression.h"
 #include "mod-file.h"
 #include "resolve-labels.h"
@@ -82,7 +83,7 @@ using StatementSemanticsPass1 = ExprChecker;
 using StatementSemanticsPass2 =
     SemanticsVisitor<ArithmeticIfStmtChecker, AssignmentChecker, CoarrayChecker,
         ComputedGotoStmtChecker, DeallocateChecker, DoConcurrentChecker,
-        IfStmtChecker, NullifyChecker, ReturnStmtChecker>;
+        IfStmtChecker, NullifyChecker, ReturnStmtChecker, StopChecker>;
 
 SemanticsContext::SemanticsContext(
     const common::IntrinsicTypeDefaultKinds &defaultKinds,
