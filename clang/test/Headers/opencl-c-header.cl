@@ -53,15 +53,14 @@
 // CHECK: _Z16convert_char_rtec
 // CHECK-NOT: _Z3ctzc
 // CHECK20: _Z3ctzc
-// CHECK20-NOT: _Z16convert_char_rtec
+// CHECK20: _Z16convert_char_rtec
 char f(char x) {
-#if !defined(__OPENCL_CPP_VERSION__) && (__OPENCL_C_VERSION__ != CL_VERSION_2_0)
-  return convert_char_rte(x);
-
-#else //__OPENCL_C_VERSION__
+// Check functionality from OpenCL 2.0 onwards
+#if defined(__OPENCL_CPP_VERSION__) || (__OPENCL_C_VERSION__ == CL_VERSION_2_0)
   ndrange_t t;
-  return ctz(x);
+  x = ctz(x);
 #endif //__OPENCL_C_VERSION__
+  return convert_char_rte(x);
 }
 
 // Verify that a builtin using a write_only image3d_t type is available
