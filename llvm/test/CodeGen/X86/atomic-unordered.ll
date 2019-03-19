@@ -2546,7 +2546,7 @@ define i64 @fold_constant_fence(i64 %arg) {
   ret i64 %ret
 }
 
-define i64 @fold_invariant_clobber(i64* %p, i64 %arg) {
+define i64 @fold_invariant_clobber(i64* dereferenceable(8) %p, i64 %arg) {
 ; CHECK-O0-LABEL: fold_invariant_clobber:
 ; CHECK-O0:       # %bb.0:
 ; CHECK-O0-NEXT:    movq (%rdi), %rax
@@ -2567,7 +2567,7 @@ define i64 @fold_invariant_clobber(i64* %p, i64 %arg) {
 }
 
 
-define i64 @fold_invariant_fence(i64* %p, i64 %arg) {
+define i64 @fold_invariant_fence(i64* dereferenceable(8) %p, i64 %arg) {
 ; CHECK-O0-LABEL: fold_invariant_fence:
 ; CHECK-O0:       # %bb.0:
 ; CHECK-O0-NEXT:    movq (%rdi), %rdi
