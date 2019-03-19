@@ -3938,6 +3938,8 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
     unsigned IsHotTextUpdated = 0;
     unsigned IsHotDataUpdated = 0;
 
+    std::vector<Elf_Sym> Symbols;
+
     std::map<const BinaryFunction *, uint64_t> IslandSizes;
     auto getConstantIslandSize = [&IslandSizes](const BinaryFunction *BF) {
       auto Itr = IslandSizes.find(BF);
@@ -3955,7 +3957,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
       NewSymbol.st_size = Function->getOutputSize();
       NewSymbol.st_other = 0;
       NewSymbol.setBindingAndType(ELF::STB_LOCAL, ELF::STT_FUNC);
-      Write(0, NewSymbol);
+      Symbols.emplace_back(NewSymbol);
 
       if (Function->isSplit()) {
         auto NewColdSym = NewSymbol;
@@ -3965,7 +3967,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
             Twine(Function->getPrintName()).concat(".cold.0").toStringRef(Buf));
         NewColdSym.st_value = Function->cold().getAddress();
         NewColdSym.st_size = Function->cold().getImageSize();
-        Write(0, NewColdSym);
+        Symbols.emplace_back(NewColdSym);
       }
     }
 
@@ -3990,7 +3992,8 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
           NewColdSym.st_shndx = Function->getColdCodeSection()->getIndex();
           NewColdSym.st_value = Function->cold().getAddress();
           NewColdSym.st_size = Function->cold().getImageSize();
-          Write(0, NewColdSym);
+          NewColdSym.setBindingAndType(ELF::STB_LOCAL, ELF::STT_FUNC);
+          Symbols.emplace_back(NewColdSym);
         }
         if (!PatchExisting && Function->hasConstantIsland()) {
           auto DataMark = Function->getOutputDataAddress();
@@ -4005,8 +4008,8 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
           auto CodeMarkSym = DataMarkSym;
           CodeMarkSym.st_name = AddToStrTab("$x");
           CodeMarkSym.st_value = CodeMark;
-          Write(0, DataMarkSym);
-          Write(0, CodeMarkSym);
+          Symbols.emplace_back(DataMarkSym);
+          Symbols.emplace_back(CodeMarkSym);
         }
         if (!PatchExisting && Function->hasConstantIsland() &&
             Function->isSplit()) {
@@ -4022,8 +4025,8 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
           auto CodeMarkSym = DataMarkSym;
           CodeMarkSym.st_name = AddToStrTab("$x");
           CodeMarkSym.st_value = CodeMark;
-          Write(0, DataMarkSym);
-          Write(0, CodeMarkSym);
+          Symbols.emplace_back(DataMarkSym);
+          Symbols.emplace_back(CodeMarkSym);
         }
       } else {
         uint32_t OldSectionIndex = NewSymbol.st_shndx;
@@ -4106,15 +4109,23 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
                << Twine::utohexstr(NewSymbol.st_value) << '\n';
       }
 
-      Write((&Symbol - cantFail(Obj->symbols(Section)).begin()) *
-                sizeof(Elf_Sym),
-            NewSymbol);
+      if (PatchExisting) {
+        Write((&Symbol - cantFail(Obj->symbols(Section)).begin()) *
+                  sizeof(Elf_Sym),
+              NewSymbol);
+      } else {
+        Symbols.emplace_back(NewSymbol);
+      }
     }
+
+    if (PatchExisting)
+      return;
 
     assert((!IsHotTextUpdated || IsHotTextUpdated == 2) &&
            "either none or both __hot_start/__hot_end symbols were expected");
     assert((!IsHotDataUpdated || IsHotDataUpdated == 2) &&
-           "either none or both __hot_data_start/__hot_data_end symbols were expected");
+           "either none or both __hot_data_start/__hot_data_end symbols were "
+           "expected");
 
     auto addSymbol = [&](const std::string &Name) {
       Elf_Sym Symbol;
@@ -4128,17 +4139,30 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
       outs() << "BOLT-INFO: setting " << Name << " to 0x"
              << Twine::utohexstr(Symbol.st_value) << '\n';
 
-      Write(0, Symbol);
+      Symbols.emplace_back(Symbol);
     };
 
-    if (opts::HotText && !IsHotTextUpdated && !PatchExisting) {
+    if (opts::HotText && !IsHotTextUpdated) {
       addSymbol("__hot_start");
       addSymbol("__hot_end");
     }
 
-    if (opts::HotData && !IsHotDataUpdated && !PatchExisting) {
+    if (opts::HotData && !IsHotDataUpdated) {
       addSymbol("__hot_data_start");
       addSymbol("__hot_data_end");
+    }
+
+    // Put local symbols at the beginning.
+    std::stable_sort(Symbols.begin(), Symbols.end(),
+                     [](const Elf_Sym &A, const Elf_Sym &B) {
+                       if (A.getBinding() == ELF::STB_LOCAL &&
+                           B.getBinding() != ELF::STB_LOCAL)
+                         return true;
+                       return false;
+                     });
+
+    for (const auto &Symbol : Symbols) {
+      Write(0, Symbol);
     }
   };
 
