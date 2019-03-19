@@ -986,7 +986,6 @@ public:
   void Post(const parser::PointerObject &);
   void Post(const parser::AllocateObject &);
   bool Pre(const parser::PointerAssignmentStmt &);
-  void Post(const parser::PointerAssignmentStmt &);
   void Post(const parser::Designator &);
   template<typename T> void Post(const parser::LoopBounds<T> &);
   void Post(const parser::ProcComponentRef &);
@@ -4609,8 +4608,10 @@ void ResolveNamesVisitor::Post(const parser::AllocateObject &x) {
       x.u);
 }
 bool ResolveNamesVisitor::Pre(const parser::PointerAssignmentStmt &x) {
-  // Resolve unrestricted specific intrinsic procedures as in "p => cos".
+  const auto &dataRef{std::get<parser::DataRef>(x.t)};
   const auto &expr{std::get<parser::Expr>(x.t)};
+  ResolveDataRef(dataRef);;
+  // Resolve unrestricted specific intrinsic procedures as in "p => cos".
   if (const auto *designator{
           std::get_if<common::Indirection<parser::Designator>>(&expr.u)}) {
     if (const parser::Name *
@@ -4627,9 +4628,6 @@ bool ResolveNamesVisitor::Pre(const parser::PointerAssignmentStmt &x) {
     }
   }
   return true;
-}
-void ResolveNamesVisitor::Post(const parser::PointerAssignmentStmt &x) {
-  ResolveDataRef(std::get<parser::DataRef>(x.t));
 }
 void ResolveNamesVisitor::Post(const parser::Designator &x) {
   std::visit(
