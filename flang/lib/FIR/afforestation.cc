@@ -25,9 +25,9 @@
 
 namespace Fortran::FIR {
 namespace {
-Expression *ExprRef(const parser::Expr &a) { return a.typedExpr.get(); }
+Expression *ExprRef(const parser::Expr &a) { return a.typedExpr.get()->v; }
 Expression *ExprRef(const common::Indirection<parser::Expr> &a) {
-  return a.value().typedExpr.get();
+  return a.value().typedExpr.get()->v;
 }
 
 struct LinearOp;

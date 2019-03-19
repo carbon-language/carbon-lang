@@ -66,7 +66,7 @@ struct Attribute {
 using FunctionType = evaluate::SomeType;  // TODO: what should this be?
 using AttributeList = std::vector<Attribute>;
 enum struct LinkageTypes { Public, Hidden, External };
-using Expression = evaluate::GenericExprWrapper;
+using Expression = evaluate::Expr<evaluate::SomeType>;
 using Variable = const semantics::Symbol *;
 using PathVariable = const parser::Variable;
 using Scope = const semantics::Scope;

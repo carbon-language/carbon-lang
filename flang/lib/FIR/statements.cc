@@ -30,7 +30,7 @@ Addressable_impl *GetAddressable(Statement *stmt) {
 
 static std::string dump(const Expression &e) {
   std::stringstream stringStream;
-  e.v.AsFortran(stringStream);
+  e.AsFortran(stringStream);
   return stringStream.str();
 }
 
