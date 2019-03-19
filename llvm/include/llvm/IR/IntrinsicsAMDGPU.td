@@ -840,7 +840,7 @@ let TargetPrefix = "amdgcn" in {
 defset list<AMDGPURsrcIntrinsic> AMDGPUBufferIntrinsics = {
 
 class AMDGPUBufferLoad : Intrinsic <
-  [llvm_anyfloat_ty],
+  [llvm_any_ty],
   [llvm_v4i32_ty,     // rsrc(SGPR)
    llvm_i32_ty,       // vindex(VGPR)
    llvm_i32_ty,       // offset(SGPR/VGPR/imm)
@@ -861,7 +861,7 @@ def int_amdgcn_s_buffer_load : Intrinsic <
 
 class AMDGPUBufferStore : Intrinsic <
   [],
-  [llvm_anyfloat_ty,  // vdata(VGPR) -- can currently only select f32, v2f32, v4f32
+  [llvm_any_ty,       // vdata(VGPR)
    llvm_v4i32_ty,     // rsrc(SGPR)
    llvm_i32_ty,       // vindex(VGPR)
    llvm_i32_ty,       // offset(SGPR/VGPR/imm)
