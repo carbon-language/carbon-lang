@@ -52,8 +52,8 @@ static std::list<BasicBlock *> SuccBlocks(
   return result.second;
 }
 
-ReturnStmt::ReturnStmt(Statement *exp) : returnValue_{GetApplyExpr(exp)} {
-  CHECK(returnValue_);
+ReturnStmt::ReturnStmt(Statement *exp) : value_{GetApplyExpr(exp)} {
+  CHECK(value_);
 }
 
 SwitchStmt::SwitchStmt(const Value &cond, BasicBlock *defaultBlock,
@@ -96,17 +96,24 @@ std::list<BasicBlock *> SwitchRankStmt::succ_blocks() const {
   return SuccBlocks<SwitchRankStmt>(valueSuccPairs_);
 }
 
-template<typename T> bool PointerNotNull(const T &variant) {
-  return std::visit(
+// check LoadInsn constraints
+static void CheckLoadInsn(const Value &v) {
+  std::visit(
       common::visitors{
-          [](const Addressable_impl *p) { return p != nullptr; },
-          [](const Value &value) { return !IsNothing(value); },
+          [](DataObject *) { /* ok */ },
+          [](Statement *s) { CHECK(GetAddressable(s)); },
+          [](auto) { CHECK(!"invalid load input"); },
       },
-      variant);
+      v.u);
 }
-
-LoadInsn::LoadInsn(Statement *addr) : address_{GetAddressable(addr)} {
-  CHECK(PointerNotNull(address_));
+LoadInsn::LoadInsn(const Value &addr) : address_{addr} {
+  CheckLoadInsn(address_);
+}
+LoadInsn::LoadInsn(Value &&addr) : address_{std::move(addr)} {
+  CheckLoadInsn(address_);
+}
+LoadInsn::LoadInsn(Statement *addr) : address_{addr} {
+  CHECK(GetAddressable(addr));
 }
 
 StoreInsn::StoreInsn(Statement *addr, Statement *val)
@@ -120,7 +127,6 @@ StoreInsn::StoreInsn(Statement *addr, Statement *val)
     value_ = expr;
   }
 }
-
 StoreInsn::StoreInsn(Statement *addr, BasicBlock *val)
   : address_{GetAddressable(addr)}, value_{val} {
   CHECK(address_);
@@ -139,11 +145,6 @@ std::string Statement::dump() const {
           [](const BranchStmt &branch) {
             if (branch.hasCondition()) {
               std::string cond{"???"};
-#if 0
-              if (auto expr{GetApplyExpr(branch.getCond())}) {
-                cond = FIR::dump(expr->expression());
-              }
-#endif
               return "branch (" + cond + ") " +
                   std::to_string(
                       reinterpret_cast<std::intptr_t>(branch.getTrueSucc())) +

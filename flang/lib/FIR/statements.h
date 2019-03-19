@@ -68,11 +68,13 @@ public:
 class ReturnStmt : public TerminatorStmt_impl {
 public:
   static ReturnStmt Create(Statement *stmt) { return ReturnStmt{stmt}; }
+  static ReturnStmt Create() { return ReturnStmt{nullptr}; }
   std::list<BasicBlock *> succ_blocks() const override { return {}; }
-  Statement *returnValue() const;
+  bool has_value() const { return value_ != nullptr; }
+  Statement *value() const;
 
 private:
-  ApplyExprStmt *returnValue_;
+  ApplyExprStmt *value_;
   explicit ReturnStmt(Statement *exp);
 };
 
@@ -393,13 +395,15 @@ private:
 // Load value(s) from a location
 class LoadInsn : public MemoryStmt_impl {
 public:
-  static LoadInsn Create(Value addr) { return LoadInsn{addr}; }
+  static LoadInsn Create(const Value &addr) { return LoadInsn{addr}; }
+  static LoadInsn Create(Value &&addr) { return LoadInsn{addr}; }
   static LoadInsn Create(Statement *addr) { return LoadInsn{addr}; }
 
 private:
-  explicit LoadInsn(Value addr) : address_{addr} {}
+  explicit LoadInsn(const Value &addr);
+  explicit LoadInsn(Value &&addr);
   explicit LoadInsn(Statement *addr);
-  std::variant<Addressable_impl *, Value> address_;
+  Value address_;
 };
 
 // Store value(s) from an applied expression to a location
@@ -585,8 +589,10 @@ public:
     return reinterpret_cast<std::size_t>(&static_cast<Statement *>(nullptr)->u);
   }
   static Statement *From(Stmt_impl *stmt) {
-    return reinterpret_cast<Statement *>(
-        reinterpret_cast<char *>(stmt) - Statement::offsetof_impl());
+    char *cp{reinterpret_cast<char *>(stmt)};
+    auto adjust{Statement::offsetof_impl()};
+    CHECK(adjust == 0);
+    return reinterpret_cast<Statement *>(cp - adjust);
   }
 };
 
@@ -599,8 +605,8 @@ inline std::list<BasicBlock *> succ_list(BasicBlock &block) {
   return {};
 }
 
-inline Statement *ReturnStmt::returnValue() const {
-  return Statement::From(returnValue_);
+inline Statement *ReturnStmt::value() const {
+  return Statement::From(value_);
 }
 
 inline ApplyExprStmt *GetApplyExpr(Statement *stmt) {
