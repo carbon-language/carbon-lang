@@ -688,9 +688,11 @@ private:
 
   /// Emit line number information corresponding to \p NewLoc. \p PrevLoc
   /// provides a context for de-duplication of line number info.
+  /// \p FirstInstr indicates if \p NewLoc represents the first instruction
+  /// in a sequence, such as a function fragment.
   ///
   /// Return new current location which is either \p NewLoc or \p PrevLoc.
-  SMLoc emitLineInfo(SMLoc NewLoc, SMLoc PrevLoc) const;
+  SMLoc emitLineInfo(SMLoc NewLoc, SMLoc PrevLoc, bool FirstInstr) const;
 
   BinaryFunction& operator=(const BinaryFunction &) = delete;
   BinaryFunction(const BinaryFunction &) = delete;

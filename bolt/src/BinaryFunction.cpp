@@ -2658,6 +2658,8 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart,
   if (!EmitCodeOnly && EmitColdPart && hasConstantIsland())
     duplicateConstantIslands();
 
+  // Track first emitted instruction with debug info.
+  bool FirstInstr = true;
   for (auto BB : layout()) {
     if (EmitColdPart != BB->isCold())
       continue;
@@ -2714,7 +2716,8 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart,
       }
 
       if (!EmitCodeOnly && opts::UpdateDebugSections && UnitLineTable.first) {
-        LastLocSeen = emitLineInfo(Instr.getLoc(), LastLocSeen);
+        LastLocSeen = emitLineInfo(Instr.getLoc(), LastLocSeen, FirstInstr);
+        FirstInstr = false;
       }
 
       Streamer.EmitInstruction(Instr, *BC.STI);
@@ -3702,7 +3705,8 @@ bool BinaryFunction::isSymbolValidInScope(const SymbolRef &Symbol,
   return true;
 }
 
-SMLoc BinaryFunction::emitLineInfo(SMLoc NewLoc, SMLoc PrevLoc) const {
+SMLoc BinaryFunction::emitLineInfo(SMLoc NewLoc, SMLoc PrevLoc,
+                                   bool FirstInstr) const {
   auto *FunctionCU = UnitLineTable.first;
   const auto *FunctionLineTable = UnitLineTable.second;
   assert(FunctionCU && "cannot emit line info for function without CU");
@@ -3737,14 +3741,20 @@ SMLoc BinaryFunction::emitLineInfo(SMLoc NewLoc, SMLoc PrevLoc) const {
   if (!CurrentFilenum)
     CurrentFilenum = CurrentRow.File;
 
+  unsigned Flags = (DWARF2_FLAG_IS_STMT * CurrentRow.IsStmt) |
+                   (DWARF2_FLAG_BASIC_BLOCK * CurrentRow.BasicBlock) |
+                   (DWARF2_FLAG_PROLOGUE_END * CurrentRow.PrologueEnd) |
+                   (DWARF2_FLAG_EPILOGUE_BEGIN * CurrentRow.EpilogueBegin);
+
+  // Always emit is_stmt at the beginning of function fragment.
+  if (FirstInstr)
+    Flags |= DWARF2_FLAG_IS_STMT;
+
   BC.Ctx->setCurrentDwarfLoc(
     CurrentFilenum,
     CurrentRow.Line,
     CurrentRow.Column,
-    (DWARF2_FLAG_IS_STMT * CurrentRow.IsStmt) |
-    (DWARF2_FLAG_BASIC_BLOCK * CurrentRow.BasicBlock) |
-    (DWARF2_FLAG_PROLOGUE_END * CurrentRow.PrologueEnd) |
-    (DWARF2_FLAG_EPILOGUE_BEGIN * CurrentRow.EpilogueBegin),
+    Flags,
     CurrentRow.Isa,
     CurrentRow.Discriminator);
   BC.Ctx->setDwarfCompileUnitID(FunctionUnitIndex);
