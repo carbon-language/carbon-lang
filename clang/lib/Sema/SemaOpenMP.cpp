@@ -2216,6 +2216,61 @@ Sema::DeclGroupPtrTy Sema::ActOnOpenMPAllocateDirective(
     if (isa<ParmVarDecl>(VD))
       continue;
 
+    // If the used several times in the allocate directive, the same allocator
+    // must be used.
+    if (VD->hasAttr<OMPAllocateDeclAttr>()) {
+      const auto *A = VD->getAttr<OMPAllocateDeclAttr>();
+      const Expr *PrevAllocator = A->getAllocator();
+      bool AllocatorsMatch = false;
+      if (Allocator && PrevAllocator) {
+        const Expr *AE = Allocator->IgnoreParenImpCasts();
+        const Expr *PAE = PrevAllocator->IgnoreParenImpCasts();
+        llvm::FoldingSetNodeID AEId, PAEId;
+        AE->Profile(AEId, Context, /*Canonical=*/true);
+        PAE->Profile(PAEId, Context, /*Canonical=*/true);
+        AllocatorsMatch = AEId == PAEId;
+      } else if (!Allocator && !PrevAllocator) {
+        AllocatorsMatch = true;
+      } else {
+        const Expr *AE = Allocator ? Allocator : PrevAllocator;
+        // In this case the specified allocator must be the default one.
+        AE = AE->IgnoreParenImpCasts();
+        if (const auto *DRE = dyn_cast<DeclRefExpr>(AE)) {
+          DeclarationName DN = DRE->getDecl()->getDeclName();
+          AllocatorsMatch =
+              DN.isIdentifier() &&
+              DN.getAsIdentifierInfo()->isStr("omp_default_mem_alloc");
+        }
+      }
+      if (!AllocatorsMatch) {
+        SmallString<256> AllocatorBuffer;
+        llvm::raw_svector_ostream AllocatorStream(AllocatorBuffer);
+        if (Allocator)
+          Allocator->printPretty(AllocatorStream, nullptr, getPrintingPolicy());
+        SmallString<256> PrevAllocatorBuffer;
+        llvm::raw_svector_ostream PrevAllocatorStream(PrevAllocatorBuffer);
+        if (PrevAllocator)
+          PrevAllocator->printPretty(PrevAllocatorStream, nullptr,
+                                     getPrintingPolicy());
+
+        SourceLocation AllocatorLoc =
+            Allocator ? Allocator->getExprLoc() : RefExpr->getExprLoc();
+        SourceRange AllocatorRange =
+            Allocator ? Allocator->getSourceRange() : RefExpr->getSourceRange();
+        SourceLocation PrevAllocatorLoc =
+            PrevAllocator ? PrevAllocator->getExprLoc() : A->getLocation();
+        SourceRange PrevAllocatorRange =
+            PrevAllocator ? PrevAllocator->getSourceRange() : A->getRange();
+        Diag(AllocatorLoc, diag::warn_omp_used_different_allocator)
+            << (Allocator ? 1 : 0) << AllocatorStream.str()
+            << (PrevAllocator ? 1 : 0) << PrevAllocatorStream.str()
+            << AllocatorRange;
+        Diag(PrevAllocatorLoc, diag::note_omp_previous_allocator)
+            << PrevAllocatorRange;
+        continue;
+      }
+    }
+
     // OpenMP, 2.11.3 allocate Directive, Restrictions, C / C++
     // If a list item has a static storage type, the allocator expression in the
     // allocator clause must be a constant expression that evaluates to one of
@@ -2254,11 +2309,17 @@ Sema::DeclGroupPtrTy Sema::ActOnOpenMPAllocateDirective(
     }
 
     Vars.push_back(RefExpr);
-    Attr *A = OMPAllocateDeclAttr::CreateImplicit(Context, Allocator,
-                                                  DE->getSourceRange());
-    VD->addAttr(A);
-    if (ASTMutationListener *ML = Context.getASTMutationListener())
-      ML->DeclarationMarkedOpenMPAllocate(VD, A);
+    if ((!Allocator || (Allocator && !Allocator->isTypeDependent() &&
+                        !Allocator->isValueDependent() &&
+                        !Allocator->isInstantiationDependent() &&
+                        !Allocator->containsUnexpandedParameterPack())) &&
+        !VD->hasAttr<OMPAllocateDeclAttr>()) {
+      Attr *A = OMPAllocateDeclAttr::CreateImplicit(Context, Allocator,
+                                                    DE->getSourceRange());
+      VD->addAttr(A);
+      if (ASTMutationListener *ML = Context.getASTMutationListener())
+        ML->DeclarationMarkedOpenMPAllocate(VD, A);
+    }
   }
   if (Vars.empty())
     return nullptr;
