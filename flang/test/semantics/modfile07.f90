@@ -22,14 +22,14 @@ module m
       complex x,y
     end function
   end interface
-  generic :: operator(+)=> s1, s2
+  generic :: operator ( + ) => s1, s2
   interface bar
     procedure :: s1
     procedure :: s2
     procedure :: s3
     procedure :: s4
   end interface
-  interface operator(.bar.)
+  interface operator( .bar.)
     procedure :: s1
     procedure :: s2
     procedure :: s3

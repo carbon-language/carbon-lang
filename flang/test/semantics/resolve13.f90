@@ -56,7 +56,7 @@ use m1, only: my_x => z
 use m1, only: operator(.foo.)
 !ERROR: Operator '.bar.' not found in module 'm1'
 use m1, only: operator(.bar.)
-use m1, only: operator(-)
+use m1, only: operator(-) , ifoo
 !ERROR: 'operator(+)' not found in module 'm1'
 use m1, only: operator(+)
 

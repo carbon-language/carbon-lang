@@ -33,7 +33,7 @@ module m2
   end interface
   public :: operator(+)
   !ERROR: The accessibility of 'operator(+)' has already been specified as PUBLIC
-  private :: operator(+)
+  private :: operator(+) , ifoo
 contains
   integer function ifoo(x, y)
     integer, intent(in) :: x, y
