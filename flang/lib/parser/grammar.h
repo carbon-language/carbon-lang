@@ -2326,7 +2326,7 @@ TYPE_CONTEXT_PARSER("STOP statement"_en_US,
 // R1162 stop-code -> scalar-default-char-expr | scalar-int-expr
 // The two alternatives for stop-code can't be distinguished at
 // parse time.
-TYPE_PARSER(construct<StopCode>(expr))
+TYPE_PARSER(construct<StopCode>(scalar(expr)))
 
 // R1164 sync-all-stmt -> SYNC ALL [( [sync-stat-list] )]
 TYPE_CONTEXT_PARSER("SYNC ALL statement"_en_US,
