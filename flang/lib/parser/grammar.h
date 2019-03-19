@@ -2324,8 +2324,9 @@ TYPE_CONTEXT_PARSER("STOP statement"_en_US,
         maybe(Parser<StopCode>{}), maybe(", QUIET =" >> scalarLogicalExpr)))
 
 // R1162 stop-code -> scalar-default-char-expr | scalar-int-expr
-TYPE_PARSER(construct<StopCode>(scalarDefaultCharExpr) ||
-    construct<StopCode>(scalarIntExpr))
+// The two alternatives for stop-code can't be distinguished at
+// parse time.
+TYPE_PARSER(construct<StopCode>(expr))
 
 // R1164 sync-all-stmt -> SYNC ALL [( [sync-stat-list] )]
 TYPE_CONTEXT_PARSER("SYNC ALL statement"_en_US,

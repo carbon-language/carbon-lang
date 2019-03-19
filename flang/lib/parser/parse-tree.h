@@ -2391,10 +2391,10 @@ struct ComputedGotoStmt {
 };
 
 // R1162 stop-code -> scalar-default-char-expr | scalar-int-expr
-struct StopCode {
-  UNION_CLASS_BOILERPLATE(StopCode);
-  std::variant<ScalarDefaultCharExpr, ScalarIntExpr> u;
-};
+// We can't distinguish character expressions from integer
+// expressions until semantics, so we just parse an expr and
+// check its type later.
+WRAPPER_CLASS(StopCode, Expr);
 
 // R1160 stop-stmt -> STOP [stop-code] [, QUIET = scalar-logical-expr]
 // R1161 error-stop-stmt ->
