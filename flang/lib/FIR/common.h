@@ -22,6 +22,7 @@
 #include "../evaluate/variable.h"
 #include "../parser/parse-tree.h"
 #include "../semantics/symbol.h"
+#include "llvm/Support/raw_ostream.h"
 
 // Some useful, self-documenting macros for failure modes
 #define STRINGIFY(X) #X
@@ -108,6 +109,9 @@ enum RuntimeCallType {
 };
 
 using RuntimeCallArguments = CallArguments;
+
+llvm::raw_ostream &DebugChannel();
+void SetDebugChannel(const std::string &filename);
 }
 
 #endif  // FORTRAN_FIR_COMMON_H_
