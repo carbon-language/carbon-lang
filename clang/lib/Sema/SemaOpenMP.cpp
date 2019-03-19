@@ -2216,6 +2216,43 @@ Sema::DeclGroupPtrTy Sema::ActOnOpenMPAllocateDirective(
     if (isa<ParmVarDecl>(VD))
       continue;
 
+    // OpenMP, 2.11.3 allocate Directive, Restrictions, C / C++
+    // If a list item has a static storage type, the allocator expression in the
+    // allocator clause must be a constant expression that evaluates to one of
+    // the predefined memory allocator values.
+    if (Allocator && VD->hasGlobalStorage()) {
+      bool IsPredefinedAllocator = false;
+      if (const auto *DRE =
+              dyn_cast<DeclRefExpr>(Allocator->IgnoreParenImpCasts())) {
+        if (DRE->getType().isConstant(getASTContext())) {
+          DeclarationName DN = DRE->getDecl()->getDeclName();
+          if (DN.isIdentifier()) {
+            StringRef PredefinedAllocators[] = {
+                "omp_default_mem_alloc", "omp_large_cap_mem_alloc",
+                "omp_const_mem_alloc",   "omp_high_bw_mem_alloc",
+                "omp_low_lat_mem_alloc", "omp_cgroup_mem_alloc",
+                "omp_pteam_mem_alloc",   "omp_thread_mem_alloc",
+            };
+            IsPredefinedAllocator =
+                llvm::any_of(PredefinedAllocators, [&DN](StringRef S) {
+                  return DN.getAsIdentifierInfo()->isStr(S);
+                });
+          }
+        }
+      }
+      if (!IsPredefinedAllocator) {
+        Diag(Allocator->getExprLoc(),
+             diag::err_omp_expected_predefined_allocator)
+            << Allocator->getSourceRange();
+        bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
+                      VarDecl::DeclarationOnly;
+        Diag(VD->getLocation(),
+             IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+            << VD;
+        continue;
+      }
+    }
+
     Vars.push_back(RefExpr);
     Attr *A = OMPAllocateDeclAttr::CreateImplicit(Context, Allocator,
                                                   DE->getSourceRange());

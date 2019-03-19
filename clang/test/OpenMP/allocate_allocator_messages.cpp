@@ -20,8 +20,10 @@ struct St1{
  int a;
  static int b;
 #pragma omp allocate(b) allocator(sss) // expected-error {{initializing 'omp_allocator_handle_t' (aka 'void *') with an expression of incompatible type 'int'}}
-} d;
+} d; // expected-note 2 {{'d' defined here}}
 
+// expected-error@+1 {{expected one of the predefined allocators for the variables with the static storage: 'omp_default_mem_alloc', 'omp_large_cap_mem_alloc', 'omp_const_mem_alloc', 'omp_high_bw_mem_alloc', 'omp_low_lat_mem_alloc', 'omp_cgroup_mem_alloc', 'omp_pteam_mem_alloc' or 'omp_thread_mem_alloc'}}
 #pragma omp allocate(d) allocator(nullptr)
 extern void *allocator;
+// expected-error@+1 {{expected one of the predefined allocators for the variables with the static storage: 'omp_default_mem_alloc', 'omp_large_cap_mem_alloc', 'omp_const_mem_alloc', 'omp_high_bw_mem_alloc', 'omp_low_lat_mem_alloc', 'omp_cgroup_mem_alloc', 'omp_pteam_mem_alloc' or 'omp_thread_mem_alloc'}}
 #pragma omp allocate(d) allocator(allocator)
