@@ -5499,9 +5499,9 @@ static void emitReductionCombiner(CodeGenFunction &CGF,
 }
 
 llvm::Function *CGOpenMPRuntime::emitReductionFunction(
-    CodeGenModule &CGM, SourceLocation Loc, llvm::Type *ArgsType,
-    ArrayRef<const Expr *> Privates, ArrayRef<const Expr *> LHSExprs,
-    ArrayRef<const Expr *> RHSExprs, ArrayRef<const Expr *> ReductionOps) {
+    SourceLocation Loc, llvm::Type *ArgsType, ArrayRef<const Expr *> Privates,
+    ArrayRef<const Expr *> LHSExprs, ArrayRef<const Expr *> RHSExprs,
+    ArrayRef<const Expr *> ReductionOps) {
   ASTContext &C = CGM.getContext();
 
   // void reduction_func(void *LHSArg, void *RHSArg);
@@ -5712,8 +5712,8 @@ void CGOpenMPRuntime::emitReduction(CodeGenFunction &CGF, SourceLocation Loc,
 
   // 2. Emit reduce_func().
   llvm::Function *ReductionFn = emitReductionFunction(
-      CGM, Loc, CGF.ConvertTypeForMem(ReductionArrayTy)->getPointerTo(),
-      Privates, LHSExprs, RHSExprs, ReductionOps);
+      Loc, CGF.ConvertTypeForMem(ReductionArrayTy)->getPointerTo(), Privates,
+      LHSExprs, RHSExprs, ReductionOps);
 
   // 3. Create static kmp_critical_name lock = { 0 };
   std::string Name = getName({"reduction"});
