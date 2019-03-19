@@ -1361,7 +1361,7 @@ def int_amdgcn_kill : Intrinsic<[], [llvm_i1_ty], []>;
 // enabled, with a few exceptions: - Phi nodes with require WWM return an
 // undefined value.
 def int_amdgcn_wwm : Intrinsic<[llvm_any_ty],
-  [LLVMMatchType<0>], [IntrNoMem, IntrSpeculatable]
+  [LLVMMatchType<0>], [IntrNoMem, IntrSpeculatable, IntrConvergent]
 >;
 
 // Given a value, copies it while setting all the inactive lanes to a given
