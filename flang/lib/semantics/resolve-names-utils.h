@@ -21,7 +21,7 @@
 #include "../parser/message.h"
 
 namespace Fortran::parser {
-struct CharBlock;
+class CharBlock;
 struct DefinedOpName;
 struct GenericSpec;
 struct Name;
