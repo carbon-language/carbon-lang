@@ -19047,36 +19047,6 @@ SDValue DAGCombiner::SimplifySelectCC(const SDLoc &DL, SDValue N0, SDValue N1,
                                        getShiftAmountTy(Temp.getValueType())));
   }
 
-  // Check to see if this is an integer abs.
-  // select_cc setg[te] X,  0,  X, -X ->
-  // select_cc setgt    X, -1,  X, -X ->
-  // select_cc setl[te] X,  0, -X,  X ->
-  // select_cc setlt    X,  1, -X,  X ->
-  // Y = sra (X, size(X)-1); xor (add (X, Y), Y)
-  if (N1C) {
-    ConstantSDNode *SubC = nullptr;
-    if (((N1C->isNullValue() && (CC == ISD::SETGT || CC == ISD::SETGE)) ||
-         (N1C->isAllOnesValue() && CC == ISD::SETGT)) &&
-        N0 == N2 && N3.getOpcode() == ISD::SUB && N0 == N3.getOperand(1))
-      SubC = dyn_cast<ConstantSDNode>(N3.getOperand(0));
-    else if (((N1C->isNullValue() && (CC == ISD::SETLT || CC == ISD::SETLE)) ||
-              (N1C->isOne() && CC == ISD::SETLT)) &&
-             N0 == N3 && N2.getOpcode() == ISD::SUB && N0 == N2.getOperand(1))
-      SubC = dyn_cast<ConstantSDNode>(N2.getOperand(0));
-
-    if (SubC && SubC->isNullValue() && CmpOpVT.isInteger()) {
-      SDLoc DL(N0);
-      SDValue Shift = DAG.getNode(ISD::SRA, DL, CmpOpVT, N0,
-                                  DAG.getConstant(CmpOpVT.getSizeInBits() - 1,
-                                                  DL,
-                                                  getShiftAmountTy(CmpOpVT)));
-      SDValue Add = DAG.getNode(ISD::ADD, DL, CmpOpVT, N0, Shift);
-      AddToWorklist(Shift.getNode());
-      AddToWorklist(Add.getNode());
-      return DAG.getNode(ISD::XOR, DL, CmpOpVT, Add, Shift);
-    }
-  }
-
   // select_cc seteq X, 0, sizeof(X), ctlz(X) -> ctlz(X)
   // select_cc seteq X, 0, sizeof(X), ctlz_zero_undef(X) -> ctlz(X)
   // select_cc seteq X, 0, sizeof(X), cttz(X) -> cttz(X)
