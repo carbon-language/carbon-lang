@@ -1724,13 +1724,6 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   // C99 6.10.2p4.
   CheckEndOfDirective(IncludeTok.getIdentifierInfo()->getNameStart(), true);
 
-  // Check that we don't have infinite #include recursion.
-  if (IncludeMacroStack.size() == MaxAllowedIncludeStackDepth-1) {
-    Diag(FilenameTok, diag::err_pp_include_too_deep);
-    HasReachedMaxIncludeDepth = true;
-    return;
-  }
-
   // Complain about attempts to #include files in an audit pragma.
   if (PragmaARCCFCodeAuditedLoc.isValid()) {
     Diag(HashLoc, diag::err_pp_include_in_arc_cf_code_audited);
@@ -2068,6 +2061,13 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
         EnterAnnotationToken(SourceRange(HashLoc, End),
                              tok::annot_module_include, M);
     }
+    return;
+  }
+
+  // Check that we don't have infinite #include recursion.
+  if (IncludeMacroStack.size() == MaxAllowedIncludeStackDepth-1) {
+    Diag(FilenameTok, diag::err_pp_include_too_deep);
+    HasReachedMaxIncludeDepth = true;
     return;
   }
 
