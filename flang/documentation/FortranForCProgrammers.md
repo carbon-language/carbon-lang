@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 -->
 
 Fortran For C Programmers
@@ -278,10 +278,15 @@ Preprocessing
 There is no standard preprocessing feature, but every real Fortran implementation
 has some support for passing Fortran source code through a variant of
 the standard C source preprocessor.
-Behavior varies across implementations and one should not depend on
+Since Fortran is very different from C at the lexical level (e.g., line
+continuations, Hollerith literals, no reserved words, fixed form), using
+a stock modern C preprocessor on Fortran source can be difficult.
+Preprocessing behavior varies across implementations and one should not depend on
 much portability.
 Preprocessing is typically requested by the use of a capitalized filename
 suffix (e.g., "foo.F90") or a compiler command line option.
+(Since the F18 compiler always runs its built-in preprocessing stage,
+no special option or filename suffix is required.)
 
 "Object Oriented" Programming
 -----------------------------
