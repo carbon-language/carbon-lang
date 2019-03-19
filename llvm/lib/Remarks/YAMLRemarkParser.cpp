@@ -63,14 +63,14 @@ Error YAMLRemarkParser::parseUnsigned(T &Result, yaml::KeyValueNode &Node) {
 
 Error YAMLRemarkParser::parseType(Type &Result, yaml::MappingNode &Node) {
   auto Type = StringSwitch<remarks::Type>(Node.getRawTag())
-                  .Case("!Passed", Type::Passed)
-                  .Case("!Missed", Type::Missed)
-                  .Case("!Analysis", Type::Analysis)
-                  .Case("!AnalysisFPCommute", Type::AnalysisFPCommute)
-                  .Case("!AnalysisAliasing", Type::AnalysisAliasing)
-                  .Case("!Failure", Type::Failure)
-                  .Default(Type::Unknown);
-  if (Type == Type::Unknown)
+                  .Case("!Passed", remarks::Type::Passed)
+                  .Case("!Missed", remarks::Type::Missed)
+                  .Case("!Analysis", remarks::Type::Analysis)
+                  .Case("!AnalysisFPCommute", remarks::Type::AnalysisFPCommute)
+                  .Case("!AnalysisAliasing", remarks::Type::AnalysisAliasing)
+                  .Case("!Failure", remarks::Type::Failure)
+                  .Default(remarks::Type::Unknown);
+  if (Type == remarks::Type::Unknown)
     return make_error<YAMLParseError>("expected a remark tag.", Node);
   Result = Type;
   return Error::success();
