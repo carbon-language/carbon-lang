@@ -582,17 +582,9 @@ void RegAllocFast::allocVirtReg(MachineInstr &MI, LiveReg &LR, unsigned Hint) {
     }
   }
 
-  // First try to find a completely free register.
-  ArrayRef<MCPhysReg> AllocationOrder = RegClassInfo.getOrder(&RC);
-  for (MCPhysReg PhysReg : AllocationOrder) {
-    if (PhysRegState[PhysReg] == regFree && !isRegUsedInInstr(PhysReg)) {
-      assignVirtToPhysReg(LR, PhysReg);
-      return;
-    }
-  }
-
   MCPhysReg BestReg = 0;
   unsigned BestCost = spillImpossible;
+  ArrayRef<MCPhysReg> AllocationOrder = RegClassInfo.getOrder(&RC);
   for (MCPhysReg PhysReg : AllocationOrder) {
     LLVM_DEBUG(dbgs() << "\tRegister: " << printReg(PhysReg, TRI) << ' ');
     unsigned Cost = calcSpillCost(PhysReg);
