@@ -40,6 +40,7 @@ class DoConcurrentEnforcement {
 public:
   DoConcurrentEnforcement(parser::Messages &messages) : messages_{messages} {}
   std::set<parser::Label> labels() { return labels_; }
+  std::set<parser::CharBlock> names() { return names_; }
   template<typename T> bool Pre(const T &) { return true; }
   template<typename T> void Post(const T &) {}
   template<typename T> bool Pre(const parser::Statement<T> &statement) {
@@ -47,6 +48,47 @@ public:
     if (statement.label.has_value()) {
       labels_.insert(*statement.label);
     }
+    return true;
+  }
+  // C1167
+  bool Pre(const parser::WhereConstructStmt &s) {
+    addName(std::get<std::optional<parser::Name>>(s.t));
+    return true;
+  }
+  bool Pre(const parser::ForallConstructStmt &s) {
+    addName(std::get<std::optional<parser::Name>>(s.t));
+    return true;
+  }
+  bool Pre(const parser::ChangeTeamStmt &s) {
+    addName(std::get<std::optional<parser::Name>>(s.t));
+    return true;
+  }
+  bool Pre(const parser::CriticalStmt &s) {
+    addName(std::get<std::optional<parser::Name>>(s.t));
+    return true;
+  }
+  bool Pre(const parser::LabelDoStmt &s) {
+    addName(std::get<std::optional<parser::Name>>(s.t));
+    return true;
+  }
+  bool Pre(const parser::NonLabelDoStmt &s) {
+    addName(std::get<std::optional<parser::Name>>(s.t));
+    return true;
+  }
+  bool Pre(const parser::IfThenStmt &s) {
+    addName(std::get<std::optional<parser::Name>>(s.t));
+    return true;
+  }
+  bool Pre(const parser::SelectCaseStmt &s) {
+    addName(std::get<std::optional<parser::Name>>(s.t));
+    return true;
+  }
+  bool Pre(const parser::SelectRankStmt &s) {
+    addName(std::get<0>(s.t));
+    return true;
+  }
+  bool Pre(const parser::SelectTypeStmt &s) {
+    addName(std::get<0>(s.t));
     return true;
   }
   // C1136
@@ -160,7 +202,13 @@ private:
     }
     return false;
   }
+  void addName(const std::optional<parser::Name> &nm) {
+    if (nm.has_value()) {
+      names_.insert(nm.value().source);
+    }
+  }
 
+  std::set<parser::CharBlock> names_;
   std::set<parser::Label> labels_;
   parser::CharBlock currentStatementSourcePosition_;
   parser::Messages &messages_;
@@ -168,17 +216,24 @@ private:
 
 class DoConcurrentLabelEnforce {
 public:
-  DoConcurrentLabelEnforce(
-      parser::Messages &messages, std::set<parser::Label> &&labels)
-    : messages_{messages}, labels_{labels} {}
+  DoConcurrentLabelEnforce(parser::Messages &messages,
+      std::set<parser::Label> &&labels, std::set<parser::CharBlock> &&names,
+      parser::CharBlock doConcurrentSourcePosition)
+    : messages_{messages}, labels_{labels}, names_{names},
+      doConcurrentSourcePosition_{doConcurrentSourcePosition} {}
   template<typename T> bool Pre(const T &) { return true; }
   template<typename T> bool Pre(const parser::Statement<T> &statement) {
     currentStatementSourcePosition_ = statement.source;
     return true;
   }
+  bool Pre(const parser::DoConstruct &) {
+    ++do_depth_;
+    return true;
+  }
   template<typename T> void Post(const T &) {}
 
   // C1138: branch from within a DO CONCURRENT shall not target outside loop
+  void Post(const parser::ExitStmt &exitStmt) { checkName(exitStmt.v); }
   void Post(const parser::GotoStmt &gotoStmt) { checkLabelUse(gotoStmt.v); }
   void Post(const parser::ComputedGotoStmt &computedGotoStmt) {
     for (auto &i : std::get<std::list<parser::Label>>(computedGotoStmt.t)) {
@@ -204,6 +259,23 @@ public:
   void Post(const parser::ErrLabel &errLabel) { checkLabelUse(errLabel.v); }
   void Post(const parser::EndLabel &endLabel) { checkLabelUse(endLabel.v); }
   void Post(const parser::EorLabel &eorLabel) { checkLabelUse(eorLabel.v); }
+  void Post(const parser::DoConstruct &) { --do_depth_; }
+  void checkName(const std::optional<parser::Name> &nm) {
+    if (!nm.has_value()) {
+      if (do_depth_ == 0) {
+        messages_.Say(currentStatementSourcePosition_,
+            "exit from DO CONCURRENT construct (%s)"_err_en_US,
+            doConcurrentSourcePosition_.ToString().data());
+      }
+      // nesting of named constructs is assumed to have been previously checked
+      // by the name/label resolution pass
+    } else if (names_.find(nm.value().source) == names_.end()) {
+      messages_.Say(currentStatementSourcePosition_,
+          "exit from DO CONCURRENT construct (%s) to construct with name '%s'"_err_en_US,
+          doConcurrentSourcePosition_.ToString().data(),
+          nm.value().source.ToString().data());
+    }
+  }
   void checkLabelUse(const parser::Label &labelUsed) {
     if (labels_.find(labelUsed) == labels_.end()) {
       messages_.Say(currentStatementSourcePosition_,
@@ -214,7 +286,10 @@ public:
 private:
   parser::Messages &messages_;
   std::set<parser::Label> labels_;
+  std::set<parser::CharBlock> names_;
+  int do_depth_{0};
   parser::CharBlock currentStatementSourcePosition_{nullptr};
+  parser::CharBlock doConcurrentSourcePosition_{nullptr};
 };
 
 using CS = std::vector<const Symbol *>;
@@ -339,8 +414,9 @@ public:
         DoConcurrentEnforcement doConcurrentEnforcement{messages_};
         parser::Walk(
             std::get<parser::Block>(doConstruct.t), doConcurrentEnforcement);
-        DoConcurrentLabelEnforce doConcurrentLabelEnforce{
-            messages_, doConcurrentEnforcement.labels()};
+        DoConcurrentLabelEnforce doConcurrentLabelEnforce{messages_,
+            doConcurrentEnforcement.labels(), doConcurrentEnforcement.names(),
+            currentStatementSourcePosition_};
         parser::Walk(
             std::get<parser::Block>(doConstruct.t), doConcurrentLabelEnforce);
         EnforceConcurrentLoopControl(*concurrent);
