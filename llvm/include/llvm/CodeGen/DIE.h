@@ -38,7 +38,6 @@ namespace llvm {
 class AsmPrinter;
 class DIE;
 class DIEUnit;
-class DwarfCompileUnit;
 class MCExpr;
 class MCSection;
 class MCSymbol;
@@ -231,25 +230,6 @@ public:
 };
 
 //===--------------------------------------------------------------------===//
-/// A BaseTypeRef DIE.
-class DIEBaseTypeRef {
-  const DwarfCompileUnit *CU;
-  const uint64_t Index;
-  static constexpr unsigned ULEB128PadSize = 4;
-
-public:
-  explicit DIEBaseTypeRef(const DwarfCompileUnit *TheCU, uint64_t Idx)
-    : CU(TheCU), Index(Idx) {}
-
-  /// EmitValue - Emit base type reference.
-  void EmitValue(const AsmPrinter *AP, dwarf::Form Form) const;
-  /// SizeOf - Determine size of the base type reference in bytes.
-  unsigned SizeOf(const AsmPrinter *AP, dwarf::Form Form) const;
-
-  void print(raw_ostream &O) const;
-};
-
-//===--------------------------------------------------------------------===//
 /// A simple label difference DIE.
 ///
 class DIEDelta {
@@ -369,7 +349,7 @@ private:
   /// should be stored by reference instead of by value.
   using ValTy = AlignedCharArrayUnion<DIEInteger, DIEString, DIEExpr, DIELabel,
                                       DIEDelta *, DIEEntry, DIEBlock *,
-                                      DIELoc *, DIELocList, DIEBaseTypeRef *>;
+                                      DIELoc *, DIELocList>;
 
   static_assert(sizeof(ValTy) <= sizeof(uint64_t) ||
                     sizeof(ValTy) <= sizeof(void *),
@@ -521,18 +501,6 @@ struct IntrusiveBackListBase {
     }
     Last = &N;
   }
-
-  void push_front(Node &N) {
-    assert(N.Next.getPointer() == &N && "Expected unlinked node");
-    assert(N.Next.getInt() == true && "Expected unlinked node");
-
-    if (Last) {
-      N.Next.setPointerAndInt(Last->Next.getPointer(), false);
-      Last->Next.setPointerAndInt(&N, true);
-    } else {
-      Last = &N;
-    }
-  }
 };
 
 template <class T> class IntrusiveBackList : IntrusiveBackListBase {
@@ -540,15 +508,8 @@ public:
   using IntrusiveBackListBase::empty;
 
   void push_back(T &N) { IntrusiveBackListBase::push_back(N); }
-  void push_front(T &N) { IntrusiveBackListBase::push_front(N); }
   T &back() { return *static_cast<T *>(Last); }
   const T &back() const { return *static_cast<T *>(Last); }
-  T &front() {
-    return *static_cast<T *>(Last ? Last->Next.getPointer() : nullptr);
-  }
-  const T &front() const {
-    return *static_cast<T *>(Last ? Last->Next.getPointer() : nullptr);
-  }
 
   class const_iterator;
   class iterator
@@ -809,13 +770,6 @@ public:
     Child->Owner = this;
     Children.push_back(*Child);
     return Children.back();
-  }
-
-  DIE &addChildFront(DIE *Child) {
-    assert(!Child->getParent() && "Child should be orphaned");
-    Child->Owner = this;
-    Children.push_front(*Child);
-    return Children.front();
   }
 
   /// Find a value in the DIE with the attribute given.

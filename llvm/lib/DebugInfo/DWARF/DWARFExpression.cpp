@@ -188,8 +188,6 @@ bool DWARFExpression::Operation::extract(DataExtractor Data, uint16_t Version,
     default:
       llvm_unreachable("Unknown DWARFExpression Op size");
     }
-
-    OperandEndOffsets[Operand] = Offset;
   }
 
   EndOffset = Offset;

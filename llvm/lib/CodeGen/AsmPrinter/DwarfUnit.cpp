@@ -46,26 +46,21 @@ using namespace llvm;
 
 #define DEBUG_TYPE "dwarfdebug"
 
-DIEDwarfExpression::DIEDwarfExpression(const AsmPrinter &AP,
-                                       DwarfCompileUnit &CU,
+DIEDwarfExpression::DIEDwarfExpression(const AsmPrinter &AP, DwarfUnit &DU,
                                        DIELoc &DIE)
-    : DwarfExpression(AP.getDwarfVersion(), CU), AP(AP),
+    : DwarfExpression(AP.getDwarfVersion()), AP(AP), DU(DU),
       DIE(DIE) {}
 
 void DIEDwarfExpression::emitOp(uint8_t Op, const char* Comment) {
-  CU.addUInt(DIE, dwarf::DW_FORM_data1, Op);
+  DU.addUInt(DIE, dwarf::DW_FORM_data1, Op);
 }
 
 void DIEDwarfExpression::emitSigned(int64_t Value) {
-  CU.addSInt(DIE, dwarf::DW_FORM_sdata, Value);
+  DU.addSInt(DIE, dwarf::DW_FORM_sdata, Value);
 }
 
 void DIEDwarfExpression::emitUnsigned(uint64_t Value) {
-  CU.addUInt(DIE, dwarf::DW_FORM_udata, Value);
-}
-
-void DIEDwarfExpression::emitBaseTypeRef(uint64_t Idx) {
-  CU.addBaseTypeRef(DIE, Idx);
+  DU.addUInt(DIE, dwarf::DW_FORM_udata, Value);
 }
 
 bool DIEDwarfExpression::isFrameRegister(const TargetRegisterInfo &TRI,

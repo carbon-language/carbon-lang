@@ -130,7 +130,7 @@ static void dumpLocation(raw_ostream &OS, DWARFFormValue &FormValue,
 
       if (LL)
         LL->dump(OS, BaseAddr, Ctx.isLittleEndian(), Obj.getAddressSize(), MRI,
-                 U, Indent);
+                 Indent);
       else
         OS << "error extracting location list.";
     }
