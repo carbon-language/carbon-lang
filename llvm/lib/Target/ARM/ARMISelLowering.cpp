@@ -14418,8 +14418,7 @@ SDValue ARMTargetLowering::LowerFP_ROUND(SDValue Op, SelectionDAG &DAG) const {
 
 void ARMTargetLowering::lowerABS(SDNode *N, SmallVectorImpl<SDValue> &Results,
                                  SelectionDAG &DAG) const {
-  EVT VT = N->getValueType(0);
-  assert(VT == MVT::i64 && "Unexpected type (!= i64) on ABS.");
+  assert(N->getValueType(0) == MVT::i64 && "Unexpected type (!= i64) on ABS.");
   MVT HalfT = MVT::i32;
   SDLoc dl(N);
   SDValue Hi, Lo, Tmp;
