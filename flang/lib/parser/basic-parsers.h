@@ -1344,11 +1344,9 @@ public:
     auto result{parser_.Parse(state)};
     if (result.has_value()) {
       const char *end{state.GetLocation()};
-      if (start < end && start[0] == ' ') {
-        ++start;
+      for (; start < end && start[0] == ' '; ++start) {
       }
-      if (start < end && end[-1] == ' ') {
-        --end;
+      for (; start < end && end[-1] == ' '; --end) {
       }
       result->source = CharBlock{start, end};
     }
