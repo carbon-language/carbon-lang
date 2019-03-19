@@ -2163,6 +2163,12 @@ public:
   /// \param TargetParam Corresponding target-specific parameter.
   Address getParameterAddress(CodeGenFunction &CGF, const VarDecl *NativeParam,
                               const VarDecl *TargetParam) const override;
+
+  /// Gets the OpenMP-specific address of the local variable.
+  Address getAddressOfLocalVariable(CodeGenFunction &CGF,
+                                    const VarDecl *VD) override {
+    return Address::invalid();
+  }
 };
 
 } // namespace CodeGen

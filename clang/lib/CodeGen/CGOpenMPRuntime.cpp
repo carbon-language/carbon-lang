@@ -667,6 +667,10 @@ enum OpenMPRTLFunction {
   // Call to void *__kmpc_task_reduction_get_th_data(int gtid, void *tg, void
   // *d);
   OMPRTL__kmpc_task_reduction_get_th_data,
+  // Call to void *__kmpc_alloc(int gtid, size_t sz, const omp_allocator_t *al);
+  OMPRTL__kmpc_alloc,
+  // Call to void __kmpc_free(int gtid, void *ptr, const omp_allocator_t *al);
+  OMPRTL__kmpc_free,
 
   //
   // Offloading related calls
@@ -2193,6 +2197,26 @@ llvm::FunctionCallee CGOpenMPRuntime::createRuntimeFunction(unsigned Function) {
         llvm::FunctionType::get(CGM.VoidPtrTy, TypeParams, /*isVarArg=*/false);
     RTLFn = CGM.CreateRuntimeFunction(
         FnTy, /*Name=*/"__kmpc_task_reduction_get_th_data");
+    break;
+  }
+  case OMPRTL__kmpc_alloc: {
+    // Build to void *__kmpc_alloc(int gtid, size_t sz, const omp_allocator_t
+    // *al);
+    // omp_allocator_t type is void *.
+    llvm::Type *TypeParams[] = {CGM.IntTy, CGM.SizeTy, CGM.VoidPtrPtrTy};
+    auto *FnTy =
+        llvm::FunctionType::get(CGM.VoidPtrTy, TypeParams, /*isVarArg=*/false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, /*Name=*/"__kmpc_alloc");
+    break;
+  }
+  case OMPRTL__kmpc_free: {
+    // Build to void __kmpc_free(int gtid, void *ptr, const omp_allocator_t
+    // *al);
+    // omp_allocator_t type is void *.
+    llvm::Type *TypeParams[] = {CGM.IntTy, CGM.VoidPtrTy, CGM.VoidPtrPtrTy};
+    auto *FnTy =
+        llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg=*/false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, /*Name=*/"__kmpc_free");
     break;
   }
   case OMPRTL__kmpc_push_target_tripcount: {
@@ -9669,8 +9693,81 @@ Address CGOpenMPRuntime::getParameterAddress(CodeGenFunction &CGF,
   return CGF.GetAddrOfLocalVar(NativeParam);
 }
 
+namespace {
+/// Cleanup action for allocate support.
+class OMPAllocateCleanupTy final : public EHScopeStack::Cleanup {
+public:
+  static const int CleanupArgs = 3;
+
+private:
+  llvm::FunctionCallee RTLFn;
+  llvm::Value *Args[CleanupArgs];
+
+public:
+  OMPAllocateCleanupTy(llvm::FunctionCallee RTLFn,
+                       ArrayRef<llvm::Value *> CallArgs)
+      : RTLFn(RTLFn) {
+    assert(CallArgs.size() == CleanupArgs &&
+           "Size of arguments does not match.");
+    std::copy(CallArgs.begin(), CallArgs.end(), std::begin(Args));
+  }
+  void Emit(CodeGenFunction &CGF, Flags /*flags*/) override {
+    if (!CGF.HaveInsertPoint())
+      return;
+    CGF.EmitRuntimeCall(RTLFn, Args);
+  }
+};
+} // namespace
+
 Address CGOpenMPRuntime::getAddressOfLocalVariable(CodeGenFunction &CGF,
                                                    const VarDecl *VD) {
+  const VarDecl *CVD = VD->getCanonicalDecl();
+  if (!CVD->hasAttr<OMPAllocateDeclAttr>())
+    return Address::invalid();
+  for (const Attr *A: CVD->getAttrs()) {
+    if (const auto *AA = dyn_cast<OMPAllocateDeclAttr>(A)) {
+      auto &Elem = OpenMPLocThreadIDMap.FindAndConstruct(CGF.CurFn);
+      if (!Elem.second.ServiceInsertPt)
+        setLocThreadIdInsertPt(CGF);
+      CGBuilderTy::InsertPointGuard IPG(CGF.Builder);
+      CGF.Builder.SetInsertPoint(Elem.second.ServiceInsertPt);
+      llvm::Value *Size;
+      CharUnits Align = CGM.getContext().getDeclAlign(CVD);
+      if (CVD->getType()->isVariablyModifiedType()) {
+        Size = CGF.getTypeSize(CVD->getType());
+        Align = CGM.getContext().getTypeAlignInChars(CVD->getType());
+      } else {
+        CharUnits Sz = CGM.getContext().getTypeSizeInChars(CVD->getType());
+        Align = CGM.getContext().getDeclAlign(CVD);
+        Size = CGM.getSize(Sz.alignTo(Align));
+      }
+      llvm::Value *ThreadID = getThreadID(CGF, CVD->getBeginLoc());
+      llvm::Value *Allocator;
+      if (const Expr *AllocExpr = AA->getAllocator()) {
+        Allocator = CGF.EmitScalarExpr(AA->getAllocator());
+      } else {
+        // Default allocator in libomp is nullptr.
+        Allocator = llvm::ConstantPointerNull::get(CGM.VoidPtrPtrTy);
+      }
+      llvm::Value *Args[] = {ThreadID, Size, Allocator};
+
+      llvm::Value *Addr =
+          CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_alloc), Args,
+                              CVD->getName() + ".void.addr");
+      llvm::Value *FiniArgs[OMPAllocateCleanupTy::CleanupArgs] = {
+          ThreadID, Addr, Allocator};
+      llvm::FunctionCallee FiniRTLFn = createRuntimeFunction(OMPRTL__kmpc_free);
+
+      CGF.EHStack.pushCleanup<OMPAllocateCleanupTy>(
+          NormalAndEHCleanup, FiniRTLFn, llvm::makeArrayRef(FiniArgs));
+      Addr = CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
+          Addr,
+          CGF.ConvertTypeForMem(
+              CGM.getContext().getPointerType(CVD->getType())),
+          CVD->getName() + ".addr");
+      return Address(Addr, Align);
+    }
+  }
   return Address::invalid();
 }
 
