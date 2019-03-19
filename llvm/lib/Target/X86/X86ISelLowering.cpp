@@ -26791,8 +26791,8 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
   }
   case ISD::ABS: {
     const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-    EVT VT = N->getValueType(0);
-    assert(VT == MVT::i64 && "Unexpected type (!= i64) on ABS.");
+    assert(N->getValueType(0) == MVT::i64 &&
+           "Unexpected type (!= i64) on ABS.");
     MVT HalfT = MVT::i32;
     SDValue Lo, Hi, Tmp;
     SDVTList VTList = DAG.getVTList(HalfT, MVT::i1);
