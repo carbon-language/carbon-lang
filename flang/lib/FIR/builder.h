@@ -44,6 +44,12 @@ struct FIRBuilder {
 
   BasicBlock *GetInsertionPoint() const { return cursorBlock_; }
 
+  Statement *CreateAddr(const Expression *e) {
+    return Insert(LocateExprStmt::Create(e));
+  }
+  Statement *CreateAddr(Expression &&e) {
+    return Insert(LocateExprStmt::Create(std::move(e)));
+  }
   Statement *CreateAlloc(Type type) {
     return Insert(AllocateInsn::Create(type));
   }
@@ -61,6 +67,9 @@ struct FIRBuilder {
   Statement *CreateDealloc(AllocateInsn *alloc) {
     return Insert(DeallocateInsn::Create(alloc));
   }
+  Statement *CreateDoCondition(Statement *dir, Statement *v1, Statement *v2) {
+    return Insert(DoConditionStmt::Create(dir, v1, v2));
+  }
   Statement *CreateExpr(const Expression *e) {
     return Insert(ApplyExprStmt::Create(e));
   }
@@ -70,32 +79,21 @@ struct FIRBuilder {
   ApplyExprStmt *MakeAsExpr(const Expression *e) {
     return GetApplyExpr(CreateExpr(e));
   }
-  Statement *CreateAddr(const Expression *e) {
-    return Insert(LocateExprStmt::Create(e));
-  }
-  Statement *CreateAddr(Expression &&e) {
-    return Insert(LocateExprStmt::Create(std::move(e)));
-  }
-  Statement *CreateLoad(Statement *addr) {
-    return Insert(LoadInsn::Create(addr));
-  }
-  Statement *CreateStore(Statement *addr, Statement *value) {
-    return Insert(StoreInsn::Create(addr, value));
-  }
-  Statement *CreateStore(Statement *addr, BasicBlock *value) {
-    return Insert(StoreInsn::Create(addr, value));
-  }
   Statement *CreateIncrement(Statement *v1, Statement *v2) {
     return Insert(IncrementStmt::Create(v1, v2));
   }
-  Statement *CreateDoCondition(Statement *dir, Statement *v1, Statement *v2) {
-    return Insert(DoConditionStmt::Create(dir, v1, v2));
+  Statement *CreateIndirectBr(Variable *v, const std::vector<BasicBlock *> &p) {
+    return InsertTerminator(IndirectBranchStmt::Create(v, p));
   }
   Statement *CreateIOCall(InputOutputCallType c, IOCallArguments &&a) {
     return Insert(IORuntimeStmt::Create(c, std::move(a)));
   }
-  Statement *CreateIndirectBr(Variable *v, const std::vector<BasicBlock *> &p) {
-    return InsertTerminator(IndirectBranchStmt::Create(v, p));
+  Statement *CreateLoad(Statement *addr) {
+    return Insert(LoadInsn::Create(addr));
+  }
+  Statement *CreateLocal(
+      Type type, int alignment = 0, Expression *expr = nullptr) {
+    return Insert(AllocateLocalInsn::Create(type, alignment, expr));
   }
   Statement *CreateNullify(Statement *s) {
     return Insert(DisassociateInsn::Create(s));
@@ -106,6 +104,12 @@ struct FIRBuilder {
   Statement *CreateRuntimeCall(
       RuntimeCallType call, RuntimeCallArguments &&arguments) {
     return Insert(RuntimeStmt::Create(call, std::move(arguments)));
+  }
+  Statement *CreateStore(Statement *addr, Statement *value) {
+    return Insert(StoreInsn::Create(addr, value));
+  }
+  Statement *CreateStore(Statement *addr, BasicBlock *value) {
+    return Insert(StoreInsn::Create(addr, value));
   }
   Statement *CreateSwitch(
       Value cond, const SwitchStmt::ValueSuccPairListType &pairs) {

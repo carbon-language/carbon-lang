@@ -271,12 +271,11 @@ template<typename A, typename B> std::string GetSource(const B *s) {
 void LabelOp::dump() const { DebugChannel() << "label_" << get() << ":\n"; }
 
 void GotoOp::dump() const {
-  DebugChannel() << "\tgoto " << target << " ["
-                 << std::visit(
-                        common::visitors{
-                            [](ArtificialJump) { return ""s; },
-                            [&](const auto *) { return GetSource(this); },
-                        },
+  DebugChannel() << "\tgoto %label_" << target << " ["
+                 << std::visit(common::visitors{
+                                   [](ArtificialJump) { return ""s; },
+                                   [&](auto *) { return GetSource(this); },
+                               },
                         u)
                  << "]\n";
 }
@@ -286,12 +285,12 @@ void ReturnOp::dump() const {
 }
 
 void ConditionalGotoOp::dump() const {
-  DebugChannel() << "\tcbranch .T.:" << trueLabel << " .F.:" << falseLabel
-                 << " ["
+  DebugChannel() << "\tcbranch .T.: %label_" << trueLabel << " .F.: %label_"
+                 << falseLabel << " ["
                  << std::visit(
                         common::visitors{
-                            [](const auto *s) { return GetSource(s); },
                             [](const parser::IfStmt *) { return "if-stmt"s; },
+                            [&](auto *s) { return GetSource(s); },
                         },
                         u)
                  << "]\n";
@@ -300,13 +299,13 @@ void ConditionalGotoOp::dump() const {
 void SwitchIOOp::dump() const {
   DebugChannel() << "\tio-call";
   if (errLabel.has_value()) {
-    DebugChannel() << " ERR:" << errLabel.value();
+    DebugChannel() << " ERR: %label_" << errLabel.value();
   }
   if (eorLabel.has_value()) {
-    DebugChannel() << " EOR:" << eorLabel.value();
+    DebugChannel() << " EOR: %label_" << eorLabel.value();
   }
   if (endLabel.has_value()) {
-    DebugChannel() << " END:" << endLabel.value();
+    DebugChannel() << " END: %label_" << endLabel.value();
   }
   DebugChannel() << " [" << GetSource(this) << "]\n";
 }
@@ -317,108 +316,59 @@ void SwitchOp::dump() const {
 
 void ActionOp::dump() const { DebugChannel() << '\t' << GetSource(v) << '\n'; }
 
+template<typename A> std::string dumpConstruct(const A &a) {
+  return std::visit(
+      common::visitors{
+          [](const parser::AssociateConstruct *c) {
+            return GetSource<parser::AssociateStmt>(c);
+          },
+          [](const parser::BlockConstruct *c) {
+            return GetSource<parser::BlockStmt>(c);
+          },
+          [](const parser::CaseConstruct *c) {
+            return GetSource<parser::SelectCaseStmt>(c);
+          },
+          [](const parser::ChangeTeamConstruct *c) {
+            return GetSource<parser::ChangeTeamStmt>(c);
+          },
+          [](const parser::CriticalConstruct *c) {
+            return GetSource<parser::CriticalStmt>(c);
+          },
+          [](const parser::DoConstruct *c) {
+            return GetSource<parser::NonLabelDoStmt>(c);
+          },
+          [](const parser::IfConstruct *c) {
+            return GetSource<parser::IfThenStmt>(c);
+          },
+          [](const parser::SelectRankConstruct *c) {
+            return GetSource<parser::SelectRankStmt>(c);
+          },
+          [](const parser::SelectTypeConstruct *c) {
+            return GetSource<parser::SelectTypeStmt>(c);
+          },
+          [](const parser::WhereConstruct *c) {
+            return GetSource<parser::WhereConstructStmt>(c);
+          },
+          [](const parser::ForallConstruct *c) {
+            return GetSource(
+                &std::get<parser::Statement<parser::ForallConstructStmt>>(
+                    c->t));
+          },
+          [](const parser::CompilerDirective *c) { return GetSource(c); },
+          [](const parser::OpenMPConstruct *) { return "openmp"s; },
+          [](const parser::OpenMPEndLoopDirective *) {
+            return "openmp end loop"s;
+          },
+      },
+      a);
+}
+
 void BeginOp::dump() const {
-  DebugChannel()
-      << "\t["
-      << std::visit(
-             common::visitors{
-                 [](const parser::AssociateConstruct *c) {
-                   return GetSource<parser::AssociateStmt>(c);
-                 },
-                 [](const parser::BlockConstruct *c) {
-                   return GetSource<parser::BlockStmt>(c);
-                 },
-                 [](const parser::CaseConstruct *c) {
-                   return GetSource<parser::SelectCaseStmt>(c);
-                 },
-                 [](const parser::ChangeTeamConstruct *c) {
-                   return GetSource<parser::ChangeTeamStmt>(c);
-                 },
-                 [](const parser::CriticalConstruct *c) {
-                   return GetSource<parser::CriticalStmt>(c);
-                 },
-                 [](const parser::DoConstruct *c) {
-                   return GetSource<parser::NonLabelDoStmt>(c);
-                 },
-                 [](const parser::IfConstruct *c) {
-                   return GetSource<parser::IfThenStmt>(c);
-                 },
-                 [](const parser::SelectRankConstruct *c) {
-                   return GetSource<parser::SelectRankStmt>(c);
-                 },
-                 [](const parser::SelectTypeConstruct *c) {
-                   return GetSource<parser::SelectTypeStmt>(c);
-                 },
-                 [](const parser::WhereConstruct *c) {
-                   return GetSource<parser::WhereConstructStmt>(c);
-                 },
-                 [](const parser::ForallConstruct *c) {
-                   return GetSource(
-                       &std::get<
-                           parser::Statement<parser::ForallConstructStmt>>(
-                           c->t));
-                 },
-                 [](const parser::CompilerDirective *c) {
-                   return GetSource(c);
-                 },
-                 [](const parser::OpenMPConstruct *) { return "openmp"s; },
-                 [](const parser::OpenMPEndLoopDirective *) {
-                   return "openmp end loop"s;
-                 },
-             },
-             u)
-      << "] :{\n";
+  DebugChannel() << "\t[" << dumpConstruct(u) << "] {\n";
 }
 
 void EndOp::dump() const {
-  DebugChannel() << "\t}: ["
-                 << std::visit(
-                        common::visitors{
-                            [](const parser::AssociateConstruct *c) {
-                              return GetSource<parser::EndAssociateStmt>(c);
-                            },
-                            [](const parser::BlockConstruct *c) {
-                              return GetSource<parser::EndBlockStmt>(c);
-                            },
-                            [](const parser::CaseConstruct *c) {
-                              return GetSource<parser::EndSelectStmt>(c);
-                            },
-                            [](const parser::ChangeTeamConstruct *c) {
-                              return GetSource<parser::EndChangeTeamStmt>(c);
-                            },
-                            [](const parser::CriticalConstruct *c) {
-                              return GetSource<parser::EndCriticalStmt>(c);
-                            },
-                            [](const parser::DoConstruct *c) {
-                              return GetSource<parser::EndDoStmt>(c);
-                            },
-                            [](const parser::IfConstruct *c) {
-                              return GetSource<parser::EndIfStmt>(c);
-                            },
-                            [](const parser::SelectRankConstruct *c) {
-                              return GetSource<parser::EndSelectStmt>(c);
-                            },
-                            [](const parser::SelectTypeConstruct *c) {
-                              return GetSource<parser::EndSelectStmt>(c);
-                            },
-                            [](const parser::WhereConstruct *c) {
-                              return GetSource<parser::EndWhereStmt>(c);
-                            },
-                            [](const parser::ForallConstruct *c) {
-                              return GetSource<parser::EndForallStmt>(c);
-                            },
-                            [](const parser::CompilerDirective *c) {
-                              return GetSource(c);
-                            },
-                            [](const parser::OpenMPConstruct *) {
-                              return "openmp"s;
-                            },
-                            [](const parser::OpenMPEndLoopDirective *) {
-                              return "openmp end loop"s;
-                            },
-                        },
-                        u)
-                 << "]\n";
+  DebugChannel() << "\t} [" << dumpConstruct(u) << "]\n";
 }
 
 void IndirectGotoOp::dump() const {

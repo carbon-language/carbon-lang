@@ -210,14 +210,14 @@ const parser::Format *FindReadWriteFormat(
 }
 
 static Expression AlwaysTrueExpression() {
-  using T = evaluate::Type<evaluate::TypeCategory::Logical, 1>;
-  return {evaluate::AsGenericExpr(evaluate::Constant<T>{true})};
+  using A = evaluate::Type<evaluate::TypeCategory::Logical, 1>;
+  return {evaluate::AsGenericExpr(evaluate::Constant<A>{true})};
 }
 
 // create an integer constant as an expression
 static Expression CreateConstant(int64_t value) {
-  using T = evaluate::SubscriptInteger;
-  return {evaluate::AsGenericExpr(evaluate::Constant<T>{value})};
+  using A = evaluate::SubscriptInteger;
+  return {evaluate::AsGenericExpr(evaluate::Constant<A>{value})};
 }
 
 static void CreateSwitchHelper(FIRBuilder *builder, Value condition,
@@ -235,6 +235,10 @@ static void CreateSwitchRankHelper(FIRBuilder *builder, Value condition,
 static void CreateSwitchTypeHelper(FIRBuilder *builder, Value condition,
     const SwitchTypeStmt::ValueSuccPairListType &rest) {
   builder->CreateSwitchType(condition, rest);
+}
+
+static Expression getApplyExpr(Statement *s) {
+  return GetApplyExpr(s)->expression();
 }
 
 class FortranIRLowering {
@@ -276,20 +280,33 @@ public:
 
   Program *program() { return fir_; }
 
+  // convert a parse tree data reference to an Expression
+  template<typename A> Expression ToExpression(const A &a) {
+    return {std::move(semantics::AnalyzeExpr(semanticsContext_, a).value())};
+  }
+
+  // build a simple arithmetic Expression
+  template<template<typename> class OPR>
+  Expression ConsExpr(Expression e1, Expression e2) {
+    evaluate::ExpressionAnalyzer context{semanticsContext_};
+    ConformabilityCheck(context.GetContextualMessages(), e1, e2);
+    return evaluate::NumericOperation<OPR>(context.GetContextualMessages(),
+        std::move(e1), std::move(e2),
+        context.GetDefaultKind(common::TypeCategory::Real))
+        .value();
+  }
+
   template<typename T>
   void ProcessRoutine(const T &here, const std::string &name) {
     CHECK(!fir_->containsProcedure(name));
     auto *subp{fir_->getOrInsertProcedure(name, nullptr, {})};
     builder_ = new FIRBuilder(*CreateBlock(subp->getLastRegion()));
     AnalysisData ad;
-#if 0
-    ControlFlowAnalyzer linearize{linearOperations_, ad};
-    Walk(here, linearize);
-#else
     CreateFlatIR(here, linearOperations_, ad);
-#endif
     if (debugLinearFIR_) {
+      DebugChannel() << "define @" << name << "(...) {\n";
       dump(linearOperations_);
+      DebugChannel() << "}\n";
     }
     ConstructFIR(ad);
     DrawRemainingArcs();
@@ -325,7 +342,7 @@ public:
     if (remap) {
       return remap;
     }
-    return builder_->CreateAddr(DataRefToExpression(dataRef));
+    return builder_->CreateAddr(ToExpression(dataRef));
   }
   Type CreateAllocationValue(const parser::Allocation *allocation,
       const parser::AllocateStmt *statement) {
@@ -464,7 +481,7 @@ public:
               return builder_->CreateExpr(ExprRef(e));
             },
             [&](const parser::Variable &v) {
-              return builder_->CreateExpr(VariableToExpression(v));
+              return builder_->CreateExpr(ToExpression(v));
             },
         },
         std::get<parser::Selector>(
@@ -555,29 +572,11 @@ public:
     return result;
   }
 
-  Expression VariableToExpression(const parser::Variable &var) {
-    evaluate::ExpressionAnalyzer analyzer{semanticsContext_};
-    return {std::move(analyzer.Analyze(var).value())};
-  }
-  Expression DataRefToExpression(const parser::DataRef &dr) {
-    evaluate::ExpressionAnalyzer analyzer{semanticsContext_};
-    return {std::move(analyzer.Analyze(dr).value())};
-  }
-  Expression NameToExpression(const parser::Name &name) {
-    evaluate::ExpressionAnalyzer analyzer{semanticsContext_};
-    return {std::move(analyzer.Analyze(name).value())};
-  }
-  Expression StructureComponentToExpression(
-      const parser::StructureComponent &sc) {
-    evaluate::ExpressionAnalyzer analyzer{semanticsContext_};
-    return {std::move(analyzer.Analyze(sc).value())};
-  }
-
   void handleIntrinsicAssignmentStmt(const parser::AssignmentStmt &stmt) {
     // TODO: check if allocation or reallocation should happen, etc.
     auto *value{builder_->CreateExpr(ExprRef(std::get<parser::Expr>(stmt.t)))};
-    auto *addr{builder_->CreateAddr(
-        VariableToExpression(std::get<parser::Variable>(stmt.t)))};
+    auto *addr{
+        builder_->CreateAddr(ToExpression(std::get<parser::Variable>(stmt.t)))};
     builder_->CreateStore(addr, value);
   }
   void handleDefinedAssignmentStmt(const parser::AssignmentStmt &stmt) {
@@ -614,10 +613,10 @@ public:
                 std::visit(
                     common::visitors{
                         [&](const parser::StatVariable &sv) {
-                          opts.stat = VariableToExpression(sv.v.thing.thing);
+                          opts.stat = ToExpression(sv.v.thing.thing);
                         },
                         [&](const parser::MsgVariable &mv) {
-                          opts.errmsg = VariableToExpression(mv.v.thing.thing);
+                          opts.errmsg = ToExpression(mv.v.thing.thing);
                         },
                     },
                     var.u);
@@ -719,12 +718,11 @@ public:
                 std::visit(
                     common::visitors{
                         [&](const parser::Name &n) {
-                          auto *s{builder_->CreateAddr(NameToExpression(n))};
+                          auto *s{builder_->CreateAddr(ToExpression(n))};
                           builder_->CreateNullify(s);
                         },
                         [&](const parser::StructureComponent &sc) {
-                          auto *s{builder_->CreateAddr(
-                              StructureComponentToExpression(sc))};
+                          auto *s{builder_->CreateAddr(ToExpression(sc))};
                           builder_->CreateNullify(s);
                         },
                     },
@@ -801,7 +799,7 @@ public:
             },
             [&](const common::Indirection<parser::AssignStmt> &s) {
               auto *addr{builder_->CreateAddr(
-                  NameToExpression(std::get<parser::Name>(s.value().t)))};
+                  ToExpression(std::get<parser::Name>(s.value().t)))};
               auto *block{blockMap_
                               .find(flat::FetchLabel(
                                   ad, std::get<parser::Label>(s.value().t))
@@ -871,14 +869,12 @@ public:
       auto &selector{std::get<parser::Selector>(assoc.t)};
       auto *expr{builder_->CreateExpr(std::visit(
           common::visitors{
-              [&](const parser::Variable &v) {
-                return VariableToExpression(v);
-              },
+              [&](const parser::Variable &v) { return ToExpression(v); },
               [](const parser::Expr &e) { return *ExprRef(e); },
           },
           selector.u))};
-      auto *name{builder_->CreateAddr(
-          NameToExpression(std::get<parser::Name>(assoc.t)))};
+      auto *name{
+          builder_->CreateAddr(ToExpression(std::get<parser::Name>(assoc.t)))};
       builder_->CreateStore(name, expr);
     }
   }
@@ -908,8 +904,8 @@ public:
       std::visit(
           common::visitors{
               [&](const parser::LoopBounds<parser::ScalarIntExpr> &bounds) {
-                auto *var = builder_->CreateAddr(
-                    NameToExpression(bounds.name.thing.thing));
+                auto *name{builder_->CreateAddr(
+                    ToExpression(bounds.name.thing.thing))};
                 // evaluate e1, e2 [, e3] ...
                 auto *e1{
                     builder_->CreateExpr(ExprRef(bounds.lower.thing.thing))};
@@ -921,8 +917,20 @@ public:
                 } else {
                   e3 = builder_->CreateExpr(CreateConstant(1));
                 }
-                builder_->CreateStore(var, e1);
-                PushDoContext(stmt, var, e1, e2, e3);
+                // name <- e1
+                builder_->CreateStore(name, e1);
+                auto *tripCounter{builder_->CreateLocal(nullptr)};
+                // totalTrips ::= iteration count = a
+                //   where a = (e2 - e1 + e3) / e3 if a > 0 and 0 otherwise
+                Expression tripExpr{ConsExpr<evaluate::Divide>(
+                    ConsExpr<evaluate::Add>(
+                        ConsExpr<evaluate::Subtract>(
+                            getApplyExpr(e2), getApplyExpr(e1)),
+                        getApplyExpr(e3)),
+                    getApplyExpr(e3))};
+                auto *totalTrips{builder_->CreateExpr(&tripExpr)};
+                builder_->CreateStore(tripCounter, totalTrips);
+                PushDoContext(stmt, name, nullptr, tripCounter, e3);
               },
               [&](const parser::ScalarLogicalExpr &whileExpr) {
                 // FIXME

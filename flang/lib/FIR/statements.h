@@ -296,7 +296,7 @@ public:
   static ApplyExprStmt Create(const Expression *e) { return ApplyExprStmt{*e}; }
   static ApplyExprStmt Create(Expression &&e) { return ApplyExprStmt{e}; }
 
-  const Expression &expression() const { return expression_; }
+  Expression expression() const { return expression_; }
 
 private:
   explicit ApplyExprStmt(const Expression &e) : expression_{e} {}
@@ -369,7 +369,7 @@ private:
 class AllocateLocalInsn : public Addressable_impl, public MemoryStmt_impl {
 public:
   static AllocateLocalInsn Create(
-      Type type, int alignment = 0, const Expression *expr = nullptr) {
+      Type type, int alignment = 0, Expression *expr = nullptr) {
     if (expr != nullptr) {
       return AllocateLocalInsn{type, alignment, *expr};
     }
