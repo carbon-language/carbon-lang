@@ -87,8 +87,8 @@ def merge_replacement_files(tmpdir, mergefile):
   """Merge all replacement files in a directory into a single file"""
   # The fixes suggested by clang-tidy >= 4.0.0 are given under
   # the top level key 'Diagnostics' in the output yaml files
-  mergekey="Diagnostics"
-  merged=[]
+  mergekey = "Diagnostics"
+  merged = []
   for replacefile in glob.iglob(os.path.join(tmpdir, '*.yaml')):
     content = yaml.safe_load(open(replacefile, 'r'))
     if not content:
