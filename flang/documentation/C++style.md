@@ -192,20 +192,17 @@ will be defined to return a reference.)
 wherever appropriate.
 * `std::unique_ptr<>`: A nullable pointer with ownership, null by default,
 not copyable, reassignable.
+F18 has a helpful `Deleter<>` class template that makes `unique_ptr<>`
+easier to use with forward-referenced data types.
 * `std::shared_ptr<>`: A nullable pointer with shared ownership via reference
 counting, null by default, shallowly copyable, reassignable, and slow.
-* `OwningPointer<>`: A nullable pointer with ownership, better suited
-for use with forward-defined types than `std::unique_ptr<>` is.
-Null by default, optionally copyable, reassignable.
-Does not have direct means for allocating data, and inconveniently requires
-the definition of an external destructor.
 * `Indirection<>`: A non-nullable pointer with ownership and
 optional deep copy semantics; reassignable.
 Often better than a reference (due to ownership) or `std::unique_ptr<>`
 (due to non-nullability and copyability).
 Can be wrapped in `std::optional<>` when nullability is required.
-* `ForwardReference<>`: A non-nullable `OwningPointer<>`, or a variant of
-`Indirection<>` that works with forward-declared content types; it's both.
+Usable with forward-referenced data types with some use of `extern template`
+in headers and explicit template instantiation in source files.
 * `CountedReference<>`: A nullable pointer with shared ownership via
 reference counting, null by default, shallowly copyable, reassignable.
 Safe to use *only* when the data are private to just one
@@ -219,11 +216,9 @@ A feature matrix:
 | -------              | -------- | ------------ | ------ | ------------ | --------          | ------------------ |
 | `*p`                 | yes      | no           | no     | yes          | shallowly         | yes                |
 | `&r`                 | no       | n/a          | no     | no           | shallowly         | yes                |
-| `unique_ptr<>`       | yes      | yes          | yes    | yes          | no                | no                 |
+| `unique_ptr<>`       | yes      | yes          | yes    | yes          | no                | yes, with work     |
 | `shared_ptr<>`       | yes      | yes          | yes    | yes          | shallowly         | no                 |
-| `OwningPointer<>`    | yes      | yes          | yes    | yes          | optionally deeply | yes                |
-| `Indirection<>`      | no       | n/a          | yes    | yes          | optionally deeply | no                 |
-| `ForwardReference<>` | no       | n/a          | yes    | yes          | optionally deeply | yes                |
+| `Indirection<>`      | no       | n/a          | yes    | yes          | optionally deeply | yes, with work     |
 | `CountedReference<>` | yes      | yes          | yes    | yes          | shallowly         | no                 |
 
 ### Overall design preferences

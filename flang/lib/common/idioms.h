@@ -135,7 +135,6 @@ template<typename A> struct ListItemCount {
   }
 
 // Given a const reference to a value, return a copy of the value.
-
 template<typename A> A Clone(const A &x) { return x; }
 }
 #endif  // FORTRAN_COMMON_IDIOMS_H_

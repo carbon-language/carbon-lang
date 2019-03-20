@@ -250,7 +250,7 @@ public:
   }
 
 private:
-  bool FoldArray(const CopyableIndirection<Expr<T>> &expr) {
+  bool FoldArray(const common::CopyableIndirection<Expr<T>> &expr) {
     Expr<T> folded{Fold(context_, common::Clone(expr.value()))};
     if (auto *c{UnwrapExpr<Constant<T>>(folded)}) {
       // Copy elements in Fortran array element order

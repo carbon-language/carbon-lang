@@ -51,10 +51,12 @@ public:
     }
   }
 
-  template<typename X> void Descend(const CopyableIndirection<X> &p) {
+  template<typename X, bool COPY>
+  void Descend(const common::Indirection<X, COPY> &p) {
     Visit(p.value());
   }
-  template<typename X> void Descend(CopyableIndirection<X> &p) {
+  template<typename X, bool COPY>
+  void Descend(common::Indirection<X, COPY> &p) {
     Visit(p.value());
   }
 

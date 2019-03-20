@@ -25,9 +25,9 @@
 
 namespace Fortran::FIR {
 namespace {
-Expression *ExprRef(const parser::Expr &a) { return &a.typedExpr.value(); }
+Expression *ExprRef(const parser::Expr &a) { return a.typedExpr.get(); }
 Expression *ExprRef(const common::Indirection<parser::Expr> &a) {
-  return &a.value().typedExpr.value();
+  return a.value().typedExpr.get();
 }
 
 struct LinearOp;
@@ -1296,9 +1296,9 @@ public:
       const std::vector<LinearLabelRef> &refs) {
     auto &cases{
         std::get<std::list<parser::CaseConstruct::Case>>(caseConstruct->t)};
-    SwitchCaseArguments result{
-        GetSwitchCaseSelector(caseConstruct), unspecifiedLabel,
-            populateSwitchValues(builder_, cases), std::move(refs)};
+    SwitchCaseArguments result{GetSwitchCaseSelector(caseConstruct),
+        unspecifiedLabel, populateSwitchValues(builder_, cases),
+        std::move(refs)};
     cleanupSwitchPairs<SwitchCaseStmt>(
         result.defLab, result.values, result.labels);
     return result;

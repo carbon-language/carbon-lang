@@ -86,7 +86,8 @@ std::ostream &LogicalOperation<KIND>::Infix(std::ostream &o) const {
 }
 
 template<typename T>
-std::ostream &Emit(std::ostream &o, const CopyableIndirection<Expr<T>> &expr) {
+std::ostream &Emit(
+    std::ostream &o, const common::CopyableIndirection<Expr<T>> &expr) {
   return expr.value().AsFortran(o);
 }
 
@@ -147,7 +148,7 @@ std::ostream &ExpressionBase<RESULT>::AsFortran(std::ostream &o) const {
             o << "z'" << x.Hexadecimal() << "'";
           },
           [&](const NullPointer &) { o << "NULL()"; },
-          [&](const CopyableIndirection<Substring> &s) {
+          [&](const common::CopyableIndirection<Substring> &s) {
             s.value().AsFortran(o);
           },
           [&](const ImpliedDoIndex &i) { o << i.name.ToString(); },
@@ -184,7 +185,7 @@ Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
       u);
 }
 
-Expr<SomeType>::~Expr() {}
+Expr<SomeType>::~Expr() = default;
 
 #if defined(__APPLE__) && defined(__GNUC__)
 template<typename A>
@@ -312,8 +313,26 @@ std::ostream &DerivedTypeSpecAsFortran(
   return o;
 }
 
+GenericExprWrapper::~GenericExprWrapper() = default;
+
 bool GenericExprWrapper::operator==(const GenericExprWrapper &that) const {
   return v == that.v;
+}
+
+template<TypeCategory CAT> int Expr<SomeKind<CAT>>::GetKind() const {
+  return std::visit(
+      [](const auto &kx) { return std::decay_t<decltype(kx)>::Result::kind; },
+      u);
+}
+
+int Expr<SomeCharacter>::GetKind() const {
+  return std::visit(
+      [](const auto &kx) { return std::decay_t<decltype(kx)>::Result::kind; },
+      u);
+}
+
+Expr<SubscriptInteger> Expr<SomeCharacter>::LEN() const {
+  return std::visit([](const auto &kx) { return kx.LEN(); }, u);
 }
 
 // Template instantiations to resolve the "extern template" declarations
@@ -329,9 +348,4 @@ FOR_EACH_TYPE_AND_KIND(template class ExpressionBase)
 FOR_EACH_INTRINSIC_KIND(template class ArrayConstructorValues)
 FOR_EACH_INTRINSIC_KIND(template class ArrayConstructor)
 }
-
-// For reclamation of analyzed expressions to which owning pointers have
-// been embedded in the parse tree.  This destructor appears here, where
-// definitions for all the necessary types are available, to obviate a
-// need to include lib/evaluate/*.h headers in the parser proper.
-DEFINE_OWNING_SPECIAL_FUNCTIONS(OwningPointer, evaluate::GenericExprWrapper)
+DEFINE_DELETER(Fortran::evaluate::GenericExprWrapper)

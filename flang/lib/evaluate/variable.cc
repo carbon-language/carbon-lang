@@ -258,8 +258,8 @@ std::ostream &Emit(
   return o;
 }
 
-template<typename A>
-std::ostream &Emit(std::ostream &o, const CopyableIndirection<A> &p,
+template<typename A, bool COPY>
+std::ostream &Emit(std::ostream &o, const common::Indirection<A, COPY> &p,
     const char *kw = nullptr) {
   if (kw != nullptr) {
     o << kw;

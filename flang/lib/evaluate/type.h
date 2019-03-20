@@ -195,7 +195,7 @@ using SameKind = Type<CATEGORY, std::decay_t<T>::kind>;
 // Many expressions, including subscripts, CHARACTER lengths, array bounds,
 // and effective type parameter values, are of a maximal kind of INTEGER.
 using IndirectSubscriptIntegerExpr =
-    CopyableIndirection<Expr<SubscriptInteger>>;
+    common::CopyableIndirection<Expr<SubscriptInteger>>;
 
 // A predicate that is true when a kind value is a kind that could possibly
 // be supported for an intrinsic type category on some target instruction

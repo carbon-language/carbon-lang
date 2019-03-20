@@ -77,7 +77,7 @@ public:
   CLASS_BOILERPLATE(Component)
   Component(const DataRef &b, const Symbol &c) : base_{b}, symbol_{&c} {}
   Component(DataRef &&b, const Symbol &c) : base_{std::move(b)}, symbol_{&c} {}
-  Component(CopyableIndirection<DataRef> &&b, const Symbol &c)
+  Component(common::CopyableIndirection<DataRef> &&b, const Symbol &c)
     : base_{std::move(b)}, symbol_{&c} {}
 
   const DataRef &base() const { return base_.value(); }
@@ -90,7 +90,7 @@ public:
   std::ostream &AsFortran(std::ostream &) const;
 
 private:
-  CopyableIndirection<DataRef> base_;
+  common::CopyableIndirection<DataRef> base_;
   const Symbol *symbol_;
 };
 
@@ -238,7 +238,7 @@ public:
 private:
   std::vector<const Symbol *> base_;
   std::vector<Expr<SubscriptInteger>> subscript_, cosubscript_;
-  std::optional<CopyableIndirection<Expr<SomeInteger>>> stat_, team_;
+  std::optional<common::CopyableIndirection<Expr<SomeInteger>>> stat_, team_;
   bool teamIsTeamNumber_{false};  // false: TEAM=, true: TEAM_NUMBER=
 };
 

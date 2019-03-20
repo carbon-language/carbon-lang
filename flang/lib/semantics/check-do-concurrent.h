@@ -21,17 +21,21 @@
 namespace Fortran::parser {
 struct DoConstruct;
 }
-
 namespace Fortran::semantics {
 class DoConcurrentContext;
+}
+extern template class Fortran::common::Indirection<
+    Fortran::semantics::DoConcurrentContext>;
 
+namespace Fortran::semantics {
 class DoConcurrentChecker : public virtual BaseChecker {
 public:
   explicit DoConcurrentChecker(SemanticsContext &);
+  ~DoConcurrentChecker();
   void Leave(const parser::DoConstruct &);
 
 private:
-  common::ForwardReference<DoConcurrentContext> context_;
+  common::Indirection<DoConcurrentContext> context_;
 };
 
 }

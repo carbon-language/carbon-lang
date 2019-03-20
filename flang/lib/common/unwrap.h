@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -70,10 +70,6 @@ template<typename A, typename... Bs>
 auto Unwrap(const std::variant<Bs...> &) -> std::add_const_t<A> *;
 template<typename A, typename B, bool COPY>
 auto Unwrap(const Indirection<B, COPY> &) -> Constify<A, B> *;
-template<typename A, typename B>
-auto Unwrap(const OwningPointer<B> &) -> Constify<A, B> *;
-template<typename A, typename B>
-auto Unwrap(const CountedReference<B> &) -> Constify<A, B> *;
 
 // Implementations of specializations
 template<typename A, typename B> auto Unwrap(B *p) -> Constify<A, B> * {
@@ -142,15 +138,6 @@ auto Unwrap(const std::variant<Bs...> &u) -> std::add_const_t<A> * {
 template<typename A, typename B, bool COPY>
 auto Unwrap(const Indirection<B, COPY> &p) -> Constify<A, B> * {
   return Unwrap<A>(*p);
-}
-
-template<typename A, typename B>
-auto Unwrap(const OwningPointer<B> &p) -> Constify<A, B> * {
-  if (p.get() != nullptr) {
-    return Unwrap<A>(*p);
-  } else {
-    return nullptr;
-  }
 }
 
 template<typename A, typename B>

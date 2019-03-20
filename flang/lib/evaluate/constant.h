@@ -128,8 +128,8 @@ private:
   std::vector<std::int64_t> shape_;
 };
 
-using StructureConstructorValues =
-    std::map<const semantics::Symbol *, CopyableIndirection<Expr<SomeType>>>;
+using StructureConstructorValues = std::map<const semantics::Symbol *,
+    common::CopyableIndirection<Expr<SomeType>>>;
 
 template<>
 class Constant<SomeDerived>

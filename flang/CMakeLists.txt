@@ -92,9 +92,9 @@ if(CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
    endif()
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic")
-   set(CMAKE_CXX_FLAGS_RELEASE    "-O2 -DDEBUG")
+   set(CMAKE_CXX_FLAGS_RELEASE    "-O2")
    set(CMAKE_CXX_FLAGS_MINSIZEREL "-O2 '-DCHECK=(void)'")
-   set(CMAKE_CXX_FLAGS_DEBUG      "-g -DDEBUG")
+   set(CMAKE_CXX_FLAGS_DEBUG      "-g -DDEBUGF18")
 
    # Building shared libraries is death on performance with GCC by default
    # due to the need to preserve the right to override external entry points

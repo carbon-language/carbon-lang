@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 // Each is based on operator<< for that type. There are overloadings for
 // reference and pointer, and for dumping to a provided ostream or cerr.
 
-#ifdef DEBUG
+#ifdef DEBUGF18
 
 #include <iostream>
 

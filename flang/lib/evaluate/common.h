@@ -166,11 +166,21 @@ using HostUnsignedInt =
 // - There are full copy and move semantics for construction and assignment.
 // - Discriminated unions have a std::variant<> member "u" and support
 //   explicit copy and move constructors as well as comparison for equality.
+#define DECLARE_CONSTRUCTORS_AND_ASSIGNMENTS(t) \
+  t(const t &); \
+  t(t &&); \
+  t &operator=(const t &); \
+  t &operator=(t &&);
 #define DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(t) \
   t(const t &) = default; \
   t(t &&) = default; \
   t &operator=(const t &) = default; \
   t &operator=(t &&) = default;
+#define DEFINE_DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(t) \
+  t::t(const t &) = default; \
+  t::t(t &&) = default; \
+  t &t::operator=(const t &) = default; \
+  t &t::operator=(t &&) = default;
 
 #define CLASS_BOILERPLATE(t) \
   t() = delete; \
@@ -183,9 +193,6 @@ using HostUnsignedInt =
   explicit t(std::enable_if_t<!std::is_reference_v<_A>, _A> &&x) \
     : u(std::move(x)) {} \
   bool operator==(const t &that) const { return u == that.u; }
-
-// Force availability of copy construction and assignment
-template<typename A> using CopyableIndirection = common::Indirection<A, true>;
 
 // Forward definition of Expr<> so that it can be indirectly used in its own
 // definition

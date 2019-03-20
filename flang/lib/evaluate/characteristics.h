@@ -54,7 +54,7 @@ struct DummyDataObject {
 struct DummyProcedure {
   ENUM_CLASS(Attr, Pointer, Optional)
   DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(DummyProcedure)
-  common::OwningPointer<Procedure> explicitProcedure;
+  std::unique_ptr<Procedure, common::Deleter<Procedure>> explicitProcedure;
   common::EnumSet<Attr, 32> attrs;
   bool operator==(const DummyProcedure &) const;
   std::ostream &Dump(std::ostream &) const;

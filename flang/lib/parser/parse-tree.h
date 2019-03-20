@@ -33,6 +33,7 @@
 #include "../common/indirection.h"
 #include <cinttypes>
 #include <list>
+#include <memory>
 #include <optional>
 #include <string>
 #include <tuple>
@@ -66,13 +67,8 @@ class DerivedTypeSpec;
 
 // Expressions in the parse tree have owning pointers that can be set to
 // type-checked generic expression representations by semantic analysis.
-// OwningPointer<> is used for leak safety without having to include
-// the bulk of lib/evaluate/*.h headers into the parser proper.
 namespace Fortran::evaluate {
 struct GenericExprWrapper;  // forward definition, wraps Expr<SomeType>
-}
-namespace Fortran::common {
-extern template class OwningPointer<evaluate::GenericExprWrapper>;
 }
 
 // Most non-template classes in this file use these default definitions
@@ -553,7 +549,7 @@ WRAPPER_CLASS(NamedConstant, Name);
 // R1023 defined-binary-op -> . letter [letter]... .
 // R1414 local-defined-operator -> defined-unary-op | defined-binary-op
 // R1415 use-defined-operator -> defined-unary-op | defined-binary-op
-// The Name here is stored with the dots; e.g., .FOO.
+// The Name here is stored without the dots; e.g., FOO, not .FOO.
 WRAPPER_CLASS(DefinedOpName, Name);
 
 // R608 intrinsic-operator ->
@@ -1695,8 +1691,10 @@ struct Expr {
   explicit Expr(Designator &&);
   explicit Expr(FunctionReference &&);
 
-  // Filled in after successful semantic analysis of the expression.
-  mutable common::OwningPointer<evaluate::GenericExprWrapper> typedExpr;
+  // Filled in with expression after successful semantic analysis.
+  mutable std::unique_ptr<evaluate::GenericExprWrapper,
+      common::Deleter<evaluate::GenericExprWrapper>>
+      typedExpr;
 
   CharBlock source;
 
@@ -2391,10 +2389,10 @@ struct ComputedGotoStmt {
 };
 
 // R1162 stop-code -> scalar-default-char-expr | scalar-int-expr
-// We can't distinguish character expressions from integer
-// expressions during parsing, so we just parse an expr and
-// check its type later.
-WRAPPER_CLASS(StopCode, Scalar<Expr>);
+struct StopCode {
+  UNION_CLASS_BOILERPLATE(StopCode);
+  std::variant<ScalarDefaultCharExpr, ScalarIntExpr> u;
+};
 
 // R1160 stop-stmt -> STOP [stop-code] [, QUIET = scalar-logical-expr]
 // R1161 error-stop-stmt ->
@@ -2881,7 +2879,6 @@ struct GenericSpec {
   EMPTY_CLASS(ReadUnformatted);
   EMPTY_CLASS(WriteFormatted);
   EMPTY_CLASS(WriteUnformatted);
-  CharBlock source;
   std::variant<Name, DefinedOperator, Assignment, ReadFormatted,
       ReadUnformatted, WriteFormatted, WriteUnformatted>
       u;

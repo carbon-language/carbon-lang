@@ -17,6 +17,7 @@
 
 #include "semantics.h"
 #include "../common/indirection.h"
+#include "../evaluate/expression.h"
 
 namespace Fortran::parser {
 template<typename> struct Statement;
@@ -31,12 +32,23 @@ struct ForallStmt;
 struct ForallConstruct;
 }
 
+namespace Fortran::evaluate {
+void CheckPointerAssignment(parser::ContextualMessages &, const Symbol &,
+    const evaluate::Expr<evaluate::SomeType> &);
+}
+
 namespace Fortran::semantics {
 class AssignmentContext;
+}
 
+extern template class Fortran::common::Indirection<
+    Fortran::semantics::AssignmentContext>;
+
+namespace Fortran::semantics {
 class AssignmentChecker : public virtual BaseChecker {
 public:
   explicit AssignmentChecker(SemanticsContext &);
+  ~AssignmentChecker();
   void Enter(const parser::AssignmentStmt &);
   void Enter(const parser::PointerAssignmentStmt &);
   void Enter(const parser::WhereStmt &);
@@ -45,7 +57,7 @@ public:
   void Enter(const parser::ForallConstruct &);
 
 private:
-  common::ForwardReference<AssignmentContext> context_;
+  common::Indirection<AssignmentContext> context_;
 };
 
 // Semantic analysis of an assignment statement or WHERE/FORALL construct.
@@ -62,6 +74,5 @@ void AnalyzeAssignment(
 // well as in DO CONCURRENT loops.
 void AnalyzeConcurrentHeader(
     SemanticsContext &, const parser::ConcurrentHeader &);
-
 }
 #endif  // FORTRAN_SEMANTICS_ASSIGNMENT_H_

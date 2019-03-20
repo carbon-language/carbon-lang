@@ -99,7 +99,4 @@ std::ostream &Procedure::Dump(std::ostream &o) const {
   return o << (sep == '(' ? "()" : ")");
 }
 }
-
-// Define OwningPointer special member functions
-DEFINE_OWNING_SPECIAL_FUNCTIONS(
-    OwningPointer, evaluate::characteristics::Procedure)
+DEFINE_DELETER(Fortran::evaluate::characteristics::Procedure)

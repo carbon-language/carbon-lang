@@ -124,9 +124,9 @@ public:
   // Unary operations wrap a single Expr with a CopyableIndirection.
   // Binary operations wrap a tuple of CopyableIndirections to Exprs.
 private:
-  using Container =
-      std::conditional_t<operands == 1, CopyableIndirection<Expr<Operand<0>>>,
-          std::tuple<CopyableIndirection<Expr<OPERANDS>>...>>;
+  using Container = std::conditional_t<operands == 1,
+      common::CopyableIndirection<Expr<Operand<0>>>,
+      std::tuple<common::CopyableIndirection<Expr<OPERANDS>>...>>;
 
 public:
   CLASS_BOILERPLATE(Operation)
@@ -437,14 +437,14 @@ public:
 
 private:
   parser::CharBlock name_;
-  CopyableIndirection<Expr<Index>> lower_, upper_, stride_;
-  CopyableIndirection<ArrayConstructorValues<Result>> values_;
+  common::CopyableIndirection<Expr<Index>> lower_, upper_, stride_;
+  common::CopyableIndirection<ArrayConstructorValues<Result>> values_;
 };
 
 template<typename RESULT> struct ArrayConstructorValue {
   using Result = RESULT;
   EVALUATE_UNION_CLASS_BOILERPLATE(ArrayConstructorValue)
-  std::variant<CopyableIndirection<Expr<Result>>, ImpliedDo<Result>> u;
+  std::variant<common::CopyableIndirection<Expr<Result>>, ImpliedDo<Result>> u;
 };
 
 template<typename RESULT> class ArrayConstructorValues {
@@ -489,7 +489,7 @@ public:
   const Expr<SubscriptInteger> &LEN() const { return length_.value(); }
 
 private:
-  CopyableIndirection<Expr<SubscriptInteger>> length_;
+  common::CopyableIndirection<Expr<SubscriptInteger>> length_;
 };
 
 template<>
@@ -747,12 +747,17 @@ class Expr<SomeKind<CAT>> : public ExpressionBase<SomeKind<CAT>> {
 public:
   using Result = SomeKind<CAT>;
   EVALUATE_UNION_CLASS_BOILERPLATE(Expr)
-  int GetKind() const {
-    return std::visit(
-        [](const auto &x) { return std::decay_t<decltype(x)>::Result::kind; },
-        u);
-  }
+  int GetKind() const;
   common::MapTemplate<Expr, CategoryTypes<CAT>> u;
+};
+
+template<> class Expr<SomeCharacter> : public ExpressionBase<SomeCharacter> {
+public:
+  using Result = SomeCharacter;
+  EVALUATE_UNION_CLASS_BOILERPLATE(Expr)
+  int GetKind() const;
+  Expr<SubscriptInteger> LEN() const;
+  common::MapTemplate<Expr, CategoryTypes<TypeCategory::Character>> u;
 };
 
 // BOZ literal "typeless" constants must be wide enough to hold a numeric
@@ -807,10 +812,10 @@ public:
 };
 
 // This wrapper class is used, by means of a forward reference with
-// OwningPointer, to implement owning pointers to analyzed expressions
-// from parse tree nodes.
+// an owning pointer, to cache analyzed expressions in parse tree nodes.
 struct GenericExprWrapper {
   GenericExprWrapper(Expr<SomeType> &&x) : v{std::move(x)} {}
+  ~GenericExprWrapper();
   bool operator==(const GenericExprWrapper &) const;
   Expr<SomeType> v;
 };

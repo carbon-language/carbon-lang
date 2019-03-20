@@ -34,7 +34,7 @@ namespace Fortran::evaluate {
 class ActualArgument {
 public:
   explicit ActualArgument(Expr<SomeType> &&x) : value_{std::move(x)} {}
-  explicit ActualArgument(CopyableIndirection<Expr<SomeType>> &&v)
+  explicit ActualArgument(common::CopyableIndirection<Expr<SomeType>> &&v)
     : value_{std::move(v)} {}
 
   Expr<SomeType> &value() { return value_.value(); }
@@ -57,7 +57,7 @@ private:
   // e.g. between X and (X).  The parser attempts to parse each argument
   // first as a variable, then as an expression, and the distinction appears
   // in the parse tree.
-  CopyableIndirection<Expr<SomeType>> value_;
+  common::CopyableIndirection<Expr<SomeType>> value_;
 };
 
 using ActualArguments = std::vector<std::optional<ActualArgument>>;

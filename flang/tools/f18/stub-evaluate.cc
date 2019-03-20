@@ -14,14 +14,16 @@
 
 // The parse tree has slots in which pointers to typed expressions may be
 // placed.  When using the parser without the expression library, as here,
-// we need to stub out the dependence.
+// we need to stub out the dependence on the external destructor, which
+// will never actually be called.
 
 #include "../../lib/common/indirection.h"
 
 namespace Fortran::evaluate {
 struct GenericExprWrapper {
-  bool operator==(const GenericExprWrapper &) const { return false; }
+  ~GenericExprWrapper();
 };
+GenericExprWrapper::~GenericExprWrapper() = default;
 }
 
-DEFINE_OWNING_DESTRUCTOR(OwningPointer, evaluate::GenericExprWrapper)
+DEFINE_DELETER(Fortran::evaluate::GenericExprWrapper)

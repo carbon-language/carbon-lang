@@ -304,13 +304,13 @@ static CS GatherLocalVariableNames(
 
 static CS GatherReferencesFromExpression(const parser::Expr &expression) {
   // Use the new expression traversal framework if possible, for testing.
-  if (expression.typedExpr.has_value()) {
+  if (expression.typedExpr) {
     struct CollectSymbols : public virtual evaluate::VisitorBase<CS> {
       explicit CollectSymbols(int) {}
       void Handle(const Symbol *symbol) { result().push_back(symbol); }
     };
     return evaluate::Visitor<CS, CollectSymbols>{0}.Traverse(
-        expression.typedExpr.value());
+        *expression.typedExpr);
   } else {
     GatherSymbols gatherSymbols;
     parser::Walk(expression, gatherSymbols);
@@ -361,7 +361,8 @@ public:
         auto &logicalExpr{
             std::get<parser::ScalarLogicalExpr>(optionalLoopControl->u)
                 .thing.thing};
-        if (!ExpressionHasTypeCategory(logicalExpr.value().typedExpr.value(),
+        CHECK(logicalExpr.value().typedExpr);
+        if (!ExpressionHasTypeCategory(*logicalExpr.value().typedExpr,
                 common::TypeCategory::Logical)) {
           messages_.Say(currentStatementSourcePosition_,
               "DO WHILE must have LOGICAL expression"_err_en_US);
@@ -528,12 +529,12 @@ private:
 
 }  // namespace Fortran::semantics
 
-DEFINE_OWNING_DESTRUCTOR(ForwardReference, semantics::DoConcurrentContext)
-
 namespace Fortran::semantics {
 
 DoConcurrentChecker::DoConcurrentChecker(SemanticsContext &context)
   : context_{new DoConcurrentContext{context}} {}
+
+DoConcurrentChecker::~DoConcurrentChecker() = default;
 
 // DO loops must be canonicalized prior to calling
 void DoConcurrentChecker::Leave(const parser::DoConstruct &x) {
@@ -541,3 +542,6 @@ void DoConcurrentChecker::Leave(const parser::DoConstruct &x) {
 }
 
 }  // namespace Fortran::semantics
+
+template class Fortran::common::Indirection<
+    Fortran::semantics::DoConcurrentContext>;
