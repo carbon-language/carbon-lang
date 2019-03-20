@@ -1216,7 +1216,7 @@ bool llvm::canSinkOrHoistInst(Instruction &I, AAResults *AA, DominatorTree *DT,
                 assert(!LI->isUnordered() && "Expected unordered load");
                 return false;
               }
-        }
+         }
 
         auto *Source = MSSA->getSkipSelfWalker()->getClobberingMemoryAccess(SI);
         (*LicmMssaOptCounter)++;
