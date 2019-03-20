@@ -41161,11 +41161,12 @@ static SDValue combineCMP(SDNode *N, SelectionDAG &DAG) {
       onlyZeroFlagUsed(SDValue(N, 0))) {
     EVT VT = Op.getValueType();
     unsigned BitWidth = VT.getSizeInBits();
-    unsigned ShAmt = Op.getConstantOperandVal(1);
-    if (ShAmt < BitWidth) { // Avoid undefined shifts.
+    const APInt &ShAmt = Op.getConstantOperandAPInt(1);
+    if (ShAmt.ult(BitWidth)) { // Avoid undefined shifts.
+      unsigned MaskBits = BitWidth - ShAmt.getZExtValue();
       APInt Mask = Op.getOpcode() == ISD::SRL
-                       ? APInt::getHighBitsSet(BitWidth, BitWidth - ShAmt)
-                       : APInt::getLowBitsSet(BitWidth, BitWidth - ShAmt);
+                       ? APInt::getHighBitsSet(BitWidth, MaskBits)
+                       : APInt::getLowBitsSet(BitWidth, MaskBits);
       if (Mask.isSignedIntN(32)) {
         Op = DAG.getNode(ISD::AND, dl, VT, Op.getOperand(0),
                          DAG.getConstant(Mask, dl, VT));
@@ -41174,7 +41175,6 @@ static SDValue combineCMP(SDNode *N, SelectionDAG &DAG) {
       }
     }
   }
-
 
   // Look for a truncate with a single use.
   if (Op.getOpcode() != ISD::TRUNCATE || !Op.hasOneUse())
