@@ -1272,7 +1272,7 @@ public:
                        const User *U = nullptr) override {
     return Impl.getIntrinsicCost(IID, RetTy, Arguments, U);
   }
-  int getMemcpyCost(const Instruction *I) {
+  int getMemcpyCost(const Instruction *I) override {
     return Impl.getMemcpyCost(I);
   }
   int getUserCost(const User *U, ArrayRef<const Value *> Operands) override {
