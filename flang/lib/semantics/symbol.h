@@ -60,17 +60,17 @@ public:
   SubprogramDetails(const SubprogramDetails &that)
     : dummyArgs_{that.dummyArgs_}, result_{that.result_} {}
 
-  bool isFunction() const { return result_.has_value(); }
+  bool isFunction() const { return result_ != nullptr; }
   bool isInterface() const { return isInterface_; }
   void set_isInterface(bool value = true) { isInterface_ = value; }
   MaybeExpr bindName() const { return bindName_; }
   void set_bindName(MaybeExpr &&expr) { bindName_ = std::move(expr); }
   const Symbol &result() const {
     CHECK(isFunction());
-    return **result_;
+    return *result_;
   }
   void set_result(Symbol &result) {
-    CHECK(!result_.has_value());
+    CHECK(result_ == nullptr);
     result_ = &result;
   }
   const std::list<Symbol *> &dummyArgs() const { return dummyArgs_; }
@@ -80,7 +80,7 @@ private:
   bool isInterface_{false};  // true if this represents an interface-body
   MaybeExpr bindName_;
   std::list<Symbol *> dummyArgs_;
-  std::optional<Symbol *> result_;
+  Symbol *result_{nullptr};
   friend std::ostream &operator<<(std::ostream &, const SubprogramDetails &);
 };
 
