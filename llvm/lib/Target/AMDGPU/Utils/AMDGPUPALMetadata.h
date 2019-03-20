@@ -15,6 +15,7 @@
 #define LLVM_LIB_TARGET_AMDGPU_AMDGPUPALMETADATA_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/BinaryFormat/MsgPackDocument.h"
 #include <map>
 
 namespace llvm {
@@ -25,7 +26,10 @@ class MCStreamer;
 class Module;
 
 class AMDGPUPALMetadata {
-  std::map<uint32_t, uint32_t> Registers;
+  unsigned BlobType = 0;
+  msgpack::Document MsgPackDoc;
+  msgpack::DocNode Registers;
+  msgpack::DocNode HwStages;
 
 public:
   // Read the amdgpu.pal.metadata supplied by the frontend, ready for
@@ -60,6 +64,9 @@ public:
   // In fact this ORs the value into any previous setting of the register.
   void setRegister(unsigned Reg, unsigned Val);
 
+  // Set the entry point name for one shader.
+  void setEntryPoint(unsigned CC, StringRef Name);
+
   // Set the number of used vgprs in the metadata. This is an optional advisory
   // record for logging etc; wave dispatch actually uses the rsrc1 register for
   // the shader stage to determine the number of vgprs to allocate.
@@ -73,13 +80,50 @@ public:
   // Set the scratch size in the metadata.
   void setScratchSize(unsigned CC, unsigned Val);
 
-  // Emit the accumulated PAL metadata as an asm directive.
+  // Emit the accumulated PAL metadata as asm directives.
   // This is called from AMDGPUTargetAsmStreamer::Finish().
   void toString(std::string &S);
+
+  // Set PAL metadata from YAML text.
+  bool setFromString(StringRef S);
+
+  // Get .note record vendor name of metadata blob to be emitted.
+  const char *getVendor() const;
+
+  // Get .note record type of metadata blob to be emitted:
+  // ELF::NT_AMD_AMDGPU_PAL_METADATA (legacy key=val format), or
+  // ELF::NT_AMD_AMDGPU_PAL_METADATA_MSGPACK or ELF::NT_AMDGPU_METADATA
+  // (MsgPack format).
+  unsigned getType() const;
 
   // Emit the accumulated PAL metadata as a binary blob.
   // This is called from AMDGPUTargetELFStreamer::Finish().
   void toBlob(unsigned Type, std::string &S);
+
+  // Get the msgpack::Document for the PAL metadata.
+  msgpack::Document *getMsgPackDoc() { return &MsgPackDoc; }
+
+  // Set legacy PAL metadata format.
+  void setLegacy();
+
+private:
+  // Return whether the blob type is legacy PAL metadata.
+  bool isLegacy() const;
+
+  // Reference (create if necessary) the node for the registers map.
+  msgpack::DocNode &refRegisters();
+
+  // Get (create if necessary) the registers map.
+  msgpack::MapDocNode getRegisters();
+
+  // Get (create if necessary) the .hardware_stages entry for the given calling
+  // convention.
+  msgpack::MapDocNode getHwStage(unsigned CC);
+
+  bool setFromLegacyBlob(StringRef Blob);
+  bool setFromMsgPackBlob(StringRef Blob);
+  void toLegacyBlob(std::string &Blob);
+  void toMsgPackBlob(std::string &Blob);
 };
 
 } // end namespace llvm

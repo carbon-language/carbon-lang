@@ -452,8 +452,14 @@ constexpr char AssemblerDirectiveEnd[] = ".end_amdgpu_metadata";
 //===----------------------------------------------------------------------===//
 namespace PALMD {
 
-/// PAL metadata assembler directive.
+/// PAL metadata (old linear format) assembler directive.
 constexpr char AssemblerDirective[] = ".amd_amdgpu_pal_metadata";
+
+/// PAL metadata (new MsgPack format) beginning assembler directive.
+constexpr char AssemblerDirectiveBegin[] = ".amdgpu_pal_metadata";
+
+/// PAL metadata (new MsgPack format) ending assembler directive.
+constexpr char AssemblerDirectiveEnd[] = ".end_amdgpu_pal_metadata";
 
 /// PAL metadata keys.
 enum Key : uint32_t {

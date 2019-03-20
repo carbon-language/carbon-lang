@@ -384,12 +384,12 @@ MCELFStreamer &AMDGPUTargetELFStreamer::getStreamer() {
 // We use it for emitting the accumulated PAL metadata as a .note record.
 void AMDGPUTargetELFStreamer::finish() {
   std::string Blob;
-  unsigned Type = ELF::NT_AMD_AMDGPU_PAL_METADATA;
+  const char *Vendor = getPALMetadata()->getVendor();
+  unsigned Type = getPALMetadata()->getType();
   getPALMetadata()->toBlob(Type, Blob);
   if (Blob.empty())
     return;
-  EmitNote(ElfNote::NoteNameV2,
-           MCConstantExpr::create(Blob.size(), getContext()), Type,
+  EmitNote(Vendor, MCConstantExpr::create(Blob.size(), getContext()), Type,
            [&](MCELFStreamer &OS) { OS.EmitBytes(Blob); });
 }
 

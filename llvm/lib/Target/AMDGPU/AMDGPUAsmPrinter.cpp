@@ -1022,6 +1022,7 @@ void AMDGPUAsmPrinter::EmitPALMetadata(const MachineFunction &MF,
   auto CC = MF.getFunction().getCallingConv();
   auto MD = getTargetStreamer()->getPALMetadata();
 
+  MD->setEntryPoint(CC, MF.getFunction().getName());
   MD->setNumUsedVgprs(CC, CurrentProgramInfo.NumVGPRsForWavesPerEU);
   MD->setNumUsedSgprs(CC, CurrentProgramInfo.NumSGPRsForWavesPerEU);
   if (AMDGPU::isCompute(MF.getFunction().getCallingConv())) {

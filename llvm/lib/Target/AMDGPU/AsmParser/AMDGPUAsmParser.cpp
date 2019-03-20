@@ -893,7 +893,14 @@ private:
 
   bool ParseDirectiveISAVersion();
   bool ParseDirectiveHSAMetadata();
+  bool ParseDirectivePALMetadataBegin();
   bool ParseDirectivePALMetadata();
+
+  /// Common code to parse out a block of text (typically YAML) between start and
+  /// end directives.
+  bool ParseToEndDirective(const char *AssemblerDirectiveBegin,
+                           const char *AssemblerDirectiveEnd,
+                           std::string &CollectString);
 
   bool AddNextRegisterToList(unsigned& Reg, unsigned& RegWidth,
                              RegisterKind RegKind, unsigned Reg1,
@@ -3296,40 +3303,9 @@ bool AMDGPUAsmParser::ParseDirectiveHSAMetadata() {
   }
 
   std::string HSAMetadataString;
-  raw_string_ostream YamlStream(HSAMetadataString);
-
-  getLexer().setSkipSpace(false);
-
-  bool FoundEnd = false;
-  while (!getLexer().is(AsmToken::Eof)) {
-    while (getLexer().is(AsmToken::Space)) {
-      YamlStream << getLexer().getTok().getString();
-      Lex();
-    }
-
-    if (getLexer().is(AsmToken::Identifier)) {
-      StringRef ID = getLexer().getTok().getIdentifier();
-      if (ID == AssemblerDirectiveEnd) {
-        Lex();
-        FoundEnd = true;
-        break;
-      }
-    }
-
-    YamlStream << Parser.parseStringToEndOfStatement()
-               << getContext().getAsmInfo()->getSeparatorString();
-
-    Parser.eatToEndOfStatement();
-  }
-
-  getLexer().setSkipSpace(true);
-
-  if (getLexer().is(AsmToken::Eof) && !FoundEnd) {
-    return TokError(Twine("expected directive ") +
-                    Twine(HSAMD::AssemblerDirectiveEnd) + Twine(" not found"));
-  }
-
-  YamlStream.flush();
+  if (ParseToEndDirective(AssemblerDirectiveBegin, AssemblerDirectiveEnd,
+                          HSAMetadataString))
+    return true;
 
   if (IsaInfo::hasCodeObjectV3(&getSTI())) {
     if (!getTargetStreamer().EmitHSAMetadataV3(HSAMetadataString))
@@ -3342,6 +3318,63 @@ bool AMDGPUAsmParser::ParseDirectiveHSAMetadata() {
   return false;
 }
 
+/// Common code to parse out a block of text (typically YAML) between start and
+/// end directives.
+bool AMDGPUAsmParser::ParseToEndDirective(const char *AssemblerDirectiveBegin,
+                                          const char *AssemblerDirectiveEnd,
+                                          std::string &CollectString) {
+
+  raw_string_ostream CollectStream(CollectString);
+
+  getLexer().setSkipSpace(false);
+
+  bool FoundEnd = false;
+  while (!getLexer().is(AsmToken::Eof)) {
+    while (getLexer().is(AsmToken::Space)) {
+      CollectStream << getLexer().getTok().getString();
+      Lex();
+    }
+
+    if (getLexer().is(AsmToken::Identifier)) {
+      StringRef ID = getLexer().getTok().getIdentifier();
+      if (ID == AssemblerDirectiveEnd) {
+        Lex();
+        FoundEnd = true;
+        break;
+      }
+    }
+
+    CollectStream << Parser.parseStringToEndOfStatement()
+                  << getContext().getAsmInfo()->getSeparatorString();
+
+    Parser.eatToEndOfStatement();
+  }
+
+  getLexer().setSkipSpace(true);
+
+  if (getLexer().is(AsmToken::Eof) && !FoundEnd) {
+    return TokError(Twine("expected directive ") +
+                    Twine(AssemblerDirectiveEnd) + Twine(" not found"));
+  }
+
+  CollectStream.flush();
+  return false;
+}
+
+/// Parse the assembler directive for new MsgPack-format PAL metadata.
+bool AMDGPUAsmParser::ParseDirectivePALMetadataBegin() {
+  std::string String;
+  if (ParseToEndDirective(AMDGPU::PALMD::AssemblerDirectiveBegin,
+                          AMDGPU::PALMD::AssemblerDirectiveEnd, String))
+    return true;
+
+  auto PALMetadata = getTargetStreamer().getPALMetadata();
+  if (!PALMetadata->setFromString(String))
+    return Error(getParser().getTok().getLoc(), "invalid PAL metadata");
+  return false;
+}
+
+/// Parse the assembler directive for old linear-format PAL metadata.
 bool AMDGPUAsmParser::ParseDirectivePALMetadata() {
   if (getSTI().getTargetTriple().getOS() != Triple::AMDPAL) {
     return Error(getParser().getTok().getLoc(),
@@ -3350,6 +3383,7 @@ bool AMDGPUAsmParser::ParseDirectivePALMetadata() {
   }
 
   auto PALMetadata = getTargetStreamer().getPALMetadata();
+  PALMetadata->setLegacy();
   for (;;) {
     uint32_t Key, Value;
     if (ParseAsAbsoluteExpression(Key)) {
@@ -3405,6 +3439,9 @@ bool AMDGPUAsmParser::ParseDirective(AsmToken DirectiveID) {
     if (IDVal == AMDGPU::HSAMD::AssemblerDirectiveBegin)
       return ParseDirectiveHSAMetadata();
   }
+
+  if (IDVal == PALMD::AssemblerDirectiveBegin)
+    return ParseDirectivePALMetadataBegin();
 
   if (IDVal == PALMD::AssemblerDirective)
     return ParseDirectivePALMetadata();
