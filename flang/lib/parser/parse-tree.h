@@ -549,7 +549,7 @@ WRAPPER_CLASS(NamedConstant, Name);
 // R1023 defined-binary-op -> . letter [letter]... .
 // R1414 local-defined-operator -> defined-unary-op | defined-binary-op
 // R1415 use-defined-operator -> defined-unary-op | defined-binary-op
-// The Name here is stored without the dots; e.g., FOO, not .FOO.
+// The Name here is stored with the dots; e.g., .FOO.
 WRAPPER_CLASS(DefinedOpName, Name);
 
 // R608 intrinsic-operator ->
@@ -2389,10 +2389,10 @@ struct ComputedGotoStmt {
 };
 
 // R1162 stop-code -> scalar-default-char-expr | scalar-int-expr
-struct StopCode {
-  UNION_CLASS_BOILERPLATE(StopCode);
-  std::variant<ScalarDefaultCharExpr, ScalarIntExpr> u;
-};
+// We can't distinguish character expressions from integer
+// expressions during parsing, so we just parse an expr and
+// check its type later.
+WRAPPER_CLASS(StopCode, Scalar<Expr>);
 
 // R1160 stop-stmt -> STOP [stop-code] [, QUIET = scalar-logical-expr]
 // R1161 error-stop-stmt ->
@@ -2879,6 +2879,7 @@ struct GenericSpec {
   EMPTY_CLASS(ReadUnformatted);
   EMPTY_CLASS(WriteFormatted);
   EMPTY_CLASS(WriteUnformatted);
+  CharBlock source;
   std::variant<Name, DefinedOperator, Assignment, ReadFormatted,
       ReadUnformatted, WriteFormatted, WriteUnformatted>
       u;

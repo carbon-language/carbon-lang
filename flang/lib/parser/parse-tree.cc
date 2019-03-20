@@ -18,7 +18,7 @@
 #include "../common/indirection.h"
 #include <algorithm>
 
-// So "delete Expr::typedExpr;" calls an external destructor.
+// So "delete Expr;" calls an external destructor for its typedExpr.
 namespace Fortran::evaluate {
 struct GenericExprWrapper {
   ~GenericExprWrapper();
