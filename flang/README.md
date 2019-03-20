@@ -4,7 +4,7 @@ Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 
 # F18
 
-F18 is a ground-up implementation of a Fortran frontend written in modern C++.
+F18 is a ground-up implementation of a Fortran front end written in modern C++.
 F18, when combined with LLVM, is intended to replace the Flang compiler.
 
 Flang is a Fortran compiler targeting LLVM.
@@ -127,16 +127,14 @@ is the path to a clang installation with bin, lib, etc:
 ```
 cmake -DBUILD_WITH_CLANG=<CLANG_DIRECTORY>
 ```
-
-To use f18 after it is built,
-the environment variables PATH and LD_LIBRARY_PATH
-must be set to use GCC and its associated libraries.
-
 Or GCC can be defined on the f18 cmake command line
 where `<GCC_DIRECTORY>` is the path to a GCC installation with bin, lib, etc:
 ```
 cmake -DGCC=<GCC_DIRECTORY> ...
 ```
+To use f18 after it is built,
+the environment variables PATH and LD_LIBRARY_PATH
+must be set to use GCC and its associated libraries.
 
 ### Installation Directory
 
@@ -163,7 +161,7 @@ Release builds execute quickly.
 
 ### Build F18
 ```
-cd where/you/want/to/build
-cmake <your custom options> where/you/put/the/source/f18
+cd ~/f18/build
+cmake -DLLVM_DIR=$LLVM ~/f18/src
 make
 ```
