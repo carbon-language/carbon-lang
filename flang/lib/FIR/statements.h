@@ -605,9 +605,7 @@ inline std::list<BasicBlock *> succ_list(BasicBlock &block) {
   return {};
 }
 
-inline Statement *ReturnStmt::value() const {
-  return Statement::From(value_);
-}
+inline Statement *ReturnStmt::value() const { return Statement::From(value_); }
 
 inline ApplyExprStmt *GetApplyExpr(Statement *stmt) {
   return std::get_if<ApplyExprStmt>(&stmt->u);

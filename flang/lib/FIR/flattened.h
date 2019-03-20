@@ -50,6 +50,7 @@ struct DoCompareOp;
 using LabelRef = unsigned;
 constexpr LabelRef unspecifiedLabel{~0u};
 
+using Location = parser::CharBlock;
 struct LabelBuilder;
 
 // target for a control-flow edge
@@ -76,21 +77,24 @@ struct GotoOp
   : public SumTypeCopyMixin<const parser::CycleStmt *, const parser::ExitStmt *,
         const parser::GotoStmt *, ArtificialJump> {
   template<typename A>
-  GotoOp(const A &stmt, LabelRef dest)
-    : SumTypeCopyMixin{&stmt}, target{dest} {}
-  GotoOp(LabelRef dest) : SumTypeCopyMixin{ARTIFICIAL}, target{dest} {}
+  GotoOp(const A &stmt, LabelRef dest, const Location &source)
+    : SumTypeCopyMixin{&stmt}, target{dest}, source{source} {}
+  explicit GotoOp(LabelRef dest) : SumTypeCopyMixin{ARTIFICIAL}, target{dest} {}
   void dump() const;
 
   LabelRef target;
+  Location source;
 };
 
 // control exits the procedure
 struct ReturnOp : public SumTypeCopyMixin<const parser::FailImageStmt *,
                       const parser::ReturnStmt *, const parser::StopStmt *> {
-  SUM_TYPE_COPY_MIXIN(ReturnOp)
+  template<typename A>
+  ReturnOp(const A &stmt, const Location &source)
+    : SumTypeCopyMixin{&stmt}, source{source} {}
   void dump() const;
 
-  template<typename A> ReturnOp(const A &stmt) : SumTypeCopyMixin{&stmt} {}
+  Location source;
 };
 
 // two-way branch based on a condition
@@ -126,14 +130,16 @@ struct SwitchIOOp
         const parser::EndfileStmt *, const parser::RewindStmt *,
         const parser::FlushStmt *, const parser::InquireStmt *> {
   template<typename A>
-  SwitchIOOp(const A &io, LabelRef next, std::optional<LabelRef> errLab,
+  SwitchIOOp(const A &io, LabelRef next, const Location &source,
+      std::optional<LabelRef> errLab,
       std::optional<LabelRef> eorLab = std::nullopt,
       std::optional<LabelRef> endLab = std::nullopt)
-    : SumTypeCopyMixin{&io}, next{next}, errLabel{errLab}, eorLabel{eorLab},
-      endLabel{endLab} {}
+    : SumTypeCopyMixin{&io}, next{next}, source{source}, errLabel{errLab},
+      eorLabel{eorLab}, endLabel{endLab} {}
   void dump() const;
 
   LabelRef next;
+  Location source;
   std::optional<LabelRef> errLabel;
   std::optional<LabelRef> eorLabel;
   std::optional<LabelRef> endLabel;
@@ -146,11 +152,13 @@ struct SwitchOp
         const parser::CaseConstruct *, const parser::SelectRankConstruct *,
         const parser::SelectTypeConstruct *> {
   template<typename A>
-  SwitchOp(const A &sw, const std::vector<LabelRef> &refs)
-    : SumTypeCopyMixin{&sw}, refs{refs} {}
+  SwitchOp(
+      const A &sw, const std::vector<LabelRef> &refs, const Location &source)
+    : SumTypeCopyMixin{&sw}, refs{refs}, source{source} {}
   void dump() const;
 
   const std::vector<LabelRef> refs;
+  Location source;
 };
 
 // a compute step

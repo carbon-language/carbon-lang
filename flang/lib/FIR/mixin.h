@@ -72,8 +72,7 @@ template<typename... Ts> struct ProductTypeMixin {
 };
 
 // implementation of a (moveable) maybe type
-template<typename T>
-struct MaybeMixin {
+template<typename T> struct MaybeMixin {
   MaybeMixin(T &&x) : o{std::move(x)} {}
   using MaybeTrait = std::true_type;
   MaybeMixin(MaybeMixin &&) = default;

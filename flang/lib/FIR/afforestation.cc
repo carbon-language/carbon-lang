@@ -987,25 +987,25 @@ public:
       const auto &op{*iter};
       std::visit(
           common::visitors{
-              [&](const flat::LabelOp &linearLabel) {
+              [&](const flat::LabelOp &op) {
                 auto *newBlock{CreateBlock(builder_->GetCurrentRegion())};
-                blockMap_.insert({linearLabel.get(), newBlock});
+                blockMap_.insert({op.get(), newBlock});
                 if (builder_->GetInsertionPoint()) {
                   builder_->CreateBranch(newBlock);
                 }
                 builder_->SetInsertionPoint(newBlock);
               },
-              [&](const flat::GotoOp &linearGoto) {
+              [&](const flat::GotoOp &op) {
                 CheckInsertionPoint();
-                AddOrQueueBranch(linearGoto.target);
+                AddOrQueueBranch(op.target);
                 builder_->ClearInsertionPoint();
               },
-              [&](const flat::IndirectGotoOp &linearIGoto) {
+              [&](const flat::IndirectGotoOp &op) {
                 CheckInsertionPoint();
-                AddOrQueueIGoto(ad, linearIGoto.symbol, linearIGoto.labelRefs);
+                AddOrQueueIGoto(ad, op.symbol, op.labelRefs);
                 builder_->ClearInsertionPoint();
               },
-              [&](const flat::ReturnOp &linearReturn) {
+              [&](const flat::ReturnOp &op) {
                 CheckInsertionPoint();
                 std::visit(
                     common::visitors{
@@ -1031,10 +1031,10 @@ public:
                           builder_->CreateUnreachable();
                         },
                     },
-                    linearReturn.u);
+                    op.u);
                 builder_->ClearInsertionPoint();
               },
-              [&](const flat::ConditionalGotoOp &linearConditionalGoto) {
+              [&](const flat::ConditionalGotoOp &cop) {
                 CheckInsertionPoint();
                 std::visit(
                     common::visitors{
@@ -1045,8 +1045,7 @@ public:
                           SEMANTICS_CHECK(ExprRef(exp),
                               "IF THEN condition expression missing");
                           auto *cond{builder_->CreateExpr(ExprRef(exp))};
-                          AddOrQueueCGoto(cond, linearConditionalGoto.trueLabel,
-                              linearConditionalGoto.falseLabel);
+                          AddOrQueueCGoto(cond, cop.trueLabel, cop.falseLabel);
                         },
                         [&](const parser::Statement<parser::ElseIfStmt> *s) {
                           const auto &exp{std::get<parser::ScalarLogicalExpr>(
@@ -1055,8 +1054,7 @@ public:
                           SEMANTICS_CHECK(ExprRef(exp),
                               "ELSE IF condition expression missing");
                           auto *cond{builder_->CreateExpr(ExprRef(exp))};
-                          AddOrQueueCGoto(cond, linearConditionalGoto.trueLabel,
-                              linearConditionalGoto.falseLabel);
+                          AddOrQueueCGoto(cond, cop.trueLabel, cop.falseLabel);
                         },
                         [&](const parser::IfStmt *s) {
                           const auto &exp{
@@ -1065,37 +1063,35 @@ public:
                           SEMANTICS_CHECK(
                               ExprRef(exp), "IF condition expression missing");
                           auto *cond{builder_->CreateExpr(ExprRef(exp))};
-                          AddOrQueueCGoto(cond, linearConditionalGoto.trueLabel,
-                              linearConditionalGoto.falseLabel);
+                          AddOrQueueCGoto(cond, cop.trueLabel, cop.falseLabel);
                         },
                         [&](const parser::Statement<parser::NonLabelDoStmt>
                                 *s) {
                           AddOrQueueCGoto(
                               BuildLoopLatchExpression(&s->statement),
-                              linearConditionalGoto.trueLabel,
-                              linearConditionalGoto.falseLabel);
+                              cop.trueLabel, cop.falseLabel);
                         }},
-                    linearConditionalGoto.u);
+                    cop.u);
                 builder_->ClearInsertionPoint();
               },
-              [&](const flat::SwitchIOOp &linearIO) {
+              [&](const flat::SwitchIOOp &IOp) {
                 CheckInsertionPoint();
                 AddOrQueueSwitch<SwitchStmt>(
-                    NOTHING, linearIO.next, {}, {}, CreateSwitchHelper);
+                    NOTHING, IOp.next, {}, {}, CreateSwitchHelper);
                 builder_->ClearInsertionPoint();
               },
-              [&](const flat::SwitchOp &linearSwitch) {
+              [&](const flat::SwitchOp &sop) {
                 CheckInsertionPoint();
                 std::visit(
                     common::visitors{
                         [&](auto) {
-                          auto args{ComposeSwitchArgs(linearSwitch)};
+                          auto args{ComposeSwitchArgs(sop)};
                           AddOrQueueSwitch<SwitchStmt>(args.exp, args.defLab,
                               args.values, args.labels, CreateSwitchHelper);
                         },
                         [&](const parser::CaseConstruct *caseConstruct) {
                           auto args{ComposeSwitchCaseArguments(
-                              caseConstruct, linearSwitch.refs)};
+                              caseConstruct, sop.refs)};
                           AddOrQueueSwitch<SwitchCaseStmt>(args.exp,
                               args.defLab, args.values, args.labels,
                               CreateSwitchCaseHelper);
@@ -1103,7 +1099,7 @@ public:
                         [&](const parser::SelectRankConstruct
                                 *selectRankConstruct) {
                           auto args{ComposeSwitchRankArguments(
-                              selectRankConstruct, linearSwitch.refs)};
+                              selectRankConstruct, sop.refs)};
                           AddOrQueueSwitch<SwitchRankStmt>(args.exp,
                               args.defLab, args.values, args.labels,
                               CreateSwitchRankHelper);
@@ -1111,13 +1107,13 @@ public:
                         [&](const parser::SelectTypeConstruct
                                 *selectTypeConstruct) {
                           auto args{ComposeSwitchTypeArguments(
-                              selectTypeConstruct, linearSwitch.refs)};
+                              selectTypeConstruct, sop.refs)};
                           AddOrQueueSwitch<SwitchTypeStmt>(args.exp,
                               args.defLab, args.values, args.labels,
                               CreateSwitchTypeHelper);
                         },
                     },
-                    linearSwitch.u);
+                    sop.u);
                 builder_->ClearInsertionPoint();
               },
               [&](const flat::ActionOp &action) {
@@ -1132,72 +1128,72 @@ public:
                 CheckInsertionPoint();
                 handleLinearDoCompare(cmp);
               },
-              [&](const flat::BeginOp &linearConstruct) {
+              [&](const flat::BeginOp &con) {
                 std::visit(
                     common::visitors{
-                        [&](const parser::AssociateConstruct *construct) {
+                        [&](const parser::AssociateConstruct *crct) {
                           const auto &statement{std::get<
                               parser::Statement<parser::AssociateStmt>>(
-                              construct->t)};
+                              crct->t)};
                           const auto &position{statement.source};
                           EnterRegion(position);
                           InitiateConstruct(&statement.statement);
                         },
-                        [&](const parser::BlockConstruct *construct) {
+                        [&](const parser::BlockConstruct *crct) {
                           EnterRegion(
                               std::get<parser::Statement<parser::BlockStmt>>(
-                                  construct->t)
+                                  crct->t)
                                   .source);
                         },
-                        [&](const parser::CaseConstruct *construct) {
+                        [&](const parser::CaseConstruct *crct) {
                           InitiateConstruct(
                               &std::get<
                                   parser::Statement<parser::SelectCaseStmt>>(
-                                  construct->t)
+                                  crct->t)
                                    .statement);
                         },
-                        [&](const parser::ChangeTeamConstruct *construct) {
+                        [&](const parser::ChangeTeamConstruct *crct) {
                           const auto &statement{std::get<
                               parser::Statement<parser::ChangeTeamStmt>>(
-                              construct->t)};
+                              crct->t)};
                           EnterRegion(statement.source);
                           InitiateConstruct(&statement.statement);
                         },
-                        [&](const parser::DoConstruct *construct) {
+                        [&](const parser::DoConstruct *crct) {
                           const auto &statement{std::get<
                               parser::Statement<parser::NonLabelDoStmt>>(
-                              construct->t)};
+                              crct->t)};
                           EnterRegion(statement.source);
                           InitiateConstruct(&statement.statement);
                         },
-                        [&](const parser::IfConstruct *construct) {
+                        [&](const parser::IfConstruct *crct) {
                           InitiateConstruct(
                               &std::get<parser::Statement<parser::IfThenStmt>>(
-                                  construct->t)
+                                  crct->t)
                                    .statement);
                         },
-                        [&](const parser::SelectRankConstruct *construct) {
+                        [&](const parser::SelectRankConstruct *crct) {
                           const auto &statement{std::get<
                               parser::Statement<parser::SelectRankStmt>>(
-                              construct->t)};
+                              crct->t)};
                           EnterRegion(statement.source);
                         },
-                        [&](const parser::SelectTypeConstruct *construct) {
+                        [&](const parser::SelectTypeConstruct *crct) {
                           const auto &statement{std::get<
                               parser::Statement<parser::SelectTypeStmt>>(
-                              construct->t)};
+                              crct->t)};
                           EnterRegion(statement.source);
                         },
-                        [&](const parser::WhereConstruct *construct) {
+                        [&](const parser::WhereConstruct *crct) {
                           InitiateConstruct(
                               &std::get<parser::Statement<
-                                   parser::WhereConstructStmt>>(construct->t)
+                                   parser::WhereConstructStmt>>(crct->t)
                                    .statement);
                         },
-                        [&](const parser::ForallConstruct *construct) {
+                        [&](const parser::ForallConstruct *crct) {
                           InitiateConstruct(
                               &std::get<parser::Statement<
-                                   parser::ForallConstructStmt>>(construct->t)
+                                   parser::ForallConstructStmt>>(crct->t)
                                    .statement);
                         },
                         [](const parser::CriticalConstruct *) { /*fixme*/ },
@@ -1206,21 +1202,21 @@ public:
                         [](const parser::OpenMPEndLoopDirective
                                 *) { /*fixme*/ },
                     },
-                    linearConstruct.u);
+                    con.u);
                 auto next{iter};
                 const auto &nextOp{*(++next)};
                 std::visit(
                     common::visitors{
                         [](const auto &) {},
-                        [&](const flat::LabelOp &linearLabel) {
-                          blockMap_.insert({linearLabel.get(),
-                              builder_->GetInsertionPoint()});
+                        [&](const flat::LabelOp &op) {
+                          blockMap_.insert(
+                              {op.get(), builder_->GetInsertionPoint()});
                           ++iter;
                         },
                     },
                     nextOp.u);
               },
-              [&](const flat::EndOp &linearConstruct) {
+              [&](const flat::EndOp &con) {
                 std::visit(
                     common::visitors{
                         [](const auto &) {},
@@ -1242,12 +1238,13 @@ public:
                           ExitRegion();
                         },
                     },
-                    linearConstruct.u);
+                    con.u);
               },
           },
           op.u);
     }
   }
+
   void EnterRegion(const parser::CharBlock &pos) {
     auto *region{builder_->GetCurrentRegion()};
     auto *scope{semanticsContext_.globalScope().FindScope(pos)};
@@ -1257,14 +1254,17 @@ public:
     builder_->CreateBranch(block);
     builder_->SetInsertionPoint(block);
   }
+
   void ExitRegion() {
     builder_->SetCurrentRegion(builder_->GetCurrentRegion()->GetEnclosing());
   }
+
   void CheckInsertionPoint() {
     if (!builder_->GetInsertionPoint()) {
       builder_->SetInsertionPoint(CreateBlock(builder_->GetCurrentRegion()));
     }
   }
+
   void AddOrQueueBranch(flat::LabelRef dest) {
     auto iter{blockMap_.find(dest)};
     if (iter != blockMap_.end()) {
@@ -1281,6 +1281,7 @@ public:
           builder_, builder_->GetInsertionPoint(), dest, _1));
     }
   }
+
   void AddOrQueueCGoto(Statement *condition, flat::LabelRef trueBlock,
       flat::LabelRef falseBlock) {
     auto trueIter{blockMap_.find(trueBlock)};

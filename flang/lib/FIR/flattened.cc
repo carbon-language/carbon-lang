@@ -52,7 +52,7 @@ void LabelOp::setReferenced() const { builder_.setReferenced(label_); }
 
 bool LabelOp::isReferenced() const { return builder_.isReferenced(label_); }
 
-void AddAssign(AnalysisData &ad, const semantics::Symbol *symbol,
+static void AddAssign(AnalysisData &ad, const semantics::Symbol *symbol,
     const parser::Label &label) {
   ad.assignMap[symbol].insert(label);
 }
@@ -66,7 +66,7 @@ std::vector<LabelRef> GetAssign(
   return result;
 }
 
-std::tuple<const parser::Name *, LabelRef, LabelRef> FindStack(
+static std::tuple<const parser::Name *, LabelRef, LabelRef> FindStack(
     const std::vector<std::tuple<const parser::Name *, LabelRef, LabelRef>>
         &stack,
     const parser::Name *key) {
@@ -90,31 +90,33 @@ LabelOp FetchLabel(AnalysisData &ad, const parser::Label &label) {
   return iter->second;
 }
 
-LabelOp BuildNewLabel(AnalysisData &ad) { return LabelOp{ad.labelBuilder}; }
+static LabelOp BuildNewLabel(AnalysisData &ad) {
+  return LabelOp{ad.labelBuilder};
+}
 
-template<typename T> parser::Label GetErr(const T &stmt) {
-  if constexpr (std::is_same_v<T, parser::ReadStmt> ||
-      std::is_same_v<T, parser::WriteStmt>) {
+template<typename A> parser::Label GetErr(const A &stmt) {
+  if constexpr (std::is_same_v<A, parser::ReadStmt> ||
+      std::is_same_v<A, parser::WriteStmt>) {
     for (const auto &control : stmt.controls) {
       if (std::holds_alternative<parser::ErrLabel>(control.u)) {
         return std::get<parser::ErrLabel>(control.u).v;
       }
     }
   }
-  if constexpr (std::is_same_v<T, parser::WaitStmt> ||
-      std::is_same_v<T, parser::OpenStmt> ||
-      std::is_same_v<T, parser::CloseStmt> ||
-      std::is_same_v<T, parser::BackspaceStmt> ||
-      std::is_same_v<T, parser::EndfileStmt> ||
-      std::is_same_v<T, parser::RewindStmt> ||
-      std::is_same_v<T, parser::FlushStmt>) {
+  if constexpr (std::is_same_v<A, parser::WaitStmt> ||
+      std::is_same_v<A, parser::OpenStmt> ||
+      std::is_same_v<A, parser::CloseStmt> ||
+      std::is_same_v<A, parser::BackspaceStmt> ||
+      std::is_same_v<A, parser::EndfileStmt> ||
+      std::is_same_v<A, parser::RewindStmt> ||
+      std::is_same_v<A, parser::FlushStmt>) {
     for (const auto &spec : stmt.v) {
       if (std::holds_alternative<parser::ErrLabel>(spec.u)) {
         return std::get<parser::ErrLabel>(spec.u).v;
       }
     }
   }
-  if constexpr (std::is_same_v<T, parser::InquireStmt>) {
+  if constexpr (std::is_same_v<A, parser::InquireStmt>) {
     for (const auto &spec : std::get<std::list<parser::InquireSpec>>(stmt.u)) {
       if (std::holds_alternative<parser::ErrLabel>(spec.u)) {
         return std::get<parser::ErrLabel>(spec.u).v;
@@ -124,16 +126,16 @@ template<typename T> parser::Label GetErr(const T &stmt) {
   return 0;
 }
 
-template<typename T> parser::Label GetEor(const T &stmt) {
-  if constexpr (std::is_same_v<T, parser::ReadStmt> ||
-      std::is_same_v<T, parser::WriteStmt>) {
+template<typename A> parser::Label GetEor(const A &stmt) {
+  if constexpr (std::is_same_v<A, parser::ReadStmt> ||
+      std::is_same_v<A, parser::WriteStmt>) {
     for (const auto &control : stmt.controls) {
       if (std::holds_alternative<parser::EorLabel>(control.u)) {
         return std::get<parser::EorLabel>(control.u).v;
       }
     }
   }
-  if constexpr (std::is_same_v<T, parser::WaitStmt>) {
+  if constexpr (std::is_same_v<A, parser::WaitStmt>) {
     for (const auto &waitSpec : stmt.v) {
       if (std::holds_alternative<parser::EorLabel>(waitSpec.u)) {
         return std::get<parser::EorLabel>(waitSpec.u).v;
@@ -143,16 +145,16 @@ template<typename T> parser::Label GetEor(const T &stmt) {
   return 0;
 }
 
-template<typename T> parser::Label GetEnd(const T &stmt) {
-  if constexpr (std::is_same_v<T, parser::ReadStmt> ||
-      std::is_same_v<T, parser::WriteStmt>) {
+template<typename A> parser::Label GetEnd(const A &stmt) {
+  if constexpr (std::is_same_v<A, parser::ReadStmt> ||
+      std::is_same_v<A, parser::WriteStmt>) {
     for (const auto &control : stmt.controls) {
       if (std::holds_alternative<parser::EndLabel>(control.u)) {
         return std::get<parser::EndLabel>(control.u).v;
       }
     }
   }
-  if constexpr (std::is_same_v<T, parser::WaitStmt>) {
+  if constexpr (std::is_same_v<A, parser::WaitStmt>) {
     for (const auto &waitSpec : stmt.v) {
       if (std::holds_alternative<parser::EndLabel>(waitSpec.u)) {
         return std::get<parser::EndLabel>(waitSpec.u).v;
@@ -168,7 +170,7 @@ void errLabelSpec(const A &s, std::list<Op> &ops,
   if (auto errLab{GetErr(s)}) {
     std::optional<LabelRef> errRef{FetchLabel(ad, errLab).get()};
     LabelOp next{BuildNewLabel(ad)};
-    ops.emplace_back(SwitchIOOp{s, next, errRef});
+    ops.emplace_back(SwitchIOOp{s, next, ec.source, errRef});
     ops.emplace_back(next);
   } else {
     ops.emplace_back(ActionOp{ec});
@@ -195,7 +197,7 @@ void threeLabelSpec(const A &s, std::list<Op> &ops,
       endRef = FetchLabel(ad, endLab).get();
     }
     auto next{BuildNewLabel(ad)};
-    ops.emplace_back(SwitchIOOp{s, next, errRef, eorRef, endRef});
+    ops.emplace_back(SwitchIOOp{s, next, ec.source, errRef, eorRef, endRef});
     ops.emplace_back(next);
   } else {
     ops.emplace_back(ActionOp{ec});
@@ -212,7 +214,7 @@ std::vector<LabelRef> toLabelRef(AnalysisData &ad, const A &labels) {
   return result;
 }
 
-bool hasAltReturns(const parser::CallStmt &callStmt) {
+static bool hasAltReturns(const parser::CallStmt &callStmt) {
   const auto &args{std::get<std::list<parser::ActualArgSpec>>(callStmt.v.t)};
   for (const auto &arg : args) {
     const auto &actual{std::get<parser::ActualArg>(arg.t)};
@@ -223,7 +225,7 @@ bool hasAltReturns(const parser::CallStmt &callStmt) {
   return false;
 }
 
-std::list<parser::Label> getAltReturnLabels(const parser::Call &call) {
+static std::list<parser::Label> getAltReturnLabels(const parser::Call &call) {
   std::list<parser::Label> result;
   const auto &args{std::get<std::list<parser::ActualArgSpec>>(call.t)};
   for (const auto &arg : args) {
@@ -235,7 +237,7 @@ std::list<parser::Label> getAltReturnLabels(const parser::Call &call) {
   return result;
 }
 
-LabelRef NearestEnclosingDoConstruct(AnalysisData &ad) {
+static LabelRef NearestEnclosingDoConstruct(AnalysisData &ad) {
   for (auto iterator{ad.nameStack.rbegin()}, endIterator{ad.nameStack.rend()};
        iterator != endIterator; ++iterator) {
     auto labelReference{std::get<2>(*iterator)};
@@ -261,26 +263,15 @@ void GotoOp::dump() const {
   DebugChannel() << "\tgoto " << target << " ["
                  << std::visit(
                         common::visitors{
-                            [](const parser::CycleStmt *s) { return "CYCLE"s; },
-                            [](const parser::ExitStmt *s) { return "EXIT"s; },
-                            [](const parser::GotoStmt *s) { return "GOTO"s; },
                             [](ArtificialJump) { return ""s; },
+                            [&](const auto *) { return GetSource(this); },
                         },
                         u)
                  << "]\n";
 }
 
 void ReturnOp::dump() const {
-  DebugChannel()
-      << "\treturn ["
-      << std::visit(
-             common::visitors{
-                 [](const parser::FailImageStmt *s) { return "FAIL IMAGE"s; },
-                 [](const parser::ReturnStmt *s) { return "RETURN"s; },
-                 [](const parser::StopStmt *s) { return "STOP"s; },
-             },
-             u)
-      << "]\n";
+  DebugChannel() << "\treturn [" << GetSource(this) << "]\n";
 }
 
 void ConditionalGotoOp::dump() const {
@@ -294,7 +285,7 @@ void ConditionalGotoOp::dump() const {
                  [](const parser::Statement<parser::ElseIfStmt> *s) {
                    return GetSource(s);
                  },
-                 [](const parser::IfStmt *s) { return ""s; },
+                 [](const parser::IfStmt *) { return "if-stmt"s; },
                  [](const parser::Statement<parser::NonLabelDoStmt> *s) {
                    return GetSource(s);
                  },
@@ -314,49 +305,11 @@ void SwitchIOOp::dump() const {
   if (endLabel.has_value()) {
     DebugChannel() << " END:" << endLabel.value();
   }
-  DebugChannel()
-      << " ["
-      << std::visit(
-             common::visitors{
-                 [](const parser::ReadStmt *) { return "READ"s; },
-                 [](const parser::WriteStmt *) { return "WRITE"s; },
-                 [](const parser::WaitStmt *) { return "WAIT"s; },
-                 [](const parser::OpenStmt *) { return "OPEN"s; },
-                 [](const parser::CloseStmt *) { return "CLOSE"s; },
-                 [](const parser::BackspaceStmt *) { return "BACKSPACE"s; },
-                 [](const parser::EndfileStmt *) { return "ENDFILE"s; },
-                 [](const parser::RewindStmt *) { return "REWIND"s; },
-                 [](const parser::FlushStmt *) { return "FLUSH"s; },
-                 [](const parser::InquireStmt *) { return "INQUIRE"s; },
-             },
-             u)
-      << "]\n";
+  DebugChannel() << " [" << GetSource(this) << "]\n";
 }
 
 void SwitchOp::dump() const {
-  DebugChannel()
-      << "\tswitch ["
-      << std::visit(
-             common::visitors{
-                 [](const parser::CaseConstruct *c) {
-		   return GetSource<parser::SelectCaseStmt>(c);
-		 },
-                 [](const parser::SelectRankConstruct *c) {
-                   return GetSource<parser::SelectRankStmt>(c);
-                 },
-                 [](const parser::SelectTypeConstruct *c) {
-                   return GetSource<parser::SelectTypeStmt>(c);
-                 },
-                 [](const parser::ComputedGotoStmt *) {
-                   return "computed GOTO"s;
-                 },
-                 [](const parser::ArithmeticIfStmt *) {
-                   return "arithmetic IF"s;
-                 },
-                 [](const parser::CallStmt *) { return "alt-return CALL"s; },
-             },
-             u)
-      << "]\n";
+  DebugChannel() << "\tswitch [" << GetSource(this) << "]\n";
 }
 
 void ActionOp::dump() const { DebugChannel() << '\t' << GetSource(v) << '\n'; }
@@ -405,8 +358,8 @@ void BeginOp::dump() const {
                  [](const parser::CompilerDirective *c) {
                    return GetSource(c);
                  },
-                 [](const parser::OpenMPConstruct *c) { return "openmp"s; },
-                 [](const parser::OpenMPEndLoopDirective *c) {
+                 [](const parser::OpenMPConstruct *) { return "openmp"s; },
+                 [](const parser::OpenMPEndLoopDirective *) {
                    return "openmp end loop"s;
                  },
              },
@@ -415,53 +368,54 @@ void BeginOp::dump() const {
 }
 
 void EndOp::dump() const {
-  DebugChannel()
-      << "\t}: ["
-      << std::visit(
-             common::visitors{
-                 [](const parser::AssociateConstruct *c) {
-                   return GetSource<parser::EndAssociateStmt>(c);
-                 },
-                 [](const parser::BlockConstruct *c) {
-                   return GetSource<parser::EndBlockStmt>(c);
-                 },
-                 [](const parser::CaseConstruct *c) {
-                   return GetSource<parser::EndSelectStmt>(c);
-                 },
-                 [](const parser::ChangeTeamConstruct *c) {
-                   return GetSource<parser::EndChangeTeamStmt>(c);
-                 },
-                 [](const parser::CriticalConstruct *c) {
-                   return GetSource<parser::EndCriticalStmt>(c);
-                 },
-                 [](const parser::DoConstruct *c) {
-                   return GetSource<parser::EndDoStmt>(c);
-                 },
-                 [](const parser::IfConstruct *c) {
-                   return GetSource<parser::EndIfStmt>(c);
-                 },
-                 [](const parser::SelectRankConstruct *c) {
-                   return GetSource<parser::EndSelectStmt>(c);
-                 },
-                 [](const parser::SelectTypeConstruct *c) {
-                   return GetSource<parser::EndSelectStmt>(c);
-                 },
-                 [](const parser::WhereConstruct *c) {
-                   return GetSource<parser::EndWhereStmt>(c);
-                 },
-                 [](const parser::ForallConstruct *c) {
-                   return GetSource<parser::EndForallStmt>(c);
-                 },
-                 [](const parser::CompilerDirective *c) {
-                   return GetSource(c);
-                 },
-                 [](const parser::OpenMPConstruct *c) { return "openmp"s; },
-                 [](const parser::OpenMPEndLoopDirective *c) {
-                   return "openmp end loop"s;
-                 },
-             },
-             u)
-      << "]\n";
+  DebugChannel() << "\t}: ["
+                 << std::visit(
+                        common::visitors{
+                            [](const parser::AssociateConstruct *c) {
+                              return GetSource<parser::EndAssociateStmt>(c);
+                            },
+                            [](const parser::BlockConstruct *c) {
+                              return GetSource<parser::EndBlockStmt>(c);
+                            },
+                            [](const parser::CaseConstruct *c) {
+                              return GetSource<parser::EndSelectStmt>(c);
+                            },
+                            [](const parser::ChangeTeamConstruct *c) {
+                              return GetSource<parser::EndChangeTeamStmt>(c);
+                            },
+                            [](const parser::CriticalConstruct *c) {
+                              return GetSource<parser::EndCriticalStmt>(c);
+                            },
+                            [](const parser::DoConstruct *c) {
+                              return GetSource<parser::EndDoStmt>(c);
+                            },
+                            [](const parser::IfConstruct *c) {
+                              return GetSource<parser::EndIfStmt>(c);
+                            },
+                            [](const parser::SelectRankConstruct *c) {
+                              return GetSource<parser::EndSelectStmt>(c);
+                            },
+                            [](const parser::SelectTypeConstruct *c) {
+                              return GetSource<parser::EndSelectStmt>(c);
+                            },
+                            [](const parser::WhereConstruct *c) {
+                              return GetSource<parser::EndWhereStmt>(c);
+                            },
+                            [](const parser::ForallConstruct *c) {
+                              return GetSource<parser::EndForallStmt>(c);
+                            },
+                            [](const parser::CompilerDirective *c) {
+                              return GetSource(c);
+                            },
+                            [](const parser::OpenMPConstruct *) {
+                              return "openmp"s;
+                            },
+                            [](const parser::OpenMPEndLoopDirective *) {
+                              return "openmp end loop"s;
+                            },
+                        },
+                        u)
+                 << "]\n";
 }
 
 void IndirectGotoOp::dump() const {
@@ -473,13 +427,13 @@ void IndirectGotoOp::dump() const {
 }
 
 void DoIncrementOp::dump() const {
-  DebugChannel() << "\tincrement [";
-  DebugChannel() << "]\n";
+  using A = parser::Statement<parser::NonLabelDoStmt>;
+  DebugChannel() << "\tincrement [" << GetSource(&std::get<A>(v->t)) << "]\n";
 }
 
 void DoCompareOp::dump() const {
-  DebugChannel() << "\tcompare [";
-  DebugChannel() << "]\n";
+  using A = parser::Statement<parser::NonLabelDoStmt>;
+  DebugChannel() << "\tcompare [" << GetSource(&std::get<A>(v->t)) << "]\n";
 }
 
 void Op::Build(std::list<Op> &ops,
@@ -492,7 +446,8 @@ void Op::Build(std::list<Op> &ops,
               auto next{BuildNewLabel(ad)};
               auto labels{toLabelRef(ad, getAltReturnLabels(s.value().v))};
               labels.push_back(next);
-              ops.emplace_back(SwitchOp{s.value(), std::move(labels)});
+              ops.emplace_back(
+                  SwitchOp{s.value(), std::move(labels), ec.source});
               ops.emplace_back(next);
             } else {
               ops.emplace_back(ActionOp{ec});
@@ -507,27 +462,29 @@ void Op::Build(std::list<Op> &ops,
             ops.emplace_back(GotoOp{s.value(),
                 s.value().v
                     ? std::get<2>(FindStack(ad.nameStack, &s.value().v.value()))
-                    : NearestEnclosingDoConstruct(ad)});
+                    : NearestEnclosingDoConstruct(ad),
+                ec.source});
           },
           [&](const common::Indirection<parser::ExitStmt> &s) {
             ops.emplace_back(GotoOp{s.value(),
                 s.value().v
                     ? std::get<1>(FindStack(ad.nameStack, &s.value().v.value()))
-                    : NearestEnclosingDoConstruct(ad)});
+                    : NearestEnclosingDoConstruct(ad),
+                ec.source});
           },
           [&](const common::Indirection<parser::GotoStmt> &s) {
-            ops.emplace_back(
-                GotoOp{s.value(), FetchLabel(ad, s.value().v).get()});
+            ops.emplace_back(GotoOp{
+                s.value(), FetchLabel(ad, s.value().v).get(), ec.source});
           },
           [&](const parser::FailImageStmt &s) {
-            ops.emplace_back(ReturnOp{s});
+            ops.emplace_back(ReturnOp{s, ec.source});
           },
           [&](const common::Indirection<parser::ReturnStmt> &s) {
-            ops.emplace_back(ReturnOp{s.value()});
+            ops.emplace_back(ReturnOp{s.value(), ec.source});
           },
           [&](const common::Indirection<parser::StopStmt> &s) {
             ops.emplace_back(ActionOp{ec});
-            ops.emplace_back(ReturnOp{s.value()});
+            ops.emplace_back(ReturnOp{s.value(), ec.source});
           },
           [&](const common::Indirection<const parser::ReadStmt> &s) {
             threeLabelSpec(s.value(), ops, ec, ad);
@@ -564,14 +521,15 @@ void Op::Build(std::list<Op> &ops,
             auto labels{toLabelRef(
                 ad, std::get<std::list<parser::Label>>(s.value().t))};
             labels.push_back(next);
-            ops.emplace_back(SwitchOp{s.value(), std::move(labels)});
+            ops.emplace_back(SwitchOp{s.value(), std::move(labels), ec.source});
             ops.emplace_back(next);
           },
           [&](const common::Indirection<parser::ArithmeticIfStmt> &s) {
             ops.emplace_back(SwitchOp{s.value(),
                 toLabelRef(ad,
                     std::list{std::get<1>(s.value().t),
-                        std::get<2>(s.value().t), std::get<3>(s.value().t)})});
+                        std::get<2>(s.value().t), std::get<3>(s.value().t)}),
+                ec.source});
           },
           [&](const common::Indirection<parser::AssignedGotoStmt> &s) {
             ops.emplace_back(
@@ -760,7 +718,8 @@ struct ControlFlowAnalyzer {
       for (i = 0; i != N; ++i) {
         targets.emplace_back(GetLabelRef(toLabels[i]));
       }
-      ops.emplace_back(SwitchOp{construct, targets});
+      ops.emplace_back(
+          SwitchOp{construct, targets, std::get<0>(construct.t).source});
       ControlFlowAnalyzer cfa{ops, ad};
       i = 0;
       for (const auto &caseBlock : std::get<std::list<B>>(construct.t)) {
