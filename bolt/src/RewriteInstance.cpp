@@ -4063,7 +4063,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
         if (NewSymbol.getType() == ELF::STT_NOTYPE &&
             NewSymbol.getBinding() == ELF::STB_LOCAL &&
             NewSymbol.st_size == 0) {
-          auto ExpectedSec = File->getELFFile()->getSection(NewSymbol.st_shndx);
+          auto ExpectedSec = File->getELFFile()->getSection(OldSectionIndex);
           if (ExpectedSec) {
             auto Section = *ExpectedSec;
             if (Section->sh_type == ELF::SHT_PROGBITS &&

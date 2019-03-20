@@ -238,7 +238,6 @@ private:
   }
 
   /// Patch ELF book-keeping info.
-  void patchELF();
   void patchELFPHDRTable();
 
   /// Create section header table.
