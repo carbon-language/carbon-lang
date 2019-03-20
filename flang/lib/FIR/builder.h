@@ -107,23 +107,21 @@ struct FIRBuilder {
       RuntimeCallType call, RuntimeCallArguments &&arguments) {
     return Insert(RuntimeStmt::Create(call, std::move(arguments)));
   }
-  Statement *CreateSwitch(Value condition, BasicBlock *defaultCase,
-      const SwitchStmt::ValueSuccPairListType &rest) {
-    return InsertTerminator(SwitchStmt::Create(condition, defaultCase, rest));
+  Statement *CreateSwitch(
+      Value cond, const SwitchStmt::ValueSuccPairListType &pairs) {
+    return InsertTerminator(SwitchStmt::Create(cond, pairs));
   }
-  Statement *CreateSwitchCase(Value condition, BasicBlock *defaultCase,
-      const SwitchCaseStmt::ValueSuccPairListType &rest) {
-    return InsertTerminator(
-        SwitchCaseStmt::Create(condition, defaultCase, rest));
+  Statement *CreateSwitchCase(
+      Value cond, const SwitchCaseStmt::ValueSuccPairListType &pairs) {
+    return InsertTerminator(SwitchCaseStmt::Create(cond, pairs));
   }
-  Statement *CreateSwitchType(Value condition, BasicBlock *defaultCase,
-      const SwitchTypeStmt::ValueSuccPairListType &rest) {
-    return InsertTerminator(
-        SwitchTypeStmt::Create(condition, defaultCase, rest));
+  Statement *CreateSwitchType(
+      Value cond, const SwitchTypeStmt::ValueSuccPairListType &pairs) {
+    return InsertTerminator(SwitchTypeStmt::Create(cond, pairs));
   }
   Statement *CreateSwitchRank(
-      Value c, BasicBlock *d, const SwitchRankStmt::ValueSuccPairListType &r) {
-    return InsertTerminator(SwitchRankStmt::Create(c, d, r));
+      Value cond, const SwitchRankStmt::ValueSuccPairListType &pairs) {
+    return InsertTerminator(SwitchRankStmt::Create(cond, pairs));
   }
   Statement *CreateUnreachable() {
     return InsertTerminator(UnreachableStmt::Create());

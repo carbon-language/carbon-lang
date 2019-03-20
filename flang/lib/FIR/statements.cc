@@ -56,44 +56,52 @@ ReturnStmt::ReturnStmt(Statement *exp) : value_{GetApplyExpr(exp)} {
   CHECK(value_);
 }
 
-SwitchStmt::SwitchStmt(const Value &cond, BasicBlock *defaultBlock,
-    const ValueSuccPairListType &args)
+SwitchStmt::SwitchStmt(const Value &cond, const ValueSuccPairListType &args)
   : condition_{cond} {
-  valueSuccPairs_.push_back({NOTHING, defaultBlock});
   valueSuccPairs_.insert(valueSuccPairs_.end(), args.begin(), args.end());
 }
 std::list<BasicBlock *> SwitchStmt::succ_blocks() const {
   return SuccBlocks<SwitchStmt>(valueSuccPairs_);
 }
+BasicBlock *SwitchStmt::defaultSucc() const {
+  CHECK(IsNothing(valueSuccPairs_[0].first));
+  return valueSuccPairs_[0].second;
+}
 
-SwitchCaseStmt::SwitchCaseStmt(
-    Value cond, BasicBlock *defaultBlock, const ValueSuccPairListType &args)
+SwitchCaseStmt::SwitchCaseStmt(Value cond, const ValueSuccPairListType &args)
   : condition_{cond} {
-  valueSuccPairs_.push_back({SwitchCaseStmt::Default{}, defaultBlock});
   valueSuccPairs_.insert(valueSuccPairs_.end(), args.begin(), args.end());
 }
 std::list<BasicBlock *> SwitchCaseStmt::succ_blocks() const {
   return SuccBlocks<SwitchCaseStmt>(valueSuccPairs_);
 }
+BasicBlock *SwitchCaseStmt::defaultSucc() const {
+  CHECK(std::holds_alternative<Default>(valueSuccPairs_[0].first));
+  return valueSuccPairs_[0].second;
+}
 
-SwitchTypeStmt::SwitchTypeStmt(
-    Value cond, BasicBlock *defaultBlock, const ValueSuccPairListType &args)
+SwitchTypeStmt::SwitchTypeStmt(Value cond, const ValueSuccPairListType &args)
   : condition_{cond} {
-  valueSuccPairs_.push_back({SwitchTypeStmt::Default{}, defaultBlock});
   valueSuccPairs_.insert(valueSuccPairs_.end(), args.begin(), args.end());
 }
 std::list<BasicBlock *> SwitchTypeStmt::succ_blocks() const {
   return SuccBlocks<SwitchTypeStmt>(valueSuccPairs_);
 }
+BasicBlock *SwitchTypeStmt::defaultSucc() const {
+  CHECK(std::holds_alternative<Default>(valueSuccPairs_[0].first));
+  return valueSuccPairs_[0].second;
+}
 
-SwitchRankStmt ::SwitchRankStmt(
-    Value cond, BasicBlock *defaultBlock, const ValueSuccPairListType &args)
+SwitchRankStmt ::SwitchRankStmt(Value cond, const ValueSuccPairListType &args)
   : condition_{cond} {
-  valueSuccPairs_.push_back({SwitchRankStmt::Default{}, defaultBlock});
   valueSuccPairs_.insert(valueSuccPairs_.end(), args.begin(), args.end());
 }
 std::list<BasicBlock *> SwitchRankStmt::succ_blocks() const {
   return SuccBlocks<SwitchRankStmt>(valueSuccPairs_);
+}
+BasicBlock *SwitchRankStmt::defaultSucc() const {
+  CHECK(std::holds_alternative<Default>(valueSuccPairs_[0].first));
+  return valueSuccPairs_[0].second;
 }
 
 // check LoadInsn constraints

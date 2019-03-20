@@ -114,17 +114,17 @@ public:
   using ValueType = Value;
   using ValueSuccPairType = std::pair<ValueType, BasicBlock *>;
   using ValueSuccPairListType = std::vector<ValueSuccPairType>;
-  static SwitchStmt Create(const Value &switchEval, BasicBlock *defaultBlock,
-      const ValueSuccPairListType &args) {
-    return SwitchStmt{switchEval, defaultBlock, args};
+  static SwitchStmt Create(
+      const Value &switchEval, const ValueSuccPairListType &args) {
+    return SwitchStmt{switchEval, args};
   }
-  BasicBlock *defaultSucc() const { return valueSuccPairs_[0].second; }
+  BasicBlock *defaultSucc() const;
   std::list<BasicBlock *> succ_blocks() const override;
   Value getCond() const { return condition_; }
 
 private:
-  explicit SwitchStmt(const Value &condition, BasicBlock *defaultBlock,
-      const ValueSuccPairListType &args);
+  explicit SwitchStmt(
+      const Value &condition, const ValueSuccPairListType &args);
 
   Value condition_;
   ValueSuccPairListType valueSuccPairs_;
@@ -153,17 +153,16 @@ public:
   using ValueSuccPairType = std::pair<ValueType, BasicBlock *>;
   using ValueSuccPairListType = std::vector<ValueSuccPairType>;
 
-  static SwitchCaseStmt Create(Value switchEval, BasicBlock *defaultBlock,
-      const ValueSuccPairListType &args) {
-    return SwitchCaseStmt{switchEval, defaultBlock, args};
+  static SwitchCaseStmt Create(
+      Value switchEval, const ValueSuccPairListType &args) {
+    return SwitchCaseStmt{switchEval, args};
   }
-  BasicBlock *defaultSucc() const { return valueSuccPairs_[0].second; }
+  BasicBlock *defaultSucc() const;
   std::list<BasicBlock *> succ_blocks() const override;
   Value getCond() const { return condition_; }
 
 private:
-  explicit SwitchCaseStmt(Value condition, BasicBlock *defaultBlock,
-      const ValueSuccPairListType &args);
+  explicit SwitchCaseStmt(Value condition, const ValueSuccPairListType &args);
 
   Value condition_;
   ValueSuccPairListType valueSuccPairs_;
@@ -182,17 +181,16 @@ public:
   using ValueType = std::variant<Default, TypeSpec, DerivedTypeSpec>;
   using ValueSuccPairType = std::pair<ValueType, BasicBlock *>;
   using ValueSuccPairListType = std::vector<ValueSuccPairType>;
-  static SwitchTypeStmt Create(Value switchEval, BasicBlock *defaultBlock,
-      const ValueSuccPairListType &args) {
-    return SwitchTypeStmt{switchEval, defaultBlock, args};
+  static SwitchTypeStmt Create(
+      Value switchEval, const ValueSuccPairListType &args) {
+    return SwitchTypeStmt{switchEval, args};
   }
-  BasicBlock *defaultSucc() const { return valueSuccPairs_[0].second; }
+  BasicBlock *defaultSucc() const;
   std::list<BasicBlock *> succ_blocks() const override;
   Value getCond() const { return condition_; }
 
 private:
-  explicit SwitchTypeStmt(Value condition, BasicBlock *defaultBlock,
-      const ValueSuccPairListType &args);
+  explicit SwitchTypeStmt(Value condition, const ValueSuccPairListType &args);
   Value condition_;
   ValueSuccPairListType valueSuccPairs_;
 };
@@ -208,17 +206,16 @@ public:
   using ValueType = std::variant<Exactly, AssumedSize, Default>;
   using ValueSuccPairType = std::pair<ValueType, BasicBlock *>;
   using ValueSuccPairListType = std::vector<ValueSuccPairType>;
-  static SwitchRankStmt Create(Value switchEval, BasicBlock *defaultBlock,
-      const ValueSuccPairListType &args) {
-    return SwitchRankStmt{switchEval, defaultBlock, args};
+  static SwitchRankStmt Create(
+      Value switchEval, const ValueSuccPairListType &args) {
+    return SwitchRankStmt{switchEval, args};
   }
-  BasicBlock *defaultSucc() const { return valueSuccPairs_[0].second; }
+  BasicBlock *defaultSucc() const;
   std::list<BasicBlock *> succ_blocks() const override;
   Value getCond() const { return condition_; }
 
 private:
-  explicit SwitchRankStmt(Value condition, BasicBlock *defaultBlock,
-      const ValueSuccPairListType &args);
+  explicit SwitchRankStmt(Value condition, const ValueSuccPairListType &args);
 
   Value condition_;
   ValueSuccPairListType valueSuccPairs_;

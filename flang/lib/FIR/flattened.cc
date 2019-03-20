@@ -214,6 +214,17 @@ std::vector<LabelRef> toLabelRef(AnalysisData &ad, const A &labels) {
   return result;
 }
 
+template<typename A>
+std::vector<LabelRef> toLabelRef(
+    const LabelOp &next, AnalysisData &ad, const A &labels) {
+  std::vector<LabelRef> result;
+  result.emplace_back(next);
+  auto refs{toLabelRef(ad, labels)};
+  result.insert(result.end(), refs.begin(), refs.end());
+  CHECK(result.size() == labels.size() + 1);
+  return result;
+}
+
 static bool hasAltReturns(const parser::CallStmt &callStmt) {
   const auto &args{std::get<std::list<parser::ActualArgSpec>>(callStmt.v.t)};
   for (const auto &arg : args) {
@@ -275,23 +286,15 @@ void ReturnOp::dump() const {
 }
 
 void ConditionalGotoOp::dump() const {
-  DebugChannel()
-      << "\tcbranch .T.:" << trueLabel << " .F.:" << falseLabel << " ["
-      << std::visit(
-             common::visitors{
-                 [](const parser::Statement<parser::IfThenStmt> *s) {
-                   return GetSource(s);
-                 },
-                 [](const parser::Statement<parser::ElseIfStmt> *s) {
-                   return GetSource(s);
-                 },
-                 [](const parser::IfStmt *) { return "if-stmt"s; },
-                 [](const parser::Statement<parser::NonLabelDoStmt> *s) {
-                   return GetSource(s);
-                 },
-             },
-             u)
-      << "]\n";
+  DebugChannel() << "\tcbranch .T.:" << trueLabel << " .F.:" << falseLabel
+                 << " ["
+                 << std::visit(
+                        common::visitors{
+                            [](const auto *s) { return GetSource(s); },
+                            [](const parser::IfStmt *) { return "if-stmt"s; },
+                        },
+                        u)
+                 << "]\n";
 }
 
 void SwitchIOOp::dump() const {
@@ -444,8 +447,8 @@ void Op::Build(std::list<Op> &ops,
           [&](const common::Indirection<parser::CallStmt> &s) {
             if (hasAltReturns(s.value())) {
               auto next{BuildNewLabel(ad)};
-              auto labels{toLabelRef(ad, getAltReturnLabels(s.value().v))};
-              labels.push_back(next);
+              auto alts{getAltReturnLabels(s.value().v)};
+              auto labels{toLabelRef(next, ad, alts)};
               ops.emplace_back(
                   SwitchOp{s.value(), std::move(labels), ec.source});
               ops.emplace_back(next);
@@ -519,8 +522,7 @@ void Op::Build(std::list<Op> &ops,
           [&](const common::Indirection<parser::ComputedGotoStmt> &s) {
             auto next{BuildNewLabel(ad)};
             auto labels{toLabelRef(
-                ad, std::get<std::list<parser::Label>>(s.value().t))};
-            labels.push_back(next);
+                next, ad, std::get<std::list<parser::Label>>(s.value().t))};
             ops.emplace_back(SwitchOp{s.value(), std::move(labels), ec.source});
             ops.emplace_back(next);
           },
