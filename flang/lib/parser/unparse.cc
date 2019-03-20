@@ -836,7 +836,7 @@ public:
     Walk(std::get<2>(x.t));  // right
   }
   void Unparse(const DefinedOpName &x) {  // R1003, R1023, R1414, & R1415
-    Put('.'), Walk(x.v), Put('.');
+    Walk(x.v);
   }
   void Unparse(const AssignmentStmt &x) {  // R1032
     Walk(x.t, " = ");
