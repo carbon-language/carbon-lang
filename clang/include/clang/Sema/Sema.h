@@ -8773,8 +8773,6 @@ public:
   //
 private:
   void *VarDataSharingAttributesStack;
-  /// omp_allocator_handle_t type.
-  QualType OMPAllocatorHandleT;
   /// Number of nested '#pragma omp declare target' directives.
   unsigned DeclareTargetNestingLevel = 0;
   /// Initialization of data-sharing attributes stack.
