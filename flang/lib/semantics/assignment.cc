@@ -132,7 +132,8 @@ private:
 
 }  // namespace Fortran::semantics
 
-DEFINE_OWNING_DESTRUCTOR(ForwardReference, semantics::AssignmentContext)
+template class Fortran::common::Indirection<
+    Fortran::semantics::AssignmentContext>;
 
 namespace Fortran::semantics {
 
@@ -297,6 +298,8 @@ void AnalyzeConcurrentHeader(
     SemanticsContext &context, const parser::ConcurrentHeader &header) {
   AssignmentContext{context}.Analyze(header);
 }
+
+AssignmentChecker::~AssignmentChecker() = default;
 
 AssignmentChecker::AssignmentChecker(SemanticsContext &context)
   : context_{new AssignmentContext{context}} {}

@@ -1147,7 +1147,7 @@ ArrayConstructorValues<T> MakeSpecific(
   for (ArrayConstructorValue<SomeType> &x : from.values()) {
     std::visit(
         common::visitors{
-            [&](CopyableIndirection<Expr<SomeType>> &&expr) {
+            [&](common::CopyableIndirection<Expr<SomeType>> &&expr) {
               auto *typed{UnwrapExpr<Expr<T>>(expr.value())};
               CHECK(typed != nullptr);
               to.Push(std::move(*typed));
@@ -1799,9 +1799,9 @@ void FixMisparsedFunctionReference(const std::variant<A...> &constU) {
 }
 
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr &expr) {
-  if (expr.typedExpr.has_value()) {
+  if (expr.typedExpr) {
     // Expression was already checked by ExprChecker
-    return std::make_optional<Expr<SomeType>>(expr.typedExpr.value().v);
+    return std::make_optional<Expr<SomeType>>(expr.typedExpr->v);
   } else {
     FixMisparsedFunctionReference(expr.u);
     if (!expr.source.empty()) {
@@ -1926,12 +1926,13 @@ evaluate::Expr<evaluate::SubscriptInteger> AnalyzeKindSelector(
 }
 
 void ExprChecker::Enter(const parser::Expr &expr) {
-  if (!expr.typedExpr.has_value()) {
+  if (!expr.typedExpr) {
     if (MaybeExpr checked{AnalyzeExpr(context_, expr)}) {
 #if PMKDEBUG
 //        checked->AsFortran(std::cout << "checked expression: ") << '\n';
 #endif
-      expr.typedExpr = new evaluate::GenericExprWrapper{std::move(*checked)};
+      expr.typedExpr.reset(
+          new evaluate::GenericExprWrapper{std::move(*checked)});
     } else {
 #if PMKDEBUG
       std::cout << "TODO: expression analysis failed for this expression: ";
