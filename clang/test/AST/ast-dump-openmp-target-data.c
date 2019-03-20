@@ -14,5 +14,5 @@ void test(int x) {
 // CHECK-NEXT:       | `-DeclRefExpr {{.*}} <col:29> 'int' lvalue ParmVar {{.*}} 'x' 'int'
 // CHECK-NEXT:       `-CapturedStmt {{.*}} <line:5:3>
 // CHECK-NEXT:         `-CapturedDecl {{.*}} <<invalid sloc>> <invalid sloc>
-// CHECK-NEXT:           |-NullStmt {{.*}} <col:3>
+// CHECK-NEXT:           |-NullStmt {{.*}} <col:3> openmp_structured_block
 // CHECK-NEXT:           `-ImplicitParamDecl {{.*}} <line:4:9> col:9 implicit __context 'struct (anonymous at {{.*}}ast-dump-openmp-target-data.c:4:9) *const restrict'

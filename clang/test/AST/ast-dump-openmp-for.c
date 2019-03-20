@@ -54,7 +54,7 @@ void test_five(int x, int y, int z) {
 // CHECK-NEXT: |       | | |   `-DeclRefExpr 0x{{.*}} <col:23> 'int' lvalue ParmVar 0x{{.*}} 'x' 'int'
 // CHECK-NEXT: |       | | |-UnaryOperator 0x{{.*}} <col:26, col:27> 'int' postfix '++'
 // CHECK-NEXT: |       | | | `-DeclRefExpr 0x{{.*}} <col:26> 'int' lvalue Var 0x{{.*}} 'i' 'int'
-// CHECK-NEXT: |       | | `-NullStmt 0x{{.*}} <line:6:5>
+// CHECK-NEXT: |       | | `-NullStmt 0x{{.*}} <line:6:5> openmp_structured_block
 // CHECK-NEXT: |       | |-ImplicitParamDecl 0x{{.*}} <line:4:9> col:9 implicit __context 'struct (anonymous at {{.*}}ast-dump-openmp-for.c:4:9) *const restrict'
 // CHECK-NEXT: |       | `-VarDecl 0x{{.*}} <line:5:8, col:16> col:12 used i 'int' cinit
 // CHECK-NEXT: |       |   `-IntegerLiteral 0x{{.*}} <col:16> 'int' 0
@@ -78,7 +78,7 @@ void test_five(int x, int y, int z) {
 // CHECK-NEXT: |       | | |   `-DeclRefExpr 0x{{.*}} <col:23> 'int' lvalue ParmVar 0x{{.*}} 'x' 'int'
 // CHECK-NEXT: |       | | |-UnaryOperator 0x{{.*}} <col:26, col:27> 'int' postfix '++'
 // CHECK-NEXT: |       | | | `-DeclRefExpr 0x{{.*}} <col:26> 'int' lvalue Var 0x{{.*}} 'i' 'int'
-// CHECK-NEXT: |       | | `-ForStmt 0x{{.*}} <line:12:5, line:13:7>
+// CHECK-NEXT: |       | | `-ForStmt 0x{{.*}} <line:12:5, line:13:7> openmp_structured_block
 // CHECK-NEXT: |       | |   |-DeclStmt 0x{{.*}} <line:12:10, col:19>
 // CHECK-NEXT: |       | |   | `-VarDecl 0x{{.*}} <col:10, col:18> col:14 used i 'int' cinit
 // CHECK-NEXT: |       | |   |   `-IntegerLiteral 0x{{.*}} <col:18> 'int' 0
@@ -120,7 +120,7 @@ void test_five(int x, int y, int z) {
 // CHECK-NEXT: |       | | |   `-DeclRefExpr 0x{{.*}} <col:23> 'int' lvalue ParmVar 0x{{.*}} 'x' 'int'
 // CHECK-NEXT: |       | | |-UnaryOperator 0x{{.*}} <col:26, col:27> 'int' postfix '++'
 // CHECK-NEXT: |       | | | `-DeclRefExpr 0x{{.*}} <col:26> 'int' lvalue Var 0x{{.*}} 'i' 'int'
-// CHECK-NEXT: |       | | `-ForStmt 0x{{.*}} <line:19:5, line:20:7>
+// CHECK-NEXT: |       | | `-ForStmt 0x{{.*}} <line:19:5, line:20:7> openmp_structured_block
 // CHECK-NEXT: |       | |   |-DeclStmt 0x{{.*}} <line:19:10, col:19>
 // CHECK-NEXT: |       | |   | `-VarDecl 0x{{.*}} <col:10, col:18> col:14 used i 'int' cinit
 // CHECK-NEXT: |       | |   |   `-IntegerLiteral 0x{{.*}} <col:18> 'int' 0
@@ -174,7 +174,7 @@ void test_five(int x, int y, int z) {
 // CHECK-NEXT: |       | |   |   `-DeclRefExpr 0x{{.*}} <col:25> 'int' lvalue ParmVar 0x{{.*}} 'y' 'int'
 // CHECK-NEXT: |       | |   |-UnaryOperator 0x{{.*}} <col:28, col:29> 'int' postfix '++'
 // CHECK-NEXT: |       | |   | `-DeclRefExpr 0x{{.*}} <col:28> 'int' lvalue Var 0x{{.*}} 'i' 'int'
-// CHECK-NEXT: |       | |   `-NullStmt 0x{{.*}} <line:27:7>
+// CHECK-NEXT: |       | |   `-NullStmt 0x{{.*}} <line:27:7> openmp_structured_block
 // CHECK-NEXT: |       | |-ImplicitParamDecl 0x{{.*}} <line:24:9> col:9 implicit __context 'struct (anonymous at {{.*}}ast-dump-openmp-for.c:24:9) *const restrict'
 // CHECK-NEXT: |       | |-VarDecl 0x{{.*}} <line:25:8, col:16> col:12 used i 'int' cinit
 // CHECK-NEXT: |       | | `-IntegerLiteral 0x{{.*}} <col:16> 'int' 0
@@ -217,7 +217,7 @@ void test_five(int x, int y, int z) {
 // CHECK-NEXT:         | |   |   `-DeclRefExpr 0x{{.*}} <col:25> 'int' lvalue ParmVar 0x{{.*}} 'y' 'int'
 // CHECK-NEXT:         | |   |-UnaryOperator 0x{{.*}} <col:28, col:29> 'int' postfix '++'
 // CHECK-NEXT:         | |   | `-DeclRefExpr 0x{{.*}} <col:28> 'int' lvalue Var 0x{{.*}} 'i' 'int'
-// CHECK-NEXT:         | |   `-ForStmt 0x{{.*}} <line:34:7, line:35:9>
+// CHECK-NEXT:         | |   `-ForStmt 0x{{.*}} <line:34:7, line:35:9> openmp_structured_block
 // CHECK-NEXT:         | |     |-DeclStmt 0x{{.*}} <line:34:12, col:21>
 // CHECK-NEXT:         | |     | `-VarDecl 0x{{.*}} <col:12, col:20> col:16 used i 'int' cinit
 // CHECK-NEXT:         | |     |   `-IntegerLiteral 0x{{.*}} <col:20> 'int' 0

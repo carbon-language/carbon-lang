@@ -8,7 +8,7 @@ void test(int x) {
 // CHECK: `-FunctionDecl {{.*}} <{{.*}}ast-dump-openmp-target-update.c:3:1, line:5:1> line:3:6 test 'void (int)'
 // CHECK-NEXT:   |-ParmVarDecl {{.*}} <col:11, col:15> col:15 used x 'int'
 // CHECK-NEXT:   `-CompoundStmt {{.*}} <col:18, line:5:1>
-// CHECK-NEXT:     `-OMPTargetUpdateDirective {{.*}} <line:4:9, col:32>
+// CHECK-NEXT:     `-OMPTargetUpdateDirective {{.*}} <line:4:9, col:32> openmp_standalone_directive
 // CHECK-NEXT:       |-OMPToClause {{.*}} <col:27, col:31>
 // CHECK-NEXT:       | `-DeclRefExpr {{.*}} <col:30> 'int' lvalue ParmVar {{.*}} 'x' 'int'
 // CHECK-NEXT:       `-CapturedStmt {{.*}} <col:9>

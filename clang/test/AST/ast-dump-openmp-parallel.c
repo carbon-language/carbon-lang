@@ -11,7 +11,7 @@ void test() {
 // CHECK-NEXT:     `-OMPParallelDirective 0x{{.*}} <line:4:9, col:21>
 // CHECK-NEXT:       `-CapturedStmt 0x{{.*}} <line:5:3>
 // CHECK-NEXT:         `-CapturedDecl 0x{{.*}} <<invalid sloc>> <invalid sloc> nothrow
-// CHECK-NEXT:           |-NullStmt 0x{{.*}} <col:3>
+// CHECK-NEXT:           |-NullStmt 0x{{.*}} <col:3> openmp_structured_block
 // CHECK-NEXT:           |-ImplicitParamDecl 0x{{.*}} <line:4:9> col:9 implicit .global_tid. 'const int *const restrict'
 // CHECK-NEXT:           |-ImplicitParamDecl 0x{{.*}} <col:9> col:9 implicit .bound_tid. 'const int *const restrict'
 // CHECK-NEXT:           `-ImplicitParamDecl 0x{{.*}} <col:9> col:9 implicit __context 'struct (anonymous at {{.*}}ast-dump-openmp-parallel.c:4:9) *const restrict'
