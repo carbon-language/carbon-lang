@@ -424,7 +424,7 @@ bool Prescanner::NextToken(TokenSequence &tokens) {
   }
   const char *start{at_};
   if (*at_ == '\'' || *at_ == '"') {
-    QuotedCharacterLiteral(tokens);
+    QuotedCharacterLiteral(tokens, start);
     preventHollerith_ = false;
   } else if (IsDecimalDigit(*at_)) {
     int n{0}, digits{0};
@@ -458,7 +458,7 @@ bool Prescanner::NextToken(TokenSequence &tokens) {
       EmitCharAndAdvance(tokens, *at_);
     } else if (at_[0] == '_' && (at_[1] == '\'' || at_[1] == '"')) {
       EmitCharAndAdvance(tokens, *at_);
-      QuotedCharacterLiteral(tokens);
+      QuotedCharacterLiteral(tokens, start);
     }
     preventHollerith_ = false;
   } else if (*at_ == '.') {
@@ -475,7 +475,7 @@ bool Prescanner::NextToken(TokenSequence &tokens) {
     while (IsLegalInIdentifier(EmitCharAndAdvance(tokens, *at_))) {
     }
     if (*at_ == '\'' || *at_ == '"') {
-      QuotedCharacterLiteral(tokens);
+      QuotedCharacterLiteral(tokens, start);
       preventHollerith_ = false;
     } else {
       // Subtle: Don't misrecognize labeled DO statement label as Hollerith
@@ -535,12 +535,8 @@ bool Prescanner::ExponentAndKind(TokenSequence &tokens) {
   return true;
 }
 
-void Prescanner::QuotedCharacterLiteral(TokenSequence &tokens) {
-  const char *start{at_};
-  if (!tokens.empty()) {
-    // If there's a kind prefix, include it in error messages.
-    start = tokens.TokenAt(tokens.SizeInTokens() - 1).begin();
-  }
+void Prescanner::QuotedCharacterLiteral(
+    TokenSequence &tokens, const char *start) {
   char quote{*at_};
   const char *end{at_ + 1};
   inCharLiteral_ = true;

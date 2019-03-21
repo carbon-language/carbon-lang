@@ -157,7 +157,7 @@ private:
   const char *SkipCComment(const char *) const;
   bool NextToken(TokenSequence &);
   bool ExponentAndKind(TokenSequence &);
-  void QuotedCharacterLiteral(TokenSequence &);
+  void QuotedCharacterLiteral(TokenSequence &, const char *start);
   void Hollerith(TokenSequence &, int count, const char *start);
   bool PadOutCharacterLiteral(TokenSequence &);
   bool SkipCommentLine(bool afterAmpersand);
