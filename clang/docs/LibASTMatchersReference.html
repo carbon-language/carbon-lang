@@ -2640,6 +2640,9 @@ Example matches y(x) but not y(42) or NS::y(x).
 Example: matches the implicit cast around 0
 (matcher = castExpr(hasCastKind(CK_NullToPointer)))
   int *p = 0;
+
+If the matcher is use from clang-query, CastKind parameter
+should be passed as a quoted string. e.g., ofKind("CK_NullToPointer").
 </pre></td></tr>
 
 
@@ -4086,6 +4089,9 @@ Given
   int s = sizeof(x) + alignof(x)
 unaryExprOrTypeTraitExpr(ofKind(UETT_SizeOf))
   matches sizeof(x)
+
+If the matcher is use from clang-query, UnaryExprOrTypeTrait parameter
+should be passed as a quoted string. e.g., ofKind("UETT_SizeOf").
 </pre></td></tr>
 
 

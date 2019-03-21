@@ -2492,6 +2492,9 @@ AST_MATCHER_P(UnaryExprOrTypeTraitExpr, hasArgumentOfType,
 /// \endcode
 /// unaryExprOrTypeTraitExpr(ofKind(UETT_SizeOf))
 ///   matches \c sizeof(x)
+///
+/// If the matcher is use from clang-query, UnaryExprOrTypeTrait parameter
+/// should be passed as a quoted string. e.g., ofKind("UETT_SizeOf").
 AST_MATCHER_P(UnaryExprOrTypeTraitExpr, ofKind, UnaryExprOrTypeTrait, Kind) {
   return Node.getKind() == Kind;
 }
@@ -4483,6 +4486,9 @@ AST_POLYMORPHIC_MATCHER_P(hasSourceExpression,
 /// \code
 ///   int *p = 0;
 /// \endcode
+///
+/// If the matcher is use from clang-query, CastKind parameter
+/// should be passed as a quoted string. e.g., ofKind("CK_NullToPointer").
 AST_MATCHER_P(CastExpr, hasCastKind, CastKind, Kind) {
   return Node.getCastKind() == Kind;
 }
