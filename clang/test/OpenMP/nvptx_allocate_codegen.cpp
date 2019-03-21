@@ -57,7 +57,9 @@ namespace ns{
 }
 #pragma omp allocate(ns::a) allocator(omp_pteam_mem_alloc)
 
+// CHECK-LABEL: @main
 int main () {
+  // CHECK: alloca double,
   static int a;
 #pragma omp allocate(a) allocator(omp_thread_mem_alloc)
   a=2;
@@ -65,6 +67,9 @@ int main () {
 #pragma omp allocate(b)
   return (foo<int>());
 }
+
+// CHECK: define {{.*}}i32 @{{.+}}foo{{.+}}()
+// CHECK: alloca i32,
 
 extern template int ST<int>::m;
 #pragma omp end declare target

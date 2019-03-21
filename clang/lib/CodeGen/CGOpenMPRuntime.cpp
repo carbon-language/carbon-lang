@@ -9745,54 +9745,50 @@ public:
 
 Address CGOpenMPRuntime::getAddressOfLocalVariable(CodeGenFunction &CGF,
                                                    const VarDecl *VD) {
+  if (!VD)
+    return Address::invalid();
   const VarDecl *CVD = VD->getCanonicalDecl();
   if (!CVD->hasAttr<OMPAllocateDeclAttr>())
     return Address::invalid();
-  for (const Attr *A: CVD->getAttrs()) {
-    if (const auto *AA = dyn_cast<OMPAllocateDeclAttr>(A)) {
-      auto &Elem = OpenMPLocThreadIDMap.FindAndConstruct(CGF.CurFn);
-      if (!Elem.second.ServiceInsertPt)
-        setLocThreadIdInsertPt(CGF);
-      CGBuilderTy::InsertPointGuard IPG(CGF.Builder);
-      CGF.Builder.SetInsertPoint(Elem.second.ServiceInsertPt);
-      llvm::Value *Size;
-      CharUnits Align = CGM.getContext().getDeclAlign(CVD);
-      if (CVD->getType()->isVariablyModifiedType()) {
-        Size = CGF.getTypeSize(CVD->getType());
-        Align = CGM.getContext().getTypeAlignInChars(CVD->getType());
-      } else {
-        CharUnits Sz = CGM.getContext().getTypeSizeInChars(CVD->getType());
-        Align = CGM.getContext().getDeclAlign(CVD);
-        Size = CGM.getSize(Sz.alignTo(Align));
-      }
-      llvm::Value *ThreadID = getThreadID(CGF, CVD->getBeginLoc());
-      llvm::Value *Allocator;
-      if (const Expr *AllocExpr = AA->getAllocator()) {
-        Allocator = CGF.EmitScalarExpr(AllocExpr);
-      } else {
-        // Default allocator in libomp is nullptr.
-        Allocator = llvm::ConstantPointerNull::get(CGM.VoidPtrPtrTy);
-      }
-      llvm::Value *Args[] = {ThreadID, Size, Allocator};
-
-      llvm::Value *Addr =
-          CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_alloc), Args,
-                              CVD->getName() + ".void.addr");
-      llvm::Value *FiniArgs[OMPAllocateCleanupTy::CleanupArgs] = {
-          ThreadID, Addr, Allocator};
-      llvm::FunctionCallee FiniRTLFn = createRuntimeFunction(OMPRTL__kmpc_free);
-
-      CGF.EHStack.pushCleanup<OMPAllocateCleanupTy>(
-          NormalAndEHCleanup, FiniRTLFn, llvm::makeArrayRef(FiniArgs));
-      Addr = CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
-          Addr,
-          CGF.ConvertTypeForMem(
-              CGM.getContext().getPointerType(CVD->getType())),
-          CVD->getName() + ".addr");
-      return Address(Addr, Align);
-    }
+  const auto *AA = CVD->getAttr<OMPAllocateDeclAttr>();
+  // Use the default allocation.
+  if (AA->getAllocatorType() == OMPAllocateDeclAttr::OMPDefaultMemAlloc)
+    return Address::invalid();
+  auto &Elem = OpenMPLocThreadIDMap.FindAndConstruct(CGF.CurFn);
+  if (!Elem.second.ServiceInsertPt)
+    setLocThreadIdInsertPt(CGF);
+  CGBuilderTy::InsertPointGuard IPG(CGF.Builder);
+  CGF.Builder.SetInsertPoint(Elem.second.ServiceInsertPt);
+  llvm::Value *Size;
+  CharUnits Align = CGM.getContext().getDeclAlign(CVD);
+  if (CVD->getType()->isVariablyModifiedType()) {
+    Size = CGF.getTypeSize(CVD->getType());
+    Align = CGM.getContext().getTypeAlignInChars(CVD->getType());
+  } else {
+    CharUnits Sz = CGM.getContext().getTypeSizeInChars(CVD->getType());
+    Align = CGM.getContext().getDeclAlign(CVD);
+    Size = CGM.getSize(Sz.alignTo(Align));
   }
-  return Address::invalid();
+  llvm::Value *ThreadID = getThreadID(CGF, CVD->getBeginLoc());
+  assert(AA->getAllocator() &&
+         "Expected allocator expression for non-default allocator.");
+  llvm::Value *Allocator = CGF.EmitScalarExpr(AA->getAllocator());
+  llvm::Value *Args[] = {ThreadID, Size, Allocator};
+
+  llvm::Value *Addr =
+      CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_alloc), Args,
+                          CVD->getName() + ".void.addr");
+  llvm::Value *FiniArgs[OMPAllocateCleanupTy::CleanupArgs] = {ThreadID, Addr,
+                                                              Allocator};
+  llvm::FunctionCallee FiniRTLFn = createRuntimeFunction(OMPRTL__kmpc_free);
+
+  CGF.EHStack.pushCleanup<OMPAllocateCleanupTy>(NormalAndEHCleanup, FiniRTLFn,
+                                                llvm::makeArrayRef(FiniArgs));
+  Addr = CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
+      Addr,
+      CGF.ConvertTypeForMem(CGM.getContext().getPointerType(CVD->getType())),
+      CVD->getName() + ".addr");
+  return Address(Addr, Align);
 }
 
 llvm::Function *CGOpenMPSIMDRuntime::emitParallelOutlinedFunction(
