@@ -3166,10 +3166,11 @@ struct CompilerDirective {
 };
 
 // Legacy extensions
-struct BasedPointerStmt {
-  TUPLE_CLASS_BOILERPLATE(BasedPointerStmt);
+struct BasedPointer {
+  TUPLE_CLASS_BOILERPLATE(BasedPointer);
   std::tuple<ObjectName, ObjectName, std::optional<ArraySpec>> t;
 };
+WRAPPER_CLASS(BasedPointerStmt, std::list<BasedPointer>);
 
 struct Union;
 struct StructureDef;

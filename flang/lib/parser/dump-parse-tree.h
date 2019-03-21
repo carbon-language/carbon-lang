@@ -96,6 +96,7 @@ public:
   NODE(parser, AttrSpec)
   NODE(parser, BOZLiteralConstant)
   NODE(parser, BackspaceStmt)
+  NODE(parser, BasedPointer)
   NODE(parser, BasedPointerStmt)
   NODE(parser, BindAttr)
   NODE(parser::BindAttr, Deferred)

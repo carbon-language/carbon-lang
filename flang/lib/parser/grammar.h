@@ -3403,9 +3403,10 @@ TYPE_PARSER(
                           construct<CompilerDirective>("DIR$" >> many(name))) /
         endDirective)
 
-TYPE_PARSER(extension<LanguageFeature::CrayPointer>(
-    construct<BasedPointerStmt>("POINTER (" >> objectName / ",", objectName,
-        maybe(Parser<ArraySpec>{}) / ")")))
+TYPE_PARSER(extension<LanguageFeature::CrayPointer>(construct<BasedPointerStmt>(
+    "POINTER" >> nonemptyList("expected POINTER associations"_err_en_US,
+                     construct<BasedPointer>("(" >> objectName / ",",
+                         objectName, maybe(Parser<ArraySpec>{}) / ")")))))
 
 TYPE_PARSER(construct<StructureStmt>("STRUCTURE /" >> name / "/", pure(true),
                 optionalList(entityDecl)) ||

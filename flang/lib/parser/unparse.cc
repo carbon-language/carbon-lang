@@ -2390,11 +2390,11 @@ public:
     Put("\n");
     EndOpenMP();
   }
-  void Unparse(const BasedPointerStmt &x) {
-    Word("POINTER ("), Walk(std::get<0>(x.t)), Put(", ");
-    Walk(std::get<1>(x.t));
+  void Unparse(const BasedPointer &x) {
+    Put('('), Walk(std::get<0>(x.t)), Put(","), Walk(std::get<1>(x.t));
     Walk("(", std::get<std::optional<ArraySpec>>(x.t), ")"), Put(')');
   }
+  void Unparse(const BasedPointerStmt &x) { Walk("POINTER ", x.v, ","); }
   void Post(const StructureField &x) {
     if (const auto *def{std::get_if<Statement<DataComponentDefStmt>>(&x.u)}) {
       for (const auto &decl :
