@@ -4840,6 +4840,34 @@ unsigned CGOpenMPRuntimeNVPTX::getDefaultFirstprivateAddressSpace() const {
   return CGM.getContext().getTargetAddressSpace(LangAS::cuda_constant);
 }
 
+bool CGOpenMPRuntimeNVPTX::hasAllocateAttributeForGlobalVar(const VarDecl *VD,
+                                                            LangAS &AS) {
+  if (!VD || !VD->hasAttr<OMPAllocateDeclAttr>())
+    return false;
+  const auto *A = VD->getAttr<OMPAllocateDeclAttr>();
+  switch(A->getAllocatorType()) {
+  case OMPAllocateDeclAttr::OMPDefaultMemAlloc:
+  // Not supported, fallback to the default mem space.
+  case OMPAllocateDeclAttr::OMPThreadMemAlloc:
+  case OMPAllocateDeclAttr::OMPLargeCapMemAlloc:
+  case OMPAllocateDeclAttr::OMPCGroupMemAlloc:
+  case OMPAllocateDeclAttr::OMPHighBWMemAlloc:
+  case OMPAllocateDeclAttr::OMPLowLatMemAlloc:
+    AS = LangAS::Default;
+    return true;
+  case OMPAllocateDeclAttr::OMPConstMemAlloc:
+    AS = LangAS::cuda_constant;
+    return true;
+  case OMPAllocateDeclAttr::OMPPTeamMemAlloc:
+    AS = LangAS::cuda_shared;
+    return true;
+  case OMPAllocateDeclAttr::OMPUserDefinedMemAlloc:
+    llvm_unreachable("Expected predefined allocator for the variables with the "
+                     "static storage.");
+  }
+  return false;
+}
+
 // Get current CudaArch and ignore any unknown values
 static CudaArch getCudaArch(CodeGenModule &CGM) {
   if (!CGM.getTarget().hasFeature("ptx"))

@@ -8928,6 +8928,30 @@ void CGOpenMPRuntime::adjustTargetSpecificDataForLambdas(
          " Expected target-based directive.");
 }
 
+bool CGOpenMPRuntime::hasAllocateAttributeForGlobalVar(const VarDecl *VD,
+                                                       LangAS &AS) {
+  if (!VD || !VD->hasAttr<OMPAllocateDeclAttr>())
+    return false;
+  const auto *A = VD->getAttr<OMPAllocateDeclAttr>();
+  switch(A->getAllocatorType()) {
+  case OMPAllocateDeclAttr::OMPDefaultMemAlloc:
+  // Not supported, fallback to the default mem space.
+  case OMPAllocateDeclAttr::OMPLargeCapMemAlloc:
+  case OMPAllocateDeclAttr::OMPCGroupMemAlloc:
+  case OMPAllocateDeclAttr::OMPHighBWMemAlloc:
+  case OMPAllocateDeclAttr::OMPLowLatMemAlloc:
+  case OMPAllocateDeclAttr::OMPThreadMemAlloc:
+  case OMPAllocateDeclAttr::OMPConstMemAlloc:
+  case OMPAllocateDeclAttr::OMPPTeamMemAlloc:
+    AS = LangAS::Default;
+    return true;
+  case OMPAllocateDeclAttr::OMPUserDefinedMemAlloc:
+    llvm_unreachable("Expected predefined allocator for the variables with the "
+                     "static storage.");
+  }
+  return false;
+}
+
 CGOpenMPRuntime::DisableAutoDeclareTargetRAII::DisableAutoDeclareTargetRAII(
     CodeGenModule &CGM)
     : CGM(CGM) {
