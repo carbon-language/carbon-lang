@@ -1724,7 +1724,7 @@ MipsTargetLowering::emitAtomicCmpSwap(MachineInstr &MI,
 
   assert((MI.getOpcode() == Mips::ATOMIC_CMP_SWAP_I32 ||
           MI.getOpcode() == Mips::ATOMIC_CMP_SWAP_I64) &&
-         "Unsupported atomic psseudo for EmitAtomicCmpSwap.");
+         "Unsupported atomic pseudo for EmitAtomicCmpSwap.");
 
   const unsigned Size = MI.getOpcode() == Mips::ATOMIC_CMP_SWAP_I32 ? 4 : 8;
 
