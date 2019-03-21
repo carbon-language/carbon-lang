@@ -669,7 +669,8 @@ R1311 e -> digit-string
 R1312 v -> [sign] digit-string
 R1313 control-edit-desc ->
         position-edit-desc | [r] / | : | sign-edit-desc | k P |
-        blank-interp-edit-desc | round-edit-desc | decimal-edit-desc
+        blank-interp-edit-desc | round-edit-desc | decimal-edit-desc |
+        @ $ | \
 R1314 k -> [sign] digit-string
 R1315 position-edit-desc -> T n | TL n | TR n | n X
 R1316 n -> digit-string

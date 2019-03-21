@@ -2976,7 +2976,8 @@ constexpr PositiveDigitStringIgnoreSpaces count;
 
 // R1313 control-edit-desc ->
 //         position-edit-desc | [r] / | : | sign-edit-desc | k P |
-//         blank-interp-edit-desc | round-edit-desc | decimal-edit-desc
+//         blank-interp-edit-desc | round-edit-desc | decimal-edit-desc |
+//         @ \ | $
 // R1315 position-edit-desc -> T n | TL n | TR n | n X
 // R1316 n -> digit-string
 // R1317 sign-edit-desc -> SS | SP | S
@@ -3023,7 +3024,12 @@ TYPE_PARSER(construct<format::ControlEditDesc>(
     "D" >> ("C" >> construct<format::ControlEditDesc>(
                        pure(format::ControlEditDesc::Kind::DC)) ||
                "P" >> construct<format::ControlEditDesc>(
-                          pure(format::ControlEditDesc::Kind::DP))))
+                          pure(format::ControlEditDesc::Kind::DP))) ||
+    extension<LanguageFeature::AdditionalFormats>(
+        "$" >> construct<format::ControlEditDesc>(
+                   pure(format::ControlEditDesc::Kind::Dollar)) ||
+        "\\" >> construct<format::ControlEditDesc>(
+                    pure(format::ControlEditDesc::Kind::Backslash))))
 
 // R1401 main-program ->
 //         [program-stmt] [specification-part] [execution-part]

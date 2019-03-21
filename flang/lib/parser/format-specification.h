@@ -70,7 +70,8 @@ struct DerivedTypeDataEditDesc {
 
 // R1313 control-edit-desc ->
 //         position-edit-desc | [r] / | : | sign-edit-desc | k P |
-//         blank-interp-edit-desc | round-edit-desc | decimal-edit-desc
+//         blank-interp-edit-desc | round-edit-desc | decimal-edit-desc |
+//         @ \ | $
 // R1315 position-edit-desc -> T n | TL n | TR n | n X
 // R1316 n -> digit-string
 // R1317 sign-edit-desc -> SS | SP | S
@@ -98,7 +99,9 @@ struct ControlEditDesc {
     RC,
     RP,
     DC,
-    DP
+    DP,
+    Dollar,
+    Backslash,
   };
   ControlEditDesc() = delete;
   ControlEditDesc(ControlEditDesc &&) = default;
