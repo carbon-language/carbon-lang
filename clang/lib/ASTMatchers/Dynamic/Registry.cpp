@@ -434,6 +434,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(objcThrowStmt);
   REGISTER_MATCHER(objcTryStmt);
   REGISTER_MATCHER(ofClass);
+  REGISTER_MATCHER(ompExecutableDirective);
   REGISTER_MATCHER(on);
   REGISTER_MATCHER(onImplicitObjectArgument);
   REGISTER_MATCHER(opaqueValueExpr);

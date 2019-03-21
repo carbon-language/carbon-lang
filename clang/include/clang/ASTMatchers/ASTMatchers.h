@@ -60,6 +60,7 @@
 #include "clang/AST/Stmt.h"
 #include "clang/AST/StmtCXX.h"
 #include "clang/AST/StmtObjC.h"
+#include "clang/AST/StmtOpenMP.h"
 #include "clang/AST/TemplateBase.h"
 #include "clang/AST/TemplateName.h"
 #include "clang/AST/Type.h"
@@ -6368,6 +6369,29 @@ AST_MATCHER(FunctionDecl, hasTrailingReturn) {
     return F->hasTrailingReturn();
   return false;
 }
+
+//----------------------------------------------------------------------------//
+// OpenMP handling.
+//----------------------------------------------------------------------------//
+
+/// Matches any ``#pragma omp`` executable directive.
+///
+/// Given
+///
+/// \code
+///   #pragma omp parallel
+///   #pragma omp parallel default(none)
+///   #pragma omp taskyield
+/// \endcode
+///
+/// ``ompExecutableDirective()`` matches ``omp parallel``,
+/// ``omp parallel default(none)`` and ``omp taskyield``.
+extern const internal::VariadicDynCastAllOfMatcher<Stmt, OMPExecutableDirective>
+    ompExecutableDirective;
+
+//----------------------------------------------------------------------------//
+// End OpenMP handling.
+//----------------------------------------------------------------------------//
 
 } // namespace ast_matchers
 } // namespace clang

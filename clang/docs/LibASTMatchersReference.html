@@ -1375,6 +1375,20 @@ Example matches @try
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt;<a href="https://clang.llvm.org/doxygen/classclang_1_1Stmt.html">Stmt</a>&gt;</td><td class="name" onclick="toggle('ompExecutableDirective0')"><a name="ompExecutableDirective0Anchor">ompExecutableDirective</a></td><td>Matcher&lt;<a href="https://clang.llvm.org/doxygen/classclang_1_1OMPExecutableDirective.html">OMPExecutableDirective</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="ompExecutableDirective0"><pre>Matches any ``#pragma omp`` executable directive.
+
+Given
+
+  #pragma omp parallel
+  #pragma omp parallel default(none)
+  #pragma omp taskyield
+
+``ompExecutableDirective()`` matches ``omp parallel``,
+``omp parallel default(none)`` and ``omp taskyield``.
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt;<a href="https://clang.llvm.org/doxygen/classclang_1_1Stmt.html">Stmt</a>&gt;</td><td class="name" onclick="toggle('opaqueValueExpr0')"><a name="opaqueValueExpr0Anchor">opaqueValueExpr</a></td><td>Matcher&lt;<a href="https://clang.llvm.org/doxygen/classclang_1_1OpaqueValueExpr.html">OpaqueValueExpr</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="opaqueValueExpr0"><pre>Matches opaque value expressions. They are used as helpers
 to reference another expressions and can be met

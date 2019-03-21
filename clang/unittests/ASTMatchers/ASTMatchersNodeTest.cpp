@@ -1765,5 +1765,29 @@ TEST(ObjCAutoreleaseMatcher, AutoreleasePool) {
   EXPECT_FALSE(matchesObjC(ObjCStringNoPool, autoreleasePoolStmt()));
 }
 
+TEST(OMPExecutableDirective, Matches) {
+  auto Matcher = stmt(ompExecutableDirective());
+
+  const std::string Source0 = R"(
+void x() {
+#pragma omp parallel
+;
+})";
+  EXPECT_TRUE(matchesWithOpenMP(Source0, Matcher));
+
+  const std::string Source1 = R"(
+void x() {
+#pragma omp taskyield
+;
+})";
+  EXPECT_TRUE(matchesWithOpenMP(Source1, Matcher));
+
+  const std::string Source2 = R"(
+void x() {
+;
+})";
+  EXPECT_TRUE(notMatchesWithOpenMP(Source2, Matcher));
+}
+
 } // namespace ast_matchers
 } // namespace clang

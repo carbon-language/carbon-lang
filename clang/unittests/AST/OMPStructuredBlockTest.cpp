@@ -28,10 +28,6 @@ namespace {
 AST_MATCHER(Stmt, isOMPStructuredBlock) { return Node.isOMPStructuredBlock(); }
 
 const ast_matchers::internal::VariadicDynCastAllOfMatcher<
-    Stmt, OMPExecutableDirective>
-    ompExecutableDirective;
-
-const ast_matchers::internal::VariadicDynCastAllOfMatcher<
     OMPExecutableDirective, OMPTargetDirective>
     ompTargetDirective;
 
