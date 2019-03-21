@@ -67,9 +67,6 @@ struct FIRBuilder {
   Statement *CreateDealloc(AllocateInsn *alloc) {
     return Insert(DeallocateInsn::Create(alloc));
   }
-  Statement *CreateDoCondition(Statement *dir, Statement *v1, Statement *v2) {
-    return Insert(DoConditionStmt::Create(dir, v1, v2));
-  }
   Statement *CreateExpr(const Expression *e) {
     return Insert(ApplyExprStmt::Create(e));
   }
@@ -78,9 +75,6 @@ struct FIRBuilder {
   }
   ApplyExprStmt *MakeAsExpr(const Expression *e) {
     return GetApplyExpr(CreateExpr(e));
-  }
-  Statement *CreateIncrement(Statement *v1, Statement *v2) {
-    return Insert(IncrementStmt::Create(v1, v2));
   }
   Statement *CreateIndirectBr(Variable *v, const std::vector<BasicBlock *> &p) {
     return InsertTerminator(IndirectBranchStmt::Create(v, p));

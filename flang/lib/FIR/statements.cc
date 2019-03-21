@@ -141,11 +141,6 @@ StoreInsn::StoreInsn(Statement *addr, BasicBlock *val)
   CHECK(val);
 }
 
-IncrementStmt::IncrementStmt(Value v1, Value v2) : value_{v1, v2} {}
-
-DoConditionStmt::DoConditionStmt(Value dir, Value v1, Value v2)
-  : value_{dir, v1, v2} {}
-
 std::string Statement::dump() const {
   return std::visit(
       common::visitors{
@@ -182,8 +177,6 @@ std::string Statement::dump() const {
           },
           [](const IndirectBranchStmt &) { return "ibranch"s; },
           [](const UnreachableStmt &) { return "unreachable"s; },
-          [](const IncrementStmt &) { return "increment"s; },
-          [](const DoConditionStmt &) { return "compare"s; },
           [](const ApplyExprStmt &e) { return FIR::dump(e.expression()); },
           [](const LocateExprStmt &e) {
             return "&" + FIR::dump(e.expression());

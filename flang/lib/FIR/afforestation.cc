@@ -240,6 +240,9 @@ static void CreateSwitchTypeHelper(FIRBuilder *builder, Value condition,
 static Expression getApplyExpr(Statement *s) {
   return GetApplyExpr(s)->expression();
 }
+static Expression getLocalVariable(Statement *s) {
+  return GetLocal(s)->variable();
+}
 
 class FortranIRLowering {
 public:
@@ -294,6 +297,13 @@ public:
         std::move(e1), std::move(e2),
         context.GetDefaultKind(common::TypeCategory::Real))
         .value();
+  }
+  Expression ConsExpr(
+      common::RelationalOperator op, Expression e1, Expression e2) {
+    evaluate::ExpressionAnalyzer context{semanticsContext_};
+    return evaluate::AsGenericExpr(evaluate::Relate(
+        context.GetContextualMessages(), op, std::move(e1), std::move(e2))
+                                       .value());
   }
 
   template<typename T>
@@ -824,14 +834,13 @@ public:
   // DO loop handlers
   struct DoBoundsInfo {
     Statement *doVariable;
-    Statement *lowerBound;
-    Statement *upperBound;
+    Statement *counter;
     Statement *stepExpr;
     Statement *condition;
   };
   void PushDoContext(const parser::NonLabelDoStmt *doStmt, Statement *doVar,
-      Statement *lowBound, Statement *upBound, Statement *stepExp) {
-    doMap_.emplace(doStmt, DoBoundsInfo{doVar, lowBound, upBound, stepExp});
+      Statement *counter, Statement *stepExp) {
+    doMap_.emplace(doStmt, DoBoundsInfo{doVar, counter, stepExp});
   }
   void PopDoContext(const parser::NonLabelDoStmt *doStmt) {
     doMap_.erase(doStmt);
@@ -847,19 +856,24 @@ public:
     return nullptr;
   }
 
-  // do_var = do_var + e3
+  // evaluate: do_var = do_var + e3; counter--
   void handleLinearDoIncrement(const flat::DoIncrementOp &inc) {
     auto *info{GetBoundsInfo(inc)};
-    auto *var{builder_->CreateLoad(info->doVariable)};
-    builder_->CreateIncrement(var, info->stepExpr);
+    auto *incremented{builder_->CreateExpr(std::move(
+        ConsExpr<evaluate::Add>(GetAddressable(info->doVariable)->address(),
+            GetApplyExpr(info->stepExpr)->expression())))};
+    builder_->CreateStore(info->doVariable, incremented);
+    auto *decremented{builder_->CreateExpr(ConsExpr<evaluate::Subtract>(
+        GetAddressable(info->counter)->address(), CreateConstant(1)))};
+    builder_->CreateStore(info->counter, decremented);
   }
 
-  // (e3 > 0 && do_var <= e2) || (e3 < 0 && do_var >= e2)
+  // is (counter > 0)?
   void handleLinearDoCompare(const flat::DoCompareOp &cmp) {
     auto *info{GetBoundsInfo(cmp)};
-    auto *var{builder_->CreateLoad(info->doVariable)};
-    auto *cond{
-        builder_->CreateDoCondition(info->stepExpr, var, info->upperBound)};
+    Expression compare{ConsExpr(common::RelationalOperator::GT,
+        getLocalVariable(info->counter), CreateConstant(0))};
+    auto *cond{builder_->CreateExpr(&compare)};
     info->condition = cond;
   }
 
@@ -930,7 +944,7 @@ public:
                     getApplyExpr(e3))};
                 auto *totalTrips{builder_->CreateExpr(&tripExpr)};
                 builder_->CreateStore(tripCounter, totalTrips);
-                PushDoContext(stmt, name, nullptr, tripCounter, e3);
+                PushDoContext(stmt, name, tripCounter, e3);
               },
               [&](const parser::ScalarLogicalExpr &whileExpr) {
                 // FIXME

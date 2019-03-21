@@ -28,8 +28,6 @@ class SwitchTypeStmt;
 class SwitchRankStmt;
 class IndirectBranchStmt;
 class UnreachableStmt;
-class IncrementStmt;
-class DoConditionStmt;
 class ApplyExprStmt;
 class LocateExprStmt;
 class AllocateInsn;
@@ -263,33 +261,6 @@ protected:
   std::optional<evaluate::DynamicType> type;
 };
 
-class IncrementStmt : public ActionStmt_impl {
-public:
-  static IncrementStmt Create(Value v1, Value v2) {
-    return IncrementStmt(v1, v2);
-  }
-  Value leftValue() const { return value_[0]; }
-  Value rightValue() const { return value_[1]; }
-
-private:
-  explicit IncrementStmt(Value v1, Value v2);
-  Value value_[2];
-};
-
-class DoConditionStmt : public ActionStmt_impl {
-public:
-  static DoConditionStmt Create(Value dir, Value left, Value right) {
-    return DoConditionStmt(dir, left, right);
-  }
-  Value direction() const { return value_[0]; }
-  Value leftValue() const { return value_[1]; }
-  Value rightValue() const { return value_[2]; }
-
-private:
-  explicit DoConditionStmt(Value dir, Value left, Value right);
-  Value value_[3];
-};
-
 // Compute the value of an expression
 class ApplyExprStmt : public ActionStmt_impl {
 public:
@@ -306,6 +277,9 @@ private:
 
 // Base class of all addressable statements
 class Addressable_impl : public ActionStmt_impl {
+public:
+  Expression address() const { return addrExpr_.value(); }
+
 protected:
   Addressable_impl() : addrExpr_{std::nullopt} {}
   explicit Addressable_impl(const Expression &ae) : addrExpr_{ae} {}
@@ -320,7 +294,7 @@ public:
   }
   static LocateExprStmt Create(Expression &&e) { return LocateExprStmt(e); }
 
-  const Expression &expression() const { return *addrExpr_; }
+  const Expression &expression() const { return addrExpr_.value(); }
 
 private:
   explicit LocateExprStmt(const Expression &e) : Addressable_impl{e} {}
@@ -378,6 +352,7 @@ public:
 
   Type type() const { return type_; }
   int alignment() const { return alignment_; }
+  Expression variable() { return addrExpr_.value(); }
 
 private:
   explicit AllocateLocalInsn(Type type, int alignment, const Expression &expr)
@@ -555,8 +530,6 @@ class Statement : public SumTypeMixin<ReturnStmt,  //
                       SwitchRankStmt,  //
                       IndirectBranchStmt,  //
                       UnreachableStmt,  //
-                      IncrementStmt,  //
-                      DoConditionStmt,  //
                       ApplyExprStmt,  //
                       LocateExprStmt,  //
                       AllocateInsn,  //
@@ -606,6 +579,10 @@ inline Statement *ReturnStmt::value() const { return Statement::From(value_); }
 
 inline ApplyExprStmt *GetApplyExpr(Statement *stmt) {
   return std::get_if<ApplyExprStmt>(&stmt->u);
+}
+
+inline AllocateLocalInsn *GetLocal(Statement *stmt) {
+  return std::get_if<AllocateLocalInsn>(&stmt->u);
 }
 
 Addressable_impl *GetAddressable(Statement *stmt);
