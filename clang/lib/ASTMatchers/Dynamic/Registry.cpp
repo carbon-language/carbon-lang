@@ -304,6 +304,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(hasSourceExpression);
   REGISTER_MATCHER(hasSpecializedTemplate);
   REGISTER_MATCHER(hasStaticStorageDuration);
+  REGISTER_MATCHER(hasStructuredBlock);
   REGISTER_MATCHER(hasSyntacticForm);
   REGISTER_MATCHER(hasTargetDecl);
   REGISTER_MATCHER(hasTemplateArgument);
@@ -379,6 +380,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(isNoReturn);
   REGISTER_MATCHER(isNoThrow);
   REGISTER_MATCHER(isNoneKind);
+  REGISTER_MATCHER(isOMPStructuredBlock);
   REGISTER_MATCHER(isOverride);
   REGISTER_MATCHER(isPrivate);
   REGISTER_MATCHER(isProtected);
@@ -387,6 +389,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(isScoped);
   REGISTER_MATCHER(isSharedKind);
   REGISTER_MATCHER(isSignedInteger);
+  REGISTER_MATCHER(isStandaloneDirective);
   REGISTER_MATCHER(isStaticLocal);
   REGISTER_MATCHER(isStaticStorageClass);
   REGISTER_MATCHER(isStruct);

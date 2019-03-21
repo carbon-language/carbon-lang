@@ -2274,6 +2274,71 @@ TEST(Matcher, isMain) {
     notMatches("int main2() {}", functionDecl(isMain())));
 }
 
+TEST(OMPExecutableDirective, isStandaloneDirective) {
+  auto Matcher = ompExecutableDirective(isStandaloneDirective());
+
+  const std::string Source0 = R"(
+void x() {
+#pragma omp parallel
+;
+})";
+  EXPECT_TRUE(notMatchesWithOpenMP(Source0, Matcher));
+
+  const std::string Source1 = R"(
+void x() {
+#pragma omp taskyield
+})";
+  EXPECT_TRUE(matchesWithOpenMP(Source1, Matcher));
+}
+
+TEST(Stmt, isOMPStructuredBlock) {
+  const std::string Source0 = R"(
+void x() {
+#pragma omp parallel
+;
+})";
+  EXPECT_TRUE(
+      matchesWithOpenMP(Source0, stmt(nullStmt(), isOMPStructuredBlock())));
+
+  const std::string Source1 = R"(
+void x() {
+#pragma omp parallel
+{;}
+})";
+  EXPECT_TRUE(
+      notMatchesWithOpenMP(Source1, stmt(nullStmt(), isOMPStructuredBlock())));
+  EXPECT_TRUE(
+      matchesWithOpenMP(Source1, stmt(compoundStmt(), isOMPStructuredBlock())));
+}
+
+TEST(OMPExecutableDirective, hasStructuredBlock) {
+  const std::string Source0 = R"(
+void x() {
+#pragma omp parallel
+;
+})";
+  EXPECT_TRUE(matchesWithOpenMP(
+      Source0, ompExecutableDirective(hasStructuredBlock(nullStmt()))));
+
+  const std::string Source1 = R"(
+void x() {
+#pragma omp parallel
+{;}
+})";
+  EXPECT_TRUE(notMatchesWithOpenMP(
+      Source1, ompExecutableDirective(hasStructuredBlock(nullStmt()))));
+  EXPECT_TRUE(matchesWithOpenMP(
+      Source1, ompExecutableDirective(hasStructuredBlock(compoundStmt()))));
+
+  const std::string Source2 = R"(
+void x() {
+#pragma omp taskyield
+{;}
+})";
+  EXPECT_TRUE(notMatchesWithOpenMP(
+      Source2, ompExecutableDirective(hasStructuredBlock(anything()))));
+}
+
 TEST(OMPExecutableDirective, hasClause) {
   auto Matcher = ompExecutableDirective(hasAnyClause(anything()));
 
