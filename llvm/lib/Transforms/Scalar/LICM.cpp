@@ -1213,6 +1213,7 @@ bool llvm::canSinkOrHoistInst(Instruction &I, AAResults *AA, DominatorTree *DT,
                 return false;
             } else if (const auto *MD = dyn_cast<MemoryDef>(&MA))
               if (auto *LI = dyn_cast<LoadInst>(MD->getMemoryInst())) {
+                (void)LI; // Silence warning.
                 assert(!LI->isUnordered() && "Expected unordered load");
                 return false;
               }
