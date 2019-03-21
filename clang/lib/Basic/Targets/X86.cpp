@@ -1819,10 +1819,9 @@ void X86TargetInfo::fillValidCPUList(SmallVectorImpl<StringRef> &Values) const {
 #define PROC(ENUM, STRING, IS64BIT)                                            \
   if (IS64BIT || getTriple().getArch() == llvm::Triple::x86)                   \
     Values.emplace_back(STRING);
-  // Go through CPUKind checking to ensure that the alias is de-aliased and
-  // 64 bit-ness is checked.
+  // For aliases we need to lookup the CPUKind to check get the 64-bit ness.
 #define PROC_ALIAS(ENUM, ALIAS)                                                \
-  if (checkCPUKind(getCPUKind(ALIAS)))                                         \
+  if (checkCPUKind(CK_##ENUM))                                                      \
     Values.emplace_back(ALIAS);
 #include "clang/Basic/X86Target.def"
 }
