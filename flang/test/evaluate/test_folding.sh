@@ -14,11 +14,11 @@
 # limitations under the License.
 
 # This script verifies expression folding.
-# This compiles a source file with '-fdebug-dump-symbols' and looks for
-# the parameter declaration to check they have been folded as expected.
+# It compiles a source file with '-fdebug-dump-symbols' and looks for
+# parameter declarations to check they have been folded as expected.
 # To check folding of an expression EXPR, the fortran program passed to this script
 # must contain the following:
-# logical, parameter :: test_x = <compare EXPR to expected value>
+#   logical, parameter :: test_x = <compare EXPR to expected value>
 # This script will test that all parameter with a name starting with "test_" have
 # been folded to .true.
 # For instance, acos folding can be tested with:
@@ -27,8 +27,8 @@
 #   real(4), parameter :: exp_acos = 1.047
 #   logical, parameter :: test_acos = abs(res_acos - exp_acos).LE.(0.001_4)
 #
-# There are two kind of failures:
-#   - test_x is folded to .false.. This means that the expression was folded
+# There are two kinds of failure:
+#   - test_x is folded to .false.. This means the expression was folded
 #     but the value is not as expected.
 #   - test_x is not folded (it is neither .true. nor .false.). This means the
 #     compiler could not fold the expression.
@@ -37,7 +37,7 @@
 
 PATH=/usr/bin:/bin
 srcdir=$(dirname $0)
-CMD="${F18:-../../build-clang-llvm8+gcc-8.3.0/tools/f18/f18} -fdebug-dump-symbols -fparse-only"
+CMD="${F18:-../../tools/f18/f18} -fdebug-dump-symbols -fparse-only"
 
 if [[ $# != 1 ]]; then
   echo "Usage: $0 <fortran-source>"
@@ -51,28 +51,26 @@ rm -rf $temp
 mkdir $temp
 [[ $KEEP ]] || trap "rm -rf $temp" EXIT
 
-src1=$temp/1.f90
-src2=$temp/2.f90
-src3=$temp/3.f90
-src4=$temp/4.f90
-diffs=$temp/diffs
-
+src1=$temp/symbols.log
+src2=$temp/all_parameters.log
+src3=$temp/tested_parameters.log
+src4=$temp/failures.log
 
 $CMD $src > $src1  # compile, dumping symbols
 
-#get all PARAMETER declaration
+# Get all PARAMETER declarations
 sed -e '/, PARAMETER/!d' -e 's/, PARAMETER.*init:/ /' \
    -e 's/^ *//'  $src1 > $src2
 
-#Collect test results
+# Collect test results
 sed -e '/^test_/!d' $src2 > $src3
 
-#Check all tests results (keep tests that do not resolve to true)
+# Check all tests results (keep tests that do not resolve to true)
 sed -e '/\.true\._.$/d' $src3 > $src4
 
 if [[ -s $src4 ]]; then
   echo "folding test failed:"
-  # print failed tests (It will actually print all parameters
+  # Print failed tests (It will actually print all parameters
   # that have the same suffix as the failed test so that one can get more info
   # by declaring expected_x and result_x for instance)
   sed -e 's/test_/_/' -e 's/ .*//' $src4 | grep -f - $src2
