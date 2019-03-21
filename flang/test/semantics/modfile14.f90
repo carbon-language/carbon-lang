@@ -58,7 +58,6 @@ end
 !  type,extends(t1)::t2
 !  contains
 !    procedure,nopass::s4
-!    generic::foo=>s2
 !    generic::foo=>s3
 !    generic::foo=>s4
 !  end type
