@@ -168,12 +168,5 @@ HostIntrinsicProceduresLibrary::GetHostProcedureWrapper(
   return std::nullopt;
 }
 
-template<typename TR, typename... ArgInfo>
-TargetRuntimeIntrinsicProcedure::TargetRuntimeIntrinsicProcedure(
-    const Signature<TR, ArgInfo...> &signature, const std::string &symbolName,
-    bool isElemental)
-  : IntrinsicProcedureRuntimeDescription{signature, isElemental},
-    symbol{symbolName} {}
-
 }
 #endif  // FORTRAN_EVALUATE_INTRINSICS_LIBRARY_TEMPLATES_H_

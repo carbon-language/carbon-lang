@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This file defines the runtime libraries for the target as well as a default
-// set of host rte functions that can be used for folding.
+// This file defines host runtimes functions that can be used for folding
+// intrinsic functions.
 // The default HostIntrinsicProceduresLibrary is built with <cmath> and
 // <complex> functions that are guaranteed to exist from the C++ standard.
 
@@ -22,10 +22,6 @@
 #include <cerrno>
 #include <cfenv>
 #include <sstream>
-#if defined(__APPLE__) || defined(__unix__)
-#define IS_POSIX_COMPLIANT
-#include <dlfcn.h>
-#endif
 
 namespace Fortran::evaluate {
 
@@ -55,48 +51,7 @@ bool HostIntrinsicProceduresLibrary::HasEquivalentProcedure(
   return false;
 }
 
-void HostIntrinsicProceduresLibrary::LoadTargetIntrinsicProceduresLibrary(
-    const TargetIntrinsicProceduresLibrary &lib) {
-  if (dynamicallyLoadedLibraries.find(lib.name) !=
-      dynamicallyLoadedLibraries.end()) {
-    return;  // already loaded
-  }
-#ifdef IS_POSIX_COMPLIANT
-  void *handle = dlopen((lib.name + std::string{".so"}).c_str(), RTLD_LAZY);
-  if (!handle) {
-    return;
-  }
-  dynamicallyLoadedLibraries.insert(std::make_pair(lib.name, handle));
-  for (const auto &sym : lib.procedures) {
-    void *func{dlsym(handle, sym.second.symbol.c_str())};
-    auto error{dlerror()};
-    if (error) {
-    } else {
-      // Note: below is the only reinterpret_cast from an object pointer to
-      // function pointer As per C++11 and later rules on reinterpret_cast, it
-      // is implementation defined whether this is supported. POSIX mandates
-      // that such cast from function pointers to void* are defined. Hence this
-      // reinterpret_cast is and MUST REMAIN inside ifdef related to POSIX.
-      AddProcedure(HostRuntimeIntrinsicProcedure{
-          sym.second, reinterpret_cast<FuncPointer<void *>>(func)});
-    }
-  }
-#else
-  // TODO: systems that do not support dlopen (e.g windows)
-#endif
-}
-
-HostIntrinsicProceduresLibrary::~HostIntrinsicProceduresLibrary() {
-  for (auto iter{dynamicallyLoadedLibraries.begin()};
-       iter != dynamicallyLoadedLibraries.end(); ++iter) {
-#ifdef IS_POSIX_COMPLIANT
-    (void)dlclose(iter->second);
-#endif
-  }
-}
-
-// Map numerical intrinsic to  <cmath>/<complex> functions (for host folding
-// only)
+// Map numerical intrinsic to  <cmath>/<complex> functions
 
 // TODO mapping to <cmath> function to be tested.<cmath> func takes
 // real arg for n
@@ -148,92 +103,9 @@ void AddLibmComplexHostProcedure(
   }
 }
 
-// define mapping between numerical intrinsics and libpgmath symbols
-
-enum class MathOption { Fast, Precise, Relaxed };
-
-char constexpr inline EncodePgmMathOption(MathOption m) {
-  switch (m) {
-  case MathOption::Fast: return 'f';
-  case MathOption::Precise: return 'p';
-  case MathOption::Relaxed: return 'r';
-  }
-  return '\0';  // unreachable. Silencing bogus g++ warning
-}
-
-template<typename T> struct EncodePgmTypeHelper {};
-
-template<> struct EncodePgmTypeHelper<Type<TypeCategory::Real, 4>> {
-  static constexpr char value{'s'};
-};
-template<> struct EncodePgmTypeHelper<Type<TypeCategory::Real, 8>> {
-  static constexpr char value{'d'};
-};
-template<> struct EncodePgmTypeHelper<Type<TypeCategory::Complex, 4>> {
-  static constexpr char value{'c'};
-};
-template<> struct EncodePgmTypeHelper<Type<TypeCategory::Complex, 8>> {
-  static constexpr char value{'z'};
-};
-
-template<typename T>
-static constexpr char EncodePgmType{EncodePgmTypeHelper<T>::value};
-
-template<typename T>
-static std::string MakeLibpgmathName(const std::string &name, MathOption m) {
-  std::ostringstream stream;
-  stream << "__" << EncodePgmMathOption(m) << EncodePgmType<T> << "_" << name
-         << "_1";
-  // TODO Take mask and vector length into account
-  return stream.str();
-}
-
-template<typename T>
-static void AddLibpgmathTargetSymbols(
-    TargetIntrinsicProceduresLibrary &lib, MathOption opt) {
-  using F = Signature<T, ArgumentInfo<T, PassBy::Val>>;
-  const std::string oneArgFuncs[]{"acos", "asin", "atan", "cos", "cosh", "exp",
-      "log", "log10", "sin", "sinh", "tan", "tanh"};
-  for (const std::string &name : oneArgFuncs) {
-    lib.AddProcedure(TargetRuntimeIntrinsicProcedure{
-        F{name}, MakeLibpgmathName<T>(name, opt), true});
-  }
-
-  if constexpr (T::category == TypeCategory::Real) {
-    using F2 = Signature<T, ArgumentInfo<T, PassBy::Val>,
-        ArgumentInfo<T, PassBy::Val>>;
-    lib.AddProcedure(TargetRuntimeIntrinsicProcedure{
-        F2{"atan2"}, MakeLibpgmathName<T>("acos", opt), true});
-  } else {
-    const std::string oneArgCmplxFuncs[]{
-        "div", "sqrt"};  // for scalar, only complex available
-    for (const std::string &name : oneArgCmplxFuncs) {
-      lib.AddProcedure(TargetRuntimeIntrinsicProcedure{
-          F{name}, MakeLibpgmathName<T>(name, opt), true});
-    }
-  }
-}
-
-TargetIntrinsicProceduresLibrary BuildLibpgmTargetIntrinsicProceduresLibrary(
-    MathOption opt) {
-  TargetIntrinsicProceduresLibrary lib{"libpgmath"};
-  AddLibpgmathTargetSymbols<Type<TypeCategory::Real, 4>>(lib, opt);
-  AddLibpgmathTargetSymbols<Type<TypeCategory::Real, 8>>(lib, opt);
-  AddLibpgmathTargetSymbols<Type<TypeCategory::Complex, 4>>(lib, opt);
-  AddLibpgmathTargetSymbols<Type<TypeCategory::Complex, 8>>(lib, opt);
-  return lib;
-}
-
 // Defines which host runtime functions will be used for folding
 
 void HostIntrinsicProceduresLibrary::DefaultInit() {
-  // TODO: when linkage information is available, this needs to be modified to
-  // load runtime accordingly. For now, try loading libpgmath (libpgmath.so
-  // needs to be in a directory from LD_LIBRARY_PATH) and then add libm symbols
-  // when no equivalent symbols were already loaded
-  TargetIntrinsicProceduresLibrary libpgmath{
-      BuildLibpgmTargetIntrinsicProceduresLibrary(MathOption::Precise)};
-  LoadTargetIntrinsicProceduresLibrary(libpgmath);
 
   AddLibmRealHostProcedure<float>(*this);
   AddLibmRealHostProcedure<double>(*this);

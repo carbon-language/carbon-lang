@@ -37,9 +37,3 @@ target_link_libraries(FortranEvaluate
   FortranParser
   m
 )
-
-IF(CMAKE_SYSTEM_NAME STREQUAL Linux)
-  target_link_libraries(FortranEvaluate
-    dl
-  )
-endif()

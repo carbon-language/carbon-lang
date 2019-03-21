@@ -15,17 +15,13 @@
 #ifndef FORTRAN_EVALUATE_INTRINSICS_LIBRARY_H_
 #define FORTRAN_EVALUATE_INTRINSICS_LIBRARY_H_
 
-// Defines structures to be used in F18 when dealing with the intrinsic
-// procedures runtime. It abstracts both:
-//  - the target intrinsic procedure runtime to be used for code generation
-//  - the host intrinsic runtime to be used for constant folding purposes.
-// To avoid unnecessary header circular dependencies, the actual implementation
-// of the templatized member function are defined in
+// Defines structures to be used in F18 for folding intrinsic function with host
+// runtime libraries. To avoid unnecessary header circular dependencies, the
+// actual implementation of the templatized member function are defined in
 // intrinsics-library-templates.h The header at hand is meant to be included by
 // files that need to define intrinsic runtime data structure but that do not
 // use them directly. To actually use the runtime data structures,
-// intrinsics-library-templates.h must be included Note that
-// intrinsics-library-templates.h includes the header at hand.
+// intrinsics-library-templates.h must be included.
 
 #include <functional>
 #include <map>
@@ -62,36 +58,10 @@ struct IntrinsicProcedureRuntimeDescription {
   const std::vector<PassBy> argumentsPassedBy;
   const bool isElemental;
   const FuncPointer<void *> callable;
-  // callable only usable by HostRuntimeIntrinsicProcedure but need to be
-  // created in case TargetRuntimeIntrinsicProcedure is dynamically loaded
-  // because creating it dynamically would be too complex
-
   // Construct from description using host independent types (RuntimeTypes)
   template<typename TR, typename... ArgInfo>
   IntrinsicProcedureRuntimeDescription(
       const Signature<TR, ArgInfo...> &signature, bool isElemental = false);
-};
-
-// TargetRuntimeIntrinsicProcedure holds target runtime information
-// for an intrinsics procedure.
-struct TargetRuntimeIntrinsicProcedure : IntrinsicProcedureRuntimeDescription {
-  // Construct from description using host independent types (RuntimeTypes)
-  // Note: passing ref/val also needs to be passed by template to build
-  // the callable
-  template<typename TR, typename... ArgInfo>
-  TargetRuntimeIntrinsicProcedure(const Signature<TR, ArgInfo...> &signature,
-      const std::string &symbolName, bool isElemental = false);
-  const std::string symbol;
-};
-
-struct TargetIntrinsicProceduresLibrary {
-  TargetIntrinsicProceduresLibrary(const std::string &name) : name{name} {}
-  void AddProcedure(TargetRuntimeIntrinsicProcedure &&sym) {
-    const std::string name{sym.name};
-    procedures.insert(std::make_pair(name, std::move(sym)));
-  }
-  const std::string name;
-  std::multimap<std::string, const TargetRuntimeIntrinsicProcedure> procedures;
 };
 
 // HostRuntimeIntrinsicProcedure allows host runtime function to be called for
@@ -119,9 +89,7 @@ using HostProcedureWrapper = std::function<ConstantContainer<TR>(
 // HostRuntimeIntrinsicProcedure elements. It is meant for constant folding.
 // When queried for an intrinsic procedure, it can return a callable object that
 // implements this intrinsic if a host runtime function pointer for this
-// intrinsic was added to its data structure. It can also dynamically load
-// function pointer from a TargetIntrinsicProceduresLibrary if the related
-// library is available on the host.
+// intrinsic was added to its data structure.
 struct HostIntrinsicProceduresLibrary {
   void AddProcedure(HostRuntimeIntrinsicProcedure &&sym) {
     const std::string name{sym.name};
@@ -130,18 +98,12 @@ struct HostIntrinsicProceduresLibrary {
   bool HasEquivalentProcedure(
       const IntrinsicProcedureRuntimeDescription &sym) const;
   HostIntrinsicProceduresLibrary() { DefaultInit(); }
-  ~HostIntrinsicProceduresLibrary();
-  void DefaultInit();  // Try loading libpgmath functions and then load
-                       // functions from <cmath> and <complex>
-  void LoadTargetIntrinsicProceduresLibrary(
-      const TargetIntrinsicProceduresLibrary &lib);
+  void DefaultInit();
   template<template<typename> typename ConstantContainer, typename TR,
       typename... TA>
   std::optional<HostProcedureWrapper<ConstantContainer, TR, TA...>>
   GetHostProcedureWrapper(const std::string &name);
   std::multimap<std::string, const HostRuntimeIntrinsicProcedure> procedures;
-  std::map<std::string, void *>
-      dynamicallyLoadedLibraries;  // keep the handles for dlclose
 };
 
 }
