@@ -116,6 +116,11 @@ target_link_libraries(folding-test
   FortranEvaluate
 )
 
+set(FOLDING_TESTS
+  folding01.f90
+)
+
+
 add_test(Expression expression-test)
 add_test(Leadz leading-zero-bit-count-test)
 add_test(PopPar bit-population-count-test)
@@ -126,3 +131,7 @@ add_test(Real real-test)
 add_test(RESHAPE reshape-test)
 add_test(ISO-binding ISO-Fortran-binding-test)
 add_test(folding folding-test)
+
+foreach(test ${FOLDING_TESTS})
+  add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_folding.sh ${test})
+endforeach()
