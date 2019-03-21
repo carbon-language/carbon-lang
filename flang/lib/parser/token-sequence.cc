@@ -135,9 +135,12 @@ TokenSequence &TokenSequence::ToLowerCase() {
       while (p < limit && IsDecimalDigit(*p)) {
         ++p;
       }
-      if (p < limit && (*p == 'h' || *p == 'H')) {
+      if (p >= limit) {
+      } else if (*p == 'h' || *p == 'H') {
         // Hollerith
         *p = 'h';
+      } else if (*p == '_') {
+        // kind-prefixed character literal (e.g., 1_"ABC")
       } else {
         // exponent
         for (; p < limit; ++p) {
@@ -153,7 +156,8 @@ TokenSequence &TokenSequence::ToLowerCase() {
           *p = ToLowerCaseLetter(*p);
         }
       } else {
-        // Kanji NC'...' character literal or literal with kind-param prefix.
+        // Kanji NC'...' character literal or literal with kind-param prefix
+        // name (e.g., K_"ABC").
         for (; *p != limit[-1]; ++p) {
           *p = ToLowerCaseLetter(*p);
         }
