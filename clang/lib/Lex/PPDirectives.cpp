@@ -2085,6 +2085,10 @@ void Preprocessor::HandleIncludeNextDirective(SourceLocation HashLoc,
     LookupFromFile = CurPPLexer->getFileEntry();
     Lookup = nullptr;
   } else if (!Lookup) {
+    // The current file was not found by walking the include path. Either it
+    // is the primary file (handled above), or it was found by absolute path,
+    // or it was found relative to such a file.
+    // FIXME: Track enough information so we know which case we're in.
     Diag(IncludeNextTok, diag::pp_include_next_absolute_path);
   } else {
     // Start looking up in the next directory.
