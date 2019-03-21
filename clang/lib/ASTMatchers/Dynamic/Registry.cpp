@@ -233,6 +233,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(has);
   REGISTER_MATCHER(hasAncestor);
   REGISTER_MATCHER(hasAnyArgument);
+  REGISTER_MATCHER(hasAnyClause);
   REGISTER_MATCHER(hasAnyConstructorInitializer);
   REGISTER_MATCHER(hasAnyDeclaration);
   REGISTER_MATCHER(hasAnyName);
@@ -331,6 +332,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(injectedClassNameType);
   REGISTER_MATCHER(innerType);
   REGISTER_MATCHER(integerLiteral);
+  REGISTER_MATCHER(isAllowedToContainClauseKind);
   REGISTER_MATCHER(isAnonymous);
   REGISTER_MATCHER(isAnyCharacter);
   REGISTER_MATCHER(isAnyPointer);
@@ -376,12 +378,14 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(isMoveConstructor);
   REGISTER_MATCHER(isNoReturn);
   REGISTER_MATCHER(isNoThrow);
+  REGISTER_MATCHER(isNoneKind);
   REGISTER_MATCHER(isOverride);
   REGISTER_MATCHER(isPrivate);
   REGISTER_MATCHER(isProtected);
   REGISTER_MATCHER(isPublic);
   REGISTER_MATCHER(isPure);
   REGISTER_MATCHER(isScoped);
+  REGISTER_MATCHER(isSharedKind);
   REGISTER_MATCHER(isSignedInteger);
   REGISTER_MATCHER(isStaticLocal);
   REGISTER_MATCHER(isStaticStorageClass);
@@ -434,6 +438,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(objcThrowStmt);
   REGISTER_MATCHER(objcTryStmt);
   REGISTER_MATCHER(ofClass);
+  REGISTER_MATCHER(ompDefaultClause);
   REGISTER_MATCHER(ompExecutableDirective);
   REGISTER_MATCHER(on);
   REGISTER_MATCHER(onImplicitObjectArgument);
