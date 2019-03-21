@@ -4773,6 +4773,7 @@ Address CGOpenMPRuntimeNVPTX::getAddressOfLocalVariable(CodeGenFunction &CGF,
   // UseDefaultAllocator ? Address::invalid :
   // CGOpenMPRuntime::getAddressOfLocalVariable(CGF, VD); when NVPTX libomp
   // supports __kmpc_alloc|__kmpc_free.
+  (void)UseDefaultAllocator; // Prevent a warning.
   return Address::invalid();
 }
 
