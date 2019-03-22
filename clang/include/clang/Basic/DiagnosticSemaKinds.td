@@ -9152,6 +9152,9 @@ def warn_omp_used_different_allocator : Warning<
   InGroup<OpenMPClauses>;
 def note_omp_previous_allocator : Note<
   "previous allocator is specified here">;
+def err_expected_allocator_clause : Error<"expected an 'allocator' clause "
+  "inside of the target region; provide an 'allocator' clause or use 'requires'"
+  " directive with the 'dynamic_allocators' clause">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {

@@ -2243,8 +2243,12 @@ Sema::DeclGroupPtrTy Sema::ActOnOpenMPAllocateDirective(
     ArrayRef<OMPClause *> Clauses, DeclContext *Owner) {
   assert(Clauses.size() <= 1 && "Expected at most one clause.");
   Expr *Allocator = nullptr;
-  if (!Clauses.empty())
+  if (Clauses.empty()) {
+    if (LangOpts.OpenMPIsDevice)
+      targetDiag(Loc, diag::err_expected_allocator_clause);
+  } else {
     Allocator = cast<OMPAllocatorClause>(Clauses.back())->getAllocator();
+  }
   OMPAllocateDeclAttr::AllocatorTypeTy AllocatorKind =
       getAllocatorKind(*this, DSAStack, Allocator);
   SmallVector<Expr *, 8> Vars;
