@@ -125,7 +125,7 @@ private:
   TrivialModuleLoader ModuleLoader;
 
   std::unique_ptr<HeaderSearch> HeaderInfo;
-  std::unique_ptr<Preprocessor> Preprocessor;
+  std::unique_ptr<Preprocessor> PP;
   bool EnteredMainFile = false;
   bool StartedLexing = false;
   Token CurrentToken;

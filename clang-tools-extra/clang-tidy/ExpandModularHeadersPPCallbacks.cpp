@@ -78,12 +78,12 @@ ExpandModularHeadersPPCallbacks::ExpandModularHeadersPPCallbacks(
   auto PO = std::make_shared<PreprocessorOptions>();
   *PO = Compiler.getPreprocessorOpts();
 
-  Preprocessor = llvm::make_unique<clang::Preprocessor>(
-      PO, Diags, LangOpts, Sources, *HeaderInfo, ModuleLoader,
-      /*IILookup=*/nullptr,
-      /*OwnsHeaderSearch=*/false);
-  Preprocessor->Initialize(Compiler.getTarget(), Compiler.getAuxTarget());
-  InitializePreprocessor(*Preprocessor, *PO, Compiler.getPCHContainerReader(),
+  PP = llvm::make_unique<clang::Preprocessor>(PO, Diags, LangOpts, Sources,
+                                              *HeaderInfo, ModuleLoader,
+                                              /*IILookup=*/nullptr,
+                                              /*OwnsHeaderSearch=*/false);
+  PP->Initialize(Compiler.getTarget(), Compiler.getAuxTarget());
+  InitializePreprocessor(*PP, *PO, Compiler.getPCHContainerReader(),
                          Compiler.getFrontendOpts());
   ApplyHeaderSearchOptions(*HeaderInfo, *HSO, LangOpts,
                            Compiler.getTarget().getTriple());
@@ -92,7 +92,7 @@ ExpandModularHeadersPPCallbacks::ExpandModularHeadersPPCallbacks(
 ExpandModularHeadersPPCallbacks::~ExpandModularHeadersPPCallbacks() = default;
 
 Preprocessor *ExpandModularHeadersPPCallbacks::getPreprocessor() const {
-  return Preprocessor.get();
+  return PP.get();
 }
 
 void ExpandModularHeadersPPCallbacks::handleModuleFile(
@@ -129,11 +129,11 @@ void ExpandModularHeadersPPCallbacks::parseToLocation(SourceLocation Loc) {
 
   if (!StartedLexing) {
     StartedLexing = true;
-    Preprocessor->Lex(CurrentToken);
+    PP->Lex(CurrentToken);
   }
   while (!CurrentToken.is(tok::eof) &&
          Sources.isBeforeInTranslationUnit(CurrentToken.getLocation(), Loc)) {
-    Preprocessor->Lex(CurrentToken);
+    PP->Lex(CurrentToken);
   }
 }
 
@@ -142,7 +142,7 @@ void ExpandModularHeadersPPCallbacks::FileChanged(
     SrcMgr::CharacteristicKind FileType, FileID PrevFID = FileID()) {
   if (!EnteredMainFile) {
     EnteredMainFile = true;
-    Preprocessor->EnterMainSourceFile();
+    PP->EnterMainSourceFile();
   }
 }
 
@@ -162,7 +162,7 @@ void ExpandModularHeadersPPCallbacks::InclusionDirective(
 
 void ExpandModularHeadersPPCallbacks::EndOfMainFile() {
   while (!CurrentToken.is(tok::eof))
-    Preprocessor->Lex(CurrentToken);
+    PP->Lex(CurrentToken);
 }
 
 // Handle all other callbacks.
