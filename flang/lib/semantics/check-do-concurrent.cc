@@ -450,8 +450,35 @@ public:
 private:
   bool ExpressionHasTypeCategory(const evaluate::GenericExprWrapper &expr,
       const common::TypeCategory &type) {
-    // TODO - implement
-    return false;
+    return std::visit(
+        common::visitors{
+            [](auto &) { return false; },
+            [=](const evaluate::Expr<
+                evaluate::SomeKind<common::TypeCategory::Integer>> &) {
+              return type == common::TypeCategory::Integer;
+            },
+            [=](const evaluate::Expr<
+                evaluate::SomeKind<common::TypeCategory::Real>> &) {
+              return type == common::TypeCategory::Real;
+            },
+            [=](const evaluate::Expr<
+                evaluate::SomeKind<common::TypeCategory::Complex>> &) {
+              return type == common::TypeCategory::Complex;
+            },
+            [=](const evaluate::Expr<
+                evaluate::SomeKind<common::TypeCategory::Character>> &) {
+              return type == common::TypeCategory::Character;
+            },
+            [=](const evaluate::Expr<
+                evaluate::SomeKind<common::TypeCategory::Logical>> &) {
+              return type == common::TypeCategory::Logical;
+            },
+            [=](const evaluate::Expr<
+                evaluate::SomeKind<common::TypeCategory::Derived>> &) {
+              return type == common::TypeCategory::Derived;
+            },
+        },
+        expr.v.u);
   }
   bool InnermostEnclosingScope(const semantics::Symbol &symbol) const {
     // TODO - implement
