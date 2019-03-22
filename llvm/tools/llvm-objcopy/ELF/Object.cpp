@@ -689,13 +689,6 @@ void GroupSection::markSymbols() {
     Sym->Referenced = true;
 }
 
-void GroupSection::replaceSectionReferences(
-    const DenseMap<SectionBase *, SectionBase *> &FromTo) {
-  for (SectionBase *&Sec : GroupMembers)
-    if (SectionBase *To = FromTo.lookup(Sec))
-      Sec = To;
-}
-
 void Section::initialize(SectionTableRef SecTable) {
   if (Link != ELF::SHN_UNDEF) {
     LinkSection =
