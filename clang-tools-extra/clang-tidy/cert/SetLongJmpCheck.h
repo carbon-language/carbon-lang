@@ -26,8 +26,6 @@ public:
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
   void registerPPCallbacks(CompilerInstance &Compiler) override;
-
-  static const char DiagWording[];
 };
 
 } // namespace cert

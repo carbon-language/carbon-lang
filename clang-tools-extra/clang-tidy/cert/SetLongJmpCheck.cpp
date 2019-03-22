@@ -19,10 +19,10 @@ namespace clang {
 namespace tidy {
 namespace cert {
 
-const char SetLongJmpCheck::DiagWording[] =
+namespace {
+const char DiagWording[] =
     "do not call %0; consider using exception handling instead";
 
-namespace {
 class SetJmpMacroCallbacks : public PPCallbacks {
   SetLongJmpCheck &Check;
 
@@ -36,7 +36,7 @@ public:
       return;
 
     if (II->getName() == "setjmp")
-      Check.diag(Range.getBegin(), Check.DiagWording) << II;
+      Check.diag(Range.getBegin(), DiagWording) << II;
   }
 };
 } // namespace
@@ -62,10 +62,10 @@ void SetLongJmpCheck::registerMatchers(MatchFinder *Finder) {
   // In case there is an implementation that happens to define setjmp as a
   // function instead of a macro, this will also catch use of it. However, we
   // are primarily searching for uses of longjmp.
-  Finder->addMatcher(callExpr(callee(functionDecl(anyOf(hasName("setjmp"),
-                                                        hasName("longjmp")))))
-                         .bind("expr"),
-                     this);
+  Finder->addMatcher(
+      callExpr(callee(functionDecl(hasAnyName("setjmp", "longjmp"))))
+          .bind("expr"),
+      this);
 }
 
 void SetLongJmpCheck::check(const MatchFinder::MatchResult &Result) {
