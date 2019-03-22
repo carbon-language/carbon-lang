@@ -561,7 +561,7 @@ TYPE_PARSER(construct<IntegerTypeSpec>("INTEGER" >> maybe(kindSelector)))
 TYPE_PARSER(construct<KindSelector>(
                 parenthesized(maybe("KIND ="_tok) >> scalarIntConstantExpr)) ||
     extension<LanguageFeature::StarKind>(construct<KindSelector>(
-        construct<KindSelector::StarSize>("*" >> digitString / spaceCheck))))
+        construct<KindSelector::StarSize>("*" >> digitString64 / spaceCheck))))
 
 // R707 signed-int-literal-constant -> [sign] int-literal-constant
 TYPE_PARSER(sourced(construct<SignedIntLiteralConstant>(
@@ -574,7 +574,7 @@ TYPE_PARSER(construct<IntLiteralConstant>(
     space >> digitString, maybe(underscore >> kindParam) / !underscore))
 
 // R709 kind-param -> digit-string | scalar-int-constant-name
-TYPE_PARSER(construct<KindParam>(digitString) ||
+TYPE_PARSER(construct<KindParam>(digitString64) ||
     construct<KindParam>(scalar(integer(constant(name)))))
 
 // R712 sign -> + | -
@@ -602,13 +602,12 @@ constexpr auto exponentPart{
 TYPE_CONTEXT_PARSER("REAL literal constant"_en_US,
     space >>
         construct<RealLiteralConstant>(
-            sourced(
-                (skipDigitString >> "."_ch >>
-                        !(some(letter) >>
-                            "."_ch /* don't misinterpret 1.AND. */) >>
-                        maybe(skipDigitString) >> maybe(exponentPart) >> ok ||
-                    "."_ch >> skipDigitString >> maybe(exponentPart) >> ok ||
-                    skipDigitString >> exponentPart >> ok) >>
+            sourced((digitString >> "."_ch >>
+                            !(some(letter) >>
+                                "."_ch /* don't misinterpret 1.AND. */) >>
+                            maybe(digitString) >> maybe(exponentPart) >> ok ||
+                        "."_ch >> digitString >> maybe(exponentPart) >> ok ||
+                        digitString >> exponentPart >> ok) >>
                 construct<RealLiteralConstant::Real>()),
             maybe(underscore >> kindParam)))
 
@@ -655,7 +654,7 @@ TYPE_PARSER(construct<LengthSelector>(
 
 // R723 char-length -> ( type-param-value ) | digit-string
 TYPE_PARSER(construct<CharLength>(parenthesized(typeParamValue)) ||
-    construct<CharLength>(space >> digitString / spaceCheck))
+    construct<CharLength>(space >> digitString64 / spaceCheck))
 
 // R724 char-literal-constant ->
 //        [kind-param _] ' [rep-char]... ' |

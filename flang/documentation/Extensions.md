@@ -60,6 +60,8 @@ Extensions, deletions, and legacy features supported by default
   need not begin with a comment marker (!).
 * Classic C-style /*comments*/ are skipped, so multi-language header
   files are easier to write and use.
+* $ and \ edit descriptors are supported in FORMAT to suppress newline
+  output on user prompts.
 
 Extensions supported when enabled by options
 --------------------------------------------

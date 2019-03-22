@@ -377,6 +377,40 @@ struct BOZLiteral {
 // R711 digit-string -> digit [digit]...
 // N.B. not a token -- no space is skipped
 constexpr struct DigitString {
+  using resultType = CharBlock;
+  static std::optional<resultType> Parse(ParseState &state) {
+    if (std::optional<const char *> ch1{state.PeekAtNextChar()}) {
+      if (IsDecimalDigit(**ch1)) {
+        state.UncheckedAdvance();
+        while (std::optional<const char *> p{state.PeekAtNextChar()}) {
+          if (!IsDecimalDigit(**p)) {
+            break;
+          }
+          state.UncheckedAdvance();
+        }
+        return CharBlock{*ch1, state.GetLocation()};
+      }
+    }
+    return std::nullopt;
+  }
+} digitString;
+
+struct SignedIntLiteralConstantWithoutKind {
+  using resultType = CharBlock;
+  static std::optional<resultType> Parse(ParseState &state) {
+    resultType result{state.GetLocation()};
+    static constexpr auto sign{maybe("+-"_ch / space)};
+    if (sign.Parse(state).has_value()) {
+      if (auto digits{digitString.Parse(state)}) {
+        result.ExtendToCover(*digits);
+        return result;
+      }
+    }
+    return std::nullopt;
+  }
+};
+
+constexpr struct DigitString64 {
   using resultType = std::uint64_t;
   static std::optional<std::uint64_t> Parse(ParseState &state) {
     std::optional<const char *> firstDigit{digit.Parse(state)};
@@ -402,26 +436,7 @@ constexpr struct DigitString {
     }
     return {value};
   }
-} digitString;
-
-constexpr struct SkipDigitString {
-  using resultType = Success;
-  static std::optional<Success> Parse(ParseState &state) {
-    if (std::optional<const char *> ch1{state.PeekAtNextChar()}) {
-      if (IsDecimalDigit(**ch1)) {
-        state.UncheckedAdvance();
-        while (std::optional<const char *> p{state.PeekAtNextChar()}) {
-          if (!IsDecimalDigit(**p)) {
-            break;
-          }
-          state.UncheckedAdvance();
-        }
-        return {Success{}};
-      }
-    }
-    return std::nullopt;
-  }
-} skipDigitString;
+} digitString64;
 
 // R707 signed-int-literal-constant -> [sign] int-literal-constant
 // N.B. Spaces are consumed before and after the sign, since the sign
@@ -444,22 +459,6 @@ static std::optional<std::int64_t> SignedInteger(
   return std::make_optional<std::int64_t>(negate ? -value : value);
 }
 
-struct SignedIntLiteralConstantWithoutKind {
-  using resultType = std::int64_t;
-  static std::optional<std::int64_t> Parse(ParseState &state) {
-    Location at{state.GetLocation()};
-    static constexpr auto minus{attempt("-"_tok)};
-    static constexpr auto plus{maybe("+"_tok)};
-    bool negate{false};
-    if (minus.Parse(state)) {
-      negate = true;
-    } else if (!plus.Parse(state).has_value()) {
-      return std::nullopt;
-    }
-    return SignedInteger(digitString.Parse(state), at, negate, state);
-  }
-};
-
 // R710 signed-digit-string -> [sign] digit-string
 // N.B. Not a complete token -- no space is skipped.
 // Used only in the exponent parts of real literal constants.
@@ -474,7 +473,7 @@ struct SignedDigitString {
     if (negate || **sign == '+') {
       state.UncheckedAdvance();
     }
-    return SignedInteger(digitString.Parse(state), *sign, negate, state);
+    return SignedInteger(digitString64.Parse(state), *sign, negate, state);
   }
 };
 

@@ -399,17 +399,38 @@ int ExpressionAnalyzer::AnalyzeKindParam(
 }
 
 // Common handling of parser::IntLiteralConstant and SignedIntLiteralConstant
+struct IntTypeVisitor {
+  using Result = MaybeExpr;
+  using Types = IntegerTypes;
+  template<typename T> Result Test() {
+    if (T::kind == kind) {
+      const char *p{digits.begin()};
+      auto value{T::Scalar::Read(p, 10, true)};
+      if (!value.overflow) {
+        return Expr<SomeType>{
+            Expr<SomeInteger>{Expr<T>{Constant<T>{std::move(value.value)}}}};
+      }
+    }
+    return std::nullopt;
+  }
+  parser::CharBlock digits;
+  int kind;
+};
+
 template<typename PARSED>
 MaybeExpr ExpressionAnalyzer::IntLiteralConstant(const PARSED &x) {
   int kind{AnalyzeKindParam(std::get<std::optional<parser::KindParam>>(x.t),
       GetDefaultKind(TypeCategory::Integer))};
-  auto value{std::get<0>(x.t)};  // std::(u)int64_t
-  if (!CheckIntrinsicKind(TypeCategory::Integer, kind)) {
-    return std::nullopt;
+  if (CheckIntrinsicKind(TypeCategory::Integer, kind)) {
+    auto digits{std::get<parser::CharBlock>(x.t)};
+    if (MaybeExpr result{common::SearchTypes(IntTypeVisitor{digits, kind})}) {
+      return result;
+    } else {
+      Say(digits, "Integer literal too large for INTEGER(KIND=%d)"_err_en_US,
+          kind);
+    }
   }
-  return common::SearchTypes(
-      TypeKindVisitor<TypeCategory::Integer, Constant, std::int64_t>{
-          kind, static_cast<std::int64_t>(value)});
+  return std::nullopt;
 }
 
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::IntLiteralConstant &x) {
@@ -587,7 +608,8 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::BOZLiteralConstant &x) {
   default: CRASH_NO_CASE;
   }
   CHECK(*p == '"');
-  auto value{BOZLiteralConstant::ReadUnsigned(++p, base)};
+  ++p;
+  auto value{BOZLiteralConstant::Read(p, base, false /*unsigned*/)};
   if (*p != '"') {
     Say("invalid digit ('%c') in BOZ literal %s"_err_en_US, *p, x.v.data());
     return std::nullopt;

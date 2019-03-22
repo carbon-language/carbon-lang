@@ -100,8 +100,8 @@ struct ControlEditDesc {
     RP,
     DC,
     DP,
-    Dollar,
-    Backslash,
+    Dollar,  // extension: inhibit newline on output
+    Backslash,  // ditto, but only on terminals
   };
   ControlEditDesc() = delete;
   ControlEditDesc(ControlEditDesc &&) = default;

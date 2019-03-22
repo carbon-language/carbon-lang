@@ -146,11 +146,11 @@ public:
         x.u);
   }
   void Unparse(const SignedIntLiteralConstant &x) {  // R707
-    Walk(std::get<std::int64_t>(x.t));
+    Put(std::get<CharBlock>(x.t).ToString());
     Walk("_", std::get<std::optional<KindParam>>(x.t));
   }
   void Unparse(const IntLiteralConstant &x) {  // R708
-    Walk(std::get<std::uint64_t>(x.t));
+    Put(std::get<CharBlock>(x.t).ToString());
     Walk("_", std::get<std::optional<KindParam>>(x.t));
   }
   void Unparse(const Sign &x) {  // R712

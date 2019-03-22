@@ -735,13 +735,13 @@ struct KindParam {
 struct SignedIntLiteralConstant {
   TUPLE_CLASS_BOILERPLATE(SignedIntLiteralConstant);
   CharBlock source;
-  std::tuple<std::int64_t, std::optional<KindParam>> t;
+  std::tuple<CharBlock, std::optional<KindParam>> t;
 };
 
 // R708 int-literal-constant -> digit-string [_ kind-param]
 struct IntLiteralConstant {
   TUPLE_CLASS_BOILERPLATE(IntLiteralConstant);
-  std::tuple<std::uint64_t, std::optional<KindParam>> t;
+  std::tuple<CharBlock, std::optional<KindParam>> t;
 };
 
 // R712 sign -> + | -
