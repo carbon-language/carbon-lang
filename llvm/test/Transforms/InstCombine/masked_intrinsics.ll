@@ -94,7 +94,7 @@ define <2 x double> @gather_zeromask(<2 x double*> %ptrs, <2 x double> %passthru
 ; CHECK-LABEL: @gather_zeromask(
 ; CHECK-NEXT:    ret <2 x double> [[PASSTHRU:%.*]]
 ;
-  %res = call <2 x double> @llvm.masked.gather.v2f64.v2p0f64(<2 x double*> %ptrs, i32 5, <2 x i1> zeroinitializer, <2 x double> %passthru)
+  %res = call <2 x double> @llvm.masked.gather.v2f64.v2p0f64(<2 x double*> %ptrs, i32 4, <2 x i1> zeroinitializer, <2 x double> %passthru)
   ret <2 x double> %res
 
 }
@@ -102,10 +102,10 @@ define <2 x double> @gather_zeromask(<2 x double*> %ptrs, <2 x double> %passthru
 
 define <2 x double> @gather_onemask(<2 x double*> %ptrs, <2 x double> %passthru)  {
 ; CHECK-LABEL: @gather_onemask(
-; CHECK-NEXT:    [[RES:%.*]] = call <2 x double> @llvm.masked.gather.v2f64.v2p0f64(<2 x double*> [[PTRS:%.*]], i32 5, <2 x i1> <i1 true, i1 true>, <2 x double> undef)
+; CHECK-NEXT:    [[RES:%.*]] = call <2 x double> @llvm.masked.gather.v2f64.v2p0f64(<2 x double*> [[PTRS:%.*]], i32 4, <2 x i1> <i1 true, i1 true>, <2 x double> undef)
 ; CHECK-NEXT:    ret <2 x double> [[RES]]
 ;
-  %res = call <2 x double> @llvm.masked.gather.v2f64.v2p0f64(<2 x double*> %ptrs, i32 5, <2 x i1> <i1 true, i1 true>, <2 x double> %passthru)
+  %res = call <2 x double> @llvm.masked.gather.v2f64.v2p0f64(<2 x double*> %ptrs, i32 4, <2 x i1> <i1 true, i1 true>, <2 x double> %passthru)
   ret <2 x double> %res
 
 }
@@ -114,13 +114,13 @@ define <2 x double> @gather_lane0(double* %base, double %pt)  {
 ; CHECK-LABEL: @gather_lane0(
 ; CHECK-NEXT:    [[PTRS:%.*]] = getelementptr double, double* [[BASE:%.*]], <2 x i64> <i64 0, i64 undef>
 ; CHECK-NEXT:    [[PT_V2:%.*]] = insertelement <2 x double> undef, double [[PT:%.*]], i64 1
-; CHECK-NEXT:    [[RES:%.*]] = call <2 x double> @llvm.masked.gather.v2f64.v2p0f64(<2 x double*> [[PTRS]], i32 5, <2 x i1> <i1 true, i1 false>, <2 x double> [[PT_V2]])
+; CHECK-NEXT:    [[RES:%.*]] = call <2 x double> @llvm.masked.gather.v2f64.v2p0f64(<2 x double*> [[PTRS]], i32 4, <2 x i1> <i1 true, i1 false>, <2 x double> [[PT_V2]])
 ; CHECK-NEXT:    ret <2 x double> [[RES]]
 ;
   %ptrs = getelementptr double, double *%base, <2 x i64> <i64 0, i64 1>
   %pt_v1 = insertelement <2 x double> undef, double %pt, i64 0
   %pt_v2 = insertelement <2 x double> %pt_v1, double %pt, i64 1
-  %res = call <2 x double> @llvm.masked.gather.v2f64.v2p0f64(<2 x double*> %ptrs, i32 5, <2 x i1> <i1 true, i1 false>, <2 x double> %pt_v2)
+  %res = call <2 x double> @llvm.masked.gather.v2f64.v2p0f64(<2 x double*> %ptrs, i32 4, <2 x i1> <i1 true, i1 false>, <2 x double> %pt_v2)
   ret <2 x double> %res
 
 }
