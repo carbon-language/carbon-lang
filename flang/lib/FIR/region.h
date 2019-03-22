@@ -47,7 +47,7 @@ public:
   iterator end() { return subregionList_.end(); }
   const_iterator end() const { return subregionList_.end(); }
   Region *GetEnclosing() const { return enclosingRegion_; }
-  bool IsOutermost() const { return GetEnclosing() == nullptr; }
+  bool IsOutermost() const { return !GetEnclosing(); }
   static Region *Create(Procedure *procedure, Scope *scope = nullptr,
       Region *inRegion = nullptr, Region *insertBefore = nullptr) {
     return new Region(procedure, scope, inRegion, insertBefore);

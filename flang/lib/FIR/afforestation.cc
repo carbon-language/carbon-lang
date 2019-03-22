@@ -159,13 +159,12 @@ static std::vector<SwitchTypeStmt::ValueType> populateSwitchValues(
         std::get<parser::Statement<parser::TypeGuardStmt>>(v.t).statement.t)};
     std::visit(
         common::visitors{
-            [&](const parser::TypeSpec &typeSpec) {
-              result.emplace_back(
-                  SwitchTypeStmt::TypeSpec{typeSpec.declTypeSpec});
+            [&](const parser::TypeSpec &spec) {
+              result.emplace_back(SwitchTypeStmt::TypeSpec{spec.declTypeSpec});
             },
-            [&](const parser::DerivedTypeSpec &derivedTypeSpec) {
+            [&](const parser::DerivedTypeSpec &spec) {
               result.emplace_back(
-                  SwitchTypeStmt::DerivedTypeSpec{nullptr /*FIXME*/});
+                  SwitchTypeStmt::DerivedTypeSpec{nullptr /* FIXME */});
             },
             [&](const parser::Default &) {
               result.emplace_back(SwitchTypeStmt::Default{});
@@ -244,6 +243,33 @@ static Expression getLocalVariable(Statement *s) {
   return GetLocal(s)->variable();
 }
 
+// create a new temporary name (as heap garbage)
+static parser::CharBlock NewTemporaryName() {
+  constexpr int SizeMagicValue{32};
+  static int counter;
+  char cache[SizeMagicValue];
+  int bytesWritten{snprintf(cache, SizeMagicValue, ".t%d", counter++)};
+  CHECK(bytesWritten < SizeMagicValue);
+  auto len{strlen(cache)};
+  char *name{new char[len]};  // XXX: add these to a pool?
+  memcpy(name, cache, len);
+  return {name, name + len};
+}
+
+static TypeRep GetDefaultIntegerType() {
+  return {semantics::NumericTypeSpec{evaluate::SubscriptInteger::category,
+      AsExpr(evaluate::Constant<evaluate::SubscriptInteger>{
+          evaluate::SubscriptInteger::kind})}};
+}
+
+#if 0
+static TypeRep GetDefaultLogicalType() {
+  return {semantics::LogicalTypeSpec{
+      AsExpr(evaluate::Constant<evaluate::SubscriptInteger>{
+          evaluate::LogicalResult::kind})}};
+}
+#endif
+
 class FortranIRLowering {
 public:
   using LabelMapType = std::map<flat::LabelRef, BasicBlock *>;
@@ -304,6 +330,21 @@ public:
     return evaluate::AsGenericExpr(evaluate::Relate(
         context.GetContextualMessages(), op, std::move(e1), std::move(e2))
                                        .value());
+  }
+  parser::Name MakeTemp(Type tempType) {
+    auto name{NewTemporaryName()};
+    auto details{semantics::ObjectEntityDetails{true}};
+    details.set_type(std::move(*tempType));
+    auto *sym{&semanticsContext_.globalScope().MakeSymbol(
+        name, {}, std::move(details))};
+    return {name, sym};
+  }
+  Statement *CreateTemp(TypeRep &&spec) {
+    TypeRep declSpec{std::move(spec)};
+    auto temp{MakeTemp(&declSpec)};
+    auto expr{ToExpression(temp)};
+    auto *localType{temp.symbol->get<semantics::ObjectEntityDetails>().type()};
+    return builder_->CreateLocal(localType, expr);
   }
 
   template<typename T>
@@ -838,8 +879,9 @@ public:
     Statement *stepExpr;
     Statement *condition;
   };
-  void PushDoContext(const parser::NonLabelDoStmt *doStmt, Statement *doVar,
-      Statement *counter, Statement *stepExp) {
+  void PushDoContext(const parser::NonLabelDoStmt *doStmt,
+      Statement *doVar = nullptr, Statement *counter = nullptr,
+      Statement *stepExp = nullptr) {
     doMap_.emplace(doStmt, DoBoundsInfo{doVar, counter, stepExp});
   }
   void PopDoContext(const parser::NonLabelDoStmt *doStmt) {
@@ -856,25 +898,33 @@ public:
     return nullptr;
   }
 
-  // evaluate: do_var = do_var + e3; counter--
   void handleLinearDoIncrement(const flat::DoIncrementOp &inc) {
     auto *info{GetBoundsInfo(inc)};
-    auto *incremented{builder_->CreateExpr(std::move(
-        ConsExpr<evaluate::Add>(GetAddressable(info->doVariable)->address(),
-            GetApplyExpr(info->stepExpr)->expression())))};
-    builder_->CreateStore(info->doVariable, incremented);
-    auto *decremented{builder_->CreateExpr(ConsExpr<evaluate::Subtract>(
-        GetAddressable(info->counter)->address(), CreateConstant(1)))};
-    builder_->CreateStore(info->counter, decremented);
+    if (info->doVariable) {
+      if (info->stepExpr) {
+        // evaluate: do_var = do_var + e3; counter--
+        auto *incremented{builder_->CreateExpr(
+            ConsExpr<evaluate::Add>(GetAddressable(info->doVariable)->address(),
+                GetApplyExpr(info->stepExpr)->expression()))};
+        builder_->CreateStore(info->doVariable, incremented);
+        auto *decremented{builder_->CreateExpr(ConsExpr<evaluate::Subtract>(
+            GetAddressable(info->counter)->address(), CreateConstant(1)))};
+        builder_->CreateStore(info->counter, decremented);
+      }
+    }
   }
 
   // is (counter > 0)?
   void handleLinearDoCompare(const flat::DoCompareOp &cmp) {
     auto *info{GetBoundsInfo(cmp)};
-    Expression compare{ConsExpr(common::RelationalOperator::GT,
-        getLocalVariable(info->counter), CreateConstant(0))};
-    auto *cond{builder_->CreateExpr(&compare)};
-    info->condition = cond;
+    if (info->doVariable) {
+      if (info->stepExpr) {
+        Expression compare{ConsExpr(common::RelationalOperator::GT,
+            getLocalVariable(info->counter), CreateConstant(0))};
+        auto *cond{builder_->CreateExpr(&compare)};
+        info->condition = cond;
+      }
+    }
   }
 
   // InitiateConstruct - many constructs require some initial setup
@@ -933,7 +983,8 @@ public:
                 }
                 // name <- e1
                 builder_->CreateStore(name, e1);
-                auto *tripCounter{builder_->CreateLocal(nullptr)};
+                auto *tripCounter{CreateTemp(GetDefaultIntegerType())};
+                // See 11.1.7.4.1, para. 1, item (3)
                 // totalTrips ::= iteration count = a
                 //   where a = (e2 - e1 + e3) / e3 if a > 0 and 0 otherwise
                 Expression tripExpr{ConsExpr<evaluate::Divide>(
@@ -946,16 +997,20 @@ public:
                 builder_->CreateStore(tripCounter, totalTrips);
                 PushDoContext(stmt, name, tripCounter, e3);
               },
-              [&](const parser::ScalarLogicalExpr &whileExpr) {
-                // FIXME
+              [&](const parser::ScalarLogicalExpr &expr) {
+                // See 11.1.7.4.1, para. 2
+                // See BuildLoopLatchExpression()
+                PushDoContext(stmt);
               },
               [&](const parser::LoopControl::Concurrent &cc) {
+                // See 11.1.7.4.2
                 // FIXME
               },
           },
           ctrl->u);
     } else {
-      // loop forever
+      // loop forever (See 11.1.7.4.1, para. 2)
+      PushDoContext(stmt);
     }
   }
 
@@ -1299,7 +1354,7 @@ public:
           [](FIRBuilder *builder, BasicBlock *block, flat::LabelRef dest,
               const LabelMapType &map) {
             builder->SetInsertionPoint(block);
-            CHECK(map.find(dest) != map.end());
+            CHECK(map.find(dest) != map.end() && "no destination");
             builder->CreateBranch(map.find(dest)->second);
           },
           builder_, builder_->GetInsertionPoint(), dest, _1));

@@ -540,6 +540,12 @@ struct ControlFlowAnalyzer {
     }
     return true;
   }
+  template<typename A>
+  void appendIfLabeled(const parser::Statement<A> &stmt, std::list<Op> &ops) {
+    if (stmt.label) {
+      ops.emplace_back(findLabel(*stmt.label));
+    }
+  }
 
   // named constructs
   template<typename A> bool linearConstruct(const A &construct) {
@@ -547,10 +553,12 @@ struct ControlFlowAnalyzer {
     LabelOp label{buildNewLabel()};
     const parser::Name *name{getName(construct)};
     ad.nameStack.emplace_back(name, GetLabelRef(label), unspecifiedLabel);
+    appendIfLabeled(std::get<0>(construct.t), ops);
     ops.emplace_back(BeginOp{construct});
     ControlFlowAnalyzer cfa{ops, ad};
     Walk(std::get<parser::Block>(construct.t), cfa);
     ops.emplace_back(label);
+    appendIfLabeled(std::get<2>(construct.t), ops);
     ops.emplace_back(EndOp{construct});
     linearOps.splice(linearOps.end(), ops);
     ad.nameStack.pop_back();
@@ -569,9 +577,13 @@ struct ControlFlowAnalyzer {
             .statement.v};
     const parser::Name *name{optName ? &*optName : nullptr};
     ad.nameStack.emplace_back(name, GetLabelRef(label), unspecifiedLabel);
+    appendIfLabeled(
+        std::get<parser::Statement<parser::BlockStmt>>(construct.t), ops);
     ops.emplace_back(BeginOp{construct});
     ControlFlowAnalyzer cfa{ops, ad};
     Walk(std::get<parser::Block>(construct.t), cfa);
+    appendIfLabeled(
+        std::get<parser::Statement<parser::EndBlockStmt>>(construct.t), ops);
     ops.emplace_back(EndOp{construct});
     ops.emplace_back(label);
     linearOps.splice(linearOps.end(), ops);
@@ -588,6 +600,8 @@ struct ControlFlowAnalyzer {
     const parser::Name *name{getName(construct)};
     LabelRef exitOpRef{GetLabelRef(exitLab)};
     ad.nameStack.emplace_back(name, exitOpRef, GetLabelRef(incrementLab));
+    appendIfLabeled(
+        std::get<parser::Statement<parser::NonLabelDoStmt>>(construct.t), ops);
     ops.emplace_back(BeginOp{construct});
     ops.emplace_back(GotoOp{GetLabelRef(backedgeLab)});
     ops.emplace_back(incrementLab);
@@ -600,6 +614,8 @@ struct ControlFlowAnalyzer {
     ops.push_back(entryLab);
     ControlFlowAnalyzer cfa{ops, ad};
     Walk(std::get<parser::Block>(construct.t), cfa);
+    appendIfLabeled(
+        std::get<parser::Statement<parser::EndDoStmt>>(construct.t), ops);
     ops.emplace_back(GotoOp{GetLabelRef(incrementLab)});
     ops.emplace_back(EndOp{construct});
     ops.emplace_back(exitLab);
@@ -615,6 +631,8 @@ struct ControlFlowAnalyzer {
     LabelOp exitLab{buildNewLabel()};
     const parser::Name *name{getName(construct)};
     ad.nameStack.emplace_back(name, GetLabelRef(exitLab), unspecifiedLabel);
+    appendIfLabeled(
+        std::get<parser::Statement<parser::IfThenStmt>>(construct.t), ops);
     ops.emplace_back(BeginOp{construct});
     ops.emplace_back(ConditionalGotoOp{
         std::get<parser::Statement<parser::IfThenStmt>>(construct.t),
@@ -626,6 +644,8 @@ struct ControlFlowAnalyzer {
     ops.emplace_back(GotoOp{exitOpRef});
     for (const auto &elseIfBlock :
         std::get<std::list<parser::IfConstruct::ElseIfBlock>>(construct.t)) {
+      appendIfLabeled(
+          std::get<parser::Statement<parser::ElseIfStmt>>(elseIfBlock.t), ops);
       ops.emplace_back(elseLab);
       LabelOp newThenLab{buildNewLabel()};
       LabelOp newElseLab{buildNewLabel()};
@@ -641,10 +661,14 @@ struct ControlFlowAnalyzer {
     if (const auto &optElseBlock{
             std::get<std::optional<parser::IfConstruct::ElseBlock>>(
                 construct.t)}) {
+      appendIfLabeled(
+          std::get<parser::Statement<parser::ElseStmt>>(optElseBlock->t), ops);
       Walk(std::get<parser::Block>(optElseBlock->t), cfa);
     }
     ops.emplace_back(GotoOp{exitOpRef});
     ops.emplace_back(exitLab);
+    appendIfLabeled(
+        std::get<parser::Statement<parser::EndIfStmt>>(construct.t), ops);
     ops.emplace_back(EndOp{construct});
     linearOps.splice(linearOps.end(), ops);
     ad.nameStack.pop_back();
@@ -657,6 +681,7 @@ struct ControlFlowAnalyzer {
     LabelOp exitLab{buildNewLabel()};
     const parser::Name *name{getName(construct)};
     ad.nameStack.emplace_back(name, GetLabelRef(exitLab), unspecifiedLabel);
+    appendIfLabeled(std::get<0>(construct.t), ops);
     ops.emplace_back(BeginOp{construct});
     const auto N{std::get<std::list<B>>(construct.t).size()};
     LabelRef exitOpRef{GetLabelRef(exitLab)};
@@ -676,11 +701,13 @@ struct ControlFlowAnalyzer {
       i = 0;
       for (const auto &caseBlock : std::get<std::list<B>>(construct.t)) {
         ops.emplace_back(toLabels[i++]);
+        appendIfLabeled(std::get<0>(caseBlock.t), ops);
         Walk(std::get<parser::Block>(caseBlock.t), cfa);
         ops.emplace_back(GotoOp{exitOpRef});
       }
     }
     ops.emplace_back(exitLab);
+    appendIfLabeled(std::get<2>(construct.t), ops);
     ops.emplace_back(EndOp{construct});
     linearOps.splice(linearOps.end(), ops);
     ad.nameStack.pop_back();
@@ -696,6 +723,8 @@ struct ControlFlowAnalyzer {
     LabelOp label{buildNewLabel()};
     const parser::Name *name{getName(c)};
     ad.nameStack.emplace_back(name, GetLabelRef(label), unspecifiedLabel);
+    appendIfLabeled(
+        std::get<parser::Statement<parser::WhereConstructStmt>>(c.t), ops);
     ops.emplace_back(BeginOp{c});
     ControlFlowAnalyzer cfa{ops, ad};
     Walk(std::get<std::list<parser::WhereBodyConstruct>>(c.t), cfa);
@@ -703,6 +732,8 @@ struct ControlFlowAnalyzer {
         std::get<std::list<parser::WhereConstruct::MaskedElsewhere>>(c.t), cfa);
     Walk(std::get<std::optional<parser::WhereConstruct::Elsewhere>>(c.t), cfa);
     ops.emplace_back(label);
+    appendIfLabeled(
+        std::get<parser::Statement<parser::EndWhereStmt>>(c.t), ops);
     ops.emplace_back(EndOp{c});
     linearOps.splice(linearOps.end(), ops);
     ad.nameStack.pop_back();
@@ -714,10 +745,15 @@ struct ControlFlowAnalyzer {
     LabelOp label{buildNewLabel()};
     const parser::Name *name{getName(construct)};
     ad.nameStack.emplace_back(name, GetLabelRef(label), unspecifiedLabel);
+    appendIfLabeled(
+        std::get<parser::Statement<parser::ForallConstructStmt>>(construct.t),
+        ops);
     ops.emplace_back(BeginOp{construct});
     ControlFlowAnalyzer cfa{ops, ad};
     Walk(std::get<std::list<parser::ForallBodyConstruct>>(construct.t), cfa);
     ops.emplace_back(label);
+    appendIfLabeled(
+        std::get<parser::Statement<parser::EndForallStmt>>(construct.t), ops);
     ops.emplace_back(EndOp{construct});
     linearOps.splice(linearOps.end(), ops);
     ad.nameStack.pop_back();

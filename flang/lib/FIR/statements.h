@@ -55,7 +55,7 @@ public:
 };
 
 // Every basic block must end in a terminator
-class TerminatorStmt_impl : public Stmt_impl {
+class TerminatorStmt_impl : virtual public Stmt_impl {
 public:
   virtual std::list<BasicBlock *> succ_blocks() const = 0;
   virtual ~TerminatorStmt_impl() = default;
@@ -68,7 +68,7 @@ public:
   static ReturnStmt Create(Statement *stmt) { return ReturnStmt{stmt}; }
   static ReturnStmt Create() { return ReturnStmt{nullptr}; }
   std::list<BasicBlock *> succ_blocks() const override { return {}; }
-  bool has_value() const { return value_ != nullptr; }
+  bool has_value() const { return value_; }
   Statement *value() const;
 
 private:
@@ -250,7 +250,7 @@ private:
   explicit UnreachableStmt() = default;
 };
 
-class ActionStmt_impl : public Stmt_impl {
+class ActionStmt_impl : virtual public Stmt_impl {
 public:
   using ActionTrait = std::true_type;
 
@@ -331,7 +331,7 @@ public:
     return DeallocateInsn{alloc};
   }
 
-  AllocateInsn *alloc() { return alloc_; }
+  Statement *alloc() const;
 
 private:
   explicit DeallocateInsn(AllocateInsn *alloc) : alloc_{alloc} {}
@@ -343,22 +343,17 @@ private:
 class AllocateLocalInsn : public Addressable_impl, public MemoryStmt_impl {
 public:
   static AllocateLocalInsn Create(
-      Type type, int alignment = 0, Expression *expr = nullptr) {
-    if (expr != nullptr) {
-      return AllocateLocalInsn{type, alignment, *expr};
-    }
-    return AllocateLocalInsn{type, alignment};
+      Type type, const Expression &expr, int alignment = 0) {
+    return AllocateLocalInsn{type, alignment, expr};
   }
 
   Type type() const { return type_; }
   int alignment() const { return alignment_; }
-  Expression variable() { return addrExpr_.value(); }
+  Expression variable() const { return addrExpr_.value(); }
 
 private:
   explicit AllocateLocalInsn(Type type, int alignment, const Expression &expr)
     : Addressable_impl{expr}, type_{type}, alignment_{alignment} {}
-  explicit AllocateLocalInsn(Type type, int alignment)
-    : type_{type}, alignment_{alignment} {}
 
   Type type_;
   int alignment_;
@@ -371,6 +366,8 @@ public:
   static LoadInsn Create(Value &&addr) { return LoadInsn{addr}; }
   static LoadInsn Create(Statement *addr) { return LoadInsn{addr}; }
 
+  Value address() const { return address_; }
+
 private:
   explicit LoadInsn(const Value &addr);
   explicit LoadInsn(Value &&addr);
@@ -381,12 +378,17 @@ private:
 // Store value(s) from an applied expression to a location
 class StoreInsn : public MemoryStmt_impl {
 public:
+  using ValueType =
+      std::variant<Value, ApplyExprStmt *, Addressable_impl *, BasicBlock *>;
   template<typename T> static StoreInsn Create(T *addr, T *value) {
     return StoreInsn{addr, value};
   }
   template<typename T> static StoreInsn Create(T *addr, BasicBlock *value) {
     return StoreInsn{addr, value};
   }
+
+  Addressable_impl *address() const { return address_; }
+  ValueType value() const { return value_; }
 
 private:
   explicit StoreInsn(Value addr, Value val);
@@ -395,7 +397,7 @@ private:
   explicit StoreInsn(Statement *addr, BasicBlock *val);
 
   Addressable_impl *address_;
-  std::variant<Value, ApplyExprStmt *, Addressable_impl *, BasicBlock *> value_;
+  ValueType value_;
 };
 
 // NULLIFY - make pointer object disassociated
@@ -576,6 +578,9 @@ inline std::list<BasicBlock *> succ_list(BasicBlock &block) {
 }
 
 inline Statement *ReturnStmt::value() const { return Statement::From(value_); }
+inline Statement *DeallocateInsn::alloc() const {
+  return Statement::From(alloc_);
+}
 
 inline ApplyExprStmt *GetApplyExpr(Statement *stmt) {
   return std::get_if<ApplyExprStmt>(&stmt->u);
@@ -586,6 +591,12 @@ inline AllocateLocalInsn *GetLocal(Statement *stmt) {
 }
 
 Addressable_impl *GetAddressable(Statement *stmt);
+
+template<typename A> std::string ToString(const A *a) {
+  std::stringstream ss;
+  ss << std::hex << reinterpret_cast<std::intptr_t>(a);
+  return ss.str();
+}
 }
 
 #endif  // FORTRAN_FIR_STATEMENTS_H_

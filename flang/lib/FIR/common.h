@@ -73,7 +73,8 @@ using PathVariable = const parser::Variable;
 using Scope = const semantics::Scope;
 using PHIPair = std::pair<Value, BasicBlock *>;
 using CallArguments = std::vector<Expression>;
-using Type = const semantics::DeclTypeSpec *;  // FIXME
+using TypeRep = semantics::DeclTypeSpec;  // FIXME
+using Type = const TypeRep *;
 
 enum InputOutputCallType {
   InputOutputCallBackspace = 11,

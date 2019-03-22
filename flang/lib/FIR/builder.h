@@ -85,9 +85,8 @@ struct FIRBuilder {
   Statement *CreateLoad(Statement *addr) {
     return Insert(LoadInsn::Create(addr));
   }
-  Statement *CreateLocal(
-      Type type, int alignment = 0, Expression *expr = nullptr) {
-    return Insert(AllocateLocalInsn::Create(type, alignment, expr));
+  Statement *CreateLocal(Type type, const Expression &expr, int alignment = 0) {
+    return Insert(AllocateLocalInsn::Create(type, expr, alignment));
   }
   Statement *CreateNullify(Statement *s) {
     return Insert(DisassociateInsn::Create(s));

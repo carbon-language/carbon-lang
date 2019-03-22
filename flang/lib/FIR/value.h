@@ -34,10 +34,19 @@ public:
   template<typename A> Value(A *a) : SumTypeCopyMixin{a} {}
   Value(const Nothing &n) : SumTypeCopyMixin{n} {}
   Value() : SumTypeCopyMixin{NOTHING} {}
+  std::string dump() const;
 };
 
 inline bool IsNothing(Value value) {
   return std::holds_alternative<Nothing>(value.u);
+}
+
+inline bool IsStatement(Value value) {
+  return std::holds_alternative<Statement *>(value.u);
+}
+
+inline bool IsBasicBlock(Value value) {
+  return std::holds_alternative<BasicBlock *>(value.u);
 }
 }
 

@@ -98,8 +98,7 @@ void GraphWriter::dump(BasicBlock &block, std::optional<const char *> color) {
   if (isEntry_) {
     output_ << "<<ENTRY>>\\n";
   }
-  output_ << block_id(block) << '(' << reinterpret_cast<std::intptr_t>(&block)
-          << ")\\n";
+  output_ << block_id(block) << '(' << ToString(&block) << ")\\n";
   for (auto &action : block.getSublist(static_cast<Statement *>(nullptr))) {
     output_ << action.dump() << "\\n";
   }
