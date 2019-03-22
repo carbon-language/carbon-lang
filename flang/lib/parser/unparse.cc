@@ -1502,6 +1502,8 @@ public:
       FMT(DC);
       FMT(DP);
 #undef FMT
+    case format::ControlEditDesc::Kind::Dollar: Put('$'); break;
+    case format::ControlEditDesc::Kind::Backslash: Put('\\'); break;
     default: CRASH_NO_CASE;
     }
   }
