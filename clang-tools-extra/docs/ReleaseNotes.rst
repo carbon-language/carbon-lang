@@ -67,6 +67,10 @@ The improvements are...
 Improvements to clang-tidy
 --------------------------
 
+- New OpenMP module.
+
+  For checks specific to `OpenMP <https://www.openmp.org/>`_ API.
+
 - New :doc:`abseil-duration-addition
   <clang-tidy/checks/abseil-duration-addition>` check.
 
