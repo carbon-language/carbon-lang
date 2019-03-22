@@ -132,6 +132,9 @@ SITargetLowering::SITargetLowering(const TargetMachine &TM,
   addRegisterClass(MVT::v4i32, &AMDGPU::SReg_128RegClass);
   addRegisterClass(MVT::v4f32, &AMDGPU::VReg_128RegClass);
 
+  addRegisterClass(MVT::v5i32, &AMDGPU::SGPR_160RegClass);
+  addRegisterClass(MVT::v5f32, &AMDGPU::VReg_160RegClass);
+
   addRegisterClass(MVT::v8i32, &AMDGPU::SReg_256RegClass);
   addRegisterClass(MVT::v8f32, &AMDGPU::VReg_256RegClass);
 
@@ -155,6 +158,7 @@ SITargetLowering::SITargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::LOAD, MVT::v2i32, Custom);
   setOperationAction(ISD::LOAD, MVT::v3i32, Custom);
   setOperationAction(ISD::LOAD, MVT::v4i32, Custom);
+  setOperationAction(ISD::LOAD, MVT::v5i32, Custom);
   setOperationAction(ISD::LOAD, MVT::v8i32, Custom);
   setOperationAction(ISD::LOAD, MVT::v16i32, Custom);
   setOperationAction(ISD::LOAD, MVT::i1, Custom);
@@ -163,6 +167,7 @@ SITargetLowering::SITargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::STORE, MVT::v2i32, Custom);
   setOperationAction(ISD::STORE, MVT::v3i32, Custom);
   setOperationAction(ISD::STORE, MVT::v4i32, Custom);
+  setOperationAction(ISD::STORE, MVT::v5i32, Custom);
   setOperationAction(ISD::STORE, MVT::v8i32, Custom);
   setOperationAction(ISD::STORE, MVT::v16i32, Custom);
   setOperationAction(ISD::STORE, MVT::i1, Custom);
@@ -335,6 +340,12 @@ SITargetLowering::SITargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::INSERT_SUBVECTOR, MVT::v3f32, Expand);
   setOperationAction(ISD::INSERT_SUBVECTOR, MVT::v4i32, Expand);
   setOperationAction(ISD::INSERT_SUBVECTOR, MVT::v4f32, Expand);
+
+  // Deal with vec5 vector operations when widened to vec8.
+  setOperationAction(ISD::INSERT_SUBVECTOR, MVT::v5i32, Expand);
+  setOperationAction(ISD::INSERT_SUBVECTOR, MVT::v5f32, Expand);
+  setOperationAction(ISD::INSERT_SUBVECTOR, MVT::v8i32, Expand);
+  setOperationAction(ISD::INSERT_SUBVECTOR, MVT::v8f32, Expand);
 
   // BUFFER/FLAT_ATOMIC_CMP_SWAP on GCN GPUs needs input marshalling,
   // and output demarshalling
@@ -9688,6 +9699,9 @@ SITargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
       case 128:
         RC = &AMDGPU::SReg_128RegClass;
         break;
+      case 160:
+        RC = &AMDGPU::SReg_160RegClass;
+        break;
       case 256:
         RC = &AMDGPU::SReg_256RegClass;
         break;
@@ -9712,6 +9726,9 @@ SITargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
         break;
       case 128:
         RC = &AMDGPU::VReg_128RegClass;
+        break;
+      case 160:
+        RC = &AMDGPU::VReg_160RegClass;
         break;
       case 256:
         RC = &AMDGPU::VReg_256RegClass;
