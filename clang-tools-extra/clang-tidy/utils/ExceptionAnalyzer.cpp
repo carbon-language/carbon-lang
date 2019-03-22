@@ -205,7 +205,7 @@ ExceptionAnalyzer::ExceptionInfo ExceptionAnalyzer::throwsException(
 }
 
 ExceptionAnalyzer::ExceptionInfo
-ExceptionAnalyzer::analyze(const FunctionDecl *Func) {
+ExceptionAnalyzer::analyzeImpl(const FunctionDecl *Func) {
   ExceptionInfo ExceptionList;
 
   // Check if the function has already been analyzed and reuse that result.
@@ -221,6 +221,14 @@ ExceptionAnalyzer::analyze(const FunctionDecl *Func) {
   } else
     ExceptionList = FunctionCache[Func];
 
+  return ExceptionList;
+}
+
+template <typename T>
+ExceptionAnalyzer::ExceptionInfo
+ExceptionAnalyzer::analyzeDispatch(const T *Node) {
+  ExceptionInfo ExceptionList = analyzeImpl(Node);
+
   if (ExceptionList.getBehaviour() == State::NotThrowing ||
       ExceptionList.getBehaviour() == State::Unknown)
     return ExceptionList;
@@ -231,6 +239,12 @@ ExceptionAnalyzer::analyze(const FunctionDecl *Func) {
 
   return ExceptionList;
 }
+
+ExceptionAnalyzer::ExceptionInfo
+ExceptionAnalyzer::analyze(const FunctionDecl *Func) {
+  return analyzeDispatch(Func);
+}
+
 } // namespace utils
 } // namespace tidy
 
