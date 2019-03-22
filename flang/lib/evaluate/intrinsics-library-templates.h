@@ -27,14 +27,12 @@
 #include "type.h"
 #include "../common/template.h"
 
-#include <cfenv>
 #include <tuple>
 #include <type_traits>
 
 namespace Fortran::evaluate {
 
 // Define meaningful types for the runtime
-// TODO: add the support for void and descriptor
 using RuntimeTypes = evaluate::AllIntrinsicTypes;
 
 template<typename T, typename... TT> struct IndexInTupleHelper {};
@@ -62,24 +60,13 @@ template<typename TR, typename... ArgInfo>
 using HostFuncPointer = FuncPointer<host::HostType<TR>,
     HostArgType<typename ArgInfo::Type, ArgInfo::pass>...>;
 
-// Helper class to handle host runtime traps, status flag and errno
-class HostFloatingPointEnvironment {
-public:
-  void SetUpHostFloatingPointEnvironment(FoldingContext &);
-  void CheckAndRestoreFloatingPointEnvironment(FoldingContext &);
-
-private:
-  std::fenv_t originalFenv_;
-  std::fenv_t currentFenv_;
-};
-
 // Callable factory
 template<typename TR, typename... ArgInfo> struct CallableHostWrapper {
   static Scalar<TR> scalarCallable(FoldingContext &context,
       HostFuncPointer<TR, ArgInfo...> func,
       const Scalar<typename ArgInfo::Type> &... x) {
     if constexpr (host::HostTypeExists<TR, typename ArgInfo::Type...>()) {
-      HostFloatingPointEnvironment hostFPE;
+      host::HostFloatingPointEnvironment hostFPE;
       hostFPE.SetUpHostFloatingPointEnvironment(context);
       host::HostType<TR> res{
           func(host::CastFortranToHost<typename ArgInfo::Type>(x)...)};

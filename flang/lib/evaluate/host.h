@@ -24,6 +24,7 @@
 // to safely refer to this hardware type.
 
 #include "type.h"
+#include <cfenv>
 #include <complex>
 #include <cstdint>
 #include <limits>
@@ -32,6 +33,17 @@
 
 namespace Fortran::evaluate {
 namespace host {
+
+// Helper class to handle host runtime traps, status flag and errno
+class HostFloatingPointEnvironment {
+public:
+  void SetUpHostFloatingPointEnvironment(FoldingContext &);
+  void CheckAndRestoreFloatingPointEnvironment(FoldingContext &);
+
+private:
+  std::fenv_t originalFenv_;
+  std::fenv_t currentFenv_;
+};
 
 // Type mapping from F18 types to host types
 struct UnsupportedType {};  // There is no host type for the F18 type

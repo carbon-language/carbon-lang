@@ -21,15 +21,16 @@ add_library(FortranEvaluate
   decimal.cc
   expression.cc
   fold.cc
+  host.cc
   integer.cc
   intrinsics.cc
+  intrinsics-library.cc
   logical.cc
   real.cc
   static-data.cc
   tools.cc
   type.cc
   variable.cc
-  intrinsics-library.cc
 )
 
 target_link_libraries(FortranEvaluate
