@@ -2434,6 +2434,8 @@ constexpr auto fileNameExpr{scalarDefaultCharExpr};
 //         POSITION = scalar-default-char-expr | RECL = scalar-int-expr |
 //         ROUND = scalar-default-char-expr | SIGN = scalar-default-char-expr |
 //         STATUS = scalar-default-char-expr
+//         @ | CONVERT = scalar-default-char-variable
+//         @ | DISPOSE = scalar-default-char-variable
 constexpr auto statusExpr{construct<StatusExpr>(scalarDefaultCharExpr)};
 constexpr auto errLabel{construct<ErrLabel>(label)};
 
@@ -2734,6 +2736,8 @@ TYPE_CONTEXT_PARSER("FLUSH statement"_en_US,
 //         STREAM = scalar-default-char-variable |
 //         STATUS = scalar-default-char-variable |
 //         WRITE = scalar-default-char-variable
+//         @ | CONVERT = scalar-default-char-variable
+//           | DISPOSE = scalar-default-char-variable
 TYPE_PARSER(first(construct<InquireSpec>(maybe("UNIT ="_tok) >> fileUnitNumber),
     construct<InquireSpec>("FILE =" >> fileNameExpr),
     construct<InquireSpec>(
@@ -2849,7 +2853,15 @@ TYPE_PARSER(first(construct<InquireSpec>(maybe("UNIT ="_tok) >> fileUnitNumber),
                                scalarDefaultCharVariable)),
     construct<InquireSpec>("WRITE =" >>
         construct<InquireSpec::CharVar>(pure(InquireSpec::CharVar::Kind::Write),
-            scalarDefaultCharVariable))))
+            scalarDefaultCharVariable)),
+    extension<LanguageFeature::Convert>(construct<InquireSpec>(
+        "CONVERT =" >> construct<InquireSpec::CharVar>(
+                           pure(InquireSpec::CharVar::Kind::Convert),
+                           scalarDefaultCharVariable))),
+    extension<LanguageFeature::Dispose>(construct<InquireSpec>(
+        "DISPOSE =" >> construct<InquireSpec::CharVar>(
+                           pure(InquireSpec::CharVar::Kind::Dispose),
+                           scalarDefaultCharVariable)))))
 
 // R1230 inquire-stmt ->
 //         INQUIRE ( inquire-spec-list ) |

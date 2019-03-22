@@ -45,10 +45,10 @@ Extensions, deletions, and legacy features supported by default
 * `+` and `-` before all primary expressions, e.g. `x*-y`
 * `.NOT. .NOT.` accepted
 * `NAME=` as synonym for `FILE=`
-* `DISPOSE=`
 * Data edit descriptors without width or other details
 * `D` lines in fixed form as comments or debug code
-* `CONVERT=` on the OPEN statement
+* `CONVERT=` on the OPEN and INQUIRE statements
+* `DISPOSE=` on the OPEN and INQUIRE statements
 * Leading semicolons are ignored before any statement that
   could have a label
 * The character `&` in column 1 in fixed form source is a variant form

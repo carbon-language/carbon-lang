@@ -2508,6 +2508,8 @@ using FileNameExpr = ScalarDefaultCharExpr;
 //         POSITION = scalar-default-char-expr | RECL = scalar-int-expr |
 //         ROUND = scalar-default-char-expr | SIGN = scalar-default-char-expr |
 //         STATUS = scalar-default-char-expr
+//         @ | CONVERT = scalar-default-char-variable
+//           | DISPOSE = scalar-default-char-variable
 WRAPPER_CLASS(StatusExpr, ScalarDefaultCharExpr);
 WRAPPER_CLASS(ErrLabel, Label);
 
@@ -2721,12 +2723,15 @@ WRAPPER_CLASS(FlushStmt, std::list<PositionOrFlushSpec>);
 //         STATUS = scalar-default-char-variable |
 //         UNFORMATTED = scalar-default-char-variable |
 //         WRITE = scalar-default-char-variable
+//         @ | CONVERT = scalar-default-char-variable
+//           | DISPOSE = scalar-default-char-variable
 struct InquireSpec {
   UNION_CLASS_BOILERPLATE(InquireSpec);
   struct CharVar {
     ENUM_CLASS(Kind, Access, Action, Asynchronous, Blank, Decimal, Delim,
         Direct, Encoding, Form, Formatted, Iomsg, Name, Pad, Position, Read,
-        Readwrite, Round, Sequential, Sign, Stream, Status, Unformatted, Write)
+        Readwrite, Round, Sequential, Sign, Stream, Status, Unformatted, Write,
+        /* extensions: */ Convert, Dispose)
     TUPLE_CLASS_BOILERPLATE(CharVar);
     std::tuple<Kind, ScalarDefaultCharVariable> t;
   };
