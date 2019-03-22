@@ -41,7 +41,9 @@ public:
 };
 } // namespace
 
-void SetLongJmpCheck::registerPPCallbacks(CompilerInstance &Compiler) {
+void SetLongJmpCheck::registerPPCallbacks(const SourceManager &SM,
+                                          Preprocessor *PP,
+                                          Preprocessor *ModuleExpanderPP) {
   // This checker only applies to C++, where exception handling is a superior
   // solution to setjmp/longjmp calls.
   if (!getLangOpts().CPlusPlus)
@@ -49,8 +51,7 @@ void SetLongJmpCheck::registerPPCallbacks(CompilerInstance &Compiler) {
 
   // Per [headers]p5, setjmp must be exposed as a macro instead of a function,
   // despite the allowance in C for setjmp to also be an extern function.
-  Compiler.getPreprocessor().addPPCallbacks(
-      llvm::make_unique<SetJmpMacroCallbacks>(*this));
+  PP->addPPCallbacks(llvm::make_unique<SetJmpMacroCallbacks>(*this));
 }
 
 void SetLongJmpCheck::registerMatchers(MatchFinder *Finder) {
