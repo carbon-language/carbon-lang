@@ -414,6 +414,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::CTPOP          , MVT::i32  , Expand);
     if (Subtarget.is64Bit())
       setOperationAction(ISD::CTPOP        , MVT::i64  , Expand);
+    else
+      setOperationAction(ISD::CTPOP        , MVT::i64  , Custom);
   }
 
   setOperationAction(ISD::READCYCLECOUNTER , MVT::i64  , Custom);
@@ -26715,6 +26717,26 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
   switch (N->getOpcode()) {
   default:
     llvm_unreachable("Do not know how to custom type legalize this operation!");
+  case ISD::CTPOP: {
+    assert(N->getValueType(0) == MVT::i64 && "Unexpected VT!");
+    // Use a v2i64 if possible.
+    bool NoImplicitFloatOps =
+        DAG.getMachineFunction().getFunction().hasFnAttribute(
+            Attribute::NoImplicitFloat);
+    if (isTypeLegal(MVT::v2i64) && !NoImplicitFloatOps) {
+      SDValue Wide =
+          DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v2i64, N->getOperand(0));
+      Wide = DAG.getNode(ISD::CTPOP, dl, MVT::v2i64, Wide);
+      // Bit count should fit in 32-bits, extract it as that and then zero
+      // extend to i64. Otherwise we end up extracting bits 63:32 separately.
+      Wide = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, Wide);
+      Wide = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i32, Wide,
+                         DAG.getIntPtrConstant(0, dl));
+      Wide = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i64, Wide);
+      Results.push_back(Wide);
+    }
+    return;
+  }
   case ISD::MUL: {
     EVT VT = N->getValueType(0);
     assert(VT.isVector() && "Unexpected VT");
