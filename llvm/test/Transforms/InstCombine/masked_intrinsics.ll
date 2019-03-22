@@ -59,6 +59,66 @@ define <2 x double> @load_lane0(<2 x double>* %ptr, double %pt)  {
 
 }
 
+define <2 x double> @load_generic(<2 x double>* %ptr, double %pt,
+; CHECK-LABEL: @load_generic(
+; CHECK-NEXT:    [[PTV1:%.*]] = insertelement <2 x double> undef, double [[PT:%.*]], i64 0
+; CHECK-NEXT:    [[PTV2:%.*]] = shufflevector <2 x double> [[PTV1]], <2 x double> undef, <2 x i32> zeroinitializer
+; CHECK-NEXT:    [[RES:%.*]] = call <2 x double> @llvm.masked.load.v2f64.p0v2f64(<2 x double>* [[PTR:%.*]], i32 4, <2 x i1> [[MASK:%.*]], <2 x double> [[PTV2]])
+; CHECK-NEXT:    ret <2 x double> [[RES]]
+;
+  <2 x i1> %mask)  {
+  %ptv1 = insertelement <2 x double> undef, double %pt, i64 0
+  %ptv2 = insertelement <2 x double> %ptv1, double %pt, i64 1
+  %res = call <2 x double> @llvm.masked.load.v2f64.p0v2f64(<2 x double>* %ptr, i32 4, <2 x i1> %mask, <2 x double> %ptv2)
+  ret <2 x double> %res
+}
+
+define <2 x double> @load_speculative(<2 x double>* dereferenceable(16) %ptr,
+; CHECK-LABEL: @load_speculative(
+; CHECK-NEXT:    [[PTV1:%.*]] = insertelement <2 x double> undef, double [[PT:%.*]], i64 0
+; CHECK-NEXT:    [[PTV2:%.*]] = shufflevector <2 x double> [[PTV1]], <2 x double> undef, <2 x i32> zeroinitializer
+; CHECK-NEXT:    [[RES:%.*]] = call <2 x double> @llvm.masked.load.v2f64.p0v2f64(<2 x double>* nonnull [[PTR:%.*]], i32 4, <2 x i1> [[MASK:%.*]], <2 x double> [[PTV2]])
+; CHECK-NEXT:    ret <2 x double> [[RES]]
+;
+  double %pt, <2 x i1> %mask)  {
+  %ptv1 = insertelement <2 x double> undef, double %pt, i64 0
+  %ptv2 = insertelement <2 x double> %ptv1, double %pt, i64 1
+  %res = call <2 x double> @llvm.masked.load.v2f64.p0v2f64(<2 x double>* %ptr, i32 4, <2 x i1> %mask, <2 x double> %ptv2)
+  ret <2 x double> %res
+}
+
+; Can't speculate since only half of required size is known deref
+define <2 x double> @load_spec_neg_size(<2 x double>* dereferenceable(8) %ptr,
+; CHECK-LABEL: @load_spec_neg_size(
+; CHECK-NEXT:    [[PTV1:%.*]] = insertelement <2 x double> undef, double [[PT:%.*]], i64 0
+; CHECK-NEXT:    [[PTV2:%.*]] = shufflevector <2 x double> [[PTV1]], <2 x double> undef, <2 x i32> zeroinitializer
+; CHECK-NEXT:    [[RES:%.*]] = call <2 x double> @llvm.masked.load.v2f64.p0v2f64(<2 x double>* nonnull [[PTR:%.*]], i32 4, <2 x i1> [[MASK:%.*]], <2 x double> [[PTV2]])
+; CHECK-NEXT:    ret <2 x double> [[RES]]
+;
+  double %pt, <2 x i1> %mask)  {
+  %ptv1 = insertelement <2 x double> undef, double %pt, i64 0
+  %ptv2 = insertelement <2 x double> %ptv1, double %pt, i64 1
+  %res = call <2 x double> @llvm.masked.load.v2f64.p0v2f64(<2 x double>* %ptr, i32 4, <2 x i1> %mask, <2 x double> %ptv2)
+  ret <2 x double> %res
+}
+
+; Can only speculate one lane (but it's the only one active)
+define <2 x double> @load_spec_lan0(<2 x double>* dereferenceable(8) %ptr,
+; CHECK-LABEL: @load_spec_lan0(
+; CHECK-NEXT:    [[PTV1:%.*]] = insertelement <2 x double> undef, double [[PT:%.*]], i64 0
+; CHECK-NEXT:    [[PTV2:%.*]] = shufflevector <2 x double> [[PTV1]], <2 x double> undef, <2 x i32> zeroinitializer
+; CHECK-NEXT:    [[MASK2:%.*]] = insertelement <2 x i1> [[MASK:%.*]], i1 false, i64 1
+; CHECK-NEXT:    [[RES:%.*]] = call <2 x double> @llvm.masked.load.v2f64.p0v2f64(<2 x double>* nonnull [[PTR:%.*]], i32 4, <2 x i1> [[MASK2]], <2 x double> [[PTV2]])
+; CHECK-NEXT:    ret <2 x double> [[RES]]
+;
+  double %pt, <2 x i1> %mask)  {
+  %ptv1 = insertelement <2 x double> undef, double %pt, i64 0
+  %ptv2 = insertelement <2 x double> %ptv1, double %pt, i64 1
+  %mask2 = insertelement <2 x i1> %mask, i1 false, i64 1
+  %res = call <2 x double> @llvm.masked.load.v2f64.p0v2f64(<2 x double>* %ptr, i32 4, <2 x i1> %mask2, <2 x double> %ptv2)
+  ret <2 x double> %res
+}
+
 define void @store_zeromask(<2 x double>* %ptr, <2 x double> %val)  {
 ; CHECK-LABEL: @store_zeromask(
 ; CHECK-NEXT:    ret void
