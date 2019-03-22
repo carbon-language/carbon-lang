@@ -2952,36 +2952,53 @@ RewriteInstance::getCodeSections() {
 }
 
 void RewriteInstance::mapCodeSections(orc::VModuleKey Key) {
+  auto TextSection = BC->getUniqueSectionByName(BC->getMainCodeSectionName());
+  assert(TextSection && ".text section not found in output");
+
   if (BC->HasRelocations) {
+    assert(TextSection->hasValidSectionID() && ".text section should be valid");
+
     // Populate the list of sections to be allocated.
     auto CodeSections = getCodeSections();
-    DEBUG(dbgs() << "Code section in the order of output:\n";
+    DEBUG(dbgs() << "Code sections in the order of output:\n";
       for (const auto *Section : CodeSections) {
         dbgs() << Section->getName() << '\n';
       });
 
-    // Beginning address for placing code.
-    uint64_t AllocationAddress{0};
-    uint64_t CodeSize{0};
+    uint64_t PaddingSize{0}; // size of padding required at the end
+
+    // Allocate sections starting at a given Address.
+    auto allocateAt = [&](uint64_t Address) {
+      for (auto *Section : CodeSections) {
+        Address = alignTo(Address, Section->getAlignment());
+        Section->setOutputAddress(Address);
+        Address += Section->getOutputSize();
+      }
+
+      // Make sure we allocate enough space for huge pages.
+      if (opts::HotText) {
+        auto HotTextEnd = TextSection->getOutputAddress() +
+                          TextSection->getOutputSize();
+        HotTextEnd = alignTo(HotTextEnd, BC->PageAlign);
+        if (HotTextEnd > Address) {
+          PaddingSize = HotTextEnd - Address;
+          Address = HotTextEnd;
+        }
+      }
+      return Address;
+    };
 
     // Check if we can fit code in the original .text
+    bool AllocationDone{false};
     if (opts::UseOldText) {
-      auto Code = BC->OldTextSectionAddress;
-      for (const auto *CodeSection : CodeSections) {
-        Code = alignTo(Code, CodeSection->getAlignment());
-        Code += CodeSection->getOutputSize();
-      }
-      CodeSize = Code - BC->OldTextSectionAddress;
+      const auto CodeSize = allocateAt(BC->OldTextSectionAddress) -
+                            BC->OldTextSectionAddress;
 
       if (CodeSize <= BC->OldTextSectionSize) {
         outs() << "BOLT-INFO: using original .text for new code with 0x"
                << Twine::utohexstr(BC->PageAlign) << " alignment\n";
-        AllocationAddress = BC->OldTextSectionAddress;
-      }
-    }
-
-    if (!AllocationAddress) {
-      if (opts::UseOldText) {
+        AllocationDone = true;
+      } else {
         errs() << "BOLT-WARNING: original .text too small to fit the new code"
                << " using 0x" << Twine::utohexstr(BC->PageAlign)
                << " page alignment. " << CodeSize
@@ -2989,144 +3006,145 @@ void RewriteInstance::mapCodeSections(orc::VModuleKey Key) {
                << " bytes available.\n";
         opts::UseOldText = false;
       }
-      AllocationAddress = NextAvailableAddress;
     }
 
-    auto mapSection = [&](BinarySection &Section) {
-      AllocationAddress = alignTo(AllocationAddress, Section.getAlignment());
-      DEBUG(dbgs() << "BOLT: mapping " << Section.getName() << " 0x"
-                   << Twine::utohexstr(Section.getAllocAddress())
-                   << " to 0x" << Twine::utohexstr(AllocationAddress)
+    if (!AllocationDone) {
+      NextAvailableAddress = allocateAt(NextAvailableAddress);
+    }
+
+    // Do the mapping for ORC layer based on the allocation.
+    for (auto *Section : CodeSections) {
+      DEBUG(dbgs() << "BOLT: mapping " << Section->getName()
+                   << " at 0x" << Twine::utohexstr(Section->getAllocAddress())
+                   << " to 0x" << Twine::utohexstr(Section->getOutputAddress())
                    << '\n');
-      OLT->mapSectionAddress(Key, Section.getSectionID(), AllocationAddress);
-      Section.setOutputAddress(AllocationAddress);
-      Section.setFileOffset(getFileOffsetForAddress(AllocationAddress));
-      AllocationAddress += Section.getOutputSize();
-    };
-
-    for (auto *CodeSection : CodeSections) {
-      mapSection(*CodeSection);
+      OLT->mapSectionAddress(Key, Section->getSectionID(),
+                             Section->getOutputAddress());
+      Section->setFileOffset(
+          getFileOffsetForAddress(Section->getOutputAddress()));
     }
 
-    if (!opts::UseOldText) {
-      NextAvailableAddress = AllocationAddress;
+    // Check if we need to insert a padding section for hot text.
+    if (PaddingSize && !opts::UseOldText) {
+      outs() << "BOLT-INFO: padding code to 0x"
+             << Twine::utohexstr(NextAvailableAddress)
+             << " to accommodate hot text\n";
     }
 
-  } else {
+    return;
+  }
 
-    auto NewTextSectionStartAddress = NextAvailableAddress;
+  // Processing in non-relocation mode.
+  auto NewTextSectionStartAddress = NextAvailableAddress;
 
-    // Prepare .text section for injected functions
-    auto TextSection = BC->getUniqueSectionByName(".text");
-    assert(TextSection && ".text not found in output");
-    if (TextSection->hasValidSectionID()) {
-      uint64_t NewTextSectionOffset = 0;
-      auto Padding = OffsetToAlignment(NewTextSectionStartAddress,
-                                       BC->PageAlign);
-      NextAvailableAddress += Padding;
-      NewTextSectionStartAddress = NextAvailableAddress;
-      NewTextSectionOffset = getFileOffsetForAddress(NextAvailableAddress);
-      NextAvailableAddress += Padding + TextSection->getOutputSize();
-      TextSection->setOutputAddress(NewTextSectionStartAddress);
-      TextSection->setFileOffset(NewTextSectionOffset);
+  // Prepare .text section for injected functions
+  if (TextSection->hasValidSectionID()) {
+    uint64_t NewTextSectionOffset = 0;
+    auto Padding = OffsetToAlignment(NewTextSectionStartAddress,
+                                     BC->PageAlign);
+    NextAvailableAddress += Padding;
+    NewTextSectionStartAddress = NextAvailableAddress;
+    NewTextSectionOffset = getFileOffsetForAddress(NextAvailableAddress);
+    NextAvailableAddress += Padding + TextSection->getOutputSize();
+    TextSection->setOutputAddress(NewTextSectionStartAddress);
+    TextSection->setFileOffset(NewTextSectionOffset);
 
-      DEBUG(dbgs() << "BOLT: mapping .text 0x"
-                   << Twine::utohexstr(TextSection->getAllocAddress())
-                   << " to 0x" << Twine::utohexstr(NewTextSectionStartAddress)
-                   << '\n');
-      OLT->mapSectionAddress(Key, TextSection->getSectionID(),
-                             NewTextSectionStartAddress);
+    DEBUG(dbgs() << "BOLT: mapping .text 0x"
+                 << Twine::utohexstr(TextSection->getAllocAddress())
+                 << " to 0x" << Twine::utohexstr(NewTextSectionStartAddress)
+                 << '\n');
+    OLT->mapSectionAddress(Key, TextSection->getSectionID(),
+                           NewTextSectionStartAddress);
+  }
+
+  for (auto &BFI : BinaryFunctions) {
+    auto &Function = BFI.second;
+    if (!Function.isSimple() || !opts::shouldProcess(Function))
+      continue;
+
+    auto TooLarge = false;
+    auto FuncSection = Function.getCodeSection();
+    assert(FuncSection && "cannot find section for function");
+    FuncSection->setOutputAddress(Function.getAddress());
+    DEBUG(dbgs() << "BOLT: mapping 0x"
+                 << Twine::utohexstr(FuncSection->getAllocAddress())
+                 << " to 0x" << Twine::utohexstr(Function.getAddress())
+                 << '\n');
+    OLT->mapSectionAddress(Key, FuncSection->getSectionID(),
+                           Function.getAddress());
+    Function.setImageAddress(FuncSection->getAllocAddress());
+    Function.setImageSize(FuncSection->getOutputSize());
+    if (Function.getImageSize() > Function.getMaxSize()) {
+      TooLarge = true;
+      FailedAddresses.emplace_back(Function.getAddress());
     }
 
-    for (auto &BFI : BinaryFunctions) {
-      auto &Function = BFI.second;
-      if (!Function.isSimple() || !opts::shouldProcess(Function))
-        continue;
-
-      auto TooLarge = false;
-      auto FuncSection = Function.getCodeSection();
-      assert(FuncSection && "cannot find section for function");
-      FuncSection->setOutputAddress(Function.getAddress());
-      DEBUG(dbgs() << "BOLT: mapping 0x"
-                   << Twine::utohexstr(FuncSection->getAllocAddress())
-                   << " to 0x" << Twine::utohexstr(Function.getAddress())
-                   << '\n');
-      OLT->mapSectionAddress(Key, FuncSection->getSectionID(),
-                             Function.getAddress());
-      Function.setImageAddress(FuncSection->getAllocAddress());
-      Function.setImageSize(FuncSection->getOutputSize());
-      if (Function.getImageSize() > Function.getMaxSize()) {
-        TooLarge = true;
-        FailedAddresses.emplace_back(Function.getAddress());
+    // Map jump tables if updating in-place.
+    if (opts::JumpTables == JTS_BASIC) {
+      for (auto &JTI : Function.JumpTables) {
+        auto *JT = JTI.second;
+        auto &Section = JT->getOutputSection();
+        Section.setOutputAddress(JT->getAddress());
+        DEBUG(dbgs() << "BOLT-DEBUG: mapping " << Section.getName()
+                     << " to 0x" << Twine::utohexstr(JT->getAddress())
+                     << '\n');
+        OLT->mapSectionAddress(Key, Section.getSectionID(),
+                               JT->getAddress());
       }
-
-      // Map jump tables if updating in-place.
-      if (opts::JumpTables == JTS_BASIC) {
-        for (auto &JTI : Function.JumpTables) {
-          auto *JT = JTI.second;
-          auto &Section = JT->getOutputSection();
-          Section.setOutputAddress(JT->getAddress());
-          DEBUG(dbgs() << "BOLT-DEBUG: mapping " << Section.getName()
-                       << " to 0x" << Twine::utohexstr(JT->getAddress())
-                       << '\n');
-          OLT->mapSectionAddress(Key, Section.getSectionID(),
-                                 JT->getAddress());
-        }
-      }
-
-      if (!Function.isSplit())
-        continue;
-
-      auto ColdSection = Function.getColdCodeSection();
-      assert(ColdSection && "cannot find section for cold part");
-      // Cold fragments are aligned at 16 bytes.
-      NextAvailableAddress = alignTo(NextAvailableAddress, 16);
-      auto &ColdPart = Function.cold();
-      if (TooLarge) {
-        // The corresponding FDE will refer to address 0.
-        ColdPart.setAddress(0);
-        ColdPart.setImageAddress(0);
-        ColdPart.setImageSize(0);
-        ColdPart.setFileOffset(0);
-      } else {
-        ColdPart.setAddress(NextAvailableAddress);
-        ColdPart.setImageAddress(ColdSection->getAllocAddress());
-        ColdPart.setImageSize(ColdSection->getOutputSize());
-        ColdPart.setFileOffset(getFileOffsetForAddress(NextAvailableAddress));
-        ColdSection->setOutputAddress(ColdPart.getAddress());
-      }
-
-      DEBUG(dbgs() << "BOLT: mapping cold fragment 0x"
-                   << Twine::utohexstr(ColdPart.getImageAddress())
-                   << " to 0x"
-                   << Twine::utohexstr(ColdPart.getAddress())
-                   << " with size "
-                   << Twine::utohexstr(ColdPart.getImageSize()) << '\n');
-      OLT->mapSectionAddress(Key, ColdSection->getSectionID(),
-                             ColdPart.getAddress());
-
-      NextAvailableAddress += ColdPart.getImageSize();
     }
 
-    // Add the new text section aggregating all existing code sections.
-    // This is pseudo-section that serves a purpose of creating a corresponding
-    // entry in section header table.
-    auto NewTextSectionSize = NextAvailableAddress - NewTextSectionStartAddress;
-    if (NewTextSectionSize) {
-      const auto Flags = BinarySection::getFlags(/*IsReadOnly=*/true,
-                                                 /*IsText=*/true,
-                                                 /*IsAllocatable=*/true);
-      auto &Section = BC->registerOrUpdateSection(BOLTSecPrefix + ".text",
-                                                  ELF::SHT_PROGBITS,
-                                                  Flags,
-                                                  nullptr,
-                                                  NewTextSectionSize,
-                                                  16,
-                                                  true /*IsLocal*/);
-      Section.setOutputAddress(NewTextSectionStartAddress);
-      Section.setFileOffset(
-        getFileOffsetForAddress(NewTextSectionStartAddress));
+    if (!Function.isSplit())
+      continue;
+
+    auto ColdSection = Function.getColdCodeSection();
+    assert(ColdSection && "cannot find section for cold part");
+    // Cold fragments are aligned at 16 bytes.
+    NextAvailableAddress = alignTo(NextAvailableAddress, 16);
+    auto &ColdPart = Function.cold();
+    if (TooLarge) {
+      // The corresponding FDE will refer to address 0.
+      ColdPart.setAddress(0);
+      ColdPart.setImageAddress(0);
+      ColdPart.setImageSize(0);
+      ColdPart.setFileOffset(0);
+    } else {
+      ColdPart.setAddress(NextAvailableAddress);
+      ColdPart.setImageAddress(ColdSection->getAllocAddress());
+      ColdPart.setImageSize(ColdSection->getOutputSize());
+      ColdPart.setFileOffset(getFileOffsetForAddress(NextAvailableAddress));
+      ColdSection->setOutputAddress(ColdPart.getAddress());
     }
+
+    DEBUG(dbgs() << "BOLT: mapping cold fragment 0x"
+                 << Twine::utohexstr(ColdPart.getImageAddress())
+                 << " to 0x"
+                 << Twine::utohexstr(ColdPart.getAddress())
+                 << " with size "
+                 << Twine::utohexstr(ColdPart.getImageSize()) << '\n');
+    OLT->mapSectionAddress(Key, ColdSection->getSectionID(),
+                           ColdPart.getAddress());
+
+    NextAvailableAddress += ColdPart.getImageSize();
+  }
+
+  // Add the new text section aggregating all existing code sections.
+  // This is pseudo-section that serves a purpose of creating a corresponding
+  // entry in section header table.
+  auto NewTextSectionSize = NextAvailableAddress - NewTextSectionStartAddress;
+  if (NewTextSectionSize) {
+    const auto Flags = BinarySection::getFlags(/*IsReadOnly=*/true,
+                                               /*IsText=*/true,
+                                               /*IsAllocatable=*/true);
+    auto &Section = BC->registerOrUpdateSection(BOLTSecPrefix + ".text",
+                                                ELF::SHT_PROGBITS,
+                                                Flags,
+                                                nullptr,
+                                                NewTextSectionSize,
+                                                16,
+                                                true /*IsLocal*/);
+    Section.setOutputAddress(NewTextSectionStartAddress);
+    Section.setFileOffset(
+      getFileOffsetForAddress(NewTextSectionStartAddress));
   }
 }
 
