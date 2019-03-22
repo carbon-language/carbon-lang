@@ -422,6 +422,16 @@ public:
     RequiresDecls.push_back(RD);
   }
 
+  /// Checks if the defined 'requires' directive has specified type of clause.
+  template <typename ClauseType>
+  bool hasRequiresDeclWithClause() {
+    return llvm::any_of(RequiresDecls, [](const OMPRequiresDecl *D) {
+      return llvm::any_of(D->clauselists(), [](const OMPClause *C) {
+        return isa<ClauseType>(C);
+      });
+    });
+  }
+
   /// Checks for a duplicate clause amongst previously declared requires
   /// directives
   bool hasDuplicateRequiresClause(ArrayRef<OMPClause *> ClauseList) const {
@@ -2244,7 +2254,8 @@ Sema::DeclGroupPtrTy Sema::ActOnOpenMPAllocateDirective(
   assert(Clauses.size() <= 1 && "Expected at most one clause.");
   Expr *Allocator = nullptr;
   if (Clauses.empty()) {
-    if (LangOpts.OpenMPIsDevice)
+    if (LangOpts.OpenMPIsDevice &&
+        !DSAStack->hasRequiresDeclWithClause<OMPDynamicAllocatorsClause>())
       targetDiag(Loc, diag::err_expected_allocator_clause);
   } else {
     Allocator = cast<OMPAllocatorClause>(Clauses.back())->getAllocator();
