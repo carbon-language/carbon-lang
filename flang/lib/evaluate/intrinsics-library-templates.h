@@ -121,7 +121,7 @@ std::optional<HostProcedureWrapper<ConstantContainer, TR, TA...>>
 HostIntrinsicProceduresLibrary::GetHostProcedureWrapper(
     const std::string &name) {
   if constexpr (host::HostTypeExists<TR, TA...>()) {
-    auto rteProcRange{procedures.equal_range(name)};
+    auto rteProcRange{procedures_.equal_range(name)};
     const TypeCode resTypeCode{typeCodeOf<TR>};
     const std::vector<TypeCode> argTypes{typeCodeOf<TA>...};
     const size_t nargs{argTypes.size()};

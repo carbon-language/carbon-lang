@@ -90,20 +90,22 @@ using HostProcedureWrapper = std::function<ConstantContainer<TR>(
 // When queried for an intrinsic procedure, it can return a callable object that
 // implements this intrinsic if a host runtime function pointer for this
 // intrinsic was added to its data structure.
-struct HostIntrinsicProceduresLibrary {
+class HostIntrinsicProceduresLibrary {
+public:
+  HostIntrinsicProceduresLibrary();
   void AddProcedure(HostRuntimeIntrinsicProcedure &&sym) {
     const std::string name{sym.name};
-    procedures.insert(std::make_pair(name, std::move(sym)));
+    procedures_.insert(std::make_pair(name, std::move(sym)));
   }
   bool HasEquivalentProcedure(
       const IntrinsicProcedureRuntimeDescription &sym) const;
-  HostIntrinsicProceduresLibrary() { DefaultInit(); }
-  void DefaultInit();
   template<template<typename> typename ConstantContainer, typename TR,
       typename... TA>
   std::optional<HostProcedureWrapper<ConstantContainer, TR, TA...>>
   GetHostProcedureWrapper(const std::string &name);
-  std::multimap<std::string, const HostRuntimeIntrinsicProcedure> procedures;
+
+private:
+  std::multimap<std::string, const HostRuntimeIntrinsicProcedure> procedures_;
 };
 
 }
