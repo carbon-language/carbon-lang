@@ -50,17 +50,31 @@ bool HostIntrinsicProceduresLibrary::HasEquivalentProcedure(
 
 // Map numerical intrinsic to  <cmath>/<complex> functions
 
-// C++ Bessel functions take a floating point as first argument.
+// Define which host runtime functions will be used for folding
+
+// C++ Bessel functions take a floating point as first arguments.
 // Fortran Bessel functions take an integer.
-template<typename HostT> static HostT Bessel_jn(std::int64_t n, HostT x) {
+template<typename HostT> static HostT Bessel_j0(HostT x) {
+  return std::cyl_bessel_j(0., x);
+}
+template<typename HostT> static HostT Bessel_y0(HostT x) {
+  return std::cyl_neumann(0., x);
+}
+template<typename HostT> static HostT Bessel_j1(HostT x) {
+  return std::cyl_bessel_j(1., x);
+}
+template<typename HostT> static HostT Bessel_y1(HostT x) {
+  return std::cyl_neumann(1., x);
+}
+template<typename HostT> static HostT Bessel_jn(int n, HostT x) {
   return std::cyl_bessel_j(static_cast<HostT>(n), x);
 }
-template<typename HostT> static HostT Bessel_yn(std::int64_t n, HostT x) {
+template<typename HostT> static HostT Bessel_yn(int n, HostT x) {
   return std::cyl_neumann(static_cast<HostT>(n), x);
 }
 
 template<typename HostT>
-void AddLibmRealHostProcedure(
+static void AddLibmRealHostProcedures(
     HostIntrinsicProceduresLibrary &hostIntrinsicLibrary) {
   using F = FuncPointer<HostT, HostT>;
   using F2 = FuncPointer<HostT, HostT, HostT>;
@@ -68,11 +82,21 @@ void AddLibmRealHostProcedure(
       {"acosh", F{std::acosh}, true}, {"asin", F{std::asin}, true},
       {"asinh", F{std::asinh}, true}, {"atan", F{std::atan}, true},
       {"atan", F2{std::atan2}, true}, {"atanh", F{std::atanh}, true},
+      {"bessel_j0", &Bessel_j0<HostT>, true},
+      {"bessel_y0", &Bessel_y0<HostT>, true},
+      {"bessel_j1", &Bessel_j1<HostT>, true},
+      {"bessel_y1", &Bessel_y1<HostT>, true},
       {"bessel_jn", &Bessel_jn<HostT>, true},
       {"bessel_yn", &Bessel_yn<HostT>, true}, {"cos", F{std::cos}, true},
-      {"cosh", F{std::cosh}, true}, {"sin", F{std::sin}, true},
-      {"sinh", F{std::sinh}, true}, {"sqrt", F{std::sqrt}, true},
-      {"tan", F{std::tan}, true}, {"tanh", F{std::tanh}, true}};
+      {"cosh", F{std::cosh}, true}, {"erf", F{std::erf}, true},
+      {"erfc", F{std::erfc}, true}, {"exp", F{std::exp}, true},
+      {"gamma", F{std::tgamma}, true}, {"hypot", F2{std::hypot}, true},
+      {"log", F{std::log}, true}, {"log10", F{std::log10}, true},
+      {"log_gamma", F{std::lgamma}, true}, {"mod", F2{std::fmod}, true},
+      {"sin", F{std::sin}, true}, {"sinh", F{std::sinh}, true},
+      {"sqrt", F{std::sqrt}, true}, {"tan", F{std::tan}, true},
+      {"tanh", F{std::tanh}, true}};
+  // Note: cmath does not have modulo and erfc_scaled equivalent
 
   for (auto sym : libmSymbols) {
     if (!hostIntrinsicLibrary.HasEquivalentProcedure(sym)) {
@@ -82,16 +106,19 @@ void AddLibmRealHostProcedure(
 }
 
 template<typename HostT>
-void AddLibmComplexHostProcedure(
+static void AddLibmComplexHostProcedures(
     HostIntrinsicProceduresLibrary &hostIntrinsicLibrary) {
   using F = FuncPointer<std::complex<HostT>, const std::complex<HostT> &>;
-  HostRuntimeIntrinsicProcedure libmSymbols[]{{"acos", F{std::acos}, true},
-      {"acosh", F{std::acosh}, true}, {"asin", F{std::asin}, true},
-      {"asinh", F{std::asinh}, true}, {"atan", F{std::atan}, true},
-      {"atanh", F{std::atanh}, true}, {"cos", F{std::cos}, true},
-      {"cosh", F{std::cosh}, true}, {"sin", F{std::sin}, true},
-      {"sinh", F{std::sinh}, true}, {"sqrt", F{std::sqrt}, true},
-      {"tan", F{std::tan}, true}, {"tanh", F{std::tanh}, true}};
+  HostRuntimeIntrinsicProcedure libmSymbols[]{
+      {"abs", FuncPointer<HostT, const std::complex<HostT> &>{std::abs}, true},
+      {"acos", F{std::acos}, true}, {"acosh", F{std::acosh}, true},
+      {"asin", F{std::asin}, true}, {"asinh", F{std::asinh}, true},
+      {"atan", F{std::atan}, true}, {"atanh", F{std::atanh}, true},
+      {"cos", F{std::cos}, true}, {"cosh", F{std::cosh}, true},
+      {"exp", F{std::exp}, true}, {"log", F{std::log}, true},
+      {"sin", F{std::sin}, true}, {"sinh", F{std::sinh}, true},
+      {"sqrt", F{std::sqrt}, true}, {"tan", F{std::tan}, true},
+      {"tanh", F{std::tanh}, true}};
 
   for (auto sym : libmSymbols) {
     if (!hostIntrinsicLibrary.HasEquivalentProcedure(sym)) {
@@ -100,16 +127,16 @@ void AddLibmComplexHostProcedure(
   }
 }
 
-// Define which host runtime functions will be used for folding
+void InitHostIntrinsicLibraryWithLibm(HostIntrinsicProceduresLibrary &lib) {
+  AddLibmRealHostProcedures<float>(lib);
+  AddLibmRealHostProcedures<double>(lib);
+  AddLibmRealHostProcedures<long double>(lib);
+  AddLibmComplexHostProcedures<float>(lib);
+  AddLibmComplexHostProcedures<double>(lib);
+  AddLibmComplexHostProcedures<long double>(lib);
+}
 
 void HostIntrinsicProceduresLibrary::DefaultInit() {
-
-  AddLibmRealHostProcedure<float>(*this);
-  AddLibmRealHostProcedure<double>(*this);
-  AddLibmRealHostProcedure<long double>(*this);
-
-  AddLibmComplexHostProcedure<float>(*this);
-  AddLibmComplexHostProcedure<double>(*this);
-  AddLibmComplexHostProcedure<long double>(*this);
+  InitHostIntrinsicLibraryWithLibm(*this);
 }
 }
