@@ -12,7 +12,6 @@ define <2 x double> @load_zeromask(<2 x double>* %ptr, <2 x double> %passthru)  
 ;
   %res = call <2 x double> @llvm.masked.load.v2f64.p0v2f64(<2 x double>* %ptr, i32 1, <2 x i1> zeroinitializer, <2 x double> %passthru)
   ret <2 x double> %res
-
 }
 
 define <2 x double> @load_onemask(<2 x double>* %ptr, <2 x double> %passthru)  {
@@ -22,7 +21,6 @@ define <2 x double> @load_onemask(<2 x double>* %ptr, <2 x double> %passthru)  {
 ;
   %res = call <2 x double> @llvm.masked.load.v2f64.p0v2f64(<2 x double>* %ptr, i32 2, <2 x i1> <i1 1, i1 1>, <2 x double> %passthru)
   ret <2 x double> %res
-
 }
 
 define <2 x double> @load_undefmask(<2 x double>* %ptr, <2 x double> %passthru)  {
@@ -32,7 +30,6 @@ define <2 x double> @load_undefmask(<2 x double>* %ptr, <2 x double> %passthru) 
 ;
   %res = call <2 x double> @llvm.masked.load.v2f64.p0v2f64(<2 x double>* %ptr, i32 2, <2 x i1> <i1 1, i1 undef>, <2 x double> %passthru)
   ret <2 x double> %res
-
 }
 
 @G = external global i8
@@ -56,7 +53,6 @@ define <2 x double> @load_lane0(<2 x double>* %ptr, double %pt)  {
   %ptv2 = insertelement <2 x double> %ptv1, double %pt, i64 1
   %res = call <2 x double> @llvm.masked.load.v2f64.p0v2f64(<2 x double>* %ptr, i32 2, <2 x i1> <i1 true, i1 false>, <2 x double> %ptv2)
   ret <2 x double> %res
-
 }
 
 define <2 x double> @load_generic(<2 x double>* %ptr, double %pt,
@@ -125,7 +121,6 @@ define void @store_zeromask(<2 x double>* %ptr, <2 x double> %val)  {
 ;
   call void @llvm.masked.store.v2f64.p0v2f64(<2 x double> %val, <2 x double>* %ptr, i32 4, <2 x i1> zeroinitializer)
   ret void
-
 }
 
 define void @store_onemask(<2 x double>* %ptr, <2 x double> %val)  {
@@ -135,7 +130,6 @@ define void @store_onemask(<2 x double>* %ptr, <2 x double> %val)  {
 ;
   call void @llvm.masked.store.v2f64.p0v2f64(<2 x double> %val, <2 x double>* %ptr, i32 4, <2 x i1> <i1 1, i1 1>)
   ret void
-
 }
 
 define void @store_demandedelts(<2 x double>* %ptr, double %val)  {
@@ -150,13 +144,23 @@ define void @store_demandedelts(<2 x double>* %ptr, double %val)  {
   ret void
 }
 
+define <2 x double> @gather_generic(<2 x double*> %ptrs, <2 x i1> %mask,
+; CHECK-LABEL: @gather_generic(
+; CHECK-NEXT:    [[RES:%.*]] = call <2 x double> @llvm.masked.gather.v2f64.v2p0f64(<2 x double*> [[PTRS:%.*]], i32 4, <2 x i1> [[MASK:%.*]], <2 x double> [[PASSTHRU:%.*]])
+; CHECK-NEXT:    ret <2 x double> [[RES]]
+;
+  <2 x double> %passthru)  {
+  %res = call <2 x double> @llvm.masked.gather.v2f64.v2p0f64(<2 x double*> %ptrs, i32 4, <2 x i1> %mask, <2 x double> %passthru)
+  ret <2 x double> %res
+}
+
+
 define <2 x double> @gather_zeromask(<2 x double*> %ptrs, <2 x double> %passthru)  {
 ; CHECK-LABEL: @gather_zeromask(
 ; CHECK-NEXT:    ret <2 x double> [[PASSTHRU:%.*]]
 ;
   %res = call <2 x double> @llvm.masked.gather.v2f64.v2p0f64(<2 x double*> %ptrs, i32 4, <2 x i1> zeroinitializer, <2 x double> %passthru)
   ret <2 x double> %res
-
 }
 
 
@@ -167,7 +171,6 @@ define <2 x double> @gather_onemask(<2 x double*> %ptrs, <2 x double> %passthru)
 ;
   %res = call <2 x double> @llvm.masked.gather.v2f64.v2p0f64(<2 x double*> %ptrs, i32 4, <2 x i1> <i1 true, i1 true>, <2 x double> %passthru)
   ret <2 x double> %res
-
 }
 
 define <2 x double> @gather_lane0(double* %base, double %pt)  {
@@ -182,7 +185,6 @@ define <2 x double> @gather_lane0(double* %base, double %pt)  {
   %pt_v2 = insertelement <2 x double> %pt_v1, double %pt, i64 1
   %res = call <2 x double> @llvm.masked.gather.v2f64.v2p0f64(<2 x double*> %ptrs, i32 4, <2 x i1> <i1 true, i1 false>, <2 x double> %pt_v2)
   ret <2 x double> %res
-
 }
 
 define void @scatter_zeromask(<2 x double*> %ptrs, <2 x double> %val)  {
@@ -191,7 +193,6 @@ define void @scatter_zeromask(<2 x double*> %ptrs, <2 x double> %val)  {
 ;
   call void @llvm.masked.scatter.v2f64.v2p0f64(<2 x double> %val, <2 x double*> %ptrs, i32 6, <2 x i1> zeroinitializer)
   ret void
-
 }
 
 define void @scatter_demandedelts(double* %ptr, double %val)  {
