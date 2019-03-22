@@ -1,19 +1,25 @@
 # RUN: yaml2obj %s > %t.o
 
 # RUN: llvm-objcopy %t.o -O elf32-i386 %t.elf32_i386.o
-# RUN: llvm-readobj --file-headers %t.elf32_i386.o | FileCheck %s --check-prefixes=CHECK,I386,32
+# RUN: llvm-readobj --file-headers %t.elf32_i386.o | FileCheck %s --check-prefixes=CHECK,I386,32,SYSV
 
 # RUN: llvm-objcopy %t.o -O elf32-powerpcle %t.elf32_ppcle.o
-# RUN: llvm-readobj --file-headers %t.elf32_ppcle.o | FileCheck %s --check-prefixes=CHECK,PPC,32
+# RUN: llvm-readobj --file-headers %t.elf32_ppcle.o | FileCheck %s --check-prefixes=CHECK,PPC,32,SYSV
 
 # RUN: llvm-objcopy %t.o -O elf32-x86-64 %t.elf32_x86_64.o
-# RUN: llvm-readobj --file-headers %t.elf32_x86_64.o | FileCheck %s --check-prefixes=CHECK,X86-64,32
+# RUN: llvm-readobj --file-headers %t.elf32_x86_64.o | FileCheck %s --check-prefixes=CHECK,X86-64,32,SYSV
 
 # RUN: llvm-objcopy %t.o -O elf64-powerpcle %t.elf64_ppcle.o
-# RUN: llvm-readobj --file-headers %t.elf64_ppcle.o | FileCheck %s --check-prefixes=CHECK,PPC64,64
+# RUN: llvm-readobj --file-headers %t.elf64_ppcle.o | FileCheck %s --check-prefixes=CHECK,PPC64,64,SYSV
 
 # RUN: llvm-objcopy %t.o -O elf64-x86-64 %t.elf64_x86_64.o
-# RUN: llvm-readobj --file-headers %t.elf64_x86_64.o | FileCheck %s --check-prefixes=CHECK,X86-64,64
+# RUN: llvm-readobj --file-headers %t.elf64_x86_64.o | FileCheck %s --check-prefixes=CHECK,X86-64,64,SYSV
+
+# RUN: llvm-objcopy %t.o -O elf64-x86-64-freebsd %t.elf64_x86_64_freebsd.o
+# RUN: llvm-readobj --file-headers %t.elf64_x86_64_freebsd.o | FileCheck %s --check-prefixes=CHECK,X86-64,64,FREEBSD
+
+# RUN: llvm-objcopy %t.o -O elf32-i386-freebsd %t.elf32_i386_freebsd.o
+# RUN: llvm-readobj --file-headers %t.elf32_i386_freebsd.o | FileCheck %s --check-prefixes=CHECK,I386,32,FREEBSD
 
 !ELF
 FileHeader:
@@ -21,6 +27,7 @@ FileHeader:
   Data:            ELFDATA2LSB
   Type:            ET_EXEC
   Machine:         EM_386
+  OSABI:           ELFOSABI_STANDALONE # Arbitrary non-zero value.
 Sections:
   - Name:            .text
     Type:            SHT_PROGBITS
@@ -58,6 +65,9 @@ Symbols:
 # 32:     Class: 32-bit
 # 64:     Class: 64-bit
 # CHECK:  DataEncoding: LittleEndian
+
+# SYSV:    OS/ABI: SystemV (0x0)
+# FREEBSD: OS/ABI: FreeBSD (0x9)
 
 # I386:   Machine: EM_386
 # PPC:    Machine: EM_PPC
