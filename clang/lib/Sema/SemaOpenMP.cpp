@@ -2254,6 +2254,10 @@ Sema::DeclGroupPtrTy Sema::ActOnOpenMPAllocateDirective(
   assert(Clauses.size() <= 1 && "Expected at most one clause.");
   Expr *Allocator = nullptr;
   if (Clauses.empty()) {
+    // OpenMP 5.0, 2.11.3 allocate Directive, Restrictions.
+    // allocate directives that appear in a target region must specify an
+    // allocator clause unless a requires directive with the dynamic_allocators
+    // clause is present in the same compilation unit.
     if (LangOpts.OpenMPIsDevice &&
         !DSAStack->hasRequiresDeclWithClause<OMPDynamicAllocatorsClause>())
       targetDiag(Loc, diag::err_expected_allocator_clause);
