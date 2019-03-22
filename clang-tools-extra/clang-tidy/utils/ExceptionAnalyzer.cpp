@@ -224,6 +224,12 @@ ExceptionAnalyzer::analyzeImpl(const FunctionDecl *Func) {
   return ExceptionList;
 }
 
+ExceptionAnalyzer::ExceptionInfo
+ExceptionAnalyzer::analyzeImpl(const Stmt *Stmt) {
+  llvm::SmallSet<const FunctionDecl *, 32> CallStack;
+  return throwsException(Stmt, ExceptionInfo::Throwables(), CallStack);
+}
+
 template <typename T>
 ExceptionAnalyzer::ExceptionInfo
 ExceptionAnalyzer::analyzeDispatch(const T *Node) {
@@ -243,6 +249,11 @@ ExceptionAnalyzer::analyzeDispatch(const T *Node) {
 ExceptionAnalyzer::ExceptionInfo
 ExceptionAnalyzer::analyze(const FunctionDecl *Func) {
   return analyzeDispatch(Func);
+}
+
+ExceptionAnalyzer::ExceptionInfo
+ExceptionAnalyzer::analyze(const Stmt *Stmt) {
+  return analyzeDispatch(Stmt);
 }
 
 } // namespace utils

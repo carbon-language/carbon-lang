@@ -129,6 +129,7 @@ public:
   }
 
   ExceptionInfo analyze(const FunctionDecl *Func);
+  ExceptionInfo analyze(const Stmt *Stmt);
 
 private:
   ExceptionInfo
@@ -139,6 +140,7 @@ private:
                   llvm::SmallSet<const FunctionDecl *, 32> &CallStack);
 
   ExceptionInfo analyzeImpl(const FunctionDecl *Func);
+  ExceptionInfo analyzeImpl(const Stmt *Stmt);
 
   template <typename T> ExceptionInfo analyzeDispatch(const T *Node);
 
