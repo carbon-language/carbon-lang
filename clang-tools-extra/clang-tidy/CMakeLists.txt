@@ -8,6 +8,7 @@ add_clang_library(clangTidy
   ClangTidyDiagnosticConsumer.cpp
   ClangTidyOptions.cpp
   ClangTidyProfiling.cpp
+  ExpandModularHeadersPPCallbacks.cpp
 
   DEPENDS
   ClangSACheckers
