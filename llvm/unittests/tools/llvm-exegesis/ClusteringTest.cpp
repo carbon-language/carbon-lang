@@ -22,7 +22,7 @@ using testing::Field;
 using testing::UnorderedElementsAre;
 using testing::UnorderedElementsAreArray;
 
-static constexpr auto HasPoints = [](const std::vector<int> &Indices) {
+static const auto HasPoints = [](const std::vector<int> &Indices) {
   return Field(&InstructionBenchmarkClustering::Cluster::PointIndices,
                  UnorderedElementsAreArray(Indices));
 };
