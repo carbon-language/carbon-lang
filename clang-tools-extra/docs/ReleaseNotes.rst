@@ -130,6 +130,13 @@ Improvements to clang-tidy
   <clang-tidy/checks/modernize-use-override>` now supports `OverrideSpelling`
   and `FinalSpelling` options.
 
+- New :doc:`openmp-use-default-none
+  <clang-tidy/checks/openmp-use-default-none>` check.
+
+  Finds OpenMP directives that are allowed to contain a ``default`` clause,
+  but either don't specify it or the clause is specified but with the kind
+  other than ``none``, and suggests to use the ``default(none)`` clause.
+
 Improvements to include-fixer
 -----------------------------
 
