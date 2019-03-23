@@ -221,8 +221,23 @@ public:
   template<typename A> bool Pre(const parser::Statement<A> &statement) {
     currentPosition_ = statement.source;
     if (statement.label.has_value()) {
-      AddTargetLabelDefinition(
-          statement.label.value(), ConstructBranchTargetFlags(statement));
+      auto label{statement.label.value()};
+      auto targetFlags{ConstructBranchTargetFlags(statement)};
+      if constexpr (std::is_same_v<A, parser::AssociateStmt> ||
+          std::is_same_v<A, parser::BlockStmt> ||
+          std::is_same_v<A, parser::ChangeTeamStmt> ||
+          std::is_same_v<A, parser::CriticalStmt> ||
+          std::is_same_v<A, parser::NonLabelDoStmt> ||
+          std::is_same_v<A, parser::IfThenStmt> ||
+          std::is_same_v<A, parser::SelectCaseStmt> ||
+          std::is_same_v<A, parser::SelectRankStmt> ||
+          std::is_same_v<A, parser::SelectTypeStmt>) {
+        constexpr bool useParent{true};
+        AddTargetLabelDefinition(useParent, label, targetFlags);
+      } else {
+        constexpr bool useParent{false};
+        AddTargetLabelDefinition(useParent, label, targetFlags);
+      }
     }
     return true;
   }
@@ -502,6 +517,9 @@ private:
   void PopScope() {
     currentScope_ = programUnits_.back().scopeModel[currentScope_];
   }
+  ProxyForScope ParentScope() {
+    return programUnits_.back().scopeModel[currentScope_];
+  }
   bool SwitchToNewScope() {
     PopScope();
     return PushSubscope();
@@ -718,12 +736,13 @@ private:
   }
 
   // 6.2.5., paragraph 2
-  void AddTargetLabelDefinition(parser::Label label,
+  void AddTargetLabelDefinition(bool useParent, parser::Label label,
       LabeledStmtClassificationSet labeledStmtClassificationSet) {
     CheckLabelInRange(label);
     const auto pair{programUnits_.back().targetStmts.emplace(label,
         LabeledStatementInfoTuplePOD{
-            currentScope_, currentPosition_, labeledStmtClassificationSet})};
+            (useParent ? ParentScope() : currentScope_), currentPosition_,
+            labeledStmtClassificationSet})};
     if (!pair.second) {
       errorHandler_.Say(currentPosition_,
           parser::MessageFormattedText{
