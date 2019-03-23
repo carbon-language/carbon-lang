@@ -2809,7 +2809,7 @@ void BoUpSLP::reorderAltShuffleOperands(const InstructionsState &S,
 
   // Reorder if we have a commutative operation and consecutive access
   // are on either side of the alternate instructions.
-  for (unsigned j = 0; j < VL.size() - 1; ++j) {
+  for (unsigned j = 0, e = VL.size() - 1; j < e; ++j) {
     if (LoadInst *L = dyn_cast<LoadInst>(Left[j])) {
       if (LoadInst *L1 = dyn_cast<LoadInst>(Right[j + 1])) {
         Instruction *VL1 = cast<Instruction>(VL[j]);
