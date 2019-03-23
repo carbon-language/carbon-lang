@@ -2917,8 +2917,6 @@ void BoUpSLP::reorderInputsAccordingToOpcode(const InstructionsState &S,
                                              ArrayRef<Value *> VL,
                                              SmallVectorImpl<Value *> &Left,
                                              SmallVectorImpl<Value *> &Right) {
-  unsigned Opcode = S.getOpcode();
-
   if (!VL.empty()) {
     // Peel the first iteration out of the loop since there's nothing
     // interesting to do anyway and it simplifies the checks in the loop.
@@ -2941,8 +2939,9 @@ void BoUpSLP::reorderInputsAccordingToOpcode(const InstructionsState &S,
 
   for (unsigned i = 1, e = VL.size(); i != e; ++i) {
     Instruction *I = cast<Instruction>(VL[i]);
-    assert(((I->getOpcode() == Opcode && I->isCommutative()) ||
-            (I->getOpcode() != Opcode && Instruction::isCommutative(Opcode))) &&
+    assert(((I->getOpcode() == S.getOpcode() && I->isCommutative()) ||
+            (I->getOpcode() != S.getOpcode() &&
+             Instruction::isCommutative(S.getOpcode()))) &&
            "Can only process commutative instruction");
     // Commute to favor either a splat or maximizing having the same opcodes on
     // one side.
