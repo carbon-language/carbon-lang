@@ -1888,6 +1888,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   setTargetDAGCombine(ISD::SIGN_EXTEND);
   setTargetDAGCombine(ISD::SIGN_EXTEND_INREG);
   setTargetDAGCombine(ISD::ANY_EXTEND_VECTOR_INREG);
+  setTargetDAGCombine(ISD::ZERO_EXTEND_VECTOR_INREG);
   setTargetDAGCombine(ISD::SINT_TO_FP);
   setTargetDAGCombine(ISD::UINT_TO_FP);
   setTargetDAGCombine(ISD::SETCC);
@@ -42597,7 +42598,8 @@ static SDValue combinePMULDQ(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-static SDValue combineExtInVec(SDNode *N, SelectionDAG &DAG) {
+static SDValue combineExtInVec(SDNode *N, SelectionDAG &DAG,
+                               const X86Subtarget &Subtarget) {
   // Disabling for widening legalization for now. We can enable if we find a
   // case that needs it. Otherwise it can be deleted when we switch to
   // widening legalization.
@@ -42612,6 +42614,15 @@ static SDValue combineExtInVec(SDNode *N, SelectionDAG &DAG) {
   if (In.getOpcode() == N->getOpcode() &&
       TLI.isTypeLegal(VT) && TLI.isTypeLegal(In.getOperand(0).getValueType()))
     return DAG.getNode(N->getOpcode(), SDLoc(N), VT, In.getOperand(0));
+
+  // Attempt to combine as a shuffle.
+  // TODO: SSE41 support
+  if (Subtarget.hasAVX() && N->getOpcode() == ISD::ZERO_EXTEND_VECTOR_INREG) {
+    SDValue Op(N, 0);
+    if (TLI.isTypeLegal(VT) && TLI.isTypeLegal(In.getValueType()))
+      if (SDValue Res = combineX86ShufflesRecursively(Op, DAG, Subtarget))
+        return Res;
+  }
 
   return SDValue();
 }
@@ -42679,7 +42690,8 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::ZERO_EXTEND:    return combineZext(N, DAG, DCI, Subtarget);
   case ISD::SIGN_EXTEND:    return combineSext(N, DAG, DCI, Subtarget);
   case ISD::SIGN_EXTEND_INREG: return combineSignExtendInReg(N, DAG, Subtarget);
-  case ISD::ANY_EXTEND_VECTOR_INREG: return combineExtInVec(N, DAG);
+  case ISD::ANY_EXTEND_VECTOR_INREG:
+  case ISD::ZERO_EXTEND_VECTOR_INREG: return combineExtInVec(N, DAG, Subtarget);
   case ISD::SETCC:          return combineSetCC(N, DAG, Subtarget);
   case X86ISD::SETCC:       return combineX86SetCC(N, DAG, Subtarget);
   case X86ISD::BRCOND:      return combineBrCond(N, DAG, Subtarget);
