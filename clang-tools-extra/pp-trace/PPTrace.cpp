@@ -17,23 +17,21 @@
 //
 // The pp-trace tool supports the following general command line format:
 //
-//    pp-trace [pp-trace options] (source file) [compiler options]
+//    pp-trace [pp-trace options] file... [-- compiler options]
 //
 // Basically you put the pp-trace options first, then the source file or files,
-// and then any options you want to pass to the compiler.
+// and then -- followed by any options you want to pass to the compiler.
 //
 //===----------------------------------------------------------------------===//
 
 #include "PPCallbacksTracker.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Driver/Options.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Tooling/CompilationDatabase.h"
 #include "clang/Tooling/Execution.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/Option/Arg.h"
@@ -44,19 +42,16 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/GlobPattern.h"
 #include "llvm/Support/InitLLVM.h"
-#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/WithColor.h"
-#include <algorithm>
-#include <fstream>
-#include <iterator>
 #include <string>
 #include <vector>
 
-using namespace clang;
-using namespace clang::tooling;
 using namespace llvm;
+
+namespace clang {
+namespace pp_trace {
 
 static cl::OptionCategory Cat("pp-trace options");
 
@@ -112,7 +107,7 @@ private:
   std::vector<CallbackCall> CallbackCalls;
 };
 
-class PPTraceFrontendActionFactory : public FrontendActionFactory {
+class PPTraceFrontendActionFactory : public tooling::FrontendActionFactory {
 public:
   PPTraceFrontendActionFactory(const FilterType &Filters, raw_ostream &OS)
       : Filters(Filters), OS(OS) {}
@@ -124,11 +119,15 @@ private:
   raw_ostream &OS;
 };
 } // namespace
+} // namespace pp_trace
+} // namespace clang
 
 int main(int argc, const char **argv) {
-  InitLLVM X(argc, argv);
+  using namespace clang::pp_trace;
 
-  auto Exec = tooling::createExecutorFromCommandLineArgs(argc, argv, Cat);
+  InitLLVM X(argc, argv);
+  auto Exec =
+      clang::tooling::createExecutorFromCommandLineArgs(argc, argv, Cat);
   if (!Exec)
     error(toString(Exec.takeError()));
 

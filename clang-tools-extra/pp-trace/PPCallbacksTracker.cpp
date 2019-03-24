@@ -17,7 +17,8 @@
 #include "clang/Lex/MacroArgs.h"
 #include "llvm/Support/raw_ostream.h"
 
-// Utility functions.
+namespace clang {
+namespace pp_trace {
 
 // Get a "file:line:column" source location string.
 static std::string getSourceLocationString(clang::Preprocessor &PP,
@@ -455,7 +456,7 @@ void PPCallbacksTracker::appendArgument(const char *Name, int Value) {
 void PPCallbacksTracker::appendArgument(const char *Name, const char *Value) {
   if (DisableTrace)
     return;
-  CallbackCalls.back().Arguments.push_back(Argument(Name, Value));
+  CallbackCalls.back().Arguments.push_back(Argument{Name, Value});
 }
 
 // Append a string object argument to the top trace item.
@@ -674,3 +675,6 @@ PPCallbacksTracker::getSourceString(clang::CharSourceRange Range) {
   const char *E = PP.getSourceManager().getCharacterData(Range.getEnd());
   return llvm::StringRef(B, E - B);
 }
+
+} // namespace pp_trace
+} // namespace clang
