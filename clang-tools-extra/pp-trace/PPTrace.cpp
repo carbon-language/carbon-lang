@@ -17,7 +17,7 @@
 //
 // The pp-trace tool supports the following general command line format:
 //
-//    pp-trace [pp-trace options] file... [-- compiler options]
+//    pp-trace [options] file... [-- compiler options]
 //
 // Basically you put the pp-trace options first, then the source file or files,
 // and then -- followed by any options you want to pass to the compiler.
@@ -81,8 +81,8 @@ public:
       : Filters(Filters), OS(OS) {}
 
 protected:
-  std::unique_ptr<clang::ASTConsumer>
-  CreateASTConsumer(CompilerInstance &CI, StringRef InFile) override {
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                 StringRef InFile) override {
     Preprocessor &PP = CI.getPreprocessor();
     PP.addPPCallbacks(
         make_unique<PPCallbacksTracker>(Filters, CallbackCalls, PP));
