@@ -198,7 +198,7 @@ def add_release_notes(module_path, module, check_name):
     lines = f.readlines()
 
   lineMatcher = re.compile('Improvements to clang-tidy')
-  nextSectionMatcher = re.compile('Improvements to include-fixer')
+  nextSectionMatcher = re.compile('Improvements to clang-include-fixer')
   checkerMatcher = re.compile('- New :doc:`(.*)')
 
   print('Updating %s...' % filename)
