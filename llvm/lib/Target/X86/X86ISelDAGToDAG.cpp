@@ -3561,7 +3561,8 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
     }
 
     // Emit the smaller op and the shift.
-    SDValue NewCst = CurDAG->getTargetConstant(Val >> ShlVal, dl, CstVT);
+    // Even though we shrink the constant, the VT should match the operation VT.
+    SDValue NewCst = CurDAG->getTargetConstant(Val >> ShlVal, dl, NVT);
     SDNode *New = CurDAG->getMachineNode(Op, dl, NVT, N0->getOperand(0),NewCst);
     if (ShlVal == 1)
       CurDAG->SelectNodeTo(Node, AddOp, NVT, SDValue(New, 0),
