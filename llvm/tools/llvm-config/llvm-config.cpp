@@ -268,6 +268,7 @@ int main(int argc, char **argv) {
   // tree.
   bool IsInDevelopmentTree;
   enum { CMakeStyle, CMakeBuildModeStyle } DevelopmentTreeLayout;
+  llvm::SmallString<256> CurrentPath(GetExecutablePath(argv[0]));
   std::string CurrentExecPrefix;
   std::string ActiveObjRoot;
 
@@ -278,18 +279,11 @@ int main(int argc, char **argv) {
     build_mode = CMAKE_CFG_INTDIR;
 #endif
 
-  // Create an absolute path, and pop up as much directory as in
-  // LLVM_TOOLS_INSTALL_DIR
-  {
-    llvm::SmallString<256> CurrentPath(GetExecutablePath(argv[0]));
-    sys::fs::make_absolute(CurrentPath);
-    for (auto iter = sys::path::begin(LLVM_TOOLS_INSTALL_DIR),
-              end = sys::path::end(LLVM_TOOLS_INSTALL_DIR);
-         iter != end; ++iter) {
-      CurrentPath = sys::path::parent_path(CurrentPath).str();
-    }
-    CurrentExecPrefix = sys::path::parent_path(CurrentPath).str();
-  }
+  // Create an absolute path, and pop up one directory (we expect to be inside a
+  // bin dir).
+  sys::fs::make_absolute(CurrentPath);
+  CurrentExecPrefix =
+      sys::path::parent_path(sys::path::parent_path(CurrentPath)).str();
 
   // Check to see if we are inside a development tree by comparing to possible
   // locations (prefix style or CMake style).
