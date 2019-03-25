@@ -150,8 +150,8 @@ int main(int argc, const char **argv) {
   if (EC)
     error(EC.message());
 
-  if (Error Err = Exec->get()->execute(
-      llvm::make_unique<PPTraceFrontendActionFactory>(Filters, Out.os())))
+  if (auto Err = Exec->get()->execute(
+          llvm::make_unique<PPTraceFrontendActionFactory>(Filters, Out.os())))
     error(toString(std::move(Err)));
   Out.keep();
   return 0;
