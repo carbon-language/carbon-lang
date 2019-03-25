@@ -144,7 +144,7 @@ Improvements to clang-tidy
   other than ``none``, and suggests to use the ``default(none)`` clause.
 
 Improvements to clang-include-fixer
------------------------------
+-----------------------------------
 
 The improvements are...
 
