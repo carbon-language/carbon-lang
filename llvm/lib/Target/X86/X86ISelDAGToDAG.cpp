@@ -3167,14 +3167,14 @@ MachineSDNode *X86DAGToDAGISel::matchBEXTRFromAndImm(SDNode *Node) {
   SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4;
   if (tryFoldLoad(Node, N0.getNode(), Input, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4)) {
     SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, New, Input.getOperand(0) };
-    SDVTList VTs = CurDAG->getVTList(NVT, MVT::Other);
+    SDVTList VTs = CurDAG->getVTList(NVT, MVT::i32, MVT::Other);
     NewNode = CurDAG->getMachineNode(MOpc, dl, VTs, Ops);
     // Update the chain.
-    ReplaceUses(Input.getValue(1), SDValue(NewNode, 1));
+    ReplaceUses(Input.getValue(1), SDValue(NewNode, 2));
     // Record the mem-refs
     CurDAG->setNodeMemRefs(NewNode, {cast<LoadSDNode>(Input)->getMemOperand()});
   } else {
-    NewNode = CurDAG->getMachineNode(ROpc, dl, NVT, Input, New);
+    NewNode = CurDAG->getMachineNode(ROpc, dl, NVT, MVT::i32, Input, New);
   }
 
   return NewNode;
@@ -3563,12 +3563,13 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
     // Emit the smaller op and the shift.
     // Even though we shrink the constant, the VT should match the operation VT.
     SDValue NewCst = CurDAG->getTargetConstant(Val >> ShlVal, dl, NVT);
-    SDNode *New = CurDAG->getMachineNode(Op, dl, NVT, N0->getOperand(0),NewCst);
+    SDNode *New = CurDAG->getMachineNode(Op, dl, NVT, MVT::i32,
+                                         N0->getOperand(0), NewCst);
     if (ShlVal == 1)
-      CurDAG->SelectNodeTo(Node, AddOp, NVT, SDValue(New, 0),
+      CurDAG->SelectNodeTo(Node, AddOp, NVT, MVT::i32, SDValue(New, 0),
                            SDValue(New, 0));
     else
-      CurDAG->SelectNodeTo(Node, ShlOp, NVT, SDValue(New, 0),
+      CurDAG->SelectNodeTo(Node, ShlOp, NVT, MVT::i32, SDValue(New, 0),
                            getI8Imm(ShlVal, dl));
     return;
   }
@@ -3969,7 +3970,7 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
           unsigned TrailingZeros = countTrailingZeros(Mask);
           SDValue Imm = CurDAG->getTargetConstant(TrailingZeros, dl, MVT::i64);
           SDValue Shift =
-            SDValue(CurDAG->getMachineNode(X86::SHR64ri, dl, MVT::i64,
+            SDValue(CurDAG->getMachineNode(X86::SHR64ri, dl, MVT::i64, MVT::i32,
                                            N0.getOperand(0), Imm), 0);
           MachineSDNode *Test = CurDAG->getMachineNode(X86::TEST64rr, dl,
                                                        MVT::i32, Shift, Shift);
@@ -3980,7 +3981,7 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
           unsigned LeadingZeros = countLeadingZeros(Mask);
           SDValue Imm = CurDAG->getTargetConstant(LeadingZeros, dl, MVT::i64);
           SDValue Shift =
-            SDValue(CurDAG->getMachineNode(X86::SHL64ri, dl, MVT::i64,
+            SDValue(CurDAG->getMachineNode(X86::SHL64ri, dl, MVT::i64, MVT::i32,
                                            N0.getOperand(0), Imm), 0);
           MachineSDNode *Test = CurDAG->getMachineNode(X86::TEST64rr, dl,
                                                        MVT::i32, Shift, Shift);
