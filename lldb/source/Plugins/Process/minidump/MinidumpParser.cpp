@@ -130,7 +130,7 @@ llvm::ArrayRef<uint8_t> MinidumpParser::GetData() {
 }
 
 llvm::ArrayRef<uint8_t>
-MinidumpParser::GetStream(MinidumpStreamType stream_type) {
+MinidumpParser::GetStream(StreamType stream_type) {
   auto iter = m_directory_map.find(static_cast<uint32_t>(stream_type));
   if (iter == m_directory_map.end())
     return {};
@@ -210,7 +210,7 @@ UUID MinidumpParser::GetModuleUUID(const MinidumpModule *module) {
 }
 
 llvm::ArrayRef<MinidumpThread> MinidumpParser::GetThreads() {
-  llvm::ArrayRef<uint8_t> data = GetStream(MinidumpStreamType::ThreadList);
+  llvm::ArrayRef<uint8_t> data = GetStream(StreamType::ThreadList);
 
   if (data.size() == 0)
     return llvm::None;
@@ -262,7 +262,7 @@ MinidumpParser::GetThreadContextWow64(const MinidumpThread &td) {
 }
 
 const MinidumpSystemInfo *MinidumpParser::GetSystemInfo() {
-  llvm::ArrayRef<uint8_t> data = GetStream(MinidumpStreamType::SystemInfo);
+  llvm::ArrayRef<uint8_t> data = GetStream(StreamType::SystemInfo);
 
   if (data.size() == 0)
     return nullptr;
@@ -286,20 +286,20 @@ ArchSpec MinidumpParser::GetArchitecture() {
   llvm::Triple triple;
   triple.setVendor(llvm::Triple::VendorType::UnknownVendor);
 
-  const MinidumpCPUArchitecture arch = static_cast<MinidumpCPUArchitecture>(
+  auto arch = static_cast<ProcessorArchitecture>(
       static_cast<uint32_t>(system_info->processor_arch));
 
   switch (arch) {
-  case MinidumpCPUArchitecture::X86:
+  case ProcessorArchitecture::X86:
     triple.setArch(llvm::Triple::ArchType::x86);
     break;
-  case MinidumpCPUArchitecture::AMD64:
+  case ProcessorArchitecture::AMD64:
     triple.setArch(llvm::Triple::ArchType::x86_64);
     break;
-  case MinidumpCPUArchitecture::ARM:
+  case ProcessorArchitecture::ARM:
     triple.setArch(llvm::Triple::ArchType::arm);
     break;
-  case MinidumpCPUArchitecture::ARM64:
+  case ProcessorArchitecture::ARM64:
     triple.setArch(llvm::Triple::ArchType::aarch64);
     break;
   default:
@@ -307,29 +307,29 @@ ArchSpec MinidumpParser::GetArchitecture() {
     break;
   }
 
-  const MinidumpOSPlatform os = static_cast<MinidumpOSPlatform>(
-      static_cast<uint32_t>(system_info->platform_id));
+  auto os =
+      static_cast<OSPlatform>(static_cast<uint32_t>(system_info->platform_id));
 
   // TODO add all of the OSes that Minidump/breakpad distinguishes?
   switch (os) {
-  case MinidumpOSPlatform::Win32S:
-  case MinidumpOSPlatform::Win32Windows:
-  case MinidumpOSPlatform::Win32NT:
-  case MinidumpOSPlatform::Win32CE:
+  case OSPlatform::Win32S:
+  case OSPlatform::Win32Windows:
+  case OSPlatform::Win32NT:
+  case OSPlatform::Win32CE:
     triple.setOS(llvm::Triple::OSType::Win32);
     break;
-  case MinidumpOSPlatform::Linux:
+  case OSPlatform::Linux:
     triple.setOS(llvm::Triple::OSType::Linux);
     break;
-  case MinidumpOSPlatform::MacOSX:
+  case OSPlatform::MacOSX:
     triple.setOS(llvm::Triple::OSType::MacOSX);
     triple.setVendor(llvm::Triple::Apple);
     break;
-  case MinidumpOSPlatform::IOS:
+  case OSPlatform::IOS:
     triple.setOS(llvm::Triple::OSType::IOS);
     triple.setVendor(llvm::Triple::Apple);
     break;
-  case MinidumpOSPlatform::Android:
+  case OSPlatform::Android:
     triple.setOS(llvm::Triple::OSType::Linux);
     triple.setEnvironment(llvm::Triple::EnvironmentType::Android);
     break;
@@ -348,7 +348,7 @@ ArchSpec MinidumpParser::GetArchitecture() {
 }
 
 const MinidumpMiscInfo *MinidumpParser::GetMiscInfo() {
-  llvm::ArrayRef<uint8_t> data = GetStream(MinidumpStreamType::MiscInfo);
+  llvm::ArrayRef<uint8_t> data = GetStream(StreamType::MiscInfo);
 
   if (data.size() == 0)
     return nullptr;
@@ -357,7 +357,7 @@ const MinidumpMiscInfo *MinidumpParser::GetMiscInfo() {
 }
 
 llvm::Optional<LinuxProcStatus> MinidumpParser::GetLinuxProcStatus() {
-  llvm::ArrayRef<uint8_t> data = GetStream(MinidumpStreamType::LinuxProcStatus);
+  llvm::ArrayRef<uint8_t> data = GetStream(StreamType::LinuxProcStatus);
 
   if (data.size() == 0)
     return llvm::None;
@@ -380,7 +380,7 @@ llvm::Optional<lldb::pid_t> MinidumpParser::GetPid() {
 }
 
 llvm::ArrayRef<MinidumpModule> MinidumpParser::GetModuleList() {
-  llvm::ArrayRef<uint8_t> data = GetStream(MinidumpStreamType::ModuleList);
+  llvm::ArrayRef<uint8_t> data = GetStream(StreamType::ModuleList);
 
   if (data.size() == 0)
     return {};
@@ -433,7 +433,7 @@ std::vector<const MinidumpModule *> MinidumpParser::GetFilteredModuleList() {
 }
 
 const MinidumpExceptionStream *MinidumpParser::GetExceptionStream() {
-  llvm::ArrayRef<uint8_t> data = GetStream(MinidumpStreamType::Exception);
+  llvm::ArrayRef<uint8_t> data = GetStream(StreamType::Exception);
 
   if (data.size() == 0)
     return nullptr;
@@ -443,8 +443,8 @@ const MinidumpExceptionStream *MinidumpParser::GetExceptionStream() {
 
 llvm::Optional<minidump::Range>
 MinidumpParser::FindMemoryRange(lldb::addr_t addr) {
-  llvm::ArrayRef<uint8_t> data = GetStream(MinidumpStreamType::MemoryList);
-  llvm::ArrayRef<uint8_t> data64 = GetStream(MinidumpStreamType::Memory64List);
+  llvm::ArrayRef<uint8_t> data = GetStream(StreamType::MemoryList);
+  llvm::ArrayRef<uint8_t> data64 = GetStream(StreamType::Memory64List);
 
   if (data.empty() && data64.empty())
     return llvm::None;
@@ -529,7 +529,7 @@ llvm::ArrayRef<uint8_t> MinidumpParser::GetMemory(lldb::addr_t addr,
 static bool
 CreateRegionsCacheFromLinuxMaps(MinidumpParser &parser,
                                 std::vector<MemoryRegionInfo> &regions) {
-  auto data = parser.GetStream(MinidumpStreamType::LinuxMaps);
+  auto data = parser.GetStream(StreamType::LinuxMaps);
   if (data.empty())
     return false;
   ParseLinuxMapRegions(llvm::toStringRef(data),
@@ -545,7 +545,7 @@ CreateRegionsCacheFromLinuxMaps(MinidumpParser &parser,
 static bool
 CreateRegionsCacheFromMemoryInfoList(MinidumpParser &parser,
                                      std::vector<MemoryRegionInfo> &regions) {
-  auto data = parser.GetStream(MinidumpStreamType::MemoryInfoList);
+  auto data = parser.GetStream(StreamType::MemoryInfoList);
   if (data.empty())
     return false;
   auto mem_info_list = MinidumpMemoryInfo::ParseMemoryInfoList(data);
@@ -570,7 +570,7 @@ CreateRegionsCacheFromMemoryInfoList(MinidumpParser &parser,
 static bool
 CreateRegionsCacheFromMemoryList(MinidumpParser &parser,
                                  std::vector<MemoryRegionInfo> &regions) {
-  auto data = parser.GetStream(MinidumpStreamType::MemoryList);
+  auto data = parser.GetStream(StreamType::MemoryList);
   if (data.empty())
     return false;
   auto memory_list = MinidumpMemoryDescriptor::ParseMemoryList(data);
@@ -595,7 +595,7 @@ static bool
 CreateRegionsCacheFromMemory64List(MinidumpParser &parser,
                                    std::vector<MemoryRegionInfo> &regions) {
   llvm::ArrayRef<uint8_t> data =
-      parser.GetStream(MinidumpStreamType::Memory64List);
+      parser.GetStream(StreamType::Memory64List);
   if (data.empty())
     return false;
   llvm::ArrayRef<MinidumpMemoryDescriptor64> memory64_list;
@@ -675,14 +675,12 @@ const MemoryRegionInfos &MinidumpParser::GetMemoryRegions() {
   return m_regions;
 }
 
-#define ENUM_TO_CSTR(ST) case (uint32_t)MinidumpStreamType::ST: return #ST
+#define ENUM_TO_CSTR(ST) case (uint32_t)StreamType::ST: return #ST
 
 llvm::StringRef
 MinidumpParser::GetStreamTypeAsString(uint32_t stream_type) {
   switch (stream_type) {
     ENUM_TO_CSTR(Unused);
-    ENUM_TO_CSTR(Reserved0);
-    ENUM_TO_CSTR(Reserved1);
     ENUM_TO_CSTR(ThreadList);
     ENUM_TO_CSTR(ModuleList);
     ENUM_TO_CSTR(MemoryList);

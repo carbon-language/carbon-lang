@@ -18,15 +18,12 @@ const MinidumpHeader *MinidumpHeader::Parse(llvm::ArrayRef<uint8_t> &data) {
   const MinidumpHeader *header = nullptr;
   Status error = consumeObject(data, header);
 
-  const MinidumpHeaderConstants signature =
-      static_cast<MinidumpHeaderConstants>(
-          static_cast<uint32_t>(header->signature));
-  const MinidumpHeaderConstants version = static_cast<MinidumpHeaderConstants>(
-      static_cast<uint32_t>(header->version) & 0x0000ffff);
+  uint32_t signature = header->signature;
+  uint32_t version = header->version & 0x0000ffff;
   // the high 16 bits of the version field are implementation specific
 
-  if (error.Fail() || signature != MinidumpHeaderConstants::Signature ||
-      version != MinidumpHeaderConstants::Version)
+  if (error.Fail() || signature != Header::MagicSignature ||
+      version != Header::MagicVersion)
     return nullptr;
 
   return header;
