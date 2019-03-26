@@ -880,5 +880,6 @@ bool WebAssemblyCFGStackify::runOnMachineFunction(MachineFunction &MF) {
            .isOSBinFormatELF())
     appendEndToFunction(MF, TII);
 
+  MF.getInfo<WebAssemblyFunctionInfo>()->setCFGStackified();
   return true;
 }

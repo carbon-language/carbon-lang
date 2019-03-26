@@ -79,11 +79,14 @@ llvm::signatureFromMVTs(const SmallVectorImpl<MVT> &Results,
 }
 
 yaml::WebAssemblyFunctionInfo::WebAssemblyFunctionInfo(
-    const llvm::WebAssemblyFunctionInfo &MFI) {}
+    const llvm::WebAssemblyFunctionInfo &MFI)
+    : CFGStackified(MFI.isCFGStackified()) {}
 
 void yaml::WebAssemblyFunctionInfo::mappingImpl(yaml::IO &YamlIO) {
   MappingTraits<WebAssemblyFunctionInfo>::mapping(YamlIO, *this);
 }
 
 void WebAssemblyFunctionInfo::initializeBaseYamlFields(
-    const yaml::WebAssemblyFunctionInfo &YamlMFI) {}
+    const yaml::WebAssemblyFunctionInfo &YamlMFI) {
+  CFGStackified = YamlMFI.CFGStackified;
+}

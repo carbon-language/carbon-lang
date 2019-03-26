@@ -56,6 +56,9 @@ class WebAssemblyFunctionInfo final : public MachineFunctionInfo {
   // overaligned values on the user stack.
   unsigned BasePtrVreg = -1U;
 
+  // Function properties.
+  bool CFGStackified = false;
+
 public:
   explicit WebAssemblyFunctionInfo(MachineFunction &MF) : MF(MF) {}
   ~WebAssemblyFunctionInfo() override;
@@ -123,6 +126,9 @@ public:
     assert(Reg & INT32_MIN);
     return Reg & INT32_MAX;
   }
+
+  bool isCFGStackified() const { return CFGStackified; }
+  void setCFGStackified(bool Value = true) { CFGStackified = Value; }
 };
 
 void computeLegalValueVTs(const Function &F, const TargetMachine &TM, Type *Ty,
@@ -144,6 +150,8 @@ signatureFromMVTs(const SmallVectorImpl<MVT> &Results,
 namespace yaml {
 
 struct WebAssemblyFunctionInfo final : public yaml::MachineFunctionInfo {
+  bool CFGStackified = false;
+
   WebAssemblyFunctionInfo() = default;
   WebAssemblyFunctionInfo(const llvm::WebAssemblyFunctionInfo &MFI);
 
@@ -152,7 +160,9 @@ struct WebAssemblyFunctionInfo final : public yaml::MachineFunctionInfo {
 };
 
 template <> struct MappingTraits<WebAssemblyFunctionInfo> {
-  static void mapping(IO &YamlIO, WebAssemblyFunctionInfo &MFI) {}
+  static void mapping(IO &YamlIO, WebAssemblyFunctionInfo &MFI) {
+    YamlIO.mapOptional("isCFGStackified", MFI.CFGStackified, false);
+  }
 };
 
 } // end namespace yaml
