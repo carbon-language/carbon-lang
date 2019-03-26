@@ -17,10 +17,15 @@
 
 #include "MCTargetDesc/WebAssemblyMCTargetDesc.h"
 #include "llvm/BinaryFormat/Wasm.h"
+#include "llvm/CodeGen/MIRYamlMapping.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/MC/MCSymbolWasm.h"
 
 namespace llvm {
+
+namespace yaml {
+struct WebAssemblyFunctionInfo;
+}
 
 /// This class is derived from MachineFunctionInfo and contains private
 /// WebAssembly-specific information for each MachineFunction.
@@ -54,6 +59,7 @@ class WebAssemblyFunctionInfo final : public MachineFunctionInfo {
 public:
   explicit WebAssemblyFunctionInfo(MachineFunction &MF) : MF(MF) {}
   ~WebAssemblyFunctionInfo() override;
+  void initializeBaseYamlFields(const yaml::WebAssemblyFunctionInfo &YamlMFI);
 
   void addParam(MVT VT) { Params.push_back(VT); }
   const std::vector<MVT> &getParams() const { return Params; }
@@ -134,6 +140,22 @@ void valTypesFromMVTs(const ArrayRef<MVT> &In,
 std::unique_ptr<wasm::WasmSignature>
 signatureFromMVTs(const SmallVectorImpl<MVT> &Results,
                   const SmallVectorImpl<MVT> &Params);
+
+namespace yaml {
+
+struct WebAssemblyFunctionInfo final : public yaml::MachineFunctionInfo {
+  WebAssemblyFunctionInfo() = default;
+  WebAssemblyFunctionInfo(const llvm::WebAssemblyFunctionInfo &MFI);
+
+  void mappingImpl(yaml::IO &YamlIO) override;
+  ~WebAssemblyFunctionInfo() = default;
+};
+
+template <> struct MappingTraits<WebAssemblyFunctionInfo> {
+  static void mapping(IO &YamlIO, WebAssemblyFunctionInfo &MFI) {}
+};
+
+} // end namespace yaml
 
 } // end namespace llvm
 
