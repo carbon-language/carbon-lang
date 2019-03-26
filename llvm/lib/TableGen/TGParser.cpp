@@ -2283,6 +2283,10 @@ void TGParser::ParseValueList(SmallVectorImpl<Init*> &Result, Record *CurRec,
   while (Lex.getCode() == tgtok::comma) {
     Lex.Lex();  // Eat the comma
 
+    // ignore trailing comma for lists
+    if (Lex.getCode() == tgtok::r_square)
+      return;
+
     if (ArgsRec && !EltTy) {
       ArrayRef<Init *> TArgs = ArgsRec->getTemplateArgs();
       if (ArgN >= TArgs.size()) {
