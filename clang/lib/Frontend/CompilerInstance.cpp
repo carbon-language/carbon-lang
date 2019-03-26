@@ -89,10 +89,6 @@ void CompilerInstance::setAuxTarget(TargetInfo *Value) { AuxTarget = Value; }
 
 void CompilerInstance::setFileManager(FileManager *Value) {
   FileMgr = Value;
-  if (Value)
-    VirtualFileSystem = Value->getVirtualFileSystem();
-  else
-    VirtualFileSystem.reset();
 }
 
 void CompilerInstance::setSourceManager(SourceManager *Value) {
@@ -297,13 +293,14 @@ CompilerInstance::createDiagnostics(DiagnosticOptions *Opts,
 
 // File Manager
 
-FileManager *CompilerInstance::createFileManager() {
-  if (!hasVirtualFileSystem()) {
-    IntrusiveRefCntPtr<llvm::vfs::FileSystem> VFS =
-        createVFSFromCompilerInvocation(getInvocation(), getDiagnostics());
-    setVirtualFileSystem(VFS);
-  }
-  FileMgr = new FileManager(getFileSystemOpts(), VirtualFileSystem);
+FileManager *CompilerInstance::createFileManager(
+    IntrusiveRefCntPtr<llvm::vfs::FileSystem> VFS) {
+  if (!VFS)
+    VFS = FileMgr ? FileMgr->getVirtualFileSystem()
+                  : createVFSFromCompilerInvocation(getInvocation(),
+                                                    getDiagnostics());
+  assert(VFS && "FileManager has no VFS?");
+  FileMgr = new FileManager(getFileSystemOpts(), std::move(VFS));
   return FileMgr.get();
 }
 
@@ -1100,8 +1097,6 @@ compileModuleImpl(CompilerInstance &ImportingInstance, SourceLocation ImportLoc,
   Instance.createDiagnostics(new ForwardingDiagnosticConsumer(
                                    ImportingInstance.getDiagnosticClient()),
                              /*ShouldOwnClient=*/true);
-
-  Instance.setVirtualFileSystem(&ImportingInstance.getVirtualFileSystem());
 
   // Note that this module is part of the module build stack, so that we
   // can detect cycles in the module graph.

@@ -1078,28 +1078,29 @@ bool ASTUnit::Parse(std::shared_ptr<PCHContainerOperations> PCHContainerOps,
   if (!Invocation)
     return true;
 
+  if (VFS && FileMgr)
+    assert(VFS == FileMgr->getVirtualFileSystem() &&
+           "VFS passed to Parse and VFS in FileMgr are different");
+
   auto CCInvocation = std::make_shared<CompilerInvocation>(*Invocation);
   if (OverrideMainBuffer) {
     assert(Preamble &&
            "No preamble was built, but OverrideMainBuffer is not null");
-    IntrusiveRefCntPtr<llvm::vfs::FileSystem> OldVFS = VFS;
     Preamble->AddImplicitPreamble(*CCInvocation, VFS, OverrideMainBuffer.get());
-    if (OldVFS != VFS && FileMgr) {
-      assert(OldVFS == FileMgr->getVirtualFileSystem() &&
-             "VFS passed to Parse and VFS in FileMgr are different");
-      FileMgr = new FileManager(FileMgr->getFileSystemOpts(), VFS);
-    }
+    // VFS may have changed...
   }
 
   // Create the compiler instance to use for building the AST.
   std::unique_ptr<CompilerInstance> Clang(
       new CompilerInstance(std::move(PCHContainerOps)));
-  if (FileMgr && VFS) {
-    assert(VFS == FileMgr->getVirtualFileSystem() &&
-           "VFS passed to Parse and VFS in FileMgr are different");
-  } else if (VFS) {
-    Clang->setVirtualFileSystem(VFS);
-  }
+
+  // Ensure that Clang has a FileManager with the right VFS, which may have
+  // changed above in AddImplicitPreamble.  If VFS is nullptr, rely on
+  // createFileManager to create one.
+  if (VFS && FileMgr && FileMgr->getVirtualFileSystem() == VFS)
+    Clang->setFileManager(&*FileMgr);
+  else
+    FileMgr = Clang->createFileManager(std::move(VFS));
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<CompilerInstance>
@@ -1136,10 +1137,6 @@ bool ASTUnit::Parse(std::shared_ptr<PCHContainerOperations> PCHContainerOps,
   // Configure the various subsystems.
   LangOpts = Clang->getInvocation().LangOpts;
   FileSystemOpts = Clang->getFileSystemOpts();
-  if (!FileMgr) {
-    Clang->createFileManager();
-    FileMgr = &Clang->getFileManager();
-  }
 
   ResetForParse();
 
