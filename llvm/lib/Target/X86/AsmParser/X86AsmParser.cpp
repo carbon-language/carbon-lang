@@ -2992,6 +2992,11 @@ bool X86AsmParser::MatchAndEmitATTInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_MnemonicFail:
     break;
   }
+  if (Op.getToken().empty()) {
+    Error(IDLoc, "instruction must have size higher than 0", EmptyRange,
+          MatchingInlineAsm);
+    return true;
+  }
 
   // FIXME: Ideally, we would only attempt suffix matches for things which are
   // valid prefixes, and we could just infer the right unambiguous
