@@ -49,11 +49,23 @@ public:
   using BaseChecker::Leave;
   SemanticsVisitor(SemanticsContext &context)
     : C{context}..., context_{context} {}
+
   template<typename N> bool Pre(const N &node) {
     Enter(node);
     return true;
   }
   template<typename N> void Post(const N &node) { Leave(node); }
+
+  template<typename T> bool Pre(const parser::Statement<T> &node) {
+    context_.set_location(&node.source);
+    Enter(node);
+    return true;
+  }
+  template<typename T> void Post(const parser::Statement<T> &node) {
+    Leave(node);
+    context_.set_location(nullptr);
+  }
+
   bool Walk(const parser::Program &program) {
     parser::Walk(program, *this);
     return !context_.AnyFatalError();

@@ -1063,7 +1063,7 @@ void ImplicitRules::SetType(const DeclTypeSpec &type, parser::Location lo,
   for (char ch = *lo; ch; ch = ImplicitRules::Incr(ch)) {
     auto res{map_.emplace(ch, &type)};
     if (!res.second && !isDefault) {
-      context_->Say(lo,
+      context_->messages().Say(lo,
           "More than one implicit type specified for '%s'"_err_en_US,
           std::string(1, ch).c_str());
     }

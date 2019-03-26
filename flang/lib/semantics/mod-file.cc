@@ -680,7 +680,7 @@ std::optional<std::string> ModFileReader::FindModFile(
           : "Cannot find module file for submodule '%s' of module '%s'"_err_en_US,
       name.ToString().data(), ancestor.data()}};
   attachments.AttachTo(error);
-  context_.Say(error);
+  context_.Say(std::move(error));
   return std::nullopt;
 }
 
