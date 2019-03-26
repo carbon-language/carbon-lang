@@ -22,6 +22,8 @@
 #include "symbol.h"
 #include "type.h"
 #include "../evaluate/variable.h"
+#include "../parser/message.h"
+#include "../parser/parse-tree.h"
 
 namespace Fortran::semantics {
 
@@ -75,5 +77,10 @@ const Symbol *FindExternallyVisibleObject(
       [&](const auto &x) { return FindExternallyVisibleObject(x, scope); },
       expr.u);
 }
+
+bool ExprHasTypeCategory(
+    const evaluate::GenericExprWrapper &expr, const common::TypeCategory &type);
+void CheckScalarLogicalExpr(
+    const parser::Expr &expr, parser::Messages &messages);
 }
 #endif  // FORTRAN_SEMANTICS_TOOLS_H_

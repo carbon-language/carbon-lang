@@ -12,16 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "semantics.h"
 #include "assignment.h"
 #include "canonicalize-do.h"
+#include "check-arithmeticif.h"
 #include "check-do-concurrent.h"
+#include "check-if-construct.h"
+#include "check-if-stmt.h"
 #include "expression.h"
 #include "mod-file.h"
 #include "resolve-labels.h"
 #include "resolve-names.h"
 #include "rewrite-parse-tree.h"
 #include "scope.h"
+#include "semantics.h"
 #include "symbol.h"
 #include "../common/default-kinds.h"
 #include "../parser/parse-tree-visitor.h"
@@ -60,11 +63,12 @@ private:
 };
 
 using StatementSemanticsPass1 = SemanticsVisitor<ExprChecker>;
-using StatementSemanticsPass2 =
-    SemanticsVisitor<AssignmentChecker, DoConcurrentChecker>;
+using StatementSemanticsPass2 = SemanticsVisitor<ArithmeticIfStmtChecker,
+    AssignmentChecker, DoConcurrentChecker, IfConstructChecker, IfStmtChecker>;
 
-SemanticsContext::SemanticsContext(const common::IntrinsicTypeDefaultKinds
-        &defaultKinds, const parser::LanguageFeatureControl &languageFeatures)
+SemanticsContext::SemanticsContext(
+    const common::IntrinsicTypeDefaultKinds &defaultKinds,
+    const parser::LanguageFeatureControl &languageFeatures)
   : defaultKinds_{defaultKinds}, languageFeatures_{languageFeatures},
     intrinsics_{evaluate::IntrinsicProcTable::Configure(defaultKinds)},
     foldingContext_{evaluate::FoldingContext{
@@ -159,5 +163,4 @@ static void PutIndent(std::ostream &os, int indent) {
     os << "  ";
   }
 }
-
 }

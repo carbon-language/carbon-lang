@@ -16,7 +16,10 @@ add_library(FortranSemantics
   assignment.cc
   attr.cc
   canonicalize-do.cc
+  check-arithmeticif.cc
   check-do-concurrent.cc
+  check-if-construct.cc
+  check-if-stmt.cc
   expression.cc
   mod-file.cc
   resolve-labels.cc

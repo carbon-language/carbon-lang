@@ -78,6 +78,12 @@ set(ERROR_TESTS
   structconst03.f90
   structconst04.f90
   assign01.f90
+  if_arith02.f90
+  if_arith03.f90
+  if_arith04.f90
+  if_construct02.f90
+  if_stmt02.f90
+  if_stmt03.f90
 )
 
 # These test files have expected symbols in the source
@@ -140,6 +146,12 @@ set(FORALL_TESTS
   forall*.[Ff]90
 )
 
+set(IF_TESTS
+  if_arith01.f90
+  if_construct01.f90
+  if_stmt01.f90
+)
+
 foreach(test ${ERROR_TESTS})
   add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_errors.sh ${test})
 endforeach()
@@ -165,5 +177,9 @@ foreach(test ${DOCONCURRENT_TESTS})
 endforeach()
 
 foreach(test ${FORALL_TESTS})
+  add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_any.sh ${test})
+endforeach()
+
+foreach(test ${IF_TESTS})
   add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_any.sh ${test})
 endforeach()
