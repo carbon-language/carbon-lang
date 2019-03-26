@@ -3086,7 +3086,7 @@ bool X86DAGToDAGISel::matchBitExtract(SDNode *Node) {
 
   // The 'X' was originally truncated. Do that now.
   if (XVT != NVT) {
-    insertDAGNode(*CurDAG, OrigNBits, Extract);
+    insertDAGNode(*CurDAG, SDValue(Node, 0), Extract);
     Extract = CurDAG->getNode(ISD::TRUNCATE, DL, NVT, Extract);
   }
 
