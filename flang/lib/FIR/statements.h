@@ -557,14 +557,14 @@ public:
   }
   std::string dump() const;
 
-  static std::size_t offsetof_impl() {
-    return reinterpret_cast<std::size_t>(&static_cast<Statement *>(nullptr)->u);
-  }
+  // g++/clang++ will optimize this to a simple register copy
   static Statement *From(Stmt_impl *stmt) {
-    char *cp{reinterpret_cast<char *>(stmt)};
-    auto adjust{Statement::offsetof_impl()};
-    CHECK(adjust == 0);
-    return reinterpret_cast<Statement *>(cp - adjust);
+    static Statement s{nullptr, UnreachableStmt::Create()};
+    auto *result{reinterpret_cast<Statement *>(reinterpret_cast<char *>(stmt) -
+        (reinterpret_cast<char *>(&s.u) - reinterpret_cast<char *>(&s)))};
+    CHECK(result == reinterpret_cast<Statement *>(stmt) &&
+        "expecting pointers to be equal");
+    return result;
   }
 };
 
