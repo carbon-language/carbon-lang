@@ -1079,7 +1079,7 @@ bool ASTUnit::Parse(std::shared_ptr<PCHContainerOperations> PCHContainerOps,
     return true;
 
   if (VFS && FileMgr)
-    assert(VFS == FileMgr->getVirtualFileSystem() &&
+    assert(VFS == &FileMgr->getVirtualFileSystem() &&
            "VFS passed to Parse and VFS in FileMgr are different");
 
   auto CCInvocation = std::make_shared<CompilerInvocation>(*Invocation);
@@ -1097,7 +1097,7 @@ bool ASTUnit::Parse(std::shared_ptr<PCHContainerOperations> PCHContainerOps,
   // Ensure that Clang has a FileManager with the right VFS, which may have
   // changed above in AddImplicitPreamble.  If VFS is nullptr, rely on
   // createFileManager to create one.
-  if (VFS && FileMgr && FileMgr->getVirtualFileSystem() == VFS)
+  if (VFS && FileMgr && &FileMgr->getVirtualFileSystem() == VFS)
     Clang->setFileManager(&*FileMgr);
   else
     FileMgr = Clang->createFileManager(std::move(VFS));
@@ -1690,7 +1690,7 @@ std::unique_ptr<ASTUnit> ASTUnit::LoadFromCompilerInvocation(
 
   if (AST->LoadFromCompilerInvocation(std::move(PCHContainerOps),
                                       PrecompilePreambleAfterNParses,
-                                      AST->FileMgr->getVirtualFileSystem()))
+                                      &AST->FileMgr->getVirtualFileSystem()))
     return nullptr;
   return AST;
 }
@@ -1797,7 +1797,7 @@ bool ASTUnit::Reparse(std::shared_ptr<PCHContainerOperations> PCHContainerOps,
 
   if (!VFS) {
     assert(FileMgr && "FileMgr is null on Reparse call");
-    VFS = FileMgr->getVirtualFileSystem();
+    VFS = &FileMgr->getVirtualFileSystem();
   }
 
   clearFileLevelDecls();
@@ -2211,18 +2211,18 @@ void ASTUnit::CodeComplete(
   if (Preamble) {
     std::string CompleteFilePath(File);
 
-    auto VFS = FileMgr.getVirtualFileSystem();
-    auto CompleteFileStatus = VFS->status(CompleteFilePath);
+    auto &VFS = FileMgr.getVirtualFileSystem();
+    auto CompleteFileStatus = VFS.status(CompleteFilePath);
     if (CompleteFileStatus) {
       llvm::sys::fs::UniqueID CompleteFileID = CompleteFileStatus->getUniqueID();
 
       std::string MainPath(OriginalSourceFile);
-      auto MainStatus = VFS->status(MainPath);
+      auto MainStatus = VFS.status(MainPath);
       if (MainStatus) {
         llvm::sys::fs::UniqueID MainID = MainStatus->getUniqueID();
         if (CompleteFileID == MainID && Line > 1)
           OverrideMainBuffer = getMainBufferWithPrecompiledPreamble(
-              PCHContainerOps, Inv, VFS, false, Line - 1);
+              PCHContainerOps, Inv, &VFS, false, Line - 1);
       }
     }
   }
@@ -2233,7 +2233,8 @@ void ASTUnit::CodeComplete(
     assert(Preamble &&
            "No preamble was built, but OverrideMainBuffer is not null");
 
-    auto VFS = FileMgr.getVirtualFileSystem();
+    IntrusiveRefCntPtr<llvm::vfs::FileSystem> VFS =
+        &FileMgr.getVirtualFileSystem();
     Preamble->AddImplicitPreamble(Clang->getInvocation(), VFS,
                                   OverrideMainBuffer.get());
     // FIXME: there is no way to update VFS if it was changed by

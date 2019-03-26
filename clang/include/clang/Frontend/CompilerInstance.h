@@ -380,7 +380,7 @@ public:
   /// {
 
   llvm::vfs::FileSystem &getVirtualFileSystem() const {
-    return *getFileManager().getVirtualFileSystem();
+    return getFileManager().getVirtualFileSystem();
   }
 
   /// }

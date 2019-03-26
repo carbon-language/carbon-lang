@@ -169,7 +169,7 @@ static void collectIncludePCH(CompilerInstance &CI,
   std::error_code EC;
   SmallString<128> DirNative;
   llvm::sys::path::native(PCHDir->getName(), DirNative);
-  llvm::vfs::FileSystem &FS = *FileMgr.getVirtualFileSystem();
+  llvm::vfs::FileSystem &FS = FileMgr.getVirtualFileSystem();
   SimpleASTReaderListener Validator(CI.getPreprocessor());
   for (llvm::vfs::directory_iterator Dir = FS.dir_begin(DirNative, EC), DirEnd;
        Dir != DirEnd && !EC; Dir.increment(EC)) {
@@ -296,7 +296,7 @@ CompilerInstance::createDiagnostics(DiagnosticOptions *Opts,
 FileManager *CompilerInstance::createFileManager(
     IntrusiveRefCntPtr<llvm::vfs::FileSystem> VFS) {
   if (!VFS)
-    VFS = FileMgr ? FileMgr->getVirtualFileSystem()
+    VFS = FileMgr ? &FileMgr->getVirtualFileSystem()
                   : createVFSFromCompilerInvocation(getInvocation(),
                                                     getDiagnostics());
   assert(VFS && "FileManager has no VFS?");
