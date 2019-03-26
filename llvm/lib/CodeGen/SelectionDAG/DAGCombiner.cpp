@@ -16824,7 +16824,7 @@ SDValue DAGCombiner::reduceBuildVecToShuffle(SDNode *N) {
 
 // Try to turn a build vector of zero extends of extract vector elts into a
 // a vector zero extend and possibly an extract subvector.
-// TODO: Support sign extend or any extend?
+// TODO: Support sign extend?
 // TODO: Allow undef elements?
 SDValue DAGCombiner::convertBuildVecZextToZext(SDNode *N) {
   if (LegalOperations)
@@ -16832,9 +16832,12 @@ SDValue DAGCombiner::convertBuildVecZextToZext(SDNode *N) {
 
   EVT VT = N->getValueType(0);
 
+  bool FoundZeroExtend = false;
   SDValue Op0 = N->getOperand(0);
   auto checkElem = [&](SDValue Op) -> int64_t {
-    if (Op.getOpcode() == ISD::ZERO_EXTEND &&
+    unsigned Opc = Op.getOpcode();
+    FoundZeroExtend |= (Opc == ISD::ZERO_EXTEND);
+    if ((Op.getOpcode() == ISD::ZERO_EXTEND || Opc == ISD::ANY_EXTEND) &&
         Op.getOperand(0).getOpcode() == ISD::EXTRACT_VECTOR_ELT &&
         Op0.getOperand(0).getOperand(0) == Op.getOperand(0).getOperand(0))
       if (auto *C = dyn_cast<ConstantSDNode>(Op.getOperand(0).getOperand(1)))
@@ -16866,7 +16869,8 @@ SDValue DAGCombiner::convertBuildVecZextToZext(SDNode *N) {
   SDLoc DL(N);
   In = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, InVT, In,
                    Op0.getOperand(0).getOperand(1));
-  return DAG.getNode(ISD::ZERO_EXTEND, DL, VT, In);
+  return DAG.getNode(FoundZeroExtend ? ISD::ZERO_EXTEND : ISD::ANY_EXTEND, DL,
+                     VT, In);
 }
 
 SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {

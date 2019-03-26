@@ -2652,7 +2652,7 @@ define <8 x i16> @insert_dup_mem_v8i16_i32(i32* %ptr) {
 define <8 x i16> @insert_dup_mem_v8i16_sext_i16(i16* %ptr) {
 ; SSE-LABEL: insert_dup_mem_v8i16_sext_i16:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    movswl (%rdi), %eax
+; SSE-NEXT:    movzwl (%rdi), %eax
 ; SSE-NEXT:    movd %eax, %xmm0
 ; SSE-NEXT:    pshuflw {{.*#+}} xmm0 = xmm0[0,0,2,3,4,5,6,7]
 ; SSE-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,0,0,0]
@@ -2660,7 +2660,7 @@ define <8 x i16> @insert_dup_mem_v8i16_sext_i16(i16* %ptr) {
 ;
 ; AVX1-LABEL: insert_dup_mem_v8i16_sext_i16:
 ; AVX1:       # %bb.0:
-; AVX1-NEXT:    movswl (%rdi), %eax
+; AVX1-NEXT:    movzwl (%rdi), %eax
 ; AVX1-NEXT:    vmovd %eax, %xmm0
 ; AVX1-NEXT:    vpshuflw {{.*#+}} xmm0 = xmm0[0,0,2,3,4,5,6,7]
 ; AVX1-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,0,0]
@@ -2668,14 +2668,14 @@ define <8 x i16> @insert_dup_mem_v8i16_sext_i16(i16* %ptr) {
 ;
 ; AVX2-LABEL: insert_dup_mem_v8i16_sext_i16:
 ; AVX2:       # %bb.0:
-; AVX2-NEXT:    movswl (%rdi), %eax
+; AVX2-NEXT:    movzwl (%rdi), %eax
 ; AVX2-NEXT:    vmovd %eax, %xmm0
 ; AVX2-NEXT:    vpbroadcastw %xmm0, %xmm0
 ; AVX2-NEXT:    retq
 ;
 ; AVX512VL-LABEL: insert_dup_mem_v8i16_sext_i16:
 ; AVX512VL:       # %bb.0:
-; AVX512VL-NEXT:    movswl (%rdi), %eax
+; AVX512VL-NEXT:    movzwl (%rdi), %eax
 ; AVX512VL-NEXT:    vpbroadcastw %eax, %xmm0
 ; AVX512VL-NEXT:    retq
   %tmp = load i16, i16* %ptr, align 2
