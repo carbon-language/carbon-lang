@@ -335,6 +335,38 @@ try.cont:                                         ; preds = %catch.start, %bb4, 
   ret void
 }
 
+; Tests if try/end_try markers are placed correctly wrt loop/end_loop markers,
+; when try and loop markers are in the same BB and end_try and end_loop are in
+; another BB.
+; CHECK: loop
+; CHECK:   try
+; CHECK:     call      foo
+; CHECK:   catch
+; CHECK:   end_try
+; CHECK: end_loop
+define void @test4(i32* %p) personality i8* bitcast (i32 (...)* @__gxx_wasm_personality_v0 to i8*) {
+entry:
+  store volatile i32 0, i32* %p
+  br label %loop
+
+loop:                                             ; preds = %try.cont, %entry
+  store volatile i32 1, i32* %p
+  invoke void @foo()
+          to label %try.cont unwind label %catch.dispatch
+
+catch.dispatch:                                   ; preds = %loop
+  %0 = catchswitch within none [label %catch.start] unwind to caller
+
+catch.start:                                      ; preds = %catch.dispatch
+  %1 = catchpad within %0 [i8* null]
+  %2 = call i8* @llvm.wasm.get.exception(token %1)
+  %3 = call i32 @llvm.wasm.get.ehselector(token %1)
+  catchret from %1 to label %try.cont
+
+try.cont:                                         ; preds = %catch.start, %loop
+  br label %loop
+}
+
 declare void @foo()
 declare void @bar()
 declare i32 @__gxx_wasm_personality_v0(...)
