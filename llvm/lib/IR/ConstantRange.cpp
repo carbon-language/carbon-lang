@@ -344,12 +344,20 @@ bool ConstantRange::isEmptySet() const {
   return Lower == Upper && Lower.isMinValue();
 }
 
+bool ConstantRange::isWrappedSet() const {
+  return Lower.ugt(Upper) && !Upper.isNullValue();
+}
+
 bool ConstantRange::isUpperWrapped() const {
   return Lower.ugt(Upper);
 }
 
 bool ConstantRange::isSignWrappedSet() const {
   return Lower.sgt(Upper) && !Upper.isMinSignedValue();
+}
+
+bool ConstantRange::isUpperSignWrapped() const {
+  return Lower.sgt(Upper);
 }
 
 APInt ConstantRange::getSetSize() const {
@@ -388,19 +396,19 @@ APInt ConstantRange::getUnsignedMax() const {
 }
 
 APInt ConstantRange::getUnsignedMin() const {
-  if (isFullSet() || (isUpperWrapped() && !getUpper().isNullValue()))
+  if (isFullSet() || isWrappedSet())
     return APInt::getMinValue(getBitWidth());
   return getLower();
 }
 
 APInt ConstantRange::getSignedMax() const {
-  if (isFullSet() || Lower.sgt(Upper))
+  if (isFullSet() || isUpperSignWrapped())
     return APInt::getSignedMaxValue(getBitWidth());
   return getUpper() - 1;
 }
 
 APInt ConstantRange::getSignedMin() const {
-  if (isFullSet() || (Lower.sgt(Upper) && !getUpper().isMinSignedValue()))
+  if (isFullSet() || isSignWrappedSet())
     return APInt::getSignedMinValue(getBitWidth());
   return getLower();
 }
