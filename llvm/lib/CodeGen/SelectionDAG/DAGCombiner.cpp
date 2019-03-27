@@ -1837,6 +1837,8 @@ SDValue DAGCombiner::visitTokenFactor(SDNode *N) {
       for (const SDValue &Op : CurNode->op_values())
         AddToWorklist(i, Op.getNode(), CurOpNumber);
       break;
+    case ISD::LIFETIME_START:
+    case ISD::LIFETIME_END:
     case ISD::CopyFromReg:
     case ISD::CopyToReg:
       AddToWorklist(i, CurNode->getOperand(0).getNode(), CurOpNumber);
