@@ -226,8 +226,8 @@ bool SIInstrInfo::areLoadsFromSameBasePtr(SDNode *Load0, SDNode *Load1,
     // getNamedOperandIdx returns the index for MachineInstrs.  Since they
     // include the output in the operand list, but SDNodes don't, we need to
     // subtract the index by one.
-    --OffIdx0;
-    --OffIdx1;
+    OffIdx0 -= get(Opc0).NumDefs;
+    OffIdx1 -= get(Opc1).NumDefs;
 
     SDValue Off0 = Load0->getOperand(OffIdx0);
     SDValue Off1 = Load1->getOperand(OffIdx1);
