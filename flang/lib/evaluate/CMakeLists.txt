@@ -39,10 +39,14 @@ target_link_libraries(FortranEvaluate
   m
 )
 
-# If pgmath library is found, it can be used for constant folding.
-find_library(LIBPGMATH pgmath PATHS ${LIBPGMATH_DIR})
-if(LIBPGMATH)
-  add_compile_definitions(LINK_WITH_LIBPGMATH)
-  target_link_libraries(FortranEvaluate ${LIBPGMATH})
-  message(STATUS "Found libpgmath: ${LIBPGMATH}")
+if (LIBPGMATH_DIR)
+  # If pgmath library is found, it can be used for constant folding.
+  find_library(LIBPGMATH pgmath PATHS ${LIBPGMATH_DIR})
+  if(LIBPGMATH)
+    add_compile_definitions(LINK_WITH_LIBPGMATH)
+    target_link_libraries(FortranEvaluate ${LIBPGMATH})
+    message(STATUS "Found libpgmath: ${LIBPGMATH}")
+  else()
+    message(STATUS "Libpgmath not found in: ${LIBPGMATH_DIR}")
+  endif()
 endif()
