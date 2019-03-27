@@ -27,7 +27,7 @@ namespace Fortran::semantics {
 
 void ComputedGotoStmtChecker::Leave(
     const parser::ComputedGotoStmt &computedGotoStmt) {
-  // C1169 Labels will have already been check
+  // C1169 Labels have already been checked
   // R1158 Check for scalar-int-expr
   auto &expr{
       std::get<parser::ScalarIntExpr>(computedGotoStmt.t).thing.thing.value()};
