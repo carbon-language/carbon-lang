@@ -24,7 +24,8 @@
         "onLanguage:c",
         "onLanguage:cpp",
         "onLanguage:objective-c",
-        "onLanguage:objective-cpp"
+        "onLanguage:objective-cpp",
+        "onCommand:clangd-vscode.activate"
     ],
     "main": "./out/src/extension",
     "scripts": {
@@ -81,6 +82,10 @@
             {
                 "command": "clangd-vscode.switchheadersource",
                 "title": "Switch between Source/Header"
+            },
+            {
+                "command": "clangd-vscode.activate",
+                "title": "Manually activate clangd extension"
             }
         ],
         "keybindings": [

@@ -139,4 +139,8 @@ export function activate(context: vscode.ExtensionContext) {
                 status.clear();
             }
         })
+    // An empty place holder for the activate command, otherwise we'll get an
+    // "command is not registered" error.
+    context.subscriptions.push(vscode.commands.registerCommand(
+            'clangd-vscode.activate', async () => {}));
 }
