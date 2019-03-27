@@ -63,9 +63,9 @@ Error Pipeline::runCycle() {
     Err = FirstStage.execute(IR);
 
   // Update stages in preparation for a new cycle.
-  for (auto I = Stages.rbegin(), E = Stages.rend(); I != E && !Err; ++I) {
-    const std::unique_ptr<Stage> &S = *I;
-    Err = S->cycleEnd();
+  for (const std::unique_ptr<Stage> &S : Stages) {
+    if (Err = S->cycleEnd())
+      break;
   }
 
   return Err;
