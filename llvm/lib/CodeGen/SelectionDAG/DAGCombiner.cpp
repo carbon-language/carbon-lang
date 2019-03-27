@@ -643,16 +643,6 @@ public:
   }
 };
 
-class WorklistInserter : public SelectionDAG::DAGUpdateListener {
-  DAGCombiner &DC;
-
-public:
-  explicit WorklistInserter(DAGCombiner &dc)
-      : SelectionDAG::DAGUpdateListener(dc.getDAG()), DC(dc) {}
-
-  void NodeInserted(SDNode *N) override { DC.AddToWorklist(N); }
-};
-
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
@@ -1404,8 +1394,6 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
   Level = AtLevel;
   LegalOperations = Level >= AfterLegalizeVectorOps;
   LegalTypes = Level >= AfterLegalizeTypes;
-
-  WorklistInserter AddNodes(*this);
 
   // Add all the dag nodes to the worklist.
   for (SDNode &Node : DAG.allnodes())
