@@ -265,7 +265,7 @@ class Missed(Remark):
         return "red"
 
 
-def get_remarks(input_file, filter_):
+def get_remarks(input_file, filter_=None):
     max_hotness = 0
     all_remarks = dict()
     file_remarks = defaultdict(functools.partial(defaultdict, list))
@@ -273,14 +273,16 @@ def get_remarks(input_file, filter_):
     with open(input_file) as f:
         docs = yaml.load_all(f, Loader=Loader)
 
-        filter_e = re.compile(filter_)
+        filter_e = None
+        if filter_:
+            filter_e = re.compile(filter_)
         for remark in docs:
             remark.canonicalize()
             # Avoid remarks withoug debug location or if they are duplicated
             if not hasattr(remark, 'DebugLoc') or remark.key in all_remarks:
                 continue
 
-            if filter_ and not filter_e.search(remark.Pass):
+            if filter_e and not filter_e.search(remark.Pass):
                 continue
 
             all_remarks[remark.key] = remark
@@ -297,7 +299,7 @@ def get_remarks(input_file, filter_):
     return max_hotness, all_remarks, file_remarks
 
 
-def gather_results(filenames, num_jobs, should_print_progress, filter_):
+def gather_results(filenames, num_jobs, should_print_progress, filter_=None):
     if should_print_progress:
         print('Reading YAML files...')
     if not Remark.demangler_proc:
