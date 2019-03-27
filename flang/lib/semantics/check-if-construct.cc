@@ -25,11 +25,6 @@
 
 namespace Fortran::semantics {
 
-IfConstructChecker::IfConstructChecker(SemanticsContext &context)
-  : context_{context} {}
-
-IfConstructChecker::~IfConstructChecker() = default;
-
 void IfConstructChecker::Leave(const parser::IfConstruct &ifConstruct) {
   auto &ifThenStmt{
       std::get<parser::Statement<parser::IfThenStmt>>(ifConstruct.t).statement};

@@ -24,9 +24,6 @@
 #include "../parser/parse-tree.h"
 
 namespace Fortran::semantics {
-IfStmtChecker::IfStmtChecker(SemanticsContext &context) : context_{context} {}
-
-IfStmtChecker::~IfStmtChecker() = default;
 
 template<class T> void suppress_unused_variable_warning(const T &) {}
 

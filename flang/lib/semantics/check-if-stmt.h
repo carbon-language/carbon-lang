@@ -20,14 +20,11 @@
 namespace Fortran::parser {
 struct IfStmt;
 }
-extern template class Fortran::common::Indirection<
-    Fortran::semantics::SemanticsContext>;
 
 namespace Fortran::semantics {
 class IfStmtChecker : public virtual BaseChecker {
 public:
-  explicit IfStmtChecker(SemanticsContext &);
-  ~IfStmtChecker();
+  inline IfStmtChecker(SemanticsContext &context) : context_{context} {}
   void Leave(const parser::IfStmt &);
 
 private:

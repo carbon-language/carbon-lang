@@ -31,11 +31,6 @@ bool IsNumericExpr(const evaluate::GenericExprWrapper &expr) {
       common::IsNumericTypeCategory(dynamicType->category);
 }
 
-ArithmeticIfStmtChecker::ArithmeticIfStmtChecker(SemanticsContext &context)
-  : context_(context) {}
-
-ArithmeticIfStmtChecker::~ArithmeticIfStmtChecker() = default;
-
 void ArithmeticIfStmtChecker::Leave(
     const parser::ArithmeticIfStmt &arithmeticIfStmt) {
   // Arithmetic IF statements have been removed from Fortran 2018.

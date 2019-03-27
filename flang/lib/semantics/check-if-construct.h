@@ -24,8 +24,7 @@ struct IfConstruct;
 namespace Fortran::semantics {
 class IfConstructChecker : public virtual BaseChecker {
 public:
-  explicit IfConstructChecker(SemanticsContext &);
-  ~IfConstructChecker();
+  inline IfConstructChecker(SemanticsContext &context) : context_{context} {}
   void Leave(const parser::IfConstruct &);
 
 private:
