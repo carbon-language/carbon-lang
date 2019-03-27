@@ -1964,6 +1964,7 @@ bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, unsigned &Scale,
     MinOffset = -256;
     MaxOffset = 255;
     break;
+  case AArch64::PRFUMi:
   case AArch64::LDURXi:
   case AArch64::LDURDi:
   case AArch64::STURXi:
@@ -2033,6 +2034,7 @@ bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, unsigned &Scale,
     MinOffset = -64;
     MaxOffset = 63;
     break;
+  case AArch64::PRFMui:
   case AArch64::LDRXui:
   case AArch64::LDRDui:
   case AArch64::STRXui:
@@ -2065,6 +2067,8 @@ bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, unsigned &Scale,
     break;
   case AArch64::LDRHui:
   case AArch64::LDRHHui:
+  case AArch64::LDRSHWui:
+  case AArch64::LDRSHXui:
   case AArch64::STRHui:
   case AArch64::STRHHui:
     Scale = Width = 2;
@@ -2073,6 +2077,8 @@ bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, unsigned &Scale,
     break;
   case AArch64::LDRBui:
   case AArch64::LDRBBui:
+  case AArch64::LDRSBWui:
+  case AArch64::LDRSBXui:
   case AArch64::STRBui:
   case AArch64::STRBBui:
     Scale = Width = 1;
