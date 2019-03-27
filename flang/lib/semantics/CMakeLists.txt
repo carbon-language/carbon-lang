@@ -17,6 +17,7 @@ add_library(FortranSemantics
   attr.cc
   canonicalize-do.cc
   check-arithmeticif.cc
+  check-computed-goto.cc
   check-do-concurrent.cc
   check-if-construct.cc
   check-if-stmt.cc

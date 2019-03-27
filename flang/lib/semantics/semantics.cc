@@ -16,6 +16,7 @@
 #include "assignment.h"
 #include "canonicalize-do.h"
 #include "check-arithmeticif.h"
+#include "check-computed-goto.h"
 #include "check-do-concurrent.h"
 #include "check-if-construct.h"
 #include "check-if-stmt.h"
@@ -64,7 +65,8 @@ private:
 
 using StatementSemanticsPass1 = SemanticsVisitor<ExprChecker>;
 using StatementSemanticsPass2 = SemanticsVisitor<ArithmeticIfStmtChecker,
-    AssignmentChecker, DoConcurrentChecker, IfConstructChecker, IfStmtChecker>;
+    AssignmentChecker, ComputedGotoStmtChecker, DoConcurrentChecker,
+    IfConstructChecker, IfStmtChecker>;
 
 SemanticsContext::SemanticsContext(
     const common::IntrinsicTypeDefaultKinds &defaultKinds,

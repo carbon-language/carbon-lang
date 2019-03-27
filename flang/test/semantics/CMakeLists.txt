@@ -84,6 +84,8 @@ set(ERROR_TESTS
   if_construct02.f90
   if_stmt02.f90
   if_stmt03.f90
+  computed-goto01.f90
+  computed-goto02.f90
 )
 
 # These test files have expected symbols in the source
