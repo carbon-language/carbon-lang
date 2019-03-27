@@ -344,7 +344,7 @@ bool ConstantRange::isEmptySet() const {
   return Lower == Upper && Lower.isMinValue();
 }
 
-bool ConstantRange::isWrappedSet() const {
+bool ConstantRange::isUpperWrapped() const {
   return Lower.ugt(Upper);
 }
 
@@ -382,13 +382,13 @@ ConstantRange::isSizeLargerThan(uint64_t MaxSize) const {
 }
 
 APInt ConstantRange::getUnsignedMax() const {
-  if (isFullSet() || isWrappedSet())
+  if (isFullSet() || isUpperWrapped())
     return APInt::getMaxValue(getBitWidth());
   return getUpper() - 1;
 }
 
 APInt ConstantRange::getUnsignedMin() const {
-  if (isFullSet() || (isWrappedSet() && !getUpper().isNullValue()))
+  if (isFullSet() || (isUpperWrapped() && !getUpper().isNullValue()))
     return APInt::getMinValue(getBitWidth());
   return getLower();
 }
@@ -409,7 +409,7 @@ bool ConstantRange::contains(const APInt &V) const {
   if (Lower == Upper)
     return isFullSet();
 
-  if (!isWrappedSet())
+  if (!isUpperWrapped())
     return Lower.ule(V) && V.ult(Upper);
   return Lower.ule(V) || V.ult(Upper);
 }
@@ -418,14 +418,14 @@ bool ConstantRange::contains(const ConstantRange &Other) const {
   if (isFullSet() || Other.isEmptySet()) return true;
   if (isEmptySet() || Other.isFullSet()) return false;
 
-  if (!isWrappedSet()) {
-    if (Other.isWrappedSet())
+  if (!isUpperWrapped()) {
+    if (Other.isUpperWrapped())
       return false;
 
     return Lower.ule(Other.getLower()) && Other.getUpper().ule(Upper);
   }
 
-  if (!Other.isWrappedSet())
+  if (!Other.isUpperWrapped())
     return Other.getUpper().ule(Upper) ||
            Lower.ule(Other.getLower());
 
@@ -452,10 +452,10 @@ ConstantRange ConstantRange::intersectWith(const ConstantRange &CR) const {
   if (   isEmptySet() || CR.isFullSet()) return *this;
   if (CR.isEmptySet() ||    isFullSet()) return CR;
 
-  if (!isWrappedSet() && CR.isWrappedSet())
+  if (!isUpperWrapped() && CR.isUpperWrapped())
     return CR.intersectWith(*this);
 
-  if (!isWrappedSet() && !CR.isWrappedSet()) {
+  if (!isUpperWrapped() && !CR.isUpperWrapped()) {
     if (Lower.ult(CR.Lower)) {
       if (Upper.ule(CR.Lower))
         return getEmpty();
@@ -474,7 +474,7 @@ ConstantRange ConstantRange::intersectWith(const ConstantRange &CR) const {
     return getEmpty();
   }
 
-  if (isWrappedSet() && !CR.isWrappedSet()) {
+  if (isUpperWrapped() && !CR.isUpperWrapped()) {
     if (CR.Lower.ult(Upper)) {
       if (CR.Upper.ult(Upper))
         return CR;
@@ -525,9 +525,9 @@ ConstantRange ConstantRange::unionWith(const ConstantRange &CR) const {
   if (   isFullSet() || CR.isEmptySet()) return *this;
   if (CR.isFullSet() ||    isEmptySet()) return CR;
 
-  if (!isWrappedSet() && CR.isWrappedSet()) return CR.unionWith(*this);
+  if (!isUpperWrapped() && CR.isUpperWrapped()) return CR.unionWith(*this);
 
-  if (!isWrappedSet() && !CR.isWrappedSet()) {
+  if (!isUpperWrapped() && !CR.isUpperWrapped()) {
     if (CR.Upper.ult(Lower) || Upper.ult(CR.Lower)) {
       // If the two ranges are disjoint, find the smaller gap and bridge it.
       APInt d1 = CR.Lower - Upper, d2 = Lower - CR.Upper;
@@ -545,7 +545,7 @@ ConstantRange ConstantRange::unionWith(const ConstantRange &CR) const {
     return ConstantRange(std::move(L), std::move(U));
   }
 
-  if (!CR.isWrappedSet()) {
+  if (!CR.isUpperWrapped()) {
     // ------U   L-----  and  ------U   L----- : this
     //   L--U                            L--U  : CR
     if (CR.Upper.ule(Upper) || CR.Lower.uge(Lower))
@@ -637,7 +637,7 @@ ConstantRange ConstantRange::zeroExtend(uint32_t DstTySize) const {
 
   unsigned SrcTySize = getBitWidth();
   assert(SrcTySize < DstTySize && "Not a value extension");
-  if (isFullSet() || isWrappedSet()) {
+  if (isFullSet() || isUpperWrapped()) {
     // Change into [0, 1 << src bit width)
     APInt LowerExt(DstTySize, 0);
     if (!Upper) // special case: [X, 0) -- not really wrapping around
@@ -680,7 +680,7 @@ ConstantRange ConstantRange::truncate(uint32_t DstTySize) const {
   // Analyze wrapped sets in their two parts: [0, Upper) \/ [Lower, MaxValue]
   // We use the non-wrapped set code to analyze the [Lower, MaxValue) part, and
   // then we do the union with [MaxValue, Upper)
-  if (isWrappedSet()) {
+  if (isUpperWrapped()) {
     // If Upper is greater than or equal to MaxValue(DstTy), it covers the whole
     // truncated range.
     if (Upper.getActiveBits() > DstTySize ||
@@ -859,7 +859,7 @@ ConstantRange::multiply(const ConstantRange &Other) const {
   // from one positive number to another which is as good as we can generate.
   // In this case, skip the extra work of generating signed ranges which aren't
   // going to be better than this range.
-  if (!UR.isWrappedSet() &&
+  if (!UR.isUpperWrapped() &&
       (UR.getUpper().isNonNegative() || UR.getUpper().isMinSignedValue()))
     return UR;
 

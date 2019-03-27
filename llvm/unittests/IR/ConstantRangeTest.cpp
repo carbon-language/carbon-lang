@@ -35,7 +35,7 @@ TEST_F(ConstantRangeTest, Basics) {
   EXPECT_TRUE(Full.isFullSet());
   EXPECT_FALSE(Full.isEmptySet());
   EXPECT_TRUE(Full.inverse().isEmptySet());
-  EXPECT_FALSE(Full.isWrappedSet());
+  EXPECT_FALSE(Full.isUpperWrapped());
   EXPECT_TRUE(Full.contains(APInt(16, 0x0)));
   EXPECT_TRUE(Full.contains(APInt(16, 0x9)));
   EXPECT_TRUE(Full.contains(APInt(16, 0xa)));
@@ -45,7 +45,7 @@ TEST_F(ConstantRangeTest, Basics) {
   EXPECT_FALSE(Empty.isFullSet());
   EXPECT_TRUE(Empty.isEmptySet());
   EXPECT_TRUE(Empty.inverse().isFullSet());
-  EXPECT_FALSE(Empty.isWrappedSet());
+  EXPECT_FALSE(Empty.isUpperWrapped());
   EXPECT_FALSE(Empty.contains(APInt(16, 0x0)));
   EXPECT_FALSE(Empty.contains(APInt(16, 0x9)));
   EXPECT_FALSE(Empty.contains(APInt(16, 0xa)));
@@ -54,7 +54,7 @@ TEST_F(ConstantRangeTest, Basics) {
 
   EXPECT_FALSE(One.isFullSet());
   EXPECT_FALSE(One.isEmptySet());
-  EXPECT_FALSE(One.isWrappedSet());
+  EXPECT_FALSE(One.isUpperWrapped());
   EXPECT_FALSE(One.contains(APInt(16, 0x0)));
   EXPECT_FALSE(One.contains(APInt(16, 0x9)));
   EXPECT_TRUE(One.contains(APInt(16, 0xa)));
@@ -64,7 +64,7 @@ TEST_F(ConstantRangeTest, Basics) {
 
   EXPECT_FALSE(Some.isFullSet());
   EXPECT_FALSE(Some.isEmptySet());
-  EXPECT_FALSE(Some.isWrappedSet());
+  EXPECT_FALSE(Some.isUpperWrapped());
   EXPECT_FALSE(Some.contains(APInt(16, 0x0)));
   EXPECT_FALSE(Some.contains(APInt(16, 0x9)));
   EXPECT_TRUE(Some.contains(APInt(16, 0xa)));
@@ -73,7 +73,7 @@ TEST_F(ConstantRangeTest, Basics) {
 
   EXPECT_FALSE(Wrap.isFullSet());
   EXPECT_FALSE(Wrap.isEmptySet());
-  EXPECT_TRUE(Wrap.isWrappedSet());
+  EXPECT_TRUE(Wrap.isUpperWrapped());
   EXPECT_TRUE(Wrap.contains(APInt(16, 0x0)));
   EXPECT_TRUE(Wrap.contains(APInt(16, 0x9)));
   EXPECT_FALSE(Wrap.contains(APInt(16, 0xa)));
