@@ -19501,11 +19501,65 @@ void DAGCombiner::GatherAllAliases(LSBaseSDNode *N, SDValue OriginalChain,
   Chains.push_back(OriginalChain);
   unsigned Depth = 0;
 
+  // Attempt to improve chain by a single step
+  std::function<bool(SDValue &)> ImproveChain = [&](SDValue &C) -> bool {
+    switch (C.getOpcode()) {
+    case ISD::EntryToken:
+      // No need to mark EntryToken.
+      C = SDValue();
+      return true;
+    case ISD::LOAD:
+    case ISD::STORE: {
+      // Get alias information for C.
+      auto LSChain = cast<LSBaseSDNode>(C.getNode());
+      bool IsOpLoad = isa<LoadSDNode>(C.getNode()) && !LSChain->isVolatile();
+      if ((IsLoad && IsOpLoad) || !isAlias(N, LSChain)) {
+        // Look further up the chain.
+        C = C.getOperand(0);
+        return true;
+      }
+      // Alias, so stop here.
+      return false;
+    }
+
+    case ISD::CopyFromReg:
+      // Always forward past past CopyFromReg.
+      C = C.getOperand(0);
+      return true;
+
+    case ISD::LIFETIME_START:
+    case ISD::LIFETIME_END: {
+      // We can forward past any lifetime start/end that can be proven not to
+      // alias the memory access.
+      const auto *Lifetime = cast<LifetimeSDNode>(C);
+      if (!Lifetime->hasOffset())
+        return false; // Be conservative if we don't know the extents of the object.
+
+      const BaseIndexOffset LifetimePtr(Lifetime->getOperand(1), SDValue(),
+                                        Lifetime->getOffset(), false);
+      bool IsAlias;
+      if (BaseIndexOffset::computeAliasing(LifetimePtr, Lifetime->getSize(),
+                                           LSBasePtr, LSNumBytes, DAG,
+                                           IsAlias) && !IsAlias) {
+        C = C.getOperand(0);
+        return true;
+      }
+      return false;
+    }
+    default:
+      return false;
+    }
+  };
+
   // Look at each chain and determine if it is an alias.  If so, add it to the
   // aliases list.  If not, then continue up the chain looking for the next
   // candidate.
   while (!Chains.empty()) {
     SDValue Chain = Chains.pop_back_val();
+
+    // Don't bother if we've seen Chain before.
+    if (!Visited.insert(Chain.getNode()).second)
+      continue;
 
     // For TokenFactor nodes, look at each operand and only continue up the
     // chain until we reach the depth limit.
@@ -19519,83 +19573,30 @@ void DAGCombiner::GatherAllAliases(LSBaseSDNode *N, SDValue OriginalChain,
       return;
     }
 
-    // Don't bother if we've been before.
-    if (!Visited.insert(Chain.getNode()).second)
-      continue;
-
-    switch (Chain.getOpcode()) {
-    case ISD::EntryToken:
-      // Entry token is ideal chain operand, but handled in FindBetterChain.
-      break;
-
-    case ISD::LOAD:
-    case ISD::STORE: {
-      // Get alias information for Chain.
-      bool IsOpLoad = isa<LoadSDNode>(Chain.getNode()) &&
-          !cast<LSBaseSDNode>(Chain.getNode())->isVolatile();
-
-      // If chain is alias then stop here.
-      if (!(IsLoad && IsOpLoad) &&
-          isAlias(N, cast<LSBaseSDNode>(Chain.getNode()))) {
-        Aliases.push_back(Chain);
-      } else {
-        // Look further up the chain.
-        Chains.push_back(Chain.getOperand(0));
-        ++Depth;
-      }
-      break;
-    }
-
-    case ISD::TokenFactor:
+    if (Chain.getOpcode() == ISD::TokenFactor) {
       // We have to check each of the operands of the token factor for "small"
       // token factors, so we queue them up.  Adding the operands to the queue
       // (stack) in reverse order maintains the original order and increases the
       // likelihood that getNode will find a matching token factor (CSE.)
       if (Chain.getNumOperands() > 16) {
         Aliases.push_back(Chain);
-        break;
+        continue;
       }
       for (unsigned n = Chain.getNumOperands(); n;)
         Chains.push_back(Chain.getOperand(--n));
       ++Depth;
-      break;
-
-    case ISD::CopyFromReg:
-      // Forward past CopyFromReg.
-      Chains.push_back(Chain.getOperand(0));
+      continue;
+    }
+    // Everything else
+    if (ImproveChain(Chain)) {
+      // Updated Chain Found, Consider new chain if one exists.
+      if (Chain.getNode())
+        Chains.push_back(Chain);
       ++Depth;
-      break;
-
-    case ISD::LIFETIME_START:
-    case ISD::LIFETIME_END: {
-      // We can forward past any lifetime start/end that can be proven not to
-      // alias the memory access.
-      const auto *Lifetime = cast<LifetimeSDNode>(Chain);
-      if (!Lifetime->hasOffset()) {
-        Aliases.push_back(Chain);
-        break; // Be conservative if we don't know the extents of the object.
-      }
-
-      const BaseIndexOffset LifetimePtr(Lifetime->getOperand(1), SDValue(),
-                                        Lifetime->getOffset(), false);
-      bool IsAlias;
-      if (BaseIndexOffset::computeAliasing(LifetimePtr, Lifetime->getSize(),
-                                           LSBasePtr, LSNumBytes, DAG,
-                                           IsAlias) &&
-          !IsAlias) {
-        Chains.push_back(Chain.getOperand(0));
-        ++Depth;
-      } else {
-        Aliases.push_back(Chain);
-      }
-      break;
+      continue;
     }
-
-    default:
-      // For all other instructions we will just have to take what we can get.
-      Aliases.push_back(Chain);
-      break;
-    }
+    // No Improved Chain Possible, treat as Alias.
+    Aliases.push_back(Chain);
   }
 }
 
