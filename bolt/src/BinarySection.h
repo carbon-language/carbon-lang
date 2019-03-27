@@ -70,6 +70,8 @@ class BinarySection {
                                    // Set by ExecutableFileMemoryManager.
   uint32_t Index{0};               // Section index in the output file.
   mutable bool IsReordered{false}; // Have the contents been reordered?
+  bool IsAnonymous{false};         // True if the name should not be included
+                                   // in the output file.
 
   uint64_t hash(const BinaryData &BD,
                 std::map<const BinaryData *, uint64_t> &Cache) const;
@@ -265,6 +267,7 @@ public:
   }
   bool isLocal() const { return IsLocal; }
   bool isReordered() const { return IsReordered; }
+  bool isAnonymous() const { return IsAnonymous; }
   unsigned getELFType() const { return ELFType; }
   unsigned getELFFlags() const { return ELFFlags; }
 
@@ -401,6 +404,9 @@ public:
   }
   void setOutputName(StringRef Name) {
     OutputName = Name;
+  }
+  void setAnonymous(bool Flag) {
+    IsAnonymous = Flag;
   }
 
   /// Reorder the contents of this section according to /p Order.  If

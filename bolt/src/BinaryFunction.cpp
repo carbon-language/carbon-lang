@@ -3805,9 +3805,11 @@ void BinaryFunction::emitJumpTables(MCStreamer *Streamer) {
       if (opts::JumpTables == JTS_BASIC) {
         std::string Name = ".local." + JT.Labels[0]->getName().str();
         std::replace(Name.begin(), Name.end(), '/', '.');
-        JT.setOutputSection(BC.registerOrUpdateSection(Name,
-                                                       ELF::SHT_PROGBITS,
-                                                       ELF::SHF_ALLOC));
+        auto &Section = BC.registerOrUpdateSection(Name,
+                                                   ELF::SHT_PROGBITS,
+                                                   ELF::SHF_ALLOC);
+        Section.setAnonymous(true);
+        JT.setOutputSection(Section);
         HotSection = BC.Ctx->getELFSection(Name,
                                            ELF::SHT_PROGBITS,
                                            ELF::SHF_ALLOC);

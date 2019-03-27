@@ -3737,9 +3737,9 @@ std::vector<ELFShdrTy> RewriteInstance::getOutputSections(
     if (!Section.isFinalized())
       continue;
 
-    if (Section.getName().startswith(OrgSecPrefix)) {
+    if (Section.getName().startswith(OrgSecPrefix) || Section.isAnonymous()) {
       if (opts::Verbosity)
-        outs() << "BOLT-INFO: not writing section header for existing section "
+        outs() << "BOLT-INFO: not writing section header for section "
                << Section.getName() << '\n';
       continue;
     }
