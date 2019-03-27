@@ -558,6 +558,9 @@ public:
   std::string dump() const;
 
   // g++/clang++ will optimize this to a simple register copy
+  // Every Stmt_impl is wrapped in and the first data member of a Statement;
+  // therefore, a pointer to one or the other is bitwise identical.
+  // This checks that this assumption is, in fact, true.
   static Statement *From(Stmt_impl *stmt) {
     static Statement s{nullptr, UnreachableStmt::Create()};
     auto *result{reinterpret_cast<Statement *>(reinterpret_cast<char *>(stmt) -
