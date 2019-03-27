@@ -256,19 +256,17 @@ static parser::CharBlock NewTemporaryName() {
   return {name, name + len};
 }
 
-static TypeRep GetDefaultIntegerType() {
-  return {semantics::NumericTypeSpec{evaluate::SubscriptInteger::category,
-      AsExpr(evaluate::Constant<evaluate::SubscriptInteger>{
-          evaluate::SubscriptInteger::kind})}};
+static TypeRep GetDefaultIntegerType(semantics::SemanticsContext &c) {
+  evaluate::ExpressionAnalyzer analyzer{c};
+  return c.MakeNumericType(common::TypeCategory::Integer,
+      analyzer.GetDefaultKind(common::TypeCategory::Integer));
 }
 
-#if 0
-static TypeRep GetDefaultLogicalType() {
-  return {semantics::LogicalTypeSpec{
-      AsExpr(evaluate::Constant<evaluate::SubscriptInteger>{
-          evaluate::LogicalResult::kind})}};
+/*static*/ TypeRep GetDefaultLogicalType(semantics::SemanticsContext &c) {
+  evaluate::ExpressionAnalyzer analyzer{c};
+  return c.MakeLogicalType(
+      analyzer.GetDefaultKind(common::TypeCategory::Logical));
 }
-#endif
 
 class FortranIRLowering {
 public:
@@ -314,6 +312,9 @@ public:
     return {std::move(semantics::AnalyzeExpr(semanticsContext_, a).value())};
   }
 
+  TypeRep GetDefaultIntegerType() {
+    return FIR::GetDefaultIntegerType(semanticsContext_);
+  }
   // build a simple arithmetic Expression
   template<template<typename> class OPR>
   Expression ConsExpr(Expression e1, Expression e2) {
