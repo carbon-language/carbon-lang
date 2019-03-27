@@ -3507,7 +3507,6 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
     if (Opcode != ISD::AND && (Val & RemovedBitsMask) != 0)
       break;
 
-    unsigned ShlOp, AddOp, Op;
     MVT CstVT = NVT;
 
     // Check the minimum bitwidth for the new constant.
@@ -3523,45 +3522,15 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
     if (NVT == CstVT)
       break;
 
-    switch (NVT.SimpleTy) {
-    default: llvm_unreachable("Unsupported VT!");
-    case MVT::i32:
-      assert(CstVT == MVT::i8);
-      ShlOp = X86::SHL32ri;
-      AddOp = X86::ADD32rr;
-
-      switch (Opcode) {
-      default: llvm_unreachable("Impossible opcode");
-      case ISD::AND: Op = X86::AND32ri8; break;
-      case ISD::OR:  Op =  X86::OR32ri8; break;
-      case ISD::XOR: Op = X86::XOR32ri8; break;
-      }
-      break;
-    case MVT::i64:
-      assert(CstVT == MVT::i8 || CstVT == MVT::i32);
-      ShlOp = X86::SHL64ri;
-      AddOp = X86::ADD64rr;
-
-      switch (Opcode) {
-      default: llvm_unreachable("Impossible opcode");
-      case ISD::AND: Op = CstVT==MVT::i8? X86::AND64ri8 : X86::AND64ri32; break;
-      case ISD::OR:  Op = CstVT==MVT::i8?  X86::OR64ri8 :  X86::OR64ri32; break;
-      case ISD::XOR: Op = CstVT==MVT::i8? X86::XOR64ri8 : X86::XOR64ri32; break;
-      }
-      break;
-    }
-
-    // Emit the smaller op and the shift.
-    // Even though we shrink the constant, the VT should match the operation VT.
-    SDValue NewCst = CurDAG->getTargetConstant(Val >> ShlVal, dl, NVT);
-    SDNode *New = CurDAG->getMachineNode(Op, dl, NVT, MVT::i32,
-                                         N0->getOperand(0), NewCst);
-    if (ShlVal == 1)
-      CurDAG->SelectNodeTo(Node, AddOp, NVT, MVT::i32, SDValue(New, 0),
-                           SDValue(New, 0));
-    else
-      CurDAG->SelectNodeTo(Node, ShlOp, NVT, MVT::i32, SDValue(New, 0),
-                           getI8Imm(ShlVal, dl));
+    SDValue NewCst = CurDAG->getConstant(Val >> ShlVal, dl, NVT);
+    insertDAGNode(*CurDAG, SDValue(Node, 0), NewCst);
+    SDValue NewBinOp = CurDAG->getNode(Opcode, dl, NVT, N0->getOperand(0),
+                                       NewCst);
+    insertDAGNode(*CurDAG, SDValue(Node, 0), NewBinOp);
+    SDValue NewSHL = CurDAG->getNode(ISD::SHL, dl, NVT, NewBinOp,
+                                     N0->getOperand(1));
+    ReplaceNode(Node, NewSHL.getNode());
+    SelectCode(NewSHL.getNode());
     return;
   }
   case X86ISD::SMUL:

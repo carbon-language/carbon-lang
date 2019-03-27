@@ -42,7 +42,7 @@ define i64 @test4(i64 %x) nounwind {
 ; CHECK-LABEL: test4:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    movq %rdi, %rax
-; CHECK-NEXT:    andq $241, %rax
+; CHECK-NEXT:    andl $241, %eax
 ; CHECK-NEXT:    shlq $40, %rax
 ; CHECK-NEXT:    retq
   %and = shl i64 %x, 40
@@ -54,7 +54,7 @@ define i64 @test5(i64 %x) nounwind {
 ; CHECK-LABEL: test5:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    movq %rdi, %rax
-; CHECK-NEXT:    andq $31, %rax
+; CHECK-NEXT:    andl $31, %eax
 ; CHECK-NEXT:    shlq $40, %rax
 ; CHECK-NEXT:    retq
   %and = shl i64 %x, 40
@@ -153,7 +153,7 @@ define i64 @test13(i64 %x, i64* %y) nounwind {
 ; CHECK-LABEL: test13:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    movq %rdi, %rax
-; CHECK-NEXT:    andq $127, %rax
+; CHECK-NEXT:    andl $127, %eax
 ; CHECK-NEXT:    addq %rax, %rax
 ; CHECK-NEXT:    movq %rax, (%rsi)
 ; CHECK-NEXT:    retq
