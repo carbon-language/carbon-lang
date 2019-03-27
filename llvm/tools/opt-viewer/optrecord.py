@@ -264,6 +264,8 @@ class Missed(Remark):
     def color(self):
         return "red"
 
+class Failure(Missed):
+    yaml_tag = '!Failure'
 
 def get_remarks(input_file, filter_=None):
     max_hotness = 0
