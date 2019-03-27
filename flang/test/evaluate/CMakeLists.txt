@@ -118,6 +118,7 @@ target_link_libraries(folding-test
 
 set(FOLDING_TESTS
   folding01.f90
+  folding02.f90
 )
 
 
