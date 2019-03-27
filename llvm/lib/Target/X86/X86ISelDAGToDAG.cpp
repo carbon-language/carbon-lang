@@ -3025,11 +3025,7 @@ bool X86DAGToDAGISel::matchBitExtract(SDNode *Node) {
     // Great, just emit the the BZHI..
     if (XVT != MVT::i32) {
       // But have to place the bit count into the wide-enough register first.
-      SDValue ImplDef = SDValue(
-          CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF, DL, XVT), 0);
-      insertDAGNode(*CurDAG, SDValue(Node, 0), ImplDef);
-      NBits = CurDAG->getTargetInsertSubreg(X86::sub_32bit, DL, XVT, ImplDef,
-                                            NBits);
+      NBits = CurDAG->getNode(ISD::ANY_EXTEND, DL, XVT, NBits);
       insertDAGNode(*CurDAG, SDValue(Node, 0), NBits);
     }
 
@@ -3072,11 +3068,7 @@ bool X86DAGToDAGISel::matchBitExtract(SDNode *Node) {
 
   // But have to place the 'control' into the wide-enough register first.
   if (XVT != MVT::i32) {
-    SDValue ImplDef =
-        SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF, DL, XVT), 0);
-    insertDAGNode(*CurDAG, SDValue(Node, 0), ImplDef);
-    Control = CurDAG->getTargetInsertSubreg(X86::sub_32bit, DL, XVT, ImplDef,
-                                            Control);
+    Control = CurDAG->getNode(ISD::ANY_EXTEND, DL, XVT, Control);
     insertDAGNode(*CurDAG, SDValue(Node, 0), Control);
   }
 
