@@ -197,7 +197,6 @@ def WAVE_BARRIER : SPseudoInstSI<(outs), (ins),
   let hasSideEffects = 1;
   let mayLoad = 1;
   let mayStore = 1;
-  let isBarrier = 1;
   let isConvergent = 1;
   let FixedSize = 1;
   let Size = 0;
