@@ -18,8 +18,8 @@
 #include "scope.h"
 #include "../evaluate/common.h"
 #include "../evaluate/intrinsics.h"
-#include "../parser/message.h"
 #include "../parser/features.h"
+#include "../parser/message.h"
 #include <iosfwd>
 #include <string>
 #include <vector>
@@ -130,6 +130,5 @@ struct BaseChecker {
   template<typename N> void Enter(const N &) {}
   template<typename N> void Leave(const N &) {}
 };
-
 }
 #endif

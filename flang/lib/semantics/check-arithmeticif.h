@@ -16,16 +16,10 @@
 #define FORTRAN_SEMANTICS_CHECK_ARITHMETICIF_STMT_H_
 
 #include "semantics.h"
-#include "../common/indirection.h"
 
 namespace Fortran::parser {
 struct ArithmeticIfStmt;
 }
-namespace Fortran::semantics {
-class ArithmeticIfStmtContext;
-}
-extern template class Fortran::common::Indirection<
-    Fortran::semantics::ArithmeticIfStmtContext>;
 
 namespace Fortran::semantics {
 class ArithmeticIfStmtChecker : public virtual BaseChecker {
@@ -35,7 +29,7 @@ public:
   void Leave(const parser::ArithmeticIfStmt &);
 
 private:
-  common::Indirection<ArithmeticIfStmtContext> context_;
+  SemanticsContext &context_;
 };
 }
 #endif  // FORTRAN_SEMANTICS_CHECK_ARITHMETICIF_STMT_H_

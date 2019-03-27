@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "attr.h"
 #include "check-do-concurrent.h"
+#include "attr.h"
 #include "scope.h"
 #include "semantics.h"
 #include "symbol.h"
@@ -598,10 +598,6 @@ private:
   parser::Messages &messages_;
   parser::CharBlock currentStatementSourcePosition_;
 };
-
-}  // namespace Fortran::semantics
-
-namespace Fortran::semantics {
 
 DoConcurrentChecker::DoConcurrentChecker(SemanticsContext &context)
   : context_{new DoConcurrentContext{context}} {}

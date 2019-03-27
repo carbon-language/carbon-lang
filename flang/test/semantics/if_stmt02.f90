@@ -12,6 +12,6 @@
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
 
-!ERROR: IF statement is not allowed
+!ERROR: IF statement is not allowed in IF statement
 IF (A > 0.0) IF (B < 0.0) A = LOG (A)
 END

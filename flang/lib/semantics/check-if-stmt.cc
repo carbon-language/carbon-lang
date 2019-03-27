@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "attr.h"
 #include "check-if-stmt.h"
+#include "attr.h"
 #include "scope.h"
 #include "semantics.h"
 #include "symbol.h"
@@ -24,51 +24,25 @@
 #include "../parser/parse-tree.h"
 
 namespace Fortran::semantics {
-
-class IfStmtContext {
-public:
-  IfStmtContext(SemanticsContext &context) : messages_{context.messages()} {}
-
-  bool operator==(const IfStmtContext &x) const { return this == &x; }
-  bool operator!=(const IfStmtContext &x) const { return this != &x; }
-
-  // TODO: remove after fixing the issues that gives rise to the warning
-  template<class T> void suppress_unused_variable_warning(const T &) {}
-
-  void Check(const parser::IfStmt &ifStmt) {
-    // R1139 Check for a scalar logical expression
-    auto &expr{
-        std::get<parser::ScalarLogicalExpr>(ifStmt.t).thing.thing.value()};
-    CheckScalarLogicalExpr(expr, messages_);
-    // C1143 Check that the action stmt is not an if stmt
-    auto &actionStmt{std::get<parser::ActionStmt>(ifStmt.t)};
-    if (auto *actionIfStmt{
-            std::get_if<common::Indirection<parser::IfStmt>>(&actionStmt.u)}) {
-      // TODO: get the source position from the action stmt
-      suppress_unused_variable_warning(actionIfStmt);
-      messages_.Say(expr.source,
-          "IF statement is not allowed"_err_en_US);
-    }
-  }
-
-private:
-  parser::Messages &messages_;
-  parser::CharBlock currentStatementSourcePosition_;
-};
-
-}  // namespace Fortran::semantics
-
-namespace Fortran::semantics {
-
-IfStmtChecker::IfStmtChecker(SemanticsContext &context)
-  : context_{new IfStmtContext{context}} {}
+IfStmtChecker::IfStmtChecker(SemanticsContext &context) : context_{context} {}
 
 IfStmtChecker::~IfStmtChecker() = default;
 
-void IfStmtChecker::Leave(const parser::IfStmt &x) {
-  context_.value().Check(x);
+template<class T> void suppress_unused_variable_warning(const T &) {}
+
+void IfStmtChecker::Leave(const parser::IfStmt &ifStmt) {
+  // R1139 Check for a scalar logical expression
+  auto &expr{std::get<parser::ScalarLogicalExpr>(ifStmt.t).thing.thing.value()};
+  CheckScalarLogicalExpr(expr, context_.messages());
+  // C1143 Check that the action stmt is not an if stmt
+  auto &actionStmt{std::get<parser::ActionStmt>(ifStmt.t)};
+  if (auto *actionIfStmt{
+          std::get_if<common::Indirection<parser::IfStmt>>(&actionStmt.u)}) {
+    // TODO: get the source position from the action stmt
+    suppress_unused_variable_warning(actionIfStmt);
+    context_.messages().Say(
+        expr.source, "IF statement is not allowed in IF statement"_err_en_US);
+  }
 }
 
 }  // namespace Fortran::semantics
-
-template class Fortran::common::Indirection<Fortran::semantics::IfStmtContext>;

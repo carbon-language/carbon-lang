@@ -37,6 +37,5 @@ public:
 private:
   common::Indirection<DoConcurrentContext> context_;
 };
-
 }
 #endif  // FORTRAN_SEMANTICS_CHECK_DO_CONCURRENT_H_

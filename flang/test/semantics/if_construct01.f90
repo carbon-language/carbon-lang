@@ -12,7 +12,7 @@
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
 
-! Simple check that if iconstructs are ok.
+! Simple check that if constructs are ok.
 
 if (a < b) then
   a = 1

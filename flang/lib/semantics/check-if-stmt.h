@@ -16,16 +16,12 @@
 #define FORTRAN_SEMANTICS_CHECK_IF_STMT_H_
 
 #include "semantics.h"
-#include "../common/indirection.h"
 
 namespace Fortran::parser {
 struct IfStmt;
 }
-namespace Fortran::semantics {
-class IfStmtContext;
-}
 extern template class Fortran::common::Indirection<
-    Fortran::semantics::IfStmtContext>;
+    Fortran::semantics::SemanticsContext>;
 
 namespace Fortran::semantics {
 class IfStmtChecker : public virtual BaseChecker {
@@ -35,7 +31,7 @@ public:
   void Leave(const parser::IfStmt &);
 
 private:
-  common::Indirection<IfStmtContext> context_;
+  SemanticsContext &context_;
 };
 }
 #endif  // FORTRAN_SEMANTICS_CHECK_IF_STMT_H_

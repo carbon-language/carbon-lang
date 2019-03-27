@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "attr.h"
 #include "check-if-construct.h"
+#include "attr.h"
 #include "scope.h"
 #include "semantics.h"
 #include "symbol.h"
@@ -25,52 +25,29 @@
 
 namespace Fortran::semantics {
 
-class IfConstructContext {
-public:
-  IfConstructContext(SemanticsContext &context)
-    : messages_{context.messages()} {}
-
-  bool operator==(const IfConstructContext &x) const { return this == &x; }
-  bool operator!=(const IfConstructContext &x) const { return this != &x; }
-
-  void Check(const parser::IfConstruct &ifConstruct) {
-    auto &ifThenStmt{
-        std::get<parser::Statement<parser::IfThenStmt>>(ifConstruct.t)
-            .statement};
-    auto &ifThenExpr{
-        std::get<parser::ScalarLogicalExpr>(ifThenStmt.t).thing.thing.value()};
-    CheckScalarLogicalExpr(ifThenExpr, messages_);
-    for (const auto &elseIfBlock :
-        std::get<std::list<parser::IfConstruct::ElseIfBlock>>(ifConstruct.t)) {
-      auto &elseIfStmt{
-          std::get<parser::Statement<parser::ElseIfStmt>>(elseIfBlock.t)
-              .statement};
-      auto &elseIfExpr{std::get<parser::ScalarLogicalExpr>(elseIfStmt.t)
-                           .thing.thing.value()};
-      CheckScalarLogicalExpr(elseIfExpr, messages_);
-    }
-    // The (optional) ELSE does not have an expression to check; ignore it.
-  }
-
-private:
-  parser::Messages &messages_;
-  parser::CharBlock currentStatementSourcePosition_;
-};
-
-}  // namespace Fortran::semantics
-
-namespace Fortran::semantics {
-
 IfConstructChecker::IfConstructChecker(SemanticsContext &context)
-  : context_{new IfConstructContext{context}} {}
+  : context_{context} {}
 
 IfConstructChecker::~IfConstructChecker() = default;
 
-void IfConstructChecker::Leave(const parser::IfConstruct &x) {
-  context_.value().Check(x);
+void IfConstructChecker::Leave(const parser::IfConstruct &ifConstruct) {
+  auto &ifThenStmt{
+      std::get<parser::Statement<parser::IfThenStmt>>(ifConstruct.t).statement};
+  auto &ifThenExpr{
+      std::get<parser::ScalarLogicalExpr>(ifThenStmt.t).thing.thing.value()};
+  // R1135 - IF scalar logical expr
+  CheckScalarLogicalExpr(ifThenExpr, context_.messages());
+  for (const auto &elseIfBlock :
+      std::get<std::list<parser::IfConstruct::ElseIfBlock>>(ifConstruct.t)) {
+    auto &elseIfStmt{
+        std::get<parser::Statement<parser::ElseIfStmt>>(elseIfBlock.t)
+            .statement};
+    auto &elseIfExpr{
+        std::get<parser::ScalarLogicalExpr>(elseIfStmt.t).thing.thing.value()};
+    // R1136 - ELSE IF scalar logical expr
+    CheckScalarLogicalExpr(elseIfExpr, context_.messages());
+  }
+  // R1137 The (optional) ELSE does not have an expression to check; ignore it.
 }
 
 }  // namespace Fortran::semantics
-
-template class Fortran::common::Indirection<
-    Fortran::semantics::IfConstructContext>;

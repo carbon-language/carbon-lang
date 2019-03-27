@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scope.h"
 #include "tools.h"
+#include "scope.h"
 #include "../evaluate/variable.h"
 #include <algorithm>
 #include <set>
@@ -240,7 +240,6 @@ void CheckScalarLogicalExpr(
   if (expr.typedExpr == nullptr) {
     return;
   }
-  // TODO: Whence IsArray()?
   if (expr.typedExpr->v.Rank() > 0) {
     messages.Say(expr.source, "Expected a scalar LOGICAL expression"_err_en_US);
   } else if (!ExprHasTypeCategory(

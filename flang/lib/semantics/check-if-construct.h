@@ -16,16 +16,10 @@
 #define FORTRAN_SEMANTICS_CHECK_IF_CONSTRUCT_H_
 
 #include "semantics.h"
-#include "../common/indirection.h"
 
 namespace Fortran::parser {
 struct IfConstruct;
 }
-namespace Fortran::semantics {
-class IfConstructContext;
-}
-extern template class Fortran::common::Indirection<
-    Fortran::semantics::IfConstructContext>;
 
 namespace Fortran::semantics {
 class IfConstructChecker : public virtual BaseChecker {
@@ -35,7 +29,7 @@ public:
   void Leave(const parser::IfConstruct &);
 
 private:
-  common::Indirection<IfConstructContext> context_;
+  SemanticsContext &context_;
 };
 }
 #endif  // FORTRAN_SEMANTICS_CHECK_IF_CONSTRUCT_H_

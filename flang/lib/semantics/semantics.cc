@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "semantics.h"
 #include "assignment.h"
 #include "canonicalize-do.h"
 #include "check-arithmeticif.h"
@@ -24,7 +25,6 @@
 #include "resolve-names.h"
 #include "rewrite-parse-tree.h"
 #include "scope.h"
-#include "semantics.h"
 #include "symbol.h"
 #include "../common/default-kinds.h"
 #include "../parser/parse-tree-visitor.h"

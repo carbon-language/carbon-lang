@@ -24,19 +24,19 @@ if ( I ) 100, 200, 300
 200 CONTINUE
 300 CONTINUE
 
-!ERROR: ARITHMETIC IF statement must not have a COMPLEX expression
+!ERROR: ARITHMETIC IF expression must not be a COMPLEX expression
 if ( Z ) 101, 201, 301
 101 CONTINUE
 201 CONTINUE
 301 CONTINUE
 
-!ERROR: ARITHMETIC IF statement must have a numeric expression
+!ERROR: ARITHMETIC IF expression must be a numeric expression
 if ( L ) 102, 202, 302
 102 CONTINUE
 202 CONTINUE
 302 CONTINUE
 
-!ERROR: ARITHMETIC IF statement must have a scalar numeric expression
+!ERROR: ARITHMETIC IF expression must be a scalar expression
 if ( B ) 103, 203, 303
 103 CONTINUE
 203 CONTINUE
