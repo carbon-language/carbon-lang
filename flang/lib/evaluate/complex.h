@@ -15,6 +15,7 @@
 #ifndef FORTRAN_EVALUATE_COMPLEX_H_
 #define FORTRAN_EVALUATE_COMPLEX_H_
 
+#include "formatting.h"
 #include "real.h"
 #include <string>
 

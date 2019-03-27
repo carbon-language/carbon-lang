@@ -15,66 +15,12 @@
 #include "constant.h"
 #include "expression.h"
 #include "type.h"
-#include "../parser/characters.h"
 #include <string>
 
 namespace Fortran::evaluate {
 
 template<typename RESULT, typename VALUE>
 ConstantBase<RESULT, VALUE>::~ConstantBase() {}
-
-static void ShapeAsFortran(
-    std::ostream &o, const std::vector<std::int64_t> &shape) {
-  if (shape.size() > 1) {
-    o << ",shape=";
-    char ch{'['};
-    for (auto dim : shape) {
-      o << ch << dim;
-      ch = ',';
-    }
-    o << "])";
-  }
-}
-
-template<typename RESULT, typename VALUE>
-std::ostream &ConstantBase<RESULT, VALUE>::AsFortran(std::ostream &o) const {
-  if (Rank() > 1) {
-    o << "reshape(";
-  }
-  if (Rank() > 0) {
-    o << '[' << GetType().AsFortran() << "::";
-  }
-  bool first{true};
-  for (const auto &value : values_) {
-    if (first) {
-      first = false;
-    } else {
-      o << ',';
-    }
-    if constexpr (Result::category == TypeCategory::Integer) {
-      o << value.SignedDecimal() << '_' << Result::kind;
-    } else if constexpr (Result::category == TypeCategory::Real ||
-        Result::category == TypeCategory::Complex) {
-      value.AsFortran(o, Result::kind);
-    } else if constexpr (Result::category == TypeCategory::Character) {
-      o << Result::kind << '_' << parser::QuoteCharacterLiteral(value);
-    } else if constexpr (Result::category == TypeCategory::Logical) {
-      if (value.IsTrue()) {
-        o << ".true.";
-      } else {
-        o << ".false.";
-      }
-      o << '_' << Result::kind;
-    } else {
-      StructureConstructor{AsConstant().derivedTypeSpec(), value}.AsFortran(o);
-    }
-  }
-  if (Rank() > 0) {
-    o << ']';
-  }
-  ShapeAsFortran(o, shape_);
-  return o;
-}
 
 static std::int64_t SubscriptsToOffset(const std::vector<std::int64_t> &index,
     const std::vector<std::int64_t> &shape) {
@@ -178,32 +124,6 @@ Constant<Type<TypeCategory::Character, KIND>>::SHAPE() const {
   return ShapeAsConstant(shape_);
 }
 
-template<int KIND>
-std::ostream &Constant<Type<TypeCategory::Character, KIND>>::AsFortran(
-    std::ostream &o) const {
-  if (Rank() > 1) {
-    o << "reshape(";
-  }
-  if (Rank() > 0) {
-    o << '[' << GetType().AsFortran(std::to_string(length_)) << "::";
-  }
-  auto total{static_cast<std::int64_t>(size())};
-  for (std::int64_t j{0}; j < total; ++j) {
-    ScalarValue value{values_.substr(j * length_, length_)};
-    if (j > 0) {
-      o << ',';
-    } else if (Rank() == 0) {
-      o << Result::kind << '_';
-    }
-    o << parser::QuoteCharacterLiteral(value);
-  }
-  if (Rank() > 0) {
-    o << ']';
-  }
-  ShapeAsFortran(o, shape_);
-  return o;
-}
-
 // Constant<SomeDerived> specialization
 Constant<SomeDerived>::Constant(const StructureConstructor &x)
   : Base{x.values()}, derivedTypeSpec_{&x.derivedTypeSpec()} {}
@@ -228,7 +148,5 @@ Constant<SomeDerived>::Constant(const semantics::DerivedTypeSpec &spec,
     std::vector<StructureConstructor> &&x, std::vector<std::int64_t> &&s)
   : Base{GetValues(std::move(x)), std::move(s)}, derivedTypeSpec_{&spec} {}
 
-FOR_EACH_LENGTHLESS_INTRINSIC_KIND(template class ConstantBase)
-template class ConstantBase<SomeDerived, StructureConstructorValues>;
-FOR_EACH_INTRINSIC_KIND(template class Constant)
+INSTANTIATE_CONSTANT_TEMPLATES
 }

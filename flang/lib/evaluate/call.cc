@@ -29,16 +29,6 @@ bool ActualArgument::operator==(const ActualArgument &that) const {
       isAlternateReturn == that.isAlternateReturn && value() == that.value();
 }
 
-std::ostream &ActualArgument::AsFortran(std::ostream &o) const {
-  if (keyword.has_value()) {
-    o << keyword->ToString() << '=';
-  }
-  if (isAlternateReturn) {
-    o << '*';
-  }
-  return value().AsFortran(o);
-}
-
 std::optional<int> ActualArgument::VectorSize() const {
   if (Rank() != 1) {
     return std::nullopt;
@@ -50,10 +40,6 @@ std::optional<int> ActualArgument::VectorSize() const {
 bool SpecificIntrinsic::operator==(const SpecificIntrinsic &that) const {
   return name == that.name && type == that.type && rank == that.rank &&
       attrs == that.attrs;
-}
-
-std::ostream &SpecificIntrinsic::AsFortran(std::ostream &o) const {
-  return o << name;
 }
 
 std::optional<DynamicType> ProcedureDesignator::GetType() const {
@@ -96,26 +82,11 @@ const Symbol *ProcedureDesignator::GetSymbol() const {
       u);
 }
 
-std::ostream &ProcedureRef::AsFortran(std::ostream &o) const {
-  proc_.AsFortran(o);
-  char separator{'('};
-  for (const auto &arg : arguments_) {
-    if (arg.has_value()) {
-      arg->AsFortran(o << separator);
-      separator = ',';
-    }
-  }
-  if (separator == '(') {
-    o << '(';
-  }
-  return o << ')';
-}
-
 Expr<SubscriptInteger> ProcedureRef::LEN() const {
   // TODO: the results of the intrinsic functions REPEAT and TRIM have
   // unpredictable lengths; maybe the concept of LEN() has to become dynamic
   return proc_.LEN();
 }
 
-FOR_EACH_SPECIFIC_TYPE(template class FunctionRef)
+FOR_EACH_SPECIFIC_TYPE(template class FunctionRef, )
 }

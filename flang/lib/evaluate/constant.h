@@ -15,6 +15,7 @@
 #ifndef FORTRAN_EVALUATE_CONSTANT_H_
 #define FORTRAN_EVALUATE_CONSTANT_H_
 
+#include "formatting.h"
 #include "type.h"
 #include <map>
 #include <ostream>
@@ -55,6 +56,7 @@ public:
   }
   bool empty() const { return values_.empty(); }
   std::size_t size() const { return values_.size(); }
+  const std::vector<ScalarValue> &values() const { return values_; }
   const std::vector<std::int64_t> &shape() const { return shape_; }
 
   ScalarValue operator*() const {
@@ -155,8 +157,13 @@ private:
   const semantics::DerivedTypeSpec *derivedTypeSpec_;
 };
 
-FOR_EACH_LENGTHLESS_INTRINSIC_KIND(extern template class ConstantBase)
+FOR_EACH_LENGTHLESS_INTRINSIC_KIND(extern template class ConstantBase, )
 extern template class ConstantBase<SomeDerived, StructureConstructorValues>;
-FOR_EACH_INTRINSIC_KIND(extern template class Constant)
+FOR_EACH_INTRINSIC_KIND(extern template class Constant, )
+
+#define INSTANTIATE_CONSTANT_TEMPLATES \
+  FOR_EACH_LENGTHLESS_INTRINSIC_KIND(template class ConstantBase, ) \
+  template class ConstantBase<SomeDerived, StructureConstructorValues>; \
+  FOR_EACH_INTRINSIC_KIND(template class Constant, )
 }
 #endif  // FORTRAN_EVALUATE_CONSTANT_H_

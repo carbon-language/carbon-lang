@@ -23,6 +23,7 @@
 
 #include "call.h"
 #include "common.h"
+#include "formatting.h"
 #include "static-data.h"
 #include "type.h"
 #include "../common/idioms.h"
@@ -129,7 +130,7 @@ private:
 };
 
 EXPAND_FOR_EACH_INTEGER_KIND(
-    TEMPLATE_INSTANTIATION, extern template class TypeParamInquiry)
+    TEMPLATE_INSTANTIATION, extern template class TypeParamInquiry, )
 
 // R921 subscript-triplet
 class Triplet {
@@ -354,7 +355,7 @@ public:
   Variant u;
 };
 
-FOR_EACH_CHARACTER_KIND(extern template class Designator)
+FOR_EACH_CHARACTER_KIND(extern template class Designator, )
 
 template<typename T> struct Variable {
   using Result = T;

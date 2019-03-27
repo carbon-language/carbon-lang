@@ -17,6 +17,7 @@
 
 // Represents constant static data objects
 
+#include "formatting.h"
 #include "type.h"
 #include "../common/idioms.h"
 #include <cinttypes>

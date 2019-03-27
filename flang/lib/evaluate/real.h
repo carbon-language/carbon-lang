@@ -16,6 +16,7 @@
 #define FORTRAN_EVALUATE_REAL_H_
 
 #include "common.h"
+#include "formatting.h"
 #include "integer.h"
 #include "rounding-bits.h"
 #include <cinttypes>

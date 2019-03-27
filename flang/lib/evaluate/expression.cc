@@ -19,144 +19,12 @@
 #include "variable.h"
 #include "../common/idioms.h"
 #include "../parser/message.h"
-#include <ostream>
-#include <sstream>
 #include <string>
 #include <type_traits>
 
 using namespace Fortran::parser::literals;
 
 namespace Fortran::evaluate {
-
-// AsFortran() formatting
-
-template<typename D, typename R, typename... O>
-std::ostream &Operation<D, R, O...>::AsFortran(std::ostream &o) const {
-  left().AsFortran(derived().Prefix(o));
-  if constexpr (operands > 1) {
-    right().AsFortran(derived().Infix(o));
-  }
-  return derived().Suffix(o);
-}
-
-template<typename TO, TypeCategory FROMCAT>
-std::ostream &Convert<TO, FROMCAT>::AsFortran(std::ostream &o) const {
-  static_assert(TO::category == TypeCategory::Integer ||
-      TO::category == TypeCategory::Real ||
-      TO::category == TypeCategory::Character ||
-      TO::category == TypeCategory::Logical || !"Convert<> to bad category!");
-  if constexpr (TO::category == TypeCategory::Character) {
-    this->left().AsFortran(o << "achar(iachar(") << ')';
-  } else if constexpr (TO::category == TypeCategory::Integer) {
-    this->left().AsFortran(o << "int(");
-  } else if constexpr (TO::category == TypeCategory::Real) {
-    this->left().AsFortran(o << "real(");
-  } else {
-    this->left().AsFortran(o << "logical(");
-  }
-  return o << ",kind=" << TO::kind << ')';
-}
-
-template<typename A> std::ostream &Relational<A>::Infix(std::ostream &o) const {
-  switch (opr) {
-  case RelationalOperator::LT: o << '<'; break;
-  case RelationalOperator::LE: o << "<="; break;
-  case RelationalOperator::EQ: o << "=="; break;
-  case RelationalOperator::NE: o << "/="; break;
-  case RelationalOperator::GE: o << ">="; break;
-  case RelationalOperator::GT: o << '>'; break;
-  }
-  return o;
-}
-
-std::ostream &Relational<SomeType>::AsFortran(std::ostream &o) const {
-  std::visit([&](const auto &rel) { rel.AsFortran(o); }, u);
-  return o;
-}
-
-template<int KIND>
-std::ostream &LogicalOperation<KIND>::Infix(std::ostream &o) const {
-  switch (logicalOperator) {
-  case LogicalOperator::And: o << ".and."; break;
-  case LogicalOperator::Or: o << ".or."; break;
-  case LogicalOperator::Eqv: o << ".eqv."; break;
-  case LogicalOperator::Neqv: o << ".neqv."; break;
-  }
-  return o;
-}
-
-template<typename T>
-std::ostream &Emit(
-    std::ostream &o, const common::CopyableIndirection<Expr<T>> &expr) {
-  return expr.value().AsFortran(o);
-}
-
-template<typename T>
-std::ostream &Emit(std::ostream &, const ArrayConstructorValues<T> &);
-
-template<typename T>
-std::ostream &Emit(std::ostream &o, const ImpliedDo<T> &implDo) {
-  o << '(';
-  Emit(o, implDo.values());
-  o << ',' << ImpliedDoIndex::Result::AsFortran()
-    << "::" << implDo.name().ToString() << '=';
-  implDo.lower().AsFortran(o) << ',';
-  implDo.upper().AsFortran(o) << ',';
-  implDo.stride().AsFortran(o) << ')';
-  return o;
-}
-
-template<typename T>
-std::ostream &Emit(std::ostream &o, const ArrayConstructorValues<T> &values) {
-  const char *sep{""};
-  for (const auto &value : values.values()) {
-    o << sep;
-    std::visit([&](const auto &x) { Emit(o, x); }, value.u);
-    sep = ",";
-  }
-  return o;
-}
-
-template<typename T>
-std::ostream &ArrayConstructor<T>::AsFortran(std::ostream &o) const {
-  o << '[' << GetType().AsFortran() << "::";
-  Emit(o, *this);
-  return o << ']';
-}
-
-template<int KIND>
-std::ostream &ArrayConstructor<Type<TypeCategory::Character, KIND>>::AsFortran(
-    std::ostream &o) const {
-  std::stringstream len;
-  LEN().AsFortran(len);
-  o << '[' << GetType().AsFortran(len.str()) << "::";
-  Emit(o, *this);
-  return o << ']';
-}
-
-std::ostream &ArrayConstructor<SomeDerived>::AsFortran(std::ostream &o) const {
-  o << '[' << GetType().AsFortran() << "::";
-  Emit(o, *this);
-  return o << ']';
-}
-
-template<typename RESULT>
-std::ostream &ExpressionBase<RESULT>::AsFortran(std::ostream &o) const {
-  std::visit(
-      common::visitors{
-          [&](const BOZLiteralConstant &x) {
-            o << "z'" << x.Hexadecimal() << "'";
-          },
-          [&](const NullPointer &) { o << "NULL()"; },
-          [&](const common::CopyableIndirection<Substring> &s) {
-            s.value().AsFortran(o);
-          },
-          [&](const ImpliedDoIndex &i) { o << i.name.ToString(); },
-          [&](const auto &x) { x.AsFortran(o); },
-      },
-      derived().u);
-  return o;
-}
 
 template<int KIND>
 Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
@@ -285,34 +153,6 @@ StructureConstructor &StructureConstructor::Add(
   return *this;
 }
 
-std::ostream &StructureConstructor::AsFortran(std::ostream &o) const {
-  DerivedTypeSpecAsFortran(o, *derivedTypeSpec_);
-  if (values_.empty()) {
-    o << '(';
-  } else {
-    char ch{'('};
-    for (const auto &[symbol, value] : values_) {
-      value.value().AsFortran(o << ch << symbol->name().ToString() << '=');
-      ch = ',';
-    }
-  }
-  return o << ')';
-}
-
-std::ostream &DerivedTypeSpecAsFortran(
-    std::ostream &o, const semantics::DerivedTypeSpec &spec) {
-  o << spec.typeSymbol().name().ToString();
-  if (!spec.parameters().empty()) {
-    char ch{'('};
-    for (const auto &[name, value] : spec.parameters()) {
-      value.GetExplicit()->AsFortran(o << ch << name.ToString() << '=');
-      ch = ',';
-    }
-    o << ')';
-  }
-  return o;
-}
-
 GenericExprWrapper::~GenericExprWrapper() = default;
 
 bool GenericExprWrapper::operator==(const GenericExprWrapper &that) const {
@@ -335,17 +175,6 @@ Expr<SubscriptInteger> Expr<SomeCharacter>::LEN() const {
   return std::visit([](const auto &kx) { return kx.LEN(); }, u);
 }
 
-// Template instantiations to resolve the "extern template" declarations
-// that appear in expression.h.
-
-FOR_EACH_INTRINSIC_KIND(template class Expr)
-FOR_EACH_CATEGORY_TYPE(template class Expr)
-FOR_EACH_INTEGER_KIND(template struct Relational)
-FOR_EACH_REAL_KIND(template struct Relational)
-FOR_EACH_CHARACTER_KIND(template struct Relational)
-template struct Relational<SomeType>;
-FOR_EACH_TYPE_AND_KIND(template class ExpressionBase)
-FOR_EACH_INTRINSIC_KIND(template class ArrayConstructorValues)
-FOR_EACH_INTRINSIC_KIND(template class ArrayConstructor)
+INSTANTIATE_EXPRESSION_TEMPLATES
 }
 DEFINE_DELETER(Fortran::evaluate::GenericExprWrapper)

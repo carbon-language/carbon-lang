@@ -684,6 +684,6 @@ bool ProcedureRef::operator==(const ProcedureRef &that) const {
 }
 
 EXPAND_FOR_EACH_INTEGER_KIND(
-    TEMPLATE_INSTANTIATION, template class TypeParamInquiry)
-FOR_EACH_SPECIFIC_TYPE(template class Designator)
+    TEMPLATE_INSTANTIATION, template class TypeParamInquiry, )
+FOR_EACH_SPECIFIC_TYPE(template class Designator, )
 }

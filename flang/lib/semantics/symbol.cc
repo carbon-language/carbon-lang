@@ -53,7 +53,7 @@ std::ostream &operator<<(std::ostream &os, const SubprogramDetails &x) {
     os << " isInterface";
   }
   if (x.bindName_) {
-    x.bindName_->AsFortran(os << " bindName:");
+    os << " bindName:" << x.bindName_;
   }
   if (x.result_) {
     os << " result:" << x.result_.value()->name();
@@ -275,7 +275,7 @@ std::ostream &operator<<(std::ostream &os, const EntityDetails &x) {
     os << " type: " << *x.type();
   }
   if (x.bindName_) {
-    x.bindName_->AsFortran(os << " bindName:");
+    os << " bindName:" << x.bindName_;
   }
   return os;
 }
@@ -289,7 +289,7 @@ std::ostream &operator<<(std::ostream &os, const ObjectEntityDetails &x) {
     }
   }
   if (x.init_) {
-    x.init_->AsFortran(os << " init:");
+    os << " init:" << x.init_;
   }
   return os;
 }
@@ -297,7 +297,7 @@ std::ostream &operator<<(std::ostream &os, const ObjectEntityDetails &x) {
 std::ostream &operator<<(std::ostream &os, const AssocEntityDetails &x) {
   os << *static_cast<const EntityDetails *>(&x);
   if (x.expr().has_value()) {
-    x.expr()->AsFortran(os << ' ');
+    os << ' ' << x.expr();
   }
   return os;
 }
@@ -309,7 +309,7 @@ std::ostream &operator<<(std::ostream &os, const ProcEntityDetails &x) {
     os << ' ' << *type;
   }
   if (x.bindName()) {
-    x.bindName()->AsFortran(os << " bindName:");
+    os << " bindName:" << x.bindName();
   }
   if (x.passName_) {
     os << " passName:" << *x.passName_;
@@ -369,7 +369,7 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
             }
             os << ')';
             if (x.bindName()) {
-              x.bindName()->AsFortran(os << " bindName:");
+              os << " bindName:" << x.bindName();
             }
             if (x.isFunction()) {
               os << " result(";
@@ -432,7 +432,7 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
             }
             os << ' ' << common::EnumToString(x.attr());
             if (x.init()) {
-              x.init()->AsFortran(os << " init:");
+              os << " init:" << x.init();
             }
           },
           [&](const MiscDetails &x) {

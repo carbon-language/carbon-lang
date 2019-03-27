@@ -1355,7 +1355,7 @@ Expr<T> ExpressionBase<T>::Rewrite(FoldingContext &context, Expr<T> &&expr) {
       std::move(expr.u));
 }
 
-FOR_EACH_TYPE_AND_KIND(template class ExpressionBase)
+FOR_EACH_TYPE_AND_KIND(template class ExpressionBase, )
 
 // Constant expression predicate IsConstantExpr().
 // This code determines whether an expression is a "constant expression"

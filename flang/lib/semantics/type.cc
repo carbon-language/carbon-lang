@@ -101,7 +101,7 @@ void DerivedTypeSpec::Instantiate(
             maybeDynamicType->category == TypeCategory::Integer &&
             !evaluate::ToInt64(expr).has_value()) {
           std::stringstream fortran;
-          expr->AsFortran(fortran);
+          fortran << expr;
           if (auto *msg{foldingContext.messages().Say(
                   "Value of kind type parameter '%s' (%s) is not "
                   "scalar INTEGER constant"_err_en_US,
@@ -168,7 +168,7 @@ std::ostream &operator<<(std::ostream &o, const Bound &x) {
   } else if (x.isDeferred()) {
     o << ':';
   } else if (x.expr_) {
-    x.expr_->AsFortran(o);
+    o << x.expr_;
   } else {
     o << "<no-expr>";
   }
@@ -231,7 +231,7 @@ std::ostream &operator<<(std::ostream &o, const ParamValue &x) {
   } else if (!x.GetExplicit()) {
     o << "<no-expr>";
   } else {
-    x.GetExplicit()->AsFortran(o);
+    o << x.GetExplicit();
   }
   return o;
 }
@@ -246,7 +246,7 @@ std::ostream &operator<<(std::ostream &os, const IntrinsicTypeSpec &x) {
   if (auto k{evaluate::ToInt64(x.kind())}) {
     return os << '(' << *k << ')';  // emit unsuffixed kind code
   } else {
-    return x.kind().AsFortran(os << '(') << ')';
+    return os << '(' << x.kind() << ')';
   }
 }
 
@@ -255,7 +255,7 @@ std::ostream &operator<<(std::ostream &os, const CharacterTypeSpec &x) {
   if (auto k{evaluate::ToInt64(x.kind())}) {
     return os << *k << ')';  // emit unsuffixed kind code
   } else {
-    return x.kind().AsFortran(os) << ')';
+    return os << x.kind() << ')';
   }
 }
 
