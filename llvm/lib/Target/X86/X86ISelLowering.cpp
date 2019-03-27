@@ -40900,7 +40900,7 @@ static SDValue combineMOVMSK(SDNode *N, SelectionDAG &DAG,
 
   // Perform constant folding.
   if (ISD::isBuildVectorOfConstantSDNodes(Src.getNode())) {
-    assert(VT== MVT::i32 && "Unexpected result type");
+    assert(VT == MVT::i32 && "Unexpected result type");
     APInt Imm(32, 0);
     for (unsigned Idx = 0, e = Src.getNumOperands(); Idx < e; ++Idx) {
       if (!Src.getOperand(Idx).isUndef() &&
@@ -40911,11 +40911,10 @@ static SDValue combineMOVMSK(SDNode *N, SelectionDAG &DAG,
   }
 
   // Look through int->fp bitcasts that don't change the element width.
-  if (Src.getOpcode() == ISD::BITCAST && Src.hasOneUse() &&
-      SrcVT.isFloatingPoint() &&
-      Src.getOperand(0).getValueType() ==
-        EVT(SrcVT).changeVectorElementTypeToInteger())
-    Src = Src.getOperand(0);
+  unsigned EltWidth = SrcVT.getScalarSizeInBits();
+  if (Src.getOpcode() == ISD::BITCAST &&
+      Src.getOperand(0).getScalarValueSizeInBits() == EltWidth)
+    return DAG.getNode(X86ISD::MOVMSK, SDLoc(N), VT, Src.getOperand(0));
 
   // Simplify the inputs.
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
