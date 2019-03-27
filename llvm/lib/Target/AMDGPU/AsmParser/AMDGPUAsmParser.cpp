@@ -4911,19 +4911,13 @@ void AMDGPUAsmParser::cvtMubufImpl(MCInst &Inst,
   bool HasLdsModifier = false;
   OptionalImmIndexMap OptionalIdx;
   assert(IsAtomicReturn ? IsAtomic : true);
-  unsigned FirstOperandIdx = 1;
 
-  for (unsigned i = FirstOperandIdx, e = Operands.size(); i != e; ++i) {
+  for (unsigned i = 1, e = Operands.size(); i != e; ++i) {
     AMDGPUOperand &Op = ((AMDGPUOperand &)*Operands[i]);
 
     // Add the register arguments
     if (Op.isReg()) {
       Op.addRegOperands(Inst, 1);
-      // Insert a tied src for atomic return dst.
-      // This cannot be postponed as subsequent calls to
-      // addImmOperands rely on correct number of MC operands.
-      if (IsAtomicReturn && i == FirstOperandIdx)
-        Op.addRegOperands(Inst, 1);
       continue;
     }
 
@@ -4959,6 +4953,12 @@ void AMDGPUAsmParser::cvtMubufImpl(MCInst &Inst,
       Inst.setOpcode(NoLdsOpcode);
       IsLdsOpcode = false;
     }
+  }
+
+  // Copy $vdata_in operand and insert as $vdata for MUBUF_Atomic RTN insns.
+  if (IsAtomicReturn) {
+    MCInst::iterator I = Inst.begin(); // $vdata_in is always at the beginning.
+    Inst.insert(I, *I);
   }
 
   addOptionalImmOperand(Inst, Operands, OptionalIdx, AMDGPUOperand::ImmTyOffset);
