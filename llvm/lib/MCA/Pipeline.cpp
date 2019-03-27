@@ -64,7 +64,8 @@ Error Pipeline::runCycle() {
 
   // Update stages in preparation for a new cycle.
   for (const std::unique_ptr<Stage> &S : Stages) {
-    if (Err = S->cycleEnd())
+    Err = S->cycleEnd();
+    if (Err)
       break;
   }
 
