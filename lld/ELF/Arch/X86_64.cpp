@@ -45,10 +45,6 @@ public:
   void relaxTlsLdToLe(uint8_t *Loc, RelType Type, uint64_t Val) const override;
   bool adjustPrologueForCrossSplitStack(uint8_t *Loc, uint8_t *End,
                                         uint8_t StOther) const override;
-
-private:
-  void relaxGotNoPic(uint8_t *Loc, uint64_t Val, uint8_t Op,
-                     uint8_t ModRm) const;
 };
 } // namespace
 
@@ -393,8 +389,8 @@ RelExpr X86_64::adjustRelaxExpr(RelType Type, const uint8_t *Data,
 // "Intel 64 and IA-32 Architectures Software Developer's Manual V2"
 // (http://www.intel.com/content/dam/www/public/us/en/documents/manuals/
 //    64-ia-32-architectures-software-developer-instruction-set-reference-manual-325383.pdf)
-void X86_64::relaxGotNoPic(uint8_t *Loc, uint64_t Val, uint8_t Op,
-                           uint8_t ModRm) const {
+static void relaxGotNoPic(uint8_t *Loc, uint64_t Val, uint8_t Op,
+                          uint8_t ModRm) {
   const uint8_t Rex = Loc[-3];
   // Convert "test %reg, foo@GOTPCREL(%rip)" to "test $foo, %reg".
   if (Op == 0x85) {
