@@ -193,8 +193,11 @@ template<typename HOST_T> struct FortranTypeHelper {
       common::MapTemplate<HostType, AllIntrinsicTypes, std::tuple>;
   static constexpr int index{
       IndexInTupleHelper<HOST_T, HostTypeMapping>::value};
+  // Both conditional types are "instantiated", so a valid type must be
+  // created for invalid index even if not used.
   using Type = std::conditional_t<index >= 0,
-      std::tuple_element_t<index, AllIntrinsicTypes>, UnknownType>;
+      std::tuple_element_t<(index >= 0) ? index : 0, AllIntrinsicTypes>,
+      UnknownType>;
 };
 
 template<typename HOST_T>

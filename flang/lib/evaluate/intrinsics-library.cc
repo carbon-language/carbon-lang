@@ -110,12 +110,25 @@ static void AddLibmComplexHostProcedures(
 }
 
 void InitHostIntrinsicLibraryWithLibm(HostIntrinsicProceduresLibrary &lib) {
-  AddLibmRealHostProcedures<float>(lib);
-  AddLibmRealHostProcedures<double>(lib);
-  AddLibmRealHostProcedures<long double>(lib);
-  AddLibmComplexHostProcedures<float>(lib);
-  AddLibmComplexHostProcedures<double>(lib);
-  AddLibmComplexHostProcedures<long double>(lib);
+  if constexpr (host::FortranTypeExists<float>()) {
+    AddLibmRealHostProcedures<float>(lib);
+  }
+  if constexpr (host::FortranTypeExists<double>()) {
+    AddLibmRealHostProcedures<double>(lib);
+  }
+  if constexpr (host::FortranTypeExists<long double>()) {
+    AddLibmRealHostProcedures<long double>(lib);
+  }
+
+  if constexpr (host::FortranTypeExists<std::complex<float>>()) {
+    AddLibmComplexHostProcedures<float>(lib);
+  }
+  if constexpr (host::FortranTypeExists<std::complex<double>>()) {
+    AddLibmComplexHostProcedures<double>(lib);
+  }
+  if constexpr (host::FortranTypeExists<std::complex<long double>>()) {
+    AddLibmComplexHostProcedures<long double>(lib);
+  }
 }
 
 #if LINK_WITH_LIBPGMATH
@@ -417,13 +430,25 @@ static void AddLibpgmathComplexHostProcedures(
 template<L Lib>
 static void InitHostIntrinsicLibraryWithLibpgmath(
     HostIntrinsicProceduresLibrary &lib) {
-  AddLibpgmathRealHostProcedures<Lib, float>(lib);
-  AddLibpgmathRealHostProcedures<Lib, double>(lib);
-  AddLibpgmathComplexHostProcedures<Lib, float>(lib);
-  AddLibpgmathComplexHostProcedures<Lib, double>(lib);
+  if constexpr (host::FortranTypeExists<float>()) {
+    AddLibpgmathRealHostProcedures<Lib, float>(lib);
+  }
+  if constexpr (host::FortranTypeExists<double>()) {
+    AddLibpgmathRealHostProcedures<Lib, double>(lib);
+  }
+  if constexpr (host::FortranTypeExists<std::complex<float>>()) {
+    AddLibpgmathComplexHostProcedures<Lib, float>(lib);
+  }
+  if constexpr (host::FortranTypeExists<std::complex<double>>()) {
+    AddLibpgmathComplexHostProcedures<Lib, double>(lib);
+  }
   // No long double functions in libpgmath
-  AddLibmRealHostProcedures<long double>(lib);
-  AddLibmComplexHostProcedures<long double>(lib);
+  if constexpr (host::FortranTypeExists<long double>()) {
+    AddLibmRealHostProcedures<long double>(lib);
+  }
+  if constexpr (host::FortranTypeExists<std::complex<long double>>()) {
+    AddLibmComplexHostProcedures<long double>(lib);
+  }
 }
 }
 #endif  // LINK_WITH_LIBPGMATH
