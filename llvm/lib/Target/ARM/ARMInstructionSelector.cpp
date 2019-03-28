@@ -111,7 +111,6 @@ private:
     unsigned MOVCCi;
 
     // Used for G_SELECT
-    unsigned CMPri;
     unsigned MOVCCr;
 
     unsigned TSTri;
@@ -319,7 +318,6 @@ ARMInstructionSelector::OpcodeCache::OpcodeCache(const ARMSubtarget &STI) {
   STORE_OPCODE(MOVi, MOVi);
   STORE_OPCODE(MOVCCi, MOVCCi);
 
-  STORE_OPCODE(CMPri, CMPri);
   STORE_OPCODE(MOVCCr, MOVCCr);
 
   STORE_OPCODE(TSTri, TSTri);
@@ -767,13 +765,13 @@ bool ARMInstructionSelector::selectSelect(MachineInstrBuilder &MIB,
   auto InsertBefore = std::next(MIB->getIterator());
   auto &DbgLoc = MIB->getDebugLoc();
 
-  // Compare the condition to 0.
+  // Compare the condition to 1.
   auto CondReg = MIB->getOperand(1).getReg();
   assert(validReg(MRI, CondReg, 1, ARM::GPRRegBankID) &&
          "Unsupported types for select operation");
-  auto CmpI = BuildMI(MBB, InsertBefore, DbgLoc, TII.get(Opcodes.CMPri))
+  auto CmpI = BuildMI(MBB, InsertBefore, DbgLoc, TII.get(Opcodes.TSTri))
                   .addUse(CondReg)
-                  .addImm(0)
+                  .addImm(1)
                   .add(predOps(ARMCC::AL));
   if (!constrainSelectedInstRegOperands(*CmpI, TII, TRI, RBI))
     return false;

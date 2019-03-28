@@ -881,7 +881,7 @@ body:             |
     %2(s1) = G_TRUNC %1(s32)
 
     %3(s32) = G_SELECT %2(s1),  %0, %1
-    ; CHECK: CMPri [[VREGY]], 0, 14, $noreg, implicit-def $cpsr
+    ; CHECK: TSTri [[VREGY]], 1, 14, $noreg, implicit-def $cpsr
     ; CHECK: [[RES:%[0-9]+]]:gpr = MOVCCr [[VREGX]], [[VREGY]], 0, $cpsr
 
     $r0 = COPY %3(s32)
@@ -919,7 +919,7 @@ body:             |
     %3(s1) = G_TRUNC %2(s32)
 
     %4(p0) = G_SELECT %3(s1),  %0, %1
-    ; CHECK: CMPri [[VREGC]], 0, 14, $noreg, implicit-def $cpsr
+    ; CHECK: TSTri [[VREGC]], 1, 14, $noreg, implicit-def $cpsr
     ; CHECK: [[RES:%[0-9]+]]:gpr = MOVCCr [[VREGX]], [[VREGY]], 0, $cpsr
 
     $r0 = COPY %4(p0)
