@@ -218,7 +218,7 @@ protected:
 } // namespace wasm
 
 std::string toString(const wasm::InputChunk *);
-StringRef reloctTypeToString(uint8_t RelocType);
+StringRef relocTypeToString(uint8_t RelocType);
 
 } // namespace lld
 

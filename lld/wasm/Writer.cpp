@@ -1160,7 +1160,7 @@ void Writer::processRelocations(InputChunk *Chunk) {
         auto *Sym = File->getSymbols()[Reloc.Index];
         if (Sym->isUndefined() && !Sym->isWeak())
           error(File->getName() + ": relocation " +
-                reloctTypeToString(Reloc.Type) +
+                relocTypeToString(Reloc.Type) +
                 " cannot be used againt symbol " + Sym->getName() +
                 "; recompile with -fPIC");
       }
