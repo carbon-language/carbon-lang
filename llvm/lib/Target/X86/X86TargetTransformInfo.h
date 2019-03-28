@@ -59,6 +59,7 @@ class X86TTIImpl : public BasicTTIImplBase<X86TTIImpl> {
       X86::FeatureLEAForSP,
       X86::FeatureLEAUsesAG,
       X86::FeatureLZCNTFalseDeps,
+      X86::FeatureBranchFusion,
       X86::FeatureMacroFusion,
       X86::FeatureMergeToThreeWayBranch,
       X86::FeaturePadShortFunctions,
