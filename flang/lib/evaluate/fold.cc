@@ -392,10 +392,9 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
                 std::is_same_v<From, Expr<SomeInteger>> ||
                 std::is_same_v<From, Expr<SomeComplex>>) {
               return Fold(context, ConvertToType<T>(std::move(x)));
-            } else {
-              common::die("int() argument type not valid");
-              return Expr<T>{std::move(funcRef)};  // unreachable
             }
+            common::die("int() argument type not valid");
+            return Expr<T>{std::move(funcRef)};  // unreachable
           },
           std::move(args[0].value().value().u));
     } else if (name == "kind") {
@@ -620,10 +619,9 @@ Expr<Type<TypeCategory::Real, KIND>> FoldOperation(FoldingContext &context,
                 std::is_same_v<From, Expr<SomeInteger>> ||
                 std::is_same_v<From, Expr<SomeComplex>>) {
               return Fold(context, ConvertToType<T>(std::move(x)));
-            } else {
-              common::die("real() argument type not valid");
-              return Expr<T>{std::move(funcRef)};  // unreachable
             }
+            common::die("real() argument type not valid");
+            return Expr<T>{std::move(funcRef)};  // unreachable
           },
           std::move(args[0].value().value().u));
     }
