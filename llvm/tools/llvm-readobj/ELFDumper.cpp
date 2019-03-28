@@ -274,9 +274,9 @@ public:
                            StringRef &SectionName,
                            unsigned &SectionIndex) const;
   std::string getStaticSymbolName(uint32_t Index) const;
-	std::string getSymbolVersionByIndex(StringRef StrTab,
-	                                const uint32_t VersionSymbolIndex,
-                                  bool &IsDefault) const;
+	StringRef getSymbolVersionByIndex(StringRef StrTab,
+	                                  uint32_t VersionSymbolIndex,
+                                    bool &IsDefault) const;
 
   void printSymbolsHelper(bool IsDynamic) const;
   const Elf_Shdr *getDotSymtabSec() const { return DotSymtabSec; }
@@ -644,12 +644,11 @@ StringRef ELFDumper<ELFT>::getSymbolVersion(StringRef StrTab,
                         reinterpret_cast<uintptr_t>(DynSymRegion.Addr)) /
                        sizeof(Elf_Sym);
 
-  // Get the corresponding version index entry
+  // Get the corresponding version index entry.
   const Elf_Versym *Versym =
       unwrapOrError(ObjF->getELFFile()->template getEntry<Elf_Versym>(
           dot_gnu_version_sec, EntryIndex));
-  return StringRef(
-      this->getSymbolVersionByIndex(StrTab, Versym->vs_index, IsDefault));
+  return this->getSymbolVersionByIndex(StrTab, Versym->vs_index, IsDefault);
 }
 
 static std::string maybeDemangle(StringRef Name) {
@@ -668,24 +667,24 @@ std::string ELFDumper<ELFT>::getStaticSymbolName(uint32_t Index) const {
 }
 
 template <typename ELFT>
-std::string ELFDumper<ELFT>::getSymbolVersionByIndex(
-    StringRef StrTab, const uint32_t SymbolVersionIndex, bool &IsDefault) const {
+StringRef ELFDumper<ELFT>::getSymbolVersionByIndex(
+    StringRef StrTab, uint32_t SymbolVersionIndex, bool &IsDefault) const {
   size_t VersionIndex = SymbolVersionIndex & VERSYM_VERSION;
 
   // Special markers for unversioned symbols.
   if (VersionIndex == VER_NDX_LOCAL ||
       VersionIndex == VER_NDX_GLOBAL) {
     IsDefault = false;
-    return "";
+    return StringRef("");
   }
 
-  // Lookup this symbol in the version table
+  // Lookup this symbol in the version table.
   LoadVersionMap();
   if (VersionIndex >= VersionMap.size() || VersionMap[VersionIndex].isNull())
     reportError("Invalid version entry");
   const VersionMapEntry &Entry = VersionMap[VersionIndex];
 
-  // Get the version name string
+  // Get the version name string.
   size_t NameOffset;
   if (Entry.isVerdef()) {
     // The first Verdaux entry holds the name.
@@ -697,7 +696,7 @@ std::string ELFDumper<ELFT>::getSymbolVersionByIndex(
   }
   if (NameOffset >= StrTab.size())
     reportError("Invalid string offset");
-  return std::string(StrTab.data() + NameOffset);
+  return StringRef(StrTab.data() + NameOffset);
 }
 
 template <typename ELFT>
