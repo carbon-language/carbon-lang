@@ -38,3 +38,5 @@ add_executable(f18-parse-demo
 target_link_libraries(f18-parse-demo
   FortranParser
 )
+
+install(TARGETS f18 f18-parse-demo DESTINATION bin)

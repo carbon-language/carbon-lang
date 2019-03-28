@@ -16,3 +16,9 @@ add_library(FortranCommon
   default-kinds.cc
   idioms.cc
 )
+
+install (TARGETS FortranCommon
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)

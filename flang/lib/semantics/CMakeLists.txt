@@ -39,3 +39,9 @@ target_link_libraries(FortranSemantics
   FortranCommon
   FortranEvaluate
 )
+
+install (TARGETS FortranSemantics
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)

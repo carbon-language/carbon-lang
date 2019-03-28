@@ -28,3 +28,9 @@ add_library(FortranFIR
 target_link_libraries(FortranFIR
   FortranCommon
 )
+
+install (TARGETS FortranFIR
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)

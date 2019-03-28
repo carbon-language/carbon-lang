@@ -37,8 +37,7 @@ endif()
 set(CMAKE_SKIP_BUILD_RPATH false)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH false)
 
-# Don't use the installation RPATH when building
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" "${CMAKE_INSTALL_RPATH}")
 
 # Reminder: Setting CMAKE_CXX_COMPILER must be done before calling project()
 
@@ -100,7 +99,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
    # due to the need to preserve the right to override external entry points
    # at dynamic link time.  -fno-semantic-interposition waives that right and
    # recovers a little bit of that performance.
-   if (BUILD_SHARED_LIBS)
+   if (BUILD_SHARED_LIBS AND NOT (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
      set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-semantic-interposition")
    endif()
 endif()

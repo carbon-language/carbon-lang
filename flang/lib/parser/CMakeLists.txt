@@ -33,3 +33,9 @@ add_library(FortranParser
 target_link_libraries(FortranParser
   FortranCommon
 )
+
+install (TARGETS FortranParser
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)

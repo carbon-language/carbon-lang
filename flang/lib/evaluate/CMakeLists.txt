@@ -39,6 +39,12 @@ target_link_libraries(FortranEvaluate
   m
 )
 
+install (TARGETS FortranEvaluate
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
 if (LIBPGMATH_DIR)
   # If pgmath library is found, it can be used for constant folding.
   find_library(LIBPGMATH pgmath PATHS ${LIBPGMATH_DIR})
