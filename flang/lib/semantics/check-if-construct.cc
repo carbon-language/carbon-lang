@@ -13,13 +13,7 @@
 // limitations under the License.
 
 #include "check-if-construct.h"
-#include "attr.h"
-#include "scope.h"
-#include "semantics.h"
-#include "symbol.h"
 #include "tools.h"
-#include "type.h"
-#include "../evaluate/traversal.h"
 #include "../parser/message.h"
 #include "../parser/parse-tree.h"
 
