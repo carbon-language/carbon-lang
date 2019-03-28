@@ -52,34 +52,6 @@ bool HostIntrinsicProceduresLibrary::HasEquivalentProcedure(
 
 // Define which host runtime functions will be used for folding
 
-// C++17 defined standard Bessel math functions std::cyl_bessel_j
-// and std::cyl_neumann that can be used for Fortran j and y
-// bessel functions. However, they are not yet implemented in
-// clang libc++ (ok in GNU libstdc++). C maths functions are used
-// in the meantime. They are not C standard but a GNU extension.
-// However, they seem widespread enough to be used.
-
-enum class Bessel { j0, j1, jn, y0, y1, yn };
-template<Bessel, typename T> constexpr auto Sym{0};
-template<> constexpr auto Sym<Bessel::j0, float>{j0f};
-template<> constexpr auto Sym<Bessel::j0, double>{j0};
-template<> constexpr auto Sym<Bessel::j0, long double>{j0l};
-template<> constexpr auto Sym<Bessel::j1, float>{j1f};
-template<> constexpr auto Sym<Bessel::j1, double>{j1};
-template<> constexpr auto Sym<Bessel::j1, long double>{j1l};
-template<> constexpr auto Sym<Bessel::jn, float>{jnf};
-template<> constexpr auto Sym<Bessel::jn, double>{jn};
-template<> constexpr auto Sym<Bessel::jn, long double>{jnl};
-template<> constexpr auto Sym<Bessel::y0, float>{y0f};
-template<> constexpr auto Sym<Bessel::y0, double>{y0};
-template<> constexpr auto Sym<Bessel::y0, long double>{y0l};
-template<> constexpr auto Sym<Bessel::y1, float>{y1f};
-template<> constexpr auto Sym<Bessel::y1, double>{y1};
-template<> constexpr auto Sym<Bessel::y1, long double>{y1l};
-template<> constexpr auto Sym<Bessel::yn, float>{ynf};
-template<> constexpr auto Sym<Bessel::yn, double>{yn};
-template<> constexpr auto Sym<Bessel::yn, long double>{ynl};
-
 template<typename HostT>
 static void AddLibmRealHostProcedures(
     HostIntrinsicProceduresLibrary &hostIntrinsicLibrary) {
@@ -89,21 +61,24 @@ static void AddLibmRealHostProcedures(
       {"acosh", F{std::acosh}, true}, {"asin", F{std::asin}, true},
       {"asinh", F{std::asinh}, true}, {"atan", F{std::atan}, true},
       {"atan", F2{std::atan2}, true}, {"atanh", F{std::atanh}, true},
-      {"bessel_j0", Sym<Bessel::j0, HostT>, true},
-      {"bessel_j1", Sym<Bessel::j1, HostT>, true},
-      {"bessel_jn", Sym<Bessel::jn, HostT>, true},
-      {"bessel_y0", Sym<Bessel::y0, HostT>, true},
-      {"bessel_y1", Sym<Bessel::y1, HostT>, true},
-      {"bessel_yn", Sym<Bessel::yn, HostT>, true}, {"cos", F{std::cos}, true},
-      {"cosh", F{std::cosh}, true}, {"erf", F{std::erf}, true},
-      {"erfc", F{std::erfc}, true}, {"exp", F{std::exp}, true},
-      {"gamma", F{std::tgamma}, true}, {"hypot", F2{std::hypot}, true},
-      {"log", F{std::log}, true}, {"log10", F{std::log10}, true},
-      {"log_gamma", F{std::lgamma}, true}, {"mod", F2{std::fmod}, true},
-      {"sin", F{std::sin}, true}, {"sinh", F{std::sinh}, true},
-      {"sqrt", F{std::sqrt}, true}, {"tan", F{std::tan}, true},
-      {"tanh", F{std::tanh}, true}};
+      {"cos", F{std::cos}, true}, {"cosh", F{std::cosh}, true},
+      {"erf", F{std::erf}, true}, {"erfc", F{std::erfc}, true},
+      {"exp", F{std::exp}, true}, {"gamma", F{std::tgamma}, true},
+      {"hypot", F2{std::hypot}, true}, {"log", F{std::log}, true},
+      {"log10", F{std::log10}, true}, {"log_gamma", F{std::lgamma}, true},
+      {"mod", F2{std::fmod}, true}, {"sin", F{std::sin}, true},
+      {"sinh", F{std::sinh}, true}, {"sqrt", F{std::sqrt}, true},
+      {"tan", F{std::tan}, true}, {"tanh", F{std::tanh}, true}};
   // Note: cmath does not have modulo and erfc_scaled equivalent
+
+  // Note regarding  lack of bessel function support:
+  // C++17 defined standard Bessel math functions std::cyl_bessel_j
+  // and std::cyl_neumann that can be used for Fortran j and y
+  // bessel functions. However, they are not yet implemented in
+  // clang libc++ (ok in GNU libstdc++). C maths functions j0...
+  // are not C standard but a GNU extension so they are not used
+  // to avoid introducing incompatibilities.
+  // Use libpgmath to get bessel function folding support.
 
   for (auto sym : libmSymbols) {
     if (!hostIntrinsicLibrary.HasEquivalentProcedure(sym)) {
