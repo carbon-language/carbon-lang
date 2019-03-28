@@ -6080,8 +6080,8 @@ void LoopVectorizationCostModel::collectValuesToIgnore() {
 // `buildVPlans(VF, VF)`. We cannot do it because VPLAN at the moment
 // doesn't have a cost model that can choose which plan to execute if
 // more than one is generated.
-unsigned determineVPlanVF(const unsigned WidestVectorRegBits,
-                          LoopVectorizationCostModel &CM) {
+static unsigned determineVPlanVF(const unsigned WidestVectorRegBits,
+                                 LoopVectorizationCostModel &CM) {
   unsigned WidestType;
   std::tie(std::ignore, WidestType) = CM.getSmallestAndWidestTypes();
   return WidestVectorRegBits / WidestType;
