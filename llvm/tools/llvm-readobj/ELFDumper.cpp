@@ -636,7 +636,7 @@ StringRef ELFDumper<ELFT>::getSymbolVersion(StringRef StrTab,
   if (!dot_gnu_version_sec) {
     // No version table.
     IsDefault = false;
-    return StringRef("");
+    return "";
   }
 
   // Determine the position in the symbol table of this entry.
@@ -675,7 +675,7 @@ StringRef ELFDumper<ELFT>::getSymbolVersionByIndex(
   if (VersionIndex == VER_NDX_LOCAL ||
       VersionIndex == VER_NDX_GLOBAL) {
     IsDefault = false;
-    return StringRef("");
+    return "";
   }
 
   // Lookup this symbol in the version table.
@@ -696,7 +696,7 @@ StringRef ELFDumper<ELFT>::getSymbolVersionByIndex(
   }
   if (NameOffset >= StrTab.size())
     reportError("Invalid string offset");
-  return StringRef(StrTab.data() + NameOffset);
+  return StrTab.data() + NameOffset;
 }
 
 template <typename ELFT>
