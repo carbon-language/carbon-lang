@@ -9895,10 +9895,11 @@ SDValue DAGCombiner::visitZERO_EXTEND_VECTOR_INREG(SDNode *N) {
 SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   EVT VT = N->getValueType(0);
+  EVT SrcVT = N0.getValueType();
   bool isLE = DAG.getDataLayout().isLittleEndian();
 
   // noop truncate
-  if (N0.getValueType() == N->getValueType(0))
+  if (SrcVT == VT)
     return N0;
 
   // fold (truncate (truncate x)) -> (truncate x)
@@ -9997,6 +9998,19 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
       }
       return DAG.getNode(ISD::SHL, SL, VT, Trunc, Amt);
     }
+  }
+
+  // Attempt to pre-truncate BUILD_VECTOR sources.
+  if (N0.getOpcode() == ISD::BUILD_VECTOR && !LegalOperations &&
+      TLI.isTruncateFree(SrcVT.getScalarType(), VT.getScalarType())) {
+    SDLoc DL(N);
+    EVT SVT = VT.getScalarType();
+    SmallVector<SDValue, 8> TruncOps;
+    for (const SDValue &Op : N0->op_values()) {
+      SDValue TruncOp = DAG.getNode(ISD::TRUNCATE, DL, SVT, Op);
+      TruncOps.push_back(TruncOp);
+    }
+    return DAG.getBuildVector(VT, DL, TruncOps);
   }
 
   // Fold a series of buildvector, bitcast, and truncate if possible.
