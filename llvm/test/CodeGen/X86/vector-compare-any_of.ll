@@ -84,8 +84,7 @@ define i64 @test_v4f64_legal_sext(<4 x double> %a0, <4 x double> %a1) {
 ; SSE-NEXT:    packssdw %xmm3, %xmm2
 ; SSE-NEXT:    movmskps %xmm2, %eax
 ; SSE-NEXT:    negl %eax
-; SSE-NEXT:    sbbl %eax, %eax
-; SSE-NEXT:    cltq
+; SSE-NEXT:    sbbq %rax, %rax
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test_v4f64_legal_sext:
@@ -95,8 +94,7 @@ define i64 @test_v4f64_legal_sext(<4 x double> %a0, <4 x double> %a1) {
 ; AVX-NEXT:    vpackssdw %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    vmovmskps %xmm0, %eax
 ; AVX-NEXT:    negl %eax
-; AVX-NEXT:    sbbl %eax, %eax
-; AVX-NEXT:    cltq
+; AVX-NEXT:    sbbq %rax, %rax
 ; AVX-NEXT:    vzeroupper
 ; AVX-NEXT:    retq
 ;
@@ -346,8 +344,7 @@ define i64 @test_v4i64_legal_sext(<4 x i64> %a0, <4 x i64> %a1) {
 ; SSE-NEXT:    packssdw %xmm1, %xmm0
 ; SSE-NEXT:    movmskps %xmm0, %eax
 ; SSE-NEXT:    negl %eax
-; SSE-NEXT:    sbbl %eax, %eax
-; SSE-NEXT:    cltq
+; SSE-NEXT:    sbbq %rax, %rax
 ; SSE-NEXT:    retq
 ;
 ; AVX1-LABEL: test_v4i64_legal_sext:
@@ -359,8 +356,7 @@ define i64 @test_v4i64_legal_sext(<4 x i64> %a0, <4 x i64> %a1) {
 ; AVX1-NEXT:    vpackssdw %xmm2, %xmm0, %xmm0
 ; AVX1-NEXT:    vmovmskps %xmm0, %eax
 ; AVX1-NEXT:    negl %eax
-; AVX1-NEXT:    sbbl %eax, %eax
-; AVX1-NEXT:    cltq
+; AVX1-NEXT:    sbbq %rax, %rax
 ; AVX1-NEXT:    vzeroupper
 ; AVX1-NEXT:    retq
 ;
@@ -371,8 +367,7 @@ define i64 @test_v4i64_legal_sext(<4 x i64> %a0, <4 x i64> %a1) {
 ; AVX2-NEXT:    vpackssdw %xmm1, %xmm0, %xmm0
 ; AVX2-NEXT:    vmovmskps %xmm0, %eax
 ; AVX2-NEXT:    negl %eax
-; AVX2-NEXT:    sbbl %eax, %eax
-; AVX2-NEXT:    cltq
+; AVX2-NEXT:    sbbq %rax, %rax
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
 ;

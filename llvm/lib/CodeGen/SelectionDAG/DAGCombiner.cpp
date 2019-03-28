@@ -9030,6 +9030,16 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   if (SDValue NewVSel = matchVSelectOpSizesWithSetCC(N))
     return NewVSel;
 
+  // Eliminate this sign extend by doing a negation in the destination type:
+  // sext i32 (0 - (zext i8 X to i32)) to i64 --> 0 - (zext i8 X to i64)
+  if (N0.getOpcode() == ISD::SUB && N0.hasOneUse() &&
+      isNullOrNullSplat(N0.getOperand(0)) &&
+      N0.getOperand(1).getOpcode() == ISD::ZERO_EXTEND &&
+      TLI.isOperationLegalOrCustom(ISD::SUB, VT)) {
+    SDValue Zext = DAG.getZExtOrTrunc(N0.getOperand(1).getOperand(0), DL, VT);
+    return DAG.getNode(ISD::SUB, DL, VT, DAG.getConstant(0, DL, VT), Zext);
+  }
+
   return SDValue();
 }
 

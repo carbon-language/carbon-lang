@@ -84,12 +84,11 @@ define i64 @test_v4f64_legal_sext(<4 x double> %a0, <4 x double> %a1) {
 ; SSE-NEXT:    cmpltpd %xmm1, %xmm3
 ; SSE-NEXT:    cmpltpd %xmm0, %xmm2
 ; SSE-NEXT:    packssdw %xmm3, %xmm2
-; SSE-NEXT:    movmskps %xmm2, %eax
-; SSE-NEXT:    xorl %ecx, %ecx
-; SSE-NEXT:    cmpl $15, %eax
-; SSE-NEXT:    sete %cl
-; SSE-NEXT:    negl %ecx
-; SSE-NEXT:    movslq %ecx, %rax
+; SSE-NEXT:    movmskps %xmm2, %ecx
+; SSE-NEXT:    xorl %eax, %eax
+; SSE-NEXT:    cmpl $15, %ecx
+; SSE-NEXT:    sete %al
+; SSE-NEXT:    negq %rax
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: test_v4f64_legal_sext:
@@ -97,12 +96,11 @@ define i64 @test_v4f64_legal_sext(<4 x double> %a0, <4 x double> %a1) {
 ; AVX-NEXT:    vcmpltpd %ymm0, %ymm1, %ymm0
 ; AVX-NEXT:    vextractf128 $1, %ymm0, %xmm1
 ; AVX-NEXT:    vpackssdw %xmm1, %xmm0, %xmm0
-; AVX-NEXT:    vmovmskps %xmm0, %eax
-; AVX-NEXT:    xorl %ecx, %ecx
-; AVX-NEXT:    cmpl $15, %eax
-; AVX-NEXT:    sete %cl
-; AVX-NEXT:    negl %ecx
-; AVX-NEXT:    movslq %ecx, %rax
+; AVX-NEXT:    vmovmskps %xmm0, %ecx
+; AVX-NEXT:    xorl %eax, %eax
+; AVX-NEXT:    cmpl $15, %ecx
+; AVX-NEXT:    sete %al
+; AVX-NEXT:    negq %rax
 ; AVX-NEXT:    vzeroupper
 ; AVX-NEXT:    retq
 ;
@@ -366,12 +364,11 @@ define i64 @test_v4i64_legal_sext(<4 x i64> %a0, <4 x i64> %a1) {
 ; SSE-NEXT:    pcmpgtq %xmm3, %xmm1
 ; SSE-NEXT:    pcmpgtq %xmm2, %xmm0
 ; SSE-NEXT:    packssdw %xmm1, %xmm0
-; SSE-NEXT:    movmskps %xmm0, %eax
-; SSE-NEXT:    xorl %ecx, %ecx
-; SSE-NEXT:    cmpl $15, %eax
-; SSE-NEXT:    sete %cl
-; SSE-NEXT:    negl %ecx
-; SSE-NEXT:    movslq %ecx, %rax
+; SSE-NEXT:    movmskps %xmm0, %ecx
+; SSE-NEXT:    xorl %eax, %eax
+; SSE-NEXT:    cmpl $15, %ecx
+; SSE-NEXT:    sete %al
+; SSE-NEXT:    negq %rax
 ; SSE-NEXT:    retq
 ;
 ; AVX1-LABEL: test_v4i64_legal_sext:
@@ -381,12 +378,11 @@ define i64 @test_v4i64_legal_sext(<4 x i64> %a0, <4 x i64> %a1) {
 ; AVX1-NEXT:    vpcmpgtq %xmm2, %xmm3, %xmm2
 ; AVX1-NEXT:    vpcmpgtq %xmm1, %xmm0, %xmm0
 ; AVX1-NEXT:    vpackssdw %xmm2, %xmm0, %xmm0
-; AVX1-NEXT:    vmovmskps %xmm0, %eax
-; AVX1-NEXT:    xorl %ecx, %ecx
-; AVX1-NEXT:    cmpl $15, %eax
-; AVX1-NEXT:    sete %cl
-; AVX1-NEXT:    negl %ecx
-; AVX1-NEXT:    movslq %ecx, %rax
+; AVX1-NEXT:    vmovmskps %xmm0, %ecx
+; AVX1-NEXT:    xorl %eax, %eax
+; AVX1-NEXT:    cmpl $15, %ecx
+; AVX1-NEXT:    sete %al
+; AVX1-NEXT:    negq %rax
 ; AVX1-NEXT:    vzeroupper
 ; AVX1-NEXT:    retq
 ;
@@ -395,12 +391,11 @@ define i64 @test_v4i64_legal_sext(<4 x i64> %a0, <4 x i64> %a1) {
 ; AVX2-NEXT:    vpcmpgtq %ymm1, %ymm0, %ymm0
 ; AVX2-NEXT:    vextracti128 $1, %ymm0, %xmm1
 ; AVX2-NEXT:    vpackssdw %xmm1, %xmm0, %xmm0
-; AVX2-NEXT:    vmovmskps %xmm0, %eax
-; AVX2-NEXT:    xorl %ecx, %ecx
-; AVX2-NEXT:    cmpl $15, %eax
-; AVX2-NEXT:    sete %cl
-; AVX2-NEXT:    negl %ecx
-; AVX2-NEXT:    movslq %ecx, %rax
+; AVX2-NEXT:    vmovmskps %xmm0, %ecx
+; AVX2-NEXT:    xorl %eax, %eax
+; AVX2-NEXT:    cmpl $15, %ecx
+; AVX2-NEXT:    sete %al
+; AVX2-NEXT:    negq %rax
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
 ;
