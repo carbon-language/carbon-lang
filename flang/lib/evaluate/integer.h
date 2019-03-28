@@ -953,9 +953,9 @@ public:
           result.overflow |= product.SignedMultiplicationOverflowed();
         }
         if (j + 1 < nbits) {
-          ValueWithOverflow doubled{shifted.AddSigned(shifted)};
-          result.overflow |= doubled.overflow;
-          shifted = doubled.value;
+          Product squared{shifted.MultiplySigned(shifted)};
+          result.overflow |= squared.SignedMultiplicationOverflowed();
+          shifted = squared.lower;
         }
       }
     }

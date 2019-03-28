@@ -95,5 +95,9 @@ module m
   logical, parameter :: test_divide_i3 = ((-7)/2).EQ.(-3)
   logical, parameter :: test_divide_i4 = (0/127).EQ.(0)
 
+  logical, parameter :: test_pow1 = (2**0).EQ.(1)
+  logical, parameter :: test_pow2 = (1**100).EQ.(1)
+  logical, parameter :: test_pow3 = (2**4).EQ.(16)
+  logical, parameter :: test_pow4 = (7**5).EQ.(16807)
 
 end module
