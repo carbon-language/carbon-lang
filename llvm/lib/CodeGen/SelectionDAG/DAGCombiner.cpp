@@ -9039,6 +9039,15 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     SDValue Zext = DAG.getZExtOrTrunc(N0.getOperand(1).getOperand(0), DL, VT);
     return DAG.getNode(ISD::SUB, DL, VT, DAG.getConstant(0, DL, VT), Zext);
   }
+  // Eliminate this sign extend by doing a decrement in the destination type:
+  // sext i32 ((zext i8 X to i32) + (-1)) to i64 --> (zext i8 X to i64) + (-1)
+  if (N0.getOpcode() == ISD::ADD && N0.hasOneUse() &&
+      isAllOnesOrAllOnesSplat(N0.getOperand(1)) &&
+      N0.getOperand(0).getOpcode() == ISD::ZERO_EXTEND &&
+      TLI.isOperationLegalOrCustom(ISD::ADD, VT)) {
+    SDValue Zext = DAG.getZExtOrTrunc(N0.getOperand(0).getOperand(0), DL, VT);
+    return DAG.getNode(ISD::ADD, DL, VT, Zext, DAG.getAllOnesConstant(DL, VT));
+  }
 
   return SDValue();
 }

@@ -184,7 +184,6 @@ define i32 @zext_decrement_sext(i8 %x) {
 ; X64:       # %bb.0:
 ; X64-NEXT:    movzbl %dil, %eax
 ; X64-NEXT:    decl %eax
-; X64-NEXT:    cwtl
 ; X64-NEXT:    retq
   %z = zext i8 %x to i16
   %dec = add i16 %z, -1
