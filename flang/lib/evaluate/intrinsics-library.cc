@@ -79,6 +79,7 @@ static void AddLibmRealHostProcedures(
   // are not C standard but a GNU extension so they are not used
   // to avoid introducing incompatibilities.
   // Use libpgmath to get bessel function folding support.
+  // TODO:  Add Bessel functions when possible.
 
   for (auto sym : libmSymbols) {
     if (!hostIntrinsicLibrary.HasEquivalentProcedure(sym)) {
