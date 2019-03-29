@@ -22,7 +22,7 @@ using namespace llvm::support::endian;
 using namespace lld;
 using namespace lld::wasm;
 
-StringRef lld::reloctTypeToString(uint8_t RelocType) {
+static StringRef reloctTypeToString(uint8_t RelocType) {
   switch (RelocType) {
 #define WASM_RELOC(NAME, REL)                                                  \
   case REL:                                                                    \
