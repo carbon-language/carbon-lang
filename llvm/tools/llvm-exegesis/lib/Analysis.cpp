@@ -460,36 +460,33 @@ static unsigned findProcResIdx(const llvm::MCSubtargetInfo &STI,
   return 0;
 }
 
-bool Analysis::SchedClassCluster::measurementsMatch(
-    const llvm::MCSubtargetInfo &STI, const ResolvedSchedClass &RSC,
-    const InstructionBenchmarkClustering &Clustering,
-    const double AnalysisInconsistencyEpsilonSquared_) const {
-  ArrayRef<PerInstructionStats> Representative = Centroid.getStats();
+std::vector<BenchmarkMeasure> Analysis::SchedClassCluster::getSchedClassPoint(
+    InstructionBenchmark::ModeE Mode, const llvm::MCSubtargetInfo &STI,
+    const ResolvedSchedClass &RSC,
+    ArrayRef<PerInstructionStats> Representative) const {
   const size_t NumMeasurements = Representative.size();
-  std::vector<BenchmarkMeasure> ClusterCenterPoint(NumMeasurements);
+
   std::vector<BenchmarkMeasure> SchedClassPoint(NumMeasurements);
-  // Latency case.
-  assert(!Clustering.getPoints().empty());
-  const InstructionBenchmark::ModeE Mode = Clustering.getPoints()[0].Mode;
+
   if (Mode == InstructionBenchmark::Latency) {
-    if (NumMeasurements != 1) {
-      llvm::errs()
-          << "invalid number of measurements in latency mode: expected 1, got "
-          << NumMeasurements << "\n";
-      return false;
-    }
+    assert(NumMeasurements == 1 && "Latency is a single measure.");
+    BenchmarkMeasure &LatencyMeasure = SchedClassPoint[0];
+
     // Find the latency.
-    SchedClassPoint[0].PerInstructionValue = 0.0;
+    LatencyMeasure.PerInstructionValue = 0.0;
+
     for (unsigned I = 0; I < RSC.SCDesc->NumWriteLatencyEntries; ++I) {
       const llvm::MCWriteLatencyEntry *const WLE =
           STI.getWriteLatencyEntry(RSC.SCDesc, I);
-      SchedClassPoint[0].PerInstructionValue =
-          std::max<double>(SchedClassPoint[0].PerInstructionValue, WLE->Cycles);
+      LatencyMeasure.PerInstructionValue =
+          std::max<double>(LatencyMeasure.PerInstructionValue, WLE->Cycles);
     }
-    ClusterCenterPoint[0].PerInstructionValue = Representative[0].avg();
   } else if (Mode == InstructionBenchmark::Uops) {
-    for (int I = 0, E = Representative.size(); I < E; ++I) {
-      const auto Key = Representative[I].key();
+    for (const auto &I : llvm::zip(SchedClassPoint, Representative)) {
+      BenchmarkMeasure &Measure = std::get<0>(I);
+      const PerInstructionStats &Stats = std::get<1>(I);
+
+      StringRef Key = Stats.key();
       uint16_t ProcResIdx = findProcResIdx(STI, Key);
       if (ProcResIdx > 0) {
         // Find the pressure on ProcResIdx `Key`.
@@ -499,30 +496,53 @@ bool Analysis::SchedClassCluster::measurementsMatch(
                          [ProcResIdx](const std::pair<uint16_t, float> &WPR) {
                            return WPR.first == ProcResIdx;
                          });
-        SchedClassPoint[I].PerInstructionValue =
+        Measure.PerInstructionValue =
             ProcResPressureIt == RSC.IdealizedProcResPressure.end()
                 ? 0.0
                 : ProcResPressureIt->second;
       } else if (Key == "NumMicroOps") {
-        SchedClassPoint[I].PerInstructionValue = RSC.SCDesc->NumMicroOps;
+        Measure.PerInstructionValue = RSC.SCDesc->NumMicroOps;
       } else {
         llvm::errs() << "expected `key` to be either a ProcResIdx or a ProcRes "
                         "name, got "
                      << Key << "\n";
-        return false;
+        return {};
       }
-      ClusterCenterPoint[I].PerInstructionValue = Representative[I].avg();
     }
   } else if (Mode == InstructionBenchmark::InverseThroughput) {
-    for (int I = 0, E = Representative.size(); I < E; ++I) {
-      SchedClassPoint[I].PerInstructionValue =
-          MCSchedModel::getReciprocalThroughput(STI, *RSC.SCDesc);
-      ClusterCenterPoint[I].PerInstructionValue = Representative[I].min();
-    }
+    assert(NumMeasurements == 1 && "Inverse Throughput is a single measure.");
+    BenchmarkMeasure &RThroughputMeasure = SchedClassPoint[0];
+
+    RThroughputMeasure.PerInstructionValue =
+        MCSchedModel::getReciprocalThroughput(STI, *RSC.SCDesc);
   } else {
     llvm_unreachable("unimplemented measurement matching mode");
-    return false;
   }
+
+  return SchedClassPoint;
+}
+
+bool Analysis::SchedClassCluster::measurementsMatch(
+    const llvm::MCSubtargetInfo &STI, const ResolvedSchedClass &RSC,
+    const InstructionBenchmarkClustering &Clustering,
+    const double AnalysisInconsistencyEpsilonSquared_) const {
+  assert(!Clustering.getPoints().empty());
+  const InstructionBenchmark::ModeE Mode = Clustering.getPoints()[0].Mode;
+
+  if (!Centroid.validate(Mode))
+    return false;
+
+  const std::vector<BenchmarkMeasure> ClusterCenterPoint =
+      Centroid.getAsPoint();
+
+  const std::vector<BenchmarkMeasure> SchedClassPoint =
+      getSchedClassPoint(Mode, STI, RSC, Centroid.getStats());
+  if (SchedClassPoint.empty())
+    return false; // In Uops mode validate() may not be enough.
+
+  assert(ClusterCenterPoint.size() == SchedClassPoint.size() &&
+         "Expected measured/sched data dimensions to match.");
+
   return Clustering.isNeighbour(ClusterCenterPoint, SchedClassPoint,
                                 AnalysisInconsistencyEpsilonSquared_);
 }
