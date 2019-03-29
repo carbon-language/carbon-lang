@@ -206,6 +206,13 @@ static bool isSplat(ArrayRef<Value *> VL) {
   return true;
 }
 
+/// \returns True if \p I is commutative, handles CmpInst as well as Instruction.
+static bool isCommutative(Instruction *I) {
+  if (auto *IC = dyn_cast<CmpInst>(I))
+    return IC->isCommutative();
+  return I->isCommutative();
+}
+
 /// Checks if the vector of instructions can be represented as a shuffle, like:
 /// %x0 = extractelement <4 x i8> %x, i32 0
 /// %x3 = extractelement <4 x i8> %x, i32 3
@@ -1854,16 +1861,23 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth,
       newTreeEntry(VL, true, UserTreeIdx, ReuseShuffleIndicies);
       LLVM_DEBUG(dbgs() << "SLP: added a vector of compares.\n");
 
-      // Collect operands - commute if it uses the swapped predicate.
       ValueList Left, Right;
-      for (Value *V : VL) {
-        auto *Cmp = cast<CmpInst>(V);
-        Value *LHS = Cmp->getOperand(0);
-        Value *RHS = Cmp->getOperand(1);
-        if (Cmp->getPredicate() != P0)
-          std::swap(LHS, RHS);
-        Left.push_back(LHS);
-        Right.push_back(RHS);
+      if (cast<CmpInst>(VL0)->isCommutative()) {
+        // Commutative predicate - collect + sort operands of the instructions
+        // so that each side is more likely to have the same opcode.
+        assert(P0 == SwapP0 && "Commutative Predicate mismatch");
+        reorderInputsAccordingToOpcode(S, VL, Left, Right);
+      } else {
+        // Collect operands - commute if it uses the swapped predicate.
+        for (Value *V : VL) {
+          auto *Cmp = cast<CmpInst>(V);
+          Value *LHS = Cmp->getOperand(0);
+          Value *RHS = Cmp->getOperand(1);
+          if (Cmp->getPredicate() != P0)
+            std::swap(LHS, RHS);
+          Left.push_back(LHS);
+          Right.push_back(RHS);
+        }
       }
 
       UserTreeIdx.EdgeIdx = 0;
@@ -2884,7 +2898,7 @@ void BoUpSLP::reorderInputsAccordingToOpcode(const InstructionsState &S,
     Instruction *I = cast<Instruction>(VL[i]);
     // Commute to favor either a splat or maximizing having the same opcodes on
     // one side.
-    if (I->isCommutative() &&
+    if (isCommutative(I) &&
         shouldReorderOperands(i, Left, Right, AllSameOpcodeLeft,
                               AllSameOpcodeRight, SplatLeft, SplatRight))
       std::swap(Left[i], Right[i]);
@@ -2925,11 +2939,11 @@ void BoUpSLP::reorderInputsAccordingToOpcode(const InstructionsState &S,
         if (isConsecutiveAccess(L, L1, *DL, *SE)) {
           auto *VL1 = cast<Instruction>(VL[j]);
           auto *VL2 = cast<Instruction>(VL[j + 1]);
-          if (VL2->isCommutative()) {
+          if (isCommutative(VL2)) {
             std::swap(Left[j + 1], Right[j + 1]);
             continue;
           }
-          if (VL1->isCommutative()) {
+          if (isCommutative(VL1)) {
             std::swap(Left[j], Right[j]);
             continue;
           }
@@ -2941,11 +2955,11 @@ void BoUpSLP::reorderInputsAccordingToOpcode(const InstructionsState &S,
         if (isConsecutiveAccess(L, L1, *DL, *SE)) {
           auto *VL1 = cast<Instruction>(VL[j]);
           auto *VL2 = cast<Instruction>(VL[j + 1]);
-          if (VL2->isCommutative()) {
+          if (isCommutative(VL2)) {
             std::swap(Left[j + 1], Right[j + 1]);
             continue;
           }
-          if (VL1->isCommutative()) {
+          if (isCommutative(VL1)) {
             std::swap(Left[j], Right[j]);
             continue;
           }
