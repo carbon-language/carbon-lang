@@ -204,7 +204,9 @@ void LinkerDriver::addArchiveBuffer(MemoryBufferRef MB, StringRef SymName,
                                     StringRef ParentName) {
   file_magic Magic = identify_magic(MB.getBuffer());
   if (Magic == file_magic::coff_import_library) {
-    Symtab->addFile(make<ImportFile>(MB));
+    InputFile *Imp = make<ImportFile>(MB);
+    Imp->ParentName = ParentName;
+    Symtab->addFile(Imp);
     return;
   }
 
