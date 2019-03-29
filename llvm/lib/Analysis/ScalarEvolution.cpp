@@ -3531,7 +3531,8 @@ ScalarEvolution::findExistingSCEVInCache(int SCEVType,
   ID.AddInteger(SCEVType);
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)
     ID.AddPointer(Ops[i]);
-  return {UniqueSCEVs.FindNodeOrInsertPos(ID, IP), std::move(ID), IP};
+  return std::tuple<const SCEV *, FoldingSetNodeID, void *>(
+      UniqueSCEVs.FindNodeOrInsertPos(ID, IP), std::move(ID), IP);
 }
 
 const SCEV *
