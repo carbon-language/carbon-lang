@@ -67,12 +67,6 @@ private:
     // Return the cluster centroid.
     const SchedClassClusterCentroid &getCentroid() const { return Centroid; }
 
-    std::vector<BenchmarkMeasure>
-    getSchedClassPoint(InstructionBenchmark::ModeE Mode,
-                       const llvm::MCSubtargetInfo &STI,
-                       const ResolvedSchedClass &SC,
-                       ArrayRef<PerInstructionStats> Representative) const;
-
     // Returns true if the cluster representative measurements match that of SC.
     bool
     measurementsMatch(const llvm::MCSubtargetInfo &STI,

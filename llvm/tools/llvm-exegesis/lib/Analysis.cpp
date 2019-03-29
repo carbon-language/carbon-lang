@@ -348,84 +348,6 @@ void Analysis::SchedClassCluster::addPoint(
   Centroid.addPoint(Point.Measurements);
 }
 
-// Returns a ProxResIdx by id or name.
-static unsigned findProcResIdx(const llvm::MCSubtargetInfo &STI,
-                               const llvm::StringRef NameOrId) {
-  // Interpret the key as an ProcResIdx.
-  unsigned ProcResIdx = 0;
-  if (llvm::to_integer(NameOrId, ProcResIdx, 10))
-    return ProcResIdx;
-  // Interpret the key as a ProcRes name.
-  const auto &SchedModel = STI.getSchedModel();
-  for (int I = 0, E = SchedModel.getNumProcResourceKinds(); I < E; ++I) {
-    if (NameOrId == SchedModel.getProcResource(I)->Name)
-      return I;
-  }
-  return 0;
-}
-
-std::vector<BenchmarkMeasure> Analysis::SchedClassCluster::getSchedClassPoint(
-    InstructionBenchmark::ModeE Mode, const llvm::MCSubtargetInfo &STI,
-    const ResolvedSchedClass &RSC,
-    ArrayRef<PerInstructionStats> Representative) const {
-  const size_t NumMeasurements = Representative.size();
-
-  std::vector<BenchmarkMeasure> SchedClassPoint(NumMeasurements);
-
-  if (Mode == InstructionBenchmark::Latency) {
-    assert(NumMeasurements == 1 && "Latency is a single measure.");
-    BenchmarkMeasure &LatencyMeasure = SchedClassPoint[0];
-
-    // Find the latency.
-    LatencyMeasure.PerInstructionValue = 0.0;
-
-    for (unsigned I = 0; I < RSC.SCDesc->NumWriteLatencyEntries; ++I) {
-      const llvm::MCWriteLatencyEntry *const WLE =
-          STI.getWriteLatencyEntry(RSC.SCDesc, I);
-      LatencyMeasure.PerInstructionValue =
-          std::max<double>(LatencyMeasure.PerInstructionValue, WLE->Cycles);
-    }
-  } else if (Mode == InstructionBenchmark::Uops) {
-    for (const auto &I : llvm::zip(SchedClassPoint, Representative)) {
-      BenchmarkMeasure &Measure = std::get<0>(I);
-      const PerInstructionStats &Stats = std::get<1>(I);
-
-      StringRef Key = Stats.key();
-      uint16_t ProcResIdx = findProcResIdx(STI, Key);
-      if (ProcResIdx > 0) {
-        // Find the pressure on ProcResIdx `Key`.
-        const auto ProcResPressureIt =
-            std::find_if(RSC.IdealizedProcResPressure.begin(),
-                         RSC.IdealizedProcResPressure.end(),
-                         [ProcResIdx](const std::pair<uint16_t, float> &WPR) {
-                           return WPR.first == ProcResIdx;
-                         });
-        Measure.PerInstructionValue =
-            ProcResPressureIt == RSC.IdealizedProcResPressure.end()
-                ? 0.0
-                : ProcResPressureIt->second;
-      } else if (Key == "NumMicroOps") {
-        Measure.PerInstructionValue = RSC.SCDesc->NumMicroOps;
-      } else {
-        llvm::errs() << "expected `key` to be either a ProcResIdx or a ProcRes "
-                        "name, got "
-                     << Key << "\n";
-        return {};
-      }
-    }
-  } else if (Mode == InstructionBenchmark::InverseThroughput) {
-    assert(NumMeasurements == 1 && "Inverse Throughput is a single measure.");
-    BenchmarkMeasure &RThroughputMeasure = SchedClassPoint[0];
-
-    RThroughputMeasure.PerInstructionValue =
-        MCSchedModel::getReciprocalThroughput(STI, *RSC.SCDesc);
-  } else {
-    llvm_unreachable("unimplemented measurement matching mode");
-  }
-
-  return SchedClassPoint;
-}
-
 bool Analysis::SchedClassCluster::measurementsMatch(
     const llvm::MCSubtargetInfo &STI, const ResolvedSchedClass &RSC,
     const InstructionBenchmarkClustering &Clustering,
@@ -440,7 +362,7 @@ bool Analysis::SchedClassCluster::measurementsMatch(
       Centroid.getAsPoint();
 
   const std::vector<BenchmarkMeasure> SchedClassPoint =
-      getSchedClassPoint(Mode, STI, RSC, Centroid.getStats());
+      RSC.getAsPoint(Mode, STI, Centroid.getStats());
   if (SchedClassPoint.empty())
     return false; // In Uops mode validate() may not be enough.
 

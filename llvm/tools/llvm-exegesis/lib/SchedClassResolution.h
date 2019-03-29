@@ -7,13 +7,14 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// Analysis output for benchmark results.
+/// Resolution of MCInst sched class into expanded form for further analysis.
 ///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_TOOLS_LLVM_EXEGESIS_SCHEDCLASSRESOLUTION_H
 #define LLVM_TOOLS_LLVM_EXEGESIS_SCHEDCLASSRESOLUTION_H
 
+#include "BenchmarkResult.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
 #include "llvm/MC/MCInstPrinter.h"
@@ -43,6 +44,10 @@ struct ResolvedSchedClass {
   resolveSchedClassId(const llvm::MCSubtargetInfo &SubtargetInfo,
                       const llvm::MCInstrInfo &InstrInfo,
                       const llvm::MCInst &MCI);
+
+  std::vector<BenchmarkMeasure>
+  getAsPoint(InstructionBenchmark::ModeE Mode, const llvm::MCSubtargetInfo &STI,
+             ArrayRef<PerInstructionStats> Representative) const;
 
   const unsigned SchedClassId;
   const llvm::MCSchedClassDesc *const SCDesc;
