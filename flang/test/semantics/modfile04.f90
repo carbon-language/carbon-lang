@@ -38,8 +38,14 @@ end
 
 module m2
 contains
-  type(t) function f3()
+  type(t) function f3(x)
     use m1
+    integer, parameter :: a = 2
+    type t2(b)
+      integer, kind :: b = a
+      integer :: y
+    end type
+    type(t2) :: x
   end
   function f4() result(x)
     implicit complex(x)
@@ -67,8 +73,14 @@ end
 !Expect: m2.mod
 !module m2
 !contains
-!function f3()
-!type(t)::f3
+!function f3(x)
+! use m1,only:t
+! type(t)::f3
+! type::t2(b)
+!  integer(4),kind::b=2_4
+!  integer(4)::y
+! end type
+! type(t2)::x
 !end
 !function f4() result(x)
 !complex(4)::x

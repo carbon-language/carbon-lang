@@ -29,12 +29,7 @@ end
 !Expect: m.mod
 !module m
 !  logical(4)::b(1_8:4_8,1_8:4_8)
-!  common/cb2/a,b,c
-!  bind(c)::/cb2/
-!  common//t,w,u,v
 !  real(4)::t
-!  common/cb/x,y,z
-!  bind(c, name=1_"CB")::/cb/
 !  real(4)::x(2_8:10_8)
 !  real(4)::a
 !  real(4)::c
@@ -43,6 +38,11 @@ end
 !  complex(4)::w
 !  real(4)::u
 !  real(4)::v
-!  common/b/cb
 !  real(4)::cb
+!  common/cb2/a,b,c
+!  bind(c)::/cb2/
+!  common//t,w,u,v
+!  common/cb/x,y,z
+!  bind(c, name=1_"CB")::/cb/
+!  common/b/cb
 !end

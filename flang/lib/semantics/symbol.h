@@ -151,6 +151,8 @@ public:
   ArraySpec &shape() { return shape_; }
   const ArraySpec &shape() const { return shape_; }
   void set_shape(const ArraySpec &shape);
+  const Symbol *commonBlock() const { return commonBlock_; }    
+  void set_commonBlock(const Symbol &commonBlock) { commonBlock_ = &commonBlock; }
   bool IsArray() const { return !shape_.empty(); }
   bool IsAssumedShape() const {
     return isDummy() && IsArray() && shape_.back().ubound().isDeferred() &&
@@ -172,6 +174,7 @@ public:
 private:
   MaybeExpr init_;
   ArraySpec shape_;
+  const Symbol *commonBlock_{nullptr};  // common block this object is in
   friend std::ostream &operator<<(std::ostream &, const ObjectEntityDetails &);
 };
 

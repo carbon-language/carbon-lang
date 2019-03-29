@@ -3414,11 +3414,12 @@ void DeclarationVisitor::Post(const parser::CommonBlockObject &x) {
   const auto &name{std::get<parser::Name>(x.t)};
   auto &symbol{DeclareObjectEntity(name, Attrs{})};
   ClearArraySpec();
-  if (!symbol.has<ObjectEntityDetails>()) {
+  auto *details{symbol.detailsIf<ObjectEntityDetails>()};
+  if (!details) {
     return;  // error was reported
   }
   commonBlockInfo_.curr->get<CommonBlockDetails>().add_object(symbol);
-  if (!IsExplicit(symbol.get<ObjectEntityDetails>().shape())) {
+  if (!IsExplicit(details->shape())) {
     Say(name,
         "The shape of common block object '%s' must be explicit"_err_en_US);
     return;
@@ -3430,6 +3431,7 @@ void DeclarationVisitor::Post(const parser::CommonBlockObject &x) {
         "Previous occurrence of '%s' in a COMMON block"_en_US);
     return;
   }
+  details->set_commonBlock(*commonBlockInfo_.curr);
 }
 
 bool DeclarationVisitor::Pre(const parser::SaveStmt &x) {
