@@ -1837,10 +1837,11 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth,
     case Instruction::FCmp: {
       // Check that all of the compares have the same predicate.
       CmpInst::Predicate P0 = cast<CmpInst>(VL0)->getPredicate();
+      CmpInst::Predicate SwapP0 = CmpInst::getSwappedPredicate(P0);
       Type *ComparedTy = VL0->getOperand(0)->getType();
       for (unsigned i = 1, e = VL.size(); i < e; ++i) {
         CmpInst *Cmp = cast<CmpInst>(VL[i]);
-        if (Cmp->getPredicate() != P0 ||
+        if ((Cmp->getPredicate() != P0 && Cmp->getPredicate() != SwapP0) ||
             Cmp->getOperand(0)->getType() != ComparedTy) {
           BS.cancelScheduling(VL, VL0);
           newTreeEntry(VL, false, UserTreeIdx, ReuseShuffleIndicies);
@@ -1853,15 +1854,22 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth,
       newTreeEntry(VL, true, UserTreeIdx, ReuseShuffleIndicies);
       LLVM_DEBUG(dbgs() << "SLP: added a vector of compares.\n");
 
-      for (unsigned i = 0, e = VL0->getNumOperands(); i < e; ++i) {
-        ValueList Operands;
-        // Prepare the operand vector.
-        for (Value *j : VL)
-          Operands.push_back(cast<Instruction>(j)->getOperand(i));
-
-        UserTreeIdx.EdgeIdx = i;
-        buildTree_rec(Operands, Depth + 1, UserTreeIdx);
+      // Collect operands - commute if it uses the swapped predicate.
+      ValueList Left, Right;
+      for (Value *V : VL) {
+        auto *Cmp = cast<CmpInst>(V);
+        Value *LHS = Cmp->getOperand(0);
+        Value *RHS = Cmp->getOperand(1);
+        if (Cmp->getPredicate() != P0)
+          std::swap(LHS, RHS);
+        Left.push_back(LHS);
+        Right.push_back(RHS);
       }
+
+      UserTreeIdx.EdgeIdx = 0;
+      buildTree_rec(Left, Depth + 1, UserTreeIdx);
+      UserTreeIdx.EdgeIdx = 1;
+      buildTree_rec(Right, Depth + 1, UserTreeIdx);
       return;
     }
     case Instruction::Select:
