@@ -384,6 +384,10 @@ namespace {
     SDValue replaceStoreOfFPConstant(StoreSDNode *ST);
 
     SDValue visitSTORE(SDNode *N);
+
+    SDValue ImproveLifetimeNodeChain(SDNode *N);
+
+    SDValue visitLIFETIME_START(SDNode *N);
     SDValue visitLIFETIME_END(SDNode *N);
     SDValue visitINSERT_VECTOR_ELT(SDNode *N);
     SDValue visitEXTRACT_VECTOR_ELT(SDNode *N);
@@ -1604,6 +1608,7 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::MLOAD:              return visitMLOAD(N);
   case ISD::MSCATTER:           return visitMSCATTER(N);
   case ISD::MSTORE:             return visitMSTORE(N);
+  case ISD::LIFETIME_START:     return visitLIFETIME_START(N);
   case ISD::LIFETIME_END:       return visitLIFETIME_END(N);
   case ISD::FP_TO_FP16:         return visitFP_TO_FP16(N);
   case ISD::FP16_TO_FP:         return visitFP16_TO_FP(N);
@@ -15654,7 +15659,32 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
   return ReduceLoadOpStoreWidth(N);
 }
 
+SDValue DAGCombiner::ImproveLifetimeNodeChain(SDNode *N) {
+  auto Chain = N->getOperand(0);
+  auto NewChain = FindBetterChain(N, Chain);
+  if (NewChain != Chain) {
+    SDNode *N2 = DAG.UpdateNodeOperands(N, NewChain, N->getOperand(1));
+    // Make sure users of new N still depend on Chain
+    auto TF = DAG.getNode(ISD::TokenFactor, SDLoc(N2), MVT::Other, Chain,
+                          SDValue(N2, 0));
+    DAG.ReplaceAllUsesOfValueWith(SDValue(N2, 0), TF);
+    AddToWorklist(DAG.UpdateNodeOperands(TF.getNode(), Chain, SDValue(N2, 0)));
+    AddToWorklist(N2);
+    return SDValue(N, 0);
+  }
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitLIFETIME_START(SDNode *N) {
+  if (SDValue V = ImproveLifetimeNodeChain(N))
+    return V;
+  return SDValue();
+}
+
 SDValue DAGCombiner::visitLIFETIME_END(SDNode *N) {
+  if (SDValue V = ImproveLifetimeNodeChain(N))
+    return V;
+
   const auto *LifetimeEnd = cast<LifetimeSDNode>(N);
   if (!LifetimeEnd->hasOffset())
     return SDValue();
