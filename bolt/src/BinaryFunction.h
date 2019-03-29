@@ -2281,7 +2281,7 @@ public:
   }
 
   /// Return output address ranges for a function.
-  DWARFAddressRangesVector getOutputAddressRanges() const;
+  DebugAddressRangesVector getOutputAddressRanges() const;
 
   /// Given an address corresponding to an instruction in the input binary,
   /// return an address of this instruction in output binary.
@@ -2292,7 +2292,7 @@ public:
 
   /// Take address ranges corresponding to the input binary and translate
   /// them to address ranges in the output binary.
-  DWARFAddressRangesVector translateInputToOutputRanges(
+  DebugAddressRangesVector translateInputToOutputRanges(
       const DWARFAddressRangesVector &InputRanges) const;
 
   /// Similar to translateInputToOutputRanges() but operates on location lists

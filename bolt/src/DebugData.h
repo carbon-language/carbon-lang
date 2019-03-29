@@ -21,6 +21,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <map>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -39,7 +40,26 @@ class BasicBlockTable;
 class BinaryBasicBlock;
 class BinaryFunction;
 
-/// Eeferences a row in a DWARFDebugLine::LineTable by the DWARF
+/// Address range representation. Takes less space than DWARFAddressRange.
+struct DebugAddressRange {
+  uint64_t LowPC{0};
+  uint64_t HighPC{0};
+
+  DebugAddressRange() = default;
+
+  DebugAddressRange(uint64_t LowPC, uint64_t HighPC)
+      : LowPC(LowPC), HighPC(HighPC) {}
+};
+
+static inline bool operator<(const DebugAddressRange &LHS,
+                             const DebugAddressRange &RHS) {
+  return std::tie(LHS.LowPC, LHS.HighPC) < std::tie(RHS.LowPC, RHS.HighPC);
+}
+
+/// DebugAddressRangesVector - represents a set of absolute address ranges.
+using DebugAddressRangesVector = SmallVector<DebugAddressRange, 2>;
+
+/// References a row in a DWARFDebugLine::LineTable by the DWARF
 /// Context index of the DWARF Compile Unit that owns the Line Table and the row
 /// index. This is tied to our IR during disassembly so that we can later update
 /// .debug_line information. RowIndex has a base of 1, which means a RowIndex
@@ -84,14 +104,14 @@ public:
   DebugRangesSectionsWriter(BinaryContext *BC);
 
   /// Add ranges for CU matching \p CUOffset and return offset into section.
-  uint64_t addCURanges(uint64_t CUOffset, DWARFAddressRangesVector &&Ranges);
+  uint64_t addCURanges(uint64_t CUOffset, DebugAddressRangesVector &&Ranges);
 
   /// Add ranges with caching for \p Function.
   uint64_t addRanges(const BinaryFunction *Function,
-                     DWARFAddressRangesVector &&Ranges);
+                     DebugAddressRangesVector &&Ranges);
 
   /// Add ranges and return offset into section.
-  uint64_t addRanges(const DWARFAddressRangesVector &Ranges);
+  uint64_t addRanges(const DebugAddressRangesVector &Ranges);
 
   /// Writes .debug_aranges with the added ranges to the MCObjectWriter.
   void writeArangesSection(MCObjectWriter *Writer) const;
@@ -106,7 +126,7 @@ public:
   uint64_t getEmptyRangesOffset() const { return EmptyRangesOffset; }
 
   /// Map DWARFCompileUnit index to ranges.
-  using CUAddressRangesType = std::map<uint64_t, DWARFAddressRangesVector>;
+  using CUAddressRangesType = std::map<uint64_t, DebugAddressRangesVector>;
 
   /// Return ranges for a given CU.
   const CUAddressRangesType &getCUAddressRanges() const {
@@ -137,7 +157,7 @@ private:
   static constexpr uint64_t EmptyRangesOffset{0};
 
   /// Cached used for de-duplicating entries for the same function.
-  std::map<DWARFAddressRangesVector, uint64_t> CachedRanges;
+  std::map<DebugAddressRangesVector, uint64_t> CachedRanges;
 };
 
 /// Serializes the .debug_loc DWARF section with LocationLists.
@@ -219,13 +239,25 @@ class DebugAbbrevPatcher : public BinaryPatcher {
 private:
   /// Patch of changing one attribute to another.
   struct AbbrevAttrPatch {
-    uint32_t Code;    // Code of abbreviation to be modified.
+    const DWARFUnit *Unit;    // Containing DWARF unit
+    uint32_t Code;            // Code of abbreviation to be modified.
     dwarf::Attribute Attr;    // ID of attribute to be replaced.
-    uint8_t NewAttr;  // ID of the new attribute.
-    uint8_t NewForm;  // Form of the new attribute.
+    uint8_t NewAttr;          // ID of the new attribute.
+    uint8_t NewForm;          // Form of the new attribute.
+
+    bool operator==(const AbbrevAttrPatch &RHS) const {
+      return Unit == RHS.Unit && Code == RHS.Code && Attr == RHS.Attr;
+    }
   };
 
-  std::map<const DWARFUnit *, std::vector<AbbrevAttrPatch>> Patches;
+  struct AbbrevHash {
+    std::size_t operator()(const AbbrevAttrPatch &P) const {
+      return std::hash<uint64_t>()(
+          ((uint64_t)P.Unit->getOffset() << 32) + (P.Code << 16) + P.Attr);
+    }
+  };
+
+  std::unordered_set<AbbrevAttrPatch, AbbrevHash> AbbrevPatches;
 
 public:
   ~DebugAbbrevPatcher() { }

@@ -40,7 +40,7 @@ namespace {
 // Returns the number of written bytes.
 uint64_t writeAddressRanges(
     MCObjectWriter *Writer,
-    const DWARFAddressRangesVector &AddressRanges,
+    const DebugAddressRangesVector &AddressRanges,
     const bool WriteRelativeRanges = false) {
   for (auto &Range : AddressRanges) {
     Writer->writeLE64(Range.LowPC);
@@ -62,12 +62,12 @@ DebugRangesSectionsWriter::DebugRangesSectionsWriter(BinaryContext *BC) {
     std::unique_ptr<MCObjectWriter>(BC->createObjectWriter(*RangesStream));
 
   // Add an empty range as the first entry;
-  SectionOffset += writeAddressRanges(Writer.get(), DWARFAddressRangesVector{});
+  SectionOffset += writeAddressRanges(Writer.get(), DebugAddressRangesVector{});
 }
 
 uint64_t DebugRangesSectionsWriter::addCURanges(
     uint64_t CUOffset,
-    DWARFAddressRangesVector &&Ranges) {
+    DebugAddressRangesVector &&Ranges) {
   const auto RangesOffset = addRanges(Ranges);
   CUAddressRanges.emplace(CUOffset, std::move(Ranges));
 
@@ -76,7 +76,7 @@ uint64_t DebugRangesSectionsWriter::addCURanges(
 
 uint64_t
 DebugRangesSectionsWriter::addRanges(const BinaryFunction *Function,
-                                     DWARFAddressRangesVector &&Ranges) {
+                                     DebugAddressRangesVector &&Ranges) {
   if (Ranges.empty())
     return getEmptyRangesOffset();
 
@@ -98,7 +98,7 @@ DebugRangesSectionsWriter::addRanges(const BinaryFunction *Function,
 }
 
 uint64_t
-DebugRangesSectionsWriter::addRanges(const DWARFAddressRangesVector &Ranges) {
+DebugRangesSectionsWriter::addRanges(const DebugAddressRangesVector &Ranges) {
   if (Ranges.empty())
     return getEmptyRangesOffset();
 
@@ -235,36 +235,30 @@ void DebugAbbrevPatcher::addAttributePatch(const DWARFUnit *Unit,
                                            uint8_t NewAttrTag,
                                            uint8_t NewAttrForm) {
   assert(Unit && "No compile unit specified.");
-  Patches[Unit].emplace_back(
-      AbbrevAttrPatch{AbbrevCode, AttrTag, NewAttrTag, NewAttrForm});
+  AbbrevPatches.emplace(
+      AbbrevAttrPatch{Unit, AbbrevCode, AttrTag, NewAttrTag, NewAttrForm});
 }
 
 void DebugAbbrevPatcher::patchBinary(std::string &Contents) {
   SimpleBinaryPatcher Patcher;
 
-  for (const auto &UnitPatchesPair : Patches) {
-    const auto *Unit = UnitPatchesPair.first;
-    const auto *UnitAbbreviations = Unit->getAbbreviations();
+  for (const auto &Patch : AbbrevPatches) {
+    const auto *UnitAbbreviations = Patch.Unit->getAbbreviations();
     assert(UnitAbbreviations &&
            "Compile unit doesn't have associated abbreviations.");
-    const auto &UnitPatches = UnitPatchesPair.second;
-    for (const auto &AttrPatch : UnitPatches) {
-      const auto *AbbreviationDeclaration =
-        UnitAbbreviations->getAbbreviationDeclaration(AttrPatch.Code);
-      assert(AbbreviationDeclaration && "No abbreviation with given code.");
-      const auto Attribute =
-          AbbreviationDeclaration->findAttribute(AttrPatch.Attr);
+    const auto *AbbreviationDeclaration =
+      UnitAbbreviations->getAbbreviationDeclaration(Patch.Code);
+    assert(AbbreviationDeclaration && "No abbreviation with given code.");
+    const auto Attribute =
+        AbbreviationDeclaration->findAttribute(Patch.Attr);
 
-      assert(Attribute && "Specified attribute doesn't occur in abbreviation.");
-      // Because we're only handling standard values (i.e. no DW_FORM_GNU_* or
-      // DW_AT_APPLE_*), they are all small (< 128) and encoded in a single
-      // byte in ULEB128, otherwise it'll be more tricky as we may need to
-      // grow or shrink the section.
-      Patcher.addBytePatch(Attribute->AttrOffset,
-          AttrPatch.NewAttr);
-      Patcher.addBytePatch(Attribute->FormOffset,
-          AttrPatch.NewForm);
-    }
+    assert(Attribute && "Specified attribute doesn't occur in abbreviation.");
+    // Because we're only handling standard values (i.e. no DW_FORM_GNU_* or
+    // DW_AT_APPLE_*), they are all small (< 128) and encoded in a single
+    // byte in ULEB128, otherwise it'll be more tricky as we may need to
+    // grow or shrink the section.
+    Patcher.addBytePatch(Attribute->AttrOffset, Patch.NewAttr);
+    Patcher.addBytePatch(Attribute->FormOffset, Patch.NewForm);
   }
   Patcher.patchBinary(Contents);
 }

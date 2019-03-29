@@ -3900,8 +3900,8 @@ void BinaryFunction::calculateLoopInfo() {
   }
 }
 
-DWARFAddressRangesVector BinaryFunction::getOutputAddressRanges() const {
-  DWARFAddressRangesVector OutputRanges;
+DebugAddressRangesVector BinaryFunction::getOutputAddressRanges() const {
+  DebugAddressRangesVector OutputRanges;
 
   OutputRanges.emplace_back(getOutputAddress(),
                             getOutputAddress() + getOutputSize());
@@ -3938,16 +3938,24 @@ uint64_t BinaryFunction::translateInputToOutputAddress(uint64_t Address) const {
                   BB->getOutputAddressRange().second);
 }
 
-DWARFAddressRangesVector BinaryFunction::translateInputToOutputRanges(
+DebugAddressRangesVector BinaryFunction::translateInputToOutputRanges(
     const DWARFAddressRangesVector &InputRanges) const {
+  DebugAddressRangesVector OutputRanges;
+
   // If the function hasn't changed return the same ranges.
-  if (!isEmitted() && !BC.HasRelocations)
-    return InputRanges;
+  if (!isEmitted() && !BC.HasRelocations) {
+    OutputRanges.resize(InputRanges.size());
+    std::transform(InputRanges.begin(), InputRanges.end(),
+                   OutputRanges.begin(),
+                   [](const DWARFAddressRange &Range) {
+                     return DebugAddressRange(Range.LowPC, Range.HighPC);
+                   });
+    return OutputRanges;
+  }
 
   // Even though we will merge ranges in a post-processing pass, we attempt to
   // merge them in a main processing loop as it improves the processing time.
   uint64_t PrevEndAddress = 0;
-  DWARFAddressRangesVector OutputRanges;
   for (const auto &Range : InputRanges) {
     if (!containsAddress(Range.LowPC)) {
       DEBUG(dbgs() << "BOLT-DEBUG: invalid debug address range detected for "
@@ -3998,7 +4006,7 @@ DWARFAddressRangesVector BinaryFunction::translateInputToOutputRanges(
 
   // Post-processing pass to sort and merge ranges.
   std::sort(OutputRanges.begin(), OutputRanges.end());
-  DWARFAddressRangesVector MergedRanges;
+  DebugAddressRangesVector MergedRanges;
   PrevEndAddress = 0;
   for(const auto &Range : OutputRanges) {
     if (Range.LowPC <= PrevEndAddress) {

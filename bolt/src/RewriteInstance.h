@@ -183,7 +183,7 @@ public:
   const BinaryFunction *getBinaryFunctionAtAddress(uint64_t Address) const;
 
   /// Produce output address ranges based on input ranges for some module.
-  DWARFAddressRangesVector translateModuleAddressRanges(
+  DebugAddressRangesVector translateModuleAddressRanges(
       const DWARFAddressRangesVector &InputRanges) const;
 
 private:
@@ -287,7 +287,7 @@ private:
 
   /// Patches the binary for DWARF address ranges (e.g. in functions and lexical
   /// blocks) to be updated.
-  void updateDWARFAddressRanges();
+  void updateDebugAddressRanges();
 
   /// Rewrite .gdb_index section if present.
   void updateGdbIndexSection();

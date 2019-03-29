@@ -4721,9 +4721,9 @@ RewriteInstance::getBinaryFunctionAtAddress(uint64_t Address) const {
   return nullptr;
 }
 
-DWARFAddressRangesVector RewriteInstance::translateModuleAddressRanges(
+DebugAddressRangesVector RewriteInstance::translateModuleAddressRanges(
       const DWARFAddressRangesVector &InputRanges) const {
-  DWARFAddressRangesVector OutputRanges;
+  DebugAddressRangesVector OutputRanges;
 
   for (const auto Range : InputRanges) {
     auto BFI = BinaryFunctions.lower_bound(Range.LowPC);
