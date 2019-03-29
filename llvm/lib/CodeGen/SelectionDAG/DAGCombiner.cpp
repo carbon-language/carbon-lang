@@ -17976,6 +17976,34 @@ static SDValue replaceShuffleOfInsert(ShuffleVectorSDNode *Shuf,
                      Op1, Op0.getOperand(1), NewInsIndex);
 }
 
+/// If we have a unary shuffle of a shuffle, see if it can be folded away
+/// completely. This has the potential to lose undef knowledge because the first
+/// shuffle may not have an undef mask element where the second one does. So
+/// only call this after doing simplifications based on demanded elements.
+static SDValue simplifyShuffleOfShuffle(ShuffleVectorSDNode *Shuf) {
+  // shuf (shuf0 X, Y, Mask0), undef, Mask
+  auto *Shuf0 = dyn_cast<ShuffleVectorSDNode>(Shuf->getOperand(0));
+  if (!Shuf0 || !Shuf->getOperand(1).isUndef())
+    return SDValue();
+
+  ArrayRef<int> Mask = Shuf->getMask();
+  ArrayRef<int> Mask0 = Shuf0->getMask();
+  for (int i = 0, e = (int)Mask.size(); i != e; ++i) {
+    // Ignore undef elements.
+    if (Mask[i] == -1)
+      continue;
+    assert(Mask[i] >= 0 && Mask[i] < e && "Unexpected shuffle mask value");
+
+    // Is the element of the shuffle operand chosen by this shuffle the same as
+    // the element chosen by the shuffle operand itself?
+    if (Mask0[Mask[i]] != Mask0[i])
+      return SDValue();
+  }
+  // Every element of this shuffle is identical to the result of the previous
+  // shuffle, so we can replace this value.
+  return Shuf->getOperand(0);
+}
+
 SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   EVT VT = N->getValueType(0);
   unsigned NumElts = VT.getVectorNumElements();
@@ -18085,6 +18113,11 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   // Simplify source operands based on shuffle mask.
   if (SimplifyDemandedVectorElts(SDValue(N, 0)))
     return SDValue(N, 0);
+
+  // This is intentionally placed after demanded elements simplification because
+  // it could eliminate knowledge of undef elements created by this shuffle.
+  if (SDValue ShufOp = simplifyShuffleOfShuffle(SVN))
+    return ShufOp;
 
   // Match shuffles that can be converted to any_vector_extend_in_reg.
   if (SDValue V = combineShuffleToVectorExtend(SVN, DAG, TLI, LegalOperations))
