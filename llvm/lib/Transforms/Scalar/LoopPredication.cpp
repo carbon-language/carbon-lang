@@ -390,8 +390,6 @@ Value *LoopPredication::expandCheck(SCEVExpander &Expander,
                                     IRBuilder<> &Builder,
                                     ICmpInst::Predicate Pred, const SCEV *LHS,
                                     const SCEV *RHS) {
-  // TODO: we can check isLoopEntryGuardedByCond before emitting the check
-
   Type *Ty = LHS->getType();
   assert(Ty == RHS->getType() && "expandCheck operands have different types?");
 
