@@ -543,8 +543,11 @@ template <class AliasAnalysisType> class ClobberWalker {
   walkToPhiOrClobber(DefPath &Desc, const MemoryAccess *StopAt = nullptr,
                      const MemoryAccess *SkipStopAt = nullptr) const {
     assert(!isa<MemoryUse>(Desc.Last) && "Uses don't exist in my world");
-    assert(UpwardWalkLimit && *UpwardWalkLimit > 0 &&
-           "Need a positive walk limit");
+    assert(UpwardWalkLimit && "Need a valid walk limit");
+    // This will not do any alias() calls. It returns in the first iteration in
+    // the loop below.
+    if (*UpwardWalkLimit == 0)
+      (*UpwardWalkLimit)++;
 
     for (MemoryAccess *Current : def_chain(Desc.Last)) {
       Desc.Last = Current;
