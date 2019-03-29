@@ -14514,9 +14514,9 @@ SDValue DAGCombiner::getMergeStoreChains(SmallVectorImpl<MemOpLink> &StoreNodes,
     Visited.insert(StoreNodes[i].MemNode);
   }
 
-  // don't include nodes that are children
+  // don't include nodes that are children or repeated nodes.
   for (unsigned i = 0; i < NumStores; ++i) {
-    if (Visited.count(StoreNodes[i].MemNode->getChain().getNode()) == 0)
+    if (Visited.insert(StoreNodes[i].MemNode->getChain().getNode()).second)
       Chains.push_back(StoreNodes[i].MemNode->getChain());
   }
 
