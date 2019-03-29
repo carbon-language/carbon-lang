@@ -137,6 +137,10 @@ namespace {
     /// them) when they are deleted from the underlying DAG. It relies on
     /// stable indices of nodes within the worklist.
     DenseMap<SDNode *, unsigned> WorklistMap;
+    /// This records all nodes attempted to add to the worklist since we
+    /// considered a new worklist entry. As we keep do not add duplicate nodes
+    /// in the worklist, this is different from the tail of the worklist.
+    SmallSetVector<SDNode *, 32> PruningList;
 
     /// Set of nodes which have been combined (at least once).
     ///
@@ -152,6 +156,37 @@ namespace {
     void AddUsersToWorklist(SDNode *N) {
       for (SDNode *Node : N->uses())
         AddToWorklist(Node);
+    }
+
+    // Prune potentially dangling nodes. This is called after
+    // any visit to a node, but should also be called during a visit after any
+    // failed combine which may have created a DAG node.
+    void clearAddedDanglingWorklistEntries() {
+      // Check any nodes added to the worklist to see if they are prunable.
+      while (!PruningList.empty()) {
+        auto *N = PruningList.pop_back_val();
+        if (N->use_empty())
+          recursivelyDeleteUnusedNodes(N);
+      }
+    }
+
+    SDNode *getNextWorklistEntry() {
+      // Before we do any work, remove nodes that are not in use.
+      clearAddedDanglingWorklistEntries();
+      SDNode *N = nullptr;
+      // The Worklist holds the SDNodes in order, but it may contain null
+      // entries.
+      while (!N && !Worklist.empty()) {
+        N = Worklist.pop_back_val();
+      }
+
+      if (N) {
+        bool GoodWorklistEntry = WorklistMap.erase(N);
+        (void)GoodWorklistEntry;
+        assert(GoodWorklistEntry &&
+               "Found a worklist entry without a corresponding map entry!");
+      }
+      return N;
     }
 
     /// Call the node-specific routine that folds each particular type of node.
@@ -171,6 +206,11 @@ namespace {
           MaximumLegalStoreInBits = VT.getSizeInBits();
     }
 
+    void ConsiderForPruning(SDNode *N) {
+      // Mark this for potential pruning.
+      PruningList.insert(N);
+    }
+
     /// Add to the worklist making sure its instance is at the back (next to be
     /// processed.)
     void AddToWorklist(SDNode *N) {
@@ -182,6 +222,8 @@ namespace {
       if (N->getOpcode() == ISD::HANDLENODE)
         return;
 
+      ConsiderForPruning(N);
+
       if (WorklistMap.insert(std::make_pair(N, Worklist.size())).second)
         Worklist.push_back(N);
     }
@@ -189,6 +231,7 @@ namespace {
     /// Remove all instances of N from the worklist.
     void removeFromWorklist(SDNode *N) {
       CombinedNodes.erase(N);
+      PruningList.remove(N);
 
       auto It = WorklistMap.find(N);
       if (It == WorklistMap.end())
@@ -654,8 +697,9 @@ public:
   explicit WorklistInserter(DAGCombiner &dc)
       : SelectionDAG::DAGUpdateListener(dc.getDAG()), DC(dc) {}
 
-  // This should eventually be pruning.
-  void NodeInserted(SDNode *N) override { }
+  // FIXME: Ideally we could add N to the worklist, but this causes exponential
+  //        compile time costs in large DAGs, e.g. Halide.
+  void NodeInserted(SDNode *N) override { DC.ConsiderForPruning(N); }
 };
 
 } // end anonymous namespace
@@ -1421,19 +1465,8 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
   // changes of the root.
   HandleSDNode Dummy(DAG.getRoot());
 
-  // While the worklist isn't empty, find a node and try to combine it.
-  while (!WorklistMap.empty()) {
-    SDNode *N;
-    // The Worklist holds the SDNodes in order, but it may contain null entries.
-    do {
-      N = Worklist.pop_back_val();
-    } while (!N);
-
-    bool GoodWorklistEntry = WorklistMap.erase(N);
-    (void)GoodWorklistEntry;
-    assert(GoodWorklistEntry &&
-           "Found a worklist entry without a corresponding map entry!");
-
+  // While we have a valid worklist entry node, try to combine it.
+  while (SDNode *N = getNextWorklistEntry()) {
     // If N has no uses, it is dead.  Make sure to revisit all N's operands once
     // N is deleted from the DAG, since they too may now be dead or may have a
     // reduced number of uses, allowing other xforms.
