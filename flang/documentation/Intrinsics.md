@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 -->
 
 # A categorization of standard (2018) and extended Fortran intrinsic procedures
@@ -8,6 +8,8 @@ This note attempts to group the intrinsic procedures of Fortran into categories
 of functions or subroutines with similar interfaces as an aid to
 comprehension beyond that which might be gained from the standard's
 alphabetical list.
+
+A brief status of intrinsic procedure support in f18 is also given at the end.
 
 Few procedures are actually described here apart from their interfaces; see the
 Fortran 2018 standard (section 16) for the complete story.
@@ -683,3 +685,103 @@ CACHESIZE, EOF, FP_CLASS, INT_PTR_KIND, ISNAN, LOC
 MALLOC
 ```
 
+# Intrinsic Procedure Support in f18
+This section gives an overview of the support inside f18 libraries for the
+intrinsic procedures listed above.
+It may be outdated, refer to f18 code base for the actual support status.
+
+## Semantic Analysis
+F18 semantic expression analysis phase detects intrinsic procedure references,
+validates the argument types and deduces the return types.
+This phase currently supports all the intrinsic procedures listed above but the ones in the table below.
+
+| Intrinsic Category | Intrinsic Procedures Lacking Support |
+| --- | --- |
+| Coarray intrinsic functions | LCOBOUND, UCOBOUND, FAILED_IMAGES, GET_TEAM, IMAGE_INDEX, NUM_IMAGES, STOPPED_IMAGES, TEAM_NUMBER, THIS_IMAGE, COSHAPE |
+| Object characteristic inquiry functions | ALLOCATED, ASSOCIATED, EXTENDS_TYPE_OF, IS_CONTIGUOUS, PRESENT, RANK, SAME_TYPE, STORAGE_SIZE |
+| Type inquiry intrinsic functions | BIT_SIZE, DIGITS, EPSILON, HUGE, KIND, MAXEXPONENT, MINEXPONENT, NEW_LINE, PRECISION, RADIX, RANGE, TINY|
+| Non-standard intrinsic functions | AND, OR, XOR, LSHIFT, RSHIFT, SHIFT, ZEXT, IZEXT, COSD, SIND, TAND, ACOSD, ASIND, ATAND, ATAN2D, COMPL, DCMPLX, EQV, NEQV, INT8, JINT, JNINT, KNINT, LOC, QCMPLX, DREAL, DFLOAT, QEXT, QFLOAT, QREAL, DNUM, NUM, JNUM, KNUM, QNUM, RNUM, RAN, RANF, ILEN, SIZEOF, MCLOCK, SECNDS, COTAN, IBCHNG, ISHA, ISHC, ISHL, IXOR, IARG, IARGC, NARGS, NUMARG, BADDRESS, IADDR, CACHESIZE, EOF, FP_CLASS, INT_PTR_KIND, ISNAN, MALLOC |
+| Intrinsic subroutines |MVBITS (elemental), CPU_TIME, DATE_AND_TIME, EVENT_QUERY, EXECUTE_COMMAND_LINE, GET_COMMAND, GET_COMMAND_ARGUMENT, GET_ENVIRONMENT_VARIABLE, MOVE_ALLOC, RANDOM_INIT, RANDOM_NUMBER, RANDOM_SEED, SYSTEM_CLOCK |
+| Atomic intrinsic subroutines | ATOMIC_ADD &al. |
+| Collective intrinsic subroutines | CO_BROADCAST &al. |
+
+
+## Intrinsic Function Folding
+Fortran Constant Expressions can contain references to a certain number of
+intrinsic functions (see Fortran 2018 standard section 10.1.12 for more details).
+Constant Expressions may be used to define kind arguments. Therefore, the semantic
+expression analysis phase must be able to fold references to intrinsic functions
+listed in section 10.1.12.
+
+F18 intrinsic function folding is either performed by implementations directly
+operating on f18 scalar types or by using host runtime functions and
+host hardware types. F18 supports folding elemental intrinsic functions over
+arrays when an implementation is provided for the scalars (regardless of whether
+it is using host hardware types or not).
+The status of intrinsic function folding support is given in the sub-sections below.
+
+### Intrinsic Functions with Host Independent Folding Support
+Implementations using f18 scalar types enables folding intrinsic functions
+on any host and with any possible type kind supported by f18. The intrinsic functions
+listed below are folded using host independent implementations.
+
+| Return Type | Intrinsic Functions with Host Independent Folding Support|
+| --- | --- |
+| INTEGER| ABS(INTEGER(k)), DIM(INTEGER(k), INTEGER(k)), DSHIFTL, DSHIFTR, IAND, IBCLR, IBSET, IEOR, INT, IOR, ISHFT, KIND, LEN, LEADZ, MASKL, MASKR, MERGE_BITS, POPCNT, POPPAR, SHIFTA, SHIFTL, SHIFTR, TRAILZ |
+| REAL | ABS(REAL(k)), ABS(COMPLEX(k)), AIMAG, AINT, DPROD, REAL |
+| COMPLEX | CMPLX, CONJG |
+| LOGICAL | BGE, BGT, BLE, BLT |
+
+### Intrinsic Functions with Host Dependent Folding Support
+Implementations using the host runtime may not be available for all f18 supported
+type kind depending on the host hardware types and the libraries available on the host.
+The actual support on a host depends on what the host hardware types are.
+The list below gives the functions that are folded using host runtime and the related C/C++ types.
+F18 automatically detects if these types match an f18 scalar type. If so,
+folding of the intrinsic functions will be possible for the related f18 scalar type,
+else an error message will be produced by f18 when attempting to fold related intrinsic functions.
+
+| C/C++ Host Type | Intrinsic Functions with Host Standard C++ Library Based Folding Support |
+| --- | --- |
+| float, double and long double | ACOS, ACOSH, ASINH, ATAN, ATAN2, ATANH, COS, COSH, ERF, ERFC, EXP, GAMMA, HYPOT, LOG, LOG10, LOG_GAMMA, MOD, SIN, SQRT, SINH, SQRT, TAN, TANH |
+| std::complex for float, double and long double| ACOS, ACOSH, ASIN, ASINH, ATAN, ATANH, COS, COSH, EXP, LOG, SIN, SINH, SQRT, TAN, TANH |
+
+On top of the default usage of C++ standard library functions for folding described
+in the table above, it is possible to compile f18 evaluate library with
+[libpgmath](https://github.com/flang-compiler/flang/tree/master/runtime/libpgmath)
+so that it can be used for folding. To do so, one must have a compiled version
+of the libpgmath library available on the host and add
+`-DLIBPGMATH_DIR=<path to the compiled shared libpgmath library>` to the f18 cmake command.
+
+Libpgmath comes with real and complex functions that replace C++ standard library
+float and double functions to fold all the intrinsic functions listed in the table above.
+It has no long double versions. If the host long double matches an f18 scalar type,
+C++ standard library functions will still be used for folding expressions with this scalar type.
+Libpgmath adds the possibility to fold the following functions for f18 real scalar
+types related to host float and double types.
+
+| C/C++ Host Type | Additional Intrinsic Function Folding Support with Libpgmath (Optional) |
+| --- | --- |
+|float and double| BESSEL_J0, BESSEL_J1, BESSEL_JN (elemental only), BESSEL_Y0, BESSEL_Y1, BESSEL_Yn (elemental only), ERFC_SCALED |
+
+Lipgmath comes in three variants (precise, relaxed and fast). So far, only the
+precise version is used for intrinsic function folding in f18. It guarantees the greatest numerical precision.
+
+### Intrinsic Functions with Missing Folding Support
+The following intrinsic functions are allowed in constant expressions but f18
+is not yet able to fold them. Note that there might be constraints on the arguments
+so that these intrinsics can be used in constant expressions (see section 10.1.12 of Fortran 2018 standard).
+
+ALL, ACHAR, ADJUSTL, ADJUSTR, ANINT, ANY, BESSEL_JN (transformational only),
+BESSEL_YN (transformational only), BTEST, CEILING, CHAR, COUNT, CSHIFT, DOT_PRODUCT,
+DIM (REAL only), DOT_PRODUCT, EOSHIFT, FINDLOC, FLOOR, FRACTION, HUGE, IACHAR, IALL,
+IANY, IPARITY, IBITS, ICHAR, IMAGE_STATUS, INDEX, ISHFTC, IS_IOSTAT_END,
+IS_IOSTAT_EOR, LBOUND, LEN_TRIM, LGE, LGT, LLE, LLT, LOGICAL, MATMUL, MAX, MAXLOC,
+MAXVAL, MERGE, MIN, MINLOC, MINVAL, MOD (INTEGER only), MODULO, NEAREST, NINT,
+NORM2, NOT, OUT_OF_RANGE, PACK, PARITY, PRODUCT, REPEAT, REDUCE, RESHAPE,
+RRSPACING, SCAN, SCALE, SELECTED_CHAR_KIND, SELECTED_INT_KIND, SELECTED_REAL_KIND,
+SET_EXPONENT, SHAPE, SIGN, SIZE, SPACING, SPREAD, SUM, TINY, TRANSFER, TRANSPOSE,
+TRIM, UBOUND, UNPACK, VERIFY.
+
+Coarray, non standard, IEEE and ISO_C_BINDINGS intrinsic functions that can be
+used in constant expressions have currently no folding support at all.

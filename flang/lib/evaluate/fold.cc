@@ -475,7 +475,7 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
           context, std::move(funcRef), &Scalar<T>::MERGE_BITS);
     }
     // TODO:
-    // ceiling, command_argument_count, count, cshift, dot_product, eoshift,
+    // ceiling, count, cshift, dot_product, eoshift,
     // findloc, floor, iachar, iall, iany, iparity, ibits, ichar, image_status,
     // index, ishftc, lbound, len_trim, matmul, max, maxloc, maxval, merge, min,
     // minloc, minval, mod, modulo, nint, not, pack, product, reduce, reshape,
