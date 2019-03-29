@@ -15709,14 +15709,15 @@ SDValue DAGCombiner::ImproveLifetimeNodeChain(SDNode *N) {
   auto Chain = N->getOperand(0);
   auto NewChain = FindBetterChain(N, Chain);
   if (NewChain != Chain) {
-    SDNode *N2 = DAG.UpdateNodeOperands(N, NewChain, N->getOperand(1));
-    // Make sure users of new N still depend on Chain
-    auto TF = DAG.getNode(ISD::TokenFactor, SDLoc(N2), MVT::Other, Chain,
-                          SDValue(N2, 0));
-    DAG.ReplaceAllUsesOfValueWith(SDValue(N2, 0), TF);
-    AddToWorklist(DAG.UpdateNodeOperands(TF.getNode(), Chain, SDValue(N2, 0)));
-    AddToWorklist(N2);
-    return SDValue(N, 0);
+    LifetimeSDNode *LN = cast<LifetimeSDNode>(N);
+    // Create New Node to prevent loop in CombineTo.
+    SDValue NewN = DAG.getLifetimeNode(N->getOpcode() == ISD::LIFETIME_START,
+                                       SDLoc(N), NewChain, LN->getFrameIndex(),
+                                       LN->hasOffset() ? LN->getSize() : -1,
+                                       LN->hasOffset() ? LN->getOffset() : -1);
+    AddToWorklist(NewN.getNode());
+    auto TF = DAG.getNode(ISD::TokenFactor, SDLoc(N), MVT::Other, Chain, NewN);
+    return CombineTo(N, TF);
   }
   return SDValue();
 }
