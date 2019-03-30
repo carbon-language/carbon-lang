@@ -1983,7 +1983,7 @@ static void sortJavaImports(const FormatStyle &Style,
 namespace {
 
 const char JavaImportRegexPattern[] =
-    "^[\t ]*import[\t ]*(static[\t ]*)?([^\t ]*)[\t ]*;";
+    "^[\t ]*import[\t ]+(static[\t ]*)?([^\t ]*)[\t ]*;";
 
 } // anonymous namespace
 
