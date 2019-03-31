@@ -1514,7 +1514,12 @@ class CGObjCGNUstep2 : public CGObjCGNUstep {
     if (CGM.getTriple().isOSBinFormatCOFF())
         InitVar->setSection(".CRT$XCLz");
     else
-      InitVar->setSection(".ctors");
+    {
+      if (CGM.getCodeGenOpts().UseInitArray)
+        InitVar->setSection(".init_array");
+      else
+        InitVar->setSection(".ctors");
+    }
     InitVar->setVisibility(llvm::GlobalValue::HiddenVisibility);
     InitVar->setComdat(TheModule.getOrInsertComdat(".objc_ctor"));
     CGM.addUsedGlobal(InitVar);

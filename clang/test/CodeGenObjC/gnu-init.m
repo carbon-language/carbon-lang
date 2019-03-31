@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -triple x86_64-unknown-freebsd -S -emit-llvm -fobjc-runtime=gnustep-2.0 -o - %s | FileCheck %s -check-prefix=CHECK-NEW
 // RUN: %clang_cc1 -triple x86_64-pc-windows-msvc -S -emit-llvm -fobjc-runtime=gnustep-2.0 -o - %s | FileCheck %s -check-prefix=CHECK-WIN
 // RUN: %clang_cc1 -triple x86_64-unknown-freebsd -S -emit-llvm -fobjc-runtime=gnustep-1.8 -o - %s | FileCheck %s -check-prefix=CHECK-OLD
+// RUN: %clang_cc1 -triple x86_64-unknown-freebsd -fuse-init-array -S -emit-llvm -fobjc-runtime=gnustep-2.0 -o - %s | FileCheck %s -check-prefix=CHECK-INIT_ARRAY
 
 // Almost minimal Objective-C file, check that it emits calls to the correct
 // runtime entry points.
@@ -39,6 +40,7 @@
 
 // Check that the load function is manually inserted into .ctors.
 // CHECK-NEW: @.objc_ctor = linkonce hidden constant void ()* @.objcv2_load_function, section ".ctors", comdat
+// CHECK-INIT_ARRAY: @.objc_ctor = linkonce hidden constant void ()* @.objcv2_load_function, section ".init_array", comdat
 
 
 // Make sure that we provide null versions of everything so the __start /
