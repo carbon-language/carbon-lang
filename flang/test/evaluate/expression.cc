@@ -26,7 +26,7 @@ using namespace Fortran::evaluate;
 
 template<typename A> std::string AsFortran(const A &x) {
   std::stringstream ss;
-  x.AsFortran(ss);
+  ss << x;
   return ss.str();
 }
 
