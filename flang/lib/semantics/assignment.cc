@@ -195,10 +195,8 @@ void AssignmentContext::Analyze(const parser::ForallStmt &stmt) {
   const auto &assign{
       std::get<parser::UnlabeledStatement<parser::ForallAssignmentStmt>>(
           stmt.t)};
-  auto restorer {
-    nested.messages_.SetLocation(assign.source);
-    nested.Analyze(assign.statement);
-  }
+  auto restorer{nested.messages_.SetLocation(assign.source)};
+  nested.Analyze(assign.statement);
 
   // N.B. Construct name matching is checked during label resolution;
   // index name distinction is checked during name resolution.
