@@ -396,6 +396,9 @@ Value *LoopPredication::expandCheck(SCEVExpander &Expander,
 
   if (SE->isLoopEntryGuardedByCond(L, Pred, LHS, RHS))
     return Builder.getTrue();
+  if (SE->isLoopEntryGuardedByCond(L, ICmpInst::getInversePredicate(Pred),
+                                   LHS, RHS))
+    return Builder.getFalse();
 
   Instruction *InsertAt = &*Builder.GetInsertPoint();
   Value *LHSV = Expander.expandCodeFor(LHS, Ty, InsertAt);
