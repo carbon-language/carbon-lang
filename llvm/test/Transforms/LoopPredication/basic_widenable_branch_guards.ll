@@ -17,9 +17,7 @@ define i32 @unsigned_loop_0_to_n_ult_check(i32* %array, i32 %length, i32 %n) {
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[LOOP_ACC:%.*]] = phi i32 [ [[LOOP_ACC_NEXT:%.*]], [[GUARDED:%.*]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[I:%.*]] = phi i32 [ [[I_NEXT:%.*]], [[GUARDED]] ], [ 0, [[LOOP_PREHEADER]] ]
-; CHECK-NEXT:    [[WITHIN_BOUNDS:%.*]] = icmp ult i32 [[I]], [[LENGTH]]
 ; CHECK-NEXT:    [[WIDENABLE_COND:%.*]] = call i1 @llvm.experimental.widenable.condition()
-; CHECK-NEXT:    [[EXIPLICIT_GUARD_COND:%.*]] = and i1 [[WITHIN_BOUNDS]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    [[TMP3:%.*]] = and i1 [[TMP2]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    br i1 [[TMP3]], label [[GUARDED]], label [[DEOPT:%.*]], !prof !0
 ; CHECK:       deopt:
@@ -86,9 +84,7 @@ define i32 @unsigned_loop_0_to_n_ule_latch_ult_check(i32* %array, i32 %length, i
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[LOOP_ACC:%.*]] = phi i32 [ [[LOOP_ACC_NEXT:%.*]], [[GUARDED:%.*]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[I:%.*]] = phi i32 [ [[I_NEXT:%.*]], [[GUARDED]] ], [ 0, [[LOOP_PREHEADER]] ]
-; CHECK-NEXT:    [[WITHIN_BOUNDS:%.*]] = icmp ult i32 [[I]], [[LENGTH]]
 ; CHECK-NEXT:    [[WIDENABLE_COND:%.*]] = call i1 @llvm.experimental.widenable.condition()
-; CHECK-NEXT:    [[EXIPLICIT_GUARD_COND:%.*]] = and i1 [[WITHIN_BOUNDS]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    [[TMP3:%.*]] = and i1 [[TMP2]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    br i1 [[TMP3]], label [[GUARDED]], label [[DEOPT:%.*]], !prof !0
 ; CHECK:       deopt:
@@ -155,9 +151,7 @@ define i32 @unsigned_loop_0_to_n_ugt_check(i32* %array, i32 %length, i32 %n) {
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[LOOP_ACC:%.*]] = phi i32 [ [[LOOP_ACC_NEXT:%.*]], [[GUARDED:%.*]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[I:%.*]] = phi i32 [ [[I_NEXT:%.*]], [[GUARDED]] ], [ 0, [[LOOP_PREHEADER]] ]
-; CHECK-NEXT:    [[WITHIN_BOUNDS:%.*]] = icmp ugt i32 [[LENGTH]], [[I]]
 ; CHECK-NEXT:    [[WIDENABLE_COND:%.*]] = call i1 @llvm.experimental.widenable.condition()
-; CHECK-NEXT:    [[EXIPLICIT_GUARD_COND:%.*]] = and i1 [[WITHIN_BOUNDS]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    [[TMP3:%.*]] = and i1 [[TMP2]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    br i1 [[TMP3]], label [[GUARDED]], label [[DEOPT:%.*]], !prof !0
 ; CHECK:       deopt:
@@ -224,9 +218,7 @@ define i32 @signed_loop_0_to_n_ult_check(i32* %array, i32 %length, i32 %n) {
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[LOOP_ACC:%.*]] = phi i32 [ [[LOOP_ACC_NEXT:%.*]], [[GUARDED:%.*]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[I:%.*]] = phi i32 [ [[I_NEXT:%.*]], [[GUARDED]] ], [ 0, [[LOOP_PREHEADER]] ]
-; CHECK-NEXT:    [[WITHIN_BOUNDS:%.*]] = icmp ult i32 [[I]], [[LENGTH]]
 ; CHECK-NEXT:    [[WIDENABLE_COND:%.*]] = call i1 @llvm.experimental.widenable.condition()
-; CHECK-NEXT:    [[EXIPLICIT_GUARD_COND:%.*]] = and i1 [[WITHIN_BOUNDS]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    [[TMP3:%.*]] = and i1 [[TMP2]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    br i1 [[TMP3]], label [[GUARDED]], label [[DEOPT:%.*]], !prof !0
 ; CHECK:       deopt:
@@ -294,9 +286,7 @@ define i32 @signed_loop_0_to_n_ult_check_length_range_known(i32* %array, i32* %l
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[LOOP_ACC:%.*]] = phi i32 [ [[LOOP_ACC_NEXT:%.*]], [[GUARDED:%.*]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[I:%.*]] = phi i32 [ [[I_NEXT:%.*]], [[GUARDED]] ], [ 0, [[LOOP_PREHEADER]] ]
-; CHECK-NEXT:    [[WITHIN_BOUNDS:%.*]] = icmp ult i32 [[I]], [[LENGTH]]
 ; CHECK-NEXT:    [[WIDENABLE_COND:%.*]] = call i1 @llvm.experimental.widenable.condition()
-; CHECK-NEXT:    [[EXIPLICIT_GUARD_COND:%.*]] = and i1 [[WITHIN_BOUNDS]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    [[TMP2:%.*]] = and i1 [[TMP1]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    br i1 [[TMP2]], label [[GUARDED]], label [[DEOPT:%.*]], !prof !0
 ; CHECK:       deopt:
@@ -364,9 +354,7 @@ define i32 @signed_loop_0_to_n_inverse_latch_predicate(i32* %array, i32 %length,
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[LOOP_ACC:%.*]] = phi i32 [ [[LOOP_ACC_NEXT:%.*]], [[GUARDED:%.*]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[I:%.*]] = phi i32 [ [[I_NEXT:%.*]], [[GUARDED]] ], [ 0, [[LOOP_PREHEADER]] ]
-; CHECK-NEXT:    [[WITHIN_BOUNDS:%.*]] = icmp ult i32 [[I]], [[LENGTH]]
 ; CHECK-NEXT:    [[WIDENABLE_COND:%.*]] = call i1 @llvm.experimental.widenable.condition()
-; CHECK-NEXT:    [[EXIPLICIT_GUARD_COND:%.*]] = and i1 [[WITHIN_BOUNDS]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    [[TMP3:%.*]] = and i1 [[TMP2]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    br i1 [[TMP3]], label [[GUARDED]], label [[DEOPT:%.*]], !prof !0
 ; CHECK:       deopt:
@@ -433,9 +421,7 @@ define i32 @signed_loop_0_to_n_sle_latch_ult_check(i32* %array, i32 %length, i32
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[LOOP_ACC:%.*]] = phi i32 [ [[LOOP_ACC_NEXT:%.*]], [[GUARDED:%.*]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[I:%.*]] = phi i32 [ [[I_NEXT:%.*]], [[GUARDED]] ], [ 0, [[LOOP_PREHEADER]] ]
-; CHECK-NEXT:    [[WITHIN_BOUNDS:%.*]] = icmp ult i32 [[I]], [[LENGTH]]
 ; CHECK-NEXT:    [[WIDENABLE_COND:%.*]] = call i1 @llvm.experimental.widenable.condition()
-; CHECK-NEXT:    [[EXIPLICIT_GUARD_COND:%.*]] = and i1 [[WITHIN_BOUNDS]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    [[TMP3:%.*]] = and i1 [[TMP2]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    br i1 [[TMP3]], label [[GUARDED]], label [[DEOPT:%.*]], !prof !0
 ; CHECK:       deopt:
@@ -503,9 +489,7 @@ define i32 @signed_loop_0_to_n_preincrement_latch_check(i32* %array, i32 %length
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[LOOP_ACC:%.*]] = phi i32 [ [[LOOP_ACC_NEXT:%.*]], [[GUARDED:%.*]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[I:%.*]] = phi i32 [ [[I_NEXT:%.*]], [[GUARDED]] ], [ 0, [[LOOP_PREHEADER]] ]
-; CHECK-NEXT:    [[WITHIN_BOUNDS:%.*]] = icmp ult i32 [[I]], [[LENGTH]]
 ; CHECK-NEXT:    [[WIDENABLE_COND:%.*]] = call i1 @llvm.experimental.widenable.condition()
-; CHECK-NEXT:    [[EXIPLICIT_GUARD_COND:%.*]] = and i1 [[WITHIN_BOUNDS]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    [[TMP4:%.*]] = and i1 [[TMP3]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    br i1 [[TMP4]], label [[GUARDED]], label [[DEOPT:%.*]], !prof !0
 ; CHECK:       deopt:
@@ -574,9 +558,7 @@ define i32 @signed_loop_0_to_n_preincrement_latch_check_postincrement_guard_chec
 ; CHECK-NEXT:    [[LOOP_ACC:%.*]] = phi i32 [ [[LOOP_ACC_NEXT:%.*]], [[GUARDED:%.*]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[I:%.*]] = phi i32 [ [[I_NEXT:%.*]], [[GUARDED]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[I_NEXT]] = add i32 [[I]], 1
-; CHECK-NEXT:    [[WITHIN_BOUNDS:%.*]] = icmp ult i32 [[I_NEXT]], [[LENGTH]]
 ; CHECK-NEXT:    [[WIDENABLE_COND:%.*]] = call i1 @llvm.experimental.widenable.condition()
-; CHECK-NEXT:    [[EXIPLICIT_GUARD_COND:%.*]] = and i1 [[WITHIN_BOUNDS]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    [[TMP4:%.*]] = and i1 [[TMP3]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    br i1 [[TMP4]], label [[GUARDED]], label [[DEOPT:%.*]], !prof !0
 ; CHECK:       deopt:
@@ -643,10 +625,7 @@ define i32 @signed_loop_0_to_n_sle_latch_offset_ult_check(i32* %array, i32 %leng
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[LOOP_ACC:%.*]] = phi i32 [ [[LOOP_ACC_NEXT:%.*]], [[GUARDED:%.*]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[I:%.*]] = phi i32 [ [[I_NEXT:%.*]], [[GUARDED]] ], [ 0, [[LOOP_PREHEADER]] ]
-; CHECK-NEXT:    [[I_OFFSET:%.*]] = add i32 [[I]], 1
-; CHECK-NEXT:    [[WITHIN_BOUNDS:%.*]] = icmp ult i32 [[I_OFFSET]], [[LENGTH]]
 ; CHECK-NEXT:    [[WIDENABLE_COND:%.*]] = call i1 @llvm.experimental.widenable.condition()
-; CHECK-NEXT:    [[EXIPLICIT_GUARD_COND:%.*]] = and i1 [[WITHIN_BOUNDS]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    [[TMP4:%.*]] = and i1 [[TMP3]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    br i1 [[TMP4]], label [[GUARDED]], label [[DEOPT:%.*]], !prof !0
 ; CHECK:       deopt:
@@ -714,10 +693,7 @@ define i32 @signed_loop_0_to_n_offset_sle_latch_offset_ult_check(i32* %array, i3
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[LOOP_ACC:%.*]] = phi i32 [ [[LOOP_ACC_NEXT:%.*]], [[GUARDED:%.*]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[I:%.*]] = phi i32 [ [[I_NEXT:%.*]], [[GUARDED]] ], [ 0, [[LOOP_PREHEADER]] ]
-; CHECK-NEXT:    [[I_OFFSET:%.*]] = add i32 [[I]], 1
-; CHECK-NEXT:    [[WITHIN_BOUNDS:%.*]] = icmp ult i32 [[I_OFFSET]], [[LENGTH]]
 ; CHECK-NEXT:    [[WIDENABLE_COND:%.*]] = call i1 @llvm.experimental.widenable.condition()
-; CHECK-NEXT:    [[EXIPLICIT_GUARD_COND:%.*]] = and i1 [[WITHIN_BOUNDS]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    [[TMP3:%.*]] = and i1 [[TMP2]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    br i1 [[TMP3]], label [[GUARDED]], label [[DEOPT:%.*]], !prof !0
 ; CHECK:       deopt:
@@ -918,9 +894,7 @@ define i32 @signed_loop_0_to_n_equal_iv_range_check(i32* %array, i32 %length, i3
 ; CHECK-NEXT:    [[LOOP_ACC:%.*]] = phi i32 [ [[LOOP_ACC_NEXT:%.*]], [[GUARDED:%.*]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[I:%.*]] = phi i32 [ [[I_NEXT:%.*]], [[GUARDED]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[J:%.*]] = phi i32 [ [[J_NEXT:%.*]], [[GUARDED]] ], [ 0, [[LOOP_PREHEADER]] ]
-; CHECK-NEXT:    [[WITHIN_BOUNDS:%.*]] = icmp ult i32 [[J]], [[LENGTH]]
 ; CHECK-NEXT:    [[WIDENABLE_COND:%.*]] = call i1 @llvm.experimental.widenable.condition()
-; CHECK-NEXT:    [[EXIPLICIT_GUARD_COND:%.*]] = and i1 [[WITHIN_BOUNDS]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    [[TMP3:%.*]] = and i1 [[TMP2]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    br i1 [[TMP3]], label [[GUARDED]], label [[DEOPT:%.*]], !prof !0
 ; CHECK:       deopt:
@@ -993,9 +967,7 @@ define i32 @signed_loop_start_to_n_offset_iv_range_check(i32* %array, i32 %start
 ; CHECK-NEXT:    [[LOOP_ACC:%.*]] = phi i32 [ [[LOOP_ACC_NEXT:%.*]], [[GUARDED:%.*]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[I:%.*]] = phi i32 [ [[I_NEXT:%.*]], [[GUARDED]] ], [ [[START_I]], [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[J:%.*]] = phi i32 [ [[J_NEXT:%.*]], [[GUARDED]] ], [ [[START_J]], [[LOOP_PREHEADER]] ]
-; CHECK-NEXT:    [[WITHIN_BOUNDS:%.*]] = icmp ult i32 [[J]], [[LENGTH]]
 ; CHECK-NEXT:    [[WIDENABLE_COND:%.*]] = call i1 @llvm.experimental.widenable.condition()
-; CHECK-NEXT:    [[EXIPLICIT_GUARD_COND:%.*]] = and i1 [[WITHIN_BOUNDS]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    [[TMP5:%.*]] = and i1 [[TMP4]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    br i1 [[TMP5]], label [[GUARDED]], label [[DEOPT:%.*]], !prof !0
 ; CHECK:       deopt:
@@ -1206,11 +1178,7 @@ define i32 @two_range_checks(i32* %array.1, i32 %length.1, i32* %array.2, i32 %l
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[LOOP_ACC:%.*]] = phi i32 [ [[LOOP_ACC_NEXT:%.*]], [[GUARDED:%.*]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[I:%.*]] = phi i32 [ [[I_NEXT:%.*]], [[GUARDED]] ], [ 0, [[LOOP_PREHEADER]] ]
-; CHECK-NEXT:    [[WITHIN_BOUNDS_1:%.*]] = icmp ult i32 [[I]], [[LENGTH_1]]
-; CHECK-NEXT:    [[WITHIN_BOUNDS_2:%.*]] = icmp ult i32 [[I]], [[LENGTH_2]]
-; CHECK-NEXT:    [[WITHIN_BOUNDS:%.*]] = and i1 [[WITHIN_BOUNDS_1]], [[WITHIN_BOUNDS_2]]
 ; CHECK-NEXT:    [[WIDENABLE_COND:%.*]] = call i1 @llvm.experimental.widenable.condition()
-; CHECK-NEXT:    [[EXIPLICIT_GUARD_COND:%.*]] = and i1 [[WITHIN_BOUNDS]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    [[TMP6:%.*]] = and i1 [[TMP2]], [[TMP5]]
 ; CHECK-NEXT:    [[TMP7:%.*]] = and i1 [[TMP6]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    br i1 [[TMP7]], label [[GUARDED]], label [[DEOPT:%.*]], !prof !0
@@ -1292,13 +1260,7 @@ define i32 @three_range_checks(i32* %array.1, i32 %length.1, i32* %array.2, i32 
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[LOOP_ACC:%.*]] = phi i32 [ [[LOOP_ACC_NEXT:%.*]], [[GUARDED:%.*]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[I:%.*]] = phi i32 [ [[I_NEXT:%.*]], [[GUARDED]] ], [ 0, [[LOOP_PREHEADER]] ]
-; CHECK-NEXT:    [[WITHIN_BOUNDS_1:%.*]] = icmp ult i32 [[I]], [[LENGTH_1]]
-; CHECK-NEXT:    [[WITHIN_BOUNDS_2:%.*]] = icmp ult i32 [[I]], [[LENGTH_2]]
-; CHECK-NEXT:    [[WITHIN_BOUNDS_3:%.*]] = icmp ult i32 [[I]], [[LENGTH_3]]
-; CHECK-NEXT:    [[WITHIN_BOUNDS_1_AND_2:%.*]] = and i1 [[WITHIN_BOUNDS_1]], [[WITHIN_BOUNDS_2]]
-; CHECK-NEXT:    [[WITHIN_BOUNDS:%.*]] = and i1 [[WITHIN_BOUNDS_1_AND_2]], [[WITHIN_BOUNDS_3]]
 ; CHECK-NEXT:    [[WIDENABLE_COND:%.*]] = call i1 @llvm.experimental.widenable.condition()
-; CHECK-NEXT:    [[EXIPLICIT_GUARD_COND:%.*]] = and i1 [[WITHIN_BOUNDS]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    [[TMP9:%.*]] = and i1 [[TMP2]], [[TMP5]]
 ; CHECK-NEXT:    [[TMP10:%.*]] = and i1 [[TMP9]], [[TMP8]]
 ; CHECK-NEXT:    [[TMP11:%.*]] = and i1 [[TMP10]], [[WIDENABLE_COND]]
@@ -1389,9 +1351,7 @@ define i32 @three_guards(i32* %array.1, i32 %length.1, i32* %array.2, i32 %lengt
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[LOOP_ACC:%.*]] = phi i32 [ [[LOOP_ACC_NEXT:%.*]], [[GUARDED6:%.*]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[I:%.*]] = phi i32 [ [[I_NEXT:%.*]], [[GUARDED6]] ], [ 0, [[LOOP_PREHEADER]] ]
-; CHECK-NEXT:    [[WITHIN_BOUNDS_1:%.*]] = icmp ult i32 [[I]], [[LENGTH_1]]
 ; CHECK-NEXT:    [[WIDENABLE_COND:%.*]] = call i1 @llvm.experimental.widenable.condition()
-; CHECK-NEXT:    [[EXIPLICIT_GUARD_COND:%.*]] = and i1 [[WITHIN_BOUNDS_1]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    [[TMP9:%.*]] = and i1 [[TMP2]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    br i1 [[TMP9]], label [[GUARDED:%.*]], label [[DEOPT:%.*]], !prof !0
 ; CHECK:       deopt:
@@ -1402,9 +1362,7 @@ define i32 @three_guards(i32* %array.1, i32 %length.1, i32* %array.2, i32 %lengt
 ; CHECK-NEXT:    [[ARRAY_1_I_PTR:%.*]] = getelementptr inbounds i32, i32* [[ARRAY_1:%.*]], i64 [[I_I64]]
 ; CHECK-NEXT:    [[ARRAY_1_I:%.*]] = load i32, i32* [[ARRAY_1_I_PTR]], align 4
 ; CHECK-NEXT:    [[LOOP_ACC_1:%.*]] = add i32 [[LOOP_ACC]], [[ARRAY_1_I]]
-; CHECK-NEXT:    [[WITHIN_BOUNDS_2:%.*]] = icmp ult i32 [[I]], [[LENGTH_2]]
 ; CHECK-NEXT:    [[WIDENABLE_COND4:%.*]] = call i1 @llvm.experimental.widenable.condition()
-; CHECK-NEXT:    [[EXIPLICIT_GUARD_COND5:%.*]] = and i1 [[WITHIN_BOUNDS_2]], [[WIDENABLE_COND4]]
 ; CHECK-NEXT:    [[TMP10:%.*]] = and i1 [[TMP5]], [[WIDENABLE_COND4]]
 ; CHECK-NEXT:    br i1 [[TMP10]], label [[GUARDED1:%.*]], label [[DEOPT2:%.*]], !prof !0
 ; CHECK:       deopt2:
@@ -1414,9 +1372,7 @@ define i32 @three_guards(i32* %array.1, i32 %length.1, i32* %array.2, i32 %lengt
 ; CHECK-NEXT:    [[ARRAY_2_I_PTR:%.*]] = getelementptr inbounds i32, i32* [[ARRAY_2:%.*]], i64 [[I_I64]]
 ; CHECK-NEXT:    [[ARRAY_2_I:%.*]] = load i32, i32* [[ARRAY_2_I_PTR]], align 4
 ; CHECK-NEXT:    [[LOOP_ACC_2:%.*]] = add i32 [[LOOP_ACC_1]], [[ARRAY_2_I]]
-; CHECK-NEXT:    [[WITHIN_BOUNDS_3:%.*]] = icmp ult i32 [[I]], [[LENGTH_3]]
 ; CHECK-NEXT:    [[WIDENABLE_COND9:%.*]] = call i1 @llvm.experimental.widenable.condition()
-; CHECK-NEXT:    [[EXIPLICIT_GUARD_COND10:%.*]] = and i1 [[WITHIN_BOUNDS_3]], [[WIDENABLE_COND9]]
 ; CHECK-NEXT:    [[TMP11:%.*]] = and i1 [[TMP8]], [[WIDENABLE_COND9]]
 ; CHECK-NEXT:    br i1 [[TMP11]], label [[GUARDED6]], label [[DEOPT7:%.*]], !prof !0
 ; CHECK:       deopt7:
@@ -1508,11 +1464,8 @@ define i32 @unsigned_loop_0_to_n_unrelated_condition(i32* %array, i32 %length, i
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[LOOP_ACC:%.*]] = phi i32 [ [[LOOP_ACC_NEXT:%.*]], [[GUARDED:%.*]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[I:%.*]] = phi i32 [ [[I_NEXT:%.*]], [[GUARDED]] ], [ 0, [[LOOP_PREHEADER]] ]
-; CHECK-NEXT:    [[WITHIN_BOUNDS:%.*]] = icmp ult i32 [[I]], [[LENGTH]]
 ; CHECK-NEXT:    [[UNRELATED_COND:%.*]] = icmp ult i32 [[X:%.*]], [[LENGTH]]
-; CHECK-NEXT:    [[GUARD_COND:%.*]] = and i1 [[WITHIN_BOUNDS]], [[UNRELATED_COND]]
 ; CHECK-NEXT:    [[WIDENABLE_COND:%.*]] = call i1 @llvm.experimental.widenable.condition()
-; CHECK-NEXT:    [[EXIPLICIT_GUARD_COND:%.*]] = and i1 [[GUARD_COND]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    [[TMP3:%.*]] = and i1 [[UNRELATED_COND]], [[TMP2]]
 ; CHECK-NEXT:    [[TMP4:%.*]] = and i1 [[TMP3]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    br i1 [[TMP4]], label [[GUARDED]], label [[DEOPT:%.*]], !prof !0
@@ -1788,10 +1741,7 @@ define i32 @unsigned_loop_0_to_n_hoist_length(i32* %array, i16 %length.i16, i32 
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[LOOP_ACC:%.*]] = phi i32 [ [[LOOP_ACC_NEXT:%.*]], [[GUARDED:%.*]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[I:%.*]] = phi i32 [ [[I_NEXT:%.*]], [[GUARDED]] ], [ 0, [[LOOP_PREHEADER]] ]
-; CHECK-NEXT:    [[LENGTH:%.*]] = zext i16 [[LENGTH_I16]] to i32
-; CHECK-NEXT:    [[WITHIN_BOUNDS:%.*]] = icmp ult i32 [[I]], [[LENGTH]]
 ; CHECK-NEXT:    [[WIDENABLE_COND:%.*]] = call i1 @llvm.experimental.widenable.condition()
-; CHECK-NEXT:    [[EXIPLICIT_GUARD_COND:%.*]] = and i1 [[WITHIN_BOUNDS]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    [[TMP4:%.*]] = and i1 [[TMP3]], [[WIDENABLE_COND]]
 ; CHECK-NEXT:    br i1 [[TMP4]], label [[GUARDED]], label [[DEOPT:%.*]], !prof !0
 ; CHECK:       deopt:

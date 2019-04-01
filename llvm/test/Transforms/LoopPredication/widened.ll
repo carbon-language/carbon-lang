@@ -27,9 +27,6 @@ define i64 @iv_wider_type_rc_two_narrow_types(i32 %offA, i16 %offB, i8* %arrA, i
 ; CHECK-NEXT:    [[IV_TRUNC_16:%.*]] = trunc i64 [[IV]] to i16
 ; CHECK-NEXT:    [[INDEXA:%.*]] = add i32 [[IV_TRUNC_32]], [[OFFA]]
 ; CHECK-NEXT:    [[INDEXB:%.*]] = add i16 [[IV_TRUNC_16]], [[OFFB]]
-; CHECK-NEXT:    [[RCA:%.*]] = icmp ult i32 [[INDEXA]], [[LENGTHA]]
-; CHECK-NEXT:    [[RCB:%.*]] = icmp ult i16 [[INDEXB]], [[LENGTHB]]
-; CHECK-NEXT:    [[WIDE_CHK:%.*]] = and i1 [[RCA]], [[RCB]]
 ; CHECK-NEXT:    [[TMP8:%.*]] = and i1 [[TMP3]], [[TMP7]]
 ; CHECK-NEXT:    call void (i1, ...) @llvm.experimental.guard(i1 [[TMP8]], i32 9) [ "deopt"() ]
 ; CHECK-NEXT:    [[INDEXA_EXT:%.*]] = zext i32 [[INDEXA]] to i64
@@ -102,11 +99,6 @@ define i64 @iv_rc_different_types(i32 %offA, i32 %offB, i8* %arrA, i8* %arrB, i6
 ; CHECK-NEXT:    [[IV_TRUNC:%.*]] = trunc i64 [[IV]] to i32
 ; CHECK-NEXT:    [[INDEXA:%.*]] = add i32 [[IV_TRUNC]], [[OFFA]]
 ; CHECK-NEXT:    [[INDEXB:%.*]] = add i32 [[IV_TRUNC]], [[OFFB]]
-; CHECK-NEXT:    [[RCA:%.*]] = icmp ult i32 [[INDEXA]], [[LENGTHA]]
-; CHECK-NEXT:    [[RCIV:%.*]] = icmp ult i64 [[IV]], [[MAX]]
-; CHECK-NEXT:    [[WIDE_CHK:%.*]] = and i1 [[RCA]], [[RCIV]]
-; CHECK-NEXT:    [[RCB:%.*]] = icmp ult i32 [[INDEXB]], [[LENGTHB]]
-; CHECK-NEXT:    [[WIDE_CHK_FINAL:%.*]] = and i1 [[WIDE_CHK]], [[RCB]]
 ; CHECK-NEXT:    [[TMP14:%.*]] = and i1 [[TMP4]], [[TMP8]]
 ; CHECK-NEXT:    [[TMP15:%.*]] = and i1 [[TMP14]], [[TMP13]]
 ; CHECK-NEXT:    call void (i1, ...) @llvm.experimental.guard(i1 [[TMP15]], i32 9) [ "deopt"() ]

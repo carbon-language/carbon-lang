@@ -199,7 +199,6 @@ define i32 @constant_length(i32* %array, i32 %n) {
 ; CHECK-NEXT:    [[I:%.*]] = phi i32 [ [[I_NEXT:%.*]], [[LOOP]] ], [ 0, [[LOOP_PREHEADER]] ]
 ; CHECK-NEXT:    [[UNKNOWN:%.*]] = load volatile i1, i1* @UNKNOWN
 ; CHECK-NEXT:    call void (i1, ...) @llvm.experimental.guard(i1 [[UNKNOWN]]) [ "deopt"() ]
-; CHECK-NEXT:    [[WITHIN_BOUNDS:%.*]] = icmp ult i32 [[I]], 20
 ; CHECK-NEXT:    call void (i1, ...) @llvm.experimental.guard(i1 [[TMP1]], i32 9) [ "deopt"() ]
 ; CHECK-NEXT:    [[I_I64:%.*]] = zext i32 [[I]] to i64
 ; CHECK-NEXT:    [[ARRAY_I_PTR:%.*]] = getelementptr inbounds i32, i32* [[ARRAY:%.*]], i64 [[I_I64]]
