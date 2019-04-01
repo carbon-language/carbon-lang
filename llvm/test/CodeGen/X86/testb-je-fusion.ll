@@ -45,8 +45,8 @@ define i32 @macrofuse_test_je(i32 %flags, i8* %p) nounwind {
 ; BRANCHFUSION_POSTRA-LABEL: macrofuse_test_je:
 ; BRANCHFUSION_POSTRA:       # %bb.0: # %entry
 ; BRANCHFUSION_POSTRA-NEXT:    xorl %eax, %eax
-; BRANCHFUSION_POSTRA-NEXT:    testl $512, %edi # imm = 0x200
 ; BRANCHFUSION_POSTRA-NEXT:    movb $1, (%rsi)
+; BRANCHFUSION_POSTRA-NEXT:    testl $512, %edi # imm = 0x200
 ; BRANCHFUSION_POSTRA-NEXT:    je .LBB0_2
 ; BRANCHFUSION_POSTRA-NEXT:  # %bb.1: # %if.then
 ; BRANCHFUSION_POSTRA-NEXT:    movl $1, %eax
@@ -105,8 +105,8 @@ define i32 @macrofuse_cmp_je(i32 %flags, i8* %p) nounwind {
 ;
 ; BRANCHFUSION_POSTRA-LABEL: macrofuse_cmp_je:
 ; BRANCHFUSION_POSTRA:       # %bb.0: # %entry
-; BRANCHFUSION_POSTRA-NEXT:    cmpl $512, %edi # imm = 0x200
 ; BRANCHFUSION_POSTRA-NEXT:    movb $1, (%rsi)
+; BRANCHFUSION_POSTRA-NEXT:    cmpl $512, %edi # imm = 0x200
 ; BRANCHFUSION_POSTRA-NEXT:    je .LBB1_1
 ; BRANCHFUSION_POSTRA-NEXT:  # %bb.2: # %if.then
 ; BRANCHFUSION_POSTRA-NEXT:    movl $1, %eax
