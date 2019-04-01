@@ -15,6 +15,15 @@
 #ifndef FORTRAN_EVALUATE_FORMATTING_H_
 #define FORTRAN_EVALUATE_FORMATTING_H_
 
+// It is inconvenient in C++ to have std::ostream::operator<<() as a direct
+// friend function of a class template with many instantiations, so the
+// various representational class templates in lib/evaluate format themselves
+// via AsFortran(std::ostream &) member functions, which the operator<<()
+// overload below will call.
+//
+// This header is meant to be included by the headers that define the several
+// representational class templates that need it, not by external clients.
+
 #include "../common/indirection.h"
 #include <optional>
 #include <ostream>

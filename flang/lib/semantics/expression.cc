@@ -1951,7 +1951,7 @@ void ExprChecker::Enter(const parser::Expr &expr) {
   if (!expr.typedExpr) {
     if (MaybeExpr checked{AnalyzeExpr(context_, expr)}) {
 #if PMKDEBUG
-//        checked->AsFortran(std::cout << "checked expression: ") << '\n';
+//        std::cout << "checked expression: " << *checked << '\n';
 #endif
       expr.typedExpr.reset(
           new evaluate::GenericExprWrapper{std::move(*checked)});
@@ -1967,7 +1967,7 @@ void ExprChecker::Enter(const parser::Expr &expr) {
 void ExprChecker::Enter(const parser::Variable &var) {
 #if PMKDEBUG
   if (MaybeExpr checked{AnalyzeExpr(context_, var)}) {
-//    checked->AsFortran(std::cout << "checked variable: ") << '\n';
+//    std::cout << "checked variable: " << *checked << '\n';
 #else
   if (AnalyzeExpr(context_, var)) {
 #endif

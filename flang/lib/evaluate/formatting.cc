@@ -133,50 +133,52 @@ std::ostream &ProcedureRef::AsFortran(std::ostream &o) const {
 // Operator precedence formatting; insert parentheses around operands
 // only when necessary.
 
-enum class Precedence {
-  Primary,  // don't parenthesize
-  Constant,  // parenthesize if negative integer/real operand
-  Parenthesize,  // (x), (real, imaginary)
-  DefinedUnary,
-  Negate,
-  Power,  // ** which is right-associative
-  Multiplicative,  // *, /
-  Additive,  // +, -, //
-  Relational,
+enum class Precedence {  // in increasing order of precedence
+  DefinedBinary,
+  NOT,  // which binds *less* tightly in Fortran than logicals & relations
   Logical,  // .OR., .AND., .EQV., .NEQV.
-  NOT,  // yes, this binds less tightly in Fortran than .OR./.AND./&c. do
-  DefinedBinary
+  Relational,
+  Additive,  // +, -, //
+  Multiplicative,  // *, /
+  Power,  // **, which is right-associative unlike the other dyadic operators
+  Negate,
+  DefinedUnary,
+  Parenthesize,  // (x), (real, imaginary)
+  Constant,  // parenthesize if negative integer/real operand
+  Primary,  // don't parenthesize
 };
 
 template<typename A> constexpr Precedence ToPrecedence{Precedence::Primary};
-template<typename T> constexpr Precedence ToPrecedence<Constant<T>>{Precedence::Constant};
+
+template<int KIND>
+constexpr Precedence ToPrecedence<Not<KIND>>{Precedence::NOT};
+template<int KIND>
+constexpr Precedence ToPrecedence<LogicalOperation<KIND>>{Precedence::Logical};
+template<typename T>
+constexpr Precedence ToPrecedence<Relational<T>>{Precedence::Relational};
+template<int KIND>
+constexpr Precedence ToPrecedence<Concat<KIND>>{Precedence::Additive};
+template<typename T>
+constexpr Precedence ToPrecedence<Subtract<T>>{Precedence::Additive};
+template<typename T>
+constexpr Precedence ToPrecedence<Add<T>>{Precedence::Additive};
+template<typename T>
+constexpr Precedence ToPrecedence<Divide<T>>{Precedence::Multiplicative};
+template<typename T>
+constexpr Precedence ToPrecedence<Multiply<T>>{Precedence::Multiplicative};
+template<typename T>
+constexpr Precedence ToPrecedence<RealToIntPower<T>>{Precedence::Power};
+template<typename T>
+constexpr Precedence ToPrecedence<Power<T>>{Precedence::Power};
+template<typename T>
+constexpr Precedence ToPrecedence<Negate<T>>{Precedence::Negate};
+template<typename T>
+constexpr Precedence ToPrecedence<Constant<T>>{Precedence::Constant};
 template<typename T>
 constexpr Precedence ToPrecedence<Parentheses<T>>{Precedence::Parenthesize};
 template<int KIND>
 constexpr Precedence ToPrecedence<ComplexConstructor<KIND>>{
     Precedence::Parenthesize};
-template<typename T>
-constexpr Precedence ToPrecedence<Negate<T>>{Precedence::Negate};
-template<typename T>
-constexpr Precedence ToPrecedence<Power<T>>{Precedence::Power};
-template<typename T>
-constexpr Precedence ToPrecedence<RealToIntPower<T>>{Precedence::Power};
-template<typename T>
-constexpr Precedence ToPrecedence<Multiply<T>>{Precedence::Multiplicative};
-template<typename T>
-constexpr Precedence ToPrecedence<Divide<T>>{Precedence::Multiplicative};
-template<typename T>
-constexpr Precedence ToPrecedence<Add<T>>{Precedence::Additive};
-template<typename T>
-constexpr Precedence ToPrecedence<Subtract<T>>{Precedence::Additive};
-template<int KIND>
-constexpr Precedence ToPrecedence<Concat<KIND>>{Precedence::Additive};
-template<typename T>
-constexpr Precedence ToPrecedence<Relational<T>>{Precedence::Relational};
-template<int KIND>
-constexpr Precedence ToPrecedence<LogicalOperation<KIND>>{Precedence::Logical};
-template<int KIND>
-constexpr Precedence ToPrecedence<Not<KIND>>{Precedence::NOT};
 
 template<typename T>
 static constexpr Precedence GetPrecedence(const Expr<T> &expr) {
@@ -203,55 +205,45 @@ static constexpr Precedence GetPrecedence(const Expr<SomeType> &expr) {
       expr.u);
 }
 
+template<typename T> static bool IsNegatedScalarConstant(const Expr<T> &expr) {
+  static constexpr TypeCategory cat{T::category};
+  if constexpr (cat == TypeCategory::Integer || cat == TypeCategory::Real) {
+    if (expr.Rank() == 0) {
+      if (const auto *p{UnwrapExpr<Constant<T>>(expr)}) {
+        CHECK(p->size() == 1);
+        return (**p).IsNegative();
+      }
+    }
+  }
+  return false;
+}
+
+template<TypeCategory CAT>
+static bool IsNegatedScalarConstant(const Expr<SomeKind<CAT>> &expr) {
+  return std::visit(
+      [](const auto &x) { return IsNegatedScalarConstant(x); }, expr.u);
+}
+
 template<typename D, typename R, typename... O>
 std::ostream &Operation<D, R, O...>::AsFortran(std::ostream &o) const {
-  static constexpr Precedence lhsPrec{ToPrecedence<Operand<0>>};
+  Precedence lhsPrec{GetPrecedence(left())};
   o << derived().Prefix();
   if constexpr (operands == 1) {
-    bool parens{lhsPrec != Precedence::Primary};
-    if (parens) {
-      o << '(';
-    }
-    o << left();
-    if (parens) {
-      o << ')';
-    }
+    bool parens{lhsPrec < Precedence::Constant};
+    o << (parens ? "(" : "") << left() << (parens ? ")" : "");
   } else {
     static constexpr Precedence thisPrec{ToPrecedence<D>};
-    bool lhsParens{lhsPrec == Precedence::Parenthesize || lhsPrec > thisPrec ||
-        (lhsPrec == thisPrec && lhsPrec == Precedence::Power)};
-    if constexpr (lhsPrec == Precedence::Constant && thisPrec != Precedence::Additive) {
-      static constexpr TypeCategory cat{Operand<0>::Result::category};
-      if constexpr (cat == TypeCategory::Integer || cat == TypeCategory::Real) {
-        const auto *p{UnwrapExpr<Constant<Operand<0>>>(left())};
-        CHECK(p != nullptr);
-        lhsParens |= p->size() == 1 && (*p)->IsNegative();
-      }
-    }
-    if (lhsParens) {
-      o << '(';
-    }
-    o << left();
-    if (lhsParens) {
-      o << ')';
-    }
-    static constexpr Precedence rhsPrec{ToPrecedence<Operand<1>>};
-    bool rhsParens{rhsPrec == Precedence::Parenthesize || rhsPrec == Precedence::Negate || rhsPrec > thisPrec};
-    if constexpr (rhsPrec == Precedence::Constant) {
-      static constexpr TypeCategory cat{Operand<1>::Result::category};
-      if constexpr (cat == TypeCategory::Integer || cat == TypeCategory::Real) {
-        const auto *p{UnwrapExpr<Constant<Operand<1>>>(right())};
-        CHECK(p != nullptr);
-        rhsParens |= p->size() == 1 && (*p)->IsNegative();
-      }
-    }
-    if (rhsParens) {
-      o << '(';
-    }
-    o << derived().Infix() << right();
-    if (rhsParens) {
-      o << ')';
-    }
+    bool lhsParens{lhsPrec == Precedence::Parenthesize || lhsPrec < thisPrec ||
+        (lhsPrec == thisPrec && lhsPrec == Precedence::Power) ||
+        (thisPrec != Precedence::Additive && lhsPrec == Precedence::Constant &&
+            IsNegatedScalarConstant(left()))};
+    o << (lhsParens ? "(" : "") << left() << (lhsParens ? ")" : "");
+    o << derived().Infix();
+    Precedence rhsPrec{GetPrecedence(right())};
+    bool rhsParens{rhsPrec == Precedence::Parenthesize ||
+        rhsPrec == Precedence::Negate || rhsPrec < thisPrec ||
+        (rhsPrec == Precedence::Constant && IsNegatedScalarConstant(right()))};
+    o << (rhsParens ? "(" : "") << right() << (rhsParens ? ")" : "");
   }
   return o << derived().Suffix();
 }
@@ -323,7 +315,8 @@ std::ostream &EmitArray(std::ostream &o, const ImpliedDo<T> &implDo) {
 }
 
 template<typename T>
-std::ostream &EmitArray(std::ostream &o, const ArrayConstructorValues<T> &values) {
+std::ostream &EmitArray(
+    std::ostream &o, const ArrayConstructorValues<T> &values) {
   const char *sep{""};
   for (const auto &value : values.values()) {
     o << sep;
@@ -498,7 +491,9 @@ std::ostream &Triplet::AsFortran(std::ostream &o) const {
   return o;
 }
 
-std::ostream &Subscript::AsFortran(std::ostream &o) const { return EmitVar(o, u); }
+std::ostream &Subscript::AsFortran(std::ostream &o) const {
+  return EmitVar(o, u);
+}
 
 std::ostream &ArrayRef::AsFortran(std::ostream &o) const {
   EmitVar(o, base_);
@@ -532,12 +527,15 @@ std::ostream &CoarrayRef::AsFortran(std::ostream &o) const {
     separator = ',';
   }
   if (team_.has_value()) {
-    EmitVar(o << separator, team_, teamIsTeamNumber_ ? "TEAM_NUMBER=" : "TEAM=");
+    EmitVar(
+        o << separator, team_, teamIsTeamNumber_ ? "TEAM_NUMBER=" : "TEAM=");
   }
   return o << ']';
 }
 
-std::ostream &DataRef::AsFortran(std::ostream &o) const { return EmitVar(o, u); }
+std::ostream &DataRef::AsFortran(std::ostream &o) const {
+  return EmitVar(o, u);
+}
 
 std::ostream &Substring::AsFortran(std::ostream &o) const {
   EmitVar(o, parent_) << '(';

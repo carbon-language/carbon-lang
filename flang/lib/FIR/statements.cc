@@ -30,7 +30,7 @@ Addressable_impl *GetAddressable(Statement *stmt) {
 
 static std::string dump(const Expression &e) {
   std::stringstream stringStream;
-  stringStream << e.v;
+  stringStream << e;
   return stringStream.str();
 }
 
