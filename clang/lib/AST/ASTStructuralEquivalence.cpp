@@ -1561,6 +1561,7 @@ unsigned StructuralEquivalenceContext::getApplicableDiagnostic(
   case diag::err_odr_non_type_parameter_type_inconsistent:
     return diag::warn_odr_non_type_parameter_type_inconsistent;
   }
+  llvm_unreachable("Diagnostic kind not handled in preceding switch");
 }
 
 bool StructuralEquivalenceContext::IsEquivalent(Decl *D1, Decl *D2) {
