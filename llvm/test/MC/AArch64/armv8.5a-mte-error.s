@@ -553,6 +553,7 @@ mrs tfsr_el2
 mrs tfsr_el3
 mrs tfsr_el12
 mrs tfsre0_el1
+mrs gmid_el1
 
 // CHECK:      invalid operand for instruction
 // CHECK-NEXT: tco
@@ -570,6 +571,8 @@ mrs tfsre0_el1
 // CHECK-NEXT: tfsr_el12
 // CHECK:      invalid operand for instruction
 // CHECK-NEXT: tfsre0_el1
+// CHECK:      invalid operand for instruction
+// CHECK-NEXT: gmid_el1
 
 mrs tco, #0
 mrs tco, x0
@@ -580,6 +583,7 @@ mrs tfsr_el2, x4
 mrs tfsr_el3, x5
 mrs tfsr_el12, x6
 mrs tfsre0_el1, x7
+mrs gmid_el1, x7
 
 // CHECK:      invalid operand for instruction
 // CHECK-NEXT: tco, #0
@@ -599,6 +603,8 @@ mrs tfsre0_el1, x7
 // CHECK-NEXT: tfsr_el12
 // CHECK:      invalid operand for instruction
 // CHECK-NEXT: tfsre0_el1
+// CHECK:      invalid operand for instruction
+// CHECK-NEXT: gmid_el1
 
 msr tco
 msr gcr_el1
@@ -608,6 +614,7 @@ msr tfsr_el2
 msr tfsr_el3
 msr tfsr_el12
 msr tfsre0_el1
+msr gmid_el1
 
 // CHECK:      too few operands for instruction
 // CHECK-NEXT: tco
@@ -625,6 +632,8 @@ msr tfsre0_el1
 // CHECK-NEXT: tfsr_el12
 // CHECK:      too few operands for instruction
 // CHECK-NEXT: tfsre0_el1
+// CHECK:      expected writable system register or pstate
+// CHECK-NEXT: gmid_el1
 
 msr x0, tco
 msr x1, gcr_el1
@@ -634,6 +643,7 @@ msr x4, tfsr_el2
 msr x5, tfsr_el3
 msr x6, tfsr_el12
 msr x7, tfsre0_el1
+msr x7, gmid_el1
 
 // CHECK:      expected writable system register or pstate
 // CHECK-NEXT: tco
@@ -651,6 +661,13 @@ msr x7, tfsre0_el1
 // CHECK-NEXT: tfsr_el12
 // CHECK:      expected writable system register or pstate
 // CHECK-NEXT: tfsre0_el1
+// CHECK:      expected writable system register or pstate
+// CHECK-NEXT: gmid_el1
+
+msr gmid_el1, x7
+
+// CHECK:      expected writable system register or pstate
+// CHECK-NEXT: gmid_el1
 
 // Among the system registers added by MTE, only TCO can be used with MSR (imm).
 // The rest can only be used with MSR (reg).
@@ -661,6 +678,7 @@ msr tfsr_el2, #4
 msr tfsr_el3, #5
 msr tfsr_el12, #6
 msr tfsre0_el1, #7
+msr gmid_el1, #7
 
 // CHECK:      invalid operand for instruction
 // CHECK-NEXT: gcr_el1
@@ -676,6 +694,8 @@ msr tfsre0_el1, #7
 // CHECK-NEXT: tfsr_el12
 // CHECK:      invalid operand for instruction
 // CHECK-NEXT: tfsre0_el1
+// CHECK:      expected writable system register or pstate
+// CHECK-NEXT: gmid_el1
 
 // Xd cannot be the stack pointer, the rest can
 subps sp, x0, x1

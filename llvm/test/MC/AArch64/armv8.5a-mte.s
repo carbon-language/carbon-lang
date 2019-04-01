@@ -420,6 +420,7 @@ mrs x4, tfsr_el2
 mrs x5, tfsr_el3
 mrs x6, tfsr_el12
 mrs x7, tfsre0_el1
+mrs x7, gmid_el1
 
 // CHECK: mrs x0, TCO           // encoding: [0xe0,0x42,0x3b,0xd5]
 // CHECK: mrs x1, GCR_EL1       // encoding: [0xc1,0x10,0x38,0xd5]
@@ -429,6 +430,7 @@ mrs x7, tfsre0_el1
 // CHECK: mrs x5, TFSR_EL3      // encoding: [0x05,0x66,0x3e,0xd5]
 // CHECK: mrs x6, TFSR_EL12     // encoding: [0x06,0x66,0x3d,0xd5]
 // CHECK: mrs x7, TFSRE0_EL1    // encoding: [0x27,0x66,0x38,0xd5]
+// CHECK: mrs x7, GMID_EL1      // encoding: [0x87,0x00,0x39,0xd5]
 
 // NOMTE: expected readable system register
 // NOMTE-NEXT: tco
@@ -446,6 +448,8 @@ mrs x7, tfsre0_el1
 // NOMTE-NEXT: tfsr_el12
 // NOMTE: expected readable system register
 // NOMTE-NEXT: tfsre0_el1
+// NOMTE: expected readable system register
+// NOMTE-NEXT: gmid_el1
 
 msr tco, #0
 
