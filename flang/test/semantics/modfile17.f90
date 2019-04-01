@@ -111,9 +111,9 @@ end module
 !end type
 !type::defaulted(n1,n2,n4,n8)
 !integer(1),kind::n1=1_4
-!integer(2),kind::n2=(int(n1,kind=4)*2_4)
-!integer(4),kind::n4=(2_4*int(n2,kind=4))
-!integer(8),kind::n8=(12_4-n4)
+!integer(2),kind::n2=int(n1,kind=4)*2_4
+!integer(4),kind::n4=2_4*int(n2,kind=4)
+!integer(8),kind::n8=12_4-n4
 !type(capture(k1=n1,k2=n2,k4=n4,k8=n8))::cap
 !end type
 !type,extends(defaulted)::extension(k5)

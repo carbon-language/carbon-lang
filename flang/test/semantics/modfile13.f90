@@ -38,9 +38,9 @@ end
 !contains
 !  subroutine s(n,a,b,c,d)
 !    integer(4)::n
-!    character((n+1_4),1)::a
-!    character((n+2_4),2)::b
-!    character((n+3_4),1)::c
+!    character(n+1_4,1)::a
+!    character(n+2_4,2)::b
+!    character(n+3_4,1)::c
 !    character(*,1)::d
 !  end
 !end

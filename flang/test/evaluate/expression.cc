@@ -34,16 +34,16 @@ int main() {
   using DefaultIntegerExpr = Expr<Type<TypeCategory::Integer, 4>>;
   TEST(DefaultIntegerExpr::Result::AsFortran() == "Integer(4)");
   MATCH("666_4", AsFortran(DefaultIntegerExpr{666}));
-  MATCH("(-1_4)", AsFortran(-DefaultIntegerExpr{1}));
+  MATCH("-1_4", AsFortran(-DefaultIntegerExpr{1}));
   auto ex1{
       DefaultIntegerExpr{2} + DefaultIntegerExpr{3} * -DefaultIntegerExpr{4}};
-  MATCH("(2_4+(3_4*(-4_4)))", AsFortran(ex1));
+  MATCH("2_4+3_4*(-4_4))", AsFortran(ex1));
   Fortran::parser::CharBlock src;
   Fortran::parser::ContextualMessages messages{src, nullptr};
   FoldingContext context{messages};
   ex1 = Fold(context, std::move(ex1));
   MATCH("-10_4", AsFortran(ex1));
-  MATCH("(1_4/2_4)", AsFortran(DefaultIntegerExpr{1} / DefaultIntegerExpr{2}));
+  MATCH("1_4/2_4", AsFortran(DefaultIntegerExpr{1} / DefaultIntegerExpr{2}));
   DefaultIntegerExpr a{1};
   DefaultIntegerExpr b{2};
   MATCH("1_4", AsFortran(a));

@@ -374,5 +374,10 @@ template<typename T> struct Variable {
   }
   std::variant<Designator<Result>, FunctionRef<Result>> u;
 };
+
+#define INSTANTIATE_VARIABLE_TEMPLATES \
+  EXPAND_FOR_EACH_INTEGER_KIND(  \
+    TEMPLATE_INSTANTIATION, template class TypeParamInquiry, ) \
+  FOR_EACH_SPECIFIC_TYPE(template class Designator, )
 }
 #endif  // FORTRAN_EVALUATE_VARIABLE_H_
