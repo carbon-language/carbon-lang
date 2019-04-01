@@ -544,6 +544,7 @@ ldgm xzr, [x2]
 
 // NOMTE: instruction requires: mte
 // NOMTE: instruction requires: mte
+// NOMTE: instruction requires: mte
 
 stgm x0, [x1]
 stgm x1, [sp]
@@ -553,5 +554,18 @@ stgm xzr, [x2]
 // CHECK: stgm x1, [sp]  // encoding: [0xe1,0x03,0xa0,0xd9]
 // CHECK: stgm xzr, [x2] // encoding: [0x5f,0x00,0xa0,0xd9]
 
+// NOMTE: instruction requires: mte
+// NOMTE: instruction requires: mte
+// NOMTE: instruction requires: mte
+
+stzgm x0, [x1]
+stzgm x1, [sp]
+stzgm xzr, [x2]
+
+// CHECK: stzgm x0, [x1]  // encoding: [0x20,0x00,0x20,0xd9]
+// CHECK: stzgm x1, [sp]  // encoding: [0xe1,0x03,0x20,0xd9]
+// CHECK: stzgm xzr, [x2] // encoding: [0x5f,0x00,0x20,0xd9]
+
+// NOMTE: instruction requires: mte
 // NOMTE: instruction requires: mte
 // NOMTE: instruction requires: mte

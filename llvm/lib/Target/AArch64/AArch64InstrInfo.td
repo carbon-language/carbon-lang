@@ -1261,6 +1261,10 @@ def LDGM : MemTagVector<1, "ldgm", "\t$Rt, [$Rn]",
 def STGM : MemTagVector<0, "stgm", "\t$Rt, [$Rn]",
                    (outs), (ins GPR64:$Rt, GPR64sp:$Rn)>;
 
+def STZGM : MemTagVector<0, "stzgm", "\t$Rt, [$Rn]",
+                   (outs), (ins GPR64:$Rt, GPR64sp:$Rn)> {
+  let Inst{23} = 0;
+}
 
 defm STG   : MemTagStore<0b00, "stg">;
 defm STZG  : MemTagStore<0b01, "stzg">;

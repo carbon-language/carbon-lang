@@ -858,3 +858,26 @@ stgm x0, [#1]
 // CHECK-NEXT: stgm #1, [x1]
 // CHECK:      invalid operand for instruction
 // CHECK-NEXT: stgm x0, [#1]
+
+stzgm
+stzgm x0
+stzgm sp, [x0]
+stzgm w0, [x0]
+stzgm x0, [w0]
+stzgm #1, [x1]
+stzgm x0, [#1]
+
+// CHECK:      too few operands for instruction
+// CHECK-NEXT: stzgm
+// CHECK:      too few operands for instruction
+// CHECK-NEXT: stzgm x0
+// CHECK:      invalid operand for instruction
+// CHECK-NEXT: stzgm sp, [x0]
+// CHECK:      invalid operand for instruction
+// CHECK-NEXT: stzgm w0, [x0]
+// CHECK:      invalid operand for instruction
+// CHECK-NEXT: stzgm x0, [w0]
+// CHECK:      invalid operand for instruction
+// CHECK-NEXT: stzgm #1, [x1]
+// CHECK:      invalid operand for instruction
+// CHECK-NEXT: stzgm x0, [#1]
