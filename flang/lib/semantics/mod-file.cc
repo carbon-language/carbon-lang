@@ -437,13 +437,13 @@ void PutTypeParam(std::ostream &os, const Symbol &symbol) {
 
 void PutInit(std::ostream &os, const MaybeExpr &init) {
   if (init) {
-    os << '=' << init;
+    init->AsFortran(os << '=');
   }
 }
 
 void PutInit(std::ostream &os, const MaybeIntExpr &init) {
   if (init) {
-    os << '=' << init;
+    init->AsFortran(os << '=');
   }
 }
 
@@ -453,7 +453,7 @@ void PutBound(std::ostream &os, const Bound &x) {
   } else if (x.isDeferred()) {
     os << ':';
   } else {
-    os << x.GetExplicit();
+    x.GetExplicit()->AsFortran(os);
   }
 }
 
@@ -482,7 +482,7 @@ std::ostream &PutAttrs(std::ostream &os, Attrs attrs, const MaybeExpr &bindName,
   attrs.set(Attr::PUBLIC, false);  // no need to write PUBLIC
   attrs.set(Attr::EXTERNAL, false);  // no need to write EXTERNAL
   if (bindName) {
-    os << before << "bind(c, name=" << bindName << ')' << after;
+    bindName->AsFortran(os << before << "bind(c, name=") << ')' << after;
     attrs.set(Attr::BIND_C, false);
   }
   for (std::size_t i{0}; i < Attr_enumSize; ++i) {
