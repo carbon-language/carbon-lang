@@ -1,4 +1,4 @@
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+# Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(common)
-add_subdirectory(evaluate)
-add_subdirectory(FIR)
-add_subdirectory(parser)
-add_subdirectory(semantics)
-add_subdirectory(bridge)
+add_library(FortranBridge
+  ir-gen.cc
+)
+
+target_link_libraries(FortranBridge
+  FortranCommon
+  FortranFIR
+)
+

@@ -107,12 +107,11 @@ BasicBlock *SwitchRankStmt::defaultSucc() const {
 
 // check LoadInsn constraints
 static void CheckLoadInsn(const Value &v) {
-  std::visit(
-      common::visitors{
-          [](DataObject *) { /* ok */ },
-          [](Statement *s) { CHECK(GetAddressable(s)); },
-          [](auto) { CHECK(!"invalid load input"); },
-      },
+  std::visit(common::visitors{
+                 [](DataObject *) { /* ok */ },
+                 [](Statement *s) { CHECK(GetAddressable(s)); },
+                 [](auto) { CHECK(!"invalid load input"); },
+             },
       v.u);
 }
 LoadInsn::LoadInsn(const Value &addr) : address_{addr} {
