@@ -226,10 +226,17 @@ bool llvm::isPotentiallyReachable(const Instruction *A, const Instruction *B,
     Worklist.push_back(const_cast<BasicBlock*>(A->getParent()));
   }
 
-  if (A->getParent() == &A->getParent()->getParent()->getEntryBlock())
-    return true;
-  if (B->getParent() == &A->getParent()->getParent()->getEntryBlock())
-    return false;
+  if (DT) {
+    if (DT->isReachableFromEntry(A->getParent()) !=
+        DT->isReachableFromEntry(B->getParent()))
+      return false;
+    if (A->getParent() == &A->getParent()->getParent()->getEntryBlock() &&
+        DT->isReachableFromEntry(B->getParent()))
+      return true;
+    if (B->getParent() == &A->getParent()->getParent()->getEntryBlock() &&
+        DT->isReachableFromEntry(A->getParent()))
+      return false;
+  }
 
   return isPotentiallyReachableFromMany(
       Worklist, const_cast<BasicBlock *>(B->getParent()), DT, LI);

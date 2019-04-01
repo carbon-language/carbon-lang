@@ -385,3 +385,43 @@ TEST_F(IsPotentiallyReachableTest, ModifyTest) {
   S[0] = OldBB;
   ExpectPath(true);
 }
+
+TEST_F(IsPotentiallyReachableTest, UnreachableFromEntryTest) {
+  ParseAssembly("define void @test() {\n"
+                "entry:\n"
+                "  %A = bitcast i8 undef to i8\n"
+                "  ret void\n"
+                "not.reachable:\n"
+                "  %B = bitcast i8 undef to i8\n"
+                "  ret void\n"
+                "}");
+  ExpectPath(false);
+}
+
+TEST_F(IsPotentiallyReachableTest, UnreachableBlocksTest1) {
+  ParseAssembly("define void @test() {\n"
+                "entry:\n"
+                "  ret void\n"
+                "not.reachable.1:\n"
+                "  %A = bitcast i8 undef to i8\n"
+                "  br label %not.reachable.2\n"
+                "not.reachable.2:\n"
+                "  %B = bitcast i8 undef to i8\n"
+                "  ret void\n"
+                "}");
+  ExpectPath(true);
+}
+
+TEST_F(IsPotentiallyReachableTest, UnreachableBlocksTest2) {
+  ParseAssembly("define void @test() {\n"
+                "entry:\n"
+                "  ret void\n"
+                "not.reachable.1:\n"
+                "  %B = bitcast i8 undef to i8\n"
+                "  br label %not.reachable.2\n"
+                "not.reachable.2:\n"
+                "  %A = bitcast i8 undef to i8\n"
+                "  ret void\n"
+                "}");
+  ExpectPath(false);
+}
