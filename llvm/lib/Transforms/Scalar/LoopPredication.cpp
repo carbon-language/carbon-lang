@@ -654,17 +654,17 @@ bool LoopPredication::widenGuardConditions(IntrinsicInst *Guard,
 }
 
 bool LoopPredication::widenWidenableBranchGuardConditions(
-    BranchInst *Guard, SCEVExpander &Expander) {
-  assert(isGuardAsWidenableBranch(Guard) && "Must be!");
+    BranchInst *BI, SCEVExpander &Expander) {
+  assert(isGuardAsWidenableBranch(BI) && "Must be!");
   LLVM_DEBUG(dbgs() << "Processing guard:\n");
-  LLVM_DEBUG(Guard->dump());
+  LLVM_DEBUG(BI->dump());
 
   TotalConsidered++;
   SmallVector<Value *, 4> Checks;
   IRBuilder<> Builder(cast<Instruction>(Preheader->getTerminator()));
   Value *Condition = nullptr, *WidenableCondition = nullptr;
   BasicBlock *GBB = nullptr, *DBB = nullptr;
-  parseWidenableBranch(Guard, Condition, WidenableCondition, GBB, DBB);
+  parseWidenableBranch(BI, Condition, WidenableCondition, GBB, DBB);
   unsigned NumWidened = collectChecks(Checks, Condition, Expander, Builder);
   if (NumWidened == 0)
     return false;
@@ -672,7 +672,7 @@ bool LoopPredication::widenWidenableBranchGuardConditions(
   TotalWidened += NumWidened;
 
   // Emit the new guard condition
-  Builder.SetInsertPoint(Guard);
+  Builder.SetInsertPoint(BI);
   Value *LastCheck = nullptr;
   for (auto *Check : Checks)
     if (!LastCheck)
@@ -682,9 +682,9 @@ bool LoopPredication::widenWidenableBranchGuardConditions(
   // Make sure that the check contains widenable condition and therefore can be
   // further widened.
   LastCheck = Builder.CreateAnd(LastCheck, WidenableCondition);
-  auto *OldCond = Guard->getOperand(0);
-  Guard->setOperand(0, LastCheck);
-  assert(isGuardAsWidenableBranch(Guard) &&
+  auto *OldCond = BI->getOperand(0);
+  BI->setOperand(0, LastCheck);
+  assert(isGuardAsWidenableBranch(BI) &&
          "Stopped being a guard after transform?");
   RecursivelyDeleteTriviallyDeadInstructions(OldCond);
 
