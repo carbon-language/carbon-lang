@@ -133,15 +133,17 @@ std::ostream &ProcedureRef::AsFortran(std::ostream &o) const {
 // Operator precedence formatting; insert parentheses around operands
 // only when necessary.
 
-enum class Precedence {  // in increasing order of precedence
+enum class Precedence {  // in increasing order for sane comparisons
   DefinedBinary,
-  NOT,  // which binds *less* tightly in Fortran than logicals & relations
-  Logical,  // .OR., .AND., .EQV., .NEQV.
+  Or,
+  And,
+  Equivalence,  // .EQV., .NEQV.
+  Not,  // which binds *less* tightly in Fortran than relations
   Relational,
-  Additive,  // +, -, //
+  Additive,  // +, -, and (arbitrarily) //
+  Negate,  // which binds *less* tightly than *, /, **
   Multiplicative,  // *, /
   Power,  // **, which is right-associative unlike the other dyadic operators
-  Negate,
   DefinedUnary,
   Parenthesize,  // (x), (real, imaginary)
   Constant,  // parenthesize if negative integer/real operand
@@ -151,27 +153,27 @@ enum class Precedence {  // in increasing order of precedence
 template<typename A> constexpr Precedence ToPrecedence{Precedence::Primary};
 
 template<int KIND>
-constexpr Precedence ToPrecedence<Not<KIND>>{Precedence::NOT};
+constexpr Precedence ToPrecedence<LogicalOperation<KIND>>{Precedence::Or};
 template<int KIND>
-constexpr Precedence ToPrecedence<LogicalOperation<KIND>>{Precedence::Logical};
+constexpr Precedence ToPrecedence<Not<KIND>>{Precedence::Not};
 template<typename T>
 constexpr Precedence ToPrecedence<Relational<T>>{Precedence::Relational};
-template<int KIND>
-constexpr Precedence ToPrecedence<Concat<KIND>>{Precedence::Additive};
-template<typename T>
-constexpr Precedence ToPrecedence<Subtract<T>>{Precedence::Additive};
 template<typename T>
 constexpr Precedence ToPrecedence<Add<T>>{Precedence::Additive};
 template<typename T>
-constexpr Precedence ToPrecedence<Divide<T>>{Precedence::Multiplicative};
+constexpr Precedence ToPrecedence<Subtract<T>>{Precedence::Additive};
+template<int KIND>
+constexpr Precedence ToPrecedence<Concat<KIND>>{Precedence::Additive};
+template<typename T>
+constexpr Precedence ToPrecedence<Negate<T>>{Precedence::Negate};
 template<typename T>
 constexpr Precedence ToPrecedence<Multiply<T>>{Precedence::Multiplicative};
 template<typename T>
-constexpr Precedence ToPrecedence<RealToIntPower<T>>{Precedence::Power};
+constexpr Precedence ToPrecedence<Divide<T>>{Precedence::Multiplicative};
 template<typename T>
 constexpr Precedence ToPrecedence<Power<T>>{Precedence::Power};
 template<typename T>
-constexpr Precedence ToPrecedence<Negate<T>>{Precedence::Negate};
+constexpr Precedence ToPrecedence<RealToIntPower<T>>{Precedence::Power};
 template<typename T>
 constexpr Precedence ToPrecedence<Constant<T>>{Precedence::Constant};
 template<typename T>
@@ -183,7 +185,22 @@ constexpr Precedence ToPrecedence<ComplexConstructor<KIND>>{
 template<typename T>
 static constexpr Precedence GetPrecedence(const Expr<T> &expr) {
   return std::visit(
-      [](const auto &x) { return ToPrecedence<std::decay_t<decltype(x)>>; },
+      [](const auto &x) {
+        static constexpr Precedence prec{
+            ToPrecedence<std::decay_t<decltype(x)>>};
+        if constexpr (prec == Precedence::Or) {
+          // Distinguish the four logical binary operations.
+          switch (x.logicalOperator) {
+          case LogicalOperator::And: return Precedence::And;
+          case LogicalOperator::Or: return Precedence::Or;
+          case LogicalOperator::Eqv:
+          case LogicalOperator::Neqv:
+            return Precedence::Equivalence;
+            CRASH_NO_CASE;
+          }
+        }
+        return prec;
+      },
       expr.u);
 }
 template<TypeCategory CAT>
@@ -228,11 +245,12 @@ template<typename D, typename R, typename... O>
 std::ostream &Operation<D, R, O...>::AsFortran(std::ostream &o) const {
   Precedence lhsPrec{GetPrecedence(left())};
   o << derived().Prefix();
+  static constexpr Precedence thisPrec{ToPrecedence<D>};
   if constexpr (operands == 1) {
-    bool parens{lhsPrec < Precedence::Constant};
+    bool parens{lhsPrec < Precedence::Constant &&
+        !(thisPrec == Precedence::Not && lhsPrec == Precedence::Relational)};
     o << (parens ? "(" : "") << left() << (parens ? ")" : "");
   } else {
-    static constexpr Precedence thisPrec{ToPrecedence<D>};
     bool lhsParens{lhsPrec == Precedence::Parenthesize || lhsPrec < thisPrec ||
         (lhsPrec == thisPrec && lhsPrec == Precedence::Power) ||
         (thisPrec != Precedence::Additive && lhsPrec == Precedence::Constant &&
