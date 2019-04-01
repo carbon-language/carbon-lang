@@ -733,13 +733,13 @@ listed below are folded using host independent implementations.
 | LOGICAL | BGE, BGT, BLE, BLT |
 
 ### Intrinsic Functions with Host Dependent Folding Support
-Implementations using the host runtime may not be available for all f18 supported
-type kind depending on the host hardware types and the libraries available on the host.
+Implementations using the host runtime may not be available for all supported
+f18 types depending on the host hardware types and the libraries available on the host.
 The actual support on a host depends on what the host hardware types are.
 The list below gives the functions that are folded using host runtime and the related C/C++ types.
 F18 automatically detects if these types match an f18 scalar type. If so,
 folding of the intrinsic functions will be possible for the related f18 scalar type,
-else an error message will be produced by f18 when attempting to fold related intrinsic functions.
+otherwise an error message will be produced by f18 when attempting to fold related intrinsic functions.
 
 | C/C++ Host Type | Intrinsic Functions with Host Standard C++ Library Based Folding Support |
 | --- | --- |
