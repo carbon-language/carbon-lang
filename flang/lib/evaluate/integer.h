@@ -587,8 +587,8 @@ public:
     return unchanged.IOR(middle).IOR(least);
   }
 
-  // Double shifts, aka shifts with specific fill
-  constexpr Integer DSHIFTL(const Integer &fill, int count) const {
+  // Double shifts, aka shifts with specific fill.
+  constexpr Integer SHIFTLWithFill(const Integer &fill, int count) const {
     if (count <= 0) {
       return *this;
     } else if (count >= 2 * bits) {
@@ -602,7 +602,7 @@ public:
     }
   }
 
-  constexpr Integer DSHIFTR(const Integer &fill, int count) const {
+  constexpr Integer SHIFTRWithFill(const Integer &fill, int count) const {
     if (count <= 0) {
       return *this;
     } else if (count >= 2 * bits) {
@@ -614,6 +614,16 @@ public:
     } else {
       return SHIFTR(count).IOR(fill.SHIFTL(bits - count));
     }
+  }
+
+  constexpr Integer DSHIFTL(const Integer &fill, int count) const {
+    // DSHIFTL(I,J) shifts I:J left; the second argument is the right fill.
+    return SHIFTLWithFill(fill, count);
+  }
+
+  constexpr Integer DSHIFTR(const Integer &value, int count) const {
+    // DSHIFTR(I,J) shifts I:J right; the *first* argument is the left fill.
+    return value.SHIFTRWithFill(*this, count);
   }
 
   // Vacated upper bits are filled with zeroes.

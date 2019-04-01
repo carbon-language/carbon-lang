@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -174,7 +174,7 @@ ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Multiply(
         } else {
           sticky = !product.lower.IAND(product.lower.MASKR(rshift)).IsZero();
         }
-        product.lower = product.lower.DSHIFTR(product.upper, rshift);
+        product.lower = product.lower.SHIFTRWithFill(product.upper, rshift);
         product.upper = product.upper.SHIFTR(rshift);
         if (sticky) {
           product.lower = product.lower.IBSET(0);
@@ -189,7 +189,7 @@ ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Multiply(
         lshift = exponent - 1;
       }
       exponent -= lshift;
-      product.upper = product.upper.DSHIFTL(product.lower, lshift);
+      product.upper = product.upper.SHIFTLWithFill(product.lower, lshift);
       product.lower = product.lower.SHIFTL(lshift);
       RoundingBits roundingBits{product.lower, product.lower.bits};
       NormalizeAndRound(result, isNegative, exponent, product.upper, rounding,

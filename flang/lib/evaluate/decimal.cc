@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ public:
     bool sticky{false};
     while (!product.upper.IsZero()) {
       sticky |= product.lower.BTEST(0);
-      product.lower = product.lower.DSHIFTR(product.upper, 1);
+      product.lower = product.lower.SHIFTRWithFill(product.upper, 1);
       product.upper = product.upper.SHIFTR(1);
       ++exponent_;
     }
