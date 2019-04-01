@@ -790,6 +790,8 @@ public:
   bool Pre(const parser::CharBlock &) { return true; }
   void Post(const parser::CharBlock &) {}
 
+  template<typename T> bool Pre(const parser::Statement<T> &) { return true; }
+  template<typename T> void Post(const parser::Statement<T> &) {}
   template<typename T> bool Pre(const parser::UnlabeledStatement<T> &) {
     return true;
   }

@@ -51,10 +51,8 @@ template<typename PA> inline constexpr auto statement(const PA &p) {
 // unlabeledStatement() is basically statement() for those few situations
 // in Fortran where a statement cannot have a label.
 template<typename PA> inline constexpr auto unlabeledStatement(const PA &p) {
-  return skipStuffBeforeStatement >>
-      sourced(
-          construct<UnlabeledStatement<typename PA::resultType>>(space >> p)) /
-      endOfStmt;
+  return space >>
+      sourced(construct<UnlabeledStatement<typename PA::resultType>>(p));
 }
 
 // This unambiguousStatement() variant of statement() provides better error
