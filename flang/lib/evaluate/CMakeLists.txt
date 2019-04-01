@@ -28,6 +28,7 @@ add_library(FortranEvaluate
   intrinsics-library.cc
   logical.cc
   real.cc
+  shape.cc
   static-data.cc
   tools.cc
   type.cc

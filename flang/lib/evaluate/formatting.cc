@@ -510,18 +510,24 @@ std::ostream &ArrayRef::AsFortran(std::ostream &o) const {
 }
 
 std::ostream &CoarrayRef::AsFortran(std::ostream &o) const {
-  for (const Symbol *sym : base_) {
-    EmitVar(o, *sym);
+  bool first{true};
+  for (const auto &part : baseDataRef_) {
+    if (first) {
+      first = false;
+    } else {
+      o << '%';
+    }
+    EmitVar(o, *part.symbol);
+    char ch{'('};
+    for (const auto &sscript : part.subscript) {
+      EmitVar(o << ch, sscript);
+      ch = ',';
+    }
+    if (ch == ',') {
+      o << ')';
+    }
   }
-  char separator{'('};
-  for (const auto &ss : subscript_) {
-    EmitVar(o << separator, ss);
-    separator = ',';
-  }
-  if (separator == ',') {
-    o << ')';
-  }
-  separator = '[';
+  char separator{'['};
   for (const auto &css : cosubscript_) {
     EmitVar(o << separator, css);
     separator = ',';
@@ -564,6 +570,28 @@ std::ostream &Designator<T>::AsFortran(std::ostream &o) const {
       },
       u);
   return o;
+}
+
+std::ostream &DescriptorInquiry::AsFortran(std::ostream &o) const {
+  switch (field_) {
+  case Field::LowerBound: o << "lbound("; break;
+  case Field::Extent: o << "%EXTENT("; break;
+  case Field::Stride: o << "%STRIDE("; break;
+  }
+  std::visit(
+      common::visitors{
+          [&](const Symbol *sym) {
+            if (sym != nullptr) {
+              EmitVar(o, *sym);
+            }
+          },
+          [&](const Component &comp) { EmitVar(o, comp); },
+      },
+      base_);
+  if (dimension_ > 0) {
+    o << ",dim=" << dimension_;
+  }
+  return o << ')';
 }
 
 INSTANTIATE_CONSTANT_TEMPLATES

@@ -69,7 +69,7 @@ struct BaseObject {
 // R913 structure-component & C920: Defined to be a multi-part
 // data-ref whose last part has no subscripts (or image-selector, although
 // that isn't explicit in the document).  Pointer and allocatable components
-// are not explicitly indirected in this representation (TODO: yet?)
+// are not explicitly indirected in this representation.
 // Complex components (%RE, %IM) are isolated below in ComplexPart.
 // (Type parameter inquiries look like component references but are distinct
 // constructs and not represented by this class.)
@@ -204,22 +204,35 @@ private:
 // C824 severely limits the usage of derived types with coarray ultimate
 // components: they can't be pointers, allocatables, arrays, coarrays, or
 // function results.  They can be components of other derived types.
+// Although the F'2018 Standard never prohibits multiple image-selectors
+// in the same data-ref or designator, nor the presence of an image-selector
+// after a part-ref with rank, the constraints on the derived types that
+// would have be involved make it impossible to declare an object that
+// could be referenced in these ways.
 // C930 precludes having both TEAM= and TEAM_NUMBER=.
 // TODO C931 prohibits the use of a coindexed object as a stat-variable.
 class CoarrayRef {
 public:
-  CLASS_BOILERPLATE(CoarrayRef)
-  CoarrayRef(std::vector<const Symbol *> &&,
-      std::vector<Expr<SubscriptInteger>> &&,
-      std::vector<Expr<SubscriptInteger>> &&);
+  struct BasePartRef {
+    explicit BasePartRef(const Symbol &s) : symbol{&s} {}
+    BasePartRef(const Symbol &s, std::vector<Expr<SubscriptInteger>> &&ss)
+      : symbol{&s}, subscript{std::move(ss)} {}
+    CLASS_BOILERPLATE(BasePartRef)
+    bool operator==(const BasePartRef &) const;
+    const Symbol *symbol;
+    std::vector<Expr<SubscriptInteger>> subscript;
+  };
+  using BaseDataRef = std::vector<BasePartRef>;
 
-  const std::vector<const Symbol *> &base() const { return base_; }
-  const std::vector<Expr<SubscriptInteger>> &subscript() const {
-    return subscript_;
-  }
+  CLASS_BOILERPLATE(CoarrayRef)
+  CoarrayRef(BaseDataRef &&, std::vector<Expr<SubscriptInteger>> &&);
+
+  const BaseDataRef &baseDataRef() const { return baseDataRef_; }
+  BaseDataRef &baseDataRef() { return baseDataRef_; }
   const std::vector<Expr<SubscriptInteger>> &cosubscript() const {
     return cosubscript_;
   }
+  std::vector<Expr<SubscriptInteger>> &cosubscript() { return cosubscript_; }
 
   // These integral expressions for STAT= and TEAM= must be variables
   // (i.e., Designator or pointer-valued FunctionRef).
@@ -229,16 +242,16 @@ public:
   bool teamIsTeamNumber() const { return teamIsTeamNumber_; }
   CoarrayRef &set_team(Expr<SomeInteger> &&, bool isTeamNumber = false);
 
-  int Rank() const;
-  const Symbol &GetFirstSymbol() const { return *base_.front(); }
-  const Symbol &GetLastSymbol() const { return *base_.back(); }
+  int Rank() const { return 0; }
+  const Symbol &GetFirstSymbol() const;
+  const Symbol &GetLastSymbol() const;
   Expr<SubscriptInteger> LEN() const;
   bool operator==(const CoarrayRef &) const;
   std::ostream &AsFortran(std::ostream &) const;
 
 private:
-  std::vector<const Symbol *> base_;
-  std::vector<Expr<SubscriptInteger>> subscript_, cosubscript_;
+  BaseDataRef baseDataRef_;
+  std::vector<Expr<SubscriptInteger>> cosubscript_;
   std::optional<common::CopyableIndirection<Expr<SomeInteger>>> stat_, team_;
   bool teamIsTeamNumber_{false};  // false: TEAM=, true: TEAM_NUMBER=
 };
@@ -375,9 +388,35 @@ template<typename T> struct Variable {
   std::variant<Designator<Result>, FunctionRef<Result>> u;
 };
 
+class DescriptorInquiry {
+public:
+  using Result = SubscriptInteger;
+  ENUM_CLASS(Field, LowerBound, Extent, Stride)
+  // TODO: Also type parameters and/or CHARACTER length?
+
+  CLASS_BOILERPLATE(DescriptorInquiry)
+  DescriptorInquiry(const Symbol &, Field, int);
+  DescriptorInquiry(Component &&, Field, int);
+  DescriptorInquiry(SymbolOrComponent &&, Field, int);
+
+  SymbolOrComponent &base() { return base_; }
+  const SymbolOrComponent &base() const { return base_; }
+  Field field() const { return field_; }
+  int dimension() const { return dimension_; }
+
+  static constexpr int Rank() { return 0; }  // always scalar
+  bool operator==(const DescriptorInquiry &) const;
+  std::ostream &AsFortran(std::ostream &) const;
+
+private:
+  SymbolOrComponent base_{nullptr};
+  Field field_;
+  int dimension_{0};
+};
+
 #define INSTANTIATE_VARIABLE_TEMPLATES \
-  EXPAND_FOR_EACH_INTEGER_KIND(  \
-    TEMPLATE_INSTANTIATION, template class TypeParamInquiry, ) \
+  EXPAND_FOR_EACH_INTEGER_KIND( \
+      TEMPLATE_INSTANTIATION, template class TypeParamInquiry, ) \
   FOR_EACH_SPECIFIC_TYPE(template class Designator, )
 }
 #endif  // FORTRAN_EVALUATE_VARIABLE_H_

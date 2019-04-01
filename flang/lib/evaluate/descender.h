@@ -210,16 +210,23 @@ public:
     Visit(aref.subscript());
   }
 
+  void Descend(const CoarrayRef::BasePartRef &part) {
+    Visit(*part.symbol);
+    Visit(part.subscript);
+  }
+  void Descend(CoarrayRef::BasePartRef &part) {
+    Visit(*part.symbol);
+    Visit(part.subscript);
+  }
+
   void Descend(const CoarrayRef &caref) {
-    Visit(caref.base());
-    Visit(caref.subscript());
+    Visit(caref.baseDataRef());
     Visit(caref.cosubscript());
     Visit(caref.stat());
     Visit(caref.team());
   }
   void Descend(CoarrayRef &caref) {
-    Visit(caref.base());
-    Visit(caref.subscript());
+    Visit(caref.baseDataRef());
     Visit(caref.cosubscript());
     Visit(caref.stat());
     Visit(caref.team());

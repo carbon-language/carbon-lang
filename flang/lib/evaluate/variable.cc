@@ -69,12 +69,14 @@ bool Triplet::IsStrideOne() const {
   }
 }
 
-CoarrayRef::CoarrayRef(std::vector<const Symbol *> &&c,
-    std::vector<Expr<SubscriptInteger>> &&ss,
-    std::vector<Expr<SubscriptInteger>> &&css)
-  : base_(std::move(c)), subscript_(std::move(ss)),
-    cosubscript_(std::move(css)) {
-  CHECK(!base_.empty());
+bool CoarrayRef::BasePartRef::operator==(const BasePartRef &that) const {
+  return symbol == that.symbol && subscript == that.subscript;
+}
+
+CoarrayRef::CoarrayRef(
+    CoarrayRef::BaseDataRef &&base, std::vector<Expr<SubscriptInteger>> &&css)
+  : baseDataRef_{std::move(base)}, cosubscript_(std::move(css)) {
+  CHECK(!baseDataRef_.empty());
 }
 
 std::optional<Expr<SomeInteger>> CoarrayRef::stat() const {
@@ -104,6 +106,14 @@ CoarrayRef &CoarrayRef::set_team(Expr<SomeInteger> &&v, bool isTeamNumber) {
   team_.emplace(std::move(v));
   teamIsTeamNumber_ = isTeamNumber;
   return *this;
+}
+
+const Symbol &CoarrayRef::GetFirstSymbol() const {
+  return *baseDataRef_.front().symbol;
+}
+
+const Symbol &CoarrayRef::GetLastSymbol() const {
+  return *baseDataRef_.back().symbol;
 }
 
 void Substring::SetBounds(std::optional<Expr<SubscriptInteger>> &lower,
@@ -213,6 +223,31 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
   return std::nullopt;
 }
 
+DescriptorInquiry::DescriptorInquiry(const Symbol &symbol, Field field, int dim)
+  : base_{&symbol}, field_{field}, dimension_{dim} {
+  CHECK(IsDescriptor(symbol));
+  CHECK(dim >= 1 && dim <= symbol.Rank());
+}
+DescriptorInquiry::DescriptorInquiry(
+    Component &&component, Field field, int dim)
+  : base_{std::move(component)}, field_{field}, dimension_{dim} {
+  const Symbol &symbol{std::get<Component>(base_).GetLastSymbol()};
+  CHECK(IsDescriptor(symbol));
+  CHECK(dim >= 1 && dim <= symbol.Rank());
+}
+DescriptorInquiry::DescriptorInquiry(
+    SymbolOrComponent &&x, Field field, int dim)
+  : base_{std::move(x)}, field_{field}, dimension_{dim} {
+  const Symbol *symbol{std::visit(
+      common::visitors{
+          [](const Symbol *s) { return s; },
+          [](Component &c) { return &c.GetLastSymbol(); },
+      },
+      base_)};
+  CHECK(symbol != nullptr && IsDescriptor(*symbol));
+  CHECK(dim >= 1 && dim <= symbol->Rank());
+}
+
 // LEN()
 static Expr<SubscriptInteger> SymbolLEN(const Symbol &sym) {
   return AsExpr(Constant<SubscriptInteger>{0});  // TODO
@@ -243,7 +278,7 @@ Expr<SubscriptInteger> ArrayRef::LEN() const {
 }
 
 Expr<SubscriptInteger> CoarrayRef::LEN() const {
-  return SymbolLEN(*base_.back());
+  return SymbolLEN(GetLastSymbol());
 }
 
 Expr<SubscriptInteger> DataRef::LEN() const {
@@ -331,14 +366,6 @@ int ArrayRef::Rank() const {
           [=](const Component &c) { return c.Rank(); },
       },
       base_);
-}
-
-int CoarrayRef::Rank() const {
-  int rank{0};
-  for (const auto &expr : subscript_) {
-    rank += expr.Rank();
-  }
-  return rank;
 }
 
 int DataRef::Rank() const {
@@ -504,7 +531,7 @@ bool ArrayRef::operator==(const ArrayRef &that) const {
   return base_ == that.base_ && subscript_ == that.subscript_;
 }
 bool CoarrayRef::operator==(const CoarrayRef &that) const {
-  return base_ == that.base_ && subscript_ == that.subscript_ &&
+  return baseDataRef_ == that.baseDataRef_ &&
       cosubscript_ == that.cosubscript_ && stat_ == that.stat_ &&
       team_ == that.team_ && teamIsTeamNumber_ == that.teamIsTeamNumber_;
 }
@@ -517,6 +544,10 @@ bool ComplexPart::operator==(const ComplexPart &that) const {
 }
 bool ProcedureRef::operator==(const ProcedureRef &that) const {
   return proc_ == that.proc_ && arguments_ == that.arguments_;
+}
+bool DescriptorInquiry::operator==(const DescriptorInquiry &that) const {
+  return field_ == that.field_ && base_ == that.base_ &&
+      dimension_ == that.dimension_;
 }
 
 INSTANTIATE_VARIABLE_TEMPLATES
