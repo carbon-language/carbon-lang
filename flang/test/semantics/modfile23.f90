@@ -18,6 +18,7 @@ module m1
   integer(8) :: i
   type t1
     sequence
+    integer :: j
   end type
   type t2
   end type
@@ -27,6 +28,7 @@ end
 ! integer(8)::i
 ! type::t1
 !  sequence
+!  integer(4)::j
 ! end type
 ! type::t2
 ! end type
