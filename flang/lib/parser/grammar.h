@@ -2015,8 +2015,8 @@ TYPE_CONTEXT_PARSER("END FORALL statement"_en_US,
 
 // R1055 forall-stmt -> FORALL concurrent-header forall-assignment-stmt
 TYPE_CONTEXT_PARSER("FORALL statement"_en_US,
-    construct<ForallStmt>(
-        "FORALL" >> indirect(concurrentHeader), forallAssignmentStmt))
+    construct<ForallStmt>("FORALL" >> indirect(concurrentHeader),
+        unlabeledStatement(forallAssignmentStmt)))
 
 // R1101 block -> [execution-part-construct]...
 constexpr auto block{many(executionPartConstruct)};
@@ -2201,7 +2201,8 @@ TYPE_CONTEXT_PARSER("IF construct"_en_US,
 
 // R1139 if-stmt -> IF ( scalar-logical-expr ) action-stmt
 TYPE_CONTEXT_PARSER("IF statement"_en_US,
-    construct<IfStmt>("IF" >> parenthesized(scalarLogicalExpr), actionStmt))
+    construct<IfStmt>("IF" >> parenthesized(scalarLogicalExpr),
+        unlabeledStatement(actionStmt)))
 
 // R1140 case-construct ->
 //         select-case-stmt [case-stmt block]... end-select-stmt

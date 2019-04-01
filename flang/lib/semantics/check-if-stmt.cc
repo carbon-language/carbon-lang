@@ -26,13 +26,13 @@ void IfStmtChecker::Leave(const parser::IfStmt &ifStmt) {
   auto &expr{std::get<parser::ScalarLogicalExpr>(ifStmt.t).thing.thing.value()};
   CheckScalarLogicalExpr(expr, context_.messages());
   // C1143 Check that the action stmt is not an if stmt
-  auto &actionStmt{std::get<parser::ActionStmt>(ifStmt.t)};
+  const auto &body{std::get<parser::UnlabeledStmt>(ifStmt.t)};
+  const auto &actionStmt{body.statement};
   if (auto *actionIfStmt{
           std::get_if<common::Indirection<parser::IfStmt>>(&actionStmt.u)}) {
-    // TODO: get the source position from the action stmt
     suppress_unused_variable_warning(actionIfStmt);
     context_.messages().Say(
-        expr.source, "IF statement is not allowed in IF statement"_err_en_US);
+        body.source, "IF statement is not allowed in IF statement"_err_en_US);
   }
 }
 

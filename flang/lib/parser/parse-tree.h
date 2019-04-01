@@ -323,12 +323,15 @@ using Label = std::uint64_t;  // validated later, must be in [1..99999]
 
 // A wrapper for xzy-stmt productions that are statements, so that
 // source provenances and labels have a uniform representation.
-template<typename A> struct Statement {
-  Statement(std::optional<long> &&lab, A &&s)
-    : label(std::move(lab)), statement(std::move(s)) {}
+template<typename A> struct UnlabeledStatement {
+  explicit UnlabeledStatement(A &&s) : statement(std::move(s)) {}
   CharBlock source;
-  std::optional<Label> label;
   A statement;
+};
+template<typename A> struct Statement : public UnlabeledStatement<A> {
+  Statement(std::optional<long> &&lab, A &&s)
+    : UnlabeledStatement<A>{std::move(s)}, label(std::move(lab)) {}
+  std::optional<Label> label;
 };
 
 // Error recovery marker
@@ -2003,7 +2006,9 @@ struct ForallAssignmentStmt {
 // R1055 forall-stmt -> FORALL concurrent-header forall-assignment-stmt
 struct ForallStmt {
   TUPLE_CLASS_BOILERPLATE(ForallStmt);
-  std::tuple<common::Indirection<ConcurrentHeader>, ForallAssignmentStmt> t;
+  std::tuple<common::Indirection<ConcurrentHeader>,
+      UnlabeledStatement<ForallAssignmentStmt>>
+      t;
 };
 
 // R1052 forall-body-construct ->
@@ -2249,7 +2254,7 @@ struct IfConstruct {
 // R1139 if-stmt -> IF ( scalar-logical-expr ) action-stmt
 struct IfStmt {
   TUPLE_CLASS_BOILERPLATE(IfStmt);
-  std::tuple<ScalarLogicalExpr, ActionStmt> t;
+  std::tuple<ScalarLogicalExpr, UnlabeledStatement<ActionStmt>> t;
 };
 
 // R1141 select-case-stmt -> [case-construct-name :] SELECT CASE ( case-expr )

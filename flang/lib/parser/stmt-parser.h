@@ -48,6 +48,15 @@ template<typename PA> inline constexpr auto statement(const PA &p) {
   return unterminatedStatement(p) / endOfStmt;
 }
 
+// unlabeledStatement() is basically statement() for those few situations
+// in Fortran where a statement cannot have a label.
+template<typename PA> inline constexpr auto unlabeledStatement(const PA &p) {
+  return skipStuffBeforeStatement >>
+      sourced(
+          construct<UnlabeledStatement<typename PA::resultType>>(space >> p)) /
+      endOfStmt;
+}
+
 // This unambiguousStatement() variant of statement() provides better error
 // recovery for contexts containing statements that might have trailing
 // garbage, but it must be used only when no instance of the statement in

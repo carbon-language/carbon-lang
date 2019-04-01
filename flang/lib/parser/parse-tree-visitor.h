@@ -291,17 +291,17 @@ template<typename T, typename M> void Walk(DefaultChar<T> &x, M &mutator) {
   }
 }
 
-template<typename T, typename V> void Walk(const Statement<T> &x, V &visitor) {
+template<typename T, typename V>
+void Walk(const UnlabeledStatement<T> &x, V &visitor) {
   if (visitor.Pre(x)) {
-    // N.B. the label is not traversed
     Walk(x.source, visitor);
     Walk(x.statement, visitor);
     visitor.Post(x);
   }
 }
-template<typename T, typename M> void Walk(Statement<T> &x, M &mutator) {
+template<typename T, typename M>
+void Walk(UnlabeledStatement<T> &x, M &mutator) {
   if (mutator.Pre(x)) {
-    // N.B. the label is not traversed
     Walk(x.source, mutator);
     Walk(x.statement, mutator);
     mutator.Post(x);
