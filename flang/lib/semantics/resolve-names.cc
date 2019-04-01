@@ -349,7 +349,7 @@ private:
 // 2. INTEGER :: x(10)
 // 3. ALLOCATABLE :: x(:)
 // 4. DIMENSION :: x(10)
-// 5. TODO: COMMON x(10)
+// 5. COMMON x(10)
 // 6. TODO: BasedPointerStmt
 class ArraySpecVisitor : public virtual BaseVisitor {
 public:
@@ -1223,7 +1223,6 @@ bool DeclTypeSpecVisitor::Pre(const parser::TypeGuardStmt &) {
   return true;
 }
 void DeclTypeSpecVisitor::Post(const parser::TypeGuardStmt &) {
-  // TODO: TypeGuardStmt
   EndDeclTypeSpec();
 }
 
@@ -2009,6 +2008,11 @@ bool InterfaceVisitor::Pre(const parser::GenericSpec &x) {
       EraseSymbol(*genericSymbol_);
       genericSymbol_ = &MakeSymbol(symbolName);
       genericSymbol_->set_details(details);
+      // preserve access attributes
+      genericSymbol_->attrs() |=
+          details.derivedType()->attrs() & Attrs{Attr::PUBLIC, Attr::PRIVATE};
+    } else if (genericSymbol_->has<UnknownDetails>()) {
+      // okay
     } else if (!genericSymbol_->IsSubprogram()) {
       SayAlreadyDeclared(symbolName, *genericSymbol_);
       EraseSymbol(*genericSymbol_);
@@ -2027,7 +2031,7 @@ bool InterfaceVisitor::Pre(const parser::GenericSpec &x) {
       }
     }
   }
-  if (!genericSymbol_) {
+  if (!genericSymbol_ || genericSymbol_->has<UnknownDetails>()) {
     genericSymbol_ = &MakeSymbol(symbolName);
     genericSymbol_->set_details(GenericDetails{});
   }
@@ -2555,7 +2559,7 @@ void DeclarationVisitor::Post(const parser::DimensionStmt::Declaration &x) {
 void DeclarationVisitor::Post(const parser::EntityDecl &x) {
   // TODO: may be under StructureStmt
   const auto &name{std::get<parser::ObjectName>(x.t)};
-  // TODO: CoarraySpec, CharLength, Initialization
+  // TODO: CoarraySpec
   Attrs attrs{attrs_ ? HandleSaveName(name.source, *attrs_) : Attrs{}};
   Symbol &symbol{DeclareUnknownEntity(name, attrs)};
   if (auto &init{std::get<std::optional<parser::Initialization>>(x.t)}) {
@@ -3745,9 +3749,7 @@ const Symbol *DeclarationVisitor::ResolveDerivedType(const parser::Name &name) {
   if (CheckUseError(name)) {
     return nullptr;
   }
-  if (auto *details{symbol->detailsIf<UseDetails>()}) {
-    symbol = &details->symbol();
-  }
+  symbol = &symbol->GetUltimate();
   if (auto *details{symbol->detailsIf<GenericDetails>()}) {
     if (details->derivedType()) {
       symbol = details->derivedType();
