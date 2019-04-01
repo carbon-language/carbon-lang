@@ -36,6 +36,9 @@ static MCOperand lowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym,
   case RISCVII::MO_None:
     Kind = RISCVMCExpr::VK_RISCV_None;
     break;
+  case RISCVII::MO_CALL:
+    Kind = RISCVMCExpr::VK_RISCV_CALL;
+    break;
   case RISCVII::MO_LO:
     Kind = RISCVMCExpr::VK_RISCV_LO;
     break;
