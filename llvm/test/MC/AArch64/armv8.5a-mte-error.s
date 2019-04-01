@@ -813,57 +813,48 @@ ldg x0, [w1]
 // CHECK:      invalid operand for instruction
 // CHECK-NEXT: ldg x0, [w1]
 
-ldgv
-ldgv x0
-ldgv x0, [x1]
-ldgv sp, [x0]!
-ldgv x3, [x3]!
-ldgv w0, [x1]!
-ldgv x0, [w1]!
-ldgv #1, [x1]!
-ldgv x0, [#1]!
+ldgm
+ldgm x0
+ldgm w0, [x1]
+ldgm x0, [w1]
+ldgm #1, [x1]
+ldgm x0, [#1]
+ldgm sp, [x0]
 
 // CHECK:      too few operands for instruction
-// CHECK-NEXT: ldgv
+// CHECK-NEXT: ldgm
 // CHECK:      too few operands for instruction
-// CHECK-NEXT: ldgv x0
-// CHECK:      too few operands for instruction
-// CHECK-NEXT: ldgv x0, [x1]
+// CHECK-NEXT: ldgm x0
 // CHECK:      invalid operand for instruction
-// CHECK-NEXT: ldgv sp, [x0]!
-// CHECK:      unpredictable LDGV instruction, writeback register is also the target register
-// CHECK-NEXT: ldgv x3, [x3]!
+// CHECK-NEXT: ldgm w0, [x1]
 // CHECK:      invalid operand for instruction
-// CHECK-NEXT: ldgv w0, [x1]!
+// CHECK-NEXT: ldgm x0, [w1]
 // CHECK:      invalid operand for instruction
-// CHECK-NEXT: ldgv x0, [w1]!
+// CHECK-NEXT: ldgm #1, [x1]
 // CHECK:      invalid operand for instruction
-// CHECK-NEXT: ldgv #1, [x1]!
+// CHECK-NEXT: ldgm x0, [#1]
 // CHECK:      invalid operand for instruction
-// CHECK-NEXT: ldgv x0, [#1]!
+// CHECK-NEXT: ldgm sp, [x0]
 
-stgv
-stgv x0
-stgv x0, [x1]
-stgv sp, [x0]!
-stgv w0, [x0]!
-stgv x0, [w0]!
-stgv #1, [x1]!
-stgv x0, [#1]!
+stgm
+stgm x0
+stgm sp, [x0]
+stgm w0, [x0]
+stgm x0, [w0]
+stgm #1, [x1]
+stgm x0, [#1]
 
 // CHECK:      too few operands for instruction
-// CHECK-NEXT: stgv
+// CHECK-NEXT: stgm
 // CHECK:      too few operands for instruction
-// CHECK-NEXT: stgv x0
-// CHECK:      too few operands for instruction
-// CHECK-NEXT: stgv x0, [x1]
+// CHECK-NEXT: stgm x0
 // CHECK:      invalid operand for instruction
-// CHECK-NEXT: stgv sp, [x0]!
+// CHECK-NEXT: stgm sp, [x0]
 // CHECK:      invalid operand for instruction
-// CHECK-NEXT: stgv w0, [x0]!
+// CHECK-NEXT: stgm w0, [x0]
 // CHECK:      invalid operand for instruction
-// CHECK-NEXT: stgv x0, [w0]!
+// CHECK-NEXT: stgm x0, [w0]
 // CHECK:      invalid operand for instruction
-// CHECK-NEXT: stgv #1, [x1]!
+// CHECK-NEXT: stgm #1, [x1]
 // CHECK:      invalid operand for instruction
-// CHECK-NEXT: stgv x0, [#1]!
+// CHECK-NEXT: stgm x0, [#1]

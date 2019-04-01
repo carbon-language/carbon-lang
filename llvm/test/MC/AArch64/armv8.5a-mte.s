@@ -534,24 +534,24 @@ ldg x3, [x4, #4080]
 // NOMTE: instruction requires: mte
 // NOMTE: instruction requires: mte
 
-ldgv x0, [x1]!
-ldgv x1, [sp]!
-ldgv xzr, [x2]!
+ldgm x0, [x1]
+ldgm x1, [sp]
+ldgm xzr, [x2]
 
-// CHECK: ldgv x0, [x1]!  // encoding: [0x20,0x00,0xe0,0xd9]
-// CHECK: ldgv x1, [sp]!  // encoding: [0xe1,0x03,0xe0,0xd9]
-// CHECK: ldgv xzr, [x2]! // encoding: [0x5f,0x00,0xe0,0xd9]
+// CHECK: ldgm x0, [x1]  // encoding: [0x20,0x00,0xe0,0xd9]
+// CHECK: ldgm x1, [sp]  // encoding: [0xe1,0x03,0xe0,0xd9]
+// CHECK: ldgm xzr, [x2] // encoding: [0x5f,0x00,0xe0,0xd9]
 
 // NOMTE: instruction requires: mte
 // NOMTE: instruction requires: mte
 
-stgv x0, [x1]!
-stgv x1, [sp]!
-stgv xzr, [x2]!
+stgm x0, [x1]
+stgm x1, [sp]
+stgm xzr, [x2]
 
-// CHECK: stgv x0, [x1]!  // encoding: [0x20,0x00,0xa0,0xd9]
-// CHECK: stgv x1, [sp]!  // encoding: [0xe1,0x03,0xa0,0xd9]
-// CHECK: stgv xzr, [x2]! // encoding: [0x5f,0x00,0xa0,0xd9]
+// CHECK: stgm x0, [x1]  // encoding: [0x20,0x00,0xa0,0xd9]
+// CHECK: stgm x1, [sp]  // encoding: [0xe1,0x03,0xa0,0xd9]
+// CHECK: stgm xzr, [x2] // encoding: [0x5f,0x00,0xa0,0xd9]
 
 // NOMTE: instruction requires: mte
 // NOMTE: instruction requires: mte

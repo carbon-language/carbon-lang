@@ -408,12 +408,12 @@
 [0xe1,0x03,0xa0,0xd9]
 [0x5f,0x00,0xa0,0xd9]
 
-# CHECK: ldgv x0, [x1]!
-# CHECK: ldgv x1, [sp]!
-# CHECK: ldgv xzr, [x2]!
-# CHECK: stgv x0, [x1]!
-# CHECK: stgv x1, [sp]!
-# CHECK: stgv xzr, [x2]!
+# CHECK: ldgm x0, [x1]
+# CHECK: ldgm x1, [sp]
+# CHECK: ldgm xzr, [x2]
+# CHECK: stgm x0, [x1]
+# CHECK: stgm x1, [sp]
+# CHECK: stgm xzr, [x2]
 
 # NOMTE:      warning: invalid instruction encoding
 # NOMTE-NEXT: [0x20,0x00,0xe0,0xd9]
