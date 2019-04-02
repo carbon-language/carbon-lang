@@ -115,9 +115,13 @@ bool SemanticsContext::AnyFatalError() const {
       (warningsAreErrors_ || messages_.AnyFatalError());
 }
 
-const Scope &SemanticsContext::FindScope(
-    const parser::CharBlock &source) const {
-  if (const auto *scope{globalScope_.FindScope(source)}) {
+const Scope &SemanticsContext::FindScope(parser::CharBlock source) const {
+  return const_cast<const Scope &>(
+      const_cast<SemanticsContext *>(this)->FindScope(source));
+}
+
+Scope &SemanticsContext::FindScope(parser::CharBlock source) {
+  if (auto *scope{globalScope_.FindScope(source)}) {
     return *scope;
   } else {
     common::die("invalid source location");

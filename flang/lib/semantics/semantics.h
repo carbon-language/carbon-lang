@@ -95,7 +95,8 @@ public:
     return messages_.Say(std::move(msg));
   }
 
-  const Scope &FindScope(const parser::CharBlock &) const;
+  const Scope &FindScope(parser::CharBlock) const;
+  Scope &FindScope(parser::CharBlock);
 
 private:
   const common::IntrinsicTypeDefaultKinds &defaultKinds_;

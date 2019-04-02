@@ -185,12 +185,17 @@ bool Scope::CanImport(const SourceName &name) const {
   }
 }
 
-const Scope *Scope::FindScope(const parser::CharBlock &source) const {
+const Scope *Scope::FindScope(parser::CharBlock source) const {
+  return const_cast<const Scope *>(
+      const_cast<Scope *>(this)->FindScope(source));
+}
+
+Scope *Scope::FindScope(parser::CharBlock source) {
   if (!sourceRange_.Contains(source)) {
     return nullptr;
   }
-  for (const auto &child : children_) {
-    if (const auto *scope{child.FindScope(source)}) {
+  for (auto &child : children_) {
+    if (auto *scope{child.FindScope(source)}) {
       return scope;
     }
   }
