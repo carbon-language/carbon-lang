@@ -473,8 +473,8 @@ llvm::Function *CGNVCUDARuntime::makeModuleCtorFunction() {
   StringRef CudaGpuBinaryFileName = CGM.getCodeGenOpts().CudaGpuBinaryFileName;
   if (CudaGpuBinaryFileName.empty() && !IsHIP)
     return nullptr;
-  if ( (IsHIP || (IsCUDA && !RelocatableDeviceCode) )
-       && EmittedKernels.empty() && DeviceVars.empty())
+  if ((IsHIP || (IsCUDA && !RelocatableDeviceCode)) && EmittedKernels.empty() &&
+      DeviceVars.empty())
     return nullptr;
 
   // void __{cuda|hip}_register_globals(void* handle);
