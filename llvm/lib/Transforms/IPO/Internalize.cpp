@@ -32,7 +32,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
-#include <set>
 using namespace llvm;
 
 #define DEBUG_TYPE "internalize"
@@ -111,7 +110,7 @@ bool InternalizePass::shouldPreserveGV(const GlobalValue &GV) {
 }
 
 bool InternalizePass::maybeInternalize(
-    GlobalValue &GV, const std::set<const Comdat *> &ExternalComdats) {
+    GlobalValue &GV, const DenseSet<const Comdat *> &ExternalComdats) {
   if (Comdat *C = GV.getComdat()) {
     if (ExternalComdats.count(C))
       return false;
@@ -138,7 +137,7 @@ bool InternalizePass::maybeInternalize(
 // If GV is part of a comdat and is externally visible, keep track of its
 // comdat so that we don't internalize any of its members.
 void InternalizePass::checkComdatVisibility(
-    GlobalValue &GV, std::set<const Comdat *> &ExternalComdats) {
+    GlobalValue &GV, DenseSet<const Comdat *> &ExternalComdats) {
   Comdat *C = GV.getComdat();
   if (!C)
     return;
@@ -155,7 +154,7 @@ bool InternalizePass::internalizeModule(Module &M, CallGraph *CG) {
   collectUsedGlobalVariables(M, Used, false);
 
   // Collect comdat visiblity information for the module.
-  std::set<const Comdat *> ExternalComdats;
+  DenseSet<const Comdat *> ExternalComdats;
   if (!M.getComdatSymbolTable().empty()) {
     for (Function &F : M)
       checkComdatVisibility(F, ExternalComdats);
