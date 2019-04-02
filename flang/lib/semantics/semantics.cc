@@ -116,8 +116,7 @@ bool SemanticsContext::AnyFatalError() const {
 }
 
 const Scope &SemanticsContext::FindScope(parser::CharBlock source) const {
-  return const_cast<const Scope &>(
-      const_cast<SemanticsContext *>(this)->FindScope(source));
+  return const_cast<SemanticsContext *>(this)->FindScope(source);
 }
 
 Scope &SemanticsContext::FindScope(parser::CharBlock source) {

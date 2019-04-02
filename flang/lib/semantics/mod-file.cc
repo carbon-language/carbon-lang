@@ -98,7 +98,6 @@ private:
       DoSymbol(*symbol);
     }
   }
-
 };
 
 bool ModFileWriter::WriteAll() {
@@ -391,7 +390,6 @@ std::vector<const Symbol *> CollectSymbols(const Scope &scope) {
   }
   for (const auto &pair : scope.commonBlocks()) {
     const Symbol *symbol{pair.second};
-    SourceName name{pair.first};
     if (symbols.insert(symbol).second) {
       common.push_back(symbol);
     }

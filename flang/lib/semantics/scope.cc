@@ -186,8 +186,7 @@ bool Scope::CanImport(const SourceName &name) const {
 }
 
 const Scope *Scope::FindScope(parser::CharBlock source) const {
-  return const_cast<const Scope *>(
-      const_cast<Scope *>(this)->FindScope(source));
+  return const_cast<Scope *>(this)->FindScope(source);
 }
 
 Scope *Scope::FindScope(parser::CharBlock source) {
