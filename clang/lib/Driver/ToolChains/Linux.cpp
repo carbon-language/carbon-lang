@@ -325,8 +325,9 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
 
     // Sourcery CodeBench MIPS toolchain holds some libraries under
     // a biarch-like suffix of the GCC installation.
-    addPathIfExists(D, GCCInstallation.getInstallPath() + SelectedMultilib.gccSuffix(),
-                    Paths);
+    addPathIfExists(
+        D, GCCInstallation.getInstallPath() + SelectedMultilib.gccSuffix(),
+        Paths);
 
     // GCC cross compiling toolchains will install target libraries which ship
     // as part of the toolchain under <prefix>/<triple>/<libdir> rather than as
@@ -636,8 +637,9 @@ std::string Linux::getDynamicLinker(const ArgList &Args) const {
   }
   }
 
-  if (Distro == Distro::Exherbo && (Triple.getVendor() == llvm::Triple::UnknownVendor ||
-                                    Triple.getVendor() == llvm::Triple::PC))
+  if (Distro == Distro::Exherbo &&
+      (Triple.getVendor() == llvm::Triple::UnknownVendor ||
+       Triple.getVendor() == llvm::Triple::PC))
     return "/usr/" + Triple.str() + "/lib/" + Loader;
   return "/" + LibDir + "/" + Loader;
 }
@@ -1028,7 +1030,8 @@ void Linux::addProfileRTLibs(const llvm::opt::ArgList &Args,
 
   // Add linker option -u__llvm_runtime_variable to cause runtime
   // initialization module to be linked in.
-  if ((!Args.hasArg(options::OPT_coverage)) && (!Args.hasArg(options::OPT_ftest_coverage)))
+  if ((!Args.hasArg(options::OPT_coverage)) &&
+      (!Args.hasArg(options::OPT_ftest_coverage)))
     CmdArgs.push_back(Args.MakeArgString(
         Twine("-u", llvm::getInstrProfRuntimeHookVarName())));
   ToolChain::addProfileRTLibs(Args, CmdArgs);
