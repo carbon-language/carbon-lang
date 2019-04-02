@@ -61,6 +61,12 @@ void DWARFRewriter::updateDebugInfo() {
   SectionPatchers[".debug_abbrev"] = llvm::make_unique<DebugAbbrevPatcher>();
   SectionPatchers[".debug_info"]  = llvm::make_unique<SimpleBinaryPatcher>();
 
+  DebugInfoPatcher =
+      static_cast<SimpleBinaryPatcher *>(SectionPatchers[".debug_info"].get());
+  AbbrevPatcher =
+      static_cast<DebugAbbrevPatcher *>(SectionPatchers[".debug_abbrev"].get());
+  assert(DebugInfoPatcher && AbbrevPatcher && "Patchers not initialized.");
+
   RangesSectionsWriter = llvm::make_unique<DebugRangesSectionsWriter>(&BC);
   LocationListWriter = llvm::make_unique<DebugLocWriter>(&BC);
 
@@ -68,6 +74,8 @@ void DWARFRewriter::updateDebugInfo() {
     updateUnitDebugInfo(CU->getUnitDIE(false),
                         std::vector<const BinaryFunction *>{});
   }
+
+  flushPendingRanges();
 
   finalizeDebugSections();
 
@@ -98,19 +106,29 @@ void DWARFRewriter::updateUnitDebugInfo(
       if (DIE.getLowAndHighPC(LowPC, HighPC, SectionIndex)) {
         IsFunctionDef = true;
         const auto *Function = BC.getBinaryFunctionAtAddress(LowPC);
-        if (Function && Function->isFolded()) {
+        if (Function && Function->isFolded())
           Function = nullptr;
-        }
         FunctionStack.push_back(Function);
-        auto RangesSectionOffset =
-          RangesSectionsWriter->getEmptyRangesOffset();
-        if (Function) {
-          auto FunctionRanges = Function->getOutputAddressRanges();
-          RangesSectionOffset =
-            RangesSectionsWriter->addRanges(Function,
-                                            std::move(FunctionRanges));
+
+        const auto *Abbrev = DIE.getAbbreviationDeclarationPtr();
+        assert(Abbrev && "abbrev expected");
+
+        DebugAddressRangesVector FunctionRanges;
+        if (Function)
+          FunctionRanges = Function->getOutputAddressRanges();
+
+        if (FunctionRanges.size() > 1) {
+          convertPending(Abbrev);
+          convertToRanges(DIE, FunctionRanges);
+        } else if (ConvertedRangesAbbrevs.find(Abbrev) !=
+                   ConvertedRangesAbbrevs.end()) {
+          convertToRanges(DIE, FunctionRanges);
+        } else {
+          if (FunctionRanges.empty())
+            FunctionRanges.emplace_back(DebugAddressRange());
+          PendingRanges[Abbrev].emplace_back(
+              std::make_pair(DIE, FunctionRanges.front()));
         }
-        updateDWARFObjectAddressRanges(DIE, RangesSectionOffset);
       }
     }
     break;
@@ -184,9 +202,6 @@ void DWARFRewriter::updateUnitDebugInfo(
             }
           }
 
-          auto DebugInfoPatcher =
-              static_cast<SimpleBinaryPatcher *>(
-                  SectionPatchers[".debug_info"].get());
           DebugInfoPatcher->addLE32Patch(AttrOffset, LocListSectionOffset);
         } else {
           assert((Value.isFormClass(DWARFFormValue::FC_Exprloc) ||
@@ -206,9 +221,6 @@ void DWARFRewriter::updateUnitDebugInfo(
                          << " for DIE with tag " << DIE.getTag()
                          << " to 0x" << Twine::utohexstr(NewAddress) << '\n');
           }
-          auto DebugInfoPatcher =
-              static_cast<SimpleBinaryPatcher *>(
-                  SectionPatchers[".debug_info"].get());
           DebugInfoPatcher->addLE64Patch(AttrOffset, NewAddress);
         } else if (opts::Verbosity >= 1) {
           errs() << "BOLT-WARNING: unexpected form value for attribute at 0x"
@@ -237,16 +249,9 @@ void DWARFRewriter::updateDWARFObjectAddressRanges(
   }
 
   if (opts::Verbosity >= 2 && DebugRangesOffset == -1U) {
-    errs() << "BOLT-WARNING: using invalid DW_AT_range for DIE at offset 0x"
+    errs() << "BOLT-WARNING: using invalid DW_AT_ranges for DIE at offset 0x"
            << Twine::utohexstr(DIE.getOffset()) << '\n';
   }
-
-  auto DebugInfoPatcher =
-      static_cast<SimpleBinaryPatcher *>(SectionPatchers[".debug_info"].get());
-  auto AbbrevPatcher =
-      static_cast<DebugAbbrevPatcher*>(SectionPatchers[".debug_abbrev"].get());
-
-  assert(DebugInfoPatcher && AbbrevPatcher && "Patchers not initialized.");
 
   const auto *AbbreviationDecl = DIE.getAbbreviationDeclarationPtr();
   if (!AbbreviationDecl) {
@@ -257,8 +262,6 @@ void DWARFRewriter::updateDWARFObjectAddressRanges(
     }
     return;
   }
-
-  auto AbbrevCode = AbbreviationDecl->getCode();
 
   if (AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_ranges)) {
     // Case 1: The object was already non-contiguous and had DW_AT_ranges.
@@ -282,50 +285,8 @@ void DWARFRewriter::updateDWARFObjectAddressRanges(
     // large size.
     if (AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_low_pc) &&
         AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_high_pc)) {
-      uint32_t LowPCOffset = -1U;
-      uint32_t HighPCOffset = -1U;
-      DWARFFormValue LowPCFormValue =
-          *DIE.find(dwarf::DW_AT_low_pc, &LowPCOffset);
-      DWARFFormValue HighPCFormValue =
-          *DIE.find(dwarf::DW_AT_high_pc, &HighPCOffset);
-
-      if (LowPCFormValue.getForm() != dwarf::DW_FORM_addr ||
-          (HighPCFormValue.getForm() != dwarf::DW_FORM_addr &&
-           HighPCFormValue.getForm() != dwarf::DW_FORM_data8 &&
-           HighPCFormValue.getForm() != dwarf::DW_FORM_data4)) {
-        errs() << "BOLT-WARNING: unexpected form value. Cannot update DIE "
-                 << "at offset 0x" << Twine::utohexstr(DIE.getOffset())
-                 << "\n";
-        return;
-      }
-      if (LowPCOffset == -1U || (LowPCOffset + 8 != HighPCOffset)) {
-        errs() << "BOLT-WARNING: high_pc expected immediately after low_pc. "
-               << "Cannot update DIE at offset 0x"
-               << Twine::utohexstr(DIE.getOffset()) << '\n';
-        return;
-      }
-
-      AbbrevPatcher->addAttributePatch(DIE.getDwarfUnit(),
-                                       AbbrevCode,
-                                       dwarf::DW_AT_low_pc,
-                                       dwarf::DW_AT_ranges,
-                                       dwarf::DW_FORM_sec_offset);
-      AbbrevPatcher->addAttributePatch(DIE.getDwarfUnit(),
-                                       AbbrevCode,
-                                       dwarf::DW_AT_high_pc,
-                                       dwarf::DW_AT_low_pc,
-                                       dwarf::DW_FORM_udata);
-      unsigned LowPCSize = 0;
-      if (HighPCFormValue.getForm() == dwarf::DW_FORM_addr ||
-          HighPCFormValue.getForm() == dwarf::DW_FORM_data8) {
-        LowPCSize = 12;
-      } else if (HighPCFormValue.getForm() == dwarf::DW_FORM_data4) {
-        LowPCSize = 8;
-      } else {
-        llvm_unreachable("unexpected form");
-      }
-      DebugInfoPatcher->addLE32Patch(LowPCOffset, DebugRangesOffset);
-      DebugInfoPatcher->addUDataPatch(LowPCOffset + 4, 0, LowPCSize);
+      convertToRanges(AbbreviationDecl);
+      convertToRanges(DIE, DebugRangesOffset);
     } else {
       if (opts::Verbosity >= 1) {
         errs() << "BOLT-WARNING: Cannot update ranges for DIE at offset 0x"
@@ -597,3 +558,116 @@ void DWARFRewriter::updateGdbIndexSection() {
                                   NewGdbIndexContents,
                                   NewGdbIndexSize);
 }
+
+void
+DWARFRewriter::convertToRanges(const DWARFAbbreviationDeclaration *Abbrev) {
+  AbbrevPatcher->addAttributePatch(Abbrev,
+                                   dwarf::DW_AT_low_pc,
+                                   dwarf::DW_AT_ranges,
+                                   dwarf::DW_FORM_sec_offset);
+  AbbrevPatcher->addAttributePatch(Abbrev,
+                                   dwarf::DW_AT_high_pc,
+                                   dwarf::DW_AT_low_pc,
+                                   dwarf::DW_FORM_udata);
+}
+
+void DWARFRewriter::convertToRanges(DWARFDie DIE,
+                                    const DebugAddressRangesVector &Ranges) {
+  uint64_t RangesSectionOffset;
+  if (Ranges.empty()) {
+    RangesSectionOffset = RangesSectionsWriter->getEmptyRangesOffset();
+  } else {
+    RangesSectionOffset = RangesSectionsWriter->addRanges(Ranges);
+  }
+
+  convertToRanges(DIE, RangesSectionOffset);
+}
+
+void DWARFRewriter::convertPending(const DWARFAbbreviationDeclaration *Abbrev) {
+  if (ConvertedRangesAbbrevs.count(Abbrev))
+    return;
+
+  convertToRanges(Abbrev);
+
+  auto I = PendingRanges.find(Abbrev);
+  if (I != PendingRanges.end()) {
+    for (auto &Pair : I->second) {
+      convertToRanges(Pair.first, {Pair.second});
+    }
+    PendingRanges.erase(I);
+  }
+
+  ConvertedRangesAbbrevs.emplace(Abbrev);
+}
+
+void DWARFRewriter::flushPendingRanges() {
+  for (auto &I : PendingRanges) {
+    for (auto &RangePair : I.second) {
+      patchLowHigh(RangePair.first, RangePair.second);
+    }
+  }
+}
+
+namespace {
+
+void getRangeAttrData(
+    DWARFDie DIE,
+    uint32_t &LowPCOffset, uint32_t &HighPCOffset,
+    DWARFFormValue &LowPCFormValue, DWARFFormValue &HighPCFormValue) {
+  LowPCOffset = -1U;
+  HighPCOffset = -1U;
+  LowPCFormValue = *DIE.find(dwarf::DW_AT_low_pc, &LowPCOffset);
+  HighPCFormValue = *DIE.find(dwarf::DW_AT_high_pc, &HighPCOffset);
+
+  if (LowPCFormValue.getForm() != dwarf::DW_FORM_addr ||
+      (HighPCFormValue.getForm() != dwarf::DW_FORM_addr &&
+       HighPCFormValue.getForm() != dwarf::DW_FORM_data8 &&
+       HighPCFormValue.getForm() != dwarf::DW_FORM_data4)) {
+    errs() << "BOLT-WARNING: unexpected form value. Cannot update DIE "
+             << "at offset 0x" << Twine::utohexstr(DIE.getOffset()) << "\n";
+    return;
+  }
+  if (LowPCOffset == -1U || (LowPCOffset + 8 != HighPCOffset)) {
+    errs() << "BOLT-WARNING: high_pc expected immediately after low_pc. "
+           << "Cannot update DIE at offset 0x"
+           << Twine::utohexstr(DIE.getOffset()) << '\n';
+    return;
+  }
+}
+
+}
+
+void DWARFRewriter::patchLowHigh(DWARFDie DIE, DebugAddressRange Range) {
+  uint32_t LowPCOffset, HighPCOffset;
+  DWARFFormValue LowPCFormValue, HighPCFormValue;
+  getRangeAttrData(
+      DIE, LowPCOffset, HighPCOffset, LowPCFormValue, HighPCFormValue);
+  DebugInfoPatcher->addLE64Patch(LowPCOffset, Range.LowPC);
+  if (HighPCFormValue.getForm() == dwarf::DW_FORM_addr ||
+      HighPCFormValue.getForm() == dwarf::DW_FORM_data8) {
+    DebugInfoPatcher->addLE64Patch(HighPCOffset, Range.HighPC - Range.LowPC);
+  } else {
+    DebugInfoPatcher->addLE32Patch(HighPCOffset, Range.HighPC - Range.LowPC);
+  }
+}
+
+void DWARFRewriter::convertToRanges(DWARFDie DIE,
+                                    uint64_t RangesSectionOffset) {
+  uint32_t LowPCOffset, HighPCOffset;
+  DWARFFormValue LowPCFormValue, HighPCFormValue;
+  getRangeAttrData(
+      DIE, LowPCOffset, HighPCOffset, LowPCFormValue, HighPCFormValue);
+
+  unsigned LowPCSize = 0;
+  if (HighPCFormValue.getForm() == dwarf::DW_FORM_addr ||
+      HighPCFormValue.getForm() == dwarf::DW_FORM_data8) {
+    LowPCSize = 12;
+  } else if (HighPCFormValue.getForm() == dwarf::DW_FORM_data4) {
+    LowPCSize = 8;
+  } else {
+    llvm_unreachable("unexpected form");
+  }
+  DebugInfoPatcher->addLE32Patch(LowPCOffset, RangesSectionOffset);
+  DebugInfoPatcher->addUDataPatch(LowPCOffset + 4, 0, LowPCSize);
+}
+

@@ -229,30 +229,23 @@ void SimpleBinaryPatcher::patchBinary(std::string &BinaryContents) {
   }
 }
 
-void DebugAbbrevPatcher::addAttributePatch(const DWARFUnit *Unit,
-                                           uint32_t AbbrevCode,
-                                           dwarf::Attribute AttrTag,
-                                           uint8_t NewAttrTag,
-                                           uint8_t NewAttrForm) {
-  assert(Unit && "No compile unit specified.");
+void DebugAbbrevPatcher::addAttributePatch(
+    const DWARFAbbreviationDeclaration *Abbrev,
+    dwarf::Attribute AttrTag,
+    uint8_t NewAttrTag,
+    uint8_t NewAttrForm) {
+  assert(Abbrev && "no abbreviation specified");
   AbbrevPatches.emplace(
-      AbbrevAttrPatch{Unit, AbbrevCode, AttrTag, NewAttrTag, NewAttrForm});
+      AbbrevAttrPatch{Abbrev, AttrTag, NewAttrTag, NewAttrForm});
 }
 
 void DebugAbbrevPatcher::patchBinary(std::string &Contents) {
   SimpleBinaryPatcher Patcher;
 
   for (const auto &Patch : AbbrevPatches) {
-    const auto *UnitAbbreviations = Patch.Unit->getAbbreviations();
-    assert(UnitAbbreviations &&
-           "Compile unit doesn't have associated abbreviations.");
-    const auto *AbbreviationDeclaration =
-      UnitAbbreviations->getAbbreviationDeclaration(Patch.Code);
-    assert(AbbreviationDeclaration && "No abbreviation with given code.");
-    const auto Attribute =
-        AbbreviationDeclaration->findAttribute(Patch.Attr);
-
+    const auto Attribute = Patch.Abbrev->findAttribute(Patch.Attr);
     assert(Attribute && "Specified attribute doesn't occur in abbreviation.");
+
     // Because we're only handling standard values (i.e. no DW_FORM_GNU_* or
     // DW_AT_APPLE_*), they are all small (< 128) and encoded in a single
     // byte in ULEB128, otherwise it'll be more tricky as we may need to

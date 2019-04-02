@@ -234,21 +234,19 @@ class DebugAbbrevPatcher : public BinaryPatcher {
 private:
   /// Patch of changing one attribute to another.
   struct AbbrevAttrPatch {
-    const DWARFUnit *Unit;    // Containing DWARF unit
-    uint32_t Code;            // Code of abbreviation to be modified.
+    const DWARFAbbreviationDeclaration *Abbrev;
     dwarf::Attribute Attr;    // ID of attribute to be replaced.
     uint8_t NewAttr;          // ID of the new attribute.
     uint8_t NewForm;          // Form of the new attribute.
 
     bool operator==(const AbbrevAttrPatch &RHS) const {
-      return Unit == RHS.Unit && Code == RHS.Code && Attr == RHS.Attr;
+      return Abbrev == RHS.Abbrev && Attr == RHS.Attr;
     }
   };
 
   struct AbbrevHash {
     std::size_t operator()(const AbbrevAttrPatch &P) const {
-      return std::hash<uint64_t>()(
-          ((uint64_t)P.Unit->getOffset() << 32) + (P.Code << 16) + P.Attr);
+      return std::hash<uint64_t>()(((uint64_t)P.Abbrev << 16) + P.Attr);
     }
   };
 
@@ -256,15 +254,13 @@ private:
 
 public:
   ~DebugAbbrevPatcher() { }
-  /// Adds a patch to change an attribute of an abbreviation that belongs to
-  /// \p Unit to another attribute.
-  /// \p AbbrevCode code of the abbreviation to be modified.
+  /// Adds a patch to change an attribute of the abbreviation
+  /// \p Abbrev the abbreviation to be modified.
   /// \p AttrTag ID of the attribute to be replaced.
   /// \p NewAttrTag ID of the new attribute.
   /// \p NewAttrForm Form of the new attribute.
   /// We only handle standard forms, that are encoded in a single byte.
-  void addAttributePatch(const DWARFUnit *Unit,
-                         uint32_t AbbrevCode,
+  void addAttributePatch(const DWARFAbbreviationDeclaration *Abbrev,
                          dwarf::Attribute AttrTag,
                          uint8_t NewAttrTag,
                          uint8_t NewAttrForm);
