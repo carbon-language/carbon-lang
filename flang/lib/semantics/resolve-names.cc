@@ -4251,10 +4251,6 @@ const parser::Name *ResolveNamesVisitor::ResolveStructureComponent(
 
 const parser::Name *ResolveNamesVisitor::ResolveArrayElement(
     const parser::ArrayElement &x) {
-  // TODO: need to resolve these
-  // for (auto &subscript : x.subscripts) {
-  //  ResolveSectionSubscript(subscript);
-  //}
   return ResolveDataRef(x.base);
 }
 
@@ -4611,8 +4607,10 @@ void ResolveNamesVisitor::Post(const parser::AllocateObject &x) {
 }
 bool ResolveNamesVisitor::Pre(const parser::PointerAssignmentStmt &x) {
   const auto &dataRef{std::get<parser::DataRef>(x.t)};
+  const auto &bounds{std::get<parser::PointerAssignmentStmt::Bounds>(x.t)};
   const auto &expr{std::get<parser::Expr>(x.t)};
-  ResolveDataRef(dataRef);;
+  ResolveDataRef(dataRef);
+  Walk(bounds);
   // Resolve unrestricted specific intrinsic procedures as in "p => cos".
   if (const auto *designator{
           std::get_if<common::Indirection<parser::Designator>>(&expr.u)}) {
@@ -4626,10 +4624,13 @@ bool ResolveNamesVisitor::Pre(const parser::PointerAssignmentStmt &x) {
                 [](const auto &) -> const parser::Name * { return nullptr; },
             },
             designator->value().u)}) {
-      return !NameIsKnownOrIntrinsic(*name);
+      if (NameIsKnownOrIntrinsic(*name)) {
+        return false;
+      }
     }
   }
-  return true;
+  Walk(expr);
+  return false;
 }
 void ResolveNamesVisitor::Post(const parser::Designator &x) {
   std::visit(
@@ -4638,7 +4639,6 @@ void ResolveNamesVisitor::Post(const parser::Designator &x) {
           [&](const parser::DataRef &x) { ResolveDataRef(x); },
           [&](const parser::Substring &x) {
             ResolveDataRef(std::get<parser::DataRef>(x.t));
-            // TODO: SubstringRange
           },
       },
       x.u);
