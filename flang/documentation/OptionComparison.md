@@ -1274,7 +1274,7 @@ GNU is the only compiler with options governing the use of non-standard intrinsi
 
 **Contiguous array pointers:** All vendors that implement this option (Cray, IBM, and Intel) seem to have apply to all pointer targets.  Assuming that the arrays that are targeted by the pointers allows greater optimization.
 
-**Contiguous assumed shape dummy arguments:** Cray and Intel have a separate argument that’s specific to assumed shape dummy arguments.
+**Contiguous assumed shape dummy arguments:** Cray and Intel have a separate argument that's specific to assumed shape dummy arguments.
 
 **<a name="miscellaneous"></a>Miscellaneous**
 
