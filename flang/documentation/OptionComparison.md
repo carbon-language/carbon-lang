@@ -1192,13 +1192,13 @@ All conformance options are similar -- they issue warnings if non-standard featu
 
 **<a name="source"></a>Source format:** 
 
-**Fixed or free source: **  Cray, IBM, and Intel default the source format based on the source file suffix as follows:
+**Fixed or free source:**  Cray, IBM, and Intel default the source format based on the source file suffix as follows:
 
 
 
 *   **Cray**
-    *   **Free: **.f90, .F90, .f95, .F95, .f03, .F03, .f08, .F08, .ftn, .FTN
-    *   **Fixed:.**f, .F, .for, .FOR
+    *   **Free:** .f90, .F90, .f95, .F95, .f03, .F03, .f08, .F08, .ftn, .FTN
+    *   **Fixed:** .f, .F, .for, .FOR
 *   **Intel**
     *   **Free:** .f90, .F90, .i90
     *   **Fixed:** .f, .for, .FOR, .ftn, .FTN, .fpp, .FPP, .i
@@ -1222,9 +1222,9 @@ IBM Fortran's options allow the source line length to be specified with the opti
 
 
 *   **GNU:** The "-fbackslash" option the interpretation of backslashes in string literals from a single backslash character to "C-style" escape characters. The following combinations are expanded \a, \b, \f, \n, \r, \t, \v, \\, and \0 to the ASCII characters alert, backspace, form feed, newline, carriage return, horizontal tab, vertical tab, backslash, and NUL, respectively. Additionally, \xnn, \unnnn and \Unnnnnnnn (where each n is a hexadecimal digit) are translated into the Unicode characters corresponding to the specified code points. All other combinations of a character preceded by \ are unexpanded.
-*   **Intel: **The option "-assume bscc" tells the compiler to treat the backslash character (\) as a C-style control (escape) character syntax in character literals. "nobscc" specifies that the backslash character is treated as a normal character in character literals.  This is the default.
+*   **Intel:** The option "-assume bscc" tells the compiler to treat the backslash character (\) as a C-style control (escape) character syntax in character literals. "nobscc" specifies that the backslash character is treated as a normal character in character literals.  This is the default.
 
-**"$" in symbol names: **Allowing "$" in names is controlled by an option in GNU and is the default behavior in IBM and Intel.  Presumably, these compilers issue warnings when standard conformance options are enabled.  Dollar signs in names don't seem to be allowed in Cray, PGI, or Flang.
+**"$" in symbol names:** Allowing "$" in names is controlled by an option in GNU and is the default behavior in IBM and Intel.  Presumably, these compilers issue warnings when standard conformance options are enabled.  Dollar signs in names don't seem to be allowed in Cray, PGI, or Flang.
 
 **<a name="do"></a>DO loop handling**
 
@@ -1233,7 +1233,7 @@ IBM Fortran's options allow the source line length to be specified with the opti
 
 
 *   **IBM:** IBM has two options that do the same thing: "-1" and "-qonetrip".
-*   **Intel: **Intel used to support a "-onetrip" option, but it has been removed.  Intel now supports a "-f66" option that ensures that DO loops are executed at least once in addition to [several other Fortran 66 semantic features](https://software.intel.com/en-us/fortran-compiler-developer-guide-and-reference-f66#320D769C-7C41-4A84-AE0E-50A72296A838).
+*   **Intel:** Intel used to support a "-onetrip" option, but it has been removed.  Intel now supports a "-f66" option that ensures that DO loops are executed at least once in addition to [several other Fortran 66 semantic features](https://software.intel.com/en-us/fortran-compiler-developer-guide-and-reference-f66#320D769C-7C41-4A84-AE0E-50A72296A838).
 
 **<a name="real"></a>REAL, DOUBLE PRECISION, and COMPLEX Data**
 
@@ -1243,26 +1243,26 @@ These size options affect the sizes of variables, literals, and intrinsic functi
 
 
 
-*   **Cray: **The "-s default32" and "-s default64" options affect both REAL, INTEGER, and LOGICAL types.
+*   **Cray:** The "-s default32" and "-s default64" options affect both REAL, INTEGER, and LOGICAL types.
 
 **Default DOUBLE PRECISION:** These options allow control of the size of DOUBLE PRECISION types in conjunction with controlling REAL types.
 
 
 
 *   **Cray:** The "-ep" option controls DOUBLE PRECISION. This option can only be enabled when the default data size is 64 bits ("-s default64" or "-s real64").  When "-s default64" or "-s real64" is specified, and double precision arithmetic is disabled, DOUBLE PRECISION variables and constants specified with the D exponent are converted to default real type (64-bit). If double precision is enabled ("-ep"), they are handled as a double precision type (128-bit).  Similarly when the "-s default64" or" -s real64" option is used, variables declared on a DOUBLE COMPLEX statement and complex constants specified with the D exponent are mapped to the complex type in which each part has a default real type, so the complex variable is 128-bit. If double precision is enabled ("-ep"), each part has double precision type, so the double complex variable is 256-bit.
-*   **GNU: **The "-fdefault-double-8" option sets the DOUBLE PRECISION type to an 8 byte wide type. Do nothing if this is already the default. If "-fdefault-real-8" is given, DOUBLE PRECISION would instead be promoted to 16 bytes if possible, and "-fdefault-double-8" can be used to prevent this. The kind of real constants like 1.d0 will not be changed by "-fdefault-real-8" though, so also "-fdefault-double-8" does not affect it.
+*   **GNU:** The "-fdefault-double-8" option sets the DOUBLE PRECISION type to an 8 byte wide type. Do nothing if this is already the default. If "-fdefault-real-8" is given, DOUBLE PRECISION would instead be promoted to 16 bytes if possible, and "-fdefault-double-8" can be used to prevent this. The kind of real constants like 1.d0 will not be changed by "-fdefault-real-8" though, so also "-fdefault-double-8" does not affect it.
 
 **Promote or demote REAL type sizes:** These options change the meaning of data types specified by declarations of the form REAL(KIND=_N_), except, perhaps for PGI.
 
 *   **GNU:** The allowable combinations are "-freal-4-real-8", "-freal-4-real-10", "-freal-4-real-16", "-freal-8-real-4", "-freal-8-real-10", and "-freal-8-real-16".
-*   **IBM: **The "-qautodbl" option  is documented [here](https://www-01.ibm.com/support/docview.wss?uid=swg27024803&aid=1#page=144).
-*   **PGI: **The "-Mr8" option promotes REAL variables and constants to DOUBLE PRECISION variables and constants, respectively. DOUBLE PRECISION elements are 8 bytes in length.  The "-Mr8intrinsics" option promotes the intrinsics CMPLX and REAL as DCMPLX and DBLE, respectively.
+*   **IBM:** The "-qautodbl" option  is documented [here](https://www-01.ibm.com/support/docview.wss?uid=swg27024803&aid=1#page=144).
+*   **PGI:** The "-Mr8" option promotes REAL variables and constants to DOUBLE PRECISION variables and constants, respectively. DOUBLE PRECISION elements are 8 bytes in length.  The "-Mr8intrinsics" option promotes the intrinsics CMPLX and REAL as DCMPLX and DBLE, respectively.
 
 **<a name="integer"></a>INTEGER and LOGICAL Data**
 
 These size options affect the sizes of variables, literals, and intrinsic function results.
 
-**Default INTEGER sizes: **For all compilers, these options affect both INTEGER and LOGICAL types.
+**Default INTEGER sizes:** For all compilers, these options affect both INTEGER and LOGICAL types.
 
 **Enable 8 and 16 bit INTEGER and LOGICAL:** This Cray option ("-eh") enables support for 8-bit and 16-bit INTEGER and LOGICAL types that use explicit kind or star values.  By default ("-eh"), data objects declared as INTEGER(kind=1) or LOGICAL(kind=1) are 8 bits long, and objects declared as INTEGER(kind=2) or LOGICAL(kind=2) are 16 bits long. When this option is disabled ("-dh"), data objects declared as INTEGER(kind=1), INTEGER(kind=2), LOGICAL(kind=1), or LOGICAL(kind=2) are 32 bits long.
 
