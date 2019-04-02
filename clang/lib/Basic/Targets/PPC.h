@@ -188,6 +188,7 @@ public:
       // Don't use floating point registers on soft float ABI.
       if (FloatABI == SoftFloat)
         return false;
+      LLVM_FALLTHROUGH;
     case 'b': // Base register
       Info.setAllowsRegister();
       break;
