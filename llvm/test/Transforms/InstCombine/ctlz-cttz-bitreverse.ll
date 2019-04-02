@@ -3,9 +3,8 @@
 
 define i32 @ctlz_true_bitreverse(i32 %x) {
 ; CHECK-LABEL: @ctlz_true_bitreverse(
-; CHECK-NEXT:    [[A:%.*]] = tail call i32 @llvm.bitreverse.i32(i32 [[X:%.*]])
-; CHECK-NEXT:    [[B:%.*]] = tail call i32 @llvm.ctlz.i32(i32 [[A]], i1 true), !range !0
-; CHECK-NEXT:    ret i32 [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = call i32 @llvm.cttz.i32(i32 [[X:%.*]], i1 true), !range !0
+; CHECK-NEXT:    ret i32 [[TMP1]]
 ;
   %a = tail call i32 @llvm.bitreverse.i32(i32 %x)
   %b = tail call i32 @llvm.ctlz.i32(i32 %a, i1 true)
@@ -14,9 +13,8 @@ define i32 @ctlz_true_bitreverse(i32 %x) {
 
 define <2 x i64> @ctlz_true_bitreverse_vec(<2 x i64> %x) {
 ; CHECK-LABEL: @ctlz_true_bitreverse_vec(
-; CHECK-NEXT:    [[A:%.*]] = tail call <2 x i64> @llvm.bitreverse.v2i64(<2 x i64> [[X:%.*]])
-; CHECK-NEXT:    [[B:%.*]] = tail call <2 x i64> @llvm.ctlz.v2i64(<2 x i64> [[A]], i1 true)
-; CHECK-NEXT:    ret <2 x i64> [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = call <2 x i64> @llvm.cttz.v2i64(<2 x i64> [[X:%.*]], i1 true)
+; CHECK-NEXT:    ret <2 x i64> [[TMP1]]
 ;
   %a = tail call <2 x i64> @llvm.bitreverse.v2i64(<2 x i64> %x)
   %b = tail call <2 x i64> @llvm.ctlz.v2i64(<2 x i64> %a, i1 true)
@@ -25,9 +23,8 @@ define <2 x i64> @ctlz_true_bitreverse_vec(<2 x i64> %x) {
 
 define i32 @ctlz_false_bitreverse(i32 %x) {
 ; CHECK-LABEL: @ctlz_false_bitreverse(
-; CHECK-NEXT:    [[A:%.*]] = tail call i32 @llvm.bitreverse.i32(i32 [[X:%.*]])
-; CHECK-NEXT:    [[B:%.*]] = tail call i32 @llvm.ctlz.i32(i32 [[A]], i1 false), !range !0
-; CHECK-NEXT:    ret i32 [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = call i32 @llvm.cttz.i32(i32 [[X:%.*]], i1 false), !range !0
+; CHECK-NEXT:    ret i32 [[TMP1]]
 ;
   %a = tail call i32 @llvm.bitreverse.i32(i32 %x)
   %b = tail call i32 @llvm.ctlz.i32(i32 %a, i1 false)
@@ -36,9 +33,8 @@ define i32 @ctlz_false_bitreverse(i32 %x) {
 
 define i32 @cttz_true_bitreverse(i32 %x) {
 ; CHECK-LABEL: @cttz_true_bitreverse(
-; CHECK-NEXT:    [[A:%.*]] = tail call i32 @llvm.bitreverse.i32(i32 [[X:%.*]])
-; CHECK-NEXT:    [[B:%.*]] = tail call i32 @llvm.cttz.i32(i32 [[A]], i1 true), !range !0
-; CHECK-NEXT:    ret i32 [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = call i32 @llvm.ctlz.i32(i32 [[X:%.*]], i1 true), !range !0
+; CHECK-NEXT:    ret i32 [[TMP1]]
 ;
   %a = tail call i32 @llvm.bitreverse.i32(i32 %x)
   %b = tail call i32 @llvm.cttz.i32(i32 %a, i1 true)
@@ -47,9 +43,8 @@ define i32 @cttz_true_bitreverse(i32 %x) {
 
 define <2 x i64> @cttz_true_bitreverse_vec(<2 x i64> %x) {
 ; CHECK-LABEL: @cttz_true_bitreverse_vec(
-; CHECK-NEXT:    [[A:%.*]] = tail call <2 x i64> @llvm.bitreverse.v2i64(<2 x i64> [[X:%.*]])
-; CHECK-NEXT:    [[B:%.*]] = tail call <2 x i64> @llvm.cttz.v2i64(<2 x i64> [[A]], i1 true)
-; CHECK-NEXT:    ret <2 x i64> [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = call <2 x i64> @llvm.ctlz.v2i64(<2 x i64> [[X:%.*]], i1 true)
+; CHECK-NEXT:    ret <2 x i64> [[TMP1]]
 ;
   %a = tail call <2 x i64> @llvm.bitreverse.v2i64(<2 x i64> %x)
   %b = tail call <2 x i64> @llvm.cttz.v2i64(<2 x i64> %a, i1 true)
@@ -58,9 +53,8 @@ define <2 x i64> @cttz_true_bitreverse_vec(<2 x i64> %x) {
 
 define i32 @cttz_false_bitreverse(i32 %x) {
 ; CHECK-LABEL: @cttz_false_bitreverse(
-; CHECK-NEXT:    [[A:%.*]] = tail call i32 @llvm.bitreverse.i32(i32 [[X:%.*]])
-; CHECK-NEXT:    [[B:%.*]] = tail call i32 @llvm.cttz.i32(i32 [[A]], i1 false), !range !0
-; CHECK-NEXT:    ret i32 [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = call i32 @llvm.ctlz.i32(i32 [[X:%.*]], i1 false), !range !0
+; CHECK-NEXT:    ret i32 [[TMP1]]
 ;
   %a = tail call i32 @llvm.bitreverse.i32(i32 %x)
   %b = tail call i32 @llvm.cttz.i32(i32 %a, i1 false)
