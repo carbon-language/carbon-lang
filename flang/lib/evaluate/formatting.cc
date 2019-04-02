@@ -212,14 +212,14 @@ static constexpr Precedence GetPrecedence(const Expr<SomeDerived> &expr) {
       [](const auto &x) { return ToPrecedence<std::decay_t<decltype(x)>>; },
       expr.u);
 }
+static constexpr Precedence GetPrecedence(const BOZLiteralConstant &) {
+  return Precedence::Primary;
+}
+static constexpr Precedence GetPrecedence(const NullPointer &) {
+  return Precedence::Primary;
+}
 static constexpr Precedence GetPrecedence(const Expr<SomeType> &expr) {
-  return std::visit(
-      common::visitors{
-          [](const BOZLiteralConstant &) { return Precedence::Primary; },
-          [](const NullPointer &) { return Precedence::Primary; },
-          [](const auto &x) { return GetPrecedence(x); },
-      },
-      expr.u);
+  return std::visit([](const auto &x) { return GetPrecedence(x); }, expr.u);
 }
 
 template<typename T> static bool IsNegatedScalarConstant(const Expr<T> &expr) {
