@@ -228,13 +228,19 @@ void hostfunc(void) { kernelfunc<<<1, 1>>>(1, 1, 1); }
 // device-side globals, but we still need to register GPU binary.
 // Skip GPU binary string first.
 // CUDANOGLOBALS: @{{.*}} = private constant{{.*}}
-// HIPNOGLOBALS: @{{.*}} = internal constant{{.*}}
+// HIPNOGLOBALS-NOT: @{{.*}} = internal constant{{.*}}
 // NOGLOBALS-NOT: define internal void @__{{.*}}_register_globals
-// NOGLOBALS: define internal void @__[[PREFIX:cuda|hip]]_module_ctor
-// NOGLOBALS: call{{.*}}[[PREFIX]]RegisterFatBinary{{.*}}__[[PREFIX]]_fatbin_wrapper
+// CUDANOGLOBALS: define internal void @__[[PREFIX:cuda|hip]]_module_ctor
+// CUDANOGLOBALS: call{{.*}}[[PREFIX]]RegisterFatBinary{{.*}}__[[PREFIX]]_fatbin_wrapper
 // NOGLOBALS-NOT: call void @__[[PREFIX]]_register_globals
-// NOGLOBALS: define internal void @__[[PREFIX]]_module_dtor
-// NOGLOBALS: call void @__[[PREFIX]]UnregisterFatBinary
+// CUDANOGLOBALS: define internal void @__[[PREFIX]]_module_dtor
+// CUDANOGLOBALS: call void @__[[PREFIX]]UnregisterFatBinary
+
+// There should be no fat binary functions when no device-code is found for HIP.
+// HIPNOGLOBALS-NOT: define internal void @__[[PREFIX:cuda|hip]]_module_ctor
+// HIPNOGLOBALS-NOT: call{{.*}}[[PREFIX]]RegisterFatBinary{{.*}}__[[PREFIX]]_fatbin_wrapper
+// HIPNOGLOBALS-NOT: define internal void @__[[PREFIX]]_module_dtor
+// HIPNOGLOBALS-NOT: call void @__[[PREFIX]]UnregisterFatBinary
 
 // There should be no constructors/destructors if we have no GPU binary.
 // NOGPUBIN-NOT: define internal void @__[[PREFIX]]_register_globals
