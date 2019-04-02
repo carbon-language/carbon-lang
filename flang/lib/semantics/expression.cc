@@ -1784,7 +1784,8 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::DefinedBinary &) {
 // A(1) as a function reference into an array reference or a structure
 // constructor.
 template<typename... A>
-void FixMisparsedFunctionReference(const std::variant<A...> &constU) {
+void FixMisparsedFunctionReference(
+    semantics::SemanticsContext &context, const std::variant<A...> &constU) {
   // The parse tree is updated in situ when resolving an ambiguous parse.
   using uType = std::decay_t<decltype(constU)>;
   auto &u{const_cast<uType &>(constU)};
@@ -1806,12 +1807,11 @@ void FixMisparsedFunctionReference(const std::variant<A...> &constU) {
         }
       } else if (symbol.has<semantics::DerivedTypeDetails>()) {
         if constexpr (common::HasMember<parser::StructureConstructor, uType>) {
-          CHECK(symbol.scope() != nullptr);
-          const semantics::DeclTypeSpec *type{
-              symbol.scope()->FindInstantiatedDerivedType(
-                  semantics::DerivedTypeSpec{symbol})};
-          CHECK(type != nullptr);
-          u = funcRef.ConvertToStructureConstructor(type->derivedTypeSpec());
+          auto &scope{context.FindScope(name->source)};
+          const semantics::DeclTypeSpec &type{
+              scope.FindOrInstantiateDerivedType(
+                  semantics::DerivedTypeSpec{symbol}, context)};
+          u = funcRef.ConvertToStructureConstructor(type.derivedTypeSpec());
         } else {
           common::die("can't fix misparsed function as structure constructor");
         }
@@ -1825,7 +1825,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr &expr) {
     // Expression was already checked by ExprChecker
     return std::make_optional<Expr<SomeType>>(expr.typedExpr->v);
   } else {
-    FixMisparsedFunctionReference(expr.u);
+    FixMisparsedFunctionReference(context_, expr.u);
     if (!expr.source.empty()) {
       // Analyze the expression in a specified source position context for
       // better error reporting.
@@ -1838,7 +1838,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr &expr) {
 }
 
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::Variable &variable) {
-  FixMisparsedFunctionReference(variable.u);
+  FixMisparsedFunctionReference(context_, variable.u);
   return Analyze(variable.u);
 }
 

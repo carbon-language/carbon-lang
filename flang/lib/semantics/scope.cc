@@ -249,7 +249,7 @@ const DeclTypeSpec *Scope::FindInstantiatedDerivedType(
 }
 
 const DeclTypeSpec &Scope::FindOrInstantiateDerivedType(DerivedTypeSpec &&spec,
-    DeclTypeSpec::Category category, SemanticsContext &semanticsContext) {
+    SemanticsContext &semanticsContext, DeclTypeSpec::Category category) {
   spec.FoldParameterExpressions(semanticsContext.foldingContext());
   if (const DeclTypeSpec * type{FindInstantiatedDerivedType(spec, category)}) {
     return *type;

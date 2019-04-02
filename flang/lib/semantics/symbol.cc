@@ -569,7 +569,7 @@ Symbol &Symbol::Instantiate(
                 }
                 details.ReplaceType(
                     scope.FindOrInstantiateDerivedType(std::move(newSpec),
-                        origType->category(), semanticsContext));
+                        semanticsContext, origType->category()));
               } else if (origType->AsIntrinsic() != nullptr) {
                 const DeclTypeSpec &newType{scope.InstantiateIntrinsicType(
                     *origType, semanticsContext)};

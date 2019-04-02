@@ -180,8 +180,8 @@ public:
 
   // Returns a matching derived type instance if one exists, otherwise
   // creates one
-  const DeclTypeSpec &FindOrInstantiateDerivedType(
-      DerivedTypeSpec &&, DeclTypeSpec::Category, SemanticsContext &);
+  const DeclTypeSpec &FindOrInstantiateDerivedType(DerivedTypeSpec &&,
+      SemanticsContext &, DeclTypeSpec::Category = DeclTypeSpec::TypeDerived);
 
   // Clones a DerivedType scope into a new derived type instance's scope.
   void InstantiateDerivedType(Scope &, SemanticsContext &) const;
