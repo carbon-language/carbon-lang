@@ -27,10 +27,11 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/LineIterator.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
-#include <fstream>
 #include <set>
 using namespace llvm;
 
@@ -72,18 +73,15 @@ private:
 
   void LoadFile(StringRef Filename) {
     // Load the APIFile...
-    std::ifstream In(Filename.data());
-    if (!In.good()) {
+    ErrorOr<std::unique_ptr<MemoryBuffer>> Buf =
+        MemoryBuffer::getFile(Filename);
+    if (!Buf) {
       errs() << "WARNING: Internalize couldn't load file '" << Filename
              << "'! Continuing as if it's empty.\n";
       return; // Just continue as if the file were empty
     }
-    while (In) {
-      std::string Symbol;
-      In >> Symbol;
-      if (!Symbol.empty())
-        ExternalNames.insert(Symbol);
-    }
+    for (line_iterator I(*Buf->get(), true), E; I != E; ++I)
+      ExternalNames.insert(*I);
   }
 };
 } // end anonymous namespace
