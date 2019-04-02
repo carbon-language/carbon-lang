@@ -2054,7 +2054,7 @@ static bool markAliveBlocks(Function &F,
           Changed = true;
           break;
         }
-        if (CI->doesNotReturn()) {
+        if (CI->doesNotReturn() && !CI->isMustTailCall()) {
           // If we found a call to a no-return function, insert an unreachable
           // instruction after it.  Make sure there isn't *already* one there
           // though.
