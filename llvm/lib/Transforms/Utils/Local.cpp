@@ -1292,9 +1292,9 @@ void llvm::ConvertDebugDeclareToDebugValue(DbgVariableIntrinsic *DII,
   auto *DIVar = DII->getVariable();
   assert(DIVar && "Missing variable");
   auto *DIExpr = DII->getExpression();
-  Value *DV = SI->getOperand(0);
+  Value *DV = SI->getValueOperand();
 
-  if (!valueCoversEntireFragment(SI->getValueOperand()->getType(), DII)) {
+  if (!valueCoversEntireFragment(DV->getType(), DII)) {
     // FIXME: If storing to a part of the variable described by the dbg.declare,
     // then we want to insert a dbg.value for the corresponding fragment.
     LLVM_DEBUG(dbgs() << "Failed to convert dbg.declare to dbg.value: "
