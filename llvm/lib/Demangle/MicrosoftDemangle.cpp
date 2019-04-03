@@ -1389,9 +1389,12 @@ Demangler::demangleFullyQualifiedSymbolName(StringView &MangledName) {
     return nullptr;
 
   if (Identifier->kind() == NodeKind::StructorIdentifier) {
+    if (QN->Components->Count < 2) {
+      Error = true;
+      return nullptr;
+    }
     StructorIdentifierNode *SIN =
         static_cast<StructorIdentifierNode *>(Identifier);
-    assert(QN->Components->Count >= 2);
     Node *ClassNode = QN->Components->Nodes[QN->Components->Count - 2];
     SIN->Class = static_cast<IdentifierNode *>(ClassNode);
   }
