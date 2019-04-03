@@ -1949,7 +1949,7 @@ ArrayTypeNode *Demangler::demangleArrayType(StringView &MangledName) {
   for (uint64_t I = 0; I < Rank; ++I) {
     uint64_t D = 0;
     std::tie(D, IsNegative) = demangleNumber(MangledName);
-    if (IsNegative) {
+    if (Error || IsNegative) {
       Error = true;
       return nullptr;
     }
