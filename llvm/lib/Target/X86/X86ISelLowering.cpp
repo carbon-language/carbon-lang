@@ -32866,8 +32866,10 @@ static SDValue combineShuffleOfConcatUndef(SDNode *N, SelectionDAG &DAG,
 
 /// Eliminate a redundant shuffle of a horizontal math op.
 static SDValue foldShuffleOfHorizOp(SDNode *N) {
-  if (N->getOpcode() != ISD::VECTOR_SHUFFLE || !N->getOperand(1).isUndef())
-    return SDValue();
+  unsigned Opcode = N->getOpcode();
+  if (Opcode != X86ISD::MOVDDUP)
+    if (Opcode != ISD::VECTOR_SHUFFLE || !N->getOperand(1).isUndef())
+      return SDValue();
 
   SDValue HOp = N->getOperand(0);
   if (HOp.getOpcode() != X86ISD::HADD && HOp.getOpcode() != X86ISD::FHADD &&
@@ -32885,6 +32887,13 @@ static SDValue foldShuffleOfHorizOp(SDNode *N) {
   // When the operands of a horizontal math op are identical, the low half of
   // the result is the same as the high half. If the shuffle is also replicating
   // low and high halves, we don't need the shuffle.
+  if (Opcode == X86ISD::MOVDDUP) {
+    // movddup (hadd X, X) --> hadd X, X
+    assert((HOp.getValueType() == MVT::v2f64 ||
+            HOp.getValueType() == MVT::v4f64) && "Unexpected type for h-op");
+    return HOp;
+  }
+
   // shuffle (hadd X, X), undef, [low half...high half] --> hadd X, X
   ArrayRef<int> Mask = cast<ShuffleVectorSDNode>(N)->getMask();
   // TODO: Other mask possibilities like {1,1} and {1,0} could be added here,

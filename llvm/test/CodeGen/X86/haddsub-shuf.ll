@@ -325,7 +325,6 @@ define <2 x double> @hadd_v2f64_scalar_splat(<2 x double> %a) {
 ; SSSE3_FAST-LABEL: hadd_v2f64_scalar_splat:
 ; SSSE3_FAST:       # %bb.0:
 ; SSSE3_FAST-NEXT:    haddpd %xmm0, %xmm0
-; SSSE3_FAST-NEXT:    movddup {{.*#+}} xmm0 = xmm0[0,0]
 ; SSSE3_FAST-NEXT:    retq
 ;
 ; AVX1_SLOW-LABEL: hadd_v2f64_scalar_splat:
@@ -338,7 +337,6 @@ define <2 x double> @hadd_v2f64_scalar_splat(<2 x double> %a) {
 ; AVX1_FAST-LABEL: hadd_v2f64_scalar_splat:
 ; AVX1_FAST:       # %bb.0:
 ; AVX1_FAST-NEXT:    vhaddpd %xmm0, %xmm0, %xmm0
-; AVX1_FAST-NEXT:    vmovddup {{.*#+}} xmm0 = xmm0[0,0]
 ; AVX1_FAST-NEXT:    retq
 ;
 ; AVX2_SLOW-LABEL: hadd_v2f64_scalar_splat:
@@ -378,8 +376,6 @@ define <4 x double> @hadd_v4f64_scalar_splat(<4 x double> %a) {
 ; SSSE3_FAST:       # %bb.0:
 ; SSSE3_FAST-NEXT:    haddpd %xmm0, %xmm0
 ; SSSE3_FAST-NEXT:    haddpd %xmm1, %xmm1
-; SSSE3_FAST-NEXT:    movddup {{.*#+}} xmm0 = xmm0[0,0]
-; SSSE3_FAST-NEXT:    movddup {{.*#+}} xmm1 = xmm1[0,0]
 ; SSSE3_FAST-NEXT:    retq
 ;
 ; AVX-LABEL: hadd_v4f64_scalar_splat:
