@@ -921,8 +921,6 @@ and Objective-C methods.
   }];
 }
 
-
-
 def NoDebugDocs : Documentation {
   let Category = DocCatVariable;
   let Content = [{
@@ -1080,7 +1078,10 @@ can only be placed before an @protocol or @interface declaration:
 def ObjCRuntimeVisibleDocs : Documentation {
     let Category = DocCatDecl;
     let Content = [{
-This attribute specifies that the Objective-C class to which it applies is visible to the Objective-C runtime but not to the linker. Classes annotated with this attribute cannot be subclassed and cannot have categories defined for them.
+This attribute specifies that the Objective-C class to which it applies is
+visible to the Objective-C runtime but not to the linker. Classes annotated
+with this attribute cannot be subclassed and cannot have categories defined for
+them.
     }];
 }
 
@@ -2774,8 +2775,6 @@ def PipelineHintDocs : Documentation {
   }];
 }
 
-
-
 def OpenCLUnrollHintDocs : Documentation {
   let Category = DocCatStmt;
   let Content = [{
@@ -3345,7 +3344,7 @@ jumps from i386 arch code).
   }];
 }
 
-def AnyX86NoCfCheckDocs : Documentation{
+def AnyX86NoCfCheckDocs : Documentation {
   let Category = DocCatFunction;
   let Content = [{
 Jump Oriented Programming attacks rely on tampering with addresses used by
