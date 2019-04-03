@@ -361,6 +361,44 @@ define <2 x double> @hadd_v2f64_scalar_splat(<2 x double> %a) {
   ret <2 x double> %shuf
 }
 
+define <4 x double> @hadd_v4f64_scalar_splat(<4 x double> %a) {
+; SSSE3_SLOW-LABEL: hadd_v4f64_scalar_splat:
+; SSSE3_SLOW:       # %bb.0:
+; SSSE3_SLOW-NEXT:    movapd %xmm0, %xmm2
+; SSSE3_SLOW-NEXT:    unpckhpd {{.*#+}} xmm2 = xmm2[1],xmm0[1]
+; SSSE3_SLOW-NEXT:    addsd %xmm0, %xmm2
+; SSSE3_SLOW-NEXT:    movapd %xmm1, %xmm3
+; SSSE3_SLOW-NEXT:    unpckhpd {{.*#+}} xmm3 = xmm3[1],xmm1[1]
+; SSSE3_SLOW-NEXT:    addsd %xmm1, %xmm3
+; SSSE3_SLOW-NEXT:    movddup {{.*#+}} xmm0 = xmm2[0,0]
+; SSSE3_SLOW-NEXT:    movddup {{.*#+}} xmm1 = xmm3[0,0]
+; SSSE3_SLOW-NEXT:    retq
+;
+; SSSE3_FAST-LABEL: hadd_v4f64_scalar_splat:
+; SSSE3_FAST:       # %bb.0:
+; SSSE3_FAST-NEXT:    haddpd %xmm0, %xmm0
+; SSSE3_FAST-NEXT:    haddpd %xmm1, %xmm1
+; SSSE3_FAST-NEXT:    movddup {{.*#+}} xmm0 = xmm0[0,0]
+; SSSE3_FAST-NEXT:    movddup {{.*#+}} xmm1 = xmm1[0,0]
+; SSSE3_FAST-NEXT:    retq
+;
+; AVX-LABEL: hadd_v4f64_scalar_splat:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vhaddpd %ymm0, %ymm0, %ymm0
+; AVX-NEXT:    vmovddup {{.*#+}} ymm0 = ymm0[0,0,2,2]
+; AVX-NEXT:    retq
+  %a0 = extractelement <4 x double> %a, i32 0
+  %a1 = extractelement <4 x double> %a, i32 1
+  %hop0 = fadd double %a0, %a1
+  %a2 = extractelement <4 x double> %a, i32 2
+  %a3 = extractelement <4 x double> %a, i32 3
+  %hop1 = fadd double %a2, %a3
+  %ins = insertelement <4 x double> undef, double %hop0, i32 0
+  %ins2 = insertelement <4 x double> %ins,  double %hop1, i32 2
+  %shuf = shufflevector <4 x double> %ins2, <4 x double> undef, <4 x i32> <i32 0, i32 0, i32 2, i32 2>
+  ret <4 x double> %shuf
+}
+
 define <4 x double> @hadd_v4f64(<4 x double> %a) {
 ; SSSE3_SLOW-LABEL: hadd_v4f64:
 ; SSSE3_SLOW:       # %bb.0:
