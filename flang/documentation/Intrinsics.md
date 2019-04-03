@@ -764,7 +764,7 @@ types related to host float and double types.
 | --- | --- |
 |float and double| BESSEL_J0, BESSEL_J1, BESSEL_JN (elemental only), BESSEL_Y0, BESSEL_Y1, BESSEL_Yn (elemental only), ERFC_SCALED |
 
-Lipgmath comes in three variants (precise, relaxed and fast). So far, only the
+Libpgmath comes in three variants (precise, relaxed and fast). So far, only the
 precise version is used for intrinsic function folding in f18. It guarantees the greatest numerical precision.
 
 ### Intrinsic Functions with Missing Folding Support
