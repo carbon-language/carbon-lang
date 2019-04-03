@@ -57,9 +57,7 @@ std::optional<Expr<SubscriptInteger>> Triplet::upper() const {
   return std::nullopt;
 }
 
-const Expr<SubscriptInteger> &Triplet::stride() const {
-  return stride_.value();
-}
+Expr<SubscriptInteger> Triplet::stride() const { return stride_.value(); }
 
 bool Triplet::IsStrideOne() const {
   if (auto stride{ToInt64(stride_.value())}) {
@@ -359,18 +357,18 @@ int ArrayRef::Rank() const {
   }
   return std::visit(
       common::visitors{
-          [=](const Symbol *s) { return s->Rank(); },
+          [=](const Symbol *s) { return 0; },
           [=](const Component &c) { return c.Rank(); },
       },
       base_);
 }
 
 int CoarrayRef::Rank() const {
-  int rank{0};
-  for (const auto &expr : subscript_) {
-    rank += expr.Rank();
-  }
-  if (rank > 0) {
+  if (!subscript_.empty()) {
+    int rank{0};
+    for (const auto &expr : subscript_) {
+      rank += expr.Rank();
+    }
     return rank;
   } else {
     return base_.back()->Rank();
@@ -517,6 +515,21 @@ template<typename T> std::optional<DynamicType> Designator<T>::GetType() const {
   } else {
     return GetSymbolType(GetLastSymbol());
   }
+}
+
+SymbolOrComponent CoarrayRef::GetBaseSymbolOrComponent() const {
+  SymbolOrComponent base{base_.front()};
+  int j{0};
+  for (const Symbol *symbol : base_) {
+    if (j == 0) {  // X - already captured the symbol above
+    } else if (j == 1) {  // X%Y
+      base = Component{DataRef{std::get<const Symbol *>(base)}, *symbol};
+    } else {  // X%Y%Z or more
+      base = Component{DataRef{std::move(std::get<Component>(base))}, *symbol};
+    }
+    ++j;
+  }
+  return base;
 }
 
 // Equality testing

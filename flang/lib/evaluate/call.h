@@ -45,7 +45,6 @@ public:
   int Rank() const;
   bool operator==(const ActualArgument &) const;
   std::ostream &AsFortran(std::ostream &) const;
-  std::optional<int> VectorSize() const;
 
   std::optional<parser::CharBlock> keyword;
   bool isAlternateReturn{false};  // when true, "value" is a label number

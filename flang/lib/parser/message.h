@@ -241,6 +241,7 @@ private:
 
 class ContextualMessages {
 public:
+  ContextualMessages() = default;
   ContextualMessages(CharBlock at, Messages *m) : at_{at}, messages_{m} {}
   ContextualMessages(const ContextualMessages &that)
     : at_{that.at_}, messages_{that.messages_} {}

@@ -19,6 +19,7 @@
 #include "host.h"
 #include "int-power.h"
 #include "intrinsics-library-templates.h"
+#include "shape.h"
 #include "tools.h"
 #include "traversal.h"
 #include "type.h"
@@ -473,13 +474,17 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
       }
       return FoldElementalIntrinsic<T, T, T, T>(
           context, std::move(funcRef), &Scalar<T>::MERGE_BITS);
+    } else if (name == "rank") {
+      // TODO pmk: get rank
+    } else if (name == "shape") {
+      // TODO pmk: call GetShape on argument, massage result
     }
     // TODO:
     // ceiling, count, cshift, dot_product, eoshift,
     // findloc, floor, iachar, iall, iany, iparity, ibits, ichar, image_status,
     // index, ishftc, lbound, len_trim, matmul, max, maxloc, maxval, merge, min,
     // minloc, minval, mod, modulo, nint, not, pack, product, reduce, reshape,
-    // scan, selected_char_kind, selected_int_kind, selected_real_kind, shape,
+    // scan, selected_char_kind, selected_int_kind, selected_real_kind,
     // sign, size, spread, sum, transfer, transpose, ubound, unpack, verify
   }
   return Expr<T>{std::move(funcRef)};

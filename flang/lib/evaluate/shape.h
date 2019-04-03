@@ -30,10 +30,69 @@ using Extent = std::optional<Expr<SubscriptInteger>>;
 using Shape = std::vector<Extent>;
 
 template<typename A> std::optional<Shape> GetShape(const A &) {
-  return std::nullopt;
+  return std::nullopt;  // default case
 }
 
-template<typename T> std::optional<Shape> GetShape(const Expr<T> &);
+// Forward declarations
+template<typename... A>
+std::optional<Shape> GetShape(const std::variant<A...> &);
+template<typename A, bool COPY>
+std::optional<Shape> GetShape(const common::Indirection<A, COPY> &);
+template<typename A> std::optional<Shape> GetShape(const std::optional<A> &);
+
+template<typename T> std::optional<Shape> GetShape(const Expr<T> &expr) {
+  return GetShape(expr.u);
+}
+
+std::optional<Shape> GetShape(
+    const semantics::Symbol &, const Component * = nullptr);
+std::optional<Shape> GetShape(const BaseObject &);
+std::optional<Shape> GetShape(const Component &);
+std::optional<Shape> GetShape(const ArrayRef &);
+std::optional<Shape> GetShape(const CoarrayRef &);
+std::optional<Shape> GetShape(const DataRef &);
+std::optional<Shape> GetShape(const Substring &);
+std::optional<Shape> GetShape(const ComplexPart &);
+std::optional<Shape> GetShape(const ActualArgument &);
+std::optional<Shape> GetShape(const ProcedureRef &);
+std::optional<Shape> GetShape(const StructureConstructor &);
+std::optional<Shape> GetShape(const BOZLiteralConstant &);
+std::optional<Shape> GetShape(const NullPointer &);
+
+template<typename T>
+std::optional<Shape> GetShape(const Designator<T> &designator) {
+  return GetShape(designator.u);
+}
+
+template<typename T>
+std::optional<Shape> GetShape(const Variable<T> &variable) {
+  return GetShape(variable.u);
+}
+
+template<typename D, typename R, typename... O>
+std::optional<Shape> GetShape(const Operation<D, R, O...> &operation) {
+  if constexpr (operation.operands > 1) {
+    if (operation.right().Rank() > 0) {
+      return GetShape(operation.right());
+    }
+  }
+  return GetShape(operation.left());
+}
+
+template<int KIND>
+std::optional<Shape> GetShape(const TypeParamInquiry<KIND> &) {
+  return Shape{};  // always scalar
+}
+
+template<typename T>
+std::optional<Shape> GetShape(const ArrayConstructorValues<T> &aconst) {
+  return std::nullopt;  // TODO pmk much more here!!
+}
+
+template<typename... A>
+std::optional<Shape> GetShape(const std::variant<A...> &u) {
+  return std::visit([](const auto &x) { return GetShape(x); }, u);
+}
 
 template<typename A, bool COPY>
 std::optional<Shape> GetShape(const common::Indirection<A, COPY> &p) {
@@ -46,35 +105,6 @@ template<typename A> std::optional<Shape> GetShape(const std::optional<A> &x) {
   } else {
     return std::nullopt;
   }
-}
-
-template<typename... A>
-std::optional<Shape> GetShape(const std::variant<A...> &u) {
-  return std::visit([](const auto &x) { return GetShape(x); }, u);
-}
-
-std::optional<Shape> GetShape(
-    const semantics::Symbol &, const Component * = nullptr);
-std::optional<Shape> GetShape(const DataRef &);
-std::optional<Shape> GetShape(const ComplexPart &);
-std::optional<Shape> GetShape(const Substring &);
-std::optional<Shape> GetShape(const Component &);
-std::optional<Shape> GetShape(const ArrayRef &);
-std::optional<Shape> GetShape(const CoarrayRef &);
-
-template<typename T>
-std::optional<Shape> GetShape(const Designator<T> &designator) {
-  return std::visit([](const auto &x) { return GetShape(x); }, designator.u);
-}
-
-template<typename T> std::optional<Shape> GetShape(const Expr<T> &expr) {
-  return std::visit(
-      common::visitors{
-          [](const BOZLiteralConstant &) { return Shape{}; },
-          [](const NullPointer &) { return std::nullopt; },
-          [](const auto &x) { return GetShape(x); },
-      },
-      expr.u);
 }
 }
 #endif  // FORTRAN_EVALUATE_SHAPE_H_

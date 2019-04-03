@@ -29,14 +29,6 @@ bool ActualArgument::operator==(const ActualArgument &that) const {
       isAlternateReturn == that.isAlternateReturn && value() == that.value();
 }
 
-std::optional<int> ActualArgument::VectorSize() const {
-  if (Rank() != 1) {
-    return std::nullopt;
-  }
-  // TODO: get shape vector of value, return its length
-  return std::nullopt;
-}
-
 bool SpecificIntrinsic::operator==(const SpecificIntrinsic &that) const {
   return name == that.name && type == that.type && rank == that.rank &&
       attrs == that.attrs;

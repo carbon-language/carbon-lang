@@ -201,6 +201,7 @@ template<typename A> class Expr;
 
 class FoldingContext {
 public:
+  FoldingContext() = default;
   explicit FoldingContext(const parser::ContextualMessages &m,
       Rounding round = defaultRounding, bool flush = false)
     : messages_{m}, rounding_{round}, flushSubnormalsToZero_{flush} {}

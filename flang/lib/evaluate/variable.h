@@ -142,7 +142,7 @@ public:
       std::optional<Expr<SubscriptInteger>> &&);
   std::optional<Expr<SubscriptInteger>> lower() const;
   std::optional<Expr<SubscriptInteger>> upper() const;
-  const Expr<SubscriptInteger> &stride() const;
+  Expr<SubscriptInteger> stride() const;
   bool operator==(const Triplet &) const;
   bool IsStrideOne() const;
   std::ostream &AsFortran(std::ostream &) const;
@@ -237,6 +237,7 @@ public:
   int Rank() const;
   const Symbol &GetFirstSymbol() const;
   const Symbol &GetLastSymbol() const;
+  SymbolOrComponent GetBaseSymbolOrComponent() const;
   Expr<SubscriptInteger> LEN() const;
   bool operator==(const CoarrayRef &) const;
   std::ostream &AsFortran(std::ostream &) const;
@@ -404,7 +405,7 @@ public:
 private:
   SymbolOrComponent base_{nullptr};
   Field field_;
-  int dimension_{0};
+  int dimension_{0};  // zero-based
 };
 
 #define INSTANTIATE_VARIABLE_TEMPLATES \

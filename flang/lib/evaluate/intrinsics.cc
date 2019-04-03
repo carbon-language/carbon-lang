@@ -15,6 +15,7 @@
 #include "intrinsics.h"
 #include "expression.h"
 #include "fold.h"
+#include "shape.h"
 #include "tools.h"
 #include "type.h"
 #include "../common/Fortran.h"
@@ -502,6 +503,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"product",
         {{"array", SameNumeric, Rank::array}, OptionalDIM, OptionalMASK},
         SameNumeric, Rank::dimReduced},
+    // TODO pmk: "rank"
     {"real", {{"a", AnyNumeric, Rank::elementalOrBOZ}, DefaultingKIND},
         KINDReal},
     {"reduce",
@@ -607,7 +609,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
 //   COSHAPE
 // TODO: Object characteristic inquiry functions
 //   ALLOCATED, ASSOCIATED, EXTENDS_TYPE_OF, IS_CONTIGUOUS,
-//   PRESENT, RANK, SAME_TYPE, STORAGE_SIZE
+//   PRESENT, SAME_TYPE, STORAGE_SIZE
 // TODO: Type inquiry intrinsic functions - these return constants
 //  BIT_SIZE, DIGITS, EPSILON, HUGE, KIND, MAXEXPONENT, MINEXPONENT,
 //  NEW_LINE, PRECISION, RADIX, RANGE, TINY
@@ -939,7 +941,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
   // Check the ranks of the arguments against the intrinsic's interface.
   const ActualArgument *arrayArg{nullptr};
   const ActualArgument *knownArg{nullptr};
-  const ActualArgument *shapeArg{nullptr};
+  std::optional<int> shapeArgSize;
   int elementalRank{0};
   for (std::size_t j{0}; j < dummies; ++j) {
     const IntrinsicDummyArgument &d{dummy[std::min(j, dummyArgPatterns - 1)]};
@@ -963,9 +965,21 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       case Rank::scalar: argOk = rank == 0; break;
       case Rank::vector: argOk = rank == 1; break;
       case Rank::shape:
-        CHECK(shapeArg == nullptr);
-        shapeArg = arg;
-        argOk = rank == 1 && arg->VectorSize().has_value();
+        CHECK(!shapeArgSize.has_value());
+        if (rank == 1) {
+          if (auto shape{GetShape(*arg)}) {
+            CHECK(shape->size() == 1);
+            if (auto value{ToInt64(shape->at(0))}) {
+              shapeArgSize = *value;
+              argOk = *value >= 0;
+            }
+          }
+        }
+        if (!argOk) {
+          messages.Say(
+              "'shape=' argument must be a vector of known size"_err_en_US);
+          return std::nullopt;
+        }
         break;
       case Rank::matrix: argOk = rank == 2; break;
       case Rank::array:
@@ -1134,8 +1148,8 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
     resultRank = knownArg->Rank() + 1;
     break;
   case Rank::shaped:
-    CHECK(shapeArg != nullptr);
-    resultRank = shapeArg->VectorSize().value();
+    CHECK(shapeArgSize.has_value());
+    resultRank = *shapeArgSize;
     break;
   case Rank::elementalOrBOZ:
   case Rank::shape:

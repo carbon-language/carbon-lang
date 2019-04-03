@@ -19,29 +19,114 @@
 #include "../semantics/symbol.h"
 
 namespace Fortran::evaluate {
+
+static Extent GetLowerBound(const semantics::Symbol &symbol,
+    const Component *component, int dimension) {
+  if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
+    int j{0};
+    for (const auto &shapeSpec : details->shape()) {
+      if (j++ == dimension) {
+        if (const auto &bound{shapeSpec.lbound().GetExplicit()}) {
+          return *bound;
+        } else if (component != nullptr) {
+          return Expr<SubscriptInteger>{DescriptorInquiry{
+              *component, DescriptorInquiry::Field::LowerBound, dimension}};
+        } else {
+          return Expr<SubscriptInteger>{DescriptorInquiry{
+              symbol, DescriptorInquiry::Field::LowerBound, dimension}};
+        }
+      }
+    }
+  }
+  return std::nullopt;
+}
+
+static Extent GetExtent(const semantics::Symbol &symbol,
+    const Component *component, int dimension) {
+  if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
+    int j{0};
+    for (const auto &shapeSpec : details->shape()) {
+      if (j++ == dimension) {
+        if (const auto &lbound{shapeSpec.lbound().GetExplicit()}) {
+          if (const auto &ubound{shapeSpec.ubound().GetExplicit()}) {
+            FoldingContext noFoldingContext;
+            return Fold(noFoldingContext,
+                common::Clone(ubound.value()) - common::Clone(lbound.value()) +
+                    Expr<SubscriptInteger>{1});
+          }
+        }
+        if (component != nullptr) {
+          return Expr<SubscriptInteger>{DescriptorInquiry{
+              *component, DescriptorInquiry::Field::Extent, dimension}};
+        } else {
+          return Expr<SubscriptInteger>{DescriptorInquiry{
+              &symbol, DescriptorInquiry::Field::Extent, dimension}};
+        }
+      }
+    }
+  }
+  return std::nullopt;
+}
+
+static Extent GetExtent(const Subscript &subscript, const Symbol &symbol,
+    const Component *component, int dimension) {
+  return std::visit(
+      common::visitors{
+          [&](const Triplet &triplet) -> Extent {
+            Extent upper{triplet.upper()};
+            if (!upper.has_value()) {
+              upper = GetExtent(symbol, component, dimension);
+            }
+            if (upper.has_value()) {
+              Extent lower{triplet.lower()};
+              if (!lower.has_value()) {
+                lower = GetLowerBound(symbol, component, dimension);
+              }
+              if (lower.has_value()) {
+                auto span{
+                    (std::move(*upper) - std::move(*lower) + triplet.stride()) /
+                    triplet.stride()};
+                Expr<SubscriptInteger> extent{
+                    Extremum<SubscriptInteger>{std::move(span),
+                        Expr<SubscriptInteger>{0}, Ordering::Greater}};
+                FoldingContext noFoldingContext;
+                return Fold(noFoldingContext, std::move(extent));
+              }
+            }
+            return std::nullopt;
+          },
+          [](const IndirectSubscriptIntegerExpr &subs) -> Extent {
+            if (auto shape{GetShape(subs.value())}) {
+              if (shape->size() > 0) {
+                CHECK(shape->size() == 1);  // vector-valued subscript
+                return std::move(shape->at(0));
+              }
+            }
+            return std::nullopt;
+          },
+      },
+      subscript.u);
+}
+
 std::optional<Shape> GetShape(
     const semantics::Symbol &symbol, const Component *component) {
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     Shape result;
-    int dimension{1};
-    for (const auto &shapeSpec : details->shape()) {
-      if (shapeSpec.isExplicit()) {
-        result.emplace_back(
-            common::Clone(shapeSpec.ubound().GetExplicit().value()) -
-            common::Clone(shapeSpec.lbound().GetExplicit().value()) +
-            Expr<SubscriptInteger>{1});
-      } else if (component != nullptr) {
-        result.emplace_back(Expr<SubscriptInteger>{DescriptorInquiry{
-            *component, DescriptorInquiry::Field::Extent, dimension}});
-      } else {
-        result.emplace_back(Expr<SubscriptInteger>{DescriptorInquiry{
-            symbol, DescriptorInquiry::Field::Extent, dimension}});
-      }
-      ++dimension;
+    int n = details->shape().size();
+    for (int dimension{0}; dimension < n; ++dimension) {
+      result.emplace_back(GetExtent(symbol, component, dimension++));
     }
     return result;
   } else {
     return std::nullopt;
+  }
+}
+
+std::optional<Shape> GetShape(const BaseObject &object) {
+  if (const Symbol * symbol{object.symbol()}) {
+    return GetShape(*symbol);
+  } else {
+    return Shape{};
   }
 }
 
@@ -53,45 +138,17 @@ std::optional<Shape> GetShape(const Component &component) {
     return GetShape(component.base());
   }
 }
-static Extent GetExtent(const Subscript &subscript) {
-  return std::visit(
-      common::visitors{
-          [](const Triplet &triplet) -> Extent {
-            if (auto lower{triplet.lower()}) {
-              if (auto lowerValue{ToInt64(*lower)}) {
-                if (auto upper{triplet.upper()}) {
-                  if (auto upperValue{ToInt64(*upper)}) {
-                    if (auto strideValue{ToInt64(triplet.stride())}) {
-                      if (*strideValue != 0) {
-                        std::int64_t extent{
-                            (*upperValue - *lowerValue + *strideValue) /
-                            *strideValue};
-                        return Expr<SubscriptInteger>{extent > 0 ? extent : 0};
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            return std::nullopt;
-          },
-          [](const IndirectSubscriptIntegerExpr &subs) -> Extent {
-            if (auto shape{GetShape(subs.value())}) {
-              if (shape->size() == 1) {
-                return std::move(shape->at(0));
-              }
-            }
-            return std::nullopt;
-          },
-      },
-      subscript.u);
-}
+
 std::optional<Shape> GetShape(const ArrayRef &arrayRef) {
   Shape shape;
+  const Symbol &symbol{arrayRef.GetLastSymbol()};
+  const Component *component{std::get_if<Component>(&arrayRef.base())};
+  int dimension{0};
   for (const Subscript &ss : arrayRef.subscript()) {
     if (ss.Rank() > 0) {
-      shape.emplace_back(GetExtent(ss));
+      shape.emplace_back(GetExtent(ss, symbol, component, dimension));
     }
+    ++dimension;
   }
   if (shape.empty()) {
     return GetShape(arrayRef.base());
@@ -99,12 +156,18 @@ std::optional<Shape> GetShape(const ArrayRef &arrayRef) {
     return shape;
   }
 }
+
 std::optional<Shape> GetShape(const CoarrayRef &coarrayRef) {
   Shape shape;
+  SymbolOrComponent base{coarrayRef.GetBaseSymbolOrComponent()};
+  const Symbol &symbol{coarrayRef.GetLastSymbol()};
+  const Component *component{std::get_if<Component>(&base)};
+  int dimension{0};
   for (const Subscript &ss : coarrayRef.subscript()) {
     if (ss.Rank() > 0) {
-      shape.emplace_back(GetExtent(ss));
+      shape.emplace_back(GetExtent(ss, symbol, component, dimension));
     }
+    ++dimension;
   }
   if (shape.empty()) {
     return GetShape(coarrayRef.GetLastSymbol());
@@ -112,9 +175,11 @@ std::optional<Shape> GetShape(const CoarrayRef &coarrayRef) {
     return shape;
   }
 }
+
 std::optional<Shape> GetShape(const DataRef &dataRef) {
   return std::visit([](const auto &x) { return GetShape(x); }, dataRef.u);
 }
+
 std::optional<Shape> GetShape(const Substring &substring) {
   if (const auto *dataRef{substring.GetParentIf<DataRef>()}) {
     return GetShape(*dataRef);
@@ -122,7 +187,49 @@ std::optional<Shape> GetShape(const Substring &substring) {
     return std::nullopt;
   }
 }
+
 std::optional<Shape> GetShape(const ComplexPart &part) {
   return GetShape(part.complex());
 }
+
+std::optional<Shape> GetShape(const ActualArgument &arg) {
+  return GetShape(arg.value());
+}
+
+std::optional<Shape> GetShape(const ProcedureRef &call) {
+  if (call.Rank() == 0) {
+    return Shape{};
+  } else if (call.IsElemental()) {
+    for (const auto &arg : call.arguments()) {
+      if (arg.has_value() && arg->Rank() > 0) {
+        return GetShape(*arg);
+      }
+    }
+  } else if (const Symbol * symbol{call.proc().GetSymbol()}) {
+    return GetShape(*symbol);
+  } else if (const auto *intrinsic{
+                 std::get_if<SpecificIntrinsic>(&call.proc().u)}) {
+    if (intrinsic->name == "shape" || intrinsic->name == "lbound" ||
+        intrinsic->name == "ubound") {
+      return Shape{Extent{Expr<SubscriptInteger>{
+          call.arguments().front().value().value().Rank()}}};
+    }
+    // TODO: shapes of other non-elemental intrinsic results
+    // esp. reshape, where shape is value of second argument
+  }
+  return std::nullopt;
+}
+
+std::optional<Shape> GetShape(const StructureConstructor &) {
+  return Shape{};  // always scalar
+}
+
+std::optional<Shape> GetShape(const BOZLiteralConstant &) {
+  return Shape{};  // always scalar
+}
+
+std::optional<Shape> GetShape(const NullPointer &) {
+  return {};  // not an object
+}
+
 }
