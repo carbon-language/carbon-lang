@@ -43505,8 +43505,13 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
   case 'i': {
     // Literal immediates are always ok.
     if (ConstantSDNode *CST = dyn_cast<ConstantSDNode>(Op)) {
-      // Widen to 64 bits here to get it sign extended.
-      Result = DAG.getTargetConstant(CST->getSExtValue(), SDLoc(Op), MVT::i64);
+      bool IsBool = CST->getConstantIntValue()->getBitWidth() == 1;
+      BooleanContent BCont = getBooleanContents(MVT::i64);
+      ISD::NodeType ExtOpc = IsBool ? getExtendForContent(BCont)
+                                    : ISD::SIGN_EXTEND;
+      int64_t ExtVal = ExtOpc == ISD::ZERO_EXTEND ? CST->getZExtValue()
+                                                  : CST->getSExtValue();
+      Result = DAG.getTargetConstant(ExtVal, SDLoc(Op), MVT::i64);
       break;
     }
 
