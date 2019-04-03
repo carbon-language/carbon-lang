@@ -79,7 +79,7 @@ fall-instrinsics
    </td>
    <td>Mallocatable=95|03
    </td>
-   <td>N/A
+   <td>Mallocatable=95|03
    </td>
   </tr>
 </table>
@@ -487,7 +487,7 @@ s default64
    </td>
    <td>r[4|8]
    </td>
-   <td>R8,
+   <td>r8,
 <p>
 fdefault-real-8
    </td>
@@ -624,7 +624,7 @@ Mi4,
 <p>
 Mnoi4
    </td>
-   <td>I8,
+   <td>i8,
 <p>
 fdefault-integer-8
    </td>
@@ -922,7 +922,7 @@ Msave
    </td>
    <td>Mrecursive
    </td>
-   <td>N/A
+   <td>Mrecursive
    </td>
   </tr>
 </table>
@@ -1214,7 +1214,7 @@ IBM Fortran's options allow the source line length to be specified with the opti
 *   **GNU:** For both "ffixed-line-length-_n_" and "ffree-line-length-_n_" options, characters are ignored after the specified length.  The default for fixed is 72.  The default for free is 132.  For free, you can specify 'none' as the length, which means that all characters in the line are meaningful.
 *   **IBM:** For **fixed**, the default is 72.  For **free**, there's no default, but the maximum length for either form is 132.
 *   **Intel:** The default is 72 for **fixed** and 132 for **free**.
-*   **PGI, Flang:** "-Mextend" instructs the compiler to accept 132-column source code; otherwise it accepts 72-column code.  It's unclear from the documentation whether this applies to fixed, free, or both source formats.
+*   **PGI, Flang:** By default, flang accepts up to 1000 characters per line in free form.  "-Mextend" instructs the compiler to accept 132-column source code; otherwise it accepts 72-column code.  It's unclear from the documentation whether this applies to fixed, free, or both source formats.
 
 **<a name="names"></a>Names, Literals, and other tokens**
 
