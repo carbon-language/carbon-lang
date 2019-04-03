@@ -113,19 +113,16 @@ ArrayRef FoldOperation(FoldingContext &context, ArrayRef &&arrayRef) {
 }
 
 CoarrayRef FoldOperation(FoldingContext &context, CoarrayRef &&coarrayRef) {
-  CoarrayRef::BaseDataRef baseDataRef;
-  for (auto &&part : std::move(coarrayRef.baseDataRef())) {
-    baseDataRef.emplace_back(*coarrayRef.baseDataRef().front().symbol);
-    for (auto &&subscript : std::move(part.subscript)) {
-      baseDataRef.back().subscript.emplace_back(
-          Fold(context, std::move(subscript)));
-    }
+  std::vector<Subscript> subscript;
+  for (Subscript x : coarrayRef.subscript()) {
+    subscript.emplace_back(FoldOperation(context, std::move(x)));
   }
   std::vector<Expr<SubscriptInteger>> cosubscript;
   for (Expr<SubscriptInteger> x : coarrayRef.cosubscript()) {
     cosubscript.emplace_back(Fold(context, std::move(x)));
   }
-  CoarrayRef folded{std::move(baseDataRef), std::move(cosubscript)};
+  CoarrayRef folded{std::move(coarrayRef.base()), std::move(subscript),
+      std::move(cosubscript)};
   if (std::optional<Expr<SomeInteger>> stat{coarrayRef.stat()}) {
     folded.set_stat(Fold(context, std::move(*stat)));
   }

@@ -511,23 +511,23 @@ std::ostream &ArrayRef::AsFortran(std::ostream &o) const {
 
 std::ostream &CoarrayRef::AsFortran(std::ostream &o) const {
   bool first{true};
-  for (const auto &part : baseDataRef_) {
+  for (const Symbol *part : base_) {
     if (first) {
       first = false;
     } else {
       o << '%';
     }
-    EmitVar(o, *part.symbol);
-    char ch{'('};
-    for (const auto &sscript : part.subscript) {
-      EmitVar(o << ch, sscript);
-      ch = ',';
-    }
-    if (ch == ',') {
-      o << ')';
-    }
+    EmitVar(o, *part);
   }
-  char separator{'['};
+  char separator{'('};
+  for (const auto &sscript : subscript_) {
+    EmitVar(o << separator, sscript);
+    separator = ',';
+  }
+  if (separator == ',') {
+    o << ')';
+  }
+  separator = '[';
   for (const auto &css : cosubscript_) {
     EmitVar(o << separator, css);
     separator = ',';

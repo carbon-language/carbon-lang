@@ -69,14 +69,15 @@ bool Triplet::IsStrideOne() const {
   }
 }
 
-bool CoarrayRef::BasePartRef::operator==(const BasePartRef &that) const {
-  return symbol == that.symbol && subscript == that.subscript;
-}
-
-CoarrayRef::CoarrayRef(
-    CoarrayRef::BaseDataRef &&base, std::vector<Expr<SubscriptInteger>> &&css)
-  : baseDataRef_{std::move(base)}, cosubscript_(std::move(css)) {
-  CHECK(!baseDataRef_.empty());
+CoarrayRef::CoarrayRef(std::vector<const Symbol *> &&base,
+    std::vector<Subscript> &&ss, std::vector<Expr<SubscriptInteger>> &&css)
+  : base_{std::move(base)}, subscript_(std::move(ss)),
+    cosubscript_(std::move(css)) {
+  CHECK(!base_.empty());
+  for (const Symbol *symbol : base_) {
+    CHECK(symbol != nullptr);
+  }
+  CHECK(!cosubscript_.empty());
 }
 
 std::optional<Expr<SomeInteger>> CoarrayRef::stat() const {
@@ -108,13 +109,9 @@ CoarrayRef &CoarrayRef::set_team(Expr<SomeInteger> &&v, bool isTeamNumber) {
   return *this;
 }
 
-const Symbol &CoarrayRef::GetFirstSymbol() const {
-  return *baseDataRef_.front().symbol;
-}
+const Symbol &CoarrayRef::GetFirstSymbol() const { return *base_.front(); }
 
-const Symbol &CoarrayRef::GetLastSymbol() const {
-  return *baseDataRef_.back().symbol;
-}
+const Symbol &CoarrayRef::GetLastSymbol() const { return *base_.back(); }
 
 void Substring::SetBounds(std::optional<Expr<SubscriptInteger>> &lower,
     std::optional<Expr<SubscriptInteger>> &upper) {
@@ -362,10 +359,22 @@ int ArrayRef::Rank() const {
   }
   return std::visit(
       common::visitors{
-          [=](const Symbol *s) { return 0; },
+          [=](const Symbol *s) { return s->Rank(); },
           [=](const Component &c) { return c.Rank(); },
       },
       base_);
+}
+
+int CoarrayRef::Rank() const {
+  int rank{0};
+  for (const auto &expr : subscript_) {
+    rank += expr.Rank();
+  }
+  if (rank > 0) {
+    return rank;
+  } else {
+    return base_.back()->Rank();
+  }
 }
 
 int DataRef::Rank() const {
@@ -531,7 +540,7 @@ bool ArrayRef::operator==(const ArrayRef &that) const {
   return base_ == that.base_ && subscript_ == that.subscript_;
 }
 bool CoarrayRef::operator==(const CoarrayRef &that) const {
-  return baseDataRef_ == that.baseDataRef_ &&
+  return base_ == that.base_ && subscript_ == that.subscript_ &&
       cosubscript_ == that.cosubscript_ && stat_ == that.stat_ &&
       team_ == that.team_ && teamIsTeamNumber_ == that.teamIsTeamNumber_;
 }

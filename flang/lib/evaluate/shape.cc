@@ -87,12 +87,10 @@ static Extent GetExtent(const Subscript &subscript) {
       subscript.u);
 }
 std::optional<Shape> GetShape(const ArrayRef &arrayRef) {
-  int subscripts{arrayRef.size()};
   Shape shape;
-  for (int j = 0; j < subscripts; ++j) {
-    const Subscript &subscript{arrayRef.at(j)};
-    if (subscript.Rank() > 0) {
-      shape.emplace_back(GetExtent(subscript));
+  for (const Subscript &ss : arrayRef.subscript()) {
+    if (ss.Rank() > 0) {
+      shape.emplace_back(GetExtent(ss));
     }
   }
   if (shape.empty()) {
@@ -101,7 +99,19 @@ std::optional<Shape> GetShape(const ArrayRef &arrayRef) {
     return shape;
   }
 }
-std::optional<Shape> GetShape(const CoarrayRef &);  // TODO pmk
+std::optional<Shape> GetShape(const CoarrayRef &coarrayRef) {
+  Shape shape;
+  for (const Subscript &ss : coarrayRef.subscript()) {
+    if (ss.Rank() > 0) {
+      shape.emplace_back(GetExtent(ss));
+    }
+  }
+  if (shape.empty()) {
+    return GetShape(coarrayRef.GetLastSymbol());
+  } else {
+    return shape;
+  }
+}
 std::optional<Shape> GetShape(const DataRef &dataRef) {
   return std::visit([](const auto &x) { return GetShape(x); }, dataRef.u);
 }

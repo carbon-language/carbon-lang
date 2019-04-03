@@ -205,30 +205,22 @@ private:
 // components: they can't be pointers, allocatables, arrays, coarrays, or
 // function results.  They can be components of other derived types.
 // Although the F'2018 Standard never prohibits multiple image-selectors
-// in the same data-ref or designator, nor the presence of an image-selector
-// after a part-ref with rank, the constraints on the derived types that
-// would have be involved make it impossible to declare an object that
-// could be referenced in these ways.
+// per se in the same data-ref or designator, nor the presence of an
+// image-selector after a part-ref with rank, the constraints on the
+// derived types that would have be involved make it impossible to declare
+// an object that could be referenced in these ways (esp. C748 & C825).
 // C930 precludes having both TEAM= and TEAM_NUMBER=.
 // TODO C931 prohibits the use of a coindexed object as a stat-variable.
 class CoarrayRef {
 public:
-  struct BasePartRef {
-    explicit BasePartRef(const Symbol &s) : symbol{&s} {}
-    BasePartRef(const Symbol &s, std::vector<Expr<SubscriptInteger>> &&ss)
-      : symbol{&s}, subscript{std::move(ss)} {}
-    CLASS_BOILERPLATE(BasePartRef)
-    bool operator==(const BasePartRef &) const;
-    const Symbol *symbol;
-    std::vector<Expr<SubscriptInteger>> subscript;
-  };
-  using BaseDataRef = std::vector<BasePartRef>;
-
   CLASS_BOILERPLATE(CoarrayRef)
-  CoarrayRef(BaseDataRef &&, std::vector<Expr<SubscriptInteger>> &&);
+  CoarrayRef(std::vector<const Symbol *> &&, std::vector<Subscript> &&,
+      std::vector<Expr<SubscriptInteger>> &&);
 
-  const BaseDataRef &baseDataRef() const { return baseDataRef_; }
-  BaseDataRef &baseDataRef() { return baseDataRef_; }
+  const std::vector<const Symbol *> &base() const { return base_; }
+  std::vector<const Symbol *> &base() { return base_; }
+  const std::vector<Subscript> &subscript() const { return subscript_; }
+  std::vector<Subscript> &subscript() { return subscript_; }
   const std::vector<Expr<SubscriptInteger>> &cosubscript() const {
     return cosubscript_;
   }
@@ -242,7 +234,7 @@ public:
   bool teamIsTeamNumber() const { return teamIsTeamNumber_; }
   CoarrayRef &set_team(Expr<SomeInteger> &&, bool isTeamNumber = false);
 
-  int Rank() const { return 0; }
+  int Rank() const;
   const Symbol &GetFirstSymbol() const;
   const Symbol &GetLastSymbol() const;
   Expr<SubscriptInteger> LEN() const;
@@ -250,7 +242,8 @@ public:
   std::ostream &AsFortran(std::ostream &) const;
 
 private:
-  BaseDataRef baseDataRef_;
+  std::vector<const Symbol *> base_;
+  std::vector<Subscript> subscript_;
   std::vector<Expr<SubscriptInteger>> cosubscript_;
   std::optional<common::CopyableIndirection<Expr<SomeInteger>>> stat_, team_;
   bool teamIsTeamNumber_{false};  // false: TEAM=, true: TEAM_NUMBER=
