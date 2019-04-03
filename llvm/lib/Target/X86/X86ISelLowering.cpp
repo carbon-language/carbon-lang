@@ -34316,6 +34316,14 @@ static SDValue combineHorizontalPredicateResult(SDNode *Extract,
   if (DAG.ComputeNumSignBits(Match) != BitWidth)
     return SDValue();
 
+  SDLoc DL(Extract);
+  if (MatchSizeInBits == 256 && BitWidth < 32 && !Subtarget.hasInt256()) {
+    SDValue Lo, Hi;
+    std::tie(Lo, Hi) = DAG.SplitVector(Match, DL);
+    Match = DAG.getNode(BinOp, DL, Lo.getValueType(), Lo, Hi);
+    MatchSizeInBits = Match.getValueSizeInBits();
+  }
+
   // For 32/64 bit comparisons use MOVMSKPS/MOVMSKPD, else PMOVMSKB.
   MVT MaskSrcVT;
   if (64 == BitWidth || 32 == BitWidth)
@@ -34324,7 +34332,6 @@ static SDValue combineHorizontalPredicateResult(SDNode *Extract,
   else
     MaskSrcVT = MVT::getVectorVT(MVT::i8, MatchSizeInBits / 8);
 
-  SDLoc DL(Extract);
   SDValue CmpC;
   ISD::CondCode CondCode;
   if (BinOp == ISD::OR) {
