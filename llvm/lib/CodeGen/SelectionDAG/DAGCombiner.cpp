@@ -6843,8 +6843,8 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
   if (N1C && N0.getOpcode() == ISD::SRL && N0.hasOneUse() &&
       TLI.shouldFoldShiftPairToMask(N, Level)) {
     if (ConstantSDNode *N0C1 = isConstOrConstSplat(N0.getOperand(1))) {
-      uint64_t c1 = N0C1->getZExtValue();
-      if (c1 < OpSizeInBits) {
+      if (N0C1->getAPIntValue().ult(OpSizeInBits)) {
+        uint64_t c1 = N0C1->getZExtValue();
         uint64_t c2 = N1C->getZExtValue();
         APInt Mask = APInt::getHighBitsSet(OpSizeInBits, OpSizeInBits - c1);
         SDValue Shift;
