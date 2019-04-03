@@ -77,7 +77,6 @@ std::deque<BinaryFunction *> BinaryFunctionCallGraph::buildTraversalOrder() {
 }
 
 BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
-                                       std::map<uint64_t, BinaryFunction> &BFs,
                                        CgFilterFunction Filter,
                                        bool CgFromPerfData,
                                        bool IncludeColdCalls,
@@ -126,7 +125,7 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
   uint64_t NoProfileCallsites = 0;
   uint64_t NumFallbacks = 0;
   uint64_t RecursiveCallsites = 0;
-  for (auto &It : BFs) {
+  for (auto &It : BC.getBinaryFunctions()) {
     auto *Function = &It.second;
 
     if (Filter(*Function)) {

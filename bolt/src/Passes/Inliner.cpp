@@ -248,9 +248,8 @@ Inliner::InliningInfo Inliner::getInliningInfo(const BinaryFunction &BF) const {
 }
 
 void
-Inliner::findInliningCandidates(BinaryContext &BC,
-                                const std::map<uint64_t, BinaryFunction> &BFs) {
-  for (const auto &BFI : BFs) {
+Inliner::findInliningCandidates(BinaryContext &BC) {
+  for (const auto &BFI : BC.getBinaryFunctions()) {
     const auto &Function = BFI.second;
     const auto InlInfo = getInliningInfo(Function);
     if (InlInfo.Type != INL_NONE)
@@ -532,16 +531,14 @@ bool Inliner::inlineCallsInFunction(BinaryFunction &Function) {
   return DidInlining;
 }
 
-void Inliner::runOnFunctions(BinaryContext &BC,
-                             std::map<uint64_t, BinaryFunction> &BFs,
-                             std::set<uint64_t> &) {
+void Inliner::runOnFunctions(BinaryContext &BC) {
   opts::syncOptions();
 
   if (!opts::inliningEnabled())
     return;
 
   uint64_t TotalSize = 0;
-  for (auto &BFI : BFs)
+  for (auto &BFI : BC.getBinaryFunctions())
     TotalSize += BFI.second.getSize();
 
   bool InlinedOnce;
@@ -553,10 +550,10 @@ void Inliner::runOnFunctions(BinaryContext &BC,
     InlinedOnce = false;
 
     InliningCandidates.clear();
-    findInliningCandidates(BC, BFs);
+    findInliningCandidates(BC);
 
     std::vector<BinaryFunction *> ConsideredFunctions;
-    for (auto &BFI : BFs) {
+    for (auto &BFI : BC.getBinaryFunctions()) {
       auto &Function = BFI.second;
       if (!shouldOptimize(Function))
         continue;

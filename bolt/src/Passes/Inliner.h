@@ -68,8 +68,7 @@ private:
   /// Return the size in bytes of a tail call instruction.
   uint64_t getSizeOfTailCallInst(const BinaryContext &BC);
 
-  void findInliningCandidates(BinaryContext &BC,
-                              const std::map<uint64_t, BinaryFunction> &BFs);
+  void findInliningCandidates(BinaryContext &BC);
 
   bool inlineCallsInFunction(BinaryFunction &Function);
 
@@ -97,9 +96,7 @@ public:
     return BinaryFunctionPass::shouldPrint(BF) && Modified.count(&BF) > 0;
   }
 
-  void runOnFunctions(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs,
-                      std::set<uint64_t> &LargeFunctions) override;
+  void runOnFunctions(BinaryContext &BC) override;
 };
 
 } // namespace bolt

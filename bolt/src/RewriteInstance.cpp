@@ -15,6 +15,7 @@
 #include "BinaryFunction.h"
 #include "BinaryPassManager.h"
 #include "CacheMetrics.h"
+#include "DWARFRewriter.h"
 #include "DataAggregator.h"
 #include "DataReader.h"
 #include "Exceptions.h"
@@ -710,12 +711,15 @@ RewriteInstance::RewriteInstance(ELFObjectFileBase *File, DataReader &DR,
           File, DR,
           DWARFContext::create(*File, nullptr,
                                DWARFContext::defaultErrorHandler, "", false))),
-      SHStrTab(StringTableBuilder::ELF) {}
+      SHStrTab(StringTableBuilder::ELF) {
+  if (opts::UpdateDebugSections) {
+    DebugInfoRewriter = llvm::make_unique<DWARFRewriter>(*BC, SectionPatchers);
+  }
+}
 
 RewriteInstance::~RewriteInstance() {}
 
 void RewriteInstance::reset() {
-  BinaryFunctions.clear();
   FileSymRefs.clear();
   auto &DR = BC->DR;
   BC = createBinaryContext(
@@ -728,8 +732,9 @@ void RewriteInstance::reset() {
   Out.reset(nullptr);
   EHFrame = nullptr;
   FailedAddresses.clear();
-  RangesSectionsWriter.reset();
-  LocationListWriter.reset();
+  if (opts::UpdateDebugSections) {
+    DebugInfoRewriter = llvm::make_unique<DWARFRewriter>(*BC, SectionPatchers);
+  }
 }
 
 bool RewriteInstance::shouldDisassemble(BinaryFunction &BF) const {
@@ -943,7 +948,8 @@ void RewriteInstance::run() {
     return;
   }
 
-  auto executeRewritePass = [&](const std::set<uint64_t> &NonSimpleFunctions) {
+  auto executeRewritePass = [&](const std::set<uint64_t> &NonSimpleFunctions,
+                                bool ShouldSplit) {
     discoverStorage();
     readSpecialSections();
     adjustCommandLineOptions();
@@ -956,9 +962,12 @@ void RewriteInstance::run() {
       return;
     postProcessFunctions();
     for (uint64_t Address : NonSimpleFunctions) {
-      auto FI = BinaryFunctions.find(Address);
-      assert(FI != BinaryFunctions.end() && "bad non-simple function address");
-      FI->second.setSimple(false);
+      auto *BF = BC->getBinaryFunctionAtAddress(Address);
+      assert(BF && "bad non-simple function address");
+      if (ShouldSplit)
+        BF->setLarge(true);
+      else
+        BF->setSimple(false);
     }
     if (opts::DiffOnly)
       return;
@@ -972,7 +981,7 @@ void RewriteInstance::run() {
          << "\n";
 
   unsigned PassNumber = 1;
-  executeRewritePass({});
+  executeRewritePass({}, false);
   if (opts::AggregateOnly || opts::DiffOnly)
     return;
 
@@ -982,7 +991,7 @@ void RewriteInstance::run() {
     // Emit again because now some functions have been split
     outs() << "BOLT: split-functions: starting pass " << PassNumber << "...\n";
     reset();
-    executeRewritePass({});
+    executeRewritePass(LargeFunctions, true);
   }
 
   // Emit functions again ignoring functions which still didn't fit in their
@@ -995,11 +1004,11 @@ void RewriteInstance::run() {
                      PassNumber, LargeFunctions.size())
            << "...\n";
     reset();
-    executeRewritePass(LargeFunctions);
+    executeRewritePass(LargeFunctions, false);
   }
 
   if (opts::UpdateDebugSections)
-    updateDebugInfo();
+    DebugInfoRewriter->updateDebugInfo();
 
   addBoltInfoSection();
 
@@ -1019,7 +1028,7 @@ void RewriteInstance::discoverFileObjects() {
                      TimerGroupName, TimerGroupDesc, opts::TimeRewrite);
 
   FileSymRefs.clear();
-  BinaryFunctions.clear();
+  BC->getBinaryFunctions().clear();
   BC->clearBinaryData();
 
   // For local symbols we want to keep track of associated FILE symbol name for
@@ -1350,12 +1359,15 @@ void RewriteInstance::discoverFileObjects() {
       }
       TentativeSize = SymbolSize;
     }
-
+    
     BinaryFunction *BF{nullptr};
-    auto BFI = BinaryFunctions.find(Address);
-    if (BFI != BinaryFunctions.end()) {
+    // Since function may not have yet obtained its real size, do a search
+    // using the list of registered functions instead of calling
+    // getBinaryFunctionAtAddress().
+    auto BFI = BC->getBinaryFunctions().find(Address);
+    if (BFI != BC->getBinaryFunctions().end()) {
       BF = &BFI->second;
-      // Duplicate function name. Make sure everything matches before we add
+      // Duplicate the function name. Make sure everything matches before we add
       // an alternative name.
       if (SymbolSize != BF->getSize()) {
         if (opts::Verbosity >= 1) {
@@ -1373,8 +1385,8 @@ void RewriteInstance::discoverFileObjects() {
     } else {
       auto Section = BC->getSectionForAddress(Address);
       assert(Section && "section for functions must be registered.");
-      BF = createBinaryFunction(UniqueName, *Section, Address,
-                                SymbolSize, IsSimple);
+      BF = BC->createBinaryFunction(UniqueName, *Section, Address,
+                                    SymbolSize, IsSimple);
     }
     if (!AlternativeName.empty())
       BF->addAlternativeName(AlternativeName);
@@ -1391,26 +1403,29 @@ void RewriteInstance::discoverFileObjects() {
   for (const auto &FDEI : CFIRdWrt->getFDEs()) {
     const auto Address = FDEI.first;
     const auto *FDE = FDEI.second;
-    const auto *BF = getBinaryFunctionAtAddress(Address);
-    if (!BF) {
-      if (const auto *PartialBF = getBinaryFunctionContainingAddress(Address)) {
-        errs() << "BOLT-WARNING: FDE [0x" << Twine::utohexstr(Address) << ", 0x"
-               << Twine::utohexstr(Address + FDE->getAddressRange())
-               << ") conflicts with function " << *PartialBF << '\n';
-      } else {
-        if (opts::Verbosity >= 1) {
-          errs() << "BOLT-WARNING: FDE [0x" << Twine::utohexstr(Address)
-                 << ", 0x" << Twine::utohexstr(Address + FDE->getAddressRange())
-                 << ") has no corresponding symbol table entry\n";
-        }
-        auto Section = BC->getSectionForAddress(Address);
-        assert(Section && "cannot get section for address from FDE");
-        std::string FunctionName =
-          "__BOLT_FDE_FUNCat" + Twine::utohexstr(Address).str();
-        createBinaryFunction(FunctionName, *Section, Address,
-                             FDE->getAddressRange(), true);
-      }
+    const auto *BF = BC->getBinaryFunctionAtAddress(Address);
+    if (BF)
+      continue;
+
+    BF = BC->getBinaryFunctionContainingAddress(Address);
+    if (BF) {
+      errs() << "BOLT-WARNING: FDE [0x" << Twine::utohexstr(Address) << ", 0x"
+             << Twine::utohexstr(Address + FDE->getAddressRange())
+             << ") conflicts with function " << *BF << '\n';
+      continue;
     }
+
+    if (opts::Verbosity >= 1) {
+      errs() << "BOLT-WARNING: FDE [0x" << Twine::utohexstr(Address)
+             << ", 0x" << Twine::utohexstr(Address + FDE->getAddressRange())
+             << ") has no corresponding symbol table entry\n";
+    }
+    auto Section = BC->getSectionForAddress(Address);
+    assert(Section && "cannot get section for address from FDE");
+    std::string FunctionName =
+      "__BOLT_FDE_FUNCat" + Twine::utohexstr(Address).str();
+    BC->createBinaryFunction(FunctionName, *Section, Address,
+                             FDE->getAddressRange(), true);
   }
 
   if (!SeenFileName && BC->DR.hasLocalsWithFileName() && !opts::AllowStripped) {
@@ -1431,7 +1446,7 @@ void RewriteInstance::discoverFileObjects() {
     uint64_t Address =
         cantFail(Symbol.getAddress(), "cannot get symbol address");
     auto SymbolSize = ELFSymbolRef(Symbol).getSize();
-    auto *BF = getBinaryFunctionContainingAddress(Address, true, true);
+    auto *BF = BC->getBinaryFunctionContainingAddress(Address, true, true);
     if (!BF) {
       // Stray marker
       continue;
@@ -1471,8 +1486,8 @@ void RewriteInstance::disassemblePLT() {
 
   // Pseudo function for the start of PLT. The table could have a matching
   // FDE that we want to match to pseudo function.
-  createBinaryFunction("__BOLT_PLT_PSEUDO", *PLTSection, PLTAddress, 0, false,
-                       PLTSize, PLTAlignment);
+  BC->createBinaryFunction("__BOLT_PLT_PSEUDO", *PLTSection, PLTAddress, 0,
+                           false, PLTSize, PLTAlignment);
   for (uint64_t Offset = 0; Offset < PLTSection->getSize(); Offset += PLTSize) {
     uint64_t InstrSize;
     MCInst Instruction;
@@ -1512,13 +1527,13 @@ void RewriteInstance::disassemblePLT() {
         const auto SymbolName = cantFail((*SymbolIter).getName());
         std::string Name = SymbolName.str() + "@PLT";
         const auto PtrSize = BC->AsmInfo->getCodePointerSize();
-        auto *BF = createBinaryFunction(Name,
-                                        *PLTSection,
-                                        InstrAddr,
-                                        0,
-                                        /*IsSimple=*/false,
-                                        PLTSize,
-                                        PLTAlignment);
+        auto *BF = BC->createBinaryFunction(Name,
+                                            *PLTSection,
+                                            InstrAddr,
+                                            0,
+                                            /*IsSimple=*/false,
+                                            PLTSize,
+                                            PLTAlignment);
         auto TargetSymbol = BC->registerNameAtAddress(SymbolName.str() + "@GOT",
                                                       TargetAddress,
                                                       PtrSize,
@@ -1532,19 +1547,20 @@ void RewriteInstance::disassemblePLT() {
   if (PLTGOTSection) {
     // Check if we need to create a function for .plt.got. Some linkers
     // (depending on the version) would mark it with FDE while others wouldn't.
-    if (!getBinaryFunctionAtAddress(PLTGOTSection->getAddress())) {
-      createBinaryFunction("__BOLT_PLT_GOT_PSEUDO",
-                           *PLTGOTSection,
-                           PLTGOTSection->getAddress(),
-                           0,
-                           false,
-                           PLTAlignment);
+    if (!BC->getBinaryFunctionAtAddress(PLTGOTSection->getAddress())) {
+      BC->createBinaryFunction("__BOLT_PLT_GOT_PSEUDO",
+                               *PLTGOTSection,
+                               PLTGOTSection->getAddress(),
+                               0,
+                               false,
+                               PLTAlignment);
     }
   }
 }
 
 void RewriteInstance::adjustFunctionBoundaries() {
-  for (auto BFI = BinaryFunctions.begin(), BFE = BinaryFunctions.end();
+  for (auto BFI = BC->getBinaryFunctions().begin(),
+            BFE = BC->getBinaryFunctions().end();
        BFI != BFE; ++BFI) {
     auto &Function = BFI->second;
 
@@ -1666,21 +1682,6 @@ void RewriteInstance::relocateEHFrameSection() {
   EHFrame.parse(DE, createReloc);
 }
 
-BinaryFunction *RewriteInstance::createBinaryFunction(
-    const std::string &Name, BinarySection &Section, uint64_t Address,
-    uint64_t Size, bool IsSimple, uint64_t SymbolSize, uint16_t Alignment) {
-  auto Result = BinaryFunctions.emplace(
-      Address, BinaryFunction(Name, Section, Address, Size, *BC, IsSimple));
-  assert(Result.second == true && "unexpected duplicate function");
-  auto *BF = &Result.first->second;
-  BC->registerNameAtAddress(Name,
-                            Address,
-                            SymbolSize ? SymbolSize : Size,
-                            Alignment);
-  BC->setSymbolToFunctionMap(BF->getSymbol(), BF);
-  return BF;
-}
-
 ArrayRef<uint8_t> RewriteInstance::getLSDAData() {
   return ArrayRef<uint8_t>(LSDASection->getData(),
                            LSDASection->getContents().size());
@@ -1714,7 +1715,6 @@ void RewriteInstance::readSpecialSections() {
   HasTextRelocations = (bool)BC->getUniqueSectionByName(".rela.text");
   LSDASection = BC->getUniqueSectionByName(".gcc_except_table");
   EHFrameSection = BC->getUniqueSectionByName(".eh_frame");
-  GdbIndexSection = BC->getUniqueSectionByName(".gdb_index");
   PLTSection = BC->getUniqueSectionByName(".plt");
   GOTPLTSection = BC->getUniqueSectionByName(".got.plt");
   PLTGOTSection = BC->getUniqueSectionByName(".plt.got");
@@ -2007,9 +2007,9 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
            << "; addend = 0x" << Twine::utohexstr(Addend)
            << "; address = 0x" << Twine::utohexstr(Address)
            << "; in = ";
-    if (auto *Func = getBinaryFunctionContainingAddress(Rel.getOffset(),
-                                                        false,
-                                                        IsAArch64)) {
+    if (auto *Func = BC->getBinaryFunctionContainingAddress(Rel.getOffset(),
+                                                            false,
+                                                            IsAArch64)) {
       dbgs() << Func->getPrintName() << "\n";
     } else {
       dbgs() << BC->getSectionForAddress(Rel.getOffset())->getName() << "\n";
@@ -2052,9 +2052,9 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     BinaryFunction *ContainingBF = nullptr;
     if (IsFromCode) {
       ContainingBF =
-        getBinaryFunctionContainingAddress(Rel.getOffset(),
-                                           /*CheckPastEnd*/ false,
-                                           /*UseMaxSize*/ IsAArch64);
+        BC->getBinaryFunctionContainingAddress(Rel.getOffset(),
+                                               /*CheckPastEnd*/ false,
+                                               /*UseMaxSize*/ IsAArch64);
       assert(ContainingBF && "cannot find function for address in code");
     }
 
@@ -2106,11 +2106,11 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
 
     // Occasionally we may see a reference past the last byte of the function
     // typically as a result of __builtin_unreachable(). Check it here.
-    auto *ReferencedBF = getBinaryFunctionContainingAddress(
+    auto *ReferencedBF = BC->getBinaryFunctionContainingAddress(
         Address, /*CheckPastEnd*/ true, /*UseMaxSize*/ IsAArch64);
 
     if (!IsSectionRelocation) {
-      if (auto *BF = getBinaryFunctionContainingAddress(SymbolAddress)) {
+      if (auto *BF = BC->getBinaryFunctionContainingAddress(SymbolAddress)) {
         if (BF != ReferencedBF) {
           // It's possible we are referencing a function without referencing any
           // code, e.g. when taking a bitmask action on a function address.
@@ -2154,7 +2154,8 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
           // We check if a code non-pc-relative relocation is pointing
           // to a (fptr - 1).
           if (ContainingBF && !Relocation::isPCRelative(Rel.getType())) {
-            if (const auto *NextBF = getBinaryFunctionAtAddress(Address + 1)) {
+            if (const auto *NextBF =
+                BC->getBinaryFunctionAtAddress(Address + 1)) {
               errs() << "BOLT-WARNING: detected possible compiler "
                         "de-virtualization bug: -1 addend used with "
                         "non-pc-relative relocation against function "
@@ -2378,7 +2379,7 @@ void RewriteInstance::readDebugInfo() {
   if (!opts::UpdateDebugSections)
     return;
 
-  BC->preprocessDebugInfo(BinaryFunctions);
+  BC->preprocessDebugInfo();
 }
 
 void RewriteInstance::preprocessProfileData() {
@@ -2387,14 +2388,15 @@ void RewriteInstance::preprocessProfileData() {
 
   NamedRegionTimer T("preprocessprofile", "pre-process profile data",
                      TimerGroupName, TimerGroupDesc, opts::TimeRewrite);
-  DA.parseProfile(*BC.get(), BinaryFunctions);
+  DA.parseProfile(*BC.get());
 }
 
 void RewriteInstance::processProfileData() {
   NamedRegionTimer T("processprofile", "process profile data", TimerGroupName,
                      TimerGroupDesc, opts::TimeRewrite);
+  auto &BinaryFunctions = BC->getBinaryFunctions();
   if (DA.started()) {
-    DA.processProfile(*BC.get(), BinaryFunctions);
+    DA.processProfile(*BC.get());
 
     for (auto &BFI : BinaryFunctions) {
       auto &Function = BFI.second;
@@ -2446,7 +2448,7 @@ void RewriteInstance::processProfileData() {
 void RewriteInstance::disassembleFunctions() {
   NamedRegionTimer T("disassembleFunctions", "disassemble functions",
                      TimerGroupName, TimerGroupDesc, opts::TimeRewrite);
-  for (auto &BFI : BinaryFunctions) {
+  for (auto &BFI : BC->getBinaryFunctions()) {
     BinaryFunction &Function = BFI.second;
 
     if (!shouldDisassemble(Function)) {
@@ -2487,7 +2489,7 @@ void RewriteInstance::disassembleFunctions() {
     // Post-process inter-procedural references ASAP as it may affect
     // functions we are about to disassemble next.
     for (const auto Addr : BC->InterproceduralReferences) {
-      auto *ContainingFunction = getBinaryFunctionContainingAddress(Addr);
+      auto *ContainingFunction = BC->getBinaryFunctionContainingAddress(Addr);
       if (ContainingFunction && ContainingFunction->getAddress() != Addr) {
         ContainingFunction->addEntryPoint(Addr);
         if (!BC->HasRelocations) {
@@ -2521,9 +2523,9 @@ void RewriteInstance::disassembleFunctions() {
         }
 
         ContainingFunction =
-          getBinaryFunctionContainingAddress(Addr,
-                                             /*CheckPastEnd=*/false,
-                                             /*UseMaxSize=*/true);
+          BC->getBinaryFunctionContainingAddress(Addr,
+                                                 /*CheckPastEnd=*/false,
+                                                 /*UseMaxSize=*/true);
         // We are not going to overwrite non-simple functions, but for simple
         // ones - adjust the padding size.
         if (ContainingFunction && ContainingFunction->isSimple()) {
@@ -2538,7 +2540,7 @@ void RewriteInstance::disassembleFunctions() {
     BC->InterproceduralReferences.clear();
   }
 
-  for (auto &BFI : BinaryFunctions) {
+  for (auto &BFI : BC->getBinaryFunctions()) {
     BinaryFunction &Function = BFI.second;
 
     if (!shouldDisassemble(Function))
@@ -2582,7 +2584,7 @@ void RewriteInstance::disassembleFunctions() {
 void RewriteInstance::postProcessFunctions() {
   BC->TotalScore = 0;
   BC->SumExecutionCount = 0;
-  for (auto &BFI : BinaryFunctions) {
+  for (auto &BFI : BC->getBinaryFunctions()) {
     BinaryFunction &Function = BFI.second;
 
     if (Function.empty())
@@ -2614,7 +2616,7 @@ void RewriteInstance::postProcessFunctions() {
 void RewriteInstance::runOptimizationPasses() {
   NamedRegionTimer T("runOptimizationPasses", "run optimization passes",
                      TimerGroupName, TimerGroupDesc, opts::TimeRewrite);
-  BinaryFunctionPassManager::runAllPasses(*BC, BinaryFunctions, LargeFunctions);
+  BinaryFunctionPassManager::runAllPasses(*BC);
 }
 
 // Helper function to emit the contents of a function via a MCStreamer object.
@@ -2773,7 +2775,7 @@ void RewriteInstance::emitSections() {
   emitFunctions(Streamer.get());
 
   if (!BC->HasRelocations && opts::UpdateDebugSections)
-    updateDebugLineInfoForNonSimpleFunctions();
+    DebugInfoRewriter->updateDebugLineInfoForNonSimpleFunctions();
 
   emitDataSections(Streamer.get());
 
@@ -2796,7 +2798,7 @@ void RewriteInstance::emitSections() {
 
   if (opts::UpdateDebugSections) {
     // Compute offsets of tables in .debug_line for each compile unit.
-    updateLineTableOffsets();
+    DebugInfoRewriter->updateLineTableOffsets();
   }
 
   // Get output object as ObjectFile.
@@ -2856,7 +2858,7 @@ void RewriteInstance::emitSections() {
   // Once the code is emitted, we can rename function sections to actual
   // output sections and de-register sections used for emission.
   if (!BC->HasRelocations) {
-    for (auto &BFI : BinaryFunctions) {
+    for (auto &BFI : BC->getBinaryFunctions()) {
       auto &Function = BFI.second;
       if (auto Section = Function.getCodeSection())
         BC->deregisterSection(*Section);
@@ -2871,7 +2873,7 @@ void RewriteInstance::emitSections() {
 
   if (opts::PrintCacheMetrics) {
     outs() << "BOLT-INFO: cache metrics after emitting functions:\n";
-    CacheMetrics::printAll(BC->getSortedFunctions(BinaryFunctions));
+    CacheMetrics::printAll(BC->getSortedFunctions());
   }
 
   if (opts::KeepTmp)
@@ -2903,8 +2905,7 @@ void RewriteInstance::emitFunctions(MCStreamer *Streamer) {
   }
 
   // Emit functions in sorted order.
-  std::vector<BinaryFunction *> SortedFunctions =
-      BinaryContext::getSortedFunctions(BinaryFunctions);
+  std::vector<BinaryFunction *> SortedFunctions = BC->getSortedFunctions();
   emit(SortedFunctions);
 
   // Emit functions added by BOLT.
@@ -3057,7 +3058,7 @@ void RewriteInstance::mapCodeSections(orc::VModuleKey Key) {
                            NewTextSectionStartAddress);
   }
 
-  for (auto &BFI : BinaryFunctions) {
+  for (auto &BFI : BC->getBinaryFunctions()) {
     auto &Function = BFI.second;
     if (!Function.isSimple() || !opts::shouldProcess(Function))
       continue;
@@ -3299,7 +3300,7 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
         Function.getOutputAddress() + Function.getOutputSize());
   };
 
-  for (auto &BFI : BinaryFunctions) {
+  for (auto &BFI : BC->getBinaryFunctions()) {
     auto &Function = BFI.second;
     updateOutputValue(Function);
   }
@@ -3377,7 +3378,7 @@ bool RewriteInstance::checkLargeFunctions() {
     return false;
 
   LargeFunctions.clear();
-  for (auto &BFI : BinaryFunctions) {
+  for (auto &BFI : BC->getBinaryFunctions()) {
     auto &Function = BFI.second;
 
     // Ignore this function if we failed to map it to the output binary
@@ -3991,7 +3992,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
 
     for (const Elf_Sym &Symbol : cantFail(Obj->symbols(Section))) {
       auto NewSymbol = Symbol;
-      const auto *Function = getBinaryFunctionAtAddress(Symbol.st_value);
+      const auto *Function = BC->getBinaryFunctionAtAddress(Symbol.st_value);
       // Some section symbols may be mistakenly associated with the first
       // function emitted in the section. Dismiss if it is a section symbol.
       if (Function &&
@@ -4391,7 +4392,7 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
 }
 
 uint64_t RewriteInstance::getNewFunctionAddress(uint64_t OldAddress) {
-  const auto *Function = getBinaryFunctionAtAddress(OldAddress);
+  const auto *Function = BC->getBinaryFunctionAtAddress(OldAddress);
   if (!Function)
     return 0;
   return Function->getOutputAddress();
@@ -4427,7 +4428,7 @@ void RewriteInstance::rewriteFile() {
     // Overwrite functions in the output file.
     uint64_t CountOverwrittenFunctions = 0;
     uint64_t OverwrittenScore = 0;
-    for (auto &BFI : BinaryFunctions) {
+    for (auto &BFI : BC->getBinaryFunctions()) {
       auto &Function = BFI.second;
 
       if (Function.getImageAddress() == 0 || Function.getImageSize() == 0)
@@ -4509,7 +4510,7 @@ void RewriteInstance::rewriteFile() {
 
     // Print function statistics.
     outs() << "BOLT: " << CountOverwrittenFunctions
-           << " out of " << BinaryFunctions.size()
+           << " out of " << BC->getBinaryFunctions().size()
            << " functions were overwritten.\n";
     if (BC->TotalScore != 0) {
       double Coverage = OverwrittenScore / (double) BC->TotalScore * 100.0;
@@ -4522,7 +4523,7 @@ void RewriteInstance::rewriteFile() {
   if (BC->HasRelocations && opts::TrapOldCode) {
     auto SavedPos = OS.tell();
     // Overwrite function body to make sure we never execute these instructions.
-    for (auto &BFI : BinaryFunctions) {
+    for (auto &BFI : BC->getBinaryFunctions()) {
       auto &BF = BFI.second;
       if (!BF.getFileOffset())
         continue;
@@ -4695,49 +4696,4 @@ bool RewriteInstance::willOverwriteSection(StringRef SectionName) {
 
   auto Section = BC->getUniqueSectionByName(SectionName);
   return Section && Section->isAllocatable() && Section->isFinalized();
-}
-
-BinaryFunction *
-RewriteInstance::getBinaryFunctionContainingAddress(uint64_t Address,
-                                                    bool CheckPastEnd,
-                                                    bool UseMaxSize) {
-  auto FI = BinaryFunctions.upper_bound(Address);
-  if (FI == BinaryFunctions.begin())
-    return nullptr;
-  --FI;
-
-  const auto UsedSize = UseMaxSize ? FI->second.getMaxSize()
-                                   : FI->second.getSize();
-
-  if (Address >= FI->first + UsedSize + (CheckPastEnd ? 1 : 0))
-    return nullptr;
-  return &FI->second;
-}
-
-const BinaryFunction *
-RewriteInstance::getBinaryFunctionAtAddress(uint64_t Address) const {
-  if (const auto *BD = BC->getBinaryDataAtAddress(Address))
-    return BC->getFunctionForSymbol(BD->getSymbol());
-  return nullptr;
-}
-
-DebugAddressRangesVector RewriteInstance::translateModuleAddressRanges(
-      const DWARFAddressRangesVector &InputRanges) const {
-  DebugAddressRangesVector OutputRanges;
-
-  for (const auto Range : InputRanges) {
-    auto BFI = BinaryFunctions.lower_bound(Range.LowPC);
-    while (BFI != BinaryFunctions.end()) {
-      const auto &Function = BFI->second;
-      if (Function.getAddress() >= Range.HighPC)
-        break;
-      const auto FunctionRanges = Function.getOutputAddressRanges();
-      std::move(std::begin(FunctionRanges),
-                std::end(FunctionRanges),
-                std::back_inserter(OutputRanges));
-      std::advance(BFI, 1);
-    }
-  }
-
-  return OutputRanges;
 }

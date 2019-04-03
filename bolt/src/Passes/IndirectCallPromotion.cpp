@@ -1082,13 +1082,11 @@ IndirectCallPromotion::printCallsiteInfo(const BinaryBasicBlock *BB,
   });
 }
 
-void IndirectCallPromotion::runOnFunctions(
-  BinaryContext &BC,
-  std::map<uint64_t, BinaryFunction> &BFs,
-  std::set<uint64_t> &LargeFunctions
-) {
+void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
   if (opts::IndirectCallPromotion == ICP_NONE)
     return;
+
+  auto &BFs = BC.getBinaryFunctions();
 
   const bool OptimizeCalls =
     (opts::IndirectCallPromotion == ICP_CALLS ||
@@ -1100,7 +1098,7 @@ void IndirectCallPromotion::runOnFunctions(
   std::unique_ptr<RegAnalysis> RA;
   std::unique_ptr<BinaryFunctionCallGraph> CG;
   if (OptimizeJumpTables) {
-    CG.reset(new BinaryFunctionCallGraph(buildCallGraph(BC, BFs)));
+    CG.reset(new BinaryFunctionCallGraph(buildCallGraph(BC)));
     RA.reset(new RegAnalysis(BC, &BFs, &*CG));
   }
 

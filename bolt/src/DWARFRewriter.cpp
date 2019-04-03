@@ -9,11 +9,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#include "BinaryBasicBlock.h"
+#include "DWARFRewriter.h"
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
-#include "RewriteInstance.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
@@ -59,14 +57,14 @@ KeepARanges("keep-aranges",
 
 } // namespace opts
 
-void RewriteInstance::updateDebugInfo() {
+void DWARFRewriter::updateDebugInfo() {
   SectionPatchers[".debug_abbrev"] = llvm::make_unique<DebugAbbrevPatcher>();
   SectionPatchers[".debug_info"]  = llvm::make_unique<SimpleBinaryPatcher>();
 
-  RangesSectionsWriter = llvm::make_unique<DebugRangesSectionsWriter>(BC.get());
-  LocationListWriter = llvm::make_unique<DebugLocWriter>(BC.get());
+  RangesSectionsWriter = llvm::make_unique<DebugRangesSectionsWriter>(&BC);
+  LocationListWriter = llvm::make_unique<DebugLocWriter>(&BC);
 
-  for (auto &CU : BC->DwCtx->compile_units()) {
+  for (auto &CU : BC.DwCtx->compile_units()) {
     updateUnitDebugInfo(CU->getUnitDIE(false),
                         std::vector<const BinaryFunction *>{});
   }
@@ -76,7 +74,7 @@ void RewriteInstance::updateDebugInfo() {
   updateGdbIndexSection();
 }
 
-void RewriteInstance::updateUnitDebugInfo(
+void DWARFRewriter::updateUnitDebugInfo(
     const DWARFDie DIE,
     std::vector<const BinaryFunction *> FunctionStack) {
 
@@ -85,7 +83,7 @@ void RewriteInstance::updateUnitDebugInfo(
   case dwarf::DW_TAG_compile_unit:
     {
       const auto ModuleRanges = DIE.getAddressRanges();
-      auto OutputRanges = translateModuleAddressRanges(ModuleRanges);
+      auto OutputRanges = BC.translateModuleAddressRanges(ModuleRanges);
       const auto RangesSectionOffset =
         RangesSectionsWriter->addCURanges(DIE.getDwarfUnit()->getOffset(),
                                           std::move(OutputRanges));
@@ -99,7 +97,7 @@ void RewriteInstance::updateUnitDebugInfo(
       uint64_t SectionIndex, LowPC, HighPC;
       if (DIE.getLowAndHighPC(LowPC, HighPC, SectionIndex)) {
         IsFunctionDef = true;
-        const auto *Function = getBinaryFunctionAtAddress(LowPC);
+        const auto *Function = BC.getBinaryFunctionAtAddress(LowPC);
         if (Function && Function->isFolded()) {
           Function = nullptr;
         }
@@ -229,7 +227,7 @@ void RewriteInstance::updateUnitDebugInfo(
     FunctionStack.pop_back();
 }
 
-void RewriteInstance::updateDWARFObjectAddressRanges(
+void DWARFRewriter::updateDWARFObjectAddressRanges(
     const DWARFDie DIE, uint64_t DebugRangesOffset) {
 
   // Some objects don't have an associated DIE and cannot be updated (such as
@@ -337,8 +335,8 @@ void RewriteInstance::updateDWARFObjectAddressRanges(
   }
 }
 
-void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
-  for (auto &It : BinaryFunctions) {
+void DWARFRewriter::updateDebugLineInfoForNonSimpleFunctions() {
+  for (auto &It : BC.getBinaryFunctions()) {
     const auto &Function = It.second;
 
     if (Function.isSimple())
@@ -353,7 +351,7 @@ void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
 
     std::vector<uint32_t> Results;
     MCSectionELF *FunctionSection =
-        BC->Ctx->getELFSection(Function.getCodeSectionName(),
+        BC.Ctx->getELFSection(Function.getCodeSectionName(),
                                ELF::SHT_PROGBITS,
                                ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
 
@@ -361,10 +359,10 @@ void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
     if (LineTable->lookupAddressRange(Address, Function.getMaxSize(),
                                       Results)) {
       auto &OutputLineTable =
-          BC->Ctx->getMCDwarfLineTable(Unit->getOffset()).getMCLineSections();
+          BC.Ctx->getMCDwarfLineTable(Unit->getOffset()).getMCLineSections();
       for (auto RowIndex : Results) {
         const auto &Row = LineTable->Rows[RowIndex];
-        BC->Ctx->setCurrentDwarfLoc(
+        BC.Ctx->setCurrentDwarfLoc(
             Row.File,
             Row.Line,
             Row.Column,
@@ -375,17 +373,17 @@ void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
             Row.Isa,
             Row.Discriminator,
             Row.Address);
-        auto Loc = BC->Ctx->getCurrentDwarfLoc();
-        BC->Ctx->clearDwarfLocSeen();
+        auto Loc = BC.Ctx->getCurrentDwarfLoc();
+        BC.Ctx->clearDwarfLocSeen();
         OutputLineTable.addLineEntry(MCDwarfLineEntry{nullptr, Loc},
                                      FunctionSection);
       }
       // Add an empty entry past the end of the function
       // for end_sequence mark.
-      BC->Ctx->setCurrentDwarfLoc(0, 0, 0, 0, 0, 0,
+      BC.Ctx->setCurrentDwarfLoc(0, 0, 0, 0, 0, 0,
                                   Address + Function.getMaxSize());
-      auto Loc = BC->Ctx->getCurrentDwarfLoc();
-      BC->Ctx->clearDwarfLocSeen();
+      auto Loc = BC.Ctx->getCurrentDwarfLoc();
+      BC.Ctx->clearDwarfLocSeen();
       OutputLineTable.addLineEntry(MCDwarfLineEntry{nullptr, Loc},
                                    FunctionSection);
     } else {
@@ -395,9 +393,9 @@ void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
   }
 }
 
-void RewriteInstance::updateLineTableOffsets() {
+void DWARFRewriter::updateLineTableOffsets() {
   const auto *LineSection =
-    BC->Ctx->getObjectFileInfo()->getDwarfLineSection();
+    BC.Ctx->getObjectFileInfo()->getDwarfLineSection();
   auto CurrentFragment = LineSection->begin();
   uint32_t CurrentOffset = 0;
   uint32_t Offset = 0;
@@ -406,7 +404,7 @@ void RewriteInstance::updateLineTableOffsets() {
   // output file, thus we can compute all table's offset by passing through
   // each fragment at most once, continuing from the last CU's beginning
   // instead of from the first fragment.
-  for (const auto &CUIDLineTablePair : BC->Ctx->getMCDwarfLineTables()) {
+  for (const auto &CUIDLineTablePair : BC.Ctx->getMCDwarfLineTables()) {
     auto Label = CUIDLineTablePair.second.getLabel();
     if (!Label)
       continue;
@@ -415,10 +413,10 @@ void RewriteInstance::updateLineTableOffsets() {
     if (CUOffset == -1U)
       continue;
 
-    auto *CU = BC->DwCtx->getCompileUnitForOffset(CUOffset);
+    auto *CU = BC.DwCtx->getCompileUnitForOffset(CUOffset);
     assert(CU && "no CU found at offset");
     auto LTOffset =
-      BC->DwCtx->getAttrFieldOffsetForUnit(CU, dwarf::DW_AT_stmt_list);
+      BC.DwCtx->getAttrFieldOffsetForUnit(CU, dwarf::DW_AT_stmt_list);
     if (!LTOffset)
       continue;
 
@@ -444,9 +442,9 @@ void RewriteInstance::updateLineTableOffsets() {
     Offset += Label->getOffset() - CurrentOffset;
     CurrentOffset = Label->getOffset();
 
-    auto DbgInfoSection = BC->getUniqueSectionByName(".debug_info");
+    auto DbgInfoSection = BC.getUniqueSectionByName(".debug_info");
     assert(DbgInfoSection && ".debug_info section must exist");
-    auto *Zero = BC->registerNameAtAddress("Zero", 0, 0, 0);
+    auto *Zero = BC.registerNameAtAddress("Zero", 0, 0, 0);
     DbgInfoSection->addRelocation(LTOffset,
                                   Zero,
                                   ELF::R_X86_64_32,
@@ -463,43 +461,43 @@ void RewriteInstance::updateLineTableOffsets() {
   }
 }
 
-void RewriteInstance::finalizeDebugSections() {
+void DWARFRewriter::finalizeDebugSections() {
   // Skip .debug_aranges if we are re-generating .gdb_index.
-  if (opts::KeepARanges || !GdbIndexSection) {
+  if (opts::KeepARanges || !BC.getGdbIndexSection()) {
     SmallVector<char, 16> ARangesBuffer;
     raw_svector_ostream OS(ARangesBuffer);
 
-    auto MAB = std::unique_ptr<MCAsmBackend>(BC->TheTarget->createMCAsmBackend(
-        *BC->STI, *BC->MRI, MCTargetOptions()));
+    auto MAB = std::unique_ptr<MCAsmBackend>(BC.TheTarget->createMCAsmBackend(
+        *BC.STI, *BC.MRI, MCTargetOptions()));
     auto Writer = std::unique_ptr<MCObjectWriter>(MAB->createObjectWriter(OS));
 
     RangesSectionsWriter->writeArangesSection(Writer.get());
     const auto &ARangesContents = OS.str();
 
-    BC->registerOrUpdateNoteSection(".debug_aranges",
+    BC.registerOrUpdateNoteSection(".debug_aranges",
                                     copyByteArray(ARangesContents),
                                     ARangesContents.size());
   }
 
   auto RangesSectionContents = RangesSectionsWriter->finalize();
-  BC->registerOrUpdateNoteSection(".debug_ranges",
+  BC.registerOrUpdateNoteSection(".debug_ranges",
                                   copyByteArray(*RangesSectionContents),
                                   RangesSectionContents->size());
 
   auto LocationListSectionContents = LocationListWriter->finalize();
-  BC->registerOrUpdateNoteSection(".debug_loc",
+  BC.registerOrUpdateNoteSection(".debug_loc",
                                   copyByteArray(*LocationListSectionContents),
                                   LocationListSectionContents->size());
 }
 
-void RewriteInstance::updateGdbIndexSection() {
-  if (!GdbIndexSection)
+void DWARFRewriter::updateGdbIndexSection() {
+  if (!BC.getGdbIndexSection())
     return;
 
   // See https://sourceware.org/gdb/onlinedocs/gdb/Index-Section-Format.html for
   // .gdb_index section format.
 
-  StringRef GdbIndexContents = GdbIndexSection->getContents();
+  StringRef GdbIndexContents = BC.getGdbIndexSection()->getContents();
 
   const auto *Data = GdbIndexContents.data();
 
@@ -523,13 +521,13 @@ void RewriteInstance::updateGdbIndexSection() {
   // Map CUs offsets to indices and verify existing index table.
   std::map<uint32_t, uint32_t> OffsetToIndexMap;
   const auto CUListSize = CUTypesOffset - CUListOffset;
-  const auto NumCUs = BC->DwCtx->getNumCompileUnits();
+  const auto NumCUs = BC.DwCtx->getNumCompileUnits();
   if (CUListSize != NumCUs * 16) {
     errs() << "BOLT-ERROR: .gdb_index: CU count mismatch\n";
     exit(1);
   }
   for (unsigned Index = 0; Index < NumCUs; ++Index, Data += 16) {
-    const auto *CU = BC->DwCtx->getCompileUnitAtIndex(Index);
+    const auto *CU = BC.DwCtx->getCompileUnitAtIndex(Index);
     const auto Offset = read64le(Data);
     if (CU->getOffset() != Offset) {
       errs() << "BOLT-ERROR: .gdb_index CU offset mismatch\n";
@@ -595,7 +593,7 @@ void RewriteInstance::updateGdbIndexSection() {
   memcpy(Buffer, Data, TrailingSize);
 
   // Register the new section.
-  BC->registerOrUpdateNoteSection(".gdb_index",
+  BC.registerOrUpdateNoteSection(".gdb_index",
                                   NewGdbIndexContents,
                                   NewGdbIndexSize);
 }

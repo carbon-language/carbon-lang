@@ -243,21 +243,17 @@ void JTFootprintReduction::optimizeFunction(BinaryContext &BC,
   }
 }
 
-void JTFootprintReduction::runOnFunctions(
-  BinaryContext &BC,
-  std::map<uint64_t, BinaryFunction> &BFs,
-  std::set<uint64_t> &LargeFunctions
-) {
+void JTFootprintReduction::runOnFunctions(BinaryContext &BC) {
   if (opts::JumpTables == JTS_BASIC && BC.HasRelocations)
     return;
 
   std::unique_ptr<RegAnalysis> RA;
   std::unique_ptr<BinaryFunctionCallGraph> CG;
   if (!opts::JTFootprintOnlyPIC) {
-    CG.reset(new BinaryFunctionCallGraph(buildCallGraph(BC, BFs)));
-    RA.reset(new RegAnalysis(BC, &BFs, &*CG));
+    CG.reset(new BinaryFunctionCallGraph(buildCallGraph(BC)));
+    RA.reset(new RegAnalysis(BC, &BC.getBinaryFunctions(), &*CG));
   }
-  for (auto &BFIt : BFs) {
+  for (auto &BFIt : BC.getBinaryFunctions()) {
     auto &Function = BFIt.second;
 
     if (!Function.isSimple() || !opts::shouldProcess(Function))

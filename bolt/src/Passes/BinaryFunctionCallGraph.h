@@ -57,7 +57,7 @@ private:
 using CgFilterFunction = std::function<bool (const BinaryFunction &BF)>;
 inline bool NoFilter(const BinaryFunction &) { return false; }
 
-/// Builds a call graph from the map of BinaryFunctions provided in BFs.
+/// Builds a call graph from the map of BinaryFunctions provided in BC.
 /// The arguments control how the graph is constructed.
 /// Filter is called on each function, any function that it returns true for
 /// is omitted from the graph.
@@ -68,7 +68,6 @@ inline bool NoFilter(const BinaryFunction &) { return false; }
 /// UseEdgeCounts is used to control if the Weight attribute on Arcs is computed
 /// using the number of calls.
 BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
-                                       std::map<uint64_t, BinaryFunction> &BFs,
                                        CgFilterFunction Filter = NoFilter,
                                        bool CgFromPerfData = false,
                                        bool IncludeColdCalls = true,

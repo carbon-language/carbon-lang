@@ -221,20 +221,18 @@ void FrameOptimizerPass::removeUnusedStores(const FrameAnalysis &FA,
   }
 }
 
-void FrameOptimizerPass::runOnFunctions(BinaryContext &BC,
-                                        std::map<uint64_t, BinaryFunction> &BFs,
-                                        std::set<uint64_t> &LargeFunctions) {
+void FrameOptimizerPass::runOnFunctions(BinaryContext &BC) {
   if (opts::FrameOptimization == FOP_NONE)
     return;
 
   // Run FrameAnalysis pass
-  BinaryFunctionCallGraph CG = buildCallGraph(BC, BFs);
-  FrameAnalysis FA(BC, BFs, CG);
-  RegAnalysis RA(BC, &BFs, &CG);
+  BinaryFunctionCallGraph CG = buildCallGraph(BC);
+  FrameAnalysis FA(BC, CG);
+  RegAnalysis RA(BC, &BC.getBinaryFunctions(), &CG);
 
   // Our main loop: perform caller-saved register optimizations, then
   // callee-saved register optimizations (shrink wrapping).
-  for (auto &I : BFs) {
+  for (auto &I : BC.getBinaryFunctions()) {
     if (!FA.hasFrameInfo(I.second))
       continue;
     // Restrict pass execution if user asked to only run on hot functions

@@ -379,9 +379,7 @@ bool ReorderData::markUnmoveableSymbols(BinaryContext &BC,
   return FoundUnmoveable;
 }
 
-void ReorderData::runOnFunctions(BinaryContext &BC,
-                                 std::map<uint64_t, BinaryFunction> &BFs,
-                                 std::set<uint64_t> &LargeFunctions) {
+void ReorderData::runOnFunctions(BinaryContext &BC) {
   static const char* DefaultSections[] = {
     ".rodata",
     ".data",
@@ -435,7 +433,8 @@ void ReorderData::runOnFunctions(BinaryContext &BC,
       std::tie(Order, SplitPointIdx) = sortedByCount(BC, *Section);
     } else {
       outs() << "BOLT-INFO: reorder-sections: ordering data by funcs\n";
-      std::tie(Order, SplitPointIdx) = sortedByFunc(BC, *Section, BFs);
+      std::tie(Order, SplitPointIdx) =
+        sortedByFunc(BC, *Section, BC.getBinaryFunctions());
     }
     auto SplitPoint = Order.begin() + SplitPointIdx;
 

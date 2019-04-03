@@ -240,6 +240,19 @@ MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
   return registerNameAtAddress(Name, Address, Size, Alignment, Flags);
 }
 
+BinaryFunction *BinaryContext::createBinaryFunction(
+    const std::string &Name, BinarySection &Section, uint64_t Address,
+    uint64_t Size, bool IsSimple, uint64_t SymbolSize, uint16_t Alignment) {
+  auto Result = BinaryFunctions.emplace(
+      Address, BinaryFunction(Name, Section, Address, Size, *this, IsSimple));
+  assert(Result.second == true && "unexpected duplicate function");
+  auto *BF = &Result.first->second;
+  registerNameAtAddress(Name, Address, SymbolSize ? SymbolSize : Size,
+                        Alignment);
+  setSymbolToFunctionMap(BF->getSymbol(), BF);
+  return BF;
+}
+
 MCSymbol *BinaryContext::registerNameAtAddress(StringRef Name,
                                                uint64_t Address,
                                                uint64_t Size,
@@ -449,8 +462,7 @@ void BinaryContext::postProcessSymbolTable() {
 }
 
 void BinaryContext::foldFunction(BinaryFunction &ChildBF,
-                                 BinaryFunction &ParentBF,
-                                 std::map<uint64_t, BinaryFunction> &BFs) {
+                                 BinaryFunction &ParentBF) {
   // Copy name list.
   ParentBF.addNewNames(ChildBF.getNames());
 
@@ -470,10 +482,10 @@ void BinaryContext::foldFunction(BinaryFunction &ChildBF,
 
   if (HasRelocations) {
     // Remove ChildBF from the global set of functions in relocs mode.
-    auto FI = BFs.find(ChildBF.getAddress());
-    assert(FI != BFs.end() && "function not found");
+    auto FI = BinaryFunctions.find(ChildBF.getAddress());
+    assert(FI != BinaryFunctions.end() && "function not found");
     assert(&ChildBF == &FI->second && "function mismatch");
-    FI = BFs.erase(FI);
+    FI = BinaryFunctions.erase(FI);
   } else {
     // In non-relocation mode we keep the function, but rename it.
     std::string NewName = "__ICF_" + ChildBF.Names.back();
@@ -688,8 +700,7 @@ unsigned BinaryContext::addDebugFilenameToUnit(const uint32_t DestCUID,
   return cantFail(Ctx->getDwarfFile(Dir, FileName, 0, nullptr, None, DestCUID));
 }
 
-std::vector<BinaryFunction *> BinaryContext::getSortedFunctions(
-    std::map<uint64_t, BinaryFunction> &BinaryFunctions) {
+std::vector<BinaryFunction *> BinaryContext::getSortedFunctions() {
   std::vector<BinaryFunction *> SortedFunctions(BinaryFunctions.size());
   std::transform(BinaryFunctions.begin(), BinaryFunctions.end(),
                  SortedFunctions.begin(),
@@ -707,8 +718,7 @@ std::vector<BinaryFunction *> BinaryContext::getSortedFunctions(
   return SortedFunctions;
 }
 
-void BinaryContext::preprocessDebugInfo(
-    std::map<uint64_t, BinaryFunction> &BinaryFunctions) {
+void BinaryContext::preprocessDebugInfo() {
   // Populate MCContext with DWARF files.
   for (const auto &CU : DwCtx->compile_units()) {
     const auto CUID = CU->getOffset();
@@ -1209,4 +1219,42 @@ BinaryContext::calculateEmittedSize(BinaryFunction &BF) {
   }
 
   return std::make_pair(HotSize, ColdSize);
+}
+
+BinaryFunction *
+BinaryContext::getBinaryFunctionContainingAddress(uint64_t Address,
+                                                    bool CheckPastEnd,
+                                                    bool UseMaxSize) {
+  auto FI = BinaryFunctions.upper_bound(Address);
+  if (FI == BinaryFunctions.begin())
+    return nullptr;
+  --FI;
+
+  const auto UsedSize = UseMaxSize ? FI->second.getMaxSize()
+                                   : FI->second.getSize();
+
+  if (Address >= FI->first + UsedSize + (CheckPastEnd ? 1 : 0))
+    return nullptr;
+  return &FI->second;
+}
+
+DebugAddressRangesVector BinaryContext::translateModuleAddressRanges(
+      const DWARFAddressRangesVector &InputRanges) const {
+  DebugAddressRangesVector OutputRanges;
+
+  for (const auto Range : InputRanges) {
+    auto BFI = BinaryFunctions.lower_bound(Range.LowPC);
+    while (BFI != BinaryFunctions.end()) {
+      const auto &Function = BFI->second;
+      if (Function.getAddress() >= Range.HighPC)
+        break;
+      const auto FunctionRanges = Function.getOutputAddressRanges();
+      std::move(std::begin(FunctionRanges),
+                std::end(FunctionRanges),
+                std::back_inserter(OutputRanges));
+      std::advance(BFI, 1);
+    }
+  }
+
+  return OutputRanges;
 }

@@ -25,19 +25,14 @@
 #include <utility>
 #include <vector>
 
-#include "BinaryBasicBlock.h"
-
 namespace llvm {
 
 class DWARFCompileUnit;
-class DWARFDebugInfoEntryMinimal;
 class MCObjectWriter;
 
 namespace bolt {
 
 class BinaryContext;
-class BasicBlockTable;
-class BinaryBasicBlock;
 class BinaryFunction;
 
 /// Address range representation. Takes less space than DWARFAddressRange.

@@ -422,11 +422,8 @@ std::error_code DataAggregator::writeAutoFDOData() {
   return std::error_code();
 }
 
-void DataAggregator::parseProfile(
-    BinaryContext &BC,
-    std::map<uint64_t, BinaryFunction> &BFs) {
+void DataAggregator::parseProfile(BinaryContext &BC) {
   this->BC = &BC;
-  this->BFs = &BFs;
 
   if (opts::ReadPreAggregated) {
     parsePreAggregated();
@@ -546,9 +543,7 @@ void DataAggregator::parseProfile(
   deleteTempFiles();
 }
 
-void DataAggregator::processProfile(
-    BinaryContext &BC,
-    std::map<uint64_t, BinaryFunction> &BFs) {
+void DataAggregator::processProfile(BinaryContext &BC) {
   if (opts::ReadPreAggregated)
     processPreAggregated();
   else if (opts::BasicAggregation)
@@ -559,7 +554,7 @@ void DataAggregator::processProfile(
   processMemEvents();
 
   // Mark all functions with registered events as having a valid profile.
-  for (auto &BFI : BFs) {
+  for (auto &BFI : BC.getBinaryFunctions()) {
     auto &BF = BFI.second;
     if (BF.getBranchData()) {
       const auto Flags = opts::BasicAggregation ? BinaryFunction::PF_SAMPLE
@@ -581,15 +576,8 @@ DataAggregator::getBinaryFunctionContainingAddress(uint64_t Address) {
   if (!BC->containsAddress(Address))
     return nullptr;
 
-  auto FI = BFs->upper_bound(Address);
-  if (FI == BFs->begin())
-    return nullptr;
-  --FI;
-
-  const auto UsedSize = FI->second.getMaxSize();
-  if (Address >= FI->first + UsedSize)
-    return nullptr;
-  return &FI->second;
+  return BC->getBinaryFunctionContainingAddress(Address, /*CheckPastEnd=*/false,
+                                                /*UseMaxSize=*/true);
 }
 
 bool DataAggregator::doSample(BinaryFunction &Func, uint64_t Address,

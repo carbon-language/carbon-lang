@@ -138,9 +138,7 @@ public:
     DataflowInfoManager &DInfo, RegAnalysis &RA,
     StokeFuncInfo &FuncInfo);
 
-  void runOnFunctions(BinaryContext &BC, std::map<uint64_t, BinaryFunction> &BFs,
-    std::set<uint64_t> &LargeFunctions) override;
-
+  void runOnFunctions(BinaryContext &BC) override;
 };
 
 } // namespace bolt

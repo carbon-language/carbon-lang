@@ -158,7 +158,7 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
 
 std::error_code
 ProfileWriter::writeProfile(const RewriteInstance &RI) {
-  const auto &Functions = RI.getFunctions();
+  const auto &Functions = RI.getBinaryContext().getBinaryFunctions();
 
   std::error_code EC;
   OS = make_unique<raw_fd_ostream>(FileName, EC, sys::fs::F_None);

@@ -93,7 +93,7 @@ raw_ostream &operator<<(raw_ostream &OS,
 /// Initialization:
 ///
 ///   FrameAnalysis FA(PrintPass);
-///   FA.runOnFunctions(BC, BFs, LargeFunctions);
+///   FA.runOnFunctions(BC);
 ///
 /// Usage (fetching frame access information about a given instruction):
 ///
@@ -113,7 +113,6 @@ raw_ostream &operator<<(raw_ostream &OS,
 ///
 class FrameAnalysis {
   BinaryContext &BC;
-  std::map<uint64_t, BinaryFunction> &BFs;
 
   /// Map functions to the set of <stack offsets, size> tuples representing
   /// accesses to stack positions that belongs to caller
@@ -170,7 +169,6 @@ class FrameAnalysis {
 
 public:
   explicit FrameAnalysis(BinaryContext &BC,
-                         std::map<uint64_t, BinaryFunction> &BFs,
                          BinaryFunctionCallGraph &CG);
 
   /// Return true if we could fully analyze \p Func

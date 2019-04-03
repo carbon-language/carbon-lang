@@ -43,15 +43,12 @@ PLT("plt",
 namespace llvm {
 namespace bolt {
 
-void PLTCall::runOnFunctions(
-    BinaryContext &BC,
-    std::map<uint64_t, BinaryFunction> &BFs,
-    std::set<uint64_t> &) {
+void PLTCall::runOnFunctions(BinaryContext &BC) {
   if (opts::PLT == OT_NONE)
     return;
 
   uint64_t NumCallsOptimized = 0;
-  for (auto &It : BFs) {
+  for (auto &It : BC.getBinaryFunctions()) {
     auto &Function = It.second;
     if (!shouldOptimize(Function))
       continue;

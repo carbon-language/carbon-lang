@@ -485,7 +485,7 @@ bool FrameAnalysis::restoreFrameIndex(BinaryFunction &BF) {
 }
 
 void FrameAnalysis::cleanAnnotations() {
-  for (auto &I : BFs) {
+  for (auto &I : BC.getBinaryFunctions()) {
     for (auto &BB : I.second) {
       for (auto &Inst : BB) {
         BC.MIB->removeAnnotation(Inst, "ArgAccessEntry");
@@ -496,16 +496,15 @@ void FrameAnalysis::cleanAnnotations() {
 }
 
 FrameAnalysis::FrameAnalysis(BinaryContext &BC,
-                             std::map<uint64_t, BinaryFunction> &BFs,
                              BinaryFunctionCallGraph &CG)
-    : BC(BC), BFs(BFs) {
+    : BC(BC) {
   // Position 0 of the vector should be always associated with "assume access
   // everything".
   ArgAccessesVector.emplace_back(ArgAccesses(/*AssumeEverything*/ true));
 
   traverseCG(CG);
 
-  for (auto &I : BFs) {
+  for (auto &I : BC.getBinaryFunctions()) {
     auto Count = I.second.getExecutionCount();
     if (Count != BinaryFunction::COUNT_NO_PROFILE)
       CountDenominator += Count;

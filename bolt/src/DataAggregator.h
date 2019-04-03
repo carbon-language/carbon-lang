@@ -172,7 +172,6 @@ class DataAggregator : public DataReader {
 
   /// References to core BOLT data structures
   BinaryContext *BC{nullptr};
-  std::map<uint64_t, BinaryFunction> *BFs{nullptr};
 
   /// Aggregation statistics
   uint64_t NumInvalidTraces{0};
@@ -400,12 +399,10 @@ public:
 
   /// Parse profile and mark functions/objects with profile.
   /// Don't assign profile to functions yet.
-  void parseProfile(BinaryContext &BC,
-                    std::map<uint64_t, BinaryFunction> &BFs);
+  void parseProfile(BinaryContext &BC);
 
   /// Populate functions with profile.
-  void processProfile(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs);
+  void processProfile(BinaryContext &BC);
 
   /// Check whether \p FileName is a perf.data file
   static bool checkPerfDataMagic(StringRef FileName);

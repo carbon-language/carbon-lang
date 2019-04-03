@@ -138,6 +138,9 @@ class BinaryContext {
   /// Low level section registration.
   BinarySection &registerSection(BinarySection *Section);
 
+  /// Store all functions in the binary, sorted by original address.
+  std::map<uint64_t, BinaryFunction> BinaryFunctions;
+
   /// Functions injected by BOLT
   std::vector<BinaryFunction *> InjectedBinaryFunctions;
 
@@ -160,6 +163,40 @@ public:
   using FilteredBinaryDataConstIterator =
     FilterIterator<binary_data_const_iterator>;
   using FilteredBinaryDataIterator = FilterIterator<binary_data_iterator>;
+
+  /// Return BinaryFunction containing a given \p Address or nullptr if
+  /// no registered function has it.
+  ///
+  /// In a binary a function has somewhat vague  boundaries. E.g. a function can
+  /// refer to the first byte past the end of the function, and it will still be
+  /// referring to this function, not the function following it in the address
+  /// space. Thus we have the following flags that allow to lookup for
+  /// a function where a caller has more context for the search.
+  ///
+  /// If \p CheckPastEnd is true and the \p Address falls on a byte
+  /// immediately following the last byte of some function and there's no other
+  /// function that starts there, then return the function as the one containing
+  /// the \p Address. This is useful when we need to locate functions for
+  /// references pointing immediately past a function body.
+  ///
+  /// If \p UseMaxSize is true, then include the space between this function
+  /// body and the next object in address ranges that we check.
+  BinaryFunction *getBinaryFunctionContainingAddress(uint64_t Address,
+                                                     bool CheckPastEnd = false,
+                                                     bool UseMaxSize = false);
+
+  /// Return BinaryFunction that starts at a given \p Address.
+  BinaryFunction *getBinaryFunctionAtAddress(uint64_t Address) {
+    if (const auto *BD = getBinaryDataAtAddress(Address))
+      return getFunctionForSymbol(BD->getSymbol());
+    return nullptr;
+  }
+
+  const BinaryFunction *getBinaryFunctionAtAddress(uint64_t Address) const {
+    if (const auto *BD = getBinaryDataAtAddress(Address))
+      return getFunctionForSymbol(BD->getSymbol());
+    return nullptr;
+  }
 
   /// [MCSymbol] -> [BinaryFunction]
   ///
@@ -188,6 +225,10 @@ public:
   /// top level BinaryData.
   bool validateHoles() const;
 
+  /// Produce output address ranges based on input ranges for some module.
+  DebugAddressRangesVector translateModuleAddressRanges(
+      const DWARFAddressRangesVector &InputRanges) const;
+
   /// Get a bogus "absolute" section that will be associated with all
   /// absolute BinaryDatas.
   BinarySection &absoluteSection();
@@ -202,6 +243,25 @@ public:
   /// Populate \p GlobalMemData.  This should be done after all symbol discovery
   /// is complete, e.g. after building CFGs for all functions.
   void assignMemData();
+
+  /// Construct BinaryFunction object and add it to internal maps.
+  BinaryFunction *createBinaryFunction(const std::string &Name,
+                                       BinarySection &Section,
+                                       uint64_t Address,
+                                       uint64_t Size,
+                                       bool IsSimple,
+                                       uint64_t SymbolSize = 0,
+                                       uint16_t Alignment = 0);
+
+  /// Return all functions for this rewrite instance.
+  std::map<uint64_t, BinaryFunction> &getBinaryFunctions() {
+    return BinaryFunctions;
+  }
+
+  /// Return all functions for this rewrite instance.
+  const std::map<uint64_t, BinaryFunction> &getBinaryFunctions() const {
+    return BinaryFunctions;
+  }
 
   /// Create BOLT-injected function
   BinaryFunction *createInjectedBinaryFunction(const std::string &Name,
@@ -491,6 +551,10 @@ public:
     return ".text.injected.cold";
   }
 
+  ErrorOr<BinarySection &> getGdbIndexSection() const {
+    return getUniqueSectionByName(".gdb_index");
+  }
+
   /// @}
 
   /// Perform any necessary post processing on the symbol table after
@@ -675,9 +739,7 @@ public:
   /// Replaces all references to \p ChildBF with \p ParentBF. \p ChildBF is then
   /// removed from the list of functions \p BFs. The profile data of \p ChildBF
   /// is merged into that of \p ParentBF.
-  void foldFunction(BinaryFunction &ChildBF,
-                    BinaryFunction &ParentBF,
-                    std::map<uint64_t, BinaryFunction> &BFs);
+  void foldFunction(BinaryFunction &ChildBF, BinaryFunction &ParentBF);
 
   /// Add a Section relocation at a given \p Address.
   void addRelocation(uint64_t Address, MCSymbol *Symbol, uint64_t Type,
@@ -707,8 +769,7 @@ public:
   }
 
   /// Populate some internal data structures with debug info.
-  void preprocessDebugInfo(
-      std::map<uint64_t, BinaryFunction> &BinaryFunctions);
+  void preprocessDebugInfo();
 
   /// Add a filename entry from SrcCUID to DestCUID.
   unsigned addDebugFilenameToUnit(const uint32_t DestCUID,
@@ -716,8 +777,7 @@ public:
                                   unsigned FileIndex);
 
   /// Return functions in output layout order
-  static std::vector<BinaryFunction *>
-  getSortedFunctions(std::map<uint64_t, BinaryFunction> &BinaryFunctions);
+  std::vector<BinaryFunction *> getSortedFunctions();
 
   /// Do the best effort to calculate the size of the function by emitting
   /// its code, and relaxing branch instructions.

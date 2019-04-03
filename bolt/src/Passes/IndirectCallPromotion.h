@@ -239,9 +239,7 @@ class IndirectCallPromotion : public BinaryFunctionPass {
   bool shouldPrint(const BinaryFunction &BF) const override {
     return BinaryFunctionPass::shouldPrint(BF) && Modified.count(&BF) > 0;
   }
-  void runOnFunctions(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs,
-                      std::set<uint64_t> &LargeFunctions) override;
+  void runOnFunctions(BinaryContext &BC) override;
 };
 
 } // namespace bolt

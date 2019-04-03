@@ -58,9 +58,7 @@ public:
     return "validate-internal-calls";
   }
 
-  void runOnFunctions(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs,
-                      std::set<uint64_t> &LargeFunctions) override;
+  void runOnFunctions(BinaryContext &BC) override;
 
 private:
   /// Fix the CFG to take into consideration internal calls that do not

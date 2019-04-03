@@ -339,7 +339,7 @@ bool RegReAssign::conservativePassOverFunction(BinaryContext &BC,
 void RegReAssign::setupAggressivePass(BinaryContext &BC,
                                      std::map<uint64_t, BinaryFunction> &BFs) {
   setupConservativePass(BC, BFs);
-  CG.reset(new BinaryFunctionCallGraph(buildCallGraph(BC, BFs)));
+  CG.reset(new BinaryFunctionCallGraph(buildCallGraph(BC)));
   RA.reset(new RegAnalysis(BC, &BFs, &*CG));
 
   GPRegs = BitVector(BC.MRI->getNumRegs(), false);
@@ -380,18 +380,16 @@ void RegReAssign::setupConservativePass(
   });
 }
 
-void RegReAssign::runOnFunctions(BinaryContext &BC,
-                                std::map<uint64_t, BinaryFunction> &BFs,
-                                std::set<uint64_t> &LargeFunctions) {
+void RegReAssign::runOnFunctions(BinaryContext &BC) {
   RegScore = std::vector<int64_t>(BC.MRI->getNumRegs(), 0);
   RankedRegs = std::vector<size_t>(BC.MRI->getNumRegs(), 0);
 
   if (opts::AggressiveReAssign)
-    setupAggressivePass(BC, BFs);
+    setupAggressivePass(BC, BC.getBinaryFunctions());
   else
-    setupConservativePass(BC, BFs);
+    setupConservativePass(BC, BC.getBinaryFunctions());
 
-  for (auto &I : BFs) {
+  for (auto &I : BC.getBinaryFunctions()) {
     auto &Function = I.second;
 
     if (!Function.isSimple() || !opts::shouldProcess(Function))

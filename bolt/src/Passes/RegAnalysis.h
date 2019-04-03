@@ -36,7 +36,8 @@ public:
   /// set of clobbered registers.
   BitVector getFunctionClobberList(const BinaryFunction *Func);
 
-  RegAnalysis(BinaryContext &BC, std::map<uint64_t, BinaryFunction> *BFs,
+  RegAnalysis(BinaryContext &BC,
+              std::map<uint64_t, BinaryFunction> *BFs,
               BinaryFunctionCallGraph *CG);
 
   /// Compute the set of registers \p Inst may read from, marking them in

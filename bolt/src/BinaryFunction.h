@@ -337,6 +337,9 @@ private:
   /// destination.
   bool HasFixedIndirectBranch{false};
 
+  /// Is the function known to exceed its input size?
+  bool IsLarge{false};
+
   /// The address for the code for this function in codegen memory.
   uint64_t ImageAddress{0};
 
@@ -1292,6 +1295,11 @@ public:
     return IsSimple;
   }
 
+  /// Return true if the function should be split for the output.
+  bool shouldSplit() const {
+    return IsLarge && !getBinaryContext().HasRelocations;
+  }
+
   /// Return true if the function body is non-contiguous.
   bool isSplit() const {
     return layout_size() &&
@@ -1653,6 +1661,11 @@ public:
 
   BinaryFunction &setSimple(bool Simple) {
     IsSimple = Simple;
+    return *this;
+  }
+
+  BinaryFunction &setLarge(bool Large) {
+    IsLarge = Large;
     return *this;
   }
 

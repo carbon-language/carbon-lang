@@ -293,15 +293,13 @@ bool ValidateInternalCalls::analyzeFunction(BinaryFunction &Function) const {
   return true;
 }
 
-void ValidateInternalCalls::runOnFunctions(
-    BinaryContext &BC, std::map<uint64_t, BinaryFunction> &BFs,
-    std::set<uint64_t> &LargeFunctions) {
+void ValidateInternalCalls::runOnFunctions(BinaryContext &BC) {
   if (!BC.isX86())
     return;
 
   // Look for functions that need validation. This should be pretty rare.
   std::set<BinaryFunction *> NeedsValidation;
-  for (auto &BFI : BFs) {
+  for (auto &BFI : BC.getBinaryFunctions()) {
     BinaryFunction &Function = BFI.second;
     for (auto &BB : Function) {
       for(auto &Inst : BB) {

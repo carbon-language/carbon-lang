@@ -27,8 +27,6 @@ namespace bolt {
 class BinaryFunctionPassManager {
 private:
   BinaryContext &BC;
-  std::map<uint64_t, BinaryFunction> &BFs;
-  std::set<uint64_t> &LargeFunctions;
   std::vector<std::pair<const bool,
                         std::unique_ptr<BinaryFunctionPass>>> Passes;
 
@@ -36,10 +34,8 @@ private:
   static const char TimerGroupName[];
   static const char TimerGroupDesc[];
 
-  BinaryFunctionPassManager(BinaryContext &BC,
-                            std::map<uint64_t, BinaryFunction> &BFs,
-                            std::set<uint64_t> &LargeFunctions)
-    : BC(BC), BFs(BFs), LargeFunctions(LargeFunctions) {}
+  BinaryFunctionPassManager(BinaryContext &BC)
+    : BC(BC) {}
 
   /// Adds a pass to this manager based on the value of its corresponding
   /// command-line option.
@@ -57,10 +53,7 @@ private:
   void runPasses();
 
   /// Runs all enabled implemented passes on all functions.
-  static void runAllPasses(BinaryContext &BC,
-                           std::map<uint64_t, BinaryFunction> &Functions,
-                           std::set<uint64_t> &LargeFunctions);
-
+  static void runAllPasses(BinaryContext &BC);
 };
 
 } // namespace bolt

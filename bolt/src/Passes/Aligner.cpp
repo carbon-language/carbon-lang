@@ -154,15 +154,13 @@ void AlignerPass::alignBlocks(BinaryFunction &Function) {
   }
 }
 
-void AlignerPass::runOnFunctions(BinaryContext &BC,
-                                 std::map<uint64_t, BinaryFunction> &BFs,
-                                 std::set<uint64_t> &LargeFunctions) {
+void AlignerPass::runOnFunctions(BinaryContext &BC) {
   if (!BC.HasRelocations)
     return;
 
   AlignHistogram.resize(opts::BlockAlignment);
 
-  for (auto &It : BFs) {
+  for (auto &It : BC.getBinaryFunctions()) {
     auto &Function = It.second;
 
     if (opts::UseCompactAligner)

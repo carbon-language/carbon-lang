@@ -137,10 +137,7 @@ bool StokeInfo::checkFunction(const BinaryContext &BC, BinaryFunction &BF,
   return true;
 }
 
-void StokeInfo::runOnFunctions(
-    BinaryContext &BC,
-    std::map<uint64_t, BinaryFunction> &BFs,
-    std::set<uint64_t> &) {
+void StokeInfo::runOnFunctions(BinaryContext &BC) {
   outs() << "STOKE-INFO: begin of stoke pass\n";
 
   std::ofstream Outfile;
@@ -156,8 +153,8 @@ void StokeInfo::runOnFunctions(
   DEBUG(dbgs() << "\tTripleName " << BC.TripleName << "\n");
   DEBUG(dbgs() << "\tgetNumRegs " << BC.MRI->getNumRegs() << "\n");
 
-  auto CG = buildCallGraph(BC, BFs);
-  RegAnalysis RA(BC, &BFs, &CG);
+  auto CG = buildCallGraph(BC);
+  RegAnalysis RA(BC, &BC.getBinaryFunctions(), &CG);
 
   NumRegs = BC.MRI->getNumRegs();
   assert(NumRegs > 0 && "STOKE-INFO: the target register number is incorrect!");
@@ -174,7 +171,7 @@ void StokeInfo::runOnFunctions(
   StokeFuncInfo FuncInfo;
   // analyze all functions
   FuncInfo.printCsvHeader(Outfile);
-  for (auto &BF : BFs) {
+  for (auto &BF : BC.getBinaryFunctions()) {
     DataflowInfoManager DInfo(BC, BF.second, &RA/*RA.get()*/, nullptr);
     FuncInfo.reset();
     if (checkFunction(BC, BF.second, DInfo, RA, FuncInfo)) {

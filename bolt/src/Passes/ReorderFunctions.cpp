@@ -276,20 +276,18 @@ std::vector<std::string> readFunctionOrderFile() {
 
 }
 
-void ReorderFunctions::runOnFunctions(BinaryContext &BC,
-                                      std::map<uint64_t, BinaryFunction> &BFs,
-                                      std::set<uint64_t> &LargeFunctions) {
+void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
   if (!BC.HasRelocations && opts::ReorderFunctions != RT_NONE) {
     errs() << "BOLT-ERROR: Function reordering only works when "
            << "relocs are enabled.\n";
     exit(1);
   }
 
+  auto &BFs = BC.getBinaryFunctions();
   if (opts::ReorderFunctions != RT_NONE &&
       opts::ReorderFunctions != RT_EXEC_COUNT &&
       opts::ReorderFunctions != RT_USER) {
     Cg = buildCallGraph(BC,
-                        BFs,
                         [](const BinaryFunction &BF) {
                           if (!BF.hasProfile())
                             return true;

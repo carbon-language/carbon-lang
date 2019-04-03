@@ -281,10 +281,8 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
 namespace llvm {
 namespace bolt {
 
-void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC,
-                                        std::map<uint64_t, BinaryFunction> &BFs,
-                                        std::set<uint64_t> &) {
-  const auto OriginalFunctionCount = BFs.size();
+void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
+  const auto OriginalFunctionCount = BC.getBinaryFunctions().size();
   uint64_t NumFunctionsFolded = 0;
   uint64_t NumJTFunctionsFolded = 0;
   uint64_t BytesSavedEstimate = 0;
@@ -312,7 +310,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC,
   // be folded.
   std::unordered_map<BinaryFunction *, std::set<BinaryFunction *>,
                      KeyHash, KeyCongruent> CongruentBuckets;
-  for (auto &BFI : BFs) {
+  for (auto &BFI : BC.getBinaryFunctions()) {
     auto &BF = BFI.second;
     if (!shouldOptimize(BF) || BF.isFolded())
       continue;
@@ -375,7 +373,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC,
           BytesSavedEstimate += ChildBF->getSize();
           CallsSavedEstimate += std::min(ChildBF->getKnownExecutionCount(),
                                          ParentBF->getKnownExecutionCount());
-          BC.foldFunction(*ChildBF, *ParentBF, BFs);
+          BC.foldFunction(*ChildBF, *ParentBF);
 
           ++NumFoldedLastIteration;
 

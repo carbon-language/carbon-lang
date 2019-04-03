@@ -286,12 +286,8 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
   }
 }
 
-void EliminateUnreachableBlocks::runOnFunctions(
-  BinaryContext&,
-  std::map<uint64_t, BinaryFunction> &BFs,
-  std::set<uint64_t> &
-) {
-  for (auto &It : BFs) {
+void EliminateUnreachableBlocks::runOnFunctions(BinaryContext &BC) {
+  for (auto &It : BC.getBinaryFunctions()) {
     auto &Function = It.second;
     if (shouldOptimize(Function)) {
       runOnFunction(Function);
@@ -306,17 +302,14 @@ bool ReorderBasicBlocks::shouldPrint(const BinaryFunction &BF) const {
           opts::ReorderBlocks != ReorderBasicBlocks::LT_NONE);
 }
 
-void ReorderBasicBlocks::runOnFunctions(
-        BinaryContext &BC,
-        std::map<uint64_t, BinaryFunction> &BFs,
-        std::set<uint64_t> &LargeFunctions) {
+void ReorderBasicBlocks::runOnFunctions(BinaryContext &BC) {
   if (opts::ReorderBlocks == ReorderBasicBlocks::LT_NONE)
     return;
 
   IsAArch64 = BC.isAArch64();
 
   uint64_t ModifiedFuncCount = 0;
-  for (auto &It : BFs) {
+  for (auto &It : BC.getBinaryFunctions()) {
     auto &Function = It.second;
 
     if (!shouldOptimize(Function))
@@ -326,7 +319,7 @@ void ReorderBasicBlocks::runOnFunctions(
             (opts::SplitFunctions == BinaryFunction::ST_ALL) ||
             (opts::SplitFunctions == BinaryFunction::ST_EH &&
              Function.hasEHRanges()) ||
-            (LargeFunctions.find(It.first) != LargeFunctions.end());
+             Function.shouldSplit();
     modifyFunctionLayout(Function, opts::ReorderBlocks, opts::MinBranchClusters,
                          ShouldSplit);
 
@@ -337,12 +330,14 @@ void ReorderBasicBlocks::runOnFunctions(
 
   outs() << "BOLT-INFO: basic block reordering modified layout of "
          << format("%zu (%.2lf%%) functions\n",
-                   ModifiedFuncCount, 100.0 * ModifiedFuncCount / BFs.size());
+                   ModifiedFuncCount,
+                   100.0 * ModifiedFuncCount / BC.getBinaryFunctions().size());
 
   if (opts::PrintFuncStat > 0) {
     raw_ostream &OS = outs();
     // Copy all the values into vector in order to sort them
     std::map<uint64_t, BinaryFunction &> ScoreMap;
+    auto &BFs = BC.getBinaryFunctions();
     for (auto It = BFs.begin(); It != BFs.end(); ++It) {
       ScoreMap.insert(std::pair<uint64_t, BinaryFunction &>(
           It->second.getFunctionScore(), It->second));
@@ -551,11 +546,8 @@ void ReorderBasicBlocks::splitFunction(BinaryFunction &BF) const {
   }
 }
 
-void FixupBranches::runOnFunctions(
-  BinaryContext &BC,
-  std::map<uint64_t, BinaryFunction> &BFs,
-  std::set<uint64_t> &) {
-  for (auto &It : BFs) {
+void FixupBranches::runOnFunctions(BinaryContext &BC) {
+  for (auto &It : BC.getBinaryFunctions()) {
     auto &Function = It.second;
     if (BC.HasRelocations || shouldOptimize(Function)) {
       if (BC.HasRelocations && !Function.isSimple())
@@ -565,12 +557,8 @@ void FixupBranches::runOnFunctions(
   }
 }
 
-void FinalizeFunctions::runOnFunctions(
-  BinaryContext &BC,
-  std::map<uint64_t, BinaryFunction> &BFs,
-  std::set<uint64_t> &
-) {
-  for (auto &It : BFs) {
+void FinalizeFunctions::runOnFunctions(BinaryContext &BC) {
+  for (auto &It : BC.getBinaryFunctions()) {
     auto &Function = It.second;
     const auto ShouldOptimize = shouldOptimize(Function);
 
@@ -596,11 +584,8 @@ void FinalizeFunctions::runOnFunctions(
   }
 }
 
-void LowerAnnotations::runOnFunctions(
-    BinaryContext &BC,
-    std::map<uint64_t, BinaryFunction> &BFs,
-    std::set<uint64_t> &) {
-  for (auto &It : BFs) {
+void LowerAnnotations::runOnFunctions(BinaryContext &BC) {
+  for (auto &It : BC.getBinaryFunctions()) {
     auto &BF = It.second;
     int64_t CurrentGnuArgsSize = 0;
 
@@ -985,15 +970,11 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
   return NumLocalCTCs > 0;
 }
 
-void SimplifyConditionalTailCalls::runOnFunctions(
-  BinaryContext &BC,
-  std::map<uint64_t, BinaryFunction> &BFs,
-  std::set<uint64_t> &
-) {
+void SimplifyConditionalTailCalls::runOnFunctions(BinaryContext &BC) {
   if (!BC.isX86())
     return;
 
-  for (auto &It : BFs) {
+  for (auto &It : BC.getBinaryFunctions()) {
     auto &Function = It.second;
 
     if (!shouldOptimize(Function))
@@ -1081,9 +1062,7 @@ void Peepholes::removeUselessCondBranches(BinaryContext &BC,
   }
 }
 
-void Peepholes::runOnFunctions(BinaryContext &BC,
-                               std::map<uint64_t, BinaryFunction> &BFs,
-                               std::set<uint64_t> &LargeFunctions) {
+void Peepholes::runOnFunctions(BinaryContext &BC) {
   const char Opts =
     std::accumulate(opts::Peepholes.begin(),
                     opts::Peepholes.end(),
@@ -1094,7 +1073,7 @@ void Peepholes::runOnFunctions(BinaryContext &BC,
   if (Opts == opts::PEEP_NONE || !BC.isX86())
     return;
 
-  for (auto &It : BFs) {
+  for (auto &It : BC.getBinaryFunctions()) {
     auto &Function = It.second;
     if (shouldOptimize(Function)) {
       if (Opts & opts::PEEP_SHORTEN)
@@ -1198,12 +1177,8 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
   return NumLocalLoadsSimplified > 0;
 }
 
-void SimplifyRODataLoads::runOnFunctions(
-  BinaryContext &BC,
-  std::map<uint64_t, BinaryFunction> &BFs,
-  std::set<uint64_t> &
-) {
-  for (auto &It : BFs) {
+void SimplifyRODataLoads::runOnFunctions(BinaryContext &BC) {
+  for (auto &It : BC.getBinaryFunctions()) {
     auto &Function = It.second;
     if (shouldOptimize(Function) && simplifyRODataLoads(BC, Function)) {
       Modified.insert(&Function);
@@ -1217,9 +1192,7 @@ void SimplifyRODataLoads::runOnFunctions(
          << "BOLT-INFO: dynamic loads found: " << NumDynamicLoadsFound << "\n";
 }
 
-void AssignSections::runOnFunctions(BinaryContext &BC,
-                                    std::map<uint64_t, BinaryFunction> &BFs,
-                                    std::set<uint64_t> &) {
+void AssignSections::runOnFunctions(BinaryContext &BC) {
   for (auto *Function : BC.getInjectedBinaryFunctions()) {
     Function->setCodeSectionName(BC.getInjectedCodeSectionName());
     Function->setColdCodeSectionName(BC.getInjectedColdCodeSectionName());
@@ -1230,7 +1203,7 @@ void AssignSections::runOnFunctions(BinaryContext &BC,
     return;
 
   const auto UseColdSection = BC.NumProfiledFuncs > 0;
-  for (auto &BFI : BFs) {
+  for (auto &BFI : BC.getBinaryFunctions()) {
     auto &Function = BFI.second;
     if (opts::isHotTextMover(Function)) {
       Function.setCodeSectionName(BC.getHotTextMoverSectionName());
@@ -1252,15 +1225,13 @@ void AssignSections::runOnFunctions(BinaryContext &BC,
 }
 
 void
-PrintProgramStats::runOnFunctions(BinaryContext &BC,
-                                  std::map<uint64_t, BinaryFunction> &BFs,
-                                  std::set<uint64_t> &) {
+PrintProgramStats::runOnFunctions(BinaryContext &BC) {
   uint64_t NumSimpleFunctions{0};
   uint64_t NumStaleProfileFunctions{0};
   uint64_t NumNonSimpleProfiledFunctions{0};
   std::vector<BinaryFunction *> ProfiledFunctions;
   const char *StaleFuncsHeader = "BOLT-INFO: Functions with stale profile:\n";
-  for (auto &BFI : BFs) {
+  for (auto &BFI : BC.getBinaryFunctions()) {
     auto &Function = BFI.second;
     if (!Function.isSimple()) {
       if (Function.hasProfile()) {
@@ -1356,7 +1327,7 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC,
     std::vector<const BinaryFunction *> Functions;
     std::map<const BinaryFunction *, DynoStats> Stats;
 
-    for (const auto &BFI : BFs) {
+    for (const auto &BFI : BC.getBinaryFunctions()) {
       const auto &BF = BFI.second;
       if (shouldOptimize(BF) && BF.hasValidProfile()) {
         Functions.push_back(&BF);
@@ -1462,7 +1433,7 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC,
   // Collect and print information about suboptimal code layout on input.
   if (opts::ReportBadLayout) {
     std::vector<const BinaryFunction *> SuboptimalFuncs;
-    for (auto &BFI : BFs) {
+    for (auto &BFI : BC.getBinaryFunctions()) {
       const auto &BF = BFI.second;
       if (!BF.hasValidProfile())
         continue;
@@ -1500,11 +1471,8 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC,
   }
 }
 
-void InstructionLowering::runOnFunctions(
-    BinaryContext &BC,
-    std::map<uint64_t, BinaryFunction> &BFs,
-    std::set<uint64_t> &LargeFunctions) {
-  for (auto &BFI : BFs) {
+void InstructionLowering::runOnFunctions(BinaryContext &BC) {
+  for (auto &BFI : BC.getBinaryFunctions()) {
     for (auto &BB : BFI.second) {
       for (auto &Instruction : BB) {
         BC.MIB->lowerTailCall(Instruction);
@@ -1513,13 +1481,10 @@ void InstructionLowering::runOnFunctions(
   }
 }
 
-void StripRepRet::runOnFunctions(
-    BinaryContext &BC,
-    std::map<uint64_t, BinaryFunction> &BFs,
-    std::set<uint64_t> &LargeFunctions) {
+void StripRepRet::runOnFunctions(BinaryContext &BC) {
   uint64_t NumPrefixesRemoved = 0;
   uint64_t NumBytesSaved = 0;
-  for (auto &BFI : BFs) {
+  for (auto &BFI : BC.getBinaryFunctions()) {
     for (auto &BB : BFI.second) {
       auto LastInstRIter = BB.getLastNonPseudo();
       if (LastInstRIter == BB.rend() ||
@@ -1539,15 +1504,13 @@ void StripRepRet::runOnFunctions(
   }
 }
 
-void InlineMemcpy::runOnFunctions(BinaryContext &BC,
-                                  std::map<uint64_t, BinaryFunction> &BFs,
-                                  std::set<uint64_t> &LargeFunctions) {
+void InlineMemcpy::runOnFunctions(BinaryContext &BC) {
   if (!BC.isX86())
     return;
 
   uint64_t NumInlined = 0;
   uint64_t NumInlinedDyno = 0;
-  for (auto &BFI : BFs) {
+  for (auto &BFI : BC.getBinaryFunctions()) {
     for (auto &BB : BFI.second) {
       for(auto II = BB.begin(); II != BB.end(); ++II) {
         auto &Inst = *II;

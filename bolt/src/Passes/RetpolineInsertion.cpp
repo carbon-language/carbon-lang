@@ -273,10 +273,7 @@ IndirectBranchInfo::IndirectBranchInfo(MCInst &Inst, MCPlusBuilder &MIB) {
   }
 }
 
-void RetpolineInsertion::runOnFunctions(BinaryContext &BC,
-                                        std::map<uint64_t, BinaryFunction> &BFs,
-                                        std::set<uint64_t> &LargeFunctions) {
-
+void RetpolineInsertion::runOnFunctions(BinaryContext &BC) {
   if (!opts::InsertRetpolines)
     return;
 
@@ -287,7 +284,7 @@ void RetpolineInsertion::runOnFunctions(BinaryContext &BC,
 
   auto &MIB = *BC.MIB;
   uint32_t RetpolinedBranches = 0;
-  for (auto &It : BFs) {
+  for (auto &It : BC.getBinaryFunctions()) {
     auto &Function = It.second;
     for (auto &BB : Function) {
       for (auto It = BB.begin(); It != BB.end(); ++It) {

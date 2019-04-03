@@ -15,7 +15,6 @@
 #define LLVM_TOOLS_LLVM_BOLT_REWRITE_INSTANCE_H
 
 #include "BinaryFunction.h"
-#include "DebugData.h"
 #include "ExecutableFileMemoryManager.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
@@ -28,14 +27,13 @@
 
 namespace llvm {
 
-class DWARFContext;
-class DWARFFrame;
 class ToolOutputFile;
 
 namespace bolt {
 
 class BinaryContext;
 class CFIReaderWriter;
+class DWARFRewriter;
 class DataAggregator;
 class DataReader;
 class RewriteInstanceDiff;
@@ -114,12 +112,6 @@ public:
   /// Update debug information in the file for re-written code.
   void updateDebugInfo();
 
-  /// Recursively update debug info for all DIEs in \p Unit.
-  /// If \p Function is not empty, it points to a function corresponding
-  /// to a parent DW_TAG_subprogram node of the current \p DIE.
-  void updateUnitDebugInfo(const DWARFDie DIE,
-                           std::vector<const BinaryFunction *> FunctionStack);
-
   /// Return the list of code sections in the output order.
   std::vector<BinarySection *> getCodeSections();
 
@@ -138,10 +130,6 @@ public:
   /// second pass to emit those functions in two parts.
   bool checkLargeFunctions();
 
-  /// Updates debug line information for non-simple functions, which are not
-  /// rewritten.
-  void updateDebugLineInfoForNonSimpleFunctions();
-
   /// Rewrite back all functions (hopefully optimized) that fit in the original
   /// memory footprint for that function. If the function is now larger and does
   /// not fit in the binary, reject it and preserve the original version of the
@@ -158,33 +146,6 @@ public:
     return cantFail(OLT->findSymbol(Name, false).getAddress(),
                     "findSymbol failed");
   }
-
-  /// Return BinaryFunction containing a given \p Address or nullptr if
-  /// no registered function has it.
-  ///
-  /// In a binary a function has somewhat vague  boundaries. E.g. a function can
-  /// refer to the first byte past the end of the function, and it will still be
-  /// referring to this function, not the function following it in the address
-  /// space. Thus we have the following flags that allow to lookup for
-  /// a function where a caller has more context for the search.
-  ///
-  /// If \p CheckPastEnd is true and the \p Address falls on a byte
-  /// immediately following the last byte of some function and there's no other
-  /// function that starts there, then return the function as the one containing
-  /// the \p Address. This is useful when we need to locate functions for
-  /// references pointing immediately past a function body.
-  ///
-  /// If \p UseMaxSize is true, then include the space between this function
-  /// body and the next object in address ranges that we check.
-  BinaryFunction *getBinaryFunctionContainingAddress(uint64_t Address,
-                                                     bool CheckPastEnd = false,
-                                                     bool UseMaxSize = false);
-
-  const BinaryFunction *getBinaryFunctionAtAddress(uint64_t Address) const;
-
-  /// Produce output address ranges based on input ranges for some module.
-  DebugAddressRangesVector translateModuleAddressRanges(
-      const DWARFAddressRangesVector &InputRanges) const;
 
 private:
   /// Emit a single function.
@@ -278,30 +239,6 @@ private:
   /// rewritten binary.
   void patchBuildID();
 
-  /// Computes output .debug_line line table offsets for each compile unit,
-  /// and updates stmt_list for a corresponding compile unit.
-  void updateLineTableOffsets();
-
-  /// Generate new contents for .debug_ranges and .debug_aranges section.
-  void finalizeDebugSections();
-
-  /// Patches the binary for DWARF address ranges (e.g. in functions and lexical
-  /// blocks) to be updated.
-  void updateDebugAddressRanges();
-
-  /// Rewrite .gdb_index section if present.
-  void updateGdbIndexSection();
-
-  /// Patches the binary for an object's address ranges to be updated.
-  /// The object can be a anything that has associated address ranges via either
-  /// DW_AT_low/high_pc or DW_AT_ranges (i.e. functions, lexical blocks, etc).
-  /// \p DebugRangesOffset is the offset in .debug_ranges of the object's
-  /// new address ranges in the output binary.
-  /// \p Unit Compile unit the object belongs to.
-  /// \p DIE is the object's DIE in the input binary.
-  void updateDWARFObjectAddressRanges(const DWARFDie DIE,
-                                      uint64_t DebugRangesOffset);
-
   /// Return file offset corresponding to a given virtual address.
   uint64_t getFileOffsetFor(uint64_t Address) {
     assert(Address >= NewTextSegmentAddress &&
@@ -318,15 +255,6 @@ private:
   /// of appending contents to it.
   bool willOverwriteSection(StringRef SectionName);
 
-  /// Construct BinaryFunction object and add it to internal maps.
-  BinaryFunction *createBinaryFunction(const std::string &Name,
-                                       BinarySection &Section,
-                                       uint64_t Address,
-                                       uint64_t Size,
-                                       bool IsSimple,
-                                       uint64_t SymbolSize = 0,
-                                       uint16_t Alignment = 0);
-
   /// Return true if the function \p BF should be disassembled.
   bool shouldDisassemble(BinaryFunction &BF) const;
 
@@ -342,6 +270,9 @@ public:
     ".debug_ranges",
     ".gdb_index",
   };
+
+  using SectionPatchersType =
+    std::map<std::string, std::unique_ptr<BinaryPatcher>>;
 
 private:
   /// Get the contents of the LSDA section for this binary.
@@ -410,18 +341,11 @@ private:
   /// Store all non-zero symbols in this map for a quick address lookup.
   std::map<uint64_t, llvm::object::SymbolRef> FileSymRefs;
 
-  /// Store all functions in the binary, sorted by original address.
-  std::map<uint64_t, BinaryFunction> BinaryFunctions;
-
-  /// Stores and serializes information that will be put into the .debug_ranges
-  /// and .debug_aranges DWARF sections.
-  std::unique_ptr<DebugRangesSectionsWriter> RangesSectionsWriter;
-
-  std::unique_ptr<DebugLocWriter> LocationListWriter;
+  std::unique_ptr<DWARFRewriter> DebugInfoRewriter;
 
   /// Patchers used to apply simple changes to sections of the input binary.
   /// Maps section name -> patcher.
-  std::map<std::string, std::unique_ptr<BinaryPatcher>> SectionPatchers;
+  SectionPatchersType SectionPatchers;
 
   /// Number of local symbols in newly written symbol table.
   uint64_t NumLocalSymbols{0};
@@ -450,16 +374,11 @@ private:
   /// Contains relocations against .got.plt.
   ErrorOr<BinarySection &> RelaPLTSection{std::errc::bad_address};
 
-  /// .gdb_index section.
-  ErrorOr<BinarySection &> GdbIndexSection{std::errc::bad_address};
-
   /// .note.gnu.build-id section.
   ErrorOr<BinarySection &> BuildIDSection{std::errc::bad_address};
 
   /// A reference to the build-id bytes in the original binary
   StringRef BuildID;
-
-  uint64_t NewSymTabOffset{0};
 
   /// Keep track of functions we fail to write in the binary. We need to avoid
   /// rewriting CFI info for these functions.
@@ -497,11 +416,6 @@ public:
   /// Return total score of all functions for this instance.
   uint64_t getTotalScore() const {
     return BC->TotalScore;
-  }
-
-  /// Return all functions for this rewrite instance.
-  const std::map<uint64_t, BinaryFunction> &getFunctions() const {
-    return BinaryFunctions;
   }
 
   /// Return the name of the input file.

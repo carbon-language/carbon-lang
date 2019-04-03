@@ -100,14 +100,13 @@ void AllocCombinerPass::combineAdjustments(BinaryContext &BC,
   }
 }
 
-void AllocCombinerPass::runOnFunctions(BinaryContext &BC,
-                                       std::map<uint64_t, BinaryFunction> &BFs,
-                                       std::set<uint64_t> &LargeFunctions) {
+void AllocCombinerPass::runOnFunctions(BinaryContext &BC) {
   if (opts::FrameOptimization == FOP_NONE)
     return;
 
   runForAllWeCare(
-      BFs, [&](BinaryFunction &Function) { combineAdjustments(BC, Function); });
+      BC.getBinaryFunctions(),
+      [&](BinaryFunction &Function) { combineAdjustments(BC, Function); });
 
   outs() << "BOLT-INFO: Allocation combiner: " << NumCombined
          << " empty spaces coalesced.\n";

@@ -32,12 +32,11 @@ EliminateVeneers("elim-link-veneers",
 namespace llvm {
 namespace bolt {
 
-void VeneerElimination::runOnFunctions(BinaryContext &BC,
-                                       std::map<uint64_t, BinaryFunction> &BFs,
-                                       std::set<uint64_t> &LargeFunctions) {
+void VeneerElimination::runOnFunctions(BinaryContext &BC) {
   if (!opts::EliminateVeneers || !BC.isAArch64())
     return;
 
+  auto &BFs = BC.getBinaryFunctions();
   std::unordered_map<const MCSymbol *, const MCSymbol *> VeneerDestinations;
   uint64_t VeneersCount = 0;
   for (auto It = BFs.begin(); It != BFs.end();) {

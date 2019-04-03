@@ -291,6 +291,7 @@ const char BinaryFunctionPassManager::TimerGroupDesc[] =
     "Binary Function Pass Manager";
 
 void BinaryFunctionPassManager::runPasses() {
+  auto &BFs = BC.getBinaryFunctions();
   for (const auto &OptPassPair : Passes) {
     if (!OptPassPair.first)
       continue;
@@ -306,7 +307,7 @@ void BinaryFunctionPassManager::runPasses() {
 
     callWithDynoStats(
       [this,&Pass] {
-        Pass->runOnFunctions(BC, BFs, LargeFunctions);
+        Pass->runOnFunctions(BC);
       },
       BFs,
       Pass->getName(),
@@ -349,14 +350,10 @@ void BinaryFunctionPassManager::runPasses() {
   }
 }
 
-void BinaryFunctionPassManager::runAllPasses(
-  BinaryContext &BC,
-  std::map<uint64_t, BinaryFunction> &Functions,
-  std::set<uint64_t> &LargeFunctions
-) {
-  BinaryFunctionPassManager Manager(BC, Functions, LargeFunctions);
+void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
+  BinaryFunctionPassManager Manager(BC);
 
-  const auto InitialDynoStats = getDynoStats(Functions);
+  const auto InitialDynoStats = getDynoStats(BC.getBinaryFunctions());
 
   // Here we manage dependencies/order manually, since passes are run in the
   // order they're registered.

@@ -53,9 +53,7 @@ public:
   virtual bool shouldPrint(const BinaryFunction &BF) const;
 
   /// Execute this pass on the given functions.
-  virtual void runOnFunctions(BinaryContext &BC,
-                              std::map<uint64_t, BinaryFunction> &BFs,
-                              std::set<uint64_t> &LargeFunctions) = 0;
+  virtual void runOnFunctions(BinaryContext &BC) = 0;
 };
 
 /// A pass to print program-wide dynostats.
@@ -79,10 +77,8 @@ public:
     return false;
   }
 
-  void runOnFunctions(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs,
-                      std::set<uint64_t> &LargeFunctions) override {
-    const auto NewDynoStats = getDynoStats(BFs);
+  void runOnFunctions(BinaryContext &BC) override {
+    const auto NewDynoStats = getDynoStats(BC.getBinaryFunctions());
     const auto Changed = (NewDynoStats != PrevDynoStats);
     outs() << "BOLT-INFO: program-wide dynostats "
            << Title << (Changed ? "" : " (no change)") << ":\n\n"
@@ -112,9 +108,7 @@ class EliminateUnreachableBlocks : public BinaryFunctionPass {
   bool shouldPrint(const BinaryFunction &BF) const override {
     return BinaryFunctionPass::shouldPrint(BF) && Modified.count(&BF) > 0;
   }
-  void runOnFunctions(BinaryContext&,
-                      std::map<uint64_t, BinaryFunction> &BFs,
-                      std::set<uint64_t> &LargeFunctions) override;
+  void runOnFunctions(BinaryContext&) override;
 };
 
 // Reorder the basic blocks for each function based on hotness.
@@ -164,9 +158,7 @@ public:
     return "reordering";
   }
   bool shouldPrint(const BinaryFunction &BF) const override;
-  void runOnFunctions(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs,
-                      std::set<uint64_t> &LargeFunctions) override;
+  void runOnFunctions(BinaryContext &BC) override;
 };
 
 /// Sync local branches with CFG.
@@ -178,9 +170,7 @@ class FixupBranches : public BinaryFunctionPass {
   const char *getName() const override {
     return "fix-branches";
   }
-  void runOnFunctions(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs,
-                      std::set<uint64_t> &LargeFunctions) override;
+  void runOnFunctions(BinaryContext &BC) override;
 };
 
 /// Fix the CFI state and exception handling information after all other
@@ -193,9 +183,7 @@ class FinalizeFunctions : public BinaryFunctionPass {
   const char *getName() const override {
     return "finalize-functions";
   }
-  void runOnFunctions(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs,
-                      std::set<uint64_t> &LargeFunctions) override;
+  void runOnFunctions(BinaryContext &BC) override;
 };
 
 /// Convert and remove all BOLT-related annotations before LLVM code emission.
@@ -207,9 +195,7 @@ class LowerAnnotations : public BinaryFunctionPass {
   const char *getName() const override {
     return "lower-annotations";
   }
-  void runOnFunctions(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs,
-                      std::set<uint64_t> &LargeFunctions) override;
+  void runOnFunctions(BinaryContext &BC) override;
 };
 
 /// An optimization to simplify conditional tail calls by removing
@@ -281,9 +267,7 @@ class SimplifyConditionalTailCalls : public BinaryFunctionPass {
   bool shouldPrint(const BinaryFunction &BF) const override {
     return BinaryFunctionPass::shouldPrint(BF) && Modified.count(&BF) > 0;
   }
-  void runOnFunctions(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs,
-                      std::set<uint64_t> &LargeFunctions) override;
+  void runOnFunctions(BinaryContext &BC) override;
 };
 
 /// Perform simple peephole optimizations.
@@ -313,9 +297,7 @@ public:
   const char *getName() const override {
     return "peepholes";
   }
-  void runOnFunctions(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs,
-                      std::set<uint64_t> &LargeFunctions) override;
+  void runOnFunctions(BinaryContext &BC) override;
 };
 
 /// An optimization to simplify loads from read-only sections.The pass converts
@@ -348,9 +330,7 @@ public:
   bool shouldPrint(const BinaryFunction &BF) const override {
     return BinaryFunctionPass::shouldPrint(BF) && Modified.count(&BF) > 0;
   }
-  void runOnFunctions(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs,
-                      std::set<uint64_t> &LargeFunctions) override;
+  void runOnFunctions(BinaryContext &BC) override;
 };
 
 /// Assign output sections to all functions.
@@ -363,9 +343,7 @@ class AssignSections : public BinaryFunctionPass {
   const char *getName() const override {
     return "assign-sections";
   }
-  void runOnFunctions(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs,
-                      std::set<uint64_t> &LargeFunctions) override;
+  void runOnFunctions(BinaryContext &BC) override;
 };
 
 /// Prints a list of the top 100 functions sorted by a set of
@@ -381,9 +359,7 @@ class PrintProgramStats : public BinaryFunctionPass {
   bool shouldPrint(const BinaryFunction &) const override {
     return false;
   }
-  void runOnFunctions(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs,
-                      std::set<uint64_t> &LargeFunctions) override;
+  void runOnFunctions(BinaryContext &BC) override;
 };
 
 /// Pass for lowering any instructions that we have raised and that have
@@ -397,9 +373,7 @@ public:
     return "inst-lowering";
   }
 
-  void runOnFunctions(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs,
-                      std::set<uint64_t> &LargeFunctions) override;
+  void runOnFunctions(BinaryContext &BC) override;
 };
 
 /// Pass for stripping 'repz' from 'repz retq' sequence of instructions.
@@ -412,9 +386,7 @@ public:
     return "strip-rep-ret";
   }
 
-  void runOnFunctions(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs,
-                      std::set<uint64_t> &LargeFunctions) override;
+  void runOnFunctions(BinaryContext &BC) override;
 };
 
 /// Pass for inlining calls to memcpy using 'rep movsb' on X86.
@@ -427,9 +399,7 @@ public:
     return "inline-memcpy";
   }
 
-  void runOnFunctions(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs,
-                      std::set<uint64_t> &LargeFunctions) override;
+  void runOnFunctions(BinaryContext &BC) override;
 };
 
 enum FrameOptimizationType : char {

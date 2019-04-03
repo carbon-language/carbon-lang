@@ -204,7 +204,7 @@ class RewriteInstanceDiff {
   /// later when matching functions in binary 2 to corresponding functions
   /// in binary 1
   void buildLookupMaps() {
-    for (const auto &BFI : RI1.BinaryFunctions) {
+    for (const auto &BFI : RI1.BC->getBinaryFunctions()) {
       StringRef LTOName;
       const auto &Function = BFI.second;
       const auto Score = getNormalizedScore(Function, RI1);
@@ -224,7 +224,7 @@ class RewriteInstanceDiff {
     }
 
     // Compute LTONameLookup2 and LargestBin2
-    for (const auto &BFI : RI2.BinaryFunctions) {
+    for (const auto &BFI : RI2.BC->getBinaryFunctions()) {
       StringRef LTOName;
       const auto &Function = BFI.second;
       const auto Score = getNormalizedScore(Function, RI2);
@@ -245,7 +245,7 @@ class RewriteInstanceDiff {
   void matchFunctions() {
     outs() << "BOLT-DIFF: Mapping functions in Binary2 to Binary1\n";
 
-    for (const auto &BFI2 : RI2.BinaryFunctions) {
+    for (const auto &BFI2 : RI2.BC->getBinaryFunctions()) {
       const auto &Function2 = BFI2.second;
       StringRef LTOName;
       bool Match = false;
@@ -451,7 +451,7 @@ class RewriteInstanceDiff {
   /// having a large difference in performance because hotness shifted from
   /// LTO variant 1 to variant 2, even though they represent the same function.
   void computeAggregatedLTOScore() {
-    for (const auto &BFI : RI1.BinaryFunctions) {
+    for (const auto &BFI : RI1.BC->getBinaryFunctions()) {
       const auto &Function = BFI.second;
       double Score = getNormalizedScore(Function, RI1);
       auto Iter = LTOMap1.find(&Function);
@@ -461,7 +461,7 @@ class RewriteInstanceDiff {
     }
 
     double UnmappedScore{0};
-    for (const auto &BFI : RI2.BinaryFunctions) {
+    for (const auto &BFI : RI2.BC->getBinaryFunctions()) {
       const auto &Function = BFI.second;
       bool Matched = FuncMap.find(&Function) != FuncMap.end();
       double Score = getNormalizedScore(Function, RI2);
@@ -475,7 +475,8 @@ class RewriteInstanceDiff {
       if (FuncMap.find(Iter->second) == FuncMap.end())
         UnmappedScore += Score;
     }
-    int64_t Unmapped = RI2.BinaryFunctions.size() - Bin2MappedFuncs.size();
+    int64_t Unmapped =
+      RI2.BC->getBinaryFunctions().size() - Bin2MappedFuncs.size();
     outs() << "BOLT-DIFF: " << Unmapped
            << " functions in Binary2 have no correspondence to any other "
               "function in Binary1.\n";
@@ -595,7 +596,7 @@ class RewriteInstanceDiff {
   void reportUnmapped() {
     outs() << "List of functions from binary 2 that were not matched with any "
            << "function in binary 1:\n";
-    for (const auto &BFI2 : RI2.BinaryFunctions) {
+    for (const auto &BFI2 : RI2.BC->getBinaryFunctions()) {
       const auto &Function2 = BFI2.second;
       if (Bin2MappedFuncs.count(&Function2))
         continue;
@@ -654,9 +655,9 @@ void RewriteInstance::compare(RewriteInstance &RI2) {
   if (opts::ICF) {
     IdenticalCodeFolding ICF(opts::NeverPrint);
     outs() << "BOLT-DIFF: Starting ICF pass for binary 1";
-    ICF.runOnFunctions(*BC, BinaryFunctions, LargeFunctions);
+    ICF.runOnFunctions(*BC);
     outs() << "BOLT-DIFF: Starting ICF pass for binary 2";
-    ICF.runOnFunctions(*RI2.BC, RI2.BinaryFunctions, RI2.LargeFunctions);
+    ICF.runOnFunctions(*RI2.BC);
   }
 
   RewriteInstanceDiff RID(*this, RI2);
