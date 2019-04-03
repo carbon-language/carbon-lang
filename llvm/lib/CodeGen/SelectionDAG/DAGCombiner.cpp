@@ -427,10 +427,6 @@ namespace {
     SDValue replaceStoreOfFPConstant(StoreSDNode *ST);
 
     SDValue visitSTORE(SDNode *N);
-
-    SDValue ImproveLifetimeNodeChain(SDNode *N);
-
-    SDValue visitLIFETIME_START(SDNode *N);
     SDValue visitLIFETIME_END(SDNode *N);
     SDValue visitINSERT_VECTOR_ELT(SDNode *N);
     SDValue visitEXTRACT_VECTOR_ELT(SDNode *N);
@@ -1654,7 +1650,6 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::MLOAD:              return visitMLOAD(N);
   case ISD::MSCATTER:           return visitMSCATTER(N);
   case ISD::MSTORE:             return visitMSTORE(N);
-  case ISD::LIFETIME_START:     return visitLIFETIME_START(N);
   case ISD::LIFETIME_END:       return visitLIFETIME_END(N);
   case ISD::FP_TO_FP16:         return visitFP_TO_FP16(N);
   case ISD::FP16_TO_FP:         return visitFP16_TO_FP(N);
@@ -15705,33 +15700,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
   return ReduceLoadOpStoreWidth(N);
 }
 
-SDValue DAGCombiner::ImproveLifetimeNodeChain(SDNode *N) {
-  auto Chain = N->getOperand(0);
-  auto NewChain = FindBetterChain(N, Chain);
-  if (NewChain != Chain) {
-    LifetimeSDNode *LN = cast<LifetimeSDNode>(N);
-    // Create New Node to prevent loop in CombineTo.
-    SDValue NewN = DAG.getLifetimeNode(N->getOpcode() == ISD::LIFETIME_START,
-                                       SDLoc(N), NewChain, LN->getFrameIndex(),
-                                       LN->hasOffset() ? LN->getSize() : -1,
-                                       LN->hasOffset() ? LN->getOffset() : -1);
-    AddToWorklist(NewN.getNode());
-    auto TF = DAG.getNode(ISD::TokenFactor, SDLoc(N), MVT::Other, Chain, NewN);
-    return CombineTo(N, TF);
-  }
-  return SDValue();
-}
-
-SDValue DAGCombiner::visitLIFETIME_START(SDNode *N) {
-  if (SDValue V = ImproveLifetimeNodeChain(N))
-    return V;
-  return SDValue();
-}
-
 SDValue DAGCombiner::visitLIFETIME_END(SDNode *N) {
-  if (SDValue V = ImproveLifetimeNodeChain(N))
-    return V;
-
   const auto *LifetimeEnd = cast<LifetimeSDNode>(N);
   if (!LifetimeEnd->hasOffset())
     return SDValue();
