@@ -466,6 +466,10 @@ IdentifierNode *
 Demangler::demangleFunctionIdentifierCode(StringView &MangledName) {
   assert(MangledName.startsWith('?'));
   MangledName = MangledName.dropFront();
+  if (MangledName.empty()) {
+    Error = true;
+    return nullptr;
+  }
 
   if (MangledName.consumeFront("__"))
     return demangleFunctionIdentifierCode(
@@ -637,6 +641,7 @@ translateIntrinsicFunctionCode(char CH, FunctionIdentifierCodeGroup Group) {
 IdentifierNode *
 Demangler::demangleFunctionIdentifierCode(StringView &MangledName,
                                           FunctionIdentifierCodeGroup Group) {
+  assert(!MangledName.empty());
   switch (Group) {
   case FunctionIdentifierCodeGroup::Basic:
     switch (char CH = MangledName.popFront()) {

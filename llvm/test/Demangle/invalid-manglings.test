@@ -14,3 +14,8 @@
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ?@@8
 ; CHECK-NEXT: error: Invalid mangled name
+
+??
+; CHECK-EMPTY:
+; CHECK-NEXT: ??
+; CHECK-NEXT: error: Invalid mangled name
