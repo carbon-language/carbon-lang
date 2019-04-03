@@ -466,6 +466,88 @@ define <8 x float> @fdiv_splat_splat_v8f32(<8 x float> %vx, <8 x float> %vy) {
   ret <8 x float> %r
 }
 
+; Negative test - splat of non-zero indexes (still sink the splat).
+
+define <2 x double> @fadd_splat_splat_nonzero_v2f64(<2 x double> %vx, <2 x double> %vy) {
+; SSE-LABEL: fadd_splat_splat_nonzero_v2f64:
+; SSE:       # %bb.0:
+; SSE-NEXT:    addpd %xmm1, %xmm0
+; SSE-NEXT:    unpckhpd {{.*#+}} xmm0 = xmm0[1,1]
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: fadd_splat_splat_nonzero_v2f64:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vaddpd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    vpermilpd {{.*#+}} xmm0 = xmm0[1,1]
+; AVX-NEXT:    retq
+  %splatx = shufflevector <2 x double> %vx, <2 x double> undef, <2 x i32> <i32 1, i32 1>
+  %splaty = shufflevector <2 x double> %vy, <2 x double> undef, <2 x i32> <i32 1, i32 1>
+  %r = fadd <2 x double> %splatx, %splaty
+  ret <2 x double> %r
+}
+
+; Negative test - splat of non-zero index and mismatched indexes.
+
+define <2 x double> @fadd_splat_splat_mismatch_v2f64(<2 x double> %vx, <2 x double> %vy) {
+; SSE-LABEL: fadd_splat_splat_mismatch_v2f64:
+; SSE:       # %bb.0:
+; SSE-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0,0]
+; SSE-NEXT:    unpckhpd {{.*#+}} xmm1 = xmm1[1,1]
+; SSE-NEXT:    addpd %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: fadd_splat_splat_mismatch_v2f64:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vmovddup {{.*#+}} xmm0 = xmm0[0,0]
+; AVX-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm1[1,1]
+; AVX-NEXT:    vaddpd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+  %splatx = shufflevector <2 x double> %vx, <2 x double> undef, <2 x i32> <i32 0, i32 0>
+  %splaty = shufflevector <2 x double> %vy, <2 x double> undef, <2 x i32> <i32 1, i32 1>
+  %r = fadd <2 x double> %splatx, %splaty
+  ret <2 x double> %r
+}
+
+; Negative test - non-splat.
+
+define <2 x double> @fadd_splat_nonsplat_v2f64(<2 x double> %vx, <2 x double> %vy) {
+; SSE-LABEL: fadd_splat_nonsplat_v2f64:
+; SSE:       # %bb.0:
+; SSE-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0,0]
+; SSE-NEXT:    addpd %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: fadd_splat_nonsplat_v2f64:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vmovddup {{.*#+}} xmm0 = xmm0[0,0]
+; AVX-NEXT:    vaddpd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+  %splatx = shufflevector <2 x double> %vx, <2 x double> undef, <2 x i32> <i32 0, i32 0>
+  %splaty = shufflevector <2 x double> %vy, <2 x double> undef, <2 x i32> <i32 0, i32 1>
+  %r = fadd <2 x double> %splatx, %splaty
+  ret <2 x double> %r
+}
+
+; Negative test - non-FP.
+
+define <2 x i64> @add_splat_splat_v2i64(<2 x i64> %vx, <2 x i64> %vy) {
+; SSE-LABEL: add_splat_splat_v2i64:
+; SSE:       # %bb.0:
+; SSE-NEXT:    paddq %xmm1, %xmm0
+; SSE-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,1,0,1]
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: add_splat_splat_v2i64:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vpaddq %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,1,0,1]
+; AVX-NEXT:    retq
+  %splatx = shufflevector <2 x i64> %vx, <2 x i64> undef, <2 x i32> <i32 0, i32 0>
+  %splaty = shufflevector <2 x i64> %vy, <2 x i64> undef, <2 x i32> <i32 0, i32 0>
+  %r = add <2 x i64> %splatx, %splaty
+  ret <2 x i64> %r
+}
+
 define <2 x double> @fadd_splat_const_op1_v2f64(<2 x double> %vx) {
 ; SSE-LABEL: fadd_splat_const_op1_v2f64:
 ; SSE:       # %bb.0:
