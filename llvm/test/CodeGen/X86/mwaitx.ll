@@ -8,13 +8,13 @@ define void @foo(i8* %P, i32 %E, i32 %H) nounwind {
 ; CHECK-LABEL: foo:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    movl %esi, %ecx
-; CHECK-NEXT:    leaq (%rdi), %rax
+; CHECK-NEXT:    movq %rdi, %rax
 ; CHECK-NEXT:    monitorx
 ; CHECK-NEXT:    retq
 ;
 ; WIN64-LABEL: foo:
 ; WIN64:       # %bb.0: # %entry
-; WIN64-NEXT:    leaq (%rcx), %rax
+; WIN64-NEXT:    movq %rcx, %rax
 ; WIN64-NEXT:    movl %edx, %ecx
 ; WIN64-NEXT:    movl %r8d, %edx
 ; WIN64-NEXT:    monitorx
