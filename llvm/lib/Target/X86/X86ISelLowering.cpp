@@ -32880,8 +32880,8 @@ static SDValue foldShuffleOfHorizOp(SDNode *N) {
   // lanes of each operand as:
   // v4X32: A[0] + A[1] , A[2] + A[3] , B[0] + B[1] , B[2] + B[3]
   // ...similarly for v2f64 and v8i16.
-  // TODO: Handle UNDEF operands.
-  if (HOp.getOperand(0) != HOp.getOperand(1))
+  if (!HOp.getOperand(0).isUndef() && !HOp.getOperand(1).isUndef() &&
+      HOp.getOperand(0) != HOp.getOperand(1))
     return SDValue();
 
   // When the operands of a horizontal math op are identical, the low half of

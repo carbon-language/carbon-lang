@@ -381,7 +381,6 @@ define <4 x double> @hadd_v4f64_scalar_splat(<4 x double> %a) {
 ; AVX-LABEL: hadd_v4f64_scalar_splat:
 ; AVX:       # %bb.0:
 ; AVX-NEXT:    vhaddpd %ymm0, %ymm0, %ymm0
-; AVX-NEXT:    vmovddup {{.*#+}} ymm0 = ymm0[0,0,2,2]
 ; AVX-NEXT:    retq
   %a0 = extractelement <4 x double> %a, i32 0
   %a1 = extractelement <4 x double> %a, i32 1
