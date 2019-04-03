@@ -1327,8 +1327,10 @@ Demangler::demangleLocallyScopedNamePiece(StringView &MangledName) {
 
   NamedIdentifierNode *Identifier = Arena.alloc<NamedIdentifierNode>();
   MangledName.consumeFront('?');
-  auto Number = demangleNumber(MangledName);
-  assert(!Number.second);
+  uint64_t Number = 0;
+  bool IsNegative = false;
+  std::tie(Number, IsNegative) = demangleNumber(MangledName);
+  assert(!IsNegative);
 
   // One ? to terminate the number
   MangledName.consumeFront('?');
@@ -1346,7 +1348,7 @@ Demangler::demangleLocallyScopedNamePiece(StringView &MangledName) {
   OS << '`';
   Scope->output(OS, OF_Default);
   OS << '\'';
-  OS << "::`" << Number.first << "'";
+  OS << "::`" << Number << "'";
   OS << '\0';
   char *Result = OS.getBuffer();
   Identifier->Name = copyString(Result);
