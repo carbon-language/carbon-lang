@@ -1276,12 +1276,16 @@ StringLiteralError:
   return nullptr;
 }
 
+// Returns MangledName's prefix before the first '@', or an error if
+// MangledName contains no '@' or the prefix has length 0.
 StringView Demangler::demangleSimpleString(StringView &MangledName,
                                            bool Memorize) {
   StringView S;
   for (size_t i = 0; i < MangledName.size(); ++i) {
     if (MangledName[i] != '@')
       continue;
+    if (i == 0)
+      break;
     S = MangledName.substr(0, i);
     MangledName = MangledName.dropFront(i + 1);
 
