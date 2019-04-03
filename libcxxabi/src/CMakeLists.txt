@@ -176,7 +176,9 @@ else()
   cxxabi_object_library(cxxabi_static_objects)
 endif()
 
-cxxabi_object_library(cxxabi_shared_objects POSITION_INDEPENDENT_CODE ON)
+cxxabi_object_library(cxxabi_shared_objects)
+set_target_properties(cxxabi_shared_objects PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 set(cxxabi_static_sources $<TARGET_OBJECTS:cxxabi_static_objects>)
 set(cxxabi_shared_sources $<TARGET_OBJECTS:cxxabi_shared_objects>)
 
