@@ -19,6 +19,7 @@
 #define FORTRAN_EVALUATE_SHAPE_H_
 
 #include "expression.h"
+#include "tools.h"
 #include "type.h"
 #include "../common/indirection.h"
 #include <optional>
@@ -26,11 +27,28 @@
 
 namespace Fortran::evaluate {
 
-using Extent = std::optional<Expr<SubscriptInteger>>;
-using Shape = std::vector<Extent>;
+using ExtentType = SubscriptInteger;
+using ExtentExpr = Expr<ExtentType>;
+using MaybeExtent = std::optional<ExtentExpr>;
+using Shape = std::vector<MaybeExtent>;
+
+// Convert a constant shape to the expression form, and vice versa.
+Shape AsGeneralShape(const Constant<ExtentType> &);
+std::optional<Constant<ExtentType>> AsConstantShape(const Shape &);
+
+// Compute a trip count for a triplet or implied DO.
+ExtentExpr CountTrips(
+    ExtentExpr &&lower, ExtentExpr &&upper, ExtentExpr &&stride);
+ExtentExpr CountTrips(
+    const ExtentExpr &lower, const ExtentExpr &upper, const ExtentExpr &stride);
+MaybeExtent CountTrips(
+    MaybeExtent &&lower, MaybeExtent &&upper, MaybeExtent &&stride);
+
+// Computes SIZE() == PRODUCT(shape)
+MaybeExtent GetSize(Shape &&);
 
 template<typename A> std::optional<Shape> GetShape(const A &) {
-  return std::nullopt;  // default case
+  return std::nullopt;  // default case  TODO pmk remove
 }
 
 // Forward declarations
@@ -59,6 +77,11 @@ std::optional<Shape> GetShape(const StructureConstructor &);
 std::optional<Shape> GetShape(const BOZLiteralConstant &);
 std::optional<Shape> GetShape(const NullPointer &);
 
+template<typename T> std::optional<Shape> GetShape(const Constant<T> &c) {
+  Constant<ExtentType> shape{c.SHAPE()};
+  return AsGeneralShape(shape);
+}
+
 template<typename T>
 std::optional<Shape> GetShape(const Designator<T> &designator) {
   return GetShape(designator.u);
@@ -81,12 +104,58 @@ std::optional<Shape> GetShape(const Operation<D, R, O...> &operation) {
 
 template<int KIND>
 std::optional<Shape> GetShape(const TypeParamInquiry<KIND> &) {
-  return Shape{};  // always scalar
+  return Shape{};  // always scalar, even when applied to an array
+}
+
+// Utility predicate: does an expression reference any implied DO index?
+bool ContainsAnyImpliedDoIndex(const ExtentExpr &);
+
+template<typename T> MaybeExtent GetExtent(const ArrayConstructorValues<T> &);
+
+template<typename T>
+MaybeExtent GetExtent(const ArrayConstructorValue<T> &value) {
+  return std::visit(
+      common::visitors{
+          [](const common::CopyableIndirection<Expr<T>> &x) -> MaybeExtent {
+            if (std::optional<Shape> xShape{GetShape(x)}) {
+              // Array values in array constructors get linearized.
+              return GetSize(std::move(*xShape));
+            }
+            return std::nullopt;
+          },
+          [](const ImpliedDo<T> &ido) -> MaybeExtent {
+            // Don't be heroic and try to figure out triangular implied DO
+            // nests.
+            if (!ContainsAnyImpliedDoIndex(ido.lower()) &&
+                !ContainsAnyImpliedDoIndex(ido.upper()) &&
+                !ContainsAnyImpliedDoIndex(ido.stride())) {
+              if (auto nValues{GetExtent(ido.values())}) {
+                return std::move(*nValues) *
+                    CountTrips(ido.lower(), ido.upper(), ido.stride());
+              }
+            }
+            return std::nullopt;
+          },
+      },
+      value.u);
 }
 
 template<typename T>
-std::optional<Shape> GetShape(const ArrayConstructorValues<T> &aconst) {
-  return std::nullopt;  // TODO pmk much more here!!
+MaybeExtent GetExtent(const ArrayConstructorValues<T> &values) {
+  ExtentExpr result{0};
+  for (const auto &value : values.values()) {
+    if (MaybeExtent n{GetExtent(value)}) {
+      result = std::move(result) + std::move(*n);
+    } else {
+      return std::nullopt;
+    }
+  }
+  return result;
+}
+
+template<typename T>
+std::optional<Shape> GetShape(const ArrayConstructor<T> &aconst) {
+  return Shape{GetExtent(aconst)};
 }
 
 template<typename... A>

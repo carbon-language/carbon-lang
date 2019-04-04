@@ -66,6 +66,7 @@ public:
 
   // Apply 1-based subscripts
   ScalarValue At(const std::vector<std::int64_t> &) const;
+  ScalarValue At(std::vector<std::int64_t> &&) const;
 
   Constant<SubscriptInteger> SHAPE() const;
   std::ostream &AsFortran(std::ostream &) const;

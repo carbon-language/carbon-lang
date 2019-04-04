@@ -15,12 +15,82 @@
 #include "shape.h"
 #include "fold.h"
 #include "tools.h"
+#include "traversal.h"
 #include "../common/idioms.h"
+#include "../common/template.h"
 #include "../semantics/symbol.h"
 
 namespace Fortran::evaluate {
 
-static Extent GetLowerBound(const semantics::Symbol &symbol,
+Shape AsGeneralShape(const Constant<ExtentType> &constShape) {
+  CHECK(constShape.Rank() == 1);
+  Shape result;
+  std::size_t dimensions{constShape.size()};
+  for (std::size_t j{0}; j < dimensions; ++j) {
+    Scalar<ExtentType> extent{constShape.values().at(j)};
+    result.emplace_back(MaybeExtent{ExtentExpr{extent}});
+  }
+  return result;
+}
+
+std::optional<Constant<ExtentType>> AsConstantShape(const Shape &shape) {
+  std::vector<Scalar<ExtentType>> extents;
+  for (const auto &dim : shape) {
+    if (dim.has_value()) {
+      if (const auto cdim{UnwrapExpr<Constant<ExtentType>>(*dim)}) {
+        extents.emplace_back(**cdim);
+        continue;
+      }
+    }
+    return std::nullopt;
+  }
+  std::vector<std::int64_t> rshape{static_cast<std::int64_t>(shape.size())};
+  return Constant<ExtentType>{std::move(extents), std::move(rshape)};
+}
+
+static ExtentExpr ComputeTripCount(
+    ExtentExpr &&lower, ExtentExpr &&upper, ExtentExpr &&stride) {
+  ExtentExpr strideCopy{common::Clone(stride)};
+  ExtentExpr span{
+      (std::move(upper) - std::move(lower) + std::move(strideCopy)) /
+      std::move(stride)};
+  ExtentExpr extent{
+      Extremum<ExtentType>{std::move(span), ExtentExpr{0}, Ordering::Greater}};
+  FoldingContext noFoldingContext;
+  return Fold(noFoldingContext, std::move(extent));
+}
+
+ExtentExpr CountTrips(
+    ExtentExpr &&lower, ExtentExpr &&upper, ExtentExpr &&stride) {
+  return ComputeTripCount(
+      std::move(lower), std::move(upper), std::move(stride));
+}
+
+ExtentExpr CountTrips(const ExtentExpr &lower, const ExtentExpr &upper,
+    const ExtentExpr &stride) {
+  return ComputeTripCount(
+      common::Clone(lower), common::Clone(upper), common::Clone(stride));
+}
+
+MaybeExtent CountTrips(
+    MaybeExtent &&lower, MaybeExtent &&upper, MaybeExtent &&stride) {
+  return common::MapOptional(
+      ComputeTripCount, std::move(lower), std::move(upper), std::move(stride));
+}
+
+MaybeExtent GetSize(Shape &&shape) {
+  ExtentExpr extent{1};
+  for (auto &&dim : std::move(shape)) {
+    if (dim.has_value()) {
+      extent = std::move(extent) * std::move(*dim);
+    } else {
+      return std::nullopt;
+    }
+  }
+  return extent;
+}
+
+static MaybeExtent GetLowerBound(const semantics::Symbol &symbol,
     const Component *component, int dimension) {
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     int j{0};
@@ -29,10 +99,10 @@ static Extent GetLowerBound(const semantics::Symbol &symbol,
         if (const auto &bound{shapeSpec.lbound().GetExplicit()}) {
           return *bound;
         } else if (component != nullptr) {
-          return Expr<SubscriptInteger>{DescriptorInquiry{
+          return ExtentExpr{DescriptorInquiry{
               *component, DescriptorInquiry::Field::LowerBound, dimension}};
         } else {
-          return Expr<SubscriptInteger>{DescriptorInquiry{
+          return ExtentExpr{DescriptorInquiry{
               symbol, DescriptorInquiry::Field::LowerBound, dimension}};
         }
       }
@@ -41,7 +111,7 @@ static Extent GetLowerBound(const semantics::Symbol &symbol,
   return std::nullopt;
 }
 
-static Extent GetExtent(const semantics::Symbol &symbol,
+static MaybeExtent GetExtent(const semantics::Symbol &symbol,
     const Component *component, int dimension) {
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     int j{0};
@@ -52,14 +122,14 @@ static Extent GetExtent(const semantics::Symbol &symbol,
             FoldingContext noFoldingContext;
             return Fold(noFoldingContext,
                 common::Clone(ubound.value()) - common::Clone(lbound.value()) +
-                    Expr<SubscriptInteger>{1});
+                    ExtentExpr{1});
           }
         }
         if (component != nullptr) {
-          return Expr<SubscriptInteger>{DescriptorInquiry{
+          return ExtentExpr{DescriptorInquiry{
               *component, DescriptorInquiry::Field::Extent, dimension}};
         } else {
-          return Expr<SubscriptInteger>{DescriptorInquiry{
+          return ExtentExpr{DescriptorInquiry{
               &symbol, DescriptorInquiry::Field::Extent, dimension}};
         }
       }
@@ -68,34 +138,23 @@ static Extent GetExtent(const semantics::Symbol &symbol,
   return std::nullopt;
 }
 
-static Extent GetExtent(const Subscript &subscript, const Symbol &symbol,
+static MaybeExtent GetExtent(const Subscript &subscript, const Symbol &symbol,
     const Component *component, int dimension) {
   return std::visit(
       common::visitors{
-          [&](const Triplet &triplet) -> Extent {
-            Extent upper{triplet.upper()};
+          [&](const Triplet &triplet) -> MaybeExtent {
+            MaybeExtent upper{triplet.upper()};
             if (!upper.has_value()) {
               upper = GetExtent(symbol, component, dimension);
             }
-            if (upper.has_value()) {
-              Extent lower{triplet.lower()};
-              if (!lower.has_value()) {
-                lower = GetLowerBound(symbol, component, dimension);
-              }
-              if (lower.has_value()) {
-                auto span{
-                    (std::move(*upper) - std::move(*lower) + triplet.stride()) /
-                    triplet.stride()};
-                Expr<SubscriptInteger> extent{
-                    Extremum<SubscriptInteger>{std::move(span),
-                        Expr<SubscriptInteger>{0}, Ordering::Greater}};
-                FoldingContext noFoldingContext;
-                return Fold(noFoldingContext, std::move(extent));
-              }
+            MaybeExtent lower{triplet.lower()};
+            if (!lower.has_value()) {
+              lower = GetLowerBound(symbol, component, dimension);
             }
-            return std::nullopt;
+            return CountTrips(std::move(lower), std::move(upper),
+                MaybeExtent{triplet.stride()});
           },
-          [](const IndirectSubscriptIntegerExpr &subs) -> Extent {
+          [](const IndirectSubscriptIntegerExpr &subs) -> MaybeExtent {
             if (auto shape{GetShape(subs.value())}) {
               if (shape->size() > 0) {
                 CHECK(shape->size() == 1);  // vector-valued subscript
@@ -106,6 +165,14 @@ static Extent GetExtent(const Subscript &subscript, const Symbol &symbol,
           },
       },
       subscript.u);
+}
+
+bool ContainsAnyImpliedDoIndex(const ExtentExpr &expr) {
+  struct MyVisitor : public virtual VisitorBase<bool> {
+    explicit MyVisitor(int) { result() = false; }
+    void Handle(const ImpliedDoIndex &) { Return(true); }
+  };
+  return Visitor<bool, MyVisitor>{0}.Traverse(expr);
 }
 
 std::optional<Shape> GetShape(
@@ -211,8 +278,8 @@ std::optional<Shape> GetShape(const ProcedureRef &call) {
                  std::get_if<SpecificIntrinsic>(&call.proc().u)}) {
     if (intrinsic->name == "shape" || intrinsic->name == "lbound" ||
         intrinsic->name == "ubound") {
-      return Shape{Extent{Expr<SubscriptInteger>{
-          call.arguments().front().value().value().Rank()}}};
+      return Shape{MaybeExtent{
+          ExtentExpr{call.arguments().front().value().value().Rank()}}};
     }
     // TODO: shapes of other non-elemental intrinsic results
     // esp. reshape, where shape is value of second argument

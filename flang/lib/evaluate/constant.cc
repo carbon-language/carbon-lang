@@ -42,6 +42,12 @@ auto ConstantBase<RESULT, VALUE>::At(
   return values_.at(SubscriptsToOffset(index, shape_));
 }
 
+template<typename RESULT, typename VALUE>
+auto ConstantBase<RESULT, VALUE>::At(std::vector<std::int64_t> &&index) const
+    -> ScalarValue {
+  return values_.at(SubscriptsToOffset(index, shape_));
+}
+
 static Constant<SubscriptInteger> ShapeAsConstant(
     const std::vector<std::int64_t> &shape) {
   using IntType = Scalar<SubscriptInteger>;

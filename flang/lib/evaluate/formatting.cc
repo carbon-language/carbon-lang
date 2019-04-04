@@ -575,8 +575,9 @@ std::ostream &Designator<T>::AsFortran(std::ostream &o) const {
 std::ostream &DescriptorInquiry::AsFortran(std::ostream &o) const {
   switch (field_) {
   case Field::LowerBound: o << "lbound("; break;
-  case Field::Extent: o << "%EXTENT("; break;
+  case Field::Extent: o << "size("; break;
   case Field::Stride: o << "%STRIDE("; break;
+  case Field::Rank: o << "rank("; break;
   }
   std::visit(
       common::visitors{
@@ -588,8 +589,8 @@ std::ostream &DescriptorInquiry::AsFortran(std::ostream &o) const {
           [&](const Component &comp) { EmitVar(o, comp); },
       },
       base_);
-  if (dimension_ > 0) {
-    o << ",dim=" << dimension_;
+  if (dimension_ >= 0) {
+    o << ",dim=" << (dimension_ + 1);
   }
   return o << ')';
 }

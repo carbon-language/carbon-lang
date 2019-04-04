@@ -385,8 +385,7 @@ template<typename T> struct Variable {
 class DescriptorInquiry {
 public:
   using Result = SubscriptInteger;
-  ENUM_CLASS(Field, LowerBound, Extent, Stride)
-  // TODO: Also type parameters and/or CHARACTER length?
+  ENUM_CLASS(Field, LowerBound, Extent, Stride, Rank)
 
   CLASS_BOILERPLATE(DescriptorInquiry)
   DescriptorInquiry(const Symbol &, Field, int);

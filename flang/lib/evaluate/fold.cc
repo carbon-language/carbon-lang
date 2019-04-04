@@ -478,6 +478,8 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
       // TODO pmk: get rank
     } else if (name == "shape") {
       // TODO pmk: call GetShape on argument, massage result
+    } else if (name == "size") {
+      // TODO pmk: call GetShape on argument, extract or compute result
     }
     // TODO:
     // ceiling, count, cshift, dot_product, eoshift,
@@ -485,7 +487,7 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
     // index, ishftc, lbound, len_trim, matmul, max, maxloc, maxval, merge, min,
     // minloc, minval, mod, modulo, nint, not, pack, product, reduce, reshape,
     // scan, selected_char_kind, selected_int_kind, selected_real_kind,
-    // sign, size, spread, sum, transfer, transpose, ubound, unpack, verify
+    // sign, spread, sum, transfer, transpose, ubound, unpack, verify
   }
   return Expr<T>{std::move(funcRef)};
 }

@@ -240,6 +240,10 @@ std::optional<R> MapOptional(
   }
   return std::nullopt;
 }
+template<typename R, typename... A>
+std::optional<R> MapOptional(R (*f)(A &&...), std::optional<A> &&... x) {
+  return MapOptional(std::function<R(A && ...)>{f}, std::move(x)...);
+}
 
 // Given a VISITOR class of the general form
 //   struct VISITOR {
