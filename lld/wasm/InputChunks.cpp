@@ -59,7 +59,9 @@ void InputChunk::verifyRelocTargets() const {
       ExistingValue = decodeULEB128(Loc, &BytesRead);
       break;
     case R_WASM_TABLE_INDEX_SLEB:
+    case R_WASM_TABLE_INDEX_REL_SLEB:
     case R_WASM_MEMORY_ADDR_SLEB:
+    case R_WASM_MEMORY_ADDR_REL_SLEB:
       ExistingValue = static_cast<uint32_t>(decodeSLEB128(Loc, &BytesRead));
       break;
     case R_WASM_TABLE_INDEX_I32:
@@ -119,7 +121,9 @@ void InputChunk::writeTo(uint8_t *Buf) const {
       encodeULEB128(Value, Loc, 5);
       break;
     case R_WASM_TABLE_INDEX_SLEB:
+    case R_WASM_TABLE_INDEX_REL_SLEB:
     case R_WASM_MEMORY_ADDR_SLEB:
+    case R_WASM_MEMORY_ADDR_REL_SLEB:
       encodeSLEB128(static_cast<int32_t>(Value), Loc, 5);
       break;
     case R_WASM_TABLE_INDEX_I32:
