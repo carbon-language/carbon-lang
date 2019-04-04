@@ -63,6 +63,10 @@ def SDTX86sahf : SDTypeProfile<1, 1, [SDTCisVT<0, i32>, SDTCisVT<1, i8>]>;
 
 def SDTX86rdrand : SDTypeProfile<2, 0, [SDTCisInt<0>, SDTCisVT<1, i32>]>;
 
+def SDTX86rdpkru : SDTypeProfile<1, 1, [SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
+def SDTX86wrpkru : SDTypeProfile<0, 3, [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
+                                        SDTCisVT<2, i32>]>;
+
 def SDTX86cas : SDTypeProfile<0, 3, [SDTCisPtrTy<0>, SDTCisInt<1>,
                                      SDTCisVT<2, i8>]>;
 def SDTX86caspair : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
@@ -150,6 +154,11 @@ def X86rdrand  : SDNode<"X86ISD::RDRAND",   SDTX86rdrand,
 
 def X86rdseed  : SDNode<"X86ISD::RDSEED",   SDTX86rdrand,
                         [SDNPHasChain, SDNPSideEffect]>;
+
+def X86rdpkru : SDNode<"X86ISD::RDPKRU",    SDTX86rdpkru,
+                       [SDNPHasChain, SDNPSideEffect]>;
+def X86wrpkru : SDNode<"X86ISD::WRPKRU",    SDTX86wrpkru,
+                       [SDNPHasChain, SDNPSideEffect]>;
 
 def X86cas : SDNode<"X86ISD::LCMPXCHG_DAG", SDTX86cas,
                         [SDNPHasChain, SDNPInGlue, SDNPOutGlue, SDNPMayStore,
