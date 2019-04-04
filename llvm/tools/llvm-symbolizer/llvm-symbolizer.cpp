@@ -94,10 +94,9 @@ ClBinaryName("obj", cl::init(""),
 static cl::alias
 ClBinaryNameAliasExe("exe", cl::desc("Alias for -obj"),
                      cl::NotHidden, cl::aliasopt(ClBinaryName));
-static cl::alias
-ClBinaryNameAliasE("e", cl::desc("Alias for -obj"),
-                   cl::NotHidden, cl::aliasopt(ClBinaryName));
-
+static cl::alias ClBinaryNameAliasE("e", cl::desc("Alias for -obj"),
+                                    cl::NotHidden, cl::Grouping, cl::Prefix,
+                                    cl::aliasopt(ClBinaryName));
 
 static cl::opt<std::string>
     ClDwpName("dwp", cl::init(""),
