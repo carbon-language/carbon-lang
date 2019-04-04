@@ -1960,6 +1960,9 @@ public:
   /// Returns false if disassembly failed.
   void disassemble(ArrayRef<uint8_t> FunctionData);
 
+  /// Validate entry points.
+  void postProcessEntryPoints();
+
   /// Post-processing for jump tables after disassembly. Since their
   /// boundaries are not known until all call sites are seen, we need this
   /// extra pass to perform any final adjustments.

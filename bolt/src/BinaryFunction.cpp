@@ -1464,7 +1464,30 @@ add_instruction:
 
   updateState(State::Disassembled);
 
+  postProcessEntryPoints();
+
   postProcessJumpTables();
+}
+
+void BinaryFunction::postProcessEntryPoints() {
+  for (auto Offset : EntryOffsets) {
+    if (!getInstructionAtOffset(Offset)) {
+      // On AArch64 there are legitimate reasons to have references past the
+      // end of the function, e.g. jump tables.
+      if (BC.isAArch64() && Offset == getSize()) {
+        continue;
+      }
+
+      errs() << "BOLT-WARNING: reference in the middle of instruction "
+                "detected in function " << *this
+             << " at offset 0x" << Twine::utohexstr(Offset) << '\n';
+      if (BC.HasRelocations) {
+        errs() << "BOLT-ERROR: unable to keep processing in relocation mode\n";
+        exit(1);
+      }
+      setSimple(false);
+    }
+  }
 }
 
 void BinaryFunction::postProcessJumpTables() {
@@ -1683,7 +1706,7 @@ bool BinaryFunction::buildCFG() {
     return false;
   }
 
-  if (!(CurrentState == State::Disassembled))
+  if (CurrentState != State::Disassembled)
     return false;
 
   assert(BasicBlocks.empty() && "basic block list should be empty");
