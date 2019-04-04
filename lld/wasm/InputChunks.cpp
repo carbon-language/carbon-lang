@@ -296,3 +296,58 @@ void InputFunction::writeTo(uint8_t *Buf) const {
   memcpy(Buf, LastRelocEnd, ChunkSize);
   LLVM_DEBUG(dbgs() << "  total: " << (Buf + ChunkSize - Orig) << "\n");
 }
+
+// Generate code to apply relocations to the data section at runtime.
+// This is only called when generating shared libaries (PIC) where address are
+// not known at static link time.
+void InputSegment::generateRelocationCode(raw_ostream &OS) const {
+  uint32_t SegmentVA = OutputSeg->StartVA + OutputSegmentOffset;
+  for (const WasmRelocation &Rel : Relocations) {
+    uint32_t Offset = Rel.Offset - getInputSectionOffset();
+    uint32_t OutputVA = SegmentVA + Offset;
+
+    // Get __memory_base
+    writeU8(OS, WASM_OPCODE_GLOBAL_GET, "GLOBAL_GET");
+    writeUleb128(OS, WasmSym::MemoryBase->getGlobalIndex(), "memory_base");
+
+    // Add the offset of the relocation
+    writeU8(OS, WASM_OPCODE_I32_CONST, "I32_CONST");
+    writeSleb128(OS, OutputVA, "offset");
+    writeU8(OS, WASM_OPCODE_I32_ADD, "ADD");
+
+    // Now figure out what we want to store
+    switch (Rel.Type) {
+    case R_WASM_TABLE_INDEX_I32:
+      // Add the table index to the __table_base
+      writeU8(OS, WASM_OPCODE_GLOBAL_GET, "GLOBAL_GET");
+      writeUleb128(OS, WasmSym::TableBase->getGlobalIndex(), "table_base");
+      writeU8(OS, WASM_OPCODE_I32_CONST, "CONST");
+      writeSleb128(OS, File->calcNewValue(Rel), "new table index");
+      writeU8(OS, WASM_OPCODE_I32_ADD, "ADD");
+      break;
+    case R_WASM_MEMORY_ADDR_I32: {
+      Symbol *Sym = File->getSymbol(Rel);
+      if (Sym->isUndefined()) {
+        // Undefined addresses are accessed via imported GOT globals
+        writeU8(OS, WASM_OPCODE_GLOBAL_GET, "GLOBAL_GET");
+        writeUleb128(OS, Sym->getGOTIndex(), "global index");
+      } else {
+        // Defined global data is accessed via known offset from __memory_base
+        writeU8(OS, WASM_OPCODE_GLOBAL_GET, "GLOBAL_GET");
+        writeUleb128(OS, WasmSym::MemoryBase->getGlobalIndex(), "memory_base");
+        writeU8(OS, WASM_OPCODE_I32_CONST, "CONST");
+        writeSleb128(OS, File->calcNewValue(Rel), "new memory offset");
+        writeU8(OS, WASM_OPCODE_I32_ADD, "ADD");
+      }
+      break;
+    }
+    default:
+      llvm_unreachable("unexpected relocation type in data segment");
+    }
+
+    // Store that value at the virtual address
+    writeU8(OS, WASM_OPCODE_I32_STORE, "I32_STORE");
+    writeUleb128(OS, 2, "align");
+    writeUleb128(OS, 0, "offset");
+  }
+}
