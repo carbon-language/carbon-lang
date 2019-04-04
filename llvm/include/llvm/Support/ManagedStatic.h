@@ -45,8 +45,8 @@ protected:
 
 public:
   /// ManagedStaticBase must be constexpr constructed so that they can be
-  /// accessed and constructed lazily during dynamic initilization of other
-  /// global variables, such as cl::opt command line flags.
+  /// accessed during dynamic initilization of other global variables, such as
+  /// cl::opt command line flags.
   constexpr ManagedStaticBase() = default;
 
   /// isConstructed - Return true if this object has not been created yet.
