@@ -373,11 +373,16 @@ void OptionCategory::registerCategory() {
   GlobalParser->registerCategory(this);
 }
 
-// A special subcommand representing no subcommand
-ManagedStatic<SubCommand> llvm::cl::TopLevelSubCommand;
+// A special subcommand representing no subcommand. It is particularly important
+// that this ManagedStatic uses constant initailization and not dynamic
+// initialization because it is referenced from cl::opt constructors, which run
+// dynamically in an arbitrary order.
+LLVM_REQUIRE_CONSTANT_INITIALIZATION ManagedStatic<SubCommand>
+    llvm::cl::TopLevelSubCommand;
 
 // A special subcommand that can be used to put an option into all subcommands.
-ManagedStatic<SubCommand> llvm::cl::AllSubCommands;
+LLVM_REQUIRE_CONSTANT_INITIALIZATION ManagedStatic<SubCommand>
+    llvm::cl::AllSubCommands;
 
 void SubCommand::registerSubCommand() {
   GlobalParser->registerSubCommand(this);
