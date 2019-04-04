@@ -1214,7 +1214,10 @@ IBM Fortran's options allow the source line length to be specified with the opti
 *   **GNU:** For both "ffixed-line-length-_n_" and "ffree-line-length-_n_" options, characters are ignored after the specified length.  The default for fixed is 72.  The default for free is 132.  For free, you can specify 'none' as the length, which means that all characters in the line are meaningful.
 *   **IBM:** For **fixed**, the default is 72.  For **free**, there's no default, but the maximum length for either form is 132.
 *   **Intel:** The default is 72 for **fixed** and 132 for **free**.
-*   **PGI, Flang:** By default, flang accepts up to 1000 characters per line in free form.  "-Mextend" instructs the compiler to accept 132-column source code; otherwise it accepts 72-column code.  It's unclear from the documentation whether this applies to fixed, free, or both source formats.
+*   **PGI, Flang:** 
+    * in free form, it is an error if the line is longer than 1000 characters
+    * in fixed form by default, characters after column 72 are ignored
+    * in fixed form with -Mextend, characters after column 132 are ignored
 
 **<a name="names"></a>Names, Literals, and other tokens**
 
