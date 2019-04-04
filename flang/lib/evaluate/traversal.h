@@ -25,15 +25,18 @@
 // To use for non-mutating visitation, define one or more client visitation
 // classes of the form:
 //   class MyVisitor : public virtual VisitorBase<RESULT> {
+//     using Result = RESULT;
 //     explicit MyVisitor(ARGTYPE);  // single-argument constructor
 //     void Handle(const T1 &);  // callback for type T1 objects
 //     void Pre(const T2 &);  // callback before visiting T2
 //     void Post(const T2 &);  // callback after visiting T2
 //     ...
 //   };
-// RESULT should have some default-constructible type.
-// Then instantiate and construct a Visitor and its embedded MyVisitor via:
-//   Visitor<RESULT, MyVisitor, ...> v{value};  // value is ARGTYPE &&
+// RESULT should have some default-constructible type, and it must be
+// the same type in all of the visitors that you combine in the next step.
+//
+// Then instantiate and construct a Visitor and its embedded visitors via:
+//   Visitor<MyVisitor, ...> v{value...};  // value is/are ARGTYPE &&
 // and call:
 //   RESULT result{v.Traverse(topLevelExpr)};
 // Within the callback routines (Handle, Pre, Post), one may call
@@ -49,6 +52,7 @@
 // argument types are rvalues and the non-void result types match
 // the arguments:
 //   class MyRewriter : public virtual RewriterBase<RESULT> {
+//     using Result = RESULT;
 //     explicit MyRewriter(ARGTYPE);  // single-argument constructor
 //     T1 Handle(T1 &&);  // rewriting callback for type T1 objects
 //     void Pre(T2 &);  // in-place mutating callback before visiting T2
@@ -83,10 +87,18 @@ protected:
   Result result_;
 };
 
-template<typename RESULT, typename... A>
-class Visitor : public virtual VisitorBase<RESULT>, public A... {
+template<typename A, typename... B> struct VisitorResultTypeHelper {
+  using type = typename A::Result;
+  static_assert(common::AreSameType<type, typename B::Result...>);
+};
+template<typename... A>
+using VisitorResultType = typename VisitorResultTypeHelper<A...>::type;
+
+template<typename... A>
+class Visitor : public virtual VisitorBase<VisitorResultType<A...>>,
+                public A... {
 public:
-  using Result = RESULT;
+  using Result = VisitorResultType<A...>;
   using Base = VisitorBase<Result>;
   using Base::Handle, Base::Pre, Base::Post;
   using A::Handle..., A::Pre..., A::Post...;

@@ -382,11 +382,11 @@ static CS GatherReferencesFromExpression(const parser::Expr &expression) {
   // Use the new expression traversal framework if possible, for testing.
   if (expression.typedExpr) {
     struct CollectSymbols : public virtual evaluate::VisitorBase<CS> {
+      using Result = CS;
       explicit CollectSymbols(int) {}
       void Handle(const Symbol *symbol) { result().push_back(symbol); }
     };
-    return evaluate::Visitor<CS, CollectSymbols>{0}.Traverse(
-        *expression.typedExpr);
+    return evaluate::Visitor<CollectSymbols>{0}.Traverse(*expression.typedExpr);
   } else {
     GatherSymbols gatherSymbols;
     parser::Walk(expression, gatherSymbols);

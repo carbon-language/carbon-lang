@@ -33,19 +33,27 @@ Shape AsGeneralShape(const Constant<ExtentType> &constShape) {
   return result;
 }
 
-std::optional<Constant<ExtentType>> AsConstantShape(const Shape &shape) {
-  std::vector<Scalar<ExtentType>> extents;
+std::optional<ExtentExpr> AsShapeArrayExpr(const Shape &shape) {
+  ArrayConstructorValues<ExtentType> values;
   for (const auto &dim : shape) {
     if (dim.has_value()) {
-      if (const auto cdim{UnwrapExpr<Constant<ExtentType>>(*dim)}) {
-        extents.emplace_back(**cdim);
-        continue;
-      }
+      values.Push(common::Clone(*dim));
+    } else {
+      return std::nullopt;
     }
-    return std::nullopt;
   }
-  std::vector<std::int64_t> rshape{static_cast<std::int64_t>(shape.size())};
-  return Constant<ExtentType>{std::move(extents), std::move(rshape)};
+  return ExtentExpr{ArrayConstructor<ExtentType>{std::move(values)}};
+}
+
+std::optional<Constant<ExtentType>> AsConstantShape(const Shape &shape) {
+  if (auto shapeArray{AsShapeArrayExpr(shape)}) {
+    FoldingContext noFoldingContext;
+    auto folded{Fold(noFoldingContext, std::move(*shapeArray))};
+    if (auto *p{UnwrapExpr<Constant<ExtentType>>(folded)}) {
+      return std::move(*p);
+    }
+  }
+  return std::nullopt;
 }
 
 static ExtentExpr ComputeTripCount(
@@ -90,8 +98,8 @@ MaybeExtent GetSize(Shape &&shape) {
   return extent;
 }
 
-static MaybeExtent GetLowerBound(const semantics::Symbol &symbol,
-    const Component *component, int dimension) {
+static MaybeExtent GetLowerBound(
+    const Symbol &symbol, const Component *component, int dimension) {
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     int j{0};
     for (const auto &shapeSpec : details->shape()) {
@@ -111,8 +119,8 @@ static MaybeExtent GetLowerBound(const semantics::Symbol &symbol,
   return std::nullopt;
 }
 
-static MaybeExtent GetExtent(const semantics::Symbol &symbol,
-    const Component *component, int dimension) {
+static MaybeExtent GetExtent(
+    const Symbol &symbol, const Component *component, int dimension) {
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     int j{0};
     for (const auto &shapeSpec : details->shape()) {
@@ -169,14 +177,15 @@ static MaybeExtent GetExtent(const Subscript &subscript, const Symbol &symbol,
 
 bool ContainsAnyImpliedDoIndex(const ExtentExpr &expr) {
   struct MyVisitor : public virtual VisitorBase<bool> {
+    using Result = bool;
     explicit MyVisitor(int) { result() = false; }
     void Handle(const ImpliedDoIndex &) { Return(true); }
   };
-  return Visitor<bool, MyVisitor>{0}.Traverse(expr);
+  return Visitor<MyVisitor>{0}.Traverse(expr);
 }
 
 std::optional<Shape> GetShape(
-    const semantics::Symbol &symbol, const Component *component) {
+    const Symbol &symbol, const Component *component) {
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     Shape result;
     int n = details->shape().size();
@@ -184,6 +193,14 @@ std::optional<Shape> GetShape(
       result.emplace_back(GetExtent(symbol, component, dimension++));
     }
     return result;
+  } else {
+    return std::nullopt;
+  }
+}
+
+std::optional<Shape> GetShape(const Symbol *symbol) {
+  if (symbol != nullptr) {
+    return GetShape(*symbol);
   } else {
     return std::nullopt;
   }
@@ -244,7 +261,7 @@ std::optional<Shape> GetShape(const CoarrayRef &coarrayRef) {
 }
 
 std::optional<Shape> GetShape(const DataRef &dataRef) {
-  return std::visit([](const auto &x) { return GetShape(x); }, dataRef.u);
+  return GetShape(dataRef.u);
 }
 
 std::optional<Shape> GetShape(const Substring &substring) {
@@ -287,7 +304,19 @@ std::optional<Shape> GetShape(const ProcedureRef &call) {
   return std::nullopt;
 }
 
+std::optional<Shape> GetShape(const Relational<SomeType> &relation) {
+  return GetShape(relation.u);
+}
+
 std::optional<Shape> GetShape(const StructureConstructor &) {
+  return Shape{};  // always scalar
+}
+
+std::optional<Shape> GetShape(const ImpliedDoIndex &) {
+  return Shape{};  // always scalar
+}
+
+std::optional<Shape> GetShape(const DescriptorInquiry &) {
   return Shape{};  // always scalar
 }
 

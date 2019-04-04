@@ -34,9 +34,10 @@ using Shape = std::vector<MaybeExtent>;
 
 // Convert a constant shape to the expression form, and vice versa.
 Shape AsGeneralShape(const Constant<ExtentType> &);
+std::optional<ExtentExpr> AsShapeArrayExpr(const Shape &);  // array constructor
 std::optional<Constant<ExtentType>> AsConstantShape(const Shape &);
 
-// Compute a trip count for a triplet or implied DO.
+// Compute an element count for a triplet or trip count for a DO.
 ExtentExpr CountTrips(
     ExtentExpr &&lower, ExtentExpr &&upper, ExtentExpr &&stride);
 ExtentExpr CountTrips(
@@ -46,10 +47,6 @@ MaybeExtent CountTrips(
 
 // Computes SIZE() == PRODUCT(shape)
 MaybeExtent GetSize(Shape &&);
-
-template<typename A> std::optional<Shape> GetShape(const A &) {
-  return std::nullopt;  // default case  TODO pmk remove
-}
 
 // Forward declarations
 template<typename... A>
@@ -62,8 +59,8 @@ template<typename T> std::optional<Shape> GetShape(const Expr<T> &expr) {
   return GetShape(expr.u);
 }
 
-std::optional<Shape> GetShape(
-    const semantics::Symbol &, const Component * = nullptr);
+std::optional<Shape> GetShape(const Symbol &, const Component * = nullptr);
+std::optional<Shape> GetShape(const Symbol *);
 std::optional<Shape> GetShape(const BaseObject &);
 std::optional<Shape> GetShape(const Component &);
 std::optional<Shape> GetShape(const ArrayRef &);
@@ -73,7 +70,10 @@ std::optional<Shape> GetShape(const Substring &);
 std::optional<Shape> GetShape(const ComplexPart &);
 std::optional<Shape> GetShape(const ActualArgument &);
 std::optional<Shape> GetShape(const ProcedureRef &);
+std::optional<Shape> GetShape(const ImpliedDoIndex &);
+std::optional<Shape> GetShape(const Relational<SomeType> &);
 std::optional<Shape> GetShape(const StructureConstructor &);
+std::optional<Shape> GetShape(const DescriptorInquiry &);
 std::optional<Shape> GetShape(const BOZLiteralConstant &);
 std::optional<Shape> GetShape(const NullPointer &);
 
@@ -94,7 +94,7 @@ std::optional<Shape> GetShape(const Variable<T> &variable) {
 
 template<typename D, typename R, typename... O>
 std::optional<Shape> GetShape(const Operation<D, R, O...> &operation) {
-  if constexpr (operation.operands > 1) {
+  if constexpr (sizeof...(O) > 1) {
     if (operation.right().Rank() > 0) {
       return GetShape(operation.right());
     }

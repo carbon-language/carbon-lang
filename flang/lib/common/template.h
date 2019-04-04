@@ -157,6 +157,21 @@ struct AreTypesDistinctHelper {
 template<typename... Ts>
 constexpr bool AreTypesDistinct{AreTypesDistinctHelper<Ts...>::value()};
 
+template<typename A, typename... Ts> struct AreSameTypeHelper {
+  using type = A;
+  static constexpr bool value() {
+    if constexpr (sizeof...(Ts) == 0) {
+      return true;
+    } else {
+      using Rest = AreSameTypeHelper<Ts...>;
+      return std::is_same_v<type, typename Rest::type> && Rest::value();
+    }
+  }
+};
+
+template<typename... Ts>
+constexpr bool AreSameType{AreSameTypeHelper<Ts...>::value()};
+
 template<typename> struct TupleToVariantHelper;
 template<typename... Ts> struct TupleToVariantHelper<std::tuple<Ts...>> {
   static_assert(AreTypesDistinct<Ts...> ||

@@ -87,12 +87,13 @@ private:
 
   using SymbolVector = std::vector<const Symbol *>;
   struct SymbolVisitor : public virtual evaluate::VisitorBase<SymbolVector> {
+    using Result = SymbolVector;
     explicit SymbolVisitor(int) {}
     void Handle(const Symbol *symbol) { result().push_back(symbol); }
   };
 
   template<typename T> void DoExpr(evaluate::Expr<T> expr) {
-    evaluate::Visitor<SymbolVector, SymbolVisitor> visitor{0};
+    evaluate::Visitor<SymbolVisitor> visitor{0};
     for (const Symbol *symbol : visitor.Traverse(expr)) {
       CHECK(symbol && "bad symbol from Traverse");
       DoSymbol(*symbol);

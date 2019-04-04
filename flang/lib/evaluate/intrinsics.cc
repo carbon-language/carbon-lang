@@ -503,7 +503,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"product",
         {{"array", SameNumeric, Rank::array}, OptionalDIM, OptionalMASK},
         SameNumeric, Rank::dimReduced},
-    // TODO pmk: "rank"
+    {"rank", {{"a", Anything, Rank::anyOrAssumedRank}}, DefaultInt},
     {"real", {{"a", AnyNumeric, Rank::elementalOrBOZ}, DefaultingKIND},
         KINDReal},
     {"reduce",
@@ -968,10 +968,10 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
         CHECK(!shapeArgSize.has_value());
         if (rank == 1) {
           if (auto shape{GetShape(*arg)}) {
-            CHECK(shape->size() == 1);
-            if (auto value{ToInt64(shape->at(0))}) {
-              shapeArgSize = *value;
-              argOk = *value >= 0;
+            if (auto constShape{AsConstantShape(*shape)}) {
+              shapeArgSize = (**constShape).ToInt64();
+              CHECK(shapeArgSize >= 0);
+              argOk = true;
             }
           }
         }

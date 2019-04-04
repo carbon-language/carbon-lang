@@ -475,11 +475,18 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
       return FoldElementalIntrinsic<T, T, T, T>(
           context, std::move(funcRef), &Scalar<T>::MERGE_BITS);
     } else if (name == "rank") {
-      // TODO pmk: get rank
+      // TODO assumed-rank dummy argument
+      return Expr<T>{args[0].value().Rank()};
     } else if (name == "shape") {
-      // TODO pmk: call GetShape on argument, massage result
+      if (auto shape{GetShape(args[0].value())}) {
+        if (auto shapeExpr{AsShapeArrayExpr(*shape)}) {
+          return Fold(context, ConvertToType<T>(std::move(*shapeExpr)));
+        }
+      }
     } else if (name == "size") {
-      // TODO pmk: call GetShape on argument, extract or compute result
+      if (auto shape{GetShape(args[0].value())}) {
+        // TODO pmk: extract or compute result
+      }
     }
     // TODO:
     // ceiling, count, cshift, dot_product, eoshift,
@@ -1373,6 +1380,7 @@ FOR_EACH_TYPE_AND_KIND(template class ExpressionBase, )
 
 class IsConstantExprVisitor : public virtual VisitorBase<bool> {
 public:
+  using Result = bool;
   explicit IsConstantExprVisitor(int) { result() = true; }
 
   template<int KIND> void Handle(const TypeParamInquiry<KIND> &inq) {
@@ -1402,7 +1410,7 @@ private:
 };
 
 bool IsConstantExpr(const Expr<SomeType> &expr) {
-  return Visitor<bool, IsConstantExprVisitor>{0}.Traverse(expr);
+  return Visitor<IsConstantExprVisitor>{0}.Traverse(expr);
 }
 
 std::optional<std::int64_t> ToInt64(const Expr<SomeInteger> &expr) {
