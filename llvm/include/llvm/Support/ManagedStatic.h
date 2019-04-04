@@ -45,7 +45,7 @@ template <typename T, size_t N> struct object_deleter<T[N]> {
 class ManagedStaticBase {
 protected:
 #ifndef LLVM_AVOID_CONSTEXPR_CTOR
-  mutable std::atomic<void *> Ptr;
+  mutable std::atomic<void *> Ptr{nullptr};
   mutable void (*DeleterFn)(void *) = nullptr;
   mutable const ManagedStaticBase *Next = nullptr;
 #else
