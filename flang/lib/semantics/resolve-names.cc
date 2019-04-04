@@ -1419,10 +1419,12 @@ bool ImplicitRulesVisitor::HandleImplicitNone(
 // ArraySpecVisitor implementation
 
 void ArraySpecVisitor::Post(const parser::ArraySpec &x) {
-  AnalyzeArraySpec(arraySpec_, context(), x);
+  CHECK(arraySpec_.empty());
+  arraySpec_ = AnalyzeArraySpec(context(), x);
 }
 void ArraySpecVisitor::Post(const parser::CoarraySpec &x) {
-  AnalyzeCoarraySpec(coarraySpec_, context(), x);
+  CHECK(coarraySpec_.empty());
+  coarraySpec_ = AnalyzeCoarraySpec(context(), x);
 }
 
 const ArraySpec &ArraySpecVisitor::arraySpec() {

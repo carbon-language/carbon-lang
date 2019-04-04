@@ -68,11 +68,10 @@ private:
   void Analyze(const parser::GenericSpec &);
 };
 
-// Analyze a parser::ArraySpec or parser::CoarraySpec into the provide ArraySpec
-void AnalyzeArraySpec(
-    ArraySpec &, SemanticsContext &, const parser::ArraySpec &);
-void AnalyzeCoarraySpec(
-    ArraySpec &, SemanticsContext &, const parser::CoarraySpec &);
+// Analyze a parser::ArraySpec or parser::CoarraySpec
+ArraySpec AnalyzeArraySpec(SemanticsContext &, const parser::ArraySpec &);
+ArraySpec AnalyzeCoarraySpec(
+    SemanticsContext &context, const parser::CoarraySpec &);
 
 }
 

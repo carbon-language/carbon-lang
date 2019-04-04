@@ -167,16 +167,13 @@ static GenericKind MapIntrinsicOperator(IntrinsicOperator op) {
 
 class ArraySpecAnalyzer {
 public:
-  ArraySpecAnalyzer(ArraySpec &arraySpec, SemanticsContext &context)
-    : context_{context}, arraySpec_{arraySpec} {
-    CHECK(arraySpec.empty());
-  }
-  void Analyze(const parser::ArraySpec &);
-  void Analyze(const parser::CoarraySpec &);
+  ArraySpecAnalyzer(SemanticsContext &context) : context_{context} {}
+  ArraySpec Analyze(const parser::ArraySpec &);
+  ArraySpec Analyze(const parser::CoarraySpec &);
 
 private:
   SemanticsContext &context_;
-  ArraySpec &arraySpec_;
+  ArraySpec arraySpec_;
 
   template<typename T> void Analyze(const std::list<T> &list) {
     for (const auto &elem : list) {
@@ -195,16 +192,16 @@ private:
   Bound GetBound(const parser::SpecificationExpr &);
 };
 
-void AnalyzeArraySpec(ArraySpec &result, SemanticsContext &context,
-    const parser::ArraySpec &arraySpec) {
-  ArraySpecAnalyzer{result, context}.Analyze(arraySpec);
+ArraySpec AnalyzeArraySpec(
+    SemanticsContext &context, const parser::ArraySpec &arraySpec) {
+  return ArraySpecAnalyzer{context}.Analyze(arraySpec);
 }
-void AnalyzeCoarraySpec(ArraySpec &result, SemanticsContext &context,
-    const parser::CoarraySpec &coarraySpec) {
-  ArraySpecAnalyzer{result, context}.Analyze(coarraySpec);
+ArraySpec AnalyzeCoarraySpec(
+    SemanticsContext &context, const parser::CoarraySpec &coarraySpec) {
+  return ArraySpecAnalyzer{context}.Analyze(coarraySpec);
 }
 
-void ArraySpecAnalyzer::Analyze(const parser::ArraySpec &x) {
+ArraySpec ArraySpecAnalyzer::Analyze(const parser::ArraySpec &x) {
   std::visit(
       common::visitors{
           [&](const parser::DeferredShapeSpecList &y) { MakeDeferred(y.v); },
@@ -216,8 +213,9 @@ void ArraySpecAnalyzer::Analyze(const parser::ArraySpec &x) {
           [&](const auto &y) { Analyze(y); },
       },
       x.u);
+  return arraySpec_;
 }
-void ArraySpecAnalyzer::Analyze(const parser::CoarraySpec &x) {
+ArraySpec ArraySpecAnalyzer::Analyze(const parser::CoarraySpec &x) {
   std::visit(
       common::visitors{
           [&](const parser::DeferredCoshapeSpecList &y) { MakeDeferred(y.v); },
@@ -228,6 +226,7 @@ void ArraySpecAnalyzer::Analyze(const parser::CoarraySpec &x) {
           },
       },
       x.u);
+  return arraySpec_;
 }
 
 void ArraySpecAnalyzer::Analyze(const parser::AssumedShapeSpec &x) {
