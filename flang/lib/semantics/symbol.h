@@ -150,10 +150,14 @@ public:
   void set_init(MaybeExpr &&expr) { init_ = std::move(expr); }
   ArraySpec &shape() { return shape_; }
   const ArraySpec &shape() const { return shape_; }
-  void set_shape(const ArraySpec &shape);
+  ArraySpec &coshape() { return coshape_; }
+  const ArraySpec &coshape() const { return coshape_; }
+  void set_shape(const ArraySpec &);
+  void set_coshape(const ArraySpec &);
   const Symbol *commonBlock() const { return commonBlock_; }    
   void set_commonBlock(const Symbol &commonBlock) { commonBlock_ = &commonBlock; }
   bool IsArray() const { return !shape_.empty(); }
+  bool IsCoarray() const { return !coshape_.empty(); }
   bool IsAssumedShape() const {
     return isDummy() && IsArray() && shape_.back().ubound().isDeferred() &&
         !shape_.back().lbound().isDeferred();
@@ -174,6 +178,7 @@ public:
 private:
   MaybeExpr init_;
   ArraySpec shape_;
+  ArraySpec coshape_;
   const Symbol *commonBlock_{nullptr};  // common block this object is in
   friend std::ostream &operator<<(std::ostream &, const ObjectEntityDetails &);
 };
@@ -529,11 +534,7 @@ public:
     return std::visit(
         common::visitors{
             [](const SubprogramDetails &sd) {
-              if (sd.isFunction()) {
-                return sd.result().Rank();
-              } else {
-                return 0;
-              }
+              return sd.isFunction() ? sd.result().Rank() : 0;
             },
             [](const GenericDetails &) {
               return 0; /*TODO*/
@@ -542,6 +543,25 @@ public:
             [](const HostAssocDetails &x) { return x.symbol().Rank(); },
             [](const ObjectEntityDetails &oed) {
               return static_cast<int>(oed.shape().size());
+            },
+            [](const auto &) { return 0; },
+        },
+        details_);
+  }
+
+  int Corank() const {
+    return std::visit(
+        common::visitors{
+            [](const SubprogramDetails &sd) {
+              return sd.isFunction() ? sd.result().Corank() : 0;
+            },
+            [](const GenericDetails &) {
+              return 0; /*TODO*/
+            },
+            [](const UseDetails &x) { return x.symbol().Corank(); },
+            [](const HostAssocDetails &x) { return x.symbol().Corank(); },
+            [](const ObjectEntityDetails &oed) {
+              return static_cast<int>(oed.coshape().size());
             },
             [](const auto &) { return 0; },
         },

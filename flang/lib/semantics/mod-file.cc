@@ -424,7 +424,7 @@ void PutEntity(std::ostream &os, const Symbol &symbol) {
 }
 
 void PutShapeSpec(std::ostream &os, const ShapeSpec &x) {
-  if (x.ubound().isAssumed()) {
+  if (x.lbound().isAssumed()) {
     CHECK(x.ubound().isAssumed());
     os << "..";
   } else {
@@ -437,9 +437,9 @@ void PutShapeSpec(std::ostream &os, const ShapeSpec &x) {
     }
   }
 }
-void PutShape(std::ostream &os, const ArraySpec &shape) {
+void PutShape(std::ostream &os, const ArraySpec &shape, char open, char close) {
   if (!shape.empty()) {
-    os << '(';
+    os << open;
     bool first{true};
     for (const auto &shapeSpec : shape) {
       if (first) {
@@ -449,7 +449,7 @@ void PutShape(std::ostream &os, const ArraySpec &shape) {
       }
       PutShapeSpec(os, shapeSpec);
     }
-    os << ')';
+    os << close;
   }
 }
 
@@ -460,7 +460,8 @@ void PutObjectEntity(std::ostream &os, const Symbol &symbol) {
     CHECK(type);
     PutLower(os, *type);
   });
-  PutShape(os, details.shape());
+  PutShape(os, details.shape(), '(', ')');
+  PutShape(os, details.coshape(), '[', ']');
   PutInit(os, details.init());
 }
 
@@ -813,6 +814,10 @@ void SubprogramSymbolCollector::DoSymbol(const Symbol &symbol) {
       common::visitors{
           [this](const ObjectEntityDetails &details) {
             for (const ShapeSpec &spec : details.shape()) {
+              DoBound(spec.lbound());
+              DoBound(spec.ubound());
+            }
+            for (const ShapeSpec &spec : details.coshape()) {
               DoBound(spec.lbound());
               DoBound(spec.ubound());
             }

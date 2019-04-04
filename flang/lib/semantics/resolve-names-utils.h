@@ -18,10 +18,13 @@
 // Utility functions and class for use in resolve-names.cc.
 
 #include "symbol.h"
+#include "type.h"
 #include "../parser/message.h"
 
 namespace Fortran::parser {
 class CharBlock;
+struct ArraySpec;
+struct CoarraySpec;
 struct DefinedOpName;
 struct GenericSpec;
 struct Name;
@@ -30,6 +33,7 @@ struct Name;
 namespace Fortran::semantics {
 
 using SourceName = parser::CharBlock;
+class SemanticsContext;
 
 // Record that a Name has been resolved to a Symbol
 Symbol &Resolve(const parser::Name &, Symbol &);
@@ -63,6 +67,12 @@ private:
   void Analyze(const parser::DefinedOpName &);
   void Analyze(const parser::GenericSpec &);
 };
+
+// Analyze a parser::ArraySpec or parser::CoarraySpec into the provide ArraySpec
+void AnalyzeArraySpec(
+    ArraySpec &, SemanticsContext &, const parser::ArraySpec &);
+void AnalyzeCoarraySpec(
+    ArraySpec &, SemanticsContext &, const parser::CoarraySpec &);
 
 }
 

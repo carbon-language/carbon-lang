@@ -353,30 +353,29 @@ private:
 // 6. TODO: BasedPointerStmt
 class ArraySpecVisitor : public virtual BaseVisitor {
 public:
-  bool Pre(const parser::ArraySpec &);
+  void Post(const parser::ArraySpec &);
+  void Post(const parser::CoarraySpec &);
   void Post(const parser::AttrSpec &) { PostAttrSpec(); }
   void Post(const parser::ComponentAttrSpec &) { PostAttrSpec(); }
-  void Post(const parser::DeferredShapeSpecList &);
-  void Post(const parser::AssumedShapeSpec &);
-  void Post(const parser::ExplicitShapeSpec &);
-  void Post(const parser::AssumedImpliedSpec &);
-  void Post(const parser::AssumedRankSpec &);
 
 protected:
   const ArraySpec &arraySpec();
+  const ArraySpec &coarraySpec();
   void BeginArraySpec();
   void EndArraySpec();
   void ClearArraySpec() { arraySpec_.clear(); }
+  void ClearCoarraySpec() { coarraySpec_.clear(); }
 
 private:
-  // arraySpec_ is populated by any ArraySpec
+  // arraySpec_/coarraySpec_ are populated from any ArraySpec/CoarraySpec
   ArraySpec arraySpec_;
+  ArraySpec coarraySpec_;
   // When an ArraySpec is under an AttrSpec or ComponentAttrSpec, it is moved
   // into attrArraySpec_
   ArraySpec attrArraySpec_;
+  ArraySpec attrCoarraySpec_;
 
   void PostAttrSpec();
-  Bound GetBound(const parser::SpecificationExpr &);
 };
 
 // Manage a stack of Scopes
@@ -649,7 +648,6 @@ class DeclarationVisitor : public ArraySpecVisitor,
                            public virtual ScopeHandler {
 public:
   using ArraySpecVisitor::Post;
-  using ArraySpecVisitor::Pre;
   using ScopeHandler::Post;
   using ScopeHandler::Pre;
 
@@ -681,6 +679,7 @@ public:
   }
   void Post(const parser::TargetStmt &) { objectDeclAttr_ = std::nullopt; }
   void Post(const parser::DimensionStmt::Declaration &);
+  void Post(const parser::CodimensionDecl &);
   bool Pre(const parser::TypeDeclarationStmt &) { return BeginDecl(); }
   void Post(const parser::TypeDeclarationStmt &) { EndDecl(); }
   void Post(const parser::IntegerTypeSpec &);
@@ -952,7 +951,6 @@ class ResolveNamesVisitor : public virtual ScopeHandler,
                             public ConstructVisitor {
 public:
   using ArraySpecVisitor::Post;
-  using ArraySpecVisitor::Pre;
   using ConstructVisitor::Post;
   using ConstructVisitor::Pre;
   using DeclarationVisitor::Post;
@@ -1420,65 +1418,42 @@ bool ImplicitRulesVisitor::HandleImplicitNone(
 
 // ArraySpecVisitor implementation
 
-bool ArraySpecVisitor::Pre(const parser::ArraySpec &x) {
-  CHECK(arraySpec_.empty());
-  return true;
+void ArraySpecVisitor::Post(const parser::ArraySpec &x) {
+  AnalyzeArraySpec(arraySpec_, context(), x);
 }
-
-void ArraySpecVisitor::Post(const parser::DeferredShapeSpecList &x) {
-  for (int i = 0; i < x.v; ++i) {
-    arraySpec_.push_back(ShapeSpec::MakeDeferred());
-  }
-}
-
-void ArraySpecVisitor::Post(const parser::AssumedShapeSpec &x) {
-  const auto &lb{x.v};
-  arraySpec_.push_back(
-      lb ? ShapeSpec::MakeAssumed(GetBound(*lb)) : ShapeSpec::MakeAssumed());
-}
-
-void ArraySpecVisitor::Post(const parser::ExplicitShapeSpec &x) {
-  auto &&ub{GetBound(std::get<parser::SpecificationExpr>(x.t))};
-  if (const auto &lb{std::get<std::optional<parser::SpecificationExpr>>(x.t)}) {
-    arraySpec_.push_back(ShapeSpec::MakeExplicit(GetBound(*lb), std::move(ub)));
-  } else {
-    arraySpec_.push_back(ShapeSpec::MakeExplicit(Bound{1}, std::move(ub)));
-  }
-}
-
-void ArraySpecVisitor::Post(const parser::AssumedImpliedSpec &x) {
-  const auto &lb{x.v};
-  arraySpec_.push_back(
-      lb ? ShapeSpec::MakeImplied(GetBound(*lb)) : ShapeSpec::MakeImplied());
-}
-
-void ArraySpecVisitor::Post(const parser::AssumedRankSpec &) {
-  arraySpec_.push_back(ShapeSpec::MakeAssumedRank());
+void ArraySpecVisitor::Post(const parser::CoarraySpec &x) {
+  AnalyzeCoarraySpec(coarraySpec_, context(), x);
 }
 
 const ArraySpec &ArraySpecVisitor::arraySpec() {
   return !arraySpec_.empty() ? arraySpec_ : attrArraySpec_;
 }
+const ArraySpec &ArraySpecVisitor::coarraySpec() {
+  return !coarraySpec_.empty() ? coarraySpec_ : attrCoarraySpec_;
+}
 void ArraySpecVisitor::BeginArraySpec() {
   CHECK(arraySpec_.empty());
+  CHECK(coarraySpec_.empty());
   CHECK(attrArraySpec_.empty());
+  CHECK(attrCoarraySpec_.empty());
 }
 void ArraySpecVisitor::EndArraySpec() {
   CHECK(arraySpec_.empty());
+  CHECK(coarraySpec_.empty());
   attrArraySpec_.clear();
+  attrCoarraySpec_.clear();
 }
 void ArraySpecVisitor::PostAttrSpec() {
+  // Save dimension/codimension from attrs so we can process array/coarray-spec
+  // on the entity-decl
   if (!arraySpec_.empty()) {
-    // Example: integer, dimension(<1>) :: x(<2>)
-    // This saves <1> in attrArraySpec_ so we can process <2> into arraySpec_
     CHECK(attrArraySpec_.empty());
     attrArraySpec_.splice(attrArraySpec_.cbegin(), arraySpec_);
-    CHECK(arraySpec_.empty());
   }
-}
-
-Bound ArraySpecVisitor::GetBound(const parser::SpecificationExpr &x) {
-  return Bound{EvaluateSubscriptIntExpr(x.v)};
+  if (!coarraySpec_.empty()) {
+    CHECK(attrCoarraySpec_.empty());
+    attrCoarraySpec_.splice(attrCoarraySpec_.cbegin(), coarraySpec_);
+  }
 }
 
 // ScopeHandler implementation
@@ -2554,6 +2529,11 @@ void DeclarationVisitor::Post(const parser::DimensionStmt::Declaration &x) {
   const auto &name{std::get<parser::Name>(x.t)};
   DeclareObjectEntity(name, Attrs{});
 }
+void DeclarationVisitor::Post(const parser::CodimensionDecl &x) {
+  const auto &name{std::get<parser::Name>(x.t)};
+  DeclareObjectEntity(name, Attrs{});
+}
+//TODO: ChangeTeamStmt also uses CodimensionDecl
 
 void DeclarationVisitor::Post(const parser::EntityDecl &x) {
   // TODO: may be under StructureStmt
@@ -2703,7 +2683,7 @@ void DeclarationVisitor::Post(const parser::ObjectDecl &x) {
 // Declare an entity not yet known to be an object or proc.
 Symbol &DeclarationVisitor::DeclareUnknownEntity(
     const parser::Name &name, Attrs attrs) {
-  if (!arraySpec().empty()) {
+  if (!arraySpec().empty() || !coarraySpec().empty()) {
     return DeclareObjectEntity(name, attrs);
   } else {
     Symbol &symbol{DeclareEntity<EntityDetails>(name, attrs)};
@@ -2751,6 +2731,15 @@ Symbol &DeclarationVisitor::DeclareObjectEntity(
         details->set_shape(arraySpec());
       }
       ClearArraySpec();
+    }
+    if (!coarraySpec().empty()) {
+      if (details->IsCoarray()) {
+        Say(name,
+            "The codimensions of '%s' have already been declared"_err_en_US);
+      } else {
+        details->set_coshape(coarraySpec());
+      }
+      ClearCoarraySpec();
     }
     SetBindNameOn(symbol);
   }
@@ -3110,6 +3099,7 @@ void DeclarationVisitor::Post(const parser::ComponentDecl &x) {
     currScope().symbol()->get<DerivedTypeDetails>().add_component(symbol);
   }
   ClearArraySpec();
+  ClearCoarraySpec();
 }
 bool DeclarationVisitor::Pre(const parser::ProcedureDeclarationStmt &) {
   CHECK(!interfaceName_);
@@ -3414,6 +3404,7 @@ void DeclarationVisitor::Post(const parser::CommonBlockObject &x) {
   const auto &name{std::get<parser::Name>(x.t)};
   auto &symbol{DeclareObjectEntity(name, Attrs{})};
   ClearArraySpec();
+  ClearCoarraySpec();
   auto *details{symbol.detailsIf<ObjectEntityDetails>()};
   if (!details) {
     return;  // error was reported

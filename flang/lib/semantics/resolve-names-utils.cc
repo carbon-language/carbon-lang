@@ -13,10 +13,12 @@
 // limitations under the License.
 
 #include "resolve-names-utils.h"
+#include "expression.h"
 #include "semantics.h"
-#include "symbol.h"
-#include "type.h"
 #include "../common/idioms.h"
+#include "../evaluate/fold.h"
+#include "../evaluate/tools.h"
+#include "../evaluate/type.h"
 #include "../parser/char-block.h"
 #include "../parser/features.h"
 #include "../parser/parse-tree.h"
@@ -161,6 +163,116 @@ static GenericKind MapIntrinsicOperator(IntrinsicOperator op) {
   case IntrinsicOperator::NEQV: return GenericKind::OpNEQV;
   default: CRASH_NO_CASE;
   }
+}
+
+class ArraySpecAnalyzer {
+public:
+  ArraySpecAnalyzer(ArraySpec &arraySpec, SemanticsContext &context)
+    : context_{context}, arraySpec_{arraySpec} {
+    CHECK(arraySpec.empty());
+  }
+  void Analyze(const parser::ArraySpec &);
+  void Analyze(const parser::CoarraySpec &);
+
+private:
+  SemanticsContext &context_;
+  ArraySpec &arraySpec_;
+
+  template<typename T> void Analyze(const std::list<T> &list) {
+    for (const auto &elem : list) {
+      Analyze(elem);
+    }
+  }
+  void Analyze(const parser::AssumedShapeSpec &);
+  void Analyze(const parser::ExplicitShapeSpec &);
+  void Analyze(const parser::AssumedImpliedSpec &);
+  void Analyze(const parser::AssumedRankSpec &);
+  void MakeExplicit(const std::optional<parser::SpecificationExpr> &,
+      const parser::SpecificationExpr &);
+  void MakeImplied(const std::optional<parser::SpecificationExpr> &);
+  void MakeDeferred(int);
+  Bound GetBound(const std::optional<parser::SpecificationExpr> &);
+  Bound GetBound(const parser::SpecificationExpr &);
+};
+
+void AnalyzeArraySpec(ArraySpec &result, SemanticsContext &context,
+    const parser::ArraySpec &arraySpec) {
+  ArraySpecAnalyzer{result, context}.Analyze(arraySpec);
+}
+void AnalyzeCoarraySpec(ArraySpec &result, SemanticsContext &context,
+    const parser::CoarraySpec &coarraySpec) {
+  ArraySpecAnalyzer{result, context}.Analyze(coarraySpec);
+}
+
+void ArraySpecAnalyzer::Analyze(const parser::ArraySpec &x) {
+  std::visit(
+      common::visitors{
+          [&](const parser::DeferredShapeSpecList &y) { MakeDeferred(y.v); },
+          [&](const parser::AssumedSizeSpec &y) {
+            Analyze(std::get<std::list<parser::ExplicitShapeSpec>>(y.t));
+            Analyze(std::get<parser::AssumedImpliedSpec>(y.t));
+          },
+          [&](const parser::ImpliedShapeSpec &y) { Analyze(y.v); },
+          [&](const auto &y) { Analyze(y); },
+      },
+      x.u);
+}
+void ArraySpecAnalyzer::Analyze(const parser::CoarraySpec &x) {
+  std::visit(
+      common::visitors{
+          [&](const parser::DeferredCoshapeSpecList &y) { MakeDeferred(y.v); },
+          [&](const parser::ExplicitCoshapeSpec &y) {
+            Analyze(std::get<std::list<parser::ExplicitShapeSpec>>(y.t));
+            MakeImplied(
+                std::get<std::optional<parser::SpecificationExpr>>(y.t));
+          },
+      },
+      x.u);
+}
+
+void ArraySpecAnalyzer::Analyze(const parser::AssumedShapeSpec &x) {
+  arraySpec_.push_back(ShapeSpec::MakeAssumed(GetBound(x.v)));
+}
+void ArraySpecAnalyzer::Analyze(const parser::ExplicitShapeSpec &x) {
+  MakeExplicit(std::get<std::optional<parser::SpecificationExpr>>(x.t),
+      std::get<parser::SpecificationExpr>(x.t));
+}
+void ArraySpecAnalyzer::Analyze(const parser::AssumedImpliedSpec &x) {
+  MakeImplied(x.v);
+}
+void ArraySpecAnalyzer::Analyze(const parser::AssumedRankSpec &) {
+  arraySpec_.push_back(ShapeSpec::MakeAssumedRank());
+}
+
+void ArraySpecAnalyzer::MakeExplicit(
+    const std::optional<parser::SpecificationExpr> &lb,
+    const parser::SpecificationExpr &ub) {
+  arraySpec_.push_back(ShapeSpec::MakeExplicit(GetBound(lb), GetBound(ub)));
+}
+void ArraySpecAnalyzer::MakeImplied(
+    const std::optional<parser::SpecificationExpr> &lb) {
+  arraySpec_.push_back(ShapeSpec::MakeImplied(GetBound(lb)));
+}
+void ArraySpecAnalyzer::MakeDeferred(int n) {
+  for (int i = 0; i < n; ++i) {
+    arraySpec_.push_back(ShapeSpec::MakeDeferred());
+  }
+}
+
+Bound ArraySpecAnalyzer::GetBound(
+    const std::optional<parser::SpecificationExpr> &x) {
+  return x ? GetBound(*x) : Bound{1};
+}
+Bound ArraySpecAnalyzer::GetBound(const parser::SpecificationExpr &x) {
+  MaybeSubscriptIntExpr expr;
+  if (MaybeExpr maybeExpr{AnalyzeExpr(context_, x.v)}) {
+    if (auto *intExpr{evaluate::UnwrapExpr<SomeIntExpr>(*maybeExpr)}) {
+      expr = evaluate::Fold(context_.foldingContext(),
+          evaluate::ConvertToType<evaluate::SubscriptInteger>(
+              std::move(*intExpr)));
+    }
+  }
+  return Bound{std::move(expr)};
 }
 
 }

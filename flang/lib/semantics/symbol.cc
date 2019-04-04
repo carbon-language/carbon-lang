@@ -26,6 +26,52 @@ std::ostream &operator<<(std::ostream &os, const parser::CharBlock &name) {
   return os << name.ToString();
 }
 
+template<typename T>
+static void DumpOptional(
+    std::ostream &os, const char *label, const std::optional<T> &x) {
+  if (x) {
+    os << ' ' << label << ':' << *x;
+  }
+}
+
+static void DumpBool(std::ostream &os, const char *label, bool x) {
+  if (x) {
+    os << ' ' << label;
+  }
+}
+
+static void DumpSymbolList(std::ostream &os, const SymbolList &list) {
+  char sep{' '};
+  for (const auto *elem : list) {
+    os << sep << elem->name();
+    sep = ',';
+  }
+}
+
+static void DumpType(std::ostream &os, const Symbol &symbol) {
+  if (const auto *type{symbol.GetType()}) {
+    os << *type << ' ';
+  }
+}
+static void DumpType(std::ostream &os, const DeclTypeSpec *type) {
+  if (type) {
+    os << ' ' << *type;
+  }
+}
+
+template<typename T>
+static void DumpList(
+    std::ostream &os, const char *label, const std::list<T> &list) {
+  if (!list.empty()) {
+    os << ' ' << label << ':';
+    char sep{' '};
+    for (const auto &elem : list) {
+      os << sep << elem;
+      sep = ',';
+    }
+  }
+}
+
 const Scope *ModuleDetails::parent() const {
   return isSubmodule_ && scope_ ? &scope_->parent() : nullptr;
 }
@@ -49,12 +95,8 @@ void ModuleDetails::set_scope(const Scope *scope) {
 }
 
 std::ostream &operator<<(std::ostream &os, const SubprogramDetails &x) {
-  if (x.isInterface_) {
-    os << " isInterface";
-  }
-  if (x.bindName_) {
-    os << " bindName:" << x.bindName_;
-  }
+  DumpBool(os, "isInterface", x.isInterface_);
+  DumpOptional(os, "bindName", x.bindName_);
   if (x.result_) {
     os << " result:" << x.result_->name();
     if (!x.result_->attrs().empty()) {
@@ -84,6 +126,12 @@ void ObjectEntityDetails::set_shape(const ArraySpec &shape) {
   CHECK(shape_.empty());
   for (const auto &shapeSpec : shape) {
     shape_.push_back(shapeSpec);
+  }
+}
+void ObjectEntityDetails::set_coshape(const ArraySpec &coshape) {
+  CHECK(coshape_.empty());
+  for (const auto &shapeSpec : coshape) {
+    coshape_.push_back(shapeSpec);
   }
 }
 
@@ -268,75 +316,43 @@ ObjectEntityDetails::ObjectEntityDetails(EntityDetails &&d)
   : EntityDetails(d) {}
 
 std::ostream &operator<<(std::ostream &os, const EntityDetails &x) {
-  if (x.isDummy()) {
-    os << " dummy";
-  }
-  if (x.isFuncResult()) {
-    os << " funcResult";
-  }
+  DumpBool(os, "dummy", x.isDummy());
+  DumpBool(os, "funcResult", x.isFuncResult());
   if (x.type()) {
     os << " type: " << *x.type();
   }
-  if (x.bindName_) {
-    os << " bindName:" << x.bindName_;
-  }
+  DumpOptional(os, "bindName", x.bindName_);
   return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const ObjectEntityDetails &x) {
   os << *static_cast<const EntityDetails *>(&x);
-  if (!x.shape().empty()) {
-    os << " shape:";
-    for (const auto &s : x.shape()) {
-      os << ' ' << s;
-    }
-  }
-  if (x.init_) {
-    os << " init:" << x.init_;
-  }
+  DumpList(os, "shape", x.shape());
+  DumpList(os, "coshape", x.coshape());
+  DumpOptional(os, "init", x.init_);
   return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const AssocEntityDetails &x) {
   os << *static_cast<const EntityDetails *>(&x);
-  if (x.expr().has_value()) {
-    os << ' ' << x.expr();
-  }
+  DumpOptional(os, "expr", x.expr());
   return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const ProcEntityDetails &x) {
   if (auto *symbol{x.interface_.symbol()}) {
     os << ' ' << symbol->name();
-  } else if (auto *type{x.interface_.type()}) {
-    os << ' ' << *type;
+  } else {
+    DumpType(os, x.interface_.type());
   }
-  if (x.bindName()) {
-    os << " bindName:" << x.bindName();
-  }
-  if (x.passName_) {
-    os << " passName:" << *x.passName_;
-  }
+  DumpOptional(os, "bindName", x.bindName());
+  DumpOptional(os, "passName", x.passName());
   return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const DerivedTypeDetails &x) {
-  if (x.sequence_) {
-    os << " sequence";
-  }
-  if (!x.componentNames_.empty()) {
-    os << " components:";
-    for (auto name : x.componentNames_) {
-      os << ' ' << name.ToString();
-    }
-  }
-  return os;
-}
-
-static std::ostream &DumpType(std::ostream &os, const Symbol &symbol) {
-  if (const auto *type{symbol.GetType()}) {
-    os << *type << ' ';
-  }
+  DumpBool(os, "sequence", x.sequence_);
+  DumpList(os, "components", x.componentNames_);
   return os;
 }
 
@@ -371,17 +387,13 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
               os << dummy->name();
             }
             os << ')';
-            if (x.bindName()) {
-              os << " bindName:" << x.bindName();
-            }
+            DumpOptional(os, "bindName", x.bindName());
             if (x.isFunction()) {
               os << " result(";
               DumpType(os, x.result());
               os << x.result().name() << ')';
             }
-            if (x.isInterface()) {
-              os << " interface";
-            }
+            DumpBool(os, "interface", x.isInterface());
           },
           [&](const SubprogramNameDetails &x) {
             os << ' ' << EnumToString(x.kind());
@@ -398,29 +410,19 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
           [](const HostAssocDetails &) {},
           [&](const GenericDetails &x) {
             os << ' ' << EnumToString(x.kind());
-            for (const auto *proc : x.specificProcs()) {
-              os << ' ' << proc->name();
-            }
+            DumpSymbolList(os, x.specificProcs());
           },
           [&](const ProcBindingDetails &x) {
             os << " => " << x.symbol().name();
-            if (x.passName()) {
-              os << " passName:" << *x.passName();
-            }
+            DumpOptional(os, "passName", x.passName());
           },
           [&](const GenericBindingDetails &x) {
             os << " =>";
-            char sep{' '};
-            for (const auto *proc : x.specificProcs()) {
-              os << sep << proc->name();
-              sep = ',';
-            }
+            DumpSymbolList(os, x.specificProcs());
           },
           [&](const NamelistDetails &x) {
             os << ':';
-            for (const auto *object : x.objects()) {
-              os << ' ' << object->name();
-            }
+            DumpSymbolList(os, x.objects());
           },
           [&](const CommonBlockDetails &x) {
             os << ':';
@@ -434,9 +436,7 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
               os << ' ' << *x.type();
             }
             os << ' ' << common::EnumToString(x.attr());
-            if (x.init()) {
-              os << " init:" << x.init();
-            }
+            DumpOptional(os, "init", x.init());
           },
           [&](const MiscDetails &x) {
             os << ' ' << MiscDetails::EnumToString(x.kind());
@@ -512,22 +512,12 @@ std::ostream &DumpForUnparse(
     if (!symbol.attrs().empty()) {
       os << ' ' << symbol.attrs();
     }
-    if (symbol.test(Symbol::Flag::Implicit)) {
-      os << " (implicit)";
-    }
-    if (symbol.test(Symbol::Flag::LocalityLocal)) {
-      os << " (local)";
-    }
-    if (symbol.test(Symbol::Flag::LocalityLocalInit)) {
-      os << " (local_init)";
-    }
-    if (symbol.test(Symbol::Flag::LocalityShared)) {
-      os << " (shared)";
-    }
+    DumpBool(os, "(implicit)", symbol.test(Symbol::Flag::Implicit));
+    DumpBool(os, "(local)", symbol.test(Symbol::Flag::LocalityLocal));
+    DumpBool(os, "(local_init)", symbol.test(Symbol::Flag::LocalityLocalInit));
+    DumpBool(os, "(shared)", symbol.test(Symbol::Flag::LocalityShared));
     os << ' ' << symbol.GetDetailsName();
-    if (const auto *type{symbol.GetType()}) {
-      os << ' ' << *type;
-    }
+    DumpType(os, symbol.GetType());
   }
   return os;
 }
@@ -591,7 +581,16 @@ Symbol &Symbol::Instantiate(
                     foldingContext, std::move(dim.ubound().GetExplicit())));
               }
             }
-            // TODO: fold cobounds too once we can represent them
+            for (ShapeSpec &dim : details.coshape()) {
+              if (dim.lbound().isExplicit()) {
+                dim.lbound().SetExplicit(Fold(
+                    foldingContext, std::move(dim.lbound().GetExplicit())));
+              }
+              if (dim.ubound().isExplicit()) {
+                dim.ubound().SetExplicit(Fold(
+                    foldingContext, std::move(dim.ubound().GetExplicit())));
+              }
+            }
           },
           [&](const ProcBindingDetails &that) { symbol.details_ = that; },
           [&](const GenericBindingDetails &that) { symbol.details_ = that; },
@@ -698,4 +697,5 @@ void TypeParamDetails::set_type(const DeclTypeSpec &type) {
   CHECK(type_ == nullptr);
   type_ = &type;
 }
+
 }
