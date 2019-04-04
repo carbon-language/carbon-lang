@@ -29,7 +29,7 @@ def main(argv):
     else:
       D[F] = BV;
   for F in D.keys():
-    print("%s %s" % (F, D[F]))
+    print("%s %s" % (F, str(D[F])))
 
 if __name__ == '__main__':
   main(sys.argv)
