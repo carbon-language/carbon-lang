@@ -37,17 +37,6 @@ typedef uint32_t guard_type;
 inline void set_initialized(guard_type* guard_object) {
     *guard_object |= 1;
 }
-#else
-typedef uint64_t guard_type;
-
-void set_initialized(guard_type* guard_object) {
-    char* initialized = (char*)guard_object;
-    *initialized = 1;
-}
-#endif
-
-#if defined(_LIBCXXABI_HAS_NO_THREADS) || (defined(__APPLE__) && !defined(__arm__))
-#ifdef __arm__
 
 // Test the lowest bit.
 inline bool is_initialized(guard_type* guard_object) {
@@ -55,13 +44,17 @@ inline bool is_initialized(guard_type* guard_object) {
 }
 
 #else
+typedef uint64_t guard_type;
+
+void set_initialized(guard_type* guard_object) {
+    char* initialized = (char*)guard_object;
+    *initialized = 1;
+}
 
 bool is_initialized(guard_type* guard_object) {
     char* initialized = (char*)guard_object;
     return *initialized;
 }
-
-#endif
 #endif
 
 #ifndef _LIBCXXABI_HAS_NO_THREADS
@@ -169,10 +162,9 @@ extern "C"
 
 #ifndef _LIBCXXABI_HAS_NO_THREADS
 _LIBCXXABI_FUNC_VIS int __cxa_guard_acquire(guard_type *guard_object) {
-    char* initialized = (char*)guard_object;
     if (std::__libcpp_mutex_lock(&guard_mut))
         abort_message("__cxa_guard_acquire failed to acquire mutex");
-    int result = *initialized == 0;
+    int result = !is_initialized(guard_object);
     if (result)
     {
 #if defined(__APPLE__) && !defined(__arm__)
@@ -211,7 +203,7 @@ _LIBCXXABI_FUNC_VIS int __cxa_guard_acquire(guard_type *guard_object) {
         while (get_lock(*guard_object))
             if (std::__libcpp_condvar_wait(&guard_cv, &guard_mut))
                 abort_message("__cxa_guard_acquire condition variable wait failed");
-        result = *initialized == 0;
+        result = !is_initialized(guard_object);
         if (result)
             set_lock(*guard_object, true);
 #endif  // !__APPLE__ || __arm__
