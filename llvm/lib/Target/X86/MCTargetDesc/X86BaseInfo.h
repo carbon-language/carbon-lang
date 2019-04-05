@@ -321,6 +321,10 @@ namespace X86II {
     /// manual, this operand is described as pntr16:32 and pntr16:16
     RawFrmImm16 = 8,
 
+    /// AddCCFrm - This form is used for Jcc that encode the condition code
+    /// in the lower 4 bits of the opcode.
+    AddCCFrm = 9,
+
     /// MRM[0-7][rm] - These forms are used to represent instructions that use
     /// a Mod/RM byte, and use the middle field to hold extended opcode
     /// information.  In the intel manual these are represented as /0, /1, ...
@@ -769,6 +773,7 @@ namespace X86II {
     case X86II::RawFrmSrc:
     case X86II::RawFrmDst:
     case X86II::RawFrmDstSrc:
+    case X86II::AddCCFrm:
       return -1;
     case X86II::MRMDestMem:
       return 0;

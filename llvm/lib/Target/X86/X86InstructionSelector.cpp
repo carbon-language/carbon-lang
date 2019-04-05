@@ -1418,8 +1418,8 @@ bool X86InstructionSelector::selectCondBranch(MachineInstr &I,
       *BuildMI(*I.getParent(), I, I.getDebugLoc(), TII.get(X86::TEST8ri))
            .addReg(CondReg)
            .addImm(1);
-  BuildMI(*I.getParent(), I, I.getDebugLoc(), TII.get(X86::JNE_1))
-      .addMBB(DestMBB);
+  BuildMI(*I.getParent(), I, I.getDebugLoc(), TII.get(X86::JCC_1))
+      .addMBB(DestMBB).addImm(X86::COND_NE);
 
   constrainSelectedInstRegOperands(TestInst, TII, TRI, RBI);
 

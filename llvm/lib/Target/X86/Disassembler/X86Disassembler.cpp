@@ -782,7 +782,7 @@ static bool translateOperand(MCInst &mcInst, const OperandSpecifier &operand,
     translateRegister(mcInst, insn.opcodeRegister);
     return false;
   case ENCODING_CC:
-    mcInst.addOperand(MCOperand::createImm(insn.immediates[0]));
+    mcInst.addOperand(MCOperand::createImm(insn.immediates[1]));
     return false;
   case ENCODING_FP:
     translateFPRegister(mcInst, insn.modRM & 7);

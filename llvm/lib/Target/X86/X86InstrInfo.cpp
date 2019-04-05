@@ -1979,25 +1979,12 @@ bool X86InstrInfo::findCommutedOpIndices(MachineInstr &MI, unsigned &SrcOpIdx1,
   return false;
 }
 
-X86::CondCode X86::getCondFromBranchOpc(unsigned BrOpc) {
-  switch (BrOpc) {
+X86::CondCode X86::getCondFromBranch(const MachineInstr &MI) {
+  switch (MI.getOpcode()) {
   default: return X86::COND_INVALID;
-  case X86::JE_1:  return X86::COND_E;
-  case X86::JNE_1: return X86::COND_NE;
-  case X86::JL_1:  return X86::COND_L;
-  case X86::JLE_1: return X86::COND_LE;
-  case X86::JG_1:  return X86::COND_G;
-  case X86::JGE_1: return X86::COND_GE;
-  case X86::JB_1:  return X86::COND_B;
-  case X86::JBE_1: return X86::COND_BE;
-  case X86::JA_1:  return X86::COND_A;
-  case X86::JAE_1: return X86::COND_AE;
-  case X86::JS_1:  return X86::COND_S;
-  case X86::JNS_1: return X86::COND_NS;
-  case X86::JP_1:  return X86::COND_P;
-  case X86::JNP_1: return X86::COND_NP;
-  case X86::JO_1:  return X86::COND_O;
-  case X86::JNO_1: return X86::COND_NO;
+  case X86::JCC_1:
+    return static_cast<X86::CondCode>(
+        MI.getOperand(MI.getDesc().getNumOperands() - 1).getImm());
   }
 }
 
@@ -2019,28 +2006,6 @@ X86::CondCode X86::getCondFromCMov(const MachineInstr &MI) {
   case X86::CMOV16rm: case X86::CMOV32rm: case X86::CMOV64rm:
     return static_cast<X86::CondCode>(
         MI.getOperand(MI.getDesc().getNumOperands() - 1).getImm());
-  }
-}
-
-unsigned X86::GetCondBranchFromCond(X86::CondCode CC) {
-  switch (CC) {
-  default: llvm_unreachable("Illegal condition code!");
-  case X86::COND_E:  return X86::JE_1;
-  case X86::COND_NE: return X86::JNE_1;
-  case X86::COND_L:  return X86::JL_1;
-  case X86::COND_LE: return X86::JLE_1;
-  case X86::COND_G:  return X86::JG_1;
-  case X86::COND_GE: return X86::JGE_1;
-  case X86::COND_B:  return X86::JB_1;
-  case X86::COND_BE: return X86::JBE_1;
-  case X86::COND_A:  return X86::JA_1;
-  case X86::COND_AE: return X86::JAE_1;
-  case X86::COND_S:  return X86::JS_1;
-  case X86::COND_NS: return X86::JNS_1;
-  case X86::COND_P:  return X86::JP_1;
-  case X86::COND_NP: return X86::JNP_1;
-  case X86::COND_O:  return X86::JO_1;
-  case X86::COND_NO: return X86::JNO_1;
   }
 }
 
@@ -2263,7 +2228,7 @@ void X86InstrInfo::replaceBranchWithTailCall(
     if (!I->isBranch())
       assert(0 && "Can't find the branch to replace!");
 
-    X86::CondCode CC = X86::getCondFromBranchOpc(I->getOpcode());
+    X86::CondCode CC = X86::getCondFromBranch(*I);
     assert(BranchCond.size() == 1);
     if (CC != BranchCond[0].getImm())
       continue;
@@ -2370,13 +2335,13 @@ bool X86InstrInfo::AnalyzeBranchImpl(
     }
 
     // Handle conditional branches.
-    X86::CondCode BranchCode = X86::getCondFromBranchOpc(I->getOpcode());
+    X86::CondCode BranchCode = X86::getCondFromBranch(*I);
     if (BranchCode == X86::COND_INVALID)
       return true;  // Can't handle indirect branch.
 
     // In practice we should never have an undef eflags operand, if we do
     // abort here as we are not prepared to preserve the flag.
-    if (I->getOperand(1).isUndef())
+    if (I->findRegisterUseOperand(X86::EFLAGS)->isUndef())
       return true;
 
     // Working from the bottom, handle the first conditional branch.
@@ -2402,11 +2367,11 @@ bool X86InstrInfo::AnalyzeBranchImpl(
         // Which is a bit more efficient.
         // We conditionally jump to the fall-through block.
         BranchCode = GetOppositeBranchCondition(BranchCode);
-        unsigned JNCC = GetCondBranchFromCond(BranchCode);
         MachineBasicBlock::iterator OldInst = I;
 
-        BuildMI(MBB, UnCondBrIter, MBB.findDebugLoc(I), get(JNCC))
-          .addMBB(UnCondBrIter->getOperand(0).getMBB());
+        BuildMI(MBB, UnCondBrIter, MBB.findDebugLoc(I), get(X86::JCC_1))
+          .addMBB(UnCondBrIter->getOperand(0).getMBB())
+          .addImm(BranchCode);
         BuildMI(MBB, UnCondBrIter, MBB.findDebugLoc(I), get(X86::JMP_1))
           .addMBB(TargetBB);
 
@@ -2571,7 +2536,7 @@ unsigned X86InstrInfo::removeBranch(MachineBasicBlock &MBB,
     if (I->isDebugInstr())
       continue;
     if (I->getOpcode() != X86::JMP_1 &&
-        X86::getCondFromBranchOpc(I->getOpcode()) == X86::COND_INVALID)
+        X86::getCondFromBranch(*I) == X86::COND_INVALID)
       break;
     // Remove the branch.
     I->eraseFromParent();
@@ -2610,9 +2575,9 @@ unsigned X86InstrInfo::insertBranch(MachineBasicBlock &MBB,
   switch (CC) {
   case X86::COND_NE_OR_P:
     // Synthesize NE_OR_P with two branches.
-    BuildMI(&MBB, DL, get(X86::JNE_1)).addMBB(TBB);
+    BuildMI(&MBB, DL, get(X86::JCC_1)).addMBB(TBB).addImm(X86::COND_NE);
     ++Count;
-    BuildMI(&MBB, DL, get(X86::JP_1)).addMBB(TBB);
+    BuildMI(&MBB, DL, get(X86::JCC_1)).addMBB(TBB).addImm(X86::COND_P);
     ++Count;
     break;
   case X86::COND_E_AND_NP:
@@ -2623,14 +2588,13 @@ unsigned X86InstrInfo::insertBranch(MachineBasicBlock &MBB,
                     "body is a fall-through.");
     }
     // Synthesize COND_E_AND_NP with two branches.
-    BuildMI(&MBB, DL, get(X86::JNE_1)).addMBB(FBB);
+    BuildMI(&MBB, DL, get(X86::JCC_1)).addMBB(FBB).addImm(X86::COND_NE);
     ++Count;
-    BuildMI(&MBB, DL, get(X86::JNP_1)).addMBB(TBB);
+    BuildMI(&MBB, DL, get(X86::JCC_1)).addMBB(TBB).addImm(X86::COND_NP);
     ++Count;
     break;
   default: {
-    unsigned Opc = GetCondBranchFromCond(CC);
-    BuildMI(&MBB, DL, get(Opc)).addMBB(TBB);
+    BuildMI(&MBB, DL, get(X86::JCC_1)).addMBB(TBB).addImm(CC);
     ++Count;
   }
   }
@@ -3541,7 +3505,7 @@ bool X86InstrInfo::optimizeCompareInstr(MachineInstr &CmpInstr, unsigned SrcReg,
     if (IsCmpZero || IsSwapped) {
       // We decode the condition code from opcode.
       if (Instr.isBranch())
-        OldCC = X86::getCondFromBranchOpc(Instr.getOpcode());
+        OldCC = X86::getCondFromBranch(Instr);
       else {
         OldCC = X86::getCondFromSETCC(Instr);
         if (OldCC == X86::COND_INVALID)
@@ -3648,11 +3612,8 @@ bool X86InstrInfo::optimizeCompareInstr(MachineInstr &CmpInstr, unsigned SrcReg,
 
   // Modify the condition code of instructions in OpsToUpdate.
   for (auto &Op : OpsToUpdate) {
-    if (Op.first->isBranch())
-      Op.first->setDesc(get(GetCondBranchFromCond(Op.second)));
-    else
-      Op.first->getOperand(Op.first->getDesc().getNumOperands() - 1)
-          .setImm(Op.second);
+    Op.first->getOperand(Op.first->getDesc().getNumOperands() - 1)
+        .setImm(Op.second);
   }
   return true;
 }

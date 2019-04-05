@@ -689,7 +689,7 @@ void X86CmovConverterPass::convertCmovInstsToBranches(
   MBB->addSuccessor(SinkMBB);
 
   // Create the conditional branch instruction.
-  BuildMI(MBB, DL, TII->get(X86::GetCondBranchFromCond(CC))).addMBB(SinkMBB);
+  BuildMI(MBB, DL, TII->get(X86::JCC_1)).addMBB(SinkMBB).addImm(CC);
 
   // Add the sink block to the false block successors.
   FalseMBB->addSuccessor(SinkMBB);

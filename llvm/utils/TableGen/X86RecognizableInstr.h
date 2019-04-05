@@ -101,6 +101,7 @@ namespace X86Local {
     RawFrmDstSrc  = 6,
     RawFrmImm8    = 7,
     RawFrmImm16   = 8,
+    AddCCFrm      = 9,
     MRMDestMem     = 32,
     MRMSrcMem      = 33,
     MRMSrcMem4VOp3 = 34,

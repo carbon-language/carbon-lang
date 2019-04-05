@@ -61,7 +61,7 @@ body:             |
     $cl = AND8rr killed $cl, killed $bl, implicit-def dead $eflags
     CMP32ri8 $ebp, -1, implicit-def $eflags
     $edx = MOV32ri 0
-    JE_1 %bb.3, implicit $eflags
+    JCC_1 %bb.3, 4, implicit $eflags
 
   bb.2:
     liveins: $cl, $eax, $ebp, $esi

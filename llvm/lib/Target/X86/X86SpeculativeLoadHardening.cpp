@@ -660,7 +660,7 @@ X86SpeculativeLoadHardeningPass::collectBlockCondInfo(MachineFunction &MF) {
       //   jmpq *%rax
       // ```
       // We still want to harden the edge to `L1`.
-      if (X86::getCondFromBranchOpc(MI.getOpcode()) == X86::COND_INVALID) {
+      if (X86::getCondFromBranch(MI) == X86::COND_INVALID) {
         Info.CondBrs.clear();
         Info.UncondBr = &MI;
         continue;
@@ -789,7 +789,7 @@ X86SpeculativeLoadHardeningPass::tracePredStateThroughCFG(
       MachineBasicBlock &Succ = *CondBr->getOperand(0).getMBB();
       int &SuccCount = SuccCounts[&Succ];
 
-      X86::CondCode Cond = X86::getCondFromBranchOpc(CondBr->getOpcode());
+      X86::CondCode Cond = X86::getCondFromBranch(*CondBr);
       X86::CondCode InvCond = X86::GetOppositeBranchCondition(Cond);
       UncondCodeSeq.push_back(Cond);
 

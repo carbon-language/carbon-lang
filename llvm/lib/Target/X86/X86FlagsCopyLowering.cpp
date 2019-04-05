@@ -251,13 +251,13 @@ static MachineBasicBlock &splitBlock(MachineBasicBlock &MBB,
          "Split instruction must be in the split block!");
   assert(SplitI.isBranch() &&
          "Only designed to split a tail of branch instructions!");
-  assert(X86::getCondFromBranchOpc(SplitI.getOpcode()) != X86::COND_INVALID &&
+  assert(X86::getCondFromBranch(SplitI) != X86::COND_INVALID &&
          "Must split on an actual jCC instruction!");
 
   // Dig out the previous instruction to the split point.
   MachineInstr &PrevI = *std::prev(SplitI.getIterator());
   assert(PrevI.isBranch() && "Must split after a branch!");
-  assert(X86::getCondFromBranchOpc(PrevI.getOpcode()) != X86::COND_INVALID &&
+  assert(X86::getCondFromBranch(PrevI) != X86::COND_INVALID &&
          "Must split after an actual jCC instruction!");
   assert(!std::prev(PrevI.getIterator())->isTerminator() &&
          "Must only have this one terminator prior to the split!");
@@ -587,13 +587,13 @@ bool X86FlagsCopyLoweringPass::runOnMachineFunction(MachineFunction &MF) {
         // branch folding or black placement. As a consequence, we get to deal
         // with the simpler formulation of conditional branches followed by tail
         // calls.
-        if (X86::getCondFromBranchOpc(MI.getOpcode()) != X86::COND_INVALID) {
+        if (X86::getCondFromBranch(MI) != X86::COND_INVALID) {
           auto JmpIt = MI.getIterator();
           do {
             JmpIs.push_back(&*JmpIt);
             ++JmpIt;
           } while (JmpIt != UseMBB.instr_end() &&
-                   X86::getCondFromBranchOpc(JmpIt->getOpcode()) !=
+                   X86::getCondFromBranch(*JmpIt) !=
                        X86::COND_INVALID);
           break;
         }
@@ -863,7 +863,7 @@ void X86FlagsCopyLoweringPass::rewriteCondJmp(
     MachineBasicBlock &TestMBB, MachineBasicBlock::iterator TestPos,
     DebugLoc TestLoc, MachineInstr &JmpI, CondRegArray &CondRegs) {
   // First get the register containing this specific condition.
-  X86::CondCode Cond = X86::getCondFromBranchOpc(JmpI.getOpcode());
+  X86::CondCode Cond = X86::getCondFromBranch(JmpI);
   unsigned CondReg;
   bool Inverted;
   std::tie(CondReg, Inverted) =
@@ -876,10 +876,8 @@ void X86FlagsCopyLoweringPass::rewriteCondJmp(
 
   // Rewrite the jump to use the !ZF flag from the test, and kill its use of
   // flags afterward.
-  JmpI.setDesc(TII->get(
-      X86::GetCondBranchFromCond(Inverted ? X86::COND_E : X86::COND_NE)));
-  const int ImplicitEFLAGSOpIdx = 1;
-  JmpI.getOperand(ImplicitEFLAGSOpIdx).setIsKill(true);
+  JmpI.getOperand(1).setImm(Inverted ? X86::COND_E : X86::COND_NE);
+  JmpI.findRegisterUseOperand(X86::EFLAGS)->setIsKill(true);
   LLVM_DEBUG(dbgs() << "    fixed jCC: "; JmpI.dump());
 }
 

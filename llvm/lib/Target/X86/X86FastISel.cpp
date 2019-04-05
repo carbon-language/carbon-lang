@@ -1690,11 +1690,9 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
       }
 
       bool SwapArgs;
-      unsigned BranchOpc;
       std::tie(CC, SwapArgs) = X86::getX86ConditionCode(Predicate);
       assert(CC <= X86::LAST_VALID_COND && "Unexpected condition code.");
 
-      BranchOpc = X86::GetCondBranchFromCond(CC);
       if (SwapArgs)
         std::swap(CmpLHS, CmpRHS);
 
@@ -1702,14 +1700,14 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
       if (!X86FastEmitCompare(CmpLHS, CmpRHS, VT, CI->getDebugLoc()))
         return false;
 
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(BranchOpc))
-        .addMBB(TrueMBB);
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::JCC_1))
+        .addMBB(TrueMBB).addImm(CC);
 
       // X86 requires a second branch to handle UNE (and OEQ, which is mapped
       // to UNE above).
       if (NeedExtraBranch) {
-        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::JP_1))
-          .addMBB(TrueMBB);
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::JCC_1))
+          .addMBB(TrueMBB).addImm(X86::COND_P);
       }
 
       finishCondBranch(BI->getParent(), TrueMBB, FalseMBB);
@@ -1736,14 +1734,14 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(TestOpc))
           .addReg(OpReg).addImm(1);
 
-        unsigned JmpOpc = X86::JNE_1;
+        unsigned JmpCond = X86::COND_NE;
         if (FuncInfo.MBB->isLayoutSuccessor(TrueMBB)) {
           std::swap(TrueMBB, FalseMBB);
-          JmpOpc = X86::JE_1;
+          JmpCond = X86::COND_E;
         }
 
-        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(JmpOpc))
-          .addMBB(TrueMBB);
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::JCC_1))
+          .addMBB(TrueMBB).addImm(JmpCond);
 
         finishCondBranch(BI->getParent(), TrueMBB, FalseMBB);
         return true;
@@ -1756,10 +1754,8 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
     if (TmpReg == 0)
       return false;
 
-    unsigned BranchOpc = X86::GetCondBranchFromCond(CC);
-
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(BranchOpc))
-      .addMBB(TrueMBB);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::JCC_1))
+      .addMBB(TrueMBB).addImm(CC);
     finishCondBranch(BI->getParent(), TrueMBB, FalseMBB);
     return true;
   }
@@ -1783,8 +1779,8 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::TEST8ri))
       .addReg(OpReg)
       .addImm(1);
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::JNE_1))
-    .addMBB(TrueMBB);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::JCC_1))
+    .addMBB(TrueMBB).addImm(X86::COND_NE);
   finishCondBranch(BI->getParent(), TrueMBB, FalseMBB);
   return true;
 }

@@ -495,6 +495,13 @@ void RecognizableInstr::emitInstructionSpecifier() {
     HANDLE_OPERAND(opcodeModifier)
     HANDLE_OPTIONAL(relocation)
     break;
+  case X86Local::AddCCFrm:
+    // Operand 1 (optional) is an address or immediate.
+    assert(numPhysicalOperands == 2 &&
+           "Unexpected number of operands for AddCCFrm");
+    HANDLE_OPERAND(relocation)
+    HANDLE_OPERAND(opcodeModifier)
+    break;
   case X86Local::MRMDestReg:
     // Operand 1 is a register operand in the R/M field.
     // - In AVX512 there may be a mask operand here -
@@ -749,6 +756,7 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
   case X86Local::RawFrmDstSrc:
   case X86Local::RawFrmImm8:
   case X86Local::RawFrmImm16:
+  case X86Local::AddCCFrm:
     filter = llvm::make_unique<DumbFilter>();
     break;
   case X86Local::MRMDestReg:
@@ -800,7 +808,7 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
 
   if (Form == X86Local::AddRegFrm || Form == X86Local::MRMSrcRegCC ||
       Form == X86Local::MRMSrcMemCC || Form == X86Local::MRMXrCC ||
-      Form == X86Local::MRMXmCC) {
+      Form == X86Local::MRMXmCC || Form == X86Local::AddCCFrm) {
     unsigned Count = Form == X86Local::AddRegFrm ? 8 : 16;
     assert(((opcodeToSet % Count) == 0) && "ADDREG_FRM opcode not aligned");
 

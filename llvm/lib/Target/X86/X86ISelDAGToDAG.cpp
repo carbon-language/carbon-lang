@@ -2324,21 +2324,19 @@ bool X86DAGToDAGISel::isSExtAbsoluteSymbolRef(unsigned Width, SDNode *N) const {
 static X86::CondCode getCondFromNode(SDNode *N) {
   assert(N->isMachineOpcode() && "Unexpected node");
   X86::CondCode CC = X86::COND_INVALID;
-  if (CC == X86::COND_INVALID)
-    CC = X86::getCondFromBranchOpc(N->getMachineOpcode());
-  if (CC == X86::COND_INVALID) {
-    unsigned Opc = N->getMachineOpcode();
-    if (Opc == X86::SETCCr)
-      CC = static_cast<X86::CondCode>(N->getConstantOperandVal(0));
-    else if (Opc == X86::SETCCm)
-      CC = static_cast<X86::CondCode>(N->getConstantOperandVal(5));
-    else if (Opc == X86::CMOV16rr || Opc == X86::CMOV32rr ||
-             Opc == X86::CMOV64rr)
-      CC = static_cast<X86::CondCode>(N->getConstantOperandVal(2));
-    else if (Opc == X86::CMOV16rm || Opc == X86::CMOV32rm ||
-             Opc == X86::CMOV64rm)
-      CC = static_cast<X86::CondCode>(N->getConstantOperandVal(6));
-  }
+  unsigned Opc = N->getMachineOpcode();
+  if (Opc == X86::JCC_1)
+    CC = static_cast<X86::CondCode>(N->getConstantOperandVal(1));
+  else if (Opc == X86::SETCCr)
+    CC = static_cast<X86::CondCode>(N->getConstantOperandVal(0));
+  else if (Opc == X86::SETCCm)
+    CC = static_cast<X86::CondCode>(N->getConstantOperandVal(5));
+  else if (Opc == X86::CMOV16rr || Opc == X86::CMOV32rr ||
+           Opc == X86::CMOV64rr)
+    CC = static_cast<X86::CondCode>(N->getConstantOperandVal(2));
+  else if (Opc == X86::CMOV16rm || Opc == X86::CMOV32rm ||
+           Opc == X86::CMOV64rm)
+    CC = static_cast<X86::CondCode>(N->getConstantOperandVal(6));
 
   return CC;
 }

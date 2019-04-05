@@ -1273,6 +1273,8 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
   if ((TSFlags & X86II::OpMapMask) == X86II::ThreeDNow)
     BaseOpcode = 0x0F;   // Weird 3DNow! encoding.
 
+  unsigned OpcodeOffset = 0;
+
   uint64_t Form = TSFlags & X86II::FormMask;
   switch (Form) {
   default: errs() << "FORM: " << Form << "\n";
@@ -1319,8 +1321,14 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     EmitByte(BaseOpcode, CurByte, OS);
     break;
   }
-  case X86II::RawFrm: {
-    EmitByte(BaseOpcode, CurByte, OS);
+  case X86II::AddCCFrm: {
+    // This will be added to the opcode in the fallthrough.
+    OpcodeOffset = MI.getOperand(NumOps - 1).getImm();
+    assert(OpcodeOffset < 16 && "Unexpected opcode offset!");
+    --NumOps; // Drop the operand from the end.
+    LLVM_FALLTHROUGH;
+  case X86II::RawFrm:
+    EmitByte(BaseOpcode + OpcodeOffset, CurByte, OS);
 
     if (!is64BitMode(STI) || !isPCRel32Branch(MI))
       break;

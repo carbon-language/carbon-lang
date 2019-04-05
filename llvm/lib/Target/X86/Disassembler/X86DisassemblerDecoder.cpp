@@ -1847,7 +1847,7 @@ static int readOperands(struct InternalInstruction* insn) {
         return -1;
       break;
     case ENCODING_CC:
-      insn->immediates[0] = insn->opcode & 0xf;
+      insn->immediates[1] = insn->opcode & 0xf;
       break;
     case ENCODING_FP:
       break;
