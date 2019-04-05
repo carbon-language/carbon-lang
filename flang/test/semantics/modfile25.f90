@@ -39,7 +39,6 @@ module m1
   end subroutine
 end module m1
 !Expect: m1.mod
-! !mod$ v1 sum:7a360903510189bc
 ! module m1
 ! integer(8),parameter::a0s(1_8:)=[Integer(8)::]
 ! real(4)::a1(1_8:5_8,1_8:5_8,1_8:5_8)
