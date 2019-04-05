@@ -54,6 +54,23 @@ public:
   using StatementTrait = std::true_type;
 };
 
+// Some uses of a Statement should be constrained.  These contraints are imposed
+// at compile time.
+template<typename A = Stmt_impl> class QualifiedStmt {
+public:
+  QualifiedStmt() = delete;
+  template<typename B, std::enable_if_t<std::is_base_of_v<A, B>, int> = 0>
+  QualifiedStmt(Statement *stmt, const B &) : stmt{stmt} {}
+
+  // create a stub, where stmt == nullptr
+  QualifiedStmt(std::nullptr_t) : stmt{nullptr} {}
+  operator Statement *() const { return stmt; }
+  operator bool() const { return stmt; }
+  operator A *() const;
+
+  Statement *stmt;
+};
+
 // Every basic block must end in a terminator
 class TerminatorStmt_impl : virtual public Stmt_impl {
 public:
@@ -65,15 +82,18 @@ public:
 // Transfer control out of the current procedure
 class ReturnStmt : public TerminatorStmt_impl {
 public:
-  static ReturnStmt Create(Statement *stmt) { return ReturnStmt{stmt}; }
-  static ReturnStmt Create() { return ReturnStmt{nullptr}; }
+  static ReturnStmt Create(QualifiedStmt<ApplyExprStmt> stmt) {
+    return ReturnStmt{stmt};
+  }
+  static ReturnStmt Create() { return ReturnStmt{}; }
   std::list<BasicBlock *> succ_blocks() const override { return {}; }
   bool has_value() const { return value_; }
-  Statement *value() const;
+  Statement *value() const { return value_; }
 
 private:
-  ApplyExprStmt *value_;
-  explicit ReturnStmt(Statement *exp);
+  QualifiedStmt<ApplyExprStmt> value_;
+  explicit ReturnStmt(QualifiedStmt<ApplyExprStmt> exp);
+  explicit ReturnStmt();
 };
 
 // Encodes two-way conditional branch and one-way absolute branch
@@ -265,12 +285,15 @@ protected:
 class ApplyExprStmt : public ActionStmt_impl {
 public:
   static ApplyExprStmt Create(const Expression *e) { return ApplyExprStmt{*e}; }
-  static ApplyExprStmt Create(Expression &&e) { return ApplyExprStmt{e}; }
+  static ApplyExprStmt Create(Expression &&e) {
+    return ApplyExprStmt{std::move(e)};
+  }
 
   Expression expression() const { return expression_; }
 
 private:
   explicit ApplyExprStmt(const Expression &e) : expression_{e} {}
+  explicit ApplyExprStmt(Expression &&e) : expression_{e} {}
 
   Expression expression_;
 };
@@ -327,15 +350,15 @@ private:
 // Deallocate storage (per DEALLOCATE)
 class DeallocateInsn : public MemoryStmt_impl {
 public:
-  static DeallocateInsn Create(AllocateInsn *alloc) {
+  static DeallocateInsn Create(QualifiedStmt<AllocateInsn> alloc) {
     return DeallocateInsn{alloc};
   }
 
-  Statement *alloc() const;
+  Statement *alloc() const { return alloc_; }
 
 private:
-  explicit DeallocateInsn(AllocateInsn *alloc) : alloc_{alloc} {}
-  AllocateInsn *alloc_;
+  explicit DeallocateInsn(QualifiedStmt<AllocateInsn> alloc) : alloc_{alloc} {}
+  QualifiedStmt<AllocateInsn> alloc_;
 };
 
 // Allocate space for a temporary by its Type. The lifetime of the temporary
@@ -378,12 +401,11 @@ private:
 // Store value(s) from an applied expression to a location
 class StoreInsn : public MemoryStmt_impl {
 public:
-  using ValueType =
-      std::variant<Value, ApplyExprStmt *, Addressable_impl *, BasicBlock *>;
-  template<typename T> static StoreInsn Create(T *addr, T *value) {
-    return StoreInsn{addr, value};
-  }
-  template<typename T> static StoreInsn Create(T *addr, BasicBlock *value) {
+  using ValueType = std::variant<Value, QualifiedStmt<ApplyExprStmt>,
+      QualifiedStmt<Addressable_impl>, BasicBlock *>;
+
+  template<typename A>
+  static StoreInsn Create(QualifiedStmt<Addressable_impl> addr, A value) {
     return StoreInsn{addr, value};
   }
 
@@ -391,12 +413,14 @@ public:
   ValueType value() const { return value_; }
 
 private:
-  explicit StoreInsn(Value addr, Value val);
-  explicit StoreInsn(Value addr, BasicBlock *val);
-  explicit StoreInsn(Statement *addr, Statement *val);
-  explicit StoreInsn(Statement *addr, BasicBlock *val);
+  explicit StoreInsn(QualifiedStmt<Addressable_impl> addr, Value val);
+  explicit StoreInsn(
+      QualifiedStmt<Addressable_impl> addr, QualifiedStmt<ApplyExprStmt> val);
+  explicit StoreInsn(QualifiedStmt<Addressable_impl> addr,
+      QualifiedStmt<Addressable_impl> val);
+  explicit StoreInsn(QualifiedStmt<Addressable_impl> addr, BasicBlock *val);
 
-  Addressable_impl *address_;
+  QualifiedStmt<Addressable_impl> address_;
   ValueType value_;
 };
 
@@ -557,20 +581,11 @@ public:
     parent->insertBefore(this);
   }
   std::string dump() const;
-
-  // g++/clang++ will optimize this to a simple register copy
-  // Every Stmt_impl is wrapped in and the first data member of a Statement;
-  // therefore, a pointer to one or the other is bitwise identical.
-  // This checks that this assumption is, in fact, true.
-  static Statement *From(Stmt_impl *stmt) {
-    static Statement s{nullptr, UnreachableStmt::Create()};
-    auto *result{reinterpret_cast<Statement *>(reinterpret_cast<char *>(stmt) -
-        (reinterpret_cast<char *>(&s.u) - reinterpret_cast<char *>(&s)))};
-    CHECK(result == reinterpret_cast<Statement *>(stmt) &&
-        "expecting pointers to be equal");
-    return result;
-  }
 };
+
+template<typename A> inline QualifiedStmt<A>::operator A *() const {
+  return reinterpret_cast<A *>(&stmt->u);
+}
 
 inline std::list<BasicBlock *> succ_list(BasicBlock &block) {
   if (auto *terminator{block.terminator()}) {
@@ -579,11 +594,6 @@ inline std::list<BasicBlock *> succ_list(BasicBlock &block) {
   }
   // CHECK(false && "block does not have terminator");
   return {};
-}
-
-inline Statement *ReturnStmt::value() const { return Statement::From(value_); }
-inline Statement *DeallocateInsn::alloc() const {
-  return Statement::From(alloc_);
 }
 
 inline ApplyExprStmt *GetApplyExpr(Statement *stmt) {

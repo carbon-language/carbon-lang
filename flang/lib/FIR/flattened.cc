@@ -272,10 +272,11 @@ void LabelOp::dump() const { DebugChannel() << "label_" << get() << ":\n"; }
 
 void GotoOp::dump() const {
   DebugChannel() << "\tgoto %label_" << target << " ["
-                 << std::visit(common::visitors{
-                                   [](ArtificialJump) { return ""s; },
-                                   [&](auto *) { return GetSource(this); },
-                               },
+                 << std::visit(
+                        common::visitors{
+                            [](ArtificialJump) { return ""s; },
+                            [&](auto *) { return GetSource(this); },
+                        },
                         u)
                  << "]\n";
 }

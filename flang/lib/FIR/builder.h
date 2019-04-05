@@ -20,21 +20,32 @@
 
 namespace Fortran::FIR {
 
+/// Helper class for building FIR statements
 struct FIRBuilder {
   explicit FIRBuilder(BasicBlock &block)
     : cursorRegion_{block.getParent()}, cursorBlock_{&block} {}
+
   template<typename A> Statement *Insert(A &&s) {
     CHECK(GetInsertionPoint());
-    auto *statement{new Statement(GetInsertionPoint(), s)};
+    auto *statement{new Statement(GetInsertionPoint(), std::forward<A>(s))};
     return statement;
   }
+
+  template<typename A, typename B> QualifiedStmt<A> QualifiedInsert(B &&s) {
+    CHECK(GetInsertionPoint());
+    auto *statement{new Statement(GetInsertionPoint(), std::forward<B>(s))};
+    return QualifiedStmt<A>{statement, s};
+  }
+
   template<typename A> Statement *InsertTerminator(A &&s) {
-    auto *stmt{Insert(s)};
+    auto *stmt{Insert(std::forward<A>(s))};
     for (auto *block : s.succ_blocks()) {
       block->addPred(GetInsertionPoint());
     }
     return stmt;
   }
+
+  // manage the insertion point
   void SetInsertionPoint(BasicBlock *bb) {
     cursorBlock_ = bb;
     cursorRegion_ = bb->getParent();
@@ -44,14 +55,16 @@ struct FIRBuilder {
 
   BasicBlock *GetInsertionPoint() const { return cursorBlock_; }
 
-  Statement *CreateAddr(const Expression *e) {
-    return Insert(LocateExprStmt::Create(e));
+  // create the various statements
+  QualifiedStmt<Addressable_impl> CreateAddr(const Expression *e) {
+    return QualifiedInsert<Addressable_impl>(LocateExprStmt::Create(e));
   }
-  Statement *CreateAddr(Expression &&e) {
-    return Insert(LocateExprStmt::Create(std::move(e)));
+  QualifiedStmt<Addressable_impl> CreateAddr(Expression &&e) {
+    return QualifiedInsert<Addressable_impl>(
+        LocateExprStmt::Create(std::move(e)));
   }
-  Statement *CreateAlloc(Type type) {
-    return Insert(AllocateInsn::Create(type));
+  QualifiedStmt<AllocateInsn> CreateAlloc(Type type) {
+    return QualifiedInsert<AllocateInsn>(AllocateInsn::Create(type));
   }
   Statement *CreateBranch(BasicBlock *block) {
     return InsertTerminator(BranchStmt::Create(block));
@@ -64,7 +77,7 @@ struct FIRBuilder {
       Statement *cond, BasicBlock *trueBlock, BasicBlock *falseBlock) {
     return InsertTerminator(BranchStmt::Create(cond, trueBlock, falseBlock));
   }
-  Statement *CreateDealloc(AllocateInsn *alloc) {
+  Statement *CreateDealloc(QualifiedStmt<AllocateInsn> alloc) {
     return Insert(DeallocateInsn::Create(alloc));
   }
   Statement *CreateExpr(const Expression *e) {
@@ -76,6 +89,12 @@ struct FIRBuilder {
   ApplyExprStmt *MakeAsExpr(const Expression *e) {
     return GetApplyExpr(CreateExpr(e));
   }
+  QualifiedStmt<ApplyExprStmt> QualifiedCreateExpr(const Expression *e) {
+    return QualifiedInsert<ApplyExprStmt>(ApplyExprStmt::Create(e));
+  }
+  QualifiedStmt<ApplyExprStmt> QualifiedCreateExpr(Expression &&e) {
+    return QualifiedInsert<ApplyExprStmt>(ApplyExprStmt::Create(std::move(e)));
+  }
   Statement *CreateIndirectBr(Variable *v, const std::vector<BasicBlock *> &p) {
     return InsertTerminator(IndirectBranchStmt::Create(v, p));
   }
@@ -85,23 +104,27 @@ struct FIRBuilder {
   Statement *CreateLoad(Statement *addr) {
     return Insert(LoadInsn::Create(addr));
   }
-  Statement *CreateLocal(Type type, const Expression &expr, int alignment = 0) {
-    return Insert(AllocateLocalInsn::Create(type, expr, alignment));
+  QualifiedStmt<Addressable_impl> CreateLocal(
+      Type type, const Expression &expr, int alignment = 0) {
+    return QualifiedInsert<Addressable_impl>(
+        AllocateLocalInsn::Create(type, expr, alignment));
   }
   Statement *CreateNullify(Statement *s) {
     return Insert(DisassociateInsn::Create(s));
   }
-  Statement *CreateReturn(Statement *expr) {
+  Statement *CreateReturn(QualifiedStmt<ApplyExprStmt> expr) {
     return InsertTerminator(ReturnStmt::Create(expr));
   }
   Statement *CreateRuntimeCall(
       RuntimeCallType call, RuntimeCallArguments &&arguments) {
     return Insert(RuntimeStmt::Create(call, std::move(arguments)));
   }
-  Statement *CreateStore(Statement *addr, Statement *value) {
+  Statement *CreateStore(
+      QualifiedStmt<Addressable_impl> addr, Statement *value) {
     return Insert(StoreInsn::Create(addr, value));
   }
-  Statement *CreateStore(Statement *addr, BasicBlock *value) {
+  Statement *CreateStore(
+      QualifiedStmt<Addressable_impl> addr, BasicBlock *value) {
     return Insert(StoreInsn::Create(addr, value));
   }
   Statement *CreateSwitch(

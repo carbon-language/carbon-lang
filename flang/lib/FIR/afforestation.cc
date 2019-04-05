@@ -340,7 +340,7 @@ public:
         name, {}, std::move(details))};
     return {name, sym};
   }
-  Statement *CreateTemp(TypeRep &&spec) {
+  QualifiedStmt<Addressable_impl> CreateTemp(TypeRep &&spec) {
     TypeRep declSpec{std::move(spec)};
     auto temp{MakeTemp(&declSpec)};
     auto expr{ToExpression(temp)};
@@ -403,11 +403,11 @@ public:
     // TODO: build an expression for the allocation
     return nullptr;
   }
-  AllocateInsn *CreateDeallocationValue(
+  QualifiedStmt<AllocateInsn> CreateDeallocationValue(
       const parser::AllocateObject *allocateObject,
       const parser::DeallocateStmt *statement) {
     // TODO: build an expression for the deallocation
-    return nullptr;
+    return QualifiedStmt<AllocateInsn>{nullptr};
   }
 
   // IO argument translations ...
@@ -627,7 +627,7 @@ public:
   void handleIntrinsicAssignmentStmt(const parser::AssignmentStmt &stmt) {
     // TODO: check if allocation or reallocation should happen, etc.
     auto *value{builder_->CreateExpr(ExprRef(std::get<parser::Expr>(stmt.t)))};
-    auto *addr{
+    auto addr{
         builder_->CreateAddr(ToExpression(std::get<parser::Variable>(stmt.t)))};
     builder_->CreateStore(addr, value);
   }
@@ -770,11 +770,11 @@ public:
                 std::visit(
                     common::visitors{
                         [&](const parser::Name &n) {
-                          auto *s{builder_->CreateAddr(ToExpression(n))};
+                          auto s{builder_->CreateAddr(ToExpression(n))};
                           builder_->CreateNullify(s);
                         },
                         [&](const parser::StructureComponent &sc) {
-                          auto *s{builder_->CreateAddr(ToExpression(sc))};
+                          auto s{builder_->CreateAddr(ToExpression(sc))};
                           builder_->CreateNullify(s);
                         },
                     },
@@ -787,7 +787,7 @@ public:
             },
             [&](const common::Indirection<parser::PointerAssignmentStmt> &s) {
               auto *value{CreatePointerValue(s.value())};
-              auto *addr{builder_->CreateAddr(
+              auto addr{builder_->CreateAddr(
                   ExprRef(std::get<parser::Expr>(s.value().t)))};
               builder_->CreateStore(addr, value);
             },
@@ -850,7 +850,7 @@ public:
               WRONG_PATH();
             },
             [&](const common::Indirection<parser::AssignStmt> &s) {
-              auto *addr{builder_->CreateAddr(
+              auto addr{builder_->CreateAddr(
                   ToExpression(std::get<parser::Name>(s.value().t)))};
               auto *block{blockMap_
                               .find(flat::FetchLabel(
@@ -875,13 +875,14 @@ public:
 
   // DO loop handlers
   struct DoBoundsInfo {
-    Statement *doVariable;
-    Statement *counter;
+    QualifiedStmt<Addressable_impl> doVariable;
+    QualifiedStmt<Addressable_impl> counter;
     Statement *stepExpr;
     Statement *condition;
   };
   void PushDoContext(const parser::NonLabelDoStmt *doStmt,
-      Statement *doVar = nullptr, Statement *counter = nullptr,
+      QualifiedStmt<Addressable_impl> doVar = nullptr,
+      QualifiedStmt<Addressable_impl> counter = nullptr,
       Statement *stepExp = nullptr) {
     doMap_.emplace(doStmt, DoBoundsInfo{doVar, counter, stepExp});
   }
@@ -938,7 +939,7 @@ public:
               [](const parser::Expr &e) { return *ExprRef(e); },
           },
           selector.u))};
-      auto *name{
+      auto name{
           builder_->CreateAddr(ToExpression(std::get<parser::Name>(assoc.t)))};
       builder_->CreateStore(name, expr);
     }
@@ -969,7 +970,7 @@ public:
       std::visit(
           common::visitors{
               [&](const parser::LoopBounds<parser::ScalarIntExpr> &bounds) {
-                auto *name{builder_->CreateAddr(
+                auto name{builder_->CreateAddr(
                     ToExpression(bounds.name.thing.thing))};
                 // evaluate e1, e2 [, e3] ...
                 auto *e1{
@@ -984,7 +985,7 @@ public:
                 }
                 // name <- e1
                 builder_->CreateStore(name, e1);
-                auto *tripCounter{CreateTemp(GetDefaultIntegerType())};
+                auto tripCounter{CreateTemp(GetDefaultIntegerType())};
                 // See 11.1.7.4.1, para. 1, item (3)
                 // totalTrips ::= iteration count = a
                 //   where a = (e2 - e1 + e3) / e3 if a > 0 and 0 otherwise
@@ -1124,11 +1125,12 @@ public:
                         [&](const parser::ReturnStmt *s) {
                           // alt-return
                           if (s->v) {
-                            auto *app{builder_->CreateExpr(
-                                ExprRef(s->v->thing.thing))};
+                            auto *exp{ExprRef(s->v->thing.thing)};
+                            auto app{builder_->QualifiedCreateExpr(exp)};
                             builder_->CreateReturn(app);
                           } else {
-                            auto *zero{builder_->CreateExpr(CreateConstant(0))};
+                            auto zero{builder_->QualifiedCreateExpr(
+                                CreateConstant(0))};
                             builder_->CreateReturn(zero);
                           }
                         },

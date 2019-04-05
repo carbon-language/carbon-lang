@@ -54,9 +54,8 @@ static std::list<BasicBlock *> SuccBlocks(
   return result.second;
 }
 
-ReturnStmt::ReturnStmt(Statement *exp) : value_{GetApplyExpr(exp)} {
-  CHECK(value_);
-}
+ReturnStmt::ReturnStmt(QualifiedStmt<ApplyExprStmt> exp) : value_{exp} {}
+ReturnStmt::ReturnStmt() : value_{QualifiedStmt<ApplyExprStmt>{nullptr}} {}
 
 SwitchStmt::SwitchStmt(const Value &cond, const ValueSuccPairListType &args)
   : condition_{cond} {
@@ -126,19 +125,25 @@ LoadInsn::LoadInsn(Statement *addr) : address_{addr} {
   CHECK(GetAddressable(addr));
 }
 
-StoreInsn::StoreInsn(Statement *addr, Statement *val)
-  : address_{GetAddressable(addr)} {
+// Store ctors
+StoreInsn::StoreInsn(QualifiedStmt<Addressable_impl> addr, BasicBlock *val)
+  : address_{addr}, value_{val} {
   CHECK(address_);
-  if (auto *value{GetAddressable(val)}) {
-    value_ = value;
-  } else {
-    auto *expr{GetApplyExpr(val)};
-    CHECK(expr);
-    value_ = expr;
-  }
+  CHECK(val);
 }
-StoreInsn::StoreInsn(Statement *addr, BasicBlock *val)
-  : address_{GetAddressable(addr)}, value_{val} {
+StoreInsn::StoreInsn(QualifiedStmt<Addressable_impl> addr, Value val)
+  : address_{addr}, value_{val} {
+  CHECK(address_);
+}
+StoreInsn::StoreInsn(
+    QualifiedStmt<Addressable_impl> addr, QualifiedStmt<ApplyExprStmt> val)
+  : address_{addr}, value_{val} {
+  CHECK(address_);
+  CHECK(val);
+}
+StoreInsn::StoreInsn(
+    QualifiedStmt<Addressable_impl> addr, QualifiedStmt<Addressable_impl> val)
+  : address_{addr}, value_{val} {
   CHECK(address_);
   CHECK(val);
 }
