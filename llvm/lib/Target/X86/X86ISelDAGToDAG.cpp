@@ -2321,14 +2321,21 @@ bool X86DAGToDAGISel::isSExtAbsoluteSymbolRef(unsigned Width, SDNode *N) const {
          CR->getSignedMax().slt(1ull << Width);
 }
 
-static X86::CondCode getCondFromOpc(unsigned Opc) {
+static X86::CondCode getCondFromNode(SDNode *N) {
+  assert(N->isMachineOpcode() && "Unexpected node");
   X86::CondCode CC = X86::COND_INVALID;
   if (CC == X86::COND_INVALID)
-    CC = X86::getCondFromBranchOpc(Opc);
+    CC = X86::getCondFromBranchOpc(N->getMachineOpcode());
   if (CC == X86::COND_INVALID)
-    CC = X86::getCondFromSETOpc(Opc);
-  if (CC == X86::COND_INVALID)
-    CC = X86::getCondFromCMovOpc(Opc);
+    CC = X86::getCondFromSETOpc(N->getMachineOpcode());
+  if (CC == X86::COND_INVALID) {
+    unsigned Opc = N->getMachineOpcode();
+    if (Opc == X86::CMOV16rr || Opc == X86::CMOV32rr || Opc == X86::CMOV64rr)
+      CC = static_cast<X86::CondCode>(N->getConstantOperandVal(2));
+    else if (Opc == X86::CMOV16rm || Opc == X86::CMOV32rm ||
+             Opc == X86::CMOV64rm)
+      CC = static_cast<X86::CondCode>(N->getConstantOperandVal(6));
+  }
 
   return CC;
 }
@@ -2354,7 +2361,7 @@ bool X86DAGToDAGISel::onlyUsesZeroFlag(SDValue Flags) const {
       // Anything unusual: assume conservatively.
       if (!FlagUI->isMachineOpcode()) return false;
       // Examine the condition code of the user.
-      X86::CondCode CC = getCondFromOpc(FlagUI->getMachineOpcode());
+      X86::CondCode CC = getCondFromNode(*FlagUI);
 
       switch (CC) {
       // Comparisons which only use the zero flag.
@@ -2390,7 +2397,7 @@ bool X86DAGToDAGISel::hasNoSignFlagUses(SDValue Flags) const {
       // Anything unusual: assume conservatively.
       if (!FlagUI->isMachineOpcode()) return false;
       // Examine the condition code of the user.
-      X86::CondCode CC = getCondFromOpc(FlagUI->getMachineOpcode());
+      X86::CondCode CC = getCondFromNode(*FlagUI);
 
       switch (CC) {
       // Comparisons which don't examine the SF flag.
@@ -2451,7 +2458,7 @@ static bool mayUseCarryFlag(X86::CondCode CC) {
         if (!FlagUI->isMachineOpcode())
           return false;
         // Examine the condition code of the user.
-        X86::CondCode CC = getCondFromOpc(FlagUI->getMachineOpcode());
+        X86::CondCode CC = getCondFromNode(*FlagUI);
 
         if (mayUseCarryFlag(CC))
           return false;

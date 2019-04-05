@@ -653,9 +653,10 @@ void X86FrameLowering::emitStackProbeInline(MachineFunction &MF,
   BuildMI(&MBB, DL, TII.get(X86::SUB64rr), TestReg)
       .addReg(CopyReg)
       .addReg(SizeReg);
-  BuildMI(&MBB, DL, TII.get(X86::CMOVB64rr), FinalReg)
+  BuildMI(&MBB, DL, TII.get(X86::CMOV64rr), FinalReg)
       .addReg(TestReg)
-      .addReg(ZeroReg);
+      .addReg(ZeroReg)
+      .addImm(X86::COND_B);
 
   // FinalReg now holds final stack pointer value, or zero if
   // allocation would overflow. Compare against the current stack

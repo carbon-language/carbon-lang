@@ -165,7 +165,6 @@ defm : HWWriteResPair<WriteJump,   [HWPort06],  1>;
 defm : HWWriteResPair<WriteCRC32,  [HWPort1],   3>;
 
 defm : HWWriteResPair<WriteCMOV,  [HWPort06,HWPort0156], 2, [1,1], 2>; // Conditional move.
-defm : HWWriteResPair<WriteCMOV2, [HWPort06,HWPort0156], 3, [1,2], 3>; // Conditional (CF + ZF flag) move.
 defm : X86WriteRes<WriteFCMOV, [HWPort1], 3, [1], 1>; // x87 conditional move.
 def  : WriteRes<WriteSETCC, [HWPort06]>; // Setcc.
 def  : WriteRes<WriteSETCCStore, [HWPort06,HWPort4,HWPort237]> {
@@ -1885,5 +1884,31 @@ def HWWriteADC : SchedWriteVariant<[
 
 def : InstRW<[HWWriteADC], (instrs ADC16ri8, ADC32ri8, ADC64ri8,
                                       SBB16ri8, SBB32ri8, SBB64ri8)>;
+
+// CMOVs that use both Z and C flag require an extra uop.
+def HWWriteCMOVA_CMOVBErr : SchedWriteRes<[HWPort06,HWPort0156]> {
+  let Latency = 3;
+  let ResourceCycles = [1,2];
+  let NumMicroOps = 3;
+}
+
+def HWWriteCMOVA_CMOVBErm : SchedWriteRes<[HWPort23,HWPort06,HWPort0156]> {
+  let Latency = 8;
+  let ResourceCycles = [1,1,2];
+  let NumMicroOps = 4;
+}
+
+def HWCMOVA_CMOVBErr :  SchedWriteVariant<[
+  SchedVar<MCSchedPredicate<IsCMOVArr_Or_CMOVBErr>, [HWWriteCMOVA_CMOVBErr]>,
+  SchedVar<NoSchedPred,                             [WriteCMOV]>
+]>;
+
+def HWCMOVA_CMOVBErm :  SchedWriteVariant<[
+  SchedVar<MCSchedPredicate<IsCMOVArm_Or_CMOVBErm>, [HWWriteCMOVA_CMOVBErm]>,
+  SchedVar<NoSchedPred,                             [WriteCMOV.Folded]>
+]>;
+
+def : InstRW<[HWCMOVA_CMOVBErr], (instrs CMOV16rr, CMOV32rr, CMOV64rr)>;
+def : InstRW<[HWCMOVA_CMOVBErm], (instrs CMOV16rm, CMOV32rm, CMOV64rm)>;
 
 } // SchedModel

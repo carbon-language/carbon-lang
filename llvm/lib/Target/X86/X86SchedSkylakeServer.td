@@ -159,7 +159,6 @@ defm : SKXWriteResPair<WriteCRC32, [SKXPort1], 3>;
 def : WriteRes<WriteLEA, [SKXPort15]>; // LEA instructions can't fold loads.
 
 defm : SKXWriteResPair<WriteCMOV,  [SKXPort06], 1, [1], 1>; // Conditional move.
-defm : SKXWriteResPair<WriteCMOV2, [SKXPort06], 2, [2], 2>; // Conditional (CF + ZF flag) move.
 defm : X86WriteRes<WriteFCMOV, [SKXPort1], 3, [1], 1>; // x87 conditional move.
 def  : WriteRes<WriteSETCC, [SKXPort06]>; // Setcc.
 def  : WriteRes<WriteSETCCStore, [SKXPort06,SKXPort4,SKXPort237]> {
@@ -2472,5 +2471,31 @@ def SKXWriteResGroup267 : SchedWriteRes<[SKXPort6,SKXPort0156]> {
 def: InstRW<[SKXWriteResGroup267], (instrs PAUSE)>;
 
 def: InstRW<[WriteZero], (instrs CLC)>;
+
+// CMOVs that use both Z and C flag require an extra uop.
+def SKXWriteCMOVA_CMOVBErr : SchedWriteRes<[SKXPort06]> {
+  let Latency = 2;
+  let ResourceCycles = [2];
+  let NumMicroOps = 2;
+}
+
+def SKXWriteCMOVA_CMOVBErm : SchedWriteRes<[SKXPort23,SKXPort06]> {
+  let Latency = 7;
+  let ResourceCycles = [1,2];
+  let NumMicroOps = 3;
+}
+
+def SKXCMOVA_CMOVBErr :  SchedWriteVariant<[
+  SchedVar<MCSchedPredicate<IsCMOVArr_Or_CMOVBErr>, [SKXWriteCMOVA_CMOVBErr]>,
+  SchedVar<NoSchedPred,                             [WriteCMOV]>
+]>;
+
+def SKXCMOVA_CMOVBErm :  SchedWriteVariant<[
+  SchedVar<MCSchedPredicate<IsCMOVArm_Or_CMOVBErm>, [SKXWriteCMOVA_CMOVBErm]>,
+  SchedVar<NoSchedPred,                             [WriteCMOV.Folded]>
+]>;
+
+def : InstRW<[SKXCMOVA_CMOVBErr], (instrs CMOV16rr, CMOV32rr, CMOV64rr)>;
+def : InstRW<[SKXCMOVA_CMOVBErm], (instrs CMOV16rm, CMOV32rm, CMOV64rm)>;
 
 } // SchedModel

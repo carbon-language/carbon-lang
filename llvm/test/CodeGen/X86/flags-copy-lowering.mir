@@ -283,19 +283,19 @@ body:             |
     ADJCALLSTACKUP64 0, 0, implicit-def dead $rsp, implicit-def dead $eflags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
 
     $eflags = COPY %2
-    %3:gr64 = CMOVA64rr %0, %1, implicit $eflags
-    %4:gr64 = CMOVB64rr %0, %1, implicit $eflags
-    %5:gr64 = CMOVE64rr %0, %1, implicit $eflags
-    %6:gr64 = CMOVNE64rr %0, %1, implicit killed $eflags
+    %3:gr64 = CMOV64rr %0, %1, 7, implicit $eflags
+    %4:gr64 = CMOV64rr %0, %1, 2, implicit $eflags
+    %5:gr64 = CMOV64rr %0, %1, 4, implicit $eflags
+    %6:gr64 = CMOV64rr %0, %1, 5, implicit killed $eflags
   ; CHECK-NOT:     $eflags =
   ; CHECK:         TEST8rr %[[A_REG]], %[[A_REG]], implicit-def $eflags
-  ; CHECK-NEXT:    %3:gr64 = CMOVNE64rr %0, %1, implicit killed $eflags
+  ; CHECK-NEXT:    %3:gr64 = CMOV64rr %0, %1, 5, implicit killed $eflags
   ; CHECK-NEXT:    TEST8rr %[[B_REG]], %[[B_REG]], implicit-def $eflags
-  ; CHECK-NEXT:    %4:gr64 = CMOVNE64rr %0, %1, implicit killed $eflags
+  ; CHECK-NEXT:    %4:gr64 = CMOV64rr %0, %1, 5, implicit killed $eflags
   ; CHECK-NEXT:    TEST8rr %[[E_REG]], %[[E_REG]], implicit-def $eflags
-  ; CHECK-NEXT:    %5:gr64 = CMOVNE64rr %0, %1, implicit killed $eflags
+  ; CHECK-NEXT:    %5:gr64 = CMOV64rr %0, %1, 5, implicit killed $eflags
   ; CHECK-NEXT:    TEST8rr %[[E_REG]], %[[E_REG]], implicit-def $eflags
-  ; CHECK-NEXT:    %6:gr64 = CMOVE64rr %0, %1, implicit killed $eflags
+  ; CHECK-NEXT:    %6:gr64 = CMOV64rr %0, %1, 4, implicit killed $eflags
     MOV64mr $rsp, 1, $noreg, -16, $noreg, killed %3
     MOV64mr $rsp, 1, $noreg, -16, $noreg, killed %4
     MOV64mr $rsp, 1, $noreg, -16, $noreg, killed %5
@@ -396,12 +396,12 @@ body:             |
     ADJCALLSTACKUP64 0, 0, implicit-def dead $rsp, implicit-def dead $eflags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
 
     $eflags = COPY %3
-    %4:gr64 = CMOVE64rr %0, %1, implicit $eflags
+    %4:gr64 = CMOV64rr %0, %1, 4, implicit $eflags
     %5:gr64 = MOV64ri32 42
     %6:gr64 = ADCX64rr %2, %5, implicit-def $eflags, implicit $eflags
   ; CHECK-NOT:     $eflags =
   ; CHECK:         TEST8rr %[[E_REG]], %[[E_REG]], implicit-def $eflags
-  ; CHECK-NEXT:    %4:gr64 = CMOVNE64rr %0, %1, implicit killed $eflags
+  ; CHECK-NEXT:    %4:gr64 = CMOV64rr %0, %1, 5, implicit killed $eflags
   ; CHECK-NEXT:    %5:gr64 = MOV64ri32 42
   ; CHECK-NEXT:    dead %{{[^:]*}}:gr8 = ADD8ri %[[CF_REG]], 255, implicit-def $eflags
   ; CHECK-NEXT:    %6:gr64 = ADCX64rr %2, %5, implicit-def{{( dead)?}} $eflags, implicit killed $eflags
@@ -435,12 +435,12 @@ body:             |
     ADJCALLSTACKUP64 0, 0, implicit-def dead $rsp, implicit-def dead $eflags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
 
     $eflags = COPY %3
-    %4:gr64 = CMOVE64rr %0, %1, implicit $eflags
+    %4:gr64 = CMOV64rr %0, %1, 4, implicit $eflags
     %5:gr64 = MOV64ri32 42
     %6:gr64 = ADOX64rr %2, %5, implicit-def $eflags, implicit $eflags
   ; CHECK-NOT:     $eflags =
   ; CHECK:         TEST8rr %[[E_REG]], %[[E_REG]], implicit-def $eflags
-  ; CHECK-NEXT:    %4:gr64 = CMOVNE64rr %0, %1, implicit killed $eflags
+  ; CHECK-NEXT:    %4:gr64 = CMOV64rr %0, %1, 5, implicit killed $eflags
   ; CHECK-NEXT:    %5:gr64 = MOV64ri32 42
   ; CHECK-NEXT:    dead %{{[^:]*}}:gr8 = ADD8ri %[[OF_REG]], 127, implicit-def $eflags
   ; CHECK-NEXT:    %6:gr64 = ADOX64rr %2, %5, implicit-def{{( dead)?}} $eflags, implicit killed $eflags
@@ -628,30 +628,30 @@ body:             |
   bb.1:
     liveins: $eflags
 
-    %3:gr64 = CMOVE64rr %0, %1, implicit killed $eflags
+    %3:gr64 = CMOV64rr %0, %1, 4, implicit killed $eflags
   ; CHECK-NOT:     $eflags =
   ; CHECK:         TEST8rr %[[NE_REG]], %[[NE_REG]], implicit-def $eflags
-  ; CHECK-NEXT:    %3:gr64 = CMOVE64rr %0, %1, implicit killed $eflags
+  ; CHECK-NEXT:    %3:gr64 = CMOV64rr %0, %1, 4, implicit killed $eflags
     $rax = COPY %3
     RET 0, $rax
 
   bb.2:
     liveins: $eflags
 
-    %4:gr64 = CMOVNE64rr %0, %1, implicit killed $eflags
+    %4:gr64 = CMOV64rr %0, %1, 5, implicit killed $eflags
   ; CHECK-NOT:     $eflags =
   ; CHECK:         TEST8rr %[[NE_REG]], %[[NE_REG]], implicit-def $eflags
-  ; CHECK-NEXT:    %4:gr64 = CMOVNE64rr %0, %1, implicit killed $eflags
+  ; CHECK-NEXT:    %4:gr64 = CMOV64rr %0, %1, 5, implicit killed $eflags
     $rax = COPY %4
     RET 0, $rax
 
   bb.3:
     liveins: $eflags
 
-    %5:gr64 = CMOVS64rr %0, %1, implicit killed $eflags
+    %5:gr64 = CMOV64rr %0, %1, 8, implicit killed $eflags
   ; CHECK-NOT:     $eflags =
   ; CHECK:         TEST8rr %[[S_REG]], %[[S_REG]], implicit-def $eflags
-  ; CHECK-NEXT:    %5:gr64 = CMOVNE64rr %0, %1, implicit killed $eflags
+  ; CHECK-NEXT:    %5:gr64 = CMOV64rr %0, %1, 5, implicit killed $eflags
     $rax = COPY %5
     RET 0, $rax
 
@@ -703,10 +703,10 @@ body:             |
   bb.1:
     liveins: $eflags
 
-    %3:gr64 = CMOVE64rr %0, %1, implicit killed $eflags
+    %3:gr64 = CMOV64rr %0, %1, 4, implicit killed $eflags
   ; CHECK-NOT:     $eflags =
   ; CHECK:         TEST8rr %[[NE_REG]], %[[NE_REG]], implicit-def $eflags
-  ; CHECK-NEXT:    %3:gr64 = CMOVE64rr %0, %1, implicit killed $eflags
+  ; CHECK-NEXT:    %3:gr64 = CMOV64rr %0, %1, 4, implicit killed $eflags
     $rax = COPY %3
     RET 0, $rax
 
@@ -728,30 +728,30 @@ body:             |
   bb.3:
     liveins: $eflags
 
-    %4:gr64 = CMOVNE64rr %0, %1, implicit $eflags
+    %4:gr64 = CMOV64rr %0, %1, 5, implicit $eflags
   ; CHECK-NOT:     $eflags =
   ; CHECK:         TEST8rr %[[NE_REG]], %[[NE_REG]], implicit-def $eflags
-  ; CHECK-NEXT:    %4:gr64 = CMOVNE64rr %0, %1, implicit killed $eflags
+  ; CHECK-NEXT:    %4:gr64 = CMOV64rr %0, %1, 5, implicit killed $eflags
     $rax = COPY %4
     RET 0, $rax
 
   bb.4:
     liveins: $eflags
 
-    %5:gr64 = CMOVP64rr %0, %1, implicit $eflags
+    %5:gr64 = CMOV64rr %0, %1, 10, implicit $eflags
   ; CHECK-NOT:     $eflags =
   ; CHECK:         TEST8rr %[[P_REG]], %[[P_REG]], implicit-def $eflags
-  ; CHECK-NEXT:    %5:gr64 = CMOVNE64rr %0, %1, implicit killed $eflags
+  ; CHECK-NEXT:    %5:gr64 = CMOV64rr %0, %1, 5, implicit killed $eflags
     $rax = COPY %5
     RET 0, $rax
 
   bb.5:
     liveins: $eflags
 
-    %6:gr64 = CMOVS64rr %0, %1, implicit killed $eflags
+    %6:gr64 = CMOV64rr %0, %1, 8, implicit killed $eflags
   ; CHECK-NOT:     $eflags =
   ; CHECK:         TEST8rr %[[S_REG]], %[[S_REG]], implicit-def $eflags
-  ; CHECK-NEXT:    %6:gr64 = CMOVNE64rr %0, %1, implicit killed $eflags
+  ; CHECK-NEXT:    %6:gr64 = CMOV64rr %0, %1, 5, implicit killed $eflags
     $rax = COPY %6
     RET 0, $rax
 
@@ -876,11 +876,11 @@ body:             |
     liveins: $eflags
 
     ; Just use $eflags on this side of the diamond.
-    %4:gr64 = CMOVA64rr %0, %1, implicit $eflags
+    %4:gr64 = CMOV64rr %0, %1, 7, implicit $eflags
   ; CHECK:      bb.5:
   ; CHECK-NOT:    COPY{{( killed)?}} $eflags
   ; CHECK:         TEST8rr %[[A_REG]], %[[A_REG]], implicit-def $eflags
-  ; CHECK-NEXT:    %4:gr64 = CMOVNE64rr %0, %1, implicit killed $eflags
+  ; CHECK-NEXT:    %4:gr64 = CMOV64rr %0, %1, 5, implicit killed $eflags
   ; CHECK-NOT:    COPY{{( killed)?}} $eflags
     MOV64mr $rsp, 1, $noreg, -16, $noreg, killed %4
     JMP_1 %bb.7
@@ -890,21 +890,21 @@ body:             |
     liveins: $eflags
 
     ; Use, copy, and then use $eflags again.
-    %5:gr64 = CMOVA64rr %0, %1, implicit $eflags
+    %5:gr64 = CMOV64rr %0, %1, 7, implicit $eflags
   ; CHECK:      bb.6:
   ; CHECK-NOT:    COPY{{( killed)?}} $eflags
   ; CHECK:        TEST8rr %[[A_REG]], %[[A_REG]], implicit-def $eflags
-  ; CHECK-NEXT:   %5:gr64 = CMOVNE64rr %0, %1, implicit killed $eflags
+  ; CHECK-NEXT:   %5:gr64 = CMOV64rr %0, %1, 5, implicit killed $eflags
   ; CHECK-NOT:    COPY{{( killed)?}} $eflags
     MOV64mr $rsp, 1, $noreg, -16, $noreg, killed %5
 
     %6:gr64 = COPY $eflags
     $eflags = COPY %6:gr64
 
-    %7:gr64 = CMOVA64rr %0, %1, implicit $eflags
+    %7:gr64 = CMOV64rr %0, %1, 7, implicit $eflags
   ; CHECK-NOT:    COPY{{( killed)?}} $eflags
   ; CHECK:        TEST8rr %[[A_REG]], %[[A_REG]], implicit-def $eflags
-  ; CHECK-NEXT:   %7:gr64 = CMOVNE64rr %0, %1, implicit killed $eflags
+  ; CHECK-NEXT:   %7:gr64 = CMOV64rr %0, %1, 5, implicit killed $eflags
   ; CHECK-NOT:    COPY{{( killed)?}} $eflags
     MOV64mr $rsp, 1, $noreg, -16, $noreg, killed %7
     JMP_1 %bb.7
@@ -940,12 +940,12 @@ body:             |
     liveins: $eflags
 
     ; And we're done.
-    %8:gr64 = CMOVE64rr %0, %1, implicit killed $eflags
+    %8:gr64 = CMOV64rr %0, %1, 4, implicit killed $eflags
     $rax = COPY %8
     RET 0, $rax
   ; CHECK:      bb.9:
   ; CHECK-NOT:     $eflags
-  ; CHECK:         %8:gr64 = CMOVE64rr %0, %1, implicit killed $eflags
+  ; CHECK:         %8:gr64 = CMOV64rr %0, %1, 4, implicit killed $eflags
 
 ...
 ---

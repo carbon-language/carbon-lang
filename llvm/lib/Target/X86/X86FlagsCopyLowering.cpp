@@ -599,7 +599,7 @@ bool X86FlagsCopyLoweringPass::runOnMachineFunction(MachineFunction &MF) {
         }
 
         // Otherwise we can just rewrite in-place.
-        if (X86::getCondFromCMovOpc(MI.getOpcode()) != X86::COND_INVALID) {
+        if (X86::getCondFromCMov(MI) != X86::COND_INVALID) {
           rewriteCMov(*TestMBB, TestPos, TestLoc, MI, *FlagUse, CondRegs);
         } else if (X86::getCondFromSETOpc(MI.getOpcode()) !=
                    X86::COND_INVALID) {
@@ -841,7 +841,7 @@ void X86FlagsCopyLoweringPass::rewriteCMov(MachineBasicBlock &TestMBB,
                                            MachineOperand &FlagUse,
                                            CondRegArray &CondRegs) {
   // First get the register containing this specific condition.
-  X86::CondCode Cond = X86::getCondFromCMovOpc(CMovI.getOpcode());
+  X86::CondCode Cond = X86::getCondFromCMov(CMovI);
   unsigned CondReg;
   bool Inverted;
   std::tie(CondReg, Inverted) =
@@ -852,12 +852,10 @@ void X86FlagsCopyLoweringPass::rewriteCMov(MachineBasicBlock &TestMBB,
   // Insert a direct test of the saved register.
   insertTest(MBB, CMovI.getIterator(), CMovI.getDebugLoc(), CondReg);
 
-  // Rewrite the CMov to use the !ZF flag from the test (but match register
-  // size and memory operand), and then kill its use of the flags afterward.
-  auto &CMovRC = *MRI->getRegClass(CMovI.getOperand(0).getReg());
-  CMovI.setDesc(TII->get(X86::getCMovFromCond(
-      Inverted ? X86::COND_E : X86::COND_NE, TRI->getRegSizeInBits(CMovRC) / 8,
-      !CMovI.memoperands_empty())));
+  // Rewrite the CMov to use the !ZF flag from the test, and then kill its use
+  // of the flags afterward.
+  CMovI.getOperand(CMovI.getDesc().getNumOperands() - 1)
+      .setImm(Inverted ? X86::COND_E : X86::COND_NE);
   FlagUse.setIsKill(true);
   LLVM_DEBUG(dbgs() << "    fixed cmov: "; CMovI.dump());
 }

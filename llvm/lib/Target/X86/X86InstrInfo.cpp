@@ -1641,76 +1641,11 @@ MachineInstr *X86InstrInfo::commuteInstructionImpl(MachineInstr &MI, bool NewMI,
     return TargetInstrInfo::commuteInstructionImpl(WorkingMI, /*NewMI=*/false,
                                                    OpIdx1, OpIdx2);
   }
-  case X86::CMOVB16rr:  case X86::CMOVB32rr:  case X86::CMOVB64rr:
-  case X86::CMOVAE16rr: case X86::CMOVAE32rr: case X86::CMOVAE64rr:
-  case X86::CMOVE16rr:  case X86::CMOVE32rr:  case X86::CMOVE64rr:
-  case X86::CMOVNE16rr: case X86::CMOVNE32rr: case X86::CMOVNE64rr:
-  case X86::CMOVBE16rr: case X86::CMOVBE32rr: case X86::CMOVBE64rr:
-  case X86::CMOVA16rr:  case X86::CMOVA32rr:  case X86::CMOVA64rr:
-  case X86::CMOVL16rr:  case X86::CMOVL32rr:  case X86::CMOVL64rr:
-  case X86::CMOVGE16rr: case X86::CMOVGE32rr: case X86::CMOVGE64rr:
-  case X86::CMOVLE16rr: case X86::CMOVLE32rr: case X86::CMOVLE64rr:
-  case X86::CMOVG16rr:  case X86::CMOVG32rr:  case X86::CMOVG64rr:
-  case X86::CMOVS16rr:  case X86::CMOVS32rr:  case X86::CMOVS64rr:
-  case X86::CMOVNS16rr: case X86::CMOVNS32rr: case X86::CMOVNS64rr:
-  case X86::CMOVP16rr:  case X86::CMOVP32rr:  case X86::CMOVP64rr:
-  case X86::CMOVNP16rr: case X86::CMOVNP32rr: case X86::CMOVNP64rr:
-  case X86::CMOVO16rr:  case X86::CMOVO32rr:  case X86::CMOVO64rr:
-  case X86::CMOVNO16rr: case X86::CMOVNO32rr: case X86::CMOVNO64rr: {
-    unsigned Opc;
-    switch (MI.getOpcode()) {
-    default: llvm_unreachable("Unreachable!");
-    case X86::CMOVB16rr:  Opc = X86::CMOVAE16rr; break;
-    case X86::CMOVB32rr:  Opc = X86::CMOVAE32rr; break;
-    case X86::CMOVB64rr:  Opc = X86::CMOVAE64rr; break;
-    case X86::CMOVAE16rr: Opc = X86::CMOVB16rr; break;
-    case X86::CMOVAE32rr: Opc = X86::CMOVB32rr; break;
-    case X86::CMOVAE64rr: Opc = X86::CMOVB64rr; break;
-    case X86::CMOVE16rr:  Opc = X86::CMOVNE16rr; break;
-    case X86::CMOVE32rr:  Opc = X86::CMOVNE32rr; break;
-    case X86::CMOVE64rr:  Opc = X86::CMOVNE64rr; break;
-    case X86::CMOVNE16rr: Opc = X86::CMOVE16rr; break;
-    case X86::CMOVNE32rr: Opc = X86::CMOVE32rr; break;
-    case X86::CMOVNE64rr: Opc = X86::CMOVE64rr; break;
-    case X86::CMOVBE16rr: Opc = X86::CMOVA16rr; break;
-    case X86::CMOVBE32rr: Opc = X86::CMOVA32rr; break;
-    case X86::CMOVBE64rr: Opc = X86::CMOVA64rr; break;
-    case X86::CMOVA16rr:  Opc = X86::CMOVBE16rr; break;
-    case X86::CMOVA32rr:  Opc = X86::CMOVBE32rr; break;
-    case X86::CMOVA64rr:  Opc = X86::CMOVBE64rr; break;
-    case X86::CMOVL16rr:  Opc = X86::CMOVGE16rr; break;
-    case X86::CMOVL32rr:  Opc = X86::CMOVGE32rr; break;
-    case X86::CMOVL64rr:  Opc = X86::CMOVGE64rr; break;
-    case X86::CMOVGE16rr: Opc = X86::CMOVL16rr; break;
-    case X86::CMOVGE32rr: Opc = X86::CMOVL32rr; break;
-    case X86::CMOVGE64rr: Opc = X86::CMOVL64rr; break;
-    case X86::CMOVLE16rr: Opc = X86::CMOVG16rr; break;
-    case X86::CMOVLE32rr: Opc = X86::CMOVG32rr; break;
-    case X86::CMOVLE64rr: Opc = X86::CMOVG64rr; break;
-    case X86::CMOVG16rr:  Opc = X86::CMOVLE16rr; break;
-    case X86::CMOVG32rr:  Opc = X86::CMOVLE32rr; break;
-    case X86::CMOVG64rr:  Opc = X86::CMOVLE64rr; break;
-    case X86::CMOVS16rr:  Opc = X86::CMOVNS16rr; break;
-    case X86::CMOVS32rr:  Opc = X86::CMOVNS32rr; break;
-    case X86::CMOVS64rr:  Opc = X86::CMOVNS64rr; break;
-    case X86::CMOVNS16rr: Opc = X86::CMOVS16rr; break;
-    case X86::CMOVNS32rr: Opc = X86::CMOVS32rr; break;
-    case X86::CMOVNS64rr: Opc = X86::CMOVS64rr; break;
-    case X86::CMOVP16rr:  Opc = X86::CMOVNP16rr; break;
-    case X86::CMOVP32rr:  Opc = X86::CMOVNP32rr; break;
-    case X86::CMOVP64rr:  Opc = X86::CMOVNP64rr; break;
-    case X86::CMOVNP16rr: Opc = X86::CMOVP16rr; break;
-    case X86::CMOVNP32rr: Opc = X86::CMOVP32rr; break;
-    case X86::CMOVNP64rr: Opc = X86::CMOVP64rr; break;
-    case X86::CMOVO16rr:  Opc = X86::CMOVNO16rr; break;
-    case X86::CMOVO32rr:  Opc = X86::CMOVNO32rr; break;
-    case X86::CMOVO64rr:  Opc = X86::CMOVNO64rr; break;
-    case X86::CMOVNO16rr: Opc = X86::CMOVO16rr; break;
-    case X86::CMOVNO32rr: Opc = X86::CMOVO32rr; break;
-    case X86::CMOVNO64rr: Opc = X86::CMOVO64rr; break;
-    }
+  case X86::CMOV16rr:  case X86::CMOV32rr:  case X86::CMOV64rr: {
     auto &WorkingMI = cloneIfNew(MI);
-    WorkingMI.setDesc(get(Opc));
+    unsigned OpNo = MI.getDesc().getNumOperands() - 1;
+    X86::CondCode CC = static_cast<X86::CondCode>(MI.getOperand(OpNo).getImm());
+    WorkingMI.getOperand(OpNo).setImm(X86::GetOppositeBranchCondition(CC));
     return TargetInstrInfo::commuteInstructionImpl(WorkingMI, /*NewMI=*/false,
                                                    OpIdx1, OpIdx2);
   }
@@ -2090,57 +2025,13 @@ X86::CondCode X86::getCondFromSETOpc(unsigned Opc) {
 }
 
 /// Return condition code of a CMov opcode.
-X86::CondCode X86::getCondFromCMovOpc(unsigned Opc) {
-  switch (Opc) {
+X86::CondCode X86::getCondFromCMov(const MachineInstr &MI) {
+  switch (MI.getOpcode()) {
   default: return X86::COND_INVALID;
-  case X86::CMOVA16rm:  case X86::CMOVA16rr:  case X86::CMOVA32rm:
-  case X86::CMOVA32rr:  case X86::CMOVA64rm:  case X86::CMOVA64rr:
-    return X86::COND_A;
-  case X86::CMOVAE16rm: case X86::CMOVAE16rr: case X86::CMOVAE32rm:
-  case X86::CMOVAE32rr: case X86::CMOVAE64rm: case X86::CMOVAE64rr:
-    return X86::COND_AE;
-  case X86::CMOVB16rm:  case X86::CMOVB16rr:  case X86::CMOVB32rm:
-  case X86::CMOVB32rr:  case X86::CMOVB64rm:  case X86::CMOVB64rr:
-    return X86::COND_B;
-  case X86::CMOVBE16rm: case X86::CMOVBE16rr: case X86::CMOVBE32rm:
-  case X86::CMOVBE32rr: case X86::CMOVBE64rm: case X86::CMOVBE64rr:
-    return X86::COND_BE;
-  case X86::CMOVE16rm:  case X86::CMOVE16rr:  case X86::CMOVE32rm:
-  case X86::CMOVE32rr:  case X86::CMOVE64rm:  case X86::CMOVE64rr:
-    return X86::COND_E;
-  case X86::CMOVG16rm:  case X86::CMOVG16rr:  case X86::CMOVG32rm:
-  case X86::CMOVG32rr:  case X86::CMOVG64rm:  case X86::CMOVG64rr:
-    return X86::COND_G;
-  case X86::CMOVGE16rm: case X86::CMOVGE16rr: case X86::CMOVGE32rm:
-  case X86::CMOVGE32rr: case X86::CMOVGE64rm: case X86::CMOVGE64rr:
-    return X86::COND_GE;
-  case X86::CMOVL16rm:  case X86::CMOVL16rr:  case X86::CMOVL32rm:
-  case X86::CMOVL32rr:  case X86::CMOVL64rm:  case X86::CMOVL64rr:
-    return X86::COND_L;
-  case X86::CMOVLE16rm: case X86::CMOVLE16rr: case X86::CMOVLE32rm:
-  case X86::CMOVLE32rr: case X86::CMOVLE64rm: case X86::CMOVLE64rr:
-    return X86::COND_LE;
-  case X86::CMOVNE16rm: case X86::CMOVNE16rr: case X86::CMOVNE32rm:
-  case X86::CMOVNE32rr: case X86::CMOVNE64rm: case X86::CMOVNE64rr:
-    return X86::COND_NE;
-  case X86::CMOVNO16rm: case X86::CMOVNO16rr: case X86::CMOVNO32rm:
-  case X86::CMOVNO32rr: case X86::CMOVNO64rm: case X86::CMOVNO64rr:
-    return X86::COND_NO;
-  case X86::CMOVNP16rm: case X86::CMOVNP16rr: case X86::CMOVNP32rm:
-  case X86::CMOVNP32rr: case X86::CMOVNP64rm: case X86::CMOVNP64rr:
-    return X86::COND_NP;
-  case X86::CMOVNS16rm: case X86::CMOVNS16rr: case X86::CMOVNS32rm:
-  case X86::CMOVNS32rr: case X86::CMOVNS64rm: case X86::CMOVNS64rr:
-    return X86::COND_NS;
-  case X86::CMOVO16rm:  case X86::CMOVO16rr:  case X86::CMOVO32rm:
-  case X86::CMOVO32rr:  case X86::CMOVO64rm:  case X86::CMOVO64rr:
-    return X86::COND_O;
-  case X86::CMOVP16rm:  case X86::CMOVP16rr:  case X86::CMOVP32rm:
-  case X86::CMOVP32rr:  case X86::CMOVP64rm:  case X86::CMOVP64rr:
-    return X86::COND_P;
-  case X86::CMOVS16rm:  case X86::CMOVS16rr:  case X86::CMOVS32rm:
-  case X86::CMOVS32rr:  case X86::CMOVS64rm:  case X86::CMOVS64rr:
-    return X86::COND_S;
+  case X86::CMOV16rr: case X86::CMOV32rr: case X86::CMOV64rr:
+  case X86::CMOV16rm: case X86::CMOV32rm: case X86::CMOV64rm:
+    return static_cast<X86::CondCode>(
+        MI.getOperand(MI.getDesc().getNumOperands() - 1).getImm());
   }
 }
 
@@ -2252,74 +2143,35 @@ X86::getX86ConditionCode(CmpInst::Predicate Predicate) {
 /// whether it has memory operand.
 unsigned X86::getSETFromCond(CondCode CC, bool HasMemoryOperand) {
   static const uint16_t Opc[16][2] = {
-    { X86::SETAr,  X86::SETAm  },
-    { X86::SETAEr, X86::SETAEm },
-    { X86::SETBr,  X86::SETBm  },
-    { X86::SETBEr, X86::SETBEm },
-    { X86::SETEr,  X86::SETEm  },
-    { X86::SETGr,  X86::SETGm  },
-    { X86::SETGEr, X86::SETGEm },
-    { X86::SETLr,  X86::SETLm  },
-    { X86::SETLEr, X86::SETLEm },
-    { X86::SETNEr, X86::SETNEm },
-    { X86::SETNOr, X86::SETNOm },
-    { X86::SETNPr, X86::SETNPm },
-    { X86::SETNSr, X86::SETNSm },
     { X86::SETOr,  X86::SETOm  },
+    { X86::SETNOr, X86::SETNOm },
+    { X86::SETBr,  X86::SETBm  },
+    { X86::SETAEr, X86::SETAEm },
+    { X86::SETEr,  X86::SETEm  },
+    { X86::SETNEr, X86::SETNEm },
+    { X86::SETBEr, X86::SETBEm },
+    { X86::SETAr,  X86::SETAm  },
+    { X86::SETSr,  X86::SETSm  },
+    { X86::SETNSr, X86::SETNSm },
     { X86::SETPr,  X86::SETPm  },
-    { X86::SETSr,  X86::SETSm  }
+    { X86::SETNPr, X86::SETNPm },
+    { X86::SETLr,  X86::SETLm  },
+    { X86::SETGEr, X86::SETGEm },
+    { X86::SETLEr, X86::SETLEm },
+    { X86::SETGr,  X86::SETGm  },
   };
 
   assert(CC <= LAST_VALID_COND && "Can only handle standard cond codes");
   return Opc[CC][HasMemoryOperand ? 1 : 0];
 }
 
-/// Return a cmov opcode for the given condition,
-/// register size in bytes, and operand type.
-unsigned X86::getCMovFromCond(CondCode CC, unsigned RegBytes,
-                              bool HasMemoryOperand) {
-  static const uint16_t Opc[32][3] = {
-    { X86::CMOVA16rr,  X86::CMOVA32rr,  X86::CMOVA64rr  },
-    { X86::CMOVAE16rr, X86::CMOVAE32rr, X86::CMOVAE64rr },
-    { X86::CMOVB16rr,  X86::CMOVB32rr,  X86::CMOVB64rr  },
-    { X86::CMOVBE16rr, X86::CMOVBE32rr, X86::CMOVBE64rr },
-    { X86::CMOVE16rr,  X86::CMOVE32rr,  X86::CMOVE64rr  },
-    { X86::CMOVG16rr,  X86::CMOVG32rr,  X86::CMOVG64rr  },
-    { X86::CMOVGE16rr, X86::CMOVGE32rr, X86::CMOVGE64rr },
-    { X86::CMOVL16rr,  X86::CMOVL32rr,  X86::CMOVL64rr  },
-    { X86::CMOVLE16rr, X86::CMOVLE32rr, X86::CMOVLE64rr },
-    { X86::CMOVNE16rr, X86::CMOVNE32rr, X86::CMOVNE64rr },
-    { X86::CMOVNO16rr, X86::CMOVNO32rr, X86::CMOVNO64rr },
-    { X86::CMOVNP16rr, X86::CMOVNP32rr, X86::CMOVNP64rr },
-    { X86::CMOVNS16rr, X86::CMOVNS32rr, X86::CMOVNS64rr },
-    { X86::CMOVO16rr,  X86::CMOVO32rr,  X86::CMOVO64rr  },
-    { X86::CMOVP16rr,  X86::CMOVP32rr,  X86::CMOVP64rr  },
-    { X86::CMOVS16rr,  X86::CMOVS32rr,  X86::CMOVS64rr  },
-    { X86::CMOVA16rm,  X86::CMOVA32rm,  X86::CMOVA64rm  },
-    { X86::CMOVAE16rm, X86::CMOVAE32rm, X86::CMOVAE64rm },
-    { X86::CMOVB16rm,  X86::CMOVB32rm,  X86::CMOVB64rm  },
-    { X86::CMOVBE16rm, X86::CMOVBE32rm, X86::CMOVBE64rm },
-    { X86::CMOVE16rm,  X86::CMOVE32rm,  X86::CMOVE64rm  },
-    { X86::CMOVG16rm,  X86::CMOVG32rm,  X86::CMOVG64rm  },
-    { X86::CMOVGE16rm, X86::CMOVGE32rm, X86::CMOVGE64rm },
-    { X86::CMOVL16rm,  X86::CMOVL32rm,  X86::CMOVL64rm  },
-    { X86::CMOVLE16rm, X86::CMOVLE32rm, X86::CMOVLE64rm },
-    { X86::CMOVNE16rm, X86::CMOVNE32rm, X86::CMOVNE64rm },
-    { X86::CMOVNO16rm, X86::CMOVNO32rm, X86::CMOVNO64rm },
-    { X86::CMOVNP16rm, X86::CMOVNP32rm, X86::CMOVNP64rm },
-    { X86::CMOVNS16rm, X86::CMOVNS32rm, X86::CMOVNS64rm },
-    { X86::CMOVO16rm,  X86::CMOVO32rm,  X86::CMOVO64rm  },
-    { X86::CMOVP16rm,  X86::CMOVP32rm,  X86::CMOVP64rm  },
-    { X86::CMOVS16rm,  X86::CMOVS32rm,  X86::CMOVS64rm  }
-  };
-
-  assert(CC < 16 && "Can only handle standard cond codes");
-  unsigned Idx = HasMemoryOperand ? 16+CC : CC;
+/// Return a cmov opcode for the given register size in bytes, and operand type.
+unsigned X86::getCMovOpcode(unsigned RegBytes, bool HasMemoryOperand) {
   switch(RegBytes) {
   default: llvm_unreachable("Illegal register size!");
-  case 2: return Opc[Idx][0];
-  case 4: return Opc[Idx][1];
-  case 8: return Opc[Idx][2];
+  case 2: return HasMemoryOperand ? X86::CMOV16rm : X86::CMOV16rr;
+  case 4: return HasMemoryOperand ? X86::CMOV32rm : X86::CMOV32rr;
+  case 8: return HasMemoryOperand ? X86::CMOV32rm : X86::CMOV64rr;
   }
 }
 
@@ -2870,10 +2722,12 @@ void X86InstrInfo::insertSelect(MachineBasicBlock &MBB,
   const TargetRegisterInfo &TRI = *MRI.getTargetRegisterInfo();
   const TargetRegisterClass &RC = *MRI.getRegClass(DstReg);
   assert(Cond.size() == 1 && "Invalid Cond array");
-  unsigned Opc = getCMovFromCond((X86::CondCode)Cond[0].getImm(),
-                                 TRI.getRegSizeInBits(RC) / 8,
-                                 false /*HasMemoryOperand*/);
-  BuildMI(MBB, I, DL, get(Opc), DstReg).addReg(FalseReg).addReg(TrueReg);
+  unsigned Opc = X86::getCMovOpcode(TRI.getRegSizeInBits(RC) / 8,
+                                    false /*HasMemoryOperand*/);
+  BuildMI(MBB, I, DL, get(Opc), DstReg)
+      .addReg(FalseReg)
+      .addReg(TrueReg)
+      .addImm(Cond[0].getImm());
 }
 
 /// Test if the given register is a physical h register.
@@ -3728,7 +3582,7 @@ bool X86InstrInfo::optimizeCompareInstr(MachineInstr &CmpInstr, unsigned SrcReg,
         if (OldCC != X86::COND_INVALID)
           OpcIsSET = true;
         else
-          OldCC = X86::getCondFromCMovOpc(Instr.getOpcode());
+          OldCC = X86::getCondFromCMov(Instr);
       }
       if (OldCC == X86::COND_INVALID) return false;
     }
@@ -3781,10 +3635,7 @@ bool X86InstrInfo::optimizeCompareInstr(MachineInstr &CmpInstr, unsigned SrcReg,
       else if(OpcIsSET)
         NewOpc = getSETFromCond(ReplacementCC, HasMemoryOperand);
       else {
-        unsigned DstReg = Instr.getOperand(0).getReg();
-        const TargetRegisterClass *DstRC = MRI->getRegClass(DstReg);
-        NewOpc = getCMovFromCond(ReplacementCC, TRI->getRegSizeInBits(*DstRC)/8,
-                                 HasMemoryOperand);
+        NewOpc = ReplacementCC;
       }
 
       // Push the MachineInstr to OpsToUpdate.
@@ -3844,8 +3695,13 @@ bool X86InstrInfo::optimizeCompareInstr(MachineInstr &CmpInstr, unsigned SrcReg,
   CmpInstr.eraseFromParent();
 
   // Modify the condition code of instructions in OpsToUpdate.
-  for (auto &Op : OpsToUpdate)
-    Op.first->setDesc(get(Op.second));
+  for (auto &Op : OpsToUpdate) {
+    if (X86::getCondFromCMov(*Op.first) != X86::COND_INVALID)
+      Op.first->getOperand(Op.first->getDesc().getNumOperands() - 1)
+          .setImm(Op.second);
+    else
+      Op.first->setDesc(get(Op.second));
+  }
   return true;
 }
 

@@ -160,7 +160,6 @@ defm : BWWriteResPair<WriteCRC32, [BWPort1],   3>;
 def : WriteRes<WriteLEA, [BWPort15]>; // LEA instructions can't fold loads.
 
 defm : BWWriteResPair<WriteCMOV,  [BWPort06], 1>; // Conditional move.
-defm : BWWriteResPair<WriteCMOV2, [BWPort06,BWPort0156], 2, [1,1], 2>; // // Conditional (CF + ZF flag) move.
 defm : X86WriteRes<WriteFCMOV, [BWPort1], 3, [1], 1>; // x87 conditional move.
 
 def  : WriteRes<WriteSETCC, [BWPort06]>; // Setcc.
@@ -1601,5 +1600,31 @@ def BWWriteResGroup202 : SchedWriteRes<[BWPort0,BWPort1,BWPort4,BWPort5,BWPort6,
 def: InstRW<[BWWriteResGroup202], (instrs FSTENVm)>;
 
 def: InstRW<[WriteZero], (instrs CLC)>;
+
+// CMOVs that use both Z and C flag require an extra uop.
+def BWWriteCMOVA_CMOVBErr : SchedWriteRes<[BWPort06,BWPort0156]> {
+  let Latency = 2;
+  let ResourceCycles = [1,1];
+  let NumMicroOps = 2;
+}
+
+def BWWriteCMOVA_CMOVBErm : SchedWriteRes<[BWPort23,BWPort06,BWPort0156]> {
+  let Latency = 7;
+  let ResourceCycles = [1,1,1];
+  let NumMicroOps = 3;
+}
+
+def BWCMOVA_CMOVBErr :  SchedWriteVariant<[
+  SchedVar<MCSchedPredicate<IsCMOVArr_Or_CMOVBErr>, [BWWriteCMOVA_CMOVBErr]>,
+  SchedVar<NoSchedPred,                             [WriteCMOV]>
+]>;
+
+def BWCMOVA_CMOVBErm :  SchedWriteVariant<[
+  SchedVar<MCSchedPredicate<IsCMOVArm_Or_CMOVBErm>, [BWWriteCMOVA_CMOVBErm]>,
+  SchedVar<NoSchedPred,                             [WriteCMOV.Folded]>
+]>;
+
+def : InstRW<[BWCMOVA_CMOVBErr], (instrs CMOV16rr, CMOV32rr, CMOV64rr)>;
+def : InstRW<[BWCMOVA_CMOVBErm], (instrs CMOV16rm, CMOV32rm, CMOV64rm)>;
 
 } // SchedModel

@@ -66,6 +66,39 @@ namespace X86 {
   enum OperandType : unsigned {
     /// AVX512 embedded rounding control. This should only have values 0-3.
     OPERAND_ROUNDING_CONTROL = MCOI::OPERAND_FIRST_TARGET,
+    OPERAND_COND_CODE,
+  };
+
+  // X86 specific condition code. These correspond to X86_*_COND in
+  // X86InstrInfo.td. They must be kept in synch.
+  enum CondCode {
+    COND_O = 0,
+    COND_NO = 1,
+    COND_B = 2,
+    COND_AE = 3,
+    COND_E = 4,
+    COND_NE = 5,
+    COND_BE = 6,
+    COND_A = 7,
+    COND_S = 8,
+    COND_NS = 9,
+    COND_P = 10,
+    COND_NP = 11,
+    COND_L = 12,
+    COND_GE = 13,
+    COND_LE = 14,
+    COND_G = 15,
+    LAST_VALID_COND = COND_G,
+
+    // Artificial condition codes. These are used by AnalyzeBranch
+    // to indicate a block terminated with two conditional branches that together
+    // form a compound condition. They occur in code using FCMP_OEQ or FCMP_UNE,
+    // which can't be represented on x86 with a single condition. These
+    // are never used in MachineInstrs and are inverses of one another.
+    COND_NE_OR_P,
+    COND_E_AND_NP,
+
+    COND_INVALID
   };
 } // end namespace X86;
 
@@ -313,6 +346,11 @@ namespace X86II {
     ///
     MRMSrcMemOp4   = 35,
 
+    /// MRMSrcMemCC - This form is used for instructions that use the Mod/RM
+    /// byte to specify the operands and also encodes a condition code.
+    ///
+    MRMSrcMemCC    = 36,
+
     /// MRMXm - This form is used for instructions that use the Mod/RM byte
     /// to specify a memory source, but doesn't use the middle field.
     ///
@@ -341,6 +379,11 @@ namespace X86II {
     /// byte to specify the fourth source, which in this case is a register.
     ///
     MRMSrcRegOp4   = 51,
+
+    /// MRMSrcRegCC - This form is used for instructions that use the Mod/RM
+    /// byte to specify the operands and also encodes a condition code
+    ///
+    MRMSrcRegCC    = 52,
 
     /// MRMXr - This form is used for instructions that use the Mod/RM byte
     /// to specify a register source, but doesn't use the middle field.
@@ -727,10 +770,15 @@ namespace X86II {
     case X86II::MRMSrcMemOp4:
       // Skip registers encoded in reg, VEX_VVVV, and I8IMM.
       return 3;
+    case X86II::MRMSrcMemCC:
+      // Start from 1, skip any registers encoded in VEX_VVVV or I8IMM, or a
+      // mask register.
+      return 1;
     case X86II::MRMDestReg:
     case X86II::MRMSrcReg:
     case X86II::MRMSrcReg4VOp3:
     case X86II::MRMSrcRegOp4:
+    case X86II::MRMSrcRegCC:
     case X86II::MRMXr:
     case X86II::MRM0r: case X86II::MRM1r:
     case X86II::MRM2r: case X86II::MRM3r:

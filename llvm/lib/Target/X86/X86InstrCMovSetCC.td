@@ -13,67 +13,79 @@
 
 
 // CMOV instructions.
-multiclass CMOV<bits<8> opc, string Mnemonic, X86FoldableSchedWrite Sched,
-                PatLeaf CondNode> {
-  let Uses = [EFLAGS], Predicates = [HasCMov], Constraints = "$src1 = $dst",
-      isCommutable = 1, SchedRW = [Sched] in {
-    def NAME#16rr
-      : I<opc, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-          !strconcat(Mnemonic, "{w}\t{$src2, $dst|$dst, $src2}"),
-          [(set GR16:$dst,
-                (X86cmov GR16:$src1, GR16:$src2, CondNode, EFLAGS))]>,
-                TB, OpSize16;
-    def NAME#32rr
-      : I<opc, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-          !strconcat(Mnemonic, "{l}\t{$src2, $dst|$dst, $src2}"),
-          [(set GR32:$dst,
-                (X86cmov GR32:$src1, GR32:$src2, CondNode, EFLAGS))]>,
-                TB, OpSize32;
-    def NAME#64rr
-      :RI<opc, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
-          !strconcat(Mnemonic, "{q}\t{$src2, $dst|$dst, $src2}"),
-          [(set GR64:$dst,
-                (X86cmov GR64:$src1, GR64:$src2, CondNode, EFLAGS))]>, TB;
-  }
+let isCodeGenOnly = 1, ForceDisassemble = 1 in {
+let Uses = [EFLAGS], Predicates = [HasCMov], Constraints = "$src1 = $dst",
+    isCommutable = 1, SchedRW = [WriteCMOV] in {
+  def CMOV16rr
+    : I<0x40, MRMSrcRegCC, (outs GR16:$dst), (ins GR16:$src1, GR16:$src2, ccode:$cond),
+        "cmov${cond}{w}\t{$src2, $dst|$dst, $src2}",
+        [(set GR16:$dst,
+              (X86cmov GR16:$src1, GR16:$src2, imm:$cond, EFLAGS))]>,
+              TB, OpSize16;
+  def CMOV32rr
+    : I<0x40, MRMSrcRegCC, (outs GR32:$dst), (ins GR32:$src1, GR32:$src2, ccode:$cond),
+        "cmov${cond}{l}\t{$src2, $dst|$dst, $src2}",
+        [(set GR32:$dst,
+              (X86cmov GR32:$src1, GR32:$src2, imm:$cond, EFLAGS))]>,
+              TB, OpSize32;
+  def CMOV64rr
+    :RI<0x40, MRMSrcRegCC, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2, ccode:$cond),
+        "cmov${cond}{q}\t{$src2, $dst|$dst, $src2}",
+        [(set GR64:$dst,
+              (X86cmov GR64:$src1, GR64:$src2, imm:$cond, EFLAGS))]>, TB;
+}
 
-  let Uses = [EFLAGS], Predicates = [HasCMov], Constraints = "$src1 = $dst",
-      SchedRW = [Sched.Folded, Sched.ReadAfterFold] in {
-    def NAME#16rm
-      : I<opc, MRMSrcMem, (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
-          !strconcat(Mnemonic, "{w}\t{$src2, $dst|$dst, $src2}"),
-          [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
-                                    CondNode, EFLAGS))]>, TB, OpSize16;
-    def NAME#32rm
-      : I<opc, MRMSrcMem, (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
-          !strconcat(Mnemonic, "{l}\t{$src2, $dst|$dst, $src2}"),
-          [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
-                                    CondNode, EFLAGS))]>, TB, OpSize32;
-    def NAME#64rm
-      :RI<opc, MRMSrcMem, (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
-          !strconcat(Mnemonic, "{q}\t{$src2, $dst|$dst, $src2}"),
-          [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
-                                    CondNode, EFLAGS))]>, TB;
-  } // Uses = [EFLAGS], Predicates = [HasCMov], Constraints = "$src1 = $dst"
-} // end multiclass
+let Uses = [EFLAGS], Predicates = [HasCMov], Constraints = "$src1 = $dst",
+    SchedRW = [WriteCMOV.Folded, WriteCMOV.ReadAfterFold] in {
+  def CMOV16rm
+    : I<0x40, MRMSrcMemCC, (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2, ccode:$cond),
+        "cmov${cond}{w}\t{$src2, $dst|$dst, $src2}",
+        [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
+                                  imm:$cond, EFLAGS))]>, TB, OpSize16;
+  def CMOV32rm
+    : I<0x40, MRMSrcMemCC, (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2, ccode:$cond),
+        "cmov${cond}{l}\t{$src2, $dst|$dst, $src2}",
+        [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
+                                  imm:$cond, EFLAGS))]>, TB, OpSize32;
+  def CMOV64rm
+    :RI<0x40, MRMSrcMemCC, (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2, ccode:$cond),
+        "cmov${cond}{q}\t{$src2, $dst|$dst, $src2}",
+        [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
+                                  imm:$cond, EFLAGS))]>, TB;
+} // Uses = [EFLAGS], Predicates = [HasCMov], Constraints = "$src1 = $dst"
+} // isCodeGenOnly = 1, ForceDisassemble = 1
 
+multiclass CMOV_Aliases<string Name, int CC> {
+  def : InstAlias<Name#"{w}\t{$src, $dst|$dst, $src}",
+                  (CMOV16rr GR16:$dst, GR16:$src, CC), 0>;
+  def : InstAlias<Name#"{w}\t{$src, $dst|$dst, $src}",
+                  (CMOV16rm GR16:$dst, i16mem:$src, CC), 0>;
+  def : InstAlias<Name#"{l}\t{$src, $dst|$dst, $src}",
+                  (CMOV32rr GR32:$dst, GR32:$src, CC), 0>;
+  def : InstAlias<Name#"{l}\t{$src, $dst|$dst, $src}",
+                  (CMOV32rm GR32:$dst, i32mem:$src, CC), 0>;
+  def : InstAlias<Name#"{q}\t{$src, $dst|$dst, $src}",
+                  (CMOV64rr GR64:$dst, GR64:$src, CC), 0>;
+  def : InstAlias<Name#"{q}\t{$src, $dst|$dst, $src}",
+                  (CMOV64rm GR64:$dst, i64mem:$src, CC), 0>;
+}
 
-// Conditional Moves.
-defm CMOVO  : CMOV<0x40, "cmovo" , WriteCMOV,  X86_COND_O>;
-defm CMOVNO : CMOV<0x41, "cmovno", WriteCMOV,  X86_COND_NO>;
-defm CMOVB  : CMOV<0x42, "cmovb" , WriteCMOV,  X86_COND_B>;
-defm CMOVAE : CMOV<0x43, "cmovae", WriteCMOV,  X86_COND_AE>;
-defm CMOVE  : CMOV<0x44, "cmove" , WriteCMOV,  X86_COND_E>;
-defm CMOVNE : CMOV<0x45, "cmovne", WriteCMOV,  X86_COND_NE>;
-defm CMOVBE : CMOV<0x46, "cmovbe", WriteCMOV2, X86_COND_BE>;
-defm CMOVA  : CMOV<0x47, "cmova" , WriteCMOV2, X86_COND_A>;
-defm CMOVS  : CMOV<0x48, "cmovs" , WriteCMOV,  X86_COND_S>;
-defm CMOVNS : CMOV<0x49, "cmovns", WriteCMOV,  X86_COND_NS>;
-defm CMOVP  : CMOV<0x4A, "cmovp" , WriteCMOV,  X86_COND_P>;
-defm CMOVNP : CMOV<0x4B, "cmovnp", WriteCMOV,  X86_COND_NP>;
-defm CMOVL  : CMOV<0x4C, "cmovl" , WriteCMOV,  X86_COND_L>;
-defm CMOVGE : CMOV<0x4D, "cmovge", WriteCMOV,  X86_COND_GE>;
-defm CMOVLE : CMOV<0x4E, "cmovle", WriteCMOV,  X86_COND_LE>;
-defm CMOVG  : CMOV<0x4F, "cmovg" , WriteCMOV,  X86_COND_G>;
+defm : CMOV_Aliases<"cmovo" ,  0>;
+defm : CMOV_Aliases<"cmovno",  1>;
+defm : CMOV_Aliases<"cmovb" ,  2>;
+defm : CMOV_Aliases<"cmovae",  3>;
+defm : CMOV_Aliases<"cmove" ,  4>;
+defm : CMOV_Aliases<"cmovne",  5>;
+defm : CMOV_Aliases<"cmovbe",  6>;
+defm : CMOV_Aliases<"cmova" ,  7>;
+defm : CMOV_Aliases<"cmovs" ,  8>;
+defm : CMOV_Aliases<"cmovns",  9>;
+defm : CMOV_Aliases<"cmovp" , 10>;
+defm : CMOV_Aliases<"cmovnp", 11>;
+defm : CMOV_Aliases<"cmovl" , 12>;
+defm : CMOV_Aliases<"cmovge", 13>;
+defm : CMOV_Aliases<"cmovle", 14>;
+defm : CMOV_Aliases<"cmovg" , 15>;
 
 
 // SetCC instructions.

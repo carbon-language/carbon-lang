@@ -217,7 +217,7 @@ body:             |
     $rax = MOV64ri @global.1
     $rax = MOV64rm killed $rax, 1, $noreg, 0, $noreg :: (dereferenceable load 8 from @global.1)
     TEST64rr $rax, $rax, implicit-def $eflags
-    $rax = CMOVE64rr undef $rax, killed $rax, implicit killed $eflags
+    $rax = CMOV64rr undef $rax, killed $rax, 4, implicit killed $eflags
     $ecx = MOV32rm undef $rax, 1, $noreg, 0, $noreg :: (load 4 from `i32* undef`)
     $rdx = MOV64rm $r12, 8, $r14, 0, $noreg :: (load 8 from %ir.tmp3)
     $r15 = LEA64r $rdx, 1, $noreg, 1, _
