@@ -485,7 +485,28 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
       }
     } else if (name == "size") {
       if (auto shape{GetShape(args[0].value())}) {
-        // TODO pmk: extract or compute result
+        if (auto &dimArg{args[1]}) {  // DIM= is present, get one extent
+          if (auto dim{ToInt64(dimArg->value())}) {
+            std::int64_t rank = shape->size();
+            if (*dim >= 1 && *dim <= rank) {
+              if (auto &extent{shape->at(*dim - 1)}) {
+                return Fold(context, ConvertToType<T>(std::move(*extent)));
+              }
+            } else {
+              context.messages().Say(
+                  "size(array,dim=%jd) dimension is out of range for rank-%d array"_en_US,
+                  static_cast<std::intmax_t>(*dim), static_cast<int>(rank));
+            }
+          }
+        } else if (auto extents{
+                       common::AllElementsPresent(std::move(*shape))}) {
+          // DIM= is absent; compute PRODUCT(SHAPE())
+          ExtentExpr product{1};
+          for (auto &&extent : std::move(*extents)) {
+            product = std::move(product) * std::move(extent);
+          }
+          return Expr<T>{ConvertToType<T>(Fold(context, std::move(product)))};
+        }
       }
     }
     // TODO:

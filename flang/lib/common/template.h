@@ -20,6 +20,7 @@
 #include <tuple>
 #include <type_traits>
 #include <variant>
+#include <vector>
 
 // Utility templates for metaprogramming and for composing the
 // std::optional<>, std::tuple<>, and std::variant<> containers.
@@ -232,6 +233,24 @@ std::optional<std::tuple<A...>> AllElementsPresent(
     std::tuple<std::optional<A>...> &&t) {
   return AllElementsPresentHelper(
       std::move(t), std::index_sequence_for<A...>{});
+}
+
+// std::vector<std::optional<A>> -> std::optional<std::vector<A>>
+// i.e., inverts a vector of optional values into an optional vector that
+// has a value of if all of the original elements were present.
+template<typename A>
+std::optional<std::vector<A>> AllElementsPresent(
+    std::vector<std::optional<A>> &&v) {
+  for (const auto &maybeA : v) {
+    if (!maybeA.has_value()) {
+      return std::nullopt;
+    }
+  }
+  std::vector<A> result;
+  for (auto &&maybeA : std::move(v)) {
+    result.emplace_back(std::move(*maybeA));
+  }
+  return result;
 }
 
 // (std::optional<>...) -> std::optional<std::tuple<...>>

@@ -22,15 +22,39 @@
 
 namespace Fortran::evaluate {
 
-Shape AsGeneralShape(const Constant<ExtentType> &constShape) {
-  CHECK(constShape.Rank() == 1);
+Shape AsShape(const Constant<ExtentType> &arrayConstant) {
+  CHECK(arrayConstant.Rank() == 1);
   Shape result;
-  std::size_t dimensions{constShape.size()};
+  std::size_t dimensions{arrayConstant.size()};
   for (std::size_t j{0}; j < dimensions; ++j) {
-    Scalar<ExtentType> extent{constShape.values().at(j)};
+    Scalar<ExtentType> extent{arrayConstant.values().at(j)};
     result.emplace_back(MaybeExtent{ExtentExpr{extent}});
   }
   return result;
+}
+
+std::optional<Shape> AsShape(ExtentExpr &&arrayExpr) {
+  if (auto *constArray{UnwrapExpr<Constant<ExtentType>>(arrayExpr)}) {
+    return AsShape(*constArray);
+  }
+  if (auto *constructor{UnwrapExpr<ArrayConstructor<ExtentType>>(arrayExpr)}) {
+    Shape result;
+    for (const auto &value : constructor->values()) {
+      if (const auto *expr{
+              std::get_if<common::CopyableIndirection<ExtentExpr>>(&value.u)}) {
+        if (expr->value().Rank() == 0) {
+          result.emplace_back(std::move(expr->value()));
+          continue;
+        }
+      }
+      return std::nullopt;
+    }
+    return result;
+  }
+  // TODO: linearize other array-valued expressions of known shape, e.g. A+B
+  // as well as conversions of arrays; this will be easier given a
+  // general-purpose array expression flattener (pmk)
+  return std::nullopt;
 }
 
 std::optional<ExtentExpr> AsShapeArrayExpr(const Shape &shape) {
@@ -297,9 +321,12 @@ std::optional<Shape> GetShape(const ProcedureRef &call) {
         intrinsic->name == "ubound") {
       return Shape{MaybeExtent{
           ExtentExpr{call.arguments().front().value().value().Rank()}}};
+    } else if (intrinsic->name == "reshape") {
+      if (call.arguments().size() >= 2 && call.arguments().at(1).has_value()) {
+      }
+    } else {
+      // TODO: shapes of other non-elemental intrinsic results
     }
-    // TODO: shapes of other non-elemental intrinsic results
-    // esp. reshape, where shape is value of second argument
   }
   return std::nullopt;
 }

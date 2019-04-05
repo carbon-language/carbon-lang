@@ -32,8 +32,9 @@ using ExtentExpr = Expr<ExtentType>;
 using MaybeExtent = std::optional<ExtentExpr>;
 using Shape = std::vector<MaybeExtent>;
 
-// Convert a constant shape to the expression form, and vice versa.
-Shape AsGeneralShape(const Constant<ExtentType> &);
+// Convert between various representations of shapes
+Shape AsShape(const Constant<ExtentType> &arrayConstant);
+std::optional<Shape> AsShape(ExtentExpr &&arrayExpr);
 std::optional<ExtentExpr> AsShapeArrayExpr(const Shape &);  // array constructor
 std::optional<Constant<ExtentType>> AsConstantShape(const Shape &);
 
@@ -79,7 +80,7 @@ std::optional<Shape> GetShape(const NullPointer &);
 
 template<typename T> std::optional<Shape> GetShape(const Constant<T> &c) {
   Constant<ExtentType> shape{c.SHAPE()};
-  return AsGeneralShape(shape);
+  return AsShape(shape);
 }
 
 template<typename T>
