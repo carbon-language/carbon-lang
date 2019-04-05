@@ -51,6 +51,7 @@ add_clang_unittest(ToolingTests
   RewriterTest.cpp
   SourceCodeTest.cpp
   ToolingTest.cpp
+  TransformerTest.cpp
   )
 
 target_link_libraries(ToolingTests
