@@ -16,6 +16,8 @@
 
 namespace Fortran::FIR {
 
+TerminatorStmt_impl::~TerminatorStmt_impl() = default;
+
 Addressable_impl *GetAddressable(Statement *stmt) {
   return std::visit(
       [](auto &s) -> Addressable_impl * {

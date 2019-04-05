@@ -58,7 +58,7 @@ public:
 class TerminatorStmt_impl : virtual public Stmt_impl {
 public:
   virtual std::list<BasicBlock *> succ_blocks() const = 0;
-  virtual ~TerminatorStmt_impl() = default;
+  virtual ~TerminatorStmt_impl();
   using TerminatorTrait = std::true_type;
 };
 
