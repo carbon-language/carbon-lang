@@ -443,7 +443,7 @@ private:
 template<typename RESULT> struct ArrayConstructorValue {
   using Result = RESULT;
   EVALUATE_UNION_CLASS_BOILERPLATE(ArrayConstructorValue)
-  std::variant<common::CopyableIndirection<Expr<Result>>, ImpliedDo<Result>> u;
+  std::variant<Expr<Result>, ImpliedDo<Result>> u;
 };
 
 template<typename RESULT> class ArrayConstructorValues {

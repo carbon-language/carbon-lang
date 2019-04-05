@@ -298,9 +298,8 @@ template<int KIND> const char *LogicalOperation<KIND>::Infix() const {
 }
 
 template<typename T>
-std::ostream &EmitArray(
-    std::ostream &o, const common::CopyableIndirection<Expr<T>> &expr) {
-  return expr.value().AsFortran(o);
+std::ostream &EmitArray(std::ostream &o, const Expr<T> &expr) {
+  return expr.AsFortran(o);
 }
 
 template<typename T>

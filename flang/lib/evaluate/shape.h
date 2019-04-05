@@ -117,7 +117,7 @@ template<typename T>
 MaybeExtent GetExtent(const ArrayConstructorValue<T> &value) {
   return std::visit(
       common::visitors{
-          [](const common::CopyableIndirection<Expr<T>> &x) -> MaybeExtent {
+          [](const Expr<T> &x) -> MaybeExtent {
             if (std::optional<Shape> xShape{GetShape(x)}) {
               // Array values in array constructors get linearized.
               return GetSize(std::move(*xShape));
