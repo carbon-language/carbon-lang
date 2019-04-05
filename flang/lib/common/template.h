@@ -237,7 +237,7 @@ std::optional<std::tuple<A...>> AllElementsPresent(
 
 // std::vector<std::optional<A>> -> std::optional<std::vector<A>>
 // i.e., inverts a vector of optional values into an optional vector that
-// has a value of if all of the original elements were present.
+// will have a value only when all of the original elements are present.
 template<typename A>
 std::optional<std::vector<A>> AllElementsPresent(
     std::vector<std::optional<A>> &&v) {

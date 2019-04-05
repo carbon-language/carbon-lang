@@ -29,6 +29,7 @@ module m1
   integer(8), parameter :: ac3bs(:) = shape([(1,j=4,1,-1)])
   integer(8), parameter :: ac4s(:) = shape([((j,k,j*k,k=1,3),j=1,4)])
   integer(8), parameter :: ac5s(:) = shape([((0,k=5,1,-2),j=9,2,-3)])
+  integer(8), parameter :: rss(:) = shape(reshape([(0,j=1,90)], [10_8,9_8]))
  contains
   subroutine subr(x,n1,n2)
     real, intent(in) :: x(:,:)
@@ -54,6 +55,7 @@ end module m1
 ! integer(8),parameter::ac3bs(1_8:)=[Integer(8)::4_8]
 ! integer(8),parameter::ac4s(1_8:)=[Integer(8)::36_8]
 ! integer(8),parameter::ac5s(1_8:)=[Integer(8)::9_8]
+! integer(8),parameter::rss(1_8:)=[Integer(8)::10_8,9_8]
 ! contains
 ! subroutine subr(x,n1,n2)
 ! real(4),intent(in)::x(1_8:,1_8:)

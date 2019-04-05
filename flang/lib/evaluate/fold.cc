@@ -56,8 +56,18 @@ DataRef FoldOperation(FoldingContext &, DataRef &&);
 Substring FoldOperation(FoldingContext &, Substring &&);
 ComplexPart FoldOperation(FoldingContext &, ComplexPart &&);
 template<int KIND>
-Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
-    FunctionRef<Type<TypeCategory::Integer, KIND>> &&funcRef);
+Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
+    FoldingContext &context, FunctionRef<Type<TypeCategory::Integer, KIND>> &&);
+template<int KIND>
+Expr<Type<TypeCategory::Real, KIND>> FoldOperation(
+    FoldingContext &context, FunctionRef<Type<TypeCategory::Real, KIND>> &&);
+template<int KIND>
+Expr<Type<TypeCategory::Complex, KIND>> FoldOperation(
+    FoldingContext &context, FunctionRef<Type<TypeCategory::Complex, KIND>> &&);
+// TODO: Character intrinsic function folding
+template<int KIND>
+Expr<Type<TypeCategory::Logical, KIND>> FoldOperation(
+    FoldingContext &context, FunctionRef<Type<TypeCategory::Logical, KIND>> &&);
 template<typename T> Expr<T> FoldOperation(FoldingContext &, Designator<T> &&);
 template<int KIND>
 Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
@@ -999,6 +1009,7 @@ Expr<TO> FoldOperation(
       [&](auto &kindExpr) -> Expr<TO> {
         kindExpr = Fold(context, std::move(kindExpr));
         using Operand = ResultType<decltype(kindExpr)>;
+        // TODO pmk: conversion of array constructors (constant or not)
         char buffer[64];
         if (auto value{GetScalarConstantValue<Operand>(kindExpr)}) {
           if constexpr (TO::category == TypeCategory::Integer) {

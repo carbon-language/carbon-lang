@@ -322,6 +322,10 @@ std::optional<Shape> GetShape(const ProcedureRef &call) {
           ExtentExpr{call.arguments().front().value().value().Rank()}}};
     } else if (intrinsic->name == "reshape") {
       if (call.arguments().size() >= 2 && call.arguments().at(1).has_value()) {
+        // SHAPE(RESHAPE(array,shape)) -> shape
+        const Expr<SomeType> &shapeExpr{call.arguments().at(1)->value()};
+        Expr<SomeInteger> shape{std::get<Expr<SomeInteger>>(shapeExpr.u)};
+        return AsShape(ConvertToType<ExtentType>(std::move(shape)));
       }
     } else {
       // TODO: shapes of other non-elemental intrinsic results
