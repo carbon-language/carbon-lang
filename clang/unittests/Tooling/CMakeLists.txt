@@ -49,6 +49,7 @@ add_clang_unittest(ToolingTests
   RefactoringTest.cpp
   ReplacementsYamlTest.cpp
   RewriterTest.cpp
+  SourceCodeTest.cpp
   ToolingTest.cpp
   )
 
