@@ -39,7 +39,6 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/ScopedPrinter.h"
 #include "llvm/Support/TargetRegistry.h"
-#include "llvm/Support/WithColor.h"
 
 using namespace llvm;
 using namespace llvm::object;
@@ -368,8 +367,8 @@ namespace opts {
 namespace llvm {
 
 LLVM_ATTRIBUTE_NORETURN void reportError(Twine Msg) {
-  errs() << "\n";
-  WithColor::error(errs()) << Msg << "\n";
+  errs() << "\nError reading file: " << Msg << ".\n";
+  errs().flush();
   exit(1);
 }
 
@@ -392,14 +391,22 @@ bool relocAddressLess(RelocationRef a, RelocationRef b) {
 
 } // namespace llvm
 
+static void reportError(StringRef Input, std::error_code EC) {
+  if (Input == "-")
+    Input = "<stdin>";
+
+  reportError(Twine(Input) + ": " + EC.message());
+}
+
 static void reportError(StringRef Input, Error Err) {
   if (Input == "-")
     Input = "<stdin>";
-  error(createFileError(Input, std::move(Err)));
-}
-
-static void reportError(StringRef Input, std::error_code EC) {
-  reportError(Input, errorCodeToError(EC));
+  std::string ErrMsg;
+  {
+    raw_string_ostream ErrStream(ErrMsg);
+    logAllUnhandledErrors(std::move(Err), ErrStream, Input + ": ");
+  }
+  reportError(ErrMsg);
 }
 
 static bool isMipsArch(unsigned Arch) {
