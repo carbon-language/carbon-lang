@@ -421,8 +421,8 @@ Stream::create(const Directory &StreamDesc, const object::MinidumpFile &File) {
   StreamKind Kind = getKind(StreamDesc.Type);
   switch (Kind) {
   case StreamKind::RawContent:
-    return make_unique<RawContentStream>(StreamDesc.Type,
-                                         File.getRawStream(StreamDesc));
+    return llvm::make_unique<RawContentStream>(StreamDesc.Type,
+                                               File.getRawStream(StreamDesc));
   case StreamKind::SystemInfo: {
     auto ExpectedInfo = File.getSystemInfo();
     if (!ExpectedInfo)
@@ -430,11 +430,11 @@ Stream::create(const Directory &StreamDesc, const object::MinidumpFile &File) {
     auto ExpectedCSDVersion = File.getString(ExpectedInfo->CSDVersionRVA);
     if (!ExpectedCSDVersion)
       return ExpectedInfo.takeError();
-    return make_unique<SystemInfoStream>(*ExpectedInfo,
-                                         std::move(*ExpectedCSDVersion));
+    return llvm::make_unique<SystemInfoStream>(*ExpectedInfo,
+                                               std::move(*ExpectedCSDVersion));
   }
   case StreamKind::TextContent:
-    return make_unique<TextContentStream>(
+    return llvm::make_unique<TextContentStream>(
         StreamDesc.Type, toStringRef(File.getRawStream(StreamDesc)));
   }
   llvm_unreachable("Unhandled stream kind!");
