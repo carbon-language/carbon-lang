@@ -382,7 +382,7 @@ public:
     SourceLocation End = getLocForEndOfToken(Range.getEnd(), 0, SM, LangOpts);
     return End.isInvalid() ? CharSourceRange()
                            : CharSourceRange::getCharRange(
-                                 Range.getBegin(), End);
+                                 Range.getBegin(), End.getLocWithOffset(-1));
   }
   static CharSourceRange getAsCharRange(CharSourceRange Range,
                                         const SourceManager &SM,
