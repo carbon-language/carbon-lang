@@ -722,13 +722,6 @@ def SKXWriteResGroup14 : SchedWriteRes<[SKXPort05]> {
 def: InstRW<[SKXWriteResGroup14], (instrs FDECSTP,
                                           MMX_MOVDQ2Qrr)>;
 
-def SKXWriteResGroup15 : SchedWriteRes<[SKXPort06]> {
-  let Latency = 2;
-  let NumMicroOps = 2;
-  let ResourceCycles = [2];
-}
-def: InstRW<[SKXWriteResGroup15], (instregex "SET(A|BE)r")>;
-
 def SKXWriteResGroup17 : SchedWriteRes<[SKXPort0156]> {
   let Latency = 2;
   let NumMicroOps = 2;
@@ -900,13 +893,6 @@ def SKXWriteResGroup45 : SchedWriteRes<[SKXPort0,SKXPort4,SKXPort237]> {
   let ResourceCycles = [1,1,1];
 }
 def: InstRW<[SKXWriteResGroup45], (instrs FNSTSWm)>;
-
-def SKXWriteResGroup46 : SchedWriteRes<[SKXPort4,SKXPort237,SKXPort06]> {
-  let Latency = 3;
-  let NumMicroOps = 4;
-  let ResourceCycles = [1,1,2];
-}
-def: InstRW<[SKXWriteResGroup46], (instregex "SET(A|BE)m")>;
 
 def SKXWriteResGroup47 : SchedWriteRes<[SKXPort4,SKXPort6,SKXPort237,SKXPort0156]> {
   let Latency = 3;
@@ -2497,5 +2483,31 @@ def SKXCMOVA_CMOVBErm :  SchedWriteVariant<[
 
 def : InstRW<[SKXCMOVA_CMOVBErr], (instrs CMOV16rr, CMOV32rr, CMOV64rr)>;
 def : InstRW<[SKXCMOVA_CMOVBErm], (instrs CMOV16rm, CMOV32rm, CMOV64rm)>;
+
+// SETCCs that use both Z and C flag require an extra uop.
+def SKXWriteSETA_SETBEr : SchedWriteRes<[SKXPort06]> {
+  let Latency = 2;
+  let ResourceCycles = [2];
+  let NumMicroOps = 2;
+}
+
+def SKXWriteSETA_SETBEm : SchedWriteRes<[SKXPort4,SKXPort237,SKXPort06]> {
+  let Latency = 3;
+  let ResourceCycles = [1,1,2];
+  let NumMicroOps = 4;
+}
+
+def SKXSETA_SETBErr :  SchedWriteVariant<[
+  SchedVar<MCSchedPredicate<IsSETAr_Or_SETBEr>, [SKXWriteSETA_SETBEr]>,
+  SchedVar<NoSchedPred,                         [WriteSETCC]>
+]>;
+
+def SKXSETA_SETBErm :  SchedWriteVariant<[
+  SchedVar<MCSchedPredicate<IsSETAm_Or_SETBEm>, [SKXWriteSETA_SETBEm]>,
+  SchedVar<NoSchedPred,                         [WriteSETCCStore]>
+]>;
+
+def : InstRW<[SKXSETA_SETBErr], (instrs SETCCr)>;
+def : InstRW<[SKXSETA_SETBErm], (instrs SETCCm)>;
 
 } // SchedModel

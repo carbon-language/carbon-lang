@@ -354,7 +354,7 @@ def : Pat<(i64 (sext (i8 (X86setcc_c X86_COND_B, EFLAGS)))),
 // this happens, it is great.  However, if we are left with an 8-bit sbb and an
 // and, we might as well just match it as a setb.
 def : Pat<(and (i8 (X86setcc_c X86_COND_B, EFLAGS)), 1),
-          (SETBr)>;
+          (SETCCr (i8 2))>;
 
 // Patterns to give priority when both inputs are zero so that we don't use
 // an immediate for the RHS.

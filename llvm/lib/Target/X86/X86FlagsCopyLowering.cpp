@@ -601,8 +601,7 @@ bool X86FlagsCopyLoweringPass::runOnMachineFunction(MachineFunction &MF) {
         // Otherwise we can just rewrite in-place.
         if (X86::getCondFromCMov(MI) != X86::COND_INVALID) {
           rewriteCMov(*TestMBB, TestPos, TestLoc, MI, *FlagUse, CondRegs);
-        } else if (X86::getCondFromSETOpc(MI.getOpcode()) !=
-                   X86::COND_INVALID) {
+        } else if (X86::getCondFromSETCC(MI) != X86::COND_INVALID) {
           rewriteSetCC(*TestMBB, TestPos, TestLoc, MI, *FlagUse, CondRegs);
         } else if (MI.getOpcode() == TargetOpcode::COPY) {
           rewriteCopy(MI, *FlagUse, CopyDefI);
@@ -729,7 +728,7 @@ CondRegArray X86FlagsCopyLoweringPass::collectCondsInRegs(
   // Scan backwards across the range of instructions with live EFLAGS.
   for (MachineInstr &MI :
        llvm::reverse(llvm::make_range(MBB.begin(), TestPos))) {
-    X86::CondCode Cond = X86::getCondFromSETOpc(MI.getOpcode());
+    X86::CondCode Cond = X86::getCondFromSETCC(MI);
     if (Cond != X86::COND_INVALID && !MI.mayStore() && MI.getOperand(0).isReg() &&
         TRI->isVirtualRegister(MI.getOperand(0).getReg())) {
       assert(MI.getOperand(0).isDef() &&
@@ -750,7 +749,7 @@ unsigned X86FlagsCopyLoweringPass::promoteCondToReg(
     DebugLoc TestLoc, X86::CondCode Cond) {
   unsigned Reg = MRI->createVirtualRegister(PromoteRC);
   auto SetI = BuildMI(TestMBB, TestPos, TestLoc,
-                      TII->get(X86::getSETFromCond(Cond)), Reg);
+                      TII->get(X86::SETCCr), Reg).addImm(Cond);
   (void)SetI;
   LLVM_DEBUG(dbgs() << "    save cond: "; SetI->dump());
   ++NumSetCCsInserted;
@@ -1023,7 +1022,7 @@ void X86FlagsCopyLoweringPass::rewriteSetCC(MachineBasicBlock &TestMBB,
                                             MachineInstr &SetCCI,
                                             MachineOperand &FlagUse,
                                             CondRegArray &CondRegs) {
-  X86::CondCode Cond = X86::getCondFromSETOpc(SetCCI.getOpcode());
+  X86::CondCode Cond = X86::getCondFromSETCC(SetCCI);
   // Note that we can't usefully rewrite this to the inverse without complex
   // analysis of the users of the setCC. Largely we rely on duplicates which
   // could have been avoided already being avoided here.

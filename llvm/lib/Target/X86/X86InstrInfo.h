@@ -42,9 +42,8 @@ unsigned GetCondBranchFromCond(CondCode CC);
 /// the instruction operands should be swaped to match the condition code.
 std::pair<CondCode, bool> getX86ConditionCode(CmpInst::Predicate Predicate);
 
-/// Return a set opcode for the given condition and whether it has
-/// a memory operand.
-unsigned getSETFromCond(CondCode CC, bool HasMemoryOperand = false);
+/// Return a setcc opcode based on whether it has a memory operand.
+unsigned getSETOpc(bool HasMemoryOperand = false);
 
 /// Return a cmov opcode for the given register size in bytes, and operand type.
 unsigned getCMovOpcode(unsigned RegBytes, bool HasMemoryOperand = false);
@@ -53,7 +52,7 @@ unsigned getCMovOpcode(unsigned RegBytes, bool HasMemoryOperand = false);
 CondCode getCondFromBranchOpc(unsigned Opc);
 
 // Turn setCC opcode into condition code.
-CondCode getCondFromSETOpc(unsigned Opc);
+CondCode getCondFromSETCC(const MachineInstr &MI);
 
 // Turn CMov opcode into condition code.
 CondCode getCondFromCMov(const MachineInstr &MI);

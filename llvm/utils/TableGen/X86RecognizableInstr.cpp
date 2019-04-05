@@ -634,6 +634,12 @@ void RecognizableInstr::emitInstructionSpecifier() {
     HANDLE_OPERAND(memory)
     HANDLE_OPERAND(opcodeModifier)
     break;
+  case X86Local::MRMXrCC:
+    assert(numPhysicalOperands == 2 &&
+           "Unexpected number of operands for MRMXrCC");
+    HANDLE_OPERAND(rmRegister)
+    HANDLE_OPERAND(opcodeModifier)
+    break;
   case X86Local::MRMXr:
   case X86Local::MRM0r:
   case X86Local::MRM1r:
@@ -658,6 +664,12 @@ void RecognizableInstr::emitInstructionSpecifier() {
     HANDLE_OPTIONAL(rmRegister)
     HANDLE_OPTIONAL(relocation)
     HANDLE_OPTIONAL(immediate)
+    break;
+  case X86Local::MRMXmCC:
+    assert(numPhysicalOperands == 2 &&
+           "Unexpected number of operands for MRMXm");
+    HANDLE_OPERAND(memory)
+    HANDLE_OPERAND(opcodeModifier)
     break;
   case X86Local::MRMXm:
   case X86Local::MRM0m:
@@ -744,6 +756,7 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
   case X86Local::MRMSrcReg4VOp3:
   case X86Local::MRMSrcRegOp4:
   case X86Local::MRMSrcRegCC:
+  case X86Local::MRMXrCC:
   case X86Local::MRMXr:
     filter = llvm::make_unique<ModFilter>(true);
     break;
@@ -752,6 +765,7 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
   case X86Local::MRMSrcMem4VOp3:
   case X86Local::MRMSrcMemOp4:
   case X86Local::MRMSrcMemCC:
+  case X86Local::MRMXmCC:
   case X86Local::MRMXm:
     filter = llvm::make_unique<ModFilter>(false);
     break;
@@ -785,7 +799,8 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
   assert(filter && "Filter not set");
 
   if (Form == X86Local::AddRegFrm || Form == X86Local::MRMSrcRegCC ||
-      Form == X86Local::MRMSrcMemCC) {
+      Form == X86Local::MRMSrcMemCC || Form == X86Local::MRMXrCC ||
+      Form == X86Local::MRMXmCC) {
     unsigned Count = Form == X86Local::AddRegFrm ? 8 : 16;
     assert(((opcodeToSet % Count) == 0) && "ADDREG_FRM opcode not aligned");
 

@@ -1081,7 +1081,7 @@ uint8_t X86MCCodeEmitter::DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
     CurOp += X86::AddrNumOperands;
     REX |= isREXExtendedReg(MI, CurOp++) << 2; // REX.R
     break;
-  case X86II::MRMXm:
+  case X86II::MRMXmCC: case X86II::MRMXm:
   case X86II::MRM0m: case X86II::MRM1m:
   case X86II::MRM2m: case X86II::MRM3m:
   case X86II::MRM4m: case X86II::MRM5m:
@@ -1089,7 +1089,7 @@ uint8_t X86MCCodeEmitter::DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
     REX |= isREXExtendedReg(MI, MemOperand+X86::AddrBaseReg) << 0; // REX.B
     REX |= isREXExtendedReg(MI, MemOperand+X86::AddrIndexReg) << 1; // REX.X
     break;
-  case X86II::MRMXr:
+  case X86II::MRMXrCC: case X86II::MRMXr:
   case X86II::MRM0r: case X86II::MRM1r:
   case X86II::MRM2r: case X86II::MRM3r:
   case X86II::MRM4r: case X86II::MRM5r:
@@ -1506,6 +1506,15 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
     break;
   }
 
+  case X86II::MRMXrCC: {
+    unsigned RegOp = CurOp++;
+
+    unsigned CC = MI.getOperand(CurOp++).getImm();
+    EmitByte(BaseOpcode + CC, CurByte, OS);
+    EmitRegModRMByte(MI.getOperand(RegOp), 0, CurByte, OS);
+    break;
+  }
+
   case X86II::MRMXr:
   case X86II::MRM0r: case X86II::MRM1r:
   case X86II::MRM2r: case X86II::MRM3r:
@@ -1520,6 +1529,17 @@ encodeInstruction(const MCInst &MI, raw_ostream &OS,
                      (Form == X86II::MRMXr) ? 0 : Form-X86II::MRM0r,
                      CurByte, OS);
     break;
+
+  case X86II::MRMXmCC: {
+    unsigned FirstMemOp = CurOp;
+    CurOp = FirstMemOp + X86::AddrNumOperands;
+
+    unsigned CC = MI.getOperand(CurOp++).getImm();
+    EmitByte(BaseOpcode + CC, CurByte, OS);
+
+    emitMemModRMByte(MI, FirstMemOp, 0, TSFlags, Rex, CurByte, OS, Fixups, STI);
+    break;
+  }
 
   case X86II::MRMXm:
   case X86II::MRM0m: case X86II::MRM1m:

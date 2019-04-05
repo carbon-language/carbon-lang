@@ -352,9 +352,15 @@ namespace X86II {
     MRMSrcMemCC    = 36,
 
     /// MRMXm - This form is used for instructions that use the Mod/RM byte
+    /// to specify a memory source, but doesn't use the middle field. And has
+    /// a condition code.
+    ///
+    MRMXmCC = 38,
+
+    /// MRMXm - This form is used for instructions that use the Mod/RM byte
     /// to specify a memory source, but doesn't use the middle field.
     ///
-    MRMXm = 39, // Instruction that uses Mod/RM but not the middle field.
+    MRMXm = 39,
 
     // Next, instructions that operate on a memory r/m operand...
     MRM0m = 40,  MRM1m = 41,  MRM2m = 42,  MRM3m = 43, // Format /0 /1 /2 /3
@@ -385,10 +391,16 @@ namespace X86II {
     ///
     MRMSrcRegCC    = 52,
 
+    /// MRMXCCr - This form is used for instructions that use the Mod/RM byte
+    /// to specify a register source, but doesn't use the middle field. And has
+    /// a condition code.
+    ///
+    MRMXrCC = 54,
+
     /// MRMXr - This form is used for instructions that use the Mod/RM byte
     /// to specify a register source, but doesn't use the middle field.
     ///
-    MRMXr = 55, // Instruction that uses Mod/RM but not the middle field.
+    MRMXr = 55,
 
     // Instructions that operate on a register r/m operand...
     MRM0r = 56,  MRM1r = 57,  MRM2r = 58,  MRM3r = 59, // Format /0 /1 /2 /3
@@ -779,12 +791,14 @@ namespace X86II {
     case X86II::MRMSrcReg4VOp3:
     case X86II::MRMSrcRegOp4:
     case X86II::MRMSrcRegCC:
+    case X86II::MRMXrCC:
     case X86II::MRMXr:
     case X86II::MRM0r: case X86II::MRM1r:
     case X86II::MRM2r: case X86II::MRM3r:
     case X86II::MRM4r: case X86II::MRM5r:
     case X86II::MRM6r: case X86II::MRM7r:
       return -1;
+    case X86II::MRMXmCC:
     case X86II::MRMXm:
     case X86II::MRM0m: case X86II::MRM1m:
     case X86II::MRM2m: case X86II::MRM3m:

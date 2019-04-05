@@ -472,8 +472,15 @@ def PdWriteSETGEmSETGmSETLEmSETLm : SchedWriteRes<[PdEX01]> {
   let ResourceCycles = [2];
   let NumMicroOps = 2;
 }
-def : InstRW<[PdWriteSETGEmSETGmSETLEmSETLm], (instrs SETGEm, SETGm,
-                                                      SETLEm, SETLm)>;
+
+def PdSETGEmSETGmSETLEmSETLm :  SchedWriteVariant<[
+  SchedVar<MCSchedPredicate<CheckImmOperand_s<5, "X86::COND_GE">>, [PdWriteSETGEmSETGmSETLEmSETLm]>,
+  SchedVar<MCSchedPredicate<CheckImmOperand_s<5, "X86::COND_G">>,  [PdWriteSETGEmSETGmSETLEmSETLm]>,
+  SchedVar<MCSchedPredicate<CheckImmOperand_s<5, "X86::COND_LE">>, [PdWriteSETGEmSETGmSETLEmSETLm]>,
+  SchedVar<MCSchedPredicate<CheckImmOperand_s<5, "X86::COND_L">>,  [PdWriteSETGEmSETGmSETLEmSETLm]>,
+  SchedVar<NoSchedPred,                                            [WriteSETCCStore]>
+]>;
+def : InstRW<[PdSETGEmSETGmSETLEmSETLm], (instrs SETCCm)>;
 
 defm : PdWriteRes<WriteLAHFSAHF,      [PdEX01],          2,  [],     2>;
 

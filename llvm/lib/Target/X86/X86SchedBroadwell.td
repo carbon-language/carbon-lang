@@ -736,7 +736,6 @@ def: InstRW<[BWWriteResGroup20], (instrs CWD,
                                          ADC16i16, SBB16i16,
                                          ADC32i32, SBB32i32,
                                          ADC64i32, SBB64i32)>;
-def: InstRW<[BWWriteResGroup20], (instregex "SET(A|BE)r")>;
 
 def BWWriteResGroup22 : SchedWriteRes<[BWPort4,BWPort6,BWPort237]> {
   let Latency = 2;
@@ -815,7 +814,6 @@ def BWWriteResGroup38 : SchedWriteRes<[BWPort4,BWPort237,BWPort06,BWPort0156]> {
   let ResourceCycles = [1,1,1,1];
 }
 def: InstRW<[BWWriteResGroup38], (instrs CALL64pcrel32)>;
-def: InstRW<[BWWriteResGroup38], (instregex "SET(A|BE)m")>;
 
 def BWWriteResGroup39 : SchedWriteRes<[BWPort0,BWPort1]> {
   let Latency = 4;
@@ -1626,5 +1624,31 @@ def BWCMOVA_CMOVBErm :  SchedWriteVariant<[
 
 def : InstRW<[BWCMOVA_CMOVBErr], (instrs CMOV16rr, CMOV32rr, CMOV64rr)>;
 def : InstRW<[BWCMOVA_CMOVBErm], (instrs CMOV16rm, CMOV32rm, CMOV64rm)>;
+
+// SETCCs that use both Z and C flag require an extra uop.
+def BWWriteSETA_SETBEr : SchedWriteRes<[BWPort06,BWPort0156]> {
+  let Latency = 2;
+  let ResourceCycles = [1,1];
+  let NumMicroOps = 2;
+}
+
+def BWWriteSETA_SETBEm : SchedWriteRes<[BWPort4,BWPort237,BWPort06,BWPort0156]> {
+  let Latency = 3;
+  let ResourceCycles = [1,1,1,1];
+  let NumMicroOps = 4;
+}
+
+def BWSETA_SETBErr :  SchedWriteVariant<[
+  SchedVar<MCSchedPredicate<IsSETAr_Or_SETBEr>, [BWWriteSETA_SETBEr]>,
+  SchedVar<NoSchedPred,                         [WriteSETCC]>
+]>;
+
+def BWSETA_SETBErm :  SchedWriteVariant<[
+  SchedVar<MCSchedPredicate<IsSETAm_Or_SETBEm>, [BWWriteSETA_SETBEm]>,
+  SchedVar<NoSchedPred,                         [WriteSETCCStore]>
+]>;
+
+def : InstRW<[BWSETA_SETBErr], (instrs SETCCr)>;
+def : InstRW<[BWSETA_SETBErm], (instrs SETCCm)>;
 
 } // SchedModel

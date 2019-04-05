@@ -119,8 +119,8 @@ body:             |
     CMP64rr %0, %1, implicit-def $eflags
     %2:gr64 = COPY $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
-  ; CHECK:      %[[A_REG:[^:]*]]:gr8 = SETAr implicit $eflags
-  ; CHECK-NEXT: %[[B_REG:[^:]*]]:gr8 = SETBr implicit $eflags
+  ; CHECK:      %[[A_REG:[^:]*]]:gr8 = SETCCr 7, implicit $eflags
+  ; CHECK-NEXT: %[[B_REG:[^:]*]]:gr8 = SETCCr 2, implicit $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
 
     ADJCALLSTACKDOWN64 0, 0, 0, implicit-def dead $rsp, implicit-def dead $eflags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
@@ -175,8 +175,8 @@ body:             |
     CMP64rr %0, %1, implicit-def $eflags
     %2:gr64 = COPY $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
-  ; CHECK:      %[[A_REG:[^:]*]]:gr8 = SETAr implicit $eflags
-  ; CHECK-NEXT: %[[B_REG:[^:]*]]:gr8 = SETBr implicit $eflags
+  ; CHECK:      %[[A_REG:[^:]*]]:gr8 = SETCCr 7, implicit $eflags
+  ; CHECK-NEXT: %[[B_REG:[^:]*]]:gr8 = SETCCr 2, implicit $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
 
     ADJCALLSTACKDOWN64 0, 0, 0, implicit-def dead $rsp, implicit-def dead $eflags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
@@ -230,10 +230,10 @@ body:             |
     CMP64rr %0, %1, implicit-def $eflags
     %2:gr64 = COPY $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
-  ; CHECK:      %[[A_REG:[^:]*]]:gr8 = SETAr implicit $eflags
-  ; CHECK-NEXT: %[[B_REG:[^:]*]]:gr8 = SETBr implicit $eflags
-  ; CHECK-NEXT: %[[E_REG:[^:]*]]:gr8 = SETEr implicit $eflags
-  ; CHECK-NEXT: %[[NE_REG:[^:]*]]:gr8 = SETNEr implicit $eflags
+  ; CHECK:      %[[A_REG:[^:]*]]:gr8 = SETCCr 7, implicit $eflags
+  ; CHECK-NEXT: %[[B_REG:[^:]*]]:gr8 = SETCCr 2, implicit $eflags
+  ; CHECK-NEXT: %[[E_REG:[^:]*]]:gr8 = SETCCr 4, implicit $eflags
+  ; CHECK-NEXT: %[[NE_REG:[^:]*]]:gr8 = SETCCr 5, implicit $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
 
     ADJCALLSTACKDOWN64 0, 0, 0, implicit-def dead $rsp, implicit-def dead $eflags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
@@ -241,10 +241,10 @@ body:             |
     ADJCALLSTACKUP64 0, 0, implicit-def dead $rsp, implicit-def dead $eflags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
 
     $eflags = COPY %2
-    %3:gr8 = SETAr implicit $eflags
-    %4:gr8 = SETBr implicit $eflags
-    %5:gr8 = SETEr implicit $eflags
-    SETNEm $rsp, 1, $noreg, -16, $noreg, implicit killed $eflags
+    %3:gr8 = SETCCr 7, implicit $eflags
+    %4:gr8 = SETCCr 2, implicit $eflags
+    %5:gr8 = SETCCr 4, implicit $eflags
+    SETCCm $rsp, 1, $noreg, -16, $noreg, 5, implicit killed $eflags
     MOV8mr $rsp, 1, $noreg, -16, $noreg, killed %3
     MOV8mr $rsp, 1, $noreg, -16, $noreg, killed %4
     MOV8mr $rsp, 1, $noreg, -16, $noreg, killed %5
@@ -273,9 +273,9 @@ body:             |
     CMP64rr %0, %1, implicit-def $eflags
     %2:gr64 = COPY $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
-  ; CHECK:      %[[A_REG:[^:]*]]:gr8 = SETAr implicit $eflags
-  ; CHECK-NEXT: %[[B_REG:[^:]*]]:gr8 = SETBr implicit $eflags
-  ; CHECK-NEXT: %[[E_REG:[^:]*]]:gr8 = SETEr implicit $eflags
+  ; CHECK:      %[[A_REG:[^:]*]]:gr8 = SETCCr 7, implicit $eflags
+  ; CHECK-NEXT: %[[B_REG:[^:]*]]:gr8 = SETCCr 2, implicit $eflags
+  ; CHECK-NEXT: %[[E_REG:[^:]*]]:gr8 = SETCCr 4, implicit $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
 
     ADJCALLSTACKDOWN64 0, 0, 0, implicit-def dead $rsp, implicit-def dead $eflags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
@@ -319,7 +319,7 @@ body:             |
     %2:gr64 = ADD64rr %0, %1, implicit-def $eflags
     %3:gr64 = COPY $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
-  ; CHECK:      %[[CF_REG:[^:]*]]:gr8 = SETBr implicit $eflags
+  ; CHECK:      %[[CF_REG:[^:]*]]:gr8 = SETCCr 2, implicit $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
 
     ADJCALLSTACKDOWN64 0, 0, 0, implicit-def dead $rsp, implicit-def dead $eflags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
@@ -353,7 +353,7 @@ body:             |
     %2:gr64 = SUB64rr %0, %1, implicit-def $eflags
     %3:gr64 = COPY killed $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
-  ; CHECK:      %[[CF_REG:[^:]*]]:gr8 = SETBr implicit $eflags
+  ; CHECK:      %[[CF_REG:[^:]*]]:gr8 = SETCCr 2, implicit $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
 
     ADJCALLSTACKDOWN64 0, 0, 0, implicit-def dead $rsp, implicit-def dead $eflags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
@@ -387,8 +387,8 @@ body:             |
     %2:gr64 = ADD64rr %0, %1, implicit-def $eflags
     %3:gr64 = COPY $eflags
   ; CHECK-NOT:    COPY{{( killed)?}} $eflags
-  ; CHECK:        %[[E_REG:[^:]*]]:gr8 = SETEr implicit $eflags
-  ; CHECK-NEXT:   %[[CF_REG:[^:]*]]:gr8 = SETBr implicit $eflags
+  ; CHECK:        %[[E_REG:[^:]*]]:gr8 = SETCCr 4, implicit $eflags
+  ; CHECK-NEXT:   %[[CF_REG:[^:]*]]:gr8 = SETCCr 2, implicit $eflags
   ; CHECK-NOT:    COPY{{( killed)?}} $eflags
 
     ADJCALLSTACKDOWN64 0, 0, 0, implicit-def dead $rsp, implicit-def dead $eflags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
@@ -426,8 +426,8 @@ body:             |
     %2:gr64 = ADD64rr %0, %1, implicit-def $eflags
     %3:gr64 = COPY $eflags
   ; CHECK-NOT:    COPY{{( killed)?}} $eflags
-  ; CHECK:        %[[E_REG:[^:]*]]:gr8 = SETEr implicit $eflags
-  ; CHECK-NEXT:   %[[OF_REG:[^:]*]]:gr8 = SETOr implicit $eflags
+  ; CHECK:        %[[E_REG:[^:]*]]:gr8 = SETCCr 4, implicit $eflags
+  ; CHECK-NEXT:   %[[OF_REG:[^:]*]]:gr8 = SETCCr 0, implicit $eflags
   ; CHECK-NOT:    COPY{{( killed)?}} $eflags
 
     ADJCALLSTACKDOWN64 0, 0, 0, implicit-def dead $rsp, implicit-def dead $eflags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
@@ -465,7 +465,7 @@ body:             |
     %2:gr64 = ADD64rr %0, %1, implicit-def $eflags
     %3:gr64 = COPY $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
-  ; CHECK:      %[[CF_REG:[^:]*]]:gr8 = SETBr implicit $eflags
+  ; CHECK:      %[[CF_REG:[^:]*]]:gr8 = SETCCr 2, implicit $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
 
     ADJCALLSTACKDOWN64 0, 0, 0, implicit-def dead $rsp, implicit-def dead $eflags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
@@ -499,7 +499,7 @@ body:             |
     %2:gr64 = ADD64rr %0, %1, implicit-def $eflags
     %3:gr64 = COPY $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
-  ; CHECK:      %[[CF_REG:[^:]*]]:gr8 = SETBr implicit $eflags
+  ; CHECK:      %[[CF_REG:[^:]*]]:gr8 = SETCCr 2, implicit $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
 
     ADJCALLSTACKDOWN64 0, 0, 0, implicit-def dead $rsp, implicit-def dead $eflags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
@@ -533,7 +533,7 @@ body:             |
     %2:gr64 = ADD64rr %0, %1, implicit-def $eflags
     %3:gr64 = COPY $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
-  ; CHECK:      %[[CF_REG:[^:]*]]:gr8 = SETBr implicit $eflags
+  ; CHECK:      %[[CF_REG:[^:]*]]:gr8 = SETCCr 2, implicit $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
 
     ADJCALLSTACKDOWN64 0, 0, 0, implicit-def dead $rsp, implicit-def dead $eflags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
@@ -599,10 +599,10 @@ body:             |
     CMP64rr %0, %1, implicit-def $eflags
     %2:gr64 = COPY $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
-  ; CHECK:      %[[S_REG:[^:]*]]:gr8 = SETSr implicit $eflags
-  ; CHECK-NEXT: %[[NE_REG:[^:]*]]:gr8 = SETNEr implicit $eflags
-  ; CHECK-NEXT: %[[A_REG:[^:]*]]:gr8 = SETAr implicit $eflags
-  ; CHECK-NEXT: %[[B_REG:[^:]*]]:gr8 = SETBr implicit $eflags
+  ; CHECK:      %[[S_REG:[^:]*]]:gr8 = SETCCr 8, implicit $eflags
+  ; CHECK-NEXT: %[[NE_REG:[^:]*]]:gr8 = SETCCr 5, implicit $eflags
+  ; CHECK-NEXT: %[[A_REG:[^:]*]]:gr8 = SETCCr 7, implicit $eflags
+  ; CHECK-NEXT: %[[B_REG:[^:]*]]:gr8 = SETCCr 2, implicit $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
 
     ADJCALLSTACKDOWN64 0, 0, 0, implicit-def dead $rsp, implicit-def dead $eflags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
@@ -672,12 +672,12 @@ body:             |
     CMP64rr %0, %1, implicit-def $eflags
     %2:gr64 = COPY $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
-  ; CHECK:      %[[S_REG:[^:]*]]:gr8 = SETSr implicit $eflags
-  ; CHECK-NEXT: %[[P_REG:[^:]*]]:gr8 = SETPr implicit $eflags
-  ; CHECK-NEXT: %[[NE_REG:[^:]*]]:gr8 = SETNEr implicit $eflags
-  ; CHECK-NEXT: %[[A_REG:[^:]*]]:gr8 = SETAr implicit $eflags
-  ; CHECK-NEXT: %[[B_REG:[^:]*]]:gr8 = SETBr implicit $eflags
-  ; CHECK-NEXT: %[[O_REG:[^:]*]]:gr8 = SETOr implicit $eflags
+  ; CHECK:      %[[S_REG:[^:]*]]:gr8 = SETCCr 8, implicit $eflags
+  ; CHECK-NEXT: %[[P_REG:[^:]*]]:gr8 = SETCCr 10, implicit $eflags
+  ; CHECK-NEXT: %[[NE_REG:[^:]*]]:gr8 = SETCCr 5, implicit $eflags
+  ; CHECK-NEXT: %[[A_REG:[^:]*]]:gr8 = SETCCr 7, implicit $eflags
+  ; CHECK-NEXT: %[[B_REG:[^:]*]]:gr8 = SETCCr 2, implicit $eflags
+  ; CHECK-NEXT: %[[O_REG:[^:]*]]:gr8 = SETCCr 0, implicit $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
 
     ADJCALLSTACKDOWN64 0, 0, 0, implicit-def dead $rsp, implicit-def dead $eflags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
@@ -824,9 +824,9 @@ body:             |
     JMP_1 %bb.4
   ; CHECK:      bb.1:
   ; CHECK-NOT:    COPY{{( killed)?}} $eflags
-  ; CHECK:        %[[A_REG:[^:]*]]:gr8 = SETAr implicit $eflags
-  ; CHECK-NEXT:   %[[E_REG:[^:]*]]:gr8 = SETEr implicit $eflags
-  ; CHECK-NEXT:   %[[B_REG:[^:]*]]:gr8 = SETBr implicit $eflags
+  ; CHECK:        %[[A_REG:[^:]*]]:gr8 = SETCCr 7, implicit $eflags
+  ; CHECK-NEXT:   %[[E_REG:[^:]*]]:gr8 = SETCCr 4, implicit $eflags
+  ; CHECK-NEXT:   %[[B_REG:[^:]*]]:gr8 = SETCCr 2, implicit $eflags
   ; CHECK-NOT:    COPY{{( killed)?}} $eflags
 
   bb.2:
@@ -962,12 +962,12 @@ body:             |
     %0:gr64 = COPY $rdi
     %1:gr64 = COPY $rsi
     CMP64rr %0, %1, implicit-def $eflags
-    %2:gr8 = SETAr implicit $eflags
-    %3:gr8 = SETAEr implicit $eflags
+    %2:gr8 = SETCCr 7, implicit $eflags
+    %3:gr8 = SETCCr 3, implicit $eflags
     %4:gr64 = COPY $eflags
   ; CHECK:      CMP64rr %0, %1, implicit-def $eflags
-  ; CHECK-NEXT: %[[A_REG:[^:]*]]:gr8 = SETAr implicit $eflags
-  ; CHECK-NEXT: %[[AE_REG:[^:]*]]:gr8 = SETAEr implicit $eflags
+  ; CHECK-NEXT: %[[A_REG:[^:]*]]:gr8 = SETCCr 7, implicit $eflags
+  ; CHECK-NEXT: %[[AE_REG:[^:]*]]:gr8 = SETCCr 3, implicit $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
 
     ADJCALLSTACKDOWN64 0, 0, 0, implicit-def dead $rsp, implicit-def dead $eflags, implicit-def dead $ssp, implicit $rsp, implicit $ssp
@@ -1020,15 +1020,15 @@ body:             |
     %0:gr64 = COPY $rdi
     %1:gr64 = COPY $rsi
     CMP64rr %0, %1, implicit-def $eflags
-    SETEm %0, 1, $noreg, -16, $noreg, implicit $eflags
+    SETCCm %0, 1, $noreg, -16, $noreg, 4, implicit $eflags
     %2:gr64 = COPY $eflags
   ; CHECK:      CMP64rr %0, %1, implicit-def $eflags
   ; We cannot reuse this SETE because it stores the flag directly to memory,
   ; so we have two SETEs here. FIXME: It'd be great if something could fold
   ; these automatically. If not, maybe we want to unfold SETcc instructions
   ; writing to memory so we can reuse them.
-  ; CHECK-NEXT: SETEm {{.*}} implicit $eflags
-  ; CHECK-NEXT: %[[E_REG:[^:]*]]:gr8 = SETEr implicit $eflags
+  ; CHECK-NEXT: SETCCm {{.*}} 4, implicit $eflags
+  ; CHECK-NEXT: %[[E_REG:[^:]*]]:gr8 = SETCCr 4, implicit $eflags
   ; CHECK-NOT:  COPY{{( killed)?}} $eflags
 
     ADJCALLSTACKDOWN64 0, 0, 0, implicit-def dead $rsp, implicit-def dead $eflags, implicit-def dead $ssp, implicit $rsp, implicit $ssp

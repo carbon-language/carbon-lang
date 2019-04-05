@@ -615,13 +615,6 @@ def: InstRW<[SBWriteResGroup5], (instrs MMX_PABSBrr,
                                         MMX_PSIGNDrr,
                                         MMX_PSIGNWrr)>;
 
-def SBWriteResGroup9 : SchedWriteRes<[SBPort05]> {
-  let Latency = 2;
-  let NumMicroOps = 2;
-  let ResourceCycles = [2];
-}
-def: InstRW<[SBWriteResGroup9], (instregex "SET(A|BE)r")>;
-
 def SBWriteResGroup11 : SchedWriteRes<[SBPort015]> {
   let Latency = 2;
   let NumMicroOps = 2;
@@ -771,13 +764,6 @@ def SBWriteResGroup41 : SchedWriteRes<[SBPort5,SBPort015]> {
   let ResourceCycles = [1,3];
 }
 def: InstRW<[SBWriteResGroup41], (instrs FNINIT)>;
-
-def SBWriteResGroup43 : SchedWriteRes<[SBPort4,SBPort23,SBPort05]> {
-  let Latency = 3;
-  let NumMicroOps = 4;
-  let ResourceCycles = [1,1,2];
-}
-def: InstRW<[SBWriteResGroup43], (instregex "SET(A|BE)m")>;
 
 def SBWriteResGroup45 : SchedWriteRes<[SBPort0,SBPort4,SBPort23,SBPort15]> {
   let Latency = 5;
@@ -1197,5 +1183,31 @@ def SBCMOVA_CMOVBErm :  SchedWriteVariant<[
 
 def : InstRW<[SBCMOVA_CMOVBErr], (instrs CMOV16rr, CMOV32rr, CMOV64rr)>;
 def : InstRW<[SBCMOVA_CMOVBErm], (instrs CMOV16rm, CMOV32rm, CMOV64rm)>;
+
+// SETCCs that use both Z and C flag require an extra uop.
+def SBWriteSETA_SETBEr : SchedWriteRes<[SBPort05]> {
+  let Latency = 2;
+  let ResourceCycles = [2];
+  let NumMicroOps = 2;
+}
+
+def SBWriteSETA_SETBEm : SchedWriteRes<[SBPort4,SBPort23,SBPort05]> {
+  let Latency = 3;
+  let ResourceCycles = [1,1,2];
+  let NumMicroOps = 4;
+}
+
+def SBSETA_SETBErr :  SchedWriteVariant<[
+  SchedVar<MCSchedPredicate<IsSETAr_Or_SETBEr>, [SBWriteSETA_SETBEr]>,
+  SchedVar<NoSchedPred,                         [WriteSETCC]>
+]>;
+
+def SBSETA_SETBErm :  SchedWriteVariant<[
+  SchedVar<MCSchedPredicate<IsSETAm_Or_SETBEm>, [SBWriteSETA_SETBEm]>,
+  SchedVar<NoSchedPred,                         [WriteSETCCStore]>
+]>;
+
+def : InstRW<[SBSETA_SETBErr], (instrs SETCCr)>;
+def : InstRW<[SBSETA_SETBErm], (instrs SETCCm)>;
 
 } // SchedModel

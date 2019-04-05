@@ -2001,26 +2001,13 @@ X86::CondCode X86::getCondFromBranchOpc(unsigned BrOpc) {
   }
 }
 
-/// Return condition code of a SET opcode.
-X86::CondCode X86::getCondFromSETOpc(unsigned Opc) {
-  switch (Opc) {
+/// Return condition code of a SETCC opcode.
+X86::CondCode X86::getCondFromSETCC(const MachineInstr &MI) {
+  switch (MI.getOpcode()) {
   default: return X86::COND_INVALID;
-  case X86::SETAr:  case X86::SETAm:  return X86::COND_A;
-  case X86::SETAEr: case X86::SETAEm: return X86::COND_AE;
-  case X86::SETBr:  case X86::SETBm:  return X86::COND_B;
-  case X86::SETBEr: case X86::SETBEm: return X86::COND_BE;
-  case X86::SETEr:  case X86::SETEm:  return X86::COND_E;
-  case X86::SETGr:  case X86::SETGm:  return X86::COND_G;
-  case X86::SETGEr: case X86::SETGEm: return X86::COND_GE;
-  case X86::SETLr:  case X86::SETLm:  return X86::COND_L;
-  case X86::SETLEr: case X86::SETLEm: return X86::COND_LE;
-  case X86::SETNEr: case X86::SETNEm: return X86::COND_NE;
-  case X86::SETNOr: case X86::SETNOm: return X86::COND_NO;
-  case X86::SETNPr: case X86::SETNPm: return X86::COND_NP;
-  case X86::SETNSr: case X86::SETNSm: return X86::COND_NS;
-  case X86::SETOr:  case X86::SETOm:  return X86::COND_O;
-  case X86::SETPr:  case X86::SETPm:  return X86::COND_P;
-  case X86::SETSr:  case X86::SETSm:  return X86::COND_S;
+  case X86::SETCCr: case X86::SETCCm:
+    return static_cast<X86::CondCode>(
+        MI.getOperand(MI.getDesc().getNumOperands() - 1).getImm());
   }
 }
 
@@ -2139,30 +2126,9 @@ X86::getX86ConditionCode(CmpInst::Predicate Predicate) {
   return std::make_pair(CC, NeedSwap);
 }
 
-/// Return a set opcode for the given condition and
-/// whether it has memory operand.
-unsigned X86::getSETFromCond(CondCode CC, bool HasMemoryOperand) {
-  static const uint16_t Opc[16][2] = {
-    { X86::SETOr,  X86::SETOm  },
-    { X86::SETNOr, X86::SETNOm },
-    { X86::SETBr,  X86::SETBm  },
-    { X86::SETAEr, X86::SETAEm },
-    { X86::SETEr,  X86::SETEm  },
-    { X86::SETNEr, X86::SETNEm },
-    { X86::SETBEr, X86::SETBEm },
-    { X86::SETAr,  X86::SETAm  },
-    { X86::SETSr,  X86::SETSm  },
-    { X86::SETNSr, X86::SETNSm },
-    { X86::SETPr,  X86::SETPm  },
-    { X86::SETNPr, X86::SETNPm },
-    { X86::SETLr,  X86::SETLm  },
-    { X86::SETGEr, X86::SETGEm },
-    { X86::SETLEr, X86::SETLEm },
-    { X86::SETGr,  X86::SETGm  },
-  };
-
-  assert(CC <= LAST_VALID_COND && "Can only handle standard cond codes");
-  return Opc[CC][HasMemoryOperand ? 1 : 0];
+/// Return a setcc opcode based on whether it has memory operand.
+unsigned X86::getSETOpc(bool HasMemoryOperand) {
+  return HasMemoryOperand ? X86::SETCCr : X86::SETCCm;
 }
 
 /// Return a cmov opcode for the given register size in bytes, and operand type.
@@ -3555,7 +3521,7 @@ bool X86InstrInfo::optimizeCompareInstr(MachineInstr &CmpInstr, unsigned SrcReg,
   // If we are done with the basic block, we need to check whether EFLAGS is
   // live-out.
   bool IsSafe = false;
-  SmallVector<std::pair<MachineInstr*, unsigned /*NewOpc*/>, 4> OpsToUpdate;
+  SmallVector<std::pair<MachineInstr*, X86::CondCode>, 4> OpsToUpdate;
   MachineBasicBlock::iterator E = CmpInstr.getParent()->end();
   for (++I; I != E; ++I) {
     const MachineInstr &Instr = *I;
@@ -3572,16 +3538,13 @@ bool X86InstrInfo::optimizeCompareInstr(MachineInstr &CmpInstr, unsigned SrcReg,
 
     // EFLAGS is used by this instruction.
     X86::CondCode OldCC = X86::COND_INVALID;
-    bool OpcIsSET = false;
     if (IsCmpZero || IsSwapped) {
       // We decode the condition code from opcode.
       if (Instr.isBranch())
         OldCC = X86::getCondFromBranchOpc(Instr.getOpcode());
       else {
-        OldCC = X86::getCondFromSETOpc(Instr.getOpcode());
-        if (OldCC != X86::COND_INVALID)
-          OpcIsSET = true;
-        else
+        OldCC = X86::getCondFromSETCC(Instr);
+        if (OldCC == X86::COND_INVALID)
           OldCC = X86::getCondFromCMov(Instr);
       }
       if (OldCC == X86::COND_INVALID) return false;
@@ -3627,21 +3590,10 @@ bool X86InstrInfo::optimizeCompareInstr(MachineInstr &CmpInstr, unsigned SrcReg,
     }
 
     if ((ShouldUpdateCC || IsSwapped) && ReplacementCC != OldCC) {
-      // Synthesize the new opcode.
-      bool HasMemoryOperand = Instr.hasOneMemOperand();
-      unsigned NewOpc;
-      if (Instr.isBranch())
-        NewOpc = GetCondBranchFromCond(ReplacementCC);
-      else if(OpcIsSET)
-        NewOpc = getSETFromCond(ReplacementCC, HasMemoryOperand);
-      else {
-        NewOpc = ReplacementCC;
-      }
-
       // Push the MachineInstr to OpsToUpdate.
       // If it is safe to remove CmpInstr, the condition code of these
       // instructions will be modified.
-      OpsToUpdate.push_back(std::make_pair(&*I, NewOpc));
+      OpsToUpdate.push_back(std::make_pair(&*I, ReplacementCC));
     }
     if (ModifyEFLAGS || Instr.killsRegister(X86::EFLAGS, TRI)) {
       // It is safe to remove CmpInstr if EFLAGS is updated again or killed.
@@ -3696,11 +3648,11 @@ bool X86InstrInfo::optimizeCompareInstr(MachineInstr &CmpInstr, unsigned SrcReg,
 
   // Modify the condition code of instructions in OpsToUpdate.
   for (auto &Op : OpsToUpdate) {
-    if (X86::getCondFromCMov(*Op.first) != X86::COND_INVALID)
+    if (Op.first->isBranch())
+      Op.first->setDesc(get(GetCondBranchFromCond(Op.second)));
+    else
       Op.first->getOperand(Op.first->getDesc().getNumOperands() - 1)
           .setImm(Op.second);
-    else
-      Op.first->setDesc(get(Op.second));
   }
   return true;
 }
