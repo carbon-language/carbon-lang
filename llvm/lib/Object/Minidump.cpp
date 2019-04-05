@@ -38,12 +38,16 @@ Expected<std::string> MinidumpFile::getString(size_t Offset) const {
     return "";
 
   Offset += sizeof(support::ulittle32_t);
-  auto ExpectedData = getDataSliceAs<UTF16>(getData(), Offset, Size);
+  auto ExpectedData =
+      getDataSliceAs<support::ulittle16_t>(getData(), Offset, Size);
   if (!ExpectedData)
     return ExpectedData.takeError();
 
+  SmallVector<UTF16, 32> WStr(Size);
+  copy(*ExpectedData, WStr.begin());
+
   std::string Result;
-  if (!convertUTF16ToUTF8String(*ExpectedData, Result))
+  if (!convertUTF16ToUTF8String(WStr, Result))
     return createError("String decoding failed");
 
   return Result;
