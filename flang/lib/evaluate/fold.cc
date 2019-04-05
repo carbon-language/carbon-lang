@@ -884,10 +884,19 @@ private:
     std::optional<std::int64_t> start{ToInt64(lower)}, end{ToInt64(upper)},
         step{ToInt64(stride)};
     if (start.has_value() && end.has_value() && step.has_value()) {
+      if (*step == 0) {
+        return false;
+      }
       bool result{true};
-      for (std::int64_t &j{context_.StartImpliedDo(iDo.name(), *start)};
-           j <= *end; j += *step) {
-        result &= FoldArray(iDo.values());
+      std::int64_t &j{context_.StartImpliedDo(iDo.name(), *start)};
+      if (*step > 0) {
+        for (; j <= *end; j += *step) {
+          result &= FoldArray(iDo.values());
+        }
+      } else {
+        for (; j >= *end; j += *step) {
+          result &= FoldArray(iDo.values());
+        }
       }
       context_.EndImpliedDo(iDo.name());
       return result;
