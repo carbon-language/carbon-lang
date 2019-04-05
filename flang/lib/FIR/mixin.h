@@ -30,7 +30,7 @@ namespace Fortran::FIR {
 
 // implementation of a (moveable) sum type (variant)
 template<typename... Ts> struct SumTypeMixin {
-  template<typename A> SumTypeMixin(A &&x) : u{std::move(x)} {}
+  template<typename A> SumTypeMixin(A &&x) : u{std::forward<A>(x)} {}
   using SumTypeTrait = std::true_type;
   SumTypeMixin(SumTypeMixin &&) = default;
   SumTypeMixin &operator=(SumTypeMixin &&) = default;
@@ -42,8 +42,7 @@ template<typename... Ts> struct SumTypeMixin {
 
 // implementation of a copyable sum type
 template<typename... Ts> struct SumTypeCopyMixin {
-  template<typename A> SumTypeCopyMixin(A &&x) : u{std::move(x)} {}
-  template<typename A> SumTypeCopyMixin(const A &x) : u{x} {}
+  template<typename A> SumTypeCopyMixin(A &&x) : u{std::forward<A>(x)} {}
   using CopyableSumTypeTrait = std::true_type;
   SumTypeCopyMixin(SumTypeCopyMixin &&) = default;
   SumTypeCopyMixin &operator=(SumTypeCopyMixin &&) = default;
@@ -61,7 +60,7 @@ template<typename... Ts> struct SumTypeCopyMixin {
 
 // implementation of a (moveable) product type (tuple)
 template<typename... Ts> struct ProductTypeMixin {
-  template<typename A> ProductTypeMixin(A &&x) : t{std::move(x)} {}
+  ProductTypeMixin(Ts... x) : t{std::forward<Ts>(x)...} {}
   using ProductTypeTrait = std::true_type;
   ProductTypeMixin(ProductTypeMixin &&) = default;
   ProductTypeMixin &operator=(ProductTypeMixin &&) = default;
@@ -73,7 +72,7 @@ template<typename... Ts> struct ProductTypeMixin {
 
 // implementation of a (moveable) maybe type
 template<typename T> struct MaybeMixin {
-  MaybeMixin(T &&x) : o{std::move(x)} {}
+  MaybeMixin(T &&x) : o{std::forward<T>(x)} {}
   using MaybeTrait = std::true_type;
   MaybeMixin(MaybeMixin &&) = default;
   MaybeMixin &operator=(MaybeMixin &&) = default;
