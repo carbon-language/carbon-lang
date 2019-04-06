@@ -4,9 +4,8 @@
 define i8 @t1(i8* %X, i64 %i) {
 ; CHECK-LABEL: t1:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    movabsq $4611686018427387649, %rax # imm = 0x3FFFFFFFFFFFFF01
-; CHECK-NEXT:    andq %rsi, %rax
-; CHECK-NEXT:    movb (%rdi,%rax,4), %al
+; CHECK-NEXT:    andq $-255, %rsi
+; CHECK-NEXT:    movb (%rdi,%rsi,4), %al
 ; CHECK-NEXT:    retq
 
 entry:
@@ -20,9 +19,8 @@ entry:
 define i8 @t2(i8* %X, i64 %i) {
 ; CHECK-LABEL: t2:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    movabsq $4611686018427387890, %rax # imm = 0x3FFFFFFFFFFFFFF2
-; CHECK-NEXT:    andq %rsi, %rax
-; CHECK-NEXT:    movb (%rdi,%rax,4), %al
+; CHECK-NEXT:    andq $-14, %rsi
+; CHECK-NEXT:    movb (%rdi,%rsi,4), %al
 ; CHECK-NEXT:    retq
 
 entry:
