@@ -3586,16 +3586,23 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
     // Check the minimum bitwidth for the new constant.
     // TODO: Using 16 and 8 bit operations is also possible for or32 & xor32.
     auto CanShrinkImmediate = [&](int64_t &ShiftedVal) {
+      if (Opcode == ISD::AND) {
+        // AND32ri is the same as AND64ri32 with zext imm.
+        // Try this before sign extended immediates below.
+        ShiftedVal = (uint64_t)Val >> ShAmt;
+        if (NVT == MVT::i64 && !isUInt<32>(Val) && isUInt<32>(ShiftedVal))
+          return true;
+      }
       ShiftedVal = Val >> ShAmt;
       if ((!isInt<8>(Val) && isInt<8>(ShiftedVal)) ||
           (!isInt<32>(Val) && isInt<32>(ShiftedVal)))
         return true;
-      // For 64-bit we can also try unsigned 32 bit immediates.
-      // AND32ri is the same as AND64ri32 with zext imm.
-      // MOV32ri+OR64r is cheaper than MOV64ri64+OR64rr
-      ShiftedVal = (uint64_t)Val >> ShAmt;
-      if (NVT == MVT::i64 && !isUInt<32>(Val) && isUInt<32>(ShiftedVal))
-        return true;
+      if (Opcode != ISD::AND) {
+        // MOV32ri+OR64r/XOR64r is cheaper than MOV64ri64+OR64rr/XOR64rr
+        ShiftedVal = (uint64_t)Val >> ShAmt;
+        if (NVT == MVT::i64 && !isUInt<32>(Val) && isUInt<32>(ShiftedVal))
+          return true;
+      }
       return false;
     };
 
