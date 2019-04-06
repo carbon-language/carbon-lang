@@ -89,3 +89,37 @@ entry:
   %sum.2 = add i32 %sum.1, %index
   ret i32 %sum.2
 }
+
+define i8 @t5(i8* %X, i32 %i) {
+; CHECK-LABEL: t5:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; CHECK-NEXT:    andl $1073741810, %ecx # imm = 0x3FFFFFF2
+; CHECK-NEXT:    movb (%eax,%ecx,4), %al
+; CHECK-NEXT:    retl
+
+entry:
+  %tmp2 = shl i32 %i, 2
+  %tmp4 = and i32 %tmp2, -56
+  %tmp7 = getelementptr i8, i8* %X, i32 %tmp4
+  %tmp9 = load i8, i8* %tmp7
+  ret i8 %tmp9
+}
+
+define i8 @t6(i8* %X, i32 %i) {
+; CHECK-LABEL: t6:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; CHECK-NEXT:    andl $1073741569, %ecx # imm = 0x3FFFFF01
+; CHECK-NEXT:    movb (%eax,%ecx,4), %al
+; CHECK-NEXT:    retl
+
+entry:
+  %tmp2 = shl i32 %i, 2
+  %tmp4 = and i32 %tmp2, -1020
+  %tmp7 = getelementptr i8, i8* %X, i32 %tmp4
+  %tmp9 = load i8, i8* %tmp7
+  ret i8 %tmp9
+}
