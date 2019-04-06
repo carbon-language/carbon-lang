@@ -225,7 +225,9 @@ class DataAggregator : public DataReader {
   std::error_code printLBRHeatMap();
 
   /// Parse a single perf sample containing a PID associated with a sequence of
-  /// LBR entries
+  /// LBR entries. If the PID does not correspond to the binary we are looking
+  /// for, return std::errc::no_such_process. If other parsing errors occur,
+  /// return the error. Otherwise, return the parsed sample.
   ErrorOr<PerfBranchSample> parseBranchSample();
 
   /// Parse a single perf sample containing a PID associated with an event name

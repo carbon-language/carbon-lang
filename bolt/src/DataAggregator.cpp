@@ -232,13 +232,18 @@ void DataAggregator::launchPerfProcess(StringRef Name, PerfProcessInfo &PPI,
   TempFiles.push_back(PPI.StderrPath.data());
 
   Optional<StringRef> Redirects[] = {
-      llvm::None,                       // Stdin
+      llvm::None,                        // Stdin
       StringRef(PPI.StdoutPath.data()),  // Stdout
       StringRef(PPI.StderrPath.data())}; // Stderr
 
-  DEBUG(dbgs() << "Launching perf: " << PerfPath.data() << " 1> "
-               << PPI.StdoutPath.data() << " 2> "
-               << PPI.StderrPath.data() << "\n");
+  DEBUG({
+      dbgs() << "Launching perf: ";
+      for (const char *Arg : Argv)
+        dbgs() << Arg << " ";
+      dbgs() << " 1> "
+             << PPI.StdoutPath.data() << " 2> "
+             << PPI.StderrPath.data() << "\n";
+    });
 
   if (Wait) {
     PPI.PI.ReturnCode =
@@ -784,7 +789,7 @@ ErrorOr<DataAggregator::PerfBranchSample> DataAggregator::parseBranchSample() {
   auto MMapInfoIter = BinaryMMapInfo.find(*PIDRes);
   if (MMapInfoIter == BinaryMMapInfo.end()) {
     consumeRestOfLine();
-    return Res;
+    return make_error_code(std::errc::no_such_process);
   }
 
   while (checkAndConsumeFS()) {}
@@ -997,8 +1002,11 @@ std::error_code DataAggregator::printLBRHeatMap() {
 
   while (hasData()) {
     auto SampleRes = parseBranchSample();
-    if (std::error_code EC = SampleRes.getError())
+    if (std::error_code EC = SampleRes.getError()) {
+      if (EC == std::errc::no_such_process)
+        continue;
       return EC;
+    }
 
     auto &Sample = SampleRes.get();
 
@@ -1059,23 +1067,29 @@ std::error_code DataAggregator::parseBranchEvents() {
   uint64_t NumTotalSamples{0};
   uint64_t NumEntries{0};
   uint64_t NumSamples{0};
+  uint64_t NumSamplesNoLBR{0};
   uint64_t NumTraces{0};
 
   while (hasData()) {
     ++NumTotalSamples;
 
     auto SampleRes = parseBranchSample();
-    if (std::error_code EC = SampleRes.getError())
+    if (std::error_code EC = SampleRes.getError()) {
+      if (EC == std::errc::no_such_process)
+        continue;
       return EC;
+    }
+    ++NumSamples;
 
     auto &Sample = SampleRes.get();
     if (opts::WriteAutoFDOData)
       ++BasicSamples[Sample.PC];
 
-    if (Sample.LBR.empty())
+    if (Sample.LBR.empty()) {
+      ++NumSamplesNoLBR;
       continue;
+    }
 
-    ++NumSamples;
     NumEntries += Sample.LBR.size();
 
     // LBRs are stored in reverse execution order. NextLBR refers to the next
@@ -1147,14 +1161,25 @@ std::error_code DataAggregator::parseBranchEvents() {
   outs() << "PERF2BOLT: read " << NumSamples << " samples and "
          << NumEntries << " LBR entries\n";
   if (NumTotalSamples) {
-    const auto IgnoredSamples = NumTotalSamples - NumSamples;
-    const auto PercentIgnored = 100.0f * IgnoredSamples / NumTotalSamples;
-    outs() << "PERF2BOLT: " << IgnoredSamples << " samples";
-    printColored(outs(), PercentIgnored, 20, 50);
-    outs() << " were ignored\n";
-    if (PercentIgnored > 50.0f) {
-      errs() << "PERF2BOLT-WARNING: less than 50% of all recorded samples were "
-                "attributed to the input binary\n";
+    if (NumSamples && NumSamplesNoLBR == NumSamples) {
+      if (errs().has_colors())
+        errs().changeColor(raw_ostream::RED);
+      errs() << "PERF2BOLT-WARNING: all recorded samples for this binary lack "
+                "LBR. Record profile with perf record -j any or run perf2bolt "
+                "in no-LBR mode with -nl (the performance improvement in -nl "
+                "mode may be limited)\n";
+      if (errs().has_colors())
+        errs().resetColor();
+    } else {
+      const auto IgnoredSamples = NumTotalSamples - NumSamples;
+      const auto PercentIgnored = 100.0f * IgnoredSamples / NumTotalSamples;
+      outs() << "PERF2BOLT: " << IgnoredSamples << " samples";
+      printColored(outs(), PercentIgnored, 20, 50);
+      outs() << " were ignored\n";
+      if (PercentIgnored > 50.0f) {
+        errs() << "PERF2BOLT-WARNING: less than 50% of all recorded samples "
+                  "were attributed to the input binary\n";
+      }
     }
   }
   outs() << "PERF2BOLT: traces mismatching disassembled function contents: "
