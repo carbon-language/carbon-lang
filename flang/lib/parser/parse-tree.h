@@ -1576,15 +1576,15 @@ struct SectionSubscript {
 // R925 cosubscript -> scalar-int-expr
 using Cosubscript = ScalarIntExpr;
 
-// R1115 team-variable -> scalar-variable
-using TeamVariable = Scalar<common::Indirection<Variable>>;
+// R1115 team-value -> scalar-expr
+using TeamValue = Scalar<common::Indirection<Expr>>;
 
 // R926 image-selector-spec ->
-//        STAT = stat-variable | TEAM = team-variable |
+//        STAT = stat-variable | TEAM = team-value |
 //        TEAM_NUMBER = scalar-int-expr
 struct ImageSelectorSpec {
   WRAPPER_CLASS(Stat, Scalar<Integer<common::Indirection<Variable>>>);
-  WRAPPER_CLASS(Team, TeamVariable);
+  WRAPPER_CLASS(Team, TeamValue);
   WRAPPER_CLASS(Team_Number, ScalarIntExpr);
   UNION_CLASS_BOILERPLATE(ImageSelectorSpec);
   std::variant<Stat, Team, Team_Number> u;
@@ -2100,10 +2100,10 @@ struct CoarrayAssociation {
 
 // R1112 change-team-stmt ->
 //         [team-construct-name :] CHANGE TEAM
-//         ( team-variable [, coarray-association-list] [, sync-stat-list] )
+//         ( team-value [, coarray-association-list] [, sync-stat-list] )
 struct ChangeTeamStmt {
   TUPLE_CLASS_BOILERPLATE(ChangeTeamStmt);
-  std::tuple<std::optional<Name>, TeamVariable, std::list<CoarrayAssociation>,
+  std::tuple<std::optional<Name>, TeamValue, std::list<CoarrayAssociation>,
       std::list<StatOrErrmsg>>
       t;
 };
@@ -2425,10 +2425,10 @@ struct SyncImagesStmt {
 // R1168 sync-memory-stmt -> SYNC MEMORY [( [sync-stat-list] )]
 WRAPPER_CLASS(SyncMemoryStmt, std::list<StatOrErrmsg>);
 
-// R1169 sync-team-stmt -> SYNC TEAM ( team-variable [, sync-stat-list] )
+// R1169 sync-team-stmt -> SYNC TEAM ( team-value [, sync-stat-list] )
 struct SyncTeamStmt {
   TUPLE_CLASS_BOILERPLATE(SyncTeamStmt);
-  std::tuple<TeamVariable, std::list<StatOrErrmsg>> t;
+  std::tuple<TeamValue, std::list<StatOrErrmsg>> t;
 };
 
 // R1171 event-variable -> scalar-variable
@@ -2453,10 +2453,13 @@ struct EventWaitStmt {
   std::tuple<EventVariable, std::list<EventWaitSpec>> t;
 };
 
+// R1177 team-variable -> scalar-variable
+using TeamVariable = Scalar<Variable>;
+
 // R1175 form-team-stmt ->
 //         FORM TEAM ( team-number , team-variable [, form-team-spec-list] )
 // R1176 team-number -> scalar-int-expr
-// R1177 form-team-spec -> NEW_INDEX = scalar-int-expr | sync-stat
+// R1178 form-team-spec -> NEW_INDEX = scalar-int-expr | sync-stat
 struct FormTeamStmt {
   struct FormTeamSpec {
     UNION_CLASS_BOILERPLATE(FormTeamSpec);
@@ -2466,11 +2469,11 @@ struct FormTeamStmt {
   std::tuple<ScalarIntExpr, TeamVariable, std::list<FormTeamSpec>> t;
 };
 
-// R1181 lock-variable -> scalar-variable
+// R1182 lock-variable -> scalar-variable
 using LockVariable = Scalar<Variable>;
 
-// R1178 lock-stmt -> LOCK ( lock-variable [, lock-stat-list] )
-// R1179 lock-stat -> ACQUIRED_LOCK = scalar-logical-variable | sync-stat
+// R1179 lock-stmt -> LOCK ( lock-variable [, lock-stat-list] )
+// R1180 lock-stat -> ACQUIRED_LOCK = scalar-logical-variable | sync-stat
 struct LockStmt {
   struct LockStat {
     UNION_CLASS_BOILERPLATE(LockStat);
@@ -2480,7 +2483,7 @@ struct LockStmt {
   std::tuple<LockVariable, std::list<LockStat>> t;
 };
 
-// R1180 unlock-stmt -> UNLOCK ( lock-variable [, sync-stat-list] )
+// R1181 unlock-stmt -> UNLOCK ( lock-variable [, sync-stat-list] )
 struct UnlockStmt {
   TUPLE_CLASS_BOILERPLATE(UnlockStmt);
   std::tuple<LockVariable, std::list<StatOrErrmsg>> t;

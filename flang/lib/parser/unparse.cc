@@ -910,7 +910,7 @@ public:
   }
   void Unparse(const ChangeTeamStmt &x) {  // R1112
     Walk(std::get<std::optional<Name>>(x.t), ": ");
-    Word("CHANGE TEAM ("), Walk(std::get<TeamVariable>(x.t));
+    Word("CHANGE TEAM ("), Walk(std::get<TeamValue>(x.t));
     Walk(", ", std::get<std::list<CoarrayAssociation>>(x.t), ", ");
     Walk(", ", std::get<std::list<StatOrErrmsg>>(x.t), ", "), Put(')');
     Indent();
@@ -1100,7 +1100,7 @@ public:
     Word("SYNC MEMORY ("), Walk(x.v, ", "), Put(')');
   }
   void Unparse(const SyncTeamStmt &x) {  // R1169
-    Word("SYNC TEAM ("), Walk(std::get<TeamVariable>(x.t));
+    Word("SYNC TEAM ("), Walk(std::get<TeamValue>(x.t));
     Walk(", ", std::get<std::list<StatOrErrmsg>>(x.t), ", "), Put(')');
   }
   void Unparse(const EventPostStmt &x) {  // R1170
@@ -1120,13 +1120,13 @@ public:
     Walk(", ", std::get<std::list<EventWaitStmt::EventWaitSpec>>(x.t), ", ");
     Put(')');
   }
-  void Unparse(const FormTeamStmt &x) {  // R1175
+  void Unparse(const FormTeamStmt &x) {  // R1175, R1177
     Word("FORM TEAM ("), Walk(std::get<ScalarIntExpr>(x.t));
     Put(','), Walk(std::get<TeamVariable>(x.t));
     Walk(", ", std::get<std::list<FormTeamStmt::FormTeamSpec>>(x.t), ", ");
     Put(')');
   }
-  void Before(const FormTeamStmt::FormTeamSpec &x) {  // R1176, R1177
+  void Before(const FormTeamStmt::FormTeamSpec &x) {  // R1176, R1178
     std::visit(
         common::visitors{
             [&](const ScalarIntExpr &x) { Word("NEW_INDEX="); },
@@ -1134,12 +1134,12 @@ public:
         },
         x.u);
   }
-  void Unparse(const LockStmt &x) {  // R1178
+  void Unparse(const LockStmt &x) {  // R1179
     Word("LOCK ("), Walk(std::get<LockVariable>(x.t));
     Walk(", ", std::get<std::list<LockStmt::LockStat>>(x.t), ", ");
     Put(')');
   }
-  void Before(const LockStmt::LockStat &x) {  // R1179
+  void Before(const LockStmt::LockStat &x) {  // R1180
     std::visit(
         common::visitors{
             [&](const ScalarLogicalVariable &) { Word("ACQUIRED_LOCK="); },
@@ -1147,7 +1147,7 @@ public:
         },
         x.u);
   }
-  void Unparse(const UnlockStmt &x) {  // R1180
+  void Unparse(const UnlockStmt &x) {  // R1181
     Word("UNLOCK ("), Walk(std::get<LockVariable>(x.t));
     Walk(", ", std::get<std::list<StatOrErrmsg>>(x.t), ", ");
     Put(')');

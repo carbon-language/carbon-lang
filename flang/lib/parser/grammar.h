@@ -1509,16 +1509,16 @@ TYPE_CONTEXT_PARSER("image selector"_en_US,
     construct<ImageSelector>("[" >> nonemptyList(cosubscript / !"="_tok),
         defaulted("," >> nonemptyList(Parser<ImageSelectorSpec>{})) / "]"))
 
-// R1115 team-variable -> scalar-variable
-constexpr auto teamVariable{scalar(indirect(variable))};
+// R1115 team-value -> scalar-expr
+constexpr auto teamValue{scalar(indirect(expr))};
 
 // R926 image-selector-spec ->
-//        STAT = stat-variable | TEAM = team-variable |
+//        STAT = stat-variable | TEAM = team-value |
 //        TEAM_NUMBER = scalar-int-expr
 TYPE_PARSER(construct<ImageSelectorSpec>(construct<ImageSelectorSpec::Stat>(
                 "STAT =" >> scalar(integer(indirect(variable))))) ||
     construct<ImageSelectorSpec>(
-        construct<ImageSelectorSpec::Team>("TEAM =" >> teamVariable)) ||
+        construct<ImageSelectorSpec::Team>("TEAM =" >> teamValue)) ||
     construct<ImageSelectorSpec>(construct<ImageSelectorSpec::Team_Number>(
         "TEAM_NUMBER =" >> scalarIntExpr)))
 
@@ -2076,10 +2076,10 @@ TYPE_CONTEXT_PARSER("CHANGE TEAM construct"_en_US,
 
 // R1112 change-team-stmt ->
 //         [team-construct-name :] CHANGE TEAM
-//         ( team-variable [, coarray-association-list] [, sync-stat-list] )
+//         ( team-value [, coarray-association-list] [, sync-stat-list] )
 TYPE_CONTEXT_PARSER("CHANGE TEAM statement"_en_US,
     construct<ChangeTeamStmt>(maybe(name / ":"),
-        "CHANGE TEAM"_sptok >> "("_tok >> teamVariable,
+        "CHANGE TEAM"_sptok >> "("_tok >> teamValue,
         defaulted("," >> nonemptyList(Parser<CoarrayAssociation>{})),
         defaulted("," >> nonemptyList(statOrErrmsg))) /
         ")")
@@ -2346,9 +2346,9 @@ TYPE_CONTEXT_PARSER("SYNC MEMORY statement"_en_US,
     construct<SyncMemoryStmt>("SYNC MEMORY"_sptok >>
         defaulted(parenthesized(optionalList(statOrErrmsg)))))
 
-// R1169 sync-team-stmt -> SYNC TEAM ( team-variable [, sync-stat-list] )
+// R1169 sync-team-stmt -> SYNC TEAM ( team-value [, sync-stat-list] )
 TYPE_CONTEXT_PARSER("SYNC TEAM statement"_en_US,
-    construct<SyncTeamStmt>("SYNC TEAM"_sptok >> "("_tok >> teamVariable,
+    construct<SyncTeamStmt>("SYNC TEAM"_sptok >> "("_tok >> teamValue,
         defaulted("," >> nonemptyList(statOrErrmsg)) / ")"))
 
 // R1170 event-post-stmt -> EVENT POST ( event-variable [, sync-stat-list] )
@@ -2371,6 +2371,9 @@ constexpr auto untilSpec{"UNTIL_COUNT =" >> scalarIntExpr};
 TYPE_PARSER(construct<EventWaitStmt::EventWaitSpec>(untilSpec) ||
     construct<EventWaitStmt::EventWaitSpec>(statOrErrmsg))
 
+// R1177 team-variable -> scalar-variable
+constexpr auto teamVariable{scalar(variable)};
+
 // R1175 form-team-stmt ->
 //         FORM TEAM ( team-number , team-variable [, form-team-spec-list] )
 // R1176 team-number -> scalar-int-expr
@@ -2380,25 +2383,25 @@ TYPE_CONTEXT_PARSER("FORM TEAM statement"_en_US,
         defaulted("," >> nonemptyList(Parser<FormTeamStmt::FormTeamSpec>{})) /
             ")"))
 
-// R1177 form-team-spec -> NEW_INDEX = scalar-int-expr | sync-stat
+// R1178 form-team-spec -> NEW_INDEX = scalar-int-expr | sync-stat
 TYPE_PARSER(
     construct<FormTeamStmt::FormTeamSpec>("NEW_INDEX =" >> scalarIntExpr) ||
     construct<FormTeamStmt::FormTeamSpec>(statOrErrmsg))
 
-// R1181 lock-variable -> scalar-variable
+// R1182 lock-variable -> scalar-variable
 constexpr auto lockVariable{scalar(variable)};
 
-// R1178 lock-stmt -> LOCK ( lock-variable [, lock-stat-list] )
+// R1179 lock-stmt -> LOCK ( lock-variable [, lock-stat-list] )
 TYPE_CONTEXT_PARSER("LOCK statement"_en_US,
     construct<LockStmt>("LOCK (" >> lockVariable,
         defaulted("," >> nonemptyList(Parser<LockStmt::LockStat>{})) / ")"))
 
-// R1179 lock-stat -> ACQUIRED_LOCK = scalar-logical-variable | sync-stat
+// R1180 lock-stat -> ACQUIRED_LOCK = scalar-logical-variable | sync-stat
 TYPE_PARSER(
     construct<LockStmt::LockStat>("ACQUIRED_LOCK =" >> scalarLogicalVariable) ||
     construct<LockStmt::LockStat>(statOrErrmsg))
 
-// R1180 unlock-stmt -> UNLOCK ( lock-variable [, sync-stat-list] )
+// R1181 unlock-stmt -> UNLOCK ( lock-variable [, sync-stat-list] )
 TYPE_CONTEXT_PARSER("UNLOCK statement"_en_US,
     construct<UnlockStmt>("UNLOCK (" >> lockVariable,
         defaulted("," >> nonemptyList(statOrErrmsg)) / ")"))
