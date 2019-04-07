@@ -8,15 +8,15 @@ Kaleidoscope: Kaleidoscope Introduction and the Lexer
 The Kaleidoscope Language
 =========================
 
-This tutorial will be illustrated with a toy language that we'll call
+This tutorial is illustrated with a toy language called
 "`Kaleidoscope <http://en.wikipedia.org/wiki/Kaleidoscope>`_" (derived
 from "meaning beautiful, form, and view"). Kaleidoscope is a procedural
 language that allows you to define functions, use conditionals, math,
 etc. Over the course of the tutorial, we'll extend Kaleidoscope to
 support the if/then/else construct, a for loop, user defined operators,
-JIT compilation with a simple command line interface, etc.
+JIT compilation with a simple command line interface, debug info, etc.
 
-Because we want to keep things simple, the only datatype in Kaleidoscope
+We want to keep things simple, so the only datatype in Kaleidoscope
 is a 64-bit floating point type (aka 'double' in C parlance). As such,
 all values are implicitly double precision and the language doesn't
 require type declarations. This gives the language a very nice and
@@ -35,10 +35,10 @@ simple syntax. For example, the following simple example computes
     # This expression will compute the 40th number.
     fib(40)
 
-We also allow Kaleidoscope to call into standard library functions (the
-LLVM JIT makes this completely trivial). This means that you can use the
+We also allow Kaleidoscope to call into standard library functions - the
+LLVM JIT makes this really easy. This means that you can use the
 'extern' keyword to define a function before you use it (this is also
-useful for mutually recursive functions). For example:
+useful for mutually recursive functions).  For example:
 
 ::
 
@@ -52,7 +52,7 @@ A more interesting example is included in Chapter 6 where we write a
 little Kaleidoscope application that `displays a Mandelbrot
 Set <LangImpl06.html#kicking-the-tires>`_ at various levels of magnification.
 
-Lets dive into the implementation of this language!
+Let's dive into the implementation of this language!
 
 The Lexer
 =========
@@ -89,7 +89,7 @@ values or it will be an 'unknown' character like '+', which is returned
 as its ASCII value. If the current token is an identifier, the
 ``IdentifierStr`` global variable holds the name of the identifier. If
 the current token is a numeric literal (like 1.0), ``NumVal`` holds its
-value. Note that we use global variables for simplicity, this is not the
+value. We use global variables for simplicity, but this is not the
 best choice for a real language implementation :).
 
 The actual implementation of the lexer is a single function named
@@ -147,12 +147,12 @@ same loop, we handle them here inline. Numeric values are similar:
         return tok_number;
       }
 
-This is all pretty straight-forward code for processing input. When
+This is all pretty straightforward code for processing input. When
 reading a numeric value from input, we use the C ``strtod`` function to
 convert it to a numeric value that we store in ``NumVal``. Note that
 this isn't doing sufficient error checking: it will incorrectly read
 "1.23.45.67" and handle it as if you typed in "1.23". Feel free to
-extend it :). Next we handle comments:
+extend it!  Next we handle comments:
 
 .. code-block:: c++
 
