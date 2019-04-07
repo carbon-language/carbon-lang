@@ -1,0 +1,28 @@
+INTEGER, PARAMETER :: maxvalue=1024
+
+Type dt
+  Integer :: l = 3
+End Type
+Type t
+  Type(dt) :: p
+End Type
+
+Type(t),Allocatable :: x(:)
+
+Integer :: pi
+Procedure(Real) :: prp
+
+Allocate(x(3))
+!ERROR: component must have the POINTER attribute
+Nullify(x(2)%p)
+
+!ERROR: name must have the POINTER attribute
+Nullify(pi)
+
+!ERROR: name must have the POINTER attribute
+Nullify(prp)
+
+!ERROR: name must be a variable or procedure pointer name
+Nullify(maxvalue)
+
+End Program

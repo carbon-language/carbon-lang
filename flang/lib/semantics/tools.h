@@ -42,10 +42,13 @@ bool DoesScopeContain(const Scope *, const Symbol &);
 bool IsUseAssociated(const Symbol *, const Scope &);
 bool IsHostAssociated(const Symbol &, const Scope &);
 bool IsDummy(const Symbol &);
+bool IsPointer(const Symbol &);
 bool IsPointerDummy(const Symbol &);
 bool IsFunction(const Symbol &);
 bool IsPureFunction(const Symbol &);
 bool IsPureFunction(const Scope &);
+bool IsProcName(const Symbol &symbol);  // proc-name
+bool IsVariableName(const Symbol &symbol);  // variable-name
 
 // Determines whether an object might be visible outside a
 // PURE function (C1594); returns a non-null Symbol pointer for

@@ -119,8 +119,26 @@ bool IsDummy(const Symbol &symbol) {
   }
 }
 
+bool IsPointer(const Symbol &symbol) {
+  return symbol.attrs().test(Attr::POINTER);
+}
+
 bool IsPointerDummy(const Symbol &symbol) {
-  return symbol.attrs().test(Attr::POINTER) && IsDummy(symbol);
+  return IsPointer(symbol) && IsDummy(symbol);
+}
+
+bool IsParameter(const Symbol &symbol) {
+  return symbol.attrs().test(Attr::PARAMETER);
+}
+
+// variable-name
+bool IsVariableName(const Symbol &symbol) {
+  return symbol.has<ObjectEntityDetails>() && !IsParameter(symbol);
+}
+
+// proc-name
+bool IsProcName(const Symbol &symbol) {
+  return symbol.has<ProcEntityDetails>();
 }
 
 bool IsFunction(const Symbol &symbol) {
