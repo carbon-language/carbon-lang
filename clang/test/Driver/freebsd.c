@@ -184,9 +184,11 @@
 // RUN:   | FileCheck -check-prefix=CHECK-MIPS64-CPU %s
 // CHECK-MIPS64-CPU: "-target-cpu" "mips3"
 
-// Check that the integrated assembler is enabled for MIPS64
+// Check that the integrated assembler is enabled for MIPS64/SPARC64
 // RUN: %clang -target mips64-unknown-freebsd -### -c %s 2>&1 \
-// RUN:   | FileCheck -check-prefix=CHECK-MIPS64-AS %s
+// RUN:   | FileCheck -check-prefix=CHECK-IAS %s
 // RUN: %clang -target mips64el-unknown-freebsd -### -c %s 2>&1 \
-// RUN:   | FileCheck -check-prefix=CHECK-MIPS64-AS %s
-// CHECK-MIPS64-AS-NOT: "-no-integrated-as"
+// RUN:   | FileCheck -check-prefix=CHECK-IAS %s
+// RUN: %clang -target sparc64-unknown-freebsd -### -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK-IAS %s
+// CHECK-IAS-NOT: "-no-integrated-as"
