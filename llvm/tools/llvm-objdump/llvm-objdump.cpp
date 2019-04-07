@@ -522,17 +522,17 @@ bool SourcePrinter::cacheSource(const DILineInfo &LineInfo) {
     Buffer = std::move(*BufferOrError);
   }
   // Chomp the file to get lines
-  size_t BufferSize = Buffer->getBufferSize();
-  const char *BufferStart = Buffer->getBufferStart();
-  for (const char *Start = BufferStart, *End = BufferStart;
-       End < BufferStart + BufferSize; End++)
-    if (*End == '\n' || End == BufferStart + BufferSize - 1 ||
-        (*End == '\r' && *(End + 1) == '\n')) {
-      LineCache[LineInfo.FileName].push_back(StringRef(Start, End - Start));
-      if (*End == '\r')
-        End++;
-      Start = End + 1;
+  const char *BufferStart = Buffer->getBufferStart(),
+             *BufferEnd = Buffer->getBufferEnd();
+  std::vector<StringRef> &Lines = LineCache[LineInfo.FileName];
+  const char *Start = BufferStart;
+  for (const char *I = BufferStart; I != BufferEnd; ++I)
+    if (*I == '\n') {
+      Lines.emplace_back(Start, I - Start - (BufferStart < I && I[-1] == '\r'));
+      Start = I + 1;
     }
+  if (Start < BufferEnd)
+    Lines.emplace_back(Start, BufferEnd - Start);
   SourceCache[LineInfo.FileName] = std::move(Buffer);
   return true;
 }
@@ -560,16 +560,12 @@ void SourcePrinter::printSourceLine(raw_ostream &OS,
     if (SourceCache.find(LineInfo.FileName) == SourceCache.end())
       if (!cacheSource(LineInfo))
         return;
-    auto FileBuffer = SourceCache.find(LineInfo.FileName);
-    if (FileBuffer != SourceCache.end()) {
-      auto LineBuffer = LineCache.find(LineInfo.FileName);
-      if (LineBuffer != LineCache.end()) {
-        if (LineInfo.Line > LineBuffer->second.size())
-          return;
-        // Vector begins at 0, line numbers are non-zero
-        OS << Delimiter << LineBuffer->second[LineInfo.Line - 1].ltrim()
-           << "\n";
-      }
+    auto LineBuffer = LineCache.find(LineInfo.FileName);
+    if (LineBuffer != LineCache.end()) {
+      if (LineInfo.Line > LineBuffer->second.size())
+        return;
+      // Vector begins at 0, line numbers are non-zero
+      OS << Delimiter << LineBuffer->second[LineInfo.Line - 1] << '\n';
     }
   }
   OldLineInfo = LineInfo;
