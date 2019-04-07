@@ -969,8 +969,6 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
       AllSymbols[*SecI].emplace_back(Address, *Name, SymbolType);
     else
       AbsoluteSymbols.emplace_back(Address, *Name, SymbolType);
-
-
   }
   if (AllSymbols.empty() && Obj->isELF())
     addDynamicElfSymbols(Obj, AllSymbols);
@@ -997,19 +995,15 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
       error(ExportEntry.getExportRVA(RVA));
 
       uint64_t VA = COFFObj->getImageBase() + RVA;
-      auto Sec = std::upper_bound(
-          SectionAddresses.begin(), SectionAddresses.end(), VA,
+      auto Sec = llvm::upper_bound(
+          SectionAddresses, VA,
           [](uint64_t LHS, const std::pair<uint64_t, SectionRef> &RHS) {
             return LHS < RHS.first;
           });
-      if (Sec != SectionAddresses.begin())
+      if (Sec != SectionAddresses.begin()) {
         --Sec;
-      else
-        Sec = SectionAddresses.end();
-
-      if (Sec != SectionAddresses.end())
         AllSymbols[Sec->second].emplace_back(VA, Name, ELF::STT_NOTYPE);
-      else
+      } else
         AbsoluteSymbols.emplace_back(VA, Name, ELF::STT_NOTYPE);
     }
   }
@@ -1196,62 +1190,38 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
         // understand what we need to dump. If the data marker is within a
         // function, it is denoted as a word/short etc
         if (isArmElf(Obj) && std::get<2>(Symbols[SI]) != ELF::STT_OBJECT &&
-            !DisassembleAll) {
-          uint64_t Stride = 0;
-
-          auto DAI = std::lower_bound(DataMappingSymsAddr.begin(),
-                                      DataMappingSymsAddr.end(), Index);
-          if (DAI != DataMappingSymsAddr.end() && *DAI == Index) {
-            // Switch to data.
-            while (Index < End) {
-              outs() << format("%8" PRIx64 ":", SectionAddr + Index);
-              outs() << "\t";
-              if (Index + 4 <= End) {
-                Stride = 4;
-                dumpBytes(Bytes.slice(Index, 4), outs());
-                outs() << "\t.word\t";
-                uint32_t Data = 0;
-                if (Obj->isLittleEndian()) {
-                  const auto Word =
-                      reinterpret_cast<const support::ulittle32_t *>(
-                          Bytes.data() + Index);
-                  Data = *Word;
-                } else {
-                  const auto Word = reinterpret_cast<const support::ubig32_t *>(
-                      Bytes.data() + Index);
-                  Data = *Word;
-                }
-                outs() << "0x" << format("%08" PRIx32, Data);
-              } else if (Index + 2 <= End) {
-                Stride = 2;
-                dumpBytes(Bytes.slice(Index, 2), outs());
-                outs() << "\t\t.short\t";
-                uint16_t Data = 0;
-                if (Obj->isLittleEndian()) {
-                  const auto Short =
-                      reinterpret_cast<const support::ulittle16_t *>(
-                          Bytes.data() + Index);
-                  Data = *Short;
-                } else {
-                  const auto Short =
-                      reinterpret_cast<const support::ubig16_t *>(Bytes.data() +
-                                                                  Index);
-                  Data = *Short;
-                }
-                outs() << "0x" << format("%04" PRIx16, Data);
-              } else {
-                Stride = 1;
-                dumpBytes(Bytes.slice(Index, 1), outs());
-                outs() << "\t\t.byte\t";
-                outs() << "0x" << format("%02" PRIx8, Bytes.slice(Index, 1)[0]);
-              }
-              Index += Stride;
-              outs() << "\n";
-              auto TAI = std::lower_bound(TextMappingSymsAddr.begin(),
-                                          TextMappingSymsAddr.end(), Index);
-              if (TAI != TextMappingSymsAddr.end() && *TAI == Index)
-                break;
+            !DisassembleAll &&
+            std::binary_search(DataMappingSymsAddr.begin(),
+                               DataMappingSymsAddr.end(), Index)) {
+          // Switch to data.
+          support::endianness Endian =
+              Obj->isLittleEndian() ? support::little : support::big;
+          while (Index < End) {
+            outs() << format("%8" PRIx64 ":", SectionAddr + Index);
+            outs() << "\t";
+            if (Index + 4 <= End) {
+              dumpBytes(Bytes.slice(Index, 4), outs());
+              outs() << "\t.word\t"
+                     << format_hex(support::endian::read32(Bytes.data() + Index,
+                                                           Endian),
+                                   10);
+              Index += 4;
+            } else if (Index + 2 <= End) {
+              dumpBytes(Bytes.slice(Index, 2), outs());
+              outs() << "\t\t.short\t"
+                     << format_hex(support::endian::read16(Bytes.data() + Index,
+                                                           Endian),
+                                   6);
+              Index += 2;
+            } else {
+              dumpBytes(Bytes.slice(Index, 1), outs());
+              outs() << "\t\t.byte\t" << format_hex(Bytes[0], 4);
+              ++Index;
             }
+            outs() << "\n";
+            if (std::binary_search(TextMappingSymsAddr.begin(),
+                                   TextMappingSymsAddr.end(), Index))
+              break;
           }
         }
 
@@ -1348,10 +1318,9 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
             // N.B. We don't walk the relocations in the relocatable case yet.
             auto *TargetSectionSymbols = &Symbols;
             if (!Obj->isRelocatableObject()) {
-              auto SectionAddress = std::upper_bound(
-                  SectionAddresses.begin(), SectionAddresses.end(), Target,
-                  [](uint64_t LHS,
-                      const std::pair<uint64_t, SectionRef> &RHS) {
+              auto SectionAddress = llvm::upper_bound(
+                  SectionAddresses, Target,
+                  [](uint64_t LHS, const std::pair<uint64_t, SectionRef> &RHS) {
                     return LHS < RHS.first;
                   });
               if (SectionAddress != SectionAddresses.begin()) {
@@ -1365,20 +1334,20 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
             // Find the first symbol in the section whose offset is less than
             // or equal to the target. If there isn't a section that contains
             // the target, find the nearest preceding absolute symbol.
-            auto TargetSym = std::upper_bound(
-                TargetSectionSymbols->begin(), TargetSectionSymbols->end(),
-                Target, [](uint64_t LHS,
-                           const std::tuple<uint64_t, StringRef, uint8_t> &RHS) {
+            auto TargetSym = llvm::upper_bound(
+                *TargetSectionSymbols, Target,
+                [](uint64_t LHS,
+                   const std::tuple<uint64_t, StringRef, uint8_t> &RHS) {
                   return LHS < std::get<0>(RHS);
                 });
             if (TargetSym == TargetSectionSymbols->begin()) {
               TargetSectionSymbols = &AbsoluteSymbols;
-              TargetSym = std::upper_bound(
-                  AbsoluteSymbols.begin(), AbsoluteSymbols.end(),
-                  Target, [](uint64_t LHS,
-                             const std::tuple<uint64_t, StringRef, uint8_t> &RHS) {
-                            return LHS < std::get<0>(RHS);
-                          });
+              TargetSym = llvm::upper_bound(
+                  AbsoluteSymbols, Target,
+                  [](uint64_t LHS,
+                     const std::tuple<uint64_t, StringRef, uint8_t> &RHS) {
+                    return LHS < std::get<0>(RHS);
+                  });
             }
             if (TargetSym != TargetSectionSymbols->begin()) {
               --TargetSym;
