@@ -356,8 +356,7 @@ LLVM_ATTRIBUTE_NORETURN void llvm::report_error(StringRef File,
   exit(1);
 }
 
-LLVM_ATTRIBUTE_NORETURN void llvm::report_error(StringRef File,
-                                                llvm::Error E) {
+LLVM_ATTRIBUTE_NORETURN void llvm::report_error(Error E, StringRef File) {
   assert(E);
   std::string Buf;
   raw_string_ostream OS(Buf);
@@ -367,9 +366,8 @@ LLVM_ATTRIBUTE_NORETURN void llvm::report_error(StringRef File,
   exit(1);
 }
 
-LLVM_ATTRIBUTE_NORETURN void llvm::report_error(StringRef ArchiveName,
+LLVM_ATTRIBUTE_NORETURN void llvm::report_error(Error E, StringRef ArchiveName,
                                                 StringRef FileName,
-                                                llvm::Error E,
                                                 StringRef ArchitectureName) {
   assert(E);
   WithColor::error(errs(), ToolName);
@@ -387,9 +385,8 @@ LLVM_ATTRIBUTE_NORETURN void llvm::report_error(StringRef ArchiveName,
   exit(1);
 }
 
-LLVM_ATTRIBUTE_NORETURN void llvm::report_error(StringRef ArchiveName,
+LLVM_ATTRIBUTE_NORETURN void llvm::report_error(Error E, StringRef ArchiveName,
                                                 const object::Archive::Child &C,
-                                                llvm::Error E,
                                                 StringRef ArchitectureName) {
   Expected<StringRef> NameOrErr = C.getName();
   // TODO: if we have a error getting the name then it would be nice to print
@@ -397,9 +394,9 @@ LLVM_ATTRIBUTE_NORETURN void llvm::report_error(StringRef ArchiveName,
   // archive instead of "???" as the name.
   if (!NameOrErr) {
     consumeError(NameOrErr.takeError());
-    llvm::report_error(ArchiveName, "???", std::move(E), ArchitectureName);
+    llvm::report_error(std::move(E), ArchiveName, "???", ArchitectureName);
   } else
-    llvm::report_error(ArchiveName, NameOrErr.get(), std::move(E),
+    llvm::report_error(std::move(E), ArchiveName, NameOrErr.get(),
                        ArchitectureName);
 }
 
@@ -813,24 +810,17 @@ addDynamicElfSymbols(const ELFObjectFile<ELFT> *Obj,
     if (SymbolType != ELF::STT_FUNC || Symbol.getSize() == 0)
       continue;
 
-    Expected<uint64_t> AddressOrErr = Symbol.getAddress();
-    if (!AddressOrErr)
-      report_error(Obj->getFileName(), AddressOrErr.takeError());
-
-    Expected<StringRef> Name = Symbol.getName();
-    if (!Name)
-      report_error(Obj->getFileName(), Name.takeError());
-    if (Name->empty())
+    uint64_t Address = unwrapOrError(Symbol.getAddress(), Obj->getFileName());
+    StringRef Name = unwrapOrError(Symbol.getName(), Obj->getFileName());
+    if (Name.empty())
       continue;
 
-    Expected<section_iterator> SectionOrErr = Symbol.getSection();
-    if (!SectionOrErr)
-      report_error(Obj->getFileName(), SectionOrErr.takeError());
-    section_iterator SecI = *SectionOrErr;
+    section_iterator SecI =
+        unwrapOrError(Symbol.getSection(), Obj->getFileName());
     if (SecI == Obj->section_end())
       continue;
 
-    AllSymbols[*SecI].emplace_back(*AddressOrErr, *Name, SymbolType);
+    AllSymbols[*SecI].emplace_back(Address, Name, SymbolType);
   }
 }
 
@@ -868,14 +858,10 @@ static void addPltEntries(const ObjectFile *Obj,
       SymbolRef Symbol(PltEntry.first, ElfObj);
       uint8_t SymbolType = getElfSymbolType(Obj, Symbol);
 
-      Expected<StringRef> NameOrErr = Symbol.getName();
-      if (!NameOrErr)
-        report_error(Obj->getFileName(), NameOrErr.takeError());
-      if (NameOrErr->empty())
-        continue;
-      StringRef Name = Saver.save((*NameOrErr + "@plt").str());
-
-      AllSymbols[*Plt].emplace_back(PltEntry.second, Name, SymbolType);
+      StringRef Name = unwrapOrError(Symbol.getName(), Obj->getFileName());
+      if (!Name.empty())
+        AllSymbols[*Plt].emplace_back(
+            PltEntry.second, Saver.save((Name + "@plt").str()), SymbolType);
     }
   }
 }
@@ -941,21 +927,13 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
   // pretty print the symbols while disassembling.
   std::map<SectionRef, SectionSymbolsTy> AllSymbols;
   SectionSymbolsTy AbsoluteSymbols;
+  const StringRef FileName = Obj->getFileName();
   for (const SymbolRef &Symbol : Obj->symbols()) {
-    Expected<uint64_t> AddressOrErr = Symbol.getAddress();
-    if (!AddressOrErr)
-      report_error(Obj->getFileName(), AddressOrErr.takeError());
-    uint64_t Address = *AddressOrErr;
+    uint64_t Address = unwrapOrError(Symbol.getAddress(), FileName);
 
-    Expected<StringRef> Name = Symbol.getName();
-    if (!Name)
-      report_error(Obj->getFileName(), Name.takeError());
-    if (Name->empty())
+    StringRef Name = unwrapOrError(Symbol.getName(), FileName);
+    if (Name.empty())
       continue;
-
-    Expected<section_iterator> SectionOrErr = Symbol.getSection();
-    if (!SectionOrErr)
-      report_error(Obj->getFileName(), SectionOrErr.takeError());
 
     uint8_t SymbolType = ELF::STT_NOTYPE;
     if (Obj->isELF()) {
@@ -964,11 +942,11 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
         continue;
     }
 
-    section_iterator SecI = *SectionOrErr;
+    section_iterator SecI = unwrapOrError(Symbol.getSection(), FileName);
     if (SecI != Obj->section_end())
-      AllSymbols[*SecI].emplace_back(Address, *Name, SymbolType);
+      AllSymbols[*SecI].emplace_back(Address, Name, SymbolType);
     else
-      AbsoluteSymbols.emplace_back(Address, *Name, SymbolType);
+      AbsoluteSymbols.emplace_back(Address, Name, SymbolType);
   }
   if (AllSymbols.empty() && Obj->isELF())
     addDynamicElfSymbols(Obj, AllSymbols);
@@ -1629,6 +1607,7 @@ void llvm::printSymbolTable(const ObjectFile *O, StringRef ArchiveName,
     return;
   }
 
+  const StringRef FileName = O->getFileName();
   for (auto I = O->symbol_begin(), E = O->symbol_end(); I != E; ++I) {
     // Skip printing the special zero symbol when dumping an ELF file.
     // This makes the output consistent with the GNU objdump.
@@ -1636,34 +1615,21 @@ void llvm::printSymbolTable(const ObjectFile *O, StringRef ArchiveName,
       continue;
 
     const SymbolRef &Symbol = *I;
-    Expected<uint64_t> AddressOrError = Symbol.getAddress();
-    if (!AddressOrError)
-      report_error(ArchiveName, O->getFileName(), AddressOrError.takeError(),
-                   ArchitectureName);
-    uint64_t Address = *AddressOrError;
+    uint64_t Address = unwrapOrError(Symbol.getAddress(), ArchiveName, FileName,
+                                     ArchitectureName);
     if ((Address < StartAddress) || (Address > StopAddress))
       continue;
-    Expected<SymbolRef::Type> TypeOrError = Symbol.getType();
-    if (!TypeOrError)
-      report_error(ArchiveName, O->getFileName(), TypeOrError.takeError(),
-                   ArchitectureName);
-    SymbolRef::Type Type = *TypeOrError;
+    SymbolRef::Type Type = unwrapOrError(Symbol.getType(), ArchiveName,
+                                         FileName, ArchitectureName);
     uint32_t Flags = Symbol.getFlags();
-    Expected<section_iterator> SectionOrErr = Symbol.getSection();
-    if (!SectionOrErr)
-      report_error(ArchiveName, O->getFileName(), SectionOrErr.takeError(),
-                   ArchitectureName);
-    section_iterator Section = *SectionOrErr;
+    section_iterator Section = unwrapOrError(Symbol.getSection(), ArchiveName,
+                                             FileName, ArchitectureName);
     StringRef Name;
-    if (Type == SymbolRef::ST_Debug && Section != O->section_end()) {
+    if (Type == SymbolRef::ST_Debug && Section != O->section_end())
       Section->getName(Name);
-    } else {
-      Expected<StringRef> NameOrErr = Symbol.getName();
-      if (!NameOrErr)
-        report_error(ArchiveName, O->getFileName(), NameOrErr.takeError(),
-                     ArchitectureName);
-      Name = *NameOrErr;
-    }
+    else
+      Name = unwrapOrError(Symbol.getName(), ArchiveName, FileName,
+                           ArchitectureName);
 
     bool Global = Flags & SymbolRef::SF_Global;
     bool Weak = Flags & SymbolRef::SF_Weak;
@@ -1896,12 +1862,9 @@ static void printFileHeaders(const ObjectFile *O) {
 
   Triple::ArchType AT = O->getArch();
   outs() << "architecture: " << Triple::getArchTypeName(AT) << "\n";
-  Expected<uint64_t> StartAddrOrErr = O->getStartAddress();
-  if (!StartAddrOrErr)
-    report_error(O->getFileName(), StartAddrOrErr.takeError());
+  uint64_t Address = unwrapOrError(O->getStartAddress(), O->getFileName());
 
   StringRef Fmt = O->getBytesInAddress() > 4 ? "%016" PRIx64 : "%08" PRIx64;
-  uint64_t Address = StartAddrOrErr.get();
   outs() << "start address: "
          << "0x" << format(Fmt.data(), Address) << "\n\n";
 }
@@ -1926,22 +1889,9 @@ static void printArchiveChild(StringRef Filename, const Archive::Child &C) {
 
   outs() << " ";
 
-  Expected<unsigned> UIDOrErr = C.getUID();
-  if (!UIDOrErr)
-    report_error(Filename, UIDOrErr.takeError());
-  unsigned UID = UIDOrErr.get();
-  outs() << format("%d/", UID);
-
-  Expected<unsigned> GIDOrErr = C.getGID();
-  if (!GIDOrErr)
-    report_error(Filename, GIDOrErr.takeError());
-  unsigned GID = GIDOrErr.get();
-  outs() << format("%-d ", GID);
-
-  Expected<uint64_t> Size = C.getRawSize();
-  if (!Size)
-    report_error(Filename, Size.takeError());
-  outs() << format("%6" PRId64, Size.get()) << " ";
+  outs() << format("%d/%d %6" PRId64 " ", unwrapOrError(C.getUID(), Filename),
+                   unwrapOrError(C.getGID(), Filename),
+                   unwrapOrError(C.getRawSize(), Filename));
 
   StringRef RawLastModified = C.getRawLastModified();
   unsigned Seconds;
@@ -1960,10 +1910,7 @@ static void printArchiveChild(StringRef Filename, const Archive::Child &C) {
   Expected<StringRef> NameOrErr = C.getName();
   if (!NameOrErr) {
     consumeError(NameOrErr.takeError());
-    Expected<StringRef> RawNameOrErr = C.getRawName();
-    if (!RawNameOrErr)
-      report_error(Filename, NameOrErr.takeError());
-    Name = RawNameOrErr.get();
+    Name = unwrapOrError(C.getRawName(), Filename);
   } else {
     Name = NameOrErr.get();
   }
@@ -2050,7 +1997,7 @@ static void dumpArchive(const Archive *A) {
     Expected<std::unique_ptr<Binary>> ChildOrErr = C.getAsBinary();
     if (!ChildOrErr) {
       if (auto E = isNotObjectErrorInvalidFileType(ChildOrErr.takeError()))
-        report_error(A->getFileName(), C, std::move(E));
+        report_error(std::move(E), A->getFileName(), C);
       continue;
     }
     if (ObjectFile *O = dyn_cast<ObjectFile>(&*ChildOrErr.get()))
@@ -2061,7 +2008,7 @@ static void dumpArchive(const Archive *A) {
       report_error(A->getFileName(), object_error::invalid_file_type);
   }
   if (Err)
-    report_error(A->getFileName(), std::move(Err));
+    report_error(std::move(Err), A->getFileName());
 }
 
 /// Open file and figure out how to dump it.
@@ -2075,10 +2022,8 @@ static void dumpInput(StringRef file) {
   }
 
   // Attempt to open the binary.
-  Expected<OwningBinary<Binary>> BinaryOrErr = createBinary(file);
-  if (!BinaryOrErr)
-    report_error(file, BinaryOrErr.takeError());
-  Binary &Binary = *BinaryOrErr.get().getBinary();
+  OwningBinary<Binary> OBinary = unwrapOrError(createBinary(file), file);
+  Binary &Binary = *OBinary.getBinary();
 
   if (Archive *A = dyn_cast<Archive>(&Binary))
     dumpArchive(A);

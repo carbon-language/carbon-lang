@@ -163,16 +163,10 @@ uint64_t llvm::getELFSectionLMA(const object::ELFSectionRef &Sec) {
 
 template <class ELFT>
 void printDynamicSection(const ELFFile<ELFT> *Elf, StringRef Filename) {
-  auto ProgramHeaderOrError = Elf->program_headers();
-  if (!ProgramHeaderOrError)
-    report_error(Filename, ProgramHeaderOrError.takeError());
-
-  auto DynamicEntriesOrError = Elf->dynamicEntries();
-  if (!DynamicEntriesOrError)
-    report_error(Filename, DynamicEntriesOrError.takeError());
-
+  ArrayRef<typename ELFT::Dyn> DynamicEntries =
+      unwrapOrError(Elf->dynamicEntries(), Filename);
   outs() << "Dynamic Section:\n";
-  for (const auto &Dyn : *DynamicEntriesOrError) {
+  for (const typename ELFT::Dyn &Dyn : DynamicEntries) {
     if (Dyn.d_tag == ELF::DT_NULL)
       continue;
 
@@ -331,34 +325,23 @@ void printSymbolVersionDefinition(const typename ELFT::Shdr &Shdr,
 
 template <class ELFT>
 void printSymbolVersionInfo(const ELFFile<ELFT> *Elf, StringRef FileName) {
-  typedef typename ELFT::Shdr Elf_Shdr;
-
-  auto SectionsOrError = Elf->sections();
-  if (!SectionsOrError)
-    report_error(FileName, SectionsOrError.takeError());
-
-  for (const Elf_Shdr &Shdr : *SectionsOrError) {
+  ArrayRef<typename ELFT::Shdr> Sections =
+      unwrapOrError(Elf->sections(), FileName);
+  for (const typename ELFT::Shdr &Shdr : Sections) {
     if (Shdr.sh_type != ELF::SHT_GNU_verneed &&
         Shdr.sh_type != ELF::SHT_GNU_verdef)
       continue;
 
-    auto ContentsOrError = Elf->getSectionContents(&Shdr);
-    if (!ContentsOrError)
-      report_error(FileName, ContentsOrError.takeError());
-
-    auto StrTabSecOrError = Elf->getSection(Shdr.sh_link);
-    if (!StrTabSecOrError)
-      report_error(FileName, StrTabSecOrError.takeError());
-
-    auto StrTabOrError = Elf->getStringTable(*StrTabSecOrError);
-    if (!StrTabOrError)
-      report_error(FileName, StrTabOrError.takeError());
+    ArrayRef<uint8_t> Contents =
+        unwrapOrError(Elf->getSectionContents(&Shdr), FileName);
+    const typename ELFT::Shdr *StrTabSec =
+        unwrapOrError(Elf->getSection(Shdr.sh_link), FileName);
+    StringRef StrTab = unwrapOrError(Elf->getStringTable(StrTabSec), FileName);
 
     if (Shdr.sh_type == ELF::SHT_GNU_verneed)
-      printSymbolVersionDependency<ELFT>(*ContentsOrError, *StrTabOrError);
+      printSymbolVersionDependency<ELFT>(Contents, StrTab);
     else
-      printSymbolVersionDefinition<ELFT>(Shdr, *ContentsOrError,
-                                         *StrTabOrError);
+      printSymbolVersionDefinition<ELFT>(Shdr, Contents, StrTab);
   }
 }
 
