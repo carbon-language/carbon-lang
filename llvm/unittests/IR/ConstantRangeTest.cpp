@@ -363,7 +363,8 @@ TEST_F(ConstantRangeTest, IntersectWith) {
   EXPECT_EQ(LHS.intersectWith(RHS), ConstantRange(APInt(32, 15), APInt(32, 0)));
 }
 
-TEST_F(ConstantRangeTest, IntersectWithExhaustive) {
+template<typename Fn1, typename Fn2>
+void testBinarySetOperationExhaustive(Fn1 OpFn, Fn2 InResultFn) {
   unsigned Bits = 4;
   EnumerateTwoConstantRanges(Bits,
       [=](const ConstantRange &CR1, const ConstantRange &CR2) {
@@ -379,7 +380,7 @@ TEST_F(ConstantRangeTest, IntersectWithExhaustive) {
 
         APInt Num(Bits, 0);
         for (unsigned I = 0, Limit = 1 << Bits; I < Limit; ++I, ++Num) {
-          if (!CR1.contains(Num) || !CR2.contains(Num)) {
+          if (!InResultFn(CR1, CR2, Num)) {
             if (HaveRange3)
               HaveInterrupt3 = true;
             else if (HaveRange2)
@@ -409,12 +410,9 @@ TEST_F(ConstantRangeTest, IntersectWithExhaustive) {
 
         assert(!HaveInterrupt3 && "Should have at most three ranges");
 
-        ConstantRange SmallestCR =
-            CR1.intersectWith(CR2, ConstantRange::Smallest);
-        ConstantRange UnsignedCR =
-            CR1.intersectWith(CR2, ConstantRange::Unsigned);
-        ConstantRange SignedCR =
-            CR1.intersectWith(CR2, ConstantRange::Signed);
+        ConstantRange SmallestCR = OpFn(CR1, CR2, ConstantRange::Smallest);
+        ConstantRange UnsignedCR = OpFn(CR1, CR2, ConstantRange::Unsigned);
+        ConstantRange SignedCR = OpFn(CR1, CR2, ConstantRange::Signed);
 
         if (!HaveRange1) {
           EXPECT_TRUE(SmallestCR.isEmptySet());
@@ -489,6 +487,17 @@ TEST_F(ConstantRangeTest, IntersectWithExhaustive) {
           EXPECT_EQ(Variant2, SignedCR);
         else
           EXPECT_TRUE(Variant1 == SignedCR || Variant2 == SignedCR);
+      });
+}
+
+TEST_F(ConstantRangeTest, IntersectWithExhaustive) {
+  testBinarySetOperationExhaustive(
+      [](const ConstantRange &CR1, const ConstantRange &CR2,
+         ConstantRange::PreferredRangeType Type) {
+        return CR1.intersectWith(CR2, Type);
+      },
+      [](const ConstantRange &CR1, const ConstantRange &CR2, const APInt &N) {
+        return CR1.contains(N) && CR2.contains(N);
       });
 }
 
