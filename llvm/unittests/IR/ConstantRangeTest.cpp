@@ -409,19 +409,30 @@ TEST_F(ConstantRangeTest, IntersectWithExhaustive) {
 
         assert(!HaveInterrupt3 && "Should have at most three ranges");
 
-        ConstantRange CR = CR1.intersectWith(CR2);
+        ConstantRange SmallestCR =
+            CR1.intersectWith(CR2, ConstantRange::Smallest);
+        ConstantRange UnsignedCR =
+            CR1.intersectWith(CR2, ConstantRange::Unsigned);
+        ConstantRange SignedCR =
+            CR1.intersectWith(CR2, ConstantRange::Signed);
 
         if (!HaveRange1) {
-          EXPECT_TRUE(CR.isEmptySet());
+          EXPECT_TRUE(SmallestCR.isEmptySet());
+          EXPECT_TRUE(UnsignedCR.isEmptySet());
+          EXPECT_TRUE(SignedCR.isEmptySet());
           return;
         }
 
         if (!HaveRange2) {
           if (Lower1 == Upper1 + 1) {
-            EXPECT_TRUE(CR.isFullSet());
+            EXPECT_TRUE(SmallestCR.isFullSet());
+            EXPECT_TRUE(UnsignedCR.isFullSet());
+            EXPECT_TRUE(SignedCR.isFullSet());
           } else {
             ConstantRange Expected(Lower1, Upper1 + 1);
-            EXPECT_EQ(Expected, CR);
+            EXPECT_EQ(Expected, SmallestCR);
+            EXPECT_EQ(Expected, UnsignedCR);
+            EXPECT_EQ(Expected, SignedCR);
           }
           return;
         }
@@ -443,13 +454,41 @@ TEST_F(ConstantRangeTest, IntersectWithExhaustive) {
           Variant2 = ConstantRange(Lower3, Upper2 + 1);
         }
 
-        // The intersection should return the smaller of the two variants.
+        // Smallest: Smaller set, then any set.
         if (Variant1.isSizeStrictlySmallerThan(Variant2))
-          EXPECT_EQ(Variant1, CR);
+          EXPECT_EQ(Variant1, SmallestCR);
         else if (Variant2.isSizeStrictlySmallerThan(Variant1))
-          EXPECT_EQ(Variant2, CR);
+          EXPECT_EQ(Variant2, SmallestCR);
         else
-          EXPECT_TRUE(Variant1 == CR || Variant2 == CR);
+          EXPECT_TRUE(Variant1 == SmallestCR || Variant2 == SmallestCR);
+
+        // Unsigned: Non-wrapped set, then smaller set, then any set.
+        bool Variant1Full = Variant1.isFullSet() || Variant1.isWrappedSet();
+        bool Variant2Full = Variant2.isFullSet() || Variant2.isWrappedSet();
+        if (!Variant1Full && Variant2Full)
+          EXPECT_EQ(Variant1, UnsignedCR);
+        else if (Variant1Full && !Variant2Full)
+          EXPECT_EQ(Variant2, UnsignedCR);
+        else if (Variant1.isSizeStrictlySmallerThan(Variant2))
+          EXPECT_EQ(Variant1, UnsignedCR);
+        else if (Variant2.isSizeStrictlySmallerThan(Variant1))
+          EXPECT_EQ(Variant2, UnsignedCR);
+        else
+          EXPECT_TRUE(Variant1 == UnsignedCR || Variant2 == UnsignedCR);
+
+        // Signed: Signed non-wrapped set, then smaller set, then any set.
+        Variant1Full = Variant1.isFullSet() || Variant1.isSignWrappedSet();
+        Variant2Full = Variant2.isFullSet() || Variant2.isSignWrappedSet();
+        if (!Variant1Full && Variant2Full)
+          EXPECT_EQ(Variant1, SignedCR);
+        else if (Variant1Full && !Variant2Full)
+          EXPECT_EQ(Variant2, SignedCR);
+        else if (Variant1.isSizeStrictlySmallerThan(Variant2))
+          EXPECT_EQ(Variant1, SignedCR);
+        else if (Variant2.isSizeStrictlySmallerThan(Variant1))
+          EXPECT_EQ(Variant2, SignedCR);
+        else
+          EXPECT_TRUE(Variant1 == SignedCR || Variant2 == SignedCR);
       });
 }
 
