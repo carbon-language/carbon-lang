@@ -26,26 +26,36 @@ protected:
 };
 
 template<typename Fn>
-static void EnumerateTwoConstantRanges(unsigned Bits, Fn TestFn) {
+static void EnumerateConstantRanges(unsigned Bits, Fn TestFn) {
   unsigned Max = 1 << Bits;
-  for (unsigned Lo1 = 0; Lo1 < Max; Lo1++) {
-    for (unsigned Hi1 = 0; Hi1 < Max; Hi1++) {
+  for (unsigned Lo = 0; Lo < Max; Lo++) {
+    for (unsigned Hi = 0; Hi < Max; Hi++) {
       // Enforce ConstantRange invariant.
-      if (Lo1 == Hi1 && Lo1 != 0 && Lo1 != Max - 1)
+      if (Lo == Hi && Lo != 0 && Lo != Max - 1)
         continue;
 
-      ConstantRange CR1(APInt(Bits, Lo1), APInt(Bits, Hi1));
-      for (unsigned Lo2 = 0; Lo2 < Max; Lo2++) {
-        for (unsigned Hi2 = 0; Hi2 < Max; Hi2++) {
-          // Enforce ConstantRange invariant.
-          if (Lo2 == Hi2 && Lo2 != 0 && Lo2 != Max - 1)
-            continue;
-
-          ConstantRange CR2(APInt(Bits, Lo2), APInt(Bits, Hi2));
-          TestFn(CR1, CR2);
-        }
-      }
+      ConstantRange CR(APInt(Bits, Lo), APInt(Bits, Hi));
+      TestFn(CR);
     }
+  }
+}
+
+template<typename Fn>
+static void EnumerateTwoConstantRanges(unsigned Bits, Fn TestFn) {
+  EnumerateConstantRanges(Bits, [&](const ConstantRange &CR1) {
+    EnumerateConstantRanges(Bits, [&](const ConstantRange &CR2) {
+      TestFn(CR1, CR2);
+    });
+  });
+}
+
+template<typename Fn>
+static void ForeachNumInConstantRange(const ConstantRange &CR, Fn TestFn) {
+  // The loop is based on the set size to correctly handle empty/full ranges.
+  unsigned Size = CR.getSetSize().getLimitedValue();
+  APInt N = CR.getLower();
+  for (unsigned I = 0; I < Size; ++I, ++N) {
+    TestFn(N);
   }
 }
 
@@ -1595,6 +1605,33 @@ TEST_F(ConstantRangeTest, FromKnownBitsExhaustive) {
       EXPECT_EQ(SignedCR, ConstantRange::fromKnownBits(Known, true));
     }
   }
+}
+
+TEST_F(ConstantRangeTest, Negative) {
+  // All elements in an empty set (of which there are none) are both negative
+  // and non-negative. Empty & full sets checked explicitly for clarity, but
+  // they are also covered by the exhaustive test below.
+  EXPECT_TRUE(Empty.isAllNegative());
+  EXPECT_TRUE(Empty.isAllNonNegative());
+  EXPECT_FALSE(Full.isAllNegative());
+  EXPECT_FALSE(Full.isAllNonNegative());
+
+  unsigned Bits = 4;
+  EnumerateConstantRanges(Bits, [](const ConstantRange &CR) {
+    bool AllNegative = true;
+    bool AllNonNegative = true;
+    ForeachNumInConstantRange(CR, [&](const APInt &N) {
+      if (!N.isNegative())
+        AllNegative = false;
+      if (!N.isNonNegative())
+        AllNonNegative = false;
+    });
+    assert((CR.isEmptySet() || !AllNegative || !AllNonNegative) &&
+           "Only empty set can be both all negative and all non-negative");
+
+    EXPECT_EQ(AllNegative, CR.isAllNegative());
+    EXPECT_EQ(AllNonNegative, CR.isAllNonNegative());
+  });
 }
 
 }  // anonymous namespace

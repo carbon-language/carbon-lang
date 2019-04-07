@@ -389,6 +389,21 @@ ConstantRange::isSizeLargerThan(uint64_t MaxSize) const {
   return (Upper - Lower).ugt(MaxSize);
 }
 
+bool ConstantRange::isAllNegative() const {
+  // Empty set is all negative, full set is not.
+  if (isEmptySet())
+    return true;
+  if (isFullSet())
+    return false;
+
+  return !isUpperSignWrapped() && !Upper.isStrictlyPositive();
+}
+
+bool ConstantRange::isAllNonNegative() const {
+  // Empty and full set are automatically treated correctly.
+  return !isSignWrappedSet() && Lower.isNonNegative();
+}
+
 APInt ConstantRange::getUnsignedMax() const {
   if (isFullSet() || isUpperWrapped())
     return APInt::getMaxValue(getBitWidth());
