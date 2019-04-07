@@ -63,8 +63,8 @@ allowing you to skip ahead as you wish:
 -  `Chapter #8: Compiling to Object Files <LangImpl08.html>`_ - This
    chapter explains how to take LLVM IR and compile it down to object
    files, like a static compiler does.
--  `Chapter #9: Extending the Language: Debug Information
-   <LangImpl09.html>`_ - A real language needs to support debuggers, so we
+-  `Chapter #9: Debug Information <LangImpl09.html>`_ - A real language 
+   needs to support debuggers, so we
    add debug information that allows setting breakpoints in Kaleidoscope
    functions, print out argument variables, and call functions!
 -  `Chapter #10: Conclusion and other tidbits <LangImpl10.html>`_ - This
