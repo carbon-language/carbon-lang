@@ -277,7 +277,8 @@ public:
   /// elements of both sets, but may contain more.  For example, [3, 9) union
   /// [12,15) is [3, 15), which includes 9, 10, and 11, which were not included
   /// in either set before.
-  ConstantRange unionWith(const ConstantRange &CR) const;
+  ConstantRange unionWith(const ConstantRange &CR,
+                          PreferredRangeType Type = Smallest) const;
 
   /// Return a new range representing the possible values resulting
   /// from an application of the specified cast operator to this range. \p

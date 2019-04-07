@@ -593,23 +593,26 @@ ConstantRange ConstantRange::intersectWith(const ConstantRange &CR,
   return getPreferredRange(*this, CR, Type);
 }
 
-ConstantRange ConstantRange::unionWith(const ConstantRange &CR) const {
+ConstantRange ConstantRange::unionWith(const ConstantRange &CR,
+                                       PreferredRangeType Type) const {
   assert(getBitWidth() == CR.getBitWidth() &&
          "ConstantRange types don't agree!");
 
   if (   isFullSet() || CR.isEmptySet()) return *this;
   if (CR.isFullSet() ||    isEmptySet()) return CR;
 
-  if (!isUpperWrapped() && CR.isUpperWrapped()) return CR.unionWith(*this);
+  if (!isUpperWrapped() && CR.isUpperWrapped())
+    return CR.unionWith(*this, Type);
 
   if (!isUpperWrapped() && !CR.isUpperWrapped()) {
-    if (CR.Upper.ult(Lower) || Upper.ult(CR.Lower)) {
-      // If the two ranges are disjoint, find the smaller gap and bridge it.
-      APInt d1 = CR.Lower - Upper, d2 = Lower - CR.Upper;
-      if (d1.ult(d2))
-        return ConstantRange(Lower, CR.Upper);
-      return ConstantRange(CR.Lower, Upper);
-    }
+    //        L---U  and  L---U        : this
+    //  L---U                   L---U  : CR
+    // result in one of
+    //  L---------U
+    // -----U L-----
+    if (CR.Upper.ult(Lower) || Upper.ult(CR.Lower))
+      return getPreferredRange(
+          ConstantRange(Lower, CR.Upper), ConstantRange(CR.Lower, Upper), Type);
 
     APInt L = CR.Lower.ult(Lower) ? CR.Lower : Lower;
     APInt U = (CR.Upper - 1).ugt(Upper - 1) ? CR.Upper : Upper;
@@ -633,22 +636,21 @@ ConstantRange ConstantRange::unionWith(const ConstantRange &CR) const {
 
     // ----U       L---- : this
     //       L---U       : CR
-    //    <d1>  <d2>
-    if (Upper.ule(CR.Lower) && CR.Upper.ule(Lower)) {
-      APInt d1 = CR.Lower - Upper, d2 = Lower - CR.Upper;
-      if (d1.ult(d2))
-        return ConstantRange(Lower, CR.Upper);
-      return ConstantRange(CR.Lower, Upper);
-    }
+    // results in one of
+    // ----------U L----
+    // ----U L----------
+    if (Upper.ult(CR.Lower) && CR.Upper.ult(Lower))
+      return getPreferredRange(
+          ConstantRange(Lower, CR.Upper), ConstantRange(CR.Lower, Upper), Type);
 
     // ----U     L----- : this
     //        L----U    : CR
-    if (Upper.ult(CR.Lower) && Lower.ult(CR.Upper))
+    if (Upper.ult(CR.Lower) && Lower.ule(CR.Upper))
       return ConstantRange(CR.Lower, Upper);
 
     // ------U    L---- : this
     //    L-----U       : CR
-    assert(CR.Lower.ult(Upper) && CR.Upper.ult(Lower) &&
+    assert(CR.Lower.ule(Upper) && CR.Upper.ult(Lower) &&
            "ConstantRange::unionWith missed a case with one range wrapped");
     return ConstantRange(Lower, CR.Upper);
   }

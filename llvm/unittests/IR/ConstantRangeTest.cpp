@@ -501,6 +501,17 @@ TEST_F(ConstantRangeTest, IntersectWithExhaustive) {
       });
 }
 
+TEST_F(ConstantRangeTest, UnionWithExhaustive) {
+  testBinarySetOperationExhaustive(
+      [](const ConstantRange &CR1, const ConstantRange &CR2,
+         ConstantRange::PreferredRangeType Type) {
+        return CR1.unionWith(CR2, Type);
+      },
+      [](const ConstantRange &CR1, const ConstantRange &CR2, const APInt &N) {
+        return CR1.contains(N) || CR2.contains(N);
+      });
+}
+
 TEST_F(ConstantRangeTest, UnionWith) {
   EXPECT_EQ(Wrap.unionWith(One),
             ConstantRange(APInt(16, 0xaaa), APInt(16, 0xb)));
