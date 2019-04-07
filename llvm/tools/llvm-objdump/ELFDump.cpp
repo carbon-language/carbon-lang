@@ -53,8 +53,6 @@ template <class ELFT>
 static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
                                                 const RelocationRef &RelRef,
                                                 SmallVectorImpl<char> &Result) {
-  typedef typename ELFObjectFile<ELFT>::Elf_Rela Elf_Rela;
-
   const ELFFile<ELFT> &EF = *Obj->getELFFile();
   DataRefImpl Rel = RelRef.getRawDataRefImpl();
   auto SecOrErr = EF.getSection(Rel.d.a);
@@ -70,7 +68,7 @@ static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
   // GNU objdump does not do that and we just follow for simplicity atm.
   bool Undef = false;
   if ((*SecOrErr)->sh_type == ELF::SHT_RELA) {
-    const Elf_Rela *ERela = Obj->getRela(Rel);
+    const typename ELFT::Rela *ERela = Obj->getRela(Rel);
     Addend = ERela->r_addend;
     Undef = ERela->getSymbol(false) == 0;
   } else if ((*SecOrErr)->sh_type != ELF::SHT_REL) {
@@ -138,7 +136,7 @@ static uint64_t getSectionLMA(const ELFFile<ELFT> *Obj,
 
   // Search for a PT_LOAD segment containing the requested section. Use this
   // segment's p_addr to calculate the section's LMA.
-  for (const typename ELFFile<ELFT>::Elf_Phdr &Phdr : *PhdrRangeOrErr)
+  for (const typename ELFT::Phdr &Phdr : *PhdrRangeOrErr)
     if ((Phdr.p_type == ELF::PT_LOAD) && (Phdr.p_vaddr <= Sec.getAddress()) &&
         (Phdr.p_vaddr + Phdr.p_memsz > Sec.getAddress()))
       return Sec.getAddress() - Phdr.p_vaddr + Phdr.p_paddr;
@@ -281,10 +279,6 @@ template <class ELFT>
 void printSymbolVersionDefinition(const typename ELFT::Shdr &Shdr,
                                   ArrayRef<uint8_t> Contents,
                                   StringRef StrTab) {
-  typedef ELFFile<ELFT> ELFO;
-  typedef typename ELFO::Elf_Verdef Elf_Verdef;
-  typedef typename ELFO::Elf_Verdaux Elf_Verdaux;
-
   outs() << "Version definitions:\n";
 
   const uint8_t *Buf = Contents.data();
@@ -294,7 +288,7 @@ void printSymbolVersionDefinition(const typename ELFT::Shdr &Shdr,
   // according to sh_info.
   uint16_t VerdefIndexWidth = std::to_string(Shdr.sh_info).size();
   while (Buf) {
-    const Elf_Verdef *Verdef = reinterpret_cast<const Elf_Verdef *>(Buf);
+    auto *Verdef = reinterpret_cast<const typename ELFT::Verdef *>(Buf);
     outs() << format_decimal(VerdefIndex++, VerdefIndexWidth) << " "
            << format("0x%02" PRIx16 " ", (uint16_t)Verdef->vd_flags)
            << format("0x%08" PRIx32 " ", (uint32_t)Verdef->vd_hash);
@@ -302,8 +296,7 @@ void printSymbolVersionDefinition(const typename ELFT::Shdr &Shdr,
     const uint8_t *BufAux = Buf + Verdef->vd_aux;
     uint16_t VerdauxIndex = 0;
     while (BufAux) {
-      const Elf_Verdaux *Verdaux =
-          reinterpret_cast<const Elf_Verdaux *>(BufAux);
+      auto *Verdaux = reinterpret_cast<const typename ELFT::Verdaux *>(BufAux);
       if (VerdauxIndex)
         outs() << std::string(VerdefIndexWidth + 17, ' ');
       outs() << StringRef(StrTab.drop_front(Verdaux->vda_name).data()) << '\n';
