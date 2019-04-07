@@ -23,13 +23,11 @@ using namespace llvm::object;
 
 template <class ELFT>
 Expected<StringRef> getDynamicStrTab(const ELFFile<ELFT> *Elf) {
-  typedef ELFFile<ELFT> ELFO;
-
   auto DynamicEntriesOrError = Elf->dynamicEntries();
   if (!DynamicEntriesOrError)
     return DynamicEntriesOrError.takeError();
 
-  for (const typename ELFO::Elf_Dyn &Dyn : *DynamicEntriesOrError) {
+  for (const typename ELFT::Dyn &Dyn : *DynamicEntriesOrError) {
     if (Dyn.d_tag == ELF::DT_STRTAB) {
       auto MappedAddrOrError = Elf->toMappedAddr(Dyn.getPtr());
       if (!MappedAddrOrError)
@@ -43,7 +41,7 @@ Expected<StringRef> getDynamicStrTab(const ELFFile<ELFT> *Elf) {
   if (!SectionsOrError)
     return SectionsOrError.takeError();
 
-  for (const typename ELFO::Elf_Shdr &Sec : *SectionsOrError) {
+  for (const typename ELFT::Shdr &Sec : *SectionsOrError) {
     if (Sec.sh_type == ELF::SHT_DYNSYM)
       return Elf->getStringTableForSymtab(Sec);
   }
@@ -55,8 +53,6 @@ template <class ELFT>
 static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
                                                 const RelocationRef &RelRef,
                                                 SmallVectorImpl<char> &Result) {
-  typedef typename ELFObjectFile<ELFT>::Elf_Sym Elf_Sym;
-  typedef typename ELFObjectFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename ELFObjectFile<ELFT>::Elf_Rela Elf_Rela;
 
   const ELFFile<ELFT> &EF = *Obj->getELFFile();
@@ -88,12 +84,13 @@ static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
 
   if (!Undef) {
     symbol_iterator SI = RelRef.getSymbol();
-    const Elf_Sym *Sym = Obj->getSymbol(SI->getRawDataRefImpl());
+    const typename ELFT::Sym *Sym = Obj->getSymbol(SI->getRawDataRefImpl());
     if (Sym->getType() == ELF::STT_SECTION) {
       Expected<section_iterator> SymSI = SI->getSection();
       if (!SymSI)
         return errorToErrorCode(SymSI.takeError());
-      const Elf_Shdr *SymSec = Obj->getSection((*SymSI)->getRawDataRefImpl());
+      const typename ELFT::Shdr *SymSec =
+          Obj->getSection((*SymSI)->getRawDataRefImpl());
       auto SecName = EF.getSectionName(SymSec);
       if (!SecName)
         return errorToErrorCode(SecName.takeError());
@@ -192,13 +189,12 @@ void printDynamicSection(const ELFFile<ELFT> *Elf, StringRef Filename) {
 }
 
 template <class ELFT> void printProgramHeaders(const ELFFile<ELFT> *o) {
-  typedef ELFFile<ELFT> ELFO;
   outs() << "Program Header:\n";
   auto ProgramHeaderOrError = o->program_headers();
   if (!ProgramHeaderOrError)
     report_fatal_error(
         errorToErrorCode(ProgramHeaderOrError.takeError()).message());
-  for (const typename ELFO::Elf_Phdr &Phdr : *ProgramHeaderOrError) {
+  for (const typename ELFT::Phdr &Phdr : *ProgramHeaderOrError) {
     switch (Phdr.p_type) {
     case ELF::PT_DYNAMIC:
       outs() << " DYNAMIC ";
@@ -259,22 +255,17 @@ template <class ELFT> void printProgramHeaders(const ELFFile<ELFT> *o) {
 template <class ELFT>
 void printSymbolVersionDependency(ArrayRef<uint8_t> Contents,
                                   StringRef StrTab) {
-  typedef ELFFile<ELFT> ELFO;
-  typedef typename ELFO::Elf_Verneed Elf_Verneed;
-  typedef typename ELFO::Elf_Vernaux Elf_Vernaux;
-
   outs() << "Version References:\n";
 
   const uint8_t *Buf = Contents.data();
   while (Buf) {
-    const Elf_Verneed *Verneed = reinterpret_cast<const Elf_Verneed *>(Buf);
+    auto *Verneed = reinterpret_cast<const typename ELFT::Verneed *>(Buf);
     outs() << "  required from "
            << StringRef(StrTab.drop_front(Verneed->vn_file).data()) << ":\n";
 
     const uint8_t *BufAux = Buf + Verneed->vn_aux;
     while (BufAux) {
-      const Elf_Vernaux *Vernaux =
-          reinterpret_cast<const Elf_Vernaux *>(BufAux);
+      auto *Vernaux = reinterpret_cast<const typename ELFT::Vernaux *>(BufAux);
       outs() << "    "
              << format("0x%08" PRIx32 " ", (uint32_t)Vernaux->vna_hash)
              << format("0x%02" PRIx16 " ", (uint16_t)Vernaux->vna_flags)
