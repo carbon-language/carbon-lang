@@ -121,7 +121,7 @@ private:
   MaskExpr GetMask(const parser::LogicalExpr &, bool defaultValue = true) const;
 
   template<typename... A> parser::Message *Say(A... args) {
-    return messages_.Say(std::forward<A>(args)...);
+    return messages_.Say(args...);
   }
 
   SemanticsContext &context_;

@@ -24,6 +24,7 @@
 
 #ifndef FORTRAN_COMMON_RESTORER_H_
 #define FORTRAN_COMMON_RESTORER_H_
+#include "idioms.h"
 namespace Fortran::common {
 template<typename A> class Restorer {
 public:
@@ -35,7 +36,8 @@ private:
   A original_;
 };
 
-template<typename A, typename B> Restorer<A> ScopedSet(A &to, B &&from) {
+template<typename A, typename B, NOT_LVALUE_REFERENCE(B)>
+Restorer<A> ScopedSet(A &to, B &&from) {
   Restorer<A> result{to};
   to = std::move(from);
   return result;

@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1192,7 +1192,8 @@ template<typename PA> inline constexpr auto indirect(const PA &p) {
 // that succeeds if a does.  If a succeeds, it then applies many(b >> a).
 // The result is the list of the values returned from all of the applications
 // of a.
-template<typename T> std::list<T> prepend(T &&head, std::list<T> &&rest) {
+template<typename T, NOT_LVALUE_REFERENCE(T)>
+std::list<T> prepend(T &&head, std::list<T> &&rest) {
   rest.push_front(std::move(head));
   return std::move(rest);
 }

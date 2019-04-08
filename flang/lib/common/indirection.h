@@ -67,8 +67,9 @@ public:
   bool operator!=(const A &that) const { return *p_ != that; }
   bool operator!=(const Indirection &that) const { return *p_ != *that.p_; }
 
-  template<typename... ARGS> static Indirection Make(ARGS &&... args) {
-    return {new A(std::forward<ARGS>(args)...)};
+  template<typename... ARGS, NO_LVALUE_REFERENCE(ARGS)>
+  static Indirection Make(ARGS &&... args) {
+    return {new A(std::move(args)...)};
   }
 
 private:
@@ -120,8 +121,9 @@ public:
   bool operator!=(const A &that) const { return *p_ != that; }
   bool operator!=(const Indirection &that) const { return *p_ != *that.p_; }
 
-  template<typename... ARGS> static Indirection Make(ARGS &&... args) {
-    return {new A(std::forward<ARGS>(args)...)};
+  template<typename... ARGS, NO_LVALUE_REFERENCE(ARGS)>
+  static Indirection Make(ARGS &&... args) {
+    return {new A(std::move(args)...)};
   }
 
 private:

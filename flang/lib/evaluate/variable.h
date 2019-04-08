@@ -183,7 +183,7 @@ public:
   int size() const { return static_cast<int>(subscript_.size()); }
   Subscript &at(int n) { return subscript_.at(n); }
   const Subscript &at(int n) const { return subscript_.at(n); }
-  template<typename A> Subscript &emplace_back(A &&x) {
+  template<typename A, NOT_LVALUE_REFERENCE(A)> Subscript &emplace_back(A &&x) {
     return subscript_.emplace_back(std::move(x));
   }
 

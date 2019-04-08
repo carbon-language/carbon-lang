@@ -96,7 +96,8 @@ template<typename A> bool IsAssumedRank(const Expr<A> &expr) {
 // Generalizing packagers: these take operations and expressions of more
 // specific types and wrap them in Expr<> containers of more abstract types.
 
-template<typename A> Expr<ResultType<A>> AsExpr(A &&x) {
+template<typename A, NOT_LVALUE_REFERENCE(A)>
+Expr<ResultType<A>> AsExpr(A &&x) {
   return Expr<ResultType<A>>{std::move(x)};
 }
 
@@ -110,11 +111,12 @@ Expr<SomeKind<CATEGORY>> AsCategoryExpr(Expr<SomeKind<CATEGORY>> &&x) {
   return std::move(x);
 }
 
-template<typename A> Expr<SomeType> AsGenericExpr(A &&x) {
+template<typename A, NOT_LVALUE_REFERENCE(A)>
+Expr<SomeType> AsGenericExpr(A &&x) {
   return Expr<SomeType>{AsCategoryExpr(std::move(x))};
 }
 
-template<typename A>
+template<typename A, NOT_LVALUE_REFERENCE(A)>
 Expr<SomeKind<ResultType<A>::category>> AsCategoryExpr(A &&x) {
   return Expr<SomeKind<ResultType<A>::category>>{AsExpr(std::move(x))};
 }
@@ -237,12 +239,12 @@ std::optional<Expr<SomeType>> ConvertToType(
     const semantics::Symbol &, Expr<SomeType> &&);
 
 // Conversions to the type of another expression
-template<TypeCategory TC, int TK, typename FROM>
+template<TypeCategory TC, int TK, typename FROM, NOT_LVALUE_REFERENCE(FROM)>
 Expr<Type<TC, TK>> ConvertTo(const Expr<Type<TC, TK>> &, FROM &&x) {
   return ConvertToType<Type<TC, TK>>(std::move(x));
 }
 
-template<TypeCategory TC, typename FROM>
+template<TypeCategory TC, typename FROM, NOT_LVALUE_REFERENCE(FROM)>
 Expr<SomeKind<TC>> ConvertTo(const Expr<SomeKind<TC>> &to, FROM &&from) {
   return std::visit(
       [&](const auto &toKindExpr) {
@@ -253,7 +255,7 @@ Expr<SomeKind<TC>> ConvertTo(const Expr<SomeKind<TC>> &to, FROM &&from) {
       to.u);
 }
 
-template<typename FROM>
+template<typename FROM, NOT_LVALUE_REFERENCE(FROM)>
 Expr<SomeType> ConvertTo(const Expr<SomeType> &to, FROM &&from) {
   return std::visit(
       [&](const auto &toCatExpr) {
@@ -279,7 +281,7 @@ template<TypeCategory TOCAT, typename VALUE> struct ConvertToKindHelper {
   VALUE value;
 };
 
-template<TypeCategory TOCAT, typename VALUE>
+template<TypeCategory TOCAT, typename VALUE, NOT_LVALUE_REFERENCE(VALUE)>
 Expr<SomeKind<TOCAT>> ConvertToKind(int kind, VALUE &&x) {
   return common::SearchTypes(
       ConvertToKindHelper<TOCAT, VALUE>{kind, std::move(x)})

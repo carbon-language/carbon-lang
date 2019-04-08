@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -143,19 +143,18 @@ public:
     context_ = context_->attachment();
   }
 
-  template<typename... A> void Say(CharBlock range, A &&... args) {
+  template<typename... A> void Say(CharBlock range, A... args) {
     if (deferMessages_) {
       anyDeferredMessages_ = true;
     } else {
-      messages_.Say(range, std::forward<A>(args)...).SetContext(context_.get());
+      messages_.Say(range, args...).SetContext(context_.get());
     }
   }
-  template<typename... A> void Say(const MessageFixedText &text, A &&... args) {
-    Say(p_, text, std::forward<A>(args)...);
+  template<typename... A> void Say(const MessageFixedText &text, A... args) {
+    Say(p_, text, args...);
   }
-  template<typename... A>
-  void Say(const MessageExpectedText &text, A &&... args) {
-    Say(p_, text, std::forward<A>(args)...);
+  template<typename... A> void Say(const MessageExpectedText &text, A... args) {
+    Say(p_, text, args...);
   }
 
   void Nonstandard(LanguageFeature lf, const MessageFixedText &msg) {

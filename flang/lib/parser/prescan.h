@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ public:
   Provenance GetCurrentProvenance() const { return GetProvenance(at_); }
 
   template<typename... A> Message &Say(A... a) {
-    Message &m{messages_.Say(std::forward<A>(a)...)};
+    Message &m{messages_.Say(a...)};
     std::optional<ProvenanceRange> range{m.GetProvenanceRange(cooked_)};
     CHECK(!range.has_value() || cooked_.IsValid(*range));
     return m;

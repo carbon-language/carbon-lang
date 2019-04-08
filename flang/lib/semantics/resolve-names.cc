@@ -145,7 +145,7 @@ public:
   // It is not in any scope and always has MiscDetails.
   void MakePlaceholder(const parser::Name &, MiscDetails::Kind);
 
-  template<typename T> auto FoldExpr(T &&expr) -> T {
+  template<typename T, NOT_LVALUE_REFERENCE(T)> auto FoldExpr(T &&expr) -> T {
     return evaluate::Fold(GetFoldingContext(), std::move(expr));
   }
 
@@ -172,11 +172,12 @@ public:
     }
   }
 
-  template<typename... A> Message &Say(const parser::Name &name, A... args) {
-    return messageHandler_.Say(name.source, std::forward<A>(args)...);
+  template<typename... A, NO_LVALUE_REFERENCE(A)>
+  Message &Say(const parser::Name &name, A &&... args) {
+    return messageHandler_.Say(name.source, std::move(args)...);
   }
-  template<typename... A> Message &Say(A... args) {
-    return messageHandler_.Say(std::forward<A>(args)...);
+  template<typename... A, NO_LVALUE_REFERENCE(A)> Message &Say(A &&... args) {
+    return messageHandler_.Say(std::move(args)...);
   }
 
 private:
@@ -443,18 +444,18 @@ public:
   Symbol &MakeSymbol(const SourceName &, Attrs = Attrs{});
   Symbol &MakeSymbol(const parser::Name &, Attrs = Attrs{});
 
-  template<typename D>
+  template<typename D, NOT_LVALUE_REFERENCE(D)>
   Symbol &MakeSymbol(const parser::Name &name, D &&details) {
     return MakeSymbol(name, Attrs{}, std::move(details));
   }
 
-  template<typename D>
+  template<typename D, NOT_LVALUE_REFERENCE(D)>
   Symbol &MakeSymbol(
       const parser::Name &name, const Attrs &attrs, D &&details) {
     return Resolve(name, MakeSymbol(name.source, attrs, std::move(details)));
   }
 
-  template<typename D>
+  template<typename D, NOT_LVALUE_REFERENCE(D)>
   Symbol &MakeSymbol(const SourceName &name, const Attrs &attrs, D &&details) {
     // Note: don't use FindSymbol here. If this is a derived type scope,
     // we want to detect whether the name is already declared as a component.
@@ -2535,7 +2536,7 @@ void DeclarationVisitor::Post(const parser::CodimensionDecl &x) {
   const auto &name{std::get<parser::Name>(x.t)};
   DeclareObjectEntity(name, Attrs{});
 }
-//TODO: ChangeTeamStmt also uses CodimensionDecl
+// TODO: ChangeTeamStmt also uses CodimensionDecl
 
 void DeclarationVisitor::Post(const parser::EntityDecl &x) {
   // TODO: may be under StructureStmt
