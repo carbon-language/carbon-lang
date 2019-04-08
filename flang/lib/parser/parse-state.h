@@ -143,19 +143,21 @@ public:
     context_ = context_->attachment();
   }
 
-  template<typename... A> void Say(CharBlock range, A &&... args) {
+  template<typename... A, NO_LVALUE_REFERENCE(A)>
+  void Say(CharBlock range, A &&... args) {
     if (deferMessages_) {
       anyDeferredMessages_ = true;
     } else {
-      messages_.Say(range, std::forward<A>(args)...).SetContext(context_.get());
+      messages_.Say(range, std::move(args)...).SetContext(context_.get());
     }
   }
-  template<typename... A> void Say(const MessageFixedText &text, A &&... args) {
-    Say(p_, text, std::forward<A>(args)...);
+  template<typename... A, NO_LVALUE_REFERENCE(A)>
+  void Say(const MessageFixedText &text, A &&... args) {
+    Say(p_, text, std::move(args)...);
   }
-  template<typename... A>
+  template<typename... A, NO_LVALUE_REFERENCE(A)>
   void Say(const MessageExpectedText &text, A &&... args) {
-    Say(p_, text, std::forward<A>(args)...);
+    Say(p_, text, std::move(args)...);
   }
 
   void Nonstandard(LanguageFeature lf, const MessageFixedText &msg) {

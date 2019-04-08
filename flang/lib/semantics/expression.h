@@ -80,13 +80,14 @@ public:
     return GetFoldingContext().messages();
   }
 
-  template<typename... A> parser::Message *Say(A &&... args) {
-    return GetContextualMessages().Say(std::forward<A>(args)...);
+  template<typename... A, NO_LVALUE_REFERENCE(A)>
+  parser::Message *Say(A &&... args) {
+    return GetContextualMessages().Say(std::move(args)...);
   }
 
-  template<typename T, typename... A>
+  template<typename T, typename... A, NO_LVALUE_REFERENCE(A)>
   parser::Message *SayAt(const T &parsed, A &&... args) {
-    return Say(parser::FindSourceLocation(parsed), std::forward<A>(args)...);
+    return Say(parser::FindSourceLocation(parsed), std::move(args)...);
   }
 
   int GetDefaultKind(common::TypeCategory);

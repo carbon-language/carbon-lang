@@ -120,8 +120,9 @@ private:
 
   MaskExpr GetMask(const parser::LogicalExpr &, bool defaultValue = true) const;
 
-  template<typename... A> parser::Message *Say(A &&... args) {
-    return messages_.Say(std::forward<A>(args)...);
+  template<typename... A, NO_LVALUE_REFERENCE(A)>
+  parser::Message *Say(A &&... args) {
+    return messages_.Say(std::move(args)...);
   }
 
   SemanticsContext &context_;

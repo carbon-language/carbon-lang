@@ -151,8 +151,9 @@ public:
     attachmentIsContext_ = true;
   }
   Message &Attach(Message *);
-  template<typename... A> Message &Attach(A &&... args) {
-    return Attach(new Message{std::forward<A>(args)...});  // reference-counted
+  template<typename... A, NO_LVALUE_REFERENCE(A)>
+  Message &Attach(A &&... args) {
+    return Attach(new Message{std::move(args)...});  // reference-counted
   }
 
   bool SortBefore(const Message &that) const;
@@ -204,8 +205,8 @@ public:
 
   bool empty() const { return messages_.empty(); }
 
-  template<typename... A> Message &Say(A... args) {
-    last_ = messages_.emplace_after(last_, std::forward<A>(args)...);
+  template<typename... A, NO_LVALUE_REFERENCE(A)> Message &Say(A... args) {
+    last_ = messages_.emplace_after(last_, std::move(args)...);
     return *last_;
   }
 
@@ -253,16 +254,17 @@ public:
     return common::ScopedSet(at_, std::move(at));
   }
 
-  template<typename... A> Message *Say(CharBlock at, A &&... args) {
+  template<typename... A, NO_LVALUE_REFERENCE(A)>
+  Message *Say(CharBlock at, A &&... args) {
     if (messages_ != nullptr) {
-      return &messages_->Say(at, std::forward<A>(args)...);
+      return &messages_->Say(at, std::move(args)...);
     } else {
       return nullptr;
     }
   }
 
-  template<typename... A> Message *Say(A &&... args) {
-    return Say(at_, std::forward<A>(args)...);
+  template<typename... A, NO_LVALUE_REFERENCE(A)> Message *Say(A &&... args) {
+    return Say(at_, std::move(args)...);
   }
 
 private:
