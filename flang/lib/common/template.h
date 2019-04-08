@@ -267,7 +267,7 @@ std::optional<std::tuple<A...>> AllPresent(std::optional<A> &&... x) {
 // N.B. If the function returns std::optional, MapOptional will return
 // std::optional<std::optional<...>> and you will probably want to
 // run it through JoinOptional to "squash" it.
-template<typename R, typename... A, NO_LVALUE_REFERENCE(A)>
+template<typename R, typename... A>
 std::optional<R> MapOptional(
     std::function<R(A &&...)> &&f, std::optional<A> &&... x) {
   if (auto args{AllPresent(std::move(x)...)}) {
@@ -275,7 +275,7 @@ std::optional<R> MapOptional(
   }
   return std::nullopt;
 }
-template<typename R, typename... A, NO_LVALUE_REFERENCE(A)>
+template<typename R, typename... A>
 std::optional<R> MapOptional(R (*f)(A &&...), std::optional<A> &&... x) {
   return MapOptional(std::function<R(A && ...)>{f}, std::move(x)...);
 }

@@ -172,12 +172,11 @@ public:
     }
   }
 
-  template<typename... A, NO_LVALUE_REFERENCE(A)>
-  Message &Say(const parser::Name &name, A &&... args) {
-    return messageHandler_.Say(name.source, std::move(args)...);
+  template<typename... A> Message &Say(const parser::Name &name, A &&... args) {
+    return messageHandler_.Say(name.source, std::forward<A>(args)...);
   }
-  template<typename... A, NO_LVALUE_REFERENCE(A)> Message &Say(A &&... args) {
-    return messageHandler_.Say(std::move(args)...);
+  template<typename... A> Message &Say(A &&... args) {
+    return messageHandler_.Say(std::forward<A>(args)...);
   }
 
 private:

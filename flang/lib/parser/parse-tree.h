@@ -108,7 +108,7 @@ struct GenericExprWrapper;  // forward definition, wraps Expr<SomeType>
 // Many other classes below simply wrap a std::tuple<> structure, which
 // is conventionally named "t".
 #define TUPLE_CLASS_BOILERPLATE(classname) \
-  template<typename... Ts, bool = (... && !std::is_lvalue_reference_v<Ts>)> \
+  template<typename... Ts, NO_LVALUE_REFERENCE(Ts)> \
   classname(Ts &&... args) : t(std::move(args)...) {} \
   using TupleTrait = std::true_type; \
   BOILERPLATE(classname)
