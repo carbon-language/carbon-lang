@@ -3800,8 +3800,6 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
   llvm::FunctionType *IRFuncTy = getTypes().GetFunctionType(CallInfo);
 
-  const Decl *TargetDecl = Callee.getAbstractInfo().getCalleeDecl().getDecl();
-
 #ifndef NDEBUG
   if (!(CallInfo.isVariadic() && CallInfo.getArgStruct())) {
     // For an inalloca varargs function, we don't expect CallInfo to match the
@@ -4290,7 +4288,11 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   // Apply always_inline to all calls within flatten functions.
   // FIXME: should this really take priority over __try, below?
   if (CurCodeDecl && CurCodeDecl->hasAttr<FlattenAttr>() &&
-      !(TargetDecl && TargetDecl->hasAttr<NoInlineAttr>())) {
+      !(Callee.getAbstractInfo().getCalleeDecl().getDecl() &&
+        Callee.getAbstractInfo()
+            .getCalleeDecl()
+            .getDecl()
+            ->hasAttr<NoInlineAttr>())) {
     Attrs =
         Attrs.addAttribute(getLLVMContext(), llvm::AttributeList::FunctionIndex,
                            llvm::Attribute::AlwaysInline);
@@ -4374,15 +4376,10 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
   // Suppress tail calls if requested.
   if (llvm::CallInst *Call = dyn_cast<llvm::CallInst>(CI)) {
+    const Decl *TargetDecl = Callee.getAbstractInfo().getCalleeDecl().getDecl();
     if (TargetDecl && TargetDecl->hasAttr<NotTailCalledAttr>())
       Call->setTailCallKind(llvm::CallInst::TCK_NoTail);
   }
-
-  // Add metadata for calls to MSAllocator functions
-  // FIXME: Get the type that the return value is cast to.
-  if (!DisableDebugInfo && TargetDecl &&
-      TargetDecl->hasAttr<MSAllocatorAttr>())
-    getDebugInfo()->addHeapAllocSiteMetadata(CI, RetTy, Loc);
 
   // 4. Finish the call.
 
@@ -4540,6 +4537,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   } ();
 
   // Emit the assume_aligned check on the return value.
+  const Decl *TargetDecl = Callee.getAbstractInfo().getCalleeDecl().getDecl();
   if (Ret.isScalar() && TargetDecl) {
     if (const auto *AA = TargetDecl->getAttr<AssumeAlignedAttr>()) {
       llvm::Value *OffsetValue = nullptr;
