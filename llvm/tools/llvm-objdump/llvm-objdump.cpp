@@ -1235,7 +1235,6 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
       bool CheckARMELFData = isArmElf(Obj) &&
                              std::get<2>(Symbols[SI]) != ELF::STT_OBJECT &&
                              !DisassembleAll;
-      MCInst Inst;
       while (Index < End) {
         // AArch64 ELF binaries can interleave data and text in the same
         // section. We rely on the markers introduced to understand what we
@@ -1268,7 +1267,7 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
 
         // Disassemble a real instruction or a data when disassemble all is
         // provided
-        Inst.clear();
+        MCInst Inst;
         bool Disassembled = DisAsm->getInstruction(
             Inst, Size, Bytes.slice(Index), SectionAddr + Index, DebugOut,
             CommentStream);
