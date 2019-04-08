@@ -139,7 +139,7 @@ template<typename A> A Clone(const A &x) { return x; }
 
 // Use when declaring functions with rvalue template arguments to dodge
 // confusing C++ reference forwarding semantics, e.g.
-//   template<typename A, NO_LVALUE_REFERENCE(A)> void foo(A &&);
+//   template<typename A, NOT_LVALUE_REFERENCE(A)> void foo(A &&);
 // Works on parameter packs as well.
 #define NOT_LVALUE_REFERENCE(X) bool = !std::is_lvalue_reference_v<X>
 #define NO_LVALUE_REFERENCE(X) bool = (... && !std::is_lvalue_reference_v<X>)
