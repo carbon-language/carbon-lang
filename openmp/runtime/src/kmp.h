@@ -2951,7 +2951,6 @@ extern volatile int __kmp_nth;
 /* total number of threads reachable from some root thread including all root
    threads, and those in the thread pool */
 extern volatile int __kmp_all_nth;
-extern int __kmp_thread_pool_nth;
 extern std::atomic<int> __kmp_thread_pool_active_nth;
 
 extern kmp_root_t **__kmp_root; /* root of thread hierarchy */
@@ -3340,6 +3339,7 @@ extern void __kmp_common_destroy_gtid(int gtid);
 extern void __kmp_register_atfork(void);
 #endif
 extern void __kmp_suspend_initialize(void);
+extern void __kmp_suspend_initialize_thread(kmp_info_t *th);
 extern void __kmp_suspend_uninitialize_thread(kmp_info_t *th);
 
 extern kmp_info_t *__kmp_allocate_thread(kmp_root_t *root, kmp_team_t *team,
