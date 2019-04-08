@@ -39,8 +39,8 @@ std::optional<Shape> AsShape(ExtentExpr &&arrayExpr) {
   }
   if (auto *constructor{UnwrapExpr<ArrayConstructor<ExtentType>>(arrayExpr)}) {
     Shape result;
-    for (const auto &value : constructor->values()) {
-      if (const auto *expr{std::get_if<ExtentExpr>(&value.u)}) {
+    for (auto &value : constructor->values()) {
+      if (auto *expr{std::get_if<ExtentExpr>(&value.u)}) {
         if (expr->Rank() == 0) {
           result.emplace_back(std::move(*expr));
           continue;

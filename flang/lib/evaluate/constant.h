@@ -43,11 +43,11 @@ public:
   using ScalarValue = SCALAR;
 
   template<typename A> ConstantBase(const A &x) : values_{x} {}
-  template<typename A>
-  ConstantBase(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
-    : values_{std::move(x)} {}
+  template<typename A, NOT_LVALUE_REFERENCE(A)>
+  ConstantBase(A &&x) : values_{std::move(x)} {}
   ConstantBase(std::vector<ScalarValue> &&x, std::vector<std::int64_t> &&dims)
     : values_(std::move(x)), shape_(std::move(dims)) {}
+  DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(ConstantBase)
   ~ConstantBase();
 
   int Rank() const { return static_cast<int>(shape_.size()); }

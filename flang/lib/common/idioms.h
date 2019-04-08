@@ -141,7 +141,9 @@ template<typename A> A Clone(const A &x) { return x; }
 // confusing C++ reference forwarding semantics, e.g.
 //   template<typename A, NOT_LVALUE_REFERENCE(A)> void foo(A &&);
 // Works on parameter packs as well.
-#define NOT_LVALUE_REFERENCE(X) bool = !std::is_lvalue_reference_v<X>
-#define NO_LVALUE_REFERENCE(X) bool = (... && !std::is_lvalue_reference_v<X>)
+#define NOT_LVALUE_REFERENCE(X) \
+  typename = std::enable_if_t<!std::is_lvalue_reference_v<X>, int>
+#define NO_LVALUE_REFERENCE(X) \
+  typename = std::enable_if_t<(... && !std::is_lvalue_reference_v<X>), int>
 }
 #endif  // FORTRAN_COMMON_IDIOMS_H_

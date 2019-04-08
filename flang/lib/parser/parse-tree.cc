@@ -87,8 +87,9 @@ bool DoConstruct::IsDoConcurrent() const {
   return control && std::holds_alternative<LoopControl::Concurrent>(control->u);
 }
 
-static Designator MakeArrayElementRef(Name &name, std::list<Expr> &subscripts) {
-  ArrayElement arrayElement{name, std::list<SectionSubscript>{}};
+static Designator MakeArrayElementRef(
+    const Name &name, std::list<Expr> &subscripts) {
+  ArrayElement arrayElement{Name{name.source}, std::list<SectionSubscript>{}};
   for (Expr &expr : subscripts) {
     arrayElement.subscripts.push_back(SectionSubscript{
         Scalar{Integer{common::Indirection{std::move(expr)}}}});
@@ -162,7 +163,8 @@ Statement<ActionStmt> StmtFunctionStmt::ConvertToAssignment() {
   auto &funcExpr{std::get<Scalar<Expr>>(t).thing};
   std::list<Expr> subscripts;
   for (Name &arg : funcArgs) {
-    subscripts.push_back(Expr{common::Indirection{Designator{arg}}});
+    subscripts.push_back(
+        Expr{common::Indirection{Designator{Name{arg.source}}}});
   }
   auto variable{
       Variable{common::Indirection{MakeArrayElementRef(funcName, subscripts)}}};

@@ -348,7 +348,7 @@ public:
   static_assert(IsSpecificIntrinsicType<Result> ||
       std::is_same_v<Result, SomeKind<TypeCategory::Derived>>);
   EVALUATE_UNION_CLASS_BOILERPLATE(Designator)
-  Designator(const DataRef &that) : u{common::MoveVariant<Variant>(that.u)} {}
+  Designator(const DataRef &that) : u{common::CopyVariant<Variant>(that.u)} {}
   Designator(DataRef &&that)
     : u{common::MoveVariant<Variant>(std::move(that.u))} {}
 

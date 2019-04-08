@@ -91,10 +91,11 @@ void RewriteMutator::Post(parser::SpecificationPart &x) {
 bool RewriteMutator::Pre(parser::ExecutionPart &x) {
   auto origFirst{x.v.begin()};  // insert each elem before origFirst
   for (stmtFuncType &sf : stmtFuncsToConvert_) {
-    auto &&stmt = sf.statement.value().ConvertToAssignment();
+    auto stmt{sf.statement.value().ConvertToAssignment()};
     stmt.source = sf.source;
     x.v.insert(origFirst,
-        parser::ExecutionPartConstruct{parser::ExecutableConstruct{stmt}});
+        parser::ExecutionPartConstruct{
+            parser::ExecutableConstruct{std::move(stmt)}});
   }
   stmtFuncsToConvert_.clear();
   return true;

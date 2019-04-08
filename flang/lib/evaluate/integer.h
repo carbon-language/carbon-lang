@@ -118,11 +118,13 @@ public:
   // Constructors and value-generating static functions
   constexpr Integer() { Clear(); }  // default constructor: zero
   constexpr Integer(const Integer &) = default;
+  constexpr Integer(Integer &&) = default;
 
   // C++'s integral types can all be converted to Integer
   // with silent truncation.
-  template<typename INT> constexpr Integer(INT n) {
-    static_assert(std::is_integral_v<INT>);
+  template<typename INT,
+      typename = std::enable_if_t<std::is_integral_v<INT>, int>>
+  constexpr Integer(INT n) {
     constexpr int nBits = CHAR_BIT * sizeof n;
     if constexpr (nBits < partBits) {
       if constexpr (std::is_unsigned_v<INT>) {

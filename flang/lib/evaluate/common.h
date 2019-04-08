@@ -190,9 +190,8 @@ using HostUnsignedInt =
 #define EVALUATE_UNION_CLASS_BOILERPLATE(t) \
   CLASS_BOILERPLATE(t) \
   template<typename _A> explicit t(const _A &x) : u{x} {} \
-  template<typename _A> \
-  explicit t(std::enable_if_t<!std::is_reference_v<_A>, _A> &&x) \
-    : u(std::move(x)) {} \
+  template<typename _A, NOT_LVALUE_REFERENCE(_A)> \
+  explicit t(_A &&x) : u(std::move(x)) {} \
   bool operator==(const t &that) const { return u == that.u; }
 
 // Forward definition of Expr<> so that it can be indirectly used in its own

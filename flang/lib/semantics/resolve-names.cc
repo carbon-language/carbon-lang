@@ -172,12 +172,13 @@ public:
     }
   }
 
-  template<typename... A, NO_LVALUE_REFERENCE(A)>
-  Message &Say(const parser::Name &name, A &&... args) {
-    return messageHandler_.Say(name.source, std::move(args)...);
+  template<typename... A> Message &Say(A &&... args) {
+    return messageHandler_.Say(std::forward<A>(args)...);
   }
-  template<typename... A, NO_LVALUE_REFERENCE(A)> Message &Say(A &&... args) {
-    return messageHandler_.Say(std::move(args)...);
+  template<typename... A>
+  Message &Say(
+      const parser::Name &name, MessageFixedText &&text, const A &... args) {
+    return messageHandler_.Say(name.source, std::move(text), args...);
   }
 
 private:
@@ -491,7 +492,7 @@ public:
       SayAlreadyDeclared(name, *symbol);
       // replace the old symbol with a new one with correct details
       EraseSymbol(*symbol);
-      return MakeSymbol(name, attrs, details);
+      return MakeSymbol(name, attrs, std::move(details));
     }
   }
 
@@ -2186,14 +2187,14 @@ bool SubprogramVisitor::HandleStmtFunction(const parser::StmtFunctionStmt &x) {
         }
       }
     }
-    details.add_dummyArg(MakeSymbol(dummyName, dummyDetails));
+    details.add_dummyArg(MakeSymbol(dummyName, std::move(dummyDetails)));
   }
   EraseSymbol(name);  // added by PushSubprogramScope
   EntityDetails resultDetails;
   if (resultType) {
     resultDetails.set_type(*resultType);
   }
-  details.set_result(MakeSymbol(name, resultDetails));
+  details.set_result(MakeSymbol(name, std::move(resultDetails)));
   return true;
 }
 
@@ -2318,7 +2319,8 @@ void SubprogramVisitor::Post(const parser::FunctionStmt &stmt) {
   // add function result to function scope
   EntityDetails funcResultDetails;
   funcResultDetails.set_funcResult(true);
-  funcInfo_.resultSymbol = &MakeSymbol(*funcResultName, funcResultDetails);
+  funcInfo_.resultSymbol =
+      &MakeSymbol(*funcResultName, std::move(funcResultDetails));
   details.set_result(*funcInfo_.resultSymbol);
 }
 
@@ -3457,7 +3459,7 @@ void DeclarationVisitor::CheckSaveStmts() {
           "Explicit SAVE of '%s' is redundant due to global SAVE statement"_err_en_US,
           *saveInfo_.saveAll, "Global SAVE statement"_en_US);
     } else if (auto msg{CheckSaveAttr(*symbol)}) {
-      Say(name, *msg);
+      Say(name, std::move(*msg));
     } else {
       SetSaveAttr(*symbol);
     }
@@ -3800,7 +3802,7 @@ Symbol *DeclarationVisitor::MakeTypeSymbol(
         std::holds_alternative<ProcBindingDetails>(details)) {
       attrs.set(Attr::PRIVATE);
     }
-    Symbol &result{MakeSymbol(name, attrs, details)};
+    Symbol &result{MakeSymbol(name, attrs, std::move(details))};
     if (result.has<TypeParamDetails>()) {
       derivedType.symbol()->get<DerivedTypeDetails>().add_paramDecl(result);
     }
