@@ -278,9 +278,6 @@ void ConformabilityCheck(
         left.Rank(), right.Rank());
   }
 }
-
-template<typename A>
-std::optional<evaluate::DataRef> ExtractDataRef(std::optional<A> &&x);
 }  // namespace Fortran::evaluate
 
 namespace Fortran::semantics {

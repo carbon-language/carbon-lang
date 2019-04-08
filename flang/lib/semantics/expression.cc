@@ -111,11 +111,6 @@ std::optional<DataRef> ExtractDataRef(std::optional<A> &&x) {
   return std::nullopt;
 }
 
-// Explicit instantiation instead of moving all ExtractDataRef templates to the
-// header
-template std::optional<DataRef> ExtractDataRef<Expr<SomeType>>(
-    std::optional<Expr<SomeType>> &&);
-
 struct DynamicTypeWithLength : public DynamicType {
   std::optional<Expr<SubscriptInteger>> LEN() const;
   std::optional<Expr<SubscriptInteger>> length;
