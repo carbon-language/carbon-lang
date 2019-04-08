@@ -164,7 +164,7 @@ bool checkFileCRC(StringRef Path, uint32_t CRCHash) {
       MemoryBuffer::getFileOrSTDIN(Path);
   if (!MB)
     return false;
-  return CRCHash == crc32(0, MB.get()->getBuffer());
+  return CRCHash == llvm::crc32(0, MB.get()->getBuffer());
 }
 
 bool findDebugBinary(const std::string &OrigPath,
