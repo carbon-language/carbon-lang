@@ -90,6 +90,9 @@ public:
   }
 
   std::string RewriteFilename(const std::string& filename, int &fd) override {
+    assert(llvm::sys::path::is_absolute(filename) &&
+           "clang-fixit expects absolute paths only.");
+
     // We don't need to do permission checking here since clang will diagnose
     // any I/O errors itself.
 
