@@ -30,8 +30,9 @@ namespace Fortran::FIR {
 
 // implementation of a (moveable) sum type (variant)
 template<typename... Ts> struct SumTypeMixin {
-  template<typename A> SumTypeMixin(A &&x) : u{std::forward<A>(x)} {}
   using SumTypeTrait = std::true_type;
+  template<typename A> SumTypeMixin(const A &x) : u{x} {}
+  template<typename A> SumTypeMixin(A &&x) : u{std::forward<A>(x)} {}
   SumTypeMixin(SumTypeMixin &&) = default;
   SumTypeMixin &operator=(SumTypeMixin &&) = default;
   SumTypeMixin(const SumTypeMixin &) = delete;
@@ -42,8 +43,9 @@ template<typename... Ts> struct SumTypeMixin {
 
 // implementation of a copyable sum type
 template<typename... Ts> struct SumTypeCopyMixin {
-  template<typename A> SumTypeCopyMixin(A &&x) : u{std::forward<A>(x)} {}
   using CopyableSumTypeTrait = std::true_type;
+  template<typename A> SumTypeCopyMixin(const A &x) : u{x} {}
+  template<typename A> SumTypeCopyMixin(A &&x) : u{std::forward<A>(x)} {}
   SumTypeCopyMixin(SumTypeCopyMixin &&) = default;
   SumTypeCopyMixin &operator=(SumTypeCopyMixin &&) = default;
   SumTypeCopyMixin(const SumTypeCopyMixin &) = default;
@@ -53,15 +55,21 @@ template<typename... Ts> struct SumTypeCopyMixin {
 };
 #define SUM_TYPE_COPY_MIXIN(DT) \
   DT(const DT &derived) : SumTypeCopyMixin(derived.u) {} \
+  DT(DT &&derived) : SumTypeCopyMixin(std::move(derived.u)) {} \
   DT &operator=(const DT &derived) { \
     SumTypeCopyMixin::operator=(derived.u); \
+    return *this; \
+  } \
+  DT &operator=(DT &&derived) { \
+    SumTypeCopyMixin::operator=(std::move(derived.u)); \
     return *this; \
   }
 
 // implementation of a (moveable) product type (tuple)
 template<typename... Ts> struct ProductTypeMixin {
-  ProductTypeMixin(Ts... x) : t{std::forward<Ts>(x)...} {}
   using ProductTypeTrait = std::true_type;
+  ProductTypeMixin(const Ts &... x) : t{x...} {}
+  ProductTypeMixin(Ts &&... x) : t{std::forward<Ts>(x)...} {}
   ProductTypeMixin(ProductTypeMixin &&) = default;
   ProductTypeMixin &operator=(ProductTypeMixin &&) = default;
   ProductTypeMixin(const ProductTypeMixin &) = delete;
@@ -72,8 +80,9 @@ template<typename... Ts> struct ProductTypeMixin {
 
 // implementation of a (moveable) maybe type
 template<typename T> struct MaybeMixin {
-  MaybeMixin(T &&x) : o{std::forward<T>(x)} {}
   using MaybeTrait = std::true_type;
+  MaybeMixin(const T &x) : o{x} {}
+  MaybeMixin(T &&x) : o{std::move(x)} {}
   MaybeMixin(MaybeMixin &&) = default;
   MaybeMixin &operator=(MaybeMixin &&) = default;
   MaybeMixin(const MaybeMixin &) = delete;
