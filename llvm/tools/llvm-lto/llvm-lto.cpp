@@ -449,37 +449,22 @@ std::unique_ptr<ModuleSummaryIndex> loadCombinedIndex() {
   return ExitOnErr(getModuleSummaryIndexForFile(ThinLTOIndex));
 }
 
-static std::unique_ptr<MemoryBuffer> loadFile(StringRef Filename) {
-  ExitOnError ExitOnErr("llvm-lto: error loading file '" + Filename.str() +
-                        "': ");
-  return ExitOnErr(errorOrToExpected(MemoryBuffer::getFileOrSTDIN(Filename)));
-}
-
-static std::unique_ptr<lto::InputFile> loadInputFile(MemoryBufferRef Buffer) {
-  ExitOnError ExitOnErr("llvm-lto: error loading input '" +
-                        Buffer.getBufferIdentifier().str() + "': ");
-  return ExitOnErr(lto::InputFile::create(Buffer));
-}
-
-static std::unique_ptr<Module> loadModuleFromInput(lto::InputFile &File,
-                                                   LLVMContext &CTX) {
-  auto &Mod = File.getSingleBitcodeModule();
-  auto ModuleOrErr = Mod.parseModule(CTX);
-  if (!ModuleOrErr) {
-    handleAllErrors(ModuleOrErr.takeError(), [&](ErrorInfoBase &EIB) {
-      SMDiagnostic Err = SMDiagnostic(Mod.getModuleIdentifier(),
-                                      SourceMgr::DK_Error, EIB.message());
-      Err.print("llvm-lto", errs());
-    });
-    report_fatal_error("Can't load module, abort.");
+static std::unique_ptr<Module> loadModule(StringRef Filename,
+                                          LLVMContext &Ctx) {
+  SMDiagnostic Err;
+  std::unique_ptr<Module> M(parseIRFile(Filename, Err, Ctx));
+  if (!M) {
+    Err.print("llvm-lto", errs());
+    report_fatal_error("Can't load module for file " + Filename);
   }
-  maybeVerifyModule(**ModuleOrErr);
+  maybeVerifyModule(*M);
+
   if (ThinLTOModuleId.getNumOccurrences()) {
     if (InputFilenames.size() != 1)
       report_fatal_error("Can't override the module id for multiple files");
-    (*ModuleOrErr)->setModuleIdentifier(ThinLTOModuleId);
+    M->setModuleIdentifier(ThinLTOModuleId);
   }
-  return std::move(*ModuleOrErr);
+  return M;
 }
 
 static void writeModuleToFile(Module &TheModule, StringRef Filename) {
@@ -577,15 +562,13 @@ private:
     auto Index = loadCombinedIndex();
     for (auto &Filename : InputFilenames) {
       LLVMContext Ctx;
-      auto Buffer = loadFile(Filename);
-      auto Input = loadInputFile(Buffer->getMemBufferRef());
-      auto TheModule = loadModuleFromInput(*Input, Ctx);
+      auto TheModule = loadModule(Filename, Ctx);
 
       // Build a map of module to the GUIDs and summary objects that should
       // be written to its index.
       std::map<std::string, GVSummaryMapTy> ModuleToSummariesForIndex;
-      ThinGenerator.gatherImportedSummariesForModule(
-          *TheModule, *Index, ModuleToSummariesForIndex, *Input);
+      ThinGenerator.gatherImportedSummariesForModule(*TheModule, *Index,
+                                                     ModuleToSummariesForIndex);
 
       std::string OutputName = OutputFilename;
       if (OutputName.empty()) {
@@ -614,16 +597,13 @@ private:
     auto Index = loadCombinedIndex();
     for (auto &Filename : InputFilenames) {
       LLVMContext Ctx;
-      auto Buffer = loadFile(Filename);
-      auto Input = loadInputFile(Buffer->getMemBufferRef());
-      auto TheModule = loadModuleFromInput(*Input, Ctx);
+      auto TheModule = loadModule(Filename, Ctx);
       std::string OutputName = OutputFilename;
       if (OutputName.empty()) {
         OutputName = Filename + ".imports";
       }
-      OutputName =
-          getThinLTOOutputFile(OutputName, OldPrefix, NewPrefix);
-      ThinGenerator.emitImports(*TheModule, OutputName, *Index, *Input);
+      OutputName = getThinLTOOutputFile(OutputName, OldPrefix, NewPrefix);
+      ThinGenerator.emitImports(*TheModule, OutputName, *Index);
     }
   }
 
@@ -641,11 +621,9 @@ private:
     auto Index = loadCombinedIndex();
     for (auto &Filename : InputFilenames) {
       LLVMContext Ctx;
-      auto Buffer = loadFile(Filename);
-      auto Input = loadInputFile(Buffer->getMemBufferRef());
-      auto TheModule = loadModuleFromInput(*Input, Ctx);
+      auto TheModule = loadModule(Filename, Ctx);
 
-      ThinGenerator.promote(*TheModule, *Index, *Input);
+      ThinGenerator.promote(*TheModule, *Index);
 
       std::string OutputName = OutputFilename;
       if (OutputName.empty()) {
@@ -674,11 +652,9 @@ private:
 
     for (auto &Filename : InputFilenames) {
       LLVMContext Ctx;
-      auto Buffer = loadFile(Filename);
-      auto Input = loadInputFile(Buffer->getMemBufferRef());
-      auto TheModule = loadModuleFromInput(*Input, Ctx);
+      auto TheModule = loadModule(Filename, Ctx);
 
-      ThinGenerator.crossModuleImport(*TheModule, *Index, *Input);
+      ThinGenerator.crossModuleImport(*TheModule, *Index);
 
       std::string OutputName = OutputFilename;
       if (OutputName.empty()) {
@@ -707,11 +683,9 @@ private:
 
     for (auto &Filename : InputFilenames) {
       LLVMContext Ctx;
-      auto Buffer = loadFile(Filename);
-      auto Input = loadInputFile(Buffer->getMemBufferRef());
-      auto TheModule = loadModuleFromInput(*Input, Ctx);
+      auto TheModule = loadModule(Filename, Ctx);
 
-      ThinGenerator.internalize(*TheModule, *Index, *Input);
+      ThinGenerator.internalize(*TheModule, *Index);
 
       std::string OutputName = OutputFilename;
       if (OutputName.empty()) {
@@ -732,9 +706,7 @@ private:
 
     for (auto &Filename : InputFilenames) {
       LLVMContext Ctx;
-      auto Buffer = loadFile(Filename);
-      auto Input = loadInputFile(Buffer->getMemBufferRef());
-      auto TheModule = loadModuleFromInput(*Input, Ctx);
+      auto TheModule = loadModule(Filename, Ctx);
 
       ThinGenerator.optimize(*TheModule);
 

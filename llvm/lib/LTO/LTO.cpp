@@ -420,11 +420,6 @@ StringRef InputFile::getName() const {
   return Mods[0].getModuleIdentifier();
 }
 
-BitcodeModule &InputFile::getSingleBitcodeModule() {
-  assert(Mods.size() == 1 && "Expect only one bitcode module");
-  return Mods[0];
-}
-
 LTO::RegularLTOState::RegularLTOState(unsigned ParallelCodeGenParallelismLevel,
                                       Config &Conf)
     : ParallelCodeGenParallelismLevel(ParallelCodeGenParallelismLevel),
