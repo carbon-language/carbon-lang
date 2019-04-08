@@ -809,7 +809,7 @@ class VersionNeedSection final : public VersionNeedBaseSection {
 
   // A vector of shared files that need Elf_Verneed data structures and the
   // string table offsets of their sonames.
-  std::vector<std::pair<SharedFile<ELFT> *, size_t>> Needed;
+  std::vector<std::pair<SharedFile *, size_t>> Needed;
 
 public:
   void addSymbol(Symbol *Sym) override;

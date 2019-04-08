@@ -328,19 +328,10 @@ public:
 };
 
 // .so file.
-template <class ELFT> class SharedFile : public ELFFileBase {
-  using Elf_Dyn = typename ELFT::Dyn;
-  using Elf_Shdr = typename ELFT::Shdr;
-  using Elf_Sym = typename ELFT::Sym;
-  using Elf_Sym_Range = typename ELFT::SymRange;
-  using Elf_Verdef = typename ELFT::Verdef;
-  using Elf_Versym = typename ELFT::Versym;
-
-  const Elf_Shdr *VersymSec = nullptr;
-  const Elf_Shdr *VerdefSec = nullptr;
-
+class SharedFile : public ELFFileBase {
 public:
-  std::vector<const Elf_Verdef *> Verdefs;
+  // This is actually a vector of Elf_Verdef pointers.
+  std::vector<const void *> Verdefs;
   std::vector<StringRef> DtNeeded;
   std::string SoName;
 
@@ -348,11 +339,7 @@ public:
 
   SharedFile(MemoryBufferRef M, StringRef DefaultSoName);
 
-  void parseDynamic();
-  void parseRest();
-  uint32_t getAlignment(ArrayRef<Elf_Shdr> Sections, const Elf_Sym &Sym);
-  std::vector<const Elf_Verdef *> parseVerdefs();
-  std::vector<uint32_t> parseVersyms();
+  template <typename ELFT> void parse();
 
   struct NeededVer {
     // The string table offset of the version name in the output file.
@@ -364,7 +351,7 @@ public:
 
   // Mapping from Elf_Verdef data structures to information about Elf_Vernaux
   // data structures in the output file.
-  std::map<const Elf_Verdef *, NeededVer> VerdefMap;
+  std::map<const void *, NeededVer> VerdefMap;
 
   // Used for --no-allow-shlib-undefined.
   bool AllNeededIsKnown;
@@ -394,7 +381,7 @@ extern std::vector<BinaryFile *> BinaryFiles;
 extern std::vector<BitcodeFile *> BitcodeFiles;
 extern std::vector<LazyObjFile *> LazyObjFiles;
 extern std::vector<InputFile *> ObjectFiles;
-extern std::vector<InputFile *> SharedFiles;
+extern std::vector<SharedFile *> SharedFiles;
 
 } // namespace elf
 } // namespace lld

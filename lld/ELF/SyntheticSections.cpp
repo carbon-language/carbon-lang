@@ -1263,11 +1263,9 @@ template <class ELFT> void DynamicSection<ELFT>::finalizeContents() {
     addInt(Config->EnableNewDtags ? DT_RUNPATH : DT_RPATH,
            In.DynStrTab->addString(Config->Rpath));
 
-  for (InputFile *File : SharedFiles) {
-    SharedFile<ELFT> *F = cast<SharedFile<ELFT>>(File);
-    if (F->IsNeeded)
-      addInt(DT_NEEDED, In.DynStrTab->addString(F->SoName));
-  }
+  for (SharedFile *File : SharedFiles)
+    if (File->IsNeeded)
+      addInt(DT_NEEDED, In.DynStrTab->addString(File->SoName));
   if (!Config->SoName.empty())
     addInt(DT_SONAME, In.DynStrTab->addString(Config->SoName));
 
@@ -2792,7 +2790,7 @@ VersionNeedBaseSection::VersionNeedBaseSection()
 }
 
 template <class ELFT> void VersionNeedSection<ELFT>::addSymbol(Symbol *SS) {
-  auto &File = cast<SharedFile<ELFT>>(*SS->File);
+  auto &File = cast<SharedFile>(*SS->File);
   if (SS->VerdefIndex == VER_NDX_GLOBAL) {
     SS->VersionId = VER_NDX_GLOBAL;
     return;
@@ -2803,8 +2801,9 @@ template <class ELFT> void VersionNeedSection<ELFT>::addSymbol(Symbol *SS) {
   // for the soname.
   if (File.VerdefMap.empty())
     Needed.push_back({&File, In.DynStrTab->addString(File.SoName)});
-  const typename ELFT::Verdef *Ver = File.Verdefs[SS->VerdefIndex];
-  typename SharedFile<ELFT>::NeededVer &NV = File.VerdefMap[Ver];
+  auto *Ver = reinterpret_cast<const typename ELFT::Verdef *>(
+      File.Verdefs[SS->VerdefIndex]);
+  typename SharedFile::NeededVer &NV = File.VerdefMap[Ver];
 
   // If we don't already know that we need an Elf_Vernaux for this Elf_Verdef,
   // prepare to create one by allocating a version identifier and creating a
@@ -2822,7 +2821,7 @@ template <class ELFT> void VersionNeedSection<ELFT>::writeTo(uint8_t *Buf) {
   auto *Verneed = reinterpret_cast<Elf_Verneed *>(Buf);
   auto *Vernaux = reinterpret_cast<Elf_Vernaux *>(Verneed + Needed.size());
 
-  for (std::pair<SharedFile<ELFT> *, size_t> &P : Needed) {
+  for (std::pair<SharedFile *, size_t> &P : Needed) {
     // Create an Elf_Verneed for this DSO.
     Verneed->vn_version = 1;
     Verneed->vn_cnt = P.first->VerdefMap.size();
@@ -2839,7 +2838,8 @@ template <class ELFT> void VersionNeedSection<ELFT>::writeTo(uint8_t *Buf) {
     // pointers, but is deterministic because the pointers refer to Elf_Verdef
     // data structures within a single input file.
     for (auto &NV : P.first->VerdefMap) {
-      Vernaux->vna_hash = NV.first->vd_hash;
+      Vernaux->vna_hash =
+          reinterpret_cast<const typename ELFT::Verdef *>(NV.first)->vd_hash;
       Vernaux->vna_flags = 0;
       Vernaux->vna_other = NV.second.Index;
       Vernaux->vna_name = NV.second.StrTab;
@@ -2860,7 +2860,7 @@ template <class ELFT> void VersionNeedSection<ELFT>::finalizeContents() {
 
 template <class ELFT> size_t VersionNeedSection<ELFT>::getSize() const {
   unsigned Size = Needed.size() * sizeof(Elf_Verneed);
-  for (const std::pair<SharedFile<ELFT> *, size_t> &P : Needed)
+  for (const std::pair<SharedFile *, size_t> &P : Needed)
     Size += P.first->VerdefMap.size() * sizeof(Elf_Vernaux);
   return Size;
 }
