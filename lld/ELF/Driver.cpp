@@ -97,6 +97,8 @@ bool elf::link(ArrayRef<const char *> Args, bool CanExitEarly,
   Tar = nullptr;
   memset(&In, 0, sizeof(In));
 
+  SharedFile::VernauxNum = 0;
+
   Config->ProgName = Args[0];
 
   Driver->main(Args);

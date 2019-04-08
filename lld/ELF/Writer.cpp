@@ -1652,7 +1652,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
       In.DynSymTab->addSymbol(Sym);
       if (auto *File = dyn_cast_or_null<SharedFile>(Sym->File))
         if (File->IsNeeded && !Sym->isUndefined())
-          In.VerNeed->addSymbol(Sym);
+          addVerneed(Sym);
     }
   }
 

@@ -869,6 +869,8 @@ InputFile *ArchiveFile::fetch(const Archive::Symbol &Sym) {
   return File;
 }
 
+unsigned SharedFile::VernauxNum;
+
 SharedFile::SharedFile(MemoryBufferRef M, StringRef DefaultSoName)
     : ELFFileBase(SharedKind, M), SoName(DefaultSoName),
       IsNeeded(!Config->AsNeeded) {}

@@ -332,6 +332,14 @@ class SharedFile : public ELFFileBase {
 public:
   // This is actually a vector of Elf_Verdef pointers.
   std::vector<const void *> Verdefs;
+
+  // If the output file needs Elf_Verneed data structures for this file, this is
+  // a vector of Elf_Vernaux version identifiers that map onto the entries in
+  // Verdefs, otherwise it is empty.
+  std::vector<unsigned> Vernauxs;
+
+  static unsigned VernauxNum;
+
   std::vector<StringRef> DtNeeded;
   std::string SoName;
 
@@ -340,18 +348,6 @@ public:
   SharedFile(MemoryBufferRef M, StringRef DefaultSoName);
 
   template <typename ELFT> void parse();
-
-  struct NeededVer {
-    // The string table offset of the version name in the output file.
-    size_t StrTab;
-
-    // The version identifier for this version name.
-    uint16_t Index;
-  };
-
-  // Mapping from Elf_Verdef data structures to information about Elf_Vernaux
-  // data structures in the output file.
-  std::map<const void *, NeededVer> VerdefMap;
 
   // Used for --no-allow-shlib-undefined.
   bool AllNeededIsKnown;
