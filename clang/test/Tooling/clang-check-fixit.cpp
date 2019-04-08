@@ -1,10 +1,10 @@
 // RUN: rm -rf %t
 // RUN: mkdir %t
 //
-// RUN: sed -s 's,^//.*,//,' %s > %t/absolute-fixed.cpp
-// RUN: sed -s 's,^//.*,//,' %s > %t/absolute-json.cpp
-// RUN: sed -s 's,^//.*,//,' %s > %t/relative-fixed.cpp
-// RUN: sed -s 's,^//.*,//,' %s > %t/relative-json.cpp
+// RUN: sed 's,^//.*,//,' %s > %t/absolute-fixed.cpp
+// RUN: sed 's,^//.*,//,' %s > %t/absolute-json.cpp
+// RUN: sed 's,^//.*,//,' %s > %t/relative-fixed.cpp
+// RUN: sed 's,^//.*,//,' %s > %t/relative-json.cpp
 //
 // RUN: clang-check %t/absolute-fixed.cpp -fixit -- 2>&1 | FileCheck %s
 //
