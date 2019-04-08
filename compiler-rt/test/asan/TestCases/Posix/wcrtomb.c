@@ -1,3 +1,6 @@
+// Function not intercepted on android.
+// UNSUPPORTED: android
+
 // RUN: %clangxx_asan -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s
 
 #include <stdlib.h>
