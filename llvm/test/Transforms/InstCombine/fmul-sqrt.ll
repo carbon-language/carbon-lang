@@ -127,6 +127,36 @@ define double @sqrt_dividend_squared(double %x, double %y) {
   ret double %squared
 }
 
+define double @sqrt_divisor_squared_extra_use(double %x, double %y) {
+; CHECK-LABEL: @sqrt_divisor_squared_extra_use(
+; CHECK-NEXT:    [[SQRT:%.*]] = call double @llvm.sqrt.f64(double [[X:%.*]])
+; CHECK-NEXT:    [[DIV:%.*]] = fdiv double [[Y:%.*]], [[SQRT]]
+; CHECK-NEXT:    call void @use(double [[DIV]])
+; CHECK-NEXT:    [[SQUARED:%.*]] = fmul reassoc nnan nsz double [[DIV]], [[DIV]]
+; CHECK-NEXT:    ret double [[SQUARED]]
+;
+  %sqrt = call double @llvm.sqrt.f64(double %x)
+  %div = fdiv double %y, %sqrt
+  call void @use(double %div)
+  %squared = fmul reassoc nnan nsz double %div, %div
+  ret double %squared
+}
+
+define double @sqrt_dividend_squared_extra_use(double %x, double %y) {
+; CHECK-LABEL: @sqrt_dividend_squared_extra_use(
+; CHECK-NEXT:    [[SQRT:%.*]] = call double @llvm.sqrt.f64(double [[X:%.*]])
+; CHECK-NEXT:    call void @use(double [[SQRT]])
+; CHECK-NEXT:    [[DIV:%.*]] = fdiv fast double [[SQRT]], [[Y:%.*]]
+; CHECK-NEXT:    [[SQUARED:%.*]] = fmul fast double [[DIV]], [[DIV]]
+; CHECK-NEXT:    ret double [[SQUARED]]
+;
+  %sqrt = call double @llvm.sqrt.f64(double %x)
+  call void @use(double %sqrt)
+  %div = fdiv fast double %sqrt, %y
+  %squared = fmul fast double %div, %div
+  ret double %squared
+}
+
 ; Negative test - require 'nsz'.
 
 define double @sqrt_divisor_not_enough_FMF(double %x, double %y) {
