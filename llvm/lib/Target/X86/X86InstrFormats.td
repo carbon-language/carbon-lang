@@ -315,11 +315,8 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   bit hasEVEX_RC = 0;       // Explicitly specified rounding control in FP instruction.
   bit hasNoTrackPrefix = 0; // Does this inst has 0x3E (NoTrack) prefix?
 
-  bits<2> EVEX_LL;
-  let EVEX_LL{0} = hasVEX_L;
-  let EVEX_LL{1} = hasEVEX_L2;
   // Vector size in bytes.
-  bits<7> VectSize = !shl(16, EVEX_LL);
+  bits<7> VectSize = !if(hasEVEX_L2, 64, !if(hasVEX_L, 32, 16));
 
   // The scaling factor for AVX512's compressed displacement is either
   //   - the size of a  power-of-two number of elements or
