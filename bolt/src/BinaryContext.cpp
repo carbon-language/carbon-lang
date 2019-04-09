@@ -1079,17 +1079,35 @@ BinarySection &BinaryContext::absoluteSection() {
 }
 
 ErrorOr<uint64_t>
-BinaryContext::extractPointerAtAddress(uint64_t Address) const {
-  auto Section = getSectionForAddress(Address);
+BinaryContext::getUnsignedValueAtAddress(uint64_t Address,
+                                         size_t Size) const {
+  const auto Section = getSectionForAddress(Address);
   if (!Section)
     return std::make_error_code(std::errc::bad_address);
 
-  StringRef SectionContents = Section->getContents();
-  DataExtractor DE(SectionContents,
-                   AsmInfo->isLittleEndian(),
+  if (Section->isVirtual())
+    return 0;
+
+  DataExtractor DE(Section->getContents(), AsmInfo->isLittleEndian(),
                    AsmInfo->getCodePointerSize());
-  uint32_t SectionOffset = Address - Section->getAddress();
-  return DE.getAddress(&SectionOffset);
+  auto ValueOffset = static_cast<uint32_t>(Address - Section->getAddress());
+  return DE.getUnsigned(&ValueOffset, Size);
+}
+
+ErrorOr<uint64_t>
+BinaryContext::getSignedValueAtAddress(uint64_t Address,
+                                       size_t Size) const {
+  const auto Section = getSectionForAddress(Address);
+  if (!Section)
+    return std::make_error_code(std::errc::bad_address);
+
+  if (Section->isVirtual())
+    return 0;
+
+  DataExtractor DE(Section->getContents(), AsmInfo->isLittleEndian(),
+                   AsmInfo->getCodePointerSize());
+  auto ValueOffset = static_cast<uint32_t>(Address - Section->getAddress());
+  return DE.getSigned(&ValueOffset, Size);
 }
 
 void BinaryContext::addRelocation(uint64_t Address,

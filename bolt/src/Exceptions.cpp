@@ -266,7 +266,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
           return;
         }
         if (TTypeEncoding & DW_EH_PE_indirect) {
-          auto PointerOrErr = BC.extractPointerAtAddress(TypeAddress);
+          auto PointerOrErr = BC.getPointerAtAddress(TypeAddress);
           assert(PointerOrErr && "failed to decode indirect address");
           TypeAddress = *PointerOrErr;
         }
@@ -349,9 +349,8 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
       if ((TTypeEncoding & DW_EH_PE_pcrel) && (TypeAddress == TTEntryAddress)) {
         TypeAddress = 0;
       }
-      if (TypeAddress &&
-          (TTypeEncoding & DW_EH_PE_indirect)) {
-        auto PointerOrErr = BC.extractPointerAtAddress(TypeAddress);
+      if (TypeAddress && (TTypeEncoding & DW_EH_PE_indirect)) {
+        auto PointerOrErr = BC.getPointerAtAddress(TypeAddress);
         assert(PointerOrErr && "failed to decode indirect address");
         TypeAddress = *PointerOrErr;
       }

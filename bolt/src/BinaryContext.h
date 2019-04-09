@@ -731,10 +731,20 @@ public:
     return std::make_error_code(std::errc::bad_address);
   }
 
-  /// Given \p Address in the binary, extract and return a pointer value at that
-  /// address. The address has to be a valid statically allocated address for
-  /// the binary.
-  ErrorOr<uint64_t> extractPointerAtAddress(uint64_t Address) const;
+  /// Return an unsigned value of \p Size stored at \p Address. The address has
+  /// to be a valid statically allocated address for the binary.
+  ErrorOr<uint64_t> getUnsignedValueAtAddress(uint64_t Address,
+                                              size_t Size) const;
+
+  /// Return a signed value of \p Size stored at \p Address. The address has
+  /// to be a valid statically allocated address for the binary.
+  ErrorOr<uint64_t> getSignedValueAtAddress(uint64_t Address,
+                                            size_t Size) const;
+
+  /// Special case of getUnsignedValueAtAddress() that uses a pointer size.
+  ErrorOr<uint64_t> getPointerAtAddress(uint64_t Address) const {
+    return getUnsignedValueAtAddress(Address, AsmInfo->getCodePointerSize());
+  }
 
   /// Replaces all references to \p ChildBF with \p ParentBF. \p ChildBF is then
   /// removed from the list of functions \p BFs. The profile data of \p ChildBF

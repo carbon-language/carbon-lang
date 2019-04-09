@@ -1838,7 +1838,6 @@ int64_t getRelocationAddend(const ELFObjectFileBase *Obj,
 } // anonymous namespace
 
 bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
-                                        SectionRef RelocatedSection,
                                         std::string &SymbolName,
                                         bool &IsSectionRelocation,
                                         uint64_t &SymbolAddress,
@@ -1849,16 +1848,11 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
 
   const bool IsAArch64 = BC->isAArch64();
 
-  // Extract the value.
-  StringRef RelocatedSectionContents;
-  RelocatedSection.getContents(RelocatedSectionContents);
-  DataExtractor DE(RelocatedSectionContents,
-                   BC->AsmInfo->isLittleEndian(),
-                   BC->AsmInfo->getCodePointerSize());
-  uint32_t RelocationOffset = Rel.getOffset() - RelocatedSection.getAddress();
   const auto RelSize = Relocation::getSizeForType(Rel.getType());
-  ExtractedValue = static_cast<uint64_t>(DE.getSigned(&RelocationOffset,
-                                                      RelSize));
+
+  auto Value = BC->getUnsignedValueAtAddress(Rel.getOffset(), RelSize);
+  assert(Value && "failed to extract relocated value");
+  ExtractedValue = *Value;
   if (IsAArch64) {
     ExtractedValue = Relocation::extractValue(Rel.getType(),
                                               ExtractedValue,
@@ -1867,7 +1861,7 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
 
   Addend = getRelocationAddend(InputFile, Rel);
 
-  const bool IsPCRelative = Relocation::isPCRelative(Rel.getType());
+  const auto IsPCRelative = Relocation::isPCRelative(Rel.getType());
   const auto PCRelOffset = IsPCRelative && !IsAArch64 ? Rel.getOffset() : 0;
   bool SkipVerification = false;
   auto SymbolIter = Rel.getSymbol();
@@ -2026,7 +2020,6 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     uint64_t ExtractedValue;
     bool IsSectionRelocation;
     if (!analyzeRelocation(Rel,
-                           RelocatedSection,
                            SymbolName,
                            IsSectionRelocation,
                            SymbolAddress,

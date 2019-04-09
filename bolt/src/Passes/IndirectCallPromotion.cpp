@@ -647,7 +647,7 @@ IndirectCallPromotion::maybeGetVtableSyms(
                             << "+" << MethodOffset << "/" << MI.Count
                             << "\n");
 
-    if (auto MethodAddr = BC.extractPointerAtAddress(Address)) {
+    if (auto MethodAddr = BC.getPointerAtAddress(Address)) {
       auto *MethodBD = BC.getBinaryDataAtAddress(MethodAddr.get());
       if (!MethodBD)  // skip unknown methods
         continue;
