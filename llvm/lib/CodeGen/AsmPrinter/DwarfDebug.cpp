@@ -1134,7 +1134,7 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
       continue;
     }
 
-    // If this fragment overlaps with any open ranges, truncate them.
+    // If this debug value overlaps with any open ranges, truncate them.
     const DIExpression *DIExpr = Begin->getDebugExpression();
     auto Last = remove_if(OpenRanges, [&](DebugLocEntry::Value R) {
       return DIExpr->fragmentsOverlap(R.getExpression());
@@ -1156,30 +1156,15 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
     LLVM_DEBUG(dbgs() << "DotDebugLoc: " << *Begin << "\n");
 
     auto Value = getDebugLocValue(Begin);
+    OpenRanges.push_back(Value);
 
     // Omit entries with empty ranges as they do not have any effect in DWARF.
     if (StartLabel == EndLabel) {
-      // If this is a fragment, we must still add the value to the list of
-      // open ranges, since it may describe non-overlapping parts of the
-      // variable.
-      if (DIExpr->isFragment())
-        OpenRanges.push_back(Value);
       LLVM_DEBUG(dbgs() << "Omitting location list entry with empty range.\n");
       continue;
     }
 
-    DebugLocEntry Loc(StartLabel, EndLabel, Value);
-
-    if (DIExpr->isFragment()) {
-      // Add this value to the list of open ranges.
-      OpenRanges.push_back(Value);
-    }
-
-    // Add all values from still valid non-overlapping fragments.
-    if (OpenRanges.size())
-      Loc.addValues(OpenRanges);
-
-    DebugLoc.push_back(std::move(Loc));
+    DebugLoc.emplace_back(StartLabel, EndLabel, OpenRanges);
 
     // Attempt to coalesce the ranges of two otherwise identical
     // DebugLocEntries.
@@ -1962,6 +1947,8 @@ void DebugLocEntry::finalize(const AsmPrinter &AP,
                              DebugLocStream::ListBuilder &List,
                              const DIBasicType *BT,
                              DwarfCompileUnit &TheCU) {
+  assert(!Values.empty() &&
+         "location list entries without values are redundant");
   assert(Begin != End && "unexpected location list entry with empty range");
   DebugLocStream::EntryBuilder Entry(List, Begin, End);
   BufferByteStreamer Streamer = Entry.getStreamer();
