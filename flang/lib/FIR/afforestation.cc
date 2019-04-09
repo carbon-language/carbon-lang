@@ -879,11 +879,11 @@ void FortranIRLowering::handleActionStatement(
               std::visit(
                   common::visitors{
                       [&](const parser::Name &n) {
-                        auto *s{builder_->CreateAddr(ToExpression(n))};
+                        auto s{builder_->CreateAddr(ToExpression(n))};
                         builder_->CreateNullify(s);
                       },
                       [&](const parser::StructureComponent &sc) {
-                        auto *s{builder_->CreateAddr(ToExpression(sc))};
+                        auto s{builder_->CreateAddr(ToExpression(sc))};
                         builder_->CreateNullify(s);
                       },
                   },
@@ -896,7 +896,7 @@ void FortranIRLowering::handleActionStatement(
           },
           [&](const common::Indirection<parser::PointerAssignmentStmt> &s) {
             auto *value{CreatePointerValue(s.value())};
-            auto *addr{builder_->CreateAddr(
+            auto addr{builder_->CreateAddr(
                 ExprRef(std::get<parser::Expr>(s.value().t)))};
             builder_->CreateStore(addr, value);
           },
@@ -957,7 +957,7 @@ void FortranIRLowering::handleActionStatement(
             WRONG_PATH();
           },
           [&](const common::Indirection<parser::AssignStmt> &s) {
-            auto *addr{builder_->CreateAddr(
+            auto addr{builder_->CreateAddr(
                 ToExpression(std::get<parser::Name>(s.value().t)))};
             auto *block{blockMap_
                             .find(flat::FetchLabel(
@@ -1096,7 +1096,7 @@ void FortranIRLowering::InitiateConstruct(const parser::AssociateStmt *stmt) {
             [](const parser::Expr &e) { return *ExprRef(e); },
         },
         selector.u))};
-    auto *name{
+    auto name{
         builder_->CreateAddr(ToExpression(std::get<parser::Name>(assoc.t)))};
     builder_->CreateStore(name, expr);
   }
@@ -1133,7 +1133,7 @@ void FortranIRLowering::InitiateConstruct(const parser::NonLabelDoStmt *stmt) {
     std::visit(
         common::visitors{
             [&](const parser::LoopBounds<parser::ScalarIntExpr> &bounds) {
-              auto *name{
+              auto name{
                   builder_->CreateAddr(ToExpression(bounds.name.thing.thing))};
               // evaluate e1, e2 [, e3] ...
               auto *e1{builder_->CreateExpr(ExprRef(bounds.lower.thing.thing))};
@@ -1146,7 +1146,7 @@ void FortranIRLowering::InitiateConstruct(const parser::NonLabelDoStmt *stmt) {
               }
               // name <- e1
               builder_->CreateStore(name, e1);
-              auto *tripCounter{CreateTemp(GetDefaultIntegerType())};
+              auto tripCounter{CreateTemp(GetDefaultIntegerType())};
               // See 11.1.7.4.1, para. 1, item (3)
               // totalTrips ::= iteration count = a
               //   where a = (e2 - e1 + e3) / e3 if a > 0 and 0 otherwise
