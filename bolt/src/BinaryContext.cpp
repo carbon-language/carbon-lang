@@ -522,7 +522,7 @@ void BinaryContext::fixBinaryDataHoles() {
 
     while (Itr != End) {
       if (Itr->second->getAddress() > EndAddress) {
-      auto Gap = Itr->second->getAddress() - EndAddress;
+        auto Gap = Itr->second->getAddress() - EndAddress;
         Holes.push_back(std::make_pair(EndAddress, Gap));
       }
       EndAddress = Itr->second->getEndAddress();
