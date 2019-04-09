@@ -35,8 +35,8 @@ int f_scalar_stack_1(int32_t a, int64_t b, int32_t c, double d, long double e,
 // the presence of large return values that consume a register due to the need
 // to pass a pointer.
 
-// CHECK-LABEL: define void @f_scalar_stack_2(%struct.large* noalias sret %agg.result, int32_t %a, i64 %b, i64 %c, fp128 %d, i8 zeroext %e, i8 %f, i8 %g)
-struct large f_scalar_stack_2(int32_t a, int64_t b, double c, long double d,
+// CHECK-LABEL: define void @f_scalar_stack_2(%struct.large* noalias sret %agg.result, i32 %a, i64 %b, i64 %c, fp128 %d, i8 zeroext %e, i8 %f, i8 %g)
+struct large f_scalar_stack_2(int32_t a, int64_t b, int64_t c, long double d,
                               uint8_t e, int8_t f, uint8_t g) {
   return (struct large){a, e, f, g};
 }
@@ -44,7 +44,7 @@ struct large f_scalar_stack_2(int32_t a, int64_t b, double c, long double d,
 // Aggregates and >=XLen scalars passed on the stack should be lowered just as
 // they would be if passed via registers.
 
-// CHECK-LABEL: define void @f_scalar_stack_3(double %a, i64 %b, double %c, i64 %d, i32 %e, i64 %f, int32_t %g, double %h, fp128 %i)
+// CHECK-LABEL: define void @f_scalar_stack_3(double %a, i64 %b, double %c, i64 %d, i32 %e, i64 %f, i32 %g, double %h, fp128 %i)
 void f_scalar_stack_3(double a, int64_t b, double c, int64_t d, int e,
                       int64_t f, int32_t g, double h, long double i) {}
 
