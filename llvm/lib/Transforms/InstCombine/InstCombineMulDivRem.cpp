@@ -1043,6 +1043,12 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
       Value *NarrowOp = Builder.CreateSDiv(Op0Src, NarrowDivisor);
       return new SExtInst(NarrowOp, Op0->getType());
     }
+  
+  // -X / Y --> -(X / Y)
+  Value *Y;
+  if (match(&I, m_SDiv(m_OneUse(m_NSWSub(m_Zero(), m_Value(X))), m_Value(Y))))
+    return BinaryOperator::CreateNSWNeg(
+        Builder.CreateSDiv(X, Y, I.getName(), I.isExact()));
 
     // -X / C --> X / -C (if the negation doesn't overflow).
     // TODO: This could be enhanced to handle arbitrary vector constants by
