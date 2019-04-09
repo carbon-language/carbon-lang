@@ -1644,8 +1644,7 @@ inline std::optional<Expr> MultOperand::Parse(ParseState &state) {
       std::function<Expr(Expr &&)> power{[&result](Expr &&right) {
         return Expr{Expr::Power(std::move(result).value(), std::move(right))};
       }};
-      return sourced(applyLambda(power, multOperand))
-          .Parse(state);  // right-recursive
+      return applyLambda(power, multOperand).Parse(state);  // right-recursive
     }
   }
   return result;
@@ -1660,6 +1659,7 @@ constexpr struct AddOperand {
   static inline std::optional<Expr> Parse(ParseState &state) {
     std::optional<Expr> result{multOperand.Parse(state)};
     if (result) {
+      auto source{result->source};
       std::function<Expr(Expr &&)> multiply{[&result](Expr &&right) {
         return Expr{
             Expr::Multiply(std::move(result).value(), std::move(right))};
@@ -1671,6 +1671,7 @@ constexpr struct AddOperand {
           "/" >> applyLambda(divide, multOperand)))};
       while (std::optional<Expr> next{more.Parse(state)}) {
         result = std::move(next);
+        result->source.ExtendToCover(source);
       }
     }
     return result;
@@ -1695,6 +1696,7 @@ constexpr struct Level2Expr {
         addOperand};
     std::optional<Expr> result{unary.Parse(state)};
     if (result) {
+      auto source{result->source};
       std::function<Expr(Expr &&)> add{[&result](Expr &&right) {
         return Expr{Expr::Add(std::move(result).value(), std::move(right))};
       }};
@@ -1706,6 +1708,7 @@ constexpr struct Level2Expr {
           "-" >> applyLambda(subtract, addOperand)))};
       while (std::optional<Expr> next{more.Parse(state)}) {
         result = std::move(next);
+        result->source.ExtendToCover(source);
       }
     }
     return result;
@@ -1722,12 +1725,14 @@ constexpr struct Level3Expr {
   static inline std::optional<Expr> Parse(ParseState &state) {
     std::optional<Expr> result{level2Expr.Parse(state)};
     if (result) {
+      auto source{result->source};
       std::function<Expr(Expr &&)> concat{[&result](Expr &&right) {
         return Expr{Expr::Concat(std::move(result).value(), std::move(right))};
       }};
       auto more{attempt(sourced("//" >> applyLambda(concat, level2Expr)))};
       while (std::optional<Expr> next{more.Parse(state)}) {
         result = std::move(next);
+        result->source.ExtendToCover(source);
       }
     }
     return result;
@@ -1745,6 +1750,7 @@ constexpr struct Level4Expr {
   static inline std::optional<Expr> Parse(ParseState &state) {
     std::optional<Expr> result{level3Expr.Parse(state)};
     if (result) {
+      auto source{result->source};
       std::function<Expr(Expr &&)> lt{[&result](Expr &&right) {
         return Expr{Expr::LT(std::move(result).value(), std::move(right))};
       }};
@@ -1774,6 +1780,7 @@ constexpr struct Level4Expr {
               (".GE."_tok || ">="_tok) >> applyLambda(ge, level3Expr) ||
               (".GT."_tok || ">"_tok) >> applyLambda(gt, level3Expr)))};
       if (std::optional<Expr> next{more.Parse(state)}) {
+        next->source.ExtendToCover(source);
         return next;
       }
     }
@@ -1815,6 +1822,7 @@ constexpr struct OrOperand {
   static inline std::optional<Expr> Parse(ParseState &state) {
     std::optional<Expr> result{andOperand.Parse(state)};
     if (result) {
+      auto source{result->source};
       std::function<Expr(Expr &&)> logicalAnd{[&result](Expr &&right) {
         return Expr{Expr::AND(std::move(result).value(), std::move(right))};
       }};
@@ -1822,6 +1830,7 @@ constexpr struct OrOperand {
           attempt(sourced(".AND." >> applyLambda(logicalAnd, andOperand)))};
       while (std::optional<Expr> next{more.Parse(state)}) {
         result = std::move(next);
+        result->source.ExtendToCover(source);
       }
     }
     return result;
@@ -1837,12 +1846,14 @@ constexpr struct EquivOperand {
   static inline std::optional<Expr> Parse(ParseState &state) {
     std::optional<Expr> result{orOperand.Parse(state)};
     if (result) {
+      auto source{result->source};
       std::function<Expr(Expr &&)> logicalOr{[&result](Expr &&right) {
         return Expr{Expr::OR(std::move(result).value(), std::move(right))};
       }};
       auto more{attempt(sourced(".OR." >> applyLambda(logicalOr, orOperand)))};
       while (std::optional<Expr> next{more.Parse(state)}) {
         result = std::move(next);
+        result->source.ExtendToCover(source);
       }
     }
     return result;
@@ -1859,6 +1870,7 @@ constexpr struct Level5Expr {
   static inline std::optional<Expr> Parse(ParseState &state) {
     std::optional<Expr> result{equivOperand.Parse(state)};
     if (result) {
+      auto source{result->source};
       std::function<Expr(Expr &&)> eqv{[&result](Expr &&right) {
         return Expr{Expr::EQV(std::move(result).value(), std::move(right))};
       }};
@@ -1874,6 +1886,7 @@ constexpr struct Level5Expr {
               ".XOR." >> applyLambda(logicalXor, equivOperand))))};
       while (std::optional<Expr> next{more.Parse(state)}) {
         result = std::move(next);
+        result->source.ExtendToCover(source);
       }
     }
     return result;
@@ -1885,6 +1898,7 @@ constexpr struct Level5Expr {
 template<> inline std::optional<Expr> Parser<Expr>::Parse(ParseState &state) {
   std::optional<Expr> result{level5Expr.Parse(state)};
   if (result) {
+    auto source{result->source};
     std::function<Expr(DefinedOpName &&, Expr &&)> defBinOp{
         [&result](DefinedOpName &&op, Expr &&right) {
           return Expr{Expr::DefinedBinary(
@@ -1894,6 +1908,7 @@ template<> inline std::optional<Expr> Parser<Expr>::Parse(ParseState &state) {
         attempt(sourced(applyLambda(defBinOp, definedOpName, level5Expr)))};
     while (std::optional<Expr> next{more.Parse(state)}) {
       result = std::move(next);
+      result->source.ExtendToCover(source);
     }
   }
   return result;
