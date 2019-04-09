@@ -929,3 +929,33 @@ define i8 @test_exact_div_minSigned(i8 %x) {
   %neg = sub nsw i8 0, %div
   ret i8 %neg
 }
+
+; X / INT_MIN --> X == INT_MIN
+
+define i8 @sdiv_by_int_min(i8 %x) {
+; CHECK-LABEL: @sdiv_by_int_min(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq i8 [[X:%.*]], -128
+; CHECK-NEXT:    [[D:%.*]] = zext i1 [[TMP1]] to i8
+; CHECK-NEXT:    ret i8 [[D]]
+;
+  %d = sdiv i8 %x, -128
+  ret i8 %d
+}
+
+define <2 x i8> @sdiv_by_int_min_vec_splat(<2 x i8> %x) {
+; CHECK-LABEL: @sdiv_by_int_min_vec_splat(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq <2 x i8> [[X:%.*]], <i8 -128, i8 -128>
+; CHECK-NEXT:    [[D:%.*]] = zext <2 x i1> [[TMP1]] to <2 x i8>
+; CHECK-NEXT:    ret <2 x i8> [[D]]
+;
+  %d = sdiv <2 x i8> %x, <i8 -128, i8 -128>
+  ret <2 x i8> %d
+}
+
+define <2 x i8> @sdiv_by_int_min_vec_splat_undef(<2 x i8> %x) {
+; CHECK-LABEL: @sdiv_by_int_min_vec_splat_undef(
+; CHECK-NEXT:    ret <2 x i8> undef
+;
+  %d = sdiv <2 x i8> %x, <i8 -128, i8 undef>
+  ret <2 x i8> %d
+}
