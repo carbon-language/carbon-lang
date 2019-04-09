@@ -4192,12 +4192,10 @@ OverflowResult llvm::computeOverflowForSignedSub(const Value *LHS,
       ComputeNumSignBits(RHS, DL, 0, AC, CxtI, DT) > 1)
     return OverflowResult::NeverOverflows;
 
-  KnownBits LHSKnown = computeKnownBits(LHS, DL, 0, AC, CxtI, DT);
-  KnownBits RHSKnown = computeKnownBits(RHS, DL, 0, AC, CxtI, DT);
-  ConstantRange LHSRange =
-      ConstantRange::fromKnownBits(LHSKnown, /*signed*/ true);
-  ConstantRange RHSRange =
-      ConstantRange::fromKnownBits(RHSKnown, /*signed*/ true);
+  ConstantRange LHSRange = computeConstantRangeIncludingKnownBits(
+      LHS, /*ForSigned=*/true, DL, /*Depth=*/0, AC, CxtI, DT);
+  ConstantRange RHSRange = computeConstantRangeIncludingKnownBits(
+      RHS, /*ForSigned=*/true, DL, /*Depth=*/0, AC, CxtI, DT);
   return mapOverflowResult(LHSRange.signedSubMayOverflow(RHSRange));
 }
 
