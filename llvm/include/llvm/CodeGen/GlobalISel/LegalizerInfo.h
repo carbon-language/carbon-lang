@@ -494,6 +494,12 @@ public:
                                      Types2);
   }
 
+  LegalizeRuleSet &alwaysLegal() {
+    using namespace LegalizeMutations;
+    markAllTypeIdxsAsCovered();
+    return actionIf(LegalizeAction::Legal, always);
+  }
+
   /// The instruction is lowered.
   LegalizeRuleSet &lower() {
     using namespace LegalizeMutations;

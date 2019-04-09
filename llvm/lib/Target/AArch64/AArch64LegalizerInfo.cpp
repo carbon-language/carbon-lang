@@ -105,10 +105,10 @@ AArch64LegalizerInfo::AArch64LegalizerInfo(const AArch64Subtarget &ST) {
       .widenScalarToNextPow2(0);
 
   getActionDefinitionsBuilder({G_LSHR, G_ASHR})
-    .legalFor({{s32, s32}, {s64, s64}})
-    .clampScalar(1, s32, s64)
-    .clampScalar(0, s32, s64)
-    .minScalarSameAs(1, 0);
+      .legalFor({{s32, s32}, {s64, s64}, {v2s32, v2s32}, {v4s32, v4s32}})
+      .clampScalar(1, s32, s64)
+      .clampScalar(0, s32, s64)
+      .minScalarSameAs(1, 0);
 
   getActionDefinitionsBuilder({G_SREM, G_UREM})
       .lowerFor({s1, s8, s16, s32, s64});
@@ -272,6 +272,8 @@ AArch64LegalizerInfo::AArch64LegalizerInfo(const AArch64Subtarget &ST) {
   // Extensions
   getActionDefinitionsBuilder({G_ZEXT, G_SEXT, G_ANYEXT})
       .legalForCartesianProduct({s8, s16, s32, s64}, {s1, s8, s16, s32});
+
+  getActionDefinitionsBuilder(G_TRUNC).alwaysLegal();
 
   // FP conversions
   getActionDefinitionsBuilder(G_FPTRUNC).legalFor(
