@@ -4154,11 +4154,11 @@ static OverflowResult computeOverflowForSignedAdd(const Value *LHS,
   // The only other way to improve on the known bits is from an assumption, so
   // call computeKnownBitsFromAssume() directly.
   bool LHSOrRHSKnownNonNegative =
-      (LHSKnown.isNonNegative() || RHSKnown.isNonNegative());
+      (LHSRange.isAllNonNegative() || RHSRange.isAllNonNegative());
   bool LHSOrRHSKnownNegative =
-      (LHSKnown.isNegative() || RHSKnown.isNegative());
+      (LHSRange.isAllNegative() || RHSRange.isAllNegative());
   if (LHSOrRHSKnownNonNegative || LHSOrRHSKnownNegative) {
-    KnownBits AddKnown(LHSKnown.getBitWidth());
+    KnownBits AddKnown(LHSRange.getBitWidth());
     computeKnownBitsFromAssume(
         Add, AddKnown, /*Depth=*/0, Query(DL, AC, CxtI, DT, true));
     if ((AddKnown.isNonNegative() && LHSOrRHSKnownNonNegative) ||
