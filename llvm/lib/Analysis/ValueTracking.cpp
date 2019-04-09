@@ -4084,8 +4084,11 @@ static ConstantRange computeConstantRangeIncludingKnownBits(
     OptimizationRemarkEmitter *ORE = nullptr, bool UseInstrInfo = true) {
   KnownBits Known = computeKnownBits(
       V, DL, Depth, AC, CxtI, DT, ORE, UseInstrInfo);
-  ConstantRange CR = computeConstantRange(V, UseInstrInfo);
-  return ConstantRange::fromKnownBits(Known, ForSigned).intersectWith(CR);
+  ConstantRange CR1 = ConstantRange::fromKnownBits(Known, ForSigned);
+  ConstantRange CR2 = computeConstantRange(V, UseInstrInfo);
+  // TODO: Use ForSigned to determine preferred range.
+  ConstantRange::PreferredRangeType RangeType = ConstantRange::Smallest;
+  return CR1.intersectWith(CR2, RangeType);
 }
 
 OverflowResult llvm::computeOverflowForUnsignedAdd(
