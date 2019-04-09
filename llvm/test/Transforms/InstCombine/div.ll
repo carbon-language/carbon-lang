@@ -274,16 +274,6 @@ define <2 x i64> @test16(<2 x i64> %x) {
   ret <2 x i64> %div
 }
 
-define <2 x i64> @test17(<2 x i64> %x) {
-; CHECK-LABEL: @test17(
-; CHECK-NEXT:    [[DIV:%.*]] = sdiv <2 x i64> [[X:%.*]], <i64 -3, i64 -4>
-; CHECK-NEXT:    ret <2 x i64> [[DIV]]
-;
-  %neg = sub nsw <2 x i64> zeroinitializer, %x
-  %div = sdiv <2 x i64> %neg, <i64 3, i64 4>
-  ret <2 x i64> %div
-}
-
 define i32 @test19(i32 %x) {
 ; CHECK-LABEL: @test19(
 ; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq i32 [[X:%.*]], 1
@@ -457,14 +447,109 @@ define <2 x i64> @test33(<2 x i64> %x) {
   ret <2 x i64> %div
 }
 
-define <2 x i64> @test34(<2 x i64> %x) {
-; CHECK-LABEL: @test34(
+; -X / C --> X / -C (if negation does not overflow)
+
+define i8 @sdiv_negated_dividend_constant_divisor(i8 %x) {
+; CHECK-LABEL: @sdiv_negated_dividend_constant_divisor(
+; CHECK-NEXT:    [[D:%.*]] = sdiv i8 [[X:%.*]], 42
+; CHECK-NEXT:    ret i8 [[D]]
+;
+  %neg = sub nsw i8 0, %x
+  %d = sdiv i8 %neg, -42
+  ret i8 %d
+}
+
+define <2 x i8> @sdiv_negated_dividend_constant_divisor_vec_splat(<2 x i8> %x) {
+; CHECK-LABEL: @sdiv_negated_dividend_constant_divisor_vec_splat(
+; CHECK-NEXT:    [[D:%.*]] = sdiv <2 x i8> [[X:%.*]], <i8 42, i8 42>
+; CHECK-NEXT:    ret <2 x i8> [[D]]
+;
+  %neg = sub nsw <2 x i8> zeroinitializer, %x
+  %d = sdiv <2 x i8> %neg, <i8 -42, i8 -42>
+  ret <2 x i8> %d
+}
+
+define i8 @sdiv_exact_negated_dividend_constant_divisor(i8 %x) {
+; CHECK-LABEL: @sdiv_exact_negated_dividend_constant_divisor(
+; CHECK-NEXT:    [[D:%.*]] = sdiv exact i8 [[X:%.*]], 42
+; CHECK-NEXT:    ret i8 [[D]]
+;
+  %neg = sub nsw i8 0, %x
+  %d = sdiv exact i8 %neg, -42
+  ret i8 %d
+}
+
+define <2 x i8> @sdiv_exact_negated_dividend_constant_divisor_vec_splat(<2 x i8> %x) {
+; CHECK-LABEL: @sdiv_exact_negated_dividend_constant_divisor_vec_splat(
+; CHECK-NEXT:    [[D:%.*]] = sdiv exact <2 x i8> [[X:%.*]], <i8 42, i8 42>
+; CHECK-NEXT:    ret <2 x i8> [[D]]
+;
+  %neg = sub nsw <2 x i8> zeroinitializer, %x
+  %d = sdiv exact <2 x i8> %neg, <i8 -42, i8 -42>
+  ret <2 x i8> %d
+}
+
+define i8 @sdiv_negated_dividend_constant_divisor_smin(i8 %x) {
+; CHECK-LABEL: @sdiv_negated_dividend_constant_divisor_smin(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq i8 [[X:%.*]], -128
+; CHECK-NEXT:    [[D:%.*]] = zext i1 [[TMP1]] to i8
+; CHECK-NEXT:    ret i8 [[D]]
+;
+  %neg = sub nsw i8 0, %x
+  %d = sdiv i8 %neg, -128
+  ret i8 %d
+}
+
+define <2 x i8> @sdiv_negated_dividend_constant_divisor_vec_splat_smin(<2 x i8> %x) {
+; CHECK-LABEL: @sdiv_negated_dividend_constant_divisor_vec_splat_smin(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq <2 x i8> [[X:%.*]], <i8 -128, i8 -128>
+; CHECK-NEXT:    [[D:%.*]] = zext <2 x i1> [[TMP1]] to <2 x i8>
+; CHECK-NEXT:    ret <2 x i8> [[D]]
+;
+  %neg = sub nsw <2 x i8> zeroinitializer, %x
+  %d = sdiv <2 x i8> %neg, <i8 -128, i8 -128>
+  ret <2 x i8> %d
+}
+
+define <2 x i8> @sdiv_negated_dividend_constant_divisor_vec_undef(<2 x i8> %x) {
+; CHECK-LABEL: @sdiv_negated_dividend_constant_divisor_vec_undef(
+; CHECK-NEXT:    ret <2 x i8> undef
+;
+  %neg = sub nsw <2 x i8> zeroinitializer, %x
+  %d = sdiv <2 x i8> %neg, <i8 -128, i8 undef>
+  ret <2 x i8> %d
+}
+
+define <2 x i64> @sdiv_negated_dividend_constant_divisor_vec(<2 x i64> %x) {
+; CHECK-LABEL: @sdiv_negated_dividend_constant_divisor_vec(
+; CHECK-NEXT:    [[DIV:%.*]] = sdiv <2 x i64> [[X:%.*]], <i64 -3, i64 -4>
+; CHECK-NEXT:    ret <2 x i64> [[DIV]]
+;
+  %neg = sub nsw <2 x i64> zeroinitializer, %x
+  %div = sdiv <2 x i64> %neg, <i64 3, i64 4>
+  ret <2 x i64> %div
+}
+
+define <2 x i64> @sdiv_exact_negated_dividend_constant_divisor_vec(<2 x i64> %x) {
+; CHECK-LABEL: @sdiv_exact_negated_dividend_constant_divisor_vec(
 ; CHECK-NEXT:    [[DIV:%.*]] = sdiv exact <2 x i64> [[X:%.*]], <i64 -3, i64 -4>
 ; CHECK-NEXT:    ret <2 x i64> [[DIV]]
 ;
   %neg = sub nsw <2 x i64> zeroinitializer, %x
   %div = sdiv exact <2 x i64> %neg, <i64 3, i64 4>
   ret <2 x i64> %div
+}
+
+; FIXME: Can't negate signed min vector element.
+
+define <2 x i8> @sdiv_exact_negated_dividend_constant_divisor_vec_overflow(<2 x i8> %x) {
+; CHECK-LABEL: @sdiv_exact_negated_dividend_constant_divisor_vec_overflow(
+; CHECK-NEXT:    [[DIV:%.*]] = sdiv exact <2 x i8> [[X:%.*]], <i8 -128, i8 -42>
+; CHECK-NEXT:    ret <2 x i8> [[DIV]]
+;
+  %neg = sub nsw <2 x i8> zeroinitializer, %x
+  %div = sdiv exact <2 x i8> %neg, <i8 -128, i8 42>
+  ret <2 x i8> %div
 }
 
 define i32 @test35(i32 %A) {
