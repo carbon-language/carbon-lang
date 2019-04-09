@@ -552,7 +552,8 @@ class Statement : public SumTypeMixin<ReturnStmt,  //
                   public llvm::ilist_node<Statement> {
 public:
   template<typename A>
-  Statement(BasicBlock *p, A &&t) : SumTypeMixin{t}, ChildMixin{p} {
+  Statement(BasicBlock *p, A &&t)
+    : SumTypeMixin{std::forward<A>(t)}, ChildMixin{p} {
     parent->insertBefore(this);
   }
   std::string dump() const;
