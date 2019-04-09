@@ -69,7 +69,8 @@ template<typename... Ts> struct SumTypeCopyMixin {
 template<typename... Ts> struct ProductTypeMixin {
   using ProductTypeTrait = std::true_type;
   ProductTypeMixin(const Ts &... x) : t{x...} {}
-  ProductTypeMixin(Ts &&... x) : t{std::forward<Ts>(x)...} {}
+  template<typename... As>
+  ProductTypeMixin(As &&... x) : t{std::forward<As>(x)...} {}
   ProductTypeMixin(ProductTypeMixin &&) = default;
   ProductTypeMixin &operator=(ProductTypeMixin &&) = default;
   ProductTypeMixin(const ProductTypeMixin &) = delete;
