@@ -123,7 +123,7 @@ public:
                         RecE->getValueAsBitsInit("EVEX_LL")) ||
         // Match is allowed if either is VEX_WIG, or they match, or EVEX
         // is VEX_W1X and VEX is VEX_W0.
-        (!(VEX_WIG || EVEX_WIG || EVEX_W == VEX_W ||
+        (!(VEX_WIG || (!EVEX_WIG && EVEX_W == VEX_W) ||
            (EVEX_W1_VEX_W0 && EVEX_W && !VEX_W))) ||
         // Instruction's format
         RecV->getValueAsDef("Form") != RecE->getValueAsDef("Form") ||
