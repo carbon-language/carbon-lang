@@ -556,21 +556,29 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
 
     if (!BB->succ_empty()) {
       OS << "  Successors: ";
-      auto BI = BB->branch_info_begin();
+      // For more than 2 successors, sort them based on frequency.
+      std::vector<uint64_t> Indices(BB->succ_size());
+      std::iota(Indices.begin(), Indices.end(), 0);
+      if (BB->succ_size() > 2 && BB->getKnownExecutionCount()) {
+        std::stable_sort(Indices.begin(), Indices.end(),
+                         [&](const uint64_t A, const uint64_t B) {
+                           return BB->BranchInfo[B] < BB->BranchInfo[A];
+                         });
+      }
       auto Sep = "";
-      for (auto Succ : BB->successors()) {
-        assert(BI != BB->branch_info_end() && "missing BranchInfo entry");
+      for (unsigned I = 0; I < Indices.size(); ++I) {
+        auto *Succ = BB->Successors[Indices[I]];
+        auto &BI = BB->BranchInfo[Indices[I]];
         OS << Sep << Succ->getName();
         if (ExecutionCount != COUNT_NO_PROFILE &&
-            BI->MispredictedCount != BinaryBasicBlock::COUNT_INFERRED) {
-          OS << " (mispreds: " << BI->MispredictedCount
-             << ", count: " << BI->Count << ")";
+            BI.MispredictedCount != BinaryBasicBlock::COUNT_INFERRED) {
+          OS << " (mispreds: " << BI.MispredictedCount
+             << ", count: " << BI.Count << ")";
         } else if (ExecutionCount != COUNT_NO_PROFILE &&
-                   BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE) {
-          OS << " (inferred count: " << BI->Count << ")";
+                   BI.Count != BinaryBasicBlock::COUNT_NO_PROFILE) {
+          OS << " (inferred count: " << BI.Count << ")";
         }
         Sep = ", ";
-        ++BI;
       }
       OS << '\n';
     }

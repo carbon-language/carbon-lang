@@ -49,6 +49,12 @@ public:
   struct BinaryBranchInfo {
     uint64_t Count;
     uint64_t MispredictedCount; /// number of branches mispredicted
+
+    bool operator<(const BinaryBranchInfo &Other) const {
+      return (Count < Other.Count) ||
+             (Count == Other.Count &&
+              MispredictedCount < Other.MispredictedCount);
+    }
   };
 
   static constexpr uint32_t INVALID_OFFSET =
