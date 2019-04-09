@@ -452,7 +452,7 @@ elseif( LLVM_COMPILER_IS_GCC_COMPATIBLE )
    if (CYGWIN OR MINGW)
       # MinGW and Cygwin are a bit stricter and lack things like
       # 'strdup', 'stricmp', etc in c++11 mode.
-      string(REPLACE "c++" "gnu++" "${LLVM_CXX_STD}" gnu_LLVM_CXX_STD)
+      string(REPLACE "c++" "gnu++" gnu_LLVM_CXX_STD "${LLVM_CXX_STD}")
       append("-std=${gnu_LLVM_CXX_STD}" CMAKE_CXX_FLAGS)
     else()
       append("-std=${LLVM_CXX_STD}" CMAKE_CXX_FLAGS)
