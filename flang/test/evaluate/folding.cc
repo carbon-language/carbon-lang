@@ -17,6 +17,7 @@
 #include "../../lib/evaluate/expression.h"
 #include "../../lib/evaluate/fold.h"
 #include "../../lib/evaluate/host.h"
+#include "../../lib/evaluate/intrinsics-library-templates.h"
 #include "../../lib/evaluate/tools.h"
 #include <tuple>
 
@@ -62,34 +63,52 @@ static FunctionRef<T> CreateIntrinsicElementalCall(
 // Subnormal value flushing on host is handle in host.cc
 // HostFloatingPointEnvironment::SetUpHostFloatingPointEnvironment
 
+// Dummy host runtime functions where subnormal flushing matters
+float SubnormalFlusher1(float f) {  // given f is subnormal
+  return 2.3 * f;  // returns 0 if subnormal arguments are flushed to zero
+}
+
+float SubnormalFlusher2(float f) {  // given f/2 is subnormal
+  return f / 2.3;  // returns 0 if subnormal
+}
+
 void TestSubnormalFlushing() {
   using R4 = Type<TypeCategory::Real, 4>;
-  if constexpr (host::HostTypeExists<R4>()) {
+  if constexpr (std::is_same_v<host::HostType<R4>, float>) {
     Fortran::parser::CharBlock src;
     Fortran::parser::ContextualMessages messages{src, nullptr};
     FoldingContext flushingContext{messages, defaultRounding, true};
     FoldingContext noFlushingContext{messages, defaultRounding, false};
 
-    // Biggest IEEE 32bits subnormal value
-    host::HostType<R4> subnormal{5.87747175411144e-39};
-    Scalar<R4> x{host::CastHostToFortran<R4>(subnormal)};
-    Expr<R4> arg{Constant<R4>{x}};
-    FunctionRef<R4> func{CreateIntrinsicElementalCall("log", arg)};
+    HostIntrinsicProceduresLibrary lib;
+    lib.AddProcedure(HostRuntimeIntrinsicProcedure{
+        "flusher_test1", SubnormalFlusher1, true});
+    lib.AddProcedure(HostRuntimeIntrinsicProcedure{
+        "flusher_test2", SubnormalFlusher2, true});
 
-    auto resFlushing{Fold(flushingContext, AsGenericExpr(func))};
-    auto resNoFlushing{Fold(noFlushingContext, AsGenericExpr(func))};
-    TEST("(-1._4/0.)" == AsFortran(resFlushing));
-    TEST("(-1._4/0.)" != AsFortran(resNoFlushing));
-
-    // Check that the NoFlushing gave a correct result
-    if (auto *typedExpr{UnwrapExpr<Expr<R4>>(resNoFlushing)}) {
-      if (auto y{GetScalarConstantValue(*typedExpr)}) {
-        // log around zero is not very precise allow 2% error.
-        host::HostType<R4> yhost{host::CastFortranToHost<R4>(*y)};
-        TEST(std::abs(yhost - (-88.)) < 2);
-      } else {
-        TEST(false);
-      }
+    // Test subnormal argument flushing
+    if (auto callable{
+            lib.GetHostProcedureWrapper<Scalar, R4, R4>("flusher_test1")}) {
+      // Biggest IEEE 32bits subnormal power of two
+      host::HostType<R4> input1{5.87747175411144e-39};
+      const Scalar<R4> x1{host::CastHostToFortran<R4>(input1)};
+      Scalar<R4> y1Flushing{callable.value()(flushingContext, x1)};
+      Scalar<R4> y1NoFlushing{callable.value()(noFlushingContext, x1)};
+      TEST(y1Flushing.IsZero());
+      TEST(!y1NoFlushing.IsZero());
+    } else {
+      TEST(false);
+    }
+    // Test subnormal result flushing
+    if (auto callable{
+            lib.GetHostProcedureWrapper<Scalar, R4, R4>("flusher_test2")}) {
+      // Smallest (positive) non-subnormal IEEE 32 bit float value
+      host::HostType<R4> input2{1.1754944e-38};
+      const Scalar<R4> x2{host::CastHostToFortran<R4>(input2)};
+      Scalar<R4> y2Flushing{callable.value()(flushingContext, x2)};
+      Scalar<R4> y2NoFlushing{callable.value()(noFlushingContext, x2)};
+      TEST(y2Flushing.IsZero());
+      TEST(!y2NoFlushing.IsZero());
     } else {
       TEST(false);
     }
