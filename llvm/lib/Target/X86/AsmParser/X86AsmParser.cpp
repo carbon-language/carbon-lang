@@ -2310,7 +2310,6 @@ bool X86AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                                     SMLoc NameLoc, OperandVector &Operands) {
   MCAsmParser &Parser = getParser();
   InstInfo = &Info;
-  std::string TempName; // Used when we parse a pseudo prefix.
 
   // Reset the forced VEX encoding.
   ForcedVEXEncoding = VEXEncoding_Default;
@@ -2342,8 +2341,8 @@ bool X86AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
       } else {
         if (getLexer().isNot(AsmToken::Identifier))
           return Error(Parser.getTok().getLoc(), "Expected identifier");
-        TempName = Parser.getTok().getString().lower();
-        Name = TempName;
+        // FIXME: The mnemonic won't match correctly if its not in lower case.
+        Name = Parser.getTok().getString();
         Parser.Lex();
       }
       continue;
@@ -2545,6 +2544,7 @@ bool X86AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
       Flags = X86::IP_NO_PREFIX;
       break;
     }
+    // FIXME: The mnemonic won't match correctly if its not in lower case.
     Name = Parser.getTok().getString();
     Parser.Lex(); // eat the prefix
     // Hack: we could have something like "rep # some comment" or
@@ -2552,6 +2552,7 @@ bool X86AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
     while (Name.startswith(";") || Name.startswith("\n") ||
            Name.startswith("#") || Name.startswith("\t") ||
            Name.startswith("/")) {
+      // FIXME: The mnemonic won't match correctly if its not in lower case.
       Name = Parser.getTok().getString();
       Parser.Lex(); // go to next prefix or instr
     }
