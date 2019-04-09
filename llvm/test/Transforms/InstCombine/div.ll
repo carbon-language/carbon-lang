@@ -772,7 +772,8 @@ define i32 @test_exact_nsw_exact(i32 %x) {
 
 define <2 x i64> @test_exact_vec(<2 x i64> %x) {
 ; CHECK-LABEL: @test_exact_vec(
-; CHECK-NEXT:    [[NEG:%.*]] = sdiv exact <2 x i64> [[X:%.*]], <i64 -3, i64 -4>
+; CHECK-NEXT:    [[DIV:%.*]] = sdiv exact <2 x i64> [[X:%.*]], <i64 3, i64 4>
+; CHECK-NEXT:    [[NEG:%.*]] = sub nsw <2 x i64> zeroinitializer, [[DIV]]
 ; CHECK-NEXT:    ret <2 x i64> [[NEG]]
 ;
   %div = sdiv exact <2 x i64> %x, <i64 3, i64 4>
@@ -832,7 +833,8 @@ define <2 x i8> @negate_sdiv_vec_splat_signed_min(<2 x i8> %x) {
 
 define <2 x i8> @negate_sdiv_vec_one_element(<2 x i8> %x) {
 ; CHECK-LABEL: @negate_sdiv_vec_one_element(
-; CHECK-NEXT:    [[NEG:%.*]] = sdiv <2 x i8> [[X:%.*]], <i8 1, i8 -1>
+; CHECK-NEXT:    [[DIV:%.*]] = sdiv <2 x i8> [[X:%.*]], <i8 -1, i8 1>
+; CHECK-NEXT:    [[NEG:%.*]] = sub <2 x i8> zeroinitializer, [[DIV]]
 ; CHECK-NEXT:    ret <2 x i8> [[NEG]]
 ;
   %div = sdiv <2 x i8> %x, <i8 -1, i8 1>
@@ -840,7 +842,7 @@ define <2 x i8> @negate_sdiv_vec_one_element(<2 x i8> %x) {
   ret <2 x i8> %neg
 }
 
-; Division by -1 may be UB and can't negate signed-min.
+; Can't negate signed-min constant for any element of a vector.
 
 define <2 x i8> @negate_sdiv_vec_signed_min_elt(<2 x i8> %x) {
 ; CHECK-LABEL: @negate_sdiv_vec_signed_min_elt(
@@ -853,7 +855,7 @@ define <2 x i8> @negate_sdiv_vec_signed_min_elt(<2 x i8> %x) {
   ret <2 x i8> %neg
 }
 
-; Can't negate signed-min constant for any element of a vector.
+; Division by -1 may be UB and can't negate signed-min.
 
 define <2 x i8> @negate_sdiv_vec_signed_min_and_one_elt(<2 x i8> %x) {
 ; CHECK-LABEL: @negate_sdiv_vec_signed_min_and_one_elt(
