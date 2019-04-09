@@ -137,18 +137,19 @@ static std::vector<SwitchRankStmt::ValueType> populateSwitchValues(
     auto &rank{std::get<parser::SelectRankCaseStmt::Rank>(
         std::get<parser::Statement<parser::SelectRankCaseStmt>>(v.t)
             .statement.t)};
-    std::visit(common::visitors{
-                   [&](const parser::ScalarIntConstantExpr &exp) {
-                     const auto &e{exp.thing.thing.thing.value()};
-                     result.emplace_back(SwitchRankStmt::Exactly{ExprRef(e)});
-                   },
-                   [&](const parser::Star &) {
-                     result.emplace_back(SwitchRankStmt::AssumedSize{});
-                   },
-                   [&](const parser::Default &) {
-                     result.emplace_back(SwitchRankStmt::Default{});
-                   },
-               },
+    std::visit(
+        common::visitors{
+            [&](const parser::ScalarIntConstantExpr &exp) {
+              const auto &e{exp.thing.thing.thing.value()};
+              result.emplace_back(SwitchRankStmt::Exactly{ExprRef(e)});
+            },
+            [&](const parser::Star &) {
+              result.emplace_back(SwitchRankStmt::AssumedSize{});
+            },
+            [&](const parser::Default &) {
+              result.emplace_back(SwitchRankStmt::Default{});
+            },
+        },
         rank.u);
   }
   return result;
@@ -160,19 +161,19 @@ static std::vector<SwitchTypeStmt::ValueType> populateSwitchValues(
   for (auto &v : list) {
     auto &guard{std::get<parser::TypeGuardStmt::Guard>(
         std::get<parser::Statement<parser::TypeGuardStmt>>(v.t).statement.t)};
-    std::visit(common::visitors{
-                   [&](const parser::TypeSpec &spec) {
-                     result.emplace_back(
-                         SwitchTypeStmt::TypeSpec{spec.declTypeSpec});
-                   },
-                   [&](const parser::DerivedTypeSpec &spec) {
-                     result.emplace_back(
-                         SwitchTypeStmt::DerivedTypeSpec{nullptr /* FIXME */});
-                   },
-                   [&](const parser::Default &) {
-                     result.emplace_back(SwitchTypeStmt::Default{});
-                   },
-               },
+    std::visit(
+        common::visitors{
+            [&](const parser::TypeSpec &spec) {
+              result.emplace_back(SwitchTypeStmt::TypeSpec{spec.declTypeSpec});
+            },
+            [&](const parser::DerivedTypeSpec &spec) {
+              result.emplace_back(
+                  SwitchTypeStmt::DerivedTypeSpec{nullptr /* FIXME */});
+            },
+            [&](const parser::Default &) {
+              result.emplace_back(SwitchTypeStmt::Default{});
+            },
+        },
         guard.u);
   }
   return result;
@@ -469,14 +470,15 @@ public:
 
   template<typename STMTTYPE, typename CT>
   Statement *GetSwitchSelector(const CT *selectConstruct) {
-    return std::visit(common::visitors{
-                          [&](const parser::Expr &e) {
-                            return builder_->CreateExpr(ExprRef(e));
-                          },
-                          [&](const parser::Variable &v) {
-                            return builder_->CreateExpr(ToExpression(v));
-                          },
-                      },
+    return std::visit(
+        common::visitors{
+            [&](const parser::Expr &e) {
+              return builder_->CreateExpr(ExprRef(e));
+            },
+            [&](const parser::Variable &v) {
+              return builder_->CreateExpr(ToExpression(v));
+            },
+        },
         std::get<parser::Selector>(
             std::get<parser::Statement<STMTTYPE>>(selectConstruct->t)
                 .statement.t)
@@ -594,26 +596,27 @@ public:
     // extract options from list -> opts
     AllocOpts opts;
     for (auto &allocOpt : std::get<std::list<parser::AllocOpt>>(stmt.t)) {
-      std::visit(common::visitors{
-                     [&](const parser::AllocOpt::Mold &m) {
-                       opts.mold = *ExprRef(m.v);
-                     },
-                     [&](const parser::AllocOpt::Source &s) {
-                       opts.source = *ExprRef(s.v);
-                     },
-                     [&](const parser::StatOrErrmsg &var) {
-                       std::visit(
-                           common::visitors{
-                               [&](const parser::StatVariable &sv) {
-                                 opts.stat = ToExpression(sv.v.thing.thing);
-                               },
-                               [&](const parser::MsgVariable &mv) {
-                                 opts.errmsg = ToExpression(mv.v.thing.thing);
-                               },
-                           },
-                           var.u);
-                     },
-                 },
+      std::visit(
+          common::visitors{
+              [&](const parser::AllocOpt::Mold &m) {
+                opts.mold = *ExprRef(m.v);
+              },
+              [&](const parser::AllocOpt::Source &s) {
+                opts.source = *ExprRef(s.v);
+              },
+              [&](const parser::StatOrErrmsg &var) {
+                std::visit(
+                    common::visitors{
+                        [&](const parser::StatVariable &sv) {
+                          opts.stat = ToExpression(sv.v.thing.thing);
+                        },
+                        [&](const parser::MsgVariable &mv) {
+                          opts.errmsg = ToExpression(mv.v.thing.thing);
+                        },
+                    },
+                    var.u);
+              },
+          },
           allocOpt.u);
     }
     // process the list of allocations
