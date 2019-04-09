@@ -109,9 +109,7 @@ public:
         (!(VEX_WIG || (!EVEX_WIG && EVEX_W == VEX_W) ||
            (EVEX_W1_VEX_W0 && EVEX_W && !VEX_W))) ||
         // Instruction's format
-        RecV->getValueAsDef("Form") != RecE->getValueAsDef("Form") ||
-        RecV->getValueAsBit("isAsmParserOnly") !=
-            RecE->getValueAsBit("isAsmParserOnly"))
+        RecV->getValueAsDef("Form") != RecE->getValueAsDef("Form"))
       return false;
 
     // This is needed for instructions with intrinsic version (_Int).
