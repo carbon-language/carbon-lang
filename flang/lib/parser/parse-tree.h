@@ -2613,7 +2613,7 @@ struct ReadStmt {
   std::optional<IoUnit> iounit;  // if first in controls without UNIT=
   std::optional<Format> format;  // if second in controls without FMT=, or
                                  // no (io-control-spec-list); might be
-                                 // an untagged namelist group name (TODO)
+                                 // an untagged namelist group name, too
   std::list<IoControlSpec> controls;
   std::list<InputItem> items;
 };
@@ -2633,7 +2633,7 @@ struct WriteStmt {
       items(std::move(its)) {}
   std::optional<IoUnit> iounit;  // if first in controls without UNIT=
   std::optional<Format> format;  // if second in controls without FMT=;
-                                 // might be an untagged namelist group (TODO)
+                                 // might be an untagged namelist group, too
   std::list<IoControlSpec> controls;
   std::list<OutputItem> items;
 };

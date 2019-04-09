@@ -26,6 +26,7 @@ namespace Fortran::semantics {
 using namespace parser::literals;
 
 /// Convert mis-identified statement functions to array element assignments.
+/// Convert mis-identified format expressions to namelist group names.
 class RewriteMutator {
 public:
   RewriteMutator(parser::Messages &messages) : messages_{messages} {}
@@ -37,6 +38,8 @@ public:
   void Post(parser::Name &);
   void Post(parser::SpecificationPart &);
   bool Pre(parser::ExecutionPart &);
+  void Post(parser::ReadStmt &);
+  void Post(parser::WriteStmt &);
 
   // Name resolution yet implemented:
   bool Pre(parser::EquivalenceStmt &) { return false; }
@@ -99,6 +102,41 @@ bool RewriteMutator::Pre(parser::ExecutionPart &x) {
   }
   stmtFuncsToConvert_.clear();
   return true;
+}
+
+// When a namelist group name appears (without NML=) in a READ or WRITE
+// statement in such a way that it can be misparsed as a format expression,
+// rewrite the I/O statement's parse tree node as if the namelist group
+// name had appeared with NML=.
+template<typename READ_OR_WRITE>
+void FixMisparsedUntaggedNamelistName(READ_OR_WRITE &x) {
+  if (x.format.has_value()) {
+    if (auto *charExpr{
+            std::get_if<parser::DefaultCharExpr>(&x.format.value().u)}) {
+      parser::Expr &expr{charExpr->thing.value()};
+      if (auto *designator{
+              std::get_if<common::Indirection<parser::Designator>>(&expr.u)}) {
+        parser::Name *name{
+            std::get_if<parser::ObjectName>(&designator->value().u)};
+        if (auto *dr{std::get_if<parser::DataRef>(&designator->value().u)}) {
+          name = std::get_if<parser::Name>(&dr->u);
+        }
+        if (name != nullptr && name->symbol != nullptr &&
+            name->symbol->has<NamelistDetails>()) {
+          x.controls.emplace_front(parser::IoControlSpec{std::move(*name)});
+          x.format.reset();
+        }
+      }
+    }
+  }
+}
+
+void RewriteMutator::Post(parser::ReadStmt &x) {
+  FixMisparsedUntaggedNamelistName(x);
+}
+
+void RewriteMutator::Post(parser::WriteStmt &x) {
+  FixMisparsedUntaggedNamelistName(x);
 }
 
 bool RewriteParseTree(SemanticsContext &context, parser::Program &program) {
