@@ -122,10 +122,10 @@ struct FormatItem {
   FormatItem() = delete;
   FormatItem(FormatItem &&) = default;
   FormatItem &operator=(FormatItem &&) = default;
-  template<typename A, NOT_LVALUE_REFERENCE(A)>
+  template<typename A, typename = common::NoLvalue<A>>
   FormatItem(std::optional<std::uint64_t> &&r, A &&x)
     : repeatCount{std::move(r)}, u{std::move(x)} {}
-  template<typename A, NOT_LVALUE_REFERENCE(A)>
+  template<typename A, typename = common::NoLvalue<A>>
   explicit FormatItem(A &&x) : u{std::move(x)} {}
   std::optional<std::uint64_t> repeatCount;
   std::variant<IntrinsicTypeDataEditDesc, DerivedTypeDataEditDesc,

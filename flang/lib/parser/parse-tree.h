@@ -100,7 +100,7 @@ struct GenericExprWrapper;  // forward definition, wraps Expr<SomeType>
 // Many classes below simply wrap a std::variant<> discriminated union,
 // which is conventionally named "u".
 #define UNION_CLASS_BOILERPLATE(classname) \
-  template<typename A, NOT_LVALUE_REFERENCE(A)> \
+  template<typename A, typename = common::NoLvalue<A>> \
   classname(A &&x) : u(std::move(x)) {} \
   using UnionTrait = std::true_type; \
   BOILERPLATE(classname)
@@ -108,7 +108,7 @@ struct GenericExprWrapper;  // forward definition, wraps Expr<SomeType>
 // Many other classes below simply wrap a std::tuple<> structure, which
 // is conventionally named "t".
 #define TUPLE_CLASS_BOILERPLATE(classname) \
-  template<typename... Ts, NO_LVALUE_REFERENCE(Ts)> \
+  template<typename... Ts, typename = common::NoLvalue<Ts...>> \
   classname(Ts &&... args) : t(std::move(args)...) {} \
   using TupleTrait = std::true_type; \
   BOILERPLATE(classname)

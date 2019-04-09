@@ -36,8 +36,8 @@ private:
   A original_;
 };
 
-template<typename A, typename B, NOT_LVALUE_REFERENCE(B)>
-Restorer<A> ScopedSet(A &to, B &&from) {
+template<typename A, typename B>
+common::IfNoLvalue<Restorer<A>, B> ScopedSet(A &to, B &&from) {
   Restorer<A> result{to};
   to = std::move(from);
   return result;

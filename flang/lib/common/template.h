@@ -119,8 +119,8 @@ template<typename TOV, typename FROMV> TOV CopyVariant(const FROMV &u) {
 
 // Move a value from one variant type to another.  The types allowed in the
 // source variant must all be allowed in the destination variant type.
-template<typename TOV, typename FROMV, NOT_LVALUE_REFERENCE(FROMV)>
-TOV MoveVariant(FROMV &&u) {
+template<typename TOV, typename FROMV>
+common::IfNoLvalue<TOV, FROMV> MoveVariant(FROMV &&u) {
   return std::visit(
       [](auto &&x) -> TOV { return {std::move(x)}; }, std::move(u));
 }
@@ -296,8 +296,9 @@ std::optional<R> MapOptional(R (*f)(A &&...), std::optional<A> &&... x) {
 // and invoke VISITOR::Test<T>() on each until it returns a value that
 // casts to true.  If no invocation of Test succeeds, SearchTypes will
 // return a default-constructed value VISITOR::Result{}.
-template<std::size_t J, typename VISITOR, NOT_LVALUE_REFERENCE(VISITOR)>
-typename VISITOR::Result SearchTypesHelper(VISITOR &&visitor) {
+template<std::size_t J, typename VISITOR>
+common::IfNoLvalue<typename VISITOR::Result, VISITOR> SearchTypesHelper(
+    VISITOR &&visitor) {
   using Tuple = typename VISITOR::Types;
   if constexpr (J < std::tuple_size_v<Tuple>) {
     if (auto result{visitor.template Test<std::tuple_element_t<J, Tuple>>()}) {
@@ -309,8 +310,9 @@ typename VISITOR::Result SearchTypesHelper(VISITOR &&visitor) {
   }
 }
 
-template<typename VISITOR, NOT_LVALUE_REFERENCE(VISITOR)>
-typename VISITOR::Result SearchTypes(VISITOR &&visitor) {
+template<typename VISITOR>
+common::IfNoLvalue<typename VISITOR::Result, VISITOR> SearchTypes(
+    VISITOR &&visitor) {
   return SearchTypesHelper<0, VISITOR>(std::move(visitor));
 }
 }

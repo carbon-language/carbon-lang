@@ -190,7 +190,7 @@ using HostUnsignedInt =
 #define EVALUATE_UNION_CLASS_BOILERPLATE(t) \
   CLASS_BOILERPLATE(t) \
   template<typename _A> explicit t(const _A &x) : u{x} {} \
-  template<typename _A, NOT_LVALUE_REFERENCE(_A)> \
+  template<typename _A, typename = common::NoLvalue<_A>> \
   explicit t(_A &&x) : u(std::move(x)) {} \
   bool operator==(const t &that) const { return u == that.u; }
 

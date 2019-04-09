@@ -122,8 +122,7 @@ public:
 
   // C++'s integral types can all be converted to Integer
   // with silent truncation.
-  template<typename INT,
-      typename = std::enable_if_t<std::is_integral_v<INT>, int>>
+  template<typename INT, typename = std::enable_if_t<std::is_integral_v<INT>>>
   constexpr Integer(INT n) {
     constexpr int nBits = CHAR_BIT * sizeof n;
     if constexpr (nBits < partBits) {

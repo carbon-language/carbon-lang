@@ -39,8 +39,9 @@
 namespace Fortran::evaluate {
 
 // no-op base case
-template<typename A, NOT_LVALUE_REFERENCE(A)>
-Expr<ResultType<A>> FoldOperation(FoldingContext &, A &&x) {
+template<typename A>
+common::IfNoLvalue<Expr<ResultType<A>>, A> FoldOperation(
+    FoldingContext &, A &&x) {
   return Expr<ResultType<A>>{std::move(x)};
 }
 
@@ -985,8 +986,8 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
 
 // Unary operations
 
-template<typename TO, typename FROM, NOT_LVALUE_REFERENCE(FROM)>
-std::optional<TO> ConvertString(FROM &&s) {
+template<typename TO, typename FROM>
+common::IfNoLvalue<std::optional<TO>, FROM> ConvertString(FROM &&s) {
   if constexpr (std::is_same_v<TO, FROM>) {
     return std::make_optional<TO>(std::move(s));
   } else {

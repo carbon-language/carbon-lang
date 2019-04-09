@@ -145,7 +145,7 @@ public:
   // It is not in any scope and always has MiscDetails.
   void MakePlaceholder(const parser::Name &, MiscDetails::Kind);
 
-  template<typename T, NOT_LVALUE_REFERENCE(T)> auto FoldExpr(T &&expr) -> T {
+  template<typename T> common::IfNoLvalue<T, T> FoldExpr(T &&expr) {
     return evaluate::Fold(GetFoldingContext(), std::move(expr));
   }
 
@@ -445,19 +445,21 @@ public:
   Symbol &MakeSymbol(const SourceName &, Attrs = Attrs{});
   Symbol &MakeSymbol(const parser::Name &, Attrs = Attrs{});
 
-  template<typename D, NOT_LVALUE_REFERENCE(D)>
-  Symbol &MakeSymbol(const parser::Name &name, D &&details) {
+  template<typename D>
+  common::IfNoLvalue<Symbol &, D> MakeSymbol(
+      const parser::Name &name, D &&details) {
     return MakeSymbol(name, Attrs{}, std::move(details));
   }
 
-  template<typename D, NOT_LVALUE_REFERENCE(D)>
-  Symbol &MakeSymbol(
+  template<typename D>
+  common::IfNoLvalue<Symbol &, D> MakeSymbol(
       const parser::Name &name, const Attrs &attrs, D &&details) {
     return Resolve(name, MakeSymbol(name.source, attrs, std::move(details)));
   }
 
-  template<typename D, NOT_LVALUE_REFERENCE(D)>
-  Symbol &MakeSymbol(const SourceName &name, const Attrs &attrs, D &&details) {
+  template<typename D>
+  common::IfNoLvalue<Symbol &, D> MakeSymbol(
+      const SourceName &name, const Attrs &attrs, D &&details) {
     // Note: don't use FindSymbol here. If this is a derived type scope,
     // we want to detect whether the name is already declared as a component.
     auto *symbol{FindInScope(currScope(), name)};

@@ -43,7 +43,7 @@ public:
   using ScalarValue = SCALAR;
 
   template<typename A> ConstantBase(const A &x) : values_{x} {}
-  template<typename A, NOT_LVALUE_REFERENCE(A)>
+  template<typename A, typename = common::NoLvalue<A>>
   ConstantBase(A &&x) : values_{std::move(x)} {}
   ConstantBase(std::vector<ScalarValue> &&x, std::vector<std::int64_t> &&dims)
     : values_(std::move(x)), shape_(std::move(dims)) {}

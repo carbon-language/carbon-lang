@@ -107,13 +107,14 @@ public:
     return try_emplace(name, attrs, UnknownDetails());
   }
   /// Make a Symbol with provided details.
-  template<typename D, NOT_LVALUE_REFERENCE(D)>
-  std::pair<iterator, bool> try_emplace(const SourceName &name, D &&details) {
+  template<typename D>
+  common::IfNoLvalue<std::pair<iterator, bool>, D> try_emplace(
+      const SourceName &name, D &&details) {
     return try_emplace(name, Attrs(), std::move(details));
   }
   /// Make a Symbol with attrs and details
-  template<typename D, NOT_LVALUE_REFERENCE(D)>
-  std::pair<iterator, bool> try_emplace(
+  template<typename D>
+  common::IfNoLvalue<std::pair<iterator, bool>, D> try_emplace(
       const SourceName &name, Attrs attrs, D &&details) {
     Symbol &symbol{MakeSymbol(name, attrs, std::move(details))};
     return symbols_.emplace(name, &symbol);
@@ -125,8 +126,9 @@ public:
   Symbol *FindCommonBlock(const SourceName &);
 
   /// Make a Symbol but don't add it to the scope.
-  template<typename D, NOT_LVALUE_REFERENCE(D)>
-  Symbol &MakeSymbol(const SourceName &name, Attrs attrs, D &&details) {
+  template<typename D>
+  common::IfNoLvalue<Symbol &, D> MakeSymbol(
+      const SourceName &name, Attrs attrs, D &&details) {
     return allSymbols.Make(*this, name, attrs, std::move(details));
   }
 

@@ -1192,8 +1192,8 @@ template<typename PA> inline constexpr auto indirect(const PA &p) {
 // that succeeds if a does.  If a succeeds, it then applies many(b >> a).
 // The result is the list of the values returned from all of the applications
 // of a.
-template<typename T, NOT_LVALUE_REFERENCE(T)>
-std::list<T> prepend(T &&head, std::list<T> &&rest) {
+template<typename T>
+common::IfNoLvalue<std::list<T>, T> prepend(T &&head, std::list<T> &&rest) {
   rest.push_front(std::move(head));
   return std::move(rest);
 }

@@ -142,12 +142,12 @@ private:
 
 class RewriterBase {
 public:
-  template<typename A, NOT_LVALUE_REFERENCE(A)> A Handle(A &&x) {
+  template<typename A> common::IfNoLvalue<A, A> Handle(A &&x) {
     defaultHandleCalled_ = true;
     return std::move(x);
   }
   template<typename A> void Pre(const A &) {}
-  template<typename A, NOT_LVALUE_REFERENCE(A)> A Post(A &&x) {
+  template<typename A> common::IfNoLvalue<A, A> Post(A &&x) {
     return std::move(x);
   }
 
@@ -170,7 +170,7 @@ private:
   using RewriterBase::done_, RewriterBase::defaultHandleCalled_;
 
 public:
-  template<typename B, NOT_LVALUE_REFERENCE(B)> B Traverse(B &&x) {
+  template<typename B> common::IfNoLvalue<B, B> Traverse(B &&x) {
     if (!done_) {
       defaultHandleCalled_ = false;
       x = Handle(std::move(x));

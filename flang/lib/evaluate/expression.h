@@ -86,7 +86,7 @@ public:
     return d;
   }
 
-  template<typename A, NOT_LVALUE_REFERENCE(A)> Derived &operator=(A &&x) {
+  template<typename A> common::IfNoLvalue<Derived &, A> operator=(A &&x) {
     Derived &d{derived()};
     d.u = std::move(x);
     return d;
@@ -452,7 +452,7 @@ public:
   ArrayConstructorValues() {}
   bool operator==(const ArrayConstructorValues &) const;
   static constexpr int Rank() { return 1; }
-  template<typename A, NOT_LVALUE_REFERENCE(A)> void Push(A &&x) {
+  template<typename A> common::NoLvalue<A> Push(A &&x) {
     values_.emplace_back(std::move(x));
   }
   Values &values() { return values_; }
@@ -520,10 +520,6 @@ public:
   using Result = Type<TypeCategory::Integer, KIND>;
 
   EVALUATE_UNION_CLASS_BOILERPLATE(Expr)
-  explicit Expr(const Scalar<Result> &x) : u{Constant<Result>{x}} {}
-  template<typename INT>
-  explicit Expr(std::enable_if_t<std::is_integral_v<INT>, INT> n)
-    : u{Constant<Result>{n}} {}
 
 private:
   using Conversions = std::tuple<Convert<Result, TypeCategory::Integer>,

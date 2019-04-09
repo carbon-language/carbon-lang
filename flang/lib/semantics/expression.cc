@@ -56,8 +56,8 @@ using common::TypeCategory;
 
 // If a generic expression simply wraps a DataRef, extract it.
 // TODO: put in tools.h?
-template<typename A, NOT_LVALUE_REFERENCE(A)>
-std::optional<DataRef> ExtractDataRef(A &&) {
+template<typename A>
+common::IfNoLvalue<std::optional<DataRef>, A> ExtractDataRef(A &&) {
   return std::nullopt;
 }
 
@@ -165,15 +165,15 @@ static std::optional<DynamicTypeWithLength> AnalyzeTypeSpec(
 // or FunctionRef<>) that has been instantiated on a dynamically chosen type.
 // TODO: move to tools.h?
 template<TypeCategory CATEGORY, template<typename> typename WRAPPER,
-    typename WRAPPED, NOT_LVALUE_REFERENCE(WRAPPED)>
-MaybeExpr WrapperHelper(int kind, WRAPPED &&x) {
+    typename WRAPPED>
+common::IfNoLvalue<MaybeExpr, WRAPPED> WrapperHelper(int kind, WRAPPED &&x) {
   return common::SearchTypes(
       TypeKindVisitor<CATEGORY, WRAPPER, WRAPPED>{kind, std::move(x)});
 }
 
-template<template<typename> typename WRAPPER, typename WRAPPED,
-    NOT_LVALUE_REFERENCE(WRAPPED)>
-MaybeExpr TypedWrapper(const DynamicType &dyType, WRAPPED &&x) {
+template<template<typename> typename WRAPPER, typename WRAPPED>
+common::IfNoLvalue<MaybeExpr, WRAPPED> TypedWrapper(
+    const DynamicType &dyType, WRAPPED &&x) {
   switch (dyType.category) {
   case TypeCategory::Integer:
     return WrapperHelper<TypeCategory::Integer, WRAPPER, WRAPPED>(
@@ -357,7 +357,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Designator &d) {
 
 // A utility subroutine to repackage optional expressions of various levels
 // of type specificity as fully general MaybeExpr values.
-template<typename A, NOT_LVALUE_REFERENCE(A)> MaybeExpr AsMaybeExpr(A &&x) {
+template<typename A> common::IfNoLvalue<MaybeExpr, A> AsMaybeExpr(A &&x) {
   return std::make_optional(AsGenericExpr(std::move(x)));
 }
 template<typename A> MaybeExpr AsMaybeExpr(std::optional<A> &&x) {

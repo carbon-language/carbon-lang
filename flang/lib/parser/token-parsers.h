@@ -184,15 +184,17 @@ constexpr TokenStringMatch operator""_sptok(const char str[], std::size_t n) {
   return TokenStringMatch{str, n, true};
 }
 
-template<class PA, std::enable_if_t<std::is_class<PA>::value, int> = 0>
-inline constexpr SequenceParser<TokenStringMatch, PA> operator>>(
-    const char *str, const PA &p) {
+template<class PA>
+inline constexpr std::enable_if_t<std::is_class_v<PA>,
+    SequenceParser<TokenStringMatch, PA>>
+operator>>(const char *str, const PA &p) {
   return SequenceParser<TokenStringMatch, PA>{TokenStringMatch{str, false}, p};
 }
 
-template<class PA, std::enable_if_t<std::is_class<PA>::value, int> = 0>
-inline constexpr InvertedSequenceParser<PA, TokenStringMatch> operator/(
-    const PA &p, const char *str) {
+template<class PA>
+inline constexpr std::enable_if_t<std::is_class_v<PA>,
+    InvertedSequenceParser<PA, TokenStringMatch>>
+operator/(const PA &p, const char *str) {
   return InvertedSequenceParser<PA, TokenStringMatch>{
       p, TokenStringMatch{str, false}};
 }
