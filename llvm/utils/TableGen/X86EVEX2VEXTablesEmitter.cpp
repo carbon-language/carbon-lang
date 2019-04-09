@@ -108,10 +108,11 @@ public:
   bool operator()(const CodeGenInstruction *VEXInst) {
     Record *RecE = EVEXInst->TheDef;
     Record *RecV = VEXInst->TheDef;
-    uint64_t EVEX_W =
-        getValueFromBitsInit(RecE->getValueAsBitsInit("VEX_WPrefix"));
-    uint64_t VEX_W =
-        getValueFromBitsInit(RecV->getValueAsBitsInit("VEX_WPrefix"));
+    bool EVEX_W = RecE->getValueAsBit("HasVEX_W");
+    bool VEX_W  = RecV->getValueAsBit("HasVEX_W");
+    bool VEX_WIG  = RecV->getValueAsBit("IgnoresVEX_W");
+    bool EVEX_WIG = RecE->getValueAsBit("IgnoresVEX_W");
+    bool EVEX_W1_VEX_W0 = RecE->getValueAsBit("EVEX_W1_VEX_W0");
 
     if (RecV->getValueAsDef("OpEnc")->getName().str() != "EncVEX" ||
         // VEX/EVEX fields
@@ -122,8 +123,8 @@ public:
                         RecE->getValueAsBitsInit("EVEX_LL")) ||
         // Match is allowed if either is VEX_WIG, or they match, or EVEX
         // is VEX_W1X and VEX is VEX_W0.
-        (!(EVEX_W == 2 || VEX_W == 2 || EVEX_W == VEX_W ||
-           (EVEX_W == 3 && VEX_W == 0))) ||
+        (!(VEX_WIG || EVEX_WIG || EVEX_W == VEX_W ||
+           (EVEX_W1_VEX_W0 && EVEX_W && !VEX_W))) ||
         // Instruction's format
         RecV->getValueAsDef("Form") != RecE->getValueAsDef("Form") ||
         RecV->getValueAsBit("isAsmParserOnly") !=
