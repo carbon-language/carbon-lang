@@ -958,6 +958,27 @@ bool ARMInstructionSelector::select(MachineInstr &I,
     MIB.add(predOps(ARMCC::AL)).add(condCodeOp());
     break;
   }
+  case G_FCONSTANT: {
+    // Load from constant pool
+    unsigned Size = MRI.getType(I.getOperand(0).getReg()).getSizeInBits() / 8;
+    unsigned Alignment = Size;
+
+    assert((Size == 4 || Size == 8) && "Unsupported FP constant type");
+    auto LoadOpcode = Size == 4 ? ARM::VLDRS : ARM::VLDRD;
+
+    auto ConstPool = MF.getConstantPool();
+    auto CPIndex =
+        ConstPool->getConstantPoolIndex(I.getOperand(1).getFPImm(), Alignment);
+    MIB->setDesc(TII.get(LoadOpcode));
+    MIB->RemoveOperand(1);
+    MIB.addConstantPoolIndex(CPIndex, /*Offset*/ 0, /*TargetFlags*/ 0)
+        .addMemOperand(
+            MF.getMachineMemOperand(MachinePointerInfo::getConstantPool(MF),
+                                    MachineMemOperand::MOLoad, Size, Alignment))
+        .addImm(0)
+        .add(predOps(ARMCC::AL));
+    break;
+  }
   case G_INTTOPTR:
   case G_PTRTOINT: {
     auto SrcReg = I.getOperand(1).getReg();
