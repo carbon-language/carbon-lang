@@ -814,7 +814,7 @@ void ARMInstructionSelector::renderVFPF32Imm(
          "Expected G_FCONSTANT");
 
   APFloat FPImmValue = OldInst.getOperand(1).getFPImm()->getValueAPF();
-  uint32_t FPImmEncoding = ARM_AM::getFP32Imm(FPImmValue);
+  int FPImmEncoding = ARM_AM::getFP32Imm(FPImmValue);
   assert(FPImmEncoding != -1 && "Invalid immediate value");
 
   NewInstBuilder.addImm(FPImmEncoding);
@@ -826,7 +826,7 @@ void ARMInstructionSelector::renderVFPF64Imm(
          "Expected G_FCONSTANT");
 
   APFloat FPImmValue = OldInst.getOperand(1).getFPImm()->getValueAPF();
-  uint64_t FPImmEncoding = ARM_AM::getFP64Imm(FPImmValue);
+  int FPImmEncoding = ARM_AM::getFP64Imm(FPImmValue);
   assert(FPImmEncoding != -1 && "Invalid immediate value");
 
   NewInstBuilder.addImm(FPImmEncoding);
