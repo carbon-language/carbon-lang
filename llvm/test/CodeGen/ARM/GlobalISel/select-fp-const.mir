@@ -81,11 +81,12 @@ selected:        false
 registers:
   - { id: 0, class: gprb }
   - { id: 1, class: fprb }
-# CHECK: constants:
-# CHECK-NEXT: id: 0
-# CHECK-NEXT: value: 'float -2.000000e+00'
-# CHECK-NEXT: alignment: 4
-# CHECK-NEXT: isTargetSpecific: false
+# VFP3: constants: []
+# VFP2: constants:
+# VFP2-NEXT: id: 0
+# VFP2-NEXT: value: 'float -2.000000e+00'
+# VFP2-NEXT: alignment: 4
+# VFP2-NEXT: isTargetSpecific: false
 body:             |
   bb.0:
     liveins: $r0
@@ -94,7 +95,8 @@ body:             |
     ; CHECK: [[PTR:%[0-9]+]]:gpr = COPY $r0
 
     %1(s32) = G_FCONSTANT float -2.0
-    ; CHECK: [[VREG:%[0-9]+]]:spr = VLDRS %const.0, 0, 14, $noreg :: (load 4 from constant-pool)
+    ; VFP3: [[VREG:%[0-9]+]]:spr = FCONSTS 128, 14, $noreg
+    ; VFP2: [[VREG:%[0-9]+]]:spr = VLDRS %const.0, 0, 14, $noreg :: (load 4 from constant-pool)
 
     G_STORE %1(s32), %0 :: (store 4)
     ; CHECK: VSTRS [[VREG]], [[PTR]], 0, 14, $noreg
@@ -112,11 +114,12 @@ selected:        false
 registers:
   - { id: 0, class: gprb }
   - { id: 1, class: fprb }
-# CHECK: constants:
-# CHECK-NEXT: id: 0
-# CHECK-NEXT: value: double 5.000000e-01
-# CHECK-NEXT: alignment: 8
-# CHECK-NEXT: isTargetSpecific: false
+# VFP3: constants: []
+# VFP2: constants:
+# VFP2-NEXT: id: 0
+# VFP2-NEXT: value: double 5.000000e-01
+# VFP2-NEXT: alignment: 8
+# VFP2-NEXT: isTargetSpecific: false
 body:             |
   bb.0:
     liveins: $r0
@@ -125,7 +128,8 @@ body:             |
     ; CHECK: [[PTR:%[0-9]+]]:gpr = COPY $r0
 
     %1(s64) = G_FCONSTANT double 5.0e-1
-    ; CHECK: [[VREG:%[0-9]+]]:dpr = VLDRD %const.0, 0, 14, $noreg :: (load 8 from constant-pool)
+    ; VFP3: [[VREG:%[0-9]+]]:dpr = FCONSTD 96, 14, $noreg
+    ; VFP2: [[VREG:%[0-9]+]]:dpr = VLDRD %const.0, 0, 14, $noreg :: (load 8 from constant-pool)
 
     G_STORE %1(s64), %0 :: (store 8)
     ; CHECK: VSTRD [[VREG]], [[PTR]], 0, 14, $noreg

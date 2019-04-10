@@ -137,6 +137,9 @@ private:
   unsigned selectLoadStoreOpCode(unsigned Opc, unsigned RegBank,
                                  unsigned Size) const;
 
+  void renderVFPF32Imm(MachineInstrBuilder &New, const MachineInstr &Old) const;
+  void renderVFPF64Imm(MachineInstrBuilder &New, const MachineInstr &Old) const;
+
 #define GET_GLOBALISEL_PREDICATES_DECL
 #include "ARMGenGlobalISel.inc"
 #undef GET_GLOBALISEL_PREDICATES_DECL
@@ -802,6 +805,30 @@ bool ARMInstructionSelector::selectShift(unsigned ShiftOpc,
   MIB.addImm(ShiftOpc);
   MIB.add(predOps(ARMCC::AL)).add(condCodeOp());
   return constrainSelectedInstRegOperands(*MIB, TII, TRI, RBI);
+}
+
+void ARMInstructionSelector::renderVFPF32Imm(
+    MachineInstrBuilder &NewInstBuilder, const MachineInstr &OldInst) const {
+  assert(OldInst.getOpcode() == TargetOpcode::G_FCONSTANT &&
+         "Expected G_FCONSTANT");
+
+  APFloat FPImmValue = OldInst.getOperand(1).getFPImm()->getValueAPF();
+  uint32_t FPImmEncoding = ARM_AM::getFP32Imm(FPImmValue);
+  assert(FPImmEncoding != -1 && "Invalid immediate value");
+
+  NewInstBuilder.addImm(FPImmEncoding);
+}
+
+void ARMInstructionSelector::renderVFPF64Imm(
+    MachineInstrBuilder &NewInstBuilder, const MachineInstr &OldInst) const {
+  assert(OldInst.getOpcode() == TargetOpcode::G_FCONSTANT &&
+         "Expected G_FCONSTANT");
+
+  APFloat FPImmValue = OldInst.getOperand(1).getFPImm()->getValueAPF();
+  uint64_t FPImmEncoding = ARM_AM::getFP64Imm(FPImmValue);
+  assert(FPImmEncoding != -1 && "Invalid immediate value");
+
+  NewInstBuilder.addImm(FPImmEncoding);
 }
 
 bool ARMInstructionSelector::select(MachineInstr &I,
