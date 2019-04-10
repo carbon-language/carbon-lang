@@ -1252,8 +1252,9 @@ bool IRTranslator::translateInvoke(const User &U,
   MCSymbol *BeginSymbol = Context.createTempSymbol();
   MIRBuilder.buildInstr(TargetOpcode::EH_LABEL).addSym(BeginSymbol);
 
-  unsigned Res =
-        MRI->createGenericVirtualRegister(getLLTForType(*I.getType(), *DL));
+  unsigned Res = 0;
+  if (!I.getType()->isVoidTy())
+    Res = MRI->createGenericVirtualRegister(getLLTForType(*I.getType(), *DL));
   SmallVector<unsigned, 8> Args;
   for (auto &Arg: I.arg_operands())
     Args.push_back(packRegs(*Arg, MIRBuilder));
