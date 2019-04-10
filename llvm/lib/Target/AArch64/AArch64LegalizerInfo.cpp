@@ -486,6 +486,7 @@ AArch64LegalizerInfo::AArch64LegalizerInfo(const AArch64Subtarget &ST) {
                  {v8s16, s16},
                  {v2s32, s32},
                  {v4s32, s32},
+                 {v2p0, p0},
                  {v2s64, s64}})
       .clampNumElements(0, v4s32, v4s32)
       .clampNumElements(0, v2s64, v2s64)
