@@ -42,6 +42,24 @@ void HostFloatingPointEnvironment::SetUpHostFloatingPointEnvironment(
     currentFenv_.__mxcsr &= ~0x8000;  // result
     currentFenv_.__mxcsr &= ~0x0040;  // operands
   }
+#elif defined(__aarch64__)
+#if defined(__GNU_LIBRARY__)
+  if (context.flushSubnormalsToZero()) {
+    currentFenv_.__fpcr |= (1U << 24);  // control register
+  } else {
+    currentFenv_.__fpcr &= ~(1U << 24);  // control register
+  }
+#elif defined(__BIONIC__)
+  if (context.flushSubnormalsToZero()) {
+    currentFenv_.__control |= (1U << 24);  // control register
+  } else {
+    currentFenv_.__control &= ~(1U << 24);  // control register
+  }
+#else
+  // TODO other C libraries on AArch64
+  context.messages().Say(
+      "TODO: flushing mode for subnormals is not set for this host architecture due to incompatible C library it uses"_en_US);
+#endif
 #else
   // TODO other architectures
   context.messages().Say(
