@@ -576,9 +576,11 @@ template <class _RandomAccessIterator, class _OutputIterator, class _BinaryPredi
 _OutputIterator __brick_unique_copy(_RandomAccessIterator, _RandomAccessIterator, _OutputIterator, _BinaryPredicate,
                                     /*vector=*/std::true_type) noexcept;
 
-template <class _ExecutionPolicy, class _ForwardIterator, class OutputIterator, class _BinaryPredicate, class _IsVector>
-OutputIterator __pattern_unique_copy(_ForwardIterator, _ForwardIterator, OutputIterator, _BinaryPredicate, _IsVector,
-                                     /*parallel=*/std::false_type) noexcept;
+template <class _ExecutionPolicy, class _ForwardIterator, class _OutputIterator, class _BinaryPredicate,
+          class _IsVector>
+_OutputIterator
+__pattern_unique_copy(_ExecutionPolicy&&, _ForwardIterator, _ForwardIterator, _OutputIterator, _BinaryPredicate,
+                      _IsVector, /*parallel=*/std::false_type) noexcept;
 
 template <class _ExecutionPolicy, class _DifferenceType, class _RandomAccessIterator, class _BinaryPredicate>
 _DifferenceType
