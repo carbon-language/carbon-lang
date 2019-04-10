@@ -28,6 +28,7 @@
       <item> !strconcat </item>
       <item> !cast </item>
       <item> !listconcat </item>
+      <item> !listsplat </item>
       <item> !size </item>
       <item> !foldl </item>
       <item> !isa </item>
