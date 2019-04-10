@@ -17,6 +17,8 @@
 #include "algorithm_fwd.h"
 #include "numeric_fwd.h" /* count and count_if use __pattern_transform_reduce */
 
+#include "execution_impl.h"
+
 namespace std
 {
 

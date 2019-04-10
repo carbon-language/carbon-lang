@@ -10,8 +10,11 @@
 #ifndef __PSTL_glue_memory_impl_H
 #define __PSTL_glue_memory_impl_H
 
+#include "execution_defs.h"
 #include "utils.h"
 #include "algorithm_fwd.h"
+
+#include "execution_impl.h"
 
 namespace std
 {

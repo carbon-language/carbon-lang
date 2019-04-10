@@ -10,6 +10,8 @@
 #ifndef __PSTL_glue_numeric_defs_H
 #define __PSTL_glue_numeric_defs_H
 
+#include <iterator>
+
 #include "execution_defs.h"
 
 namespace std

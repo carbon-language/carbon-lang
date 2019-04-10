@@ -11,6 +11,7 @@
 #define __PSTL_glue_algorithm_defs_H
 
 #include <functional>
+#include <iterator>
 
 #include "execution_defs.h"
 
