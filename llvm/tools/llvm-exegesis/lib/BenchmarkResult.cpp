@@ -392,7 +392,7 @@ llvm::Error InstructionBenchmark::writeYaml(const LLVMState &State,
                                             const llvm::StringRef Filename) {
   if (Filename == "-") {
     if (auto Err = writeYamlTo(State, llvm::outs()))
-      return std::move(Err);
+      return Err;
   } else {
     int ResultFD = 0;
     if (auto E = llvm::errorCodeToError(
@@ -402,7 +402,7 @@ llvm::Error InstructionBenchmark::writeYaml(const LLVMState &State,
     }
     llvm::raw_fd_ostream Ostr(ResultFD, true /*shouldClose*/);
     if (auto Err = writeYamlTo(State, Ostr))
-      return std::move(Err);
+      return Err;
   }
   return llvm::Error::success();
 }
