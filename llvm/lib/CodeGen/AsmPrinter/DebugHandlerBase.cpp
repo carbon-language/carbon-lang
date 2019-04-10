@@ -211,8 +211,8 @@ void DebugHandlerBase::beginFunction(const MachineFunction *MF) {
 
   // Request labels for the full history.
   for (const auto &I : DbgValues) {
-    const auto &Ranges = I.second;
-    if (Ranges.empty())
+    const auto &Entries = I.second;
+    if (Entries.empty())
       continue;
 
     auto IsDescribedByReg = [](const MachineInstr *MI) {
@@ -229,17 +229,17 @@ void DebugHandlerBase::beginFunction(const MachineFunction *MF) {
     // However, we currently do not emit debug values for constant arguments
     // directly at the start of the function, so this code is still useful.
     const DILocalVariable *DIVar =
-        Ranges.front().getBegin()->getDebugVariable();
+        Entries.front().getBegin()->getDebugVariable();
     if (DIVar->isParameter() &&
         getDISubprogram(DIVar->getScope())->describes(&MF->getFunction())) {
-      if (!IsDescribedByReg(Ranges.front().getBegin()))
-        LabelsBeforeInsn[Ranges.front().getBegin()] = Asm->getFunctionBegin();
-      if (Ranges.front().getBegin()->getDebugExpression()->isFragment()) {
+      if (!IsDescribedByReg(Entries.front().getBegin()))
+        LabelsBeforeInsn[Entries.front().getBegin()] = Asm->getFunctionBegin();
+      if (Entries.front().getBegin()->getDebugExpression()->isFragment()) {
         // Mark all non-overlapping initial fragments.
-        for (auto I = Ranges.begin(); I != Ranges.end(); ++I) {
+        for (auto I = Entries.begin(); I != Entries.end(); ++I) {
           const DIExpression *Fragment = I->getBegin()->getDebugExpression();
-          if (std::any_of(Ranges.begin(), I,
-                          [&](DbgValueHistoryMap::InstrRange Pred) {
+          if (std::any_of(Entries.begin(), I,
+                          [&](DbgValueHistoryMap::Entry Pred) {
                             return Fragment->fragmentsOverlap(
                                 Pred.getBegin()->getDebugExpression());
                           }))
@@ -250,10 +250,10 @@ void DebugHandlerBase::beginFunction(const MachineFunction *MF) {
       }
     }
 
-    for (const auto &Range : Ranges) {
-      requestLabelBeforeInsn(Range.getBegin());
-      if (Range.getEnd())
-        requestLabelAfterInsn(Range.getEnd());
+    for (const auto &Entry : Entries) {
+      requestLabelBeforeInsn(Entry.getBegin());
+      if (Entry.getEnd())
+        requestLabelAfterInsn(Entry.getEnd());
     }
   }
 

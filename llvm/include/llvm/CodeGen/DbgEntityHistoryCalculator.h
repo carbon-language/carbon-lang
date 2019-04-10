@@ -32,39 +32,39 @@ public:
   /// End is not specified, the location is valid until the first overlapping
   /// DBG_VALUE if any such DBG_VALUE exists, otherwise it is valid until the
   /// end of the function.
-  class InstrRange {
+  class Entry {
     const MachineInstr *Begin;
     const MachineInstr *End;
 
   public:
-    InstrRange(const MachineInstr *Begin) : Begin(Begin), End(nullptr) {}
+    Entry(const MachineInstr *Begin) : Begin(Begin), End(nullptr) {}
 
     const MachineInstr *getBegin() const { return Begin; }
     const MachineInstr *getEnd() const { return End; }
 
     bool isClosed() const { return End; }
 
-    void endRange(const MachineInstr &End);
+    void endEntry(const MachineInstr &End);
   };
-  using InstrRanges = SmallVector<InstrRange, 4>;
+  using Entries = SmallVector<Entry, 4>;
   using InlinedEntity = std::pair<const DINode *, const DILocation *>;
-  using InstrRangesMap = MapVector<InlinedEntity, InstrRanges>;
+  using EntriesMap = MapVector<InlinedEntity, Entries>;
 
 private:
-  InstrRangesMap VarInstrRanges;
+  EntriesMap VarEntries;
 
 public:
-  void startInstrRange(InlinedEntity Var, const MachineInstr &MI);
-  void endInstrRange(InlinedEntity Var, const MachineInstr &MI);
+  void startEntry(InlinedEntity Var, const MachineInstr &MI);
+  void endEntry(InlinedEntity Var, const MachineInstr &MI);
 
   // Returns register currently describing @Var. If @Var is currently
   // unaccessible or is not described by a register, returns 0.
   unsigned getRegisterForVar(InlinedEntity Var) const;
 
-  bool empty() const { return VarInstrRanges.empty(); }
-  void clear() { VarInstrRanges.clear(); }
-  InstrRangesMap::const_iterator begin() const { return VarInstrRanges.begin(); }
-  InstrRangesMap::const_iterator end() const { return VarInstrRanges.end(); }
+  bool empty() const { return VarEntries.empty(); }
+  void clear() { VarEntries.clear(); }
+  EntriesMap::const_iterator begin() const { return VarEntries.begin(); }
+  EntriesMap::const_iterator end() const { return VarEntries.end(); }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   LLVM_DUMP_METHOD void dump() const;
