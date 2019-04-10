@@ -365,27 +365,34 @@ InstructionBenchmark::readYamls(const LLVMState &State,
   }
 }
 
-void InstructionBenchmark::writeYamlTo(const LLVMState &State,
-                                       llvm::raw_ostream &OS) {
+llvm::Error InstructionBenchmark::writeYamlTo(const LLVMState &State,
+                                              llvm::raw_ostream &OS) {
   llvm::yaml::Output Yout(OS, nullptr /*Ctx*/, 200 /*WrapColumn*/);
   YamlContext Context(State);
   Yout.beginDocuments();
   llvm::yaml::yamlize(Yout, *this, /*unused*/ true, Context);
+  if (!Context.getLastError().empty())
+    return llvm::make_error<BenchmarkFailure>(Context.getLastError());
   Yout.endDocuments();
+  return Error::success();
 }
 
-void InstructionBenchmark::readYamlFrom(const LLVMState &State,
-                                        llvm::StringRef InputContent) {
+llvm::Error InstructionBenchmark::readYamlFrom(const LLVMState &State,
+                                               llvm::StringRef InputContent) {
   llvm::yaml::Input Yin(InputContent);
   YamlContext Context(State);
   if (Yin.setCurrentDocument())
     llvm::yaml::yamlize(Yin, *this, /*unused*/ true, Context);
+  if (!Context.getLastError().empty())
+    return llvm::make_error<BenchmarkFailure>(Context.getLastError());
+  return Error::success();
 }
 
 llvm::Error InstructionBenchmark::writeYaml(const LLVMState &State,
                                             const llvm::StringRef Filename) {
   if (Filename == "-") {
-    writeYamlTo(State, llvm::outs());
+    if (auto Err = writeYamlTo(State, llvm::outs()))
+      return std::move(Err);
   } else {
     int ResultFD = 0;
     if (auto E = llvm::errorCodeToError(
@@ -394,7 +401,8 @@ llvm::Error InstructionBenchmark::writeYaml(const LLVMState &State,
       return E;
     }
     llvm::raw_fd_ostream Ostr(ResultFD, true /*shouldClose*/);
-    writeYamlTo(State, Ostr);
+    if (auto Err = writeYamlTo(State, Ostr))
+      return std::move(Err);
   }
   return llvm::Error::success();
 }
