@@ -16,6 +16,7 @@
       <item> !tail </item>
       <item> !con </item>
       <item> !add </item>
+      <item> !mul </item>
       <item> !shl </item>
       <item> !sra </item>
       <item> !srl </item>
