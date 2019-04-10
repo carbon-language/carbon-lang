@@ -33,10 +33,11 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Regex.h"
 #include <cxxabi.h>
+#include <functional>
 #include <limits>
+#include <numeric>
 #include <queue>
 #include <string>
-#include <functional>
 
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt"
