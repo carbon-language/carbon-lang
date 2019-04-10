@@ -1123,8 +1123,8 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
   SmallVector<DebugLocEntry::Value, 4> OpenRanges;
 
   for (auto I = Ranges.begin(), E = Ranges.end(); I != E; ++I) {
-    const MachineInstr *Begin = I->first;
-    const MachineInstr *End = I->second;
+    const MachineInstr *Begin = I->getBegin();
+    const MachineInstr *End = I->getEnd();
     assert(Begin->isDebugValue() && "Invalid History entry");
 
     // Check if a variable is inaccessible in this range.
@@ -1150,7 +1150,7 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
     else if (std::next(I) == Ranges.end())
       EndLabel = Asm->getFunctionEnd();
     else
-      EndLabel = getLabelBeforeInsn(std::next(I)->first);
+      EndLabel = getLabelBeforeInsn(std::next(I)->getBegin());
     assert(EndLabel && "Forgot label after instruction ending a range!");
 
     LLVM_DEBUG(dbgs() << "DotDebugLoc: " << *Begin << "\n");
@@ -1293,12 +1293,12 @@ void DwarfDebug::collectEntityInfo(DwarfCompileUnit &TheCU,
     DbgVariable *RegVar = cast<DbgVariable>(createConcreteEntity(TheCU,
                                             *Scope, LocalVar, IV.second));
 
-    const MachineInstr *MInsn = Ranges.front().first;
+    const MachineInstr *MInsn = Ranges.front().getBegin();
     assert(MInsn->isDebugValue() && "History must begin with debug value");
 
     // Check if there is a single DBG_VALUE, valid throughout the var's scope.
     if (Ranges.size() == 1 &&
-        validThroughout(LScopes, MInsn, Ranges.front().second)) {
+        validThroughout(LScopes, MInsn, Ranges.front().getEnd())) {
       RegVar->initializeDbgValue(MInsn);
       continue;
     }

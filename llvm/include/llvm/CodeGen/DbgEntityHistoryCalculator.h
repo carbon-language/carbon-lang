@@ -24,13 +24,28 @@ class TargetRegisterInfo;
 // For each user variable, keep a list of instruction ranges where this variable
 // is accessible. The variables are listed in order of appearance.
 class DbgValueHistoryMap {
-  // Each instruction range starts with a DBG_VALUE instruction, specifying the
-  // location of a variable, which is assumed to be valid until the end of the
-  // range. If end is not specified, location is valid until the start
-  // instruction of the next instruction range, or until the end of the
-  // function.
 public:
-  using InstrRange = std::pair<const MachineInstr *, const MachineInstr *>;
+  /// Specifies an instruction range where a DBG_VALUE is valid.
+  ///
+  /// \p Begin is a DBG_VALUE instruction, specifying the location of a
+  /// variable, which is assumed to be valid until the end of the range. If \p
+  /// End is not specified, the location is valid until the first overlapping
+  /// DBG_VALUE if any such DBG_VALUE exists, otherwise it is valid until the
+  /// end of the function.
+  class InstrRange {
+    const MachineInstr *Begin;
+    const MachineInstr *End;
+
+  public:
+    InstrRange(const MachineInstr *Begin) : Begin(Begin), End(nullptr) {}
+
+    const MachineInstr *getBegin() const { return Begin; }
+    const MachineInstr *getEnd() const { return End; }
+
+    bool isClosed() const { return End; }
+
+    void endRange(const MachineInstr &End);
+  };
   using InstrRanges = SmallVector<InstrRange, 4>;
   using InlinedEntity = std::pair<const DINode *, const DILocation *>;
   using InstrRangesMap = MapVector<InlinedEntity, InstrRanges>;

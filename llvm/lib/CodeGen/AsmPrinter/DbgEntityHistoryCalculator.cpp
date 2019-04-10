@@ -47,24 +47,29 @@ void DbgValueHistoryMap::startInstrRange(InlinedEntity Var,
   // variable.
   assert(MI.isDebugValue() && "not a DBG_VALUE");
   auto &Ranges = VarInstrRanges[Var];
-  if (!Ranges.empty() && Ranges.back().second == nullptr &&
-      Ranges.back().first->isIdenticalTo(MI)) {
+  if (!Ranges.empty() && !Ranges.back().isClosed() &&
+      Ranges.back().getBegin()->isIdenticalTo(MI)) {
     LLVM_DEBUG(dbgs() << "Coalescing identical DBG_VALUE entries:\n"
-                      << "\t" << Ranges.back().first << "\t" << MI << "\n");
+                      << "\t" << Ranges.back().getBegin() << "\t" << MI
+                      << "\n");
     return;
   }
-  Ranges.push_back(std::make_pair(&MI, nullptr));
+  Ranges.emplace_back(&MI);
 }
 
 void DbgValueHistoryMap::endInstrRange(InlinedEntity Var,
                                        const MachineInstr &MI) {
   auto &Ranges = VarInstrRanges[Var];
-  // Verify that the current instruction range is not yet closed.
-  assert(!Ranges.empty() && Ranges.back().second == nullptr);
+  assert(!Ranges.empty() && "No range exists for variable!");
+  Ranges.back().endRange(MI);
+}
+
+void DbgValueHistoryMap::InstrRange::endRange(const MachineInstr &MI) {
   // For now, instruction ranges are not allowed to cross basic block
   // boundaries.
-  assert(Ranges.back().first->getParent() == MI.getParent());
-  Ranges.back().second = &MI;
+  assert(Begin->getParent() == MI.getParent());
+  assert(!isClosed() && "Range is already closed!");
+  End = &MI;
 }
 
 unsigned DbgValueHistoryMap::getRegisterForVar(InlinedEntity Var) const {
@@ -72,9 +77,9 @@ unsigned DbgValueHistoryMap::getRegisterForVar(InlinedEntity Var) const {
   if (I == VarInstrRanges.end())
     return 0;
   const auto &Ranges = I->second;
-  if (Ranges.empty() || Ranges.back().second != nullptr)
+  if (Ranges.empty() || Ranges.back().isClosed())
     return 0;
-  return isDescribedByReg(*Ranges.back().first);
+  return isDescribedByReg(*Ranges.back().getBegin());
 }
 
 void DbgLabelInstrMap::addInstr(InlinedEntity Label, const MachineInstr &MI) {
@@ -304,9 +309,9 @@ LLVM_DUMP_METHOD void DbgValueHistoryMap::dump() const {
     dbgs() << " --\n";
 
     for (const InstrRange &Range : Ranges) {
-      dbgs() << "   Begin: " << *Range.first;
-      if (Range.second)
-        dbgs() << "   End  : " << *Range.second;
+      dbgs() << "   Begin: " << *Range.getBegin();
+      if (Range.getEnd())
+        dbgs() << "   End  : " << *Range.getEnd();
       dbgs() << "\n";
     }
   }

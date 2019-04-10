@@ -1159,8 +1159,8 @@ void CodeViewDebug::calculateRanges(
 
   // Calculate the definition ranges.
   for (auto I = Ranges.begin(), E = Ranges.end(); I != E; ++I) {
-    const InsnRange &Range = *I;
-    const MachineInstr *DVInst = Range.first;
+    const auto &Range = *I;
+    const MachineInstr *DVInst = Range.getBegin();
     assert(DVInst->isDebugValue() && "Invalid History entry");
     // FIXME: Find a way to represent constant variables, since they are
     // relatively common.
@@ -1215,18 +1215,18 @@ void CodeViewDebug::calculateRanges(
     }
 
     // Compute the label range.
-    const MCSymbol *Begin = getLabelBeforeInsn(Range.first);
-    const MCSymbol *End = getLabelAfterInsn(Range.second);
+    const MCSymbol *Begin = getLabelBeforeInsn(Range.getBegin());
+    const MCSymbol *End = getLabelAfterInsn(Range.getEnd());
     if (!End) {
       // This range is valid until the next overlapping bitpiece. In the
       // common case, ranges will not be bitpieces, so they will overlap.
       auto J = std::next(I);
       const DIExpression *DIExpr = DVInst->getDebugExpression();
       while (J != E &&
-             !DIExpr->fragmentsOverlap(J->first->getDebugExpression()))
+             !DIExpr->fragmentsOverlap(J->getBegin()->getDebugExpression()))
         ++J;
       if (J != E)
-        End = getLabelBeforeInsn(J->first);
+        End = getLabelBeforeInsn(J->getBegin());
       else
         End = Asm->getFunctionEnd();
     }

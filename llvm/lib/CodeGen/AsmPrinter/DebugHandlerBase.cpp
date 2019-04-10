@@ -228,31 +228,32 @@ void DebugHandlerBase::beginFunction(const MachineFunction *MF) {
     // doing that violates the ranges that are calculated in the history map.
     // However, we currently do not emit debug values for constant arguments
     // directly at the start of the function, so this code is still useful.
-    const DILocalVariable *DIVar = Ranges.front().first->getDebugVariable();
+    const DILocalVariable *DIVar =
+        Ranges.front().getBegin()->getDebugVariable();
     if (DIVar->isParameter() &&
         getDISubprogram(DIVar->getScope())->describes(&MF->getFunction())) {
-      if (!IsDescribedByReg(Ranges.front().first))
-        LabelsBeforeInsn[Ranges.front().first] = Asm->getFunctionBegin();
-      if (Ranges.front().first->getDebugExpression()->isFragment()) {
+      if (!IsDescribedByReg(Ranges.front().getBegin()))
+        LabelsBeforeInsn[Ranges.front().getBegin()] = Asm->getFunctionBegin();
+      if (Ranges.front().getBegin()->getDebugExpression()->isFragment()) {
         // Mark all non-overlapping initial fragments.
         for (auto I = Ranges.begin(); I != Ranges.end(); ++I) {
-          const DIExpression *Fragment = I->first->getDebugExpression();
+          const DIExpression *Fragment = I->getBegin()->getDebugExpression();
           if (std::any_of(Ranges.begin(), I,
                           [&](DbgValueHistoryMap::InstrRange Pred) {
                             return Fragment->fragmentsOverlap(
-                                Pred.first->getDebugExpression());
+                                Pred.getBegin()->getDebugExpression());
                           }))
             break;
-          if (!IsDescribedByReg(I->first))
-            LabelsBeforeInsn[I->first] = Asm->getFunctionBegin();
+          if (!IsDescribedByReg(I->getBegin()))
+            LabelsBeforeInsn[I->getBegin()] = Asm->getFunctionBegin();
         }
       }
     }
 
     for (const auto &Range : Ranges) {
-      requestLabelBeforeInsn(Range.first);
-      if (Range.second)
-        requestLabelAfterInsn(Range.second);
+      requestLabelBeforeInsn(Range.getBegin());
+      if (Range.getEnd())
+        requestLabelAfterInsn(Range.getEnd());
     }
   }
 
