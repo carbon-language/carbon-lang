@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __PSTL_glue_numeric_impl_H
-#define __PSTL_glue_numeric_impl_H
+#ifndef _PSTL_GLUE_NUMERIC_IMPL_H
+#define _PSTL_GLUE_NUMERIC_IMPL_H
 
 #include <functional>
 
@@ -222,4 +222,4 @@ adjacent_difference(_ExecutionPolicy&& __exec, _ForwardIterator1 __first, _Forwa
 
 } // namespace std
 
-#endif /* __PSTL_glue_numeric_impl_H_ */
+#endif /* _PSTL_GLUE_NUMERIC_IMPL_H_ */
