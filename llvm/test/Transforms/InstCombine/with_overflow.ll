@@ -544,8 +544,9 @@ define { i8, i1 } @uadd_always_overflow(i8 %x) nounwind {
 define { i8, i1 } @usub_always_overflow(i8 %x) nounwind {
 ; CHECK-LABEL: @usub_always_overflow(
 ; CHECK-NEXT:    [[Y:%.*]] = or i8 [[X:%.*]], 64
-; CHECK-NEXT:    [[A:%.*]] = call { i8, i1 } @llvm.usub.with.overflow.i8(i8 63, i8 [[Y]])
-; CHECK-NEXT:    ret { i8, i1 } [[A]]
+; CHECK-NEXT:    [[A:%.*]] = sub nsw i8 63, [[Y]]
+; CHECK-NEXT:    [[TMP1:%.*]] = insertvalue { i8, i1 } { i8 undef, i1 true }, i8 [[A]], 0
+; CHECK-NEXT:    ret { i8, i1 } [[TMP1]]
 ;
   %y = or i8 %x, 64
   %a = call { i8, i1 } @llvm.usub.with.overflow.i8(i8 63, i8 %y)
