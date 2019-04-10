@@ -227,7 +227,7 @@ __pattern_walk3(_ExecutionPolicy&&, _RandomAccessIterator1, _RandomAccessIterato
 
 template <class _ForwardIterator1, class _ForwardIterator2, class _BinaryPredicate>
 bool __brick_equal(_ForwardIterator1, _ForwardIterator1, _ForwardIterator2, _BinaryPredicate,
-                   /* IsVector = */ std::false_type) noexcept;
+                   /* is_vector = */ std::false_type) noexcept;
 
 template <class _RandomAccessIterator1, class _RandomAccessIterator2, class _BinaryPredicate>
 bool __brick_equal(_RandomAccessIterator1, _RandomAccessIterator1, _RandomAccessIterator2, _BinaryPredicate,
@@ -237,16 +237,36 @@ template <class _ExecutionPolicy, class _ForwardIterator1, class _ForwardIterato
           class _IsVector>
 bool
 __pattern_equal(_ExecutionPolicy&&, _ForwardIterator1, _ForwardIterator1, _ForwardIterator2, _BinaryPredicate,
-                _IsVector,
-                /* is_parallel = */ std::false_type) noexcept;
+                _IsVector, /* is_parallel = */ std::false_type) noexcept;
 
 #if __PSTL_USE_PAR_POLICIES
 template <class _ExecutionPolicy, class _RandomAccessIterator1, class _RandomAccessIterator2, class _BinaryPredicate,
           class _IsVector>
 bool
 __pattern_equal(_ExecutionPolicy&&, _RandomAccessIterator1, _RandomAccessIterator1, _RandomAccessIterator2,
-                _BinaryPredicate, _IsVector,
-                /*is_parallel=*/std::true_type);
+                _BinaryPredicate, _IsVector, /* is_parallel = */ std::true_type);
+#endif
+
+template <class _ForwardIterator1, class _ForwardIterator2, class _BinaryPredicate>
+bool __brick_equal(_ForwardIterator1, _ForwardIterator1, _ForwardIterator2, _ForwardIterator2, _BinaryPredicate,
+                   /* is_vector = */ std::false_type) noexcept;
+
+template <class _RandomAccessIterator1, class _RandomAccessIterator2, class _BinaryPredicate>
+bool __brick_equal(_RandomAccessIterator1, _RandomAccessIterator1, _RandomAccessIterator2, _RandomAccessIterator2,
+                   _BinaryPredicate, /* is_vector = */ std::true_type) noexcept;
+
+template <class _ExecutionPolicy, class _ForwardIterator1, class _ForwardIterator2, class _BinaryPredicate,
+          class _IsVector>
+bool
+__pattern_equal(_ExecutionPolicy&&, _ForwardIterator1, _ForwardIterator1, _ForwardIterator2, _ForwardIterator2,
+                _BinaryPredicate, _IsVector, /* is_parallel = */ std::false_type) noexcept;
+
+#if __PSTL_USE_PAR_POLICIES
+template <class _ExecutionPolicy, class _RandomAccessIterator1, class _RandomAccessIterator2, class _BinaryPredicate,
+          class _IsVector>
+bool
+__pattern_equal(_ExecutionPolicy&&, _RandomAccessIterator1, _RandomAccessIterator1, _RandomAccessIterator2,
+                _RandomAccessIterator2, _BinaryPredicate, _IsVector, /* is_parallel = */ std::true_type);
 #endif
 
 //------------------------------------------------------------------------
