@@ -14,6 +14,12 @@
 #   return local[1];
 # }
 #
+# int test2() {
+#   int local[3] = {global1, global2, global3};
+#   ext3(local[0], local[1], local[2]);
+#   return local[0];
+# }
+#
 # Compiled using -O1 -g.
 
 --- |
@@ -36,6 +42,21 @@
   }
 
   declare void @ext2(i32, i32)
+
+  ; Function Attrs: nounwind uwtable
+  define i32 @test2() #0 !dbg !18 {
+  entry:
+    %0 = load i32, i32* @global1, align 4, !dbg !20
+    call void @llvm.dbg.value(metadata i32 %0, metadata !19, metadata !DIExpression(DW_OP_LLVM_fragment, 0, 32)), !dbg !20
+    %1 = load i32, i32* @global2, align 4, !dbg !20
+    call void @llvm.dbg.value(metadata i32 %1, metadata !19, metadata !DIExpression(DW_OP_LLVM_fragment, 32, 32)), !dbg !20
+    %2 = load i32, i32* @global3, align 4, !dbg !20
+    call void @llvm.dbg.value(metadata i32 %2, metadata !19, metadata !DIExpression(DW_OP_LLVM_fragment, 64, 32)), !dbg !20
+    tail call void @ext3(i32 %0, i32 %1, i32 %2) #3, !dbg !20
+    ret i32 %0, !dbg !21
+  }
+
+  declare void @ext3(i32, i32, i32)
 
   ; Function Attrs: nounwind readnone speculatable
   declare void @llvm.dbg.value(metadata, metadata, metadata) #1
@@ -64,6 +85,10 @@
   !15 = !DISubrange(count: 3)
   !16 = !DILocation(line: 8, scope: !8)
   !17 = !DILocation(line: 9, scope: !8)
+  !18 = distinct !DISubprogram(name: "test2", scope: !2, file: !2, line: 7, type: !9, scopeLine: 7, spFlags: DISPFlagDefinition | DISPFlagOptimized, unit: !1, retainedNodes: !11)
+  !19 = !DILocalVariable(name: "local", scope: !18, file: !2, line: 8, type: !13)
+  !20 = !DILocation(line: 15, scope: !18)
+  !21 = !DILocation(line: 16, scope: !18)
 
 ...
 ---
@@ -90,6 +115,40 @@ body:             |
 # CHECK-NEXT: #DEBUG_VALUE: test1:local <- [DW_OP_LLVM_fragment 0 32] $edi
 # CHECK:         callq   ext2
 # CHECK-NEXT: .Ltmp2:
+
+...
+---
+name:            test2
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $rbx
+
+    frame-setup PUSH64r killed $rbx, implicit-def $rsp, implicit $rsp, debug-location !20
+    renamable $ebx = MOV32rm $rip, 1, $noreg, @global1, $noreg, debug-location !20 :: (dereferenceable load 4 from @global1)
+    DBG_VALUE $ebx, $noreg, !19, !DIExpression(DW_OP_LLVM_fragment, 0, 32), debug-location !20
+    renamable $esi = MOV32rm $rip, 1, $noreg, @global2, $noreg, debug-location !20 :: (dereferenceable load 4 from @global2)
+    DBG_VALUE $esi, $noreg, !19, !DIExpression(DW_OP_LLVM_fragment, 32, 32), debug-location !20
+    renamable $edx = MOV32rm $rip, 1, $noreg, @global3, $noreg, debug-location !20 :: (dereferenceable load 4 from @global3)
+    DBG_VALUE $edx, $noreg, !19, !DIExpression(DW_OP_LLVM_fragment, 64, 32), debug-location !20
+    $edi = MOV32rr $ebx, debug-location !20
+    CALL64pcrel32 @ext3, csr_64, implicit $rsp, implicit $ssp, implicit killed $edi, implicit $esi, implicit $edx, implicit-def $rsp, implicit-def $ssp, debug-location !20
+    $eax = MOV32rr killed $ebx, debug-location !20
+    $rbx = frame-destroy POP64r implicit-def $rsp, implicit $rsp, debug-location !20
+    RETQ killed $eax, debug-location !21
+
+...
+
+# CHECK: .Ltmp4:
+# CHECK-NEXT: #DEBUG_VALUE: test2:local <- [DW_OP_LLVM_fragment 0 32] $ebx
+# CHECK: .Ltmp5:
+# CHECK-NEXT: #DEBUG_VALUE: test2:local <- [DW_OP_LLVM_fragment 32 32] $esi
+# CHECK: .Ltmp6:
+# CHECK-NEXT: #DEBUG_VALUE: test2:local <- [DW_OP_LLVM_fragment 64 32] $edx
+# CHECK:         callq   ext3
+# CHECK-NEXT: .Ltmp7:
+# CHECK:         popq    %rbx
+# CHECK-NEXT: .Ltmp8:
 
 #### Location list for test1:local.
 
@@ -134,3 +193,46 @@ body:             |
 # CHECK-NEXT: .quad   0
 # CHECK-NEXT: .quad   0
 
+#### Location list for test2:local.
+
+# Verify that the debug values that are described by $edi and $edx are
+# considered clobbered by the call to ext3(), leaving a location list entry
+# after the call where the first 32 bits are still described by $ebx.
+# That location list entry is valid until the restore of the register.
+
+# CHECK: .Ldebug_loc1:
+# CHECK-NEXT: .quad   .Ltmp4-.Lfunc_begin0
+# CHECK-NEXT: .quad   .Ltmp5-.Lfunc_begin0
+# CHECK-NEXT: .short  3                       # Loc expr size
+# CHECK-NEXT: .byte   83                      # super-register DW_OP_reg3
+# CHECK-NEXT: .byte   147                     # DW_OP_piece
+# CHECK-NEXT: .byte   4                       # 4
+# CHECK-NEXT: .quad   .Ltmp5-.Lfunc_begin0
+# CHECK-NEXT: .quad   .Ltmp6-.Lfunc_begin0
+# CHECK-NEXT: .short  6                       # Loc expr size
+# CHECK-NEXT: .byte   83                      # super-register DW_OP_reg3
+# CHECK-NEXT: .byte   147                     # DW_OP_piece
+# CHECK-NEXT: .byte   4                       # 4
+# CHECK-NEXT: .byte   84                      # super-register DW_OP_reg4
+# CHECK-NEXT: .byte   147                     # DW_OP_piece
+# CHECK-NEXT: .byte   4                       # 4
+# CHECK-NEXT: .quad   .Ltmp6-.Lfunc_begin0
+# CHECK-NEXT: .quad   .Ltmp7-.Lfunc_begin0
+# CHECK-NEXT: .short  9                       # Loc expr size
+# CHECK-NEXT: .byte   83                      # super-register DW_OP_reg3
+# CHECK-NEXT: .byte   147                     # DW_OP_piece
+# CHECK-NEXT: .byte   4                       # 4
+# CHECK-NEXT: .byte   84                      # super-register DW_OP_reg4
+# CHECK-NEXT: .byte   147                     # DW_OP_piece
+# CHECK-NEXT: .byte   4                       # 4
+# CHECK-NEXT: .byte   81                      # super-register DW_OP_reg1
+# CHECK-NEXT: .byte   147                     # DW_OP_piece
+# CHECK-NEXT: .byte   4                       # 4
+# CHECK-NEXT: .quad   .Ltmp7-.Lfunc_begin0
+# CHECK-NEXT: .quad   .Ltmp8-.Lfunc_begin0
+# CHECK-NEXT: .short  3                       # Loc expr size
+# CHECK-NEXT: .byte   83                      # super-register DW_OP_reg3
+# CHECK-NEXT: .byte   147                     # DW_OP_piece
+# CHECK-NEXT: .byte   4                       # 4
+# CHECK-NEXT: .quad   0
+# CHECK-NEXT: .quad   0

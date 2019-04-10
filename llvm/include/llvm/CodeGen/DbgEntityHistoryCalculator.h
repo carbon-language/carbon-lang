@@ -83,10 +83,6 @@ public:
                      EntryIndex &NewIndex);
   EntryIndex startClobber(InlinedEntity Var, const MachineInstr &MI);
 
-  // Returns register currently describing @Var. If @Var is currently
-  // unaccessible or is not described by a register, returns 0.
-  unsigned getRegisterForVar(InlinedEntity Var) const;
-
   Entry &getEntry(InlinedEntity Var, EntryIndex Index) {
     auto &Entries = VarEntries[Var];
     return Entries[Index];

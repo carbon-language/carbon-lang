@@ -69,6 +69,10 @@ bool DbgValueHistoryMap::startDbgValue(InlinedEntity Var,
 EntryIndex DbgValueHistoryMap::startClobber(InlinedEntity Var,
                                             const MachineInstr &MI) {
   auto &Entries = VarEntries[Var];
+  // If an instruction clobbers multiple registers that the variable is
+  // described by, then we may have already created a clobbering instruction.
+  if (Entries.back().isClobber() && Entries.back().getInstr() == &MI)
+    return Entries.size() - 1;
   Entries.emplace_back(&MI, Entry::Clobber);
   return Entries.size() - 1;
 }
@@ -79,18 +83,6 @@ void DbgValueHistoryMap::Entry::endEntry(EntryIndex Index) {
   assert(isDbgValue() && "Setting end index for non-debug value");
   assert(!isClosed() && "End index has already been set");
   EndIndex = Index;
-}
-
-unsigned DbgValueHistoryMap::getRegisterForVar(InlinedEntity Var) const {
-  const auto &I = VarEntries.find(Var);
-  if (I == VarEntries.end())
-    return 0;
-  const auto &Entries = I->second;
-  if (Entries.empty() || Entries.back().isClosed())
-    return 0;
-  if (Entries.back().isClobber())
-    return 0;
-  return isDescribedByReg(*Entries.back().getInstr());
 }
 
 void DbgLabelInstrMap::addInstr(InlinedEntity Label, const MachineInstr &MI) {
@@ -135,18 +127,28 @@ static void addRegDescribedVar(RegDescribedVarsMap &RegVars, unsigned RegNo,
   VarSet.push_back(Var);
 }
 
+/// Create a clobbering entry and end all open debug value entries
+/// for \p Var that are described by \p RegNo using that entry.
 static void clobberRegEntries(InlinedEntity Var, unsigned RegNo,
                               const MachineInstr &ClobberingInstr,
                               DbgValueEntriesMap &LiveEntries,
                               DbgValueHistoryMap &HistMap) {
   EntryIndex ClobberIndex = HistMap.startClobber(Var, ClobberingInstr);
 
-  // TODO: Close all preceding live entries that are clobbered by this
-  // instruction.
-  EntryIndex ValueIndex = ClobberIndex - 1;
-  auto &ValueEntry = HistMap.getEntry(Var, ValueIndex);
-  ValueEntry.endEntry(ClobberIndex);
-  LiveEntries[Var].erase(ValueIndex);
+  // Close all entries whose values are described by the register.
+  SmallVector<EntryIndex, 4> IndicesToErase;
+  for (auto Index : LiveEntries[Var]) {
+    auto &Entry = HistMap.getEntry(Var, Index);
+    assert(Entry.isDbgValue() && "Not a DBG_VALUE in LiveEntries");
+    if (isDescribedByReg(*Entry.getInstr()) == RegNo) {
+      IndicesToErase.push_back(Index);
+      Entry.endEntry(ClobberIndex);
+    }
+  }
+
+  // Drop all entries that have ended.
+  for (auto Index : IndicesToErase)
+    LiveEntries[Var].erase(Index);
 }
 
 /// Add a new debug value for \p Var. Closes all overlapping debug values.
@@ -154,14 +156,10 @@ static void handleNewDebugValue(InlinedEntity Var, const MachineInstr &DV,
                                 RegDescribedVarsMap &RegVars,
                                 DbgValueEntriesMap &LiveEntries,
                                 DbgValueHistoryMap &HistMap) {
-  // TODO: We should track all registers which this variable is currently
-  // described by.
-
-  if (unsigned PrevReg = HistMap.getRegisterForVar(Var))
-    dropRegDescribedVar(RegVars, PrevReg, Var);
-
   EntryIndex NewIndex;
   if (HistMap.startDbgValue(Var, DV, NewIndex)) {
+    SmallDenseMap<unsigned, bool, 4> TrackedRegs;
+
     // If we have created a new debug value entry, close all preceding
     // live entries that overlap.
     SmallVector<EntryIndex, 4> IndicesToErase;
@@ -170,19 +168,34 @@ static void handleNewDebugValue(InlinedEntity Var, const MachineInstr &DV,
       auto &Entry = HistMap.getEntry(Var, Index);
       assert(Entry.isDbgValue() && "Not a DBG_VALUE in LiveEntries");
       const MachineInstr &DV = *Entry.getInstr();
-      if (DIExpr->fragmentsOverlap(DV.getDebugExpression())) {
+      bool Overlaps = DIExpr->fragmentsOverlap(DV.getDebugExpression());
+      if (Overlaps) {
         IndicesToErase.push_back(Index);
         Entry.endEntry(NewIndex);
       }
+      if (unsigned Reg = isDescribedByReg(DV))
+        TrackedRegs[Reg] |= !Overlaps;
     }
+
+    // If the new debug value is described by a register, add tracking of
+    // that register if it is not already tracked.
+    if (unsigned NewReg = isDescribedByReg(DV)) {
+      if (!TrackedRegs.count(NewReg))
+        addRegDescribedVar(RegVars, NewReg, Var);
+      LiveEntries[Var].insert(NewIndex);
+      TrackedRegs[NewReg] = true;
+    }
+
+    // Drop tracking of registers that are no longer used.
+    for (auto I : TrackedRegs)
+      if (!I.second)
+        dropRegDescribedVar(RegVars, I.first, Var);
+
     // Drop all entries that have ended, and mark the new entry as live.
     for (auto Index : IndicesToErase)
       LiveEntries[Var].erase(Index);
     LiveEntries[Var].insert(NewIndex);
   }
-
-  if (unsigned NewReg = isDescribedByReg(DV))
-    addRegDescribedVar(RegVars, NewReg, Var);
 }
 
 // Terminate the location range for variables described by register at
