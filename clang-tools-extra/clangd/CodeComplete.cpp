@@ -581,7 +581,7 @@ getQueryScopes(CodeCompletionContext &CCContext, const Sema &CCSema,
     return {EnclosingAtFront, Opts.AllScopes};
   }
   // Case 3: sema saw and resolved a scope qualifier.
-  if (Specifier && SemaSpecifier->isValid())
+  if (SemaSpecifier && SemaSpecifier->isValid())
     return {Scopes.scopesForIndexQuery(), false};
 
   // Case 4: There was a qualifier, and Sema didn't resolve it.
