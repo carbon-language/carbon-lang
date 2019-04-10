@@ -555,6 +555,16 @@ TEST(CompletionTest, IncludeInsertionPreprocessorIntegrationTests) {
                              {Sym});
   EXPECT_THAT(Results.Completions,
               ElementsAre(AllOf(Named("X"), InsertInclude("\"bar.h\""))));
+  // Can be disabled via option.
+  CodeCompleteOptions NoInsertion;
+  NoInsertion.InsertIncludes = CodeCompleteOptions::NeverInsert;
+  Results = completions(Server,
+                             R"cpp(
+          int main() { ns::^ }
+      )cpp",
+                             {Sym}, NoInsertion);
+  EXPECT_THAT(Results.Completions,
+              ElementsAre(AllOf(Named("X"), Not(InsertInclude()))));
   // Duplicate based on inclusions in preamble.
   Results = completions(Server,
                         R"cpp(

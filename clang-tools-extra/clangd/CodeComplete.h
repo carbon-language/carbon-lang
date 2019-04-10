@@ -68,6 +68,11 @@ struct CodeCompleteOptions {
   /// If more results are available, we set CompletionList.isIncomplete.
   size_t Limit = 0;
 
+  enum IncludeInsertion {
+    IWYU,
+    NeverInsert,
+  } InsertIncludes = IncludeInsertion::IWYU;
+
   /// A visual indicator to prepend to the completion label to indicate whether
   /// completion result would trigger an #include insertion or not.
   struct IncludeInsertionIndicator {

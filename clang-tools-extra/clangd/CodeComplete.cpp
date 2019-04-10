@@ -191,7 +191,9 @@ struct CompletionCandidate {
 
   // Returns a token identifying the overload set this is part of.
   // 0 indicates it's not part of any overload set.
-  size_t overloadSet() const {
+  size_t overloadSet(const CodeCompleteOptions &Opts) const {
+    if (!Opts.BundleOverloads)
+      return 0;
     llvm::SmallString<256> Scratch;
     if (IndexResult) {
       switch (IndexResult->SymInfo.Kind) {
@@ -208,7 +210,7 @@ struct CompletionCandidate {
         // This could break #include insertion.
         return llvm::hash_combine(
             (IndexResult->Scope + IndexResult->Name).toStringRef(Scratch),
-            headerToInsertIfAllowed().getValueOr(""));
+            headerToInsertIfAllowed(Opts).getValueOr(""));
       default:
         return 0;
       }
@@ -223,12 +225,14 @@ struct CompletionCandidate {
       D->printQualifiedName(OS);
     }
     return llvm::hash_combine(Scratch,
-                              headerToInsertIfAllowed().getValueOr(""));
+                              headerToInsertIfAllowed(Opts).getValueOr(""));
   }
 
   // The best header to include if include insertion is allowed.
-  llvm::Optional<llvm::StringRef> headerToInsertIfAllowed() const {
-    if (RankedIncludeHeaders.empty())
+  llvm::Optional<llvm::StringRef>
+  headerToInsertIfAllowed(const CodeCompleteOptions &Opts) const {
+    if (Opts.InsertIncludes == CodeCompleteOptions::NeverInsert ||
+        RankedIncludeHeaders.empty())
       return None;
     if (SemaResult && SemaResult->Declaration) {
       // Avoid inserting new #include if the declaration is found in the current
@@ -338,7 +342,7 @@ struct CodeCompletionBuilder {
           Includes.calculateIncludePath(*ResolvedDeclaring, *ResolvedInserted),
           Includes.shouldInsertInclude(*ResolvedDeclaring, *ResolvedInserted));
     };
-    bool ShouldInsert = C.headerToInsertIfAllowed().hasValue();
+    bool ShouldInsert = C.headerToInsertIfAllowed(Opts).hasValue();
     // Calculate include paths and edits for all possible headers.
     for (const auto &Inc : C.RankedIncludeHeaders) {
       if (auto ToInclude = Inserted(Inc)) {
@@ -1373,7 +1377,7 @@ private:
       if (C.IndexResult)
         C.RankedIncludeHeaders = getRankedIncludes(*C.IndexResult);
       C.Name = IndexResult ? IndexResult->Name : Recorder->getName(*SemaResult);
-      if (auto OverloadSet = Opts.BundleOverloads ? C.overloadSet() : 0) {
+      if (auto OverloadSet = C.overloadSet(Opts)) {
         auto Ret = BundleLookup.try_emplace(OverloadSet, Bundles.size());
         if (Ret.second)
           Bundles.emplace_back();
