@@ -568,8 +568,9 @@ define { i8, i1 } @sadd_always_overflow(i8 %x) nounwind {
 ; CHECK-LABEL: @sadd_always_overflow(
 ; CHECK-NEXT:    [[C:%.*]] = icmp sgt i8 [[X:%.*]], 100
 ; CHECK-NEXT:    [[Y:%.*]] = select i1 [[C]], i8 [[X]], i8 100
-; CHECK-NEXT:    [[A:%.*]] = call { i8, i1 } @llvm.sadd.with.overflow.i8(i8 [[Y]], i8 28)
-; CHECK-NEXT:    ret { i8, i1 } [[A]]
+; CHECK-NEXT:    [[A:%.*]] = add nuw i8 [[Y]], 28
+; CHECK-NEXT:    [[TMP1:%.*]] = insertvalue { i8, i1 } { i8 undef, i1 true }, i8 [[A]], 0
+; CHECK-NEXT:    ret { i8, i1 } [[TMP1]]
 ;
   %c = icmp sgt i8 %x, 100
   %y = select i1 %c, i8 %x, i8 100
