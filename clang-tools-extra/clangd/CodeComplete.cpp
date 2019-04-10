@@ -37,6 +37,7 @@
 #include "index/Symbol.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclBase.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Format/Format.h"
@@ -1110,14 +1111,12 @@ llvm::Optional<FuzzyFindRequest>
 speculativeFuzzyFindRequestForCompletion(FuzzyFindRequest CachedReq,
                                          PathRef File, llvm::StringRef Content,
                                          Position Pos) {
-  auto Filter = speculateCompletionFilter(Content, Pos);
-  if (!Filter) {
-    elog("Failed to speculate filter text for code completion at Pos "
-         "{0}:{1}: {2}",
-         Pos.line, Pos.character, Filter.takeError());
-    return None;
+  auto Offset = positionToOffset(Content, Pos);
+  if (!Offset) {
+    elog("No speculative filter: bad offset {0} in {1}", Pos, File);
+    return llvm::None;
   }
-  CachedReq.Query = *Filter;
+  CachedReq.Query = guessCompletionPrefix(Content, *Offset).Name;
   return CachedReq;
 }
 
@@ -1537,29 +1536,26 @@ clang::CodeCompleteOptions CodeCompleteOptions::getClangCompleteOpts() const {
   return Result;
 }
 
-llvm::Expected<llvm::StringRef>
-speculateCompletionFilter(llvm::StringRef Content, Position Pos) {
-  auto Offset = positionToOffset(Content, Pos);
-  if (!Offset)
-    return llvm::make_error<llvm::StringError>(
-        "Failed to convert position to offset in content.",
-        llvm::inconvertibleErrorCode());
-  if (*Offset == 0)
-    return "";
+CompletionPrefix
+guessCompletionPrefix(llvm::StringRef Content, unsigned Offset) {
+  assert(Offset <= Content.size());
+  StringRef Rest = Content.take_front(Offset);
+  CompletionPrefix Result;
 
-  // Start from the character before the cursor.
-  int St = *Offset - 1;
-  // FIXME(ioeric): consider UTF characters?
-  auto IsValidIdentifierChar = [](char C) {
-    return ((C >= 'a' && C <= 'z') || (C >= 'A' && C <= 'Z') ||
-            (C >= '0' && C <= '9') || (C == '_'));
-  };
-  size_t Len = 0;
-  for (; (St >= 0) && IsValidIdentifierChar(Content[St]); --St, ++Len) {
-  }
-  if (Len > 0)
-    St++; // Shift to the first valid character.
-  return Content.substr(St, Len);
+  // Consume the unqualified name. We only handle ASCII characters.
+  // isIdentifierBody will let us match "0invalid", but we don't mind.
+  while (!Rest.empty() && isIdentifierBody(Rest.back()))
+    Rest = Rest.drop_back();
+  Result.Name = Content.slice(Rest.size(), Offset);
+
+  // Consume qualifiers.
+  while (Rest.consume_back("::") && !Rest.endswith(":")) // reject ::::
+    while (!Rest.empty() && isIdentifierBody(Rest.back()))
+      Rest = Rest.drop_back();
+  Result.Qualifier =
+      Content.slice(Rest.size(), Result.Name.begin() - Content.begin());
+
+  return Result;
 }
 
 CodeCompleteResult
