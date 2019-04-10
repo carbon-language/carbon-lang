@@ -110,7 +110,7 @@ bool RewriteMutator::Pre(parser::ExecutionPart &x) {
 // name had appeared with NML=.
 template<typename READ_OR_WRITE>
 void FixMisparsedUntaggedNamelistName(READ_OR_WRITE &x) {
-  if (x.format.has_value()) {
+  if (x.iounit.has_value() && x.format.has_value()) {
     if (auto *charExpr{
             std::get_if<parser::DefaultCharExpr>(&x.format.value().u)}) {
       parser::Expr &expr{charExpr->thing.value()};

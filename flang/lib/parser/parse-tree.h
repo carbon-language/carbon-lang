@@ -2610,10 +2610,11 @@ struct ReadStmt {
       std::list<IoControlSpec> &&cs, std::list<InputItem> &&its)
     : iounit{std::move(i)}, format{std::move(f)}, controls(std::move(cs)),
       items(std::move(its)) {}
-  std::optional<IoUnit> iounit;  // if first in controls without UNIT=
-  std::optional<Format> format;  // if second in controls without FMT=, or
+  std::optional<IoUnit> iounit;  // if first in controls without UNIT= &/or
+                                 // followed by untagged format/namelist
+  std::optional<Format> format;  // if second in controls without FMT=/NML=, or
                                  // no (io-control-spec-list); might be
-                                 // an untagged namelist group name, too
+                                 // an untagged namelist group name
   std::list<IoControlSpec> controls;
   std::list<InputItem> items;
 };
@@ -2631,8 +2632,9 @@ struct WriteStmt {
       std::list<IoControlSpec> &&cs, std::list<OutputItem> &&its)
     : iounit{std::move(i)}, format{std::move(f)}, controls(std::move(cs)),
       items(std::move(its)) {}
-  std::optional<IoUnit> iounit;  // if first in controls without UNIT=
-  std::optional<Format> format;  // if second in controls without FMT=;
+  std::optional<IoUnit> iounit;  // if first in controls without UNIT= &/or
+                                 // followed by untagged format/namelist
+  std::optional<Format> format;  // if second in controls without FMT=/NML=;
                                  // might be an untagged namelist group, too
   std::list<IoControlSpec> controls;
   std::list<OutputItem> items;
