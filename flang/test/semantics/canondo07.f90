@@ -16,7 +16,7 @@
 ! See R1131 and C1131
 
 ! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
-! CHECK: Obsolete construct not allowed.  DO statements must terminate with END DO or CONTINUE
+! CHECK: A DO loop should terminate with END DO or CONTINUE
 
 program endDo
   do 10 i = 1, 5
