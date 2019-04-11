@@ -1578,6 +1578,18 @@ TEST_F(ConstantRangeTest, UnsignedSubOverflowExhaustive) {
       });
 }
 
+TEST_F(ConstantRangeTest, UnsignedMulOverflowExhaustive) {
+  TestOverflowExhaustive(
+      [](const APInt &N1, const APInt &N2) {
+        bool Overflow;
+        (void) N1.umul_ov(N2, Overflow);
+        return Overflow;
+      },
+      [](const ConstantRange &CR1, const ConstantRange &CR2) {
+        return CR1.unsignedMulMayOverflow(CR2);
+      });
+}
+
 TEST_F(ConstantRangeTest, SignedAddOverflowExhaustive) {
   TestOverflowExhaustive(
       [](const APInt &N1, const APInt &N2) {
