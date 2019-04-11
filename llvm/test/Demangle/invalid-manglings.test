@@ -94,3 +94,8 @@
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ??8@8
 ; CHECK-NEXT: error: Invalid mangled name
+
+?B@?$?K$H?
+; CHECK-EMPTY:
+; CHECK-NEXT: ?B@?$?K$H?
+; CHECK-NEXT: error: Invalid mangled name
