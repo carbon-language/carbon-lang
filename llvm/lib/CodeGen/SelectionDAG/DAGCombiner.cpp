@@ -18675,6 +18675,61 @@ SDValue DAGCombiner::XformToShuffleWithZero(SDNode *N) {
   return SDValue();
 }
 
+/// If a vector binop is performed on build vector operands that only have one
+/// non-undef element, it may be profitable to extract, scalarize, and insert.
+static SDValue scalarizeBinOpOfBuildVectors(SDNode *N, SelectionDAG &DAG) {
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  if (N0.getOpcode() != ISD::BUILD_VECTOR || N0.getOpcode() != N1.getOpcode())
+    return SDValue();
+
+  // Return the index of exactly one scalar element in an otherwise undefined
+  // build vector.
+  auto getScalarIndex = [](SDValue V) {
+    int NotUndefIndex = -1;
+    for (unsigned i = 0, e = V.getNumOperands(); i != e; ++i) {
+      // Ignore undef elements.
+      if (V.getOperand(i).isUndef())
+        continue;
+      // There can be only one.
+      if (NotUndefIndex >= 0)
+        return -1;
+      // This might be the only non-undef operand.
+      NotUndefIndex = i;
+    }
+    return NotUndefIndex;
+  };
+  int N0Index = getScalarIndex(N0);
+  if (N0Index == -1)
+    return SDValue();
+  int N1Index = getScalarIndex(N1);
+  if (N1Index == -1)
+    return SDValue();
+
+  SDValue X = N0.getOperand(N0Index);
+  SDValue Y = N1.getOperand(N1Index);
+  EVT ScalarVT = X.getValueType();
+  if (ScalarVT != Y.getValueType())
+    return SDValue();
+
+  // TODO: Remove/replace the extract cost check? If the elements are available
+  //       as scalars, then there may be no extract cost. Should we ask if
+  //       inserting a scalar back into a vector is cheap instead?
+  EVT VT = N->getValueType(0);
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  if (N0Index != N1Index || !TLI.isExtractVecEltCheap(VT, N0Index) ||
+      !TLI.isOperationLegalOrCustom(N->getOpcode(), ScalarVT))
+    return SDValue();
+
+  // bo (build_vec ...undef, x, undef...), (build_vec ...undef, y, undef...) -->
+  // build_vec ...undef, (bo x, y), undef...
+  SDValue ScalarBO = DAG.getNode(N->getOpcode(), SDLoc(N), ScalarVT, X, Y,
+                                 N->getFlags());
+  SmallVector<SDValue, 8> Ops(N0.getNumOperands(), DAG.getUNDEF(ScalarVT));
+  Ops[N0Index] = ScalarBO;
+  return DAG.getBuildVector(VT, SDLoc(N), Ops);
+}
+
 /// Visit a binary vector operation, like ADD.
 SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
   assert(N->getValueType(0).isVector() &&
@@ -18736,6 +18791,9 @@ SDValue DAGCombiner::SimplifyVBinOp(SDNode *N) {
       return DAG.getNode(ISD::INSERT_SUBVECTOR, DL, VT, VecC, NarrowBO, Z);
     }
   }
+
+  if (SDValue V = scalarizeBinOpOfBuildVectors(N, DAG))
+    return V;
 
   return SDValue();
 }
