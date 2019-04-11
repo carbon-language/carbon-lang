@@ -77,14 +77,13 @@ define void @fadd_64r(double* %loc, double %val) nounwind {
 ; X86-NOSSE-NEXT:    pushl %ebx
 ; X86-NOSSE-NEXT:    pushl %esi
 ; X86-NOSSE-NEXT:    andl $-8, %esp
-; X86-NOSSE-NEXT:    subl $16, %esp
+; X86-NOSSE-NEXT:    subl $24, %esp
 ; X86-NOSSE-NEXT:    movl 8(%ebp), %esi
-; X86-NOSSE-NEXT:    xorl %eax, %eax
-; X86-NOSSE-NEXT:    xorl %edx, %edx
-; X86-NOSSE-NEXT:    xorl %ecx, %ecx
-; X86-NOSSE-NEXT:    xorl %ebx, %ebx
-; X86-NOSSE-NEXT:    lock cmpxchg8b (%esi)
-; X86-NOSSE-NEXT:    movl %edx, {{[0-9]+}}(%esp)
+; X86-NOSSE-NEXT:    fildll (%esi)
+; X86-NOSSE-NEXT:    fistpll {{[0-9]+}}(%esp)
+; X86-NOSSE-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NOSSE-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X86-NOSSE-NEXT:    movl %ecx, {{[0-9]+}}(%esp)
 ; X86-NOSSE-NEXT:    movl %eax, {{[0-9]+}}(%esp)
 ; X86-NOSSE-NEXT:    fldl {{[0-9]+}}(%esp)
 ; X86-NOSSE-NEXT:    faddl 12(%ebp)
@@ -283,13 +282,12 @@ define void @fadd_64g() nounwind {
 ; X86-NOSSE-NEXT:    movl %esp, %ebp
 ; X86-NOSSE-NEXT:    pushl %ebx
 ; X86-NOSSE-NEXT:    andl $-8, %esp
-; X86-NOSSE-NEXT:    subl $24, %esp
-; X86-NOSSE-NEXT:    xorl %eax, %eax
-; X86-NOSSE-NEXT:    xorl %edx, %edx
-; X86-NOSSE-NEXT:    xorl %ecx, %ecx
-; X86-NOSSE-NEXT:    xorl %ebx, %ebx
-; X86-NOSSE-NEXT:    lock cmpxchg8b glob64
-; X86-NOSSE-NEXT:    movl %edx, {{[0-9]+}}(%esp)
+; X86-NOSSE-NEXT:    subl $32, %esp
+; X86-NOSSE-NEXT:    fildll glob64
+; X86-NOSSE-NEXT:    fistpll {{[0-9]+}}(%esp)
+; X86-NOSSE-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NOSSE-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X86-NOSSE-NEXT:    movl %ecx, {{[0-9]+}}(%esp)
 ; X86-NOSSE-NEXT:    movl %eax, {{[0-9]+}}(%esp)
 ; X86-NOSSE-NEXT:    fld1
 ; X86-NOSSE-NEXT:    faddl {{[0-9]+}}(%esp)
@@ -484,13 +482,12 @@ define void @fadd_64imm() nounwind {
 ; X86-NOSSE-NEXT:    movl %esp, %ebp
 ; X86-NOSSE-NEXT:    pushl %ebx
 ; X86-NOSSE-NEXT:    andl $-8, %esp
-; X86-NOSSE-NEXT:    subl $24, %esp
-; X86-NOSSE-NEXT:    xorl %eax, %eax
-; X86-NOSSE-NEXT:    xorl %edx, %edx
-; X86-NOSSE-NEXT:    xorl %ecx, %ecx
-; X86-NOSSE-NEXT:    xorl %ebx, %ebx
-; X86-NOSSE-NEXT:    lock cmpxchg8b -559038737
-; X86-NOSSE-NEXT:    movl %edx, {{[0-9]+}}(%esp)
+; X86-NOSSE-NEXT:    subl $32, %esp
+; X86-NOSSE-NEXT:    fildll -559038737
+; X86-NOSSE-NEXT:    fistpll {{[0-9]+}}(%esp)
+; X86-NOSSE-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NOSSE-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X86-NOSSE-NEXT:    movl %ecx, {{[0-9]+}}(%esp)
 ; X86-NOSSE-NEXT:    movl %eax, {{[0-9]+}}(%esp)
 ; X86-NOSSE-NEXT:    fld1
 ; X86-NOSSE-NEXT:    faddl {{[0-9]+}}(%esp)
@@ -691,13 +688,12 @@ define void @fadd_64stack() nounwind {
 ; X86-NOSSE-NEXT:    movl %esp, %ebp
 ; X86-NOSSE-NEXT:    pushl %ebx
 ; X86-NOSSE-NEXT:    andl $-8, %esp
-; X86-NOSSE-NEXT:    subl $32, %esp
-; X86-NOSSE-NEXT:    xorl %eax, %eax
-; X86-NOSSE-NEXT:    xorl %edx, %edx
-; X86-NOSSE-NEXT:    xorl %ecx, %ecx
-; X86-NOSSE-NEXT:    xorl %ebx, %ebx
-; X86-NOSSE-NEXT:    lock cmpxchg8b (%esp)
-; X86-NOSSE-NEXT:    movl %edx, {{[0-9]+}}(%esp)
+; X86-NOSSE-NEXT:    subl $40, %esp
+; X86-NOSSE-NEXT:    fildll (%esp)
+; X86-NOSSE-NEXT:    fistpll {{[0-9]+}}(%esp)
+; X86-NOSSE-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NOSSE-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X86-NOSSE-NEXT:    movl %ecx, {{[0-9]+}}(%esp)
 ; X86-NOSSE-NEXT:    movl %eax, {{[0-9]+}}(%esp)
 ; X86-NOSSE-NEXT:    fld1
 ; X86-NOSSE-NEXT:    faddl {{[0-9]+}}(%esp)
@@ -831,15 +827,14 @@ define void @fadd_array(i64* %arg, double %arg1, i64 %arg2) nounwind {
 ; X86-NOSSE-NEXT:    pushl %edi
 ; X86-NOSSE-NEXT:    pushl %esi
 ; X86-NOSSE-NEXT:    andl $-8, %esp
-; X86-NOSSE-NEXT:    subl $24, %esp
+; X86-NOSSE-NEXT:    subl $32, %esp
 ; X86-NOSSE-NEXT:    movl 20(%ebp), %esi
 ; X86-NOSSE-NEXT:    movl 8(%ebp), %edi
-; X86-NOSSE-NEXT:    xorl %eax, %eax
-; X86-NOSSE-NEXT:    xorl %edx, %edx
-; X86-NOSSE-NEXT:    xorl %ecx, %ecx
-; X86-NOSSE-NEXT:    xorl %ebx, %ebx
-; X86-NOSSE-NEXT:    lock cmpxchg8b (%edi,%esi,8)
-; X86-NOSSE-NEXT:    movl %edx, {{[0-9]+}}(%esp)
+; X86-NOSSE-NEXT:    fildll (%edi,%esi,8)
+; X86-NOSSE-NEXT:    fistpll {{[0-9]+}}(%esp)
+; X86-NOSSE-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NOSSE-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X86-NOSSE-NEXT:    movl %ecx, {{[0-9]+}}(%esp)
 ; X86-NOSSE-NEXT:    movl %eax, {{[0-9]+}}(%esp)
 ; X86-NOSSE-NEXT:    fldl {{[0-9]+}}(%esp)
 ; X86-NOSSE-NEXT:    faddl 12(%ebp)
