@@ -1767,7 +1767,7 @@ def ObjCRootClass : InheritableAttr {
 
 def ObjCNonLazyClass : Attr {
   let Spellings = [Clang<"objc_nonlazy_class">];
-  let Subjects = SubjectList<[ObjCInterface], ErrorDiag>;
+  let Subjects = SubjectList<[ObjCInterface, ObjCImpl], ErrorDiag>;
   let LangOpts = [ObjC];
   let Documentation = [ObjCNonLazyClassDocs];
 }
