@@ -34555,8 +34555,12 @@ static SDValue scalarizeExtEltFP(SDNode *ExtElt, SelectionDAG &DAG) {
   // Vector FP selects don't fit the pattern of FP math ops (because the
   // condition has a different type and we have to change the opcode), so deal
   // with those here.
+  // FIXME: This is restricted to pre type legalization by ensuring the setcc
+  // has i1 elements. If we loosen this we need to convert vector bool to a
+  // scalar bool.
   if (Vec.getOpcode() == ISD::VSELECT &&
       Vec.getOperand(0).getOpcode() == ISD::SETCC &&
+      Vec.getOperand(0).getValueType().getScalarType() == MVT::i1 &&
       Vec.getOperand(0).getOperand(0).getValueType() == VecVT) {
     // ext (sel Cond, X, Y), 0 --> sel (ext Cond, 0), (ext X, 0), (ext Y, 0)
     SDLoc DL(ExtElt);

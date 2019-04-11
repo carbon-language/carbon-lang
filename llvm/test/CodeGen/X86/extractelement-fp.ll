@@ -313,6 +313,31 @@ define void @extsetcc(<4 x float> %x) {
   ret void
 }
 
+; This used to crash by creating a setcc with an i64 condition on a 32-bit target.
+define <3 x double> @extvselectsetcc_crash(<2 x double> %x) {
+; X64-LABEL: extvselectsetcc_crash:
+; X64:       # %bb.0:
+; X64-NEXT:    vcmpeqpd {{.*}}(%rip), %xmm0, %xmm1
+; X64-NEXT:    vmovsd {{.*#+}} xmm2 = mem[0],zero
+; X64-NEXT:    vandpd %xmm2, %xmm1, %xmm1
+; X64-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; X64-NEXT:    vpermpd {{.*#+}} ymm0 = ymm0[0,2,3,3]
+; X64-NEXT:    retq
+;
+; X86-LABEL: extvselectsetcc_crash:
+; X86:       # %bb.0:
+; X86-NEXT:    vcmpeqpd {{\.LCPI.*}}, %xmm0, %xmm1
+; X86-NEXT:    vmovsd {{.*#+}} xmm2 = mem[0],zero
+; X86-NEXT:    vandpd %xmm2, %xmm1, %xmm1
+; X86-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; X86-NEXT:    vpermpd {{.*#+}} ymm0 = ymm0[0,2,3,3]
+; X86-NEXT:    retl
+  %cmp = fcmp oeq <2 x double> %x, <double 5.0, double 5.0>
+  %s = select <2 x i1> %cmp, <2 x double> <double 1.0, double undef>, <2 x double> <double 0.0, double undef>
+  %r = shufflevector <2 x double> %s, <2 x double> %x, <3 x i32> <i32 0, i32 2, i32 3>
+  ret <3 x double> %r
+}
+
 define float @select_fcmp_v4f32(<4 x float> %x, <4 x float> %y, <4 x float> %z, <4 x float> %w) nounwind {
 ; X64-LABEL: select_fcmp_v4f32:
 ; X64:       # %bb.0:
