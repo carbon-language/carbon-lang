@@ -25584,18 +25584,17 @@ bool X86TargetLowering::shouldExpandAtomicStoreInIR(StoreInst *SI) const {
 
 // Note: this turns large loads into lock cmpxchg8b/16b.
 // TODO: In 32-bit mode, use MOVLPS when SSE1 is available?
+// TODO: In 32-bit mode, use FILD/FISTP when X87 is available?
 TargetLowering::AtomicExpansionKind
 X86TargetLowering::shouldExpandAtomicLoadInIR(LoadInst *LI) const {
   Type *MemType = LI->getType();
 
   // If this a 64 bit atomic load on a 32-bit target and SSE2 is enabled, we
-  // can use movq to do the load. If we have X87 we can load into an 80-bit
-  // X87 register and store it to a stack temporary.
+  // can use movq to do the load.
   bool NoImplicitFloatOps =
       LI->getFunction()->hasFnAttribute(Attribute::NoImplicitFloat);
   if (MemType->getPrimitiveSizeInBits() == 64 && !Subtarget.is64Bit() &&
-      !Subtarget.useSoftFloat() && !NoImplicitFloatOps &&
-      (Subtarget.hasSSE2() || Subtarget.hasX87()))
+      !Subtarget.useSoftFloat() && !NoImplicitFloatOps && Subtarget.hasSSE2())
     return AtomicExpansionKind::None;
 
   return needsCmpXchgNb(MemType) ? AtomicExpansionKind::CmpXChg
@@ -27441,57 +27440,23 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     bool NoImplicitFloatOps =
         DAG.getMachineFunction().getFunction().hasFnAttribute(
             Attribute::NoImplicitFloat);
-    if (!Subtarget.useSoftFloat() && !NoImplicitFloatOps) {
+    if (!Subtarget.useSoftFloat() && !NoImplicitFloatOps &&
+        Subtarget.hasSSE2()) {
       auto *Node = cast<AtomicSDNode>(N);
-      if (Subtarget.hasSSE2()) {
-        // Use a VZEXT_LOAD which will be selected as MOVQ. Then extract the
-        // lower 64-bits.
-        SDVTList Tys = DAG.getVTList(MVT::v2i64, MVT::Other);
-        SDValue Ops[] = { Node->getChain(), Node->getBasePtr() };
-        SDValue Ld = DAG.getMemIntrinsicNode(X86ISD::VZEXT_LOAD, dl, Tys, Ops,
-                                             MVT::i64, Node->getMemOperand());
-        SDValue Res = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i64, Ld,
-                                  DAG.getIntPtrConstant(0, dl));
-        Results.push_back(Res);
-        Results.push_back(Ld.getValue(1));
-        return;
-      }
-      if (Subtarget.hasX87()) {
-        // First load this into an 80-bit X87 register. This will put the whole
-        // integer into the significand.
-        // FIXME: Do we need to glue? See FIXME comment in BuildFILD.
-        SDVTList Tys = DAG.getVTList(MVT::f80, MVT::Other, MVT::Glue);
-        SDValue Ops[] = { Node->getChain(), Node->getBasePtr() };
-        SDValue Result = DAG.getMemIntrinsicNode(X86ISD::FILD_FLAG,
-                                                 dl, Tys, Ops, MVT::i64,
-                                                 Node->getMemOperand());
-        SDValue Chain = Result.getValue(1);
-        SDValue InFlag = Result.getValue(2);
-
-        // Now store the X87 register to a stack temporary and convert to i64.
-        // This store is not atomic and doesn't need to be.
-        // FIXME: We don't need a stack temporary if the result of the load
-        // is already being stored. We could just directly store there.
-        SDValue StackPtr = DAG.CreateStackTemporary(MVT::i64);
-        int SPFI = cast<FrameIndexSDNode>(StackPtr.getNode())->getIndex();
-        MachinePointerInfo MPI =
-            MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), SPFI);
-        SDValue StoreOps[] = { Chain, Result, StackPtr, InFlag };
-        Chain = DAG.getMemIntrinsicNode(X86ISD::FIST, dl,
-                                        DAG.getVTList(MVT::Other), StoreOps,
-                                        MVT::i64, MPI, 0 /*Align*/,
-                                        MachineMemOperand::MOStore);
-
-        // Finally load the value back from the stack temporary and return it.
-        // This load is not atomic and doesn't need to be.
-        // This load will be further type legalized.
-        Result = DAG.getLoad(MVT::i64, dl, Chain, StackPtr, MPI);
-        Results.push_back(Result);
-        Results.push_back(Result.getValue(1));
-        return;
-      }
+      // Use a VZEXT_LOAD which will be selected as MOVQ. Then extract the lower
+      // 64-bits.
+      SDVTList Tys = DAG.getVTList(MVT::v2i64, MVT::Other);
+      SDValue Ops[] = { Node->getChain(), Node->getBasePtr() };
+      SDValue Ld = DAG.getMemIntrinsicNode(X86ISD::VZEXT_LOAD, dl, Tys, Ops,
+                                           MVT::i64, Node->getMemOperand());
+      SDValue Res = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i64, Ld,
+                                DAG.getIntPtrConstant(0, dl));
+      Results.push_back(Res);
+      Results.push_back(Ld.getValue(1));
+      return;
     }
     // TODO: Use MOVLPS when SSE1 is available?
+    // TODO: Use FILD/FISTP when X87 is available?
     // Delegate to generic TypeLegalization. Situations we can really handle
     // should have already been dealt with by AtomicExpandPass.cpp.
     break;
@@ -27684,7 +27649,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FXOR:               return "X86ISD::FXOR";
   case X86ISD::FILD:               return "X86ISD::FILD";
   case X86ISD::FILD_FLAG:          return "X86ISD::FILD_FLAG";
-  case X86ISD::FIST:               return "X86ISD::FIST";
   case X86ISD::FP_TO_INT_IN_MEM:   return "X86ISD::FP_TO_INT_IN_MEM";
   case X86ISD::FLD:                return "X86ISD::FLD";
   case X86ISD::FST:                return "X86ISD::FST";
