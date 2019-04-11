@@ -29091,53 +29091,6 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr &MI,
 }
 
 MachineBasicBlock *
-X86TargetLowering::EmitLoweredAtomicFP(MachineInstr &MI,
-                                       MachineBasicBlock *BB) const {
-  // Combine the following atomic floating-point modification pattern:
-  //   a.store(reg OP a.load(acquire), release)
-  // Transform them into:
-  //   OPss (%gpr), %xmm
-  //   movss %xmm, (%gpr)
-  // Or sd equivalent for 64-bit operations.
-  unsigned MOp, FOp;
-  switch (MI.getOpcode()) {
-  default: llvm_unreachable("unexpected instr type for EmitLoweredAtomicFP");
-  case X86::RELEASE_FADD32mr:
-    FOp = X86::ADDSSrm;
-    MOp = X86::MOVSSmr;
-    break;
-  case X86::RELEASE_FADD64mr:
-    FOp = X86::ADDSDrm;
-    MOp = X86::MOVSDmr;
-    break;
-  }
-  const X86InstrInfo *TII = Subtarget.getInstrInfo();
-  DebugLoc DL = MI.getDebugLoc();
-  MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
-  unsigned ValOpIdx = X86::AddrNumOperands;
-  unsigned VSrc = MI.getOperand(ValOpIdx).getReg();
-  MachineInstrBuilder MIB =
-      BuildMI(*BB, MI, DL, TII->get(FOp),
-              MRI.createVirtualRegister(MRI.getRegClass(VSrc)))
-          .addReg(VSrc);
-  for (int i = 0; i < X86::AddrNumOperands; ++i) {
-    MachineOperand &Operand = MI.getOperand(i);
-    // Clear any kill flags on register operands as we'll create a second
-    // instruction using the same address operands.
-    if (Operand.isReg())
-      Operand.setIsKill(false);
-    MIB.add(Operand);
-  }
-  MachineInstr *FOpMI = MIB;
-  MIB = BuildMI(*BB, MI, DL, TII->get(MOp));
-  for (int i = 0; i < X86::AddrNumOperands; ++i)
-    MIB.add(MI.getOperand(i));
-  MIB.addReg(FOpMI->getOperand(0).getReg(), RegState::Kill);
-  MI.eraseFromParent(); // The pseudo instruction is gone now.
-  return BB;
-}
-
-MachineBasicBlock *
 X86TargetLowering::EmitLoweredSegAlloca(MachineInstr &MI,
                                         MachineBasicBlock *BB) const {
   MachineFunction *MF = BB->getParent();
@@ -30371,10 +30324,6 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
     MI.eraseFromParent(); // The pseudo is gone now.
     return BB;
   }
-
-  case X86::RELEASE_FADD32mr:
-  case X86::RELEASE_FADD64mr:
-    return EmitLoweredAtomicFP(MI, BB);
 
   case X86::FP32_TO_INT16_IN_MEM:
   case X86::FP32_TO_INT32_IN_MEM:
