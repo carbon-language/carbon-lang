@@ -56,11 +56,10 @@ public:
 
 // Some uses of a Statement should be constrained.  These contraints are imposed
 // at compile time.
-template<typename A = Stmt_impl> class QualifiedStmt {
+template<typename A> class QualifiedStmt {
 public:
   QualifiedStmt() = delete;
-  template<typename B, std::enable_if_t<std::is_base_of_v<A, B>, int> = 0>
-  QualifiedStmt(Statement *stmt, const B &) : stmt{stmt} {}
+  QualifiedStmt(Statement *stmt) : stmt{stmt} {}
 
   // create a stub, where stmt == nullptr
   QualifiedStmt(std::nullptr_t) : stmt{nullptr} {}
@@ -70,6 +69,12 @@ public:
 
   Statement *stmt;
 };
+
+template<typename A, typename B,
+    std::enable_if_t<std::is_base_of_v<A, B>, int> = 0>
+QualifiedStmt<A> MakeQualifiedStmt(Statement *s) {
+  return QualifiedStmt<A>{s};
+}
 
 // Every basic block must end in a terminator
 class TerminatorStmt_impl : virtual public Stmt_impl {
@@ -401,27 +406,18 @@ private:
 // Store value(s) from an applied expression to a location
 class StoreInsn : public MemoryStmt_impl {
 public:
-  using ValueType = std::variant<Value, QualifiedStmt<ApplyExprStmt>,
-      QualifiedStmt<Addressable_impl>, BasicBlock *>;
-
-  template<typename A>
-  static StoreInsn Create(QualifiedStmt<Addressable_impl> addr, A value) {
+  static StoreInsn Create(QualifiedStmt<Addressable_impl> addr, Value value) {
     return StoreInsn{addr, value};
   }
 
   Addressable_impl *address() const { return address_; }
-  ValueType value() const { return value_; }
+  Value value() const { return value_; }
 
 private:
   explicit StoreInsn(QualifiedStmt<Addressable_impl> addr, Value val);
-  explicit StoreInsn(
-      QualifiedStmt<Addressable_impl> addr, QualifiedStmt<ApplyExprStmt> val);
-  explicit StoreInsn(QualifiedStmt<Addressable_impl> addr,
-      QualifiedStmt<Addressable_impl> val);
-  explicit StoreInsn(QualifiedStmt<Addressable_impl> addr, BasicBlock *val);
 
   QualifiedStmt<Addressable_impl> address_;
-  ValueType value_;
+  Value value_;
 };
 
 // NULLIFY - make pointer object disassociated
@@ -575,12 +571,19 @@ class Statement : public SumTypeMixin<ReturnStmt,  //
                   public ChildMixin<Statement, BasicBlock>,
                   public llvm::ilist_node<Statement> {
 public:
+  template<typename A> static Statement *Create(BasicBlock *p, A &&t) {
+    return new Statement(p, std::forward<A>(t));
+  }
+  std::string dump() const;  // LLVM expected name
+
+  void Dump(std::ostream &os) const { os << dump(); }
+
+private:
   template<typename A>
-  Statement(BasicBlock *p, A &&t)
+  explicit Statement(BasicBlock *p, A &&t)
     : SumTypeMixin{std::forward<A>(t)}, ChildMixin{p} {
     parent->insertBefore(this);
   }
-  std::string dump() const;
 };
 
 template<typename A> inline QualifiedStmt<A>::operator A *() const {

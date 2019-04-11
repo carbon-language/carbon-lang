@@ -27,14 +27,14 @@ struct FIRBuilder {
 
   template<typename A> Statement *Insert(A &&s) {
     CHECK(GetInsertionPoint());
-    auto *statement{new Statement(GetInsertionPoint(), std::forward<A>(s))};
+    auto *statement{Statement::Create(GetInsertionPoint(), std::forward<A>(s))};
     return statement;
   }
 
   template<typename A, typename B> QualifiedStmt<A> QualifiedInsert(B &&s) {
     CHECK(GetInsertionPoint());
-    auto *statement{new Statement(GetInsertionPoint(), std::forward<B>(s))};
-    return QualifiedStmt<A>{statement, s};
+    auto *statement{Statement::Create(GetInsertionPoint(), std::forward<B>(s))};
+    return MakeQualifiedStmt<A, B>(statement);
   }
 
   template<typename A> Statement *InsertTerminator(A &&s) {
