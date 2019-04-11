@@ -30,7 +30,7 @@ void DeallocateChecker::Leave(const parser::DeallocateStmt &deallocateStmt) {
               if (!IsVariableName(*symbol)) {
                 context_.messages().Say(name.source,
                     "name in DEALLOCATE statement must be a variable name"_err_en_US);
-              } else if (!IsAllocatableOrPointer(*symbol)) {  // C951
+              } else if (!IsAllocatableOrPointer(*symbol)) {  // C932
                 context_.messages().Say(name.source,
                     "name in DEALLOCATE statement must have the ALLOCATABLE or POINTER attribute"_err_en_US);
               }
@@ -39,7 +39,7 @@ void DeallocateChecker::Leave(const parser::DeallocateStmt &deallocateStmt) {
               evaluate::ExpressionAnalyzer analyzer{context_};
               if (MaybeExpr checked{analyzer.Analyze(structureComponent)}) {
                 if (!IsAllocatableOrPointer(
-                        *structureComponent.component.symbol)) {  // C951
+                        *structureComponent.component.symbol)) {  // C932
                   context_.messages().Say(structureComponent.component.source,
                       "component in DEALLOCATE statement must have the ALLOCATABLE or POINTER attribute"_err_en_US);
                 }
@@ -48,7 +48,7 @@ void DeallocateChecker::Leave(const parser::DeallocateStmt &deallocateStmt) {
         },
         allocateObject.u);
   }
-  // The parser is catchng dups too
+  // The parser is catching dups too
   bool gotStat{false}, gotMsg{false};
   for (const parser::StatOrErrmsg &deallocOpt :
       std::get<std::list<parser::StatOrErrmsg>>(deallocateStmt.t)) {
@@ -58,8 +58,9 @@ void DeallocateChecker::Leave(const parser::DeallocateStmt &deallocateStmt) {
               // ExpressionAnalyzer emits error messages
               evaluate::ExpressionAnalyzer analyzer{context_};
               (void)analyzer.Analyze(statVariable.v);
-              if(gotStat) {
-                  context_.Say("STAT may not be duplicated in a DEALLOCATE statement"_err_en_US);
+              if (gotStat) {
+                context_.Say(
+                    "STAT may not be duplicated in a DEALLOCATE statement"_err_en_US);
               }
               gotStat = true;
             },
@@ -67,8 +68,9 @@ void DeallocateChecker::Leave(const parser::DeallocateStmt &deallocateStmt) {
               // ExpressionAnalyzer emits error messages
               evaluate::ExpressionAnalyzer analyzer{context_};
               (void)analyzer.Analyze(msgVariable.v);
-              if(gotMsg) {
-                  context_.Say("ERRMSG may not be duplicated in a DEALLOCATE statement"_err_en_US);
+              if (gotMsg) {
+                context_.Say(
+                    "ERRMSG may not be duplicated in a DEALLOCATE statement"_err_en_US);
               }
               gotMsg = true;
             },
