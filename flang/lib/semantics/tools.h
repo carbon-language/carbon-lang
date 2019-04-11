@@ -49,6 +49,8 @@ bool IsPureFunction(const Symbol &);
 bool IsPureFunction(const Scope &);
 bool IsProcName(const Symbol &symbol);  // proc-name
 bool IsVariableName(const Symbol &symbol);  // variable-name
+bool IsAllocatable(const Symbol &);
+bool IsAllocatableOrPointer(const Symbol &);
 
 // Determines whether an object might be visible outside a
 // PURE function (C1594); returns a non-null Symbol pointer for

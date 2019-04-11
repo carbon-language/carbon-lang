@@ -91,6 +91,8 @@ set(ERROR_TESTS
   computed-goto02.f90
   nullify01.f90
   nullify02.f90
+  deallocate01.f90
+  deallocate04.f90
 )
 
 # These test files have expected symbols in the source
