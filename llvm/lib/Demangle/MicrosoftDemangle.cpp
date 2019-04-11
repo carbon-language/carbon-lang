@@ -1907,7 +1907,7 @@ TagTypeNode *Demangler::demangleClassType(StringView &MangledName) {
     TT = Arena.alloc<TagTypeNode>(TagKind::Class);
     break;
   case 'W':
-    if (MangledName.popFront() != '4') {
+    if (!MangledName.consumeFront('4')) {
       Error = true;
       return nullptr;
     }
