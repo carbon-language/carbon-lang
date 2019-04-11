@@ -17425,28 +17425,27 @@ static SDValue narrowExtractedVectorBinOp(SDNode *Extract, SelectionDAG &DAG) {
       LHS.getOpcode() == ISD::CONCAT_VECTORS && LHS.getNumOperands() == 2;
   bool ConcatR =
       RHS.getOpcode() == ISD::CONCAT_VECTORS && RHS.getNumOperands() == 2;
-  if (!ConcatL && !ConcatR)
-    return SDValue();
+  if (ConcatL || ConcatR) {
+    // If a binop operand was not the result of a concat, we must extract a
+    // half-sized operand for our new narrow binop:
+    // extract (binop (concat X1, X2), (concat Y1, Y2)), N --> binop XN, YN
+    // extract (binop (concat X1, X2), Y), N --> binop XN, (extract Y, IndexC)
+    // extract (binop X, (concat Y1, Y2)), N --> binop (extract X, IndexC), YN
+    SDLoc DL(Extract);
+    SDValue IndexC = DAG.getConstant(ExtBOIdx, DL, ExtBOIdxVT);
+    SDValue X = ConcatL ? DAG.getBitcast(NarrowBVT, LHS.getOperand(ConcatOpNum))
+                        : DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, NarrowBVT,
+                                      BinOp.getOperand(0), IndexC);
 
-  // If one of the binop operands was not the result of a concat, we must
-  // extract a half-sized operand for our new narrow binop.
-  SDLoc DL(Extract);
+    SDValue Y = ConcatR ? DAG.getBitcast(NarrowBVT, RHS.getOperand(ConcatOpNum))
+                        : DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, NarrowBVT,
+                                      BinOp.getOperand(1), IndexC);
 
-  // extract (binop (concat X1, X2), (concat Y1, Y2)), N --> binop XN, YN
-  // extract (binop (concat X1, X2), Y), N --> binop XN, (extract Y, N)
-  // extract (binop X, (concat Y1, Y2)), N --> binop (extract X, N), YN
-  SDValue X = ConcatL ? DAG.getBitcast(NarrowBVT, LHS.getOperand(ConcatOpNum))
-                      : DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, NarrowBVT,
-                                    BinOp.getOperand(0),
-                                    DAG.getConstant(ExtBOIdx, DL, ExtBOIdxVT));
+    SDValue NarrowBinOp = DAG.getNode(BOpcode, DL, NarrowBVT, X, Y);
+    return DAG.getBitcast(VT, NarrowBinOp);
+  }
 
-  SDValue Y = ConcatR ? DAG.getBitcast(NarrowBVT, RHS.getOperand(ConcatOpNum))
-                      : DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, NarrowBVT,
-                                    BinOp.getOperand(1),
-                                    DAG.getConstant(ExtBOIdx, DL, ExtBOIdxVT));
-
-  SDValue NarrowBinOp = DAG.getNode(BOpcode, DL, NarrowBVT, X, Y);
-  return DAG.getBitcast(VT, NarrowBinOp);
+  return SDValue();
 }
 
 /// If we are extracting a subvector from a wide vector load, convert to a
