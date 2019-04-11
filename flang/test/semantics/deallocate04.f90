@@ -66,4 +66,13 @@ Deallocate(x%p, stat=s, errmsg=e)
 !ERROR: Must have default CHARACTER type
 Deallocate(x%p, stat=r, errmsg=e)
 
+!ERROR: STAT may not be duplicated in a DEALLOCATE statement
+Deallocate(x, stat=s, stat=s)
+!ERROR: ERRMSG may not be duplicated in a DEALLOCATE statement
+Deallocate(x, errmsg=ee, errmsg=ee)
+!ERROR: STAT may not be duplicated in a DEALLOCATE statement
+Deallocate(x, stat=s, errmsg=ee, stat=s)
+!ERROR: ERRMSG may not be duplicated in a DEALLOCATE statement
+Deallocate(x, stat=s, errmsg=ee, errmsg=ee)
+
 End Program

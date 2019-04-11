@@ -28,10 +28,10 @@ void DeallocateChecker::Leave(const parser::DeallocateStmt &deallocateStmt) {
             [&](const parser::Name &name) {
               auto const *symbol{name.symbol};
               if (!IsVariableName(*symbol)) {
-                context_.messages().Say(name.source,
+                context_.Say(name.source,
                     "name in DEALLOCATE statement must be a variable name"_err_en_US);
               } else if (!IsAllocatableOrPointer(*symbol)) {  // C932
-                context_.messages().Say(name.source,
+                context_.Say(name.source,
                     "name in DEALLOCATE statement must have the ALLOCATABLE or POINTER attribute"_err_en_US);
               }
             },
@@ -40,7 +40,7 @@ void DeallocateChecker::Leave(const parser::DeallocateStmt &deallocateStmt) {
               if (MaybeExpr checked{analyzer.Analyze(structureComponent)}) {
                 if (!IsAllocatableOrPointer(
                         *structureComponent.component.symbol)) {  // C932
-                  context_.messages().Say(structureComponent.component.source,
+                  context_.Say(structureComponent.component.source,
                       "component in DEALLOCATE statement must have the ALLOCATABLE or POINTER attribute"_err_en_US);
                 }
               }
@@ -48,7 +48,6 @@ void DeallocateChecker::Leave(const parser::DeallocateStmt &deallocateStmt) {
         },
         allocateObject.u);
   }
-  // The parser is catching dups too
   bool gotStat{false}, gotMsg{false};
   for (const parser::StatOrErrmsg &deallocOpt :
       std::get<std::list<parser::StatOrErrmsg>>(deallocateStmt.t)) {
