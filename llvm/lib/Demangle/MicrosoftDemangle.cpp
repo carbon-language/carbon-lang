@@ -511,12 +511,18 @@ Demangler::demangleLiteralOperatorIdentifier(StringView &MangledName) {
   return N;
 }
 
-static IntrinsicFunctionKind
-translateIntrinsicFunctionCode(char CH, FunctionIdentifierCodeGroup Group) {
+IntrinsicFunctionKind
+Demangler::translateIntrinsicFunctionCode(char CH,
+                                          FunctionIdentifierCodeGroup Group) {
+  using IFK = IntrinsicFunctionKind;
+  if (!(CH >= '0' && CH <= '9') && !(CH >= 'A' && CH <= 'Z')) {
+    Error = true;
+    return IFK::None;
+  }
+
   // Not all ? identifiers are intrinsics *functions*.  This function only maps
   // operator codes for the special functions, all others are handled elsewhere,
   // hence the IFK::None entries in the table.
-  using IFK = IntrinsicFunctionKind;
   static IFK Basic[36] = {
       IFK::None,             // ?0 # Foo::Foo()
       IFK::None,             // ?1 # Foo::~Foo()

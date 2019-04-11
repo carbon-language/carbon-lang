@@ -109,3 +109,8 @@
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ?x@@3PAW
 ; CHECK-NEXT: error: Invalid mangled name
+
+??}
+; CHECK-EMPTY:
+; CHECK-NEXT: ??}
+; CHECK-NEXT: error: Invalid mangled name
