@@ -23,12 +23,13 @@
 namespace Fortran::semantics {
 
 void StopChecker::Enter(const parser::StopStmt &stmt) {
-  const auto &sc{std::get<std::optional<parser::StopCode>>(stmt.t)};
-  const auto &sle{std::get<std::optional<parser::ScalarLogicalExpr>>(stmt.t)};
+  const auto &stopCode{std::get<std::optional<parser::StopCode>>(stmt.t)};
+  const auto &scalarLogicalExpr{
+      std::get<std::optional<parser::ScalarLogicalExpr>>(stmt.t)};
 
-  if (sc.has_value()) {
-    const parser::CharBlock &source{sc.value().v.thing.source};
-    const auto &expr{*(sc.value().v.thing.typedExpr)};
+  if (stopCode.has_value()) {
+    const parser::CharBlock &source{stopCode.value().v.thing.source};
+    const auto &expr{*(stopCode.value().v.thing.typedExpr)};
 
     if (!(ExprIsScalar(expr))) {
       context_.Say(source, "Stop code must be a scalar"_err_en_US);
@@ -51,9 +52,11 @@ void StopChecker::Enter(const parser::StopStmt &stmt) {
       }
     }
   }
-  if (sle.has_value()) {
-    const parser::CharBlock &source{sle.value().thing.thing.value().source};
-    const auto &expr{*(sle.value().thing.thing.value().typedExpr)};
+  if (scalarLogicalExpr.has_value()) {
+    const parser::CharBlock &source{
+        scalarLogicalExpr.value().thing.thing.value().source};
+    const auto &expr{
+        *(scalarLogicalExpr.value().thing.thing.value().typedExpr)};
 
     if (!(ExprIsScalar(expr))) {
       context_.Say(source,
