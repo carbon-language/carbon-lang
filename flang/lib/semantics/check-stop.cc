@@ -20,34 +20,32 @@
 #include "../parser/parse-tree.h"
 #include <optional>
 
-void Fortran::semantics::StopChecker::Enter(
-    const Fortran::parser::StopStmt &stmt) {
-  const auto &sc{std::get<std::optional<Fortran::parser::StopCode>>(stmt.t)};
-  const auto &sle{
-      std::get<std::optional<Fortran::parser::ScalarLogicalExpr>>(stmt.t)};
+namespace Fortran::semantics {
+
+void StopChecker::Enter(const parser::StopStmt &stmt) {
+  const auto &sc{std::get<std::optional<parser::StopCode>>(stmt.t)};
+  const auto &sle{std::get<std::optional<parser::ScalarLogicalExpr>>(stmt.t)};
 
   if (sc.has_value()) {
-    const Fortran::parser::CharBlock &source{sc.value().v.thing.source};
+    const parser::CharBlock &source{sc.value().v.thing.source};
     const auto &expr{*(sc.value().v.thing.typedExpr)};
 
-    if (!(Fortran::semantics::ExprIsScalar(expr))) {
+    if (!(ExprIsScalar(expr))) {
       context_.Say(source, "Stop code must be a scalar"_err_en_US);
     } else {
-      if (Fortran::semantics::ExprHasTypeCategory(
-              expr, Fortran::common::TypeCategory::Integer)) {
+      if (ExprHasTypeCategory(expr, common::TypeCategory::Integer)) {
         // C1171 default kind
-        if (!(Fortran::semantics::ExprHasTypeKind(expr,
+        if (!(ExprHasTypeKind(expr,
                 context_.defaultKinds().GetDefaultKind(
-                    Fortran::common::TypeCategory::Integer)))) {
+                    common::TypeCategory::Integer)))) {
           context_.Say(
               source, "Integer stop code must be of default kind"_err_en_US);
         }
-      } else if (Fortran::semantics::ExprHasTypeCategory(
-                     expr, Fortran::common::TypeCategory::Character)) {
+      } else if (ExprHasTypeCategory(expr, common::TypeCategory::Character)) {
         // R1162 spells scalar-DEFAULT-char-expr
-        if (!(Fortran::semantics::ExprHasTypeKind(expr,
+        if (!(ExprHasTypeKind(expr,
                 context_.defaultKinds().GetDefaultKind(
-                    Fortran::common::TypeCategory::Character)))) {
+                    common::TypeCategory::Character)))) {
           context_.Say(
               source, "Character stop code must be of default kind"_err_en_US);
         }
@@ -58,19 +56,19 @@ void Fortran::semantics::StopChecker::Enter(
     }
   }
   if (sle.has_value()) {
-    const Fortran::parser::CharBlock &source{
-        sle.value().thing.thing.value().source};
+    const parser::CharBlock &source{sle.value().thing.thing.value().source};
     const auto &expr{*(sle.value().thing.thing.value().typedExpr)};
 
-    if (!(Fortran::semantics::ExprIsScalar(expr))) {
+    if (!(ExprIsScalar(expr))) {
       context_.Say(source,
           "The optional QUIET parameter value must be a scalar"_err_en_US);
     } else {
-      if (!(Fortran::semantics::ExprHasTypeCategory(
-              expr, Fortran::common::TypeCategory::Logical))) {
+      if (!(ExprHasTypeCategory(expr, common::TypeCategory::Logical))) {
         context_.Say(source,
             "The optional QUIET parameter value must be of LOGICAL type"_err_en_US);
       }
     }
   }
 }
+
+}  // namespace Fortran::semantics
