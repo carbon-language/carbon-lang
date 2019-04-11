@@ -933,10 +933,8 @@ define <8 x double> @combine_vpermi2var_8f64_as_permpd(<8 x double> %x0, <8 x do
 ;
 ; X64-LABEL: combine_vpermi2var_8f64_as_permpd:
 ; X64:       # %bb.0:
-; X64-NEXT:    vmovdqa {{.*#+}} xmm2 = <u,2,1,3,4,6,5,7>
-; X64-NEXT:    vpinsrq $0, %rdi, %xmm2, %xmm2
-; X64-NEXT:    vmovdqa64 {{.*#+}} zmm3 = <u,2,1,3,4,6,5,7>
-; X64-NEXT:    vinserti32x4 $0, %xmm2, %zmm3, %zmm2
+; X64-NEXT:    vmovapd {{.*#+}} zmm2 = <u,2,1,3,4,6,5,7>
+; X64-NEXT:    vinsertf32x4 $0, {{.*}}(%rip), %zmm2, %zmm2
 ; X64-NEXT:    vpermi2pd %zmm1, %zmm0, %zmm2
 ; X64-NEXT:    vpermpd {{.*#+}} zmm0 = zmm2[2,3,1,1,6,7,5,5]
 ; X64-NEXT:    retq
