@@ -397,28 +397,17 @@ define float @load_float(float* %fptr) {
 define double @load_double(double* %fptr) {
 ; X86-SSE1-LABEL: load_double:
 ; X86-SSE1:       # %bb.0:
-; X86-SSE1-NEXT:    pushl %ebx
-; X86-SSE1-NEXT:    .cfi_def_cfa_offset 8
-; X86-SSE1-NEXT:    pushl %esi
-; X86-SSE1-NEXT:    .cfi_def_cfa_offset 12
-; X86-SSE1-NEXT:    subl $12, %esp
+; X86-SSE1-NEXT:    subl $20, %esp
 ; X86-SSE1-NEXT:    .cfi_def_cfa_offset 24
-; X86-SSE1-NEXT:    .cfi_offset %esi, -12
-; X86-SSE1-NEXT:    .cfi_offset %ebx, -8
-; X86-SSE1-NEXT:    movl {{[0-9]+}}(%esp), %esi
-; X86-SSE1-NEXT:    xorl %eax, %eax
-; X86-SSE1-NEXT:    xorl %edx, %edx
-; X86-SSE1-NEXT:    xorl %ecx, %ecx
-; X86-SSE1-NEXT:    xorl %ebx, %ebx
-; X86-SSE1-NEXT:    lock cmpxchg8b (%esi)
-; X86-SSE1-NEXT:    movl %edx, {{[0-9]+}}(%esp)
+; X86-SSE1-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-SSE1-NEXT:    fildll (%eax)
+; X86-SSE1-NEXT:    fistpll {{[0-9]+}}(%esp)
+; X86-SSE1-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-SSE1-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X86-SSE1-NEXT:    movl %ecx, {{[0-9]+}}(%esp)
 ; X86-SSE1-NEXT:    movl %eax, (%esp)
 ; X86-SSE1-NEXT:    fldl (%esp)
-; X86-SSE1-NEXT:    addl $12, %esp
-; X86-SSE1-NEXT:    .cfi_def_cfa_offset 12
-; X86-SSE1-NEXT:    popl %esi
-; X86-SSE1-NEXT:    .cfi_def_cfa_offset 8
-; X86-SSE1-NEXT:    popl %ebx
+; X86-SSE1-NEXT:    addl $20, %esp
 ; X86-SSE1-NEXT:    .cfi_def_cfa_offset 4
 ; X86-SSE1-NEXT:    retl
 ;
@@ -448,28 +437,17 @@ define double @load_double(double* %fptr) {
 ;
 ; X86-NOSSE-LABEL: load_double:
 ; X86-NOSSE:       # %bb.0:
-; X86-NOSSE-NEXT:    pushl %ebx
-; X86-NOSSE-NEXT:    .cfi_def_cfa_offset 8
-; X86-NOSSE-NEXT:    pushl %esi
-; X86-NOSSE-NEXT:    .cfi_def_cfa_offset 12
-; X86-NOSSE-NEXT:    subl $12, %esp
+; X86-NOSSE-NEXT:    subl $20, %esp
 ; X86-NOSSE-NEXT:    .cfi_def_cfa_offset 24
-; X86-NOSSE-NEXT:    .cfi_offset %esi, -12
-; X86-NOSSE-NEXT:    .cfi_offset %ebx, -8
-; X86-NOSSE-NEXT:    movl {{[0-9]+}}(%esp), %esi
-; X86-NOSSE-NEXT:    xorl %eax, %eax
-; X86-NOSSE-NEXT:    xorl %edx, %edx
-; X86-NOSSE-NEXT:    xorl %ecx, %ecx
-; X86-NOSSE-NEXT:    xorl %ebx, %ebx
-; X86-NOSSE-NEXT:    lock cmpxchg8b (%esi)
-; X86-NOSSE-NEXT:    movl %edx, {{[0-9]+}}(%esp)
+; X86-NOSSE-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NOSSE-NEXT:    fildll (%eax)
+; X86-NOSSE-NEXT:    fistpll {{[0-9]+}}(%esp)
+; X86-NOSSE-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NOSSE-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X86-NOSSE-NEXT:    movl %ecx, {{[0-9]+}}(%esp)
 ; X86-NOSSE-NEXT:    movl %eax, (%esp)
 ; X86-NOSSE-NEXT:    fldl (%esp)
-; X86-NOSSE-NEXT:    addl $12, %esp
-; X86-NOSSE-NEXT:    .cfi_def_cfa_offset 12
-; X86-NOSSE-NEXT:    popl %esi
-; X86-NOSSE-NEXT:    .cfi_def_cfa_offset 8
-; X86-NOSSE-NEXT:    popl %ebx
+; X86-NOSSE-NEXT:    addl $20, %esp
 ; X86-NOSSE-NEXT:    .cfi_def_cfa_offset 4
 ; X86-NOSSE-NEXT:    retl
 ;
@@ -776,28 +754,17 @@ define float @load_float_seq_cst(float* %fptr) {
 define double @load_double_seq_cst(double* %fptr) {
 ; X86-SSE1-LABEL: load_double_seq_cst:
 ; X86-SSE1:       # %bb.0:
-; X86-SSE1-NEXT:    pushl %ebx
-; X86-SSE1-NEXT:    .cfi_def_cfa_offset 8
-; X86-SSE1-NEXT:    pushl %esi
-; X86-SSE1-NEXT:    .cfi_def_cfa_offset 12
-; X86-SSE1-NEXT:    subl $12, %esp
+; X86-SSE1-NEXT:    subl $20, %esp
 ; X86-SSE1-NEXT:    .cfi_def_cfa_offset 24
-; X86-SSE1-NEXT:    .cfi_offset %esi, -12
-; X86-SSE1-NEXT:    .cfi_offset %ebx, -8
-; X86-SSE1-NEXT:    movl {{[0-9]+}}(%esp), %esi
-; X86-SSE1-NEXT:    xorl %eax, %eax
-; X86-SSE1-NEXT:    xorl %edx, %edx
-; X86-SSE1-NEXT:    xorl %ecx, %ecx
-; X86-SSE1-NEXT:    xorl %ebx, %ebx
-; X86-SSE1-NEXT:    lock cmpxchg8b (%esi)
-; X86-SSE1-NEXT:    movl %edx, {{[0-9]+}}(%esp)
+; X86-SSE1-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-SSE1-NEXT:    fildll (%eax)
+; X86-SSE1-NEXT:    fistpll {{[0-9]+}}(%esp)
+; X86-SSE1-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-SSE1-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X86-SSE1-NEXT:    movl %ecx, {{[0-9]+}}(%esp)
 ; X86-SSE1-NEXT:    movl %eax, (%esp)
 ; X86-SSE1-NEXT:    fldl (%esp)
-; X86-SSE1-NEXT:    addl $12, %esp
-; X86-SSE1-NEXT:    .cfi_def_cfa_offset 12
-; X86-SSE1-NEXT:    popl %esi
-; X86-SSE1-NEXT:    .cfi_def_cfa_offset 8
-; X86-SSE1-NEXT:    popl %ebx
+; X86-SSE1-NEXT:    addl $20, %esp
 ; X86-SSE1-NEXT:    .cfi_def_cfa_offset 4
 ; X86-SSE1-NEXT:    retl
 ;
@@ -827,28 +794,17 @@ define double @load_double_seq_cst(double* %fptr) {
 ;
 ; X86-NOSSE-LABEL: load_double_seq_cst:
 ; X86-NOSSE:       # %bb.0:
-; X86-NOSSE-NEXT:    pushl %ebx
-; X86-NOSSE-NEXT:    .cfi_def_cfa_offset 8
-; X86-NOSSE-NEXT:    pushl %esi
-; X86-NOSSE-NEXT:    .cfi_def_cfa_offset 12
-; X86-NOSSE-NEXT:    subl $12, %esp
+; X86-NOSSE-NEXT:    subl $20, %esp
 ; X86-NOSSE-NEXT:    .cfi_def_cfa_offset 24
-; X86-NOSSE-NEXT:    .cfi_offset %esi, -12
-; X86-NOSSE-NEXT:    .cfi_offset %ebx, -8
-; X86-NOSSE-NEXT:    movl {{[0-9]+}}(%esp), %esi
-; X86-NOSSE-NEXT:    xorl %eax, %eax
-; X86-NOSSE-NEXT:    xorl %edx, %edx
-; X86-NOSSE-NEXT:    xorl %ecx, %ecx
-; X86-NOSSE-NEXT:    xorl %ebx, %ebx
-; X86-NOSSE-NEXT:    lock cmpxchg8b (%esi)
-; X86-NOSSE-NEXT:    movl %edx, {{[0-9]+}}(%esp)
+; X86-NOSSE-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NOSSE-NEXT:    fildll (%eax)
+; X86-NOSSE-NEXT:    fistpll {{[0-9]+}}(%esp)
+; X86-NOSSE-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NOSSE-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X86-NOSSE-NEXT:    movl %ecx, {{[0-9]+}}(%esp)
 ; X86-NOSSE-NEXT:    movl %eax, (%esp)
 ; X86-NOSSE-NEXT:    fldl (%esp)
-; X86-NOSSE-NEXT:    addl $12, %esp
-; X86-NOSSE-NEXT:    .cfi_def_cfa_offset 12
-; X86-NOSSE-NEXT:    popl %esi
-; X86-NOSSE-NEXT:    .cfi_def_cfa_offset 8
-; X86-NOSSE-NEXT:    popl %ebx
+; X86-NOSSE-NEXT:    addl $20, %esp
 ; X86-NOSSE-NEXT:    .cfi_def_cfa_offset 4
 ; X86-NOSSE-NEXT:    retl
 ;
