@@ -682,7 +682,7 @@ Demangler::demangleFunctionIdentifierCode(StringView &MangledName,
   }
   // No Mangling Yet:      Spaceship,                    // operator<=>
 
-  return nullptr;
+  DEMANGLE_UNREACHABLE;
 }
 
 SymbolNode *Demangler::demangleEncodedSymbol(StringView &MangledName,
