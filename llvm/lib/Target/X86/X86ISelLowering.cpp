@@ -33234,8 +33234,8 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
       return true;
     break;
   }
-  case X86ISD::VPPERM: {
-    // TODO - simplify other variable shuffle masks.
+  case X86ISD::VPPERM:
+  case X86ISD::VPERMIL2: {
     SDValue Mask = Op.getOperand(2);
     APInt MaskUndef, MaskZero;
     if (SimplifyDemandedVectorElts(Mask, DemandedElts, MaskUndef, MaskZero, TLO,
