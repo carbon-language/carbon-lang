@@ -285,6 +285,84 @@ class Preprocessor {
   /// Whether the last token we lexed was an '@'.
   bool LastTokenWasAt = false;
 
+  /// A position within a C++20 import-seq.
+  class ImportSeq {
+  public:
+    enum State : int {
+      // Positive values represent a number of unclosed brackets.
+      AtTopLevel = 0,
+      AfterTopLevelTokenSeq = -1,
+      AfterExport = -2,
+      AfterImportSeq = -3,
+    };
+
+    ImportSeq(State S) : S(S) {}
+
+    /// Saw any kind of open bracket.
+    void handleOpenBracket() {
+      S = static_cast<State>(std::max<int>(S, 0) + 1);
+    }
+    /// Saw any kind of close bracket other than '}'.
+    void handleCloseBracket() {
+      S = static_cast<State>(std::max<int>(S, 1) - 1);
+    }
+    /// Saw a close brace.
+    void handleCloseBrace() {
+      handleCloseBracket();
+      if (S == AtTopLevel && !AfterHeaderName)
+        S = AfterTopLevelTokenSeq;
+    }
+    /// Saw a semicolon.
+    void handleSemi() {
+      if (atTopLevel()) {
+        S = AfterTopLevelTokenSeq;
+        AfterHeaderName = false;
+      }
+    }
+
+    /// Saw an 'export' identifier.
+    void handleExport() {
+      if (S == AfterTopLevelTokenSeq)
+        S = AfterExport;
+      else if (S <= 0)
+        S = AtTopLevel;
+    }
+    /// Saw an 'import' identifier.
+    void handleImport() {
+      if (S == AfterTopLevelTokenSeq || S == AfterExport)
+        S = AfterImportSeq;
+      else if (S <= 0)
+        S = AtTopLevel;
+    }
+
+    /// Saw a 'header-name' token; do not recognize any more 'import' tokens
+    /// until we reach a top-level semicolon.
+    void handleHeaderName() {
+      if (S == AfterImportSeq)
+        AfterHeaderName = true;
+      handleMisc();
+    }
+
+    /// Saw any other token.
+    void handleMisc() {
+      if (S <= 0)
+        S = AtTopLevel;
+    }
+
+    bool atTopLevel() { return S <= 0; }
+    bool afterImportSeq() { return S == AfterImportSeq; }
+
+  private:
+    State S;
+    /// Whether we're in the pp-import-suffix following the header-name in a
+    /// pp-import. If so, a close-brace is not sufficient to end the
+    /// top-level-token-seq of an import-seq.
+    bool AfterHeaderName = false;
+  };
+
+  /// Our current position within a C++20 import-seq.
+  ImportSeq ImportSeqState = ImportSeq::AfterTopLevelTokenSeq;
+
   /// Whether the module import expects an identifier next. Otherwise,
   /// it expects a '.' or ';'.
   bool ModuleImportExpectsIdentifier = false;
@@ -1266,7 +1344,8 @@ public:
   /// Lex a token, forming a header-name token if possible.
   bool LexHeaderName(Token &Result, bool AllowMacroExpansion = true);
 
-  void LexAfterModuleImport(Token &Result);
+  bool LexAfterModuleImport(Token &Result);
+  void CollectPpImportSuffix(SmallVectorImpl<Token> &Toks);
 
   void makeModuleVisible(Module *M, SourceLocation Loc);
 
@@ -1813,7 +1892,11 @@ public:
   /// If not, emit a diagnostic and consume up until the eod.
   /// If \p EnableMacros is true, then we consider macros that expand to zero
   /// tokens as being ok.
-  void CheckEndOfDirective(const char *DirType, bool EnableMacros = false);
+  ///
+  /// \return The location of the end of the directive (the terminating
+  /// newline).
+  SourceLocation CheckEndOfDirective(const char *DirType,
+                                     bool EnableMacros = false);
 
   /// Read and discard all tokens remaining on the current line until
   /// the tok::eod token is found. Returns the range of the skipped tokens.
@@ -2052,7 +2135,7 @@ private:
 
   //===--------------------------------------------------------------------===//
   // Caching stuff.
-  void CachingLex(Token &Result);
+  void CachingLex(Token &Result, bool &IsNewToken);
 
   bool InCachingLexMode() const {
     // If the Lexer pointers are 0 and IncludeMacroStack is empty, it means
@@ -2082,12 +2165,31 @@ private:
   void HandleMacroPublicDirective(Token &Tok);
   void HandleMacroPrivateDirective();
 
+  /// An additional notification that can be produced by a header inclusion or
+  /// import to tell the parser what happened.
+  struct ImportAction {
+    enum ActionKind {
+      None,
+      ModuleBegin,
+      ModuleImport,
+    } Kind;
+    Module *ModuleForHeader = nullptr;
+
+    ImportAction(ActionKind AK, Module *Mod = nullptr)
+        : Kind(AK), ModuleForHeader(Mod) {
+      assert((AK == None || Mod) && "no module for module action");
+    }
+  };
+
   // File inclusion.
-  void HandleIncludeDirective(SourceLocation HashLoc,
-                              Token &Tok,
+  void HandleIncludeDirective(SourceLocation HashLoc, Token &Tok,
                               const DirectoryLookup *LookupFrom = nullptr,
-                              const FileEntry *LookupFromFile = nullptr,
-                              bool isImport = false);
+                              const FileEntry *LookupFromFile = nullptr);
+  ImportAction
+  HandleHeaderIncludeOrImport(SourceLocation HashLoc, Token &IncludeTok,
+                              Token &FilenameTok, SourceLocation EndLoc,
+                              const DirectoryLookup *LookupFrom = nullptr,
+                              const FileEntry *LookupFromFile = nullptr);
   void HandleIncludeNextDirective(SourceLocation HashLoc, Token &Tok);
   void HandleIncludeMacrosDirective(SourceLocation HashLoc, Token &Tok);
   void HandleImportDirective(SourceLocation HashLoc, Token &Tok);

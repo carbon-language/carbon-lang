@@ -45,7 +45,7 @@ void Preprocessor::Backtrack() {
   recomputeCurLexerKind();
 }
 
-void Preprocessor::CachingLex(Token &Result) {
+void Preprocessor::CachingLex(Token &Result, bool &IsNewToken) {
   if (!InCachingLexMode())
     return;
 
@@ -55,6 +55,7 @@ void Preprocessor::CachingLex(Token &Result) {
 
   if (CachedLexPos < CachedTokens.size()) {
     Result = CachedTokens[CachedLexPos++];
+    IsNewToken = false;
     return;
   }
 
