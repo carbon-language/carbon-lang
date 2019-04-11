@@ -507,7 +507,7 @@ LiteralOperatorIdentifierNode *
 Demangler::demangleLiteralOperatorIdentifier(StringView &MangledName) {
   LiteralOperatorIdentifierNode *N =
       Arena.alloc<LiteralOperatorIdentifierNode>();
-  N->Name = demangleSimpleString(MangledName, false);
+  N->Name = demangleSimpleString(MangledName, /*Memorize=*/false);
   return N;
 }
 
@@ -1389,7 +1389,8 @@ Demangler::demangleLocallyScopedNamePiece(StringView &MangledName) {
 // Parses a type name in the form of A@B@C@@ which represents C::B::A.
 QualifiedNameNode *
 Demangler::demangleFullyQualifiedTypeName(StringView &MangledName) {
-  IdentifierNode *Identifier = demangleUnqualifiedTypeName(MangledName, true);
+  IdentifierNode *Identifier =
+      demangleUnqualifiedTypeName(MangledName, /*Memorize=*/true);
   if (Error)
     return nullptr;
   assert(Identifier);
@@ -1458,7 +1459,7 @@ Demangler::demangleUnqualifiedSymbolName(StringView &MangledName,
     return demangleTemplateInstantiationName(MangledName, NBB);
   if (MangledName.startsWith('?'))
     return demangleFunctionIdentifierCode(MangledName);
-  return demangleSimpleName(MangledName, (NBB & NBB_Simple) != 0);
+  return demangleSimpleName(MangledName, /*Memorize=*/(NBB & NBB_Simple) != 0);
 }
 
 IdentifierNode *Demangler::demangleNameScopePiece(StringView &MangledName) {
@@ -1474,7 +1475,7 @@ IdentifierNode *Demangler::demangleNameScopePiece(StringView &MangledName) {
   if (startsWithLocalScopePattern(MangledName))
     return demangleLocallyScopedNamePiece(MangledName);
 
-  return demangleSimpleName(MangledName, true);
+  return demangleSimpleName(MangledName, /*Memorize=*/true);
 }
 
 static NodeArrayNode *nodeListToNodeArray(ArenaAllocator &Arena, NodeList *Head,
@@ -1833,7 +1834,7 @@ CustomTypeNode *Demangler::demangleCustomType(StringView &MangledName) {
   MangledName.popFront();
 
   CustomTypeNode *CTN = Arena.alloc<CustomTypeNode>();
-  CTN->Identifier = demangleUnqualifiedTypeName(MangledName, true);
+  CTN->Identifier = demangleUnqualifiedTypeName(MangledName, /*Memorize=*/true);
   if (!MangledName.consumeFront('@'))
     Error = true;
   if (Error)
