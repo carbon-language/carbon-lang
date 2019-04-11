@@ -26,8 +26,7 @@ namespace Fortran::semantics {
 // Semantic analysis of STOP and ERROR STOP statements.
 class StopChecker : public virtual BaseChecker {
 public:
-  explicit StopChecker(SemanticsContext &);
-  ~StopChecker();
+  explicit StopChecker(SemanticsContext &context) : context_{context} {};
 
   void Enter(const parser::StopStmt &);
 

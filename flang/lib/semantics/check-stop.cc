@@ -20,12 +20,6 @@
 #include "../parser/parse-tree.h"
 #include <optional>
 
-Fortran::semantics::StopChecker::StopChecker(
-    Fortran::semantics::SemanticsContext &context)
-  : context_{context} {}
-
-Fortran::semantics::StopChecker::~StopChecker() = default;
-
 void Fortran::semantics::StopChecker::Enter(
     const Fortran::parser::StopStmt &stmt) {
   const auto &sc{std::get<std::optional<Fortran::parser::StopCode>>(stmt.t)};
@@ -34,7 +28,7 @@ void Fortran::semantics::StopChecker::Enter(
 
   if (sc.has_value()) {
     const Fortran::parser::CharBlock &source{sc.value().v.thing.source};
-    const auto &expr = *(sc.value().v.thing.typedExpr);
+    const auto &expr{*(sc.value().v.thing.typedExpr)};
 
     if (!(Fortran::semantics::ExprIsScalar(expr))) {
       context_.Say(source, "Stop code must be a scalar"_err_en_US);
@@ -66,7 +60,7 @@ void Fortran::semantics::StopChecker::Enter(
   if (sle.has_value()) {
     const Fortran::parser::CharBlock &source{
         sle.value().thing.thing.value().source};
-    const auto &expr = *(sle.value().thing.thing.value().typedExpr);
+    const auto &expr{*(sle.value().thing.thing.value().typedExpr)};
 
     if (!(Fortran::semantics::ExprIsScalar(expr))) {
       context_.Say(source,
