@@ -481,7 +481,7 @@ Demangler::demangleFunctionIdentifierCode(StringView &MangledName) {
   if (MangledName.consumeFront("__"))
     return demangleFunctionIdentifierCode(
         MangledName, FunctionIdentifierCodeGroup::DoubleUnder);
-  else if (MangledName.consumeFront("_"))
+  if (MangledName.consumeFront("_"))
     return demangleFunctionIdentifierCode(MangledName,
                                           FunctionIdentifierCodeGroup::Under);
   return demangleFunctionIdentifierCode(MangledName,
@@ -1575,7 +1575,8 @@ FuncClass Demangler::demangleFunctionClass(StringView &MangledName) {
     FuncClass VFlag = FC_VirtualThisAdjust;
     if (MangledName.consumeFront('R'))
       VFlag = FuncClass(VFlag | FC_VirtualThisAdjustEx);
-
+    if (MangledName.empty())
+      break;
     switch (MangledName.popFront()) {
     case '0':
       return FuncClass(FC_Private | FC_Virtual | VFlag);
