@@ -343,21 +343,10 @@ define <8 x float> @combine_permps_as_permpd(<8 x float> %a) {
 }
 
 define <8 x float> @combine_permps_as_vpermilps(<8 x float> %a, i32 %a1) {
-; X86-LABEL: combine_permps_as_vpermilps:
-; X86:       # %bb.0:
-; X86-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; X86-NEXT:    vblendps {{.*#+}} ymm1 = ymm1[0],mem[1,2,3,4,5,6,7]
-; X86-NEXT:    vpermps %ymm0, %ymm1, %ymm0
-; X86-NEXT:    vpermilps {{.*#+}} ymm0 = ymm0[1,1,2,3,4,5,6,7]
-; X86-NEXT:    retl
-;
-; X64-LABEL: combine_permps_as_vpermilps:
-; X64:       # %bb.0:
-; X64-NEXT:    vmovd %edi, %xmm1
-; X64-NEXT:    vpblendd {{.*#+}} ymm1 = ymm1[0],mem[1,2,3,4,5,6,7]
-; X64-NEXT:    vpermd %ymm0, %ymm1, %ymm0
-; X64-NEXT:    vpermilps {{.*#+}} ymm0 = ymm0[1,1,2,3,4,5,6,7]
-; X64-NEXT:    retq
+; CHECK-LABEL: combine_permps_as_vpermilps:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    vpermilps {{.*#+}} ymm0 = ymm0[2,2,1,0,7,6,5,4]
+; CHECK-NEXT:    ret{{[l|q]}}
   %1 = insertelement <8 x i32> <i32 3, i32 2, i32 1, i32 0, i32 7, i32 6, i32 5, i32 4>, i32 %a1, i32 0
   %2 = call <8 x float> @llvm.x86.avx2.permps(<8 x float> %a, <8 x i32> %1)
   %3 = shufflevector <8 x float> %2, <8 x float> undef, <8 x i32> <i32 1, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
