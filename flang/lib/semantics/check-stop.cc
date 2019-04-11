@@ -35,17 +35,13 @@ void StopChecker::Enter(const parser::StopStmt &stmt) {
     } else {
       if (ExprHasTypeCategory(expr, common::TypeCategory::Integer)) {
         // C1171 default kind
-        if (!(ExprHasTypeKind(expr,
-                context_.defaultKinds().GetDefaultKind(
-                    common::TypeCategory::Integer)))) {
+        if (!(ExprTypeKindIsDefault(expr, context_))) {
           context_.Say(
               source, "Integer stop code must be of default kind"_err_en_US);
         }
       } else if (ExprHasTypeCategory(expr, common::TypeCategory::Character)) {
         // R1162 spells scalar-DEFAULT-char-expr
-        if (!(ExprHasTypeKind(expr,
-                context_.defaultKinds().GetDefaultKind(
-                    common::TypeCategory::Character)))) {
+        if (!(ExprTypeKindIsDefault(expr, context_))) {
           context_.Say(
               source, "Character stop code must be of default kind"_err_en_US);
         }
