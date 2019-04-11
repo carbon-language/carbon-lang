@@ -1554,7 +1554,7 @@ static void TestOverflowExhaustive(Fn1 OverflowFn, Fn2 MayOverflowFn) {
       });
 }
 
-TEST_F(ConstantRangeTest, UnsignedAddOverflowExhautive) {
+TEST_F(ConstantRangeTest, UnsignedAddOverflowExhaustive) {
   TestOverflowExhaustive(
       [](const APInt &N1, const APInt &N2) {
         bool Overflow;
@@ -1566,7 +1566,7 @@ TEST_F(ConstantRangeTest, UnsignedAddOverflowExhautive) {
       });
 }
 
-TEST_F(ConstantRangeTest, UnsignedSubOverflowExhautive) {
+TEST_F(ConstantRangeTest, UnsignedSubOverflowExhaustive) {
   TestOverflowExhaustive(
       [](const APInt &N1, const APInt &N2) {
         bool Overflow;
@@ -1578,7 +1578,7 @@ TEST_F(ConstantRangeTest, UnsignedSubOverflowExhautive) {
       });
 }
 
-TEST_F(ConstantRangeTest, SignedAddOverflowExhautive) {
+TEST_F(ConstantRangeTest, SignedAddOverflowExhaustive) {
   TestOverflowExhaustive(
       [](const APInt &N1, const APInt &N2) {
         bool Overflow;
@@ -1590,7 +1590,7 @@ TEST_F(ConstantRangeTest, SignedAddOverflowExhautive) {
       });
 }
 
-TEST_F(ConstantRangeTest, SignedSubOverflowExhautive) {
+TEST_F(ConstantRangeTest, SignedSubOverflowExhaustive) {
   TestOverflowExhaustive(
       [](const APInt &N1, const APInt &N2) {
         bool Overflow;
