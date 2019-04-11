@@ -323,6 +323,14 @@ class Preprocessor {
   /// to avoid hitting the same error over and over again.
   bool HasReachedMaxIncludeDepth = false;
 
+  /// The number of currently-active calls to Lex.
+  ///
+  /// Lex is reentrant, and asking for an (end-of-phase-4) token can often
+  /// require asking for multiple additional tokens. This counter makes it
+  /// possible for Lex to detect whether it's producing a token for the end
+  /// of phase 4 of translation or for some other situation.
+  unsigned LexLevel = 0;
+
 public:
   struct PreambleSkipInfo {
     SourceLocation HashTokenLoc;
@@ -1244,24 +1252,6 @@ public:
   /// Disable the last EnableBacktrackAtThisPos call.
   void CommitBacktrackedTokens();
 
-  struct CachedTokensRange {
-    CachedTokensTy::size_type Begin, End;
-  };
-
-private:
-  /// A range of cached tokens that should be erased after lexing
-  /// when backtracking requires the erasure of such cached tokens.
-  Optional<CachedTokensRange> CachedTokenRangeToErase;
-
-public:
-  /// Returns the range of cached tokens that were lexed since
-  /// EnableBacktrackAtThisPos() was previously called.
-  CachedTokensRange LastCachedTokenRange();
-
-  /// Erase the range of cached tokens that were lexed since
-  /// EnableBacktrackAtThisPos() was previously called.
-  void EraseCachedTokens(CachedTokensRange TokenRange);
-
   /// Make Preprocessor re-lex the tokens that were lexed since
   /// EnableBacktrackAtThisPos() was previously called.
   void Backtrack();
@@ -1353,6 +1343,7 @@ public:
   /// tokens after phase 5.  As such, it is equivalent to using
   /// 'Lex', not 'LexUnexpandedToken'.
   const Token &LookAhead(unsigned N) {
+    assert(LexLevel == 0 && "cannot use lookahead while lexing");
     if (CachedLexPos + N < CachedTokens.size())
       return CachedTokens[CachedLexPos+N];
     else
@@ -1379,8 +1370,16 @@ public:
   /// If BackTrack() is called afterwards, the token will remain at the
   /// insertion point.
   void EnterToken(const Token &Tok) {
-    EnterCachingLexMode();
-    CachedTokens.insert(CachedTokens.begin()+CachedLexPos, Tok);
+    if (LexLevel) {
+      // It's not correct in general to enter caching lex mode while in the
+      // middle of a nested lexing action.
+      auto TokCopy = llvm::make_unique<Token[]>(1);
+      TokCopy[0] = Tok;
+      EnterTokenStream(std::move(TokCopy), 1, true);
+    } else {
+      EnterCachingLexMode();
+      CachedTokens.insert(CachedTokens.begin()+CachedLexPos, Tok);
+    }
   }
 
   /// We notify the Preprocessor that if it is caching tokens (because
@@ -2062,6 +2061,7 @@ private:
   }
 
   void EnterCachingLexMode();
+  void EnterCachingLexModeUnchecked();
 
   void ExitCachingLexMode() {
     if (InCachingLexMode())

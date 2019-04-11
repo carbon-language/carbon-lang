@@ -829,10 +829,10 @@ void Preprocessor::HandleSkippedDirectiveWhileUsingPCH(Token &Result,
       return HandleIncludeDirective(HashLoc, Result);
     }
     if (SkippingUntilPragmaHdrStop && II->getPPKeywordID() == tok::pp_pragma) {
-      Token P = LookAhead(0);
-      auto *II = P.getIdentifierInfo();
+      Lex(Result);
+      auto *II = Result.getIdentifierInfo();
       if (II && II->getName() == "hdrstop")
-        return HandlePragmaDirective(HashLoc, PIK_HashPragma);
+        return HandlePragmaHdrstop(Result);
     }
   }
   DiscardUntilEndOfDirective();

@@ -862,6 +862,8 @@ bool Preprocessor::HandleIdentifier(Token &Identifier) {
 }
 
 void Preprocessor::Lex(Token &Result) {
+  ++LexLevel;
+
   // We loop here until a lex function returns a token; this avoids recursion.
   bool ReturnedToken;
   do {
@@ -893,6 +895,7 @@ void Preprocessor::Lex(Token &Result) {
   }
 
   LastTokenWasAt = Result.is(tok::at);
+  --LexLevel;
 }
 
 /// Lex a header-name token (including one formed from header-name-tokens if
