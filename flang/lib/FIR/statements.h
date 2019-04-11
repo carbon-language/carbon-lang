@@ -293,7 +293,7 @@ public:
 
 private:
   explicit ApplyExprStmt(const Expression &e) : expression_{e} {}
-  explicit ApplyExprStmt(Expression &&e) : expression_{e} {}
+  explicit ApplyExprStmt(Expression &&e) : expression_{std::move(e)} {}
 
   Expression expression_;
 };
