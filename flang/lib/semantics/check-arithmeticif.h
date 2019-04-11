@@ -24,8 +24,7 @@ struct ArithmeticIfStmt;
 namespace Fortran::semantics {
 class ArithmeticIfStmtChecker : public virtual BaseChecker {
 public:
-  inline ArithmeticIfStmtChecker(SemanticsContext &context)
-    : context_(context){};
+  ArithmeticIfStmtChecker(SemanticsContext &context) : context_(context){};
   void Leave(const parser::ArithmeticIfStmt &);
 
 private:

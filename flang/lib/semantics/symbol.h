@@ -154,8 +154,10 @@ public:
   const ArraySpec &coshape() const { return coshape_; }
   void set_shape(const ArraySpec &);
   void set_coshape(const ArraySpec &);
-  const Symbol *commonBlock() const { return commonBlock_; }    
-  void set_commonBlock(const Symbol &commonBlock) { commonBlock_ = &commonBlock; }
+  const Symbol *commonBlock() const { return commonBlock_; }
+  void set_commonBlock(const Symbol &commonBlock) {
+    commonBlock_ = &commonBlock;
+  }
   bool IsArray() const { return !shape_.empty(); }
   bool IsCoarray() const { return !coshape_.empty(); }
   bool IsAssumedShape() const {
@@ -260,7 +262,7 @@ private:
   std::optional<SourceName> passName_;  // name in PASS attribute
 };
 
-ENUM_CLASS(GenericKind, // Kinds of generic-spec
+ENUM_CLASS(GenericKind,  // Kinds of generic-spec
     Name, DefinedOp,  // these have a Name associated with them
     Assignment,  // user-defined assignment
     OpPower, OpMultiply, OpDivide, OpAdd, OpSubtract, OpConcat, OpLT, OpLE,

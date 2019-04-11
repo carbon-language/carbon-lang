@@ -24,7 +24,7 @@ struct DeallocateStmt;
 namespace Fortran::semantics {
 class DeallocateChecker : public virtual BaseChecker {
 public:
-  inline DeallocateChecker(SemanticsContext &context) : context_{context} {}
+  DeallocateChecker(SemanticsContext &context) : context_{context} {}
   void Leave(const parser::DeallocateStmt &);
 
 private:

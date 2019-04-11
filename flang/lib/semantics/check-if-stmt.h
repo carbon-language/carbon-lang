@@ -24,7 +24,7 @@ struct IfStmt;
 namespace Fortran::semantics {
 class IfStmtChecker : public virtual BaseChecker {
 public:
-  inline IfStmtChecker(SemanticsContext &context) : context_{context} {}
+  IfStmtChecker(SemanticsContext &context) : context_{context} {}
   void Leave(const parser::IfStmt &);
 
 private:

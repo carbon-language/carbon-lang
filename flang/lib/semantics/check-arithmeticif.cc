@@ -33,14 +33,14 @@ void ArithmeticIfStmtChecker::Leave(
   // C849 that shall not be of type complex.
   auto &expr{std::get<parser::Expr>(arithmeticIfStmt.t)};
   if (expr.typedExpr->v.Rank() > 0) {
-    context_.messages().Say(expr.source,
+    context_.Say(expr.source,
         "ARITHMETIC IF expression must be a scalar expression"_err_en_US);
   } else if (ExprHasTypeCategory(
                  *expr.typedExpr, common::TypeCategory::Complex)) {
-    context_.messages().Say(expr.source,
+    context_.Say(expr.source,
         "ARITHMETIC IF expression must not be a COMPLEX expression"_err_en_US);
   } else if (!IsNumericExpr(*expr.typedExpr)) {
-    context_.messages().Say(expr.source,
+    context_.Say(expr.source,
         "ARITHMETIC IF expression must be a numeric expression"_err_en_US);
   }
   // The labels have already been checked in resolve-labels.

@@ -28,10 +28,10 @@ void NullifyChecker::Leave(const parser::NullifyStmt &nullifyStmt) {
             [&](const parser::Name &name) {
               auto const *symbol{name.symbol};
               if (!IsVariableName(*symbol) && !IsProcName(*symbol)) {
-                context_.messages().Say(name.source,
+                context_.Say(name.source,
                     "name in NULLIFY statement must be a variable or procedure pointer name"_err_en_US);
               } else if (!IsPointer(*symbol)) {  // C951
-                context_.messages().Say(name.source,
+                context_.Say(name.source,
                     "name in NULLIFY statement must have the POINTER attribute"_err_en_US);
               }
             },
@@ -39,7 +39,7 @@ void NullifyChecker::Leave(const parser::NullifyStmt &nullifyStmt) {
               evaluate::ExpressionAnalyzer analyzer{context_};
               if (MaybeExpr checked{analyzer.Analyze(structureComponent)}) {
                 if (!IsPointer(*structureComponent.component.symbol)) {  // C951
-                  context_.messages().Say(structureComponent.component.source,
+                  context_.Say(structureComponent.component.source,
                       "component in NULLIFY statement must have the POINTER attribute"_err_en_US);
                 }
               }

@@ -26,11 +26,11 @@ void ComputedGotoStmtChecker::Leave(
   auto &expr{
       std::get<parser::ScalarIntExpr>(computedGotoStmt.t).thing.thing.value()};
   if (expr.typedExpr->v.Rank() > 0) {
-    context_.messages().Say(expr.source,
+    context_.Say(expr.source,
         "Computed GOTO expression must be a scalar expression"_err_en_US);
   } else if (!ExprHasTypeCategory(
                  *expr.typedExpr, common::TypeCategory::Integer)) {
-    context_.messages().Say(expr.source,
+    context_.Say(expr.source,
         "Computed GOTO expression must be an integer expression"_err_en_US);
   }
 }

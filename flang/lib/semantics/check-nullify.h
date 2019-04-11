@@ -24,7 +24,7 @@ struct NullifyStmt;
 namespace Fortran::semantics {
 class NullifyChecker : public virtual BaseChecker {
 public:
-  inline NullifyChecker(SemanticsContext &context) : context_{context} {}
+  NullifyChecker(SemanticsContext &context) : context_{context} {}
   void Leave(const parser::NullifyStmt &);
 
 private:

@@ -28,7 +28,7 @@ void IfStmtChecker::Leave(const parser::IfStmt &ifStmt) {
       std::get<parser::UnlabeledStatement<parser::ActionStmt>>(ifStmt.t)};
   if (std::holds_alternative<common::Indirection<parser::IfStmt>>(
           body.statement.u)) {
-    context_.messages().Say(
+    context_.Say(
         body.source, "IF statement is not allowed in IF statement"_err_en_US);
   }
 }
