@@ -535,7 +535,8 @@ bool IRTranslator::translateExtractValue(const User &U,
   uint64_t Offset = getOffsetFromIndices(U, *DL);
   ArrayRef<unsigned> SrcRegs = getOrCreateVRegs(*Src);
   ArrayRef<uint64_t> Offsets = *VMap.getOffsets(*Src);
-  unsigned Idx = llvm::lower_bound(Offsets, Offset) - Offsets.begin();
+  unsigned Idx = std::lower_bound(Offsets.begin(), Offsets.end(), Offset) -
+                 Offsets.begin();
   auto &DstRegs = allocateVRegs(U);
 
   for (unsigned i = 0; i < DstRegs.size(); ++i)
