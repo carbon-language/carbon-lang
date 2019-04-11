@@ -72,7 +72,7 @@ float SubnormalFlusher2(float f) {  // given f/2 is subnormal
   return f / 2.3;  // returns 0 if subnormal
 }
 
-void TestSubnormalFlushing() {
+void TestHostRuntimeSubnormalFlushing() {
   using R4 = Type<TypeCategory::Real, 4>;
   if constexpr (std::is_same_v<host::HostType<R4>, float>) {
     Fortran::parser::CharBlock src;
@@ -119,6 +119,6 @@ void TestSubnormalFlushing() {
 
 int main() {
   RunOnTypes<TestGetScalarConstantValue, AllIntrinsicTypes>::Run();
-  TestSubnormalFlushing();
+  TestHostRuntimeSubnormalFlushing();
   return testing::Complete();
 }

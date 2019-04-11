@@ -60,6 +60,26 @@ template<typename TR, typename... ArgInfo>
 using HostFuncPointer = FuncPointer<host::HostType<TR>,
     HostArgType<typename ArgInfo::Type, ArgInfo::pass>...>;
 
+// Software Subnormal Flushing helper.
+template<typename T> struct Flusher {
+  // Only flush floating-points. Forward other scalars untouched.
+  static constexpr inline const Scalar<T> &FlushSubnormals(const Scalar<T> &x) {
+    return x;
+  }
+};
+template<int Kind> struct Flusher<Type<TypeCategory::Real, Kind>> {
+  using T = Type<TypeCategory::Real, Kind>;
+  static constexpr inline Scalar<T> FlushSubnormals(const Scalar<T> &x) {
+    return x.FlushSubnormalToZero();
+  }
+};
+template<int Kind> struct Flusher<Type<TypeCategory::Complex, Kind>> {
+  using T = Type<TypeCategory::Complex, Kind>;
+  static constexpr inline Scalar<T> FlushSubnormals(const Scalar<T> &x) {
+    return x.FlushSubnormalToZero();
+  }
+};
+
 // Callable factory
 template<typename TR, typename... ArgInfo> struct CallableHostWrapper {
   static Scalar<TR> scalarCallable(FoldingContext &context,
@@ -68,10 +88,18 @@ template<typename TR, typename... ArgInfo> struct CallableHostWrapper {
     if constexpr (host::HostTypeExists<TR, typename ArgInfo::Type...>()) {
       host::HostFloatingPointEnvironment hostFPE;
       hostFPE.SetUpHostFloatingPointEnvironment(context);
-      host::HostType<TR> res{
-          func(host::CastFortranToHost<typename ArgInfo::Type>(x)...)};
-      hostFPE.CheckAndRestoreFloatingPointEnvironment(context);
-      return host::CastHostToFortran<TR>(res);
+      host::HostType<TR> res{};
+      if (context.flushSubnormalsToZero() &&
+          !hostFPE.HasSubnormalFlushingHardwareControl()) {
+        res = func(host::CastFortranToHost<typename ArgInfo::Type>(
+            Flusher<typename ArgInfo::Type>::FlushSubnormals(x))...);
+        hostFPE.CheckAndRestoreFloatingPointEnvironment(context);
+        return Flusher<TR>::FlushSubnormals(host::CastHostToFortran<TR>(res));
+      } else {
+        res = func(host::CastFortranToHost<typename ArgInfo::Type>(x)...);
+        hostFPE.CheckAndRestoreFloatingPointEnvironment(context);
+        return host::CastHostToFortran<TR>(res);
+      }
     } else {
       common::die("Internal error: Host does not supports this function type."
                   "This should not have been called for folding");

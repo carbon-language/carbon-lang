@@ -35,6 +35,7 @@ void HostFloatingPointEnvironment::SetUpHostFloatingPointEnvironment(
     return;
   }
 #if __x86_64__
+  HasSubnormalFlushingHardwareControl_ = true;
   if (context.flushSubnormalsToZero()) {
     currentFenv_.__mxcsr |= 0x8000;  // result
     currentFenv_.__mxcsr |= 0x0040;  // operands
@@ -61,9 +62,7 @@ void HostFloatingPointEnvironment::SetUpHostFloatingPointEnvironment(
       "TODO: flushing mode for subnormals is not set for this host architecture due to incompatible C library it uses"_en_US);
 #endif
 #else
-  // TODO other architectures
-  context.messages().Say(
-      "TODO: flushing mode for subnormals is not set for this host architecture when folding with host runtime functions"_en_US);
+  // Software flushing will be performed around host library calls if needed.
 #endif
   errno = 0;
   if (fesetenv(&currentFenv_) != 0) {
