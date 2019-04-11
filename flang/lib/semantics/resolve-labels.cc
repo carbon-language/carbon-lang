@@ -898,11 +898,11 @@ void CheckLabelDoConstraints(const SourceStmtList &dos,
               TargetStatementEnum::CompatibleDo)) {
         errorHandler.Say(doTarget.parserCharBlock,
             parser::MessageFormattedText{
-                "END DO or CONTINUE must be used to terminate a labeled DO loop"_err_en_US});
+                "A DO loop should terminate with an END DO or CONTINUE"_err_en_US});
       } else {
         errorHandler.Say(doTarget.parserCharBlock,
             parser::MessageFormattedText{
-                "Only an END DO or CONTINUE should be used to terminate a labeled DO loop"_en_US});
+                "A DO loop should terminate with an END DO or CONTINUE"_en_US});
       }
     } else {
       loopBodies.emplace_back(SkipLabel(position), doTarget.parserCharBlock);
