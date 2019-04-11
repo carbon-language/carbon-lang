@@ -23,12 +23,6 @@
 
 using namespace Fortran::evaluate;
 
-template<typename A> std::string AsFortran(const A &x) {
-  std::stringstream ss;
-  ss << x;
-  return ss.str();
-}
-
 // helper to call functions on all types from tuple
 template<typename... T> struct RunOnTypes {};
 template<typename Test, typename... T>
