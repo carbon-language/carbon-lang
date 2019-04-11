@@ -27,11 +27,11 @@
 #include "formatting.h"
 #include "type.h"
 #include "variable.h"
-#include "../lib/common/Fortran.h"
-#include "../lib/common/idioms.h"
-#include "../lib/common/template.h"
-#include "../lib/parser/char-block.h"
-#include "../lib/parser/message.h"
+#include "../common/Fortran.h"
+#include "../common/idioms.h"
+#include "../common/indirection.h"
+#include "../common/template.h"
+#include "../parser/char-block.h"
 #include <algorithm>
 #include <list>
 #include <ostream>

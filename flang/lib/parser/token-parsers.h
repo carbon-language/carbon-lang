@@ -25,7 +25,6 @@
 #include "provenance.h"
 #include "type-parsers.h"
 #include "../common/idioms.h"
-#include "../evaluate/integer.h"
 #include <cstddef>
 #include <cstring>
 #include <functional>

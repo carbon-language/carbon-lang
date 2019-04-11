@@ -26,7 +26,7 @@
 //    template class Fortran::common::Indirection<FORWARD_TYPE>;
 // in one C++ source file later where a definition of the type is visible.
 
-#include "../common/idioms.h"
+#include "idioms.h"
 #include <memory>
 #include <type_traits>
 #include <utility>
