@@ -46,11 +46,11 @@ subroutine s4
   real :: a(10), b(10)
   complex :: x
   integer :: i(2)
-  !ERROR: Variable 'x' is not integer
+  !ERROR: Variable 'x' is not INTEGER
   forall(x=1:10)
     a(x) = b(x)
   end forall
-  !ERROR: Variable 'y' is not integer
+  !ERROR: Variable 'y' is not INTEGER
   forall(y=1:10)
     a(y) = b(y)
   end forall

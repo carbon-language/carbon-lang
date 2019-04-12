@@ -43,8 +43,8 @@ end
 
 subroutine s4
   real :: i, j
-  !ERROR: Variable 'i' is not integer
+  !ERROR: Variable 'i' is not INTEGER
   real :: a(16) = [(i, i=1, 16)]
-  !ERROR: Variable 'j' is not integer
+  !ERROR: Variable 'j' is not INTEGER
   data(a(j), j=1, 16) / 16 * 0.0 /
 end
