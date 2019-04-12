@@ -32,6 +32,10 @@ using namespace llvm;
 
 STATISTIC(NumExpanded, "Number of branches expanded to long format");
 
+namespace llvm {
+  void initializePPCBSelPass(PassRegistry&);
+}
+
 namespace {
   struct PPCBSel : public MachineFunctionPass {
     static char ID;
