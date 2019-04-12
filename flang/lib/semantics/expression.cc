@@ -1832,6 +1832,9 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr &expr) {
     }
     if (result.has_value()) {
       expr.typedExpr.reset(new GenericExprWrapper{common::Clone(*result)});
+    } else if (!fatalErrors_) {
+      CHECK(context_.AnyFatalError());  // somewhat expensive
+      fatalErrors_ = true;
     }
     return result;
   }
@@ -1968,6 +1971,7 @@ evaluate::Expr<evaluate::SubscriptInteger> AnalyzeKindSelector(
   auto save{analyzer.GetContextualMessages().SetLocation(*context.location())};
   return analyzer.AnalyzeKindSelector(category, selector);
 }
+
 bool ExprChecker::Walk(const parser::Program &program) {
   parser::Walk(program, *this);
   return !context_.AnyFatalError();

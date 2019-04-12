@@ -249,6 +249,7 @@ private:
 
   semantics::SemanticsContext &context_;
   std::map<parser::CharBlock, int> acImpliedDos_;  // values are INTEGER kinds
+  bool fatalErrors_{false};
 };
 
 template<typename L, typename R>
@@ -303,6 +304,7 @@ public:
     AnalyzeExpr(context_, x);
     return false;
   }
+
   template<typename A> bool Pre(const parser::Scalar<A> &x) {
     AnalyzeExpr(context_, x);
     return false;
