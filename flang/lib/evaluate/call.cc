@@ -34,6 +34,9 @@ bool SpecificIntrinsic::operator==(const SpecificIntrinsic &that) const {
       attrs == that.attrs;
 }
 
+ProcedureDesignator::ProcedureDesignator(Component &&c)
+  : u{common::CopyableIndirection<Component>::Make(std::move(c))} {}
+
 std::optional<DynamicType> ProcedureDesignator::GetType() const {
   if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&u)}) {
     return intrinsic->type;
@@ -68,7 +71,9 @@ const Symbol *ProcedureDesignator::GetSymbol() const {
   return std::visit(
       common::visitors{
           [](const Symbol *sym) { return sym; },
-          [](const Component &c) { return &c.GetLastSymbol(); },
+          [](const common::CopyableIndirection<Component> &c) {
+            return &c.value().GetLastSymbol();
+          },
           [](const auto &) -> const Symbol * { return nullptr; },
       },
       u);

@@ -28,6 +28,13 @@
 #include <optional>
 #include <set>
 
+// #define DUMP_ON_FAILURE 1
+#if DUMP_ON_FAILURE
+#include "../parser/dump-parse-tree.h"
+#include <iostream>
+#endif
+// #define CRASH_ON_FAILURE
+
 // Typedef for optional generic expressions (ubiquitous in this file)
 using MaybeExpr =
     std::optional<Fortran::evaluate::Expr<Fortran::evaluate::SomeType>>;
@@ -1398,6 +1405,46 @@ MaybeExpr ExpressionAnalyzer::Analyze(
   return AsMaybeExpr(Expr<SomeDerived>{std::move(result)});
 }
 
+std::optional<ProcedureDesignator>
+ExpressionAnalyzer::AnalyzeProcedureComponentRef(
+    const parser::ProcComponentRef &pcr) {
+  const parser::StructureComponent &sc{pcr.v.thing};
+  const auto &name{sc.component.source};
+  if (MaybeExpr base{Analyze(sc.base)}) {
+    Symbol *sym{sc.component.symbol};
+    if (sym == nullptr) {
+      Say(sc.component.source,
+          "procedure component name was not resolved to a symbol"_err_en_US);
+    } else if (auto *dtExpr{UnwrapExpr<Expr<SomeDerived>>(*base)}) {
+      const semantics::DerivedTypeSpec *dtSpec{nullptr};
+      if (std::optional<DynamicType> dtDyTy{dtExpr->GetType()}) {
+        dtSpec = dtDyTy->derived;
+      }
+      if (dtSpec == nullptr || dtSpec->scope() == nullptr) {
+        Say(name,
+            "TODO: base of procedure component reference lacks a derived type"_err_en_US);
+      } else if (std::optional<DataRef> dataRef{
+                     ExtractDataRef(std::move(*dtExpr))}) {
+        if (auto component{
+                CreateComponent(std::move(*dataRef), *sym, *dtSpec->scope())}) {
+          return ProcedureDesignator{std::move(*component)};
+        } else {
+          Say(name,
+              "procedure component is not in scope of derived TYPE(%s)"_err_en_US,
+              dtSpec->typeSymbol().name().ToString().data());
+        }
+      } else {
+        Say(name,
+            "base of procedure component reference must be a data reference"_err_en_US);
+      }
+    } else {
+      Say(name,
+          "base of procedure component reference is not a derived type object"_err_en_US);
+    }
+  }
+  return std::nullopt;
+}
+
 auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
     ActualArguments &arguments) -> std::optional<CallAndArguments> {
   return std::visit(
@@ -1436,10 +1483,11 @@ auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
           },
           [&](const parser::ProcComponentRef &pcr)
               -> std::optional<CallAndArguments> {
-            if (MaybeExpr component{Analyze(pcr.v)}) {
+            if (std::optional<ProcedureDesignator> proc{
+                    AnalyzeProcedureComponentRef(pcr)}) {
               // TODO distinguish PCR from TBP
               // TODO optional PASS argument for TBP
-              return std::nullopt;
+              return {CallAndArguments{std::move(*proc), std::move(arguments)}};
             } else {
               return std::nullopt;
             }
@@ -1833,7 +1881,13 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr &expr) {
     if (result.has_value()) {
       expr.typedExpr.reset(new GenericExprWrapper{common::Clone(*result)});
     } else if (!fatalErrors_) {
-      CHECK(context_.AnyFatalError());  // somewhat expensive
+      if (!context_.AnyFatalError()) {
+#if DUMP_ON_FAILURE
+        parser::DumpTree(std::cout << "Expression analysis failed on: ", expr);
+#elif CRASH_ON_FAILURE
+        common::die("Expression analysis failed without emitting an error");
+#endif
+      }
       fatalErrors_ = true;
     }
     return result;

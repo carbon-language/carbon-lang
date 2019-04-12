@@ -64,8 +64,6 @@ public:
 
   bool operator==(const A &that) const { return *p_ == that; }
   bool operator==(const Indirection &that) const { return *p_ == *that.p_; }
-  bool operator!=(const A &that) const { return *p_ != that; }
-  bool operator!=(const Indirection &that) const { return *p_ != *that.p_; }
 
   template<typename... ARGS>
   static common::IfNoLvalue<Indirection, ARGS...> Make(ARGS &&... args) {
@@ -118,8 +116,6 @@ public:
 
   bool operator==(const A &that) const { return *p_ == that; }
   bool operator==(const Indirection &that) const { return *p_ == *that.p_; }
-  bool operator!=(const A &that) const { return *p_ != that; }
-  bool operator!=(const Indirection &that) const { return *p_ != *that.p_; }
 
   template<typename... ARGS>
   static common::IfNoLvalue<Indirection, ARGS...> Make(ARGS &&... args) {

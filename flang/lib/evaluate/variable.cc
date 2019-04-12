@@ -574,3 +574,5 @@ bool DescriptorInquiry::operator==(const DescriptorInquiry &that) const {
 
 INSTANTIATE_VARIABLE_TEMPLATES
 }
+
+template class Fortran::common::Indirection<Fortran::evaluate::Component, true>;

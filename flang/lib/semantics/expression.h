@@ -238,6 +238,8 @@ private:
   std::optional<Expr<SubscriptInteger>> GetSubstringBound(
       const std::optional<parser::ScalarIntExpr> &);
 
+  std::optional<ProcedureDesignator> AnalyzeProcedureComponentRef(
+      const parser::ProcComponentRef &);
   struct CallAndArguments {
     ProcedureDesignator procedureDesignator;
     ActualArguments arguments;

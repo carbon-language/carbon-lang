@@ -401,7 +401,6 @@ public:
     : messages_{context.messages()} {}
 
   bool operator==(const DoConcurrentContext &x) const { return this == &x; }
-  bool operator!=(const DoConcurrentContext &x) const { return this != &x; }
 
   void Check(const parser::DoConstruct &doConstruct) {
     auto &doStmt{
