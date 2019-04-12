@@ -23,6 +23,7 @@
 #include "MCPlusBuilder.h"
 #include "ProfileReader.h"
 #include "ProfileWriter.h"
+#include "Relocation.h"
 #include "RewriteInstance.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
@@ -1838,30 +1839,31 @@ int64_t getRelocationAddend(const ELFObjectFileBase *Obj,
 } // anonymous namespace
 
 bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
+                                        uint64_t RType,
                                         std::string &SymbolName,
                                         bool &IsSectionRelocation,
                                         uint64_t &SymbolAddress,
                                         int64_t &Addend,
                                         uint64_t &ExtractedValue) const {
-  if (!Relocation::isSupported(Rel.getType()))
+  if (!Relocation::isSupported(RType))
     return false;
 
   const bool IsAArch64 = BC->isAArch64();
 
-  const auto RelSize = Relocation::getSizeForType(Rel.getType());
+  const auto RelSize = Relocation::getSizeForType(RType);
 
   auto Value = BC->getUnsignedValueAtAddress(Rel.getOffset(), RelSize);
   assert(Value && "failed to extract relocated value");
   ExtractedValue = *Value;
   if (IsAArch64) {
-    ExtractedValue = Relocation::extractValue(Rel.getType(),
+    ExtractedValue = Relocation::extractValue(RType,
                                               ExtractedValue,
                                               Rel.getOffset());
   }
 
   Addend = getRelocationAddend(InputFile, Rel);
 
-  const auto IsPCRelative = Relocation::isPCRelative(Rel.getType());
+  const auto IsPCRelative = Relocation::isPCRelative(RType);
   const auto PCRelOffset = IsPCRelative && !IsAArch64 ? Rel.getOffset() : 0;
   bool SkipVerification = false;
   auto SymbolIter = Rel.getSymbol();
@@ -1906,7 +1908,7 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
   // For GOT relocs, do not subtract addend as the addend does not refer
   // to this instruction's target, but it refers to the target in the GOT
   // entry.
-  if (Relocation::isGOT(Rel.getType())) {
+  if (Relocation::isGOT(RType)) {
     Addend = 0;
     SymbolAddress = ExtractedValue + PCRelOffset;
   } else if (!SymbolAddress) {
@@ -1936,7 +1938,7 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
     if (SymbolName == "__hot_start" || SymbolName == "__hot_end")
       return true;
 
-    if (Relocation::isTLS(Rel.getType()))
+    if (Relocation::isTLS(RType))
       return true;
 
     return truncateToSize(ExtractedValue, RelSize) ==
@@ -2013,6 +2015,15 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
   for (const auto &Rel : Section.relocations()) {
     SmallString<16> TypeName;
     Rel.getTypeName(TypeName);
+    auto RType = Rel.getType();
+
+    // Adjust the relocation type as the linker might have skewed it.
+    if (BC->isX86() && (RType & ELF::R_X86_64_converted_reloc_bit)) {
+      if (opts::Verbosity >= 1) {
+        dbgs() << "BOLT-WARNING: ignoring R_X86_64_converted_reloc_bit\n";
+      }
+      RType &= ~ELF::R_X86_64_converted_reloc_bit;
+    }
 
     std::string SymbolName;
     uint64_t SymbolAddress;
@@ -2020,6 +2031,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     uint64_t ExtractedValue;
     bool IsSectionRelocation;
     if (!analyzeRelocation(Rel,
+                           RType,
                            SymbolName,
                            IsSectionRelocation,
                            SymbolAddress,
@@ -2058,7 +2070,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     // between the two. If we blindly apply the relocation it will appear
     // that it references an arbitrary location in the code, possibly even
     // in a different function from that containing the jump table.
-    if (!IsAArch64 && Relocation::isPCRelative(Rel.getType())) {
+    if (!IsAArch64 && Relocation::isPCRelative(RType)) {
       // Just register the fact that we have PC-relative relocation at a given
       // address. The actual referenced label/address cannot be determined
       // from linker data alone.
@@ -2086,7 +2098,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
       return false;
     }(SymbolName);
 
-    if (BC->isAArch64() && Rel.getType() == ELF::R_AARCH64_ADR_GOT_PAGE)
+    if (BC->isAArch64() && RType == ELF::R_AARCH64_ADR_GOT_PAGE)
       ForceRelocation = true;
 
     auto RefSection = BC->getSectionForAddress(SymbolAddress);
@@ -2129,10 +2141,10 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     uint64_t RefFunctionOffset = 0;
     MCSymbol *ReferencedSymbol = nullptr;
     if (ForceRelocation) {
-      auto Name = Relocation::isGOT(Rel.getType()) ? "Zero" : SymbolName;
+      auto Name = Relocation::isGOT(RType) ? "Zero" : SymbolName;
       ReferencedSymbol = BC->registerNameAtAddress(Name, 0, 0, 0);
       SymbolAddress = 0;
-      if (Relocation::isGOT(Rel.getType()))
+      if (Relocation::isGOT(RType))
         Addend = Address;
       DEBUG(dbgs() << "BOLT-DEBUG: forcing relocation against symbol "
                    << SymbolName << " with addend " << Addend << '\n');
@@ -2146,7 +2158,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
           // Workaround for member function pointer de-virtualization bug.
           // We check if a code non-pc-relative relocation is pointing
           // to a (fptr - 1).
-          if (ContainingBF && !Relocation::isPCRelative(Rel.getType())) {
+          if (ContainingBF && !Relocation::isPCRelative(RType)) {
             if (const auto *NextBF =
                 BC->getBinaryFunctionAtAddress(Address + 1)) {
               errs() << "BOLT-WARNING: detected possible compiler "
@@ -2348,7 +2360,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
       if (ReferencedBF || ForceRelocation) {
         ContainingBF->addRelocation(Rel.getOffset(),
                                     ReferencedSymbol,
-                                    Rel.getType(),
+                                    RType,
                                     Addend,
                                     ExtractedValue);
       } else {
@@ -2358,7 +2370,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     } else if (IsToCode || ForceRelocation) {
       BC->addRelocation(Rel.getOffset(),
                         ReferencedSymbol,
-                        Rel.getType(),
+                        RType,
                         Addend);
     } else {
       DEBUG(dbgs() << "BOLT-DEBUG: ignoring relocation from data to data\n");

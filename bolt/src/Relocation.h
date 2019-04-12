@@ -18,6 +18,14 @@
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
+
+namespace ELF {
+/// Relocation type mask that was accidentally output by bfd 2.30 linker.
+enum {
+  R_X86_64_converted_reloc_bit = 0x80
+};
+}
+
 namespace bolt {
 
 /// Relocation class.

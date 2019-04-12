@@ -168,6 +168,7 @@ private:
   /// The \p SymbolName, \p SymbolAddress, \p Addend and \p ExtractedValue
   /// parameters will be set on success.
   bool analyzeRelocation(const RelocationRef &Rel,
+                         uint64_t RType,
                          std::string &SymbolName,
                          bool &IsSectionRelocation,
                          uint64_t &SymbolAddress,
