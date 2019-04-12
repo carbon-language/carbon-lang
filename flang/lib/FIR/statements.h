@@ -58,8 +58,11 @@ public:
 // at compile time.
 template<typename A> class QualifiedStmt {
 public:
+  template<typename T, typename U,
+      std::enable_if_t<std::is_base_of_v<T, U>, int>>
+  friend QualifiedStmt<T> QualifiedStmtCreate(Statement *s);
+
   QualifiedStmt() = delete;
-  QualifiedStmt(Statement *stmt) : stmt{stmt} {}
 
   // create a stub, where stmt == nullptr
   QualifiedStmt(std::nullptr_t) : stmt{nullptr} {}
@@ -68,11 +71,14 @@ public:
   operator A *() const;
 
   Statement *stmt;
+
+private:
+  QualifiedStmt(Statement *stmt) : stmt{stmt} {}
 };
 
 template<typename A, typename B,
     std::enable_if_t<std::is_base_of_v<A, B>, int> = 0>
-QualifiedStmt<A> MakeQualifiedStmt(Statement *s) {
+QualifiedStmt<A> QualifiedStmtCreate(Statement *s) {
   return QualifiedStmt<A>{s};
 }
 

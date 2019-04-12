@@ -34,7 +34,7 @@ struct FIRBuilder {
   template<typename A, typename B> QualifiedStmt<A> QualifiedInsert(B &&s) {
     CHECK(GetInsertionPoint());
     auto *statement{Statement::Create(GetInsertionPoint(), std::forward<B>(s))};
-    return MakeQualifiedStmt<A, B>(statement);
+    return QualifiedStmtCreate<A, B>(statement);
   }
 
   template<typename A> Statement *InsertTerminator(A &&s) {
