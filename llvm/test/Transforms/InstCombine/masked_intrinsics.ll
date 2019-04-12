@@ -56,10 +56,9 @@ define <2 x double> @load_lane0(<2 x double>* %ptr, double %pt)  {
   ret <2 x double> %res
 }
 
-; FIXME: the output here demonstrates a miscompile!
 define double @load_all(double* %base, double %pt)  {
 ; CHECK-LABEL: @load_all(
-; CHECK-NEXT:    [[PTRS:%.*]] = getelementptr double, double* [[BASE:%.*]], <4 x i64> <i64 undef, i64 undef, i64 2, i64 undef>
+; CHECK-NEXT:    [[PTRS:%.*]] = getelementptr double, double* [[BASE:%.*]], <4 x i64> <i64 0, i64 undef, i64 2, i64 3>
 ; CHECK-NEXT:    [[RES:%.*]] = call <4 x double> @llvm.masked.gather.v4f64.v4p0f64(<4 x double*> [[PTRS]], i32 4, <4 x i1> <i1 true, i1 false, i1 true, i1 true>, <4 x double> undef)
 ; CHECK-NEXT:    [[ELT:%.*]] = extractelement <4 x double> [[RES]], i64 2
 ; CHECK-NEXT:    ret double [[ELT]]
