@@ -1757,7 +1757,7 @@ struct CharLiteralConstantSubstring {
 struct Designator {
   UNION_CLASS_BOILERPLATE(Designator);
   bool EndsInBareName() const;
-  std::variant<ObjectName, DataRef, Substring> u;
+  std::variant<DataRef, Substring> u;
 };
 
 // R902 variable -> designator | function-reference

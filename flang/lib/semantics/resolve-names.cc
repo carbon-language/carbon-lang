@@ -22,6 +22,7 @@
 #include "semantics.h"
 #include "symbol.h"
 #include "type.h"
+#include "tools.h"
 #include "../common/Fortran.h"
 #include "../common/default-kinds.h"
 #include "../common/indirection.h"
@@ -4020,16 +4021,10 @@ void ConstructVisitor::Post(const parser::Selector &x) {
       common::visitors{
           [&](const parser::Expr &y) { return EvaluateExpr(y); },
           [&](const parser::Variable &y) {
-            if (const auto *des{
-                    std::get_if<Indirection<parser::Designator>>(&y.u)}) {
-              if (const auto *dr{
-                      std::get_if<parser::DataRef>(&des->value().u)}) {
-                variable = std::get_if<parser::Name>(&dr->u);
-                if (variable && !FindSymbol(*variable)) {
-                  variable = nullptr;
-                  return MaybeExpr{};
-                }
-              }
+            variable = GetSimpleName(y);
+            if (variable && !FindSymbol(*variable)) {
+              variable = nullptr;
+              return MaybeExpr{};
             }
             return EvaluateExpr(y);
           },
@@ -4603,6 +4598,7 @@ void ResolveNamesVisitor::Post(const parser::AllocateObject &x) {
       },
       x.u);
 }
+
 bool ResolveNamesVisitor::Pre(const parser::PointerAssignmentStmt &x) {
   const auto &dataRef{std::get<parser::DataRef>(x.t)};
   const auto &bounds{std::get<parser::PointerAssignmentStmt::Bounds>(x.t)};
@@ -4610,21 +4606,9 @@ bool ResolveNamesVisitor::Pre(const parser::PointerAssignmentStmt &x) {
   ResolveDataRef(dataRef);
   Walk(bounds);
   // Resolve unrestricted specific intrinsic procedures as in "p => cos".
-  if (const auto *designator{
-          std::get_if<common::Indirection<parser::Designator>>(&expr.u)}) {
-    if (const parser::Name *
-        name{std::visit(
-            common::visitors{
-                [](const parser::ObjectName &n) { return &n; },
-                [](const parser::DataRef &dataRef) {
-                  return std::get_if<parser::Name>(&dataRef.u);
-                },
-                [](const auto &) -> const parser::Name * { return nullptr; },
-            },
-            designator->value().u)}) {
-      if (NameIsKnownOrIntrinsic(*name)) {
-        return false;
-      }
+  if (const parser::Name *name{GetSimpleName(expr)}) {
+    if (NameIsKnownOrIntrinsic(*name)) {
+      return false;
     }
   }
   Walk(expr);
@@ -4633,7 +4617,6 @@ bool ResolveNamesVisitor::Pre(const parser::PointerAssignmentStmt &x) {
 void ResolveNamesVisitor::Post(const parser::Designator &x) {
   std::visit(
       common::visitors{
-          [&](const parser::ObjectName &x) { ResolveName(x); },
           [&](const parser::DataRef &x) { ResolveDataRef(x); },
           [&](const parser::Substring &x) {
             ResolveDataRef(std::get<parser::DataRef>(x.t));

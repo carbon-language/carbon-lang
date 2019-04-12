@@ -18,14 +18,26 @@
 // Simple predicates and look-up functions that are best defined
 // canonically for use in semantic checking.
 
-#include "scope.h"
-#include "symbol.h"
-#include "type.h"
+#include "../common/Fortran.h"
 #include "../evaluate/variable.h"
-#include "../parser/message.h"
-#include "../parser/parse-tree.h"
+
+namespace Fortran::parser {
+class Messages;
+struct Expr;
+struct Name;
+struct Variable;
+}
+
+namespace Fortran::evaluate {
+class GenericExprWrapper;
+}
 
 namespace Fortran::semantics {
+
+class DeclTypeSpec;
+class DerivedTypeSpec;
+class Scope;
+class Symbol;
 
 const Symbol *FindCommonBlockContaining(const Symbol &object);
 const Scope *FindProgramUnitContaining(const Scope &);
@@ -87,5 +99,12 @@ bool ExprHasTypeCategory(
     const evaluate::GenericExprWrapper &expr, const common::TypeCategory &type);
 void CheckScalarLogicalExpr(
     const parser::Expr &expr, parser::Messages &messages);
+
+// If this Expr or Variable represents a simple Name, return it.
+parser::Name *GetSimpleName(parser::Expr &);
+const parser::Name *GetSimpleName(const parser::Expr &);
+parser::Name *GetSimpleName(parser::Variable &);
+const parser::Name *GetSimpleName(const parser::Variable &);
+
 }
 #endif  // FORTRAN_SEMANTICS_TOOLS_H_

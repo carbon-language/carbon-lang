@@ -16,6 +16,7 @@
 #include "scope.h"
 #include "semantics.h"
 #include "symbol.h"
+#include "tools.h"
 #include "../common/indirection.h"
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
@@ -114,18 +115,11 @@ void FixMisparsedUntaggedNamelistName(READ_OR_WRITE &x) {
     if (auto *charExpr{
             std::get_if<parser::DefaultCharExpr>(&x.format.value().u)}) {
       parser::Expr &expr{charExpr->thing.value()};
-      if (auto *designator{
-              std::get_if<common::Indirection<parser::Designator>>(&expr.u)}) {
-        parser::Name *name{
-            std::get_if<parser::ObjectName>(&designator->value().u)};
-        if (auto *dr{std::get_if<parser::DataRef>(&designator->value().u)}) {
-          name = std::get_if<parser::Name>(&dr->u);
-        }
-        if (name != nullptr && name->symbol != nullptr &&
-            name->symbol->has<NamelistDetails>()) {
-          x.controls.emplace_front(parser::IoControlSpec{std::move(*name)});
-          x.format.reset();
-        }
+      parser::Name *name{GetSimpleName(expr)};
+      if (name != nullptr && name->symbol != nullptr &&
+          name->symbol->has<NamelistDetails>()) {
+        x.controls.emplace_front(parser::IoControlSpec{std::move(*name)});
+        x.format.reset();
       }
     }
   }
