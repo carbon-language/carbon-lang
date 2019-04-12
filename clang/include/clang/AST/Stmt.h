@@ -1042,6 +1042,11 @@ public:
     return static_cast<StmtClass>(StmtBits.sClass);
   }
 
+  Stmt(const Stmt &) = delete;
+  Stmt(Stmt &&) = delete;
+  Stmt &operator=(const Stmt &) = delete;
+  Stmt &operator=(Stmt &&) = delete;
+
   const char *getStmtClassName() const;
 
   bool isOMPStructuredBlock() const { return StmtBits.IsOMPStructuredBlock; }
