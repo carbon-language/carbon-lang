@@ -2526,7 +2526,7 @@ void DeclarationVisitor::CheckScalarIntegerType(const parser::Name &name) {
     }
     if (auto *type{symbol.GetType()}) {
       if (!type->IsNumeric(TypeCategory::Integer)) {
-        Say(name, "Variable '%s' is not integer"_err_en_US);
+        Say(name, "Variable '%s' is not INTEGER"_err_en_US);
         return;
       }
     }

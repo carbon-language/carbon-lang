@@ -12,7 +12,7 @@
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
 
-! Check for semantic errors in DEALLOCATE statements
+! Check for type errors in DEALLOCATE statements
 
 INTEGER, PARAMETER :: maxvalue=1024
 
@@ -23,7 +23,7 @@ Type t
   Type(dt) :: p
 End Type
 
-Type(t),Allocatable :: x(:)
+Type(t),Allocatable :: x
 
 Real :: r
 Integer :: s
@@ -32,47 +32,13 @@ Integer :: pi
 Character(256) :: ee
 Procedure(Real) :: prp
 
-Allocate(x(3))
+Allocate(x)
 
-!ERROR: component in DEALLOCATE statement must have the ALLOCATABLE or POINTER attribute
-Deallocate(x(2)%p)
+!ERROR: Must have CHARACTER type, but is INTEGER(4)
+Deallocate(x, stat=s, errmsg=e)
 
-!ERROR: name in DEALLOCATE statement must have the ALLOCATABLE or POINTER attribute
-Deallocate(pi)
-
-!ERROR: component in DEALLOCATE statement must have the ALLOCATABLE or POINTER attribute
-!ERROR: name in DEALLOCATE statement must have the ALLOCATABLE or POINTER attribute
-Deallocate(x(2)%p, pi)
-
-!ERROR: name in DEALLOCATE statement must be a variable name
-Deallocate(prp)
-
-!ERROR: name in DEALLOCATE statement must have the ALLOCATABLE or POINTER attribute
-!ERROR: name in DEALLOCATE statement must be a variable name
-Deallocate(pi, prp)
-
-!ERROR: name in DEALLOCATE statement must be a variable name
-Deallocate(maxvalue)
-
-!ERROR: component in DEALLOCATE statement must have the ALLOCATABLE or POINTER attribute
-Deallocate(x%p)
-
-!ERROR: component in DEALLOCATE statement must have the ALLOCATABLE or POINTER attribute
-!ERROR: Must have default CHARACTER type
-Deallocate(x%p, stat=s, errmsg=e)
-
-!ERROR: component in DEALLOCATE statement must have the ALLOCATABLE or POINTER attribute
-!ERROR: Must have INTEGER type
-!ERROR: Must have default CHARACTER type
-Deallocate(x%p, stat=r, errmsg=e)
-
-!ERROR: STAT may not be duplicated in a DEALLOCATE statement
-Deallocate(x, stat=s, stat=s)
-!ERROR: ERRMSG may not be duplicated in a DEALLOCATE statement
-Deallocate(x, errmsg=ee, errmsg=ee)
-!ERROR: STAT may not be duplicated in a DEALLOCATE statement
-Deallocate(x, stat=s, errmsg=ee, stat=s)
-!ERROR: ERRMSG may not be duplicated in a DEALLOCATE statement
-Deallocate(x, stat=s, errmsg=ee, errmsg=ee)
+!ERROR: Must have INTEGER type, but is REAL(4)
+!ERROR: Must have CHARACTER type, but is INTEGER(4)
+Deallocate(x, stat=r, errmsg=e)
 
 End Program

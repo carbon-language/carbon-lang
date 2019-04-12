@@ -13,10 +13,11 @@
 ! limitations under the License.
 
 ! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
-! CHECK: must have INTEGER type, but is REAL(4)
+! CHECK: Variable 'j' is not INTEGER
 
-subroutine do_concurrent_test1(i,n)
+subroutine do_concurrent_test1(n)
   implicit none
+  integer :: n
   real :: j
   do 20 concurrent (j = 1:n)
 20 enddo

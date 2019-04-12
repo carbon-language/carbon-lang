@@ -93,6 +93,7 @@ set(ERROR_TESTS
   nullify02.f90
   deallocate01.f90
   deallocate04.f90
+  deallocate05.f90
 )
 
 # These test files have expected symbols in the source
