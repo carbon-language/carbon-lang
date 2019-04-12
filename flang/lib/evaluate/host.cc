@@ -35,7 +35,7 @@ void HostFloatingPointEnvironment::SetUpHostFloatingPointEnvironment(
     return;
   }
 #if __x86_64__
-  HasSubnormalFlushingHardwareControl_ = true;
+  hasSubnormalFlushingHardwareControl_ = true;
   if (context.flushSubnormalsToZero()) {
     currentFenv_.__mxcsr |= 0x8000;  // result
     currentFenv_.__mxcsr |= 0x0040;  // operands
