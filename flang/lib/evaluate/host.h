@@ -39,7 +39,7 @@ class HostFloatingPointEnvironment {
 public:
   void SetUpHostFloatingPointEnvironment(FoldingContext &);
   void CheckAndRestoreFloatingPointEnvironment(FoldingContext &);
-  bool HasSubnormalFlushingHardwareControl() {
+  bool hasSubnormalFlushingHardwareControl() {
     return hasSubnormalFlushingHardwareControl_;
   }
 

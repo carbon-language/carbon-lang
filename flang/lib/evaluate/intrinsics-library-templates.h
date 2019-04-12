@@ -90,7 +90,7 @@ template<typename TR, typename... ArgInfo> struct CallableHostWrapper {
       hostFPE.SetUpHostFloatingPointEnvironment(context);
       host::HostType<TR> res{};
       if (context.flushSubnormalsToZero() &&
-          !hostFPE.HasSubnormalFlushingHardwareControl()) {
+          !hostFPE.hasSubnormalFlushingHardwareControl()) {
         res = func(host::CastFortranToHost<typename ArgInfo::Type>(
             Flusher<typename ArgInfo::Type>::FlushSubnormals(x))...);
         hostFPE.CheckAndRestoreFloatingPointEnvironment(context);
