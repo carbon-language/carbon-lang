@@ -55,7 +55,7 @@ public:
 };
 
 // Some uses of a Statement should be constrained.  These contraints are imposed
-// at compile time.
+// at compile-time with a QualifiedStmt<A> wrapper.
 template<typename A> class QualifiedStmt {
 public:
   template<typename T, typename U,
