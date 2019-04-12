@@ -525,11 +525,9 @@ TEST_F(DocumentSymbolsTest, Template) {
           AllOf(WithName("Tmpl<double>"), WithKind(SymbolKind::Struct),
                 Children()),
           AllOf(WithName("funcTmpl"), Children()),
-          // FIXME(ibiryukov): template args should be <int> to match the code.
-          AllOf(WithName("funcTmpl<int, double, float>"), Children()),
+          AllOf(WithName("funcTmpl<int>"), Children()),
           AllOf(WithName("varTmpl"), Children()),
-          // FIXME(ibiryukov): template args should be <int> to match the code.
-          AllOf(WithName("varTmpl<int, double>"), Children())));
+          AllOf(WithName("varTmpl<int>"), Children())));
 }
 
 TEST_F(DocumentSymbolsTest, Namespaces) {
