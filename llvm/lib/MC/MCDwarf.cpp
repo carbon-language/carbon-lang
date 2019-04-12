@@ -546,7 +546,7 @@ Expected<unsigned>
 MCDwarfLineTableHeader::tryGetFile(StringRef &Directory,
                                    StringRef &FileName,
                                    Optional<MD5::MD5Result> Checksum,
-                                   Optional<StringRef> &Source,
+                                   Optional<StringRef> Source,
                                    unsigned FileNumber) {
   if (Directory == CompilationDir)
     Directory = "";
