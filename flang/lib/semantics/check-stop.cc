@@ -24,48 +24,26 @@ namespace Fortran::semantics {
 
 void StopChecker::Enter(const parser::StopStmt &stmt) {
   const auto &stopCode{std::get<std::optional<parser::StopCode>>(stmt.t)};
-  const auto &scalarLogicalExpr{
-      std::get<std::optional<parser::ScalarLogicalExpr>>(stmt.t)};
 
   if (stopCode.has_value()) {
     const parser::CharBlock &source{stopCode.value().v.thing.source};
     const auto &expr{*(stopCode.value().v.thing.typedExpr)};
 
-    if (!(ExprIsScalar(expr))) {
-      context_.Say(source, "Stop code must be a scalar"_err_en_US);
-    } else {
-      if (ExprHasTypeCategory(expr, common::TypeCategory::Integer)) {
-        // C1171 default kind
-        if (!(ExprTypeKindIsDefault(expr, context_))) {
-          context_.Say(
-              source, "Integer stop code must be of default kind"_err_en_US);
-        }
-      } else if (ExprHasTypeCategory(expr, common::TypeCategory::Character)) {
-        // R1162 spells scalar-DEFAULT-char-expr
-        if (!(ExprTypeKindIsDefault(expr, context_))) {
-          context_.Say(
-              source, "Character stop code must be of default kind"_err_en_US);
-        }
-      } else {
+    if (ExprHasTypeCategory(expr, common::TypeCategory::Integer)) {
+      // C1171 default kind
+      if (!(ExprTypeKindIsDefault(expr, context_))) {
         context_.Say(
-            source, "Stop code must be of INTEGER or CHARACTER type"_err_en_US);
+            source, "Integer stop code must be of default kind"_err_en_US);
       }
-    }
-  }
-  if (scalarLogicalExpr.has_value()) {
-    const parser::CharBlock &source{
-        scalarLogicalExpr.value().thing.thing.value().source};
-    const auto &expr{
-        *(scalarLogicalExpr.value().thing.thing.value().typedExpr)};
-
-    if (!(ExprIsScalar(expr))) {
-      context_.Say(source,
-          "The optional QUIET parameter value must be a scalar"_err_en_US);
+    } else if (ExprHasTypeCategory(expr, common::TypeCategory::Character)) {
+      // R1162 spells scalar-DEFAULT-char-expr
+      if (!(ExprTypeKindIsDefault(expr, context_))) {
+        context_.Say(
+            source, "Character stop code must be of default kind"_err_en_US);
+      }
     } else {
-      if (!(ExprHasTypeCategory(expr, common::TypeCategory::Logical))) {
-        context_.Say(source,
-            "The optional QUIET parameter value must be of LOGICAL type"_err_en_US);
-      }
+      context_.Say(
+          source, "Stop code must be of INTEGER or CHARACTER type"_err_en_US);
     }
   }
 }

@@ -36,21 +36,9 @@ program main
   if (i .eq. 0) stop 1 + 2
   if (i .eq. 0) stop i
   if (i .eq. 0) stop p_i
-!ERROR: Stop code must be a scalar
-  if (i .eq. 0) stop p_iarray
   if (i .eq. 0) stop p_iarray(1)
-!ERROR: Stop code must be a scalar
-  if (i .eq. 0) stop p_iarray(1:4)
-!ERROR: Stop code must be a scalar
-  if (i .eq. 0) stop iarray
   if (i .eq. 0) stop iarray(1)
-!ERROR: Stop code must be a scalar
-  if (i .eq. 0) stop iarray(1:4)
-!ERROR: Stop code must be a scalar
-  if (i .eq. 0) stop aiarray
   if (i .eq. 0) stop aiarray(1)
-!ERROR: Stop code must be a scalar
-  if (i .eq. 0) stop aiarray(1:4)
   if (i .eq. 0) stop 1 + i
 !ERROR: Integer stop code must be of default kind
   if (i .eq. 0) stop invalid
@@ -60,17 +48,7 @@ program main
   if (i .eq. 0) stop 2, quiet = .false.
   if (i .eq. 0) stop 3, quiet = l
   if (i .eq. 0) stop 3, quiet = .not. l
-!ERROR: The optional QUIET parameter value must be a scalar
-  if (i .eq. 0) stop 3, quiet = larray
   if (i .eq. 0) stop 3, quiet = larray(1)
-!ERROR: The optional QUIET parameter value must be a scalar
-  if (i .eq. 0) stop 3, quiet = larray(1:4)
-!ERROR: The optional QUIET parameter value must be a scalar
-  if (i .eq. 0) stop 3, quiet = alarray
-!ERROR: The optional QUIET parameter value must be of LOGICAL type
-  if (i .eq. 0) stop 1, quiet = "Quiet."
-!ERROR: The optional QUIET parameter value must be of LOGICAL type
-  if (i .eq. 0) stop 1, quiet = "Quiet."(1:4)
   if (i .eq. 0) stop , quiet = .false.
   if (i .eq. 0) error stop "Error."
   if (i .eq. 0) error stop chr1
@@ -79,21 +57,9 @@ program main
   if (i .eq. 0) error stop 1
   if (i .eq. 0) error stop i
   if (i .eq. 0) error stop p_i
-!ERROR: Stop code must be a scalar
-  if (i .eq. 0) error stop p_iarray
   if (i .eq. 0) error stop p_iarray(1)
-!ERROR: Stop code must be a scalar
-  if (i .eq. 0) error stop p_iarray(1:4)
-!ERROR: Stop code must be a scalar
-  if (i .eq. 0) error stop iarray
   if (i .eq. 0) error stop iarray(1)
-!ERROR: Stop code must be a scalar
-  if (i .eq. 0) error stop iarray(1:4)
-!ERROR: Stop code must be a scalar
-  if (i .eq. 0) error stop aiarray
   if (i .eq. 0) error stop aiarray(1)
-!ERROR: Stop code must be a scalar
-  if (i .eq. 0) error stop aiarray(1:4)
   if (i .eq. 0) error stop 1 + i
 !ERROR: Integer stop code must be of default kind
   if (i .eq. 0) error stop invalid
@@ -103,17 +69,7 @@ program main
   if (i .eq. 0) error stop 2, quiet = .false.
   if (i .eq. 0) error stop 3, quiet = l
   if (i .eq. 0) error stop 3, quiet = .not. l
-!ERROR: The optional QUIET parameter value must be a scalar
-  if (i .eq. 0) error stop 3, quiet = larray
   if (i .eq. 0) error stop 3, quiet = larray(1)
-!ERROR: The optional QUIET parameter value must be a scalar
-  if (i .eq. 0) error stop 3, quiet = larray(1:4)
-!ERROR: The optional QUIET parameter value must be a scalar
-  if (i .eq. 0) error stop 3, quiet = alarray
-!ERROR: The optional QUIET parameter value must be of LOGICAL type
-  if (i .eq. 0) error stop 1, quiet = "Quiet."
-!ERROR: The optional QUIET parameter value must be of LOGICAL type
-  if (i .eq. 0) error stop 1, quiet = "Quiet."(1:4)
   if (i .eq. 0) error stop , quiet = .false.
   stop
 end program
