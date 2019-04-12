@@ -18,107 +18,107 @@
 INTEGER :: I
 LOGICAL, DIMENSION (2) :: B
 
-!ERROR: Expected a scalar LOGICAL expression
+!ERROR: Must be a scalar value, but is a rank-1 array
 if ( B ) then
   a = 1
 end if
 
-!ERROR: Expected a scalar LOGICAL expression
+!ERROR: Must be a scalar value, but is a rank-1 array
 if ( B ) then
   a = 2
 else
   a = 3
 endif
 
-!ERROR: Expected a scalar LOGICAL expression
+!ERROR: Must be a scalar value, but is a rank-1 array
 if ( B ) then
   a = 4
-!ERROR: Expected a scalar LOGICAL expression
+!ERROR: Must be a scalar value, but is a rank-1 array
 else if( B ) then
   a = 5
 end if
 
-!ERROR: Expected a scalar LOGICAL expression
+!ERROR: Must be a scalar value, but is a rank-1 array
 if ( B ) then
   a = 6
-!ERROR: Expected a scalar LOGICAL expression
+!ERROR: Must be a scalar value, but is a rank-1 array
 else if( B ) then
   a = 7
-!ERROR: Expected a scalar LOGICAL expression
+!ERROR: Must be a scalar value, but is a rank-1 array
 elseif( B ) then
   a = 8
 end if
 
-!ERROR: Expected a scalar LOGICAL expression
+!ERROR: Must be a scalar value, but is a rank-1 array
 if ( B ) then
   a = 9
-!ERROR: Expected a scalar LOGICAL expression
+!ERROR: Must be a scalar value, but is a rank-1 array
 else if( B ) then
   a = 10
 else
   a = 11
 end if
 
-!ERROR: Expected a scalar LOGICAL expression
+!ERROR: Must be a scalar value, but is a rank-1 array
 if ( B ) then
   a = 12
-!ERROR: Expected a scalar LOGICAL expression
+!ERROR: Must be a scalar value, but is a rank-1 array
 else if( B ) then
   a = 13
-!ERROR: Expected a scalar LOGICAL expression
+!ERROR: Must be a scalar value, but is a rank-1 array
 else if( B ) then
   a = 14
 end if
 
 
-!ERROR: Expected a LOGICAL expression
+!ERROR: Must have LOGICAL type, but is INTEGER(4)
 if ( I ) then
   a = 1
 end if
 
-!ERROR: Expected a LOGICAL expression
+!ERROR: Must have LOGICAL type, but is INTEGER(4)
 if ( I ) then
   a = 2
 else
   a = 3
 endif
 
-!ERROR: Expected a LOGICAL expression
+!ERROR: Must have LOGICAL type, but is INTEGER(4)
 if ( I ) then
   a = 4
-!ERROR: Expected a LOGICAL expression
+!ERROR: Must have LOGICAL type, but is INTEGER(4)
 else if( I ) then
   a = 5
 end if
 
-!ERROR: Expected a LOGICAL expression
+!ERROR: Must have LOGICAL type, but is INTEGER(4)
 if ( I ) then
   a = 6
-!ERROR: Expected a LOGICAL expression
+!ERROR: Must have LOGICAL type, but is INTEGER(4)
 else if( I ) then
   a = 7
-!ERROR: Expected a LOGICAL expression
+!ERROR: Must have LOGICAL type, but is INTEGER(4)
 elseif( I ) then
   a = 8
 end if
 
-!ERROR: Expected a LOGICAL expression
+!ERROR: Must have LOGICAL type, but is INTEGER(4)
 if ( I ) then
   a = 9
-!ERROR: Expected a LOGICAL expression
+!ERROR: Must have LOGICAL type, but is INTEGER(4)
 else if( I ) then
   a = 10
 else
   a = 11
 end if
 
-!ERROR: Expected a LOGICAL expression
+!ERROR: Must have LOGICAL type, but is INTEGER(4)
 if ( I ) then
   a = 12
-!ERROR: Expected a LOGICAL expression
+!ERROR: Must have LOGICAL type, but is INTEGER(4)
 else if( I ) then
   a = 13
-!ERROR: Expected a LOGICAL expression
+!ERROR: Must have LOGICAL type, but is INTEGER(4)
 else if( I ) then
   a = 14
 end if

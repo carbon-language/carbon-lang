@@ -105,6 +105,5 @@ parser::Name *GetSimpleName(parser::Expr &);
 const parser::Name *GetSimpleName(const parser::Expr &);
 parser::Name *GetSimpleName(parser::Variable &);
 const parser::Name *GetSimpleName(const parser::Variable &);
-
 }
 #endif  // FORTRAN_SEMANTICS_TOOLS_H_

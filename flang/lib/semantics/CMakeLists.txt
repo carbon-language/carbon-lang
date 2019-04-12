@@ -20,7 +20,6 @@ add_library(FortranSemantics
   check-computed-goto.cc
   check-deallocate.cc
   check-do-concurrent.cc
-  check-if-construct.cc
   check-if-stmt.cc
   check-nullify.cc
   expression.cc

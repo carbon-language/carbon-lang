@@ -19,6 +19,7 @@
 #include "../common/Fortran.h"
 #include "../common/indirection.h"
 #include "../evaluate/expression.h"
+#include "../evaluate/fold.h"
 #include "../evaluate/tools.h"
 #include "../evaluate/type.h"
 #include "../parser/char-block.h"
@@ -118,7 +119,7 @@ public:
     }
   }
 
-  // Implement constraint-checking wrappers from the Fortran grammar
+  // Implement constraint-checking wrappers from the Fortran grammar.
   template<typename A> MaybeExpr Analyze(const parser::Scalar<A> &x) {
     auto result{Analyze(x.thing)};
     if (result.has_value()) {
@@ -141,35 +142,23 @@ public:
   }
   template<typename A> MaybeExpr Analyze(const parser::Integer<A> &x) {
     auto result{Analyze(x.thing)};
-    if (result.has_value()) {
-      if (!std::holds_alternative<Expr<SomeInteger>>(result->u)) {
-        SayAt(x, "Must have INTEGER type"_err_en_US);
-      }
-    }
+    EnforceTypeConstraint(
+        parser::FindSourceLocation(x), result, TypeCategory::Integer);
     return result;
   }
   template<typename A> MaybeExpr Analyze(const parser::Logical<A> &x) {
     auto result{Analyze(x.thing)};
-    if (result.has_value()) {
-      if (!std::holds_alternative<Expr<SomeLogical>>(result->u)) {
-        SayAt(x, "Must have LOGICAL type"_err_en_US);
-      }
-    }
+    EnforceTypeConstraint(
+        parser::FindSourceLocation(x), result, TypeCategory::Logical);
     return result;
   }
   template<typename A> MaybeExpr Analyze(const parser::DefaultChar<A> &x) {
     auto result{Analyze(x.thing)};
-    if (result.has_value()) {
-      if (auto *charExpr{std::get_if<Expr<SomeCharacter>>(&result->u)}) {
-        if (charExpr->GetKind() ==
-            context().defaultKinds().GetDefaultKind(TypeCategory::Character)) {
-          return result;
-        }
-      }
-      SayAt(x, "Must have default CHARACTER type"_err_en_US);
-    }
+    EnforceTypeConstraint(parser::FindSourceLocation(x), result,
+        TypeCategory::Character, true /* default kind */);
     return result;
   }
+
   MaybeExpr Analyze(const parser::Name &);
   MaybeExpr Analyze(const parser::DataRef &dr) {
     return Analyze<parser::DataRef>(dr);
@@ -255,6 +244,8 @@ private:
   };
   std::optional<CallAndArguments> Procedure(
       const parser::ProcedureDesignator &, ActualArguments &);
+  void EnforceTypeConstraint(parser::CharBlock, const MaybeExpr &, TypeCategory,
+      bool defaultKind = false);
 
   semantics::SemanticsContext &context_;
   std::map<parser::CharBlock, int> acImpliedDos_;  // values are INTEGER kinds
@@ -296,11 +287,42 @@ evaluate::Expr<evaluate::SubscriptInteger> AnalyzeKindSelector(
 
 // Semantic analysis of all expressions in a parse tree, which becomes
 // decorated with typed representations for top-level expressions.
-class ExprChecker : public virtual BaseChecker {
+class ExprChecker {
 public:
   explicit ExprChecker(SemanticsContext &context) : context_{context} {}
-  void Enter(const parser::Expr &);
-  void Enter(const parser::Variable &);
+
+  template<typename A> bool Pre(const A &) { return true; }
+  template<typename A> void Post(const A &) {}
+  bool Walk(const parser::Program &);
+
+  bool Pre(const parser::Expr &x) {
+    AnalyzeExpr(context_, x);
+    return false;
+  }
+  bool Pre(const parser::Variable &x) {
+    AnalyzeExpr(context_, x);
+    return false;
+  }
+  template<typename A> bool Pre(const parser::Scalar<A> &x) {
+    AnalyzeExpr(context_, x);
+    return false;
+  }
+  template<typename A> bool Pre(const parser::Constant<A> &x) {
+    AnalyzeExpr(context_, x);
+    return false;
+  }
+  template<typename A> bool Pre(const parser::Integer<A> &x) {
+    AnalyzeExpr(context_, x);
+    return false;
+  }
+  template<typename A> bool Pre(const parser::Logical<A> &x) {
+    AnalyzeExpr(context_, x);
+    return false;
+  }
+  template<typename A> bool Pre(const parser::DefaultChar<A> &x) {
+    AnalyzeExpr(context_, x);
+    return false;
+  }
 
 private:
   SemanticsContext &context_;

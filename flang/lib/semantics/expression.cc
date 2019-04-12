@@ -28,13 +28,6 @@
 #include <optional>
 #include <set>
 
-// TODO pmk remove when scaffolding is obsolete
-#undef PMKDEBUG  // #define PMKDEBUG 1
-#if PMKDEBUG
-#include "../parser/dump-parse-tree.h"
-#include <iostream>
-#endif
-
 // Typedef for optional generic expressions (ubiquitous in this file)
 using MaybeExpr =
     std::optional<Fortran::evaluate::Expr<Fortran::evaluate::SomeType>>;
@@ -1828,14 +1821,19 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr &expr) {
     return std::make_optional<Expr<SomeType>>(expr.typedExpr->v);
   } else {
     FixMisparsedFunctionReference(context_, expr.u);
+    MaybeExpr result;
     if (!expr.source.empty()) {
       // Analyze the expression in a specified source position context for
       // better error reporting.
       auto save{GetFoldingContext().messages().SetLocation(expr.source)};
-      return Analyze(expr.u);
+      result = Analyze(expr.u);
     } else {
-      return Analyze(expr.u);
+      result = Analyze(expr.u);
     }
+    if (result.has_value()) {
+      expr.typedExpr.reset(new GenericExprWrapper{common::Clone(*result)});
+    }
+    return result;
   }
 }
 
@@ -1937,10 +1935,32 @@ std::optional<int> ExpressionAnalyzer::IsAcImpliedDo(
     return std::nullopt;
   }
 }
+
+void ExpressionAnalyzer::EnforceTypeConstraint(parser::CharBlock at,
+    const MaybeExpr &result, TypeCategory category, bool defaultKind) {
+  if (result.has_value()) {
+    if (auto type{result->GetType()}) {
+      if (type->category != category) {
+        Say(at, "Must have %s type, but is %s"_err_en_US,
+            parser::ToUpperCaseLetters(EnumToString(category)).data(),
+            parser::ToUpperCaseLetters(type->AsFortran()).data());
+      } else if (defaultKind) {
+        int kind{context().defaultKinds().GetDefaultKind(category)};
+        if (type->kind != kind) {
+          Say(at, "Must have default kind(%d) of %s type, but is %s"_err_en_US,
+              kind, parser::ToUpperCaseLetters(EnumToString(category)).data(),
+              parser::ToUpperCaseLetters(type->AsFortran()).data());
+        }
+      }
+    } else {
+      Say(at, "Must have %s type, but is typeless"_err_en_US,
+          parser::ToUpperCaseLetters(EnumToString(category)).data());
+    }
+  }
+}
 }
 
 namespace Fortran::semantics {
-
 evaluate::Expr<evaluate::SubscriptInteger> AnalyzeKindSelector(
     SemanticsContext &context, common::TypeCategory category,
     const std::optional<parser::KindSelector> &selector) {
@@ -1948,36 +1968,8 @@ evaluate::Expr<evaluate::SubscriptInteger> AnalyzeKindSelector(
   auto save{analyzer.GetContextualMessages().SetLocation(*context.location())};
   return analyzer.AnalyzeKindSelector(category, selector);
 }
-
-void ExprChecker::Enter(const parser::Expr &expr) {
-  if (!expr.typedExpr) {
-    if (MaybeExpr checked{AnalyzeExpr(context_, expr)}) {
-#if PMKDEBUG
-//        std::cout << "checked expression: " << *checked << '\n';
-#endif
-      expr.typedExpr.reset(
-          new evaluate::GenericExprWrapper{std::move(*checked)});
-    } else {
-#if PMKDEBUG
-      std::cout << "TODO: expression analysis failed for this expression: ";
-      parser::DumpTree(std::cout, expr);
-#endif
-    }
-  }
-}
-
-void ExprChecker::Enter(const parser::Variable &var) {
-#if PMKDEBUG
-  if (MaybeExpr checked{AnalyzeExpr(context_, var)}) {
-//    std::cout << "checked variable: " << *checked << '\n';
-#else
-  if (AnalyzeExpr(context_, var)) {
-#endif
-  } else {
-#if PMKDEBUG
-    std::cout << "TODO: expression analysis failed for this variable: ";
-    DumpTree(std::cout, var);
-#endif
-  }
+bool ExprChecker::Walk(const parser::Program &program) {
+  parser::Walk(program, *this);
+  return !context_.AnyFatalError();
 }
 }
