@@ -18,7 +18,7 @@ Know This At Least
   vendors, and the standard language has been defined by U.S. and
   international standards organizations.  The various editions of
   the standard are known as the '66, '77, '90, '95, 2003, 2008, and
-  (real soon now) 2018 standards.
+  (now) 2018 standards.
 * Forward compatibility is important.  Fortran has outlasted many
   generations of computer systems hardware and software.  Standard
   compliance notwithstanding, Fortran programmers generally expect that
@@ -37,7 +37,7 @@ Know This At Least
   names begin with the letters `I` through `N` are implicitly
   `INTEGER`, and others are implicitly `REAL`.  These implicit typing
   rules can be changed in the source.
-* Fortran uses parentheses for both array references and for function calls.
+* Fortran uses parentheses in both array references and function calls.
   All arrays must be declared as such; other names followed by parenthesized
   expressions are assumed to be function calls.
 * Fortran has a _lot_ of built-in "intrinsic" functions.  They are always
@@ -56,7 +56,7 @@ in particular ways that might be unfamiliar.
 
 | Fortran | English |
 | ------- | ------- |
-| Association | Making one name refer to something else |
+| Association | Making a name refer to something else |
 | Assumed | Some attribute of an argument or interface that is not known until a call is made |
 | Companion processor | A C compiler |
 | Component | Class member |
@@ -65,7 +65,7 @@ in particular ways that might be unfamiliar.
 | Dummy argument | C++ reference argument |
 | Final procedure | C++ destructor |
 | Generic | Overloaded function, resolved by actual arguments |
-| Host procedure | The subprogram that contains this nested one |
+| Host procedure | The subprogram that contains a nested one |
 | Implied DO | There's a loop inside a statement |
 | Interface | Prototype |
 | Internal I/O | `sscanf` and `snprintf` |
@@ -82,8 +82,8 @@ Data Types
 There are five built-in ("intrinsic") types: `INTEGER`, `REAL`, `COMPLEX`,
 `LOGICAL`, and `CHARACTER`.
 They are parameterized with "kind" values, which should be treated as
-non-portable integer codes, although in practice today are the byte sizes of
-the data.
+non-portable integer codes, although in practice today these are the
+byte sizes of the data.
 (For `COMPLEX`, the kind type parameter value is the byte size of one of the
 two `REAL` components, or half of the total size.)
 The legacy `DOUBLE PRECISION` intrinsic type is an alias for a kind of `REAL`
@@ -115,7 +115,7 @@ where type is not necessary.
 
 Arrays
 ------
-Arrays are not a type in Fortran.
+Arrays are not types in Fortran.
 Being an array is a property of an object or function, not of a type.
 Unlike C, one cannot have an array of arrays or an array of pointers,
 although can can have an array of a derived type that has arrays or
@@ -146,7 +146,7 @@ that interacts with much of the rest of the language.)
 I/O
 ---
 Fortran's input/output features are built into the syntax of the language,
-not defined by library interfaces as in C and C++.
+rather than being defined by library interfaces as in C and C++.
 There are means for raw binary I/O and for "formatted" transfers to
 character representations.
 There are means for random-access I/O using fixed-size records as well as for
@@ -172,7 +172,8 @@ data types.
 Subprograms
 -----------
 Fortran has both `FUNCTION` and `SUBROUTINE` subprograms.
-They share the same name space.
+They share the same name space, but functions cannot be called as
+subroutines or vice versa.
 Subroutines are called with the `CALL` statement, while functions are
 invoked with function references in expressions.
 
@@ -192,10 +193,10 @@ subprograms still exist, of course, as well as the main program.
 Modules define types, constants, interfaces, and nested
 subprograms.
 
-Objects from a module are made available for use in another compilation
-unit via the `USE` statement, which has options for limiting the objects
+Objects from a module are made available for use in other compilation
+units via the `USE` statement, which has options for limiting the objects
 that are made available as well as for renaming them.
-All references to objects in modules is done with direct names or
+All references to objects in modules are done with direct names or
 aliases that have been added to the local scope, as Fortran has no means
 of qualifying references with module names.
 
@@ -258,7 +259,7 @@ little like C++17's `std::visit()` on a discriminated union.
 
 Pointers
 --------
-Pointers are objects in Fortran, not a data type.
+Pointers are objects in Fortran, not data types.
 Pointers can point to data, arrays, and subprograms, but not to other pointers
 or to an allocatable.
 A pointer can only point to data that has the `TARGET` attribute.
@@ -334,9 +335,9 @@ Watch out for exponentiation with `**`, which of course C lacks; it
 binds more tightly than negation does (e.g., `-2**2` is -4),
 and it binds to the right, unlike what any other Fortran and most
 C operators do; e.g., `2**2**3` is 256, not 64.
-Also dangerous are logical expressions, in which the unary negation
-operator `.NOT.` binds less tightly than the binary `.AND.` and `.OR.`
-operators do.
+Logical values must be compared with special logical equivalence
+relations (`.EQV.` and `.NEQV.`) rather than the usual equality
+operators.
 
 A Fortran compiler is allowed to short-circuit expression evaluation,
 but not required to do so.
