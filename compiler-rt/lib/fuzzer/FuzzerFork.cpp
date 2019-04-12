@@ -103,6 +103,7 @@ struct GlobalEnv {
   FuzzJob *CreateNewJob(size_t JobId) {
     Command Cmd(Args);
     Cmd.removeFlag("fork");
+    Cmd.removeFlag("runs");
     for (auto &C : CorpusDirs) // Remove all corpora from the args.
       Cmd.removeArgument(C);
     Cmd.addFlag("reload", "0");  // working in an isolated dir, no reload.
@@ -278,7 +279,8 @@ void FuzzWithFork(Random &Rand, const FuzzingOptions &Options,
         std::ifstream In(Job->LogPath);
         std::string Line;
         while (std::getline(In, Line, '\n'))
-          if (Line.find("ERROR:") != Line.npos)
+          if (Line.find("ERROR:") != Line.npos ||
+              Line.find("runtime error:") != Line.npos)
             Printf("%s\n", Line.c_str());
       } else {
         // And exit if we don't ignore this crash.
@@ -296,6 +298,12 @@ void FuzzWithFork(Random &Rand, const FuzzingOptions &Options,
         Env.secondsSinceProcessStartUp() >= (size_t)Options.MaxTotalTimeSec) {
       Printf("INFO: fuzzed for %zd seconds, wrapping up soon\n",
              Env.secondsSinceProcessStartUp());
+      Stop = true;
+    }
+    if (Options.MaxNumberOfRuns >= 0 && !Stop &&
+        Env.NumRuns >= Options.MaxNumberOfRuns) {
+      Printf("INFO: fuzzed for %zd iterations, wrapping up soon\n",
+             Env.NumRuns);
       Stop = true;
     }
 
