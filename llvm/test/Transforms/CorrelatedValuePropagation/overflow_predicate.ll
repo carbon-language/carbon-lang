@@ -281,9 +281,9 @@ define i1 @umul_ov_false(i8 %x, i8* %px, i1* %pc) {
 ; CHECK-NEXT:    [[OV:%.*]] = extractvalue { i8, i1 } [[VAL_OV]], 1
 ; CHECK-NEXT:    br i1 [[OV]], label [[TRAP:%.*]], label [[NO_OVERFLOW:%.*]]
 ; CHECK:       no_overflow:
-; CHECK-NEXT:    [[C1:%.*]] = icmp ult i8 [[X]], 25
+; CHECK-NEXT:    [[C1:%.*]] = icmp ugt i8 [[X]], 24
 ; CHECK-NEXT:    store i1 [[C1]], i1* [[PC:%.*]]
-; CHECK-NEXT:    [[C2:%.*]] = icmp ult i8 [[X]], 26
+; CHECK-NEXT:    [[C2:%.*]] = icmp ugt i8 [[X]], 25
 ; CHECK-NEXT:    ret i1 [[C2]]
 ; CHECK:       trap:
 ; CHECK-NEXT:    call void @llvm.trap()
@@ -296,9 +296,9 @@ define i1 @umul_ov_false(i8 %x, i8* %px, i1* %pc) {
   br i1 %ov, label %trap, label %no_overflow
 
 no_overflow:
-  %c1 = icmp ult i8 %x, 25
+  %c1 = icmp ugt i8 %x, 24
   store i1 %c1, i1* %pc
-  %c2 = icmp ult i8 %x, 26
+  %c2 = icmp ugt i8 %x, 25
   ret i1 %c2
 
 trap:
@@ -314,9 +314,9 @@ define i1 @umul_ov_true(i8 %x, i8* %px, i1* %pc) {
 ; CHECK-NEXT:    [[OV:%.*]] = extractvalue { i8, i1 } [[VAL_OV]], 1
 ; CHECK-NEXT:    br i1 [[OV]], label [[OVERFLOW:%.*]], label [[TRAP:%.*]]
 ; CHECK:       overflow:
-; CHECK-NEXT:    [[C1:%.*]] = icmp ult i8 [[X]], 27
+; CHECK-NEXT:    [[C1:%.*]] = icmp ugt i8 [[X]], 26
 ; CHECK-NEXT:    store i1 [[C1]], i1* [[PC:%.*]]
-; CHECK-NEXT:    [[C2:%.*]] = icmp ult i8 [[X]], 26
+; CHECK-NEXT:    [[C2:%.*]] = icmp ugt i8 [[X]], 25
 ; CHECK-NEXT:    ret i1 [[C2]]
 ; CHECK:       trap:
 ; CHECK-NEXT:    call void @llvm.trap()
@@ -329,9 +329,9 @@ define i1 @umul_ov_true(i8 %x, i8* %px, i1* %pc) {
   br i1 %ov, label %overflow, label %trap
 
 overflow:
-  %c1 = icmp ult i8 %x, 27
+  %c1 = icmp ugt i8 %x, 26
   store i1 %c1, i1* %pc
-  %c2 = icmp ult i8 %x, 26
+  %c2 = icmp ugt i8 %x, 25
   ret i1 %c2
 
 trap:
