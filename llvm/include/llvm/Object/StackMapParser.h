@@ -114,6 +114,12 @@ public:
       return LocationKind(P[KindOffset]);
     }
 
+    /// Get the Size for this location.
+    uint8_t getSize() const {
+        return read<uint8_t>(P + SizeOffset);
+
+    }
+
     /// Get the Dwarf register number for this location.
     uint16_t getDwarfRegNum() const {
       return read<uint16_t>(P + DwarfRegNumOffset);
@@ -148,7 +154,8 @@ public:
     }
 
     static const int KindOffset = 0;
-    static const int DwarfRegNumOffset = KindOffset + sizeof(uint16_t);
+    static const int SizeOffset = KindOffset + sizeof(uint8_t);
+    static const int DwarfRegNumOffset = SizeOffset + sizeof(uint8_t);
     static const int SmallConstantOffset = DwarfRegNumOffset + sizeof(uint16_t);
     static const int LocationAccessorSize = sizeof(uint64_t);
 
