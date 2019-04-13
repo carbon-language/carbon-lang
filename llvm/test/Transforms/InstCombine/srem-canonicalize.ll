@@ -3,8 +3,8 @@
 
 define i32 @test_srem_canonicalize_op0(i32 %x, i32 %y) {
 ; CHECK-LABEL: @test_srem_canonicalize_op0(
-; CHECK-NEXT:    [[NEG:%.*]] = sub nsw i32 0, [[X:%.*]]
-; CHECK-NEXT:    [[SREM:%.*]] = srem i32 [[NEG]], [[Y:%.*]]
+; CHECK-NEXT:    [[TMP1:%.*]] = srem i32 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[SREM:%.*]] = sub nsw i32 0, [[TMP1]]
 ; CHECK-NEXT:    ret i32 [[SREM]]
 ;
   %neg = sub nsw i32 0, %x
@@ -39,8 +39,8 @@ define i32 @test_srem_canonicalize_nonsw(i32 %x, i32 %y) {
 
 define <2 x i32> @test_srem_canonicalize_vec(<2 x i32> %x, <2 x i32> %y) {
 ; CHECK-LABEL: @test_srem_canonicalize_vec(
-; CHECK-NEXT:    [[NEG:%.*]] = sub nsw <2 x i32> zeroinitializer, [[X:%.*]]
-; CHECK-NEXT:    [[SREM:%.*]] = srem <2 x i32> [[NEG]], [[Y:%.*]]
+; CHECK-NEXT:    [[TMP1:%.*]] = srem <2 x i32> [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[SREM:%.*]] = sub nsw <2 x i32> zeroinitializer, [[TMP1]]
 ; CHECK-NEXT:    ret <2 x i32> [[SREM]]
 ;
   %neg = sub nsw <2 x i32> <i32 0, i32 0>, %x
