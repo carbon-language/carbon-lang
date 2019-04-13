@@ -2835,16 +2835,15 @@ bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
     // See if the operand is a constant that we can fold into an immediate
     // operand.
     if (auto *OperandC = dyn_cast<ConstantSDNode>(Operand)) {
-      auto OperandV = OperandC->getAPIntValue();
+      int64_t OperandV = OperandC->getSExtValue();
 
       // Check if we can shrink the operand enough to fit in an immediate (or
       // fit into a smaller immediate) by negating it and switching the
       // operation.
       if ((Opc == X86ISD::ADD || Opc == X86ISD::SUB) &&
-          ((MemVT != MVT::i8 && OperandV.getMinSignedBits() > 8 &&
-            (-OperandV).getMinSignedBits() <= 8) ||
-           (MemVT == MVT::i64 && OperandV.getMinSignedBits() > 32 &&
-            (-OperandV).getMinSignedBits() <= 32)) &&
+          ((MemVT != MVT::i8 && !isInt<8>(OperandV) && isInt<8>(-OperandV)) ||
+           (MemVT == MVT::i64 && !isInt<32>(OperandV) &&
+            isInt<32>(-OperandV))) &&
           hasNoCarryFlagUses(StoredVal.getValue(1))) {
         OperandV = -OperandV;
         Opc = Opc == X86ISD::ADD ? X86ISD::SUB : X86ISD::ADD;
@@ -2852,11 +2851,10 @@ bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
 
       // First try to fit this into an Imm8 operand. If it doesn't fit, then try
       // the larger immediate operand.
-      if (MemVT != MVT::i8 && OperandV.getMinSignedBits() <= 8) {
+      if (MemVT != MVT::i8 && isInt<8>(OperandV)) {
         Operand = CurDAG->getTargetConstant(OperandV, SDLoc(Node), MemVT);
         NewOpc = SelectImm8Opcode(Opc);
-      } else if (OperandV.getActiveBits() <= MemVT.getSizeInBits() &&
-                 (MemVT != MVT::i64 || OperandV.getMinSignedBits() <= 32)) {
+      } else if (MemVT != MVT::i64 || isInt<32>(OperandV)) {
         Operand = CurDAG->getTargetConstant(OperandV, SDLoc(Node), MemVT);
         NewOpc = SelectImmOpcode(Opc);
       }
