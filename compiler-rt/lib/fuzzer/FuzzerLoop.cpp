@@ -446,13 +446,12 @@ void Fuzzer::PrintPulseAndReportSlowInput(const uint8_t *Data, size_t Size) {
 }
 
 static void WriteFeatureSetToFile(const std::string &FeaturesDir,
-                                  const uint8_t Sha1[],
+                                  const std::string &FileName,
                                   const Vector<uint32_t> &FeatureSet) {
   if (FeaturesDir.empty() || FeatureSet.empty()) return;
   WriteToFile(reinterpret_cast<const uint8_t *>(FeatureSet.data()),
               FeatureSet.size() * sizeof(FeatureSet[0]),
-              DirPlusFile(FeaturesDir, Sha1ToString(Sha1)));
-  Printf("Features: %s\n", Sha1ToString(Sha1).c_str());
+              DirPlusFile(FeaturesDir, FileName));
 }
 
 static void RenameFeatureSetFile(const std::string &FeaturesDir,
@@ -490,7 +489,7 @@ bool Fuzzer::RunOne(const uint8_t *Data, size_t Size, bool MayDeleteFile,
     auto NewII = Corpus.AddToCorpus({Data, Data + Size}, NumNewFeatures,
                                     MayDeleteFile, TPC.ObservedFocusFunction(),
                                     UniqFeatureSetTmp, DFT, II);
-    WriteFeatureSetToFile(Options.FeaturesDir, NewII->Sha1,
+    WriteFeatureSetToFile(Options.FeaturesDir, Sha1ToString(NewII->Sha1),
                           NewII->UniqFeatureSet);
     return true;
   }
