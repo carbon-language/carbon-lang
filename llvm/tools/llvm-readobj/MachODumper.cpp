@@ -669,8 +669,8 @@ void MachODumper::printStackMap() const {
     prettyPrintStackMap(
         W, StackMapParser<support::little>(StackMapContentsArray));
   else
-    prettyPrintStackMap(W,
-                        StackMapParser<support::big>(StackMapContentsArray));
+    prettyPrintStackMap(
+        W, StackMapParser<support::big>(StackMapContentsArray));
 }
 
 void MachODumper::printNeededLibraries() {
