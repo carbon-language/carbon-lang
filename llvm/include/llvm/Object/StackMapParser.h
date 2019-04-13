@@ -117,7 +117,7 @@ public:
 
     /// Get the Size for this location.
     unsigned getSizeInBytes() const {
-        return read<uint8_t>(P + SizeOffset);
+        return read<uint16_t>(P + SizeOffset);
 
     }
 
@@ -155,10 +155,10 @@ public:
     }
 
     static const int KindOffset = 0;
-    static const int SizeOffset = KindOffset + sizeof(uint8_t);
-    static const int DwarfRegNumOffset = SizeOffset + sizeof(uint8_t);
-    static const int SmallConstantOffset = DwarfRegNumOffset + sizeof(uint16_t);
-    static const int LocationAccessorSize = sizeof(uint64_t);
+    static const int SizeOffset = KindOffset + sizeof(uint16_t);
+    static const int DwarfRegNumOffset = SizeOffset + sizeof(uint16_t);
+    static const int SmallConstantOffset = DwarfRegNumOffset + sizeof(uint32_t);
+    static const int LocationAccessorSize = sizeof(uint64_t) + sizeof(uint32_t);
 
     const uint8_t *P;
   };
@@ -271,8 +271,9 @@ public:
     RecordAccessor(const uint8_t *P) : P(P) {}
 
     unsigned getNumLiveOutsOffset() const {
-      return LocationListOffset + LocationSize * getNumLocations() +
-             sizeof(uint16_t);
+      unsigned LocOffset = 
+          ((LocationListOffset + LocationSize * getNumLocations()) + 7) & ~0x7; 
+      return LocOffset + sizeof(uint16_t);
     }
 
     unsigned getSizeInBytes() const {
@@ -292,7 +293,7 @@ public:
       InstructionOffsetOffset + sizeof(uint32_t) + sizeof(uint16_t);
     static const unsigned LocationListOffset =
       NumLocationsOffset + sizeof(uint16_t);
-    static const unsigned LocationSize = sizeof(uint64_t);
+    static const unsigned LocationSize = sizeof(uint64_t) + sizeof(uint32_t);
     static const unsigned LiveOutSize = sizeof(uint32_t);
 
     const uint8_t *P;
@@ -304,8 +305,8 @@ public:
       : StackMapSection(StackMapSection) {
     ConstantsListOffset = FunctionListOffset + getNumFunctions() * FunctionSize;
 
-    assert(StackMapSection[0] == 2 &&
-           "StackMapParser can only parse version 2 stackmaps");
+    assert(StackMapSection[0] == 3 &&
+           "StackMapParser can only parse version 3 stackmaps");
 
     unsigned CurrentRecordOffset =
       ConstantsListOffset + getNumConstants() * ConstantSize;
@@ -321,8 +322,8 @@ public:
   using constant_iterator = AccessorIterator<ConstantAccessor>;
   using record_iterator = AccessorIterator<RecordAccessor>;
 
-  /// Get the version number of this stackmap. (Always returns 2).
-  unsigned getVersion() const { return 2; }
+  /// Get the version number of this stackmap. (Always returns 3).
+  unsigned getVersion() const { return 3; }
 
   /// Get the number of functions in the stack map.
   uint32_t getNumFunctions() const {
