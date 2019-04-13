@@ -116,7 +116,7 @@ public:
     }
 
     /// Get the Size for this location.
-    uint8_t getSize() const {
+    unsigned getSizeInBytes() const {
         return read<uint8_t>(P + SizeOffset);
 
     }
