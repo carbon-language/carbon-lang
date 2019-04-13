@@ -70,6 +70,7 @@ add_llvm_tool(llvm-bolt
   BinaryFunctionProfile.cpp
   BinaryPassManager.cpp
   BinarySection.cpp
+  BoltAddressTranslation.cpp
   BoltDiff.cpp
   CacheMetrics.cpp
   DataAggregator.cpp

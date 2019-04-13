@@ -14,6 +14,7 @@
 
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
+#include "BoltAddressTranslation.h"
 #include "DataAggregator.h"
 #include "Heatmap.h"
 #include "llvm/Support/Debug.h"
@@ -585,7 +586,7 @@ void DataAggregator::processProfile(BinaryContext &BC) {
 }
 
 BinaryFunction *
-DataAggregator::getBinaryFunctionContainingAddress(uint64_t Address) {
+DataAggregator::getBinaryFunctionContainingAddress(uint64_t Address) const {
   if (!BC->containsAddress(Address))
     return nullptr;
 
@@ -593,17 +594,50 @@ DataAggregator::getBinaryFunctionContainingAddress(uint64_t Address) {
                                                 /*UseMaxSize=*/true);
 }
 
+StringRef DataAggregator::getLocationName(BinaryFunction &Func,
+                                          uint64_t Count) {
+  if (!BAT)
+    return Func.getNames()[0];
+
+  const auto *OrigFunc = &Func;
+  if (const auto HotAddr = BAT->fetchParentAddress(Func.getAddress())) {
+    NumColdSamples += Count;
+    auto *HotFunc = getBinaryFunctionContainingAddress(HotAddr);
+    if (HotFunc)
+      OrigFunc = HotFunc;
+  }
+  const auto &Names = OrigFunc->getNames();
+  // If it is a local function, prefer the name containing the file name where
+  // the local function was declared
+  for (const auto &Name : Names) {
+    StringRef AlternativeName = Name;
+    size_t FileNameIdx = AlternativeName.find('/');
+    // Confirm the alternative name has the pattern Symbol/FileName/1 before
+    // using it
+    if (FileNameIdx == StringRef::npos ||
+        AlternativeName.find('/', FileNameIdx + 1) == StringRef::npos)
+      continue;
+    return AlternativeName;
+  }
+  return Names[0];
+}
+
 bool DataAggregator::doSample(BinaryFunction &Func, uint64_t Address,
                               uint64_t Count) {
   auto I = FuncsToSamples.find(Func.getNames()[0]);
   if (I == FuncsToSamples.end()) {
     bool Success;
+    StringRef LocName = getLocationName(Func, Count);
     std::tie(I, Success) = FuncsToSamples.insert(std::make_pair(
         Func.getNames()[0],
-        FuncSampleData(Func.getNames()[0], FuncSampleData::ContainerTy())));
+        FuncSampleData(LocName, FuncSampleData::ContainerTy())));
   }
 
-  I->second.bumpCount(Address - Func.getAddress(), Count);
+  Address -= Func.getAddress();
+  if (BAT)
+    Address = BAT->translate(Func, Address, /*IsBranchSrc=*/false);
+
+  I->second.bumpCount(Address, Count);
   return true;
 }
 
@@ -613,12 +647,26 @@ bool DataAggregator::doIntraBranch(BinaryFunction &Func, uint64_t From,
   FuncBranchData *AggrData = Func.getBranchData();
   if (!AggrData) {
     AggrData = &FuncsToBranches[Func.getNames()[0]];
-    AggrData->Name = Func.getNames()[0];
+    AggrData->Name = getLocationName(Func, Count);
     Func.setBranchData(AggrData);
   }
 
-  AggrData->bumpBranchCount(From - Func.getAddress(), To - Func.getAddress(),
-                            Count, Mispreds);
+  From -= Func.getAddress();
+  To -= Func.getAddress();
+  DEBUG(dbgs() << "BOLT-DEBUG: bumpBranchCount: " << Func.getPrintName()
+               << " @ " << Twine::utohexstr(From) << " -> "
+               << Func.getPrintName() << " @ " << Twine::utohexstr(To)
+               << '\n');
+  if (BAT) {
+    From = BAT->translate(Func, From, /*IsBranchSrc=*/true);
+    To = BAT->translate(Func, To, /*IsBranchSrc=*/false);
+    DEBUG(dbgs() << "BOLT-DEBUG: BAT translation on bumpBranchCount: "
+                 << Func.getPrintName() << " @ " << Twine::utohexstr(From)
+                 << " -> " << Func.getPrintName() << " @ "
+                 << Twine::utohexstr(To) << '\n');
+  }
+
+  AggrData->bumpBranchCount(From, To, Count, Mispreds);
   return true;
 }
 
@@ -631,26 +679,30 @@ bool DataAggregator::doInterBranch(BinaryFunction *FromFunc,
   StringRef SrcFunc;
   StringRef DstFunc;
   if (FromFunc) {
-    SrcFunc = FromFunc->getNames()[0];
+    SrcFunc = getLocationName(*FromFunc, Count);
     FromAggrData = FromFunc->getBranchData();
     if (!FromAggrData) {
-      FromAggrData = &FuncsToBranches[SrcFunc];
+      FromAggrData = &FuncsToBranches[FromFunc->getNames()[0]];
       FromAggrData->Name = SrcFunc;
       FromFunc->setBranchData(FromAggrData);
     }
     From -= FromFunc->getAddress();
+    if (BAT)
+      From = BAT->translate(*FromFunc, From, /*IsBranchSrc=*/true);
 
     FromFunc->recordExit(From, Mispreds, Count);
   }
   if (ToFunc) {
-    DstFunc = ToFunc->getNames()[0];
+    DstFunc = getLocationName(*ToFunc, 0);
     ToAggrData = ToFunc->getBranchData();
     if (!ToAggrData) {
-      ToAggrData = &FuncsToBranches[DstFunc];
+      ToAggrData = &FuncsToBranches[ToFunc->getNames()[0]];
       ToAggrData->Name = DstFunc;
       ToFunc->setBranchData(ToAggrData);
     }
     To -= ToFunc->getAddress();
+    if (BAT)
+      To = BAT->translate(*ToFunc, To, /*IsBranchSrc=*/false);
 
     ToFunc->recordEntry(To, Mispreds, Count);
   }
@@ -685,13 +737,19 @@ bool DataAggregator::doTrace(const LBREntry &First, const LBREntry &Second,
   auto *FromFunc = getBinaryFunctionContainingAddress(First.To);
   auto *ToFunc = getBinaryFunctionContainingAddress(Second.From);
   if (!FromFunc || !ToFunc) {
+    DEBUG(
+        dbgs() << "Out of range trace starting in " << FromFunc->getPrintName()
+               << " @ " << Twine::utohexstr(First.To - FromFunc->getAddress())
+               << " and ending in " << ToFunc->getPrintName() << " @ "
+               << ToFunc->getPrintName() << " @ "
+               << Twine::utohexstr(Second.From - ToFunc->getAddress()) << '\n');
     NumLongRangeTraces += Count;
     return false;
   }
   if (FromFunc != ToFunc) {
     NumInvalidTraces += Count;
-    DEBUG(dbgs() << "Trace starting in " << FromFunc->getPrintName() << " @ "
-                 << Twine::utohexstr(First.To - FromFunc->getAddress())
+    DEBUG(dbgs() << "Invalid trace starting in " << FromFunc->getPrintName()
+                 << " @ " << Twine::utohexstr(First.To - FromFunc->getAddress())
                  << " and ending in " << ToFunc->getPrintName() << " @ "
                  << ToFunc->getPrintName() << " @ "
                  << Twine::utohexstr(Second.From - ToFunc->getAddress())
@@ -699,12 +757,22 @@ bool DataAggregator::doTrace(const LBREntry &First, const LBREntry &Second,
     return false;
   }
 
-  auto FTs = FromFunc->getFallthroughsInTrace(First, Second, Count);
+  auto FTs = BAT ? BAT->getFallthroughsInTrace(*FromFunc, First, Second)
+                 : FromFunc->getFallthroughsInTrace(First, Second, Count);
   if (!FTs) {
+    DEBUG(dbgs() << "Invalid trace starting in " << FromFunc->getPrintName()
+                 << " @ " << Twine::utohexstr(First.To - FromFunc->getAddress())
+                 << " and ending in " << ToFunc->getPrintName() << " @ "
+                 << ToFunc->getPrintName() << " @ "
+                 << Twine::utohexstr(Second.From - ToFunc->getAddress())
+                 << '\n');
     NumInvalidTraces += Count;
     return false;
   }
 
+  DEBUG(dbgs() << "Processing " << FTs->size() << " fallthroughs for "
+               << FromFunc->getPrintName() << ":" << Twine::utohexstr(First.To)
+               << " to " << Twine::utohexstr(Second.From) << ".\n");
   for (const auto &Pair : *FTs) {
     doIntraBranch(*FromFunc, Pair.first + FromFunc->getAddress(),
                   Pair.second + FromFunc->getAddress(), Count, false);
@@ -1118,8 +1186,31 @@ std::error_code DataAggregator::parseBranchEvents() {
             }
         } else {
           if (TraceBF && getBinaryFunctionContainingAddress(TraceTo)) {
+            DEBUG(dbgs() << "Invalid trace starting in "
+                         << TraceBF->getPrintName() << " @ "
+                         << Twine::utohexstr(TraceFrom - TraceBF->getAddress())
+                         << " and ending @ " << Twine::utohexstr(TraceTo)
+                         << '\n');
             ++NumInvalidTraces;
           } else {
+            DEBUG(
+                dbgs() << "Out of range trace starting in "
+                       << (TraceBF ? TraceBF->getPrintName() : "None") << " @ "
+                       << Twine::utohexstr(
+                              TraceFrom - (TraceBF ? TraceBF->getAddress() : 0))
+                       << " and ending in "
+                       << (getBinaryFunctionContainingAddress(TraceTo)
+                               ? getBinaryFunctionContainingAddress(TraceTo)
+                                     ->getPrintName()
+                               : "None")
+                       << " @ "
+                       << Twine::utohexstr(
+                              TraceTo -
+                              (getBinaryFunctionContainingAddress(TraceTo)
+                                   ? getBinaryFunctionContainingAddress(TraceTo)
+                                         ->getAddress()
+                                   : 0))
+                       << '\n');
             ++NumLongRangeTraces;
           }
         }
@@ -1209,6 +1300,19 @@ std::error_code DataAggregator::parseBranchEvents() {
     outs() << format(" (%.1f%%)", NumLongRangeTraces * 100.0f / NumTraces);
   }
   outs() << "\n";
+
+  if (NumColdSamples > 0) {
+    const auto ColdSamples = NumColdSamples * 100.0f / NumTotalSamples;
+    outs() << "PERF2BOLT: " << NumColdSamples
+           << format(" (%.1f%%)", ColdSamples)
+           << " samples recorded in cold regions of split functions.\n";
+    if (ColdSamples > 5.0f) {
+      outs()
+          << "WARNING: The BOLT-processed binary where samples were collected "
+             "likely used bad data or your service observed a large shift in "
+             "profile. You may want to audit this.\n";
+    }
+  }
 
   return std::error_code();
 }
@@ -1801,6 +1905,8 @@ std::error_code DataAggregator::writeAggregatedFile() const {
   uint64_t BranchValues{0};
   uint64_t MemValues{0};
 
+  if (BAT)
+    OutFile << "boltedcollection\n";
   if (opts::BasicAggregation) {
     OutFile << "no_lbr";
     for (const auto &Entry : EventNames) {

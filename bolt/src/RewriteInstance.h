@@ -31,6 +31,7 @@ class ToolOutputFile;
 
 namespace bolt {
 
+class BoltAddressTranslation;
 class BinaryContext;
 class CFIReaderWriter;
 class DWARFRewriter;
@@ -234,6 +235,14 @@ private:
   /// Add a notes section containing the BOLT revision and command line options.
   void addBoltInfoSection();
 
+  /// Add a notes section containing the serialized BOLT Address Translation maps
+  /// that can be used to enable sampling of the output binary for the purposes
+  /// of generating BOLT profile data for the input binary.
+  void addBATSection();
+
+  /// Loop over now emitted functions to write translation maps
+  void encodeBATSection();
+
   /// Update the ELF note section containing the binary build-id to reflect
   /// a new build-id, so tools can differentiate between the old and the
   /// rewritten binary.
@@ -355,6 +364,8 @@ private:
   std::map<uint64_t, llvm::object::SymbolRef> FileSymRefs;
 
   std::unique_ptr<DWARFRewriter> DebugInfoRewriter;
+
+  std::unique_ptr<BoltAddressTranslation> BAT;
 
   /// Patchers used to apply simple changes to sections of the input binary.
   /// Maps section name -> patcher.

@@ -56,6 +56,7 @@ extern bool shouldProcess(const BinaryFunction &);
 
 extern cl::opt<bool> UpdateDebugSections;
 extern cl::opt<unsigned> Verbosity;
+extern cl::opt<bool> EnableBAT;
 
 cl::opt<bool>
 AlignBlocks("align-blocks",
@@ -499,6 +500,10 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     }
     if (BB->getCFIState() >= 0) {
       OS << "  CFI State : " << BB->getCFIState() << '\n';
+    }
+    if (opts::EnableBAT) {
+      OS << "  Input offset: " << Twine::utohexstr(BB->getInputOffset())
+         << "\n";
     }
     if (!BB->pred_empty()) {
       OS << "  Predecessors: ";
@@ -1413,7 +1418,7 @@ add_instruction:
 
     // Record offset of the instruction for profile matching.
     if (BC.keepOffsetForInstruction(Instruction)) {
-      MIB->addAnnotation(Instruction, "Offset", Offset);
+      MIB->addAnnotation(Instruction, "Offset", static_cast<uint32_t>(Offset));
     }
 
     if (MemData && !emptyRange(MemData->getMemInfoRange(Offset))) {
@@ -1683,7 +1688,7 @@ bool BinaryFunction::buildCFG() {
     assert(PrevBB && PrevBB != InsertBB && "invalid previous block");
     auto *PrevInstr = PrevBB->getLastNonPseudoInstr();
     if (PrevInstr && !MIB->hasAnnotation(*PrevInstr, "Offset"))
-      MIB->addAnnotation(*PrevInstr, "Offset", Offset);
+      MIB->addAnnotation(*PrevInstr, "Offset", static_cast<uint32_t>(Offset));
   };
 
   for (auto I = Instructions.begin(), E = Instructions.end(); I != E; ++I) {
@@ -1908,10 +1913,14 @@ void BinaryFunction::postProcessCFG() {
   clearList(IgnoredBranches);
   clearList(EntryOffsets);
 
-  // Remove "Offset" annotations.
-  for (auto *BB : layout())
-    for (auto &Inst : *BB)
-      BC.MIB->removeAnnotation(Inst, "Offset");
+  // Remove "Offset" annotations, unless we need to write a BOLT address
+  // translation table later. This has no cost, since annotations are allocated
+  // by a bumpptr allocator and won't be released anyway until late in the
+  // pipeline.
+  if (!opts::EnableBAT)
+    for (auto *BB : layout())
+      for (auto &Inst : *BB)
+        BC.MIB->removeAnnotation(Inst, "Offset");
 
   assert((!isSimple() || validateCFG()) &&
          "invalid CFG detected after post-processing");
@@ -1928,7 +1937,7 @@ void BinaryFunction::calculateMacroOpFusionStats() {
     // Check offset of the second instruction.
     // FIXME: arch-specific.
     const auto Offset =
-      BC.MIB->getAnnotationWithDefault<uint64_t>(*std::next(II), "Offset", 0);
+      BC.MIB->getAnnotationWithDefault<uint32_t>(*std::next(II), "Offset", 0);
     if (!Offset || (getAddress() + Offset) % 64)
       continue;
 
@@ -2065,7 +2074,10 @@ void BinaryFunction::removeConditionalTailCalls() {
     assert(CTCTargetLabel && "symbol expected for conditional tail call");
     MCInst TailCallInstr;
     BC.MIB->createTailCall(TailCallInstr, CTCTargetLabel, BC.Ctx.get());
-    auto TailCallBB = createBasicBlock(BinaryBasicBlock::INVALID_OFFSET,
+    // Link new BBs to the original input offset of the BB where the CTC
+    // is, so we can map samples recorded in new BBs back to the original BB
+    // seem in the input binary (if using BAT)
+    auto TailCallBB = createBasicBlock(BB.getInputOffset(),
                                        BC.Ctx->createTempSymbol("TC", true));
     TailCallBB->addInstruction(TailCallInstr);
     TailCallBB->setCFIState(CFIStateBeforeCTC);
@@ -2627,7 +2639,7 @@ uint64_t BinaryFunction::getEditDistance() const {
 }
 
 void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart,
-                              bool EmitCodeOnly) {
+                              bool EmitCodeOnly, bool LabelsForOffsets) {
   if (!EmitCodeOnly && EmitColdPart && hasConstantIsland())
     duplicateConstantIslands();
 
@@ -2668,7 +2680,7 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart,
       // Handle pseudo instructions.
       if (BC.MIB->isEHLabel(Instr)) {
         const auto *Label = BC.MIB->getTargetSymbol(Instr);
-        assert(Instr.getNumOperands() == 1 && Label &&
+        assert(Instr.getNumOperands() >= 1 && Label &&
                "bad EH_LABEL instruction");
         Streamer.EmitLabel(const_cast<MCSymbol *>(Label));
         continue;
@@ -2693,12 +2705,22 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart,
         FirstInstr = false;
       }
 
+      // Prepare to tag this location with a label if we need to keep track of
+      // the location of calls/returns for BOLT address translation maps
+      if (LabelsForOffsets && BC.MIB->hasAnnotation(Instr, "Offset")) {
+        MCSymbol *LocSym = BC.Ctx->createTempSymbol(/*CanBeUnnamed=*/true);
+        Streamer.EmitLabel(LocSym);
+        BC.MIB->addAnnotation(Instr, "LocSym",
+                              static_cast<uint32_t>(LocSyms.size()));
+        LocSyms.push_back(LocSym);
+      }
+
       // Emit SDT labels
       if (BC.MIB->hasAnnotation(Instr, "SDTMarker")) {
         auto OriginalAddress =
             BC.MIB->tryGetAnnotationAs<uint64_t>(Instr, "SDTMarker").get();
         auto *SDTLabel = BC.SDTMarkers[OriginalAddress].Label;
-        
+
         //  A given symbol should only be emitted as a label once
         if (SDTLabel->isUndefined())
           Streamer.EmitLabel(SDTLabel);
@@ -3599,7 +3621,10 @@ BinaryBasicBlock *BinaryFunction::splitEdge(BinaryBasicBlock *From,
                                             BinaryBasicBlock *To) {
   // Create intermediate BB
   MCSymbol *Tmp = BC.Ctx->createTempSymbol("SplitEdge", true);
-  auto NewBB = createBasicBlock(0, Tmp);
+  // Link new BBs to the original input offset of the From BB, so we can map
+  // samples recorded in new BBs back to the original BB seem in the input
+  // binary (if using BAT)
+  auto NewBB = createBasicBlock(From->getInputOffset(), Tmp);
   auto NewBBPtr = NewBB.get();
 
   // Update "From" BB
@@ -4016,8 +4041,8 @@ MCInst *BinaryFunction::getInstructionAtOffset(uint64_t Offset) {
       return nullptr;
 
     for (auto &Inst : *BB) {
-      constexpr auto InvalidOffset = std::numeric_limits<uint64_t>::max();
-      if (Offset == BC.MIB->getAnnotationWithDefault<uint64_t>(Inst, "Offset",
+      constexpr auto InvalidOffset = std::numeric_limits<uint32_t>::max();
+      if (Offset == BC.MIB->getAnnotationWithDefault<uint32_t>(Inst, "Offset",
                                                                InvalidOffset))
         return &Inst;
     }

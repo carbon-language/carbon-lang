@@ -498,6 +498,20 @@ ErrorOr<bool> DataReader::maybeParseNoLBRFlag() {
   return true;
 }
 
+ErrorOr<bool> DataReader::maybeParseBATFlag() {
+  if (ParsingBuf.size() < 16 || ParsingBuf.substr(0, 16) != "boltedcollection")
+    return false;
+  ParsingBuf = ParsingBuf.drop_front(16);
+  Col += 16;
+
+  if (!checkAndConsumeNewLine()) {
+    reportError("malformed boltedcollection line");
+    return make_error_code(llvm::errc::io_error);
+  }
+  return true;
+}
+
+
 bool DataReader::hasBranchData() {
   if (ParsingBuf.size() == 0)
     return false;
@@ -614,6 +628,11 @@ std::error_code DataReader::parse() {
   if (!FlagOrErr)
     return FlagOrErr.getError();
   NoLBRMode = *FlagOrErr;
+
+  auto BATFlagOrErr = maybeParseBATFlag();
+  if (!BATFlagOrErr)
+    return BATFlagOrErr.getError();
+  BATMode = *BATFlagOrErr;
 
   if (!hasBranchData() && !hasMemData()) {
     Diag << "ERROR: no valid profile data found\n";

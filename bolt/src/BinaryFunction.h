@@ -368,8 +368,8 @@ private:
   std::set<uint64_t> CodeOffsets;
   /// The address offset where we emitted the constant island, that is, the
   /// chunk of data in the function code area (AArch only)
-  int64_t OutputDataOffset;
-  int64_t OutputColdDataOffset;
+  int64_t OutputDataOffset{0};
+  int64_t OutputColdDataOffset{0};
 
   /// Map labels to corresponding basic blocks.
   std::unordered_map<const MCSymbol *, BinaryBasicBlock *> LabelToBB;
@@ -536,6 +536,12 @@ private:
 
   /// Count the number of functions created.
   static uint64_t Count;
+
+  /// LocSym annotation records an index to this vector. This holds a label
+  /// for each instruction whose input/output offsets need to be known after
+  /// emission. Enables writing bolt address translation tables, used for
+  /// mapping control transfer in the output binary back to the original binary.
+  std::vector<const MCSymbol *> LocSyms;
 
   /// Register alternative function name.
   void addAlternativeName(std::string NewName) {
@@ -749,6 +755,14 @@ public:
     CurrentState = State;
     return *this;
   }
+
+  /// Return a symbol for an instruction location. \p Idx is recorded as an
+  /// annotation in the instruction.
+  const MCSymbol *getLocSym(size_t Idx) const {
+    assert(Idx < LocSyms.size() && "Invalid index");
+    return LocSyms[Idx];
+  }
+
 
   /// Update layout of basic blocks used for output.
   void updateBasicBlockLayout(BasicBlockOrderType &NewLayout) {
@@ -2085,7 +2099,7 @@ public:
   /// Emit function code. The caller is responsible for emitting function
   /// symbol(s) and setting the section to emit the code to.
   void emitBody(MCStreamer &Streamer, bool EmitColdPart,
-                bool EmitCodeOnly = false);
+                bool EmitCodeOnly = false, bool LabelsForOffsets = false);
 
   /// Emit function as a blob with relocations and labels for relocations.
   void emitBodyRaw(MCStreamer *Streamer);

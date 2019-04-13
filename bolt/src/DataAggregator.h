@@ -28,6 +28,7 @@ namespace bolt {
 
 class BinaryFunction;
 class BinaryContext;
+class BoltAddressTranslation;
 
 /// DataAggregator inherits all parsing logic from DataReader as well as
 /// its data structures used to represent aggregated profile data in memory.
@@ -173,9 +174,12 @@ class DataAggregator : public DataReader {
   /// References to core BOLT data structures
   BinaryContext *BC{nullptr};
 
+  BoltAddressTranslation *BAT{nullptr};
+
   /// Aggregation statistics
   uint64_t NumInvalidTraces{0};
   uint64_t NumLongRangeTraces{0};
+  uint64_t NumColdSamples{0};
 
   /// Looks into system PATH for Linux Perf and set up the aggregator to use it
   void findPerfExecutable();
@@ -193,7 +197,16 @@ class DataAggregator : public DataReader {
 
   /// Look up which function contains an address by using out map of
   /// disassembled BinaryFunctions
-  BinaryFunction *getBinaryFunctionContainingAddress(uint64_t Address);
+  BinaryFunction *getBinaryFunctionContainingAddress(uint64_t Address) const;
+
+  /// Retrieve the location name to be used for samples recorded in \p Func.
+  /// If doing BAT translation, link cold parts to the hot part  names (used by
+  /// the original binary).  \p Count specifies how many samples were recorded
+  /// at that location, so we can tally total activity in cold areas if we are
+  /// dealing with profiling data collected in a bolted binary. For LBRs,
+  /// \p Count should only be used for the source of the branch to avoid
+  /// counting cold activity twice (one for source and another for destination).
+  StringRef getLocationName(BinaryFunction &Func, uint64_t Count);
 
   /// Semantic actions - parser hooks to interpret parsed perf samples
   /// Register a sample (non-LBR mode), i.e. a new hit at \p Address
@@ -384,6 +397,14 @@ public:
 
   /// Set the file name to save aggregate data to
   void setOutputFDataName(StringRef Name) { OutputFDataName = Name; }
+
+  /// Set Bolt Address Translation Table when processing samples collected in
+  /// bolted binaries
+  void setBAT(BoltAddressTranslation *B) { BAT = B; }
+
+  /// Returns true if this aggregation job is using a translation table to
+  /// remap samples collected on binaries already processed by BOLT.
+  bool usesBAT() const { return BAT; }
 
   /// Start an aggregation job asynchronously. Call "aggregate" to finish it
   /// with a list of disassembled functions.

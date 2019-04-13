@@ -1505,17 +1505,17 @@ public:
   /// Get an annotation as a specific value. Assumes that the annotation exists.
   /// Use hasAnnotation() if the annotation may not exist.
   template <typename ValueType>
-  const ValueType &getAnnotationAs(const MCInst &Inst, unsigned Index) const {
+  ValueType &getAnnotationAs(const MCInst &Inst, unsigned Index) const {
     auto Value = getAnnotationOpValue(Inst, Index);
     assert(Value && "annotation should exist");
-    return reinterpret_cast<const MCPlus::MCSimpleAnnotation<ValueType> *>
+    return reinterpret_cast<MCPlus::MCSimpleAnnotation<ValueType> *>
       (*Value)->getValue();
   }
 
   /// Get an annotation as a specific value. Assumes that the annotation exists.
   /// Use hasAnnotation() if the annotation may not exist.
   template <typename ValueType>
-  const ValueType &getAnnotationAs(const MCInst &Inst, StringRef Name) const {
+  ValueType &getAnnotationAs(const MCInst &Inst, StringRef Name) const {
     const auto Index = getAnnotationIndex(Name);
     assert(Index && "annotation should exist");
     return getAnnotationAs<ValueType>(Inst, *Index);

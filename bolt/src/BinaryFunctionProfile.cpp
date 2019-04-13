@@ -152,7 +152,7 @@ bool BinaryFunction::recordTrace(
       const auto *Instr = BB->getLastNonPseudoInstr();
       uint64_t Offset{0};
       if (Instr) {
-        Offset = BC.MIB->getAnnotationWithDefault<uint64_t>(*Instr, "Offset");
+        Offset = BC.MIB->getAnnotationWithDefault<uint32_t>(*Instr, "Offset");
       } else {
         Offset = BB->getOffset();
       }
@@ -175,7 +175,11 @@ bool BinaryFunction::recordBranch(uint64_t From, uint64_t To,
     return false;
   }
 
-  // Could be bad LBR data; ignore the branch.
+  // Could be bad LBR data; ignore the branch. In the case of data collected
+  // in binaries optimized by BOLT, a source BB may be mapped to two output
+  // BBs as a result of optimizations. In that case, a branch between these
+  // two will be recorded as a branch from A going to A in the source address
+  // space. Keep processing.
   if (From == To) {
     return true;
   }
@@ -200,7 +204,7 @@ bool BinaryFunction::recordBranch(uint64_t From, uint64_t To,
     const auto *LastInstr = ToBB->getLastNonPseudoInstr();
     if (LastInstr) {
       const auto LastInstrOffset =
-        BC.MIB->getAnnotationWithDefault<uint64_t>(*LastInstr, "Offset");
+        BC.MIB->getAnnotationWithDefault<uint32_t>(*LastInstr, "Offset");
 
       // With old .fdata we are getting FT branches for "jcc,jmp" sequences.
       if (To == LastInstrOffset && BC.MIB->isUnconditionalBranch(*LastInstr)) {
@@ -226,23 +230,40 @@ bool BinaryFunction::recordBranch(uint64_t From, uint64_t To,
   // discarded it as a FT from __builtin_unreachable.
   auto *FromInstruction = getInstructionAtOffset(From);
   if (!FromInstruction) {
-    DEBUG(dbgs() << "no instruction for offset " << From << " in "
-                 << *this << '\n');
-    return false;
-  }
-
-  if (FromBB == ToBB) {
-    // Check for a return from a recursive call.
-    // Otherwise it's a simple loop.
+    // If the data was collected in a bolted binary, the From addresses may be
+    // translated to the first instruction of the source BB if BOLT inserted
+    // a new branch that did not exist in the source (we can't map it to the
+    // source instruction, so we map it to the first instr of source BB).
+    // We do not keep offsets for random instructions. So the check above will
+    // evaluate to true if the first instr is not a branch (call/jmp/ret/etc)
+    if (BC.DR.collectedInBoltedBinary()) {
+      if (FromBB->getInputOffset() != From) {
+        DEBUG(dbgs() << "offset " << From << " does not match a BB in " << *this
+                     << '\n');
+        return false;
+      }
+      FromInstruction = nullptr;
+    } else {
+      DEBUG(dbgs() << "no instruction for offset " << From << " in " << *this
+                   << '\n');
+      return false;
+    }
   }
 
   if (!FromBB->getSuccessor(ToBB->getLabel())) {
     // Check if this is a recursive call or a return from a recursive call.
-    if (ToBB->isEntryPoint() && (BC.MIB->isCall(*FromInstruction) ||
-                                 BC.MIB->isIndirectBranch(*FromInstruction))) {
+    if (FromInstruction && ToBB->isEntryPoint() &&
+        (BC.MIB->isCall(*FromInstruction) ||
+         BC.MIB->isIndirectBranch(*FromInstruction))) {
       // Execution count is already accounted for.
       return true;
     }
+    // For data collected in a bolted binary, we may have created two output BBs
+    // that map to one original block. Branches between these two blocks will
+    // appear here as one BB jumping to itself, even though it has no loop edges.
+    // Ignore these.
+    if (BC.DR.collectedInBoltedBinary() && FromBB == ToBB)
+      return true;
 
     DEBUG(dbgs() << "invalid branch in " << *this << '\n'
                  << Twine::utohexstr(From) << " -> "
@@ -843,6 +864,11 @@ float BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
     if (BI.From.Name == BI.To.Name) {
       // Try to record information with 0 count.
       IsValid = recordBranch(BI.From.Offset, BI.To.Offset, 0);
+    } else if (BC.DR.collectedInBoltedBinary()) {
+      // We can't check branch source for collections in bolted binaries because
+      // the source of the branch may be mapped to the first instruction in a BB
+      // instead of the original branch (which may not exist in the source bin).
+      IsValid = true;
     } else {
       // The branch has to originate from this function.
       // Check for calls, tail calls, rets and indirect branches.

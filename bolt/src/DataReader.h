@@ -401,6 +401,11 @@ public:
   /// Return false only if we are running with profiling data that lacks LBR.
   bool hasLBR() const { return !NoLBRMode; }
 
+  /// Return true if the profiling data was collected in a bolted binary. This
+  /// means we lose the ability to identify stale data at some branch locations,
+  /// since we have to be more permissive in some cases.
+  bool collectedInBoltedBinary() const { return BATMode; }
+
   /// Return true if event named \p Name was used to collect this profile data.
   bool usesEvent(StringRef Name) const {
     for (auto I = EventNames.begin(), E = EventNames.end(); I != E; ++I) {
@@ -435,6 +440,7 @@ protected:
   ErrorOr<SampleInfo> parseSampleInfo();
   ErrorOr<MemInfo> parseMemInfo();
   ErrorOr<bool> maybeParseNoLBRFlag();
+  ErrorOr<bool> maybeParseBATFlag();
   bool hasBranchData();
   bool hasMemData();
 
@@ -451,6 +457,7 @@ protected:
   FuncsToSamplesMapTy FuncsToSamples;
   FuncsToMemEventsMapTy FuncsToMemEvents;
   bool NoLBRMode{false};
+  bool BATMode{false};
   StringSet<> EventNames;
   static const char FieldSeparator = ' ';
 

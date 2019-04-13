@@ -835,6 +835,10 @@ IndirectCallPromotion::rewriteCall(
   }
 
   auto MovedInst = IndCallBlock->splitInstructions(&CallInst);
+  // Link new BBs to the original input offset of the BB where the indirect
+  // call site is, so we can map samples recorded in new BBs back to the
+  // original BB seen in the input binary (if using BAT)
+  const auto OrigOffset = IndCallBlock->getInputOffset();
 
   IndCallBlock->eraseInstructions(MethodFetchInsns.begin(),
                                   MethodFetchInsns.end());
@@ -852,7 +856,7 @@ IndirectCallPromotion::rewriteCall(
     auto &Sym = Itr->first;
     auto &Insts = Itr->second;
     assert(Sym);
-    auto TBB = Function.createBasicBlock(0, Sym);
+    auto TBB = Function.createBasicBlock(OrigOffset, Sym);
     for (auto &Inst : Insts) { // sanitize new instructions.
       if (BC.MIB->isCall(Inst))
         BC.MIB->removeAnnotation(Inst, "CallProfile");

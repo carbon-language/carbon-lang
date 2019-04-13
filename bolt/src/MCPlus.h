@@ -81,7 +81,7 @@ private:
 template <typename ValueType>
 class MCSimpleAnnotation : public MCAnnotation {
 public:
-  const ValueType &getValue() const { return Value; }
+  ValueType &getValue() { return Value; }
   bool equals(const MCAnnotation &Other) const override {
     return Value == static_cast<const MCSimpleAnnotation &>(Other).Value;
   }

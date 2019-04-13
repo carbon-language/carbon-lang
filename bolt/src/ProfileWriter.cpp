@@ -67,7 +67,7 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
         continue;
 
       yaml::bolt::CallSiteInfo CSI;
-      auto Offset = BC.MIB->tryGetAnnotationAs<uint64_t>(Instr, "Offset");
+      auto Offset = BC.MIB->tryGetAnnotationAs<uint32_t>(Instr, "Offset");
       if (!Offset || Offset.get() < BB->getInputOffset())
         continue;
       CSI.Offset = Offset.get() - BB->getInputOffset();
