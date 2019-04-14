@@ -421,14 +421,12 @@ static bool rewriteSingleStoreAlloca(AllocaInst *AI, AllocaInfo &Info,
     DIBuilder DIB(*AI->getModule(), /*AllowUnresolved*/ false);
     ConvertDebugDeclareToDebugValue(DII, Info.OnlyStore, DIB);
     DII->eraseFromParent();
-    LBI.deleteValue(DII);
   }
   // Remove the (now dead) store and alloca.
   Info.OnlyStore->eraseFromParent();
   LBI.deleteValue(Info.OnlyStore);
 
   AI->eraseFromParent();
-  LBI.deleteValue(AI);
   return true;
 }
 
@@ -526,13 +524,10 @@ static bool promoteSingleBlockAlloca(AllocaInst *AI, const AllocaInfo &Info,
   }
 
   AI->eraseFromParent();
-  LBI.deleteValue(AI);
 
   // The alloca's debuginfo can be removed as well.
-  for (DbgVariableIntrinsic *DII : Info.DbgDeclares) {
+  for (DbgVariableIntrinsic *DII : Info.DbgDeclares)
     DII->eraseFromParent();
-    LBI.deleteValue(DII);
-  }
 
   ++NumLocalPromoted;
   return true;
