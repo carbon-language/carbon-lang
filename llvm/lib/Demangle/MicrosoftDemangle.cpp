@@ -276,6 +276,10 @@ Demangler::demangleSpecialTableSymbolNode(StringView &MangledName,
   SpecialTableSymbolNode *STSN = Arena.alloc<SpecialTableSymbolNode>();
   STSN->Name = QN;
   bool IsMember = false;
+  if (MangledName.empty()) {
+    Error = true;
+    return nullptr;
+  }
   char Front = MangledName.popFront();
   if (Front != '6' && Front != '7') {
     Error = true;
