@@ -22,6 +22,7 @@ add_library(FortranSemantics
   check-do-concurrent.cc
   check-if-stmt.cc
   check-nullify.cc
+  check-return.cc
   expression.cc
   mod-file.cc
   resolve-labels.cc

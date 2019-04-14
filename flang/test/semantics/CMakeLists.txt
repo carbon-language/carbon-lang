@@ -94,6 +94,11 @@ set(ERROR_TESTS
   deallocate01.f90
   deallocate04.f90
   deallocate05.f90
+  altreturn01.f90
+# Issue 407
+#  altreturn02.f90
+#  altreturn03.f90
+  altreturn04.f90
 )
 
 # These test files have expected symbols in the source
