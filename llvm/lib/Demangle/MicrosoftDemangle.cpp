@@ -654,7 +654,10 @@ Demangler::translateIntrinsicFunctionCode(char CH,
 IdentifierNode *
 Demangler::demangleFunctionIdentifierCode(StringView &MangledName,
                                           FunctionIdentifierCodeGroup Group) {
-  assert(!MangledName.empty());
+  if (MangledName.empty()) {
+    Error = true;
+    return nullptr;
+  }
   switch (Group) {
   case FunctionIdentifierCodeGroup::Basic:
     switch (char CH = MangledName.popFront()) {
