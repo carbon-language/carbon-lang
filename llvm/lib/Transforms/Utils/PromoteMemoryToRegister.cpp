@@ -249,11 +249,6 @@ struct PromoteMem2Reg {
   /// to.
   DenseMap<PHINode *, unsigned> PhiToAllocaMap;
 
-  /// If we are updating an AliasSetTracker, then for each alloca that is of
-  /// pointer type, we keep track of what to copyValue to the inserted PHI
-  /// nodes here.
-  std::vector<Value *> PointerAllocaValues;
-
   /// For each alloca, we keep track of the dbg.declare intrinsic that
   /// describes it, if any, so that we can convert it to a dbg.value
   /// intrinsic if the alloca gets promoted.
