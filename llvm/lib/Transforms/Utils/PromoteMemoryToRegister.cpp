@@ -362,10 +362,8 @@ static bool rewriteSingleStoreAlloca(AllocaInst *AI, AllocaInfo &Info,
 
   for (auto UI = AI->user_begin(), E = AI->user_end(); UI != E;) {
     Instruction *UserInst = cast<Instruction>(*UI++);
-    if (!isa<LoadInst>(UserInst)) {
-      assert(UserInst == OnlyStore && "Should only have load/stores");
+    if (UserInst == OnlyStore)
       continue;
-    }
     LoadInst *LI = cast<LoadInst>(UserInst);
 
     // Okay, if we have a load from the alloca, we want to replace it with the
@@ -385,8 +383,7 @@ static bool rewriteSingleStoreAlloca(AllocaInst *AI, AllocaInfo &Info,
           Info.UsingBlocks.push_back(StoreBB);
           continue;
         }
-      } else if (LI->getParent() != StoreBB &&
-                 !DT.dominates(StoreBB, LI->getParent())) {
+      } else if (!DT.dominates(StoreBB, LI->getParent())) {
         // If the load and store are in different blocks, use BB dominance to
         // check their relationships.  If the store doesn't dom the use, bail
         // out.
