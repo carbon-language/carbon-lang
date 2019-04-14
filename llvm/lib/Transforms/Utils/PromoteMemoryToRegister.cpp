@@ -606,8 +606,8 @@ void PromoteMem2Reg::run() {
     // dead phi nodes.
 
     // Unique the set of defining blocks for efficient lookup.
-    SmallPtrSet<BasicBlock *, 32> DefBlocks;
-    DefBlocks.insert(Info.DefiningBlocks.begin(), Info.DefiningBlocks.end());
+    SmallPtrSet<BasicBlock *, 32> DefBlocks(Info.DefiningBlocks.begin(),
+                                            Info.DefiningBlocks.end());
 
     // Determine which blocks the value is live in.  These are blocks which lead
     // to uses.
@@ -622,10 +622,9 @@ void PromoteMem2Reg::run() {
     IDF.setDefiningBlocks(DefBlocks);
     SmallVector<BasicBlock *, 32> PHIBlocks;
     IDF.calculate(PHIBlocks);
-    if (PHIBlocks.size() > 1)
-      llvm::sort(PHIBlocks, [this](BasicBlock *A, BasicBlock *B) {
-        return BBNumbers.lookup(A) < BBNumbers.lookup(B);
-      });
+    llvm::sort(PHIBlocks, [this](BasicBlock *A, BasicBlock *B) {
+      return BBNumbers.find(A)->second < BBNumbers.find(B)->second;
+    });
 
     unsigned CurrentVersion = 0;
     for (BasicBlock *BB : PHIBlocks)
@@ -737,7 +736,7 @@ void PromoteMem2Reg::run() {
     // basic blocks.  Start by sorting the incoming predecessors for efficient
     // access.
     auto CompareBBNumbers = [this](BasicBlock *A, BasicBlock *B) {
-      return BBNumbers.lookup(A) < BBNumbers.lookup(B);
+      return BBNumbers.find(A)->second < BBNumbers.find(B)->second;
     };
     llvm::sort(Preds, CompareBBNumbers);
 
@@ -810,14 +809,11 @@ void PromoteMem2Reg::ComputeLiveInBlocks(
         break;
       }
 
-      if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-        if (LI->getOperand(0) != AI)
-          continue;
-
+      if (LoadInst *LI = dyn_cast<LoadInst>(I))
         // Okay, we found a load before a store to the alloca.  It is actually
         // live into this block.
-        break;
-      }
+        if (LI->getOperand(0) == AI)
+          break;
     }
   }
 
