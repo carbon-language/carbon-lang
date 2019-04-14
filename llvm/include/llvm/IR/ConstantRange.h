@@ -205,9 +205,6 @@ public:
   /// Return true if this set contains exactly one member.
   bool isSingleElement() const { return getSingleElement() != nullptr; }
 
-  /// Return the number of elements in this set.
-  APInt getSetSize() const;
-
   /// Compare set size of this range with the range CR.
   bool isSizeStrictlySmallerThan(const ConstantRange &CR) const;
 

@@ -349,14 +349,6 @@ bool ConstantRange::isUpperSignWrapped() const {
   return Lower.sgt(Upper);
 }
 
-APInt ConstantRange::getSetSize() const {
-  if (isFullSet())
-    return APInt::getOneBitSet(getBitWidth()+1, getBitWidth());
-
-  // This is also correct for wrapped sets.
-  return (Upper - Lower).zext(getBitWidth()+1);
-}
-
 bool
 ConstantRange::isSizeStrictlySmallerThan(const ConstantRange &Other) const {
   assert(getBitWidth() == Other.getBitWidth());
