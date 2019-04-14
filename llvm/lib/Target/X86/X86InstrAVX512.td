@@ -2988,26 +2988,24 @@ defm : avx512_binop_pat<vxnor, xnor, KXNORWrr>;
 defm : avx512_binop_pat<xor,   xor,  KXORWrr>;
 
 // Mask unpacking
-multiclass avx512_mask_unpck<string Suffix,RegisterClass KRC, ValueType VT,
-                             RegisterClass KRCSrc, X86FoldableSchedWrite sched,
+multiclass avx512_mask_unpck<string Suffix, X86KVectorVTInfo Dst,
+                             X86KVectorVTInfo Src, X86FoldableSchedWrite sched,
                              Predicate prd> {
   let Predicates = [prd] in {
     let hasSideEffects = 0 in
-    def rr : I<0x4b, MRMSrcReg, (outs KRC:$dst),
-               (ins KRC:$src1, KRC:$src2),
+    def rr : I<0x4b, MRMSrcReg, (outs Dst.KRC:$dst),
+               (ins Src.KRC:$src1, Src.KRC:$src2),
                "kunpck"#Suffix#"\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
                VEX_4V, VEX_L, Sched<[sched]>;
 
-    def : Pat<(VT (concat_vectors KRCSrc:$src1, KRCSrc:$src2)),
-              (!cast<Instruction>(NAME##rr)
-                        (COPY_TO_REGCLASS KRCSrc:$src2, KRC),
-                        (COPY_TO_REGCLASS KRCSrc:$src1, KRC))>;
+    def : Pat<(Dst.KVT (concat_vectors Src.KRC:$src1, Src.KRC:$src2)),
+              (!cast<Instruction>(NAME##rr) Src.KRC:$src2, Src.KRC:$src1)>;
   }
 }
 
-defm KUNPCKBW : avx512_mask_unpck<"bw", VK16, v16i1, VK8, WriteShuffle, HasAVX512>, PD;
-defm KUNPCKWD : avx512_mask_unpck<"wd", VK32, v32i1, VK16, WriteShuffle, HasBWI>, PS;
-defm KUNPCKDQ : avx512_mask_unpck<"dq", VK64, v64i1, VK32, WriteShuffle, HasBWI>, PS, VEX_W;
+defm KUNPCKBW : avx512_mask_unpck<"bw", v16i1_info, v8i1_info,  WriteShuffle, HasAVX512>, PD;
+defm KUNPCKWD : avx512_mask_unpck<"wd", v32i1_info, v16i1_info, WriteShuffle, HasBWI>, PS;
+defm KUNPCKDQ : avx512_mask_unpck<"dq", v64i1_info, v32i1_info, WriteShuffle, HasBWI>, PS, VEX_W;
 
 // Mask bit testing
 multiclass avx512_mask_testop<bits<8> opc, string OpcodeStr, RegisterClass KRC,
