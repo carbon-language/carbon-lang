@@ -5813,309 +5813,93 @@ defm VSCALEF : avx512_fp_scalef_all<0x2C, 0x2D, "vscalef",
 // AVX-512  VPTESTM instructions
 //===----------------------------------------------------------------------===//
 
-multiclass avx512_vptest<bits<8> opc, string OpcodeStr, PatFrag OpNode,
-                         PatFrag OpNode_su,
+multiclass avx512_vptest<bits<8> opc, string OpcodeStr,
                          X86FoldableSchedWrite sched, X86VectorVTInfo _,
                          string Name> {
-  let ExeDomain = _.ExeDomain in {
+  // NOTE: Patterns are omitted in favor of manual selection in X86ISelDAGToDAG.
+  // There are just too many permuations due to commutability and bitcasts.
+  let ExeDomain = _.ExeDomain, hasSideEffects = 0 in {
   let isCommutable = 1 in
   defm rr : AVX512_maskable_cmp<opc, MRMSrcReg, _, (outs _.KRC:$dst),
                    (ins _.RC:$src1, _.RC:$src2), OpcodeStr,
                       "$src2, $src1", "$src1, $src2",
-                   (OpNode (and _.RC:$src1, _.RC:$src2), _.ImmAllZerosV),
-                   (OpNode_su (and _.RC:$src1, _.RC:$src2), _.ImmAllZerosV)>,
+                   (null_frag), (null_frag)>,
                    EVEX_4V, Sched<[sched]>;
+  let mayLoad = 1 in
   defm rm : AVX512_maskable_cmp<opc, MRMSrcMem, _, (outs _.KRC:$dst),
                    (ins _.RC:$src1, _.MemOp:$src2), OpcodeStr,
                        "$src2, $src1", "$src1, $src2",
-                   (OpNode (and _.RC:$src1, (_.LdFrag addr:$src2)),
-                           _.ImmAllZerosV),
-                   (OpNode_su (and _.RC:$src1, (_.LdFrag addr:$src2)),
-                           _.ImmAllZerosV)>,
+                   (null_frag), (null_frag)>,
                    EVEX_4V, EVEX_CD8<_.EltSize, CD8VF>,
                    Sched<[sched.Folded, sched.ReadAfterFold]>;
   }
-
-  // Patterns for compare with 0 that just use the same source twice.
-  def : Pat<(_.KVT (OpNode _.RC:$src, _.ImmAllZerosV)),
-            (_.KVT (!cast<Instruction>(Name # _.ZSuffix # "rr")
-                                      _.RC:$src, _.RC:$src))>;
-
-  def : Pat<(_.KVT (and _.KRC:$mask, (OpNode_su _.RC:$src, _.ImmAllZerosV))),
-            (_.KVT (!cast<Instruction>(Name # _.ZSuffix # "rrk")
-                                      _.KRC:$mask, _.RC:$src, _.RC:$src))>;
 }
 
-multiclass avx512_vptest_mb<bits<8> opc, string OpcodeStr, PatFrag OpNode,
-                            PatFrag OpNode_su, X86FoldableSchedWrite sched,
-                            X86VectorVTInfo _> {
-  let ExeDomain = _.ExeDomain in
+multiclass avx512_vptest_mb<bits<8> opc, string OpcodeStr,
+                            X86FoldableSchedWrite sched, X86VectorVTInfo _> {
+  let ExeDomain = _.ExeDomain, mayLoad = 1, hasSideEffects = 0 in
   defm rmb : AVX512_maskable_cmp<opc, MRMSrcMem, _, (outs _.KRC:$dst),
                     (ins _.RC:$src1, _.ScalarMemOp:$src2), OpcodeStr,
                     "${src2}"##_.BroadcastStr##", $src1",
                     "$src1, ${src2}"##_.BroadcastStr,
-                    (OpNode (and _.RC:$src1,
-                                       (X86VBroadcast
-                                        (_.ScalarLdFrag addr:$src2))),
-                            _.ImmAllZerosV),
-                    (OpNode_su (and _.RC:$src1,
-                                          (X86VBroadcast
-                                           (_.ScalarLdFrag addr:$src2))),
-                               _.ImmAllZerosV)>,
+                    (null_frag), (null_frag)>,
                     EVEX_B, EVEX_4V, EVEX_CD8<_.EltSize, CD8VF>,
                     Sched<[sched.Folded, sched.ReadAfterFold]>;
 }
 
-// Use 512bit version to implement 128/256 bit in case NoVLX.
-multiclass avx512_vptest_lowering<PatFrag OpNode, PatFrag OpNode_su,
-                                  X86VectorVTInfo ExtendInfo, X86VectorVTInfo _,
-                                  string Name> {
-  def : Pat<(_.KVT (OpNode (and _.RC:$src1, _.RC:$src2),
-                           _.ImmAllZerosV)),
-            (_.KVT (COPY_TO_REGCLASS
-                     (!cast<Instruction>(Name # "Zrr")
-                       (INSERT_SUBREG (ExtendInfo.VT (IMPLICIT_DEF)),
-                                      _.RC:$src1, _.SubRegIdx),
-                       (INSERT_SUBREG (ExtendInfo.VT (IMPLICIT_DEF)),
-                                      _.RC:$src2, _.SubRegIdx)),
-                   _.KRC))>;
-
-  def : Pat<(_.KVT (and _.KRC:$mask,
-                        (OpNode_su (and _.RC:$src1, _.RC:$src2),
-                                   _.ImmAllZerosV))),
-            (COPY_TO_REGCLASS
-             (!cast<Instruction>(Name # "Zrrk")
-              (COPY_TO_REGCLASS _.KRC:$mask, ExtendInfo.KRC),
-              (INSERT_SUBREG (ExtendInfo.VT (IMPLICIT_DEF)),
-                             _.RC:$src1, _.SubRegIdx),
-              (INSERT_SUBREG (ExtendInfo.VT (IMPLICIT_DEF)),
-                             _.RC:$src2, _.SubRegIdx)),
-             _.KRC)>;
-
-  def : Pat<(_.KVT (OpNode _.RC:$src, _.ImmAllZerosV)),
-            (_.KVT (COPY_TO_REGCLASS
-                     (!cast<Instruction>(Name # "Zrr")
-                       (INSERT_SUBREG (ExtendInfo.VT (IMPLICIT_DEF)),
-                                      _.RC:$src, _.SubRegIdx),
-                       (INSERT_SUBREG (ExtendInfo.VT (IMPLICIT_DEF)),
-                                      _.RC:$src, _.SubRegIdx)),
-                   _.KRC))>;
-
-  def : Pat<(_.KVT (and _.KRC:$mask, (OpNode_su _.RC:$src, _.ImmAllZerosV))),
-            (COPY_TO_REGCLASS
-             (!cast<Instruction>(Name # "Zrrk")
-              (COPY_TO_REGCLASS _.KRC:$mask, ExtendInfo.KRC),
-              (INSERT_SUBREG (ExtendInfo.VT (IMPLICIT_DEF)),
-                             _.RC:$src, _.SubRegIdx),
-              (INSERT_SUBREG (ExtendInfo.VT (IMPLICIT_DEF)),
-                             _.RC:$src, _.SubRegIdx)),
-             _.KRC)>;
-}
-
-multiclass avx512_vptest_dq_sizes<bits<8> opc, string OpcodeStr, PatFrag OpNode,
-                                  PatFrag OpNode_su, X86SchedWriteWidths sched,
+multiclass avx512_vptest_dq_sizes<bits<8> opc, string OpcodeStr,
+                                  X86SchedWriteWidths sched,
                                   AVX512VLVectorVTInfo _> {
   let Predicates  = [HasAVX512] in
-  defm Z : avx512_vptest<opc, OpcodeStr, OpNode, OpNode_su, sched.ZMM, _.info512, NAME>,
-           avx512_vptest_mb<opc, OpcodeStr, OpNode, OpNode_su, sched.ZMM, _.info512>, EVEX_V512;
+  defm Z : avx512_vptest<opc, OpcodeStr, sched.ZMM, _.info512, NAME>,
+           avx512_vptest_mb<opc, OpcodeStr, sched.ZMM, _.info512>, EVEX_V512;
 
   let Predicates = [HasAVX512, HasVLX] in {
-  defm Z256 : avx512_vptest<opc, OpcodeStr, OpNode, OpNode_su, sched.YMM, _.info256, NAME>,
-              avx512_vptest_mb<opc, OpcodeStr, OpNode, OpNode_su, sched.YMM, _.info256>, EVEX_V256;
-  defm Z128 : avx512_vptest<opc, OpcodeStr, OpNode, OpNode_su, sched.XMM, _.info128, NAME>,
-              avx512_vptest_mb<opc, OpcodeStr, OpNode, OpNode_su, sched.XMM, _.info128>, EVEX_V128;
-  }
-  let Predicates = [HasAVX512, NoVLX] in {
-  defm Z256_Alt : avx512_vptest_lowering< OpNode, OpNode_su, _.info512, _.info256, NAME>;
-  defm Z128_Alt : avx512_vptest_lowering< OpNode, OpNode_su, _.info512, _.info128, NAME>;
+  defm Z256 : avx512_vptest<opc, OpcodeStr, sched.YMM, _.info256, NAME>,
+              avx512_vptest_mb<opc, OpcodeStr, sched.YMM, _.info256>, EVEX_V256;
+  defm Z128 : avx512_vptest<opc, OpcodeStr, sched.XMM, _.info128, NAME>,
+              avx512_vptest_mb<opc, OpcodeStr, sched.XMM, _.info128>, EVEX_V128;
   }
 }
 
-multiclass avx512_vptest_dq<bits<8> opc, string OpcodeStr, PatFrag OpNode,
-                            PatFrag OpNode_su, X86SchedWriteWidths sched> {
-  defm D : avx512_vptest_dq_sizes<opc, OpcodeStr#"d", OpNode, OpNode_su, sched,
+multiclass avx512_vptest_dq<bits<8> opc, string OpcodeStr,
+                            X86SchedWriteWidths sched> {
+  defm D : avx512_vptest_dq_sizes<opc, OpcodeStr#"d", sched,
                                  avx512vl_i32_info>;
-  defm Q : avx512_vptest_dq_sizes<opc, OpcodeStr#"q", OpNode, OpNode_su, sched,
+  defm Q : avx512_vptest_dq_sizes<opc, OpcodeStr#"q", sched,
                                  avx512vl_i64_info>, VEX_W;
 }
 
 multiclass avx512_vptest_wb<bits<8> opc, string OpcodeStr,
-                            PatFrag OpNode, PatFrag OpNode_su,
                             X86SchedWriteWidths sched> {
   let Predicates = [HasBWI] in {
-  defm WZ:    avx512_vptest<opc, OpcodeStr#"w", OpNode, OpNode_su, sched.ZMM,
+  defm WZ:    avx512_vptest<opc, OpcodeStr#"w", sched.ZMM,
                             v32i16_info, NAME#"W">, EVEX_V512, VEX_W;
-  defm BZ:    avx512_vptest<opc, OpcodeStr#"b", OpNode, OpNode_su, sched.ZMM,
+  defm BZ:    avx512_vptest<opc, OpcodeStr#"b", sched.ZMM,
                             v64i8_info, NAME#"B">, EVEX_V512;
   }
   let Predicates = [HasVLX, HasBWI] in {
 
-  defm WZ256: avx512_vptest<opc, OpcodeStr#"w", OpNode, OpNode_su, sched.YMM,
+  defm WZ256: avx512_vptest<opc, OpcodeStr#"w", sched.YMM,
                             v16i16x_info, NAME#"W">, EVEX_V256, VEX_W;
-  defm WZ128: avx512_vptest<opc, OpcodeStr#"w", OpNode, OpNode_su, sched.XMM,
+  defm WZ128: avx512_vptest<opc, OpcodeStr#"w", sched.XMM,
                             v8i16x_info, NAME#"W">, EVEX_V128, VEX_W;
-  defm BZ256: avx512_vptest<opc, OpcodeStr#"b", OpNode, OpNode_su, sched.YMM,
+  defm BZ256: avx512_vptest<opc, OpcodeStr#"b", sched.YMM,
                             v32i8x_info, NAME#"B">, EVEX_V256;
-  defm BZ128: avx512_vptest<opc, OpcodeStr#"b", OpNode, OpNode_su, sched.XMM,
+  defm BZ128: avx512_vptest<opc, OpcodeStr#"b", sched.XMM,
                             v16i8x_info, NAME#"B">, EVEX_V128;
   }
-
-  let Predicates = [HasBWI, NoVLX] in {
-  defm BZ256_Alt : avx512_vptest_lowering<OpNode, OpNode_su, v64i8_info, v32i8x_info, NAME#"B">;
-  defm BZ128_Alt : avx512_vptest_lowering<OpNode, OpNode_su, v64i8_info, v16i8x_info, NAME#"B">;
-  defm WZ256_Alt : avx512_vptest_lowering<OpNode, OpNode_su, v32i16_info, v16i16x_info, NAME#"W">;
-  defm WZ128_Alt : avx512_vptest_lowering<OpNode, OpNode_su, v32i16_info, v8i16x_info, NAME#"W">;
-  }
 }
-
-// These patterns are used to match vptestm/vptestnm. We don't treat pcmpeqm
-// as commutable here because we already canonicalized all zeros vectors to the
-// RHS during lowering.
-def X86pcmpeqm : PatFrag<(ops node:$src1, node:$src2),
-                         (setcc node:$src1, node:$src2, SETEQ)>;
-def X86pcmpnem : PatFrag<(ops node:$src1, node:$src2),
-                         (setcc node:$src1, node:$src2, SETNE)>;
-
-def X86pcmpeqm_su : PatFrag<(ops node:$src1, node:$src2),
-                            (X86pcmpeqm node:$src1, node:$src2), [{
-  return N->hasOneUse();
-}]>;
-def X86pcmpnem_su : PatFrag<(ops node:$src1, node:$src2),
-                            (X86pcmpnem node:$src1, node:$src2), [{
-  return N->hasOneUse();
-}]>;
 
 multiclass avx512_vptest_all_forms<bits<8> opc_wb, bits<8> opc_dq, string OpcodeStr,
-                                   PatFrag OpNode, PatFrag OpNode_su,
                                    X86SchedWriteWidths sched> :
-  avx512_vptest_wb<opc_wb, OpcodeStr, OpNode, OpNode_su, sched>,
-  avx512_vptest_dq<opc_dq, OpcodeStr, OpNode, OpNode_su, sched>;
+  avx512_vptest_wb<opc_wb, OpcodeStr, sched>,
+  avx512_vptest_dq<opc_dq, OpcodeStr, sched>;
 
-defm VPTESTM   : avx512_vptest_all_forms<0x26, 0x27, "vptestm", X86pcmpnem,
-                                         X86pcmpnem_su, SchedWriteVecLogic>, T8PD;
-defm VPTESTNM  : avx512_vptest_all_forms<0x26, 0x27, "vptestnm", X86pcmpeqm,
-                                         X86pcmpeqm_su, SchedWriteVecLogic>, T8XS;
-
-
-multiclass avx512_vptest_lowering_pats<string InstrStr, PatFrag OpNode,
-                                       PatFrag OpNode_su, X86VectorVTInfo _,
-                                       X86VectorVTInfo AndInfo> {
-  def : Pat<(_.KVT (OpNode (bitconvert
-                            (AndInfo.VT (and _.RC:$src1, _.RC:$src2))),
-                           _.ImmAllZerosV)),
-            (!cast<Instruction>(InstrStr # "rr") _.RC:$src1, _.RC:$src2)>;
-
-  def : Pat<(_.KVT (and _.KRC:$mask,
-                    (OpNode_su (bitconvert
-                                (AndInfo.VT (and _.RC:$src1, _.RC:$src2))),
-                               _.ImmAllZerosV))),
-            (!cast<Instruction>(InstrStr # "rrk") _.KRC:$mask, _.RC:$src1,
-                                                  _.RC:$src2)>;
-
-  def : Pat<(_.KVT (OpNode (bitconvert
-                            (AndInfo.VT (and _.RC:$src1,
-                                             (AndInfo.LdFrag addr:$src2)))),
-                           _.ImmAllZerosV)),
-            (!cast<Instruction>(InstrStr # "rm") _.RC:$src1, addr:$src2)>;
-
-  def : Pat<(_.KVT (and _.KRC:$mask,
-                    (OpNode_su (bitconvert
-                                (AndInfo.VT (and _.RC:$src1,
-                                                 (AndInfo.LdFrag addr:$src2)))),
-                            _   .ImmAllZerosV))),
-            (!cast<Instruction>(InstrStr # "rmk") _.KRC:$mask, _.RC:$src1,
-                                                  addr:$src2)>;
-}
-
-// Patterns to use 512-bit instructions when 128/256 are not available.
-multiclass avx512_vptest_lowering_wide_pats<string InstrStr, PatFrag OpNode,
-                                            PatFrag OpNode_su,
-                                            X86VectorVTInfo _,
-                                            X86VectorVTInfo AndInfo,
-                                            X86VectorVTInfo ExtendInfo> {
-  def : Pat<(_.KVT (OpNode (bitconvert
-                            (AndInfo.VT (and _.RC:$src1, _.RC:$src2))),
-                           _.ImmAllZerosV)),
-            (_.KVT (COPY_TO_REGCLASS
-                     (!cast<Instruction>(InstrStr#"rr")
-                       (INSERT_SUBREG (ExtendInfo.VT (IMPLICIT_DEF)),
-                                      _.RC:$src1, _.SubRegIdx),
-                       (INSERT_SUBREG (ExtendInfo.VT (IMPLICIT_DEF)),
-                                      _.RC:$src2, _.SubRegIdx)),
-                   _.KRC))>;
-
-  def : Pat<(_.KVT (and _.KRC:$mask,
-                    (OpNode_su (bitconvert
-                                (AndInfo.VT (and _.RC:$src1, _.RC:$src2))),
-                               _.ImmAllZerosV))),
-            (COPY_TO_REGCLASS
-             (!cast<Instruction>(InstrStr#"rrk")
-              (COPY_TO_REGCLASS _.KRC:$mask, ExtendInfo.KRC),
-              (INSERT_SUBREG (ExtendInfo.VT (IMPLICIT_DEF)),
-                             _.RC:$src1, _.SubRegIdx),
-              (INSERT_SUBREG (ExtendInfo.VT (IMPLICIT_DEF)),
-                             _.RC:$src2, _.SubRegIdx)),
-             _.KRC)>;
-}
-
-multiclass avx512_vptest_lowering_sizes<string InstrStr, PatFrag OpNode,
-                                        PatFrag OpNode_su, Predicate prd,
-                                        AVX512VLVectorVTInfo CmpInfo,
-                                        AVX512VLVectorVTInfo AndInfo> {
-let Predicates = [prd, HasVLX] in {
-  defm : avx512_vptest_lowering_pats<InstrStr#"Z128", OpNode, OpNode_su,
-                                     CmpInfo.info128, AndInfo.info128>;
-  defm : avx512_vptest_lowering_pats<InstrStr#"Z256", OpNode, OpNode_su,
-                                     CmpInfo.info256, AndInfo.info256>;
-}
-let Predicates = [prd] in {
-  defm : avx512_vptest_lowering_pats<InstrStr#"Z", OpNode, OpNode_su,
-                                     CmpInfo.info512, AndInfo.info512>;
-}
-
-let Predicates = [prd, NoVLX] in {
-  defm : avx512_vptest_lowering_wide_pats<InstrStr#"Z", OpNode, OpNode_su,
-                                          CmpInfo.info128, AndInfo.info128,
-                                          CmpInfo.info512>;
-  defm : avx512_vptest_lowering_wide_pats<InstrStr#"Z", OpNode, OpNode_su,
-                                          CmpInfo.info256, AndInfo.info256,
-                                          CmpInfo.info512>;
-}
-}
-
-multiclass avx512_vptest_lowering_types<string InstrStr, PatFrag OpNode,
-                                        PatFrag OpNode_su> {
-  defm : avx512_vptest_lowering_sizes<InstrStr # "B", OpNode, OpNode_su, HasBWI,
-                                      avx512vl_i8_info, avx512vl_i16_info>;
-  defm : avx512_vptest_lowering_sizes<InstrStr # "B", OpNode, OpNode_su, HasBWI,
-                                      avx512vl_i8_info, avx512vl_i32_info>;
-  defm : avx512_vptest_lowering_sizes<InstrStr # "B", OpNode, OpNode_su, HasBWI,
-                                      avx512vl_i8_info, avx512vl_i64_info>;
-
-  defm : avx512_vptest_lowering_sizes<InstrStr # "W", OpNode, OpNode_su, HasBWI,
-                                      avx512vl_i16_info, avx512vl_i8_info>;
-  defm : avx512_vptest_lowering_sizes<InstrStr # "W", OpNode, OpNode_su, HasBWI,
-                                      avx512vl_i16_info, avx512vl_i32_info>;
-  defm : avx512_vptest_lowering_sizes<InstrStr # "W", OpNode, OpNode_su, HasBWI,
-                                      avx512vl_i16_info, avx512vl_i64_info>;
-
-  defm : avx512_vptest_lowering_sizes<InstrStr # "D", OpNode, OpNode_su, HasAVX512,
-                                      avx512vl_i32_info, avx512vl_i8_info>;
-  defm : avx512_vptest_lowering_sizes<InstrStr # "D", OpNode, OpNode_su, HasAVX512,
-                                      avx512vl_i32_info, avx512vl_i16_info>;
-  defm : avx512_vptest_lowering_sizes<InstrStr # "D", OpNode, OpNode_su, HasAVX512,
-                                      avx512vl_i32_info, avx512vl_i64_info>;
-
-  defm : avx512_vptest_lowering_sizes<InstrStr # "Q", OpNode, OpNode_su, HasAVX512,
-                                      avx512vl_i64_info, avx512vl_i8_info>;
-  defm : avx512_vptest_lowering_sizes<InstrStr # "Q", OpNode, OpNode_su, HasAVX512,
-                                      avx512vl_i64_info, avx512vl_i16_info>;
-  defm : avx512_vptest_lowering_sizes<InstrStr # "Q", OpNode, OpNode_su, HasAVX512,
-                                      avx512vl_i64_info, avx512vl_i32_info>;
-}
-
-defm : avx512_vptest_lowering_types<"VPTESTM", X86pcmpnem, X86pcmpnem_su>;
-defm : avx512_vptest_lowering_types<"VPTESTNM", X86pcmpeqm, X86pcmpeqm_su>;
+defm VPTESTM   : avx512_vptest_all_forms<0x26, 0x27, "vptestm",
+                                         SchedWriteVecLogic>, T8PD;
+defm VPTESTNM  : avx512_vptest_all_forms<0x26, 0x27, "vptestnm",
+                                         SchedWriteVecLogic>, T8XS;
 
 //===----------------------------------------------------------------------===//
 // AVX-512  Shift instructions
