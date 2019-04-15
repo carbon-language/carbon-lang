@@ -43730,7 +43730,9 @@ X86TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
       case MVT::v16f32:
       case MVT::v16i32:
       case MVT::v8i64:
-        return std::make_pair(0U, &X86::VR512RegClass);
+        if (VConstraint)
+          return std::make_pair(0U, &X86::VR512RegClass);
+        return std::make_pair(0U, &X86::VR512_0_15RegClass);
       }
       break;
     }
