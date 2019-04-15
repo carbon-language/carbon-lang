@@ -761,7 +761,7 @@ straightforwards: determining the variable location in every basic block
 requries the consideraton of control flow. Consider the following IR, which
 presents several difficulties:
 
-.. code-block:: llvm
+.. code-block:: text
 
   define dso_local i32 @foo(i1 %cond, i32 %input) !dbg !12 {
   entry:
