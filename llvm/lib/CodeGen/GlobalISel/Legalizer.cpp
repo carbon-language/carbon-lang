@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Target/TargetMachine.h"
 
 #include <iterator>
 

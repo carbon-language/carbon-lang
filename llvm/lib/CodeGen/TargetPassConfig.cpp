@@ -1226,7 +1226,7 @@ bool TargetPassConfig::reportDiagnosticWhenGlobalISelFallback() const {
 }
 
 bool TargetPassConfig::isGISelCSEEnabled() const {
-  return getOptLevel() != CodeGenOpt::Level::None;
+  return true;
 }
 
 std::unique_ptr<CSEConfigBase> TargetPassConfig::getCSEConfig() const {

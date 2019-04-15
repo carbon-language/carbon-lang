@@ -65,7 +65,7 @@ std::unique_ptr<CSEConfigBase>
 llvm::getStandardCSEConfigForOpt(CodeGenOpt::Level Level) {
   std::unique_ptr<CSEConfigBase> Config;
   if (Level == CodeGenOpt::None)
-    Config = make_unique<CSEConfigBase>();
+    Config = make_unique<CSEConfigConstantOnly>();
   else
     Config = make_unique<CSEConfigFull>();
   return Config;
