@@ -58,6 +58,44 @@ extern "C" {
 using namespace llvm;
 using namespace object;
 
+namespace llvm {
+
+extern cl::opt<bool> ArchiveHeaders;
+extern cl::opt<bool> Disassemble;
+extern cl::opt<bool> DisassembleAll;
+extern cl::opt<DIDumpType> DwarfDumpType;
+extern cl::list<std::string> FilterSections;
+extern cl::list<std::string> MAttrs;
+extern cl::opt<std::string> MCPU;
+extern cl::opt<bool> NoShowRawInsn;
+extern cl::opt<bool> NoLeadingAddr;
+extern cl::opt<bool> PrintImmHex;
+extern cl::opt<bool> PrivateHeaders;
+extern cl::opt<bool> Relocations;
+extern cl::opt<bool> SectionHeaders;
+extern cl::opt<bool> SectionContents;
+extern cl::opt<bool> SymbolTable;
+extern cl::opt<std::string> TripleName;
+extern cl::opt<bool> UnwindInfo;
+
+cl::opt<bool>
+    FirstPrivateHeader("private-header",
+                       cl::desc("Display only the first format specific file "
+                                "header"));
+
+cl::opt<bool> ExportsTrie("exports-trie",
+                                 cl::desc("Display mach-o exported symbols"));
+
+cl::opt<bool> Rebase("rebase", cl::desc("Display mach-o rebasing info"));
+
+cl::opt<bool> Bind("bind", cl::desc("Display mach-o binding info"));
+
+cl::opt<bool> LazyBind("lazy-bind",
+                              cl::desc("Display mach-o lazy binding info"));
+
+cl::opt<bool> WeakBind("weak-bind",
+                              cl::desc("Display mach-o weak binding info"));
+
 static cl::opt<bool>
     UseDbg("g", cl::Grouping,
            cl::desc("Print line information from debug info if available"));
@@ -71,9 +109,9 @@ static cl::opt<bool> FullLeadingAddr("full-leading-addr",
 static cl::opt<bool> NoLeadingHeaders("no-leading-headers",
                                       cl::desc("Print no leading headers"));
 
-cl::opt<bool> llvm::UniversalHeaders("universal-headers",
-                                     cl::desc("Print Mach-O universal headers "
-                                              "(requires -macho)"));
+cl::opt<bool> UniversalHeaders("universal-headers",
+                               cl::desc("Print Mach-O universal headers "
+                                        "(requires -macho)"));
 
 cl::opt<bool>
     ArchiveMemberOffsets("archive-member-offsets",
@@ -81,47 +119,43 @@ cl::opt<bool>
                                   "Mach-O archives (requires -macho and "
                                   "-archive-headers)"));
 
-cl::opt<bool>
-    llvm::IndirectSymbols("indirect-symbols",
-                          cl::desc("Print indirect symbol table for Mach-O "
-                                   "objects (requires -macho)"));
+cl::opt<bool> IndirectSymbols("indirect-symbols",
+                              cl::desc("Print indirect symbol table for Mach-O "
+                                       "objects (requires -macho)"));
 
 cl::opt<bool>
-    llvm::DataInCode("data-in-code",
-                     cl::desc("Print the data in code table for Mach-O objects "
-                              "(requires -macho)"));
+    DataInCode("data-in-code",
+               cl::desc("Print the data in code table for Mach-O objects "
+                        "(requires -macho)"));
+
+cl::opt<bool> LinkOptHints("link-opt-hints",
+                           cl::desc("Print the linker optimization hints for "
+                                    "Mach-O objects (requires -macho)"));
+
+cl::opt<bool> InfoPlist("info-plist",
+                        cl::desc("Print the info plist section as strings for "
+                                 "Mach-O objects (requires -macho)"));
+
+cl::opt<bool> DylibsUsed("dylibs-used",
+                         cl::desc("Print the shared libraries used for linked "
+                                  "Mach-O files (requires -macho)"));
 
 cl::opt<bool>
-    llvm::LinkOptHints("link-opt-hints",
-                       cl::desc("Print the linker optimization hints for "
-                                "Mach-O objects (requires -macho)"));
+    DylibId("dylib-id",
+            cl::desc("Print the shared library's id for the dylib Mach-O "
+                     "file (requires -macho)"));
 
 cl::opt<bool>
-    llvm::InfoPlist("info-plist",
-                    cl::desc("Print the info plist section as strings for "
-                             "Mach-O objects (requires -macho)"));
+    NonVerbose("non-verbose",
+               cl::desc("Print the info for Mach-O objects in "
+                        "non-verbose or numeric form (requires -macho)"));
 
 cl::opt<bool>
-    llvm::DylibsUsed("dylibs-used",
-                     cl::desc("Print the shared libraries used for linked "
-                              "Mach-O files (requires -macho)"));
+    ObjcMetaData("objc-meta-data",
+                 cl::desc("Print the Objective-C runtime meta data for "
+                          "Mach-O files (requires -macho)"));
 
-cl::opt<bool>
-    llvm::DylibId("dylib-id",
-                  cl::desc("Print the shared library's id for the dylib Mach-O "
-                           "file (requires -macho)"));
-
-cl::opt<bool>
-    llvm::NonVerbose("non-verbose",
-                     cl::desc("Print the info for Mach-O objects in "
-                              "non-verbose or numeric form (requires -macho)"));
-
-cl::opt<bool>
-    llvm::ObjcMetaData("objc-meta-data",
-                       cl::desc("Print the Objective-C runtime meta data for "
-                                "Mach-O files (requires -macho)"));
-
-cl::opt<std::string> llvm::DisSymName(
+cl::opt<std::string> DisSymName(
     "dis-symname",
     cl::desc("disassemble just this symbol's instructions (requires -macho)"));
 
@@ -132,6 +166,7 @@ static cl::opt<bool> NoSymbolicOperands(
 static cl::list<std::string>
     ArchFlags("arch", cl::desc("architecture(s) from a Mach-O file to dump"),
               cl::ZeroOrMore);
+} // namespace llvm
 
 bool ArchAll = false;
 
@@ -10216,3 +10251,52 @@ static const char *get_dyld_bind_info_symbolname(uint64_t ReferenceValue,
   return !name.empty() ? name.data() : nullptr;
 }
 
+void llvm::printLazyBindTable(ObjectFile *o) {
+  outs() << "Lazy bind table:\n";
+  if (MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o))
+    printMachOLazyBindTable(MachO);
+  else
+    WithColor::error()
+        << "This operation is only currently supported "
+           "for Mach-O executable files.\n";
+}
+
+void llvm::printWeakBindTable(ObjectFile *o) {
+  outs() << "Weak bind table:\n";
+  if (MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o))
+    printMachOWeakBindTable(MachO);
+  else
+    WithColor::error()
+        << "This operation is only currently supported "
+           "for Mach-O executable files.\n";
+}
+
+void llvm::printExportsTrie(const ObjectFile *o) {
+  outs() << "Exports trie:\n";
+  if (const MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o))
+    printMachOExportsTrie(MachO);
+  else
+    WithColor::error()
+        << "This operation is only currently supported "
+           "for Mach-O executable files.\n";
+}
+
+void llvm::printRebaseTable(ObjectFile *o) {
+  outs() << "Rebase table:\n";
+  if (MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o))
+    printMachORebaseTable(MachO);
+  else
+    WithColor::error()
+        << "This operation is only currently supported "
+           "for Mach-O executable files.\n";
+}
+
+void llvm::printBindTable(ObjectFile *o) {
+  outs() << "Bind table:\n";
+  if (MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o))
+    printMachOBindTable(MachO);
+  else
+    WithColor::error()
+        << "This operation is only currently supported "
+           "for Mach-O executable files.\n";
+}
