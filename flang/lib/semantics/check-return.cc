@@ -39,7 +39,7 @@ void ReturnStmtChecker::Leave(const parser::ReturnStmt &returnStmt) {
   // C1575 The scalar-int-expr is allowed only in the inclusive scope of a
   // subroutine subprogram.
   const auto &scope{context_.FindScope(*context_.location())};
-  const auto &subprogramScope{FindContainingSubprogram(scope)};
+  const auto *subprogramScope{FindContainingSubprogram(scope)};
   if (subprogramScope == nullptr) {
     context_.Say(
         "RETURN must in the inclusive scope of a SUBPROGRAM"_err_en_US);
