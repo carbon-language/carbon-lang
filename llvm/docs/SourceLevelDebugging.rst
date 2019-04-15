@@ -531,9 +531,9 @@ within the LLVM IR. By the end of CodeGen, this becomes a mapping from each
 variable to their machine locations over ranges of instructions.
 From IR to object emission, the major transformations which affect variable
 location fidelity are:
- 1. Instruction Selection
- 2. Register allocation
- 3. Block layout
+1. Instruction Selection
+2. Register allocation
+3. Block layout
 
 each of which are discussed below. In addition, instruction scheduling can
 significantly change the ordering of the program, and occurs in a number of
