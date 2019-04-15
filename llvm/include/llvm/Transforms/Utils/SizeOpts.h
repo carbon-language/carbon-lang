@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_TRANSFORMS_UTILS_SIZEOPTS_H
-#define LLVM_TRANSFORMS_UTILS_SiZEOPTS_H
+#define LLVM_TRANSFORMS_UTILS_SIZEOPTS_H
 
 namespace llvm {
 
@@ -31,4 +31,4 @@ bool shouldOptimizeForSize(BasicBlock *BB, ProfileSummaryInfo *PSI,
 
 } // end namespace llvm
 
-#endif // LLVM_TRANSFORMS_UTILS_SiZEOPTS_H
+#endif // LLVM_TRANSFORMS_UTILS_SIZEOPTS_H
