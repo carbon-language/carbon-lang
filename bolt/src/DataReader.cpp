@@ -253,14 +253,20 @@ void FuncMemData::update(const Location &Offset, const Location &Addr) {
 
 ErrorOr<std::unique_ptr<DataReader>>
 DataReader::readPerfData(StringRef Path, raw_ostream &Diag) {
-  ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
-      MemoryBuffer::getFileOrSTDIN(Path);
-  if (std::error_code EC = MB.getError()) {
-    Diag << "Cannot open " << Path << ": " << EC.message() << "\n";
+  auto MB = MemoryBuffer::getFileOrSTDIN(Path);
+  if (auto EC = MB.getError()) {
+    Diag << "cannot open " << Path << ": " << EC.message() << "\n";
     return EC;
   }
   auto DR = make_unique<DataReader>(std::move(MB.get()), Diag);
-  DR->parse();
+  if (auto EC = DR->parse()) {
+    return EC;
+  }
+  if (!DR->ParsingBuf.empty()) {
+    Diag << "WARNING: invalid profile data detected at line " << DR->Line
+         << ". Possibly corrupted profile.\n";
+  }
+
   DR->buildLTONameMaps();
   return std::move(DR);
 }
@@ -599,6 +605,12 @@ std::error_code DataReader::parse() {
   if (!FlagOrErr)
     return FlagOrErr.getError();
   NoLBRMode = *FlagOrErr;
+
+  if (!hasBranchData() && !hasMemData()) {
+    Diag << "ERROR: no valid profile data found\n";
+    return make_error_code(llvm::errc::io_error);
+  }
+
   if (NoLBRMode)
     return parseInNoLBRMode();
 
