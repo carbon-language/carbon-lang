@@ -1040,7 +1040,7 @@ static bool ExpandResponseFile(StringRef FName, StringSaver &Saver,
 bool cl::ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
                              SmallVectorImpl<const char *> &Argv,
                              bool MarkEOLs, bool RelativeNames) {
-  unsigned ExpandedRspFiles = 0;
+  unsigned RspFiles = 0;
   bool AllExpanded = true;
 
   // Don't cache Argv.size() because it can change.
@@ -1058,16 +1058,14 @@ bool cl::ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
 
     // If we have too many response files, leave some unexpanded.  This avoids
     // crashing on self-referential response files.
-    if (ExpandedRspFiles > 20)
+    if (RspFiles++ > 20)
       return false;
 
     // Replace this response file argument with the tokenization of its
     // contents.  Nested response files are expanded in subsequent iterations.
     SmallVector<const char *, 0> ExpandedArgv;
-    if (ExpandResponseFile(Arg + 1, Saver, Tokenizer, ExpandedArgv, MarkEOLs,
-                           RelativeNames)) {
-      ++ExpandedRspFiles;
-    } else {
+    if (!ExpandResponseFile(Arg + 1, Saver, Tokenizer, ExpandedArgv,
+                            MarkEOLs, RelativeNames)) {
       // We couldn't read this file, so we leave it in the argument stream and
       // move on.
       AllExpanded = false;

@@ -813,43 +813,6 @@ TEST(CommandLineTest, RecursiveResponseFiles) {
     EXPECT_STREQ(Argv[i], ResponseFileRef.c_str());
 }
 
-TEST(CommandLineTest, ResponseFilesAtArguments) {
-  SmallString<128> TestDir;
-  std::error_code EC = sys::fs::createUniqueDirectory("unittest", TestDir);
-  EXPECT_TRUE(!EC);
-
-  SmallString<128> ResponseFilePath;
-  sys::path::append(ResponseFilePath, TestDir, "test.rsp");
-
-  std::ofstream ResponseFile(ResponseFilePath.c_str());
-  EXPECT_TRUE(ResponseFile.is_open());
-  ResponseFile << "-foo" << "\n";
-  ResponseFile << "-bar" << "\n";
-  ResponseFile.close();
-
-  // Ensure we expand rsp files after lots of non-rsp arguments starting with @.
-  constexpr size_t NON_RSP_AT_ARGS = 64;
-  llvm::SmallVector<const char *, 4> Argv = {"test/test"};
-  Argv.append(NON_RSP_AT_ARGS, "@non_rsp_at_arg");
-  std::string ResponseFileRef = std::string("@") + ResponseFilePath.c_str();
-  Argv.push_back(ResponseFileRef.c_str());
-
-  llvm::BumpPtrAllocator A;
-  llvm::StringSaver Saver(A);
-  bool Res = llvm::cl::ExpandResponseFiles(
-      Saver, llvm::cl::TokenizeGNUCommandLine, Argv, false, false);
-  EXPECT_FALSE(Res);
-
-  // ASSERT instead of EXPECT to prevent potential out-of-bounds access.
-  ASSERT_EQ(Argv.size(), 1 + NON_RSP_AT_ARGS + 2);
-  size_t i = 0;
-  EXPECT_STREQ(Argv[i++], "test/test");
-  for (; i < 1 + NON_RSP_AT_ARGS; ++i)
-    EXPECT_STREQ(Argv[i], "@non_rsp_at_arg");
-  EXPECT_STREQ(Argv[i++], "-foo");
-  EXPECT_STREQ(Argv[i++], "-bar");
-}
-
 TEST(CommandLineTest, SetDefautValue) {
   cl::ResetCommandLineParser();
 
