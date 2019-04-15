@@ -939,14 +939,14 @@ private:
   // R1105 selector -> expr | variable
   // expr is set in either case unless there were errors
   struct Selector {
-    Selector() : variable{nullptr} {}
+    Selector() {}
     Selector(const parser::CharBlock &source, MaybeExpr &&expr,
         const parser::Name *variable = nullptr)
       : source{source}, expr{std::move(expr)}, variable{variable} {}
     operator bool() const { return expr.has_value(); }
     parser::CharBlock source;
     MaybeExpr expr;
-    const parser::Name *variable;
+    const parser::Name *variable{nullptr};
   };
   // association -> [associate-name =>] selector
   struct {

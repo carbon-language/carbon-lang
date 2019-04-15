@@ -33,7 +33,7 @@ namespace Fortran::semantics {
 
 class CoarrayChecker : public virtual BaseChecker {
 public:
-  inline CoarrayChecker(SemanticsContext &context) : context_{context} {}
+  CoarrayChecker(SemanticsContext &context) : context_{context} {}
   void Leave(const parser::ChangeTeamStmt &);
   void Leave(const parser::SyncTeamStmt &);
   void Leave(const parser::ImageSelectorSpec &);
@@ -42,7 +42,7 @@ public:
 private:
   SemanticsContext &context_;
 
-  void CheckNamesAreUnique(const std::list<parser::CoarrayAssociation> &);
+  void CheckNamesAreDistinct(const std::list<parser::CoarrayAssociation> &);
   void CheckTeamValue(const parser::TeamValue &);
   void Say2(const parser::CharBlock &, parser::MessageFixedText &&,
       const parser::CharBlock &, parser::MessageFixedText &&);

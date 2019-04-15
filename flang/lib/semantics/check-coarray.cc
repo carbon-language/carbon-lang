@@ -38,7 +38,7 @@ static bool IsTeamType(const DerivedTypeSpec *derived) {
 }
 
 void CoarrayChecker::Leave(const parser::ChangeTeamStmt &x) {
-  CheckNamesAreUnique(std::get<std::list<parser::CoarrayAssociation>>(x.t));
+  CheckNamesAreDistinct(std::get<std::list<parser::CoarrayAssociation>>(x.t));
   CheckTeamValue(std::get<parser::TeamValue>(x.t));
 }
 
@@ -68,7 +68,7 @@ void CoarrayChecker::Leave(const parser::FormTeamStmt &x) {
 }
 
 // Check that coarray names and selector names are all distinct.
-void CoarrayChecker::CheckNamesAreUnique(
+void CoarrayChecker::CheckNamesAreDistinct(
     const std::list<parser::CoarrayAssociation> &list) {
   std::set<parser::CharBlock> names;
   auto getPreviousUse{
