@@ -45,24 +45,26 @@ void HostFloatingPointEnvironment::SetUpHostFloatingPointEnvironment(
   }
 #elif defined(__aarch64__)
 #if defined(__GNU_LIBRARY__)
+  hasSubnormalFlushingHardwareControl_ = true;
   if (context.flushSubnormalsToZero()) {
     currentFenv_.__fpcr |= (1U << 24);  // control register
   } else {
     currentFenv_.__fpcr &= ~(1U << 24);  // control register
   }
 #elif defined(__BIONIC__)
+  hasSubnormalFlushingHardwareControl_ = true;
   if (context.flushSubnormalsToZero()) {
     currentFenv_.__control |= (1U << 24);  // control register
   } else {
     currentFenv_.__control &= ~(1U << 24);  // control register
   }
 #else
-  // TODO other C libraries on AArch64
-  context.messages().Say(
-      "TODO: flushing mode for subnormals is not set for this host architecture due to incompatible C library it uses"_en_US);
+  // If F18 is built with other C libraries on AArch64, software flushing will
+  // be performed around host library calls if subnormal flushing is requested
 #endif
 #else
-  // Software flushing will be performed around host library calls if needed.
+  // If F18 is not built on one of the above host architecture, software
+  // flushing will be performed around host library calls if needed.
 #endif
   errno = 0;
   if (fesetenv(&currentFenv_) != 0) {
