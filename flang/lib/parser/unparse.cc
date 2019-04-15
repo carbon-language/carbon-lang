@@ -755,8 +755,12 @@ public:
   void Before(const ImageSelectorSpec::Stat &) {  // R926
     Word("STAT=");
   }
-  void Before(const TeamValue &) { Word("TEAM="); }
   void Before(const ImageSelectorSpec::Team_Number &) { Word("TEAM_NUMBER="); }
+  void Before(const ImageSelectorSpec &x) {
+    if (std::holds_alternative<TeamValue>(x.u)) {
+      Word("TEAM=");
+    }
+  }
   void Unparse(const AllocateStmt &x) {  // R927
     Word("ALLOCATE(");
     Walk(std::get<std::optional<TypeSpec>>(x.t), "::");
