@@ -1729,8 +1729,7 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &CurMF) {
 
   if (EnableCSE) {
     EntryBuilder = make_unique<CSEMIRBuilder>(CurMF);
-    std::unique_ptr<CSEConfig> Config = make_unique<CSEConfig>();
-    CSEInfo = &Wrapper.get(std::move(Config));
+    CSEInfo = &Wrapper.get(TPC->getCSEConfig());
     EntryBuilder->setCSEInfo(CSEInfo);
     CurBuilder = make_unique<CSEMIRBuilder>(CurMF);
     CurBuilder->setCSEInfo(CSEInfo);
