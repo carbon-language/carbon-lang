@@ -24,8 +24,6 @@ class ELFObjectFileBase;
 class ELFSectionRef;
 class MachOObjectFile;
 class MachOUniversalBinary;
-class ObjectFile;
-class Archive;
 class RelocationRef;
 }
 
