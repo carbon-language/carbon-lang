@@ -264,6 +264,12 @@ class LoopPredication {
 
   Optional<LoopICmp> parseLoopLatchICmp();
 
+  /// Return an insertion point suitable for inserting a safe to speculate
+  /// instruction whose only user will be 'User' which has operands 'Ops'.  A
+  /// trivial result would be the at the User itself, but we try to return a
+  /// loop invariant location if possible.  
+  Instruction *findInsertPt(Instruction *User, ArrayRef<Value*> Ops);
+
   bool CanExpand(const SCEV* S);
   Value *expandCheck(SCEVExpander &Expander, IRBuilder<> &Builder,
                      ICmpInst::Predicate Pred, const SCEV *LHS,
@@ -436,6 +442,14 @@ LoopPredication::generateLoopLatchCheck(Type *RangeCheckType) {
 
 bool LoopPredication::isSupportedStep(const SCEV* Step) {
   return Step->isOne() || (Step->isAllOnesValue() && EnableCountDownLoop);
+}
+
+Instruction *LoopPredication::findInsertPt(Instruction *Use,
+                                           ArrayRef<Value*> Ops) {
+  for (Value *Op : Ops)
+    if (!L->isLoopInvariant(Op))
+      return Use;
+  return Preheader->getTerminator();
 }
 
 bool LoopPredication::CanExpand(const SCEV* S) {
@@ -652,7 +666,7 @@ bool LoopPredication::widenGuardConditions(IntrinsicInst *Guard,
   TotalWidened += NumWidened;
 
   // Emit the new guard condition
-  Builder.SetInsertPoint(Guard);
+  Builder.SetInsertPoint(findInsertPt(Guard, Checks));
   Value *LastCheck = nullptr;
   for (auto *Check : Checks)
     if (!LastCheck)
@@ -684,7 +698,7 @@ bool LoopPredication::widenWidenableBranchGuardConditions(
   TotalWidened += NumWidened;
 
   // Emit the new guard condition
-  Builder.SetInsertPoint(BI);
+  Builder.SetInsertPoint(findInsertPt(BI, Checks));
   Value *LastCheck = nullptr;
   for (auto *Check : Checks)
     if (!LastCheck)
