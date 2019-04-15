@@ -1518,7 +1518,7 @@ constexpr auto teamValue{scalar(indirect(expr))};
 TYPE_PARSER(construct<ImageSelectorSpec>(construct<ImageSelectorSpec::Stat>(
                 "STAT =" >> scalar(integer(indirect(variable))))) ||
     construct<ImageSelectorSpec>(
-        construct<ImageSelectorSpec::Team>("TEAM =" >> teamValue)) ||
+        construct<TeamValue>("TEAM =" >> teamValue)) ||
     construct<ImageSelectorSpec>(construct<ImageSelectorSpec::Team_Number>(
         "TEAM_NUMBER =" >> scalarIntExpr)))
 

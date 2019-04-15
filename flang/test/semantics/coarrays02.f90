@@ -12,19 +12,24 @@
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
 
-subroutine s1
-  implicit none
-  real(8) :: x = 2.0
-  !ERROR: The associate name 'a' is already used in this associate statement
-  associate(a => x, b => x+1, a => x+2)
-    x = b
-  end associate
-  !ERROR: No explicit type declared for 'b'
-  x = b
+! Test team-variable in FORM TEAM statement
+
+! Temporary, until we have real iso_fortran_env
+module iso_fortran_env
+  type :: team_type
+  end type
 end
 
-subroutine s2
-  !ERROR: Associate name 'a' must have a type
-  associate (a => z'1')
-  end associate
+subroutine s1
+  use iso_fortran_env, only: team_type
+  complex :: z
+  integer :: i, j(10)
+  type(team_type) :: t, t2(2)
+  form team(i, t)
+  !ERROR: Must be a scalar value, but is a rank-1 array
+  form team(1, t2)
+  !ERROR: Must have INTEGER type, but is COMPLEX(4)
+  form team(z, t)
+  !ERROR: Must be a scalar value, but is a rank-1 array
+  form team(j, t)
 end

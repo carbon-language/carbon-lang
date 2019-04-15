@@ -755,7 +755,7 @@ public:
   void Before(const ImageSelectorSpec::Stat &) {  // R926
     Word("STAT=");
   }
-  void Before(const ImageSelectorSpec::Team &) { Word("TEAM="); }
+  void Before(const TeamValue &) { Word("TEAM="); }
   void Before(const ImageSelectorSpec::Team_Number &) { Word("TEAM_NUMBER="); }
   void Unparse(const AllocateStmt &x) {  // R927
     Word("ALLOCATE(");

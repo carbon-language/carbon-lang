@@ -1578,17 +1578,16 @@ struct SectionSubscript {
 using Cosubscript = ScalarIntExpr;
 
 // R1115 team-value -> scalar-expr
-using TeamValue = Scalar<common::Indirection<Expr>>;
+WRAPPER_CLASS(TeamValue, Scalar<common::Indirection<Expr>>);
 
 // R926 image-selector-spec ->
 //        STAT = stat-variable | TEAM = team-value |
 //        TEAM_NUMBER = scalar-int-expr
 struct ImageSelectorSpec {
   WRAPPER_CLASS(Stat, Scalar<Integer<common::Indirection<Variable>>>);
-  WRAPPER_CLASS(Team, TeamValue);
   WRAPPER_CLASS(Team_Number, ScalarIntExpr);
   UNION_CLASS_BOILERPLATE(ImageSelectorSpec);
-  std::variant<Stat, Team, Team_Number> u;
+  std::variant<Stat, TeamValue, Team_Number> u;
 };
 
 // R924 image-selector ->

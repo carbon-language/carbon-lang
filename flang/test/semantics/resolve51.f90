@@ -12,19 +12,20 @@
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
 
-subroutine s1
-  implicit none
-  real(8) :: x = 2.0
-  !ERROR: The associate name 'a' is already used in this associate statement
-  associate(a => x, b => x+1, a => x+2)
-    x = b
-  end associate
-  !ERROR: No explicit type declared for 'b'
-  x = b
-end
+! Test SELECT TYPE errors: C1157
 
-subroutine s2
-  !ERROR: Associate name 'a' must have a type
-  associate (a => z'1')
-  end associate
-end
+subroutine s1()
+  type :: t
+  end type
+  procedure(f) :: ff
+  !ERROR: Selector is not a named variable: 'associate-name =>' is required
+  select type(ff())
+    class is(t)
+    class default
+  end select
+contains
+  function f()
+    class(t), pointer :: f
+    f => null()
+  end function
+end subroutine
