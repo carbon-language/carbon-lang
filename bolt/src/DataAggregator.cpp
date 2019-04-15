@@ -789,7 +789,7 @@ ErrorOr<DataAggregator::PerfBranchSample> DataAggregator::parseBranchSample() {
   auto MMapInfoIter = BinaryMMapInfo.find(*PIDRes);
   if (MMapInfoIter == BinaryMMapInfo.end()) {
     consumeRestOfLine();
-    return make_error_code(std::errc::no_such_process);
+    return make_error_code(errc::no_such_process);
   }
 
   while (checkAndConsumeFS()) {}
@@ -1002,8 +1002,8 @@ std::error_code DataAggregator::printLBRHeatMap() {
 
   while (hasData()) {
     auto SampleRes = parseBranchSample();
-    if (std::error_code EC = SampleRes.getError()) {
-      if (EC == std::errc::no_such_process)
+    if (auto EC = SampleRes.getError()) {
+      if (EC == errc::no_such_process)
         continue;
       return EC;
     }
@@ -1074,8 +1074,8 @@ std::error_code DataAggregator::parseBranchEvents() {
     ++NumTotalSamples;
 
     auto SampleRes = parseBranchSample();
-    if (std::error_code EC = SampleRes.getError()) {
-      if (EC == std::errc::no_such_process)
+    if (auto EC = SampleRes.getError()) {
+      if (EC == errc::no_such_process)
         continue;
       return EC;
     }
