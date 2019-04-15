@@ -36,9 +36,6 @@ struct DWARFAddressRange {
   /// Returns true if [LowPC, HighPC) intersects with [RHS.LowPC, RHS.HighPC).
   bool intersects(const DWARFAddressRange &RHS) const {
     assert(valid() && RHS.valid());
-    // Empty ranges can't intersect.
-    if (LowPC == HighPC || RHS.LowPC == RHS.HighPC)
-      return false;
     return LowPC < RHS.HighPC && RHS.LowPC < HighPC;
   }
 
