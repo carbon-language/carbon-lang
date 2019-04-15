@@ -782,37 +782,6 @@ TEST(CommandLineTest, ResponseFiles) {
   llvm::sys::fs::remove(TestDir);
 }
 
-TEST(CommandLineTest, RecursiveResponseFiles) {
-  SmallString<128> TestDir;
-  std::error_code EC = sys::fs::createUniqueDirectory("unittest", TestDir);
-  EXPECT_TRUE(!EC);
-
-  SmallString<128> ResponseFilePath;
-  sys::path::append(ResponseFilePath, TestDir, "recursive.rsp");
-  std::string ResponseFileRef = std::string("@") + ResponseFilePath.c_str();
-
-  std::ofstream ResponseFile(ResponseFilePath.str());
-  EXPECT_TRUE(ResponseFile.is_open());
-  ResponseFile << ResponseFileRef << "\n";
-  ResponseFile << ResponseFileRef << "\n";
-  ResponseFile.close();
-
-  // Ensure the recursive expansion terminates.
-  llvm::SmallVector<const char *, 4> Argv = {"test/test",
-                                             ResponseFileRef.c_str()};
-  llvm::BumpPtrAllocator A;
-  llvm::StringSaver Saver(A);
-  bool Res = llvm::cl::ExpandResponseFiles(
-      Saver, llvm::cl::TokenizeGNUCommandLine, Argv, false, false);
-  EXPECT_FALSE(Res);
-
-  // Ensure some expansion took place.
-  EXPECT_GT(Argv.size(), 2U);
-  EXPECT_STREQ(Argv[0], "test/test");
-  for (size_t i = 1; i < Argv.size(); ++i)
-    EXPECT_STREQ(Argv[i], ResponseFileRef.c_str());
-}
-
 TEST(CommandLineTest, SetDefautValue) {
   cl::ResetCommandLineParser();
 
