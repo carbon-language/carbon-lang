@@ -29,7 +29,7 @@ struct Variable;
 }
 
 namespace Fortran::evaluate {
-class GenericExprWrapper;
+struct GenericExprWrapper;
 }
 
 namespace Fortran::semantics {
