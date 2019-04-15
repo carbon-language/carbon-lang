@@ -67,8 +67,7 @@
 #include <unordered_map>
 #include <utility>
 
-using namespace llvm;
-using namespace object;
+using namespace llvm::object;
 
 namespace llvm {
 
@@ -298,19 +297,18 @@ static cl::alias UnwindInfoShort("u", cl::desc("Alias for --unwind-info"),
 static cl::opt<bool>
     Wide("wide", cl::desc("Ignored for compatibility with GNU objdump"));
 static cl::alias WideShort("w", cl::Grouping, cl::aliasopt(Wide));
-} // namespace llvm
 
 static StringSet<> DisasmFuncsSet;
 static StringRef ToolName;
 
 typedef std::vector<std::tuple<uint64_t, StringRef, uint8_t>> SectionSymbolsTy;
 
-SectionFilter llvm::ToolSectionFilter(llvm::object::ObjectFile const &O) {
+SectionFilter ToolSectionFilter(object::ObjectFile const &O) {
   return SectionFilter(
-      [](llvm::object::SectionRef const &S) {
+      [](object::SectionRef const &S) {
         if (FilterSections.empty())
           return true;
-        llvm::StringRef String;
+        StringRef String;
         std::error_code error = S.getName(String);
         if (error)
           return false;
@@ -319,7 +317,7 @@ SectionFilter llvm::ToolSectionFilter(llvm::object::ObjectFile const &O) {
       O);
 }
 
-void llvm::error(std::error_code EC) {
+void error(std::error_code EC) {
   if (!EC)
     return;
   WithColor::error(errs(), ToolName)
@@ -328,32 +326,31 @@ void llvm::error(std::error_code EC) {
   exit(1);
 }
 
-void llvm::error(Error E) {
+void error(Error E) {
   if (!E)
     return;
   WithColor::error(errs(), ToolName) << toString(std::move(E));
   exit(1);
 }
 
-LLVM_ATTRIBUTE_NORETURN void llvm::error(Twine Message) {
+LLVM_ATTRIBUTE_NORETURN void error(Twine Message) {
   WithColor::error(errs(), ToolName) << Message << ".\n";
   errs().flush();
   exit(1);
 }
 
-void llvm::warn(StringRef Message) {
+void warn(StringRef Message) {
   WithColor::warning(errs(), ToolName) << Message << ".\n";
   errs().flush();
 }
 
-LLVM_ATTRIBUTE_NORETURN void llvm::report_error(StringRef File,
-                                                Twine Message) {
+LLVM_ATTRIBUTE_NORETURN void report_error(StringRef File, Twine Message) {
   WithColor::error(errs(), ToolName)
       << "'" << File << "': " << Message << ".\n";
   exit(1);
 }
 
-LLVM_ATTRIBUTE_NORETURN void llvm::report_error(Error E, StringRef File) {
+LLVM_ATTRIBUTE_NORETURN void report_error(Error E, StringRef File) {
   assert(E);
   std::string Buf;
   raw_string_ostream OS(Buf);
@@ -363,9 +360,9 @@ LLVM_ATTRIBUTE_NORETURN void llvm::report_error(Error E, StringRef File) {
   exit(1);
 }
 
-LLVM_ATTRIBUTE_NORETURN void llvm::report_error(Error E, StringRef ArchiveName,
-                                                StringRef FileName,
-                                                StringRef ArchitectureName) {
+LLVM_ATTRIBUTE_NORETURN void report_error(Error E, StringRef ArchiveName,
+                                          StringRef FileName,
+                                          StringRef ArchitectureName) {
   assert(E);
   WithColor::error(errs(), ToolName);
   if (ArchiveName != "")
@@ -382,24 +379,23 @@ LLVM_ATTRIBUTE_NORETURN void llvm::report_error(Error E, StringRef ArchiveName,
   exit(1);
 }
 
-LLVM_ATTRIBUTE_NORETURN void llvm::report_error(Error E, StringRef ArchiveName,
-                                                const object::Archive::Child &C,
-                                                StringRef ArchitectureName) {
+LLVM_ATTRIBUTE_NORETURN void report_error(Error E, StringRef ArchiveName,
+                                          const object::Archive::Child &C,
+                                          StringRef ArchitectureName) {
   Expected<StringRef> NameOrErr = C.getName();
   // TODO: if we have a error getting the name then it would be nice to print
   // the index of which archive member this is and or its offset in the
   // archive instead of "???" as the name.
   if (!NameOrErr) {
     consumeError(NameOrErr.takeError());
-    llvm::report_error(std::move(E), ArchiveName, "???", ArchitectureName);
+    report_error(std::move(E), ArchiveName, "???", ArchitectureName);
   } else
-    llvm::report_error(std::move(E), ArchiveName, NameOrErr.get(),
-                       ArchitectureName);
+    report_error(std::move(E), ArchiveName, NameOrErr.get(), ArchitectureName);
 }
 
 static const Target *getTarget(const ObjectFile *Obj = nullptr) {
   // Figure out the target triple.
-  llvm::Triple TheTriple("unknown-unknown-unknown");
+  Triple TheTriple("unknown-unknown-unknown");
   if (TripleName.empty()) {
     if (Obj)
       TheTriple = Obj->makeTriple();
@@ -430,7 +426,7 @@ static const Target *getTarget(const ObjectFile *Obj = nullptr) {
   return TheTarget;
 }
 
-bool llvm::isRelocAddressLess(RelocationRef A, RelocationRef B) {
+bool isRelocAddressLess(RelocationRef A, RelocationRef B) {
   return A.getOffset() < B.getOffset();
 }
 
@@ -893,7 +889,7 @@ static size_t countSkippableZeroBytes(ArrayRef<uint8_t> Buf) {
 
 // Returns a map from sections to their relocations.
 static std::map<SectionRef, std::vector<RelocationRef>>
-getRelocsMap(llvm::object::ObjectFile const &Obj) {
+getRelocsMap(object::ObjectFile const &Obj) {
   std::map<SectionRef, std::vector<RelocationRef>> Ret;
   for (const SectionRef &Section : ToolSectionFilter(Obj)) {
     section_iterator RelSec = Section.getRelocatedSection();
@@ -1453,7 +1449,7 @@ static void disassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
                     STI.get(), PIP, SP, InlineRelocs);
 }
 
-void llvm::printRelocations(const ObjectFile *Obj) {
+void printRelocations(const ObjectFile *Obj) {
   StringRef Fmt = Obj->getBytesInAddress() > 4 ? "%016" PRIx64 :
                                                  "%08" PRIx64;
   // Regular objdump doesn't print relocations in non-relocatable object
@@ -1482,7 +1478,7 @@ void llvm::printRelocations(const ObjectFile *Obj) {
   }
 }
 
-void llvm::printDynamicRelocations(const ObjectFile *Obj) {
+void printDynamicRelocations(const ObjectFile *Obj) {
   // For the moment, this option is for ELF only
   if (!Obj->isELF())
     return;
@@ -1526,7 +1522,7 @@ static bool shouldDisplayLMA(const ObjectFile *Obj) {
   return ShowLMA;
 }
 
-void llvm::printSectionHeaders(const ObjectFile *Obj) {
+void printSectionHeaders(const ObjectFile *Obj) {
   bool HasLMAColumn = shouldDisplayLMA(Obj);
   if (HasLMAColumn)
     outs() << "Sections:\n"
@@ -1563,7 +1559,7 @@ void llvm::printSectionHeaders(const ObjectFile *Obj) {
   outs() << "\n";
 }
 
-void llvm::printSectionContents(const ObjectFile *Obj) {
+void printSectionContents(const ObjectFile *Obj) {
   for (const SectionRef &Section : ToolSectionFilter(*Obj)) {
     StringRef Name;
     StringRef Contents;
@@ -1609,8 +1605,8 @@ void llvm::printSectionContents(const ObjectFile *Obj) {
   }
 }
 
-void llvm::printSymbolTable(const ObjectFile *O, StringRef ArchiveName,
-                            StringRef ArchitectureName) {
+void printSymbolTable(const ObjectFile *O, StringRef ArchiveName,
+                      StringRef ArchitectureName) {
   outs() << "SYMBOL TABLE:\n";
 
   if (const COFFObjectFile *Coff = dyn_cast<const COFFObjectFile>(O)) {
@@ -1724,7 +1720,7 @@ static void printUnwindInfo(const ObjectFile *O) {
 
 /// Dump the raw contents of the __clangast section so the output can be piped
 /// into llvm-bcanalyzer.
-void llvm::printRawClangAST(const ObjectFile *Obj) {
+void printRawClangAST(const ObjectFile *Obj) {
   if (outs().is_displayed()) {
     WithColor::error(errs(), ToolName)
         << "The -raw-clang-ast option will dump the raw binary contents of "
@@ -1996,14 +1992,16 @@ static void dumpInput(StringRef file) {
   else
     report_error(errorCodeToError(object_error::invalid_file_type), file);
 }
+} // namespace llvm
 
 int main(int argc, char **argv) {
+  using namespace llvm;
   InitLLVM X(argc, argv);
 
   // Initialize targets and assembly printers/parsers.
-  llvm::InitializeAllTargetInfos();
-  llvm::InitializeAllTargetMCs();
-  llvm::InitializeAllDisassemblers();
+  InitializeAllTargetInfos();
+  InitializeAllTargetMCs();
+  InitializeAllDisassemblers();
 
   // Register the target printer for --version.
   cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
