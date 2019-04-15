@@ -461,7 +461,7 @@ define i32 @select_not_invert_pred_cond(i8 %x, i32 %t, i32 %f) {
 ; CHECK-NEXT:    [[NOT:%.*]] = xor i1 [[INVCOND]], true
 ; CHECK-NEXT:    [[M1:%.*]] = select i1 [[COND]], i32 [[T:%.*]], i32 [[F:%.*]]
 ; CHECK-NEXT:    [[M2:%.*]] = select i1 [[NOT]], i32 [[T]], i32 [[F]]
-; CHECK-NEXT:    [[R:%.*]] = xor i32 [[M1]], [[M2]]
+; CHECK-NEXT:    [[R:%.*]] = sub i32 [[M1]], [[M2]]
 ; CHECK-NEXT:    ret i32 [[R]]
 ;
   %cond = icmp ugt i8 %x, 42
@@ -469,6 +469,90 @@ define i32 @select_not_invert_pred_cond(i8 %x, i32 %t, i32 %f) {
   %not = xor i1 %invcond, -1
   %m1 = select i1 %cond, i32 %t, i32 %f
   %m2 = select i1 %not, i32 %t, i32 %f
-  %r = xor i32 %m1, %m2
+  %r = sub i32 %m1, %m2
+  ret i32 %r
+}
+
+; TODO: If we have both an inverted predicate and a 'not' op, recognize the double-negation.
+
+define i32 @select_not_invert_pred_cond_commute(i8 %x, i8 %y, i32 %t, i32 %f) {
+; CHECK-LABEL: @select_not_invert_pred_cond_commute(
+; CHECK-NEXT:    [[INVCOND:%.*]] = icmp ule i8 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[NOT:%.*]] = xor i1 [[INVCOND]], true
+; CHECK-NEXT:    [[M2:%.*]] = select i1 [[NOT]], i32 [[T:%.*]], i32 [[F:%.*]]
+; CHECK-NEXT:    [[COND:%.*]] = icmp ugt i8 [[X]], [[Y]]
+; CHECK-NEXT:    [[M1:%.*]] = select i1 [[COND]], i32 [[T]], i32 [[F]]
+; CHECK-NEXT:    [[R:%.*]] = sub i32 [[M2]], [[M1]]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %invcond = icmp ule i8 %x, %y
+  %not = xor i1 %invcond, -1
+  %m2 = select i1 %not, i32 %t, i32 %f
+  %cond = icmp ugt i8 %x, %y
+  %m1 = select i1 %cond, i32 %t, i32 %f
+  %r = sub i32 %m2, %m1
+  ret i32 %r
+}
+
+; Negative test - not an inverted predicate.
+
+define i32 @select_not_invert_pred_cond_wrong_pred(i8 %x, i8 %y, i32 %t, i32 %f) {
+; CHECK-LABEL: @select_not_invert_pred_cond_wrong_pred(
+; CHECK-NEXT:    [[INVCOND:%.*]] = icmp ult i8 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[NOT:%.*]] = xor i1 [[INVCOND]], true
+; CHECK-NEXT:    [[M2:%.*]] = select i1 [[NOT]], i32 [[T:%.*]], i32 [[F:%.*]]
+; CHECK-NEXT:    [[COND:%.*]] = icmp ugt i8 [[X]], [[Y]]
+; CHECK-NEXT:    [[M1:%.*]] = select i1 [[COND]], i32 [[T]], i32 [[F]]
+; CHECK-NEXT:    [[R:%.*]] = sub i32 [[M2]], [[M1]]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %invcond = icmp ult i8 %x, %y
+  %not = xor i1 %invcond, -1
+  %m2 = select i1 %not, i32 %t, i32 %f
+  %cond = icmp ugt i8 %x, %y
+  %m1 = select i1 %cond, i32 %t, i32 %f
+  %r = sub i32 %m2, %m1
+  ret i32 %r
+}
+
+; Negative test - cmp ops must match.
+
+define i32 @select_not_invert_pred_cond_wrong_cmp_op(i8 %x, i8 %y, i32 %t, i32 %f) {
+; CHECK-LABEL: @select_not_invert_pred_cond_wrong_cmp_op(
+; CHECK-NEXT:    [[INVCOND:%.*]] = icmp ule i8 [[X:%.*]], 42
+; CHECK-NEXT:    [[NOT:%.*]] = xor i1 [[INVCOND]], true
+; CHECK-NEXT:    [[M2:%.*]] = select i1 [[NOT]], i32 [[T:%.*]], i32 [[F:%.*]]
+; CHECK-NEXT:    [[COND:%.*]] = icmp ugt i8 [[X]], [[Y:%.*]]
+; CHECK-NEXT:    [[M1:%.*]] = select i1 [[COND]], i32 [[T]], i32 [[F]]
+; CHECK-NEXT:    [[R:%.*]] = sub i32 [[M2]], [[M1]]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %invcond = icmp ule i8 %x, 42
+  %not = xor i1 %invcond, -1
+  %m2 = select i1 %not, i32 %t, i32 %f
+  %cond = icmp ugt i8 %x, %y
+  %m1 = select i1 %cond, i32 %t, i32 %f
+  %r = sub i32 %m2, %m1
+  ret i32 %r
+}
+
+; Negative test - select ops must be same (and not commuted).
+
+define i32 @select_not_invert_pred_cond_wrong_select_op(i8 %x, i8 %y, i32 %t, i32 %f) {
+; CHECK-LABEL: @select_not_invert_pred_cond_wrong_select_op(
+; CHECK-NEXT:    [[INVCOND:%.*]] = icmp ule i8 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[NOT:%.*]] = xor i1 [[INVCOND]], true
+; CHECK-NEXT:    [[M2:%.*]] = select i1 [[NOT]], i32 [[T:%.*]], i32 [[F:%.*]]
+; CHECK-NEXT:    [[COND:%.*]] = icmp ugt i8 [[X]], [[Y]]
+; CHECK-NEXT:    [[M1:%.*]] = select i1 [[COND]], i32 [[F]], i32 [[T]]
+; CHECK-NEXT:    [[R:%.*]] = sub i32 [[M2]], [[M1]]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %invcond = icmp ule i8 %x, %y
+  %not = xor i1 %invcond, -1
+  %m2 = select i1 %not, i32 %t, i32 %f
+  %cond = icmp ugt i8 %x, %y
+  %m1 = select i1 %cond, i32 %f, i32 %t
+  %r = sub i32 %m2, %m1
   ret i32 %r
 }
