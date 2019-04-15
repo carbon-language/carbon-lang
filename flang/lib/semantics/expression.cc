@@ -39,14 +39,6 @@
 using MaybeExpr =
     std::optional<Fortran::evaluate::Expr<Fortran::evaluate::SomeType>>;
 
-namespace Fortran::parser {
-bool SourceLocationFindingVisitor::Pre(const Expr &x) {
-  source = x.source;
-  return false;
-}
-void SourceLocationFindingVisitor::Post(const CharBlock &at) { source = at; }
-}
-
 // Much of the code that implements semantic analysis of expressions is
 // tightly coupled with their typed representations in lib/evaluate,
 // and appears here in namespace Fortran::evaluate for convenience.
@@ -342,6 +334,7 @@ static void FixMisparsedSubstring(const parser::Designator &d) {
 }
 
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::Designator &d) {
+  auto save{GetContextualMessages().SetLocation(d.source)};
   FixMisparsedSubstring(d);
   // These checks have to be deferred to these "top level" data-refs where
   // we can be sure that there are no following subscripts (yet).
@@ -1504,6 +1497,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
   // TODO: Actual arguments that are procedures and procedure pointers need to
   // be detected and represented (they're not expressions).
   // TODO: C1534: Don't allow a "restricted" specific intrinsic to be passed.
+  auto save{GetContextualMessages().SetLocation(funcRef.v.source)};
   ActualArguments arguments;
   for (const auto &arg :
       std::get<std::list<parser::ActualArgSpec>>(funcRef.v.t)) {

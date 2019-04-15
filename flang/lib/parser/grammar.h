@@ -1415,7 +1415,7 @@ TYPE_PARSER(construct<CommonBlockObject>(name, maybe(arraySpec)))
 //  maybe an [image-selector].
 //  If it's a substring, it ends with (substring-range).
 TYPE_CONTEXT_PARSER("designator"_en_US,
-    construct<Designator>(substring) || construct<Designator>(dataRef))
+    sourced(construct<Designator>(substring) || construct<Designator>(dataRef)))
 
 constexpr auto percentOrDot{"%"_tok ||
     // legacy VAX extension for RECORD field access
@@ -1517,8 +1517,7 @@ constexpr auto teamValue{scalar(indirect(expr))};
 //        TEAM_NUMBER = scalar-int-expr
 TYPE_PARSER(construct<ImageSelectorSpec>(construct<ImageSelectorSpec::Stat>(
                 "STAT =" >> scalar(integer(indirect(variable))))) ||
-    construct<ImageSelectorSpec>(
-        construct<TeamValue>("TEAM =" >> teamValue)) ||
+    construct<ImageSelectorSpec>(construct<TeamValue>("TEAM =" >> teamValue)) ||
     construct<ImageSelectorSpec>(construct<ImageSelectorSpec::Team_Number>(
         "TEAM_NUMBER =" >> scalarIntExpr)))
 
@@ -3284,14 +3283,15 @@ TYPE_PARSER(
 
 // R1520 function-reference -> procedure-designator ( [actual-arg-spec-list] )
 TYPE_CONTEXT_PARSER("function reference"_en_US,
-    construct<FunctionReference>(construct<Call>(Parser<ProcedureDesignator>{},
-        parenthesized(optionalList(actualArgSpec)))) /
+    construct<FunctionReference>(
+        sourced(construct<Call>(Parser<ProcedureDesignator>{},
+            parenthesized(optionalList(actualArgSpec))))) /
         !"["_tok)
 
 // R1521 call-stmt -> CALL procedure-designator [( [actual-arg-spec-list] )]
-TYPE_PARSER(
-    construct<CallStmt>(construct<Call>("CALL" >> Parser<ProcedureDesignator>{},
-        defaulted(parenthesized(optionalList(actualArgSpec))))))
+TYPE_PARSER(construct<CallStmt>(
+    sourced(construct<Call>("CALL" >> Parser<ProcedureDesignator>{},
+        defaulted(parenthesized(optionalList(actualArgSpec)))))))
 
 // R1522 procedure-designator ->
 //         procedure-name | proc-component-ref | data-ref % binding-name

@@ -1756,6 +1756,7 @@ struct CharLiteralConstantSubstring {
 struct Designator {
   UNION_CLASS_BOILERPLATE(Designator);
   bool EndsInBareName() const;
+  CharBlock source;
   std::variant<DataRef, Substring> u;
 };
 
@@ -3101,6 +3102,7 @@ struct ActualArgSpec {
 // R1520 function-reference -> procedure-designator ( [actual-arg-spec-list] )
 struct Call {
   TUPLE_CLASS_BOILERPLATE(Call);
+  CharBlock source;
   std::tuple<ProcedureDesignator, std::list<ActualArgSpec>> t;
 };
 

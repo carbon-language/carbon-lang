@@ -35,12 +35,31 @@ namespace Fortran::parser {
 struct SourceLocationFindingVisitor {
   template<typename A> bool Pre(const A &) { return true; }
   template<typename A> void Post(const A &) {}
-  bool Pre(const Expr &);
-  template<typename A> bool Pre(const Statement<A> &stmt) {
+  bool Pre(const Expr &x) {
+    source = x.source;
+    return false;
+  }
+  bool Pre(const Designator &x) {
+    source = x.source;
+    return false;
+  }
+  bool Pre(const Call &x) {
+    source = x.source;
+    return false;
+  }
+  bool Pre(const CompilerDirective &x) {
+    source = x.source;
+    return false;
+  }
+  bool Pre(const GenericSpec &x) {
+    source = x.source;
+    return false;
+  }
+  template<typename A> bool Pre(const UnlabeledStatement<A> &stmt) {
     source = stmt.source;
     return false;
   }
-  void Post(const CharBlock &);
+  void Post(const CharBlock &at) { source = at; }
 
   CharBlock source;
 };
