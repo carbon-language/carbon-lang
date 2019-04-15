@@ -451,3 +451,24 @@ define i32 @select_invert_pred_wrong_cmp_ops(float %x, i32 %t, i32 %f) {
   %r = xor i32 %m2, %m1
   ret i32 %r
 }
+
+; TODO: If we have both an inverted predicate and a 'not' op, recognize the double-negation.
+
+define i32 @select_not_invert_pred_cond(i8 %x, i32 %t, i32 %f) {
+; CHECK-LABEL: @select_not_invert_pred_cond(
+; CHECK-NEXT:    [[COND:%.*]] = icmp ugt i8 [[X:%.*]], 42
+; CHECK-NEXT:    [[INVCOND:%.*]] = icmp ule i8 [[X]], 42
+; CHECK-NEXT:    [[NOT:%.*]] = xor i1 [[INVCOND]], true
+; CHECK-NEXT:    [[M1:%.*]] = select i1 [[COND]], i32 [[T:%.*]], i32 [[F:%.*]]
+; CHECK-NEXT:    [[M2:%.*]] = select i1 [[NOT]], i32 [[T]], i32 [[F]]
+; CHECK-NEXT:    [[R:%.*]] = xor i32 [[M1]], [[M2]]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %cond = icmp ugt i8 %x, 42
+  %invcond = icmp ule i8 %x, 42
+  %not = xor i1 %invcond, -1
+  %m1 = select i1 %cond, i32 %t, i32 %f
+  %m2 = select i1 %not, i32 %t, i32 %f
+  %r = xor i32 %m1, %m2
+  ret i32 %r
+}
