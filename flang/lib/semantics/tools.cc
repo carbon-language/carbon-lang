@@ -293,8 +293,4 @@ bool ExprTypeKindIsDefault(
       dynamicType->kind ==
       context.defaultKinds().GetDefaultKind(dynamicType->category);
 }
-
-bool ExprIsScalar(const evaluate::GenericExprWrapper &expr) {
-  return !(expr.v.Rank() > 0);
-}
 }
