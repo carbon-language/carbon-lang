@@ -289,3 +289,165 @@ define i8 @nabs_different_constants(i8 %a) {
   ret i8 %r
 }
 
+; https://bugs.llvm.org/show_bug.cgi?id=41101
+; TODO: Detect equivalence of selects with commuted operands: 'not' cond.
+
+define i32 @select_not_cond(i1 %cond, i32 %t, i32 %f) {
+; CHECK-LABEL: @select_not_cond(
+; CHECK-NEXT:    [[NOT:%.*]] = xor i1 [[COND:%.*]], true
+; CHECK-NEXT:    [[M1:%.*]] = select i1 [[COND]], i32 [[T:%.*]], i32 [[F:%.*]]
+; CHECK-NEXT:    [[M2:%.*]] = select i1 [[NOT]], i32 [[F]], i32 [[T]]
+; CHECK-NEXT:    [[R:%.*]] = xor i32 [[M2]], [[M1]]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %not = xor i1 %cond, -1
+  %m1 = select i1 %cond, i32 %t, i32 %f
+  %m2 = select i1 %not, i32 %f, i32 %t
+  %r = xor i32 %m2, %m1
+  ret i32 %r
+}
+
+; TODO: Detect equivalence of selects with commuted operands: 'not' cond with vector select.
+
+define <2 x double> @select_not_cond_commute_vec(<2 x i1> %cond, <2 x double> %t, <2 x double> %f) {
+; CHECK-LABEL: @select_not_cond_commute_vec(
+; CHECK-NEXT:    [[NOT:%.*]] = xor <2 x i1> [[COND:%.*]], <i1 true, i1 true>
+; CHECK-NEXT:    [[M1:%.*]] = select <2 x i1> [[COND]], <2 x double> [[T:%.*]], <2 x double> [[F:%.*]]
+; CHECK-NEXT:    [[M2:%.*]] = select <2 x i1> [[NOT]], <2 x double> [[F]], <2 x double> [[T]]
+; CHECK-NEXT:    [[R:%.*]] = fdiv nnan <2 x double> [[M1]], [[M2]]
+; CHECK-NEXT:    ret <2 x double> [[R]]
+;
+  %not = xor <2 x i1> %cond, <i1 -1, i1 -1>
+  %m1 = select <2 x i1> %cond, <2 x double> %t, <2 x double> %f
+  %m2 = select <2 x i1> %not, <2 x double> %f, <2 x double> %t
+  %r = fdiv nnan <2 x double> %m1, %m2
+  ret <2 x double> %r
+}
+
+; Negative test - select ops must be commuted.
+
+define i32 @select_not_cond_wrong_select_ops(i1 %cond, i32 %t, i32 %f) {
+; CHECK-LABEL: @select_not_cond_wrong_select_ops(
+; CHECK-NEXT:    [[NOT:%.*]] = xor i1 [[COND:%.*]], true
+; CHECK-NEXT:    [[M1:%.*]] = select i1 [[COND]], i32 [[T:%.*]], i32 [[F:%.*]]
+; CHECK-NEXT:    [[M2:%.*]] = select i1 [[NOT]], i32 [[T]], i32 [[F]]
+; CHECK-NEXT:    [[R:%.*]] = xor i32 [[M2]], [[M1]]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %not = xor i1 %cond, -1
+  %m1 = select i1 %cond, i32 %t, i32 %f
+  %m2 = select i1 %not, i32 %t, i32 %f
+  %r = xor i32 %m2, %m1
+  ret i32 %r
+}
+
+; Negative test - not a 'not'.
+
+define i32 @select_not_cond_wrong_cond(i1 %cond, i32 %t, i32 %f) {
+; CHECK-LABEL: @select_not_cond_wrong_cond(
+; CHECK-NEXT:    [[M1:%.*]] = select i1 [[COND:%.*]], i32 [[T:%.*]], i32 [[F:%.*]]
+; CHECK-NEXT:    [[M2:%.*]] = select i1 [[COND]], i32 [[F]], i32 [[T]]
+; CHECK-NEXT:    [[R:%.*]] = xor i32 [[M2]], [[M1]]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %not = xor i1 %cond, -2
+  %m1 = select i1 %cond, i32 %t, i32 %f
+  %m2 = select i1 %not, i32 %f, i32 %t
+  %r = xor i32 %m2, %m1
+  ret i32 %r
+}
+
+; TODO: Detect equivalence of selects with commuted operands: inverted pred with fcmps.
+
+define i32 @select_invert_pred_cond(float %x, i32 %t, i32 %f) {
+; CHECK-LABEL: @select_invert_pred_cond(
+; CHECK-NEXT:    [[COND:%.*]] = fcmp ueq float [[X:%.*]], 4.200000e+01
+; CHECK-NEXT:    [[INVCOND:%.*]] = fcmp one float [[X]], 4.200000e+01
+; CHECK-NEXT:    [[M1:%.*]] = select i1 [[COND]], i32 [[T:%.*]], i32 [[F:%.*]]
+; CHECK-NEXT:    [[M2:%.*]] = select i1 [[INVCOND]], i32 [[F]], i32 [[T]]
+; CHECK-NEXT:    [[R:%.*]] = xor i32 [[M2]], [[M1]]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %cond = fcmp ueq float %x, 42.0
+  %invcond = fcmp one float %x, 42.0
+  %m1 = select i1 %cond, i32 %t, i32 %f
+  %m2 = select i1 %invcond, i32 %f, i32 %t
+  %r = xor i32 %m2, %m1
+  ret i32 %r
+}
+
+; TODO: Detect equivalence of selects with commuted operands: inverted pred with icmps and vectors.
+
+define <2 x i32> @select_invert_pred_cond_commute_vec(<2 x i8> %x, <2 x i32> %t, <2 x i32> %f) {
+; CHECK-LABEL: @select_invert_pred_cond_commute_vec(
+; CHECK-NEXT:    [[COND:%.*]] = icmp sgt <2 x i8> [[X:%.*]], <i8 42, i8 -1>
+; CHECK-NEXT:    [[INVCOND:%.*]] = icmp sle <2 x i8> [[X]], <i8 42, i8 -1>
+; CHECK-NEXT:    [[M1:%.*]] = select <2 x i1> [[COND]], <2 x i32> [[T:%.*]], <2 x i32> [[F:%.*]]
+; CHECK-NEXT:    [[M2:%.*]] = select <2 x i1> [[INVCOND]], <2 x i32> [[F]], <2 x i32> [[T]]
+; CHECK-NEXT:    [[R:%.*]] = xor <2 x i32> [[M1]], [[M2]]
+; CHECK-NEXT:    ret <2 x i32> [[R]]
+;
+  %cond = icmp sgt <2 x i8> %x, <i8 42, i8 -1>
+  %invcond = icmp sle <2 x i8> %x, <i8 42, i8 -1>
+  %m1 = select <2 x i1> %cond, <2 x i32> %t, <2 x i32> %f
+  %m2 = select <2 x i1> %invcond, <2 x i32> %f, <2 x i32> %t
+  %r = xor <2 x i32> %m1, %m2
+  ret <2 x i32> %r
+}
+
+; Negative test - select ops must be commuted.
+
+define i32 @select_invert_pred_wrong_select_ops(float %x, i32 %t, i32 %f) {
+; CHECK-LABEL: @select_invert_pred_wrong_select_ops(
+; CHECK-NEXT:    [[COND:%.*]] = fcmp ueq float [[X:%.*]], 4.200000e+01
+; CHECK-NEXT:    [[INVCOND:%.*]] = fcmp one float [[X]], 4.200000e+01
+; CHECK-NEXT:    [[M1:%.*]] = select i1 [[COND]], i32 [[F:%.*]], i32 [[T:%.*]]
+; CHECK-NEXT:    [[M2:%.*]] = select i1 [[INVCOND]], i32 [[F]], i32 [[T]]
+; CHECK-NEXT:    [[R:%.*]] = xor i32 [[M2]], [[M1]]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %cond = fcmp ueq float %x, 42.0
+  %invcond = fcmp one float %x, 42.0
+  %m1 = select i1 %cond, i32 %f, i32 %t
+  %m2 = select i1 %invcond, i32 %f, i32 %t
+  %r = xor i32 %m2, %m1
+  ret i32 %r
+}
+
+; Negative test - not an inverted predicate.
+
+define i32 @select_invert_pred_wrong_cond(float %x, i32 %t, i32 %f) {
+; CHECK-LABEL: @select_invert_pred_wrong_cond(
+; CHECK-NEXT:    [[COND:%.*]] = fcmp ueq float [[X:%.*]], 4.200000e+01
+; CHECK-NEXT:    [[INVCOND:%.*]] = fcmp une float [[X]], 4.200000e+01
+; CHECK-NEXT:    [[M1:%.*]] = select i1 [[COND]], i32 [[T:%.*]], i32 [[F:%.*]]
+; CHECK-NEXT:    [[M2:%.*]] = select i1 [[INVCOND]], i32 [[F]], i32 [[T]]
+; CHECK-NEXT:    [[R:%.*]] = xor i32 [[M2]], [[M1]]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %cond = fcmp ueq float %x, 42.0
+  %invcond = fcmp une float %x, 42.0
+  %m1 = select i1 %cond, i32 %t, i32 %f
+  %m2 = select i1 %invcond, i32 %f, i32 %t
+  %r = xor i32 %m2, %m1
+  ret i32 %r
+}
+
+; Negative test - cmp ops must match.
+
+define i32 @select_invert_pred_wrong_cmp_ops(float %x, i32 %t, i32 %f) {
+; CHECK-LABEL: @select_invert_pred_wrong_cmp_ops(
+; CHECK-NEXT:    [[COND:%.*]] = fcmp ueq float [[X:%.*]], 4.200000e+01
+; CHECK-NEXT:    [[INVCOND:%.*]] = fcmp one float [[X]], 4.300000e+01
+; CHECK-NEXT:    [[M1:%.*]] = select i1 [[COND]], i32 [[T:%.*]], i32 [[F:%.*]]
+; CHECK-NEXT:    [[M2:%.*]] = select i1 [[INVCOND]], i32 [[F]], i32 [[T]]
+; CHECK-NEXT:    [[R:%.*]] = xor i32 [[M2]], [[M1]]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %cond = fcmp ueq float %x, 42.0
+  %invcond = fcmp one float %x, 43.0
+  %m1 = select i1 %cond, i32 %t, i32 %f
+  %m2 = select i1 %invcond, i32 %f, i32 %t
+  %r = xor i32 %m2, %m1
+  ret i32 %r
+}
