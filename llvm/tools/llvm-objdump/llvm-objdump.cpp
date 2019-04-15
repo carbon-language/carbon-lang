@@ -2021,15 +2021,34 @@ int main(int argc, char **argv) {
   if (DisassembleAll || PrintSource || PrintLines)
     Disassemble = true;
 
-  if (!ArchiveHeaders && !Disassemble && DwarfDumpType == DIDT_Null &&
-      !DynamicRelocations && !FileHeaders && !PrivateHeaders && !RawClangAST &&
-      !Relocations && !SectionHeaders && !SectionContents && !SymbolTable &&
-      !UnwindInfo && !FaultMapSection &&
-      !(MachOOpt &&
-        (Bind || DataInCode || DylibId || DylibsUsed || ExportsTrie ||
-         FirstPrivateHeader || IndirectSymbols || InfoPlist || LazyBind ||
-         LinkOptHints || Rebase || ObjcMetaData || UniversalHeaders ||
-         WeakBind || !FilterSections.empty()))) {
+  if (!Disassemble
+      && !Relocations
+      && !DynamicRelocations
+      && !SectionHeaders
+      && !SectionContents
+      && !SymbolTable
+      && !UnwindInfo
+      && !PrivateHeaders
+      && !FileHeaders
+      && !FirstPrivateHeader
+      && !ExportsTrie
+      && !Rebase
+      && !Bind
+      && !LazyBind
+      && !WeakBind
+      && !RawClangAST
+      && !(UniversalHeaders && MachOOpt)
+      && !ArchiveHeaders
+      && !(IndirectSymbols && MachOOpt)
+      && !(DataInCode && MachOOpt)
+      && !(LinkOptHints && MachOOpt)
+      && !(InfoPlist && MachOOpt)
+      && !(DylibsUsed && MachOOpt)
+      && !(DylibId && MachOOpt)
+      && !(ObjcMetaData && MachOOpt)
+      && !(!FilterSections.empty() && MachOOpt)
+      && !FaultMapSection
+      && DwarfDumpType == DIDT_Null) {
     cl::PrintHelpMessage();
     return 2;
   }
