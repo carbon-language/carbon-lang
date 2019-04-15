@@ -1479,6 +1479,9 @@ add_instruction:
 }
 
 void BinaryFunction::postProcessEntryPoints() {
+  if (!isSimple())
+    return;
+
   for (auto Offset : EntryOffsets) {
     if (!getInstructionAtOffset(Offset)) {
       // On AArch64 there are legitimate reasons to have references past the
