@@ -97,8 +97,6 @@ const Symbol *FindExternallyVisibleObject(
 
 bool ExprHasTypeCategory(
     const evaluate::GenericExprWrapper &expr, const common::TypeCategory &type);
-void CheckScalarLogicalExpr(
-    const parser::Expr &expr, parser::Messages &messages);
 
 // If this Expr or Variable represents a simple Name, return it.
 parser::Name *GetSimpleName(parser::Expr &);

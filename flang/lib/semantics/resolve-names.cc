@@ -21,8 +21,8 @@
 #include "scope.h"
 #include "semantics.h"
 #include "symbol.h"
-#include "type.h"
 #include "tools.h"
+#include "type.h"
 #include "../common/Fortran.h"
 #include "../common/default-kinds.h"
 #include "../common/indirection.h"
@@ -4606,7 +4606,7 @@ bool ResolveNamesVisitor::Pre(const parser::PointerAssignmentStmt &x) {
   ResolveDataRef(dataRef);
   Walk(bounds);
   // Resolve unrestricted specific intrinsic procedures as in "p => cos".
-  if (const parser::Name *name{GetSimpleName(expr)}) {
+  if (const parser::Name * name{GetSimpleName(expr)}) {
     if (NameIsKnownOrIntrinsic(*name)) {
       return false;
     }
