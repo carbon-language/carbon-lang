@@ -2422,8 +2422,10 @@ TYPE_CONTEXT_PARSER("UNLOCK statement"_en_US,
 
 // R1201 io-unit -> file-unit-number | * | internal-file-variable
 // R1203 internal-file-variable -> char-variable
-TYPE_PARSER(construct<IoUnit>(fileUnitNumber) || construct<IoUnit>(star) ||
-    construct<IoUnit>(charVariable / !"="_tok))
+// "char-variable" is attempted first since it's not type constrained but
+// syntactically ambiguous with "file-unit-number", which is constrained.
+TYPE_PARSER(construct<IoUnit>(charVariable / !"="_tok) ||
+    construct<IoUnit>(fileUnitNumber) || construct<IoUnit>(star))
 
 // R1202 file-unit-number -> scalar-int-expr
 TYPE_PARSER(construct<FileUnitNumber>(scalarIntExpr / !"="_tok))

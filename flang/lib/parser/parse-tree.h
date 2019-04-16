@@ -2497,7 +2497,7 @@ WRAPPER_CLASS(FileUnitNumber, ScalarIntExpr);
 // R1203 internal-file-variable -> char-variable
 struct IoUnit {
   UNION_CLASS_BOILERPLATE(IoUnit);
-  std::variant<FileUnitNumber, Star, CharVariable> u;
+  std::variant<CharVariable, FileUnitNumber, Star> u;
 };
 
 // R1206 file-name-expr -> scalar-default-char-expr
