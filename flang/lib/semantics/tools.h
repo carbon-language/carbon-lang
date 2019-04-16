@@ -99,7 +99,6 @@ const Symbol *FindExternallyVisibleObject(
 
 bool ExprHasTypeCategory(
     const evaluate::GenericExprWrapper &expr, const common::TypeCategory &type);
-bool ExprHasTypeKind(const evaluate::GenericExprWrapper &expr, int kind);
 bool ExprTypeKindIsDefault(
     const evaluate::GenericExprWrapper &expr, const SemanticsContext &context);
 }
