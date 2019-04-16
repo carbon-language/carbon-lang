@@ -18,6 +18,7 @@
 // Simple predicates and look-up functions that are best defined
 // canonically for use in semantic checking.
 
+#include "semantics.h"
 #include "../common/Fortran.h"
 #include "../evaluate/variable.h"
 
