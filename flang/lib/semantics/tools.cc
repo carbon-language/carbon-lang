@@ -17,6 +17,7 @@
 #include "semantics.h"
 #include "symbol.h"
 #include "type.h"
+#include "../common/Fortran.h"
 #include "../common/indirection.h"
 #include "../parser/message.h"
 #include "../parser/parse-tree.h"
@@ -286,6 +287,7 @@ bool ExprTypeKindIsDefault(
     const evaluate::GenericExprWrapper &expr, const SemanticsContext &context) {
   auto dynamicType{expr.v.GetType()};
   return dynamicType.has_value() &&
+      dynamicType->category != common::TypeCategory::Derived &&
       dynamicType->kind ==
       context.defaultKinds().GetDefaultKind(dynamicType->category);
 }

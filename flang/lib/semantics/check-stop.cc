@@ -23,9 +23,8 @@
 namespace Fortran::semantics {
 
 void StopChecker::Enter(const parser::StopStmt &stmt) {
-  const auto &stopCode{std::get<std::optional<parser::StopCode>>(stmt.t)};
-
-  if (stopCode.has_value()) {
+  if (const auto &stopCode{std::get<std::optional<parser::StopCode>>(stmt.t)};
+      stopCode.has_value()) {
     const parser::CharBlock &source{stopCode.value().v.thing.source};
     const auto &expr{*(stopCode.value().v.thing.typedExpr)};
 
@@ -33,13 +32,13 @@ void StopChecker::Enter(const parser::StopStmt &stmt) {
       // C1171 default kind
       if (!(ExprTypeKindIsDefault(expr, context_))) {
         context_.Say(
-            source, "Integer stop code must be of default kind"_err_en_US);
+            source, "INTEGER stop code must be of default kind"_err_en_US);
       }
     } else if (ExprHasTypeCategory(expr, common::TypeCategory::Character)) {
       // R1162 spells scalar-DEFAULT-char-expr
       if (!(ExprTypeKindIsDefault(expr, context_))) {
         context_.Say(
-            source, "Character stop code must be of default kind"_err_en_US);
+            source, "CHARACTER stop code must be of default kind"_err_en_US);
       }
     } else {
       context_.Say(

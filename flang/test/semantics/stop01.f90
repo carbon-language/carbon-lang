@@ -30,7 +30,7 @@ program main
 !ERROR: Stop code must be of INTEGER or CHARACTER type
   if (i .eq. 0) stop "Stop."(1:4)
   if (i .eq. 0) stop chr1
-!ERROR: Character stop code must be of default kind
+!ERROR: CHARACTER stop code must be of default kind
   if (i .eq. 0) stop chr2
   if (i .eq. 0) stop 1
   if (i .eq. 0) stop 1 + 2
@@ -40,7 +40,7 @@ program main
   if (i .eq. 0) stop iarray(1)
   if (i .eq. 0) stop aiarray(1)
   if (i .eq. 0) stop 1 + i
-!ERROR: Integer stop code must be of default kind
+!ERROR: INTEGER stop code must be of default kind
   if (i .eq. 0) stop invalid
 !ERROR: Stop code must be of INTEGER or CHARACTER type
   if (i .eq. 0) stop 12.34
@@ -52,7 +52,7 @@ program main
   if (i .eq. 0) stop , quiet = .false.
   if (i .eq. 0) error stop "Error."
   if (i .eq. 0) error stop chr1
-!ERROR: Character stop code must be of default kind
+!ERROR: CHARACTER stop code must be of default kind
   if (i .eq. 0) error stop chr2
   if (i .eq. 0) error stop 1
   if (i .eq. 0) error stop i
@@ -61,7 +61,7 @@ program main
   if (i .eq. 0) error stop iarray(1)
   if (i .eq. 0) error stop aiarray(1)
   if (i .eq. 0) error stop 1 + i
-!ERROR: Integer stop code must be of default kind
+!ERROR: INTEGER stop code must be of default kind
   if (i .eq. 0) error stop invalid
 !ERROR: Stop code must be of INTEGER or CHARACTER type
   if (i .eq. 0) error stop 12.34
