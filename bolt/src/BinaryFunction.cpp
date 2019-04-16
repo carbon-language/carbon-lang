@@ -3721,6 +3721,12 @@ bool BinaryFunction::isCodeMarker(const SymbolRef &Symbol,
 
 bool BinaryFunction::isSymbolValidInScope(const SymbolRef &Symbol,
                                           uint64_t SymbolSize) const {
+  // If this symbol is in a different section from the one where the
+  // function symbol is, don't consider it as valid.
+  if (!getSection().containsAddress(
+          cantFail(Symbol.getAddress(), "cannot get symbol address")))
+    return false;
+
   // Some symbols are tolerated inside function bodies, others are not.
   // The real function boundaries may not be known at this point.
   if (isDataMarker(Symbol, SymbolSize) || isCodeMarker(Symbol, SymbolSize))

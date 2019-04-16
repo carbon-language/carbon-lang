@@ -1360,7 +1360,7 @@ void RewriteInstance::discoverFileObjects() {
       }
       TentativeSize = SymbolSize;
     }
-    
+
     BinaryFunction *BF{nullptr};
     // Since function may not have yet obtained its real size, do a search
     // using the list of registered functions instead of calling
