@@ -400,15 +400,10 @@ static bool processSwitch(SwitchInst *SI, LazyValueInfo *LVI,
 
 // See if we can prove that the given overflow intrinsic will not overflow.
 static bool willNotOverflow(WithOverflowInst *WO, LazyValueInfo *LVI) {
-  // TODO: Also support multiplication.
-  Instruction::BinaryOps BinOp = WO->getBinaryOp();
-  if (BinOp == Instruction::Mul)
-    return false;
-
   Value *RHS = WO->getRHS();
   ConstantRange RRange = LVI->getConstantRange(RHS, WO->getParent(), WO);
   ConstantRange NWRegion = ConstantRange::makeGuaranteedNoWrapRegion(
-      BinOp, RRange, WO->getNoWrapKind());
+      WO->getBinaryOp(), RRange, WO->getNoWrapKind());
   // As an optimization, do not compute LRange if we do not need it.
   if (NWRegion.isEmptySet())
     return false;
