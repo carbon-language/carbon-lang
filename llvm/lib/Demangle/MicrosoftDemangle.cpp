@@ -2056,7 +2056,7 @@ NodeArrayNode *
 Demangler::demangleFunctionParameterList(StringView &MangledName) {
   // Empty parameter list.
   if (MangledName.consumeFront('X'))
-    return {};
+    return nullptr;
 
   NodeList *Head = Arena.alloc<NodeList>();
   NodeList **Current = &Head;
@@ -2069,7 +2069,7 @@ Demangler::demangleFunctionParameterList(StringView &MangledName) {
       size_t N = MangledName[0] - '0';
       if (N >= Backrefs.FunctionParamCount) {
         Error = true;
-        return {};
+        return nullptr;
       }
       MangledName = MangledName.dropFront();
 
@@ -2100,7 +2100,7 @@ Demangler::demangleFunctionParameterList(StringView &MangledName) {
   }
 
   if (Error)
-    return {};
+    return nullptr;
 
   NodeArrayNode *NA = nodeListToNodeArray(Arena, Head, Count);
   // A non-empty parameter list is terminated by either 'Z' (variadic) parameter
@@ -2116,7 +2116,7 @@ Demangler::demangleFunctionParameterList(StringView &MangledName) {
   }
 
   Error = true;
-  return {};
+  return nullptr;
 }
 
 NodeArrayNode *
