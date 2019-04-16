@@ -263,31 +263,4 @@ bool ExprHasTypeCategory(const evaluate::GenericExprWrapper &expr,
   auto dynamicType{expr.v.GetType()};
   return dynamicType.has_value() && dynamicType->category == type;
 }
-
-static parser::Name *GetSimpleName(
-    common::Indirection<parser::Designator> *designator) {
-  if (designator) {
-    auto *dataRef{std::get_if<parser::DataRef>(&designator->value().u)};
-    return dataRef ? std::get_if<parser::Name>(&dataRef->u) : nullptr;
-  } else {
-    return nullptr;
-  }
-}
-
-parser::Name *GetSimpleName(parser::Expr &expr) {
-  return GetSimpleName(
-      std::get_if<common::Indirection<parser::Designator>>(&expr.u));
-}
-const parser::Name *GetSimpleName(const parser::Expr &expr) {
-  return GetSimpleName(const_cast<parser::Expr &>(expr));
-}
-
-parser::Name *GetSimpleName(parser::Variable &variable) {
-  return GetSimpleName(
-      std::get_if<common::Indirection<parser::Designator>>(&variable.u));
-}
-const parser::Name *GetSimpleName(const parser::Variable &variable) {
-  return GetSimpleName(const_cast<parser::Variable &>(variable));
-}
-
 }
