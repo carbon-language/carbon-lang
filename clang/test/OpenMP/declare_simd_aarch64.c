@@ -1,3 +1,4 @@
+// REQUIRES: aarch64-registered-target
 // -fopemp and -fopenmp-simd behavior are expected to be the same.
 
 // RUN: %clang_cc1 -triple aarch64-linux-gnu -target-feature +neon -fopenmp -x c -emit-llvm %s -o - -femit-all-decls | FileCheck %s --check-prefix=AARCH64

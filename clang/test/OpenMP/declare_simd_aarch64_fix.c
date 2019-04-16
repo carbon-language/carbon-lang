@@ -1,3 +1,4 @@
+// REQUIRES: aarch64-registered-target
 // This test is making sure that no crash happens.
 
 // RUN: %clang -o - -fno-fast-math -S -target aarch64-linux-gnu \

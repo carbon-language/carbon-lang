@@ -1,3 +1,4 @@
+// REQUIRES: aarch64-registered-target
 // RUN: %clang_cc1 -triple aarch64-linux-gnu -target-feature +neon -fopenmp -x c -std=c11 -emit-llvm %s -o - -femit-all-decls | FileCheck %s
 
 // RUN: %clang_cc1 -triple aarch64-linux-gnu -target-feature +sve -fopenmp -x c -std=c11 -emit-llvm %s -o - -femit-all-decls | FileCheck %s --check-prefix=SVE

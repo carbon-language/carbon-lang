@@ -1,3 +1,4 @@
+// REQUIRES: aarch64-registered-target
 // RUN: %clang_cc1 -triple aarch64-linux-gnu -target-feature +sve  -fopenmp  %s -S  -o %t -verify
 // RUN: %clang_cc1 -triple aarch64-linux-gnu -target-feature +sve  -fopenmp-simd  %s -S  -o %t -verify
 
