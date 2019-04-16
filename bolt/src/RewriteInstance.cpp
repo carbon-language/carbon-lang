@@ -1800,6 +1800,7 @@ void RewriteInstance::adjustCommandLineOptions() {
   if (opts::HotText && opts::HotTextMoveSections.getNumOccurrences() == 0) {
     opts::HotTextMoveSections.addValue(".stub");
     opts::HotTextMoveSections.addValue(".mover");
+    opts::HotTextMoveSections.addValue(".never_hugify");
   }
 }
 
