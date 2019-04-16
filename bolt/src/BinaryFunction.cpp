@@ -272,12 +272,13 @@ bool DynoStats::lessThan(const DynoStats &Other,
 
 uint64_t BinaryFunction::Count = 0;
 
-bool BinaryFunction::hasNameRegex(const std::string &NameRegex) const {
+const std::string *
+BinaryFunction::hasNameRegex(const std::string &NameRegex) const {
   Regex MatchName(NameRegex);
   for (auto &Name : Names)
     if (MatchName.match(Name))
-      return true;
-  return false;
+      return &Name;
+  return nullptr;
 }
 
 std::string BinaryFunction::getDemangledName() const {
@@ -455,6 +456,20 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
      << "\n  IsSplit     : "   << isSplit()
      << "\n  BB Count    : "   << size();
 
+  if (IsFragment) {
+    OS << "\n  IsFragment  : true";
+  }
+  if (ParentFunction) {
+    OS << "\n  Parent      : " << *ParentFunction;
+  }
+  if (!Fragments.empty()) {
+    OS << "\n  Fragments   : ";
+    auto Sep = "";
+    for (auto *Frag : Fragments) {
+      OS << Sep << *Frag;
+      Sep = ", ";
+    }
+  }
   if (hasCFG()) {
     OS << "\n  Hash        : "   << Twine::utohexstr(hash());
   }
@@ -950,7 +965,7 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
   // postProcessIndirectBranches() is going to mark the function as non-simple
   // in this case.
   if (Value && BC.getSectionForAddress(Value))
-    BC.InterproceduralReferences.insert(Value);
+    BC.InterproceduralReferences.insert(std::make_pair(this, Value));
 
   return IndirectBranchType::POSSIBLE_TAIL_CALL;
 }
@@ -1040,8 +1055,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     // a section, it could be an absolute address too.
     auto Section = BC.getSectionForAddress(TargetAddress);
     if (Section && Section->isText()) {
-      if (containsAddress(TargetAddress, /*UseMaxSize=*/
-                          BC.isAArch64())) {
+      if (containsAddress(TargetAddress, /*UseMaxSize=*/ BC.isAArch64())) {
         if (TargetAddress != getAddress()) {
           // The address could potentially escape. Mark it as another entry
           // point into the function.
@@ -1051,7 +1065,8 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           return addEntryPointAtOffset(TargetAddress - getAddress());
         }
       } else {
-        BC.InterproceduralReferences.insert(TargetAddress);
+        BC.InterproceduralReferences.insert(
+            std::make_pair(this, TargetAddress));
       }
     }
 
@@ -1291,7 +1306,8 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
               }
               goto add_instruction;
             }
-            BC.InterproceduralReferences.insert(TargetAddress);
+            BC.InterproceduralReferences.insert(
+                std::make_pair(this, TargetAddress));
             if (opts::Verbosity >= 2 && !IsCall && Size == 2 &&
                 !BC.HasRelocations) {
               errs() << "BOLT-WARNING: relaxed tail call detected at 0x"
@@ -1400,7 +1416,8 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
               HasFixedIndirectBranch = true;
             } else {
               MIB->convertJmpToTailCall(Instruction, BC.Ctx.get());
-              BC.InterproceduralReferences.insert(IndirectTarget);
+              BC.InterproceduralReferences.insert(
+                  std::make_pair(this, IndirectTarget));
             }
             break;
           }
@@ -3944,12 +3961,25 @@ void BinaryFunction::calculateLoopInfo() {
 DebugAddressRangesVector BinaryFunction::getOutputAddressRanges() const {
   DebugAddressRangesVector OutputRanges;
 
+  if (IsFragment)
+    return OutputRanges;
+
   OutputRanges.emplace_back(getOutputAddress(),
                             getOutputAddress() + getOutputSize());
   if (isSplit()) {
     assert(isEmitted() && "split function should be emitted");
     OutputRanges.emplace_back(cold().getAddress(),
                               cold().getAddress() + cold().getImageSize());
+  }
+
+  if (isSimple())
+    return OutputRanges;
+
+  for (auto *Frag : Fragments) {
+    assert(!Frag->isSimple() &&
+           "fragment of non-simple function should also be non-simple");
+    OutputRanges.emplace_back(Frag->getOutputAddress(),
+                              Frag->getOutputAddress() + Frag->getOutputSize());
   }
 
   return OutputRanges;

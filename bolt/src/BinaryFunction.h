@@ -340,6 +340,12 @@ private:
   /// Is the function known to exceed its input size?
   bool IsLarge{false};
 
+  /// True if the function is a fragment of another function. This means that
+  /// this function could only be entered via its parent or one of its sibling
+  /// fragments. It could be entered at any basic block. It can also return
+  /// the control to any basic block of its parent or its sibling.
+  bool IsFragment{false};
+
   /// The address for the code for this function in codegen memory.
   uint64_t ImageAddress{0};
 
@@ -351,6 +357,12 @@ private:
 
   /// Name for the corresponding cold code section.
   std::string ColdCodeSectionName;
+
+  /// Parent function for split function fragments.
+  BinaryFunction *ParentFunction{nullptr};
+
+  /// All fragments for a parent function.
+  std::unordered_set<BinaryFunction *> Fragments;
 
   /// The profile data for the number of times the function was executed.
   uint64_t ExecutionCount{COUNT_NO_PROFILE};
@@ -664,6 +676,16 @@ private:
 
   /// This is called in disassembled state.
   void addEntryPoint(uint64_t Address);
+
+  void setParentFunction(BinaryFunction *BF) {
+    assert((!ParentFunction || ParentFunction == BF) &&
+           "cannot have more than one parent function");
+    ParentFunction = BF;
+  }
+
+  void addFragment(BinaryFunction *BF) {
+    Fragments.insert(BF);
+  }
 
   /// Return true if there is a registered entry point at a given offset
   /// into the function.
@@ -1006,7 +1028,7 @@ public:
 
   /// Check if (possibly one out of many) function name matches the given
   /// regex.
-  bool hasNameRegex(const std::string &NameRegex) const;
+  const std::string *hasNameRegex(const std::string &NameRegex) const;
 
   /// Return a vector of all possible names for the function.
   const std::vector<std::string> &getNames() const {
@@ -1365,7 +1387,7 @@ public:
   }
 
   /// Return true if the given address \p PC is inside the function body.
-  bool containsAddress(uint64_t PC, bool UseMaxSize=false) const {
+  bool containsAddress(uint64_t PC, bool UseMaxSize = false) const {
     if (UseMaxSize)
       return Address <= PC && PC < Address + MaxSize;
     return Address <= PC && PC < Address + Size;
@@ -1740,6 +1762,10 @@ public:
   /// Return the size of this function' image in memory.
   uint64_t getImageSize() const {
     return ImageSize;
+  }
+
+  BinaryFunction *getParentFunction() const {
+    return ParentFunction;
   }
 
   /// Set the profile data for the number of times the function was called.

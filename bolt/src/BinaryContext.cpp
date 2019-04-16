@@ -647,7 +647,6 @@ namespace {
 void findSubprograms(const DWARFDie DIE,
                      std::map<uint64_t, BinaryFunction> &BinaryFunctions) {
   if (DIE.isSubprogramDIE()) {
-    // TODO: handle DW_AT_ranges.
     uint64_t LowPC, HighPC, SectionIndex;
     if (DIE.getLowAndHighPC(LowPC, HighPC, SectionIndex)) {
       auto It = BinaryFunctions.find(LowPC);
@@ -658,10 +657,11 @@ void findSubprograms(const DWARFDie DIE,
       }
     } else {
       const auto RangesVector = DIE.getAddressRanges();
-      if (!RangesVector.empty()) {
-        errs() << "BOLT-ERROR: split function detected in .debug_info. "
-                  "Split functions are not supported.\n";
-        exit(1);
+      for (const auto Range : DIE.getAddressRanges()) {
+        auto It = BinaryFunctions.find(Range.LowPC);
+        if (It != BinaryFunctions.end()) {
+          It->second.addSubprogramDIE(DIE);
+        }
       }
     }
   }
@@ -1241,8 +1241,8 @@ BinaryContext::calculateEmittedSize(BinaryFunction &BF) {
 
 BinaryFunction *
 BinaryContext::getBinaryFunctionContainingAddress(uint64_t Address,
-                                                    bool CheckPastEnd,
-                                                    bool UseMaxSize) {
+                                                  bool CheckPastEnd,
+                                                  bool UseMaxSize) {
   auto FI = BinaryFunctions.upper_bound(Address);
   if (FI == BinaryFunctions.begin())
     return nullptr;
@@ -1253,7 +1253,25 @@ BinaryContext::getBinaryFunctionContainingAddress(uint64_t Address,
 
   if (Address >= FI->first + UsedSize + (CheckPastEnd ? 1 : 0))
     return nullptr;
-  return &FI->second;
+
+  auto *BF = &FI->second;
+  while (BF->getParentFunction())
+    BF = BF->getParentFunction();
+
+  return BF;
+}
+
+BinaryFunction *
+BinaryContext::getBinaryFunctionAtAddress(uint64_t Address, bool Shallow) {
+  if (const auto *BD = getBinaryDataAtAddress(Address)) {
+    if (auto *BF = getFunctionForSymbol(BD->getSymbol())) {
+      while (BF->getParentFunction() && !Shallow) {
+        BF = BF->getParentFunction();
+      }
+      return BF;
+    }
+  }
+  return nullptr;
 }
 
 DebugAddressRangesVector BinaryContext::translateModuleAddressRanges(

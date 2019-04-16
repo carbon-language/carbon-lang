@@ -1094,14 +1094,23 @@ void RewriteInstance::discoverFileObjects() {
 
   std::stable_sort(SortedFileSymbols.begin(), SortedFileSymbols.end(),
                    [](const SymbolRef &A, const SymbolRef &B) {
-                     // FUNC symbols have higher precedence.
+                     // FUNC symbols have the highest precedence, while SECTIONs
+                     // have the lowest.
                      auto AddressA = cantFail(A.getAddress());
                      auto AddressB = cantFail(B.getAddress());
-                     if (AddressA == AddressB) {
-                       return cantFail(A.getType()) == SymbolRef::ST_Function &&
-                              cantFail(B.getType()) != SymbolRef::ST_Function;
-                     }
-                     return AddressA < AddressB;
+                     if (AddressA != AddressB)
+                      return AddressA < AddressB;
+
+                     auto AType = cantFail(A.getType());
+                     auto BType = cantFail(B.getType());
+                     if (AType == SymbolRef::ST_Function &&
+                         BType != SymbolRef::ST_Function)
+                       return true;
+                     if (BType == SymbolRef::ST_Debug &&
+                         AType != SymbolRef::ST_Debug)
+                       return true;
+
+                     return false;
                    });
 
   // For aarch64, the ABI defines mapping symbols so we identify data in the
@@ -1564,6 +1573,17 @@ void RewriteInstance::adjustFunctionBoundaries() {
             BFE = BC->getBinaryFunctions().end();
        BFI != BFE; ++BFI) {
     auto &Function = BFI->second;
+
+    // Check if it's a fragment of a function.
+    if (auto *FragName = Function.hasNameRegex("\\.cold\\.")) {
+      static bool PrintedWarning = false;
+      if (BC->HasRelocations && !PrintedWarning) {
+        errs() << "BOLT-WARNING: split function detected on input : "
+               << *FragName <<". The support is limited in relocation mode.\n";
+        PrintedWarning = true;
+      }
+      Function.IsFragment = true;
+    }
 
     // Check if there's a symbol or a function with a larger address in the
     // same section. If there is - it determines the maximum size for the
@@ -2494,19 +2514,43 @@ void RewriteInstance::disassembleFunctions() {
 
     // Post-process inter-procedural references ASAP as it may affect
     // functions we are about to disassemble next.
-    for (const auto Addr : BC->InterproceduralReferences) {
+    for (auto &Pair : BC->InterproceduralReferences) {
+      auto *FromBF = Pair.first;
+      auto Addr = Pair.second;
       auto *ContainingFunction = BC->getBinaryFunctionContainingAddress(Addr);
-      if (ContainingFunction && ContainingFunction->getAddress() != Addr) {
-        ContainingFunction->addEntryPoint(Addr);
-        if (!BC->HasRelocations) {
-          if (opts::Verbosity >= 1) {
-            errs() << "BOLT-WARNING: Function " << *ContainingFunction
-                   << " has internal BBs that are target of a reference located"
-                   << " in another function. Skipping the function.\n";
+      if (FromBF == ContainingFunction)
+        continue;
+
+      if (ContainingFunction) {
+        // Only a parent function (or a sibling) can reach its fragment.
+        if (ContainingFunction->IsFragment) {
+          assert(!FromBF->IsFragment &&
+                 "only one cold fragment is supported at this time");
+          ContainingFunction->setParentFunction(FromBF);
+          FromBF->addFragment(ContainingFunction);
+          if (!BC->HasRelocations) {
+            ContainingFunction->setSimple(false);
+            FromBF->setSimple(false);
           }
-          ContainingFunction->setSimple(false);
+          if (opts::Verbosity >= 1) {
+            outs() << "BOLT-INFO: marking " << *ContainingFunction
+                   << " as a fragment of " << *FromBF << '\n';
+          }
+          continue;
         }
-      } else if (!ContainingFunction && Addr) {
+
+        if (ContainingFunction->getAddress() != Addr) {
+          ContainingFunction->addEntryPoint(Addr);
+          if (!BC->HasRelocations) {
+            if (opts::Verbosity >= 1) {
+              errs() << "BOLT-WARNING: Function " << *ContainingFunction
+                     << " has internal BBs that are target of a reference "
+                     << "located in another function. Skipping the function.\n";
+            }
+            ContainingFunction->setSimple(false);
+          }
+        }
+      } else if (Addr) {
         // Check if address falls in function padding space - this could be
         // unmarked data in code. In this case adjust the padding space size.
         auto Section = BC->getSectionForAddress(Addr);
@@ -3998,7 +4042,8 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
 
     for (const Elf_Sym &Symbol : cantFail(Obj->symbols(Section))) {
       auto NewSymbol = Symbol;
-      const auto *Function = BC->getBinaryFunctionAtAddress(Symbol.st_value);
+      const auto *Function = BC->getBinaryFunctionAtAddress(Symbol.st_value,
+                                                            /*Shallow=*/true);
       // Some section symbols may be mistakenly associated with the first
       // function emitted in the section. Dismiss if it is a section symbol.
       if (Function &&
@@ -4398,7 +4443,8 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
 }
 
 uint64_t RewriteInstance::getNewFunctionAddress(uint64_t OldAddress) {
-  const auto *Function = BC->getBinaryFunctionAtAddress(OldAddress);
+  const auto *Function = BC->getBinaryFunctionAtAddress(OldAddress,
+                                                        /*Shallow=*/true);
   if (!Function)
     return 0;
   return Function->getOutputAddress();

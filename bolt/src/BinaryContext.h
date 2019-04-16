@@ -185,17 +185,16 @@ public:
                                                      bool CheckPastEnd = false,
                                                      bool UseMaxSize = false);
 
-  /// Return BinaryFunction that starts at a given \p Address.
-  BinaryFunction *getBinaryFunctionAtAddress(uint64_t Address) {
-    if (const auto *BD = getBinaryDataAtAddress(Address))
-      return getFunctionForSymbol(BD->getSymbol());
-    return nullptr;
-  }
+  /// Return BinaryFunction which has a fragment that starts at a given
+  /// \p Address. If the BinaryFunction is a child fragment, then return its
+  /// parent unless \p Shallow parameter is set to true.
+  BinaryFunction *getBinaryFunctionAtAddress(uint64_t Address,
+                                             bool Shallow = false);
 
-  const BinaryFunction *getBinaryFunctionAtAddress(uint64_t Address) const {
-    if (const auto *BD = getBinaryDataAtAddress(Address))
-      return getFunctionForSymbol(BD->getSymbol());
-    return nullptr;
+  const BinaryFunction *getBinaryFunctionAtAddress(uint64_t Address,
+                                                   bool Shallow = false) const {
+    return const_cast<BinaryContext *>(this)->
+        getBinaryFunctionAtAddress(Address, Shallow);
   }
 
   /// [MCSymbol] -> [BinaryFunction]
@@ -284,7 +283,7 @@ public:
   /// Set of addresses in the code that are not a function start, and are
   /// referenced from outside of containing function. E.g. this could happen
   /// when a function has more than a single entry point.
-  std::set<uint64_t> InterproceduralReferences;
+  std::set<std::pair<BinaryFunction *, uint64_t>> InterproceduralReferences;
 
   std::unique_ptr<MCContext> Ctx;
 

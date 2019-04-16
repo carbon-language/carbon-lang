@@ -101,21 +101,38 @@ void DWARFRewriter::updateUnitDebugInfo(
 
   case dwarf::DW_TAG_subprogram:
     {
-      // The function cannot have multiple ranges on the input.
-      uint64_t SectionIndex, LowPC, HighPC;
-      if (DIE.getLowAndHighPC(LowPC, HighPC, SectionIndex)) {
-        IsFunctionDef = true;
-        const auto *Function = BC.getBinaryFunctionAtAddress(LowPC);
-        if (Function && Function->isFolded())
-          Function = nullptr;
-        FunctionStack.push_back(Function);
+      // Get function address either from ranges or [LowPC, HighPC) pair.
+      bool UsesRanges = false;
+      uint64_t Address;
+      uint64_t SectionIndex, HighPC;
+      if (!DIE.getLowAndHighPC(Address, HighPC, SectionIndex)) {
+        auto Ranges = DIE.getAddressRanges();
+        // Not a function definition.
+        if (Ranges.empty())
+          break;
 
+        Address = Ranges.front().LowPC;
+        UsesRanges = true;
+      }
+
+      IsFunctionDef = true;
+      const auto *Function = BC.getBinaryFunctionAtAddress(Address);
+      if (Function && Function->isFolded())
+        Function = nullptr;
+      FunctionStack.push_back(Function);
+
+      DebugAddressRangesVector FunctionRanges;
+      if (Function)
+        FunctionRanges = Function->getOutputAddressRanges();
+
+      // Update ranges.
+      if (UsesRanges) {
+        updateDWARFObjectAddressRanges(DIE,
+            RangesSectionsWriter->addRanges(FunctionRanges));
+      } else {
+        // Delay conversion of [LowPC, HighPC) into DW_AT_ranges if possible.
         const auto *Abbrev = DIE.getAbbreviationDeclarationPtr();
         assert(Abbrev && "abbrev expected");
-
-        DebugAddressRangesVector FunctionRanges;
-        if (Function)
-          FunctionRanges = Function->getOutputAddressRanges();
 
         if (FunctionRanges.size() > 1) {
           convertPending(Abbrev);
