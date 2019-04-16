@@ -55,6 +55,7 @@ CLASS_TRAIT(EmptyTrait)
 CLASS_TRAIT(WrapperTrait)
 CLASS_TRAIT(UnionTrait)
 CLASS_TRAIT(TupleTrait)
+CLASS_TRAIT(ConstraintTrait)
 
 // Some parse tree nodes have fields in them to cache the results of a
 // successful semantic analysis later.  Their types are forward declared
@@ -272,6 +273,7 @@ using Location = const char *;
 // These template class wrappers correspond to the Standard's modifiers
 // scalar-xyz, constant-xzy, int-xzy, default-char-xyz, & logical-xyz.
 template<typename A> struct Scalar {
+  using ConstraintTrait = std::true_type;
   Scalar(Scalar &&that) = default;
   Scalar(A &&that) : thing(std::move(that)) {}
   Scalar &operator=(Scalar &&) = default;
@@ -279,6 +281,7 @@ template<typename A> struct Scalar {
 };
 
 template<typename A> struct Constant {
+  using ConstraintTrait = std::true_type;
   Constant(Constant &&that) = default;
   Constant(A &&that) : thing(std::move(that)) {}
   Constant &operator=(Constant &&) = default;
@@ -286,6 +289,7 @@ template<typename A> struct Constant {
 };
 
 template<typename A> struct Integer {
+  using ConstraintTrait = std::true_type;
   Integer(Integer &&that) = default;
   Integer(A &&that) : thing(std::move(that)) {}
   Integer &operator=(Integer &&) = default;
@@ -293,6 +297,7 @@ template<typename A> struct Integer {
 };
 
 template<typename A> struct Logical {
+  using ConstraintTrait = std::true_type;
   Logical(Logical &&that) = default;
   Logical(A &&that) : thing(std::move(that)) {}
   Logical &operator=(Logical &&) = default;
@@ -300,6 +305,7 @@ template<typename A> struct Logical {
 };
 
 template<typename A> struct DefaultChar {
+  using ConstraintTrait = std::true_type;
   DefaultChar(DefaultChar &&that) = default;
   DefaultChar(A &&that) : thing(std::move(that)) {}
   DefaultChar &operator=(DefaultChar &&) = default;

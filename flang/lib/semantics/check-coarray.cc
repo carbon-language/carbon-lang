@@ -19,6 +19,7 @@
 #include "../evaluate/expression.h"
 #include "../parser/message.h"
 #include "../parser/parse-tree.h"
+#include "../parser/tools.h"
 
 namespace Fortran::semantics {
 
@@ -56,7 +57,7 @@ void CoarrayChecker::Leave(const parser::FormTeamStmt &x) {
   AnalyzeExpr(context_, std::get<parser::ScalarIntExpr>(x.t));
   const auto &teamVar{std::get<parser::TeamVariable>(x.t)};
   AnalyzeExpr(context_, teamVar);
-  const parser::Name *name{GetSimpleName(teamVar.thing)};
+  const parser::Name *name{parser::Unwrap<parser::Name>(teamVar)};
   CHECK(name);
   if (const auto *type{name->symbol->GetType()}) {
     if (!IsTeamType(type->AsDerived())) {
@@ -86,8 +87,7 @@ void CoarrayChecker::CheckNamesAreDistinct(
           *prev, "Previous use of '%s'"_en_US);
     }
     // ResolveNames verified the selector is a simple name
-    const auto &variable{std::get<parser::Variable>(selector.u)};
-    const parser::Name *name{GetSimpleName(variable)};
+    const parser::Name *name{parser::Unwrap<parser::Name>(selector)};
     CHECK(name);
     if (auto *prev{getPreviousUse(*name)}) {
       Say2(name->source,  // C1113, C1115

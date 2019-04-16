@@ -111,7 +111,7 @@ bool RewriteMutator::Pre(parser::ExecutionPart &x) {
 
 void RewriteMutator::Post(parser::IoUnit &x) {
   if (auto *var{std::get_if<parser::Variable>(&x.u)}) {
-    parser::Name &last{parser::GetLastName(*var)};
+    const parser::Name &last{parser::GetLastName(*var)};
     DeclTypeSpec *type{last.symbol ? last.symbol->GetType() : nullptr};
     if (type == nullptr || type->category() != DeclTypeSpec::Character) {
       // If the Variable is not known to be character (any kind), transform
@@ -134,13 +134,10 @@ void RewriteMutator::Post(parser::IoUnit &x) {
 // name had appeared with NML=.
 template<typename READ_OR_WRITE>
 void FixMisparsedUntaggedNamelistName(READ_OR_WRITE &x) {
-  if (x.iounit.has_value() && x.format.has_value()) {
-    if (auto *charExpr{
-            std::get_if<parser::DefaultCharExpr>(&x.format.value().u)}) {
-      parser::Expr &expr{charExpr->thing.value()};
-      parser::Name *name{GetSimpleName(expr)};
-      if (name != nullptr && name->symbol != nullptr &&
-          name->symbol->has<NamelistDetails>()) {
+  if (x.iounit.has_value() && x.format.has_value() &&
+      std::holds_alternative<parser::DefaultCharExpr>(x.format->u)) {
+    if (const parser::Name * name{parser::Unwrap<parser::Name>(x.format)}) {
+      if (name->symbol != nullptr && name->symbol->has<NamelistDetails>()) {
         x.controls.emplace_front(parser::IoControlSpec{std::move(*name)});
         x.format.reset();
       }

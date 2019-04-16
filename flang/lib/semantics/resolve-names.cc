@@ -34,6 +34,7 @@
 #include "../evaluate/type.h"
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
+#include "../parser/tools.h"
 #include <list>
 #include <map>
 #include <memory>
@@ -4668,7 +4669,7 @@ bool ResolveNamesVisitor::Pre(const parser::PointerAssignmentStmt &x) {
   ResolveDataRef(dataRef);
   Walk(bounds);
   // Resolve unrestricted specific intrinsic procedures as in "p => cos".
-  if (const parser::Name * name{GetSimpleName(expr)}) {
+  if (const parser::Name * name{parser::Unwrap<parser::Name>(expr)}) {
     if (NameIsKnownOrIntrinsic(*name)) {
       return false;
     }

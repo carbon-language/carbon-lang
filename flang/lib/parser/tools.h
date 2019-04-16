@@ -14,62 +14,75 @@
 
 #ifndef FORTRAN_PARSER_TOOLS_H_
 #define FORTRAN_PARSER_TOOLS_H_
+
 #include "parse-tree.h"
+
 namespace Fortran::parser {
 
 // GetLastName() isolates and returns a reference to the rightmost Name
 // in a variable (i.e., the Name whose symbol's type determines the type
 // of the variable or expression).
+const Name &GetLastName(const Name &);
+const Name &GetLastName(const StructureComponent &);
+const Name &GetLastName(const DataRef &);
+const Name &GetLastName(const Substring &);
+const Name &GetLastName(const Designator &);
+const Name &GetLastName(const ProcComponentRef &);
+const Name &GetLastName(const ProcedureDesignator &);
+const Name &GetLastName(const Call &);
+const Name &GetLastName(const FunctionReference &);
+const Name &GetLastName(const Variable &);
 
-const Name &GetLastName(const Name &x) { return x; }
+// When a parse tree node is an instance of a specific type wrapped in
+// layers of packaging, return a pointer to that object.
+// Implemented with mutually recursive template functions that are
+// wrapped in a struct to avoid prototypes.
+struct UnwrapperHelper {
 
-const Name &GetLastName(const StructureComponent &x) {
-  return GetLastName(x.component);
-}
+  template<typename A, typename B> static const A *Unwrap(B *p) {
+    if (p != nullptr) {
+      return Unwrap<A>(*p);
+    } else {
+      return nullptr;
+    }
+  }
 
-const Name &GetLastName(const DataRef &x) {
-  return std::visit(
-      common::visitors{
-          [](const Name &name) { return GetLastName(name); },
-          [](const common::Indirection<StructureComponent> &sc) {
-            return GetLastName(sc.value());
-          },
-          [](const common::Indirection<ArrayElement> &sc) {
-            return GetLastName(sc.value().base);
-          },
-          [](const common::Indirection<CoindexedNamedObject> &ci) {
-            return GetLastName(ci.value().base);
-          },
-      },
-      x.u);
-}
+  template<typename A, typename B, bool COPY>
+  static const A *Unwrap(const common::Indirection<B, COPY> &x) {
+    return Unwrap<A>(x.value());
+  }
 
-const Name &GetLastName(const Substring &x) {
-  return GetType(std::get<DataRef>(x.t));
-}
+  template<typename A, typename... Bs>
+  static const A *Unwrap(const std::variant<Bs...> &x) {
+    return std::visit([](const auto &y) { return Unwrap<A>(y); }, x);
+  }
 
-const Name &GetLastName(const Designator &x) {
-  return std::visit([](const auto &y) { return GetType(y); }, x.u);
-}
+  template<typename A, typename B>
+  static const A *Unwrap(const std::optional<B> &o) {
+    if (o.has_value()) {
+      return Unwrap<A>(*o);
+    } else {
+      return nullptr;
+    }
+  }
 
-const Name &GetLastName(const ProcComponentRef &x) {
-  return GetType(x.v.thing);
-}
+  template<typename A, typename B> static const A *Unwrap(B &x) {
+    if constexpr (std::is_same_v<std::decay_t<A>, std::decay_t<B>>) {
+      return &x;
+    } else if constexpr (ConstraintTrait<B>) {
+      return Unwrap<A>(x.thing);
+    } else if constexpr (WrapperTrait<B>) {
+      return Unwrap<A>(x.v);
+    } else if constexpr (UnionTrait<B>) {
+      return Unwrap<A>(x.u);
+    } else {
+      return nullptr;
+    }
+  }
+};
 
-const Name &GetLastName(const ProcedureDesignator &x) {
-  return std::visit([](const auto &y) { return GetType(y); }, x.u);
-}
-
-const Name &GetLastName(const Call &x) {
-  return GetType(std::get<ProcedureDesignator>(x.t));
-}
-
-const Name &GetLastName(const FunctionReference &x) { return GetType(x.v); }
-
-const Name &GetLastName(const Variable &x) {
-  return std::visit(
-      [](const auto &indirection) { return GetType(indirection.value()); },
-      x.u);
+template<typename A, typename B> const A *Unwrap(const B &x) {
+  return UnwrapperHelper::Unwrap<A>(x);
 }
 
 }

@@ -46,107 +46,103 @@ template<typename A, typename B>
 using Constify = std::conditional_t<std::is_const_v<B> && !std::is_const_v<A>,
     std::add_const_t<A>, A>;
 
-// Base case
+// Unwrap's mutually-recursive template functions are packaged in a struct
+// to avoid a need for prototypes.
+struct UnwrapperHelper {
+
+  // Base case
+  template<typename A, typename B>
+  static auto Unwrap(B &x) -> Constify<A, B> * {
+    if constexpr (std::is_same_v<std::decay_t<A>, std::decay_t<B>>) {
+      return &x;
+    } else {
+      return nullptr;
+    }
+  }
+
+  // Implementations of specializations
+  template<typename A, typename B>
+  static auto Unwrap(B *p) -> Constify<A, B> * {
+    if (p != nullptr) {
+      return Unwrap<A>(*p);
+    } else {
+      return nullptr;
+    }
+  }
+
+  template<typename A, typename B>
+  static auto Unwrap(const std::unique_ptr<B> &p) -> Constify<A, B> * {
+    if (p.get() != nullptr) {
+      return Unwrap<A>(*p);
+    } else {
+      return nullptr;
+    }
+  }
+
+  template<typename A, typename B>
+  static auto Unwrap(const std::shared_ptr<B> &p) -> Constify<A, B> * {
+    if (p.get() != nullptr) {
+      return Unwrap<A>(*p);
+    } else {
+      return nullptr;
+    }
+  }
+
+  template<typename A, typename B>
+  static auto Unwrap(std::optional<B> &x) -> Constify<A, B> * {
+    if (x.has_value()) {
+      return Unwrap<A>(*x);
+    } else {
+      return nullptr;
+    }
+  }
+
+  template<typename A, typename B>
+  static auto Unwrap(const std::optional<B> &x) -> Constify<A, B> * {
+    if (x.has_value()) {
+      return Unwrap<A>(*x);
+    } else {
+      return nullptr;
+    }
+  }
+
+  template<typename A, typename... Bs>
+  static A *Unwrap(std::variant<Bs...> &u) {
+    return std::visit(
+        [](auto &x) -> A * {
+          using Ty = std::decay_t<decltype(Unwrap<A>(x))>;
+          if constexpr (!std::is_const_v<std::remove_pointer_t<Ty>> ||
+              std::is_const_v<A>) {
+            return Unwrap<A>(x);
+          }
+          return nullptr;
+        },
+        u);
+  }
+
+  template<typename A, typename... Bs>
+  static auto Unwrap(const std::variant<Bs...> &u) -> std::add_const_t<A> * {
+    return std::visit(
+        [](const auto &x) -> std::add_const_t<A> * { return Unwrap<A>(x); }, u);
+  }
+
+  template<typename A, typename B, bool COPY>
+  static auto Unwrap(const Indirection<B, COPY> &p) -> Constify<A, B> * {
+    return Unwrap<A>(*p);
+  }
+
+  template<typename A, typename B>
+  static auto Unwrap(const CountedReference<B> &p) -> Constify<A, B> * {
+    if (p.get() != nullptr) {
+      return Unwrap<A>(*p);
+    } else {
+      return nullptr;
+    }
+  }
+};
+
 template<typename A, typename B> auto Unwrap(B &x) -> Constify<A, B> * {
-  if constexpr (std::is_same_v<std::decay_t<A>, std::decay_t<B>>) {
-    return &x;
-  } else {
-    return nullptr;
-  }
-}
-
-// Prototypes of specializations, to enable mutual recursion
-template<typename A, typename B> auto Unwrap(B *p) -> Constify<A, B> *;
-template<typename A, typename B>
-auto Unwrap(const std::unique_ptr<B> &) -> Constify<A, B> *;
-template<typename A, typename B>
-auto Unwrap(const std::shared_ptr<B> &) -> Constify<A, B> *;
-template<typename A, typename B>
-auto Unwrap(std::optional<B> &) -> Constify<A, B> *;
-template<typename A, typename B>
-auto Unwrap(const std::optional<B> &) -> std::add_const_t<A> *;
-template<typename A, typename... Bs> A *Unwrap(std::variant<Bs...> &);
-template<typename A, typename... Bs>
-auto Unwrap(const std::variant<Bs...> &) -> std::add_const_t<A> *;
-template<typename A, typename B, bool COPY>
-auto Unwrap(const Indirection<B, COPY> &) -> Constify<A, B> *;
-
-// Implementations of specializations
-template<typename A, typename B> auto Unwrap(B *p) -> Constify<A, B> * {
-  if (p != nullptr) {
-    return Unwrap<A>(*p);
-  } else {
-    return nullptr;
-  }
-}
-
-template<typename A, typename B>
-auto Unwrap(const std::unique_ptr<B> &p) -> Constify<A, B> * {
-  if (p.get() != nullptr) {
-    return Unwrap<A>(*p);
-  } else {
-    return nullptr;
-  }
-}
-
-template<typename A, typename B>
-auto Unwrap(const std::shared_ptr<B> &p) -> Constify<A, B> * {
-  if (p.get() != nullptr) {
-    return Unwrap<A>(*p);
-  } else {
-    return nullptr;
-  }
-}
-
-template<typename A, typename B>
-auto Unwrap(std::optional<B> &x) -> Constify<A, B> * {
-  if (x.has_value()) {
-    return Unwrap<A>(*x);
-  } else {
-    return nullptr;
-  }
-}
-
-template<typename A, typename B>
-auto Unwrap(const std::optional<B> &x) -> Constify<A, B> * {
-  if (x.has_value()) {
-    return Unwrap<A>(*x);
-  } else {
-    return nullptr;
-  }
-}
-
-template<typename A, typename... Bs> A *Unwrap(std::variant<Bs...> &u) {
-  return std::visit(
-      [](auto &x) -> A * {
-        using Ty = std::decay_t<decltype(Unwrap<A>(x))>;
-        if constexpr (!std::is_const_v<std::remove_pointer_t<Ty>> ||
-            std::is_const_v<A>) {
-          return Unwrap<A>(x);
-        }
-        return nullptr;
-      },
-      u);
-}
-
-template<typename A, typename... Bs>
-auto Unwrap(const std::variant<Bs...> &u) -> std::add_const_t<A> * {
-  return std::visit(
-      [](const auto &x) -> std::add_const_t<A> * { return Unwrap<A>(x); }, u);
-}
-
-template<typename A, typename B, bool COPY>
-auto Unwrap(const Indirection<B, COPY> &p) -> Constify<A, B> * {
-  return Unwrap<A>(*p);
-}
-
-template<typename A, typename B>
-auto Unwrap(const CountedReference<B> &p) -> Constify<A, B> * {
-  if (p.get() != nullptr) {
-    return Unwrap<A>(*p);
-  } else {
-    return nullptr;
-  }
+  return UnwrapperHelper::Unwrap<A>(x);
 }
 
 // Returns a copy of a wrapped value, if present, otherwise a vacant optional.
