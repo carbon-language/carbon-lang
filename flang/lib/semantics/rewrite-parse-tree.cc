@@ -20,6 +20,7 @@
 #include "../common/indirection.h"
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
+#include "../parser/tools.h"
 #include <list>
 
 namespace Fortran::semantics {
@@ -108,59 +109,10 @@ bool RewriteMutator::Pre(parser::ExecutionPart &x) {
   return true;
 }
 
-static DeclTypeSpec *GetType(const parser::Name &x) {
-  if (x.symbol != nullptr) {
-    return x.symbol->GetType();
-  } else {
-    return nullptr;
-  }
-}
-static DeclTypeSpec *GetType(const parser::StructureComponent &x) {
-  return GetType(x.component);
-}
-static DeclTypeSpec *GetType(const parser::DataRef &x) {
-  return std::visit(
-      common::visitors{
-          [](const parser::Name &name) { return GetType(name); },
-          [](const common::Indirection<parser::StructureComponent> &sc) {
-            return GetType(sc.value());
-          },
-          [](const common::Indirection<parser::ArrayElement> &sc) {
-            return GetType(sc.value().base);
-          },
-          [](const common::Indirection<parser::CoindexedNamedObject> &ci) {
-            return GetType(ci.value().base);
-          },
-      },
-      x.u);
-}
-static DeclTypeSpec *GetType(const parser::Substring &x) {
-  return GetType(std::get<parser::DataRef>(x.t));
-}
-static DeclTypeSpec *GetType(const parser::Designator &x) {
-  return std::visit([](const auto &y) { return GetType(y); }, x.u);
-}
-static DeclTypeSpec *GetType(const parser::ProcComponentRef &x) {
-  return GetType(x.v.thing);
-}
-static DeclTypeSpec *GetType(const parser::ProcedureDesignator &x) {
-  return std::visit([](const auto &y) { return GetType(y); }, x.u);
-}
-static DeclTypeSpec *GetType(const parser::Call &x) {
-  return GetType(std::get<parser::ProcedureDesignator>(x.t));
-}
-static DeclTypeSpec *GetType(const parser::FunctionReference &x) {
-  return GetType(x.v);
-}
-static DeclTypeSpec *GetType(const parser::Variable &x) {
-  return std::visit(
-      [](const auto &indirection) { return GetType(indirection.value()); },
-      x.u);
-}
-
 void RewriteMutator::Post(parser::IoUnit &x) {
   if (auto *var{std::get_if<parser::Variable>(&x.u)}) {
-    DeclTypeSpec *type{GetType(*var)};
+    parser::Name &last{parser::GetLastName(*var)};
+    DeclTypeSpec *type{last.symbol ? last.symbol->GetType() : nullptr};
     if (type == nullptr || type->category() != DeclTypeSpec::Character) {
       // If the Variable is not known to be character (any kind), transform
       // the I/O unit in situ to a FileUnitNumber so that automatic expression

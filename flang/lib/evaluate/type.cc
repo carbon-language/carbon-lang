@@ -135,12 +135,12 @@ std::string DynamicType::AsFortran() const {
   } else if (charLength != nullptr) {
     std::string result{"CHARACTER(KIND="s + std::to_string(kind) + ",LEN="};
     if (charLength->isAssumed()) {
-      result += ",LEN=*";
+      result += '*';
     } else if (charLength->isDeferred()) {
-      result += ",LEN=:";
+      result += ':';
     } else if (const auto &length{charLength->GetExplicit()}) {
       std::stringstream ss;
-      length->AsFortran(ss << ",LEN=");
+      length->AsFortran(ss);
       result += ss.str();
     }
     return result + ')';
