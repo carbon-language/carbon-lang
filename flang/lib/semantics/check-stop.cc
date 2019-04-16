@@ -23,8 +23,7 @@
 namespace Fortran::semantics {
 
 void StopChecker::Enter(const parser::StopStmt &stmt) {
-  if (const auto &stopCode{std::get<std::optional<parser::StopCode>>(stmt.t)};
-      stopCode.has_value()) {
+  if (const auto &stopCode{std::get<std::optional<parser::StopCode>>(stmt.t)}) {
     const parser::CharBlock &source{stopCode.value().v.thing.source};
     const auto &expr{*(stopCode.value().v.thing.typedExpr)};
 
