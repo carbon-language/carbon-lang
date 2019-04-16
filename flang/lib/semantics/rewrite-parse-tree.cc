@@ -28,6 +28,8 @@ using namespace parser::literals;
 
 /// Convert mis-identified statement functions to array element assignments.
 /// Convert mis-identified format expressions to namelist group names.
+/// Convert mis-identified character variables in I/O units to integer
+/// unit number expressions.
 class RewriteMutator {
 public:
   RewriteMutator(parser::Messages &messages) : messages_{messages} {}
@@ -39,6 +41,7 @@ public:
   void Post(parser::Name &);
   void Post(parser::SpecificationPart &);
   bool Pre(parser::ExecutionPart &);
+  void Post(parser::IoUnit &);
   void Post(parser::ReadStmt &);
   void Post(parser::WriteStmt &);
 
@@ -103,6 +106,74 @@ bool RewriteMutator::Pre(parser::ExecutionPart &x) {
   }
   stmtFuncsToConvert_.clear();
   return true;
+}
+
+static DeclTypeSpec *GetType(const parser::Name &x) {
+  if (x.symbol != nullptr) {
+    return x.symbol->GetType();
+  } else {
+    return nullptr;
+  }
+}
+static DeclTypeSpec *GetType(const parser::StructureComponent &x) {
+  return GetType(x.component);
+}
+static DeclTypeSpec *GetType(const parser::DataRef &x) {
+  return std::visit(
+      common::visitors{
+          [](const parser::Name &name) { return GetType(name); },
+          [](const common::Indirection<parser::StructureComponent> &sc) {
+            return GetType(sc.value());
+          },
+          [](const common::Indirection<parser::ArrayElement> &sc) {
+            return GetType(sc.value().base);
+          },
+          [](const common::Indirection<parser::CoindexedNamedObject> &ci) {
+            return GetType(ci.value().base);
+          },
+      },
+      x.u);
+}
+static DeclTypeSpec *GetType(const parser::Substring &x) {
+  return GetType(std::get<parser::DataRef>(x.t));
+}
+static DeclTypeSpec *GetType(const parser::Designator &x) {
+  return std::visit([](const auto &y) { return GetType(y); }, x.u);
+}
+static DeclTypeSpec *GetType(const parser::ProcComponentRef &x) {
+  return GetType(x.v.thing);
+}
+static DeclTypeSpec *GetType(const parser::ProcedureDesignator &x) {
+  return std::visit([](const auto &y) { return GetType(y); }, x.u);
+}
+static DeclTypeSpec *GetType(const parser::Call &x) {
+  return GetType(std::get<parser::ProcedureDesignator>(x.t));
+}
+static DeclTypeSpec *GetType(const parser::FunctionReference &x) {
+  return GetType(x.v);
+}
+static DeclTypeSpec *GetType(const parser::Variable &x) {
+  return std::visit(
+      [](const auto &indirection) { return GetType(indirection.value()); },
+      x.u);
+}
+
+void RewriteMutator::Post(parser::IoUnit &x) {
+  if (auto *var{std::get_if<parser::Variable>(&x.u)}) {
+    DeclTypeSpec *type{GetType(*var)};
+    if (type == nullptr || type->category() != DeclTypeSpec::Character) {
+      // If the Variable is not known to be character (any kind), transform
+      // the I/O unit in situ to a FileUnitNumber so that automatic expression
+      // constraint checking will be applied.
+      auto expr{std::visit(
+          [](auto &&indirection) {
+            return parser::Expr{std::move(indirection)};
+          },
+          std::move(var->u))};
+      x.u = parser::FileUnitNumber{
+          parser::ScalarIntExpr{parser::IntExpr{std::move(expr)}}};
+    }
+  }
 }
 
 // When a namelist group name appears (without NML=) in a READ or WRITE

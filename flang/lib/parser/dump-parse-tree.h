@@ -127,7 +127,6 @@ public:
   NODE(parser, CharLiteralConstantSubstring)
   NODE(parser, CharSelector)
   NODE(parser::CharSelector, LengthAndKind)
-  NODE(parser, CharVariable)
   NODE(parser, CloseStmt)
   NODE(parser::CloseStmt, CloseSpec)
   NODE(parser, CoarrayAssociation)

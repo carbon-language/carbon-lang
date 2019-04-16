@@ -1772,9 +1772,6 @@ struct Variable {
 // Appears only as part of scalar-logical-variable.
 using ScalarLogicalVariable = Scalar<Logical<Variable>>;
 
-// R905 char-variable -> variable
-WRAPPER_CLASS(CharVariable, Variable);
-
 // R906 default-char-variable -> variable
 // Appears only as part of scalar-default-char-variable.
 using ScalarDefaultCharVariable = Scalar<DefaultChar<Variable>>;
@@ -2495,9 +2492,14 @@ WRAPPER_CLASS(FileUnitNumber, ScalarIntExpr);
 
 // R1201 io-unit -> file-unit-number | * | internal-file-variable
 // R1203 internal-file-variable -> char-variable
+// R905 char-variable -> variable
+// When Variable appears as an IoUnit, it must be character of a default,
+// ASCII, or Unicode kind; this constraint is not automatically checked.
+// The parse is ambiguous and is repaired if necessary once the types of
+// symbols are known.
 struct IoUnit {
   UNION_CLASS_BOILERPLATE(IoUnit);
-  std::variant<CharVariable, FileUnitNumber, Star> u;
+  std::variant<Variable, FileUnitNumber, Star> u;
 };
 
 // R1206 file-name-expr -> scalar-default-char-expr

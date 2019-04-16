@@ -1441,9 +1441,6 @@ TYPE_CONTEXT_PARSER("variable"_en_US,
 // Appears only as part of scalar-logical-variable.
 constexpr auto scalarLogicalVariable{scalar(logical(variable))};
 
-// R905 char-variable -> variable
-constexpr auto charVariable{construct<CharVariable>(variable)};
-
 // R906 default-char-variable -> variable
 // Appears only as part of scalar-default-char-variable.
 constexpr auto scalarDefaultCharVariable{scalar(defaultChar(variable))};
@@ -2422,9 +2419,10 @@ TYPE_CONTEXT_PARSER("UNLOCK statement"_en_US,
 
 // R1201 io-unit -> file-unit-number | * | internal-file-variable
 // R1203 internal-file-variable -> char-variable
+// R905 char-variable -> variable
 // "char-variable" is attempted first since it's not type constrained but
 // syntactically ambiguous with "file-unit-number", which is constrained.
-TYPE_PARSER(construct<IoUnit>(charVariable / !"="_tok) ||
+TYPE_PARSER(construct<IoUnit>(variable / !"="_tok) ||
     construct<IoUnit>(fileUnitNumber) || construct<IoUnit>(star))
 
 // R1202 file-unit-number -> scalar-int-expr
