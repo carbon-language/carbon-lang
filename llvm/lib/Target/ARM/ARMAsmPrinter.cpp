@@ -264,17 +264,6 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
     default:
       // See if this is a generic print operand
       return AsmPrinter::PrintAsmOperand(MI, OpNum, ExtraCode, O);
-    case 'a': // Print as a memory address.
-      if (MI->getOperand(OpNum).isReg()) {
-        O << "["
-          << ARMInstPrinter::getRegisterName(MI->getOperand(OpNum).getReg())
-          << "]";
-        return false;
-      } else if (MI->getOperand(OpNum).isImm()) {
-        O << MI->getOperand(OpNum).getImm();
-        return false;
-      }
-      return true;
     case 'P': // Print a VFP double precision register.
     case 'q': // Print a NEON quad precision register.
       printOperand(MI, OpNum, O);

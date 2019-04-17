@@ -601,7 +601,8 @@ void AsmPrinter::PrintSpecial(const MachineInstr *MI, raw_ostream &OS,
 
 /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM
 /// instruction, using the specified assembler variant.  Targets should
-/// override this to format as appropriate.
+/// override this to format as appropriate for machine specific ExtraCodes
+/// or when the arch-independent handling would be too complex otherwise.
 bool AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                                  const char *ExtraCode, raw_ostream &O) {
   // Does this asm operand have a single letter operand modifier?
@@ -613,18 +614,24 @@ bool AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     switch (ExtraCode[0]) {
     default:
       return true;  // Unknown modifier.
+    case 'a': // Print as memory address.
+      if (MO.isReg()) {
+        PrintAsmMemoryOperand(MI, OpNo, nullptr, O);
+        return false;
+      }
+      LLVM_FALLTHROUGH; // GCC allows '%a' to behave like '%c' with immediates.
     case 'c': // Substitute immediate value without immediate syntax
-      if (MO.getType() != MachineOperand::MO_Immediate)
+      if (!MO.isImm())
         return true;
       O << MO.getImm();
       return false;
     case 'n':  // Negate the immediate constant.
-      if (MO.getType() != MachineOperand::MO_Immediate)
+      if (!MO.isImm())
         return true;
       O << -MO.getImm();
       return false;
     case 's':  // The GCC deprecated s modifier
-      if (MO.getType() != MachineOperand::MO_Immediate)
+      if (!MO.isImm())
         return true;
       O << ((32 - MO.getImm()) & 31);
       return false;
