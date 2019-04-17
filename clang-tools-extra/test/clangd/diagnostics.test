@@ -6,7 +6,7 @@
 # CHECK-NEXT:  "params": {
 # CHECK-NEXT:    "diagnostics": [
 # CHECK-NEXT:      {
-# CHECK-NEXT:        "code": "ext_main_returns_nonint",
+# CHECK-NEXT:        "code": "-Wmain-return-type",
 # CHECK-NEXT:        "message": "Return type of 'main' is not 'int' (fix available)",
 # CHECK-NEXT:        "range": {
 # CHECK-NEXT:          "end": {

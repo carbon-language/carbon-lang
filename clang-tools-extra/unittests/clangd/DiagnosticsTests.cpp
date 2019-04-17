@@ -107,7 +107,7 @@ o]]();
           AllOf(Diag(Test.range("typo"),
                      "use of undeclared identifier 'goo'; did you mean 'foo'?"),
                 DiagSource(Diag::Clang),
-                DiagName("err_undeclared_var_use_suggest"),
+                DiagName("undeclared_var_use_suggest"),
                 WithFix(
                     Fix(Test.range("typo"), "foo", "change 'go\\ o' to 'foo'")),
                 // This is a pretty normal range.
@@ -152,7 +152,7 @@ TEST(DiagnosticsTest, DiagnosticPreamble) {
   EXPECT_THAT(TU.build().getDiagnostics(),
               ElementsAre(testing::AllOf(
                   Diag(Test.range(), "'not-found.h' file not found"),
-                  DiagSource(Diag::Clang), DiagName("err_pp_file_not_found"))));
+                  DiagSource(Diag::Clang), DiagName("pp_file_not_found"))));
 }
 
 TEST(DiagnosticsTest, ClangTidy) {
@@ -252,7 +252,7 @@ TEST(DiagnosticsTest, NoFixItInMacro) {
 TEST(DiagnosticsTest, ToLSP) {
   clangd::Diag D;
   D.ID = clang::diag::err_enum_class_reference;
-  D.Name = "err_enum_class_reference";
+  D.Name = "enum_class_reference";
   D.Source = clangd::Diag::Clang;
   D.Message = "something terrible happened";
   D.Range = {pos(1, 2), pos(3, 4)};
@@ -322,7 +322,7 @@ main.cpp:2:3: error: something terrible happened)");
       LSPDiags,
       ElementsAre(Pair(EqualToLSPDiag(MainLSP), ElementsAre(EqualToFix(F))),
                   Pair(EqualToLSPDiag(NoteInMainLSP), IsEmpty())));
-  EXPECT_EQ(LSPDiags[0].first.code, "err_enum_class_reference");
+  EXPECT_EQ(LSPDiags[0].first.code, "enum_class_reference");
   EXPECT_EQ(LSPDiags[0].first.source, "clang");
   EXPECT_EQ(LSPDiags[1].first.code, "");
   EXPECT_EQ(LSPDiags[1].first.source, "");
