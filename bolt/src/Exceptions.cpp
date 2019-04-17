@@ -673,17 +673,6 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
     return true;
 
   const FDE &CurFDE = *I->second;
-  if (Function.getSize() != CurFDE.getAddressRange()) {
-    if (opts::Verbosity >= 1) {
-      errs() << "BOLT-WARNING: CFI information size mismatch for function \""
-             << Function << "\""
-             << format(": Function size is %dB, CFI covers "
-                       "%dB\n",
-                       Function.getSize(), CurFDE.getAddressRange());
-    }
-    return false;
-  }
-
   auto LSDA = CurFDE.getLSDAAddress();
   Function.setLSDAAddress(LSDA ? *LSDA : 0);
 
@@ -844,7 +833,8 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
           return false;
         default:
           if (opts::Verbosity >= 1) {
-            errs() << "BOLT-WARNING: Unrecognized CFI instruction\n";
+            errs() << "BOLT-WARNING: Unrecognized CFI instruction: "
+                   << Instr.Opcode << '\n';
           }
           return false;
         }
