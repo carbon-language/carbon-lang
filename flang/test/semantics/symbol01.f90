@@ -1,4 +1,4 @@
-! Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 !DEF: /m Module
 module m
- !DEF: /m/f PRIVATE, PURE, RECURSIVE Subprogram
+ !DEF: /m/f PRIVATE, PURE, RECURSIVE Subprogram REAL(4)
  private :: f
 contains
  !DEF: /m/s BIND(C), PUBLIC, PURE Subprogram

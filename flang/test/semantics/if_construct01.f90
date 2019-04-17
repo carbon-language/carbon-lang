@@ -54,4 +54,12 @@ else if(a > b) then
   a = 14
 end if
 
+if (f()) then
+  a = 15
+end if
+
+contains
+  logical function f()
+    f = .true.
+  end
 end

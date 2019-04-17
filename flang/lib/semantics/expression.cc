@@ -1443,15 +1443,14 @@ auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
   return std::visit(
       common::visitors{
           [&](const parser::Name &n) -> std::optional<CallAndArguments> {
-            if (n.symbol == nullptr) {
+            const Symbol *symbol{n.symbol};
+            if (symbol == nullptr) {
               Say("TODO INTERNAL no symbol for procedure designator name '%s'"_err_en_US,
                   n.ToString().data());
               return std::nullopt;
             }
-            const Symbol &ultimate{n.symbol->GetUltimate()};
-            if (const auto *proc{
-                    ultimate.detailsIf<semantics::ProcEntityDetails>()}) {
-              if (proc->HasExplicitInterface()) {
+            if (IsProcedure(*symbol)) {
+              if (symbol->HasExplicitInterface()) {
                 // TODO: check actual arguments vs. interface
               } else {
                 CallCharacteristics cc{n.source};
@@ -1468,7 +1467,7 @@ auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
                 }
               }
               return {CallAndArguments{
-                  ProcedureDesignator{*n.symbol}, std::move(arguments)}};
+                  ProcedureDesignator{*symbol}, std::move(arguments)}};
             } else {
               Say(n.source, "not a procedure"_err_en_US);
               return std::nullopt;

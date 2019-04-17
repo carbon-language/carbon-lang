@@ -123,4 +123,13 @@ else if( I ) then
   a = 14
 end if
 
+!ERROR: Must have LOGICAL type, but is REAL(4)
+if (f()) then
+  a = 15
+end if
+
+contains
+  real function f()
+    f = 1.0
+  end
 end

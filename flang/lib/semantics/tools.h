@@ -59,6 +59,7 @@ bool IsPointerDummy(const Symbol &);
 bool IsFunction(const Symbol &);
 bool IsPureFunction(const Symbol &);
 bool IsPureFunction(const Scope &);
+bool IsProcedure(const Symbol &);
 bool IsProcName(const Symbol &symbol);  // proc-name
 bool IsVariableName(const Symbol &symbol);  // variable-name
 bool IsAllocatable(const Symbol &);

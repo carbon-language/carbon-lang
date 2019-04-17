@@ -497,6 +497,9 @@ public:
             [](const EntityDetails &x) { return x.type(); },
             [](const ObjectEntityDetails &x) { return x.type(); },
             [](const AssocEntityDetails &x) { return x.type(); },
+            [](const SubprogramDetails &x) {
+              return x.isFunction() ? x.result().GetType() : nullptr;
+            },
             [](const ProcEntityDetails &x) { return x.interface().type(); },
             [](const TypeParamDetails &x) { return x.type(); },
             [](const UseDetails &x) { return x.symbol().GetType(); },
