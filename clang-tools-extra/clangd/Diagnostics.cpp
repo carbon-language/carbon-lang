@@ -350,6 +350,17 @@ std::vector<Diag> StoreDiags::take(const clang::tidy::ClangTidyContext *Tidy) {
       if (!TidyDiag.empty()) {
         Diag.Name = std::move(TidyDiag);
         Diag.Source = Diag::ClangTidy;
+        // clang-tidy bakes the name into diagnostic messages. Strip it out.
+        // It would be much nicer to make clang-tidy not do this.
+        auto CleanMessage = [&](std::string &Msg) {
+          StringRef Rest(Msg);
+          if (Rest.consume_back("]") && Rest.consume_back(Diag.Name) &&
+              Rest.consume_back(" ["))
+            Msg.resize(Rest.size());
+        };
+        CleanMessage(Diag.Message);
+        for (auto& Note : Diag.Notes)
+          CleanMessage(Note.Message);
         continue;
       }
     }

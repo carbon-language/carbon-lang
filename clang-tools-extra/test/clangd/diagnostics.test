@@ -23,7 +23,7 @@
 # CHECK-NEXT:      },
 # CHECK-NEXT:      {
 # CHECK-NEXT:        "code": "bugprone-sizeof-expression",
-# CHECK-NEXT:        "message": "Suspicious usage of 'sizeof(K)'; did you mean 'K'? [bugprone-sizeof-expression]",
+# CHECK-NEXT:        "message": "Suspicious usage of 'sizeof(K)'; did you mean 'K'?",
 # CHECK-NEXT:        "range": {
 # CHECK-NEXT:          "end": {
 # CHECK-NEXT:            "character": 12,

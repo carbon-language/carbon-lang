@@ -176,23 +176,21 @@ TEST(DiagnosticsTest, ClangTidy) {
       UnorderedElementsAre(
           AllOf(Diag(Test.range("deprecated"),
                      "inclusion of deprecated C++ header 'assert.h'; consider "
-                     "using 'cassert' instead [modernize-deprecated-headers]"),
+                     "using 'cassert' instead"),
                 DiagSource(Diag::ClangTidy),
                 DiagName("modernize-deprecated-headers"),
                 WithFix(Fix(Test.range("deprecated"), "<cassert>",
                             "change '\"assert.h\"' to '<cassert>'"))),
           Diag(Test.range("doubled"),
-               "suspicious usage of 'sizeof(sizeof(...))' "
-               "[bugprone-sizeof-expression]"),
+               "suspicious usage of 'sizeof(sizeof(...))'"),
           AllOf(
               Diag(Test.range("macroarg"),
                    "side effects in the 1st macro argument 'X' are repeated in "
-                   "macro expansion [bugprone-macro-repeated-side-effects]"),
+                   "macro expansion"),
               DiagSource(Diag::ClangTidy),
               DiagName("bugprone-macro-repeated-side-effects"),
-              WithNote(Diag(Test.range("macrodef"),
-                            "macro 'SQUARE' defined here "
-                            "[bugprone-macro-repeated-side-effects]"))),
+              WithNote(
+                  Diag(Test.range("macrodef"), "macro 'SQUARE' defined here"))),
           Diag(Test.range("macroarg"),
                "multiple unsequenced modifications to 'y'")));
 }
