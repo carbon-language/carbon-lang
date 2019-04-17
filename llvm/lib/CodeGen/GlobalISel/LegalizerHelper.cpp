@@ -603,7 +603,7 @@ LegalizerHelper::LegalizeResult LegalizerHelper::narrowScalar(MachineInstr &MI,
 
     unsigned TmpReg = MRI.createGenericVirtualRegister(NarrowTy);
     auto &MMO = **MI.memoperands_begin();
-    if (MMO.getSize() * 8 == NarrowSize) {
+    if (MMO.getSizeInBits() == NarrowSize) {
       MIRBuilder.buildLoad(TmpReg, PtrReg, MMO);
     } else {
       unsigned ExtLoad = ZExt ? TargetOpcode::G_ZEXTLOAD
@@ -1483,7 +1483,7 @@ LegalizerHelper::lower(MachineInstr &MI, unsigned TypeIdx, LLT Ty) {
     LLT DstTy = MRI.getType(DstReg);
     auto &MMO = **MI.memoperands_begin();
 
-    if (DstTy.getSizeInBits() == MMO.getSize() /* in bytes */ * 8) {
+    if (DstTy.getSizeInBits() == MMO.getSizeInBits()) {
       if (MI.getOpcode() == TargetOpcode::G_LOAD) {
         // This load needs splitting into power of 2 sized loads.
         if (DstTy.isVector())
@@ -1540,8 +1540,8 @@ LegalizerHelper::lower(MachineInstr &MI, unsigned TypeIdx, LLT Ty) {
     }
 
     if (DstTy.isScalar()) {
-      unsigned TmpReg = MRI.createGenericVirtualRegister(
-          LLT::scalar(MMO.getSize() /* in bytes */ * 8));
+      unsigned TmpReg =
+          MRI.createGenericVirtualRegister(LLT::scalar(MMO.getSizeInBits()));
       MIRBuilder.buildLoad(TmpReg, PtrReg, MMO);
       switch (MI.getOpcode()) {
       default:
@@ -1573,7 +1573,7 @@ LegalizerHelper::lower(MachineInstr &MI, unsigned TypeIdx, LLT Ty) {
     unsigned PtrReg = MI.getOperand(1).getReg();
     LLT SrcTy = MRI.getType(SrcReg);
     MachineMemOperand &MMO = **MI.memoperands_begin();
-    if (SrcTy.getSizeInBits() != MMO.getSize() /* in bytes */ * 8)
+    if (SrcTy.getSizeInBits() != MMO.getSizeInBits())
       return UnableToLegalize;
     if (SrcTy.isVector())
       return UnableToLegalize;
