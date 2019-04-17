@@ -270,13 +270,11 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
           << ARMInstPrinter::getRegisterName(MI->getOperand(OpNum).getReg())
           << "]";
         return false;
+      } else if (MI->getOperand(OpNum).isImm()) {
+        O << MI->getOperand(OpNum).getImm();
+        return false;
       }
-      LLVM_FALLTHROUGH;
-    case 'c': // Don't print "#" before an immediate operand.
-      if (!MI->getOperand(OpNum).isImm())
-        return true;
-      O << MI->getOperand(OpNum).getImm();
-      return false;
+      return true;
     case 'P': // Print a VFP double precision register.
     case 'q': // Print a NEON quad precision register.
       printOperand(MI, OpNum, O);

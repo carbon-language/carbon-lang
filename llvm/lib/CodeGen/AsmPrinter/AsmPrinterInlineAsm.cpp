@@ -425,6 +425,8 @@ static void EmitGCCInlineAsmStr(const char *AsmStr, const MachineInstr *MI,
           unsigned OpFlags = MI->getOperand(OpNo).getImm();
           ++OpNo;  // Skip over the ID number.
 
+          // FIXME: Shouldn't arch-independant output template handling go into
+          // PrintAsmOperand?
           if (Modifier[0] == 'l') { // Labels are target independent.
             if (MI->getOperand(OpNo).isBlockAddress()) {
               const BlockAddress *BA = MI->getOperand(OpNo).getBlockAddress();
@@ -606,6 +608,7 @@ bool AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
   if (ExtraCode && ExtraCode[0]) {
     if (ExtraCode[1] != 0) return true; // Unknown modifier.
 
+    // https://gcc.gnu.org/onlinedocs/gccint/Output-Template.html
     const MachineOperand &MO = MI->getOperand(OpNo);
     switch (ExtraCode[0]) {
     default:
