@@ -534,7 +534,7 @@ Stream::create(const Directory &StreamDesc, const object::MinidumpFile &File) {
       Modules.push_back(
           {M, std::move(*ExpectedName), *ExpectedCv, *ExpectedMisc});
     }
-    return make_unique<ModuleListStream>(std::move(Modules));
+    return llvm::make_unique<ModuleListStream>(std::move(Modules));
   }
   case StreamKind::RawContent:
     return llvm::make_unique<RawContentStream>(StreamDesc.Type,
