@@ -48,6 +48,28 @@ template <class T> struct FullNameLT {
 using CheckerNameLT = FullNameLT<CheckerRegistry::CheckerInfo>;
 } // end of anonymous namespace
 
+template <class CheckerOrPackageInfoList>
+static
+    typename std::conditional<std::is_const<CheckerOrPackageInfoList>::value,
+                              typename CheckerOrPackageInfoList::const_iterator,
+                              typename CheckerOrPackageInfoList::iterator>::type
+    binaryFind(CheckerOrPackageInfoList &Collection, StringRef FullName) {
+
+  using CheckerOrPackage = typename CheckerOrPackageInfoList::value_type;
+  using CheckerOrPackageFullNameLT = FullNameLT<CheckerOrPackage>;
+
+  assert(std::is_sorted(Collection.begin(), Collection.end(),
+                        CheckerOrPackageFullNameLT{}) &&
+         "In order to efficiently gather checkers/packages, this function "
+         "expects them to be already sorted!");
+
+  typename CheckerOrPackageInfoList::value_type Info(FullName);
+
+  return llvm::lower_bound(
+      Collection, Info,
+      FullNameLT<typename CheckerOrPackageInfoList::value_type>{});
+}
+
 static constexpr char PackageSeparator = '.';
 
 static bool isInPackage(const CheckerRegistry::CheckerInfo &Checker,
@@ -69,16 +91,7 @@ static bool isInPackage(const CheckerRegistry::CheckerInfo &Checker,
 
 CheckerRegistry::CheckerInfoListRange
 CheckerRegistry::getMutableCheckersForCmdLineArg(StringRef CmdLineArg) {
-
-  assert(std::is_sorted(Checkers.begin(), Checkers.end(), CheckerNameLT{}) &&
-         "In order to efficiently gather checkers, this function expects them "
-         "to be already sorted!");
-
-  // Use a binary search to find the possible start of the package.
-  CheckerRegistry::CheckerInfo PackageInfo(nullptr, nullptr, CmdLineArg, "",
-                                           "");
-  auto It = std::lower_bound(Checkers.begin(), Checkers.end(), PackageInfo,
-                             CheckerNameLT{});
+  auto It = binaryFind(Checkers, CmdLineArg);
 
   if (!isInPackage(*It, CmdLineArg))
     return {Checkers.end(), Checkers.end()};
@@ -268,24 +281,18 @@ void CheckerRegistry::addChecker(InitializationFunction Rfn,
   }
 }
 
-void CheckerRegistry::addDependency(StringRef FullName, StringRef dependency) {
-  auto CheckerThatNeedsDeps = [&FullName](const CheckerInfo &Chk) {
-    return Chk.FullName == FullName;
-  };
-  auto Dependency = [&dependency](const CheckerInfo &Chk) {
-    return Chk.FullName == dependency;
-  };
-
-  auto CheckerIt = llvm::find_if(Checkers, CheckerThatNeedsDeps);
-  assert(CheckerIt != Checkers.end() &&
+void CheckerRegistry::addDependency(StringRef FullName, StringRef Dependency) {
+  auto CheckerIt = binaryFind(Checkers, FullName);
+  assert(CheckerIt != Checkers.end() && CheckerIt->FullName == FullName &&
          "Failed to find the checker while attempting to set up its "
          "dependencies!");
 
-  auto DependencyIt = llvm::find_if(Checkers, Dependency);
+  auto DependencyIt = binaryFind(Checkers, Dependency);
   assert(DependencyIt != Checkers.end() &&
+         DependencyIt->FullName == Dependency &&
          "Failed to find the dependency of a checker!");
 
-  CheckerIt->Dependencies.push_back(&*DependencyIt);
+  CheckerIt->Dependencies.emplace_back(&*DependencyIt);
 }
 
 void CheckerRegistry::initializeManager(CheckerManager &CheckerMgr) const {

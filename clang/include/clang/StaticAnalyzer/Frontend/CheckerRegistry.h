@@ -108,8 +108,8 @@ public:
       State_Enabled
     };
 
-    InitializationFunction Initialize;
-    ShouldRegisterFunction ShouldRegister;
+    InitializationFunction Initialize = nullptr;
+    ShouldRegisterFunction ShouldRegister = nullptr;
     StringRef FullName;
     StringRef Desc;
     StringRef DocumentationUri;
@@ -129,6 +129,9 @@ public:
                 StringRef Name, StringRef Desc, StringRef DocsUri)
         : Initialize(Fn), ShouldRegister(sfn), FullName(Name), Desc(Desc),
           DocumentationUri(DocsUri) {}
+
+    // Used for lower_bound.
+    explicit CheckerInfo(StringRef FullName) : FullName(FullName) {}
   };
 
   using StateFromCmdLine = CheckerInfo::StateFromCmdLine;
