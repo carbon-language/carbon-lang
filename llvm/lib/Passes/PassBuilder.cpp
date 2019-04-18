@@ -1469,6 +1469,27 @@ Expected<SimplifyCFGOptions> parseSimplifyCFGOptions(StringRef Params) {
   return Result;
 }
 
+/// Parser of parameters for LoopVectorize pass.
+Expected<LoopVectorizeOptions> parseLoopVectorizeOptions(StringRef Params) {
+  LoopVectorizeOptions Opts;
+  while (!Params.empty()) {
+    StringRef ParamName;
+    std::tie(ParamName, Params) = Params.split(';');
+
+    bool Enable = !ParamName.consume_front("no-");
+    if (ParamName == "interleave-forced-only") {
+      Opts.setInterleaveOnlyWhenForced(Enable);
+    } else if (ParamName == "vectorize-forced-only") {
+      Opts.setVectorizeOnlyWhenForced(Enable);
+    } else {
+      return make_error<StringError>(
+          formatv("invalid LoopVectorize parameter '{0}' ", ParamName).str(),
+          inconvertibleErrorCode());
+    }
+  }
+  return Opts;
+}
+
 } // namespace
 
 /// Tests whether a pass name starts with a valid prefix for a default pipeline
