@@ -196,6 +196,10 @@ bool IsProcedure(const Symbol &symbol) {
       symbol.details());
 }
 
+bool IsProcedurePointer(const Symbol &symbol) {
+  return symbol.has<ProcEntityDetails>() && IsPointer(symbol);
+}
+
 static const Symbol *FindPointerComponent(
     const Scope &scope, std::set<const Scope *> &visited) {
   if (scope.kind() != Scope::Kind::DerivedType) {
@@ -208,7 +212,7 @@ static const Symbol *FindPointerComponent(
   // messaging.
   for (const auto &pair : scope) {
     const Symbol &symbol{*pair.second};
-    if (symbol.attrs().test(Attr::POINTER)) {
+    if (IsPointer(symbol)) {
       return &symbol;
     }
   }
@@ -256,9 +260,7 @@ const Symbol *FindPointerComponent(const DeclTypeSpec *type) {
 }
 
 const Symbol *FindPointerComponent(const Symbol &symbol) {
-  return symbol.attrs().test(Attr::POINTER)
-      ? &symbol
-      : FindPointerComponent(symbol.GetType());
+  return IsPointer(symbol) ? &symbol : FindPointerComponent(symbol.GetType());
 }
 
 // C1594 specifies several ways by which an object might be globally visible.
@@ -290,5 +292,19 @@ bool ExprTypeKindIsDefault(
       dynamicType->category != common::TypeCategory::Derived &&
       dynamicType->kind ==
       context.defaultKinds().GetDefaultKind(dynamicType->category);
+}
+
+const Symbol *FindFunctionResult(const Symbol &symbol) {
+  if (const auto *procEntity{symbol.detailsIf<ProcEntityDetails>()}) {
+    const ProcInterface &interface{procEntity->interface()};
+    if (interface.symbol() != nullptr) {
+      return FindFunctionResult(*interface.symbol());
+    }
+  } else if (const auto *subp{symbol.detailsIf<SubprogramDetails>()}) {
+    if (subp->isFunction()) {
+      return &subp->result();
+    }
+  }
+  return nullptr;
 }
 }

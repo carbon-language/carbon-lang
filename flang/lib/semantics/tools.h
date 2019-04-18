@@ -47,6 +47,7 @@ const Symbol *FindPointerComponent(const Scope &);
 const Symbol *FindPointerComponent(const DerivedTypeSpec &);
 const Symbol *FindPointerComponent(const DeclTypeSpec &);
 const Symbol *FindPointerComponent(const Symbol &);
+const Symbol *FindFunctionResult(const Symbol &);
 
 bool IsCommonBlockContaining(const Symbol &block, const Symbol &object);
 bool DoesScopeContain(const Scope *maybeAncestor, const Scope &maybeDescendent);
@@ -64,6 +65,7 @@ bool IsProcName(const Symbol &symbol);  // proc-name
 bool IsVariableName(const Symbol &symbol);  // variable-name
 bool IsAllocatable(const Symbol &);
 bool IsAllocatableOrPointer(const Symbol &);
+bool IsProcedurePointer(const Symbol &);
 
 // Determines whether an object might be visible outside a
 // PURE function (C1594); returns a non-null Symbol pointer for
