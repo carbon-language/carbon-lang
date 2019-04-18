@@ -22,8 +22,7 @@
 
 namespace Fortran::evaluate {
 
-static void ShapeAsFortran(
-    std::ostream &o, const std::vector<std::int64_t> &shape) {
+static void ShapeAsFortran(std::ostream &o, const ConstantSubscripts &shape) {
   if (shape.size() > 1) {
     o << ",shape=";
     char ch{'['};
@@ -101,6 +100,10 @@ std::ostream &Constant<Type<TypeCategory::Character, KIND>>::AsFortran(
   return o;
 }
 
+std::ostream &ActualArgument::AssumedType::AsFortran(std::ostream &o) const {
+  return o << symbol_->name().ToString();
+}
+
 std::ostream &ActualArgument::AsFortran(std::ostream &o) const {
   if (keyword.has_value()) {
     o << keyword->ToString() << '=';
@@ -108,7 +111,11 @@ std::ostream &ActualArgument::AsFortran(std::ostream &o) const {
   if (isAlternateReturn) {
     o << '*';
   }
-  return value().AsFortran(o);
+  if (const auto *expr{GetExpr()}) {
+    return expr->AsFortran(o);
+  } else {
+    return std::get<AssumedType>(u_).AsFortran(o);
+  }
 }
 
 std::ostream &SpecificIntrinsic::AsFortran(std::ostream &o) const {
@@ -321,7 +328,7 @@ template<typename T>
 std::ostream &EmitArray(
     std::ostream &o, const ArrayConstructorValues<T> &values) {
   const char *sep{""};
-  for (const auto &value : values.values()) {
+  for (const auto &value : values) {
     o << sep;
     std::visit([&](const auto &x) { EmitArray(o, x); }, value.u);
     sep = ",";

@@ -41,12 +41,55 @@ namespace Fortran::evaluate {
 
 class ActualArgument {
 public:
-  explicit ActualArgument(Expr<SomeType> &&x) : value_{std::move(x)} {}
-  explicit ActualArgument(common::CopyableIndirection<Expr<SomeType>> &&v)
-    : value_{std::move(v)} {}
+  // Dummy arguments that are TYPE(*) can be forwarded as actual arguments.
+  // Since that's the only thing one may do with them in Fortran, they're
+  // represented in expressions as a special case of an actual argument.
+  class AssumedType {
+  public:
+    explicit AssumedType(const semantics::Symbol &);
+    DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(AssumedType)
+    const semantics::Symbol &symbol() const { return *symbol_; }
+    int Rank() const;
+    bool operator==(const AssumedType &that) const {
+      return symbol_ == that.symbol_;
+    }
+    std::ostream &AsFortran(std::ostream &) const;
 
-  Expr<SomeType> &value() { return value_.value(); }
-  const Expr<SomeType> &value() const { return value_.value(); }
+  private:
+    const semantics::Symbol *symbol_;
+  };
+
+  explicit ActualArgument(Expr<SomeType> &&x) : u_{std::move(x)} {}
+  explicit ActualArgument(common::CopyableIndirection<Expr<SomeType>> &&v)
+    : u_{std::move(v)} {}
+  explicit ActualArgument(AssumedType x) : u_{x} {}
+
+  ActualArgument &operator=(Expr<SomeType> &&);
+
+  Expr<SomeType> *GetExpr() {
+    if (auto *p{
+            std::get_if<common::CopyableIndirection<Expr<SomeType>>>(&u_)}) {
+      return &p->value();
+    } else {
+      return nullptr;
+    }
+  }
+  const Expr<SomeType> *GetExpr() const {
+    if (const auto *p{
+            std::get_if<common::CopyableIndirection<Expr<SomeType>>>(&u_)}) {
+      return &p->value();
+    } else {
+      return nullptr;
+    }
+  }
+
+  const semantics::Symbol *GetAssumedTypeDummy() const {
+    if (const AssumedType * aType{std::get_if<AssumedType>(&u_)}) {
+      return &aType->symbol();
+    } else {
+      return nullptr;
+    }
+  }
 
   std::optional<DynamicType> GetType() const;
   int Rank() const;
@@ -64,7 +107,7 @@ private:
   // e.g. between X and (X).  The parser attempts to parse each argument
   // first as a variable, then as an expression, and the distinction appears
   // in the parse tree.
-  common::CopyableIndirection<Expr<SomeType>> value_;
+  std::variant<common::CopyableIndirection<Expr<SomeType>>, AssumedType> u_;
 };
 
 using ActualArguments = std::vector<std::optional<ActualArgument>>;

@@ -19,16 +19,41 @@
 
 namespace Fortran::evaluate {
 
+std::size_t TotalElementCount(const ConstantSubscripts &shape) {
+  std::size_t size{1};
+  for (auto dim : shape) {
+    CHECK(dim >= 0);
+    size *= dim;
+  }
+  return size;
+}
+
+bool IncrementSubscripts(
+    ConstantSubscripts &indices, const ConstantSubscripts &shape) {
+  auto rank{shape.size()};
+  CHECK(indices.size() == rank);
+  for (std::size_t j{0}; j < rank; ++j) {
+    CHECK(indices[j] >= 1);
+    if (++indices[j] <= shape[j]) {
+      return true;
+    } else {
+      CHECK(indices[j] == shape[j] + 1);
+      indices[j] = 1;
+    }
+  }
+  return false;  // all done
+}
+
 template<typename RESULT, typename VALUE>
 ConstantBase<RESULT, VALUE>::~ConstantBase() {}
 
-static std::int64_t SubscriptsToOffset(const std::vector<std::int64_t> &index,
-    const std::vector<std::int64_t> &shape) {
+static ConstantSubscript SubscriptsToOffset(
+    const ConstantSubscripts &index, const ConstantSubscripts &shape) {
   CHECK(index.size() == shape.size());
-  std::int64_t stride{1}, offset{0};
+  ConstantSubscript stride{1}, offset{0};
   int dim{0};
-  for (std::int64_t j : index) {
-    std::int64_t bound{shape[dim++]};
+  for (auto j : index) {
+    auto bound{shape[dim++]};
     CHECK(j >= 1 && j <= bound);
     offset += stride * (j - 1);
     stride *= bound;
@@ -37,26 +62,26 @@ static std::int64_t SubscriptsToOffset(const std::vector<std::int64_t> &index,
 }
 
 template<typename RESULT, typename VALUE>
-auto ConstantBase<RESULT, VALUE>::At(
-    const std::vector<std::int64_t> &index) const -> ScalarValue {
+auto ConstantBase<RESULT, VALUE>::At(const ConstantSubscripts &index) const
+    -> ScalarValue {
   return values_.at(SubscriptsToOffset(index, shape_));
 }
 
 template<typename RESULT, typename VALUE>
-auto ConstantBase<RESULT, VALUE>::At(std::vector<std::int64_t> &&index) const
+auto ConstantBase<RESULT, VALUE>::At(ConstantSubscripts &&index) const
     -> ScalarValue {
   return values_.at(SubscriptsToOffset(index, shape_));
 }
 
 static Constant<SubscriptInteger> ShapeAsConstant(
-    const std::vector<std::int64_t> &shape) {
+    const ConstantSubscripts &shape) {
   using IntType = Scalar<SubscriptInteger>;
   std::vector<IntType> result;
-  for (std::int64_t dim : shape) {
+  for (auto dim : shape) {
     result.emplace_back(dim);
   }
   return {std::move(result),
-      std::vector<std::int64_t>{static_cast<std::int64_t>(shape.size())}};
+      ConstantSubscripts{static_cast<std::int64_t>(shape.size())}};
 }
 
 template<typename RESULT, typename VALUE>
@@ -76,7 +101,7 @@ Constant<Type<TypeCategory::Character, KIND>>::Constant(ScalarValue &&str)
 
 template<int KIND>
 Constant<Type<TypeCategory::Character, KIND>>::Constant(std::int64_t len,
-    std::vector<ScalarValue> &&strings, std::vector<std::int64_t> &&dims)
+    std::vector<ScalarValue> &&strings, ConstantSubscripts &&dims)
   : length_{len}, shape_{std::move(dims)} {
   values_.assign(strings.size() * length_,
       static_cast<typename ScalarValue::value_type>(' '));
@@ -95,8 +120,8 @@ Constant<Type<TypeCategory::Character, KIND>>::Constant(std::int64_t len,
 
 template<int KIND> Constant<Type<TypeCategory::Character, KIND>>::~Constant() {}
 
-static std::int64_t ShapeElements(const std::vector<std::int64_t> &shape) {
-  std::int64_t elements{1};
+static ConstantSubscript ShapeElements(const ConstantSubscripts &shape) {
+  ConstantSubscript elements{1};
   for (auto dim : shape) {
     elements *= dim;
   }
@@ -119,7 +144,7 @@ std::size_t Constant<Type<TypeCategory::Character, KIND>>::size() const {
 
 template<int KIND>
 auto Constant<Type<TypeCategory::Character, KIND>>::At(
-    const std::vector<std::int64_t> &index) const -> ScalarValue {
+    const ConstantSubscripts &index) const -> ScalarValue {
   auto offset{SubscriptsToOffset(index, shape_)};
   return values_.substr(offset, length_);
 }
@@ -138,10 +163,10 @@ Constant<SomeDerived>::Constant(StructureConstructor &&x)
   : Base{std::move(x.values())}, derivedTypeSpec_{&x.derivedTypeSpec()} {}
 
 Constant<SomeDerived>::Constant(const semantics::DerivedTypeSpec &spec,
-    std::vector<StructureConstructorValues> &&x, std::vector<std::int64_t> &&s)
+    std::vector<StructureConstructorValues> &&x, ConstantSubscripts &&s)
   : Base{std::move(x), std::move(s)}, derivedTypeSpec_{&spec} {}
 
-static std::vector<StructureConstructorValues> GetValues(
+static std::vector<StructureConstructorValues> AcquireValues(
     std::vector<StructureConstructor> &&x) {
   std::vector<StructureConstructorValues> result;
   for (auto &&structure : std::move(x)) {
@@ -151,8 +176,8 @@ static std::vector<StructureConstructorValues> GetValues(
 }
 
 Constant<SomeDerived>::Constant(const semantics::DerivedTypeSpec &spec,
-    std::vector<StructureConstructor> &&x, std::vector<std::int64_t> &&s)
-  : Base{GetValues(std::move(x)), std::move(s)}, derivedTypeSpec_{&spec} {}
+    std::vector<StructureConstructor> &&x, ConstantSubscripts &&s)
+  : Base{AcquireValues(std::move(x)), std::move(s)}, derivedTypeSpec_{&spec} {}
 
 INSTANTIATE_CONSTANT_TEMPLATES
 }

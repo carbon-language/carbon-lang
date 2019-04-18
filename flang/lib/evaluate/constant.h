@@ -32,6 +32,24 @@ namespace Fortran::evaluate {
 
 template<typename> class Constant;
 
+// When describing shapes of constants or specifying 1-based subscript
+// values as indices into constants, use a vector of integers.
+using ConstantSubscript = std::int64_t;
+using ConstantSubscripts = std::vector<ConstantSubscript>;
+
+std::size_t TotalElementCount(const ConstantSubscripts &);
+
+inline ConstantSubscripts InitialSubscripts(int rank) {
+  return ConstantSubscripts(rank, 1);  // parens, not braces: "rank" copies of 1
+}
+inline ConstantSubscripts InitialSubscripts(const ConstantSubscripts &shape) {
+  return InitialSubscripts(static_cast<int>(shape.size()));
+}
+
+// Increments a vector of subscripts in Fortran array order (first dimension
+// varying most quickly).  Returns false when last element was visited.
+bool IncrementSubscripts(ConstantSubscripts &, const ConstantSubscripts &shape);
+
 // Constant<> is specialized for Character kinds and SomeDerived.
 // The non-Character intrinsic types, and SomeDerived, share enough
 // common behavior that they use this common base class.
@@ -45,7 +63,7 @@ public:
   template<typename A> ConstantBase(const A &x) : values_{x} {}
   template<typename A, typename = common::NoLvalue<A>>
   ConstantBase(A &&x) : values_{std::move(x)} {}
-  ConstantBase(std::vector<ScalarValue> &&x, std::vector<std::int64_t> &&dims)
+  ConstantBase(std::vector<ScalarValue> &&x, ConstantSubscripts &&dims)
     : values_(std::move(x)), shape_(std::move(dims)) {}
   DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(ConstantBase)
   ~ConstantBase();
@@ -57,7 +75,8 @@ public:
   bool empty() const { return values_.empty(); }
   std::size_t size() const { return values_.size(); }
   const std::vector<ScalarValue> &values() const { return values_; }
-  const std::vector<std::int64_t> &shape() const { return shape_; }
+  const ConstantSubscripts &shape() const { return shape_; }
+  ConstantSubscripts &shape() { return shape_; }
 
   ScalarValue operator*() const {
     CHECK(values_.size() == 1);
@@ -65,15 +84,15 @@ public:
   }
 
   // Apply 1-based subscripts
-  ScalarValue At(const std::vector<std::int64_t> &) const;
-  ScalarValue At(std::vector<std::int64_t> &&) const;
+  ScalarValue At(const ConstantSubscripts &) const;
+  ScalarValue At(ConstantSubscripts &&) const;
 
   Constant<SubscriptInteger> SHAPE() const;
   std::ostream &AsFortran(std::ostream &) const;
 
 protected:
   std::vector<ScalarValue> values_;
-  std::vector<std::int64_t> shape_;
+  ConstantSubscripts shape_;
 
 private:
   const Constant<Result> &AsConstant() const {
@@ -96,11 +115,11 @@ template<int KIND> class Constant<Type<TypeCategory::Character, KIND>> {
 public:
   using Result = Type<TypeCategory::Character, KIND>;
   using ScalarValue = Scalar<Result>;
+
   CLASS_BOILERPLATE(Constant)
   explicit Constant(const ScalarValue &);
   explicit Constant(ScalarValue &&);
-  Constant(
-      std::int64_t, std::vector<ScalarValue> &&, std::vector<std::int64_t> &&);
+  Constant(std::int64_t, std::vector<ScalarValue> &&, ConstantSubscripts &&);
   ~Constant();
 
   int Rank() const { return static_cast<int>(shape_.size()); }
@@ -109,7 +128,8 @@ public:
   }
   bool empty() const;
   std::size_t size() const;
-  const std::vector<std::int64_t> &shape() const { return shape_; }
+  const ConstantSubscripts &shape() const { return shape_; }
+  ConstantSubscripts &shape() { return shape_; }
 
   std::int64_t LEN() const { return length_; }
 
@@ -119,7 +139,7 @@ public:
   }
 
   // Apply 1-based subscripts
-  ScalarValue At(const std::vector<std::int64_t> &) const;
+  ScalarValue At(const ConstantSubscripts &) const;
 
   Constant<SubscriptInteger> SHAPE() const;
   std::ostream &AsFortran(std::ostream &) const;
@@ -128,7 +148,7 @@ public:
 private:
   ScalarValue values_;  // one contiguous string
   std::int64_t length_;
-  std::vector<std::int64_t> shape_;
+  ConstantSubscripts shape_;
 };
 
 using StructureConstructorValues = std::map<const semantics::Symbol *,
@@ -140,12 +160,13 @@ class Constant<SomeDerived>
 public:
   using Result = SomeDerived;
   using Base = ConstantBase<Result, StructureConstructorValues>;
+
   Constant(const StructureConstructor &);
   Constant(StructureConstructor &&);
   Constant(const semantics::DerivedTypeSpec &, std::vector<ScalarValue> &&,
-      std::vector<std::int64_t> &&);
+      ConstantSubscripts &&);
   Constant(const semantics::DerivedTypeSpec &,
-      std::vector<StructureConstructor> &&, std::vector<std::int64_t> &&);
+      std::vector<StructureConstructor> &&, ConstantSubscripts &&);
   CLASS_BOILERPLATE(Constant)
 
   const semantics::DerivedTypeSpec &derivedTypeSpec() const {

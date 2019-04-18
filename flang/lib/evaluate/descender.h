@@ -117,10 +117,14 @@ public:
   }
 
   template<typename R> void Descend(const ArrayConstructorValues<R> &avs) {
-    Visit(avs.values());
+    for (const auto &x : avs) {
+      Visit(x);
+    }
   }
   template<typename R> void Descend(ArrayConstructorValues<R> &avs) {
-    Visit(avs.values());
+    for (auto &x : avs) {
+      Visit(x);
+    }
   }
 
   template<int KIND>
@@ -155,13 +159,13 @@ public:
 
   void Descend(const StructureConstructor &sc) {
     Visit(sc.derivedTypeSpec());
-    for (const auto &pair : sc.values()) {
+    for (const auto &pair : sc) {
       Visit(pair.second);
     }
   }
   void Descend(StructureConstructor &sc) {
     Visit(sc.derivedTypeSpec());
-    for (const auto &pair : sc.values()) {
+    for (const auto &pair : sc) {
       Visit(pair.second);
     }
   }
@@ -241,8 +245,22 @@ public:
   template<typename T> void Descend(const Variable<T> &var) { Visit(var.u); }
   template<typename T> void Descend(Variable<T> &var) { Visit(var.u); }
 
-  void Descend(const ActualArgument &arg) { Visit(arg.value()); }
-  void Descend(ActualArgument &arg) { Visit(arg.value()); }
+  void Descend(const ActualArgument &arg) {
+    if (const auto *expr{arg.GetExpr()}) {
+      Visit(*expr);
+    } else {
+      const semantics::Symbol *aType{arg.GetAssumedTypeDummy()};
+      Visit(*aType);
+    }
+  }
+  void Descend(ActualArgument &arg) {
+    if (auto *expr{arg.GetExpr()}) {
+      Visit(*expr);
+    } else {
+      const semantics::Symbol *aType{arg.GetAssumedTypeDummy()};
+      Visit(*aType);
+    }
+  }
 
   void Descend(const ProcedureDesignator &p) { Visit(p.u); }
   void Descend(ProcedureDesignator &p) { Visit(p.u); }

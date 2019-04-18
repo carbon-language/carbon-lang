@@ -1161,7 +1161,7 @@ template<typename T>
 ArrayConstructorValues<T> MakeSpecific(
     ArrayConstructorValues<SomeType> &&from) {
   ArrayConstructorValues<T> to;
-  for (ArrayConstructorValue<SomeType> &x : from.values()) {
+  for (ArrayConstructorValue<SomeType> &x : from) {
     std::visit(
         common::visitors{
             [&](common::CopyableIndirection<Expr<SomeType>> &&expr) {
@@ -1456,7 +1456,7 @@ auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
                 CallCharacteristics cc{n.source};
                 if (std::optional<SpecificCall> specificCall{
                         context().intrinsics().Probe(
-                            cc, arguments, &GetContextualMessages())}) {
+                            cc, arguments, GetFoldingContext())}) {
                   return {
                       CallAndArguments{ProcedureDesignator{std::move(
                                            specificCall->specificIntrinsic)},

@@ -26,6 +26,8 @@
 
 namespace Fortran::evaluate {
 
+class FoldingContext;
+
 struct CallCharacteristics {
   parser::CharBlock name;
   bool isSubroutineCall{false};
@@ -61,8 +63,8 @@ public:
   // Probe the intrinsics for a match against a specific call.
   // On success, the actual arguments are transferred to the result
   // in dummy argument order.
-  std::optional<SpecificCall> Probe(const CallCharacteristics &,
-      ActualArguments &, parser::ContextualMessages *messages = nullptr) const;
+  std::optional<SpecificCall> Probe(
+      const CallCharacteristics &, ActualArguments &, FoldingContext &) const;
 
   // Probe the intrinsics with the name of a potential unrestricted specific
   // intrinsic.

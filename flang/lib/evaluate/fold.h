@@ -52,7 +52,7 @@ std::optional<Expr<T>> Fold(
 template<typename T>
 std::optional<Scalar<T>> GetScalarConstantValue(const Expr<T> &expr) {
   if (const auto *c{UnwrapExpr<Constant<T>>(expr)}) {
-    if (c->size() == 1) {
+    if (c->Rank() == 0) {
       return **c;
     } else {
       return std::nullopt;

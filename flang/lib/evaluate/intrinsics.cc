@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "intrinsics.h"
+#include "common.h"
 #include "expression.h"
 #include "fold.h"
 #include "shape.h"
@@ -32,7 +33,7 @@ using namespace Fortran::parser::literals;
 
 namespace Fortran::evaluate {
 
-using common::TypeCategory;
+class FoldingContext;
 
 // This file defines the supported intrinsic procedures and implements
 // their recognition and validation.  It is largely table-driven.  See
@@ -53,6 +54,8 @@ using common::TypeCategory;
 // INTEGER with a special "typeless" kind code.  Arguments of intrinsic types
 // that can also be be typeless values are encoded with an "elementalOrBOZ"
 // rank pattern.
+// Assumed-type (TYPE(*)) dummy arguments can be forwarded along to some
+// intrinsic functions that accept AnyType + Rank::anyOrAssumedRank.
 using CategorySet = common::EnumSet<TypeCategory, 8>;
 static constexpr CategorySet IntType{TypeCategory::Integer};
 static constexpr CategorySet RealType{TypeCategory::Real};
@@ -72,12 +75,12 @@ ENUM_CLASS(KindCode, none, defaultIntegerKind,
     defaultRealKind,  // is also the default COMPLEX kind
     doublePrecision, defaultCharKind, defaultLogicalKind,
     any,  // matches any kind value; each instance is independent
+    same,  // match any kind, but all "same" kinds must be equal
     typeless,  // BOZ literals are INTEGER with this kind
     teamType,  // TEAM_TYPE from module ISO_FORTRAN_ENV (for coarrays)
     kindArg,  // this argument is KIND=
     effectiveKind,  // for function results: same "kindArg", possibly defaulted
     dimArg,  // this argument is DIM=
-    same,  // match any kind; all "same" kinds must be equal
     likeMultiply,  // for DOT_PRODUCT and MATMUL
 )
 
@@ -153,7 +156,7 @@ ENUM_CLASS(Rank,
     matrix,
     array,  // not scalar, rank is known and greater than zero
     known,  // rank is known and can be scalar
-    anyOrAssumedRank,  // rank can be unknown
+    anyOrAssumedRank,  // rank can be unknown; assumed-type TYPE(*) allowed
     conformable,  // scalar, or array of same rank & shape as "array" argument
     reduceOperation,  // a pure function with constraints for REDUCE
     dimReduced,  // scalar if no DIM= argument, else rank(array)-1
@@ -207,7 +210,7 @@ struct IntrinsicInterface {
   Rank rank{Rank::elemental};
   std::optional<SpecificCall> Match(const CallCharacteristics &,
       const common::IntrinsicTypeDefaultKinds &, ActualArguments &,
-      parser::ContextualMessages &messages) const;
+      FoldingContext &context) const;
   int CountArguments() const;
   std::ostream &Dump(std::ostream &) const;
 };
@@ -771,7 +774,8 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
 std::optional<SpecificCall> IntrinsicInterface::Match(
     const CallCharacteristics &call,
     const common::IntrinsicTypeDefaultKinds &defaults,
-    ActualArguments &arguments, parser::ContextualMessages &messages) const {
+    ActualArguments &arguments, FoldingContext &context) const {
+  auto &messages{context.messages()};
   // Attempt to construct a 1-1 correspondence between the dummy arguments in
   // a particular intrinsic procedure's generic interface and the actual
   // arguments in a procedure reference.
@@ -868,6 +872,18 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
         continue;
       }
     }
+    if (arg->GetAssumedTypeDummy()) {
+      // TYPE(*) assumed-type dummy argument forwarded to intrinsic
+      if (d.typePattern.categorySet == AnyType &&
+          d.typePattern.kindCode == KindCode::any &&
+          d.rank == Rank::anyOrAssumedRank) {
+        continue;
+      }
+      messages.Say("Assumed type TYPE(*) dummy argument not allowed "
+                   "for '%s=' intrinsic argument"_err_en_US,
+          d.keyword);
+      return std::nullopt;
+    }
     std::optional<DynamicType> type{arg->GetType()};
     if (!type.has_value()) {
       CHECK(arg->Rank() == 0);
@@ -946,7 +962,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
   for (std::size_t j{0}; j < dummies; ++j) {
     const IntrinsicDummyArgument &d{dummy[std::min(j, dummyArgPatterns - 1)]};
     if (const ActualArgument * arg{actualForDummy[j]}) {
-      if (IsAssumedRank(arg->value()) && d.rank != Rank::anyOrAssumedRank) {
+      if (IsAssumedRank(*arg) && d.rank != Rank::anyOrAssumedRank) {
         messages.Say("assumed-rank array cannot be forwarded to "
                      "'%s=' argument"_err_en_US,
             d.keyword);
@@ -967,7 +983,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       case Rank::shape:
         CHECK(!shapeArgSize.has_value());
         if (rank == 1) {
-          if (auto shape{GetShape(*arg)}) {
+          if (auto shape{GetShape(context, *arg)}) {
             if (auto constShape{AsConstantShape(*shape)}) {
               shapeArgSize = (**constShape).ToInt64();
               CHECK(shapeArgSize >= 0);
@@ -1083,12 +1099,13 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       CHECK(kindDummyArg != nullptr);
       CHECK(result.categorySet == CategorySet{resultType->category});
       if (kindArg != nullptr) {
-        auto &expr{kindArg->value()};
-        CHECK(expr.Rank() == 0);
-        if (auto code{ToInt64(expr)}) {
-          if (IsValidKindOfIntrinsicType(resultType->category, *code)) {
-            resultType->kind = *code;
-            break;
+        if (auto *expr{kindArg->GetExpr()}) {
+          CHECK(expr->Rank() == 0);
+          if (auto code{ToInt64(*expr)}) {
+            if (IsValidKindOfIntrinsicType(resultType->category, *code)) {
+              resultType->kind = *code;
+              break;
+            }
           }
         }
         messages.Say("'kind=' argument must be a constant scalar integer "
@@ -1196,8 +1213,8 @@ public:
 
   bool IsIntrinsic(const std::string &) const;
 
-  std::optional<SpecificCall> Probe(const CallCharacteristics &,
-      ActualArguments &, parser::ContextualMessages *) const;
+  std::optional<SpecificCall> Probe(
+      const CallCharacteristics &, ActualArguments &, FoldingContext &) const;
 
   std::optional<UnrestrictedSpecificIntrinsicFunctionInterface>
   IsUnrestrictedSpecificIntrinsicFunction(const std::string &) const;
@@ -1230,21 +1247,21 @@ bool IntrinsicProcTable::Implementation::IsIntrinsic(
 // match for a given procedure reference.
 std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
     const CallCharacteristics &call, ActualArguments &arguments,
-    parser::ContextualMessages *messages) const {
+    FoldingContext &context) const {
   if (call.isSubroutineCall) {
     return std::nullopt;  // TODO
   }
-  parser::Messages *finalBuffer{messages ? messages->messages() : nullptr};
+  parser::Messages *finalBuffer{context.messages().messages()};
   // Probe the specific intrinsic function table first.
   parser::Messages specificBuffer;
   parser::ContextualMessages specificErrors{
-      messages ? messages->at() : call.name,
-      finalBuffer ? &specificBuffer : nullptr};
+      call.name, finalBuffer ? &specificBuffer : nullptr};
+  FoldingContext specificContext{context, specificErrors};
   std::string name{call.name.ToString()};
   auto specificRange{specificFuncs_.equal_range(name)};
   for (auto iter{specificRange.first}; iter != specificRange.second; ++iter) {
     if (auto specificCall{
-            iter->second->Match(call, defaults_, arguments, specificErrors)}) {
+            iter->second->Match(call, defaults_, arguments, specificContext)}) {
       if (const char *genericName{iter->second->generic}) {
         specificCall->specificIntrinsic.name = genericName;
       }
@@ -1256,12 +1273,12 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
   // Probe the generic intrinsic function table next.
   parser::Messages genericBuffer;
   parser::ContextualMessages genericErrors{
-      messages ? messages->at() : call.name,
-      finalBuffer ? &genericBuffer : nullptr};
+      call.name, finalBuffer ? &genericBuffer : nullptr};
+  FoldingContext genericContext{context, genericErrors};
   auto genericRange{genericFuncs_.equal_range(name)};
   for (auto iter{genericRange.first}; iter != genericRange.second; ++iter) {
     if (auto specificCall{
-            iter->second->Match(call, defaults_, arguments, genericErrors)}) {
+            iter->second->Match(call, defaults_, arguments, genericContext)}) {
       return specificCall;
     }
   }
@@ -1277,20 +1294,20 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
       genericErrors.Say("unknown argument '%s' to NULL()"_err_en_US,
           arguments[0]->keyword->ToString().data());
     } else {
-      Expr<SomeType> &mold{arguments[0]->value()};
-      if (IsPointerOrAllocatable(mold)) {
-        return std::make_optional<SpecificCall>(
-            SpecificIntrinsic{"null"s, mold.GetType(), mold.Rank(),
-                semantics::Attrs{semantics::Attr::POINTER}},
-            std::move(arguments));
-      } else {
-        genericErrors.Say("MOLD argument to NULL() must be a pointer "
-                          "or allocatable"_err_en_US);
+      if (Expr<SomeType> * mold{arguments[0]->GetExpr()}) {
+        if (IsPointerOrAllocatable(*mold)) {
+          return std::make_optional<SpecificCall>(
+              SpecificIntrinsic{"null"s, mold->GetType(), mold->Rank(),
+                  semantics::Attrs{semantics::Attr::POINTER}},
+              std::move(arguments));
+        }
       }
+      genericErrors.Say("MOLD argument to NULL() must be a pointer "
+                        "or allocatable"_err_en_US);
     }
   }
   // No match
-  if (finalBuffer) {
+  if (finalBuffer != nullptr) {
     if (genericBuffer.empty()) {
       finalBuffer->Annex(std::move(specificBuffer));
     } else {
@@ -1358,9 +1375,9 @@ bool IntrinsicProcTable::IsIntrinsic(const std::string &name) const {
 
 std::optional<SpecificCall> IntrinsicProcTable::Probe(
     const CallCharacteristics &call, ActualArguments &arguments,
-    parser::ContextualMessages *messages) const {
+    FoldingContext &context) const {
   CHECK(impl_ != nullptr || !"IntrinsicProcTable: not configured");
-  return impl_->Probe(call, arguments, messages);
+  return impl_->Probe(call, arguments, context);
 }
 
 std::optional<UnrestrictedSpecificIntrinsicFunctionInterface>

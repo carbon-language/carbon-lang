@@ -29,7 +29,7 @@ module m1
   integer(8), parameter :: ac3bs(:) = shape([(1,j=4,1,-1)])
   integer(8), parameter :: ac4s(:) = shape([((j,k,j*k,k=1,3),j=1,4)])
   integer(8), parameter :: ac5s(:) = shape([((0,k=5,1,-2),j=9,2,-3)])
-  integer(8), parameter :: rss(:) = shape(reshape([(0,j=1,90)], [10_8,9_8]))
+  integer(8), parameter :: rss(:) = shape(reshape([(0,j=1,90)], -[2,3]*(-[5_8,3_8])))
  contains
   subroutine subr(x,n1,n2)
     real, intent(in) :: x(:,:)

@@ -33,13 +33,15 @@ Shape AsShape(const Constant<ExtentType> &arrayConstant) {
   return result;
 }
 
-std::optional<Shape> AsShape(ExtentExpr &&arrayExpr) {
+std::optional<Shape> AsShape(FoldingContext &context, ExtentExpr &&arrayExpr) {
+  // Flatten any array expression into an array constructor if possible.
+  arrayExpr = Fold(context, std::move(arrayExpr));
   if (auto *constArray{UnwrapExpr<Constant<ExtentType>>(arrayExpr)}) {
     return AsShape(*constArray);
   }
   if (auto *constructor{UnwrapExpr<ArrayConstructor<ExtentType>>(arrayExpr)}) {
     Shape result;
-    for (auto &value : constructor->values()) {
+    for (auto &value : *constructor) {
       if (auto *expr{std::get_if<ExtentExpr>(&value.u)}) {
         if (expr->Rank() == 0) {
           result.emplace_back(std::move(*expr));
@@ -50,13 +52,10 @@ std::optional<Shape> AsShape(ExtentExpr &&arrayExpr) {
     }
     return result;
   }
-  // TODO: linearize other array-valued expressions of known shape, e.g. A+B
-  // as well as conversions of arrays; this will be easier given a
-  // general-purpose array expression flattener (pmk)
   return std::nullopt;
 }
 
-std::optional<ExtentExpr> AsShapeArrayExpr(const Shape &shape) {
+std::optional<ExtentExpr> AsExtentArrayExpr(const Shape &shape) {
   ArrayConstructorValues<ExtentType> values;
   for (const auto &dim : shape) {
     if (dim.has_value()) {
@@ -69,7 +68,7 @@ std::optional<ExtentExpr> AsShapeArrayExpr(const Shape &shape) {
 }
 
 std::optional<Constant<ExtentType>> AsConstantShape(const Shape &shape) {
-  if (auto shapeArray{AsShapeArrayExpr(shape)}) {
+  if (auto shapeArray{AsExtentArrayExpr(shape)}) {
     FoldingContext noFoldingContext;
     auto folded{Fold(noFoldingContext, std::move(*shapeArray))};
     if (auto *p{UnwrapExpr<Constant<ExtentType>>(folded)}) {
@@ -77,6 +76,22 @@ std::optional<Constant<ExtentType>> AsConstantShape(const Shape &shape) {
     }
   }
   return std::nullopt;
+}
+
+ConstantSubscripts AsConstantExtents(const Constant<ExtentType> &shape) {
+  ConstantSubscripts result;
+  for (const auto &extent : shape.values()) {
+    result.push_back(extent.ToInt64());
+  }
+  return result;
+}
+
+std::optional<ConstantSubscripts> AsConstantExtents(const Shape &shape) {
+  if (auto shapeConstant{AsConstantShape(shape)}) {
+    return AsConstantExtents(*shapeConstant);
+  } else {
+    return std::nullopt;
+  }
 }
 
 static ExtentExpr ComputeTripCount(
@@ -121,7 +136,16 @@ MaybeExtent GetSize(Shape &&shape) {
   return extent;
 }
 
-static MaybeExtent GetLowerBound(
+bool ContainsAnyImpliedDoIndex(const ExtentExpr &expr) {
+  struct MyVisitor : public virtual VisitorBase<bool> {
+    using Result = bool;
+    explicit MyVisitor(int) { result() = false; }
+    void Handle(const ImpliedDoIndex &) { Return(true); }
+  };
+  return Visitor<MyVisitor>{0}.Traverse(expr);
+}
+
+MaybeExtent GetShapeHelper::GetLowerBound(
     const Symbol &symbol, const Component *component, int dimension) {
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     int j{0};
@@ -142,7 +166,7 @@ static MaybeExtent GetLowerBound(
   return std::nullopt;
 }
 
-static MaybeExtent GetExtent(
+MaybeExtent GetShapeHelper::GetExtent(
     const Symbol &symbol, const Component *component, int dimension) {
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     int j{0};
@@ -169,8 +193,8 @@ static MaybeExtent GetExtent(
   return std::nullopt;
 }
 
-static MaybeExtent GetExtent(const Subscript &subscript, const Symbol &symbol,
-    const Component *component, int dimension) {
+MaybeExtent GetShapeHelper::GetExtent(const Subscript &subscript,
+    const Symbol &symbol, const Component *component, int dimension) {
   return std::visit(
       common::visitors{
           [&](const Triplet &triplet) -> MaybeExtent {
@@ -185,7 +209,7 @@ static MaybeExtent GetExtent(const Subscript &subscript, const Symbol &symbol,
             return CountTrips(std::move(lower), std::move(upper),
                 MaybeExtent{triplet.stride()});
           },
-          [](const IndirectSubscriptIntegerExpr &subs) -> MaybeExtent {
+          [&](const IndirectSubscriptIntegerExpr &subs) -> MaybeExtent {
             if (auto shape{GetShape(subs.value())}) {
               if (shape->size() > 0) {
                 CHECK(shape->size() == 1);  // vector-valued subscript
@@ -198,16 +222,7 @@ static MaybeExtent GetExtent(const Subscript &subscript, const Symbol &symbol,
       subscript.u);
 }
 
-bool ContainsAnyImpliedDoIndex(const ExtentExpr &expr) {
-  struct MyVisitor : public virtual VisitorBase<bool> {
-    using Result = bool;
-    explicit MyVisitor(int) { result() = false; }
-    void Handle(const ImpliedDoIndex &) { Return(true); }
-  };
-  return Visitor<MyVisitor>{0}.Traverse(expr);
-}
-
-std::optional<Shape> GetShape(
+std::optional<Shape> GetShapeHelper::GetShape(
     const Symbol &symbol, const Component *component) {
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     Shape result;
@@ -221,7 +236,7 @@ std::optional<Shape> GetShape(
   }
 }
 
-std::optional<Shape> GetShape(const Symbol *symbol) {
+std::optional<Shape> GetShapeHelper::GetShape(const Symbol *symbol) {
   if (symbol != nullptr) {
     return GetShape(*symbol);
   } else {
@@ -229,7 +244,7 @@ std::optional<Shape> GetShape(const Symbol *symbol) {
   }
 }
 
-std::optional<Shape> GetShape(const BaseObject &object) {
+std::optional<Shape> GetShapeHelper::GetShape(const BaseObject &object) {
   if (const Symbol * symbol{object.symbol()}) {
     return GetShape(*symbol);
   } else {
@@ -237,7 +252,7 @@ std::optional<Shape> GetShape(const BaseObject &object) {
   }
 }
 
-std::optional<Shape> GetShape(const Component &component) {
+std::optional<Shape> GetShapeHelper::GetShape(const Component &component) {
   const Symbol &symbol{component.GetLastSymbol()};
   if (symbol.Rank() > 0) {
     return GetShape(symbol, &component);
@@ -246,7 +261,7 @@ std::optional<Shape> GetShape(const Component &component) {
   }
 }
 
-std::optional<Shape> GetShape(const ArrayRef &arrayRef) {
+std::optional<Shape> GetShapeHelper::GetShape(const ArrayRef &arrayRef) {
   Shape shape;
   const Symbol &symbol{arrayRef.GetLastSymbol()};
   const Component *component{std::get_if<Component>(&arrayRef.base())};
@@ -264,7 +279,7 @@ std::optional<Shape> GetShape(const ArrayRef &arrayRef) {
   }
 }
 
-std::optional<Shape> GetShape(const CoarrayRef &coarrayRef) {
+std::optional<Shape> GetShapeHelper::GetShape(const CoarrayRef &coarrayRef) {
   Shape shape;
   SymbolOrComponent base{coarrayRef.GetBaseSymbolOrComponent()};
   const Symbol &symbol{coarrayRef.GetLastSymbol()};
@@ -283,11 +298,11 @@ std::optional<Shape> GetShape(const CoarrayRef &coarrayRef) {
   }
 }
 
-std::optional<Shape> GetShape(const DataRef &dataRef) {
+std::optional<Shape> GetShapeHelper::GetShape(const DataRef &dataRef) {
   return GetShape(dataRef.u);
 }
 
-std::optional<Shape> GetShape(const Substring &substring) {
+std::optional<Shape> GetShapeHelper::GetShape(const Substring &substring) {
   if (const auto *dataRef{substring.GetParentIf<DataRef>()}) {
     return GetShape(*dataRef);
   } else {
@@ -295,15 +310,21 @@ std::optional<Shape> GetShape(const Substring &substring) {
   }
 }
 
-std::optional<Shape> GetShape(const ComplexPart &part) {
+std::optional<Shape> GetShapeHelper::GetShape(const ComplexPart &part) {
   return GetShape(part.complex());
 }
 
-std::optional<Shape> GetShape(const ActualArgument &arg) {
-  return GetShape(arg.value());
+std::optional<Shape> GetShapeHelper::GetShape(const ActualArgument &arg) {
+  if (const auto *expr{arg.GetExpr()}) {
+    return GetShape(*expr);
+  } else {
+    const Symbol *aType{arg.GetAssumedTypeDummy()};
+    CHECK(aType != nullptr);
+    return GetShape(*aType);
+  }
 }
 
-std::optional<Shape> GetShape(const ProcedureRef &call) {
+std::optional<Shape> GetShapeHelper::GetShape(const ProcedureRef &call) {
   if (call.Rank() == 0) {
     return Shape{};
   } else if (call.IsElemental()) {
@@ -318,14 +339,16 @@ std::optional<Shape> GetShape(const ProcedureRef &call) {
                  std::get_if<SpecificIntrinsic>(&call.proc().u)}) {
     if (intrinsic->name == "shape" || intrinsic->name == "lbound" ||
         intrinsic->name == "ubound") {
-      return Shape{MaybeExtent{
-          ExtentExpr{call.arguments().front().value().value().Rank()}}};
+      const auto *expr{call.arguments().front().value().GetExpr()};
+      CHECK(expr != nullptr);
+      return Shape{MaybeExtent{ExtentExpr{expr->Rank()}}};
     } else if (intrinsic->name == "reshape") {
       if (call.arguments().size() >= 2 && call.arguments().at(1).has_value()) {
         // SHAPE(RESHAPE(array,shape)) -> shape
-        const Expr<SomeType> &shapeExpr{call.arguments().at(1)->value()};
-        Expr<SomeInteger> shape{std::get<Expr<SomeInteger>>(shapeExpr.u)};
-        return AsShape(ConvertToType<ExtentType>(std::move(shape)));
+        const auto *shapeExpr{call.arguments().at(1).value().GetExpr()};
+        CHECK(shapeExpr != nullptr);
+        Expr<SomeInteger> shape{std::get<Expr<SomeInteger>>(shapeExpr->u)};
+        return AsShape(context_, ConvertToType<ExtentType>(std::move(shape)));
       }
     } else {
       // TODO: shapes of other non-elemental intrinsic results
@@ -334,28 +357,54 @@ std::optional<Shape> GetShape(const ProcedureRef &call) {
   return std::nullopt;
 }
 
-std::optional<Shape> GetShape(const Relational<SomeType> &relation) {
+std::optional<Shape> GetShapeHelper::GetShape(
+    const Relational<SomeType> &relation) {
   return GetShape(relation.u);
 }
 
-std::optional<Shape> GetShape(const StructureConstructor &) {
+std::optional<Shape> GetShapeHelper::GetShape(const StructureConstructor &) {
   return Shape{};  // always scalar
 }
 
-std::optional<Shape> GetShape(const ImpliedDoIndex &) {
+std::optional<Shape> GetShapeHelper::GetShape(const ImpliedDoIndex &) {
   return Shape{};  // always scalar
 }
 
-std::optional<Shape> GetShape(const DescriptorInquiry &) {
+std::optional<Shape> GetShapeHelper::GetShape(const DescriptorInquiry &) {
   return Shape{};  // always scalar
 }
 
-std::optional<Shape> GetShape(const BOZLiteralConstant &) {
+std::optional<Shape> GetShapeHelper::GetShape(const BOZLiteralConstant &) {
   return Shape{};  // always scalar
 }
 
-std::optional<Shape> GetShape(const NullPointer &) {
+std::optional<Shape> GetShapeHelper::GetShape(const NullPointer &) {
   return {};  // not an object
 }
 
+void CheckConformance(parser::ContextualMessages &messages, const Shape &left,
+    const Shape &right) {
+  if (!left.empty() && !right.empty()) {
+    int n{static_cast<int>(left.size())};
+    int rn{static_cast<int>(right.size())};
+    if (n != rn) {
+      messages.Say(
+          "Left operand has rank %d, but right operand has rank %d"_err_en_US,
+          n, rn);
+    } else {
+      for (int j{0}; j < n; ++j) {
+        if (auto leftDim{ToInt64(left[j])}) {
+          if (auto rightDim{ToInt64(right[j])}) {
+            if (*leftDim != *rightDim) {
+              messages.Say("Dimension %d of left operand has extent %jd, "
+                           "but right operand has extent %jd"_err_en_US,
+                  j + 1, static_cast<std::intmax_t>(*leftDim),
+                  static_cast<std::intmax_t>(*rightDim));
+            }
+          }
+        }
+      }
+    }
+  }
+}
 }

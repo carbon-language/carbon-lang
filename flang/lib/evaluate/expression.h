@@ -450,18 +450,26 @@ public:
   using Values = std::vector<ArrayConstructorValue<Result>>;
   DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(ArrayConstructorValues)
   ArrayConstructorValues() {}
+
   bool operator==(const ArrayConstructorValues &) const;
   static constexpr int Rank() { return 1; }
   template<typename A> common::NoLvalue<A> Push(A &&x) {
     values_.emplace_back(std::move(x));
   }
-  Values &values() { return values_; }
-  const Values &values() const { return values_; }
+
+  typename Values::iterator begin() { return values_.begin(); }
+  typename Values::const_iterator begin() const { return values_.begin(); }
+  typename Values::iterator end() { return values_.end(); }
+  typename Values::const_iterator end() const { return values_.end(); }
 
 protected:
   Values values_;
 };
 
+// Note that there are specializations of ArrayConstructor for character
+// and derived types, since they must carry additional type information,
+// but that an empty ArrayConstructor can be constructed for any type
+// given an expression from which such type information may be gleaned.
 template<typename RESULT>
 class ArrayConstructor : public ArrayConstructorValues<RESULT> {
 public:
@@ -469,6 +477,7 @@ public:
   using Base = ArrayConstructorValues<Result>;
   DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(ArrayConstructor)
   explicit ArrayConstructor(Base &&values) : Base{std::move(values)} {}
+  template<typename T> explicit ArrayConstructor(const Expr<T> &) {}
   static constexpr DynamicType GetType() { return Result::GetType(); }
   std::ostream &AsFortran(std::ostream &) const;
 };
@@ -482,6 +491,8 @@ public:
   CLASS_BOILERPLATE(ArrayConstructor)
   ArrayConstructor(Expr<SubscriptInteger> &&len, Base &&v)
     : Base{std::move(v)}, length_{std::move(len)} {}
+  template<typename T>
+  explicit ArrayConstructor(const Expr<T> &proto) : length_{proto.LEN()} {}
   bool operator==(const ArrayConstructor &) const;
   static constexpr DynamicType GetType() { return Result::GetType(); }
   std::ostream &AsFortran(std::ostream &) const;
@@ -500,6 +511,11 @@ public:
   CLASS_BOILERPLATE(ArrayConstructor)
   ArrayConstructor(const semantics::DerivedTypeSpec &spec, Base &&v)
     : Base{std::move(v)}, derivedTypeSpec_{&spec} {}
+  template<typename T>
+  explicit ArrayConstructor(const Expr<T> &proto)
+    : derivedTypeSpec_{GetType(proto).derived} {
+    CHECK(derivedTypeSpec_ != nullptr);
+  }
   bool operator==(const ArrayConstructor &) const;
   const semantics::DerivedTypeSpec &derivedTypeSpec() const {
     return *derivedTypeSpec_;
@@ -715,7 +731,17 @@ public:
   }
   StructureConstructorValues &values() { return values_; }
   const StructureConstructorValues &values() const { return values_; }
+
   bool operator==(const StructureConstructor &) const;
+
+  StructureConstructorValues::iterator begin() { return values_.begin(); }
+  StructureConstructorValues::const_iterator begin() const {
+    return values_.begin();
+  }
+  StructureConstructorValues::iterator end() { return values_.end(); }
+  StructureConstructorValues::const_iterator end() const {
+    return values_.end();
+  }
 
   StructureConstructor &Add(const semantics::Symbol &, Expr<SomeType> &&);
   int Rank() const { return 0; }

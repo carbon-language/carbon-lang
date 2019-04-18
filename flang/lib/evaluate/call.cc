@@ -14,19 +14,45 @@
 
 #include "call.h"
 #include "expression.h"
+#include "tools.h"
+#include "../common/idioms.h"
 #include "../semantics/symbol.h"
 
 namespace Fortran::evaluate {
 
-std::optional<DynamicType> ActualArgument::GetType() const {
-  return value().GetType();
+ActualArgument::AssumedType::AssumedType(const semantics::Symbol &symbol)
+  : symbol_{&symbol} {
+  const semantics::DeclTypeSpec *type{symbol.GetType()};
+  CHECK(
+      type != nullptr && type->category() == semantics::DeclTypeSpec::TypeStar);
 }
 
-int ActualArgument::Rank() const { return value().Rank(); }
+int ActualArgument::AssumedType::Rank() const { return symbol_->Rank(); }
+
+ActualArgument &ActualArgument::operator=(Expr<SomeType> &&expr) {
+  u_ = std::move(expr);
+  return *this;
+}
+
+std::optional<DynamicType> ActualArgument::GetType() const {
+  if (const auto *expr{GetExpr()}) {
+    return expr->GetType();
+  } else {
+    return std::nullopt;
+  }
+}
+
+int ActualArgument::Rank() const {
+  if (const auto *expr{GetExpr()}) {
+    return expr->Rank();
+  } else {
+    return std::get<AssumedType>(u_).Rank();
+  }
+}
 
 bool ActualArgument::operator==(const ActualArgument &that) const {
   return keyword == that.keyword &&
-      isAlternateReturn == that.isAlternateReturn && value() == that.value();
+      isAlternateReturn == that.isAlternateReturn && u_ == that.u_;
 }
 
 bool SpecificIntrinsic::operator==(const SpecificIntrinsic &that) const {
@@ -80,8 +106,28 @@ const Symbol *ProcedureDesignator::GetSymbol() const {
 }
 
 Expr<SubscriptInteger> ProcedureRef::LEN() const {
-  // TODO: the results of the intrinsic functions REPEAT and TRIM have
-  // unpredictable lengths; maybe the concept of LEN() has to become dynamic
+  if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&proc_.u)}) {
+    if (intrinsic->name == "repeat") {
+      // LEN(REPEAT(ch,n)) == LEN(ch) * n
+      CHECK(arguments_.size() == 2);
+      const auto *stringArg{
+          UnwrapExpr<Expr<SomeCharacter>>(arguments_[0].value())};
+      const auto *nCopiesArg{
+          UnwrapExpr<Expr<SomeInteger>>(arguments_[1].value())};
+      CHECK(stringArg != nullptr && nCopiesArg != nullptr);
+      auto stringLen{stringArg->LEN()};
+      return std::move(stringLen) *
+          ConvertTo(stringLen, common::Clone(*nCopiesArg));
+    }
+    if (intrinsic->name == "trim") {
+      // LEN(TRIM(ch)) is unknown without execution.
+      CHECK(arguments_.size() == 1);
+      const auto *stringArg{
+          UnwrapExpr<Expr<SomeCharacter>>(arguments_[0].value())};
+      CHECK(stringArg != nullptr);
+      return stringArg->LEN();
+    }
+  }
   return proc_.LEN();
 }
 

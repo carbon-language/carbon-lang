@@ -14,6 +14,7 @@
 
 #include "../../lib/evaluate/intrinsics.h"
 #include "testing.h"
+#include "../../lib/evaluate/common.h"
 #include "../../lib/evaluate/expression.h"
 #include "../../lib/evaluate/tools.h"
 #include "../../lib/parser/provenance.h"
@@ -111,7 +112,8 @@ struct TestCall {
     std::cout << ")\n";
     CallCharacteristics call{fName};
     auto messages{strings.Messages(buffer)};
-    std::optional<SpecificCall> si{table.Probe(call, args, &messages)};
+    FoldingContext context{messages};
+    std::optional<SpecificCall> si{table.Probe(call, args, context)};
     if (resultType.has_value()) {
       TEST(si.has_value());
       TEST(buffer.empty());
