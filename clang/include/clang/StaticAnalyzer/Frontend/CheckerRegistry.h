@@ -81,11 +81,10 @@ namespace ento {
 /// "core.builtin", or the full name "core.builtin.NoReturnFunctionChecker".
 class CheckerRegistry {
 public:
-  CheckerRegistry(
-      ArrayRef<std::string> plugins, DiagnosticsEngine &diags,
-      AnalyzerOptions &AnOpts, const LangOptions &LangOpts,
-      ArrayRef<std::function<void(CheckerRegistry &)>>
-          checkerRegistrationFns = {});
+  CheckerRegistry(ArrayRef<std::string> plugins, DiagnosticsEngine &diags,
+                  AnalyzerOptions &AnOpts, const LangOptions &LangOpts,
+                  ArrayRef<std::function<void(CheckerRegistry &)>>
+                      checkerRegistrationFns = {});
 
   /// Initialization functions perform any necessary setup for a checker.
   /// They should include a call to CheckerManager::registerChecker.
@@ -135,14 +134,11 @@ public:
   using StateFromCmdLine = CheckerInfo::StateFromCmdLine;
 
 private:
-  template <typename T>
-  static void initializeManager(CheckerManager &mgr) {
+  template <typename T> static void initializeManager(CheckerManager &mgr) {
     mgr.registerChecker<T>();
   }
 
-
-  template <typename T>
-  static bool returnTrue(const LangOptions &LO) {
+  template <typename T> static bool returnTrue(const LangOptions &LO) {
     return true;
   }
 

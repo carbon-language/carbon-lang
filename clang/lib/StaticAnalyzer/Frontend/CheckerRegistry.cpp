@@ -11,8 +11,8 @@
 #include "clang/Basic/LLVM.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/StaticAnalyzer/Checkers/BuiltinCheckerRegistration.h"
-#include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/StringMap.h"
@@ -39,8 +39,7 @@ static bool isCompatibleAPIVersion(const char *VersionString) {
 }
 
 namespace {
-template <class T>
-struct FullNameLT {
+template <class T> struct FullNameLT {
   bool operator()(const T &Lhs, const T &Rhs) {
     return Lhs.FullName < Rhs.FullName;
   }
@@ -76,13 +75,13 @@ CheckerRegistry::getMutableCheckersForCmdLineArg(StringRef CmdLineArg) {
          "to be already sorted!");
 
   // Use a binary search to find the possible start of the package.
-  CheckerRegistry::CheckerInfo
-      PackageInfo(nullptr, nullptr, CmdLineArg, "", "");
-  auto It = std::lower_bound(Checkers.begin(), Checkers.end(),
-                             PackageInfo, CheckerNameLT{});
+  CheckerRegistry::CheckerInfo PackageInfo(nullptr, nullptr, CmdLineArg, "",
+                                           "");
+  auto It = std::lower_bound(Checkers.begin(), Checkers.end(), PackageInfo,
+                             CheckerNameLT{});
 
   if (!isInPackage(*It, CmdLineArg))
-    return { Checkers.end(), Checkers.end() };
+    return {Checkers.end(), Checkers.end()};
 
   // See how large the package is.
   // If the package doesn't exist, assume the option refers to a single
@@ -94,15 +93,14 @@ CheckerRegistry::getMutableCheckersForCmdLineArg(StringRef CmdLineArg) {
   if (PackageSize != PackageSizes.end())
     Size = PackageSize->getValue();
 
-  return { It, It + Size };
+  return {It, It + Size};
 }
 
 CheckerRegistry::CheckerRegistry(
-     ArrayRef<std::string> Plugins, DiagnosticsEngine &Diags,
-     AnalyzerOptions &AnOpts, const LangOptions &LangOpts,
-     ArrayRef<std::function<void(CheckerRegistry &)>>
-         CheckerRegistrationFns)
-  : Diags(Diags), AnOpts(AnOpts), LangOpts(LangOpts) {
+    ArrayRef<std::string> Plugins, DiagnosticsEngine &Diags,
+    AnalyzerOptions &AnOpts, const LangOptions &LangOpts,
+    ArrayRef<std::function<void(CheckerRegistry &)>> CheckerRegistrationFns)
+    : Diags(Diags), AnOpts(AnOpts), LangOpts(LangOpts) {
 
   // Register builtin checkers.
 #define GET_CHECKERS
@@ -135,22 +133,21 @@ CheckerRegistry::CheckerRegistry(
       Diags.Report(diag::warn_incompatible_analyzer_plugin_api)
           << llvm::sys::path::filename(Plugin);
       Diags.Report(diag::note_incompatible_analyzer_plugin_api)
-          << CLANG_ANALYZER_API_VERSION_STRING
-          << PluginAPIVersion;
+          << CLANG_ANALYZER_API_VERSION_STRING << PluginAPIVersion;
       continue;
     }
 
     // Register its checkers.
     RegisterCheckersFn RegisterPluginCheckers =
-        reinterpret_cast<RegisterCheckersFn>(Lib.getAddressOfSymbol(
-                                                     "clang_registerCheckers"));
+        reinterpret_cast<RegisterCheckersFn>(
+            Lib.getAddressOfSymbol("clang_registerCheckers"));
     if (RegisterPluginCheckers)
       RegisterPluginCheckers(*this);
   }
 
   // Register statically linked checkers, that aren't generated from the tblgen
-  // file, but rather passed their registry function as a parameter in 
-  // checkerRegistrationFns. 
+  // file, but rather passed their registry function as a parameter in
+  // checkerRegistrationFns.
 
   for (const auto &Fn : CheckerRegistrationFns)
     Fn(*this);
@@ -174,7 +171,7 @@ CheckerRegistry::CheckerRegistry(
   // command line.
   for (const std::pair<std::string, bool> &Opt : AnOpts.CheckersControlList) {
     CheckerInfoListRange CheckerForCmdLineArg =
-                                     getMutableCheckersForCmdLineArg(Opt.first);
+        getMutableCheckersForCmdLineArg(Opt.first);
 
     if (CheckerForCmdLineArg.begin() == CheckerForCmdLineArg.end()) {
       Diags.Report(diag::err_unknown_analyzer_checker) << Opt.first;
@@ -182,22 +179,23 @@ CheckerRegistry::CheckerRegistry(
     }
 
     for (CheckerInfo &checker : CheckerForCmdLineArg) {
-      checker.State = Opt.second ? StateFromCmdLine::State_Enabled :
-                                   StateFromCmdLine::State_Disabled;
+      checker.State = Opt.second ? StateFromCmdLine::State_Enabled
+                                 : StateFromCmdLine::State_Disabled;
     }
   }
 }
 
 /// Collects dependencies in \p ret, returns false on failure.
-static bool collectDependenciesImpl(
-                              const CheckerRegistry::ConstCheckerInfoList &Deps,
-                              const LangOptions &LO,
-                              CheckerRegistry::CheckerInfoSet &Ret);
+static bool
+collectDependenciesImpl(const CheckerRegistry::ConstCheckerInfoList &Deps,
+                        const LangOptions &LO,
+                        CheckerRegistry::CheckerInfoSet &Ret);
 
 /// Collects dependenies in \p enabledCheckers. Return None on failure.
 LLVM_NODISCARD
-static llvm::Optional<CheckerRegistry::CheckerInfoSet> collectDependencies(
-     const CheckerRegistry::CheckerInfo &checker, const LangOptions &LO) {
+static llvm::Optional<CheckerRegistry::CheckerInfoSet>
+collectDependencies(const CheckerRegistry::CheckerInfo &checker,
+                    const LangOptions &LO) {
 
   CheckerRegistry::CheckerInfoSet Ret;
   // Add dependencies to the enabled checkers only if all of them can be
@@ -208,10 +206,10 @@ static llvm::Optional<CheckerRegistry::CheckerInfoSet> collectDependencies(
   return Ret;
 }
 
-static bool collectDependenciesImpl(
-                              const CheckerRegistry::ConstCheckerInfoList &Deps,
-                              const LangOptions &LO,
-                              CheckerRegistry::CheckerInfoSet &Ret) {
+static bool
+collectDependenciesImpl(const CheckerRegistry::ConstCheckerInfoList &Deps,
+                        const LangOptions &LO,
+                        CheckerRegistry::CheckerInfoSet &Ret) {
 
   for (const CheckerRegistry::CheckerInfo *Dependency : Deps) {
 
@@ -271,12 +269,12 @@ void CheckerRegistry::addChecker(InitializationFunction Rfn,
 }
 
 void CheckerRegistry::addDependency(StringRef FullName, StringRef dependency) {
-  auto CheckerThatNeedsDeps =
-     [&FullName](const CheckerInfo &Chk) { return Chk.FullName == FullName; };
-  auto Dependency =
-    [&dependency](const CheckerInfo &Chk) {
-      return Chk.FullName == dependency;
-    };
+  auto CheckerThatNeedsDeps = [&FullName](const CheckerInfo &Chk) {
+    return Chk.FullName == FullName;
+  };
+  auto Dependency = [&dependency](const CheckerInfo &Chk) {
+    return Chk.FullName == dependency;
+  };
 
   auto CheckerIt = llvm::find_if(Checkers, CheckerThatNeedsDeps);
   assert(CheckerIt != Checkers.end() &&
