@@ -16,6 +16,7 @@ add_library(FortranSemantics
   assignment.cc
   attr.cc
   canonicalize-do.cc
+  check-allocate.cc
   check-arithmeticif.cc
   check-coarray.cc
   check-deallocate.cc

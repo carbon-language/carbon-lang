@@ -103,6 +103,14 @@ set(ERROR_TESTS
 #  altreturn02.f90
 #  altreturn03.f90
   altreturn04.f90
+  allocate01.f90
+  allocate02.f90
+  allocate03.f90
+  allocate04.f90
+  allocate05.f90
+  allocate06.f90
+  allocate07.f90
+  allocate08.f90
 )
 
 # These test files have expected symbols in the source

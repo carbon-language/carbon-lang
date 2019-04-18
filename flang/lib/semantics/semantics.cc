@@ -15,6 +15,7 @@
 #include "semantics.h"
 #include "assignment.h"
 #include "canonicalize-do.h"
+#include "check-allocate.h"
 #include "check-arithmeticif.h"
 #include "check-coarray.h"
 #include "check-deallocate.h"
@@ -79,9 +80,10 @@ private:
 };
 
 using StatementSemanticsPass1 = ExprChecker;
-using StatementSemanticsPass2 = SemanticsVisitor<ArithmeticIfStmtChecker,
-    AssignmentChecker, CoarrayChecker, DeallocateChecker, DoConcurrentChecker,
-    IfStmtChecker, NullifyChecker, ReturnStmtChecker, StopChecker>;
+using StatementSemanticsPass2 = SemanticsVisitor<AllocateChecker,
+    ArithmeticIfStmtChecker, AssignmentChecker, CoarrayChecker,
+    DeallocateChecker, DoConcurrentChecker, IfStmtChecker, NullifyChecker,
+    ReturnStmtChecker, StopChecker>;
 
 static bool PerformStatementSemantics(
     SemanticsContext &context, const parser::Program &program) {
