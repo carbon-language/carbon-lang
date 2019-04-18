@@ -982,6 +982,7 @@ static uint8_t rebasedHexDigitToNumber(char C) {
 }
 
 uint8_t Demangler::demangleCharLiteral(StringView &MangledName) {
+  assert(!MangledName.empty());
   if (!MangledName.startsWith('?'))
     return MangledName.popFront();
 
@@ -1248,7 +1249,7 @@ Demangler::demangleStringLiteral(StringView &MangledName) {
 
   // Encoded Length
   std::tie(StringByteSize, IsNegative) = demangleNumber(MangledName);
-  if (Error || IsNegative)
+  if (Error || IsNegative || StringByteSize < (IsWcharT ? 2 : 1))
     goto StringLiteralError;
 
   // CRC 32 (always 8 characters plus a terminator)
@@ -1269,7 +1270,7 @@ Demangler::demangleStringLiteral(StringView &MangledName) {
       Result->IsTruncated = true;
 
     while (!MangledName.consumeFront('@')) {
-      if (StringByteSize < 2)
+      if (MangledName.size() < 2)
         goto StringLiteralError;
       wchar_t W = demangleWcharLiteral(MangledName);
       if (StringByteSize != 2 || Result->IsTruncated)
@@ -1286,7 +1287,7 @@ Demangler::demangleStringLiteral(StringView &MangledName) {
 
     unsigned BytesDecoded = 0;
     while (!MangledName.consumeFront('@')) {
-      if (StringByteSize < 1)
+      if (MangledName.size() < 1)
         goto StringLiteralError;
       StringBytes[BytesDecoded++] = demangleCharLiteral(MangledName);
     }
