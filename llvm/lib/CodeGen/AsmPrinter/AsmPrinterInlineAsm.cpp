@@ -425,7 +425,7 @@ static void EmitGCCInlineAsmStr(const char *AsmStr, const MachineInstr *MI,
           unsigned OpFlags = MI->getOperand(OpNo).getImm();
           ++OpNo;  // Skip over the ID number.
 
-          // FIXME: Shouldn't arch-independant output template handling go into
+          // FIXME: Shouldn't arch-independent output template handling go into
           // PrintAsmOperand?
           if (Modifier[0] == 'l') { // Labels are target independent.
             if (MI->getOperand(OpNo).isBlockAddress()) {
