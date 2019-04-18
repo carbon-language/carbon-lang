@@ -771,7 +771,7 @@ void ShrinkWrapping::pruneUnwantedCSRs() {
 }
 
 void ShrinkWrapping::computeSaveLocations() {
-  SavePos = std::vector<SmallPtrSet<MCInst *, 4>>(BC.MRI->getNumRegs());
+  SavePos = std::vector<SmallSetVector<MCInst *, 4>>(BC.MRI->getNumRegs());
   auto &RI = Info.getReachingInsnsBackwards();
   auto &DA = Info.getDominatorAnalysis();
   auto &SPT = Info.getStackPointerTracking();
@@ -960,7 +960,7 @@ ShrinkWrapping::doRestorePlacement(MCInst *BestPosSave, unsigned CSR,
   // In case of a critical edge, we need to create extra BBs to host restores
   // into edges transitioning to the dominance frontier, otherwise we pull these
   // restores to inside the dominated area.
-  Frontier = DA.getDominanceFrontierFor(*BestPosSave);
+  Frontier = DA.getDominanceFrontierFor(*BestPosSave).takeVector();
   DEBUG({
     dbgs() << "Dumping dominance frontier for ";
     BC.printInstruction(dbgs(), *BestPosSave);

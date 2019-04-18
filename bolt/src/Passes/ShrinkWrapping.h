@@ -306,7 +306,7 @@ class ShrinkWrapping {
   std::vector<int64_t> PopOffsetByReg;
   std::vector<MCPhysReg> DomOrder;
   CalleeSavedAnalysis CSA;
-  std::vector<SmallPtrSet<MCInst *, 4>> SavePos;
+  std::vector<SmallSetVector<MCInst *, 4>> SavePos;
   std::vector<uint64_t> BestSaveCount;
   std::vector<MCInst *> BestSavePos;
 

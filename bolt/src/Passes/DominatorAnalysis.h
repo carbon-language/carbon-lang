@@ -39,30 +39,28 @@ public:
       : InstrsDataflowAnalysis<DominatorAnalysis<Backward>, Backward>(BC, BF) {}
   virtual ~DominatorAnalysis() {}
 
-  SmallVector<ProgramPoint, 4> getDominanceFrontierFor(const MCInst &Dom) {
-    SmallVector<ProgramPoint, 4> Result;
+  SmallSetVector<ProgramPoint, 4> getDominanceFrontierFor(const MCInst &Dom) {
+    SmallSetVector<ProgramPoint, 4> Result;
     auto DomIdx = this->ExprToIdx[&Dom];
     assert(!Backward && "Post-dom frontier not implemented");
     for (auto &BB : this->Func) {
       bool HasDominatedPred = false;
       bool HasNonDominatedPred = false;
-      SmallVector<ProgramPoint, 4> Candidates;
+      SmallSetVector<ProgramPoint, 4> Candidates;
       this->doForAllSuccsOrPreds(BB, [&](ProgramPoint P) {
         if ((*this->getStateAt(P))[DomIdx]) {
-          Candidates.emplace_back(P);
+          Candidates.insert(P);
           HasDominatedPred = true;
           return;
         }
         HasNonDominatedPred = true;
       });
       if (HasDominatedPred && HasNonDominatedPred)
-        Result.append(Candidates.begin(), Candidates.end());
+        Result.insert(Candidates.begin(), Candidates.end());
       if ((*this->getStateAt(ProgramPoint::getLastPointAt(BB)))[DomIdx] &&
           BB.succ_begin() == BB.succ_end())
-        Result.emplace_back(ProgramPoint::getLastPointAt(BB));
+        Result.insert(ProgramPoint::getLastPointAt(BB));
     }
-    std::sort(Result.begin(), Result.end());
-    Result.erase(std::unique(Result.begin(), Result.end()), Result.end());
     return Result;
   }
 
