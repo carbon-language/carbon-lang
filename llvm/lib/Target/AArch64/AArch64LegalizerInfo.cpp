@@ -316,7 +316,8 @@ AArch64LegalizerInfo::AArch64LegalizerInfo(const AArch64Subtarget &ST) {
 
   // Extensions
   getActionDefinitionsBuilder({G_ZEXT, G_SEXT, G_ANYEXT})
-      .legalForCartesianProduct({s8, s16, s32, s64}, {s1, s8, s16, s32});
+      .legalForCartesianProduct({s8, s16, s32, s64}, {s1, s8, s16, s32})
+      .legalFor({v8s16, v8s8});
 
   getActionDefinitionsBuilder(G_TRUNC).alwaysLegal();
 
