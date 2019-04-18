@@ -26,38 +26,88 @@
 #include "../common/enum-set.h"
 #include "../common/idioms.h"
 #include "../common/indirection.h"
-#include <memory>
+#include "../semantics/symbol.h"
+#include <optional>
 #include <ostream>
 #include <variant>
 #include <vector>
 
+namespace Fortran::evaluate {
+class IntrinsicProcTable;
+}
+namespace Fortran::evaluate::characteristics {
+struct Procedure;
+}
+extern template class Fortran::common::Indirection<
+    Fortran::evaluate::characteristics::Procedure, true>;
+
 namespace Fortran::evaluate::characteristics {
 
-// Forward declare Procedure so dummy procedures can use it indirectly
-struct Procedure;
+// Absent components are deferred or assumed.
+using Shape = std::vector<std::optional<Expr<SubscriptInteger>>>;
+
+class TypeAndShape {
+public:
+  explicit TypeAndShape(DynamicType t) : type_{t} {}
+  DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(TypeAndShape)
+
+  DynamicType type() const { return type_; }
+  const Shape &shape() const { return shape_; }
+  bool IsAssumedRank() const { return isAssumedRank_; }
+
+  bool operator==(const TypeAndShape &) const;
+
+  static std::optional<TypeAndShape> Characterize(const semantics::Symbol &);
+  static std::optional<TypeAndShape> Characterize(const semantics::Symbol *);
+  static std::optional<TypeAndShape> Characterize(
+      const semantics::ObjectEntityDetails &);
+  static std::optional<TypeAndShape> Characterize(
+      const semantics::ProcEntityDetails &);
+  static std::optional<TypeAndShape> Characterize(
+      const semantics::ProcInterface &);
+  static std::optional<TypeAndShape> Characterize(
+      const semantics::DeclTypeSpec &);
+  static std::optional<TypeAndShape> Characterize(
+      const semantics::DeclTypeSpec *);
+
+  std::ostream &Dump(std::ostream &) const;
+
+private:
+  void AcquireShape(const semantics::ObjectEntityDetails &);
+
+protected:
+  DynamicType type_;
+  Shape shape_;
+  bool isAssumedRank_{false};
+};
 
 // 15.3.2.2
-struct DummyDataObject {
-  ENUM_CLASS(Attr, AssumedRank, Optional, Allocatable, Asynchronous, Contiguous,
-      Value, Volatile, Polymorphic, Pointer, Target)
+struct DummyDataObject : public TypeAndShape {
+  ENUM_CLASS(Attr, Optional, Allocatable, Asynchronous, Contiguous, Value,
+      Volatile, Pointer, Target)
   DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(DummyDataObject)
-  DynamicType type;
-  std::vector<std::optional<Expr<SubscriptInteger>>> shape;
+  explicit DummyDataObject(const TypeAndShape &t) : TypeAndShape{t} {}
+  explicit DummyDataObject(TypeAndShape &&t) : TypeAndShape{std::move(t)} {}
+  explicit DummyDataObject(DynamicType t) : TypeAndShape{t} {}
+  bool operator==(const DummyDataObject &) const;
+  static std::optional<DummyDataObject> Characterize(const semantics::Symbol &);
+  std::ostream &Dump(std::ostream &) const;
   std::vector<Expr<SubscriptInteger>> coshape;
   common::Intent intent{common::Intent::Default};
   common::EnumSet<Attr, 32> attrs;
-  bool operator==(const DummyDataObject &) const;
-  std::ostream &Dump(std::ostream &) const;
 };
 
 // 15.3.2.3
 struct DummyProcedure {
   ENUM_CLASS(Attr, Pointer, Optional)
   DECLARE_CONSTRUCTORS_AND_ASSIGNMENTS(DummyProcedure)
-  common::CopyableIndirection<Procedure> explicitProcedure;
-  common::EnumSet<Attr, 32> attrs;
+  explicit DummyProcedure(Procedure &&);
   bool operator==(const DummyProcedure &) const;
+  static std::optional<DummyProcedure> Characterize(
+      const semantics::Symbol &, const IntrinsicProcTable &);
   std::ostream &Dump(std::ostream &) const;
+  common::CopyableIndirection<Procedure> procedure;
+  common::EnumSet<Attr, 32> attrs;
 };
 
 // 15.3.2.4
@@ -69,29 +119,60 @@ struct AlternateReturn {
 // 15.3.2.1
 using DummyArgument =
     std::variant<DummyDataObject, DummyProcedure, AlternateReturn>;
+bool IsOptional(const DummyArgument &);
+std::optional<DummyArgument> CharacterizeDummyArgument(
+    const semantics::Symbol &, const IntrinsicProcTable &);
 
 // 15.3.3
 struct FunctionResult {
-  ENUM_CLASS(
-      Attr, Polymorphic, Allocatable, Pointer, Contiguous, ProcedurePointer)
-  DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(FunctionResult)
-  DynamicType type;
-  int rank{0};
-  common::EnumSet<Attr, 32> attrs;
+  ENUM_CLASS(Attr, Allocatable, Pointer, Contiguous)
+  DECLARE_CONSTRUCTORS_AND_ASSIGNMENTS(FunctionResult)
+  explicit FunctionResult(DynamicType t) : u{TypeAndShape{t}} {}
+  explicit FunctionResult(TypeAndShape &&t) : u{std::move(t)} {}
+  explicit FunctionResult(Procedure &&p) : u{std::move(p)} {}
+  ~FunctionResult();
   bool operator==(const FunctionResult &) const;
+  static std::optional<FunctionResult> Characterize(
+      const Symbol &, const IntrinsicProcTable &);
+
+  bool IsAssumedLengthCharacter() const;
+
+  const Procedure *IsProcedurePointer() const {
+    if (const auto *pp{
+            std::get_if<common::CopyableIndirection<Procedure>>(&u)}) {
+      return &pp->value();
+    } else {
+      return nullptr;
+    }
+  }
   std::ostream &Dump(std::ostream &) const;
+
+  common::EnumSet<Attr, 32> attrs;
+  std::variant<TypeAndShape, common::CopyableIndirection<Procedure>> u;
 };
 
 // 15.3.1
 struct Procedure {
-  ENUM_CLASS(Attr, Pure, Elemental, Bind_C)
+  ENUM_CLASS(Attr, Pure, Elemental, BindC, ImplicitInterface)
   Procedure() {}
-  DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(Procedure)
-  std::optional<FunctionResult> functionResult;  // absent means subroutine
+  DECLARE_CONSTRUCTORS_AND_ASSIGNMENTS(Procedure)
+  bool operator==(const Procedure &) const;
+
+  static std::optional<Procedure> Characterize(
+      const semantics::Symbol &, const IntrinsicProcTable &);
+  bool IsFunction() const { return functionResult.has_value(); }
+  bool IsSubroutine() const { return !IsFunction(); }
+  bool IsPure() const { return attrs.test(Attr::Pure); }
+  bool IsElemental() const { return attrs.test(Attr::Elemental); }
+  bool IsBindC() const { return attrs.test(Attr::BindC); }
+  bool HasExplicitInterface() const {
+    return !attrs.test(Attr::ImplicitInterface);
+  }
+  std::ostream &Dump(std::ostream &) const;
+
+  std::optional<FunctionResult> functionResult;
   std::vector<DummyArgument> dummyArguments;
   common::EnumSet<Attr, 32> attrs;
-  bool operator==(const Procedure &) const;
-  std::ostream &Dump(std::ostream &) const;
 };
 }
 #endif  // FORTRAN_EVALUATE_CHARACTERISTICS_H_

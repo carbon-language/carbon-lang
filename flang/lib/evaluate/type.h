@@ -38,6 +38,7 @@
 #include <variant>
 
 namespace Fortran::semantics {
+class DeclTypeSpec;
 class DerivedTypeSpec;
 class ParamValue;
 class Symbol;
@@ -69,22 +70,30 @@ struct DynamicType {
   constexpr DynamicType(TypeCategory cat, int k) : category{cat}, kind{k} {}
   constexpr DynamicType(int k, const semantics::ParamValue &pv)
     : category{TypeCategory::Character}, kind{k}, charLength{&pv} {}
-  explicit constexpr DynamicType(const semantics::DerivedTypeSpec &dt)
-    : category{TypeCategory::Derived}, derived{&dt} {}
+  explicit constexpr DynamicType(
+      const semantics::DerivedTypeSpec &dt, bool poly = false)
+    : category{TypeCategory::Derived}, derived{&dt}, isPolymorphic{poly} {}
 
+  // Comparison is deep -- type parameters are compared independently.
   bool operator==(const DynamicType &) const;
+  bool operator!=(const DynamicType &that) const { return !(*this == that); }
+
   std::string AsFortran() const;
   std::string AsFortran(std::string &&charLenExpr) const;
   DynamicType ResultTypeForMultiply(const DynamicType &) const;
+  bool IsAssumedLengthCharacter() const;
 
   TypeCategory category{TypeCategory::Integer};  // overridable default
   int kind{0};  // set only for intrinsic types
   const semantics::ParamValue *charLength{nullptr};
   const semantics::DerivedTypeSpec *derived{nullptr};  // TYPE(T), CLASS(T)
+  bool isPolymorphic{false};  // CLASS(T), CLASS(*)
 };
 
 // Result will be missing when a symbol is absent or
 // has an erroneous type, e.g., REAL(KIND=666).
+std::optional<DynamicType> AsDynamicType(const semantics::DeclTypeSpec &);
+std::optional<DynamicType> AsDynamicType(const semantics::DeclTypeSpec *);
 std::optional<DynamicType> GetSymbolType(const semantics::Symbol &);
 std::optional<DynamicType> GetSymbolType(const semantics::Symbol *);
 
@@ -261,6 +270,14 @@ template<TypeCategory CATEGORY> struct SomeKind {
   static constexpr TypeCategory category{CATEGORY};
   constexpr bool operator==(const SomeKind &) const { return true; }
 };
+
+using AllGenericIntrinsicCategoryTypes =
+    std::tuple<SomeKind<TypeCategory::Integer>, SomeKind<TypeCategory::Real>,
+        SomeKind<TypeCategory::Complex>, SomeKind<TypeCategory::Character>,
+        SomeKind<TypeCategory::Logical>>;
+template<typename T>
+constexpr bool IsGenericIntrinsicCategoryType{
+    common::HasMember<T, AllGenericIntrinsicCategoryTypes>};
 
 // Represents a completely generic type (but not typeless).
 struct SomeType {};

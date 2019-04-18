@@ -99,25 +99,47 @@ bool DynamicType::operator==(const DynamicType &that) const {
       PointeeComparison(derived, that.derived);
 }
 
-std::optional<DynamicType> GetSymbolType(const semantics::Symbol &symbol) {
-  if (const auto *type{symbol.GetType()}) {
-    if (const auto *intrinsic{type->AsIntrinsic()}) {
-      if (auto kind{ToInt64(intrinsic->kind())}) {
-        TypeCategory category{intrinsic->category()};
-        if (IsValidKindOfIntrinsicType(category, *kind)) {
-          if (category == TypeCategory::Character) {
-            const auto &charType{type->characterTypeSpec()};
-            return DynamicType{static_cast<int>(*kind), charType.length()};
-          } else {
-            return DynamicType{category, static_cast<int>(*kind)};
-          }
+bool DynamicType::IsAssumedLengthCharacter() const {
+  return category == TypeCategory::Character && charLength != nullptr &&
+      charLength->isAssumed();
+}
+
+std::optional<DynamicType> AsDynamicType(const semantics::DeclTypeSpec &type) {
+  if (const auto *intrinsic{type.AsIntrinsic()}) {
+    if (auto kind{ToInt64(intrinsic->kind())}) {
+      TypeCategory category{intrinsic->category()};
+      if (IsValidKindOfIntrinsicType(category, *kind)) {
+        if (category == TypeCategory::Character) {
+          const auto &charType{type.characterTypeSpec()};
+          return DynamicType{static_cast<int>(*kind), charType.length()};
+        } else {
+          return DynamicType{category, static_cast<int>(*kind)};
         }
       }
-    } else if (const auto *derived{type->AsDerived()}) {
-      return DynamicType{*derived};
     }
+  } else if (const auto *derived{type.AsDerived()}) {
+    return DynamicType{
+        *derived, type.category() == semantics::DeclTypeSpec::ClassDerived};
+  } else if (type.category() == semantics::DeclTypeSpec::ClassStar) {
+    DynamicType result;
+    result.isPolymorphic = true;
+    return result;
+  } else {
+    // Assumed-type dummy arguments (TYPE(*)) do not have dynamic types.
   }
   return std::nullopt;
+}
+
+std::optional<DynamicType> AsDynamicType(const semantics::DeclTypeSpec *type) {
+  if (type != nullptr) {
+    return AsDynamicType(*type);
+  } else {
+    return std::nullopt;
+  }
+}
+
+std::optional<DynamicType> GetSymbolType(const semantics::Symbol &symbol) {
+  return AsDynamicType(symbol.GetType());
 }
 
 std::optional<DynamicType> GetSymbolType(const semantics::Symbol *symbol) {
