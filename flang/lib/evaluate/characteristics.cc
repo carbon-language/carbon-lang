@@ -268,6 +268,7 @@ std::optional<DummyDataObject> DummyDataObject::Characterize(
         result.intent = common::Intent::InOut;
       }
       // TODO: acquire coshape when symbol table represents it
+      return result;
     }
   }
   return std::nullopt;
