@@ -94,7 +94,7 @@ struct DummyDataObject : public TypeAndShape {
   std::ostream &Dump(std::ostream &) const;
   std::vector<Expr<SubscriptInteger>> coshape;
   common::Intent intent{common::Intent::Default};
-  common::EnumSet<Attr, 32> attrs;
+  common::EnumSet<Attr, Attr_enumSize> attrs;
 };
 
 // 15.3.2.3
@@ -107,7 +107,7 @@ struct DummyProcedure {
       const semantics::Symbol &, const IntrinsicProcTable &);
   std::ostream &Dump(std::ostream &) const;
   common::CopyableIndirection<Procedure> procedure;
-  common::EnumSet<Attr, 32> attrs;
+  common::EnumSet<Attr, Attr_enumSize> attrs;
 };
 
 // 15.3.2.4
@@ -147,7 +147,7 @@ struct FunctionResult {
   }
   std::ostream &Dump(std::ostream &) const;
 
-  common::EnumSet<Attr, 32> attrs;
+  common::EnumSet<Attr, Attr_enumSize> attrs;
   std::variant<TypeAndShape, common::CopyableIndirection<Procedure>> u;
 };
 
@@ -172,7 +172,7 @@ struct Procedure {
 
   std::optional<FunctionResult> functionResult;
   std::vector<DummyArgument> dummyArguments;
-  common::EnumSet<Attr, 32> attrs;
+  common::EnumSet<Attr, Attr_enumSize> attrs;
 };
 }
 #endif  // FORTRAN_EVALUATE_CHARACTERISTICS_H_
