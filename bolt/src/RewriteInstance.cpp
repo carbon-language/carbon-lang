@@ -3307,8 +3307,9 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
           Layout.getSymbolOffset(*Function.getFunctionEndLabel()));
     }
 
-    // Update basic block output ranges only for the debug info.
-    if (!opts::UpdateDebugSections)
+    // Update basic block output ranges only for the debug info or if we have
+    // secondary entry points in the symbol table to update
+    if (!opts::UpdateDebugSections && !Function.isMultiEntry())
       return;
 
     // Output ranges should match the input if the body hasn't changed.
@@ -4042,11 +4043,17 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
 
     for (const Elf_Sym &Symbol : cantFail(Obj->symbols(Section))) {
       auto NewSymbol = Symbol;
-      const auto *Function = BC->getBinaryFunctionAtAddress(Symbol.st_value,
-                                                            /*Shallow=*/true);
+
+      const auto *Function =
+          BC->getBinaryFunctionContainingAddress(NewSymbol.st_value,
+                                                 /*CheckPastEnd=*/false,
+                                                 /*UseMaxSize=*/true,
+                                                 /*Shallow=*/true);
+
       // Some section symbols may be mistakenly associated with the first
       // function emitted in the section. Dismiss if it is a section symbol.
       if (Function &&
+          Function->getAddress() == NewSymbol.st_value &&
           !Function->getPLTSymbol() &&
           NewSymbol.getType() != ELF::STT_SECTION) {
         NewSymbol.st_value = Function->getOutputAddress();
@@ -4102,9 +4109,24 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
         uint32_t OldSectionIndex = NewSymbol.st_shndx;
         auto *BD = !Function ? BC->getBinaryDataAtAddress(NewSymbol.st_value)
                              : nullptr;
-        if (BD && BD->isMoved() && !BD->isJumpTable()) {
-          assert((!BD->getSize() ||
-                  !NewSymbol.st_size ||
+        auto Output =
+            Function && !Function->getPLTSymbol()
+                ? Function->translateInputToOutputAddress(NewSymbol.st_value)
+                : 0;
+
+        // Handle secondary entry points for this function
+        // (when Function->getAddress() != Symbol.st_value)
+        if (Output && NewSymbol.getType() != ELF::STT_SECTION) {
+          NewSymbol.st_value = Output;
+          // Force secondary entry points to have zero size
+          NewSymbol.st_size = 0;
+          NewSymbol.st_shndx = Output >= Function->cold().getAddress() &&
+                                       Output < Function->cold().getImageSize()
+                                   ? Function->getColdCodeSection()->getIndex()
+                                   : Function->getCodeSection()->getIndex();
+          OldSectionIndex = ELF::SHN_LORESERVE;
+        } else if (BD && BD->isMoved() && !BD->isJumpTable()) {
+          assert((!BD->getSize() || !NewSymbol.st_size ||
                   NewSymbol.st_size == BD->getSize()) &&
                  "sizes must match");
 
@@ -4133,7 +4155,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
         if (NewSymbol.getType() == ELF::STT_NOTYPE &&
             NewSymbol.getBinding() == ELF::STB_LOCAL &&
             NewSymbol.st_size == 0) {
-          auto ExpectedSec = File->getELFFile()->getSection(OldSectionIndex);
+          auto ExpectedSec = File->getELFFile()->getSection(Symbol.st_shndx);
           if (ExpectedSec) {
             auto Section = *ExpectedSec;
             if (Section->sh_type == ELF::SHT_PROGBITS &&

@@ -1242,7 +1242,8 @@ BinaryContext::calculateEmittedSize(BinaryFunction &BF) {
 BinaryFunction *
 BinaryContext::getBinaryFunctionContainingAddress(uint64_t Address,
                                                   bool CheckPastEnd,
-                                                  bool UseMaxSize) {
+                                                  bool UseMaxSize,
+                                                  bool Shallow) {
   auto FI = BinaryFunctions.upper_bound(Address);
   if (FI == BinaryFunctions.begin())
     return nullptr;
@@ -1255,6 +1256,9 @@ BinaryContext::getBinaryFunctionContainingAddress(uint64_t Address,
     return nullptr;
 
   auto *BF = &FI->second;
+  if (Shallow)
+    return BF;
+
   while (BF->getParentFunction())
     BF = BF->getParentFunction();
 

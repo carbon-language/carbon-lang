@@ -56,6 +56,7 @@ using namespace object;
 namespace bolt {
 
 class BinaryFunction;
+class BinaryBasicBlock;
 class DataReader;
 
 /// Helper function to truncate a \p Value to given size in \p Bytes.
@@ -183,7 +184,8 @@ public:
   /// body and the next object in address ranges that we check.
   BinaryFunction *getBinaryFunctionContainingAddress(uint64_t Address,
                                                      bool CheckPastEnd = false,
-                                                     bool UseMaxSize = false);
+                                                     bool UseMaxSize = false,
+                                                     bool Shallow = false);
 
   /// Return BinaryFunction which has a fragment that starts at a given
   /// \p Address. If the BinaryFunction is a child fragment, then return its
