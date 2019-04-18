@@ -172,7 +172,8 @@ RewriteRule tooling::makeRule(ast_matchers::internal::DynTypedMatcher M,
                               SmallVector<ASTEdit, 1> Edits) {
   M.setAllowBind(true);
   // `tryBind` is guaranteed to succeed, because `AllowBind` was set to true.
-  return RewriteRule{*M.tryBind(RewriteRule::RootId), std::move(Edits)};
+  return RewriteRule{*M.tryBind(RewriteRule::RootId), std::move(Edits),
+                     nullptr};
 }
 
 constexpr llvm::StringLiteral RewriteRule::RootId;
