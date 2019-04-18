@@ -31,7 +31,7 @@ CHARACTER(256) :: e
 
 Integer, Pointer :: pi
 
-Allocate(p)
+Allocate(pi)
 Allocate(x(3))
 
 Deallocate(x(2)%p)
