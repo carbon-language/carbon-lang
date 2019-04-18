@@ -838,7 +838,7 @@ VariableSymbolNode *Demangler::demangleVariableEncoding(StringView &MangledName,
 // <number>               ::= [?] <non-negative integer>
 //
 // <non-negative integer> ::= <decimal digit> # when 1 <= Number <= 10
-//                        ::= <hex digit>+ @  # when Numbrer == 0 or >= 10
+//                        ::= <hex digit>+ @  # when Number == 0 or >= 10
 //
 // <hex-digit>            ::= [A-P]           # A = 0, B = 1, ...
 std::pair<uint64_t, bool> Demangler::demangleNumber(StringView &MangledName) {
@@ -1269,7 +1269,8 @@ Demangler::demangleStringLiteral(StringView &MangledName) {
       Result->IsTruncated = true;
 
     while (!MangledName.consumeFront('@')) {
-      assert(StringByteSize >= 2);
+      if (StringByteSize < 2)
+        goto StringLiteralError;
       wchar_t W = demangleWcharLiteral(MangledName);
       if (StringByteSize != 2 || Result->IsTruncated)
         outputEscapedChar(OS, W);
@@ -1285,7 +1286,8 @@ Demangler::demangleStringLiteral(StringView &MangledName) {
 
     unsigned BytesDecoded = 0;
     while (!MangledName.consumeFront('@')) {
-      assert(StringByteSize >= 1);
+      if (StringByteSize < 1)
+        goto StringLiteralError;
       StringBytes[BytesDecoded++] = demangleCharLiteral(MangledName);
     }
 
