@@ -264,18 +264,20 @@ struct FusionCandidateCompare {
     // will trigger an unused variable warning if building without asserts.
     assert(DT && LHS.PDT && "Expecting valid dominator tree");
 
-    if (DT->dominates(LHS.Preheader, RHS.Preheader)) {
-      // Verify RHS Postdominates LHS
-      assert(LHS.PDT->dominates(RHS.Preheader, LHS.Preheader));
-      return true;
-    }
-
+    // Do this compare first so if LHS == RHS, function returns false.
     if (DT->dominates(RHS.Preheader, LHS.Preheader)) {
       // RHS dominates LHS
       // Verify LHS post-dominates RHS
       assert(LHS.PDT->dominates(LHS.Preheader, RHS.Preheader));
       return false;
     }
+
+    if (DT->dominates(LHS.Preheader, RHS.Preheader)) {
+      // Verify RHS Postdominates LHS
+      assert(LHS.PDT->dominates(RHS.Preheader, LHS.Preheader));
+      return true;
+    }
+
     // If LHS does not dominate RHS and RHS does not dominate LHS then there is
     // no dominance relationship between the two FusionCandidates. Thus, they
     // should not be in the same set together.
