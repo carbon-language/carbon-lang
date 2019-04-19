@@ -574,7 +574,7 @@ static bool isInModulePurview(const NamedDecl *D) {
   return false;
 }
 
-static bool isExportedFromModuleIntefaceUnit(const NamedDecl *D) {
+static bool isExportedFromModuleInterfaceUnit(const NamedDecl *D) {
   // FIXME: Handle isModulePrivate.
   switch (D->getModuleOwnershipKind()) {
   case Decl::ModuleOwnershipKind::Unowned:
@@ -604,7 +604,7 @@ static LinkageInfo getExternalLinkageFor(const NamedDecl *D) {
   //     by the previous rules and that is introduced by a non-exported
   //     declaration has module linkage.
   if (isInModulePurview(D) &&
-      !isExportedFromModuleIntefaceUnit(cast<NamedDecl>(D->getCanonicalDecl())))
+      !isExportedFromModuleInterfaceUnit(cast<NamedDecl>(D->getCanonicalDecl())))
     return LinkageInfo(ModuleLinkage, DefaultVisibility, false);
 
   return LinkageInfo::external();
@@ -638,7 +638,7 @@ LinkageComputer::getLVForNamespaceScopeDecl(const NamedDecl *D,
         Var->getType().isConstQualified() &&
         !Var->getType().isVolatileQualified() &&
         !Var->isInline() &&
-        !isExportedFromModuleIntefaceUnit(Var)) {
+        !isExportedFromModuleInterfaceUnit(Var)) {
       const VarDecl *PrevVar = Var->getPreviousDecl();
       if (PrevVar)
         return getLVForDecl(PrevVar, computation);
