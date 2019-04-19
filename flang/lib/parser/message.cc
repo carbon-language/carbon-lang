@@ -284,7 +284,7 @@ void Messages::Emit(
   for (const auto &msg : messages_) {
     sorted.push_back(&msg);
   }
-  std::sort(sorted.begin(), sorted.end(),
+  std::stable_sort(sorted.begin(), sorted.end(),
       [](const Message *x, const Message *y) { return x->SortBefore(*y); });
   for (const Message *msg : sorted) {
     msg->Emit(o, cooked, echoSourceLines);

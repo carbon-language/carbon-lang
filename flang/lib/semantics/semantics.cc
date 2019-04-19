@@ -83,6 +83,12 @@ using StatementSemanticsPass2 = SemanticsVisitor<ArithmeticIfStmtChecker,
     AssignmentChecker, CoarrayChecker, DeallocateChecker, DoConcurrentChecker,
     IfStmtChecker, NullifyChecker, ReturnStmtChecker, StopChecker>;
 
+static bool PerformStatementSemantics(
+    SemanticsContext &context, const parser::Program &program) {
+  StatementSemanticsPass1{context}.Walk(program);
+  return StatementSemanticsPass2{context}.Walk(program);
+}
+
 SemanticsContext::SemanticsContext(
     const common::IntrinsicTypeDefaultKinds &defaultKinds,
     const parser::LanguageFeatureControl &languageFeatures)
@@ -135,8 +141,7 @@ bool Semantics::Perform() {
       parser::CanonicalizeDo(program_) &&  // force line break
       ResolveNames(context_, program_) &&
       RewriteParseTree(context_, program_) &&
-      StatementSemanticsPass1{context_}.Walk(program_) &&
-      StatementSemanticsPass2{context_}.Walk(program_) &&
+      PerformStatementSemantics(context_, program_) &&
       ModFileWriter{context_}.WriteAll();
 }
 
