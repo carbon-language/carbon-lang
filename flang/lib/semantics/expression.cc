@@ -1888,8 +1888,17 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr &expr) {
 }
 
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::Variable &variable) {
-  FixMisparsedFunctionReference(context_, variable.u);
-  return Analyze(variable.u);
+  if (variable.typedExpr) {
+    return std::make_optional<Expr<SomeType>>(variable.typedExpr->v);
+  } else {
+    FixMisparsedFunctionReference(context_, variable.u);
+    if (MaybeExpr result{Analyze(variable.u)}) {
+      variable.typedExpr.reset(new GenericExprWrapper{common::Clone(*result)});
+      return result;
+    } else {
+      return std::nullopt;
+    }
+  }
 }
 
 Expr<SubscriptInteger> ExpressionAnalyzer::AnalyzeKindSelector(

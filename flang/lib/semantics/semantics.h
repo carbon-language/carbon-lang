@@ -85,7 +85,7 @@ public:
 
   template<typename... A>
   common::IfNoLvalue<parser::Message &, A...> Say(
-      const parser::CharBlock &at, A &&... args) {
+      parser::CharBlock at, A &&... args) {
     return messages_.Say(at, std::move(args)...);
   }
   template<typename... A>

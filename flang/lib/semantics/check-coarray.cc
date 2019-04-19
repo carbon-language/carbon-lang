@@ -34,38 +34,40 @@ static bool IsDerivedTypeFromModule(
         symbol.owner().name() == module;
   }
 }
+
 static bool IsTeamType(const DerivedTypeSpec *derived) {
   return IsDerivedTypeFromModule(derived, "iso_fortran_env", "team_type");
 }
 
+template<typename T>
+static void CheckTeamType(SemanticsContext &context, const T &x) {
+  if (const auto *expr{GetExpr(x)}) {
+    if (auto type{expr->GetType()}) {
+      if (!IsTeamType(type->derived)) {
+        context.Say(parser::FindSourceLocation(x),  // C1114
+            "Team value must be of type TEAM_TYPE from module ISO_FORTRAN_ENV"_err_en_US);
+      }
+    }
+  }
+}
+
 void CoarrayChecker::Leave(const parser::ChangeTeamStmt &x) {
   CheckNamesAreDistinct(std::get<std::list<parser::CoarrayAssociation>>(x.t));
-  CheckTeamValue(std::get<parser::TeamValue>(x.t));
+  CheckTeamType(context_, std::get<parser::TeamValue>(x.t));
 }
 
 void CoarrayChecker::Leave(const parser::SyncTeamStmt &x) {
-  CheckTeamValue(std::get<parser::TeamValue>(x.t));
+  CheckTeamType(context_, std::get<parser::TeamValue>(x.t));
 }
 
 void CoarrayChecker::Leave(const parser::ImageSelectorSpec &x) {
   if (const auto *team{std::get_if<parser::TeamValue>(&x.u)}) {
-    CheckTeamValue(*team);
+    CheckTeamType(context_, *team);
   }
 }
 
 void CoarrayChecker::Leave(const parser::FormTeamStmt &x) {
-  AnalyzeExpr(context_, std::get<parser::ScalarIntExpr>(x.t));
-  const auto &teamVar{std::get<parser::TeamVariable>(x.t)};
-  AnalyzeExpr(context_, teamVar);
-  const parser::Name *name{parser::Unwrap<parser::Name>(teamVar)};
-  CHECK(name);
-  if (const auto *type{name->symbol->GetType()}) {
-    if (!IsTeamType(type->AsDerived())) {
-      context_.Say(name->source,  // C1179
-          "Team variable '%s' must be of type TEAM_TYPE from module ISO_FORTRAN_ENV"_err_en_US,
-          name->ToString().c_str());
-    }
-  }
+  CheckTeamType(context_, std::get<parser::TeamVariable>(x.t));
 }
 
 // Check that coarray names and selector names are all distinct.
@@ -93,17 +95,6 @@ void CoarrayChecker::CheckNamesAreDistinct(
       Say2(name->source,  // C1113, C1115
           "Selector '%s' was already used as a selector or coarray in this statement"_err_en_US,
           *prev, "Previous use of '%s'"_en_US);
-    }
-  }
-}
-
-void CoarrayChecker::CheckTeamValue(const parser::TeamValue &x) {
-  const auto &parsedExpr{x.v.thing.value()};
-  const auto &expr{parsedExpr.typedExpr->v};
-  if (auto type{expr.GetType()}) {
-    if (!IsTeamType(type->derived)) {
-      context_.Say(parsedExpr.source,  // C1114
-          "Team value must be of type TEAM_TYPE from module ISO_FORTRAN_ENV"_err_en_US);
     }
   }
 }

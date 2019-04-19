@@ -43,7 +43,6 @@ private:
   SemanticsContext &context_;
 
   void CheckNamesAreDistinct(const std::list<parser::CoarrayAssociation> &);
-  void CheckTeamValue(const parser::TeamValue &);
   void Say2(const parser::CharBlock &, parser::MessageFixedText &&,
       const parser::CharBlock &, parser::MessageFixedText &&);
 };

@@ -61,8 +61,8 @@ subroutine s3
   !ERROR: Team value must be of type TEAM_TYPE from module ISO_FORTRAN_ENV
   change team(t2, x[10,*] => y)
   end team
-  !ERROR: Team variable 't1' must be of type TEAM_TYPE from module ISO_FORTRAN_ENV
+  !ERROR: Team value must be of type TEAM_TYPE from module ISO_FORTRAN_ENV
   form team(1, t1)
-  !ERROR: Team variable 't2' must be of type TEAM_TYPE from module ISO_FORTRAN_ENV
+  !ERROR: Team value must be of type TEAM_TYPE from module ISO_FORTRAN_ENV
   form team(2, t2)
 end

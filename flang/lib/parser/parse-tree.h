@@ -1701,9 +1701,9 @@ struct Expr {
   explicit Expr(FunctionReference &&);
 
   // Filled in with expression after successful semantic analysis.
-  mutable std::unique_ptr<evaluate::GenericExprWrapper,
-      common::Deleter<evaluate::GenericExprWrapper>>
-      typedExpr;
+  using TypedExpr = std::unique_ptr<evaluate::GenericExprWrapper,
+      common::Deleter<evaluate::GenericExprWrapper>>;
+  mutable TypedExpr typedExpr;
 
   CharBlock source;
 
@@ -1769,6 +1769,7 @@ struct Designator {
 // R902 variable -> designator | function-reference
 struct Variable {
   UNION_CLASS_BOILERPLATE(Variable);
+  mutable Expr::TypedExpr typedExpr;
   std::variant<common::Indirection<Designator>,
       common::Indirection<FunctionReference>>
       u;
