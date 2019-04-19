@@ -189,8 +189,6 @@ public:
   void replaceBy(Function *G) const {
     F = G;
   }
-
-  void release() { F = nullptr; }
 };
 
 /// MergeFunctions finds functions which will generate identical machine code,
