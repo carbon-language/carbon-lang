@@ -86,14 +86,17 @@ bool DoConstruct::IsDoConcurrent() const {
   return control && std::holds_alternative<LoopControl::Concurrent>(control->u);
 }
 
-static Designator MakeArrayElementRef(
-    const Name &name, std::list<Expr> &&subscripts) {
+static Designator MakeArrayElementRef(const Name &name,
+    const parser::CharBlock &source, std::list<Expr> &&subscripts) {
   ArrayElement arrayElement{DataRef{Name{name}}, std::list<SectionSubscript>{}};
   for (Expr &expr : subscripts) {
     arrayElement.subscripts.push_back(SectionSubscript{
         Scalar{Integer{common::Indirection{std::move(expr)}}}});
   }
-  return Designator{DataRef{common::Indirection{std::move(arrayElement)}}};
+  auto result{
+      Designator{DataRef{common::Indirection{std::move(arrayElement)}}}};
+  result.source = source;
+  return result;
 }
 
 static std::optional<Expr> ActualArgToExpr(
@@ -123,7 +126,7 @@ Designator FunctionReference::ConvertToArrayElementRef() {
   for (auto &arg : std::get<std::list<ActualArgSpec>>(v.t)) {
     args.emplace_back(std::move(ActualArgToExpr(name.source, arg).value()));
   }
-  return MakeArrayElementRef(name, std::move(args));
+  return MakeArrayElementRef(name, v.source, std::move(args));
 }
 
 StructureConstructor FunctionReference::ConvertToStructureConstructor(
@@ -166,7 +169,7 @@ Statement<ActionStmt> StmtFunctionStmt::ConvertToAssignment() {
         Expr{common::Indirection{Designator{DataRef{Name{arg}}}}});
   }
   auto variable{Variable{common::Indirection{
-      MakeArrayElementRef(funcName, std::move(subscripts))}}};
+      MakeArrayElementRef(funcName, funcName.source, std::move(subscripts))}}};
   return Statement{std::nullopt,
       ActionStmt{common::Indirection{
           AssignmentStmt{std::move(variable), std::move(funcExpr)}}}};
