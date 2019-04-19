@@ -148,7 +148,7 @@ static cl::opt<std::string>
 
 static cl::opt<DIPrinter::OutputStyle>
     ClOutputStyle("output-style", cl::init(DIPrinter::OutputStyle::LLVM),
-                  cl::desc("Specify print style"), cl::Hidden,
+                  cl::desc("Specify print style"),
                   cl::values(clEnumValN(DIPrinter::OutputStyle::LLVM, "LLVM",
                                         "LLVM default style"),
                              clEnumValN(DIPrinter::OutputStyle::GNU, "GNU",

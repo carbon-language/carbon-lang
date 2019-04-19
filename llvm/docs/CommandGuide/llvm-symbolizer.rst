@@ -128,6 +128,37 @@ OPTIONS
  Add the specified offset to object file addresses when performing lookups. This
  can be used to perform lookups as if the object were relocated by the offset.
 
+.. option:: -output-style=<LLVM|GNU>
+
+  Specify the preferred output style. Defaults to ``LLVM``. When the output
+  style is set to ``GNU``, the tool follows the style of GNU's **addr2line**.
+  The differences from the ``LLVM`` style are:
+  
+  * Does not print column of a source code location.
+
+  * Does not add an empty line after the report for an address.
+
+  * Does not replace the name of an inlined function with the name of the
+    topmost caller when inlined frames are not shown and ``-use-symbol-table``
+    is on.
+
+  .. code-block:: console
+
+    $ llvm-symbolizer -p -e=addr.exe 0x40054d 0x400568
+    inc at /tmp/x.c:3:3
+     (inlined by) main at /tmp/x.c:14:0
+
+    main at /tmp/x.c:14:3
+
+    $ llvm-symbolizer --output-style=LLVM -p -i=0 -e=addr.exe 0x40054d 0x400568
+    main at /tmp/x.c:3:3
+
+    main at /tmp/x.c:14:3
+
+    $ llvm-symbolizer --output-style=GNU -p -i=0 -e=addr.exe 0x40054d 0x400568
+    inc at /tmp/x.c:3
+    main at /tmp/x.c:14
+
 EXIT STATUS
 -----------
 
