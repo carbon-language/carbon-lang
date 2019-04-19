@@ -1874,6 +1874,8 @@ void SIScheduleDAGMI::moveLowLatencies() {
       bool CopyForLowLat = false;
       for (SDep& SuccDep : SU->Succs) {
         SUnit *Succ = SuccDep.getSUnit();
+        if (SuccDep.isWeak() || Succ->NodeNum >= DAGSize)
+          continue;
         if (SITII->isLowLatencyInstruction(*Succ->getInstr())) {
           CopyForLowLat = true;
         }
