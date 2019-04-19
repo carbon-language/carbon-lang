@@ -1856,27 +1856,29 @@ void FixMisparsedFunctionReference(
   }
 }
 
-MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr &expr) {
-  if (expr.typedExpr) {
+// Common handling of parser::Expr and Parser::Variable
+template<typename PARSED>
+MaybeExpr ExpressionAnalyzer::ExprOrVariable(const PARSED &x) {
+  if (x.typedExpr) {
     // Expression was already checked by ExprChecker
-    return std::make_optional<Expr<SomeType>>(expr.typedExpr->v);
+    return std::make_optional<Expr<SomeType>>(x.typedExpr->v);
   } else {
-    FixMisparsedFunctionReference(context_, expr.u);
+    FixMisparsedFunctionReference(context_, x.u);
     MaybeExpr result;
-    if (!expr.source.empty()) {
+    if constexpr (std::is_same_v<PARSED, parser::Expr>) {
       // Analyze the expression in a specified source position context for
       // better error reporting.
-      auto save{GetFoldingContext().messages().SetLocation(expr.source)};
-      result = Analyze(expr.u);
+      auto save{GetFoldingContext().messages().SetLocation(x.source)};
+      result = Analyze(x.u);
     } else {
-      result = Analyze(expr.u);
+      result = Analyze(x.u);
     }
     if (result.has_value()) {
-      expr.typedExpr.reset(new GenericExprWrapper{common::Clone(*result)});
+      x.typedExpr.reset(new GenericExprWrapper{common::Clone(*result)});
     } else if (!fatalErrors_) {
       if (!context_.AnyFatalError()) {
 #if DUMP_ON_FAILURE
-        parser::DumpTree(std::cout << "Expression analysis failed on: ", expr);
+        parser::DumpTree(std::cout << "Expression analysis failed on: ", x);
 #elif CRASH_ON_FAILURE
         common::die("Expression analysis failed without emitting an error");
 #endif
@@ -1887,18 +1889,12 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr &expr) {
   }
 }
 
+MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr &expr) {
+  return ExprOrVariable(expr);
+}
+
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::Variable &variable) {
-  if (variable.typedExpr) {
-    return std::make_optional<Expr<SomeType>>(variable.typedExpr->v);
-  } else {
-    FixMisparsedFunctionReference(context_, variable.u);
-    if (MaybeExpr result{Analyze(variable.u)}) {
-      variable.typedExpr.reset(new GenericExprWrapper{common::Clone(*result)});
-      return result;
-    } else {
-      return std::nullopt;
-    }
-  }
+  return ExprOrVariable(variable);
 }
 
 Expr<SubscriptInteger> ExpressionAnalyzer::AnalyzeKindSelector(

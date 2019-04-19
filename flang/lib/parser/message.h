@@ -250,6 +250,9 @@ public:
 
   // Set CharBlock for messages; restore when the returned value is deleted
   common::Restorer<CharBlock> SetLocation(CharBlock at) {
+    if (at.empty()) {
+      at = at_;
+    }
     return common::ScopedSet(at_, std::move(at));
   }
 
