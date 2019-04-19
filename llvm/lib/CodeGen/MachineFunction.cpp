@@ -814,7 +814,7 @@ void MachineFunction::addCodeViewHeapAllocSite(MachineInstr *I, MDNode *MD) {
   I->setPostInstrSymbol(*this, EndLabel);
 
   DIType *DI = dyn_cast<DIType>(MD);
-  CodeViewHeapAllocSites.push_back({BeginLabel, EndLabel, DI});
+  CodeViewHeapAllocSites.push_back(std::make_tuple(BeginLabel, EndLabel, DI));
 }
 
 /// \}
