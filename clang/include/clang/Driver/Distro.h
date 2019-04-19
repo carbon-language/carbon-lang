@@ -63,6 +63,7 @@ public:
     UbuntuBionic,
     UbuntuCosmic,
     UbuntuDisco,
+    UbuntuEoan,
     UnknownDistro
   };
 
@@ -116,7 +117,7 @@ public:
   }
 
   bool IsUbuntu() const {
-    return DistroVal >= UbuntuHardy && DistroVal <= UbuntuDisco;
+    return DistroVal >= UbuntuHardy && DistroVal <= UbuntuEoan;
   }
 
   bool IsAlpineLinux() const {

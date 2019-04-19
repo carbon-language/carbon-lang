@@ -51,6 +51,7 @@ static Distro::DistroType DetectDistro(llvm::vfs::FileSystem &VFS) {
                       .Case("bionic", Distro::UbuntuBionic)
                       .Case("cosmic", Distro::UbuntuCosmic)
                       .Case("disco", Distro::UbuntuDisco)
+                      .Case("eoan", Distro::UbuntuEoan)
                       .Default(Distro::UnknownDistro);
     if (Version != Distro::UnknownDistro)
       return Version;
