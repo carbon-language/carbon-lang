@@ -63,11 +63,8 @@ static
          "In order to efficiently gather checkers/packages, this function "
          "expects them to be already sorted!");
 
-  typename CheckerOrPackageInfoList::value_type Info(FullName);
-
-  return llvm::lower_bound(
-      Collection, Info,
-      FullNameLT<typename CheckerOrPackageInfoList::value_type>{});
+  return llvm::lower_bound(Collection, CheckerOrPackage(FullName),
+                           CheckerOrPackageFullNameLT{});
 }
 
 static constexpr char PackageSeparator = '.';
