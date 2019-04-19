@@ -66,6 +66,7 @@ elseif(TARGET cxx-headers OR HAVE_LIBCXX)
 endif()
 
 append_list_if(COMPILER_RT_HAS_OMIT_FRAME_POINTER_FLAG -fno-omit-frame-pointer LIBFUZZER_CFLAGS)
+append_list_if(True -fexceptions LIBFUZZER_CFLAGS)
 
 if (CMAKE_CXX_FLAGS MATCHES "fsanitize-coverage")
   list(APPEND LIBFUZZER_CFLAGS -fno-sanitize-coverage=trace-pc-guard,edge,trace-cmp,indirect-calls,8bit-counters)
