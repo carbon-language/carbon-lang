@@ -1,15 +1,15 @@
-// RUN: %clangxx_hwasan -ffixed-x10 -ffixed-x20 -ffixed-x27 -fno-omit-frame-pointer \
-// RUN:   -mno-omit-leaf-frame-pointer -O0 %s -o %t && not %run %t 2>&1 | \
-// RUN:   FileCheck %s --check-prefixes=CHECK
-// RUN: %clangxx_hwasan -ffixed-x10 -ffixed-x20 -ffixed-x27 -fno-omit-frame-pointer \
-// RUN:   -mno-omit-leaf-frame-pointer -O1 %s -o %t && not %run %t 2>&1 | \
-// RUN:   FileCheck %s --check-prefixes=CHECK
-// RUN: %clangxx_hwasan -ffixed-x10 -ffixed-x20 -ffixed-x27 -fno-omit-frame-pointer \
-// RUN:   -mno-omit-leaf-frame-pointer -O2 %s -o %t && not %run %t 2>&1 | \
-// RUN:   FileCheck %s --check-prefixes=CHECK
-// RUN: %clangxx_hwasan -ffixed-x10 -ffixed-x20 -ffixed-x27 -fno-omit-frame-pointer \
-// RUN:   -mno-omit-leaf-frame-pointer -O3 %s -o %t && not %run %t 2>&1 | \
-// RUN:   FileCheck %s --check-prefixes=CHECK
+// RUN: %clangxx_hwasan -ffixed-x10 -ffixed-x20 -ffixed-x27 \
+// RUN:   -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -O0 %s -o %t && \
+// RUN:   not %run %t 2>&1 | FileCheck %s --check-prefixes=CHECK
+// RUN: %clangxx_hwasan -ffixed-x10 -ffixed-x20 -ffixed-x27 \
+// RUN:   -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -O1 %s -o %t && \
+// RUN:   not %run %t 2>&1 | FileCheck %s --check-prefixes=CHECK
+// RUN: %clangxx_hwasan -ffixed-x10 -ffixed-x20 -ffixed-x27 \
+// RUN:   -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -O2 %s -o %t && \
+// RUN:   not %run %t 2>&1 | FileCheck %s --check-prefixes=CHECK
+// RUN: %clangxx_hwasan -ffixed-x10 -ffixed-x20 -ffixed-x27 \
+// RUN:   -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -O3 %s -o %t && \
+// RUN:   not %run %t 2>&1 | FileCheck %s --check-prefixes=CHECK
 // REQUIRES: aarch64-target-arch
 #include <stdlib.h>
 #include <stdio.h>
