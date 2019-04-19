@@ -192,23 +192,16 @@ operator>>(const char *str, const PA &p) {
 
 template<class PA>
 inline constexpr std::enable_if_t<std::is_class_v<PA>,
-    InvertedSequenceParser<PA, TokenStringMatch>>
+    FollowParser<PA, TokenStringMatch>>
 operator/(const PA &p, const char *str) {
-  return InvertedSequenceParser<PA, TokenStringMatch>{
-      p, TokenStringMatch{str, false}};
+  return FollowParser<PA, TokenStringMatch>{p, TokenStringMatch{str, false}};
 }
 
-template<class PA>
-inline constexpr SequenceParser<TokenStringMatch,
-    InvertedSequenceParser<PA, TokenStringMatch>>
-parenthesized(const PA &p) {
+template<class PA> inline constexpr auto parenthesized(const PA &p) {
   return "(" >> p / ")";
 }
 
-template<class PA>
-inline constexpr SequenceParser<TokenStringMatch,
-    InvertedSequenceParser<PA, TokenStringMatch>>
-bracketed(const PA &p) {
+template<class PA> inline constexpr auto bracketed(const PA &p) {
   return "[" >> p / "]";
 }
 

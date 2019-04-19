@@ -42,6 +42,8 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
+#include <utility>
 
 namespace Fortran::parser {
 
@@ -118,7 +120,7 @@ template<typename PA> class NegatedParser {
 public:
   using resultType = Success;
   constexpr NegatedParser(const NegatedParser &) = default;
-  constexpr NegatedParser(const PA &p) : parser_{p} {}
+  constexpr NegatedParser(PA p) : parser_{p} {}
   std::optional<Success> Parse(ParseState &state) const {
     ParseState forked{state};
     forked.set_deferMessages(true);
@@ -132,7 +134,7 @@ private:
   const PA parser_;
 };
 
-template<typename PA> inline constexpr auto operator!(const PA &p) {
+template<typename PA> inline constexpr auto operator!(PA p) {
   return NegatedParser<PA>(p);
 }
 
@@ -142,7 +144,7 @@ template<typename PA> class LookAheadParser {
 public:
   using resultType = Success;
   constexpr LookAheadParser(const LookAheadParser &) = default;
-  constexpr LookAheadParser(const PA &p) : parser_{p} {}
+  constexpr LookAheadParser(PA p) : parser_{p} {}
   std::optional<Success> Parse(ParseState &state) const {
     ParseState forked{state};
     forked.set_deferMessages(true);
@@ -156,7 +158,7 @@ private:
   const PA parser_;
 };
 
-template<typename PA> inline constexpr auto lookAhead(const PA &p) {
+template<typename PA> inline constexpr auto lookAhead(PA p) {
   return LookAheadParser<PA>{p};
 }
 
@@ -166,7 +168,7 @@ template<typename PA> class MessageContextParser {
 public:
   using resultType = typename PA::resultType;
   constexpr MessageContextParser(const MessageContextParser &) = default;
-  constexpr MessageContextParser(MessageFixedText t, const PA &p)
+  constexpr MessageContextParser(MessageFixedText t, PA p)
     : text_{t}, parser_{p} {}
   std::optional<resultType> Parse(ParseState &state) const {
     state.PushContext(text_);
@@ -181,7 +183,7 @@ private:
 };
 
 template<typename PA>
-inline constexpr auto inContext(MessageFixedText context, const PA &parser) {
+inline constexpr auto inContext(MessageFixedText context, PA parser) {
   return MessageContextParser{context, parser};
 }
 
@@ -192,7 +194,7 @@ template<typename PA> class WithMessageParser {
 public:
   using resultType = typename PA::resultType;
   constexpr WithMessageParser(const WithMessageParser &) = default;
-  constexpr WithMessageParser(MessageFixedText t, const PA &p)
+  constexpr WithMessageParser(MessageFixedText t, PA p)
     : text_{t}, parser_{p} {}
   std::optional<resultType> Parse(ParseState &state) const {
     Messages messages{std::move(state.messages())};
@@ -228,7 +230,7 @@ private:
 };
 
 template<typename PA>
-inline constexpr auto withMessage(MessageFixedText msg, const PA &parser) {
+inline constexpr auto withMessage(MessageFixedText msg, PA parser) {
   return WithMessageParser{msg, parser};
 }
 
@@ -240,13 +242,13 @@ template<typename PA, typename PB> class SequenceParser {
 public:
   using resultType = typename PB::resultType;
   constexpr SequenceParser(const SequenceParser &) = default;
-  constexpr SequenceParser(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
+  constexpr SequenceParser(PA pa, PB pb) : pa_{pa}, pb_{pb} {}
   std::optional<resultType> Parse(ParseState &state) const {
-    std::optional<resultType> result;
     if (pa_.Parse(state)) {
-      result = pb_.Parse(state);
+      return pb_.Parse(state);
+    } else {
+      return std::nullopt;
     }
-    return result;
   }
 
 private:
@@ -255,24 +257,22 @@ private:
 };
 
 template<typename PA, typename PB>
-inline constexpr auto operator>>(const PA &pa, const PB &pb) {
+inline constexpr auto operator>>(PA pa, PB pb) {
   return SequenceParser<PA, PB>{pa, pb};
 }
 
-template<typename PA, typename PB> class InvertedSequenceParser {
+template<typename PA, typename PB> class FollowParser {
 public:
   using resultType = typename PA::resultType;
-  constexpr InvertedSequenceParser(const InvertedSequenceParser &) = default;
-  constexpr InvertedSequenceParser(const PA &pa, const PB &pb)
-    : pa_{pa}, pb_{pb} {}
+  constexpr FollowParser(const FollowParser &) = default;
+  constexpr FollowParser(PA pa, PB pb) : pa_{pa}, pb_{pb} {}
   std::optional<resultType> Parse(ParseState &state) const {
-    std::optional<resultType> result;
     if (std::optional<resultType> ax{pa_.Parse(state)}) {
       if (pb_.Parse(state)) {
-        result = std::move(ax);
+        return ax;
       }
     }
-    return result;
+    return std::nullopt;
   }
 
 private:
@@ -281,15 +281,14 @@ private:
 };
 
 template<typename PA, typename PB>
-inline constexpr auto operator/(const PA &pa, const PB &pb) {
-  return InvertedSequenceParser<PA, PB>{pa, pb};
+inline constexpr auto operator/(PA pa, PB pb) {
+  return FollowParser<PA, PB>{pa, pb};
 }
 
 template<typename PA, typename... Ps> class AlternativesParser {
 public:
   using resultType = typename PA::resultType;
-  constexpr AlternativesParser(const PA &pa, const Ps &... ps)
-    : ps_{pa, ps...} {}
+  constexpr AlternativesParser(PA pa, Ps... ps) : ps_{pa, ps...} {}
   constexpr AlternativesParser(const AlternativesParser &) = default;
   std::optional<resultType> Parse(ParseState &state) const {
     Messages messages{std::move(state.messages())};
@@ -323,58 +322,14 @@ private:
   const std::tuple<PA, Ps...> ps_;
 };
 
-template<typename... Ps> inline constexpr auto first(const Ps &... ps) {
+template<typename... Ps> inline constexpr auto first(Ps... ps) {
   return AlternativesParser<Ps...>{ps...};
 }
 
-#if !__GNUC__ || __clang__ || ((100 * __GNUC__ + __GNUC__MINOR__) >= 802)
-// Implement operator|| with first(), unless compiling with g++,
-// which can segfault at compile time and needs to continue to use
-// the original implementation of operator|| as of gcc-8.1.0.
 template<typename PA, typename PB>
-inline constexpr auto operator||(const PA &pa, const PB &pb) {
-  return first(pa, pb);
+inline constexpr auto operator||(PA pa, PB pb) {
+  return AlternativesParser<PA, PB>{pa, pb};
 }
-#else  // g++ <= 8.1.0 only: original implementation
-// If a and b are parsers, then a || b returns a parser that succeeds if
-// a does so, or if a fails and b succeeds.  The result types of the parsers
-// must be the same type.  If a succeeds, b is not attempted.
-// TODO: remove this code when no longer needed
-template<typename PA, typename PB> class AlternativeParser {
-public:
-  using resultType = typename PA::resultType;
-  static_assert(std::is_same_v<resultType, typename PB::resultType>);
-  constexpr AlternativeParser(const AlternativeParser &) = default;
-  constexpr AlternativeParser(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
-  std::optional<resultType> Parse(ParseState &state) const {
-    Messages messages{std::move(state.messages())};
-    ParseState backtrack{state};
-    if (std::optional<resultType> ax{pa_.Parse(state)}) {
-      state.messages().Restore(std::move(messages));
-      return ax;
-    }
-    ParseState paState{std::move(state)};
-    state = std::move(backtrack);
-    if (std::optional<resultType> bx{pb_.Parse(state)}) {
-      state.messages().Restore(std::move(messages));
-      return bx;
-    }
-    state.CombineFailedParses(std::move(paState));
-    state.messages().Restore(std::move(messages));
-    std::optional<resultType> result;
-    return result;
-  }
-
-private:
-  const PA pa_;
-  const PB pb_;
-};
-
-template<typename PA, typename PB>
-inline constexpr auto operator||(const PA &pa, const PB &pb) {
-  return AlternativeParser<PA, PB>{pa, pb};
-}
-#endif  // clang vs. g++ on operator|| implementations
 
 // If a and b are parsers, then recovery(a,b) returns a parser that succeeds if
 // a does so, or if a fails and b succeeds.  If a succeeds, b is not attempted.
@@ -385,7 +340,7 @@ public:
   using resultType = typename PA::resultType;
   static_assert(std::is_same_v<resultType, typename PB::resultType>);
   constexpr RecoveryParser(const RecoveryParser &) = default;
-  constexpr RecoveryParser(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
+  constexpr RecoveryParser(PA pa, PB pb) : pa_{pa}, pb_{pb} {}
   std::optional<resultType> Parse(ParseState &state) const {
     bool originallyDeferred{state.deferMessages()};
     ParseState backtrack{state};
@@ -436,7 +391,7 @@ private:
 };
 
 template<typename PA, typename PB>
-inline constexpr auto recovery(const PA &pa, const PB &pb) {
+inline constexpr auto recovery(PA pa, PB pb) {
   return RecoveryParser<PA, PB>{pa, pb};
 }
 
@@ -449,7 +404,7 @@ template<typename PA> class ManyParser {
 public:
   using resultType = std::list<paType>;
   constexpr ManyParser(const ManyParser &) = default;
-  constexpr ManyParser(const PA &parser) : parser_{parser} {}
+  constexpr ManyParser(PA parser) : parser_{parser} {}
   std::optional<resultType> Parse(ParseState &state) const {
     resultType result;
     auto at{state.GetLocation()};
@@ -467,7 +422,7 @@ private:
   const BacktrackingParser<PA> parser_;
 };
 
-template<typename PA> inline constexpr auto many(const PA &parser) {
+template<typename PA> inline constexpr auto many(PA parser) {
   return ManyParser<PA>{parser};
 }
 
@@ -481,7 +436,7 @@ template<typename PA> class SomeParser {
 public:
   using resultType = std::list<paType>;
   constexpr SomeParser(const SomeParser &) = default;
-  constexpr SomeParser(const PA &parser) : parser_{parser} {}
+  constexpr SomeParser(PA parser) : parser_{parser} {}
   std::optional<resultType> Parse(ParseState &state) const {
     auto start{state.GetLocation()};
     if (std::optional<paType> first{parser_.Parse(state)}) {
@@ -499,7 +454,7 @@ private:
   const PA parser_;
 };
 
-template<typename PA> inline constexpr auto some(const PA &parser) {
+template<typename PA> inline constexpr auto some(PA parser) {
   return SomeParser<PA>{parser};
 }
 
@@ -508,7 +463,7 @@ template<typename PA> class SkipManyParser {
 public:
   using resultType = Success;
   constexpr SkipManyParser(const SkipManyParser &) = default;
-  constexpr SkipManyParser(const PA &parser) : parser_{parser} {}
+  constexpr SkipManyParser(PA parser) : parser_{parser} {}
   std::optional<Success> Parse(ParseState &state) const {
     for (auto at{state.GetLocation()};
          parser_.Parse(state) && state.GetLocation() > at;
@@ -521,7 +476,7 @@ private:
   const BacktrackingParser<PA> parser_;
 };
 
-template<typename PA> inline constexpr auto skipMany(const PA &parser) {
+template<typename PA> inline constexpr auto skipMany(PA parser) {
   return SkipManyParser<PA>{parser};
 }
 
@@ -532,7 +487,7 @@ template<typename PA> class SkipManyFastParser {
 public:
   using resultType = Success;
   constexpr SkipManyFastParser(const SkipManyFastParser &) = default;
-  constexpr SkipManyFastParser(const PA &parser) : parser_{parser} {}
+  constexpr SkipManyFastParser(PA parser) : parser_{parser} {}
   std::optional<Success> Parse(ParseState &state) const {
     while (parser_.Parse(state)) {
     }
@@ -543,7 +498,7 @@ private:
   const PA parser_;
 };
 
-template<typename PA> inline constexpr auto skipManyFast(const PA &parser) {
+template<typename PA> inline constexpr auto skipManyFast(PA parser) {
   return SkipManyFastParser<PA>{parser};
 }
 
@@ -555,7 +510,7 @@ template<typename PA> class MaybeParser {
 public:
   using resultType = std::optional<paType>;
   constexpr MaybeParser(const MaybeParser &) = default;
-  constexpr MaybeParser(const PA &parser) : parser_{parser} {}
+  constexpr MaybeParser(PA parser) : parser_{parser} {}
   std::optional<resultType> Parse(ParseState &state) const {
     if (resultType result{parser_.Parse(state)}) {
       return {std::move(result)};
@@ -567,7 +522,7 @@ private:
   const BacktrackingParser<PA> parser_;
 };
 
-template<typename PA> inline constexpr auto maybe(const PA &parser) {
+template<typename PA> inline constexpr auto maybe(PA parser) {
   return MaybeParser<PA>{parser};
 }
 
@@ -578,7 +533,7 @@ template<typename PA> class DefaultedParser {
 public:
   using resultType = typename PA::resultType;
   constexpr DefaultedParser(const DefaultedParser &) = default;
-  constexpr DefaultedParser(const PA &p) : parser_{p} {}
+  constexpr DefaultedParser(PA p) : parser_{p} {}
   std::optional<resultType> Parse(ParseState &state) const {
     std::optional<std::optional<resultType>> ax{maybe(parser_).Parse(state)};
     if (ax.value().has_value()) {  // maybe() always succeeds
@@ -591,7 +546,7 @@ private:
   const BacktrackingParser<PA> parser_;
 };
 
-template<typename PA> inline constexpr auto defaulted(const PA &p) {
+template<typename PA> inline constexpr auto defaulted(PA p) {
   return DefaultedParser<PA>(p);
 }
 
@@ -613,337 +568,124 @@ template<typename PA> inline constexpr auto defaulted(const PA &p) {
 // by ax.f().  Additional parser arguments can be specified to supply their
 // results to the member function call, so applyMem(f, a, b) succeeds if
 // both a and b do so and returns the result of calling ax.f(std::move(bx)).
-template<typename PA, typename T> class Apply1 {
-  using paType = typename PA::resultType;
-  using funcType = T (*)(paType &&);
+
+// Runs a sequence of parsers until one fails or all have succeeded.
+// Collects their results in a std::tuple<std::optional<>...>.
+template<typename... PARSER>
+using ApplyArgs = std::tuple<std::optional<typename PARSER::resultType>...>;
+
+template<typename... PARSER, std::size_t... J>
+inline bool ApplyHelperArgs(const std::tuple<PARSER...> &parsers,
+    ApplyArgs<PARSER...> &args, ParseState &state, std::index_sequence<J...>) {
+  return (... &&
+      (std::get<J>(args) = std::get<J>(parsers).Parse(state),
+          std::get<J>(args).has_value()));
+}
+
+// Applies a function to the arguments collected by ApplyHelperArgs.
+template<typename RESULT, typename... PARSER>
+using ApplicableFunctionPointer = RESULT (*)(typename PARSER::resultType &&...);
+template<typename RESULT, typename... PARSER>
+using ApplicableFunctionObject =
+    const std::function<RESULT(typename PARSER::resultType &&...)> &;
+
+template<template<typename...> class FUNCTION, typename RESULT,
+    typename... PARSER, std::size_t... J>
+inline RESULT ApplyHelperFunction(FUNCTION<RESULT, PARSER...> f,
+    ApplyArgs<PARSER...> &&args, std::index_sequence<J...>) {
+  return f(std::move(*std::get<J>(args))...);
+}
+
+template<template<typename...> class FUNCTION, typename RESULT,
+    typename... PARSER>
+class ApplyFunction {
+  using funcType = FUNCTION<RESULT, PARSER...>;
 
 public:
-  using resultType = T;
-  constexpr Apply1(const Apply1 &) = default;
-  constexpr Apply1(funcType function, const PA &parser)
-    : function_{function}, parser_{parser} {}
+  using resultType = RESULT;
+  constexpr ApplyFunction(const ApplyFunction &) = default;
+  constexpr ApplyFunction(funcType f, PARSER... p)
+    : function_{f}, parsers_{p...} {}
   std::optional<resultType> Parse(ParseState &state) const {
-    if (std::optional<paType> ax{parser_.Parse(state)}) {
-      return {function_(std::move(*ax))};
+    ApplyArgs<PARSER...> results;
+    using Sequence = std::index_sequence_for<PARSER...>;
+    if (ApplyHelperArgs(parsers_, results, state, Sequence{})) {
+      return {ApplyHelperFunction<FUNCTION, RESULT, PARSER...>(
+          function_, std::move(results), Sequence{})};
+    } else {
+      return std::nullopt;
     }
-    return std::nullopt;
   }
 
 private:
   const funcType function_;
-  const PA parser_;
+  const std::tuple<PARSER...> parsers_;
 };
 
-template<typename PA, typename T>
+template<typename RESULT, typename... PARSER>
 inline constexpr auto applyFunction(
-    T (*f)(typename PA::resultType &&), const PA &pa) {
-  return Apply1<PA, T>{f, pa};
+    ApplicableFunctionPointer<RESULT, PARSER...> f, const PARSER &... parser) {
+  return ApplyFunction<ApplicableFunctionPointer, RESULT, PARSER...>{
+      f, parser...};
 }
 
-template<typename PA, typename T> class Apply1Functor {
-  using paType = typename PA::resultType;
-  using funcType = std::function<T(paType &&)>;
+template<typename RESULT, typename... PARSER>
+inline /* not constexpr */ auto applyLambda(
+    ApplicableFunctionObject<RESULT, PARSER...> f, const PARSER &... parser) {
+  return ApplyFunction<ApplicableFunctionObject, RESULT, PARSER...>{
+      f, parser...};
+}
+
+// Member function application
+template<typename OBJPARSER, typename... PARSER> class AMFPHelper {
+  using resultType = typename OBJPARSER::resultType;
 
 public:
-  using resultType = T;
-  Apply1Functor(const Apply1Functor &) = default;
-  Apply1Functor(const funcType &functor, const PA &parser)
-    : functor_{functor}, parser_{parser} {}
-  std::optional<resultType> Parse(ParseState &state) const {
-    if (std::optional<paType> ax{parser_.Parse(state)}) {
-      return {functor_(std::move(*ax))};
-    }
-    return std::nullopt;
-  }
-
-private:
-  const funcType &functor_;
-  const PA parser_;
+  using type = void (resultType::*)(typename PARSER::resultType &&...);
 };
+template<typename OBJPARSER, typename... PARSER>
+using ApplicableMemberFunctionPointer =
+    typename AMFPHelper<OBJPARSER, PARSER...>::type;
 
-template<typename PA, typename T>
-inline auto applyLambda(
-    const std::function<T(typename PA::resultType &&)> &f, const PA &pa) {
-  return Apply1Functor<PA, T>{f, pa};
+template<typename OBJPARSER, typename... PARSER, std::size_t... J>
+inline auto ApplyHelperMember(
+    ApplicableMemberFunctionPointer<OBJPARSER, PARSER...> mfp,
+    ApplyArgs<OBJPARSER, PARSER...> &&args, std::index_sequence<J...>) ->
+    typename OBJPARSER::resultType {
+  ((*std::get<0>(args)).*mfp)(std::move(*std::get<J + 1>(args))...);
+  return std::move(std::get<0>(args));
 }
 
-template<typename PA> class Apply1Mem {
+template<typename OBJPARSER, typename... PARSER> class ApplyMemberFunction {
+  using funcType = ApplicableMemberFunctionPointer<OBJPARSER, PARSER...>;
+
 public:
-  using resultType = typename PA::resultType;
-  using funcType = void (resultType::*)();
-  constexpr Apply1Mem(const Apply1Mem &) = default;
-  constexpr Apply1Mem(funcType function, const PA &pa)
-    : function_{function}, pa_{pa} {}
+  using resultType = typename OBJPARSER::resultType;
+  constexpr ApplyMemberFunction(const ApplyMemberFunction &) = default;
+  constexpr ApplyMemberFunction(funcType f, OBJPARSER o, PARSER... p)
+    : function_{f}, parsers_{o, p...} {}
   std::optional<resultType> Parse(ParseState &state) const {
-    std::optional<resultType> result{pa_.Parse(state)};
-    if (result) {
-      ((*result).*function_)();
+    ApplyArgs<OBJPARSER, PARSER...> results;
+    using Sequence1 = std::index_sequence_for<OBJPARSER, PARSER...>;
+    using Sequence2 = std::index_sequence_for<PARSER...>;
+    if (ApplyHelperArgs(parsers_, results, state, Sequence1{})) {
+      return {ApplyHelperMember<OBJPARSER, PARSER...>(
+          function_, std::move(results), Sequence2{})};
+    } else {
+      return std::nullopt;
     }
-    return result;
   }
 
 private:
   const funcType function_;
-  const PA pa_;
+  const std::tuple<OBJPARSER, PARSER...> parsers_;
 };
 
-template<typename PA>
+template<typename OBJPARSER, typename... PARSER>
 inline constexpr auto applyMem(
-    typename Apply1Mem<PA>::funcType f, const PA &pa) {
-  return Apply1Mem<PA>{f, pa};
-}
-
-template<typename PA, typename PB, typename T> class Apply2 {
-  using paType = typename PA::resultType;
-  using pbType = typename PB::resultType;
-  using funcType = T (*)(paType &&, pbType &&);
-
-public:
-  using resultType = T;
-  constexpr Apply2(const Apply2 &) = default;
-  constexpr Apply2(funcType function, const PA &pa, const PB &pb)
-    : function_{function}, pa_{pa}, pb_{pb} {}
-  std::optional<resultType> Parse(ParseState &state) const {
-    if (std::optional<paType> ax{pa_.Parse(state)}) {
-      if (std::optional<pbType> bx{pb_.Parse(state)}) {
-        return {function_(std::move(*ax), std::move(*bx))};
-      }
-    }
-    return std::nullopt;
-  }
-
-private:
-  const funcType function_;
-  const PA pa_;
-  const PB pb_;
-};
-
-template<typename PA, typename PB, typename T>
-inline constexpr auto applyFunction(
-    T (*f)(typename PA::resultType &&, typename PB::resultType &&),
-    const PA &pa, const PB &pb) {
-  return Apply2<PA, PB, T>{f, pa, pb};
-}
-
-template<typename PA, typename PB, typename T> class Apply2Functor {
-  using paType = typename PA::resultType;
-  using pbType = typename PB::resultType;
-  using funcType = std::function<T(paType &&, pbType &&)>;
-
-public:
-  using resultType = T;
-  Apply2Functor(const Apply2Functor &) = default;
-  Apply2Functor(const funcType &function, const PA &pa, const PB &pb)
-    : function_{function}, pa_{pa}, pb_{pb} {}
-  std::optional<resultType> Parse(ParseState &state) const {
-    if (std::optional<paType> ax{pa_.Parse(state)}) {
-      if (std::optional<pbType> bx{pb_.Parse(state)}) {
-        return {function_(std::move(*ax), std::move(*bx))};
-      }
-    }
-    return std::nullopt;
-  }
-
-private:
-  const funcType &function_;
-  const PA pa_;
-  const PB pb_;
-};
-
-template<typename PA, typename PB, typename T>
-inline auto applyLambda(const std::function<T(typename PA::resultType &&,
-                            typename PB::resultType &&)> &f,
-    const PA &pa, const PB &pb) {
-  return Apply2Functor<PA, PB, T>{f, pa, pb};
-}
-
-template<typename PA, typename PB> class Apply2Mem {
-  using pbType = typename PB::resultType;
-
-public:
-  using resultType = typename PA::resultType;
-  using funcType = void (resultType::*)(pbType &&);
-  constexpr Apply2Mem(const Apply2Mem &) = default;
-  constexpr Apply2Mem(funcType function, const PA &pa, const PB &pb)
-    : function_{function}, pa_{pa}, pb_{pb} {}
-  std::optional<resultType> Parse(ParseState &state) const {
-    if (std::optional<resultType> result{pa_.Parse(state)}) {
-      if (std::optional<pbType> bx{pb_.Parse(state)}) {
-        ((*result).*function_)(std::move(*bx));
-        return result;
-      }
-    }
-    return std::nullopt;
-  }
-
-private:
-  const funcType function_;
-  const PA pa_;
-  const PB pb_;
-};
-
-template<typename PA, typename PB>
-inline constexpr auto applyMem(
-    typename Apply2Mem<PA, PB>::funcType f, const PA &pa, const PB &pb) {
-  return Apply2Mem<PA, PB>{f, pa, pb};
-}
-
-template<typename PA, typename PB, typename PC, typename T> class Apply3 {
-  using paType = typename PA::resultType;
-  using pbType = typename PB::resultType;
-  using pcType = typename PC::resultType;
-  using funcType = T (*)(paType &&, pbType &&, pcType &&);
-
-public:
-  using resultType = T;
-  constexpr Apply3(const Apply3 &) = default;
-  constexpr Apply3(funcType function, const PA &pa, const PB &pb, const PC &pc)
-    : function_{function}, pa_{pa}, pb_{pb}, pc_{pc} {}
-  std::optional<resultType> Parse(ParseState &state) const {
-    if (std::optional<paType> ax{pa_.Parse(state)}) {
-      if (std::optional<pbType> bx{pb_.Parse(state)}) {
-        if (std::optional<pcType> cx{pc_.Parse(state)}) {
-          return {function_(std::move(*ax), std::move(*bx), std::move(*cx))};
-        }
-      }
-    }
-    return std::nullopt;
-  }
-
-private:
-  const funcType function_;
-  const PA pa_;
-  const PB pb_;
-  const PC pc_;
-};
-
-template<typename PA, typename PB, typename PC, typename T>
-inline constexpr auto applyFunction(
-    T (*f)(typename PA::resultType &&, typename PB::resultType &&,
-        typename PC::resultType &&),
-    const PA &pa, const PB &pb, const PC &pc) {
-  return Apply3<PA, PB, PC, T>{f, pa, pb, pc};
-}
-
-template<typename PA, typename PB, typename PC> class Apply3Mem {
-  using pbType = typename PB::resultType;
-  using pcType = typename PC::resultType;
-
-public:
-  using resultType = typename PA::resultType;
-  using funcType = void (resultType::*)(pbType &&, pcType &&);
-  constexpr Apply3Mem(const Apply3Mem &) = default;
-  constexpr Apply3Mem(
-      funcType function, const PA &pa, const PB &pb, const PC &pc)
-    : function_{function}, pa_{pa}, pb_{pb}, pc_{pc} {}
-  std::optional<resultType> Parse(ParseState &state) const {
-    if (std::optional<resultType> result{pa_.Parse(state)}) {
-      if (std::optional<pbType> bx{pb_.Parse(state)}) {
-        if (std::optional<pcType> cx{pc_.Parse(state)}) {
-          ((*result).*function_)(std::move(*bx), std::move(*cx));
-          return result;
-        }
-      }
-    }
-    return std::nullopt;
-  }
-
-private:
-  const funcType function_;
-  const PA pa_;
-  const PB pb_;
-  const PC pc_;
-};
-
-template<typename PA, typename PB, typename PC>
-inline constexpr auto applyMem(typename Apply3Mem<PA, PB, PC>::funcType f,
-    const PA &pa, const PB &pb, const PC &pc) {
-  return Apply3Mem<PA, PB, PC>{f, pa, pb, pc};
-}
-
-template<typename PA, typename PB, typename PC, typename PD, typename T>
-class Apply4 {
-  using paType = typename PA::resultType;
-  using pbType = typename PB::resultType;
-  using pcType = typename PC::resultType;
-  using pdType = typename PD::resultType;
-  using funcType = T (*)(paType &&, pbType &&, pcType &&, pdType &&);
-
-public:
-  using resultType = T;
-  constexpr Apply4(const Apply4 &) = default;
-  constexpr Apply4(
-      funcType function, const PA &pa, const PB &pb, const PC &pc, const PD &pd)
-    : function_{function}, pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd} {}
-  std::optional<resultType> Parse(ParseState &state) const {
-    if (std::optional<paType> ax{pa_.Parse(state)}) {
-      if (std::optional<pbType> bx{pb_.Parse(state)}) {
-        if (std::optional<pcType> cx{pc_.Parse(state)}) {
-          if (std::optional<pdType> dx{pd_.Parse(state)}) {
-            return {function_(std::move(*ax), std::move(*bx), std::move(*cx),
-                std::move(*dx))};
-          }
-        }
-      }
-    }
-    return std::nullopt;
-  }
-
-private:
-  const funcType function_;
-  const PA pa_;
-  const PB pb_;
-  const PC pc_;
-  const PD pd_;
-};
-
-template<typename PA, typename PB, typename PC, typename PD, typename T>
-inline constexpr auto applyFunction(
-    T (*f)(typename PA::resultType &&, typename PB::resultType &&,
-        typename PC::resultType &&, typename PD::resultType &&),
-    const PA &pa, const PB &pb, const PC &pc, const PD &pd) {
-  return Apply4<PA, PB, PC, PD, T>{f, pa, pb, pc, pd};
-}
-
-template<typename PA, typename PB, typename PC, typename PD> class Apply4Mem {
-  using pbType = typename PB::resultType;
-  using pcType = typename PC::resultType;
-  using pdType = typename PD::resultType;
-
-public:
-  using resultType = typename PA::resultType;
-  using funcType = void (resultType::*)(pbType &&, pcType &&, pdType &&);
-  constexpr Apply4Mem(const Apply4Mem &) = default;
-  constexpr Apply4Mem(
-      funcType function, const PA &pa, const PB &pb, const PC &pc, const PD &pd)
-    : function_{function}, pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd} {}
-  std::optional<resultType> Parse(ParseState &state) const {
-    if (std::optional<resultType> result{pa_.Parse(state)}) {
-      if (std::optional<pbType> bx{pb_.Parse(state)}) {
-        if (std::optional<pcType> cx{pc_.Parse(state)}) {
-          if (std::optional<pdType> dx{pd_.Parse(state)}) {
-            ((*result).*function_)(
-                std::move(*bx), std::move(*cx), std::move(*dx));
-            return result;
-          }
-        }
-      }
-    }
-    return std::nullopt;
-  }
-
-private:
-  const funcType function_;
-  const PA pa_;
-  const PB pb_;
-  const PC pc_;
-  const PD pd_;
-};
-
-template<typename PA, typename PB, typename PC, typename PD>
-inline constexpr auto applyMem(typename Apply4Mem<PA, PB, PC, PD>::funcType f,
-    const PA &pa, const PB &pb, const PC &pc, const PD &pd) {
-  return Apply4Mem<PA, PB, PC, PD>{f, pa, pb, pc, pd};
+    ApplicableMemberFunctionPointer<OBJPARSER, PARSER...> mfp,
+    const OBJPARSER &objParser, PARSER... parser) {
+  return ApplyMemberFunction<OBJPARSER, PARSER...>{mfp, objParser, parser...};
 }
 
 // As is done with function application via applyFunction() above, class
@@ -952,239 +694,56 @@ inline constexpr auto applyMem(typename Apply4Mem<PA, PB, PC, PD>::funcType f,
 // construct<T>(a, b, ...) returns a parser that succeeds if all of
 // its argument parsers do so in succession, and whose result is an
 // instance of T constructed upon the values they returned.
-template<class T> struct Construct0 {
-  using resultType = T;
-  constexpr Construct0() {}
-  constexpr Construct0(const Construct0 &) = default;
-  std::optional<T> Parse(ParseState &state) const { return {T{}}; }
-};
-
-template<class T> constexpr Construct0<T> construct() {
-  return Construct0<T>{};
-}
-
-template<class T, typename PA> struct Construct01 {
-  using resultType = T;
-  constexpr explicit Construct01(const PA &parser) : parser_{parser} {}
-  constexpr Construct01(const Construct01 &) = default;
-  std::optional<T> Parse(ParseState &state) const {
-    if (std::optional<Success>{parser_.Parse(state)}) {
-      return {T{}};
-    }
-    return std::nullopt;
-  }
-
-private:
-  const PA parser_;
-};
-
-template<typename T, typename PA> class Construct1 {
-public:
-  using resultType = T;
-  constexpr explicit Construct1(const PA &parser) : parser_{parser} {}
-  constexpr Construct1(const Construct1 &) = default;
-  std::optional<T> Parse(ParseState &state) const {
-    if (auto ax{parser_.Parse(state)}) {
-      return {T(std::move(*ax))};
-    }
-    return std::nullopt;
-  }
-
-private:
-  const PA parser_;
-};
-
 // With a single argument that is a parser with no usable value,
-// construct<T>(p) invokes T's default nullary constructor T(){}.
-// With a single argument that is a parser with a usable value of
-// type A, construct<T>(p) invokes T's explicit constructor T(A &&).
-template<class T, typename PA>
-constexpr std::enable_if_t<std::is_same_v<Success, typename PA::resultType>,
-    Construct01<T, PA>>
-construct(const PA &parser) {
-  return Construct01<T, PA>{parser};
+// construct<T>(p) invokes T's default nullary constructor (T(){}).
+
+template<typename RESULT, typename... PARSER, std::size_t... J>
+inline RESULT ApplyHelperConstructor(
+    ApplyArgs<PARSER...> &&args, std::index_sequence<J...>) {
+  return RESULT{std::move(*std::get<J>(args))...};
 }
 
-template<typename T, typename PA>
-constexpr std::enable_if_t<!std::is_same_v<Success, typename PA::resultType>,
-    Construct1<T, PA>>
-construct(const PA &parser) {
-  return Construct1<T, PA>{parser};
-}
-
-template<typename T, typename PA, typename PB> class Construct2 {
+template<typename RESULT, typename... PARSER> class ApplyConstructor {
 public:
-  using resultType = T;
-  constexpr Construct2(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
-  constexpr Construct2(const Construct2 &) = default;
-  std::optional<T> Parse(ParseState &state) const {
-    if (auto ax{pa_.Parse(state)}) {
-      if (auto bx{pb_.Parse(state)}) {
-        return {T{std::move(*ax), std::move(*bx)}};
-      }
-    }
-    return std::nullopt;
-  }
-
-private:
-  const PA pa_;
-  const PB pb_;
-};
-
-template<typename T, typename PA, typename PB>
-constexpr Construct2<T, PA, PB> construct(const PA &pa, const PB &pb) {
-  return Construct2<T, PA, PB>{pa, pb};
-}
-
-template<typename T, typename PA, typename PB, typename PC> class Construct3 {
-public:
-  using resultType = T;
-  constexpr Construct3(const PA &pa, const PB &pb, const PC &pc)
-    : pa_{pa}, pb_{pb}, pc_{pc} {}
-  constexpr Construct3(const Construct3 &) = default;
+  using resultType = RESULT;
+  constexpr ApplyConstructor(const ApplyConstructor &) = default;
+  constexpr explicit ApplyConstructor(PARSER... p) : parsers_{p...} {}
   std::optional<resultType> Parse(ParseState &state) const {
-    if (auto ax{pa_.Parse(state)}) {
-      if (auto bx{pb_.Parse(state)}) {
-        if (auto cx{pc_.Parse(state)}) {
-          return {T{std::move(*ax), std::move(*bx), std::move(*cx)}};
-        }
-      }
-    }
-    return std::nullopt;
-  }
-
-private:
-  const PA pa_;
-  const PB pb_;
-  const PC pc_;
-};
-
-template<typename T, typename PA, typename PB, typename PC>
-constexpr Construct3<T, PA, PB, PC> construct(
-    const PA &pa, const PB &pb, const PC &pc) {
-  return Construct3<T, PA, PB, PC>{pa, pb, pc};
-}
-
-template<typename T, typename PA, typename PB, typename PC, typename PD>
-class Construct4 {
-public:
-  using resultType = T;
-  constexpr Construct4(const PA &pa, const PB &pb, const PC &pc, const PD &pd)
-    : pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd} {}
-  constexpr Construct4(const Construct4 &) = default;
-  std::optional<resultType> Parse(ParseState &state) const {
-    if (auto ax{pa_.Parse(state)}) {
-      if (auto bx{pb_.Parse(state)}) {
-        if (auto cx{pc_.Parse(state)}) {
-          if (auto dx{pd_.Parse(state)}) {
-            return {T{std::move(*ax), std::move(*bx), std::move(*cx),
-                std::move(*dx)}};
+    if constexpr (sizeof...(PARSER) == 0) {
+      return RESULT{};
+    } else {
+      if constexpr (sizeof...(PARSER) == 1) {
+        if constexpr (std::is_same_v<Success, typename PARSER::resultType...>) {
+          if (std::get<0>(parsers_).Parse(state)) {
+            return RESULT{};
           }
+        } else if (auto arg{std::get<0>(parsers_).Parse(state)}) {
+          return RESULT{std::move(*arg)};
+        }
+      } else {
+        ApplyArgs<PARSER...> results;
+        using Sequence = std::index_sequence_for<PARSER...>;
+        if (ApplyHelperArgs(parsers_, results, state, Sequence{})) {
+          return ApplyHelperConstructor<RESULT, PARSER...>(
+              std::move(results), Sequence{});
         }
       }
+      return std::nullopt;
     }
-    return std::nullopt;
   }
 
 private:
-  const PA pa_;
-  const PB pb_;
-  const PC pc_;
-  const PD pd_;
+  const std::tuple<PARSER...> parsers_;
 };
 
-template<typename T, typename PA, typename PB, typename PC, typename PD>
-constexpr Construct4<T, PA, PB, PC, PD> construct(
-    const PA &pa, const PB &pb, const PC &pc, const PD &pd) {
-  return Construct4<T, PA, PB, PC, PD>{pa, pb, pc, pd};
-}
-
-template<typename T, typename PA, typename PB, typename PC, typename PD,
-    typename PE>
-class Construct5 {
-public:
-  using resultType = T;
-  constexpr Construct5(
-      const PA &pa, const PB &pb, const PC &pc, const PD &pd, const PE &pe)
-    : pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd}, pe_{pe} {}
-  constexpr Construct5(const Construct5 &) = default;
-  std::optional<resultType> Parse(ParseState &state) const {
-    if (auto ax{pa_.Parse(state)}) {
-      if (auto bx{pb_.Parse(state)}) {
-        if (auto cx{pc_.Parse(state)}) {
-          if (auto dx{pd_.Parse(state)}) {
-            if (auto ex{pe_.Parse(state)}) {
-              return {T{std::move(*ax), std::move(*bx), std::move(*cx),
-                  std::move(*dx), std::move(*ex)}};
-            }
-          }
-        }
-      }
-    }
-    return std::nullopt;
-  }
-
-private:
-  const PA pa_;
-  const PB pb_;
-  const PC pc_;
-  const PD pd_;
-  const PE pe_;
-};
-
-template<typename T, typename PA, typename PB, typename PC, typename PD,
-    typename PE>
-constexpr Construct5<T, PA, PB, PC, PD, PE> construct(
-    const PA &pa, const PB &pb, const PC &pc, const PD &pd, const PE &pe) {
-  return Construct5<T, PA, PB, PC, PD, PE>{pa, pb, pc, pd, pe};
-}
-
-template<typename T, typename PA, typename PB, typename PC, typename PD,
-    typename PE, typename PF>
-class Construct6 {
-public:
-  using resultType = T;
-  constexpr Construct6(const PA &pa, const PB &pb, const PC &pc, const PD &pd,
-      const PE &pe, const PF &pf)
-    : pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd}, pe_{pe}, pf_{pf} {}
-  constexpr Construct6(const Construct6 &) = default;
-  std::optional<resultType> Parse(ParseState &state) const {
-    if (auto ax{pa_.Parse(state)}) {
-      if (auto bx{pb_.Parse(state)}) {
-        if (auto cx{pc_.Parse(state)}) {
-          if (auto dx{pd_.Parse(state)}) {
-            if (auto ex{pe_.Parse(state)}) {
-              if (auto fx{pf_.Parse(state)}) {
-                return {T{std::move(*ax), std::move(*bx), std::move(*cx),
-                    std::move(*dx), std::move(*ex), std::move(*fx)}};
-              }
-            }
-          }
-        }
-      }
-    }
-    return std::nullopt;
-  }
-
-private:
-  const PA pa_;
-  const PB pb_;
-  const PC pc_;
-  const PD pd_;
-  const PE pe_;
-  const PF pf_;
-};
-
-template<typename T, typename PA, typename PB, typename PC, typename PD,
-    typename PE, typename PF>
-constexpr Construct6<T, PA, PB, PC, PD, PE, PF> construct(const PA &pa,
-    const PB &pb, const PC &pc, const PD &pd, const PE &pe, const PF &pf) {
-  return Construct6<T, PA, PB, PC, PD, PE, PF>{pa, pb, pc, pd, pe, pf};
+template<typename RESULT, typename... PARSER>
+inline constexpr auto construct(PARSER... p) {
+  return ApplyConstructor<RESULT, PARSER...>{p...};
 }
 
 // For a parser p, indirect(p) returns a parser that builds an indirect
 // reference to p's return type.
-template<typename PA> inline constexpr auto indirect(const PA &p) {
+template<typename PA> inline constexpr auto indirect(PA p) {
   return construct<common::Indirection<typename PA::resultType>>(p);
 }
 
@@ -1205,8 +764,7 @@ private:
 public:
   using resultType = std::list<paType>;
   constexpr NonemptySeparated(const NonemptySeparated &) = default;
-  constexpr NonemptySeparated(const PA &p, const PB &sep)
-    : parser_{p}, separator_{sep} {}
+  constexpr NonemptySeparated(PA p, PB sep) : parser_{p}, separator_{sep} {}
   std::optional<resultType> Parse(ParseState &state) const {
     return applyFunction(prepend<paType>, parser_, many(separator_ >> parser_))
         .Parse(state);
@@ -1218,7 +776,7 @@ private:
 };
 
 template<typename PA, typename PB>
-inline constexpr auto nonemptySeparated(const PA &p, const PB &sep) {
+inline constexpr auto nonemptySeparated(PA p, PB sep) {
   return NonemptySeparated<PA, PB>{p, sep};
 }
 
@@ -1248,8 +806,7 @@ constexpr FixedParser<false> cut;
 
 // A variant of recovery() above for convenience.
 template<typename PA, typename PB>
-inline constexpr auto localRecovery(
-    MessageFixedText msg, const PA &pa, const PB &pb) {
+inline constexpr auto localRecovery(MessageFixedText msg, PA pa, PB pb) {
   return recovery(withMessage(msg, pa), pb >> defaulted(cut >> pa));
 }
 
@@ -1277,7 +834,7 @@ template<LanguageFeature LF, typename PA> class NonstandardParser {
 public:
   using resultType = typename PA::resultType;
   constexpr NonstandardParser(const NonstandardParser &) = default;
-  constexpr NonstandardParser(const PA &parser) : parser_{parser} {}
+  constexpr NonstandardParser(PA parser) : parser_{parser} {}
   std::optional<resultType> Parse(ParseState &state) const {
     if (UserState * ustate{state.userState()}) {
       if (!ustate->features().IsEnabled(LF)) {
@@ -1298,7 +855,7 @@ private:
 };
 
 template<LanguageFeature LF, typename PA>
-inline constexpr auto extension(const PA &parser) {
+inline constexpr auto extension(PA parser) {
   return NonstandardParser<LF, PA>(parser);
 }
 
@@ -1309,7 +866,7 @@ template<LanguageFeature LF, typename PA> class DeprecatedParser {
 public:
   using resultType = typename PA::resultType;
   constexpr DeprecatedParser(const DeprecatedParser &) = default;
-  constexpr DeprecatedParser(const PA &parser) : parser_{parser} {}
+  constexpr DeprecatedParser(PA parser) : parser_{parser} {}
   std::optional<resultType> Parse(ParseState &state) const {
     if (UserState * ustate{state.userState()}) {
       if (!ustate->features().IsEnabled(LF)) {
@@ -1330,7 +887,7 @@ private:
 };
 
 template<LanguageFeature LF, typename PA>
-inline constexpr auto deprecated(const PA &parser) {
+inline constexpr auto deprecated(PA parser) {
   return DeprecatedParser<LF, PA>(parser);
 }
 
@@ -1339,7 +896,7 @@ template<typename PA> class SourcedParser {
 public:
   using resultType = typename PA::resultType;
   constexpr SourcedParser(const SourcedParser &) = default;
-  constexpr SourcedParser(const PA &parser) : parser_{parser} {}
+  constexpr SourcedParser(PA parser) : parser_{parser} {}
   std::optional<resultType> Parse(ParseState &state) const {
     const char *start{state.GetLocation()};
     auto result{parser_.Parse(state)};
@@ -1358,7 +915,7 @@ private:
   const PA parser_;
 };
 
-template<typename PA> inline constexpr auto sourced(const PA &parser) {
+template<typename PA> inline constexpr auto sourced(PA parser) {
   return SourcedParser<PA>{parser};
 }
 }

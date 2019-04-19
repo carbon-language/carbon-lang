@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,13 +30,19 @@ namespace Fortran::parser {
 template<typename A> struct Parser {
   using resultType = A;
   constexpr Parser() {}
-  static inline std::optional<A> Parse(ParseState &);
+  constexpr Parser(const Parser &) = default;
+  static inline std::optional<resultType> Parse(ParseState &);
 };
 
+// The result type of a parser combinator expression is determined
+// here via "decltype(attempt(pexpr))" to work around a g++ bug that
+// causes it to crash on "decltype(pexpr)" when pexpr's top-level
+// operator is an overridden || of parsing alternatives.
 #define TYPE_PARSER(pexpr) \
   template<> \
-  inline std::optional<typename decltype(pexpr)::resultType> \
-  Parser<typename decltype(pexpr)::resultType>::Parse(ParseState &state) { \
+  inline auto Parser<typename decltype(attempt(pexpr))::resultType>::Parse( \
+      ParseState &state) \
+      ->std::optional<resultType> { \
     static constexpr auto parser{(pexpr)}; \
     return parser.Parse(state); \
   }
