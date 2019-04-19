@@ -13,5 +13,14 @@ RUN:   | FileCheck %s --check-prefix=LLVM --implicit-check-not=inctwo
 RUN: llvm-symbolizer --output-style=GNU -i=0 -e %p/Inputs/addr.exe 0x40054d \
 RUN:   | FileCheck %s --check-prefix=GNU --implicit-check-not=main
 
+RUN: llvm-addr2line -f -e %p/Inputs/addr.exe 0x40054d \
+RUN:   | FileCheck %s --check-prefix=GNU --implicit-check-not=main
+
+RUN: llvm-addr2line --output-style=GNU -f -e %p/Inputs/addr.exe 0x40054d \
+RUN:   | FileCheck %s --check-prefix=GNU --implicit-check-not=main
+
+RUN: llvm-addr2line --output-style=LLVM -f -e %p/Inputs/addr.exe 0x40054d \
+RUN:   | FileCheck %s --check-prefix=LLVM --implicit-check-not=inctwo
+
 LLVM: main
 GNU: inctwo

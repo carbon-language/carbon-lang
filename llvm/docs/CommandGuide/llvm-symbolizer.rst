@@ -72,16 +72,22 @@ OPTIONS
 
   Path to object file to be symbolized.
 
+.. _llvm-symbolizer-opt-f:
+
 .. option:: -functions[=<none|short|linkage>], -f
 
   Specify the way function names are printed (omit function name,
   print short function name, or print full linkage name, respectively).
   Defaults to ``linkage``.
 
+.. _llvm-symbolizer-opt-use-symbol-table:
+
 .. option:: -use-symbol-table
 
  Prefer function names stored in symbol table to function names
  in debug info sections. Defaults to true.
+
+.. _llvm-symbolizer-opt-C:
 
 .. option:: -demangle, -C
 
@@ -90,6 +96,8 @@ OPTIONS
 .. option:: -no-demangle
 
  Don't print demangled function names.
+
+.. _llvm-symbolizer-opt-i:
 
 .. option:: -inlining, -inlines, -i
 
@@ -127,6 +135,8 @@ OPTIONS
 
  Add the specified offset to object file addresses when performing lookups. This
  can be used to perform lookups as if the object were relocated by the offset.
+
+.. _llvm-symbolizer-opt-output-style:
 
 .. option:: -output-style=<LLVM|GNU>
 

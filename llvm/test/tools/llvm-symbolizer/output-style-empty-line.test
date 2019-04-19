@@ -11,6 +11,15 @@ RUN:   | FileCheck %s --check-prefix=LLVM
 RUN: llvm-symbolizer --output-style=GNU -e %p/Inputs/addr.exe < %p/Inputs/addr.inp \
 RUN:   | FileCheck %s --check-prefix=GNU
 
+RUN: llvm-addr2line -i -e %p/Inputs/addr.exe < %p/Inputs/addr.inp \
+RUN:   | FileCheck %s --check-prefix=GNU
+
+RUN: llvm-addr2line --output-style=GNU -i -e %p/Inputs/addr.exe < %p/Inputs/addr.inp \
+RUN:   | FileCheck %s --check-prefix=GNU
+
+RUN: llvm-addr2line --output-style=LLVM -i -e %p/Inputs/addr.exe < %p/Inputs/addr.inp \
+RUN:   | FileCheck %s --check-prefix=LLVM
+
 LLVM: x.c:14:0
 LLVM-EMPTY:
 LLVM-NEXT: some text2

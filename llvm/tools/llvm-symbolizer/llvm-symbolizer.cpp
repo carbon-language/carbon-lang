@@ -43,7 +43,7 @@ static cl::opt<FunctionNameKind> ClPrintFunctions(
                clEnumValN(FunctionNameKind::ShortName, "short",
                           "print short function name"),
                clEnumValN(FunctionNameKind::LinkageName, "linkage",
-                          "print function linkage name (default)"),
+                          "print function linkage name"),
                // Sentinel value for unspecified value.
                clEnumValN(FunctionNameKind::LinkageName, "", "")));
 static cl::alias ClPrintFunctionsShort("f", cl::desc("Alias for -functions"),
@@ -252,8 +252,18 @@ static void symbolizeInput(StringRef InputString, LLVMSymbolizer &Symbolizer,
 int main(int argc, char **argv) {
   InitLLVM X(argc, argv);
 
+  bool IsAddr2Line = sys::path::stem(argv[0]).contains("addr2line");
+
+  if (IsAddr2Line) {
+    ClDemangle.setInitialValue(false);
+    ClPrintFunctions.setInitialValue(FunctionNameKind::None);
+    ClPrintInlining.setInitialValue(false);
+    ClOutputStyle.setInitialValue(DIPrinter::OutputStyle::GNU);
+  }
+
   llvm::sys::InitializeCOMRAII COM(llvm::sys::COMThreadingMode::MultiThreaded);
-  cl::ParseCommandLineOptions(argc, argv, "llvm-symbolizer\n");
+  cl::ParseCommandLineOptions(argc, argv, IsAddr2Line ? "llvm-addr2line\n"
+                                                      : "llvm-symbolizer\n");
 
   // If both --demangle and --no-demangle are specified then pick the last one.
   if (ClNoDemangle.getPosition() > ClDemangle.getPosition())
