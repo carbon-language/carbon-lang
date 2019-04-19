@@ -38,6 +38,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Scalar/GVN.h"
 #include "llvm/Transforms/Scalar/InstSimplifyPass.h"
+#include "llvm/Transforms/Scalar/LICM.h"
 #include "llvm/Transforms/Scalar/SimpleLoopUnswitch.h"
 #include "llvm/Transforms/Utils.h"
 #include "llvm/Transforms/Vectorize.h"
@@ -170,6 +171,8 @@ PassManagerBuilder::PassManagerBuilder() {
     // the LoopVectorize pass, to be consistent with the new pass manager.
     RerollLoops = RunLoopRerolling;
     NewGVN = RunNewGVN;
+    LicmMssaOptCap = SetLicmMssaOptCap;
+    LicmMssaNoAccForPromotionCap = SetLicmMssaNoAccForPromotionCap;
     DisableGVNLoadPRE = false;
     ForgetAllSCEVInLoopUnroll = ForgetSCEVInLoopUnroll;
     VerifyInput = false;
@@ -370,7 +373,7 @@ void PassManagerBuilder::addFunctionSimplificationPasses(
   }
   // Rotate Loop - disable header duplication at -Oz
   MPM.add(createLoopRotatePass(SizeLevel == 2 ? 0 : -1));
-  MPM.add(createLICMPass());                  // Hoist loop invariants
+  MPM.add(createLICMPass(LicmMssaOptCap, LicmMssaNoAccForPromotionCap));
   if (EnableSimpleLoopUnswitch)
     MPM.add(createSimpleLoopUnswitchLegacyPass());
   else
@@ -415,7 +418,7 @@ void PassManagerBuilder::addFunctionSimplificationPasses(
   MPM.add(createJumpThreadingPass());         // Thread jumps
   MPM.add(createCorrelatedValuePropagationPass());
   MPM.add(createDeadStoreEliminationPass());  // Delete dead stores
-  MPM.add(createLICMPass());
+  MPM.add(createLICMPass(LicmMssaOptCap, LicmMssaNoAccForPromotionCap));
 
   addExtensionsToPM(EP_ScalarOptimizerLate, MPM);
 
@@ -639,7 +642,7 @@ void PassManagerBuilder::populateModulePassManager(
   // later might get benefit of no-alias assumption in clone loop.
   if (UseLoopVersioningLICM) {
     MPM.add(createLoopVersioningLICMPass());    // Do LoopVersioningLICM
-    MPM.add(createLICMPass());                  // Hoist loop invariants
+    MPM.add(createLICMPass(LicmMssaOptCap, LicmMssaNoAccForPromotionCap));
   }
 
   // We add a fresh GlobalsModRef run at this point. This is particularly
@@ -696,7 +699,7 @@ void PassManagerBuilder::populateModulePassManager(
     MPM.add(createEarlyCSEPass());
     MPM.add(createCorrelatedValuePropagationPass());
     addInstructionCombiningPass(MPM);
-    MPM.add(createLICMPass());
+    MPM.add(createLICMPass(LicmMssaOptCap, LicmMssaNoAccForPromotionCap));
     MPM.add(createLoopUnswitchPass(SizeLevel || OptLevel < 3, DivergentTarget));
     MPM.add(createCFGSimplificationPass());
     addInstructionCombiningPass(MPM);
@@ -738,7 +741,7 @@ void PassManagerBuilder::populateModulePassManager(
     // unrolled loop is a inner loop, then the prologue will be inside the
     // outer loop. LICM pass can help to promote the runtime check out if the
     // checked value is loop invariant.
-    MPM.add(createLICMPass());
+    MPM.add(createLICMPass(LicmMssaOptCap, LicmMssaNoAccForPromotionCap));
   }
 
   MPM.add(createWarnMissedTransformationsPass());
@@ -907,7 +910,7 @@ void PassManagerBuilder::addLTOOptimizationPasses(legacy::PassManagerBase &PM) {
   PM.add(createPostOrderFunctionAttrsLegacyPass()); // Add nocapture.
   PM.add(createGlobalsAAWrapperPass()); // IP alias analysis.
 
-  PM.add(createLICMPass());                 // Hoist loop invariants.
+  PM.add(createLICMPass(LicmMssaOptCap, LicmMssaNoAccForPromotionCap));
   PM.add(createMergedLoadStoreMotionPass()); // Merge ld/st in diamonds.
   PM.add(NewGVN ? createNewGVNPass()
                 : createGVNPass(DisableGVNLoadPRE)); // Remove redundancies.

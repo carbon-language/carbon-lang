@@ -218,6 +218,8 @@ static cl::opt<bool>
 PipelineTuningOptions::PipelineTuningOptions() {
   LoopInterleaving = EnableLoopInterleaving;
   LoopVectorization = EnableLoopVectorization;
+  LicmMssaOptCap = SetLicmMssaOptCap;
+  LicmMssaNoAccForPromotionCap = SetLicmMssaNoAccForPromotionCap;
 }
 
 extern cl::opt<bool> EnableHotColdSplit;
@@ -446,7 +448,7 @@ PassBuilder::buildFunctionSimplificationPipeline(OptimizationLevel Level,
 
   // Rotate Loop - disable header duplication at -Oz
   LPM1.addPass(LoopRotatePass(Level != Oz));
-  LPM1.addPass(LICMPass());
+  LPM1.addPass(LICMPass(PTO.LicmMssaOptCap, PTO.LicmMssaNoAccForPromotionCap));
   LPM1.addPass(SimpleLoopUnswitchPass());
   LPM2.addPass(IndVarSimplifyPass());
   LPM2.addPass(LoopIdiomRecognizePass());
@@ -506,7 +508,9 @@ PassBuilder::buildFunctionSimplificationPipeline(OptimizationLevel Level,
   FPM.addPass(JumpThreadingPass());
   FPM.addPass(CorrelatedValuePropagationPass());
   FPM.addPass(DSEPass());
-  FPM.addPass(createFunctionToLoopPassAdaptor(LICMPass(), DebugLogging));
+  FPM.addPass(createFunctionToLoopPassAdaptor(
+      LICMPass(PTO.LicmMssaOptCap, PTO.LicmMssaNoAccForPromotionCap),
+      DebugLogging));
 
   for (auto &C : ScalarOptimizerLateEPCallbacks)
     C(FPM, Level);
@@ -907,7 +911,9 @@ ModulePassManager PassBuilder::buildModuleOptimizationPipeline(
   OptimizePM.addPass(WarnMissedTransformationsPass());
   OptimizePM.addPass(InstCombinePass());
   OptimizePM.addPass(RequireAnalysisPass<OptimizationRemarkEmitterAnalysis, Function>());
-  OptimizePM.addPass(createFunctionToLoopPassAdaptor(LICMPass(), DebugLogging));
+  OptimizePM.addPass(createFunctionToLoopPassAdaptor(
+      LICMPass(PTO.LicmMssaOptCap, PTO.LicmMssaNoAccForPromotionCap),
+      DebugLogging));
 
   // Now that we've vectorized and unrolled loops, we may have more refined
   // alignment information, try to re-derive it here.
