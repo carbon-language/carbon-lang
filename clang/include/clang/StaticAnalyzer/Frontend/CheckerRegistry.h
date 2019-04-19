@@ -195,6 +195,12 @@ private:
   CheckerInfoList Checkers;
   llvm::StringMap<size_t> PackageSizes;
 
+  /// Contains all (Dependendent checker, Dependency) pairs. We need this, as
+  /// we'll resolve dependencies after all checkers were added first.
+  llvm::SmallVector<std::pair<StringRef, StringRef>, 0> Dependencies;
+
+  void resolveDependencies();
+
   DiagnosticsEngine &Diags;
   AnalyzerOptions &AnOpts;
   const LangOptions &LangOpts;

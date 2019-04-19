@@ -177,6 +177,8 @@ CheckerRegistry::CheckerRegistry(
 #undef CHECKER_DEPENDENCY
 #undef GET_CHECKER_DEPENDENCIES
 
+  resolveDependencies();
+
   // Parse '-analyzer-checker' and '-analyzer-disable-checker' options from the
   // command line.
   for (const std::pair<std::string, bool> &Opt : AnOpts.CheckersControlList) {
@@ -278,18 +280,26 @@ void CheckerRegistry::addChecker(InitializationFunction Rfn,
   }
 }
 
+void CheckerRegistry::resolveDependencies() {
+  for (const std::pair<StringRef, StringRef> &Entry : Dependencies) {
+    auto CheckerIt = binaryFind(Checkers, Entry.first);
+    assert(CheckerIt != Checkers.end() && CheckerIt->FullName == Entry.first &&
+           "Failed to find the checker while attempting to set up its "
+           "dependencies!");
+
+    auto DependencyIt = binaryFind(Checkers, Entry.second);
+    assert(DependencyIt != Checkers.end() &&
+           DependencyIt->FullName == Entry.second &&
+           "Failed to find the dependency of a checker!");
+
+    CheckerIt->Dependencies.emplace_back(&*DependencyIt);
+  }
+
+  Dependencies.clear();
+}
+
 void CheckerRegistry::addDependency(StringRef FullName, StringRef Dependency) {
-  auto CheckerIt = binaryFind(Checkers, FullName);
-  assert(CheckerIt != Checkers.end() && CheckerIt->FullName == FullName &&
-         "Failed to find the checker while attempting to set up its "
-         "dependencies!");
-
-  auto DependencyIt = binaryFind(Checkers, Dependency);
-  assert(DependencyIt != Checkers.end() &&
-         DependencyIt->FullName == Dependency &&
-         "Failed to find the dependency of a checker!");
-
-  CheckerIt->Dependencies.emplace_back(&*DependencyIt);
+  Dependencies.emplace_back(FullName, Dependency);
 }
 
 void CheckerRegistry::initializeManager(CheckerManager &CheckerMgr) const {
