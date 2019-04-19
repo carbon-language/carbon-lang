@@ -105,6 +105,8 @@ static Distro::DistroType DetectDistro(llvm::vfs::FileSystem &VFS) {
         .Case("wheezy/sid", Distro::DebianWheezy)
         .Case("jessie/sid", Distro::DebianJessie)
         .Case("stretch/sid", Distro::DebianStretch)
+        .Case("buster/sid", Distro::DebianBuster)
+        .Case("bullseye/sid", Distro::DebianBullseye)
         .Default(Distro::UnknownDistro);
   }
 
