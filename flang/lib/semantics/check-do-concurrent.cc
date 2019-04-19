@@ -302,9 +302,6 @@ struct GatherSymbols {
   void Post(const parser::Name &name) { symbols.push_back(name.symbol); }
 };
 
-static bool IntegerVariable(const Symbol &variable) {
-  return variable.GetType()->IsNumeric(common::TypeCategory::Integer);
-}
 static CS GatherAllVariableNames(
     const std::list<parser::LocalitySpec> &localitySpecs) {
   CS names;
@@ -420,29 +417,6 @@ public:
         parser::Walk(
             std::get<parser::Block>(doConstruct.t), doConcurrentLabelEnforce);
         EnforceConcurrentLoopControl(*concurrent);
-      } else if (auto *loopBounds{
-                     std::get_if<parser::LoopBounds<parser::ScalarIntExpr>>(
-                         &optionalLoopControl->u)}) {
-        // C1120 - FIXME? may be checked before we get here
-        auto *doVariable{loopBounds->name.thing.thing.symbol};
-        CHECK(doVariable);
-        currentStatementSourcePosition_ = loopBounds->name.thing.thing.source;
-        if (!IntegerVariable(*doVariable)) {
-          // warning only: older Fortrans allowed floating-point do-variables
-          messages_.Say(currentStatementSourcePosition_,
-              "do-variable must have INTEGER type"_en_US);
-        }
-      } else {
-        // C1006 - FIXME? may be checked before we get here
-        auto &logicalExpr{
-            std::get<parser::ScalarLogicalExpr>(optionalLoopControl->u)
-                .thing.thing};
-        CHECK(logicalExpr.value().typedExpr);
-        if (!ExprHasTypeCategory(*logicalExpr.value().typedExpr,
-                common::TypeCategory::Logical)) {
-          messages_.Say(currentStatementSourcePosition_,
-              "DO WHILE must have LOGICAL expression"_err_en_US);
-        }
       }
     }
   }
@@ -550,17 +524,8 @@ private:
     CS indexNames;
     for (auto &c : controls) {
       auto &indexName{std::get<parser::Name>(c.t)};
-      // C1122 - FIXME? may be checked somewhere else before we get here
-      if (!indexName.symbol) {
-        continue;  // XXX - this shouldn't be needed
-      }
       CHECK(indexName.symbol);
       indexNames.push_back(indexName.symbol);
-      if (!IntegerVariable(*indexName.symbol)) {
-        messages_.Say(
-            indexName.source, "index-name must have INTEGER type"_err_en_US);
-        return;
-      }
     }
     if (!indexNames.empty()) {
       for (auto &c : controls) {

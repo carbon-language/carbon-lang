@@ -54,9 +54,6 @@ void DeallocateChecker::Leave(const parser::DeallocateStmt &deallocateStmt) {
     std::visit(
         common::visitors{
             [&](const parser::StatVariable &statVariable) {
-              // ExpressionAnalyzer emits error messages
-              evaluate::ExpressionAnalyzer analyzer{context_};
-              analyzer.Analyze(statVariable.v);
               if (gotStat) {
                 context_.Say(
                     "STAT may not be duplicated in a DEALLOCATE statement"_err_en_US);
@@ -64,9 +61,6 @@ void DeallocateChecker::Leave(const parser::DeallocateStmt &deallocateStmt) {
               gotStat = true;
             },
             [&](const parser::MsgVariable &msgVariable) {
-              // ExpressionAnalyzer emits error messages
-              evaluate::ExpressionAnalyzer analyzer{context_};
-              analyzer.Analyze(msgVariable.v);
               if (gotMsg) {
                 context_.Say(
                     "ERRMSG may not be duplicated in a DEALLOCATE statement"_err_en_US);

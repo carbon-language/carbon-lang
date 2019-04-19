@@ -18,7 +18,6 @@ add_library(FortranSemantics
   canonicalize-do.cc
   check-arithmeticif.cc
   check-coarray.cc
-  check-computed-goto.cc
   check-deallocate.cc
   check-do-concurrent.cc
   check-if-stmt.cc

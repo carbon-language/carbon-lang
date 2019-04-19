@@ -17,7 +17,6 @@
 #include "canonicalize-do.h"
 #include "check-arithmeticif.h"
 #include "check-coarray.h"
-#include "check-computed-goto.h"
 #include "check-deallocate.h"
 #include "check-do-concurrent.h"
 #include "check-if-stmt.h"
@@ -80,10 +79,9 @@ private:
 };
 
 using StatementSemanticsPass1 = ExprChecker;
-using StatementSemanticsPass2 =
-    SemanticsVisitor<ArithmeticIfStmtChecker, AssignmentChecker, CoarrayChecker,
-        ComputedGotoStmtChecker, DeallocateChecker, DoConcurrentChecker,
-        IfStmtChecker, NullifyChecker, ReturnStmtChecker, StopChecker>;
+using StatementSemanticsPass2 = SemanticsVisitor<ArithmeticIfStmtChecker,
+    AssignmentChecker, CoarrayChecker, DeallocateChecker, DoConcurrentChecker,
+    IfStmtChecker, NullifyChecker, ReturnStmtChecker, StopChecker>;
 
 SemanticsContext::SemanticsContext(
     const common::IntrinsicTypeDefaultKinds &defaultKinds,
