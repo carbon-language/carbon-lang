@@ -277,15 +277,15 @@ const Symbol *FindExternallyVisibleObject(
   }
 }
 
-bool ExprHasTypeCategory(const evaluate::GenericExprWrapper &expr,
-    const common::TypeCategory &type) {
-  auto dynamicType{expr.v.GetType()};
+bool ExprHasTypeCategory(
+    const SomeExpr &expr, const common::TypeCategory &type) {
+  auto dynamicType{expr.GetType()};
   return dynamicType.has_value() && dynamicType->category == type;
 }
 
 bool ExprTypeKindIsDefault(
-    const evaluate::GenericExprWrapper &expr, const SemanticsContext &context) {
-  auto dynamicType{expr.v.GetType()};
+    const SomeExpr &expr, const SemanticsContext &context) {
+  auto dynamicType{expr.GetType()};
   return dynamicType.has_value() &&
       dynamicType->category != common::TypeCategory::Derived &&
       dynamicType->kind ==

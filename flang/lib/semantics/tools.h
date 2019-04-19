@@ -18,6 +18,7 @@
 // Simple predicates and look-up functions that are best defined
 // canonically for use in semantic checking.
 
+#include "expression.h"
 #include "semantics.h"
 #include "../common/Fortran.h"
 #include "../evaluate/expression.h"
@@ -95,12 +96,12 @@ const Symbol *FindExternallyVisibleObject(
       expr.u);
 }
 
-bool ExprHasTypeCategory(
-    const evaluate::GenericExprWrapper &expr, const common::TypeCategory &type);
-bool ExprTypeKindIsDefault(
-    const evaluate::GenericExprWrapper &expr, const SemanticsContext &context);
-
 using SomeExpr = evaluate::Expr<evaluate::SomeType>;
+
+bool ExprHasTypeCategory(
+    const SomeExpr &expr, const common::TypeCategory &type);
+bool ExprTypeKindIsDefault(
+    const SomeExpr &expr, const SemanticsContext &context);
 
 struct GetExprHelper {
   const SomeExpr *Get(const parser::Expr::TypedExpr &x) {
@@ -110,6 +111,9 @@ struct GetExprHelper {
   const SomeExpr *Get(const parser::Variable &x) { return Get(x.typedExpr); }
   template<typename T> const SomeExpr *Get(const common::Indirection<T> &x) {
     return Get(x.value());
+  }
+  template<typename T> const SomeExpr *Get(const std::optional<T> &x) {
+    return x.has_value() ? Get(x.value()) : nullptr;
   }
   template<typename T> const SomeExpr *Get(const T &x) {
     if constexpr (ConstraintTrait<T>) {
