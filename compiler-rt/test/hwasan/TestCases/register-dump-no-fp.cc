@@ -1,7 +1,15 @@
-// RUN: %clang_hwasan -ffixed-x10 -ffixed-x20 -ffixed-x27 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s
-// RUN: %clang_hwasan -ffixed-x10 -ffixed-x20 -ffixed-x27 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -O1 %s -o %t && not %run %t 2>&1 | FileCheck %s
-// RUN: %clang_hwasan -ffixed-x10 -ffixed-x20 -ffixed-x27 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -O2 %s -o %t && not %run %t 2>&1 | FileCheck %s
-// RUN: %clang_hwasan -ffixed-x10 -ffixed-x20 -ffixed-x27 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -O3 %s -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_hwasan -ffixed-x10 -ffixed-x20 -ffixed-x27 -fno-omit-frame-pointer \
+// RUN:   -mno-omit-leaf-frame-pointer -O0 %s -o %t && not %run %t 2>&1 | \
+// RUN:   FileCheck %s --check-prefixes=CHECK
+// RUN: %clangxx_hwasan -ffixed-x10 -ffixed-x20 -ffixed-x27 -fno-omit-frame-pointer \
+// RUN:   -mno-omit-leaf-frame-pointer -O1 %s -o %t && not %run %t 2>&1 | \
+// RUN:   FileCheck %s --check-prefixes=CHECK
+// RUN: %clangxx_hwasan -ffixed-x10 -ffixed-x20 -ffixed-x27 -fno-omit-frame-pointer \
+// RUN:   -mno-omit-leaf-frame-pointer -O2 %s -o %t && not %run %t 2>&1 | \
+// RUN:   FileCheck %s --check-prefixes=CHECK
+// RUN: %clangxx_hwasan -ffixed-x10 -ffixed-x20 -ffixed-x27 -fno-omit-frame-pointer \
+// RUN:   -mno-omit-leaf-frame-pointer -O3 %s -o %t && not %run %t 2>&1 | \
+// RUN:   FileCheck %s --check-prefixes=CHECK
 // REQUIRES: aarch64-target-arch
 #include <stdlib.h>
 #include <stdio.h>
@@ -10,17 +18,21 @@
 __attribute__((noinline)) void f(int *p) { *p = 3; }
 
 // CHECK: ERROR: HWAddressSanitizer:
-// CHECK: #0 {{.*}} in f {{.*}}register-dump-no-fp.c:[[@LINE-3]]
+// CHECK: #0 {{.*}} in f(int*) {{.*}}register-dump-no-fp.cc:[[@LINE-3]]
 
 int main() {
+  __hwasan_enable_allocator_tagging();
+
+  // Must come first - libc++ can clobber as it's not compiled with -ffixed-x10.
+  int * volatile a = new int;
+
   asm volatile("mov x10, #0x2222\n"
                "mov x20, #0x3333\n"
                "mov x27, #0x4444\n");
 
-  int * volatile a = new int;
   a = (int *)__hwasan_tag_pointer(a, 0);
   f(a);
-  // CHECK: #1 {{.*}} in main {{.*}}register-dump-no-fp.c:[[@LINE-1]]
+  // CHECK: #1 {{.*}} in main {{.*}}register-dump-no-fp.cc:[[@LINE-1]]
   // CHECK: #2 {{.*}} in {{.*lib.*}}
 }
 
