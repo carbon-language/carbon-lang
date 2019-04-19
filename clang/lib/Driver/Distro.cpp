@@ -94,6 +94,8 @@ static Distro::DistroType DetectDistro(llvm::vfs::FileSystem &VFS) {
         return Distro::DebianStretch;
       case 10:
         return Distro::DebianBuster;
+      case 11:
+        return Distro::DebianBullseye;
       default:
         return Distro::UnknownDistro;
       }
