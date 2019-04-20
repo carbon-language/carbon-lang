@@ -10,6 +10,7 @@
 #include "JITLink_EHFrameSupportImpl.h"
 
 #include "llvm/BinaryFormat/Dwarf.h"
+#include "llvm/Support/DynamicLibrary.h"
 
 #define DEBUG_TYPE "jitlink"
 
@@ -428,7 +429,7 @@ static Error registerFrameWrapper(const void *P) {
                                   "__register_frame function not found");
 }
 
-static void deregisterFrameWrapper(const void *P) {
+static Error deregisterFrameWrapper(const void *P) {
   static void((*DeregisterFrame)(const void *)) = 0;
 
   if (!DeregisterFrame)
