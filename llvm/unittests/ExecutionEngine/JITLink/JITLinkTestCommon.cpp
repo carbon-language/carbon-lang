@@ -15,14 +15,16 @@
 using namespace llvm::jitlink;
 namespace llvm {
 
-JITLinkTestCommon::TestResources::TestResources(StringRef AsmSrc,
-                                                StringRef TripleStr, bool PIC,
-                                                bool LargeCodeModel,
-                                                MCTargetOptions Options)
-    : ObjStream(ObjBuffer), Options(std::move(Options)) {
-  Triple TT(Triple::normalize(TripleStr));
-  initializeTripleSpecifics(TT);
-  initializeTestSpecifics(AsmSrc, TT, PIC, LargeCodeModel);
+Expected<std::unique_ptr<JITLinkTestCommon::TestResources>>
+JITLinkTestCommon::TestResources::Create(StringRef AsmSrc, StringRef TripleStr,
+                                         bool PIC, bool LargeCodeModel,
+                                         MCTargetOptions Options) {
+  Error Err = Error::success();
+  auto R = std::unique_ptr<TestResources>(new TestResources(
+      AsmSrc, TripleStr, PIC, LargeCodeModel, std::move(Options), Err));
+  if (Err)
+    return std::move(Err);
+  return std::move(R);
 }
 
 MemoryBufferRef
@@ -31,12 +33,27 @@ JITLinkTestCommon::TestResources::getTestObjectBufferRef() const {
                          "Test object");
 }
 
-void JITLinkTestCommon::TestResources::initializeTripleSpecifics(Triple &TT) {
-  std::string Error;
-  TheTarget = TargetRegistry::lookupTarget("", TT, Error);
+JITLinkTestCommon::TestResources::TestResources(StringRef AsmSrc,
+                                                StringRef TripleStr, bool PIC,
+                                                bool LargeCodeModel,
+                                                MCTargetOptions Options,
+                                                Error &Err)
+    : ObjStream(ObjBuffer), Options(std::move(Options)) {
+  ErrorAsOutParameter _(&Err);
+  Triple TT(Triple::normalize(TripleStr));
+  if (auto Err2 = initializeTripleSpecifics(TT)) {
+    Err = std::move(Err2);
+    return;
+  }
+  initializeTestSpecifics(AsmSrc, TT, PIC, LargeCodeModel);
+}
+
+Error JITLinkTestCommon::TestResources::initializeTripleSpecifics(Triple &TT) {
+  std::string ErrorMsg;
+  TheTarget = TargetRegistry::lookupTarget("", TT, ErrorMsg);
 
   if (!TheTarget)
-    report_fatal_error(Error);
+    return make_error<StringError>(ErrorMsg, inconvertibleErrorCode());
 
   MRI.reset(TheTarget->createMCRegInfo(TT.getTriple()));
   if (!MRI)
@@ -59,6 +76,8 @@ void JITLinkTestCommon::TestResources::initializeTripleSpecifics(Triple &TT) {
 
   if (!Dis)
     report_fatal_error("Could not build MCDisassembler");
+
+  return Error::success();
 }
 
 void JITLinkTestCommon::TestResources::initializeTestSpecifics(

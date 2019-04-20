@@ -40,15 +40,19 @@ public:
 
   class TestResources {
   public:
-    TestResources(StringRef AsmSrc, StringRef TripleStr, bool PIC,
-                  bool LargeCodeModel, MCTargetOptions Options);
+    static Expected<std::unique_ptr<TestResources>>
+    Create(StringRef AsmSrc, StringRef TripleStr, bool PIC, bool LargeCodeModel,
+           MCTargetOptions Options);
 
     MemoryBufferRef getTestObjectBufferRef() const;
 
     const MCDisassembler &getDisassembler() const { return *Dis; }
 
   private:
-    void initializeTripleSpecifics(Triple &TT);
+    TestResources(StringRef AsmSrc, StringRef TripleStr, bool PIC,
+                  bool LargeCodeModel, MCTargetOptions Options, Error &Err);
+
+    Error initializeTripleSpecifics(Triple &TT);
     void initializeTestSpecifics(StringRef AsmSource, const Triple &TT,
                                  bool PIC, bool LargeCodeModel);
 
@@ -123,11 +127,16 @@ public:
 
   JITLinkTestCommon();
 
-  std::unique_ptr<TestResources>
+  /// Get TestResources for this target/test.
+  ///
+  /// If this method fails it is likely because the target is not supported in
+  /// this build. The test should bail out without failing (possibly logging a
+  /// diagnostic).
+  Expected<std::unique_ptr<TestResources>>
   getTestResources(StringRef AsmSrc, StringRef Triple, bool PIC,
                    bool LargeCodeModel, MCTargetOptions Options) const {
-    return llvm::make_unique<TestResources>(AsmSrc, Triple, PIC, LargeCodeModel,
-                                            std::move(Options));
+    return TestResources::Create(AsmSrc, Triple, PIC, LargeCodeModel,
+                                 std::move(Options));
   }
 
   template <typename T>

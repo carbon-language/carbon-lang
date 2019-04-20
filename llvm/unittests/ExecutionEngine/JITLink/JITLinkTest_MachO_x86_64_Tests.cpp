@@ -33,9 +33,14 @@ public:
                                BasicVerifyGraphFunction RunGraphTest) {
     auto TR = getTestResources(AsmSrc, Triple, PIC, LargeCodeModel,
                                std::move(Options));
+    if (!TR) {
+      dbgs() << "Skipping JITLInk unit test: " << toString(TR.takeError())
+             << "\n";
+      return;
+    }
 
     auto JTCtx = llvm::make_unique<TestJITLinkContext>(
-        *TR, [&](AtomGraph &G) { RunGraphTest(G, TR->getDisassembler()); });
+        **TR, [&](AtomGraph &G) { RunGraphTest(G, (*TR)->getDisassembler()); });
 
     JTCtx->externals() = std::move(Externals);
 
