@@ -3983,10 +3983,11 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
     if (!Cst)
       break;
 
+    int64_t Val = Cst->getSExtValue();
+
     // If we have an any_extend feeding the AND, look through it to see if there
     // is a shift behind it. But only if the AND doesn't use the extended bits.
     // FIXME: Generalize this to other ANY_EXTEND than i32 to i64?
-    int64_t Val = Cst->getSExtValue();
     bool FoundAnyExtend = false;
     if (Shift.getOpcode() == ISD::ANY_EXTEND && Shift.hasOneUse() &&
         Shift.getOperand(0).getSimpleValueType() == MVT::i32 &&
@@ -4041,26 +4042,44 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
     };
 
     int64_t ShiftedVal;
-    if (CanShrinkImmediate(ShiftedVal)) {
-      SDValue X = Shift.getOperand(0);
-      if (FoundAnyExtend) {
-        SDValue NewX = CurDAG->getNode(ISD::ANY_EXTEND, dl, NVT, X);
-        insertDAGNode(*CurDAG, SDValue(Node, 0), NewX);
-        X = NewX;
-      }
+    if (!CanShrinkImmediate(ShiftedVal))
+      break;
 
-      SDValue NewCst = CurDAG->getConstant(ShiftedVal, dl, NVT);
-      insertDAGNode(*CurDAG, SDValue(Node, 0), NewCst);
-      SDValue NewBinOp = CurDAG->getNode(Opcode, dl, NVT, X, NewCst);
-      insertDAGNode(*CurDAG, SDValue(Node, 0), NewBinOp);
-      SDValue NewSHL = CurDAG->getNode(ISD::SHL, dl, NVT, NewBinOp,
-                                       Shift.getOperand(1));
-      ReplaceNode(Node, NewSHL.getNode());
-      SelectCode(NewSHL.getNode());
-      return;
+    // Ok, we can reorder to get a smaller immediate.
+
+    // But, its possible the original immediate allowed an AND to become MOVZX.
+    // Doing this late due to avoid the MakedValueIsZero call as late as
+    // possible.
+    if (Opcode == ISD::AND) {
+      // Find the smallest zext this could possibly be.
+      unsigned ZExtWidth = Cst->getAPIntValue().getActiveBits();
+      ZExtWidth = PowerOf2Ceil(std::max(ZExtWidth, 8U));
+
+      // Figure out which bits need to be zero to achieve that mask.
+      APInt NeededMask = APInt::getLowBitsSet(NVT.getSizeInBits(),
+                                              ZExtWidth);
+      NeededMask &= ~Cst->getAPIntValue();
+
+      if (CurDAG->MaskedValueIsZero(Node->getOperand(0), NeededMask))
+        break;
     }
 
-    break;
+    SDValue X = Shift.getOperand(0);
+    if (FoundAnyExtend) {
+      SDValue NewX = CurDAG->getNode(ISD::ANY_EXTEND, dl, NVT, X);
+      insertDAGNode(*CurDAG, SDValue(Node, 0), NewX);
+      X = NewX;
+    }
+
+    SDValue NewCst = CurDAG->getConstant(ShiftedVal, dl, NVT);
+    insertDAGNode(*CurDAG, SDValue(Node, 0), NewCst);
+    SDValue NewBinOp = CurDAG->getNode(Opcode, dl, NVT, X, NewCst);
+    insertDAGNode(*CurDAG, SDValue(Node, 0), NewBinOp);
+    SDValue NewSHL = CurDAG->getNode(ISD::SHL, dl, NVT, NewBinOp,
+                                     Shift.getOperand(1));
+    ReplaceNode(Node, NewSHL.getNode());
+    SelectCode(NewSHL.getNode());
+    return;
   }
   case X86ISD::SMUL:
     // i16/i32/i64 are handled with isel patterns.
