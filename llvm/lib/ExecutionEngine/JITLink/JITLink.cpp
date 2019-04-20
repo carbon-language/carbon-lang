@@ -216,8 +216,8 @@ InProcessMemoryManager::allocate(const SegmentsRequestMap &Request) {
       return errorCodeToError(EC);
 
     // Zero out the zero-fill memory.
-    bzero(static_cast<char *>(SegMem.base()) + ZeroFillStart,
-          Seg.getZeroFillSize());
+    memset(static_cast<char *>(SegMem.base()) + ZeroFillStart, 0,
+           Seg.getZeroFillSize());
 
     // Record the block for this segment.
     Blocks[KV.first] = std::move(SegMem);
