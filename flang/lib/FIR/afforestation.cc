@@ -25,9 +25,13 @@
 
 namespace Fortran::FIR {
 namespace {
-Expression *ExprRef(const parser::Expr &a) { return &a.typedExpr.get()->v; }
+Expression *ExprRef(const parser::Expr &a) {
+  CHECK(a.typedExpr);
+  CHECK(a.typedExpr->v);
+  return &*a.typedExpr->v;
+}
 Expression *ExprRef(const common::Indirection<parser::Expr> &a) {
-  return &a.value().typedExpr.get()->v;
+  return ExprRef(a.value());
 }
 
 template<typename STMTTYPE, typename CT>

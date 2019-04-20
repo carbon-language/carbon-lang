@@ -1859,10 +1859,7 @@ void FixMisparsedFunctionReference(
 // Common handling of parser::Expr and Parser::Variable
 template<typename PARSED>
 MaybeExpr ExpressionAnalyzer::ExprOrVariable(const PARSED &x) {
-  if (x.typedExpr) {
-    // Expression was already checked by ExprChecker
-    return std::make_optional<Expr<SomeType>>(x.typedExpr->v);
-  } else {
+  if (!x.typedExpr) {  // not yet analyzed
     FixMisparsedFunctionReference(context_, x.u);
     MaybeExpr result;
     if constexpr (std::is_same_v<PARSED, parser::Expr>) {
@@ -1873,9 +1870,8 @@ MaybeExpr ExpressionAnalyzer::ExprOrVariable(const PARSED &x) {
     } else {
       result = Analyze(x.u);
     }
-    if (result.has_value()) {
-      x.typedExpr.reset(new GenericExprWrapper{common::Clone(*result)});
-    } else if (!fatalErrors_) {
+    x.typedExpr.reset(new GenericExprWrapper{std::move(result)});
+    if (!x.typedExpr->v.has_value()) {
       if (!context_.AnyFatalError()) {
 #if DUMP_ON_FAILURE
         parser::DumpTree(std::cout << "Expression analysis failed on: ", x);
@@ -1885,8 +1881,8 @@ MaybeExpr ExpressionAnalyzer::ExprOrVariable(const PARSED &x) {
       }
       fatalErrors_ = true;
     }
-    return result;
   }
+  return x.typedExpr->v;
 }
 
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr &expr) {

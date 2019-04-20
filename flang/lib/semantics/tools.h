@@ -107,7 +107,8 @@ bool ExprTypeKindIsDefault(
 
 struct GetExprHelper {
   const SomeExpr *Get(const parser::Expr::TypedExpr &x) {
-    return x ? &x->v : nullptr;
+    CHECK(x);
+    return x->v ? &*x->v : nullptr;
   }
   const SomeExpr *Get(const parser::Expr &x) { return Get(x.typedExpr); }
   const SomeExpr *Get(const parser::Variable &x) { return Get(x.typedExpr); }

@@ -837,11 +837,12 @@ public:
 
 // This wrapper class is used, by means of a forward reference with
 // an owning pointer, to cache analyzed expressions in parse tree nodes.
+// v is nullopt if an error occurred during expression analysis.
 struct GenericExprWrapper {
-  GenericExprWrapper(Expr<SomeType> &&x) : v{std::move(x)} {}
+  GenericExprWrapper(std::optional<Expr<SomeType>> &&x) : v{std::move(x)} {}
   ~GenericExprWrapper();
   bool operator==(const GenericExprWrapper &) const;
-  Expr<SomeType> v;
+  std::optional<Expr<SomeType>> v;
 };
 
 std::ostream &DerivedTypeSpecAsFortran(
