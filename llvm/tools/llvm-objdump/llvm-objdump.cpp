@@ -1153,9 +1153,9 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
 
       // The end is the section end, the beginning of the next symbol, or
       // --stop-address.
-      uint64_t End = std::min<uint64_t>(
-          SI + 1 < SE ? std::get<0>(Symbols[SI + 1]) : SectionAddr + SectSize,
-          StopAddress);
+      uint64_t End = std::min<uint64_t>(SectionAddr + SectSize, StopAddress);
+      if (SI + 1 < SE)
+        End = std::min(End, std::get<0>(Symbols[SI + 1]));
       if (Start >= End || End <= StartAddress)
         continue;
       Start -= SectionAddr;
