@@ -381,7 +381,7 @@ public:
     assert(!Parent.isZeroFill() && "Trying to get content for zero-fill atom");
     assert(Size <= std::numeric_limits<size_t>::max() &&
            "Content size too large");
-    return {ContentPtr, Size};
+    return {ContentPtr, static_cast<size_t>(Size)};
   }
   void setContent(StringRef Content) {
     assert(!Parent.isZeroFill() && "Calling setContent on zero-fill atom?");
