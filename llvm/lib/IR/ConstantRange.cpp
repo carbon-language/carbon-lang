@@ -1099,6 +1099,42 @@ ConstantRange::ashr(const ConstantRange &Other) const {
   return getNonEmpty(std::move(min), std::move(max));
 }
 
+ConstantRange ConstantRange::uadd_sat(const ConstantRange &Other) const {
+  if (isEmptySet() || Other.isEmptySet())
+    return getEmpty();
+
+  APInt NewL = getUnsignedMin().uadd_sat(Other.getUnsignedMin());
+  APInt NewU = getUnsignedMax().uadd_sat(Other.getUnsignedMax()) + 1;
+  return getNonEmpty(std::move(NewL), std::move(NewU));
+}
+
+ConstantRange ConstantRange::sadd_sat(const ConstantRange &Other) const {
+  if (isEmptySet() || Other.isEmptySet())
+    return getEmpty();
+
+  APInt NewL = getSignedMin().sadd_sat(Other.getSignedMin());
+  APInt NewU = getSignedMax().sadd_sat(Other.getSignedMax()) + 1;
+  return getNonEmpty(std::move(NewL), std::move(NewU));
+}
+
+ConstantRange ConstantRange::usub_sat(const ConstantRange &Other) const {
+  if (isEmptySet() || Other.isEmptySet())
+    return getEmpty();
+
+  APInt NewL = getUnsignedMin().usub_sat(Other.getUnsignedMax());
+  APInt NewU = getUnsignedMax().usub_sat(Other.getUnsignedMin()) + 1;
+  return getNonEmpty(std::move(NewL), std::move(NewU));
+}
+
+ConstantRange ConstantRange::ssub_sat(const ConstantRange &Other) const {
+  if (isEmptySet() || Other.isEmptySet())
+    return getEmpty();
+
+  APInt NewL = getSignedMin().ssub_sat(Other.getSignedMax());
+  APInt NewU = getSignedMax().ssub_sat(Other.getSignedMin()) + 1;
+  return getNonEmpty(std::move(NewL), std::move(NewU));
+}
+
 ConstantRange ConstantRange::inverse() const {
   if (isFullSet())
     return getEmpty();

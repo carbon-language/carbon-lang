@@ -377,6 +377,18 @@ public:
   /// arithmetic right shift of a value in this range and a value in \p Other.
   ConstantRange ashr(const ConstantRange &Other) const;
 
+  /// Perform an unsigned saturating addition of two constant ranges.
+  ConstantRange uadd_sat(const ConstantRange &Other) const;
+
+  /// Perform a signed saturating addition of two constant ranges.
+  ConstantRange sadd_sat(const ConstantRange &Other) const;
+
+  /// Perform an unsigned saturating subtraction of two constant ranges.
+  ConstantRange usub_sat(const ConstantRange &Other) const;
+
+  /// Perform a signed saturating subtraction of two constant ranges.
+  ConstantRange ssub_sat(const ConstantRange &Other) const;
+
   /// Return a new range that is the logical not of the current set.
   ConstantRange inverse() const;
 
