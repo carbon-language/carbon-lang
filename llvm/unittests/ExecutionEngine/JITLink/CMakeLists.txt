@@ -3,6 +3,7 @@ set(LLVM_LINK_COMPONENTS
   JITLink
   MC
   MCDisassembler
+  MCParser
   Object
   RuntimeDyld
   Support
