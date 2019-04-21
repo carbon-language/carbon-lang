@@ -1292,7 +1292,7 @@ Demangler::demangleStringLiteral(StringView &MangledName) {
 
     unsigned BytesDecoded = 0;
     while (!MangledName.consumeFront('@')) {
-      if (MangledName.size() < 1)
+      if (MangledName.size() < 1 || BytesDecoded >= MaxStringByteLength)
         goto StringLiteralError;
       StringBytes[BytesDecoded++] = demangleCharLiteral(MangledName);
     }
