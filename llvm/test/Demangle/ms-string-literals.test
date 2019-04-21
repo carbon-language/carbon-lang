@@ -730,7 +730,10 @@
 ; CHECK: L"012345678901234567890123456789AB"...
 
 ??_C@_13IIHIAFKH@?W?$PP?$AA?$AA@
-; CHECK: L"\xD7\xFF"
+; CHECK: L"\xD7FF"
+
+??_C@_03IIHIAFKH@?$PP?W?$AA?$AA@
+; CHECK: u"\xD7FF"
 
 ??_C@_02PCEFGMJL@hi?$AA@
 ; CHECK: "hi"
@@ -785,9 +788,7 @@
 ; This is technically not a valid u32 string since the character in it is not
 ; <= 0x10FFFF like unicode demands. (Also, the crc doesn't match the contents.)
 ; It's here because this input used to cause a stack overflow in outputHex().
-
-; FIXME: The demangler currently writes for \x codes for a single U string
-; character. That's incorrect since that would mangle two four characters.
+; Both cl.exe and clang-cl produce it for `const char32_t* s = U"\x11223344";`
 
 ??_C@_07LJGFEJEB@D3?$CC?$BB?$AA?$AA?$AA?$AA@)
-; CHECK: U"\x11\x22\x33\x44"
+; CHECK: U"\x11223344"

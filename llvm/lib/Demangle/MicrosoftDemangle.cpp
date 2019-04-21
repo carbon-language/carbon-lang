@@ -1079,10 +1079,10 @@ static void outputHex(OutputStream &OS, unsigned C) {
       writeHexDigit(&TempBuffer[Pos--], C % 16);
       C /= 16;
     }
-    TempBuffer[Pos--] = 'x';
-    assert(Pos >= 0);
-    TempBuffer[Pos--] = '\\';
   }
+  TempBuffer[Pos--] = 'x';
+  assert(Pos >= 0);
+  TempBuffer[Pos--] = '\\';
   OS << StringView(&TempBuffer[Pos + 1]);
 }
 
