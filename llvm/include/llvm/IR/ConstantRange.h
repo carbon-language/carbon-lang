@@ -79,6 +79,14 @@ public:
     return ConstantRange(BitWidth, true);
   }
 
+  /// Create non-empty constant range with the given bounds. If Lower and
+  /// Upper are the same, a full range is returned.
+  static ConstantRange getNonEmpty(APInt Lower, APInt Upper) {
+    if (Lower == Upper)
+      return getFull(Lower.getBitWidth());
+    return ConstantRange(std::move(Lower), std::move(Upper));
+  }
+
   /// Initialize a range based on a known bits constraint. The IsSigned flag
   /// indicates whether the constant range should not wrap in the signed or
   /// unsigned domain.
