@@ -36,8 +36,6 @@
 #include <list>
 #include <string>
 
-#include "dlfcn.h"
-
 #define DEBUG_TYPE "llvm-jitlink"
 
 using namespace llvm;
@@ -71,10 +69,10 @@ static cl::opt<bool>
                      cl::desc("Do not resolve to llvm-jitlink process symbols"),
                      cl::init(false));
 
-static cl::list<std::string>
-AbsoluteDefs("define-abs",
-             cl::desc("Inject absolute symbol definitions (syntax: <name>=<addr>)"),
-             cl::ZeroOrMore);
+static cl::list<std::string> AbsoluteDefs(
+    "define-abs",
+    cl::desc("Inject absolute symbol definitions (syntax: <name>=<addr>)"),
+    cl::ZeroOrMore);
 
 static cl::opt<bool> ShowAddrs(
     "show-addrs",
