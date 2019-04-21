@@ -12,6 +12,7 @@
 
 #include "llvm/ExecutionEngine/JITLink/JITLink_MachO_x86_64.h"
 
+#include "BasicGOTAndStubsBuilder.h"
 #include "MachOAtomGraphBuilder.h"
 
 #define DEBUG_TYPE "jitlink"
@@ -346,104 +347,79 @@ private:
   unsigned NumSymbols = 0;
 };
 
-class MachOInPlaceGOTAndStubsBuilder {
+class MachO_x86_64_GOTAndStubsBuilder
+    : public BasicGOTAndStubsBuilder<MachO_x86_64_GOTAndStubsBuilder> {
 public:
-  MachOInPlaceGOTAndStubsBuilder(AtomGraph &G) : G(G) {}
+  MachO_x86_64_GOTAndStubsBuilder(AtomGraph &G)
+      : BasicGOTAndStubsBuilder<MachO_x86_64_GOTAndStubsBuilder>(G) {}
 
-  void run() {
-    // We're going to be adding new atoms, but we don't want to iterate over
-    // the newly added ones, so just copy the existing atoms out.
-    std::vector<DefinedAtom *> DAs(G.defined_atoms().begin(),
-                                   G.defined_atoms().end());
-
-    for (auto *DA : DAs)
-      for (auto &E : DA->edges())
-        if (E.getKind() == PCRel32GOT || E.getKind() == PCRel32GOTLoad)
-          fixGOTEdge(E);
-        else if (E.getKind() == Branch32 && !E.getTarget().isDefined())
-          fixExternalBranchEdge(E);
+  bool isGOTEdge(Edge &E) const {
+    return E.getKind() == PCRel32GOT || E.getKind() == PCRel32GOTLoad;
   }
 
-  Atom &getGOTEntryAtom(Atom &Target) {
-    assert(!Target.getName().empty() &&
-           "GOT load edge cannot point to anonymous target");
-
-    auto GOTEntryI = GOTEntries.find(Target.getName());
-
-    // Build the entry if it doesn't exist.
-    if (GOTEntryI == GOTEntries.end()) {
-      // Build a GOT section if we don't have one already.
-      if (!GOTSection)
-        GOTSection = &G.createSection("$__GOT", sys::Memory::MF_READ, false);
-
-      auto &GOTEntryAtom = G.addAnonymousAtom(*GOTSection, 0x0, 8);
-      GOTEntryAtom.setContent(
-          StringRef(reinterpret_cast<const char *>(NullGOTEntryContent), 8));
-      GOTEntryAtom.addEdge(Pointer64, 0, Target, 0);
-      GOTEntryI =
-          GOTEntries.insert(std::make_pair(Target.getName(), &GOTEntryAtom))
-              .first;
-    }
-
-    assert(GOTEntryI != GOTEntries.end() && "Could not get GOT entry atom");
-    return *GOTEntryI->second;
+  DefinedAtom &createGOTEntry(Atom &Target) {
+    auto &GOTEntryAtom = G.addAnonymousAtom(getGOTSection(), 0x0, 8);
+    GOTEntryAtom.setContent(
+        StringRef(reinterpret_cast<const char *>(NullGOTEntryContent), 8));
+    GOTEntryAtom.addEdge(Pointer64, 0, Target, 0);
+    return GOTEntryAtom;
   }
 
-  void fixGOTEdge(Edge &E) {
+  void fixGOTEdge(Edge &E, Atom &GOTEntry) {
     assert((E.getKind() == PCRel32GOT || E.getKind() == PCRel32GOTLoad) &&
            "Not a GOT edge?");
-    auto &GOTEntryAtom = getGOTEntryAtom(E.getTarget());
     E.setKind(PCRel32);
-    E.setTarget(GOTEntryAtom);
+    E.setTarget(GOTEntry);
     // Leave the edge addend as-is.
   }
 
-  Atom &getStubAtom(Atom &Target) {
-    assert(!Target.getName().empty() &&
-           "Branch edge can not point to an anonymous target");
-    auto StubI = Stubs.find(Target.getName());
-
-    if (StubI == Stubs.end()) {
-      // Build a Stubs section if we don't have one already.
-      if (!StubsSection) {
-        auto StubsProt = static_cast<sys::Memory::ProtectionFlags>(
-            sys::Memory::MF_READ | sys::Memory::MF_EXEC);
-        StubsSection = &G.createSection("$__STUBS", StubsProt, false);
-      }
-
-      auto &StubAtom = G.addAnonymousAtom(*StubsSection, 0x0, 2);
-      StubAtom.setContent(
-          StringRef(reinterpret_cast<const char *>(StubContent), 6));
-
-      // Re-use GOT entries for stub targets.
-      auto &GOTEntryAtom = getGOTEntryAtom(Target);
-      StubAtom.addEdge(PCRel32, 2, GOTEntryAtom, 0);
-
-      StubI = Stubs.insert(std::make_pair(Target.getName(), &StubAtom)).first;
-    }
-
-    assert(StubI != Stubs.end() && "Count not get stub atom");
-    return *StubI->second;
+  bool isExternalBranchEdge(Edge &E) {
+    return E.getKind() == Branch32 && !E.getTarget().isDefined();
   }
 
-  void fixExternalBranchEdge(Edge &E) {
+  DefinedAtom &createStub(Atom &Target) {
+    auto &StubAtom = G.addAnonymousAtom(getStubsSection(), 0x0, 2);
+    StubAtom.setContent(
+        StringRef(reinterpret_cast<const char *>(StubContent), 6));
+
+    // Re-use GOT entries for stub targets.
+    auto &GOTEntryAtom = getGOTEntryAtom(Target);
+    StubAtom.addEdge(PCRel32, 2, GOTEntryAtom, 0);
+
+    return StubAtom;
+  }
+
+  void fixExternalBranchEdge(Edge &E, Atom &Stub) {
     assert(E.getKind() == Branch32 && "Not a Branch32 edge?");
     assert(E.getAddend() == 0 && "Branch32 edge has non-zero addend?");
-    E.setTarget(getStubAtom(E.getTarget()));
+    E.setTarget(Stub);
   }
 
-  AtomGraph &G;
-  DenseMap<StringRef, DefinedAtom *> GOTEntries;
-  DenseMap<StringRef, DefinedAtom *> Stubs;
+private:
+  Section &getGOTSection() {
+    if (!GOTSection)
+      GOTSection = &G.createSection("$__GOT", sys::Memory::MF_READ, false);
+    return *GOTSection;
+  }
+
+  Section &getStubsSection() {
+    if (!StubsSection) {
+      auto StubsProt = static_cast<sys::Memory::ProtectionFlags>(
+          sys::Memory::MF_READ | sys::Memory::MF_EXEC);
+      StubsSection = &G.createSection("$__STUBS", StubsProt, false);
+    }
+    return *StubsSection;
+  }
+
   static const uint8_t NullGOTEntryContent[8];
   static const uint8_t StubContent[6];
   Section *GOTSection = nullptr;
   Section *StubsSection = nullptr;
 };
 
-const uint8_t MachOInPlaceGOTAndStubsBuilder::NullGOTEntryContent[8] = {
+const uint8_t MachO_x86_64_GOTAndStubsBuilder::NullGOTEntryContent[8] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-const uint8_t MachOInPlaceGOTAndStubsBuilder::StubContent[6] = {
+const uint8_t MachO_x86_64_GOTAndStubsBuilder::StubContent[6] = {
     0xFF, 0x25, 0x00, 0x00, 0x00, 0x00};
 } // namespace
 
@@ -570,7 +546,7 @@ void jitLink_MachO_x86_64(std::unique_ptr<JITLinkContext> Ctx) {
 
     // Add an in-place GOT/Stubs pass.
     Config.PostPrunePasses.push_back([](AtomGraph &G) -> Error {
-      MachOInPlaceGOTAndStubsBuilder(G).run();
+      MachO_x86_64_GOTAndStubsBuilder(G).run();
       return Error::success();
     });
   }
