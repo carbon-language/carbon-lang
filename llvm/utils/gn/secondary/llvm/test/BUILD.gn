@@ -227,7 +227,7 @@ group("test") {
     "//llvm/tools/llvm-size",
     "//llvm/tools/llvm-split",
     "//llvm/tools/llvm-strings",
-    "//llvm/tools/llvm-symbolizer",
+    "//llvm/tools/llvm-symbolizer:symlinks",
     "//llvm/tools/llvm-undname",
     "//llvm/tools/llvm-xray",
     "//llvm/tools/lto",
