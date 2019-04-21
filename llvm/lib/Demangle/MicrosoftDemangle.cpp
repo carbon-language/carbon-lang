@@ -1071,17 +1071,17 @@ static void outputHex(OutputStream &OS, unsigned C) {
   char TempBuffer[17];
 
   ::memset(TempBuffer, 0, sizeof(TempBuffer));
-  constexpr int MaxPos = 15;
+  constexpr int MaxPos = sizeof(TempBuffer) - 1;
 
-  int Pos = MaxPos - 1;
+  int Pos = MaxPos - 1; // TempBuffer[MaxPos] is the terminating \0.
   while (C != 0) {
     for (int I = 0; I < 2; ++I) {
       writeHexDigit(&TempBuffer[Pos--], C % 16);
       C /= 16;
     }
     TempBuffer[Pos--] = 'x';
-    TempBuffer[Pos--] = '\\';
     assert(Pos >= 0);
+    TempBuffer[Pos--] = '\\';
   }
   OS << StringView(&TempBuffer[Pos + 1]);
 }
