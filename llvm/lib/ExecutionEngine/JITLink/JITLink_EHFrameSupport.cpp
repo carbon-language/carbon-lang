@@ -164,7 +164,6 @@ Error EHFrameParser::processCIE() {
   LLVM_DEBUG(dbgs() << "  Record is CIE\n");
 
   /// Reset state for the new CIE.
-  MostRecentCIE = CurRecordAtom;
   LSDAFieldPresent = false;
 
   uint8_t Version = 0;
@@ -276,26 +275,19 @@ Error EHFrameParser::processFDE(JITTargetAddress CIEPointerAddress,
                                 uint32_t CIEPointer) {
   LLVM_DEBUG(dbgs() << "  Record is FDE\n");
 
-  // Sanity check the CIE pointer: if this is an FDE it must be proceeded by
-  // a CIE.
-  if (MostRecentCIE == nullptr)
-    return make_error<JITLinkError>("__eh_frame must start with CIE, not "
-                                    "FDE");
-
   LLVM_DEBUG({
     dbgs() << "  CIE pointer: "
            << format("0x%016" PRIx64, CIEPointerAddress - CIEPointer) << "\n";
   });
 
-  // Verify that this FDE's CIE pointer points to the most recent CIE entry.
-  if (CIEPointerAddress - CIEPointer != MostRecentCIE->getAddress())
-    return make_error<JITLinkError>("__eh_frame FDE's CIE Pointer does not "
-                                    "point at the most recent CIE");
+  auto CIEAtom = G.findAtomByAddress(CIEPointerAddress - CIEPointer);
+  if (!CIEAtom)
+    return CIEAtom.takeError();
 
   // The CIEPointer looks good. Add a relocation.
   CurRecordAtom->addEdge(FDEToCIERelocKind,
                          CIEPointerAddress - CurRecordAtom->getAddress(),
-                         *MostRecentCIE, 0);
+                         *CIEAtom, 0);
 
   // Read and sanity check the PC-start pointer and size.
   JITTargetAddress PCBeginAddress = EHFrameAddress + EHFrameReader.getOffset();

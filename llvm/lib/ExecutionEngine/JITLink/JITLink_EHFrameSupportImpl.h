@@ -50,7 +50,6 @@ private:
   JITTargetAddress EHFrameAddress;
   BinaryStreamReader EHFrameReader;
   DefinedAtom *CurRecordAtom = nullptr;
-  DefinedAtom *MostRecentCIE = nullptr;
   bool LSDAFieldPresent = false;
   Edge::Kind FDEToCIERelocKind;
   Edge::Kind FDEToTargetRelocKind;
