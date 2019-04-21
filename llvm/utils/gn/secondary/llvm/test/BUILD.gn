@@ -206,6 +206,7 @@ group("test") {
     "//llvm/tools/llvm-exegesis",
     "//llvm/tools/llvm-extract",
     "//llvm/tools/llvm-isel-fuzzer",
+    "//llvm/tools/llvm-jitlink",
     "//llvm/tools/llvm-link",
     "//llvm/tools/llvm-lto",
     "//llvm/tools/llvm-lto2",
