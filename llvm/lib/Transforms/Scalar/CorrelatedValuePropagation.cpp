@@ -402,7 +402,7 @@ static bool processSwitch(SwitchInst *SI, LazyValueInfo *LVI,
 static bool willNotOverflow(WithOverflowInst *WO, LazyValueInfo *LVI) {
   Value *RHS = WO->getRHS();
   ConstantRange RRange = LVI->getConstantRange(RHS, WO->getParent(), WO);
-  ConstantRange NWRegion = ConstantRange::makeExactNoWrapRegion(
+  ConstantRange NWRegion = ConstantRange::makeGuaranteedNoWrapRegion(
       WO->getBinaryOp(), RRange, WO->getNoWrapKind());
   // As an optimization, do not compute LRange if we do not need it.
   if (NWRegion.isEmptySet())
@@ -640,7 +640,7 @@ static bool processBinOp(BinaryOperator *BinOp, LazyValueInfo *LVI) {
 
   bool Changed = false;
   if (!NUW) {
-    ConstantRange NUWRange = ConstantRange::makeExactNoWrapRegion(
+    ConstantRange NUWRange = ConstantRange::makeGuaranteedNoWrapRegion(
         BinOp->getOpcode(), RRange, OBO::NoUnsignedWrap);
     if (!NUWRange.isEmptySet()) {
       bool NewNUW = NUWRange.contains(LazyLRange());
@@ -649,7 +649,7 @@ static bool processBinOp(BinaryOperator *BinOp, LazyValueInfo *LVI) {
     }
   }
   if (!NSW) {
-    ConstantRange NSWRange = ConstantRange::makeExactNoWrapRegion(
+    ConstantRange NSWRange = ConstantRange::makeGuaranteedNoWrapRegion(
         BinOp->getOpcode(), RRange, OBO::NoSignedWrap);
     if (!NSWRange.isEmptySet()) {
       bool NewNSW = NSWRange.contains(LazyLRange());
