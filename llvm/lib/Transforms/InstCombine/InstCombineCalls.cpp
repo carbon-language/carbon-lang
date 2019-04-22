@@ -120,6 +120,15 @@ Instruction *InstCombiner::SimplifyAnyMemTransfer(AnyMemTransferInst *MI) {
     return MI;
   }
 
+  // If we have a store to a location which is known constant, we can conclude
+  // that the store must be storing the constant value (else the memory
+  // wouldn't be constant), and this must be a noop.
+  if (AA->pointsToConstantMemory(MI->getDest())) {
+    // Set the size of the copy to 0, it will be deleted on the next iteration.
+    MI->setLength(Constant::getNullValue(MI->getLength()->getType()));
+    return MI;
+  }
+
   // If MemCpyInst length is 1/2/4/8 bytes then replace memcpy with
   // load/store.
   ConstantInt *MemOpLength = dyn_cast<ConstantInt>(MI->getLength());
@@ -215,6 +224,15 @@ Instruction *InstCombiner::SimplifyAnyMemSet(AnyMemSetInst *MI) {
   unsigned Alignment = getKnownAlignment(MI->getDest(), DL, MI, &AC, &DT);
   if (MI->getDestAlignment() < Alignment) {
     MI->setDestAlignment(Alignment);
+    return MI;
+  }
+
+  // If we have a store to a location which is known constant, we can conclude
+  // that the store must be storing the constant value (else the memory
+  // wouldn't be constant), and this must be a noop.
+  if (AA->pointsToConstantMemory(MI->getDest())) {
+    // Set the size of the copy to 0, it will be deleted on the next iteration.
+    MI->setLength(Constant::getNullValue(MI->getLength()->getType()));
     return MI;
   }
 
