@@ -1220,11 +1220,6 @@ Instruction *InstCombiner::simplifyMaskedStore(IntrinsicInst &II) {
 // * Vector splat address w/known mask -> scalar load
 // * Vector incrementing address -> vector masked load
 static Instruction *simplifyMaskedGather(IntrinsicInst &II, InstCombiner &IC) {
-  // If the mask is all zeros, return the "passthru" argument of the gather.
-  auto *ConstMask = dyn_cast<Constant>(II.getArgOperand(2));
-  if (ConstMask && ConstMask->isNullValue())
-    return IC.replaceInstUsesWith(II, II.getArgOperand(3));
-
   return nullptr;
 }
 
