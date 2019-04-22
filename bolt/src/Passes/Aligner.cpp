@@ -120,7 +120,8 @@ void AlignerPass::alignBlocks(BinaryFunction &Function) {
 
   const auto &BC = Function.getBinaryContext();
 
-  const auto FuncCount = std::max(1UL, Function.getKnownExecutionCount());
+  const auto FuncCount =
+      std::max<uint64_t>(1, Function.getKnownExecutionCount());
   BinaryBasicBlock *PrevBB{nullptr};
   for (auto *BB : Function.layout()) {
     auto Count = BB->getKnownExecutionCount();
@@ -140,7 +141,8 @@ void AlignerPass::alignBlocks(BinaryFunction &Function) {
       continue;
 
     const auto BlockSize = BC.computeCodeSize(BB->begin(), BB->end());
-    const auto BytesToUse = std::min(opts::BlockAlignment - 1UL, BlockSize);
+    const auto BytesToUse =
+        std::min<uint64_t>(opts::BlockAlignment - 1, BlockSize);
 
     if (opts::AlignBlocksMinSize && BlockSize < opts::AlignBlocksMinSize)
       continue;

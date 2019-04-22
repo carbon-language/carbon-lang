@@ -1438,7 +1438,8 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
       if (!BF.hasValidProfile())
         continue;
 
-      const auto HotThreshold = std::max(BF.getKnownExecutionCount(), 1UL);
+      const auto HotThreshold =
+          std::max<uint64_t>(BF.getKnownExecutionCount(), 1);
       bool HotSeen = false;
       for (const auto *BB : BF.rlayout()) {
         if (!HotSeen && BB->getKnownExecutionCount() > HotThreshold) {

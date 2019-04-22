@@ -295,7 +295,7 @@ private:
     Size.reserve(BF.layout_size());
     for (auto BB : BF.layout()) {
       size_t Index = BB->getLayoutIndex();
-      Size.push_back(std::max(BB->estimateSize(), size_t(1)));
+      Size.push_back(std::max<uint64_t>(BB->estimateSize(), 1));
       AllClusters.emplace_back(BB, ExecutionCounts[Index], Size[Index]);
       Clusters.push_back(&AllClusters[Index]);
       CurCluster.push_back(&AllClusters[Index]);

@@ -1444,12 +1444,12 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
          << "BOLT-INFO: ICP percentage of indirect calls that can be "
             "optimized = "
          << format("%.1f", (100.0 * TotalNumFrequentCalls) /
-                   std::max(TotalIndirectCalls, 1ul))
+                   std::max<size_t>(TotalIndirectCalls, 1))
          << "%\n"
          << "BOLT-INFO: ICP percentage of indirect callsites that are "
             "optimized = "
          << format("%.1f", (100.0 * TotalOptimizedIndirectCallsites) /
-                   std::max(TotalIndirectCallsites, 1ul))
+                   std::max<uint64_t>(TotalIndirectCallsites, 1))
          << "%\n"
          << "BOLT-INFO: ICP number of method load elimination candidates = "
          << TotalMethodLoadEliminationCandidates
@@ -1457,17 +1457,17 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
          << "BOLT-INFO: ICP percentage of method calls candidates that have "
             "loads eliminated = "
          << format("%.1f", (100.0 * TotalMethodLoadsEliminated) /
-                   std::max(TotalMethodLoadEliminationCandidates, 1ul))
+                   std::max<uint64_t>(TotalMethodLoadEliminationCandidates, 1))
          << "%\n"
          << "BOLT-INFO: ICP percentage of indirect branches that are "
             "optimized = "
          << format("%.1f", (100.0 * TotalNumFrequentJmps) /
-                   std::max(TotalIndirectJmps, 1ul))
+                   std::max<uint64_t>(TotalIndirectJmps, 1))
          << "%\n"
          << "BOLT-INFO: ICP percentage of jump table callsites that are "
          << "optimized = "
          << format("%.1f", (100.0 * TotalOptimizedJumpTableCallsites) /
-                   std::max(TotalJumpTableCallsites, 1ul))
+                   std::max<uint64_t>(TotalJumpTableCallsites, 1))
          << "%\n"
          << "BOLT-INFO: ICP number of jump table callsites that can use hot "
          << "indices = " << TotalIndexBasedCandidates
@@ -1475,7 +1475,7 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
          << "BOLT-INFO: ICP percentage of jump table callsites that use hot "
             "indices = "
          << format("%.1f", (100.0 * TotalIndexBasedJumps) /
-                   std::max(TotalIndexBasedCandidates, 1ul))
+                   std::max<uint64_t>(TotalIndexBasedCandidates, 1))
          << "%\n";
 
 #ifndef NDEBUG

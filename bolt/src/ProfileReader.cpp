@@ -268,7 +268,8 @@ ProfileReader::readProfile(const std::string &FileName,
                            BinaryFunction &BF) {
     if (opts::IgnoreHash && Profile.NumBasicBlocks == BF.size())
       return true;
-    if (!opts::IgnoreHash && Profile.Hash == BF.hash(/*Recompute = */false))
+    if (!opts::IgnoreHash &&
+        Profile.Hash == static_cast<uint64_t>(BF.hash(/*Recompute = */false)))
       return true;
     return false;
   };

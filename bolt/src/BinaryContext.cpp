@@ -590,14 +590,14 @@ void BinaryContext::printGlobalSymbols(raw_ostream& OS) const {
 }
 
 void BinaryContext::assignMemData() {
-  auto getAddress = [&](const MemInfo &MI) {
+  auto getAddress = [&](const MemInfo &MI) -> uint64_t {
     if (!MI.Addr.IsSymbol)
       return MI.Addr.Offset;
 
     if (auto *BD = getBinaryDataByName(MI.Addr.Name))
       return BD->getAddress() + MI.Addr.Offset;
 
-    return 0ul;
+    return 0;
   };
 
   // Map of sections (or heap/stack) to count/size.
