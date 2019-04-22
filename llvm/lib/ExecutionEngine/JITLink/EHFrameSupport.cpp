@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "JITLink_EHFrameSupportImpl.h"
+#include "EHFrameSupportImpl.h"
 
 #include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/Support/DynamicLibrary.h"
