@@ -1,2 +1,4 @@
-add_subdirectory(AArch64)
-add_subdirectory(X86)
+foreach(t ${LLVM_TARGETS_TO_BUILD})
+  message(STATUS "Targeting llvm-bolt ${t}")
+  add_subdirectory(${t})
+endforeach()
