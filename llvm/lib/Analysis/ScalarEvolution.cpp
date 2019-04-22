@@ -2363,7 +2363,7 @@ StrengthenNoWrapFlags(ScalarEvolution *SE, SCEVTypes Type,
 
     // (A <opcode> C) --> (A <opcode> C)<nsw> if the op doesn't sign overflow.
     if (!(SignOrUnsignWrap & SCEV::FlagNSW)) {
-      auto NSWRegion = ConstantRange::makeGuaranteedNoWrapRegion(
+      auto NSWRegion = ConstantRange::makeExactNoWrapRegion(
           Opcode, C, OBO::NoSignedWrap);
       if (NSWRegion.contains(SE->getSignedRange(Ops[1])))
         Flags = ScalarEvolution::setFlags(Flags, SCEV::FlagNSW);
@@ -2371,7 +2371,7 @@ StrengthenNoWrapFlags(ScalarEvolution *SE, SCEVTypes Type,
 
     // (A <opcode> C) --> (A <opcode> C)<nuw> if the op doesn't unsign overflow.
     if (!(SignOrUnsignWrap & SCEV::FlagNUW)) {
-      auto NUWRegion = ConstantRange::makeGuaranteedNoWrapRegion(
+      auto NUWRegion = ConstantRange::makeExactNoWrapRegion(
           Opcode, C, OBO::NoUnsignedWrap);
       if (NUWRegion.contains(SE->getUnsignedRange(Ops[1])))
         Flags = ScalarEvolution::setFlags(Flags, SCEV::FlagNUW);
@@ -4471,7 +4471,7 @@ ScalarEvolution::proveNoWrapViaConstantRanges(const SCEVAddRecExpr *AR) {
     ConstantRange AddRecRange = getSignedRange(AR);
     ConstantRange IncRange = getSignedRange(AR->getStepRecurrence(*this));
 
-    auto NSWRegion = ConstantRange::makeGuaranteedNoWrapRegion(
+    auto NSWRegion = ConstantRange::makeExactNoWrapRegion(
         Instruction::Add, IncRange, OBO::NoSignedWrap);
     if (NSWRegion.contains(AddRecRange))
       Result = ScalarEvolution::setFlags(Result, SCEV::FlagNSW);
@@ -4481,7 +4481,7 @@ ScalarEvolution::proveNoWrapViaConstantRanges(const SCEVAddRecExpr *AR) {
     ConstantRange AddRecRange = getUnsignedRange(AR);
     ConstantRange IncRange = getUnsignedRange(AR->getStepRecurrence(*this));
 
-    auto NUWRegion = ConstantRange::makeGuaranteedNoWrapRegion(
+    auto NUWRegion = ConstantRange::makeExactNoWrapRegion(
         Instruction::Add, IncRange, OBO::NoUnsignedWrap);
     if (NUWRegion.contains(AddRecRange))
       Result = ScalarEvolution::setFlags(Result, SCEV::FlagNUW);

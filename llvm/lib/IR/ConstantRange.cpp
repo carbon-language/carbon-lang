@@ -181,9 +181,9 @@ bool ConstantRange::getEquivalentICmp(CmpInst::Predicate &Pred,
 }
 
 ConstantRange
-ConstantRange::makeGuaranteedNoWrapRegion(Instruction::BinaryOps BinOp,
-                                          const ConstantRange &Other,
-                                          unsigned NoWrapKind) {
+ConstantRange::makeExactNoWrapRegion(Instruction::BinaryOps BinOp,
+                                     const ConstantRange &Other,
+                                     unsigned NoWrapKind) {
   using OBO = OverflowingBinaryOperator;
 
   // Computes the intersection of CR0 and CR1.  It is different from
@@ -262,7 +262,7 @@ ConstantRange::makeGuaranteedNoWrapRegion(Instruction::BinaryOps BinOp,
     return Result;
 
   case Instruction::Mul: {
-    // Equivalent to calling makeGuaranteedNoWrapRegion() on [V, V+1).
+    // Equivalent to calling makeExactNoWrapRegion() on [V, V+1).
     const bool Unsigned = NoWrapKind == OBO::NoUnsignedWrap;
     const auto makeSingleValueRegion = [Unsigned,
                                         BitWidth](APInt V) -> ConstantRange {
@@ -841,10 +841,9 @@ ConstantRange::add(const ConstantRange &Other) const {
 ConstantRange ConstantRange::addWithNoSignedWrap(const APInt &Other) const {
   // Calculate the subset of this range such that "X + Other" is
   // guaranteed not to wrap (overflow) for all X in this subset.
-  // makeGuaranteedNoWrapRegion will produce an exact NSW range.
-  auto NSWRange = ConstantRange::makeGuaranteedNoWrapRegion(BinaryOperator::Add,
-                                      ConstantRange(Other),
-                                      OverflowingBinaryOperator::NoSignedWrap);
+  auto NSWRange = ConstantRange::makeExactNoWrapRegion(
+      BinaryOperator::Add, ConstantRange(Other),
+      OverflowingBinaryOperator::NoSignedWrap);
   auto NSWConstrainedRange = intersectWith(NSWRange);
 
   return NSWConstrainedRange.add(ConstantRange(Other));

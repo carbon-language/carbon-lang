@@ -131,16 +131,16 @@ public:
   ///
   /// Examples:
   ///  typedef OverflowingBinaryOperator OBO;
-  ///  #define MGNR makeGuaranteedNoWrapRegion
-  ///  MGNR(Add, [i8 1, 2), OBO::NoSignedWrap) == [-128, 127)
-  ///  MGNR(Add, [i8 1, 2), OBO::NoUnsignedWrap) == [0, -1)
-  ///  MGNR(Add, [i8 0, 1), OBO::NoUnsignedWrap) == Full Set
-  ///  MGNR(Add, [i8 -1, 6), OBO::NoSignedWrap) == [INT_MIN+1, INT_MAX-4)
-  ///  MGNR(Sub, [i8 1, 2), OBO::NoSignedWrap) == [-127, 128)
-  ///  MGNR(Sub, [i8 1, 2), OBO::NoUnsignedWrap) == [1, 0)
-  static ConstantRange makeGuaranteedNoWrapRegion(Instruction::BinaryOps BinOp,
-                                                  const ConstantRange &Other,
-                                                  unsigned NoWrapKind);
+  ///  #define MENR makeExactNoWrapRegion
+  ///  MENR(Add, [i8 1, 2), OBO::NoSignedWrap) == [-128, 127)
+  ///  MENR(Add, [i8 1, 2), OBO::NoUnsignedWrap) == [0, -1)
+  ///  MENR(Add, [i8 0, 1), OBO::NoUnsignedWrap) == Full Set
+  ///  MENR(Add, [i8 -1, 6), OBO::NoSignedWrap) == [INT_MIN+1, INT_MAX-4)
+  ///  MENR(Sub, [i8 1, 2), OBO::NoSignedWrap) == [-127, 128)
+  ///  MENR(Sub, [i8 1, 2), OBO::NoUnsignedWrap) == [1, 0)
+  static ConstantRange makeExactNoWrapRegion(Instruction::BinaryOps BinOp,
+                                             const ConstantRange &Other,
+                                             unsigned NoWrapKind);
 
   /// Set up \p Pred and \p RHS such that
   /// ConstantRange::makeExactICmpRegion(Pred, RHS) == *this.  Return true if
