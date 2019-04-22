@@ -97,6 +97,20 @@ define <2 x double> @load_speculative(<2 x double>* dereferenceable(16) %ptr,
   ret <2 x double> %res
 }
 
+define <2 x double> @neg_load_spec_width(<2 x double>* dereferenceable(8) %ptr,
+; CHECK-LABEL: @neg_load_spec_width(
+; CHECK-NEXT:    [[PTV1:%.*]] = insertelement <2 x double> undef, double [[PT:%.*]], i64 0
+; CHECK-NEXT:    [[PTV2:%.*]] = shufflevector <2 x double> [[PTV1]], <2 x double> undef, <2 x i32> zeroinitializer
+; CHECK-NEXT:    [[RES:%.*]] = call <2 x double> @llvm.masked.load.v2f64.p0v2f64(<2 x double>* nonnull [[PTR:%.*]], i32 4, <2 x i1> [[MASK:%.*]], <2 x double> [[PTV2]])
+; CHECK-NEXT:    ret <2 x double> [[RES]]
+;
+  double %pt, <2 x i1> %mask)  {
+  %ptv1 = insertelement <2 x double> undef, double %pt, i64 0
+  %ptv2 = insertelement <2 x double> %ptv1, double %pt, i64 1
+  %res = call <2 x double> @llvm.masked.load.v2f64.p0v2f64(<2 x double>* %ptr, i32 4, <2 x i1> %mask, <2 x double> %ptv2)
+  ret <2 x double> %res
+}
+
 ; Can't speculate since only half of required size is known deref
 define <2 x double> @load_spec_neg_size(<2 x double>* dereferenceable(8) %ptr,
 ; CHECK-LABEL: @load_spec_neg_size(
