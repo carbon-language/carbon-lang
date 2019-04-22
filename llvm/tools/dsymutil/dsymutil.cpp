@@ -280,6 +280,10 @@ static bool verify(llvm::StringRef OutputFile, llvm::StringRef Arch) {
 
 namespace {
 struct OutputLocation {
+  OutputLocation(std::string DWARFFile, Optional<std::string> ResourceDir = {})
+      : DWARFFile(DWARFFile), ResourceDir(ResourceDir) {}
+  /// This method is a workaround for older compilers.
+  Optional<std::string> getResourceDir() const { return ResourceDir; }
   std::string DWARFFile;
   Optional<std::string> ResourceDir;
 };
@@ -287,21 +291,21 @@ struct OutputLocation {
 
 static Expected<OutputLocation> getOutputFileName(llvm::StringRef InputFile) {
   if (OutputFileOpt == "-")
-    return OutputLocation{OutputFileOpt, {}};
+    return OutputLocation(OutputFileOpt);
 
   // When updating, do in place replacement.
   if (OutputFileOpt.empty() && (Update || !SymbolMap.empty()))
-    return OutputLocation{InputFile, {}};
+    return OutputLocation(InputFile);
 
   // If a flat dSYM has been requested, things are pretty simple.
   if (FlatOut) {
     if (OutputFileOpt.empty()) {
       if (InputFile == "-")
         return OutputLocation{"a.out.dwarf", {}};
-      return OutputLocation{(InputFile + ".dwarf").str(), {}};
+      return OutputLocation((InputFile + ".dwarf").str());
     }
 
-    return OutputLocation{OutputFileOpt, {}};
+    return OutputLocation(OutputFileOpt);
   }
 
   // We need to create/update a dSYM bundle.
@@ -325,7 +329,7 @@ static Expected<OutputLocation> getOutputFileName(llvm::StringRef InputFile) {
   llvm::sys::path::append(Path, "Contents", "Resources");
   StringRef ResourceDir = Path;
   llvm::sys::path::append(Path, "DWARF", llvm::sys::path::filename(DwarfFile));
-  return OutputLocation{Path.str(), ResourceDir.str()};
+  return OutputLocation(Path.str(), ResourceDir.str());
 }
 
 /// Parses the command line options into the LinkOptions struct and performs
@@ -558,7 +562,7 @@ int main(int argc, char **argv) {
         WithColor::error() << toString(OutputLocationOrErr.takeError());
         return 1;
       }
-      OptionsOrErr->ResourceDir = OutputLocationOrErr->ResourceDir;
+      OptionsOrErr->ResourceDir = OutputLocationOrErr->getResourceDir();
 
       std::string OutputFile = OutputLocationOrErr->DWARFFile;
       if (NeedsTempFiles) {
