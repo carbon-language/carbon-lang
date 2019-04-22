@@ -127,9 +127,9 @@ std::optional<DummyArgument> CharacterizeDummyArgument(
 struct FunctionResult {
   ENUM_CLASS(Attr, Allocatable, Pointer, Contiguous)
   DECLARE_CONSTRUCTORS_AND_ASSIGNMENTS(FunctionResult)
-  explicit FunctionResult(DynamicType t) : u{TypeAndShape{t}} {}
-  explicit FunctionResult(TypeAndShape &&t) : u{std::move(t)} {}
-  explicit FunctionResult(Procedure &&p) : u{std::move(p)} {}
+  explicit FunctionResult(DynamicType);
+  explicit FunctionResult(TypeAndShape &&);
+  explicit FunctionResult(Procedure &&);
   ~FunctionResult();
   bool operator==(const FunctionResult &) const;
   static std::optional<FunctionResult> Characterize(

@@ -20,6 +20,12 @@
 
 namespace Fortran::evaluate {
 
+ActualArgument::ActualArgument(Expr<SomeType> &&x) : u_{std::move(x)} {}
+ActualArgument::ActualArgument(common::CopyableIndirection<Expr<SomeType>> &&v)
+  : u_{std::move(v)} {}
+ActualArgument::ActualArgument(AssumedType x) : u_{x} {}
+ActualArgument::~ActualArgument() {}
+
 ActualArgument::AssumedType::AssumedType(const semantics::Symbol &symbol)
   : symbol_{&symbol} {
   const semantics::DeclTypeSpec *type{symbol.GetType()};

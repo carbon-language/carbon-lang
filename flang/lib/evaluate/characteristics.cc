@@ -187,6 +187,9 @@ bool IsOptional(const DummyArgument &da) {
       da);
 }
 
+FunctionResult::FunctionResult(DynamicType t) : u{TypeAndShape{t}} {}
+FunctionResult::FunctionResult(TypeAndShape &&t) : u{std::move(t)} {}
+FunctionResult::FunctionResult(Procedure &&p) : u{std::move(p)} {}
 FunctionResult::~FunctionResult() = default;
 
 bool FunctionResult::operator==(const FunctionResult &that) const {

@@ -59,11 +59,10 @@ public:
     const semantics::Symbol *symbol_;
   };
 
-  explicit ActualArgument(Expr<SomeType> &&x) : u_{std::move(x)} {}
-  explicit ActualArgument(common::CopyableIndirection<Expr<SomeType>> &&v)
-    : u_{std::move(v)} {}
-  explicit ActualArgument(AssumedType x) : u_{x} {}
-
+  explicit ActualArgument(Expr<SomeType> &&);
+  explicit ActualArgument(common::CopyableIndirection<Expr<SomeType>> &&);
+  explicit ActualArgument(AssumedType);
+  ~ActualArgument();
   ActualArgument &operator=(Expr<SomeType> &&);
 
   Expr<SomeType> *GetExpr() {
