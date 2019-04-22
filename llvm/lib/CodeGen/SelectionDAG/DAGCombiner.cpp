@@ -17944,9 +17944,9 @@ static SDValue combineShuffleOfSplatVal(ShuffleVectorSDNode *Shuf,
   if (!Splat || !Splat->isSplat())
     return SDValue();
 
-  ArrayRef<int> Mask = Shuf->getMask();
+  ArrayRef<int> ShufMask = Shuf->getMask();
   ArrayRef<int> SplatMask = Splat->getMask();
-  assert(Mask.size() == SplatMask.size() && "Mask length mismatch");
+  assert(ShufMask.size() == SplatMask.size() && "Mask length mismatch");
 
   // Prefer simplifying to the splat-shuffle, if possible. This is legal if
   // every undef mask element in the splat-shuffle has a corresponding undef
@@ -17972,13 +17972,13 @@ static SDValue combineShuffleOfSplatVal(ShuffleVectorSDNode *Shuf,
         return false;
     return true;
   };
-  if (CanSimplifyToExistingSplat(Mask, SplatMask))
+  if (CanSimplifyToExistingSplat(ShufMask, SplatMask))
     return Shuf->getOperand(0);
 
   // Create a new shuffle with a mask that is composed of the two shuffles'
   // masks.
   SmallVector<int, 32> NewMask;
-  for (int Idx : Mask)
+  for (int Idx : ShufMask)
     NewMask.push_back(Idx == -1 ? -1 : SplatMask[Idx]);
 
   return DAG.getVectorShuffle(Splat->getValueType(0), SDLoc(Splat),
