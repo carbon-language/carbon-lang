@@ -616,6 +616,8 @@ static uint64_t getRelocTargetVA(const InputFile *File, RelType Type, int64_t A,
   case R_RELAX_TLS_LD_TO_LE_ABS:
   case R_RELAX_GOT_PC_NOPIC:
     return Sym.getVA(A);
+  case R_DTPREL:
+    return Sym.getVA(A);
   case R_ADDEND:
     return A;
   case R_ARM_SBREL:
@@ -806,7 +808,7 @@ void InputSection::relocateNonAlloc(uint8_t *Buf, ArrayRef<RelTy> Rels) {
     if (Expr == R_NONE)
       continue;
 
-    if (Expr != R_ABS) {
+    if (Expr != R_ABS && Expr != R_DTPREL) {
       std::string Msg = getLocation<ELFT>(Offset) +
                         ": has non-ABS relocation " + toString(Type) +
                         " against symbol '" + toString(Sym) + "'";
