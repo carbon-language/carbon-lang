@@ -25,13 +25,18 @@
 
 namespace Fortran::FIR {
 namespace {
-Expression *ExprRef(const parser::Expr &a) {
+const Expression &ExprRef(const parser::Expr &a) {
   CHECK(a.typedExpr);
   CHECK(a.typedExpr->v);
-  return &*a.typedExpr->v;
+  return *a.typedExpr->v;
 }
-Expression *ExprRef(const common::Indirection<parser::Expr> &a) {
+const Expression &ExprRef(const common::Indirection<parser::Expr> &a) {
   return ExprRef(a.value());
+}
+const Expression &ExprRef(const parser::Variable &a) {
+  CHECK(a.typedExpr);
+  CHECK(a.typedExpr->v);
+  return *a.typedExpr->v;
 }
 
 template<typename STMTTYPE, typename CT>
@@ -141,7 +146,7 @@ static std::vector<SwitchRankStmt::ValueType> populateSwitchValues(
         common::visitors{
             [&](const parser::ScalarIntConstantExpr &exp) {
               const auto &e{exp.thing.thing.thing.value()};
-              result.emplace_back(SwitchRankStmt::Exactly{ExprRef(e)});
+              result.emplace_back(SwitchRankStmt::Exactly{&ExprRef(e)});
             },
             [&](const parser::Star &) {
               result.emplace_back(SwitchRankStmt::AssumedSize{});
@@ -537,7 +542,7 @@ public:
               return builder_->CreateExpr(ExprRef(e));
             },
             [&](const parser::Variable &v) {
-              return builder_->CreateExpr(ToExpression(v));
+              return builder_->CreateExpr(ExprRef(v));
             },
         },
         std::get<parser::Selector>(
@@ -632,7 +637,7 @@ public:
     // TODO: check if allocation or reallocation should happen, etc.
     auto *value{builder_->CreateExpr(ExprRef(std::get<parser::Expr>(stmt.t)))};
     auto addr{
-        builder_->CreateAddr(ToExpression(std::get<parser::Variable>(stmt.t)))};
+        builder_->CreateAddr(ExprRef(std::get<parser::Variable>(stmt.t)))};
     builder_->CreateStore(addr, value);
   }
   void handleDefinedAssignmentStmt(const parser::AssignmentStmt &stmt) {
@@ -660,10 +665,10 @@ public:
       std::visit(
           common::visitors{
               [&](const parser::AllocOpt::Mold &m) {
-                opts.mold = *ExprRef(m.v);
+                opts.mold = ExprRef(m.v);
               },
               [&](const parser::AllocOpt::Source &s) {
-                opts.source = *ExprRef(s.v);
+                opts.source = ExprRef(s.v);
               },
               [&](const parser::StatOrErrmsg &var) {
                 std::visit(
@@ -927,7 +932,7 @@ public:
       if (info->stepExpr) {
         Expression compare{ConsExpr(common::RelationalOperator::GT,
             getLocalVariable(info->counter), CreateConstant(0))};
-        auto *cond{builder_->CreateExpr(&compare)};
+        auto *cond{builder_->CreateExpr(std::move(compare))};
         info->condition = cond;
       }
     }
@@ -937,12 +942,8 @@ public:
   void InitiateConstruct(const parser::AssociateStmt *stmt) {
     for (auto &assoc : std::get<std::list<parser::Association>>(stmt->t)) {
       auto &selector{std::get<parser::Selector>(assoc.t)};
-      auto *expr{builder_->CreateExpr(std::visit(
-          common::visitors{
-              [&](const parser::Variable &v) { return ToExpression(v); },
-              [](const parser::Expr &e) { return *ExprRef(e); },
-          },
-          selector.u))};
+      auto *expr{builder_->CreateExpr(
+          std::visit([](const auto &x) { return ExprRef(x); }, selector.u))};
       auto name{
           builder_->CreateAddr(ToExpression(std::get<parser::Name>(assoc.t)))};
       builder_->CreateStore(name, expr);
@@ -999,7 +1000,7 @@ public:
                             getApplyExpr(e2), getApplyExpr(e1)),
                         getApplyExpr(e3)),
                     getApplyExpr(e3))};
-                auto *totalTrips{builder_->CreateExpr(&tripExpr)};
+                auto *totalTrips{builder_->CreateExpr(std::move(tripExpr))};
                 builder_->CreateStore(tripCounter, totalTrips);
                 PushDoContext(stmt, name, tripCounter, e3);
               },
@@ -1040,8 +1041,7 @@ public:
                 return doMap_.find(stmt)->second.condition;
               },
               [&](const parser::ScalarLogicalExpr &sle) {
-                auto &exp{sle.thing.thing.value()};
-                SEMANTICS_CHECK(ExprRef(exp), "DO WHILE condition missing");
+                const auto &exp{sle.thing.thing};
                 return builder_->CreateExpr(ExprRef(exp));
               },
               [&](const parser::LoopControl::Concurrent &concurrent) {
@@ -1129,7 +1129,7 @@ public:
                         [&](const parser::ReturnStmt *s) {
                           // alt-return
                           if (s->v) {
-                            auto *exp{ExprRef(s->v->thing.thing)};
+                            const auto &exp{ExprRef(s->v->thing.thing)};
                             auto app{builder_->QualifiedCreateExpr(exp)};
                             builder_->CreateReturn(app);
                           } else {
@@ -1155,26 +1155,20 @@ public:
                           const auto &exp{std::get<parser::ScalarLogicalExpr>(
                               s->statement.t)
                                               .thing.thing.value()};
-                          SEMANTICS_CHECK(ExprRef(exp),
-                              "IF THEN condition expression missing");
                           auto *cond{builder_->CreateExpr(ExprRef(exp))};
                           AddOrQueueCGoto(cond, cop.trueLabel, cop.falseLabel);
                         },
                         [&](const parser::Statement<parser::ElseIfStmt> *s) {
                           const auto &exp{std::get<parser::ScalarLogicalExpr>(
                               s->statement.t)
-                                              .thing.thing.value()};
-                          SEMANTICS_CHECK(ExprRef(exp),
-                              "ELSE IF condition expression missing");
+                                              .thing.thing};
                           auto *cond{builder_->CreateExpr(ExprRef(exp))};
                           AddOrQueueCGoto(cond, cop.trueLabel, cop.falseLabel);
                         },
                         [&](const parser::IfStmt *s) {
                           const auto &exp{
                               std::get<parser::ScalarLogicalExpr>(s->t)
-                                  .thing.thing.value()};
-                          SEMANTICS_CHECK(
-                              ExprRef(exp), "IF condition expression missing");
+                                  .thing.thing};
                           auto *cond{builder_->CreateExpr(ExprRef(exp))};
                           AddOrQueueCGoto(cond, cop.trueLabel, cop.falseLabel);
                         },

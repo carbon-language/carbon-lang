@@ -56,7 +56,7 @@ struct FIRBuilder {
   BasicBlock *GetInsertionPoint() const { return cursorBlock_; }
 
   // create the various statements
-  QualifiedStmt<Addressable_impl> CreateAddr(const Expression *e) {
+  QualifiedStmt<Addressable_impl> CreateAddr(const Expression &e) {
     return QualifiedInsert<Addressable_impl>(LocateExprStmt::Create(e));
   }
   QualifiedStmt<Addressable_impl> CreateAddr(Expression &&e) {
@@ -80,16 +80,16 @@ struct FIRBuilder {
   Statement *CreateDealloc(QualifiedStmt<AllocateInsn> alloc) {
     return Insert(DeallocateInsn::Create(alloc));
   }
-  Statement *CreateExpr(const Expression *e) {
+  Statement *CreateExpr(const Expression &e) {
     return Insert(ApplyExprStmt::Create(e));
   }
   Statement *CreateExpr(Expression &&e) {
     return Insert(ApplyExprStmt::Create(std::move(e)));
   }
-  ApplyExprStmt *MakeAsExpr(const Expression *e) {
+  ApplyExprStmt *MakeAsExpr(const Expression &e) {
     return GetApplyExpr(CreateExpr(e));
   }
-  QualifiedStmt<ApplyExprStmt> QualifiedCreateExpr(const Expression *e) {
+  QualifiedStmt<ApplyExprStmt> QualifiedCreateExpr(const Expression &e) {
     return QualifiedInsert<ApplyExprStmt>(ApplyExprStmt::Create(e));
   }
   QualifiedStmt<ApplyExprStmt> QualifiedCreateExpr(Expression &&e) {
