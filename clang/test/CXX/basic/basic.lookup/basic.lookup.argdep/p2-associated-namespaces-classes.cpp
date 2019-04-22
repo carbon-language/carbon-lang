@@ -38,12 +38,11 @@ namespace adl_class_type {
       return s;
     }
     using S = decltype(foo());
-    void f(S); // expected-note {{'X2::f' declared here}}
+    void f(S); // #1
   }
   void test2() {
-    f(X2::S{}); // FIXME: This is well-formed; X2 is the innermost enclosing namespace
-                // of the local struct S.
-                // expected-error@-2 {{use of undeclared identifier 'f'}}
+    f(X2::S{}); // This is well-formed; X2 is the innermost enclosing namespace
+                // of the local struct S. Calls #1.
   }
 
   // associated class: the parent class
@@ -83,7 +82,7 @@ namespace adl_class_type {
 
     void test5() {
       auto lambda = N::get_lambda();
-      f(lambda); // FIXME: This is well-formed. expected-error {{use of undeclared}}
+      f(lambda); // ok
     }
   }
 
@@ -193,6 +192,12 @@ namespace adl_enumeration_type {
       enum F : int;
       friend void g(F);
     };
+    auto foo() {
+      enum G {} g;
+      return g;
+    }
+    using G = decltype(foo());
+    void h(G);
   }
 
   void test() {
@@ -200,6 +205,9 @@ namespace adl_enumeration_type {
     f(e); // ok
     N::S::F f;
     g(f); // ok
+    N::G g;
+    h(g); // ok
+
   }
 }
 
