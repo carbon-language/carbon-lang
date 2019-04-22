@@ -516,6 +516,9 @@ AtomGraphPassFunction createEHFrameRecorderPass(const Triple &TT,
     for (auto &S : G.sections())
       if (S.getName() == EHFrameSectionName && !S.atoms_empty()) {
         Addr = (*S.atoms().begin())->getAddress();
+        for (auto *DA : S.atoms())
+          if (DA->getAddress() < Addr)
+            Addr = DA->getAddress();
         break;
       }
 
