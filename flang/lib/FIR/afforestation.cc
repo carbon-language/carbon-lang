@@ -25,18 +25,13 @@
 
 namespace Fortran::FIR {
 namespace {
-const Expression &ExprRef(const parser::Expr &a) {
+Expression *ExprRef(const parser::Expr &a) {
   CHECK(a.typedExpr);
   CHECK(a.typedExpr->v);
-  return *a.typedExpr->v;
+  return &*a.typedExpr->v;
 }
-const Expression &ExprRef(const common::Indirection<parser::Expr> &a) {
+Expression *ExprRef(const common::Indirection<parser::Expr> &a) {
   return ExprRef(a.value());
-}
-const Expression &ExprRef(const parser::Variable &a) {
-  CHECK(a.typedExpr);
-  CHECK(a.typedExpr->v);
-  return *a.typedExpr->v;
 }
 
 template<typename STMTTYPE, typename CT>
@@ -146,7 +141,7 @@ static std::vector<SwitchRankStmt::ValueType> populateSwitchValues(
         common::visitors{
             [&](const parser::ScalarIntConstantExpr &exp) {
               const auto &e{exp.thing.thing.thing.value()};
-              result.emplace_back(SwitchRankStmt::Exactly{&ExprRef(e)});
+              result.emplace_back(SwitchRankStmt::Exactly{ExprRef(e)});
             },
             [&](const parser::Star &) {
               result.emplace_back(SwitchRankStmt::AssumedSize{});
@@ -421,109 +416,48 @@ public:
 
   // IO argument translations ...
   IOCallArguments CreateBackspaceArguments(
-      const std::list<parser::PositionOrFlushSpec> &specifiers) {
-    return IOCallArguments{};
-  }
+      const std::list<parser::PositionOrFlushSpec> &);
   IOCallArguments CreateCloseArguments(
-      const std::list<parser::CloseStmt::CloseSpec> &specifiers) {
-    return IOCallArguments{};
-  }
+      const std::list<parser::CloseStmt::CloseSpec> &);
   IOCallArguments CreateEndfileArguments(
-      const std::list<parser::PositionOrFlushSpec> &specifiers) {
-    return IOCallArguments{};
-  }
+      const std::list<parser::PositionOrFlushSpec> &);
   IOCallArguments CreateFlushArguments(
-      const std::list<parser::PositionOrFlushSpec> &specifiers) {
-    return IOCallArguments{};
-  }
+      const std::list<parser::PositionOrFlushSpec> &);
   IOCallArguments CreateRewindArguments(
-      const std::list<parser::PositionOrFlushSpec> &specifiers) {
-    return IOCallArguments{};
-  }
+      const std::list<parser::PositionOrFlushSpec> &);
   IOCallArguments CreateInquireArguments(
-      const std::list<parser::InquireSpec> &specifiers) {
-    return IOCallArguments{};
-  }
-  IOCallArguments CreateInquireArguments(
-      const parser::InquireStmt::Iolength &iolength) {
-    return IOCallArguments{};
-  }
-  IOCallArguments CreateOpenArguments(
-      const std::list<parser::ConnectSpec> &specifiers) {
-    return IOCallArguments{};
-  }
-  IOCallArguments CreateWaitArguments(
-      const std::list<parser::WaitSpec> &specifiers) {
-    return IOCallArguments{};
-  }
+      const std::list<parser::InquireSpec> &);
+  IOCallArguments CreateInquireArguments(const parser::InquireStmt::Iolength &);
+  IOCallArguments CreateOpenArguments(const std::list<parser::ConnectSpec> &);
+  IOCallArguments CreateWaitArguments(const std::list<parser::WaitSpec> &);
   IOCallArguments CreatePrintArguments(const parser::Format &format,
-      const std::list<parser::OutputItem> &outputs) {
-    return IOCallArguments{};
-  }
+      const std::list<parser::OutputItem> &outputs);
   IOCallArguments CreateReadArguments(
       const std::optional<parser::IoUnit> &ioUnit,
       const std::optional<parser::Format> &format,
       const std::list<parser::IoControlSpec> &controls,
-      const std::list<parser::InputItem> &inputs) {
-    return IOCallArguments{};
-  }
+      const std::list<parser::InputItem> &inputs);
   IOCallArguments CreateWriteArguments(
       const std::optional<parser::IoUnit> &ioUnit,
       const std::optional<parser::Format> &format,
       const std::list<parser::IoControlSpec> &controls,
-      const std::list<parser::OutputItem> &outputs) {
-    return IOCallArguments{};
-  }
+      const std::list<parser::OutputItem> &outputs);
 
-  // Runtime argument translations ...
-  RuntimeCallArguments CreateEventPostArguments(
-      const parser::EventPostStmt &eventPostStatement) {
-    return RuntimeCallArguments{};
-  }
-  RuntimeCallArguments CreateEventWaitArguments(
-      const parser::EventWaitStmt &eventWaitStatement) {
-    return RuntimeCallArguments{};
-  }
-  RuntimeCallArguments CreateFailImageArguments(
-      const parser::FailImageStmt &failImageStatement) {
-    return RuntimeCallArguments{};
-  }
-  RuntimeCallArguments CreateFormTeamArguments(
-      const parser::FormTeamStmt &formTeamStatement) {
-    return RuntimeCallArguments{};
-  }
-  RuntimeCallArguments CreateLockArguments(
-      const parser::LockStmt &lockStatement) {
-    return RuntimeCallArguments{};
-  }
-  RuntimeCallArguments CreatePauseArguments(
-      const parser::PauseStmt &pauseStatement) {
-    return RuntimeCallArguments{};
-  }
-  RuntimeCallArguments CreateStopArguments(
-      const parser::StopStmt &stopStatement) {
-    return RuntimeCallArguments{};
-  }
-  RuntimeCallArguments CreateSyncAllArguments(
-      const parser::SyncAllStmt &syncAllStatement) {
-    return RuntimeCallArguments{};
-  }
+  // Image related runtime argument translations ...
+  RuntimeCallArguments CreateEventPostArguments(const parser::EventPostStmt &);
+  RuntimeCallArguments CreateEventWaitArguments(const parser::EventWaitStmt &);
+  RuntimeCallArguments CreateFailImageArguments(const parser::FailImageStmt &);
+  RuntimeCallArguments CreateFormTeamArguments(const parser::FormTeamStmt &);
+  RuntimeCallArguments CreateLockArguments(const parser::LockStmt &);
+  RuntimeCallArguments CreatePauseArguments(const parser::PauseStmt &);
+  RuntimeCallArguments CreateStopArguments(const parser::StopStmt &);
+  RuntimeCallArguments CreateSyncAllArguments(const parser::SyncAllStmt &);
   RuntimeCallArguments CreateSyncImagesArguments(
-      const parser::SyncImagesStmt &syncImagesStatement) {
-    return RuntimeCallArguments{};
-  }
+      const parser::SyncImagesStmt &);
   RuntimeCallArguments CreateSyncMemoryArguments(
-      const parser::SyncMemoryStmt &syncMemoryStatement) {
-    return RuntimeCallArguments{};
-  }
-  RuntimeCallArguments CreateSyncTeamArguments(
-      const parser::SyncTeamStmt &syncTeamStatement) {
-    return RuntimeCallArguments{};
-  }
-  RuntimeCallArguments CreateUnlockArguments(
-      const parser::UnlockStmt &unlockStatement) {
-    return RuntimeCallArguments{};
-  }
+      const parser::SyncMemoryStmt &);
+  RuntimeCallArguments CreateSyncTeamArguments(const parser::SyncTeamStmt &);
+  RuntimeCallArguments CreateUnlockArguments(const parser::UnlockStmt &);
 
   // CALL translations ...
   const Value CreateCalleeValue(const parser::ProcedureDesignator &designator) {
@@ -542,7 +476,7 @@ public:
               return builder_->CreateExpr(ExprRef(e));
             },
             [&](const parser::Variable &v) {
-              return builder_->CreateExpr(ExprRef(v));
+              return builder_->CreateExpr(ToExpression(v));
             },
         },
         std::get<parser::Selector>(
@@ -637,7 +571,7 @@ public:
     // TODO: check if allocation or reallocation should happen, etc.
     auto *value{builder_->CreateExpr(ExprRef(std::get<parser::Expr>(stmt.t)))};
     auto addr{
-        builder_->CreateAddr(ExprRef(std::get<parser::Variable>(stmt.t)))};
+        builder_->CreateAddr(ToExpression(std::get<parser::Variable>(stmt.t)))};
     builder_->CreateStore(addr, value);
   }
   void handleDefinedAssignmentStmt(const parser::AssignmentStmt &stmt) {
@@ -665,10 +599,10 @@ public:
       std::visit(
           common::visitors{
               [&](const parser::AllocOpt::Mold &m) {
-                opts.mold = ExprRef(m.v);
+                opts.mold = *ExprRef(m.v);
               },
               [&](const parser::AllocOpt::Source &s) {
-                opts.source = ExprRef(s.v);
+                opts.source = *ExprRef(s.v);
               },
               [&](const parser::StatOrErrmsg &var) {
                 std::visit(
@@ -693,191 +627,8 @@ public:
   }
 
   void handleActionStatement(
-      AnalysisData &ad, const parser::Statement<parser::ActionStmt> &stmt) {
-    std::visit(
-        common::visitors{
-            [&](const common::Indirection<parser::AllocateStmt> &s) {
-              handleAllocateStmt(s.value());
-            },
-            [&](const common::Indirection<parser::AssignmentStmt> &s) {
-              handleAssignmentStmt(s.value());
-            },
-            [&](const common::Indirection<parser::BackspaceStmt> &s) {
-              builder_->CreateIOCall(InputOutputCallBackspace,
-                  CreateBackspaceArguments(s.value().v));
-            },
-            [&](const common::Indirection<parser::CallStmt> &s) {
-              builder_->CreateCall(nullptr,
-                  CreateCalleeValue(
-                      std::get<parser::ProcedureDesignator>(s.value().v.t)),
-                  CreateCallArguments(
-                      std::get<std::list<parser::ActualArgSpec>>(
-                          s.value().v.t)));
-            },
-            [&](const common::Indirection<parser::CloseStmt> &s) {
-              builder_->CreateIOCall(
-                  InputOutputCallClose, CreateCloseArguments(s.value().v));
-            },
-            [](const parser::ContinueStmt &) { WRONG_PATH(); },
-            [](const common::Indirection<parser::CycleStmt> &) {
-              WRONG_PATH();
-            },
-            [&](const common::Indirection<parser::DeallocateStmt> &s) {
-              for (auto &alloc :
-                  std::get<std::list<parser::AllocateObject>>(s.value().t)) {
-                builder_->CreateDealloc(
-                    CreateDeallocationValue(&alloc, &s.value()));
-              }
-            },
-            [&](const common::Indirection<parser::EndfileStmt> &s) {
-              builder_->CreateIOCall(
-                  InputOutputCallEndfile, CreateEndfileArguments(s.value().v));
-            },
-            [&](const common::Indirection<parser::EventPostStmt> &s) {
-              builder_->CreateRuntimeCall(
-                  RuntimeCallEventPost, CreateEventPostArguments(s.value()));
-            },
-            [&](const common::Indirection<parser::EventWaitStmt> &s) {
-              builder_->CreateRuntimeCall(
-                  RuntimeCallEventWait, CreateEventWaitArguments(s.value()));
-            },
-            [](const common::Indirection<parser::ExitStmt> &) { WRONG_PATH(); },
-            [&](const parser::FailImageStmt &s) {
-              builder_->CreateRuntimeCall(
-                  RuntimeCallFailImage, CreateFailImageArguments(s));
-            },
-            [&](const common::Indirection<parser::FlushStmt> &s) {
-              builder_->CreateIOCall(
-                  InputOutputCallFlush, CreateFlushArguments(s.value().v));
-            },
-            [&](const common::Indirection<parser::FormTeamStmt> &s) {
-              builder_->CreateRuntimeCall(
-                  RuntimeCallFormTeam, CreateFormTeamArguments(s.value()));
-            },
-            [](const common::Indirection<parser::GotoStmt> &) { WRONG_PATH(); },
-            [](const common::Indirection<parser::IfStmt> &) { WRONG_PATH(); },
-            [&](const common::Indirection<parser::InquireStmt> &s) {
-              std::visit(
-                  common::visitors{
-                      [&](const std::list<parser::InquireSpec> &specifiers) {
-                        builder_->CreateIOCall(InputOutputCallInquire,
-                            CreateInquireArguments(specifiers));
-                      },
-                      [&](const parser::InquireStmt::Iolength &iolength) {
-                        builder_->CreateIOCall(InputOutputCallInquire,
-                            CreateInquireArguments(iolength));
-                      },
-                  },
-                  s.value().u);
-            },
-            [&](const common::Indirection<parser::LockStmt> &s) {
-              builder_->CreateRuntimeCall(
-                  RuntimeCallLock, CreateLockArguments(s.value()));
-            },
-            [&](const common::Indirection<parser::NullifyStmt> &s) {
-              for (auto &obj : s.value().v) {
-                std::visit(
-                    common::visitors{
-                        [&](const parser::Name &n) {
-                          auto s{builder_->CreateAddr(ToExpression(n))};
-                          builder_->CreateNullify(s);
-                        },
-                        [&](const parser::StructureComponent &sc) {
-                          auto s{builder_->CreateAddr(ToExpression(sc))};
-                          builder_->CreateNullify(s);
-                        },
-                    },
-                    obj.u);
-              }
-            },
-            [&](const common::Indirection<parser::OpenStmt> &s) {
-              builder_->CreateIOCall(
-                  InputOutputCallOpen, CreateOpenArguments(s.value().v));
-            },
-            [&](const common::Indirection<parser::PointerAssignmentStmt> &s) {
-              auto *value{CreatePointerValue(s.value())};
-              auto addr{builder_->CreateAddr(
-                  ExprRef(std::get<parser::Expr>(s.value().t)))};
-              builder_->CreateStore(addr, value);
-            },
-            [&](const common::Indirection<parser::PrintStmt> &s) {
-              builder_->CreateIOCall(InputOutputCallPrint,
-                  CreatePrintArguments(std::get<parser::Format>(s.value().t),
-                      std::get<std::list<parser::OutputItem>>(s.value().t)));
-            },
-            [&](const common::Indirection<parser::ReadStmt> &s) {
-              builder_->CreateIOCall(InputOutputCallRead,
-                  CreateReadArguments(s.value().iounit, s.value().format,
-                      s.value().controls, s.value().items));
-            },
-            [](const common::Indirection<parser::ReturnStmt> &) {
-              WRONG_PATH();
-            },
-            [&](const common::Indirection<parser::RewindStmt> &s) {
-              builder_->CreateIOCall(
-                  InputOutputCallRewind, CreateRewindArguments(s.value().v));
-            },
-            [&](const common::Indirection<parser::StopStmt> &s) {
-              builder_->CreateRuntimeCall(
-                  RuntimeCallStop, CreateStopArguments(s.value()));
-            },
-            [&](const common::Indirection<parser::SyncAllStmt> &s) {
-              builder_->CreateRuntimeCall(
-                  RuntimeCallSyncAll, CreateSyncAllArguments(s.value()));
-            },
-            [&](const common::Indirection<parser::SyncImagesStmt> &s) {
-              builder_->CreateRuntimeCall(
-                  RuntimeCallSyncImages, CreateSyncImagesArguments(s.value()));
-            },
-            [&](const common::Indirection<parser::SyncMemoryStmt> &s) {
-              builder_->CreateRuntimeCall(
-                  RuntimeCallSyncMemory, CreateSyncMemoryArguments(s.value()));
-            },
-            [&](const common::Indirection<parser::SyncTeamStmt> &s) {
-              builder_->CreateRuntimeCall(
-                  RuntimeCallSyncTeam, CreateSyncTeamArguments(s.value()));
-            },
-            [&](const common::Indirection<parser::UnlockStmt> &s) {
-              builder_->CreateRuntimeCall(
-                  RuntimeCallUnlock, CreateUnlockArguments(s.value()));
-            },
-            [&](const common::Indirection<parser::WaitStmt> &s) {
-              builder_->CreateIOCall(
-                  InputOutputCallWait, CreateWaitArguments(s.value().v));
-            },
-            [](const common::Indirection<parser::WhereStmt> &) { /*fixme*/ },
-            [&](const common::Indirection<parser::WriteStmt> &s) {
-              builder_->CreateIOCall(InputOutputCallWrite,
-                  CreateWriteArguments(s.value().iounit, s.value().format,
-                      s.value().controls, s.value().items));
-            },
-            [](const common::Indirection<parser::ComputedGotoStmt> &) {
-              WRONG_PATH();
-            },
-            [](const common::Indirection<parser::ForallStmt> &) { /*fixme*/ },
-            [](const common::Indirection<parser::ArithmeticIfStmt> &) {
-              WRONG_PATH();
-            },
-            [&](const common::Indirection<parser::AssignStmt> &s) {
-              auto addr{builder_->CreateAddr(
-                  ToExpression(std::get<parser::Name>(s.value().t)))};
-              auto *block{blockMap_
-                              .find(flat::FetchLabel(
-                                  ad, std::get<parser::Label>(s.value().t))
-                                        .get())
-                              ->second};
-              builder_->CreateStore(addr, block);
-            },
-            [](const common::Indirection<parser::AssignedGotoStmt> &) {
-              WRONG_PATH();
-            },
-            [&](const common::Indirection<parser::PauseStmt> &s) {
-              builder_->CreateRuntimeCall(
-                  RuntimeCallPause, CreatePauseArguments(s.value()));
-            },
-        },
-        stmt.statement.u);
-  }
+      AnalysisData &ad, const parser::Statement<parser::ActionStmt> &stmt);
+
   void handleLinearAction(const flat::ActionOp &action, AnalysisData &ad) {
     handleActionStatement(ad, *action.v);
   }
@@ -932,92 +683,20 @@ public:
       if (info->stepExpr) {
         Expression compare{ConsExpr(common::RelationalOperator::GT,
             getLocalVariable(info->counter), CreateConstant(0))};
-        auto *cond{builder_->CreateExpr(std::move(compare))};
+        auto *cond{builder_->CreateExpr(&compare)};
         info->condition = cond;
       }
     }
   }
 
   // InitiateConstruct - many constructs require some initial setup
-  void InitiateConstruct(const parser::AssociateStmt *stmt) {
-    for (auto &assoc : std::get<std::list<parser::Association>>(stmt->t)) {
-      auto &selector{std::get<parser::Selector>(assoc.t)};
-      auto *expr{builder_->CreateExpr(
-          std::visit([](const auto &x) { return ExprRef(x); }, selector.u))};
-      auto name{
-          builder_->CreateAddr(ToExpression(std::get<parser::Name>(assoc.t)))};
-      builder_->CreateStore(name, expr);
-    }
-  }
-  void InitiateConstruct(const parser::SelectCaseStmt *stmt) {
-    builder_->CreateExpr(
-        ExprRef(std::get<parser::Scalar<parser::Expr>>(stmt->t).thing));
-  }
-  void InitiateConstruct(const parser::ChangeTeamStmt *changeTeamStmt) {
-    // FIXME
-  }
-  void InitiateConstruct(const parser::IfThenStmt *ifThenStmt) {
-    const auto &e{std::get<parser::ScalarLogicalExpr>(ifThenStmt->t).thing};
-    builder_->CreateExpr(ExprRef(e.thing));
-  }
-  void InitiateConstruct(const parser::WhereConstructStmt *whereConstructStmt) {
-    const auto &e{std::get<parser::LogicalExpr>(whereConstructStmt->t)};
-    builder_->CreateExpr(ExprRef(e.thing));
-  }
-  void InitiateConstruct(
-      const parser::ForallConstructStmt *forallConstructStmt) {
-    // FIXME
-  }
-
-  void InitiateConstruct(const parser::NonLabelDoStmt *stmt) {
-    auto &ctrl{std::get<std::optional<parser::LoopControl>>(stmt->t)};
-    if (ctrl.has_value()) {
-      std::visit(
-          common::visitors{
-              [&](const parser::LoopControl::Bounds &bounds) {
-                auto name{
-                    builder_->CreateAddr(ToExpression(bounds.name.thing))};
-                // evaluate e1, e2 [, e3] ...
-                auto *e1{builder_->CreateExpr(ExprRef(bounds.lower.thing))};
-                auto *e2{builder_->CreateExpr(ExprRef(bounds.upper.thing))};
-                Statement *e3;
-                if (bounds.step.has_value()) {
-                  e3 = builder_->CreateExpr(ExprRef(bounds.step->thing));
-                } else {
-                  e3 = builder_->CreateExpr(CreateConstant(1));
-                }
-                // name <- e1
-                builder_->CreateStore(name, e1);
-                auto tripCounter{CreateTemp(GetDefaultIntegerType())};
-                // See 11.1.7.4.1, para. 1, item (3)
-                // totalTrips ::= iteration count = a
-                //   where a = (e2 - e1 + e3) / e3 if a > 0 and 0 otherwise
-                Expression tripExpr{ConsExpr<evaluate::Divide>(
-                    ConsExpr<evaluate::Add>(
-                        ConsExpr<evaluate::Subtract>(
-                            getApplyExpr(e2), getApplyExpr(e1)),
-                        getApplyExpr(e3)),
-                    getApplyExpr(e3))};
-                auto *totalTrips{builder_->CreateExpr(std::move(tripExpr))};
-                builder_->CreateStore(tripCounter, totalTrips);
-                PushDoContext(stmt, name, tripCounter, e3);
-              },
-              [&](const parser::ScalarLogicalExpr &expr) {
-                // See 11.1.7.4.1, para. 2
-                // See BuildLoopLatchExpression()
-                PushDoContext(stmt);
-              },
-              [&](const parser::LoopControl::Concurrent &cc) {
-                // See 11.1.7.4.2
-                // FIXME
-              },
-          },
-          ctrl->u);
-    } else {
-      // loop forever (See 11.1.7.4.1, para. 2)
-      PushDoContext(stmt);
-    }
-  }
+  void InitiateConstruct(const parser::AssociateStmt *stmt);
+  void InitiateConstruct(const parser::SelectCaseStmt *stmt);
+  void InitiateConstruct(const parser::ChangeTeamStmt *stmt);
+  void InitiateConstruct(const parser::IfThenStmt *stmt);
+  void InitiateConstruct(const parser::WhereConstructStmt *stmt);
+  void InitiateConstruct(const parser::ForallConstructStmt *stmt);
+  void InitiateConstruct(const parser::NonLabelDoStmt *stmt);
 
   // finish DO construct construction
   void FinishConstruct(const parser::NonLabelDoStmt *stmt) {
@@ -1038,7 +717,8 @@ public:
                 return doMap_.find(stmt)->second.condition;
               },
               [&](const parser::ScalarLogicalExpr &sle) {
-                const auto &exp{sle.thing.thing};
+                auto &exp{sle.thing.thing.value()};
+                SEMANTICS_CHECK(ExprRef(exp), "DO WHILE condition missing");
                 return builder_->CreateExpr(ExprRef(exp));
               },
               [&](const parser::LoopControl::Concurrent &concurrent) {
@@ -1054,273 +734,14 @@ public:
   template<typename SWITCHTYPE, typename F>
   void AddOrQueueSwitch(Value condition,
       const std::vector<typename SWITCHTYPE::ValueType> &values,
-      const std::vector<flat::LabelRef> &labels, F function) {
-    auto defer{false};
-    typename SWITCHTYPE::ValueSuccPairListType cases;
-    CHECK(values.size() == labels.size());
-    auto valiter{values.begin()};
-    for (auto lab : labels) {
-      auto labIter{blockMap_.find(lab)};
-      if (labIter == blockMap_.end()) {
-        defer = true;
-        break;
-      } else {
-        cases.emplace_back(*valiter++, labIter->second);
-      }
-    }
-    if (defer) {
-      using namespace std::placeholders;
-      controlFlowEdgesToAdd_.emplace_back(std::bind(
-          [](FIRBuilder *builder, BasicBlock *block, Value expr,
-              const std::vector<typename SWITCHTYPE::ValueType> &values,
-              const std::vector<flat::LabelRef> &labels, F function,
-              const LabelMapType &map) {
-            builder->SetInsertionPoint(block);
-            typename SWITCHTYPE::ValueSuccPairListType cases;
-            auto valiter{values.begin()};
-            for (auto &lab : labels) {
-              cases.emplace_back(*valiter++, map.find(lab)->second);
-            }
-            function(builder, expr, cases);
-          },
-          builder_, builder_->GetInsertionPoint(), condition, values, labels,
-          function, _1));
-    } else {
-      function(builder_, condition, cases);
-    }
-  }
+      const std::vector<flat::LabelRef> &labels, F function);
+  void AddOrQueueBranch(flat::LabelRef dest);
+  void AddOrQueueCGoto(Statement *condition, flat::LabelRef trueBlock,
+      flat::LabelRef falseBlock);
+  void AddOrQueueIGoto(AnalysisData &ad, const semantics::Symbol *symbol,
+      const std::vector<flat::LabelRef> &labels);
 
-  void ConstructFIR(AnalysisData &ad) {
-    for (auto iter{linearOperations_.begin()}, iend{linearOperations_.end()};
-         iter != iend; ++iter) {
-      const auto &op{*iter};
-      std::visit(
-          common::visitors{
-              [&](const flat::LabelOp &op) {
-                auto *newBlock{CreateBlock(builder_->GetCurrentRegion())};
-                blockMap_.insert({op.get(), newBlock});
-                if (builder_->GetInsertionPoint()) {
-                  builder_->CreateBranch(newBlock);
-                }
-                builder_->SetInsertionPoint(newBlock);
-              },
-              [&](const flat::GotoOp &op) {
-                CheckInsertionPoint();
-                AddOrQueueBranch(op.target);
-                builder_->ClearInsertionPoint();
-              },
-              [&](const flat::IndirectGotoOp &op) {
-                CheckInsertionPoint();
-                AddOrQueueIGoto(ad, op.symbol, op.labelRefs);
-                builder_->ClearInsertionPoint();
-              },
-              [&](const flat::ReturnOp &op) {
-                CheckInsertionPoint();
-                std::visit(
-                    common::visitors{
-                        [&](const parser::FailImageStmt *s) {
-                          builder_->CreateRuntimeCall(RuntimeCallFailImage,
-                              CreateFailImageArguments(*s));
-                          builder_->CreateUnreachable();
-                        },
-                        [&](const parser::ReturnStmt *s) {
-                          // alt-return
-                          if (s->v) {
-                            const auto &exp{ExprRef(s->v->thing.thing)};
-                            auto app{builder_->QualifiedCreateExpr(exp)};
-                            builder_->CreateReturn(app);
-                          } else {
-                            auto zero{builder_->QualifiedCreateExpr(
-                                CreateConstant(0))};
-                            builder_->CreateReturn(zero);
-                          }
-                        },
-                        [&](const parser::StopStmt *s) {
-                          builder_->CreateRuntimeCall(
-                              RuntimeCallStop, CreateStopArguments(*s));
-                          builder_->CreateUnreachable();
-                        },
-                    },
-                    op.u);
-                builder_->ClearInsertionPoint();
-              },
-              [&](const flat::ConditionalGotoOp &cop) {
-                CheckInsertionPoint();
-                std::visit(
-                    common::visitors{
-                        [&](const parser::Statement<parser::IfThenStmt> *s) {
-                          const auto &exp{std::get<parser::ScalarLogicalExpr>(
-                              s->statement.t)
-                                              .thing.thing.value()};
-                          auto *cond{builder_->CreateExpr(ExprRef(exp))};
-                          AddOrQueueCGoto(cond, cop.trueLabel, cop.falseLabel);
-                        },
-                        [&](const parser::Statement<parser::ElseIfStmt> *s) {
-                          const auto &exp{std::get<parser::ScalarLogicalExpr>(
-                              s->statement.t)
-                                              .thing.thing};
-                          auto *cond{builder_->CreateExpr(ExprRef(exp))};
-                          AddOrQueueCGoto(cond, cop.trueLabel, cop.falseLabel);
-                        },
-                        [&](const parser::IfStmt *s) {
-                          const auto &exp{
-                              std::get<parser::ScalarLogicalExpr>(s->t)
-                                  .thing.thing};
-                          auto *cond{builder_->CreateExpr(ExprRef(exp))};
-                          AddOrQueueCGoto(cond, cop.trueLabel, cop.falseLabel);
-                        },
-                        [&](const parser::Statement<parser::NonLabelDoStmt>
-                                *s) {
-                          AddOrQueueCGoto(
-                              BuildLoopLatchExpression(&s->statement),
-                              cop.trueLabel, cop.falseLabel);
-                        }},
-                    cop.u);
-                builder_->ClearInsertionPoint();
-              },
-              [&](const flat::SwitchIOOp &IOp) {
-                CheckInsertionPoint();
-                auto args{ComposeIOSwitchArgs(IOp)};
-                AddOrQueueSwitch<SwitchStmt>(
-                    args.exp, args.values, args.labels, CreateSwitchHelper);
-                builder_->ClearInsertionPoint();
-              },
-              [&](const flat::SwitchOp &sop) {
-                CheckInsertionPoint();
-                std::visit(
-                    common::visitors{
-                        [&](auto) {
-                          auto args{ComposeSwitchArgs(sop)};
-                          AddOrQueueSwitch<SwitchStmt>(args.exp, args.values,
-                              args.labels, CreateSwitchHelper);
-                        },
-                        [&](const parser::CaseConstruct *crct) {
-                          auto args{ComposeSwitchCaseArguments(crct, sop.refs)};
-                          AddOrQueueSwitch<SwitchCaseStmt>(args.exp,
-                              args.values, args.labels, CreateSwitchCaseHelper);
-                        },
-                        [&](const parser::SelectRankConstruct *crct) {
-                          auto args{ComposeSwitchRankArguments(crct, sop.refs)};
-                          AddOrQueueSwitch<SwitchRankStmt>(args.exp,
-                              args.values, args.labels, CreateSwitchRankHelper);
-                        },
-                        [&](const parser::SelectTypeConstruct *crct) {
-                          auto args{ComposeSwitchTypeArguments(crct, sop.refs)};
-                          AddOrQueueSwitch<SwitchTypeStmt>(args.exp,
-                              args.values, args.labels, CreateSwitchTypeHelper);
-                        },
-                    },
-                    sop.u);
-                builder_->ClearInsertionPoint();
-              },
-              [&](const flat::ActionOp &action) {
-                CheckInsertionPoint();
-                handleLinearAction(action, ad);
-              },
-              [&](const flat::DoIncrementOp &inc) {
-                CheckInsertionPoint();
-                handleLinearDoIncrement(inc);
-              },
-              [&](const flat::DoCompareOp &cmp) {
-                CheckInsertionPoint();
-                handleLinearDoCompare(cmp);
-              },
-              [&](const flat::BeginOp &con) {
-                std::visit(
-                    common::visitors{
-                        [&](const parser::AssociateConstruct *crct) {
-                          using A = parser::Statement<parser::AssociateStmt>;
-                          const auto &statement{std::get<A>(crct->t)};
-                          const auto &position{statement.source};
-                          EnterRegion(position);
-                          InitiateConstruct(&statement.statement);
-                        },
-                        [&](const parser::BlockConstruct *crct) {
-                          using A = parser::Statement<parser::BlockStmt>;
-                          EnterRegion(std::get<A>(crct->t).source);
-                        },
-                        [&](const parser::CaseConstruct *crct) {
-                          using A = parser::Statement<parser::SelectCaseStmt>;
-                          InitiateConstruct(&std::get<A>(crct->t).statement);
-                        },
-                        [&](const parser::ChangeTeamConstruct *crct) {
-                          using A = parser::Statement<parser::ChangeTeamStmt>;
-                          const auto &statement{std::get<A>(crct->t)};
-                          EnterRegion(statement.source);
-                          InitiateConstruct(&statement.statement);
-                        },
-                        [&](const parser::DoConstruct *crct) {
-                          using A = parser::Statement<parser::NonLabelDoStmt>;
-                          const auto &statement{std::get<A>(crct->t)};
-                          EnterRegion(statement.source);
-                          InitiateConstruct(&statement.statement);
-                        },
-                        [&](const parser::IfConstruct *crct) {
-                          using A = parser::Statement<parser::IfThenStmt>;
-                          InitiateConstruct(&std::get<A>(crct->t).statement);
-                        },
-                        [&](const parser::SelectRankConstruct *crct) {
-                          using A = parser::Statement<parser::SelectRankStmt>;
-                          const auto &statement{std::get<A>(crct->t)};
-                          EnterRegion(statement.source);
-                        },
-                        [&](const parser::SelectTypeConstruct *crct) {
-                          using A = parser::Statement<parser::SelectTypeStmt>;
-                          const auto &statement{std::get<A>(crct->t)};
-                          EnterRegion(statement.source);
-                        },
-                        [&](const parser::WhereConstruct *crct) {
-                          using A =
-                              parser::Statement<parser::WhereConstructStmt>;
-                          InitiateConstruct(&std::get<A>(crct->t).statement);
-                        },
-                        [&](const parser::ForallConstruct *crct) {
-                          using A =
-                              parser::Statement<parser::ForallConstructStmt>;
-                          InitiateConstruct(&std::get<A>(crct->t).statement);
-                        },
-                        [](const parser::CriticalConstruct *) { /*fixme*/ },
-                        [](const parser::CompilerDirective *) { /*fixme*/ },
-                        [](const parser::OpenMPConstruct *) { /*fixme*/ },
-                        [](const parser::OpenMPEndLoopDirective
-                                *) { /*fixme*/ },
-                    },
-                    con.u);
-                auto next{iter};
-                const auto &nextOp{*(++next)};
-                if (auto *op{std::get_if<flat::LabelOp>(&nextOp.u)}) {
-                  blockMap_.insert({op->get(), builder_->GetInsertionPoint()});
-                  ++iter;
-                }
-              },
-              [&](const flat::EndOp &con) {
-                std::visit(
-                    common::visitors{
-                        [](const auto &) {},
-                        [&](const parser::BlockConstruct *) { ExitRegion(); },
-                        [&](const parser::DoConstruct *crct) {
-                          const auto &statement{std::get<
-                              parser::Statement<parser::NonLabelDoStmt>>(
-                              crct->t)};
-                          FinishConstruct(&statement.statement);
-                          ExitRegion();
-                        },
-                        [&](const parser::AssociateConstruct *) {
-                          ExitRegion();
-                        },
-                        [&](const parser::ChangeTeamConstruct *) {
-                          ExitRegion();
-                        },
-                        [&](const parser::SelectTypeConstruct *) {
-                          ExitRegion();
-                        },
-                    },
-                    con.u);
-              },
-          },
-          op.u);
-    }
-  }
+  void ConstructFIR(AnalysisData &ad);
 
   void EnterRegion(const parser::CharBlock &pos) {
     auto *region{builder_->GetCurrentRegion()};
@@ -1342,80 +763,9 @@ public:
     }
   }
 
-  void AddOrQueueBranch(flat::LabelRef dest) {
-    auto iter{blockMap_.find(dest)};
-    if (iter != blockMap_.end()) {
-      builder_->CreateBranch(iter->second);
-    } else {
-      using namespace std::placeholders;
-      controlFlowEdgesToAdd_.emplace_back(std::bind(
-          [](FIRBuilder *builder, BasicBlock *block, flat::LabelRef dest,
-              const LabelMapType &map) {
-            builder->SetInsertionPoint(block);
-            CHECK(map.find(dest) != map.end() && "no destination");
-            builder->CreateBranch(map.find(dest)->second);
-          },
-          builder_, builder_->GetInsertionPoint(), dest, _1));
-    }
-  }
-
-  void AddOrQueueCGoto(Statement *condition, flat::LabelRef trueBlock,
-      flat::LabelRef falseBlock) {
-    auto trueIter{blockMap_.find(trueBlock)};
-    auto falseIter{blockMap_.find(falseBlock)};
-    if (trueIter != blockMap_.end() && falseIter != blockMap_.end()) {
-      builder_->CreateConditionalBranch(
-          condition, trueIter->second, falseIter->second);
-    } else {
-      using namespace std::placeholders;
-      controlFlowEdgesToAdd_.emplace_back(std::bind(
-          [](FIRBuilder *builder, BasicBlock *block, Statement *expr,
-              flat::LabelRef trueDest, flat::LabelRef falseDest,
-              const LabelMapType &map) {
-            builder->SetInsertionPoint(block);
-            CHECK(map.find(trueDest) != map.end());
-            CHECK(map.find(falseDest) != map.end());
-            builder->CreateConditionalBranch(
-                expr, map.find(trueDest)->second, map.find(falseDest)->second);
-          },
-          builder_, builder_->GetInsertionPoint(), condition, trueBlock,
-          falseBlock, _1));
-    }
-  }
-
   Variable *ConvertToVariable(const semantics::Symbol *symbol) {
     // FIXME: how to convert semantics::Symbol to evaluate::Variable?
     return new Variable(symbol);
-  }
-
-  void AddOrQueueIGoto(AnalysisData &ad, const semantics::Symbol *symbol,
-      const std::vector<flat::LabelRef> &labels) {
-    auto useLabels{labels.empty() ? flat::GetAssign(ad, symbol) : labels};
-    auto defer{false};
-    IndirectBranchStmt::TargetListType blocks;
-    for (auto lab : useLabels) {
-      auto iter{blockMap_.find(lab)};
-      if (iter == blockMap_.end()) {
-        defer = true;
-        break;
-      } else {
-        blocks.push_back(iter->second);
-      }
-    }
-    if (defer) {
-      using namespace std::placeholders;
-      controlFlowEdgesToAdd_.emplace_back(std::bind(
-          [](FIRBuilder *builder, BasicBlock *block, Variable *variable,
-              const std::vector<flat::LabelRef> &fixme,
-              const LabelMapType &map) {
-            builder->SetInsertionPoint(block);
-            builder->CreateIndirectBr(variable, {});  // FIXME
-          },
-          builder_, builder_->GetInsertionPoint(), nullptr /*symbol*/,
-          useLabels, _1));
-    } else {
-      builder_->CreateIndirectBr(ConvertToVariable(symbol), blocks);
-    }
   }
 
   void DrawRemainingArcs() {
@@ -1443,6 +793,727 @@ public:
   semantics::SemanticsContext &semanticsContext_;
   bool debugLinearFIR_;
 };
+
+void FortranIRLowering::handleActionStatement(
+    AnalysisData &ad, const parser::Statement<parser::ActionStmt> &stmt) {
+  std::visit(
+      common::visitors{
+          [&](const common::Indirection<parser::AllocateStmt> &s) {
+            handleAllocateStmt(s.value());
+          },
+          [&](const common::Indirection<parser::AssignmentStmt> &s) {
+            handleAssignmentStmt(s.value());
+          },
+          [&](const common::Indirection<parser::BackspaceStmt> &s) {
+            builder_->CreateIOCall(InputOutputCallBackspace,
+                CreateBackspaceArguments(s.value().v));
+          },
+          [&](const common::Indirection<parser::CallStmt> &s) {
+            builder_->CreateCall(nullptr,
+                CreateCalleeValue(
+                    std::get<parser::ProcedureDesignator>(s.value().v.t)),
+                CreateCallArguments(
+                    std::get<std::list<parser::ActualArgSpec>>(s.value().v.t)));
+          },
+          [&](const common::Indirection<parser::CloseStmt> &s) {
+            builder_->CreateIOCall(
+                InputOutputCallClose, CreateCloseArguments(s.value().v));
+          },
+          [](const parser::ContinueStmt &) { WRONG_PATH(); },
+          [](const common::Indirection<parser::CycleStmt> &) { WRONG_PATH(); },
+          [&](const common::Indirection<parser::DeallocateStmt> &s) {
+            for (auto &alloc :
+                std::get<std::list<parser::AllocateObject>>(s.value().t)) {
+              builder_->CreateDealloc(
+                  CreateDeallocationValue(&alloc, &s.value()));
+            }
+          },
+          [&](const common::Indirection<parser::EndfileStmt> &s) {
+            builder_->CreateIOCall(
+                InputOutputCallEndfile, CreateEndfileArguments(s.value().v));
+          },
+          [&](const common::Indirection<parser::EventPostStmt> &s) {
+            builder_->CreateRuntimeCall(
+                RuntimeCallEventPost, CreateEventPostArguments(s.value()));
+          },
+          [&](const common::Indirection<parser::EventWaitStmt> &s) {
+            builder_->CreateRuntimeCall(
+                RuntimeCallEventWait, CreateEventWaitArguments(s.value()));
+          },
+          [](const common::Indirection<parser::ExitStmt> &) { WRONG_PATH(); },
+          [&](const parser::FailImageStmt &s) {
+            builder_->CreateRuntimeCall(
+                RuntimeCallFailImage, CreateFailImageArguments(s));
+          },
+          [&](const common::Indirection<parser::FlushStmt> &s) {
+            builder_->CreateIOCall(
+                InputOutputCallFlush, CreateFlushArguments(s.value().v));
+          },
+          [&](const common::Indirection<parser::FormTeamStmt> &s) {
+            builder_->CreateRuntimeCall(
+                RuntimeCallFormTeam, CreateFormTeamArguments(s.value()));
+          },
+          [](const common::Indirection<parser::GotoStmt> &) { WRONG_PATH(); },
+          [](const common::Indirection<parser::IfStmt> &) { WRONG_PATH(); },
+          [&](const common::Indirection<parser::InquireStmt> &s) {
+            std::visit(
+                common::visitors{
+                    [&](const std::list<parser::InquireSpec> &specifiers) {
+                      builder_->CreateIOCall(InputOutputCallInquire,
+                          CreateInquireArguments(specifiers));
+                    },
+                    [&](const parser::InquireStmt::Iolength &iolength) {
+                      builder_->CreateIOCall(InputOutputCallInquire,
+                          CreateInquireArguments(iolength));
+                    },
+                },
+                s.value().u);
+          },
+          [&](const common::Indirection<parser::LockStmt> &s) {
+            builder_->CreateRuntimeCall(
+                RuntimeCallLock, CreateLockArguments(s.value()));
+          },
+          [&](const common::Indirection<parser::NullifyStmt> &s) {
+            for (auto &obj : s.value().v) {
+              std::visit(
+                  common::visitors{
+                      [&](const parser::Name &n) {
+                        auto s{builder_->CreateAddr(ToExpression(n))};
+                        builder_->CreateNullify(s);
+                      },
+                      [&](const parser::StructureComponent &sc) {
+                        auto s{builder_->CreateAddr(ToExpression(sc))};
+                        builder_->CreateNullify(s);
+                      },
+                  },
+                  obj.u);
+            }
+          },
+          [&](const common::Indirection<parser::OpenStmt> &s) {
+            builder_->CreateIOCall(
+                InputOutputCallOpen, CreateOpenArguments(s.value().v));
+          },
+          [&](const common::Indirection<parser::PointerAssignmentStmt> &s) {
+            auto *value{CreatePointerValue(s.value())};
+            auto addr{builder_->CreateAddr(
+                ExprRef(std::get<parser::Expr>(s.value().t)))};
+            builder_->CreateStore(addr, value);
+          },
+          [&](const common::Indirection<parser::PrintStmt> &s) {
+            builder_->CreateIOCall(InputOutputCallPrint,
+                CreatePrintArguments(std::get<parser::Format>(s.value().t),
+                    std::get<std::list<parser::OutputItem>>(s.value().t)));
+          },
+          [&](const common::Indirection<parser::ReadStmt> &s) {
+            builder_->CreateIOCall(InputOutputCallRead,
+                CreateReadArguments(s.value().iounit, s.value().format,
+                    s.value().controls, s.value().items));
+          },
+          [](const common::Indirection<parser::ReturnStmt> &) { WRONG_PATH(); },
+          [&](const common::Indirection<parser::RewindStmt> &s) {
+            builder_->CreateIOCall(
+                InputOutputCallRewind, CreateRewindArguments(s.value().v));
+          },
+          [&](const common::Indirection<parser::StopStmt> &s) {
+            builder_->CreateRuntimeCall(
+                RuntimeCallStop, CreateStopArguments(s.value()));
+          },
+          [&](const common::Indirection<parser::SyncAllStmt> &s) {
+            builder_->CreateRuntimeCall(
+                RuntimeCallSyncAll, CreateSyncAllArguments(s.value()));
+          },
+          [&](const common::Indirection<parser::SyncImagesStmt> &s) {
+            builder_->CreateRuntimeCall(
+                RuntimeCallSyncImages, CreateSyncImagesArguments(s.value()));
+          },
+          [&](const common::Indirection<parser::SyncMemoryStmt> &s) {
+            builder_->CreateRuntimeCall(
+                RuntimeCallSyncMemory, CreateSyncMemoryArguments(s.value()));
+          },
+          [&](const common::Indirection<parser::SyncTeamStmt> &s) {
+            builder_->CreateRuntimeCall(
+                RuntimeCallSyncTeam, CreateSyncTeamArguments(s.value()));
+          },
+          [&](const common::Indirection<parser::UnlockStmt> &s) {
+            builder_->CreateRuntimeCall(
+                RuntimeCallUnlock, CreateUnlockArguments(s.value()));
+          },
+          [&](const common::Indirection<parser::WaitStmt> &s) {
+            builder_->CreateIOCall(
+                InputOutputCallWait, CreateWaitArguments(s.value().v));
+          },
+          [](const common::Indirection<parser::WhereStmt> &) { /*fixme*/ },
+          [&](const common::Indirection<parser::WriteStmt> &s) {
+            builder_->CreateIOCall(InputOutputCallWrite,
+                CreateWriteArguments(s.value().iounit, s.value().format,
+                    s.value().controls, s.value().items));
+          },
+          [](const common::Indirection<parser::ComputedGotoStmt> &) {
+            WRONG_PATH();
+          },
+          [](const common::Indirection<parser::ForallStmt> &) { /*fixme*/ },
+          [](const common::Indirection<parser::ArithmeticIfStmt> &) {
+            WRONG_PATH();
+          },
+          [&](const common::Indirection<parser::AssignStmt> &s) {
+            auto addr{builder_->CreateAddr(
+                ToExpression(std::get<parser::Name>(s.value().t)))};
+            auto *block{blockMap_
+                            .find(flat::FetchLabel(
+                                ad, std::get<parser::Label>(s.value().t))
+                                      .get())
+                            ->second};
+            builder_->CreateStore(addr, block);
+          },
+          [](const common::Indirection<parser::AssignedGotoStmt> &) {
+            WRONG_PATH();
+          },
+          [&](const common::Indirection<parser::PauseStmt> &s) {
+            builder_->CreateRuntimeCall(
+                RuntimeCallPause, CreatePauseArguments(s.value()));
+          },
+      },
+      stmt.statement.u);
+}
+
+template<typename SWITCHTYPE, typename F>
+void FortranIRLowering::AddOrQueueSwitch(Value condition,
+    const std::vector<typename SWITCHTYPE::ValueType> &values,
+    const std::vector<flat::LabelRef> &labels, F function) {
+  auto defer{false};
+  typename SWITCHTYPE::ValueSuccPairListType cases;
+  CHECK(values.size() == labels.size());
+  auto valiter{values.begin()};
+  for (auto lab : labels) {
+    auto labIter{blockMap_.find(lab)};
+    if (labIter == blockMap_.end()) {
+      defer = true;
+      break;
+    } else {
+      cases.emplace_back(*valiter++, labIter->second);
+    }
+  }
+  if (defer) {
+    using namespace std::placeholders;
+    controlFlowEdgesToAdd_.emplace_back(std::bind(
+        [](FIRBuilder *builder, BasicBlock *block, Value expr,
+            const std::vector<typename SWITCHTYPE::ValueType> &values,
+            const std::vector<flat::LabelRef> &labels, F function,
+            const LabelMapType &map) {
+          builder->SetInsertionPoint(block);
+          typename SWITCHTYPE::ValueSuccPairListType cases;
+          auto valiter{values.begin()};
+          for (auto &lab : labels) {
+            cases.emplace_back(*valiter++, map.find(lab)->second);
+          }
+          function(builder, expr, cases);
+        },
+        builder_, builder_->GetInsertionPoint(), condition, values, labels,
+        function, _1));
+  } else {
+    function(builder_, condition, cases);
+  }
+}
+
+void FortranIRLowering::AddOrQueueBranch(flat::LabelRef dest) {
+  auto iter{blockMap_.find(dest)};
+  if (iter != blockMap_.end()) {
+    builder_->CreateBranch(iter->second);
+  } else {
+    using namespace std::placeholders;
+    controlFlowEdgesToAdd_.emplace_back(std::bind(
+        [](FIRBuilder *builder, BasicBlock *block, flat::LabelRef dest,
+            const LabelMapType &map) {
+          builder->SetInsertionPoint(block);
+          CHECK(map.find(dest) != map.end() && "no destination");
+          builder->CreateBranch(map.find(dest)->second);
+        },
+        builder_, builder_->GetInsertionPoint(), dest, _1));
+  }
+}
+
+void FortranIRLowering::AddOrQueueCGoto(
+    Statement *condition, flat::LabelRef trueBlock, flat::LabelRef falseBlock) {
+  auto trueIter{blockMap_.find(trueBlock)};
+  auto falseIter{blockMap_.find(falseBlock)};
+  if (trueIter != blockMap_.end() && falseIter != blockMap_.end()) {
+    builder_->CreateConditionalBranch(
+        condition, trueIter->second, falseIter->second);
+  } else {
+    using namespace std::placeholders;
+    controlFlowEdgesToAdd_.emplace_back(std::bind(
+        [](FIRBuilder *builder, BasicBlock *block, Statement *expr,
+            flat::LabelRef trueDest, flat::LabelRef falseDest,
+            const LabelMapType &map) {
+          builder->SetInsertionPoint(block);
+          CHECK(map.find(trueDest) != map.end());
+          CHECK(map.find(falseDest) != map.end());
+          builder->CreateConditionalBranch(
+              expr, map.find(trueDest)->second, map.find(falseDest)->second);
+        },
+        builder_, builder_->GetInsertionPoint(), condition, trueBlock,
+        falseBlock, _1));
+  }
+}
+
+void FortranIRLowering::AddOrQueueIGoto(AnalysisData &ad,
+    const semantics::Symbol *symbol,
+    const std::vector<flat::LabelRef> &labels) {
+  auto useLabels{labels.empty() ? flat::GetAssign(ad, symbol) : labels};
+  auto defer{false};
+  IndirectBranchStmt::TargetListType blocks;
+  for (auto lab : useLabels) {
+    auto iter{blockMap_.find(lab)};
+    if (iter == blockMap_.end()) {
+      defer = true;
+      break;
+    } else {
+      blocks.push_back(iter->second);
+    }
+  }
+  if (defer) {
+    using namespace std::placeholders;
+    controlFlowEdgesToAdd_.emplace_back(std::bind(
+        [](FIRBuilder *builder, BasicBlock *block, Variable *variable,
+            const std::vector<flat::LabelRef> &fixme, const LabelMapType &map) {
+          builder->SetInsertionPoint(block);
+          builder->CreateIndirectBr(variable, {});  // FIXME
+        },
+        builder_, builder_->GetInsertionPoint(), nullptr /*symbol*/, useLabels,
+        _1));
+  } else {
+    builder_->CreateIndirectBr(ConvertToVariable(symbol), blocks);
+  }
+}
+
+void FortranIRLowering::InitiateConstruct(const parser::AssociateStmt *stmt) {
+  for (auto &assoc : std::get<std::list<parser::Association>>(stmt->t)) {
+    auto &selector{std::get<parser::Selector>(assoc.t)};
+    auto *expr{builder_->CreateExpr(std::visit(
+        common::visitors{
+            [&](const parser::Variable &v) { return ToExpression(v); },
+            [](const parser::Expr &e) { return *ExprRef(e); },
+        },
+        selector.u))};
+    auto name{
+        builder_->CreateAddr(ToExpression(std::get<parser::Name>(assoc.t)))};
+    builder_->CreateStore(name, expr);
+  }
+}
+
+void FortranIRLowering::InitiateConstruct(const parser::SelectCaseStmt *stmt) {
+  builder_->CreateExpr(
+      ExprRef(std::get<parser::Scalar<parser::Expr>>(stmt->t).thing));
+}
+
+void FortranIRLowering::InitiateConstruct(const parser::ChangeTeamStmt *stmt) {
+  // FIXME
+}
+
+void FortranIRLowering::InitiateConstruct(const parser::IfThenStmt *stmt) {
+  const auto &e{std::get<parser::ScalarLogicalExpr>(stmt->t).thing};
+  builder_->CreateExpr(ExprRef(e.thing));
+}
+
+void FortranIRLowering::InitiateConstruct(
+    const parser::WhereConstructStmt *stmt) {
+  const auto &e{std::get<parser::LogicalExpr>(stmt->t)};
+  builder_->CreateExpr(ExprRef(e.thing));
+}
+
+void FortranIRLowering::InitiateConstruct(
+    const parser::ForallConstructStmt *stmt) {
+  // FIXME
+}
+
+void FortranIRLowering::InitiateConstruct(const parser::NonLabelDoStmt *stmt) {
+  auto &ctrl{std::get<std::optional<parser::LoopControl>>(stmt->t)};
+  if (ctrl.has_value()) {
+    std::visit(
+        common::visitors{
+          [&](const parser::LoopControl::Bounds &bounds) {
+              auto name{
+                  builder_->CreateAddr(ToExpression(bounds.name.thing))};
+              // evaluate e1, e2 [, e3] ...
+              auto *e1{builder_->CreateExpr(ExprRef(bounds.lower.thing))};
+              auto *e2{builder_->CreateExpr(ExprRef(bounds.upper.thing))};
+              Statement *e3;
+              if (bounds.step.has_value()) {
+                e3 = builder_->CreateExpr(ExprRef(bounds.step->thing));
+              } else {
+                e3 = builder_->CreateExpr(CreateConstant(1));
+              }
+              // name <- e1
+              builder_->CreateStore(name, e1);
+              auto tripCounter{CreateTemp(GetDefaultIntegerType())};
+              // See 11.1.7.4.1, para. 1, item (3)
+              // totalTrips ::= iteration count = a
+              //   where a = (e2 - e1 + e3) / e3 if a > 0 and 0 otherwise
+              Expression tripExpr{ConsExpr<evaluate::Divide>(
+                  ConsExpr<evaluate::Add>(
+                      ConsExpr<evaluate::Subtract>(
+                          getApplyExpr(e2), getApplyExpr(e1)),
+                      getApplyExpr(e3)),
+                  getApplyExpr(e3))};
+              auto *totalTrips{builder_->CreateExpr(&tripExpr)};
+              builder_->CreateStore(tripCounter, totalTrips);
+              PushDoContext(stmt, name, tripCounter, e3);
+            },
+            [&](const parser::ScalarLogicalExpr &expr) {
+              // See 11.1.7.4.1, para. 2
+              // See BuildLoopLatchExpression()
+              PushDoContext(stmt);
+            },
+            [&](const parser::LoopControl::Concurrent &cc) {
+              // See 11.1.7.4.2
+              // FIXME
+            },
+        },
+        ctrl->u);
+  } else {
+    // loop forever (See 11.1.7.4.1, para. 2)
+    PushDoContext(stmt);
+  }
+}
+
+// Image related runtime argument translations ...
+RuntimeCallArguments FortranIRLowering::CreateEventPostArguments(
+    const parser::EventPostStmt &stmt) {
+  return RuntimeCallArguments{};
+}
+RuntimeCallArguments FortranIRLowering::CreateEventWaitArguments(
+    const parser::EventWaitStmt &stmt) {
+  return RuntimeCallArguments{};
+}
+RuntimeCallArguments FortranIRLowering::CreateFailImageArguments(
+    const parser::FailImageStmt &stmt) {
+  return RuntimeCallArguments{};
+}
+RuntimeCallArguments FortranIRLowering::CreateFormTeamArguments(
+    const parser::FormTeamStmt &stmt) {
+  return RuntimeCallArguments{};
+}
+RuntimeCallArguments FortranIRLowering::CreateLockArguments(
+    const parser::LockStmt &stmt) {
+  return RuntimeCallArguments{};
+}
+RuntimeCallArguments FortranIRLowering::CreatePauseArguments(
+    const parser::PauseStmt &stmt) {
+  return RuntimeCallArguments{};
+}
+RuntimeCallArguments FortranIRLowering::CreateStopArguments(
+    const parser::StopStmt &stmt) {
+  return RuntimeCallArguments{};
+}
+RuntimeCallArguments FortranIRLowering::CreateSyncAllArguments(
+    const parser::SyncAllStmt &stmt) {
+  return RuntimeCallArguments{};
+}
+RuntimeCallArguments FortranIRLowering::CreateSyncImagesArguments(
+    const parser::SyncImagesStmt &stmt) {
+  return RuntimeCallArguments{};
+}
+RuntimeCallArguments FortranIRLowering::CreateSyncMemoryArguments(
+    const parser::SyncMemoryStmt &stmt) {
+  return RuntimeCallArguments{};
+}
+RuntimeCallArguments FortranIRLowering::CreateSyncTeamArguments(
+    const parser::SyncTeamStmt &stmt) {
+  return RuntimeCallArguments{};
+}
+RuntimeCallArguments FortranIRLowering::CreateUnlockArguments(
+    const parser::UnlockStmt &stmt) {
+  return RuntimeCallArguments{};
+}
+
+// I/O related runtime argument translations ...
+IOCallArguments FortranIRLowering::CreateBackspaceArguments(
+    const std::list<parser::PositionOrFlushSpec> &specifiers) {
+  return IOCallArguments{};
+}
+IOCallArguments FortranIRLowering::CreateCloseArguments(
+    const std::list<parser::CloseStmt::CloseSpec> &specifiers) {
+  return IOCallArguments{};
+}
+IOCallArguments FortranIRLowering::CreateEndfileArguments(
+    const std::list<parser::PositionOrFlushSpec> &specifiers) {
+  return IOCallArguments{};
+}
+IOCallArguments FortranIRLowering::CreateFlushArguments(
+    const std::list<parser::PositionOrFlushSpec> &specifiers) {
+  return IOCallArguments{};
+}
+IOCallArguments FortranIRLowering::CreateRewindArguments(
+    const std::list<parser::PositionOrFlushSpec> &specifiers) {
+  return IOCallArguments{};
+}
+IOCallArguments FortranIRLowering::CreateInquireArguments(
+    const std::list<parser::InquireSpec> &specifiers) {
+  return IOCallArguments{};
+}
+IOCallArguments FortranIRLowering::CreateInquireArguments(
+    const parser::InquireStmt::Iolength &iolength) {
+  return IOCallArguments{};
+}
+IOCallArguments FortranIRLowering::CreateOpenArguments(
+    const std::list<parser::ConnectSpec> &specifiers) {
+  return IOCallArguments{};
+}
+IOCallArguments FortranIRLowering::CreateWaitArguments(
+    const std::list<parser::WaitSpec> &specifiers) {
+  return IOCallArguments{};
+}
+IOCallArguments FortranIRLowering::CreatePrintArguments(
+    const parser::Format &format,
+    const std::list<parser::OutputItem> &outputs) {
+  return IOCallArguments{};
+}
+IOCallArguments FortranIRLowering::CreateReadArguments(
+    const std::optional<parser::IoUnit> &ioUnit,
+    const std::optional<parser::Format> &format,
+    const std::list<parser::IoControlSpec> &controls,
+    const std::list<parser::InputItem> &inputs) {
+  return IOCallArguments{};
+}
+IOCallArguments FortranIRLowering::CreateWriteArguments(
+    const std::optional<parser::IoUnit> &ioUnit,
+    const std::optional<parser::Format> &format,
+    const std::list<parser::IoControlSpec> &controls,
+    const std::list<parser::OutputItem> &outputs) {
+  return IOCallArguments{};
+}
+
+void FortranIRLowering::ConstructFIR(AnalysisData &ad) {
+  for (auto iter{linearOperations_.begin()}, iend{linearOperations_.end()};
+       iter != iend; ++iter) {
+    const auto &op{*iter};
+    std::visit(
+        common::visitors{
+            [&](const flat::LabelOp &op) {
+              auto *newBlock{CreateBlock(builder_->GetCurrentRegion())};
+              blockMap_.insert({op.get(), newBlock});
+              if (builder_->GetInsertionPoint()) {
+                builder_->CreateBranch(newBlock);
+              }
+              builder_->SetInsertionPoint(newBlock);
+            },
+            [&](const flat::GotoOp &op) {
+              CheckInsertionPoint();
+              AddOrQueueBranch(op.target);
+              builder_->ClearInsertionPoint();
+            },
+            [&](const flat::IndirectGotoOp &op) {
+              CheckInsertionPoint();
+              AddOrQueueIGoto(ad, op.symbol, op.labelRefs);
+              builder_->ClearInsertionPoint();
+            },
+            [&](const flat::ReturnOp &op) {
+              CheckInsertionPoint();
+              std::visit(
+                  common::visitors{
+                      [&](const parser::FailImageStmt *s) {
+                        builder_->CreateRuntimeCall(
+                            RuntimeCallFailImage, CreateFailImageArguments(*s));
+                        builder_->CreateUnreachable();
+                      },
+                      [&](const parser::ReturnStmt *s) {
+                        // alt-return
+                        if (s->v) {
+                          auto *exp{ExprRef(s->v->thing.thing)};
+                          auto app{builder_->QualifiedCreateExpr(exp)};
+                          builder_->CreateReturn(app);
+                        } else {
+                          auto zero{
+                              builder_->QualifiedCreateExpr(CreateConstant(0))};
+                          builder_->CreateReturn(zero);
+                        }
+                      },
+                      [&](const parser::StopStmt *s) {
+                        builder_->CreateRuntimeCall(
+                            RuntimeCallStop, CreateStopArguments(*s));
+                        builder_->CreateUnreachable();
+                      },
+                  },
+                  op.u);
+              builder_->ClearInsertionPoint();
+            },
+            [&](const flat::ConditionalGotoOp &cop) {
+              CheckInsertionPoint();
+              std::visit(
+                  common::visitors{
+                      [&](const parser::Statement<parser::IfThenStmt> *s) {
+                        const auto &exp{
+                            std::get<parser::ScalarLogicalExpr>(s->statement.t)
+                                .thing.thing.value()};
+                        SEMANTICS_CHECK(ExprRef(exp),
+                            "IF THEN condition expression missing");
+                        auto *cond{builder_->CreateExpr(ExprRef(exp))};
+                        AddOrQueueCGoto(cond, cop.trueLabel, cop.falseLabel);
+                      },
+                      [&](const parser::Statement<parser::ElseIfStmt> *s) {
+                        const auto &exp{
+                            std::get<parser::ScalarLogicalExpr>(s->statement.t)
+                                .thing.thing.value()};
+                        SEMANTICS_CHECK(ExprRef(exp),
+                            "ELSE IF condition expression missing");
+                        auto *cond{builder_->CreateExpr(ExprRef(exp))};
+                        AddOrQueueCGoto(cond, cop.trueLabel, cop.falseLabel);
+                      },
+                      [&](const parser::IfStmt *s) {
+                        const auto &exp{
+                            std::get<parser::ScalarLogicalExpr>(s->t)
+                                .thing.thing.value()};
+                        SEMANTICS_CHECK(
+                            ExprRef(exp), "IF condition expression missing");
+                        auto *cond{builder_->CreateExpr(ExprRef(exp))};
+                        AddOrQueueCGoto(cond, cop.trueLabel, cop.falseLabel);
+                      },
+                      [&](const parser::Statement<parser::NonLabelDoStmt> *s) {
+                        AddOrQueueCGoto(BuildLoopLatchExpression(&s->statement),
+                            cop.trueLabel, cop.falseLabel);
+                      }},
+                  cop.u);
+              builder_->ClearInsertionPoint();
+            },
+            [&](const flat::SwitchIOOp &IOp) {
+              CheckInsertionPoint();
+              auto args{ComposeIOSwitchArgs(IOp)};
+              AddOrQueueSwitch<SwitchStmt>(
+                  args.exp, args.values, args.labels, CreateSwitchHelper);
+              builder_->ClearInsertionPoint();
+            },
+            [&](const flat::SwitchOp &sop) {
+              CheckInsertionPoint();
+              std::visit(
+                  common::visitors{
+                      [&](auto) {
+                        auto args{ComposeSwitchArgs(sop)};
+                        AddOrQueueSwitch<SwitchStmt>(args.exp, args.values,
+                            args.labels, CreateSwitchHelper);
+                      },
+                      [&](const parser::CaseConstruct *crct) {
+                        auto args{ComposeSwitchCaseArguments(crct, sop.refs)};
+                        AddOrQueueSwitch<SwitchCaseStmt>(args.exp, args.values,
+                            args.labels, CreateSwitchCaseHelper);
+                      },
+                      [&](const parser::SelectRankConstruct *crct) {
+                        auto args{ComposeSwitchRankArguments(crct, sop.refs)};
+                        AddOrQueueSwitch<SwitchRankStmt>(args.exp, args.values,
+                            args.labels, CreateSwitchRankHelper);
+                      },
+                      [&](const parser::SelectTypeConstruct *crct) {
+                        auto args{ComposeSwitchTypeArguments(crct, sop.refs)};
+                        AddOrQueueSwitch<SwitchTypeStmt>(args.exp, args.values,
+                            args.labels, CreateSwitchTypeHelper);
+                      },
+                  },
+                  sop.u);
+              builder_->ClearInsertionPoint();
+            },
+            [&](const flat::ActionOp &action) {
+              CheckInsertionPoint();
+              handleLinearAction(action, ad);
+            },
+            [&](const flat::DoIncrementOp &inc) {
+              CheckInsertionPoint();
+              handleLinearDoIncrement(inc);
+            },
+            [&](const flat::DoCompareOp &cmp) {
+              CheckInsertionPoint();
+              handleLinearDoCompare(cmp);
+            },
+            [&](const flat::BeginOp &con) {
+              std::visit(
+                  common::visitors{
+                      [&](const parser::AssociateConstruct *crct) {
+                        using A = parser::Statement<parser::AssociateStmt>;
+                        const auto &statement{std::get<A>(crct->t)};
+                        const auto &position{statement.source};
+                        EnterRegion(position);
+                        InitiateConstruct(&statement.statement);
+                      },
+                      [&](const parser::BlockConstruct *crct) {
+                        using A = parser::Statement<parser::BlockStmt>;
+                        EnterRegion(std::get<A>(crct->t).source);
+                      },
+                      [&](const parser::CaseConstruct *crct) {
+                        using A = parser::Statement<parser::SelectCaseStmt>;
+                        InitiateConstruct(&std::get<A>(crct->t).statement);
+                      },
+                      [&](const parser::ChangeTeamConstruct *crct) {
+                        using A = parser::Statement<parser::ChangeTeamStmt>;
+                        const auto &statement{std::get<A>(crct->t)};
+                        EnterRegion(statement.source);
+                        InitiateConstruct(&statement.statement);
+                      },
+                      [&](const parser::DoConstruct *crct) {
+                        using A = parser::Statement<parser::NonLabelDoStmt>;
+                        const auto &statement{std::get<A>(crct->t)};
+                        EnterRegion(statement.source);
+                        InitiateConstruct(&statement.statement);
+                      },
+                      [&](const parser::IfConstruct *crct) {
+                        using A = parser::Statement<parser::IfThenStmt>;
+                        InitiateConstruct(&std::get<A>(crct->t).statement);
+                      },
+                      [&](const parser::SelectRankConstruct *crct) {
+                        using A = parser::Statement<parser::SelectRankStmt>;
+                        const auto &statement{std::get<A>(crct->t)};
+                        EnterRegion(statement.source);
+                      },
+                      [&](const parser::SelectTypeConstruct *crct) {
+                        using A = parser::Statement<parser::SelectTypeStmt>;
+                        const auto &statement{std::get<A>(crct->t)};
+                        EnterRegion(statement.source);
+                      },
+                      [&](const parser::WhereConstruct *crct) {
+                        using A = parser::Statement<parser::WhereConstructStmt>;
+                        InitiateConstruct(&std::get<A>(crct->t).statement);
+                      },
+                      [&](const parser::ForallConstruct *crct) {
+                        using A =
+                            parser::Statement<parser::ForallConstructStmt>;
+                        InitiateConstruct(&std::get<A>(crct->t).statement);
+                      },
+                      [](const parser::CriticalConstruct *) { /*fixme*/ },
+                      [](const parser::CompilerDirective *) { /*fixme*/ },
+                      [](const parser::OpenMPConstruct *) { /*fixme*/ },
+                      [](const parser::OpenMPEndLoopDirective *) { /*fixme*/ },
+                  },
+                  con.u);
+              auto next{iter};
+              const auto &nextOp{*(++next)};
+              if (auto *op{std::get_if<flat::LabelOp>(&nextOp.u)}) {
+                blockMap_.insert({op->get(), builder_->GetInsertionPoint()});
+                ++iter;
+              }
+            },
+            [&](const flat::EndOp &con) {
+              std::visit(
+                  common::visitors{
+                      [](const auto &) {},
+                      [&](const parser::BlockConstruct *) { ExitRegion(); },
+                      [&](const parser::DoConstruct *crct) {
+                        const auto &statement{
+                            std::get<parser::Statement<parser::NonLabelDoStmt>>(
+                                crct->t)};
+                        FinishConstruct(&statement.statement);
+                        ExitRegion();
+                      },
+                      [&](const parser::AssociateConstruct *) { ExitRegion(); },
+                      [&](const parser::ChangeTeamConstruct *) {
+                        ExitRegion();
+                      },
+                      [&](const parser::SelectTypeConstruct *) {
+                        ExitRegion();
+                      },
+                  },
+                  con.u);
+            },
+        },
+        op.u);
+  }
+}
 
 Program *CreateFortranIR(const parser::Program &program,
     semantics::SemanticsContext &semanticsContext, bool debugLinearIR) {
