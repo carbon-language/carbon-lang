@@ -61,20 +61,20 @@ subroutine C934()
     npca1, npca2(2:4))
 
 
-  !ERROR: Allocatable object in ALLOCATE shall be type compatible with type-spec
+  !ERROR: Allocatable object in ALLOCATE must be type compatible with type-spec
   allocate(complex:: x1)
-  !ERROR: Allocatable object in ALLOCATE shall be type compatible with type-spec
+  !ERROR: Allocatable object in ALLOCATE must be type compatible with type-spec
   allocate(complex:: x2(2))
-  !ERROR: Allocatable object in ALLOCATE shall be type compatible with type-spec
+  !ERROR: Allocatable object in ALLOCATE must be type compatible with type-spec
   allocate(logical:: bp2(3)%x(5))
-  !ERROR: Allocatable object in ALLOCATE shall be type compatible with type-spec
+  !ERROR: Allocatable object in ALLOCATE must be type compatible with type-spec
   allocate(A:: unrelat)
-  !ERROR: Allocatable object in ALLOCATE shall be type compatible with type-spec
+  !ERROR: Allocatable object in ALLOCATE must be type compatible with type-spec
   allocate(B:: unrelat%notpolymorph)
-  !ERROR: Allocatable object in ALLOCATE shall be type compatible with type-spec
+  !ERROR: Allocatable object in ALLOCATE must be type compatible with type-spec
   allocate(B:: npaa1)
-  !ERROR: Allocatable object in ALLOCATE shall be type compatible with type-spec
+  !ERROR: Allocatable object in ALLOCATE must be type compatible with type-spec
   allocate(B:: npaa2(4))
-  !ERROR: Allocatable object in ALLOCATE shall be type compatible with type-spec
+  !ERROR: Allocatable object in ALLOCATE must be type compatible with type-spec
   allocate(C:: npca1, bp1, npbp1)
 end subroutine

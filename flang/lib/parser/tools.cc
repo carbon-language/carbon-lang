@@ -68,4 +68,9 @@ const Name &GetLastName(const Variable &x) {
       },
       x.u);
 }
+
+const Name &GetLastName(const AllocateObject &x) {
+  return std::visit(
+      [](const auto &y) -> const Name & { return GetLastName(y); }, x.u);
+}
 }

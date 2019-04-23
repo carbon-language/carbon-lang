@@ -46,7 +46,7 @@ subroutine C943_C944(src, src2)
   allocate(x9, mold=mld, errmsg=msg, stat=stat, errmsg= msg)
 
 ! C944
-! At most one of source-expr and type-spec shall appear.
+! At most one of source-expr and type-spec must appear.
 
   !Nominal cases already tested in C943 and type-spec tests (e.g C934)
 

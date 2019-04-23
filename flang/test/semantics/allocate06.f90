@@ -66,51 +66,51 @@ subroutine C935(l, ac1, ac2, ac3, dc1, dc2, ec1, ec2, aa, ab, ea, eb, da, db, wh
   ! Not OK
 
   ! Should be * or no type-spec
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(character(len=5):: ac1)
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(character(len=5):: ac2(3), ac3)
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(character(len=l):: ac1)
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(character(len=l):: ac2(3), ac3)
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(A(5):: aa)
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(B(5, 5):: ab(5))
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(B(l, 5):: aa, ab(5))
 
   ! Must not be *
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(character(len=*):: ac1, dc1, ac3)
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(character*(*):: dc2(5))
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(character*(*):: ec1)
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(character(*):: whatever)
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(character(len=*):: ac2(5), ec2(5))
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(A(*):: ea) !segfault gfortran
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(B(*, 5):: eb(2)) !segfault gfortran
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(A(*):: da) !segfault gfortran
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(B(*, 5):: db(2)) !segfault gfortran
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(A(*):: aa, whatever)
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(B(*, *):: aa)
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(C(la=*, lb=10, lc1=*, lc2=5, lc3=*):: something_else(5))
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(C(la=5, lb=10, lc1=4, lc2=5, lc3=3):: aa)
-  !ERROR: Type parameters in type-spec shall be assumed if and only if they are assumed for allocatable object in ALLOCATE
+  !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(C(la=*, lb=10, lc1=*, lc2=5, lc3=*):: aa)
 end subroutine

@@ -69,20 +69,20 @@ subroutine C945_a(srca, srcb, srcc, src_complex, src_logical, &
   allocate(aa2, up2, bp2, ca2, npca2, source=srcc2)
 
 
-  !ERROR: Allocatable object in ALLOCATE shall be type compatible with source expression from MOLD or SOURCE
+  !ERROR: Allocatable object in ALLOCATE must be type compatible with source expression from MOLD or SOURCE
   allocate(x1, mold=src_complex)
-  !ERROR: Allocatable object in ALLOCATE shall be type compatible with source expression from MOLD or SOURCE
+  !ERROR: Allocatable object in ALLOCATE must be type compatible with source expression from MOLD or SOURCE
   allocate(x2(2), source=src_complex2)
-  !ERROR: Allocatable object in ALLOCATE shall be type compatible with source expression from MOLD or SOURCE
+  !ERROR: Allocatable object in ALLOCATE must be type compatible with source expression from MOLD or SOURCE
   allocate(bp2(3)%x, mold=src_logical)
-  !ERROR: Allocatable object in ALLOCATE shall be type compatible with source expression from MOLD or SOURCE
+  !ERROR: Allocatable object in ALLOCATE must be type compatible with source expression from MOLD or SOURCE
   allocate(unrelat, mold=srca)
-  !ERROR: Allocatable object in ALLOCATE shall be type compatible with source expression from MOLD or SOURCE
+  !ERROR: Allocatable object in ALLOCATE must be type compatible with source expression from MOLD or SOURCE
   allocate(unrelat%notpolymorph, source=srcb)
-  !ERROR: Allocatable object in ALLOCATE shall be type compatible with source expression from MOLD or SOURCE
+  !ERROR: Allocatable object in ALLOCATE must be type compatible with source expression from MOLD or SOURCE
   allocate(npaa1, mold=srcb)
-  !ERROR: Allocatable object in ALLOCATE shall be type compatible with source expression from MOLD or SOURCE
+  !ERROR: Allocatable object in ALLOCATE must be type compatible with source expression from MOLD or SOURCE
   allocate(npaa2, source=srcb2)
-  !ERROR: Allocatable object in ALLOCATE shall be type compatible with source expression from MOLD or SOURCE
+  !ERROR: Allocatable object in ALLOCATE must be type compatible with source expression from MOLD or SOURCE
   allocate(npca1, bp1, npbp1, mold=srcc)
 end subroutine

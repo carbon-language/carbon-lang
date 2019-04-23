@@ -45,21 +45,21 @@ subroutine C933_b(n)
   class(B), pointer :: p3, p4(:)
   type(A) :: molda = A(1, 2)
 
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object is unlimited polymorphic
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object is unlimited polymorphic
   allocate(u1)
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object is unlimited polymorphic
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object is unlimited polymorphic
   allocate(u2(2))
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object is unlimited polymorphic
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object is unlimited polymorphic
   allocate(n1%whatever)
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object is unlimited polymorphic
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object is unlimited polymorphic
   allocate(n2(2)%whatever)
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object is of abstract type
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object is of abstract type
   allocate(p1)
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object is of abstract type
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object is of abstract type
   allocate(p2(2))
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object is of abstract type
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object is of abstract type
   allocate(p3%y)
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object is of abstract type
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object is of abstract type
   allocate(p4(2)%y)
   !WRONG allocate(Base:: u1) !C703
 

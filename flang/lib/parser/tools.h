@@ -32,6 +32,7 @@ const Name &GetLastName(const ProcedureDesignator &);
 const Name &GetLastName(const Call &);
 const Name &GetLastName(const FunctionReference &);
 const Name &GetLastName(const Variable &);
+const Name &GetLastName(const AllocateObject &);
 
 // When a parse tree node is an instance of a specific type wrapped in
 // layers of packaging, return a pointer to that object.

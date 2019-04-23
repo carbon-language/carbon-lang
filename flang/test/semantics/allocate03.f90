@@ -54,33 +54,33 @@ subroutine C933_a(ca3, ca4, cp3, cp3mold, cp4, cp7, cp8, bsrc)
   type(SomeType(4, *, 8)) bsrc
 
   ! Expecting errors: need type-spec/src-expr
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object has a deferred type parameters
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object has a deferred type parameters
   allocate(ca1)
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object has a deferred type parameters
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object has a deferred type parameters
   allocate(ca2(4))
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object has a deferred type parameters
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object has a deferred type parameters
   allocate(cp1)
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object has a deferred type parameters
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object has a deferred type parameters
   allocate(cp2(2))
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object has a deferred type parameters
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object has a deferred type parameters
   allocate(cp3)
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object has a deferred type parameters
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object has a deferred type parameters
   allocate(cp4(2))
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object has a deferred type parameters
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object has a deferred type parameters
   allocate(cp5)
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object has a deferred type parameters
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object has a deferred type parameters
   allocate(cp6(2))
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object has a deferred type parameters
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object has a deferred type parameters
   allocate(b1%msg)
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object has a deferred type parameters
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object has a deferred type parameters
   allocate(b1%something)
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object has a deferred type parameters
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object has a deferred type parameters
   allocate(b2%msg)
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object has a deferred type parameters
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object has a deferred type parameters
   allocate(b2%something)
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object has a deferred type parameters
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object has a deferred type parameters
   allocate(b3%msg)
-  !ERROR: Either type-spec or source-expr shall appear in ALLOCATE when allocatable object has a deferred type parameters
+  !ERROR: Either type-spec or source-expr must appear in ALLOCATE when allocatable object has a deferred type parameters
   allocate(b3%something)
 
   ! Nominal cases, expecting no errors

@@ -67,40 +67,40 @@ subroutine C936(param_ca_4_assumed, param_ta_4_assumed, param_ca_4_deferred)
   allocate(WithParamExtent2(k1=1, l1=2, k2=5, l2=6, k3=5, l3=8 ):: whatever)
 
 
-  !ERROR: Kind type parameters of allocatable object in ALLOCATE shall be the same as the corresponding ones in type-spec
+  !ERROR: Kind type parameters of allocatable object in ALLOCATE must be the same as the corresponding ones in type-spec
   allocate(real(kind=8):: x1)
-  !ERROR: Kind type parameters of allocatable object in ALLOCATE shall be the same as the corresponding ones in type-spec
+  !ERROR: Kind type parameters of allocatable object in ALLOCATE must be the same as the corresponding ones in type-spec
   allocate(real(kind=8):: x2(10))
-  !ERROR: Kind type parameters of allocatable object in ALLOCATE shall be the same as the corresponding ones in type-spec
+  !ERROR: Kind type parameters of allocatable object in ALLOCATE must be the same as the corresponding ones in type-spec
   allocate(WithParam(8, 2):: param_ta_4_2)
-  !ERROR: Kind type parameters of allocatable object in ALLOCATE shall be the same as the corresponding ones in type-spec
+  !ERROR: Kind type parameters of allocatable object in ALLOCATE must be the same as the corresponding ones in type-spec
   allocate(WithParam(8, 2):: param_ca_4_2)
-  !ERROR: Kind type parameters of allocatable object in ALLOCATE shall be the same as the corresponding ones in type-spec
+  !ERROR: Kind type parameters of allocatable object in ALLOCATE must be the same as the corresponding ones in type-spec
   allocate(WithParamExtent(8, 2, 8, 3):: param_ca_4_2)
-  !ERROR: Kind type parameters of allocatable object in ALLOCATE shall be the same as the corresponding ones in type-spec
+  !ERROR: Kind type parameters of allocatable object in ALLOCATE must be the same as the corresponding ones in type-spec
   allocate(WithParam(8, *):: param_ta_4_assumed)
-  !ERROR: Kind type parameters of allocatable object in ALLOCATE shall be the same as the corresponding ones in type-spec
+  !ERROR: Kind type parameters of allocatable object in ALLOCATE must be the same as the corresponding ones in type-spec
   allocate(WithParam(8, *):: param_ca_4_assumed)
-  !ERROR: Kind type parameters of allocatable object in ALLOCATE shall be the same as the corresponding ones in type-spec
+  !ERROR: Kind type parameters of allocatable object in ALLOCATE must be the same as the corresponding ones in type-spec
   allocate(WithParamExtent(8, *, 8, 3):: param_ca_4_assumed)
-  !ERROR: Kind type parameters of allocatable object in ALLOCATE shall be the same as the corresponding ones in type-spec
+  !ERROR: Kind type parameters of allocatable object in ALLOCATE must be the same as the corresponding ones in type-spec
   allocate(WithParam(8, 2):: param_ta_4_deferred)
-  !ERROR: Kind type parameters of allocatable object in ALLOCATE shall be the same as the corresponding ones in type-spec
+  !ERROR: Kind type parameters of allocatable object in ALLOCATE must be the same as the corresponding ones in type-spec
   allocate(WithParam(8, 2):: param_ca_4_deferred)
-  !ERROR: Kind type parameters of allocatable object in ALLOCATE shall be the same as the corresponding ones in type-spec
+  !ERROR: Kind type parameters of allocatable object in ALLOCATE must be the same as the corresponding ones in type-spec
   allocate(WithParamExtent(8, 2, 8, 3):: param_ca_4_deferred)
-  !ERROR: Kind type parameters of allocatable object in ALLOCATE shall be the same as the corresponding ones in type-spec
+  !ERROR: Kind type parameters of allocatable object in ALLOCATE must be the same as the corresponding ones in type-spec
   allocate(WithParamExtent2(k1=5, l1=5, k2=5, l2=6, l3=8 ):: extended2)
-  !ERROR: Kind type parameters of allocatable object in ALLOCATE shall be the same as the corresponding ones in type-spec
+  !ERROR: Kind type parameters of allocatable object in ALLOCATE must be the same as the corresponding ones in type-spec
   allocate(WithParamExtent2(k1=5, l1=2, k2=5, l2=6, k3=5, l3=8 ):: param_ca_4_2)
-  !ERROR: Kind type parameters of allocatable object in ALLOCATE shall be the same as the corresponding ones in type-spec
+  !ERROR: Kind type parameters of allocatable object in ALLOCATE must be the same as the corresponding ones in type-spec
   allocate(WithParamExtent2(k1=4, l1=5, k2=5, l2=6, k3=5, l3=8 ):: extended2)
-  !ERROR: Kind type parameters of allocatable object in ALLOCATE shall be the same as the corresponding ones in type-spec
+  !ERROR: Kind type parameters of allocatable object in ALLOCATE must be the same as the corresponding ones in type-spec
   allocate(WithParam:: param_ca_4_2)
-  !ERROR: Kind type parameters of allocatable object in ALLOCATE shall be the same as the corresponding ones in type-spec
+  !ERROR: Kind type parameters of allocatable object in ALLOCATE must be the same as the corresponding ones in type-spec
   allocate(WithParam(k1=2, l1=2):: param_defaulted)
-  !ERROR: Kind type parameters of allocatable object in ALLOCATE shall be the same as the corresponding ones in type-spec
+  !ERROR: Kind type parameters of allocatable object in ALLOCATE must be the same as the corresponding ones in type-spec
   allocate(WithParam(k1=2):: param_defaulted)
-  !ERROR: Kind type parameters of allocatable object in ALLOCATE shall be the same as the corresponding ones in type-spec
+  !ERROR: Kind type parameters of allocatable object in ALLOCATE must be the same as the corresponding ones in type-spec
   allocate(WithParamExtent2(k1=5, l1=2, k2=5, l2=6, k3=5, l3=8 ):: param_defaulted)
 end subroutine
