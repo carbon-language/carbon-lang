@@ -230,6 +230,11 @@ define %v4f16 @test_v4f16.round(%v4f16 %a) {
   ; CHECK-FP16-NOT:       fcvt
   ; CHECK-FP16:           frinta.4h
   ; CHECK-FP16-NEXT:      ret
+  ; GISEL-LABEL:          test_v4f16.round:
+  ; GISEL-NOFP16-COUNT-4: frinta s{{[0-9]+}}, s{{[0-9]+}}
+  ; GISEL-FP16-NOT:       fcvt
+  ; GISEL-FP16:           frinta.4h
+  ; GISEL-FP16-NEXT:      ret
   %1 =  call %v4f16 @llvm.round.v4f16(%v4f16 %a)
   ret %v4f16 %1
 }
@@ -475,6 +480,11 @@ define %v8f16 @test_v8f16.round(%v8f16 %a) {
   ; CHECK-FP16-NOT:       fcvt
   ; CHECK-FP16:           frinta.8h
   ; CHECK-FP16-NEXT:      ret
+  ; GISEL-LABEL:          test_v8f16.round:
+  ; GISEL-NOFP16-COUNT-8: frinta s{{[0-9]+}}, s{{[0-9]+}}
+  ; GISEL-FP16-NOT:       fcvt
+  ; GISEL-FP16:           frinta.8h
+  ; GISEL-FP16-NEXT:      ret
   %1 =  call %v8f16 @llvm.round.v8f16(%v8f16 %a)
   ret %v8f16 %1
 }
