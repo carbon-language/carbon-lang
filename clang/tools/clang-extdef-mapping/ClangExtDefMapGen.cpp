@@ -90,6 +90,7 @@ void MapExtDefNamesConsumer::addIfInMain(const DeclaratorDecl *DD,
   case UniqueExternalLinkage:
     if (SM.isInMainFile(defStart))
       Index[LookupName] = CurrentFileName;
+    break;
   default:
     break;
   }
