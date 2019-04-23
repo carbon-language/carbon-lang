@@ -1933,6 +1933,15 @@ isProfitableToIfCvt(MachineBasicBlock &TBB,
   if (!TCycles)
     return false;
 
+  // In thumb code we often end up trading one branch for a IT block, and
+  // if we are cloning the instruction can increase code size. Prevent
+  // blocks with multiple predecesors from being ifcvted to prevent this
+  // cloning.
+  if (Subtarget.isThumb2() && TBB.getParent()->getFunction().hasMinSize()) {
+    if (TBB.pred_size() != 1 || FBB.pred_size() != 1)
+      return false;
+  }
+
   // Attempt to estimate the relative costs of predication versus branching.
   // Here we scale up each component of UnpredCost to avoid precision issue when
   // scaling TCycles/FCycles by Probability.
