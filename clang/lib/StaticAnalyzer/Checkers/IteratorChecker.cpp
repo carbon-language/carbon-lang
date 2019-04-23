@@ -848,9 +848,9 @@ void IteratorChecker::processComparison(CheckerContext &C,
                                         SymbolRef Sym2, const SVal &RetVal,
                                         OverloadedOperatorKind Op) const {
   if (const auto TruthVal = RetVal.getAs<nonloc::ConcreteInt>()) {
-    if (State = relateSymbols(State, Sym1, Sym2,
+    if ((State = relateSymbols(State, Sym1, Sym2,
                               (Op == OO_EqualEqual) ==
-                              (TruthVal->getValue() != 0))) {
+                               (TruthVal->getValue() != 0)))) {
       C.addTransition(State);
     } else {
       C.generateSink(State, C.getPredecessor());
