@@ -237,9 +237,8 @@ static bool HaveSameAssumedTypeParameters(
     for (const auto &pair : derivedType2->parameters()) {
       type2AssumedParametersCount += pair.second.isAssumed();
     }
-    if (const DerivedTypeSpec *
-        derivedType1{
-            type1.AsDerived()}) {  // type1 may be unlimited polymorphic
+    // type1 may be unlimited polymorphic
+    if (const DerivedTypeSpec * derivedType1{type1.AsDerived()}) {
       for (auto it{derivedType1->parameters().begin()};
            it != derivedType1->parameters().end(); ++it) {
         if (it->second.isAssumed()) {
