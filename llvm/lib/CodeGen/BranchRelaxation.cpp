@@ -300,7 +300,7 @@ bool BranchRelaxation::isBlockInRange(
 /// too far away to fit in its displacement field. It is converted to an inverse
 /// conditional branch + an unconditional branch to the destination.
 bool BranchRelaxation::fixupConditionalBranch(MachineInstr &MI) {
-  const DebugLoc &DL = MI.getDebugLoc();
+  DebugLoc DL = MI.getDebugLoc();
   MachineBasicBlock *MBB = MI.getParent();
   MachineBasicBlock *TBB = nullptr, *FBB = nullptr;
   MachineBasicBlock *NewBB = nullptr;
@@ -468,7 +468,7 @@ bool BranchRelaxation::fixupUnconditionalBranch(MachineInstr &MI) {
     MBB->replaceSuccessor(DestBB, BranchBB);
   }
 
-  const DebugLoc &DL = MI.getDebugLoc();
+  DebugLoc DL = MI.getDebugLoc();
   MI.eraseFromParent();
   BlockInfo[BranchBB->getNumber()].Size += TII->insertIndirectBranch(
     *BranchBB, *DestBB, DL, DestOffset - SrcOffset, RS.get());
