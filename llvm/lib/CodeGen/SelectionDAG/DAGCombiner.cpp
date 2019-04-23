@@ -341,7 +341,8 @@ namespace {
     SDValue visitTokenFactor(SDNode *N);
     SDValue visitMERGE_VALUES(SDNode *N);
     SDValue visitADD(SDNode *N);
-    SDValue visitADDLike(SDValue N0, SDValue N1, SDNode *LocReference);
+    SDValue visitADDLike(SDNode *N);
+    SDValue visitADDLikeCommutative(SDValue N0, SDValue N1, SDNode *LocReference);
     SDValue visitSUB(SDNode *N);
     SDValue visitADDSAT(SDNode *N);
     SDValue visitSUBSAT(SDNode *N);
@@ -2111,7 +2112,10 @@ static SDValue foldAddSubOfSignBit(SDNode *N, SelectionDAG &DAG) {
   return DAG.getNode(ISD::ADD, DL, VT, NewShift, DAG.getConstant(NewC, DL, VT));
 }
 
-SDValue DAGCombiner::visitADD(SDNode *N) {
+/// Try to fold a node that behaves like an ADD (note that N isn't necessarily
+/// an ISD::ADD here, it could for example be an ISD::OR if we know that there
+/// are no common bits set in the operands).
+SDValue DAGCombiner::visitADDLike(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
   EVT VT = N0.getValueType();
@@ -2264,19 +2268,8 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
                          N0.getOperand(1));
   }
 
-  if (SDValue V = foldAddSubBoolOfMaskedVal(N, DAG))
-    return V;
-
-  if (SDValue V = foldAddSubOfSignBit(N, DAG))
-    return V;
-
   if (SimplifyDemandedBits(SDValue(N, 0)))
     return SDValue(N, 0);
-
-  // fold (a+b) -> (a|b) iff a and b share no bits.
-  if ((!LegalOperations || TLI.isOperationLegal(ISD::OR, VT)) &&
-      DAG.haveNoCommonBitsSet(N0, N1))
-    return DAG.getNode(ISD::OR, DL, VT, N0, N1);
 
   if (isOneOrOneSplat(N1)) {
     // fold (add (xor a, -1), 1) -> (sub 0, a)
@@ -2303,11 +2296,34 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
     }
   }
 
-  if (SDValue Combined = visitADDLike(N0, N1, N))
+  if (SDValue Combined = visitADDLikeCommutative(N0, N1, N))
     return Combined;
 
-  if (SDValue Combined = visitADDLike(N1, N0, N))
+  if (SDValue Combined = visitADDLikeCommutative(N1, N0, N))
     return Combined;
+
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitADD(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  EVT VT = N0.getValueType();
+  SDLoc DL(N);
+
+  if (SDValue Combined = visitADDLike(N))
+    return Combined;
+
+  if (SDValue V = foldAddSubBoolOfMaskedVal(N, DAG))
+    return V;
+
+  if (SDValue V = foldAddSubOfSignBit(N, DAG))
+    return V;
+
+  // fold (a+b) -> (a|b) iff a and b share no bits.
+  if ((!LegalOperations || TLI.isOperationLegal(ISD::OR, VT)) &&
+      DAG.haveNoCommonBitsSet(N0, N1))
+    return DAG.getNode(ISD::OR, DL, VT, N0, N1);
 
   return SDValue();
 }
@@ -2414,7 +2430,9 @@ static SDValue foldAddSubMasked1(bool IsAdd, SDValue N0, SDValue N1,
   return DAG.getNode(IsAdd ? ISD::SUB : ISD::ADD, DL, VT, N0, N1.getOperand(0));
 }
 
-SDValue DAGCombiner::visitADDLike(SDValue N0, SDValue N1, SDNode *LocReference) {
+/// Helper for doing combines based on N0 and N1 being added to each other.
+SDValue DAGCombiner::visitADDLikeCommutative(SDValue N0, SDValue N1,
+                                          SDNode *LocReference) {
   EVT VT = N0.getValueType();
   SDLoc DL(LocReference);
 
@@ -5545,6 +5563,12 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
   // Simplify the operands using demanded-bits information.
   if (SimplifyDemandedBits(SDValue(N, 0)))
     return SDValue(N, 0);
+
+  // If OR can be rewritten into ADD, try combines based on ADD.
+  if ((!LegalOperations || TLI.isOperationLegal(ISD::ADD, VT)) &&
+      DAG.haveNoCommonBitsSet(N0, N1))
+    if (SDValue Combined = visitADDLike(N))
+      return Combined;
 
   return SDValue();
 }
