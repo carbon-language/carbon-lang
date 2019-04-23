@@ -75,11 +75,15 @@ define <4 x float> @splat_fdiv_v4f32(<4 x float> %x, float %y) {
 define <8 x float> @splat_fdiv_v8f32(<8 x float> %x, float %y) {
 ; SSE-LABEL: splat_fdiv_v8f32:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    movss {{.*#+}} xmm3 = mem[0],zero,zero,zero
-; SSE-NEXT:    divss %xmm2, %xmm3
-; SSE-NEXT:    shufps {{.*#+}} xmm3 = xmm3[0,0,0,0]
-; SSE-NEXT:    mulps %xmm3, %xmm0
-; SSE-NEXT:    mulps %xmm3, %xmm1
+; SSE-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,0,0,0]
+; SSE-NEXT:    rcpps %xmm2, %xmm3
+; SSE-NEXT:    mulps %xmm3, %xmm2
+; SSE-NEXT:    movaps {{.*#+}} xmm4 = [1.0E+0,1.0E+0,1.0E+0,1.0E+0]
+; SSE-NEXT:    subps %xmm2, %xmm4
+; SSE-NEXT:    mulps %xmm3, %xmm4
+; SSE-NEXT:    addps %xmm3, %xmm4
+; SSE-NEXT:    mulps %xmm4, %xmm0
+; SSE-NEXT:    mulps %xmm4, %xmm1
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: splat_fdiv_v8f32:
