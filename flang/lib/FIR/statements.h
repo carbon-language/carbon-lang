@@ -230,7 +230,7 @@ public:
   struct Default {};  // RANK DEFAULT
   struct AssumedSize {};  // RANK(*)
   struct Exactly {  // RANK(n)
-    const Expression *v;
+    Expression *v;
   };
   using ValueType = std::variant<Exactly, AssumedSize, Default>;
   using ValueSuccPairType = std::pair<ValueType, BasicBlock *>;
@@ -295,7 +295,7 @@ protected:
 // Compute the value of an expression
 class ApplyExprStmt : public ActionStmt_impl {
 public:
-  static ApplyExprStmt Create(const Expression &e) { return ApplyExprStmt{e}; }
+  static ApplyExprStmt Create(const Expression *e) { return ApplyExprStmt{*e}; }
   static ApplyExprStmt Create(Expression &&e) {
     return ApplyExprStmt{std::move(e)};
   }
@@ -323,8 +323,8 @@ protected:
 // Compute the location of an expression
 class LocateExprStmt : public Addressable_impl {
 public:
-  static LocateExprStmt Create(const Expression &e) {
-    return LocateExprStmt(e);
+  static LocateExprStmt Create(const Expression *e) {
+    return LocateExprStmt(*e);
   }
   static LocateExprStmt Create(Expression &&e) { return LocateExprStmt(e); }
 
