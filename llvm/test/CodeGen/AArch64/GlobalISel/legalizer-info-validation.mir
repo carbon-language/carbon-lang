@@ -88,7 +88,7 @@
 # DEBUG:      .. the first uncovered type index: 2, OK
 #
 # DEBUG-NEXT: G_INTRINSIC_TRUNC (opcode {{[0-9]+}}): 1 type index
-# DEBUG:      .. type index coverage check SKIPPED: no rules defined
+# DEBUG:      .. type index coverage check SKIPPED: user-defined predicate detected
 #
 # DEBUG-NEXT: G_INTRINSIC_ROUND (opcode {{[0-9]+}}): 1 type index
 # DEBUG:      .. type index coverage check SKIPPED: no rules defined

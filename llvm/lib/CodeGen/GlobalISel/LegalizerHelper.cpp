@@ -1327,6 +1327,7 @@ LegalizerHelper::widenScalar(MachineInstr &MI, unsigned TypeIdx, LLT WideTy) {
   case TargetOpcode::G_FEXP:
   case TargetOpcode::G_FEXP2:
   case TargetOpcode::G_FPOW:
+  case TargetOpcode::G_INTRINSIC_TRUNC:
     assert(TypeIdx == 0);
     Observer.changingInstr(MI);
 
