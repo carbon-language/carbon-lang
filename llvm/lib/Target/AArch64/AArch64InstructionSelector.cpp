@@ -102,7 +102,7 @@ private:
   bool selectIntrinsicWithSideEffects(MachineInstr &I,
                                       MachineRegisterInfo &MRI) const;
   bool selectVectorICmp(MachineInstr &I, MachineRegisterInfo &MRI) const;
-
+  bool selectIntrinsicTrunc(MachineInstr &I, MachineRegisterInfo &MRI) const;
   unsigned emitConstantPoolEntry(Constant *CPVal, MachineFunction &MF) const;
   MachineInstr *emitLoadFromConstantPool(Constant *CPVal,
                                          MachineIRBuilder &MIRBuilder) const;
@@ -1847,6 +1847,8 @@ bool AArch64InstructionSelector::select(MachineInstr &I,
       return constrainSelectedInstRegOperands(*MovMI, TII, TRI, RBI);
     }
   }
+  case TargetOpcode::G_INTRINSIC_TRUNC:
+    return selectIntrinsicTrunc(I, MRI);
   case TargetOpcode::G_BUILD_VECTOR:
     return selectBuildVector(I, MRI);
   case TargetOpcode::G_MERGE_VALUES:
@@ -1864,6 +1866,61 @@ bool AArch64InstructionSelector::select(MachineInstr &I,
   }
 
   return false;
+}
+
+bool AArch64InstructionSelector::selectIntrinsicTrunc(
+    MachineInstr &I, MachineRegisterInfo &MRI) const {
+  const LLT SrcTy = MRI.getType(I.getOperand(0).getReg());
+
+  // Select the correct opcode.
+  unsigned Opc = 0;
+  if (!SrcTy.isVector()) {
+    switch (SrcTy.getSizeInBits()) {
+    default:
+    case 16:
+      Opc = AArch64::FRINTZHr;
+      break;
+    case 32:
+      Opc = AArch64::FRINTZSr;
+      break;
+    case 64:
+      Opc = AArch64::FRINTZDr;
+      break;
+    }
+  } else {
+    unsigned NumElts = SrcTy.getNumElements();
+    switch (SrcTy.getElementType().getSizeInBits()) {
+    default:
+      break;
+    case 16:
+      if (NumElts == 4)
+        Opc = AArch64::FRINTZv4f16;
+      else if (NumElts == 8)
+        Opc = AArch64::FRINTZv8f16;
+      break;
+    case 32:
+      if (NumElts == 2)
+        Opc = AArch64::FRINTZv2f32;
+      else if (NumElts == 4)
+        Opc = AArch64::FRINTZv4f32;
+      break;
+    case 64:
+      if (NumElts == 2)
+        Opc = AArch64::FRINTZv2f64;
+      break;
+    }
+  }
+
+  if (!Opc) {
+    // Didn't get an opcode above, bail.
+    LLVM_DEBUG(dbgs() << "Unsupported type for G_INTRINSIC_TRUNC!\n");
+    return false;
+  }
+
+  // Legalization would have set us up perfectly for this; we just need to
+  // set the opcode and move on.
+  I.setDesc(TII.get(Opc));
+  return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
 }
 
 bool AArch64InstructionSelector::selectVectorICmp(
