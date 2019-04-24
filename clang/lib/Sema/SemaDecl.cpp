@@ -4817,6 +4817,18 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
     Invalid = true;
   }
 
+  // C++ [dcl.dcl]p3:
+  //   [If there are no declarators], and except for the declaration of an
+  //   unnamed bit-field, the decl-specifier-seq shall introduce one or more
+  //   names into the program
+  // C++ [class.mem]p2:
+  //   each such member-declaration shall either declare at least one member
+  //   name of the class or declare at least one unnamed bit-field
+  //
+  // For C this is an error even for a named struct, and is diagnosed elsewhere.
+  if (getLangOpts().CPlusPlus && Record->field_empty())
+    Diag(DS.getBeginLoc(), diag::ext_no_declarators) << DS.getSourceRange();
+
   // Mock up a declarator.
   Declarator Dc(DS, DeclaratorContext::MemberContext);
   TypeSourceInfo *TInfo = GetTypeForDeclarator(Dc, S);
