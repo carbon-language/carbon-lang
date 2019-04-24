@@ -15,6 +15,7 @@
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Lex/PreprocessorOptions.h"
+#include "llvm/Support/Path.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -221,7 +222,8 @@ TEST_F(HeadersTest, ShortenedInclude) {
 }
 
 TEST_F(HeadersTest, NotShortenedInclude) {
-  std::string BarHeader = testPath("sub-2/bar.h");
+  std::string BarHeader =
+      llvm::sys::path::convert_to_slash(testPath("sub-2/bar.h"));
   EXPECT_EQ(calculate(BarHeader, ""), "\"" + BarHeader + "\"");
 }
 
@@ -265,8 +267,7 @@ TEST(Headers, NoHeaderSearchInfo) {
   auto Inserting = HeaderFile{HeaderPath, /*Verbatim=*/false};
   auto Verbatim = HeaderFile{"<x>", /*Verbatim=*/true};
 
-  EXPECT_EQ(Inserter.calculateIncludePath(Inserting),
-            "\"" + HeaderPath + "\"");
+  EXPECT_EQ(Inserter.calculateIncludePath(Inserting), "\"" + HeaderPath + "\"");
   EXPECT_EQ(Inserter.shouldInsertInclude(HeaderPath, Inserting), false);
 
   EXPECT_EQ(Inserter.calculateIncludePath(Verbatim), "<x>");
