@@ -592,6 +592,15 @@ X86DAGToDAGISel::IsProfitableToFold(SDValue N, SDNode *U, SDNode *Root) const {
             Imm->getAPIntValue().isIntN(32))
           return false;
 
+        // If this really a zext_inreg that can be represented with a movzx
+        // instruction, prefer that.
+        // TODO: We could shrink the load and fold if it is non-volatile.
+        if (U->getOpcode() == ISD::AND &&
+            (Imm->getAPIntValue() == UINT8_MAX ||
+             Imm->getAPIntValue() == UINT16_MAX ||
+             Imm->getAPIntValue() == UINT32_MAX))
+          return false;
+
         // ADD/SUB with can negate the immediate and use the opposite operation
         // to fit 128 into a sign extended 8 bit immediate.
         if ((U->getOpcode() == ISD::ADD || U->getOpcode() == ISD::SUB) &&
