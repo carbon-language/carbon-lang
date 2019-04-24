@@ -100,5 +100,12 @@ TEST_F(HeaderSearchTest, BackSlash) {
 }
 #endif
 
+TEST_F(HeaderSearchTest, DotDotsWithAbsPath) {
+  addSearchDir("/x/../y/");
+  EXPECT_EQ(Search.suggestPathToFileForDiagnostics("/y/z",
+                                                   /*WorkingDir=*/""),
+            "z");
+}
+
 } // namespace
 } // namespace clang

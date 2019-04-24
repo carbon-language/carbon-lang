@@ -213,6 +213,11 @@ TEST_F(HeadersTest, DoNotInsertIfInSameFile) {
 TEST_F(HeadersTest, ShortenedInclude) {
   std::string BarHeader = testPath("sub/bar.h");
   EXPECT_EQ(calculate(BarHeader), "\"bar.h\"");
+
+  SearchDirArg = (llvm::Twine("-I") + Subdir + "/..").str();
+  CDB.ExtraClangFlags = {SearchDirArg.c_str()};
+  BarHeader = testPath("sub/bar.h");
+  EXPECT_EQ(calculate(BarHeader), "\"sub/bar.h\"");
 }
 
 TEST_F(HeadersTest, NotShortenedInclude) {
