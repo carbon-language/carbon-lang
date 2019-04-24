@@ -5011,6 +5011,12 @@ bool X86TargetLowering::hasAndNot(SDValue Y) const {
   return Subtarget.hasSSE2();
 }
 
+bool X86TargetLowering::shouldFoldConstantShiftPairToMask(
+    const SDNode *N, CombineLevel Level) const {
+  // TODO - some targets prefer immediate vector shifts to shift+mask.
+  return TargetLoweringBase::shouldFoldConstantShiftPairToMask(N, Level);
+}
+
 bool X86TargetLowering::shouldFoldMaskToVariableShiftPair(SDValue Y) const {
   EVT VT = Y.getValueType();
 
