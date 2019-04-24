@@ -91,5 +91,14 @@ TEST_F(HeaderSearchTest, Dots) {
             "z");
 }
 
+#ifdef _WIN32
+TEST_F(HeaderSearchTest, BackSlash) {
+  addSearchDir("C:\\x\\y\\");
+  EXPECT_EQ(Search.suggestPathToFileForDiagnostics("C:\\x\\y\\z\\t",
+                                                   /*WorkingDir=*/""),
+            "z/t");
+}
+#endif
+
 } // namespace
 } // namespace clang

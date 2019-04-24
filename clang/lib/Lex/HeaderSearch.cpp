@@ -1720,5 +1720,5 @@ std::string HeaderSearch::suggestPathToFileForDiagnostics(
 
   if (IsSystem)
     *IsSystem = BestPrefixLength ? BestSearchDir >= SystemDirIdx : false;
-  return File.drop_front(BestPrefixLength);
+  return path::convert_to_slash(File.drop_front(BestPrefixLength));
 }
