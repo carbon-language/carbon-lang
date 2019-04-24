@@ -1375,6 +1375,7 @@ static bool foldMaskAndShiftToExtract(SelectionDAG &DAG, SDValue N,
   insertDAGNode(DAG, N, ShlCount);
   insertDAGNode(DAG, N, Shl);
   DAG.ReplaceAllUsesWith(N, Shl);
+  DAG.RemoveDeadNode(N.getNode());
   AM.IndexReg = And;
   AM.Scale = (1 << ScaleLog);
   return false;
@@ -1441,6 +1442,7 @@ static bool foldMaskedShiftToScaledMask(SelectionDAG &DAG, SDValue N,
   insertDAGNode(DAG, N, NewAnd);
   insertDAGNode(DAG, N, NewShift);
   DAG.ReplaceAllUsesWith(N, NewShift);
+  DAG.RemoveDeadNode(N.getNode());
 
   AM.Scale = 1 << ShiftAmt;
   AM.IndexReg = NewAnd;
@@ -1551,6 +1553,7 @@ static bool foldMaskAndShiftToScale(SelectionDAG &DAG, SDValue N,
   insertDAGNode(DAG, N, NewSHLAmt);
   insertDAGNode(DAG, N, NewSHL);
   DAG.ReplaceAllUsesWith(N, NewSHL);
+  DAG.RemoveDeadNode(N.getNode());
 
   AM.Scale = 1 << AMShiftAmt;
   AM.IndexReg = NewSRL;
@@ -1609,6 +1612,7 @@ static bool foldMaskedShiftToBEXTR(SelectionDAG &DAG, SDValue N,
   insertDAGNode(DAG, N, NewSHLAmt);
   insertDAGNode(DAG, N, NewSHL);
   DAG.ReplaceAllUsesWith(N, NewSHL);
+  DAG.RemoveDeadNode(N.getNode());
 
   AM.Scale = 1 << AMShiftAmt;
   AM.IndexReg = NewAnd;
@@ -1940,6 +1944,7 @@ bool X86DAGToDAGISel::matchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
     insertDAGNode(*CurDAG, N, Zext);
     insertDAGNode(*CurDAG, N, NewShl);
     CurDAG->ReplaceAllUsesWith(N, NewShl);
+    CurDAG->RemoveDeadNode(N.getNode());
     return false;
   }
   }

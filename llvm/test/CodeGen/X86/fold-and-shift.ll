@@ -5,8 +5,8 @@ define i32 @t1(i8* %X, i32 %i) {
 ; CHECK-LABEL: t1:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %ecx
-; CHECK-NEXT:    movzbl %cl, %ecx
+; CHECK-NEXT:    movl $255, %ecx
+; CHECK-NEXT:    andl {{[0-9]+}}(%esp), %ecx
 ; CHECK-NEXT:    movl (%eax,%ecx,4), %eax
 ; CHECK-NEXT:    retl
 
@@ -23,8 +23,8 @@ define i32 @t2(i16* %X, i32 %i) {
 ; CHECK-LABEL: t2:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %ecx
-; CHECK-NEXT:    movzwl %cx, %ecx
+; CHECK-NEXT:    movl $65535, %ecx # imm = 0xFFFF
+; CHECK-NEXT:    andl {{[0-9]+}}(%esp), %ecx
 ; CHECK-NEXT:    movl (%eax,%ecx,4), %eax
 ; CHECK-NEXT:    retl
 
@@ -111,8 +111,8 @@ define i8 @t6(i8* %X, i32 %i) {
 ; CHECK-LABEL: t6:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %ecx
-; CHECK-NEXT:    andl $-255, %ecx
+; CHECK-NEXT:    movl $-255, %ecx
+; CHECK-NEXT:    andl {{[0-9]+}}(%esp), %ecx
 ; CHECK-NEXT:    movb (%eax,%ecx,4), %al
 ; CHECK-NEXT:    retl
 
