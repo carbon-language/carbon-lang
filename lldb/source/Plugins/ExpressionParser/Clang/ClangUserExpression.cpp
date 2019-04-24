@@ -432,9 +432,8 @@ void ClangUserExpression::UpdateLanguageForExpr(
     std::size_t original_end;
     bool found_bounds = source_code->GetOriginalBodyBounds(
         m_transformed_text, m_expr_lang, original_start, original_end);
-    if (found_bounds) {
+    if (found_bounds)
       m_user_expression_start_pos = original_start;
-    }
   }
 }
 
