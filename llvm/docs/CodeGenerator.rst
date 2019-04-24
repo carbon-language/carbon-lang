@@ -1597,6 +1597,10 @@ A section containing metadata on remark diagnostics will be emitted when
 
 * a magic number: "REMARKS\0"
 * the version number: a little-endian uint64_t
+* the string table:
+  * the total size of the string table (the size itself excluded):
+    little-endian uint64_t
+  * a list of null-terminated strings
 * the absolute file path to the serialized remark diagnostics: a
   null-terminated string.
 
