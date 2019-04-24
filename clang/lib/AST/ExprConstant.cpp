@@ -8279,6 +8279,9 @@ bool IntExprEvaluator::VisitBuiltinCallExpr(const CallExpr *E,
     return Success(false, E);
   }
 
+  case Builtin::BI__builtin_is_constant_evaluated:
+    return Success(Info.InConstantContext, E);
+
   case Builtin::BI__builtin_ctz:
   case Builtin::BI__builtin_ctzl:
   case Builtin::BI__builtin_ctzll:
@@ -11139,6 +11142,7 @@ bool Expr::EvaluateAsConstantExpr(EvalResult &Result, ConstExprUsage Usage,
   EvalInfo::EvaluationMode EM = EvalInfo::EM_ConstantExpression;
   EvalInfo Info(Ctx, Result, EM);
   Info.InConstantContext = true;
+
   if (!::Evaluate(Result.Val, Info, this))
     return false;
 
