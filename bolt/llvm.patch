@@ -848,7 +848,7 @@ index 8e9b4ac5632..d2c569e3399 100644
                           SMLoc Loc) override;
    void
 diff --git a/include/llvm/MC/MCStreamer.h b/include/llvm/MC/MCStreamer.h
-index 582a836023b..0b15454ecd6 100644
+index 582a836023b..f1e341bd624 100644
 --- a/include/llvm/MC/MCStreamer.h
 +++ b/include/llvm/MC/MCStreamer.h
 @@ -199,7 +199,7 @@ class MCStreamer {
@@ -860,17 +860,6 @@ index 582a836023b..0b15454ecd6 100644
  
    /// \brief This is stack of current and previous section values saved by
    /// PushSection.
-@@ -290,8 +290,8 @@ public:
-   /// If the comment includes embedded \n's, they will each get the comment
-   /// prefix as appropriate.  The added comment should not end with a \n.
-   /// By default, each comment is terminated with an end of line, i.e. the
--  /// EOL param is set to true by default. If one prefers not to end the 
--  /// comment with a new line then the EOL param should be passed 
-+  /// EOL param is set to true by default. If one prefers not to end the
-+  /// comment with a new line then the EOL param should be passed
-   /// with a false value.
-   virtual void AddComment(const Twine &T, bool EOL = true) {}
- 
 @@ -338,9 +338,7 @@ public:
  
    /// \brief Returns an index to represent the order a symbol was emitted in.
@@ -1009,11 +998,10 @@ index 46504e74bc2..836fd8ddc45 100644
    Expected<Elf_Shdr_Range> sections() const;
  
    Expected<Elf_Sym_Range> symbols(const Elf_Shdr *Sec) const {
-@@ -396,6 +408,34 @@ void ELFFile<ELFT>::getRelocationTypeName(uint32_t Type,
-   }
+@@ -397,6 +409,34 @@ void ELFFile<ELFT>::getRelocationTypeName(uint32_t Type,
  }
  
-+template <class ELFT>
+ template <class ELFT>
 +Expected<const typename ELFFile<ELFT>::Elf_Dyn *>
 +ELFFile<ELFT>::dynamic_table_begin(const Elf_Phdr *Phdr) const {
 +  if (!Phdr)
@@ -1041,9 +1029,10 @@ index 46504e74bc2..836fd8ddc45 100644
 +  return reinterpret_cast<const Elf_Dyn *>(base() + End);
 +}
 +
- template <class ELFT>
++template <class ELFT>
  Expected<const typename ELFT::Sym *>
  ELFFile<ELFT>::getRelocationSymbol(const Elf_Rel *Rel,
+                                    const Elf_Shdr *SymTab) const {
 diff --git a/include/llvm/Object/ELFObjectFile.h b/include/llvm/Object/ELFObjectFile.h
 index 4d001039238..62837bbcaa0 100644
 --- a/include/llvm/Object/ELFObjectFile.h
@@ -1056,11 +1045,10 @@ index 4d001039238..62837bbcaa0 100644
    relocation_iterator section_rel_begin(DataRefImpl Sec) const override;
    relocation_iterator section_rel_end(DataRefImpl Sec) const override;
    section_iterator getRelocatedSection(DataRefImpl Sec) const override;
-@@ -716,6 +717,14 @@ bool ELFObjectFile<ELFT>::isSectionVirtual(DataRefImpl Sec) const {
-   return getSection(Sec)->sh_type == ELF::SHT_NOBITS;
+@@ -717,6 +718,14 @@ bool ELFObjectFile<ELFT>::isSectionVirtual(DataRefImpl Sec) const {
  }
  
-+template <class ELFT>
+ template <class ELFT>
 +bool ELFObjectFile<ELFT>::isSectionReadOnly(DataRefImpl Sec) const {
 +  const Elf_Shdr *EShdr = getSection(Sec);
 +  return EShdr->sh_flags & ELF::SHF_ALLOC &&
@@ -1068,9 +1056,10 @@ index 4d001039238..62837bbcaa0 100644
 +         EShdr->sh_type == ELF::SHT_PROGBITS;
 +}
 +
- template <class ELFT>
++template <class ELFT>
  relocation_iterator
  ELFObjectFile<ELFT>::section_rel_begin(DataRefImpl Sec) const {
+   DataRefImpl RelData;
 @@ -751,9 +760,6 @@ ELFObjectFile<ELFT>::section_rel_end(DataRefImpl Sec) const {
  template <class ELFT>
  section_iterator
@@ -1101,7 +1090,7 @@ index 4d001039238..62837bbcaa0 100644
    if (sec->sh_type == ELF::SHT_REL)
      return getRel(Rel)->r_offset;
 diff --git a/include/llvm/Object/MachO.h b/include/llvm/Object/MachO.h
-index bfd3462bf69..9be0b260f34 100644
+index bfd3462bf69..52bc210b577 100644
 --- a/include/llvm/Object/MachO.h
 +++ b/include/llvm/Object/MachO.h
 @@ -320,6 +320,7 @@ public:
@@ -1112,15 +1101,6 @@ index bfd3462bf69..9be0b260f34 100644
    relocation_iterator section_rel_begin(DataRefImpl Sec) const override;
    relocation_iterator section_rel_end(DataRefImpl Sec) const override;
  
-@@ -331,7 +332,7 @@ public:
- 
-   relocation_iterator locrel_begin() const;
-   relocation_iterator locrel_end() const;
--  
-+
-   void moveRelocationNext(DataRefImpl &Rel) const override;
-   uint64_t getRelocationOffset(DataRefImpl Rel) const override;
-   symbol_iterator getRelocationSymbol(DataRefImpl Rel) const override;
 diff --git a/include/llvm/Object/ObjectFile.h b/include/llvm/Object/ObjectFile.h
 index 9c4ae94d3a6..64342723371 100644
 --- a/include/llvm/Object/ObjectFile.h
@@ -1215,18 +1195,9 @@ index d11f5a83779..0ad115c886b 100644
    /// FD is the file descriptor that this writes to.  If ShouldClose is true,
    /// this closes the file when the stream is destroyed. If FD is for stdout or
 diff --git a/lib/DebugInfo/DWARF/DWARFAbbreviationDeclaration.cpp b/lib/DebugInfo/DWARF/DWARFAbbreviationDeclaration.cpp
-index adada672af0..c9c79971a25 100644
+index adada672af0..b3d68ed66af 100644
 --- a/lib/DebugInfo/DWARF/DWARFAbbreviationDeclaration.cpp
 +++ b/lib/DebugInfo/DWARF/DWARFAbbreviationDeclaration.cpp
-@@ -38,7 +38,7 @@ DWARFAbbreviationDeclaration::DWARFAbbreviationDeclaration() {
- }
- 
- bool
--DWARFAbbreviationDeclaration::extract(DataExtractor Data, 
-+DWARFAbbreviationDeclaration::extract(DataExtractor Data,
-                                       uint32_t* OffsetPtr) {
-   clear();
-   const uint32_t Offset = *OffsetPtr;
 @@ -61,13 +61,15 @@ DWARFAbbreviationDeclaration::extract(DataExtractor Data,
  
    // Read all of the abbreviation attributes and forms.
@@ -1587,7 +1558,7 @@ index 3d274b63a4f..cef29f4b41d 100644
  
  StringRef RuntimeDyld::getErrorString() { return Dyld->getErrorString(); }
 diff --git a/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldELF.cpp b/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldELF.cpp
-index 36b43ec9b78..3dc3e8f325c 100644
+index 36b43ec9b78..1a56e590014 100644
 --- a/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldELF.cpp
 +++ b/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldELF.cpp
 @@ -270,6 +270,25 @@ void RuntimeDyldELF::resolveX86_64Relocation(const SectionEntry &Section,
@@ -1688,15 +1659,6 @@ index 36b43ec9b78..3dc3e8f325c 100644
        resolveAArch64Branch(SectionID, Value, RelI, Stubs);
      } else if (RelType == ELF::R_AARCH64_ADR_GOT_PAGE) {
        // Craete new GOT entry or find existing one. If GOT entry is
-@@ -1410,7 +1478,7 @@ RuntimeDyldELF::processRelocationRef(
-     } else {
-       processSimpleRelocation(SectionID, Offset, RelType, Value);
-     }
--  
-+
-   } else if (Arch == Triple::ppc64 || Arch == Triple::ppc64le) {
-     if (RelType == ELF::R_PPC64_REL24) {
-       // Determine ABI variant in use for this object.
 @@ -1632,7 +1700,7 @@ RuntimeDyldELF::processRelocationRef(
        // equivalent to the usual PLT implementation except that we use the stub
        // mechanism in RuntimeDyld (which puts stubs at the end of the section)
@@ -1819,18 +1781,10 @@ index a0f9a857e3c..be32963b705 100644
          assert((cast<MCFillFragment>(F).getValue() == 0) &&
                 "Invalid fill in virtual section!");
 diff --git a/lib/MC/MCDwarf.cpp b/lib/MC/MCDwarf.cpp
-index 0e0ea965d14..0044566d9ab 100644
+index 0e0ea965d14..49885269d06 100644
 --- a/lib/MC/MCDwarf.cpp
 +++ b/lib/MC/MCDwarf.cpp
-@@ -41,6 +41,7 @@
- #include <cassert>
- #include <cstdint>
- #include <string>
-+#include <tuple>
- #include <utility>
- #include <vector>
- 
-@@ -156,12 +157,36 @@ EmitDwarfLineTable(MCObjectStreamer *MCOS, MCSection *Section,
+@@ -156,12 +156,36 @@ EmitDwarfLineTable(MCObjectStreamer *MCOS, MCSection *Section,
    unsigned Flags = DWARF2_LINE_DEFAULT_IS_STMT ? DWARF2_FLAG_IS_STMT : 0;
    unsigned Isa = 0;
    unsigned Discriminator = 0;
@@ -1868,7 +1822,7 @@ index 0e0ea965d14..0044566d9ab 100644
      if (FileNum != LineEntry.getFileNum()) {
        FileNum = LineEntry.getFileNum();
        MCOS->EmitIntValue(dwarf::DW_LNS_set_file, 1);
-@@ -197,18 +222,33 @@ EmitDwarfLineTable(MCObjectStreamer *MCOS, MCSection *Section,
+@@ -197,18 +221,33 @@ EmitDwarfLineTable(MCObjectStreamer *MCOS, MCSection *Section,
      if (LineEntry.getFlags() & DWARF2_FLAG_EPILOGUE_BEGIN)
        MCOS->EmitIntValue(dwarf::DW_LNS_set_epilogue_begin, 1);
  
@@ -1910,7 +1864,7 @@ index 0e0ea965d14..0044566d9ab 100644
    }
  
    // Emit a DW_LNE_end_sequence for the end of the section.
-@@ -250,7 +290,7 @@ void MCDwarfLineTable::Emit(MCObjectStreamer *MCOS,
+@@ -250,7 +289,7 @@ void MCDwarfLineTable::Emit(MCObjectStreamer *MCOS,
    MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfLineSection());
  
    // Handle the rest of the Compile Units.
@@ -1919,16 +1873,7 @@ index 0e0ea965d14..0044566d9ab 100644
      CUIDTablePair.second.EmitCU(MCOS, Params, LineStr);
  
    if (LineStr)
-@@ -484,7 +524,7 @@ MCDwarfLineTableHeader::Emit(MCStreamer *MCOS, MCDwarfLineTableParams Params,
- 
-   // Parameters of the state machine, are next.
-   MCOS->EmitIntValue(context.getAsmInfo()->getMinInstAlignment(), 1);
--  // maximum_operations_per_instruction 
-+  // maximum_operations_per_instruction
-   // For non-VLIW architectures this field is always 1.
-   // FIXME: VLIW architectures need to update this field accordingly.
-   if (LineTableVersion >= 4)
-@@ -514,8 +554,12 @@ MCDwarfLineTableHeader::Emit(MCStreamer *MCOS, MCDwarfLineTableParams Params,
+@@ -514,8 +553,12 @@ MCDwarfLineTableHeader::Emit(MCStreamer *MCOS, MCDwarfLineTableParams Params,
  
  void MCDwarfLineTable::EmitCU(MCObjectStreamer *MCOS,
                                MCDwarfLineTableParams Params,
@@ -1943,7 +1888,7 @@ index 0e0ea965d14..0044566d9ab 100644
  
    // Put out the line tables.
    for (const auto &LineSec : MCLineSections.getMCLineEntries())
-@@ -1253,12 +1297,217 @@ public:
+@@ -1253,12 +1296,217 @@ public:
    void EmitCFIInstruction(const MCCFIInstruction &Instr);
  };
  
@@ -2161,7 +2106,7 @@ index 0e0ea965d14..0044566d9ab 100644
  void FrameEmitterImpl::EmitCFIInstruction(const MCCFIInstruction &Instr) {
    int dataAlignmentFactor = getDataAlignmentFactor(Streamer);
    auto *MRI = Streamer.getContext().getRegisterInfo();
-@@ -1373,7 +1622,28 @@ void FrameEmitterImpl::EmitCFIInstruction(const MCCFIInstruction &Instr) {
+@@ -1373,7 +1621,28 @@ void FrameEmitterImpl::EmitCFIInstruction(const MCCFIInstruction &Instr) {
      Streamer.EmitIntValue(dwarf::DW_CFA_GNU_args_size, 1);
      Streamer.EmitULEB128IntValue(Instr.getOffset());
      return;
@@ -2286,7 +2231,7 @@ index 0a684588110..58199c97420 100644
                                           unsigned char Value,
                                           SMLoc Loc) {
 diff --git a/lib/MC/MCStreamer.cpp b/lib/MC/MCStreamer.cpp
-index 776569894a5..0954b70df49 100644
+index 776569894a5..aa130bb2d6a 100644
 --- a/lib/MC/MCStreamer.cpp
 +++ b/lib/MC/MCStreamer.cpp
 @@ -85,11 +85,15 @@ void MCStreamer::reset() {
@@ -2329,15 +2274,6 @@ index 776569894a5..0954b70df49 100644
  }
  
  void MCStreamer::EmitLabel(MCSymbol *Symbol, SMLoc Loc) {
-@@ -513,7 +524,7 @@ void MCStreamer::EmitCFIEscape(StringRef Values) {
- 
- void MCStreamer::EmitCFIGnuArgsSize(int64_t Size) {
-   MCSymbol *Label = EmitCFILabel();
--  MCCFIInstruction Instruction = 
-+  MCCFIInstruction Instruction =
-     MCCFIInstruction::createGnuArgsSize(Label, Size);
-   MCDwarfFrameInfo *CurFrame = getCurrentDwarfFrameInfo();
-   if (!CurFrame)
 @@ -884,6 +895,14 @@ void MCStreamer::visitUsedExpr(const MCExpr &Expr) {
    }
  }
@@ -2363,16 +2299,10 @@ index 776569894a5..0954b70df49 100644
                                     SMLoc Loc) {}
  void MCStreamer::EmitBundleAlignMode(unsigned AlignPow2) {}
 diff --git a/lib/Object/COFFObjectFile.cpp b/lib/Object/COFFObjectFile.cpp
-index b544fa5c147..746c9f32865 100644
+index b544fa5c147..c885bf9f037 100644
 --- a/lib/Object/COFFObjectFile.cpp
 +++ b/lib/Object/COFFObjectFile.cpp
-@@ -339,11 +339,16 @@ unsigned COFFObjectFile::getSectionID(SectionRef Sec) const {
- 
- bool COFFObjectFile::isSectionVirtual(DataRefImpl Ref) const {
-   const coff_section *Sec = toSec(Ref);
--  // In COFF, a virtual section won't have any in-file 
-+  // In COFF, a virtual section won't have any in-file
-   // content, so the file pointer to the content will be zero.
+@@ -344,6 +344,11 @@ bool COFFObjectFile::isSectionVirtual(DataRefImpl Ref) const {
    return Sec->PointerToRawData == 0;
  }
  
