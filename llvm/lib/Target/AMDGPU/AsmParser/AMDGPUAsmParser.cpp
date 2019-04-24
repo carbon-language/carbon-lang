@@ -999,6 +999,10 @@ public:
     return AMDGPU::isGFX9(getSTI());
   }
 
+  bool isGFX10() const {
+    return AMDGPU::isGFX10(getSTI());
+  }
+
   bool hasInv2PiInlineImm() const {
     return getFeatureBits()[AMDGPU::FeatureInv2PiInlineImm];
   }
@@ -1407,7 +1411,7 @@ bool AMDGPUOperand::isRegClass(unsigned RCID) const {
 bool AMDGPUOperand::isSDWAOperand(MVT type) const {
   if (AsmParser->isVI())
     return isVReg32();
-  else if (AsmParser->isGFX9())
+  else if (AsmParser->isGFX9() || AsmParser->isGFX10())
     return isRegClass(AMDGPU::VS_32RegClassID) || isInlinableImm(type);
   else
     return false;
@@ -2953,7 +2957,7 @@ bool AMDGPUAsmParser::ParseDirectiveAMDHSAKernel() {
   if (getParser().parseIdentifier(KernelName))
     return true;
 
-  kernel_descriptor_t KD = getDefaultAmdhsaKernelDescriptor();
+  kernel_descriptor_t KD = getDefaultAmdhsaKernelDescriptor(&getSTI());
 
   StringSet<> Seen;
 
