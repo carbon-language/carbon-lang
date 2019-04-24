@@ -96,13 +96,13 @@ struct NopMutex {
 private:
   bool is_locked = false;
 };
-static NopMutex global_nop_mutex = {};
+NopMutex global_nop_mutex = {};
 
 struct NopCondVar {
   bool broadcast() { return false; }
   bool wait(NopMutex&) { return false; }
 };
-static NopCondVar global_nop_cond = {};
+NopCondVar global_nop_cond = {};
 
 void NopFutexWait(int*, int) { assert(false); }
 void NopFutexWake(int*) { assert(false); }
