@@ -108,7 +108,7 @@ void l() {
 // CHECK-MS-DAG: @_Init_thread_epoch = external thread_local global i32
 // CHECK-MS-DAG: declare dso_local i32 @__tlregdtor(void ()*)
 // CHECK-MS-DAG: declare dso_local i32 @atexit(void ()*)
-// CHECK-MS-DYNAMIC-DAG: declare dllimport {{.*}} void @_CxxThrowException
+// CHECK-MS-DYNAMIC-DAG: declare {{.*}} void @_CxxThrowException
 // CHECK-MS-STATIC-DAG: declare {{.*}} void @_CxxThrowException
 // CHECK-MS-DAG: declare dso_local noalias i8* @"??2@YAPAXI@Z"
 // CHECK-MS-DAG: declare dso_local void @_Init_thread_header(i32*)
