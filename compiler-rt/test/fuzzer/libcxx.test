@@ -1,4 +1,5 @@
 # Ensures that the libFuzzer library does not export exceptions.
+REQUIRES: linux
 
 RUN: %cpp_compiler %S/SimpleTest.cpp -o %t
 RUN: nm %t 2>&1 | FileCheck %s
