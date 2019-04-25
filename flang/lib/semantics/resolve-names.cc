@@ -358,6 +358,7 @@ private:
 class ArraySpecVisitor : public virtual BaseVisitor {
 public:
   void Post(const parser::ArraySpec &);
+  void Post(const parser::ComponentArraySpec &);
   void Post(const parser::CoarraySpec &);
   void Post(const parser::AttrSpec &) { PostAttrSpec(); }
   void Post(const parser::ComponentAttrSpec &) { PostAttrSpec(); }
@@ -1436,6 +1437,10 @@ bool ImplicitRulesVisitor::HandleImplicitNone(
 // ArraySpecVisitor implementation
 
 void ArraySpecVisitor::Post(const parser::ArraySpec &x) {
+  CHECK(arraySpec_.empty());
+  arraySpec_ = AnalyzeArraySpec(context(), x);
+}
+void ArraySpecVisitor::Post(const parser::ComponentArraySpec &x) {
   CHECK(arraySpec_.empty());
   arraySpec_ = AnalyzeArraySpec(context(), x);
 }

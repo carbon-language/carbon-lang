@@ -24,6 +24,7 @@
 namespace Fortran::parser {
 class CharBlock;
 struct ArraySpec;
+struct ComponentArraySpec;
 struct CoarraySpec;
 struct DefinedOpName;
 struct GenericSpec;
@@ -70,6 +71,8 @@ private:
 
 // Analyze a parser::ArraySpec or parser::CoarraySpec
 ArraySpec AnalyzeArraySpec(SemanticsContext &, const parser::ArraySpec &);
+ArraySpec AnalyzeArraySpec(
+    SemanticsContext &, const parser::ComponentArraySpec &);
 ArraySpec AnalyzeCoarraySpec(
     SemanticsContext &context, const parser::CoarraySpec &);
 

@@ -169,6 +169,7 @@ class ArraySpecAnalyzer {
 public:
   ArraySpecAnalyzer(SemanticsContext &context) : context_{context} {}
   ArraySpec Analyze(const parser::ArraySpec &);
+  ArraySpec Analyze(const parser::ComponentArraySpec &);
   ArraySpec Analyze(const parser::CoarraySpec &);
 
 private:
@@ -183,6 +184,7 @@ private:
   void Analyze(const parser::AssumedShapeSpec &);
   void Analyze(const parser::ExplicitShapeSpec &);
   void Analyze(const parser::AssumedImpliedSpec &);
+  void Analyze(const parser::DeferredShapeSpecList &);
   void Analyze(const parser::AssumedRankSpec &);
   void MakeExplicit(const std::optional<parser::SpecificationExpr> &,
       const parser::SpecificationExpr &);
@@ -196,15 +198,22 @@ ArraySpec AnalyzeArraySpec(
     SemanticsContext &context, const parser::ArraySpec &arraySpec) {
   return ArraySpecAnalyzer{context}.Analyze(arraySpec);
 }
+ArraySpec AnalyzeArraySpec(
+    SemanticsContext &context, const parser::ComponentArraySpec &arraySpec) {
+  return ArraySpecAnalyzer{context}.Analyze(arraySpec);
+}
 ArraySpec AnalyzeCoarraySpec(
     SemanticsContext &context, const parser::CoarraySpec &coarraySpec) {
   return ArraySpecAnalyzer{context}.Analyze(coarraySpec);
 }
 
+ArraySpec ArraySpecAnalyzer::Analyze(const parser::ComponentArraySpec &x) {
+  std::visit([this](const auto &y) { Analyze(y); }, x.u);
+  return arraySpec_;
+}
 ArraySpec ArraySpecAnalyzer::Analyze(const parser::ArraySpec &x) {
   std::visit(
       common::visitors{
-          [&](const parser::DeferredShapeSpecList &y) { MakeDeferred(y.v); },
           [&](const parser::AssumedSizeSpec &y) {
             Analyze(std::get<std::list<parser::ExplicitShapeSpec>>(y.t));
             Analyze(std::get<parser::AssumedImpliedSpec>(y.t));
@@ -238,6 +247,9 @@ void ArraySpecAnalyzer::Analyze(const parser::ExplicitShapeSpec &x) {
 }
 void ArraySpecAnalyzer::Analyze(const parser::AssumedImpliedSpec &x) {
   MakeImplied(x.v);
+}
+void ArraySpecAnalyzer::Analyze(const parser::DeferredShapeSpecList &x) {
+  MakeDeferred(x.v);
 }
 void ArraySpecAnalyzer::Analyze(const parser::AssumedRankSpec &) {
   arraySpec_.push_back(ShapeSpec::MakeAssumedRank());

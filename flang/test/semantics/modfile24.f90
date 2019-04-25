@@ -63,7 +63,7 @@ end
 !Expect: m3.mod
 !module m3
 ! type::t
-!  real(4)::c[1_8:10_8,1_8:*]
+!  real(4)::c(1_8:5_8)[1_8:10_8,1_8:*]
 !  complex(4)::d[1_8:5_8,1_8:*]
 ! end type
 ! real(4),allocatable::e[:,:,:]
