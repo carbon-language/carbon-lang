@@ -321,8 +321,29 @@ AArch64LegalizerInfo::AArch64LegalizerInfo(const AArch64Subtarget &ST) {
 
   // Extensions
   getActionDefinitionsBuilder({G_ZEXT, G_SEXT, G_ANYEXT})
-      .legalForCartesianProduct({s8, s16, s32, s64}, {s1, s8, s16, s32})
-      .legalFor({v8s16, v8s8});
+      .legalIf([=](const LegalityQuery &Query) {
+        unsigned DstSize = Query.Types[0].getSizeInBits();
+
+        // Make sure that we have something that will fit in a register, and
+        // make sure it's a power of 2.
+        if (DstSize < 8 || DstSize > 128 || !isPowerOf2_32(DstSize))
+          return false;
+
+        const LLT &SrcTy = Query.Types[1];
+
+        // Special case for s1.
+        if (SrcTy == s1)
+          return true;
+
+        // Make sure we fit in a register otherwise. Don't bother checking that
+        // the source type is below 128 bits. We shouldn't be allowing anything
+        // through which is wider than the destination in the first place.
+        unsigned SrcSize = SrcTy.getSizeInBits();
+        if (SrcSize < 8 || !isPowerOf2_32(SrcSize))
+          return false;
+
+        return true;
+      });
 
   getActionDefinitionsBuilder(G_TRUNC).alwaysLegal();
 
