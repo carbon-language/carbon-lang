@@ -29,11 +29,14 @@ class IntrinsicTypeDefaultKinds;
 }
 
 namespace Fortran::parser {
+struct Name;
 struct Program;
 class CookedSource;
 }
 
 namespace Fortran::semantics {
+
+class Symbol;
 
 class SemanticsContext {
 public:
@@ -83,6 +86,12 @@ public:
 
   bool AnyFatalError() const;
 
+  // Test or set the Error flag on a Symbol
+  bool HasError(const Symbol &);
+  bool HasError(const Symbol *);
+  bool HasError(const parser::Name &);
+  void SetError(Symbol &, bool = true);
+
   template<typename... A>
   common::IfNoLvalue<parser::Message &, A...> Say(
       parser::CharBlock at, A &&... args) {
@@ -112,6 +121,8 @@ private:
   Scope globalScope_;
   parser::Messages messages_;
   evaluate::FoldingContext foldingContext_;
+
+  bool CheckError(bool);
 };
 
 class Semantics {

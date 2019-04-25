@@ -83,7 +83,7 @@ void CoarrayChecker::CheckNamesAreDistinct(
     const auto &decl{std::get<parser::CodimensionDecl>(assoc.t)};
     const auto &selector{std::get<parser::Selector>(assoc.t)};
     const auto &declName{std::get<parser::Name>(decl.t)};
-    if (HasError(declName)) {
+    if (context_.HasError(declName)) {
       continue;  // already reported an error about this name
     }
     if (auto *prev{getPreviousUse(declName)}) {

@@ -1485,7 +1485,6 @@ void ScopeHandler::SayAlreadyDeclared(const parser::Name &name, Symbol &prev) {
   SayAlreadyDeclared(name.source, prev);
 }
 void ScopeHandler::SayAlreadyDeclared(const SourceName &name, Symbol &prev) {
-  SetError(prev);
   auto &msg{
       Say(name, "'%s' is already declared in this scoping unit"_err_en_US)};
   if (const auto *details{prev.detailsIf<UseDetails>()}) {
@@ -1497,14 +1496,15 @@ void ScopeHandler::SayAlreadyDeclared(const SourceName &name, Symbol &prev) {
     msg.Attach(prev.name(), "Previous declaration of '%s'"_en_US,
         prev.name().ToString().c_str());
   }
+  context().SetError(prev);
 }
 
 void ScopeHandler::SayWithDecl(
     const parser::Name &name, Symbol &symbol, MessageFixedText &&msg) {
-  SetError(symbol, msg.isFatal());
   Say2(name, std::move(msg), symbol,
       symbol.test(Symbol::Flag::Implicit) ? "Implicit declaration of '%s'"_en_US
                                           : "Declaration of '%s'"_en_US);
+  context().SetError(symbol, msg.isFatal());
 }
 void ScopeHandler::SayDerivedType(
     const SourceName &name, MessageFixedText &&msg, const Scope &type) {
@@ -1521,13 +1521,13 @@ void ScopeHandler::Say2(const SourceName &name1, MessageFixedText &&msg1,
 }
 void ScopeHandler::Say2(const SourceName &name, MessageFixedText &&msg1,
     Symbol &symbol, MessageFixedText &&msg2) {
-  SetError(symbol, msg1.isFatal());
   Say2(name, std::move(msg1), symbol.name(), std::move(msg2));
+  context().SetError(symbol, msg1.isFatal());
 }
 void ScopeHandler::Say2(const parser::Name &name, MessageFixedText &&msg1,
     Symbol &symbol, MessageFixedText &&msg2) {
-  SetError(symbol, msg1.isFatal());
   Say2(name.source, std::move(msg1), symbol.name(), std::move(msg2));
+  context().SetError(symbol, msg1.isFatal());
 }
 
 Scope &ScopeHandler::InclusiveScope() {
@@ -2735,7 +2735,7 @@ Symbol &DeclarationVisitor::DeclareObjectEntity(
       if (details->IsArray()) {
         Say(name,
             "The dimensions of '%s' have already been declared"_err_en_US);
-        SetError(symbol);
+        context().SetError(symbol);
       } else {
         details->set_shape(arraySpec());
       }
@@ -2745,7 +2745,7 @@ Symbol &DeclarationVisitor::DeclareObjectEntity(
       if (details->IsCoarray()) {
         Say(name,
             "The codimensions of '%s' have already been declared"_err_en_US);
-        SetError(symbol);
+        context().SetError(symbol);
       } else {
         details->set_coshape(coarraySpec());
       }
@@ -3898,7 +3898,8 @@ bool ConstructVisitor::Pre(const parser::LocalitySpec::Shared &x) {
       symbol.set(Symbol::Flag::LocalityShared);
     } else {
       Say(name, "Variable '%s' not found"_err_en_US);
-      SetError(MakeSymbol(name, ObjectEntityDetails{EntityDetails{}}));
+      context().SetError(
+          MakeSymbol(name, ObjectEntityDetails{EntityDetails{}}));
     }
   }
   return false;

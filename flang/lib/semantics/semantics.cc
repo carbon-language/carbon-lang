@@ -127,6 +127,25 @@ bool SemanticsContext::AnyFatalError() const {
   return !messages_.empty() &&
       (warningsAreErrors_ || messages_.AnyFatalError());
 }
+bool SemanticsContext::HasError(const Symbol &symbol) {
+  return CheckError(symbol.test(Symbol::Flag::Error));
+}
+bool SemanticsContext::HasError(const Symbol *symbol) {
+  return CheckError(!symbol || HasError(*symbol));
+}
+bool SemanticsContext::HasError(const parser::Name &name) {
+  return HasError(name.symbol);
+}
+void SemanticsContext::SetError(Symbol &symbol, bool value) {
+  if (value) {
+    CHECK(AnyFatalError());
+    symbol.set(Symbol::Flag::Error);
+  }
+}
+bool SemanticsContext::CheckError(bool error) {
+  CHECK(!error || AnyFatalError());
+  return error;
+}
 
 const Scope &SemanticsContext::FindScope(parser::CharBlock source) const {
   return const_cast<SemanticsContext *>(this)->FindScope(source);

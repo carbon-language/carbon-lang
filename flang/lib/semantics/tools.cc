@@ -280,16 +280,6 @@ const Symbol *FindExternallyVisibleObject(
   }
 }
 
-bool HasError(const Symbol &symbol) { return symbol.test(Symbol::Flag::Error); }
-bool HasError(const Symbol *symbol) { return !symbol || HasError(*symbol); }
-bool HasError(const parser::Name &name) { return HasError(name.symbol); }
-
-void SetError(Symbol &symbol, bool value) {
-  if (value) {
-    symbol.set(Symbol::Flag::Error);
-  }
-}
-
 bool ExprHasTypeCategory(
     const SomeExpr &expr, const common::TypeCategory &type) {
   auto dynamicType{expr.GetType()};

@@ -27,7 +27,7 @@ void DeallocateChecker::Leave(const parser::DeallocateStmt &deallocateStmt) {
         common::visitors{
             [&](const parser::Name &name) {
               auto const *symbol{name.symbol};
-              if (HasError(symbol)) {
+              if (context_.HasError(symbol)) {
                 // already reported an error
               } else if (!IsVariableName(*symbol)) {
                 context_.Say(name.source,

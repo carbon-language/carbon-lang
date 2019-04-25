@@ -270,7 +270,7 @@ void AssignmentContext::Analyze(const parser::ConcurrentHeader &header) {
       std::get<std::list<parser::ConcurrentControl>>(header.t)) {
     const parser::Name &name{std::get<parser::Name>(control.t)};
     bool inserted{forall_->activeNames.insert(name.source).second};
-    CHECK(inserted || HasError(name));
+    CHECK(inserted || context_.HasError(name));
   }
 }
 

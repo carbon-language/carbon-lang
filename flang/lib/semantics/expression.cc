@@ -651,7 +651,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Name &n) {
   if (std::optional<int> kind{IsAcImpliedDo(n.source)}) {
     return AsMaybeExpr(ConvertToKind<TypeCategory::Integer>(
         *kind, AsExpr(ImpliedDoIndex{n.source})));
-  } else if (!semantics::HasError(n)) {
+  } else if (!context_.HasError(n)) {
     const Symbol &ultimate{n.symbol->GetUltimate()};
     if (ultimate.attrs().test(semantics::Attr::PARAMETER)) {
       if (auto *details{ultimate.detailsIf<semantics::ObjectEntityDetails>()}) {
@@ -889,7 +889,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::StructureComponent &sc) {
     return std::nullopt;
   }
   Symbol *sym{sc.component.symbol};
-  if (HasError(sym)) {
+  if (context_.HasError(sym)) {
     return std::nullopt;
   }
   const auto &name{sc.component.source};
@@ -1446,7 +1446,7 @@ auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
       common::visitors{
           [&](const parser::Name &n) -> std::optional<CallAndArguments> {
             const Symbol *symbol{n.symbol};
-            if (HasError(symbol)) {
+            if (context_.HasError(symbol)) {
               return std::nullopt;
             }
             if (IsProcedure(*symbol)) {
