@@ -1407,7 +1407,7 @@ void DataAggregator::processPreAggregated() {
                      AggrEntry.From.Offset, false};
       LBREntry Second{AggrEntry.To.Offset, AggrEntry.To.Offset, false};
       doTrace(First, Second, AggrEntry.Count);
-      ++NumTraces;
+      NumTraces += AggrEntry.Count;
       break;
     }
     }
