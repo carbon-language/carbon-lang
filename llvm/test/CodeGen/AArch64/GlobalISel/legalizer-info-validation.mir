@@ -352,7 +352,7 @@
 # DEBUG: .. type index coverage check SKIPPED: user-defined predicate detected
 #
 # DEBUG-NEXT: G_FNEARBYINT (opcode {{[0-9]+}}): 1 type index
-# DEBUG: .. type index coverage check SKIPPED: no rules defined
+# DEBUG: .. type index coverage check SKIPPED: user-defined predicate detected
 
 # CHECK-NOT: ill-defined
 
