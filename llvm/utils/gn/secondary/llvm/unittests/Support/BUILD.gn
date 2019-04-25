@@ -9,6 +9,7 @@ unittest("SupportTests") {
     "ARMAttributeParser.cpp",
     "AlignOfTest.cpp",
     "AllocatorTest.cpp",
+    "AnnotationsTest.cpp",
     "ArrayRecyclerTest.cpp",
     "BinaryStreamTest.cpp",
     "BlockFrequencyTest.cpp",
