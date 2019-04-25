@@ -1179,8 +1179,7 @@ static APInt possiblyDemandedEltsInMask(Value *Mask) {
 
 // TODO, Obvious Missing Transforms:
 // * Narrow width by halfs excluding zero/undef lanes
-static Value *simplifyMaskedLoad(const IntrinsicInst &II,
-                                 InstCombiner::BuilderTy &Builder) {
+Value *InstCombiner::simplifyMaskedLoad(IntrinsicInst &II) {
   Value *LoadPtr = II.getArgOperand(0);
   unsigned Alignment = cast<ConstantInt>(II.getArgOperand(1))->getZExtValue();
 
@@ -1241,7 +1240,7 @@ Instruction *InstCombiner::simplifyMaskedStore(IntrinsicInst &II) {
 // * Narrow width by halfs excluding zero/undef lanes
 // * Vector splat address w/known mask -> scalar load
 // * Vector incrementing address -> vector masked load
-static Instruction *simplifyMaskedGather(IntrinsicInst &II, InstCombiner &IC) {
+Instruction *InstCombiner::simplifyMaskedGather(IntrinsicInst &II) {
   return nullptr;
 }
 
@@ -2018,13 +2017,13 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     break;
   }
   case Intrinsic::masked_load:
-    if (Value *SimplifiedMaskedOp = simplifyMaskedLoad(*II, Builder))
+    if (Value *SimplifiedMaskedOp = simplifyMaskedLoad(*II))
       return replaceInstUsesWith(CI, SimplifiedMaskedOp);
     break;
   case Intrinsic::masked_store:
     return simplifyMaskedStore(*II);
   case Intrinsic::masked_gather:
-    return simplifyMaskedGather(*II, *this);
+    return simplifyMaskedGather(*II);
   case Intrinsic::masked_scatter:
     return simplifyMaskedScatter(*II);
   case Intrinsic::launder_invariant_group:
