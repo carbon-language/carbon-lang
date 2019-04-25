@@ -3,9 +3,12 @@
 
 # RUN: python %s > %t.ll
 # RUN: llc < %t.ll -march=nvptx64 -mcpu=sm_70 -mattr=+ptx61 | FileCheck %t.ll
+# RUN: python %s --ptx=63 > %t-ptx63.ll
+# RUN: llc < %t-ptx63.ll -march=nvptx64 -mcpu=sm_70 -mattr=+ptx63 | FileCheck %t-ptx63.ll
 
 from __future__ import print_function
 
+import argparse
 from itertools import product
 from string import Template
 
@@ -64,7 +67,7 @@ define ${ret_ty} @test_${function}_o(i8 ${as}* %src ${extra_args}) {
 }
 """
   intrinsic_template = "llvm.nvvm.wmma.${geom}.load.${abc}.${layout}${stride}.${itype}.${pspace}"
-  instruction_template = "wmma.load.${abc}.sync.${layout}.${geom}${space}.${itype}"
+  instruction_template = "wmma.load.${abc}.sync${aligned}.${layout}.${geom}${space}.${itype}"
 
   for geom, abc, layout, space, stride, itype in product(
       known_geoms,
@@ -76,6 +79,7 @@ define ${ret_ty} @test_${function}_o(i8 ${as}* %src ${extra_args}) {
 
     params = {
         "abc" : abc,
+        "aligned" : ".aligned" if ptx_version >= 63 else "",
         "layout" : layout,
         "space" : space,
         "stride" : stride,
@@ -135,7 +139,7 @@ define void @test_${function}_o(i8 ${as}* %src, ${args}${extra_args}) {
 }
 """
   intrinsic_template = "llvm.nvvm.wmma.${geom}.store.${abc}.${layout}${stride}.${itype}.${pspace}"
-  instruction_template = "wmma.store.${abc}.sync.${layout}.${geom}${space}.${itype}"
+  instruction_template = "wmma.store.${abc}.sync${aligned}.${layout}.${geom}${space}.${itype}"
 
   for geom, abc, layout, space, stride, itype in product(
       known_geoms,
@@ -147,6 +151,7 @@ define void @test_${function}_o(i8 ${as}* %src, ${args}${extra_args}) {
 
     params = {
         "abc" : abc,
+        "aligned" : ".aligned" if ptx_version >= 63 else "",
         "layout" : layout,
         "space" : space,
         "stride" : stride,
@@ -191,7 +196,7 @@ define ${ret_ty} @test_${function}(
 }
 """
   intrinsic_template = "llvm.nvvm.wmma.${geom}.mma.${alayout}.${blayout}.${dtype}.${ctype}${satf}"
-  instruction_template = "wmma.mma.sync.${alayout}.${blayout}.${geom}.${dtype}.${ctype}${satf}"
+  instruction_template = "wmma.mma.sync${aligned}.${alayout}.${blayout}.${geom}.${dtype}.${ctype}${satf}"
 
   for geom, alayout, blayout, ctype, dtype, satf in product(
       known_geoms,
@@ -202,6 +207,7 @@ define ${ret_ty} @test_${function}(
       [".satfinite", ""]):
 
     params = {
+        "aligned" : ".aligned" if ptx_version >= 63 else "",
         "alayout" : alayout,
         "blayout" : blayout,
         "ctype" : ctype,
@@ -229,5 +235,10 @@ def main():
   gen_wmma_load_tests()
   gen_wmma_store_tests()
   gen_wmma_mma_tests()
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--ptx', type=int, default=60)
+args = parser.parse_args()
+ptx_version = args.ptx
 
 main()

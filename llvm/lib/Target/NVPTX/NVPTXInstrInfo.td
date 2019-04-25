@@ -1548,6 +1548,10 @@ def LdStCode : Operand<i32> {
   let PrintMethod = "printLdStCode";
 }
 
+def MmaCode : Operand<i32> {
+  let PrintMethod = "printMmaCode";
+}
+
 def SDTWrapper : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
 def Wrapper    : SDNode<"NVPTXISD::Wrapper", SDTWrapper>;
 

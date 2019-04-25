@@ -38,6 +38,24 @@ def AS_match {
   }];
 }
 
+// A node that will be replaced with the current PTX version.
+class PTX {
+  SDNodeXForm PTXVerXform = SDNodeXForm<imm, [{
+    return getI32Imm(Subtarget->getPTXVersion(), SDLoc(N));
+  }]>;
+  // (i32 0) will be XForm'ed to the currently used PTX version.
+  dag version = (PTXVerXform (i32 0));
+}
+def ptx : PTX;
+
+// Generates list of n sequential register names.
+// E.g. RegNames<3,"r">.ret -> ["r0", "r1", "r2" ]
+class RegSeq<int n, string prefix> {
+  list<string> ret = !if(n, !listconcat(RegSeq<!add(n,-1), prefix>.ret,
+                                        [prefix # !add(n, -1)]),
+                            []);
+}
+
 //-----------------------------------
 // Synchronization and shuffle functions
 //-----------------------------------
@@ -7384,14 +7402,6 @@ def INT_PTX_SREG_WARPSIZE :
     NVPTXInst<(outs Int32Regs:$dst), (ins), "mov.u32 \t$dst, WARP_SZ;",
               [(set Int32Regs:$dst, (int_nvvm_read_ptx_sreg_warpsize))]>;
 
-class EmptyNVPTXInst : NVPTXInst<(outs), (ins), "?", []>;
-// Generates list of n sequential register names.
-class RegSeq<int n, string prefix> {
-  list<string> ret = !if(n, !listconcat(RegSeq<!add(n,-1), prefix>.ret,
-                                        [prefix # !add(n, -1)]),
-                            []);
-}
-
 // Helper class that represents a 'fragment' of an NVPTX *MMA instruction.
 // In addition to target-independent fields provided by WMMA_REGS, it adds
 // the fields commonly used to implement specific PTX instruction -- register
@@ -7408,6 +7418,7 @@ class WMMA_REGINFO<string Geom, string Frag, string PtxEltType>
 
   // List of register names for the fragment -- ["ra0", "ra1",...]
   list<string> reg_names = RegSeq<!size(ptx_regs), "r"#frag>.ret;
+
   // Generates "{{$r0, $r1,.... $rN-1}}" for use in asm string construction.
   string regstring = "{{$" # !head(reg_names)
                            # !foldl("", !tail(reg_names), a, b,
@@ -7437,61 +7448,65 @@ class WMMA_REGINFO<string Geom, string Frag, string PtxEltType>
   dag Ins = !dag(ins, ptx_regs, reg_names);
 }
 
-class BuildPattern<dag Outs, PatFrag IntrMatcher, dag Ins> {
+// Convert dag of arguments into a dag to match given intrinsic.
+class BuildPatternI<Intrinsic Intr, dag Ins> {
   // Build a dag pattern that matches the intrinsic call.
-  // We want a dag that looks like this:
-  // (set <output args>, (intrinsic <input arguments>)) where input and
-  // output arguments are named patterns that would match corresponding
-  // input/output arguments of the instruction.
-  //
-  // First we construct (set <output arguments>) from instruction's outs dag by
-  // replacing dag operator 'outs' with 'set'.
-  dag PatOuts = !foreach(tmp, Outs, !subst(outs, set, tmp));
-  // Similarly, construct (intrinsic <input arguments>) sub-dag from
-  // instruction's input arguments, only now we also need to replace operands
-  // with patterns that would match them and the operator 'ins' with the
-  // intrinsic.
-  dag PatArgs = !foreach(tmp, Ins,
-                              !subst(imem, ADDRvar,
-                              !subst(MEMri64, ADDRri64,
-                              !subst(MEMri, ADDRri,
-                              !subst(ins, IntrMatcher, tmp)))));
-  // Finally, consatenate both parts together. !con() requires both dags to have
-  // the same operator, so we wrap PatArgs in a (set ...) dag.
-  dag ret = !con(PatOuts, (set PatArgs));
+  dag ret = !foreach(tmp, Ins,
+                          !subst(imem, ADDRvar,
+                          !subst(MEMri64, ADDRri64,
+                          !subst(MEMri, ADDRri,
+                          !subst(ins, Intr, tmp)))));
+}
+
+// Same as above, but uses PatFrag instead of an Intrinsic.
+class BuildPatternPF<PatFrag Intr, dag Ins> {
+  // Build a dag pattern that matches the intrinsic call.
+  dag ret = !foreach(tmp, Ins,
+                          !subst(imem, ADDRvar,
+                          !subst(MEMri64, ADDRri64,
+                          !subst(MEMri, ADDRri,
+                          !subst(ins, Intr, tmp)))));
+}
+
+// Common WMMA-related fields used for building patterns for all MMA instructions.
+class WMMA_INSTR<string _Intr, list<dag> _Args>
+  : NVPTXInst<(outs), (ins), "?", []> {
+  Intrinsic Intr = !cast<Intrinsic>(_Intr);
+  // Concatenate all arguments into a single dag.
+  dag Args = !foldl((ins), _Args, a, b, !con(a,b));
+  // Pre-build the pattern to match (intrinsic arg0, arg1, ...).
+  dag IntrinsicPattern = BuildPatternI<!cast<Intrinsic>(Intr), Args>.ret;
 }
 
 //
 // wmma.load.[a|b|c].sync.[row|col].m16n16k16[|.global|.shared].[f16|f32]
 //
 
-class WMMA_LOAD_INTR_HELPER<WMMA_REGINFO Frag, string Layout, string Space,
-                            bit WithStride>
-                           : PatFrag <(ops),(ops)> {
-  // Intrinsic that matches this instruction.
-  Intrinsic Intr = !cast<Intrinsic>(WMMA_NAME_LDST<"load", Frag, Layout,
-                                                   WithStride>.record);
-  let Operands = !if(WithStride, (ops node:$src, node:$ldm), (ops node:$src));
-  let Fragments = [!foreach(tmp, Operands, !subst(ops, Intr, tmp))];
-  let PredicateCode = !cond(!eq(Space, ".shared"): AS_match.shared,
-                            !eq(Space, ".global"): AS_match.global,
-                            1: AS_match.generic);
-}
-
 class WMMA_LOAD<WMMA_REGINFO Frag, string Layout, string Space, bit WithStride,
                 DAGOperand SrcOp>
-  : EmptyNVPTXInst,
+  : WMMA_INSTR<WMMA_NAME_LDST<"load", Frag, Layout, WithStride>.record,
+                              [!con((ins SrcOp:$src),
+                                    !if(WithStride, (ins Int32Regs:$ldm), (ins)))]>,
     Requires<Frag.Predicates> {
-  // Pattern that matches the intrinsic for this instruction variant.
-  PatFrag IntrMatcher = WMMA_LOAD_INTR_HELPER<Frag, Layout, Space, WithStride>;
-  dag Ins = !con((ins SrcOp:$src), !if(WithStride, (ins Int32Regs:$ldm), (ins)));
+  // Load/store intrinsics are overloaded on pointer's address space.
+  // To match the right intrinsic, we need to build AS-constrained PatFrag.
+  // Operands is a dag equivalent in shape to Args, but using (ops node:$name, .....).
+  dag PFOperands = !if(WithStride, (ops node:$src, node:$ldm), (ops node:$src));
+  // Build PatFrag that only matches particular address space.
+  PatFrag IntrFrag = PatFrag<PFOperands,
+                             !foreach(tmp, PFOperands, !subst(ops, Intr, tmp)),
+                             !cond(!eq(Space, ".shared"): AS_match.shared,
+                                   !eq(Space, ".global"): AS_match.global,
+                                   1: AS_match.generic)>;
+  // Build AS-constrained pattern.
+  let IntrinsicPattern = BuildPatternPF<IntrFrag, Args>.ret;
 
-  let Pattern = [BuildPattern<Frag.Outs, IntrMatcher, Ins>.ret];
   let OutOperandList = Frag.Outs;
-  let InOperandList = Ins;
+  let InOperandList = !con(Args, (ins MmaCode:$ptx));
   let AsmString = "wmma.load."
                   # Frag.frag
                   # ".sync"
+                  # "${ptx:aligned}"
                   # "." # Layout
                   # "." # Frag.geom
                   # Space
@@ -7505,87 +7520,79 @@ class WMMA_LOAD<WMMA_REGINFO Frag, string Layout, string Space, bit WithStride,
 //
 // wmma.store.d.sync.[row|col].m16n16k16[|.global|.shared].[f16|f32]
 //
-class WMMA_STORE_INTR_HELPER<WMMA_REGINFO Frag, string Layout, string Space,
-                             bit WithStride>
-                            : PatFrag <(ops),(ops)> {
-  // Intrinsic that matches this instruction.
-  Intrinsic Intr = !cast<Intrinsic>(WMMA_NAME_LDST<"store", Frag, Layout,
-                                                   WithStride>.record);
-  let Operands = !con((ops node:$dst),
-                      !dag(ops, !foreach(tmp, Frag.regs, node), Frag.reg_names),
-                      !if(WithStride, (ops node:$ldm), (ops)));
-  let Fragments = [!foreach(tmp, Operands, !subst(ops, Intr, tmp))];
-  let PredicateCode = !cond(!eq(Space, ".shared"): AS_match.shared,
-                            !eq(Space, ".global"): AS_match.global,
-                            1: AS_match.generic);
-}
-
-class WMMA_STORE<WMMA_REGINFO Frag, string Layout, string Space, bit WithStride,
-                 DAGOperand DstOp>
-  : EmptyNVPTXInst,
+class WMMA_STORE_D<WMMA_REGINFO Frag, string Layout, string Space,
+                   bit WithStride, DAGOperand DstOp>
+  : WMMA_INSTR<WMMA_NAME_LDST<"store", Frag, Layout, WithStride>.record,
+               [!con((ins DstOp:$dst),
+                     Frag.Ins,
+                     !if(WithStride, (ins Int32Regs:$ldm), (ins)))]>,
     Requires<Frag.Predicates> {
-  PatFrag IntrMatcher = WMMA_STORE_INTR_HELPER<Frag, Layout, Space, WithStride>;
-  dag Ins = !con((ins DstOp:$src),
-                 Frag.Ins,
-                 !if(WithStride, (ins Int32Regs:$ldm), (ins)));
-  let Pattern = [BuildPattern<(set), IntrMatcher, Ins>.ret];
+
+  // Load/store intrinsics are overloaded on pointer's address space.
+  // To match the right intrinsic, we need to build AS-constrained PatFrag.
+  // Operands is a dag equivalent in shape to Args, but using (ops node:$name, .....).
+  dag PFOperands = !con((ops node:$dst),
+                        !dag(ops, !foreach(tmp, Frag.regs, node), Frag.reg_names),
+                        !if(WithStride, (ops node:$ldm), (ops)));
+  // Build PatFrag that only matches particular address space.
+  PatFrag IntrFrag = PatFrag<PFOperands,
+                             !foreach(tmp, PFOperands, !subst(ops, Intr, tmp)),
+                             !cond(!eq(Space, ".shared"): AS_match.shared,
+                                   !eq(Space, ".global"): AS_match.global,
+                                   1: AS_match.generic)>;
+  // Build AS-constrained pattern.
+  let IntrinsicPattern = BuildPatternPF<IntrFrag, Args>.ret;
+
+  let InOperandList  = !con(Args, (ins MmaCode:$ptx));
   let OutOperandList = (outs);
-  let InOperandList = Ins;
-  let AsmString = "wmma.store.d.sync."
-                  # Layout
+  let AsmString = "wmma.store.d.sync"
+                  # "${ptx:aligned}"
+                  # "." # Layout
                   # "." # Frag.geom
                   # Space
                   # "." # Frag.ptx_elt_type
-                  # " \t[$src],"
+                  # " \t[$dst],"
                   # Frag.regstring
                   # !if(WithStride, ", $ldm", "")
                   # ";";
 }
 
 // Create all load/store variants
-foreach geom = ["m16n16k16", "m32n8k16", "m8n32k16" ] in {
-  foreach layout = ["row", "col"] in {
-    foreach stride = [0, 1] in {
-      foreach space = [".global", ".shared", ""] in {
-        foreach addr = [imem, Int32Regs, Int64Regs, MEMri, MEMri64] in {
-          foreach frag = [WMMA_REGINFO<geom, "a", "f16">,
-                          WMMA_REGINFO<geom, "b", "f16">,
-                          WMMA_REGINFO<geom, "c", "f16">,
-                          WMMA_REGINFO<geom, "c", "f32">] in {
-              def : WMMA_LOAD<frag, layout, space, stride, addr>;
-          }
-          foreach frag = [WMMA_REGINFO<geom, "d", "f16">,
-                          WMMA_REGINFO<geom, "d", "f32">] in {
-              def : WMMA_STORE<frag, layout, space, stride, addr>;
-          }
-        } // addr
-      } // space
-    } // stride
-  } // layout
-} // geom
+defset list<WMMA_INSTR> MMA_LDSTs  = {
+  foreach geom = ["m16n16k16", "m32n8k16", "m8n32k16" ] in {
+    foreach layout = ["row", "col"] in {
+      foreach stride = [0, 1] in {
+        foreach space = [".global", ".shared", ""] in {
+          foreach addr = [imem, Int32Regs, Int64Regs, MEMri, MEMri64] in {
+            foreach frag = [WMMA_REGINFO<geom, "a", "f16">,
+                            WMMA_REGINFO<geom, "b", "f16">,
+                            WMMA_REGINFO<geom, "c", "f16">,
+                            WMMA_REGINFO<geom, "c", "f32">] in {
+                def : WMMA_LOAD<frag, layout, space, stride, addr>;
+            }
+            foreach frag = [WMMA_REGINFO<geom, "d", "f16">,
+                            WMMA_REGINFO<geom, "d", "f32">] in {
+                def : WMMA_STORE_D<frag, layout, space, stride, addr>;
+            }
+          } // addr
+        } // space
+      } // stride
+    } // layout
+  } // geom
+} // defset
 
 // WMMA.MMA
 class WMMA_MMA<WMMA_REGINFO FragA, WMMA_REGINFO FragB,
                WMMA_REGINFO FragC, WMMA_REGINFO FragD,
                string ALayout, string BLayout, int Satfinite>
-  : EmptyNVPTXInst,
+  : WMMA_INSTR<WMMA_NAME_MMA<ALayout, BLayout, FragC, FragD, Satfinite>.record,
+                             [FragA.Ins, FragB.Ins, FragC.Ins]>,
     Requires<FragC.Predicates> {
-  //Intrinsic Intr = int_nvvm_suld_1d_v4i32_zero;
-  Intrinsic Intr = !cast<Intrinsic>(WMMA_NAME_MMA<ALayout, BLayout, FragC, FragD, Satfinite>.record);
-  dag Outs = FragD.Outs;
-  dag Ins = !con(FragA.Ins,
-                 FragB.Ins,
-                 FragC.Ins);
-
-  // Construct the pattern to match corresponding intrinsic call.
-  // mma does not load/store anything, so we don't need complex operand matching here.
-  dag PatOuts = !foreach(tmp, Outs, !subst(outs, set, tmp));
-  dag PatArgs = !foreach(tmp, Ins, !subst(ins, Intr, tmp));
-  let Pattern = [!con(PatOuts, (set PatArgs))];
-  let OutOperandList = Outs;
-  let InOperandList  = Ins;
-  let AsmString = "wmma.mma.sync."
-                  # ALayout
+  let OutOperandList = FragD.Outs;
+  let InOperandList  = !con(Args, (ins MmaCode:$ptx));
+  let AsmString = "wmma.mma.sync"
+                  # "${ptx:aligned}"
+                  # "." # ALayout
                   # "." # BLayout
                   # "." # FragA.geom
                   # "." # FragD.ptx_elt_type
@@ -7597,20 +7604,34 @@ class WMMA_MMA<WMMA_REGINFO FragA, WMMA_REGINFO FragB,
                   # FragC.regstring # ";";
 }
 
-foreach geom = ["m16n16k16", "m32n8k16", "m8n32k16" ] in {
-  foreach layout_a = ["row", "col"] in {
-    foreach layout_b = ["row", "col"] in {
-      foreach frag_c = [WMMA_REGINFO<geom, "c", "f16">,
-                        WMMA_REGINFO<geom, "c", "f32">] in {
-        foreach frag_d = [WMMA_REGINFO<geom, "d", "f16">,
-                          WMMA_REGINFO<geom, "d", "f32">] in {
-          foreach satf = [0, 1] in {
-            def : WMMA_MMA<WMMA_REGINFO<geom, "a", "f16">,
-                           WMMA_REGINFO<geom, "b", "f16">,
-                           frag_c, frag_d, layout_a, layout_b, satf>;
-          } // satf
-        } // frag_d
-      } // frag_c
-    } // layout_b
-  } // layout_a
-} // geom
+defset list<WMMA_INSTR> MMAs  = {
+  foreach geom = ["m16n16k16", "m32n8k16", "m8n32k16" ] in {
+    foreach layout_a = ["row", "col"] in {
+      foreach layout_b = ["row", "col"] in {
+        foreach frag_c = [WMMA_REGINFO<geom, "c", "f16">,
+                          WMMA_REGINFO<geom, "c", "f32">] in {
+          foreach frag_d = [WMMA_REGINFO<geom, "d", "f16">,
+                            WMMA_REGINFO<geom, "d", "f32">] in {
+            foreach satf = [0, 1] in {
+              def : WMMA_MMA<WMMA_REGINFO<geom, "a", "f16">,
+                             WMMA_REGINFO<geom, "b", "f16">,
+                             frag_c, frag_d, layout_a, layout_b, satf>;
+            } // satf
+          } // frag_d
+        } // frag_c
+      } // layout_b
+    } // layout_a
+  } // geom
+} // defset
+
+// Constructing non-flat DAGs is still a pain. I can't !subst a dag node with a
+// dag, so the ptx.version must be appended *after* foreach replaces 'ins' with
+// the instruction record.
+class WMMA_PAT<WMMA_INSTR wi>
+      : Pat<wi.IntrinsicPattern,
+            !con(!foreach(tmp, wi.Args, !subst(ins, wi, tmp)),
+                 (wi ptx.version))>;
+
+// Build intrinsic->instruction patterns for all MMA instructions.
+foreach mma = !listconcat(MMAs, MMA_LDSTs) in
+  def : WMMA_PAT<mma>;
