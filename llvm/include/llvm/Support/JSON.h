@@ -751,7 +751,6 @@ public:
 class OStream {
  public:
   using Block = llvm::function_ref<void()>;
-  // OStream does not buffer internally, and need never be flushed or destroyed.
   // If IndentSize is nonzero, output is pretty-printed.
   explicit OStream(llvm::raw_ostream &OS, unsigned IndentSize = 0)
       : OS(OS), IndentSize(IndentSize) {
@@ -762,6 +761,9 @@ class OStream {
     assert(Stack.back().Ctx == Singleton);
     assert(Stack.back().HasValue && "Did not write top-level value");
   }
+
+  /// Flushes the underlying ostream. OStream does not buffer internally.
+  void flush() { OS.flush(); }
 
   // High level functions to output a value.
   // Valid at top-level (exactly once), in an attribute value (exactly once),
