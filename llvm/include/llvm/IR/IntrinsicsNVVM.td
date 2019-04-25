@@ -37,6 +37,69 @@ def llvm_anyi64ptr_ty     : LLVMAnyPointerType<llvm_i64_ty>;     // (space)i64*
 // MISC
 //
 
+// Helper class for construction of n-element list<LLVMtype> [t,t,...,t]
+class RepLLVMType<int N, LLVMType T> {
+  list<LLVMType> ret = !if(N, !listconcat(RepLLVMType<!add(N,-1), T>.ret, [T]), []);
+}
+
+// Helper class that represents a 'fragment' of an NVPTX *MMA instruction.
+// Geom: m<M>n<N>k<K>. E.g. m8n32k16
+// Frag: [abcd]
+// PtxEltType: PTX type for the element.
+class WMMA_REGS<string Geom, string Frag, string PtxEltType> {
+  string geom = Geom;
+  string frag = Frag;
+  string ptx_elt_type = PtxEltType;
+  string ft = frag#":"#ptx_elt_type;
+  list<LLVMType> regs = !cond(
+    // fp16 -> fp16/fp32 @  m16n16k16/m8n32k16/m32n8k16
+    // All currently supported geometries use the same fragment format,
+    // so we only need to consider {fragment, type}.
+    !eq(ft,"a:f16") : RepLLVMType<8, llvm_v2f16_ty>.ret,
+    !eq(ft,"b:f16") : RepLLVMType<8, llvm_v2f16_ty>.ret,
+    !eq(ft,"c:f16") : RepLLVMType<4, llvm_v2f16_ty>.ret,
+    !eq(ft,"d:f16") : RepLLVMType<4, llvm_v2f16_ty>.ret,
+    !eq(ft,"c:f32") : RepLLVMType<8, llvm_float_ty>.ret,
+    !eq(ft,"d:f32") : RepLLVMType<8, llvm_float_ty>.ret);
+}
+
+class WMMA_NAME_LDST<string Op, WMMA_REGS Frag, string Layout, int WithStride> {
+  string intr = "llvm.nvvm.wmma."
+                # Frag.geom
+                # "." # Op
+                # "." # Frag.frag
+                # "." # Layout
+                # !if(WithStride, ".stride", "")
+                # "." # Frag.ptx_elt_type
+                ;
+  // TODO(tra): record name should ideally use the same field order as the intrinsic.
+  // E.g. string record = !subst("llvm", "int",
+  //                      !subst(".", "_", llvm));
+  string record = "int_nvvm_wmma_"
+                # Frag.geom
+                # "_" # Op
+                # "_" # Frag.frag
+                # "_" # Frag.ptx_elt_type
+                # "_" # Layout
+                # !if(WithStride, "_stride", "");
+}
+
+class WMMA_NAME_MMA<string ALayout, string BLayout,
+                    WMMA_REGS C, WMMA_REGS D,
+                    int Satfinite> {
+  string llvm = "llvm.nvvm.wmma."
+                # C.geom
+                # ".mma"
+                # "." # ALayout
+                # "." # BLayout
+                # "." # D.ptx_elt_type  // Intrinsic encodes 'd' first.
+                # "." # C.ptx_elt_type
+                # !if(Satfinite, ".satfinite", "");
+
+  string record = !subst(".", "_",
+                  !subst("llvm.", "int_", llvm));
+}
+
 let TargetPrefix = "nvvm" in {
   def int_nvvm_prmt : GCCBuiltin<"__nvvm_prmt">,
       Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
@@ -3889,166 +3952,69 @@ def int_nvvm_match_all_sync_i64p :
 //
 // WMMA instructions
 //
-
 // WMMA.LOAD
-class NVVM_WMMA_LD_GALSTS<string Geometry, string Abc, string Layout,
-                          string Type, LLVMType regty, int WithStride>
-  : Intrinsic<!if(!eq(Abc#Type,"cf16"),
-                  [regty, regty, regty, regty],
-                  [regty, regty, regty, regty,
-                   regty, regty, regty, regty]),
+class NVVM_WMMA_LD<WMMA_REGS Frag, string Layout, int WithStride>
+  : Intrinsic<Frag.regs,
               !if(WithStride, [llvm_anyptr_ty, llvm_i32_ty], [llvm_anyptr_ty]),
               [IntrReadMem, IntrArgMemOnly, ReadOnly<0>, NoCapture<0>],
-              "llvm.nvvm.wmma."
-                # Geometry
-                # ".load"
-                # "." # Abc
-                # "." # Layout
-                # !if(WithStride, ".stride", "")
-                # "." # Type>;
-
-multiclass NVVM_WMMA_LD_GALT<string Geometry, string Abc, string Layout,
-                             string Type, LLVMType regty> {
-  def _stride: NVVM_WMMA_LD_GALSTS<Geometry, Abc, Layout, Type, regty, 1>;
-  def NAME   : NVVM_WMMA_LD_GALSTS<Geometry, Abc, Layout, Type, regty, 0>;
-}
-
-multiclass NVVM_WMMA_LD_GAT<string Geometry, string Abc,
-                           string Type, LLVMType regty> {
-  defm _row: NVVM_WMMA_LD_GALT<Geometry, Abc, "row", Type, regty>;
-  defm _col: NVVM_WMMA_LD_GALT<Geometry, Abc, "col", Type, regty>;
-}
-
-multiclass NVVM_WMMA_LD_G<string Geometry> {
-  defm _a_f16: NVVM_WMMA_LD_GAT<Geometry, "a", "f16", llvm_v2f16_ty>;
-  defm _b_f16: NVVM_WMMA_LD_GAT<Geometry, "b", "f16", llvm_v2f16_ty>;
-  defm _c_f16: NVVM_WMMA_LD_GAT<Geometry, "c", "f16", llvm_v2f16_ty>;
-  defm _c_f32: NVVM_WMMA_LD_GAT<Geometry, "c", "f32", llvm_float_ty>;
-}
-
-multiclass NVVM_WMMA_LD {
-  defm _m32n8k16_load: NVVM_WMMA_LD_G<"m32n8k16">;
-  defm _m16n16k16_load: NVVM_WMMA_LD_G<"m16n16k16">;
-  defm _m8n32k16_load: NVVM_WMMA_LD_G<"m8n32k16">;
-}
-
-defm int_nvvm_wmma: NVVM_WMMA_LD;
+              WMMA_NAME_LDST<"load", Frag, Layout, WithStride>.intr>;
 
 // WMMA.STORE.D
-class NVVM_WMMA_STD_GLSTS<string Geometry, string Layout,
-                          string Type, LLVMType regty, int WithStride,
-                          // This is only used to create a typed empty array we
-                          // need to pass to !if below.
-                          list<LLVMType>Empty=[]>
+class NVVM_WMMA_ST<WMMA_REGS Frag, string Layout, int WithStride>
   : Intrinsic<[],
               !listconcat(
                 [llvm_anyptr_ty],
-                !if(!eq(Type,"f16"),
-                    [regty, regty, regty, regty],
-                    [regty, regty, regty, regty,
-                     regty, regty, regty, regty]),
-                !if(WithStride, [llvm_i32_ty], Empty)),
+                Frag.regs,
+                !if(WithStride, [llvm_i32_ty], [])),
               [IntrWriteMem, IntrArgMemOnly, WriteOnly<0>, NoCapture<0>],
-              "llvm.nvvm.wmma."
-                   # Geometry
-                   # ".store.d"
-                   # "." # Layout
-                   # !if(WithStride, ".stride", "")
-                   # "." # Type>;
+              WMMA_NAME_LDST<"store", Frag, Layout, WithStride>.intr>;
 
-multiclass NVVM_WMMA_STD_GLT<string Geometry, string Layout,
-                             string Type, LLVMType regty> {
-  def _stride: NVVM_WMMA_STD_GLSTS<Geometry, Layout, Type, regty, 1>;
-  def NAME:    NVVM_WMMA_STD_GLSTS<Geometry, Layout, Type, regty, 0>;
+// Create all load/store variants 
+foreach geom = ["m16n16k16", "m32n8k16", "m8n32k16" ] in {
+  foreach layout = ["row", "col"] in {
+    foreach stride = [0, 1] in {
+      foreach frag = [WMMA_REGS<geom, "a", "f16">,
+                      WMMA_REGS<geom, "b", "f16">,
+                      WMMA_REGS<geom, "c", "f16">,
+                      WMMA_REGS<geom, "c", "f32">] in {
+          def WMMA_NAME_LDST<"load", frag, layout, stride>.record
+             : NVVM_WMMA_LD<frag, layout, stride>;
+      }
+      foreach frag = [WMMA_REGS<geom, "d", "f16">,
+                      WMMA_REGS<geom, "d", "f32">] in {
+          def WMMA_NAME_LDST<"store", frag, layout, stride>.record
+             : NVVM_WMMA_ST<frag, layout, stride>;
+      }
+    }
+  }
 }
-
-multiclass NVVM_WMMA_STD_GT<string Geometry, string Type, LLVMType regty> {
-  defm _row: NVVM_WMMA_STD_GLT<Geometry, "row", Type, regty>;
-  defm _col: NVVM_WMMA_STD_GLT<Geometry, "col", Type, regty>;
-}
-multiclass NVVM_WMMA_STD_G<string Geometry> {
-  defm _d_f16: NVVM_WMMA_STD_GT<Geometry, "f16", llvm_v2f16_ty>;
-  defm _d_f32: NVVM_WMMA_STD_GT<Geometry, "f32", llvm_float_ty>;
-}
-
-multiclass NVVM_WMMA_STD {
-  defm _m32n8k16_store:  NVVM_WMMA_STD_G<"m32n8k16">;
-  defm _m16n16k16_store: NVVM_WMMA_STD_G<"m16n16k16">;
-  defm _m8n32k16_store:  NVVM_WMMA_STD_G<"m8n32k16">;
-}
-
-defm int_nvvm_wmma: NVVM_WMMA_STD;
 
 // WMMA.MMA
-class NVVM_WMMA_MMA_GABDCS<string Geometry,
-                           string ALayout, string BLayout,
-                           string DType, LLVMType d_regty,
-                           string CType, LLVMType c_regty,
-                           string Satfinite = "">
-  : Intrinsic<!if(!eq(DType,"f16"),
-                      [d_regty, d_regty, d_regty, d_regty],
-                      [d_regty, d_regty, d_regty, d_regty,
-                       d_regty, d_regty, d_regty, d_regty]),
+class NVVM_WMMA_MMA<string ALayout, string BLayout,
+                    WMMA_REGS C, WMMA_REGS D, int Satfinite>
+  : Intrinsic<D.regs,
               !listconcat(
-                [// A
-                llvm_v2f16_ty, llvm_v2f16_ty, llvm_v2f16_ty, llvm_v2f16_ty,
-                llvm_v2f16_ty, llvm_v2f16_ty, llvm_v2f16_ty, llvm_v2f16_ty,
-                // B
-                llvm_v2f16_ty, llvm_v2f16_ty, llvm_v2f16_ty, llvm_v2f16_ty,
-                llvm_v2f16_ty, llvm_v2f16_ty, llvm_v2f16_ty, llvm_v2f16_ty],
-                !if(!eq(CType,"f16"),
-                      [c_regty, c_regty, c_regty, c_regty],
-                      [c_regty, c_regty, c_regty, c_regty,
-                       c_regty, c_regty, c_regty, c_regty])),
+                WMMA_REGS<C.geom, "a", "f16">.regs,
+                WMMA_REGS<C.geom, "b", "f16">.regs,
+                C.regs),
               [IntrNoMem],
-              "llvm.nvvm.wmma."
-                # Geometry
-                # ".mma"
-                # "." # ALayout
-                # "." # BLayout
-                # "." # DType
-                # "." # CType
-                # Satfinite> {
-}
+              WMMA_NAME_MMA<ALayout, BLayout, C, D, Satfinite>.llvm>;
 
-multiclass NVVM_WMMA_MMA_GABDC<string Geometry, string ALayout, string BLayout,
-                               string DType, LLVMType d_regty,
-                               string CType, LLVMType c_regty> {
-  def NAME : NVVM_WMMA_MMA_GABDCS<Geometry, ALayout, BLayout,
-                                  DType, d_regty, CType, c_regty>;
-  def _satfinite: NVVM_WMMA_MMA_GABDCS<Geometry, ALayout, BLayout,
-                                       DType, d_regty, CType, c_regty,".satfinite">;
+foreach geom = ["m16n16k16", "m32n8k16", "m8n32k16" ] in {
+  foreach layout_a = ["row", "col"] in {
+    foreach layout_b = ["row", "col"] in {
+      foreach frag_c = [WMMA_REGS<geom, "c", "f16">,
+                        WMMA_REGS<geom, "c", "f32">] in {
+        foreach frag_d = [WMMA_REGS<geom, "d", "f16">,
+                          WMMA_REGS<geom, "d", "f32">] in {
+          foreach satf = [0, 1] in {
+            def WMMA_NAME_MMA<layout_a, layout_b, frag_c, frag_d, satf>.record
+             : NVVM_WMMA_MMA<layout_a, layout_b, frag_c, frag_d, satf>;
+          }
+        }
+      }
+    }
+  }
 }
-
-multiclass NVVM_WMMA_MMA_GABD<string Geometry, string ALayout, string BLayout,
-                              string DType, LLVMType d_regty> {
-  defm _f16: NVVM_WMMA_MMA_GABDC<Geometry, ALayout, BLayout, DType, d_regty,
-                                "f16", llvm_v2f16_ty>;
-  defm _f32: NVVM_WMMA_MMA_GABDC<Geometry, ALayout, BLayout, DType, d_regty,
-                                "f32", llvm_float_ty>;
-}
-
-multiclass NVVM_WMMA_MMA_GAB<string Geometry, string ALayout, string BLayout> {
-  defm _f16: NVVM_WMMA_MMA_GABD<Geometry, ALayout, BLayout, "f16", llvm_v2f16_ty>;
-  defm _f32: NVVM_WMMA_MMA_GABD<Geometry, ALayout, BLayout, "f32", llvm_float_ty>;
-}
-
-multiclass NVVM_WMMA_MMA_GA<string Geometry, string ALayout> {
-  defm _col: NVVM_WMMA_MMA_GAB<Geometry, ALayout, "col">;
-  defm _row: NVVM_WMMA_MMA_GAB<Geometry, ALayout, "row">;
-}
-
-multiclass NVVM_WMMA_MMA_G<string Geometry> {
-  defm _col: NVVM_WMMA_MMA_GA<Geometry, "col">;
-  defm _row: NVVM_WMMA_MMA_GA<Geometry, "row">;
-}
-
-multiclass NVVM_WMMA_MMA {
-  defm _m32n8k16_mma : NVVM_WMMA_MMA_G<"m32n8k16">;
-  defm _m16n16k16_mma : NVVM_WMMA_MMA_G<"m16n16k16">;
-  defm _m8n32k16_mma : NVVM_WMMA_MMA_G<"m8n32k16">;
-}
-
-defm int_nvvm_wmma : NVVM_WMMA_MMA;
 
 } // let TargetPrefix = "nvvm"
