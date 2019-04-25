@@ -171,6 +171,9 @@ void GenericDetails::set_derivedType(Symbol &derivedType) {
 }
 
 const Symbol *GenericDetails::CheckSpecific() const {
+  return const_cast<GenericDetails *>(this)->CheckSpecific();
+}
+Symbol *GenericDetails::CheckSpecific() {
   if (specific_) {
     for (const auto *proc : specificProcs_) {
       if (proc == specific_) {

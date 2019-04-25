@@ -27,7 +27,9 @@ void NullifyChecker::Leave(const parser::NullifyStmt &nullifyStmt) {
         common::visitors{
             [&](const parser::Name &name) {
               auto const *symbol{name.symbol};
-              if (!IsVariableName(*symbol) && !IsProcName(*symbol)) {
+              if (HasError(symbol)) {
+                // already reported an error
+              } else if (!IsVariableName(*symbol) && !IsProcName(*symbol)) {
                 context_.Say(name.source,
                     "name in NULLIFY statement must be a variable or procedure pointer name"_err_en_US);
               } else if (!IsPointer(*symbol)) {  // C951

@@ -189,7 +189,8 @@ bool IsProcedure(const Symbol &symbol) {
       common::visitors{
           [](const SubprogramDetails &) { return true; },
           [](const SubprogramNameDetails &) { return true; },
-          [](const ProcEntityDetails &x) { return true; },
+          [](const ProcEntityDetails &) { return true; },
+          [](const GenericDetails &) { return true; },
           [](const UseDetails &x) { return IsProcedure(x.symbol()); },
           [](const auto &) { return false; },
       },
@@ -276,6 +277,16 @@ const Symbol *FindExternallyVisibleObject(
     return block;
   } else {
     return nullptr;
+  }
+}
+
+bool HasError(const Symbol &symbol) { return symbol.test(Symbol::Flag::Error); }
+bool HasError(const Symbol *symbol) { return !symbol || HasError(*symbol); }
+bool HasError(const parser::Name &name) { return HasError(name.symbol); }
+
+void SetError(Symbol &symbol, bool value) {
+  if (value) {
+    symbol.set(Symbol::Flag::Error);
   }
 }
 

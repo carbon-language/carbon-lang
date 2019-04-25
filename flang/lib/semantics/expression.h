@@ -83,6 +83,25 @@ using namespace Fortran::parser::literals;
 // in the Fortran standard (i.e., scalar-, constant-, &c.).
 
 namespace Fortran::evaluate {
+
+struct ResetExprHelper {
+  void Reset(parser::Expr::TypedExpr &x) { x->v = std::nullopt; }
+  void Reset(const parser::Expr &x) { Reset(x.typedExpr); }
+  void Reset(const parser::Variable &x) { Reset(x.typedExpr); }
+  template<typename T> void Reset(const common::Indirection<T> &x) {
+    Reset(x.value());
+  }
+  template<typename T> void Reset(const T &x) {
+    if constexpr (ConstraintTrait<T>) {
+      Reset(x.thing);
+    } else {
+      static_assert("bad type");
+    }
+  }
+};
+// Set the typedExpr data member to std::nullopt to indicate an error
+template<typename T> void ResetExpr(const T &x) { ResetExprHelper{}.Reset(x); }
+
 class ExpressionAnalyzer {
 public:
   using MaybeExpr = std::optional<Expr<SomeType>>;
@@ -145,6 +164,8 @@ public:
       if (int rank{result->Rank()}; rank != 0) {
         SayAt(x, "Must be a scalar value, but is a rank-%d array"_err_en_US,
             rank);
+        ResetExpr(x);
+        return std::nullopt;
       }
     }
     return result;
@@ -155,26 +176,37 @@ public:
       *result = Fold(GetFoldingContext(), std::move(*result));
       if (!IsConstantExpr(*result)) {
         SayAt(x, "Must be a constant value"_err_en_US);
+        ResetExpr(x);
+        return std::nullopt;
       }
     }
     return result;
   }
   template<typename A> MaybeExpr Analyze(const parser::Integer<A> &x) {
     auto result{Analyze(x.thing)};
-    EnforceTypeConstraint(
-        parser::FindSourceLocation(x), result, TypeCategory::Integer);
+    if (!EnforceTypeConstraint(
+            parser::FindSourceLocation(x), result, TypeCategory::Integer)) {
+      ResetExpr(x);
+      return std::nullopt;
+    }
     return result;
   }
   template<typename A> MaybeExpr Analyze(const parser::Logical<A> &x) {
     auto result{Analyze(x.thing)};
-    EnforceTypeConstraint(
-        parser::FindSourceLocation(x), result, TypeCategory::Logical);
+    if (!EnforceTypeConstraint(
+            parser::FindSourceLocation(x), result, TypeCategory::Logical)) {
+      ResetExpr(x);
+      return std::nullopt;
+    }
     return result;
   }
   template<typename A> MaybeExpr Analyze(const parser::DefaultChar<A> &x) {
     auto result{Analyze(x.thing)};
-    EnforceTypeConstraint(parser::FindSourceLocation(x), result,
-        TypeCategory::Character, true /* default kind */);
+    if (!EnforceTypeConstraint(parser::FindSourceLocation(x), result,
+            TypeCategory::Character, true /* default kind */)) {
+      ResetExpr(x);
+      return std::nullopt;
+    }
     return result;
   }
 
@@ -266,7 +298,7 @@ private:
   };
   std::optional<CallAndArguments> Procedure(
       const parser::ProcedureDesignator &, ActualArguments &);
-  void EnforceTypeConstraint(parser::CharBlock, const MaybeExpr &, TypeCategory,
+  bool EnforceTypeConstraint(parser::CharBlock, const MaybeExpr &, TypeCategory,
       bool defaultKind = false);
 
   semantics::SemanticsContext &context_;

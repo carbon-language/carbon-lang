@@ -39,20 +39,22 @@ public:
   AllocationCheckerHelper(
       const parser::AllocateObject &obj, AllocateCheckerInfo &info)
     : allocateInfo_{info}, name_{parser::GetLastName(obj)},
-      type_{name_.symbol->GetType()},
+      type_{name_.symbol ? name_.symbol->GetType() : nullptr},
       isSubobject_{std::holds_alternative<parser::StructureComponent>(obj.u)} {
-    CHECK(type_ != nullptr);
-    if (type_->category() == DeclTypeSpec::Category::Character) {
-      hasDeferredTypeParameter_ =
-          type_->characterTypeSpec().length().isDeferred();
-    } else if (const DerivedTypeSpec * derivedTypeSpec{type_->AsDerived()}) {
-      for (const auto &pair : derivedTypeSpec->parameters()) {
-        hasDeferredTypeParameter_ |= pair.second.isDeferred();
+    if (type_) {
+      if (type_->category() == DeclTypeSpec::Category::Character) {
+        hasDeferredTypeParameter_ =
+            type_->characterTypeSpec().length().isDeferred();
+      } else if (const DerivedTypeSpec * derivedTypeSpec{type_->AsDerived()}) {
+        for (const auto &pair : derivedTypeSpec->parameters()) {
+          hasDeferredTypeParameter_ |= pair.second.isDeferred();
+        }
+        isAbstract_ =
+            derivedTypeSpec->typeSymbol().attrs().test(Attr::ABSTRACT);
       }
-      isAbstract_ = derivedTypeSpec->typeSymbol().attrs().test(Attr::ABSTRACT);
+      isUnlimitedPolymorphic_ =
+          type_->category() == DeclTypeSpec::Category::ClassStar;
     }
-    isUnlimitedPolymorphic_ =
-        type_->category() == DeclTypeSpec::Category::ClassStar;
   }
 
   bool RunChecks(SemanticsContext &context);
@@ -304,6 +306,9 @@ static bool HaveCompatibleKindParameters(
 }
 
 bool AllocationCheckerHelper::RunChecks(SemanticsContext &context) {
+  if (type_ == nullptr) {
+    return false;
+  }
   if (!IsVariableName(*name_.symbol)) {  // C932 pre-requisite
     context.Say(name_.source,
         "name in ALLOCATE statement must be a variable name"_err_en_US);

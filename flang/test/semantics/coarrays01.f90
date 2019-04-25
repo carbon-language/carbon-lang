@@ -67,7 +67,6 @@ subroutine s3
   change team(t2%a, x[10,*] => y)
   end team
   !ERROR: Must be a scalar value, but is a rank-1 array
-  !ERROR: Team value must be of type TEAM_TYPE from module ISO_FORTRAN_ENV
   change team(t3, x[10,*] => y)
   end team
   !ERROR: Team value must be of type TEAM_TYPE from module ISO_FORTRAN_ENV
@@ -79,7 +78,6 @@ subroutine s3
   !ERROR: Team value must be of type TEAM_TYPE from module ISO_FORTRAN_ENV
   form team(3, t3(2))
   !ERROR: Must be a scalar value, but is a rank-1 array
-  !ERROR: Team value must be of type TEAM_TYPE from module ISO_FORTRAN_ENV
   form team(3, t3)
 end
 

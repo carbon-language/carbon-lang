@@ -33,7 +33,9 @@ using namespace parser::literals;
 /// unit number expressions.
 class RewriteMutator {
 public:
-  RewriteMutator(parser::Messages &messages) : messages_{messages} {}
+  RewriteMutator(SemanticsContext &context)
+    : errorOnUnresolvedName_{!context.AnyFatalError()},
+      messages_{context.messages()} {}
 
   // Default action for a parse tree node is to visit children.
   template<typename T> bool Pre(T &) { return true; }
@@ -154,7 +156,7 @@ void RewriteMutator::Post(parser::WriteStmt &x) {
 }
 
 bool RewriteParseTree(SemanticsContext &context, parser::Program &program) {
-  RewriteMutator mutator{context.messages()};
+  RewriteMutator mutator{context};
   parser::Walk(program, mutator);
   return !context.AnyFatalError();
 }

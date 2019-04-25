@@ -302,77 +302,34 @@ struct GatherSymbols {
   void Post(const parser::Name &name) { symbols.push_back(name.symbol); }
 };
 
-static CS GatherAllVariableNames(
-    const std::list<parser::LocalitySpec> &localitySpecs) {
-  CS names;
+enum GatherWhichVariables { All, NotShared, Local };
+static CS GatherVariables(const std::list<parser::LocalitySpec> &localitySpecs,
+    GatherWhichVariables which) {
+  CS symbols;
   for (auto &ls : localitySpecs) {
-    std::visit(
-        common::visitors{
-            [](auto &) {},
-            [&](const parser::LocalitySpec::Local &local) {
-              for (auto &v : local.v) {
-                CHECK(v.symbol);
-                names.push_back(v.symbol);
-              }
-            },
-            [&](const parser::LocalitySpec::LocalInit &localInit) {
-              for (auto &v : localInit.v) {
-                CHECK(v.symbol);
-                names.push_back(v.symbol);
-              }
-            },
-            [&](const parser::LocalitySpec::Shared &shared) {
-              for (auto &v : shared.v) {
-                CHECK(v.symbol);
-                names.push_back(v.symbol);
-              }
-            },
+    auto names{std::visit(
+        [=](const auto &x) {
+          using T = std::decay_t<decltype(x)>;
+          using namespace parser;
+          if constexpr (!std::is_same_v<T, LocalitySpec::DefaultNone>) {
+            if (which == GatherWhichVariables::All ||
+                (which == GatherWhichVariables::NotShared &&
+                    !std::is_same_v<T, LocalitySpec::Shared>) ||
+                (which == GatherWhichVariables::Local &&
+                    std::is_same_v<T, LocalitySpec::Local>)) {
+              return x.v;
+            }
+          }
+          return std::list<parser::Name>{};
         },
-        ls.u);
+        ls.u)};
+    for (const auto &name : names) {
+      if (name.symbol) {
+        symbols.push_back(name.symbol);
+      }
+    }
   }
-  return names;
-}
-static CS GatherNotSharedVariableNames(
-    const std::list<parser::LocalitySpec> &localitySpecs) {
-  CS names;
-  for (auto &ls : localitySpecs) {
-    std::visit(
-        common::visitors{
-            [](auto &) {},
-            [&](const parser::LocalitySpec::Local &local) {
-              for (auto &v : local.v) {
-                CHECK(v.symbol);
-                names.push_back(v.symbol);
-              }
-            },
-            [&](const parser::LocalitySpec::LocalInit &localInit) {
-              for (auto &v : localInit.v) {
-                CHECK(v.symbol);
-                names.push_back(v.symbol);
-              }
-            },
-        },
-        ls.u);
-  }
-  return names;
-}
-static CS GatherLocalVariableNames(
-    const std::list<parser::LocalitySpec> &localitySpecs) {
-  CS names;
-  for (auto &ls : localitySpecs) {
-    std::visit(
-        common::visitors{
-            [](auto &) {},
-            [&](const parser::LocalitySpec::Local &local) {
-              for (auto &v : local.v) {
-                CHECK(v.symbol);
-                names.push_back(v.symbol);
-              }
-            },
-        },
-        ls.u);
-  }
-  return names;
+  return symbols;
 }
 
 static CS GatherReferencesFromExpression(const parser::Expr &expression) {
@@ -482,19 +439,6 @@ private:
     CheckNoCollisions(references, indexNames,
         "concurrent-control expression references index-name"_err_en_US);
   }
-  void CheckNoDuplicates(const CS &symbols) const {
-    // C1126
-    auto endIter{symbols.end()};
-    for (auto iter1{symbols.begin()}; iter1 != endIter; ++iter1) {
-      for (auto iter2{iter1}; iter2 != endIter;) {
-        ++iter2;
-        if (iter2 != endIter && *iter1 == *iter2) {
-          messages_.Say(currentStatementSourcePosition_,
-              "name appears more than once in concurrent-locality"_err_en_US);
-        }
-      }
-    }
-  }
   void CheckMaskDoesNotReferenceLocal(
       const parser::ScalarLogicalExpr &mask, const CS &symbols) const {
     // C1129
@@ -524,8 +468,9 @@ private:
     CS indexNames;
     for (auto &c : controls) {
       auto &indexName{std::get<parser::Name>(c.t)};
-      CHECK(indexName.symbol);
-      indexNames.push_back(indexName.symbol);
+      if (indexName.symbol) {
+        indexNames.push_back(indexName.symbol);
+      }
     }
     if (!indexNames.empty()) {
       for (auto &c : controls) {
@@ -543,18 +488,15 @@ private:
     if (localitySpecs.empty()) {
       return;
     }
-    auto variableNames{GatherAllVariableNames(localitySpecs)};
+    auto variableNames{
+        GatherVariables(localitySpecs, GatherWhichVariables::All)};
     CheckScopingConstraints(variableNames);
-    // C1125
-    CheckNoCollisions(indexNames, variableNames,
-        "name in concurrent-locality also appears in index-names"_err_en_US);
-    CheckNoDuplicates(variableNames);
     CheckZeroOrOneDefaultNone(localitySpecs);
     CheckLocalAndLocalInitAttributes(
-        GatherNotSharedVariableNames(localitySpecs));
+        GatherVariables(localitySpecs, GatherWhichVariables::NotShared));
     if (mask) {
       CheckMaskDoesNotReferenceLocal(
-          *mask, GatherLocalVariableNames(localitySpecs));
+          *mask, GatherVariables(localitySpecs, GatherWhichVariables::Local));
     }
     CheckDefaultNoneImpliesExplicitLocality(localitySpecs);
   }

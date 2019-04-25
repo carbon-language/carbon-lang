@@ -404,6 +404,7 @@ public:
   // Check that specific is one of the specificProcs. If not, return the
   // specific as a raw pointer.
   const Symbol *CheckSpecific() const;
+  Symbol *CheckSpecific();
 
 private:
   GenericKind kind_{GenericKind::Name};
@@ -429,6 +430,7 @@ std::string DetailsToString(const Details &);
 class Symbol {
 public:
   ENUM_CLASS(Flag,
+      Error,  // an error has been reported on this symbol
       Function,  // symbol is a function
       Subroutine,  // symbol is a subroutine
       Implicit,  // symbol is implicitly typed

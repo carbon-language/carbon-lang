@@ -83,6 +83,9 @@ void CoarrayChecker::CheckNamesAreDistinct(
     const auto &decl{std::get<parser::CodimensionDecl>(assoc.t)};
     const auto &selector{std::get<parser::Selector>(assoc.t)};
     const auto &declName{std::get<parser::Name>(decl.t)};
+    if (HasError(declName)) {
+      continue;  // already reported an error about this name
+    }
     if (auto *prev{getPreviousUse(declName)}) {
       Say2(declName.source,  // C1113
           "Coarray '%s' was already used as a selector or coarray in this statement"_err_en_US,
@@ -90,11 +93,12 @@ void CoarrayChecker::CheckNamesAreDistinct(
     }
     // ResolveNames verified the selector is a simple name
     const parser::Name *name{parser::Unwrap<parser::Name>(selector)};
-    CHECK(name);
-    if (auto *prev{getPreviousUse(*name)}) {
-      Say2(name->source,  // C1113, C1115
-          "Selector '%s' was already used as a selector or coarray in this statement"_err_en_US,
-          *prev, "Previous use of '%s'"_en_US);
+    if (name) {
+      if (auto *prev{getPreviousUse(*name)}) {
+        Say2(name->source,  // C1113, C1115
+            "Selector '%s' was already used as a selector or coarray in this statement"_err_en_US,
+            *prev, "Previous use of '%s'"_en_US);
+      }
     }
   }
 }

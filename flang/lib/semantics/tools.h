@@ -25,13 +25,6 @@
 #include "../evaluate/variable.h"
 #include "../parser/parse-tree.h"
 
-namespace Fortran::parser {
-class Messages;
-struct Expr;
-struct Name;
-struct Variable;
-}
-
 namespace Fortran::semantics {
 
 class DeclTypeSpec;
@@ -66,6 +59,12 @@ bool IsVariableName(const Symbol &symbol);  // variable-name
 bool IsAllocatable(const Symbol &);
 bool IsAllocatableOrPointer(const Symbol &);
 bool IsProcedurePointer(const Symbol &);
+
+// Test or set the Error flag on a Symbol
+bool HasError(const Symbol &);
+bool HasError(const Symbol *);
+bool HasError(const parser::Name &);
+void SetError(Symbol &, bool value = true);
 
 // Determines whether an object might be visible outside a
 // PURE function (C1594); returns a non-null Symbol pointer for

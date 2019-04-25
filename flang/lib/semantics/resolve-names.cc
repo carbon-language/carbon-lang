@@ -416,16 +416,16 @@ public:
 
   // Special messages: already declared; referencing symbol's declaration;
   // about a type; two names & locations
-  void SayAlreadyDeclared(const SourceName &, const Symbol &);
-  void SayAlreadyDeclared(const parser::Name &, const Symbol &);
-  void SayWithDecl(const parser::Name &, const Symbol &, MessageFixedText &&);
+  void SayAlreadyDeclared(const SourceName &, Symbol &);
+  void SayAlreadyDeclared(const parser::Name &, Symbol &);
+  void SayWithDecl(const parser::Name &, Symbol &, MessageFixedText &&);
   void SayDerivedType(const SourceName &, MessageFixedText &&, const Scope &);
   void Say2(const SourceName &, MessageFixedText &&, const SourceName &,
       MessageFixedText &&);
-  void Say2(const SourceName &, MessageFixedText &&, const Symbol &,
-      MessageFixedText &&);
-  void Say2(const parser::Name &, MessageFixedText &&, const Symbol &,
-      MessageFixedText &&);
+  void Say2(
+      const SourceName &, MessageFixedText &&, Symbol &, MessageFixedText &&);
+  void Say2(
+      const parser::Name &, MessageFixedText &&, Symbol &, MessageFixedText &&);
 
   // Search for symbol by name in current and containing scopes
   Symbol *FindSymbol(const parser::Name &);
@@ -755,9 +755,8 @@ protected:
   Symbol *DeclareStatementEntity(
       const parser::Name &, const std::optional<parser::IntegerTypeSpec> &);
   bool CheckUseError(const parser::Name &);
-  void CheckAccessibility(const SourceName &, bool, const Symbol &);
+  void CheckAccessibility(const SourceName &, bool, Symbol &);
   bool CheckAccessibleComponent(const SourceName &, const Symbol &);
-  void CheckScalarIntegerType(const parser::Name &);
   void CheckCommonBlocks();
   void CheckSaveStmts();
   bool CheckNotInBlock(const char *);
@@ -1482,12 +1481,11 @@ void ArraySpecVisitor::PostAttrSpec() {
 
 // ScopeHandler implementation
 
-void ScopeHandler::SayAlreadyDeclared(
-    const parser::Name &name, const Symbol &prev) {
+void ScopeHandler::SayAlreadyDeclared(const parser::Name &name, Symbol &prev) {
   SayAlreadyDeclared(name.source, prev);
 }
-void ScopeHandler::SayAlreadyDeclared(
-    const SourceName &name, const Symbol &prev) {
+void ScopeHandler::SayAlreadyDeclared(const SourceName &name, Symbol &prev) {
+  SetError(prev);
   auto &msg{
       Say(name, "'%s' is already declared in this scoping unit"_err_en_US)};
   if (const auto *details{prev.detailsIf<UseDetails>()}) {
@@ -1502,7 +1500,8 @@ void ScopeHandler::SayAlreadyDeclared(
 }
 
 void ScopeHandler::SayWithDecl(
-    const parser::Name &name, const Symbol &symbol, MessageFixedText &&msg) {
+    const parser::Name &name, Symbol &symbol, MessageFixedText &&msg) {
+  SetError(symbol, msg.isFatal());
   Say2(name, std::move(msg), symbol,
       symbol.test(Symbol::Flag::Implicit) ? "Implicit declaration of '%s'"_en_US
                                           : "Declaration of '%s'"_en_US);
@@ -1521,11 +1520,13 @@ void ScopeHandler::Say2(const SourceName &name1, MessageFixedText &&msg1,
       .Attach(name2, std::move(msg2), name2.ToString().c_str());
 }
 void ScopeHandler::Say2(const SourceName &name, MessageFixedText &&msg1,
-    const Symbol &symbol, MessageFixedText &&msg2) {
+    Symbol &symbol, MessageFixedText &&msg2) {
+  SetError(symbol, msg1.isFatal());
   Say2(name, std::move(msg1), symbol.name(), std::move(msg2));
 }
 void ScopeHandler::Say2(const parser::Name &name, MessageFixedText &&msg1,
-    const Symbol &symbol, MessageFixedText &&msg2) {
+    Symbol &symbol, MessageFixedText &&msg2) {
+  SetError(symbol, msg1.isFatal());
   Say2(name.source, std::move(msg1), symbol.name(), std::move(msg2));
 }
 
@@ -2135,7 +2136,7 @@ void InterfaceVisitor::ResolveSpecificsInGeneric(Symbol &generic) {
 void InterfaceVisitor::CheckGenericProcedures(Symbol &generic) {
   ResolveSpecificsInGeneric(generic);
   auto &details{generic.get<GenericDetails>()};
-  if (const auto *proc{details.CheckSpecific()}) {
+  if (auto *proc{details.CheckSpecific()}) {
     SayAlreadyDeclared(generic.name(), *proc);
   }
   auto &specifics{details.specificProcs()};
@@ -2495,7 +2496,7 @@ bool DeclarationVisitor::CheckUseError(const parser::Name &name) {
 
 // Report error if accessibility of symbol doesn't match isPrivate.
 void DeclarationVisitor::CheckAccessibility(
-    const SourceName &name, bool isPrivate, const Symbol &symbol) {
+    const SourceName &name, bool isPrivate, Symbol &symbol) {
   if (symbol.attrs().test(Attr::PRIVATE) != isPrivate) {
     Say2(name,
         "'%s' does not have the same accessibility as its previous declaration"_err_en_US,
@@ -2532,22 +2533,6 @@ bool DeclarationVisitor::CheckAccessibleComponent(
         name.ToString());
   }
   return false;
-}
-
-void DeclarationVisitor::CheckScalarIntegerType(const parser::Name &name) {
-  if (name.symbol != nullptr) {
-    const Symbol &symbol{*name.symbol};
-    if (symbol.IsObjectArray()) {
-      Say(name, "Variable '%s' is not scalar"_err_en_US);
-      return;
-    }
-    if (auto *type{symbol.GetType()}) {
-      if (!type->IsNumeric(TypeCategory::Integer)) {
-        Say(name, "Variable '%s' is not INTEGER"_err_en_US);
-        return;
-      }
-    }
-  }
 }
 
 void DeclarationVisitor::Post(const parser::DimensionStmt::Declaration &x) {
@@ -2750,6 +2735,7 @@ Symbol &DeclarationVisitor::DeclareObjectEntity(
       if (details->IsArray()) {
         Say(name,
             "The dimensions of '%s' have already been declared"_err_en_US);
+        SetError(symbol);
       } else {
         details->set_shape(arraySpec());
       }
@@ -2759,6 +2745,7 @@ Symbol &DeclarationVisitor::DeclareObjectEntity(
       if (details->IsCoarray()) {
         Say(name,
             "The codimensions of '%s' have already been declared"_err_en_US);
+        SetError(symbol);
       } else {
         details->set_coshape(coarraySpec());
       }
@@ -3275,7 +3262,7 @@ bool DeclarationVisitor::Pre(const parser::TypeBoundGenericStmt &x) {
   const auto &bindingNames{std::get<std::list<parser::Name>>(x.t)};
   SymbolList specificProcs;
   for (const auto &bindingName : bindingNames) {
-    const auto *symbol{FindInTypeOrParents(bindingName)};
+    auto *symbol{FindInTypeOrParents(bindingName)};
     if (!symbol) {
       Say(bindingName,
           "Binding name '%s' not found in this derived type"_err_en_US);
@@ -3295,7 +3282,7 @@ bool DeclarationVisitor::Pre(const parser::TypeBoundGenericStmt &x) {
     if (!genericSymbol->has<GenericBindingDetails>()) {
       genericSymbol = nullptr;  // MakeTypeSymbol will report the error below
     }
-  } else if (const auto *inheritedSymbol{
+  } else if (auto *inheritedSymbol{
                  FindInTypeOrParents(currScope(), symbolName)}) {
     // look in parent types:
     if (inheritedSymbol->has<GenericBindingDetails>()) {
@@ -3723,7 +3710,6 @@ Symbol *DeclarationVisitor::DeclareStatementEntity(const parser::Name &name,
   } else {
     ApplyImplicitRules(symbol);
   }
-  CheckScalarIntegerType(name);
   return Resolve(name, &symbol);
 }
 
@@ -3912,6 +3898,7 @@ bool ConstructVisitor::Pre(const parser::LocalitySpec::Shared &x) {
       symbol.set(Symbol::Flag::LocalityShared);
     } else {
       Say(name, "Variable '%s' not found"_err_en_US);
+      SetError(MakeSymbol(name, ObjectEntityDetails{EntityDetails{}}));
     }
   }
   return false;
@@ -4004,7 +3991,7 @@ void ConstructVisitor::Post(const parser::ConcurrentControl &x) {
       return;
     }
   }
-  CheckScalarIntegerType(name);
+  EvaluateExpr(parser::Scalar{parser::Integer{common::Clone(name)}});
 }
 
 bool ConstructVisitor::Pre(const parser::ForallConstruct &) {

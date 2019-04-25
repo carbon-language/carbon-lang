@@ -651,23 +651,19 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Name &n) {
   if (std::optional<int> kind{IsAcImpliedDo(n.source)}) {
     return AsMaybeExpr(ConvertToKind<TypeCategory::Integer>(
         *kind, AsExpr(ImpliedDoIndex{n.source})));
-  } else if (n.symbol != nullptr) {
+  } else if (!semantics::HasError(n)) {
     const Symbol &ultimate{n.symbol->GetUltimate()};
     if (ultimate.attrs().test(semantics::Attr::PARAMETER)) {
       if (auto *details{ultimate.detailsIf<semantics::ObjectEntityDetails>()}) {
-        if (auto &init{details->init()}) {
-          return init;
-        }
+        return details->init();
       }
       // TODO: enumerators, do they have the PARAMETER attribute?
     } else if (ultimate.detailsIf<semantics::TypeParamDetails>()) {
       // A bare reference to a derived type parameter (within a parameterized
       // derived type definition)
       return AsMaybeExpr(MakeTypeParamInquiry(&ultimate));
-    } else if (MaybeExpr result{Designate(DataRef{*n.symbol})}) {
-      return result;
     } else {
-      Say(n.source, "not of a supported type and kind"_err_en_US);
+      return Designate(DataRef{*n.symbol});
     }
   }
   return std::nullopt;
@@ -825,28 +821,32 @@ std::optional<Subscript> ExpressionAnalyzer::AnalyzeSectionSubscript(
       ss.u);
 }
 
+// Empty result means an error occurred
 std::vector<Subscript> ExpressionAnalyzer::AnalyzeSectionSubscripts(
     const std::list<parser::SectionSubscript> &sss) {
+  bool error{false};
   std::vector<Subscript> subscripts;
   for (const auto &s : sss) {
     if (auto subscript{AnalyzeSectionSubscript(s)}) {
       subscripts.emplace_back(std::move(*subscript));
+    } else {
+      error = true;
     }
   }
-  return subscripts;
+  return !error ? subscripts : std::vector<Subscript>{};
 }
 
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::ArrayElement &ae) {
   std::vector<Subscript> subscripts{AnalyzeSectionSubscripts(ae.subscripts)};
   if (MaybeExpr baseExpr{Analyze(ae.base)}) {
     if (std::optional<DataRef> dataRef{ExtractDataRef(std::move(*baseExpr))}) {
-      if (MaybeExpr result{
-              ApplySubscripts(std::move(*dataRef), std::move(subscripts))}) {
-        return result;
+      if (!subscripts.empty()) {
+        return ApplySubscripts(std::move(*dataRef), std::move(subscripts));
       }
+    } else {
+      Say("subscripts may be applied only to an object or component"_err_en_US);
     }
   }
-  Say("subscripts may be applied only to an object or component"_err_en_US);
   return std::nullopt;
 }
 
@@ -884,84 +884,85 @@ static std::optional<Component> CreateComponent(
 
 // Derived type component references and type parameter inquiries
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::StructureComponent &sc) {
+  MaybeExpr base{Analyze(sc.base)};
+  if (!base) {
+    return std::nullopt;
+  }
+  Symbol *sym{sc.component.symbol};
+  if (HasError(sym)) {
+    return std::nullopt;
+  }
   const auto &name{sc.component.source};
-  if (MaybeExpr base{Analyze(sc.base)}) {
-    Symbol *sym{sc.component.symbol};
-    if (sym == nullptr) {
-      Say(sc.component.source,
-          "component name was not resolved to a symbol"_err_en_US);
-    } else if (auto *dtExpr{UnwrapExpr<Expr<SomeDerived>>(*base)}) {
-      const semantics::DerivedTypeSpec *dtSpec{nullptr};
-      if (std::optional<DynamicType> dtDyTy{dtExpr->GetType()}) {
-        dtSpec = dtDyTy->derived;
-      }
-      if (sym->detailsIf<semantics::TypeParamDetails>()) {
-        if (auto *designator{UnwrapExpr<Designator<SomeDerived>>(*dtExpr)}) {
-          if (std::optional<DynamicType> dyType{GetSymbolType(*sym)}) {
-            if (dyType->category == TypeCategory::Integer) {
-              return AsMaybeExpr(
-                  common::SearchTypes(TypeParamInquiryVisitor{dyType->kind,
-                      IgnoreAnySubscripts(std::move(*designator)), *sym}));
-            }
-          }
-          Say(name, "type parameter is not INTEGER"_err_en_US);
-        } else {
-          Say(name,
-              "type parameter inquiry must be applied to "
-              "a designator"_err_en_US);
-        }
-      } else if (dtSpec == nullptr || dtSpec->scope() == nullptr) {
-        Say(name,
-            "TODO: base of component reference lacks a derived type"_err_en_US);
-      } else if (std::optional<DataRef> dataRef{
-                     ExtractDataRef(std::move(*dtExpr))}) {
-        if (auto component{
-                CreateComponent(std::move(*dataRef), *sym, *dtSpec->scope())}) {
-          return Designate(DataRef{std::move(*component)});
-        } else {
-          Say(name, "component is not in scope of derived TYPE(%s)"_err_en_US,
-              dtSpec->typeSymbol().name().ToString().data());
-        }
-      } else {
-        Say(name,
-            "base of component reference must be a data reference"_err_en_US);
-      }
-    } else if (auto *details{sym->detailsIf<semantics::MiscDetails>()}) {
-      // special part-ref: %re, %im, %kind, %len
-      // Type errors are detected and reported in semantics.
-      using MiscKind = semantics::MiscDetails::Kind;
-      MiscKind kind{details->kind()};
-      if (kind == MiscKind::ComplexPartRe || kind == MiscKind::ComplexPartIm) {
-        if (auto *zExpr{std::get_if<Expr<SomeComplex>>(&base->u)}) {
-          if (std::optional<DataRef> dataRef{
-                  ExtractDataRef(std::move(*zExpr))}) {
-            Expr<SomeReal> realExpr{std::visit(
-                [&](const auto &z) {
-                  using PartType = typename ResultType<decltype(z)>::Part;
-                  auto part{kind == MiscKind::ComplexPartRe
-                          ? ComplexPart::Part::RE
-                          : ComplexPart::Part::IM};
-                  return AsCategoryExpr(Designator<PartType>{
-                      ComplexPart{std::move(*dataRef), part}});
-                },
-                zExpr->u)};
-            return {AsGenericExpr(std::move(realExpr))};
+  if (auto *dtExpr{UnwrapExpr<Expr<SomeDerived>>(*base)}) {
+    const semantics::DerivedTypeSpec *dtSpec{nullptr};
+    if (std::optional<DynamicType> dtDyTy{dtExpr->GetType()}) {
+      dtSpec = dtDyTy->derived;
+    }
+    if (sym->detailsIf<semantics::TypeParamDetails>()) {
+      if (auto *designator{UnwrapExpr<Designator<SomeDerived>>(*dtExpr)}) {
+        if (std::optional<DynamicType> dyType{GetSymbolType(*sym)}) {
+          if (dyType->category == TypeCategory::Integer) {
+            return AsMaybeExpr(
+                common::SearchTypes(TypeParamInquiryVisitor{dyType->kind,
+                    IgnoreAnySubscripts(std::move(*designator)), *sym}));
           }
         }
-      } else if (kind == MiscKind::KindParamInquiry ||
-          kind == MiscKind::LenParamInquiry) {
-        // Convert x%KIND -> intrinsic KIND(x), x%LEN -> intrinsic LEN(x)
-        SpecificIntrinsic func{name.ToString()};
-        func.type = GetDefaultKindOfType(TypeCategory::Integer);
-        return TypedWrapper<FunctionRef, ProcedureRef>(*func.type,
-            ProcedureRef{ProcedureDesignator{std::move(func)},
-                ActualArguments{ActualArgument{std::move(*base)}}});
+        Say(name, "type parameter is not INTEGER"_err_en_US);
       } else {
-        common::die("unexpected kind");
+        Say(name,
+            "type parameter inquiry must be applied to "
+            "a designator"_err_en_US);
+      }
+    } else if (dtSpec == nullptr || dtSpec->scope() == nullptr) {
+      Say(name,
+          "TODO: base of component reference lacks a derived type"_err_en_US);
+    } else if (std::optional<DataRef> dataRef{
+                   ExtractDataRef(std::move(*dtExpr))}) {
+      if (auto component{
+              CreateComponent(std::move(*dataRef), *sym, *dtSpec->scope())}) {
+        return Designate(DataRef{std::move(*component)});
+      } else {
+        Say(name, "component is not in scope of derived TYPE(%s)"_err_en_US,
+            dtSpec->typeSymbol().name().ToString().data());
       }
     } else {
-      Say(name, "derived type required before component reference"_err_en_US);
+      Say(name,
+          "base of component reference must be a data reference"_err_en_US);
     }
+  } else if (auto *details{sym->detailsIf<semantics::MiscDetails>()}) {
+    // special part-ref: %re, %im, %kind, %len
+    // Type errors are detected and reported in semantics.
+    using MiscKind = semantics::MiscDetails::Kind;
+    MiscKind kind{details->kind()};
+    if (kind == MiscKind::ComplexPartRe || kind == MiscKind::ComplexPartIm) {
+      if (auto *zExpr{std::get_if<Expr<SomeComplex>>(&base->u)}) {
+        if (std::optional<DataRef> dataRef{ExtractDataRef(std::move(*zExpr))}) {
+          Expr<SomeReal> realExpr{std::visit(
+              [&](const auto &z) {
+                using PartType = typename ResultType<decltype(z)>::Part;
+                auto part{kind == MiscKind::ComplexPartRe
+                        ? ComplexPart::Part::RE
+                        : ComplexPart::Part::IM};
+                return AsCategoryExpr(Designator<PartType>{
+                    ComplexPart{std::move(*dataRef), part}});
+              },
+              zExpr->u)};
+          return {AsGenericExpr(std::move(realExpr))};
+        }
+      }
+    } else if (kind == MiscKind::KindParamInquiry ||
+        kind == MiscKind::LenParamInquiry) {
+      // Convert x%KIND -> intrinsic KIND(x), x%LEN -> intrinsic LEN(x)
+      SpecificIntrinsic func{name.ToString()};
+      func.type = GetDefaultKindOfType(TypeCategory::Integer);
+      return TypedWrapper<FunctionRef, ProcedureRef>(*func.type,
+          ProcedureRef{ProcedureDesignator{std::move(func)},
+              ActualArguments{ActualArgument{std::move(*base)}}});
+    } else {
+      common::die("unexpected kind");
+    }
+  } else {
+    Say(name, "derived type required before component reference"_err_en_US);
   }
   return std::nullopt;
 }
@@ -1116,6 +1117,7 @@ void ArrayConstructorContext::Add(const parser::AcValue &x) {
                 std::get<parser::AcImpliedDoControl>(impliedDo.value().t)};
             const auto &bounds{
                 std::get<parser::LoopBounds<parser::ScalarIntExpr>>(control.t)};
+            Analyze(bounds.name);
             parser::CharBlock name{bounds.name.thing.thing.source};
             int kind{IntType::kind};
             if (auto &its{std::get<std::optional<parser::IntegerTypeSpec>>(
@@ -1444,9 +1446,7 @@ auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
       common::visitors{
           [&](const parser::Name &n) -> std::optional<CallAndArguments> {
             const Symbol *symbol{n.symbol};
-            if (symbol == nullptr) {
-              Say("TODO INTERNAL no symbol for procedure designator name '%s'"_err_en_US,
-                  n.ToString().data());
+            if (HasError(symbol)) {
               return std::nullopt;
             }
             if (IsProcedure(*symbol)) {
@@ -1987,7 +1987,7 @@ std::optional<int> ExpressionAnalyzer::IsAcImpliedDo(
   }
 }
 
-void ExpressionAnalyzer::EnforceTypeConstraint(parser::CharBlock at,
+bool ExpressionAnalyzer::EnforceTypeConstraint(parser::CharBlock at,
     const MaybeExpr &result, TypeCategory category, bool defaultKind) {
   if (result.has_value()) {
     if (auto type{result->GetType()}) {
@@ -1995,20 +1995,25 @@ void ExpressionAnalyzer::EnforceTypeConstraint(parser::CharBlock at,
         Say(at, "Must have %s type, but is %s"_err_en_US,
             parser::ToUpperCaseLetters(EnumToString(category)).data(),
             parser::ToUpperCaseLetters(type->AsFortran()).data());
+        return false;
       } else if (defaultKind) {
         int kind{context().defaultKinds().GetDefaultKind(category)};
         if (type->kind != kind) {
           Say(at, "Must have default kind(%d) of %s type, but is %s"_err_en_US,
               kind, parser::ToUpperCaseLetters(EnumToString(category)).data(),
               parser::ToUpperCaseLetters(type->AsFortran()).data());
+          return false;
         }
       }
     } else {
       Say(at, "Must have %s type, but is typeless"_err_en_US,
           parser::ToUpperCaseLetters(EnumToString(category)).data());
+      return false;
     }
   }
+  return true;
 }
+
 }
 
 namespace Fortran::semantics {

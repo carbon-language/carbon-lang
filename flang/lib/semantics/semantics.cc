@@ -86,7 +86,9 @@ using StatementSemanticsPass2 = SemanticsVisitor<AllocateChecker,
     ReturnStmtChecker, StopChecker>;
 
 static bool PerformStatementSemantics(
-    SemanticsContext &context, const parser::Program &program) {
+    SemanticsContext &context, parser::Program &program) {
+  ResolveNames(context, program);
+  RewriteParseTree(context, program);
   StatementSemanticsPass1{context}.Walk(program);
   return StatementSemanticsPass2{context}.Walk(program);
 }
@@ -141,8 +143,6 @@ Scope &SemanticsContext::FindScope(parser::CharBlock source) {
 bool Semantics::Perform() {
   return ValidateLabels(context_.messages(), program_) &&
       parser::CanonicalizeDo(program_) &&  // force line break
-      ResolveNames(context_, program_) &&
-      RewriteParseTree(context_, program_) &&
       PerformStatementSemantics(context_, program_) &&
       ModFileWriter{context_}.WriteAll();
 }

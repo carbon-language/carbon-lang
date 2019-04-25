@@ -27,7 +27,9 @@ void DeallocateChecker::Leave(const parser::DeallocateStmt &deallocateStmt) {
         common::visitors{
             [&](const parser::Name &name) {
               auto const *symbol{name.symbol};
-              if (!IsVariableName(*symbol)) {
+              if (HasError(symbol)) {
+                // already reported an error
+              } else if (!IsVariableName(*symbol)) {
                 context_.Say(name.source,
                     "name in DEALLOCATE statement must be a variable name"_err_en_US);
               } else if (!IsAllocatableOrPointer(*symbol)) {  // C932

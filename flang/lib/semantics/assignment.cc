@@ -15,6 +15,7 @@
 #include "assignment.h"
 #include "expression.h"
 #include "symbol.h"
+#include "tools.h"
 #include "../common/idioms.h"
 #include "../evaluate/expression.h"
 #include "../evaluate/fold.h"
@@ -267,9 +268,9 @@ void AssignmentContext::Analyze(const parser::ConcurrentHeader &header) {
       std::get<std::optional<parser::IntegerTypeSpec>>(header.t));
   for (const auto &control :
       std::get<std::list<parser::ConcurrentControl>>(header.t)) {
-    const parser::CharBlock &name{std::get<parser::Name>(control.t).source};
-    bool inserted{forall_->activeNames.insert(name).second};
-    CHECK(inserted);
+    const parser::Name &name{std::get<parser::Name>(control.t)};
+    bool inserted{forall_->activeNames.insert(name.source).second};
+    CHECK(inserted || HasError(name));
   }
 }
 

@@ -46,12 +46,16 @@ subroutine s4
   real :: a(10), b(10)
   complex :: x
   integer :: i(2)
-  !ERROR: Variable 'x' is not INTEGER
+  !ERROR: Must have INTEGER type, but is COMPLEX(4)
   forall(x=1:10)
+    !ERROR: Must have INTEGER type, but is COMPLEX(4)
+    !ERROR: Must have INTEGER type, but is COMPLEX(4)
     a(x) = b(x)
   end forall
-  !ERROR: Variable 'y' is not INTEGER
+  !ERROR: Must have INTEGER type, but is REAL(4)
   forall(y=1:10)
+    !ERROR: Must have INTEGER type, but is REAL(4)
+    !ERROR: Must have INTEGER type, but is REAL(4)
     a(y) = b(y)
   end forall
   !ERROR: Index variable 'i' is not scalar
