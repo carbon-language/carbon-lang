@@ -105,7 +105,7 @@ TEST(AnnotationsTest, Errors) {
 
   // Parsing failures.
   EXPECT_DEATH(llvm::Annotations("ff[[fdfd"), "unmatched \\[\\[");
-  EXPECT_DEATH(llvm::Annotations("ff[[fdjsfjd]]xxx]]"), "unmatched ]]");
+  EXPECT_DEATH(llvm::Annotations("ff[[fdjsfjd]]xxx]]"), "unmatched \\]\\]");
   EXPECT_DEATH(llvm::Annotations("ff$fdsfd"), "unterminated \\$name");
 #endif
 }
