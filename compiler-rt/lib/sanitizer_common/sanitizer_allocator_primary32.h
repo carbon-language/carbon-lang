@@ -47,10 +47,6 @@ struct SizeClassAllocator32FlagMasks {  //  Bit masks.
 
 template <class Params>
 class SizeClassAllocator32 {
- private:
-  static const u64 TwoLevelByteMapSize1 =
-      (Params::kSpaceSize >> Params::kRegionSizeLog) >> 12;
-
  public:
   using AddressSpaceView = typename Params::AddressSpaceView;
   static const uptr kSpaceBeg = Params::kSpaceBeg;
@@ -62,12 +58,12 @@ class SizeClassAllocator32 {
   typedef typename Params::MapUnmapCallback MapUnmapCallback;
 
 #if SANITIZER_WORDSIZE == 32
-  static_assert(TwoLevelByteMapSize1 <= 128, "FlatByteMap should be used");
   using BM = FlatByteMap<(Params::kSpaceSize >> Params::kRegionSizeLog),
                          AddressSpaceView>;
 #elif SANITIZER_WORDSIZE == 64
-  static_assert(TwoLevelByteMapSize1 > 128, "TwoLevelByteMap should be used");
-  using BM = TwoLevelByteMap<TwoLevelByteMapSize1, 1 << 12, AddressSpaceView>;
+  using BM =
+      TwoLevelByteMap<((Params::kSpaceSize >> Params::kRegionSizeLog) >> 12),
+                      1 << 12, AddressSpaceView>;
 #endif
   static_assert((Params::kFlags & SizeClassAllocator32FlagMasks::kForTest) ||
                     is_same<BM, ByteMap>::value,
