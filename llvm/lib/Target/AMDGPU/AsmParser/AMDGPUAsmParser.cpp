@@ -6003,7 +6003,8 @@ void AMDGPUAsmParser::cvtSDWA(MCInst &Inst, const OperandVector &Operands,
     skippedVcc = false;
   }
 
-  if (Inst.getOpcode() != AMDGPU::V_NOP_sdwa_gfx9 &&
+  if (Inst.getOpcode() != AMDGPU::V_NOP_sdwa_gfx10 &&
+      Inst.getOpcode() != AMDGPU::V_NOP_sdwa_gfx9 &&
       Inst.getOpcode() != AMDGPU::V_NOP_sdwa_vi) {
     // v_nop_sdwa_sdwa_vi/gfx9 has no optional sdwa arguments
     switch (BasicInstType) {
