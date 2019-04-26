@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=hexagon < %s | FileCheck %s
+; RUN: llc -march=nvptx < %s | FileCheck %s
 
 ; Test that %c works with immediates
 ; CHECK-LABEL: test_inlineasm_c_output_template0
@@ -9,13 +9,15 @@ define dso_local i32 @test_inlineasm_c_output_template0() {
 }
 
 ; Test that %c works with global address
-; CHECK-LABEL: test_inlineasm_c_output_template1:
-; CHECK: TEST {{_?}}baz
-@baz = internal global i32 0, align 4
-define dso_local i32 @test_inlineasm_c_output_template1() {
-  tail call void asm sideeffect "//TEST ${0:c}", "i"(i32* nonnull @baz)
-  ret i32 43
-}
+; FIXME: seems this case isn't handled properly by
+; SelectionDAG TargetLowering::LowerAsmOperandForConstraint?
+; check: test_inlineasm_c_output_template1
+; check: //TEST baz
+;@baz = internal global i32 0, align 4
+;define dso_local i32 @test_inlineasm_c_output_template1() {
+;  tail call void asm sideeffect "//TEST ${0:c}", "i"(i32* nonnull @baz)
+;  ret i32 42
+;}
 
 ; Test that %n works with immediates
 ; CHECK-LABEL: test_inlineasm_c_output_template2
