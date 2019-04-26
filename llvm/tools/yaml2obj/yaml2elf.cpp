@@ -170,7 +170,7 @@ class ELFState {
   bool writeSectionContent(Elf_Shdr &SHeader,
                            const ELFYAML::DynamicSection &Section,
                            ContiguousBlobAccumulator &CBA);
-  SmallVector<const char *, 5> implicitSectionNames() const;
+  std::vector<StringRef> implicitSectionNames() const;
 
   // - SHT_NULL entry (placed first, i.e. 0'th entry)
   // - symbol table (.symtab) (defaults to after last yaml section)
@@ -792,7 +792,7 @@ template <class ELFT> bool ELFState<ELFT>::buildSectionIndex() {
 
   auto SecNo = 1 + Doc.Sections.size();
   // Add special sections after input sections, if necessary.
-  for (const auto &Name : implicitSectionNames())
+  for (StringRef Name : implicitSectionNames())
     if (!SN2I.addName(Name, SecNo)) {
       // Account for this section, since it wasn't in the Doc
       ++SecNo;
@@ -894,7 +894,7 @@ int ELFState<ELFT>::writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
     return 1;
 
   // Populate SHeaders with implicit sections not present in the Doc
-  for (const auto &Name : State.implicitSectionNames())
+  for (StringRef Name : State.implicitSectionNames())
     if (State.SN2I.get(Name) >= SHeaders.size())
       SHeaders.push_back({});
 
@@ -925,7 +925,7 @@ int ELFState<ELFT>::writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
 }
 
 template <class ELFT>
-SmallVector<const char *, 5> ELFState<ELFT>::implicitSectionNames() const {
+std::vector<StringRef> ELFState<ELFT>::implicitSectionNames() const {
   if (Doc.DynamicSymbols.empty())
     return {".symtab", ".strtab", ".shstrtab"};
   return {".symtab", ".strtab", ".shstrtab", ".dynsym", ".dynstr"};
