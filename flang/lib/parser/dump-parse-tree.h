@@ -21,10 +21,19 @@
 #include "../common/indirection.h"
 #include <ostream>
 #include <string>
+#include <type_traits>
 
 namespace Fortran::parser {
 
 using namespace std::string_literals;
+
+// When SHOW_ALL_SOURCE_MEMBERS is defined, HasSource<T>::value is true if T has
+// a member named source
+template<typename T, typename = int> struct HasSource : std::false_type {};
+#ifdef SHOW_ALL_SOURCE_MEMBERS
+template<typename T>
+struct HasSource<T, decltype((void)T::source, 0)> : std::true_type {};
+#endif
 
 //
 // Dump the Parse Tree hierarchy of any node 'x' of the parse tree.
@@ -711,11 +720,14 @@ public:
 #undef NODE_NAME
 
   template<typename T> bool Pre(const T &x) {
-    if (UnionTrait<T> || WrapperTrait<T>) {
+    if constexpr (!HasSource<T>::value && (UnionTrait<T> || WrapperTrait<T>)) {
       Prefix(GetNodeName(x));
     } else {
       IndentEmptyLine();
       out_ << GetNodeName(x);
+      if constexpr (HasSource<T>::value) {
+        out_ << " = '" << x.source.ToString() << '\'';
+      }
       EndLine();
       ++indent_;
     }
@@ -723,28 +735,25 @@ public:
   }
 
   template<typename T> void Post(const T &x) {
-    if (UnionTrait<T> || WrapperTrait<T>) {
+    if constexpr (!HasSource<T>::value && (UnionTrait<T> || WrapperTrait<T>)) {
       EndLineIfNonempty();
     } else {
       --indent_;
     }
   }
 
-  bool PutName(const std::string &name) {
+  bool Pre(const parser::Name &x) {
     IndentEmptyLine();
-    out_ << "Name = '" << name << '\'';
-    ++indent_;
+    out_ << "Name = '" << x.ToString() << '\'';
     EndLine();
-    return true;
+    return false;
   }
-
-  bool Pre(const parser::Name &x) { return PutName(x.ToString()); }
-
-  void Post(const parser::Name &) { --indent_; }
-
-  bool Pre(const std::string &x) { return PutName(x); }
-
-  void Post(const std::string &x) { --indent_; }
+  bool Pre(const std::string &x) {
+    IndentEmptyLine();
+    out_ << "string = '" << x << '\'';
+    EndLine();
+    return false;
+  }
 
   bool Pre(const std::int64_t &x) {
     IndentEmptyLine();
@@ -759,30 +768,39 @@ public:
   bool Pre(const std::uint64_t &x) {
     IndentEmptyLine();
     out_ << "int = '" << x << '\'';
-    ++indent_;
     EndLine();
-    return true;
+    return false;
   }
-
-  void Post(const std::uint64_t &x) { --indent_; }
 
   bool Pre(const parser::IntLiteralConstant &x) {
     IndentEmptyLine();
     out_ << "int = '" << std::get<parser::CharBlock>(x.t).ToString() << '\'';
-    ++indent_;
     EndLine();
-    return true;
+    ++indent_;
+    Walk(std::get<std::optional<KindParam>>(x.t), *this);
+    --indent_;
+    return false;
   }
-  void Post(const parser::IntLiteralConstant &) { --indent_; }
 
   bool Pre(const parser::SignedIntLiteralConstant &x) {
     IndentEmptyLine();
     out_ << "int = '" << std::get<parser::CharBlock>(x.t).ToString() << '\'';
-    ++indent_;
     EndLine();
-    return true;
+    ++indent_;
+    Walk(std::get<std::optional<KindParam>>(x.t), *this);
+    --indent_;
+    return false;
   }
-  void Post(const parser::SignedIntLiteralConstant &) { --indent_; }
+
+  bool Pre(const parser::RealLiteralConstant &x) {
+    Prefix(GetNodeName(x));
+    out_ << "Real = '" << x.real.source.ToString() << '\'';
+    EndLine();
+    ++indent_;
+    Walk(x.kind, *this);
+    --indent_;
+    return false;
+  }
 
   // A few types we want to ignore
 
