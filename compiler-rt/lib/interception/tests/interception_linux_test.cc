@@ -50,6 +50,8 @@ TEST(Interception, GetFuncAddr) {
 }
 
 TEST(Interception, Basic) {
+  INTERCEPT_FUNCTION(isdigit);
+
   // After interception, the counter should be incremented.
   InterceptorFunctionCalled = 0;
   EXPECT_NE(0, isdigit('1'));
