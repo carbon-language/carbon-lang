@@ -593,14 +593,14 @@ bool ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
   raw_ostream &OS =
       CBA.getOSAndAlignedOffset(SHeader.sh_offset, SHeader.sh_addralign);
 
-  for (auto member : Section.Members) {
-    unsigned int sectionIndex = 0;
-    if (member.sectionNameOrType == "GRP_COMDAT")
-      sectionIndex = llvm::ELF::GRP_COMDAT;
-    else if (!convertSectionIndex(SN2I, Section.Name, member.sectionNameOrType,
-                                  sectionIndex))
+  for (const ELFYAML::SectionOrType &Member : Section.Members) {
+    unsigned int SectionIndex = 0;
+    if (Member.sectionNameOrType == "GRP_COMDAT")
+      SectionIndex = llvm::ELF::GRP_COMDAT;
+    else if (!convertSectionIndex(SN2I, Section.Name, Member.sectionNameOrType,
+                                  SectionIndex))
       return false;
-    support::endian::write<uint32_t>(OS, sectionIndex, ELFT::TargetEndianness);
+    support::endian::write<uint32_t>(OS, SectionIndex, ELFT::TargetEndianness);
   }
   return true;
 }
