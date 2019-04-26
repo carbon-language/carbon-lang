@@ -928,9 +928,6 @@ static char getSymbolNMTypeChar(ELFObjectFileBase &Obj,
   // OK, this is ELF
   elf_symbol_iterator SymI(I);
 
-  if (SymI->getELFType() == ELF::STT_GNU_IFUNC)
-    return 'i';
-
   Expected<elf_section_iterator> SecIOrErr = SymI->getSection();
   if (!SecIOrErr) {
     consumeError(SecIOrErr.takeError());
