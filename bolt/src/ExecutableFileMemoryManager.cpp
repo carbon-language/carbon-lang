@@ -29,18 +29,16 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
                                                       StringRef SectionName,
                                                       bool IsCode,
                                                       bool IsReadOnly) {
-  // Register as note section (non-allocatable) if we recognize it as so
-  for (auto &OverwriteName : RewriteInstance::SectionsToOverwrite) {
-    if (SectionName == OverwriteName) {
-      uint8_t *DataCopy = new uint8_t[Size];
-      auto &Section = BC.registerOrUpdateNoteSection(SectionName,
-                                                     DataCopy,
-                                                     Size,
-                                                     Alignment);
-      Section.setSectionID(SectionID);
-      assert(!Section.isAllocatable() && "note sections cannot be allocatable");
-      return DataCopy;
-    }
+  // Register a debug section as a note section.
+  if (RewriteInstance::isDebugSection(SectionName)) {
+    uint8_t *DataCopy = new uint8_t[Size];
+    auto &Section = BC.registerOrUpdateNoteSection(SectionName,
+                                                   DataCopy,
+                                                   Size,
+                                                   Alignment);
+    Section.setSectionID(SectionID);
+    assert(!Section.isAllocatable() && "note sections cannot be allocatable");
+    return DataCopy;
   }
 
   uint8_t *Ret;

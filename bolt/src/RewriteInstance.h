@@ -259,17 +259,24 @@ private:
   bool shouldDisassemble(BinaryFunction &BF) const;
 
 public:
-  /// When updating debug info, these are the sections we overwrite.
+  /// Standard ELF sections we overwrite.
   static constexpr const char *SectionsToOverwrite[] = {
     ".shstrtab",
     ".symtab",
     ".strtab",
+  };
+
+  /// Debug section to we overwrite while updating the debug info.
+  static constexpr const char *DebugSectionsToOverwrite[] = {
     ".debug_aranges",
     ".debug_line",
     ".debug_loc",
     ".debug_ranges",
     ".gdb_index",
   };
+
+  /// Return true if the section holds debug information.
+  static bool isDebugSection(StringRef SectionName);
 
   using SectionPatchersType =
     std::map<std::string, std::unique_ptr<BinaryPatcher>>;

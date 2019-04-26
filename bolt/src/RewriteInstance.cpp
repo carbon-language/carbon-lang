@@ -512,6 +512,7 @@ MCPlusBuilder *createMCPlusBuilder(const Triple::ArchType Arch,
 }
 
 constexpr const char *RewriteInstance::SectionsToOverwrite[];
+constexpr const char *RewriteInstance::DebugSectionsToOverwrite[];
 
 const std::string RewriteInstance::OrgSecPrefix = ".bolt.org";
 
@@ -1720,6 +1721,7 @@ void RewriteInstance::readSpecialSections() {
                      TimerGroupName, TimerGroupDesc, opts::TimeRewrite);
 
   bool HasTextRelocations = false;
+  bool HasDebugInfo = false;
 
   // Process special sections.
   for (const auto &Section : InputFile->sections()) {
@@ -1733,7 +1735,14 @@ void RewriteInstance::readSpecialSections() {
                    << " @ 0x" << Twine::utohexstr(Section.getAddress()) << ":0x"
                    << Twine::utohexstr(Section.getAddress() + Section.getSize())
                    << "\n");
+      if (isDebugSection(SectionName))
+        HasDebugInfo = true;
     }
+  }
+
+  if (HasDebugInfo && !opts::UpdateDebugSections) {
+    errs() << "BOLT-WARNING: debug info will be stripped from the binary. "
+              "Use -update-debug-sections to keep it.\n";
   }
 
   HasTextRelocations = (bool)BC->getUniqueSectionByName(".rela.text");
@@ -3763,8 +3772,7 @@ std::string RewriteInstance::getOutputSectionName(const ELFObjType *Obj,
   StringRef SectionName =
       cantFail(Obj->getSectionName(&Section), "cannot get section name");
 
-  if ((Section.sh_flags & ELF::SHF_ALLOC) &&
-      willOverwriteSection(SectionName))
+  if ((Section.sh_flags & ELF::SHF_ALLOC) && willOverwriteSection(SectionName))
     return OrgSecPrefix + SectionName.str();
 
   return SectionName;
@@ -3867,6 +3875,10 @@ std::vector<ELFShdrTy> RewriteInstance::getOutputSections(
 
     StringRef SectionName =
         cantFail(Obj->getSectionName(&Section), "cannot get section name");
+
+    // Strip debug sections if not updating them.
+    if (isDebugSection(SectionName) && !opts::UpdateDebugSections)
+      continue;
 
     auto BSec = BC->getUniqueSectionByName(SectionName);
     assert(BSec && "missing section info for non-allocatable section");
@@ -4789,7 +4801,18 @@ bool RewriteInstance::willOverwriteSection(StringRef SectionName) {
     if (SectionName == OverwriteName)
       return true;
   }
+  for (auto &OverwriteName : DebugSectionsToOverwrite) {
+    if (SectionName == OverwriteName)
+      return true;
+  }
 
   auto Section = BC->getUniqueSectionByName(SectionName);
   return Section && Section->isAllocatable() && Section->isFinalized();
+}
+
+bool RewriteInstance::isDebugSection(StringRef SectionName) {
+  if (SectionName.startswith(".debug_") || SectionName == ".gdb_index")
+    return true;
+
+  return false;
 }
