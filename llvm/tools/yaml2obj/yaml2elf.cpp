@@ -325,9 +325,9 @@ void ELFState<ELFT>::initSymtabSectionHeader(Elf_Shdr &SHeader,
   SHeader.sh_name = DotShStrtab.getOffset(IsStatic ? ".symtab" : ".dynsym");
   SHeader.sh_type = IsStatic ? ELF::SHT_SYMTAB : ELF::SHT_DYNSYM;
   SHeader.sh_link = IsStatic ? getDotStrTabSecNo() : getDotDynStrSecNo();
-  const auto &Symbols = IsStatic ? Doc.Symbols : Doc.DynamicSymbols;
-  auto &Strtab = IsStatic ? DotStrtab : DotDynstr;
+
   // One greater than symbol table index of the last local symbol.
+  const auto &Symbols = IsStatic ? Doc.Symbols : Doc.DynamicSymbols;
   SHeader.sh_info = findFirstNonGlobal(Symbols) + 1;
   SHeader.sh_entsize = sizeof(Elf_Sym);
   SHeader.sh_addralign = 8;
@@ -352,7 +352,7 @@ void ELFState<ELFT>::initSymtabSectionHeader(Elf_Shdr &SHeader,
     Syms.push_back(Sym);
   }
 
-  addSymbols(Symbols, Syms, Strtab);
+  addSymbols(Symbols, Syms, IsStatic ? DotStrtab : DotDynstr);
 
   writeArrayData(
       CBA.getOSAndAlignedOffset(SHeader.sh_offset, SHeader.sh_addralign),
