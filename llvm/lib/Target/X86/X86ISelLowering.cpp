@@ -42590,6 +42590,13 @@ static SDValue combineExtractSubvector(SDNode *N, SelectionDAG &DAG,
         VT, SDLoc(N),
         InVec.getNode()->ops().slice(IdxVal, VT.getVectorNumElements()));
 
+  // If we're extracting from a broadcast then we're better off just
+  // broadcasting to the smaller type directly, assuming this is the only use.
+  // As its a broadcast we don't care about the extraction index.
+  if (InVec.getOpcode() == X86ISD::VBROADCAST && InVec.hasOneUse() &&
+      InVec.getOperand(0).getValueSizeInBits() <= VT.getSizeInBits())
+    return DAG.getNode(X86ISD::VBROADCAST, SDLoc(N), VT, InVec.getOperand(0));
+
   // If we're extracting the lowest subvector and we're the only user,
   // we may be able to perform this with a smaller vector width.
   if (IdxVal == 0 && InVec.hasOneUse()) {
