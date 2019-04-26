@@ -56,6 +56,21 @@ bool IsProcedure(const Symbol &);
 bool IsProcName(const Symbol &symbol);  // proc-name
 bool IsVariableName(const Symbol &symbol);  // variable-name
 bool IsProcedurePointer(const Symbol &);
+// Is this a derived type from module with this name?
+bool IsDerivedTypeFromModule(
+    const DerivedTypeSpec *derived, const char *module, const char *name);
+bool IsTeamType(const DerivedTypeSpec *derived);
+const bool IsEventTypeOrLockType(const DerivedTypeSpec *);
+// Returns an ultimate component symbol that is a
+// coarray or nullptr if there are no such component.
+// There is no guarantee regarding which ultimate coarray
+// component is returned in case there are several because this
+// does not really matter for the checks where it is needed.
+const Symbol *HasCoarrayUltimateComponent(const DerivedTypeSpec &);
+// Same logic as HasCoarrayUltimateComponent, but looking for
+// potential component of EVENT_TYPE or LOCK_TYPE from
+// ISO_FORTRAN_ENV module.
+const Symbol *HasEventOrLockPotentialComponent(const DerivedTypeSpec &);
 
 inline bool IsPointer(const Symbol &symbol) {
   return symbol.attrs().test(Attr::POINTER);

@@ -39,29 +39,29 @@ subroutine C932(ed1, ed5, ed7, edc9, edc10, okad1, okpd1, okacd5)
   real, allocatable, save :: oka3, okac4[:,:]
   real, allocatable :: okacd5(:, :)[:]
 
-  !ERROR: name in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
+  !ERROR: Entity in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
   allocate(ed1)
-  !ERROR: name in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
+  !ERROR: Entity in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
   allocate(e2)
-  !ERROR: name in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
+  !ERROR: Entity in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
   allocate(e3)
-  !ERROR: name in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
+  !ERROR: Entity in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
   allocate(e4)
-  !ERROR: name in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
+  !ERROR: Entity in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
   allocate(ed5)
-  !ERROR: name in ALLOCATE statement must be a variable name
+  !ERROR: Name in ALLOCATE statement must be a variable name
   allocate(e6)
-  !ERROR: name in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
+  !ERROR: Entity in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
   allocate(ed7)
-  !ERROR: component in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
+  !ERROR: Entity in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
   allocate(ed7%nok(2))
-  !ERROR: name in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
+  !ERROR: Entity in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
   allocate(ed8)
-  !ERROR: name in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
+  !ERROR: Entity in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
   allocate(ed8)
-  !ERROR: component in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
+  !ERROR: Entity in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
   allocate(edc9%nok)
-  !ERROR: name in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
+  !ERROR: Entity in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute
   allocate(edc10)
 
   ! No errors expected below:
@@ -71,8 +71,8 @@ subroutine C932(ed1, ed5, ed7, edc9, edc10, okad1, okpd1, okacd5)
   allocate(okp3, oka3)
   allocate(okac4[2:4,4:*])
   allocate(okacd5(1:2,3:4)[5:*])
-  allocate(ed7%ok)
-  allocate(e8%ok(7))
-  allocate(edc9%ok)
-  allocate(edc10%ok(4))
+  allocate(ed7%ok(7))
+  allocate(e8%ok)
+  allocate(edc9%ok(4))
+  allocate(edc10%ok)
 end subroutine

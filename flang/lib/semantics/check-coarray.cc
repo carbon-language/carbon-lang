@@ -23,22 +23,6 @@
 
 namespace Fortran::semantics {
 
-// Is this a derived type from module with this name?
-static bool IsDerivedTypeFromModule(
-    const DerivedTypeSpec *derived, const char *module, const char *name) {
-  if (!derived) {
-    return false;
-  } else {
-    const auto &symbol{derived->typeSymbol()};
-    return symbol.name() == name && symbol.owner().IsModule() &&
-        symbol.owner().name() == module;
-  }
-}
-
-static bool IsTeamType(const DerivedTypeSpec *derived) {
-  return IsDerivedTypeFromModule(derived, "iso_fortran_env", "team_type");
-}
-
 template<typename T>
 static void CheckTeamType(SemanticsContext &context, const T &x) {
   if (const auto *expr{GetExpr(x)}) {

@@ -58,7 +58,7 @@ subroutine C935(l, ac1, ac2, ac3, dc1, dc2, ec1, ec2, aa, ab, ea, eb, da, db, wh
   allocate(character(len=*):: ac1, ac3(3))
   allocate(character*(*):: ac2(5))
   allocate(B(*, 5):: aa, ab(2)) !OK but segfault GCC
-  allocate(B(*, *):: ab2)
+  allocate(B(*, *):: ab2(2))
   allocate(C(la=*, lb=10, lc1=*, lc2=5, lc3=*):: something(5))
   allocate(C(la=*, lb=10, lc1=2, lc2=5, lc3=3):: aa)
   allocate(character(5):: whatever)
@@ -86,7 +86,7 @@ subroutine C935(l, ac1, ac2, ac3, dc1, dc2, ec1, ec2, aa, ab, ea, eb, da, db, wh
 
   ! Must not be *
   !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
-  allocate(character(len=*):: ac1, dc1, ac3)
+  allocate(character(len=*):: ac1, dc1, ac3(2))
   !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE
   allocate(character*(*):: dc2(5))
   !ERROR: Type parameters in type-spec must be assumed if and only if they are assumed for allocatable object in ALLOCATE

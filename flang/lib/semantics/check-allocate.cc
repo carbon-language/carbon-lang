@@ -27,6 +27,9 @@ namespace Fortran::semantics {
 struct AllocateCheckerInfo {
   const DeclTypeSpec *typeSpec{nullptr};
   std::optional<evaluate::DynamicType> sourceExprType;
+  std::optional<parser::CharBlock> sourceExprLoc;
+  std::optional<parser::CharBlock> typeSpecLoc;
+  int sourceExprRank{0};  // only valid if gotMold || gotSrc
   bool gotStat{false};
   bool gotMsg{false};
   bool gotTypeSpec{false};
@@ -37,10 +40,54 @@ struct AllocateCheckerInfo {
 class AllocationCheckerHelper {
 public:
   AllocationCheckerHelper(
-      const parser::AllocateObject &obj, AllocateCheckerInfo &info)
-    : allocateInfo_{info}, name_{parser::GetLastName(obj)},
+      const parser::Allocation &alloc, AllocateCheckerInfo &info)
+    : allocateInfo_{info}, allocateObject_{std::get<parser::AllocateObject>(
+                               alloc.t)},
+      name_{parser::GetLastName(allocateObject_)},
       type_{name_.symbol ? name_.symbol->GetType() : nullptr},
-      isSubobject_{std::holds_alternative<parser::StructureComponent>(obj.u)} {
+      allocateShapeSpecRank_{ShapeSpecRank(alloc)},
+      rank_{name_.symbol ? name_.symbol->Rank() : 0},
+      allocateCoarraySpecRank_{CoarraySpecRank(alloc)},
+      corank_{name_.symbol ? name_.symbol->Corank() : 0} {
+    GatherAllocationBasicInfo();
+  }
+
+  bool RunChecks(SemanticsContext &context);
+
+private:
+  AllocateCheckerInfo &allocateInfo_;
+  const parser::AllocateObject &allocateObject_;
+  const parser::Name &name_;
+  const DeclTypeSpec *type_;
+  const int allocateShapeSpecRank_;
+  const int rank_;
+  const int allocateCoarraySpecRank_;
+  const int corank_;
+  bool hasDeferredTypeParameter_{false};
+  bool isUnlimitedPolymorphic_{false};
+  bool isAbstract_{false};
+  bool hasAllocateShapeSpecList() const { return allocateShapeSpecRank_ != 0; }
+  bool hasAllocateCoarraySpec() const { return allocateCoarraySpecRank_ != 0; }
+  bool RunCoarrayRelatedChecks(SemanticsContext &) const;
+
+  static int ShapeSpecRank(const parser::Allocation &allocation) {
+    return static_cast<int>(
+        std::get<std::list<parser::AllocateShapeSpec>>(allocation.t).size());
+  }
+
+  static int CoarraySpecRank(const parser::Allocation &allocation) {
+    if (const auto &coarraySpec{
+            std::get<std::optional<parser::AllocateCoarraySpec>>(
+                allocation.t)}) {
+      return std::get<std::list<parser::AllocateCoshapeSpec>>(coarraySpec->t)
+                 .size() +
+          1;
+    } else {
+      return 0;
+    }
+  }
+
+  void GatherAllocationBasicInfo() {
     if (type_) {
       if (type_->category() == DeclTypeSpec::Category::Character) {
         hasDeferredTypeParameter_ =
@@ -56,29 +103,32 @@ public:
           type_->category() == DeclTypeSpec::Category::ClassStar;
     }
   }
-
-  bool RunChecks(SemanticsContext &context);
-
-private:
-  AllocateCheckerInfo &allocateInfo_;
-  const parser::Name &name_;
-  const DeclTypeSpec *type_;
-  bool isSubobject_;
-  bool hasDeferredTypeParameter_{false};
-  bool isUnlimitedPolymorphic_{false};
-  bool isAbstract_{false};
 };
 
 static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
     const parser::AllocateStmt &allocateStmt, SemanticsContext &context) {
   AllocateCheckerInfo info;
   bool stopCheckingAllocate{false};  // for errors that would lead to ambiguity
-  info.gotTypeSpec =
-      std::get<std::optional<parser::TypeSpec>>(allocateStmt.t).has_value();
-  if (info.gotTypeSpec) {
-    info.typeSpec = std::get<std::optional<parser::TypeSpec>>(allocateStmt.t)
-                        .value()
-                        .declTypeSpec;
+  if (const auto &typeSpec{
+          std::get<std::optional<parser::TypeSpec>>(allocateStmt.t)}) {
+    info.typeSpec = typeSpec->declTypeSpec;
+    info.gotTypeSpec = true;
+    info.typeSpecLoc = parser::FindSourceLocation(*typeSpec);
+    if (!info.typeSpec) {
+      CHECK(context.AnyFatalError());
+      return std::nullopt;
+    }
+    if (const DerivedTypeSpec * derived{info.typeSpec->AsDerived()}) {
+      // C937
+      if (const Symbol *
+          coarrayComponent{HasCoarrayUltimateComponent(*derived)}) {
+        context
+            .Say(
+                "Type-spec in ALLOCATE must not specify a type with a coarray ultimate component"_err_en_US)
+            .Attach(coarrayComponent->name(),
+                "Coarray ultimate component declared here"_en_US);
+      }
+    }
   }
 
   const parser::Expr *parserSourceExpr{nullptr};
@@ -146,10 +196,37 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
     CHECK(parserSourceExpr);
     if (const auto *expr{GetExpr(*parserSourceExpr)}) {
       info.sourceExprType = expr->GetType();
-      if (!info.sourceExprType.has_value()) {
+      if (!info.sourceExprType.has_value() && !context.AnyFatalError()) {
         context.Say(parserSourceExpr->source,
             "Source expression in ALLOCATE must be a valid expression"_err_en_US);
         return std::nullopt;
+      }
+      info.sourceExprRank = expr->Rank();
+      info.sourceExprLoc = parserSourceExpr->source;
+      if (const DerivedTypeSpec * derived{info.sourceExprType->derived}) {
+        // C949
+        if (const Symbol *
+            coarrayComponent{HasCoarrayUltimateComponent(*derived)}) {
+          context
+              .Say(parserSourceExpr->source,
+                  "SOURCE or MOLD expression must not have a type with a coarray ultimate component"_err_en_US)
+              .Attach(coarrayComponent->name(),
+                  "Coarray ultimate component declared here"_en_US);
+        }
+        if (info.gotSrc) {
+          // C948
+          if (IsEventTypeOrLockType(derived)) {
+            context.Say(parserSourceExpr->source,
+                "SOURCE expression type must not be EVENT_TYPE or LOCK_TYPE from ISO_FORTRAN_ENV"_err_en_US);
+          } else if (const Symbol *
+              component{HasEventOrLockPotentialComponent(*derived)}) {
+            context
+                .Say(parserSourceExpr->source,
+                    "SOURCE expression type must not have potential subobject component of type EVENT_TYPE or LOCK_TYPE from ISO_FORTRAN_ENV"_err_en_US)
+                .Attach(component->name(),
+                    "Potential subobject component of forbidden type declared here"_en_US);
+          }
+        }
       }
     } else {
       // Error already reported on source expression.
@@ -157,6 +234,7 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
       return std::nullopt;
     }
   }
+
   return info;
 }
 
@@ -272,7 +350,42 @@ static std::optional<std::int64_t> GetTypeParameterInt64Value(
   }
 }
 
-// Assumes type1 is type compatible with type2 (except for kind type parameters)
+// HaveCompatibleKindParameters functions assume type1 is type compatible with
+// type2 (except for kind type parameters)
+static bool HaveCompatibleKindParameters(
+    const DerivedTypeSpec &derivedType1, const DerivedTypeSpec &derivedType2) {
+  const DerivedTypeDetails &typeDetails{
+      derivedType1.typeSymbol().get<DerivedTypeDetails>()};
+  for (const Symbol *symbol :
+      typeDetails.OrderParameterDeclarations(derivedType1.typeSymbol())) {
+    if (symbol->get<TypeParamDetails>().attr() == common::TypeParamAttr::Kind) {
+      // At this point, it should have been ensured that these contain integer
+      // constants, so die if this is not the case.
+      if (GetTypeParameterInt64Value(*symbol, derivedType1).value() !=
+          GetTypeParameterInt64Value(*symbol, derivedType2).value()) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+static bool HaveCompatibleKindParameters(
+    const DeclTypeSpec &type1, const evaluate::DynamicType &type2) {
+  if (type1.category() == DeclTypeSpec::Category::ClassStar) {
+    return true;
+  }
+  if (const IntrinsicTypeSpec * intrinsicType1{type1.AsIntrinsic()}) {
+    return evaluate::ToInt64(intrinsicType1->kind()).value() == type2.kind;
+  } else if (const DerivedTypeSpec * derivedType1{type1.AsDerived()}) {
+    const DerivedTypeSpec *derivedType2{type2.derived};
+    CHECK(derivedType2);  // Violation of type compatibility hypothesis.
+    return HaveCompatibleKindParameters(*derivedType1, *derivedType2);
+  } else {
+    common::die("unexpected type1 category");
+  }
+}
+
 static bool HaveCompatibleKindParameters(
     const DeclTypeSpec &type1, const DeclTypeSpec &type2) {
   if (type1.category() == DeclTypeSpec::Category::ClassStar) {
@@ -285,21 +398,7 @@ static bool HaveCompatibleKindParameters(
   } else if (const DerivedTypeSpec * derivedType1{type1.AsDerived()}) {
     const DerivedTypeSpec *derivedType2{type2.AsDerived()};
     CHECK(derivedType2);  // Violation of type compatibility hypothesis.
-    const DerivedTypeDetails &typeDetails{
-        derivedType1->typeSymbol().get<DerivedTypeDetails>()};
-    for (const Symbol *symbol :
-        typeDetails.OrderParameterDeclarations(derivedType1->typeSymbol())) {
-      if (symbol->get<TypeParamDetails>().attr() ==
-          common::TypeParamAttr::Kind) {
-        // At this point, it should have been ensured that these contain integer
-        // constants, so die if this is not the case.
-        if (GetTypeParameterInt64Value(*symbol, *derivedType1).value() !=
-            GetTypeParameterInt64Value(*symbol, *derivedType2).value()) {
-          return false;
-        }
-      }
-    }
-    return true;
+    return HaveCompatibleKindParameters(*derivedType1, *derivedType2);
   } else {
     common::die("unexpected type1 category");
   }
@@ -311,13 +410,12 @@ bool AllocationCheckerHelper::RunChecks(SemanticsContext &context) {
   }
   if (!IsVariableName(*name_.symbol)) {  // C932 pre-requisite
     context.Say(name_.source,
-        "name in ALLOCATE statement must be a variable name"_err_en_US);
+        "Name in ALLOCATE statement must be a variable name"_err_en_US);
     return false;
   }
   if (!IsAllocatableOrPointer(*name_.symbol)) {  // C932
     context.Say(name_.source,
-        "%s in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute"_err_en_US,
-        (isSubobject_ ? "component" : "name"));
+        "Entity in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute"_err_en_US);
     return false;
   }
   bool gotSourceExprOrTypeSpec{allocateInfo_.gotMold ||
@@ -366,10 +464,152 @@ bool AllocationCheckerHelper::RunChecks(SemanticsContext &context) {
           "Allocatable object in ALLOCATE must be type compatible with source expression from MOLD or SOURCE"_err_en_US);
       return false;
     }
+    if (!HaveCompatibleKindParameters(
+            *type_, allocateInfo_.sourceExprType.value())) {
+      // C946
+      context.Say(name_.source,
+          "Kind type parameters of allocatable object must be the same as the corresponding ones of SOURCE or MOLD expression"_err_en_US);
+      return false;
+    }
   }
-  // TODO: Second part of C945, and C946. Shape related checks (C939, C940,
-  // C942), Coarray related checks (C937, C941, C949, C950). Blacklisted type
-  // checks (C938, C947, C948)
+  // Shape related checks
+  if (rank_ > 0) {
+    if (!hasAllocateShapeSpecList()) {
+      // C939
+      if (!(allocateInfo_.gotSrc || allocateInfo_.gotMold)) {
+        context.Say(name_.source,
+            "Arrays in ALLOCATE must have a shape specification or an expression of the same rank must appear in SOURCE or MOLD"_err_en_US);
+        return false;
+      } else {
+        if (allocateInfo_.sourceExprRank != rank_) {
+          context
+              .Say(name_.source,
+                  "Arrays in ALLOCATE must have a shape specification or an expression of the same rank must appear in SOURCE or MOLD"_err_en_US)
+              .Attach(allocateInfo_.sourceExprLoc.value(),
+                  "Expression in %s has rank %d but allocatable object has rank %d"_en_US,
+                  allocateInfo_.gotSrc ? "SOURCE" : "MOLD",
+                  allocateInfo_.sourceExprRank, rank_);
+          return false;
+        }
+      }
+    } else {
+      // first part of C942
+      if (allocateShapeSpecRank_ != rank_) {
+        context
+            .Say(name_.source,
+                "The number of shape specifications, when they appear, must match the rank of allocatable object"_err_en_US)
+            .Attach(name_.symbol->name(), "Declared here with rank %d"_en_US,
+                rank_);
+        return false;
+      }
+    }
+  } else {
+    // C940
+    if (hasAllocateShapeSpecList()) {
+      context.Say(name_.source,
+          "Shape specifications must not appear when allocatable object is scalar"_err_en_US);
+      return false;
+    }
+  }
+  // second and last part of C945
+  if (allocateInfo_.gotSrc && allocateInfo_.sourceExprRank &&
+      allocateInfo_.sourceExprRank != rank_) {
+    context
+        .Say(name_.source,
+            "If SOURCE appears, the related expression must be scalar or have the same rank as each allocatable object in ALLOCATE"_err_en_US)
+        .Attach(allocateInfo_.sourceExprLoc.value(),
+            "SOURCE expression has rank %d"_en_US, allocateInfo_.sourceExprRank)
+        .Attach(name_.symbol->name(),
+            "Allocatable object declared here with rank %d"_en_US, rank_);
+    return false;
+  }
+  return RunCoarrayRelatedChecks(context);
+}
+
+static bool IsCoarray(const Symbol &symbol) {
+  if (const auto *objectDetails{symbol.detailsIf<ObjectEntityDetails>()}) {
+    return objectDetails->IsCoarray();
+  }
+  return false;
+}
+
+bool AllocationCheckerHelper::RunCoarrayRelatedChecks(
+    SemanticsContext &context) const {
+  if (IsCoarray(*name_.symbol)) {
+    if (allocateInfo_.gotTypeSpec) {
+      // C938
+      if (const DerivedTypeSpec *
+          derived{allocateInfo_.typeSpec->AsDerived()}) {
+        if (IsTeamType(derived)) {
+          context
+              .Say(allocateInfo_.typeSpecLoc.value(),
+                  "Type-Spec in ALLOCATE must not be TEAM_TYPE from ISO_FORTRAN_ENV when an allocatable object is a coarray"_err_en_US)
+              .Attach(name_.source, "'%s' is a coarray"_en_US,
+                  name_.source.ToString().c_str());
+          return false;
+        } else if (IsDerivedTypeFromModule(derived, "iso_c_binding", "c_ptr") ||
+            IsDerivedTypeFromModule(derived, "iso_c_binding", "c_funptr")) {
+          context
+              .Say(allocateInfo_.typeSpecLoc.value(),
+                  "Type-Spec in ALLOCATE must not be C_PTR or C_FUNPTR from ISO_C_BINDING when an allocatable object is a coarray"_err_en_US)
+              .Attach(name_.source, "'%s' is a coarray"_en_US,
+                  name_.source.ToString().c_str());
+          return false;
+        }
+      }
+    } else if (allocateInfo_.gotSrc || allocateInfo_.gotMold) {
+      // C948
+      if (const DerivedTypeSpec *
+          derived{allocateInfo_.sourceExprType.value().derived}) {
+        if (IsTeamType(derived)) {
+          context
+              .Say(allocateInfo_.sourceExprLoc.value(),
+                  "SOURCE or MOLD expression type must not be TEAM_TYPE from ISO_FORTRAN_ENV when an allocatable object is a coarray"_err_en_US)
+              .Attach(name_.source, "'%s' is a coarray"_en_US,
+                  name_.source.ToString().c_str());
+          return false;
+        } else if (IsDerivedTypeFromModule(derived, "iso_c_binding", "c_ptr") ||
+            IsDerivedTypeFromModule(derived, "iso_c_binding", "c_funptr")) {
+          context
+              .Say(allocateInfo_.sourceExprLoc.value(),
+                  "SOURCE or MOLD expression type must not be C_PTR or C_FUNPTR from ISO_C_BINDING when an allocatable object is a coarray"_err_en_US)
+              .Attach(name_.source, "'%s' is a coarray"_en_US,
+                  name_.source.ToString().c_str());
+          return false;
+        }
+      }
+    }
+    if (!hasAllocateCoarraySpec()) {
+      // C941
+      context.Say(name_.source,
+          "Coarray specification must appear in ALLOCATE when allocatable object is a coarray"_err_en_US);
+      return false;
+    } else {
+      if (allocateCoarraySpecRank_ != corank_) {
+        // Second and last part of C942
+        context
+            .Say(name_.source,
+                "Corank of coarray specification in ALLOCATE must match corank of alloctable coarray"_err_en_US)
+            .Attach(name_.symbol->name(), "Declared here with corank %d"_en_US,
+                corank_);
+        return false;
+      }
+    }
+  } else {  // Not a coarray
+    if (hasAllocateCoarraySpec()) {
+      // C941
+      context.Say(name_.source,
+          "Coarray specification must not appear in ALLOCATE when allocatable object is not a coarray"_err_en_US);
+      return false;
+    }
+  }
+  if (const parser::CoindexedNamedObject *
+      coindexedObject{parser::GetCoindexedNamedObject(allocateObject_)}) {
+    // C950
+    context.Say(parser::FindSourceLocation(*coindexedObject),
+        "Allocatable object must not be coindexed in ALLOCATE"_err_en_US);
+    return false;
+  }
   return true;
 }
 
@@ -377,9 +617,7 @@ void AllocateChecker::Leave(const parser::AllocateStmt &allocateStmt) {
   if (auto info{CheckAllocateOptions(allocateStmt, context_)}) {
     for (const parser::Allocation &allocation :
         std::get<std::list<parser::Allocation>>(allocateStmt.t)) {
-      AllocationCheckerHelper allocationChecker{
-          std::get<parser::AllocateObject>(allocation.t), *info};
-      allocationChecker.RunChecks(context_);
+      AllocationCheckerHelper{allocation, *info}.RunChecks(context_);
     }
   }
 }

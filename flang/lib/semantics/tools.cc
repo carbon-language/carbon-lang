@@ -292,4 +292,93 @@ const Symbol *FindFunctionResult(const Symbol &symbol) {
   }
   return nullptr;
 }
+
+bool IsDerivedTypeFromModule(
+    const DerivedTypeSpec *derived, const char *module, const char *name) {
+  if (!derived) {
+    return false;
+  } else {
+    const auto &symbol{derived->typeSymbol()};
+    return symbol.name() == name && symbol.owner().IsModule() &&
+        symbol.owner().name() == module;
+  }
+}
+
+bool IsTeamType(const DerivedTypeSpec *derived) {
+  return IsDerivedTypeFromModule(derived, "iso_fortran_env", "team_type");
+}
+
+const Symbol *HasCoarrayUltimateComponent(
+    const DerivedTypeSpec &derivedTypeSpec) {
+  const Symbol &symbol{derivedTypeSpec.typeSymbol()};
+  // TODO is it guaranteed that derived type symbol have a scope and is it the
+  // right scope to look into?
+  CHECK(symbol.scope());
+  for (const Symbol *componentSymbol :
+      symbol.get<DerivedTypeDetails>().OrderComponents(*symbol.scope())) {
+    CHECK(componentSymbol);
+    const ObjectEntityDetails &objectDetails{
+        componentSymbol->get<ObjectEntityDetails>()};
+    if (objectDetails.IsCoarray()) {
+      // Coarrays are ultimate components because they must be allocatable
+      // according to C746.
+      return componentSymbol;
+    }
+    if (!IsAllocatableOrPointer(*componentSymbol)) {
+      if (const DeclTypeSpec * declTypeSpec{objectDetails.type()}) {
+        if (const DerivedTypeSpec *
+            componentDerivedTypeSpec{declTypeSpec->AsDerived()}) {
+          // Avoid infinite loop, though this should not happen due to C744
+          CHECK(&symbol != &componentDerivedTypeSpec->typeSymbol());
+          if (const Symbol *
+              subcomponent{
+                  HasCoarrayUltimateComponent(*componentDerivedTypeSpec)}) {
+            return subcomponent;
+          }
+        }
+      }
+    }
+  }
+  return nullptr;
+}
+
+const bool IsEventTypeOrLockType(const DerivedTypeSpec *derivedTypeSpec) {
+  return IsDerivedTypeFromModule(
+             derivedTypeSpec, "iso_fortran_env", "event_type") ||
+      IsDerivedTypeFromModule(derivedTypeSpec, "iso_fortran_env", "lock_type");
+}
+
+const Symbol *HasEventOrLockPotentialComponent(
+    const DerivedTypeSpec &derivedTypeSpec) {
+
+  const Symbol &symbol{derivedTypeSpec.typeSymbol()};
+  // TODO is it guaranteed that derived type symbol have a scope and is it the
+  // right scope to look into?
+  CHECK(symbol.scope());
+  for (const Symbol *componentSymbol :
+      symbol.get<DerivedTypeDetails>().OrderComponents(*symbol.scope())) {
+    CHECK(componentSymbol);
+    if (!IsPointer(*componentSymbol)) {
+      if (const DeclTypeSpec * declTypeSpec{componentSymbol->GetType()}) {
+        if (const DerivedTypeSpec *
+            componentDerivedTypeSpec{declTypeSpec->AsDerived()}) {
+          // Avoid infinite loop, that may happen if the component
+          // is an allocatable of the same type as the derived type.
+          // TODO: Is it legal to have longer type loops: i.e type B has a
+          // component of type A that has an allocatable component of type B?
+          if (&symbol != &componentDerivedTypeSpec->typeSymbol()) {
+            if (IsEventTypeOrLockType(componentDerivedTypeSpec)) {
+              return componentSymbol;
+            } else if (const Symbol *
+                subcomponent{HasEventOrLockPotentialComponent(
+                    *componentDerivedTypeSpec)}) {
+              return subcomponent;
+            }
+          }
+        }
+      }
+    }
+  }
+  return nullptr;
+}
 }

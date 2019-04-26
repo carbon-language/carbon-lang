@@ -73,4 +73,28 @@ const Name &GetLastName(const AllocateObject &x) {
   return std::visit(
       [](const auto &y) -> const Name & { return GetLastName(y); }, x.u);
 }
+
+const CoindexedNamedObject *GetCoindexedNamedObject(const DataRef &base) {
+  return std::visit(
+      common::visitors{
+          [](const Name &) -> const CoindexedNamedObject * { return nullptr; },
+          [](const common::Indirection<CoindexedNamedObject> &x)
+              -> const CoindexedNamedObject * { return &x.value(); },
+          [](const auto &x) -> const CoindexedNamedObject * {
+            return GetCoindexedNamedObject(x.value().base);
+          },
+      },
+      base.u);
+}
+const CoindexedNamedObject *GetCoindexedNamedObject(
+    const AllocateObject &allocateObject) {
+  return std::visit(
+      common::visitors{
+          [](const StructureComponent &x) -> const CoindexedNamedObject * {
+            return GetCoindexedNamedObject(x.base);
+          },
+          [](const auto &x) -> const CoindexedNamedObject * { return nullptr; },
+      },
+      allocateObject.u);
+}
 }

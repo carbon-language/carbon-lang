@@ -117,6 +117,11 @@ set(ERROR_TESTS
   allocate06.f90
   allocate07.f90
   allocate08.f90
+  allocate09.f90
+  allocate10.f90
+  allocate11.f90
+  allocate12.f90
+  allocate13.f90
   dosemantics01.f90
 )
 
