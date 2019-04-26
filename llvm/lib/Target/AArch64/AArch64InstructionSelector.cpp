@@ -2288,40 +2288,6 @@ static bool getLaneCopyOpcode(unsigned &CopyOpc, unsigned &ExtractSubReg,
   return true;
 }
 
-/// Given a register \p Reg, find the value of a constant defining \p Reg.
-/// Return true if one could be found, and store it in \p Val. Return false
-/// otherwise.
-static bool getConstantValueForReg(unsigned Reg, MachineRegisterInfo &MRI,
-                                   unsigned &Val) {
-  // Look at the def of the register.
-  MachineInstr *Def = MRI.getVRegDef(Reg);
-  if (!Def)
-    return false;
-
-  // Find the first definition which isn't a copy.
-  if (Def->isCopy()) {
-    Reg = Def->getOperand(1).getReg();
-    auto It = find_if_not(MRI.reg_nodbg_instructions(Reg),
-                          [](const MachineInstr &MI) { return MI.isCopy(); });
-    if (It == MRI.reg_instr_nodbg_end()) {
-      LLVM_DEBUG(dbgs() << "Couldn't find non-copy def for register\n");
-      return false;
-    }
-    Def = &*It;
-  }
-
-  // TODO: Handle opcodes other than G_CONSTANT.
-  if (Def->getOpcode() != TargetOpcode::G_CONSTANT) {
-    LLVM_DEBUG(dbgs() << "VRegs defined by anything other than G_CONSTANT "
-                         "currently unsupported.\n");
-    return false;
-  }
-
-  // Return the constant value associated with the operand.
-  Val = Def->getOperand(1).getCImm()->getLimitedValue();
-  return true;
-}
-
 MachineInstr *AArch64InstructionSelector::emitExtractVectorElt(
     Optional<unsigned> DstReg, const RegisterBank &DstRB, LLT ScalarTy,
     unsigned VecReg, unsigned LaneIdx, MachineIRBuilder &MIRBuilder) const {
@@ -2405,9 +2371,10 @@ bool AArch64InstructionSelector::selectExtractElt(
   }
 
   // Find the index to extract from.
-  unsigned LaneIdx = 0;
-  if (!getConstantValueForReg(LaneIdxOp.getReg(), MRI, LaneIdx))
+  auto VRegAndVal = getConstantVRegValWithLookThrough(LaneIdxOp.getReg(), MRI);
+  if (!VRegAndVal)
     return false;
+  unsigned LaneIdx = VRegAndVal->Value;
 
   MachineIRBuilder MIRBuilder(I);
 
@@ -2983,9 +2950,10 @@ bool AArch64InstructionSelector::selectInsertElt(
   // Find the definition of the index. Bail out if it's not defined by a
   // G_CONSTANT.
   unsigned IdxReg = I.getOperand(3).getReg();
-  unsigned LaneIdx = 0;
-  if (!getConstantValueForReg(IdxReg, MRI, LaneIdx))
+  auto VRegAndVal = getConstantVRegValWithLookThrough(IdxReg, MRI);
+  if (!VRegAndVal)
     return false;
+  unsigned LaneIdx = VRegAndVal->Value;
 
   // Perform the lane insert.
   unsigned SrcReg = I.getOperand(1).getReg();
