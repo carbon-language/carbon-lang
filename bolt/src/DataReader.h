@@ -303,6 +303,9 @@ public:
   static ErrorOr<std::unique_ptr<DataReader>> readPerfData(StringRef Path,
                                                            raw_ostream &Diag);
 
+  /// Mark all profile objects unused.
+  void reset();
+
   /// Parses the input bolt data file into internal data structures. We expect
   /// the file format to follow the syntax below.
   ///

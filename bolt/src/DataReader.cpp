@@ -251,6 +251,15 @@ void FuncMemData::update(const Location &Offset, const Location &Addr) {
   ++Data[Iter->second].Count;
 }
 
+void DataReader::reset() {
+  for (auto &Pair : getAllFuncsBranchData()) {
+    Pair.second.Used = false;
+  }
+  for (auto &Pair : getAllFuncsMemData()) {
+    Pair.second.Used = false;
+  }
+}
+
 ErrorOr<std::unique_ptr<DataReader>>
 DataReader::readPerfData(StringRef Path, raw_ostream &Diag) {
   auto MB = MemoryBuffer::getFileOrSTDIN(Path);

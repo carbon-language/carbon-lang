@@ -725,6 +725,7 @@ RewriteInstance::~RewriteInstance() {}
 void RewriteInstance::reset() {
   FileSymRefs.clear();
   auto &DR = BC->DR;
+  DR.reset();
   BC = createBinaryContext(
       InputFile, DR,
       DWARFContext::create(*InputFile, nullptr,
