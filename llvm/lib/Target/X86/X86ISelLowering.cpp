@@ -5013,11 +5013,11 @@ bool X86TargetLowering::hasAndNot(SDValue Y) const {
 
 bool X86TargetLowering::shouldFoldConstantShiftPairToMask(
     const SDNode *N, CombineLevel Level) const {
-  assert((N->getOpcode() == ISD::SHL &&
-          N->getOperand(0).getOpcode() == ISD::SRL) ||
-         (N->getOpcode() == ISD::SRL &&
-          N->getOperand(0).getOpcode() == ISD::SHL) &&
-             "Expected shift-shift mask");
+  assert(((N->getOpcode() == ISD::SHL &&
+           N->getOperand(0).getOpcode() == ISD::SRL) ||
+          (N->getOpcode() == ISD::SRL &&
+           N->getOperand(0).getOpcode() == ISD::SHL)) &&
+         "Expected shift-shift mask");
 
   if (Subtarget.hasFastVectorShiftMasks() && N->getValueType(0).isVector()) {
     // Only fold if the shift values are equal - so it folds to AND.
