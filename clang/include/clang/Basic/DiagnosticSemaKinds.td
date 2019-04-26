@@ -9177,8 +9177,10 @@ def err_omp_expected_private_copy_for_allocate : Error<
   "the referenced item is not found in any private clause on the same directive">;
 def err_omp_stmt_depends_on_loop_counter : Error<
   "the loop %select{initializer|condition}0 expression depends on the current loop control variable">;
-def err_omp_invariant_or_linear_dependancy : Error<
+def err_omp_invariant_or_linear_dependency : Error<
   "expected loop invariant expression or '<invariant1> * %0 + <invariant2>' kind of expression">;
+def err_omp_wrong_dependency_iterator_type : Error<
+  "expected an integer or a pointer type of the outer loop counter '%0' for non-rectangular nests">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {
