@@ -494,6 +494,34 @@ template<typename M> void Walk(Expr &x, M &mutator) {
     mutator.Post(x);
   }
 }
+template<typename V> void Walk(const Designator &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.source, visitor);
+    Walk(x.u, visitor);
+    visitor.Post(x);
+  }
+}
+template<typename M> void Walk(Designator &x, M &mutator) {
+  if (mutator.Pre(x)) {
+    Walk(x.source, mutator);
+    Walk(x.u, mutator);
+    mutator.Post(x);
+  }
+}
+template<typename V> void Walk(const Call &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.source, visitor);
+    Walk(x.t, visitor);
+    visitor.Post(x);
+  }
+}
+template<typename M> void Walk(Call &x, M &mutator) {
+  if (mutator.Pre(x)) {
+    Walk(x.source, mutator);
+    Walk(x.t, mutator);
+    mutator.Post(x);
+  }
+}
 template<typename V> void Walk(const PartRef &x, V &visitor) {
   if (visitor.Pre(x)) {
     Walk(x.name, visitor);
