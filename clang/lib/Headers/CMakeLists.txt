@@ -126,7 +126,7 @@ set(ppc_wrapper_files
   ppc_wrappers/mmintrin.h
 )
 
-set(output_dir ${CMAKE_CURRENT_BINARY_DIR}/lib${LLVM_LIBDIR_SUFFIX}/clang/${CLANG_VERSION}/include)
+set(output_dir ${LLVM_LIBRARY_OUTPUT_INTDIR}/clang/${CLANG_VERSION}/include)
 set(out_files)
 
 function(copy_header_to_output_dir src_dir file)
