@@ -296,7 +296,7 @@ namespace {
       if (AM.Segment.getNode())
         Segment = AM.Segment;
       else
-        Segment = CurDAG->getRegister(0, MVT::i32);
+        Segment = CurDAG->getRegister(0, MVT::i16);
     }
 
     // Utility function to determine whether we should avoid selecting
