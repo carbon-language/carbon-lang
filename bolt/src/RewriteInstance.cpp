@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 
+#include "RewriteInstance.h"
 #include "BinaryBasicBlock.h"
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
@@ -21,10 +22,10 @@
 #include "Exceptions.h"
 #include "ExecutableFileMemoryManager.h"
 #include "MCPlusBuilder.h"
+#include "Passes/ReorderFunctions.h"
 #include "ProfileReader.h"
 #include "ProfileWriter.h"
 #include "Relocation.h"
-#include "RewriteInstance.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/BinaryFormat/Dwarf.h"
@@ -89,6 +90,7 @@ extern cl::OptionCategory AggregatorCategory;
 extern cl::opt<MacroFusionType> AlignMacroOpFusion;
 extern cl::opt<JumpTableSupportLevel> JumpTables;
 extern cl::list<std::string> ReorderData;
+extern cl::opt<bolt::ReorderFunctions::ReorderType> ReorderFunctions;
 
 static cl::opt<bool>
 ForceToDataRelocations("force-data-relocations",
@@ -1799,7 +1801,7 @@ void RewriteInstance::adjustCommandLineOptions() {
   }
 
   if (opts::SplitEH && !BC->HasRelocations) {
-    outs() << "BOLT-WARNING: disabling -split-eh in non-relocation mode\n";
+    errs() << "BOLT-WARNING: disabling -split-eh in non-relocation mode\n";
     opts::SplitEH = false;
   }
 
@@ -1812,8 +1814,18 @@ void RewriteInstance::adjustCommandLineOptions() {
     opts::AlignMacroOpFusion = MFT_ALL;
   }
 
-  if (opts::HotText && !BC->HasRelocations) {
-    outs() << "BOLT-WARNING: hot text is disabled in non-relocation mode\n";
+  if (!BC->HasRelocations &&
+      opts::ReorderFunctions != ReorderFunctions::RT_NONE) {
+    errs() << "BOLT-ERROR: function reordering only works when "
+           << "relocations are enabled\n";
+    exit(1);
+  }
+
+  if (opts::ReorderFunctions != ReorderFunctions::RT_NONE &&
+      !opts::HotText.getNumOccurrences()) {
+    opts::HotText = true;
+  } else if (opts::HotText && !BC->HasRelocations) {
+    errs() << "BOLT-WARNING: hot text is disabled in non-relocation mode\n";
     opts::HotText = false;
   }
 
