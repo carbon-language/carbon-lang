@@ -7,10 +7,8 @@
 
 template <class T>
 class c {
-  void f();
+  void f() {}
 };
-
-template <class T> void c<T>::f() {}
 
 template class __declspec(dllexport) c<int>;
 
