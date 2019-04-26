@@ -194,6 +194,9 @@ void AArch64TargetInfo::getTargetDefines(const LangOptions &Opts,
   if (HasDotProd)
     Builder.defineMacro("__ARM_FEATURE_DOTPROD", "1");
 
+  if (HasMTE)
+    Builder.defineMacro("__ARM_FEATURE_MEMORY_TAGGING", "1");
+
   if ((FPU & NeonMode) && HasFP16FML)
     Builder.defineMacro("__ARM_FEATURE_FP16FML", "1");
 
@@ -258,6 +261,8 @@ bool AArch64TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       HasDotProd = 1;
     if (Feature == "+fp16fml")
       HasFP16FML = 1;
+    if (Feature == "+mte")
+      HasMTE = 1;
   }
 
   setDataLayout();
