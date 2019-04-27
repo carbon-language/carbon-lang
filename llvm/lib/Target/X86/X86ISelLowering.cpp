@@ -34415,29 +34415,31 @@ static SDValue combineHorizontalPredicateResult(SDNode *Extract,
   SDLoc DL(Extract);
   EVT MatchVT = Match.getValueType();
   unsigned NumElts = MatchVT.getVectorNumElements();
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
   if (ExtractVT == MVT::i1) {
     // Special case for (pre-legalization) vXi1 reductions.
-    if (NumElts > 32)
+    if (NumElts > 64 || !isPowerOf2_32(NumElts))
       return SDValue();
-    if (DAG.getTargetLoweringInfo().isTypeLegal(MatchVT)) {
+    if (TLI.isTypeLegal(MatchVT)) {
       // If this is a legal AVX512 predicate type then we can just bitcast.
       EVT MovmskVT = EVT::getIntegerVT(*DAG.getContext(), NumElts);
       Movmsk = DAG.getBitcast(MovmskVT, Match);
     } else {
       // Use combineBitcastvxi1 to create the MOVMSK.
-      if (NumElts == 32 && !Subtarget.hasInt256()) {
+      unsigned MaxElts = Subtarget.hasInt256() ? 32 : 16;
+      while (NumElts > MaxElts) {
         SDValue Lo, Hi;
         std::tie(Lo, Hi) = DAG.SplitVector(Match, DL);
         Match = DAG.getNode(BinOp, DL, Lo.getValueType(), Lo, Hi);
-        NumElts = 16;
+        NumElts /= 2;
       }
       EVT MovmskVT = EVT::getIntegerVT(*DAG.getContext(), NumElts);
       Movmsk = combineBitcastvxi1(DAG, MovmskVT, Match, DL, Subtarget);
     }
     if (!Movmsk)
       return SDValue();
-    Movmsk = DAG.getZExtOrTrunc(Movmsk, DL, MVT::i32);
+    Movmsk = DAG.getZExtOrTrunc(Movmsk, DL, NumElts > 32 ? MVT::i64 : MVT::i32);
   } else {
     // Bail with AVX512VL (which uses predicate registers).
     if (Subtarget.hasVLX())
@@ -34478,25 +34480,25 @@ static SDValue combineHorizontalPredicateResult(SDNode *Extract,
     Movmsk = getPMOVMSKB(DL, BitcastLogicOp, DAG, Subtarget);
     NumElts = MaskSrcVT.getVectorNumElements();
   }
-  assert(NumElts <= 32 && "Not expecting more than 32 elements");
+  assert((NumElts <= 32 || NumElts == 64) && "Not expecting more than 64 elements");
 
   SDValue CmpC;
   ISD::CondCode CondCode;
+  MVT CmpVT = NumElts == 64 ? MVT::i64 : MVT::i32;
   if (BinOp == ISD::OR) {
     // any_of -> MOVMSK != 0
-    CmpC = DAG.getConstant(0, DL, MVT::i32);
+    CmpC = DAG.getConstant(0, DL, CmpVT);
     CondCode = ISD::CondCode::SETNE;
   } else {
     // all_of -> MOVMSK == ((1 << NumElts) - 1)
-    CmpC = DAG.getConstant((1ULL << NumElts) - 1, DL, MVT::i32);
+    CmpC = DAG.getConstant((1ULL << NumElts) - 1, DL, CmpVT);
     CondCode = ISD::CondCode::SETEQ;
   }
 
   // The setcc produces an i8 of 0/1, so extend that to the result width and
   // negate to get the final 0/-1 mask value.
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   EVT SetccVT =
-      TLI.getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), MVT::i32);
+      TLI.getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), CmpVT);
   SDValue Setcc = DAG.getSetCC(DL, SetccVT, Movmsk, CmpC, CondCode);
   SDValue Zext = DAG.getZExtOrTrunc(Setcc, DL, ExtractVT);
   SDValue Zero = DAG.getConstant(0, DL, ExtractVT);
