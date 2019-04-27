@@ -4057,16 +4057,12 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
     for (const Elf_Sym &Symbol : cantFail(Obj->symbols(Section))) {
       auto NewSymbol = Symbol;
 
-      const auto *Function =
-          BC->getBinaryFunctionContainingAddress(NewSymbol.st_value,
-                                                 /*CheckPastEnd=*/false,
-                                                 /*UseMaxSize=*/true,
-                                                 /*Shallow=*/true);
+      const auto *Function = BC->getBinaryFunctionAtAddress(Symbol.st_value,
+                                                            /*Shallow=*/true);
 
       // Some section symbols may be mistakenly associated with the first
       // function emitted in the section. Dismiss if it is a section symbol.
       if (Function &&
-          Function->getAddress() == NewSymbol.st_value &&
           !Function->getPLTSymbol() &&
           NewSymbol.getType() != ELF::STT_SECTION) {
         NewSymbol.st_value = Function->getOutputAddress();
@@ -4120,6 +4116,28 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
         }
       } else {
         uint32_t OldSectionIndex = NewSymbol.st_shndx;
+        // Check if the original section where this symbol links to is
+        // code that we may have reordered.
+        auto ExpectedSec = File->getELFFile()->getSection(Symbol.st_shndx);
+        bool IsCodeSym{false};
+        if (ExpectedSec) {
+          auto Section = *ExpectedSec;
+          IsCodeSym = (Section->sh_type == ELF::SHT_PROGBITS &&
+                       Section->sh_flags & ELF::SHF_ALLOC &&
+                       Section->sh_flags & ELF::SHF_EXECINSTR &&
+                       !(Section->sh_flags & ELF::SHF_WRITE));
+        } else {
+          consumeError(ExpectedSec.takeError());
+        }
+        // Try to fetch a containing function to check if this symbol is
+        // a secondary entry point of it
+        if (!Function && IsCodeSym && NewSymbol.getType() == ELF::STT_FUNC) {
+          Function =
+              BC->getBinaryFunctionContainingAddress(NewSymbol.st_value,
+                                                     /*CheckPastEnd=*/false,
+                                                     /*UseMaxSize=*/true,
+                                                     /*Shallow=*/true);
+        }
         auto *BD = !Function ? BC->getBinaryDataAtAddress(NewSymbol.st_value)
                              : nullptr;
         auto Output =
@@ -4167,23 +4185,14 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
         // .text (t15274167). Remove then from the symtab.
         if (NewSymbol.getType() == ELF::STT_NOTYPE &&
             NewSymbol.getBinding() == ELF::STB_LOCAL &&
-            NewSymbol.st_size == 0) {
-          auto ExpectedSec = File->getELFFile()->getSection(Symbol.st_shndx);
-          if (ExpectedSec) {
-            auto Section = *ExpectedSec;
-            if (Section->sh_type == ELF::SHT_PROGBITS &&
-                Section->sh_flags & ELF::SHF_ALLOC &&
-                Section->sh_flags & ELF::SHF_EXECINSTR) {
-              // This will cause the symbol to not be emitted if we are
-              // creating a new symtab from scratch instead of patching one.
-              if (!PatchExisting)
-                continue;
-              // If patching an existing symtab, patch this value to zero.
-              NewSymbol.st_value = 0;
-            }
-          } else {
-            consumeError(ExpectedSec.takeError());
-          }
+            NewSymbol.st_size == 0 &&
+            IsCodeSym) {
+          // This will cause the symbol to not be emitted if we are
+          // creating a new symtab from scratch instead of patching one.
+          if (!PatchExisting)
+            continue;
+          // If patching an existing symtab, patch this value to zero.
+          NewSymbol.st_value = 0;
         }
       }
 
