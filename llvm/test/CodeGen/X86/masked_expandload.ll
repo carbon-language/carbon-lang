@@ -3,73 +3,113 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-linux-gnu -mcpu=skylake-avx512 | FileCheck %s --check-prefixes=ALL,SKX
 ; RUN: llc < %s -mtriple=x86_64-unknown-linux-gnu -mcpu=knl | FileCheck %s --check-prefixes=ALL,KNL
 
-define <16 x float> @expandload_v16f32_const_undef(float* %base) {
-; HSW-LABEL: expandload_v16f32_const_undef:
-; HSW:       # %bb.0: # %cond.load
-; HSW-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; HSW-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0,1],mem[0],xmm0[3]
-; HSW-NEXT:    vinsertf128 $1, 44(%rdi), %ymm0, %ymm1
-; HSW-NEXT:    vmovups (%rdi), %ymm0
+;
+; vXf64
+;
+
+define <2 x double> @expandload_v2f64_v2i64(double* %base, <2 x double> %src0, <2 x i64> %trigger) {
+; HSW-LABEL: expandload_v2f64_v2i64:
+; HSW:       # %bb.0:
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqq %xmm2, %xmm1, %xmm1
+; HSW-NEXT:    vpextrb $0, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB0_2
+; HSW-NEXT:  # %bb.1: # %cond.load
+; HSW-NEXT:    vmovlpd {{.*#+}} xmm0 = mem[0],xmm0[1]
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB0_2: # %else
+; HSW-NEXT:    vpextrb $8, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB0_4
+; HSW-NEXT:  # %bb.3: # %cond.load1
+; HSW-NEXT:    vmovhpd {{.*#+}} xmm0 = xmm0[0],mem[0]
+; HSW-NEXT:  .LBB0_4: # %else2
 ; HSW-NEXT:    retq
 ;
-; SKX-LABEL: expandload_v16f32_const_undef:
+; SKX-LABEL: expandload_v2f64_v2i64:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    movw $-2049, %ax # imm = 0xF7FF
-; SKX-NEXT:    kmovd %eax, %k1
-; SKX-NEXT:    vexpandps (%rdi), %zmm0 {%k1} {z}
+; SKX-NEXT:    vptestnmq %xmm1, %xmm1, %k1
+; SKX-NEXT:    vexpandpd (%rdi), %xmm0 {%k1}
 ; SKX-NEXT:    retq
 ;
-; KNL-LABEL: expandload_v16f32_const_undef:
+; KNL-LABEL: expandload_v2f64_v2i64:
 ; KNL:       # %bb.0:
-; KNL-NEXT:    movw $-2049, %ax # imm = 0xF7FF
-; KNL-NEXT:    kmovw %eax, %k1
-; KNL-NEXT:    vexpandps (%rdi), %zmm0 {%k1} {z}
+; KNL-NEXT:    # kill: def $xmm1 killed $xmm1 def $zmm1
+; KNL-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
+; KNL-NEXT:    vptestnmq %zmm1, %zmm1, %k0
+; KNL-NEXT:    kshiftlw $14, %k0, %k0
+; KNL-NEXT:    kshiftrw $14, %k0, %k1
+; KNL-NEXT:    vexpandpd (%rdi), %zmm0 {%k1}
+; KNL-NEXT:    # kill: def $xmm0 killed $xmm0 killed $zmm0
 ; KNL-NEXT:    retq
-  %res = call <16 x float> @llvm.masked.expandload.v16f32(float* %base, <16 x i1> <i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 false, i1 true, i1 true, i1 true, i1 true>, <16 x float> undef)
-  ret <16 x float>%res
+  %mask = icmp eq <2 x i64> %trigger, zeroinitializer
+  %res = call <2 x double> @llvm.masked.expandload.v2f64(double* %base, <2 x i1> %mask, <2 x double> %src0)
+  ret <2 x double>%res
 }
 
-define <16 x float> @expandload_v16f32_const(float* %base, <16 x float> %src0) {
-; HSW-LABEL: expandload_v16f32_const:
-; HSW:       # %bb.0: # %cond.load
-; HSW-NEXT:    vmovss {{.*#+}} xmm2 = mem[0],zero,zero,zero
-; HSW-NEXT:    vblendps {{.*#+}} ymm0 = ymm2[0],ymm0[1,2,3,4,5,6,7]
-; HSW-NEXT:    vinsertps {{.*#+}} xmm2 = xmm0[0],mem[0],xmm0[2,3]
-; HSW-NEXT:    vinsertps {{.*#+}} xmm2 = xmm2[0,1],mem[0],xmm2[3]
-; HSW-NEXT:    vinsertps {{.*#+}} xmm2 = xmm2[0,1,2],mem[0]
-; HSW-NEXT:    vblendps {{.*#+}} ymm0 = ymm2[0,1,2,3],ymm0[4,5,6,7]
-; HSW-NEXT:    vmovsd {{.*#+}} xmm2 = mem[0],zero
-; HSW-NEXT:    vinsertps {{.*#+}} xmm2 = xmm2[0,1],mem[0],xmm2[3]
-; HSW-NEXT:    vinsertps {{.*#+}} xmm2 = xmm2[0,1,2],mem[0]
+define <4 x double> @expandload_v4f64_v4i64(double* %base, <4 x double> %src0, <4 x i64> %trigger) {
+; HSW-LABEL: expandload_v4f64_v4i64:
+; HSW:       # %bb.0:
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqq %ymm2, %ymm1, %ymm2
+; HSW-NEXT:    vpextrb $0, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB1_2
+; HSW-NEXT:  # %bb.1: # %cond.load
+; HSW-NEXT:    vmovsd {{.*#+}} xmm3 = mem[0],zero
+; HSW-NEXT:    vblendpd {{.*#+}} ymm0 = ymm3[0],ymm0[1,2,3]
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB1_2: # %else
+; HSW-NEXT:    vpextrb $8, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB1_4
+; HSW-NEXT:  # %bb.3: # %cond.load1
+; HSW-NEXT:    vmovhpd {{.*#+}} xmm2 = xmm0[0],mem[0]
+; HSW-NEXT:    vblendpd {{.*#+}} ymm0 = ymm2[0,1],ymm0[2,3]
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB1_4: # %else2
+; HSW-NEXT:    vxorpd %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqq %ymm2, %ymm1, %ymm1
+; HSW-NEXT:    vextracti128 $1, %ymm1, %xmm1
+; HSW-NEXT:    vpextrb $0, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB1_6
+; HSW-NEXT:  # %bb.5: # %cond.load5
+; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; HSW-NEXT:    vmovlpd {{.*#+}} xmm2 = mem[0],xmm2[1]
 ; HSW-NEXT:    vinsertf128 $1, %xmm2, %ymm0, %ymm0
-; HSW-NEXT:    vmovss {{.*#+}} xmm2 = mem[0],zero,zero,zero
-; HSW-NEXT:    vblendps {{.*#+}} ymm1 = ymm2[0],ymm1[1,2,3,4,5,6,7]
-; HSW-NEXT:    vmovss {{.*#+}} xmm2 = mem[0],zero,zero,zero
-; HSW-NEXT:    vextractf128 $1, %ymm1, %xmm3
-; HSW-NEXT:    vblendps {{.*#+}} xmm2 = xmm2[0],xmm3[1,2,3]
-; HSW-NEXT:    vinsertps {{.*#+}} xmm3 = xmm1[0],mem[0],xmm1[2,3]
-; HSW-NEXT:    vinsertps {{.*#+}} xmm3 = xmm3[0,1],mem[0],xmm3[3]
-; HSW-NEXT:    vinsertps {{.*#+}} xmm2 = xmm2[0],mem[0],xmm2[2,3]
-; HSW-NEXT:    vblendps {{.*#+}} ymm1 = ymm3[0,1,2,3],ymm1[4,5,6,7]
-; HSW-NEXT:    vinsertps {{.*#+}} xmm2 = xmm2[0,1],mem[0],xmm2[3]
-; HSW-NEXT:    vinsertf128 $1, %xmm2, %ymm1, %ymm1
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB1_6: # %else6
+; HSW-NEXT:    vpextrb $8, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB1_8
+; HSW-NEXT:  # %bb.7: # %cond.load9
+; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; HSW-NEXT:    vmovhpd {{.*#+}} xmm1 = xmm1[0],mem[0]
+; HSW-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; HSW-NEXT:  .LBB1_8: # %else10
 ; HSW-NEXT:    retq
 ;
-; SKX-LABEL: expandload_v16f32_const:
+; SKX-LABEL: expandload_v4f64_v4i64:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    movw $30719, %ax # imm = 0x77FF
-; SKX-NEXT:    kmovd %eax, %k1
-; SKX-NEXT:    vexpandps (%rdi), %zmm0 {%k1}
+; SKX-NEXT:    vptestnmq %ymm1, %ymm1, %k1
+; SKX-NEXT:    vexpandpd (%rdi), %ymm0 {%k1}
 ; SKX-NEXT:    retq
 ;
-; KNL-LABEL: expandload_v16f32_const:
+; KNL-LABEL: expandload_v4f64_v4i64:
 ; KNL:       # %bb.0:
-; KNL-NEXT:    movw $30719, %ax # imm = 0x77FF
-; KNL-NEXT:    kmovw %eax, %k1
-; KNL-NEXT:    vexpandps (%rdi), %zmm0 {%k1}
+; KNL-NEXT:    # kill: def $ymm1 killed $ymm1 def $zmm1
+; KNL-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
+; KNL-NEXT:    vptestnmq %zmm1, %zmm1, %k0
+; KNL-NEXT:    kshiftlw $12, %k0, %k0
+; KNL-NEXT:    kshiftrw $12, %k0, %k1
+; KNL-NEXT:    vexpandpd (%rdi), %zmm0 {%k1}
+; KNL-NEXT:    # kill: def $ymm0 killed $ymm0 killed $zmm0
 ; KNL-NEXT:    retq
-  %res = call <16 x float> @llvm.masked.expandload.v16f32(float* %base, <16 x i1> <i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 false, i1 true, i1 true, i1 true, i1 false>, <16 x float> %src0)
-  ret <16 x float>%res
+  %mask = icmp eq <4 x i64> %trigger, zeroinitializer
+  %res = call <4 x double> @llvm.masked.expandload.v4f64(double* %base, <4 x i1> %mask, <4 x double> %src0)
+  ret <4 x double>%res
 }
 
 define <8 x double> @expandload_v8f64_v8i1(double* %base, <8 x double> %src0, <8 x i1> %mask) {
@@ -162,6 +202,275 @@ define <8 x double> @expandload_v8f64_v8i1(double* %base, <8 x double> %src0, <8
   ret <8 x double>%res
 }
 
+define <16 x double> @expandload_v16f64_v16i32(double* %base, <16 x double> %src0, <16 x i32> %trigger) {
+; HSW-LABEL: expandload_v16f64_v16i32:
+; HSW:       # %bb.0:
+; HSW-NEXT:    vpxor %xmm6, %xmm6, %xmm6
+; HSW-NEXT:    vpcmpeqd %ymm6, %ymm4, %ymm6
+; HSW-NEXT:    vpackssdw %xmm0, %xmm6, %xmm7
+; HSW-NEXT:    vpacksswb %xmm0, %xmm7, %xmm7
+; HSW-NEXT:    vpextrb $0, %xmm7, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB3_2
+; HSW-NEXT:  # %bb.1: # %cond.load
+; HSW-NEXT:    vmovq {{.*#+}} xmm7 = mem[0],zero
+; HSW-NEXT:    vpblendd {{.*#+}} ymm0 = ymm7[0,1],ymm0[2,3,4,5,6,7]
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB3_2: # %else
+; HSW-NEXT:    vpackssdw %xmm0, %xmm6, %xmm6
+; HSW-NEXT:    vpacksswb %xmm0, %xmm6, %xmm6
+; HSW-NEXT:    vpextrb $1, %xmm6, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB3_4
+; HSW-NEXT:  # %bb.3: # %cond.load1
+; HSW-NEXT:    vmovhpd {{.*#+}} xmm6 = xmm0[0],mem[0]
+; HSW-NEXT:    vblendpd {{.*#+}} ymm0 = ymm6[0,1],ymm0[2,3]
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB3_4: # %else2
+; HSW-NEXT:    vxorpd %xmm6, %xmm6, %xmm6
+; HSW-NEXT:    vpcmpeqd %ymm6, %ymm4, %ymm6
+; HSW-NEXT:    vpackssdw %xmm0, %xmm6, %xmm7
+; HSW-NEXT:    vpacksswb %xmm0, %xmm7, %xmm7
+; HSW-NEXT:    vpextrb $2, %xmm7, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB3_6
+; HSW-NEXT:  # %bb.5: # %cond.load5
+; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm7
+; HSW-NEXT:    vmovlpd {{.*#+}} xmm7 = mem[0],xmm7[1]
+; HSW-NEXT:    vinsertf128 $1, %xmm7, %ymm0, %ymm0
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB3_6: # %else6
+; HSW-NEXT:    vpackssdw %xmm0, %xmm6, %xmm6
+; HSW-NEXT:    vpacksswb %xmm0, %xmm6, %xmm6
+; HSW-NEXT:    vpextrb $3, %xmm6, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB3_8
+; HSW-NEXT:  # %bb.7: # %cond.load9
+; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm6
+; HSW-NEXT:    vmovhpd {{.*#+}} xmm6 = xmm6[0],mem[0]
+; HSW-NEXT:    vinsertf128 $1, %xmm6, %ymm0, %ymm0
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB3_8: # %else10
+; HSW-NEXT:    vxorpd %xmm6, %xmm6, %xmm6
+; HSW-NEXT:    vpcmpeqd %ymm6, %ymm4, %ymm6
+; HSW-NEXT:    vextracti128 $1, %ymm6, %xmm6
+; HSW-NEXT:    vpackssdw %xmm6, %xmm0, %xmm7
+; HSW-NEXT:    vpacksswb %xmm0, %xmm7, %xmm7
+; HSW-NEXT:    vpextrb $4, %xmm7, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB3_10
+; HSW-NEXT:  # %bb.9: # %cond.load13
+; HSW-NEXT:    vmovq {{.*#+}} xmm7 = mem[0],zero
+; HSW-NEXT:    vpblendd {{.*#+}} ymm1 = ymm7[0,1],ymm1[2,3,4,5,6,7]
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB3_10: # %else14
+; HSW-NEXT:    vpackssdw %xmm6, %xmm0, %xmm6
+; HSW-NEXT:    vpacksswb %xmm0, %xmm6, %xmm6
+; HSW-NEXT:    vpextrb $5, %xmm6, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB3_12
+; HSW-NEXT:  # %bb.11: # %cond.load17
+; HSW-NEXT:    vmovhpd {{.*#+}} xmm6 = xmm1[0],mem[0]
+; HSW-NEXT:    vblendpd {{.*#+}} ymm1 = ymm6[0,1],ymm1[2,3]
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB3_12: # %else18
+; HSW-NEXT:    vxorpd %xmm6, %xmm6, %xmm6
+; HSW-NEXT:    vpcmpeqd %ymm6, %ymm4, %ymm4
+; HSW-NEXT:    vextracti128 $1, %ymm4, %xmm4
+; HSW-NEXT:    vpackssdw %xmm4, %xmm0, %xmm6
+; HSW-NEXT:    vpacksswb %xmm0, %xmm6, %xmm6
+; HSW-NEXT:    vpextrb $6, %xmm6, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB3_14
+; HSW-NEXT:  # %bb.13: # %cond.load21
+; HSW-NEXT:    vextractf128 $1, %ymm1, %xmm6
+; HSW-NEXT:    vmovlpd {{.*#+}} xmm6 = mem[0],xmm6[1]
+; HSW-NEXT:    vinsertf128 $1, %xmm6, %ymm1, %ymm1
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB3_14: # %else22
+; HSW-NEXT:    vpackssdw %xmm4, %xmm0, %xmm4
+; HSW-NEXT:    vpacksswb %xmm0, %xmm4, %xmm4
+; HSW-NEXT:    vpextrb $7, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB3_16
+; HSW-NEXT:  # %bb.15: # %cond.load25
+; HSW-NEXT:    vextractf128 $1, %ymm1, %xmm4
+; HSW-NEXT:    vmovhpd {{.*#+}} xmm4 = xmm4[0],mem[0]
+; HSW-NEXT:    vinsertf128 $1, %xmm4, %ymm1, %ymm1
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB3_16: # %else26
+; HSW-NEXT:    vxorpd %xmm4, %xmm4, %xmm4
+; HSW-NEXT:    vpcmpeqd %ymm4, %ymm5, %ymm4
+; HSW-NEXT:    vpackssdw %xmm0, %xmm4, %xmm6
+; HSW-NEXT:    vpacksswb %xmm6, %xmm0, %xmm6
+; HSW-NEXT:    vpextrb $8, %xmm6, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB3_18
+; HSW-NEXT:  # %bb.17: # %cond.load29
+; HSW-NEXT:    vmovq {{.*#+}} xmm6 = mem[0],zero
+; HSW-NEXT:    vpblendd {{.*#+}} ymm2 = ymm6[0,1],ymm2[2,3,4,5,6,7]
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB3_18: # %else30
+; HSW-NEXT:    vpackssdw %xmm0, %xmm4, %xmm4
+; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
+; HSW-NEXT:    vpextrb $9, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB3_20
+; HSW-NEXT:  # %bb.19: # %cond.load33
+; HSW-NEXT:    vmovhpd {{.*#+}} xmm4 = xmm2[0],mem[0]
+; HSW-NEXT:    vblendpd {{.*#+}} ymm2 = ymm4[0,1],ymm2[2,3]
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB3_20: # %else34
+; HSW-NEXT:    vxorpd %xmm4, %xmm4, %xmm4
+; HSW-NEXT:    vpcmpeqd %ymm4, %ymm5, %ymm4
+; HSW-NEXT:    vpackssdw %xmm0, %xmm4, %xmm6
+; HSW-NEXT:    vpacksswb %xmm6, %xmm0, %xmm6
+; HSW-NEXT:    vpextrb $10, %xmm6, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB3_22
+; HSW-NEXT:  # %bb.21: # %cond.load37
+; HSW-NEXT:    vextractf128 $1, %ymm2, %xmm6
+; HSW-NEXT:    vmovlpd {{.*#+}} xmm6 = mem[0],xmm6[1]
+; HSW-NEXT:    vinsertf128 $1, %xmm6, %ymm2, %ymm2
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB3_22: # %else38
+; HSW-NEXT:    vpackssdw %xmm0, %xmm4, %xmm4
+; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
+; HSW-NEXT:    vpextrb $11, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB3_24
+; HSW-NEXT:  # %bb.23: # %cond.load41
+; HSW-NEXT:    vextractf128 $1, %ymm2, %xmm4
+; HSW-NEXT:    vmovhpd {{.*#+}} xmm4 = xmm4[0],mem[0]
+; HSW-NEXT:    vinsertf128 $1, %xmm4, %ymm2, %ymm2
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB3_24: # %else42
+; HSW-NEXT:    vxorpd %xmm4, %xmm4, %xmm4
+; HSW-NEXT:    vpcmpeqd %ymm4, %ymm5, %ymm4
+; HSW-NEXT:    vextracti128 $1, %ymm4, %xmm4
+; HSW-NEXT:    vpackssdw %xmm4, %xmm0, %xmm6
+; HSW-NEXT:    vpacksswb %xmm6, %xmm0, %xmm6
+; HSW-NEXT:    vpextrb $12, %xmm6, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB3_26
+; HSW-NEXT:  # %bb.25: # %cond.load45
+; HSW-NEXT:    vmovq {{.*#+}} xmm6 = mem[0],zero
+; HSW-NEXT:    vpblendd {{.*#+}} ymm3 = ymm6[0,1],ymm3[2,3,4,5,6,7]
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB3_26: # %else46
+; HSW-NEXT:    vpackssdw %xmm4, %xmm0, %xmm4
+; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
+; HSW-NEXT:    vpextrb $13, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB3_28
+; HSW-NEXT:  # %bb.27: # %cond.load49
+; HSW-NEXT:    vmovhpd {{.*#+}} xmm4 = xmm3[0],mem[0]
+; HSW-NEXT:    vblendpd {{.*#+}} ymm3 = ymm4[0,1],ymm3[2,3]
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB3_28: # %else50
+; HSW-NEXT:    vxorpd %xmm4, %xmm4, %xmm4
+; HSW-NEXT:    vpcmpeqd %ymm4, %ymm5, %ymm4
+; HSW-NEXT:    vextracti128 $1, %ymm4, %xmm4
+; HSW-NEXT:    vpackssdw %xmm4, %xmm0, %xmm5
+; HSW-NEXT:    vpacksswb %xmm5, %xmm0, %xmm5
+; HSW-NEXT:    vpextrb $14, %xmm5, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB3_30
+; HSW-NEXT:  # %bb.29: # %cond.load53
+; HSW-NEXT:    vextractf128 $1, %ymm3, %xmm5
+; HSW-NEXT:    vmovlpd {{.*#+}} xmm5 = mem[0],xmm5[1]
+; HSW-NEXT:    vinsertf128 $1, %xmm5, %ymm3, %ymm3
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB3_30: # %else54
+; HSW-NEXT:    vpackssdw %xmm4, %xmm0, %xmm4
+; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
+; HSW-NEXT:    vpextrb $15, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB3_32
+; HSW-NEXT:  # %bb.31: # %cond.load57
+; HSW-NEXT:    vextractf128 $1, %ymm3, %xmm4
+; HSW-NEXT:    vmovhpd {{.*#+}} xmm4 = xmm4[0],mem[0]
+; HSW-NEXT:    vinsertf128 $1, %xmm4, %ymm3, %ymm3
+; HSW-NEXT:  .LBB3_32: # %else58
+; HSW-NEXT:    retq
+;
+; SKX-LABEL: expandload_v16f64_v16i32:
+; SKX:       # %bb.0:
+; SKX-NEXT:    vextracti64x4 $1, %zmm2, %ymm3
+; SKX-NEXT:    vptestnmd %ymm3, %ymm3, %k1
+; SKX-NEXT:    vptestnmd %ymm2, %ymm2, %k2
+; SKX-NEXT:    kmovb %k2, %eax
+; SKX-NEXT:    popcntl %eax, %eax
+; SKX-NEXT:    vexpandpd (%rdi,%rax,8), %zmm1 {%k1}
+; SKX-NEXT:    vexpandpd (%rdi), %zmm0 {%k2}
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: expandload_v16f64_v16i32:
+; KNL:       # %bb.0:
+; KNL-NEXT:    vextracti64x4 $1, %zmm2, %ymm3
+; KNL-NEXT:    vptestnmd %zmm3, %zmm3, %k1
+; KNL-NEXT:    vptestnmd %zmm2, %zmm2, %k2
+; KNL-NEXT:    vexpandpd (%rdi), %zmm0 {%k2}
+; KNL-NEXT:    kmovw %k2, %eax
+; KNL-NEXT:    movzbl %al, %eax
+; KNL-NEXT:    popcntl %eax, %eax
+; KNL-NEXT:    vexpandpd (%rdi,%rax,8), %zmm1 {%k1}
+; KNL-NEXT:    retq
+  %mask = icmp eq <16 x i32> %trigger, zeroinitializer
+  %res = call <16 x double> @llvm.masked.expandload.v16f64(double* %base, <16 x i1> %mask, <16 x double> %src0)
+  ret <16 x double> %res
+}
+
+;
+; vXf32
+;
+
+define <2 x float> @expandload_v2f32_v2i1(float* %base, <2 x float> %src0, <2 x i32> %trigger) {
+; HSW-LABEL: expandload_v2f32_v2i1:
+; HSW:       # %bb.0:
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpblendd {{.*#+}} xmm1 = xmm1[0],xmm2[1],xmm1[2],xmm2[3]
+; HSW-NEXT:    vpcmpeqq %xmm2, %xmm1, %xmm1
+; HSW-NEXT:    vpextrb $0, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB4_2
+; HSW-NEXT:  # %bb.1: # %cond.load
+; HSW-NEXT:    vmovd {{.*#+}} xmm2 = mem[0],zero,zero,zero
+; HSW-NEXT:    vpblendd {{.*#+}} xmm0 = xmm2[0],xmm0[1,2,3]
+; HSW-NEXT:    addq $4, %rdi
+; HSW-NEXT:  .LBB4_2: # %else
+; HSW-NEXT:    vpextrb $8, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB4_4
+; HSW-NEXT:  # %bb.3: # %cond.load1
+; HSW-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0],mem[0],xmm0[2,3]
+; HSW-NEXT:  .LBB4_4: # %else2
+; HSW-NEXT:    retq
+;
+; SKX-LABEL: expandload_v2f32_v2i1:
+; SKX:       # %bb.0:
+; SKX-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; SKX-NEXT:    vpblendd {{.*#+}} xmm1 = xmm1[0],xmm2[1],xmm1[2],xmm2[3]
+; SKX-NEXT:    vptestnmq %xmm1, %xmm1, %k1
+; SKX-NEXT:    vexpandps (%rdi), %xmm0 {%k1}
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: expandload_v2f32_v2i1:
+; KNL:       # %bb.0:
+; KNL-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpblendd {{.*#+}} xmm1 = xmm1[0],xmm2[1],xmm1[2],xmm2[3]
+; KNL-NEXT:    vptestnmq %zmm1, %zmm1, %k0
+; KNL-NEXT:    kshiftlw $14, %k0, %k0
+; KNL-NEXT:    kshiftrw $14, %k0, %k1
+; KNL-NEXT:    vexpandps (%rdi), %zmm0 {%k1}
+; KNL-NEXT:    # kill: def $xmm0 killed $xmm0 killed $zmm0
+; KNL-NEXT:    retq
+  %mask = icmp eq <2 x i32> %trigger, zeroinitializer
+  %res = call <2 x float> @llvm.masked.expandload.v2f32(float* %base, <2 x i1> %mask, <2 x float> %src0)
+  ret <2 x float> %res
+}
+
 define <4 x float> @expandload_v4f32_const(float* %base, <4 x float> %src0) {
 ; HSW-LABEL: expandload_v4f32_const:
 ; HSW:       # %bb.0: # %cond.load
@@ -190,76 +499,75 @@ define <4 x float> @expandload_v4f32_const(float* %base, <4 x float> %src0) {
   ret <4 x float>%res
 }
 
-define <2 x i64> @expandload_v2i64_const(i64* %base, <2 x i64> %src0) {
-; HSW-LABEL: expandload_v2i64_const:
-; HSW:       # %bb.0: # %else
-; HSW-NEXT:    vpinsrq $1, (%rdi), %xmm0, %xmm0
+define <16 x float> @expandload_v16f32_const(float* %base, <16 x float> %src0) {
+; HSW-LABEL: expandload_v16f32_const:
+; HSW:       # %bb.0: # %cond.load
+; HSW-NEXT:    vmovss {{.*#+}} xmm2 = mem[0],zero,zero,zero
+; HSW-NEXT:    vblendps {{.*#+}} ymm0 = ymm2[0],ymm0[1,2,3,4,5,6,7]
+; HSW-NEXT:    vinsertps {{.*#+}} xmm2 = xmm0[0],mem[0],xmm0[2,3]
+; HSW-NEXT:    vinsertps {{.*#+}} xmm2 = xmm2[0,1],mem[0],xmm2[3]
+; HSW-NEXT:    vinsertps {{.*#+}} xmm2 = xmm2[0,1,2],mem[0]
+; HSW-NEXT:    vblendps {{.*#+}} ymm0 = ymm2[0,1,2,3],ymm0[4,5,6,7]
+; HSW-NEXT:    vmovsd {{.*#+}} xmm2 = mem[0],zero
+; HSW-NEXT:    vinsertps {{.*#+}} xmm2 = xmm2[0,1],mem[0],xmm2[3]
+; HSW-NEXT:    vinsertps {{.*#+}} xmm2 = xmm2[0,1,2],mem[0]
+; HSW-NEXT:    vinsertf128 $1, %xmm2, %ymm0, %ymm0
+; HSW-NEXT:    vmovss {{.*#+}} xmm2 = mem[0],zero,zero,zero
+; HSW-NEXT:    vblendps {{.*#+}} ymm1 = ymm2[0],ymm1[1,2,3,4,5,6,7]
+; HSW-NEXT:    vmovss {{.*#+}} xmm2 = mem[0],zero,zero,zero
+; HSW-NEXT:    vextractf128 $1, %ymm1, %xmm3
+; HSW-NEXT:    vblendps {{.*#+}} xmm2 = xmm2[0],xmm3[1,2,3]
+; HSW-NEXT:    vinsertps {{.*#+}} xmm3 = xmm1[0],mem[0],xmm1[2,3]
+; HSW-NEXT:    vinsertps {{.*#+}} xmm3 = xmm3[0,1],mem[0],xmm3[3]
+; HSW-NEXT:    vinsertps {{.*#+}} xmm2 = xmm2[0],mem[0],xmm2[2,3]
+; HSW-NEXT:    vblendps {{.*#+}} ymm1 = ymm3[0,1,2,3],ymm1[4,5,6,7]
+; HSW-NEXT:    vinsertps {{.*#+}} xmm2 = xmm2[0,1],mem[0],xmm2[3]
+; HSW-NEXT:    vinsertf128 $1, %xmm2, %ymm1, %ymm1
 ; HSW-NEXT:    retq
 ;
-; SKX-LABEL: expandload_v2i64_const:
+; SKX-LABEL: expandload_v16f32_const:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    movb $2, %al
+; SKX-NEXT:    movw $30719, %ax # imm = 0x77FF
 ; SKX-NEXT:    kmovd %eax, %k1
-; SKX-NEXT:    vpexpandq (%rdi), %xmm0 {%k1}
+; SKX-NEXT:    vexpandps (%rdi), %zmm0 {%k1}
 ; SKX-NEXT:    retq
 ;
-; KNL-LABEL: expandload_v2i64_const:
+; KNL-LABEL: expandload_v16f32_const:
 ; KNL:       # %bb.0:
-; KNL-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
-; KNL-NEXT:    movb $2, %al
+; KNL-NEXT:    movw $30719, %ax # imm = 0x77FF
 ; KNL-NEXT:    kmovw %eax, %k1
-; KNL-NEXT:    vpexpandq (%rdi), %zmm0 {%k1}
-; KNL-NEXT:    # kill: def $xmm0 killed $xmm0 killed $zmm0
+; KNL-NEXT:    vexpandps (%rdi), %zmm0 {%k1}
 ; KNL-NEXT:    retq
-  %res = call <2 x i64> @llvm.masked.expandload.v2i64(i64* %base, <2 x i1> <i1 false, i1 true>, <2 x i64> %src0)
-  ret <2 x i64>%res
+  %res = call <16 x float> @llvm.masked.expandload.v16f32(float* %base, <16 x i1> <i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 false, i1 true, i1 true, i1 true, i1 false>, <16 x float> %src0)
+  ret <16 x float>%res
 }
 
-define <2 x float> @expandload_v2f32_v2i1(float* %base, <2 x float> %src0, <2 x i32> %trigger) {
-; HSW-LABEL: expandload_v2f32_v2i1:
-; HSW:       # %bb.0:
-; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
-; HSW-NEXT:    vpblendd {{.*#+}} xmm1 = xmm1[0],xmm2[1],xmm1[2],xmm2[3]
-; HSW-NEXT:    vpcmpeqq %xmm2, %xmm1, %xmm1
-; HSW-NEXT:    vpextrb $0, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB5_2
-; HSW-NEXT:  # %bb.1: # %cond.load
-; HSW-NEXT:    vmovd {{.*#+}} xmm2 = mem[0],zero,zero,zero
-; HSW-NEXT:    vpblendd {{.*#+}} xmm0 = xmm2[0],xmm0[1,2,3]
-; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB5_2: # %else
-; HSW-NEXT:    vpextrb $8, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB5_4
-; HSW-NEXT:  # %bb.3: # %cond.load1
-; HSW-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0],mem[0],xmm0[2,3]
-; HSW-NEXT:  .LBB5_4: # %else2
+define <16 x float> @expandload_v16f32_const_undef(float* %base) {
+; HSW-LABEL: expandload_v16f32_const_undef:
+; HSW:       # %bb.0: # %cond.load
+; HSW-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; HSW-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0,1],mem[0],xmm0[3]
+; HSW-NEXT:    vinsertf128 $1, 44(%rdi), %ymm0, %ymm1
+; HSW-NEXT:    vmovups (%rdi), %ymm0
 ; HSW-NEXT:    retq
 ;
-; SKX-LABEL: expandload_v2f32_v2i1:
+; SKX-LABEL: expandload_v16f32_const_undef:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    vpxor %xmm2, %xmm2, %xmm2
-; SKX-NEXT:    vpblendd {{.*#+}} xmm1 = xmm1[0],xmm2[1],xmm1[2],xmm2[3]
-; SKX-NEXT:    vptestnmq %xmm1, %xmm1, %k1
-; SKX-NEXT:    vexpandps (%rdi), %xmm0 {%k1}
+; SKX-NEXT:    movw $-2049, %ax # imm = 0xF7FF
+; SKX-NEXT:    kmovd %eax, %k1
+; SKX-NEXT:    vexpandps (%rdi), %zmm0 {%k1} {z}
 ; SKX-NEXT:    retq
 ;
-; KNL-LABEL: expandload_v2f32_v2i1:
+; KNL-LABEL: expandload_v16f32_const_undef:
 ; KNL:       # %bb.0:
-; KNL-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
-; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
-; KNL-NEXT:    vpblendd {{.*#+}} xmm1 = xmm1[0],xmm2[1],xmm1[2],xmm2[3]
-; KNL-NEXT:    vptestnmq %zmm1, %zmm1, %k0
-; KNL-NEXT:    kshiftlw $14, %k0, %k0
-; KNL-NEXT:    kshiftrw $14, %k0, %k1
-; KNL-NEXT:    vexpandps (%rdi), %zmm0 {%k1}
-; KNL-NEXT:    # kill: def $xmm0 killed $xmm0 killed $zmm0
+; KNL-NEXT:    movw $-2049, %ax # imm = 0xF7FF
+; KNL-NEXT:    kmovw %eax, %k1
+; KNL-NEXT:    vexpandps (%rdi), %zmm0 {%k1} {z}
 ; KNL-NEXT:    retq
-  %mask = icmp eq <2 x i32> %trigger, zeroinitializer
-  %res = call <2 x float> @llvm.masked.expandload.v2f32(float* %base, <2 x i1> %mask, <2 x float> %src0)
-  ret <2 x float> %res
+  %res = call <16 x float> @llvm.masked.expandload.v16f32(float* %base, <16 x i1> <i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 false, i1 true, i1 true, i1 true, i1 true>, <16 x float> undef)
+  ret <16 x float>%res
 }
+
 
 define <32 x float> @expandload_v32f32_v32i32(float* %base, <32 x float> %src0, <32 x i32> %trigger) {
 ; HSW-LABEL: expandload_v32f32_v32i32:
@@ -270,44 +578,44 @@ define <32 x float> @expandload_v32f32_v32i32(float* %base, <32 x float> %src0, 
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm9, %xmm9
 ; HSW-NEXT:    vpextrb $0, %xmm9, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_2
+; HSW-NEXT:    je .LBB8_2
 ; HSW-NEXT:  # %bb.1: # %cond.load
 ; HSW-NEXT:    vmovd {{.*#+}} xmm9 = mem[0],zero,zero,zero
 ; HSW-NEXT:    vpblendd {{.*#+}} ymm0 = ymm9[0],ymm0[1,2,3,4,5,6,7]
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_2: # %else
+; HSW-NEXT:  .LBB8_2: # %else
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm8, %xmm8
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm8, %xmm8
 ; HSW-NEXT:    vpextrb $1, %xmm8, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_4
+; HSW-NEXT:    je .LBB8_4
 ; HSW-NEXT:  # %bb.3: # %cond.load1
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm8 = xmm0[0],mem[0],xmm0[2,3]
 ; HSW-NEXT:    vblendps {{.*#+}} ymm0 = ymm8[0,1,2,3],ymm0[4,5,6,7]
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_4: # %else2
+; HSW-NEXT:  .LBB8_4: # %else2
 ; HSW-NEXT:    vxorps %xmm8, %xmm8, %xmm8
 ; HSW-NEXT:    vpcmpeqd %ymm8, %ymm4, %ymm8
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm8, %xmm9
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm9, %xmm9
 ; HSW-NEXT:    vpextrb $2, %xmm9, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_6
+; HSW-NEXT:    je .LBB8_6
 ; HSW-NEXT:  # %bb.5: # %cond.load5
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm9 = xmm0[0,1],mem[0],xmm0[3]
 ; HSW-NEXT:    vblendps {{.*#+}} ymm0 = ymm9[0,1,2,3],ymm0[4,5,6,7]
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_6: # %else6
+; HSW-NEXT:  .LBB8_6: # %else6
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm8, %xmm8
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm8, %xmm8
 ; HSW-NEXT:    vpextrb $3, %xmm8, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_8
+; HSW-NEXT:    je .LBB8_8
 ; HSW-NEXT:  # %bb.7: # %cond.load9
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm8 = xmm0[0,1,2],mem[0]
 ; HSW-NEXT:    vblendps {{.*#+}} ymm0 = ymm8[0,1,2,3],ymm0[4,5,6,7]
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_8: # %else10
+; HSW-NEXT:  .LBB8_8: # %else10
 ; HSW-NEXT:    vxorps %xmm8, %xmm8, %xmm8
 ; HSW-NEXT:    vpcmpeqd %ymm8, %ymm4, %ymm8
 ; HSW-NEXT:    vextracti128 $1, %ymm8, %xmm8
@@ -315,25 +623,25 @@ define <32 x float> @expandload_v32f32_v32i32(float* %base, <32 x float> %src0, 
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm9, %xmm9
 ; HSW-NEXT:    vpextrb $4, %xmm9, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_10
+; HSW-NEXT:    je .LBB8_10
 ; HSW-NEXT:  # %bb.9: # %cond.load13
 ; HSW-NEXT:    vmovss {{.*#+}} xmm9 = mem[0],zero,zero,zero
 ; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm10
 ; HSW-NEXT:    vblendps {{.*#+}} xmm9 = xmm9[0],xmm10[1,2,3]
 ; HSW-NEXT:    vinsertf128 $1, %xmm9, %ymm0, %ymm0
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_10: # %else14
+; HSW-NEXT:  .LBB8_10: # %else14
 ; HSW-NEXT:    vpackssdw %xmm8, %xmm0, %xmm8
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm8, %xmm8
 ; HSW-NEXT:    vpextrb $5, %xmm8, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_12
+; HSW-NEXT:    je .LBB8_12
 ; HSW-NEXT:  # %bb.11: # %cond.load17
 ; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm8
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm8 = xmm8[0],mem[0],xmm8[2,3]
 ; HSW-NEXT:    vinsertf128 $1, %xmm8, %ymm0, %ymm0
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_12: # %else18
+; HSW-NEXT:  .LBB8_12: # %else18
 ; HSW-NEXT:    vxorps %xmm8, %xmm8, %xmm8
 ; HSW-NEXT:    vpcmpeqd %ymm8, %ymm4, %ymm4
 ; HSW-NEXT:    vextracti128 $1, %ymm4, %xmm8
@@ -341,68 +649,68 @@ define <32 x float> @expandload_v32f32_v32i32(float* %base, <32 x float> %src0, 
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm4, %xmm4
 ; HSW-NEXT:    vpextrb $6, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_14
+; HSW-NEXT:    je .LBB8_14
 ; HSW-NEXT:  # %bb.13: # %cond.load21
 ; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm4
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm4 = xmm4[0,1],mem[0],xmm4[3]
 ; HSW-NEXT:    vinsertf128 $1, %xmm4, %ymm0, %ymm0
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_14: # %else22
+; HSW-NEXT:  .LBB8_14: # %else22
 ; HSW-NEXT:    vpackssdw %xmm8, %xmm0, %xmm4
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm4, %xmm4
 ; HSW-NEXT:    vpextrb $7, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_16
+; HSW-NEXT:    je .LBB8_16
 ; HSW-NEXT:  # %bb.15: # %cond.load25
 ; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm4
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm4 = xmm4[0,1,2],mem[0]
 ; HSW-NEXT:    vinsertf128 $1, %xmm4, %ymm0, %ymm0
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_16: # %else26
+; HSW-NEXT:  .LBB8_16: # %else26
 ; HSW-NEXT:    vxorps %xmm4, %xmm4, %xmm4
 ; HSW-NEXT:    vpcmpeqd %ymm4, %ymm5, %ymm8
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm8, %xmm4
 ; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
 ; HSW-NEXT:    vpextrb $8, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_18
+; HSW-NEXT:    je .LBB8_18
 ; HSW-NEXT:  # %bb.17: # %cond.load29
 ; HSW-NEXT:    vmovd {{.*#+}} xmm4 = mem[0],zero,zero,zero
 ; HSW-NEXT:    vpblendd {{.*#+}} ymm1 = ymm4[0],ymm1[1,2,3,4,5,6,7]
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_18: # %else30
+; HSW-NEXT:  .LBB8_18: # %else30
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm8, %xmm4
 ; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
 ; HSW-NEXT:    vpextrb $9, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_20
+; HSW-NEXT:    je .LBB8_20
 ; HSW-NEXT:  # %bb.19: # %cond.load33
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm4 = xmm1[0],mem[0],xmm1[2,3]
 ; HSW-NEXT:    vblendps {{.*#+}} ymm1 = ymm4[0,1,2,3],ymm1[4,5,6,7]
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_20: # %else34
+; HSW-NEXT:  .LBB8_20: # %else34
 ; HSW-NEXT:    vxorps %xmm4, %xmm4, %xmm4
 ; HSW-NEXT:    vpcmpeqd %ymm4, %ymm5, %ymm8
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm8, %xmm4
 ; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
 ; HSW-NEXT:    vpextrb $10, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_22
+; HSW-NEXT:    je .LBB8_22
 ; HSW-NEXT:  # %bb.21: # %cond.load37
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm4 = xmm1[0,1],mem[0],xmm1[3]
 ; HSW-NEXT:    vblendps {{.*#+}} ymm1 = ymm4[0,1,2,3],ymm1[4,5,6,7]
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_22: # %else38
+; HSW-NEXT:  .LBB8_22: # %else38
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm8, %xmm4
 ; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
 ; HSW-NEXT:    vpextrb $11, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_24
+; HSW-NEXT:    je .LBB8_24
 ; HSW-NEXT:  # %bb.23: # %cond.load41
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm4 = xmm1[0,1,2],mem[0]
 ; HSW-NEXT:    vblendps {{.*#+}} ymm1 = ymm4[0,1,2,3],ymm1[4,5,6,7]
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_24: # %else42
+; HSW-NEXT:  .LBB8_24: # %else42
 ; HSW-NEXT:    vxorps %xmm4, %xmm4, %xmm4
 ; HSW-NEXT:    vpcmpeqd %ymm4, %ymm5, %ymm4
 ; HSW-NEXT:    vextracti128 $1, %ymm4, %xmm8
@@ -410,25 +718,25 @@ define <32 x float> @expandload_v32f32_v32i32(float* %base, <32 x float> %src0, 
 ; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
 ; HSW-NEXT:    vpextrb $12, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_26
+; HSW-NEXT:    je .LBB8_26
 ; HSW-NEXT:  # %bb.25: # %cond.load45
 ; HSW-NEXT:    vmovss {{.*#+}} xmm9 = mem[0],zero,zero,zero
 ; HSW-NEXT:    vextractf128 $1, %ymm1, %xmm4
 ; HSW-NEXT:    vblendps {{.*#+}} xmm4 = xmm9[0],xmm4[1,2,3]
 ; HSW-NEXT:    vinsertf128 $1, %xmm4, %ymm1, %ymm1
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_26: # %else46
+; HSW-NEXT:  .LBB8_26: # %else46
 ; HSW-NEXT:    vpackssdw %xmm8, %xmm0, %xmm4
 ; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
 ; HSW-NEXT:    vpextrb $13, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_28
+; HSW-NEXT:    je .LBB8_28
 ; HSW-NEXT:  # %bb.27: # %cond.load49
 ; HSW-NEXT:    vextractf128 $1, %ymm1, %xmm4
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm4 = xmm4[0],mem[0],xmm4[2,3]
 ; HSW-NEXT:    vinsertf128 $1, %xmm4, %ymm1, %ymm1
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_28: # %else50
+; HSW-NEXT:  .LBB8_28: # %else50
 ; HSW-NEXT:    vxorps %xmm4, %xmm4, %xmm4
 ; HSW-NEXT:    vpcmpeqd %ymm4, %ymm5, %ymm4
 ; HSW-NEXT:    vextracti128 $1, %ymm4, %xmm4
@@ -436,68 +744,68 @@ define <32 x float> @expandload_v32f32_v32i32(float* %base, <32 x float> %src0, 
 ; HSW-NEXT:    vpacksswb %xmm5, %xmm0, %xmm5
 ; HSW-NEXT:    vpextrb $14, %xmm5, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_30
+; HSW-NEXT:    je .LBB8_30
 ; HSW-NEXT:  # %bb.29: # %cond.load53
 ; HSW-NEXT:    vextractf128 $1, %ymm1, %xmm5
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm5 = xmm5[0,1],mem[0],xmm5[3]
 ; HSW-NEXT:    vinsertf128 $1, %xmm5, %ymm1, %ymm1
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_30: # %else54
+; HSW-NEXT:  .LBB8_30: # %else54
 ; HSW-NEXT:    vpackssdw %xmm4, %xmm0, %xmm4
 ; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
 ; HSW-NEXT:    vpextrb $15, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_32
+; HSW-NEXT:    je .LBB8_32
 ; HSW-NEXT:  # %bb.31: # %cond.load57
 ; HSW-NEXT:    vextractf128 $1, %ymm1, %xmm4
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm4 = xmm4[0,1,2],mem[0]
 ; HSW-NEXT:    vinsertf128 $1, %xmm4, %ymm1, %ymm1
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_32: # %else58
+; HSW-NEXT:  .LBB8_32: # %else58
 ; HSW-NEXT:    vxorps %xmm4, %xmm4, %xmm4
 ; HSW-NEXT:    vpcmpeqd %ymm4, %ymm6, %ymm4
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm4, %xmm5
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm5, %xmm5
 ; HSW-NEXT:    vpextrb $0, %xmm5, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_34
+; HSW-NEXT:    je .LBB8_34
 ; HSW-NEXT:  # %bb.33: # %cond.load61
 ; HSW-NEXT:    vmovd {{.*#+}} xmm5 = mem[0],zero,zero,zero
 ; HSW-NEXT:    vpblendd {{.*#+}} ymm2 = ymm5[0],ymm2[1,2,3,4,5,6,7]
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_34: # %else62
+; HSW-NEXT:  .LBB8_34: # %else62
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm4, %xmm4
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm4, %xmm4
 ; HSW-NEXT:    vpextrb $1, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_36
+; HSW-NEXT:    je .LBB8_36
 ; HSW-NEXT:  # %bb.35: # %cond.load65
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm4 = xmm2[0],mem[0],xmm2[2,3]
 ; HSW-NEXT:    vblendps {{.*#+}} ymm2 = ymm4[0,1,2,3],ymm2[4,5,6,7]
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_36: # %else66
+; HSW-NEXT:  .LBB8_36: # %else66
 ; HSW-NEXT:    vxorps %xmm4, %xmm4, %xmm4
 ; HSW-NEXT:    vpcmpeqd %ymm4, %ymm6, %ymm4
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm4, %xmm5
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm5, %xmm5
 ; HSW-NEXT:    vpextrb $2, %xmm5, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_38
+; HSW-NEXT:    je .LBB8_38
 ; HSW-NEXT:  # %bb.37: # %cond.load69
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm5 = xmm2[0,1],mem[0],xmm2[3]
 ; HSW-NEXT:    vblendps {{.*#+}} ymm2 = ymm5[0,1,2,3],ymm2[4,5,6,7]
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_38: # %else70
+; HSW-NEXT:  .LBB8_38: # %else70
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm4, %xmm4
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm4, %xmm4
 ; HSW-NEXT:    vpextrb $3, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_40
+; HSW-NEXT:    je .LBB8_40
 ; HSW-NEXT:  # %bb.39: # %cond.load73
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm4 = xmm2[0,1,2],mem[0]
 ; HSW-NEXT:    vblendps {{.*#+}} ymm2 = ymm4[0,1,2,3],ymm2[4,5,6,7]
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_40: # %else74
+; HSW-NEXT:  .LBB8_40: # %else74
 ; HSW-NEXT:    vxorps %xmm4, %xmm4, %xmm4
 ; HSW-NEXT:    vpcmpeqd %ymm4, %ymm6, %ymm4
 ; HSW-NEXT:    vextracti128 $1, %ymm4, %xmm4
@@ -505,25 +813,25 @@ define <32 x float> @expandload_v32f32_v32i32(float* %base, <32 x float> %src0, 
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm5, %xmm5
 ; HSW-NEXT:    vpextrb $4, %xmm5, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_42
+; HSW-NEXT:    je .LBB8_42
 ; HSW-NEXT:  # %bb.41: # %cond.load77
 ; HSW-NEXT:    vmovss {{.*#+}} xmm8 = mem[0],zero,zero,zero
 ; HSW-NEXT:    vextractf128 $1, %ymm2, %xmm5
 ; HSW-NEXT:    vblendps {{.*#+}} xmm5 = xmm8[0],xmm5[1,2,3]
 ; HSW-NEXT:    vinsertf128 $1, %xmm5, %ymm2, %ymm2
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_42: # %else78
+; HSW-NEXT:  .LBB8_42: # %else78
 ; HSW-NEXT:    vpackssdw %xmm4, %xmm0, %xmm4
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm4, %xmm4
 ; HSW-NEXT:    vpextrb $5, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_44
+; HSW-NEXT:    je .LBB8_44
 ; HSW-NEXT:  # %bb.43: # %cond.load81
 ; HSW-NEXT:    vextractf128 $1, %ymm2, %xmm4
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm4 = xmm4[0],mem[0],xmm4[2,3]
 ; HSW-NEXT:    vinsertf128 $1, %xmm4, %ymm2, %ymm2
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_44: # %else82
+; HSW-NEXT:  .LBB8_44: # %else82
 ; HSW-NEXT:    vxorps %xmm4, %xmm4, %xmm4
 ; HSW-NEXT:    vpcmpeqd %ymm4, %ymm6, %ymm4
 ; HSW-NEXT:    vextracti128 $1, %ymm4, %xmm4
@@ -531,68 +839,68 @@ define <32 x float> @expandload_v32f32_v32i32(float* %base, <32 x float> %src0, 
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm5, %xmm5
 ; HSW-NEXT:    vpextrb $6, %xmm5, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_46
+; HSW-NEXT:    je .LBB8_46
 ; HSW-NEXT:  # %bb.45: # %cond.load85
 ; HSW-NEXT:    vextractf128 $1, %ymm2, %xmm5
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm5 = xmm5[0,1],mem[0],xmm5[3]
 ; HSW-NEXT:    vinsertf128 $1, %xmm5, %ymm2, %ymm2
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_46: # %else86
+; HSW-NEXT:  .LBB8_46: # %else86
 ; HSW-NEXT:    vpackssdw %xmm4, %xmm0, %xmm4
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm4, %xmm4
 ; HSW-NEXT:    vpextrb $7, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_48
+; HSW-NEXT:    je .LBB8_48
 ; HSW-NEXT:  # %bb.47: # %cond.load89
 ; HSW-NEXT:    vextractf128 $1, %ymm2, %xmm4
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm4 = xmm4[0,1,2],mem[0]
 ; HSW-NEXT:    vinsertf128 $1, %xmm4, %ymm2, %ymm2
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_48: # %else90
+; HSW-NEXT:  .LBB8_48: # %else90
 ; HSW-NEXT:    vxorps %xmm4, %xmm4, %xmm4
 ; HSW-NEXT:    vpcmpeqd %ymm4, %ymm7, %ymm4
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm4, %xmm5
 ; HSW-NEXT:    vpacksswb %xmm5, %xmm0, %xmm5
 ; HSW-NEXT:    vpextrb $8, %xmm5, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_50
+; HSW-NEXT:    je .LBB8_50
 ; HSW-NEXT:  # %bb.49: # %cond.load93
 ; HSW-NEXT:    vmovd {{.*#+}} xmm5 = mem[0],zero,zero,zero
 ; HSW-NEXT:    vpblendd {{.*#+}} ymm3 = ymm5[0],ymm3[1,2,3,4,5,6,7]
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_50: # %else94
+; HSW-NEXT:  .LBB8_50: # %else94
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm4, %xmm4
 ; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
 ; HSW-NEXT:    vpextrb $9, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_52
+; HSW-NEXT:    je .LBB8_52
 ; HSW-NEXT:  # %bb.51: # %cond.load97
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm4 = xmm3[0],mem[0],xmm3[2,3]
 ; HSW-NEXT:    vblendps {{.*#+}} ymm3 = ymm4[0,1,2,3],ymm3[4,5,6,7]
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_52: # %else98
+; HSW-NEXT:  .LBB8_52: # %else98
 ; HSW-NEXT:    vxorps %xmm4, %xmm4, %xmm4
 ; HSW-NEXT:    vpcmpeqd %ymm4, %ymm7, %ymm4
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm4, %xmm5
 ; HSW-NEXT:    vpacksswb %xmm5, %xmm0, %xmm5
 ; HSW-NEXT:    vpextrb $10, %xmm5, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_54
+; HSW-NEXT:    je .LBB8_54
 ; HSW-NEXT:  # %bb.53: # %cond.load101
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm5 = xmm3[0,1],mem[0],xmm3[3]
 ; HSW-NEXT:    vblendps {{.*#+}} ymm3 = ymm5[0,1,2,3],ymm3[4,5,6,7]
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_54: # %else102
+; HSW-NEXT:  .LBB8_54: # %else102
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm4, %xmm4
 ; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
 ; HSW-NEXT:    vpextrb $11, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_56
+; HSW-NEXT:    je .LBB8_56
 ; HSW-NEXT:  # %bb.55: # %cond.load105
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm4 = xmm3[0,1,2],mem[0]
 ; HSW-NEXT:    vblendps {{.*#+}} ymm3 = ymm4[0,1,2,3],ymm3[4,5,6,7]
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_56: # %else106
+; HSW-NEXT:  .LBB8_56: # %else106
 ; HSW-NEXT:    vxorps %xmm4, %xmm4, %xmm4
 ; HSW-NEXT:    vpcmpeqd %ymm4, %ymm7, %ymm4
 ; HSW-NEXT:    vextracti128 $1, %ymm4, %xmm4
@@ -600,25 +908,25 @@ define <32 x float> @expandload_v32f32_v32i32(float* %base, <32 x float> %src0, 
 ; HSW-NEXT:    vpacksswb %xmm5, %xmm0, %xmm5
 ; HSW-NEXT:    vpextrb $12, %xmm5, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_58
+; HSW-NEXT:    je .LBB8_58
 ; HSW-NEXT:  # %bb.57: # %cond.load109
 ; HSW-NEXT:    vmovss {{.*#+}} xmm5 = mem[0],zero,zero,zero
 ; HSW-NEXT:    vextractf128 $1, %ymm3, %xmm6
 ; HSW-NEXT:    vblendps {{.*#+}} xmm5 = xmm5[0],xmm6[1,2,3]
 ; HSW-NEXT:    vinsertf128 $1, %xmm5, %ymm3, %ymm3
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_58: # %else110
+; HSW-NEXT:  .LBB8_58: # %else110
 ; HSW-NEXT:    vpackssdw %xmm4, %xmm0, %xmm4
 ; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
 ; HSW-NEXT:    vpextrb $13, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_60
+; HSW-NEXT:    je .LBB8_60
 ; HSW-NEXT:  # %bb.59: # %cond.load113
 ; HSW-NEXT:    vextractf128 $1, %ymm3, %xmm4
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm4 = xmm4[0],mem[0],xmm4[2,3]
 ; HSW-NEXT:    vinsertf128 $1, %xmm4, %ymm3, %ymm3
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_60: # %else114
+; HSW-NEXT:  .LBB8_60: # %else114
 ; HSW-NEXT:    vxorps %xmm4, %xmm4, %xmm4
 ; HSW-NEXT:    vpcmpeqd %ymm4, %ymm7, %ymm4
 ; HSW-NEXT:    vextracti128 $1, %ymm4, %xmm4
@@ -626,23 +934,23 @@ define <32 x float> @expandload_v32f32_v32i32(float* %base, <32 x float> %src0, 
 ; HSW-NEXT:    vpacksswb %xmm5, %xmm0, %xmm5
 ; HSW-NEXT:    vpextrb $14, %xmm5, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_62
+; HSW-NEXT:    je .LBB8_62
 ; HSW-NEXT:  # %bb.61: # %cond.load117
 ; HSW-NEXT:    vextractf128 $1, %ymm3, %xmm5
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm5 = xmm5[0,1],mem[0],xmm5[3]
 ; HSW-NEXT:    vinsertf128 $1, %xmm5, %ymm3, %ymm3
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_62: # %else118
+; HSW-NEXT:  .LBB8_62: # %else118
 ; HSW-NEXT:    vpackssdw %xmm4, %xmm0, %xmm4
 ; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
 ; HSW-NEXT:    vpextrb $15, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_64
+; HSW-NEXT:    je .LBB8_64
 ; HSW-NEXT:  # %bb.63: # %cond.load121
 ; HSW-NEXT:    vextractf128 $1, %ymm3, %xmm4
 ; HSW-NEXT:    vinsertps {{.*#+}} xmm4 = xmm4[0,1,2],mem[0]
 ; HSW-NEXT:    vinsertf128 $1, %xmm4, %ymm3, %ymm3
-; HSW-NEXT:  .LBB6_64: # %else122
+; HSW-NEXT:  .LBB8_64: # %else122
 ; HSW-NEXT:    retq
 ;
 ; SKX-LABEL: expandload_v32f32_v32i32:
@@ -669,223 +977,752 @@ define <32 x float> @expandload_v32f32_v32i32(float* %base, <32 x float> %src0, 
   ret <32 x float> %res
 }
 
-define <16 x double> @expandload_v16f64_v16i32(double* %base, <16 x double> %src0, <16 x i32> %trigger) {
-; HSW-LABEL: expandload_v16f64_v16i32:
-; HSW:       # %bb.0:
-; HSW-NEXT:    vpxor %xmm6, %xmm6, %xmm6
-; HSW-NEXT:    vpcmpeqd %ymm6, %ymm4, %ymm6
-; HSW-NEXT:    vpackssdw %xmm0, %xmm6, %xmm7
-; HSW-NEXT:    vpacksswb %xmm0, %xmm7, %xmm7
-; HSW-NEXT:    vpextrb $0, %xmm7, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB7_2
-; HSW-NEXT:  # %bb.1: # %cond.load
-; HSW-NEXT:    vmovq {{.*#+}} xmm7 = mem[0],zero
-; HSW-NEXT:    vpblendd {{.*#+}} ymm0 = ymm7[0,1],ymm0[2,3,4,5,6,7]
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB7_2: # %else
-; HSW-NEXT:    vpackssdw %xmm0, %xmm6, %xmm6
-; HSW-NEXT:    vpacksswb %xmm0, %xmm6, %xmm6
-; HSW-NEXT:    vpextrb $1, %xmm6, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB7_4
-; HSW-NEXT:  # %bb.3: # %cond.load1
-; HSW-NEXT:    vmovhpd {{.*#+}} xmm6 = xmm0[0],mem[0]
-; HSW-NEXT:    vblendpd {{.*#+}} ymm0 = ymm6[0,1],ymm0[2,3]
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB7_4: # %else2
-; HSW-NEXT:    vxorpd %xmm6, %xmm6, %xmm6
-; HSW-NEXT:    vpcmpeqd %ymm6, %ymm4, %ymm6
-; HSW-NEXT:    vpackssdw %xmm0, %xmm6, %xmm7
-; HSW-NEXT:    vpacksswb %xmm0, %xmm7, %xmm7
-; HSW-NEXT:    vpextrb $2, %xmm7, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB7_6
-; HSW-NEXT:  # %bb.5: # %cond.load5
-; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm7
-; HSW-NEXT:    vmovlpd {{.*#+}} xmm7 = mem[0],xmm7[1]
-; HSW-NEXT:    vinsertf128 $1, %xmm7, %ymm0, %ymm0
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB7_6: # %else6
-; HSW-NEXT:    vpackssdw %xmm0, %xmm6, %xmm6
-; HSW-NEXT:    vpacksswb %xmm0, %xmm6, %xmm6
-; HSW-NEXT:    vpextrb $3, %xmm6, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB7_8
-; HSW-NEXT:  # %bb.7: # %cond.load9
-; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm6
-; HSW-NEXT:    vmovhpd {{.*#+}} xmm6 = xmm6[0],mem[0]
-; HSW-NEXT:    vinsertf128 $1, %xmm6, %ymm0, %ymm0
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB7_8: # %else10
-; HSW-NEXT:    vxorpd %xmm6, %xmm6, %xmm6
-; HSW-NEXT:    vpcmpeqd %ymm6, %ymm4, %ymm6
-; HSW-NEXT:    vextracti128 $1, %ymm6, %xmm6
-; HSW-NEXT:    vpackssdw %xmm6, %xmm0, %xmm7
-; HSW-NEXT:    vpacksswb %xmm0, %xmm7, %xmm7
-; HSW-NEXT:    vpextrb $4, %xmm7, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB7_10
-; HSW-NEXT:  # %bb.9: # %cond.load13
-; HSW-NEXT:    vmovq {{.*#+}} xmm7 = mem[0],zero
-; HSW-NEXT:    vpblendd {{.*#+}} ymm1 = ymm7[0,1],ymm1[2,3,4,5,6,7]
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB7_10: # %else14
-; HSW-NEXT:    vpackssdw %xmm6, %xmm0, %xmm6
-; HSW-NEXT:    vpacksswb %xmm0, %xmm6, %xmm6
-; HSW-NEXT:    vpextrb $5, %xmm6, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB7_12
-; HSW-NEXT:  # %bb.11: # %cond.load17
-; HSW-NEXT:    vmovhpd {{.*#+}} xmm6 = xmm1[0],mem[0]
-; HSW-NEXT:    vblendpd {{.*#+}} ymm1 = ymm6[0,1],ymm1[2,3]
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB7_12: # %else18
-; HSW-NEXT:    vxorpd %xmm6, %xmm6, %xmm6
-; HSW-NEXT:    vpcmpeqd %ymm6, %ymm4, %ymm4
-; HSW-NEXT:    vextracti128 $1, %ymm4, %xmm4
-; HSW-NEXT:    vpackssdw %xmm4, %xmm0, %xmm6
-; HSW-NEXT:    vpacksswb %xmm0, %xmm6, %xmm6
-; HSW-NEXT:    vpextrb $6, %xmm6, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB7_14
-; HSW-NEXT:  # %bb.13: # %cond.load21
-; HSW-NEXT:    vextractf128 $1, %ymm1, %xmm6
-; HSW-NEXT:    vmovlpd {{.*#+}} xmm6 = mem[0],xmm6[1]
-; HSW-NEXT:    vinsertf128 $1, %xmm6, %ymm1, %ymm1
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB7_14: # %else22
-; HSW-NEXT:    vpackssdw %xmm4, %xmm0, %xmm4
-; HSW-NEXT:    vpacksswb %xmm0, %xmm4, %xmm4
-; HSW-NEXT:    vpextrb $7, %xmm4, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB7_16
-; HSW-NEXT:  # %bb.15: # %cond.load25
-; HSW-NEXT:    vextractf128 $1, %ymm1, %xmm4
-; HSW-NEXT:    vmovhpd {{.*#+}} xmm4 = xmm4[0],mem[0]
-; HSW-NEXT:    vinsertf128 $1, %xmm4, %ymm1, %ymm1
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB7_16: # %else26
-; HSW-NEXT:    vxorpd %xmm4, %xmm4, %xmm4
-; HSW-NEXT:    vpcmpeqd %ymm4, %ymm5, %ymm4
-; HSW-NEXT:    vpackssdw %xmm0, %xmm4, %xmm6
-; HSW-NEXT:    vpacksswb %xmm6, %xmm0, %xmm6
-; HSW-NEXT:    vpextrb $8, %xmm6, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB7_18
-; HSW-NEXT:  # %bb.17: # %cond.load29
-; HSW-NEXT:    vmovq {{.*#+}} xmm6 = mem[0],zero
-; HSW-NEXT:    vpblendd {{.*#+}} ymm2 = ymm6[0,1],ymm2[2,3,4,5,6,7]
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB7_18: # %else30
-; HSW-NEXT:    vpackssdw %xmm0, %xmm4, %xmm4
-; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
-; HSW-NEXT:    vpextrb $9, %xmm4, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB7_20
-; HSW-NEXT:  # %bb.19: # %cond.load33
-; HSW-NEXT:    vmovhpd {{.*#+}} xmm4 = xmm2[0],mem[0]
-; HSW-NEXT:    vblendpd {{.*#+}} ymm2 = ymm4[0,1],ymm2[2,3]
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB7_20: # %else34
-; HSW-NEXT:    vxorpd %xmm4, %xmm4, %xmm4
-; HSW-NEXT:    vpcmpeqd %ymm4, %ymm5, %ymm4
-; HSW-NEXT:    vpackssdw %xmm0, %xmm4, %xmm6
-; HSW-NEXT:    vpacksswb %xmm6, %xmm0, %xmm6
-; HSW-NEXT:    vpextrb $10, %xmm6, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB7_22
-; HSW-NEXT:  # %bb.21: # %cond.load37
-; HSW-NEXT:    vextractf128 $1, %ymm2, %xmm6
-; HSW-NEXT:    vmovlpd {{.*#+}} xmm6 = mem[0],xmm6[1]
-; HSW-NEXT:    vinsertf128 $1, %xmm6, %ymm2, %ymm2
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB7_22: # %else38
-; HSW-NEXT:    vpackssdw %xmm0, %xmm4, %xmm4
-; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
-; HSW-NEXT:    vpextrb $11, %xmm4, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB7_24
-; HSW-NEXT:  # %bb.23: # %cond.load41
-; HSW-NEXT:    vextractf128 $1, %ymm2, %xmm4
-; HSW-NEXT:    vmovhpd {{.*#+}} xmm4 = xmm4[0],mem[0]
-; HSW-NEXT:    vinsertf128 $1, %xmm4, %ymm2, %ymm2
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB7_24: # %else42
-; HSW-NEXT:    vxorpd %xmm4, %xmm4, %xmm4
-; HSW-NEXT:    vpcmpeqd %ymm4, %ymm5, %ymm4
-; HSW-NEXT:    vextracti128 $1, %ymm4, %xmm4
-; HSW-NEXT:    vpackssdw %xmm4, %xmm0, %xmm6
-; HSW-NEXT:    vpacksswb %xmm6, %xmm0, %xmm6
-; HSW-NEXT:    vpextrb $12, %xmm6, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB7_26
-; HSW-NEXT:  # %bb.25: # %cond.load45
-; HSW-NEXT:    vmovq {{.*#+}} xmm6 = mem[0],zero
-; HSW-NEXT:    vpblendd {{.*#+}} ymm3 = ymm6[0,1],ymm3[2,3,4,5,6,7]
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB7_26: # %else46
-; HSW-NEXT:    vpackssdw %xmm4, %xmm0, %xmm4
-; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
-; HSW-NEXT:    vpextrb $13, %xmm4, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB7_28
-; HSW-NEXT:  # %bb.27: # %cond.load49
-; HSW-NEXT:    vmovhpd {{.*#+}} xmm4 = xmm3[0],mem[0]
-; HSW-NEXT:    vblendpd {{.*#+}} ymm3 = ymm4[0,1],ymm3[2,3]
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB7_28: # %else50
-; HSW-NEXT:    vxorpd %xmm4, %xmm4, %xmm4
-; HSW-NEXT:    vpcmpeqd %ymm4, %ymm5, %ymm4
-; HSW-NEXT:    vextracti128 $1, %ymm4, %xmm4
-; HSW-NEXT:    vpackssdw %xmm4, %xmm0, %xmm5
-; HSW-NEXT:    vpacksswb %xmm5, %xmm0, %xmm5
-; HSW-NEXT:    vpextrb $14, %xmm5, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB7_30
-; HSW-NEXT:  # %bb.29: # %cond.load53
-; HSW-NEXT:    vextractf128 $1, %ymm3, %xmm5
-; HSW-NEXT:    vmovlpd {{.*#+}} xmm5 = mem[0],xmm5[1]
-; HSW-NEXT:    vinsertf128 $1, %xmm5, %ymm3, %ymm3
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB7_30: # %else54
-; HSW-NEXT:    vpackssdw %xmm4, %xmm0, %xmm4
-; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
-; HSW-NEXT:    vpextrb $15, %xmm4, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB7_32
-; HSW-NEXT:  # %bb.31: # %cond.load57
-; HSW-NEXT:    vextractf128 $1, %ymm3, %xmm4
-; HSW-NEXT:    vmovhpd {{.*#+}} xmm4 = xmm4[0],mem[0]
-; HSW-NEXT:    vinsertf128 $1, %xmm4, %ymm3, %ymm3
-; HSW-NEXT:  .LBB7_32: # %else58
+;
+; vXi64
+;
+
+define <2 x i64> @expandload_v2i64_const(i64* %base, <2 x i64> %src0) {
+; HSW-LABEL: expandload_v2i64_const:
+; HSW:       # %bb.0: # %else
+; HSW-NEXT:    vpinsrq $1, (%rdi), %xmm0, %xmm0
 ; HSW-NEXT:    retq
 ;
-; SKX-LABEL: expandload_v16f64_v16i32:
+; SKX-LABEL: expandload_v2i64_const:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    vextracti64x4 $1, %zmm2, %ymm3
-; SKX-NEXT:    vptestnmd %ymm3, %ymm3, %k1
-; SKX-NEXT:    vptestnmd %ymm2, %ymm2, %k2
-; SKX-NEXT:    kmovb %k2, %eax
-; SKX-NEXT:    popcntl %eax, %eax
-; SKX-NEXT:    vexpandpd (%rdi,%rax,8), %zmm1 {%k1}
-; SKX-NEXT:    vexpandpd (%rdi), %zmm0 {%k2}
+; SKX-NEXT:    movb $2, %al
+; SKX-NEXT:    kmovd %eax, %k1
+; SKX-NEXT:    vpexpandq (%rdi), %xmm0 {%k1}
 ; SKX-NEXT:    retq
 ;
-; KNL-LABEL: expandload_v16f64_v16i32:
+; KNL-LABEL: expandload_v2i64_const:
 ; KNL:       # %bb.0:
-; KNL-NEXT:    vextracti64x4 $1, %zmm2, %ymm3
-; KNL-NEXT:    vptestnmd %zmm3, %zmm3, %k1
-; KNL-NEXT:    vptestnmd %zmm2, %zmm2, %k2
-; KNL-NEXT:    vexpandpd (%rdi), %zmm0 {%k2}
-; KNL-NEXT:    kmovw %k2, %eax
-; KNL-NEXT:    movzbl %al, %eax
-; KNL-NEXT:    popcntl %eax, %eax
-; KNL-NEXT:    vexpandpd (%rdi,%rax,8), %zmm1 {%k1}
+; KNL-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
+; KNL-NEXT:    movb $2, %al
+; KNL-NEXT:    kmovw %eax, %k1
+; KNL-NEXT:    vpexpandq (%rdi), %zmm0 {%k1}
+; KNL-NEXT:    # kill: def $xmm0 killed $xmm0 killed $zmm0
 ; KNL-NEXT:    retq
-  %mask = icmp eq <16 x i32> %trigger, zeroinitializer
-  %res = call <16 x double> @llvm.masked.expandload.v16f64(double* %base, <16 x i1> %mask, <16 x double> %src0)
-  ret <16 x double> %res
+  %res = call <2 x i64> @llvm.masked.expandload.v2i64(i64* %base, <2 x i1> <i1 false, i1 true>, <2 x i64> %src0)
+  ret <2 x i64>%res
+}
+
+;
+; vXi32
+;
+
+define <4 x i32> @expandload_v4i32_v4i32(i32* %base, <4 x i32> %src0, <4 x i32> %trigger) {
+; HSW-LABEL: expandload_v4i32_v4i32:
+; HSW:       # %bb.0:
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqd %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $0, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB10_2
+; HSW-NEXT:  # %bb.1: # %cond.load
+; HSW-NEXT:    vpinsrd $0, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    addq $4, %rdi
+; HSW-NEXT:  .LBB10_2: # %else
+; HSW-NEXT:    vpextrb $4, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB10_4
+; HSW-NEXT:  # %bb.3: # %cond.load1
+; HSW-NEXT:    vpinsrd $1, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    addq $4, %rdi
+; HSW-NEXT:  .LBB10_4: # %else2
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqd %xmm2, %xmm1, %xmm1
+; HSW-NEXT:    vpextrb $8, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB10_6
+; HSW-NEXT:  # %bb.5: # %cond.load5
+; HSW-NEXT:    vpinsrd $2, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    addq $4, %rdi
+; HSW-NEXT:  .LBB10_6: # %else6
+; HSW-NEXT:    vpextrb $12, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB10_8
+; HSW-NEXT:  # %bb.7: # %cond.load9
+; HSW-NEXT:    vpinsrd $3, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:  .LBB10_8: # %else10
+; HSW-NEXT:    retq
+;
+; SKX-LABEL: expandload_v4i32_v4i32:
+; SKX:       # %bb.0:
+; SKX-NEXT:    vptestnmd %xmm1, %xmm1, %k1
+; SKX-NEXT:    vpexpandd (%rdi), %xmm0 {%k1}
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: expandload_v4i32_v4i32:
+; KNL:       # %bb.0:
+; KNL-NEXT:    # kill: def $xmm1 killed $xmm1 def $zmm1
+; KNL-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
+; KNL-NEXT:    vptestnmd %zmm1, %zmm1, %k0
+; KNL-NEXT:    kshiftlw $12, %k0, %k0
+; KNL-NEXT:    kshiftrw $12, %k0, %k1
+; KNL-NEXT:    vpexpandd (%rdi), %zmm0 {%k1}
+; KNL-NEXT:    # kill: def $xmm0 killed $xmm0 killed $zmm0
+; KNL-NEXT:    retq
+  %mask = icmp eq <4 x i32> %trigger, zeroinitializer
+  %res = call <4 x i32> @llvm.masked.expandload.v4i32(i32* %base, <4 x i1> %mask, <4 x i32> %src0)
+  ret <4 x i32>%res
+}
+
+;
+; vXi16
+;
+
+define <8 x i16> @expandload_v8i16_v8i16(i16* %base, <8 x i16> %src0, <8 x i16> %trigger) {
+; HSW-LABEL: expandload_v8i16_v8i16:
+; HSW:       # %bb.0:
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqw %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $0, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB11_2
+; HSW-NEXT:  # %bb.1: # %cond.load
+; HSW-NEXT:    vpinsrw $0, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    addq $2, %rdi
+; HSW-NEXT:  .LBB11_2: # %else
+; HSW-NEXT:    vpextrb $2, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB11_4
+; HSW-NEXT:  # %bb.3: # %cond.load1
+; HSW-NEXT:    vpinsrw $1, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    addq $2, %rdi
+; HSW-NEXT:  .LBB11_4: # %else2
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqw %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $4, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB11_6
+; HSW-NEXT:  # %bb.5: # %cond.load5
+; HSW-NEXT:    vpinsrw $2, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    addq $2, %rdi
+; HSW-NEXT:  .LBB11_6: # %else6
+; HSW-NEXT:    vpextrb $6, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB11_8
+; HSW-NEXT:  # %bb.7: # %cond.load9
+; HSW-NEXT:    vpinsrw $3, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    addq $2, %rdi
+; HSW-NEXT:  .LBB11_8: # %else10
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqw %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $8, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB11_10
+; HSW-NEXT:  # %bb.9: # %cond.load13
+; HSW-NEXT:    vpinsrw $4, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    addq $2, %rdi
+; HSW-NEXT:  .LBB11_10: # %else14
+; HSW-NEXT:    vpextrb $10, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB11_12
+; HSW-NEXT:  # %bb.11: # %cond.load17
+; HSW-NEXT:    vpinsrw $5, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    addq $2, %rdi
+; HSW-NEXT:  .LBB11_12: # %else18
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqw %xmm2, %xmm1, %xmm1
+; HSW-NEXT:    vpextrb $12, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB11_14
+; HSW-NEXT:  # %bb.13: # %cond.load21
+; HSW-NEXT:    vpinsrw $6, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    addq $2, %rdi
+; HSW-NEXT:  .LBB11_14: # %else22
+; HSW-NEXT:    vpextrb $14, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB11_16
+; HSW-NEXT:  # %bb.15: # %cond.load25
+; HSW-NEXT:    vpinsrw $7, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:  .LBB11_16: # %else26
+; HSW-NEXT:    retq
+;
+; SKX-LABEL: expandload_v8i16_v8i16:
+; SKX:       # %bb.0:
+; SKX-NEXT:    vptestnmw %xmm1, %xmm1, %k0
+; SKX-NEXT:    kmovd %k0, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB11_2
+; SKX-NEXT:  # %bb.1: # %cond.load
+; SKX-NEXT:    vpinsrw $0, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    addq $2, %rdi
+; SKX-NEXT:  .LBB11_2: # %else
+; SKX-NEXT:    kshiftrb $1, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB11_4
+; SKX-NEXT:  # %bb.3: # %cond.load1
+; SKX-NEXT:    vpinsrw $1, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    addq $2, %rdi
+; SKX-NEXT:  .LBB11_4: # %else2
+; SKX-NEXT:    kshiftrb $2, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB11_6
+; SKX-NEXT:  # %bb.5: # %cond.load5
+; SKX-NEXT:    vpinsrw $2, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    addq $2, %rdi
+; SKX-NEXT:  .LBB11_6: # %else6
+; SKX-NEXT:    kshiftrb $3, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB11_8
+; SKX-NEXT:  # %bb.7: # %cond.load9
+; SKX-NEXT:    vpinsrw $3, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    addq $2, %rdi
+; SKX-NEXT:  .LBB11_8: # %else10
+; SKX-NEXT:    kshiftrb $4, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB11_10
+; SKX-NEXT:  # %bb.9: # %cond.load13
+; SKX-NEXT:    vpinsrw $4, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    addq $2, %rdi
+; SKX-NEXT:  .LBB11_10: # %else14
+; SKX-NEXT:    kshiftrb $5, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB11_12
+; SKX-NEXT:  # %bb.11: # %cond.load17
+; SKX-NEXT:    vpinsrw $5, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    addq $2, %rdi
+; SKX-NEXT:  .LBB11_12: # %else18
+; SKX-NEXT:    kshiftrb $6, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB11_14
+; SKX-NEXT:  # %bb.13: # %cond.load21
+; SKX-NEXT:    vpinsrw $6, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    addq $2, %rdi
+; SKX-NEXT:  .LBB11_14: # %else22
+; SKX-NEXT:    kshiftrb $7, %k0, %k0
+; SKX-NEXT:    kmovd %k0, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB11_16
+; SKX-NEXT:  # %bb.15: # %cond.load25
+; SKX-NEXT:    vpinsrw $7, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:  .LBB11_16: # %else26
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: expandload_v8i16_v8i16:
+; KNL:       # %bb.0:
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqw %xmm2, %xmm1, %xmm2
+; KNL-NEXT:    vpmovsxwq %xmm2, %zmm2
+; KNL-NEXT:    vptestmq %zmm2, %zmm2, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB11_2
+; KNL-NEXT:  # %bb.1: # %cond.load
+; KNL-NEXT:    vpinsrw $0, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $2, %rdi
+; KNL-NEXT:  .LBB11_2: # %else
+; KNL-NEXT:    kshiftrw $1, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB11_4
+; KNL-NEXT:  # %bb.3: # %cond.load1
+; KNL-NEXT:    vpinsrw $1, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $2, %rdi
+; KNL-NEXT:  .LBB11_4: # %else2
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqw %xmm2, %xmm1, %xmm2
+; KNL-NEXT:    vpmovsxwq %xmm2, %zmm2
+; KNL-NEXT:    vptestmq %zmm2, %zmm2, %k0
+; KNL-NEXT:    kshiftrw $2, %k0, %k1
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB11_6
+; KNL-NEXT:  # %bb.5: # %cond.load5
+; KNL-NEXT:    vpinsrw $2, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $2, %rdi
+; KNL-NEXT:  .LBB11_6: # %else6
+; KNL-NEXT:    kshiftrw $3, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB11_8
+; KNL-NEXT:  # %bb.7: # %cond.load9
+; KNL-NEXT:    vpinsrw $3, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $2, %rdi
+; KNL-NEXT:  .LBB11_8: # %else10
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqw %xmm2, %xmm1, %xmm2
+; KNL-NEXT:    vpmovsxwq %xmm2, %zmm2
+; KNL-NEXT:    vptestmq %zmm2, %zmm2, %k0
+; KNL-NEXT:    kshiftrw $4, %k0, %k1
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB11_10
+; KNL-NEXT:  # %bb.9: # %cond.load13
+; KNL-NEXT:    vpinsrw $4, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $2, %rdi
+; KNL-NEXT:  .LBB11_10: # %else14
+; KNL-NEXT:    kshiftrw $5, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB11_12
+; KNL-NEXT:  # %bb.11: # %cond.load17
+; KNL-NEXT:    vpinsrw $5, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $2, %rdi
+; KNL-NEXT:  .LBB11_12: # %else18
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqw %xmm2, %xmm1, %xmm1
+; KNL-NEXT:    vpmovsxwq %xmm1, %zmm1
+; KNL-NEXT:    vptestmq %zmm1, %zmm1, %k0
+; KNL-NEXT:    kshiftrw $6, %k0, %k1
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB11_14
+; KNL-NEXT:  # %bb.13: # %cond.load21
+; KNL-NEXT:    vpinsrw $6, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $2, %rdi
+; KNL-NEXT:  .LBB11_14: # %else22
+; KNL-NEXT:    kshiftrw $7, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB11_16
+; KNL-NEXT:  # %bb.15: # %cond.load25
+; KNL-NEXT:    vpinsrw $7, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:  .LBB11_16: # %else26
+; KNL-NEXT:    retq
+  %mask = icmp eq <8 x i16> %trigger, zeroinitializer
+  %res = call <8 x i16> @llvm.masked.expandload.v8i16(i16* %base, <8 x i1> %mask, <8 x i16> %src0)
+  ret <8 x i16>%res
+}
+
+;
+; vXi8
+;
+
+define <16 x i8> @expandload_v16i8_v16i8(i8* %base, <16 x i8> %src0, <16 x i8> %trigger) {
+; HSW-LABEL: expandload_v16i8_v16i8:
+; HSW:       # %bb.0:
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $0, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_2
+; HSW-NEXT:  # %bb.1: # %cond.load
+; HSW-NEXT:    vpinsrb $0, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_2: # %else
+; HSW-NEXT:    vpextrb $1, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_4
+; HSW-NEXT:  # %bb.3: # %cond.load1
+; HSW-NEXT:    vpinsrb $1, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_4: # %else2
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $2, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_6
+; HSW-NEXT:  # %bb.5: # %cond.load5
+; HSW-NEXT:    vpinsrb $2, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_6: # %else6
+; HSW-NEXT:    vpextrb $3, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_8
+; HSW-NEXT:  # %bb.7: # %cond.load9
+; HSW-NEXT:    vpinsrb $3, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_8: # %else10
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $4, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_10
+; HSW-NEXT:  # %bb.9: # %cond.load13
+; HSW-NEXT:    vpinsrb $4, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_10: # %else14
+; HSW-NEXT:    vpextrb $5, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_12
+; HSW-NEXT:  # %bb.11: # %cond.load17
+; HSW-NEXT:    vpinsrb $5, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_12: # %else18
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $6, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_14
+; HSW-NEXT:  # %bb.13: # %cond.load21
+; HSW-NEXT:    vpinsrb $6, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_14: # %else22
+; HSW-NEXT:    vpextrb $7, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_16
+; HSW-NEXT:  # %bb.15: # %cond.load25
+; HSW-NEXT:    vpinsrb $7, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_16: # %else26
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $8, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_18
+; HSW-NEXT:  # %bb.17: # %cond.load29
+; HSW-NEXT:    vpinsrb $8, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_18: # %else30
+; HSW-NEXT:    vpextrb $9, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_20
+; HSW-NEXT:  # %bb.19: # %cond.load33
+; HSW-NEXT:    vpinsrb $9, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_20: # %else34
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $10, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_22
+; HSW-NEXT:  # %bb.21: # %cond.load37
+; HSW-NEXT:    vpinsrb $10, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_22: # %else38
+; HSW-NEXT:    vpextrb $11, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_24
+; HSW-NEXT:  # %bb.23: # %cond.load41
+; HSW-NEXT:    vpinsrb $11, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_24: # %else42
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $12, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_26
+; HSW-NEXT:  # %bb.25: # %cond.load45
+; HSW-NEXT:    vpinsrb $12, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_26: # %else46
+; HSW-NEXT:    vpextrb $13, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_28
+; HSW-NEXT:  # %bb.27: # %cond.load49
+; HSW-NEXT:    vpinsrb $13, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_28: # %else50
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm1
+; HSW-NEXT:    vpextrb $14, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_30
+; HSW-NEXT:  # %bb.29: # %cond.load53
+; HSW-NEXT:    vpinsrb $14, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_30: # %else54
+; HSW-NEXT:    vpextrb $15, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_32
+; HSW-NEXT:  # %bb.31: # %cond.load57
+; HSW-NEXT:    vpinsrb $15, (%rdi), %xmm0, %xmm0
+; HSW-NEXT:  .LBB12_32: # %else58
+; HSW-NEXT:    retq
+;
+; SKX-LABEL: expandload_v16i8_v16i8:
+; SKX:       # %bb.0:
+; SKX-NEXT:    vptestnmb %xmm1, %xmm1, %k0
+; SKX-NEXT:    kmovd %k0, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_2
+; SKX-NEXT:  # %bb.1: # %cond.load
+; SKX-NEXT:    vpinsrb $0, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_2: # %else
+; SKX-NEXT:    kshiftrw $1, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_4
+; SKX-NEXT:  # %bb.3: # %cond.load1
+; SKX-NEXT:    vpinsrb $1, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_4: # %else2
+; SKX-NEXT:    kshiftrw $2, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_6
+; SKX-NEXT:  # %bb.5: # %cond.load5
+; SKX-NEXT:    vpinsrb $2, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_6: # %else6
+; SKX-NEXT:    kshiftrw $3, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_8
+; SKX-NEXT:  # %bb.7: # %cond.load9
+; SKX-NEXT:    vpinsrb $3, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_8: # %else10
+; SKX-NEXT:    kshiftrw $4, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_10
+; SKX-NEXT:  # %bb.9: # %cond.load13
+; SKX-NEXT:    vpinsrb $4, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_10: # %else14
+; SKX-NEXT:    kshiftrw $5, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_12
+; SKX-NEXT:  # %bb.11: # %cond.load17
+; SKX-NEXT:    vpinsrb $5, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_12: # %else18
+; SKX-NEXT:    kshiftrw $6, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_14
+; SKX-NEXT:  # %bb.13: # %cond.load21
+; SKX-NEXT:    vpinsrb $6, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_14: # %else22
+; SKX-NEXT:    kshiftrw $7, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_16
+; SKX-NEXT:  # %bb.15: # %cond.load25
+; SKX-NEXT:    vpinsrb $7, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_16: # %else26
+; SKX-NEXT:    kshiftrw $8, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_18
+; SKX-NEXT:  # %bb.17: # %cond.load29
+; SKX-NEXT:    vpinsrb $8, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_18: # %else30
+; SKX-NEXT:    kshiftrw $9, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_20
+; SKX-NEXT:  # %bb.19: # %cond.load33
+; SKX-NEXT:    vpinsrb $9, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_20: # %else34
+; SKX-NEXT:    kshiftrw $10, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_22
+; SKX-NEXT:  # %bb.21: # %cond.load37
+; SKX-NEXT:    vpinsrb $10, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_22: # %else38
+; SKX-NEXT:    kshiftrw $11, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_24
+; SKX-NEXT:  # %bb.23: # %cond.load41
+; SKX-NEXT:    vpinsrb $11, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_24: # %else42
+; SKX-NEXT:    kshiftrw $12, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_26
+; SKX-NEXT:  # %bb.25: # %cond.load45
+; SKX-NEXT:    vpinsrb $12, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_26: # %else46
+; SKX-NEXT:    kshiftrw $13, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_28
+; SKX-NEXT:  # %bb.27: # %cond.load49
+; SKX-NEXT:    vpinsrb $13, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_28: # %else50
+; SKX-NEXT:    kshiftrw $14, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_30
+; SKX-NEXT:  # %bb.29: # %cond.load53
+; SKX-NEXT:    vpinsrb $14, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_30: # %else54
+; SKX-NEXT:    kshiftrw $15, %k0, %k0
+; SKX-NEXT:    kmovd %k0, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_32
+; SKX-NEXT:  # %bb.31: # %cond.load57
+; SKX-NEXT:    vpinsrb $15, (%rdi), %xmm0, %xmm0
+; SKX-NEXT:  .LBB12_32: # %else58
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: expandload_v16i8_v16i8:
+; KNL:       # %bb.0:
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; KNL-NEXT:    vpmovsxbd %xmm2, %zmm2
+; KNL-NEXT:    vptestmd %zmm2, %zmm2, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_2
+; KNL-NEXT:  # %bb.1: # %cond.load
+; KNL-NEXT:    vpinsrb $0, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_2: # %else
+; KNL-NEXT:    kshiftrw $1, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_4
+; KNL-NEXT:  # %bb.3: # %cond.load1
+; KNL-NEXT:    vpinsrb $1, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_4: # %else2
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; KNL-NEXT:    vpmovsxbd %xmm2, %zmm2
+; KNL-NEXT:    vptestmd %zmm2, %zmm2, %k0
+; KNL-NEXT:    kshiftrw $2, %k0, %k1
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_6
+; KNL-NEXT:  # %bb.5: # %cond.load5
+; KNL-NEXT:    vpinsrb $2, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_6: # %else6
+; KNL-NEXT:    kshiftrw $3, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_8
+; KNL-NEXT:  # %bb.7: # %cond.load9
+; KNL-NEXT:    vpinsrb $3, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_8: # %else10
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; KNL-NEXT:    vpmovsxbd %xmm2, %zmm2
+; KNL-NEXT:    vptestmd %zmm2, %zmm2, %k0
+; KNL-NEXT:    kshiftrw $4, %k0, %k1
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_10
+; KNL-NEXT:  # %bb.9: # %cond.load13
+; KNL-NEXT:    vpinsrb $4, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_10: # %else14
+; KNL-NEXT:    kshiftrw $5, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_12
+; KNL-NEXT:  # %bb.11: # %cond.load17
+; KNL-NEXT:    vpinsrb $5, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_12: # %else18
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; KNL-NEXT:    vpmovsxbd %xmm2, %zmm2
+; KNL-NEXT:    vptestmd %zmm2, %zmm2, %k0
+; KNL-NEXT:    kshiftrw $6, %k0, %k1
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_14
+; KNL-NEXT:  # %bb.13: # %cond.load21
+; KNL-NEXT:    vpinsrb $6, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_14: # %else22
+; KNL-NEXT:    kshiftrw $7, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_16
+; KNL-NEXT:  # %bb.15: # %cond.load25
+; KNL-NEXT:    vpinsrb $7, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_16: # %else26
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; KNL-NEXT:    vpmovsxbd %xmm2, %zmm2
+; KNL-NEXT:    vptestmd %zmm2, %zmm2, %k0
+; KNL-NEXT:    kshiftrw $8, %k0, %k1
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_18
+; KNL-NEXT:  # %bb.17: # %cond.load29
+; KNL-NEXT:    vpinsrb $8, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_18: # %else30
+; KNL-NEXT:    kshiftrw $9, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_20
+; KNL-NEXT:  # %bb.19: # %cond.load33
+; KNL-NEXT:    vpinsrb $9, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_20: # %else34
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; KNL-NEXT:    vpmovsxbd %xmm2, %zmm2
+; KNL-NEXT:    vptestmd %zmm2, %zmm2, %k0
+; KNL-NEXT:    kshiftrw $10, %k0, %k1
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_22
+; KNL-NEXT:  # %bb.21: # %cond.load37
+; KNL-NEXT:    vpinsrb $10, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_22: # %else38
+; KNL-NEXT:    kshiftrw $11, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_24
+; KNL-NEXT:  # %bb.23: # %cond.load41
+; KNL-NEXT:    vpinsrb $11, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_24: # %else42
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; KNL-NEXT:    vpmovsxbd %xmm2, %zmm2
+; KNL-NEXT:    vptestmd %zmm2, %zmm2, %k0
+; KNL-NEXT:    kshiftrw $12, %k0, %k1
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_26
+; KNL-NEXT:  # %bb.25: # %cond.load45
+; KNL-NEXT:    vpinsrb $12, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_26: # %else46
+; KNL-NEXT:    kshiftrw $13, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_28
+; KNL-NEXT:  # %bb.27: # %cond.load49
+; KNL-NEXT:    vpinsrb $13, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_28: # %else50
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm1
+; KNL-NEXT:    vpmovsxbd %xmm1, %zmm1
+; KNL-NEXT:    vptestmd %zmm1, %zmm1, %k0
+; KNL-NEXT:    kshiftrw $14, %k0, %k1
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_30
+; KNL-NEXT:  # %bb.29: # %cond.load53
+; KNL-NEXT:    vpinsrb $14, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_30: # %else54
+; KNL-NEXT:    kshiftrw $15, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_32
+; KNL-NEXT:  # %bb.31: # %cond.load57
+; KNL-NEXT:    vpinsrb $15, (%rdi), %xmm0, %xmm0
+; KNL-NEXT:  .LBB12_32: # %else58
+; KNL-NEXT:    retq
+  %mask = icmp eq <16 x i8> %trigger, zeroinitializer
+  %res = call <16 x i8> @llvm.masked.expandload.v16i8(i8* %base, <16 x i1> %mask, <16 x i8> %src0)
+  ret <16 x i8>%res
 }
 
 declare <16 x double> @llvm.masked.expandload.v16f64(double*, <16 x i1>, <16 x double>)

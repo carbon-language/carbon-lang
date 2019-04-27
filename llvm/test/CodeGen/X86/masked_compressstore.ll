@@ -3,6 +3,432 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-linux-gnu -mcpu=skylake-avx512 | FileCheck %s --check-prefixes=ALL,SKX
 ; RUN: llc < %s -mtriple=x86_64-unknown-linux-gnu -mcpu=knl | FileCheck %s --check-prefixes=ALL,KNL
 
+;
+; vXf64
+;
+
+define void @compressstore_v8f64_v8i1(double* %base, <8 x double> %V, <8 x i1> %mask) {
+; HSW-LABEL: compressstore_v8f64_v8i1:
+; HSW:       # %bb.0:
+; HSW-NEXT:    vpextrb $0, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB0_2
+; HSW-NEXT:  # %bb.1: # %cond.store
+; HSW-NEXT:    vmovlpd %xmm0, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB0_2: # %else
+; HSW-NEXT:    vpextrb $2, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB0_4
+; HSW-NEXT:  # %bb.3: # %cond.store1
+; HSW-NEXT:    vmovhpd %xmm0, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB0_4: # %else2
+; HSW-NEXT:    vpextrb $4, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB0_6
+; HSW-NEXT:  # %bb.5: # %cond.store4
+; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm3
+; HSW-NEXT:    vmovlpd %xmm3, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB0_6: # %else5
+; HSW-NEXT:    vpextrb $6, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB0_8
+; HSW-NEXT:  # %bb.7: # %cond.store7
+; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; HSW-NEXT:    vmovhpd %xmm0, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB0_8: # %else8
+; HSW-NEXT:    vpextrb $8, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB0_10
+; HSW-NEXT:  # %bb.9: # %cond.store10
+; HSW-NEXT:    vmovlpd %xmm1, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB0_10: # %else11
+; HSW-NEXT:    vpextrb $10, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB0_12
+; HSW-NEXT:  # %bb.11: # %cond.store13
+; HSW-NEXT:    vmovhpd %xmm1, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB0_12: # %else14
+; HSW-NEXT:    vpextrb $12, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB0_14
+; HSW-NEXT:  # %bb.13: # %cond.store16
+; HSW-NEXT:    vextractf128 $1, %ymm1, %xmm0
+; HSW-NEXT:    vmovlpd %xmm0, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB0_14: # %else17
+; HSW-NEXT:    vpextrb $14, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB0_16
+; HSW-NEXT:  # %bb.15: # %cond.store19
+; HSW-NEXT:    vextractf128 $1, %ymm1, %xmm0
+; HSW-NEXT:    vmovhpd %xmm0, (%rdi)
+; HSW-NEXT:  .LBB0_16: # %else20
+; HSW-NEXT:    vzeroupper
+; HSW-NEXT:    retq
+;
+; SKX-LABEL: compressstore_v8f64_v8i1:
+; SKX:       # %bb.0:
+; SKX-NEXT:    vpsllw $15, %xmm1, %xmm1
+; SKX-NEXT:    vpmovw2m %xmm1, %k1
+; SKX-NEXT:    vcompresspd %zmm0, (%rdi) {%k1}
+; SKX-NEXT:    vzeroupper
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: compressstore_v8f64_v8i1:
+; KNL:       # %bb.0:
+; KNL-NEXT:    vpmovzxwq {{.*#+}} zmm1 = xmm1[0],zero,zero,zero,xmm1[1],zero,zero,zero,xmm1[2],zero,zero,zero,xmm1[3],zero,zero,zero,xmm1[4],zero,zero,zero,xmm1[5],zero,zero,zero,xmm1[6],zero,zero,zero,xmm1[7],zero,zero,zero
+; KNL-NEXT:    vpsllq $63, %zmm1, %zmm1
+; KNL-NEXT:    vptestmq %zmm1, %zmm1, %k1
+; KNL-NEXT:    vcompresspd %zmm0, (%rdi) {%k1}
+; KNL-NEXT:    retq
+  call void @llvm.masked.compressstore.v8f64(<8 x double> %V, double* %base, <8 x i1> %mask)
+  ret void
+}
+
+define void @compressstore_v16f64_v16i1(double* %base, <16 x double> %V, <16 x i1> %mask) {
+; HSW-LABEL: compressstore_v16f64_v16i1:
+; HSW:       # %bb.0:
+; HSW-NEXT:    vpextrb $0, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB1_2
+; HSW-NEXT:  # %bb.1: # %cond.store
+; HSW-NEXT:    vmovlpd %xmm0, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB1_2: # %else
+; HSW-NEXT:    vpextrb $1, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB1_4
+; HSW-NEXT:  # %bb.3: # %cond.store1
+; HSW-NEXT:    vmovhpd %xmm0, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB1_4: # %else2
+; HSW-NEXT:    vpextrb $2, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB1_6
+; HSW-NEXT:  # %bb.5: # %cond.store4
+; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm5
+; HSW-NEXT:    vmovlpd %xmm5, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB1_6: # %else5
+; HSW-NEXT:    vpextrb $3, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB1_8
+; HSW-NEXT:  # %bb.7: # %cond.store7
+; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; HSW-NEXT:    vmovhpd %xmm0, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB1_8: # %else8
+; HSW-NEXT:    vpextrb $4, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB1_10
+; HSW-NEXT:  # %bb.9: # %cond.store10
+; HSW-NEXT:    vmovlpd %xmm1, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB1_10: # %else11
+; HSW-NEXT:    vpextrb $5, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB1_12
+; HSW-NEXT:  # %bb.11: # %cond.store13
+; HSW-NEXT:    vmovhpd %xmm1, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB1_12: # %else14
+; HSW-NEXT:    vpextrb $6, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB1_14
+; HSW-NEXT:  # %bb.13: # %cond.store16
+; HSW-NEXT:    vextractf128 $1, %ymm1, %xmm0
+; HSW-NEXT:    vmovlpd %xmm0, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB1_14: # %else17
+; HSW-NEXT:    vpextrb $7, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB1_16
+; HSW-NEXT:  # %bb.15: # %cond.store19
+; HSW-NEXT:    vextractf128 $1, %ymm1, %xmm0
+; HSW-NEXT:    vmovhpd %xmm0, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB1_16: # %else20
+; HSW-NEXT:    vpextrb $8, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB1_18
+; HSW-NEXT:  # %bb.17: # %cond.store22
+; HSW-NEXT:    vmovlpd %xmm2, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB1_18: # %else23
+; HSW-NEXT:    vpextrb $9, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB1_20
+; HSW-NEXT:  # %bb.19: # %cond.store25
+; HSW-NEXT:    vmovhpd %xmm2, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB1_20: # %else26
+; HSW-NEXT:    vpextrb $10, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB1_22
+; HSW-NEXT:  # %bb.21: # %cond.store28
+; HSW-NEXT:    vextractf128 $1, %ymm2, %xmm0
+; HSW-NEXT:    vmovlpd %xmm0, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB1_22: # %else29
+; HSW-NEXT:    vpextrb $11, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB1_24
+; HSW-NEXT:  # %bb.23: # %cond.store31
+; HSW-NEXT:    vextractf128 $1, %ymm2, %xmm0
+; HSW-NEXT:    vmovhpd %xmm0, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB1_24: # %else32
+; HSW-NEXT:    vpextrb $12, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB1_26
+; HSW-NEXT:  # %bb.25: # %cond.store34
+; HSW-NEXT:    vmovlpd %xmm3, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB1_26: # %else35
+; HSW-NEXT:    vpextrb $13, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB1_28
+; HSW-NEXT:  # %bb.27: # %cond.store37
+; HSW-NEXT:    vmovhpd %xmm3, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB1_28: # %else38
+; HSW-NEXT:    vpextrb $14, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB1_30
+; HSW-NEXT:  # %bb.29: # %cond.store40
+; HSW-NEXT:    vextractf128 $1, %ymm3, %xmm0
+; HSW-NEXT:    vmovlpd %xmm0, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB1_30: # %else41
+; HSW-NEXT:    vpextrb $15, %xmm4, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB1_32
+; HSW-NEXT:  # %bb.31: # %cond.store43
+; HSW-NEXT:    vextractf128 $1, %ymm3, %xmm0
+; HSW-NEXT:    vmovhpd %xmm0, (%rdi)
+; HSW-NEXT:  .LBB1_32: # %else44
+; HSW-NEXT:    vzeroupper
+; HSW-NEXT:    retq
+;
+; SKX-LABEL: compressstore_v16f64_v16i1:
+; SKX:       # %bb.0:
+; SKX-NEXT:    vpsllw $7, %xmm2, %xmm2
+; SKX-NEXT:    vpmovb2m %xmm2, %k1
+; SKX-NEXT:    kshiftrw $8, %k1, %k2
+; SKX-NEXT:    kmovb %k1, %eax
+; SKX-NEXT:    popcntl %eax, %eax
+; SKX-NEXT:    vcompresspd %zmm1, (%rdi,%rax,8) {%k2}
+; SKX-NEXT:    vcompresspd %zmm0, (%rdi) {%k1}
+; SKX-NEXT:    vzeroupper
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: compressstore_v16f64_v16i1:
+; KNL:       # %bb.0:
+; KNL-NEXT:    vpmovzxbd {{.*#+}} zmm2 = xmm2[0],zero,zero,zero,xmm2[1],zero,zero,zero,xmm2[2],zero,zero,zero,xmm2[3],zero,zero,zero,xmm2[4],zero,zero,zero,xmm2[5],zero,zero,zero,xmm2[6],zero,zero,zero,xmm2[7],zero,zero,zero,xmm2[8],zero,zero,zero,xmm2[9],zero,zero,zero,xmm2[10],zero,zero,zero,xmm2[11],zero,zero,zero,xmm2[12],zero,zero,zero,xmm2[13],zero,zero,zero,xmm2[14],zero,zero,zero,xmm2[15],zero,zero,zero
+; KNL-NEXT:    vpslld $31, %zmm2, %zmm2
+; KNL-NEXT:    vptestmd %zmm2, %zmm2, %k1
+; KNL-NEXT:    kshiftrw $8, %k1, %k2
+; KNL-NEXT:    vcompresspd %zmm0, (%rdi) {%k1}
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    movzbl %al, %eax
+; KNL-NEXT:    popcntl %eax, %eax
+; KNL-NEXT:    vcompresspd %zmm1, (%rdi,%rax,8) {%k2}
+; KNL-NEXT:    retq
+  call void @llvm.masked.compressstore.v16f64(<16 x double> %V, double* %base, <16 x i1> %mask)
+  ret void
+}
+
+;
+; vXf32
+;
+
+define void @compressstore_v2f32_v2i32(float* %base, <2 x float> %V, <2 x i32> %trigger) {
+; HSW-LABEL: compressstore_v2f32_v2i32:
+; HSW:       # %bb.0:
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpblendd {{.*#+}} xmm1 = xmm1[0],xmm2[1],xmm1[2],xmm2[3]
+; HSW-NEXT:    vpcmpeqq %xmm2, %xmm1, %xmm1
+; HSW-NEXT:    vpextrb $0, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB2_2
+; HSW-NEXT:  # %bb.1: # %cond.store
+; HSW-NEXT:    vmovss %xmm0, (%rdi)
+; HSW-NEXT:    addq $4, %rdi
+; HSW-NEXT:  .LBB2_2: # %else
+; HSW-NEXT:    vpextrb $8, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB2_4
+; HSW-NEXT:  # %bb.3: # %cond.store1
+; HSW-NEXT:    vextractps $1, %xmm0, (%rdi)
+; HSW-NEXT:  .LBB2_4: # %else2
+; HSW-NEXT:    retq
+;
+; SKX-LABEL: compressstore_v2f32_v2i32:
+; SKX:       # %bb.0:
+; SKX-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; SKX-NEXT:    vpblendd {{.*#+}} xmm1 = xmm1[0],xmm2[1],xmm1[2],xmm2[3]
+; SKX-NEXT:    vptestnmq %xmm1, %xmm1, %k1
+; SKX-NEXT:    vcompressps %xmm0, (%rdi) {%k1}
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: compressstore_v2f32_v2i32:
+; KNL:       # %bb.0:
+; KNL-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpblendd {{.*#+}} xmm1 = xmm1[0],xmm2[1],xmm1[2],xmm2[3]
+; KNL-NEXT:    vptestnmq %zmm1, %zmm1, %k0
+; KNL-NEXT:    kshiftlw $14, %k0, %k0
+; KNL-NEXT:    kshiftrw $14, %k0, %k1
+; KNL-NEXT:    vcompressps %zmm0, (%rdi) {%k1}
+; KNL-NEXT:    retq
+  %mask = icmp eq <2 x i32> %trigger, zeroinitializer
+  call void @llvm.masked.compressstore.v2f32(<2 x float> %V, float* %base, <2 x i1> %mask)
+  ret void
+}
+
+define void @compressstore_v4f32_v4i1(float* %base, <4 x float> %V, <4 x i1> %mask) {
+; HSW-LABEL: compressstore_v4f32_v4i1:
+; HSW:       # %bb.0:
+; HSW-NEXT:    vpextrb $0, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB3_2
+; HSW-NEXT:  # %bb.1: # %cond.store
+; HSW-NEXT:    vmovss %xmm0, (%rdi)
+; HSW-NEXT:    addq $4, %rdi
+; HSW-NEXT:  .LBB3_2: # %else
+; HSW-NEXT:    vpextrb $4, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB3_4
+; HSW-NEXT:  # %bb.3: # %cond.store1
+; HSW-NEXT:    vextractps $1, %xmm0, (%rdi)
+; HSW-NEXT:    addq $4, %rdi
+; HSW-NEXT:  .LBB3_4: # %else2
+; HSW-NEXT:    vpextrb $8, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB3_6
+; HSW-NEXT:  # %bb.5: # %cond.store4
+; HSW-NEXT:    vextractps $2, %xmm0, (%rdi)
+; HSW-NEXT:    addq $4, %rdi
+; HSW-NEXT:  .LBB3_6: # %else5
+; HSW-NEXT:    vpextrb $12, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB3_8
+; HSW-NEXT:  # %bb.7: # %cond.store7
+; HSW-NEXT:    vextractps $3, %xmm0, (%rdi)
+; HSW-NEXT:  .LBB3_8: # %else8
+; HSW-NEXT:    retq
+;
+; SKX-LABEL: compressstore_v4f32_v4i1:
+; SKX:       # %bb.0:
+; SKX-NEXT:    vpslld $31, %xmm1, %xmm1
+; SKX-NEXT:    vpmovd2m %xmm1, %k1
+; SKX-NEXT:    vcompressps %xmm0, (%rdi) {%k1}
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: compressstore_v4f32_v4i1:
+; KNL:       # %bb.0:
+; KNL-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
+; KNL-NEXT:    vpslld $31, %xmm1, %xmm1
+; KNL-NEXT:    vptestmd %zmm1, %zmm1, %k0
+; KNL-NEXT:    kshiftlw $12, %k0, %k0
+; KNL-NEXT:    kshiftrw $12, %k0, %k1
+; KNL-NEXT:    vcompressps %zmm0, (%rdi) {%k1}
+; KNL-NEXT:    retq
+  call void @llvm.masked.compressstore.v4f32(<4 x float> %V, float* %base, <4 x i1> %mask)
+  ret void
+}
+
+define void @compressstore_v8f32_v8i1(float* %base, <8 x float> %V, <8 x i1> %mask) {
+; HSW-LABEL: compressstore_v8f32_v8i1:
+; HSW:       # %bb.0:
+; HSW-NEXT:    vpextrb $0, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB4_2
+; HSW-NEXT:  # %bb.1: # %cond.store
+; HSW-NEXT:    vmovss %xmm0, (%rdi)
+; HSW-NEXT:    addq $4, %rdi
+; HSW-NEXT:  .LBB4_2: # %else
+; HSW-NEXT:    vpextrb $2, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB4_4
+; HSW-NEXT:  # %bb.3: # %cond.store1
+; HSW-NEXT:    vextractps $1, %xmm0, (%rdi)
+; HSW-NEXT:    addq $4, %rdi
+; HSW-NEXT:  .LBB4_4: # %else2
+; HSW-NEXT:    vpextrb $4, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB4_6
+; HSW-NEXT:  # %bb.5: # %cond.store4
+; HSW-NEXT:    vextractps $2, %xmm0, (%rdi)
+; HSW-NEXT:    addq $4, %rdi
+; HSW-NEXT:  .LBB4_6: # %else5
+; HSW-NEXT:    vpextrb $6, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB4_8
+; HSW-NEXT:  # %bb.7: # %cond.store7
+; HSW-NEXT:    vextractps $3, %xmm0, (%rdi)
+; HSW-NEXT:    addq $4, %rdi
+; HSW-NEXT:  .LBB4_8: # %else8
+; HSW-NEXT:    vpextrb $8, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB4_10
+; HSW-NEXT:  # %bb.9: # %cond.store10
+; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; HSW-NEXT:    vmovss %xmm2, (%rdi)
+; HSW-NEXT:    addq $4, %rdi
+; HSW-NEXT:  .LBB4_10: # %else11
+; HSW-NEXT:    vpextrb $10, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB4_12
+; HSW-NEXT:  # %bb.11: # %cond.store13
+; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; HSW-NEXT:    vextractps $1, %xmm2, (%rdi)
+; HSW-NEXT:    addq $4, %rdi
+; HSW-NEXT:  .LBB4_12: # %else14
+; HSW-NEXT:    vpextrb $12, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB4_14
+; HSW-NEXT:  # %bb.13: # %cond.store16
+; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; HSW-NEXT:    vextractps $2, %xmm2, (%rdi)
+; HSW-NEXT:    addq $4, %rdi
+; HSW-NEXT:  .LBB4_14: # %else17
+; HSW-NEXT:    vpextrb $14, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB4_16
+; HSW-NEXT:  # %bb.15: # %cond.store19
+; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm0
+; HSW-NEXT:    vextractps $3, %xmm0, (%rdi)
+; HSW-NEXT:  .LBB4_16: # %else20
+; HSW-NEXT:    vzeroupper
+; HSW-NEXT:    retq
+;
+; SKX-LABEL: compressstore_v8f32_v8i1:
+; SKX:       # %bb.0:
+; SKX-NEXT:    vpsllw $15, %xmm1, %xmm1
+; SKX-NEXT:    vpmovw2m %xmm1, %k1
+; SKX-NEXT:    vcompressps %ymm0, (%rdi) {%k1}
+; SKX-NEXT:    vzeroupper
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: compressstore_v8f32_v8i1:
+; KNL:       # %bb.0:
+; KNL-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
+; KNL-NEXT:    vpmovzxwq {{.*#+}} zmm1 = xmm1[0],zero,zero,zero,xmm1[1],zero,zero,zero,xmm1[2],zero,zero,zero,xmm1[3],zero,zero,zero,xmm1[4],zero,zero,zero,xmm1[5],zero,zero,zero,xmm1[6],zero,zero,zero,xmm1[7],zero,zero,zero
+; KNL-NEXT:    vpsllq $63, %zmm1, %zmm1
+; KNL-NEXT:    vptestmq %zmm1, %zmm1, %k1
+; KNL-NEXT:    vcompressps %zmm0, (%rdi) {%k1}
+; KNL-NEXT:    retq
+  call void @llvm.masked.compressstore.v8f32(<8 x float> %V, float* %base, <8 x i1> %mask)
+  ret void
+}
+
 define void @compressstore_v16f32_const(float* %base, <16 x float> %V) {
 ; HSW-LABEL: compressstore_v16f32_const:
 ; HSW:       # %bb.0: # %cond.store
@@ -35,449 +461,6 @@ define void @compressstore_v16f32_const(float* %base, <16 x float> %V) {
   ret void
 }
 
-define void @compressstore_v8f32_v8i1(float* %base, <8 x float> %V, <8 x i1> %mask) {
-; HSW-LABEL: compressstore_v8f32_v8i1:
-; HSW:       # %bb.0:
-; HSW-NEXT:    vpextrb $0, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB1_2
-; HSW-NEXT:  # %bb.1: # %cond.store
-; HSW-NEXT:    vmovss %xmm0, (%rdi)
-; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB1_2: # %else
-; HSW-NEXT:    vpextrb $2, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB1_4
-; HSW-NEXT:  # %bb.3: # %cond.store1
-; HSW-NEXT:    vextractps $1, %xmm0, (%rdi)
-; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB1_4: # %else2
-; HSW-NEXT:    vpextrb $4, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB1_6
-; HSW-NEXT:  # %bb.5: # %cond.store4
-; HSW-NEXT:    vextractps $2, %xmm0, (%rdi)
-; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB1_6: # %else5
-; HSW-NEXT:    vpextrb $6, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB1_8
-; HSW-NEXT:  # %bb.7: # %cond.store7
-; HSW-NEXT:    vextractps $3, %xmm0, (%rdi)
-; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB1_8: # %else8
-; HSW-NEXT:    vpextrb $8, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB1_10
-; HSW-NEXT:  # %bb.9: # %cond.store10
-; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm2
-; HSW-NEXT:    vmovss %xmm2, (%rdi)
-; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB1_10: # %else11
-; HSW-NEXT:    vpextrb $10, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB1_12
-; HSW-NEXT:  # %bb.11: # %cond.store13
-; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm2
-; HSW-NEXT:    vextractps $1, %xmm2, (%rdi)
-; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB1_12: # %else14
-; HSW-NEXT:    vpextrb $12, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB1_14
-; HSW-NEXT:  # %bb.13: # %cond.store16
-; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm2
-; HSW-NEXT:    vextractps $2, %xmm2, (%rdi)
-; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB1_14: # %else17
-; HSW-NEXT:    vpextrb $14, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB1_16
-; HSW-NEXT:  # %bb.15: # %cond.store19
-; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; HSW-NEXT:    vextractps $3, %xmm0, (%rdi)
-; HSW-NEXT:  .LBB1_16: # %else20
-; HSW-NEXT:    vzeroupper
-; HSW-NEXT:    retq
-;
-; SKX-LABEL: compressstore_v8f32_v8i1:
-; SKX:       # %bb.0:
-; SKX-NEXT:    vpsllw $15, %xmm1, %xmm1
-; SKX-NEXT:    vpmovw2m %xmm1, %k1
-; SKX-NEXT:    vcompressps %ymm0, (%rdi) {%k1}
-; SKX-NEXT:    vzeroupper
-; SKX-NEXT:    retq
-;
-; KNL-LABEL: compressstore_v8f32_v8i1:
-; KNL:       # %bb.0:
-; KNL-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
-; KNL-NEXT:    vpmovzxwq {{.*#+}} zmm1 = xmm1[0],zero,zero,zero,xmm1[1],zero,zero,zero,xmm1[2],zero,zero,zero,xmm1[3],zero,zero,zero,xmm1[4],zero,zero,zero,xmm1[5],zero,zero,zero,xmm1[6],zero,zero,zero,xmm1[7],zero,zero,zero
-; KNL-NEXT:    vpsllq $63, %zmm1, %zmm1
-; KNL-NEXT:    vptestmq %zmm1, %zmm1, %k1
-; KNL-NEXT:    vcompressps %zmm0, (%rdi) {%k1}
-; KNL-NEXT:    retq
-  call void @llvm.masked.compressstore.v8f32(<8 x float> %V, float* %base, <8 x i1> %mask)
-  ret void
-}
-
-define void @compressstore_v8f64_v8i1(double* %base, <8 x double> %V, <8 x i1> %mask) {
-; HSW-LABEL: compressstore_v8f64_v8i1:
-; HSW:       # %bb.0:
-; HSW-NEXT:    vpextrb $0, %xmm2, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB2_2
-; HSW-NEXT:  # %bb.1: # %cond.store
-; HSW-NEXT:    vmovlpd %xmm0, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB2_2: # %else
-; HSW-NEXT:    vpextrb $2, %xmm2, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB2_4
-; HSW-NEXT:  # %bb.3: # %cond.store1
-; HSW-NEXT:    vmovhpd %xmm0, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB2_4: # %else2
-; HSW-NEXT:    vpextrb $4, %xmm2, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB2_6
-; HSW-NEXT:  # %bb.5: # %cond.store4
-; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm3
-; HSW-NEXT:    vmovlpd %xmm3, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB2_6: # %else5
-; HSW-NEXT:    vpextrb $6, %xmm2, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB2_8
-; HSW-NEXT:  # %bb.7: # %cond.store7
-; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; HSW-NEXT:    vmovhpd %xmm0, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB2_8: # %else8
-; HSW-NEXT:    vpextrb $8, %xmm2, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB2_10
-; HSW-NEXT:  # %bb.9: # %cond.store10
-; HSW-NEXT:    vmovlpd %xmm1, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB2_10: # %else11
-; HSW-NEXT:    vpextrb $10, %xmm2, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB2_12
-; HSW-NEXT:  # %bb.11: # %cond.store13
-; HSW-NEXT:    vmovhpd %xmm1, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB2_12: # %else14
-; HSW-NEXT:    vpextrb $12, %xmm2, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB2_14
-; HSW-NEXT:  # %bb.13: # %cond.store16
-; HSW-NEXT:    vextractf128 $1, %ymm1, %xmm0
-; HSW-NEXT:    vmovlpd %xmm0, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB2_14: # %else17
-; HSW-NEXT:    vpextrb $14, %xmm2, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB2_16
-; HSW-NEXT:  # %bb.15: # %cond.store19
-; HSW-NEXT:    vextractf128 $1, %ymm1, %xmm0
-; HSW-NEXT:    vmovhpd %xmm0, (%rdi)
-; HSW-NEXT:  .LBB2_16: # %else20
-; HSW-NEXT:    vzeroupper
-; HSW-NEXT:    retq
-;
-; SKX-LABEL: compressstore_v8f64_v8i1:
-; SKX:       # %bb.0:
-; SKX-NEXT:    vpsllw $15, %xmm1, %xmm1
-; SKX-NEXT:    vpmovw2m %xmm1, %k1
-; SKX-NEXT:    vcompresspd %zmm0, (%rdi) {%k1}
-; SKX-NEXT:    vzeroupper
-; SKX-NEXT:    retq
-;
-; KNL-LABEL: compressstore_v8f64_v8i1:
-; KNL:       # %bb.0:
-; KNL-NEXT:    vpmovzxwq {{.*#+}} zmm1 = xmm1[0],zero,zero,zero,xmm1[1],zero,zero,zero,xmm1[2],zero,zero,zero,xmm1[3],zero,zero,zero,xmm1[4],zero,zero,zero,xmm1[5],zero,zero,zero,xmm1[6],zero,zero,zero,xmm1[7],zero,zero,zero
-; KNL-NEXT:    vpsllq $63, %zmm1, %zmm1
-; KNL-NEXT:    vptestmq %zmm1, %zmm1, %k1
-; KNL-NEXT:    vcompresspd %zmm0, (%rdi) {%k1}
-; KNL-NEXT:    retq
-  call void @llvm.masked.compressstore.v8f64(<8 x double> %V, double* %base, <8 x i1> %mask)
-  ret void
-}
-
-define void @compressstore_v8i64_v8i1(i64* %base, <8 x i64> %V, <8 x i1> %mask) {
-; HSW-LABEL: compressstore_v8i64_v8i1:
-; HSW:       # %bb.0:
-; HSW-NEXT:    vpextrb $0, %xmm2, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB3_2
-; HSW-NEXT:  # %bb.1: # %cond.store
-; HSW-NEXT:    vmovq %xmm0, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB3_2: # %else
-; HSW-NEXT:    vpextrb $2, %xmm2, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB3_4
-; HSW-NEXT:  # %bb.3: # %cond.store1
-; HSW-NEXT:    vpextrq $1, %xmm0, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB3_4: # %else2
-; HSW-NEXT:    vpextrb $4, %xmm2, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB3_6
-; HSW-NEXT:  # %bb.5: # %cond.store4
-; HSW-NEXT:    vextracti128 $1, %ymm0, %xmm3
-; HSW-NEXT:    vmovq %xmm3, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB3_6: # %else5
-; HSW-NEXT:    vpextrb $6, %xmm2, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB3_8
-; HSW-NEXT:  # %bb.7: # %cond.store7
-; HSW-NEXT:    vextracti128 $1, %ymm0, %xmm0
-; HSW-NEXT:    vpextrq $1, %xmm0, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB3_8: # %else8
-; HSW-NEXT:    vpextrb $8, %xmm2, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB3_10
-; HSW-NEXT:  # %bb.9: # %cond.store10
-; HSW-NEXT:    vmovq %xmm1, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB3_10: # %else11
-; HSW-NEXT:    vpextrb $10, %xmm2, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB3_12
-; HSW-NEXT:  # %bb.11: # %cond.store13
-; HSW-NEXT:    vpextrq $1, %xmm1, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB3_12: # %else14
-; HSW-NEXT:    vpextrb $12, %xmm2, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB3_14
-; HSW-NEXT:  # %bb.13: # %cond.store16
-; HSW-NEXT:    vextracti128 $1, %ymm1, %xmm0
-; HSW-NEXT:    vmovq %xmm0, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB3_14: # %else17
-; HSW-NEXT:    vpextrb $14, %xmm2, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB3_16
-; HSW-NEXT:  # %bb.15: # %cond.store19
-; HSW-NEXT:    vextracti128 $1, %ymm1, %xmm0
-; HSW-NEXT:    vpextrq $1, %xmm0, (%rdi)
-; HSW-NEXT:  .LBB3_16: # %else20
-; HSW-NEXT:    vzeroupper
-; HSW-NEXT:    retq
-;
-; SKX-LABEL: compressstore_v8i64_v8i1:
-; SKX:       # %bb.0:
-; SKX-NEXT:    vpsllw $15, %xmm1, %xmm1
-; SKX-NEXT:    vpmovw2m %xmm1, %k1
-; SKX-NEXT:    vpcompressq %zmm0, (%rdi) {%k1}
-; SKX-NEXT:    vzeroupper
-; SKX-NEXT:    retq
-;
-; KNL-LABEL: compressstore_v8i64_v8i1:
-; KNL:       # %bb.0:
-; KNL-NEXT:    vpmovzxwq {{.*#+}} zmm1 = xmm1[0],zero,zero,zero,xmm1[1],zero,zero,zero,xmm1[2],zero,zero,zero,xmm1[3],zero,zero,zero,xmm1[4],zero,zero,zero,xmm1[5],zero,zero,zero,xmm1[6],zero,zero,zero,xmm1[7],zero,zero,zero
-; KNL-NEXT:    vpsllq $63, %zmm1, %zmm1
-; KNL-NEXT:    vptestmq %zmm1, %zmm1, %k1
-; KNL-NEXT:    vpcompressq %zmm0, (%rdi) {%k1}
-; KNL-NEXT:    retq
-    call void @llvm.masked.compressstore.v8i64(<8 x i64> %V, i64* %base, <8 x i1> %mask)
-  ret void
-}
-
-define void @compressstore_v4i64_v4i1(i64* %base, <4 x i64> %V, <4 x i1> %mask) {
-; HSW-LABEL: compressstore_v4i64_v4i1:
-; HSW:       # %bb.0:
-; HSW-NEXT:    vpextrb $0, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB4_2
-; HSW-NEXT:  # %bb.1: # %cond.store
-; HSW-NEXT:    vmovq %xmm0, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB4_2: # %else
-; HSW-NEXT:    vpextrb $4, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB4_4
-; HSW-NEXT:  # %bb.3: # %cond.store1
-; HSW-NEXT:    vpextrq $1, %xmm0, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB4_4: # %else2
-; HSW-NEXT:    vpextrb $8, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB4_6
-; HSW-NEXT:  # %bb.5: # %cond.store4
-; HSW-NEXT:    vextracti128 $1, %ymm0, %xmm2
-; HSW-NEXT:    vmovq %xmm2, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB4_6: # %else5
-; HSW-NEXT:    vpextrb $12, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB4_8
-; HSW-NEXT:  # %bb.7: # %cond.store7
-; HSW-NEXT:    vextracti128 $1, %ymm0, %xmm0
-; HSW-NEXT:    vpextrq $1, %xmm0, (%rdi)
-; HSW-NEXT:  .LBB4_8: # %else8
-; HSW-NEXT:    vzeroupper
-; HSW-NEXT:    retq
-;
-; SKX-LABEL: compressstore_v4i64_v4i1:
-; SKX:       # %bb.0:
-; SKX-NEXT:    vpslld $31, %xmm1, %xmm1
-; SKX-NEXT:    vpmovd2m %xmm1, %k1
-; SKX-NEXT:    vpcompressq %ymm0, (%rdi) {%k1}
-; SKX-NEXT:    vzeroupper
-; SKX-NEXT:    retq
-;
-; KNL-LABEL: compressstore_v4i64_v4i1:
-; KNL:       # %bb.0:
-; KNL-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
-; KNL-NEXT:    vpslld $31, %xmm1, %xmm1
-; KNL-NEXT:    vptestmd %zmm1, %zmm1, %k0
-; KNL-NEXT:    kshiftlw $12, %k0, %k0
-; KNL-NEXT:    kshiftrw $12, %k0, %k1
-; KNL-NEXT:    vpcompressq %zmm0, (%rdi) {%k1}
-; KNL-NEXT:    retq
-    call void @llvm.masked.compressstore.v4i64(<4 x i64> %V, i64* %base, <4 x i1> %mask)
-  ret void
-}
-
-define void @compressstore_v2i64_v2i1(i64* %base, <2 x i64> %V, <2 x i1> %mask) {
-; HSW-LABEL: compressstore_v2i64_v2i1:
-; HSW:       # %bb.0:
-; HSW-NEXT:    vpextrb $0, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB5_2
-; HSW-NEXT:  # %bb.1: # %cond.store
-; HSW-NEXT:    vmovq %xmm0, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB5_2: # %else
-; HSW-NEXT:    vpextrb $8, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB5_4
-; HSW-NEXT:  # %bb.3: # %cond.store1
-; HSW-NEXT:    vpextrq $1, %xmm0, (%rdi)
-; HSW-NEXT:  .LBB5_4: # %else2
-; HSW-NEXT:    retq
-;
-; SKX-LABEL: compressstore_v2i64_v2i1:
-; SKX:       # %bb.0:
-; SKX-NEXT:    vpsllq $63, %xmm1, %xmm1
-; SKX-NEXT:    vpmovq2m %xmm1, %k1
-; SKX-NEXT:    vpcompressq %xmm0, (%rdi) {%k1}
-; SKX-NEXT:    retq
-;
-; KNL-LABEL: compressstore_v2i64_v2i1:
-; KNL:       # %bb.0:
-; KNL-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
-; KNL-NEXT:    vpsllq $63, %xmm1, %xmm1
-; KNL-NEXT:    vptestmq %zmm1, %zmm1, %k0
-; KNL-NEXT:    kshiftlw $14, %k0, %k0
-; KNL-NEXT:    kshiftrw $14, %k0, %k1
-; KNL-NEXT:    vpcompressq %zmm0, (%rdi) {%k1}
-; KNL-NEXT:    retq
-    call void @llvm.masked.compressstore.v2i64(<2 x i64> %V, i64* %base, <2 x i1> %mask)
-  ret void
-}
-
-define void @compressstore_v4f32_v4i1(float* %base, <4 x float> %V, <4 x i1> %mask) {
-; HSW-LABEL: compressstore_v4f32_v4i1:
-; HSW:       # %bb.0:
-; HSW-NEXT:    vpextrb $0, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_2
-; HSW-NEXT:  # %bb.1: # %cond.store
-; HSW-NEXT:    vmovss %xmm0, (%rdi)
-; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_2: # %else
-; HSW-NEXT:    vpextrb $4, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_4
-; HSW-NEXT:  # %bb.3: # %cond.store1
-; HSW-NEXT:    vextractps $1, %xmm0, (%rdi)
-; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_4: # %else2
-; HSW-NEXT:    vpextrb $8, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_6
-; HSW-NEXT:  # %bb.5: # %cond.store4
-; HSW-NEXT:    vextractps $2, %xmm0, (%rdi)
-; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB6_6: # %else5
-; HSW-NEXT:    vpextrb $12, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB6_8
-; HSW-NEXT:  # %bb.7: # %cond.store7
-; HSW-NEXT:    vextractps $3, %xmm0, (%rdi)
-; HSW-NEXT:  .LBB6_8: # %else8
-; HSW-NEXT:    retq
-;
-; SKX-LABEL: compressstore_v4f32_v4i1:
-; SKX:       # %bb.0:
-; SKX-NEXT:    vpslld $31, %xmm1, %xmm1
-; SKX-NEXT:    vpmovd2m %xmm1, %k1
-; SKX-NEXT:    vcompressps %xmm0, (%rdi) {%k1}
-; SKX-NEXT:    retq
-;
-; KNL-LABEL: compressstore_v4f32_v4i1:
-; KNL:       # %bb.0:
-; KNL-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
-; KNL-NEXT:    vpslld $31, %xmm1, %xmm1
-; KNL-NEXT:    vptestmd %zmm1, %zmm1, %k0
-; KNL-NEXT:    kshiftlw $12, %k0, %k0
-; KNL-NEXT:    kshiftrw $12, %k0, %k1
-; KNL-NEXT:    vcompressps %zmm0, (%rdi) {%k1}
-; KNL-NEXT:    retq
-    call void @llvm.masked.compressstore.v4f32(<4 x float> %V, float* %base, <4 x i1> %mask)
-  ret void
-}
-
-define void @compressstore_v2f32_v2i32(float* %base, <2 x float> %V, <2 x i32> %trigger) {
-; HSW-LABEL: compressstore_v2f32_v2i32:
-; HSW:       # %bb.0:
-; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
-; HSW-NEXT:    vpblendd {{.*#+}} xmm1 = xmm1[0],xmm2[1],xmm1[2],xmm2[3]
-; HSW-NEXT:    vpcmpeqq %xmm2, %xmm1, %xmm1
-; HSW-NEXT:    vpextrb $0, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB7_2
-; HSW-NEXT:  # %bb.1: # %cond.store
-; HSW-NEXT:    vmovss %xmm0, (%rdi)
-; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB7_2: # %else
-; HSW-NEXT:    vpextrb $8, %xmm1, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB7_4
-; HSW-NEXT:  # %bb.3: # %cond.store1
-; HSW-NEXT:    vextractps $1, %xmm0, (%rdi)
-; HSW-NEXT:  .LBB7_4: # %else2
-; HSW-NEXT:    retq
-;
-; SKX-LABEL: compressstore_v2f32_v2i32:
-; SKX:       # %bb.0:
-; SKX-NEXT:    vpxor %xmm2, %xmm2, %xmm2
-; SKX-NEXT:    vpblendd {{.*#+}} xmm1 = xmm1[0],xmm2[1],xmm1[2],xmm2[3]
-; SKX-NEXT:    vptestnmq %xmm1, %xmm1, %k1
-; SKX-NEXT:    vcompressps %xmm0, (%rdi) {%k1}
-; SKX-NEXT:    retq
-;
-; KNL-LABEL: compressstore_v2f32_v2i32:
-; KNL:       # %bb.0:
-; KNL-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
-; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
-; KNL-NEXT:    vpblendd {{.*#+}} xmm1 = xmm1[0],xmm2[1],xmm1[2],xmm2[3]
-; KNL-NEXT:    vptestnmq %zmm1, %zmm1, %k0
-; KNL-NEXT:    kshiftlw $14, %k0, %k0
-; KNL-NEXT:    kshiftrw $14, %k0, %k1
-; KNL-NEXT:    vcompressps %zmm0, (%rdi) {%k1}
-; KNL-NEXT:    retq
-  %mask = icmp eq <2 x i32> %trigger, zeroinitializer
-  call void @llvm.masked.compressstore.v2f32(<2 x float> %V, float* %base, <2 x i1> %mask)
-  ret void
-}
-
 define void @compressstore_v32f32_v32i32(float* %base, <32 x float> %V, <32 x i32> %trigger) {
 ; HSW-LABEL: compressstore_v32f32_v32i32:
 ; HSW:       # %bb.0:
@@ -487,40 +470,40 @@ define void @compressstore_v32f32_v32i32(float* %base, <32 x float> %V, <32 x i3
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm9, %xmm9
 ; HSW-NEXT:    vpextrb $0, %xmm9, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_2
+; HSW-NEXT:    je .LBB6_2
 ; HSW-NEXT:  # %bb.1: # %cond.store
 ; HSW-NEXT:    vmovd %xmm0, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_2: # %else
+; HSW-NEXT:  .LBB6_2: # %else
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm8, %xmm8
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm8, %xmm8
 ; HSW-NEXT:    vpextrb $1, %xmm8, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_4
+; HSW-NEXT:    je .LBB6_4
 ; HSW-NEXT:  # %bb.3: # %cond.store1
 ; HSW-NEXT:    vpextrd $1, %xmm0, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_4: # %else2
+; HSW-NEXT:  .LBB6_4: # %else2
 ; HSW-NEXT:    vpxor %xmm8, %xmm8, %xmm8
 ; HSW-NEXT:    vpcmpeqd %ymm8, %ymm4, %ymm8
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm8, %xmm9
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm9, %xmm9
 ; HSW-NEXT:    vpextrb $2, %xmm9, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_6
+; HSW-NEXT:    je .LBB6_6
 ; HSW-NEXT:  # %bb.5: # %cond.store4
 ; HSW-NEXT:    vpextrd $2, %xmm0, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_6: # %else5
+; HSW-NEXT:  .LBB6_6: # %else5
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm8, %xmm8
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm8, %xmm8
 ; HSW-NEXT:    vpextrb $3, %xmm8, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_8
+; HSW-NEXT:    je .LBB6_8
 ; HSW-NEXT:  # %bb.7: # %cond.store7
 ; HSW-NEXT:    vpextrd $3, %xmm0, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_8: # %else8
+; HSW-NEXT:  .LBB6_8: # %else8
 ; HSW-NEXT:    vpxor %xmm8, %xmm8, %xmm8
 ; HSW-NEXT:    vpcmpeqd %ymm8, %ymm4, %ymm8
 ; HSW-NEXT:    vextracti128 $1, %ymm8, %xmm8
@@ -528,22 +511,22 @@ define void @compressstore_v32f32_v32i32(float* %base, <32 x float> %V, <32 x i3
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm9, %xmm9
 ; HSW-NEXT:    vpextrb $4, %xmm9, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_10
+; HSW-NEXT:    je .LBB6_10
 ; HSW-NEXT:  # %bb.9: # %cond.store10
 ; HSW-NEXT:    vextracti128 $1, %ymm0, %xmm9
 ; HSW-NEXT:    vmovd %xmm9, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_10: # %else11
+; HSW-NEXT:  .LBB6_10: # %else11
 ; HSW-NEXT:    vpackssdw %xmm8, %xmm0, %xmm8
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm8, %xmm8
 ; HSW-NEXT:    vpextrb $5, %xmm8, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_12
+; HSW-NEXT:    je .LBB6_12
 ; HSW-NEXT:  # %bb.11: # %cond.store13
 ; HSW-NEXT:    vextracti128 $1, %ymm0, %xmm8
 ; HSW-NEXT:    vpextrd $1, %xmm8, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_12: # %else14
+; HSW-NEXT:  .LBB6_12: # %else14
 ; HSW-NEXT:    vpxor %xmm8, %xmm8, %xmm8
 ; HSW-NEXT:    vpcmpeqd %ymm8, %ymm4, %ymm4
 ; HSW-NEXT:    vextracti128 $1, %ymm4, %xmm8
@@ -551,62 +534,62 @@ define void @compressstore_v32f32_v32i32(float* %base, <32 x float> %V, <32 x i3
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm4, %xmm4
 ; HSW-NEXT:    vpextrb $6, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_14
+; HSW-NEXT:    je .LBB6_14
 ; HSW-NEXT:  # %bb.13: # %cond.store16
 ; HSW-NEXT:    vextracti128 $1, %ymm0, %xmm4
 ; HSW-NEXT:    vpextrd $2, %xmm4, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_14: # %else17
+; HSW-NEXT:  .LBB6_14: # %else17
 ; HSW-NEXT:    vpackssdw %xmm8, %xmm0, %xmm4
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm4, %xmm4
 ; HSW-NEXT:    vpextrb $7, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_16
+; HSW-NEXT:    je .LBB6_16
 ; HSW-NEXT:  # %bb.15: # %cond.store19
 ; HSW-NEXT:    vextracti128 $1, %ymm0, %xmm0
 ; HSW-NEXT:    vpextrd $3, %xmm0, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_16: # %else20
+; HSW-NEXT:  .LBB6_16: # %else20
 ; HSW-NEXT:    vpxor %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpcmpeqd %ymm0, %ymm5, %ymm0
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm0, %xmm4
 ; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
 ; HSW-NEXT:    vpextrb $8, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_18
+; HSW-NEXT:    je .LBB6_18
 ; HSW-NEXT:  # %bb.17: # %cond.store22
 ; HSW-NEXT:    vmovd %xmm1, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_18: # %else23
+; HSW-NEXT:  .LBB6_18: # %else23
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpextrb $9, %xmm0, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_20
+; HSW-NEXT:    je .LBB6_20
 ; HSW-NEXT:  # %bb.19: # %cond.store25
 ; HSW-NEXT:    vpextrd $1, %xmm1, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_20: # %else26
+; HSW-NEXT:  .LBB6_20: # %else26
 ; HSW-NEXT:    vpxor %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpcmpeqd %ymm0, %ymm5, %ymm0
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm0, %xmm4
 ; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
 ; HSW-NEXT:    vpextrb $10, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_22
+; HSW-NEXT:    je .LBB6_22
 ; HSW-NEXT:  # %bb.21: # %cond.store28
 ; HSW-NEXT:    vpextrd $2, %xmm1, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_22: # %else29
+; HSW-NEXT:  .LBB6_22: # %else29
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpextrb $11, %xmm0, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_24
+; HSW-NEXT:    je .LBB6_24
 ; HSW-NEXT:  # %bb.23: # %cond.store31
 ; HSW-NEXT:    vpextrd $3, %xmm1, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_24: # %else32
+; HSW-NEXT:  .LBB6_24: # %else32
 ; HSW-NEXT:    vpxor %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpcmpeqd %ymm0, %ymm5, %ymm0
 ; HSW-NEXT:    vextracti128 $1, %ymm0, %xmm0
@@ -614,22 +597,22 @@ define void @compressstore_v32f32_v32i32(float* %base, <32 x float> %V, <32 x i3
 ; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
 ; HSW-NEXT:    vpextrb $12, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_26
+; HSW-NEXT:    je .LBB6_26
 ; HSW-NEXT:  # %bb.25: # %cond.store34
 ; HSW-NEXT:    vextracti128 $1, %ymm1, %xmm4
 ; HSW-NEXT:    vmovd %xmm4, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_26: # %else35
+; HSW-NEXT:  .LBB6_26: # %else35
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpextrb $13, %xmm0, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_28
+; HSW-NEXT:    je .LBB6_28
 ; HSW-NEXT:  # %bb.27: # %cond.store37
 ; HSW-NEXT:    vextracti128 $1, %ymm1, %xmm0
 ; HSW-NEXT:    vpextrd $1, %xmm0, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_28: # %else38
+; HSW-NEXT:  .LBB6_28: # %else38
 ; HSW-NEXT:    vpxor %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpcmpeqd %ymm0, %ymm5, %ymm0
 ; HSW-NEXT:    vextracti128 $1, %ymm0, %xmm0
@@ -637,62 +620,62 @@ define void @compressstore_v32f32_v32i32(float* %base, <32 x float> %V, <32 x i3
 ; HSW-NEXT:    vpacksswb %xmm4, %xmm0, %xmm4
 ; HSW-NEXT:    vpextrb $14, %xmm4, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_30
+; HSW-NEXT:    je .LBB6_30
 ; HSW-NEXT:  # %bb.29: # %cond.store40
 ; HSW-NEXT:    vextracti128 $1, %ymm1, %xmm4
 ; HSW-NEXT:    vpextrd $2, %xmm4, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_30: # %else41
+; HSW-NEXT:  .LBB6_30: # %else41
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpextrb $15, %xmm0, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_32
+; HSW-NEXT:    je .LBB6_32
 ; HSW-NEXT:  # %bb.31: # %cond.store43
 ; HSW-NEXT:    vextracti128 $1, %ymm1, %xmm0
 ; HSW-NEXT:    vpextrd $3, %xmm0, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_32: # %else44
+; HSW-NEXT:  .LBB6_32: # %else44
 ; HSW-NEXT:    vpxor %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpcmpeqd %ymm0, %ymm6, %ymm0
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm0, %xmm1
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm1, %xmm1
 ; HSW-NEXT:    vpextrb $0, %xmm1, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_34
+; HSW-NEXT:    je .LBB6_34
 ; HSW-NEXT:  # %bb.33: # %cond.store46
 ; HSW-NEXT:    vmovd %xmm2, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_34: # %else47
+; HSW-NEXT:  .LBB6_34: # %else47
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpextrb $1, %xmm0, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_36
+; HSW-NEXT:    je .LBB6_36
 ; HSW-NEXT:  # %bb.35: # %cond.store49
 ; HSW-NEXT:    vpextrd $1, %xmm2, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_36: # %else50
+; HSW-NEXT:  .LBB6_36: # %else50
 ; HSW-NEXT:    vpxor %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpcmpeqd %ymm0, %ymm6, %ymm0
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm0, %xmm1
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm1, %xmm1
 ; HSW-NEXT:    vpextrb $2, %xmm1, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_38
+; HSW-NEXT:    je .LBB6_38
 ; HSW-NEXT:  # %bb.37: # %cond.store52
 ; HSW-NEXT:    vpextrd $2, %xmm2, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_38: # %else53
+; HSW-NEXT:  .LBB6_38: # %else53
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpextrb $3, %xmm0, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_40
+; HSW-NEXT:    je .LBB6_40
 ; HSW-NEXT:  # %bb.39: # %cond.store55
 ; HSW-NEXT:    vpextrd $3, %xmm2, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_40: # %else56
+; HSW-NEXT:  .LBB6_40: # %else56
 ; HSW-NEXT:    vpxor %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpcmpeqd %ymm0, %ymm6, %ymm0
 ; HSW-NEXT:    vextracti128 $1, %ymm0, %xmm0
@@ -700,22 +683,22 @@ define void @compressstore_v32f32_v32i32(float* %base, <32 x float> %V, <32 x i3
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm1, %xmm1
 ; HSW-NEXT:    vpextrb $4, %xmm1, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_42
+; HSW-NEXT:    je .LBB6_42
 ; HSW-NEXT:  # %bb.41: # %cond.store58
 ; HSW-NEXT:    vextracti128 $1, %ymm2, %xmm1
 ; HSW-NEXT:    vmovd %xmm1, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_42: # %else59
+; HSW-NEXT:  .LBB6_42: # %else59
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpextrb $5, %xmm0, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_44
+; HSW-NEXT:    je .LBB6_44
 ; HSW-NEXT:  # %bb.43: # %cond.store61
 ; HSW-NEXT:    vextracti128 $1, %ymm2, %xmm0
 ; HSW-NEXT:    vpextrd $1, %xmm0, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_44: # %else62
+; HSW-NEXT:  .LBB6_44: # %else62
 ; HSW-NEXT:    vpxor %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpcmpeqd %ymm0, %ymm6, %ymm0
 ; HSW-NEXT:    vextracti128 $1, %ymm0, %xmm0
@@ -723,62 +706,62 @@ define void @compressstore_v32f32_v32i32(float* %base, <32 x float> %V, <32 x i3
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm1, %xmm1
 ; HSW-NEXT:    vpextrb $6, %xmm1, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_46
+; HSW-NEXT:    je .LBB6_46
 ; HSW-NEXT:  # %bb.45: # %cond.store64
 ; HSW-NEXT:    vextracti128 $1, %ymm2, %xmm1
 ; HSW-NEXT:    vpextrd $2, %xmm1, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_46: # %else65
+; HSW-NEXT:  .LBB6_46: # %else65
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpextrb $7, %xmm0, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_48
+; HSW-NEXT:    je .LBB6_48
 ; HSW-NEXT:  # %bb.47: # %cond.store67
 ; HSW-NEXT:    vextracti128 $1, %ymm2, %xmm0
 ; HSW-NEXT:    vpextrd $3, %xmm0, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_48: # %else68
+; HSW-NEXT:  .LBB6_48: # %else68
 ; HSW-NEXT:    vpxor %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpcmpeqd %ymm0, %ymm7, %ymm0
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm0, %xmm1
 ; HSW-NEXT:    vpacksswb %xmm1, %xmm0, %xmm1
 ; HSW-NEXT:    vpextrb $8, %xmm1, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_50
+; HSW-NEXT:    je .LBB6_50
 ; HSW-NEXT:  # %bb.49: # %cond.store70
 ; HSW-NEXT:    vmovd %xmm3, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_50: # %else71
+; HSW-NEXT:  .LBB6_50: # %else71
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpextrb $9, %xmm0, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_52
+; HSW-NEXT:    je .LBB6_52
 ; HSW-NEXT:  # %bb.51: # %cond.store73
 ; HSW-NEXT:    vpextrd $1, %xmm3, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_52: # %else74
+; HSW-NEXT:  .LBB6_52: # %else74
 ; HSW-NEXT:    vpxor %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpcmpeqd %ymm0, %ymm7, %ymm0
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm0, %xmm1
 ; HSW-NEXT:    vpacksswb %xmm1, %xmm0, %xmm1
 ; HSW-NEXT:    vpextrb $10, %xmm1, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_54
+; HSW-NEXT:    je .LBB6_54
 ; HSW-NEXT:  # %bb.53: # %cond.store76
 ; HSW-NEXT:    vpextrd $2, %xmm3, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_54: # %else77
+; HSW-NEXT:  .LBB6_54: # %else77
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpextrb $11, %xmm0, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_56
+; HSW-NEXT:    je .LBB6_56
 ; HSW-NEXT:  # %bb.55: # %cond.store79
 ; HSW-NEXT:    vpextrd $3, %xmm3, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_56: # %else80
+; HSW-NEXT:  .LBB6_56: # %else80
 ; HSW-NEXT:    vpxor %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpcmpeqd %ymm0, %ymm7, %ymm0
 ; HSW-NEXT:    vextracti128 $1, %ymm0, %xmm0
@@ -786,22 +769,22 @@ define void @compressstore_v32f32_v32i32(float* %base, <32 x float> %V, <32 x i3
 ; HSW-NEXT:    vpacksswb %xmm1, %xmm0, %xmm1
 ; HSW-NEXT:    vpextrb $12, %xmm1, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_58
+; HSW-NEXT:    je .LBB6_58
 ; HSW-NEXT:  # %bb.57: # %cond.store82
 ; HSW-NEXT:    vextracti128 $1, %ymm3, %xmm1
 ; HSW-NEXT:    vmovd %xmm1, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_58: # %else83
+; HSW-NEXT:  .LBB6_58: # %else83
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpextrb $13, %xmm0, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_60
+; HSW-NEXT:    je .LBB6_60
 ; HSW-NEXT:  # %bb.59: # %cond.store85
 ; HSW-NEXT:    vextracti128 $1, %ymm3, %xmm0
 ; HSW-NEXT:    vpextrd $1, %xmm0, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_60: # %else86
+; HSW-NEXT:  .LBB6_60: # %else86
 ; HSW-NEXT:    vpxor %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpcmpeqd %ymm0, %ymm7, %ymm0
 ; HSW-NEXT:    vextracti128 $1, %ymm0, %xmm0
@@ -809,21 +792,21 @@ define void @compressstore_v32f32_v32i32(float* %base, <32 x float> %V, <32 x i3
 ; HSW-NEXT:    vpacksswb %xmm1, %xmm0, %xmm1
 ; HSW-NEXT:    vpextrb $14, %xmm1, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_62
+; HSW-NEXT:    je .LBB6_62
 ; HSW-NEXT:  # %bb.61: # %cond.store88
 ; HSW-NEXT:    vextracti128 $1, %ymm3, %xmm1
 ; HSW-NEXT:    vpextrd $2, %xmm1, (%rdi)
 ; HSW-NEXT:    addq $4, %rdi
-; HSW-NEXT:  .LBB8_62: # %else89
+; HSW-NEXT:  .LBB6_62: # %else89
 ; HSW-NEXT:    vpackssdw %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpacksswb %xmm0, %xmm0, %xmm0
 ; HSW-NEXT:    vpextrb $15, %xmm0, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB8_64
+; HSW-NEXT:    je .LBB6_64
 ; HSW-NEXT:  # %bb.63: # %cond.store91
 ; HSW-NEXT:    vextracti128 $1, %ymm3, %xmm0
 ; HSW-NEXT:    vpextrd $3, %xmm0, (%rdi)
-; HSW-NEXT:  .LBB8_64: # %else92
+; HSW-NEXT:  .LBB6_64: # %else92
 ; HSW-NEXT:    vzeroupper
 ; HSW-NEXT:    retq
 ;
@@ -852,156 +835,903 @@ define void @compressstore_v32f32_v32i32(float* %base, <32 x float> %V, <32 x i3
   ret void
 }
 
-define void @compressstore_v16f64_v16i1(double* %base, <16 x double> %V, <16 x i1> %mask) {
-; HSW-LABEL: compressstore_v16f64_v16i1:
+;
+; vXi64
+;
+
+define void @compressstore_v2i64_v2i1(i64* %base, <2 x i64> %V, <2 x i1> %mask) {
+; HSW-LABEL: compressstore_v2i64_v2i1:
 ; HSW:       # %bb.0:
-; HSW-NEXT:    vpextrb $0, %xmm4, %eax
+; HSW-NEXT:    vpextrb $0, %xmm1, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB9_2
+; HSW-NEXT:    je .LBB7_2
 ; HSW-NEXT:  # %bb.1: # %cond.store
-; HSW-NEXT:    vmovlpd %xmm0, (%rdi)
+; HSW-NEXT:    vmovq %xmm0, (%rdi)
 ; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB9_2: # %else
-; HSW-NEXT:    vpextrb $1, %xmm4, %eax
+; HSW-NEXT:  .LBB7_2: # %else
+; HSW-NEXT:    vpextrb $8, %xmm1, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB9_4
+; HSW-NEXT:    je .LBB7_4
 ; HSW-NEXT:  # %bb.3: # %cond.store1
-; HSW-NEXT:    vmovhpd %xmm0, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB9_4: # %else2
-; HSW-NEXT:    vpextrb $2, %xmm4, %eax
+; HSW-NEXT:    vpextrq $1, %xmm0, (%rdi)
+; HSW-NEXT:  .LBB7_4: # %else2
+; HSW-NEXT:    retq
+;
+; SKX-LABEL: compressstore_v2i64_v2i1:
+; SKX:       # %bb.0:
+; SKX-NEXT:    vpsllq $63, %xmm1, %xmm1
+; SKX-NEXT:    vpmovq2m %xmm1, %k1
+; SKX-NEXT:    vpcompressq %xmm0, (%rdi) {%k1}
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: compressstore_v2i64_v2i1:
+; KNL:       # %bb.0:
+; KNL-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
+; KNL-NEXT:    vpsllq $63, %xmm1, %xmm1
+; KNL-NEXT:    vptestmq %zmm1, %zmm1, %k0
+; KNL-NEXT:    kshiftlw $14, %k0, %k0
+; KNL-NEXT:    kshiftrw $14, %k0, %k1
+; KNL-NEXT:    vpcompressq %zmm0, (%rdi) {%k1}
+; KNL-NEXT:    retq
+  call void @llvm.masked.compressstore.v2i64(<2 x i64> %V, i64* %base, <2 x i1> %mask)
+  ret void
+}
+
+define void @compressstore_v4i64_v4i1(i64* %base, <4 x i64> %V, <4 x i1> %mask) {
+; HSW-LABEL: compressstore_v4i64_v4i1:
+; HSW:       # %bb.0:
+; HSW-NEXT:    vpextrb $0, %xmm1, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB9_6
+; HSW-NEXT:    je .LBB8_2
+; HSW-NEXT:  # %bb.1: # %cond.store
+; HSW-NEXT:    vmovq %xmm0, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB8_2: # %else
+; HSW-NEXT:    vpextrb $4, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB8_4
+; HSW-NEXT:  # %bb.3: # %cond.store1
+; HSW-NEXT:    vpextrq $1, %xmm0, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB8_4: # %else2
+; HSW-NEXT:    vpextrb $8, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB8_6
 ; HSW-NEXT:  # %bb.5: # %cond.store4
-; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm5
-; HSW-NEXT:    vmovlpd %xmm5, (%rdi)
+; HSW-NEXT:    vextracti128 $1, %ymm0, %xmm2
+; HSW-NEXT:    vmovq %xmm2, (%rdi)
 ; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB9_6: # %else5
-; HSW-NEXT:    vpextrb $3, %xmm4, %eax
+; HSW-NEXT:  .LBB8_6: # %else5
+; HSW-NEXT:    vpextrb $12, %xmm1, %eax
 ; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB9_8
+; HSW-NEXT:    je .LBB8_8
 ; HSW-NEXT:  # %bb.7: # %cond.store7
-; HSW-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; HSW-NEXT:    vmovhpd %xmm0, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB9_8: # %else8
-; HSW-NEXT:    vpextrb $4, %xmm4, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB9_10
-; HSW-NEXT:  # %bb.9: # %cond.store10
-; HSW-NEXT:    vmovlpd %xmm1, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB9_10: # %else11
-; HSW-NEXT:    vpextrb $5, %xmm4, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB9_12
-; HSW-NEXT:  # %bb.11: # %cond.store13
-; HSW-NEXT:    vmovhpd %xmm1, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB9_12: # %else14
-; HSW-NEXT:    vpextrb $6, %xmm4, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB9_14
-; HSW-NEXT:  # %bb.13: # %cond.store16
-; HSW-NEXT:    vextractf128 $1, %ymm1, %xmm0
-; HSW-NEXT:    vmovlpd %xmm0, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB9_14: # %else17
-; HSW-NEXT:    vpextrb $7, %xmm4, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB9_16
-; HSW-NEXT:  # %bb.15: # %cond.store19
-; HSW-NEXT:    vextractf128 $1, %ymm1, %xmm0
-; HSW-NEXT:    vmovhpd %xmm0, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB9_16: # %else20
-; HSW-NEXT:    vpextrb $8, %xmm4, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB9_18
-; HSW-NEXT:  # %bb.17: # %cond.store22
-; HSW-NEXT:    vmovlpd %xmm2, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB9_18: # %else23
-; HSW-NEXT:    vpextrb $9, %xmm4, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB9_20
-; HSW-NEXT:  # %bb.19: # %cond.store25
-; HSW-NEXT:    vmovhpd %xmm2, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB9_20: # %else26
-; HSW-NEXT:    vpextrb $10, %xmm4, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB9_22
-; HSW-NEXT:  # %bb.21: # %cond.store28
-; HSW-NEXT:    vextractf128 $1, %ymm2, %xmm0
-; HSW-NEXT:    vmovlpd %xmm0, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB9_22: # %else29
-; HSW-NEXT:    vpextrb $11, %xmm4, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB9_24
-; HSW-NEXT:  # %bb.23: # %cond.store31
-; HSW-NEXT:    vextractf128 $1, %ymm2, %xmm0
-; HSW-NEXT:    vmovhpd %xmm0, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB9_24: # %else32
-; HSW-NEXT:    vpextrb $12, %xmm4, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB9_26
-; HSW-NEXT:  # %bb.25: # %cond.store34
-; HSW-NEXT:    vmovlpd %xmm3, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB9_26: # %else35
-; HSW-NEXT:    vpextrb $13, %xmm4, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB9_28
-; HSW-NEXT:  # %bb.27: # %cond.store37
-; HSW-NEXT:    vmovhpd %xmm3, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB9_28: # %else38
-; HSW-NEXT:    vpextrb $14, %xmm4, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB9_30
-; HSW-NEXT:  # %bb.29: # %cond.store40
-; HSW-NEXT:    vextractf128 $1, %ymm3, %xmm0
-; HSW-NEXT:    vmovlpd %xmm0, (%rdi)
-; HSW-NEXT:    addq $8, %rdi
-; HSW-NEXT:  .LBB9_30: # %else41
-; HSW-NEXT:    vpextrb $15, %xmm4, %eax
-; HSW-NEXT:    testb $1, %al
-; HSW-NEXT:    je .LBB9_32
-; HSW-NEXT:  # %bb.31: # %cond.store43
-; HSW-NEXT:    vextractf128 $1, %ymm3, %xmm0
-; HSW-NEXT:    vmovhpd %xmm0, (%rdi)
-; HSW-NEXT:  .LBB9_32: # %else44
+; HSW-NEXT:    vextracti128 $1, %ymm0, %xmm0
+; HSW-NEXT:    vpextrq $1, %xmm0, (%rdi)
+; HSW-NEXT:  .LBB8_8: # %else8
 ; HSW-NEXT:    vzeroupper
 ; HSW-NEXT:    retq
 ;
-; SKX-LABEL: compressstore_v16f64_v16i1:
+; SKX-LABEL: compressstore_v4i64_v4i1:
 ; SKX:       # %bb.0:
-; SKX-NEXT:    vpsllw $7, %xmm2, %xmm2
-; SKX-NEXT:    vpmovb2m %xmm2, %k1
-; SKX-NEXT:    kshiftrw $8, %k1, %k2
-; SKX-NEXT:    kmovb %k1, %eax
-; SKX-NEXT:    popcntl %eax, %eax
-; SKX-NEXT:    vcompresspd %zmm1, (%rdi,%rax,8) {%k2}
-; SKX-NEXT:    vcompresspd %zmm0, (%rdi) {%k1}
+; SKX-NEXT:    vpslld $31, %xmm1, %xmm1
+; SKX-NEXT:    vpmovd2m %xmm1, %k1
+; SKX-NEXT:    vpcompressq %ymm0, (%rdi) {%k1}
 ; SKX-NEXT:    vzeroupper
 ; SKX-NEXT:    retq
 ;
-; KNL-LABEL: compressstore_v16f64_v16i1:
+; KNL-LABEL: compressstore_v4i64_v4i1:
 ; KNL:       # %bb.0:
-; KNL-NEXT:    vpmovzxbd {{.*#+}} zmm2 = xmm2[0],zero,zero,zero,xmm2[1],zero,zero,zero,xmm2[2],zero,zero,zero,xmm2[3],zero,zero,zero,xmm2[4],zero,zero,zero,xmm2[5],zero,zero,zero,xmm2[6],zero,zero,zero,xmm2[7],zero,zero,zero,xmm2[8],zero,zero,zero,xmm2[9],zero,zero,zero,xmm2[10],zero,zero,zero,xmm2[11],zero,zero,zero,xmm2[12],zero,zero,zero,xmm2[13],zero,zero,zero,xmm2[14],zero,zero,zero,xmm2[15],zero,zero,zero
-; KNL-NEXT:    vpslld $31, %zmm2, %zmm2
-; KNL-NEXT:    vptestmd %zmm2, %zmm2, %k1
-; KNL-NEXT:    kshiftrw $8, %k1, %k2
-; KNL-NEXT:    vcompresspd %zmm0, (%rdi) {%k1}
-; KNL-NEXT:    kmovw %k1, %eax
-; KNL-NEXT:    movzbl %al, %eax
-; KNL-NEXT:    popcntl %eax, %eax
-; KNL-NEXT:    vcompresspd %zmm1, (%rdi,%rax,8) {%k2}
+; KNL-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
+; KNL-NEXT:    vpslld $31, %xmm1, %xmm1
+; KNL-NEXT:    vptestmd %zmm1, %zmm1, %k0
+; KNL-NEXT:    kshiftlw $12, %k0, %k0
+; KNL-NEXT:    kshiftrw $12, %k0, %k1
+; KNL-NEXT:    vpcompressq %zmm0, (%rdi) {%k1}
 ; KNL-NEXT:    retq
-  call void @llvm.masked.compressstore.v16f64(<16 x double> %V, double* %base, <16 x i1> %mask)
+  call void @llvm.masked.compressstore.v4i64(<4 x i64> %V, i64* %base, <4 x i1> %mask)
+  ret void
+}
+
+define void @compressstore_v8i64_v8i1(i64* %base, <8 x i64> %V, <8 x i1> %mask) {
+; HSW-LABEL: compressstore_v8i64_v8i1:
+; HSW:       # %bb.0:
+; HSW-NEXT:    vpextrb $0, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB9_2
+; HSW-NEXT:  # %bb.1: # %cond.store
+; HSW-NEXT:    vmovq %xmm0, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB9_2: # %else
+; HSW-NEXT:    vpextrb $2, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB9_4
+; HSW-NEXT:  # %bb.3: # %cond.store1
+; HSW-NEXT:    vpextrq $1, %xmm0, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB9_4: # %else2
+; HSW-NEXT:    vpextrb $4, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB9_6
+; HSW-NEXT:  # %bb.5: # %cond.store4
+; HSW-NEXT:    vextracti128 $1, %ymm0, %xmm3
+; HSW-NEXT:    vmovq %xmm3, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB9_6: # %else5
+; HSW-NEXT:    vpextrb $6, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB9_8
+; HSW-NEXT:  # %bb.7: # %cond.store7
+; HSW-NEXT:    vextracti128 $1, %ymm0, %xmm0
+; HSW-NEXT:    vpextrq $1, %xmm0, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB9_8: # %else8
+; HSW-NEXT:    vpextrb $8, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB9_10
+; HSW-NEXT:  # %bb.9: # %cond.store10
+; HSW-NEXT:    vmovq %xmm1, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB9_10: # %else11
+; HSW-NEXT:    vpextrb $10, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB9_12
+; HSW-NEXT:  # %bb.11: # %cond.store13
+; HSW-NEXT:    vpextrq $1, %xmm1, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB9_12: # %else14
+; HSW-NEXT:    vpextrb $12, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB9_14
+; HSW-NEXT:  # %bb.13: # %cond.store16
+; HSW-NEXT:    vextracti128 $1, %ymm1, %xmm0
+; HSW-NEXT:    vmovq %xmm0, (%rdi)
+; HSW-NEXT:    addq $8, %rdi
+; HSW-NEXT:  .LBB9_14: # %else17
+; HSW-NEXT:    vpextrb $14, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB9_16
+; HSW-NEXT:  # %bb.15: # %cond.store19
+; HSW-NEXT:    vextracti128 $1, %ymm1, %xmm0
+; HSW-NEXT:    vpextrq $1, %xmm0, (%rdi)
+; HSW-NEXT:  .LBB9_16: # %else20
+; HSW-NEXT:    vzeroupper
+; HSW-NEXT:    retq
+;
+; SKX-LABEL: compressstore_v8i64_v8i1:
+; SKX:       # %bb.0:
+; SKX-NEXT:    vpsllw $15, %xmm1, %xmm1
+; SKX-NEXT:    vpmovw2m %xmm1, %k1
+; SKX-NEXT:    vpcompressq %zmm0, (%rdi) {%k1}
+; SKX-NEXT:    vzeroupper
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: compressstore_v8i64_v8i1:
+; KNL:       # %bb.0:
+; KNL-NEXT:    vpmovzxwq {{.*#+}} zmm1 = xmm1[0],zero,zero,zero,xmm1[1],zero,zero,zero,xmm1[2],zero,zero,zero,xmm1[3],zero,zero,zero,xmm1[4],zero,zero,zero,xmm1[5],zero,zero,zero,xmm1[6],zero,zero,zero,xmm1[7],zero,zero,zero
+; KNL-NEXT:    vpsllq $63, %zmm1, %zmm1
+; KNL-NEXT:    vptestmq %zmm1, %zmm1, %k1
+; KNL-NEXT:    vpcompressq %zmm0, (%rdi) {%k1}
+; KNL-NEXT:    retq
+  call void @llvm.masked.compressstore.v8i64(<8 x i64> %V, i64* %base, <8 x i1> %mask)
+  ret void
+}
+
+;
+; vXi32
+;
+
+define void @compressstore_v4i32_v4i32(i32* %base, <4 x i32> %V, <4 x i32> %trigger) {
+; HSW-LABEL: compressstore_v4i32_v4i32:
+; HSW:       # %bb.0:
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqd %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $0, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB10_2
+; HSW-NEXT:  # %bb.1: # %cond.store
+; HSW-NEXT:    vmovss %xmm0, (%rdi)
+; HSW-NEXT:    addq $4, %rdi
+; HSW-NEXT:  .LBB10_2: # %else
+; HSW-NEXT:    vpextrb $4, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB10_4
+; HSW-NEXT:  # %bb.3: # %cond.store1
+; HSW-NEXT:    vextractps $1, %xmm0, (%rdi)
+; HSW-NEXT:    addq $4, %rdi
+; HSW-NEXT:  .LBB10_4: # %else2
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqd %xmm2, %xmm1, %xmm1
+; HSW-NEXT:    vpextrb $8, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB10_6
+; HSW-NEXT:  # %bb.5: # %cond.store4
+; HSW-NEXT:    vextractps $2, %xmm0, (%rdi)
+; HSW-NEXT:    addq $4, %rdi
+; HSW-NEXT:  .LBB10_6: # %else5
+; HSW-NEXT:    vpextrb $12, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB10_8
+; HSW-NEXT:  # %bb.7: # %cond.store7
+; HSW-NEXT:    vextractps $3, %xmm0, (%rdi)
+; HSW-NEXT:  .LBB10_8: # %else8
+; HSW-NEXT:    retq
+;
+; SKX-LABEL: compressstore_v4i32_v4i32:
+; SKX:       # %bb.0:
+; SKX-NEXT:    vptestnmd %xmm1, %xmm1, %k1
+; SKX-NEXT:    vpcompressd %xmm0, (%rdi) {%k1}
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: compressstore_v4i32_v4i32:
+; KNL:       # %bb.0:
+; KNL-NEXT:    # kill: def $xmm1 killed $xmm1 def $zmm1
+; KNL-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
+; KNL-NEXT:    vptestnmd %zmm1, %zmm1, %k0
+; KNL-NEXT:    kshiftlw $12, %k0, %k0
+; KNL-NEXT:    kshiftrw $12, %k0, %k1
+; KNL-NEXT:    vpcompressd %zmm0, (%rdi) {%k1}
+; KNL-NEXT:    retq
+  %mask = icmp eq <4 x i32> %trigger, zeroinitializer
+  call void @llvm.masked.compressstore.v4i32(<4 x i32> %V, i32* %base, <4 x i1> %mask)
+  ret void
+}
+
+;
+; vXi16
+;
+
+define void @compressstore_v8i16_v8i16(i16* %base, <8 x i16> %V, <8 x i16> %trigger) {
+; HSW-LABEL: compressstore_v8i16_v8i16:
+; HSW:       # %bb.0:
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqw %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $0, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB11_2
+; HSW-NEXT:  # %bb.1: # %cond.store
+; HSW-NEXT:    vpextrw $0, %xmm0, (%rdi)
+; HSW-NEXT:    addq $2, %rdi
+; HSW-NEXT:  .LBB11_2: # %else
+; HSW-NEXT:    vpextrb $2, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB11_4
+; HSW-NEXT:  # %bb.3: # %cond.store1
+; HSW-NEXT:    vpextrw $1, %xmm0, (%rdi)
+; HSW-NEXT:    addq $2, %rdi
+; HSW-NEXT:  .LBB11_4: # %else2
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqw %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $4, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB11_6
+; HSW-NEXT:  # %bb.5: # %cond.store4
+; HSW-NEXT:    vpextrw $2, %xmm0, (%rdi)
+; HSW-NEXT:    addq $2, %rdi
+; HSW-NEXT:  .LBB11_6: # %else5
+; HSW-NEXT:    vpextrb $6, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB11_8
+; HSW-NEXT:  # %bb.7: # %cond.store7
+; HSW-NEXT:    vpextrw $3, %xmm0, (%rdi)
+; HSW-NEXT:    addq $2, %rdi
+; HSW-NEXT:  .LBB11_8: # %else8
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqw %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $8, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB11_10
+; HSW-NEXT:  # %bb.9: # %cond.store10
+; HSW-NEXT:    vpextrw $4, %xmm0, (%rdi)
+; HSW-NEXT:    addq $2, %rdi
+; HSW-NEXT:  .LBB11_10: # %else11
+; HSW-NEXT:    vpextrb $10, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB11_12
+; HSW-NEXT:  # %bb.11: # %cond.store13
+; HSW-NEXT:    vpextrw $5, %xmm0, (%rdi)
+; HSW-NEXT:    addq $2, %rdi
+; HSW-NEXT:  .LBB11_12: # %else14
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqw %xmm2, %xmm1, %xmm1
+; HSW-NEXT:    vpextrb $12, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB11_14
+; HSW-NEXT:  # %bb.13: # %cond.store16
+; HSW-NEXT:    vpextrw $6, %xmm0, (%rdi)
+; HSW-NEXT:    addq $2, %rdi
+; HSW-NEXT:  .LBB11_14: # %else17
+; HSW-NEXT:    vpextrb $14, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB11_16
+; HSW-NEXT:  # %bb.15: # %cond.store19
+; HSW-NEXT:    vpextrw $7, %xmm0, (%rdi)
+; HSW-NEXT:  .LBB11_16: # %else20
+; HSW-NEXT:    retq
+;
+; SKX-LABEL: compressstore_v8i16_v8i16:
+; SKX:       # %bb.0:
+; SKX-NEXT:    vptestnmw %xmm1, %xmm1, %k0
+; SKX-NEXT:    kmovd %k0, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB11_2
+; SKX-NEXT:  # %bb.1: # %cond.store
+; SKX-NEXT:    vpextrw $0, %xmm0, (%rdi)
+; SKX-NEXT:    addq $2, %rdi
+; SKX-NEXT:  .LBB11_2: # %else
+; SKX-NEXT:    kshiftrb $1, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB11_4
+; SKX-NEXT:  # %bb.3: # %cond.store1
+; SKX-NEXT:    vpextrw $1, %xmm0, (%rdi)
+; SKX-NEXT:    addq $2, %rdi
+; SKX-NEXT:  .LBB11_4: # %else2
+; SKX-NEXT:    kshiftrb $2, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB11_6
+; SKX-NEXT:  # %bb.5: # %cond.store4
+; SKX-NEXT:    vpextrw $2, %xmm0, (%rdi)
+; SKX-NEXT:    addq $2, %rdi
+; SKX-NEXT:  .LBB11_6: # %else5
+; SKX-NEXT:    kshiftrb $3, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB11_8
+; SKX-NEXT:  # %bb.7: # %cond.store7
+; SKX-NEXT:    vpextrw $3, %xmm0, (%rdi)
+; SKX-NEXT:    addq $2, %rdi
+; SKX-NEXT:  .LBB11_8: # %else8
+; SKX-NEXT:    kshiftrb $4, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB11_10
+; SKX-NEXT:  # %bb.9: # %cond.store10
+; SKX-NEXT:    vpextrw $4, %xmm0, (%rdi)
+; SKX-NEXT:    addq $2, %rdi
+; SKX-NEXT:  .LBB11_10: # %else11
+; SKX-NEXT:    kshiftrb $5, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB11_12
+; SKX-NEXT:  # %bb.11: # %cond.store13
+; SKX-NEXT:    vpextrw $5, %xmm0, (%rdi)
+; SKX-NEXT:    addq $2, %rdi
+; SKX-NEXT:  .LBB11_12: # %else14
+; SKX-NEXT:    kshiftrb $6, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB11_14
+; SKX-NEXT:  # %bb.13: # %cond.store16
+; SKX-NEXT:    vpextrw $6, %xmm0, (%rdi)
+; SKX-NEXT:    addq $2, %rdi
+; SKX-NEXT:  .LBB11_14: # %else17
+; SKX-NEXT:    kshiftrb $7, %k0, %k0
+; SKX-NEXT:    kmovd %k0, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB11_16
+; SKX-NEXT:  # %bb.15: # %cond.store19
+; SKX-NEXT:    vpextrw $7, %xmm0, (%rdi)
+; SKX-NEXT:  .LBB11_16: # %else20
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: compressstore_v8i16_v8i16:
+; KNL:       # %bb.0:
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqw %xmm2, %xmm1, %xmm2
+; KNL-NEXT:    vpmovsxwq %xmm2, %zmm2
+; KNL-NEXT:    vptestmq %zmm2, %zmm2, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB11_2
+; KNL-NEXT:  # %bb.1: # %cond.store
+; KNL-NEXT:    vpextrw $0, %xmm0, (%rdi)
+; KNL-NEXT:    addq $2, %rdi
+; KNL-NEXT:  .LBB11_2: # %else
+; KNL-NEXT:    kshiftrw $1, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB11_4
+; KNL-NEXT:  # %bb.3: # %cond.store1
+; KNL-NEXT:    vpextrw $1, %xmm0, (%rdi)
+; KNL-NEXT:    addq $2, %rdi
+; KNL-NEXT:  .LBB11_4: # %else2
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqw %xmm2, %xmm1, %xmm2
+; KNL-NEXT:    vpmovsxwq %xmm2, %zmm2
+; KNL-NEXT:    vptestmq %zmm2, %zmm2, %k0
+; KNL-NEXT:    kshiftrw $2, %k0, %k1
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB11_6
+; KNL-NEXT:  # %bb.5: # %cond.store4
+; KNL-NEXT:    vpextrw $2, %xmm0, (%rdi)
+; KNL-NEXT:    addq $2, %rdi
+; KNL-NEXT:  .LBB11_6: # %else5
+; KNL-NEXT:    kshiftrw $3, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB11_8
+; KNL-NEXT:  # %bb.7: # %cond.store7
+; KNL-NEXT:    vpextrw $3, %xmm0, (%rdi)
+; KNL-NEXT:    addq $2, %rdi
+; KNL-NEXT:  .LBB11_8: # %else8
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqw %xmm2, %xmm1, %xmm2
+; KNL-NEXT:    vpmovsxwq %xmm2, %zmm2
+; KNL-NEXT:    vptestmq %zmm2, %zmm2, %k0
+; KNL-NEXT:    kshiftrw $4, %k0, %k1
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB11_10
+; KNL-NEXT:  # %bb.9: # %cond.store10
+; KNL-NEXT:    vpextrw $4, %xmm0, (%rdi)
+; KNL-NEXT:    addq $2, %rdi
+; KNL-NEXT:  .LBB11_10: # %else11
+; KNL-NEXT:    kshiftrw $5, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB11_12
+; KNL-NEXT:  # %bb.11: # %cond.store13
+; KNL-NEXT:    vpextrw $5, %xmm0, (%rdi)
+; KNL-NEXT:    addq $2, %rdi
+; KNL-NEXT:  .LBB11_12: # %else14
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqw %xmm2, %xmm1, %xmm1
+; KNL-NEXT:    vpmovsxwq %xmm1, %zmm1
+; KNL-NEXT:    vptestmq %zmm1, %zmm1, %k0
+; KNL-NEXT:    kshiftrw $6, %k0, %k1
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB11_14
+; KNL-NEXT:  # %bb.13: # %cond.store16
+; KNL-NEXT:    vpextrw $6, %xmm0, (%rdi)
+; KNL-NEXT:    addq $2, %rdi
+; KNL-NEXT:  .LBB11_14: # %else17
+; KNL-NEXT:    kshiftrw $7, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB11_16
+; KNL-NEXT:  # %bb.15: # %cond.store19
+; KNL-NEXT:    vpextrw $7, %xmm0, (%rdi)
+; KNL-NEXT:  .LBB11_16: # %else20
+; KNL-NEXT:    retq
+  %mask = icmp eq <8 x i16> %trigger, zeroinitializer
+  call void @llvm.masked.compressstore.v8i16(<8 x i16> %V, i16* %base, <8 x i1> %mask)
+  ret void
+}
+
+;
+; vXi8
+;
+
+define void @compressstore_v16i8_v16i8(i8* %base, <16 x i8> %V, <16 x i8> %trigger) {
+; HSW-LABEL: compressstore_v16i8_v16i8:
+; HSW:       # %bb.0:
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $0, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_2
+; HSW-NEXT:  # %bb.1: # %cond.store
+; HSW-NEXT:    vpextrb $0, %xmm0, (%rdi)
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_2: # %else
+; HSW-NEXT:    vpextrb $1, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_4
+; HSW-NEXT:  # %bb.3: # %cond.store1
+; HSW-NEXT:    vpextrb $1, %xmm0, (%rdi)
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_4: # %else2
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $2, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_6
+; HSW-NEXT:  # %bb.5: # %cond.store4
+; HSW-NEXT:    vpextrb $2, %xmm0, (%rdi)
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_6: # %else5
+; HSW-NEXT:    vpextrb $3, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_8
+; HSW-NEXT:  # %bb.7: # %cond.store7
+; HSW-NEXT:    vpextrb $3, %xmm0, (%rdi)
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_8: # %else8
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $4, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_10
+; HSW-NEXT:  # %bb.9: # %cond.store10
+; HSW-NEXT:    vpextrb $4, %xmm0, (%rdi)
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_10: # %else11
+; HSW-NEXT:    vpextrb $5, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_12
+; HSW-NEXT:  # %bb.11: # %cond.store13
+; HSW-NEXT:    vpextrb $5, %xmm0, (%rdi)
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_12: # %else14
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $6, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_14
+; HSW-NEXT:  # %bb.13: # %cond.store16
+; HSW-NEXT:    vpextrb $6, %xmm0, (%rdi)
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_14: # %else17
+; HSW-NEXT:    vpextrb $7, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_16
+; HSW-NEXT:  # %bb.15: # %cond.store19
+; HSW-NEXT:    vpextrb $7, %xmm0, (%rdi)
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_16: # %else20
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $8, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_18
+; HSW-NEXT:  # %bb.17: # %cond.store22
+; HSW-NEXT:    vpextrb $8, %xmm0, (%rdi)
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_18: # %else23
+; HSW-NEXT:    vpextrb $9, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_20
+; HSW-NEXT:  # %bb.19: # %cond.store25
+; HSW-NEXT:    vpextrb $9, %xmm0, (%rdi)
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_20: # %else26
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $10, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_22
+; HSW-NEXT:  # %bb.21: # %cond.store28
+; HSW-NEXT:    vpextrb $10, %xmm0, (%rdi)
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_22: # %else29
+; HSW-NEXT:    vpextrb $11, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_24
+; HSW-NEXT:  # %bb.23: # %cond.store31
+; HSW-NEXT:    vpextrb $11, %xmm0, (%rdi)
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_24: # %else32
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; HSW-NEXT:    vpextrb $12, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_26
+; HSW-NEXT:  # %bb.25: # %cond.store34
+; HSW-NEXT:    vpextrb $12, %xmm0, (%rdi)
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_26: # %else35
+; HSW-NEXT:    vpextrb $13, %xmm2, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_28
+; HSW-NEXT:  # %bb.27: # %cond.store37
+; HSW-NEXT:    vpextrb $13, %xmm0, (%rdi)
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_28: # %else38
+; HSW-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; HSW-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm1
+; HSW-NEXT:    vpextrb $14, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_30
+; HSW-NEXT:  # %bb.29: # %cond.store40
+; HSW-NEXT:    vpextrb $14, %xmm0, (%rdi)
+; HSW-NEXT:    incq %rdi
+; HSW-NEXT:  .LBB12_30: # %else41
+; HSW-NEXT:    vpextrb $15, %xmm1, %eax
+; HSW-NEXT:    testb $1, %al
+; HSW-NEXT:    je .LBB12_32
+; HSW-NEXT:  # %bb.31: # %cond.store43
+; HSW-NEXT:    vpextrb $15, %xmm0, (%rdi)
+; HSW-NEXT:  .LBB12_32: # %else44
+; HSW-NEXT:    retq
+;
+; SKX-LABEL: compressstore_v16i8_v16i8:
+; SKX:       # %bb.0:
+; SKX-NEXT:    vptestnmb %xmm1, %xmm1, %k0
+; SKX-NEXT:    kmovd %k0, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_2
+; SKX-NEXT:  # %bb.1: # %cond.store
+; SKX-NEXT:    vpextrb $0, %xmm0, (%rdi)
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_2: # %else
+; SKX-NEXT:    kshiftrw $1, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_4
+; SKX-NEXT:  # %bb.3: # %cond.store1
+; SKX-NEXT:    vpextrb $1, %xmm0, (%rdi)
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_4: # %else2
+; SKX-NEXT:    kshiftrw $2, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_6
+; SKX-NEXT:  # %bb.5: # %cond.store4
+; SKX-NEXT:    vpextrb $2, %xmm0, (%rdi)
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_6: # %else5
+; SKX-NEXT:    kshiftrw $3, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_8
+; SKX-NEXT:  # %bb.7: # %cond.store7
+; SKX-NEXT:    vpextrb $3, %xmm0, (%rdi)
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_8: # %else8
+; SKX-NEXT:    kshiftrw $4, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_10
+; SKX-NEXT:  # %bb.9: # %cond.store10
+; SKX-NEXT:    vpextrb $4, %xmm0, (%rdi)
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_10: # %else11
+; SKX-NEXT:    kshiftrw $5, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_12
+; SKX-NEXT:  # %bb.11: # %cond.store13
+; SKX-NEXT:    vpextrb $5, %xmm0, (%rdi)
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_12: # %else14
+; SKX-NEXT:    kshiftrw $6, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_14
+; SKX-NEXT:  # %bb.13: # %cond.store16
+; SKX-NEXT:    vpextrb $6, %xmm0, (%rdi)
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_14: # %else17
+; SKX-NEXT:    kshiftrw $7, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_16
+; SKX-NEXT:  # %bb.15: # %cond.store19
+; SKX-NEXT:    vpextrb $7, %xmm0, (%rdi)
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_16: # %else20
+; SKX-NEXT:    kshiftrw $8, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_18
+; SKX-NEXT:  # %bb.17: # %cond.store22
+; SKX-NEXT:    vpextrb $8, %xmm0, (%rdi)
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_18: # %else23
+; SKX-NEXT:    kshiftrw $9, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_20
+; SKX-NEXT:  # %bb.19: # %cond.store25
+; SKX-NEXT:    vpextrb $9, %xmm0, (%rdi)
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_20: # %else26
+; SKX-NEXT:    kshiftrw $10, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_22
+; SKX-NEXT:  # %bb.21: # %cond.store28
+; SKX-NEXT:    vpextrb $10, %xmm0, (%rdi)
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_22: # %else29
+; SKX-NEXT:    kshiftrw $11, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_24
+; SKX-NEXT:  # %bb.23: # %cond.store31
+; SKX-NEXT:    vpextrb $11, %xmm0, (%rdi)
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_24: # %else32
+; SKX-NEXT:    kshiftrw $12, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_26
+; SKX-NEXT:  # %bb.25: # %cond.store34
+; SKX-NEXT:    vpextrb $12, %xmm0, (%rdi)
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_26: # %else35
+; SKX-NEXT:    kshiftrw $13, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_28
+; SKX-NEXT:  # %bb.27: # %cond.store37
+; SKX-NEXT:    vpextrb $13, %xmm0, (%rdi)
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_28: # %else38
+; SKX-NEXT:    kshiftrw $14, %k0, %k1
+; SKX-NEXT:    kmovd %k1, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_30
+; SKX-NEXT:  # %bb.29: # %cond.store40
+; SKX-NEXT:    vpextrb $14, %xmm0, (%rdi)
+; SKX-NEXT:    incq %rdi
+; SKX-NEXT:  .LBB12_30: # %else41
+; SKX-NEXT:    kshiftrw $15, %k0, %k0
+; SKX-NEXT:    kmovd %k0, %eax
+; SKX-NEXT:    testb $1, %al
+; SKX-NEXT:    je .LBB12_32
+; SKX-NEXT:  # %bb.31: # %cond.store43
+; SKX-NEXT:    vpextrb $15, %xmm0, (%rdi)
+; SKX-NEXT:  .LBB12_32: # %else44
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: compressstore_v16i8_v16i8:
+; KNL:       # %bb.0:
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; KNL-NEXT:    vpmovsxbd %xmm2, %zmm2
+; KNL-NEXT:    vptestmd %zmm2, %zmm2, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_2
+; KNL-NEXT:  # %bb.1: # %cond.store
+; KNL-NEXT:    vpextrb $0, %xmm0, (%rdi)
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_2: # %else
+; KNL-NEXT:    kshiftrw $1, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_4
+; KNL-NEXT:  # %bb.3: # %cond.store1
+; KNL-NEXT:    vpextrb $1, %xmm0, (%rdi)
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_4: # %else2
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; KNL-NEXT:    vpmovsxbd %xmm2, %zmm2
+; KNL-NEXT:    vptestmd %zmm2, %zmm2, %k0
+; KNL-NEXT:    kshiftrw $2, %k0, %k1
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_6
+; KNL-NEXT:  # %bb.5: # %cond.store4
+; KNL-NEXT:    vpextrb $2, %xmm0, (%rdi)
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_6: # %else5
+; KNL-NEXT:    kshiftrw $3, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_8
+; KNL-NEXT:  # %bb.7: # %cond.store7
+; KNL-NEXT:    vpextrb $3, %xmm0, (%rdi)
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_8: # %else8
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; KNL-NEXT:    vpmovsxbd %xmm2, %zmm2
+; KNL-NEXT:    vptestmd %zmm2, %zmm2, %k0
+; KNL-NEXT:    kshiftrw $4, %k0, %k1
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_10
+; KNL-NEXT:  # %bb.9: # %cond.store10
+; KNL-NEXT:    vpextrb $4, %xmm0, (%rdi)
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_10: # %else11
+; KNL-NEXT:    kshiftrw $5, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_12
+; KNL-NEXT:  # %bb.11: # %cond.store13
+; KNL-NEXT:    vpextrb $5, %xmm0, (%rdi)
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_12: # %else14
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; KNL-NEXT:    vpmovsxbd %xmm2, %zmm2
+; KNL-NEXT:    vptestmd %zmm2, %zmm2, %k0
+; KNL-NEXT:    kshiftrw $6, %k0, %k1
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_14
+; KNL-NEXT:  # %bb.13: # %cond.store16
+; KNL-NEXT:    vpextrb $6, %xmm0, (%rdi)
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_14: # %else17
+; KNL-NEXT:    kshiftrw $7, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_16
+; KNL-NEXT:  # %bb.15: # %cond.store19
+; KNL-NEXT:    vpextrb $7, %xmm0, (%rdi)
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_16: # %else20
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; KNL-NEXT:    vpmovsxbd %xmm2, %zmm2
+; KNL-NEXT:    vptestmd %zmm2, %zmm2, %k0
+; KNL-NEXT:    kshiftrw $8, %k0, %k1
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_18
+; KNL-NEXT:  # %bb.17: # %cond.store22
+; KNL-NEXT:    vpextrb $8, %xmm0, (%rdi)
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_18: # %else23
+; KNL-NEXT:    kshiftrw $9, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_20
+; KNL-NEXT:  # %bb.19: # %cond.store25
+; KNL-NEXT:    vpextrb $9, %xmm0, (%rdi)
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_20: # %else26
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; KNL-NEXT:    vpmovsxbd %xmm2, %zmm2
+; KNL-NEXT:    vptestmd %zmm2, %zmm2, %k0
+; KNL-NEXT:    kshiftrw $10, %k0, %k1
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_22
+; KNL-NEXT:  # %bb.21: # %cond.store28
+; KNL-NEXT:    vpextrb $10, %xmm0, (%rdi)
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_22: # %else29
+; KNL-NEXT:    kshiftrw $11, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_24
+; KNL-NEXT:  # %bb.23: # %cond.store31
+; KNL-NEXT:    vpextrb $11, %xmm0, (%rdi)
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_24: # %else32
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm2
+; KNL-NEXT:    vpmovsxbd %xmm2, %zmm2
+; KNL-NEXT:    vptestmd %zmm2, %zmm2, %k0
+; KNL-NEXT:    kshiftrw $12, %k0, %k1
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_26
+; KNL-NEXT:  # %bb.25: # %cond.store34
+; KNL-NEXT:    vpextrb $12, %xmm0, (%rdi)
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_26: # %else35
+; KNL-NEXT:    kshiftrw $13, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_28
+; KNL-NEXT:  # %bb.27: # %cond.store37
+; KNL-NEXT:    vpextrb $13, %xmm0, (%rdi)
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_28: # %else38
+; KNL-NEXT:    vpxor %xmm2, %xmm2, %xmm2
+; KNL-NEXT:    vpcmpeqb %xmm2, %xmm1, %xmm1
+; KNL-NEXT:    vpmovsxbd %xmm1, %zmm1
+; KNL-NEXT:    vptestmd %zmm1, %zmm1, %k0
+; KNL-NEXT:    kshiftrw $14, %k0, %k1
+; KNL-NEXT:    kmovw %k1, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_30
+; KNL-NEXT:  # %bb.29: # %cond.store40
+; KNL-NEXT:    vpextrb $14, %xmm0, (%rdi)
+; KNL-NEXT:    addq $1, %rdi
+; KNL-NEXT:  .LBB12_30: # %else41
+; KNL-NEXT:    kshiftrw $15, %k0, %k0
+; KNL-NEXT:    kmovw %k0, %eax
+; KNL-NEXT:    testb $1, %al
+; KNL-NEXT:    je .LBB12_32
+; KNL-NEXT:  # %bb.31: # %cond.store43
+; KNL-NEXT:    vpextrb $15, %xmm0, (%rdi)
+; KNL-NEXT:  .LBB12_32: # %else44
+; KNL-NEXT:    retq
+  %mask = icmp eq <16 x i8> %trigger, zeroinitializer
+  call void @llvm.masked.compressstore.v16i8(<16 x i8> %V, i8* %base, <16 x i1> %mask)
   ret void
 }
 
