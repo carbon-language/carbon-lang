@@ -934,10 +934,6 @@ static char getSymbolNMTypeChar(ELFObjectFileBase &Obj,
     return '?';
   }
 
-  uint8_t Binding = SymI->getOther() >> 4;
-  if (Binding == ELF::STB_GNU_UNIQUE)
-    return 'u';
-
   elf_section_iterator SecI = *SecIOrErr;
   if (SecI != Obj.section_end()) {
     uint32_t Type = SecI->getType();
