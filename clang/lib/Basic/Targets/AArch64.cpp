@@ -238,6 +238,7 @@ bool AArch64TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
   HasFullFP16 = 0;
   HasDotProd = 0;
   HasFP16FML = 0;
+  HasMTE = 0;
   ArchKind = llvm::AArch64::ArchKind::ARMV8A;
 
   for (const auto &Feature : Features) {
