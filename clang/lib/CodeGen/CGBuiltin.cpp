@@ -2027,8 +2027,17 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
 
     const Expr *Arg = E->getArg(0);
     QualType ArgType = Arg->getType();
-    if (!hasScalarEvaluationKind(ArgType) || ArgType->isFunctionType())
-      // We can only reason about scalar types.
+    // FIXME: The allowance for Obj-C pointers and block pointers is historical
+    // and likely a mistake.
+    if (!ArgType->isIntegralOrEnumerationType() && !ArgType->isFloatingType() &&
+        !ArgType->isObjCObjectPointerType() && !ArgType->isBlockPointerType())
+      // Per the GCC documentation, only numeric constants are recognized after
+      // inlining.
+      return RValue::get(ConstantInt::get(ResultType, 0));
+
+    if (Arg->HasSideEffects(getContext()))
+      // The argument is unevaluated, so be conservative if it might have
+      // side-effects.
       return RValue::get(ConstantInt::get(ResultType, 0));
 
     Value *ArgValue = EmitScalarExpr(Arg);
