@@ -31874,6 +31874,28 @@ static SDValue combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
     }
   }
 
+  // If we have a dual input shuffle then lower to VPERMV3.
+  if (!UnaryShuffle && AllowVariableMask && !MaskContainsZeros &&
+      ((Subtarget.hasAVX512() &&
+        (MaskVT == MVT::v8f64 || MaskVT == MVT::v8i64 ||
+         MaskVT == MVT::v16f32 || MaskVT == MVT::v16i32)) ||
+       (Subtarget.hasVLX() &&
+        (MaskVT == MVT::v2f64 || MaskVT == MVT::v2i64 || MaskVT == MVT::v4f64 ||
+         MaskVT == MVT::v4i64 || MaskVT == MVT::v4f32 || MaskVT == MVT::v4i32 ||
+         MaskVT == MVT::v8f32 || MaskVT == MVT::v8i32)) ||
+       (Subtarget.hasBWI() && MaskVT == MVT::v32i16) ||
+       (Subtarget.hasBWI() && Subtarget.hasVLX() &&
+        (MaskVT == MVT::v8i16 || MaskVT == MVT::v16i16)) ||
+       (Subtarget.hasVBMI() && MaskVT == MVT::v64i8) ||
+       (Subtarget.hasVBMI() && Subtarget.hasVLX() &&
+        (MaskVT == MVT::v16i8 || MaskVT == MVT::v32i8)))) {
+    SDValue VPermMask = getConstVector(Mask, IntMaskVT, DAG, DL, true);
+    V1 = DAG.getBitcast(MaskVT, V1);
+    V2 = DAG.getBitcast(MaskVT, V2);
+    Res = DAG.getNode(X86ISD::VPERMV3, DL, MaskVT, V1, VPermMask, V2);
+    return DAG.getBitcast(RootVT, Res);
+  }
+
   // Failed to find any combines.
   return SDValue();
 }
