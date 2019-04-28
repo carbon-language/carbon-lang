@@ -34386,7 +34386,7 @@ static SDValue combineHorizontalMinMaxResult(SDNode *Extract, SelectionDAG &DAG,
                      DAG.getIntPtrConstant(0, DL));
 }
 
-// Attempt to replace an all_of/any_of style horizontal reduction with a MOVMSK.
+// Attempt to replace an all_of/any_of/parity style horizontal reduction with a MOVMSK.
 static SDValue combineHorizontalPredicateResult(SDNode *Extract,
                                                 SelectionDAG &DAG,
                                                 const X86Subtarget &Subtarget) {
@@ -34400,9 +34400,11 @@ static SDValue combineHorizontalPredicateResult(SDNode *Extract,
       ExtractVT != MVT::i8 && ExtractVT != MVT::i1)
     return SDValue();
 
-  // Check for OR(any_of) and AND(all_of) horizontal reduction patterns.
+  // Check for OR(any_of)/AND(all_of)/XOR(parity) horizontal reduction patterns.
   ISD::NodeType BinOp;
   SDValue Match = DAG.matchBinOpReduction(Extract, BinOp, {ISD::OR, ISD::AND});
+  if (!Match && ExtractVT == MVT::i1)
+    Match = DAG.matchBinOpReduction(Extract, BinOp, {ISD::XOR});
   if (!Match)
     return SDValue();
 
@@ -34479,6 +34481,14 @@ static SDValue combineHorizontalPredicateResult(SDNode *Extract,
     NumElts = MaskSrcVT.getVectorNumElements();
   }
   assert(NumElts <= 32 && "Not expecting more than 32 elements");
+
+  if (BinOp == ISD::XOR) {
+    // parity -> (AND (CTPOP(MOVMSK X)), 1)
+    SDValue Mask = DAG.getConstant(1, DL, MVT::i32);
+    SDValue Result = DAG.getNode(ISD::CTPOP, DL, MVT::i32, Movmsk);
+    Result = DAG.getNode(ISD::AND, DL, MVT::i32, Result, Mask);
+    return DAG.getZExtOrTrunc(Result, DL, ExtractVT);
+  }
 
   SDValue CmpC;
   ISD::CondCode CondCode;
