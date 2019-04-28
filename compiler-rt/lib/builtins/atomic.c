@@ -1,28 +1,27 @@
-/*===-- atomic.c - Implement support functions for atomic operations.------===
- *
- * Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
- * See https://llvm.org/LICENSE.txt for license information.
- * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
- *
- *===----------------------------------------------------------------------===
- *
- *  atomic.c defines a set of functions for performing atomic accesses on
- *  arbitrary-sized memory locations.  This design uses locks that should
- *  be fast in the uncontended case, for two reasons:
- *
- *  1) This code must work with C programs that do not link to anything
- *     (including pthreads) and so it should not depend on any pthread
- *     functions.
- *  2) Atomic operations, rather than explicit mutexes, are most commonly used
- *     on code where contended operations are rate.
- *
- *  To avoid needing a per-object lock, this code allocates an array of
- *  locks and hashes the object pointers to find the one that it should use.
- *  For operations that must be atomic on two locations, the lower lock is
- *  always acquired first, to avoid deadlock.
- *
- *===----------------------------------------------------------------------===
- */
+//===-- atomic.c - Implement support functions for atomic operations.------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+//
+//  atomic.c defines a set of functions for performing atomic accesses on
+//  arbitrary-sized memory locations.  This design uses locks that should
+//  be fast in the uncontended case, for two reasons:
+//
+//  1) This code must work with C programs that do not link to anything
+//     (including pthreads) and so it should not depend on any pthread
+//     functions.
+//  2) Atomic operations, rather than explicit mutexes, are most commonly used
+//     on code where contended operations are rate.
+//
+//  To avoid needing a per-object lock, this code allocates an array of
+//  locks and hashes the object pointers to find the one that it should use.
+//  For operations that must be atomic on two locations, the lower lock is
+//  always acquired first, to avoid deadlock.
+//
+//===----------------------------------------------------------------------===//
 
 #include <stdint.h>
 #include <string.h>

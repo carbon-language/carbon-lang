@@ -42,4 +42,4 @@ long double __gcc_qsub(long double, long double);
 long double __gcc_qmul(long double, long double);
 long double __gcc_qdiv(long double, long double);
 
-#endif /* COMPILERRT_DD_HEADER */
+#endif // COMPILERRT_DD_HEADER

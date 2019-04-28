@@ -1,22 +1,21 @@
-/* ===-- mulxc3.c - Implement __mulxc3 -------------------------------------===
- *
- * Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
- * See https://llvm.org/LICENSE.txt for license information.
- * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
- *
- * ===----------------------------------------------------------------------===
- *
- * This file implements __mulxc3 for the compiler_rt library.
- *
- * ===----------------------------------------------------------------------===
- */
+//===-- mulxc3.c - Implement __mulxc3 -------------------------------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+//
+// This file implements __mulxc3 for the compiler_rt library.
+//
+//===----------------------------------------------------------------------===//
 
 #if !_ARCH_PPC
 
 #include "int_lib.h"
 #include "int_math.h"
 
-/* Returns: the product of a + ib and c + id */
+// Returns: the product of a + ib and c + id
 
 COMPILER_RT_ABI Lcomplex __mulxc3(long double __a, long double __b,
                                   long double __c, long double __d) {

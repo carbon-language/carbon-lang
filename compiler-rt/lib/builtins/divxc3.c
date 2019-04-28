@@ -1,21 +1,21 @@
-/* ===-- divxc3.c - Implement __divxc3 -------------------------------------===
- *
- * Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
- * See https://llvm.org/LICENSE.txt for license information.
- * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
- *
- * ===----------------------------------------------------------------------===
- *
- * This file implements __divxc3 for the compiler_rt library.
- *
- */
+//===-- divxc3.c - Implement __divxc3 -------------------------------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+//
+// This file implements __divxc3 for the compiler_rt library.
+//
+//===----------------------------------------------------------------------===//
 
 #if !_ARCH_PPC
 
 #include "int_lib.h"
 #include "int_math.h"
 
-/* Returns: the quotient of (a + ib) / (c + id) */
+// Returns: the quotient of (a + ib) / (c + id)
 
 COMPILER_RT_ABI Lcomplex __divxc3(long double __a, long double __b,
                                   long double __c, long double __d) {

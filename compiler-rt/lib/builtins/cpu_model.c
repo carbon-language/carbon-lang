@@ -31,8 +31,8 @@
 #endif
 
 enum VendorSignatures {
-  SIG_INTEL = 0x756e6547 /* Genu */,
-  SIG_AMD = 0x68747541 /* Auth */
+  SIG_INTEL = 0x756e6547, // Genu
+  SIG_AMD = 0x68747541,   // Auth
 };
 
 enum ProcessorVendors {
@@ -612,11 +612,11 @@ __attribute__((visibility("hidden")))
 #endif
 unsigned int __cpu_features2;
 
-/* A constructor function that is sets __cpu_model and __cpu_features2 with
-   the right values.  This needs to run only once.  This constructor is
-   given the highest priority and it should run before constructors without
-   the priority set.  However, it still runs after ifunc initializers and
-   needs to be called explicitly there.  */
+// A constructor function that is sets __cpu_model and __cpu_features2 with
+// the right values.  This needs to run only once.  This constructor is
+// given the highest priority and it should run before constructors without
+// the priority set.  However, it still runs after ifunc initializers and
+// needs to be called explicitly there.
 
 int CONSTRUCTOR_ATTRIBUTE __cpu_indicator_init(void) {
   unsigned EAX, EBX, ECX, EDX;
@@ -626,14 +626,14 @@ int CONSTRUCTOR_ATTRIBUTE __cpu_indicator_init(void) {
   unsigned Features = 0;
   unsigned Features2 = 0;
 
-  /* This function needs to run just once.  */
+  // This function needs to run just once.
   if (__cpu_model.__cpu_vendor)
     return 0;
 
   if (!isCpuIdSupported())
     return -1;
 
-  /* Assume cpuid insn present. Run in level 0 to get vendor id. */
+  // Assume cpuid insn present. Run in level 0 to get vendor id.
   if (getX86CpuIDAndInfo(0, &MaxLeaf, &Vendor, &ECX, &EDX) || MaxLeaf < 1) {
     __cpu_model.__cpu_vendor = VENDOR_OTHER;
     return -1;
@@ -642,19 +642,19 @@ int CONSTRUCTOR_ATTRIBUTE __cpu_indicator_init(void) {
   detectX86FamilyModel(EAX, &Family, &Model);
   Brand_id = EBX & 0xff;
 
-  /* Find available features. */
+  // Find available features.
   getAvailableFeatures(ECX, EDX, MaxLeaf, &Features, &Features2);
   __cpu_model.__cpu_features[0] = Features;
   __cpu_features2 = Features2;
 
   if (Vendor == SIG_INTEL) {
-    /* Get CPU type.  */
+    // Get CPU type.
     getIntelProcessorTypeAndSubtype(Family, Model, Brand_id, Features,
                                     Features2, &(__cpu_model.__cpu_type),
                                     &(__cpu_model.__cpu_subtype));
     __cpu_model.__cpu_vendor = VENDOR_INTEL;
   } else if (Vendor == SIG_AMD) {
-    /* Get CPU type.  */
+    // Get CPU type.
     getAMDProcessorTypeAndSubtype(Family, Model, Features, Features2,
                                   &(__cpu_model.__cpu_type),
                                   &(__cpu_model.__cpu_subtype));

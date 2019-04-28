@@ -1,23 +1,22 @@
-/* ===-- mulvti3.c - Implement __mulvti3 -----------------------------------===
- *
- * Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
- * See https://llvm.org/LICENSE.txt for license information.
- * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
- *
- * ===----------------------------------------------------------------------===
- *
- * This file implements __mulvti3 for the compiler_rt library.
- *
- * ===----------------------------------------------------------------------===
- */
+//===-- mulvti3.c - Implement __mulvti3 -----------------------------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+//
+// This file implements __mulvti3 for the compiler_rt library.
+//
+//===----------------------------------------------------------------------===//
 
 #include "int_lib.h"
 
 #ifdef CRT_HAS_128BIT
 
-/* Returns: a * b */
+// Returns: a * b
 
-/* Effects: aborts if a * b overflows */
+// Effects: aborts if a * b overflows
 
 COMPILER_RT_ABI ti_int __mulvti3(ti_int a, ti_int b) {
   const int N = (int)(sizeof(ti_int) * CHAR_BIT);
@@ -49,4 +48,4 @@ COMPILER_RT_ABI ti_int __mulvti3(ti_int a, ti_int b) {
   return a * b;
 }
 
-#endif /* CRT_HAS_128BIT */
+#endif // CRT_HAS_128BIT

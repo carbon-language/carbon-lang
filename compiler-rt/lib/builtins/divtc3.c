@@ -1,22 +1,21 @@
-/*===-- divtc3.c - Implement __divtc3 -------------------------------------===
- *
- * Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
- * See https://llvm.org/LICENSE.txt for license information.
- * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
- *
- * ===----------------------------------------------------------------------===
- *
- * This file implements __divtc3 for the compiler_rt library.
- *
- *===----------------------------------------------------------------------===
- */
+//===-- divtc3.c - Implement __divtc3 -------------------------------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+//
+// This file implements __divtc3 for the compiler_rt library.
+//
+//===----------------------------------------------------------------------===//
 
 #define QUAD_PRECISION
 #include "fp_lib.h"
 #include "int_lib.h"
 #include "int_math.h"
 
-/* Returns: the quotient of (a + ib) / (c + id) */
+// Returns: the quotient of (a + ib) / (c + id)
 
 COMPILER_RT_ABI Lcomplex __divtc3(long double __a, long double __b,
                                   long double __c, long double __d) {

@@ -1,23 +1,22 @@
-/* ===-- int_lib.h - configuration header for compiler-rt  -----------------===
- *
- * Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
- * See https://llvm.org/LICENSE.txt for license information.
- * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
- *
- * ===----------------------------------------------------------------------===
- *
- * This file is a configuration header for compiler-rt.
- * This file is not part of the interface of this library.
- *
- * ===----------------------------------------------------------------------===
- */
+//===-- int_lib.h - configuration header for compiler-rt  -----------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+//
+// This file is a configuration header for compiler-rt.
+// This file is not part of the interface of this library.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef INT_LIB_H
 #define INT_LIB_H
 
-/* Assumption: Signed integral is 2's complement. */
-/* Assumption: Right shift of signed negative is arithmetic shift. */
-/* Assumption: Endianness is little or big (not mixed). */
+// Assumption: Signed integral is 2's complement.
+// Assumption: Right shift of signed negative is arithmetic shift.
+// Assumption: Endianness is little or big (not mixed).
 
 #if defined(__ELF__)
 #define FNALIAS(alias_name, original_name)                                     \
@@ -30,7 +29,7 @@
   _Pragma("GCC error(\"alias unsupported on this file format\")")
 #endif
 
-/* ABI macro definitions */
+// ABI macro definitions
 
 #if __ARM_EABI__
 #ifdef COMPILER_RT_ARMHF_TARGET
@@ -57,25 +56,25 @@
 #endif
 
 #if defined(__NetBSD__) && (defined(_KERNEL) || defined(_STANDALONE))
-/*
- * Kernel and boot environment can't use normal headers,
- * so use the equivalent system headers.
- */
+//
+// Kernel and boot environment can't use normal headers,
+// so use the equivalent system headers.
+//
 #include <machine/limits.h>
 #include <sys/stdint.h>
 #include <sys/types.h>
 #else
-/* Include the standard compiler builtin headers we use functionality from. */
+// Include the standard compiler builtin headers we use functionality from.
 #include <float.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #endif
 
-/* Include the commonly used internal type definitions. */
+// Include the commonly used internal type definitions.
 #include "int_types.h"
 
-/* Include internal utility function declarations. */
+// Include internal utility function declarations.
 #include "int_util.h"
 
 COMPILER_RT_ABI si_int __paritysi2(si_int a);
@@ -92,7 +91,7 @@ COMPILER_RT_ABI si_int __clzti2(ti_int a);
 COMPILER_RT_ABI tu_int __udivmodti4(tu_int a, tu_int b, tu_int *rem);
 #endif
 
-/* Definitions for builtins unavailable on MSVC */
+// Definitions for builtins unavailable on MSVC
 #if defined(_MSC_VER) && !defined(__clang__)
 #include <intrin.h>
 
@@ -130,6 +129,6 @@ uint32_t __inline __builtin_clzll(uint64_t value) {
 #endif
 
 #define __builtin_clzl __builtin_clzll
-#endif /* defined(_MSC_VER) && !defined(__clang__) */
+#endif // defined(_MSC_VER) && !defined(__clang__)
 
-#endif /* INT_LIB_H */
+#endif // INT_LIB_H

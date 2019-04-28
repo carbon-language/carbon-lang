@@ -1,22 +1,21 @@
-/*===-- divsc3.c - Implement __divsc3 -------------------------------------===
- *
- * Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
- * See https://llvm.org/LICENSE.txt for license information.
- * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
- *
- * ===----------------------------------------------------------------------===
- *
- * This file implements __divsc3 for the compiler_rt library.
- *
- *===----------------------------------------------------------------------===
- */
+//===-- divsc3.c - Implement __divsc3 -------------------------------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+//
+// This file implements __divsc3 for the compiler_rt library.
+//
+//===----------------------------------------------------------------------===//
 
 #define SINGLE_PRECISION
 #include "fp_lib.h"
 #include "int_lib.h"
 #include "int_math.h"
 
-/* Returns: the quotient of (a + ib) / (c + id) */
+// Returns: the quotient of (a + ib) / (c + id)
 
 COMPILER_RT_ABI Fcomplex __divsc3(float __a, float __b, float __c, float __d) {
   int __ilogbw = 0;

@@ -1,12 +1,10 @@
-/* Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
- * See https://llvm.org/LICENSE.txt for license information.
- * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
- */
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-/* long double __gcc_qmul(long double x, long double y);
- * This file implements the PowerPC 128-bit double-double multiply operation.
- * This implementation is shamelessly cribbed from Apple's DDRT, circa 1993(!)
- */
+// long double __gcc_qmul(long double x, long double y);
+// This file implements the PowerPC 128-bit double-double multiply operation.
+// This implementation is shamelessly cribbed from Apple's DDRT, circa 1993(!)
 
 #include "DD.h"
 
@@ -21,7 +19,7 @@ long double __gcc_qmul(long double x, long double y) {
 
   ab = A * B;
 
-  /* Detect special cases */
+  // Detect special cases
   if (ab == 0.0) {
     dst.s.hi = ab;
     dst.s.lo = 0.0;
@@ -35,7 +33,7 @@ long double __gcc_qmul(long double x, long double y) {
     return dst.ld;
   }
 
-  /* Generic cases handled here. */
+  // Generic cases handled here.
   aHi = high26bits(A);
   bHi = high26bits(B);
   aLo = A - aHi;

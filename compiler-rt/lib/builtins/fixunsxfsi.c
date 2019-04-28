@@ -1,33 +1,29 @@
-/* ===-- fixunsxfsi.c - Implement __fixunsxfsi -----------------------------===
- *
- * Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
- * See https://llvm.org/LICENSE.txt for license information.
- * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
- *
- * ===----------------------------------------------------------------------===
- *
- * This file implements __fixunsxfsi for the compiler_rt library.
- *
- * ===----------------------------------------------------------------------===
- */
+//===-- fixunsxfsi.c - Implement __fixunsxfsi -----------------------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+//
+// This file implements __fixunsxfsi for the compiler_rt library.
+//
+//===----------------------------------------------------------------------===//
 
 #if !_ARCH_PPC
 
 #include "int_lib.h"
 
-/* Returns: convert a to a unsigned int, rounding toward zero.
- *          Negative values all become zero.
- */
+// Returns: convert a to a unsigned int, rounding toward zero.
+//          Negative values all become zero.
 
-/* Assumption: long double is an intel 80 bit floating point type padded with 6
- * bytes su_int is a 32 bit integral type value in long double is representable
- * in su_int or is negative
- */
+// Assumption: long double is an intel 80 bit floating point type padded with 6
+// bytes su_int is a 32 bit integral type value in long double is representable
+// in su_int or is negative
 
-/* gggg gggg gggg gggg gggg gggg gggg gggg | gggg gggg gggg gggg seee eeee eeee
- * eeee | 1mmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm
- * mmmm mmmm mmmm
- */
+// gggg gggg gggg gggg gggg gggg gggg gggg | gggg gggg gggg gggg seee eeee eeee
+// eeee | 1mmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm
+// mmmm mmmm mmmm
 
 COMPILER_RT_ABI su_int __fixunsxfsi(long double a) {
   long_double_bits fb;
@@ -40,4 +36,4 @@ COMPILER_RT_ABI su_int __fixunsxfsi(long double a) {
   return fb.u.low.s.high >> (31 - e);
 }
 
-#endif /* !_ARCH_PPC */
+#endif // !_ARCH_PPC

@@ -1,35 +1,29 @@
-/* ===-- gcc_personality_v0.c - Implement __gcc_personality_v0 -------------===
- *
- * Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
- * See https://llvm.org/LICENSE.txt for license information.
- * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
- *
- * ===----------------------------------------------------------------------===
- *
- */
+//===-- gcc_personality_v0.c - Implement __gcc_personality_v0 -------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
 
 #include "int_lib.h"
 
 #include <unwind.h>
 #if defined(__arm__) && !defined(__ARM_DWARF_EH__) &&                          \
     !defined(__USING_SJLJ_EXCEPTIONS__)
-/*
- * When building with older compilers (e.g. clang <3.9), it is possible that we
- * have a version of unwind.h which does not provide the EHABI declarations
- * which are quired for the C personality to conform to the specification.  In
- * order to provide forward compatibility for such compilers, we re-declare the
- * necessary interfaces in the helper to permit a standalone compilation of the
- * builtins (which contains the C unwinding personality for historical reasons).
- */
+// When building with older compilers (e.g. clang <3.9), it is possible that we
+// have a version of unwind.h which does not provide the EHABI declarations
+// which are quired for the C personality to conform to the specification.  In
+// order to provide forward compatibility for such compilers, we re-declare the
+// necessary interfaces in the helper to permit a standalone compilation of the
+// builtins (which contains the C unwinding personality for historical reasons).
 #include "unwind-ehabi-helpers.h"
 #endif
 
-/*
- * Pointer encodings documented at:
- *   http://refspecs.freestandards.org/LSB_1.3.0/gLSB/gLSB/ehframehdr.html
- */
+// Pointer encodings documented at:
+//   http://refspecs.freestandards.org/LSB_1.3.0/gLSB/gLSB/ehframehdr.html
 
-#define DW_EH_PE_omit 0xff /* no data follows */
+#define DW_EH_PE_omit 0xff // no data follows
 
 #define DW_EH_PE_absptr 0x00
 #define DW_EH_PE_uleb128 0x01
@@ -46,9 +40,9 @@
 #define DW_EH_PE_datarel 0x30
 #define DW_EH_PE_funcrel 0x40
 #define DW_EH_PE_aligned 0x50
-#define DW_EH_PE_indirect 0x80 /* gcc extension */
+#define DW_EH_PE_indirect 0x80 // gcc extension
 
-/* read a uleb128 encoded value and advance pointer */
+// read a uleb128 encoded value and advance pointer
 static uintptr_t readULEB128(const uint8_t **data) {
   uintptr_t result = 0;
   uintptr_t shift = 0;
@@ -63,7 +57,7 @@ static uintptr_t readULEB128(const uint8_t **data) {
   return result;
 }
 
-/* read a pointer encoded value and advance pointer */
+// read a pointer encoded value and advance pointer
 static uintptr_t readEncodedPointer(const uint8_t **data, uint8_t encoding) {
   const uint8_t *p = *data;
   uintptr_t result = 0;
@@ -71,7 +65,7 @@ static uintptr_t readEncodedPointer(const uint8_t **data, uint8_t encoding) {
   if (encoding == DW_EH_PE_omit)
     return 0;
 
-  /* first get value */
+  // first get value
   switch (encoding & 0x0F) {
   case DW_EH_PE_absptr:
     result = *((const uintptr_t *)p);
@@ -106,15 +100,15 @@ static uintptr_t readEncodedPointer(const uint8_t **data, uint8_t encoding) {
     break;
   case DW_EH_PE_sleb128:
   default:
-    /* not supported */
+    // not supported
     compilerrt_abort();
     break;
   }
 
-  /* then add relative offset */
+  // then add relative offset
   switch (encoding & 0x70) {
   case DW_EH_PE_absptr:
-    /* do nothing */
+    // do nothing
     break;
   case DW_EH_PE_pcrel:
     result += (uintptr_t)(*data);
@@ -124,12 +118,12 @@ static uintptr_t readEncodedPointer(const uint8_t **data, uint8_t encoding) {
   case DW_EH_PE_funcrel:
   case DW_EH_PE_aligned:
   default:
-    /* not supported */
+    // not supported
     compilerrt_abort();
     break;
   }
 
-  /* then apply indirection */
+  // then apply indirection
   if (encoding & DW_EH_PE_indirect) {
     result = *((const uintptr_t *)result);
   }
@@ -149,32 +143,28 @@ static inline _Unwind_Reason_Code
 continueUnwind(struct _Unwind_Exception *exceptionObject,
                struct _Unwind_Context *context) {
 #if USING_ARM_EHABI
-  /*
-   * On ARM EHABI the personality routine is responsible for actually
-   * unwinding a single stack frame before returning (ARM EHABI Sec. 6.1).
-   */
+  // On ARM EHABI the personality routine is responsible for actually
+  // unwinding a single stack frame before returning (ARM EHABI Sec. 6.1).
   if (__gnu_unwind_frame(exceptionObject, context) != _URC_OK)
     return _URC_FAILURE;
 #endif
   return _URC_CONTINUE_UNWIND;
 }
 
-/*
- * The C compiler makes references to __gcc_personality_v0 in
- * the dwarf unwind information for translation units that use
- * __attribute__((cleanup(xx))) on local variables.
- * This personality routine is called by the system unwinder
- * on each frame as the stack is unwound during a C++ exception
- * throw through a C function compiled with -fexceptions.
- */
+// The C compiler makes references to __gcc_personality_v0 in
+// the dwarf unwind information for translation units that use
+// __attribute__((cleanup(xx))) on local variables.
+// This personality routine is called by the system unwinder
+// on each frame as the stack is unwound during a C++ exception
+// throw through a C function compiled with -fexceptions.
 #if __USING_SJLJ_EXCEPTIONS__
-/* the setjump-longjump based exceptions personality routine has a
- * different name */
+// the setjump-longjump based exceptions personality routine has a
+// different name
 COMPILER_RT_ABI _Unwind_Reason_Code __gcc_personality_sj0(
     int version, _Unwind_Action actions, uint64_t exceptionClass,
     struct _Unwind_Exception *exceptionObject, struct _Unwind_Context *context)
 #elif USING_ARM_EHABI
-/* The ARM EHABI personality routine has a different signature. */
+// The ARM EHABI personality routine has a different signature.
 COMPILER_RT_ABI _Unwind_Reason_Code __gcc_personality_v0(
     _Unwind_State state, struct _Unwind_Exception *exceptionObject,
     struct _Unwind_Context *context)
@@ -184,18 +174,18 @@ COMPILER_RT_ABI _Unwind_Reason_Code __gcc_personality_v0(
     struct _Unwind_Exception *exceptionObject, struct _Unwind_Context *context)
 #endif
 {
-  /* Since C does not have catch clauses, there is nothing to do during */
-  /* phase 1 (the search phase). */
+  // Since C does not have catch clauses, there is nothing to do during
+  // phase 1 (the search phase).
 #if USING_ARM_EHABI
-  /* After resuming from a cleanup we should also continue on to the next
-   * frame straight away. */
+  // After resuming from a cleanup we should also continue on to the next
+  // frame straight away.
   if ((state & _US_ACTION_MASK) != _US_UNWIND_FRAME_STARTING)
 #else
   if (actions & _UA_SEARCH_PHASE)
 #endif
     return continueUnwind(exceptionObject, context);
 
-  /* There is nothing to do if there is no LSDA for this frame. */
+  // There is nothing to do if there is no LSDA for this frame.
   const uint8_t *lsda = (uint8_t *)_Unwind_GetLanguageSpecificData(context);
   if (lsda == (uint8_t *)0)
     return continueUnwind(exceptionObject, context);
@@ -204,7 +194,7 @@ COMPILER_RT_ABI _Unwind_Reason_Code __gcc_personality_v0(
   uintptr_t funcStart = (uintptr_t)_Unwind_GetRegionStart(context);
   uintptr_t pcOffset = pc - funcStart;
 
-  /* Parse LSDA header. */
+  // Parse LSDA header.
   uint8_t lpStartEncoding = *lsda++;
   if (lpStartEncoding != DW_EH_PE_omit) {
     readEncodedPointer(&lsda, lpStartEncoding);
@@ -213,7 +203,7 @@ COMPILER_RT_ABI _Unwind_Reason_Code __gcc_personality_v0(
   if (ttypeEncoding != DW_EH_PE_omit) {
     readULEB128(&lsda);
   }
-  /* Walk call-site table looking for range that includes current PC. */
+  // Walk call-site table looking for range that includes current PC.
   uint8_t callSiteEncoding = *lsda++;
   uint32_t callSiteTableLength = readULEB128(&lsda);
   const uint8_t *callSiteTableStart = lsda;
@@ -223,15 +213,14 @@ COMPILER_RT_ABI _Unwind_Reason_Code __gcc_personality_v0(
     uintptr_t start = readEncodedPointer(&p, callSiteEncoding);
     uintptr_t length = readEncodedPointer(&p, callSiteEncoding);
     uintptr_t landingPad = readEncodedPointer(&p, callSiteEncoding);
-    readULEB128(&p); /* action value not used for C code */
+    readULEB128(&p); // action value not used for C code
     if (landingPad == 0)
-      continue; /* no landing pad for this entry */
+      continue; // no landing pad for this entry
     if ((start <= pcOffset) && (pcOffset < (start + length))) {
-      /* Found landing pad for the PC.
-       * Set Instruction Pointer to so we re-enter function
-       * at landing pad. The landing pad is created by the compiler
-       * to take two parameters in registers.
-       */
+      // Found landing pad for the PC.
+      // Set Instruction Pointer to so we re-enter function
+      // at landing pad. The landing pad is created by the compiler
+      // to take two parameters in registers.
       _Unwind_SetGR(context, __builtin_eh_return_data_regno(0),
                     (uintptr_t)exceptionObject);
       _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), 0);
@@ -240,6 +229,6 @@ COMPILER_RT_ABI _Unwind_Reason_Code __gcc_personality_v0(
     }
   }
 
-  /* No landing pad found, continue unwinding. */
+  // No landing pad found, continue unwinding.
   return continueUnwind(exceptionObject, context);
 }

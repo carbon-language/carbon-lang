@@ -1,11 +1,11 @@
-/* ===---------- emutls.c - Implements __emutls_get_address ---------------===
- *
- * Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
- * See https://llvm.org/LICENSE.txt for license information.
- * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
- *
- * ===----------------------------------------------------------------------===
- */
+//===---------- emutls.c - Implements __emutls_get_address ---------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,14 +13,14 @@
 #include "int_lib.h"
 
 #ifdef __BIONIC__
-/* There are 4 pthread key cleanup rounds on Bionic. Delay emutls deallocation
-   to round 2. We need to delay deallocation because:
-    - Android versions older than M lack __cxa_thread_atexit_impl, so apps
-      use a pthread key destructor to call C++ destructors.
-    - Apps might use __thread/thread_local variables in pthread destructors.
-   We can't wait until the final two rounds, because jemalloc needs two rounds
-   after the final malloc/free call to free its thread-specific data (see
-   https://reviews.llvm.org/D46978#1107507). */
+// There are 4 pthread key cleanup rounds on Bionic. Delay emutls deallocation
+// to round 2. We need to delay deallocation because:
+//  - Android versions older than M lack __cxa_thread_atexit_impl, so apps
+//    use a pthread key destructor to call C++ destructors.
+//  - Apps might use __thread/thread_local variables in pthread destructors.
+// We can't wait until the final two rounds, because jemalloc needs two rounds
+// after the final malloc/free call to free its thread-specific data (see
+// https://reviews.llvm.org/D46978#1107507).
 #define EMUTLS_SKIP_DESTRUCTOR_ROUNDS 1
 #else
 #define EMUTLS_SKIP_DESTRUCTOR_ROUNDS 0
@@ -28,7 +28,7 @@
 
 typedef struct emutls_address_array {
   uintptr_t skip_destructor_rounds;
-  uintptr_t size; /* number of elements in the 'data' array */
+  uintptr_t size; // number of elements in the 'data' array
   void *data[];
 } emutls_address_array;
 
@@ -45,9 +45,8 @@ static bool emutls_key_created = false;
 typedef unsigned int gcc_word __attribute__((mode(word)));
 typedef unsigned int gcc_pointer __attribute__((mode(pointer)));
 
-/* Default is not to use posix_memalign, so systems like Android
- * can use thread local data without heavier POSIX memory allocators.
- */
+// Default is not to use posix_memalign, so systems like Android
+// can use thread local data without heavier POSIX memory allocators.
 #ifndef EMUTLS_USE_POSIX_MEMALIGN
 #define EMUTLS_USE_POSIX_MEMALIGN 0
 #endif
@@ -74,7 +73,7 @@ static __inline void emutls_memalign_free(void *base) {
 #if EMUTLS_USE_POSIX_MEMALIGN
   free(base);
 #else
-  /* The mallocated address is in ((void**)base)[-1] */
+  // The mallocated address is in ((void**)base)[-1]
   free(((void **)base)[-1]);
 #endif
 }
@@ -90,13 +89,12 @@ static __inline emutls_address_array *emutls_getspecific() {
 static void emutls_key_destructor(void *ptr) {
   emutls_address_array *array = (emutls_address_array *)ptr;
   if (array->skip_destructor_rounds > 0) {
-    /* emutls is deallocated using a pthread key destructor. These
-     * destructors are called in several rounds to accommodate destructor
-     * functions that (re)initialize key values with pthread_setspecific.
-     * Delay the emutls deallocation to accommodate other end-of-thread
-     * cleanup tasks like calling thread_local destructors (e.g. the
-     * __cxa_thread_atexit fallback in libc++abi).
-     */
+    // emutls is deallocated using a pthread key destructor. These
+    // destructors are called in several rounds to accommodate destructor
+    // functions that (re)initialize key values with pthread_setspecific.
+    // Delay the emutls deallocation to accommodate other end-of-thread
+    // cleanup tasks like calling thread_local destructors (e.g. the
+    // __cxa_thread_atexit fallback in libc++abi).
     array->skip_destructor_rounds--;
     emutls_setspecific(array);
   } else {
@@ -120,7 +118,7 @@ static __inline void emutls_lock() { pthread_mutex_lock(&emutls_mutex); }
 
 static __inline void emutls_unlock() { pthread_mutex_unlock(&emutls_mutex); }
 
-#else /* _WIN32 */
+#else // _WIN32
 
 #include <assert.h>
 #include <malloc.h>
@@ -218,8 +216,7 @@ static __inline emutls_address_array *emutls_getspecific() {
   return (emutls_address_array *)value;
 }
 
-/* Provide atomic load/store functions for emutls_get_index if built with MSVC.
- */
+// Provide atomic load/store functions for emutls_get_index if built with MSVC.
 #if !defined(__ATOMIC_RELEASE)
 #include <intrin.h>
 
@@ -241,16 +238,15 @@ static __inline void __atomic_store_n(void *ptr, uintptr_t val, unsigned type) {
   InterlockedExchangePointer((void *volatile *)ptr, (void *)val);
 }
 
-#endif /* __ATOMIC_RELEASE */
+#endif // __ATOMIC_RELEASE
 
 #pragma warning(pop)
 
-#endif /* _WIN32 */
+#endif // _WIN32
 
-static size_t emutls_num_object = 0; /* number of allocated TLS objects */
+static size_t emutls_num_object = 0; // number of allocated TLS objects
 
-/* Free the allocated TLS data
- */
+// Free the allocated TLS data
 static void emutls_shutdown(emutls_address_array *array) {
   if (array) {
     uintptr_t i;
@@ -261,28 +257,27 @@ static void emutls_shutdown(emutls_address_array *array) {
   }
 }
 
-/* For every TLS variable xyz,
- * there is one __emutls_control variable named __emutls_v.xyz.
- * If xyz has non-zero initial value, __emutls_v.xyz's "value"
- * will point to __emutls_t.xyz, which has the initial value.
- */
+// For every TLS variable xyz,
+// there is one __emutls_control variable named __emutls_v.xyz.
+// If xyz has non-zero initial value, __emutls_v.xyz's "value"
+// will point to __emutls_t.xyz, which has the initial value.
 typedef struct __emutls_control {
-  /* Must use gcc_word here, instead of size_t, to match GCC.  When
-     gcc_word is larger than size_t, the upper extra bits are all
-     zeros.  We can use variables of size_t to operate on size and
-     align.  */
-  gcc_word size;  /* size of the object in bytes */
-  gcc_word align; /* alignment of the object in bytes */
+  // Must use gcc_word here, instead of size_t, to match GCC.  When
+  // gcc_word is larger than size_t, the upper extra bits are all
+  // zeros.  We can use variables of size_t to operate on size and
+  // align.
+  gcc_word size;  // size of the object in bytes
+  gcc_word align; // alignment of the object in bytes
   union {
-    uintptr_t index; /* data[index-1] is the object address */
-    void *address;   /* object address, when in single thread env */
+    uintptr_t index; // data[index-1] is the object address
+    void *address;   // object address, when in single thread env
   } object;
-  void *value; /* null or non-zero initial value for the object */
+  void *value; // null or non-zero initial value for the object
 } __emutls_control;
 
-/* Emulated TLS objects are always allocated at run-time. */
+// Emulated TLS objects are always allocated at run-time.
 static __inline void *emutls_allocate_object(__emutls_control *control) {
-  /* Use standard C types, check with gcc's emutls.o. */
+  // Use standard C types, check with gcc's emutls.o.
   COMPILE_TIME_ASSERT(sizeof(uintptr_t) == sizeof(gcc_pointer));
   COMPILE_TIME_ASSERT(sizeof(uintptr_t) == sizeof(void *));
 
@@ -291,7 +286,7 @@ static __inline void *emutls_allocate_object(__emutls_control *control) {
   void *base;
   if (align < sizeof(void *))
     align = sizeof(void *);
-  /* Make sure that align is power of 2. */
+  // Make sure that align is power of 2.
   if ((align & (align - 1)) != 0)
     abort();
 
@@ -303,7 +298,7 @@ static __inline void *emutls_allocate_object(__emutls_control *control) {
   return base;
 }
 
-/* Returns control->object.index; set index if not allocated yet. */
+// Returns control->object.index; set index if not allocated yet.
 static __inline uintptr_t emutls_get_index(__emutls_control *control) {
   uintptr_t index = __atomic_load_n(&control->object.index, __ATOMIC_ACQUIRE);
   if (!index) {
@@ -319,7 +314,7 @@ static __inline uintptr_t emutls_get_index(__emutls_control *control) {
   return index;
 }
 
-/* Updates newly allocated thread local emutls_address_array. */
+// Updates newly allocated thread local emutls_address_array.
 static __inline void emutls_check_array_set_size(emutls_address_array *array,
                                                  uintptr_t size) {
   if (array == NULL)
@@ -328,28 +323,24 @@ static __inline void emutls_check_array_set_size(emutls_address_array *array,
   emutls_setspecific(array);
 }
 
-/* Returns the new 'data' array size, number of elements,
- * which must be no smaller than the given index.
- */
+// Returns the new 'data' array size, number of elements,
+// which must be no smaller than the given index.
 static __inline uintptr_t emutls_new_data_array_size(uintptr_t index) {
-  /* Need to allocate emutls_address_array with extra slots
-   * to store the header.
-   * Round up the emutls_address_array size to multiple of 16.
-   */
+  // Need to allocate emutls_address_array with extra slots
+  // to store the header.
+  // Round up the emutls_address_array size to multiple of 16.
   uintptr_t header_words = sizeof(emutls_address_array) / sizeof(void *);
   return ((index + header_words + 15) & ~((uintptr_t)15)) - header_words;
 }
 
-/* Returns the size in bytes required for an emutls_address_array with
- * N number of elements for data field.
- */
+// Returns the size in bytes required for an emutls_address_array with
+// N number of elements for data field.
 static __inline uintptr_t emutls_asize(uintptr_t N) {
   return N * sizeof(void *) + sizeof(emutls_address_array);
 }
 
-/* Returns the thread local emutls_address_array.
- * Extends its size if necessary to hold address at index.
- */
+// Returns the thread local emutls_address_array.
+// Extends its size if necessary to hold address at index.
 static __inline emutls_address_array *
 emutls_get_address_array(uintptr_t index) {
   emutls_address_array *array = emutls_getspecific();
@@ -382,7 +373,7 @@ void *__emutls_get_address(__emutls_control *control) {
 }
 
 #ifdef __BIONIC__
-/* Called by Bionic on dlclose to delete the emutls pthread key. */
+// Called by Bionic on dlclose to delete the emutls pthread key.
 __attribute__((visibility("hidden"))) void __emutls_unregister_key(void) {
   if (emutls_key_created) {
     pthread_key_delete(emutls_pthread_key);

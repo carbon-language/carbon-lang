@@ -1,20 +1,19 @@
-/* ===-- muldc3.c - Implement __muldc3 -------------------------------------===
- *
- * Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
- * See https://llvm.org/LICENSE.txt for license information.
- * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
- *
- * ===----------------------------------------------------------------------===
- *
- * This file implements __muldc3 for the compiler_rt library.
- *
- * ===----------------------------------------------------------------------===
- */
+//===-- muldc3.c - Implement __muldc3 -------------------------------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+//
+// This file implements __muldc3 for the compiler_rt library.
+//
+//===----------------------------------------------------------------------===//
 
 #include "int_lib.h"
 #include "int_math.h"
 
-/* Returns: the product of a + ib and c + id */
+// Returns: the product of a + ib and c + id
 
 COMPILER_RT_ABI Dcomplex __muldc3(double __a, double __b, double __c,
                                   double __d) {

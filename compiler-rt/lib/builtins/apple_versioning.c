@@ -1,11 +1,10 @@
-/* ===-- apple_versioning.c - Adds versioning symbols for ld ---------------===
- *
- * Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
- * See https://llvm.org/LICENSE.txt for license information.
- * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
- *
- * ===----------------------------------------------------------------------===
- */
+//===-- apple_versioning.c - Adds versioning symbols for ld ---------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
 
 #if __APPLE__
 #include <Availability.h>
@@ -36,9 +35,8 @@
   __attribute__((visibility("default"))) const char sym##_tmp6 = 0;
 #endif
 
-/* Symbols in libSystem.dylib in 10.6 and later,
- *  but are in libgcc_s.dylib in earlier versions
- */
+// Symbols in libSystem.dylib in 10.6 and later,
+//  but are in libgcc_s.dylib in earlier versions
 
 NOT_HERE_BEFORE_10_6(__absvdi2)
 NOT_HERE_BEFORE_10_6(__absvsi2)
@@ -146,7 +144,7 @@ NOT_HERE_BEFORE_10_6(__gcc_qdiv)
 NOT_HERE_BEFORE_10_6(__gcc_qmul)
 NOT_HERE_BEFORE_10_6(__gcc_qsub)
 NOT_HERE_BEFORE_10_6(__trampoline_setup)
-#endif /* __ppc__ */
+#endif // __ppc__
 
 NOT_HERE_IN_10_8_AND_EARLIER(__atomic_compare_exchange)
 NOT_HERE_IN_10_8_AND_EARLIER(__atomic_compare_exchange_1)
@@ -334,8 +332,8 @@ NOT_HERE_UNTIL_AFTER_4_3(__divmodsi4)
 NOT_HERE_UNTIL_AFTER_4_3(__udivmodsi4)
 #endif // __arm__ && __DYNAMIC__
 
-#else /* !__APPLE__ */
+#else // !__APPLE__
 
 extern int avoid_empty_file;
 
-#endif /* !__APPLE__*/
+#endif // !__APPLE__

@@ -1,16 +1,16 @@
-/*===-- sync-ops.h - --===//
- *
- * Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
- * See https://llvm.org/LICENSE.txt for license information.
- * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
- *
- *===----------------------------------------------------------------------===//
- *
- * This file implements outline macros for the __sync_fetch_and_*
- * operations. Different instantiations will generate appropriate assembly for
- * ARM and Thumb-2 versions of the functions.
- *
- *===----------------------------------------------------------------------===*/
+//===-- sync-ops.h - --===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+//
+// This file implements outline macros for the __sync_fetch_and_*
+// operations. Different instantiations will generate appropriate assembly for
+// ARM and Thumb-2 versions of the functions.
+//
+//===----------------------------------------------------------------------===//
 
 #include "../assembly.h"
 

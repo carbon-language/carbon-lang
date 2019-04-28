@@ -1,25 +1,24 @@
-/* ===-- int_lib.h - configuration header for compiler-rt  -----------------===
- *
- * Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
- * See https://llvm.org/LICENSE.txt for license information.
- * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
- *
- * ===----------------------------------------------------------------------===
- *
- * This file is not part of the interface of this library.
- *
- * This file defines various standard types, most importantly a number of unions
- * used to access parts of larger types.
- *
- * ===----------------------------------------------------------------------===
- */
+//===-- int_lib.h - configuration header for compiler-rt  -----------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+//
+// This file is not part of the interface of this library.
+//
+// This file defines various standard types, most importantly a number of unions
+// used to access parts of larger types.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef INT_TYPES_H
 #define INT_TYPES_H
 
 #include "int_endianness.h"
 
-/* si_int is defined in Linux sysroot's asm-generic/siginfo.h */
+// si_int is defined in Linux sysroot's asm-generic/siginfo.h
 #ifdef si_int
 #undef si_int
 #endif
@@ -38,7 +37,7 @@ typedef union {
 #else
     si_int high;
     su_int low;
-#endif /* _YUGA_LITTLE_ENDIAN */
+#endif // _YUGA_LITTLE_ENDIAN
   } s;
 } dwords;
 
@@ -51,7 +50,7 @@ typedef union {
 #else
     su_int high;
     su_int low;
-#endif /* _YUGA_LITTLE_ENDIAN */
+#endif // _YUGA_LITTLE_ENDIAN
   } s;
 } udwords;
 
@@ -60,10 +59,9 @@ typedef union {
 #define CRT_HAS_128BIT
 #endif
 
-/* MSVC doesn't have a working 128bit integer type. Users should really compile
- * compiler-rt with clang, but if they happen to be doing a standalone build for
- * asan or something else, disable the 128 bit parts so things sort of work.
- */
+// MSVC doesn't have a working 128bit integer type. Users should really compile
+// compiler-rt with clang, but if they happen to be doing a standalone build for
+// asan or something else, disable the 128 bit parts so things sort of work.
 #if defined(_MSC_VER) && !defined(__clang__)
 #undef CRT_HAS_128BIT
 #endif
@@ -81,7 +79,7 @@ typedef union {
 #else
     di_int high;
     du_int low;
-#endif /* _YUGA_LITTLE_ENDIAN */
+#endif // _YUGA_LITTLE_ENDIAN
   } s;
 } twords;
 
@@ -94,7 +92,7 @@ typedef union {
 #else
     du_int high;
     du_int low;
-#endif /* _YUGA_LITTLE_ENDIAN */
+#endif // _YUGA_LITTLE_ENDIAN
   } s;
 } utwords;
 
@@ -112,7 +110,7 @@ static __inline tu_int make_tu(du_int h, du_int l) {
   return r.all;
 }
 
-#endif /* CRT_HAS_128BIT */
+#endif // CRT_HAS_128BIT
 
 typedef union {
   su_int u;
@@ -131,14 +129,13 @@ typedef struct {
 #else
   udwords high;
   udwords low;
-#endif /* _YUGA_LITTLE_ENDIAN */
+#endif // _YUGA_LITTLE_ENDIAN
 } uqwords;
 
-/* Check if the target supports 80 bit extended precision long doubles.
- * Notably, on x86 Windows, MSVC only provides a 64-bit long double, but GCC
- * still makes it 80 bits. Clang will match whatever compiler it is trying to
- * be compatible with.
- */
+// Check if the target supports 80 bit extended precision long doubles.
+// Notably, on x86 Windows, MSVC only provides a 64-bit long double, but GCC
+// still makes it 80 bits. Clang will match whatever compiler it is trying to
+// be compatible with.
 #if ((defined(__i386__) || defined(__x86_64__)) && !defined(_MSC_VER)) ||      \
     defined(__m68k__) || defined(__ia64__)
 #define HAS_80_BIT_LONG_DOUBLE 1
@@ -174,4 +171,4 @@ typedef struct {
 #define COMPLEX_REAL(x) (x).real
 #define COMPLEX_IMAGINARY(x) (x).imaginary
 #endif
-#endif /* INT_TYPES_H */
+#endif // INT_TYPES_H

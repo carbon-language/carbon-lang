@@ -1,21 +1,20 @@
-/* ===-- multi3.c - Implement __multi3 -------------------------------------===
- *
- * Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
- * See https://llvm.org/LICENSE.txt for license information.
- * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
- *
- * ===----------------------------------------------------------------------===
-
- * This file implements __multi3 for the compiler_rt library.
- *
- * ===----------------------------------------------------------------------===
- */
+//===-- multi3.c - Implement __multi3 -------------------------------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+//
+// This file implements __multi3 for the compiler_rt library.
+//
+//===----------------------------------------------------------------------===//
 
 #include "int_lib.h"
 
 #ifdef CRT_HAS_128BIT
 
-/* Returns: a * b */
+// Returns: a * b
 
 static ti_int __mulddi3(du_int a, du_int b) {
   twords r;
@@ -36,7 +35,7 @@ static ti_int __mulddi3(du_int a, du_int b) {
   return r.all;
 }
 
-/* Returns: a * b */
+// Returns: a * b
 
 COMPILER_RT_ABI ti_int __multi3(ti_int a, ti_int b) {
   twords x;
@@ -49,4 +48,4 @@ COMPILER_RT_ABI ti_int __multi3(ti_int a, ti_int b) {
   return r.all;
 }
 
-#endif /* CRT_HAS_128BIT */
+#endif // CRT_HAS_128BIT
