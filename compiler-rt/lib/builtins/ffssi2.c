@@ -17,12 +17,9 @@
  * the value zero if a is zero. The least significant bit is index one.
  */
 
-COMPILER_RT_ABI si_int
-__ffssi2(si_int a)
-{
-    if (a == 0)
-    {
-        return 0;
-    }
-    return __builtin_ctz(a) + 1;
+COMPILER_RT_ABI si_int __ffssi2(si_int a) {
+  if (a == 0) {
+    return 0;
+  }
+  return __builtin_ctz(a) + 1;
 }

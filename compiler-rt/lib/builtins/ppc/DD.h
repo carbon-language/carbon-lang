@@ -4,20 +4,20 @@
 #include "../int_lib.h"
 
 typedef union {
-	long double ld;
-	struct {
-		double hi;
-		double lo;
-	}s;
+  long double ld;
+  struct {
+    double hi;
+    double lo;
+  } s;
 } DD;
 
-typedef union { 
-	double d;
-	uint64_t x;
+typedef union {
+  double d;
+  uint64_t x;
 } doublebits;
 
-#define LOWORDER(xy,xHi,xLo,yHi,yLo) \
-	(((((xHi)*(yHi) - (xy)) + (xHi)*(yLo)) + (xLo)*(yHi)) + (xLo)*(yLo))
+#define LOWORDER(xy, xHi, xLo, yHi, yLo)                                       \
+  (((((xHi) * (yHi) - (xy)) + (xHi) * (yLo)) + (xLo) * (yHi)) + (xLo) * (yLo))
 
 static __inline ALWAYS_INLINE double local_fabs(double x) {
   doublebits result = {.d = x};

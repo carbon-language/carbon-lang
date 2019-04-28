@@ -21,7 +21,7 @@
 #define INT_MATH_H
 
 #ifndef __has_builtin
-#  define  __has_builtin(x) 0
+#define __has_builtin(x) 0
 #endif
 
 #if defined(_MSC_VER) && !defined(__clang__)
@@ -45,15 +45,15 @@
  * versions of GCC which didn't have __builtin_isfinite.
  */
 #if __has_builtin(__builtin_isfinite)
-#  define crt_isfinite(x) __builtin_isfinite((x))
+#define crt_isfinite(x) __builtin_isfinite((x))
 #elif defined(__GNUC__)
-#  define crt_isfinite(x) \
-  __extension__(({ \
-      __typeof((x)) x_ = (x); \
-      !crt_isinf(x_) && !crt_isnan(x_); \
-    }))
+#define crt_isfinite(x)                                                        \
+  __extension__(({                                                             \
+    __typeof((x)) x_ = (x);                                                    \
+    !crt_isinf(x_) && !crt_isnan(x_);                                          \
+  }))
 #else
-#  error "Do not know how to check for infinity"
+#error "Do not know how to check for infinity"
 #endif /* __has_builtin(__builtin_isfinite) */
 #define crt_isinf(x) __builtin_isinf((x))
 #define crt_isnan(x) __builtin_isnan((x))

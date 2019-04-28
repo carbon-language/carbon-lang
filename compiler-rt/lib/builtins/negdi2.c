@@ -15,11 +15,9 @@
 
 /* Returns: -a */
 
-COMPILER_RT_ABI di_int
-__negdi2(di_int a)
-{
-    /* Note: this routine is here for API compatibility; any sane compiler
-     * should expand it inline.
-     */
-    return -a;
+COMPILER_RT_ABI di_int __negdi2(di_int a) {
+  /* Note: this routine is here for API compatibility; any sane compiler
+   * should expand it inline.
+   */
+  return -a;
 }

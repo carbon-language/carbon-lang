@@ -15,8 +15,5 @@
 typedef tu_int fixuint_t;
 #include "fp_fixuint_impl.inc"
 
-COMPILER_RT_ABI tu_int
-__fixunsdfti(fp_t a) {
-    return __fixuint(a);
-}
+COMPILER_RT_ABI tu_int __fixunsdfti(fp_t a) { return __fixuint(a); }
 #endif /* CRT_HAS_128BIT */

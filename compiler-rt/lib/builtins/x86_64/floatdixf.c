@@ -9,9 +9,6 @@
 
 #include "../int_lib.h"
 
-long double __floatdixf(int64_t a)
-{
-	return (long double)a;
-}
+long double __floatdixf(int64_t a) { return (long double)a; }
 
 #endif /* __i386__ */

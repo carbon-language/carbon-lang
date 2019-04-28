@@ -7,11 +7,8 @@
  * ===----------------------------------------------------------------------===
  */
 
-
-
 #include "int_lib.h"
 #include <stdio.h>
-
 
 /*
  * __eprintf() was used in an old version of <assert.h>.
@@ -25,10 +22,9 @@
 __attribute__((visibility("hidden")))
 #endif
 COMPILER_RT_ABI void
-__eprintf(const char* format, const char* assertion_expression,
-	  const char* line, const char* file)
-{
-	fprintf(stderr, format, assertion_expression, line, file);
-	fflush(stderr);
-	compilerrt_abort();
+__eprintf(const char *format, const char *assertion_expression,
+          const char *line, const char *file) {
+  fprintf(stderr, format, assertion_expression, line, file);
+  fflush(stderr);
+  compilerrt_abort();
 }

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if (defined(__i386__) || defined(_M_IX86) || \
-     defined(__x86_64__) || defined(_M_X64)) && \
+#if (defined(__i386__) || defined(_M_IX86) || defined(__x86_64__) ||           \
+     defined(_M_X64)) &&                                                       \
     (defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER))
 
 #include <assert.h>
@@ -267,11 +267,11 @@ static void detectX86FamilyModel(unsigned EAX, unsigned *Family,
   }
 }
 
-static void
-getIntelProcessorTypeAndSubtype(unsigned Family, unsigned Model,
-                                unsigned Brand_id, unsigned Features,
-                                unsigned Features2, unsigned *Type,
-                                unsigned *Subtype) {
+static void getIntelProcessorTypeAndSubtype(unsigned Family, unsigned Model,
+                                            unsigned Brand_id,
+                                            unsigned Features,
+                                            unsigned Features2, unsigned *Type,
+                                            unsigned *Subtype) {
   if (Brand_id != 0)
     return;
   switch (Family) {
@@ -297,7 +297,7 @@ getIntelProcessorTypeAndSubtype(unsigned Family, unsigned Model,
     case 0x1e: // Intel(R) Core(TM) i7 CPU         870  @ 2.93GHz.
                // As found in a Summer 2010 model iMac.
     case 0x1f:
-    case 0x2e:             // Nehalem EX
+    case 0x2e:              // Nehalem EX
       *Type = INTEL_COREI7; // "nehalem"
       *Subtype = INTEL_COREI7_NEHALEM;
       break;
@@ -315,7 +315,7 @@ getIntelProcessorTypeAndSubtype(unsigned Family, unsigned Model,
       *Subtype = INTEL_COREI7_SANDYBRIDGE;
       break;
     case 0x3a:
-    case 0x3e:             // Ivy Bridge EP
+    case 0x3e:              // Ivy Bridge EP
       *Type = INTEL_COREI7; // "ivybridge"
       *Subtype = INTEL_COREI7_IVYBRIDGE;
       break;
@@ -339,10 +339,10 @@ getIntelProcessorTypeAndSubtype(unsigned Family, unsigned Model,
       break;
 
     // Skylake:
-    case 0x4e: // Skylake mobile
-    case 0x5e: // Skylake desktop
-    case 0x8e: // Kaby Lake mobile
-    case 0x9e: // Kaby Lake desktop
+    case 0x4e:              // Skylake mobile
+    case 0x5e:              // Skylake desktop
+    case 0x8e:              // Kaby Lake mobile
+    case 0x9e:              // Kaby Lake desktop
       *Type = INTEL_COREI7; // "skylake"
       *Subtype = INTEL_COREI7_SKYLAKE;
       break;
@@ -398,7 +398,7 @@ getIntelProcessorTypeAndSubtype(unsigned Family, unsigned Model,
 
     default: // Unknown family 6 CPU.
       break;
-    break;
+      break;
     }
   default:
     break; // Unknown.
@@ -474,12 +474,12 @@ static void getAvailableFeatures(unsigned ECX, unsigned EDX, unsigned MaxLeaf,
   unsigned Features2 = 0;
   unsigned EAX, EBX;
 
-#define setFeature(F)                       \
-  do {                                      \
-    if (F < 32)                             \
-      Features |= 1U << (F & 0x1f);         \
-    else if (F < 64)                        \
-      Features2 |= 1U << ((F - 32) & 0x1f); \
+#define setFeature(F)                                                          \
+  do {                                                                         \
+    if (F < 32)                                                                \
+      Features |= 1U << (F & 0x1f);                                            \
+    else if (F < 64)                                                           \
+      Features2 |= 1U << ((F - 32) & 0x1f);                                    \
   } while (0)
 
   if ((EDX >> 15) & 1)
@@ -618,8 +618,7 @@ unsigned int __cpu_features2;
    the priority set.  However, it still runs after ifunc initializers and
    needs to be called explicitly there.  */
 
-int CONSTRUCTOR_ATTRIBUTE
-__cpu_indicator_init(void) {
+int CONSTRUCTOR_ATTRIBUTE __cpu_indicator_init(void) {
   unsigned EAX, EBX, ECX, EDX;
   unsigned MaxLeaf = 5;
   unsigned Vendor;
@@ -651,8 +650,7 @@ __cpu_indicator_init(void) {
   if (Vendor == SIG_INTEL) {
     /* Get CPU type.  */
     getIntelProcessorTypeAndSubtype(Family, Model, Brand_id, Features,
-                                    Features2,
-                                    &(__cpu_model.__cpu_type),
+                                    Features2, &(__cpu_model.__cpu_type),
                                     &(__cpu_model.__cpu_subtype));
     __cpu_model.__cpu_vendor = VENDOR_INTEL;
   } else if (Vendor == SIG_AMD) {

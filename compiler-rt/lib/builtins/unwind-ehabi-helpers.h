@@ -35,8 +35,8 @@
  * those states.
  */
 
-#define _URC_OK       0
-#define _URC_FAILURE  9
+#define _URC_OK 0
+#define _URC_FAILURE 9
 
 typedef uint32_t _Unwind_State;
 
@@ -51,4 +51,3 @@ typedef uint32_t _Unwind_State;
 #endif
 
 #endif
-

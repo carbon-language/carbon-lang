@@ -7,9 +7,6 @@
 
 #include "../int_lib.h"
 
-float __floatdisf(int64_t a)
-{
-	return (float)a;
-}
+float __floatdisf(int64_t a) { return (float)a; }
 
 #endif /* __x86_64__ */

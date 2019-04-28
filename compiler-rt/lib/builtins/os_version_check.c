@@ -30,7 +30,7 @@ static dispatch_once_t DispatchOnceCounter;
  * just forward declare everything that we need from it. */
 
 typedef const void *CFDataRef, *CFAllocatorRef, *CFPropertyListRef,
-                   *CFStringRef, *CFDictionaryRef, *CFTypeRef, *CFErrorRef;
+    *CFStringRef, *CFDictionaryRef, *CFTypeRef, *CFErrorRef;
 
 #if __LLP64__
 typedef unsigned long long CFTypeID;
@@ -87,8 +87,8 @@ static void parseSystemVersionPList(void *Unused) {
   if (!CFDataCreateWithBytesNoCopyFunc)
     return;
   CFPropertyListCreateWithDataFuncTy CFPropertyListCreateWithDataFunc =
-      (CFPropertyListCreateWithDataFuncTy)dlsym(
-          RTLD_DEFAULT, "CFPropertyListCreateWithData");
+      (CFPropertyListCreateWithDataFuncTy)dlsym(RTLD_DEFAULT,
+                                                "CFPropertyListCreateWithData");
 /* CFPropertyListCreateWithData was introduced only in macOS 10.6+, so it
  * will be NULL on earlier OS versions. */
 #pragma clang diagnostic push

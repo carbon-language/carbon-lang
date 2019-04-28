@@ -16,7 +16,7 @@
 #include "fp_extend_impl.inc"
 
 COMPILER_RT_ABI long double __extendsftf2(float a) {
-    return __extendXfYf2__(a);
+  return __extendXfYf2__(a);
 }
 
 #endif

@@ -19,18 +19,15 @@
  * the value zero if a is zero. The least significant bit is index one.
  */
 
-COMPILER_RT_ABI si_int
-__ffsti2(ti_int a)
-{
-    twords x;
-    x.all = a;
-    if (x.s.low == 0)
-    {
-        if (x.s.high == 0)
-            return 0;
-        return __builtin_ctzll(x.s.high) + (1 + sizeof(di_int) * CHAR_BIT);
-    }
-    return __builtin_ctzll(x.s.low) + 1;
+COMPILER_RT_ABI si_int __ffsti2(ti_int a) {
+  twords x;
+  x.all = a;
+  if (x.s.low == 0) {
+    if (x.s.high == 0)
+      return 0;
+    return __builtin_ctzll(x.s.high) + (1 + sizeof(di_int) * CHAR_BIT);
+  }
+  return __builtin_ctzll(x.s.low) + 1;
 }
 
 #endif /* CRT_HAS_128BIT */

@@ -19,21 +19,16 @@
 
 /* Effects: aborts if a - b overflows */
 
-COMPILER_RT_ABI ti_int
-__subvti3(ti_int a, ti_int b)
-{
-    ti_int s = (tu_int) a - (tu_int) b;
-    if (b >= 0)
-    {
-        if (s > a)
-            compilerrt_abort();
-    }
-    else
-    {
-        if (s <= a)
-            compilerrt_abort();
-    }
-    return s;
+COMPILER_RT_ABI ti_int __subvti3(ti_int a, ti_int b) {
+  ti_int s = (tu_int)a - (tu_int)b;
+  if (b >= 0) {
+    if (s > a)
+      compilerrt_abort();
+  } else {
+    if (s <= a)
+      compilerrt_abort();
+  }
+  return s;
 }
 
 #endif /* CRT_HAS_128BIT */

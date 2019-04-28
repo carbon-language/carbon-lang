@@ -15,10 +15,8 @@
 
 /* Returns: a / b, *rem = a % b  */
 
-COMPILER_RT_ABI di_int
-__divmoddi4(di_int a, di_int b, di_int* rem)
-{
-  di_int d = __divdi3(a,b);
-  *rem = a - (d*b);
+COMPILER_RT_ABI di_int __divmoddi4(di_int a, di_int b, di_int *rem) {
+  di_int d = __divdi3(a, b);
+  *rem = a - (d * b);
   return d;
 }

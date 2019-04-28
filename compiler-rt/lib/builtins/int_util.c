@@ -8,7 +8,6 @@
  */
 
 #include "int_lib.h"
-#include "int_util.h"
 
 /* NOTE: The definitions in this file are declared weak because we clients to be
  * able to arbitrarily package individual functions into separate .a files. If
