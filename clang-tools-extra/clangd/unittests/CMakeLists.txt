@@ -90,3 +90,7 @@ target_link_libraries(ClangdTests
 if (CLANGD_BUILD_XPC)
   add_subdirectory(xpc)
 endif ()
+
+configure_lit_site_cfg(
+  ${CMAKE_CURRENT_SOURCE_DIR}/lit.cfg.in
+  ${CMAKE_CURRENT_BINARY_DIR}/lit.cfg)
