@@ -76,6 +76,7 @@ add_llvm_tool(llvm-bolt
   DataReader.cpp
   DebugData.cpp
   DWARFRewriter.cpp
+  DynoStats.cpp
   Exceptions.cpp
   ExecutableFileMemoryManager.cpp
   Heatmap.cpp

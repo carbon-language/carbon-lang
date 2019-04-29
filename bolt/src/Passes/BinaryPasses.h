@@ -16,6 +16,7 @@
 
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
+#include "DynoStats.h"
 #include "HFSort.h"
 #include "llvm/Support/CommandLine.h"
 

@@ -1331,7 +1331,7 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
       const auto &BF = BFI.second;
       if (shouldOptimize(BF) && BF.hasValidProfile()) {
         Functions.push_back(&BF);
-        Stats.emplace(&BF, BF.getDynoStats());
+        Stats.emplace(&BF, getDynoStats(BF));
       }
     }
 
@@ -1383,7 +1383,7 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
     outs() << " are:\n";
     auto SFI = Functions.begin();
     for (unsigned I = 0; I < 100 && SFI != Functions.end(); ++SFI, ++I) {
-      const auto Stats = (*SFI)->getDynoStats();
+      const auto Stats = getDynoStats(**SFI);
       outs() << "  " << **SFI;
       if (!SortAll) {
         outs() << " (";
