@@ -5512,7 +5512,7 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
       return &I;
     }
     if (!match(Op1, m_PosZeroFP()) && isKnownNeverNaN(Op1, &TLI)) {
-      I.setOperand(1, ConstantFP::getNullValue(Op0->getType()));
+      I.setOperand(1, ConstantFP::getNullValue(Op1->getType()));
       return &I;
     }
   }
