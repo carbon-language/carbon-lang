@@ -98,7 +98,7 @@ private:
 
 public:
   bool parseExpect(std::string &VarName, std::string &Trailer) {
-    StringRef NameTrailer = StringRef(VarName + Trailer);
+    std::string NameTrailer = VarName + Trailer;
     std::unique_ptr<MemoryBuffer> Buffer =
         MemoryBuffer::getMemBufferCopy(NameTrailer, "TestBuffer");
     StringRef NameTrailerRef = Buffer->getBuffer();
