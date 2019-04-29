@@ -933,24 +933,15 @@ std::vector<StringRef> ELFState<ELFT>::implicitSectionNames() const {
   return {".symtab", ".strtab", ".shstrtab", ".dynsym", ".dynstr"};
 }
 
-static bool is64Bit(const ELFYAML::Object &Doc) {
-  return Doc.Header.Class == ELFYAML::ELF_ELFCLASS(ELF::ELFCLASS64);
-}
-
-static bool isLittleEndian(const ELFYAML::Object &Doc) {
-  return Doc.Header.Data == ELFYAML::ELF_ELFDATA(ELF::ELFDATA2LSB);
-}
-
 int yaml2elf(llvm::ELFYAML::Object &Doc, raw_ostream &Out) {
-  if (is64Bit(Doc)) {
-    if (isLittleEndian(Doc))
+  bool IsLE = Doc.Header.Data == ELFYAML::ELF_ELFDATA(ELF::ELFDATA2LSB);
+  bool Is64Bit = Doc.Header.Class == ELFYAML::ELF_ELFCLASS(ELF::ELFCLASS64);
+  if (Is64Bit) {
+    if (IsLE)
       return ELFState<object::ELF64LE>::writeELF(Out, Doc);
-    else
-      return ELFState<object::ELF64BE>::writeELF(Out, Doc);
-  } else {
-    if (isLittleEndian(Doc))
-      return ELFState<object::ELF32LE>::writeELF(Out, Doc);
-    else
-      return ELFState<object::ELF32BE>::writeELF(Out, Doc);
+    return ELFState<object::ELF64BE>::writeELF(Out, Doc);
   }
+  if (IsLE)
+    return ELFState<object::ELF32LE>::writeELF(Out, Doc);
+  return ELFState<object::ELF32BE>::writeELF(Out, Doc);
 }
