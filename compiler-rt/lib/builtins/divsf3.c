@@ -191,6 +191,6 @@ COMPILER_RT_ABI fp_t __divsf3(fp_t a, fp_t b) {
 #if defined(COMPILER_RT_ARMHF_TARGET)
 AEABI_RTABI fp_t __aeabi_fdiv(fp_t a, fp_t b) { return __divsf3(a, b); }
 #else
-AEABI_RTABI fp_t __aeabi_fdiv(fp_t a, fp_t b) COMPILER_RT_ALIAS(__divsf3);
+COMPILER_RT_ALIAS(__divsf3, __aeabi_fdiv)
 #endif
 #endif

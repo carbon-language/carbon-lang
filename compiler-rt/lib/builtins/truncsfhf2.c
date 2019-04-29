@@ -22,6 +22,6 @@ COMPILER_RT_ABI uint16_t __gnu_f2h_ieee(float a) { return __truncsfhf2(a); }
 #if defined(COMPILER_RT_ARMHF_TARGET)
 AEABI_RTABI uint16_t __aeabi_f2h(float a) { return __truncsfhf2(a); }
 #else
-AEABI_RTABI uint16_t __aeabi_f2h(float a) COMPILER_RT_ALIAS(__truncsfhf2);
+COMPILER_RT_ALIAS(__truncsfhf2, __aeabi_f2h)
 #endif
 #endif

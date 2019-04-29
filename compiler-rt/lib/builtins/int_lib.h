@@ -18,17 +18,6 @@
 // Assumption: Right shift of signed negative is arithmetic shift.
 // Assumption: Endianness is little or big (not mixed).
 
-#if defined(__ELF__)
-#define FNALIAS(alias_name, original_name)                                     \
-  void alias_name() __attribute__((__alias__(#original_name)))
-#define COMPILER_RT_ALIAS(aliasee) __attribute__((__alias__(#aliasee)))
-#else
-#define FNALIAS(alias, name)                                                   \
-  _Pragma("GCC error(\"alias unsupported on this file format\")")
-#define COMPILER_RT_ALIAS(aliasee)                                             \
-  _Pragma("GCC error(\"alias unsupported on this file format\")")
-#endif
-
 // ABI macro definitions
 
 #if __ARM_EABI__
@@ -53,6 +42,24 @@
 #define NOINLINE __attribute__((noinline))
 #define NORETURN __attribute__((noreturn))
 #define UNUSED __attribute__((unused))
+#endif
+
+#define STR(a) #a
+#define XSTR(a) STR(a)
+#define SYMBOL_NAME(name) XSTR(__USER_LABEL_PREFIX__) #name
+
+#if defined(__ELF__) || defined(__MINGW32__) || defined(__wasm__)
+#define COMPILER_RT_ALIAS(name, aliasname) \
+  COMPILER_RT_ABI __typeof(name) aliasname __attribute__((__alias__(#name)));
+#elif defines(__MACH__)
+#define COMPILER_RT_ALIAS(name, aliasname) \
+  __asm__(".globl " SYMBOL_NAME(aliasname)); \
+  __asm__(SYMBOL_NAME(aliasname) " = " SYMBOL_NAME(name)) \
+  COMPILER_RT_ABI __typeof(name) aliasname;
+#elif defined(_WIN32)
+#define COMPILER_RT_ALIAS(name, aliasname)
+#else
+#error Unsupported target
 #endif
 
 #if defined(__NetBSD__) && (defined(_KERNEL) || defined(_STANDALONE))

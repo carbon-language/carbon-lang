@@ -18,6 +18,6 @@ COMPILER_RT_ABI si_int __fixsfsi(fp_t a) { return __fixint(a); }
 #if defined(COMPILER_RT_ARMHF_TARGET)
 AEABI_RTABI si_int __aeabi_f2iz(fp_t a) { return __fixsfsi(a); }
 #else
-AEABI_RTABI si_int __aeabi_f2iz(fp_t a) COMPILER_RT_ALIAS(__fixsfsi);
+COMPILER_RT_ALIAS(__fixsfsi, __aeabi_f2iz)
 #endif
 #endif

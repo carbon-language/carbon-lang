@@ -20,6 +20,6 @@ COMPILER_RT_ABI double __adddf3(double a, double b) { return __addXf3__(a, b); }
 #if defined(COMPILER_RT_ARMHF_TARGET)
 AEABI_RTABI double __aeabi_dadd(double a, double b) { return __adddf3(a, b); }
 #else
-AEABI_RTABI double __aeabi_dadd(double a, double b) COMPILER_RT_ALIAS(__adddf3);
+COMPILER_RT_ALIAS(__adddf3, __aeabi_dadd)
 #endif
 #endif

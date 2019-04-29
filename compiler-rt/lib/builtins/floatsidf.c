@@ -52,6 +52,6 @@ COMPILER_RT_ABI fp_t __floatsidf(int a) {
 #if defined(COMPILER_RT_ARMHF_TARGET)
 AEABI_RTABI fp_t __aeabi_i2d(int a) { return __floatsidf(a); }
 #else
-AEABI_RTABI fp_t __aeabi_i2d(int a) COMPILER_RT_ALIAS(__floatsidf);
+COMPILER_RT_ALIAS(__floatsidf, __aeabi_i2d)
 #endif
 #endif

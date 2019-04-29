@@ -67,6 +67,6 @@ COMPILER_RT_ABI float __floatundisf(du_int a) {
 #if defined(COMPILER_RT_ARMHF_TARGET)
 AEABI_RTABI float __aeabi_ul2f(du_int a) { return __floatundisf(a); }
 #else
-AEABI_RTABI float __aeabi_ul2f(du_int a) COMPILER_RT_ALIAS(__floatundisf);
+COMPILER_RT_ALIAS(__floatundisf, __aeabi_ul2f)
 #endif
 #endif

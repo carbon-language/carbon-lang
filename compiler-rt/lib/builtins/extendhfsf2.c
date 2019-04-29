@@ -22,6 +22,6 @@ COMPILER_RT_ABI float __gnu_h2f_ieee(uint16_t a) { return __extendhfsf2(a); }
 #if defined(COMPILER_RT_ARMHF_TARGET)
 AEABI_RTABI float __aeabi_h2f(uint16_t a) { return __extendhfsf2(a); }
 #else
-AEABI_RTABI float __aeabi_h2f(uint16_t a) COMPILER_RT_ALIAS(__extendhfsf2);
+COMPILER_RT_ALIAS(__extendhfsf2, __aeabi_h2f)
 #endif
 #endif

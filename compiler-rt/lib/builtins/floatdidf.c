@@ -98,6 +98,6 @@ COMPILER_RT_ABI double __floatdidf(di_int a) {
 #if defined(COMPILER_RT_ARMHF_TARGET)
 AEABI_RTABI double __aeabi_l2d(di_int a) { return __floatdidf(a); }
 #else
-AEABI_RTABI double __aeabi_l2d(di_int a) COMPILER_RT_ALIAS(__floatdidf);
+COMPILER_RT_ALIAS(__floatdidf, __aeabi_l2d)
 #endif
 #endif

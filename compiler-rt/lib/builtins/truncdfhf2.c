@@ -16,6 +16,6 @@ COMPILER_RT_ABI uint16_t __truncdfhf2(double a) { return __truncXfYf2__(a); }
 #if defined(COMPILER_RT_ARMHF_TARGET)
 AEABI_RTABI uint16_t __aeabi_d2h(double a) { return __truncdfhf2(a); }
 #else
-AEABI_RTABI uint16_t __aeabi_d2h(double a) COMPILER_RT_ALIAS(__truncdfhf2);
+COMPILER_RT_ALIAS(__truncdfhf2, __aeabi_d2h)
 #endif
 #endif

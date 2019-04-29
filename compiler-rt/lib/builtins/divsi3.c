@@ -31,5 +31,5 @@ COMPILER_RT_ABI si_int __divsi3(si_int a, si_int b) {
 }
 
 #if defined(__ARM_EABI__)
-AEABI_RTABI si_int __aeabi_idiv(si_int a, si_int b) COMPILER_RT_ALIAS(__divsi3);
+COMPILER_RT_ALIAS(__divsi3, __aeabi_idiv)
 #endif

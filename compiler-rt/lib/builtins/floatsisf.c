@@ -60,6 +60,6 @@ COMPILER_RT_ABI fp_t __floatsisf(int a) {
 #if defined(COMPILER_RT_ARMHF_TARGET)
 AEABI_RTABI fp_t __aeabi_i2f(int a) { return __floatsisf(a); }
 #else
-AEABI_RTABI fp_t __aeabi_i2f(int a) COMPILER_RT_ALIAS(__floatsisf);
+COMPILER_RT_ALIAS(__floatsisf, __aeabi_i2f)
 #endif
 #endif

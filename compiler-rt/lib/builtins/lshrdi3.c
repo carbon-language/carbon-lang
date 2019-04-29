@@ -34,6 +34,5 @@ COMPILER_RT_ABI di_int __lshrdi3(di_int a, si_int b) {
 }
 
 #if defined(__ARM_EABI__)
-AEABI_RTABI di_int __aeabi_llsr(di_int a, si_int b)
-    COMPILER_RT_ALIAS(__lshrdi3);
+COMPILER_RT_ALIAS(__lshrdi3, __aeabi_llsr)
 #endif

@@ -83,8 +83,11 @@ COMPILER_RT_ABI enum LE_RESULT __lesf2(fp_t a, fp_t b) {
 
 #if defined(__ELF__)
 // Alias for libgcc compatibility
-FNALIAS(__cmpsf2, __lesf2);
+COMPILER_RT_ALIAS(__lesf2, __cmpsf2)
 #endif
+COMPILER_RT_ALIAS(__lesf2, __eqsf2)
+COMPILER_RT_ALIAS(__lesf2, __ltsf2)
+COMPILER_RT_ALIAS(__lesf2, __nesf2)
 
 enum GE_RESULT {
   GE_LESS = -1,
@@ -121,26 +124,19 @@ COMPILER_RT_ABI enum GE_RESULT __gesf2(fp_t a, fp_t b) {
   }
 }
 
-COMPILER_RT_ABI int __unordsf2(fp_t a, fp_t b) {
-  const rep_t aAbs = toRep(a) & absMask;
-  const rep_t bAbs = toRep(b) & absMask;
-  return aAbs > infRep || bAbs > infRep;
+COMPILER_RT_ALIAS(__gesf2, __gtsf2)
+
+COMPILER_RT_ABI int
+__unordsf2(fp_t a, fp_t b) {
+    const rep_t aAbs = toRep(a) & absMask;
+    const rep_t bAbs = toRep(b) & absMask;
+    return aAbs > infRep || bAbs > infRep;
 }
-
-// The following are alternative names for the preceding routines.
-
-COMPILER_RT_ABI enum LE_RESULT __eqsf2(fp_t a, fp_t b) { return __lesf2(a, b); }
-
-COMPILER_RT_ABI enum LE_RESULT __ltsf2(fp_t a, fp_t b) { return __lesf2(a, b); }
-
-COMPILER_RT_ABI enum LE_RESULT __nesf2(fp_t a, fp_t b) { return __lesf2(a, b); }
-
-COMPILER_RT_ABI enum GE_RESULT __gtsf2(fp_t a, fp_t b) { return __gesf2(a, b); }
 
 #if defined(__ARM_EABI__)
 #if defined(COMPILER_RT_ARMHF_TARGET)
 AEABI_RTABI int __aeabi_fcmpun(fp_t a, fp_t b) { return __unordsf2(a, b); }
 #else
-AEABI_RTABI int __aeabi_fcmpun(fp_t a, fp_t b) COMPILER_RT_ALIAS(__unordsf2);
+COMPILER_RT_ALIAS(__unordsf2, __aeabi_fcmpun)
 #endif
 #endif

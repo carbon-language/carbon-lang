@@ -39,6 +39,6 @@ COMPILER_RT_ABI di_int __fixsfdi(fp_t a) { return __fixint(a); }
 #if defined(COMPILER_RT_ARMHF_TARGET)
 AEABI_RTABI di_int __aeabi_f2lz(fp_t a) { return __fixsfdi(a); }
 #else
-AEABI_RTABI di_int __aeabi_f2lz(fp_t a) COMPILER_RT_ALIAS(__fixsfdi);
+COMPILER_RT_ALIAS(__fixsfdi, __aeabi_f2lz)
 #endif
 #endif
