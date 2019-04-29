@@ -51,7 +51,7 @@
 #if defined(__ELF__) || defined(__MINGW32__) || defined(__wasm__)
 #define COMPILER_RT_ALIAS(name, aliasname) \
   COMPILER_RT_ABI __typeof(name) aliasname __attribute__((__alias__(#name)));
-#elif defined(__MACH__)
+#elif defined(__APPLE__)
 #define COMPILER_RT_ALIAS(name, aliasname) \
   __asm__(".globl " SYMBOL_NAME(aliasname)); \
   __asm__(SYMBOL_NAME(aliasname) " = " SYMBOL_NAME(name)); \
