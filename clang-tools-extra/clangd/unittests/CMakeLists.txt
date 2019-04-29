@@ -25,6 +25,7 @@ add_unittest(ClangdUnitTests ClangdTests
   Annotations.cpp
   BackgroundIndexTests.cpp
   CancellationTests.cpp
+  CanonicalIncludesTests.cpp
   ClangdTests.cpp
   ClangdUnitTests.cpp
   CodeCompleteTests.cpp
