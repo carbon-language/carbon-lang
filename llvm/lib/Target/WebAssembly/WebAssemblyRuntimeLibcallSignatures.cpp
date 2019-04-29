@@ -842,8 +842,8 @@ void llvm::getLibcallSignature(const WebAssemblySubtarget &Subtarget,
   auto Val = Map.find(Name);
 #ifndef NDEBUG
   if (Val == Map.end()) {
-    errs() << "runtime library name: " << Name << "\n";
-    llvm_unreachable("unexpected runtime library name");
+    auto message = std::string("unexpected runtime library name: ") + Name;
+    llvm_unreachable(message.c_str());
   }
 #endif
   return getLibcallSignature(Subtarget, Val->second, Rets, Params);
