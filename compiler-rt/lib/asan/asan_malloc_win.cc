@@ -47,7 +47,6 @@ using namespace __asan;  // NOLINT
 #endif
 
 extern "C" {
-
 ALLOCATION_FUNCTION_ATTRIBUTE
 size_t _msize(void *ptr) {
   GET_CURRENT_PC_BP_SP;
