@@ -208,6 +208,7 @@ INTERCEPTOR_WINAPI(LPVOID, HeapReAlloc, HANDLE hHeap, DWORD dwFlags,
                    LPVOID lpMem, SIZE_T dwBytes) {
   GET_STACK_TRACE_MALLOC;
   GET_CURRENT_PC_BP_SP;
+  (void)sp;
   // Realloc should never reallocate in place.
   if (dwFlags & HEAP_REALLOC_IN_PLACE_ONLY)
     return nullptr;
