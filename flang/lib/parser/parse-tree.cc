@@ -86,36 +86,41 @@ bool DoConstruct::IsDoConcurrent() const {
   return control && std::holds_alternative<LoopControl::Concurrent>(control->u);
 }
 
-static Designator MakeArrayElementRef(const Name &name,
-    const parser::CharBlock &source, std::list<Expr> &&subscripts) {
+static Designator MakeArrayElementRef(
+    const Name &name, std::list<Expr> &&subscripts) {
   ArrayElement arrayElement{DataRef{Name{name}}, std::list<SectionSubscript>{}};
   for (Expr &expr : subscripts) {
     arrayElement.subscripts.push_back(SectionSubscript{
         Scalar{Integer{common::Indirection{std::move(expr)}}}});
   }
-  auto result{
-      Designator{DataRef{common::Indirection{std::move(arrayElement)}}}};
-  result.source = source;
-  return result;
+  return Designator{DataRef{common::Indirection{std::move(arrayElement)}}};
 }
 
-static std::optional<Expr> ActualArgToExpr(
-    parser::CharBlock at, ActualArgSpec &arg) {
+// Set source in any type of node that has it.
+template<typename T> T WithSource(CharBlock source, T &&x) {
+  x.source = source;
+  return std::move(x);
+}
+
+static Expr ActualArgToExpr(ActualArgSpec &arg) {
   return std::visit(
       common::visitors{
-          [&](common::Indirection<Expr> &y) {
-            return std::make_optional<Expr>(std::move(y.value()));
-          },
+          [&](common::Indirection<Expr> &y) { return std::move(y.value()); },
           [&](common::Indirection<Variable> &y) {
             return std::visit(
-                [&](auto &indirection) {
-                  std::optional<Expr> result{std::move(indirection.value())};
-                  result->source = at;
-                  return result;
+                common::visitors{
+                    [&](common::Indirection<Designator> &z) {
+                      return WithSource(
+                          z.value().source, Expr{std::move(z.value())});
+                    },
+                    [&](common::Indirection<FunctionReference> &z) {
+                      return WithSource(
+                          z.value().v.source, Expr{std::move(z.value())});
+                    },
                 },
                 y.value().u);
           },
-          [&](auto &) -> std::optional<Expr> { return std::nullopt; },
+          [&](auto &) -> Expr { common::die("unexpected type"); },
       },
       std::get<ActualArg>(arg.t).u);
 }
@@ -124,9 +129,9 @@ Designator FunctionReference::ConvertToArrayElementRef() {
   auto &name{std::get<parser::Name>(std::get<ProcedureDesignator>(v.t).u)};
   std::list<Expr> args;
   for (auto &arg : std::get<std::list<ActualArgSpec>>(v.t)) {
-    args.emplace_back(std::move(ActualArgToExpr(name.source, arg).value()));
+    args.emplace_back(ActualArgToExpr(arg));
   }
-  return MakeArrayElementRef(name, v.source, std::move(args));
+  return WithSource(v.source, MakeArrayElementRef(name, std::move(args)));
 }
 
 StructureConstructor FunctionReference::ConvertToStructureConstructor(
@@ -138,8 +143,8 @@ StructureConstructor FunctionReference::ConvertToStructureConstructor(
     if (auto &kw{std::get<std::optional<Keyword>>(arg.t)}) {
       keyword.emplace(Keyword{Name{kw->v}});
     }
-    components.emplace_back(std::move(keyword),
-        ComponentDataSource{ActualArgToExpr(name.source, arg).value()});
+    components.emplace_back(
+        std::move(keyword), ComponentDataSource{ActualArgToExpr(arg)});
   }
   DerivedTypeSpec spec{std::move(name), std::list<TypeParamSpec>{}};
   spec.derivedTypeSpec = &derived;
@@ -163,13 +168,19 @@ Statement<ActionStmt> StmtFunctionStmt::ConvertToAssignment() {
   auto &funcName{std::get<Name>(t)};
   auto &funcArgs{std::get<std::list<Name>>(t)};
   auto &funcExpr{std::get<Scalar<Expr>>(t).thing};
+  CharBlock source{funcName.source};
   std::list<Expr> subscripts;
   for (Name &arg : funcArgs) {
-    subscripts.push_back(
-        Expr{common::Indirection{Designator{DataRef{Name{arg}}}}});
+    subscripts.push_back(WithSource(arg.source,
+        Expr{common::Indirection{
+            WithSource(arg.source, Designator{DataRef{Name{arg}}})}}));
+    source.ExtendToCover(arg.source);
   }
-  auto variable{Variable{common::Indirection{
-      MakeArrayElementRef(funcName, funcName.source, std::move(subscripts))}}};
+  // extend source to include closing paren
+  CHECK(*source.end() == ')');
+  source = CharBlock{source.begin(), source.end() + 1};
+  auto variable{Variable{common::Indirection{WithSource(
+      source, MakeArrayElementRef(funcName, std::move(subscripts)))}}};
   return Statement{std::nullopt,
       ActionStmt{common::Indirection{
           AssignmentStmt{std::move(variable), std::move(funcExpr)}}}};
