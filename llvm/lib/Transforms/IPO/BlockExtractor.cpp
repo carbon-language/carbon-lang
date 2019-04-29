@@ -94,7 +94,7 @@ void BlockExtractor::loadFile() {
     if (LineSplit.empty())
       continue;
     SmallVector<StringRef, 4> BBNames;
-    LineSplit[1].split(BBNames, ',', /*MaxSplit=*/-1,
+    LineSplit[1].split(BBNames, ';', /*MaxSplit=*/-1,
                        /*KeepEmpty=*/false);
     if (BBNames.empty())
       report_fatal_error("Missing bbs name");
