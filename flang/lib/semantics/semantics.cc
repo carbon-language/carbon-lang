@@ -21,6 +21,7 @@
 #include "check-deallocate.h"
 #include "check-do-concurrent.h"
 #include "check-if-stmt.h"
+#include "check-io.h"
 #include "check-nullify.h"
 #include "check-return.h"
 #include "check-stop.h"
@@ -82,8 +83,8 @@ private:
 using StatementSemanticsPass1 = ExprChecker;
 using StatementSemanticsPass2 = SemanticsVisitor<AllocateChecker,
     ArithmeticIfStmtChecker, AssignmentChecker, CoarrayChecker,
-    DeallocateChecker, DoConcurrentChecker, IfStmtChecker, NullifyChecker,
-    ReturnStmtChecker, StopChecker>;
+    DeallocateChecker, DoConcurrentChecker, IfStmtChecker, IoChecker,
+    NullifyChecker, ReturnStmtChecker, StopChecker>;
 
 static bool PerformStatementSemantics(
     SemanticsContext &context, parser::Program &program) {

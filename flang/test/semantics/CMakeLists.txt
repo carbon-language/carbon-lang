@@ -26,6 +26,12 @@ set(ERROR_TESTS
   implicit07.f90
   implicit08.f90
   int-literals.f90
+  io01.f90
+  io02.f90
+  io03.f90
+  io04.f90
+  io05.f90
+  io06.f90
   kinds02.f90
   resolve01.f90
   resolve02.f90

@@ -22,6 +22,7 @@ add_library(FortranSemantics
   check-deallocate.cc
   check-do-concurrent.cc
   check-if-stmt.cc
+  check-io.cc
   check-nullify.cc
   check-return.cc
   check-stop.cc
