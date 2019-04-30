@@ -4816,17 +4816,13 @@ SDValue SelectionDAG::foldConstantFPMath(unsigned Opcode, const SDLoc &DL,
       break;
     case ISD::FDIV:
       Status = C1.divide(C2, APFloat::rmNearestTiesToEven);
-      if (!HasFPExceptions || (Status != APFloat::opInvalidOp &&
-                               Status != APFloat::opDivByZero)) {
+      if (!HasFPExceptions || Status != APFloat::opInvalidOp)
         return getConstantFP(C1, DL, VT);
-      }
       break;
     case ISD::FREM:
       Status = C1.mod(C2);
-      if (!HasFPExceptions || (Status != APFloat::opInvalidOp &&
-                               Status != APFloat::opDivByZero)) {
+      if (!HasFPExceptions || Status != APFloat::opInvalidOp)
         return getConstantFP(C1, DL, VT);
-      }
       break;
     case ISD::FCOPYSIGN:
       C1.copySign(C2);
@@ -4840,7 +4836,7 @@ SDValue SelectionDAG::foldConstantFPMath(unsigned Opcode, const SDLoc &DL,
     // This can return overflow, underflow, or inexact; we don't care.
     // FIXME need to be more flexible about rounding mode.
     (void) C1.convert(EVTToAPFloatSemantics(VT), APFloat::rmNearestTiesToEven,
-                     &Unused);
+                      &Unused);
     return getConstantFP(C1, DL, VT);
   }
 
