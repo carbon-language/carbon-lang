@@ -17019,6 +17019,14 @@ SDValue X86TargetLowering::LowerINSERT_VECTOR_ELT(SDValue Op,
   }
   assert(VT.is128BitVector() && "Only 128-bit vector types should be left!");
 
+  // This will be just movd/movq/movss/movsd.
+  if (IdxVal == 0 && ISD::isBuildVectorAllZeros(N0.getNode()) &&
+      (EltVT == MVT::i32 || EltVT == MVT::f32 || EltVT == MVT::f64 ||
+       EltVT == MVT::i64)) {
+    N1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, N1);
+    return getShuffleVectorZeroOrUndef(N1, 0, true, Subtarget, DAG);
+  }
+
   // Transform it so it match pinsr{b,w} which expects a GR32 as its second
   // argument. SSE41 required for pinsrb.
   if (VT == MVT::v8i16 || (VT == MVT::v16i8 && Subtarget.hasSSE41())) {
