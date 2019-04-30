@@ -120,8 +120,8 @@ add_compiler_rt_runtime(clang_rt.fuzzer_no_main
 if(OS_NAME MATCHES "Linux|Fuchsia" AND
    COMPILER_RT_LIBCXX_PATH AND
    COMPILER_RT_LIBCXXABI_PATH)
- macro(partially_link_libcxx name dir arch)
-    if (${arch} MATCHES "i386")
+  macro(partially_link_libcxx name dir arch)
+    if(${arch} MATCHES "i386")
       set(EMULATION_ARGUMENT "-m" "elf_i386")
     else()
       set(EMULATION_ARGUMENT "")
