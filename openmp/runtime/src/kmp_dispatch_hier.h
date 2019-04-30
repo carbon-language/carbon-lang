@@ -691,6 +691,7 @@ public:
           sizeof(kmp_hier_top_unit_t<T>) * max);
       for (int j = 0; j < max; ++j) {
         layers[i][j].active = 0;
+        layers[i][j].hier_pr.flags.use_hier = TRUE;
       }
     }
     valid = true;
@@ -949,26 +950,23 @@ void __kmp_dispatch_init_hierarchy(ident_t *loc, int n,
   active = !team->t.t_serialized;
   th->th.th_ident = loc;
   num_hw_threads = __kmp_hier_max_units[kmp_hier_layer_e::LAYER_THREAD + 1];
-  if (!active) {
-    KD_TRACE(10, ("__kmp_dispatch_init_hierarchy: T#%d not active parallel. "
-                  "Using normal dispatch functions.\n",
-                  gtid));
-    pr = reinterpret_cast<dispatch_private_info_template<T> *>(
-        th->th.th_dispatch->th_disp_buffer);
-    KMP_DEBUG_ASSERT(pr);
-    pr->flags.use_hier = FALSE;
-    pr->flags.contains_last = FALSE;
-    return;
-  }
   KMP_DEBUG_ASSERT(th->th.th_dispatch ==
                    &th->th.th_team->t.t_dispatch[th->th.th_info.ds.ds_tid]);
-
   my_buffer_index = th->th.th_dispatch->th_disp_index;
   pr = reinterpret_cast<dispatch_private_info_template<T> *>(
       &th->th.th_dispatch
            ->th_disp_buffer[my_buffer_index % __kmp_dispatch_num_buffers]);
   sh = reinterpret_cast<dispatch_shared_info_template<T> volatile *>(
       &team->t.t_disp_buffer[my_buffer_index % __kmp_dispatch_num_buffers]);
+  if (!active) {
+    KD_TRACE(10, ("__kmp_dispatch_init_hierarchy: T#%d not active parallel. "
+                  "Using normal dispatch functions.\n",
+                  gtid));
+    KMP_DEBUG_ASSERT(pr);
+    pr->flags.use_hier = FALSE;
+    pr->flags.contains_last = FALSE;
+    return;
+  }
   KMP_DEBUG_ASSERT(pr);
   KMP_DEBUG_ASSERT(sh);
   pr->flags.use_hier = TRUE;
