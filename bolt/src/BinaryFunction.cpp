@@ -840,7 +840,15 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
   auto ValueOffset = static_cast<uint32_t>(ArrayStart - Section->getAddress());
   uint64_t Value = 0;
   std::vector<uint64_t> JTOffsetCandidates;
-  while (ValueOffset <= Section->getSize() - EntrySize) {
+  auto UpperBound = Section->getSize();
+  const auto *JumpTableBD = BC.getBinaryDataAtAddress(ArrayStart);
+  if (JumpTableBD && JumpTableBD->getSize()) {
+    UpperBound = ValueOffset + JumpTableBD->getSize();
+    assert(UpperBound <= Section->getSize() &&
+           "data object cannot cross a section boundary");
+  }
+
+  while (ValueOffset <= UpperBound - EntrySize) {
     DEBUG(dbgs() << "BOLT-DEBUG: indirect jmp at 0x"
                  << Twine::utohexstr(getAddress() + Offset)
                  << " is referencing address 0x"
