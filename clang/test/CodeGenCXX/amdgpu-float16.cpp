@@ -1,3 +1,4 @@
+// REQUIRES: amdgpu-registered-target
 // RUN: %clang_cc1 -triple amdgcn-amd-amdhsa -target-cpu gfx701 -S -o - %s | FileCheck %s -check-prefix=NOF16
 // RUN: %clang_cc1 -triple amdgcn-amd-amdhsa -target-cpu gfx803 -S -o - %s | FileCheck %s
 // RUN: %clang_cc1 -triple amdgcn-amd-amdhsa -target-cpu gfx900 -S -o - %s | FileCheck %s
