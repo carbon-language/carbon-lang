@@ -42765,15 +42765,17 @@ static SDValue combineExtractSubvector(SDNode *N, SelectionDAG &DAG,
         return DAG.getNode(X86ISD::VFPEXT, SDLoc(N), VT, InVec.getOperand(0));
       }
     }
-    if ((InOpcode == ISD::ZERO_EXTEND || InOpcode == ISD::SIGN_EXTEND) &&
+    if ((InOpcode == ISD::ANY_EXTEND || InOpcode == ISD::ZERO_EXTEND ||
+         InOpcode == ISD::SIGN_EXTEND) &&
         VT.is128BitVector() &&
         InVec.getOperand(0).getSimpleValueType().is128BitVector()) {
-      unsigned ExtOp =
-          InOpcode == ISD::ZERO_EXTEND ? ISD::ZERO_EXTEND_VECTOR_INREG
-                                       : ISD::SIGN_EXTEND_VECTOR_INREG;
+      unsigned ExtOp = InOpcode == ISD::SIGN_EXTEND
+                           ? ISD::SIGN_EXTEND_VECTOR_INREG
+                           : ISD::ZERO_EXTEND_VECTOR_INREG;
       return DAG.getNode(ExtOp, SDLoc(N), VT, InVec.getOperand(0));
     }
-    if ((InOpcode == ISD::ZERO_EXTEND_VECTOR_INREG ||
+    if ((InOpcode == ISD::ANY_EXTEND_VECTOR_INREG ||
+         InOpcode == ISD::ZERO_EXTEND_VECTOR_INREG ||
          InOpcode == ISD::SIGN_EXTEND_VECTOR_INREG) &&
         VT.is128BitVector() &&
         InVec.getOperand(0).getSimpleValueType().is128BitVector()) {
