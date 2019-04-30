@@ -67,8 +67,9 @@ public:
       PM.run(M);
     }
 
-    auto ObjBuffer =
-        llvm::make_unique<SmallVectorMemoryBuffer>(std::move(ObjBufferSV));
+    auto ObjBuffer = llvm::make_unique<SmallVectorMemoryBuffer>(
+        std::move(ObjBufferSV),
+        "<in memory object compiled from " + M.getModuleIdentifier() + ">");
     auto Obj =
         object::ObjectFile::createObjectFile(ObjBuffer->getMemBufferRef());
 
