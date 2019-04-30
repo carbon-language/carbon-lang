@@ -10257,7 +10257,9 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
   // When the adde's carry is not used.
   if ((N0.getOpcode() == ISD::ADDE || N0.getOpcode() == ISD::ADDCARRY) &&
       N0.hasOneUse() && !N0.getNode()->hasAnyUseOfValue(1) &&
-      (!LegalOperations || TLI.isOperationLegal(N0.getOpcode(), VT))) {
+      // We only do for addcarry before legalize operation
+      ((!LegalOperations && N0.getOpcode() == ISD::ADDCARRY) ||
+       TLI.isOperationLegal(N0.getOpcode(), VT))) {
     SDLoc SL(N);
     auto X = DAG.getNode(ISD::TRUNCATE, SL, VT, N0.getOperand(0));
     auto Y = DAG.getNode(ISD::TRUNCATE, SL, VT, N0.getOperand(1));
