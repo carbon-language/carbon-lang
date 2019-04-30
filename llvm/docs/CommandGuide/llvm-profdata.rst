@@ -262,7 +262,7 @@ c2_v_i (i = 1 .. v) are unmatched counters (or counters only existing in)
 Let sum_1 = c1_1 + c1_2 +  ... + c1_n +  c1_u_1 + c2_u_2 + ... + c2_u_s, and
 sum_2 = c2_1 + c2_2 + ... + c2_n + c2_v_1 + c2_v_2 + ... + c2_v_t.
 *overlap* = min(c1_1/sum_1, c2_1/sum_2) + min(c1_2/sum_1, c2_2/sum_2) + ...
- + min(c1_n/sum_1, c2_n/sum_2).
++ min(c1_n/sum_1, c2_n/sum_2).
 
 The result overlap distribution is a percentage number, ranging from 0.0% to
 100.0%, where 0.0% means there is no overlap and 100.0% means a perfect
