@@ -251,9 +251,11 @@ TEST_F(TransformerTest, NodePartNameDeclRefFailure) {
   )cc";
 
   StringRef Ref = "ref";
-  testRule(makeRule(declRefExpr(to(functionDecl())).bind(Ref),
-                    change<clang::Expr>(Ref, NodePart::Name, "good")),
-           Input, Input);
+  Transformer T(makeRule(declRefExpr(to(functionDecl())).bind(Ref),
+                         change<clang::Expr>(Ref, NodePart::Name, "good")),
+                consumer());
+  T.registerMatchers(&MatchFinder);
+  EXPECT_FALSE(rewrite(Input));
 }
 
 TEST_F(TransformerTest, NodePartMember) {
