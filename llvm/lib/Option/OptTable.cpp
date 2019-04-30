@@ -296,10 +296,11 @@ unsigned OptTable::findNearest(StringRef Option, std::string &NearestString,
     // "--help" over "-help".
     for (int P = 0; const char *const CandidatePrefix = CandidateInfo.Prefixes[P]; P++) {
       std::string NormalizedName = (LHS + Delimiter).str();
-      StringRef Candidate = (CandidatePrefix + CandidateName).str();
+      std::string Candidate = (CandidatePrefix + CandidateName).str();
+      StringRef CandidateRef = Candidate;
       unsigned Distance =
-          Candidate.edit_distance(NormalizedName, /*AllowReplacements=*/true,
-                                  /*MaxEditDistance=*/BestDistance);
+          CandidateRef.edit_distance(NormalizedName, /*AllowReplacements=*/true,
+                                     /*MaxEditDistance=*/BestDistance);
       if (Distance < BestDistance) {
         BestDistance = Distance;
         NearestString = (Candidate + RHS).str();
