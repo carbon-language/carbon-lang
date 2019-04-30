@@ -288,7 +288,8 @@ TEST_F(CoreAPIsStandardTest, LookupWithGeneratorFailure) {
       << "Generator failure did not propagate through lookupFlags";
 
   EXPECT_THAT_ERROR(
-      ES.lookup(JITDylibSearchList({{&JD, false}}), {Foo}).takeError(),
+      ES.lookup(JITDylibSearchList({{&JD, false}}), SymbolNameSet({Foo}))
+          .takeError(),
       Failed<StringError>())
       << "Generator failure did not propagate through lookup";
 }
