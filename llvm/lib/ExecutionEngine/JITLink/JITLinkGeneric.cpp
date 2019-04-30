@@ -345,6 +345,12 @@ void JITLinkerBase::applyLookupResult(AsyncLookupResult Result) {
     A.setAddress(KV.second.getAddress());
   }
 
+  LLVM_DEBUG({
+    dbgs() << "Externals after applying lookup result:\n";
+    for (auto *A : G->external_atoms())
+      dbgs() << "  " << A->getName() << ": "
+             << formatv("{0:x16}", A->getAddress()) << "\n";
+  });
   assert(llvm::all_of(G->external_atoms(),
                       [](Atom *A) { return A->getAddress() != 0; }) &&
          "All atoms should have been resolved by this point");
