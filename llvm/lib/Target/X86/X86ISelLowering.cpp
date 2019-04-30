@@ -2059,13 +2059,11 @@ unsigned X86TargetLowering::getByValTypeAlignment(Type *Ty,
 /// It returns EVT::Other if the type should be determined using generic
 /// target-independent logic.
 EVT
-X86TargetLowering::getOptimalMemOpType(uint64_t Size,
-                                       unsigned DstAlign, unsigned SrcAlign,
-                                       bool IsMemset, bool ZeroMemset,
-                                       bool MemcpyStrSrc,
-                                       MachineFunction &MF) const {
-  const Function &F = MF.getFunction();
-  if (!F.hasFnAttribute(Attribute::NoImplicitFloat)) {
+X86TargetLowering::getOptimalMemOpType(
+    uint64_t Size, unsigned DstAlign, unsigned SrcAlign, bool IsMemset,
+    bool ZeroMemset, bool MemcpyStrSrc,
+    const AttributeList &FuncAttributes) const {
+  if (!FuncAttributes.hasFnAttribute(Attribute::NoImplicitFloat)) {
     if (Size >= 16 &&
         (!Subtarget.isUnalignedMem16Slow() ||
          ((DstAlign == 0 || DstAlign >= 16) &&
