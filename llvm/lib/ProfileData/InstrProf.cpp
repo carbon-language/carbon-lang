@@ -535,8 +535,7 @@ void InstrProfRecord::overlapValueProfData(uint32_t ValueKind,
                                            OverlapStats &Overlap,
                                            OverlapStats &FuncLevelOverlap) {
   uint32_t ThisNumValueSites = getNumValueSites(ValueKind);
-  uint32_t OtherNumValueSites = Other.getNumValueSites(ValueKind);
-  assert(ThisNumValueSites == OtherNumValueSites);
+  assert(ThisNumValueSites == Other.getNumValueSites(ValueKind));
   if (!ThisNumValueSites)
     return;
 
@@ -1183,10 +1182,10 @@ Error OverlapStats::accumuateCounts(const std::string &BaseFilename,
   };
   auto Ret = getProfileSum(BaseFilename, Base);
   if (Ret)
-    return std::move(Ret);
+    return Ret;
   Ret = getProfileSum(TestFilename, Test);
   if (Ret)
-    return std::move(Ret);
+    return Ret;
   this->BaseFilename = &BaseFilename;
   this->TestFilename = &TestFilename;
   Valid = true;
