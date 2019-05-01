@@ -274,16 +274,41 @@ function(add_compiler_rt_runtime name type)
     endif()
 
     if(type STREQUAL "OBJECT")
-      string(TOUPPER ${CMAKE_BUILD_TYPE} config)
-      get_property(cflags SOURCE ${sources_${libname}} PROPERTY COMPILE_FLAGS)
-      separate_arguments(cflags)
+      get_property(cflags_${libname} SOURCE ${sources_${libname}} PROPERTY COMPILE_FLAGS)
+      if(CMAKE_C_COMPILER_ID MATCHES Clang AND CMAKE_C_COMPILER_TARGET)
+        list(APPEND cflags_${libname} "-target ${CMAKE_C_COMPILER_TARGET}")
+      endif()
+      string(REPLACE ";" " " extra_cflags_${libname} "${extra_cflags_${libname}}")
+      string(REGEX MATCHALL "<[A-Za-z0-9_]*>" substitutions
+             ${CMAKE_C_COMPILE_OBJECT})
+      set(compile_command_${libname} "${CMAKE_C_COMPILE_OBJECT}")
+      set(output_file_${libname} ${output_name_${libname}}${CMAKE_C_OUTPUT_EXTENSION})
+      foreach(substitution ${substitutions})
+        if(substitution STREQUAL "<CMAKE_C_COMPILER>")
+          string(REPLACE "<CMAKE_C_COMPILER>" "${CMAKE_C_COMPILER}"
+                 compile_command_${libname} ${compile_command_${libname}})
+        elseif(substitution STREQUAL "<OBJECT>")
+          string(REPLACE "<OBJECT>" "${output_dir_${libname}}/${output_file_${libname}}"
+                 compile_command_${libname} ${compile_command_${libname}})
+        elseif(substitution STREQUAL "<SOURCE>")
+          string(REPLACE "<SOURCE>" "${sources_${libname}}"
+                 compile_command_${libname} ${compile_command_${libname}})
+        elseif(substitution STREQUAL "<FLAGS>")
+          string(REPLACE "<FLAGS>" "${CMAKE_C_FLAGS} ${cflags_${libname}} ${extra_cflags_${libname}}"
+                 compile_command_${libname} ${compile_command_${libname}})
+        else()
+          string(REPLACE "${substitution}" "" compile_command_${libname}
+                 ${compile_command_${libname}})
+        endif()
+      endforeach()
+      separate_arguments(compile_command_${libname})
       add_custom_command(
-          OUTPUT ${output_dir_${libname}}/${output_name_${libname}}.o
-          COMMAND ${CMAKE_C_COMPILER} ${sources_${libname}} ${cflags} ${extra_cflags_${libname}} -c -o ${output_dir_${libname}}/${output_name_${libname}}.o
+          OUTPUT ${output_dir_${libname}}/${output_file_${libname}}
+          COMMAND ${compile_command_${libname}}
           DEPENDS ${sources_${libname}}
-          COMMENT "Building C object ${output_name_${libname}}.o")
-      add_custom_target(${libname} DEPENDS ${output_dir_${libname}}/${output_name_${libname}}.o)
-      install(FILES ${output_dir_${libname}}/${output_name_${libname}}.o
+          COMMENT "Building C object ${output_file_${libname}}")
+      add_custom_target(${libname} DEPENDS ${output_dir_${libname}}/${output_file_${libname}})
+      install(FILES ${output_dir_${libname}}/${output_file_${libname}}
         DESTINATION ${install_dir_${libname}}
         ${COMPONENT_OPTION})
     else()
