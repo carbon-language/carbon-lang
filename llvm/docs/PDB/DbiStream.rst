@@ -105,7 +105,8 @@ further guidance.
   
 - **PdbDllRbld** - Unknown
 
-- **MFCTypeServerIndex** - The length of the :ref:dbi_mfc_type_server_substream
+- **MFCTypeServerIndex** - The length of the
+  :ref:`dbi_mfc_type_server_substream`.
 
 - **Flags** - A bitfield with the following layout, containing various
   information about how the program was built:
