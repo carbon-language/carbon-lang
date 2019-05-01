@@ -10,7 +10,7 @@ RUN: not llvm-objdump -s %p/Inputs/invalid-strtab-non-null.elf 2>&1 | FileCheck 
 NON-NULL: Invalid data was encountered while parsing the file
 
 Test the sh_entsize are invalid
-RUN: llvm-readobj -s %p/Inputs/invalid-sh_entsize.elf | FileCheck --check-prefix=SECTION %s
+RUN: llvm-readobj -S %p/Inputs/invalid-sh_entsize.elf | FileCheck --check-prefix=SECTION %s
 
 SECTION:         Name: .dynsym
 SECTION-NEXT:    Type: SHT_DYNSYM
@@ -46,7 +46,7 @@ INVALID-DYNSYM-SIZE: Invalid entity size
 RUN: not llvm-readobj -t %p/Inputs/invalid-section-index.elf 2>&1 | FileCheck --check-prefix=INVALID-SECTION-INDEX %s
 INVALID-SECTION-INDEX: invalid section index
 
-RUN: not llvm-readobj -s %p/Inputs/invalid-section-size.elf 2>&1 | FileCheck --check-prefix=INVALID-SECTION-SIZE %s
+RUN: not llvm-readobj -S %p/Inputs/invalid-section-size.elf 2>&1 | FileCheck --check-prefix=INVALID-SECTION-SIZE %s
 INVALID-SECTION-SIZE: invalid section header entry size (e_shentsize) in ELF header
 
 
