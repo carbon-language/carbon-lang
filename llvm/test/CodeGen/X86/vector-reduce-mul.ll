@@ -2492,12 +2492,10 @@ define i8 @test_v64i8(<64 x i8> %a0) {
 ; AVX512BW-NEXT:    vpmullw %zmm2, %zmm0, %zmm0
 ; AVX512BW-NEXT:    vpandq %zmm3, %zmm0, %zmm0
 ; AVX512BW-NEXT:    vpackuswb %zmm1, %zmm0, %zmm0
-; AVX512BW-NEXT:    vpsrlw $8, %xmm0, %xmm2
-; AVX512BW-NEXT:    vpunpcklbw {{.*#+}} zmm0 = zmm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,16,16,17,17,18,18,19,19,20,20,21,21,22,22,23,23,32,32,33,33,34,34,35,35,36,36,37,37,38,38,39,39,48,48,49,49,50,50,51,51,52,52,53,53,54,54,55,55]
-; AVX512BW-NEXT:    vpunpcklbw {{.*#+}} zmm2 = zmm2[0],zmm0[0],zmm2[1],zmm0[1],zmm2[2],zmm0[2],zmm2[3],zmm0[3],zmm2[4],zmm0[4],zmm2[5],zmm0[5],zmm2[6],zmm0[6],zmm2[7],zmm0[7],zmm2[16],zmm0[16],zmm2[17],zmm0[17],zmm2[18],zmm0[18],zmm2[19],zmm0[19],zmm2[20],zmm0[20],zmm2[21],zmm0[21],zmm2[22],zmm0[22],zmm2[23],zmm0[23],zmm2[32],zmm0[32],zmm2[33],zmm0[33],zmm2[34],zmm0[34],zmm2[35],zmm0[35],zmm2[36],zmm0[36],zmm2[37],zmm0[37],zmm2[38],zmm0[38],zmm2[39],zmm0[39],zmm2[48],zmm0[48],zmm2[49],zmm0[49],zmm2[50],zmm0[50],zmm2[51],zmm0[51],zmm2[52],zmm0[52],zmm2[53],zmm0[53],zmm2[54],zmm0[54],zmm2[55],zmm0[55]
-; AVX512BW-NEXT:    vpmullw %zmm2, %zmm0, %zmm0
-; AVX512BW-NEXT:    vpandq %zmm3, %zmm0, %zmm0
-; AVX512BW-NEXT:    vpackuswb %zmm1, %zmm0, %zmm0
+; AVX512BW-NEXT:    vpsrlw $8, %xmm0, %xmm1
+; AVX512BW-NEXT:    vpunpcklbw {{.*#+}} ymm0 = ymm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,16,16,17,17,18,18,19,19,20,20,21,21,22,22,23,23]
+; AVX512BW-NEXT:    vpunpcklbw {{.*#+}} ymm1 = ymm1[0],ymm0[0],ymm1[1],ymm0[1],ymm1[2],ymm0[2],ymm1[3],ymm0[3],ymm1[4],ymm0[4],ymm1[5],ymm0[5],ymm1[6],ymm0[6],ymm1[7],ymm0[7],ymm1[16],ymm0[16],ymm1[17],ymm0[17],ymm1[18],ymm0[18],ymm1[19],ymm0[19],ymm1[20],ymm0[20],ymm1[21],ymm0[21],ymm1[22],ymm0[22],ymm1[23],ymm0[23]
+; AVX512BW-NEXT:    vpmullw %xmm1, %xmm0, %xmm0
 ; AVX512BW-NEXT:    vpextrb $0, %xmm0, %eax
 ; AVX512BW-NEXT:    # kill: def $al killed $al killed $eax
 ; AVX512BW-NEXT:    vzeroupper
@@ -2544,12 +2542,10 @@ define i8 @test_v64i8(<64 x i8> %a0) {
 ; AVX512BWVL-NEXT:    vpmullw %zmm2, %zmm0, %zmm0
 ; AVX512BWVL-NEXT:    vpandq %zmm3, %zmm0, %zmm0
 ; AVX512BWVL-NEXT:    vpackuswb %zmm1, %zmm0, %zmm0
-; AVX512BWVL-NEXT:    vpsrlw $8, %xmm0, %xmm2
-; AVX512BWVL-NEXT:    vpunpcklbw {{.*#+}} zmm0 = zmm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,16,16,17,17,18,18,19,19,20,20,21,21,22,22,23,23,32,32,33,33,34,34,35,35,36,36,37,37,38,38,39,39,48,48,49,49,50,50,51,51,52,52,53,53,54,54,55,55]
-; AVX512BWVL-NEXT:    vpunpcklbw {{.*#+}} zmm2 = zmm2[0],zmm0[0],zmm2[1],zmm0[1],zmm2[2],zmm0[2],zmm2[3],zmm0[3],zmm2[4],zmm0[4],zmm2[5],zmm0[5],zmm2[6],zmm0[6],zmm2[7],zmm0[7],zmm2[16],zmm0[16],zmm2[17],zmm0[17],zmm2[18],zmm0[18],zmm2[19],zmm0[19],zmm2[20],zmm0[20],zmm2[21],zmm0[21],zmm2[22],zmm0[22],zmm2[23],zmm0[23],zmm2[32],zmm0[32],zmm2[33],zmm0[33],zmm2[34],zmm0[34],zmm2[35],zmm0[35],zmm2[36],zmm0[36],zmm2[37],zmm0[37],zmm2[38],zmm0[38],zmm2[39],zmm0[39],zmm2[48],zmm0[48],zmm2[49],zmm0[49],zmm2[50],zmm0[50],zmm2[51],zmm0[51],zmm2[52],zmm0[52],zmm2[53],zmm0[53],zmm2[54],zmm0[54],zmm2[55],zmm0[55]
-; AVX512BWVL-NEXT:    vpmullw %zmm2, %zmm0, %zmm0
-; AVX512BWVL-NEXT:    vpandq %zmm3, %zmm0, %zmm0
-; AVX512BWVL-NEXT:    vpackuswb %zmm1, %zmm0, %zmm0
+; AVX512BWVL-NEXT:    vpsrlw $8, %xmm0, %xmm1
+; AVX512BWVL-NEXT:    vpunpcklbw {{.*#+}} ymm0 = ymm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,16,16,17,17,18,18,19,19,20,20,21,21,22,22,23,23]
+; AVX512BWVL-NEXT:    vpunpcklbw {{.*#+}} ymm1 = ymm1[0],ymm0[0],ymm1[1],ymm0[1],ymm1[2],ymm0[2],ymm1[3],ymm0[3],ymm1[4],ymm0[4],ymm1[5],ymm0[5],ymm1[6],ymm0[6],ymm1[7],ymm0[7],ymm1[16],ymm0[16],ymm1[17],ymm0[17],ymm1[18],ymm0[18],ymm1[19],ymm0[19],ymm1[20],ymm0[20],ymm1[21],ymm0[21],ymm1[22],ymm0[22],ymm1[23],ymm0[23]
+; AVX512BWVL-NEXT:    vpmullw %xmm1, %xmm0, %xmm0
 ; AVX512BWVL-NEXT:    vpextrb $0, %xmm0, %eax
 ; AVX512BWVL-NEXT:    # kill: def $al killed $al killed $eax
 ; AVX512BWVL-NEXT:    vzeroupper
@@ -3076,12 +3072,10 @@ define i8 @test_v128i8(<128 x i8> %a0) {
 ; AVX512BW-NEXT:    vpmullw %zmm2, %zmm0, %zmm0
 ; AVX512BW-NEXT:    vpandq %zmm3, %zmm0, %zmm0
 ; AVX512BW-NEXT:    vpackuswb %zmm1, %zmm0, %zmm0
-; AVX512BW-NEXT:    vpsrlw $8, %xmm0, %xmm2
-; AVX512BW-NEXT:    vpunpcklbw {{.*#+}} zmm0 = zmm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,16,16,17,17,18,18,19,19,20,20,21,21,22,22,23,23,32,32,33,33,34,34,35,35,36,36,37,37,38,38,39,39,48,48,49,49,50,50,51,51,52,52,53,53,54,54,55,55]
-; AVX512BW-NEXT:    vpunpcklbw {{.*#+}} zmm2 = zmm2[0],zmm0[0],zmm2[1],zmm0[1],zmm2[2],zmm0[2],zmm2[3],zmm0[3],zmm2[4],zmm0[4],zmm2[5],zmm0[5],zmm2[6],zmm0[6],zmm2[7],zmm0[7],zmm2[16],zmm0[16],zmm2[17],zmm0[17],zmm2[18],zmm0[18],zmm2[19],zmm0[19],zmm2[20],zmm0[20],zmm2[21],zmm0[21],zmm2[22],zmm0[22],zmm2[23],zmm0[23],zmm2[32],zmm0[32],zmm2[33],zmm0[33],zmm2[34],zmm0[34],zmm2[35],zmm0[35],zmm2[36],zmm0[36],zmm2[37],zmm0[37],zmm2[38],zmm0[38],zmm2[39],zmm0[39],zmm2[48],zmm0[48],zmm2[49],zmm0[49],zmm2[50],zmm0[50],zmm2[51],zmm0[51],zmm2[52],zmm0[52],zmm2[53],zmm0[53],zmm2[54],zmm0[54],zmm2[55],zmm0[55]
-; AVX512BW-NEXT:    vpmullw %zmm2, %zmm0, %zmm0
-; AVX512BW-NEXT:    vpandq %zmm3, %zmm0, %zmm0
-; AVX512BW-NEXT:    vpackuswb %zmm1, %zmm0, %zmm0
+; AVX512BW-NEXT:    vpsrlw $8, %xmm0, %xmm1
+; AVX512BW-NEXT:    vpunpcklbw {{.*#+}} ymm0 = ymm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,16,16,17,17,18,18,19,19,20,20,21,21,22,22,23,23]
+; AVX512BW-NEXT:    vpunpcklbw {{.*#+}} ymm1 = ymm1[0],ymm0[0],ymm1[1],ymm0[1],ymm1[2],ymm0[2],ymm1[3],ymm0[3],ymm1[4],ymm0[4],ymm1[5],ymm0[5],ymm1[6],ymm0[6],ymm1[7],ymm0[7],ymm1[16],ymm0[16],ymm1[17],ymm0[17],ymm1[18],ymm0[18],ymm1[19],ymm0[19],ymm1[20],ymm0[20],ymm1[21],ymm0[21],ymm1[22],ymm0[22],ymm1[23],ymm0[23]
+; AVX512BW-NEXT:    vpmullw %xmm1, %xmm0, %xmm0
 ; AVX512BW-NEXT:    vpextrb $0, %xmm0, %eax
 ; AVX512BW-NEXT:    # kill: def $al killed $al killed $eax
 ; AVX512BW-NEXT:    vzeroupper
@@ -3137,12 +3131,10 @@ define i8 @test_v128i8(<128 x i8> %a0) {
 ; AVX512BWVL-NEXT:    vpmullw %zmm2, %zmm0, %zmm0
 ; AVX512BWVL-NEXT:    vpandq %zmm3, %zmm0, %zmm0
 ; AVX512BWVL-NEXT:    vpackuswb %zmm1, %zmm0, %zmm0
-; AVX512BWVL-NEXT:    vpsrlw $8, %xmm0, %xmm2
-; AVX512BWVL-NEXT:    vpunpcklbw {{.*#+}} zmm0 = zmm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,16,16,17,17,18,18,19,19,20,20,21,21,22,22,23,23,32,32,33,33,34,34,35,35,36,36,37,37,38,38,39,39,48,48,49,49,50,50,51,51,52,52,53,53,54,54,55,55]
-; AVX512BWVL-NEXT:    vpunpcklbw {{.*#+}} zmm2 = zmm2[0],zmm0[0],zmm2[1],zmm0[1],zmm2[2],zmm0[2],zmm2[3],zmm0[3],zmm2[4],zmm0[4],zmm2[5],zmm0[5],zmm2[6],zmm0[6],zmm2[7],zmm0[7],zmm2[16],zmm0[16],zmm2[17],zmm0[17],zmm2[18],zmm0[18],zmm2[19],zmm0[19],zmm2[20],zmm0[20],zmm2[21],zmm0[21],zmm2[22],zmm0[22],zmm2[23],zmm0[23],zmm2[32],zmm0[32],zmm2[33],zmm0[33],zmm2[34],zmm0[34],zmm2[35],zmm0[35],zmm2[36],zmm0[36],zmm2[37],zmm0[37],zmm2[38],zmm0[38],zmm2[39],zmm0[39],zmm2[48],zmm0[48],zmm2[49],zmm0[49],zmm2[50],zmm0[50],zmm2[51],zmm0[51],zmm2[52],zmm0[52],zmm2[53],zmm0[53],zmm2[54],zmm0[54],zmm2[55],zmm0[55]
-; AVX512BWVL-NEXT:    vpmullw %zmm2, %zmm0, %zmm0
-; AVX512BWVL-NEXT:    vpandq %zmm3, %zmm0, %zmm0
-; AVX512BWVL-NEXT:    vpackuswb %zmm1, %zmm0, %zmm0
+; AVX512BWVL-NEXT:    vpsrlw $8, %xmm0, %xmm1
+; AVX512BWVL-NEXT:    vpunpcklbw {{.*#+}} ymm0 = ymm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,16,16,17,17,18,18,19,19,20,20,21,21,22,22,23,23]
+; AVX512BWVL-NEXT:    vpunpcklbw {{.*#+}} ymm1 = ymm1[0],ymm0[0],ymm1[1],ymm0[1],ymm1[2],ymm0[2],ymm1[3],ymm0[3],ymm1[4],ymm0[4],ymm1[5],ymm0[5],ymm1[6],ymm0[6],ymm1[7],ymm0[7],ymm1[16],ymm0[16],ymm1[17],ymm0[17],ymm1[18],ymm0[18],ymm1[19],ymm0[19],ymm1[20],ymm0[20],ymm1[21],ymm0[21],ymm1[22],ymm0[22],ymm1[23],ymm0[23]
+; AVX512BWVL-NEXT:    vpmullw %xmm1, %xmm0, %xmm0
 ; AVX512BWVL-NEXT:    vpextrb $0, %xmm0, %eax
 ; AVX512BWVL-NEXT:    # kill: def $al killed $al killed $eax
 ; AVX512BWVL-NEXT:    vzeroupper

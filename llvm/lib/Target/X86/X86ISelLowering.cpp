@@ -33400,11 +33400,15 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
   }
   }
 
-  // For 256-bit ops that are two 128-bit ops glued together, if we do not
-  // demand any of the high elements, then narrow the op to 128-bits:
+  // For 256/512-bit ops that are 128/256-bit ops glued together, if we do not
+  // demand any of the high elements, then narrow the op to 128/256-bits: e.g.
   // (op ymm0, ymm1) --> insert undef, (op xmm0, xmm1), 0
-  // TODO: Handle 512-bit -> 128/256-bit ops as well.
-  if (VT.is256BitVector() && DemandedElts.lshr(NumElts / 2) == 0) {
+  // TODO: Handle 512-bit -> 128-bit ops as well.
+  if ((VT.is256BitVector() || VT.is512BitVector()) &&
+      DemandedElts.lshr(NumElts / 2) == 0) {
+    unsigned SizeInBits = VT.getSizeInBits();
+    unsigned ExtSizeInBits = SizeInBits / 2;
+
     switch (Opc) {
       // Target Shuffles.
     case X86ISD::PSHUFB:
@@ -33421,12 +33425,15 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
       SDLoc DL(Op);
       MVT ExtVT = VT.getSimpleVT();
       ExtVT = MVT::getVectorVT(ExtVT.getScalarType(),
-                               128 / ExtVT.getScalarSizeInBits());
-      SDValue Ext0 = extract128BitVector(Op.getOperand(0), 0, TLO.DAG, DL);
-      SDValue Ext1 = extract128BitVector(Op.getOperand(1), 0, TLO.DAG, DL);
+                               ExtSizeInBits / ExtVT.getScalarSizeInBits());
+      SDValue Ext0 =
+          extractSubVector(Op.getOperand(0), 0, TLO.DAG, DL, ExtSizeInBits);
+      SDValue Ext1 =
+          extractSubVector(Op.getOperand(1), 0, TLO.DAG, DL, ExtSizeInBits);
       SDValue ExtOp = TLO.DAG.getNode(Opc, DL, ExtVT, Ext0, Ext1);
       SDValue UndefVec = TLO.DAG.getUNDEF(VT);
-      SDValue Insert = insert128BitVector(UndefVec, ExtOp, 0, TLO.DAG, DL);
+      SDValue Insert =
+          insertSubVector(UndefVec, ExtOp, 0, TLO.DAG, DL, ExtSizeInBits);
       return TLO.CombineTo(Op, Insert);
     }
     }
