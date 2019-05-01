@@ -33406,6 +33406,9 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
   // TODO: Handle 512-bit -> 128/256-bit ops as well.
   if (VT.is256BitVector() && DemandedElts.lshr(NumElts / 2) == 0) {
     switch (Opc) {
+      // Target Shuffles.
+    case X86ISD::PSHUFB:
+      // Horizontal Ops.
     case X86ISD::HADD:
     case X86ISD::HSUB:
     case X86ISD::FHADD:
@@ -42816,18 +42819,6 @@ static SDValue combineExtractSubvector(SDNode *N, SelectionDAG &DAG,
         VT.is128BitVector() &&
         InVec.getOperand(0).getSimpleValueType().is128BitVector()) {
       return DAG.getNode(InOpcode, SDLoc(N), VT, InVec.getOperand(0));
-    }
-    if (InOpcode == ISD::BITCAST) {
-      // TODO - do this for target shuffles in general.
-      SDValue InVecBC = peekThroughOneUseBitcasts(InVec);
-      if (InVecBC.getOpcode() == X86ISD::PSHUFB && VT.is128BitVector()) {
-        SDLoc DL(N);
-        SDValue SubPSHUFB =
-            DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8,
-                        extract128BitVector(InVecBC.getOperand(0), 0, DAG, DL),
-                        extract128BitVector(InVecBC.getOperand(1), 0, DAG, DL));
-        return DAG.getBitcast(VT, SubPSHUFB);
-      }
     }
   }
 
