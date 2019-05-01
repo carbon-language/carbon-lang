@@ -73,7 +73,7 @@ check_cxx_section_exists(".init_array" COMPILER_RT_HAS_INITFINI_ARRAY
 
 append_list_if(COMPILER_RT_HAS_INITFINI_ARRAY -DCRT_HAS_INITFINI_ARRAY CRT_CFLAGS)
 append_list_if(COMPILER_RT_HAS_FPIC_FLAG -fPIC CRT_CFLAGS)
-append_list_if(COMPILER_RT_HAS_NO_PEDANTIC -Wno-pedantic CRT_CFLAGS)
+append_list_if(COMPILER_RT_HAS_WNO_PEDANTIC -Wno-pedantic CRT_CFLAGS)
 
 foreach(arch ${CRT_SUPPORTED_ARCH})
   add_compiler_rt_runtime(clang_rt.crtbegin
