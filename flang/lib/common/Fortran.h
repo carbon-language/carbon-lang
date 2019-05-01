@@ -42,14 +42,14 @@ ENUM_CLASS(RelationalOperator, LT, LE, EQ, NE, GE, GT)
 ENUM_CLASS(Intent, Default, In, Out, InOut)
 
 ENUM_CLASS(IoStmtKind, None, Backspace, Close, Endfile, Flush, Inquire, Open,
-    Print, Read, Rewind, Wait, Write);
+    Print, Read, Rewind, Wait, Write)
 
 // Union of specifiers for all I/O statements.
-ENUM_CLASS(IoSpecKind, Access, Action, Advance, Asynchronous, Blank,
-    Decimal, Delim, Direct, Encoding, End, Eor, Err, Exist, File, Fmt, Form,
-    Formatted, Id, Iomsg, Iostat, Name, Named, Newunit, Nextrec, Nml, Number,
-    Opened, Pad, Pending, Pos, Position, Read, Readwrite, Rec, Recl, Round,
-    Sequential, Sign, Size, Status, Stream, Unformatted, Unit, Write,
+ENUM_CLASS(IoSpecKind, Access, Action, Advance, Asynchronous, Blank, Decimal,
+    Delim, Direct, Encoding, End, Eor, Err, Exist, File, Fmt, Form, Formatted,
+    Id, Iomsg, Iostat, Name, Named, Newunit, Nextrec, Nml, Number, Opened, Pad,
+    Pending, Pos, Position, Read, Readwrite, Rec, Recl, Round, Sequential, Sign,
+    Size, Status, Stream, Unformatted, Unit, Write,
     Convert,  // nonstandard
     Dispose,  // nonstandard
 )
