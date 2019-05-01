@@ -221,6 +221,9 @@ ModulePass *createAMDGPUOpenCLEnqueuedBlockLoweringPass();
 void initializeAMDGPUOpenCLEnqueuedBlockLoweringPass(PassRegistry &);
 extern char &AMDGPUOpenCLEnqueuedBlockLoweringID;
 
+void initializeGCNNSAReassignPass(PassRegistry &);
+extern char &GCNNSAReassignID;
+
 Target &getTheAMDGPUTarget();
 Target &getTheGCNTarget();
 
