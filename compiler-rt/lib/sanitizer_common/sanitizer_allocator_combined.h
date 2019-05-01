@@ -23,7 +23,7 @@ template <class PrimaryAllocator,
           class LargeMmapAllocatorPtrArray = DefaultLargeMmapAllocatorPtrArray>
 class CombinedAllocator {
  public:
-  using AllocatorCache = SizeClassAllocatorLocalCache<PrimaryAllocator>;
+  using AllocatorCache = typename PrimaryAllocator::AllocatorCache;
   using SecondaryAllocator =
       LargeMmapAllocator<typename PrimaryAllocator::MapUnmapCallback,
                          LargeMmapAllocatorPtrArray,
