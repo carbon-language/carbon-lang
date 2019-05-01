@@ -37,6 +37,9 @@ def Doopf2 : Flag<["-"], "doopf2">, HelpText<"The doopf2 option">, Flags<[OptFla
 def Ermgh : Joined<["--"], "ermgh">, HelpText<"The ermgh option">, MetaVarName<"ERMGH">, Flags<[OptFlag1]>;
 def Fjormp : Flag<["--"], "fjormp">, HelpText<"The fjormp option">, Flags<[OptFlag1]>;
 
-def Glormp_eq : Flag<["--"], "glormp=">;
+def Glorrmp_eq : Flag<["--"], "glorrmp=">;
+
+def Blurmpq : Flag<["--"], "blurmp">;
+def Blurmpq_eq : Flag<["--"], "blurmp=">;
 
 def DashDash : Option<["--"], "", KIND_REMAINING_ARGS>;

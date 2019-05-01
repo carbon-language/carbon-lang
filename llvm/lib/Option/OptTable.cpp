@@ -301,6 +301,15 @@ unsigned OptTable::findNearest(StringRef Option, std::string &NearestString,
       unsigned Distance =
           CandidateRef.edit_distance(NormalizedName, /*AllowReplacements=*/true,
                                      /*MaxEditDistance=*/BestDistance);
+      if (RHS.empty() && CandidateHasDelimiter) {
+        // The Candidate ends with a = or : delimiter, but the option passed in
+        // didn't contain the delimiter (or doesn't have anything after it).
+        // In that case, penalize the correction: `-nodefaultlibs` is more
+        // likely to be a spello for `-nodefaultlib` than `-nodefaultlib:` even
+        // though both have an unmodified editing distance of 1, since the
+        // latter would need an argument.
+        ++Distance;
+      }
       if (Distance < BestDistance) {
         BestDistance = Distance;
         NearestString = (Candidate + RHS).str();
