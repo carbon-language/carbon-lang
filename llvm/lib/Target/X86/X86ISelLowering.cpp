@@ -34909,6 +34909,39 @@ static SDValue combineExtractVectorElt(SDNode *N, SelectionDAG &DAG,
   if (SDValue V = scalarizeExtEltFP(N, DAG))
     return V;
 
+  // Attempt to extract a i1 element by using MOVMSK to extract the signbits
+  // and then testing the relevant element.
+  if (CIdx && SrcVT.getScalarType() == MVT::i1) {
+    SmallVector<SDNode *, 16> BoolExtracts;
+    auto IsBoolExtract = [&BoolExtracts](SDNode *Use) {
+      if (Use->getOpcode() == ISD::EXTRACT_VECTOR_ELT &&
+          isa<ConstantSDNode>(Use->getOperand(1)) &&
+          Use->getValueType(0) == MVT::i1) {
+        BoolExtracts.push_back(Use);
+        return true;
+      }
+      return false;
+    };
+    if (all_of(InputVector->uses(), IsBoolExtract) &&
+        BoolExtracts.size() > 1) {
+      unsigned NumSrcElts = SrcVT.getVectorNumElements();
+      EVT BCVT = EVT::getIntegerVT(*DAG.getContext(), NumSrcElts);
+      if (SDValue BC =
+              combineBitcastvxi1(DAG, BCVT, InputVector, dl, Subtarget)) {
+        for (SDNode *Use : BoolExtracts) {
+          // extractelement vXi1 X, MaskIdx --> ((movmsk X) & Mask) == Mask
+          unsigned MaskIdx = Use->getConstantOperandVal(1);
+          APInt MaskBit = APInt::getOneBitSet(NumSrcElts, MaskIdx);
+          SDValue Mask = DAG.getConstant(MaskBit, dl, BCVT);
+          SDValue Res = DAG.getNode(ISD::AND, dl, BCVT, BC, Mask);
+          Res = DAG.getSetCC(dl, MVT::i1, Res, Mask, ISD::SETEQ);
+          DCI.CombineTo(Use, Res);
+        }
+        return SDValue(N, 0);
+      }
+    }
+  }
+
   return SDValue();
 }
 
