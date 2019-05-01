@@ -157,8 +157,8 @@ define i64 @test_v4i64(<4 x i64> %a0) {
 ; AVX2-NEXT:    vpmuludq %ymm2, %ymm0, %ymm2
 ; AVX2-NEXT:    vpsrlq $32, %ymm0, %ymm3
 ; AVX2-NEXT:    vpmuludq %ymm1, %ymm3, %ymm3
-; AVX2-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
-; AVX2-NEXT:    vpsllq $32, %ymm2, %ymm2
+; AVX2-NEXT:    vpaddq %xmm3, %xmm2, %xmm2
+; AVX2-NEXT:    vpsllq $32, %xmm2, %xmm2
 ; AVX2-NEXT:    vpmuludq %ymm1, %ymm0, %ymm0
 ; AVX2-NEXT:    vpaddq %xmm2, %xmm0, %xmm0
 ; AVX2-NEXT:    vmovq %xmm0, %rax
@@ -181,8 +181,8 @@ define i64 @test_v4i64(<4 x i64> %a0) {
 ; AVX512BW-NEXT:    vpmuludq %ymm2, %ymm0, %ymm2
 ; AVX512BW-NEXT:    vpsrlq $32, %ymm0, %ymm3
 ; AVX512BW-NEXT:    vpmuludq %ymm1, %ymm3, %ymm3
-; AVX512BW-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
-; AVX512BW-NEXT:    vpsllq $32, %ymm2, %ymm2
+; AVX512BW-NEXT:    vpaddq %xmm3, %xmm2, %xmm2
+; AVX512BW-NEXT:    vpsllq $32, %xmm2, %xmm2
 ; AVX512BW-NEXT:    vpmuludq %ymm1, %ymm0, %ymm0
 ; AVX512BW-NEXT:    vpaddq %xmm2, %xmm0, %xmm0
 ; AVX512BW-NEXT:    vmovq %xmm0, %rax
@@ -205,8 +205,8 @@ define i64 @test_v4i64(<4 x i64> %a0) {
 ; AVX512BWVL-NEXT:    vpmuludq %ymm1, %ymm2, %ymm2
 ; AVX512BWVL-NEXT:    vpsrlq $32, %ymm1, %ymm3
 ; AVX512BWVL-NEXT:    vpmuludq %ymm3, %ymm0, %ymm3
-; AVX512BWVL-NEXT:    vpaddq %ymm2, %ymm3, %ymm2
-; AVX512BWVL-NEXT:    vpsllq $32, %ymm2, %ymm2
+; AVX512BWVL-NEXT:    vpaddq %xmm2, %xmm3, %xmm2
+; AVX512BWVL-NEXT:    vpsllq $32, %xmm2, %xmm2
 ; AVX512BWVL-NEXT:    vpmuludq %ymm1, %ymm0, %ymm0
 ; AVX512BWVL-NEXT:    vpaddq %xmm2, %xmm0, %xmm0
 ; AVX512BWVL-NEXT:    vmovq %xmm0, %rax
@@ -349,8 +349,8 @@ define i64 @test_v8i64(<8 x i64> %a0) {
 ; AVX2-NEXT:    vpmuludq %ymm2, %ymm0, %ymm2
 ; AVX2-NEXT:    vpsrlq $32, %ymm0, %ymm3
 ; AVX2-NEXT:    vpmuludq %ymm1, %ymm3, %ymm3
-; AVX2-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
-; AVX2-NEXT:    vpsllq $32, %ymm2, %ymm2
+; AVX2-NEXT:    vpaddq %xmm3, %xmm2, %xmm2
+; AVX2-NEXT:    vpsllq $32, %xmm2, %xmm2
 ; AVX2-NEXT:    vpmuludq %ymm1, %ymm0, %ymm0
 ; AVX2-NEXT:    vpaddq %xmm2, %xmm0, %xmm0
 ; AVX2-NEXT:    vmovq %xmm0, %rax
@@ -382,8 +382,8 @@ define i64 @test_v8i64(<8 x i64> %a0) {
 ; AVX512BW-NEXT:    vpmuludq %zmm1, %zmm2, %zmm2
 ; AVX512BW-NEXT:    vpsrlq $32, %zmm1, %zmm3
 ; AVX512BW-NEXT:    vpmuludq %zmm3, %zmm0, %zmm3
-; AVX512BW-NEXT:    vpaddq %zmm2, %zmm3, %zmm2
-; AVX512BW-NEXT:    vpsllq $32, %zmm2, %zmm2
+; AVX512BW-NEXT:    vpaddq %xmm2, %xmm3, %xmm2
+; AVX512BW-NEXT:    vpsllq $32, %xmm2, %xmm2
 ; AVX512BW-NEXT:    vpmuludq %zmm1, %zmm0, %zmm0
 ; AVX512BW-NEXT:    vpaddq %xmm2, %xmm0, %xmm0
 ; AVX512BW-NEXT:    vmovq %xmm0, %rax
@@ -415,8 +415,8 @@ define i64 @test_v8i64(<8 x i64> %a0) {
 ; AVX512BWVL-NEXT:    vpmuludq %zmm1, %zmm2, %zmm2
 ; AVX512BWVL-NEXT:    vpsrlq $32, %zmm1, %zmm3
 ; AVX512BWVL-NEXT:    vpmuludq %zmm3, %zmm0, %zmm3
-; AVX512BWVL-NEXT:    vpaddq %zmm2, %zmm3, %zmm2
-; AVX512BWVL-NEXT:    vpsllq $32, %zmm2, %zmm2
+; AVX512BWVL-NEXT:    vpaddq %xmm2, %xmm3, %xmm2
+; AVX512BWVL-NEXT:    vpsllq $32, %xmm2, %xmm2
 ; AVX512BWVL-NEXT:    vpmuludq %zmm1, %zmm0, %zmm0
 ; AVX512BWVL-NEXT:    vpaddq %xmm2, %xmm0, %xmm0
 ; AVX512BWVL-NEXT:    vmovq %xmm0, %rax
@@ -652,8 +652,8 @@ define i64 @test_v16i64(<16 x i64> %a0) {
 ; AVX2-NEXT:    vpmuludq %ymm2, %ymm0, %ymm2
 ; AVX2-NEXT:    vpsrlq $32, %ymm0, %ymm3
 ; AVX2-NEXT:    vpmuludq %ymm1, %ymm3, %ymm3
-; AVX2-NEXT:    vpaddq %ymm3, %ymm2, %ymm2
-; AVX2-NEXT:    vpsllq $32, %ymm2, %ymm2
+; AVX2-NEXT:    vpaddq %xmm3, %xmm2, %xmm2
+; AVX2-NEXT:    vpsllq $32, %xmm2, %xmm2
 ; AVX2-NEXT:    vpmuludq %ymm1, %ymm0, %ymm0
 ; AVX2-NEXT:    vpaddq %xmm2, %xmm0, %xmm0
 ; AVX2-NEXT:    vmovq %xmm0, %rax
@@ -693,8 +693,8 @@ define i64 @test_v16i64(<16 x i64> %a0) {
 ; AVX512BW-NEXT:    vpmuludq %zmm1, %zmm2, %zmm2
 ; AVX512BW-NEXT:    vpsrlq $32, %zmm1, %zmm3
 ; AVX512BW-NEXT:    vpmuludq %zmm3, %zmm0, %zmm3
-; AVX512BW-NEXT:    vpaddq %zmm2, %zmm3, %zmm2
-; AVX512BW-NEXT:    vpsllq $32, %zmm2, %zmm2
+; AVX512BW-NEXT:    vpaddq %xmm2, %xmm3, %xmm2
+; AVX512BW-NEXT:    vpsllq $32, %xmm2, %xmm2
 ; AVX512BW-NEXT:    vpmuludq %zmm1, %zmm0, %zmm0
 ; AVX512BW-NEXT:    vpaddq %xmm2, %xmm0, %xmm0
 ; AVX512BW-NEXT:    vmovq %xmm0, %rax
@@ -734,8 +734,8 @@ define i64 @test_v16i64(<16 x i64> %a0) {
 ; AVX512BWVL-NEXT:    vpmuludq %zmm1, %zmm2, %zmm2
 ; AVX512BWVL-NEXT:    vpsrlq $32, %zmm1, %zmm3
 ; AVX512BWVL-NEXT:    vpmuludq %zmm3, %zmm0, %zmm3
-; AVX512BWVL-NEXT:    vpaddq %zmm2, %zmm3, %zmm2
-; AVX512BWVL-NEXT:    vpsllq $32, %zmm2, %zmm2
+; AVX512BWVL-NEXT:    vpaddq %xmm2, %xmm3, %xmm2
+; AVX512BWVL-NEXT:    vpsllq $32, %xmm2, %xmm2
 ; AVX512BWVL-NEXT:    vpmuludq %zmm1, %zmm0, %zmm0
 ; AVX512BWVL-NEXT:    vpaddq %xmm2, %xmm0, %xmm0
 ; AVX512BWVL-NEXT:    vmovq %xmm0, %rax

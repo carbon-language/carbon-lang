@@ -33413,6 +33413,27 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
       ExtSizeInBits = SizeInBits / 4;
 
     switch (Opc) {
+      // Byte shifts by immediate.
+    case X86ISD::VSHLDQ:
+    case X86ISD::VSRLDQ:
+      // Shift by uniform.
+    case X86ISD::VSHL:
+    case X86ISD::VSRL:
+    case X86ISD::VSRA:
+      // Shift by immediate.
+    case X86ISD::VSHLI:
+    case X86ISD::VSRLI:
+    case X86ISD::VSRAI: {
+      SDLoc DL(Op);
+      SDValue Ext0 =
+          extractSubVector(Op.getOperand(0), 0, TLO.DAG, DL, ExtSizeInBits);
+      SDValue ExtOp =
+          TLO.DAG.getNode(Opc, DL, Ext0.getValueType(), Ext0, Op.getOperand(1));
+      SDValue UndefVec = TLO.DAG.getUNDEF(VT);
+      SDValue Insert =
+          insertSubVector(UndefVec, ExtOp, 0, TLO.DAG, DL, ExtSizeInBits);
+      return TLO.CombineTo(Op, Insert);
+    } 
       // Target Shuffles.
     case X86ISD::PSHUFB:
     case X86ISD::UNPCKL:
