@@ -34,15 +34,13 @@ struct AP32 {
 };
 typedef SizeClassAllocator32<AP32> PrimaryInternalAllocator;
 
-typedef SizeClassAllocatorLocalCache<PrimaryInternalAllocator>
-    InternalAllocatorCache;
-
 typedef LargeMmapAllocator<NoOpMapUnmapCallback,
                            LargeMmapAllocatorPtrArrayStatic>
     SecondaryInternalAllocator;
 
-typedef CombinedAllocator<PrimaryInternalAllocator, InternalAllocatorCache,
-                          SecondaryInternalAllocator> InternalAllocator;
+typedef CombinedAllocator<PrimaryInternalAllocator, SecondaryInternalAllocator>
+    InternalAllocator;
+typedef InternalAllocator::AllocatorCache InternalAllocatorCache;
 
 void *InternalAlloc(uptr size, InternalAllocatorCache *cache = nullptr,
                     uptr alignment = 0);

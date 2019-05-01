@@ -615,17 +615,14 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
   a.Deallocate(&stats, p);
 }
 
-template
-<class PrimaryAllocator, class SecondaryAllocator, class AllocatorCache>
+template <class PrimaryAllocator, class SecondaryAllocator>
 void TestCombinedAllocator() {
-  typedef
-      CombinedAllocator<PrimaryAllocator, AllocatorCache, SecondaryAllocator>
-      Allocator;
+  typedef CombinedAllocator<PrimaryAllocator, SecondaryAllocator> Allocator;
   Allocator *a = new Allocator;
   a->Init(kReleaseToOSIntervalNever);
   std::mt19937 r;
 
-  AllocatorCache cache;
+  typename Allocator::AllocatorCache cache;
   memset(&cache, 0, sizeof(cache));
   a->InitCache(&cache);
 
@@ -686,36 +683,26 @@ void TestCombinedAllocator() {
 
 #if SANITIZER_CAN_USE_ALLOCATOR64
 TEST(SanitizerCommon, CombinedAllocator64) {
-  TestCombinedAllocator<Allocator64,
-      LargeMmapAllocator<>,
-      SizeClassAllocatorLocalCache<Allocator64> > ();
+  TestCombinedAllocator<Allocator64, LargeMmapAllocator<>>();
 }
 
 TEST(SanitizerCommon, CombinedAllocator64Dynamic) {
-  TestCombinedAllocator<Allocator64Dynamic,
-      LargeMmapAllocator<>,
-      SizeClassAllocatorLocalCache<Allocator64Dynamic> > ();
+  TestCombinedAllocator<Allocator64Dynamic, LargeMmapAllocator<>>();
 }
 
 #if !SANITIZER_ANDROID
 TEST(SanitizerCommon, CombinedAllocator64Compact) {
-  TestCombinedAllocator<Allocator64Compact,
-      LargeMmapAllocator<>,
-      SizeClassAllocatorLocalCache<Allocator64Compact> > ();
+  TestCombinedAllocator<Allocator64Compact, LargeMmapAllocator<>>();
 }
 #endif
 
 TEST(SanitizerCommon, CombinedAllocator64VeryCompact) {
-  TestCombinedAllocator<Allocator64VeryCompact,
-      LargeMmapAllocator<>,
-      SizeClassAllocatorLocalCache<Allocator64VeryCompact> > ();
+  TestCombinedAllocator<Allocator64VeryCompact, LargeMmapAllocator<>>();
 }
 #endif
 
 TEST(SanitizerCommon, CombinedAllocator32Compact) {
-  TestCombinedAllocator<Allocator32Compact,
-      LargeMmapAllocator<>,
-      SizeClassAllocatorLocalCache<Allocator32Compact> > ();
+  TestCombinedAllocator<Allocator32Compact, LargeMmapAllocator<>>();
 }
 
 template <class AllocatorCache>

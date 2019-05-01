@@ -19,11 +19,11 @@
 //  When allocating 2^x bytes it should return 2^x aligned chunk.
 // PrimaryAllocator is used via a local AllocatorCache.
 // SecondaryAllocator can allocate anything, but is not efficient.
-template <class PrimaryAllocator, class AllocatorCache,
-          class SecondaryAllocator,
+template <class PrimaryAllocator, class SecondaryAllocator,
           typename AddressSpaceViewTy = LocalAddressSpaceView>  // NOLINT
 class CombinedAllocator {
  public:
+  using AllocatorCache = SizeClassAllocatorLocalCache<PrimaryAllocator>;
   using AddressSpaceView = AddressSpaceViewTy;
   static_assert(is_same<AddressSpaceView,
                         typename PrimaryAllocator::AddressSpaceView>::value,

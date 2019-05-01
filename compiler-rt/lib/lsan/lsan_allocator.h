@@ -90,11 +90,6 @@ using PrimaryAllocator = PrimaryAllocatorASVT<LocalAddressSpaceView>;
 #endif
 
 template <typename AddressSpaceView>
-using AllocatorCacheASVT =
-    SizeClassAllocatorLocalCache<PrimaryAllocatorASVT<AddressSpaceView>>;
-using AllocatorCache = AllocatorCacheASVT<LocalAddressSpaceView>;
-
-template <typename AddressSpaceView>
 using SecondaryAllocatorASVT =
     LargeMmapAllocator<NoOpMapUnmapCallback, DefaultLargeMmapAllocatorPtrArray,
                        AddressSpaceView>;
@@ -102,12 +97,12 @@ using SecondaryAllocatorASVT =
 template <typename AddressSpaceView>
 using AllocatorASVT =
     CombinedAllocator<PrimaryAllocatorASVT<AddressSpaceView>,
-                      AllocatorCacheASVT<AddressSpaceView>,
                       SecondaryAllocatorASVT<AddressSpaceView>,
                       AddressSpaceView>;
 using Allocator = AllocatorASVT<LocalAddressSpaceView>;
+using AllocatorCache = Allocator::AllocatorCache;
 
-AllocatorCache *GetAllocatorCache();
+Allocator::AllocatorCache *GetAllocatorCache();
 
 int lsan_posix_memalign(void **memptr, uptr alignment, uptr size,
                         const StackTrace &stack);

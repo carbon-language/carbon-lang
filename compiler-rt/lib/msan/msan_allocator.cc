@@ -108,10 +108,9 @@ struct AP32 {
 };
 typedef SizeClassAllocator32<AP32> PrimaryAllocator;
 #endif
-typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;
 typedef LargeMmapAllocator<MsanMapUnmapCallback> SecondaryAllocator;
-typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
-                          SecondaryAllocator> Allocator;
+typedef CombinedAllocator<PrimaryAllocator, SecondaryAllocator> Allocator;
+typedef Allocator::AllocatorCache AllocatorCache;
 
 static Allocator allocator;
 static AllocatorCache fallback_allocator_cache;

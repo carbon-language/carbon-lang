@@ -79,10 +79,9 @@ struct AP64 {  // Allocator64 parameters. Deliberately using a short name.
 };
 typedef SizeClassAllocator64<AP64> PrimaryAllocator;
 #endif
-typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;
 typedef LargeMmapAllocator<MapUnmapCallback> SecondaryAllocator;
-typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
-    SecondaryAllocator> Allocator;
+typedef CombinedAllocator<PrimaryAllocator, SecondaryAllocator> Allocator;
+typedef Allocator::AllocatorCache AllocatorCache;
 Allocator *allocator();
 #endif
 

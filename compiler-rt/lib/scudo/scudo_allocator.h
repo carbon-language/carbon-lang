@@ -102,9 +102,9 @@ typedef SizeClassAllocator32<AP32> PrimaryT;
 #include "scudo_allocator_secondary.h"
 #include "scudo_allocator_combined.h"
 
-typedef SizeClassAllocatorLocalCache<PrimaryT> AllocatorCacheT;
 typedef LargeMmapAllocator SecondaryT;
-typedef CombinedAllocator<PrimaryT, AllocatorCacheT, SecondaryT> BackendT;
+typedef CombinedAllocator<PrimaryT, SecondaryT> BackendT;
+typedef BackendT::AllocatorCache AllocatorCacheT;
 
 void initScudo();
 
