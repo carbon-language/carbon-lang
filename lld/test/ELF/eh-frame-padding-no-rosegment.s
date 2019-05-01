@@ -12,7 +12,7 @@ bar:
 // RUN: llvm-mc -filetype=obj -triple=x86_64-pc-linux %s -o %t.o
 
 // Check the size of the CIE (0x18 + 4) and FDE (0x10 + 4)
-// RUN: llvm-readobj -s -section-data %t.o | FileCheck --check-prefix=OBJ %s
+// RUN: llvm-readobj -S --section-data %t.o | FileCheck --check-prefix=OBJ %s
 
 // OBJ:      Name: .eh_frame
 // OBJ-NEXT: Type:
@@ -42,7 +42,7 @@ bar:
 
 // Check that the CIE and FDE are padded with 0x00 and not 0xCC when the
 // .eh_frame section is placed in the executable segment
-// RUN: llvm-readobj -s -section-data %t | FileCheck %s
+// RUN: llvm-readobj -S --section-data %t | FileCheck %s
 
 // CHECK:      Name: .eh_frame
 // CHECK-NEXT: Type:
