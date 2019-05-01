@@ -33237,6 +33237,22 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
 
   // Handle special case opcodes.
   switch (Opc) {
+  case X86ISD::PMULDQ:
+  case X86ISD::PMULUDQ: {
+    APInt LHSUndef, LHSZero;
+    APInt RHSUndef, RHSZero;
+    SDValue LHS = Op.getOperand(0);
+    SDValue RHS = Op.getOperand(1);
+    if (SimplifyDemandedVectorElts(LHS, DemandedElts, LHSUndef, LHSZero, TLO,
+                                   Depth + 1))
+      return true;
+    if (SimplifyDemandedVectorElts(RHS, DemandedElts, RHSUndef, RHSZero, TLO,
+                                   Depth + 1))
+      return true;
+    // Multiply by zero.
+    KnownZero = LHSZero | RHSZero;
+    break;
+  }
   case X86ISD::VSHL:
   case X86ISD::VSRL:
   case X86ISD::VSRA: {
@@ -33433,7 +33449,10 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
       SDValue Insert =
           insertSubVector(UndefVec, ExtOp, 0, TLO.DAG, DL, ExtSizeInBits);
       return TLO.CombineTo(Op, Insert);
-    } 
+    }
+      // Arithmetic Ops.
+    case X86ISD::PMULDQ:
+    case X86ISD::PMULUDQ:
       // Target Shuffles.
     case X86ISD::PSHUFB:
     case X86ISD::UNPCKL:
@@ -33552,9 +33571,11 @@ bool X86TargetLowering::SimplifyDemandedBitsForTargetNode(
     SDValue RHS = Op.getOperand(1);
     // FIXME: Can we bound this better?
     APInt DemandedMask = APInt::getLowBitsSet(64, 32);
-    if (SimplifyDemandedBits(LHS, DemandedMask, KnownOp, TLO, Depth + 1))
+    if (SimplifyDemandedBits(LHS, DemandedMask, OriginalDemandedElts, KnownOp,
+                             TLO, Depth + 1))
       return true;
-    if (SimplifyDemandedBits(RHS, DemandedMask, KnownOp, TLO, Depth + 1))
+    if (SimplifyDemandedBits(RHS, DemandedMask, OriginalDemandedElts, KnownOp,
+                             TLO, Depth + 1))
       return true;
     break;
   }
