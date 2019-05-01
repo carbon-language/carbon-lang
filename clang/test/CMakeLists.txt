@@ -49,7 +49,6 @@ list(APPEND CLANG_TEST_DEPS
   c-index-test
   clang
   clang-resource-headers
-  clang-check
   clang-format
   clang-tblgen
   clang-offload-bundler
@@ -63,6 +62,7 @@ list(APPEND CLANG_TEST_DEPS
   
 if(CLANG_ENABLE_STATIC_ANALYZER)
   list(APPEND CLANG_TEST_DEPS
+    clang-check
     clang-extdef-mapping
     )
 endif()
