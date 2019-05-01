@@ -33408,6 +33408,8 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
     switch (Opc) {
       // Target Shuffles.
     case X86ISD::PSHUFB:
+    case X86ISD::UNPCKL:
+    case X86ISD::UNPCKH:
       // Horizontal Ops.
     case X86ISD::HADD:
     case X86ISD::HSUB:
@@ -33416,9 +33418,9 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
       SDLoc DL(Op);
       SDValue Ext0 = extract128BitVector(Op.getOperand(0), 0, TLO.DAG, DL);
       SDValue Ext1 = extract128BitVector(Op.getOperand(1), 0, TLO.DAG, DL);
-      SDValue Hop = TLO.DAG.getNode(Opc, DL, Ext0.getValueType(), Ext0, Ext1);
+      SDValue ExtOp = TLO.DAG.getNode(Opc, DL, Ext0.getValueType(), Ext0, Ext1);
       SDValue UndefVec = TLO.DAG.getUNDEF(VT);
-      SDValue Insert = insert128BitVector(UndefVec, Hop, 0, TLO.DAG, DL);
+      SDValue Insert = insert128BitVector(UndefVec, ExtOp, 0, TLO.DAG, DL);
       return TLO.CombineTo(Op, Insert);
     }
     }
