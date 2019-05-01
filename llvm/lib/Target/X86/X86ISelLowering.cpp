@@ -33403,11 +33403,14 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
   // For 256/512-bit ops that are 128/256-bit ops glued together, if we do not
   // demand any of the high elements, then narrow the op to 128/256-bits: e.g.
   // (op ymm0, ymm1) --> insert undef, (op xmm0, xmm1), 0
-  // TODO: Handle 512-bit -> 128-bit ops as well.
   if ((VT.is256BitVector() || VT.is512BitVector()) &&
       DemandedElts.lshr(NumElts / 2) == 0) {
     unsigned SizeInBits = VT.getSizeInBits();
     unsigned ExtSizeInBits = SizeInBits / 2;
+
+    // See if 512-bit ops only use the bottom 128-bits.
+    if (VT.is512BitVector() && DemandedElts.lshr(NumElts / 4) == 0)
+      ExtSizeInBits = SizeInBits / 4;
 
     switch (Opc) {
       // Target Shuffles.
