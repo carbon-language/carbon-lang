@@ -108,6 +108,7 @@ group("test") {
     ":lit_unit_site_cfg",
     "//clang/lib/Headers",
     "//clang/tools/c-index-test",
+    "//clang/tools/clang-check",
     "//clang/tools/clang-diff",
     "//clang/tools/clang-format",
     "//clang/tools/clang-import-test",
@@ -147,7 +148,6 @@ group("test") {
   }
   if (clang_enable_static_analyzer) {
     deps += [
-      "//clang/tools/clang-check",
       "//clang/tools/clang-extdef-mapping",
     ]
   }
