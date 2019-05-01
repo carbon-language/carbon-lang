@@ -33410,15 +33410,21 @@ bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
     case X86ISD::PSHUFB:
     case X86ISD::UNPCKL:
     case X86ISD::UNPCKH:
+      // Saturated Packs.
+    case X86ISD::PACKSS:
+    case X86ISD::PACKUS:
       // Horizontal Ops.
     case X86ISD::HADD:
     case X86ISD::HSUB:
     case X86ISD::FHADD:
     case X86ISD::FHSUB: {
       SDLoc DL(Op);
+      MVT ExtVT = VT.getSimpleVT();
+      ExtVT = MVT::getVectorVT(ExtVT.getScalarType(),
+                               128 / ExtVT.getScalarSizeInBits());
       SDValue Ext0 = extract128BitVector(Op.getOperand(0), 0, TLO.DAG, DL);
       SDValue Ext1 = extract128BitVector(Op.getOperand(1), 0, TLO.DAG, DL);
-      SDValue ExtOp = TLO.DAG.getNode(Opc, DL, Ext0.getValueType(), Ext0, Ext1);
+      SDValue ExtOp = TLO.DAG.getNode(Opc, DL, ExtVT, Ext0, Ext1);
       SDValue UndefVec = TLO.DAG.getUNDEF(VT);
       SDValue Insert = insert128BitVector(UndefVec, ExtOp, 0, TLO.DAG, DL);
       return TLO.CombineTo(Op, Insert);
