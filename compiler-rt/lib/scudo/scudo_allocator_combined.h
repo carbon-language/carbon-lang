@@ -18,9 +18,10 @@
 # error "This file must be included inside scudo_allocator.h."
 #endif
 
-template <class PrimaryAllocator, class SecondaryAllocator>
 class CombinedAllocator {
  public:
+  using PrimaryAllocator = PrimaryT;
+  using SecondaryAllocator = SecondaryT;
   using AllocatorCache = typename PrimaryAllocator::AllocatorCache;
   void init(s32 ReleaseToOSIntervalMs) {
     Primary.Init(ReleaseToOSIntervalMs);
