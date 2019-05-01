@@ -117,6 +117,7 @@ set(ERROR_TESTS
   allocate06.f90
   allocate07.f90
   allocate08.f90
+  dosemantics01.f90
 )
 
 # These test files have expected symbols in the source

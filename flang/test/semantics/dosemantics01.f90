@@ -14,20 +14,8 @@
 
 ! C1131 -- check valid and invalid DO loop naming
 
-! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
-! CHECK-NOT: 34:.*name required but missing
-! CHECK-NOT: 34:.*DO construct name unexpected
-! CHECK-NOT: 32:.*should be
-! CHECK-NOT: 32:.*unnamed DO statement
-! CHECK: 39:.*name required but missing
-! CHECK: 37:.*should be
-! CHECK: 44:.*DO construct name unexpected
-! CHECK: 42:.*unnamed DO statement
 PROGRAM C1131
-
   IMPLICIT NONE
-  ! Test R1121 label-do-stmt
-
   ! Valid construct
   validDo: DO WHILE (.true.)
       PRINT *, "Hello"
@@ -36,11 +24,13 @@ PROGRAM C1131
   ! Missing name on END DO
   missingEndDo: DO WHILE (.true.)
       PRINT *, "Hello"
+!ERROR: DO construct name required but missing
     END DO
 
   ! Missing name on DO
   DO WHILE (.true.)
       PRINT *, "Hello"
+!ERROR: DO construct name unexpected
     END DO missingDO
 
 END PROGRAM C1131
