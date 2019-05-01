@@ -49,8 +49,7 @@ struct __AP64 {
 namespace {
 
 typedef SizeClassAllocator64<__AP64> PrimaryAllocator;
-typedef LargeMmapAllocator<> SecondaryAllocator;
-typedef CombinedAllocator<PrimaryAllocator, SecondaryAllocator> Allocator;
+typedef CombinedAllocator<PrimaryAllocator> Allocator;
 typedef Allocator::AllocatorCache AllocatorCache;
 
 static Allocator allocator;

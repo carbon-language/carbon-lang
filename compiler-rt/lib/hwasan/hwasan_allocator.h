@@ -61,8 +61,7 @@ struct AP64 {
   static const uptr kFlags = 0;
 };
 typedef SizeClassAllocator64<AP64> PrimaryAllocator;
-typedef LargeMmapAllocator<HwasanMapUnmapCallback> SecondaryAllocator;
-typedef CombinedAllocator<PrimaryAllocator, SecondaryAllocator> Allocator;
+typedef CombinedAllocator<PrimaryAllocator> Allocator;
 typedef Allocator::AllocatorCache AllocatorCache;
 
 void AllocatorSwallowThreadLocalCache(AllocatorCache *cache);

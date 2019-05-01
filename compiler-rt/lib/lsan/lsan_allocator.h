@@ -90,15 +90,7 @@ using PrimaryAllocator = PrimaryAllocatorASVT<LocalAddressSpaceView>;
 #endif
 
 template <typename AddressSpaceView>
-using SecondaryAllocatorASVT =
-    LargeMmapAllocator<NoOpMapUnmapCallback, DefaultLargeMmapAllocatorPtrArray,
-                       AddressSpaceView>;
-
-template <typename AddressSpaceView>
-using AllocatorASVT =
-    CombinedAllocator<PrimaryAllocatorASVT<AddressSpaceView>,
-                      SecondaryAllocatorASVT<AddressSpaceView>,
-                      AddressSpaceView>;
+using AllocatorASVT = CombinedAllocator<PrimaryAllocatorASVT<AddressSpaceView>>;
 using Allocator = AllocatorASVT<LocalAddressSpaceView>;
 using AllocatorCache = Allocator::AllocatorCache;
 

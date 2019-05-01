@@ -186,14 +186,8 @@ using PrimaryAllocator = PrimaryAllocatorASVT<LocalAddressSpaceView>;
 static const uptr kNumberOfSizeClasses = SizeClassMap::kNumClasses;
 
 template <typename AddressSpaceView>
-using SecondaryAllocatorASVT =
-    LargeMmapAllocator<AsanMapUnmapCallback, DefaultLargeMmapAllocatorPtrArray,
-                       AddressSpaceView>;
-template <typename AddressSpaceView>
 using AsanAllocatorASVT =
-    CombinedAllocator<PrimaryAllocatorASVT<AddressSpaceView>,
-                      SecondaryAllocatorASVT<AddressSpaceView>,
-                      AddressSpaceView>;
+    CombinedAllocator<PrimaryAllocatorASVT<AddressSpaceView>>;
 using AsanAllocator = AsanAllocatorASVT<LocalAddressSpaceView>;
 using AllocatorCache = AsanAllocator::AllocatorCache;
 

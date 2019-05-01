@@ -615,9 +615,9 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
   a.Deallocate(&stats, p);
 }
 
-template <class PrimaryAllocator, class SecondaryAllocator>
+template <class PrimaryAllocator>
 void TestCombinedAllocator() {
-  typedef CombinedAllocator<PrimaryAllocator, SecondaryAllocator> Allocator;
+  typedef CombinedAllocator<PrimaryAllocator> Allocator;
   Allocator *a = new Allocator;
   a->Init(kReleaseToOSIntervalNever);
   std::mt19937 r;
@@ -683,26 +683,26 @@ void TestCombinedAllocator() {
 
 #if SANITIZER_CAN_USE_ALLOCATOR64
 TEST(SanitizerCommon, CombinedAllocator64) {
-  TestCombinedAllocator<Allocator64, LargeMmapAllocator<>>();
+  TestCombinedAllocator<Allocator64>();
 }
 
 TEST(SanitizerCommon, CombinedAllocator64Dynamic) {
-  TestCombinedAllocator<Allocator64Dynamic, LargeMmapAllocator<>>();
+  TestCombinedAllocator<Allocator64Dynamic>();
 }
 
 #if !SANITIZER_ANDROID
 TEST(SanitizerCommon, CombinedAllocator64Compact) {
-  TestCombinedAllocator<Allocator64Compact, LargeMmapAllocator<>>();
+  TestCombinedAllocator<Allocator64Compact>();
 }
 #endif
 
 TEST(SanitizerCommon, CombinedAllocator64VeryCompact) {
-  TestCombinedAllocator<Allocator64VeryCompact, LargeMmapAllocator<>>();
+  TestCombinedAllocator<Allocator64VeryCompact>();
 }
 #endif
 
 TEST(SanitizerCommon, CombinedAllocator32Compact) {
-  TestCombinedAllocator<Allocator32Compact, LargeMmapAllocator<>>();
+  TestCombinedAllocator<Allocator32Compact>();
 }
 
 template <class AllocatorCache>
