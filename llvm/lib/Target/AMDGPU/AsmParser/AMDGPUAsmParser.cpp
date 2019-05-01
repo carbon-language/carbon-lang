@@ -4047,7 +4047,8 @@ void AMDGPUAsmParser::cvtDSImpl(MCInst &Inst, const OperandVector &Operands,
   }
 
   AMDGPUOperand::ImmTy OffsetType =
-    (Inst.getOpcode() == AMDGPU::DS_SWIZZLE_B32_si ||
+    (Inst.getOpcode() == AMDGPU::DS_SWIZZLE_B32_gfx10 ||
+     Inst.getOpcode() == AMDGPU::DS_SWIZZLE_B32_gfx6_gfx7 ||
      Inst.getOpcode() == AMDGPU::DS_SWIZZLE_B32_vi) ? AMDGPUOperand::ImmTySwizzle :
                                                       AMDGPUOperand::ImmTyOffset;
 
@@ -5164,7 +5165,7 @@ void AMDGPUAsmParser::cvtMubufImpl(MCInst &Inst,
       continue;
     }
 
-    HasLdsModifier = Op.isLDS();
+    HasLdsModifier |= Op.isLDS();
 
     // Handle tokens like 'offen' which are sometimes hard-coded into the
     // asm string.  There are no MCInst operands for these.

@@ -6649,6 +6649,11 @@ SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
     std::tie(Ops[0], Ops[1]) = expandUnalignedLoad(Load, DAG);
     return DAG.getMergeValues(Ops, DL);
   }
+  if (Subtarget->hasLDSMisalignedBug() &&
+      AS == AMDGPUAS::FLAT_ADDRESS &&
+      Alignment < MemVT.getStoreSize() && MemVT.getSizeInBits() > 32) {
+    return SplitVectorLoad(Op, DAG);
+  }
 
   MachineFunction &MF = DAG.getMachineFunction();
   SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
@@ -7108,6 +7113,12 @@ SDValue SITargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   if (!allowsMemoryAccess(*DAG.getContext(), DAG.getDataLayout(), VT,
                           AS, Store->getAlignment())) {
     return expandUnalignedStore(Store, DAG);
+  }
+
+  if (Subtarget->hasLDSMisalignedBug() &&
+      AS == AMDGPUAS::FLAT_ADDRESS &&
+      Store->getAlignment() < VT.getStoreSize() && VT.getSizeInBits() > 32) {
+    return SplitVectorStore(Op, DAG);
   }
 
   MachineFunction &MF = DAG.getMachineFunction();
