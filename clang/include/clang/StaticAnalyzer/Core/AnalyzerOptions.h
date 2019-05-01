@@ -197,6 +197,7 @@ public:
   unsigned DisableAllChecks : 1;
 
   unsigned ShowCheckerHelp : 1;
+  unsigned ShowCheckerHelpHidden : 1;
   unsigned ShowEnabledCheckerList : 1;
   unsigned ShowConfigOptionsList : 1;
   unsigned ShouldEmitErrorsOnInvalidConfigValue : 1;
