@@ -274,12 +274,11 @@ function(add_compiler_rt_runtime name type)
     endif()
 
     if(type STREQUAL "OBJECT")
-      get_property(cflags_${libname} SOURCE ${sources_${libname}} PROPERTY COMPILE_FLAGS)
       if(CMAKE_C_COMPILER_ID MATCHES Clang AND CMAKE_C_COMPILER_TARGET)
-        list(APPEND cflags_${libname} "--target=${CMAKE_C_COMPILER_TARGET}")
+        list(APPEND extra_cflags_${libname} "--target=${CMAKE_C_COMPILER_TARGET}")
       endif()
       if(CMAKE_SYSROOT)
-        list(APPEND cflags_${libname} "--sysroot=${CMAKE_SYSROOT}")
+        list(APPEND extra_cflags_${libname} "--sysroot=${CMAKE_SYSROOT}")
       endif()
       string(REPLACE ";" " " extra_cflags_${libname} "${extra_cflags_${libname}}")
       string(REGEX MATCHALL "<[A-Za-z0-9_]*>" substitutions
@@ -297,7 +296,7 @@ function(add_compiler_rt_runtime name type)
           string(REPLACE "<SOURCE>" "${sources_${libname}}"
                  compile_command_${libname} ${compile_command_${libname}})
         elseif(substitution STREQUAL "<FLAGS>")
-          string(REPLACE "<FLAGS>" "${CMAKE_C_FLAGS} ${cflags_${libname}} ${extra_cflags_${libname}}"
+          string(REPLACE "<FLAGS>" "${CMAKE_C_FLAGS} ${extra_cflags_${libname}}"
                  compile_command_${libname} ${compile_command_${libname}})
         else()
           string(REPLACE "${substitution}" "" compile_command_${libname}
