@@ -210,6 +210,7 @@ void DataAggregator::launchPerfProcess(StringRef Name, PerfProcessInfo &PPI,
     *Str++ = 0;
   } while (true);
 
+  Argv.push_back("-f");
   Argv.push_back("-i");
   Argv.push_back(PerfDataFilename.data());
   Argv.push_back(nullptr);
