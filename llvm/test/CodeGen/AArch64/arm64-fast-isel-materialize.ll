@@ -1,7 +1,6 @@
 ; RUN: llc -O0 -fast-isel -fast-isel-abort=1 -verify-machineinstrs -mtriple=arm64-apple-darwin < %s | FileCheck %s
-; RUN: llc -O0 -global-isel -fast-isel-abort=2 -pass-remarks-missed=gisel* -verify-machineinstrs -mtriple=arm64-apple-darwin %s -o - 2>&1 | FileCheck %s --check-prefixes=GISEL,FALLBACK
+; RUN: llc -O0 -global-isel -verify-machineinstrs -mtriple=arm64-apple-darwin %s -o - | FileCheck %s --check-prefix=GISEL
 
-; FALLBACK-NOT: remark:
 
 ; Materialize using fmov
 define float @fmov_float1() {
