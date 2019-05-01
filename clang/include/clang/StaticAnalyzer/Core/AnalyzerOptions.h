@@ -261,11 +261,12 @@ public:
 
   AnalyzerOptions()
       : DisableAllChecks(false), ShowCheckerHelp(false),
-        ShowEnabledCheckerList(false), ShowConfigOptionsList(false),
-        AnalyzeAll(false), AnalyzerDisplayProgress(false),
-        AnalyzeNestedBlocks(false), eagerlyAssumeBinOpBifurcation(false),
-        TrimGraph(false), visualizeExplodedGraphWithGraphViz(false),
-        UnoptimizedCFG(false), PrintStats(false), NoRetryExhausted(false) {
+        ShowCheckerHelpHidden(false), ShowEnabledCheckerList(false),
+        ShowConfigOptionsList(false), AnalyzeAll(false),
+        AnalyzerDisplayProgress(false), AnalyzeNestedBlocks(false),
+        eagerlyAssumeBinOpBifurcation(false), TrimGraph(false),
+        visualizeExplodedGraphWithGraphViz(false), UnoptimizedCFG(false),
+        PrintStats(false), NoRetryExhausted(false) {
     llvm::sort(AnalyzerConfigCmdFlags);
   }
 
