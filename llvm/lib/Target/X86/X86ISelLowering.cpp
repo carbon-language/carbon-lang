@@ -44250,7 +44250,7 @@ void X86TargetLowering::initializeSplitCSR(MachineBasicBlock *Entry) const {
 
   // Update IsSplitCSR in X86MachineFunctionInfo.
   X86MachineFunctionInfo *AFI =
-    Entry->getParent()->getInfo<X86MachineFunctionInfo>();
+      Entry->getParent()->getInfo<X86MachineFunctionInfo>();
   AFI->setIsSplitCSR(true);
 }
 
@@ -44278,9 +44278,9 @@ void X86TargetLowering::insertCopiesSplitCSR(
     // fine for CXX_FAST_TLS since the C++-style TLS access functions should be
     // nounwind. If we want to generalize this later, we may need to emit
     // CFI pseudo-instructions.
-    assert(Entry->getParent()->getFunction().hasFnAttribute(
-               Attribute::NoUnwind) &&
-           "Function should be nounwind in insertCopiesSplitCSR!");
+    assert(
+        Entry->getParent()->getFunction().hasFnAttribute(Attribute::NoUnwind) &&
+        "Function should be nounwind in insertCopiesSplitCSR!");
     Entry->addLiveIn(*I);
     BuildMI(*Entry, MBBI, DebugLoc(), TII->get(TargetOpcode::COPY), NewVR)
         .addReg(*I);
@@ -44299,7 +44299,8 @@ bool X86TargetLowering::supportSwiftError() const {
 
 /// Returns the name of the symbol used to emit stack probes or the empty
 /// string if not applicable.
-StringRef X86TargetLowering::getStackProbeSymbolName(MachineFunction &MF) const {
+StringRef
+X86TargetLowering::getStackProbeSymbolName(MachineFunction &MF) const {
   // If the function specifically requests stack probes, emit them.
   if (MF.getFunction().hasFnAttribute("probe-stack"))
     return MF.getFunction().getFnAttribute("probe-stack").getValueAsString();
