@@ -280,23 +280,22 @@ unsigned OptTable::findNearest(StringRef Option, std::string &NearestString,
     // Now check if the candidate ends with a character commonly used when
     // delimiting an option from its value, such as '=' or ':'. If it does,
     // attempt to split the given option based on that delimiter.
-    std::string Delimiter = "";
-    char Last = CandidateName.back();
-    if (Last == '=' || Last == ':')
-      Delimiter = std::string(1, Last);
-
     StringRef LHS, RHS;
-    if (Delimiter.empty())
-      LHS = Option;
-    else
+    char Last = CandidateName.back();
+    bool CandidateHasDelimiter = Last == '=' || Last == ':';
+    std::string NormalizedName = Option;
+    if (CandidateHasDelimiter) {
       std::tie(LHS, RHS) = Option.split(Last);
+      NormalizedName = LHS;
+      if (Option.find(Last) == LHS.size())
+        NormalizedName += Last;
+    }
 
     // Consider each possible prefix for each candidate to find the most
     // appropriate one. For example, if a user asks for "--helm", suggest
     // "--help" over "-help".
     for (int P = 0;
          const char *const CandidatePrefix = CandidateInfo.Prefixes[P]; P++) {
-      std::string NormalizedName = (LHS + Delimiter).str();
       std::string Candidate = (CandidatePrefix + CandidateName).str();
       StringRef CandidateRef = Candidate;
       unsigned Distance =

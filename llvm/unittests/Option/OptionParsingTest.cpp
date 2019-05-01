@@ -298,6 +298,11 @@ TEST(Option, FindNearest) {
   EXPECT_EQ(1U, T.findNearest("/framb:foo", Nearest));
   EXPECT_EQ(Nearest, "/cramb:foo");
 
+  // `--glormp` should have an editing distance of 1 to `--glormp=`.
+  EXPECT_EQ(1U, T.findNearest("--glormp", Nearest));
+  EXPECT_EQ(Nearest, "--glormp=");
+  EXPECT_EQ(0U, T.findNearest("--glormp=foo", Nearest));
+
   // Flags should be included and excluded as specified.
   EXPECT_EQ(1U, T.findNearest("-doopf", Nearest, /*FlagsToInclude=*/OptFlag2));
   EXPECT_EQ(Nearest, "-doopf2");
