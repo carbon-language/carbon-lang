@@ -294,7 +294,8 @@ unsigned OptTable::findNearest(StringRef Option, std::string &NearestString,
     // Consider each possible prefix for each candidate to find the most
     // appropriate one. For example, if a user asks for "--helm", suggest
     // "--help" over "-help".
-    for (int P = 0; const char *const CandidatePrefix = CandidateInfo.Prefixes[P]; P++) {
+    for (int P = 0;
+         const char *const CandidatePrefix = CandidateInfo.Prefixes[P]; P++) {
       std::string NormalizedName = (LHS + Delimiter).str();
       std::string Candidate = (CandidatePrefix + CandidateName).str();
       StringRef CandidateRef = Candidate;
