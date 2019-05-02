@@ -19037,13 +19037,12 @@ static SDValue lowerAddSubToHorizontalOp(SDValue Op, SelectionDAG &DAG,
 
   // Creating a 256-bit horizontal op would be wasteful, and there is no 512-bit
   // equivalent, so extract the 256/512-bit source op to 128-bit if we can.
-  // This is free if we're extracting from the bottom lane: ymm/zmm -> xmm.
-  if (NumEltsPerLane <= LExtIndex)
-   return Op;
-
   SDLoc DL(Op);
-  if (BitWidth == 256 || BitWidth == 512)
-    X = extract128BitVector(X, 0, DAG, DL);
+  if (BitWidth == 256 || BitWidth == 512) {
+    unsigned LaneIdx = LExtIndex / NumEltsPerLane;
+    X = extract128BitVector(X, LaneIdx * NumEltsPerLane, DAG, DL);
+    LExtIndex %= NumEltsPerLane;
+  }
 
   // add (extractelt (X, 0), extractelt (X, 1)) --> extractelt (hadd X, X), 0
   // add (extractelt (X, 1), extractelt (X, 0)) --> extractelt (hadd X, X), 0
