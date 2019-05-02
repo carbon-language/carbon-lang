@@ -35,6 +35,7 @@ import collections
 import datetime
 import multiprocessing
 import os
+import re
 import signal
 import sys
 
@@ -50,7 +51,13 @@ STDGEN_CODE_PREFIX = """\
 //===----------------------------------------------------------------------===//
 """
 
-def ParseSymbolPage(symbol_page_html):
+def HasClass(tag, *classes):
+  for c in tag.get('class', []):
+    if c in classes:
+      return True
+  return False
+
+def ParseSymbolPage(symbol_page_html, symbol_name):
   """Parse symbol page and retrieve the include header defined in this page.
   The symbol page provides header for the symbol, specifically in
   "Defined in header <header>" section. An example:
@@ -61,17 +68,43 @@ def ParseSymbolPage(symbol_page_html):
 
   Returns a list of headers.
   """
-  headers = []
+  headers = set()
+  all_headers = set()
 
   soup = BeautifulSoup(symbol_page_html, "html.parser")
-  #  "Defined in header " are defined in <tr class="t-dsc-header"> or
-  #  <tr class="t-dcl-header">.
-  for header_tr in soup.select('tr.t-dcl-header,tr.t-dsc-header'):
-    if "Defined in header " in header_tr.text:
-      # The interesting header content (e.g. <cstdlib>) is wrapped in <code>.
-      for header_code in header_tr.find_all("code"):
-        headers.append(header_code.text)
-  return headers
+  # Rows in table are like:
+  #   Defined in header <foo>      .t-dsc-header
+  #   Defined in header <bar>      .t-dsc-header
+  #   decl1                        .t-dcl
+  #   Defined in header <baz>      .t-dsc-header
+  #   decl2                        .t-dcl
+  for table in soup.select('table.t-dcl-begin, table.t-dsc-begin'):
+    current_headers = []
+    was_decl = False
+    for row in table.select('tr'):
+      if HasClass(row, 't-dcl', 't-dsc'):
+        was_decl = True
+        # Declaration is in the first cell.
+        text = row.find('td').text
+        # Decl may not be for the symbol name we're looking for.
+        if not re.search("\\b%s\\b" % symbol_name, text):
+          continue
+        headers.update(current_headers)
+      elif HasClass(row, 't-dsc-header'):
+        # If we saw a decl since the last header, this is a new block of headers
+        # for a new block of decls.
+        if was_decl:
+          current_headers = []
+        was_decl = False
+        # There are also .t-dsc-header for "defined in namespace".
+        if not "Defined in header " in row.text:
+          continue
+        # The interesting header content (e.g. <cstdlib>) is wrapped in <code>.
+        for header_code in row.find_all("code"):
+          current_headers.append(header_code.text)
+          all_headers.add(header_code.text)
+  # If the symbol was never named, consider all named headers.
+  return headers or all_headers
 
 
 def ParseIndexPage(index_page_html):
@@ -112,7 +145,7 @@ class Symbol:
 
 def ReadSymbolPage(path, name):
   with open(path) as f:
-    return ParseSymbolPage(f.read())
+    return ParseSymbolPage(f.read(), name)
 
 
 def GetSymbols(pool, root_dir, index_page_name, namespace):
