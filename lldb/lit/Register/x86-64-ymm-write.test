@@ -1,3 +1,4 @@
+# XFAIL: system-darwin
 # XFAIL: system-windows
 # REQUIRES: native && target-x86_64 && native-cpu-avx
 # RUN: %clangxx %p/Inputs/x86-ymm-write.cpp -o %t
