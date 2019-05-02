@@ -77,8 +77,7 @@ __ubsan::getDynamicTypeInfoFromVtable(void *VtablePtr) {
                          "<unknown>");
 }
 
-bool __ubsan::checkTypeInfoEquality(const std::type_info *,
-                                    const std::type_info *) {
+bool __ubsan::checkTypeInfoEquality(const void *, const void *) {
   return false;
 }
 
