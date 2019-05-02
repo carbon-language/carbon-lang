@@ -39344,7 +39344,9 @@ static SDValue combineStore(SDNode *N, SelectionDAG &DAG,
 /// In short, LHS and RHS are inspected to see if LHS op RHS is of the form
 /// A horizontal-op B, for some already available A and B, and if so then LHS is
 /// set to A, RHS to B, and the routine returns 'true'.
-static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool IsCommutative) {
+static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, SelectionDAG &DAG,
+                              const X86Subtarget &Subtarget,
+                              bool IsCommutative) {
   // If either operand is undef, bail out. The binop should be simplified.
   if (LHS.isUndef() || RHS.isUndef())
     return false;
@@ -39465,6 +39467,12 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool IsCommutative) {
 
   LHS = A.getNode() ? A : B; // If A is 'UNDEF', use B for it.
   RHS = B.getNode() ? B : A; // If B is 'UNDEF', use A for it.
+
+  if (!shouldUseHorizontalOp(LHS == RHS, DAG, Subtarget))
+    return false;
+
+  LHS = DAG.getBitcast(VT, LHS);
+  RHS = DAG.getBitcast(VT, RHS);
   return true;
 }
 
@@ -39481,10 +39489,8 @@ static SDValue combineFaddFsub(SDNode *N, SelectionDAG &DAG,
   // Try to synthesize horizontal add/sub from adds/subs of shuffles.
   if (((Subtarget.hasSSE3() && (VT == MVT::v4f32 || VT == MVT::v2f64)) ||
        (Subtarget.hasAVX() && (VT == MVT::v8f32 || VT == MVT::v4f64))) &&
-      isHorizontalBinOp(LHS, RHS, IsFadd) &&
-      shouldUseHorizontalOp(LHS == RHS, DAG, Subtarget))
-    return DAG.getNode(HorizOpcode, SDLoc(N), VT, DAG.getBitcast(VT, LHS),
-                       DAG.getBitcast(VT, RHS));
+      isHorizontalBinOp(LHS, RHS, DAG, Subtarget, IsFadd))
+    return DAG.getNode(HorizOpcode, SDLoc(N), VT, LHS, RHS);
 
   return SDValue();
 }
@@ -42380,14 +42386,12 @@ static SDValue combineAdd(SDNode *N, SelectionDAG &DAG,
   // Try to synthesize horizontal adds from adds of shuffles.
   if ((VT == MVT::v8i16 || VT == MVT::v4i32 || VT == MVT::v16i16 ||
        VT == MVT::v8i32) &&
-      Subtarget.hasSSSE3() && isHorizontalBinOp(Op0, Op1, true) &&
-      shouldUseHorizontalOp(Op0 == Op1, DAG, Subtarget)) {
+      Subtarget.hasSSSE3() &&
+      isHorizontalBinOp(Op0, Op1, DAG, Subtarget, true)) {
     auto HADDBuilder = [](SelectionDAG &DAG, const SDLoc &DL,
                           ArrayRef<SDValue> Ops) {
       return DAG.getNode(X86ISD::HADD, DL, Ops[0].getValueType(), Ops);
     };
-    Op0 = DAG.getBitcast(VT, Op0);
-    Op1 = DAG.getBitcast(VT, Op1);
     return SplitOpsAndApply(DAG, Subtarget, SDLoc(N), VT, {Op0, Op1},
                             HADDBuilder);
   }
@@ -42513,14 +42517,12 @@ static SDValue combineSub(SDNode *N, SelectionDAG &DAG,
   EVT VT = N->getValueType(0);
   if ((VT == MVT::v8i16 || VT == MVT::v4i32 || VT == MVT::v16i16 ||
        VT == MVT::v8i32) &&
-      Subtarget.hasSSSE3() && isHorizontalBinOp(Op0, Op1, false) &&
-      shouldUseHorizontalOp(Op0 == Op1, DAG, Subtarget)) {
+      Subtarget.hasSSSE3() &&
+      isHorizontalBinOp(Op0, Op1, DAG, Subtarget, false)) {
     auto HSUBBuilder = [](SelectionDAG &DAG, const SDLoc &DL,
                           ArrayRef<SDValue> Ops) {
       return DAG.getNode(X86ISD::HSUB, DL, Ops[0].getValueType(), Ops);
     };
-    Op0 = DAG.getBitcast(VT, Op0);
-    Op1 = DAG.getBitcast(VT, Op1);
     return SplitOpsAndApply(DAG, Subtarget, SDLoc(N), VT, {Op0, Op1},
                             HSUBBuilder);
   }
