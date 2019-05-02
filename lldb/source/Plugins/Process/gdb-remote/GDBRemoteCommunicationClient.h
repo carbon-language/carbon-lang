@@ -17,12 +17,12 @@
 #include <string>
 #include <vector>
 
-#include "lldb/Target/Process.h"
 #include "lldb/Utility/ArchSpec.h"
 #include "lldb/Utility/StreamGDBRemote.h"
 #include "lldb/Utility/StructuredData.h"
 
 #include "llvm/ADT/Optional.h"
+#include "llvm/Support/VersionTuple.h"
 
 namespace lldb_private {
 namespace process_gdb_remote {
