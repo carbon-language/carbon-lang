@@ -24,16 +24,17 @@ class TestStdGen(unittest.TestCase):
 
     actual = ParseIndexPage(html)
     expected = [
-      ("abs", "abs.html"),
-      ("abs", "complex/abs.html"),
-      ("acos", "acos.html"),
-      ("acosh", "acosh.html"),
-      ("as_bytes", "as_bytes.html"),
+      ("abs", "abs.html", True),
+      ("abs", "complex/abs.html", True),
+      ("acos", "acos.html", False),
+      ("acosh", "acosh.html", False),
+      ("as_bytes", "as_bytes.html", False),
     ]
     self.assertEqual(len(actual), len(expected))
     for i in range(0, len(actual)):
       self.assertEqual(expected[i][0], actual[i][0])
       self.assertTrue(actual[i][1].endswith(expected[i][1]))
+      self.assertEqual(expected[i][2], actual[i][2])
 
 
   def testParseSymbolPage_SingleHeader(self):

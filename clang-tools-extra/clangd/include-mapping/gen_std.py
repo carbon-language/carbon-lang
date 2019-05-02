@@ -28,7 +28,7 @@ Usage:
        gen_std.py -cppreference </cppreference/reference> > StdSymbolMap.inc
 """
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 
 import argparse
 import collections
@@ -82,15 +82,21 @@ def ParseIndexPage(index_page_html):
   <a href="abs.html" title="abs"><tt>abs()</tt></a> (int) <br>
   <a href="acos.html" title="acos"><tt>acos()</tt></a> <br>
 
-  Returns a list of tuple (symbol_name, relative_path_to_symbol_page).
+  Returns a list of tuple (symbol_name, relative_path_to_symbol_page, variant).
   """
   symbols = []
   soup = BeautifulSoup(index_page_html, "html.parser")
   for symbol_href in soup.select("a[title]"):
+    # Ignore annotated symbols like "acos<>() (std::complex)".
+    # These tend to be overloads, and we the primary is more useful.
+    # This accidentally accepts begin/end despite the (iterator) caption: the
+    # (since C++11) note is first. They are good symbols, so the bug is unfixed.
+    caption = symbol_href.next_sibling
+    variant = isinstance(caption, NavigableString) and "(" in caption
     symbol_tt = symbol_href.find("tt")
     if symbol_tt:
       symbols.append((symbol_tt.text.rstrip("<>()"), # strip any trailing <>()
-                      symbol_href["href"]))
+                      symbol_href["href"], variant))
   return symbols
 
 class Symbol:
@@ -125,7 +131,11 @@ def GetSymbols(pool, root_dir, index_page_name, namespace):
   with open(index_page_path, "r") as f:
     # Read each symbol page in parallel.
     results = [] # (symbol_name, promise of [header...])
-    for symbol_name, symbol_page_path in ParseIndexPage(f.read()):
+    for symbol_name, symbol_page_path, variant in ParseIndexPage(f.read()):
+      # Variant symbols (e.g. the std::locale version of isalpha) add ambiguity.
+      # FIXME: use these as a fallback rather than ignoring entirely.
+      if variant:
+        continue
       path = os.path.join(root_dir, symbol_page_path)
       results.append((symbol_name,
                       pool.apply_async(ReadSymbolPage, (path, symbol_name))))
