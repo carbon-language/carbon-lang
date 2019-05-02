@@ -20,8 +20,6 @@
 #include "index/Index.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Basic/LangOptions.h"
-#include "clang/Basic/SourceManager.h"
-#include "clang/Basic/TokenKinds.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/FrontendActions.h"
@@ -96,36 +94,6 @@ private:
   std::vector<Decl *> TopLevelDecls;
 };
 
-class CollectMainFileMacros : public PPCallbacks {
-public:
-  explicit CollectMainFileMacros(const SourceManager &SM,
-                                 std::vector<std::string> *Out)
-      : SM(SM), Out(Out) {}
-
-  void FileChanged(SourceLocation Loc, FileChangeReason,
-                   SrcMgr::CharacteristicKind, FileID Prev) {
-    InMainFile = SM.isWrittenInMainFile(Loc);
-  }
-
-  void MacroDefined(const Token &MacroName, const MacroDirective *MD) {
-    assert(MacroName.is(tok::identifier));
-    if (InMainFile)
-      MainFileMacros.insert(MacroName.getIdentifierInfo()->getName());
-  }
-
-  void EndOfMainFile() {
-    for (const auto& Entry : MainFileMacros)
-      Out->push_back(Entry.getKey());
-    llvm::sort(*Out);
-  }
-
- private:
-  const SourceManager &SM;
-  bool InMainFile = true;
-  llvm::StringSet<> MainFileMacros;
-  std::vector<std::string> *Out;
-};
-
 class CppFilePreambleCallbacks : public PreambleCallbacks {
 public:
   CppFilePreambleCallbacks(PathRef File, PreambleParsedCallback ParsedCallback)
@@ -134,10 +102,6 @@ public:
   }
 
   IncludeStructure takeIncludes() { return std::move(Includes); }
-
-  std::vector<std::string> takeMainFileMacros() {
-    return std::move(MainFileMacros);
-  }
 
   CanonicalIncludes takeCanonicalIncludes() { return std::move(CanonIncludes); }
 
@@ -154,9 +118,7 @@ public:
 
   std::unique_ptr<PPCallbacks> createPPCallbacks() override {
     assert(SourceMgr && "SourceMgr must be set at this point");
-    return llvm::make_unique<PPChainedCallbacks>(
-        collectIncludeStructureCallback(*SourceMgr, &Includes),
-        llvm::make_unique<CollectMainFileMacros>(*SourceMgr, &MainFileMacros));
+    return collectIncludeStructureCallback(*SourceMgr, &Includes);
   }
 
   CommentHandler *getCommentHandler() override {
@@ -169,7 +131,6 @@ private:
   PreambleParsedCallback ParsedCallback;
   IncludeStructure Includes;
   CanonicalIncludes CanonIncludes;
-  std::vector<std::string> MainFileMacros;
   std::unique_ptr<CommentHandler> IWYUHandler = nullptr;
   SourceManager *SourceMgr = nullptr;
 };
@@ -498,13 +459,11 @@ const CanonicalIncludes &ParsedAST::getCanonicalIncludes() const {
 
 PreambleData::PreambleData(PrecompiledPreamble Preamble,
                            std::vector<Diag> Diags, IncludeStructure Includes,
-                           std::vector<std::string> MainFileMacros,
                            std::unique_ptr<PreambleFileStatusCache> StatCache,
                            CanonicalIncludes CanonIncludes)
     : Preamble(std::move(Preamble)), Diags(std::move(Diags)),
-      Includes(std::move(Includes)), MainFileMacros(std::move(MainFileMacros)),
-      StatCache(std::move(StatCache)), CanonIncludes(std::move(CanonIncludes)) {
-}
+      Includes(std::move(Includes)), StatCache(std::move(StatCache)),
+      CanonIncludes(std::move(CanonIncludes)) {}
 
 ParsedAST::ParsedAST(std::shared_ptr<const PreambleData> Preamble,
                      std::unique_ptr<CompilerInstance> Clang,
@@ -583,8 +542,7 @@ buildPreamble(PathRef FileName, CompilerInvocation &CI,
     std::vector<Diag> Diags = PreambleDiagnostics.take();
     return std::make_shared<PreambleData>(
         std::move(*BuiltPreamble), std::move(Diags),
-        SerializedDeclsCollector.takeIncludes(),
-        SerializedDeclsCollector.takeMainFileMacros(), std::move(StatCache),
+        SerializedDeclsCollector.takeIncludes(), std::move(StatCache),
         SerializedDeclsCollector.takeCanonicalIncludes());
   } else {
     elog("Could not build a preamble for file {0}", FileName);

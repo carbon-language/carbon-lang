@@ -2073,28 +2073,19 @@ TEST(CompletionTest, MergeMacrosFromIndexAndSema) {
               UnorderedElementsAre(Named("Clangd_Macro_Test")));
 }
 
-TEST(CompletionTest, MacroFromPreamble) {
-  MockFSProvider FS;
-  MockCompilationDatabase CDB;
-  std::string FooHeader = testPath("foo.h");
-  FS.Files[FooHeader] = "#define CLANGD_PREAMBLE_HEADER x\n";
-  IgnoreDiagnostics DiagConsumer;
-  ClangdServer Server(CDB, FS, DiagConsumer, ClangdServer::optsForTest());
+TEST(CompletionTest, NoMacroFromPreambleIfIndexIsSet) {
   auto Results = completions(
-      R"cpp(#include "foo.h"
-          #define CLANGD_PREAMBLE_MAIN x
+      R"cpp(#define CLANGD_PREAMBLE x
 
           int x = 0;
           #define CLANGD_MAIN x
           void f() { CLANGD_^ }
       )cpp",
       {func("CLANGD_INDEX")});
-  // We should get results from the main file, including the preamble section.
-  // However no results from included files (the index should cover them).
-  EXPECT_THAT(Results.Completions,
-              UnorderedElementsAre(Named("CLANGD_PREAMBLE_MAIN"),
-                                   Named("CLANGD_MAIN"),
-                                   Named("CLANGD_INDEX")));
+  // Index is overriden in code completion options, so the preamble symbol is
+  // not seen.
+  EXPECT_THAT(Results.Completions, UnorderedElementsAre(Named("CLANGD_MAIN"),
+                                                        Named("CLANGD_INDEX")));
 }
 
 TEST(CompletionTest, DeprecatedResults) {

@@ -24,7 +24,6 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/Specifiers.h"
 #include "clang/Index/IndexSymbol.h"
-#include "clang/Index/IndexingAction.h"
 #include "clang/Index/USRGeneration.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/Casting.h"
