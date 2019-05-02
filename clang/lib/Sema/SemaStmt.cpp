@@ -1162,6 +1162,9 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
           break;
         }
 
+        if (EI->second->hasAttr<UnusedAttr>())
+          continue;
+
         // Drop unneeded case values
         while (CI != CaseVals.end() && CI->first < EI->first)
           CI++;
