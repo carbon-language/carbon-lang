@@ -1,20 +1,20 @@
 # RUN: llc -O0 -mtriple thumb-- -mattr=+v6t2 -run-pass=instruction-select -verify-machineinstrs %s -o - | FileCheck %s
 --- |
-  define void @test_trunc_and_zext_s1() { ret void }
-  define void @test_trunc_and_sext_s1() { ret void }
-  define void @test_trunc_and_anyext_s1() { ret void }
+  define void @test_trunc_and_zext_s1_to_s32() { ret void }
+  define void @test_trunc_and_sext_s1_to_s32() { ret void }
+  define void @test_trunc_and_anyext_s1_to_s32() { ret void }
 
-  define void @test_trunc_and_zext_s8() { ret void }
-  define void @test_trunc_and_sext_s8() { ret void }
-  define void @test_trunc_and_anyext_s8() { ret void }
+  define void @test_trunc_and_zext_s8_to_s32() { ret void }
+  define void @test_trunc_and_sext_s8_to_s32() { ret void }
+  define void @test_trunc_and_anyext_s8_to_s32() { ret void }
 
-  define void @test_trunc_and_zext_s16() { ret void }
-  define void @test_trunc_and_sext_s16() { ret void }
-  define void @test_trunc_and_anyext_s16() { ret void }
+  define void @test_trunc_and_zext_s16_to_s32() { ret void }
+  define void @test_trunc_and_sext_s16_to_s32() { ret void }
+  define void @test_trunc_and_anyext_s16_to_s32() { ret void }
 ...
 ---
-name:            test_trunc_and_zext_s1
-# CHECK-LABEL: name: test_trunc_and_zext_s1
+name:            test_trunc_and_zext_s1_to_s32
+# CHECK-LABEL: name: test_trunc_and_zext_s1_to_s32
 legalized:       true
 regBankSelected: true
 selected:        false
@@ -44,8 +44,8 @@ body:             |
     ; CHECK: BX_RET 14, $noreg, implicit $r0
 ...
 ---
-name:            test_trunc_and_sext_s1
-# CHECK-LABEL: name: test_trunc_and_sext_s1
+name:            test_trunc_and_sext_s1_to_s32
+# CHECK-LABEL: name: test_trunc_and_sext_s1_to_s32
 legalized:       true
 regBankSelected: true
 selected:        false
@@ -76,8 +76,8 @@ body:             |
     ; CHECK: BX_RET 14, $noreg, implicit $r0
 ...
 ---
-name:            test_trunc_and_anyext_s1
-# CHECK-LABEL: name: test_trunc_and_anyext_s1
+name:            test_trunc_and_anyext_s1_to_s32
+# CHECK-LABEL: name: test_trunc_and_anyext_s1_to_s32
 legalized:       true
 regBankSelected: true
 selected:        false
@@ -105,8 +105,8 @@ body:             |
     ; CHECK: BX_RET 14, $noreg, implicit $r0
 ...
 ---
-name:            test_trunc_and_zext_s8
-# CHECK-LABEL: name: test_trunc_and_zext_s8
+name:            test_trunc_and_zext_s8_to_s32
+# CHECK-LABEL: name: test_trunc_and_zext_s8_to_s32
 legalized:       true
 regBankSelected: true
 selected:        false
@@ -136,8 +136,8 @@ body:             |
     ; CHECK: BX_RET 14, $noreg, implicit $r0
 ...
 ---
-name:            test_trunc_and_sext_s8
-# CHECK-LABEL: name: test_trunc_and_sext_s8
+name:            test_trunc_and_sext_s8_to_s32
+# CHECK-LABEL: name: test_trunc_and_sext_s8_to_s32
 legalized:       true
 regBankSelected: true
 selected:        false
@@ -167,8 +167,8 @@ body:             |
     ; CHECK: BX_RET 14, $noreg, implicit $r0
 ...
 ---
-name:            test_trunc_and_anyext_s8
-# CHECK-LABEL: name: test_trunc_and_anyext_s8
+name:            test_trunc_and_anyext_s8_to_s32
+# CHECK-LABEL: name: test_trunc_and_anyext_s8_to_s32
 legalized:       true
 regBankSelected: true
 selected:        false
@@ -196,8 +196,8 @@ body:             |
     ; CHECK: BX_RET 14, $noreg, implicit $r0
 ...
 ---
-name:            test_trunc_and_zext_s16
-# CHECK-LABEL: name: test_trunc_and_zext_s16
+name:            test_trunc_and_zext_s16_to_s32
+# CHECK-LABEL: name: test_trunc_and_zext_s16_to_s32
 legalized:       true
 regBankSelected: true
 selected:        false
@@ -227,8 +227,8 @@ body:             |
     ; CHECK: BX_RET 14, $noreg, implicit $r0
 ...
 ---
-name:            test_trunc_and_sext_s16
-# CHECK-LABEL: name: test_trunc_and_sext_s16
+name:            test_trunc_and_sext_s16_to_s32
+# CHECK-LABEL: name: test_trunc_and_sext_s16_to_s32
 legalized:       true
 regBankSelected: true
 selected:        false
@@ -258,8 +258,8 @@ body:             |
     ; CHECK: BX_RET 14, $noreg, implicit $r0
 ...
 ---
-name:            test_trunc_and_anyext_s16
-# CHECK-LABEL: name: test_trunc_and_anyext_s16
+name:            test_trunc_and_anyext_s16_to_s32
+# CHECK-LABEL: name: test_trunc_and_anyext_s16_to_s32
 legalized:       true
 regBankSelected: true
 selected:        false
