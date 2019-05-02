@@ -319,8 +319,10 @@ std::optional<TokenSequence> Preprocessor::MacroReplacement(
         }
       }
     }
-    if (argStart.size() == 1 && argStart[0] == k) {
-      // empty parentheses, no arguments
+    if (argStart.size() == 1 && k == argStart[0] &&
+        def.argumentCount() == 0) {
+      // Subtle: () is zero arguments, not one empty argument,
+      // unless one argument was expected.
       argStart.clear();
     }
     if (k >= tokens || argStart.size() < def.argumentCount() ||
