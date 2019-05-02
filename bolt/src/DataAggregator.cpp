@@ -54,6 +54,13 @@ IgnoreBuildID("ignore-build-id",
   cl::init(false),
   cl::cat(AggregatorCategory));
 
+static cl::opt<bool>
+FilterMemProfile("filter-mem-profile",
+  cl::desc("if processing a memory profile, filter out stack or heap accesses that "
+           "won't be useful for BOLT to reduce profile file size"),
+  cl::init(true),
+  cl::cat(AggregatorCategory));
+
 static cl::opt<unsigned>
 HeatmapBlock("block-size",
   cl::desc("size of a heat map block in bytes (default 64)"),
@@ -1163,14 +1170,12 @@ std::error_code DataAggregator::parseBranchEvents() {
          << NumEntries << " LBR entries\n";
   if (NumTotalSamples) {
     if (NumSamples && NumSamplesNoLBR == NumSamples) {
-      if (errs().has_colors())
-        errs().changeColor(raw_ostream::RED);
+      // Note: we don't know if perf2bolt is being used to parse memory samples
+      // at this point. In this case, it is OK to parse zero LBRs.
       errs() << "PERF2BOLT-WARNING: all recorded samples for this binary lack "
                 "LBR. Record profile with perf record -j any or run perf2bolt "
                 "in no-LBR mode with -nl (the performance improvement in -nl "
                 "mode may be limited)\n";
-      if (errs().has_colors())
-        errs().resetColor();
     } else {
       const auto IgnoredSamples = NumTotalSamples - NumSamples;
       const auto PercentIgnored = 100.0f * IgnoredSamples / NumTotalSamples;
@@ -1344,11 +1349,17 @@ void DataAggregator::processMemEvents() {
     if (MemFunc) {
       MemName = MemFunc->getNames()[0];
       Addr -= MemFunc->getAddress();
-    } else if (Addr) {  // TODO: filter heap/stack/nulls here?
+    } else if (Addr) {
       if (auto *BD = BC->getBinaryDataContainingAddress(Addr)) {
         MemName = BD->getName();
         Addr -= BD->getAddress();
+      } else if (opts::FilterMemProfile) {
+        // Filter out heap/stack accesses
+        continue;
       }
+    } else if (opts::FilterMemProfile) {
+      // Filter out nulls
+      continue;
     }
 
     const Location FuncLoc(!FuncName.empty(), FuncName, PC);

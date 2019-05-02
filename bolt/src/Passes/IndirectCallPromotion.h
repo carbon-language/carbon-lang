@@ -119,7 +119,7 @@ class IndirectCallPromotion : public BinaryFunctionPass {
     uint64_t Mispreds{0};
     uint64_t Branches{0};
     // Indices in the jmp table (jt only)
-    std::vector<uint64_t> JTIndex;
+    std::vector<uint64_t> JTIndices;
     bool isValid() const {
       return From.isValid() && To.isValid();
     }
@@ -128,7 +128,7 @@ class IndirectCallPromotion : public BinaryFunctionPass {
              uint64_t Mispreds, uint64_t Branches,
              uint64_t JTIndex)
     : From(From), To(To), Mispreds(Mispreds), Branches(Branches),
-      JTIndex(1, JTIndex) { }
+      JTIndices(1, JTIndex) { }
   };
 
   std::unordered_set<const BinaryFunction *> Modified;
@@ -177,6 +177,10 @@ class IndirectCallPromotion : public BinaryFunctionPass {
   // Total number of jump table sites that use hot indices.
   uint64_t TotalIndexBasedJumps{0};
 
+  void printDecision(llvm::raw_ostream &OS,
+                     std::vector<IndirectCallPromotion::Callsite> &Targets,
+                     unsigned N) const;
+
   std::vector<Callsite> getCallTargets(BinaryBasicBlock &BB,
                                        const MCInst &Inst) const;
 
@@ -201,7 +205,7 @@ class IndirectCallPromotion : public BinaryFunctionPass {
 
   SymTargetsType findCallTargetSymbols(BinaryContext &BC,
                                        std::vector<Callsite> &Targets,
-                                       const size_t N,
+                                       size_t &N,
                                        BinaryFunction &Function,
                                        BinaryBasicBlock *BB,
                                        MCInst &Inst,
