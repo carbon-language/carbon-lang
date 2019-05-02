@@ -59,13 +59,10 @@ class ResolveNamesVisitor;
 // When inheritFromParent is set, defaults come from the parent rules.
 class ImplicitRules {
 public:
-  ImplicitRules() : inheritFromParent_{false} {}
-  ImplicitRules(std::unique_ptr<ImplicitRules> &&parent)
-    : inheritFromParent_{parent.get() != nullptr} {
-    parent_.swap(parent);
+  ImplicitRules(SemanticsContext &context, ImplicitRules *parent)
+    : parent_{parent}, context_{context} {
+    inheritFromParent_ = parent != nullptr;
   }
-  void set_context(SemanticsContext &context) { context_ = &context; }
-  std::unique_ptr<ImplicitRules> &&parent() { return std::move(parent_); }
   bool isImplicitNoneType() const;
   bool isImplicitNoneExternal() const;
   void set_isImplicitNoneType(bool x) { isImplicitNoneType_ = x; }
@@ -80,11 +77,11 @@ public:
 private:
   static char Incr(char ch);
 
-  std::unique_ptr<ImplicitRules> parent_;
+  ImplicitRules *parent_;
+  SemanticsContext &context_;
+  bool inheritFromParent_;  // look in parent if not specified here
   std::optional<bool> isImplicitNoneType_;
   std::optional<bool> isImplicitNoneExternal_;
-  bool inheritFromParent_;  // look in parent if not specified here
-  SemanticsContext *context_{nullptr};
   // map initial character of identifier to nullptr or its default type
   std::map<char, const DeclTypeSpec *> map_;
 
@@ -332,13 +329,14 @@ public:
   }
 
 protected:
-  void PushScope();
-  void PopScope();
-  void ClearScopes() { implicitRules_.reset(); }
+  void BeginScope(const Scope &);
+  void SetScope(const Scope &);
 
 private:
+  // scope -> implicit rules for that scope
+  std::map<const Scope *, ImplicitRules> implicitRulesMap_;
   // implicit rules in effect for current scope
-  std::unique_ptr<ImplicitRules> implicitRules_;
+  ImplicitRules *implicitRules_{nullptr};
   const SourceName *prevImplicit_{nullptr};
   const SourceName *prevImplicitNone_{nullptr};
   const SourceName *prevImplicitNoneType_{nullptr};
@@ -402,7 +400,6 @@ public:
   void ClearScopes() {
     PopScope();  // trigger ConvertToObjectEntity calls
     currScope_ = &context().globalScope();
-    ImplicitRulesVisitor::ClearScopes();
   }
 
   template<typename T> bool Pre(const parser::Statement<T> &x) {
@@ -1059,12 +1056,12 @@ bool ImplicitRules::isImplicitNoneExternal() const {
 const DeclTypeSpec *ImplicitRules::GetType(char ch) const {
   if (auto it{map_.find(ch)}; it != map_.end()) {
     return it->second;
-  } else if (inheritFromParent_ && parent_->context_) {
+  } else if (inheritFromParent_) {
     return parent_->GetType(ch);
   } else if (ch >= 'i' && ch <= 'n') {
-    return &context_->MakeNumericType(TypeCategory::Integer);
+    return &context_.MakeNumericType(TypeCategory::Integer);
   } else if (ch >= 'a' && ch <= 'z') {
-    return &context_->MakeNumericType(TypeCategory::Real);
+    return &context_.MakeNumericType(TypeCategory::Real);
   } else {
     return nullptr;
   }
@@ -1077,7 +1074,7 @@ void ImplicitRules::SetType(const DeclTypeSpec &type, parser::Location lo,
   for (char ch = *lo; ch; ch = ImplicitRules::Incr(ch)) {
     auto res{map_.emplace(ch, &type)};
     if (!res.second && !isDefault) {
-      context_->messages().Say(lo,
+      context_.Say(lo,
           "More than one implicit type specified for '%s'"_err_en_US,
           std::string(1, ch).c_str());
     }
@@ -1368,17 +1365,17 @@ void ImplicitRulesVisitor::Post(const parser::ImplicitSpec &) {
   EndDeclTypeSpec();
 }
 
-void ImplicitRulesVisitor::PushScope() {
-  implicitRules_ = std::make_unique<ImplicitRules>(std::move(implicitRules_));
-  implicitRules_->set_context(context());
+void ImplicitRulesVisitor::SetScope(const Scope &scope) {
+  implicitRules_ = &implicitRulesMap_.at(&scope);
   prevImplicit_ = nullptr;
   prevImplicitNone_ = nullptr;
   prevImplicitNoneType_ = nullptr;
   prevParameterStmt_ = nullptr;
 }
-
-void ImplicitRulesVisitor::PopScope() {
-  implicitRules_ = std::move(implicitRules_->parent());
+void ImplicitRulesVisitor::BeginScope(const Scope &scope) {
+  // find or create implicit rules for this scope
+  implicitRulesMap_.try_emplace(&scope, context(), implicitRules_);
+  SetScope(scope);
 }
 
 // TODO: for all of these errors, reference previous statement too
@@ -1554,7 +1551,7 @@ void ScopeHandler::PushScope(Scope &scope) {
   currScope_ = &scope;
   auto kind{currScope_->kind()};
   if (kind != Scope::Kind::Block) {
-    ImplicitRulesVisitor::PushScope();
+    ImplicitRulesVisitor::BeginScope(scope);
   }
   if (kind != Scope::Kind::DerivedType) {
     if (auto *symbol{scope.symbol()}) {
@@ -1576,10 +1573,8 @@ void ScopeHandler::PopScope() {
     auto &symbol{*pair.second};
     ConvertToObjectEntity(symbol);  // if not a proc by now, it is an object
   }
-  if (currScope_->kind() != Scope::Kind::Block) {
-    ImplicitRulesVisitor::PopScope();
-  }
   currScope_ = &currScope_->parent();
+  ImplicitRulesVisitor::SetScope(InclusiveScope());
 }
 
 Symbol *ScopeHandler::FindSymbol(const parser::Name &name) {
