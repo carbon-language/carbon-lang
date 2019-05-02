@@ -20,6 +20,9 @@
 #include "lldb/Utility/ArchSpec.h"
 #include "lldb/Utility/StreamGDBRemote.h"
 #include "lldb/Utility/StructuredData.h"
+#if defined(_WIN32)
+#include "lldb/Host/windows/PosixApi.h"
+#endif
 
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/VersionTuple.h"
