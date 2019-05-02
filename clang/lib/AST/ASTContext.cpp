@@ -1600,8 +1600,10 @@ CharUnits ASTContext::getDeclAlign(const Decl *D, bool ForAlignof) const {
       if (BaseT.getQualifiers().hasUnaligned())
         Align = Target->getCharWidth();
       if (const auto *VD = dyn_cast<VarDecl>(D)) {
-        if (VD->hasGlobalStorage() && !ForAlignof)
-          Align = std::max(Align, getTargetInfo().getMinGlobalAlign());
+        if (VD->hasGlobalStorage() && !ForAlignof) {
+          uint64_t TypeSize = getTypeSize(T.getTypePtr());
+          Align = std::max(Align, getTargetInfo().getMinGlobalAlign(TypeSize));
+        }
       }
     }
 
@@ -2239,7 +2241,8 @@ unsigned ASTContext::getTargetDefaultAlignForAttributeAligned() const {
 /// getAlignOfGlobalVar - Return the alignment in bits that should be given
 /// to a global variable of the specified type.
 unsigned ASTContext::getAlignOfGlobalVar(QualType T) const {
-  return std::max(getTypeAlign(T), getTargetInfo().getMinGlobalAlign());
+  uint64_t TypeSize = getTypeSize(T.getTypePtr());
+  return std::max(getTypeAlign(T), getTargetInfo().getMinGlobalAlign(TypeSize));
 }
 
 /// getAlignOfGlobalVarInChars - Return the alignment in characters that
