@@ -2151,9 +2151,11 @@ bool SIInstrInfo::FoldImmediate(MachineInstr &UseMI, MachineInstr &DefMI,
           Src0->ChangeToImmediate(Def->getOperand(1).getImm());
           Src0Inlined = true;
         } else if ((RI.isPhysicalRegister(Src0->getReg()) &&
-            RI.isSGPRClass(RI.getPhysRegClass(Src0->getReg()))) ||
+            (ST.getConstantBusLimit(Opc) <= 1 &&
+             RI.isSGPRClass(RI.getPhysRegClass(Src0->getReg())))) ||
             (RI.isVirtualRegister(Src0->getReg()) &&
-            RI.isSGPRClass(MRI->getRegClass(Src0->getReg()))))
+            (ST.getConstantBusLimit(Opc) <= 1 &&
+             RI.isSGPRClass(MRI->getRegClass(Src0->getReg())))))
           return false;
           // VGPR is okay as Src0 - fallthrough
       }
@@ -2350,7 +2352,9 @@ MachineInstr *SIInstrInfo::convertToThreeAddress(MachineFunction::iterator &MBB,
 
   if (!IsFMA && !Src0Mods && !Src1Mods && !Clamp && !Omod &&
       // If we have an SGPR input, we will violate the constant bus restriction.
-      (!Src0->isReg() || !RI.isSGPRReg(MBB->getParent()->getRegInfo(), Src0->getReg()))) {
+      (ST.getConstantBusLimit(Opc) > 1 ||
+       !Src0->isReg() ||
+       !RI.isSGPRReg(MBB->getParent()->getRegInfo(), Src0->getReg()))) {
     if (auto Imm = getFoldableImm(Src2)) {
       return BuildMI(*MBB, MI, MI.getDebugLoc(),
                      get(IsF16 ? AMDGPU::V_MADAK_F16 : AMDGPU::V_MADAK_F32))
@@ -3090,9 +3094,12 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr &MI,
     if (AMDGPU::getNamedOperandIdx(Opcode, AMDGPU::OpName::imm) != -1)
       ++ConstantBusCount;
 
+    SmallVector<unsigned, 2> SGPRsUsed;
     unsigned SGPRUsed = findImplicitSGPRRead(MI);
-    if (SGPRUsed != AMDGPU::NoRegister)
+    if (SGPRUsed != AMDGPU::NoRegister) {
       ++ConstantBusCount;
+      SGPRsUsed.push_back(SGPRUsed);
+    }
 
     for (int OpIdx : OpIndices) {
       if (OpIdx == -1)
@@ -3100,23 +3107,37 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr &MI,
       const MachineOperand &MO = MI.getOperand(OpIdx);
       if (usesConstantBus(MRI, MO, MI.getDesc().OpInfo[OpIdx])) {
         if (MO.isReg()) {
-          if (MO.getReg() != SGPRUsed)
-            ++ConstantBusCount;
           SGPRUsed = MO.getReg();
+          if (llvm::all_of(SGPRsUsed, [this, SGPRUsed](unsigned SGPR) {
+                return !RI.regsOverlap(SGPRUsed, SGPR);
+              })) {
+            ++ConstantBusCount;
+            SGPRsUsed.push_back(SGPRUsed);
+          }
         } else {
           ++ConstantBusCount;
           ++LiteralCount;
         }
       }
     }
-    if (ConstantBusCount > 1) {
-      ErrInfo = "VOP* instruction uses the constant bus more than once";
+    const GCNSubtarget &ST = MF->getSubtarget<GCNSubtarget>();
+    // v_writelane_b32 is an exception from constant bus restriction:
+    // vsrc0 can be sgpr, const or m0 and lane select sgpr, m0 or inline-const
+    if (ConstantBusCount > ST.getConstantBusLimit(Opcode) &&
+        Opcode != AMDGPU::V_WRITELANE_B32) {
+      ErrInfo = "VOP* instruction violates constant bus restriction";
       return false;
     }
 
     if (isVOP3(MI) && LiteralCount) {
-      ErrInfo = "VOP3 instruction uses literal";
-      return false;
+      if (LiteralCount && !ST.hasVOP3Literal()) {
+        ErrInfo = "VOP3 instruction uses literal";
+        return false;
+      }
+      if (LiteralCount > 1) {
+        ErrInfo = "VOP3 instruction uses more than one literal";
+        return false;
+      }
     }
   }
 
@@ -3509,31 +3530,47 @@ bool SIInstrInfo::isLegalVSrcOperand(const MachineRegisterInfo &MRI,
 
 bool SIInstrInfo::isOperandLegal(const MachineInstr &MI, unsigned OpIdx,
                                  const MachineOperand *MO) const {
-  const MachineRegisterInfo &MRI = MI.getParent()->getParent()->getRegInfo();
+  const MachineFunction &MF = *MI.getParent()->getParent();
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
   const MCInstrDesc &InstDesc = MI.getDesc();
   const MCOperandInfo &OpInfo = InstDesc.OpInfo[OpIdx];
+  const GCNSubtarget &ST = MF.getSubtarget<GCNSubtarget>();
   const TargetRegisterClass *DefinedRC =
       OpInfo.RegClass != -1 ? RI.getRegClass(OpInfo.RegClass) : nullptr;
   if (!MO)
     MO = &MI.getOperand(OpIdx);
 
+  int ConstantBusLimit = ST.getConstantBusLimit(MI.getOpcode());
+  int VOP3LiteralLimit = ST.hasVOP3Literal() ? 1 : 0;
   if (isVALU(MI) && usesConstantBus(MRI, *MO, OpInfo)) {
+    if (isVOP3(MI) && isLiteralConstantLike(*MO, OpInfo) && !VOP3LiteralLimit--)
+      return false;
 
-    RegSubRegPair SGPRUsed;
+    SmallDenseSet<RegSubRegPair> SGPRsUsed;
     if (MO->isReg())
-      SGPRUsed = RegSubRegPair(MO->getReg(), MO->getSubReg());
+      SGPRsUsed.insert(RegSubRegPair(MO->getReg(), MO->getSubReg()));
 
     for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
       if (i == OpIdx)
         continue;
       const MachineOperand &Op = MI.getOperand(i);
       if (Op.isReg()) {
-        if ((Op.getReg() != SGPRUsed.Reg || Op.getSubReg() != SGPRUsed.SubReg) &&
+        RegSubRegPair SGPR(Op.getReg(), Op.getSubReg());
+        if (!SGPRsUsed.count(SGPR) &&
             usesConstantBus(MRI, Op, InstDesc.OpInfo[i])) {
-          return false;
+          if (--ConstantBusLimit <= 0)
+            return false;
+          SGPRsUsed.insert(SGPR);
         }
       } else if (InstDesc.OpInfo[i].OperandType == AMDGPU::OPERAND_KIMM32) {
-        return false;
+        if (--ConstantBusLimit <= 0)
+          return false;
+      } else if (isVOP3(MI) && AMDGPU::isSISrcOperand(InstDesc, i) &&
+                 isLiteralConstantLike(Op, InstDesc.OpInfo[i])) {
+        if (!VOP3LiteralLimit--)
+          return false;
+        if (--ConstantBusLimit <= 0)
+          return false;
       }
     }
   }
@@ -3569,7 +3606,7 @@ void SIInstrInfo::legalizeOperandsVOP2(MachineRegisterInfo &MRI,
   // disabled for the operand type for instructions because they will always
   // violate the one constant bus use rule.
   bool HasImplicitSGPR = findImplicitSGPRRead(MI) != AMDGPU::NoRegister;
-  if (HasImplicitSGPR) {
+  if (HasImplicitSGPR && ST.getConstantBusLimit(Opc) <= 1) {
     int Src0Idx = AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src0);
     MachineOperand &Src0 = MI.getOperand(Src0Idx);
 
@@ -3680,7 +3717,14 @@ void SIInstrInfo::legalizeOperandsVOP3(MachineRegisterInfo &MRI,
   };
 
   // Find the one SGPR operand we are allowed to use.
+  int ConstantBusLimit = ST.getConstantBusLimit(Opc);
+  int LiteralLimit = ST.hasVOP3Literal() ? 1 : 0;
+  SmallDenseSet<unsigned> SGPRsUsed;
   unsigned SGPRReg = findUsedSGPR(MI, VOP3Idx);
+  if (SGPRReg != AMDGPU::NoRegister) {
+    SGPRsUsed.insert(SGPRReg);
+    --ConstantBusLimit;
+  }
 
   for (unsigned i = 0; i < 3; ++i) {
     int Idx = VOP3Idx[i];
@@ -3688,16 +3732,32 @@ void SIInstrInfo::legalizeOperandsVOP3(MachineRegisterInfo &MRI,
       break;
     MachineOperand &MO = MI.getOperand(Idx);
 
-    // We should never see a VOP3 instruction with an illegal immediate operand.
-    if (!MO.isReg())
+    if (!MO.isReg()) {
+      if (!isLiteralConstantLike(MO, get(Opc).OpInfo[Idx]))
+        continue;
+
+      if (LiteralLimit > 0 && ConstantBusLimit > 0) {
+        --LiteralLimit;
+        --ConstantBusLimit;
+        continue;
+      }
+
+      --LiteralLimit;
+      --ConstantBusLimit;
+      legalizeOpWithMove(MI, Idx);
       continue;
+    }
 
     if (!RI.isSGPRClass(MRI.getRegClass(MO.getReg())))
       continue; // VGPRs are legal
 
-    if (SGPRReg == AMDGPU::NoRegister || SGPRReg == MO.getReg()) {
-      SGPRReg = MO.getReg();
-      // We can use one SGPR in each VOP3 instruction.
+    // We can use one SGPR in each VOP3 instruction prior to GFX10
+    // and two starting from GFX10.
+    if (SGPRsUsed.count(MO.getReg()))
+      continue;
+    if (ConstantBusLimit > 0) {
+      SGPRsUsed.insert(MO.getReg());
+      --ConstantBusLimit;
       continue;
     }
 

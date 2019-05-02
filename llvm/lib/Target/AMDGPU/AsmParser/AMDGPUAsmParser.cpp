@@ -2443,6 +2443,8 @@ bool AMDGPUAsmParser::validateConstantBusLimitations(const MCInst &Inst) {
   const unsigned Opcode = Inst.getOpcode();
   const MCInstrDesc &Desc = MII.get(Opcode);
   unsigned ConstantBusUseCount = 0;
+  unsigned NumLiterals = 0;
+  unsigned LiteralSize;
 
   if (Desc.TSFlags &
       (SIInstrFlags::VOPC |
@@ -2454,8 +2456,10 @@ bool AMDGPUAsmParser::validateConstantBusLimitations(const MCInst &Inst) {
       ++ConstantBusUseCount;
     }
 
+    SmallDenseSet<unsigned> SGPRsUsed;
     unsigned SGPRUsed = findImplicitSGPRReadInVOP(Inst);
     if (SGPRUsed != AMDGPU::NoRegister) {
+      SGPRsUsed.insert(SGPRUsed);
       ++ConstantBusUseCount;
     }
 
@@ -2478,16 +2482,42 @@ bool AMDGPUAsmParser::validateConstantBusLimitations(const MCInst &Inst) {
           //   flat_scratch_lo, flat_scratch_hi
           // are theoretically valid but they are disabled anyway.
           // Note that this code mimics SIInstrInfo::verifyInstruction
-          if (Reg != SGPRUsed) {
+          if (!SGPRsUsed.count(Reg)) {
+            SGPRsUsed.insert(Reg);
             ++ConstantBusUseCount;
           }
           SGPRUsed = Reg;
         } else { // Expression or a literal
-          ++ConstantBusUseCount;
+
+          if (Desc.OpInfo[OpIdx].OperandType == MCOI::OPERAND_IMMEDIATE)
+            continue; // special operand like VINTERP attr_chan
+
+          // An instruction may use only one literal.
+          // This has been validated on the previous step.
+          // See validateVOP3Literal.
+          // This literal may be used as more than one operand.
+          // If all these operands are of the same size,
+          // this literal counts as one scalar value.
+          // Otherwise it counts as 2 scalar values.
+          // See "GFX10 Shader Programming", section 3.6.2.3.
+
+          unsigned Size = AMDGPU::getOperandSize(Desc, OpIdx);
+          if (Size < 4) Size = 4;
+
+          if (NumLiterals == 0) {
+            NumLiterals = 1;
+            LiteralSize = Size;
+          } else if (LiteralSize != Size) {
+            NumLiterals = 2;
+          }
         }
       }
     }
   }
+  ConstantBusUseCount += NumLiterals;
+
+  if (isGFX10())
+    return ConstantBusUseCount <= 2;
 
   return ConstantBusUseCount <= 1;
 }
