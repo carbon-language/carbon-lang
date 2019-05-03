@@ -472,12 +472,12 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
     if (nameToken.empty()) {
       prescanner->Say(
           dir.GetIntervalProvenanceRange(dirOffset, tokens - dirOffset),
-          "#%s: missing name"_err_en_US, dirName.data());
+          "#%S: missing name"_err_en_US, dirName);
     } else {
       j = dir.SkipBlanks(j + 1);
       if (j != tokens) {
         prescanner->Say(dir.GetIntervalProvenanceRange(j, tokens - j),
-            "#%s: excess tokens at end of directive"_en_US, dirName.data());
+            "#%S: excess tokens at end of directive"_en_US, dirName);
       }
       doThen = IsNameDefined(nameToken) == (dirName == "ifdef");
     }
@@ -534,12 +534,12 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
   } else if (dirName == "error") {
     prescanner->Say(
         dir.GetIntervalProvenanceRange(dirOffset, tokens - dirOffset),
-        "%s"_err_en_US, dir.ToString().data());
+        "%S"_err_en_US, dir.ToString());
   } else if (dirName == "warning" || dirName == "comment" ||
       dirName == "note") {
     prescanner->Say(
         dir.GetIntervalProvenanceRange(dirOffset, tokens - dirOffset),
-        "%s"_en_US, dir.ToString().data());
+        "%S"_en_US, dir.ToString());
   } else if (dirName == "include") {
     if (j == tokens) {
       prescanner->Say(
@@ -585,7 +585,7 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
     const SourceFile *included{allSources_.Open(include, &error)};
     if (included == nullptr) {
       prescanner->Say(dir.GetTokenProvenanceRange(dirOffset),
-          "#include: %s"_err_en_US, error.str().data());
+          "#include: %S"_err_en_US, error.str());
     } else if (included->bytes() > 0) {
       ProvenanceRange fileRange{
           allSources_.AddIncludedFile(*included, dir.GetProvenanceRange())};
@@ -593,7 +593,7 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
     }
   } else {
     prescanner->Say(dir.GetTokenProvenanceRange(dirOffset),
-        "#%s: unknown or unimplemented directive"_err_en_US, dirName.data());
+        "#%S: unknown or unimplemented directive"_err_en_US, dirName);
   }
 }
 
@@ -654,8 +654,7 @@ void Preprocessor::SkipDisabledConditionalCode(const std::string &dirName,
       }
     }
   }
-  prescanner->Say(
-      provenanceRange, "#%s: missing #endif"_err_en_US, dirName.data());
+  prescanner->Say(provenanceRange, "#%S: missing #endif"_err_en_US, dirName);
 }
 
 // Precedence level codes used here to accommodate mixed Fortran and C:
@@ -774,7 +773,7 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
     left = std::stoll(t, &consumed, 0 /*base to be detected*/);
     if (consumed < t.size()) {
       *error = Message{token.GetTokenProvenanceRange(opAt),
-          "uninterpretable numeric constant '%s'"_err_en_US, t.data()};
+          "Uninterpretable numeric constant '%S'"_err_en_US, t};
       return 0;
     }
   } else if (IsLegalIdentifierStart(t[0])) {

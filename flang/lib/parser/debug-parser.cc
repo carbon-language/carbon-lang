@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,8 +23,7 @@ std::optional<Success> DebugParser::Parse(ParseState &state) const {
   if (auto ustate{state.userState()}) {
     if (auto out{ustate->debugOutput()}) {
       std::string note{str_, length_};
-      Message message{
-          state.GetLocation(), "parser debug: %s"_en_US, note.data()};
+      Message message{state.GetLocation(), "parser debug: %S"_en_US, note};
       message.SetContext(state.context().get());
       message.Emit(*out, ustate->cooked(), true);
     }

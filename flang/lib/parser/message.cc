@@ -33,6 +33,56 @@ std::ostream &operator<<(std::ostream &o, const MessageFixedText &t) {
   return o;
 }
 
+static bool NeedsSpecialFormatting(const char *p) {
+  while (*p != '\0') {
+    if (*p++ == '%') {
+      if (*p == 'S' || *p == 'B') {
+        return true;
+      } else if (*p != '%' && *p != 's' && *p != 'd' &&
+          !(p[1] == 'd' && (*p == 'z' || *p == 'j'))) {
+        return false;
+      }
+    }
+  }
+  return false;
+}
+
+static std::string SpecialFormatting(const char *p, va_list &ap) {
+  std::string result;
+  while (*p != '\0') {
+    if (*p != '%') {
+      result += *p++;
+    } else {
+      ++p;
+      switch (*p++) {
+      case '%': result += '%'; break;
+      case 's': result += va_arg(ap, const char *); break;
+      case 'd': result += std::to_string(va_arg(ap, int)); break;
+      case 'S': result += va_arg(ap, std::string); break;
+      case 'B': result += va_arg(ap, CharBlock).ToString(); break;
+      default:
+        if (*p == 'd') {
+          if (p[-1] == 'z') {
+            result += std::to_string(va_arg(ap, std::size_t));
+            ++p;
+            break;
+          }
+          if (p[-1] == 'j') {
+            result += std::to_string(va_arg(ap, std::intmax_t));
+            ++p;
+            break;
+          }
+        }
+        char buffer[256];
+        vsnprintf(buffer, sizeof buffer, p - 2, ap);
+        result += buffer;
+        return result;
+      }
+    }
+  }
+  return result;
+}
+
 MessageFormattedText::MessageFormattedText(MessageFixedText text, ...)
   : isFatal_{text.isFatal()} {
   const char *p{text.text().begin()};
@@ -40,22 +90,25 @@ MessageFormattedText::MessageFormattedText(MessageFixedText text, ...)
   if (*text.text().end() != '\0') {
     // not NUL-terminated
     asString = text.text().NULTerminatedToString();
-    p = asString.data();
+    p = asString.c_str();
   }
-  char buffer[256];
   va_list ap;
   va_start(ap, text);
-  vsnprintf(buffer, sizeof buffer, p, ap);
+  if (NeedsSpecialFormatting(p)) {
+    string_ = SpecialFormatting(p, ap);
+  } else {
+    char buffer[256];
+    vsnprintf(buffer, sizeof buffer, p, ap);
+    string_ = buffer;
+  }
   va_end(ap);
-  string_ = buffer;
 }
 
 std::string MessageExpectedText::ToString() const {
   return std::visit(
       common::visitors{
           [](const CharBlock &cb) {
-            return MessageFormattedText(
-                "expected '%s'"_err_en_US, cb.NULTerminatedToString().data())
+            return MessageFormattedText("expected '%B'"_err_en_US, cb)
                 .MoveString();
           },
           [](const SetOfChars &set) {
@@ -68,22 +121,21 @@ std::string MessageExpectedText::ToString() const {
                 std::string s{expect.ToString()};
                 if (s.size() == 1) {
                   return MessageFormattedText(
-                      "expected end of line or '%s'"_err_en_US, s.data())
+                      "expected end of line or '%S'"_err_en_US, s)
                       .MoveString();
                 } else {
                   return MessageFormattedText(
-                      "expected end of line or one of '%s'"_err_en_US, s.data())
+                      "expected end of line or one of '%S'"_err_en_US, s)
                       .MoveString();
                 }
               }
             }
             std::string s{expect.ToString()};
             if (s.size() != 1) {
-              return MessageFormattedText(
-                  "expected one of '%s'"_err_en_US, s.data())
+              return MessageFormattedText("expected one of '%S'"_err_en_US, s)
                   .MoveString();
             } else {
-              return MessageFormattedText("expected '%s'"_err_en_US, s.data())
+              return MessageFormattedText("expected '%S'"_err_en_US, s)
                   .MoveString();
             }
           },

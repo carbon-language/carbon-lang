@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ void Parsing::Prescan(const std::string &path, Options options) {
   }
   if (sourceFile == nullptr) {
     ProvenanceRange range{allSources.AddCompilerInsertion(path)};
-    messages_.Say(range, "%s"_err_en_US, fileError.str().data());
+    messages_.Say(range, "%S"_err_en_US, fileError.str());
     return;
   }
   if (sourceFile->bytes() == 0) {
