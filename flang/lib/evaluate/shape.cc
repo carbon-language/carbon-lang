@@ -324,6 +324,14 @@ std::optional<Shape> GetShapeHelper::GetShape(const ActualArgument &arg) {
   }
 }
 
+std::optional<Shape> GetShapeHelper::GetShape(const ProcedureDesignator &proc) {
+  if (const Symbol * symbol{proc.GetSymbol()}) {
+    return GetShape(*symbol);
+  } else {
+    return std::nullopt;
+  }
+}
+
 std::optional<Shape> GetShapeHelper::GetShape(const ProcedureRef &call) {
   if (call.Rank() == 0) {
     return Shape{};
@@ -382,29 +390,31 @@ std::optional<Shape> GetShapeHelper::GetShape(const NullPointer &) {
   return {};  // not an object
 }
 
-void CheckConformance(parser::ContextualMessages &messages, const Shape &left,
-    const Shape &right) {
+bool CheckConformance(parser::ContextualMessages &messages, const Shape &left,
+    const Shape &right, const char *leftDesc, const char *rightDesc) {
   if (!left.empty() && !right.empty()) {
     int n{static_cast<int>(left.size())};
     int rn{static_cast<int>(right.size())};
     if (n != rn) {
-      messages.Say(
-          "Left operand has rank %d, but right operand has rank %d"_err_en_US,
-          n, rn);
+      messages.Say("Rank of %s is %d, but %s has rank %d"_err_en_US, leftDesc,
+          n, rightDesc, rn);
+      return false;
     } else {
       for (int j{0}; j < n; ++j) {
         if (auto leftDim{ToInt64(left[j])}) {
           if (auto rightDim{ToInt64(right[j])}) {
             if (*leftDim != *rightDim) {
-              messages.Say("Dimension %d of left operand has extent %jd, "
-                           "but right operand has extent %jd"_err_en_US,
-                  j + 1, static_cast<std::intmax_t>(*leftDim),
-                  static_cast<std::intmax_t>(*rightDim));
+              messages.Say("Dimension %d of %s has extent %jd, "
+                           "but %s has extent %jd"_err_en_US,
+                  j + 1, leftDesc, static_cast<std::intmax_t>(*leftDim),
+                  rightDesc, static_cast<std::intmax_t>(*rightDim));
+              return false;
             }
           }
         }
       }
     }
   }
+  return true;
 }
 }

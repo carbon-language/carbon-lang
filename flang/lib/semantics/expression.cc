@@ -191,7 +191,7 @@ common::IfNoLvalue<MaybeExpr, WRAPPED> TypedWrapper(
 // Wraps a data reference in a typed Designator<>.
 static MaybeExpr Designate(DataRef &&ref) {
   if (std::optional<DynamicType> dyType{
-          GetSymbolType(ref.GetLastSymbol().GetUltimate())}) {
+          DynamicType::From(ref.GetLastSymbol().GetUltimate())}) {
     return TypedWrapper<Designator, DataRef>(
         std::move(*dyType), std::move(ref));
   }
@@ -637,7 +637,7 @@ struct TypeParamInquiryVisitor {
 
 static std::optional<Expr<SomeInteger>> MakeTypeParamInquiry(
     const Symbol *symbol) {
-  if (std::optional<DynamicType> dyType{GetSymbolType(symbol)}) {
+  if (std::optional<DynamicType> dyType{DynamicType::From(symbol)}) {
     if (dyType->category == TypeCategory::Integer) {
       return common::SearchTypes(TypeParamInquiryVisitor{
           dyType->kind, SymbolOrComponent{nullptr}, *symbol});
@@ -716,7 +716,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Substring &ss) {
           std::optional<Expr<SubscriptInteger>> last{
               GetSubstringBound(std::get<1>(range.t))};
           const Symbol &symbol{checked->GetLastSymbol()};
-          if (std::optional<DynamicType> dynamicType{GetSymbolType(symbol)}) {
+          if (std::optional<DynamicType> dynamicType{DynamicType::From(symbol)}) {
             if (dynamicType->category == TypeCategory::Character) {
               return WrapperHelper<TypeCategory::Character, Designator,
                   Substring>(dynamicType->kind,
@@ -900,7 +900,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::StructureComponent &sc) {
     }
     if (sym->detailsIf<semantics::TypeParamDetails>()) {
       if (auto *designator{UnwrapExpr<Designator<SomeDerived>>(*dtExpr)}) {
-        if (std::optional<DynamicType> dyType{GetSymbolType(*sym)}) {
+        if (std::optional<DynamicType> dyType{DynamicType::From(*sym)}) {
           if (dyType->category == TypeCategory::Integer) {
             return AsMaybeExpr(
                 common::SearchTypes(TypeParamInquiryVisitor{dyType->kind,
@@ -953,9 +953,8 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::StructureComponent &sc) {
     } else if (kind == MiscKind::KindParamInquiry ||
         kind == MiscKind::LenParamInquiry) {
       // Convert x%KIND -> intrinsic KIND(x), x%LEN -> intrinsic LEN(x)
-      SpecificIntrinsic func{name.ToString()};
-      func.type = GetDefaultKindOfType(TypeCategory::Integer);
-      return TypedWrapper<FunctionRef, ProcedureRef>(*func.type,
+      SpecificIntrinsic func{name.ToString(), characteristics::Procedure{}};
+      return TypedWrapper<FunctionRef, ProcedureRef>(GetDefaultKindOfType(TypeCategory::Integer),
           ProcedureRef{ProcedureDesignator{std::move(func)},
               ActualArguments{ActualArgument{std::move(*base)}}});
     } else {
@@ -1560,29 +1559,30 @@ MaybeExpr ExpressionAnalyzer::Analyze(
 // Unary operations
 
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::Parentheses &x) {
-  // TODO: C1003: A parenthesized function reference may not return a
-  // procedure pointer.
   if (MaybeExpr operand{Analyze(x.v.value())}) {
+    if (const semantics::Symbol * symbol{GetLastSymbol(*operand)}) {
+      if (const semantics::Symbol * result{FindFunctionResult(*symbol)}) {
+        if (semantics::IsProcedurePointer(*result)) {
+          Say("A function reference that returns a procedure "
+              "pointer may not be parenthesized."_err_en_US);  // C1003
+        }
+      }
+    }
     return std::visit(
-        common::visitors{
-            [&](BOZLiteralConstant &&boz) {
-              return operand;  // ignore parentheses around typeless constants
-            },
-            [&](NullPointer &&boz) {
-              return operand;  // ignore parentheses around NULL()
-            },
-            [&](Expr<SomeDerived> &&) {
-              // TODO: parenthesized derived type variable
-              return operand;
-            },
-            [](auto &&catExpr) {
-              return std::visit(
-                  [](auto &&expr) -> MaybeExpr {
-                    using Ty = ResultType<decltype(expr)>;
-                    return {AsGenericExpr(Parentheses<Ty>{std::move(expr)})};
-                  },
-                  std::move(catExpr.u));
-            },
+        [&](auto &&x) -> MaybeExpr {
+          using xTy = std::decay_t<decltype(x)>;
+          if constexpr (common::HasMember<xTy, TypelessExpression>) {
+            return operand;  // ignore parentheses around typeless
+          } else if constexpr (std::is_same_v<xTy, Expr<SomeDerived>>) {
+            return operand;  // ignore parentheses around derived type
+          } else {
+            return std::visit(
+                [](auto &&y) -> MaybeExpr {
+                  using Ty = ResultType<decltype(y)>;
+                  return {AsGenericExpr(Parentheses<Ty>{std::move(y)})};
+                },
+                std::move(x.u));
+          }
         },
         std::move(operand->u));
   }
@@ -1592,21 +1592,22 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::Parentheses &x) {
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::UnaryPlus &x) {
   MaybeExpr value{Analyze(x.v.value())};
   if (value.has_value()) {
-    std::visit(
-        common::visitors{
-            [](const BOZLiteralConstant &) {},  // allow +Z'1', it's harmless
-            [&](const NullPointer &) {
-              Say("+NULL() is not allowed"_err_en_US);
-            },
-            [&](const auto &catExpr) {
-              TypeCategory cat{ResultType<decltype(catExpr)>::category};
-              if (cat != TypeCategory::Integer && cat != TypeCategory::Real &&
-                  cat != TypeCategory::Complex) {
-                Say("operand of unary + must be of a numeric type"_err_en_US);
+    if (!std::visit(
+            [&](const auto &y) {
+              using yTy = std::decay_t<decltype(y)>;
+              if constexpr (std::is_same_v<yTy, BOZLiteralConstant>) {
+                // allow and ignore +Z'1', it's harmless
+                return true;
+              } else if constexpr (!IsNumericCategoryExpr<yTy>()) {
+                Say("Operand of unary + must have numeric type"_err_en_US);
+                return false;
+              } else {
+                return true;
               }
             },
-        },
-        value->u);
+            value->u)) {
+      return std::nullopt;
+    }
   }
   return value;
 }

@@ -17,18 +17,29 @@
 #include "tools.h"
 #include "type.h"
 #include "../common/indirection.h"
+#include "../parser/message.h"
 #include "../semantics/symbol.h"
 #include <ostream>
 #include <sstream>
 #include <string>
 
-using namespace std::literals::string_literals;
+using namespace Fortran::parser::literals;
 
 namespace Fortran::evaluate::characteristics {
 
 bool TypeAndShape::operator==(const TypeAndShape &that) const {
   return type_ == that.type_ && shape_ == that.shape_ &&
       isAssumedRank_ == that.isAssumedRank_;
+}
+
+bool TypeAndShape::IsCompatibleWith(
+    parser::ContextualMessages &messages, const TypeAndShape &that) const {
+  if (!type_.IsTypeCompatibleWith(that.type_)) {
+    messages.Say("Target type '%s' is not compatible with '%s'"_err_en_US,
+        that.type_.AsFortran().c_str(), type_.AsFortran().c_str());
+    return false;
+  }
+  return CheckConformance(messages, shape_, that.shape_);
 }
 
 std::optional<TypeAndShape> TypeAndShape::Characterize(
@@ -44,17 +55,8 @@ std::optional<TypeAndShape> TypeAndShape::Characterize(
 }
 
 std::optional<TypeAndShape> TypeAndShape::Characterize(
-    const semantics::Symbol *symbol) {
-  if (symbol != nullptr) {
-    return Characterize(*symbol);
-  } else {
-    return std::nullopt;
-  }
-}
-
-std::optional<TypeAndShape> TypeAndShape::Characterize(
     const semantics::ObjectEntityDetails &object) {
-  if (auto type{AsDynamicType(object.type())}) {
+  if (auto type{DynamicType::From(object.type())}) {
     TypeAndShape result{std::move(*type)};
     result.AcquireShape(object);
     return result;
@@ -79,17 +81,8 @@ std::optional<TypeAndShape> TypeAndShape::Characterize(
 
 std::optional<TypeAndShape> TypeAndShape::Characterize(
     const semantics::DeclTypeSpec &spec) {
-  if (auto type{AsDynamicType(spec)}) {
+  if (auto type{DynamicType::From(spec)}) {
     return TypeAndShape{std::move(*type)};
-  } else {
-    return std::nullopt;
-  }
-}
-
-std::optional<TypeAndShape> TypeAndShape::Characterize(
-    const semantics::DeclTypeSpec *spec) {
-  if (spec != nullptr) {
-    return Characterize(*spec);
   } else {
     return std::nullopt;
   }
@@ -138,8 +131,8 @@ std::ostream &TypeAndShape::Dump(std::ostream &o) const {
 }
 
 bool DummyDataObject::operator==(const DummyDataObject &that) const {
-  return TypeAndShape::operator==(that) && attrs == that.attrs &&
-      intent == that.intent && coshape == that.coshape;
+  return type == that.type && attrs == that.attrs && intent == that.intent &&
+      coshape == that.coshape;
 }
 
 std::ostream &DummyDataObject::Dump(std::ostream &o) const {
@@ -147,7 +140,7 @@ std::ostream &DummyDataObject::Dump(std::ostream &o) const {
   if (intent != common::Intent::Default) {
     o << "INTENT(" << common::EnumToString(intent) << ')';
   }
-  TypeAndShape::Dump(o);
+  type.Dump(o);
   if (!coshape.empty()) {
     char sep{'['};
     for (const auto &expr : coshape) {
@@ -338,6 +331,11 @@ bool FunctionResult::IsAssumedLengthCharacter() const {
   }
 }
 
+Procedure::Procedure(FunctionResult &&fr, DummyArguments &&args, Attrs a)
+  : functionResult{std::move(fr)}, dummyArguments{std::move(args)}, attrs{a} {}
+Procedure::Procedure(DummyArguments &&args, Attrs a)
+  : dummyArguments{std::move(args)}, attrs{a} {}
+
 static void SetProcedureAttrs(
     Procedure &procedure, const semantics::Symbol &symbol) {
   if (symbol.attrs().test(semantics::Attr::PURE)) {
@@ -353,8 +351,8 @@ static void SetProcedureAttrs(
 
 std::optional<Procedure> Procedure::Characterize(
     const semantics::Symbol &symbol, const IntrinsicProcTable &intrinsics) {
-  Procedure result;
   if (const auto *subp{symbol.detailsIf<semantics::SubprogramDetails>()}) {
+    Procedure result;
     if (subp->isFunction()) {
       if (auto maybeResult{
               FunctionResult::Characterize(subp->result(), intrinsics)}) {
@@ -375,7 +373,7 @@ std::optional<Procedure> Procedure::Characterize(
         return std::nullopt;
       }
     }
-    return std::move(result);
+    return result;
   } else if (const auto *proc{
                  symbol.detailsIf<semantics::ProcEntityDetails>()}) {
     const semantics::ProcInterface &interface{proc->interface()};
@@ -389,7 +387,7 @@ std::optional<Procedure> Procedure::Characterize(
     } else {
       result.attrs.set(Procedure::Attr::ImplicitInterface);
       if (const semantics::DeclTypeSpec * type{interface.type()}) {
-        if (auto resultType{AsDynamicType(*type)}) {
+        if (auto resultType{DynamicType::From(*type)}) {
           result.functionResult = FunctionResult{*resultType};
         } else {
           return std::nullopt;
@@ -400,6 +398,7 @@ std::optional<Procedure> Procedure::Characterize(
     }
     SetProcedureAttrs(result, symbol);
     // The PASS name, if any, is not a characteristic.
+    return result;
   } else if (const auto *misc{symbol.detailsIf<semantics::MiscDetails>()}) {
     if (misc->kind() == semantics::MiscDetails::Kind::SpecificIntrinsic) {
       if (auto intrinsic{intrinsics.IsUnrestrictedSpecificIntrinsicFunction(
@@ -410,6 +409,7 @@ std::optional<Procedure> Procedure::Characterize(
   }
   return std::nullopt;
 }
+
 DEFINE_DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(DummyProcedure)
 DEFINE_DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(FunctionResult)
 DEFINE_DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(Procedure)

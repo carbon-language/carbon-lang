@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "call.h"
+#include "characteristics.h"
 #include "expression.h"
 #include "tools.h"
 #include "../common/idioms.h"
@@ -61,9 +62,17 @@ bool ActualArgument::operator==(const ActualArgument &that) const {
       isAlternateReturn == that.isAlternateReturn && u_ == that.u_;
 }
 
+SpecificIntrinsic::SpecificIntrinsic(
+    IntrinsicProcedure n, characteristics::Procedure &&chars)
+  : name{n}, characteristics{new characteristics::Procedure{std::move(chars)}} {
+}
+
+DEFINE_DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(SpecificIntrinsic)
+
+SpecificIntrinsic::~SpecificIntrinsic() {}
+
 bool SpecificIntrinsic::operator==(const SpecificIntrinsic &that) const {
-  return name == that.name && type == that.type && rank == that.rank &&
-      attrs == that.attrs;
+  return name == that.name && characteristics == that.characteristics;
 }
 
 ProcedureDesignator::ProcedureDesignator(Component &&c)
@@ -71,10 +80,15 @@ ProcedureDesignator::ProcedureDesignator(Component &&c)
 
 std::optional<DynamicType> ProcedureDesignator::GetType() const {
   if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&u)}) {
-    return intrinsic->type;
+    if (const auto &result{intrinsic->characteristics.value().functionResult}) {
+      if (const auto *typeAndShape{result->GetTypeAndShape()}) {
+        return typeAndShape->type();
+      }
+    }
   } else {
-    return GetSymbolType(GetSymbol());
+    return DynamicType::From(GetSymbol());
   }
+  return std::nullopt;
 }
 
 int ProcedureDesignator::Rank() const {
@@ -82,9 +96,14 @@ int ProcedureDesignator::Rank() const {
     return symbol->Rank();
   }
   if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&u)}) {
-    return intrinsic->rank;
+    if (const auto &result{intrinsic->characteristics.value().functionResult}) {
+      if (const auto *typeAndShape{result->GetTypeAndShape()}) {
+        CHECK(!typeAndShape->IsAssumedRank());
+        return typeAndShape->Rank();
+      }
+    }
   }
-  CHECK(!"ProcedureDesignator::Rank(): no case");
+  common::die("ProcedureDesignator::Rank(): no case");
   return 0;
 }
 
@@ -93,10 +112,23 @@ bool ProcedureDesignator::IsElemental() const {
     return symbol->attrs().test(semantics::Attr::ELEMENTAL);
   }
   if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&u)}) {
-    return intrinsic->attrs.test(semantics::Attr::ELEMENTAL);
+    return intrinsic->characteristics.value().attrs.test(
+        characteristics::Procedure::Attr::Elemental);
   }
-  CHECK(!"ProcedureDesignator::IsElemental(): no case");
+  common::die("ProcedureDesignator::IsElemental(): no case");
   return 0;
+}
+
+const SpecificIntrinsic *ProcedureDesignator::GetSpecificIntrinsic() const {
+  return std::get_if<SpecificIntrinsic>(&u);
+}
+
+const Component *ProcedureDesignator::GetComponent() const {
+  if (auto *c{std::get_if<common::CopyableIndirection<Component>>(&u)}) {
+    return &c->value();
+  } else {
+    return nullptr;
+  }
 }
 
 const Symbol *ProcedureDesignator::GetSymbol() const {
@@ -107,6 +139,19 @@ const Symbol *ProcedureDesignator::GetSymbol() const {
             return &c.value().GetLastSymbol();
           },
           [](const auto &) -> const Symbol * { return nullptr; },
+      },
+      u);
+}
+
+parser::CharBlock ProcedureDesignator::GetName() const {
+  return std::visit(
+      common::visitors{
+          [](const SpecificIntrinsic &i) -> parser::CharBlock {
+            return i.name;
+          },
+          [](const Symbol *sym) -> parser::CharBlock { return sym->name(); },
+          [](const common::CopyableIndirection<Component> &c)
+              -> parser::CharBlock { return c.value().GetLastSymbol().name(); },
       },
       u);
 }

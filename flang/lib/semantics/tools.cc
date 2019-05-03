@@ -125,24 +125,8 @@ bool IsDummy(const Symbol &symbol) {
   }
 }
 
-bool IsPointer(const Symbol &symbol) {
-  return symbol.attrs().test(Attr::POINTER);
-}
-
-bool IsAllocatable(const Symbol &symbol) {
-  return symbol.attrs().test(Attr::ALLOCATABLE);
-}
-
 bool IsPointerDummy(const Symbol &symbol) {
   return IsPointer(symbol) && IsDummy(symbol);
-}
-
-bool IsAllocatableOrPointer(const Symbol &symbol) {
-  return IsPointer(symbol) || IsAllocatable(symbol);
-}
-
-bool IsParameter(const Symbol &symbol) {
-  return symbol.attrs().test(Attr::PARAMETER);
 }
 
 // variable-name

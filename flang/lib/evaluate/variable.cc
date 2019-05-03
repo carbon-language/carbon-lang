@@ -221,14 +221,14 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
 DescriptorInquiry::DescriptorInquiry(const Symbol &symbol, Field field, int dim)
   : base_{&symbol}, field_{field}, dimension_{dim} {
   CHECK(IsDescriptor(symbol));
-  CHECK(dim >= 1 && dim <= symbol.Rank());
+  CHECK(dim >= 0 && dim < symbol.Rank());
 }
 DescriptorInquiry::DescriptorInquiry(
     Component &&component, Field field, int dim)
   : base_{std::move(component)}, field_{field}, dimension_{dim} {
   const Symbol &symbol{std::get<Component>(base_).GetLastSymbol()};
   CHECK(IsDescriptor(symbol));
-  CHECK(dim >= 1 && dim <= symbol.Rank());
+  CHECK(dim >= 0 && dim < symbol.Rank());
 }
 DescriptorInquiry::DescriptorInquiry(
     SymbolOrComponent &&x, Field field, int dim)
@@ -240,7 +240,7 @@ DescriptorInquiry::DescriptorInquiry(
       },
       base_)};
   CHECK(symbol != nullptr && IsDescriptor(*symbol));
-  CHECK(dim >= 1 && dim <= symbol->Rank());
+  CHECK(dim >= 0 && dim < symbol->Rank());
 }
 
 // LEN()
@@ -513,7 +513,7 @@ template<typename T> std::optional<DynamicType> Designator<T>::GetType() const {
   if constexpr (IsLengthlessIntrinsicType<Result>) {
     return {Result::GetType()};
   } else {
-    return GetSymbolType(GetLastSymbol());
+    return DynamicType::From(GetLastSymbol());
   }
 }
 

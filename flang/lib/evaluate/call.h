@@ -30,12 +30,20 @@ namespace Fortran::semantics {
 class Symbol;
 }
 
+// Mutually referential data structures are represented here with forward
+// declarations of hitherto undefined class types and a level of indirection.
 namespace Fortran::evaluate {
 class Component;
+class IntrinsicProcTable;
+}
+namespace Fortran::evaluate::characteristics {
+struct Procedure;
 }
 
 extern template class Fortran::common::Indirection<Fortran::evaluate::Component,
     true>;
+extern template class Fortran::common::Indirection<
+    Fortran::evaluate::characteristics::Procedure, true>;
 
 namespace Fortran::evaluate {
 
@@ -116,22 +124,15 @@ using ActualArguments = std::vector<std::optional<ActualArgument>>;
 using IntrinsicProcedure = std::string;
 
 struct SpecificIntrinsic {
-  explicit SpecificIntrinsic(IntrinsicProcedure n) : name{n} {}
-  SpecificIntrinsic(IntrinsicProcedure n, std::optional<DynamicType> &&dt,
-      int r, semantics::Attrs a)
-    : name{n}, type{std::move(dt)}, rank{r}, attrs{a} {}
-  SpecificIntrinsic(const SpecificIntrinsic &) = default;
-  SpecificIntrinsic(SpecificIntrinsic &&) = default;
-  SpecificIntrinsic &operator=(const SpecificIntrinsic &) = default;
-  SpecificIntrinsic &operator=(SpecificIntrinsic &&) = default;
+  SpecificIntrinsic(IntrinsicProcedure, characteristics::Procedure &&);
+  DECLARE_CONSTRUCTORS_AND_ASSIGNMENTS(SpecificIntrinsic)
+  ~SpecificIntrinsic();
   bool operator==(const SpecificIntrinsic &) const;
   std::ostream &AsFortran(std::ostream &) const;
 
   IntrinsicProcedure name;
-  bool isRestrictedSpecific{false};  // if true, can only call it
-  std::optional<DynamicType> type;  // absent if subroutine call or NULL()
-  int rank{0};
-  semantics::Attrs attrs;  // ELEMENTAL, POINTER
+  bool isRestrictedSpecific{false};  // if true, can only call it, not pass it
+  common::CopyableIndirection<characteristics::Procedure> characteristics;
 };
 
 struct ProcedureDesignator {
@@ -139,11 +140,19 @@ struct ProcedureDesignator {
   explicit ProcedureDesignator(SpecificIntrinsic &&i) : u{std::move(i)} {}
   explicit ProcedureDesignator(const semantics::Symbol &n) : u{&n} {}
   explicit ProcedureDesignator(Component &&);
+
+  // Exactly one of these will return a non-null pointer.
+  const SpecificIntrinsic *GetSpecificIntrinsic() const;
+  const semantics::Symbol *GetSymbol() const;  // symbol or component symbol
+
+  // Always null if the procedure is intrinsic.
+  const Component *GetComponent() const;
+
+  parser::CharBlock GetName() const;
   std::optional<DynamicType> GetType() const;
   int Rank() const;
   bool IsElemental() const;
   Expr<SubscriptInteger> LEN() const;
-  const semantics::Symbol *GetSymbol() const;
   std::ostream &AsFortran(std::ostream &) const;
 
   // TODO: When calling X%F, pass X as PASS argument unless NOPASS

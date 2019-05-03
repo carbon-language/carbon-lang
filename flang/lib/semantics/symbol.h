@@ -236,6 +236,14 @@ public:
 
   const Symbol *GetParentComponent(const Scope &) const;
 
+  std::optional<SourceName> GetParentComponentName() const {
+    if (componentNames_.empty()) {
+      return std::nullopt;
+    } else {
+      return componentNames_.front();
+    }
+  }
+
 private:
   // These are (1) the names of the derived type parameters in the order
   // in which they appear on the type definition statement(s), and (2) the

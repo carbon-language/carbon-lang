@@ -117,10 +117,19 @@ struct TestCall {
     if (resultType.has_value()) {
       TEST(si.has_value());
       TEST(buffer.empty());
-      TEST(*resultType == si->specificIntrinsic.type);
-      MATCH(rank, si->specificIntrinsic.rank);
+      const auto &proc{si->specificIntrinsic.characteristics.value()};
+      const auto &fr{proc.functionResult};
+      TEST(fr.has_value());
+      if (fr) {
+        const auto *ts{fr->GetTypeAndShape()};
+        TEST(ts != nullptr);
+        if (ts) {
+          TEST(*resultType == ts->type());
+          MATCH(rank, ts->Rank());
+        }
+      }
       MATCH(isElemental,
-          si->specificIntrinsic.attrs.test(semantics::Attr::ELEMENTAL));
+          proc.attrs.test(characteristics::Procedure::Attr::Elemental));
     } else {
       TEST(!si.has_value());
       TEST(!buffer.empty() || name == "bad");

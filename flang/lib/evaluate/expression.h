@@ -231,6 +231,8 @@ struct Parentheses : public Operation<Parentheses<A>, A, A> {
   using Operand = A;
   using Base = Operation<Parentheses, A, A>;
   using Base::Base;
+  static const char *Prefix() { return "("; }
+  static const char *Suffix() { return ")"; }
 };
 
 template<typename A> struct Negate : public Operation<Negate<A>, A, A> {
@@ -365,6 +367,9 @@ struct ComplexConstructor
   using Operand = Type<TypeCategory::Real, KIND>;
   using Base = Operation<ComplexConstructor, Result, Operand, Operand>;
   using Base::Base;
+  static const char *Prefix() { return "("; }
+  static const char *Infix() { return ","; }
+  static const char *Suffix() { return ")"; }
 };
 
 template<int KIND>
@@ -784,6 +789,10 @@ public:
   common::MapTemplate<Expr, CategoryTypes<TypeCategory::Character>> u;
 };
 
+// A variant comprising the Expr<> instantiations over SomeDerived and
+// SomeKind<CATEGORY>.
+using CategoryExpression = common::MapTemplate<Expr, SomeCategory>;
+
 // BOZ literal "typeless" constants must be wide enough to hold a numeric
 // value of any supported kind of INTEGER or REAL.  They must also be
 // distinguishable from other integer constants, since they are permitted
@@ -796,11 +805,18 @@ struct NullPointer {
   constexpr int Rank() const { return 0; }
 };
 
+// Procedure pointer targets are treated as if they were typeless.
+// They are either procedure designators or values returned from
+// function references.
+using TypelessExpression = std::variant<BOZLiteralConstant, NullPointer,
+    ProcedureDesignator, ProcedureRef>;
+
 // A completely generic expression, polymorphic across all of the intrinsic type
 // categories and each of their kinds.
 template<> class Expr<SomeType> : public ExpressionBase<SomeType> {
 public:
   using Result = SomeType;
+
   EVALUATE_UNION_CLASS_BOILERPLATE(Expr)
 
   // Owning references to these generic expressions can appear in other
@@ -827,12 +843,8 @@ public:
     return *this;
   }
 
-private:
-  using Others = std::variant<BOZLiteralConstant, NullPointer>;
-  using Categories = common::MapTemplate<Expr, SomeCategory>;
-
 public:
-  common::CombineVariants<Others, Categories> u;
+  common::CombineVariants<TypelessExpression, CategoryExpression> u;
 };
 
 // This wrapper class is used, by means of a forward reference with

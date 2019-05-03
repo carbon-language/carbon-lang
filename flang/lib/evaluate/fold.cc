@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "fold.h"
+#include "characteristics.h"
 #include "common.h"
 #include "constant.h"
 #include "expression.h"
@@ -401,9 +402,7 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
             [&](auto &&x) -> Expr<T> {
               using From = std::decay_t<decltype(x)>;
               if constexpr (std::is_same_v<From, BOZLiteralConstant> ||
-                  std::is_same_v<From, Expr<SomeReal>> ||
-                  std::is_same_v<From, Expr<SomeInteger>> ||
-                  std::is_same_v<From, Expr<SomeComplex>>) {
+                  IsNumericCategoryExpr<From>()) {
                 return Fold(context, ConvertToType<T>(std::move(x)));
               }
               common::die("int() argument type not valid");
@@ -451,13 +450,7 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
     } else if (name == "len") {
       if (auto *charExpr{UnwrapArgument<SomeCharacter>(args[0])}) {
         return std::visit(
-            [&](auto &kx) {
-              if constexpr (std::is_same_v<T, SubscriptInteger>) {
-                return kx.LEN();
-              } else {
-                return Fold(context, ConvertToType<T>(kx.LEN()));
-              }
-            },
+            [&](auto &kx) { return Fold(context, ConvertToType<T>(kx.LEN())); },
             charExpr->u);
       } else {
         common::die("len() argument must be of character type");
@@ -533,6 +526,36 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
     // sign, spread, sum, transfer, transpose, ubound, unpack, verify
   }
   return Expr<T>{std::move(funcRef)};
+}
+
+template<int KIND>
+Expr<Type<TypeCategory::Real, KIND>> ToReal(
+    FoldingContext &context, Expr<SomeType> &&expr) {
+  using Result = Type<TypeCategory::Real, KIND>;
+  std::optional<Expr<Result>> result;
+  std::visit(
+      [&](auto &&x) {
+        using From = std::decay_t<decltype(x)>;
+        if constexpr (std::is_same_v<From, BOZLiteralConstant>) {
+          // Move the bits without any integer->real conversion
+          From original{x};
+          result = ConvertToType<Result>(std::move(x));
+          const auto *constant{UnwrapExpr<Constant<Result>>(*result)};
+          CHECK(constant != nullptr);
+          const Scalar<Result> &real{**constant};
+          From converted{From::ConvertUnsigned(real.RawBits()).value};
+          if (!(original == converted)) {  // C1601
+            context.messages().Say(
+                "Nonzero bits truncated from BOZ literal constant in REAL intrinsic"_en_US);
+          }
+        } else if constexpr (IsNumericCategoryExpr<From>()) {
+          result = Fold(context, ConvertToType<Result>(std::move(x)));
+        } else {
+          common::die("ToReal: bad argument expression");
+        }
+      },
+      std::move(expr.u));
+  return result.value();
 }
 
 template<int KIND>
@@ -655,25 +678,7 @@ Expr<Type<TypeCategory::Real, KIND>> FoldOperation(FoldingContext &context,
       return Expr<T>{Constant<T>{Scalar<T>::EPSILON()}};
     } else if (name == "real") {
       if (auto *expr{args[0].value().GetExpr()}) {
-        return std::visit(
-            [&](auto &&x) -> Expr<T> {
-              using From = std::decay_t<decltype(x)>;
-              if constexpr (std::is_same_v<From, BOZLiteralConstant>) {
-                typename T::Scalar::Word::ValueWithOverflow result{
-                    T::Scalar::Word::ConvertUnsigned(x)};
-                if (result.overflow) {  // C1601
-                  context.messages().Say(
-                      "Non null truncated bits of boz literal constant in REAL intrinsic"_en_US);
-                }
-                return Expr<T>{Constant<T>{Scalar<T>(std::move(result.value))}};
-              } else if constexpr (std::is_same_v<From, Expr<SomeReal>> ||
-                  std::is_same_v<From, Expr<SomeInteger>> ||
-                  std::is_same_v<From, Expr<SomeComplex>>) {
-                return Fold(context, ConvertToType<T>(std::move(x)));
-              }
-              common::die("real() argument type not valid");
-            },
-            std::move(expr->u));
+        return ToReal<KIND>(context, std::move(*expr));
       }
     }
     // TODO: anint, cshift, dim, dot_product, eoshift, fraction, huge, matmul,
@@ -725,25 +730,14 @@ Expr<Type<TypeCategory::Complex, KIND>> FoldOperation(FoldingContext &context,
       } else {
         CHECK(args.size() == 3);
         using Part = typename T::Part;
+        Expr<SomeType> re{std::move(*args[0].value().GetExpr())};
         Expr<SomeType> im{args[1].has_value()
                 ? std::move(*args[1].value().GetExpr())
                 : AsGenericExpr(Constant<Part>{Scalar<Part>{}})};
-        Expr<SomeType> re{std::move(*args[0].value().GetExpr())};
-        int reRank{re.Rank()};
-        int imRank{im.Rank()};
-        semantics::Attrs attrs;
-        attrs.set(semantics::Attr::ELEMENTAL);
-        auto reReal{
-            FunctionRef<Part>{ProcedureDesignator{SpecificIntrinsic{
-                                  "real", Part::GetType(), reRank, attrs}},
-                ActualArguments{ActualArgument{std::move(re)}}}};
-        auto imReal{
-            FunctionRef<Part>{ProcedureDesignator{SpecificIntrinsic{
-                                  "real", Part::GetType(), imRank, attrs}},
-                ActualArguments{ActualArgument{std::move(im)}}}};
         return Fold(context,
-            Expr<T>{ComplexConstructor<T::kind>{
-                Expr<Part>{std::move(reReal)}, Expr<Part>{std::move(imReal)}}});
+            Expr<T>{
+                ComplexConstructor<KIND>{ToReal<KIND>(context, std::move(re)),
+                    ToReal<KIND>(context, std::move(im))}});
       }
     }
     // TODO: cshift, dot_product, eoshift, matmul, merge, pack, product,
@@ -1080,7 +1074,7 @@ Expr<RESULT> MapOperation(FoldingContext &context,
     std::function<Expr<RESULT>(Expr<OPERAND> &&)> &&f, const Shape &shape,
     Expr<OPERAND> &&values) {
   ArrayConstructor<RESULT> result{values};
-  if constexpr (IsGenericIntrinsicCategoryType<OPERAND>) {
+  if constexpr (common::HasMember<OPERAND, AllIntrinsicCategoryTypes>) {
     std::visit(
         [&](auto &&kindExpr) {
           using kindType = ResultType<decltype(kindExpr)>;
@@ -1110,7 +1104,7 @@ Expr<RESULT> MapOperation(FoldingContext &context,
     const Shape &shape, Expr<LEFT> &&leftValues, Expr<RIGHT> &&rightValues) {
   ArrayConstructor<RESULT> result{leftValues};
   auto &leftArrConst{std::get<ArrayConstructor<LEFT>>(leftValues.u)};
-  if constexpr (IsGenericIntrinsicCategoryType<RIGHT>) {
+  if constexpr (common::HasMember<RIGHT, AllIntrinsicCategoryTypes>) {
     std::visit(
         [&](auto &&kindExpr) {
           using kindType = ResultType<decltype(kindExpr)>;
@@ -1167,7 +1161,7 @@ Expr<RESULT> MapOperation(FoldingContext &context,
     const Shape &shape, const Expr<LEFT> &leftScalar,
     Expr<RIGHT> &&rightValues) {
   ArrayConstructor<RESULT> result{leftScalar};
-  if constexpr (IsGenericIntrinsicCategoryType<RIGHT>) {
+  if constexpr (common::HasMember<RIGHT, AllIntrinsicCategoryTypes>) {
     std::visit(
         [&](auto &&kindExpr) {
           using kindType = ResultType<decltype(kindExpr)>;
@@ -1764,14 +1758,11 @@ Expr<T> ExpressionBase<T>::Rewrite(FoldingContext &context, Expr<T> &&expr) {
           return FoldOperation(context, std::move(x));
         } else if constexpr (std::is_same_v<T, SomeDerived>) {
           return FoldOperation(context, std::move(x));
+        } else if constexpr (common::HasMember<decltype(x),
+                                 TypelessExpression>) {
+          return std::move(expr);
         } else {
-          using Ty = std::decay_t<decltype(x)>;
-          if constexpr (std::is_same_v<Ty, BOZLiteralConstant> ||
-              std::is_same_v<Ty, NullPointer>) {
-            return std::move(expr);
-          } else {
-            return Expr<T>{Fold(context, std::move(x))};
-          }
+          return Expr<T>{Fold(context, std::move(x))};
         }
       },
       std::move(expr.u));

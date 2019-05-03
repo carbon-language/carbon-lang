@@ -48,7 +48,6 @@ bool DoesScopeContain(const Scope *, const Symbol &);
 bool IsUseAssociated(const Symbol *, const Scope &);
 bool IsHostAssociated(const Symbol &, const Scope &);
 bool IsDummy(const Symbol &);
-bool IsPointer(const Symbol &);
 bool IsPointerDummy(const Symbol &);
 bool IsFunction(const Symbol &);
 bool IsPureFunction(const Symbol &);
@@ -56,9 +55,20 @@ bool IsPureFunction(const Scope &);
 bool IsProcedure(const Symbol &);
 bool IsProcName(const Symbol &symbol);  // proc-name
 bool IsVariableName(const Symbol &symbol);  // variable-name
-bool IsAllocatable(const Symbol &);
-bool IsAllocatableOrPointer(const Symbol &);
 bool IsProcedurePointer(const Symbol &);
+
+inline bool IsPointer(const Symbol &symbol) {
+  return symbol.attrs().test(Attr::POINTER);
+}
+inline bool IsAllocatable(const Symbol &symbol) {
+  return symbol.attrs().test(Attr::ALLOCATABLE);
+}
+inline bool IsAllocatableOrPointer(const Symbol &symbol) {
+  return IsPointer(symbol) || IsAllocatable(symbol);
+}
+inline bool IsParameter(const Symbol &symbol) {
+  return symbol.attrs().test(Attr::PARAMETER);
+}
 
 // Determines whether an object might be visible outside a
 // PURE function (C1594); returns a non-null Symbol pointer for

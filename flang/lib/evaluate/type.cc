@@ -18,6 +18,7 @@
 #include "../common/idioms.h"
 #include "../semantics/scope.h"
 #include "../semantics/symbol.h"
+#include "../semantics/tools.h"
 #include "../semantics/type.h"
 #include <algorithm>
 #include <optional>
@@ -26,8 +27,8 @@
 
 using namespace std::literals::string_literals;
 
-// TODO there's probably a better place for this predicate than here
 // IsDescriptor() predicate
+// TODO there's probably a better place for this predicate than here
 namespace Fortran::semantics {
 static bool IsDescriptor(const ObjectEntityDetails &details) {
   if (const auto *type{details.type()}) {
@@ -64,19 +65,20 @@ static bool IsDescriptor(const ObjectEntityDetails &details) {
     return true;
   }
   // TODO: Explicit shape component array dependent on length parameter
-  // TODO: Automatic (adjustable) arrays
+  // TODO: Automatic (adjustable) arrays - are they descriptors?
   return false;
 }
 
 static bool IsDescriptor(const ProcEntityDetails &details) {
-  // A procedure pointer or dummy procedure must be a descriptor if
+  // A procedure pointer or dummy procedure must be & is a descriptor if
   // and only if it requires a static link.
+  // TODO: refine this placeholder
   return details.HasExplicitInterface();
 }
 
 bool IsDescriptor(const Symbol &symbol) {
   if (const auto *objectDetails{symbol.detailsIf<ObjectEntityDetails>()}) {
-    return IsDescriptor(*objectDetails);
+    return IsAllocatableOrPointer(symbol) || IsDescriptor(*objectDetails);
   } else if (const auto *procDetails{symbol.detailsIf<ProcEntityDetails>()}) {
     if (symbol.attrs().test(Attr::POINTER) ||
         symbol.attrs().test(Attr::EXTERNAL)) {
@@ -104,7 +106,45 @@ bool DynamicType::IsAssumedLengthCharacter() const {
       charLength->isAssumed();
 }
 
-std::optional<DynamicType> AsDynamicType(const semantics::DeclTypeSpec &type) {
+static const semantics::DerivedTypeSpec *GetParentTypeSpec(
+    const semantics::DerivedTypeSpec &spec) {
+  const semantics::Symbol &typeSymbol{spec.typeSymbol()};
+  if (const semantics::Scope * scope{typeSymbol.scope()}) {
+    const auto &dtDetails{typeSymbol.get<semantics::DerivedTypeDetails>()};
+    if (auto extends{dtDetails.GetParentComponentName()}) {
+      if (auto iter{scope->find(*extends)}; iter != scope->cend()) {
+        if (const Symbol & symbol{*iter->second};
+            symbol.test(Symbol::Flag::ParentComp)) {
+          return &symbol.get<semantics::ObjectEntityDetails>()
+                      .type()
+                      ->derivedTypeSpec();
+        }
+      }
+    }
+  }
+  return nullptr;
+}
+
+static const bool IsAncestorTypeOf(const semantics::DerivedTypeSpec *ancestor,
+    const semantics::DerivedTypeSpec *spec) {
+  if (ancestor == nullptr) {
+    return false;
+  } else if (spec == nullptr) {
+    return false;
+  } else if (spec == ancestor) {
+    return true;
+  } else {
+    return IsAncestorTypeOf(ancestor, GetParentTypeSpec(*spec));
+  }
+}
+
+bool DynamicType::IsTypeCompatibleWith(const DynamicType &that) const {
+  return *this == that || IsUnlimitedPolymorphic() ||
+      (isPolymorphic && IsAncestorTypeOf(derived, that.derived));
+}
+
+std::optional<DynamicType> DynamicType::From(
+    const semantics::DeclTypeSpec &type) {
   if (const auto *intrinsic{type.AsIntrinsic()}) {
     if (auto kind{ToInt64(intrinsic->kind())}) {
       TypeCategory category{intrinsic->category()};
@@ -121,39 +161,25 @@ std::optional<DynamicType> AsDynamicType(const semantics::DeclTypeSpec &type) {
     return DynamicType{
         *derived, type.category() == semantics::DeclTypeSpec::ClassDerived};
   } else if (type.category() == semantics::DeclTypeSpec::ClassStar) {
-    DynamicType result;
-    result.isPolymorphic = true;
-    return result;
+    return DynamicType::UnlimitedPolymorphic();
   } else {
     // Assumed-type dummy arguments (TYPE(*)) do not have dynamic types.
   }
   return std::nullopt;
 }
 
-std::optional<DynamicType> AsDynamicType(const semantics::DeclTypeSpec *type) {
-  if (type != nullptr) {
-    return AsDynamicType(*type);
-  } else {
-    return std::nullopt;
-  }
-}
-
-std::optional<DynamicType> GetSymbolType(const semantics::Symbol &symbol) {
-  return AsDynamicType(symbol.GetType());
-}
-
-std::optional<DynamicType> GetSymbolType(const semantics::Symbol *symbol) {
-  if (symbol != nullptr) {
-    return GetSymbolType(*symbol);
-  } else {
-    return std::nullopt;
-  }
+std::optional<DynamicType> DynamicType::From(const semantics::Symbol &symbol) {
+  return From(symbol.GetType());  // Symbol -> DeclTypeSpec -> DynamicType
 }
 
 std::string DynamicType::AsFortran() const {
   if (derived != nullptr) {
     CHECK(category == TypeCategory::Derived);
-    return "TYPE("s + derived->typeSymbol().name().ToString() + ')';
+    if (isPolymorphic) {
+      return "CLASS("s + derived->typeSymbol().name().ToString() + ')';
+    } else {
+      return "TYPE("s + derived->typeSymbol().name().ToString() + ')';
+    }
   } else if (charLength != nullptr) {
     std::string result{"CHARACTER(KIND="s + std::to_string(kind) + ",LEN="};
     if (charLength->isAssumed()) {
@@ -166,6 +192,10 @@ std::string DynamicType::AsFortran() const {
       result += ss.str();
     }
     return result + ')';
+  } else if (isPolymorphic) {
+    return "CLASS(*)";
+  } else if (kind == 0) {
+    return "(typeless intrinsic function argument)";
   } else {
     return EnumToString(category) + '(' + std::to_string(kind) + ')';
   }

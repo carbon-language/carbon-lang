@@ -57,6 +57,25 @@ using SubscriptInteger = Type<TypeCategory::Integer, 8>;
 using LogicalResult = Type<TypeCategory::Logical, 1>;
 using LargestReal = Type<TypeCategory::Real, 16>;
 
+// A predicate that is true when a kind value is a kind that could possibly
+// be supported for an intrinsic type category on some target instruction
+// set architecture.
+static constexpr bool IsValidKindOfIntrinsicType(
+    TypeCategory category, std::int64_t kind) {
+  switch (category) {
+  case TypeCategory::Integer:
+    return kind == 1 || kind == 2 || kind == 4 || kind == 8 || kind == 16;
+  case TypeCategory::Real:
+  case TypeCategory::Complex:
+    return kind == 2 || kind == 3 || kind == 4 || kind == 8 || kind == 10 ||
+        kind == 16;
+  case TypeCategory::Character: return kind == 1 || kind == 2 || kind == 4;
+  case TypeCategory::Logical:
+    return kind == 1 || kind == 2 || kind == 4 || kind == 8;
+  default: return false;
+  }
+}
+
 // DynamicType is meant to be suitable for use as the result type for
 // GetType() functions and member functions; consequently, it must be
 // capable of being used in a constexpr context.  So it does *not*
@@ -65,14 +84,31 @@ using LargestReal = Type<TypeCategory::Real, 16>;
 // via LEN() member functions, packaged elsewhere (e.g. as in
 // ArrayConstructor), or copied from a parameter spec in the symbol table
 // if one is supplied.
-struct DynamicType {
-  constexpr DynamicType() = default;
-  constexpr DynamicType(TypeCategory cat, int k) : category{cat}, kind{k} {}
+class DynamicType {
+public:
+  constexpr DynamicType(TypeCategory cat, int k) : category{cat}, kind{k} {
+    CHECK(IsValidKindOfIntrinsicType(category, kind));
+  }
   constexpr DynamicType(int k, const semantics::ParamValue &pv)
-    : category{TypeCategory::Character}, kind{k}, charLength{&pv} {}
+    : category{TypeCategory::Character}, kind{k}, charLength{&pv} {
+    CHECK(IsValidKindOfIntrinsicType(category, kind));
+  }
   explicit constexpr DynamicType(
       const semantics::DerivedTypeSpec &dt, bool poly = false)
     : category{TypeCategory::Derived}, derived{&dt}, isPolymorphic{poly} {}
+
+  // A rare use case used for representing the characteristics of an
+  // intrinsic function like REAL() that accepts a typeless BOZ literal
+  // argument, which is something that real user Fortran can't do.
+  static constexpr DynamicType TypelessIntrinsicArgument() {
+    return {};  // looks like INTEGER(KIND=0)
+  }
+
+  static constexpr DynamicType UnlimitedPolymorphic() {
+    DynamicType result;
+    result.isPolymorphic = true;
+    return result;  // CLASS(*)
+  }
 
   // Comparison is deep -- type parameters are compared independently.
   bool operator==(const DynamicType &) const;
@@ -81,21 +117,53 @@ struct DynamicType {
   std::string AsFortran() const;
   std::string AsFortran(std::string &&charLenExpr) const;
   DynamicType ResultTypeForMultiply(const DynamicType &) const;
+
   bool IsAssumedLengthCharacter() const;
+  constexpr bool IsUnlimitedPolymorphic() const {
+    return isPolymorphic && derived == nullptr;
+  }
+
+  // 7.3.2.3 type compatibility.
+  // x.IsTypeCompatibleWith(y) is true if "x => y" or passing actual y to
+  // dummy argument x would be valid.  Be advised, this is not a reflexive
+  // relation.
+  bool IsTypeCompatibleWith(const DynamicType &) const;
+
+  // Result will be missing when a symbol is absent or
+  // has an erroneous type, e.g., REAL(KIND=666).
+  static std::optional<DynamicType> From(const semantics::DeclTypeSpec &);
+  static std::optional<DynamicType> From(const semantics::Symbol &);
+
+  template<typename A> static std::optional<DynamicType> From(const A &x) {
+    return x.GetType();
+  }
+  template<typename A> static std::optional<DynamicType> From(const A *p) {
+    if (p == nullptr) {
+      return std::nullopt;
+    } else {
+      return From(*p);
+    }
+  }
+  template<typename A>
+  static std::optional<DynamicType> From(const std::optional<A> &x) {
+    if (x.has_value()) {
+      return From(*x);
+    } else {
+      return std::nullopt;
+    }
+  }
 
   TypeCategory category{TypeCategory::Integer};  // overridable default
   int kind{0};  // set only for intrinsic types
   const semantics::ParamValue *charLength{nullptr};
   const semantics::DerivedTypeSpec *derived{nullptr};  // TYPE(T), CLASS(T)
   bool isPolymorphic{false};  // CLASS(T), CLASS(*)
-};
 
-// Result will be missing when a symbol is absent or
-// has an erroneous type, e.g., REAL(KIND=666).
-std::optional<DynamicType> AsDynamicType(const semantics::DeclTypeSpec &);
-std::optional<DynamicType> AsDynamicType(const semantics::DeclTypeSpec *);
-std::optional<DynamicType> GetSymbolType(const semantics::Symbol &);
-std::optional<DynamicType> GetSymbolType(const semantics::Symbol *);
+// TODO pmk: restore private accessibility once changes are
+// merged into lib/semantics
+// private:
+  constexpr DynamicType() {}
+};
 
 template<TypeCategory CATEGORY, int KIND = 0> struct TypeBase {
   static constexpr TypeCategory category{CATEGORY};
@@ -207,25 +275,6 @@ using SameKind = Type<CATEGORY, std::decay_t<T>::kind>;
 using IndirectSubscriptIntegerExpr =
     common::CopyableIndirection<Expr<SubscriptInteger>>;
 
-// A predicate that is true when a kind value is a kind that could possibly
-// be supported for an intrinsic type category on some target instruction
-// set architecture.
-static constexpr bool IsValidKindOfIntrinsicType(
-    TypeCategory category, std::int64_t kind) {
-  switch (category) {
-  case TypeCategory::Integer:
-    return kind == 1 || kind == 2 || kind == 4 || kind == 8 || kind == 16;
-  case TypeCategory::Real:
-  case TypeCategory::Complex:
-    return kind == 2 || kind == 3 || kind == 4 || kind == 8 || kind == 10 ||
-        kind == 16;
-  case TypeCategory::Character: return kind == 1 || kind == 2 || kind == 4;
-  case TypeCategory::Logical:
-    return kind == 1 || kind == 2 || kind == 4 || kind == 8;
-  default: return false;
-  }
-}
-
 // For each intrinsic type category CAT, CategoryTypes<CAT> is an instantiation
 // of std::tuple<Type<CAT, K>> that comprises every kind value K in that
 // category that could possibly be supported on any target.
@@ -271,13 +320,11 @@ template<TypeCategory CATEGORY> struct SomeKind {
   constexpr bool operator==(const SomeKind &) const { return true; }
 };
 
-using AllGenericIntrinsicCategoryTypes =
-    std::tuple<SomeKind<TypeCategory::Integer>, SomeKind<TypeCategory::Real>,
-        SomeKind<TypeCategory::Complex>, SomeKind<TypeCategory::Character>,
-        SomeKind<TypeCategory::Logical>>;
-template<typename T>
-constexpr bool IsGenericIntrinsicCategoryType{
-    common::HasMember<T, AllGenericIntrinsicCategoryTypes>};
+using NumericCategoryTypes = std::tuple<SomeKind<TypeCategory::Integer>,
+    SomeKind<TypeCategory::Real>, SomeKind<TypeCategory::Complex>>;
+using AllIntrinsicCategoryTypes = std::tuple<SomeKind<TypeCategory::Integer>,
+    SomeKind<TypeCategory::Real>, SomeKind<TypeCategory::Complex>,
+    SomeKind<TypeCategory::Character>, SomeKind<TypeCategory::Logical>>;
 
 // Represents a completely generic type (but not typeless).
 struct SomeType {};

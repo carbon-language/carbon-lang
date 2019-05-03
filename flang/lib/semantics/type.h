@@ -289,8 +289,14 @@ public:
     CHECK(category_ == Character);
     return std::get<CharacterTypeSpec>(typeSpec_);
   }
-  const DerivedTypeSpec &derivedTypeSpec() const;
-  DerivedTypeSpec &derivedTypeSpec();
+  const DerivedTypeSpec &derivedTypeSpec() const {
+    CHECK(category_ == TypeDerived || category_ == ClassDerived);
+    return std::get<DerivedTypeSpec>(typeSpec_);
+  }
+  DerivedTypeSpec &derivedTypeSpec() {
+    CHECK(category_ == TypeDerived || category_ == ClassDerived);
+    return std::get<DerivedTypeSpec>(typeSpec_);
+  }
 
   IntrinsicTypeSpec *AsIntrinsic();
   const IntrinsicTypeSpec *AsIntrinsic() const {
