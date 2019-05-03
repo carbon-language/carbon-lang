@@ -39,7 +39,7 @@ static bool NeedsSpecialFormatting(const char *p) {
       if (*p == 'S' || *p == 'B') {
         return true;
       } else if (*p != '%' && *p != 's' && *p != 'd' &&
-          !(p[1] == 'd' && (*p == 'z' || *p == 'j'))) {
+          !((*p == 'z' || *p == 'j') && (p[1] == 'd' || p[1] == 'u'))) {
         return false;
       }
     }
@@ -47,6 +47,11 @@ static bool NeedsSpecialFormatting(const char *p) {
   return false;
 }
 
+// Some standard formatting codes (e.g., %d) are handled here
+// rather than in vsnprintf() because once we have to call vsnprintf(),
+// we're no longer able to process our special codes like %S and %B,
+// and it's possible that a format might use a common standard formatting
+// code before one of our special codes.
 static std::string SpecialFormatting(const char *p, va_list &ap) {
   std::string result;
   while (*p != '\0') {
@@ -61,14 +66,19 @@ static std::string SpecialFormatting(const char *p, va_list &ap) {
       case 'S': result += va_arg(ap, std::string); break;
       case 'B': result += va_arg(ap, CharBlock).ToString(); break;
       default:
-        if (*p == 'd') {
-          if (p[-1] == 'z') {
-            result += std::to_string(va_arg(ap, std::size_t));
+        if (p[-1] == 'z' && (*p == 'u' || *p == 'd')) {
+          result += std::to_string(va_arg(ap, std::size_t));
+          ++p;
+          break;
+        }
+        if (p[-1] == 'j') {
+          if (*p == 'd') {
+            result += std::to_string(va_arg(ap, std::intmax_t));
             ++p;
             break;
           }
-          if (p[-1] == 'j') {
-            result += std::to_string(va_arg(ap, std::intmax_t));
+          if (*p == 'u') {
+            result += std::to_string(va_arg(ap, std::uintmax_t));
             ++p;
             break;
           }
