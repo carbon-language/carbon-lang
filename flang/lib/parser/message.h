@@ -66,6 +66,12 @@ constexpr MessageFixedText operator""_err_en_US(
 }
 }
 
+// The construction of a MessageFormattedText uses a MessageFixedText
+// as a vsnprintf()-like formatting string that is applied to the
+// following arguments.  Additional formatting codes are accepted in
+// messages:
+//   %B - the corresponding argument is a CharBlock
+//   %S - the corresponding argument is a std::string
 class MessageFormattedText {
 public:
   MessageFormattedText(MessageFixedText, ...);
