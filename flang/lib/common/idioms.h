@@ -69,18 +69,15 @@ template<typename... LAMBDAS> visitors(LAMBDAS... x)->visitors<LAMBDAS...>;
 // Calls std::fprintf(stderr, ...), then abort().
 [[noreturn]] void die(const char *, ...);
 
+#define DIE(x) Fortran::common::die(x " at " __FILE__ "(%d)", __LINE__)
+
 // For switch statements without default: labels.
-#define CRASH_NO_CASE \
-  Fortran::common::die("no case at " __FILE__ "(%d)", __LINE__)
+#define CRASH_NO_CASE DIE("no case")
 
 // For cheap assertions that should be applied in production.
 // To disable, compile with '-DCHECK=(void)'
 #ifndef CHECK
-#define CHECK(x) \
-  ((x) || \
-      (Fortran::common::die( \
-           "CHECK(" #x ") failed at " __FILE__ "(%d)", __LINE__), \
-          false))
+#define CHECK(x) ((x) || (DIE("CHECK(" #x ") failed"), false))
 #endif
 
 // User-defined type traits that default to false:

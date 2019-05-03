@@ -25,17 +25,13 @@
 #include "llvm/Support/raw_ostream.h"
 
 // Some useful, self-documenting macros for failure modes
-#define STRINGIFY(X) #X
-#define LINE2STRING(X) STRINGIFY(X)
-#define AT_HERE " at " __FILE__ "(" LINE2STRING(__LINE__) ")"
-#define DIE Fortran::common::die
-#define SEMANTICS_FAILED(STRING) DIE("semantics bug: " STRING AT_HERE)
+#define SEMANTICS_FAILED(STRING) DIE("semantics bug: " STRING)
 #define SEMANTICS_CHECK(CONDITION, STRING) \
   if (CONDITION) { \
   } else { \
-    DIE("semantics bug: " STRING AT_HERE); \
+    DIE("semantics bug: " STRING); \
   }
-#define WRONG_PATH() DIE("control should not reach here" AT_HERE)
+#define WRONG_PATH() DIE("control should not reach here")
 
 namespace Fortran::FIR {
 
