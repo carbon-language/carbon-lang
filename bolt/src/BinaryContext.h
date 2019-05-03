@@ -17,6 +17,7 @@
 #include "BinaryData.h"
 #include "BinarySection.h"
 #include "DebugData.h"
+#include "JumpTable.h"
 #include "MCPlusBuilder.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/Triple.h"
@@ -145,6 +146,9 @@ class BinaryContext {
   /// Functions injected by BOLT
   std::vector<BinaryFunction *> InjectedBinaryFunctions;
 
+  /// Jump tables for all functions mapped by address.
+  std::map<uint64_t, JumpTable *> JumpTables;
+
 public:
   /// [name] -> [BinaryData*] map used for global symbol resolution.
   using SymbolMapType = std::map<std::string, BinaryData *>;
@@ -197,6 +201,18 @@ public:
                                                    bool Shallow = false) const {
     return const_cast<BinaryContext *>(this)->
         getBinaryFunctionAtAddress(Address, Shallow);
+  }
+
+  /// Return JumpTable containing a given \p Address.
+  JumpTable *getJumpTableContainingAddress(uint64_t Address) {
+    auto JTI = JumpTables.upper_bound(Address);
+    if (JTI == JumpTables.begin())
+      return nullptr;
+    --JTI;
+    if (JTI->first + JTI->second->getSize() > Address) {
+      return JTI->second;
+    }
+    return nullptr;
   }
 
   /// [MCSymbol] -> [BinaryFunction]
@@ -272,6 +288,19 @@ public:
     return InjectedBinaryFunctions;
   }
 
+  /// Construct a jump table for \p Function at \p Address.
+  /// May create an embedded jump table and return its label as the second
+  /// element of the pair.
+  std::pair<JumpTable *, const MCSymbol *>
+  createJumpTable(BinaryFunction &Function,
+                  uint64_t Address,
+                  JumpTable::JumpTableType Type,
+                  JumpTable::OffsetEntriesType &&OffsetEntries);
+
+  /// Generate a unique name for jump table at a given \p Address belonging
+  /// to function \p BF.
+  std::string generateJumpTableName(const BinaryFunction &BF, uint64_t Address);
+
 public:
   /// Regular page size.
   static constexpr unsigned RegularPageSize = 0x1000;
@@ -281,6 +310,10 @@ public:
 
   /// Map address to a constant island owner (constant data in code section)
   std::map<uint64_t, BinaryFunction *> AddressToConstantIslandMap;
+
+  /// A map from jump table address to insertion order.  Used for generating
+  /// jump table names.
+  std::map<uint64_t, size_t> JumpTableIds;
 
   /// Set of addresses in the code that are not a function start, and are
   /// referenced from outside of containing function. E.g. this could happen

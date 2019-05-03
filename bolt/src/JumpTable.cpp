@@ -27,6 +27,23 @@ extern cl::opt<JumpTableSupportLevel> JumpTables;
 extern cl::opt<unsigned> Verbosity;
 }
 
+JumpTable::JumpTable(StringRef Name,
+                     uint64_t Address,
+                     std::size_t EntrySize,
+                     JumpTableType Type,
+                     OffsetEntriesType &&OffsetEntries,
+                     LabelMapType &&Labels,
+                     BinaryFunction &BF,
+                     BinarySection &Section)
+  : BinaryData(Name, Address, 0, EntrySize, Section),
+    EntrySize(EntrySize),
+    OutputEntrySize(EntrySize),
+    Type(Type),
+    OffsetEntries(OffsetEntries),
+    Labels(Labels),
+    Parent(&BF) {
+}
+
 std::pair<size_t, size_t>
 JumpTable::getEntriesForAddress(const uint64_t Addr) const {
   const uint64_t InstOffset = Addr - getAddress();
@@ -174,18 +191,3 @@ void JumpTable::print(raw_ostream &OS) const {
   }
   OS << "\n\n";
 }
-
-JumpTable::JumpTable(StringRef Name,
-                     uint64_t Address,
-                     std::size_t EntrySize,
-                     JumpTableType Type,
-                     decltype(OffsetEntries) &&OffsetEntries,
-                     decltype(Labels) &&Labels,
-                     BinarySection &Section)
-  : BinaryData(Name, Address, 0, EntrySize, Section),
-    EntrySize(EntrySize),
-    OutputEntrySize(EntrySize),
-    Type(Type),
-    OffsetEntries(OffsetEntries),
-    Labels(Labels)
-{ }

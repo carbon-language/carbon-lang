@@ -30,17 +30,26 @@ enum JumpTableSupportLevel : char {
   JTS_AGGRESSIVE = 4, /// Aggressive splitting of jump tables.
 };
 
+class BinaryFunction;
+
 /// Representation of a jump table.
 ///
 /// The jump table may include other jump tables that are referenced by
 /// a different label at a different offset in this jump table.
 class JumpTable : public BinaryData {
+  friend class BinaryContext;
+
+  JumpTable() = delete;
+  JumpTable(const JumpTable &) = delete;
+  JumpTable &operator=(const JumpTable &) = delete;
+
 public:
   enum JumpTableType : char {
     JTT_NORMAL,
     JTT_PIC,
   };
 
+public:
   /// Branch statistics for jump table entries.
   struct JumpInfo {
     uint64_t Mispreds{0};
@@ -60,7 +69,8 @@ public:
   std::vector<MCSymbol *> Entries;
 
   /// All the entries as offsets into a function. Invalid after CFG is built.
-  std::vector<uint64_t> OffsetEntries;
+  using OffsetEntriesType = std::vector<uint64_t>;
+  OffsetEntriesType OffsetEntries;
 
   /// Map <Offset> -> <Label> used for embedded jump tables. Label at 0 offset
   /// is the main label for the jump table.
@@ -75,6 +85,21 @@ public:
   /// Total number of times this jump table was used.
   uint64_t Count{0};
 
+  /// BinaryFunction this jump tables belongs to.
+  BinaryFunction *Parent{nullptr};
+
+private:
+  /// Constructor should only be called by a BinaryContext.
+  JumpTable(StringRef Name,
+            uint64_t Address,
+            std::size_t EntrySize,
+            JumpTableType Type,
+            OffsetEntriesType &&OffsetEntries,
+            LabelMapType &&Labels,
+            BinaryFunction &BF,
+            BinarySection &Section);
+
+public:
   /// Return the size of the jump table.
   uint64_t getSize() const {
     return std::max(OffsetEntries.size(), Entries.size()) * EntrySize;
@@ -88,15 +113,6 @@ public:
   /// Get the indexes for symbol entries that correspond to the jump table
   /// starting at (or containing) 'Addr'.
   std::pair<size_t, size_t> getEntriesForAddress(const uint64_t Addr) const;
-
-  /// Constructor.
-  JumpTable(StringRef Name,
-            uint64_t Address,
-            std::size_t EntrySize,
-            JumpTableType Type,
-            decltype(OffsetEntries) &&OffsetEntries,
-            LabelMapType &&Labels,
-            BinarySection &Section);
 
   virtual bool isJumpTable() const override { return true; }
 

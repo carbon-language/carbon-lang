@@ -772,9 +772,27 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
   DEBUG(dbgs() << "BOLT-DEBUG: addressed memory is 0x"
                << Twine::utohexstr(ArrayStart) << '\n');
 
+  // List of possible jump targets.
+  std::vector<uint64_t> JTOffsetCandidates;
+
+  auto useJumpTableForInstruction = [&](JumpTable::JumpTableType JTType) {
+    JumpTable *JT;
+    const MCSymbol *JTLabel;
+    std::tie(JT, JTLabel) = BC.createJumpTable(*this,
+                                               ArrayStart,
+                                               JTType,
+                                               std::move(JTOffsetCandidates));
+
+    BC.MIB->replaceMemOperandDisp(const_cast<MCInst &>(*MemLocInstr),
+                                  JTLabel, BC.Ctx.get());
+    BC.MIB->setJumpTable(Instruction, ArrayStart, IndexRegNum);
+
+    JTSites.emplace_back(Offset, ArrayStart);
+  };
+
   // Check if there's already a jump table registered at this address.
-  if (auto *JT = getJumpTableContainingAddress(ArrayStart)) {
-    auto JTOffset = ArrayStart - JT->getAddress();
+  if (auto *JT = BC.getJumpTableContainingAddress(ArrayStart)) {
+    const auto JTOffset = ArrayStart - JT->getAddress();
     if (Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE && JTOffset != 0) {
         // Adjust the size of this jump table and create a new one if necessary.
         // We cannot re-use the entries since the offsets are relative to the
@@ -783,7 +801,7 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
                      << Twine::utohexstr(JT->getAddress()) << '\n');
         JT->OffsetEntries.resize(JTOffset / JT->EntrySize);
     } else if (Type != IndirectBranchType::POSSIBLE_FIXED_BRANCH) {
-      // Re-use an existing jump table. Perhaps parts of it.
+      // Re-use the existing jump table or parts of it.
       if (Type != IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE) {
         assert(JT->Type == JumpTable::JTT_NORMAL &&
                "normal jump table expected");
@@ -792,24 +810,7 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
         assert(JT->Type == JumpTable::JTT_PIC && "PIC jump table expected");
       }
 
-      // Get or create a new label for the table.
-      auto LI = JT->Labels.find(JTOffset);
-      if (LI == JT->Labels.end()) {
-        auto *JTStartLabel =
-          BC.registerNameAtAddress(generateJumpTableName(ArrayStart),
-                                   ArrayStart,
-                                   0,
-                                   JT->EntrySize);
-        auto Result = JT->Labels.emplace(JTOffset, JTStartLabel);
-        assert(Result.second && "error adding jump table label");
-        LI = Result.first;
-      }
-
-      BC.MIB->replaceMemOperandDisp(const_cast<MCInst &>(*MemLocInstr),
-                                    LI->second, BC.Ctx.get());
-      BC.MIB->setJumpTable(Instruction, ArrayStart, IndexRegNum);
-
-      JTSites.emplace_back(Offset, ArrayStart);
+      useJumpTableForInstruction(JT->Type);
 
       return Type;
     }
@@ -839,7 +840,6 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
   DataExtractor DE(SectionContents, BC.AsmInfo->isLittleEndian(), EntrySize);
   auto ValueOffset = static_cast<uint32_t>(ArrayStart - Section->getAddress());
   uint64_t Value = 0;
-  std::vector<uint64_t> JTOffsetCandidates;
   auto UpperBound = Section->getSize();
   const auto *JumpTableBD = BC.getBinaryDataAtAddress(ArrayStart);
   if (JumpTableBD && JumpTableBD->getSize()) {
@@ -897,37 +897,10 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
     assert(JTOffsetCandidates.size() > 1 &&
            "expected more than one jump table entry");
 
-    auto JumpTableName = generateJumpTableName(ArrayStart);
-    auto JumpTableType =
-      Type == IndirectBranchType::POSSIBLE_JUMP_TABLE
+    const auto JumpTableType = Type == IndirectBranchType::POSSIBLE_JUMP_TABLE
         ? JumpTable::JTT_NORMAL
         : JumpTable::JTT_PIC;
-
-    auto *JTStartLabel = BC.Ctx->getOrCreateSymbol(JumpTableName);
-
-    auto JT = llvm::make_unique<JumpTable>(JumpTableName,
-                                           ArrayStart,
-                                           EntrySize,
-                                           JumpTableType,
-                                           std::move(JTOffsetCandidates),
-                                           JumpTable::LabelMapType{{0, JTStartLabel}},
-                                           *BC.getSectionForAddress(ArrayStart));
-
-    auto *JTLabel = BC.registerNameAtAddress(JumpTableName,
-                                             ArrayStart,
-                                             JT.get());
-    assert(JTLabel == JTStartLabel);
-
-    DEBUG(dbgs() << "BOLT-DEBUG: creating jump table "
-                 << JTStartLabel->getName()
-                 << " in function " << *this << " with "
-                 << JTOffsetCandidates.size() << " entries.\n");
-    JumpTables.emplace(ArrayStart, JT.release());
-    BC.MIB->replaceMemOperandDisp(const_cast<MCInst &>(*MemLocInstr),
-                                  JTStartLabel, BC.Ctx.get());
-    BC.MIB->setJumpTable(Instruction, ArrayStart, IndexRegNum);
-
-    JTSites.emplace_back(Offset, ArrayStart);
+    useJumpTableForInstruction(JumpTableType);
 
     return Type;
   }
@@ -1558,6 +1531,7 @@ void BinaryFunction::postProcessJumpTables() {
         break;
     }
   }
+  clearList(JTSites);
 
   // Free memory used by jump table offsets.
   for (auto &JTI : JumpTables) {
@@ -3482,24 +3456,6 @@ BinaryFunction::BasicBlockOrderType BinaryFunction::dfs() const {
   }
 
   return DFS;
-}
-
-std::string BinaryFunction::generateJumpTableName(uint64_t Address) const {
-  auto *JT = getJumpTableContainingAddress(Address);
-  size_t Id;
-  uint64_t Offset = 0;
-  if (JT) {
-    Offset = Address - JT->getAddress();
-    auto Itr = JT->Labels.find(Offset);
-    if (Itr != JT->Labels.end()) {
-      return Itr->second->getName();
-    }
-    Id = JumpTableIds.at(JT->getAddress());
-  } else {
-    Id = JumpTableIds[Address] = JumpTables.size();
-  }
-  return ("JUMP_TABLE/" + Names[0] + "." + std::to_string(Id) +
-          (Offset ? ("." + std::to_string(Offset)) : ""));
 }
 
 std::size_t BinaryFunction::hash(bool Recompute, bool UseDFS) const {

@@ -451,17 +451,12 @@ private:
   /// function and that apply before the entry basic block).
   CFIInstrMapType CIEFrameInstructions;
 
-  /// All compound jump tables for this function.
+  /// All compound jump tables for this function. This duplicates what's stored
+  /// in the BinaryContext, but additionally it gives quick access for all
+  /// jump tables used by this function.
+  ///
   /// <OriginalAddress> -> <JumpTable *>
   std::map<uint64_t, JumpTable *> JumpTables;
-
-  /// A map from jump table address to insertion order.  Used for generating
-  /// jump table names.
-  mutable std::map<uint64_t, size_t> JumpTableIds;
-
-  /// Generate a unique name for this jump table at the given address that
-  /// should be repeatable no matter what the start address of the table is.
-  std::string generateJumpTableName(uint64_t Address) const;
 
   /// Iterate over all jump tables associated with this function.
   iterator_range<std::map<uint64_t, JumpTable *>::const_iterator>
@@ -469,7 +464,7 @@ private:
     return make_range(JumpTables.begin(), JumpTables.end());
   }
 
-  /// All jump table sites in the function.
+  /// All jump table sites in the function before CFG is built.
   std::vector<std::pair<uint64_t, uint64_t>> JTSites;
 
   /// List of relocations in this function.

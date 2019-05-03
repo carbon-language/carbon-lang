@@ -253,6 +253,81 @@ BinaryFunction *BinaryContext::createBinaryFunction(
   return BF;
 }
 
+std::pair<JumpTable *, const MCSymbol *>
+BinaryContext::createJumpTable(BinaryFunction &Function,
+                               uint64_t Address,
+                               JumpTable::JumpTableType Type,
+                               JumpTable::OffsetEntriesType &&OffsetEntries) {
+  const auto JumpTableName = generateJumpTableName(Function, Address);
+  if (auto *JT = getJumpTableContainingAddress(Address)) {
+    assert(JT->Type == Type && "jump table types have to match");
+    assert(JT->Parent == &Function &&
+           "cannot re-use jump table of a different function");
+    assert((Address == JT->getAddress() || Type != JumpTable::JTT_PIC) &&
+           "cannot re-use part of PIC jump table");
+    // Get or create a new label for the table.
+    const auto JTOffset = Address - JT->getAddress();
+    auto LI = JT->Labels.find(JTOffset);
+    if (LI == JT->Labels.end()) {
+      auto *JTStartLabel = registerNameAtAddress(JumpTableName,
+                                                 Address,
+                                                 0,
+                                                 JT->EntrySize);
+      auto Result = JT->Labels.emplace(JTOffset, JTStartLabel);
+      assert(Result.second && "error adding jump table label");
+      LI = Result.first;
+    }
+
+    return std::make_pair(JT, LI->second);
+  }
+
+  auto *JTStartLabel = Ctx->getOrCreateSymbol(JumpTableName);
+  const auto EntrySize =
+    Type == JumpTable::JTT_PIC ? 4 : AsmInfo->getCodePointerSize();
+
+  DEBUG(dbgs() << "BOLT-DEBUG: creating jump table "
+               << JTStartLabel->getName()
+               << " in function " << Function << " with "
+               << OffsetEntries.size() << " entries\n");
+
+  auto *JT = new JumpTable(JumpTableName,
+                           Address,
+                           EntrySize,
+                           Type,
+                           std::move(OffsetEntries),
+                           JumpTable::LabelMapType{{0, JTStartLabel}},
+                           Function,
+                           *getSectionForAddress(Address));
+
+  const auto *JTLabel = registerNameAtAddress(JumpTableName, Address, JT);
+  assert(JTLabel == JTStartLabel);
+
+  JumpTables.emplace(Address, JT);
+
+  // Duplicate the entry for the parent function for easy access.
+  Function.JumpTables.emplace(Address, JT);
+
+  return std::make_pair(JT, JTLabel);
+}
+
+std::string BinaryContext::generateJumpTableName(const BinaryFunction &BF,
+                                                 uint64_t Address) {
+  size_t Id;
+  uint64_t Offset = 0;
+  if (const auto *JT = BF.getJumpTableContainingAddress(Address)) {
+    Offset = Address - JT->getAddress();
+    auto Itr = JT->Labels.find(Offset);
+    if (Itr != JT->Labels.end()) {
+      return Itr->second->getName();
+    }
+    Id = JumpTableIds.at(JT->getAddress());
+  } else {
+    Id = JumpTableIds[Address] = BF.JumpTables.size();
+  }
+  return ("JUMP_TABLE/" + BF.Names[0] + "." + std::to_string(Id) +
+          (Offset ? ("." + std::to_string(Offset)) : ""));
+}
+
 MCSymbol *BinaryContext::registerNameAtAddress(StringRef Name,
                                                uint64_t Address,
                                                uint64_t Size,
