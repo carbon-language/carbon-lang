@@ -34,17 +34,20 @@ std::ostream &operator<<(std::ostream &o, const MessageFixedText &t) {
 }
 
 static bool NeedsSpecialFormatting(const char *p) {
+  bool result{false};
+  bool tooLate{false};
   while (*p != '\0') {
     if (*p++ == '%') {
       if (*p == 'S' || *p == 'B') {
-        return true;
+        CHECK(!tooLate);
+        result = true;
       } else if (*p != '%' && *p != 's' && *p != 'd' &&
           !((*p == 'z' || *p == 'j') && (p[1] == 'd' || p[1] == 'u'))) {
-        return false;
+        tooLate = true;
       }
     }
   }
-  return false;
+  return result;
 }
 
 // Some standard formatting codes (e.g., %d) are handled here
