@@ -48,24 +48,11 @@ public:
       allocateShapeSpecRank_{ShapeSpecRank(alloc)},
       rank_{name_.symbol ? name_.symbol->Rank() : 0},
       allocateCoarraySpecRank_{CoarraySpecRank(alloc)},
-      corank_{name_.symbol ? name_.symbol->Corank() : 0} {
-    GatherAllocationBasicInfo();
-  }
+      corank_{name_.symbol ? name_.symbol->Corank() : 0} {}
 
   bool RunChecks(SemanticsContext &context);
 
 private:
-  AllocateCheckerInfo &allocateInfo_;
-  const parser::AllocateObject &allocateObject_;
-  const parser::Name &name_;
-  const DeclTypeSpec *type_;
-  const int allocateShapeSpecRank_;
-  const int rank_;
-  const int allocateCoarraySpecRank_;
-  const int corank_;
-  bool hasDeferredTypeParameter_{false};
-  bool isUnlimitedPolymorphic_{false};
-  bool isAbstract_{false};
   bool hasAllocateShapeSpecList() const { return allocateShapeSpecRank_ != 0; }
   bool hasAllocateCoarraySpec() const { return allocateCoarraySpecRank_ != 0; }
   bool RunCoarrayRelatedChecks(SemanticsContext &) const;
@@ -88,21 +75,30 @@ private:
   }
 
   void GatherAllocationBasicInfo() {
-    if (type_) {
-      if (type_->category() == DeclTypeSpec::Category::Character) {
-        hasDeferredTypeParameter_ =
-            type_->characterTypeSpec().length().isDeferred();
-      } else if (const DerivedTypeSpec * derivedTypeSpec{type_->AsDerived()}) {
-        for (const auto &pair : derivedTypeSpec->parameters()) {
-          hasDeferredTypeParameter_ |= pair.second.isDeferred();
-        }
-        isAbstract_ =
-            derivedTypeSpec->typeSymbol().attrs().test(Attr::ABSTRACT);
+    if (type_->category() == DeclTypeSpec::Category::Character) {
+      hasDeferredTypeParameter_ =
+          type_->characterTypeSpec().length().isDeferred();
+    } else if (const DerivedTypeSpec * derivedTypeSpec{type_->AsDerived()}) {
+      for (const auto &pair : derivedTypeSpec->parameters()) {
+        hasDeferredTypeParameter_ |= pair.second.isDeferred();
       }
-      isUnlimitedPolymorphic_ =
-          type_->category() == DeclTypeSpec::Category::ClassStar;
+      isAbstract_ = derivedTypeSpec->typeSymbol().attrs().test(Attr::ABSTRACT);
     }
+    isUnlimitedPolymorphic_ =
+        type_->category() == DeclTypeSpec::Category::ClassStar;
   }
+
+  AllocateCheckerInfo &allocateInfo_;
+  const parser::AllocateObject &allocateObject_;
+  const parser::Name &name_;
+  const DeclTypeSpec *type_;
+  const int allocateShapeSpecRank_;
+  const int rank_;
+  const int allocateCoarraySpecRank_;
+  const int corank_;
+  bool hasDeferredTypeParameter_{false};
+  bool isUnlimitedPolymorphic_{false};
+  bool isAbstract_{false};
 };
 
 static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
@@ -408,6 +404,7 @@ bool AllocationCheckerHelper::RunChecks(SemanticsContext &context) {
   if (type_ == nullptr) {
     return false;
   }
+  GatherAllocationBasicInfo();
   if (!IsVariableName(*name_.symbol)) {  // C932 pre-requisite
     context.Say(name_.source,
         "Name in ALLOCATE statement must be a variable name"_err_en_US);

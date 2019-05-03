@@ -16,7 +16,7 @@
 
 ! TODO: Function Pointer in allocate and derived types!
 
-! Rules I should know when working wit coarrays and derived type:
+! Rules I should know when working with coarrays and derived type:
 
 ! C736: If EXTENDS appears and the type being defined has a coarray ultimate
 ! component, its parent type shall have a coarray ultimate component.
@@ -67,12 +67,13 @@ subroutine C937(var)
 
   class(*), allocatable :: var
   ! unlimited polymorphic is the ONLY way to get an allocatable/pointer 'var' that can be
-  ! allocated with a type-spec T that has coarray ultimate component.
-  ! Rational:
+  ! allocated with a type-spec T that has coarray ultimate component without
+  ! violating other rules than C937.
+  ! Rationale:
   !   C934 => var must be type compatible with T.
   !        => var type is T, a type P extended by T, or unlimited polymorphic
   !   C825 => var cannot be of type T.
-  !   C736 => all parent type P of T must have a coarray unlimited component
+  !   C736 => all parent types P of T must have a coarray ultimate component
   !        => var cannot be of type P (C825)
   !        => if var can be defined, it can only be unlimited polymorphic
 
