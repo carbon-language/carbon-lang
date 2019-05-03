@@ -148,7 +148,7 @@ struct ProcedureDesignator {
   // Always null if the procedure is intrinsic.
   const Component *GetComponent() const;
 
-  parser::CharBlock GetName() const;
+  std::string GetName() const;
   std::optional<DynamicType> GetType() const;
   int Rank() const;
   bool IsElemental() const;

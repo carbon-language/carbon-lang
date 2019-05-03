@@ -18,6 +18,7 @@
 #include "traversal.h"
 #include "../common/idioms.h"
 #include "../common/template.h"
+#include "../parser/message.h"
 #include "../semantics/symbol.h"
 
 namespace Fortran::evaluate {

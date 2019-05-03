@@ -143,15 +143,14 @@ const Symbol *ProcedureDesignator::GetSymbol() const {
       u);
 }
 
-parser::CharBlock ProcedureDesignator::GetName() const {
+std::string ProcedureDesignator::GetName() const {
   return std::visit(
       common::visitors{
-          [](const SpecificIntrinsic &i) -> parser::CharBlock {
-            return i.name;
+          [](const SpecificIntrinsic &i) { return i.name; },
+          [](const Symbol *sym) { return sym->name().ToString(); },
+          [](const common::CopyableIndirection<Component> &c) {
+            return c.value().GetLastSymbol().name().ToString();
           },
-          [](const Symbol *sym) -> parser::CharBlock { return sym->name(); },
-          [](const common::CopyableIndirection<Component> &c)
-              -> parser::CharBlock { return c.value().GetLastSymbol().name(); },
       },
       u);
 }

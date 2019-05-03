@@ -22,9 +22,12 @@
 #include "tools.h"
 #include "type.h"
 #include "../common/indirection.h"
-#include "../parser/message.h"
 #include <optional>
 #include <variant>
+
+namespace Fortran::parser {
+class ContextualMessages;
+}
 
 namespace Fortran::evaluate {
 
