@@ -66,22 +66,22 @@ void CheckPointerAssignment(parser::ContextualMessages &messages,
       if (IsProcedurePointer(lhs)) {
         // Shouldn't be here in this function unless lhs
         // is an object pointer.
-        error = "Procedure pointer '%s' assigned with result of "
-                "reference to function '%s' that does not return a "
+        error = "Procedure pointer '%s' was assigned the result of "
+                "a reference to function '%s' that does not return a "
                 "procedure pointer"_err_en_US;
       } else if (frProc != nullptr) {
-        error = "Object pointer '%s' assigned with result of "
+        error = "Object pointer '%s' was assigned the result of a "
                 "reference to function '%s' that is a procedure "
                 "pointer"_err_en_US;
       } else if (!funcResult->attrs.test(
                      characteristics::FunctionResult::Attr::Pointer)) {
-        error = "Pointer '%s' assigned with result of "
+        error = "Pointer '%s' was assigned the result of a "
                 "reference to function '%s' that is a not a "
                 "pointer"_err_en_US;
       } else if (lhs.attrs().test(semantics::Attr::CONTIGUOUS) &&
           !funcResult->attrs.test(
               characteristics::FunctionResult::Attr::Contiguous)) {
-        error = "Contiguous pointer '%s' assigned with result of "
+        error = "Contiguous pointer '%s' was assigned the result of "
                 "reference to function '%s' that is not "
                 "contiguous"_err_en_US;
       } else if (auto lhsTypeAndShape{
@@ -89,13 +89,13 @@ void CheckPointerAssignment(parser::ContextualMessages &messages,
         const auto *frTypeAndShape{funcResult->GetTypeAndShape()};
         CHECK(frTypeAndShape != nullptr);
         if (!lhsTypeAndShape->IsCompatibleWith(messages, *frTypeAndShape)) {
-          error = "Pointer '%s' assigned with result of reference to "
+          error = "Pointer '%s' was assigned the result of a reference to "
                   "function '%s' whose pointer result has an "
                   "incompatible type or shape"_err_en_US;
         }
       }
     } else {
-      error = "Pointer assigned with non-existent "
+      error = "Pointer was assigned the non-existent "
               "result of reference to procedure"_err_en_US;
     }
     if (error.has_value()) {
