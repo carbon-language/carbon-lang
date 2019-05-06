@@ -397,10 +397,7 @@ public:
   void PushScope(Scope::Kind kind, Symbol *symbol);
   void PushScope(Scope &scope);
   void PopScope();
-  void ClearScopes() {
-    PopScope();  // trigger ConvertToObjectEntity calls
-    currScope_ = &context().globalScope();
-  }
+  void SetScope(Scope &);
 
   template<typename T> bool Pre(const parser::Statement<T> &x) {
     messageHandler().set_currStmtSource(&x.source);
@@ -499,10 +496,6 @@ public:
   }
 
 protected:
-  // When subpNamesOnly_ is set we are only collecting procedure names.
-  // Create symbols with SubprogramNameDetails of the given kind.
-  std::optional<SubprogramKind> subpNamesOnly_;
-
   // Apply the implicit type rules to this symbol.
   void ApplyImplicitRules(Symbol &);
   const DeclTypeSpec *GetImplicitType(Symbol &);
@@ -514,38 +507,22 @@ protected:
   const DeclTypeSpec &MakeLogicalType(
       const std::optional<parser::KindSelector> &);
 
-  // Walk the ModuleSubprogramPart or InternalSubprogramPart collecting names.
-  template<typename T>
-  void WalkSubprogramPart(const std::optional<T> &subpPart) {
-    if (subpPart) {
-      if (std::is_same_v<T, parser::ModuleSubprogramPart>) {
-        subpNamesOnly_ = SubprogramKind::Module;
-      } else if (std::is_same_v<T, parser::InternalSubprogramPart>) {
-        subpNamesOnly_ = SubprogramKind::Internal;
-      } else {
-        static_assert("unexpected type");
-      }
-      Walk(*subpPart);
-      subpNamesOnly_ = std::nullopt;
-    }
-  }
-
 private:
   Scope *currScope_{nullptr};
 };
 
 class ModuleVisitor : public virtual ScopeHandler {
 public:
-  bool Pre(const parser::Module &);
-  void Post(const parser::Module &);
-  bool Pre(const parser::Submodule &);
-  void Post(const parser::Submodule &);
   bool Pre(const parser::AccessStmt &);
   bool Pre(const parser::Only &);
   bool Pre(const parser::Rename::Names &);
   bool Pre(const parser::Rename::Operators &);
   bool Pre(const parser::UseStmt &);
   void Post(const parser::UseStmt &);
+
+  void BeginModule(const parser::Name &, bool isSubmodule);
+  bool BeginSubmodule(const parser::Name &, const parser::ParentIdentifier &);
+  void ApplyDefaultAccess();
 
 private:
   // The default access spec for this module.
@@ -556,7 +533,6 @@ private:
   const Scope *useModuleScope_{nullptr};
 
   Symbol &SetAccess(const SourceName &, Attr);
-  void ApplyDefaultAccess();
   void AddUse(const parser::Rename::Names &);
   void AddUse(const parser::Rename::Operators &);
   Symbol *AddUse(const SourceName &);
@@ -568,8 +544,6 @@ private:
   // Record a use from useModuleScope_ of use Name/Symbol as local Name/Symbol
   SymbolRename AddUse(const SourceName &localName, const SourceName &useName);
   void AddUse(const SourceName &, Symbol &localSymbol, const Symbol &useSymbol);
-  Symbol &BeginModule(const parser::Name &, bool isSubmodule,
-      const std::optional<parser::ModuleSubprogramPart> &);
   Scope *FindModule(const parser::Name &, Scope *ancestor = nullptr);
 };
 
@@ -611,19 +585,17 @@ public:
   void Post(const parser::SubroutineStmt &);
   bool Pre(const parser::FunctionStmt &);
   void Post(const parser::FunctionStmt &);
-  bool Pre(const parser::SubroutineSubprogram &);
-  void Post(const parser::SubroutineSubprogram &);
-  bool Pre(const parser::FunctionSubprogram &);
-  void Post(const parser::FunctionSubprogram &);
   bool Pre(const parser::InterfaceBody::Subroutine &);
   void Post(const parser::InterfaceBody::Subroutine &);
   bool Pre(const parser::InterfaceBody::Function &);
   void Post(const parser::InterfaceBody::Function &);
-  bool Pre(const parser::SeparateModuleSubprogram &);
-  void Post(const parser::SeparateModuleSubprogram &);
   bool Pre(const parser::Suffix &);
   bool Pre(const parser::PrefixSpec &);
   void Post(const parser::ImplicitPart &);
+
+  bool BeginSubprogram(
+      const parser::Name &, Symbol::Flag, bool hasModulePrefix = false);
+  void EndSubprogram();
 
 protected:
   // Set when we see a stmt function that is really an array element assignment
@@ -639,9 +611,6 @@ private:
     const SourceName *source{nullptr};
   } funcInfo_;
 
-  bool BeginSubprogram(const parser::Name &, Symbol::Flag, bool hasModulePrefix,
-      const std::optional<parser::InternalSubprogramPart> &);
-  void EndSubprogram();
   // Create a subprogram symbol in the current scope and push a new scope.
   Symbol &PushSubprogramScope(const parser::Name &, Symbol::Flag);
   Symbol *GetSpecificFromGeneric(const parser::Name &);
@@ -1002,8 +971,6 @@ public:
   template<typename T> void Post(const T &) {}
 
   void Post(const parser::SpecificationPart &);
-  bool Pre(const parser::MainProgram &);
-  void Post(const parser::EndProgramStmt &);
   void Post(const parser::Program &);
   bool Pre(const parser::ImplicitStmt &);
   void Post(const parser::PointerObject &);
@@ -1018,6 +985,16 @@ public:
   void Post(const parser::TypeGuardStmt &);
   bool Pre(const parser::StmtFunctionStmt &);
   bool Pre(const parser::DefinedOpName &);
+  bool Pre(const parser::ProgramUnit &);
+
+  // These nodes should never be reached: they are handled in ProgramUnit
+  bool Pre(const parser::MainProgram &) { DIE("unreachable"); }
+  bool Pre(const parser::FunctionSubprogram &) { DIE("unreachable"); }
+  bool Pre(const parser::SubroutineSubprogram &) { DIE("unreachable"); }
+  bool Pre(const parser::SeparateModuleSubprogram &) { DIE("unreachable"); }
+  bool Pre(const parser::Module &) { DIE("unreachable"); }
+  bool Pre(const parser::Submodule &) { DIE("unreachable"); }
+  bool Pre(const parser::BlockData &) { DIE("unreachable"); }
 
 private:
   // Kind of procedure we are expecting to see in a ProcedureDesignator
@@ -1029,6 +1006,10 @@ private:
   void HandleCall(Symbol::Flag, const parser::Call &);
   void HandleProcedureName(Symbol::Flag, const parser::Name &);
   bool SetProcFlag(const parser::Name &, Symbol &, Symbol::Flag);
+  void ResolveExecutionParts(const ProgramTree &);
+  void AddSubpNames(const ProgramTree &);
+  bool BeginScope(const ProgramTree &);
+  void ResolveSpecificationParts(ProgramTree &);
 };
 
 // ImplicitRules implementation
@@ -1573,7 +1554,10 @@ void ScopeHandler::PopScope() {
     auto &symbol{*pair.second};
     ConvertToObjectEntity(symbol);  // if not a proc by now, it is an object
   }
-  currScope_ = &currScope_->parent();
+  SetScope(currScope_->parent());
+}
+void ScopeHandler::SetScope(Scope &scope) {
+  currScope_ = &scope;
   ImplicitRulesVisitor::SetScope(InclusiveScope());
 }
 
@@ -1891,11 +1875,8 @@ void ModuleVisitor::AddUse(
   }
 }
 
-bool ModuleVisitor::Pre(const parser::Submodule &x) {
-  auto &stmt{std::get<parser::Statement<parser::SubmoduleStmt>>(x.t)};
-  auto &name{std::get<parser::Name>(stmt.statement.t)};
-  auto &subpPart{std::get<std::optional<parser::ModuleSubprogramPart>>(x.t)};
-  auto &parentId{std::get<parser::ParentIdentifier>(stmt.statement.t)};
+bool ModuleVisitor::BeginSubmodule(
+    const parser::Name &name, const parser::ParentIdentifier &parentId) {
   auto &ancestorName{std::get<parser::Name>(parentId.t)};
   auto &parentName{std::get<std::optional<parser::Name>>(parentId.t)};
   Scope *ancestor{FindModule(ancestorName)};
@@ -1907,38 +1888,20 @@ bool ModuleVisitor::Pre(const parser::Submodule &x) {
     return false;
   }
   PushScope(*parentScope);  // submodule is hosted in parent
-  BeginModule(name, true, subpPart);
+  BeginModule(name, true);
   if (!ancestor->AddSubmodule(name.source, currScope())) {
     Say(name, "Module '%s' already has a submodule named '%s'"_err_en_US,
         ancestorName.source, name.source);
   }
   return true;
 }
-void ModuleVisitor::Post(const parser::Submodule &) { ClearScopes(); }
 
-bool ModuleVisitor::Pre(const parser::Module &x) {
-  // Make a symbol and push a scope for this module
-  const auto &name{
-      std::get<parser::Statement<parser::ModuleStmt>>(x.t).statement.v};
-  auto &subpPart{std::get<std::optional<parser::ModuleSubprogramPart>>(x.t)};
-  BeginModule(name, false, subpPart);
-  return true;
-}
-
-void ModuleVisitor::Post(const parser::Module &) {
-  ApplyDefaultAccess();
-  PopScope();
-  prevAccessStmt_ = nullptr;
-}
-
-Symbol &ModuleVisitor::BeginModule(const parser::Name &name, bool isSubmodule,
-    const std::optional<parser::ModuleSubprogramPart> &subpPart) {
+void ModuleVisitor::BeginModule(const parser::Name &name, bool isSubmodule) {
   auto &symbol{MakeSymbol(name, ModuleDetails{isSubmodule})};
   auto &details{symbol.get<ModuleDetails>()};
   PushScope(Scope::Kind::Module, &symbol);
   details.set_scope(&currScope());
-  WalkSubprogramPart(subpPart);
-  return symbol;
+  prevAccessStmt_ = nullptr;
 }
 
 // Find a module or submodule by name and return its scope.
@@ -2243,49 +2206,10 @@ void SubprogramVisitor::Post(const parser::ImplicitPart &) {
   funcInfo_ = {};
 }
 
-bool HasModulePrefix(const std::list<parser::PrefixSpec> &prefixes) {
-  for (const auto &prefix : prefixes) {
-    if (std::holds_alternative<parser::PrefixSpec::Module>(prefix.u)) {
-      return true;
-    }
-  }
-  return false;
-}
-bool SubprogramVisitor::Pre(const parser::SubroutineSubprogram &x) {
-  const auto &stmt{
-      std::get<parser::Statement<parser::SubroutineStmt>>(x.t).statement};
-  bool hasModulePrefix{
-      HasModulePrefix(std::get<std::list<parser::PrefixSpec>>(stmt.t))};
-  const auto &name{std::get<parser::Name>(stmt.t)};
-  const auto &subpPart{
-      std::get<std::optional<parser::InternalSubprogramPart>>(x.t)};
-  return BeginSubprogram(
-      name, Symbol::Flag::Subroutine, hasModulePrefix, subpPart);
-}
-void SubprogramVisitor::Post(const parser::SubroutineSubprogram &) {
-  EndSubprogram();
-}
-
-bool SubprogramVisitor::Pre(const parser::FunctionSubprogram &x) {
-  const auto &stmt{
-      std::get<parser::Statement<parser::FunctionStmt>>(x.t).statement};
-  bool hasModulePrefix{
-      HasModulePrefix(std::get<std::list<parser::PrefixSpec>>(stmt.t))};
-  const auto &name{std::get<parser::Name>(stmt.t)};
-  const auto &subpPart{
-      std::get<std::optional<parser::InternalSubprogramPart>>(x.t)};
-  return BeginSubprogram(
-      name, Symbol::Flag::Function, hasModulePrefix, subpPart);
-}
-void SubprogramVisitor::Post(const parser::FunctionSubprogram &) {
-  EndSubprogram();
-}
-
 bool SubprogramVisitor::Pre(const parser::InterfaceBody::Subroutine &x) {
   const auto &name{std::get<parser::Name>(
       std::get<parser::Statement<parser::SubroutineStmt>>(x.t).statement.t)};
-  return BeginSubprogram(name, Symbol::Flag::Subroutine,
-      /*hasModulePrefix*/ false, std::nullopt);
+  return BeginSubprogram(name, Symbol::Flag::Subroutine);
 }
 void SubprogramVisitor::Post(const parser::InterfaceBody::Subroutine &) {
   EndSubprogram();
@@ -2293,8 +2217,7 @@ void SubprogramVisitor::Post(const parser::InterfaceBody::Subroutine &) {
 bool SubprogramVisitor::Pre(const parser::InterfaceBody::Function &x) {
   const auto &name{std::get<parser::Name>(
       std::get<parser::Statement<parser::FunctionStmt>>(x.t).statement.t)};
-  return BeginSubprogram(
-      name, Symbol::Flag::Function, /*hasModulePrefix*/ false, std::nullopt);
+  return BeginSubprogram(name, Symbol::Flag::Function);
 }
 void SubprogramVisitor::Post(const parser::InterfaceBody::Function &) {
   EndSubprogram();
@@ -2352,14 +2275,8 @@ SubprogramDetails &SubprogramVisitor::PostSubprogramStmt(
   return symbol.get<SubprogramDetails>();
 }
 
-bool SubprogramVisitor::BeginSubprogram(const parser::Name &name,
-    Symbol::Flag subpFlag, bool hasModulePrefix,
-    const std::optional<parser::InternalSubprogramPart> &subpPart) {
-  if (subpNamesOnly_) {
-    auto &symbol{MakeSymbol(name, SubprogramNameDetails{*subpNamesOnly_})};
-    symbol.set(subpFlag);
-    return false;
-  }
+bool SubprogramVisitor::BeginSubprogram(
+    const parser::Name &name, Symbol::Flag subpFlag, bool hasModulePrefix) {
   if (hasModulePrefix && !inInterfaceBlock()) {
     auto *symbol{FindSymbol(name)};
     if (!symbol || !symbol->IsSeparateModuleProc()) {
@@ -2375,30 +2292,9 @@ bool SubprogramVisitor::BeginSubprogram(const parser::Name &name,
   } else {
     PushSubprogramScope(name, subpFlag);
   }
-  WalkSubprogramPart(subpPart);
   return true;
 }
-void SubprogramVisitor::EndSubprogram() {
-  if (!subpNamesOnly_) {
-    PopScope();
-  }
-}
-
-bool SubprogramVisitor::Pre(const parser::SeparateModuleSubprogram &x) {
-  if (subpNamesOnly_) {
-    return false;
-  }
-  const auto &name{
-      std::get<parser::Statement<parser::MpSubprogramStmt>>(x.t).statement.v};
-  const auto &subpPart{
-      std::get<std::optional<parser::InternalSubprogramPart>>(x.t)};
-  return BeginSubprogram(
-      name, Symbol::Flag::Subroutine, /*hasModulePrefix*/ true, subpPart);
-}
-
-void SubprogramVisitor::Post(const parser::SeparateModuleSubprogram &) {
-  EndSubprogram();
-}
+void SubprogramVisitor::EndSubprogram() { PopScope(); }
 
 Symbol &SubprogramVisitor::PushSubprogramScope(
     const parser::Name &name, Symbol::Flag subpFlag) {
@@ -4495,6 +4391,9 @@ bool ResolveNamesVisitor::SetProcFlag(
     if (flag == Symbol::Flag::Function) {
       ApplyImplicitRules(symbol);
     }
+  } else if (symbol.GetType() != nullptr && flag == Symbol::Flag::Subroutine) {
+    SayWithDecl(
+        name, symbol, "Cannot call function '%s' like a subroutine"_err_en_US);
   }
   return true;
 }
@@ -4619,20 +4518,6 @@ void ResolveNamesVisitor::CheckImport(
   }
 }
 
-bool ResolveNamesVisitor::Pre(const parser::MainProgram &x) {
-  using stmtType = std::optional<parser::Statement<parser::ProgramStmt>>;
-  Symbol *symbol{nullptr};
-  if (auto &stmt{std::get<stmtType>(x.t)}) {
-    symbol = &MakeSymbol(stmt->statement.v, MainProgramDetails{});
-  }
-  PushScope(Scope::Kind::MainProgram, symbol);
-  auto &subpPart{std::get<std::optional<parser::InternalSubprogramPart>>(x.t)};
-  WalkSubprogramPart(subpPart);
-  return true;
-}
-
-void ResolveNamesVisitor::Post(const parser::EndProgramStmt &) { PopScope(); }
-
 bool ResolveNamesVisitor::Pre(const parser::ImplicitStmt &x) {
   return CheckNotInBlock("IMPLICIT") && ImplicitRulesVisitor::Pre(x);
 }
@@ -4710,6 +4595,80 @@ bool ResolveNamesVisitor::Pre(const parser::DefinedOpName &x) {
     Say(name, "Defined operator '%s' not found"_err_en_US);
   }
   return false;
+}
+
+bool ResolveNamesVisitor::Pre(const parser::ProgramUnit &x) {
+  auto root{ProgramTree::Build(x)};
+  SetScope(context().globalScope());
+  ResolveSpecificationParts(root);
+  SetScope(context().globalScope());
+  ResolveExecutionParts(root);
+  return false;
+}
+
+// Build the scope tree and resolve names in the specification parts of this
+// node and its children
+void ResolveNamesVisitor::ResolveSpecificationParts(ProgramTree &node) {
+  if (!BeginScope(node)) {
+    return;  // an error prevented scope from being created
+  }
+  Scope &scope{currScope()};
+  node.set_scope(scope);
+  AddSubpNames(node);
+  std::visit([&](const auto *x) { Walk(*x); }, node.stmt());
+  Walk(node.spec());
+  if (node.IsModule()) {
+    ApplyDefaultAccess();
+  }
+  for (auto &child : node.children()) {
+    ResolveSpecificationParts(child);
+  }
+  PopScope();
+}
+
+// Add SubprogramNameDetails symbols for contained subprograms
+void ResolveNamesVisitor::AddSubpNames(const ProgramTree &node) {
+  auto kind{
+      node.IsModule() ? SubprogramKind::Module : SubprogramKind::Internal};
+  for (const auto &child : node.children()) {
+    auto &symbol{MakeSymbol(child.name(), SubprogramNameDetails{kind})};
+    symbol.set(child.GetSubpFlag());
+  }
+}
+
+// Push a new scope for this node or return false on error.
+bool ResolveNamesVisitor::BeginScope(const ProgramTree &node) {
+  switch (node.GetKind()) {
+  case ProgramTree::Kind::Program:
+    PushScope(Scope::Kind::MainProgram,
+        &MakeSymbol(node.name(), MainProgramDetails{}));
+    return true;
+  case ProgramTree::Kind::Function:
+  case ProgramTree::Kind::Subroutine:
+    return BeginSubprogram(
+        node.name(), node.GetSubpFlag(), node.HasModulePrefix());
+  case ProgramTree::Kind::MpSubprogram:
+    return BeginSubprogram(
+        node.name(), Symbol::Flag::Subroutine, /*hasModulePrefix*/ true);
+  case ProgramTree::Kind::Module: BeginModule(node.name(), false); return true;
+  case ProgramTree::Kind::Submodule:
+    return BeginSubmodule(node.name(), node.GetParentId());
+  default: CRASH_NO_CASE;
+  }
+}
+
+// Resolve names in the execution part of this node and its children
+void ResolveNamesVisitor::ResolveExecutionParts(const ProgramTree &node) {
+  if (!node.scope()) {
+    return;  // error occurred creating scope
+  }
+  SetScope(*node.scope());
+  if (const auto *exec{node.exec()}) {
+    Walk(*exec);
+  }
+  for (const auto &child : node.children()) {
+    ResolveExecutionParts(child);
+  }
 }
 
 void ResolveNamesVisitor::Post(const parser::Program &) {

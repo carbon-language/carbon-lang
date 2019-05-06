@@ -488,7 +488,8 @@ static void DumpUniqueName(std::ostream &os, const Scope &scope) {
   if (scope.kind() != Scope::Kind::Global) {
     DumpUniqueName(os, scope.parent());
     os << '/';
-    if (auto *scopeSymbol{scope.symbol()}) {
+    if (auto *scopeSymbol{scope.symbol()};
+        scopeSymbol && !scopeSymbol->name().empty()) {
       os << scopeSymbol->name();
     } else {
       int index{1};

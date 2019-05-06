@@ -1,4 +1,4 @@
-! Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+! Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License");
 ! you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ module m2
     module integer function fun1()
     end function
   end interface
+  !ERROR: 't' is already declared in this scoping unit
   type t
   end type
   !ERROR: Declaration of 'i' conflicts with its use as module procedure

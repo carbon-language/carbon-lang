@@ -119,3 +119,29 @@ subroutine s4
   y%a = 0.0
  end associate
 end subroutine
+
+!DEF: /s5 Subprogram
+subroutine s5
+ !DEF: /s5/t DerivedType
+ type :: t
+  !DEF: /s5/t/a ObjectEntity REAL(4)
+  real :: a
+ end type
+ !DEF: /s5/b ObjectEntity REAL(4)
+ real b
+ !DEF: /s5/Block1/x AssocEntity TYPE(t)
+ !DEF: /s5/f Subprogram TYPE(t)
+ associate(x => f())
+  !REF: /s5/b
+  !REF: /s5/Block1/x
+  !REF: /s5/t/a
+  b = x%a
+ end associate
+contains
+ !DEF: /s5/f/f ObjectEntity TYPE(t)
+ function f()
+  !REF: /s5/t
+  !REF: /s5/f/f
+  type(t) :: f
+ end function
+end subroutine

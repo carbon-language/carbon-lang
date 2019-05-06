@@ -40,7 +40,7 @@ contains
   !REF: /m/s/y
   !REF: /m/x
   y = x
-  !DEF: /m/s/s Subprogram
+  !DEF: /m/s/s PUBLIC Subprogram
   call s
  contains
   !DEF: /m/s/s2 Subprogram
