@@ -75,10 +75,10 @@ subroutine test
   dt0x = dt0(ip0=null(ip0))
   dt0x = dt0(ip0=null(mold=ip0))
   !ERROR: Target type 'Real(4)' is not compatible with 'Integer(4)'
-  !ERROR: Pointer 'ip0' assigned with result of reference to function 'null' whose pointer result has an incompatible type or shape
+  !ERROR: Pointer 'ip0' was assigned the result of a reference to function 'null' whose pointer result has an incompatible type or shape
   dt0x = dt0(ip0=null(mold=rp0))
   !ERROR: Target type 'Real(4)' is not compatible with 'Integer(4)'
-  !ERROR: Pointer 'ip1' assigned with result of reference to function 'null' whose pointer result has an incompatible type or shape
+  !ERROR: Pointer 'ip1' was assigned the result of a reference to function 'null' whose pointer result has an incompatible type or shape
   dt1x = dt1(ip1=null(mold=rp1))
   dt2x = dt2(pps0=null())
   dt2x = dt2(pps0=null(mold=dt2x%pps0))

@@ -192,14 +192,17 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
     CHECK(parserSourceExpr);
     if (const auto *expr{GetExpr(*parserSourceExpr)}) {
       info.sourceExprType = expr->GetType();
-      if (!info.sourceExprType.has_value() && !context.AnyFatalError()) {
-        context.Say(parserSourceExpr->source,
-            "Source expression in ALLOCATE must be a valid expression"_err_en_US);
+      if (!info.sourceExprType.has_value()) {
+        if (!context.AnyFatalError()) {
+          context.Say(parserSourceExpr->source,
+              "Source expression in ALLOCATE must be a valid expression"_err_en_US);
+        }
         return std::nullopt;
       }
       info.sourceExprRank = expr->Rank();
       info.sourceExprLoc = parserSourceExpr->source;
-      if (const DerivedTypeSpec * derived{info.sourceExprType->derived}) {
+      if (const DerivedTypeSpec *
+          derived{info.sourceExprType.value().derived}) {
         // C949
         if (const Symbol *
             coarrayComponent{HasCoarrayUltimateComponent(*derived)}) {
