@@ -16,6 +16,7 @@
 #include "attr.h"
 #include "expression.h"
 #include "mod-file.h"
+#include "program-tree.h"
 #include "resolve-names-utils.h"
 #include "rewrite-parse-tree.h"
 #include "scope.h"
