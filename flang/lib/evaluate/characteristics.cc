@@ -36,7 +36,7 @@ bool TypeAndShape::IsCompatibleWith(
     parser::ContextualMessages &messages, const TypeAndShape &that) const {
   if (!type_.IsTypeCompatibleWith(that.type_)) {
     messages.Say("Target type '%s' is not compatible with '%s'"_err_en_US,
-        that.type_.AsFortran().c_str(), type_.AsFortran().c_str());
+        that.type_.AsFortran(), type_.AsFortran());
     return false;
   }
   return CheckConformance(messages, shape_, that.shape_);

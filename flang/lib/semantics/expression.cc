@@ -180,7 +180,7 @@ MaybeExpr ExpressionAnalyzer::Designate(DataRef &&ref) {
     if (declTypeSpec->category() == semantics::DeclTypeSpec::TypeStar) {
       Say("TYPE(*) assumed-type dummy argument '%s' may not be "
           "used except as an actual argument"_err_en_US,
-          symbol.name().ToString().c_str());
+          symbol.name());
     }
   }
   return std::nullopt;
@@ -200,7 +200,7 @@ MaybeExpr ExpressionAnalyzer::CompleteSubscripts(ArrayRef &&ref) {
   }
   if (subscripts != symbolRank) {
     Say("Reference to rank-%d object '%s' has %d subscripts"_err_en_US,
-        symbolRank, symbol.name().ToString().c_str(), subscripts);
+        symbolRank, symbol.name(), subscripts);
   } else if (subscripts == 0) {
     // nothing to check
   } else if (Component * component{std::get_if<Component>(&ref.base())}) {
@@ -213,7 +213,7 @@ MaybeExpr ExpressionAnalyzer::CompleteSubscripts(ArrayRef &&ref) {
       if (subscriptRank > 0) {
         Say("Subscripts of component '%s' of rank-%d derived type "
             "array have rank %d but must all be scalar"_err_en_US,
-            symbol.name().ToString().c_str(), baseRank, subscriptRank);
+            symbol.name(), baseRank, subscriptRank);
       }
     }
   } else if (const auto *details{
@@ -223,7 +223,7 @@ MaybeExpr ExpressionAnalyzer::CompleteSubscripts(ArrayRef &&ref) {
       if (!last->upper().has_value() && details->IsAssumedSize()) {
         Say("Assumed-size array '%s' must have explicit final "
             "subscript upper bound value"_err_en_US,
-            symbol.name().ToString().c_str());
+            symbol.name());
       }
     }
   }
@@ -262,7 +262,7 @@ MaybeExpr ExpressionAnalyzer::TopLevelChecks(DataRef &&dataRef) {
       if (baseRank > 0) {
         Say("Reference to whole rank-%d component '%%%s' of "
             "rank-%d array of derived type is not allowed"_err_en_US,
-            componentRank, symbol.name().ToString().c_str(), baseRank);
+            componentRank, symbol.name(), baseRank);
       } else {
         addSubscripts = true;
       }
@@ -579,7 +579,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::LogicalLiteralConstant &x) {
 
 // BOZ typeless literals
 MaybeExpr ExpressionAnalyzer::Analyze(const parser::BOZLiteralConstant &x) {
-  const char *p{x.v.data()};
+  const char *p{x.v.c_str()};
   std::uint64_t base{16};
   switch (*p++) {
   case 'b': base = 2; break;
@@ -592,11 +592,11 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::BOZLiteralConstant &x) {
   ++p;
   auto value{BOZLiteralConstant::Read(p, base, false /*unsigned*/)};
   if (*p != '"') {
-    Say("invalid digit ('%c') in BOZ literal %s"_err_en_US, *p, x.v.data());
+    Say("Invalid digit ('%c') in BOZ literal '%s'"_err_en_US, *p, x.v);
     return std::nullopt;
   }
   if (value.overflow) {
-    Say("BOZ literal %s too large"_err_en_US, x.v.data());
+    Say("BOZ literal '%s' too large"_err_en_US, x.v);
     return std::nullopt;
   }
   return {AsGenericExpr(std::move(value.value))};
@@ -704,7 +704,8 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Substring &ss) {
           std::optional<Expr<SubscriptInteger>> last{
               GetSubstringBound(std::get<1>(range.t))};
           const Symbol &symbol{checked->GetLastSymbol()};
-          if (std::optional<DynamicType> dynamicType{DynamicType::From(symbol)}) {
+          if (std::optional<DynamicType> dynamicType{
+                  DynamicType::From(symbol)}) {
             if (dynamicType->category == TypeCategory::Character) {
               return WrapperHelper<TypeCategory::Character, Designator,
                   Substring>(dynamicType->kind,
@@ -911,7 +912,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::StructureComponent &sc) {
         return Designate(DataRef{std::move(*component)});
       } else {
         Say(name, "component is not in scope of derived TYPE(%s)"_err_en_US,
-            dtSpec->typeSymbol().name().ToString().c_str());
+            dtSpec->typeSymbol().name());
       }
     } else {
       Say(name,
@@ -1222,7 +1223,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
     if (auto *msg{Say(typeName,
             "ABSTRACT derived type '%s' may not be used in a "
             "structure constructor"_err_en_US,
-            typeName.ToString().c_str())}) {
+            typeName)}) {
       msg->Attach(
           typeSymbol.name(), "Declaration of ABSTRACT derived type"_en_US);
     }
@@ -1267,7 +1268,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
       if (symbol == nullptr) {  // C7101
         Say(source,
             "Keyword '%s=' does not name a component of derived type '%s'"_err_en_US,
-            source.ToString().c_str(), typeName.ToString().c_str());
+            source, typeName);
       }
     } else {
       if (anyKeyword) {  // C7100
@@ -1295,7 +1296,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
           Say(source,
               "Component '%s' conflicts with another component earlier in "
               "this structure constructor"_err_en_US,
-              symbol->name().ToString().c_str());
+              symbol->name());
         } else if (symbol->test(Symbol::Flag::ParentComp)) {
           // Make earlier components unavailable once a whole parent appears.
           for (auto it{components.begin()}; it != componentIter; ++it) {
@@ -1329,8 +1330,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
                         "Externally visible object '%s' must not be "
                         "associated with pointer component '%s' in a "
                         "PURE function"_err_en_US,
-                        object->name().ToString().c_str(),
-                        pointer->name().ToString().c_str())}) {
+                        object->name(), pointer->name())}) {
                   msg->Attach(object->name(), "Object declaration"_en_US)
                       .Attach(pointer->name(), "Pointer declaration"_en_US);
                 }
@@ -1341,13 +1341,13 @@ MaybeExpr ExpressionAnalyzer::Analyze(
           Say(expr.source,
               "Type parameter '%s' may not appear as a component "
               "of a structure constructor"_err_en_US,
-              symbol->name().ToString().c_str());
+              symbol->name());
           continue;
         } else {
           Say(expr.source,
               "Component '%s' is neither a procedure pointer "
               "nor a data object"_err_en_US,
-              symbol->name().ToString().c_str());
+              symbol->name());
           continue;
         }
         if (IsPointer(*symbol)) {
@@ -1360,7 +1360,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
           if (auto *msg{Say(expr.source,
                   "Value in structure constructor is incompatible with "
                   "component '%s'"_err_en_US,
-                  symbol->name().ToString().c_str())}) {
+                  symbol->name())}) {
             msg->Attach(symbol->name(), "Component declaration"_en_US);
           }
         }
@@ -1381,7 +1381,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
           if (auto *msg{Say(typeName,
                   "Structure constructor lacks a value for "
                   "component '%s'"_err_en_US,
-                  symbol->name().ToString().c_str())}) {
+                  symbol->name())}) {
             msg->Attach(symbol->name(), "Absent component"_en_US);
           }
         }
@@ -1413,7 +1413,7 @@ ExpressionAnalyzer::AnalyzeProcedureComponentRef(
             } else {
               Say(name,
                   "procedure component is not in scope of derived TYPE(%s)"_err_en_US,
-                  dtSpec->typeSymbol().name().ToString().c_str());
+                  dtSpec->typeSymbol().name());
             }
           } else {
             Say(name,
@@ -1963,7 +1963,7 @@ bool ExpressionAnalyzer::CheckIntrinsicKind(
     return true;
   } else {
     Say("%s(KIND=%jd) is not a supported type"_err_en_US,
-        parser::ToUpperCaseLetters(EnumToString(category)).c_str(), kind);
+        parser::ToUpperCaseLetters(EnumToString(category)), kind);
     return false;
   }
 }
@@ -1979,7 +1979,7 @@ bool ExpressionAnalyzer::CheckIntrinsicSize(
     return true;
   }
   Say("%s*%jd is not a supported type"_err_en_US,
-      parser::ToUpperCaseLetters(EnumToString(category)).c_str(), size);
+      parser::ToUpperCaseLetters(EnumToString(category)), size);
   return false;
 }
 
@@ -2010,21 +2010,21 @@ bool ExpressionAnalyzer::EnforceTypeConstraint(parser::CharBlock at,
     if (auto type{result->GetType()}) {
       if (type->category != category) {
         Say(at, "Must have %s type, but is %s"_err_en_US,
-            parser::ToUpperCaseLetters(EnumToString(category)).c_str(),
-            parser::ToUpperCaseLetters(type->AsFortran()).c_str());
+            parser::ToUpperCaseLetters(EnumToString(category)),
+            parser::ToUpperCaseLetters(type->AsFortran()));
         return false;
       } else if (defaultKind) {
         int kind{context_.defaultKinds().GetDefaultKind(category)};
         if (type->kind != kind) {
           Say(at, "Must have default kind(%d) of %s type, but is %s"_err_en_US,
-              kind, parser::ToUpperCaseLetters(EnumToString(category)).c_str(),
-              parser::ToUpperCaseLetters(type->AsFortran()).c_str());
+              kind, parser::ToUpperCaseLetters(EnumToString(category)),
+              parser::ToUpperCaseLetters(type->AsFortran()));
           return false;
         }
       }
     } else {
       Say(at, "Must have %s type, but is typeless"_err_en_US,
-          parser::ToUpperCaseLetters(EnumToString(category)).c_str());
+          parser::ToUpperCaseLetters(EnumToString(category)));
       return false;
     }
   }

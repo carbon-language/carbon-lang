@@ -92,15 +92,13 @@ public:
   bool HasError(const parser::Name &);
   void SetError(Symbol &, bool = true);
 
-  template<typename... A>
-  common::IfNoLvalue<parser::Message &, A...> Say(
-      parser::CharBlock at, A &&... args) {
-    return messages_.Say(at, std::move(args)...);
+  template<typename... A> parser::Message &Say(A &&... args) {
+    CHECK(location_);
+    return messages_.Say(*location_, std::forward<A>(args)...);
   }
   template<typename... A>
-  common::IfNoLvalue<parser::Message &, A...> Say(A &&... args) {
-    CHECK(location_);
-    return messages_.Say(*location_, std::move(args)...);
+  parser::Message &Say(parser::CharBlock at, A &&... args) {
+    return messages_.Say(at, std::forward<A>(args)...);
   }
   parser::Message &Say(parser::Message &&msg) {
     return messages_.Say(std::move(msg));

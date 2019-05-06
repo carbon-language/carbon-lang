@@ -266,15 +266,14 @@ public:
       if (do_depth_ == 0) {
         messages_.Say(currentStatementSourcePosition_,
             "exit from DO CONCURRENT construct (%s)"_err_en_US,
-            doConcurrentSourcePosition_.ToString().data());
+            doConcurrentSourcePosition_);
       }
       // nesting of named constructs is assumed to have been previously checked
       // by the name/label resolution pass
     } else if (names_.find(nm.value().source) == names_.end()) {
       messages_.Say(currentStatementSourcePosition_,
           "exit from DO CONCURRENT construct (%s) to construct with name '%s'"_err_en_US,
-          doConcurrentSourcePosition_.ToString().data(),
-          nm.value().source.ToString().data());
+          doConcurrentSourcePosition_, nm.value().source);
     }
   }
   void checkLabelUse(const parser::Label &labelUsed) {

@@ -298,8 +298,7 @@ const DeclTypeSpec &Scope::InstantiateIntrinsicType(
           "did not resolve to a supported value"_err_en_US,
           static_cast<std::intmax_t>(*value),
           parser::ToUpperCaseLetters(
-              common::EnumToString(intrinsic->category()))
-              .data());
+              common::EnumToString(intrinsic->category())));
     }
   }
   switch (spec.category()) {

@@ -90,8 +90,8 @@ void CoarrayChecker::CheckNamesAreDistinct(
 void CoarrayChecker::Say2(const parser::CharBlock &name1,
     parser::MessageFixedText &&msg1, const parser::CharBlock &name2,
     parser::MessageFixedText &&msg2) {
-  context_.Say(name1, std::move(msg1), name1.ToString().c_str())
-      .Attach(name2, std::move(msg2), name2.ToString().c_str());
+  context_.Say(name1, std::move(msg1), name1)
+      .Attach(name2, std::move(msg2), name2);
 }
 
 }

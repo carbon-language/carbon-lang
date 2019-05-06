@@ -589,8 +589,7 @@ Expr<Type<TypeCategory::Real, KIND>> FoldOperation(FoldingContext &context,
             context, std::move(funcRef), *callable);
       } else {
         context.messages().Say(
-            "%s(real(kind=%d)) cannot be folded on host"_en_US, name.c_str(),
-            KIND);
+            "%s(real(kind=%d)) cannot be folded on host"_en_US, name, KIND);
       }
     }
     if (name == "atan" || name == "atan2" || name == "hypot" || name == "mod") {
@@ -604,7 +603,7 @@ Expr<Type<TypeCategory::Real, KIND>> FoldOperation(FoldingContext &context,
       } else {
         context.messages().Say(
             "%s(real(kind=%d), real(kind%d)) cannot be folded on host"_en_US,
-            name.c_str(), KIND, KIND);
+            name, KIND, KIND);
       }
     } else if (name == "bessel_jn" || name == "bessel_yn") {
       if (args.size() == 2) {  // elemental
@@ -624,7 +623,7 @@ Expr<Type<TypeCategory::Real, KIND>> FoldOperation(FoldingContext &context,
         } else {
           context.messages().Say(
               "%s(integer(kind=4), real(kind=%d)) cannot be folded on host"_en_US,
-              name.c_str(), KIND);
+              name, KIND);
         }
       }
     } else if (name == "abs") {
@@ -661,7 +660,7 @@ Expr<Type<TypeCategory::Real, KIND>> FoldOperation(FoldingContext &context,
             ValueWithRealFlags<Scalar<T>> y{x.AINT()};
             if (y.flags.test(RealFlag::Overflow)) {
               context.messages().Say(
-                  "%s intrinsic folding overflow"_en_US, name.c_str());
+                  "%s intrinsic folding overflow"_en_US, name);
             }
             return y.value;
           }));
@@ -714,8 +713,7 @@ Expr<Type<TypeCategory::Complex, KIND>> FoldOperation(FoldingContext &context,
             context, std::move(funcRef), *callable);
       } else {
         context.messages().Say(
-            "%s(complex(kind=%d)) cannot be folded on host"_en_US, name.c_str(),
-            KIND);
+            "%s(complex(kind=%d)) cannot be folded on host"_en_US, name, KIND);
       }
     } else if (name == "conjg") {
       return FoldElementalIntrinsic<T, T>(

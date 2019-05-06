@@ -35,6 +35,8 @@
 
 namespace Fortran::parser {
 
+struct Name;
+
 // Use "..."_err_en_US and "..."_en_US literals to define the static
 // text and fatality of a message.
 class MessageFixedText {
@@ -67,14 +69,17 @@ constexpr MessageFixedText operator""_err_en_US(
 }
 
 // The construction of a MessageFormattedText uses a MessageFixedText
-// as a vsnprintf()-like formatting string that is applied to the
-// following arguments.  Additional formatting codes are accepted in
-// messages:
-//   %B - the corresponding argument is a CharBlock
-//   %S - the corresponding argument is a std::string
+// as a vsnprintf() formatting string that is applied to the
+// following arguments.  CharBlock and std::string argument values are
+// also supported; they are automatically converted into char pointers
+// that are suitable for '%s' formatting.
 class MessageFormattedText {
 public:
-  MessageFormattedText(MessageFixedText, ...);
+  template<typename... A>
+  MessageFormattedText(const MessageFixedText &text, A &&... x)
+    : isFatal_{text.isFatal()} {
+    Format(&text, Convert(std::forward<A>(x))...);
+  }
   MessageFormattedText(const MessageFormattedText &) = default;
   MessageFormattedText(MessageFormattedText &&) = default;
   MessageFormattedText &operator=(const MessageFormattedText &) = default;
@@ -84,8 +89,21 @@ public:
   std::string MoveString() { return std::move(string_); }
 
 private:
-  std::string string_;
+  void Format(const MessageFixedText *text, ...);
+  template<typename A> A Convert(const A &x) { return x; }
+  template<typename A> common::IfNoLvalue<A, A> Convert(A &&x) {
+    return std::move(x);
+  }
+  const char *Convert(const std::string &);
+  const char *Convert(std::string &&);
+  const char *Convert(const CharBlock &);
+  const char *Convert(CharBlock &&);
+  const char *Convert(const Name &);
+  const char *Convert(Name &&);
+
   bool isFatal_{false};
+  std::string string_;
+  std::forward_list<std::string> conversions_;  // preserves created strings
 };
 
 // Represents a formatted rendition of "expected '%s'"_err_en_US
@@ -145,9 +163,10 @@ public:
   Message(CharBlock csr, const MessageExpectedText &t)
     : location_{csr}, text_{t} {}
 
-  template<typename RANGE, typename A1, typename... As>
-  Message(RANGE r, const MessageFixedText &t, A1 a1, As... as)
-    : location_{r}, text_{MessageFormattedText{t, a1, as...}} {}
+  template<typename RANGE, typename A, typename... As>
+  Message(RANGE r, const MessageFixedText &t, A &&x, As &&... xs)
+    : location_{r}, text_{MessageFormattedText{
+                        t, std::forward<A>(x), std::forward<As>(xs)...}} {}
 
   bool attachmentIsContext() const { return attachmentIsContext_; }
   Reference attachment() const { return attachment_; }
@@ -210,7 +229,7 @@ public:
 
   bool empty() const { return messages_.empty(); }
 
-  template<typename... A> Message &Say(A... args) {
+  template<typename... A> Message &Say(A &&... args) {
     last_ = messages_.emplace_after(last_, std::forward<A>(args)...);
     return *last_;
   }

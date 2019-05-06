@@ -130,7 +130,7 @@ void ModFileWriter::Write(const Symbol &symbol) {
       ModFilePath(context_.moduleDirectory(), symbol.name(), ancestorName)};
   PutSymbols(*symbol.scope());
   if (!WriteFile(path, GetAsString(symbol))) {
-    context_.Say(symbol.name(), "Error writing %s: %s"_err_en_US, path.c_str(),
+    context_.Say(symbol.name(), "Error writing %s: %s"_err_en_US, path,
         std::strerror(errno));
   }
 }
@@ -682,8 +682,7 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
   // to parse. Do it only reading the file once.
   if (!VerifyHeader(*path)) {
     context_.Say(name,
-        "Module file for '%s' has invalid checksum: %s"_err_en_US,
-        name.ToString().data(), path->data());
+        "Module file for '%s' has invalid checksum: %s"_err_en_US, name, *path);
     return nullptr;
   }
   // TODO: Construct parsing with an AllSources reference to share provenance
@@ -695,8 +694,8 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
   auto &parseTree{parsing.parseTree()};
   if (!parsing.messages().empty() || !parsing.consumedWholeFile() ||
       !parseTree.has_value()) {
-    context_.Say(name, "Module file for '%s' is corrupt: %s"_err_en_US,
-        name.ToString().data(), path->data());
+    context_.Say(
+        name, "Module file for '%s' is corrupt: %s"_err_en_US, name, *path);
     return nullptr;
   }
   Scope *parentScope;  // the scope this module/submodule goes into
@@ -727,21 +726,21 @@ std::optional<std::string> ModFileReader::FindModFile(
     std::string path{ModFilePath(dir, name, ancestor)};
     std::ifstream ifstream{path};
     if (!ifstream.good()) {
-      attachments.Say(name, "%s: %s"_en_US, path.data(), std::strerror(errno));
+      attachments.Say(name, "%s: %s"_en_US, path, std::strerror(errno));
     } else {
       std::string line;
       std::getline(ifstream, line);
       if (line.compare(0, strlen(magic), magic) == 0) {
         return path;
       }
-      attachments.Say(name, "%s: Not a valid module file"_en_US, path.data());
+      attachments.Say(name, "%s: Not a valid module file"_en_US, path);
     }
   }
   auto error{parser::Message{name,
       ancestor.empty()
           ? "Cannot find module file for '%s'"_err_en_US
           : "Cannot find module file for submodule '%s' of module '%s'"_err_en_US,
-      name.ToString().data(), ancestor.data()}};
+      name, ancestor}};
   attachments.AttachTo(error);
   context_.Say(std::move(error));
   return std::nullopt;

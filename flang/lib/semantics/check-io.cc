@@ -139,7 +139,7 @@ void IoChecker::Enter(const parser::InputItem &spec) {
         // This check may be superseded by C928 or C1002.
         context_.Say(name.source,
             "'%s' must not be a whole assumed size array"_err_en_US,
-            name.ToString().c_str());  // C1231
+            name);  // C1231
       }
     }
   }
@@ -312,7 +312,7 @@ void IoChecker::Enter(const parser::StatusExpr &spec) {
     CHECK(stmt_ == IoStmtKind::Close);
     if (s != "DELETE" && s != "KEEP") {
       context_.Say(parser::FindSourceLocation(spec),
-          "invalid STATUS value '%s'"_err_en_US, (*charConst).c_str());
+          "invalid STATUS value '%s'"_err_en_US, *charConst);
     }
   }
 }
@@ -476,7 +476,7 @@ void IoChecker::SetSpecifier(IoSpecKind specKind) {
   // C1203, C1207, C1210, C1236, C1239, C1242, C1245
   if (specifierSet_.test(specKind)) {
     context_.Say("duplicate %s specifier"_err_en_US,
-        parser::ToUpperCaseLetters(common::EnumToString(specKind)).c_str());
+        parser::ToUpperCaseLetters(common::EnumToString(specKind)));
   }
   specifierSet_.set(specKind);
 }
@@ -506,8 +506,7 @@ void IoChecker::CheckStringValue(IoSpecKind specKind, const std::string &value,
   };
   if (!specValues.at(specKind).count(parser::ToUpperCaseLetters(value))) {
     context_.Say(source, "invalid %s value '%s'"_err_en_US,
-        parser::ToUpperCaseLetters(common::EnumToString(specKind)).c_str(),
-        value.c_str());
+        parser::ToUpperCaseLetters(common::EnumToString(specKind)), value);
   }
 }
 
@@ -520,8 +519,8 @@ void IoChecker::CheckStringValue(IoSpecKind specKind, const std::string &value,
 void IoChecker::CheckForRequiredSpecifier(IoSpecKind specKind) const {
   if (!specifierSet_.test(specKind)) {
     context_.Say("%s statement must have a %s specifier"_err_en_US,
-        parser::ToUpperCaseLetters(common::EnumToString(stmt_)).c_str(),
-        parser::ToUpperCaseLetters(common::EnumToString(specKind)).c_str());
+        parser::ToUpperCaseLetters(common::EnumToString(stmt_)),
+        parser::ToUpperCaseLetters(common::EnumToString(specKind)));
   }
 }
 
@@ -529,8 +528,7 @@ void IoChecker::CheckForRequiredSpecifier(
     bool condition, const std::string &s) const {
   if (!condition) {
     context_.Say("%s statement must have a %s specifier"_err_en_US,
-        parser::ToUpperCaseLetters(common::EnumToString(stmt_)).c_str(),
-        s.c_str());
+        parser::ToUpperCaseLetters(common::EnumToString(stmt_)), s);
   }
 }
 
@@ -538,8 +536,8 @@ void IoChecker::CheckForRequiredSpecifier(
     IoSpecKind specKind1, IoSpecKind specKind2) const {
   if (specifierSet_.test(specKind1) && !specifierSet_.test(specKind2)) {
     context_.Say("if %s appears, %s must also appear"_err_en_US,
-        parser::ToUpperCaseLetters(common::EnumToString(specKind1)).c_str(),
-        parser::ToUpperCaseLetters(common::EnumToString(specKind2)).c_str());
+        parser::ToUpperCaseLetters(common::EnumToString(specKind1)),
+        parser::ToUpperCaseLetters(common::EnumToString(specKind2)));
   }
 }
 
@@ -547,32 +545,30 @@ void IoChecker::CheckForRequiredSpecifier(
     IoSpecKind specKind, bool condition, const std::string &s) const {
   if (specifierSet_.test(specKind) && !condition) {
     context_.Say("if %s appears, %s must also appear"_err_en_US,
-        parser::ToUpperCaseLetters(common::EnumToString(specKind)).c_str(),
-        s.c_str());
+        parser::ToUpperCaseLetters(common::EnumToString(specKind)), s);
   }
 }
 
 void IoChecker::CheckForRequiredSpecifier(
     bool condition, const std::string &s, IoSpecKind specKind) const {
   if (condition && !specifierSet_.test(specKind)) {
-    context_.Say("if %s appears, %s must also appear"_err_en_US, s.c_str(),
-        parser::ToUpperCaseLetters(common::EnumToString(specKind)).c_str());
+    context_.Say("if %s appears, %s must also appear"_err_en_US, s,
+        parser::ToUpperCaseLetters(common::EnumToString(specKind)));
   }
 }
 
 void IoChecker::CheckForRequiredSpecifier(bool condition1,
     const std::string &s1, bool condition2, const std::string &s2) const {
   if (condition1 && !condition2) {
-    context_.Say(
-        "if %s appears, %s must also appear"_err_en_US, s1.c_str(), s2.c_str());
+    context_.Say("if %s appears, %s must also appear"_err_en_US, s1, s2);
   }
 }
 
 void IoChecker::CheckForProhibitedSpecifier(IoSpecKind specKind) const {
   if (specifierSet_.test(specKind)) {
     context_.Say("%s statement must not have a %s specifier"_err_en_US,
-        parser::ToUpperCaseLetters(common::EnumToString(stmt_)).c_str(),
-        parser::ToUpperCaseLetters(common::EnumToString(specKind)).c_str());
+        parser::ToUpperCaseLetters(common::EnumToString(stmt_)),
+        parser::ToUpperCaseLetters(common::EnumToString(specKind)));
   }
 }
 
@@ -580,8 +576,8 @@ void IoChecker::CheckForProhibitedSpecifier(
     IoSpecKind specKind1, IoSpecKind specKind2) const {
   if (specifierSet_.test(specKind1) && specifierSet_.test(specKind2)) {
     context_.Say("if %s appears, %s must not appear"_err_en_US,
-        parser::ToUpperCaseLetters(common::EnumToString(specKind1)).c_str(),
-        parser::ToUpperCaseLetters(common::EnumToString(specKind2)).c_str());
+        parser::ToUpperCaseLetters(common::EnumToString(specKind1)),
+        parser::ToUpperCaseLetters(common::EnumToString(specKind2)));
   }
 }
 
@@ -589,16 +585,15 @@ void IoChecker::CheckForProhibitedSpecifier(
     IoSpecKind specKind, bool condition, const std::string &s) const {
   if (specifierSet_.test(specKind) && condition) {
     context_.Say("if %s appears, %s must not appear"_err_en_US,
-        parser::ToUpperCaseLetters(common::EnumToString(specKind)).c_str(),
-        s.c_str());
+        parser::ToUpperCaseLetters(common::EnumToString(specKind)), s);
   }
 }
 
 void IoChecker::CheckForProhibitedSpecifier(
     bool condition, const std::string &s, IoSpecKind specKind) const {
   if (condition && specifierSet_.test(specKind)) {
-    context_.Say("if %s appears, %s must not appear"_err_en_US, s.c_str(),
-        parser::ToUpperCaseLetters(common::EnumToString(specKind)).c_str());
+    context_.Say("if %s appears, %s must not appear"_err_en_US, s,
+        parser::ToUpperCaseLetters(common::EnumToString(specKind)));
   }
 }
 

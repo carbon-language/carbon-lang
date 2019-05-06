@@ -43,7 +43,7 @@ void Parsing::Prescan(const std::string &path, Options options) {
   }
   if (sourceFile == nullptr) {
     ProvenanceRange range{allSources.AddCompilerInsertion(path)};
-    messages_.Say(range, "%S"_err_en_US, fileError.str());
+    messages_.Say(range, "%s"_err_en_US, fileError.str());
     return;
   }
   if (sourceFile->bytes() == 0) {

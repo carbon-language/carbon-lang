@@ -38,7 +38,7 @@ void CheckPointerAssignment(parser::ContextualMessages &messages,
   // Default catch-all when RHS of pointer assignment isn't recognized
   messages.Say("Pointer target assigned to '%s' must be a designator or "
                "a call to a pointer-valued function"_err_en_US,
-      symbol.name().ToString().c_str());
+      symbol.name());
 }
 
 void CheckPointerAssignment(parser::ContextualMessages &messages,
@@ -99,8 +99,7 @@ void CheckPointerAssignment(parser::ContextualMessages &messages,
               "result of reference to procedure"_err_en_US;
     }
     if (error.has_value()) {
-      if (auto *msg{messages.Say(
-              *error, lhs.name().ToString().c_str(), funcName.c_str())}) {
+      if (auto *msg{messages.Say(*error, lhs.name(), funcName)}) {
         msg->Attach(lhs.name(), "Declaration of pointer"_en_US);
         if (ultimate != nullptr) {
           msg->Attach(ultimate->name(), "Declaration of function"_en_US);
@@ -138,8 +137,7 @@ void CheckPointerAssignment(parser::ContextualMessages &messages,
       }
     }
     if (error.has_value()) {
-      if (auto *msg{messages.Say(*error, lhs.name().ToString().c_str(),
-              ultimate.name().ToString().c_str())}) {
+      if (auto *msg{messages.Say(*error, lhs.name(), ultimate.name())}) {
         msg->Attach(lhs.name(), "Declaration of pointer being assigned"_en_US)
             .Attach(ultimate.name(), "Declaration of pointer target"_en_US);
       }
@@ -184,8 +182,7 @@ void CheckPointerAssignment(parser::ContextualMessages &messages,
             "is a procedure designator"_err_en_US;
   }
   if (error.has_value()) {
-    if (auto *msg{messages.Say(*error, lhs.name().ToString().c_str(),
-            rhsName.ToString().c_str())}) {
+    if (auto *msg{messages.Say(*error, lhs.name(), rhsName)}) {
       msg->Attach(lhs.name(), "Declaration of pointer being assigned"_en_US);
     }
   }

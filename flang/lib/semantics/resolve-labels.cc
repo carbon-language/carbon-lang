@@ -387,12 +387,12 @@ public:
           if (optionalGenericSpec.has_value()) {
             if (const auto *otherPointer{
                     std::get_if<parser::Name>(&optionalGenericSpec->u)}) {
-              if (namePointer->ToString() != otherPointer->ToString()) {
+              if (namePointer->source != otherPointer->source) {
                 errorHandler_
                     .Say(currentPosition_,
                         parser::MessageFormattedText{
                             "INTERFACE generic-name (%s) mismatch"_en_US,
-                            namePointer->ToString().c_str()})
+                            namePointer->source})
                     .Attach(interfaceStmt.source, "mismatched INTERFACE"_en_US);
               }
             }

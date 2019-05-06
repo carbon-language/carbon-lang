@@ -105,7 +105,7 @@ void DerivedTypeSpec::Instantiate(
           if (auto *msg{foldingContext.messages().Say(
                   "Value of kind type parameter '%s' (%s) is not "
                   "scalar INTEGER constant"_err_en_US,
-                  name.ToString().data(), fortran.str().data())}) {
+                  name, fortran.str())}) {
             msg->Attach(name, "declared here"_en_US);
           }
         }

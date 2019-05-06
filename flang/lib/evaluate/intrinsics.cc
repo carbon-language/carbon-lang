@@ -908,7 +908,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       return std::nullopt;
     } else if (!d.typePattern.categorySet.test(type->category)) {
       messages.Say("Actual argument for '%s=' has bad type '%s'"_err_en_US,
-          d.keyword, type->AsFortran().data());
+          d.keyword, type->AsFortran());
       return std::nullopt;  // argument has invalid type category
     }
     bool argOk{false};
@@ -961,7 +961,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
     if (!argOk) {
       messages.Say(
           "actual argument for '%s=' has bad type or kind '%s'"_err_en_US,
-          d.keyword, type->AsFortran().data());
+          d.keyword, type->AsFortran());
       return std::nullopt;
     }
   }
@@ -1315,7 +1315,7 @@ SpecificCall IntrinsicProcTable::Implementation::HandleNull(
     } else if (arguments[0].has_value() && arguments[0]->keyword.has_value() &&
         arguments[0]->keyword->ToString() != "mold") {
       context.messages().Say("Unknown argument '%s' to NULL()"_err_en_US,
-          arguments[0]->keyword->ToString().data());
+          arguments[0]->keyword->ToString());
     } else {
       if (Expr<SomeType> * mold{arguments[0]->GetExpr()}) {
         if (IsAllocatableOrPointer(*mold)) {
