@@ -339,7 +339,7 @@ static CS GatherReferencesFromExpression(const parser::Expr &expression) {
       explicit CollectSymbols(int) {}
       void Handle(const Symbol *symbol) { result().push_back(symbol); }
     };
-    return evaluate::Visitor<GRFECollectSymbols>{0}.Traverse(
+    return evaluate::Visitor<CollectSymbols>{0}.Traverse(
         expression.typedExpr->v);
   } else {
     GatherSymbols gatherSymbols;
