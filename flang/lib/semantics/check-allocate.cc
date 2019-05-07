@@ -108,12 +108,12 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
   if (const auto &typeSpec{
           std::get<std::optional<parser::TypeSpec>>(allocateStmt.t)}) {
     info.typeSpec = typeSpec->declTypeSpec;
-    info.gotTypeSpec = true;
-    info.typeSpecLoc = parser::FindSourceLocation(*typeSpec);
     if (!info.typeSpec) {
       CHECK(context.AnyFatalError());
       return std::nullopt;
     }
+    info.gotTypeSpec = true;
+    info.typeSpecLoc = parser::FindSourceLocation(*typeSpec);
     if (const DerivedTypeSpec * derived{info.typeSpec->AsDerived()}) {
       // C937
       if (const Symbol *
@@ -193,10 +193,7 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
     if (const auto *expr{GetExpr(*parserSourceExpr)}) {
       info.sourceExprType = expr->GetType();
       if (!info.sourceExprType.has_value()) {
-        if (!context.AnyFatalError()) {
-          context.Say(parserSourceExpr->source,
-              "Source expression in ALLOCATE must be a valid expression"_err_en_US);
-        }
+        CHECK(context.AnyFatalError());
         return std::nullopt;
       }
       info.sourceExprRank = expr->Rank();
