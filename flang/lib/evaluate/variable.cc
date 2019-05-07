@@ -129,6 +129,14 @@ Expr<SubscriptInteger> Substring::lower() const {
   }
 }
 
+Expr<SubscriptInteger> *Substring::lower() {
+  if (lower_.has_value()) {
+    return &lower_.value().value();
+  } else {
+    return nullptr;
+  }
+}
+
 Expr<SubscriptInteger> Substring::upper() const {
   if (upper_.has_value()) {
     return upper_.value().value();
@@ -141,6 +149,14 @@ Expr<SubscriptInteger> Substring::upper() const {
             },
         },
         parent_);
+  }
+}
+
+Expr<SubscriptInteger> *Substring::upper() {
+  if (upper_.has_value()) {
+    return &upper_.value().value();
+  } else {
+    return nullptr;
   }
 }
 

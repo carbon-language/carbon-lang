@@ -273,6 +273,8 @@ struct DataRef {
 // In the F2018 standard, substrings of array sections are parsed as
 // variants of sections instead.
 class Substring {
+  using Parent = std::variant<DataRef, StaticDataObject::Pointer>;
+
 public:
   CLASS_BOILERPLATE(Substring)
   Substring(DataRef &&parent, std::optional<Expr<SubscriptInteger>> &&lower,
@@ -288,7 +290,12 @@ public:
   }
 
   Expr<SubscriptInteger> lower() const;
+  Expr<SubscriptInteger> *lower();
   Expr<SubscriptInteger> upper() const;
+  Expr<SubscriptInteger> *upper();
+  const Parent &parent() const { return parent_; }
+  Parent &parent() { return parent_; }
+
   int Rank() const;
   template<typename A> const A *GetParentIf() const {
     return std::get_if<A>(&parent_);

@@ -638,10 +638,10 @@ FOR_EACH_CHARACTER_KIND(extern template class Expr, )
 // addition operator.  Character relations must have the same kind.
 // There are no relations between LOGICAL values.
 
-template<typename A>
-struct Relational : public Operation<Relational<A>, LogicalResult, A, A> {
+template<typename T>
+struct Relational : public Operation<Relational<T>, LogicalResult, T, T> {
   using Result = LogicalResult;
-  using Base = Operation<Relational, LogicalResult, A, A>;
+  using Base = Operation<Relational, LogicalResult, T, T>;
   using Operand = typename Base::template Operand<0>;
   static_assert(Operand::category == TypeCategory::Integer ||
       Operand::category == TypeCategory::Real ||
