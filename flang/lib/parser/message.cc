@@ -64,12 +64,21 @@ const char *MessageFormattedText::Convert(const std::string &s) {
   return conversions_.front().c_str();
 }
 
+const char *MessageFormattedText::Convert(std::string &s) {
+  conversions_.emplace_front(s);
+  return conversions_.front().c_str();
+}
+
 const char *MessageFormattedText::Convert(std::string &&s) {
   conversions_.emplace_front(std::move(s));
   return conversions_.front().c_str();
 }
 
 const char *MessageFormattedText::Convert(const CharBlock &x) {
+  return Convert(x.ToString());
+}
+
+const char *MessageFormattedText::Convert(CharBlock &x) {
   return Convert(x.ToString());
 }
 
@@ -80,6 +89,8 @@ const char *MessageFormattedText::Convert(CharBlock &&x) {
 const char *MessageFormattedText::Convert(const Name &n) {
   return Convert(n.source);
 }
+
+const char *MessageFormattedText::Convert(Name &n) { return Convert(n.source); }
 
 const char *MessageFormattedText::Convert(Name &&n) {
   return Convert(n.source);

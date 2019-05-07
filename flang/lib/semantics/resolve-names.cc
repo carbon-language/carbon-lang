@@ -1056,9 +1056,8 @@ void ImplicitRules::SetType(const DeclTypeSpec &type, parser::Location lo,
   for (char ch = *lo; ch; ch = ImplicitRules::Incr(ch)) {
     auto res{map_.emplace(ch, &type)};
     if (!res.second && !isDefault) {
-      context_.Say(lo,
-          "More than one implicit type specified for '%s'"_err_en_US,
-          std::string(1, ch).c_str());
+      context_.Say(parser::CharBlock{lo},
+          "More than one implicit type specified for '%c'"_err_en_US, ch);
     }
     if (ch == *hi) {
       break;
@@ -1289,12 +1288,11 @@ Message &MessageHandler::Say(const SourceName &name, MessageFixedText &&msg) {
 }
 Message &MessageHandler::Say(const SourceName &location, MessageFixedText &&msg,
     const SourceName &arg1) {
-  return context_->Say(location, std::move(msg), arg1.ToString().c_str());
+  return context_->Say(location, std::move(msg), arg1);
 }
 Message &MessageHandler::Say(const SourceName &location, MessageFixedText &&msg,
     const SourceName &arg1, const SourceName &arg2) {
-  return context_->Say(location, std::move(msg), arg1.ToString().c_str(),
-      arg2.ToString().c_str());
+  return context_->Say(location, std::move(msg), arg1, arg2);
 }
 
 // ImplicitRulesVisitor implementation
@@ -1469,11 +1467,9 @@ void ScopeHandler::SayAlreadyDeclared(const SourceName &name, Symbol &prev) {
   if (const auto *details{prev.detailsIf<UseDetails>()}) {
     msg.Attach(details->location(),
         "It is use-associated with '%s' in module '%s'"_err_en_US,
-        details->symbol().name().ToString().c_str(),
-        details->module().name().ToString().c_str());
+        details->symbol().name(), details->module().name());
   } else {
-    msg.Attach(prev.name(), "Previous declaration of '%s'"_en_US,
-        prev.name().ToString().c_str());
+    msg.Attach(prev.name(), "Previous declaration of '%s'"_en_US, prev.name());
   }
   context().SetError(prev);
 }
@@ -1491,12 +1487,11 @@ void ScopeHandler::SayDerivedType(
   CHECK(typeSymbol != nullptr);
   Say(name, std::move(msg), name, typeSymbol->name())
       .Attach(typeSymbol->name(), "Declaration of derived type '%s'"_en_US,
-          typeSymbol->name().ToString().c_str());
+          typeSymbol->name());
 }
 void ScopeHandler::Say2(const SourceName &name1, MessageFixedText &&msg1,
     const SourceName &name2, MessageFixedText &&msg2) {
-  Say(name1, std::move(msg1))
-      .Attach(name2, std::move(msg2), name2.ToString().c_str());
+  Say(name1, std::move(msg1)).Attach(name2, std::move(msg2), name2);
 }
 void ScopeHandler::Say2(const SourceName &name, MessageFixedText &&msg1,
     Symbol &symbol, MessageFixedText &&msg2) {
@@ -1870,7 +1865,7 @@ void ModuleVisitor::AddUse(
         "Cannot use-associate '%s'; it is already declared in this scope"_err_en_US,
         localSymbol.name())
         .Attach(localSymbol.name(), "Previous declaration of '%s'"_en_US,
-            localSymbol.name().ToString().c_str());
+            localSymbol.name());
   } else {
     localSymbol.set_details(UseDetails{location, useSymbol});
   }
@@ -2381,7 +2376,7 @@ bool DeclarationVisitor::CheckUseError(const parser::Name &name) {
   Message &msg{Say(name, "Reference to '%s' is ambiguous"_err_en_US)};
   for (const auto &[location, module] : details->occurrences()) {
     msg.Attach(location, "'%s' was use-associated from module '%s'"_en_US,
-        name.ToString().data(), module->name().ToString().data());
+        name.source, module->name());
   }
   return true;
 }
@@ -4515,7 +4510,7 @@ void ResolveNamesVisitor::CheckImport(
   if (auto *symbol{FindInScope(currScope(), name)}) {
     Say(location, "'%s' from host is not accessible"_err_en_US, name)
         .Attach(symbol->name(), "'%s' is hidden by this entity"_en_US,
-            symbol->name().ToString().c_str());
+            symbol->name());
   }
 }
 

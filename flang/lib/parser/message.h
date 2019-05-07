@@ -90,15 +90,18 @@ public:
 
 private:
   void Format(const MessageFixedText *text, ...);
-  template<typename A> A Convert(const A &x) { return x; }
+  template<typename A> A Convert(A &x) { return x; }
   template<typename A> common::IfNoLvalue<A, A> Convert(A &&x) {
     return std::move(x);
   }
   const char *Convert(const std::string &);
+  const char *Convert(std::string &);
   const char *Convert(std::string &&);
   const char *Convert(const CharBlock &);
+  const char *Convert(CharBlock &);
   const char *Convert(CharBlock &&);
   const char *Convert(const Name &);
+  const char *Convert(Name &);
   const char *Convert(Name &&);
 
   bool isFatal_{false};
