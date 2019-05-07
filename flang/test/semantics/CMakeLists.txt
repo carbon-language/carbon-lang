@@ -83,7 +83,7 @@ set(ERROR_TESTS
   resolve48.f90
   resolve49.f90
   resolve50.f90
-#  resolve51.f90  -- TODO pmk or tks: re-enable when contained subprogram specification parts are analyzed before host executable parts are
+  resolve51.f90
   stop01.f90
   structconst01.f90
   structconst02.f90
