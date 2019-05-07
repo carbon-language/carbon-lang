@@ -163,7 +163,6 @@ private:
   constexpr DynamicType() {}
 };
 
-
 template<TypeCategory CATEGORY, int KIND = 0> struct TypeBase {
   static constexpr TypeCategory category{CATEGORY};
   static constexpr int kind{KIND};

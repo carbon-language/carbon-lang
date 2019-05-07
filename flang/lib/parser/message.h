@@ -35,8 +35,6 @@
 
 namespace Fortran::parser {
 
-struct Name;
-
 // Use "..."_err_en_US and "..."_en_US literals to define the static
 // text and fatality of a message.
 class MessageFixedText {
@@ -70,9 +68,9 @@ constexpr MessageFixedText operator""_err_en_US(
 
 // The construction of a MessageFormattedText uses a MessageFixedText
 // as a vsnprintf() formatting string that is applied to the
-// following arguments.  CharBlock and std::string argument values are
-// also supported; they are automatically converted into char pointers
-// that are suitable for '%s' formatting.
+// following arguments.  CharBlock and std::string argument
+// values are also supported; they are automatically converted into
+// char pointers that are suitable for '%s' formatting.
 class MessageFormattedText {
 public:
   template<typename... A>
@@ -90,8 +88,17 @@ public:
 
 private:
   void Format(const MessageFixedText *text, ...);
-  template<typename A> A Convert(A &x) { return x; }
+
+  template<typename A> A Convert(const A &x) {
+    static_assert(!std::is_class_v<std::decay_t<A>>);
+    return x;
+  }
+  template<typename A> A Convert(A &x) {
+    static_assert(!std::is_class_v<std::decay_t<A>>);
+    return x;
+  }
   template<typename A> common::IfNoLvalue<A, A> Convert(A &&x) {
+    static_assert(!std::is_class_v<std::decay_t<A>>);
     return std::move(x);
   }
   const char *Convert(const std::string &);
@@ -100,9 +107,6 @@ private:
   const char *Convert(const CharBlock &);
   const char *Convert(CharBlock &);
   const char *Convert(CharBlock &&);
-  const char *Convert(const Name &);
-  const char *Convert(Name &);
-  const char *Convert(Name &&);
 
   bool isFatal_{false};
   std::string string_;

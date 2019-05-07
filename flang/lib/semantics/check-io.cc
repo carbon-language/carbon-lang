@@ -139,7 +139,7 @@ void IoChecker::Enter(const parser::InputItem &spec) {
         // This check may be superseded by C928 or C1002.
         context_.Say(name.source,
             "'%s' must not be a whole assumed size array"_err_en_US,
-            name);  // C1231
+            name.source);  // C1231
       }
     }
   }

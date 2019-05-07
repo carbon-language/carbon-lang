@@ -14,7 +14,6 @@
 
 #include "message.h"
 #include "char-set.h"
-#include "parse-tree.h"
 #include "../common/idioms.h"
 #include <algorithm>
 #include <cstdarg>
@@ -84,16 +83,6 @@ const char *MessageFormattedText::Convert(CharBlock &x) {
 
 const char *MessageFormattedText::Convert(CharBlock &&x) {
   return Convert(x.ToString());
-}
-
-const char *MessageFormattedText::Convert(const Name &n) {
-  return Convert(n.source);
-}
-
-const char *MessageFormattedText::Convert(Name &n) { return Convert(n.source); }
-
-const char *MessageFormattedText::Convert(Name &&n) {
-  return Convert(n.source);
 }
 
 std::string MessageExpectedText::ToString() const {
