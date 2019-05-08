@@ -158,13 +158,8 @@ DataRef FoldOperation(FoldingContext &context, DataRef &&dataRef) {
 }
 
 Substring FoldOperation(FoldingContext &context, Substring &&substring) {
-  std::optional<Expr<SubscriptInteger>> lower, upper;
-  if (auto *p{substring.lower()}) {
-    lower = Fold(context, std::move(*p));
-  }
-  if (auto *p{substring.upper()}) {
-    upper = Fold(context, std::move(*p));
-  }
+  auto lower{Fold(context, substring.lower())};
+  auto upper{Fold(context, substring.upper())};
   if (const DataRef * dataRef{substring.GetParentIf<DataRef>()}) {
     return Substring{FoldOperation(context, DataRef{*dataRef}),
         std::move(lower), std::move(upper)};

@@ -233,9 +233,15 @@ public:
     Visit(triplet.stride());
   }
   void Descend(Triplet &triplet) {
-    Visit(triplet.lower());
-    Visit(triplet.upper());
-    Visit(triplet.stride());
+    if (auto x{triplet.lower()}) {
+      Visit(*x);
+      triplet.set_lower(std::move(*x));
+    }
+    if (auto x{triplet.upper()}) {
+      Visit(*x);
+      triplet.set_upper(std::move(*x));
+    }
+    triplet.set_stride(Visit(triplet.stride()));
   }
 
   void Descend(const Subscript &sscript) { Visit(sscript.u); }
@@ -261,8 +267,14 @@ public:
     Visit(caref.base());
     Visit(caref.subscript());
     Visit(caref.cosubscript());
-    Visit(caref.stat());
-    Visit(caref.team());
+    if (auto x{caref.stat()}) {
+      Visit(*x);
+      caref.set_stat(std::move(*x));
+    }
+    if (auto x{caref.team()}) {
+      Visit(*x);
+      caref.set_team(std::move(*x), caref.teamIsTeamNumber());
+    }
   }
 
   void Descend(const DataRef &data) { Visit(data.u); }
@@ -278,8 +290,12 @@ public:
   }
   void Descend(Substring &ss) {
     Visit(ss.parent());
-    Visit(ss.lower());
-    Visit(ss.upper());
+    auto lx{ss.lower()};
+    Visit(lx);
+    ss.set_lower(std::move(lx));
+    auto ux{ss.upper()};
+    Visit(ux);
+    ss.set_lower(std::move(ux));
   }
 
   template<typename T> void Descend(const Designator<T> &designator) {

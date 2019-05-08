@@ -140,9 +140,14 @@ public:
   Triplet(std::optional<Expr<SubscriptInteger>> &&,
       std::optional<Expr<SubscriptInteger>> &&,
       std::optional<Expr<SubscriptInteger>> &&);
+
   std::optional<Expr<SubscriptInteger>> lower() const;
+  Triplet &set_lower(Expr<SubscriptInteger> &&);
   std::optional<Expr<SubscriptInteger>> upper() const;
-  Expr<SubscriptInteger> stride() const;
+  Triplet &set_upper(Expr<SubscriptInteger> &&);
+  Expr<SubscriptInteger> stride() const;  // N.B. result is not optional<>
+  Triplet &set_stride(Expr<SubscriptInteger> &&);
+
   bool operator==(const Triplet &) const;
   bool IsStrideOne() const;
   std::ostream &AsFortran(std::ostream &) const;
@@ -290,9 +295,9 @@ public:
   }
 
   Expr<SubscriptInteger> lower() const;
-  Expr<SubscriptInteger> *lower();
+  Substring &set_lower(Expr<SubscriptInteger> &&);
   Expr<SubscriptInteger> upper() const;
-  Expr<SubscriptInteger> *upper();
+  Substring &set_upper(Expr<SubscriptInteger> &&);
   const Parent &parent() const { return parent_; }
   Parent &parent() { return parent_; }
 
