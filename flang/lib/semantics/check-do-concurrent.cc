@@ -411,7 +411,7 @@ private:
     for (auto *r : references) {
       if (isProcedure(r->flags()) && !isPure(r->attrs())) {
         messages_.Say(currentStatementSourcePosition_,
-            "concurrent-header mask expression cannot reference impure"
+            "concurrent-header mask expression cannot reference an impure"
             " procedure"_err_en_US);
         return;
       }

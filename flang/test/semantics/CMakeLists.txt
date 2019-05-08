@@ -123,6 +123,7 @@ set(ERROR_TESTS
   allocate12.f90
   allocate13.f90
   dosemantics01.f90
+  dosemantics02.f90
   expr-errors01.f90
   null01.f90
 )
