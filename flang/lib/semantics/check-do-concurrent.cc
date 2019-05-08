@@ -339,6 +339,8 @@ static CS GatherReferencesFromExpression(const parser::Expr &expression) {
       void Handle(const Symbol *symbol) { result().push_back(symbol); }
     };
     return evaluate::Visitor<CollectSymbols>{0}.Traverse(*expr);
+  } else {
+    return {};
   }
 }
 
