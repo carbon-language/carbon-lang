@@ -101,6 +101,8 @@ private:
     static_assert(!std::is_class_v<std::decay_t<A>>);
     return std::move(x);
   }
+  const char *Convert(const char *s) { return s; }
+  const char *Convert(char *s) { return s; }
   const char *Convert(const std::string &);
   const char *Convert(std::string &);
   const char *Convert(std::string &&);
