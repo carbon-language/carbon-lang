@@ -1790,7 +1790,7 @@ public:
   }
   void Unparse(const OmpScheduleClause &x) {
     Word("SCHEDULE(");
-    Walk(std::get<std::optional<OmpScheduleModifier>>(x.t));
+    Walk(std::get<std::optional<OmpScheduleModifier>>(x.t), ":");
     Walk(std::get<OmpScheduleClause::ScheduleType>(x.t));
     Walk(",", std::get<std::optional<ScalarIntExpr>>(x.t));
     Put(")");
@@ -1968,7 +1968,7 @@ public:
     Put(")");
   }
   void Unparse(const OmpClause::ThreadLimit &x) {
-    Word("THREADLIMIT(");
+    Word("THREAD_LIMIT(");
     Walk(x.v);
     Put(")");
   }

@@ -80,7 +80,7 @@ TYPE_PARSER(construct<OmpScheduleModifierType>(
     "SIMD" >> pure(OmpScheduleModifierType::ModType::Simd)))
 
 TYPE_PARSER(construct<OmpScheduleModifier>(Parser<OmpScheduleModifierType>{},
-    maybe(","_tok >> Parser<OmpScheduleModifierType>{})))
+    maybe(","_tok >> Parser<OmpScheduleModifierType>{}) / ":"_tok))
 
 TYPE_PARSER(construct<OmpScheduleClause>(maybe(Parser<OmpScheduleModifier>{}),
     "STATIC" >> pure(OmpScheduleClause::ScheduleType::Static) ||
