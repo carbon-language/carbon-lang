@@ -107,19 +107,23 @@ public:
   template<typename T> void Descend(const Expr<T> &expr) { Visit(expr.u); }
   template<typename T> void Descend(Expr<T> &expr) { Visit(expr.u); }
 
-  template<typename D, typename R, typename... O>
-  void Descend(const Operation<D, R, O...> &op) {
+  template<typename D, typename R, typename X>
+  void Descend(const Operation<D, R, X> &op) {
     Visit(op.left());
-    if constexpr (op.operands > 1) {
-      Visit(op.right());
-    }
   }
-  template<typename D, typename R, typename... O>
-  void Descend(Operation<D, R, O...> &op) {
+  template<typename D, typename R, typename X>
+  void Descend(Operation<D, R, X> &op) {
     Visit(op.left());
-    if constexpr (op.operands > 1) {
-      Visit(op.right());
-    }
+  }
+  template<typename D, typename R, typename X, typename Y>
+  void Descend(const Operation<D, R, X, Y> &op) {
+    Visit(op.left());
+    Visit(op.right());
+  }
+  template<typename D, typename R, typename X, typename Y>
+  void Descend(Operation<D, R, X, Y> &op) {
+    Visit(op.left());
+    Visit(op.right());
   }
 
   void Descend(const Relational<SomeType> &r) { Visit(r.u); }
