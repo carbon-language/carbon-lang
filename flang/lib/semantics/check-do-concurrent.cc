@@ -332,19 +332,13 @@ static CS GatherVariables(const std::list<parser::LocalitySpec> &localitySpecs,
 }
 
 static CS GatherReferencesFromExpression(const parser::Expr &expression) {
-  // Use the new expression traversal framework if possible, for testing.
-  if (expression.typedExpr) {
+  if (const auto *expr{GetExpr(expression)}) {
     struct CollectSymbols : public virtual evaluate::VisitorBase<CS> {
       using Result = CS;
       explicit CollectSymbols(int) {}
       void Handle(const Symbol *symbol) { result().push_back(symbol); }
     };
-    return evaluate::Visitor<CollectSymbols>{0}.Traverse(
-        expression.typedExpr->v);
-  } else {
-    GatherSymbols gatherSymbols;
-    parser::Walk(expression, gatherSymbols);
-    return gatherSymbols.symbols;
+    return evaluate::Visitor<CollectSymbols>{0}.Traverse(*expr);
   }
 }
 
