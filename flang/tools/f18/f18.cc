@@ -513,6 +513,10 @@ int main(int argc, char *const argv[]) {
           Fortran::parser::LanguageFeature::BackslashEscapes)) {
     driver.pgf90Args.push_back("-Mbackslash");
   }
+  if (options.features.IsEnabled(
+          Fortran::parser::LanguageFeature::OpenMP)) {
+    driver.pgf90Args.push_back("-mp");
+  }
 
   Fortran::semantics::SemanticsContext semanticsContext{
       defaultKinds, options.features};
