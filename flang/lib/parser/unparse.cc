@@ -386,7 +386,7 @@ public:
   void Unparse(const AcSpec &x) {  // R770
     Walk(x.type, "::"), Walk(x.values, ", ");
   }
-  template<typename A> void Unparse(const LoopBounds<A> &x) {
+  template<typename A, typename B> void Unparse(const LoopBounds<A, B> &x) {
     Walk(x.name), Put('='), Walk(x.lower), Put(','), Walk(x.upper);
     Walk(",", x.step);
   }
@@ -396,7 +396,7 @@ public:
   }
   void Unparse(const AcImpliedDoControl &x) {  // R775
     Walk(std::get<std::optional<IntegerTypeSpec>>(x.t), "::");
-    Walk(std::get<LoopBounds<ScalarIntExpr>>(x.t));
+    Walk(std::get<AcImpliedDoControl::Bounds>(x.t));
   }
 
   void Unparse(const TypeDeclarationStmt &x) {  // R801
@@ -598,7 +598,7 @@ public:
   void Unparse(const DataImpliedDo &x) {  // R840, R842
     Put('('), Walk(std::get<std::list<DataIDoObject>>(x.t), ", "), Put(',');
     Walk(std::get<std::optional<IntegerTypeSpec>>(x.t), "::");
-    Walk(std::get<LoopBounds<ScalarIntConstantExpr>>(x.t)), Put(')');
+    Walk(std::get<DataImpliedDo::Bounds>(x.t)), Put(')');
   }
   void Unparse(const DataStmtValue &x) {  // R843
     Walk(std::get<std::optional<DataStmtRepeat>>(x.t), "*");

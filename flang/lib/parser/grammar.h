@@ -259,6 +259,7 @@ constexpr auto scalarIntExpr{scalar(intExpr)};
 
 // R1029 constant-expr -> expr
 constexpr auto constantExpr{constant(indirect(expr))};
+constexpr auto scalarExpr{scalar(indirect(expr))};
 
 // R1030 default-char-constant-expr -> default-char-expr
 constexpr auto scalarDefaultCharConstantExpr{scalar(defaultChar(constantExpr))};
@@ -959,9 +960,16 @@ TYPE_PARSER(construct<BOZLiteralConstant>(BOZLiteral{}))
 // R1124 do-variable -> scalar-int-variable-name
 constexpr auto doVariable{scalar(integer(name))};
 
+// NOTE: In loop-control we allow REAL name and bounds too.
+// This means parse them without the integer constraint and check later.
 template<typename PA> inline constexpr auto loopBounds(const PA &p) {
-  return construct<LoopBounds<typename PA::resultType>>(
-      doVariable / "=", p / ",", p, maybe("," >> p));
+  if constexpr (std::is_same_v<typename PA::resultType, ScalarExpr>) {
+    return construct<LoopBounds<ScalarName, typename PA::resultType>>(
+        scalar(name) / "=", p / ",", p, maybe("," >> p));
+  } else {
+    return construct<LoopBounds<DoVariable, typename PA::resultType>>(
+        doVariable / "=", p / ",", p, maybe("," >> p));
+  }
 }
 
 // R769 array-constructor -> (/ ac-spec /) | lbracket ac-spec rbracket
@@ -2162,7 +2170,7 @@ TYPE_PARSER(construct<LocalitySpec>(construct<LocalitySpec::Local>(
 // R1129 concurrent-locality -> [locality-spec]...
 TYPE_CONTEXT_PARSER("loop control"_en_US,
     maybe(","_tok) >>
-        (construct<LoopControl>(loopBounds(scalarIntExpr)) ||
+        (construct<LoopControl>(loopBounds(scalarExpr)) ||
             construct<LoopControl>(
                 "WHILE" >> parenthesized(scalarLogicalExpr)) ||
             construct<LoopControl>(construct<LoopControl::Concurrent>(

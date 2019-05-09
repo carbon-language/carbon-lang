@@ -450,7 +450,8 @@ template<typename M> void Walk(IntrinsicTypeSpec::Real &x, M &mutator) {
     mutator.Post(x);
   }
 }
-template<typename T, typename V> void Walk(const LoopBounds<T> &x, V &visitor) {
+template<typename A, typename B, typename V>
+void Walk(const LoopBounds<A, B> &x, V &visitor) {
   if (visitor.Pre(x)) {
     Walk(x.name, visitor);
     Walk(x.lower, visitor);
@@ -459,7 +460,8 @@ template<typename T, typename V> void Walk(const LoopBounds<T> &x, V &visitor) {
     visitor.Post(x);
   }
 }
-template<typename T, typename M> void Walk(LoopBounds<T> &x, M &mutator) {
+template<typename A, typename B, typename M>
+void Walk(LoopBounds<A, B> &x, M &mutator) {
   if (mutator.Pre(x)) {
     Walk(x.name, mutator);
     Walk(x.lower, mutator);

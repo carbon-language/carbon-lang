@@ -1101,7 +1101,7 @@ void ArrayConstructorContext::Add(const parser::AcValue &x) {
             const auto &control{
                 std::get<parser::AcImpliedDoControl>(impliedDo.value().t)};
             const auto &bounds{
-                std::get<parser::LoopBounds<parser::ScalarIntExpr>>(control.t)};
+                std::get<parser::AcImpliedDoControl::Bounds>(control.t)};
             Analyze(bounds.name);
             parser::CharBlock name{bounds.name.thing.thing.source};
             int kind{IntType::kind};

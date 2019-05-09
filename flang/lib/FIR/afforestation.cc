@@ -974,17 +974,15 @@ public:
     if (ctrl.has_value()) {
       std::visit(
           common::visitors{
-              [&](const parser::LoopBounds<parser::ScalarIntExpr> &bounds) {
-                auto name{builder_->CreateAddr(
-                    ToExpression(bounds.name.thing.thing))};
+              [&](const parser::LoopControl::Bounds &bounds) {
+                auto name{
+                    builder_->CreateAddr(ToExpression(bounds.name.thing))};
                 // evaluate e1, e2 [, e3] ...
-                auto *e1{
-                    builder_->CreateExpr(ExprRef(bounds.lower.thing.thing))};
-                auto *e2{
-                    builder_->CreateExpr(ExprRef(bounds.upper.thing.thing))};
+                auto *e1{builder_->CreateExpr(ExprRef(bounds.lower.thing))};
+                auto *e2{builder_->CreateExpr(ExprRef(bounds.upper.thing))};
                 Statement *e3;
                 if (bounds.step.has_value()) {
-                  e3 = builder_->CreateExpr(ExprRef(bounds.step->thing.thing));
+                  e3 = builder_->CreateExpr(ExprRef(bounds.step->thing));
                 } else {
                   e3 = builder_->CreateExpr(CreateConstant(1));
                 }
@@ -1025,8 +1023,7 @@ public:
   void FinishConstruct(const parser::NonLabelDoStmt *stmt) {
     auto &ctrl{std::get<std::optional<parser::LoopControl>>(stmt->t)};
     if (ctrl.has_value()) {
-      using A = parser::LoopBounds<parser::ScalarIntExpr>;
-      if (std::holds_alternative<A>(ctrl->u)) {
+      if (std::holds_alternative<parser::LoopControl::Bounds>(ctrl->u)) {
         PopDoContext(stmt);
       }
     }
@@ -1037,7 +1034,7 @@ public:
     if (loopCtrl.has_value()) {
       return std::visit(
           common::visitors{
-              [&](const parser::LoopBounds<parser::ScalarIntExpr> &) {
+              [&](const parser::LoopControl::Bounds &) {
                 return doMap_.find(stmt)->second.condition;
               },
               [&](const parser::ScalarLogicalExpr &sle) {

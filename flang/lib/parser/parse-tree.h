@@ -1208,16 +1208,19 @@ WRAPPER_CLASS(ArrayConstructor, AcSpec);
 // R1124 do-variable -> scalar-int-variable-name
 using DoVariable = Scalar<Integer<Name>>;
 
-template<typename A> struct LoopBounds {
+template<typename A, typename B> struct LoopBounds {
   LoopBounds(LoopBounds &&that) = default;
-  LoopBounds(DoVariable &&n, A &&a, A &&z, std::optional<A> &&s)
+  LoopBounds(A &&n, B &&a, B &&z, std::optional<B> &&s)
     : name{std::move(n)}, lower{std::move(a)}, upper{std::move(z)},
       step{std::move(s)} {}
   LoopBounds &operator=(LoopBounds &&) = default;
-  DoVariable name;
-  A lower, upper;
-  std::optional<A> step;
+  A name;
+  B lower, upper;
+  std::optional<B> step;
 };
+
+using ScalarName = Scalar<Name>;
+using ScalarExpr = Scalar<common::Indirection<Expr>>;
 
 // R775 ac-implied-do-control ->
 //        [integer-type-spec ::] ac-do-variable = scalar-int-expr ,
@@ -1225,7 +1228,8 @@ template<typename A> struct LoopBounds {
 // R776 ac-do-variable -> do-variable
 struct AcImpliedDoControl {
   TUPLE_CLASS_BOILERPLATE(AcImpliedDoControl);
-  std::tuple<std::optional<IntegerTypeSpec>, LoopBounds<ScalarIntExpr>> t;
+  using Bounds = LoopBounds<DoVariable, ScalarIntExpr>;
+  std::tuple<std::optional<IntegerTypeSpec>, Bounds> t;
 };
 
 // R774 ac-implied-do -> ( ac-value-list , ac-implied-do-control )
@@ -1432,8 +1436,8 @@ struct DataIDoObject {
 // R842 data-i-do-variable -> do-variable
 struct DataImpliedDo {
   TUPLE_CLASS_BOILERPLATE(DataImpliedDo);
-  std::tuple<std::list<DataIDoObject>, std::optional<IntegerTypeSpec>,
-      LoopBounds<ScalarIntConstantExpr>>
+  using Bounds = LoopBounds<DoVariable, ScalarIntConstantExpr>;
+  std::tuple<std::list<DataIDoObject>, std::optional<IntegerTypeSpec>, Bounds>
       t;
 };
 
@@ -2186,7 +2190,8 @@ struct LoopControl {
     TUPLE_CLASS_BOILERPLATE(Concurrent);
     std::tuple<ConcurrentHeader, std::list<LocalitySpec>> t;
   };
-  std::variant<LoopBounds<ScalarIntExpr>, ScalarLogicalExpr, Concurrent> u;
+  using Bounds = LoopBounds<ScalarName, ScalarExpr>;
+  std::variant<Bounds, ScalarLogicalExpr, Concurrent> u;
 };
 
 // R1121 label-do-stmt -> [do-construct-name :] DO label [loop-control]
@@ -2657,7 +2662,7 @@ struct PrintStmt {
 
 // R1220 io-implied-do-control ->
 //         do-variable = scalar-int-expr , scalar-int-expr [, scalar-int-expr]
-using IoImpliedDoControl = LoopBounds<ScalarIntExpr>;
+using IoImpliedDoControl = LoopBounds<DoVariable, ScalarIntExpr>;
 
 // R1218 io-implied-do -> ( io-implied-do-object-list , io-implied-do-control )
 // R1219 io-implied-do-object -> input-item | output-item

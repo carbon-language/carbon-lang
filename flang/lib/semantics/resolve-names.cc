@@ -978,7 +978,10 @@ public:
   void Post(const parser::AllocateObject &);
   bool Pre(const parser::PointerAssignmentStmt &);
   void Post(const parser::Designator &);
-  template<typename T> void Post(const parser::LoopBounds<T> &);
+  template<typename A, typename B>
+  void Post(const parser::LoopBounds<A, B> &x) {
+    ResolveName(*parser::Unwrap<parser::Name>(x.name));
+  }
   void Post(const parser::ProcComponentRef &);
   bool Pre(const parser::FunctionReference &);
   bool Pre(const parser::CallStmt &);
@@ -3812,7 +3815,7 @@ bool ConstructVisitor::Pre(const parser::AcImpliedDo &x) {
   auto &values{std::get<std::list<parser::AcValue>>(x.t)};
   auto &control{std::get<parser::AcImpliedDoControl>(x.t)};
   auto &type{std::get<std::optional<parser::IntegerTypeSpec>>(control.t)};
-  auto &bounds{std::get<parser::LoopBounds<parser::ScalarIntExpr>>(control.t)};
+  auto &bounds{std::get<parser::AcImpliedDoControl::Bounds>(control.t)};
   DeclareStatementEntity(bounds.name.thing.thing, type);
   Walk(bounds);
   Walk(values);
@@ -3822,8 +3825,7 @@ bool ConstructVisitor::Pre(const parser::AcImpliedDo &x) {
 bool ConstructVisitor::Pre(const parser::DataImpliedDo &x) {
   auto &objects{std::get<std::list<parser::DataIDoObject>>(x.t)};
   auto &type{std::get<std::optional<parser::IntegerTypeSpec>>(x.t)};
-  auto &bounds{
-      std::get<parser::LoopBounds<parser::ScalarIntConstantExpr>>(x.t)};
+  auto &bounds{std::get<parser::DataImpliedDo::Bounds>(x.t)};
   DeclareStatementEntity(bounds.name.thing.thing, type);
   Walk(bounds);
   Walk(objects);
@@ -4558,10 +4560,6 @@ void ResolveNamesVisitor::Post(const parser::Designator &x) {
   ResolveDesignator(x);
 }
 
-template<typename T>
-void ResolveNamesVisitor::Post(const parser::LoopBounds<T> &x) {
-  ResolveName(x.name.thing.thing);
-}
 void ResolveNamesVisitor::Post(const parser::ProcComponentRef &x) {
   ResolveStructureComponent(x.v.thing);
 }
