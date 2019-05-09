@@ -62,6 +62,7 @@ Extensions, deletions, and legacy features supported by default
   files are easier to write and use.
 * $ and \ edit descriptors are supported in FORMAT to suppress newline
   output on user prompts.
+* REAL variable and bounds in DO loops
 
 Extensions supported when enabled by options
 --------------------------------------------
