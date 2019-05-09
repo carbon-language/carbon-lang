@@ -1208,15 +1208,16 @@ WRAPPER_CLASS(ArrayConstructor, AcSpec);
 // R1124 do-variable -> scalar-int-variable-name
 using DoVariable = Scalar<Integer<Name>>;
 
-template<typename A, typename B> struct LoopBounds {
+template<typename VAR, typename BOUND> struct LoopBounds {
   LoopBounds(LoopBounds &&that) = default;
-  LoopBounds(A &&n, B &&a, B &&z, std::optional<B> &&s)
-    : name{std::move(n)}, lower{std::move(a)}, upper{std::move(z)},
-      step{std::move(s)} {}
+  LoopBounds(
+      VAR &&name, BOUND &&lower, BOUND &&upper, std::optional<BOUND> &&step)
+    : name{std::move(name)}, lower{std::move(lower)}, upper{std::move(upper)},
+      step{std::move(step)} {}
   LoopBounds &operator=(LoopBounds &&) = default;
-  A name;
-  B lower, upper;
-  std::optional<B> step;
+  VAR name;
+  BOUND lower, upper;
+  std::optional<BOUND> step;
 };
 
 using ScalarName = Scalar<Name>;

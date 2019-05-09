@@ -962,14 +962,14 @@ constexpr auto doVariable{scalar(integer(name))};
 
 // NOTE: In loop-control we allow REAL name and bounds too.
 // This means parse them without the integer constraint and check later.
+
+inline constexpr auto loopBounds(decltype(scalarExpr) &p) {
+  return construct<LoopBounds<ScalarName, ScalarExpr>>(
+      scalar(name) / "=", p / ",", p, maybe("," >> p));
+}
 template<typename PA> inline constexpr auto loopBounds(const PA &p) {
-  if constexpr (std::is_same_v<typename PA::resultType, ScalarExpr>) {
-    return construct<LoopBounds<ScalarName, typename PA::resultType>>(
-        scalar(name) / "=", p / ",", p, maybe("," >> p));
-  } else {
-    return construct<LoopBounds<DoVariable, typename PA::resultType>>(
-        doVariable / "=", p / ",", p, maybe("," >> p));
-  }
+  return construct<LoopBounds<DoVariable, typename PA::resultType>>(
+      doVariable / "=", p / ",", p, maybe("," >> p));
 }
 
 // R769 array-constructor -> (/ ac-spec /) | lbracket ac-spec rbracket
