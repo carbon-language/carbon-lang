@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -218,6 +218,21 @@ TokenSequence &TokenSequence::RemoveRedundantBlanks(std::size_t firstChar) {
     lastWasBlank = isBlank;
   }
   swap(result);
+  return *this;
+}
+
+TokenSequence &TokenSequence::ClipComment() {
+  std::size_t tokens{SizeInTokens()};
+  for (std::size_t j{0}; j < tokens; ++j) {
+    if (TokenAt(j).FirstNonBlank() == '!') {
+      TokenSequence result;
+      if (j > 0) {
+        result.Put(*this, 0, j - 1);
+      }
+      swap(result);
+      return *this;
+    }
+  }
   return *this;
 }
 

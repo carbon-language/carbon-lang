@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -56,14 +56,16 @@ public:
     interval_.ExtendToCover(that.interval_);
   }
 
-  bool IsBlank() const {
+  char FirstNonBlank() const {
     for (char ch : *this) {
       if (ch != ' ' && ch != '\t') {
-        return false;
+        return ch;
       }
     }
-    return true;
+    return ' ';  // non no-blank character
   }
+
+  bool IsBlank() const { return FirstNonBlank() == ' '; }
 
   std::string ToString() const {
     return std::string{interval_.start(), interval_.size()};

@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -93,6 +93,7 @@ public:
   void Put(const CharBlock &, Provenance);
   void Put(const std::string &, Provenance);
   void Put(const std::stringstream &, Provenance);
+
   Provenance GetTokenProvenance(
       std::size_t token, std::size_t offset = 0) const;
   ProvenanceRange GetTokenProvenanceRange(
@@ -107,6 +108,7 @@ public:
   bool HasRedundantBlanks(std::size_t firstChar = 0) const;
   TokenSequence &RemoveBlanks(std::size_t firstChar = 0);
   TokenSequence &RemoveRedundantBlanks(std::size_t firstChar = 0);
+  TokenSequence &ClipComment();
   void Emit(CookedSource &) const;
   void Dump(std::ostream &) const;
 
