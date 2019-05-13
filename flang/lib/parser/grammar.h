@@ -1491,15 +1491,12 @@ TYPE_PARSER(construct<StructureComponent>(
 // R919 subscript -> scalar-int-expr
 constexpr auto subscript{scalarIntExpr};
 
-// R923 vector-subscript -> int-expr
-constexpr auto vectorSubscript{intExpr};
-
 // R920 section-subscript -> subscript | subscript-triplet | vector-subscript
+// R923 vector-subscript -> int-expr
 // N.B. The distinction that needs to be made between "subscript" and
 // "vector-subscript" is deferred to semantic analysis.
 TYPE_PARSER(construct<SectionSubscript>(Parser<SubscriptTriplet>{}) ||
-    construct<SectionSubscript>(vectorSubscript) ||
-    construct<SectionSubscript>(subscript))
+    construct<SectionSubscript>(intExpr))
 
 // R921 subscript-triplet -> [subscript] : [subscript] [: stride]
 TYPE_PARSER(construct<SubscriptTriplet>(

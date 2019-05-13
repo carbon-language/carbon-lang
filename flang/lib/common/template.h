@@ -114,7 +114,7 @@ std::optional<A> JoinOptional(std::optional<std::optional<A>> &&x) {
 // Copy a value from one variant type to another.  The types allowed in the
 // source variant must all be allowed in the destination variant type.
 template<typename TOV, typename FROMV> TOV CopyVariant(const FROMV &u) {
-  return std::visit([](const auto &x) -> TOV { return {x}; }, std::move(u));
+  return std::visit([](const auto &x) -> TOV { return {x}; }, u);
 }
 
 // Move a value from one variant type to another.  The types allowed in the

@@ -80,7 +80,7 @@ end
 !  integer(4),kind::b=2_4
 !  integer(4)::y
 ! end type
-! type(t2)::x
+! type(t2(b=2_4))::x
 !end
 !function f4() result(x)
 !complex(4)::x

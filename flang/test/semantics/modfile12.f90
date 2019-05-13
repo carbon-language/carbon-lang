@@ -43,7 +43,7 @@ end
 
 !Expect: m.mod
 !module m
-!  integer(8),parameter::a=1_4
+!  integer(8),parameter::a=1_8
 !  integer(8),parameter::b=2_8
 !  integer(4),parameter::n=3_4
 !  integer(4),parameter::l=-3_4
@@ -52,7 +52,7 @@ end
 !  real(4)::y(1_8:8_8)
 !  type::t(c,d)
 !    integer(4),kind::c=1_4
-!    integer(4),len::d=3_8
+!    integer(4),len::d=3_4
 !  end type
 !  type(t(c=4_4,d=:)),allocatable::z
 !  class(t(c=5_4,d=:)),allocatable::z2

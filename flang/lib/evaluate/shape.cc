@@ -37,7 +37,7 @@ Shape AsShape(const Constant<ExtentType> &arrayConstant) {
 std::optional<Shape> AsShape(FoldingContext &context, ExtentExpr &&arrayExpr) {
   // Flatten any array expression into an array constructor if possible.
   arrayExpr = Fold(context, std::move(arrayExpr));
-  if (auto *constArray{UnwrapExpr<Constant<ExtentType>>(arrayExpr)}) {
+  if (const auto *constArray{GetConstantValue<ExtentType>(arrayExpr)}) {
     return AsShape(*constArray);
   }
   if (auto *constructor{UnwrapExpr<ArrayConstructor<ExtentType>>(arrayExpr)}) {
@@ -72,7 +72,7 @@ std::optional<Constant<ExtentType>> AsConstantShape(const Shape &shape) {
   if (auto shapeArray{AsExtentArrayExpr(shape)}) {
     FoldingContext noFoldingContext;
     auto folded{Fold(noFoldingContext, std::move(*shapeArray))};
-    if (auto *p{UnwrapExpr<Constant<ExtentType>>(folded)}) {
+    if (auto *p{GetConstantValue<ExtentType>(folded)}) {
       return std::move(*p);
     }
   }
@@ -167,21 +167,44 @@ MaybeExtent GetShapeHelper::GetLowerBound(
   return std::nullopt;
 }
 
+static bool IsImpliedShape(const Symbol &symbol) {
+  if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
+    if (symbol.attrs().test(semantics::Attr::PARAMETER) &&
+        details->init().has_value()) {
+      for (const semantics::ShapeSpec &ss : details->shape()) {
+        if (ss.isExplicit()) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
 MaybeExtent GetShapeHelper::GetExtent(
     const Symbol &symbol, const Component *component, int dimension) {
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     int j{0};
     for (const auto &shapeSpec : details->shape()) {
       if (j++ == dimension) {
-        if (const auto &lbound{shapeSpec.lbound().GetExplicit()}) {
+        if (shapeSpec.isExplicit()) {
           if (const auto &ubound{shapeSpec.ubound().GetExplicit()}) {
             FoldingContext noFoldingContext;
-            return Fold(noFoldingContext,
-                common::Clone(ubound.value()) - common::Clone(lbound.value()) +
-                    ExtentExpr{1});
+            if (const auto &lbound{shapeSpec.lbound().GetExplicit()}) {
+              return Fold(noFoldingContext,
+                  common::Clone(ubound.value()) -
+                      common::Clone(lbound.value()) + ExtentExpr{1});
+            } else {
+              return Fold(noFoldingContext, common::Clone(ubound.value()));
+            }
           }
-        }
-        if (component != nullptr) {
+        } else if (IsImpliedShape(symbol)) {
+          Shape shape{GetShape(symbol).value()};
+          return std::move(shape.at(dimension));
+        } else if (details->IsAssumedSize() && j == symbol.Rank()) {
+          return std::nullopt;
+        } else if (component != nullptr) {
           return ExtentExpr{DescriptorInquiry{
               *component, DescriptorInquiry::Field::Extent, dimension}};
         } else {
@@ -226,15 +249,23 @@ MaybeExtent GetShapeHelper::GetExtent(const Subscript &subscript,
 std::optional<Shape> GetShapeHelper::GetShape(
     const Symbol &symbol, const Component *component) {
   if (const auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
-    Shape result;
-    int n = details->shape().size();
-    for (int dimension{0}; dimension < n; ++dimension) {
-      result.emplace_back(GetExtent(symbol, component, dimension++));
+    if (IsImpliedShape(symbol)) {
+      return GetShape(*details->init());
+    } else {
+      Shape result;
+      int n{static_cast<int>(details->shape().size())};
+      for (int dimension{0}; dimension < n; ++dimension) {
+        result.emplace_back(GetExtent(symbol, component, dimension++));
+      }
+      return result;
     }
-    return result;
-  } else {
-    return std::nullopt;
+  } else if (const auto *details{
+                 symbol.detailsIf<semantics::AssocEntityDetails>()}) {
+    if (details->expr().has_value()) {
+      return GetShape(*details->expr());
+    }
   }
+  return std::nullopt;
 }
 
 std::optional<Shape> GetShapeHelper::GetShape(const Symbol *symbol) {

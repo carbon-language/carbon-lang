@@ -86,27 +86,30 @@ static constexpr bool IsValidKindOfIntrinsicType(
 // if one is supplied.
 class DynamicType {
 public:
-  constexpr DynamicType(TypeCategory cat, int k) : category{cat}, kind{k} {
-    CHECK(IsValidKindOfIntrinsicType(category, kind));
+  constexpr DynamicType(TypeCategory cat, int k) : category_{cat}, kind_{k} {
+    CHECK(IsValidKindOfIntrinsicType(category_, kind_));
   }
   constexpr DynamicType(int k, const semantics::ParamValue &pv)
-    : category{TypeCategory::Character}, kind{k}, charLength{&pv} {
-    CHECK(IsValidKindOfIntrinsicType(category, kind));
+    : category_{TypeCategory::Character}, kind_{k}, charLength_{&pv} {
+    CHECK(IsValidKindOfIntrinsicType(category_, kind_));
   }
   explicit constexpr DynamicType(
       const semantics::DerivedTypeSpec &dt, bool poly = false)
-    : category{TypeCategory::Derived}, derived{&dt}, isPolymorphic{poly} {}
+    : category_{TypeCategory::Derived}, derived_{&dt}, isPolymorphic_{poly} {}
 
   // A rare use case used for representing the characteristics of an
   // intrinsic function like REAL() that accepts a typeless BOZ literal
   // argument, which is something that real user Fortran can't do.
   static constexpr DynamicType TypelessIntrinsicArgument() {
-    return {};  // looks like INTEGER(KIND=0)
+    DynamicType result;
+    result.category_ = TypeCategory::Integer;
+    result.kind_ = 0;
+    return result;
   }
 
   static constexpr DynamicType UnlimitedPolymorphic() {
     DynamicType result;
-    result.isPolymorphic = true;
+    result.isPolymorphic_ = true;
     return result;  // CLASS(*)
   }
 
@@ -114,13 +117,24 @@ public:
   bool operator==(const DynamicType &) const;
   bool operator!=(const DynamicType &that) const { return !(*this == that); }
 
+  constexpr TypeCategory category() const { return category_; }
+  constexpr int kind() const { return kind_; }
+  constexpr const semantics::ParamValue *charLength() const {
+    return charLength_;
+  }
+  constexpr bool isPolymorphic() const { return isPolymorphic_; }
+
   std::string AsFortran() const;
   std::string AsFortran(std::string &&charLenExpr) const;
   DynamicType ResultTypeForMultiply(const DynamicType &) const;
 
   bool IsAssumedLengthCharacter() const;
   constexpr bool IsUnlimitedPolymorphic() const {
-    return isPolymorphic && derived == nullptr;
+    return isPolymorphic_ && derived_ == nullptr;
+  }
+  constexpr const semantics::DerivedTypeSpec &GetDerivedTypeSpec() const {
+    CHECK(derived_ != nullptr);
+    return *derived_;
   }
 
   // 7.3.2.3 type compatibility.
@@ -153,15 +167,17 @@ public:
     }
   }
 
-  TypeCategory category{TypeCategory::Integer};  // overridable default
-  int kind{0};  // set only for intrinsic types
-  const semantics::ParamValue *charLength{nullptr};
-  const semantics::DerivedTypeSpec *derived{nullptr};  // TYPE(T), CLASS(T)
-  bool isPolymorphic{false};  // CLASS(T), CLASS(*)
-
 private:
   constexpr DynamicType() {}
+
+  TypeCategory category_{TypeCategory::Derived};  // overridable default
+  int kind_{0};  // set only for intrinsic types
+  const semantics::ParamValue *charLength_{nullptr};
+  const semantics::DerivedTypeSpec *derived_{nullptr};  // TYPE(T), CLASS(T)
+  bool isPolymorphic_{false};  // CLASS(T), CLASS(*)
 };
+
+std::string DerivedTypeSpecAsFortran(const semantics::DerivedTypeSpec &);
 
 template<TypeCategory CATEGORY, int KIND = 0> struct TypeBase {
   static constexpr TypeCategory category{CATEGORY};
@@ -324,27 +340,42 @@ using AllIntrinsicCategoryTypes = std::tuple<SomeKind<TypeCategory::Integer>,
     SomeKind<TypeCategory::Real>, SomeKind<TypeCategory::Complex>,
     SomeKind<TypeCategory::Character>, SomeKind<TypeCategory::Logical>>;
 
-// Represents a completely generic type (but not typeless).
+// Represents a completely generic type (or, for Expr<SomeType>, a typeless
+// value like a BOZ literal or NULL() pointer).
 struct SomeType {};
 
-// Represents a derived type
 class StructureConstructor;
 
+// Represents any derived type, polymorphic or not, as well as CLASS(*).
 template<> class SomeKind<TypeCategory::Derived> {
 public:
   static constexpr TypeCategory category{TypeCategory::Derived};
   using Scalar = StructureConstructor;
 
-  CLASS_BOILERPLATE(SomeKind)
-  explicit SomeKind(const semantics::DerivedTypeSpec &dts) : spec_{&dts} {}
+  constexpr SomeKind() {}  // CLASS(*)
+  constexpr explicit SomeKind(const semantics::DerivedTypeSpec &dts)
+    : derivedTypeSpec_{&dts} {}
+  constexpr explicit SomeKind(const DynamicType &dt)
+    : SomeKind(dt.GetDerivedTypeSpec()) {}
+  CONSTEXPR_CONSTRUCTORS_AND_ASSIGNMENTS(SomeKind)
 
-  DynamicType GetType() const { return DynamicType{spec()}; }
-  const semantics::DerivedTypeSpec &spec() const { return *spec_; }
+  bool IsUnlimitedPolymorphic() const { return derivedTypeSpec_ == nullptr; }
+  constexpr DynamicType GetType() const {
+    if (derivedTypeSpec_ == nullptr) {
+      return DynamicType::UnlimitedPolymorphic();
+    } else {
+      return DynamicType{*derivedTypeSpec_};
+    }
+  }
+  const semantics::DerivedTypeSpec &derivedTypeSpec() const {
+    CHECK(derivedTypeSpec_ != nullptr);
+    return *derivedTypeSpec_;
+  }
   bool operator==(const SomeKind &) const;
   std::string AsFortran() const;
 
 private:
-  const semantics::DerivedTypeSpec *spec_;
+  const semantics::DerivedTypeSpec *derivedTypeSpec_{nullptr};
 };
 
 using SomeInteger = SomeKind<TypeCategory::Integer>;

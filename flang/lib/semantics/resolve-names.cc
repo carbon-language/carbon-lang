@@ -153,10 +153,27 @@ public:
     return FoldExpr(AnalyzeExpr(*context_, expr));
   }
 
+  template<typename T>
+  MaybeExpr EvaluateConvertedExpr(
+      const Symbol &symbol, const T &expr, parser::CharBlock source) {
+    if (auto maybeExpr{AnalyzeExpr(*context_, expr)}) {
+      if (auto converted{
+              evaluate::ConvertToType(symbol, std::move(*maybeExpr))}) {
+        return FoldExpr(
+            evaluate::ConvertToType(symbol, AnalyzeExpr(*context_, expr)));
+      } else {
+        Say(source,
+            "Initialization expression could not be converted to declared type of symbol '%s'"_err_en_US,
+            symbol.name());
+      }
+    }
+    return std::nullopt;
+  }
+
   template<typename T> MaybeIntExpr EvaluateIntExpr(const T &expr) {
     if (MaybeExpr maybeExpr{EvaluateExpr(expr)}) {
       if (auto *intExpr{evaluate::UnwrapExpr<SomeIntExpr>(*maybeExpr)}) {
-        return {std::move(*intExpr)};
+        return std::move(*intExpr);
       }
     }
     return std::nullopt;
@@ -2442,7 +2459,10 @@ void DeclarationVisitor::Post(const parser::EntityDecl &x) {
   if (auto &init{std::get<std::optional<parser::Initialization>>(x.t)}) {
     if (ConvertToObjectEntity(symbol)) {
       if (auto *expr{std::get_if<parser::ConstantExpr>(&init->u)}) {
-        symbol.get<ObjectEntityDetails>().set_init(EvaluateExpr(*expr));
+        if (auto folded{EvaluateConvertedExpr(
+                symbol, *expr, expr->thing.value().source)}) {
+          symbol.get<ObjectEntityDetails>().set_init(std::move(*folded));
+        }
       }
     }
   } else if (attrs.test(Attr::PARAMETER)) {
@@ -2478,8 +2498,11 @@ bool DeclarationVisitor::Pre(const parser::NamedConstantDef &x) {
   }
   const auto &expr{std::get<parser::ConstantExpr>(x.t)};
   Walk(expr);
-  symbol.get<ObjectEntityDetails>().set_init(EvaluateExpr(expr));
   ApplyImplicitRules(symbol);
+  if (auto converted{
+          EvaluateConvertedExpr(symbol, expr, expr.thing.value().source)}) {
+    symbol.get<ObjectEntityDetails>().set_init(std::move(*converted));
+  }
   return false;
 }
 bool DeclarationVisitor::Pre(const parser::NamedConstant &x) {
@@ -2811,6 +2834,7 @@ void DeclarationVisitor::Post(const parser::DerivedTypeSpec &x) {
   }
 
   auto category{GetDeclTypeSpecCategory()};
+  spec.ProcessParameterExpressions(context().foldingContext());
   if (const DeclTypeSpec *
       extant{currScope().FindInstantiatedDerivedType(spec, category)}) {
     // This derived type and parameter expressions (if any) are already present
@@ -2936,13 +2960,17 @@ void DeclarationVisitor::Post(const parser::TypeParamDefStmt &x) {
   auto attr{std::get<common::TypeParamAttr>(x.t)};
   for (auto &decl : std::get<std::list<parser::TypeParamDecl>>(x.t)) {
     auto &name{std::get<parser::Name>(decl.t)};
-    auto details{TypeParamDetails{attr}};
-    if (auto &init{
-            std::get<std::optional<parser::ScalarIntConstantExpr>>(decl.t)}) {
-      details.set_init(EvaluateIntExpr(*init));
-    }
-    if (MakeTypeSymbol(name, std::move(details))) {
+    if (Symbol * symbol{MakeTypeSymbol(name, TypeParamDetails{attr})}) {
       SetType(name, *type);
+      if (auto &init{
+              std::get<std::optional<parser::ScalarIntConstantExpr>>(decl.t)}) {
+        if (auto maybeExpr{EvaluateConvertedExpr(
+                *symbol, *init, init->thing.thing.thing.value().source)}) {
+          auto *intExpr{std::get_if<SomeIntExpr>(&maybeExpr->u)};
+          CHECK(intExpr != nullptr);
+          symbol->get<TypeParamDetails>().set_init(std::move(*intExpr));
+        }
+      }
     }
   }
   EndDecl();
@@ -4098,17 +4126,16 @@ ConstructVisitor::Selector ConstructVisitor::ResolveSelector(
 
 const DeclTypeSpec &ConstructVisitor::ToDeclTypeSpec(
     evaluate::DynamicType &&type) {
-  switch (type.category) {
+  switch (type.category()) {
   case common::TypeCategory::Integer:
   case common::TypeCategory::Real:
   case common::TypeCategory::Complex:
-    return context().MakeNumericType(type.category, type.kind);
+    return context().MakeNumericType(type.category(), type.kind());
   case common::TypeCategory::Logical:
-    return context().MakeLogicalType(type.kind);
+    return context().MakeLogicalType(type.kind());
   case common::TypeCategory::Derived:
-    CHECK(type.derived != nullptr);
     return currScope().MakeDerivedType(
-        DeclTypeSpec::TypeDerived, DerivedTypeSpec{*type.derived});
+        DeclTypeSpec::TypeDerived, DerivedTypeSpec{type.GetDerivedTypeSpec()});
   case common::TypeCategory::Character:
   default: CRASH_NO_CASE;
   }
@@ -4116,9 +4143,9 @@ const DeclTypeSpec &ConstructVisitor::ToDeclTypeSpec(
 
 const DeclTypeSpec &ConstructVisitor::ToDeclTypeSpec(
     evaluate::DynamicType &&type, SubscriptIntExpr &&length) {
-  CHECK(type.category == common::TypeCategory::Character);
+  CHECK(type.category() == common::TypeCategory::Character);
   return currScope().MakeCharacterType(
-      ParamValue{SomeIntExpr{std::move(length)}}, KindExpr{type.kind});
+      ParamValue{SomeIntExpr{std::move(length)}}, KindExpr{type.kind()});
 }
 
 // ResolveNamesVisitor implementation

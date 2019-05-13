@@ -117,7 +117,7 @@ void IoChecker::Enter(const parser::IdVariable &spec) {
   if (expr == nullptr || !expr->GetType()) {
     return;
   }
-  int kind{expr->GetType()->kind};
+  int kind{expr->GetType()->kind()};
   int defaultKind{
       context_.defaultKinds().GetDefaultKind(TypeCategory::Integer)};
   if (kind < defaultKind) {

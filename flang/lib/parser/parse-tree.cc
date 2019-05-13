@@ -90,8 +90,8 @@ static Designator MakeArrayElementRef(
     const Name &name, std::list<Expr> &&subscripts) {
   ArrayElement arrayElement{DataRef{Name{name}}, std::list<SectionSubscript>{}};
   for (Expr &expr : subscripts) {
-    arrayElement.subscripts.push_back(SectionSubscript{
-        Scalar{Integer{common::Indirection{std::move(expr)}}}});
+    arrayElement.subscripts.push_back(
+        SectionSubscript{Integer{common::Indirection{std::move(expr)}}});
   }
   return Designator{DataRef{common::Indirection{std::move(arrayElement)}}};
 }

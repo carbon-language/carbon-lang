@@ -26,10 +26,10 @@ end
 !Expect: m.mod
 !module m
 !  integer(4),parameter::k8=8_4
-!  integer(8),parameter::k4=4_4
+!  integer(8),parameter::k4=4_8
 !  integer(4),parameter::k1=1_4
 !  integer(8),parameter::i=2_8
 !  real(4)::r=2._4
-!  character(10_4,1)::c=1_"asdf"
+!  character(10_4,1)::c=1_"asdf      "
 !  complex(8)::z=(1._8,2._8)
 !end

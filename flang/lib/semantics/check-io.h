@@ -88,15 +88,13 @@ private:
 
   template<typename R, typename T> std::optional<R> GetConstExpr(const T &x) {
     using DefaultCharConstantType =
-        evaluate::Constant<evaluate::Type<common::TypeCategory::Character, 1>>;
+        evaluate::Type<common::TypeCategory::Character, 1>;
     if (const SomeExpr * expr{GetExpr(x)}) {
       const auto foldExpr{
           evaluate::Fold(context_.foldingContext(), common::Clone(*expr))};
       if constexpr (std::is_same_v<R, std::string>) {
-        if (const auto *charConst{
-                evaluate::UnwrapExpr<DefaultCharConstantType>(foldExpr)}) {
-          return {**charConst};
-        }
+        return evaluate::GetScalarConstantValue<DefaultCharConstantType>(
+            foldExpr);
       } else {
         static_assert(std::is_same_v<R, std::int64_t>, "unexpected type");
         return evaluate::ToInt64(foldExpr);

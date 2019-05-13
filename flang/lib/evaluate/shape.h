@@ -158,8 +158,9 @@ private:
               if (std::optional<Shape> xShape{GetShape(x)}) {
                 // Array values in array constructors get linearized.
                 return GetSize(std::move(*xShape));
+              } else {
+                return std::nullopt;
               }
-              return std::nullopt;
             },
             [&](const ImpliedDo<T> &ido) -> MaybeExtent {
               // Don't be heroic and try to figure out triangular implied DO

@@ -254,7 +254,7 @@ const DeclTypeSpec *Scope::FindInstantiatedDerivedType(
 
 const DeclTypeSpec &Scope::FindOrInstantiateDerivedType(DerivedTypeSpec &&spec,
     SemanticsContext &semanticsContext, DeclTypeSpec::Category category) {
-  spec.FoldParameterExpressions(semanticsContext.foldingContext());
+  spec.ProcessParameterExpressions(semanticsContext.foldingContext());
   if (const DeclTypeSpec * type{FindInstantiatedDerivedType(spec, category)}) {
     return *type;
   }
@@ -265,14 +265,15 @@ const DeclTypeSpec &Scope::FindOrInstantiateDerivedType(DerivedTypeSpec &&spec,
   return type;
 }
 
-void Scope::InstantiateDerivedType(
-    Scope &clone, SemanticsContext &semanticsContext) const {
-  CHECK(kind_ == Kind::DerivedType);
-  clone.sourceRange_ = sourceRange_;
-  clone.chars_ = chars_;
-  for (const auto &pair : symbols_) {
-    pair.second->Instantiate(clone, semanticsContext);
+Scope &Scope::InstantiateDerivedType(
+    const Scope &from, SemanticsContext &semanticsContext) {
+  CHECK(from.kind_ == Kind::DerivedType);
+  sourceRange_ = from.sourceRange_;
+  chars_ = from.chars_;
+  for (const auto &pair : from.symbols_) {
+    pair.second->Instantiate(*this, semanticsContext);
   }
+  return *this;
 }
 
 const DeclTypeSpec &Scope::InstantiateIntrinsicType(

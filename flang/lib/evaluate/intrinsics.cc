@@ -228,7 +228,7 @@ int IntrinsicInterface::CountArguments() const {
 // functions have more than one such pattern.  Besides the name
 // of the intrinsic function, each pattern has specifications for
 // the dummy arguments and for the result of the function.
-// The dummy argument patterns each have a name (this are from the
+// The dummy argument patterns each have a name (these are from the
 // standard, but rarely appear in actual code), a type and kind
 // pattern, allowable ranks, and optionality indicators.
 // Be advised, the default rank pattern is "elemental".
@@ -507,6 +507,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"product",
         {{"array", SameNumeric, Rank::array}, OptionalDIM, OptionalMASK},
         SameNumeric, Rank::dimReduced},
+    {"present", {{"a", Anything, Rank::anyOrAssumedRank}}, DefaultLogical},
     {"rank", {{"a", Anything, Rank::anyOrAssumedRank}}, DefaultInt},
     {"real", {{"a", AnyNumeric, Rank::elementalOrBOZ}, DefaultingKIND},
         KINDReal},
@@ -613,7 +614,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
 //   COSHAPE
 // TODO: Object characteristic inquiry functions
 //   ALLOCATED, ASSOCIATED, EXTENDS_TYPE_OF, IS_CONTIGUOUS,
-//   PRESENT, SAME_TYPE, STORAGE_SIZE
+//   SAME_TYPE, STORAGE_SIZE
 // TODO: Type inquiry intrinsic functions - these return constants
 //  BIT_SIZE, DIGITS, EPSILON, HUGE, KIND, MAXEXPONENT, MINEXPONENT,
 //  NEW_LINE, PRECISION, RADIX, RANGE, TINY
@@ -906,7 +907,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
             d.keyword);
       }
       return std::nullopt;
-    } else if (!d.typePattern.categorySet.test(type->category)) {
+    } else if (!d.typePattern.categorySet.test(type->category())) {
       messages.Say("Actual argument for '%s=' has bad type '%s'"_err_en_US,
           d.keyword, type->AsFortran());
       return std::nullopt;  // argument has invalid type category
@@ -919,29 +920,29 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       argOk = false;
       break;
     case KindCode::defaultIntegerKind:
-      argOk = type->kind == defaults.GetDefaultKind(TypeCategory::Integer);
+      argOk = type->kind() == defaults.GetDefaultKind(TypeCategory::Integer);
       break;
     case KindCode::defaultRealKind:
-      argOk = type->kind == defaults.GetDefaultKind(TypeCategory::Real);
+      argOk = type->kind() == defaults.GetDefaultKind(TypeCategory::Real);
       break;
     case KindCode::doublePrecision:
-      argOk = type->kind == defaults.doublePrecisionKind();
+      argOk = type->kind() == defaults.doublePrecisionKind();
       break;
     case KindCode::defaultCharKind:
-      argOk = type->kind == defaults.GetDefaultKind(TypeCategory::Character);
+      argOk = type->kind() == defaults.GetDefaultKind(TypeCategory::Character);
       break;
     case KindCode::defaultLogicalKind:
-      argOk = type->kind == defaults.GetDefaultKind(TypeCategory::Logical);
+      argOk = type->kind() == defaults.GetDefaultKind(TypeCategory::Logical);
       break;
     case KindCode::any: argOk = true; break;
     case KindCode::kindArg:
-      CHECK(type->category == TypeCategory::Integer);
+      CHECK(type->category() == TypeCategory::Integer);
       CHECK(kindArg == nullptr);
       kindArg = arg;
       argOk = true;
       break;
     case KindCode::dimArg:
-      CHECK(type->category == TypeCategory::Integer);
+      CHECK(type->category() == TypeCategory::Integer);
       hasDimArg = true;
       argOk = true;
       break;
@@ -997,7 +998,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
         if (rank == 1) {
           if (auto shape{GetShape(context, *arg)}) {
             if (auto constShape{AsConstantShape(*shape)}) {
-              shapeArgSize = (**constShape).ToInt64();
+              shapeArgSize = constShape->At(ConstantSubscripts{1}).ToInt64();
               CHECK(shapeArgSize >= 0);
               argOk = true;
             }
@@ -1099,10 +1100,10 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
     case KindCode::same:
       CHECK(sameArg != nullptr);
       if (std::optional<DynamicType> aType{sameArg->GetType()}) {
-        if (result.categorySet.test(aType->category)) {
+        if (result.categorySet.test(aType->category())) {
           resultType = *aType;
         } else {
-          resultType = DynamicType{*category, aType->kind};
+          resultType = DynamicType{*category, aType->kind()};
         }
       }
       break;
@@ -1378,7 +1379,7 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
   }
   parser::Messages *finalBuffer{context.messages().messages()};
   // Special case: NULL()
-  if (call.name.ToString() == "null") {
+  if (call.name == "null") {
     parser::Messages nullBuffer;
     parser::ContextualMessages nullErrors{
         call.name, finalBuffer ? &nullBuffer : nullptr};
@@ -1390,33 +1391,55 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
     return result;
   }
   // Probe the specific intrinsic function table first.
-  parser::Messages specificBuffer;
-  parser::ContextualMessages specificErrors{
-      call.name, finalBuffer ? &specificBuffer : nullptr};
-  FoldingContext specificContext{context, specificErrors};
+  parser::Messages localBuffer, specificBuffer;
+  parser::ContextualMessages localMessages{
+      call.name, finalBuffer ? &localBuffer : nullptr};
+  FoldingContext localContext{context, localMessages};
   std::string name{call.name.ToString()};
   auto specificRange{specificFuncs_.equal_range(name)};
   for (auto iter{specificRange.first}; iter != specificRange.second; ++iter) {
     if (auto specificCall{
-            iter->second->Match(call, defaults_, arguments, specificContext)}) {
+            iter->second->Match(call, defaults_, arguments, localContext)}) {
       if (const char *genericName{iter->second->generic}) {
         specificCall->specificIntrinsic.name = genericName;
       }
       specificCall->specificIntrinsic.isRestrictedSpecific =
           iter->second->isRestrictedSpecific;
+      if (finalBuffer != nullptr) {
+        finalBuffer->Annex(std::move(localBuffer));
+      }
       return specificCall;
+    } else {
+      specificBuffer.Annex(std::move(localBuffer));
     }
   }
   // Probe the generic intrinsic function table next.
   parser::Messages genericBuffer;
-  parser::ContextualMessages genericErrors{
-      call.name, finalBuffer ? &genericBuffer : nullptr};
-  FoldingContext genericContext{context, genericErrors};
   auto genericRange{genericFuncs_.equal_range(name)};
   for (auto iter{genericRange.first}; iter != genericRange.second; ++iter) {
     if (auto specificCall{
-            iter->second->Match(call, defaults_, arguments, genericContext)}) {
+            iter->second->Match(call, defaults_, arguments, localContext)}) {
+      // Apply any semantic checks peculiar to the intrinsic
+      if (call.name == "present") {
+        bool ok{false};
+        if (const auto &arg{specificCall->arguments[0]}) {
+          if (const auto *expr{arg->GetExpr()}) {
+            if (const Symbol * symbol{GetLastSymbol(*expr)}) {
+              ok = symbol->attrs().test(semantics::Attr::OPTIONAL);
+            }
+          }
+        }
+        if (!ok) {
+          localMessages.Say(
+              "Argument of PRESENT() must be the name of an OPTIONAL dummy argument"_err_en_US);
+        }
+      }
+      if (finalBuffer != nullptr) {
+        finalBuffer->Annex(std::move(localBuffer));
+      }
       return specificCall;
+    } else {
+      genericBuffer.Annex(std::move(localBuffer));
     }
   }
   // No match; report the right errors, if any

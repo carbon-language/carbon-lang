@@ -27,10 +27,11 @@
 #include "../parser/parse-tree.h"
 #include <algorithm>
 #include <functional>
+#include <iostream>  // TODO pmk rm
 #include <optional>
 #include <set>
 
-// #define DUMP_ON_FAILURE 1
+#define DUMP_ON_FAILURE 1  // pmk
 #if DUMP_ON_FAILURE
 #include "../parser/dump-parse-tree.h"
 #include <iostream>
@@ -88,8 +89,8 @@ std::optional<Expr<SubscriptInteger>> DynamicTypeWithLength::LEN() const {
   if (length.has_value()) {
     return length;
   }
-  if (charLength != nullptr) {
-    if (const auto &len{charLength->GetExplicit()}) {
+  if (auto *lengthParam{charLength()}) {
+    if (const auto &len{lengthParam->GetExplicit()}) {
       return ConvertToType<SubscriptInteger>(common::Clone(*len));
     }
   }
@@ -140,22 +141,22 @@ common::IfNoLvalue<MaybeExpr, WRAPPED> WrapperHelper(int kind, WRAPPED &&x) {
 template<template<typename> typename WRAPPER, typename WRAPPED>
 common::IfNoLvalue<MaybeExpr, WRAPPED> TypedWrapper(
     const DynamicType &dyType, WRAPPED &&x) {
-  switch (dyType.category) {
+  switch (dyType.category()) {
   case TypeCategory::Integer:
     return WrapperHelper<TypeCategory::Integer, WRAPPER, WRAPPED>(
-        dyType.kind, std::move(x));
+        dyType.kind(), std::move(x));
   case TypeCategory::Real:
     return WrapperHelper<TypeCategory::Real, WRAPPER, WRAPPED>(
-        dyType.kind, std::move(x));
+        dyType.kind(), std::move(x));
   case TypeCategory::Complex:
     return WrapperHelper<TypeCategory::Complex, WRAPPER, WRAPPED>(
-        dyType.kind, std::move(x));
+        dyType.kind(), std::move(x));
   case TypeCategory::Character:
     return WrapperHelper<TypeCategory::Character, WRAPPER, WRAPPED>(
-        dyType.kind, std::move(x));
+        dyType.kind(), std::move(x));
   case TypeCategory::Logical:
     return WrapperHelper<TypeCategory::Logical, WRAPPER, WRAPPED>(
-        dyType.kind, std::move(x));
+        dyType.kind(), std::move(x));
   case TypeCategory::Derived:
     return AsGenericExpr(Expr<SomeDerived>{WRAPPER<SomeDerived>{std::move(x)}});
   default: CRASH_NO_CASE;
@@ -174,8 +175,7 @@ MaybeExpr ExpressionAnalyzer::Designate(DataRef &&ref) {
       return Expr<SomeType>{ProcedureDesignator{symbol}};
     }
   } else if (auto dyType{DynamicType::From(symbol)}) {
-    return TypedWrapper<Designator, DataRef>(
-        std::move(*dyType), std::move(ref));
+    return TypedWrapper<Designator, DataRef>(*dyType, std::move(ref));
   } else if (const auto *declTypeSpec{symbol.GetType()}) {
     if (declTypeSpec->category() == semantics::DeclTypeSpec::TypeStar) {
       Say("TYPE(*) assumed-type dummy argument '%s' may not be "
@@ -476,7 +476,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::RealLiteralConstant &x) {
       case 'e': letterKind = defaults.GetDefaultKind(TypeCategory::Real); break;
       case 'd': letterKind = defaults.doublePrecisionKind(); break;
       case 'q': letterKind = defaults.quadPrecisionKind(); break;
-      default: Say("unknown exponent letter '%c'"_err_en_US, *p);
+      default: Say("Unknown exponent letter '%c'"_err_en_US, *p);
       }
       break;
     }
@@ -486,13 +486,13 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::RealLiteralConstant &x) {
   }
   auto kind{AnalyzeKindParam(x.kind, defaultKind)};
   if (letterKind.has_value() && kind != *letterKind) {
-    Say("explicit kind parameter on real constant disagrees with "
+    Say("Explicit kind parameter on real constant disagrees with "
         "exponent letter"_en_US);
   }
   auto result{common::SearchTypes(
       RealTypeVisitor{kind, x.real.source, GetFoldingContext()})};
   if (!result.has_value()) {
-    Say("unsupported REAL(KIND=%d)"_err_en_US, kind);
+    Say("Unsupported REAL(KIND=%d)"_err_en_US, kind);
   }
   return AsMaybeExpr(std::move(result));
 }
@@ -621,12 +621,12 @@ struct TypeParamInquiryVisitor {
   const Symbol &parameter;
 };
 
-static std::optional<Expr<SomeInteger>> MakeTypeParamInquiry(
+static std::optional<Expr<SomeInteger>> MakeBareTypeParamInquiry(
     const Symbol *symbol) {
   if (std::optional<DynamicType> dyType{DynamicType::From(symbol)}) {
-    if (dyType->category == TypeCategory::Integer) {
+    if (dyType->category() == TypeCategory::Integer) {
       return common::SearchTypes(TypeParamInquiryVisitor{
-          dyType->kind, SymbolOrComponent{nullptr}, *symbol});
+          dyType->kind(), SymbolOrComponent{nullptr} /* no base */, *symbol});
     }
   }
   return std::nullopt;
@@ -639,15 +639,10 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Name &n) {
         *kind, AsExpr(ImpliedDoIndex{n.source})));
   } else if (!context_.HasError(n)) {
     const Symbol &ultimate{n.symbol->GetUltimate()};
-    if (ultimate.attrs().test(semantics::Attr::PARAMETER)) {
-      if (auto *details{ultimate.detailsIf<semantics::ObjectEntityDetails>()}) {
-        return details->init();
-      }
-      // TODO: enumerators, do they have the PARAMETER attribute?
-    } else if (ultimate.detailsIf<semantics::TypeParamDetails>()) {
+    if (ultimate.detailsIf<semantics::TypeParamDetails>()) {
       // A bare reference to a derived type parameter (within a parameterized
       // derived type definition)
-      return AsMaybeExpr(MakeTypeParamInquiry(&ultimate));
+      return AsMaybeExpr(MakeBareTypeParamInquiry(&ultimate));
     } else if (MaybeExpr result{Designate(DataRef{ultimate})}) {
       return result;
     } else {
@@ -706,9 +701,9 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Substring &ss) {
           const Symbol &symbol{checked->GetLastSymbol()};
           if (std::optional<DynamicType> dynamicType{
                   DynamicType::From(symbol)}) {
-            if (dynamicType->category == TypeCategory::Character) {
+            if (dynamicType->category() == TypeCategory::Character) {
               return WrapperHelper<TypeCategory::Character, Designator,
-                  Substring>(dynamicType->kind,
+                  Substring>(dynamicType->kind(),
                   Substring{std::move(checked.value()), std::move(first),
                       std::move(last)});
             }
@@ -749,7 +744,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(
             StaticDataObject::Pointer staticData{StaticDataObject::Create()};
             staticData->set_alignment(Result::kind)
                 .set_itemBytes(Result::kind)
-                .Push(**cp);
+                .Push(cp->GetScalarValue().value());
             Substring substring{std::move(staticData), std::move(lower.value()),
                 std::move(upper.value())};
             return AsGenericExpr(Expr<SomeCharacter>{
@@ -833,7 +828,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::ArrayElement &ae) {
         return ApplySubscripts(std::move(*dataRef), std::move(subscripts));
       }
     } else {
-      Say("subscripts may be applied only to an object or component"_err_en_US);
+      Say("Subscripts may be applied only to an object, component, or array constant"_err_en_US);
     }
   }
   return std::nullopt;
@@ -859,7 +854,7 @@ static SymbolOrComponent IgnoreAnySubscripts(
 static std::optional<Component> CreateComponent(
     DataRef &&base, const Symbol &component, const semantics::Scope &scope) {
   if (&component.owner() == &scope) {
-    return {Component{std::move(base), component}};
+    return Component{std::move(base), component};
   }
   if (const semantics::Scope * parentScope{scope.GetDerivedTypeParent()}) {
     if (const Symbol * parentComponent{parentScope->GetSymbol()}) {
@@ -885,14 +880,16 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::StructureComponent &sc) {
   if (auto *dtExpr{UnwrapExpr<Expr<SomeDerived>>(*base)}) {
     const semantics::DerivedTypeSpec *dtSpec{nullptr};
     if (std::optional<DynamicType> dtDyTy{dtExpr->GetType()}) {
-      dtSpec = dtDyTy->derived;
+      if (!dtDyTy->IsUnlimitedPolymorphic()) {
+        dtSpec = &dtDyTy->GetDerivedTypeSpec();
+      }
     }
     if (sym->detailsIf<semantics::TypeParamDetails>()) {
       if (auto *designator{UnwrapExpr<Designator<SomeDerived>>(*dtExpr)}) {
         if (std::optional<DynamicType> dyType{DynamicType::From(*sym)}) {
-          if (dyType->category == TypeCategory::Integer) {
+          if (dyType->category() == TypeCategory::Integer) {
             return AsMaybeExpr(
-                common::SearchTypes(TypeParamInquiryVisitor{dyType->kind,
+                common::SearchTypes(TypeParamInquiryVisitor{dyType->kind(),
                     IgnoreAnySubscripts(std::move(*designator)), *sym}));
           }
         }
@@ -1008,7 +1005,7 @@ void ArrayConstructorContext::Push(MaybeExpr &&x) {
   if (auto dyType{x->GetType()}) {
     DynamicTypeWithLength xType{*dyType};
     if (Expr<SomeCharacter> * charExpr{UnwrapExpr<Expr<SomeCharacter>>(*x)}) {
-      CHECK(xType.category == TypeCategory::Character);
+      CHECK(xType.category() == TypeCategory::Character);
       xType.length =
           std::visit([](const auto &kc) { return kc.LEN(); }, charExpr->u);
     }
@@ -1172,12 +1169,11 @@ struct ArrayConstructorTypeVisitor {
   using Result = MaybeExpr;
   using Types = AllTypes;
   template<typename T> Result Test() {
-    if (type.category == T::category) {
+    if (type.category() == T::category) {
       if constexpr (T::category == TypeCategory::Derived) {
-        CHECK(type.derived != nullptr);
         return AsMaybeExpr(ArrayConstructor<T>{
-            *type.derived, MakeSpecific<T>(std::move(values))});
-      } else if (type.kind == T::kind) {
+            type.GetDerivedTypeSpec(), MakeSpecific<T>(std::move(values))});
+      } else if (type.kind() == T::kind) {
         if constexpr (T::category == TypeCategory::Character) {
           return AsMaybeExpr(ArrayConstructor<T>{
               type.LEN().value(), MakeSpecific<T>(std::move(values))});
@@ -1356,12 +1352,21 @@ MaybeExpr ExpressionAnalyzer::Analyze(
         } else if (MaybeExpr converted{
                        ConvertToType(*symbol, std::move(*value))}) {
           result.Add(*symbol, std::move(*converted));
-        } else {
-          if (auto *msg{Say(expr.source,
-                  "Value in structure constructor is incompatible with "
-                  "component '%s'"_err_en_US,
-                  symbol->name())}) {
-            msg->Attach(symbol->name(), "Component declaration"_en_US);
+        } else if (auto symType{DynamicType::From(symbol)}) {
+          if (auto type{DynamicType::From(value)}) {
+            if (auto *msg{Say(expr.source,
+                    "Value in structure constructor of type %s is "
+                    "incompatible with component '%s' of type %s"_err_en_US,
+                    type->AsFortran(), symbol->name(), symType->AsFortran())}) {
+              msg->Attach(symbol->name(), "Component declaration"_en_US);
+            }
+          } else {
+            if (auto *msg{Say(expr.source,
+                    "Value in structure constructor is incompatible with "
+                    " component '%s' of type %s"_err_en_US,
+                    symbol->name(), symType->AsFortran())}) {
+              msg->Attach(symbol->name(), "Component declaration"_en_US);
+            }
           }
         }
       }
@@ -1402,7 +1407,9 @@ ExpressionAnalyzer::AnalyzeProcedureComponentRef(
       if (auto *dtExpr{UnwrapExpr<Expr<SomeDerived>>(*base)}) {
         const semantics::DerivedTypeSpec *dtSpec{nullptr};
         if (std::optional<DynamicType> dtDyTy{dtExpr->GetType()}) {
-          dtSpec = dtDyTy->derived;
+          if (!dtDyTy->IsUnlimitedPolymorphic()) {
+            dtSpec = &dtDyTy->GetDerivedTypeSpec();
+          }
         }
         if (dtSpec != nullptr && dtSpec->scope() != nullptr) {
           if (std::optional<DataRef> dataRef{
@@ -1825,7 +1832,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr::DefinedBinary &) {
 // A(1) as a function reference into an array reference or a structure
 // constructor.
 template<typename... A>
-void FixMisparsedFunctionReference(
+static void FixMisparsedFunctionReference(
     semantics::SemanticsContext &context, const std::variant<A...> &constU) {
   // The parse tree is updated in situ when resolving an ambiguous parse.
   using uType = std::decay_t<decltype(constU)>;
@@ -2008,14 +2015,14 @@ bool ExpressionAnalyzer::EnforceTypeConstraint(parser::CharBlock at,
     const MaybeExpr &result, TypeCategory category, bool defaultKind) {
   if (result.has_value()) {
     if (auto type{result->GetType()}) {
-      if (type->category != category) {
+      if (type->category() != category) {
         Say(at, "Must have %s type, but is %s"_err_en_US,
             parser::ToUpperCaseLetters(EnumToString(category)),
             parser::ToUpperCaseLetters(type->AsFortran()));
         return false;
       } else if (defaultKind) {
         int kind{context_.defaultKinds().GetDefaultKind(category)};
-        if (type->kind != kind) {
+        if (type->kind() != kind) {
           Say(at, "Must have default kind(%d) of %s type, but is %s"_err_en_US,
               kind, parser::ToUpperCaseLetters(EnumToString(category)),
               parser::ToUpperCaseLetters(type->AsFortran()));

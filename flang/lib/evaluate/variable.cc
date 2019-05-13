@@ -263,7 +263,8 @@ DescriptorInquiry::DescriptorInquiry(
           [](Component &c) { return &c.GetLastSymbol(); },
       },
       base_)};
-  CHECK(symbol != nullptr && IsDescriptor(*symbol));
+  CHECK(symbol != nullptr);
+  CHECK(IsDescriptor(*symbol));
   CHECK(dim >= 0 && dim < symbol->Rank());
 }
 

@@ -103,7 +103,8 @@ using SymbolOrComponent = std::variant<const Symbol *, Component>;
 // x%KIND for intrinsic types is similarly rewritten in semantics to
 // KIND(x), which is then folded to a constant value.
 // "Bare" type parameter references within a derived type definition do
-// not have base objects here, only symbols.
+// not have base objects, and appear with null Symbol pointers for their
+// bases.
 template<int KIND> class TypeParamInquiry {
 public:
   using Result = Type<TypeCategory::Integer, KIND>;
@@ -114,7 +115,6 @@ public:
     : base_{std::move(component)}, parameter_{&param} {}
   TypeParamInquiry(SymbolOrComponent &&x, const Symbol &param)
     : base_{std::move(x)}, parameter_{&param} {}
-  explicit TypeParamInquiry(const Symbol &param) : parameter_{&param} {}
 
   SymbolOrComponent &base() { return base_; }
   const SymbolOrComponent &base() const { return base_; }
@@ -346,7 +346,7 @@ private:
 // a DataRef can, and possibly also a substring reference or a
 // complex component (%RE/%IM) reference.
 template<typename T> class Designator {
-  using DataRefs = decltype(DataRef::u);
+  using DataRefs = std::decay_t<decltype(DataRef::u)>;
   using MaybeSubstring =
       std::conditional_t<T::category == TypeCategory::Character,
           std::variant<Substring>, std::variant<>>;
@@ -357,9 +357,10 @@ template<typename T> class Designator {
 
 public:
   using Result = T;
-  static_assert(IsSpecificIntrinsicType<Result> ||
-      std::is_same_v<Result, SomeKind<TypeCategory::Derived>>);
+  static_assert(
+      IsSpecificIntrinsicType<Result> || std::is_same_v<Result, SomeDerived>);
   EVALUATE_UNION_CLASS_BOILERPLATE(Designator)
+
   Designator(const DataRef &that) : u{common::CopyVariant<Variant>(that.u)} {}
   Designator(DataRef &&that)
     : u{common::MoveVariant<Variant>(std::move(that.u))} {}

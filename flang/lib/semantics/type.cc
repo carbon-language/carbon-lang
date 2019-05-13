@@ -54,92 +54,121 @@ ParamValue *DerivedTypeSpec::FindParameter(SourceName target) {
       const_cast<const DerivedTypeSpec *>(this)->FindParameter(target));
 }
 
-void DerivedTypeSpec::FoldParameterExpressions(
+void DerivedTypeSpec::ProcessParameterExpressions(
     evaluate::FoldingContext &foldingContext) {
-  for (auto &pair : parameters_) {
-    if (MaybeIntExpr expr{pair.second.GetExplicit()}) {
-      pair.second.SetExplicit(evaluate::Fold(foldingContext, std::move(*expr)));
+  const DerivedTypeDetails &typeDetails{typeSymbol_.get<DerivedTypeDetails>()};
+  auto paramDecls{typeDetails.OrderParameterDeclarations(typeSymbol_)};
+  // Fold the explicit type parameter value expressions first.  Do not
+  // fold them within the scope of the derived type being instantiated;
+  // these expressions cannot use its type parameters.  Convert the values
+  // of the expressions to the declared types of the type parameters.
+  for (const Symbol *symbol : paramDecls) {
+    const SourceName &name{symbol->name()};
+    if (ParamValue * paramValue{FindParameter(name)}) {
+      if (const MaybeIntExpr & expr{paramValue->GetExplicit()}) {
+        if (auto converted{evaluate::ConvertToType(*symbol, SomeExpr{*expr})}) {
+          SomeExpr folded{
+              evaluate::Fold(foldingContext, std::move(*converted))};
+          if (auto *intExpr{std::get_if<SomeIntExpr>(&folded.u)}) {
+            paramValue->SetExplicit(std::move(*intExpr));
+            continue;
+          }
+        }
+        std::stringstream fortran;
+        fortran << *expr;
+        if (auto *msg{foldingContext.messages().Say(
+                "Value of type parameter '%s' (%s) is not "
+                "convertible to its type"_err_en_US,
+                name, fortran.str())}) {
+          msg->Attach(name, "declared here"_en_US);
+        }
+      }
     }
   }
-}
-
-void DerivedTypeSpec::Instantiate(
-    Scope &containingScope, SemanticsContext &semanticsContext) {
-  Scope &newScope{containingScope.MakeScope(Scope::Kind::DerivedType)};
-  newScope.set_derivedTypeSpec(*this);
-  scope_ = &newScope;
-  const DerivedTypeDetails &typeDetails{typeSymbol_.get<DerivedTypeDetails>()};
-
-  // Evaluate any necessary default initial value expressions for those
-  // type parameters that lack explicit initialization.  These expressions
-  // are evaluated in the scope of the derived type instance and follow the
-  // order in which their declarations appeared so as to allow later
-  // parameter values to depend on those of their predecessors.
-  // The folded values of the expressions replace the init() expressions
-  // of the parameters' symbols in the instantiation's scope.
-  evaluate::FoldingContext &foldingContext{semanticsContext.foldingContext()};
+  // Type parameter default value expressions are folded in declaration order
+  // within the scope of the derived type so that the values of earlier type
+  // parameters are available for use in the default initialization
+  // expressions of later parameters.
   auto restorer{foldingContext.WithPDTInstance(*this)};
-
-  for (const Symbol *symbol :
-      typeDetails.OrderParameterDeclarations(typeSymbol_)) {
+  for (const Symbol *symbol : paramDecls) {
     const SourceName &name{symbol->name()};
     const TypeParamDetails &details{symbol->get<TypeParamDetails>()};
     MaybeIntExpr expr;
     ParamValue *paramValue{FindParameter(name)};
     if (paramValue != nullptr) {
-      expr = paramValue->GetExplicit();
-    } else {
-      expr = details.init();
-      expr = evaluate::Fold(foldingContext, std::move(expr));
-    }
-    // Ensure that any kind type parameters are constant by now.
-    if (details.attr() == common::TypeParamAttr::Kind && expr.has_value()) {
-      // Any errors in rank and type will have already elicited messages, so
-      // don't complain further here.
-      if (auto maybeDynamicType{expr->GetType()}) {
-        if (expr->Rank() == 0 &&
-            maybeDynamicType->category == TypeCategory::Integer &&
-            !evaluate::ToInt64(expr).has_value()) {
-          std::stringstream fortran;
-          fortran << expr;
-          if (auto *msg{foldingContext.messages().Say(
-                  "Value of kind type parameter '%s' (%s) is not "
-                  "scalar INTEGER constant"_err_en_US,
-                  name, fortran.str())}) {
-            msg->Attach(name, "declared here"_en_US);
-          }
-        }
+      if (!paramValue->isExplicit()) {
+        continue;  // Deferred type parameter
       }
+      expr = paramValue->GetExplicit();
+    }
+    if (!expr.has_value()) {
+      expr = evaluate::Fold(foldingContext, common::Clone(details.init()));
     }
     if (expr.has_value()) {
-      const Scope *typeScope{typeSymbol_.scope()};
-      if (typeScope != nullptr &&
-          typeScope->find(symbol->name()) != typeScope->end()) {
-        // This type parameter belongs to the derived type itself, not
-        // one of its parents.  Put the type parameter expression value
-        // into the new scope as the initialization value for the parameter
-        // so that type parameter inquiries can acquire it.
-        TypeParamDetails instanceDetails{details.attr()};
-        instanceDetails.set_init(std::move(*expr));
-        Symbol *parameter{newScope.try_emplace(name, std::move(instanceDetails))
-                              .first->second};
-        CHECK(parameter != nullptr);
-      } else if (paramValue != nullptr) {
-        // Update the type parameter value in the spec for parent component
-        // derived type instantiation later (in symbol.cc) and folding.
+      if (paramValue != nullptr) {
         paramValue->SetExplicit(std::move(*expr));
       } else {
-        // Save the resolved value in the spec in case folding needs it.
         AddParamValue(symbol->name(), ParamValue{std::move(*expr)});
       }
     }
   }
+}
 
-  // Instantiate every non-parameter symbol from the original derived
-  // type's scope into the new instance.
+Scope &DerivedTypeSpec::Instantiate(
+    Scope &containingScope, SemanticsContext &semanticsContext) {
+  Scope &newScope{containingScope.MakeScope(Scope::Kind::DerivedType)};
+  newScope.set_derivedTypeSpec(*this);
+  scope_ = &newScope;
   const Scope *typeScope{typeSymbol_.scope()};
   CHECK(typeScope != nullptr);
-  typeScope->InstantiateDerivedType(newScope, semanticsContext);
+  const DerivedTypeDetails &typeDetails{typeSymbol_.get<DerivedTypeDetails>()};
+  for (const Symbol *symbol :
+      typeDetails.OrderParameterDeclarations(typeSymbol_)) {
+    const SourceName &name{symbol->name()};
+    if (typeScope->find(symbol->name()) != typeScope->end()) {
+      // This type parameter belongs to the derived type itself, not to
+      // one of its parents.  Put the type parameter expression value
+      // into the new scope as the initialization value for the parameter.
+      if (ParamValue * paramValue{FindParameter(name)}) {
+        if (MaybeIntExpr expr{paramValue->GetExplicit()}) {
+          const TypeParamDetails &details{symbol->get<TypeParamDetails>()};
+          // Ensure that any kind type parameters with values are
+          // constant by now.
+          if (details.attr() == common::TypeParamAttr::Kind) {
+            // Any errors in rank and type will have already elicited
+            // messages, so don't pile on by complaining further here.
+            if (auto maybeDynamicType{expr->GetType()}) {
+              if (expr->Rank() == 0 &&
+                  maybeDynamicType->category() == TypeCategory::Integer) {
+                if (!evaluate::ToInt64(*expr).has_value()) {
+                  std::stringstream fortran;
+                  fortran << *expr;
+                  if (auto *msg{
+                          semanticsContext.foldingContext().messages().Say(
+                              "Value of kind type parameter '%s' (%s) is not "
+                              "a scalar INTEGER constant"_err_en_US,
+                              name, fortran.str())}) {
+                    msg->Attach(name, "declared here"_en_US);
+                  }
+                }
+              }
+            }
+          }
+          TypeParamDetails instanceDetails{details.attr()};
+          instanceDetails.set_init(std::move(*expr));
+          Symbol *parameter{
+              newScope.try_emplace(name, std::move(instanceDetails))
+                  .first->second};
+          CHECK(parameter != nullptr);
+        }
+      }
+    }
+  }
+  // Instantiate every non-parameter symbol from the original derived
+  // type's scope into the new instance.
+  auto restorer{semanticsContext.foldingContext().WithPDTInstance(*this)};
+  newScope.InstantiateDerivedType(*typeScope, semanticsContext);
+  return newScope;
 }
 
 std::ostream &operator<<(std::ostream &o, const DerivedTypeSpec &x) {

@@ -44,8 +44,13 @@ bool IncrementSubscripts(
   return false;  // all done
 }
 
-template<typename RESULT, typename VALUE>
-ConstantBase<RESULT, VALUE>::~ConstantBase() {}
+template<typename RESULT, typename ELEMENT>
+ConstantBase<RESULT, ELEMENT>::~ConstantBase() {}
+
+template<typename RESULT, typename ELEMENT>
+bool ConstantBase<RESULT, ELEMENT>::operator==(const ConstantBase &that) const {
+  return shape_ == that.shape_ && values_ == that.values_;
+}
 
 static ConstantSubscript SubscriptsToOffset(
     const ConstantSubscripts &index, const ConstantSubscripts &shape) {
@@ -61,18 +66,6 @@ static ConstantSubscript SubscriptsToOffset(
   return offset;
 }
 
-template<typename RESULT, typename VALUE>
-auto ConstantBase<RESULT, VALUE>::At(const ConstantSubscripts &index) const
-    -> ScalarValue {
-  return values_.at(SubscriptsToOffset(index, shape_));
-}
-
-template<typename RESULT, typename VALUE>
-auto ConstantBase<RESULT, VALUE>::At(ConstantSubscripts &&index) const
-    -> ScalarValue {
-  return values_.at(SubscriptsToOffset(index, shape_));
-}
-
 static Constant<SubscriptInteger> ShapeAsConstant(
     const ConstantSubscripts &shape) {
   using IntType = Scalar<SubscriptInteger>;
@@ -84,27 +77,33 @@ static Constant<SubscriptInteger> ShapeAsConstant(
       ConstantSubscripts{static_cast<std::int64_t>(shape.size())}};
 }
 
-template<typename RESULT, typename VALUE>
-Constant<SubscriptInteger> ConstantBase<RESULT, VALUE>::SHAPE() const {
+template<typename RESULT, typename ELEMENT>
+Constant<SubscriptInteger> ConstantBase<RESULT, ELEMENT>::SHAPE() const {
   return ShapeAsConstant(shape_);
+}
+
+template<typename T>
+auto Constant<T>::At(const ConstantSubscripts &index) const -> Element {
+  return Base::values_.at(SubscriptsToOffset(index, Base::shape_));
 }
 
 // Constant<Type<TypeCategory::Character, KIND> specializations
 template<int KIND>
-Constant<Type<TypeCategory::Character, KIND>>::Constant(const ScalarValue &str)
+Constant<Type<TypeCategory::Character, KIND>>::Constant(
+    const Scalar<Result> &str)
   : values_{str}, length_{static_cast<std::int64_t>(values_.size())} {}
 
 template<int KIND>
-Constant<Type<TypeCategory::Character, KIND>>::Constant(ScalarValue &&str)
+Constant<Type<TypeCategory::Character, KIND>>::Constant(Scalar<Result> &&str)
   : values_{std::move(str)}, length_{
                                  static_cast<std::int64_t>(values_.size())} {}
 
 template<int KIND>
 Constant<Type<TypeCategory::Character, KIND>>::Constant(std::int64_t len,
-    std::vector<ScalarValue> &&strings, ConstantSubscripts &&dims)
+    std::vector<Scalar<Result>> &&strings, ConstantSubscripts &&dims)
   : length_{len}, shape_{std::move(dims)} {
   values_.assign(strings.size() * length_,
-      static_cast<typename ScalarValue::value_type>(' '));
+      static_cast<typename Scalar<Result>::value_type>(' '));
   std::int64_t at{0};
   for (const auto &str : strings) {
     auto strLen{static_cast<std::int64_t>(str.size())};
@@ -144,9 +143,9 @@ std::size_t Constant<Type<TypeCategory::Character, KIND>>::size() const {
 
 template<int KIND>
 auto Constant<Type<TypeCategory::Character, KIND>>::At(
-    const ConstantSubscripts &index) const -> ScalarValue {
+    const ConstantSubscripts &index) const -> Scalar<Result> {
   auto offset{SubscriptsToOffset(index, shape_)};
-  return values_.substr(offset, length_);
+  return values_.substr(offset * length_, length_);
 }
 
 template<int KIND>
@@ -157,14 +156,14 @@ Constant<Type<TypeCategory::Character, KIND>>::SHAPE() const {
 
 // Constant<SomeDerived> specialization
 Constant<SomeDerived>::Constant(const StructureConstructor &x)
-  : Base{x.values()}, derivedTypeSpec_{&x.derivedTypeSpec()} {}
+  : Base{x.values(), Result{x.derivedTypeSpec()}} {}
 
 Constant<SomeDerived>::Constant(StructureConstructor &&x)
-  : Base{std::move(x.values())}, derivedTypeSpec_{&x.derivedTypeSpec()} {}
+  : Base{std::move(x.values()), Result{x.derivedTypeSpec()}} {}
 
 Constant<SomeDerived>::Constant(const semantics::DerivedTypeSpec &spec,
     std::vector<StructureConstructorValues> &&x, ConstantSubscripts &&s)
-  : Base{std::move(x), std::move(s)}, derivedTypeSpec_{&spec} {}
+  : Base{std::move(x), std::move(s), Result{spec}} {}
 
 static std::vector<StructureConstructorValues> AcquireValues(
     std::vector<StructureConstructor> &&x) {
@@ -177,7 +176,22 @@ static std::vector<StructureConstructorValues> AcquireValues(
 
 Constant<SomeDerived>::Constant(const semantics::DerivedTypeSpec &spec,
     std::vector<StructureConstructor> &&x, ConstantSubscripts &&s)
-  : Base{AcquireValues(std::move(x)), std::move(s)}, derivedTypeSpec_{&spec} {}
+  : Base{AcquireValues(std::move(x)), std::move(s), Result{spec}} {}
+
+std::optional<StructureConstructor>
+Constant<SomeDerived>::GetScalarValue() const {
+  if (shape_.empty()) {
+    return StructureConstructor{result().derivedTypeSpec(), values_.at(0)};
+  } else {
+    return std::nullopt;
+  }
+}
+
+StructureConstructor Constant<SomeDerived>::At(
+    const ConstantSubscripts &index) const {
+  return {result().derivedTypeSpec(),
+      values_.at(SubscriptsToOffset(index, shape_))};
+}
 
 INSTANTIATE_CONSTANT_TEMPLATES
 }

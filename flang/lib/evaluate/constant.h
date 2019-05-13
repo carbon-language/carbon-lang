@@ -53,73 +53,75 @@ bool IncrementSubscripts(ConstantSubscripts &, const ConstantSubscripts &shape);
 // Constant<> is specialized for Character kinds and SomeDerived.
 // The non-Character intrinsic types, and SomeDerived, share enough
 // common behavior that they use this common base class.
-template<typename RESULT, typename SCALAR = Scalar<RESULT>> class ConstantBase {
+template<typename RESULT, typename ELEMENT = Scalar<RESULT>>
+class ConstantBase {
   static_assert(RESULT::category != TypeCategory::Character);
 
 public:
   using Result = RESULT;
-  using ScalarValue = SCALAR;
+  using Element = ELEMENT;
 
-  template<typename A> ConstantBase(const A &x) : values_{x} {}
+  template<typename A>
+  ConstantBase(const A &x, Result res = Result{}) : result_{res}, values_{x} {}
   template<typename A, typename = common::NoLvalue<A>>
-  ConstantBase(A &&x) : values_{std::move(x)} {}
-  ConstantBase(std::vector<ScalarValue> &&x, ConstantSubscripts &&dims)
-    : values_(std::move(x)), shape_(std::move(dims)) {}
+  ConstantBase(A &&x, Result res = Result{})
+    : result_{res}, values_{std::move(x)} {}
+  ConstantBase(std::vector<Element> &&x, ConstantSubscripts &&dims,
+      Result res = Result{})
+    : result_{res}, values_(std::move(x)), shape_(std::move(dims)) {}
+
   DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(ConstantBase)
   ~ConstantBase();
 
   int Rank() const { return static_cast<int>(shape_.size()); }
-  bool operator==(const ConstantBase &that) const {
-    return shape_ == that.shape_ && values_ == that.values_;
-  }
+  bool operator==(const ConstantBase &) const;
   bool empty() const { return values_.empty(); }
   std::size_t size() const { return values_.size(); }
-  const std::vector<ScalarValue> &values() const { return values_; }
+  const std::vector<Element> &values() const { return values_; }
   const ConstantSubscripts &shape() const { return shape_; }
   ConstantSubscripts &shape() { return shape_; }
+  constexpr Result result() const { return result_; }
 
-  ScalarValue operator*() const {
-    CHECK(values_.size() == 1);
-    return values_.at(0);
-  }
-
-  // Apply 1-based subscripts
-  ScalarValue At(const ConstantSubscripts &) const;
-  ScalarValue At(ConstantSubscripts &&) const;
-
+  constexpr DynamicType GetType() const { return result_.GetType(); }
   Constant<SubscriptInteger> SHAPE() const;
   std::ostream &AsFortran(std::ostream &) const;
 
 protected:
-  std::vector<ScalarValue> values_;
+  Result result_;
+  std::vector<Element> values_;
   ConstantSubscripts shape_;
-
-private:
-  const Constant<Result> &AsConstant() const {
-    return *static_cast<const Constant<Result> *>(this);
-  }
-
-  DynamicType GetType() const { return AsConstant().GetType(); }
 };
 
 template<typename T> class Constant : public ConstantBase<T> {
 public:
   using Result = T;
-  using ScalarValue = Scalar<Result>;
-  using ConstantBase<Result, ScalarValue>::ConstantBase;
+  using Base = ConstantBase<T>;
+  using Element = typename Base::Element;
+
+  using Base::Base;
   CLASS_BOILERPLATE(Constant)
-  static constexpr DynamicType GetType() { return Result::GetType(); }
+
+  std::optional<Scalar<T>> GetScalarValue() const {
+    if (Base::shape_.empty()) {
+      return Base::values_.at(0);
+    } else {
+      return std::nullopt;
+    }
+  }
+
+  // Apply 1-based subscripts
+  Element At(const ConstantSubscripts &) const;
 };
 
 template<int KIND> class Constant<Type<TypeCategory::Character, KIND>> {
 public:
   using Result = Type<TypeCategory::Character, KIND>;
-  using ScalarValue = Scalar<Result>;
+  using Element = Scalar<Result>;
 
   CLASS_BOILERPLATE(Constant)
-  explicit Constant(const ScalarValue &);
-  explicit Constant(ScalarValue &&);
-  Constant(std::int64_t, std::vector<ScalarValue> &&, ConstantSubscripts &&);
+  explicit Constant(const Scalar<Result> &);
+  explicit Constant(Scalar<Result> &&);
+  Constant(std::int64_t, std::vector<Element> &&, ConstantSubscripts &&);
   ~Constant();
 
   int Rank() const { return static_cast<int>(shape_.size()); }
@@ -133,24 +135,30 @@ public:
 
   std::int64_t LEN() const { return length_; }
 
-  ScalarValue operator*() const {
-    CHECK(static_cast<std::int64_t>(values_.size()) == length_);
-    return values_;
+  std::optional<Scalar<Result>> GetScalarValue() const {
+    if (shape_.empty()) {
+      return values_;
+    } else {
+      return std::nullopt;
+    }
   }
 
   // Apply 1-based subscripts
-  ScalarValue At(const ConstantSubscripts &) const;
+  Scalar<Result> At(const ConstantSubscripts &) const;
 
   Constant<SubscriptInteger> SHAPE() const;
   std::ostream &AsFortran(std::ostream &) const;
-  static constexpr DynamicType GetType() { return Result::GetType(); }
+  static constexpr DynamicType GetType() {
+    return {TypeCategory::Character, KIND};
+  }
 
 private:
-  ScalarValue values_;  // one contiguous string
+  Scalar<Result> values_;  // one contiguous string
   std::int64_t length_;
   ConstantSubscripts shape_;
 };
 
+class StructureConstructor;
 using StructureConstructorValues = std::map<const semantics::Symbol *,
     common::CopyableIndirection<Expr<SomeType>>>;
 
@@ -159,24 +167,19 @@ class Constant<SomeDerived>
   : public ConstantBase<SomeDerived, StructureConstructorValues> {
 public:
   using Result = SomeDerived;
-  using Base = ConstantBase<Result, StructureConstructorValues>;
+  using Element = StructureConstructorValues;
+  using Base = ConstantBase<SomeDerived, StructureConstructorValues>;
 
   Constant(const StructureConstructor &);
   Constant(StructureConstructor &&);
-  Constant(const semantics::DerivedTypeSpec &, std::vector<ScalarValue> &&,
-      ConstantSubscripts &&);
+  Constant(const semantics::DerivedTypeSpec &,
+      std::vector<StructureConstructorValues> &&, ConstantSubscripts &&);
   Constant(const semantics::DerivedTypeSpec &,
       std::vector<StructureConstructor> &&, ConstantSubscripts &&);
   CLASS_BOILERPLATE(Constant)
 
-  const semantics::DerivedTypeSpec &derivedTypeSpec() const {
-    return *derivedTypeSpec_;
-  }
-
-  DynamicType GetType() const { return DynamicType{derivedTypeSpec()}; }
-
-private:
-  const semantics::DerivedTypeSpec *derivedTypeSpec_;
+  std::optional<StructureConstructor> GetScalarValue() const;
+  StructureConstructor At(const ConstantSubscripts &) const;
 };
 
 FOR_EACH_LENGTHLESS_INTRINSIC_KIND(extern template class ConstantBase, )

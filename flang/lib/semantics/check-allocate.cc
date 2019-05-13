@@ -198,11 +198,13 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
       }
       info.sourceExprRank = expr->Rank();
       info.sourceExprLoc = parserSourceExpr->source;
-      if (const DerivedTypeSpec *
-          derived{info.sourceExprType.value().derived}) {
+      if (info.sourceExprType.value().category() == TypeCategory::Derived &&
+          !info.sourceExprType.value().IsUnlimitedPolymorphic()) {
+        const DerivedTypeSpec &derived{
+            info.sourceExprType.value().GetDerivedTypeSpec()};
         // C949
         if (const Symbol *
-            coarrayComponent{HasCoarrayUltimateComponent(*derived)}) {
+            coarrayComponent{HasCoarrayUltimateComponent(derived)}) {
           context
               .Say(parserSourceExpr->source,
                   "SOURCE or MOLD expression must not have a type with a coarray ultimate component"_err_en_US)
@@ -211,11 +213,11 @@ static std::optional<AllocateCheckerInfo> CheckAllocateOptions(
         }
         if (info.gotSrc) {
           // C948
-          if (IsEventTypeOrLockType(derived)) {
+          if (IsEventTypeOrLockType(&derived)) {
             context.Say(parserSourceExpr->source,
                 "SOURCE expression type must not be EVENT_TYPE or LOCK_TYPE from ISO_FORTRAN_ENV"_err_en_US);
           } else if (const Symbol *
-              component{HasEventOrLockPotentialComponent(*derived)}) {
+              component{HasEventOrLockPotentialComponent(derived)}) {
             context
                 .Say(parserSourceExpr->source,
                     "SOURCE expression type must not have potential subobject component of type EVENT_TYPE or LOCK_TYPE from ISO_FORTRAN_ENV"_err_en_US)
@@ -280,15 +282,14 @@ static bool IsTypeCompatible(
     // cannot be allocatable (C709)
     return true;
   }
-  if (type2.category != evaluate::TypeCategory::Derived) {
+  if (type2.category() != evaluate::TypeCategory::Derived) {
     if (const IntrinsicTypeSpec * intrinsicType1{type1.AsIntrinsic()}) {
-      return intrinsicType1->category() == type2.category;
+      return intrinsicType1->category() == type2.category();
     } else {
       return false;
     }
   } else {
-    CHECK(type2.derived);
-    return IsTypeCompatible(type1, *type2.derived);
+    return IsTypeCompatible(type1, type2.GetDerivedTypeSpec());
   }
   return false;
 }
@@ -372,11 +373,10 @@ static bool HaveCompatibleKindParameters(
     return true;
   }
   if (const IntrinsicTypeSpec * intrinsicType1{type1.AsIntrinsic()}) {
-    return evaluate::ToInt64(intrinsicType1->kind()).value() == type2.kind;
+    return evaluate::ToInt64(intrinsicType1->kind()).value() == type2.kind();
   } else if (const DerivedTypeSpec * derivedType1{type1.AsDerived()}) {
-    const DerivedTypeSpec *derivedType2{type2.derived};
-    CHECK(derivedType2);  // Violation of type compatibility hypothesis.
-    return HaveCompatibleKindParameters(*derivedType1, *derivedType2);
+    return HaveCompatibleKindParameters(
+        *derivedType1, type2.GetDerivedTypeSpec());
   } else {
     common::die("unexpected type1 category");
   }
@@ -554,16 +554,20 @@ bool AllocationCheckerHelper::RunCoarrayRelatedChecks(
       }
     } else if (allocateInfo_.gotSrc || allocateInfo_.gotMold) {
       // C948
-      if (const DerivedTypeSpec *
-          derived{allocateInfo_.sourceExprType.value().derived}) {
-        if (IsTeamType(derived)) {
+      const evaluate::DynamicType &sourceType{
+          allocateInfo_.sourceExprType.value()};
+      if (sourceType.category() == TypeCategory::Derived &&
+          !sourceType.IsUnlimitedPolymorphic()) {
+        const DerivedTypeSpec derived{sourceType.GetDerivedTypeSpec()};
+        if (IsTeamType(&derived)) {
           context
               .Say(allocateInfo_.sourceExprLoc.value(),
                   "SOURCE or MOLD expression type must not be TEAM_TYPE from ISO_FORTRAN_ENV when an allocatable object is a coarray"_err_en_US)
               .Attach(name_.source, "'%s' is a coarray"_en_US, name_.source);
           return false;
-        } else if (IsDerivedTypeFromModule(derived, "iso_c_binding", "c_ptr") ||
-            IsDerivedTypeFromModule(derived, "iso_c_binding", "c_funptr")) {
+        } else if (IsDerivedTypeFromModule(
+                       &derived, "iso_c_binding", "c_ptr") ||
+            IsDerivedTypeFromModule(&derived, "iso_c_binding", "c_funptr")) {
           context
               .Say(allocateInfo_.sourceExprLoc.value(),
                   "SOURCE or MOLD expression type must not be C_PTR or C_FUNPTR from ISO_C_BINDING when an allocatable object is a coarray"_err_en_US)

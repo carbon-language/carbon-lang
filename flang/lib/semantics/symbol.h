@@ -566,6 +566,13 @@ public:
             [](const ObjectEntityDetails &oed) {
               return static_cast<int>(oed.shape().size());
             },
+            [](const AssocEntityDetails &aed) {
+              if (const auto &expr{aed.expr()}) {
+                return expr->Rank();
+              } else {
+                return 0;
+              }
+            },
             [](const auto &) { return 0; },
         },
         details_);

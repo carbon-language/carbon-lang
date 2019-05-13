@@ -109,7 +109,7 @@ struct TestCall {
     if (sep == '(') {
       std::cout << '(';
     }
-    std::cout << ")\n";
+    std::cout << ')' << std::endl;
     CallCharacteristics call{fName};
     auto messages{strings.Messages(buffer)};
     FoldingContext context{messages};

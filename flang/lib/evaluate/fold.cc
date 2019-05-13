@@ -34,6 +34,7 @@
 #include <complex>
 #include <cstdio>
 #include <optional>
+#include <sstream>
 #include <type_traits>
 #include <variant>
 
@@ -231,11 +232,12 @@ static inline Expr<TR> FoldElementalIntrinsicHelper(FoldingContext &context,
                           ScalarFuncWithContext<TR, TA...>>) {
           results.emplace_back(func(context,
               (ranks[I] ? std::get<I>(args)->At(index)
-                        : **std::get<I>(args))...));
+                        : std::get<I>(args)->GetScalarValue().value())...));
         } else if constexpr (std::is_same_v<WrapperType<TR, TA...>,
                                  ScalarFunc<TR, TA...>>) {
-          results.emplace_back(func((ranks[I] ? std::get<I>(args)->At(index)
-                                              : **std::get<I>(args))...));
+          results.emplace_back(func(
+              (ranks[I] ? std::get<I>(args)->At(index)
+                        : std::get<I>(args)->GetScalarValue().value())...));
         }
       } while (IncrementSubscripts(index, shape));
     }
@@ -320,10 +322,8 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
       // than BIT_SIZE. It can be converted to Int4 to simplify.
       using Int4 = Type<TypeCategory::Integer, 4>;
       if (auto *n{UnwrapArgument<SomeInteger>(args[2])}) {
-        if (n->GetType()->kind != 4) {
-          *args[2] =
-              AsGenericExpr(Fold(context, ConvertToType<Int4>(std::move(*n))));
-        }
+        *args[2] =
+            AsGenericExpr(Fold(context, ConvertToType<Int4>(std::move(*n))));
       }
       const auto fptr{
           name == "dshiftl" ? &Scalar<T>::DSHIFTL : &Scalar<T>::DSHIFTR};
@@ -371,10 +371,8 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
       // equal than BIT_SIZE. It can be converted to Int4 to simplify.
       using Int4 = Type<TypeCategory::Integer, 4>;
       if (auto *n{UnwrapArgument<SomeInteger>(args[1])}) {
-        if (n->GetType()->kind != 4) {
-          *args[1] =
-              AsGenericExpr(Fold(context, ConvertToType<Int4>(std::move(*n))));
-        }
+        *args[1] =
+            AsGenericExpr(Fold(context, ConvertToType<Int4>(std::move(*n))));
       }
       auto fptr{&Scalar<T>::IBCLR};
       if (name == "ibclr") {  // done in fprt definition
@@ -411,7 +409,7 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
       }
     } else if (name == "kind") {
       if constexpr (common::HasMember<T, IntegerTypes>) {
-        return Expr<T>{args[0].value().GetType()->kind};
+        return Expr<T>{args[0].value().GetType()->kind()};
       } else {
         common::die("kind() result not integral");
       }
@@ -460,10 +458,8 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
       // It can be safely converted to Int4 to simplify.
       using Int4 = Type<TypeCategory::Integer, 4>;
       if (auto *n{UnwrapArgument<SomeInteger>(args[0])}) {
-        if (n->GetType()->kind != 4) {
-          *args[0] =
-              AsGenericExpr(Fold(context, ConvertToType<Int4>(std::move(*n))));
-        }
+        *args[0] =
+            AsGenericExpr(Fold(context, ConvertToType<Int4>(std::move(*n))));
       }
       const auto fptr{name == "maskl" ? &Scalar<T>::MASKL : &Scalar<T>::MASKR};
       return FoldElementalIntrinsic<T, Int4>(context, std::move(funcRef),
@@ -542,7 +538,7 @@ Expr<Type<TypeCategory::Real, KIND>> ToReal(
           result = ConvertToType<Result>(std::move(x));
           const auto *constant{UnwrapExpr<Constant<Result>>(*result)};
           CHECK(constant != nullptr);
-          const Scalar<Result> &real{**constant};
+          Scalar<Result> real{constant->GetScalarValue().value()};
           From converted{From::ConvertUnsigned(real.RawBits()).value};
           if (!(original == converted)) {  // C1601
             context.messages().Say(
@@ -610,10 +606,8 @@ Expr<Type<TypeCategory::Real, KIND>> FoldOperation(FoldingContext &context,
         // runtime functions use int arg
         using Int4 = Type<TypeCategory::Integer, 4>;
         if (auto *n{UnwrapArgument<SomeInteger>(args[0])}) {
-          if (n->GetType()->kind != 4) {
-            *args[0] = AsGenericExpr(
-                Fold(context, ConvertToType<Int4>(std::move(*n))));
-          }
+          *args[0] =
+              AsGenericExpr(Fold(context, ConvertToType<Int4>(std::move(*n))));
         }
         if (auto callable{
                 context.hostIntrinsicsLibrary()
@@ -650,10 +644,8 @@ Expr<Type<TypeCategory::Real, KIND>> FoldOperation(FoldingContext &context,
     } else if (name == "aint") {
       // Convert argument to the requested kind before calling aint
       if (auto *x{UnwrapArgument<SomeReal>(args[0])}) {
-        if (!(x->GetType()->kind == T::kind)) {
-          *args[0] =
-              AsGenericExpr(Fold(context, ConvertToType<T>(std::move(*x))));
-        }
+        *args[0] =
+            AsGenericExpr(Fold(context, ConvertToType<T>(std::move(*x))));
       }
       return FoldElementalIntrinsic<T, T>(context, std::move(funcRef),
           ScalarFunc<T, T>([&name, &context](const Scalar<T> &x) -> Scalar<T> {
@@ -798,6 +790,178 @@ Expr<Type<TypeCategory::Logical, KIND>> FoldOperation(FoldingContext &context,
   return Expr<T>{std::move(funcRef)};
 }
 
+// Get the value of a PARAMETER
+template<typename T>
+static std::optional<Expr<T>> GetParameterValue(
+    FoldingContext &context, const Symbol *symbol) {
+  CHECK(symbol != nullptr);
+  if (symbol->attrs().test(semantics::Attr::PARAMETER)) {
+    if (const auto *object{
+            symbol->detailsIf<semantics::ObjectEntityDetails>()}) {
+      if (const auto &init{object->init()}) {
+        if (const auto *constant{UnwrapExpr<Constant<T>>(*init)}) {
+          return Expr<T>{*constant};
+        }
+        if (auto dyType{DynamicType::From(*symbol)}) {
+          auto converted{ConvertToType(*dyType, common::Clone(*init))};
+          semantics::ObjectEntityDetails *mutableObject{
+              const_cast<semantics::ObjectEntityDetails *>(object)};
+          if (converted.has_value()) {
+            *converted = Fold(context, std::move(*converted));
+            auto *unwrapped{UnwrapExpr<Expr<T>>(*converted)};
+            CHECK(unwrapped != nullptr);
+            if (auto constant{GetScalarConstantValue<T>(*unwrapped)}) {
+              mutableObject->set_init(AsGenericExpr(Expr<T>{*constant}));
+              return std::move(*unwrapped);
+            } else {
+              std::stringstream ss;
+              unwrapped->AsFortran(ss);
+              context.messages().Say(symbol->name(),
+                  "Initialization expression for PARAMETER '%s' (%s) cannot computed as a constant value"_err_en_US,
+                  symbol->name(), ss.str());
+            }
+          } else {
+            std::stringstream ss;
+            init->AsFortran(ss);
+            context.messages().Say(symbol->name(),
+                "Initialization expression for PARAMETER '%s' (%s) cannot be converted to its type (%s)"_err_en_US,
+                symbol->name(), ss.str(), dyType->AsFortran());
+          }
+          mutableObject->set_init(std::nullopt);
+        }
+      }
+    }
+  }
+  return std::nullopt;
+}
+
+// Apply subscripts to a constant array
+
+std::optional<Constant<SubscriptInteger>> GetConstantSubscript(
+    FoldingContext &context, Subscript &ss) {
+  ss = FoldOperation(context, std::move(ss));
+  return std::visit(
+      common::visitors{
+          [](IndirectSubscriptIntegerExpr &expr)
+              -> std::optional<Constant<SubscriptInteger>> {
+            if (auto constant{
+                    GetScalarConstantValue<SubscriptInteger>(expr.value())}) {
+              return Constant<SubscriptInteger>{*constant};
+            } else {
+              return std::nullopt;
+            }
+          },
+          [](Triplet &triplet) -> std::optional<Constant<SubscriptInteger>> {
+            std::optional<std::int64_t> lbi{1}, ubi;
+            std::optional<std::int64_t> stride{ToInt64(triplet.stride())};
+            if (auto lower{triplet.lower()}) {
+              lbi = ToInt64(*lower);
+            }
+            if (auto upper{triplet.upper()}) {
+              ubi = ToInt64(*upper);
+            }
+            if (lbi.has_value() && ubi.has_value() && stride.has_value() &&
+                *stride != 0) {
+              std::vector<SubscriptInteger::Scalar> values;
+              while ((*stride > 0 && *lbi <= *ubi) ||
+                  (*stride < 0 && *lbi >= *ubi)) {
+                values.emplace_back(*lbi);
+                *lbi += *stride;
+              }
+              return Constant<SubscriptInteger>{std::move(values),
+                  ConstantSubscripts{
+                      static_cast<ConstantSubscript>(values.size())}};
+            } else {
+              return std::nullopt;
+            }
+          },
+      },
+      ss.u);
+}
+
+template<typename T>
+std::optional<Constant<T>> ApplySubscripts(parser::ContextualMessages &messages,
+    const Constant<T> &array,
+    const std::vector<Constant<SubscriptInteger>> &subscripts) {
+  const auto &shape{array.shape()};
+  std::size_t rank{shape.size()};
+  CHECK(rank == subscripts.size());
+  std::size_t elements{1};
+  ConstantSubscripts resultShape;
+  for (const auto &ss : subscripts) {
+    CHECK(ss.Rank() <= 1);
+    if (ss.Rank() == 1) {
+      resultShape.push_back(static_cast<std::int64_t>(ss.size()));
+      elements *= ss.size();
+    }
+  }
+  ConstantSubscripts ssAt(rank, 0), at(rank, 0), tmp(1, 0);
+  std::vector<Scalar<T>> values;
+  while (elements-- > 0) {
+    bool increment{true};
+    std::size_t k{0};
+    for (std::size_t j{0}; j < rank; ++j) {
+      if (subscripts[j].Rank() == 0) {
+        at[j] = subscripts[j].GetScalarValue().value().ToInt64();
+      } else {
+        CHECK(k < resultShape.size());
+        tmp[0] = ssAt[j] + 1;
+        at[j] = subscripts[j].At(tmp).ToInt64();
+        if (increment) {
+          if (++ssAt[j] == resultShape[k]) {
+            ssAt[j] = 0;
+          } else {
+            increment = false;
+          }
+        }
+        ++k;
+      }
+      CHECK(!increment || elements == 0);
+      CHECK(k == resultShape.size());
+      if (at[j] < 1 || at[j] > shape[j]) {
+        messages.Say("Subscript value (%jd) is out of range in reference "
+                     "to a constant array value"_err_en_US,
+            static_cast<std::intmax_t>(at[j]));
+        return std::nullopt;
+      }
+      values.emplace_back(array.At(at));
+    }
+  }
+  if constexpr (T::category == TypeCategory::Character) {
+    return Constant<T>{array.LEN(), std::move(values), std::move(resultShape)};
+  } else if constexpr (std::is_same_v<T, SomeDerived>) {
+    return Constant<T>{array.result().derivedTypeSpec(), std::move(values),
+        std::move(resultShape)};
+  } else {
+    return Constant<T>{std::move(values), std::move(resultShape)};
+  }
+}
+
+template<typename T>
+static std::optional<Constant<T>> ApplyConstantSubscripts(
+    FoldingContext &context, ArrayRef &aRef) {
+  std::vector<Constant<SubscriptInteger>> subscripts;
+  for (Subscript &ss : aRef.subscript()) {
+    if (auto constant{GetConstantSubscript(context, ss)}) {
+      subscripts.emplace_back(std::move(*constant));
+    } else {
+      return std::nullopt;
+    }
+  }
+  if (const Symbol *const *symbol{std::get_if<const Symbol *>(&aRef.base())}) {
+    if (auto value{GetParameterValue<T>(context, *symbol)}) {
+      Expr<T> folded{Fold(context, std::move(*value))};
+      if (const auto *array{GetConstantValue<T>(folded)}) {
+        if (auto result{
+                ApplySubscripts(context.messages(), *array, subscripts)}) {
+          return result;
+        }
+      }
+    }
+  }
+  return std::nullopt;
+}
+
 template<typename T>
 Expr<T> FoldOperation(FoldingContext &context, Designator<T> &&designator) {
   if constexpr (T::category == TypeCategory::Character) {
@@ -816,7 +980,21 @@ Expr<T> FoldOperation(FoldingContext &context, Designator<T> &&designator) {
   }
   return std::visit(
       common::visitors{
-          [&](const Symbol *symbol) { return Expr<T>{std::move(designator)}; },
+          [&](const Symbol *symbol) {
+            if (auto constant{GetParameterValue<T>(context, symbol)}) {
+              return std::move(*constant);
+            } else {
+              return Expr<T>{std::move(designator)};
+            }
+          },
+          [&](ArrayRef &&aRef) {
+            if (auto c{ApplyConstantSubscripts<T>(context, aRef)}) {
+              return Expr<T>{std::move(*c)};
+            } else {
+              return Expr<T>{
+                  Designator<T>{FoldOperation(context, std::move(aRef))}};
+            }
+          },
           [&](auto &&x) {
             return Expr<T>{Designator<T>{FoldOperation(context, std::move(x))}};
           },
@@ -843,7 +1021,7 @@ public:
     if (FoldArray(array)) {
       auto n{static_cast<std::int64_t>(elements_.size())};
       if constexpr (std::is_same_v<T, SomeDerived>) {
-        return Expr<T>{Constant<T>{array.derivedTypeSpec(),
+        return Expr<T>{Constant<T>{array.GetType().GetDerivedTypeSpec(),
             std::move(elements_), ConstantSubscripts{n}}};
       } else if constexpr (T::category == TypeCategory::Character) {
         auto length{Fold(context_, common::Clone(array.LEN()))};
@@ -862,17 +1040,13 @@ public:
 private:
   bool FoldArray(const common::CopyableIndirection<Expr<T>> &expr) {
     Expr<T> folded{Fold(context_, common::Clone(expr.value()))};
-    if (auto *c{UnwrapExpr<Constant<T>>(folded)}) {
+    if (const auto *c{GetConstantValue<T>(folded)}) {
       // Copy elements in Fortran array element order
       ConstantSubscripts shape{c->shape()};
       int rank{c->Rank()};
       ConstantSubscripts index(shape.size(), 1);
       for (std::size_t n{c->size()}; n-- > 0;) {
-        if constexpr (std::is_same_v<T, SomeDerived>) {
-          elements_.emplace_back(c->derivedTypeSpec(), c->At(index));
-        } else {
-          elements_.emplace_back(c->At(index));
-        }
+        elements_.emplace_back(c->At(index));
         for (int d{0}; d < rank; ++d) {
           if (++index[d] <= shape[d]) {
             break;
@@ -952,32 +1126,32 @@ template<int KIND>
 Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(
     FoldingContext &context, TypeParamInquiry<KIND> &&inquiry) {
   using IntKIND = Type<TypeCategory::Integer, KIND>;
-  if (Component * component{common::Unwrap<Component>(inquiry.base())}) {
-    return Expr<IntKIND>{TypeParamInquiry<KIND>{
-        FoldOperation(context, std::move(*component)), inquiry.parameter()}};
-  }
-  if (context.pdtInstance() != nullptr &&
-      std::get<const Symbol *>(inquiry.base()) == nullptr) {
-    // "bare" type parameter: replace with actual value
-    const semantics::Scope *scope{context.pdtInstance()->scope()};
-    CHECK(scope != nullptr);
-    auto iter{scope->find(inquiry.parameter().name())};
-    if (iter != scope->end()) {
-      const Symbol &symbol{*iter->second};
-      const auto *details{symbol.detailsIf<semantics::TypeParamDetails>()};
-      if (details && details->init().has_value()) {
-        Expr<SomeInteger> expr{*details->init()};
-        return Fold(context,
-            Expr<IntKIND>{
-                Convert<IntKIND, TypeCategory::Integer>(std::move(expr))});
-      }
-    } else if (const auto *value{context.pdtInstance()->FindParameter(
-                   inquiry.parameter().name())}) {
-      // Parameter of a parent derived type; these are saved in the spec.
-      if (value->isExplicit()) {
-        return Fold(context,
-            Expr<IntKIND>{Convert<IntKIND, TypeCategory::Integer>(
-                Expr<SomeInteger>{value->GetExplicit().value()})});
+  if (const Symbol *const *symbol{
+          std::get_if<const Symbol *>(&inquiry.base())}) {
+    if (*symbol == nullptr) {
+      // A "bare" type parameter: replace with its value, if that's now known.
+      if (const auto *pdt{context.pdtInstance()}) {
+        if (const semantics::Scope * scope{context.pdtInstance()->scope()}) {
+          auto iter{scope->find(inquiry.parameter().name())};
+          if (iter != scope->end()) {
+            const Symbol &symbol{*iter->second};
+            const auto *details{
+                symbol.detailsIf<semantics::TypeParamDetails>()};
+            if (details && details->init().has_value()) {
+              Expr<SomeInteger> expr{*details->init()};
+              return Fold(context,
+                  Expr<IntKIND>{Convert<IntKIND, TypeCategory::Integer>(
+                      std::move(expr))});
+            }
+          }
+        }
+        if (const auto *value{pdt->FindParameter(inquiry.parameter().name())}) {
+          if (value->isExplicit()) {
+            return Fold(context,
+                Expr<IntKIND>{Convert<IntKIND, TypeCategory::Integer>(
+                    Expr<SomeInteger>{value->GetExplicit().value()})});
+          }
+        }
       }
     }
   }
@@ -1004,7 +1178,7 @@ bool ArrayConstructorIsFlat(const ArrayConstructorValues<T> &values) {
 
 template<typename T>
 std::optional<Expr<T>> AsFlatArrayConstructor(const Expr<T> &expr) {
-  if (const auto *c{UnwrapExpr<Constant<T>>(expr)}) {
+  if (const auto *c{GetConstantValue<T>(expr)}) {
     ArrayConstructor<T> result{expr};
     if (c->size() > 0) {
       ConstantSubscripts at{InitialSubscripts(c->shape())};
@@ -1046,14 +1220,8 @@ Expr<T> FromArrayConstructor(FoldingContext &context,
     ArrayConstructor<T> &&values, std::optional<ConstantSubscripts> &&shape) {
   Expr<T> result{Fold(context, Expr<T>{std::move(values)})};
   if (shape.has_value()) {
-    if (auto *constant{UnwrapExpr<Constant<T>>(result)}) {
+    if (auto *constant{GetConstantValue<T>(result)}) {
       constant->shape() = std::move(*shape);
-    } else {
-      auto resultShape{GetShape(context, result)};
-      CHECK(resultShape.has_value());
-      auto constantShape{AsConstantShape(*resultShape)};
-      CHECK(constantShape.has_value());
-      CHECK(*shape == AsConstantExtents(*constantShape));
     }
   }
   return result;
@@ -1227,7 +1395,7 @@ struct UnexpandabilityFindingVisitor : public virtual VisitorBase<bool> {
 };
 
 template<typename T> bool IsExpandableScalar(const Expr<T> &expr) {
-  return Visitor<UnexpandabilityFindingVisitor>{0}.Traverse(expr);
+  return !Visitor<UnexpandabilityFindingVisitor>{0}.Traverse(expr);
 }
 
 template<typename DERIVED, typename RESULT, typename LEFT, typename RIGHT>

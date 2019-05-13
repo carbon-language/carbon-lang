@@ -240,8 +240,8 @@ public:
       return nullptr;
     }
   }
-  void FoldParameterExpressions(evaluate::FoldingContext &);
-  void Instantiate(Scope &, SemanticsContext &);
+  void ProcessParameterExpressions(evaluate::FoldingContext &);
+  Scope &Instantiate(Scope &, SemanticsContext &);
   bool operator==(const DerivedTypeSpec &that) const {
     return &typeSymbol_ == &that.typeSymbol_ && parameters_ == that.parameters_;
   }

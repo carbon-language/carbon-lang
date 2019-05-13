@@ -535,7 +535,7 @@ Symbol &Symbol::Instantiate(
   Symbol &symbol{*pair.first->second};
   if (!pair.second) {
     // Symbol was already present in the scope, which can only happen
-    // in the case of type parameters with actual or default values.
+    // in the case of type parameters.
     CHECK(has<TypeParamDetails>());
     return symbol;
   }
@@ -550,10 +550,10 @@ Symbol &Symbol::Instantiate(
               if (const DerivedTypeSpec * derived{origType->AsDerived()}) {
                 DerivedTypeSpec newSpec{*derived};
                 if (test(Flag::ParentComp)) {
-                  // Forward all explicit type parameter values from the
-                  // derived type spec under instantiation to this parent
-                  // component spec when they define type parameters that
-                  // pertain to the parent component.
+                  // Forward any explicit type parameter values from the
+                  // derived type spec under instantiation to its parent
+                  // component derived type spec that define type parameters
+                  // of the parent component.
                   for (const auto &pair : instanceSpec.parameters()) {
                     if (scope.find(pair.first) == scope.end()) {
                       newSpec.AddParamValue(

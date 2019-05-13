@@ -187,8 +187,8 @@ public:
   const DeclTypeSpec &FindOrInstantiateDerivedType(DerivedTypeSpec &&,
       SemanticsContext &, DeclTypeSpec::Category = DeclTypeSpec::TypeDerived);
 
-  // Clones a DerivedType scope into a new derived type instance's scope.
-  void InstantiateDerivedType(Scope &, SemanticsContext &) const;
+  // Clones a DerivedType scope for a new instance from the type definition.
+  Scope &InstantiateDerivedType(const Scope &, SemanticsContext &);
 
   const DeclTypeSpec &InstantiateIntrinsicType(
       const DeclTypeSpec &, SemanticsContext &);

@@ -182,6 +182,11 @@ using HostUnsignedInt =
   t::t(t &&) = default; \
   t &t::operator=(const t &) = default; \
   t &t::operator=(t &&) = default;
+#define CONSTEXPR_CONSTRUCTORS_AND_ASSIGNMENTS(t) \
+  constexpr t(const t &) = default; \
+  constexpr t(t &&) = default; \
+  constexpr t &operator=(const t &) = default; \
+  constexpr t &operator=(t &&) = default;
 
 #define CLASS_BOILERPLATE(t) \
   t() = delete; \

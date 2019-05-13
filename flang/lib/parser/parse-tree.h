@@ -1576,13 +1576,11 @@ struct SubscriptTriplet {
       t;
 };
 
-// R923 vector-subscript -> int-expr
-using VectorSubscript = IntExpr;
-
 // R920 section-subscript -> subscript | subscript-triplet | vector-subscript
+// R923 vector-subscript -> int-expr
 struct SectionSubscript {
   UNION_CLASS_BOILERPLATE(SectionSubscript);
-  std::variant<Subscript, SubscriptTriplet, VectorSubscript> u;
+  std::variant<IntExpr, SubscriptTriplet> u;
 };
 
 // R925 cosubscript -> scalar-int-expr

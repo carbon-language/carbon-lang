@@ -375,7 +375,7 @@ std::optional<Expr<SomeType>> Negation(
           },
           [&](Expr<SomeDerived> &&x) {
             // TODO: defined operator
-            messages.Say("derived type cannot be negated"_err_en_US);
+            messages.Say("Operand cannot be negated"_err_en_US);
             return NoExpr();
           },
       },
@@ -527,19 +527,19 @@ std::optional<Expr<SomeType>> ConvertToNumeric(int kind, Expr<SomeType> &&x) {
 
 std::optional<Expr<SomeType>> ConvertToType(
     const DynamicType &type, Expr<SomeType> &&x) {
-  switch (type.category) {
+  switch (type.category()) {
   case TypeCategory::Integer:
-    return ConvertToNumeric<TypeCategory::Integer>(type.kind, std::move(x));
+    return ConvertToNumeric<TypeCategory::Integer>(type.kind(), std::move(x));
   case TypeCategory::Real:
-    return ConvertToNumeric<TypeCategory::Real>(type.kind, std::move(x));
+    return ConvertToNumeric<TypeCategory::Real>(type.kind(), std::move(x));
   case TypeCategory::Complex:
-    return ConvertToNumeric<TypeCategory::Complex>(type.kind, std::move(x));
+    return ConvertToNumeric<TypeCategory::Complex>(type.kind(), std::move(x));
   case TypeCategory::Character:
     if (auto *cx{UnwrapExpr<Expr<SomeCharacter>>(x)}) {
       auto converted{
-          ConvertToKind<TypeCategory::Character>(type.kind, std::move(*cx))};
-      if (type.charLength != nullptr) {
-        if (const auto &len{type.charLength->GetExplicit()}) {
+          ConvertToKind<TypeCategory::Character>(type.kind(), std::move(*cx))};
+      if (type.charLength() != nullptr) {
+        if (const auto &len{type.charLength()->GetExplicit()}) {
           Expr<SomeInteger> lenParam{*len};
           Expr<SubscriptInteger> length{Convert<SubscriptInteger>{lenParam}};
           converted = std::visit(
@@ -559,7 +559,7 @@ std::optional<Expr<SomeType>> ConvertToType(
   case TypeCategory::Logical:
     if (auto *cx{UnwrapExpr<Expr<SomeLogical>>(x)}) {
       return Expr<SomeType>{
-          ConvertToKind<TypeCategory::Logical>(type.kind, std::move(*cx))};
+          ConvertToKind<TypeCategory::Logical>(type.kind(), std::move(*cx))};
     }
     break;
   case TypeCategory::Derived:
@@ -572,6 +572,15 @@ std::optional<Expr<SomeType>> ConvertToType(
   default: CRASH_NO_CASE;
   }
   return std::nullopt;
+}
+
+std::optional<Expr<SomeType>> ConvertToType(
+    const DynamicType &to, std::optional<Expr<SomeType>> &&x) {
+  if (x.has_value()) {
+    return ConvertToType(to, std::move(*x));
+  } else {
+    return std::nullopt;
+  }
 }
 
 std::optional<Expr<SomeType>> ConvertToType(
@@ -588,9 +597,9 @@ std::optional<Expr<SomeType>> ConvertToType(
 }
 
 std::optional<Expr<SomeType>> ConvertToType(
-    const DynamicType &type, std::optional<Expr<SomeType>> &&x) {
+    const semantics::Symbol &to, std::optional<Expr<SomeType>> &&x) {
   if (x.has_value()) {
-    return ConvertToType(type, std::move(*x));
+    return ConvertToType(to, std::move(*x));
   } else {
     return std::nullopt;
   }

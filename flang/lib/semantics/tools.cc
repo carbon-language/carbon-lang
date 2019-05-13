@@ -267,16 +267,16 @@ const Symbol *FindExternallyVisibleObject(
 bool ExprHasTypeCategory(
     const SomeExpr &expr, const common::TypeCategory &type) {
   auto dynamicType{expr.GetType()};
-  return dynamicType.has_value() && dynamicType->category == type;
+  return dynamicType.has_value() && dynamicType->category() == type;
 }
 
 bool ExprTypeKindIsDefault(
     const SomeExpr &expr, const SemanticsContext &context) {
   auto dynamicType{expr.GetType()};
   return dynamicType.has_value() &&
-      dynamicType->category != common::TypeCategory::Derived &&
-      dynamicType->kind ==
-      context.defaultKinds().GetDefaultKind(dynamicType->category);
+      dynamicType->category() != common::TypeCategory::Derived &&
+      dynamicType->kind() ==
+      context.defaultKinds().GetDefaultKind(dynamicType->category());
 }
 
 const Symbol *FindFunctionResult(const Symbol &symbol) {

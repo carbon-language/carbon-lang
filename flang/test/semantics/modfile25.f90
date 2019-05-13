@@ -46,7 +46,7 @@ end module m1
 ! integer(8),parameter::a1s(1_8:)=[Integer(8)::5_8,5_8,5_8]
 ! integer(8),parameter::a1ss(1_8:)=[Integer(8)::3_8]
 ! integer(8),parameter::a1sss(1_8:)=[Integer(8)::1_8]
-! integer(8),parameter::a1rs(1_8:)=[Integer(4)::3_4,1_4,1_4,1_4]
+! integer(8),parameter::a1rs(1_8:)=[Integer(8)::3_8,1_8,1_8,1_8]
 ! integer(8),parameter::a1n(1_8:)=[Integer(8)::125_8,5_8,5_8]
 ! integer(8),parameter::a1sn(1_8:)=[Integer(8)::3_8,1_8,1_8]
 ! integer(8),parameter::ac1s(1_8:)=[Integer(8)::1_8]

@@ -123,7 +123,7 @@ bool ArrayConstructor<Type<TypeCategory::Character, KIND>>::operator==(
 
 bool ArrayConstructor<SomeDerived>::operator==(
     const ArrayConstructor &that) const {
-  return derivedTypeSpec_ == that.derivedTypeSpec_ &&
+  return result_ == that.result_ &&
       static_cast<const Base &>(*this) == static_cast<const Base &>(that);
   ;
 }
@@ -131,18 +131,16 @@ bool ArrayConstructor<SomeDerived>::operator==(
 StructureConstructor::StructureConstructor(
     const semantics::DerivedTypeSpec &spec,
     const StructureConstructorValues &values)
-  : derivedTypeSpec_{&spec}, values_{values} {}
+  : result_{spec}, values_{values} {}
 StructureConstructor::StructureConstructor(
     const semantics::DerivedTypeSpec &spec, StructureConstructorValues &&values)
-  : derivedTypeSpec_{&spec}, values_{std::move(values)} {}
+  : result_{spec}, values_{std::move(values)} {}
 
 bool StructureConstructor::operator==(const StructureConstructor &that) const {
-  return derivedTypeSpec_ == that.derivedTypeSpec_ && values_ == that.values_;
+  return result_ == that.result_ && values_ == that.values_;
 }
 
-DynamicType StructureConstructor::GetType() const {
-  return DynamicType{*derivedTypeSpec_};
-}
+DynamicType StructureConstructor::GetType() const { return result_.GetType(); }
 
 StructureConstructor &StructureConstructor::Add(
     const Symbol &symbol, Expr<SomeType> &&expr) {
