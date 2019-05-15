@@ -1,206 +1,139 @@
 <!--
-Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 -->
 
-The semantic pass will determine whether the input program is a legal Fortran
-program.
+# Semantic Analysis
+
+The semantic analysis pass will take a parse tree for a syntactically
+correct Fortran program and determine whether it is legal by enforcing
+the constraints of the language.
 
 If the program is not legal, the results of the semantic pass will be a list of
 errors associated with the program.
 
-If the program is legal, the semantic pass will produce an unambiguous parse
-tree with additional information that is useful for the tools API and creation
-of the DST.
+If the program is legal, the semantic pass will produce a (possibly modified)
+parse tree for the semantically correct program with each name mapped to a symbol
+and each expression fully analyzed.
 
-What is required of semantics?
-* Error checking
-* A non-ambiguous parse tree
-* Symbol tables with scope information
-* Name & operator resolution
+All user errors are detected during semantic analysis.
+After it completes successfully the program should compile with no error messages.
+There may still be warnings or informational messages.
 
-What do we want from semantics?
-* Cache information about labels and references to labels
-* Cache information derived from static expression evaluation
+## Phases of Semantic Analysis
 
-What don’t we want from semantics?
-* Semantics will not display error messages directly.  Instead, error messages
-and their associated source locations will be saved and returned to the caller.
-* The parse tree will not be modified except to resolve ambiguity and resolve
-names, operators, and labels.
+1. [Validate labels](#validate-labels) -
+   Check all constraints on labels and branches
+2. [Rewrite DO loops](#rewrite-do-loops) -
+   Convert all occurrences of `LabelDoStmt` to `DoConstruct`.
+3. [Name resolution](#name-resolution) -
+   Analyze names and declarations, build a tree of Scopes containing Symbols,
+   and fill in the `Name::symbol` data member in the parse tree
+4. [Rewrite parse tree](#rewrite-parse-tree) -
+   Fix incorrect parses based on symbol information
+5. [Expression analysis](#expression-analysis) -
+   Analyze all expressions in the parse tree and fill in `Expr::typedExpr` and
+   `Variable::typedExpr` with analyzed expressions
+6. [Statement semantics](#statement-semantics) -
+   Perform remaining semantic checks on the execution parts of subprograms
+7. [Write module files](#write-module-files) -
+   If no errors have occurred, write out `.mod` files for modules and submodules
 
-Semantic checking does not need to preserve information that is easily
-recomputed, such as pointers to enclosing structures.
+### Validate labels
 
-The parse tree shall be immutable after resolution of names, operators, labels
-and ambiguous sub-trees.  This means that the parse tree does not have direct
-references to error messages, etc.
+Perform semantic checks related to labels and branches:
+- check that any labels that are referenced are defined and in scope
+- check branches into loop bodies
+- check that labeled `DO` loops are properly nested
+- check labels in data transfer statements
 
-Much of the work that is to be performed by semantic analysis has been specified
-in the Fortran standard with numbered constraints.  The structure of the code in
-the semantic analyzer should correspond to the structure of the Fortran standard
-as closely as possible so that one can refer to the Standard easily from the
-code, and so that we can audit the code for missing checks.
+### Rewrite DO loops
 
-The code that generates LLVM will be able to be implemented with assertions
-rather than with user error message generation; in other words, semantic
-analysis will detect and report all errors. Note that informational and warning
-messages may be generated after semantic analysis.
+This phases normalizes the parse tree by removing all unstructures `DO` loops
+and replacing them with `DO` constructs.
 
-Analyses and data structures that can be deferred to the deep structure should
-be so, with exceptions for cases where completing an analysis is just a little
-more complex than completing a correctness check (e.g. EQUIVALENCE overlays).
+### Name resolution
 
+The name resolution phase walks the parse tree and constructs the symbol table.
 
-## Symbol resolution and scope assignment
-The section describes the when scopes are created and how symbols are resolved.
-It is a step-by-step process.  Each step is envisioned as a separate pass over
-the tree.  The sub-bullets under each step will happen roughly in the order
-specified.
+The symbol table consists of a tree of `Scope` objects rooted at the global scope.
+The global scope is owned by the `SemanticsContext` object.
+It contains a `Scope` for each program unit in the compilation.
 
-There is a special predefined scope for intrinsics.  This scope is an ancestor
-of all other scopes.
+Each `Scope` in the scope tree contains child scopes representing other scopes
+lexically nested in it.
+Each `Scope` also contains a map of `CharBlock` to `Symbol` representing names
+declared in that scope. (All names in the symbol table are represented as
+`CharBlock` objects, i.e. as substrings of the cooked character stream.)
 
-More detail is needed about this predefined scope. Who populates this special
-intrinsic scope? Does it need to be constructed and populated for each
-compilation unit? Maybe it could be a single distinct immutable scope from which
-names can be associated, rather than an ancestor.
+All `Symbol` objects are owned by the symbol table data structures.
+They should be accessed as `Symbol *` or `Symbol &` outside of the symbol
+table classes as they can't be created, copied, or moved.
+The `Symbol` class has functions and data common across all symbols, and a
+`details` field that contains more information specific to that type of symbol.
+Many symbols also have types, represented by `DeclTypeSpec`.
+Types are also owned by scopes.
 
-The following steps will be followed each program unit:
+Name resolution happens on the parse tree in this order:
+1. Process the specification of a program unit:
+  1. Create a new scope for the unit
+  2. Create a symbol for each contained subprogram containing just the name
+  3. Process the opening statement of the unit (`ModuleStmt`, `FunctionStmt`, etc.)
+  4. Process the specification part of the unit
+2. Apply the same process recursively to nested subprograms
+3. Process the execution part of the program unit
+4. Process the execution parts of nested subprograms recursively
 
-_N.B. Modules are not yet covered_
+After the completion of this phase, every `Name` corresponds to a `Symbol`
+unless an error occurred.
 
-_N.B. We need to define the semantics of the LOC intrinsic_
+### Rewrite parse tree
 
-#### Step 1. Process the top-level declaration, e.g. a subroutine
-1. Create a new scope
-1. Add the name of the program unit to the scope except for functions without
-result clause
-1. Add the result variable to the scope
-1. Add the names of the dummy arguments to the scope
+The parser cannot build a completely correct parse tree without symbol information.
+This phases correct mis-parses based on symbols:
+- Array element assignments may be parsed as statement functions: `a(i) = ...`
+- Namelist group names without `NML=` may be parsed as format expressions
+- A file unit number expression may be parsed as a character variable
 
-Implementation note:  When a program make an illegal forward reference, we
-should emit at least a warning so that programs that are illegally assuming host
-association for a name won’t be silently invalidated; preferably with a message
-that references both instances.
+This phase also produces an internal error if it finds a `Name` that does not
+have its `symbol` data member filled in. This error is suppressed if other
+errors have occurred because in that case a `Name` corresponding to an erroneous
+symbol may not be resolved.
 
-#### Step 2.  Process the specification part
-1. Set up implicit rules
-1. Process imports, uses, and host association
-1. Add the names of the internal and module procedures
-1. Process declaration constructs in a single pass
-1. Apply implicit rules to undefined locals, dummy arguments and the function
-result
-1. Create new scopes for derived type, structure, union
+### Expression analysis
 
-Host association logically happens at step 2; perhaps host association can
-be deferred until the symbol is referenced?
+Expressions that occur in the specification part are analyzed during name
+resolution, for example, initial values, array bounds, type parameters.
+Any remaining expressions are analyzed in this phase.
 
-At this point, all names in the specification part of the parse tree reference
-a symbol.
+For each `Variable` and top-level `Expr` (i.e. one that is not nested below
+another `Expr` in the parse tree) the analyzed form of the expression is saved
+in the `typedExpr` data member. After this phase has completed, the analyzed
+expression can be accessed using `GetExpr()` in `lib/semantics/tools.cc`.
 
-We  can process declaration constructs in a single pass because:
-- It is not legal to reference an internal procedure.
-- It is not  legal to reference not-yet-defined parameters, constants, etc.
-- It is not possible to inquire about a type parameter or array bound for an
-object that is not yet defined
-- So, no other forward definitions, so yes, we can do in a single pass
+This phase also corrects mis-parses based on the result of expression analysis:
+- An expression like `a(b)` is parsed as a function reference but may need
+  to be rewritten to an array element reference (if `a` is an object entity)
+  or to a structure constructor (if `a` is a derive type)
+- An expression like `a(b:c)` is parsed as an array section but may need to be
+  rewritten as a substring if `a` is an object with type CHARACTER
 
-Do we ever need to apply implicit rules in the specification section?
-1. `integer(kind = kind(x)) :: y ! does implicit rule apply to ‘x’`?
-1. `integer, parameter :: z = rank(x) ! use implicit rule to get ‘0’`?
+### Statement semantics
 
-What if (1) and (2) are legal & x’s type is subsequently declared?
+Multiple independent checkers driven by the `SemanticsVisitor` framework
+perform the remaining semantic checks.
+By this phase, and names and expressions that can be successfully resolved
+have been. But there may be names without symbols or expressions without
+analyzed form if errors occurred earlier.
 
-#### Step 3. Resolve statement functions vs array assignments
-1. Rewrite and move array assignments to execution part
-1. Why rewrite?  Because array assignment needs processing in Step 4
-1. Statement functions need scopes for the dummy arguments
+### Write module files
 
-N.B. As soon as a statement function definition is determined to actually be a
-misrecognized assignment to an array element, all of the statement definitions
-that follow it in the same specification-part must also be converted into array
-element assignments, even if that would lead to an error.
+Separate compilation information is written out on successful compilation
+of modules and submodules. These are used as input to name resolution
+in program units that `USE` the modules.
 
-#### Step 4. Resolve symbols in the execution part
-1. Look up the name
-  - If it exists in a scope, update the name to reference the symbol
-  - If it does not exist,
-    * Apply the implicit rules
-    * Add the name to the scope
-    * Update the name to reference the new symbol
-  - Introduce new scopes for
-    * Select Type type guard statements
-    * Select Rank case statements
-    * Associate construct
-    * Block construct
-      - Block has a specification part
-      - Blocks start Step 1..4 again
-      - N.B. Implicits are applied to the host scope
-    * Implied Do
-    * Index names in Forall and Do Concurrent
-    * Change Team
-    * OpenMP and OpenACC constructs
-    * ENTRY
+Module files are stripped down Fortran source for the module.
+Parts that aren't needed to compile dependent program units (e.g. action statements)
+are omitted.
 
-References to derived types members are not resolved until semantics
-
-No semantic checking or resolving of types (except for implicit declarations)
-has happened yet.
-
-#### Step 5. Perform Step 1..4 on each internal procedure
-- Side effect is that each internal procedure gets a proper interface in the
-parent scope
-- We do this now because we need to know the return and argument types for
-functions, e.g. `a = f(a, b, c) % x + 1`
-
-#### Step 6. Tree Disambiguation
-
-At this point, or during Step 3 (TBD), the tree can be rewritten to be
-unambiguous.
-- Structure vs operator a.b.c.d
-- Array references vs function calls
-- Statement functions vs array assignment (In Step 3)
-- READ/WRITE stmts where the arguments do not have keywords
-  - WRITE (6, X)  ….
-  - That X might be a namelist group or an internal variable
-  - Need to know the names of the namelist groups to disambiguate it
-- Others….? TBD
-
-Resolution of parse tree ambiguity (statement function definition, function vs.
-  array)
-
-#### Step 7. Do enough semantic processing to generate .mod files
-- Fully resolve derived types
-- Combine and check declarations of all entities within a given scope; resolve
-their type, rank, shape, and other attributes.
-- Constant evaluation is required at this point.
-
-Why do Step 7 before the rest of semantic checking? The sooner we can generate
-mod file the sooner we can read ‘em; you can test a lot of Fortran programs as
-soon as you can read mod files.
-
-#### Step 8. Semantic Rule Checking
-
-An incomplete and unordered list of requirements for semantic analysis:
-
-* EQUIVALENCE overlaying (checking at least)
-* Intrinsic function generic->specific resolution, constraint checking, T/R/S.
-* Compile-time evaluation of constant expressions, including intrinsic
-functions.
-* Resolution of generics and type-bound procedures.
-* Identifying and recording uplevel references.
-* Control flow constraint checking
-* Labeled DO loop terminal statement expansion? (maybe not, can defer to CFG in
-  DST).
-* Construct association: distinguish pointer-like from allocatable-like
-* OMP and OACC checking
-* CUF constraint checking
-
-## Utility Routines
-
-### Diagnostic Output
-TBD
-
-### Constant Expression Evaluation
-- Scalars
-- Array intrinsics
+The module file for module `m` is named `m.mod` and the module file for
+submodule `s` of module `m` is named `m-s.mod`.
