@@ -260,13 +260,22 @@ little like C++17's `std::visit()` on a discriminated union.
 Pointers
 --------
 Pointers are objects in Fortran, not data types.
-Pointers can point to data, arrays, and subprograms, but not to other pointers
-or to an allocatable.
+Pointers can point to data, arrays, and subprograms.
 A pointer can only point to data that has the `TARGET` attribute.
 Outside of the pointer assignment statement (`P=>X`) and some intrinsic
 functions and cases with pointer dummy arguments, pointers are implicitly
 dereferenced, and the use of their name is a reference to the data to which
 they point instead.
+
+Unlike C, a pointer cannot point to a pointer *per se*, nor can they be
+used to implement a level of indirection to the management structure of
+an allocatable.
+If you assign to a Fortran pointer to make it point at another pointer,
+you are making the pointer point to the data (if any) to which the other
+pointer points.
+Similarly, if you assign to a Fortran pointer to make it point to an allocatable,
+you are making the pointer point to the current content of the allocatable,
+not to the metadata that manages the allocatable.
 
 Unlike allocatables, pointers do not deallocate their data when they go
 out of scope.
