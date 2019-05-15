@@ -48,7 +48,7 @@ Perform semantic checks related to labels and branches:
 
 ### Rewrite DO loops
 
-This phases normalizes the parse tree by removing all unstructures `DO` loops
+This phase normalizes the parse tree by removing all unstructured `DO` loops
 and replacing them with `DO` constructs.
 
 ### Name resolution
@@ -75,10 +75,10 @@ Types are also owned by scopes.
 
 Name resolution happens on the parse tree in this order:
 1. Process the specification of a program unit:
-  1. Create a new scope for the unit
-  2. Create a symbol for each contained subprogram containing just the name
-  3. Process the opening statement of the unit (`ModuleStmt`, `FunctionStmt`, etc.)
-  4. Process the specification part of the unit
+   1. Create a new scope for the unit
+   2. Create a symbol for each contained subprogram containing just the name
+   3. Process the opening statement of the unit (`ModuleStmt`, `FunctionStmt`, etc.)
+   4. Process the specification part of the unit
 2. Apply the same process recursively to nested subprograms
 3. Process the execution part of the program unit
 4. Process the execution parts of nested subprograms recursively
@@ -89,7 +89,7 @@ unless an error occurred.
 ### Rewrite parse tree
 
 The parser cannot build a completely correct parse tree without symbol information.
-This phases correct mis-parses based on symbols:
+This phase corrects mis-parses based on symbols:
 - Array element assignments may be parsed as statement functions: `a(i) = ...`
 - Namelist group names without `NML=` may be parsed as format expressions
 - A file unit number expression may be parsed as a character variable
@@ -121,7 +121,7 @@ This phase also corrects mis-parses based on the result of expression analysis:
 
 Multiple independent checkers driven by the `SemanticsVisitor` framework
 perform the remaining semantic checks.
-By this phase, and names and expressions that can be successfully resolved
+By this phase, all names and expressions that can be successfully resolved
 have been. But there may be names without symbols or expressions without
 analyzed form if errors occurred earlier.
 
