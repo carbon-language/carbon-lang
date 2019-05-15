@@ -177,7 +177,7 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
   std::optional<std::int64_t> lbi{ToInt64(lower_.value().value())};
   if (lbi.has_value() && *lbi < 1) {
     context.messages().Say(
-        "lower bound (%jd) on substring is less than one"_en_US,
+        "Lower bound (%jd) on substring is less than one"_en_US,
         static_cast<std::intmax_t>(*lbi));
     *lbi = 1;
     lower_ = AsExpr(Constant<SubscriptInteger>{1});
@@ -204,39 +204,38 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
       lower_ = AsExpr(Constant<SubscriptInteger>{*lbi});
       upper_ = AsExpr(Constant<SubscriptInteger>{*ubi});
     } else if (length.has_value() && *ubi > *length) {
-      context.messages().Say("upper bound (&jd) on substring is greater "
+      context.messages().Say("Upper bound (%jd) on substring is greater "
                              "than character length (%jd)"_en_US,
           static_cast<std::intmax_t>(*ubi), static_cast<std::int64_t>(*length));
       *ubi = *length;
     }
-    if (lbi.has_value()) {
-      if (literal != nullptr || *ubi < *lbi) {
-        auto newStaticData{StaticDataObject::Create()};
-        auto items{*ubi - *lbi + 1};
-        auto width{(*literal)->itemBytes()};
-        auto bytes{items * width};
-        auto startByte{(*lbi - 1) * width};
-        const auto *from{&(*literal)->data()[0] + startByte};
-        for (auto j{0}; j < bytes; ++j) {
-          newStaticData->data().push_back(from[j]);
-        }
-        parent_ = newStaticData;
-        lower_ = AsExpr(Constant<SubscriptInteger>{1});
-        std::int64_t length = newStaticData->data().size();
-        upper_ = AsExpr(Constant<SubscriptInteger>{length});
-        switch (width) {
-        case 1:
-          return {
-              AsCategoryExpr(AsExpr(Constant<Type<TypeCategory::Character, 1>>{
-                  *newStaticData->AsString()}))};
-        case 2:
-          return {AsCategoryExpr(Constant<Type<TypeCategory::Character, 2>>{
-              *newStaticData->AsU16String()})};
-        case 4:
-          return {AsCategoryExpr(Constant<Type<TypeCategory::Character, 4>>{
-              *newStaticData->AsU32String()})};
-        default: CRASH_NO_CASE;
-        }
+    if (lbi.has_value() && literal != nullptr) {
+      CHECK(*ubi >= *lbi);
+      auto newStaticData{StaticDataObject::Create()};
+      auto items{*ubi - *lbi + 1};
+      auto width{(*literal)->itemBytes()};
+      auto bytes{items * width};
+      auto startByte{(*lbi - 1) * width};
+      const auto *from{&(*literal)->data()[0] + startByte};
+      for (auto j{0}; j < bytes; ++j) {
+        newStaticData->data().push_back(from[j]);
+      }
+      parent_ = newStaticData;
+      lower_ = AsExpr(Constant<SubscriptInteger>{1});
+      std::int64_t length = newStaticData->data().size();
+      upper_ = AsExpr(Constant<SubscriptInteger>{length});
+      switch (width) {
+      case 1:
+        return {
+            AsCategoryExpr(AsExpr(Constant<Type<TypeCategory::Character, 1>>{
+                *newStaticData->AsString()}))};
+      case 2:
+        return {AsCategoryExpr(Constant<Type<TypeCategory::Character, 2>>{
+            *newStaticData->AsU16String()})};
+      case 4:
+        return {AsCategoryExpr(Constant<Type<TypeCategory::Character, 4>>{
+            *newStaticData->AsU32String()})};
+      default: CRASH_NO_CASE;
       }
     }
   }
