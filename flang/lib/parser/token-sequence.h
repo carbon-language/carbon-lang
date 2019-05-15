@@ -108,7 +108,7 @@ public:
   bool HasRedundantBlanks(std::size_t firstChar = 0) const;
   TokenSequence &RemoveBlanks(std::size_t firstChar = 0);
   TokenSequence &RemoveRedundantBlanks(std::size_t firstChar = 0);
-  TokenSequence &ClipComment();
+  TokenSequence &ClipComment(bool skipFirst = false);
   void Emit(CookedSource &) const;
   void Dump(std::ostream &) const;
 

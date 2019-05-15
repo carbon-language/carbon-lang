@@ -193,7 +193,7 @@ void Prescanner::Statement() {
       NormalizeCompilerDirectiveCommentMarker(*preprocessed);
       preprocessed->ToLowerCase();
       SourceFormChange(preprocessed->ToString());
-      preprocessed->ClipComment().Emit(cooked_);
+      preprocessed->ClipComment(true /* skip first ! */).Emit(cooked_);
       break;
     case LineClassification::Kind::Source:
       if (inFixedForm_) {

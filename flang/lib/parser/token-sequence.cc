@@ -221,16 +221,20 @@ TokenSequence &TokenSequence::RemoveRedundantBlanks(std::size_t firstChar) {
   return *this;
 }
 
-TokenSequence &TokenSequence::ClipComment() {
+TokenSequence &TokenSequence::ClipComment(bool skipFirst) {
   std::size_t tokens{SizeInTokens()};
   for (std::size_t j{0}; j < tokens; ++j) {
     if (TokenAt(j).FirstNonBlank() == '!') {
-      TokenSequence result;
-      if (j > 0) {
-        result.Put(*this, 0, j - 1);
+      if (skipFirst) {
+        skipFirst = false;
+      } else {
+        TokenSequence result;
+        if (j > 0) {
+          result.Put(*this, 0, j - 1);
+        }
+        swap(result);
+        return *this;
       }
-      swap(result);
-      return *this;
     }
   }
   return *this;
