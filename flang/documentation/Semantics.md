@@ -4,8 +4,15 @@ Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 
 # Semantic Analysis
 
-The semantic analysis pass will take a parse tree for a syntactically
-correct Fortran program and determine whether it is legal by enforcing
+The semantic analysis pass determines if a syntactically correct Fortran
+program is is legal by enforcing the constraints of the language.
+
+The input is a parse tree with a `Program` node at the root;
+and a "cooked" character stream, a contiguous stream of characters
+containing a normalized form of the Fortran source.
+
+The semantic analysis pass takes a parse tree for a syntactically
+correct Fortran program and determines whether it is legal by enforcing
 the constraints of the language.
 
 If the program is not legal, the results of the semantic pass will be a list of
@@ -15,7 +22,7 @@ If the program is legal, the semantic pass will produce a (possibly modified)
 parse tree for the semantically correct program with each name mapped to a symbol
 and each expression fully analyzed.
 
-All user errors are detected during semantic analysis.
+All user errors are detected either prior to or during semantic analysis.
 After it completes successfully the program should compile with no error messages.
 There may still be warnings or informational messages.
 
@@ -32,11 +39,17 @@ There may still be warnings or informational messages.
    Fix incorrect parses based on symbol information
 5. [Expression analysis](#expression-analysis) -
    Analyze all expressions in the parse tree and fill in `Expr::typedExpr` and
-   `Variable::typedExpr` with analyzed expressions
+   `Variable::typedExpr` with analyzed expressions; fix incorrect parses
+   based on the result of this analysis
 6. [Statement semantics](#statement-semantics) -
    Perform remaining semantic checks on the execution parts of subprograms
 7. [Write module files](#write-module-files) -
    If no errors have occurred, write out `.mod` files for modules and submodules
+
+If phase 1 or phase 2 encounter an error on any of the program units,
+compilation terminates. Otherwise, phases 3-6 are all performed even if
+errors occur.
+Module files are written (phase 7) only if there are no errors.
 
 ### Validate labels
 
@@ -108,7 +121,7 @@ Any remaining expressions are analyzed in this phase.
 For each `Variable` and top-level `Expr` (i.e. one that is not nested below
 another `Expr` in the parse tree) the analyzed form of the expression is saved
 in the `typedExpr` data member. After this phase has completed, the analyzed
-expression can be accessed using `GetExpr()` in `lib/semantics/tools.cc`.
+expression can be accessed using `semantics::GetExpr()`.
 
 This phase also corrects mis-parses based on the result of expression analysis:
 - An expression like `a(b)` is parsed as a function reference but may need
