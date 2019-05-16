@@ -441,4 +441,13 @@ inline raw_ostream &operator<<(raw_ostream &OS, const BinarySection &Section) {
 } // namespace bolt
 } // namespace llvm
 
+struct SDTMarkerInfo {
+  uint64_t PC;
+  uint64_t Base;
+  uint64_t Semaphore;
+  llvm::StringRef Provider;
+  llvm::StringRef Name;
+  llvm::StringRef Args;
+};
+
 #endif

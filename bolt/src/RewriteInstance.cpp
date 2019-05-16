@@ -294,6 +294,13 @@ PrintLoopInfo("print-loops",
   cl::Hidden,
   cl::cat(BoltCategory));
 
+static cl::opt<bool>
+PrintSDTMarkers("print-sdt",
+  cl::desc("print all SDT markers"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
 static cl::opt<cl::boolOrDefault>
 RelocationMode("relocs",
   cl::desc("use relocations in the binary (default=autodetect)"),
@@ -872,6 +879,64 @@ void RewriteInstance::discoverStorage() {
   NewTextSegmentAddress = NextAvailableAddress;
   NewTextSegmentOffset = NextAvailableOffset;
   BC->LayoutStartAddress = NextAvailableAddress;
+}
+
+void RewriteInstance::parseSDTNotes() {
+  if (!SDTSection)
+    return;
+
+  StringRef Buf = SDTSection->getContents();
+  auto DE = DataExtractor(Buf, BC->AsmInfo->isLittleEndian(),
+                          BC->AsmInfo->getCodePointerSize());
+  uint32_t Offset = 0;
+
+  while (DE.isValidOffset(Offset)) {
+    auto NameSz = DE.getU32(&Offset);
+    DE.getU32(&Offset); // skip over DescSz
+    auto Type = DE.getU32(&Offset);
+    Offset = alignTo(Offset, 4);
+
+    if (Type != 3)
+      errs() << "BOLT-WARNING: SDT note type \"" << Type
+             << "\" is not expected\n";
+
+    if (NameSz == 0)
+      errs() << "BOLT-WARNING: SDT note has empty name\n";
+
+    StringRef Name = DE.getCStr(&Offset);
+
+    if (!Name.equals("stapsdt"))
+      errs() << "BOLT-WARNING: SDT note name \"" << Name
+             << "\" is not expected\n";
+
+    // Parse description
+    SDTMarkerInfo Marker;
+    Marker.PC = DE.getU64(&Offset);
+    Marker.Base = DE.getU64(&Offset);
+    Marker.Semaphore = DE.getU64(&Offset);
+    Marker.Provider = DE.getCStr(&Offset);
+    Marker.Name = DE.getCStr(&Offset);
+    Marker.Args = DE.getCStr(&Offset);
+
+    Offset = alignTo(Offset, 4);
+
+    BC->SDTMarkers.push_back(Marker);
+  }
+
+  if (opts::PrintSDTMarkers)
+    printSDTMarkers();
+}
+
+void RewriteInstance::printSDTMarkers() {
+  outs() << "BOLT-INFO: Number of SDT markers is " << BC->SDTMarkers.size()
+         << "\n";
+  for (auto &Marker : BC->SDTMarkers) {
+    outs() << "BOLT-INFO: PC: " << utohexstr(Marker.PC)
+           << ", Base: " << utohexstr(Marker.Base)
+           << ", Semaphore: " << utohexstr(Marker.Semaphore)
+           << ", Provider: " << Marker.Provider << ", Name: " << Marker.Name
+           << ", Args: " << Marker.Args << "\n";
+  }
 }
 
 void RewriteInstance::parseBuildID() {
@@ -1753,6 +1818,7 @@ void RewriteInstance::readSpecialSections() {
   PLTGOTSection = BC->getUniqueSectionByName(".plt.got");
   RelaPLTSection = BC->getUniqueSectionByName(".rela.plt");
   BuildIDSection = BC->getUniqueSectionByName(".note.gnu.build-id");
+  SDTSection = BC->getUniqueSectionByName(".note.stapsdt");
 
   if (opts::PrintSections) {
     outs() << "BOLT-INFO: Sections from original binary:\n";
@@ -1781,6 +1847,7 @@ void RewriteInstance::readSpecialSections() {
 
   // Parse build-id
   parseBuildID();
+
   if (DA.started()) {
     if (auto FileBuildID = getPrintableBuildID()) {
       outs() << "BOLT-INFO: binary build-id is:     " << *FileBuildID << "\n";
@@ -1790,6 +1857,8 @@ void RewriteInstance::readSpecialSections() {
                 "not read one from input binary\n";
     }
   }
+
+  parseSDTNotes();
 }
 
 void RewriteInstance::adjustCommandLineOptions() {

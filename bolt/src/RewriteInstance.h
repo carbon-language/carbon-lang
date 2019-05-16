@@ -258,6 +258,12 @@ private:
   /// Return true if the function \p BF should be disassembled.
   bool shouldDisassemble(BinaryFunction &BF) const;
 
+  /// Parse .note.stapsdt section
+  void parseSDTNotes();
+
+  /// Print all SDT markers
+  void printSDTMarkers();
+
 public:
   /// Standard ELF sections we overwrite.
   static constexpr const char *SectionsToOverwrite[] = {
@@ -383,6 +389,10 @@ private:
 
   /// .note.gnu.build-id section.
   ErrorOr<BinarySection &> BuildIDSection{std::errc::bad_address};
+
+  /// .note.stapsdt section.
+  /// Contains information about statically defined tracing points
+  ErrorOr<BinarySection &> SDTSection{std::errc::bad_address};
 
   /// A reference to the build-id bytes in the original binary
   StringRef BuildID;
