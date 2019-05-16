@@ -309,6 +309,9 @@ private:
   /// Function order for streaming into the destination binary.
   uint32_t Index{-1U};
 
+  /// Indicate that the function body has SDT marker
+  bool HasSDTMarker{false};
+
   /// Get basic block index assuming it belongs to this function.
   unsigned getIndex(const BinaryBasicBlock *BB) const {
     assert(BB->getIndex() < BasicBlocks.size());
@@ -1243,6 +1246,9 @@ public:
   bool hasJumpTables() const {
     return !JumpTables.empty();
   }
+
+  /// Return true if the function has SDT marker
+  bool hasSDTMarker() const { return HasSDTMarker; }
 
   const JumpTable *getJumpTable(const MCInst &Inst) const {
     const auto Address = BC.MIB->getJumpTable(Inst);

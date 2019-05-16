@@ -312,7 +312,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
                      KeyHash, KeyCongruent> CongruentBuckets;
   for (auto &BFI : BC.getBinaryFunctions()) {
     auto &BF = BFI.second;
-    if (!shouldOptimize(BF) || BF.isFolded())
+    if (!shouldOptimize(BF) || BF.isFolded() || BF.hasSDTMarker())
       continue;
 
     // Make sure indices are in-order.

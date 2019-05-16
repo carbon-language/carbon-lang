@@ -180,6 +180,9 @@ Inliner::InliningInfo Inliner::getInliningInfo(const BinaryFunction &BF) const {
 
   // Perform necessary checks unless the option overrides it.
   if (!opts::mustConsider(BF)) {
+    if (BF.hasSDTMarker())
+      return INL_NONE;
+
     if (BF.hasEHRanges())
       return INL_NONE;
 

@@ -395,8 +395,8 @@ public:
   /// List of functions that always trap.
   std::vector<const BinaryFunction *> TrappedFunctions;
 
-  /// List of the SDT markers in the elf file
-  std::vector<SDTMarkerInfo> SDTMarkers;
+  /// Map SDT locations to SDT markers info
+  std::unordered_map<uint64_t, SDTMarkerInfo> SDTMarkers;
 
   BinaryContext(std::unique_ptr<MCContext> Ctx,
                 std::unique_ptr<DWARFContext> DwCtx,

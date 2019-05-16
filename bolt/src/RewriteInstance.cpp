@@ -919,8 +919,7 @@ void RewriteInstance::parseSDTNotes() {
     Marker.Args = DE.getCStr(&Offset);
 
     Offset = alignTo(Offset, 4);
-
-    BC->SDTMarkers.push_back(Marker);
+    BC->SDTMarkers[Marker.PC] = Marker;
   }
 
   if (opts::PrintSDTMarkers)
@@ -930,7 +929,8 @@ void RewriteInstance::parseSDTNotes() {
 void RewriteInstance::printSDTMarkers() {
   outs() << "BOLT-INFO: Number of SDT markers is " << BC->SDTMarkers.size()
          << "\n";
-  for (auto &Marker : BC->SDTMarkers) {
+  for (auto It : BC->SDTMarkers) {
+    auto &Marker = It.second;
     outs() << "BOLT-INFO: PC: " << utohexstr(Marker.PC)
            << ", Base: " << utohexstr(Marker.Base)
            << ", Semaphore: " << utohexstr(Marker.Semaphore)

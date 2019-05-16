@@ -1744,10 +1744,17 @@ bool BinaryFunction::buildCFG() {
       if (PrevBB)
         updateOffset(LastInstrOffset);
     }
-    // Ignore nops. We use nops to derive alignment of the next basic block.
-    // It will not always work, as some blocks are naturally aligned, but
-    // it's just part of heuristic for block alignment.
-    if (MIB->isNoop(Instr) && !PreserveNops) {
+
+    bool IsSDTMarker =
+        MIB->isNoop(Instr) && BC.SDTMarkers.count(I->first + Address);
+
+    if (IsSDTMarker)
+      HasSDTMarker = true;
+
+    // Ignore nops except SDT markers. We use nops to derive alignment of the
+    // next basic block. It will not always work, as some blocks are naturally
+    // aligned, but it's just part of heuristic for block alignment.
+    if (MIB->isNoop(Instr) && !PreserveNops && !IsSDTMarker) {
       IsLastInstrNop = true;
       continue;
     }
