@@ -911,13 +911,13 @@ void RewriteInstance::parseSDTNotes() {
 
     // Parse description
     SDTMarkerInfo Marker;
+    Marker.PCOffset = Offset;
     Marker.PC = DE.getU64(&Offset);
     Marker.Base = DE.getU64(&Offset);
     Marker.Semaphore = DE.getU64(&Offset);
     Marker.Provider = DE.getCStr(&Offset);
     Marker.Name = DE.getCStr(&Offset);
     Marker.Args = DE.getCStr(&Offset);
-
     Offset = alignTo(Offset, 4);
     BC->SDTMarkers[Marker.PC] = Marker;
   }
@@ -2924,6 +2924,9 @@ void RewriteInstance::emitSections() {
 
   cantFail(OLT->emitAndFinalize(K));
 
+  // Release all memory taken by annotations.
+  BC->MIB->freeAnnotations();
+
   // Once the code is emitted, we can rename function sections to actual
   // output sections and de-register sections used for emission.
   if (!BC->HasRelocations) {
@@ -3279,6 +3282,9 @@ void RewriteInstance::mapDataSections(orc::VModuleKey Key) {
 }
 
 void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
+  SectionPatchers[".note.stapsdt"] = llvm::make_unique<SimpleBinaryPatcher>();
+  auto *SDTNotePatcher = static_cast<SimpleBinaryPatcher *>(
+      SectionPatchers[".note.stapsdt"].get());
 
   auto updateOutputValue = [&](BinaryFunction &Function) {
     if (!Function.isEmitted()) {
@@ -3324,6 +3330,33 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
       Function.setOutputAddress(Function.getAddress());
       Function.setOutputSize(
           Layout.getSymbolOffset(*Function.getFunctionEndLabel()));
+    }
+
+    // Create patches that update .note.stapsdt section to reflect the new
+    // locations of the SDT markers
+    if (Function.hasSDTMarker()) {
+      for (auto BBI = Function.layout_begin(), BBE = Function.layout_end();
+           BBI != BBE; ++BBI) {
+        auto *BB = *BBI;
+        const auto BBBaseAddress = BB->isCold() ? ColdBaseAddress : BaseAddress;
+
+        for (auto &Instr : *BB) {
+          if (BC->MIB->hasAnnotation(Instr, "SDTMarker")) {
+            const auto OriginalSDTAddress =
+                BC->MIB->getAnnotationAs<uint64_t>(Instr, "SDTMarker");
+            const auto NewSDTAddress =
+                Layout.getSymbolOffset(
+                    *BC->SDTMarkers[OriginalSDTAddress].Label) +
+                BBBaseAddress;
+            DEBUG(dbgs() << "SDTMarker at :" << utohexstr(OriginalSDTAddress)
+                         << "moved to :" << utohexstr(NewSDTAddress) << "\n");
+
+            SDTNotePatcher->addLE64Patch(
+                BC->SDTMarkers[OriginalSDTAddress].PCOffset, NewSDTAddress);
+            BC->MIB->removeAnnotation(Instr, "SDTMarker");
+          }
+        }
+      }
     }
 
     // Update basic block output ranges only for the debug info or if we have
@@ -4802,7 +4835,7 @@ bool RewriteInstance::willOverwriteSection(StringRef SectionName) {
     if (SectionName == OverwriteName)
       return true;
   }
-
+ 
   auto Section = BC->getUniqueSectionByName(SectionName);
   return Section && Section->isAllocatable() && Section->isFinalized();
 }

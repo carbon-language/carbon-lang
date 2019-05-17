@@ -13,6 +13,7 @@
 #include "Passes/ReorderAlgorithm.h"
 #include "llvm/Support/Options.h"
 #include <numeric>
+#include <vector>
 
 #define DEBUG_TYPE "bolt-opts"
 
@@ -585,6 +586,8 @@ void FinalizeFunctions::runOnFunctions(BinaryContext &BC) {
 }
 
 void LowerAnnotations::runOnFunctions(BinaryContext &BC) {
+  std::vector<std::pair<MCInst *, uint64_t>> SDTAnnotations;
+
   for (auto &It : BC.getBinaryFunctions()) {
     auto &BF = It.second;
     int64_t CurrentGnuArgsSize = 0;
@@ -610,13 +613,24 @@ void LowerAnnotations::runOnFunctions(BinaryContext &BC) {
             II = std::next(InsertII);
           }
         }
+
+        if (BC.MIB->hasAnnotation(*II, "SDTMarker")) {
+          auto AnnotationValue =
+              BC.MIB->getAnnotationAs<uint64_t>(*II, "SDTMarker");
+          SDTAnnotations.push_back(std::make_pair(&(*II), AnnotationValue));
+        }
+
         BC.MIB->removeAllAnnotations(*II);
       }
     }
   }
-
+  
   // Release all memory taken by annotations.
   BC.MIB->freeAnnotations();
+
+  // Reinsert SDT annotations since we need them during code emition.
+  for (auto &Item : SDTAnnotations)
+    BC.MIB->addAnnotation<uint64_t>(*Item.first, "SDTMarker", Item.second);
 }
 
 namespace {

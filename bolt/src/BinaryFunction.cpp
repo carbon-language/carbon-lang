@@ -1702,11 +1702,19 @@ bool BinaryFunction::buildCFG() {
         updateOffset(LastInstrOffset);
     }
 
+    const auto InstrInputAddr = I->first + Address;
     bool IsSDTMarker =
-        MIB->isNoop(Instr) && BC.SDTMarkers.count(I->first + Address);
+        MIB->isNoop(Instr) && BC.SDTMarkers.count(InstrInputAddr);
 
-    if (IsSDTMarker)
+    if (IsSDTMarker) {
       HasSDTMarker = true;
+      DEBUG(dbgs() << "SDTMarker detected in the input at : "
+                   << utohexstr(InstrInputAddr) << "\n");
+
+      MIB->addAnnotation<uint64_t>(Instr, "SDTMarker", InstrInputAddr);
+      BC.SDTMarkers[InstrInputAddr].Label =
+          getOrCreateLocalLabel(InstrInputAddr);
+    }
 
     // Ignore nops except SDT markers. We use nops to derive alignment of the
     // next basic block. It will not always work, as some blocks are naturally
@@ -2683,6 +2691,17 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart,
       if (!EmitCodeOnly && opts::UpdateDebugSections && UnitLineTable.first) {
         LastLocSeen = emitLineInfo(Instr.getLoc(), LastLocSeen, FirstInstr);
         FirstInstr = false;
+      }
+
+      // Emit SDT labels
+      if (BC.MIB->hasAnnotation(Instr, "SDTMarker")) {
+        auto OriginalAddress =
+            BC.MIB->tryGetAnnotationAs<uint64_t>(Instr, "SDTMarker").get();
+        auto *SDTLabel = BC.SDTMarkers[OriginalAddress].Label;
+        
+        //  A given symbol should only be emitted as a label once
+        if (SDTLabel->isUndefined())
+          Streamer.EmitLabel(SDTLabel);
       }
 
       Streamer.EmitInstruction(Instr, *BC.STI);

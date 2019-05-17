@@ -438,16 +438,22 @@ inline raw_ostream &operator<<(raw_ostream &OS, const BinarySection &Section) {
   return OS;
 }
 
-} // namespace bolt
-} // namespace llvm
-
 struct SDTMarkerInfo {
   uint64_t PC;
   uint64_t Base;
   uint64_t Semaphore;
-  llvm::StringRef Provider;
-  llvm::StringRef Name;
-  llvm::StringRef Args;
+  StringRef Provider;
+  StringRef Name;
+  StringRef Args;
+
+  /// The offset of PC within the note section
+  unsigned PCOffset;
+
+  /// A label that marks the location of the SDT nop instruction
+  MCSymbol *Label;
 };
+
+} // namespace bolt
+} // namespace llvm
 
 #endif
