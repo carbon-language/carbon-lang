@@ -173,61 +173,6 @@ std::optional<DynamicType> DynamicType::From(const semantics::Symbol &symbol) {
   return From(symbol.GetType());  // Symbol -> DeclTypeSpec -> DynamicType
 }
 
-std::string DynamicType::AsFortran() const {
-  if (derived_ != nullptr) {
-    CHECK(category_ == TypeCategory::Derived);
-    std::string result{isPolymorphic_ ? "CLASS("s : "TYPE("s};
-    result += derived_->typeSymbol().name().ToString();
-    if (derived_->HasActualParameters()) {
-      char ch{'('};
-      for (const auto &[name, value] : derived_->parameters()) {
-        result += ch;
-        ch = ',';
-        result += name.ToString() + '=';
-        if (value.isAssumed()) {
-          result += '*';
-        } else if (value.isDeferred()) {
-          result += ':';
-        } else if (const auto &intExpr{value.GetExplicit()}) {
-          std::stringstream ss;
-          intExpr->AsFortran(ss);
-          result += ss.str();
-        }
-      }
-      result += ')';
-    }
-    return result + ')';
-
-  } else if (charLength_ != nullptr) {
-    std::string result{"CHARACTER(KIND="s + std::to_string(kind_) + ",LEN="};
-    if (charLength_->isAssumed()) {
-      result += '*';
-    } else if (charLength_->isDeferred()) {
-      result += ':';
-    } else if (const auto &length{charLength_->GetExplicit()}) {
-      std::stringstream ss;
-      length->AsFortran(ss);
-      result += ss.str();
-    }
-    return result + ')';
-  } else if (isPolymorphic_) {
-    return "CLASS(*)";
-  } else if (kind_ == 0) {
-    return "(typeless intrinsic function argument)";
-  } else {
-    return EnumToString(category_) + '(' + std::to_string(kind_) + ')';
-  }
-}
-
-std::string DynamicType::AsFortran(std::string &&charLenExpr) const {
-  if (!charLenExpr.empty() && category_ == TypeCategory::Character) {
-    return "CHARACTER(KIND=" + std::to_string(kind_) +
-        ",LEN=" + std::move(charLenExpr) + ')';
-  } else {
-    return AsFortran();
-  }
-}
-
 DynamicType DynamicType::ResultTypeForMultiply(const DynamicType &that) const {
   switch (category_) {
   case TypeCategory::Integer:
@@ -273,13 +218,5 @@ DynamicType DynamicType::ResultTypeForMultiply(const DynamicType &that) const {
 bool SomeKind<TypeCategory::Derived>::operator==(
     const SomeKind<TypeCategory::Derived> &that) const {
   return PointeeComparison(derivedTypeSpec_, that.derivedTypeSpec_);
-}
-
-std::string SomeDerived::AsFortran() const {
-  if (IsUnlimitedPolymorphic()) {
-    return "CLASS(*)";
-  } else {
-    return "TYPE("s + DerivedTypeSpecAsFortran(derivedTypeSpec()) + ')';
-  }
 }
 }

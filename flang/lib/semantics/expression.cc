@@ -27,16 +27,15 @@
 #include "../parser/parse-tree.h"
 #include <algorithm>
 #include <functional>
-#include <iostream>  // TODO pmk rm
 #include <optional>
 #include <set>
 
-#define DUMP_ON_FAILURE 1  // pmk
+// #define DUMP_ON_FAILURE 1
+// #define CRASH_ON_FAILURE
 #if DUMP_ON_FAILURE
 #include "../parser/dump-parse-tree.h"
 #include <iostream>
 #endif
-// #define CRASH_ON_FAILURE
 
 // Typedef for optional generic expressions (ubiquitous in this file)
 using MaybeExpr =
@@ -48,36 +47,6 @@ using MaybeExpr =
 namespace Fortran::evaluate {
 
 using common::TypeCategory;
-
-// If an expression simply wraps a DataRef, extract and return it.
-template<typename A>
-common::IfNoLvalue<std::optional<DataRef>, A> ExtractDataRef(A &&) {
-  return std::nullopt;
-}
-
-template<typename T> std::optional<DataRef> ExtractDataRef(Designator<T> &&d) {
-  return std::visit(
-      [](auto &&x) -> std::optional<DataRef> {
-        if constexpr (common::HasMember<decltype(x), decltype(DataRef::u)>) {
-          return {DataRef{std::move(x)}};
-        }
-        return std::nullopt;
-      },
-      std::move(d.u));
-}
-
-template<typename T> std::optional<DataRef> ExtractDataRef(Expr<T> &&expr) {
-  return std::visit(
-      [](auto &&x) { return ExtractDataRef(std::move(x)); }, std::move(expr.u));
-}
-
-template<typename A>
-std::optional<DataRef> ExtractDataRef(std::optional<A> &&x) {
-  if (x.has_value()) {
-    return ExtractDataRef(std::move(*x));
-  }
-  return std::nullopt;
-}
 
 struct DynamicTypeWithLength : public DynamicType {
   explicit DynamicTypeWithLength(const DynamicType &t) : DynamicType{t} {}

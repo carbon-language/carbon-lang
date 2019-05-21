@@ -916,16 +916,16 @@ std::optional<Constant<T>> ApplySubscripts(parser::ContextualMessages &messages,
         }
         ++k;
       }
-      CHECK(!increment || elements == 0);
-      CHECK(k == resultShape.size());
       if (at[j] < 1 || at[j] > shape[j]) {
         messages.Say("Subscript value (%jd) is out of range in reference "
                      "to a constant array value"_err_en_US,
             static_cast<std::intmax_t>(at[j]));
         return std::nullopt;
       }
-      values.emplace_back(array.At(at));
     }
+    values.emplace_back(array.At(at));
+    CHECK(!increment || elements == 0);
+    CHECK(k == resultShape.size());
   }
   if constexpr (T::category == TypeCategory::Character) {
     return Constant<T>{array.LEN(), std::move(values), std::move(resultShape)};

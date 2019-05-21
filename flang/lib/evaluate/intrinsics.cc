@@ -1424,7 +1424,7 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
         bool ok{false};
         if (const auto &arg{specificCall->arguments[0]}) {
           if (const auto *expr{arg->GetExpr()}) {
-            if (const Symbol * symbol{GetLastSymbol(*expr)}) {
+            if (const Symbol * symbol{IsWholeSymbolDataRef(*expr)}) {
               ok = symbol->attrs().test(semantics::Attr::OPTIONAL);
             }
           }

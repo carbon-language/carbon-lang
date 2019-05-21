@@ -96,12 +96,12 @@ void DerivedTypeSpec::ProcessParameterExpressions(
     MaybeIntExpr expr;
     ParamValue *paramValue{FindParameter(name)};
     if (paramValue != nullptr) {
-      if (!paramValue->isExplicit()) {
-        continue;  // Deferred type parameter
+      if (paramValue->isExplicit()) {
+        expr = paramValue->GetExplicit();
+      } else {
+        continue;  // deferred or assumed parameter: don't use default value
       }
-      expr = paramValue->GetExplicit();
-    }
-    if (!expr.has_value()) {
+    } else {
       expr = evaluate::Fold(foldingContext, common::Clone(details.init()));
     }
     if (expr.has_value()) {

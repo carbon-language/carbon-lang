@@ -179,6 +179,49 @@ template<typename A, typename B> A *UnwrapExpr(std::optional<B> &x) {
   }
 }
 
+// If an expression simply wraps a DataRef, extract and return it.
+template<typename A>
+common::IfNoLvalue<std::optional<DataRef>, A> ExtractDataRef(const A &) {
+  return std::nullopt;  // default base casec
+}
+
+template<typename T>
+std::optional<DataRef> ExtractDataRef(const Designator<T> &d) {
+  return std::visit(
+      [](const auto &x) -> std::optional<DataRef> {
+        if constexpr (common::HasMember<decltype(x), decltype(DataRef::u)>) {
+          return DataRef{x};
+        }
+        return std::nullopt;
+      },
+      d.u);
+}
+
+template<typename T>
+std::optional<DataRef> ExtractDataRef(const Expr<T> &expr) {
+  return std::visit([](const auto &x) { return ExtractDataRef(x); }, expr.u);
+}
+
+template<typename A>
+std::optional<DataRef> ExtractDataRef(const std::optional<A> &x) {
+  if (x.has_value()) {
+    return ExtractDataRef(*x);
+  } else {
+    return std::nullopt;
+  }
+}
+
+// If an expression is simply a whole symbol data designator,
+// extract and return that symbol, else null.
+template<typename A> const Symbol *IsWholeSymbolDataRef(const A &x) {
+  if (auto dataRef{ExtractDataRef(x)}) {
+    if (const Symbol **p{std::get_if<const Symbol *>(&dataRef->u)}) {
+      return *p;
+    }
+  }
+  return nullptr;
+}
+
 // Creation of conversion expressions can be done to either a known
 // specific intrinsic type with ConvertToType<T>(x) or by converting
 // one arbitrary expression to the type of another with ConvertTo(to, from).

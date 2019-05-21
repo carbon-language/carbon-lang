@@ -391,18 +391,70 @@ std::ostream &StructureConstructor::AsFortran(std::ostream &o) const {
   return o << ')';
 }
 
+std::string DynamicType::AsFortran() const {
+  if (derived_ != nullptr) {
+    CHECK(category_ == TypeCategory::Derived);
+    return (isPolymorphic_ ? "CLASS("s : "TYPE("s) +
+        DerivedTypeSpecAsFortran(*derived_) + ')';
+  } else if (charLength_ != nullptr) {
+    std::string result{"CHARACTER(KIND="s + std::to_string(kind_) + ",LEN="};
+    if (charLength_->isAssumed()) {
+      result += '*';
+    } else if (charLength_->isDeferred()) {
+      result += ':';
+    } else if (const auto &length{charLength_->GetExplicit()}) {
+      std::stringstream ss;
+      length->AsFortran(ss);
+      result += ss.str();
+    }
+    return result + ')';
+  } else if (isPolymorphic_) {
+    return "CLASS(*)";
+  } else if (kind_ == 0) {
+    return "(typeless intrinsic function argument)";
+  } else {
+    return EnumToString(category_) + '(' + std::to_string(kind_) + ')';
+  }
+}
+
+std::string DynamicType::AsFortran(std::string &&charLenExpr) const {
+  if (!charLenExpr.empty() && category_ == TypeCategory::Character) {
+    return "CHARACTER(KIND=" + std::to_string(kind_) +
+        ",LEN=" + std::move(charLenExpr) + ')';
+  } else {
+    return AsFortran();
+  }
+}
+
+std::string SomeDerived::AsFortran() const {
+  if (IsUnlimitedPolymorphic()) {
+    return "CLASS(*)";
+  } else {
+    return "TYPE("s + DerivedTypeSpecAsFortran(derivedTypeSpec()) + ')';
+  }
+}
+
 std::string DerivedTypeSpecAsFortran(const semantics::DerivedTypeSpec &spec) {
-  std::stringstream ss;
-  ss << spec.typeSymbol().name().ToString();
-  if (!spec.parameters().empty()) {
+  if (spec.HasActualParameters()) {
+    std::stringstream ss;
+    ss << spec.typeSymbol().name().ToString();
     char ch{'('};
     for (const auto &[name, value] : spec.parameters()) {
-      value.GetExplicit()->AsFortran(ss << ch << name.ToString() << '=');
+      ss << ch << name.ToString() << '=';
       ch = ',';
+      if (value.isAssumed()) {
+        ss << '*';
+      } else if (value.isDeferred()) {
+        ss << ':';
+      } else {
+        value.GetExplicit()->AsFortran(ss);
+      }
     }
     ss << ')';
+    return ss.str();
+  } else {
+    return spec.typeSymbol().name().ToString();
   }
-  return ss.str();
 }
 
 std::ostream &EmitVar(std::ostream &o, const Symbol &symbol) {
