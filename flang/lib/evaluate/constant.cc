@@ -14,6 +14,7 @@
 
 #include "constant.h"
 #include "expression.h"
+#include "shape.h"
 #include "type.h"
 #include <string>
 
@@ -30,9 +31,9 @@ std::size_t TotalElementCount(const ConstantSubscripts &shape) {
 
 bool IncrementSubscripts(
     ConstantSubscripts &indices, const ConstantSubscripts &shape) {
-  auto rank{shape.size()};
-  CHECK(indices.size() == rank);
-  for (std::size_t j{0}; j < rank; ++j) {
+  int rank{GetRank(shape)};
+  CHECK(GetRank(indices) == rank);
+  for (int j{0}; j < rank; ++j) {
     CHECK(indices[j] >= 1);
     if (++indices[j] <= shape[j]) {
       return true;
@@ -45,6 +46,13 @@ bool IncrementSubscripts(
 }
 
 template<typename RESULT, typename ELEMENT>
+ConstantBase<RESULT, ELEMENT>::ConstantBase(
+    std::vector<Element> &&x, ConstantSubscripts &&dims, Result res)
+  : result_{res}, values_(std::move(x)), shape_(std::move(dims)) {
+  CHECK(size() == TotalElementCount(shape_));
+}
+
+template<typename RESULT, typename ELEMENT>
 ConstantBase<RESULT, ELEMENT>::~ConstantBase() {}
 
 template<typename RESULT, typename ELEMENT>
@@ -54,7 +62,7 @@ bool ConstantBase<RESULT, ELEMENT>::operator==(const ConstantBase &that) const {
 
 static ConstantSubscript SubscriptsToOffset(
     const ConstantSubscripts &index, const ConstantSubscripts &shape) {
-  CHECK(index.size() == shape.size());
+  CHECK(GetRank(index) == GetRank(shape));
   ConstantSubscript stride{1}, offset{0};
   int dim{0};
   for (auto j : index) {
@@ -66,25 +74,35 @@ static ConstantSubscript SubscriptsToOffset(
   return offset;
 }
 
-static Constant<SubscriptInteger> ShapeAsConstant(
-    const ConstantSubscripts &shape) {
-  using IntType = Scalar<SubscriptInteger>;
-  std::vector<IntType> result;
-  for (auto dim : shape) {
-    result.emplace_back(dim);
-  }
-  return {std::move(result),
-      ConstantSubscripts{static_cast<std::int64_t>(shape.size())}};
+template<typename RESULT, typename ELEMENT>
+Constant<SubscriptInteger> ConstantBase<RESULT, ELEMENT>::SHAPE() const {
+  return AsConstantShape(shape_);
 }
 
 template<typename RESULT, typename ELEMENT>
-Constant<SubscriptInteger> ConstantBase<RESULT, ELEMENT>::SHAPE() const {
-  return ShapeAsConstant(shape_);
+auto ConstantBase<RESULT, ELEMENT>::Reshape(
+    const ConstantSubscripts &dims) const -> std::vector<Element> {
+  std::size_t n{TotalElementCount(dims)};
+  CHECK(!empty() || n == 0);
+  std::vector<Element> elements;
+  auto iter{values().cbegin()};
+  while (n-- > 0) {
+    elements.push_back(*iter);
+    if (++iter == values().cend()) {
+      iter = values().cbegin();
+    }
+  }
+  return elements;
 }
 
 template<typename T>
 auto Constant<T>::At(const ConstantSubscripts &index) const -> Element {
   return Base::values_.at(SubscriptsToOffset(index, Base::shape_));
+}
+
+template<typename T>
+auto Constant<T>::Reshape(ConstantSubscripts &&dims) const -> Constant {
+  return {Base::Reshape(dims), std::move(dims)};
 }
 
 // Constant<Type<TypeCategory::Character, KIND> specializations
@@ -102,6 +120,7 @@ template<int KIND>
 Constant<Type<TypeCategory::Character, KIND>>::Constant(std::int64_t len,
     std::vector<Scalar<Result>> &&strings, ConstantSubscripts &&dims)
   : length_{len}, shape_{std::move(dims)} {
+  CHECK(strings.size() == TotalElementCount(shape_));
   values_.assign(strings.size() * length_,
       static_cast<typename Scalar<Result>::value_type>(' '));
   std::int64_t at{0};
@@ -119,14 +138,6 @@ Constant<Type<TypeCategory::Character, KIND>>::Constant(std::int64_t len,
 
 template<int KIND> Constant<Type<TypeCategory::Character, KIND>>::~Constant() {}
 
-static ConstantSubscript ShapeElements(const ConstantSubscripts &shape) {
-  ConstantSubscript elements{1};
-  for (auto dim : shape) {
-    elements *= dim;
-  }
-  return elements;
-}
-
 template<int KIND>
 bool Constant<Type<TypeCategory::Character, KIND>>::empty() const {
   return size() == 0;
@@ -135,7 +146,7 @@ bool Constant<Type<TypeCategory::Character, KIND>>::empty() const {
 template<int KIND>
 std::size_t Constant<Type<TypeCategory::Character, KIND>>::size() const {
   if (length_ == 0) {
-    return ShapeElements(shape_);
+    return TotalElementCount(shape_);
   } else {
     return static_cast<std::int64_t>(values_.size()) / length_;
   }
@@ -149,9 +160,26 @@ auto Constant<Type<TypeCategory::Character, KIND>>::At(
 }
 
 template<int KIND>
+auto Constant<Type<TypeCategory::Character, KIND>>::Reshape(
+    ConstantSubscripts &&dims) const -> Constant<Result> {
+  std::size_t n{TotalElementCount(dims)};
+  CHECK(!empty() || n == 0);
+  std::vector<Element> elements;
+  std::int64_t at{0}, limit{static_cast<std::int64_t>(values_.size())};
+  while (n-- > 0) {
+    elements.push_back(values_.substr(at, length_));
+    at += length_;
+    if (at == limit) {  // subtle: at > limit somehow? substr() will catch it
+      at = 0;
+    }
+  }
+  return {length_, std::move(elements), std::move(dims)};
+}
+
+template<int KIND>
 Constant<SubscriptInteger>
 Constant<Type<TypeCategory::Character, KIND>>::SHAPE() const {
-  return ShapeAsConstant(shape_);
+  return AsConstantShape(shape_);
 }
 
 // Constant<SomeDerived> specialization
@@ -191,6 +219,11 @@ StructureConstructor Constant<SomeDerived>::At(
     const ConstantSubscripts &index) const {
   return {result().derivedTypeSpec(),
       values_.at(SubscriptsToOffset(index, shape_))};
+}
+
+auto Constant<SomeDerived>::Reshape(ConstantSubscripts &&dims) const
+    -> Constant {
+  return {result().derivedTypeSpec(), Base::Reshape(dims), std::move(dims)};
 }
 
 INSTANTIATE_CONSTANT_TEMPLATES

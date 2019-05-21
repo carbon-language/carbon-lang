@@ -614,7 +614,7 @@ bool IsAssumedRank(const semantics::Symbol &symbol) {
 }
 
 bool IsAssumedRank(const ActualArgument &arg) {
-  if (const auto *expr{arg.GetExpr()}) {
+  if (const auto *expr{arg.UnwrapExpr()}) {
     return IsAssumedRank(*expr);
   } else {
     const semantics::Symbol *assumedTypeDummy{arg.GetAssumedTypeDummy()};

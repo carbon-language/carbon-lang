@@ -30,14 +30,12 @@ namespace Fortran::semantics {
 
 using namespace parser::literals;
 
-// The extension used for module files.
-static constexpr auto extension{".mod"};
 // The initial characters of a file that identify it as a .mod file.
 static constexpr auto magic{"!mod$ v1 sum:"};
 
 static const SourceName *GetSubmoduleParent(const parser::Program &);
-static std::string ModFilePath(
-    const std::string &, const SourceName &, const std::string &);
+static std::string ModFilePath(const std::string &dir, const SourceName &,
+    const std::string &ancestor, const std::string &suffix);
 static std::vector<const Symbol *> CollectSymbols(const Scope &);
 static void PutEntity(std::ostream &, const Symbol &);
 static void PutObjectEntity(std::ostream &, const Symbol &);
@@ -126,8 +124,8 @@ void ModFileWriter::WriteOne(const Scope &scope) {
 void ModFileWriter::Write(const Symbol &symbol) {
   auto *ancestor{symbol.get<ModuleDetails>().ancestor()};
   auto ancestorName{ancestor ? ancestor->name().ToString() : ""s};
-  auto path{
-      ModFilePath(context_.moduleDirectory(), symbol.name(), ancestorName)};
+  auto path{ModFilePath(context_.moduleDirectory(), symbol.name(), ancestorName,
+      context_.moduleFileSuffix())};
   PutSymbols(*symbol.scope());
   if (!WriteFile(path, GetAsString(symbol))) {
     context_.Say(symbol.name(), "Error writing %s: %s"_err_en_US, path,
@@ -723,7 +721,8 @@ std::optional<std::string> ModFileReader::FindModFile(
     const SourceName &name, const std::string &ancestor) {
   parser::Messages attachments;
   for (auto &dir : context_.searchDirectories()) {
-    std::string path{ModFilePath(dir, name, ancestor)};
+    std::string path{
+        ModFilePath(dir, name, ancestor, context_.moduleFileSuffix())};
     std::ifstream ifstream{path};
     if (!ifstream.good()) {
       attachments.Say(name, "%s: %s"_en_US, path, std::strerror(errno));
@@ -764,7 +763,7 @@ static const SourceName *GetSubmoduleParent(const parser::Program &program) {
 
 // Construct the path to a module file. ancestorName not empty means submodule.
 static std::string ModFilePath(const std::string &dir, const SourceName &name,
-    const std::string &ancestorName) {
+    const std::string &ancestorName, const std::string &suffix) {
   std::stringstream path;
   if (dir != "."s) {
     path << dir << '/';
@@ -772,7 +771,7 @@ static std::string ModFilePath(const std::string &dir, const SourceName &name,
   if (!ancestorName.empty()) {
     PutLower(path, ancestorName) << '-';
   }
-  PutLower(path, name.ToString()) << extension;
+  PutLower(path, name.ToString()) << suffix;
   return path.str();
 }
 

@@ -309,7 +309,7 @@ public:
   template<typename T> void Descend(Variable<T> &var) { Visit(var.u); }
 
   void Descend(const ActualArgument &arg) {
-    if (const auto *expr{arg.GetExpr()}) {
+    if (const auto *expr{arg.UnwrapExpr()}) {
       Visit(*expr);
     } else {
       const semantics::Symbol *aType{arg.GetAssumedTypeDummy()};
@@ -317,7 +317,7 @@ public:
     }
   }
   void Descend(ActualArgument &arg) {
-    if (auto *expr{arg.GetExpr()}) {
+    if (auto *expr{arg.UnwrapExpr()}) {
       Visit(*expr);
     } else {
       const semantics::Symbol *aType{arg.GetAssumedTypeDummy()};

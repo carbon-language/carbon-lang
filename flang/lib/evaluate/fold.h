@@ -30,7 +30,7 @@ namespace Fortran::evaluate {
 using namespace Fortran::parser::literals;
 
 // Fold() rewrites an expression and returns it.  When the rewritten expression
-// is a constant, GetConstantValue() and GetScalarConstantValue() below will
+// is a constant, UnwrapConstantValue() and GetScalarConstantValue() below will
 // be able to extract it.
 // Note the rvalue reference argument: the rewrites are performed in place
 // for efficiency.
@@ -48,29 +48,18 @@ std::optional<Expr<T>> Fold(
   }
 }
 
-// GetConstantValue() isolates the known constant value of
-// an expression, if it has one.  The value can be parenthesized.
+// UnwrapConstantValue() isolates the known constant value of
+// an expression, if it has one.  It returns a pointer, which is
+// const-qualified when the expression is so.  The value can be
+// parenthesized.
 template<typename T, typename EXPR>
-const Constant<T> *GetConstantValue(const EXPR &expr) {
-  if (const auto *c{UnwrapExpr<Constant<T>>(expr)}) {
-    return c;
-  } else {
-    if constexpr (!std::is_same_v<T, SomeDerived>) {
-      if (auto *parens{UnwrapExpr<Parentheses<T>>(expr)}) {
-        return GetConstantValue<T>(parens->left());
-      }
-    }
-    return nullptr;
-  }
-}
-
-template<typename T, typename EXPR> Constant<T> *GetConstantValue(EXPR &expr) {
+auto UnwrapConstantValue(EXPR &expr) -> common::Constify<Constant<T>, EXPR> * {
   if (auto *c{UnwrapExpr<Constant<T>>(expr)}) {
     return c;
   } else {
     if constexpr (!std::is_same_v<T, SomeDerived>) {
       if (auto *parens{UnwrapExpr<Parentheses<T>>(expr)}) {
-        return GetConstantValue<T>(parens->left());
+        return UnwrapConstantValue<T>(parens->left());
       }
     }
     return nullptr;
@@ -81,7 +70,7 @@ template<typename T, typename EXPR> Constant<T> *GetConstantValue(EXPR &expr) {
 // an expression, if it has one.  The value can be parenthesized.
 template<typename T, typename EXPR>
 auto GetScalarConstantValue(const EXPR &expr) -> std::optional<Scalar<T>> {
-  if (const Constant<T> *constant{GetConstantValue<T>(expr)}) {
+  if (const Constant<T> *constant{UnwrapConstantValue<T>(expr)}) {
     return constant->GetScalarValue();
   } else {
     return std::nullopt;

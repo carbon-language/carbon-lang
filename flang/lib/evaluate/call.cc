@@ -42,7 +42,7 @@ ActualArgument &ActualArgument::operator=(Expr<SomeType> &&expr) {
 }
 
 std::optional<DynamicType> ActualArgument::GetType() const {
-  if (const auto *expr{GetExpr()}) {
+  if (const auto *expr{UnwrapExpr()}) {
     return expr->GetType();
   } else {
     return std::nullopt;
@@ -50,7 +50,7 @@ std::optional<DynamicType> ActualArgument::GetType() const {
 }
 
 int ActualArgument::Rank() const {
-  if (const auto *expr{GetExpr()}) {
+  if (const auto *expr{UnwrapExpr()}) {
     return expr->Rank();
   } else {
     return std::get<AssumedType>(u_).Rank();

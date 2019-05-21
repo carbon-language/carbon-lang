@@ -86,6 +86,7 @@ struct DriverOptions {
   std::string outputPath;  // -o path
   std::vector<std::string> searchDirectories{"."s};  // -I dir
   std::string moduleDirectory{"."s};  // -module dir
+  std::string moduleFileSuffix{".mod"};  // -moduleSuffix suff
   bool forcedForm{false};  // -Mfixed or -Mfree appeared
   bool warnOnNonstandardUsage{false};  // -Mstandard
   bool warningsAreErrors{false};  // -Werror
@@ -452,6 +453,12 @@ int main(int argc, char *const argv[]) {
       defaultKinds.set_defaultIntegerKind(8);
     } else if (arg == "-fno-large-arrays") {
       defaultKinds.set_subscriptIntegerKind(4);
+    } else if (arg == "-module") {
+      driver.moduleDirectory = args.front();
+      args.pop_front();
+    } else if (arg == "-module-suffix") {
+      driver.moduleFileSuffix = args.front();
+      args.pop_front();
     } else if (arg == "-help" || arg == "--help" || arg == "-?") {
       std::cerr
           << "f18 options:\n"
@@ -465,6 +472,7 @@ int main(int argc, char *const argv[]) {
           << "  -Werror              treat warnings as errors\n"
           << "  -ed                  enable fixed form D lines\n"
           << "  -E                   prescan & preprocess only\n"
+          << "  -module dir          module output directory (default .)\n"
           << "  -fparse-only         parse only, no output except messages\n"
           << "  -funparse            parse & reformat only, no code "
              "generation\n"
@@ -495,10 +503,6 @@ int main(int argc, char *const argv[]) {
         args.pop_front();
       } else if (arg.substr(0, 2) == "-I") {
         driver.searchDirectories.push_back(arg.substr(2));
-      } else if (arg == "-module") {
-        driver.moduleDirectory = args.front();
-        driver.pgf90Args.push_back(driver.moduleDirectory);
-        args.pop_front();
       } else if (arg == "-Mx,125,4") {  // PGI "all Kanji" mode
         options.encoding = Fortran::parser::Encoding::EUC_JP;
       }
@@ -513,14 +517,14 @@ int main(int argc, char *const argv[]) {
           Fortran::parser::LanguageFeature::BackslashEscapes)) {
     driver.pgf90Args.push_back("-Mbackslash");
   }
-  if (options.features.IsEnabled(
-          Fortran::parser::LanguageFeature::OpenMP)) {
+  if (options.features.IsEnabled(Fortran::parser::LanguageFeature::OpenMP)) {
     driver.pgf90Args.push_back("-mp");
   }
 
   Fortran::semantics::SemanticsContext semanticsContext{
       defaultKinds, options.features};
   semanticsContext.set_moduleDirectory(driver.moduleDirectory)
+      .set_moduleFileSuffix(driver.moduleFileSuffix)
       .set_searchDirectories(driver.searchDirectories)
       .set_warnOnNonstandardUsage(driver.warnOnNonstandardUsage)
       .set_warningsAreErrors(driver.warningsAreErrors);

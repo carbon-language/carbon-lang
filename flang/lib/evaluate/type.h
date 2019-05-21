@@ -60,6 +60,7 @@ using LargestReal = Type<TypeCategory::Real, 16>;
 // A predicate that is true when a kind value is a kind that could possibly
 // be supported for an intrinsic type category on some target instruction
 // set architecture.
+// TODO: specialize for the actual target architecture
 static constexpr bool IsValidKindOfIntrinsicType(
     TypeCategory category, std::int64_t kind) {
   switch (category) {
@@ -409,6 +410,10 @@ template<typename CONST> struct TypeOfHelper {
 };
 
 template<typename CONST> using TypeOf = typename TypeOfHelper<CONST>::type;
+
+int SelectedIntKind(std::int64_t precision = 0);
+int SelectedRealKind(
+    std::int64_t precision = 0, std::int64_t range = 0, std::int64_t radix = 2);
 
 // For generating "[extern] template class", &c. boilerplate
 #define EXPAND_FOR_EACH_INTEGER_KIND(M, P, S) \

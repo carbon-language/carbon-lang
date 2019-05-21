@@ -19,6 +19,7 @@
 #include "type.h"
 #include <map>
 #include <ostream>
+#include <vector>
 
 namespace Fortran::evaluate {
 
@@ -36,6 +37,9 @@ template<typename> class Constant;
 // values as indices into constants, use a vector of integers.
 using ConstantSubscript = std::int64_t;
 using ConstantSubscripts = std::vector<ConstantSubscript>;
+inline int GetRank(const ConstantSubscripts &s) {
+  return static_cast<int>(s.size());
+}
 
 std::size_t TotalElementCount(const ConstantSubscripts &);
 
@@ -43,7 +47,7 @@ inline ConstantSubscripts InitialSubscripts(int rank) {
   return ConstantSubscripts(rank, 1);  // parens, not braces: "rank" copies of 1
 }
 inline ConstantSubscripts InitialSubscripts(const ConstantSubscripts &shape) {
-  return InitialSubscripts(static_cast<int>(shape.size()));
+  return InitialSubscripts(GetRank(shape));
 }
 
 // Increments a vector of subscripts in Fortran array order (first dimension
@@ -66,20 +70,18 @@ public:
   template<typename A, typename = common::NoLvalue<A>>
   ConstantBase(A &&x, Result res = Result{})
     : result_{res}, values_{std::move(x)} {}
-  ConstantBase(std::vector<Element> &&x, ConstantSubscripts &&dims,
-      Result res = Result{})
-    : result_{res}, values_(std::move(x)), shape_(std::move(dims)) {}
+  ConstantBase(
+      std::vector<Element> &&, ConstantSubscripts &&, Result = Result{});
 
   DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(ConstantBase)
   ~ConstantBase();
 
-  int Rank() const { return static_cast<int>(shape_.size()); }
+  int Rank() const { return GetRank(shape_); }
   bool operator==(const ConstantBase &) const;
   bool empty() const { return values_.empty(); }
   std::size_t size() const { return values_.size(); }
   const std::vector<Element> &values() const { return values_; }
   const ConstantSubscripts &shape() const { return shape_; }
-  ConstantSubscripts &shape() { return shape_; }
   constexpr Result result() const { return result_; }
 
   constexpr DynamicType GetType() const { return result_.GetType(); }
@@ -87,6 +89,8 @@ public:
   std::ostream &AsFortran(std::ostream &) const;
 
 protected:
+  std::vector<Element> Reshape(const ConstantSubscripts &) const;
+
   Result result_;
   std::vector<Element> values_;
   ConstantSubscripts shape_;
@@ -111,6 +115,7 @@ public:
 
   // Apply 1-based subscripts
   Element At(const ConstantSubscripts &) const;
+  Constant Reshape(ConstantSubscripts &&) const;
 };
 
 template<int KIND> class Constant<Type<TypeCategory::Character, KIND>> {
@@ -124,14 +129,13 @@ public:
   Constant(std::int64_t, std::vector<Element> &&, ConstantSubscripts &&);
   ~Constant();
 
-  int Rank() const { return static_cast<int>(shape_.size()); }
+  int Rank() const { return GetRank(shape_); }
   bool operator==(const Constant &that) const {
     return shape_ == that.shape_ && values_ == that.values_;
   }
   bool empty() const;
   std::size_t size() const;
   const ConstantSubscripts &shape() const { return shape_; }
-  ConstantSubscripts &shape() { return shape_; }
 
   std::int64_t LEN() const { return length_; }
 
@@ -145,6 +149,7 @@ public:
 
   // Apply 1-based subscripts
   Scalar<Result> At(const ConstantSubscripts &) const;
+  Constant Reshape(ConstantSubscripts &&) const;
 
   Constant<SubscriptInteger> SHAPE() const;
   std::ostream &AsFortran(std::ostream &) const;
@@ -180,6 +185,7 @@ public:
 
   std::optional<StructureConstructor> GetScalarValue() const;
   StructureConstructor At(const ConstantSubscripts &) const;
+  Constant Reshape(ConstantSubscripts &&) const;
 };
 
 FOR_EACH_LENGTHLESS_INTRINSIC_KIND(extern template class ConstantBase, )

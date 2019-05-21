@@ -24,7 +24,7 @@
 namespace Fortran::evaluate {
 
 static void ShapeAsFortran(std::ostream &o, const ConstantSubscripts &shape) {
-  if (shape.size() > 1) {
+  if (GetRank(shape) > 1) {
     o << ",shape=";
     char ch{'['};
     for (auto dim : shape) {
@@ -112,7 +112,7 @@ std::ostream &ActualArgument::AsFortran(std::ostream &o) const {
   if (isAlternateReturn) {
     o << '*';
   }
-  if (const auto *expr{GetExpr()}) {
+  if (const auto *expr{UnwrapExpr()}) {
     return expr->AsFortran(o);
   } else {
     return std::get<AssumedType>(u_).AsFortran(o);

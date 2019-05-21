@@ -301,7 +301,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"cshift",
         {{"array", SameType, Rank::array}, {"shift", AnyInt, Rank::dimRemoved},
             OptionalDIM},
-        SameType, Rank::array},
+        SameType, Rank::conformable},
     {"dble", {{"a", AnyNumeric, Rank::elementalOrBOZ}}, DoublePrecision},
     {"dim", {{"x", SameIntOrReal}, {"y", SameIntOrReal}}, SameIntOrReal},
     {"dot_product",
@@ -333,12 +333,12 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
             {"boundary", SameIntrinsic, Rank::dimRemoved,
                 Optionality::optional},
             OptionalDIM},
-        SameIntrinsic, Rank::array},
+        SameIntrinsic, Rank::conformable},
     {"eoshift",
         {{"array", SameDerivedType, Rank::array},
             {"shift", AnyInt, Rank::dimRemoved},
             {"boundary", SameDerivedType, Rank::dimRemoved}, OptionalDIM},
-        SameDerivedType, Rank::array},
+        SameDerivedType, Rank::conformable},
     {"erf", {{"x", SameReal}}, SameReal},
     {"erfc", {{"x", SameReal}}, SameReal},
     {"erfc_scaled", {{"x", SameReal}}, SameReal},
@@ -401,13 +401,13 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"is_iostat_eor", {{"i", AnyInt}}, DefaultLogical},
     {"kind", {{"x", AnyIntrinsic}}, DefaultInt},
     {"lbound",
-        {{"array", Anything, Rank::anyOrAssumedRank}, SubscriptDefaultKIND},
-        KINDInt, Rank::vector},
-    {"lbound",
         {{"array", Anything, Rank::anyOrAssumedRank},
             {"dim", {IntType, KindCode::dimArg}, Rank::scalar},
             SubscriptDefaultKIND},
         KINDInt, Rank::scalar},
+    {"lbound",
+        {{"array", Anything, Rank::anyOrAssumedRank}, SubscriptDefaultKIND},
+        KINDInt, Rank::vector},
     {"leadz", {{"i", AnyInt}}, DefaultInt},
     {"len", {{"string", AnyChar}, SubscriptDefaultKIND}, KINDInt},
     {"len_trim", {{"string", AnyChar}, SubscriptDefaultKIND}, KINDInt},
@@ -590,13 +590,13 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"transpose", {{"matrix", SameType, Rank::matrix}}, SameType, Rank::matrix},
     {"trim", {{"string", SameChar, Rank::scalar}}, SameChar, Rank::scalar},
     {"ubound",
-        {{"array", Anything, Rank::anyOrAssumedRank}, SubscriptDefaultKIND},
-        KINDInt, Rank::vector},
-    {"ubound",
         {{"array", Anything, Rank::anyOrAssumedRank},
             {"dim", {IntType, KindCode::dimArg}, Rank::scalar},
             SubscriptDefaultKIND},
         KINDInt, Rank::scalar},
+    {"ubound",
+        {{"array", Anything, Rank::anyOrAssumedRank}, SubscriptDefaultKIND},
+        KINDInt, Rank::vector},
     {"unpack",
         {{"vector", SameType, Rank::vector}, {"mask", AnyLogical, Rank::array},
             {"field", SameType, Rank::conformable}},
@@ -890,7 +890,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
     std::optional<DynamicType> type{arg->GetType()};
     if (!type.has_value()) {
       CHECK(arg->Rank() == 0);
-      const Expr<SomeType> *expr{arg->GetExpr()};
+      const Expr<SomeType> *expr{arg->UnwrapExpr()};
       CHECK(expr != nullptr);
       if (std::holds_alternative<BOZLiteralConstant>(expr->u)) {
         if (d.typePattern.kindCode == KindCode::typeless ||
@@ -1111,7 +1111,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       CHECK(kindDummyArg != nullptr);
       CHECK(result.categorySet == CategorySet{*category});
       if (kindArg != nullptr) {
-        if (auto *expr{kindArg->GetExpr()}) {
+        if (auto *expr{kindArg->UnwrapExpr()}) {
           CHECK(expr->Rank() == 0);
           if (auto code{ToInt64(*expr)}) {
             if (IsValidKindOfIntrinsicType(*category, *code)) {
@@ -1215,7 +1215,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
   for (std::size_t j{0}; j < dummies; ++j) {
     const IntrinsicDummyArgument &d{dummy[std::min(j, dummyArgPatterns - 1)]};
     if (const auto &arg{rearranged[j]}) {
-      const Expr<SomeType> *expr{arg->GetExpr()};
+      const Expr<SomeType> *expr{arg->UnwrapExpr()};
       CHECK(expr != nullptr);
       std::optional<characteristics::TypeAndShape> typeAndShape;
       if (auto type{expr->GetType()}) {
@@ -1318,7 +1318,7 @@ SpecificCall IntrinsicProcTable::Implementation::HandleNull(
       context.messages().Say("Unknown argument '%s' to NULL()"_err_en_US,
           arguments[0]->keyword->ToString());
     } else {
-      if (Expr<SomeType> * mold{arguments[0]->GetExpr()}) {
+      if (Expr<SomeType> * mold{arguments[0]->UnwrapExpr()}) {
         if (IsAllocatableOrPointer(*mold)) {
           characteristics::DummyArguments args;
           std::optional<characteristics::FunctionResult> fResult;
@@ -1423,7 +1423,7 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
       if (call.name == "present") {
         bool ok{false};
         if (const auto &arg{specificCall->arguments[0]}) {
-          if (const auto *expr{arg->GetExpr()}) {
+          if (const auto *expr{arg->UnwrapExpr()}) {
             if (const Symbol * symbol{IsWholeSymbolDataRef(*expr)}) {
               ok = symbol->attrs().test(semantics::Attr::OPTIONAL);
             }

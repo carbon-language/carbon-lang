@@ -1565,9 +1565,10 @@ void ScopeHandler::PushScope(Scope &scope) {
   }
 }
 void ScopeHandler::PopScope() {
+  // Entities that are not yet classified as objects or procedures are now
+  // assumed to be objects.
   for (auto &pair : currScope()) {
-    auto &symbol{*pair.second};
-    ConvertToObjectEntity(symbol);  // if not a proc by now, it is an object
+    ConvertToObjectEntity(*pair.second);
   }
   SetScope(currScope_->parent());
 }
@@ -4252,9 +4253,12 @@ const parser::Name *DeclarationVisitor::ResolveVariable(
 // If implicit types are allowed, ensure name is in the symbol table.
 // Otherwise, report an error if it hasn't been declared.
 const parser::Name *DeclarationVisitor::ResolveName(const parser::Name &name) {
-  if (FindSymbol(name)) {
+  if (Symbol * symbol{FindSymbol(name)}) {
     if (CheckUseError(name)) {
       return nullptr;  // reported an error
+    }
+    if (symbol->IsDummy()) {
+      ApplyImplicitRules(*symbol);
     }
     return &name;
   }
@@ -4643,7 +4647,20 @@ void ResolveNamesVisitor::ResolveSpecificationParts(ProgramTree &node) {
   for (auto &child : node.children()) {
     ResolveSpecificationParts(child);
   }
-  PopScope();
+  // Subtlety: PopScope() is not called here because we want to defer
+  // conversions of uncategorized entities into objects until after
+  // we have traversed the executable part of the subprogram.
+  // Function results, however, are converted now so that they can
+  // be used in executable parts.
+  if (Symbol * symbol{currScope().symbol()}) {
+    if (auto *details{symbol->detailsIf<SubprogramDetails>()}) {
+      if (details->isFunction()) {
+        Symbol &result{const_cast<Symbol &>(details->result())};
+        ConvertToObjectEntity(result);
+      }
+    }
+  }
+  SetScope(currScope().parent());
 }
 
 // Add SubprogramNameDetails symbols for contained subprograms
@@ -4686,6 +4703,7 @@ void ResolveNamesVisitor::ResolveExecutionParts(const ProgramTree &node) {
   if (const auto *exec{node.exec()}) {
     Walk(*exec);
   }
+  PopScope();  // converts unclassified entities into objects
   for (const auto &child : node.children()) {
     ResolveExecutionParts(child);
   }

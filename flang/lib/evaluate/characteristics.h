@@ -56,7 +56,7 @@ public:
 
   bool operator==(const TypeAndShape &) const;
   bool IsAssumedRank() const { return isAssumedRank_; }
-  int Rank() const { return static_cast<int>(shape().size()); }
+  int Rank() const { return GetRank(shape_); }
   bool IsCompatibleWith(
       parser::ContextualMessages &, const TypeAndShape &) const;
 

@@ -73,7 +73,7 @@ public:
   ~ActualArgument();
   ActualArgument &operator=(Expr<SomeType> &&);
 
-  Expr<SomeType> *GetExpr() {
+  Expr<SomeType> *UnwrapExpr() {
     if (auto *p{
             std::get_if<common::CopyableIndirection<Expr<SomeType>>>(&u_)}) {
       return &p->value();
@@ -81,7 +81,7 @@ public:
       return nullptr;
     }
   }
-  const Expr<SomeType> *GetExpr() const {
+  const Expr<SomeType> *UnwrapExpr() const {
     if (const auto *p{
             std::get_if<common::CopyableIndirection<Expr<SomeType>>>(&u_)}) {
       return &p->value();

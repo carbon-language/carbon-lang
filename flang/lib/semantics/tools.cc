@@ -175,6 +175,7 @@ bool IsProcedure(const Symbol &symbol) {
           [](const SubprogramNameDetails &) { return true; },
           [](const ProcEntityDetails &) { return true; },
           [](const GenericDetails &) { return true; },
+          [](const ProcBindingDetails &) { return true; },
           [](const UseDetails &x) { return IsProcedure(x.symbol()); },
           [](const auto &) { return false; },
       },

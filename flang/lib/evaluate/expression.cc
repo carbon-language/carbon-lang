@@ -142,6 +142,15 @@ bool StructureConstructor::operator==(const StructureConstructor &that) const {
 
 DynamicType StructureConstructor::GetType() const { return result_.GetType(); }
 
+const Expr<SomeType> *StructureConstructor::Find(
+    const Symbol *component) const {
+  if (auto iter{values_.find(component)}; iter != values_.end()) {
+    return &iter->second.value();
+  } else {
+    return nullptr;
+  }
+}
+
 StructureConstructor &StructureConstructor::Add(
     const Symbol &symbol, Expr<SomeType> &&expr) {
   values_.emplace(&symbol, std::move(expr));

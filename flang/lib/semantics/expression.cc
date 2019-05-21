@@ -30,7 +30,7 @@
 #include <optional>
 #include <set>
 
-// #define DUMP_ON_FAILURE 1
+#define DUMP_ON_FAILURE 1  // pmk
 // #define CRASH_ON_FAILURE
 #if DUMP_ON_FAILURE
 #include "../parser/dump-parse-tree.h"
@@ -170,6 +170,7 @@ MaybeExpr ExpressionAnalyzer::CompleteSubscripts(ArrayRef &&ref) {
   if (subscripts != symbolRank) {
     Say("Reference to rank-%d object '%s' has %d subscripts"_err_en_US,
         symbolRank, symbol.name(), subscripts);
+    return std::nullopt;
   } else if (subscripts == 0) {
     // nothing to check
   } else if (Component * component{std::get_if<Component>(&ref.base())}) {
@@ -183,6 +184,7 @@ MaybeExpr ExpressionAnalyzer::CompleteSubscripts(ArrayRef &&ref) {
         Say("Subscripts of component '%s' of rank-%d derived type "
             "array have rank %d but must all be scalar"_err_en_US,
             symbol.name(), baseRank, subscriptRank);
+        return std::nullopt;
       }
     }
   } else if (const auto *details{
@@ -193,6 +195,7 @@ MaybeExpr ExpressionAnalyzer::CompleteSubscripts(ArrayRef &&ref) {
         Say("Assumed-size array '%s' must have explicit final "
             "subscript upper bound value"_err_en_US,
             symbol.name());
+        return std::nullopt;
       }
     }
   }
@@ -612,8 +615,6 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Name &n) {
       // A bare reference to a derived type parameter (within a parameterized
       // derived type definition)
       return AsMaybeExpr(MakeBareTypeParamInquiry(&ultimate));
-    } else if (MaybeExpr result{Designate(DataRef{ultimate})}) {
-      return result;
     } else {
       return Designate(DataRef{*n.symbol});
     }

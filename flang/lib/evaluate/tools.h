@@ -144,22 +144,26 @@ template<typename A> constexpr bool IsNumericCategoryExpr() {
 }
 
 // Specializing extractor.  If an Expr wraps some type of object, perhaps
-// in several layers, return a pointer to it; otherwise null.
+// in several layers, return a pointer to it; otherwise null.  Also works
+// with ActualArgument.
 template<typename A, typename B>
 auto UnwrapExpr(B &x) -> common::Constify<A, B> * {
   using Ty = std::decay_t<B>;
   if constexpr (std::is_same_v<A, Ty>) {
     return &x;
-  } else if constexpr (common::HasMember<Ty, TypelessExpression>) {
-    return nullptr;
-  } else if constexpr (std::is_same_v<Ty, Expr<ResultType<A>>>) {
-    return common::Unwrap<A>(x.u);
-  } else if constexpr (std::is_same_v<Ty, Expr<SomeType>> ||
-      std::is_same_v<Ty, Expr<SomeKind<ResultType<A>::category>>>) {
+  } else if constexpr (std::is_same_v<Ty, ActualArgument>) {
+    if (auto *expr{x.UnwrapExpr()}) {
+      return UnwrapExpr<A>(*expr);
+    }
+  } else if constexpr (std::is_same_v<Ty, Expr<SomeType>>) {
     return std::visit([](auto &x) { return UnwrapExpr<A>(x); }, x.u);
-  } else {
-    return nullptr;
+  } else if constexpr (!common::HasMember<A, TypelessExpression>) {
+    if constexpr (std::is_same_v<Ty, Expr<ResultType<A>>> ||
+        std::is_same_v<Ty, Expr<SomeKind<ResultType<A>::category>>>) {
+      return std::visit([](auto &x) { return UnwrapExpr<A>(x); }, x.u);
+    }
   }
+  return nullptr;
 }
 
 template<typename A, typename B>

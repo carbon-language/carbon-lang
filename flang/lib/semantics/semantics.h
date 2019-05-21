@@ -53,6 +53,7 @@ public:
     return searchDirectories_;
   }
   const std::string &moduleDirectory() const { return moduleDirectory_; }
+  const std::string &moduleFileSuffix() const { return moduleFileSuffix_; }
   bool warnOnNonstandardUsage() const { return warnOnNonstandardUsage_; }
   bool warningsAreErrors() const { return warningsAreErrors_; }
   const evaluate::IntrinsicProcTable &intrinsics() const { return intrinsics_; }
@@ -70,6 +71,10 @@ public:
   }
   SemanticsContext &set_moduleDirectory(const std::string &x) {
     moduleDirectory_ = x;
+    return *this;
+  }
+  SemanticsContext &set_moduleFileSuffix(const std::string &x) {
+    moduleFileSuffix_ = x;
     return *this;
   }
   SemanticsContext &set_warnOnNonstandardUsage(bool x) {
@@ -113,6 +118,7 @@ private:
   const parser::CharBlock *location_{nullptr};
   std::vector<std::string> searchDirectories_;
   std::string moduleDirectory_{"."s};
+  std::string moduleFileSuffix_{".mod"};
   bool warnOnNonstandardUsage_{false};
   bool warningsAreErrors_{false};
   const evaluate::IntrinsicProcTable intrinsics_;

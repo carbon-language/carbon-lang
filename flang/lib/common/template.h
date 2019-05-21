@@ -295,25 +295,28 @@ std::optional<R> MapOptional(R (*f)(A &&...), std::optional<A> &&... x) {
 // SearchTypes will traverse the element types in the tuple in order
 // and invoke VISITOR::Test<T>() on each until it returns a value that
 // casts to true.  If no invocation of Test succeeds, SearchTypes will
-// return a default-constructed value VISITOR::Result{}.
+// return a default value.
 template<std::size_t J, typename VISITOR>
 common::IfNoLvalue<typename VISITOR::Result, VISITOR> SearchTypesHelper(
-    VISITOR &&visitor) {
+    VISITOR &&visitor, typename VISITOR::Result &&defaultResult) {
   using Tuple = typename VISITOR::Types;
   if constexpr (J < std::tuple_size_v<Tuple>) {
     if (auto result{visitor.template Test<std::tuple_element_t<J, Tuple>>()}) {
       return result;
     }
-    return SearchTypesHelper<J + 1, VISITOR>(std::move(visitor));
+    return SearchTypesHelper<J + 1, VISITOR>(std::move(visitor),
+        std::move(defaultResult));
   } else {
-    return typename VISITOR::Result{};
+    return std::move(defaultResult);
   }
 }
 
 template<typename VISITOR>
 common::IfNoLvalue<typename VISITOR::Result, VISITOR> SearchTypes(
-    VISITOR &&visitor) {
-  return SearchTypesHelper<0, VISITOR>(std::move(visitor));
+    VISITOR &&visitor,
+    typename VISITOR::Result defaultResult = typename VISITOR::Result{}) {
+  return SearchTypesHelper<0, VISITOR>(
+      std::move(visitor), std::move(defaultResult));
 }
 }
 #endif  // FORTRAN_COMMON_TEMPLATE_H_

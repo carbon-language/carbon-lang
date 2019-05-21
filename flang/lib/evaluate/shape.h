@@ -35,27 +35,46 @@ class FoldingContext;
 
 using ExtentType = SubscriptInteger;
 using ExtentExpr = Expr<ExtentType>;
-using MaybeExtent = std::optional<ExtentExpr>;
-using Shape = std::vector<MaybeExtent>;
+using MaybeExtentExpr = std::optional<ExtentExpr>;
+using Shape = std::vector<MaybeExtentExpr>;
+
+bool IsImpliedShape(const Symbol &);
+bool IsExplicitShape(const Symbol &);
 
 // Conversions between various representations of shapes.
-Shape AsShape(const Constant<ExtentType> &arrayConstant);
-std::optional<Shape> AsShape(FoldingContext &, ExtentExpr &&arrayExpr);
+Shape AsShape(const Constant<ExtentType> &);
+std::optional<Shape> AsShape(FoldingContext &, ExtentExpr &&);
+
 std::optional<ExtentExpr> AsExtentArrayExpr(const Shape &);
+
 std::optional<Constant<ExtentType>> AsConstantShape(const Shape &);
+Constant<ExtentType> AsConstantShape(const ConstantSubscripts &);
+
 ConstantSubscripts AsConstantExtents(const Constant<ExtentType> &);
 std::optional<ConstantSubscripts> AsConstantExtents(const Shape &);
+
+inline int GetRank(const Shape &s) { return static_cast<int>(s.size()); }
+
+// The dimension here is zero-based, unlike DIM= arguments to many intrinsics.
+MaybeExtentExpr GetLowerBound(FoldingContext &, const Symbol &, int dimension,
+    const Component * = nullptr);
+MaybeExtentExpr GetExtent(FoldingContext &, const Symbol &, int dimension,
+    const Component * = nullptr);
+MaybeExtentExpr GetExtent(FoldingContext &, const Subscript &, const Symbol &,
+    int dimension, const Component * = nullptr);
+MaybeExtentExpr GetUpperBound(
+    FoldingContext &, MaybeExtentExpr &&lower, MaybeExtentExpr &&extent);
 
 // Compute an element count for a triplet or trip count for a DO.
 ExtentExpr CountTrips(
     ExtentExpr &&lower, ExtentExpr &&upper, ExtentExpr &&stride);
 ExtentExpr CountTrips(
     const ExtentExpr &lower, const ExtentExpr &upper, const ExtentExpr &stride);
-MaybeExtent CountTrips(
-    MaybeExtent &&lower, MaybeExtent &&upper, MaybeExtent &&stride);
+MaybeExtentExpr CountTrips(
+    MaybeExtentExpr &&lower, MaybeExtentExpr &&upper, MaybeExtentExpr &&stride);
 
 // Computes SIZE() == PRODUCT(shape)
-MaybeExtent GetSize(Shape &&);
+MaybeExtentExpr GetSize(Shape &&);
 
 // Utility predicate: does an expression reference any implied DO index?
 bool ContainsAnyImpliedDoIndex(const ExtentExpr &);
@@ -127,7 +146,7 @@ public:
 
   template<typename T>
   std::optional<Shape> GetShape(const ArrayConstructor<T> &aconst) {
-    return Shape{GetExtent(aconst)};
+    return Shape{GetArrayConstructorExtent(aconst)};
   }
 
   template<typename... A>
@@ -151,10 +170,11 @@ public:
 
 private:
   template<typename T>
-  MaybeExtent GetExtent(const ArrayConstructorValue<T> &value) {
+  MaybeExtentExpr GetArrayConstructorValueExtent(
+      const ArrayConstructorValue<T> &value) {
     return std::visit(
         common::visitors{
-            [&](const Expr<T> &x) -> MaybeExtent {
+            [&](const Expr<T> &x) -> MaybeExtentExpr {
               if (std::optional<Shape> xShape{GetShape(x)}) {
                 // Array values in array constructors get linearized.
                 return GetSize(std::move(*xShape));
@@ -162,13 +182,13 @@ private:
                 return std::nullopt;
               }
             },
-            [&](const ImpliedDo<T> &ido) -> MaybeExtent {
+            [&](const ImpliedDo<T> &ido) -> MaybeExtentExpr {
               // Don't be heroic and try to figure out triangular implied DO
               // nests.
               if (!ContainsAnyImpliedDoIndex(ido.lower()) &&
                   !ContainsAnyImpliedDoIndex(ido.upper()) &&
                   !ContainsAnyImpliedDoIndex(ido.stride())) {
-                if (auto nValues{GetExtent(ido.values())}) {
+                if (auto nValues{GetArrayConstructorExtent(ido.values())}) {
                   return std::move(*nValues) *
                       CountTrips(ido.lower(), ido.upper(), ido.stride());
                 }
@@ -180,10 +200,11 @@ private:
   }
 
   template<typename T>
-  MaybeExtent GetExtent(const ArrayConstructorValues<T> &values) {
+  MaybeExtentExpr GetArrayConstructorExtent(
+      const ArrayConstructorValues<T> &values) {
     ExtentExpr result{0};
     for (const auto &value : values) {
-      if (MaybeExtent n{GetExtent(value)}) {
+      if (MaybeExtentExpr n{GetArrayConstructorValueExtent(value)}) {
         result = std::move(result) + std::move(*n);
       } else {
         return std::nullopt;
@@ -191,12 +212,6 @@ private:
     }
     return result;
   }
-
-  // The dimension here is zero-based, unlike DIM= intrinsic arguments.
-  MaybeExtent GetLowerBound(const Symbol &, const Component *, int dimension);
-  MaybeExtent GetExtent(const Symbol &, const Component *, int dimension);
-  MaybeExtent GetExtent(
-      const Subscript &, const Symbol &, const Component *, int dimension);
 
   FoldingContext &context_;
 };

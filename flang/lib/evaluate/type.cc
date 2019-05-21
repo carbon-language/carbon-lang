@@ -16,6 +16,7 @@
 #include "expression.h"
 #include "fold.h"
 #include "../common/idioms.h"
+#include "../common/template.h"
 #include "../semantics/scope.h"
 #include "../semantics/symbol.h"
 #include "../semantics/tools.h"
@@ -218,5 +219,80 @@ DynamicType DynamicType::ResultTypeForMultiply(const DynamicType &that) const {
 bool SomeKind<TypeCategory::Derived>::operator==(
     const SomeKind<TypeCategory::Derived> &that) const {
   return PointeeComparison(derivedTypeSpec_, that.derivedTypeSpec_);
+}
+
+static constexpr double LogBaseTenOfTwo{0.301029995664};
+
+class SelectedIntKindVisitor {
+public:
+  explicit SelectedIntKindVisitor(std::int64_t p) : precision_{p} {}
+  using Result = std::optional<int>;
+  using Types = IntegerTypes;
+  template<typename T> Result Test() const {
+    if ((Scalar<T>::bits - 1) * LogBaseTenOfTwo > precision_) {
+      return T::kind;
+    } else {
+      return std::nullopt;
+    }
+  }
+
+private:
+  std::int64_t precision_;
+};
+
+int SelectedIntKind(std::int64_t precision) {
+  if (auto kind{common::SearchTypes(SelectedIntKindVisitor{precision})}) {
+    return *kind;
+  } else {
+    return -1;
+  }
+}
+
+class SelectedRealKindVisitor {
+public:
+  explicit SelectedRealKindVisitor(std::int64_t p, std::int64_t r)
+    : precision_{p}, range_{r} {}
+  using Result = std::optional<int>;
+  using Types = RealTypes;
+  template<typename T> Result Test() const {
+    if ((Scalar<T>::precision - 1) * LogBaseTenOfTwo > precision_ &&
+        (Scalar<T>::exponentBias - 1) * LogBaseTenOfTwo > range_) {
+      return {T::kind};
+    } else {
+      return std::nullopt;
+    }
+  }
+
+private:
+  std::int64_t precision_, range_;
+};
+
+int SelectedRealKind(
+    std::int64_t precision, std::int64_t range, std::int64_t radix) {
+  if (radix != 2) {
+    return -5;
+  }
+  if (auto kind{
+          common::SearchTypes(SelectedRealKindVisitor{precision, range})}) {
+    return *kind;
+  }
+  // No kind has both sufficient precision and sufficient range.
+  // The negative return value encodes whether any kinds exist that
+  // could satisfy either constraint independently.
+  bool pOK{common::SearchTypes(SelectedRealKindVisitor{precision, 0})};
+  bool rOK{common::SearchTypes(SelectedRealKindVisitor{0, range})};
+  if (pOK) {
+    if (rOK) {
+      return -4;
+    } else {
+      return -2;
+    }
+  } else {
+    if (rOK) {
+      return -1;
+    } else {
+      return -3;
+    }
+  }
 }
 }
