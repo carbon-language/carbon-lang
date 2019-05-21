@@ -683,6 +683,10 @@ public:
     return iterator_range<const_iterator>(begin(), end());
   }
 
+  // Iterators by pointer.
+  BasicBlockListType::iterator pbegin()  { return BasicBlocks.begin(); }
+  BasicBlockListType::iterator pend()    { return BasicBlocks.end(); }
+
   order_iterator       layout_begin()    { return BasicBlocksLayout.begin(); }
   const_order_iterator layout_begin()    const
                                          { return BasicBlocksLayout.begin(); }

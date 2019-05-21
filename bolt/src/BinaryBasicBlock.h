@@ -456,6 +456,13 @@ public:
     }
   }
 
+  /// Add a range of instructions to the end of this basic block.
+  template <typename RangeTy>
+  void addInstructions(RangeTy R) {
+    for(auto &I : R)
+      addInstruction(I);
+  }
+
   /// Add instruction before Pos in this basic block.
   template <typename Itr>
   Itr insertPseudoInstr(Itr Pos, MCInst &Instr) {

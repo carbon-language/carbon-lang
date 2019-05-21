@@ -228,6 +228,14 @@ StringOps("inline-memcpy",
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
+static cl::list<std::string>
+SpecializeMemcpy1("memcpy1-spec",
+  cl::desc("list of functions with call sites for which to specialize memcpy() "
+           "for size 1"),
+  cl::value_desc("func1,func2:cs1:cs2,func3:cs1,..."),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
 static cl::opt<bool>
 StripRepRet("strip-rep-ret",
   cl::desc("strip 'repz' prefix from 'repz retq' sequence (on by default)"),
@@ -370,7 +378,12 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
                        opts::ICF);
 
   if (BC.isAArch64())
-      Manager.registerPass(llvm::make_unique<VeneerElimination>(PrintVeneerElimination));
+      Manager.registerPass(
+          llvm::make_unique<VeneerElimination>(PrintVeneerElimination));
+
+  Manager.registerPass(
+      llvm::make_unique<SpecializeMemcpy1>(NeverPrint, opts::SpecializeMemcpy1),
+      !opts::SpecializeMemcpy1.empty());
 
   Manager.registerPass(llvm::make_unique<InlineMemcpy>(NeverPrint),
                        opts::StringOps);

@@ -1553,5 +1553,143 @@ void InlineMemcpy::runOnFunctions(BinaryContext &BC) {
   }
 }
 
+bool SpecializeMemcpy1::shouldOptimize(const BinaryFunction &Function) const {
+  if (!BinaryFunctionPass::shouldOptimize(Function))
+    return false;
+
+  for (auto &FunctionSpec : Spec) {
+    auto FunctionName = StringRef(FunctionSpec).split(':').first;
+    if (Function.hasName(FunctionName))
+      return true;
+    if (Function.hasNameRegex(FunctionName))
+      return true;
+  }
+
+  return false;
+}
+
+std::set<size_t>
+SpecializeMemcpy1::getCallSitesToOptimize(const BinaryFunction &Function) const{
+  StringRef SitesString;
+  for (auto &FunctionSpec : Spec) {
+    StringRef FunctionName;
+    std::tie(FunctionName, SitesString) = StringRef(FunctionSpec).split(':');
+    if (Function.hasName(FunctionName))
+      break;
+    if (Function.hasNameRegex(FunctionName))
+      break;
+    SitesString = "";
+  }
+
+  std::set<size_t> Sites;
+  SmallVector<StringRef, 4> SitesVec;
+  SitesString.split(SitesVec, ':');
+  for (auto SiteString : SitesVec) {
+    if (SiteString.empty())
+      continue;
+    size_t Result;
+    if (!SiteString.getAsInteger(10, Result))
+      Sites.emplace(Result);
+  }
+
+  return Sites;
+}
+
+void SpecializeMemcpy1::runOnFunctions(BinaryContext &BC) {
+  if (!BC.isX86())
+    return;
+
+  uint64_t NumSpecialized = 0;
+  uint64_t NumSpecializedDyno = 0;
+  for (auto &BFI : BC.getBinaryFunctions()) {
+    auto &Function = BFI.second;
+    if (!shouldOptimize(Function))
+      continue;
+
+    auto CallsToOptimize = getCallSitesToOptimize(Function);
+    auto shouldOptimize = [&](size_t N) {
+      return CallsToOptimize.empty() || CallsToOptimize.count(N);
+    };
+
+    std::vector<BinaryBasicBlock *> Blocks(Function.pbegin(), Function.pend());
+    size_t CallSiteID = 0;
+    for (auto *CurBB : Blocks) {
+      for(auto II = CurBB->begin(); II != CurBB->end(); ++II) {
+        auto &Inst = *II;
+
+        if (!BC.MIB->isCall(Inst) || MCPlus::getNumPrimeOperands(Inst) != 1 ||
+            !Inst.getOperand(0).isExpr())
+          continue;
+
+        const auto *CalleeSymbol = BC.MIB->getTargetSymbol(Inst);
+        if (CalleeSymbol->getName() != "memcpy" &&
+            CalleeSymbol->getName() != "memcpy@PLT")
+          continue;
+
+        if (BC.MIB->isTailCall(Inst))
+          continue;
+
+        ++CallSiteID;
+
+        if (!shouldOptimize(CallSiteID))
+          continue;
+
+        // Create a copy of a call to memcpy(dest, src, size).
+        auto MemcpyInstr = Inst;
+
+        auto *OneByteMemcpyBB = CurBB->splitAt(II);
+
+        BinaryBasicBlock *NextBB{nullptr};
+        if (OneByteMemcpyBB->getNumNonPseudos() > 1) {
+          NextBB = OneByteMemcpyBB->splitAt(OneByteMemcpyBB->begin());
+          NextBB->eraseInstruction(NextBB->begin());
+        } else {
+          NextBB = OneByteMemcpyBB->getSuccessor();
+          OneByteMemcpyBB->eraseInstruction(OneByteMemcpyBB->begin());
+          assert(NextBB && "unexpected call to memcpy() with no return");
+        }
+
+        auto *MemcpyBB = Function.addBasicBlock(0);
+        auto CmpJCC = BC.MIB->createCmpJE(BC.MIB->getIntArgRegister(2),
+                                          1,
+                                          OneByteMemcpyBB->getLabel(),
+                                          BC.Ctx.get());
+        CurBB->addInstructions(CmpJCC);
+        CurBB->addSuccessor(MemcpyBB);
+
+        MemcpyBB->addInstruction(std::move(MemcpyInstr));
+        MemcpyBB->addSuccessor(NextBB);
+        MemcpyBB->setCFIState(NextBB->getCFIState());
+        MemcpyBB->setExecutionCount(0);
+
+        // To prevent the actual call from being moved to cold, we set its
+        // execution count to 1.
+        if (CurBB->getKnownExecutionCount() > 0)
+          MemcpyBB->setExecutionCount(1);
+
+        auto OneByteMemcpy = BC.MIB->createOneByteMemcpy();
+        OneByteMemcpyBB->addInstructions(OneByteMemcpy);
+
+        ++NumSpecialized;
+        NumSpecializedDyno += CurBB->getKnownExecutionCount();
+
+        CurBB = NextBB;
+
+        // Note: we don't expect the next instruction to be a call to memcpy.
+        II = CurBB->begin();
+      }
+    }
+  }
+
+  if (NumSpecialized) {
+    outs() << "BOLT-INFO: specialized " << NumSpecialized
+           << " memcpy() call sites for size 1";
+    if (NumSpecializedDyno)
+      outs() << ". The calls were executed " << NumSpecializedDyno
+             << " times based on profile.";
+    outs() << '\n';
+  }
+}
+
 } // namespace bolt
 } // namespace llvm

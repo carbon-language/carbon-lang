@@ -196,19 +196,19 @@ std::string createRetpolineFunctionTag(BinaryContext &BC,
     Ostream.flush();
   }
 
-  Tag += MemRef.BaseRegNum != BC.MIB->getX86NoRegister()
+  Tag += MemRef.BaseRegNum != BC.MIB->getNoRegister()
              ? "r" + to_string(MemRef.BaseRegNum)
              : "";
 
   Tag +=
       MemRef.DispExpr ? "+" + DispExprStr : "+" + to_string(MemRef.DispValue);
 
-  Tag += MemRef.IndexRegNum != BC.MIB->getX86NoRegister()
+  Tag += MemRef.IndexRegNum != BC.MIB->getNoRegister()
              ? "+" + to_string(MemRef.ScaleValue) + "*" +
                    to_string(MemRef.IndexRegNum)
              : "";
 
-  Tag += MemRef.SegRegNum != BC.MIB->getX86NoRegister()
+  Tag += MemRef.SegRegNum != BC.MIB->getNoRegister()
              ? "_seg_" + to_string(MemRef.SegRegNum)
              : "";
 

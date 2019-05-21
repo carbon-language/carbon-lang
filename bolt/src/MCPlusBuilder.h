@@ -368,7 +368,18 @@ public:
     llvm_unreachable("not implemented");
   }
 
-  virtual MCPhysReg getX86NoRegister() const {
+  /// Return a register number that is guaranteed to not match with
+  /// any real register on the underlying architecture.
+  virtual MCPhysReg getNoRegister() const {
+    llvm_unreachable("not implemented");
+  }
+
+  /// Return a register corresponding to a function integer argument \p ArgNo
+  /// if the argument is passed in a register. Or return the result of
+  /// getNoRegister() otherwise. The enumeration starts at 0.
+  ///
+  /// Note: this should depend on a used calling convention.
+  virtual MCPhysReg getIntArgRegister(unsigned ArgNo) const {
     llvm_unreachable("not implemented");
   }
 
@@ -1357,6 +1368,21 @@ public:
     Inst.setOpcode(TargetOpcode::CFI_INSTRUCTION);
     Inst.addOperand(MCOperand::createImm(Offset));
     return true;
+  }
+
+  /// Create an inline version of memcpy(dest, src, 1).
+  virtual std::vector<MCInst> createOneByteMemcpy() const {
+    llvm_unreachable("not implemented");
+    return {};
+  }
+
+  /// Create a sequence of instructions to compare contents of a register
+  /// \p RegNo to immediate \Imm and jump to \p Target if they are equal.
+  virtual std::vector<MCInst>
+  createCmpJE(MCPhysReg RegNo, int64_t Imm, const MCSymbol *Target,
+              MCContext *Ctx) const {
+    llvm_unreachable("not implemented");
+    return {};
   }
 
   /// Creates inline memcpy instruction. If \p ReturnEnd is true, then return

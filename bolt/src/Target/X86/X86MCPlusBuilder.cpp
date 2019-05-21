@@ -2759,6 +2759,43 @@ public:
     return Code;
   }
 
+  std::vector<MCInst> createOneByteMemcpy() const override {
+    std::vector<MCInst> Code;
+    Code.emplace_back(MCInstBuilder(X86::MOV8rm)
+                          .addReg(X86::CL)
+                          .addReg(X86::RSI)
+                          .addImm(0)
+                          .addReg(X86::NoRegister)
+                          .addImm(0)
+                          .addReg(X86::NoRegister));
+    Code.emplace_back(MCInstBuilder(X86::MOV8mr)
+                          .addReg(X86::RDI)
+                          .addImm(0)
+                          .addReg(X86::NoRegister)
+                          .addImm(0)
+                          .addReg(X86::NoRegister)
+                          .addReg(X86::CL));
+    Code.emplace_back(MCInstBuilder(X86::MOV64rr)
+                          .addReg(X86::RAX)
+                          .addReg(X86::RDI));
+    return Code;
+  }
+
+  std::vector<MCInst>
+  createCmpJE(MCPhysReg RegNo, int64_t Imm, const MCSymbol *Target,
+              MCContext *Ctx) const override {
+    std::vector<MCInst> Code;
+    Code.emplace_back(MCInstBuilder(X86::CMP64ri8)
+                          .addReg(RegNo)
+                          .addImm(Imm));
+    Code.emplace_back(MCInstBuilder(X86::JE_1)
+                          .addExpr(MCSymbolRefExpr::create(
+                            Target,
+                            MCSymbolRefExpr::VK_None,
+                            *Ctx)));
+    return Code;
+  }
+
   bool replaceImmWithSymbol(MCInst &Inst, MCSymbol *Symbol, int64_t Addend,
                             MCContext *Ctx, int64_t &Value,
                             uint64_t RelType) const override {
@@ -2903,8 +2940,21 @@ public:
     return X86::R11;
   }
 
-  MCPhysReg getX86NoRegister() const override {
+  MCPhysReg getNoRegister() const override {
     return X86::NoRegister;
+  }
+
+  MCPhysReg getIntArgRegister(unsigned ArgNo) const override {
+    // FIXME: this should depend on the calling convention.
+    switch (ArgNo) {
+    case 0:   return X86::RDI;
+    case 1:   return X86::RSI;
+    case 2:   return X86::RDX;
+    case 3:   return X86::RCX;
+    case 4:   return X86::R8;
+    case 5:   return X86::R9;
+    default:  return getNoRegister();
+    }
   }
 
   void createPause(MCInst &Inst) const override {

@@ -39,7 +39,7 @@ protected:
 
   /// Control whether a specific function should be skipped during
   /// optimization.
-  bool shouldOptimize(const BinaryFunction &BF) const;
+  virtual bool shouldOptimize(const BinaryFunction &BF) const;
 public:
   virtual ~BinaryFunctionPass() = default;
 
@@ -398,6 +398,29 @@ public:
 
   const char *getName() const override {
     return "inline-memcpy";
+  }
+
+  void runOnFunctions(BinaryContext &BC) override;
+};
+
+/// Pass for specializing memcpy for a size of 1 byte.
+class SpecializeMemcpy1 : public BinaryFunctionPass {
+private:
+  std::vector<std::string> Spec;
+
+  /// Return indices of the call sites to optimize. Count starts at 1.
+  /// Returns an empty set for all call sites in the function.
+  std::set<size_t> getCallSitesToOptimize(const BinaryFunction &) const;
+
+public:
+  explicit SpecializeMemcpy1(const cl::opt<bool> &PrintPass,
+                             cl::list<std::string> &Spec)
+    : BinaryFunctionPass(PrintPass), Spec(Spec) {}
+
+  bool shouldOptimize(const BinaryFunction &BF) const override;
+
+  const char *getName() const override {
+    return "specialize-memcpy";
   }
 
   void runOnFunctions(BinaryContext &BC) override;
