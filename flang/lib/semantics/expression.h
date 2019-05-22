@@ -87,23 +87,33 @@ namespace Fortran::evaluate {
 
 class IntrinsicProcTable;
 
-struct ResetExprHelper {
-  void Reset(parser::Expr::TypedExpr &x) { x->v = std::nullopt; }
-  void Reset(const parser::Expr &x) { Reset(x.typedExpr); }
-  void Reset(const parser::Variable &x) { Reset(x.typedExpr); }
-  template<typename T> void Reset(const common::Indirection<T> &x) {
-    Reset(x.value());
+struct SetExprHelper {
+  SetExprHelper(GenericExprWrapper &&expr) : expr_{std::move(expr)} {}
+  void Set(parser::Expr::TypedExpr &x) { x->v = std::move(expr_.v); }
+  void Set(const parser::Expr &x) { Set(x.typedExpr); }
+  void Set(const parser::Variable &x) { Set(x.typedExpr); }
+  template<typename T> void Set(const common::Indirection<T> &x) {
+    Set(x.value());
   }
-  template<typename T> void Reset(const T &x) {
+  template<typename T> void Set(const T &x) {
     if constexpr (ConstraintTrait<T>) {
-      Reset(x.thing);
+      Set(x.thing);
     } else {
       static_assert("bad type");
     }
   }
+
+  GenericExprWrapper expr_;
 };
+
 // Set the typedExpr data member to std::nullopt to indicate an error
-template<typename T> void ResetExpr(const T &x) { ResetExprHelper{}.Reset(x); }
+template<typename T> void ResetExpr(const T &x) {
+  SetExprHelper{GenericExprWrapper{std::nullopt}}.Set(x);
+}
+
+template<typename T> void SetExpr(const T &x, GenericExprWrapper &&expr) {
+  SetExprHelper{std::move(expr)}.Set(x);
+}
 
 class ExpressionAnalyzer {
 public:
@@ -176,11 +186,16 @@ public:
   template<typename A> MaybeExpr Analyze(const parser::Constant<A> &x) {
     auto result{Analyze(x.thing)};
     if (result.has_value()) {
+      auto save{
+          GetFoldingContext().messages().SetLocation(FindSourceLocation(x))};
       *result = Fold(GetFoldingContext(), std::move(*result));
       if (!IsConstantExpr(*result)) {
         SayAt(x, "Must be a constant value"_err_en_US);
         ResetExpr(x);
         return std::nullopt;
+      } else {
+        // Save folded expression for later use
+        SetExpr(x, common::Clone(result));
       }
     }
     return result;
