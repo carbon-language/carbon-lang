@@ -195,7 +195,7 @@ static inline Expr<TR> FoldElementalIntrinsicHelper(FoldingContext &context,
       (... && IsSpecificIntrinsicType<TA>));  // TODO derived types for MERGE?
   static_assert(sizeof...(TA) > 0);
   std::tuple<const Constant<TA> *...> args{
-      UnwrapExpr<Constant<TA>>(*funcRef.arguments()[I].value().GetExpr())...};
+      GetConstantValue<TA>(*funcRef.arguments()[I].value().GetExpr())...};
   if ((... && (std::get<I>(args) != nullptr))) {
     // Compute the shape of the result based on shapes of arguments
     ConstantSubscripts shape;
