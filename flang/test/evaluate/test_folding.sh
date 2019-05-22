@@ -65,8 +65,12 @@ src1=$temp/symbols.log
 src2=$temp/all_parameters.log
 src3=$temp/tested_parameters.log
 src4=$temp/failures.log
+messages=$temp/messages.log
+actual_warnings=$temp/actwarnings.log
+expected_warnings=$temp/expwarnings.log
+warning_diffs=$temp/warnings.diff
 
-if $CMD $src > $src1  # compile, dumping symbols
+if $CMD $src > $src1 2> $messages # compile, dumping symbols
 then :
 else echo FAIL compilation
      exit 1
@@ -82,16 +86,38 @@ sed -e '/^test_/!d' $src2 > $src3
 # Check all tests results (keep tests that do not resolve to true)
 sed -e '/\.true\._.$/d' $src3 > $src4
 
-if [[ -s $src4 ]]; then
+
+#Check warnings
+sed -n 's=^[^:]*:\([^:]*\):[^:]*: =\1: =p' $messages > $actual_warnings
+
+awk '
+  BEGIN { FS = "!WARN: "; }
+  /^ *!WARN: / { warnings[nwarnings++] = $2; next; }
+  { for (i = 0; i < nwarnings; ++i) printf "%d: %s\n", NR, warnings[i]; nwarnings = 0; }
+' $src > $expected_warnings
+
+diff -U0 $actual_warnings $expected_warnings > $warning_diffs
+
+if [ -s $src4 ] || [ -s $warning_diffs ]; then
   echo "folding test failed:"
   # Print failed tests (It will actually print all parameters
   # that have the same suffix as the failed test so that one can get more info
   # by declaring expected_x and result_x for instance)
-  sed -e 's/test_/_/' -e 's/ .*//' $src4 | grep -f - $src2
+  if [[ -s $src4 ]]; then
+    sed -e 's/test_/_/' -e 's/ .*//' $src4 | grep -f - $src2
+  fi
+  if [[ -s $warning_diffs ]]; then
+    echo "$cmd"
+    < $warning_diffs \
+      sed -n -e 's/^-\([0-9]\)/actual at \1/p' -e 's/^+\([0-9]\)/expect at \1/p' \
+      | sort -n -k 2
+  fi
   echo FAIL
   exit 1
 else
-  passed="$(wc -l $src3 | sed 's/ .*//')"
+  passed_results="$(wc -l $src3 | sed 's/ .*//')"
+  passed_warnings="$(wc -l $expected_warnings | sed 's/ .*//')"
+  passed=$((passed_warnings + $passed_results))
   echo all $passed tests passed
   echo PASS
 fi
