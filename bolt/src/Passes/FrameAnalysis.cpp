@@ -152,11 +152,7 @@ class FrameAccessAnalysis {
 public:
   FrameAccessAnalysis(const BinaryContext &BC, BinaryFunction &BF)
       : SPT(BC, BF), BC(BC), BF(BF) {
-    {
-      NamedRegionTimer T1("SPT", "Stack Pointer Tracking", "Dataflow",
-                          "Dataflow", opts::TimeOpts);
-      SPT.run();
-    }
+    SPT.run();
   }
 
   void enterNewBB() { Prev = nullptr; }
