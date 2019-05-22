@@ -342,8 +342,7 @@ static std::optional<std::int64_t> GetTypeParameterInt64Value(
       paramValue{derivedType.FindParameter(parameterSymbol.name())}) {
     return evaluate::ToInt64(paramValue->GetExplicit());
   } else {
-    // Type parameter with default value and omitted in DerivedTypeSpec
-    return evaluate::ToInt64(parameterSymbol.get<TypeParamDetails>().init());
+    return std::nullopt;
   }
 }
 
@@ -401,15 +400,23 @@ static bool HaveCompatibleKindParameters(
 }
 
 bool AllocationCheckerHelper::RunChecks(SemanticsContext &context) {
-  if (type_ == nullptr) {
+  if (name_.symbol == nullptr) {
+    CHECK(context.AnyFatalError());
     return false;
   }
-  GatherAllocationBasicInfo();
   if (!IsVariableName(*name_.symbol)) {  // C932 pre-requisite
     context.Say(name_.source,
         "Name in ALLOCATE statement must be a variable name"_err_en_US);
     return false;
   }
+  if (type_ == nullptr) {
+    // This is done after variable check because a user could have put
+    // a subroutine name in allocate for instance which is a symbol with
+    // no type.
+    CHECK(context.AnyFatalError());
+    return false;
+  }
+  GatherAllocationBasicInfo();
   if (!IsAllocatableOrPointer(*name_.symbol)) {  // C932
     context.Say(name_.source,
         "Entity in ALLOCATE statement must have the ALLOCATABLE or POINTER attribute"_err_en_US);
