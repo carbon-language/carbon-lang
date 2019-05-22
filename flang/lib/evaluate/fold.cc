@@ -806,6 +806,9 @@ static std::optional<Expr<T>> GetParameterValue(
           auto converted{ConvertToType(*dyType, common::Clone(*init))};
           semantics::ObjectEntityDetails *mutableObject{
               const_cast<semantics::ObjectEntityDetails *>(object)};
+          // Reset expression now to prevent infinite loops if the init
+          // expression depends on symbol itself.
+          mutableObject->set_init(std::nullopt);
           if (converted.has_value()) {
             *converted = Fold(context, std::move(*converted));
             auto *unwrapped{UnwrapExpr<Expr<T>>(*converted)};
@@ -827,7 +830,6 @@ static std::optional<Expr<T>> GetParameterValue(
                 "Initialization expression for PARAMETER '%s' (%s) cannot be converted to its type (%s)"_err_en_US,
                 symbol->name(), ss.str(), dyType->AsFortran());
           }
-          mutableObject->set_init(std::nullopt);
         }
       }
     }
