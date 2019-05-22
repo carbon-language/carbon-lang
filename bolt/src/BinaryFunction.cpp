@@ -1911,6 +1911,17 @@ bool BinaryFunction::buildCFG() {
   // Update the state.
   CurrentState = State::CFG;
 
+  // Make any necessary adjustments for indirect branches.
+  if (!postProcessIndirectBranches()) {
+    if (opts::Verbosity) {
+      errs() << "BOLT-WARNING: failed to post-process indirect branches for "
+             << *this << '\n';
+    }
+    // In relocation mode we want to keep processing the function but avoid
+    // optimizing it.
+    setSimple(false);
+  }
+
   return true;
 }
 
@@ -1920,24 +1931,14 @@ void BinaryFunction::postProcessCFG() {
     // to a tail call.
     removeConditionalTailCalls();
 
-    // Make any necessary adjustments for indirect branches.
-    if (!postProcessIndirectBranches()) {
-      if (opts::Verbosity) {
-        errs() << "BOLT-WARNING: failed to post-process indirect branches for "
-               << *this << '\n';
-      }
-      // In relocation mode we want to keep processing the function but avoid
-      // optimizing it.
-      setSimple(false);
-    } else {
-      postProcessProfile();
+    postProcessProfile();
 
-      // Eliminate inconsistencies between branch instructions and CFG.
-      postProcessBranches();
-    }
+    // Eliminate inconsistencies between branch instructions and CFG.
+    postProcessBranches();
 
-    calculateMacroOpFusionStats();
   }
+
+  calculateMacroOpFusionStats();
 
   // The final cleanup of intermediate structures.
   clearList(IgnoredBranches);

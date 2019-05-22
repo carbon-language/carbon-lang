@@ -594,6 +594,9 @@ public:
 
   /// @}
 
+  /// Resolve inter-procedural dependencies.
+  void processInterproceduralReferences();
+
   /// Perform any necessary post processing on the symbol table after
   /// function disassembly is complete.  This processing fixes top
   /// level data holes and makes sure the symbol table is valid.

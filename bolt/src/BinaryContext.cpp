@@ -516,6 +516,84 @@ void BinaryContext::generateSymbolHashes() {
   }
 }
 
+void BinaryContext::processInterproceduralReferences() {
+  for (auto &Pair : InterproceduralReferences) {
+    auto *FromBF = Pair.first;
+    auto Addr = Pair.second;
+    auto *ContainingFunction = getBinaryFunctionContainingAddress(Addr);
+    if (FromBF == ContainingFunction)
+      continue;
+
+    if (ContainingFunction) {
+      // Only a parent function (or a sibling) can reach its fragment.
+      if (ContainingFunction->IsFragment) {
+        assert(!FromBF->IsFragment &&
+               "only one cold fragment is supported at this time");
+        ContainingFunction->setParentFunction(FromBF);
+        FromBF->addFragment(ContainingFunction);
+        if (!HasRelocations) {
+          ContainingFunction->setSimple(false);
+          FromBF->setSimple(false);
+        }
+        if (opts::Verbosity >= 1) {
+          outs() << "BOLT-INFO: marking " << *ContainingFunction
+                 << " as a fragment of " << *FromBF << '\n';
+        }
+        continue;
+      }
+
+      if (ContainingFunction->getAddress() != Addr) {
+        ContainingFunction->addEntryPoint(Addr);
+        if (!HasRelocations) {
+          if (opts::Verbosity >= 1) {
+            errs() << "BOLT-WARNING: Function " << *ContainingFunction
+                   << " has internal BBs that are target of a reference "
+                   << "located in another function. Skipping the function.\n";
+          }
+          ContainingFunction->setSimple(false);
+        }
+      }
+    } else if (Addr) {
+      // Check if address falls in function padding space - this could be
+      // unmarked data in code. In this case adjust the padding space size.
+      auto Section = getSectionForAddress(Addr);
+      assert(Section && "cannot get section for referenced address");
+
+      if (!Section->isText())
+        continue;
+
+      // PLT requires special handling and could be ignored in this context.
+      StringRef SectionName = Section->getName();
+      if (SectionName == ".plt" || SectionName == ".plt.got")
+        continue;
+
+      if (HasRelocations) {
+        errs() << "BOLT-ERROR: cannot process binaries with unmarked "
+               << "object in code at address 0x"
+               << Twine::utohexstr(Addr) << " belonging to section "
+               << SectionName << " in relocation mode.\n";
+        exit(1);
+      }
+
+      ContainingFunction =
+        getBinaryFunctionContainingAddress(Addr,
+                                           /*CheckPastEnd=*/false,
+                                           /*UseMaxSize=*/true);
+      // We are not going to overwrite non-simple functions, but for simple
+      // ones - adjust the padding size.
+      if (ContainingFunction && ContainingFunction->isSimple()) {
+        errs() << "BOLT-WARNING: function " << *ContainingFunction
+               << " has an object detected in a padding region at address 0x"
+               << Twine::utohexstr(Addr) << '\n';
+        ContainingFunction->setMaxSize(Addr -
+                                       ContainingFunction->getAddress());
+      }
+    }
+  }
+
+  InterproceduralReferences.clear();
+}
+
 void BinaryContext::postProcessSymbolTable() {
   fixBinaryDataHoles();
   bool Valid = true;
