@@ -15,8 +15,6 @@
 ! Test intrinsic function folding edge case (both expected value and messages)
 ! These tests make assumptions regarding real(4) extrema.
 
-!end program
-
 #define TEST_ISNAN(v) logical, parameter :: test_##v =.NOT.(v.EQ.v)
 
 
