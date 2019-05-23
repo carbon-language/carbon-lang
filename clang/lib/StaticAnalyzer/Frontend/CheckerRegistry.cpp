@@ -518,17 +518,8 @@ void CheckerRegistry::printCheckerWithDescList(raw_ostream &Out,
     if (!AnOpts.ShowCheckerHelpHidden && Checker.IsHidden)
       continue;
 
-    Out.indent(InitialPad) << Checker.FullName;
-
-    int Pad = OptionFieldWidth - Checker.FullName.size();
-
-    // Break on long option names.
-    if (Pad < 0) {
-      Out << '\n';
-      Pad = OptionFieldWidth + InitialPad;
-    }
-    Out.indent(Pad + 2) << Checker.Desc;
-
+    AnalyzerOptions::printFormattedEntry(Out, {Checker.FullName, Checker.Desc},
+                                         InitialPad, OptionFieldWidth);
     Out << '\n';
   }
 }
@@ -539,4 +530,42 @@ void CheckerRegistry::printEnabledCheckerList(raw_ostream &Out) const {
 
   for (const auto *i : EnabledCheckers)
     Out << i->FullName << '\n';
+}
+
+void CheckerRegistry::printCheckerOptionList(raw_ostream &Out) const {
+  Out << "OVERVIEW: Clang Static Analyzer Checker and Package Option List\n\n";
+  Out << "USAGE: -analyzer-config <OPTION1=VALUE,OPTION2=VALUE,...>\n\n";
+  Out << "       -analyzer-config OPTION1=VALUE, -analyzer-config "
+         "OPTION2=VALUE, ...\n\n";
+  Out << "OPTIONS:\n\n";
+
+  std::multimap<StringRef, const CmdLineOption &> OptionMap;
+
+  for (const CheckerInfo &Checker : Checkers) {
+    for (const CmdLineOption &Option : Checker.CmdLineOptions) {
+      OptionMap.insert({Checker.FullName, Option});
+    }
+  }
+
+  for (const PackageInfo &Package : Packages) {
+    for (const CmdLineOption &Option : Package.CmdLineOptions) {
+      OptionMap.insert({Package.FullName, Option});
+    }
+  }
+
+  for (const std::pair<StringRef, const CmdLineOption &> &Entry : OptionMap) {
+    const CmdLineOption &Option = Entry.second;
+    std::string FullOption = (Entry.first + ":" + Option.OptionName).str();
+
+    std::string Desc =
+        ("(" + Option.OptionType + ") " + Option.Description + " (default: " +
+         (Option.DefaultValStr.empty() ? "\"\"" : Option.DefaultValStr) + ")")
+            .str();
+
+    AnalyzerOptions::printFormattedEntry(Out, {FullOption, Desc},
+                                         /*InitialPad*/ 2,
+                                         /*EntryWidth*/ 50,
+                                         /*MinLineWidth*/ 90);
+    Out << "\n\n";
+  }
 }

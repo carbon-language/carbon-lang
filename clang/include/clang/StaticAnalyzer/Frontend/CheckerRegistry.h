@@ -272,6 +272,7 @@ public:
   void printCheckerWithDescList(raw_ostream &Out,
                                 size_t MaxNameChars = 30) const;
   void printEnabledCheckerList(raw_ostream &Out) const;
+  void printCheckerOptionList(raw_ostream &Out) const;
 
 private:
   /// Collect all enabled checkers. The returned container preserves the order

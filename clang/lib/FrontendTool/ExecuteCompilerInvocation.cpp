@@ -247,6 +247,16 @@ bool ExecuteCompilerInvocation(CompilerInstance *Clang) {
     return true;
   }
 
+  // Honor -analyzer-checker-option-help.
+  if (Clang->getAnalyzerOpts()->ShowCheckerOptionList) {
+    ento::printCheckerConfigList(llvm::outs(),
+                                 Clang->getFrontendOpts().Plugins,
+                                 *Clang->getAnalyzerOpts(),
+                                 Clang->getDiagnostics(),
+                                 Clang->getLangOpts());
+    return true;
+  }
+
   // Honor -analyzer-list-enabled-checkers.
   if (AnOpts.ShowEnabledCheckerList) {
     ento::printEnabledCheckerList(llvm::outs(),

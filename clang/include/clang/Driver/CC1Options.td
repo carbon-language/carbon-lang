@@ -143,6 +143,9 @@ def analyzer_list_enabled_checkers : Flag<["-"], "analyzer-list-enabled-checkers
 def analyzer_config : Separate<["-"], "analyzer-config">,
   HelpText<"Choose analyzer options to enable">;
 
+def analyzer_checker_option_help : Flag<["-"], "analyzer-checker-option-help">,
+  HelpText<"Display the list of checker and package options">;
+
 def analyzer_config_compatibility_mode : Separate<["-"], "analyzer-config-compatibility-mode">,
   HelpText<"Don't emit errors on invalid analyzer-config inputs">;
 
