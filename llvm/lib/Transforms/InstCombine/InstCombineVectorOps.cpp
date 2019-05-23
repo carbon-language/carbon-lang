@@ -884,13 +884,9 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
   if (match(IdxOp, m_ConstantInt(InsertedIdx)) &&
       match(ScalarOp, m_ExtractElement(m_Value(ExtVecOp),
                                        m_ConstantInt(ExtractedIdx)))) {
-    unsigned NumInsertVectorElts = IE.getType()->getNumElements();
     unsigned NumExtractVectorElts = ExtVecOp->getType()->getVectorNumElements();
     if (ExtractedIdx >= NumExtractVectorElts) // Out of range extract.
       return replaceInstUsesWith(IE, VecOp);
-
-    if (InsertedIdx >= NumInsertVectorElts)  // Out of range insert.
-      return replaceInstUsesWith(IE, UndefValue::get(IE.getType()));
 
     // If we are extracting a value from a vector, then inserting it right
     // back into the same place, just use the input vector.
