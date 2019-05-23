@@ -92,6 +92,7 @@ Symbol *SymbolTable::insert(StringRef Name) {
   Symbol *Sym = reinterpret_cast<Symbol *>(make<SymbolUnion>());
   SymVector.push_back(Sym);
 
+  Sym->setName(Name);
   Sym->SymbolKind = Symbol::PlaceholderKind;
   Sym->VersionId = Config->DefaultSymbolVersion;
   Sym->Visibility = STV_DEFAULT;
