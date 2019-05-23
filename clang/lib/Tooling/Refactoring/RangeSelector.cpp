@@ -218,37 +218,47 @@ public:
 };
 } // namespace
 
+// FIXME: Change the following functions from being in an anonymous namespace
+// to static functions, after the minimum Visual C++ has _MSC_VER >= 1915
+// (equivalent to Visual Studio 2017 v15.8 or higher). Using the anonymous
+// namespace works around a bug in earlier versions.
+namespace {
 // Returns the range of the statements (all source between the braces).
-static CharSourceRange getStatementsRange(const MatchResult &,
-                                          const CompoundStmt &CS) {
+CharSourceRange getStatementsRange(const MatchResult &,
+                                   const CompoundStmt &CS) {
   return CharSourceRange::getCharRange(CS.getLBracLoc().getLocWithOffset(1),
                                        CS.getRBracLoc());
 }
+} // namespace
 
 RangeSelector tooling::statements(StringRef ID) {
   return RelativeSelector<CompoundStmt, getStatementsRange>(ID);
 }
 
+namespace {
 // Returns the range of the source between the call's parentheses.
-static CharSourceRange getCallArgumentsRange(const MatchResult &Result,
-                                             const CallExpr &CE) {
+CharSourceRange getCallArgumentsRange(const MatchResult &Result,
+                                      const CallExpr &CE) {
   return CharSourceRange::getCharRange(
       findOpenParen(CE, *Result.SourceManager, Result.Context->getLangOpts())
           .getLocWithOffset(1),
       CE.getRParenLoc());
 }
+} // namespace
 
 RangeSelector tooling::callArgs(StringRef ID) {
   return RelativeSelector<CallExpr, getCallArgumentsRange>(ID);
 }
 
+namespace {
 // Returns the range of the elements of the initializer list. Includes all
 // source between the braces.
-static CharSourceRange getElementsRange(const MatchResult &,
-                                        const InitListExpr &E) {
+CharSourceRange getElementsRange(const MatchResult &,
+                                 const InitListExpr &E) {
   return CharSourceRange::getCharRange(E.getLBraceLoc().getLocWithOffset(1),
                                        E.getRBraceLoc());
 }
+} // namespace
 
 RangeSelector tooling::initListElements(StringRef ID) {
   return RelativeSelector<InitListExpr, getElementsRange>(ID);
