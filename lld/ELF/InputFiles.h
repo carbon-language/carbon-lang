@@ -307,9 +307,7 @@ public:
   static bool classof(const InputFile *F) { return F->kind() == LazyObjKind; }
 
   template <class ELFT> void parse();
-  MemoryBufferRef getBuffer();
   InputFile *fetch();
-  bool AddedToLink = false;
 
 private:
   uint64_t OffsetInArchive;

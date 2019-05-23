@@ -1469,20 +1469,14 @@ InputFile *elf::createSharedFile(MemoryBufferRef MB, StringRef DefaultSoName) {
   return F;
 }
 
-MemoryBufferRef LazyObjFile::getBuffer() {
-  if (AddedToLink)
-    return MemoryBufferRef();
-  AddedToLink = true;
-  return MB;
-}
-
 InputFile *LazyObjFile::fetch() {
-  MemoryBufferRef MBRef = getBuffer();
-  if (MBRef.getBuffer().empty())
+  if (MB.getBuffer().empty())
     return nullptr;
 
-  InputFile *File = createObjectFile(MBRef, ArchiveName, OffsetInArchive);
+  InputFile *File = createObjectFile(MB, ArchiveName, OffsetInArchive);
   File->GroupId = GroupId;
+
+  MB = {};
 
   // Copy symbol vector so that the new InputFile doesn't have to
   // insert the same defined symbols to the symbol table again.
@@ -1538,7 +1532,9 @@ template <class ELFT> void LazyObjFile::parse() {
       if (!Sym)
         continue;
       Sym->resolve(LazyObject{*this, Sym->getName()});
-      if (AddedToLink)
+
+      // MemoryBuffer is emptied if this file is instantiated as ObjFile.
+      if (MB.getBuffer().empty())
         return;
     }
     return;
