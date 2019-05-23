@@ -2398,8 +2398,6 @@ public:
       assert(Instruction.getOperand(0).isReg() && "register operand expected");
       const auto R1 = Instruction.getOperand(0).getReg();
       // Check if one of the previous instructions defines the jump-on register.
-      // We will check that this instruction belongs to the same basic block
-      // in postProcessIndirectBranches().
       for (auto PrevII = II; PrevII != IE; ++PrevII) {
         auto &PrevInstr = *PrevII;
         const auto &PrevInstrDesc = Info->get(PrevInstr.getOpcode());

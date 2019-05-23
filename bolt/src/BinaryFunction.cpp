@@ -1560,56 +1560,26 @@ bool BinaryFunction::postProcessIndirectBranches() {
         return true;
       }
 
-      // Validate the tail call or jump table assumptions.
+      // Validate the tail call or jump table assumptions now that we know
+      // basic block boundaries.
       if (BC.MIB->isTailCall(Instr) || BC.MIB->getJumpTable(Instr)) {
-        if (BC.MIB->getMemoryOperandNo(Instr) != -1) {
-          // We have validated memory contents addressed by the jump
-          // instruction already.
-          continue;
-        }
-        // This is jump on register. Just make sure the register is defined
-        // in the containing basic block. Other assumptions were checked
-        // earlier.
-        assert(Instr.getOperand(0).isReg() && "register operand expected");
-        const auto R1 = Instr.getOperand(0).getReg();
-        auto PrevInstr = BB->rbegin();
-        while (PrevInstr != BB->rend()) {
-          const auto &PrevInstrDesc = BC.MII->get(PrevInstr->getOpcode());
-          if (PrevInstrDesc.hasDefOfPhysReg(*PrevInstr, R1, *BC.MRI)) {
-            break;
-          }
-          ++PrevInstr;
-        }
-        if (PrevInstr == BB->rend()) {
-          if (opts::Verbosity >= 2) {
-            outs() << "BOLT-INFO: rejected potential "
-                       << (BC.MIB->isTailCall(Instr) ? "indirect tail call"
-                                                     : "jump table")
-                       << " in function " << *this
-                       << " because the jump-on register was not defined in "
-                       << " basic block " << BB->getName() << ".\n";
-            DEBUG(dbgs() << BC.printInstructions(dbgs(), BB->begin(), BB->end(),
-                                                 BB->getOffset(), this, true));
-          }
-          return false;
-        }
-        // In case of PIC jump table we need to do more checks.
-        if (BC.MIB->isMoveMem2Reg(*PrevInstr))
-          continue;
-        assert(BC.MIB->isADD64rr(*PrevInstr) && "add instruction expected");
-        auto R2 = PrevInstr->getOperand(2).getReg();
-        // Make sure both regs are set in the same basic block prior to ADD.
-        bool IsR1Set = false;
-        bool IsR2Set = false;
-        while ((++PrevInstr != BB->rend()) && !(IsR1Set && IsR2Set)) {
-          const auto &PrevInstrDesc = BC.MII->get(PrevInstr->getOpcode());
-          if (PrevInstrDesc.hasDefOfPhysReg(*PrevInstr, R1, *BC.MRI))
-            IsR1Set = true;
-          else if (PrevInstrDesc.hasDefOfPhysReg(*PrevInstr, R2, *BC.MRI))
-            IsR2Set = true;
-        }
-
-        if (!IsR1Set || !IsR2Set)
+        const auto PtrSize = BC.AsmInfo->getCodePointerSize();
+        MCInst *MemLocInstr;
+        unsigned BaseRegNum, IndexRegNum;
+        int64_t DispValue;
+        const MCExpr *DispExpr;
+        MCInst *PCRelBaseInstr;
+        auto Type = BC.MIB->analyzeIndirectBranch(Instr,
+                                                  BB->begin(),
+                                                  BB->end(),
+                                                  PtrSize,
+                                                  MemLocInstr,
+                                                  BaseRegNum,
+                                                  IndexRegNum,
+                                                  DispValue,
+                                                  DispExpr,
+                                                  PCRelBaseInstr);
+        if (Type == IndirectBranchType::UNKNOWN && MemLocInstr == nullptr)
           return false;
 
         continue;
