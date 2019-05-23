@@ -459,7 +459,7 @@ public:
   /// Add a range of instructions to the end of this basic block.
   template <typename RangeTy>
   void addInstructions(RangeTy R) {
-    for(auto &I : R)
+    for (auto &I : R)
       addInstruction(I);
   }
 

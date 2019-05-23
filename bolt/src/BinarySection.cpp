@@ -66,7 +66,7 @@ BinarySection::~BinarySection() {
     delete[] getData();
     return;
   }
-  
+
   if (!isAllocatable() &&
       (!hasSectionRef() ||
        OutputContents.data() != getContents(Section).data())) {

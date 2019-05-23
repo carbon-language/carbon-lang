@@ -1513,7 +1513,7 @@ void InlineMemcpy::runOnFunctions(BinaryContext &BC) {
   uint64_t NumInlinedDyno = 0;
   for (auto &BFI : BC.getBinaryFunctions()) {
     for (auto &BB : BFI.second) {
-      for(auto II = BB.begin(); II != BB.end(); ++II) {
+      for (auto II = BB.begin(); II != BB.end(); ++II) {
         auto &Inst = *II;
 
         if (!BC.MIB->isCall(Inst) || MCPlus::getNumPrimeOperands(Inst) != 1 ||
@@ -1614,7 +1614,7 @@ void SpecializeMemcpy1::runOnFunctions(BinaryContext &BC) {
     std::vector<BinaryBasicBlock *> Blocks(Function.pbegin(), Function.pend());
     size_t CallSiteID = 0;
     for (auto *CurBB : Blocks) {
-      for(auto II = CurBB->begin(); II != CurBB->end(); ++II) {
+      for (auto II = CurBB->begin(); II != CurBB->end(); ++II) {
         auto &Inst = *II;
 
         if (!BC.MIB->isCall(Inst) || MCPlus::getNumPrimeOperands(Inst) != 1 ||

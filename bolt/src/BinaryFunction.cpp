@@ -1905,7 +1905,6 @@ void BinaryFunction::postProcessCFG() {
 
     // Eliminate inconsistencies between branch instructions and CFG.
     postProcessBranches();
-
   }
 
   calculateMacroOpFusionStats();
@@ -3988,7 +3987,7 @@ DebugAddressRangesVector BinaryFunction::translateInputToOutputRanges(
   std::sort(OutputRanges.begin(), OutputRanges.end());
   DebugAddressRangesVector MergedRanges;
   PrevEndAddress = 0;
-  for(const auto &Range : OutputRanges) {
+  for (const auto &Range : OutputRanges) {
     if (Range.LowPC <= PrevEndAddress) {
       MergedRanges.back().HighPC = std::max(MergedRanges.back().HighPC,
                                             Range.HighPC);
@@ -4125,7 +4124,7 @@ DWARFDebugLoc::LocationList BinaryFunction::translateInputToOutputLocationList(
   DWARFDebugLoc::LocationList MergedLL;
   PrevEndAddress = 0;
   PrevLoc = nullptr;
-  for(const auto &Entry : OutputLL.Entries) {
+  for (const auto &Entry : OutputLL.Entries) {
     if (Entry.Begin <= PrevEndAddress && *PrevLoc == Entry.Loc) {
       MergedLL.Entries.back().End = std::max(Entry.End,
                                              MergedLL.Entries.back().End);

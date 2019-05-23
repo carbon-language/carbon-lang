@@ -95,7 +95,7 @@ public:
 bool ValidateInternalCalls::fixCFGForPIC(BinaryFunction &Function) const {
   const BinaryContext &BC = Function.getBinaryContext();
   for (auto &BB : Function) {
-    for(auto II = BB.begin(); II != BB.end(); ++II) {
+    for (auto II = BB.begin(); II != BB.end(); ++II) {
       auto &Inst = *II;
       auto *Target = getInternalCallTarget(Function, Inst);
       if (!Target || BC.MIB->hasAnnotation(Inst, getProcessedICTag()))
@@ -302,7 +302,7 @@ void ValidateInternalCalls::runOnFunctions(BinaryContext &BC) {
   for (auto &BFI : BC.getBinaryFunctions()) {
     BinaryFunction &Function = BFI.second;
     for (auto &BB : Function) {
-      for(auto &Inst : BB) {
+      for (auto &Inst : BB) {
         if (getInternalCallTarget(Function, Inst)) {
           NeedsValidation.insert(&Function);
           Function.setSimple(false);

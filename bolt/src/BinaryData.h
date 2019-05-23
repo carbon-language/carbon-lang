@@ -106,7 +106,7 @@ public:
   bool isAtomic() const {
     return isTopLevelJumpTable() || !Parent;
   }
-  
+
   iterator_range<std::vector<std::string>::const_iterator> names() const {
     return make_range(Names.begin(), Names.end());
   }

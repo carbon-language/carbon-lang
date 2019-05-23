@@ -39,7 +39,7 @@ private:
       : Type(Type)
     {}
   };
-    
+
   std::unordered_map<const BinaryFunction *, InliningInfo> InliningCandidates;
 
   /// Count total amount of bytes inlined for all instances of Inliner.
@@ -58,7 +58,7 @@ private:
 
   /// Size in bytes of a tail call instruction.
   static uint64_t SizeOfTailCallInst;
-  
+
   /// Set of functions modified by inlining (used for printing).
   std::unordered_set<const BinaryFunction *> Modified;
 
