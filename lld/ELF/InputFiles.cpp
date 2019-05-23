@@ -963,8 +963,7 @@ template <class ELFT> void ObjFile<ELFT>::initializeSymbols() {
 
     // Handle global undefined symbols.
     if (ESym.st_shndx == SHN_UNDEF) {
-      resolveSymbol(this->Symbols[I],
-                    Undefined{this, Name, Binding, StOther, Type});
+      this->Symbols[I]->resolve(Undefined{this, Name, Binding, StOther, Type});
       continue;
     }
 
@@ -973,8 +972,8 @@ template <class ELFT> void ObjFile<ELFT>::initializeSymbols() {
       if (Value == 0 || Value >= UINT32_MAX)
         fatal(toString(this) + ": common symbol '" + StringRef(Name.Data) +
               "' has invalid alignment: " + Twine(Value));
-      resolveSymbol(this->Symbols[I], CommonSymbol{this, Name, Binding, StOther,
-                                                   Type, Value, Size});
+      this->Symbols[I]->resolve(
+          CommonSymbol{this, Name, Binding, StOther, Type, Value, Size});
       continue;
     }
 
@@ -984,16 +983,16 @@ template <class ELFT> void ObjFile<ELFT>::initializeSymbols() {
     // COMDAT member sections, and if a comdat group is discarded, some
     // defined symbol in a .eh_frame becomes dangling symbols.
     if (Sec == &InputSection::Discarded) {
-      resolveSymbol(this->Symbols[I],
-                    Undefined{this, Name, Binding, StOther, Type, SecIdx});
+      this->Symbols[I]->resolve(
+          Undefined{this, Name, Binding, StOther, Type, SecIdx});
       continue;
     }
 
     // Handle global defined symbols.
     if (Binding == STB_GLOBAL || Binding == STB_WEAK ||
         Binding == STB_GNU_UNIQUE) {
-      resolveSymbol(this->Symbols[I], Defined{this, Name, Binding, StOther,
-                                              Type, Value, Size, Sec});
+      this->Symbols[I]->resolve(
+          Defined{this, Name, Binding, StOther, Type, Value, Size, Sec});
       continue;
     }
 
@@ -1532,13 +1531,13 @@ template <class ELFT> void LazyObjFile::parse() {
 
     // Replace existing symbols with LazyObject symbols.
     //
-    // resolveSymbol() may trigger this->fetch() if an existing symbol
-    // is an undefined symbol. If that happens, this LazyObjFile has
-    // served its purpose, and we can exit from the loop early.
+    // resolve() may trigger this->fetch() if an existing symbol is an
+    // undefined symbol. If that happens, this LazyObjFile has served
+    // its purpose, and we can exit from the loop early.
     for (Symbol *Sym : this->Symbols) {
       if (!Sym)
         continue;
-      resolveSymbol(Sym, LazyObject{*this, Sym->getName()});
+      Sym->resolve(LazyObject{*this, Sym->getName()});
       if (AddedToLink)
         return;
     }
