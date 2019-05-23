@@ -33,4 +33,6 @@ type(t( &
 real :: u(l*2)
 !ERROR: Must have INTEGER type, but is REAL(4)
 character(len=l) :: v
+!ERROR: Initialization expression for PARAMETER 'o' (o) cannot be computed as a constant value
+real, parameter ::  o = o
 end
