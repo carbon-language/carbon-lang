@@ -151,6 +151,11 @@ def analyzer_config : Separate<["-"], "analyzer-config">,
 def analyzer_checker_option_help : Flag<["-"], "analyzer-checker-option-help">,
   HelpText<"Display the list of checker and package options">;
 
+def analyzer_checker_option_help_alpha : Flag<["-"], "analyzer-checker-option-help-alpha">,
+  HelpText<"Display the list of in development checker and package options. "
+           "These are NOT considered safe, they are unstable and will emit "
+           "incorrect reports. Enable ONLY FOR DEVELOPMENT purposes">;
+
 def analyzer_checker_option_help_developer : Flag<["-"], "analyzer-checker-option-help-developer">,
   HelpText<"Display the list of checker and package options meant for "
            "development purposes only">;

@@ -110,6 +110,22 @@ static std::string getCheckerOptionType(const Record &R) {
   return "";
 }
 
+static std::string getDevelopmentStage(const Record &R) {
+  if (BitsInit *BI = R.getValueAsBitsInit("DevelopmentStage")) {
+    switch(getValueFromBitsInit(BI, R)) {
+    case 0:
+      return "alpha";
+    case 1:
+      return "released";
+    }
+  }
+
+  PrintFatalError(R.getLoc(),
+                  "unable to parse command line option type for "
+                  + getCheckerFullName(&R));
+  return "";
+}
+
 static bool isHidden(const Record *R) {
   if (R->getValueAsBit("Hidden"))
     return true;
@@ -149,6 +165,8 @@ static void printOption(llvm::raw_ostream &OS, StringRef FullName,
   OS.write_escaped(getStringValue(R, "Desc")) << "\", ";
   OS << '\"';
   OS.write_escaped(getStringValue(R, "DefaultVal")) << "\", ";
+  OS << '\"';
+  OS << getDevelopmentStage(R) << "\", ";
 
   if (!R.getValueAsBit("Hidden"))
     OS << "false";

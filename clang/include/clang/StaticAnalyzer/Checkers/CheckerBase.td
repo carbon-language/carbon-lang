@@ -21,9 +21,20 @@ def Integer : CmdLineOptionTypeEnum<0>;
 def String : CmdLineOptionTypeEnum<1>;
 def Boolean : CmdLineOptionTypeEnum<2>;
 
-class Type<CmdLineOptionTypeEnum val> {
-  bits<2> Type = val.Type;
+/// Describes the state of the entry. We wouldn't like to display, for example,
+/// developer only entries for a list meant for end users.
+class DevelopmentStageEnum<bits<1> val> {
+  bits<1> Val = val;
 }
+
+/// Alpha entries are under development, might be incomplet, inkorrekt and
+/// unstable.
+def InAlpha : DevelopmentStageEnum<0>;
+
+/// Released entries are stable, produce minimal, if any false positives,
+/// and emits reports that explain the occurance of the bug understandably and
+/// thoroughly.
+def Released : DevelopmentStageEnum<1>;
 
 /// Marks the entry hidden. Hidden entries won't be displayed in
 /// -analyzer-checker-option-help.
@@ -35,11 +46,13 @@ def Hide : HiddenEnum<1>;
 
 /// Describes an option for a checker or a package.
 class CmdLineOption<CmdLineOptionTypeEnum type, string cmdFlag, string desc,
-                    string defaultVal, HiddenEnum isHidden = DontHide> {
+                    string defaultVal, DevelopmentStageEnum stage,
+                    HiddenEnum isHidden = DontHide> {
   bits<2> Type = type.Type;
   string  CmdFlag = cmdFlag;
   string  Desc = desc;
   string  DefaultVal = defaultVal;
+  bits<1> DevelopmentStage = stage.Val;
   bit     Hidden = isHidden.Val;
 }
 

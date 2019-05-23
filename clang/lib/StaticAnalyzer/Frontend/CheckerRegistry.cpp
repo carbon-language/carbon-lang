@@ -180,12 +180,12 @@ CheckerRegistry::CheckerRegistry(
   addDependency(FULLNAME, DEPENDENCY);
 
 #define GET_CHECKER_OPTIONS
-#define CHECKER_OPTION(TYPE, FULLNAME, CMDFLAG, DESC, DEFAULT_VAL, IS_HIDDEN)  \
-  addCheckerOption(TYPE, FULLNAME, CMDFLAG, DEFAULT_VAL, DESC, IS_HIDDEN);
+#define CHECKER_OPTION(TYPE, FULLNAME, CMDFLAG, DESC, DEFAULT_VAL, DEVELOPMENT_STATUS, IS_HIDDEN)  \
+  addCheckerOption(TYPE, FULLNAME, CMDFLAG, DEFAULT_VAL, DESC, DEVELOPMENT_STATUS, IS_HIDDEN);
 
 #define GET_PACKAGE_OPTIONS
-#define PACKAGE_OPTION(TYPE, FULLNAME, CMDFLAG, DESC, DEFAULT_VAL, IS_HIDDEN)  \
-  addPackageOption(TYPE, FULLNAME, CMDFLAG, DEFAULT_VAL, DESC, IS_HIDDEN);
+#define PACKAGE_OPTION(TYPE, FULLNAME, CMDFLAG, DESC, DEFAULT_VAL, DEVELOPMENT_STATUS, IS_HIDDEN)  \
+  addPackageOption(TYPE, FULLNAME, CMDFLAG, DEFAULT_VAL, DESC, DEVELOPMENT_STATUS, IS_HIDDEN);
 
 #include "clang/StaticAnalyzer/Checkers/Checkers.inc"
 #undef CHECKER_DEPENDENCY
@@ -396,10 +396,12 @@ void CheckerRegistry::addPackageOption(StringRef OptionType,
                                        StringRef PackageFullName,
                                        StringRef OptionName,
                                        StringRef DefaultValStr,
-                                       StringRef Description, bool IsHidden) {
+                                       StringRef Description,
+                                       StringRef DevelopmentStatus,
+                                       bool IsHidden) {
   PackageOptions.emplace_back(
       PackageFullName, CmdLineOption{OptionType, OptionName, DefaultValStr,
-                                     Description, IsHidden});
+                                     Description, DevelopmentStatus, IsHidden});
 }
 
 void CheckerRegistry::addChecker(InitializationFunction Rfn,
@@ -421,10 +423,12 @@ void CheckerRegistry::addCheckerOption(StringRef OptionType,
                                        StringRef CheckerFullName,
                                        StringRef OptionName,
                                        StringRef DefaultValStr,
-                                       StringRef Description, bool IsHidden) {
+                                       StringRef Description,
+                                       StringRef DevelopmentStatus,
+                                       bool IsHidden) {
   CheckerOptions.emplace_back(
       CheckerFullName, CmdLineOption{OptionType, OptionName, DefaultValStr,
-                                     Description, IsHidden});
+                                     Description, DevelopmentStatus, IsHidden});
 }
 
 void CheckerRegistry::initializeManager(CheckerManager &CheckerMgr) const {
@@ -576,10 +580,14 @@ void CheckerRegistry::printCheckerOptionList(raw_ostream &Out) const {
     }
   }
 
+  auto Print = [] (llvm::raw_ostream &Out, StringRef FullOption, StringRef Desc) {
+    AnalyzerOptions::printFormattedEntry(Out, {FullOption, Desc},
+                                         /*InitialPad*/ 2,
+                                         /*EntryWidth*/ 50,
+                                         /*MinLineWidth*/ 90);
+    Out << "\n\n";
+  };
   for (const std::pair<StringRef, const CmdLineOption &> &Entry : OptionMap) {
-    if (!AnOpts.ShowCheckerOptionDeveloperList && Entry.second.IsHidden)
-      continue;
-
     const CmdLineOption &Option = Entry.second;
     std::string FullOption = (Entry.first + ":" + Option.OptionName).str();
 
@@ -588,10 +596,25 @@ void CheckerRegistry::printCheckerOptionList(raw_ostream &Out) const {
          (Option.DefaultValStr.empty() ? "\"\"" : Option.DefaultValStr) + ")")
             .str();
 
-    AnalyzerOptions::printFormattedEntry(Out, {FullOption, Desc},
-                                         /*InitialPad*/ 2,
-                                         /*EntryWidth*/ 50,
-                                         /*MinLineWidth*/ 90);
-    Out << "\n\n";
+    // The list of these if branches is significant, we wouldn't like to
+    // display hidden alpha checker options for
+    // -analyzer-checker-option-help-alpha.
+
+    if (Option.IsHidden) {
+      if (AnOpts.ShowCheckerOptionDeveloperList)
+        Print(Out, FullOption, Desc);
+      continue;
+    }
+
+    if (Option.DevelopmentStatus == "alpha" ||
+        Entry.first.startswith("alpha")) {
+      if (AnOpts.ShowCheckerOptionAlphaList)
+        Print(Out, FullOption,
+              llvm::Twine("(Enable only for development!) " + Desc).str());
+      continue;
+    }
+
+    if (AnOpts.ShowCheckerOptionList)
+      Print(Out, FullOption, Desc);
   }
 }

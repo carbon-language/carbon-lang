@@ -222,9 +222,12 @@ public:
   unsigned ShowCheckerHelp : 1;
   unsigned ShowCheckerHelpAlpha : 1;
   unsigned ShowCheckerHelpDeveloper : 1;
-  unsigned ShowEnabledCheckerList : 1;
+
   unsigned ShowCheckerOptionList : 1;
+  unsigned ShowCheckerOptionAlphaList : 1;
   unsigned ShowCheckerOptionDeveloperList : 1;
+
+  unsigned ShowEnabledCheckerList : 1;
   unsigned ShowConfigOptionsList : 1;
   unsigned ShouldEmitErrorsOnInvalidConfigValue : 1;
   unsigned AnalyzeAll : 1;
@@ -288,8 +291,8 @@ public:
   AnalyzerOptions()
       : DisableAllChecks(false), ShowCheckerHelp(false),
         ShowCheckerHelpAlpha(false), ShowCheckerHelpDeveloper(false),
-        ShowEnabledCheckerList(false),
-        ShowCheckerOptionList(false), ShowCheckerOptionDeveloperList(false),
+        ShowCheckerOptionList(false), ShowCheckerOptionAlphaList(false),
+        ShowCheckerOptionDeveloperList(false), ShowEnabledCheckerList(false),
         ShowConfigOptionsList(false), AnalyzeAll(false),
         AnalyzerDisplayProgress(false), AnalyzeNestedBlocks(false),
         eagerlyAssumeBinOpBifurcation(false), TrimGraph(false),
