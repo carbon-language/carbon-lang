@@ -111,6 +111,6 @@ class Dependencies<list<Checker> Deps = []> {
   list<Checker> Dependencies = Deps;
 }
 
-/// Marks a checker or a package hidden. Hidden entries won't be displayed in
-/// -analyzer-checker-help, which is desirable for alpha or modeling checkers.
+/// Marks a checker or a package hidden. Hidden entries are meant for developers
+/// only, and aren't exposed to end users.
 class Hidden { bit Hidden = 1; }

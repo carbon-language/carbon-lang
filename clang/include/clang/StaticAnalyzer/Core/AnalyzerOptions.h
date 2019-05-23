@@ -220,7 +220,8 @@ public:
   unsigned DisableAllChecks : 1;
 
   unsigned ShowCheckerHelp : 1;
-  unsigned ShowCheckerHelpHidden : 1;
+  unsigned ShowCheckerHelpAlpha : 1;
+  unsigned ShowCheckerHelpDeveloper : 1;
   unsigned ShowEnabledCheckerList : 1;
   unsigned ShowCheckerOptionList : 1;
   unsigned ShowConfigOptionsList : 1;
@@ -285,12 +286,13 @@ public:
 
   AnalyzerOptions()
       : DisableAllChecks(false), ShowCheckerHelp(false),
-        ShowCheckerHelpHidden(false), ShowEnabledCheckerList(false),
-        ShowCheckerOptionList(false), ShowConfigOptionsList(false),
-        AnalyzeAll(false), AnalyzerDisplayProgress(false),
-        AnalyzeNestedBlocks(false), eagerlyAssumeBinOpBifurcation(false),
-        TrimGraph(false), visualizeExplodedGraphWithGraphViz(false),
-        UnoptimizedCFG(false), PrintStats(false), NoRetryExhausted(false) {
+        ShowCheckerHelpAlpha(false), ShowCheckerHelpDeveloper(false),
+        ShowEnabledCheckerList(false), ShowCheckerOptionList(false),
+        ShowConfigOptionsList(false), AnalyzeAll(false),
+        AnalyzerDisplayProgress(false), AnalyzeNestedBlocks(false),
+        eagerlyAssumeBinOpBifurcation(false), TrimGraph(false),
+        visualizeExplodedGraphWithGraphViz(false), UnoptimizedCFG(false),
+        PrintStats(false), NoRetryExhausted(false) {
     llvm::sort(AnalyzerConfigCmdFlags);
   }
 

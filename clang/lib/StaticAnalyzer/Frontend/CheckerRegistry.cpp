@@ -514,13 +514,36 @@ void CheckerRegistry::printCheckerWithDescList(raw_ostream &Out,
   }
 
   const size_t InitialPad = 2;
-  for (const auto &Checker : Checkers) {
-    if (!AnOpts.ShowCheckerHelpHidden && Checker.IsHidden)
-      continue;
 
-    AnalyzerOptions::printFormattedEntry(Out, {Checker.FullName, Checker.Desc},
+  auto Print = [=](llvm::raw_ostream &Out, const CheckerInfo &Checker,
+                   StringRef Description) {
+    AnalyzerOptions::printFormattedEntry(Out, {Checker.FullName, Description},
                                          InitialPad, OptionFieldWidth);
     Out << '\n';
+  };
+
+  for (const auto &Checker : Checkers) {
+    // The order of this if branches is significant, we wouldn't like to display
+    // developer checkers even in the alpha output. For example,
+    // alpha.cplusplus.IteratorModeling is a modeling checker, hence it's hidden
+    // by default, and users (even when the user is a developer of an alpha
+    // checker) shouldn't normally tinker with whether they should be enabled.
+
+    if (Checker.IsHidden) {
+      if (AnOpts.ShowCheckerHelpDeveloper)
+        Print(Out, Checker, Checker.Desc);
+      continue;
+    }
+
+    if (Checker.FullName.startswith("alpha")) {
+      if (AnOpts.ShowCheckerHelpAlpha)
+        Print(Out, Checker,
+              ("(Enable only for development!) " + Checker.Desc).str());
+      continue;
+    }
+
+    if (AnOpts.ShowCheckerHelp)
+        Print(Out, Checker, Checker.Desc);
   }
 }
 

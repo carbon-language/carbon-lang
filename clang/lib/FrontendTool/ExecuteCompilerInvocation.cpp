@@ -238,7 +238,8 @@ bool ExecuteCompilerInvocation(CompilerInstance *Clang) {
 
   AnalyzerOptions &AnOpts = *Clang->getAnalyzerOpts();
   // Honor -analyzer-checker-help and -analyzer-checker-help-hidden.
-  if (AnOpts.ShowCheckerHelp || AnOpts.ShowCheckerHelpHidden) {
+  if (AnOpts.ShowCheckerHelp || AnOpts.ShowCheckerHelpAlpha ||
+      AnOpts.ShowCheckerHelpDeveloper) {
     ento::printCheckerHelp(llvm::outs(),
                            Clang->getFrontendOpts().Plugins,
                            AnOpts,
