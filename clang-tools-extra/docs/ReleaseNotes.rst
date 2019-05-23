@@ -134,6 +134,11 @@ Improvements to clang-tidy
   subclasses of ``NSObject`` and recommends calling a superclass initializer
   instead.
 
+- New alias :doc:`cert-oop54-cpp
+  <clang-tidy/checks/cert-oop54-cpp>` to
+  :doc:`bugprone-unhandled-self-assignment
+  <clang-tidy/checks/bugprone-unhandled-self-assignment>` was added.
+
 - New alias :doc:`cppcoreguidelines-explicit-virtual-functions
   <clang-tidy/checks/cppcoreguidelines-explicit-virtual-functions>` to
   :doc:`modernize-use-override
