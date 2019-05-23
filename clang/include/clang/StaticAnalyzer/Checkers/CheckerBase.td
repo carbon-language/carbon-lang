@@ -25,13 +25,22 @@ class Type<CmdLineOptionTypeEnum val> {
   bits<2> Type = val.Type;
 }
 
+/// Marks the entry hidden. Hidden entries won't be displayed in
+/// -analyzer-checker-option-help.
+class HiddenEnum<bit val> {
+  bit Val = val;
+}
+def DontHide : HiddenEnum<0>;
+def Hide : HiddenEnum<1>;
+
 /// Describes an option for a checker or a package.
 class CmdLineOption<CmdLineOptionTypeEnum type, string cmdFlag, string desc,
-                    string defaultVal> {
+                    string defaultVal, HiddenEnum isHidden = DontHide> {
   bits<2> Type = type.Type;
-  string CmdFlag = cmdFlag;
-  string Desc = desc;
-  string DefaultVal = defaultVal;
+  string  CmdFlag = cmdFlag;
+  string  Desc = desc;
+  string  DefaultVal = defaultVal;
+  bit     Hidden = isHidden.Val;
 }
 
 /// Describes a list of package options.

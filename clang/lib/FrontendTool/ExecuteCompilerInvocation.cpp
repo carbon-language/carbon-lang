@@ -249,7 +249,7 @@ bool ExecuteCompilerInvocation(CompilerInstance *Clang) {
   }
 
   // Honor -analyzer-checker-option-help.
-  if (Clang->getAnalyzerOpts()->ShowCheckerOptionList) {
+  if (AnOpts.ShowCheckerOptionList || AnOpts.ShowCheckerOptionDeveloperList) {
     ento::printCheckerConfigList(llvm::outs(),
                                  Clang->getFrontendOpts().Plugins,
                                  *Clang->getAnalyzerOpts(),

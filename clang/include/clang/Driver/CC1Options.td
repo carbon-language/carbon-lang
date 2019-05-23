@@ -151,6 +151,10 @@ def analyzer_config : Separate<["-"], "analyzer-config">,
 def analyzer_checker_option_help : Flag<["-"], "analyzer-checker-option-help">,
   HelpText<"Display the list of checker and package options">;
 
+def analyzer_checker_option_help_developer : Flag<["-"], "analyzer-checker-option-help-developer">,
+  HelpText<"Display the list of checker and package options meant for "
+           "development purposes only">;
+
 def analyzer_config_compatibility_mode : Separate<["-"], "analyzer-config-compatibility-mode">,
   HelpText<"Don't emit errors on invalid analyzer-config inputs">;
 

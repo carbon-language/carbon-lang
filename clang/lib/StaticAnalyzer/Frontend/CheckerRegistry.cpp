@@ -180,12 +180,12 @@ CheckerRegistry::CheckerRegistry(
   addDependency(FULLNAME, DEPENDENCY);
 
 #define GET_CHECKER_OPTIONS
-#define CHECKER_OPTION(TYPE, FULLNAME, CMDFLAG, DESC, DEFAULT_VAL)             \
-  addCheckerOption(TYPE, FULLNAME, CMDFLAG, DEFAULT_VAL, DESC);
+#define CHECKER_OPTION(TYPE, FULLNAME, CMDFLAG, DESC, DEFAULT_VAL, IS_HIDDEN)  \
+  addCheckerOption(TYPE, FULLNAME, CMDFLAG, DEFAULT_VAL, DESC, IS_HIDDEN);
 
 #define GET_PACKAGE_OPTIONS
-#define PACKAGE_OPTION(TYPE, FULLNAME, CMDFLAG, DESC, DEFAULT_VAL)             \
-  addPackageOption(TYPE, FULLNAME, CMDFLAG, DEFAULT_VAL, DESC);
+#define PACKAGE_OPTION(TYPE, FULLNAME, CMDFLAG, DESC, DEFAULT_VAL, IS_HIDDEN)  \
+  addPackageOption(TYPE, FULLNAME, CMDFLAG, DEFAULT_VAL, DESC, IS_HIDDEN);
 
 #include "clang/StaticAnalyzer/Checkers/Checkers.inc"
 #undef CHECKER_DEPENDENCY
@@ -396,10 +396,10 @@ void CheckerRegistry::addPackageOption(StringRef OptionType,
                                        StringRef PackageFullName,
                                        StringRef OptionName,
                                        StringRef DefaultValStr,
-                                       StringRef Description) {
+                                       StringRef Description, bool IsHidden) {
   PackageOptions.emplace_back(
-      PackageFullName,
-      CmdLineOption{OptionType, OptionName, DefaultValStr, Description});
+      PackageFullName, CmdLineOption{OptionType, OptionName, DefaultValStr,
+                                     Description, IsHidden});
 }
 
 void CheckerRegistry::addChecker(InitializationFunction Rfn,
@@ -421,10 +421,10 @@ void CheckerRegistry::addCheckerOption(StringRef OptionType,
                                        StringRef CheckerFullName,
                                        StringRef OptionName,
                                        StringRef DefaultValStr,
-                                       StringRef Description) {
+                                       StringRef Description, bool IsHidden) {
   CheckerOptions.emplace_back(
-      CheckerFullName,
-      CmdLineOption{OptionType, OptionName, DefaultValStr, Description});
+      CheckerFullName, CmdLineOption{OptionType, OptionName, DefaultValStr,
+                                     Description, IsHidden});
 }
 
 void CheckerRegistry::initializeManager(CheckerManager &CheckerMgr) const {
@@ -577,6 +577,9 @@ void CheckerRegistry::printCheckerOptionList(raw_ostream &Out) const {
   }
 
   for (const std::pair<StringRef, const CmdLineOption &> &Entry : OptionMap) {
+    if (!AnOpts.ShowCheckerOptionDeveloperList && Entry.second.IsHidden)
+      continue;
+
     const CmdLineOption &Option = Entry.second;
     std::string FullOption = (Entry.first + ":" + Option.OptionName).str();
 

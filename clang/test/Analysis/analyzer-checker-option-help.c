@@ -1,5 +1,8 @@
 // RUN: %clang_cc1 -analyzer-checker-option-help 2>&1 | FileCheck %s
 
+// RUN: %clang_cc1 -analyzer-checker-option-help-developer \
+// RUN:   2>&1 | FileCheck %s -check-prefix=CHECK-HIDDEN
+
 // CHECK: OVERVIEW: Clang Static Analyzer Checker and Package Option List
 //
 // CHECK: USAGE: -analyzer-config <OPTION1=VALUE,OPTION2=VALUE,...>
@@ -17,3 +20,6 @@
 // CHECK:        the first statement in the group is representative
 // CHECK:        for all other statements in the group in
 // CHECK:        terms of complexity. (default: 50)
+
+// CHECK-NOT:     optin.cplusplus.UninitializedObject:NotesAsWarnings
+// CHECK-HIDDEN:  optin.cplusplus.UninitializedObject:NotesAsWarnings
