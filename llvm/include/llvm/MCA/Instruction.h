@@ -526,13 +526,17 @@ public:
   InstRef(unsigned Index, Instruction *I) : Data(std::make_pair(Index, I)) {}
 
   bool operator==(const InstRef &Other) const { return Data == Other.Data; }
+  bool operator!=(const InstRef &Other) const { return Data != Other.Data; }
+  bool operator<(const InstRef &Other) const {
+    return Data.first < Other.Data.first;
+  }
 
   unsigned getSourceIndex() const { return Data.first; }
   Instruction *getInstruction() { return Data.second; }
   const Instruction *getInstruction() const { return Data.second; }
 
   /// Returns true if this references a valid instruction.
-  operator bool() const { return Data.second != nullptr; }
+  explicit operator bool() const { return Data.second != nullptr; }
 
   /// Invalidate this reference.
   void invalidate() { Data.second = nullptr; }
