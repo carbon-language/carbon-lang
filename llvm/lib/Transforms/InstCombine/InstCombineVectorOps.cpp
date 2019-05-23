@@ -863,10 +863,6 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
           VecOp, ScalarOp, IdxOp, SQ.getWithInstruction(&IE)))
     return replaceInstUsesWith(IE, V);
 
-  // Inserting an undef or into an undefined place, remove this.
-  if (isa<UndefValue>(ScalarOp) || isa<UndefValue>(IdxOp))
-    replaceInstUsesWith(IE, VecOp);
-
   // If the vector and scalar are both bitcast from the same element type, do
   // the insert in that source type followed by bitcast.
   Value *VecSrc, *ScalarSrc;
