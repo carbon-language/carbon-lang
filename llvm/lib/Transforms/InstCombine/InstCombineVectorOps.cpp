@@ -884,10 +884,6 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
   if (match(IdxOp, m_ConstantInt(InsertedIdx)) &&
       match(ScalarOp, m_ExtractElement(m_Value(ExtVecOp),
                                        m_ConstantInt(ExtractedIdx)))) {
-    unsigned NumExtractVectorElts = ExtVecOp->getType()->getVectorNumElements();
-    if (ExtractedIdx >= NumExtractVectorElts) // Out of range extract.
-      return replaceInstUsesWith(IE, VecOp);
-
     // If we are extracting a value from a vector, then inserting it right
     // back into the same place, just use the input vector.
     if (ExtVecOp == VecOp && ExtractedIdx == InsertedIdx)
