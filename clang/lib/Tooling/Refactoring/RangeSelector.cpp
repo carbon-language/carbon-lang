@@ -104,7 +104,7 @@ static SourceLocation findOpenParen(const CallExpr &E, const SourceManager &SM,
   return findPreviousTokenKind(EndLoc, SM, LangOpts, tok::TokenKind::l_paren);
 }
 
-RangeSelector tooling::node(StringRef ID) {
+RangeSelector tooling::node(std::string ID) {
   return [ID](const MatchResult &Result) -> Expected<CharSourceRange> {
     Expected<DynTypedNode> Node = getNode(Result.Nodes, ID);
     if (!Node)
@@ -115,7 +115,7 @@ RangeSelector tooling::node(StringRef ID) {
   };
 }
 
-RangeSelector tooling::statement(StringRef ID) {
+RangeSelector tooling::statement(std::string ID) {
   return [ID](const MatchResult &Result) -> Expected<CharSourceRange> {
     Expected<DynTypedNode> Node = getNode(Result.Nodes, ID);
     if (!Node)
@@ -143,11 +143,11 @@ RangeSelector tooling::range(RangeSelector Begin, RangeSelector End) {
   };
 }
 
-RangeSelector tooling::range(StringRef BeginID, StringRef EndID) {
-  return tooling::range(node(BeginID), node(EndID));
+RangeSelector tooling::range(std::string BeginID, std::string EndID) {
+  return tooling::range(node(std::move(BeginID)), node(std::move(EndID)));
 }
 
-RangeSelector tooling::member(StringRef ID) {
+RangeSelector tooling::member(std::string ID) {
   return [ID](const MatchResult &Result) -> Expected<CharSourceRange> {
     Expected<DynTypedNode> Node = getNode(Result.Nodes, ID);
     if (!Node)
@@ -159,7 +159,7 @@ RangeSelector tooling::member(StringRef ID) {
   };
 }
 
-RangeSelector tooling::name(StringRef ID) {
+RangeSelector tooling::name(std::string ID) {
   return [ID](const MatchResult &Result) -> Expected<CharSourceRange> {
     Expected<DynTypedNode> N = getNode(Result.Nodes, ID);
     if (!N)
@@ -205,7 +205,7 @@ class RelativeSelector {
   std::string ID;
 
 public:
-  RelativeSelector(StringRef ID) : ID(ID) {}
+  RelativeSelector(std::string ID) : ID(std::move(ID)) {}
 
   Expected<CharSourceRange> operator()(const MatchResult &Result) {
     Expected<DynTypedNode> N = getNode(Result.Nodes, ID);
@@ -231,8 +231,8 @@ CharSourceRange getStatementsRange(const MatchResult &,
 }
 } // namespace
 
-RangeSelector tooling::statements(StringRef ID) {
-  return RelativeSelector<CompoundStmt, getStatementsRange>(ID);
+RangeSelector tooling::statements(std::string ID) {
+  return RelativeSelector<CompoundStmt, getStatementsRange>(std::move(ID));
 }
 
 namespace {
@@ -246,8 +246,8 @@ CharSourceRange getCallArgumentsRange(const MatchResult &Result,
 }
 } // namespace
 
-RangeSelector tooling::callArgs(StringRef ID) {
-  return RelativeSelector<CallExpr, getCallArgumentsRange>(ID);
+RangeSelector tooling::callArgs(std::string ID) {
+  return RelativeSelector<CallExpr, getCallArgumentsRange>(std::move(ID));
 }
 
 namespace {
@@ -260,8 +260,8 @@ CharSourceRange getElementsRange(const MatchResult &,
 }
 } // namespace
 
-RangeSelector tooling::initListElements(StringRef ID) {
-  return RelativeSelector<InitListExpr, getElementsRange>(ID);
+RangeSelector tooling::initListElements(std::string ID) {
+  return RelativeSelector<InitListExpr, getElementsRange>(std::move(ID));
 }
 
 RangeSelector tooling::expansion(RangeSelector S) {
