@@ -307,7 +307,7 @@ public:
   static bool classof(const InputFile *F) { return F->kind() == LazyObjKind; }
 
   template <class ELFT> void parse();
-  InputFile *fetch();
+  void fetch();
 
 private:
   uint64_t OffsetInArchive;
@@ -322,9 +322,9 @@ public:
 
   // Pulls out an object file that contains a definition for Sym and
   // returns it. If the same file was instantiated before, this
-  // function returns a nullptr (so we don't instantiate the same file
+  // function does nothing (so we don't instantiate the same file
   // more than once.)
-  InputFile *fetch(const Archive::Symbol &Sym);
+  void fetch(const Archive::Symbol &Sym);
 
 private:
   std::unique_ptr<Archive> File;
