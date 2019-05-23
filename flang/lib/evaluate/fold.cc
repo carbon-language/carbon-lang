@@ -820,7 +820,7 @@ static std::optional<Expr<T>> GetParameterValue(
               std::stringstream ss;
               unwrapped->AsFortran(ss);
               context.messages().Say(symbol->name(),
-                  "Initialization expression for PARAMETER '%s' (%s) cannot computed as a constant value"_err_en_US,
+                  "Initialization expression for PARAMETER '%s' (%s) cannot be computed as a constant value"_err_en_US,
                   symbol->name(), ss.str());
             }
           } else {
