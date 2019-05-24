@@ -19,6 +19,7 @@
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/ProgramPoint.h"
 #include "clang/Basic/LLVM.h"
+#include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/BlockCounter.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState_Fwd.h"
@@ -94,6 +95,10 @@ private:
   /// The information about functions shared by the whole translation unit.
   /// (This data is owned by AnalysisConsumer.)
   FunctionSummariesTy *FunctionSummaries;
+
+  /// Add path note tags along the path when we see that something interesting
+  /// is happening. This field is the allocator for such tags.
+  NoteTag::Factory NoteTags;
 
   void generateNode(const ProgramPoint &Loc,
                     ProgramStateRef State,
@@ -194,6 +199,8 @@ public:
 
   /// Enqueue a single node created as a result of statement processing.
   void enqueueStmtNode(ExplodedNode *N, const CFGBlock *Block, unsigned Idx);
+
+  NoteTag::Factory &getNoteTags() { return NoteTags; }
 };
 
 // TODO: Turn into a class.

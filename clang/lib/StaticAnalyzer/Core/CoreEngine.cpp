@@ -216,6 +216,25 @@ void CoreEngine::HandleBlockEdge(const BlockEdge &L, ExplodedNode *Pred) {
                                            LC->getDecl(),
                                            LC->getCFG()->getNumBlockIDs());
 
+  // Display a prunable path note to the user if it's a virtual bases branch
+  // and we're taking the path that skips virtual base constructors.
+  if (L.getSrc()->getTerminator().isVirtualBaseBranch() &&
+      L.getDst() == *L.getSrc()->succ_begin()) {
+    ProgramPoint P = L.withTag(getNoteTags().makeNoteTag(
+        [](BugReporterContext &, BugReport &) -> std::string {
+          // TODO: Just call out the name of the most derived class
+          // when we know it.
+          return "Virtual base initialization skipped because "
+                 "it has already been handled by the most derived class";
+        }, /*IsPrunable=*/true));
+    // Perform the transition.
+    ExplodedNodeSet Dst;
+    NodeBuilder Bldr(Pred, Dst, BuilderCtx);
+    Pred = Bldr.generateNode(P, Pred->getState(), Pred);
+    if (!Pred)
+      return;
+  }
+
   // Check if we are entering the EXIT block.
   if (Blk == &(L.getLocationContext()->getCFG()->getExit())) {
     assert(L.getLocationContext()->getCFG()->getExit().empty() &&
