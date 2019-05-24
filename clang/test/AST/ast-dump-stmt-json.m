@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Wno-unused -fblocks -fobjc-exceptions -ast-dump=json -ast-dump-filter Test %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-pc-win32 -Wno-unused -fblocks -fobjc-exceptions -ast-dump=json -ast-dump-filter Test %s | FileCheck %s
 
 void TestBlockExpr(int x) {
   ^{ x; };
