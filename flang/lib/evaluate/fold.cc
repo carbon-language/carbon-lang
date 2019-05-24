@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "fold.h"
+#include "character.h"
 #include "characteristics.h"
 #include "common.h"
 #include "constant.h"
@@ -76,7 +77,6 @@ Expr<Type<TypeCategory::Real, KIND>> FoldOperation(
 template<int KIND>
 Expr<Type<TypeCategory::Complex, KIND>> FoldOperation(
     FoldingContext &context, FunctionRef<Type<TypeCategory::Complex, KIND>> &&);
-// TODO: Character intrinsic function folding
 template<int KIND>
 Expr<Type<TypeCategory::Logical, KIND>> FoldOperation(
     FoldingContext &context, FunctionRef<Type<TypeCategory::Logical, KIND>> &&);
@@ -870,6 +870,53 @@ Expr<Type<TypeCategory::Logical, KIND>> FoldOperation(FoldingContext &context,
     // TODO: btest, cshift, dot_product, eoshift, is_iostat_end,
     // is_iostat_eor, lge, lgt, lle, llt, logical, matmul, merge, out_of_range,
     // pack, parity, reduce, reshape, spread, transfer, transpose, unpack
+  }
+  return Expr<T>{std::move(funcRef)};
+}
+
+template<int KIND>
+Expr<Type<TypeCategory::Character, KIND>> FoldOperation(FoldingContext &context,
+    FunctionRef<Type<TypeCategory::Character, KIND>> &&funcRef) {
+  using T = Type<TypeCategory::Character, KIND>;
+  ActualArguments &args{funcRef.arguments()};
+  for (std::optional<ActualArgument> &arg : args) {
+    if (arg.has_value()) {
+      if (auto *expr{arg->GetExpr()}) {
+        *expr = FoldOperation(context, std::move(*expr));
+      }
+    }
+  }
+  if (auto *intrinsic{std::get_if<SpecificIntrinsic>(&funcRef.proc().u)}) {
+    std::string name{intrinsic->name};
+    if (name == "achar") {
+      // TODO
+    } else if (name == "char") {
+      if (auto *sn{UnwrapArgument<SomeInteger>(args[0])}) {
+        return std::visit(
+            [&funcRef, &context](const auto &n) -> Expr<T> {
+              using IntT = typename std::decay_t<decltype(n)>::Result;
+              return FoldElementalIntrinsic<T, IntT>(context,
+                  std::move(funcRef),
+                  ScalarFunc<T, IntT>([&context](const Scalar<IntT> &i) {
+                    std::int64_t code{i.ToInt64()};
+                    if (auto result{CodeToChar<KIND>(code)}) {
+                      return *result;
+                    } else {
+                      context.messages().Say(
+                          "Character code %lld is invalid for CHARACTER(%d) type"_en_US,
+                          code, KIND);
+                      return CodeToChar<KIND>(0).value();
+                    }
+                  }));
+            },
+            sn->u);
+      } else {
+        common::die("expected integer argument in CHAR");
+      }
+    }
+    // TODO: achar, adjustl, adjustr, char, cshift, eoshift, max, maxval, merge,
+    // min, minval, pack, reduce, repeat, reshape, spread, transfer, transpose,
+    // trim, unpack
   }
   return Expr<T>{std::move(funcRef)};
 }
