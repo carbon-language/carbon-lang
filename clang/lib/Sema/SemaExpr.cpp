@@ -14739,6 +14739,7 @@ static bool isPotentiallyConstantEvaluatedContext(Sema &SemaRef) {
     case Sema::ExpressionEvaluationContext::ConstantEvaluated:
       // -- a manifestly constant-evaluated expression,
     case Sema::ExpressionEvaluationContext::PotentiallyEvaluated:
+    case Sema::ExpressionEvaluationContext::PotentiallyEvaluatedIfUsed:
     case Sema::ExpressionEvaluationContext::DiscardedStatement:
       // -- a potentially-evaluated expression,
     case Sema::ExpressionEvaluationContext::UnevaluatedList:
@@ -14753,11 +14754,6 @@ static bool isPotentiallyConstantEvaluatedContext(Sema &SemaRef) {
     case Sema::ExpressionEvaluationContext::Unevaluated:
     case Sema::ExpressionEvaluationContext::UnevaluatedAbstract:
       // Expressions in this context are never evaluated.
-      return false;
-
-    case Sema::ExpressionEvaluationContext::PotentiallyEvaluatedIfUsed:
-      // FIXME: This is wrong. Default arguemnts are potentially constant
-      // evaluated even if they are never used.
       return false;
   }
   llvm_unreachable("Invalid context");
