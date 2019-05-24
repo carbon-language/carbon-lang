@@ -333,8 +333,9 @@
 
 2.13.5 end-taskgroup -> END TASKGROUP
 
-2.13.6 atomic -> ATOMIC [seq_cst[,]] READ | WRITE | UPDATE | CAPTURE [[,]seq_cst]
-2.13.6 atomic -> ATOMIC [seq_cst]
+2.13.6 atomic -> ATOMIC [seq_cst[,]] atomic-clause [[,]seq_cst] |
+                 ATOMIC [seq_cst]
+       atomic-clause -> READ | WRITE | UPDATE | CAPTURE
 
 2.13.7 flush -> FLUSH [(variable-name-list)]
 
