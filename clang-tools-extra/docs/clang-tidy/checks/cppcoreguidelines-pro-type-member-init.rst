@@ -35,7 +35,7 @@ Options
 
 .. option:: UseAssignment
    If set to non-zero, the check will provide fix-its with literal initializers
-   (``int i = 0;``) instead of curly braces (``int i{};``).
+   \( ``int i = 0;`` \) instead of curly braces \( ``int i{};`` \).
 
 This rule is part of the "Type safety" profile of the C++ Core
 Guidelines, corresponding to rule Type.6. See
