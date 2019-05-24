@@ -1264,6 +1264,10 @@ let Predicates = [HasSVE2] in {
   defm SQXTUNB_ZZ : sve2_int_sat_extract_narrow<0b100, "sqxtunb">;
   defm SQXTUNT_ZZ : sve2_int_sat_extract_narrow<0b101, "sqxtunt">;
 
+  // SVE2 character match
+  defm MATCH_PPzZZ  : sve2_char_match<0b0, "match">;
+  defm NMATCH_PPzZZ : sve2_char_match<0b1, "nmatch">;
+
   // Predicated shifts
   defm SQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0110, "sqshl">;
   defm UQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0111, "uqshl">;

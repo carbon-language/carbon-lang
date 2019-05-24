@@ -5132,3 +5132,34 @@ multiclass sve_int_break_z<bits<3> opc, string asm> {
   def NAME : sve_int_break<opc, asm, "/z", (ins PPRAny:$Pg, PPR8:$Pn)>;
 }
 
+//===----------------------------------------------------------------------===//
+// SVE2 String Processing Group
+//===----------------------------------------------------------------------===//
+
+class sve2_char_match<bit sz, bit opc, string asm,
+                      PPRRegOp pprty, ZPRRegOp zprty>
+: I<(outs pprty:$Pd), (ins PPR3bAny:$Pg, zprty:$Zn, zprty:$Zm),
+  asm, "\t$Pd, $Pg/z, $Zn, $Zm",
+  "",
+  []>, Sched<[]> {
+  bits<4> Pd;
+  bits<3> Pg;
+  bits<5> Zm;
+  bits<5> Zn;
+  let Inst{31-23} = 0b010001010;
+  let Inst{22}    = sz;
+  let Inst{21}    = 0b1;
+  let Inst{20-16} = Zm;
+  let Inst{15-13} = 0b100;
+  let Inst{12-10} = Pg;
+  let Inst{9-5}   = Zn;
+  let Inst{4}     = opc;
+  let Inst{3-0}   = Pd;
+
+  let Defs = [NZCV];
+}
+
+multiclass sve2_char_match<bit opc, string asm> {
+  def _B : sve2_char_match<0b0, opc, asm, PPR8, ZPR8>;
+  def _H : sve2_char_match<0b1, opc, asm, PPR16, ZPR16>;
+}
