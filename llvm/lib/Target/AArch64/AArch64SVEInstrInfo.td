@@ -1198,6 +1198,36 @@ let Predicates = [HasSVE2] in {
   defm PMULLB_ZZZ   : sve2_pmul_long<0b0, "pmullb">;
   defm PMULLT_ZZZ   : sve2_pmul_long<0b1, "pmullt">;
 
+  // SVE2 bitwise shift and insert
+  defm SRI_ZZI : sve2_int_bin_cons_shift_imm_right<0b0, "sri">;
+  defm SLI_ZZI : sve2_int_bin_cons_shift_imm_left< 0b1, "sli">;
+
+  // SVE2 bitwise shift right and accumulate
+  defm SSRA_ZZI  : sve2_int_bin_accum_cons_shift_imm_right<0b00, "ssra">;
+  defm USRA_ZZI  : sve2_int_bin_accum_cons_shift_imm_right<0b01, "usra">;
+  defm SRSRA_ZZI : sve2_int_bin_accum_cons_shift_imm_right<0b10, "srsra">;
+  defm URSRA_ZZI : sve2_int_bin_accum_cons_shift_imm_right<0b11, "ursra">;
+
+  // SVE2 complex integer add
+  defm CADD_ZZI   : sve2_int_cadd<0b0, "cadd">;
+  defm SQCADD_ZZI : sve2_int_cadd<0b1, "sqcadd">;
+
+  // SVE2 integer absolute difference and accumulate
+  defm SABA_ZZZ : sve2_int_absdiff_accum<0b0, "saba">;
+  defm UABA_ZZZ : sve2_int_absdiff_accum<0b1, "uaba">;
+
+  // SVE2 integer absolute difference and accumulate long
+  defm SABALB_ZZZ : sve2_int_absdiff_accum_long<0b00, "sabalb">;
+  defm SABALT_ZZZ : sve2_int_absdiff_accum_long<0b01, "sabalt">;
+  defm UABALB_ZZZ : sve2_int_absdiff_accum_long<0b10, "uabalb">;
+  defm UABALT_ZZZ : sve2_int_absdiff_accum_long<0b11, "uabalt">;
+
+  // SVE2 integer add/subtract long with carry
+  defm ADCLB_ZZZ : sve2_int_addsub_long_carry<0b00, "adclb">;
+  defm ADCLT_ZZZ : sve2_int_addsub_long_carry<0b01, "adclt">;
+  defm SBCLB_ZZZ : sve2_int_addsub_long_carry<0b10, "sbclb">;
+  defm SBCLT_ZZZ : sve2_int_addsub_long_carry<0b11, "sbclt">;
+
   // Predicated shifts
   defm SQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0110, "sqshl">;
   defm UQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0111, "uqshl">;

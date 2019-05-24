@@ -2192,6 +2192,162 @@ multiclass sve2_pmul_long<bits<1> opc, string asm> {
 }
 
 //===----------------------------------------------------------------------===//
+// SVE2 Accumulate Group
+//===----------------------------------------------------------------------===//
+
+class sve2_int_bin_cons_shift_imm<bits<4> tsz8_64, bit opc, string asm,
+                                  ZPRRegOp zprty, Operand immtype>
+: I<(outs zprty:$Zd), (ins zprty:$Zn, immtype:$imm),
+  asm, "\t$Zd, $Zn, $imm",
+  "", []>, Sched<[]> {
+  bits<5> Zd;
+  bits<5> Zn;
+  bits<6> imm;
+  let Inst{31-24} = 0b01000101;
+  let Inst{23-22} = tsz8_64{3-2};
+  let Inst{21}    = 0b0;
+  let Inst{20-19} = tsz8_64{1-0};
+  let Inst{18-16} = imm{2-0}; // imm3
+  let Inst{15-11} = 0b11110;
+  let Inst{10}    = opc;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zd;
+}
+
+multiclass sve2_int_bin_cons_shift_imm_left<bit opc, string asm> {
+  def _B : sve2_int_bin_cons_shift_imm<{0,0,0,1}, opc, asm, ZPR8, vecshiftL8>;
+  def _H : sve2_int_bin_cons_shift_imm<{0,0,1,?}, opc, asm, ZPR16, vecshiftL16> {
+    let Inst{19} = imm{3};
+  }
+  def _S : sve2_int_bin_cons_shift_imm<{0,1,?,?}, opc, asm, ZPR32, vecshiftL32> {
+    let Inst{20-19} = imm{4-3};
+  }
+  def _D : sve2_int_bin_cons_shift_imm<{1,?,?,?}, opc, asm, ZPR64, vecshiftL64> {
+    let Inst{22}    = imm{5};
+    let Inst{20-19} = imm{4-3};
+  }
+}
+
+multiclass sve2_int_bin_cons_shift_imm_right<bit opc, string asm> {
+  def _B : sve2_int_bin_cons_shift_imm<{0,0,0,1}, opc, asm, ZPR8, vecshiftR8>;
+  def _H : sve2_int_bin_cons_shift_imm<{0,0,1,?}, opc, asm, ZPR16, vecshiftR16> {
+    let Inst{19} = imm{3};
+  }
+  def _S : sve2_int_bin_cons_shift_imm<{0,1,?,?}, opc, asm, ZPR32, vecshiftR32> {
+    let Inst{20-19} = imm{4-3};
+  }
+  def _D : sve2_int_bin_cons_shift_imm<{1,?,?,?}, opc, asm, ZPR64, vecshiftR64> {
+    let Inst{22}    = imm{5};
+    let Inst{20-19} = imm{4-3};
+  }
+}
+
+class sve2_int_bin_accum_cons_shift_imm<bits<4> tsz8_64, bits<2> opc, string asm,
+                                        ZPRRegOp zprty, Operand immtype>
+: I<(outs zprty:$Zda), (ins zprty:$_Zda, zprty:$Zn, immtype:$imm),
+  asm, "\t$Zda, $Zn, $imm",
+  "", []>, Sched<[]> {
+  bits<5> Zda;
+  bits<5> Zn;
+  bits<6> imm;
+  let Inst{31-24} = 0b01000101;
+  let Inst{23-22} = tsz8_64{3-2};
+  let Inst{21}    = 0b0;
+  let Inst{20-19} = tsz8_64{1-0};
+  let Inst{18-16} = imm{2-0}; // imm3
+  let Inst{15-12} = 0b1110;
+  let Inst{11-10} = opc;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zda;
+
+  let Constraints = "$Zda = $_Zda";
+  let DestructiveInstType = Destructive;
+  let ElementSize = ElementSizeNone;
+}
+
+multiclass sve2_int_bin_accum_cons_shift_imm_right<bits<2> opc, string asm> {
+  def _B : sve2_int_bin_accum_cons_shift_imm<{0,0,0,1}, opc, asm, ZPR8, vecshiftR8>;
+  def _H : sve2_int_bin_accum_cons_shift_imm<{0,0,1,?}, opc, asm, ZPR16, vecshiftR16> {
+    let Inst{19} = imm{3};
+  }
+  def _S : sve2_int_bin_accum_cons_shift_imm<{0,1,?,?}, opc, asm, ZPR32, vecshiftR32> {
+    let Inst{20-19} = imm{4-3};
+  }
+  def _D : sve2_int_bin_accum_cons_shift_imm<{1,?,?,?}, opc, asm, ZPR64, vecshiftR64> {
+    let Inst{22}    = imm{5};
+    let Inst{20-19} = imm{4-3};
+  }
+}
+
+class sve2_int_cadd<bits<2> sz, bit opc, string asm, ZPRRegOp zprty>
+: I<(outs zprty:$Zdn), (ins zprty:$_Zdn, zprty:$Zm, complexrotateopodd:$rot),
+  asm, "\t$Zdn, $_Zdn, $Zm, $rot", "", []>, Sched<[]> {
+  bits<5> Zdn;
+  bits<5> Zm;
+  bit rot;
+  let Inst{31-24} = 0b01000101;
+  let Inst{23-22} = sz;
+  let Inst{21-17} = 0b00000;
+  let Inst{16}    = opc;
+  let Inst{15-11} = 0b11011;
+  let Inst{10}    = rot;
+  let Inst{9-5}   = Zm;
+  let Inst{4-0}   = Zdn;
+
+  let Constraints = "$Zdn = $_Zdn";
+  let DestructiveInstType = Destructive;
+  let ElementSize = ElementSizeNone;
+}
+
+multiclass sve2_int_cadd<bit opc, string asm> {
+  def _B : sve2_int_cadd<0b00, opc, asm, ZPR8>;
+  def _H : sve2_int_cadd<0b01, opc, asm, ZPR16>;
+  def _S : sve2_int_cadd<0b10, opc, asm, ZPR32>;
+  def _D : sve2_int_cadd<0b11, opc, asm, ZPR64>;
+}
+
+class sve2_int_absdiff_accum<bits<2> sz, bits<4> opc, string asm,
+                             ZPRRegOp zprty1, ZPRRegOp zprty2>
+: I<(outs zprty1:$Zda), (ins zprty1:$_Zda, zprty2:$Zn, zprty2:$Zm),
+  asm, "\t$Zda, $Zn, $Zm", "", []>, Sched<[]> {
+  bits<5> Zda;
+  bits<5> Zn;
+  bits<5> Zm;
+  let Inst{31-24} = 0b01000101;
+  let Inst{23-22} = sz;
+  let Inst{21}    = 0b0;
+  let Inst{20-16} = Zm;
+  let Inst{15-14} = 0b11;
+  let Inst{13-10} = opc;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zda;
+
+  let Constraints = "$Zda = $_Zda";
+  let DestructiveInstType = Destructive;
+  let ElementSize = ElementSizeNone;
+}
+
+multiclass sve2_int_absdiff_accum<bit opc, string asm> {
+  def _B : sve2_int_absdiff_accum<0b00, { 0b111, opc }, asm, ZPR8, ZPR8>;
+  def _H : sve2_int_absdiff_accum<0b01, { 0b111, opc }, asm, ZPR16, ZPR16>;
+  def _S : sve2_int_absdiff_accum<0b10, { 0b111, opc }, asm, ZPR32, ZPR32>;
+  def _D : sve2_int_absdiff_accum<0b11, { 0b111, opc }, asm, ZPR64, ZPR64>;
+}
+
+multiclass sve2_int_absdiff_accum_long<bits<2> opc, string asm> {
+  def _H : sve2_int_absdiff_accum<0b01, { 0b00, opc }, asm, ZPR16, ZPR8>;
+  def _S : sve2_int_absdiff_accum<0b10, { 0b00, opc }, asm, ZPR32, ZPR16>;
+  def _D : sve2_int_absdiff_accum<0b11, { 0b00, opc }, asm, ZPR64, ZPR32>;
+}
+
+multiclass sve2_int_addsub_long_carry<bits<2> opc, string asm> {
+  def _S : sve2_int_absdiff_accum<{ opc{1}, 0b0 }, { 0b010, opc{0} }, asm,
+                                  ZPR32, ZPR32>;
+  def _D : sve2_int_absdiff_accum<{ opc{1}, 0b1 }, { 0b010, opc{0} }, asm,
+                                  ZPR64, ZPR64>;
+}
+
+//===----------------------------------------------------------------------===//
 // SVE Integer Arithmetic - Unary Predicated Group
 //===----------------------------------------------------------------------===//
 
