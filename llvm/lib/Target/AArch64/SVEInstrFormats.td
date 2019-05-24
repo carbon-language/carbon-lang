@@ -2070,7 +2070,7 @@ class sve2_int_arith_pred<bits<2> sz, bits<6> opc, string asm,
   bits<5> Zdn;
   let Inst{31-24} = 0b01000100;
   let Inst{23-22} = sz;
-  let Inst{21-20} = 0b01;
+  let Inst{21}    = 0b0;
   let Inst{20-16} = opc{5-1};
   let Inst{15-14} = 0b10;
   let Inst{13}    = opc{0};
