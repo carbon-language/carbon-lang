@@ -31,6 +31,8 @@ defm demangle: B<"demangle",
     "Demangle symbol names",
     "Do not demangle symbol names">;
 
+def emit_relocs: F<"emit-relocs">, HelpText<"Generate relocations in output">;
+
 defm export_dynamic: B<"export-dynamic",
     "Put symbols in the dynamic symbol table",
     "Do not put symbols in the dynamic symbol table (default)">;

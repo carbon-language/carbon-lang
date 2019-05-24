@@ -302,6 +302,7 @@ static void readConfigs(opt::InputArgList &Args) {
   Config->CompressRelocations = Args.hasArg(OPT_compress_relocations);
   Config->Demangle = Args.hasFlag(OPT_demangle, OPT_no_demangle, true);
   Config->DisableVerify = Args.hasArg(OPT_disable_verify);
+  Config->EmitRelocs = Args.hasArg(OPT_emit_relocs);
   Config->Entry = getEntry(Args);
   Config->ExportAll = Args.hasArg(OPT_export_all);
   Config->ExportDynamic = Args.hasFlag(OPT_export_dynamic,
