@@ -811,12 +811,19 @@ DWARFUnit::determineStringOffsetsTableContribution(DWARFDataExtractor &DA) {
   auto Offset = toSectionOffset(getUnitDIE().find(DW_AT_str_offsets_base), 0);
   Optional<StrOffsetsContributionDescriptor> Descriptor;
   // Attempt to find a DWARF64 contribution 16 bytes before the base.
-  if (Offset >= 16)
+  switch (Header.getFormat()) {
+  case dwarf::DwarfFormat::DWARF64:
+    if (Offset < 16)
+      return None;
     Descriptor =
         parseDWARF64StringOffsetsTableHeader(DA, (uint32_t)Offset - 16);
-  // Try to find a DWARF32 contribution 8 bytes before the base.
-  if (!Descriptor && Offset >= 8)
+    break;
+  case dwarf::DwarfFormat::DWARF32:
+    if (Offset < 8)
+      return None;
     Descriptor = parseDWARF32StringOffsetsTableHeader(DA, (uint32_t)Offset - 8);
+    break;
+  }
   return Descriptor ? Descriptor->validateContributionSize(DA) : Descriptor;
 }
 
