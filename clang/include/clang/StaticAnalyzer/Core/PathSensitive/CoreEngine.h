@@ -116,6 +116,8 @@ private:
   void HandleStaticInit(const DeclStmt *DS, const CFGBlock *B,
                         ExplodedNode *Pred);
 
+  void HandleVirtualBaseBranch(const CFGBlock *B, ExplodedNode *Pred);
+
 private:
   ExplodedNode *generateCallExitBeginNode(ExplodedNode *N,
                                           const ReturnStmt *RS);

@@ -380,6 +380,11 @@ void CoreEngine::HandleBlockExit(const CFGBlock * B, ExplodedNode *Pred) {
     }
   }
 
+  if (B->getTerminator().isVirtualBaseBranch()) {
+    HandleVirtualBaseBranch(B, Pred);
+    return;
+  }
+
   assert(B->succ_size() == 1 &&
          "Blocks with no terminator should have at most 1 successor.");
 
@@ -437,6 +442,29 @@ void CoreEngine::HandlePostStmt(const CFGBlock *B, unsigned StmtIdx,
     NodeBuilderContext Ctx(*this, B, Pred);
     SubEng.processCFGElement((*B)[StmtIdx], Pred, StmtIdx, &Ctx);
   }
+}
+
+void CoreEngine::HandleVirtualBaseBranch(const CFGBlock *B,
+                                         ExplodedNode *Pred) {
+  const LocationContext *LCtx = Pred->getLocationContext();
+  if (const auto *CallerCtor = dyn_cast_or_null<CXXConstructExpr>(
+          LCtx->getStackFrame()->getCallSite())) {
+    switch (CallerCtor->getConstructionKind()) {
+    case CXXConstructExpr::CK_NonVirtualBase:
+    case CXXConstructExpr::CK_VirtualBase: {
+      BlockEdge Loc(B, *B->succ_begin(), LCtx);
+      HandleBlockEdge(Loc, Pred);
+      return;
+    }
+    default:
+      break;
+    }
+  }
+
+  // We either don't see a parent stack frame because we're in the top frame,
+  // or the parent stack frame doesn't initialize our virtual bases.
+  BlockEdge Loc(B, *(B->succ_begin() + 1), LCtx);
+  HandleBlockEdge(Loc, Pred);
 }
 
 /// generateNode - Utility method to generate nodes, hook up successors,
