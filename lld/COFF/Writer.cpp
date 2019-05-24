@@ -88,7 +88,7 @@ OutputSection *Chunk::getOutputSection() const {
 
 namespace {
 
-class DebugDirectoryChunk : public Chunk {
+class DebugDirectoryChunk : public NonSectionChunk {
 public:
   DebugDirectoryChunk(const std::vector<Chunk *> &R, bool WriteRepro)
       : Records(R), WriteRepro(WriteRepro) {}
@@ -143,7 +143,7 @@ private:
   bool WriteRepro;
 };
 
-class CVDebugRecordChunk : public Chunk {
+class CVDebugRecordChunk : public NonSectionChunk {
 public:
   size_t getSize() const override {
     return sizeof(codeview::DebugInfo) + Config->PDBAltPath.size() + 1;
