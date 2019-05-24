@@ -1140,6 +1140,16 @@ let Predicates = [HasSVE2] in {
   defm SQABS_ZPmZ   : sve2_int_un_pred_arit<0b100, "sqabs">;
   defm SQNEG_ZPmZ   : sve2_int_un_pred_arit<0b101, "sqneg">;
 
+  // SVE2 saturating add/subtract
+  defm SQADD_ZPmZ  : sve2_int_arith_pred<0b110000, "sqadd">;
+  defm UQADD_ZPmZ  : sve2_int_arith_pred<0b110010, "uqadd">;
+  defm SQSUB_ZPmZ  : sve2_int_arith_pred<0b110100, "sqsub">;
+  defm UQSUB_ZPmZ  : sve2_int_arith_pred<0b110110, "uqsub">;
+  defm SUQADD_ZPmZ : sve2_int_arith_pred<0b111000, "suqadd">;
+  defm USQADD_ZPmZ : sve2_int_arith_pred<0b111010, "usqadd">;
+  defm SQSUBR_ZPmZ : sve2_int_arith_pred<0b111100, "sqsubr">;
+  defm UQSUBR_ZPmZ : sve2_int_arith_pred<0b111110, "uqsubr">;
+
   // SVE2 integer multiply long
   defm SQDMULLB_ZZZ : sve2_wide_int_arith_long<0b11000, "sqdmullb">;
   defm SQDMULLT_ZZZ : sve2_wide_int_arith_long<0b11001, "sqdmullt">;
