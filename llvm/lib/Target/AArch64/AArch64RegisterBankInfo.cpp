@@ -457,6 +457,25 @@ AArch64RegisterBankInfo::getSameKindOfOperandsMapping(
                                getValueMapping(RBIdx, Size), NumOperands);
 }
 
+bool AArch64RegisterBankInfo::hasFPConstraints(
+    const MachineInstr &MI, const MachineRegisterInfo &MRI,
+    const TargetRegisterInfo &TRI) const {
+  unsigned Op = MI.getOpcode();
+
+  // Do we have an explicit floating point instruction?
+  if (isPreISelGenericFloatingPointOpcode(Op))
+    return true;
+
+  // No. Check if we have a copy-like instruction. If we do, then we could
+  // still be fed by floating point instructions.
+  if (Op != TargetOpcode::COPY && !MI.isPHI())
+    return false;
+
+  // MI is copy-like. Return true if it outputs an FPR.
+  return getRegBank(MI.getOperand(0).getReg(), MRI, TRI) ==
+         &AArch64::FPRRegBank;
+}
+
 const RegisterBankInfo::InstructionMapping &
 AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   const unsigned Opc = MI.getOpcode();
@@ -475,24 +494,6 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   const MachineRegisterInfo &MRI = MF.getRegInfo();
   const TargetSubtargetInfo &STI = MF.getSubtarget();
   const TargetRegisterInfo &TRI = *STI.getRegisterInfo();
-
-  // Helper lambda that returns true if MI has floating point constraints.
-  auto HasFPConstraints = [&TRI, &MRI, this](MachineInstr &MI) {
-    unsigned Op = MI.getOpcode();
-
-    // Do we have an explicit floating point instruction?
-    if (isPreISelGenericFloatingPointOpcode(Op))
-      return true;
-
-    // No. Check if we have a copy-like instruction. If we do, then we could
-    // still be fed by floating point instructions.
-    if (Op != TargetOpcode::COPY && !MI.isPHI())
-      return false;
-
-    // MI is copy-like. Return true if it's using an FPR.
-    return getRegBank(MI.getOperand(0).getReg(), MRI, TRI) ==
-           &AArch64::FPRRegBank;
-  };
 
   switch (Opc) {
     // G_{F|S|U}REM are not listed because they are not legal.
@@ -641,15 +642,7 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
         // assume this was a floating point load in the IR.
         // If it was not, we would have had a bitcast before
         // reaching that instruction.
-        unsigned UseOpc = UseMI.getOpcode();
-        if (isPreISelGenericFloatingPointOpcode(UseOpc) ||
-            // Check if we feed a copy-like instruction with
-            // floating point constraints. In that case, we are still
-            // feeding fp instructions, but indirectly
-            // (e.g., through ABI copies).
-            ((UseOpc == TargetOpcode::COPY || UseMI.isPHI()) &&
-             getRegBank(UseMI.getOperand(0).getReg(), MRI, TRI) ==
-                 &AArch64::FPRRegBank)) {
+        if (hasFPConstraints(UseMI, MRI, TRI)) {
           OpRegBankIdx[0] = PMI_FirstFPR;
           break;
         }
@@ -662,15 +655,7 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       if (!VReg)
         break;
       MachineInstr *DefMI = MRI.getVRegDef(VReg);
-      unsigned DefOpc = DefMI->getOpcode();
-      if (isPreISelGenericFloatingPointOpcode(DefOpc) ||
-          // Check if we come from a copy-like instruction with
-          // floating point constraints. In that case, we are still
-          // fed by fp instructions, but indirectly
-          // (e.g., through ABI copies).
-          ((DefOpc == TargetOpcode::COPY || DefMI->isPHI()) &&
-           getRegBank(DefMI->getOperand(0).getReg(), MRI, TRI) ==
-               &AArch64::FPRRegBank))
+      if (hasFPConstraints(*DefMI, MRI, TRI))
         OpRegBankIdx[0] = PMI_FirstFPR;
       break;
     }
@@ -700,8 +685,9 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     //
     // %z = G_SELECT %cond %x %y
     // fpr = G_FOO %z ...
-    if (any_of(MRI.use_instructions(MI.getOperand(0).getReg()),
-               [&](MachineInstr &MI) { return HasFPConstraints(MI); }))
+    if (any_of(
+            MRI.use_instructions(MI.getOperand(0).getReg()),
+            [&](MachineInstr &MI) { return hasFPConstraints(MI, MRI, TRI); }))
       ++NumFP;
 
     // Check if the defs of the source values always produce floating point
@@ -721,7 +707,7 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       unsigned VReg = MI.getOperand(Idx).getReg();
       MachineInstr *DefMI = MRI.getVRegDef(VReg);
       if (getRegBank(VReg, MRI, TRI) == &AArch64::FPRRegBank ||
-          HasFPConstraints(*DefMI))
+          hasFPConstraints(*DefMI, MRI, TRI))
         ++NumFP;
     }
 
@@ -743,8 +729,9 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     // UNMERGE into scalars from a vector should always use FPR.
     // Likewise if any of the uses are FP instructions.
     if (SrcTy.isVector() ||
-        any_of(MRI.use_instructions(MI.getOperand(0).getReg()),
-               [&](MachineInstr &MI) { return HasFPConstraints(MI); })) {
+        any_of(
+            MRI.use_instructions(MI.getOperand(0).getReg()),
+            [&](MachineInstr &MI) { return hasFPConstraints(MI, MRI, TRI); })) {
       // Set the register bank of every operand to FPR.
       for (unsigned Idx = 0, NumOperands = MI.getNumOperands();
            Idx < NumOperands; ++Idx)
