@@ -389,6 +389,8 @@ Symbol *SymbolTable::addUndefinedFunction(StringRef Name, StringRef ImportName,
   Symbol *S;
   bool WasInserted;
   std::tie(S, WasInserted) = insert(Name, File);
+  if (S->Traced)
+    printTraceSymbolUndefined(Name, File);
 
   auto Replace = [&]() {
     replaceSymbol<UndefinedFunction>(S, Name, ImportName, ImportModule, Flags,
@@ -420,6 +422,8 @@ Symbol *SymbolTable::addUndefinedData(StringRef Name, uint32_t Flags,
   Symbol *S;
   bool WasInserted;
   std::tie(S, WasInserted) = insert(Name, File);
+  if (S->Traced)
+    printTraceSymbolUndefined(Name, File);
 
   if (WasInserted)
     replaceSymbol<UndefinedData>(S, Name, Flags, File);
@@ -439,6 +443,8 @@ Symbol *SymbolTable::addUndefinedGlobal(StringRef Name, StringRef ImportName,
   Symbol *S;
   bool WasInserted;
   std::tie(S, WasInserted) = insert(Name, File);
+  if (S->Traced)
+    printTraceSymbolUndefined(Name, File);
 
   if (WasInserted)
     replaceSymbol<UndefinedGlobal>(S, Name, ImportName, ImportModule, Flags,

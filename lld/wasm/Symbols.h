@@ -457,6 +457,7 @@ union SymbolUnion {
 };
 
 void printTraceSymbol(Symbol *Sym);
+void printTraceSymbolUndefined(StringRef Name, const InputFile* File);
 
 template <typename T, typename... ArgT>
 T *replaceSymbol(Symbol *S, ArgT &&... Arg) {
