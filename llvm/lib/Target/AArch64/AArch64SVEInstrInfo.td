@@ -875,10 +875,10 @@ let Predicates = [HasSVE] in {
   defm LSL_WIDE_ZZZ : sve_int_bin_cons_shift_wide<0b11, "lsl">;
 
   // Predicated shifts
-  defm ASR_ZPmI  : sve_int_bin_pred_shift_imm_right<0b000, "asr">;
-  defm LSR_ZPmI  : sve_int_bin_pred_shift_imm_right<0b001, "lsr">;
-  defm LSL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b011, "lsl">;
-  defm ASRD_ZPmI : sve_int_bin_pred_shift_imm_right<0b100, "asrd">;
+  defm ASR_ZPmI  : sve_int_bin_pred_shift_imm_right<0b0000, "asr">;
+  defm LSR_ZPmI  : sve_int_bin_pred_shift_imm_right<0b0001, "lsr">;
+  defm LSL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0011, "lsl">;
+  defm ASRD_ZPmI : sve_int_bin_pred_shift_imm_right<0b0100, "asrd">;
 
   defm ASR_ZPmZ  : sve_int_bin_pred_shift<0b000, "asr">;
   defm LSR_ZPmZ  : sve_int_bin_pred_shift<0b001, "lsr">;
@@ -1150,6 +1150,20 @@ let Predicates = [HasSVE2] in {
   defm SQSUBR_ZPmZ : sve2_int_arith_pred<0b111100, "sqsubr">;
   defm UQSUBR_ZPmZ : sve2_int_arith_pred<0b111110, "uqsubr">;
 
+  // SVE2 saturating/rounding bitwise shift left (predicated)
+  defm SRSHL_ZPmZ   : sve2_int_arith_pred<0b000100, "srshl">;
+  defm URSHL_ZPmZ   : sve2_int_arith_pred<0b000110, "urshl">;
+  defm SRSHLR_ZPmZ  : sve2_int_arith_pred<0b001100, "srshlr">;
+  defm URSHLR_ZPmZ  : sve2_int_arith_pred<0b001110, "urshlr">;
+  defm SQSHL_ZPmZ   : sve2_int_arith_pred<0b010000, "sqshl">;
+  defm UQSHL_ZPmZ   : sve2_int_arith_pred<0b010010, "uqshl">;
+  defm SQRSHL_ZPmZ  : sve2_int_arith_pred<0b010100, "sqrshl">;
+  defm UQRSHL_ZPmZ  : sve2_int_arith_pred<0b010110, "uqrshl">;
+  defm SQSHLR_ZPmZ  : sve2_int_arith_pred<0b011000, "sqshlr">;
+  defm UQSHLR_ZPmZ  : sve2_int_arith_pred<0b011010, "uqshlr">;
+  defm SQRSHLR_ZPmZ : sve2_int_arith_pred<0b011100, "sqrshlr">;
+  defm UQRSHLR_ZPmZ : sve2_int_arith_pred<0b011110, "uqrshlr">;
+
   // SVE2 integer multiply long
   defm SQDMULLB_ZZZ : sve2_wide_int_arith_long<0b11000, "sqdmullb">;
   defm SQDMULLT_ZZZ : sve2_wide_int_arith_long<0b11001, "sqdmullt">;
@@ -1157,4 +1171,11 @@ let Predicates = [HasSVE2] in {
   defm SMULLT_ZZZ   : sve2_wide_int_arith_long<0b11101, "smullt">;
   defm UMULLB_ZZZ   : sve2_wide_int_arith_long<0b11110, "umullb">;
   defm UMULLT_ZZZ   : sve2_wide_int_arith_long<0b11111, "umullt">;
+
+  // Predicated shifts
+  defm SQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0110, "sqshl">;
+  defm UQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0111, "uqshl">;
+  defm SRSHR_ZPmI  : sve_int_bin_pred_shift_imm_right<0b1100, "srshr">;
+  defm URSHR_ZPmI  : sve_int_bin_pred_shift_imm_right<0b1101, "urshr">;
+  defm SQSHLU_ZPmI : sve_int_bin_pred_shift_imm_left< 0b1111, "sqshlu">;
 }

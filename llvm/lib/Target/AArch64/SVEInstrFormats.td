@@ -2926,9 +2926,9 @@ multiclass sve_int_index_rr<string asm> {
 //===----------------------------------------------------------------------===//
 // SVE Bitwise Shift - Predicated Group
 //===----------------------------------------------------------------------===//
-class sve_int_bin_pred_shift_imm<bits<4> tsz8_64, bits<3> opc, string asm,
-                               ZPRRegOp zprty, Operand immtype,
-                               ElementSizeEnum size>
+class sve_int_bin_pred_shift_imm<bits<4> tsz8_64, bits<4> opc, string asm,
+                                 ZPRRegOp zprty, Operand immtype,
+                                 ElementSizeEnum size>
 : I<(outs zprty:$Zdn), (ins PPR3bAny:$Pg, zprty:$_Zdn, immtype:$imm),
   asm, "\t$Zdn, $Pg/m, $_Zdn, $imm",
   "",
@@ -2938,8 +2938,8 @@ class sve_int_bin_pred_shift_imm<bits<4> tsz8_64, bits<3> opc, string asm,
   bits<6> imm;
   let Inst{31-24} = 0b00000100;
   let Inst{23-22} = tsz8_64{3-2};
-  let Inst{21-19} = 0b000;
-  let Inst{18-16} = opc;
+  let Inst{21-20} = 0b00;
+  let Inst{19-16} = opc;
   let Inst{15-13} = 0b100;
   let Inst{12-10} = Pg;
   let Inst{9-8}   = tsz8_64{1-0};
@@ -2951,7 +2951,7 @@ class sve_int_bin_pred_shift_imm<bits<4> tsz8_64, bits<3> opc, string asm,
   let ElementSize = size;
 }
 
-multiclass sve_int_bin_pred_shift_imm_left<bits<3> opc, string asm> {
+multiclass sve_int_bin_pred_shift_imm_left<bits<4> opc, string asm> {
   def _B : sve_int_bin_pred_shift_imm<{0,0,0,1}, opc, asm, ZPR8, vecshiftL8,
                                       ElementSizeB>;
   def _H : sve_int_bin_pred_shift_imm<{0,0,1,?}, opc, asm, ZPR16, vecshiftL16,
@@ -2969,7 +2969,7 @@ multiclass sve_int_bin_pred_shift_imm_left<bits<3> opc, string asm> {
   }
 }
 
-multiclass sve_int_bin_pred_shift_imm_right<bits<3> opc, string asm> {
+multiclass sve_int_bin_pred_shift_imm_right<bits<4> opc, string asm> {
   def _B : sve_int_bin_pred_shift_imm<{0,0,0,1}, opc, asm, ZPR8, vecshiftR8,
                                       ElementSizeB>;
   def _H : sve_int_bin_pred_shift_imm<{0,0,1,?}, opc, asm, ZPR16, vecshiftR16,
