@@ -17,44 +17,16 @@
 
 #define TEST_ISNAN(v) logical, parameter :: test_##v =.NOT.(v.EQ.v)
 
-! TODO: 2 behaviors to clarify:
-
-!  Biggest negative literal integer(4): -(2**31) or -(2**31-1) ?
-!   -> Fortran standard says representable value set must be in [-HUGE, HUGE].
-!      For f18 integer(4) that means [-(2**31-1), 2**31-1].
-!   -> Current f18 behavior is to emit an error for -2147483648_4 literal (-2**31), but not for
-!      -2147483647_4 -1_4 which is folded to -2147483648_4 without errors/warnings.
-!  It seems to me that biggest negative literal and representable value should
-!  be the same.
-!   -> pgfortran and ifort are OK with -2147483648_4 literal.
-!   -> gfortran gives an error for both -2147483648_4 unless -fno-range-check is used.
-!      It never raises errors for -2147483647_4 -1_4 and fold it to -2147483648_4.
-
-! Proposal: add option to control literal range. Make -2147483648_4 accepted by
-! default?
-
-! How to handle 0_4/0_4:
-!  -> raise an error (pgfortran, gfortran, ifort)
-!  -> warning and return 2147483647_4 (currently f18)
-!  -> warning and return 0_4 (maybe power HW (not tested))
-! Actually, gfortran, pgfortran and ifort forbid integer divide by zero in all
-! case.
-
-! Proposal: Make integer divide by zero a fatal error. There is no maths
-! rational to support it and there is no integer NaN to circumvent this.
-! Plus, people ignore warnings ?
-
-
 module integer_tests
   integer(4), parameter :: i4_pmax = 2147483647_4
-  integer(4), parameter :: i4_nmax = -2147483647_4 - 1_4 ! See TODO above.
+  ! Fortran grammar rule R605 prevents from writing -2147483648_4 in an
+  ! expression because literal-constant are not signed so this would parse
+  ! to -(2147483648_4) and 2147483648_4 is not accepted as a literal-constant.
+  ! However, one can reach this value with operations.
+  integer(4), parameter :: i4_nmax = -2147483647_4 - 1_4
 
-  ! integer(4), parameter :: i4_nan = (0_4/0_4).EQ.i4_pmax ! See TODO above.
-
-  !WARN: INTEGER(4) division by zero
-  logical, parameter :: test_pinf = (1_4/0_4).EQ.i4_pmax ! See TODO above
-  ! !WARN: INTEGER(4) division by zero
-  ! logical, parameter :: test_ninf = (-1_4/0_4).EQ.i4_nmax ! See TODO above, plus returns -2147483647_4
+  ! Integer division by zero are not tested here because they are handled as fatal
+  ! errors in constants.
 
   !WARN: INTEGER(4) negation overflowed
   logical, parameter :: test_overflow_unary_minus1 = (-i4_nmax).EQ.i4_nmax
@@ -125,10 +97,10 @@ module real_tests
   !WARN: division by zero on division
   real(4), parameter :: r4_ninf = -1._4/0._4
 
-  logical, parameter :: test_ra_nan_parentheses1 = .NOT.(((r4_nan)).EQ.r4_nan)
-  logical, parameter :: test_ra_nan_parentheses2 = .NOT.(((r4_nan)).NE.r4_nan)
-  logical, parameter :: test_ra_pinf_parentheses = ((r4_pinf)).EQ.r4_pinf
-  logical, parameter :: test_ra_ninf_parentheses = ((r4_ninf)).EQ.r4_ninf
+  logical, parameter :: test_r4_nan_parentheses1 = .NOT.(((r4_nan)).EQ.r4_nan)
+  logical, parameter :: test_r4_nan_parentheses2 = .NOT.(((r4_nan)).NE.r4_nan)
+  logical, parameter :: test_r4_pinf_parentheses = ((r4_pinf)).EQ.r4_pinf
+  logical, parameter :: test_r4_ninf_parentheses = ((r4_ninf)).EQ.r4_ninf
 
   ! No warnings expected
   logical, parameter :: test_r4_negation1 = (-r4_pmax).EQ.r4_nmax

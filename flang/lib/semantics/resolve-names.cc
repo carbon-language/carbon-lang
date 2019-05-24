@@ -159,8 +159,7 @@ public:
     if (auto maybeExpr{AnalyzeExpr(*context_, expr)}) {
       if (auto converted{
               evaluate::ConvertToType(symbol, std::move(*maybeExpr))}) {
-        return FoldExpr(
-            evaluate::ConvertToType(symbol, AnalyzeExpr(*context_, expr)));
+        return FoldExpr(std::move(*converted));
       } else {
         Say(source,
             "Initialization expression could not be converted to declared type of symbol '%s'"_err_en_US,
