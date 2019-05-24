@@ -103,8 +103,9 @@ public:
 
   // An output section has pointers to chunks in the section, and each
   // chunk has a back pointer to an output section.
-  void setOutputSection(OutputSection *O) { Out = O; }
-  OutputSection *getOutputSection() const { return Out; }
+  void setOutputSectionIdx(uint16_t O) { OSIdx = O; }
+  uint16_t getOutputSectionIdx() const { return OSIdx; }
+  OutputSection *getOutputSection() const;
 
   // Windows-specific.
   // Collect all locations that contain absolute addresses for base relocations.
@@ -125,11 +126,12 @@ protected:
   // value.
   uint8_t P2Align = 0;
 
+  // The output section index for this chunk. The first valid section number is
+  // one.
+  uint16_t OSIdx = 0;
+
   // The RVA of this chunk in the output. The writer sets a value.
   uint32_t RVA = 0;
-
-  // The output section for this chunk.
-  OutputSection *Out = nullptr;
 };
 
 // A chunk corresponding a section of an input file.

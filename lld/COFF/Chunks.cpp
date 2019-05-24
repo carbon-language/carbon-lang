@@ -53,7 +53,7 @@ SectionChunk::SectionChunk(ObjFile *F, const coff_section *H)
 // SectionChunk is one of the most frequently allocated classes, so it is
 // important to keep it as compact as possible. As of this writing, the number
 // below is the size of this class on x64 platforms.
-static_assert(sizeof(SectionChunk) <= 104, "SectionChunk grew unexpectedly");
+static_assert(sizeof(SectionChunk) <= 96, "SectionChunk grew unexpectedly");
 
 static void add16(uint8_t *P, int16_t V) { write16le(P, read16le(P) + V); }
 static void add32(uint8_t *P, int32_t V) { write32le(P, read32le(P) + V); }
@@ -858,7 +858,7 @@ uint8_t Baserel::getDefaultType() {
 MergeChunk *MergeChunk::Instances[Log2MaxSectionAlignment + 1] = {};
 
 MergeChunk::MergeChunk(uint32_t Alignment)
-    : Builder(StringTableBuilder::RAW, Alignment) {
+    : Chunk(OtherKind), Builder(StringTableBuilder::RAW, Alignment) {
   setAlignment(Alignment);
 }
 
@@ -886,7 +886,6 @@ void MergeChunk::assignSubsectionRVAs() {
     if (!C->Live)
       continue;
     size_t Off = Builder.getOffset(toStringRef(C->getContents()));
-    C->setOutputSection(Out);
     C->setRVA(RVA + Off);
   }
 }
