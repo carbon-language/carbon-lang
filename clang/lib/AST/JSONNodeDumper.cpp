@@ -966,6 +966,13 @@ void JSONNodeDumper::VisitWhileStmt(const WhileStmt *WS) {
   attributeOnlyIfTrue("hasVar", WS->hasVarStorage());
 }
 
+void JSONNodeDumper::VisitObjCAtCatchStmt(const ObjCAtCatchStmt* OACS) {
+  // FIXME: it would be nice for the ASTNodeTraverser would handle the catch
+  // parameter the same way for C++ and ObjC rather. In this case, C++ gets a
+  // null child node and ObjC gets no child node.
+  attributeOnlyIfTrue("isCatchAll", OACS->getCatchParamDecl() == nullptr);
+}
+
 StringRef JSONNodeDumper::getCommentCommandName(unsigned CommandID) const {
   if (Traits)
     return Traits->getCommandInfo(CommandID)->Name;

@@ -260,6 +260,7 @@ public:
   void VisitLabelStmt(const LabelStmt *LS);
   void VisitGotoStmt(const GotoStmt *GS);
   void VisitWhileStmt(const WhileStmt *WS);
+  void VisitObjCAtCatchStmt(const ObjCAtCatchStmt *OACS);
 
   void visitTextComment(const comments::TextComment *C,
                         const comments::FullComment *);
