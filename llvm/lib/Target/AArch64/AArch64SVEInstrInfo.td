@@ -1228,6 +1228,42 @@ let Predicates = [HasSVE2] in {
   defm SBCLB_ZZZ : sve2_int_addsub_long_carry<0b10, "sbclb">;
   defm SBCLT_ZZZ : sve2_int_addsub_long_carry<0b11, "sbclt">;
 
+  // SVE2 bitwise shift right narrow
+  defm SQSHRUNB_ZZI  : sve2_int_bin_cons_shift_imm_right_narrow<0b0000, "sqshrunb">;
+  defm SQSHRUNT_ZZI  : sve2_int_bin_cons_shift_imm_right_narrow<0b0001, "sqshrunt">;
+  defm SQRSHRUNB_ZZI : sve2_int_bin_cons_shift_imm_right_narrow<0b0010, "sqrshrunb">;
+  defm SQRSHRUNT_ZZI : sve2_int_bin_cons_shift_imm_right_narrow<0b0011, "sqrshrunt">;
+  defm SHRNB_ZZI     : sve2_int_bin_cons_shift_imm_right_narrow<0b0100, "shrnb">;
+  defm SHRNT_ZZI     : sve2_int_bin_cons_shift_imm_right_narrow<0b0101, "shrnt">;
+  defm RSHRNB_ZZI    : sve2_int_bin_cons_shift_imm_right_narrow<0b0110, "rshrnb">;
+  defm RSHRNT_ZZI    : sve2_int_bin_cons_shift_imm_right_narrow<0b0111, "rshrnt">;
+  defm SQSHRNB_ZZI   : sve2_int_bin_cons_shift_imm_right_narrow<0b1000, "sqshrnb">;
+  defm SQSHRNT_ZZI   : sve2_int_bin_cons_shift_imm_right_narrow<0b1001, "sqshrnt">;
+  defm SQRSHRNB_ZZI  : sve2_int_bin_cons_shift_imm_right_narrow<0b1010, "sqrshrnb">;
+  defm SQRSHRNT_ZZI  : sve2_int_bin_cons_shift_imm_right_narrow<0b1011, "sqrshrnt">;
+  defm UQSHRNB_ZZI   : sve2_int_bin_cons_shift_imm_right_narrow<0b1100, "uqshrnb">;
+  defm UQSHRNT_ZZI   : sve2_int_bin_cons_shift_imm_right_narrow<0b1101, "uqshrnt">;
+  defm UQRSHRNB_ZZI  : sve2_int_bin_cons_shift_imm_right_narrow<0b1110, "uqrshrnb">;
+  defm UQRSHRNT_ZZI  : sve2_int_bin_cons_shift_imm_right_narrow<0b1111, "uqrshrnt">;
+
+  // SVE2 integer add/subtract narrow high part
+  defm ADDHNB_ZZZ  : sve2_int_addsub_narrow_high<0b000, "addhnb">;
+  defm ADDHNT_ZZZ  : sve2_int_addsub_narrow_high<0b001, "addhnt">;
+  defm RADDHNB_ZZZ : sve2_int_addsub_narrow_high<0b010, "raddhnb">;
+  defm RADDHNT_ZZZ : sve2_int_addsub_narrow_high<0b011, "raddhnt">;
+  defm SUBHNB_ZZZ  : sve2_int_addsub_narrow_high<0b100, "subhnb">;
+  defm SUBHNT_ZZZ  : sve2_int_addsub_narrow_high<0b101, "subhnt">;
+  defm RSUBHNB_ZZZ : sve2_int_addsub_narrow_high<0b110, "rsubhnb">;
+  defm RSUBHNT_ZZZ : sve2_int_addsub_narrow_high<0b111, "rsubhnt">;
+
+  // SVE2 saturating extract narrow
+  defm SQXTNB_ZZ  : sve2_int_sat_extract_narrow<0b000, "sqxtnb">;
+  defm SQXTNT_ZZ  : sve2_int_sat_extract_narrow<0b001, "sqxtnt">;
+  defm UQXTNB_ZZ  : sve2_int_sat_extract_narrow<0b010, "uqxtnb">;
+  defm UQXTNT_ZZ  : sve2_int_sat_extract_narrow<0b011, "uqxtnt">;
+  defm SQXTUNB_ZZ : sve2_int_sat_extract_narrow<0b100, "sqxtunb">;
+  defm SQXTUNT_ZZ : sve2_int_sat_extract_narrow<0b101, "sqxtunt">;
+
   // Predicated shifts
   defm SQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0110, "sqshl">;
   defm UQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0111, "uqshl">;

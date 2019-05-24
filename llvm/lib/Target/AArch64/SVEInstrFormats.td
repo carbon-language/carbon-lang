@@ -2348,6 +2348,88 @@ multiclass sve2_int_addsub_long_carry<bits<2> opc, string asm> {
 }
 
 //===----------------------------------------------------------------------===//
+// SVE2 Narrowing Group
+//===----------------------------------------------------------------------===//
+
+class sve2_int_bin_cons_shift_imm_narrow<bits<3> tsz8_64, bits<4> opc,
+                                         string asm, ZPRRegOp zprty1,
+                                         ZPRRegOp zprty2, Operand immtype>
+: I<(outs zprty1:$Zd), (ins zprty2:$Zn, immtype:$imm),
+  asm, "\t$Zd, $Zn, $imm",
+  "", []>, Sched<[]> {
+  bits<5> Zd;
+  bits<5> Zn;
+  bits<5> imm;
+  let Inst{31-23} = 0b010001010;
+  let Inst{22}    = tsz8_64{2};
+  let Inst{21}    = 0b1;
+  let Inst{20-19} = tsz8_64{1-0};
+  let Inst{18-16} = imm{2-0}; // imm3
+  let Inst{15-14} = 0b00;
+  let Inst{13-10} = opc;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zd;
+}
+
+multiclass sve2_int_bin_cons_shift_imm_right_narrow<bits<4> opc, string asm> {
+  def _B : sve2_int_bin_cons_shift_imm_narrow<{0,0,1}, opc, asm, ZPR8, ZPR16,
+                                              vecshiftR8>;
+  def _H : sve2_int_bin_cons_shift_imm_narrow<{0,1,?}, opc, asm, ZPR16, ZPR32,
+                                              vecshiftR16> {
+    let Inst{19} = imm{3};
+  }
+  def _S : sve2_int_bin_cons_shift_imm_narrow<{1,?,?}, opc, asm, ZPR32, ZPR64,
+                                              vecshiftR32> {
+    let Inst{20-19} = imm{4-3};
+  }
+}
+
+class sve2_int_addsub_narrow_high<bits<2> sz, bits<3> opc, string asm,
+                                  ZPRRegOp zprty1, ZPRRegOp zprty2>
+: I<(outs zprty1:$Zd), (ins zprty2:$Zn, zprty2:$Zm),
+  asm, "\t$Zd, $Zn, $Zm", "", []>, Sched<[]> {
+  bits<5> Zd;
+  bits<5> Zn;
+  bits<5> Zm;
+  let Inst{31-24} = 0b01000101;
+  let Inst{23-22} = sz;
+  let Inst{21}    = 0b1;
+  let Inst{20-16} = Zm;
+  let Inst{15-13} = 0b011;
+  let Inst{12-10} = opc; // S, R, T
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zd;
+}
+
+multiclass sve2_int_addsub_narrow_high<bits<3> opc, string asm> {
+  def _B : sve2_int_addsub_narrow_high<0b01, opc, asm, ZPR8, ZPR16>;
+  def _H : sve2_int_addsub_narrow_high<0b10, opc, asm, ZPR16, ZPR32>;
+  def _S : sve2_int_addsub_narrow_high<0b11, opc, asm, ZPR32, ZPR64>;
+}
+
+class sve2_int_sat_extract_narrow<bits<3> tsz8_64, bits<3> opc, string asm,
+                                  ZPRRegOp zprty1, ZPRRegOp zprty2>
+: I<(outs zprty1:$Zd), (ins zprty2:$Zn),
+  asm, "\t$Zd, $Zn", "", []>, Sched<[]> {
+  bits<5> Zd;
+  bits<5> Zn;
+  let Inst{31-23} = 0b010001010;
+  let Inst{22}    = tsz8_64{2};
+  let Inst{21}    = 0b1;
+  let Inst{20-19} = tsz8_64{1-0};
+  let Inst{18-13} = 0b000010;
+  let Inst{12-10} = opc;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zd;
+}
+
+multiclass sve2_int_sat_extract_narrow<bits<3> opc, string asm> {
+  def _B : sve2_int_sat_extract_narrow<0b001, opc, asm, ZPR8, ZPR16>;
+  def _H : sve2_int_sat_extract_narrow<0b010, opc, asm, ZPR16, ZPR32>;
+  def _S : sve2_int_sat_extract_narrow<0b100, opc, asm, ZPR32, ZPR64>;
+}
+
+//===----------------------------------------------------------------------===//
 // SVE Integer Arithmetic - Unary Predicated Group
 //===----------------------------------------------------------------------===//
 
