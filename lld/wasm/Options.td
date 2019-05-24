@@ -112,6 +112,9 @@ def version: F<"version">, HelpText<"Display the version number and exit">;
 def z: JoinedOrSeparate<["-"], "z">, MetaVarName<"<option>">,
   HelpText<"Linker option extensions">;
 
+defm wrap: Eq<"wrap", "Use wrapper functions for symbol">,
+  MetaVarName<"<symbol>=<symbol>">;
+
 // The follow flags are unique to wasm
 
 def allow_undefined: F<"allow-undefined">,

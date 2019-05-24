@@ -65,7 +65,8 @@ void SymbolTable::addCombinedLTOObject() {
 }
 
 void SymbolTable::reportRemainingUndefines() {
-  for (Symbol *Sym : SymVector) {
+  for (const auto& Pair : SymMap) {
+    const Symbol *Sym = SymVector[Pair.second];
     if (!Sym->isUndefined() || Sym->isWeak())
       continue;
     if (Config->AllowUndefinedSymbols.count(Sym->getName()) != 0)
@@ -104,6 +105,7 @@ std::pair<Symbol *, bool> SymbolTable::insertName(StringRef Name) {
 
   Symbol *Sym = reinterpret_cast<Symbol *>(make<SymbolUnion>());
   Sym->IsUsedInRegularObj = false;
+  Sym->CanInline = true;
   Sym->Traced = Trace;
   SymVector.emplace_back(Sym);
   return {Sym, true};
@@ -537,6 +539,19 @@ bool SymbolTable::getFunctionVariant(Symbol* Sym, const WasmSignature *Sig,
 // if a new symbol with the same name is inserted into the symbol table.
 void SymbolTable::trace(StringRef Name) {
   SymMap.insert({CachedHashStringRef(Name), -1});
+}
+
+void SymbolTable::wrap(Symbol *Sym, Symbol *Real, Symbol *Wrap) {
+  // Swap symbols as instructed by -wrap.
+  int &OrigIdx = SymMap[CachedHashStringRef(Sym->getName())];
+  int &RealIdx= SymMap[CachedHashStringRef(Real->getName())];
+  int &WrapIdx = SymMap[CachedHashStringRef(Wrap->getName())];
+  LLVM_DEBUG(dbgs() << "wrap: " << Sym->getName() << "\n");
+
+  // Anyone looking up __real symbols should get the original
+  RealIdx = OrigIdx;
+  // Anyone looking up the original should get the __wrap symbol
+  OrigIdx = WrapIdx;
 }
 
 static const uint8_t UnreachableFn[] = {
