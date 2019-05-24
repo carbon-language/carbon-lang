@@ -4061,7 +4061,10 @@ void GNUStyle<ELFT>::printMipsGOT(const MipsGOTParser<ELFT> &Parser) {
      << format_hex_no_prefix(Parser.getGp(), 8 + Bias) << "\n\n";
 
   OS << " Reserved entries:\n";
-  OS << "   Address     Access  Initial Purpose\n";
+  if (ELFT::Is64Bits)
+    OS << "           Address     Access          Initial Purpose\n";
+  else
+    OS << "   Address     Access  Initial Purpose\n";
   PrintEntry(Parser.getGotLazyResolver(), "Lazy resolver");
   if (Parser.getGotModulePointer())
     PrintEntry(Parser.getGotModulePointer(), "Module pointer (GNU extension)");
@@ -4069,7 +4072,10 @@ void GNUStyle<ELFT>::printMipsGOT(const MipsGOTParser<ELFT> &Parser) {
   if (!Parser.getLocalEntries().empty()) {
     OS << "\n";
     OS << " Local entries:\n";
-    OS << "   Address     Access  Initial\n";
+    if (ELFT::Is64Bits)
+      OS << "           Address     Access          Initial\n";
+    else
+      OS << "   Address     Access  Initial\n";
     for (auto &E : Parser.getLocalEntries())
       PrintEntry(&E, "");
   }
@@ -4080,7 +4086,11 @@ void GNUStyle<ELFT>::printMipsGOT(const MipsGOTParser<ELFT> &Parser) {
   if (!Parser.getGlobalEntries().empty()) {
     OS << "\n";
     OS << " Global entries:\n";
-    OS << "   Address     Access  Initial Sym.Val. Type    Ndx Name\n";
+    if (ELFT::Is64Bits)
+      OS << "           Address     Access          Initial         Sym.Val."
+         << " Type    Ndx Name\n";
+    else
+      OS << "   Address     Access  Initial Sym.Val. Type    Ndx Name\n";
     for (auto &E : Parser.getGlobalEntries()) {
       const Elf_Sym *Sym = Parser.getGotSym(&E);
       std::string SymName = this->dumper()->getFullSymbolName(
