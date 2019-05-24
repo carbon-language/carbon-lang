@@ -1195,6 +1195,8 @@ let Predicates = [HasSVE2] in {
   defm SMULLT_ZZZ   : sve2_wide_int_arith_long<0b11101, "smullt">;
   defm UMULLB_ZZZ   : sve2_wide_int_arith_long<0b11110, "umullb">;
   defm UMULLT_ZZZ   : sve2_wide_int_arith_long<0b11111, "umullt">;
+  defm PMULLB_ZZZ   : sve2_pmul_long<0b0, "pmullb">;
+  defm PMULLT_ZZZ   : sve2_pmul_long<0b1, "pmullt">;
 
   // Predicated shifts
   defm SQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0110, "sqshl">;
@@ -1202,4 +1204,14 @@ let Predicates = [HasSVE2] in {
   defm SRSHR_ZPmI  : sve_int_bin_pred_shift_imm_right<0b1100, "srshr">;
   defm URSHR_ZPmI  : sve_int_bin_pred_shift_imm_right<0b1101, "urshr">;
   defm SQSHLU_ZPmI : sve_int_bin_pred_shift_imm_left< 0b1111, "sqshlu">;
+}
+
+let Predicates = [HasSVE2AES] in {
+  // PMULLB and PMULLT instructions which operate with 64-bit source and
+  // 128-bit destination elements are enabled with crypto extensions, similar
+  // to NEON PMULL2 instruction.
+  def PMULLB_ZZZ_Q : sve2_wide_int_arith<0b00, 0b11010, "pmullb",
+                                         ZPR128, ZPR64, ZPR64>;
+  def PMULLT_ZZZ_Q : sve2_wide_int_arith<0b00, 0b11011, "pmullt",
+                                         ZPR128, ZPR64, ZPR64>;
 }

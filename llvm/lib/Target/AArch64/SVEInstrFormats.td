@@ -2186,6 +2186,11 @@ multiclass sve2_wide_int_arith_wide<bits<3> opc, string asm> {
   def _D : sve2_wide_int_arith<0b11, { 0b10, opc }, asm, ZPR64, ZPR64, ZPR32>;
 }
 
+multiclass sve2_pmul_long<bits<1> opc, string asm> {
+  def _H : sve2_wide_int_arith<0b01, {0b1101, opc}, asm, ZPR16, ZPR8, ZPR8>;
+  def _D : sve2_wide_int_arith<0b11, {0b1101, opc}, asm, ZPR64, ZPR32, ZPR32>;
+}
+
 //===----------------------------------------------------------------------===//
 // SVE Integer Arithmetic - Unary Predicated Group
 //===----------------------------------------------------------------------===//
