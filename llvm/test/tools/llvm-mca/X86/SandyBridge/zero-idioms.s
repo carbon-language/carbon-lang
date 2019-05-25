@@ -153,15 +153,15 @@ vpxor  %xmm3, %xmm3, %xmm5
 # CHECK-NEXT:  1      0     0.25                        xorpd	%xmm1, %xmm1
 # CHECK-NEXT:  1      0     0.25                        vxorps	%xmm2, %xmm2, %xmm2
 # CHECK-NEXT:  1      0     0.25                        vxorpd	%xmm1, %xmm1, %xmm1
-# CHECK-NEXT:  1      1     1.00                        vxorps	%ymm2, %ymm2, %ymm2
-# CHECK-NEXT:  1      1     1.00                        vxorpd	%ymm1, %ymm1, %ymm1
+# CHECK-NEXT:  1      0     0.25                        vxorps	%ymm2, %ymm2, %ymm2
+# CHECK-NEXT:  1      0     0.25                        vxorpd	%ymm1, %ymm1, %ymm1
 # CHECK-NEXT:  1      1     0.33                        pxor	%mm2, %mm2
 # CHECK-NEXT:  1      0     0.25                        pxor	%xmm2, %xmm2
 # CHECK-NEXT:  1      0     0.25                        vpxor	%xmm3, %xmm3, %xmm3
 # CHECK-NEXT:  1      0     0.25                        vxorps	%xmm4, %xmm4, %xmm5
 # CHECK-NEXT:  1      0     0.25                        vxorpd	%xmm1, %xmm1, %xmm3
-# CHECK-NEXT:  1      1     1.00                        vxorps	%ymm4, %ymm4, %ymm5
-# CHECK-NEXT:  1      1     1.00                        vxorpd	%ymm1, %ymm1, %ymm3
+# CHECK-NEXT:  1      0     0.25                        vxorps	%ymm4, %ymm4, %ymm5
+# CHECK-NEXT:  1      0     0.25                        vxorpd	%ymm1, %ymm1, %ymm3
 # CHECK-NEXT:  1      0     0.25                        vpxor	%xmm3, %xmm3, %xmm5
 
 # CHECK:      Register File statistics:
@@ -180,7 +180,7 @@ vpxor  %xmm3, %xmm3, %xmm5
 
 # CHECK:      Resource pressure per iteration:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6.0]  [6.1]
-# CHECK-NEXT:  -      -     4.00   8.00    -     14.00   -      -
+# CHECK-NEXT:  -      -     4.00   8.00    -     10.00   -      -
 
 # CHECK:      Resource pressure by instruction:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6.0]  [6.1]  Instructions:
@@ -237,15 +237,15 @@ vpxor  %xmm3, %xmm3, %xmm5
 # CHECK-NEXT:  -      -      -      -      -      -      -      -     xorpd	%xmm1, %xmm1
 # CHECK-NEXT:  -      -      -      -      -      -      -      -     vxorps	%xmm2, %xmm2, %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -      -      -     vxorpd	%xmm1, %xmm1, %xmm1
-# CHECK-NEXT:  -      -      -      -      -     1.00    -      -     vxorps	%ymm2, %ymm2, %ymm2
-# CHECK-NEXT:  -      -      -      -      -     1.00    -      -     vxorpd	%ymm1, %ymm1, %ymm1
+# CHECK-NEXT:  -      -      -      -      -      -      -      -     vxorps	%ymm2, %ymm2, %ymm2
+# CHECK-NEXT:  -      -      -      -      -      -      -      -     vxorpd	%ymm1, %ymm1, %ymm1
 # CHECK-NEXT:  -      -     1.00    -      -      -      -      -     pxor	%mm2, %mm2
 # CHECK-NEXT:  -      -      -      -      -      -      -      -     pxor	%xmm2, %xmm2
 # CHECK-NEXT:  -      -      -      -      -      -      -      -     vpxor	%xmm3, %xmm3, %xmm3
 # CHECK-NEXT:  -      -      -      -      -      -      -      -     vxorps	%xmm4, %xmm4, %xmm5
 # CHECK-NEXT:  -      -      -      -      -      -      -      -     vxorpd	%xmm1, %xmm1, %xmm3
-# CHECK-NEXT:  -      -      -      -      -     1.00    -      -     vxorps	%ymm4, %ymm4, %ymm5
-# CHECK-NEXT:  -      -      -      -      -     1.00    -      -     vxorpd	%ymm1, %ymm1, %ymm3
+# CHECK-NEXT:  -      -      -      -      -      -      -      -     vxorps	%ymm4, %ymm4, %ymm5
+# CHECK-NEXT:  -      -      -      -      -      -      -      -     vxorpd	%ymm1, %ymm1, %ymm3
 # CHECK-NEXT:  -      -      -      -      -      -      -      -     vpxor	%xmm3, %xmm3, %xmm5
 
 # CHECK:      Timeline view:
@@ -305,16 +305,16 @@ vpxor  %xmm3, %xmm3, %xmm5
 # CHECK-NEXT: [0,50]    .    .    . D==E---------R.   xorpd	%xmm1, %xmm1
 # CHECK-NEXT: [0,51]    .    .    . D=E----------R.   vxorps	%xmm2, %xmm2, %xmm2
 # CHECK-NEXT: [0,52]    .    .    .  D=E---------R.   vxorpd	%xmm1, %xmm1, %xmm1
-# CHECK-NEXT: [0,53]    .    .    .  D======eE---R.   vxorps	%ymm2, %ymm2, %ymm2
-# CHECK-NEXT: [0,54]    .    .    .  D=====eE----R.   vxorpd	%ymm1, %ymm1, %ymm1
+# CHECK-NEXT: [0,53]    .    .    .  DE----------R.   vxorps	%ymm2, %ymm2, %ymm2
+# CHECK-NEXT: [0,54]    .    .    .  D=E---------R.   vxorpd	%ymm1, %ymm1, %ymm1
 # CHECK-NEXT: [0,55]    .    .    .  D==========eER   pxor	%mm2, %mm2
-# CHECK-NEXT: [0,56]    .    .    .   D======E----R   pxor	%xmm2, %xmm2
+# CHECK-NEXT: [0,56]    .    .    .   D-----------R   pxor	%xmm2, %xmm2
 # CHECK-NEXT: [0,57]    .    .    .   D-----------R   vpxor	%xmm3, %xmm3, %xmm3
 # CHECK-NEXT: [0,58]    .    .    .   D-----------R   vxorps	%xmm4, %xmm4, %xmm5
-# CHECK-NEXT: [0,59]    .    .    .   D=====E-----R   vxorpd	%xmm1, %xmm1, %xmm3
-# CHECK-NEXT: [0,60]    .    .    .    D======eE--R   vxorps	%ymm4, %ymm4, %ymm5
-# CHECK-NEXT: [0,61]    .    .    .    D=====eE---R   vxorpd	%ymm1, %ymm1, %ymm3
-# CHECK-NEXT: [0,62]    .    .    .    D======E---R   vpxor	%xmm3, %xmm3, %xmm5
+# CHECK-NEXT: [0,59]    .    .    .   DE----------R   vxorpd	%xmm1, %xmm1, %xmm3
+# CHECK-NEXT: [0,60]    .    .    .    D----------R   vxorps	%ymm4, %ymm4, %ymm5
+# CHECK-NEXT: [0,61]    .    .    .    D----------R   vxorpd	%ymm1, %ymm1, %ymm3
+# CHECK-NEXT: [0,62]    .    .    .    D----------R   vpxor	%xmm3, %xmm3, %xmm5
 
 # CHECK:      Average Wait times (based on the timeline view):
 # CHECK-NEXT: [0]: Executions
@@ -376,13 +376,13 @@ vpxor  %xmm3, %xmm3, %xmm5
 # CHECK-NEXT: 50.    1     3.0    0.0    9.0       xorpd	%xmm1, %xmm1
 # CHECK-NEXT: 51.    1     2.0    0.0    10.0      vxorps	%xmm2, %xmm2, %xmm2
 # CHECK-NEXT: 52.    1     2.0    0.0    9.0       vxorpd	%xmm1, %xmm1, %xmm1
-# CHECK-NEXT: 53.    1     7.0    6.0    3.0       vxorps	%ymm2, %ymm2, %ymm2
-# CHECK-NEXT: 54.    1     6.0    4.0    4.0       vxorpd	%ymm1, %ymm1, %ymm1
+# CHECK-NEXT: 53.    1     1.0    0.0    10.0      vxorps	%ymm2, %ymm2, %ymm2
+# CHECK-NEXT: 54.    1     2.0    0.0    9.0       vxorpd	%ymm1, %ymm1, %ymm1
 # CHECK-NEXT: 55.    1     11.0   0.0    0.0       pxor	%mm2, %mm2
-# CHECK-NEXT: 56.    1     7.0    0.0    4.0       pxor	%xmm2, %xmm2
+# CHECK-NEXT: 56.    1     0.0    0.0    11.0      pxor	%xmm2, %xmm2
 # CHECK-NEXT: 57.    1     0.0    0.0    11.0      vpxor	%xmm3, %xmm3, %xmm3
 # CHECK-NEXT: 58.    1     0.0    0.0    11.0      vxorps	%xmm4, %xmm4, %xmm5
-# CHECK-NEXT: 59.    1     6.0    0.0    5.0       vxorpd	%xmm1, %xmm1, %xmm3
-# CHECK-NEXT: 60.    1     7.0    7.0    2.0       vxorps	%ymm4, %ymm4, %ymm5
-# CHECK-NEXT: 61.    1     6.0    1.0    3.0       vxorpd	%ymm1, %ymm1, %ymm3
-# CHECK-NEXT: 62.    1     7.0    0.0    3.0       vpxor	%xmm3, %xmm3, %xmm5
+# CHECK-NEXT: 59.    1     1.0    0.0    10.0      vxorpd	%xmm1, %xmm1, %xmm3
+# CHECK-NEXT: 60.    1     0.0    0.0    10.0      vxorps	%ymm4, %ymm4, %ymm5
+# CHECK-NEXT: 61.    1     0.0    0.0    10.0      vxorpd	%ymm1, %ymm1, %ymm3
+# CHECK-NEXT: 62.    1     0.0    0.0    10.0      vpxor	%xmm3, %xmm3, %xmm5
