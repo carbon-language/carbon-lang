@@ -430,6 +430,8 @@ namespace {
                                BasicBlock *BB);
   bool solveBlockValueCast(ValueLatticeElement &BBLV, CastInst *CI,
                            BasicBlock *BB);
+  bool solveBlockValueOverflowIntrinsic(
+      ValueLatticeElement &BBLV, WithOverflowInst *WO, BasicBlock *BB);
   void intersectAssumeOrGuardBlockValueConstantRange(Value *Val,
                                                      ValueLatticeElement &BBLV,
                                                      Instruction *BBI);
@@ -642,6 +644,11 @@ bool LazyValueInfoImpl::solveBlockValueImpl(ValueLatticeElement &Res,
 
     if (BinaryOperator *BO = dyn_cast<BinaryOperator>(BBI))
       return solveBlockValueBinaryOp(Res, BO, BB);
+
+    if (auto *EVI = dyn_cast<ExtractValueInst>(BBI))
+      if (auto *WO = dyn_cast<WithOverflowInst>(EVI->getAggregateOperand()))
+        if (EVI->getNumIndices() == 1 && *EVI->idx_begin() == 0)
+          return solveBlockValueOverflowIntrinsic(Res, WO, BB);
   }
 
   LLVM_DEBUG(dbgs() << " compute BB '" << BB->getName()
@@ -1095,6 +1102,14 @@ bool LazyValueInfoImpl::solveBlockValueBinaryOp(ValueLatticeElement &BBLV,
     BBLV = ValueLatticeElement::getOverdefined();
     return true;
   };
+}
+
+bool LazyValueInfoImpl::solveBlockValueOverflowIntrinsic(
+    ValueLatticeElement &BBLV, WithOverflowInst *WO, BasicBlock *BB) {
+  return solveBlockValueBinaryOpImpl(BBLV, WO, BB,
+      [WO](const ConstantRange &CR1, const ConstantRange &CR2) {
+        return CR1.binaryOp(WO->getBinaryOp(), CR2);
+      });
 }
 
 static ValueLatticeElement getValueFromICmpCondition(Value *Val, ICmpInst *ICI,
