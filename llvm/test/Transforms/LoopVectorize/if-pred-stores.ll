@@ -194,9 +194,11 @@ for.end:
 ; vectorized loop body.
 ; PR18724
 
-define void @bug18724() {
+define void @bug18724(i1 %cond) {
 ; UNROLL-LABEL: @bug18724(
 ; UNROLL-NEXT:  entry:
+; UNROLL-NEXT:    [[TMP0:%.*]] = xor i1 [[COND:%.*]], true
+; UNROLL-NEXT:    call void @llvm.assume(i1 [[TMP0]])
 ; UNROLL-NEXT:    br label [[FOR_BODY14:%.*]]
 ; UNROLL:       for.body14:
 ; UNROLL-NEXT:    [[INDVARS_IV3:%.*]] = phi i64 [ [[INDVARS_IV_NEXT4:%.*]], [[FOR_INC23:%.*]] ], [ undef, [[ENTRY:%.*]] ]
@@ -211,13 +213,16 @@ define void @bug18724() {
 ; UNROLL:       for.inc23:
 ; UNROLL-NEXT:    [[INEWCHUNKS_2]] = phi i32 [ [[INC21]], [[IF_THEN18]] ], [ [[INEWCHUNKS_120]], [[FOR_BODY14]] ]
 ; UNROLL-NEXT:    [[INDVARS_IV_NEXT4]] = add nsw i64 [[INDVARS_IV3]], 1
+; UNROLL-NEXT:    [[TMP1:%.*]] = trunc i64 [[INDVARS_IV3]] to i32
+; UNROLL-NEXT:    [[CMP13:%.*]] = icmp slt i32 [[TMP1]], 0
+; UNROLL-NEXT:    call void @llvm.assume(i1 [[CMP13]])
 ; UNROLL-NEXT:    br label [[FOR_BODY14]]
 ;
 ; UNROLL-NOSIMPLIFY-LABEL: @bug18724(
 ; UNROLL-NOSIMPLIFY-NEXT:  entry:
 ; UNROLL-NOSIMPLIFY-NEXT:    br label [[FOR_BODY9:%.*]]
 ; UNROLL-NOSIMPLIFY:       for.body9:
-; UNROLL-NOSIMPLIFY-NEXT:    br i1 undef, label [[FOR_INC26:%.*]], label [[FOR_BODY14_PREHEADER:%.*]]
+; UNROLL-NOSIMPLIFY-NEXT:    br i1 [[COND:%.*]], label [[FOR_INC26:%.*]], label [[FOR_BODY14_PREHEADER:%.*]]
 ; UNROLL-NOSIMPLIFY:       for.body14.preheader:
 ; UNROLL-NOSIMPLIFY-NEXT:    br i1 true, label [[SCALAR_PH:%.*]], label [[VECTOR_PH:%.*]]
 ; UNROLL-NOSIMPLIFY:       vector.ph:
@@ -287,6 +292,8 @@ define void @bug18724() {
 ;
 ; VEC-LABEL: @bug18724(
 ; VEC-NEXT:  entry:
+; VEC-NEXT:    [[TMP0:%.*]] = xor i1 [[COND:%.*]], true
+; VEC-NEXT:    call void @llvm.assume(i1 [[TMP0]])
 ; VEC-NEXT:    br label [[FOR_BODY14:%.*]]
 ; VEC:       for.body14:
 ; VEC-NEXT:    [[INDVARS_IV3:%.*]] = phi i64 [ [[INDVARS_IV_NEXT4:%.*]], [[FOR_INC23:%.*]] ], [ undef, [[ENTRY:%.*]] ]
@@ -301,13 +308,16 @@ define void @bug18724() {
 ; VEC:       for.inc23:
 ; VEC-NEXT:    [[INEWCHUNKS_2]] = phi i32 [ [[INC21]], [[IF_THEN18]] ], [ [[INEWCHUNKS_120]], [[FOR_BODY14]] ]
 ; VEC-NEXT:    [[INDVARS_IV_NEXT4]] = add nsw i64 [[INDVARS_IV3]], 1
+; VEC-NEXT:    [[TMP1:%.*]] = trunc i64 [[INDVARS_IV3]] to i32
+; VEC-NEXT:    [[CMP13:%.*]] = icmp slt i32 [[TMP1]], 0
+; VEC-NEXT:    call void @llvm.assume(i1 [[CMP13]])
 ; VEC-NEXT:    br label [[FOR_BODY14]]
 ;
 entry:
   br label %for.body9
 
 for.body9:
-  br i1 undef, label %for.inc26, label %for.body14
+  br i1 %cond, label %for.inc26, label %for.body14
 
 for.body14:
   %indvars.iv3 = phi i64 [ %indvars.iv.next4, %for.inc23 ], [ undef, %for.body9 ]
