@@ -20,10 +20,10 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CHECK: @switch.table.earlyreturncrash = private unnamed_addr constant [4 x i32] [i32 42, i32 9, i32 88, i32 5], align 4
 
 ; The table for @large
-; CHECK: @switch.table.large = private unnamed_addr constant [199 x i32] [i32 1, i32 4, i32 9,
+; CHECK: @switch.table.large = private unnamed_addr constant [200 x i32] [i32 0, i32 1, i32 4, i32 9,
 
 ; The table for @cprop
-; CHECK: @switch.table.cprop = private unnamed_addr constant [7 x i32] [i32 5, i32 42, i32 126, i32 -452, i32 128, i32 6, i32 7], align 4
+; CHECK: @switch.table.cprop = private unnamed_addr constant [8 x i32] [i32 123, i32 5, i32 42, i32 126, i32 -452, i32 128, i32 6, i32 7], align 4
 
 ; The table for @unreachable_case
 ; CHECK: @switch.table.unreachable_case = private unnamed_addr constant [9 x i32] [i32 0, i32 0, i32 0, i32 2, i32 -1, i32 1, i32 1, i32 1, i32 1], align 4

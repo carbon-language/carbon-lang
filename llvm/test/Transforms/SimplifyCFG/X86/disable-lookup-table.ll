@@ -5,10 +5,6 @@
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 ; In the presence of "-no-jump-tables"="true", simplifycfg should not convert switches to lookup tables.
 
-; CHECK: @switch.table.bar = private unnamed_addr constant [4 x i32] [i32 55, i32 123, i32 0, i32 -1]
-; CHECK-LABEL: foo
-; CHECK-NOT: @switch.table.foo = private unnamed_addr constant [4 x i32] [i32 55, i32 123, i32 0, i32 -1]
-
 define i32 @foo(i32 %c) "no-jump-tables"="true" {
 ; CHECK-LABEL: @foo(
 ; CHECK-NEXT:  entry:
