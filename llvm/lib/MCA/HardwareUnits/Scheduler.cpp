@@ -105,7 +105,13 @@ void Scheduler::issueInstruction(
   // other dependent instructions. Dependent instructions may be issued during
   // this same cycle if operands have ReadAdvance entries.  Promote those
   // instructions to the ReadySet and notify the caller that those are ready.
-  if (HasDependentUsers && promoteToPendingSet(PendingInstructions))
+  // If IR is a memory operation, then always call method `promoteToReadySet()`
+  // to notify any dependent memory operations that IR started execution.
+  bool ShouldPromoteInstructions = Inst.isMemOp();
+  if (HasDependentUsers)
+    ShouldPromoteInstructions |= promoteToPendingSet(PendingInstructions);
+
+  if (ShouldPromoteInstructions)
     promoteToReadySet(ReadyInstructions);
 }
 
@@ -287,15 +293,19 @@ uint64_t Scheduler::analyzeResourcePressure(SmallVectorImpl<InstRef> &Insts) {
 void Scheduler::analyzeDataDependencies(SmallVectorImpl<InstRef> &RegDeps,
                                         SmallVectorImpl<InstRef> &MemDeps) {
   const auto EndIt = PendingSet.end() - NumDispatchedToThePendingSet;
-  for (InstRef &IR : make_range(PendingSet.begin(), EndIt)) {
-    Instruction &IS = *IR.getInstruction();
+  for (const InstRef &IR : make_range(PendingSet.begin(), EndIt)) {
+    const Instruction &IS = *IR.getInstruction();
     if (Resources->checkAvailability(IS.getDesc()))
       continue;
 
-    if (IS.isReady() || (IS.isMemOp() && LSU.isReady(IR) != IR))
-      MemDeps.emplace_back(IR);
-    else
+    const CriticalDependency &CMD = IS.getCriticalMemDep();
+    if (IS.isMemOp() && IS.getCurrentMemDep() != &IS && !CMD.Cycles)
+      continue;
+
+    if (IS.isPending())
       RegDeps.emplace_back(IR);
+    if (CMD.Cycles)
+      MemDeps.emplace_back(IR);
   }
 }
 
