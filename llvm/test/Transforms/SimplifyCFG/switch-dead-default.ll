@@ -5,12 +5,14 @@ declare void @foo(i32)
 
 define void @test(i1 %a) {
 ; CHECK-LABEL: @test(
-; CHECK-NEXT:    br i1 [[A:%.*]], label [[TRUE:%.*]], label [[FALSE:%.*]]
+; CHECK-NEXT:    [[A_OFF:%.*]] = add i1 [[A:%.*]], true
+; CHECK-NEXT:    [[SWITCH:%.*]] = icmp ult i1 [[A_OFF]], true
+; CHECK-NEXT:    br i1 [[SWITCH]], label [[TRUE:%.*]], label [[FALSE:%.*]]
 ; CHECK:       true:
-; CHECK-NEXT:    tail call void @foo(i32 1)
+; CHECK-NEXT:    call void @foo(i32 1)
 ; CHECK-NEXT:    ret void
 ; CHECK:       false:
-; CHECK-NEXT:    tail call void @foo(i32 3)
+; CHECK-NEXT:    call void @foo(i32 3)
 ; CHECK-NEXT:    ret void
 ;
   switch i1 %a, label %default [i1 1, label %true
@@ -35,16 +37,16 @@ define void @test2(i2 %a) {
 ; CHECK-NEXT:    i2 -1, label [[CASE3:%.*]]
 ; CHECK-NEXT:    ]
 ; CHECK:       case0:
-; CHECK-NEXT:    tail call void @foo(i32 0)
+; CHECK-NEXT:    call void @foo(i32 0)
 ; CHECK-NEXT:    ret void
 ; CHECK:       case1:
-; CHECK-NEXT:    tail call void @foo(i32 1)
+; CHECK-NEXT:    call void @foo(i32 1)
 ; CHECK-NEXT:    ret void
 ; CHECK:       case2:
-; CHECK-NEXT:    tail call void @foo(i32 2)
+; CHECK-NEXT:    call void @foo(i32 2)
 ; CHECK-NEXT:    ret void
 ; CHECK:       case3:
-; CHECK-NEXT:    tail call void @foo(i32 3)
+; CHECK-NEXT:    call void @foo(i32 3)
 ; CHECK-NEXT:    ret void
 ; CHECK:       default1:
 ; CHECK-NEXT:    unreachable
@@ -80,16 +82,16 @@ define void @test3(i2 %a) {
 ; CHECK-NEXT:    i2 -2, label [[CASE2:%.*]]
 ; CHECK-NEXT:    ]
 ; CHECK:       case0:
-; CHECK-NEXT:    tail call void @foo(i32 0)
+; CHECK-NEXT:    call void @foo(i32 0)
 ; CHECK-NEXT:    ret void
 ; CHECK:       case1:
-; CHECK-NEXT:    tail call void @foo(i32 1)
+; CHECK-NEXT:    call void @foo(i32 1)
 ; CHECK-NEXT:    ret void
 ; CHECK:       case2:
-; CHECK-NEXT:    tail call void @foo(i32 2)
+; CHECK-NEXT:    call void @foo(i32 2)
 ; CHECK-NEXT:    ret void
 ; CHECK:       default:
-; CHECK-NEXT:    tail call void @foo(i32 0)
+; CHECK-NEXT:    call void @foo(i32 0)
 ; CHECK-NEXT:    ret void
 ;
   switch i2 %a, label %default [i2 0, label %case0
@@ -119,13 +121,13 @@ define void @test4(i128 %a) {
 ; CHECK-NEXT:    i128 1, label [[CASE1:%.*]]
 ; CHECK-NEXT:    ]
 ; CHECK:       case0:
-; CHECK-NEXT:    tail call void @foo(i32 0)
+; CHECK-NEXT:    call void @foo(i32 0)
 ; CHECK-NEXT:    ret void
 ; CHECK:       case1:
-; CHECK-NEXT:    tail call void @foo(i32 1)
+; CHECK-NEXT:    call void @foo(i32 1)
 ; CHECK-NEXT:    ret void
 ; CHECK:       default:
-; CHECK-NEXT:    tail call void @foo(i32 0)
+; CHECK-NEXT:    call void @foo(i32 0)
 ; CHECK-NEXT:    ret void
 ;
   switch i128 %a, label %default [i128 0, label %case0
@@ -146,14 +148,15 @@ default:
 define void @test5(i8 %a) {
 ; CHECK-LABEL: @test5(
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp ult i8 [[A:%.*]], 2
-; CHECK-NEXT:    tail call void @llvm.assume(i1 [[CMP]])
-; CHECK-NEXT:    [[SWITCH:%.*]] = icmp eq i8 [[A]], 1
+; CHECK-NEXT:    call void @llvm.assume(i1 [[CMP]])
+; CHECK-NEXT:    [[A_OFF:%.*]] = add i8 [[A]], -1
+; CHECK-NEXT:    [[SWITCH:%.*]] = icmp ult i8 [[A_OFF]], 1
 ; CHECK-NEXT:    br i1 [[SWITCH]], label [[TRUE:%.*]], label [[FALSE:%.*]]
 ; CHECK:       true:
-; CHECK-NEXT:    tail call void @foo(i32 1)
+; CHECK-NEXT:    call void @foo(i32 1)
 ; CHECK-NEXT:    ret void
 ; CHECK:       false:
-; CHECK-NEXT:    tail call void @foo(i32 3)
+; CHECK-NEXT:    call void @foo(i32 3)
 ; CHECK-NEXT:    ret void
 ;
   %cmp = icmp ult i8 %a, 2
@@ -174,15 +177,17 @@ default:
 ;; All but one bit known one
 define void @test6(i8 %a) {
 ; CHECK-LABEL: @test6(
-; CHECK-NEXT:    [[CMP:%.*]] = icmp ugt i8 [[A:%.*]], -3
-; CHECK-NEXT:    tail call void @llvm.assume(i1 [[CMP]])
-; CHECK-NEXT:    [[SWITCH:%.*]] = icmp eq i8 [[A]], -1
+; CHECK-NEXT:    [[AND:%.*]] = and i8 [[A:%.*]], -2
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i8 [[AND]], -2
+; CHECK-NEXT:    call void @llvm.assume(i1 [[CMP]])
+; CHECK-NEXT:    [[A_OFF:%.*]] = add i8 [[A]], 1
+; CHECK-NEXT:    [[SWITCH:%.*]] = icmp ult i8 [[A_OFF]], 1
 ; CHECK-NEXT:    br i1 [[SWITCH]], label [[TRUE:%.*]], label [[FALSE:%.*]]
 ; CHECK:       true:
-; CHECK-NEXT:    tail call void @foo(i32 1)
+; CHECK-NEXT:    call void @foo(i32 1)
 ; CHECK-NEXT:    ret void
 ; CHECK:       false:
-; CHECK-NEXT:    tail call void @foo(i32 3)
+; CHECK-NEXT:    call void @foo(i32 3)
 ; CHECK-NEXT:    ret void
 ;
   %and = and i8 %a, 254
@@ -205,15 +210,17 @@ default:
 ; within a single run of simplify-cfg
 define void @test7(i8 %a) {
 ; CHECK-LABEL: @test7(
-; CHECK-NEXT:    [[CMP:%.*]] = icmp ugt i8 [[A:%.*]], -3
-; CHECK-NEXT:    tail call void @llvm.assume(i1 [[CMP]])
-; CHECK-NEXT:    [[SWITCH:%.*]] = icmp eq i8 [[A]], -1
+; CHECK-NEXT:    [[AND:%.*]] = and i8 [[A:%.*]], -2
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i8 [[AND]], -2
+; CHECK-NEXT:    call void @llvm.assume(i1 [[CMP]])
+; CHECK-NEXT:    [[A_OFF:%.*]] = add i8 [[A]], 1
+; CHECK-NEXT:    [[SWITCH:%.*]] = icmp ult i8 [[A_OFF]], 1
 ; CHECK-NEXT:    br i1 [[SWITCH]], label [[TRUE:%.*]], label [[FALSE:%.*]]
 ; CHECK:       true:
-; CHECK-NEXT:    tail call void @foo(i32 1)
+; CHECK-NEXT:    call void @foo(i32 1)
 ; CHECK-NEXT:    ret void
 ; CHECK:       false:
-; CHECK-NEXT:    tail call void @foo(i32 3)
+; CHECK-NEXT:    call void @foo(i32 3)
 ; CHECK-NEXT:    ret void
 ;
   %and = and i8 %a, 254
@@ -243,7 +250,22 @@ default:
 ;; but it doesn't hurt to confirm.
 define void @test8(i8 %a) {
 ; CHECK-LABEL: @test8(
-; CHECK-NEXT:    unreachable
+; CHECK-NEXT:    [[AND:%.*]] = and i8 [[A:%.*]], -2
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i8 [[AND]], undef
+; CHECK-NEXT:    call void @llvm.assume(i1 [[CMP]])
+; CHECK-NEXT:    switch i8 [[A]], label [[DEFAULT:%.*]] [
+; CHECK-NEXT:    i8 -1, label [[TRUE:%.*]]
+; CHECK-NEXT:    i8 -2, label [[FALSE:%.*]]
+; CHECK-NEXT:    ]
+; CHECK:       true:
+; CHECK-NEXT:    call void @foo(i32 1)
+; CHECK-NEXT:    ret void
+; CHECK:       false:
+; CHECK-NEXT:    call void @foo(i32 3)
+; CHECK-NEXT:    ret void
+; CHECK:       default:
+; CHECK-NEXT:    call void @foo(i32 2)
+; CHECK-NEXT:    ret void
 ;
   %and = and i8 %a, 254
   %cmp = icmp eq i8 %and, undef

@@ -9,11 +9,16 @@ target triple = "x86_64-apple-darwin12.0.0"
 define i64 @test(i3 %arg) {
 ; CHECK-LABEL: @test(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[SWITCH_TABLEIDX:%.*]] = sub i3 [[ARG:%.*]], -4
-; CHECK-NEXT:    [[SWITCH_TABLEIDX_ZEXT:%.*]] = zext i3 [[SWITCH_TABLEIDX]] to i4
-; CHECK-NEXT:    [[SWITCH_GEP:%.*]] = getelementptr inbounds [8 x i64], [8 x i64]* @switch.table.test, i32 0, i4 [[SWITCH_TABLEIDX_ZEXT]]
+; CHECK-NEXT:    [[TMP0:%.*]] = icmp ult i3 [[ARG:%.*]], -1
+; CHECK-NEXT:    br i1 [[TMP0]], label [[SWITCH_LOOKUP:%.*]], label [[DEFAULT:%.*]]
+; CHECK:       switch.lookup:
+; CHECK-NEXT:    [[SWITCH_TABLEIDX_ZEXT:%.*]] = zext i3 [[ARG]] to i4
+; CHECK-NEXT:    [[SWITCH_GEP:%.*]] = getelementptr inbounds [7 x i64], [7 x i64]* @switch.table.test, i32 0, i4 [[SWITCH_TABLEIDX_ZEXT]]
 ; CHECK-NEXT:    [[SWITCH_LOAD:%.*]] = load i64, i64* [[SWITCH_GEP]]
-; CHECK-NEXT:    [[V3:%.*]] = add i64 [[SWITCH_LOAD]], 0
+; CHECK-NEXT:    br label [[DEFAULT]]
+; CHECK:       Default:
+; CHECK-NEXT:    [[V1:%.*]] = phi i64 [ 8, [[ENTRY:%.*]] ], [ [[SWITCH_LOAD]], [[SWITCH_LOOKUP]] ]
+; CHECK-NEXT:    [[V3:%.*]] = add i64 [[V1]], 0
 ; CHECK-NEXT:    ret i64 [[V3]]
 ;
 entry:

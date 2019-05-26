@@ -5309,9 +5309,9 @@ static bool SwitchToLookupTable(SwitchInst *SI, IRBuilder<> &Builder,
 
   for (SwitchInst::CaseIt E = SI->case_end(); CI != E; ++CI) {
     ConstantInt *CaseVal = CI->getCaseValue();
-    if (CaseVal->getValue().slt(MinCaseVal->getValue()))
+    if (CaseVal->getValue().ult(MinCaseVal->getValue()))
       MinCaseVal = CaseVal;
-    if (CaseVal->getValue().sgt(MaxCaseVal->getValue()))
+    if (CaseVal->getValue().ugt(MaxCaseVal->getValue()))
       MaxCaseVal = CaseVal;
 
     // Resulting value at phi nodes for this case value.
@@ -5337,8 +5337,7 @@ static bool SwitchToLookupTable(SwitchInst *SI, IRBuilder<> &Builder,
   }
 
   uint64_t NumResults = ResultLists[PHIs[0]].size();
-  APInt RangeSpread = MaxCaseVal->getValue() - MinCaseVal->getValue();
-  uint64_t TableSize = RangeSpread.getLimitedValue() + 1;
+  uint64_t TableSize = MaxCaseVal->getValue().getLimitedValue() + 1;
   bool TableHasHoles = (NumResults < TableSize);
 
   // If the table has holes, we need a constant result for the default case
@@ -5373,12 +5372,7 @@ static bool SwitchToLookupTable(SwitchInst *SI, IRBuilder<> &Builder,
 
   // Compute the table index value.
   Builder.SetInsertPoint(SI);
-  Value *TableIndex;
-  if (MinCaseVal->isNullValue())
-    TableIndex = SI->getCondition();
-  else
-    TableIndex =
-        Builder.CreateSub(SI->getCondition(), MinCaseVal, "switch.tableidx");
+  Value *TableIndex = SI->getCondition();
 
   // Compute the maximum table size representable by the integer type we are
   // switching upon.
@@ -5417,6 +5411,10 @@ static bool SwitchToLookupTable(SwitchInst *SI, IRBuilder<> &Builder,
     MaskBB->setName("switch.hole_check");
     LookupBB = BasicBlock::Create(Mod.getContext(), "switch.lookup",
                                   CommonDest->getParent(), CommonDest);
+
+    // When doing the register-sized hole-check, unconditionally use a
+    // subtraction.
+    TableIndex = Builder.CreateSub(TableIndex, MinCaseVal);
 
     // Make the mask's bitwidth at least 8-bit and a power-of-2 to avoid
     // unnecessary illegal types.
@@ -5461,8 +5459,11 @@ static bool SwitchToLookupTable(SwitchInst *SI, IRBuilder<> &Builder,
     // If using a bitmask, use any value to fill the lookup table holes.
     Constant *DV = NeedMask ? ResultLists[PHI][0].second : DefaultResults[PHI];
     StringRef FuncName = Fn->getName();
-    SwitchLookupTable Table(Mod, TableSize, MinCaseVal, ResultList, DV, DL,
-                            FuncName);
+    // Base is 0 unless using a hole check
+    ConstantInt *Base =
+        NeedMask ? MinCaseVal
+                 : ConstantInt::get(Mod.getContext(), APInt(CaseSize, 0));
+    SwitchLookupTable Table(Mod, TableSize, Base, ResultList, DV, DL, FuncName);
 
     Value *Result = Table.BuildLookup(TableIndex, Builder);
 
@@ -5507,18 +5508,6 @@ static bool SwitchToLookupTable(SwitchInst *SI, IRBuilder<> &Builder,
   return true;
 }
 
-static bool isSwitchDense(ArrayRef<int64_t> Values) {
-  // See also SelectionDAGBuilder::isDense(), which this function was based on.
-  uint64_t Diff = (uint64_t)Values.back() - (uint64_t)Values.front();
-  uint64_t Range = Diff + 1;
-  uint64_t NumCases = Values.size();
-  // 40% is the default density for building a jump table in optsize/minsize
-  // mode.
-  uint64_t MinDensity = 40;
-
-  return NumCases * 100 >= Range * MinDensity;
-}
-
 /// Try to transform a switch that has "holes" in it to a contiguous sequence
 /// of cases.
 ///
@@ -5530,32 +5519,47 @@ static bool isSwitchDense(ArrayRef<int64_t> Values) {
 static bool ReduceSwitchRange(SwitchInst *SI, IRBuilder<> &Builder,
                               const DataLayout &DL,
                               const TargetTransformInfo &TTI) {
+  // The number of cases that need to be removed by a subtraction operation
+  // to make it worth using.
+  const unsigned SubThreshold = (SI->getFunction()->hasOptSize() ? 2 : 8);
   auto *CondTy = cast<IntegerType>(SI->getCondition()->getType());
-  if (CondTy->getIntegerBitWidth() > 64 ||
-      !DL.fitsInLegalInteger(CondTy->getIntegerBitWidth()))
+  unsigned BitWidth = CondTy->getIntegerBitWidth();
+  if (BitWidth > 64 || !DL.fitsInLegalInteger(BitWidth))
     return false;
   // Only bother with this optimization if there are more than 3 switch cases;
   // SDAG will only bother creating jump tables for 4 or more cases.
+  // This is also useful when using the LowerSwitch transform, but not with
+  // so few cases.
   if (SI->getNumCases() < 4)
     return false;
 
-  // This transform is agnostic to the signedness of the input or case values.
-  // We can treat the case values as signed or unsigned. We can optimize more
-  // common cases such as a sequence crossing zero {-4,0,4,8} if we interpret
-  // case values as signed.
-  SmallVector<int64_t, 4> Values;
+  // We organize the range to start from 0, if it is not already close.
+  SmallVector<uint64_t, 4> Values;
   for (auto &C : SI->cases())
-    Values.push_back(C.getCaseValue()->getValue().getSExtValue());
+    Values.push_back(C.getCaseValue()->getValue().getLimitedValue());
   llvm::sort(Values);
 
-  // If the switch is already dense, there's nothing useful to do here.
-  if (isSwitchDense(Values))
-    return false;
-
-  // First, transform the values such that they start at zero and ascend.
-  int64_t Base = Values[0];
-  for (auto &V : Values)
-    V -= (uint64_t)(Base);
+  bool MadeChanges = false;
+  // We must first look find the best start point, for example if we have a
+  // series that crosses zero: -2, -1, 0, 1, 2.
+  uint64_t BestDistance =
+      APInt::getMaxValue(CondTy->getIntegerBitWidth()).getLimitedValue() -
+      Values.back() + Values.front() + 1;
+  unsigned BestIndex = 0;
+  for (unsigned I = 1, E = Values.size(); I != E; I++) {
+    if (Values[I] - Values[I - 1] > BestDistance) {
+      BestIndex = I;
+      BestDistance = Values[I] - Values[I - 1];
+    }
+  }
+  uint64_t Base = 0;
+  // Now transform the values such that they start at zero and ascend.
+  if (Values[BestIndex] >= SubThreshold) {
+    Base = Values[BestIndex];
+    MadeChanges = true;
+    for (auto &V : Values)
+      V = (APInt(BitWidth, V) - Base).getLimitedValue();
+  }
 
   // Now we have signed numbers that have been shifted so that, given enough
   // precision, there are no negative values. Since the rest of the transform
@@ -5572,14 +5576,16 @@ static bool ReduceSwitchRange(SwitchInst *SI, IRBuilder<> &Builder,
   // less than 64.
   unsigned Shift = 64;
   for (auto &V : Values)
-    Shift = std::min(Shift, countTrailingZeros((uint64_t)V);
+    Shift = std::min(Shift, countTrailingZeros(V));
   assert(Shift < 64);
-  if (Shift > 0)
+  if (Shift > 0) {
+    MadeChanges = true;
     for (auto &V : Values)
-      V = (int64_t)((uint64_t)V >> Shift);
+      V >>= Shift;
+  }
 
-  if (!isSwitchDense(Values))
-    // Transform didn't create a dense switch.
+  if (!MadeChanges)
+    // We didn't do anything.
     return false;
 
   // The obvious transform is to shift the switch condition right and emit a
@@ -5594,18 +5600,22 @@ static bool ReduceSwitchRange(SwitchInst *SI, IRBuilder<> &Builder,
 
   auto *Ty = cast<IntegerType>(SI->getCondition()->getType());
   Builder.SetInsertPoint(SI);
-  auto *ShiftC = ConstantInt::get(Ty, Shift);
-  auto *Sub = Builder.CreateSub(SI->getCondition(), ConstantInt::get(Ty, Base));
-  auto *LShr = Builder.CreateLShr(Sub, ShiftC);
-  auto *Shl = Builder.CreateShl(Sub, Ty->getBitWidth() - Shift);
-  auto *Rot = Builder.CreateOr(LShr, Shl);
-  SI->replaceUsesOfWith(SI->getCondition(), Rot);
+  Value *Key = SI->getCondition();
+  if (Base > 0)
+    Key = Builder.CreateSub(Key, ConstantInt::get(Ty, Base));
+  if (Shift > 0) {
+    // FIXME replace with fshr?
+    auto *ShiftC = ConstantInt::get(Ty, Shift);
+    auto *LShr = Builder.CreateLShr(Key, ShiftC);
+    auto *Shl = Builder.CreateShl(Key, Ty->getBitWidth() - Shift);
+    Key = Builder.CreateOr(LShr, Shl);
+  }
+  SI->replaceUsesOfWith(SI->getCondition(), Key);
 
   for (auto Case : SI->cases()) {
     auto *Orig = Case.getCaseValue();
     auto Sub = Orig->getValue() - APInt(Ty->getBitWidth(), Base);
-    Case.setValue(
-        cast<ConstantInt>(ConstantInt::get(Ty, Sub.lshr(ShiftC->getValue()))));
+    Case.setValue(cast<ConstantInt>(ConstantInt::get(Ty, Sub.lshr(Shift))));
   }
   return true;
 }
@@ -5646,6 +5656,9 @@ bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI, IRBuilder<> &Builder) {
   if (Options.ForwardSwitchCondToPhi && ForwardSwitchConditionToPHI(SI))
     return requestResimplify();
 
+  if (ReduceSwitchRange(SI, Builder, DL, TTI))
+    return requestResimplify();
+
   // The conversion from switch to lookup tables results in difficult-to-analyze
   // code and makes pruning branches much harder. This is a problem if the
   // switch expression itself can still be restricted as a result of inlining or
@@ -5653,9 +5666,6 @@ bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI, IRBuilder<> &Builder) {
   // optimisation pipeline.
   if (Options.ConvertSwitchToLookupTable &&
       SwitchToLookupTable(SI, Builder, DL, TTI))
-    return requestResimplify();
-
-  if (ReduceSwitchRange(SI, Builder, DL, TTI))
     return requestResimplify();
 
   return false;
