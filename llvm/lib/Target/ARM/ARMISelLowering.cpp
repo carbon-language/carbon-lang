@@ -1142,6 +1142,11 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
     }
   }
 
+  // FP16 often need to be promoted to call lib functions
+  if (Subtarget->hasFullFP16()) {
+    setOperationAction(ISD::FREM, MVT::f16, Promote);
+  }
+
   if (Subtarget->hasNEON()) {
     // vmin and vmax aren't available in a scalar form, so we use
     // a NEON instruction with an undef lane instead.

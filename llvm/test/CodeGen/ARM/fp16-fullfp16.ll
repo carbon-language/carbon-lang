@@ -57,14 +57,25 @@ define void @test_fdiv(half* %p, half* %q) {
   ret void
 }
 
-; FIXME
-;define void @test_frem(half* %p, half* %q) {
-;  %a = load half, half* %p, align 2
-;  %b = load half, half* %q, align 2
-;  %r = frem half %a, %b
-;  store half %r, half* %p
-;  ret void
-;}
+define arm_aapcs_vfpcc void @test_frem(half* %p, half* %q) {
+; CHECK-LABEL: test_frem:
+; CHECK:         .save {r4, lr}
+; CHECK-NEXT:    push {r4, lr}
+; CHECK-NEXT:    vldr.16 s2, [r1]
+; CHECK-NEXT:    vldr.16 s0, [r0]
+; CHECK-NEXT:    mov r4, r0
+; CHECK-NEXT:    vcvtb.f32.f16 s0, s0
+; CHECK-NEXT:    vcvtb.f32.f16 s1, s2
+; CHECK-NEXT:    bl fmodf
+; CHECK-NEXT:    vcvtb.f16.f32 s0, s0
+; CHECK-NEXT:    vstr.16 s0, [r4]
+; CHECK-NEXT:    pop {r4, pc}
+  %a = load half, half* %p, align 2
+  %b = load half, half* %q, align 2
+  %r = frem half %a, %b
+  store half %r, half* %p
+  ret void
+}
 
 define void @test_load_store(half* %p, half* %q) {
 ; CHECK-LABEL: test_load_store:
