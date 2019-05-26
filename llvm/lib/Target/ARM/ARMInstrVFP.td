@@ -595,9 +595,9 @@ def VABSS  : ASuIn<0b11101, 0b11, 0b0000, 0b11, 0,
 }
 
 def VABSH  : AHuI<0b11101, 0b11, 0b0000, 0b11, 0,
-                   (outs SPR:$Sd), (ins SPR:$Sm),
+                   (outs HPR:$Sd), (ins HPR:$Sm),
                    IIC_fpUNA16, "vabs", ".f16\t$Sd, $Sm",
-                   []>;
+                   [(set HPR:$Sd, (fabs (f16 HPR:$Sm)))]>;
 
 let Defs = [FPSCR_NZCV] in {
 def VCMPEZD : ADuI<0b11101, 0b11, 0b0101, 0b11, 0,

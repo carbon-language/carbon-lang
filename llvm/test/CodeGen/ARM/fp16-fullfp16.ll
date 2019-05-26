@@ -312,13 +312,17 @@ define void @test_sqrt(half* %p) {
 ;  ret void
 ;}
 
-; FIXME
-;define void @test_fabs(half* %p) {
-;  %a = load half, half* %p, align 2
-;  %r = call half @llvm.fabs.f16(half %a)
-;  store half %r, half* %p
-;  ret void
-;}
+define void @test_fabs(half* %p) {
+; CHECK-LABEL: test_fabs:
+; CHECK:         vldr.16 s0, [r0]
+; CHECK-NEXT:    vabs.f16 s0, s0
+; CHECK-NEXT:    vstr.16 s0, [r0]
+; CHECK-NEXT:    bx lr
+  %a = load half, half* %p, align 2
+  %r = call half @llvm.fabs.f16(half %a)
+  store half %r, half* %p
+  ret void
+}
 
 define void @test_minnum(half* %p, half* %q) {
 ; CHECK-LABEL: test_minnum:
