@@ -5377,8 +5377,8 @@ static bool SwitchToLookupTable(SwitchInst *SI, IRBuilder<> &Builder,
   if (MinCaseVal->isNullValue())
     TableIndex = SI->getCondition();
   else
-    TableIndex = Builder.CreateSub(SI->getCondition(), MinCaseVal,
-                                   "switch.tableidx");
+    TableIndex =
+        Builder.CreateSub(SI->getCondition(), MinCaseVal, "switch.tableidx");
 
   // Compute the maximum table size representable by the integer type we are
   // switching upon.
@@ -5512,7 +5512,8 @@ static bool isSwitchDense(ArrayRef<int64_t> Values) {
   uint64_t Diff = (uint64_t)Values.back() - (uint64_t)Values.front();
   uint64_t Range = Diff + 1;
   uint64_t NumCases = Values.size();
-  // 40% is the default density for building a jump table in optsize/minsize mode.
+  // 40% is the default density for building a jump table in optsize/minsize
+  // mode.
   uint64_t MinDensity = 40;
 
   return NumCases * 100 >= Range * MinDensity;
@@ -5538,11 +5539,11 @@ static bool ReduceSwitchRange(SwitchInst *SI, IRBuilder<> &Builder,
   if (SI->getNumCases() < 4)
     return false;
 
-  // This transform is agnostic to the signedness of the input or case values. We
-  // can treat the case values as signed or unsigned. We can optimize more common
-  // cases such as a sequence crossing zero {-4,0,4,8} if we interpret case values
-  // as signed.
-  SmallVector<int64_t,4> Values;
+  // This transform is agnostic to the signedness of the input or case values.
+  // We can treat the case values as signed or unsigned. We can optimize more
+  // common cases such as a sequence crossing zero {-4,0,4,8} if we interpret
+  // case values as signed.
+  SmallVector<int64_t, 4> Values;
   for (auto &C : SI->cases())
     Values.push_back(C.getCaseValue()->getValue().getSExtValue());
   llvm::sort(Values);
@@ -5563,9 +5564,9 @@ static bool ReduceSwitchRange(SwitchInst *SI, IRBuilder<> &Builder,
   for (auto &V : Values)
     GCD = GreatestCommonDivisor64(GCD, (uint64_t)V);
 
-  // This transform can be done speculatively because it is so cheap - it results
-  // in a single rotate operation being inserted. This can only happen if the
-  // factor extracted is a power of 2.
+  // This transform can be done speculatively because it is so cheap - it
+  // results in a single rotate operation being inserted. This can only happen
+  // if the factor extracted is a power of 2.
   // FIXME: If the GCD is an odd number we can multiply by the multiplicative
   // inverse of GCD and then perform this transform.
   // FIXME: It's possible that optimizing a switch on powers of two might also
