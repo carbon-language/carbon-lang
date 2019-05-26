@@ -386,15 +386,21 @@ define void @test_log2(half* %p) {
   ret void
 }
 
-; FIXME
-;define void @test_fma(half* %p, half* %q, half* %r) {
-;  %a = load half, half* %p, align 2
-;  %b = load half, half* %q, align 2
-;  %c = load half, half* %r, align 2
-;  %v = call half @llvm.fma.f16(half %a, half %b, half %c)
-;  store half %v, half* %p
-;  ret void
-;}
+define void @test_fma(half* %p, half* %q, half* %r) {
+; CHECK-LABEL: test_fma:
+; CHECK:         vldr.16 s0, [r1]
+; CHECK-NEXT:    vldr.16 s2, [r0]
+; CHECK-NEXT:    vldr.16 s4, [r2]
+; CHECK-NEXT:    vfma.f16 s4, s2, s0
+; CHECK-NEXT:    vstr.16 s4, [r0]
+; CHECK-NEXT:    bx lr
+  %a = load half, half* %p, align 2
+  %b = load half, half* %q, align 2
+  %c = load half, half* %r, align 2
+  %v = call half @llvm.fma.f16(half %a, half %b, half %c)
+  store half %v, half* %p
+  ret void
+}
 
 define void @test_fabs(half* %p) {
 ; CHECK-LABEL: test_fabs:
