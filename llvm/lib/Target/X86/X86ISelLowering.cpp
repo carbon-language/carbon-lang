@@ -34126,6 +34126,21 @@ static SDValue XFormVExtractWithShuffleIntoLoad(SDNode *N, SelectionDAG &DAG,
                      EltNo);
 }
 
+// Helper to peek through bitops/setcc to determine size of source vector.
+// Allows combineBitcastvxi1 to determine what size vector generated a <X x i1>.
+static bool checkBitcastSrcVectorSize(SDValue Src, unsigned Size) {
+  switch (Src.getOpcode()) {
+  case ISD::SETCC:
+    return Src.getOperand(0).getValueSizeInBits() == Size;
+  case ISD::AND:
+  case ISD::XOR:
+  case ISD::OR:
+    return checkBitcastSrcVectorSize(Src.getOperand(0), Size) &&
+           checkBitcastSrcVectorSize(Src.getOperand(1), Size);
+  }
+  return false;
+}
+
 // Try to match patterns such as
 // (i16 bitcast (v16i1 x))
 // ->
@@ -34174,10 +34189,8 @@ static SDValue combineBitcastvxi1(SelectionDAG &DAG, EVT VT, SDValue Src,
     SExtVT = MVT::v4i32;
     // For cases such as (i4 bitcast (v4i1 setcc v4i64 v1, v2))
     // sign-extend to a 256-bit operation to avoid truncation.
-    if (Src.getOpcode() == ISD::SETCC && Subtarget.hasAVX() &&
-        Src.getOperand(0).getValueType().is256BitVector()) {
+    if (Subtarget.hasAVX() && checkBitcastSrcVectorSize(Src, 256))
       SExtVT = MVT::v4i64;
-    }
     break;
   case MVT::v8i1:
     SExtVT = MVT::v8i16;
@@ -34186,6 +34199,7 @@ static SDValue combineBitcastvxi1(SelectionDAG &DAG, EVT VT, SDValue Src,
     // If the setcc operand is 128-bit, prefer sign-extending to 128-bit over
     // 256-bit because the shuffle is cheaper than sign extending the result of
     // the compare.
+    // TODO : use checkBitcastSrcVectorSize
     if (Src.getOpcode() == ISD::SETCC && Subtarget.hasAVX() &&
         (Src.getOperand(0).getValueType().is256BitVector() ||
          Src.getOperand(0).getValueType().is512BitVector())) {
