@@ -182,43 +182,25 @@ declare i32 @f4(i32, i32)
 declare i32 @f5(i32, i32)
 
 define i32 @test4(i32 %a, i32 %b, i32 %c) {
-; ENABLE-LABEL: @test4(
-; ENABLE-NEXT:  entry:
-; ENABLE-NEXT:    [[SWITCH_TABLEIDX:%.*]] = sub i32 [[A:%.*]], 1
-; ENABLE-NEXT:    [[TMP0:%.*]] = icmp ult i32 [[SWITCH_TABLEIDX]], 3
-; ENABLE-NEXT:    br i1 [[TMP0]], label [[SWITCH_LOOKUP:%.*]], label [[COND_FALSE6:%.*]]
-; ENABLE:       cond.false6:
-; ENABLE-NEXT:    [[CMP7:%.*]] = icmp eq i32 [[A]], 4
-; ENABLE-NEXT:    [[COND:%.*]] = select i1 [[CMP7]], i32 (i32, i32)* @f4, i32 (i32, i32)* @f5
-; ENABLE-NEXT:    br label [[COND_END11:%.*]]
-; ENABLE:       switch.lookup:
-; ENABLE-NEXT:    [[SWITCH_GEP:%.*]] = getelementptr inbounds [3 x i32 (i32, i32)*], [3 x i32 (i32, i32)*]* @switch.table.test4, i32 0, i32 [[SWITCH_TABLEIDX]]
-; ENABLE-NEXT:    [[SWITCH_LOAD:%.*]] = load i32 (i32, i32)*, i32 (i32, i32)** [[SWITCH_GEP]]
-; ENABLE-NEXT:    br label [[COND_END11]]
-; ENABLE:       cond.end11:
-; ENABLE-NEXT:    [[COND12:%.*]] = phi i32 (i32, i32)* [ [[COND]], [[COND_FALSE6]] ], [ [[SWITCH_LOAD]], [[SWITCH_LOOKUP]] ]
-; ENABLE-NEXT:    [[CALL:%.*]] = call i32 [[COND12]](i32 [[B:%.*]], i32 [[C:%.*]])
-; ENABLE-NEXT:    ret i32 [[CALL]]
-;
-; DISABLE-LABEL: @test4(
-; DISABLE-NEXT:  entry:
-; DISABLE-NEXT:    switch i32 [[A:%.*]], label [[COND_FALSE6:%.*]] [
-; DISABLE-NEXT:    i32 1, label [[COND_END11:%.*]]
-; DISABLE-NEXT:    i32 2, label [[COND_END11_FOLD_SPLIT:%.*]]
-; DISABLE-NEXT:    i32 3, label [[COND_END11_FOLD_SPLIT1:%.*]]
-; DISABLE-NEXT:    ]
-; DISABLE:       cond.false6:
-; DISABLE-NEXT:    [[CMP7:%.*]] = icmp eq i32 [[A]], 4
-; DISABLE-NEXT:    [[COND:%.*]] = select i1 [[CMP7]], i32 (i32, i32)* @f4, i32 (i32, i32)* @f5
-; DISABLE-NEXT:    br label [[COND_END11]]
-; DISABLE:       cond.end11.fold.split:
-; DISABLE-NEXT:    br label [[COND_END11]]
-; DISABLE:       cond.end11.fold.split1:
-; DISABLE-NEXT:    br label [[COND_END11]]
-; DISABLE:       cond.end11:
-; DISABLE-NEXT:    [[COND12:%.*]] = phi i32 (i32, i32)* [ @f1, [[ENTRY:%.*]] ], [ [[COND]], [[COND_FALSE6]] ], [ @f2, [[COND_END11_FOLD_SPLIT]] ], [ @f3, [[COND_END11_FOLD_SPLIT1]] ]
-; DISABLE-NEXT:    [[CALL:%.*]] = call i32 [[COND12]](i32 [[B:%.*]], i32 [[C:%.*]])
-; DISABLE-NEXT:    ret i32 [[CALL]]
+; CHECK-LABEL: @test4(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    switch i32 [[A:%.*]], label [[COND_FALSE6:%.*]] [
+; CHECK-NEXT:    i32 1, label [[COND_END11:%.*]]
+; CHECK-NEXT:    i32 2, label [[COND_END11_FOLD_SPLIT:%.*]]
+; CHECK-NEXT:    i32 3, label [[COND_END11_FOLD_SPLIT1:%.*]]
+; CHECK-NEXT:    ]
+; CHECK:       cond.false6:
+; CHECK-NEXT:    [[CMP7:%.*]] = icmp eq i32 [[A]], 4
+; CHECK-NEXT:    [[COND:%.*]] = select i1 [[CMP7]], i32 (i32, i32)* @f4, i32 (i32, i32)* @f5
+; CHECK-NEXT:    br label [[COND_END11]]
+; CHECK:       cond.end11.fold.split:
+; CHECK-NEXT:    br label [[COND_END11]]
+; CHECK:       cond.end11.fold.split1:
+; CHECK-NEXT:    br label [[COND_END11]]
+; CHECK:       cond.end11:
+; CHECK-NEXT:    [[COND12:%.*]] = phi i32 (i32, i32)* [ @f1, [[ENTRY:%.*]] ], [ [[COND]], [[COND_FALSE6]] ], [ @f2, [[COND_END11_FOLD_SPLIT]] ], [ @f3, [[COND_END11_FOLD_SPLIT1]] ]
+; CHECK-NEXT:    [[CALL:%.*]] = call i32 [[COND12]](i32 [[B:%.*]], i32 [[C:%.*]])
+; CHECK-NEXT:    ret i32 [[CALL]]
 ;
 entry:
   %cmp = icmp eq i32 %a, 1
