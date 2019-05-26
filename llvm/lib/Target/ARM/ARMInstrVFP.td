@@ -930,9 +930,9 @@ def VNEGH  : AHuI<0b11101, 0b11, 0b0001, 0b01, 0,
 
 multiclass vrint_inst_zrx<string opc, bit op, bit op2, SDPatternOperator node> {
   def H : AHuI<0b11101, 0b11, 0b0110, 0b11, 0,
-               (outs SPR:$Sd), (ins SPR:$Sm),
+               (outs HPR:$Sd), (ins HPR:$Sm),
                NoItinerary, !strconcat("vrint", opc), ".f16\t$Sd, $Sm",
-               []>,
+               [(set (f16 HPR:$Sd), (node (f16 HPR:$Sm)))]>,
                Requires<[HasFullFP16]> {
     let Inst{7} = op2;
     let Inst{16} = op;
@@ -975,9 +975,9 @@ multiclass vrint_inst_anpm<string opc, bits<2> rm,
   let PostEncoderMethod = "", DecoderNamespace = "VFPV8",
       isUnpredicable = 1 in {
     def H : AHuInp<0b11101, 0b11, 0b1000, 0b01, 0,
-                   (outs SPR:$Sd), (ins SPR:$Sm),
+                   (outs HPR:$Sd), (ins HPR:$Sm),
                    NoItinerary, !strconcat("vrint", opc, ".f16\t$Sd, $Sm"),
-                   []>,
+                   [(set (f16 HPR:$Sd), (node (f16 HPR:$Sm)))]>,
                    Requires<[HasFullFP16]> {
       let Inst{17-16} = rm;
     }

@@ -1156,6 +1156,8 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FLOG, MVT::f16, Promote);
     setOperationAction(ISD::FLOG10, MVT::f16, Promote);
     setOperationAction(ISD::FLOG2, MVT::f16, Promote);
+
+    setOperationAction(ISD::FROUND, MVT::f16, Legal);
   }
 
   if (Subtarget->hasNEON()) {

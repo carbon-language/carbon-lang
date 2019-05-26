@@ -488,53 +488,77 @@ define void @test_copysign(half* %p, half* %q) {
   ret void
 }
 
-; FIXME
-;define void @test_floor(half* %p) {
-;  %a = load half, half* %p, align 2
-;  %r = call half @llvm.floor.f16(half %a)
-;  store half %r, half* %p
-;  ret void
-;}
+define void @test_floor(half* %p) {
+; CHECK-LABEL: test_floor:
+; CHECK:         vldr.16 s0, [r0]
+; CHECK-NEXT:    vrintm.f16 s0, s0
+; CHECK-NEXT:    vstr.16 s0, [r0]
+; CHECK-NEXT:    bx lr
+  %a = load half, half* %p, align 2
+  %r = call half @llvm.floor.f16(half %a)
+  store half %r, half* %p
+  ret void
+}
 
-; FIXME
-;define void @test_ceil(half* %p) {
-;  %a = load half, half* %p, align 2
-;  %r = call half @llvm.ceil.f16(half %a)
-;  store half %r, half* %p
-;  ret void
-;}
+define void @test_ceil(half* %p) {
+; CHECK-LABEL: test_ceil:
+; CHECK:         vldr.16 s0, [r0]
+; CHECK-NEXT:    vrintp.f16 s0, s0
+; CHECK-NEXT:    vstr.16 s0, [r0]
+; CHECK-NEXT:    bx lr
+  %a = load half, half* %p, align 2
+  %r = call half @llvm.ceil.f16(half %a)
+  store half %r, half* %p
+  ret void
+}
 
-; FIXME
-;define void @test_trunc(half* %p) {
-;  %a = load half, half* %p, align 2
-;  %r = call half @llvm.trunc.f16(half %a)
-;  store half %r, half* %p
-;  ret void
-;}
+define void @test_trunc(half* %p) {
+; CHECK-LABEL: test_trunc:
+; CHECK:         vldr.16 s0, [r0]
+; CHECK-NEXT:    vrintz.f16 s0, s0
+; CHECK-NEXT:    vstr.16 s0, [r0]
+; CHECK-NEXT:    bx lr
+  %a = load half, half* %p, align 2
+  %r = call half @llvm.trunc.f16(half %a)
+  store half %r, half* %p
+  ret void
+}
 
-; FIXME
-;define void @test_rint(half* %p) {
-;  %a = load half, half* %p, align 2
-;  %r = call half @llvm.rint.f16(half %a)
-;  store half %r, half* %p
-;  ret void
-;}
+define void @test_rint(half* %p) {
+; CHECK-LABEL: test_rint:
+; CHECK:         vldr.16 s0, [r0]
+; CHECK-NEXT:    vrintx.f16 s0, s0
+; CHECK-NEXT:    vstr.16 s0, [r0]
+; CHECK-NEXT:    bx lr
+  %a = load half, half* %p, align 2
+  %r = call half @llvm.rint.f16(half %a)
+  store half %r, half* %p
+  ret void
+}
 
-; FIXME
-;define void @test_nearbyint(half* %p) {
-;  %a = load half, half* %p, align 2
-;  %r = call half @llvm.nearbyint.f16(half %a)
-;  store half %r, half* %p
-;  ret void
-;}
+define void @test_nearbyint(half* %p) {
+; CHECK-LABEL: test_nearbyint:
+; CHECK:         vldr.16 s0, [r0]
+; CHECK-NEXT:    vrintr.f16 s0, s0
+; CHECK-NEXT:    vstr.16 s0, [r0]
+; CHECK-NEXT:    bx lr
+  %a = load half, half* %p, align 2
+  %r = call half @llvm.nearbyint.f16(half %a)
+  store half %r, half* %p
+  ret void
+}
 
-; FIXME
-;define void @test_round(half* %p) {
-;  %a = load half, half* %p, align 2
-;  %r = call half @llvm.round.f16(half %a)
-;  store half %r, half* %p
-;  ret void
-;}
+define void @test_round(half* %p) {
+; CHECK-LABEL: test_round:
+; CHECK:         vldr.16 s0, [r0]
+; CHECK-NEXT:    vrinta.f16 s0, s0
+; CHECK-NEXT:    vstr.16 s0, [r0]
+; CHECK-NEXT:    bx lr
+  %a = load half, half* %p, align 2
+  %r = call half @llvm.round.f16(half %a)
+  store half %r, half* %p
+  ret void
+}
 
 define void @test_fmuladd(half* %p, half* %q, half* %r) {
 ; CHECK-LABEL: test_fmuladd:
