@@ -3936,9 +3936,9 @@ Instruction *InstCombiner::foldICmpWithCastAndCast(ICmpInst &ICmp) {
   return BinaryOperator::CreateNot(Result);
 }
 
-bool InstCombiner::OptimizeOverflowCheck(OverflowCheckFlavor OCF, Value *LHS,
-                                         Value *RHS, Instruction &OrigI,
-                                         Value *&Result, Constant *&Overflow) {
+bool InstCombiner::OptimizeOverflowCheck(
+    Instruction::BinaryOps BinaryOp, bool IsSigned, Value *LHS, Value *RHS,
+    Instruction &OrigI, Value *&Result, Constant *&Overflow) {
   if (OrigI.isCommutative() && isa<Constant>(LHS) && !isa<Constant>(RHS))
     std::swap(LHS, RHS);
 
@@ -3956,18 +3956,17 @@ bool InstCombiner::OptimizeOverflowCheck(OverflowCheckFlavor OCF, Value *LHS,
   // compare.
   Builder.SetInsertPoint(&OrigI);
 
-  switch (OCF) {
-  case OCF_INVALID:
-    llvm_unreachable("bad overflow check kind!");
+  switch (BinaryOp) {
+  default:
+    llvm_unreachable("unsupported binary op");
 
-  case OCF_UNSIGNED_ADD:
-  case OCF_SIGNED_ADD: {
+  case Instruction::Add: {
     // X + 0 -> {X, false}
     if (match(RHS, m_Zero()))
       return SetResult(LHS, Builder.getFalse(), false);
 
     OverflowResult OR;
-    if (OCF == OCF_UNSIGNED_ADD) {
+    if (!IsSigned) {
       OR = computeOverflowForUnsignedAdd(LHS, RHS, &OrigI);
       if (OR == OverflowResult::NeverOverflows)
         return SetResult(Builder.CreateNUWAdd(LHS, RHS), Builder.getFalse(),
@@ -3984,14 +3983,13 @@ bool InstCombiner::OptimizeOverflowCheck(OverflowCheckFlavor OCF, Value *LHS,
     break;
   }
 
-  case OCF_UNSIGNED_SUB:
-  case OCF_SIGNED_SUB: {
+  case Instruction::Sub: {
     // X - 0 -> {X, false}
     if (match(RHS, m_Zero()))
       return SetResult(LHS, Builder.getFalse(), false);
 
     OverflowResult OR;
-    if (OCF == OCF_UNSIGNED_SUB) {
+    if (!IsSigned) {
       OR = computeOverflowForUnsignedSub(LHS, RHS, &OrigI);
       if (OR == OverflowResult::NeverOverflows)
         return SetResult(Builder.CreateNUWSub(LHS, RHS), Builder.getFalse(),
@@ -4008,14 +4006,13 @@ bool InstCombiner::OptimizeOverflowCheck(OverflowCheckFlavor OCF, Value *LHS,
     break;
   }
 
-  case OCF_UNSIGNED_MUL:
-  case OCF_SIGNED_MUL: {
+  case Instruction::Mul: {
     // X * 1 -> {X, false}
     if (match(RHS, m_One()))
       return SetResult(LHS, Builder.getFalse(), false);
 
     OverflowResult OR;
-    if (OCF == OCF_UNSIGNED_MUL) {
+    if (!IsSigned) {
       OR = computeOverflowForUnsignedMul(LHS, RHS, &OrigI);
       if (OR == OverflowResult::NeverOverflows)
         return SetResult(Builder.CreateNUWMul(LHS, RHS), Builder.getFalse(),
@@ -5053,8 +5050,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         isa<IntegerType>(A->getType())) {
       Value *Result;
       Constant *Overflow;
-      if (OptimizeOverflowCheck(OCF_UNSIGNED_ADD, A, B, *AddI, Result,
-                                Overflow)) {
+      if (OptimizeOverflowCheck(Instruction::Add, /*Signed*/false, A, B,
+                                *AddI, Result, Overflow)) {
         replaceInstUsesWith(*AddI, Result);
         return replaceInstUsesWith(I, Overflow);
       }
