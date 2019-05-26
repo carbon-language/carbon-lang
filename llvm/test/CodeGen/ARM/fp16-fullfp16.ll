@@ -229,78 +229,162 @@ define void @test_sqrt(half* %p) {
   ret void
 }
 
-; FIXME
-;define void @test_fpowi(half* %p, i32 %b) {
-;  %a = load half, half* %p, align 2
-;  %r = call half @llvm.powi.f16(half %a, i32 %b)
-;  store half %r, half* %p
-;  ret void
-;}
+define void @test_fpowi(half* %p, i32 %b) {
+; CHECK-LABEL: test_fpowi:
+; CHECK:         .save {r4, lr}
+; CHECK-NEXT:    push {r4, lr}
+; CHECK-NEXT:    vldr.16 s0, [r0]
+; CHECK-NEXT:    mov r4, r0
+; CHECK-NEXT:    mov r0, r1
+; CHECK-NEXT:    vcvtb.f32.f16 s0, s0
+; CHECK-NEXT:    bl __powisf2
+; CHECK-NEXT:    vcvtb.f16.f32 s0, s0
+; CHECK-NEXT:    vstr.16 s0, [r4]
+; CHECK-NEXT:    pop {r4, pc}
+  %a = load half, half* %p, align 2
+  %r = call half @llvm.powi.f16(half %a, i32 %b)
+  store half %r, half* %p
+  ret void
+}
 
-; FIXME
-;define void @test_sin(half* %p) {
-;  %a = load half, half* %p, align 2
-;  %r = call half @llvm.sin.f16(half %a)
-;  store half %r, half* %p
-;  ret void
-;}
+define void @test_sin(half* %p) {
+; CHECK-LABEL: test_sin:
+; CHECK:         .save {r4, lr}
+; CHECK-NEXT:    push {r4, lr}
+; CHECK-NEXT:    vldr.16 s0, [r0]
+; CHECK-NEXT:    mov r4, r0
+; CHECK-NEXT:    vcvtb.f32.f16 s0, s0
+; CHECK-NEXT:    bl sinf
+; CHECK-NEXT:    vcvtb.f16.f32 s0, s0
+; CHECK-NEXT:    vstr.16 s0, [r4]
+; CHECK-NEXT:    pop {r4, pc}
+  %a = load half, half* %p, align 2
+  %r = call half @llvm.sin.f16(half %a)
+  store half %r, half* %p
+  ret void
+}
 
-; FIXME
-;define void @test_cos(half* %p) {
-;  %a = load half, half* %p, align 2
-;  %r = call half @llvm.cos.f16(half %a)
-;  store half %r, half* %p
-;  ret void
-;}
+define void @test_cos(half* %p) {
+; CHECK-LABEL: test_cos:
+; CHECK:         .save {r4, lr}
+; CHECK-NEXT:    push {r4, lr}
+; CHECK-NEXT:    vldr.16 s0, [r0]
+; CHECK-NEXT:    mov r4, r0
+; CHECK-NEXT:    vcvtb.f32.f16 s0, s0
+; CHECK-NEXT:    bl cosf
+; CHECK-NEXT:    vcvtb.f16.f32 s0, s0
+; CHECK-NEXT:    vstr.16 s0, [r4]
+; CHECK-NEXT:    pop {r4, pc}
+  %a = load half, half* %p, align 2
+  %r = call half @llvm.cos.f16(half %a)
+  store half %r, half* %p
+  ret void
+}
 
-; FIXME
-;define void @test_pow(half* %p, half* %q) {
-;  %a = load half, half* %p, align 2
-;  %b = load half, half* %q, align 2
-;  %r = call half @llvm.pow.f16(half %a, half %b)
-;  store half %r, half* %p
-;  ret void
-;}
+define void @test_pow(half* %p, half* %q) {
+; CHECK-LABEL: test_pow:
+; CHECK:         .save {r4, lr}
+; CHECK-NEXT:    push {r4, lr}
+; CHECK-NEXT:    vldr.16 s2, [r1]
+; CHECK-NEXT:    vldr.16 s0, [r0]
+; CHECK-NEXT:    mov r4, r0
+; CHECK-NEXT:    vcvtb.f32.f16 s0, s0
+; CHECK-NEXT:    vcvtb.f32.f16 s1, s2
+; CHECK-NEXT:    bl powf
+; CHECK-NEXT:    vcvtb.f16.f32 s0, s0
+; CHECK-NEXT:    vstr.16 s0, [r4]
+; CHECK-NEXT:    pop {r4, pc}
+  %a = load half, half* %p, align 2
+  %b = load half, half* %q, align 2
+  %r = call half @llvm.pow.f16(half %a, half %b)
+  store half %r, half* %p
+  ret void
+}
 
-; FIXME
-;define void @test_exp(half* %p) {
-;  %a = load half, half* %p, align 2
-;  %r = call half @llvm.exp.f16(half %a)
-;  store half %r, half* %p
-;  ret void
-;}
+define void @test_exp(half* %p) {
+; CHECK-LABEL: test_exp:
+; CHECK:         .save {r4, lr}
+; CHECK-NEXT:    push {r4, lr}
+; CHECK-NEXT:    vldr.16 s0, [r0]
+; CHECK-NEXT:    mov r4, r0
+; CHECK-NEXT:    vcvtb.f32.f16 s0, s0
+; CHECK-NEXT:    bl expf
+; CHECK-NEXT:    vcvtb.f16.f32 s0, s0
+; CHECK-NEXT:    vstr.16 s0, [r4]
+; CHECK-NEXT:    pop {r4, pc}
+  %a = load half, half* %p, align 2
+  %r = call half @llvm.exp.f16(half %a)
+  store half %r, half* %p
+  ret void
+}
 
-; FIXME
-;define void @test_exp2(half* %p) {
-;  %a = load half, half* %p, align 2
-;  %r = call half @llvm.exp2.f16(half %a)
-;  store half %r, half* %p
-;  ret void
-;}
+define void @test_exp2(half* %p) {
+; CHECK-LABEL: test_exp2:
+; CHECK:         .save {r4, lr}
+; CHECK-NEXT:    push {r4, lr}
+; CHECK-NEXT:    vldr.16 s0, [r0]
+; CHECK-NEXT:    mov r4, r0
+; CHECK-NEXT:    vcvtb.f32.f16 s0, s0
+; CHECK-NEXT:    bl exp2f
+; CHECK-NEXT:    vcvtb.f16.f32 s0, s0
+; CHECK-NEXT:    vstr.16 s0, [r4]
+; CHECK-NEXT:    pop {r4, pc}
+  %a = load half, half* %p, align 2
+  %r = call half @llvm.exp2.f16(half %a)
+  store half %r, half* %p
+  ret void
+}
 
-; FIXME
-;define void @test_log(half* %p) {
-;  %a = load half, half* %p, align 2
-;  %r = call half @llvm.log.f16(half %a)
-;  store half %r, half* %p
-;  ret void
-;}
+define void @test_log(half* %p) {
+; CHECK-LABEL: test_log:
+; CHECK:         .save {r4, lr}
+; CHECK-NEXT:    push {r4, lr}
+; CHECK-NEXT:    vldr.16 s0, [r0]
+; CHECK-NEXT:    mov r4, r0
+; CHECK-NEXT:    vcvtb.f32.f16 s0, s0
+; CHECK-NEXT:    bl logf
+; CHECK-NEXT:    vcvtb.f16.f32 s0, s0
+; CHECK-NEXT:    vstr.16 s0, [r4]
+; CHECK-NEXT:    pop {r4, pc}
+  %a = load half, half* %p, align 2
+  %r = call half @llvm.log.f16(half %a)
+  store half %r, half* %p
+  ret void
+}
 
-; FIXME
-;define void @test_log10(half* %p) {
-;  %a = load half, half* %p, align 2
-;  %r = call half @llvm.log10.f16(half %a)
-;  store half %r, half* %p
-;  ret void
-;}
+define void @test_log10(half* %p) {
+; CHECK-LABEL: test_log10:
+; CHECK:         .save {r4, lr}
+; CHECK-NEXT:    push {r4, lr}
+; CHECK-NEXT:    vldr.16 s0, [r0]
+; CHECK-NEXT:    mov r4, r0
+; CHECK-NEXT:    vcvtb.f32.f16 s0, s0
+; CHECK-NEXT:    bl log10f
+; CHECK-NEXT:    vcvtb.f16.f32 s0, s0
+; CHECK-NEXT:    vstr.16 s0, [r4]
+; CHECK-NEXT:    pop {r4, pc}
+  %a = load half, half* %p, align 2
+  %r = call half @llvm.log10.f16(half %a)
+  store half %r, half* %p
+  ret void
+}
 
-; FIXME
-;define void @test_log2(half* %p) {
-;  %a = load half, half* %p, align 2
-;  %r = call half @llvm.log2.f16(half %a)
-;  store half %r, half* %p
-;  ret void
-;}
+define void @test_log2(half* %p) {
+; CHECK-LABEL: test_log2:
+; CHECK:         .save {r4, lr}
+; CHECK-NEXT:    push {r4, lr}
+; CHECK-NEXT:    vldr.16 s0, [r0]
+; CHECK-NEXT:    mov r4, r0
+; CHECK-NEXT:    vcvtb.f32.f16 s0, s0
+; CHECK-NEXT:    bl log2f
+; CHECK-NEXT:    vcvtb.f16.f32 s0, s0
+; CHECK-NEXT:    vstr.16 s0, [r4]
+; CHECK-NEXT:    pop {r4, pc}
+  %a = load half, half* %p, align 2
+  %r = call half @llvm.log2.f16(half %a)
+  store half %r, half* %p
+  ret void
+}
 
 ; FIXME
 ;define void @test_fma(half* %p, half* %q, half* %r) {
@@ -380,14 +464,29 @@ define void @test_maximum(half* %p) {
   ret void
 }
 
-; FIXME
-;define void @test_copysign(half* %p, half* %q) {
-;  %a = load half, half* %p, align 2
-;  %b = load half, half* %q, align 2
-;  %r = call half @llvm.copysign.f16(half %a, half %b)
-;  store half %r, half* %p
-;  ret void
-;}
+define void @test_copysign(half* %p, half* %q) {
+; CHECK-LABEL: test_copysign:
+; CHECK:         .pad #4
+; CHECK-NEXT:    sub sp, sp, #4
+; CHECK-NEXT:    vldr.16 s0, [r1]
+; CHECK-NEXT:    vstr.16 s0, [sp]
+; CHECK-NEXT:    vldr.16 s0, [r0]
+; CHECK-NEXT:    ldrb r1, [sp, #1]
+; CHECK-NEXT:    ands r1, r1, #128
+; CHECK-NEXT:    vabs.f16 s0, s0
+; CHECK-NEXT:    movwne r1, #1
+; CHECK-NEXT:    vneg.f16 s2, s0
+; CHECK-NEXT:    cmp r1, #0
+; CHECK-NEXT:    vseleq.f16 s0, s0, s2
+; CHECK-NEXT:    vstr.16 s0, [r0]
+; CHECK-NEXT:    add sp, sp, #4
+; CHECK-NEXT:    bx lr
+  %a = load half, half* %p, align 2
+  %b = load half, half* %q, align 2
+  %r = call half @llvm.copysign.f16(half %a, half %b)
+  store half %r, half* %p
+  ret void
+}
 
 ; FIXME
 ;define void @test_floor(half* %p) {

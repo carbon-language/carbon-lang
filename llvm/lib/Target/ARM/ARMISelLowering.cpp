@@ -1145,6 +1145,17 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
   // FP16 often need to be promoted to call lib functions
   if (Subtarget->hasFullFP16()) {
     setOperationAction(ISD::FREM, MVT::f16, Promote);
+    setOperationAction(ISD::FCOPYSIGN, MVT::f16, Expand);
+    setOperationAction(ISD::FSIN, MVT::f16, Promote);
+    setOperationAction(ISD::FCOS, MVT::f16, Promote);
+    setOperationAction(ISD::FSINCOS, MVT::f16, Promote);
+    setOperationAction(ISD::FPOWI, MVT::f16, Promote);
+    setOperationAction(ISD::FPOW, MVT::f16, Promote);
+    setOperationAction(ISD::FEXP, MVT::f16, Promote);
+    setOperationAction(ISD::FEXP2, MVT::f16, Promote);
+    setOperationAction(ISD::FLOG, MVT::f16, Promote);
+    setOperationAction(ISD::FLOG10, MVT::f16, Promote);
+    setOperationAction(ISD::FLOG2, MVT::f16, Promote);
   }
 
   if (Subtarget->hasNEON()) {
