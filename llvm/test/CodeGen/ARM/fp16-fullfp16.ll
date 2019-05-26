@@ -217,13 +217,17 @@ define void @test_bitcast_i16tohalf(i16 %a, half* %p) {
   ret void
 }
 
-; FIXME
-;define void @test_sqrt(half* %p) {
-;  %a = load half, half* %p, align 2
-;  %r = call half @llvm.sqrt.f16(half %a)
-;  store half %r, half* %p
-;  ret void
-;}
+define void @test_sqrt(half* %p) {
+; CHECK-LABEL: test_sqrt:
+; CHECK:         vldr.16 s0, [r0]
+; CHECK-NEXT:    vsqrt.f16 s0, s0
+; CHECK-NEXT:    vstr.16 s0, [r0]
+; CHECK-NEXT:    bx lr
+  %a = load half, half* %p, align 2
+  %r = call half @llvm.sqrt.f16(half %a)
+  store half %r, half* %p
+  ret void
+}
 
 ; FIXME
 ;define void @test_fpowi(half* %p, i32 %b) {

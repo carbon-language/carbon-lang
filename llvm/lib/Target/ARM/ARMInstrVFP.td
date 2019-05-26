@@ -1023,9 +1023,9 @@ def VSQRTS : ASuI<0b11101, 0b11, 0b0001, 0b11, 0,
              Sched<[WriteFPSQRT32]>;
 
 def VSQRTH : AHuI<0b11101, 0b11, 0b0001, 0b11, 0,
-                  (outs SPR:$Sd), (ins SPR:$Sm),
+                  (outs HPR:$Sd), (ins HPR:$Sm),
                   IIC_fpSQRT16, "vsqrt", ".f16\t$Sd, $Sm",
-                  []>;
+                  [(set HPR:$Sd, (fsqrt (f16 HPR:$Sm)))]>;
 
 let hasSideEffects = 0 in {
 let isMoveReg = 1 in {
