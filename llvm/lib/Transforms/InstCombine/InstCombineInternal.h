@@ -692,7 +692,7 @@ public:
   }
 
   OverflowResult computeOverflowForSignedMul(const Value *LHS,
-	                                         const Value *RHS,
+                                             const Value *RHS,
                                              const Instruction *CxtI) const {
     return llvm::computeOverflowForSignedMul(LHS, RHS, DL, &AC, CxtI, &DT);
   }
@@ -719,6 +719,10 @@ public:
                                              const Instruction *CxtI) const {
     return llvm::computeOverflowForSignedSub(LHS, RHS, DL, &AC, CxtI, &DT);
   }
+
+  OverflowResult computeOverflow(
+      Instruction::BinaryOps BinaryOp, bool IsSigned,
+      Value *LHS, Value *RHS, Instruction *CxtI) const;
 
   /// Maximum size of array considered when transforming.
   uint64_t MaxArraySizeForCombine;
