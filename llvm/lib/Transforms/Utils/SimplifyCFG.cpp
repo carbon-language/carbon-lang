@@ -5552,18 +5552,6 @@ static bool ReduceSwitchRange(SwitchInst *SI, IRBuilder<> &Builder,
       BestDistance = Values[I] - Values[I - 1];
     }
   }
-  uint64_t Base = 0;
-  // Now transform the values such that they start at zero and ascend.
-  if (Values[BestIndex] >= SubThreshold) {
-    Base = Values[BestIndex];
-    MadeChanges = true;
-    for (auto &V : Values)
-      V = (APInt(BitWidth, V) - Base).getLimitedValue();
-  }
-
-  // Now we have signed numbers that have been shifted so that, given enough
-  // precision, there are no negative values. Since the rest of the transform
-  // is bitwise only, we switch now to an unsigned representation.
 
   // This transform can be done speculatively because it is so cheap - it
   // results in a single rotate operation being inserted.
@@ -5575,13 +5563,35 @@ static bool ReduceSwitchRange(SwitchInst *SI, IRBuilder<> &Builder,
   // one element and LLVM disallows duplicate cases, Shift is guaranteed to be
   // less than 64.
   unsigned Shift = 64;
+  // We need to store this from _before_ the transform
+  uint64_t BestIndexXor = Values[BestIndex];
   for (auto &V : Values)
-    Shift = std::min(Shift, countTrailingZeros(V));
+    Shift = std::min(Shift, countTrailingZeros(V ^ BestIndexXor));
   assert(Shift < 64);
   if (Shift > 0) {
     MadeChanges = true;
     for (auto &V : Values)
       V >>= Shift;
+  }
+
+  // We Xor against Values[] (any element will do) because the if we do not
+  // start at zero, but also don't meet the SubThreshold, then we still might
+  // share common rights bits, and if this transform succeeds
+  // then we should insert the subtraction anyways, because the rotate trick
+  // below to avoid a branch needs the shifted away bits to be zero.
+
+  // Now transform the values such that they start at zero and ascend. Do not
+  // do this if the shift reduces the lowest value to less than SubThreshold,
+  // or if the subtraction is less than SubThreshold and it does not enable a
+  // rotate.
+  uint64_t Base = 0;
+  if ((BestIndexXor >= SubThreshold && Shift == 0) ||
+      (Shift > countTrailingZeros(BestIndexXor) &&
+       Values[BestIndex] >= SubThreshold)) {
+    Base = BestIndexXor;
+    MadeChanges = true;
+    for (auto &V : Values)
+      V = (APInt(BitWidth, V) - Base).getLimitedValue();
   }
 
   if (!MadeChanges)
@@ -5614,7 +5624,7 @@ static bool ReduceSwitchRange(SwitchInst *SI, IRBuilder<> &Builder,
 
   for (auto Case : SI->cases()) {
     auto *Orig = Case.getCaseValue();
-    auto Sub = Orig->getValue() - APInt(Ty->getBitWidth(), Base);
+    auto Sub = Orig->getValue() - Base;
     Case.setValue(cast<ConstantInt>(ConstantInt::get(Ty, Sub.lshr(Shift))));
   }
   return true;

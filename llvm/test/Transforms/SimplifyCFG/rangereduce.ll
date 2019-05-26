@@ -234,10 +234,10 @@ three:
 
 define i8 @test7(i8 %a) optsize {
 ; CHECK-LABEL: @test7(
-; CHECK-NEXT:    [[TMP1:%.*]] = sub i8 [[A:%.*]], -36
-; CHECK-NEXT:    [[TMP2:%.*]] = lshr i8 [[TMP1]], 2
-; CHECK-NEXT:    [[TMP3:%.*]] = shl i8 [[TMP1]], 6
-; CHECK-NEXT:    [[TMP4:%.*]] = or i8 [[TMP2]], [[TMP3]]
+; CHECK-NEXT:    [[TMP1:%.*]] = lshr i8 [[A:%.*]], 2
+; CHECK-NEXT:    [[TMP2:%.*]] = shl i8 [[A]], 6
+; CHECK-NEXT:    [[TMP3:%.*]] = or i8 [[TMP1]], [[TMP2]]
+; CHECK-NEXT:    [[TMP4:%.*]] = sub i8 [[TMP3]], 55
 ; CHECK-NEXT:    [[TMP5:%.*]] = icmp ult i8 [[TMP4]], 4
 ; CHECK-NEXT:    br i1 [[TMP5]], label [[SWITCH_LOOKUP:%.*]], label [[DEF:%.*]]
 ; CHECK:       switch.lookup:
