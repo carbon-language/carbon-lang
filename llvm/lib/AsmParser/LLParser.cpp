@@ -8484,13 +8484,13 @@ bool LLParser::ParseGVFlags(GlobalValueSummary::GVFlags &GVFlags) {
     return true;
 
   do {
-    unsigned Flag;
+    unsigned Flag = 0;
     switch (Lex.getKind()) {
     case lltok::kw_linkage:
       Lex.Lex();
       if (ParseToken(lltok::colon, "expected ':'"))
         return true;
-      bool HasLinkage;
+      bool HasLinkage = false;
       GVFlags.Linkage = parseOptionalLinkageAux(Lex.getKind(), HasLinkage);
       assert(HasLinkage && "Linkage not optional in summary entry");
       Lex.Lex();
@@ -8536,7 +8536,7 @@ bool LLParser::ParseGVarFlags(GlobalVarSummary::GVarFlags &GVarFlags) {
   assert(Lex.getKind() == lltok::kw_varFlags);
   Lex.Lex();
 
-  unsigned Flag;
+  unsigned Flag = 0;
   if (ParseToken(lltok::colon, "expected ':' here") ||
       ParseToken(lltok::lparen, "expected '(' here") ||
       ParseToken(lltok::kw_readonly, "expected 'readonly' here") ||
