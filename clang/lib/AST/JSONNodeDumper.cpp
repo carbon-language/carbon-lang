@@ -829,9 +829,10 @@ void JSONNodeDumper::VisitCompoundAssignOperator(
 void JSONNodeDumper::VisitMemberExpr(const MemberExpr *ME) {
   // Note, we always write this Boolean field because the information it conveys
   // is critical to understanding the AST node.
+  ValueDecl *VD = ME->getMemberDecl();
+  JOS.attribute("name", VD && VD->getDeclName() ? VD->getNameAsString() : "");
   JOS.attribute("isArrow", ME->isArrow());
-  JOS.attribute("referencedMemberDecl",
-                createPointerRepresentation(ME->getMemberDecl()));
+  JOS.attribute("referencedMemberDecl", createPointerRepresentation(VD));
 }
 
 void JSONNodeDumper::VisitCXXNewExpr(const CXXNewExpr *NE) {

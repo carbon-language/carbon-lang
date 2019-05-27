@@ -2584,6 +2584,7 @@ void TestNonADLCall3() {
 // CHECK-NEXT:         "qualType": "<bound member function type>"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "valueCategory": "rvalue",
+// CHECK-NEXT:        "name": "func",
 // CHECK-NEXT:        "isArrow": false,
 // CHECK-NEXT:        "referencedMemberDecl": "0x{{.*}}",
 // CHECK-NEXT:        "inner": [
@@ -2679,6 +2680,7 @@ void TestNonADLCall3() {
 // CHECK-NEXT:         "qualType": "<bound member function type>"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "valueCategory": "rvalue",
+// CHECK-NEXT:        "name": "func",
 // CHECK-NEXT:        "isArrow": true,
 // CHECK-NEXT:        "referencedMemberDecl": "0x{{.*}}",
 // CHECK-NEXT:        "inner": [
@@ -2798,6 +2800,7 @@ void TestNonADLCall3() {
 // CHECK-NEXT:         "qualType": "<bound member function type>"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "valueCategory": "rvalue",
+// CHECK-NEXT:        "name": "foo",
 // CHECK-NEXT:        "isArrow": true,
 // CHECK-NEXT:        "referencedMemberDecl": "0x{{.*}}",
 // CHECK-NEXT:        "inner": [
@@ -2896,6 +2899,7 @@ void TestNonADLCall3() {
 // CHECK-NEXT:         "qualType": "<bound member function type>"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "valueCategory": "rvalue",
+// CHECK-NEXT:        "name": "foo",
 // CHECK-NEXT:        "isArrow": false,
 // CHECK-NEXT:        "referencedMemberDecl": "0x{{.*}}",
 // CHECK-NEXT:        "inner": [
@@ -2970,6 +2974,7 @@ void TestNonADLCall3() {
 // CHECK-NEXT:         "qualType": "<bound member function type>"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "valueCategory": "rvalue",
+// CHECK-NEXT:        "name": "~S",
 // CHECK-NEXT:        "isArrow": true,
 // CHECK-NEXT:        "referencedMemberDecl": "0x{{.*}}",
 // CHECK-NEXT:        "inner": [
@@ -3067,6 +3072,7 @@ void TestNonADLCall3() {
 // CHECK-NEXT:         "qualType": "<bound member function type>"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "valueCategory": "rvalue",
+// CHECK-NEXT:        "name": "~S",
 // CHECK-NEXT:        "isArrow": false,
 // CHECK-NEXT:        "referencedMemberDecl": "0x{{.*}}",
 // CHECK-NEXT:        "inner": [
@@ -3141,6 +3147,7 @@ void TestNonADLCall3() {
 // CHECK-NEXT:         "qualType": "<bound member function type>"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "valueCategory": "rvalue",
+// CHECK-NEXT:        "name": "~S",
 // CHECK-NEXT:        "isArrow": false,
 // CHECK-NEXT:        "referencedMemberDecl": "0x{{.*}}",
 // CHECK-NEXT:        "inner": [
@@ -3215,6 +3222,7 @@ void TestNonADLCall3() {
 // CHECK-NEXT:         "qualType": "<bound member function type>"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "valueCategory": "rvalue",
+// CHECK-NEXT:        "name": "~S",
 // CHECK-NEXT:        "isArrow": true,
 // CHECK-NEXT:        "referencedMemberDecl": "0x{{.*}}",
 // CHECK-NEXT:        "inner": [
@@ -3312,6 +3320,7 @@ void TestNonADLCall3() {
 // CHECK-NEXT:         "qualType": "<bound member function type>"
 // CHECK-NEXT:        },
 // CHECK-NEXT:        "valueCategory": "rvalue",
+// CHECK-NEXT:        "name": "~U",
 // CHECK-NEXT:        "isArrow": true,
 // CHECK-NEXT:        "referencedMemberDecl": "0x{{.*}}",
 // CHECK-NEXT:        "inner": [
