@@ -4138,7 +4138,9 @@ static SDValue FoldBUILD_VECTOR(const SDLoc &DL, EVT VT,
   return SDValue();
 }
 
-static SDValue FoldCONCAT_VECTORS(const SDLoc &DL, EVT VT,
+/// Try to simplify vector concatenation to an input value, undef, or build
+/// vector.
+static SDValue foldCONCAT_VECTORS(const SDLoc &DL, EVT VT,
                                   ArrayRef<SDValue> Ops,
                                   SelectionDAG &DAG) {
   assert(!Ops.empty() && "Can't concatenate an empty list of vectors!");
@@ -4989,9 +4991,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, const SDLoc &DL, EVT VT,
     break;
   }
   case ISD::CONCAT_VECTORS: {
-    // Attempt to fold CONCAT_VECTORS into BUILD_VECTOR or UNDEF.
     SDValue Ops[] = {N1, N2};
-    if (SDValue V = FoldCONCAT_VECTORS(DL, VT, Ops, *this))
+    if (SDValue V = foldCONCAT_VECTORS(DL, VT, Ops, *this))
       return V;
     break;
   }
@@ -5409,9 +5410,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, const SDLoc &DL, EVT VT,
     break;
   }
   case ISD::CONCAT_VECTORS: {
-    // Attempt to fold CONCAT_VECTORS into BUILD_VECTOR or UNDEF.
     SDValue Ops[] = {N1, N2, N3};
-    if (SDValue V = FoldCONCAT_VECTORS(DL, VT, Ops, *this))
+    if (SDValue V = foldCONCAT_VECTORS(DL, VT, Ops, *this))
       return V;
     break;
   }
@@ -7135,8 +7135,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, const SDLoc &DL, EVT VT,
       return V;
     break;
   case ISD::CONCAT_VECTORS:
-    // Attempt to fold CONCAT_VECTORS into BUILD_VECTOR or UNDEF.
-    if (SDValue V = FoldCONCAT_VECTORS(DL, VT, Ops, *this))
+    if (SDValue V = foldCONCAT_VECTORS(DL, VT, Ops, *this))
       return V;
     break;
   case ISD::SELECT_CC:
