@@ -4574,6 +4574,7 @@ void TestNonADLCall3() {
 // CHECK-NEXT:             "qualType": "auto (int, ...) const"
 // CHECK-NEXT:            },
 // CHECK-NEXT:            "inline": true,
+// CHECK-NEXT:            "variadic": true,
 // CHECK-NEXT:            "inner": [
 // CHECK-NEXT:             {
 // CHECK-NEXT:              "id": "0x{{.*}}",
@@ -4673,6 +4674,7 @@ void TestNonADLCall3() {
 // CHECK-NEXT:            },
 // CHECK-NEXT:            "storageClass": "static",
 // CHECK-NEXT:            "inline": true,
+// CHECK-NEXT:            "variadic": true,
 // CHECK-NEXT:            "inner": [
 // CHECK-NEXT:             {
 // CHECK-NEXT:              "id": "0x{{.*}}",

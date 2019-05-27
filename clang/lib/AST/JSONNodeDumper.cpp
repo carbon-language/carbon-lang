@@ -572,6 +572,8 @@ void JSONNodeDumper::VisitFunctionDecl(const FunctionDecl *FD) {
   attributeOnlyIfTrue("pure", FD->isPure());
   attributeOnlyIfTrue("explicitlyDeleted", FD->isDeletedAsWritten());
   attributeOnlyIfTrue("constexpr", FD->isConstexpr());
+  attributeOnlyIfTrue("variadic", FD->isVariadic());
+
   if (FD->isDefaulted())
     JOS.attribute("explicitlyDefaulted",
                   FD->isDeleted() ? "deleted" : "default");
