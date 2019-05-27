@@ -894,6 +894,10 @@ void JSONNodeDumper::VisitUnaryExprOrTypeTraitExpr(
     JOS.attribute("argType", createQualType(TTE->getArgumentType()));
 }
 
+void JSONNodeDumper::VisitSizeOfPackExpr(const SizeOfPackExpr *SOPE) {
+  VisitNamedDecl(SOPE->getPack());
+}
+
 void JSONNodeDumper::VisitUnresolvedLookupExpr(
     const UnresolvedLookupExpr *ULE) {
   JOS.attribute("usesADL", ULE->requiresADL());

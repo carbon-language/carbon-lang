@@ -1505,7 +1505,8 @@ void TestNonADLCall3() {
 // CHECK-NEXT:        "type": {
 // CHECK-NEXT:         "qualType": "unsigned long"
 // CHECK-NEXT:        },
-// CHECK-NEXT:        "valueCategory": "rvalue"
+// CHECK-NEXT:        "valueCategory": "rvalue",
+// CHECK-NEXT:        "name": "Ts"
 // CHECK-NEXT:       },
 // CHECK-NEXT:       {
 // CHECK-NEXT:        "id": "0x{{.*}}",

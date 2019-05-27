@@ -244,6 +244,7 @@ public:
   void VisitImplicitCastExpr(const ImplicitCastExpr *ICE);
   void VisitCallExpr(const CallExpr *CE);
   void VisitUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr *TTE);
+  void VisitSizeOfPackExpr(const SizeOfPackExpr *SOPE);
   void VisitUnresolvedLookupExpr(const UnresolvedLookupExpr *ULE);
   void VisitAddrLabelExpr(const AddrLabelExpr *ALE);
 
