@@ -3447,7 +3447,10 @@ void TestNonADLCall3() {
 // CHECK-NEXT:      "type": {
 // CHECK-NEXT:       "qualType": "const std::type_info"
 // CHECK-NEXT:      },
-// CHECK-NEXT:      "valueCategory": "lvalue"
+// CHECK-NEXT:      "valueCategory": "lvalue",
+// CHECK-NEXT:      "typeArg": {
+// CHECK-NEXT:       "qualType": "S"
+// CHECK-NEXT:      }
 // CHECK-NEXT:     },
 // CHECK-NEXT:     {
 // CHECK-NEXT:      "id": "0x{{.*}}",
@@ -3467,7 +3470,13 @@ void TestNonADLCall3() {
 // CHECK-NEXT:      "type": {
 // CHECK-NEXT:       "qualType": "const std::type_info"
 // CHECK-NEXT:      },
-// CHECK-NEXT:      "valueCategory": "lvalue"
+// CHECK-NEXT:      "valueCategory": "lvalue",
+// CHECK-NEXT:      "typeArg": {
+// CHECK-NEXT:       "qualType": "const volatile S"
+// CHECK-NEXT:      },
+// CHECK-NEXT:      "adjustedTypeArg": {
+// CHECK-NEXT:       "qualType": "S"
+// CHECK-NEXT:      }
 // CHECK-NEXT:     }
 // CHECK-NEXT:    ]
 // CHECK-NEXT:   }

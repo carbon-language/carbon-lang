@@ -917,6 +917,16 @@ void JSONNodeDumper::VisitAddrLabelExpr(const AddrLabelExpr *ALE) {
   JOS.attribute("labelDeclId", createPointerRepresentation(ALE->getLabel()));
 }
 
+void JSONNodeDumper::VisitCXXTypeidExpr(const CXXTypeidExpr *CTE) {
+  if (CTE->isTypeOperand()) {
+    QualType Adjusted = CTE->getTypeOperand(Ctx);
+    QualType Unadjusted = CTE->getTypeOperandSourceInfo()->getType();
+    JOS.attribute("typeArg", createQualType(Unadjusted));
+    if (Adjusted != Unadjusted)
+      JOS.attribute("adjustedTypeArg", createQualType(Adjusted));
+  }
+}
+
 void JSONNodeDumper::VisitIntegerLiteral(const IntegerLiteral *IL) {
   JOS.attribute("value",
                 IL->getValue().toString(
