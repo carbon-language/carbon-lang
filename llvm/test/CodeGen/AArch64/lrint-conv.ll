@@ -1,7 +1,9 @@
 ; RUN: llc < %s -mtriple=aarch64 -mattr=+neon | FileCheck %s
 
 ; CHECK-LABEL: testmsws:
-; CHECK:       bl      lrintf
+; CHECK:       frintx  [[REG:s[0-9]]], s0
+; CHECK-NEXT:  fcvtzs  x0, [[REG]]
+; CHECK:       ret
 define i32 @testmsws(float %x) {
 entry:
   %0 = tail call i64 @llvm.lrint.i64.f32(float %x)
@@ -10,7 +12,9 @@ entry:
 }
 
 ; CHECK-LABEL: testmsxs:
-; CHECK:       b       lrintf
+; CHECK:       frintx  [[REG:s[0-9]]], s0
+; CHECK-NEXT:  fcvtzs  x0, [[REG]]
+; CHECK-NEXT:  ret
 define i64 @testmsxs(float %x) {
 entry:
   %0 = tail call i64 @llvm.lrint.i64.f32(float %x)
@@ -18,7 +22,9 @@ entry:
 }
 
 ; CHECK-LABEL: testmswd:
-; CHECK:       bl      lrint
+; CHECK:       frintx  [[REG:d[0-9]]], d0
+; CHECK-NEXT:  fcvtzs  x0, [[REG]]
+; CHECK:       ret
 define i32 @testmswd(double %x) {
 entry:
   %0 = tail call i64 @llvm.lrint.i64.f64(double %x)
@@ -27,7 +33,9 @@ entry:
 }
 
 ; CHECK-LABEL: testmsxd:
-; CHECK:       b       lrint
+; CHECK:       frintx  [[REG:d[0-9]]], d0
+; CHECK-NEXT:  fcvtzs  x0, [[REG]]
+; CHECK-NEXT:  ret
 define i64 @testmsxd(double %x) {
 entry:
   %0 = tail call i64 @llvm.lrint.i64.f64(double %x)
