@@ -96,8 +96,8 @@ static llvm::cl::opt<Logger::Level> LogLevel(
 
 static llvm::cl::opt<bool>
     Test("lit-test",
-         llvm::cl::desc("Abbreviation for -input-style=delimited -pretty "
-                        "-run-synchronously -enable-test-scheme -log=verbose. "
+         llvm::cl::desc("Abbreviation for -input-style=delimited -pretty -sync "
+                        "-enable-test-scheme -log=verbose."
                         "Intended to simplify lit tests."),
          llvm::cl::init(false), llvm::cl::Hidden);
 
@@ -122,10 +122,9 @@ static llvm::cl::opt<int> LimitResults(
                    "0 means no limit. (default=100)"),
     llvm::cl::init(100));
 
-static llvm::cl::opt<bool> RunSynchronously(
-    "run-synchronously",
-    llvm::cl::desc("Parse on main thread. If set, -j is ignored"),
-    llvm::cl::init(false), llvm::cl::Hidden);
+static llvm::cl::opt<bool>
+    Sync("sync", llvm::cl::desc("Parse on main thread. If set, -j is ignored"),
+         llvm::cl::init(false), llvm::cl::Hidden);
 
 static llvm::cl::opt<Path>
     ResourceDir("resource-dir",
@@ -229,10 +228,10 @@ static llvm::cl::opt<std::string> ClangTidyChecks(
         ".clang-tidy files). Only meaningful when -clang-tidy flag is on."),
     llvm::cl::init(""));
 
-static llvm::cl::opt<bool> EnableClangTidy(
-    "clang-tidy",
-    llvm::cl::desc("Enable clang-tidy diagnostics."),
-    llvm::cl::init(true));
+static llvm::cl::opt<bool>
+    EnableClangTidy("clang-tidy",
+                    llvm::cl::desc("Enable clang-tidy diagnostics."),
+                    llvm::cl::init(true));
 
 static llvm::cl::opt<std::string>
     FallbackStyle("fallback-style",
@@ -343,7 +342,7 @@ int main(int argc, char *argv[]) {
       "\n\thttps://clang.llvm.org/extra/clangd.html"
       "\n\thttps://microsoft.github.io/language-server-protocol/");
   if (Test) {
-    RunSynchronously = true;
+    Sync = true;
     InputStyle = JSONStreamStyle::Delimited;
     LogLevel = Logger::Verbose;
     PrettyPrint = true;
@@ -355,15 +354,15 @@ int main(int argc, char *argv[]) {
         "test", "Test scheme for clangd lit tests.");
   }
 
-  if (!RunSynchronously && WorkerThreadsCount == 0) {
+  if (!Sync && WorkerThreadsCount == 0) {
     llvm::errs() << "A number of worker threads cannot be 0. Did you mean to "
-                    "specify -run-synchronously?";
+                    "specify -sync?";
     return 1;
   }
 
-  if (RunSynchronously) {
+  if (Sync) {
     if (WorkerThreadsCount.getNumOccurrences())
-      llvm::errs() << "Ignoring -j because -run-synchronously is set.\n";
+      llvm::errs() << "Ignoring -j because -sync is set.\n";
     WorkerThreadsCount = 0;
   }
   if (FallbackStyle.getNumOccurrences())
@@ -461,7 +460,7 @@ int main(int argc, char *argv[]) {
       if (auto Idx = loadIndex(IndexFile, /*UseDex=*/true))
         Placeholder->reset(std::move(Idx));
     });
-    if (RunSynchronously)
+    if (Sync)
       AsyncIndexLoad.wait();
   }
   Opts.StaticIndex = StaticIdx.get();
