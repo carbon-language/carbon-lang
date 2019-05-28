@@ -358,7 +358,7 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile *objfile,
       m_debug_map_module_wp(), m_debug_map_symfile(nullptr),
       m_context(objfile->GetModule()->GetSectionList(), dwo_section_list),
       m_data_debug_loc(), m_data_debug_ranges(), m_data_debug_rnglists(),
-      m_abbr(), m_info(), m_line(), m_fetched_external_modules(false),
+      m_abbr(), m_info(), m_fetched_external_modules(false),
       m_supports_DW_AT_APPLE_objc_complete_type(eLazyBoolCalculate), m_ranges(),
       m_unique_ast_type_map() {}
 
