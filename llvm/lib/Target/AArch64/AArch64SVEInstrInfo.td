@@ -1283,6 +1283,12 @@ let Predicates = [HasSVE2] in {
   defm SSUBLBT_ZZZ : sve2_misc_int_addsub_long_interleaved<0b10, "ssublbt">;
   defm SSUBLTB_ZZZ : sve2_misc_int_addsub_long_interleaved<0b11, "ssubltb">;
 
+  // SVE2 histogram generation (segment)
+  def HISTSEG_ZZZ : sve2_hist_gen_segment<"histseg">;
+
+  // SVE2 histogram generation (vector)
+  defm HISTCNT_ZPzZZ : sve2_hist_gen_vector<"histcnt">;
+
   // Predicated shifts
   defm SQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0110, "sqshl">;
   defm UQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0111, "uqshl">;

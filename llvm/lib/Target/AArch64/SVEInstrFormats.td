@@ -5239,3 +5239,50 @@ multiclass sve2_char_match<bit opc, string asm> {
   def _B : sve2_char_match<0b0, opc, asm, PPR8, ZPR8>;
   def _H : sve2_char_match<0b1, opc, asm, PPR16, ZPR16>;
 }
+
+//===----------------------------------------------------------------------===//
+// SVE2 Histogram Computation - Segment Group
+//===----------------------------------------------------------------------===//
+
+class sve2_hist_gen_segment<string asm>
+: I<(outs ZPR8:$Zd), (ins ZPR8:$Zn, ZPR8:$Zm),
+  asm, "\t$Zd, $Zn, $Zm",
+  "",
+  []>, Sched<[]> {
+  bits<5> Zd;
+  bits<5> Zn;
+  bits<5> Zm;
+  let Inst{31-21} = 0b01000101001;
+  let Inst{20-16} = Zm;
+  let Inst{15-10} = 0b101000;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zd;
+}
+
+//===----------------------------------------------------------------------===//
+// SVE2 Histogram Computation - Vector Group
+//===----------------------------------------------------------------------===//
+
+class sve2_hist_gen_vector<bit sz, string asm, ZPRRegOp zprty>
+: I<(outs zprty:$Zd), (ins PPR3bAny:$Pg, zprty:$Zn, zprty:$Zm),
+  asm, "\t$Zd, $Pg/z, $Zn, $Zm",
+  "",
+  []>, Sched<[]> {
+  bits<5> Zd;
+  bits<5> Zn;
+  bits<3> Pg;
+  bits<5> Zm;
+  let Inst{31-23} = 0b010001011;
+  let Inst{22}    = sz;
+  let Inst{21}    = 0b1;
+  let Inst{20-16} = Zm;
+  let Inst{15-13} = 0b110;
+  let Inst{12-10} = Pg;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zd;
+}
+
+multiclass sve2_hist_gen_vector<string asm> {
+  def _S : sve2_hist_gen_vector<0b0, asm, ZPR32>;
+  def _D : sve2_hist_gen_vector<0b1, asm, ZPR64>;
+}
