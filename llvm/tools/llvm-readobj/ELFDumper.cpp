@@ -3346,9 +3346,8 @@ template <class ELFT> void GNUStyle<ELFT>::printDynamic(const ELFO *Obj) {
     OS << "  Tag        Type                 Name/Value\n";
   for (auto Entry : Table) {
     uintX_t Tag = Entry.getTag();
-    std::string TypeString = getTypeString(Obj->getHeader()->e_machine, Tag);
-    OS << format("  0x%0*x %-20s ", Is64 ? 16 : 8, Tag,
-                 ("(" + TypeString + ")").c_str());
+    std::string TypeString = std::string("(") + getTypeString(Obj->getHeader()->e_machine, Tag) + ")";
+    OS << "  " << format_hex(Tag, Is64 ? 18 : 10) << format(" %-20s ", TypeString.c_str());
     this->dumper()->printDynamicEntry(OS, Tag, Entry.getVal());
     OS << "\n";
   }
@@ -4134,7 +4133,7 @@ void GNUStyle<ELFT>::printMipsPLT(const MipsGOTParser<ELFT> &Parser) {
   size_t Bias = ELFT::Is64Bits ? 8 : 0;
   auto PrintEntry = [&](const Elf_Addr *E, StringRef Purpose) {
     OS.PadToColumn(2);
-    OS << format_hex_no_prefix(Parser.getGotAddress(E), 8 + Bias);
+    OS << format_hex_no_prefix(Parser.getPltAddress(E), 8 + Bias);
     OS.PadToColumn(11 + Bias);
     OS << format_hex_no_prefix(*E, 8 + Bias);
     OS.PadToColumn(20 + 2 * Bias);
@@ -4147,7 +4146,7 @@ void GNUStyle<ELFT>::printMipsPLT(const MipsGOTParser<ELFT> &Parser) {
   OS << "   Address  Initial Purpose\n";
   PrintEntry(Parser.getPltLazyResolver(), "PLT lazy resolver");
   if (Parser.getPltModulePointer())
-    PrintEntry(Parser.getGotModulePointer(), "Module pointer");
+    PrintEntry(Parser.getPltModulePointer(), "Module pointer");
 
   if (!Parser.getPltEntries().empty()) {
     OS << "\n";
@@ -4159,7 +4158,7 @@ void GNUStyle<ELFT>::printMipsPLT(const MipsGOTParser<ELFT> &Parser) {
           Sym, this->dumper()->getDynamicStringTable(), false);
 
       OS.PadToColumn(2);
-      OS << to_string(format_hex_no_prefix(Parser.getGotAddress(&E), 8 + Bias));
+      OS << to_string(format_hex_no_prefix(Parser.getPltAddress(&E), 8 + Bias));
       OS.PadToColumn(11 + Bias);
       OS << to_string(format_hex_no_prefix(E, 8 + Bias));
       OS.PadToColumn(20 + 2 * Bias);
@@ -4919,6 +4918,7 @@ void LLVMStyle<ELFT>::printELFLinkerOptions(const ELFFile<ELFT> *Obj) {
 template <class ELFT>
 void LLVMStyle<ELFT>::printMipsGOT(const MipsGOTParser<ELFT> &Parser) {
   auto PrintEntry = [&](const Elf_Addr *E) {
+		// XXX: here?
     W.printHex("Address", Parser.getGotAddress(E));
     W.printNumber("Access", Parser.getGotOffset(E));
     W.printHex("Initial", *E);
@@ -4983,6 +4983,7 @@ void LLVMStyle<ELFT>::printMipsGOT(const MipsGOTParser<ELFT> &Parser) {
 template <class ELFT>
 void LLVMStyle<ELFT>::printMipsPLT(const MipsGOTParser<ELFT> &Parser) {
   auto PrintEntry = [&](const Elf_Addr *E) {
+		// XXX: here? no.
     W.printHex("Address", Parser.getPltAddress(E));
     W.printHex("Initial", *E);
   };
