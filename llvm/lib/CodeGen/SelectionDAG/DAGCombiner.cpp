@@ -2957,6 +2957,13 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
     SDValue Sub = DAG.getNode(ISD::SUB, DL, VT, N0, N1.getOperand(0));
     return DAG.getNode(ISD::SUB, DL, VT, Sub, N1.getOperand(1));
   }
+  // (x - C) - y  ->  (x - y) - C
+  // This is necessary because SUB(X,C) -> ADD(X,-C) doesn't work for vectors.
+  if (N0.hasOneUse() && N0.getOpcode() == ISD::SUB &&
+      isConstantOrConstantVector(N0.getOperand(1))) {
+    SDValue Sub = DAG.getNode(ISD::SUB, DL, VT, N0.getOperand(0), N1);
+    return DAG.getNode(ISD::SUB, DL, VT, Sub, N0.getOperand(1));
+  }
 
   // If the target's bool is represented as 0/-1, prefer to make this 'add 0/-1'
   // rather than 'sub 0/1' (the sext should get folded).
