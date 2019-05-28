@@ -130,6 +130,7 @@ void PrimitiveTypeNode::outputPre(OutputStream &OS, OutputFlags Flags) const {
     OUTPUT_ENUM_CLASS_VALUE(PrimitiveKind, Char, "char");
     OUTPUT_ENUM_CLASS_VALUE(PrimitiveKind, Schar, "signed char");
     OUTPUT_ENUM_CLASS_VALUE(PrimitiveKind, Uchar, "unsigned char");
+    OUTPUT_ENUM_CLASS_VALUE(PrimitiveKind, Char8, "char8_t");
     OUTPUT_ENUM_CLASS_VALUE(PrimitiveKind, Char16, "char16_t");
     OUTPUT_ENUM_CLASS_VALUE(PrimitiveKind, Char32, "char32_t");
     OUTPUT_ENUM_CLASS_VALUE(PrimitiveKind, Short, "short");

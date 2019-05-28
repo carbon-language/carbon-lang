@@ -82,6 +82,7 @@ enum class PrimitiveKind {
   Char,
   Schar,
   Uchar,
+  Char8,
   Char16,
   Char32,
   Short,

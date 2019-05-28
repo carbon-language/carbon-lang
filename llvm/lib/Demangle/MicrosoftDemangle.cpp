@@ -1944,6 +1944,8 @@ PrimitiveTypeNode *Demangler::demanglePrimitiveType(StringView &MangledName) {
       return Arena.alloc<PrimitiveTypeNode>(PrimitiveKind::Uint64);
     case 'W':
       return Arena.alloc<PrimitiveTypeNode>(PrimitiveKind::Wchar);
+    case 'Q':
+      return Arena.alloc<PrimitiveTypeNode>(PrimitiveKind::Char8);
     case 'S':
       return Arena.alloc<PrimitiveTypeNode>(PrimitiveKind::Char16);
     case 'U':
