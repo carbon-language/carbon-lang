@@ -2192,6 +2192,82 @@ multiclass sve2_pmul_long<bits<1> opc, string asm> {
 }
 
 //===----------------------------------------------------------------------===//
+// SVE2 Misc Group
+//===----------------------------------------------------------------------===//
+
+class sve2_misc<bits<2> sz, bits<4> opc, string asm,
+                ZPRRegOp zprty1, ZPRRegOp zprty2>
+: I<(outs zprty1:$Zd), (ins zprty2:$Zn, zprty2:$Zm),
+  asm, "\t$Zd, $Zn, $Zm", "", []>, Sched<[]> {
+  bits<5> Zd;
+  bits<5> Zn;
+  bits<5> Zm;
+  let Inst{31-24} = 0b01000101;
+  let Inst{23-22} = sz;
+  let Inst{21}    = 0b0;
+  let Inst{20-16} = Zm;
+  let Inst{15-14} = 0b10;
+  let Inst{13-10} = opc;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zd;
+}
+
+multiclass sve2_misc_bitwise<bits<4> opc, string asm> {
+  def _B : sve2_misc<0b00, opc, asm, ZPR8, ZPR8>;
+  def _H : sve2_misc<0b01, opc, asm, ZPR16, ZPR16>;
+  def _S : sve2_misc<0b10, opc, asm, ZPR32, ZPR32>;
+  def _D : sve2_misc<0b11, opc, asm, ZPR64, ZPR64>;
+}
+
+multiclass sve2_bitwise_xor_interleaved<bit opc, string asm> {
+  let DestructiveInstType = Destructive, ElementSize = ElementSizeNone in {
+    def _B : sve2_misc<0b00, { 0b010, opc }, asm, ZPR8,  ZPR8>;
+    def _H : sve2_misc<0b01, { 0b010, opc }, asm, ZPR16, ZPR16>;
+    def _S : sve2_misc<0b10, { 0b010, opc }, asm, ZPR32, ZPR32>;
+    def _D : sve2_misc<0b11, { 0b010, opc }, asm, ZPR64, ZPR64>;
+  }
+}
+
+multiclass sve2_misc_int_addsub_long_interleaved<bits<2> opc, string asm> {
+  def _H : sve2_misc<0b01, { 0b00, opc }, asm, ZPR16, ZPR8>;
+  def _S : sve2_misc<0b10, { 0b00, opc }, asm, ZPR32, ZPR16>;
+  def _D : sve2_misc<0b11, { 0b00, opc }, asm, ZPR64, ZPR32>;
+}
+
+class sve2_bitwise_shift_left_long<bits<3> tsz8_64, bits<2> opc, string asm,
+                                   ZPRRegOp zprty1, ZPRRegOp zprty2,
+                                   Operand immtype>
+: I<(outs zprty1:$Zd), (ins zprty2:$Zn, immtype:$imm),
+  asm, "\t$Zd, $Zn, $imm",
+  "", []>, Sched<[]> {
+  bits<5> Zd;
+  bits<5> Zn;
+  bits<5> imm;
+  let Inst{31-23} = 0b010001010;
+  let Inst{22}    = tsz8_64{2};
+  let Inst{21}    = 0b0;
+  let Inst{20-19} = tsz8_64{1-0};
+  let Inst{18-16} = imm{2-0}; // imm3
+  let Inst{15-12} = 0b1010;
+  let Inst{11-10} = opc;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zd;
+}
+
+multiclass sve2_bitwise_shift_left_long<bits<2> opc, string asm> {
+  def _H : sve2_bitwise_shift_left_long<{0,0,1}, opc, asm,
+                                        ZPR16, ZPR8, vecshiftL8>;
+  def _S : sve2_bitwise_shift_left_long<{0,1,?}, opc, asm,
+                                        ZPR32, ZPR16, vecshiftL16> {
+    let Inst{19} = imm{3};
+  }
+  def _D : sve2_bitwise_shift_left_long<{1,?,?}, opc, asm,
+                                        ZPR64, ZPR32, vecshiftL32> {
+    let Inst{20-19} = imm{4-3};
+  }
+}
+
+//===----------------------------------------------------------------------===//
 // SVE2 Accumulate Group
 //===----------------------------------------------------------------------===//
 

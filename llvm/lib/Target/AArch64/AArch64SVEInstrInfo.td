@@ -1268,6 +1268,21 @@ let Predicates = [HasSVE2] in {
   defm MATCH_PPzZZ  : sve2_char_match<0b0, "match">;
   defm NMATCH_PPzZZ : sve2_char_match<0b1, "nmatch">;
 
+  // SVE2 bitwise exclusive-or interleaved
+  defm EORBT_ZZZ : sve2_bitwise_xor_interleaved<0b0, "eorbt">;
+  defm EORTB_ZZZ : sve2_bitwise_xor_interleaved<0b1, "eortb">;
+
+  // SVE2 bitwise shift left long
+  defm SSHLLB_ZZI : sve2_bitwise_shift_left_long<0b00, "sshllb">;
+  defm SSHLLT_ZZI : sve2_bitwise_shift_left_long<0b01, "sshllt">;
+  defm USHLLB_ZZI : sve2_bitwise_shift_left_long<0b10, "ushllb">;
+  defm USHLLT_ZZI : sve2_bitwise_shift_left_long<0b11, "ushllt">;
+
+  // SVE2 integer add/subtract interleaved long
+  defm SADDLBT_ZZZ : sve2_misc_int_addsub_long_interleaved<0b00, "saddlbt">;
+  defm SSUBLBT_ZZZ : sve2_misc_int_addsub_long_interleaved<0b10, "ssublbt">;
+  defm SSUBLTB_ZZZ : sve2_misc_int_addsub_long_interleaved<0b11, "ssubltb">;
+
   // Predicated shifts
   defm SQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0110, "sqshl">;
   defm UQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0111, "uqshl">;
@@ -1284,4 +1299,11 @@ let Predicates = [HasSVE2AES] in {
                                          ZPR128, ZPR64, ZPR64>;
   def PMULLT_ZZZ_Q : sve2_wide_int_arith<0b00, 0b11011, "pmullt",
                                          ZPR128, ZPR64, ZPR64>;
+}
+
+let Predicates = [HasSVE2BitPerm] in {
+  // SVE2 bitwise permute
+  defm BEXT_ZZZ : sve2_misc_bitwise<0b1100, "bext">;
+  defm BDEP_ZZZ : sve2_misc_bitwise<0b1101, "bdep">;
+  defm BGRP_ZZZ : sve2_misc_bitwise<0b1110, "bgrp">;
 }
