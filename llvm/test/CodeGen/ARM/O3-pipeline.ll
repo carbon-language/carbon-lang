@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=arm -O3 -debug-pass=Structure < %s -o /dev/null 2>&1 | FileCheck %s
+; RUN: llc -mtriple=arm -O3 -debug-pass=Structure < %s -o /dev/null 2>&1 | grep -v "Verify generated machine code" | FileCheck %s
 
 ; REQUIRES: asserts
 
