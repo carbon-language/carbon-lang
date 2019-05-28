@@ -674,7 +674,6 @@ Demangler::demangleFunctionIdentifierCode(StringView &MangledName,
       return Arena.alloc<IntrinsicFunctionIdentifierNode>(
           translateIntrinsicFunctionCode(CH, Group));
     }
-    break;
   case FunctionIdentifierCodeGroup::Under:
     return Arena.alloc<IntrinsicFunctionIdentifierNode>(
         translateIntrinsicFunctionCode(MangledName.popFront(), Group));
