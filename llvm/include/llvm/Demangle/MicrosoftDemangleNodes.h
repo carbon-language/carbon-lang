@@ -408,6 +408,7 @@ struct LocalStaticGuardIdentifierNode : public IdentifierNode {
 
   void output(OutputStream &OS, OutputFlags Flags) const override;
 
+  bool IsThread = false;
   uint32_t ScopeIndex = 0;
 };
 

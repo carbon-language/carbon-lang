@@ -349,7 +349,10 @@ void IntrinsicFunctionIdentifierNode::output(OutputStream &OS,
 
 void LocalStaticGuardIdentifierNode::output(OutputStream &OS,
                                             OutputFlags Flags) const {
-  OS << "`local static guard'";
+  if (IsThread)
+    OS << "`local static thread guard'";
+  else
+    OS << "`local static guard'";
   if (ScopeIndex > 0)
     OS << "{" << ScopeIndex << "}";
 }
