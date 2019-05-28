@@ -34,5 +34,3 @@ add_clang_library(clangAnalysis
   clangBasic
   clangLex
   )
-
-add_subdirectory(plugins)
