@@ -15,10 +15,11 @@ define amdgpu_kernel void @test_barrier(i32 addrspace(1)* %out, i32 %size) #0 {
 ; VARIANT0-NEXT:    v_mov_b32_e32 v2, 0
 ; VARIANT0-NEXT:    s_waitcnt lgkmcnt(0)
 ; VARIANT0-NEXT:    buffer_store_dword v0, v[1:2], s[4:7], 0 addr64
-; VARIANT0-NEXT:    s_add_i32 s2, s2, -1
-; VARIANT0-NEXT:    s_waitcnt vmcnt(0) expcnt(0)
+; VARIANT0-NEXT:    s_waitcnt expcnt(0)
+; VARIANT0-NEXT:    v_sub_i32_e32 v0, vcc, s2, v0
+; VARIANT0-NEXT:    s_waitcnt vmcnt(0)
 ; VARIANT0-NEXT:    s_barrier
-; VARIANT0-NEXT:    v_sub_i32_e32 v3, vcc, s2, v0
+; VARIANT0-NEXT:    v_add_i32_e32 v3, vcc, -1, v0
 ; VARIANT0-NEXT:    v_ashrrev_i32_e32 v4, 31, v3
 ; VARIANT0-NEXT:    v_lshl_b64 v[3:4], v[3:4], 2
 ; VARIANT0-NEXT:    buffer_load_dword v0, v[3:4], s[4:7], 0 addr64
@@ -36,12 +37,12 @@ define amdgpu_kernel void @test_barrier(i32 addrspace(1)* %out, i32 %size) #0 {
 ; VARIANT1-NEXT:    v_mov_b32_e32 v2, 0
 ; VARIANT1-NEXT:    s_waitcnt lgkmcnt(0)
 ; VARIANT1-NEXT:    buffer_store_dword v0, v[1:2], s[4:7], 0 addr64
-; VARIANT1-NEXT:    s_add_i32 s2, s2, -1
+; VARIANT1-NEXT:    s_waitcnt expcnt(0)
+; VARIANT1-NEXT:    v_sub_i32_e32 v0, vcc, s2, v0
 ; VARIANT1-NEXT:    s_barrier
-; VARIANT1-NEXT:    v_sub_i32_e32 v3, vcc, s2, v0
+; VARIANT1-NEXT:    v_add_i32_e32 v3, vcc, -1, v0
 ; VARIANT1-NEXT:    v_ashrrev_i32_e32 v4, 31, v3
 ; VARIANT1-NEXT:    v_lshl_b64 v[3:4], v[3:4], 2
-; VARIANT1-NEXT:    s_waitcnt expcnt(0)
 ; VARIANT1-NEXT:    buffer_load_dword v0, v[3:4], s[4:7], 0 addr64
 ; VARIANT1-NEXT:    s_waitcnt vmcnt(0)
 ; VARIANT1-NEXT:    buffer_store_dword v0, v[1:2], s[4:7], 0 addr64
@@ -59,8 +60,8 @@ define amdgpu_kernel void @test_barrier(i32 addrspace(1)* %out, i32 %size) #0 {
 ; VARIANT2-NEXT:    global_store_dword v[1:2], v0, off
 ; VARIANT2-NEXT:    s_waitcnt vmcnt(0)
 ; VARIANT2-NEXT:    s_barrier
-; VARIANT2-NEXT:    s_add_i32 s0, s0, -1
-; VARIANT2-NEXT:    v_sub_u32_e32 v3, s0, v0
+; VARIANT2-NEXT:    v_sub_u32_e32 v0, s0, v0
+; VARIANT2-NEXT:    v_add_u32_e32 v3, -1, v0
 ; VARIANT2-NEXT:    v_ashrrev_i32_e32 v4, 31, v3
 ; VARIANT2-NEXT:    v_lshlrev_b64 v[3:4], 2, v[3:4]
 ; VARIANT2-NEXT:    v_mov_b32_e32 v0, s3
@@ -82,8 +83,8 @@ define amdgpu_kernel void @test_barrier(i32 addrspace(1)* %out, i32 %size) #0 {
 ; VARIANT3-NEXT:    v_addc_co_u32_e32 v2, vcc, 0, v2, vcc
 ; VARIANT3-NEXT:    global_store_dword v[1:2], v0, off
 ; VARIANT3-NEXT:    s_barrier
-; VARIANT3-NEXT:    s_add_i32 s0, s0, -1
-; VARIANT3-NEXT:    v_sub_u32_e32 v3, s0, v0
+; VARIANT3-NEXT:    v_sub_u32_e32 v0, s0, v0
+; VARIANT3-NEXT:    v_add_u32_e32 v3, -1, v0
 ; VARIANT3-NEXT:    v_ashrrev_i32_e32 v4, 31, v3
 ; VARIANT3-NEXT:    v_lshlrev_b64 v[3:4], 2, v[3:4]
 ; VARIANT3-NEXT:    v_mov_b32_e32 v0, s3
