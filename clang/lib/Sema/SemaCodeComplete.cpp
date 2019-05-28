@@ -5215,7 +5215,8 @@ void Sema::CodeCompleteAfterIf(Scope *S) {
 }
 
 void Sema::CodeCompleteQualifiedId(Scope *S, CXXScopeSpec &SS,
-                                   bool EnteringContext, QualType BaseType) {
+                                   bool EnteringContext, QualType BaseType,
+                                   QualType PreferredType) {
   if (SS.isEmpty() || !CodeCompleter)
     return;
 
@@ -5224,13 +5225,15 @@ void Sema::CodeCompleteQualifiedId(Scope *S, CXXScopeSpec &SS,
   // it can be useful for global code completion which have information about
   // contexts/symbols that are not in the AST.
   if (SS.isInvalid()) {
-    CodeCompletionContext CC(CodeCompletionContext::CCC_Symbol);
+    CodeCompletionContext CC(CodeCompletionContext::CCC_Symbol, PreferredType);
     CC.setCXXScopeSpecifier(SS);
     // As SS is invalid, we try to collect accessible contexts from the current
     // scope with a dummy lookup so that the completion consumer can try to
     // guess what the specified scope is.
     ResultBuilder DummyResults(*this, CodeCompleter->getAllocator(),
                                CodeCompleter->getCodeCompletionTUInfo(), CC);
+    if (!PreferredType.isNull())
+      DummyResults.setPreferredType(PreferredType);
     if (S->getEntity()) {
       CodeCompletionDeclConsumer Consumer(DummyResults, S->getEntity(),
                                           BaseType);
@@ -5253,9 +5256,12 @@ void Sema::CodeCompleteQualifiedId(Scope *S, CXXScopeSpec &SS,
   if (!isDependentScopeSpecifier(SS) && RequireCompleteDeclContext(SS, Ctx))
     return;
 
-  ResultBuilder Results(*this, CodeCompleter->getAllocator(),
-                        CodeCompleter->getCodeCompletionTUInfo(),
-                        CodeCompletionContext::CCC_Symbol);
+  ResultBuilder Results(
+      *this, CodeCompleter->getAllocator(),
+      CodeCompleter->getCodeCompletionTUInfo(),
+      CodeCompletionContext(CodeCompletionContext::CCC_Symbol, PreferredType));
+  if (!PreferredType.isNull())
+    Results.setPreferredType(PreferredType);
   Results.EnterNewScope();
 
   // The "template" keyword can follow "::" in the grammar, but only
