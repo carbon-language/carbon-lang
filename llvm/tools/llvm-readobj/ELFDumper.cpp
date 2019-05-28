@@ -3346,8 +3346,11 @@ template <class ELFT> void GNUStyle<ELFT>::printDynamic(const ELFO *Obj) {
     OS << "  Tag        Type                 Name/Value\n";
   for (auto Entry : Table) {
     uintX_t Tag = Entry.getTag();
-    std::string TypeString = std::string("(") + getTypeString(Obj->getHeader()->e_machine, Tag) + ")";
-    OS << "  " << format_hex(Tag, Is64 ? 18 : 10) << format(" %-20s ", TypeString.c_str());
+    std::string TypeString = std::string("(") +
+                             getTypeString(Obj->getHeader()->e_machine, Tag) +
+                             ")";
+    OS << "  " << format_hex(Tag, Is64 ? 18 : 10)
+       << format(" %-20s ", TypeString.c_str());
     this->dumper()->printDynamicEntry(OS, Tag, Entry.getVal());
     OS << "\n";
   }
@@ -4918,7 +4921,6 @@ void LLVMStyle<ELFT>::printELFLinkerOptions(const ELFFile<ELFT> *Obj) {
 template <class ELFT>
 void LLVMStyle<ELFT>::printMipsGOT(const MipsGOTParser<ELFT> &Parser) {
   auto PrintEntry = [&](const Elf_Addr *E) {
-		// XXX: here?
     W.printHex("Address", Parser.getGotAddress(E));
     W.printNumber("Access", Parser.getGotOffset(E));
     W.printHex("Initial", *E);
@@ -4983,7 +4985,6 @@ void LLVMStyle<ELFT>::printMipsGOT(const MipsGOTParser<ELFT> &Parser) {
 template <class ELFT>
 void LLVMStyle<ELFT>::printMipsPLT(const MipsGOTParser<ELFT> &Parser) {
   auto PrintEntry = [&](const Elf_Addr *E) {
-		// XXX: here? no.
     W.printHex("Address", Parser.getPltAddress(E));
     W.printHex("Initial", *E);
   };
