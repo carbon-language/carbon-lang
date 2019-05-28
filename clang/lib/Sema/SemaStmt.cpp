@@ -4228,6 +4228,9 @@ buildCapturedStmtCaptureList(SmallVectorImpl<CapturedStmt::Capture> &Captures,
                              SmallVectorImpl<Expr *> &CaptureInits,
                              ArrayRef<sema::Capture> Candidates) {
   for (const sema::Capture &Cap : Candidates) {
+    if (Cap.isInvalid())
+      continue;
+
     if (Cap.isThisCapture()) {
       Captures.push_back(CapturedStmt::Capture(Cap.getLocation(),
                                                CapturedStmt::VCK_This));

@@ -854,7 +854,7 @@ FieldDecl *Sema::buildInitCaptureField(LambdaScopeInfo *LSI, VarDecl *Var) {
 
   LSI->addCapture(Var, /*isBlock*/false, Var->getType()->isReferenceType(),
                   /*isNested*/false, Var->getLocation(), SourceLocation(),
-                  Var->getType(), Var->getInit());
+                  Var->getType(), Var->getInit(), /*Invalid*/false);
   return Field;
 }
 
@@ -1585,6 +1585,9 @@ ExprResult Sema::BuildLambdaExpr(SourceLocation StartLoc, SourceLocation EndLoc,
 
     for (unsigned I = 0, N = LSI->Captures.size(); I != N; ++I, ++CurField) {
       const Capture &From = LSI->Captures[I];
+
+      if (From.isInvalid())
+        return ExprError();
 
       assert(!From.isBlockCapture() && "Cannot capture __block variables");
       bool IsImplicit = I >= LSI->NumExplicitCaptures;

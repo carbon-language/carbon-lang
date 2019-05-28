@@ -539,23 +539,28 @@ class Capture {
   /// the lambda.
   bool NonODRUsed = false;
 
+  /// Whether the capture is invalid (a capture was required but the entity is
+  /// non-capturable).
+  bool Invalid = false;
+
 public:
   Capture(VarDecl *Var, bool Block, bool ByRef, bool IsNested,
-          SourceLocation Loc, SourceLocation EllipsisLoc,
-          QualType CaptureType, Expr *Cpy)
+          SourceLocation Loc, SourceLocation EllipsisLoc, QualType CaptureType,
+          Expr *Cpy, bool Invalid)
       : VarAndNestedAndThis(Var, IsNested ? IsNestedCapture : 0),
         InitExprAndCaptureKind(
-            Cpy, !Var ? Cap_VLA : Block ? Cap_Block : ByRef ? Cap_ByRef
-                                                            : Cap_ByCopy),
-        Loc(Loc), EllipsisLoc(EllipsisLoc), CaptureType(CaptureType) {}
+            Cpy, !Var ? Cap_VLA
+                      : Block ? Cap_Block : ByRef ? Cap_ByRef : Cap_ByCopy),
+        Loc(Loc), EllipsisLoc(EllipsisLoc), CaptureType(CaptureType),
+        Invalid(Invalid) {}
 
   enum IsThisCapture { ThisCapture };
   Capture(IsThisCapture, bool IsNested, SourceLocation Loc,
-          QualType CaptureType, Expr *Cpy, const bool ByCopy)
+          QualType CaptureType, Expr *Cpy, const bool ByCopy, bool Invalid)
       : VarAndNestedAndThis(
             nullptr, (IsThisCaptured | (IsNested ? IsNestedCapture : 0))),
-        InitExprAndCaptureKind(Cpy, ByCopy ? Cap_ByCopy : Cap_ByRef),
-        Loc(Loc), CaptureType(CaptureType) {}
+        InitExprAndCaptureKind(Cpy, ByCopy ? Cap_ByCopy : Cap_ByRef), Loc(Loc),
+        CaptureType(CaptureType), Invalid(Invalid) {}
 
   bool isThisCapture() const {
     return VarAndNestedAndThis.getInt() & IsThisCaptured;
@@ -584,6 +589,8 @@ public:
   bool isNested() const {
     return VarAndNestedAndThis.getInt() & IsNestedCapture;
   }
+
+  bool isInvalid() const { return Invalid; }
 
   bool isODRUsed() const { return ODRUsed; }
   bool isNonODRUsed() const { return NonODRUsed; }
@@ -650,9 +657,9 @@ public:
 
   void addCapture(VarDecl *Var, bool isBlock, bool isByref, bool isNested,
                   SourceLocation Loc, SourceLocation EllipsisLoc,
-                  QualType CaptureType, Expr *Cpy) {
+                  QualType CaptureType, Expr *Cpy, bool Invalid) {
     Captures.push_back(Capture(Var, isBlock, isByref, isNested, Loc,
-                               EllipsisLoc, CaptureType, Cpy));
+                               EllipsisLoc, CaptureType, Cpy, Invalid));
     CaptureMap[Var] = Captures.size();
   }
 
@@ -660,7 +667,7 @@ public:
     Captures.push_back(Capture(/*Var*/ nullptr, /*isBlock*/ false,
                                /*isByref*/ false, /*isNested*/ false, Loc,
                                /*EllipsisLoc*/ SourceLocation(), CaptureType,
-                               /*Cpy*/ nullptr));
+                               /*Cpy*/ nullptr, /*Invalid*/ false));
   }
 
   // Note, we do not need to add the type of 'this' since that is always
@@ -1016,7 +1023,7 @@ CapturingScopeInfo::addThisCapture(bool isNested, SourceLocation Loc,
                                    Expr *Cpy,
                                    const bool ByCopy) {
   Captures.push_back(Capture(Capture::ThisCapture, isNested, Loc, QualType(),
-                             Cpy, ByCopy));
+                             Cpy, ByCopy, /*Invalid*/ false));
   CXXThisCaptureIndex = Captures.size();
 }
 
