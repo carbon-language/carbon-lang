@@ -126,27 +126,13 @@ if( NOT CLANG_BUILT_STANDALONE )
 endif()
 
 if (CLANG_ENABLE_STATIC_ANALYZER)
-  add_subdirectory(Analysis/plugins)
-  list(APPEND CLANG_TEST_DEPS clang-analyzer-plugin)
-
-  # check-all would launch those tests via check-clang.
-  set(EXCLUDE_FROM_ALL ON)
-
-  add_lit_testsuite(check-clang-analyzer "Running the Clang analyzer tests"
-    ${CMAKE_CURRENT_BINARY_DIR}/Analysis
-    PARAMS ${ANALYZER_TEST_PARAMS}
-    DEPENDS ${CLANG_TEST_DEPS})
-  set_target_properties(check-clang-analyzer PROPERTIES FOLDER "Clang tests")
-
-  if (LLVM_WITH_Z3)
-    add_lit_testsuite(check-clang-analyzer-z3 "Running the Clang analyzer tests, using Z3 as a solver"
-      ${CMAKE_CURRENT_BINARY_DIR}/Analysis
-      PARAMS ${ANALYZER_TEST_PARAMS_Z3}
-      DEPENDS ${CLANG_TEST_DEPS})
-    set_target_properties(check-clang-analyzer-z3 PROPERTIES FOLDER "Clang tests")
+  if (LLVM_ENABLE_PLUGINS)
+    set(CLANG_ANALYZER_PLUGIN_DEPS
+      SampleAnalyzerPlugin
+      CheckerDependencyHandlingAnalyzerPlugin
+      CheckerOptionHandlingAnalyzerPlugin
+      )
   endif()
-
-  set(EXCLUDE_FROM_ALL OFF)
 endif()
 
 add_custom_target(clang-test-depends DEPENDS ${CLANG_TEST_DEPS})
