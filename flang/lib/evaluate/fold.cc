@@ -218,8 +218,8 @@ static inline Expr<TR> FoldElementalIntrinsicHelper(FoldingContext &context,
   static_assert(
       (... && IsSpecificIntrinsicType<TA>));  // TODO derived types for MERGE?
   static_assert(sizeof...(TA) > 0);
-  std::tuple<const Constant<TA> *...> args{UnwrapExpr<Constant<TA>>(
-      *funcRef.arguments()[I].value().UnwrapExpr())...};
+  std::tuple<const Constant<TA> *...> args{
+      UnwrapConstantValue<TA>(funcRef.arguments()[I])...};
   if ((... && (std::get<I>(args) != nullptr))) {
     // Compute the shape of the result based on shapes of arguments
     ConstantSubscripts shape;
@@ -310,16 +310,23 @@ static std::optional<std::int64_t> GetInt64ArgOr(
   }
 }
 
-template<int KIND>
-Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
-    FunctionRef<Type<TypeCategory::Integer, KIND>> &&funcRef) {
-  using T = Type<TypeCategory::Integer, KIND>;
+template<typename T>
+ActualArguments &FoldArguments(
+    FoldingContext &context, FunctionRef<T> &funcRef) {
   ActualArguments &args{funcRef.arguments()};
   for (std::optional<ActualArgument> &arg : args) {
     if (auto *expr{UnwrapExpr<Expr<SomeType>>(arg)}) {
       *expr = Fold(context, std::move(*expr));
     }
   }
+  return args;
+}
+
+template<int KIND>
+Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
+    FunctionRef<Type<TypeCategory::Integer, KIND>> &&funcRef) {
+  using T = Type<TypeCategory::Integer, KIND>;
+  ActualArguments &args{FoldArguments(context, funcRef)};
   if (auto *intrinsic{std::get_if<SpecificIntrinsic>(&funcRef.proc().u)}) {
     const std::string name{intrinsic->name};
     if (name == "abs") {
@@ -594,14 +601,7 @@ Expr<Type<TypeCategory::Real, KIND>> FoldOperation(FoldingContext &context,
     FunctionRef<Type<TypeCategory::Real, KIND>> &&funcRef) {
   using T = Type<TypeCategory::Real, KIND>;
   using ComplexT = Type<TypeCategory::Complex, KIND>;
-  ActualArguments &args{funcRef.arguments()};
-  for (std::optional<ActualArgument> &arg : args) {
-    if (arg.has_value()) {
-      if (auto *expr{arg->UnwrapExpr()}) {
-        *expr = Fold(context, std::move(*expr));
-      }
-    }
-  }
+  ActualArguments &args{FoldArguments(context, funcRef)};
   if (auto *intrinsic{std::get_if<SpecificIntrinsic>(&funcRef.proc().u)}) {
     const std::string name{intrinsic->name};
     if (name == "acos" || name == "acosh" || name == "asin" ||
@@ -720,14 +720,7 @@ template<int KIND>
 Expr<Type<TypeCategory::Complex, KIND>> FoldOperation(FoldingContext &context,
     FunctionRef<Type<TypeCategory::Complex, KIND>> &&funcRef) {
   using T = Type<TypeCategory::Complex, KIND>;
-  ActualArguments &args{funcRef.arguments()};
-  for (std::optional<ActualArgument> &arg : args) {
-    if (arg.has_value()) {
-      if (auto *expr{arg->UnwrapExpr()}) {
-        *expr = Fold(context, std::move(*expr));
-      }
-    }
-  }
+  ActualArguments &args{FoldArguments(context, funcRef)};
   if (auto *intrinsic{std::get_if<SpecificIntrinsic>(&funcRef.proc().u)}) {
     const std::string name{intrinsic->name};
     if (name == "acos" || name == "acosh" || name == "asin" ||
@@ -775,14 +768,7 @@ template<int KIND>
 Expr<Type<TypeCategory::Logical, KIND>> FoldOperation(FoldingContext &context,
     FunctionRef<Type<TypeCategory::Logical, KIND>> &&funcRef) {
   using T = Type<TypeCategory::Logical, KIND>;
-  ActualArguments &args{funcRef.arguments()};
-  for (std::optional<ActualArgument> &arg : args) {
-    if (arg.has_value()) {
-      if (auto *expr{arg->UnwrapExpr()}) {
-        *expr = Fold(context, std::move(*expr));
-      }
-    }
-  }
+  ActualArguments &args{FoldArguments(context, funcRef)};
   if (auto *intrinsic{std::get_if<SpecificIntrinsic>(&funcRef.proc().u)}) {
     std::string name{intrinsic->name};
     if (name == "all") {
