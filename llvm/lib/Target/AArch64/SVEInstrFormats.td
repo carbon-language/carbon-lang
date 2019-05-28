@@ -5286,3 +5286,54 @@ multiclass sve2_hist_gen_vector<string asm> {
   def _S : sve2_hist_gen_vector<0b0, asm, ZPR32>;
   def _D : sve2_hist_gen_vector<0b1, asm, ZPR64>;
 }
+
+//===----------------------------------------------------------------------===//
+// SVE2 Crypto Extensions Group
+//===----------------------------------------------------------------------===//
+
+class sve2_crypto_cons_bin_op<bit opc, string asm, ZPRRegOp zprty>
+: I<(outs zprty:$Zd), (ins zprty:$Zn, zprty:$Zm),
+  asm, "\t$Zd, $Zn, $Zm",
+  "",
+  []>, Sched<[]> {
+  bits<5> Zd;
+  bits<5> Zn;
+  bits<5> Zm;
+  let Inst{31-21} = 0b01000101001;
+  let Inst{20-16} = Zm;
+  let Inst{15-11} = 0b11110;
+  let Inst{10}    = opc;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zd;
+}
+
+class sve2_crypto_des_bin_op<bits<2> opc, string asm, ZPRRegOp zprty>
+: I<(outs zprty:$Zdn), (ins zprty:$_Zdn, zprty:$Zm),
+  asm, "\t$Zdn, $_Zdn, $Zm",
+  "",
+  []>, Sched<[]> {
+  bits<5> Zdn;
+  bits<5> Zm;
+  let Inst{31-17} = 0b010001010010001;
+  let Inst{16}    = opc{1};
+  let Inst{15-11} = 0b11100;
+  let Inst{10}    = opc{0};
+  let Inst{9-5}   = Zm;
+  let Inst{4-0}   = Zdn;
+
+  let Constraints = "$Zdn = $_Zdn";
+}
+
+class sve2_crypto_unary_op<bit opc, string asm>
+: I<(outs ZPR8:$Zdn), (ins ZPR8:$_Zdn),
+  asm, "\t$Zdn, $_Zdn",
+  "",
+  []>, Sched<[]> {
+  bits<5> Zdn;
+  let Inst{31-11} = 0b010001010010000011100;
+  let Inst{10}    = opc;
+  let Inst{9-5}   = 0b00000;
+  let Inst{4-0}   = Zdn;
+
+  let Constraints = "$Zdn = $_Zdn";
+}
