@@ -88,8 +88,15 @@ std::string QuoteCharacterLiteralHelper(
   std::string result{'"'};
   const auto emit{[&](char ch) { result += ch; }};
   for (auto ch : str) {
-    char32_t ch32{static_cast<unsigned char>(ch)};
-    EmitQuotedChar(ch32, emit, emit, doubleDoubleQuotes, doubleBackslash);
+    using CharT = std::decay_t<decltype(ch)>;
+    if constexpr (std::is_same_v<char, CharT>) {
+      // char may be signed depending on host.
+      char32_t ch32{static_cast<unsigned char>(ch)};
+      EmitQuotedChar(ch32, emit, emit, doubleDoubleQuotes, doubleBackslash);
+    } else {
+      char32_t ch32{ch};
+      EmitQuotedChar(ch32, emit, emit, doubleDoubleQuotes, doubleBackslash);
+    }
   }
   result += '"';
   return result;
@@ -136,6 +143,7 @@ std::optional<std::u32string> DecodeUTF8(const std::string &s) {
         return std::nullopt;  // not valid UTF-8
       }
     }
+    result.append(1, ch);
     bytes -= charBytes;
   }
   return {result};
