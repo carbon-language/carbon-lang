@@ -507,8 +507,13 @@ class Capture {
     Cap_ByCopy, Cap_ByRef, Cap_Block, Cap_VLA
   };
 
-  /// If !CapturesThis, the captured variable.
-  VarDecl *CapturedVar = nullptr;
+  union {
+    /// If Kind == Cap_VLA, the captured type.
+    const VariableArrayType *CapturedVLA;
+
+    /// Otherwise, the captured variable (if any).
+    VarDecl *CapturedVar;
+  };
 
   /// Expression to initialize a field of the given type. This is only required
   /// if we are capturing ByVal and the variable's type has a non-trivial copy
@@ -553,8 +558,7 @@ public:
           Expr *Cpy, bool Invalid)
       : CapturedVar(Var), InitExpr(Cpy), Loc(Loc), EllipsisLoc(EllipsisLoc),
         CaptureType(CaptureType),
-        Kind(!Var ? Cap_VLA
-                  : Block ? Cap_Block : ByRef ? Cap_ByRef : Cap_ByCopy),
+        Kind(Block ? Cap_Block : ByRef ? Cap_ByRef : Cap_ByCopy),
         Nested(IsNested), CapturesThis(false), ODRUsed(false),
         NonODRUsed(false), Invalid(Invalid) {}
 
@@ -565,6 +569,13 @@ public:
         Kind(ByCopy ? Cap_ByCopy : Cap_ByRef), Nested(IsNested),
         CapturesThis(true), ODRUsed(false), NonODRUsed(false),
         Invalid(Invalid) {}
+
+  enum IsVLACapture { VLACapture };
+  Capture(IsVLACapture, const VariableArrayType *VLA, bool IsNested,
+          SourceLocation Loc, QualType CaptureType)
+      : CapturedVLA(VLA), Loc(Loc), CaptureType(CaptureType), Kind(Cap_VLA),
+        Nested(IsNested), CapturesThis(false), ODRUsed(false),
+        NonODRUsed(false), Invalid(false) {}
 
   bool isThisCapture() const { return CapturesThis; }
   bool isVariableCapture() const {
@@ -592,6 +603,11 @@ public:
   VarDecl *getVariable() const {
     assert(isVariableCapture());
     return CapturedVar;
+  }
+
+  const VariableArrayType *getCapturedVLAType() const {
+    assert(isVLATypeCapture());
+    return CapturedVLA;
   }
 
   /// Retrieve the location at which this variable was captured.
@@ -653,17 +669,13 @@ public:
     CaptureMap[Var] = Captures.size();
   }
 
-  void addVLATypeCapture(SourceLocation Loc, QualType CaptureType) {
-    Captures.push_back(Capture(/*Var*/ nullptr, /*isBlock*/ false,
-                               /*isByref*/ false, /*isNested*/ false, Loc,
-                               /*EllipsisLoc*/ SourceLocation(), CaptureType,
-                               /*Cpy*/ nullptr, /*Invalid*/ false));
+  void addVLATypeCapture(SourceLocation Loc, const VariableArrayType *VLAType,
+                         QualType CaptureType) {
+    Captures.push_back(Capture(Capture::VLACapture, VLAType,
+                               /*FIXME: IsNested*/ false, Loc, CaptureType));
   }
 
-  // Note, we do not need to add the type of 'this' since that is always
-  // retrievable from Sema::getCurrentThisType - and is also encoded within the
-  // type of the corresponding FieldDecl.
-  void addThisCapture(bool isNested, SourceLocation Loc,
+  void addThisCapture(bool isNested, SourceLocation Loc, QualType CaptureType,
                       Expr *Cpy, bool ByCopy);
 
   /// Determine whether the C++ 'this' is captured.
@@ -1010,9 +1022,9 @@ void FunctionScopeInfo::recordUseOfWeak(const ExprT *E, bool IsRead) {
 
 inline void
 CapturingScopeInfo::addThisCapture(bool isNested, SourceLocation Loc,
-                                   Expr *Cpy,
+                                   QualType CaptureType, Expr *Cpy,
                                    const bool ByCopy) {
-  Captures.push_back(Capture(Capture::ThisCapture, isNested, Loc, QualType(),
+  Captures.push_back(Capture(Capture::ThisCapture, isNested, Loc, CaptureType,
                              Cpy, ByCopy, /*Invalid*/ false));
   CXXThisCaptureIndex = Captures.size();
 }
