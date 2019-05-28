@@ -2454,6 +2454,14 @@ SDValue DAGCombiner::visitADDLikeCommutative(SDValue N0, SDValue N1,
   if (SDValue V = foldAddSubMasked1(true, N0, N1, DAG, DL))
     return V;
 
+  // Hoist one-use subtraction by constant:  (x - C) + y  ->  (x + y) - C
+  // This is necessary because SUB(X,C) -> ADD(X,-C) doesn't work for vectors.
+  if (N0.hasOneUse() && N0.getOpcode() == ISD::SUB &&
+      isConstantOrConstantVector(N0.getOperand(1))) {
+    SDValue Add = DAG.getNode(ISD::ADD, DL, VT, N0.getOperand(0), N1);
+    return DAG.getNode(ISD::SUB, DL, VT, Add, N0.getOperand(1));
+  }
+
   // If the target's bool is represented as 0/1, prefer to make this 'sub 0/1'
   // rather than 'add 0/-1' (the zext should get folded).
   // add (sext i1 Y), X --> sub X, (zext i1 Y)
