@@ -50,6 +50,17 @@ macro(set_flag_in_var flagsvar regex flag)
   set(${flagsvar} "${${flagsvar}}" CACHE STRING "${flagsvar_docs}" FORCE)
 endmacro(set_flag_in_var)
 
+macro(disable_MT_if_LLDB build message)
+  if (LLVM_TOOL_LLDB_BUILD)
+    if ((NOT ${build} STREQUAL "DEBUG") AND (LLVM_USE_CRT_${build} STREQUAL "MT"))
+      if (LLVM_TOOL_CLANG_BUILD OR LLVM_TOOL_LLD_BUILD)
+        set(performance " This might impact runtime performance for Clang or LLD. Preferably build them separately.")
+      endif()
+      message(WARNING "${message}.${performance}")
+      set(LLVM_USE_CRT_${build} "MD")
+    endif()
+  endif()
+endmacro(disable_MT_if_LLDB)
 
 macro(choose_msvc_crt MSVC_CRT)
   if(LLVM_USE_CRT)
@@ -66,13 +77,26 @@ variables (LLVM_USE_CRT_DEBUG, etc) instead.")
       get_current_crt(LLVM_USE_CRT_${build}
         MSVC_CRT_REGEX
         CMAKE_CXX_FLAGS_${build})
+
+      # Make /MT the default in Release builds to make them faster
+      # and avoid the DLL function thunking.
+      if ((${build} STREQUAL "MINSIZEREL") OR
+          (${build} STREQUAL "RELEASE") OR
+          (${build} STREQUAL "RELWITHDEBINFO"))
+          set(LLVM_USE_CRT_${build} "MT")
+      endif()
+
+      disable_MT_if_LLDB(${build} "Using /MD as required by LLDB")
+
       set(LLVM_USE_CRT_${build}
         "${LLVM_USE_CRT_${build}}"
         CACHE STRING "Specify VC++ CRT to use for ${build_type} configurations."
         FORCE)
       set_property(CACHE LLVM_USE_CRT_${build}
         PROPERTY STRINGS ;${${MSVC_CRT}})
-    endif(NOT LLVM_USE_CRT_${build})
+    else()
+      disable_MT_if_LLDB(${build} "Disabling /MT as required by LLDB")
+    endif()
   endforeach(build_type)
 
   foreach(build_type ${CMAKE_CONFIGURATION_TYPES} ${CMAKE_BUILD_TYPE})
