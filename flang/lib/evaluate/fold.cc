@@ -378,6 +378,28 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
       } else {
         common::die("exponent argument must be real");
       }
+    } else if (name == "iachar" || name == "ichar") {
+      auto *someChar{UnwrapArgument<SomeCharacter>(args[0])};
+      CHECK(someChar != nullptr);
+      if (auto len{ToInt64(someChar->LEN())}) {
+        if (len.value() != 1) {
+          // Do not die, this was not checked before
+          context.messages().Say(
+              "Character in intrinsic function %s must have length one"_en_US,
+              name);
+        } else {
+          return std::visit(
+              [&funcRef, &context](const auto &str) -> Expr<T> {
+                using Char = typename std::decay_t<decltype(str)>::Result;
+                return FoldElementalIntrinsic<T, Char>(context,
+                    std::move(funcRef),
+                    ScalarFunc<T, Char>([](const Scalar<Char> &c) {
+                      return Scalar<T>{CharacterUtils<Char::kind>::ICHAR(c)};
+                    }));
+              },
+              someChar->u);
+        }
+      }
     } else if (name == "iand" || name == "ior" || name == "ieor") {
       // convert boz
       for (int i{0}; i <= 1; ++i) {
@@ -593,8 +615,8 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
     }
     // TODO:
     // ceiling, count, cshift, dot_product, eoshift,
-    // findloc, floor, iachar, iall, iany, iparity, ibits, ichar, image_status,
-    // index, ishftc, lbound, len_trim, matmul, max, maxloc, maxval, merge, min,
+    // findloc, floor, iall, iany, iparity, ibits, image_status, index, ishftc,
+    // lbound, len_trim, matmul, max, maxloc, maxval, merge, min,
     // minloc, minval, mod, modulo, nint, not, pack, product, reduce, reshape,
     // scan, selected_char_kind,
     // sign, spread, sum, transfer, transpose, ubound, unpack, verify
@@ -888,35 +910,39 @@ Expr<Type<TypeCategory::Character, KIND>> FoldOperation(FoldingContext &context,
   }
   if (auto *intrinsic{std::get_if<SpecificIntrinsic>(&funcRef.proc().u)}) {
     std::string name{intrinsic->name};
-    if (name == "achar") {
-      // TODO
-    } else if (name == "char") {
-      if (auto *sn{UnwrapArgument<SomeInteger>(args[0])}) {
-        return std::visit(
-            [&funcRef, &context](const auto &n) -> Expr<T> {
-              using IntT = typename std::decay_t<decltype(n)>::Result;
-              return FoldElementalIntrinsic<T, IntT>(context,
-                  std::move(funcRef),
-                  ScalarFunc<T, IntT>([&context](const Scalar<IntT> &i) {
-                    std::int64_t code{i.ToInt64()};
-                    if (auto result{CodeToChar<KIND>(code)}) {
-                      return *result;
-                    } else {
-                      context.messages().Say(
-                          "Character code %lld is invalid for CHARACTER(%d) type"_en_US,
-                          code, KIND);
-                      return CodeToChar<KIND>(0).value();
-                    }
-                  }));
-            },
-            sn->u);
-      } else {
-        common::die("expected integer argument in CHAR");
-      }
+    if (name == "achar" || name == "char") {
+      const auto validate{name == "achar"
+              ? &CharacterUtils<1>::IsValidCharacterCode
+              : &CharacterUtils<KIND>::IsValidCharacterCode};
+      auto *sn{UnwrapArgument<SomeInteger>(args[0])};
+      CHECK(sn != nullptr);
+      return std::visit(
+          [&funcRef, &context, &name, &validate](const auto &n) -> Expr<T> {
+            using IntT = typename std::decay_t<decltype(n)>::Result;
+            return FoldElementalIntrinsic<T, IntT>(context, std::move(funcRef),
+                ScalarFunc<T, IntT>([&context, &name, &validate](
+                                        const Scalar<IntT> &i) {
+                  std::uint64_t code{i.ToUInt64()};
+                  if (!validate(code)) {
+                    context.messages().Say(
+                        "Character code %lld is invalid for CHARACTER(%d) type in %s intrinsic function"_en_US,
+                        code, KIND, name);
+                  }
+                  return CharacterUtils<KIND>::CHAR(code);
+                }));
+          },
+          sn->u);
+    } else if (name == "adjustl") {
+      return FoldElementalIntrinsic<T, T>(
+          context, std::move(funcRef), CharacterUtils<KIND>::ADJUSTL);
+    } else if (name == "adjustr") {
+      return FoldElementalIntrinsic<T, T>(
+          context, std::move(funcRef), CharacterUtils<KIND>::ADJUSTR);
+    } else if (name == "new_line") {
+      return Expr<T>{Constant<T>{CharacterUtils<KIND>::NEW_LINE()}};
     }
-    // TODO: achar, adjustl, adjustr, char, cshift, eoshift, max, maxval, merge,
-    // min, minval, pack, reduce, repeat, reshape, spread, transfer, transpose,
-    // trim, unpack
+    // TODO: cshift, eoshift, max, maxval, merge, min, minval, pack, reduce,
+    // repeat, reshape, spread, transfer, transpose, trim, unpack
   }
   return Expr<T>{std::move(funcRef)};
 }

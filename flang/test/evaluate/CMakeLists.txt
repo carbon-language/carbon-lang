@@ -121,6 +121,7 @@ set(FOLDING_TESTS
   folding02.f90
   folding03.f90
   folding04.f90
+  folding05.f90
 )
 
 
