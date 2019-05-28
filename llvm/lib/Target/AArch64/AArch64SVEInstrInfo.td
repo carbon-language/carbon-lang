@@ -1289,6 +1289,11 @@ let Predicates = [HasSVE2] in {
   // SVE2 histogram generation (vector)
   defm HISTCNT_ZPzZZ : sve2_hist_gen_vector<"histcnt">;
 
+  // SVE2 floating-point convert precision
+  defm FCVTXNT_ZPmZ : sve2_fp_convert_down_odd_rounding<"fcvtxnt">;
+  defm FCVTNT_ZPmZ  : sve2_fp_convert_down_narrow<"fcvtnt">;
+  defm FCVTLT_ZPmZ  : sve2_fp_convert_up_long<"fcvtlt">;
+
   // Predicated shifts
   defm SQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0110, "sqshl">;
   defm UQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0111, "uqshl">;
