@@ -21022,6 +21022,35 @@ static SDValue LowerSIGN_EXTEND(SDValue Op, const X86Subtarget &Subtarget,
   return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, OpLo, OpHi);
 }
 
+/// Change a 256-bit vector store into a pair of 128-bit vector stores.
+static SDValue split256BitStore(StoreSDNode *Store, SelectionDAG &DAG) {
+  SDValue StoredVal = Store->getValue();
+  assert(StoredVal.getValueType().is256BitVector() && "Expecting 256-bit op");
+
+  // Splitting volatile memory ops is not allowed unless the operation was not
+  // legal to begin with. We are assuming the input op is legal (this transform
+  // is only used for targets with AVX).
+  if (Store->isVolatile())
+    return SDValue();
+
+  MVT StoreVT = StoredVal.getSimpleValueType();
+  unsigned NumElems = StoreVT.getVectorNumElements();
+  SDLoc DL(Store);
+  SDValue Value0 = extract128BitVector(StoredVal, 0, DAG, DL);
+  SDValue Value1 = extract128BitVector(StoredVal, NumElems / 2, DAG, DL);
+  SDValue Ptr0 = Store->getBasePtr();
+  SDValue Ptr1 = DAG.getMemBasePlusOffset(Ptr0, 16, DL);
+  unsigned Alignment = Store->getAlignment();
+  SDValue Ch0 =
+      DAG.getStore(Store->getChain(), DL, Value0, Ptr0, Store->getPointerInfo(),
+                   Alignment, Store->getMemOperand()->getFlags());
+  SDValue Ch1 =
+      DAG.getStore(Store->getChain(), DL, Value1, Ptr1,
+                   Store->getPointerInfo().getWithOffset(16),
+                   MinAlign(Alignment, 16), Store->getMemOperand()->getFlags());
+  return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, Ch0, Ch1);
+}
+
 static SDValue LowerStore(SDValue Op, const X86Subtarget &Subtarget,
                           SelectionDAG &DAG) {
   StoreSDNode *St = cast<StoreSDNode>(Op.getNode());
@@ -39345,20 +39374,7 @@ static SDValue combineStore(SDNode *N, SelectionDAG &DAG,
     if (NumElems < 2)
       return SDValue();
 
-    SDValue Value0 = extract128BitVector(StoredVal, 0, DAG, dl);
-    SDValue Value1 = extract128BitVector(StoredVal, NumElems / 2, DAG, dl);
-
-    SDValue Ptr0 = St->getBasePtr();
-    SDValue Ptr1 = DAG.getMemBasePlusOffset(Ptr0, 16, dl);
-
-    SDValue Ch0 =
-        DAG.getStore(St->getChain(), dl, Value0, Ptr0, St->getPointerInfo(),
-                     Alignment, St->getMemOperand()->getFlags());
-    SDValue Ch1 =
-        DAG.getStore(St->getChain(), dl, Value1, Ptr1,
-                     St->getPointerInfo().getWithOffset(16),
-                     MinAlign(Alignment, 16U), St->getMemOperand()->getFlags());
-    return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Ch0, Ch1);
+    return split256BitStore(St, DAG);
   }
 
   // Optimize trunc store (of multiple scalars) to shuffle and store.
