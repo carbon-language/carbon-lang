@@ -2064,7 +2064,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       OR = computeOverflowForUnsignedAdd(Arg0, Arg1, II);
       if (OR == OverflowResult::NeverOverflows)
         return BinaryOperator::CreateNUWAdd(Arg0, Arg1);
-      if (OR == OverflowResult::AlwaysOverflows)
+      if (OR == OverflowResult::AlwaysOverflowsHigh)
         return replaceInstUsesWith(*II,
                                    ConstantInt::getAllOnesValue(II->getType()));
       break;
@@ -2072,7 +2072,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       OR = computeOverflowForUnsignedSub(Arg0, Arg1, II);
       if (OR == OverflowResult::NeverOverflows)
         return BinaryOperator::CreateNUWSub(Arg0, Arg1);
-      if (OR == OverflowResult::AlwaysOverflows)
+      if (OR == OverflowResult::AlwaysOverflowsLow)
         return replaceInstUsesWith(*II,
                                    ConstantInt::getNullValue(II->getType()));
       break;
