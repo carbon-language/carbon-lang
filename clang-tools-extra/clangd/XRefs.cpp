@@ -286,7 +286,7 @@ llvm::Optional<Location> makeLocation(ASTContext &AST, SourceLocation TokLoc,
 
 std::vector<LocatedSymbol> locateSymbolAt(ParsedAST &AST, Position Pos,
                                           const SymbolIndex *Index) {
-  const auto &SM = AST.getASTContext().getSourceManager();
+  const auto &SM = AST.getSourceManager();
   auto MainFilePath =
       getCanonicalPath(SM.getFileEntryForID(SM.getMainFileID()), SM);
   if (!MainFilePath) {
@@ -461,7 +461,7 @@ findRefs(const std::vector<const Decl *> &Decls, ParsedAST &AST) {
 
 std::vector<DocumentHighlight> findDocumentHighlights(ParsedAST &AST,
                                                       Position Pos) {
-  const SourceManager &SM = AST.getASTContext().getSourceManager();
+  const SourceManager &SM = AST.getSourceManager();
   auto Symbols = getSymbolAtPosition(
       AST, getBeginningOfIdentifier(AST, Pos, SM.getMainFileID()));
   auto References = findRefs(Symbols.Decls, AST);
@@ -719,7 +719,7 @@ static HoverInfo getHoverContents(QualType T, const Decl *D,
 /// Generate a \p Hover object given the macro \p MacroDecl.
 static HoverInfo getHoverContents(MacroDecl Decl, ParsedAST &AST) {
   HoverInfo HI;
-  SourceManager &SM = AST.getASTContext().getSourceManager();
+  SourceManager &SM = AST.getSourceManager();
   HI.Name = Decl.Name;
   HI.Kind = indexSymbolKindToSymbolKind(
       index::getSymbolInfoForMacro(*Decl.Info).Kind);
@@ -864,9 +864,8 @@ bool hasDeducedType(ParsedAST &AST, SourceLocation SourceLocationBeg) {
 llvm::Optional<HoverInfo> getHover(ParsedAST &AST, Position Pos,
                                    format::FormatStyle Style) {
   llvm::Optional<HoverInfo> HI;
-  const SourceManager &SourceMgr = AST.getASTContext().getSourceManager();
-  SourceLocation SourceLocationBeg =
-      getBeginningOfIdentifier(AST, Pos, SourceMgr.getMainFileID());
+  SourceLocation SourceLocationBeg = getBeginningOfIdentifier(
+      AST, Pos, AST.getSourceManager().getMainFileID());
   // Identified symbols at a specific position.
   auto Symbols = getSymbolAtPosition(AST, SourceLocationBeg);
 
@@ -900,7 +899,7 @@ std::vector<Location> findReferences(ParsedAST &AST, Position Pos,
   if (!Limit)
     Limit = std::numeric_limits<uint32_t>::max();
   std::vector<Location> Results;
-  const SourceManager &SM = AST.getASTContext().getSourceManager();
+  const SourceManager &SM = AST.getSourceManager();
   auto MainFilePath =
       getCanonicalPath(SM.getFileEntryForID(SM.getMainFileID()), SM);
   if (!MainFilePath) {
@@ -949,7 +948,7 @@ std::vector<Location> findReferences(ParsedAST &AST, Position Pos,
 }
 
 std::vector<SymbolDetails> getSymbolInfo(ParsedAST &AST, Position Pos) {
-  const SourceManager &SM = AST.getASTContext().getSourceManager();
+  const SourceManager &SM = AST.getSourceManager();
 
   auto Loc = getBeginningOfIdentifier(AST, Pos, SM.getMainFileID());
   auto Symbols = getSymbolAtPosition(AST, Loc);
@@ -1084,10 +1083,8 @@ getTypeAncestors(const CXXRecordDecl &CXXRD, ASTContext &ASTCtx,
 }
 
 const CXXRecordDecl *findRecordTypeAt(ParsedAST &AST, Position Pos) {
-  ASTContext &ASTCtx = AST.getASTContext();
-  const SourceManager &SourceMgr = ASTCtx.getSourceManager();
-  SourceLocation SourceLocationBeg =
-      getBeginningOfIdentifier(AST, Pos, SourceMgr.getMainFileID());
+  SourceLocation SourceLocationBeg = getBeginningOfIdentifier(
+      AST, Pos, AST.getSourceManager().getMainFileID());
   IdentifiedSymbol Symbols = getSymbolAtPosition(AST, SourceLocationBeg);
   if (Symbols.Decls.empty())
     return nullptr;
