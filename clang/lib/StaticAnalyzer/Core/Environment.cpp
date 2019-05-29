@@ -248,6 +248,7 @@ void Environment::printJson(raw_ostream &Out, const ASTContext &Ctx,
       }
 
       const Stmt *S = I->first.getStmt();
+      (void)S;
       assert(S != nullptr && "Expected non-null Stmt");
 
       LastI = I;
