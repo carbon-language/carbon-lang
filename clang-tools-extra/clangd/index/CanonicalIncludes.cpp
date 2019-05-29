@@ -87,10 +87,14 @@ collectIWYUHeaderMaps(CanonicalIncludes *Includes) {
 }
 
 void addSystemHeadersMapping(CanonicalIncludes *Includes) {
+  static const std::vector<std::pair<const char *, const char *>> SymbolMap = {
 #define SYMBOL(Name, NameSpace, Header) { #NameSpace#Name, #Header },
       #include "StdSymbolMap.inc"
 #undef SYMBOL
   };
+
+  for (const auto &Pair : SymbolMap)
+    Includes->addSymbolMapping(Pair.first, Pair.second);
 
   // FIXME: remove the std header mapping once we support ambiguous symbols, now
   // it serves as a fallback to disambiguate:
