@@ -4437,6 +4437,11 @@ std::string Driver::GetFilePath(StringRef Name, const ToolChain &TC) const {
   if (llvm::sys::fs::exists(Twine(P)))
     return P.str();
 
+  SmallString<128> D(Dir);
+  llvm::sys::path::append(D, "..", Name);
+  if (llvm::sys::fs::exists(Twine(D)))
+    return D.str();
+
   if (auto P = SearchPaths(TC.getLibraryPaths()))
     return *P;
 
