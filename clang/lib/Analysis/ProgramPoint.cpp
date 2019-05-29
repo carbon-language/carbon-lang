@@ -149,13 +149,16 @@ void ProgramPoint::printJson(llvm::raw_ostream &Out, const char *NL) const {
     const BlockEdge &E = castAs<BlockEdge>();
     const Stmt *T = E.getSrc()->getTerminatorStmt();
     Out << "Edge\", \"src_id\": " << E.getSrc()->getBlockID()
-        << ", \"dst_id\": " << E.getDst()->getBlockID()
-        << ", \"terminator\": " << (!T ? "null, \"term_kind\": null" : "\"");
-    if (!T)
-      break;
+        << ", \"dst_id\": " << E.getDst()->getBlockID() << ", \"terminator\": ";
 
-    E.getSrc()->printTerminator(Out, Context.getLangOpts());
-    Out << "\", ";
+    if (!T) {
+      Out << "null, \"term_kind\": null";
+      break;
+    }
+
+    E.getSrc()->printTerminatorJson(Out, Context.getLangOpts(),
+                                    /*AddQuotes=*/true);
+    Out << ", ";
     printLocJson(Out, T->getBeginLoc(), SM);
 
     Out << ", \"term_kind\": \"";
