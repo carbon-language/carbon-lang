@@ -9076,11 +9076,8 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
       if (Args[i].IsByVal || Args[i].IsInAlloca) {
         PointerType *Ty = cast<PointerType>(Args[i].Ty);
         Type *ElementTy = Ty->getElementType();
-
-        unsigned FrameSize = DL.getTypeAllocSize(
-            Args[i].ByValType ? Args[i].ByValType : ElementTy);
-        Flags.setByValSize(FrameSize);
-
+        Flags.setByValSize(DL.getTypeAllocSize(ElementTy));
+        // For ByVal, alignment should come from FE.  BE will guess if this
         // info is not there but there are cases it cannot get right.
         unsigned FrameAlign;
         if (Args[i].Alignment)
@@ -9577,14 +9574,9 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
       if (Flags.isByVal() || Flags.isInAlloca()) {
         PointerType *Ty = cast<PointerType>(Arg.getType());
         Type *ElementTy = Ty->getElementType();
-
-        // For ByVal, size and alignment should be passed from FE.  BE will
-        // guess if this info is not there but there are cases it cannot get
-        // right.
-        unsigned FrameSize = DL.getTypeAllocSize(
-            Arg.getParamByValType() ? Arg.getParamByValType() : ElementTy);
-        Flags.setByValSize(FrameSize);
-
+        Flags.setByValSize(DL.getTypeAllocSize(ElementTy));
+        // For ByVal, alignment should be passed from FE.  BE will guess if
+        // this info is not there but there are cases it cannot get right.
         unsigned FrameAlign;
         if (Arg.getParamAlignment())
           FrameAlign = Arg.getParamAlignment();

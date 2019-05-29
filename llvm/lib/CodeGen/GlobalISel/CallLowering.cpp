@@ -87,10 +87,7 @@ void CallLowering::setArgFlags(CallLowering::ArgInfo &Arg, unsigned OpIdx,
 
   if (Arg.Flags.isByVal() || Arg.Flags.isInAlloca()) {
     Type *ElementTy = cast<PointerType>(Arg.Ty)->getElementType();
-
-    auto Ty = Attrs.getAttribute(OpIdx, Attribute::ByVal).getValueAsType();
-    Arg.Flags.setByValSize(DL.getTypeAllocSize(Ty ? Ty : ElementTy));
-
+    Arg.Flags.setByValSize(DL.getTypeAllocSize(ElementTy));
     // For ByVal, alignment should be passed from FE.  BE will guess if
     // this info is not there but there are cases it cannot get right.
     unsigned FrameAlign;

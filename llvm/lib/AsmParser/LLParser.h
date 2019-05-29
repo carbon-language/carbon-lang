@@ -339,7 +339,6 @@ namespace llvm {
     bool ParseFnAttributeValuePairs(AttrBuilder &B,
                                     std::vector<unsigned> &FwdRefAttrGrps,
                                     bool inAttrGrp, LocTy &BuiltinLoc);
-    bool ParseByValWithOptionalType(Type *&Result);
 
     // Module Summary Index Parsing.
     bool SkipModuleSummaryEntry();

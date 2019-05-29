@@ -29,7 +29,6 @@
 namespace llvm {
 
 class LLVMContext;
-class Type;
 
 //===----------------------------------------------------------------------===//
 /// \class
@@ -42,8 +41,7 @@ protected:
   enum AttrEntryKind {
     EnumAttrEntry,
     IntAttrEntry,
-    StringAttrEntry,
-    TypeAttrEntry,
+    StringAttrEntry
   };
 
   AttributeImpl(AttrEntryKind KindID) : KindID(KindID) {}
@@ -58,7 +56,6 @@ public:
   bool isEnumAttribute() const { return KindID == EnumAttrEntry; }
   bool isIntAttribute() const { return KindID == IntAttrEntry; }
   bool isStringAttribute() const { return KindID == StringAttrEntry; }
-  bool isTypeAttribute() const { return KindID == TypeAttrEntry; }
 
   bool hasAttribute(Attribute::AttrKind A) const;
   bool hasAttribute(StringRef Kind) const;
@@ -69,20 +66,16 @@ public:
   StringRef getKindAsString() const;
   StringRef getValueAsString() const;
 
-  Type *getValueAsType() const;
-
   /// Used when sorting the attributes.
   bool operator<(const AttributeImpl &AI) const;
 
   void Profile(FoldingSetNodeID &ID) const {
     if (isEnumAttribute())
-      Profile(ID, getKindAsEnum(), static_cast<uint64_t>(0));
+      Profile(ID, getKindAsEnum(), 0);
     else if (isIntAttribute())
       Profile(ID, getKindAsEnum(), getValueAsInt());
-    else if (isStringAttribute())
-      Profile(ID, getKindAsString(), getValueAsString());
     else
-      Profile(ID, getKindAsEnum(), getValueAsType());
+      Profile(ID, getKindAsString(), getValueAsString());
   }
 
   static void Profile(FoldingSetNodeID &ID, Attribute::AttrKind Kind,
@@ -94,12 +87,6 @@ public:
   static void Profile(FoldingSetNodeID &ID, StringRef Kind, StringRef Values) {
     ID.AddString(Kind);
     if (!Values.empty()) ID.AddString(Values);
-  }
-
-  static void Profile(FoldingSetNodeID &ID, Attribute::AttrKind Kind,
-                      Type *Ty) {
-    ID.AddInteger(Kind);
-    ID.AddPointer(Ty);
   }
 };
 
@@ -158,18 +145,6 @@ public:
   StringRef getStringValue() const { return Val; }
 };
 
-class TypeAttributeImpl : public EnumAttributeImpl {
-  virtual void anchor();
-
-  Type *Ty;
-
-public:
-  TypeAttributeImpl(Attribute::AttrKind Kind, Type *Ty)
-      : EnumAttributeImpl(TypeAttrEntry, Kind), Ty(Ty) {}
-
-  Type *getTypeValue() const { return Ty; }
-};
-
 //===----------------------------------------------------------------------===//
 /// \class
 /// This class represents a group of attributes that apply to one
@@ -214,7 +189,6 @@ public:
   uint64_t getDereferenceableOrNullBytes() const;
   std::pair<unsigned, Optional<unsigned>> getAllocSizeArgs() const;
   std::string getAsString(bool InAttrGrp) const;
-  Type *getByValType() const;
 
   using iterator = const Attribute *;
 

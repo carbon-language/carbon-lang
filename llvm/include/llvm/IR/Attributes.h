@@ -90,7 +90,6 @@ public:
   static Attribute get(LLVMContext &Context, AttrKind Kind, uint64_t Val = 0);
   static Attribute get(LLVMContext &Context, StringRef Kind,
                        StringRef Val = StringRef());
-  static Attribute get(LLVMContext &Context, AttrKind Kind, Type *Ty);
 
   /// Return a uniquified Attribute object that has the specific
   /// alignment set.
@@ -103,7 +102,6 @@ public:
   static Attribute getWithAllocSizeArgs(LLVMContext &Context,
                                         unsigned ElemSizeArg,
                                         const Optional<unsigned> &NumElemsArg);
-  static Attribute getWithByValType(LLVMContext &Context, Type *Ty);
 
   //===--------------------------------------------------------------------===//
   // Attribute Accessors
@@ -118,9 +116,6 @@ public:
   /// Return true if the attribute is a string (target-dependent)
   /// attribute.
   bool isStringAttribute() const;
-
-  /// Return true if the attribute is a type attribute.
-  bool isTypeAttribute() const;
 
   /// Return true if the attribute is present.
   bool hasAttribute(AttrKind Val) const;
@@ -143,10 +138,6 @@ public:
   /// Return the attribute's value as a string. This requires the
   /// attribute to be a string attribute.
   StringRef getValueAsString() const;
-
-  /// Return the attribute's value as a Type. This requires the attribute to be
-  /// a type attribute.
-  Type *getValueAsType() const;
 
   /// Returns the alignment field of an attribute as a byte alignment
   /// value.
@@ -288,7 +279,6 @@ public:
   unsigned getStackAlignment() const;
   uint64_t getDereferenceableBytes() const;
   uint64_t getDereferenceableOrNullBytes() const;
-  Type *getByValType() const;
   std::pair<unsigned, Optional<unsigned>> getAllocSizeArgs() const;
   std::string getAsString(bool InAttrGrp = false) const;
 
@@ -608,9 +598,6 @@ public:
   /// Return the alignment for the specified function parameter.
   unsigned getParamAlignment(unsigned ArgNo) const;
 
-  /// Return the byval type for the specified function parameter.
-  Type *getParamByValType(unsigned ArgNo) const;
-
   /// Get the stack alignment.
   unsigned getStackAlignment(unsigned Index) const;
 
@@ -710,7 +697,6 @@ class AttrBuilder {
   uint64_t DerefBytes = 0;
   uint64_t DerefOrNullBytes = 0;
   uint64_t AllocSizeArgs = 0;
-  Type *ByValType = nullptr;
 
 public:
   AttrBuilder() = default;
@@ -786,9 +772,6 @@ public:
   /// dereferenceable_or_null attribute exists (zero is returned otherwise).
   uint64_t getDereferenceableOrNullBytes() const { return DerefOrNullBytes; }
 
-  /// Retrieve the byval type.
-  Type *getByValType() const { return ByValType; }
-
   /// Retrieve the allocsize args, if the allocsize attribute exists.  If it
   /// doesn't exist, pair(0, 0) is returned.
   std::pair<unsigned, Optional<unsigned>> getAllocSizeArgs() const;
@@ -812,9 +795,6 @@ public:
   /// This turns one (or two) ints into the form used internally in Attribute.
   AttrBuilder &addAllocSizeAttr(unsigned ElemSizeArg,
                                 const Optional<unsigned> &NumElemsArg);
-
-  /// This turns a byval type into the form used internally in Attribute.
-  AttrBuilder &addByValAttr(Type *Ty);
 
   /// Add an allocsize attribute, using the representation returned by
   /// Attribute.getIntValue().
