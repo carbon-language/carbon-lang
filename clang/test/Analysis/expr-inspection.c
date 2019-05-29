@@ -36,4 +36,4 @@ void foo(int x) {
 // CHECK-NEXT: "constraints": [
 // CHECK-NEXT:   { "symbol": "reg_$0<int x>", "range": "{ [-2147483648, 13] }" }
 // CHECK-NEXT: ],
-
+// CHECK-NEXT: "dynamic_types": null,

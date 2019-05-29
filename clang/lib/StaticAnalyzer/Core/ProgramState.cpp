@@ -455,7 +455,7 @@ void ProgramState::printJson(raw_ostream &Out, const LocationContext *LCtx,
   Mgr.getConstraintManager().printJson(Out, this, NL, Space, IsDot);
 
   // Print out the tracked dynamic types.
-  printDynamicTypeInfo(this, Out, NL, Sep);
+  printDynamicTypeInfoJson(Out, this, NL, Space, IsDot);
 
   // Print checker-specific data.
   Mgr.getOwningEngine().printState(Out, this, LCtx, NL, Space, IsDot);
