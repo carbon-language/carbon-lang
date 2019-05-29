@@ -38,3 +38,5 @@ void foo(int x) {
 // CHECK-NEXT: ],
 // CHECK-NEXT: "dynamic_types": null,
 // CHECK-NEXT: "constructing_objects": null,
+// CHECK-NEXT: "checker_messages": null
+

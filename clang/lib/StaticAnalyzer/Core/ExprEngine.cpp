@@ -633,7 +633,8 @@ void ExprEngine::printJson(raw_ostream &Out, ProgramStateRef State,
     Out << "null," << NL;
   }
 
-  getCheckerManager().runCheckersForPrintState(Out, State, NL, "");
+  getCheckerManager().runCheckersForPrintStateJson(Out, State, NL, Space,
+                                                   IsDot);
 }
 
 void ExprEngine::processEndWorklist() {
