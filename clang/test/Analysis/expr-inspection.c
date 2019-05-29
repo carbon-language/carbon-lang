@@ -33,6 +33,7 @@ void foo(int x) {
 // CHECK-NEXT:     { "lctx_id": 1, "stmt_id": 847, "pretty": "clang_analyzer_printState", "value": "&code{clang_analyzer_printState}" }
 // CHECK-NEXT:   ]}
 // CHECK-NEXT: ],
+// CHECK-NEXT: "constraints": [
+// CHECK-NEXT:   { "symbol": "reg_$0<int x>", "range": "{ [-2147483648, 13] }" }
+// CHECK-NEXT: ],
 
-// CHECK:      Ranges of symbol values:
-// CHECK-NEXT:  reg_$0<int x> : { [-2147483648, 13] }

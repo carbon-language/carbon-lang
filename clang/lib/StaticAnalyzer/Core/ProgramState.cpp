@@ -452,7 +452,7 @@ void ProgramState::printJson(raw_ostream &Out, const LocationContext *LCtx,
   Env.printJson(Out, Context, LCtx, NL, Space, IsDot);
 
   // Print out the constraints.
-  Mgr.getConstraintManager().print(this, Out, NL, Sep);
+  Mgr.getConstraintManager().printJson(Out, this, NL, Space, IsDot);
 
   // Print out the tracked dynamic types.
   printDynamicTypeInfo(this, Out, NL, Sep);
