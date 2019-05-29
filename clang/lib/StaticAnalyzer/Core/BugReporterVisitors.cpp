@@ -1991,6 +1991,11 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond, BugReporterContext &BRC,
                                    BRC, R, N, TookTrueTmp, IsAssuming))
           return P;
         break;
+      case Stmt::MemberExprClass:
+        if (auto P = VisitTrueTest(Cond, cast<MemberExpr>(CondTmp),
+                                   BRC, R, N, TookTrueTmp, IsAssuming))
+          return P;
+        break;
       case Stmt::UnaryOperatorClass: {
         const auto *UO = cast<UnaryOperator>(CondTmp);
         if (UO->getOpcode() == UO_LNot) {
@@ -2025,7 +2030,8 @@ bool ConditionBRVisitor::patternMatch(const Expr *Ex,
                                       BugReporterContext &BRC,
                                       BugReport &report,
                                       const ExplodedNode *N,
-                                      Optional<bool> &prunable) {
+                                      Optional<bool> &prunable,
+                                      bool IsSameFieldName) {
   const Expr *OriginalExpr = Ex;
   Ex = Ex->IgnoreParenCasts();
 
@@ -2091,6 +2097,17 @@ bool ConditionBRVisitor::patternMatch(const Expr *Ex,
     return false;
   }
 
+  if (const auto *ME = dyn_cast<MemberExpr>(Ex)) {
+    if (!IsSameFieldName)
+      Out << "field '" << ME->getMemberDecl()->getName() << '\'';
+    else
+      Out << '\''
+          << Lexer::getSourceText(
+                 CharSourceRange::getTokenRange(Ex->getSourceRange()),
+                 BRC.getSourceManager(), BRC.getASTContext().getLangOpts(), 0)
+          << '\'';
+  }
+
   return false;
 }
 
@@ -2100,13 +2117,23 @@ std::shared_ptr<PathDiagnosticPiece> ConditionBRVisitor::VisitTrueTest(
   bool shouldInvert = false;
   Optional<bool> shouldPrune;
 
+  // Check if the field name of the MemberExprs is ambiguous. Example:
+  // " 'a.d' is equal to 'h.d' " in 'test/Analysis/null-deref-path-notes.cpp'.
+  bool IsSameFieldName = false;
+  if (const auto *LhsME =
+          dyn_cast<MemberExpr>(BExpr->getLHS()->IgnoreParenCasts()))
+    if (const auto *RhsME =
+            dyn_cast<MemberExpr>(BExpr->getRHS()->IgnoreParenCasts()))
+      IsSameFieldName = LhsME->getMemberDecl()->getName() ==
+                        RhsME->getMemberDecl()->getName();
+
   SmallString<128> LhsString, RhsString;
   {
     llvm::raw_svector_ostream OutLHS(LhsString), OutRHS(RhsString);
-    const bool isVarLHS = patternMatch(BExpr->getLHS(), BExpr, OutLHS,
-                                       BRC, R, N, shouldPrune);
-    const bool isVarRHS = patternMatch(BExpr->getRHS(), BExpr, OutRHS,
-                                       BRC, R, N, shouldPrune);
+    const bool isVarLHS = patternMatch(BExpr->getLHS(), BExpr, OutLHS, BRC, R,
+                                       N, shouldPrune, IsSameFieldName);
+    const bool isVarRHS = patternMatch(BExpr->getRHS(), BExpr, OutRHS, BRC, R,
+                                       N, shouldPrune, IsSameFieldName);
 
     shouldInvert = !isVarLHS && isVarRHS;
   }
@@ -2170,11 +2197,15 @@ std::shared_ptr<PathDiagnosticPiece> ConditionBRVisitor::VisitTrueTest(
   const LocationContext *LCtx = N->getLocationContext();
   PathDiagnosticLocation Loc(Cond, BRC.getSourceManager(), LCtx);
 
+  // Convert 'field ...' to 'Field ...' if it is a MemberExpr.
+  std::string Message = Out.str();
+  Message[0] = toupper(Message[0]);
+
   // If we know the value create a pop-up note.
   if (!IsAssuming)
-    return std::make_shared<PathDiagnosticPopUpPiece>(Loc, Out.str());
+    return std::make_shared<PathDiagnosticPopUpPiece>(Loc, Message);
 
-  auto event = std::make_shared<PathDiagnosticEventPiece>(Loc, Out.str());
+  auto event = std::make_shared<PathDiagnosticEventPiece>(Loc, Message);
   if (shouldPrune.hasValue())
     event->setPrunable(shouldPrune.getValue());
   return event;
@@ -2244,6 +2275,30 @@ std::shared_ptr<PathDiagnosticPiece> ConditionBRVisitor::VisitTrueTest(
     }
   }
   return std::move(event);
+}
+
+std::shared_ptr<PathDiagnosticPiece> ConditionBRVisitor::VisitTrueTest(
+    const Expr *Cond, const MemberExpr *ME, BugReporterContext &BRC,
+    BugReport &report, const ExplodedNode *N, bool TookTrue, bool IsAssuming) {
+  SmallString<256> Buf;
+  llvm::raw_svector_ostream Out(Buf);
+
+  Out << (IsAssuming ? "Assuming field '" : "Field '")
+      << ME->getMemberDecl()->getName() << "' is ";
+
+  if (!printValue(ME, Out, N, TookTrue, IsAssuming))
+    return nullptr;
+
+  const LocationContext *LCtx = N->getLocationContext();
+  PathDiagnosticLocation Loc(Cond, BRC.getSourceManager(), LCtx);
+  if (!Loc.isValid() || !Loc.asLocation().isValid())
+    return nullptr;
+
+  // If we know the value create a pop-up note.
+  if (!IsAssuming)
+    return std::make_shared<PathDiagnosticPopUpPiece>(Loc, Out.str());
+
+  return std::make_shared<PathDiagnosticEventPiece>(Loc, Out.str());
 }
 
 bool ConditionBRVisitor::printValue(const Expr *CondVarExpr, raw_ostream &Out,

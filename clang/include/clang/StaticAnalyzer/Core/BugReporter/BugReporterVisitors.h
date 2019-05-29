@@ -203,6 +203,11 @@ public:
                 bool TookTrue, bool IsAssuming);
 
   std::shared_ptr<PathDiagnosticPiece>
+  VisitTrueTest(const Expr *Cond, const MemberExpr *ME, BugReporterContext &BRC,
+                BugReport &R, const ExplodedNode *N, bool TookTrue,
+                bool IsAssuming);
+
+  std::shared_ptr<PathDiagnosticPiece>
   VisitConditionVariable(StringRef LhsString, const Expr *CondVarExpr,
                          BugReporterContext &BRC, BugReport &R,
                          const ExplodedNode *N, bool TookTrue);
@@ -225,7 +230,8 @@ public:
                     BugReporterContext &BRC,
                     BugReport &R,
                     const ExplodedNode *N,
-                    Optional<bool> &prunable);
+                    Optional<bool> &prunable,
+                    bool IsSameFieldName);
 
   static bool isPieceMessageGeneric(const PathDiagnosticPiece *Piece);
 };

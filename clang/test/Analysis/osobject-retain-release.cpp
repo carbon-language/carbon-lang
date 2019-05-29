@@ -601,16 +601,18 @@ void test_smart_ptr_uaf() {
   {
     OSObjectPtr p(obj); // expected-note{{Calling constructor for 'smart_ptr<OSObject>'}}
    // expected-note@-1{{Returning from constructor for 'smart_ptr<OSObject>'}}
+    // expected-note@os_smart_ptr.h:13{{Field 'pointer' is non-null}}
     // expected-note@os_smart_ptr.h:13{{Taking true branch}}
     // expected-note@os_smart_ptr.h:14{{Calling 'smart_ptr::_retain'}}
     // expected-note@os_smart_ptr.h:71{{Reference count incremented. The object now has a +2 retain count}}
     // expected-note@os_smart_ptr.h:14{{Returning from 'smart_ptr::_retain'}}
   } // expected-note{{Calling '~smart_ptr'}}
+  // expected-note@os_smart_ptr.h:35{{Field 'pointer' is non-null}}
   // expected-note@os_smart_ptr.h:35{{Taking true branch}}
   // expected-note@os_smart_ptr.h:36{{Calling 'smart_ptr::_release'}}
   // expected-note@os_smart_ptr.h:76{{Reference count decremented. The object now has a +1 retain count}}
   // expected-note@os_smart_ptr.h:36{{Returning from 'smart_ptr::_release'}}
- // expected-note@-5{{Returning from '~smart_ptr'}}
+ // expected-note@-6{{Returning from '~smart_ptr'}}
   obj->release(); // expected-note{{Object released}}
   obj->release(); // expected-warning{{Reference-counted object is used after it is released}}
 // expected-note@-1{{Reference-counted object is used after it is released}}
@@ -621,16 +623,18 @@ void test_smart_ptr_leak() {
   {
     OSObjectPtr p(obj); // expected-note{{Calling constructor for 'smart_ptr<OSObject>'}}
    // expected-note@-1{{Returning from constructor for 'smart_ptr<OSObject>'}}
+    // expected-note@os_smart_ptr.h:13{{Field 'pointer' is non-null}}
     // expected-note@os_smart_ptr.h:13{{Taking true branch}}
     // expected-note@os_smart_ptr.h:14{{Calling 'smart_ptr::_retain'}}
     // expected-note@os_smart_ptr.h:71{{Reference count incremented. The object now has a +2 retain count}}
     // expected-note@os_smart_ptr.h:14{{Returning from 'smart_ptr::_retain'}}
   } // expected-note{{Calling '~smart_ptr'}}
+  // expected-note@os_smart_ptr.h:35{{Field 'pointer' is non-null}}
   // expected-note@os_smart_ptr.h:35{{Taking true branch}}
   // expected-note@os_smart_ptr.h:36{{Calling 'smart_ptr::_release'}}
   // expected-note@os_smart_ptr.h:76{{Reference count decremented. The object now has a +1 retain count}}
   // expected-note@os_smart_ptr.h:36{{Returning from 'smart_ptr::_release'}}
- // expected-note@-5{{Returning from '~smart_ptr'}}
+ // expected-note@-6{{Returning from '~smart_ptr'}}
 } // expected-warning{{Potential leak of an object stored into 'obj'}}
 // expected-note@-1{{Object leaked: object allocated and stored into 'obj' is not referenced later in this execution path and has a retain count of +1}}
 
