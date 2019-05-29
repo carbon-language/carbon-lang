@@ -227,7 +227,7 @@ public:
   using Result = std::optional<int>;
   using Types = IntegerTypes;
   template<typename T> Result Test() const {
-    if (Scalar<T>::Precision >= precision_) {
+    if (Scalar<T>::RANGE >= precision_) {
       return T::kind;
     } else {
       return std::nullopt;

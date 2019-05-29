@@ -525,7 +525,13 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
     } else if (name == "radix") {
       return Expr<T>{2};
     } else if (name == "range") {
-      if (const auto *cx{UnwrapExpr<Expr<SomeReal>>(args[0])}) {
+      if (const auto *cx{UnwrapExpr<Expr<SomeInteger>>(args[0])}) {
+        return Expr<T>{std::visit(
+            [](const auto &kx) {
+              return Scalar<ResultType<decltype(kx)>>::RANGE;
+            },
+            cx->u)};
+      } else if (const auto *cx{UnwrapExpr<Expr<SomeReal>>(args[0])}) {
         return Expr<T>{std::visit(
             [](const auto &kx) {
               return Scalar<ResultType<decltype(kx)>>::RANGE;

@@ -19,7 +19,10 @@ module m1
   ! INTEGER(KIND=2)  handles  3 <= P < 5
   ! INTEGER(KIND=4)  handles  5 <= P < 10
   ! INTEGER(KIND=8)  handles 10 <= P < 19
-  ! INTEGER(KIND=16) handles 19 <= P < 38
+  ! INTEGER(KIND=16) handles 19 <= P < 39
+  integer, parameter :: iranges(:) = &
+    [range(0_1), range(0_2), range(0_4), range(0_8), range(0_16)]
+  logical, parameter :: ircheck = all([2, 4, 9, 18, 38] == iranges)
   integer, parameter :: intpvals(:) = [0, 2, 3, 4, 5, 9, 10, 18, 19, 38, 39]
   integer, parameter :: intpkinds(:) = &
     [(selected_int_kind(intpvals(j)),j=1,size(intpvals))]
@@ -64,6 +67,8 @@ module m1
 end module m1
 !Expect: m1.mod
 !module m1
+!integer(4),parameter::iranges(1_8:)=[Integer(4)::2_4,4_4,9_4,18_4,38_4]
+!logical(4),parameter::ircheck=.true._4
 !integer(4),parameter::intpvals(1_8:)=[Integer(4)::0_4,2_4,3_4,4_4,5_4,9_4,10_4,18_4,19_4,38_4,39_4]
 !integer(4),parameter::intpkinds(1_8:)=[Integer(4)::1_4,1_4,2_4,2_4,4_4,4_4,8_4,8_4,16_4,16_4,-1_4]
 !logical(4),parameter::ipcheck=.true._4
