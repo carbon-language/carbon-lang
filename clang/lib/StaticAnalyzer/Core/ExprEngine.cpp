@@ -2316,7 +2316,6 @@ void ExprEngine::processEndOfFunction(NodeBuilderContext& BC,
                                        Pred->getStackFrame()->getParent()));
 
   PrettyStackTraceLocationContext CrashInfo(Pred->getLocationContext());
-  StateMgr.EndPath(Pred->getState());
 
   ExplodedNodeSet Dst;
   if (Pred->getLocationContext()->inTopFrame()) {
