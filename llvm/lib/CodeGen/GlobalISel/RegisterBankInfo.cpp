@@ -91,9 +91,7 @@ RegisterBankInfo::getRegBank(unsigned Reg, const MachineRegisterInfo &MRI,
     return RB;
   if (auto *RC = RegClassOrBank.dyn_cast<const TargetRegisterClass *>())
     return &getRegBankFromRegClass(*RC);
-
-  llvm_unreachable("RegClassOrBank is either a const RegisterBank* or "
-                   "a const TargetRegisterClass*");
+  return nullptr;
 }
 
 const TargetRegisterClass &
