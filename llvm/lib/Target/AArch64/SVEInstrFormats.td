@@ -1506,6 +1506,62 @@ multiclass sve2_fp_pairwise_pred<bits<3> opc, string asm> {
 }
 
 //===----------------------------------------------------------------------===//
+// SVE2 Floating Point Widening Multiply-Add - Indexed Group
+//===----------------------------------------------------------------------===//
+
+class sve2_fp_mla_long_by_indexed_elem<bits<2> opc, string asm>
+: I<(outs ZPR32:$Zda), (ins ZPR32:$_Zda, ZPR16:$Zn, ZPR3b16:$Zm,
+                        VectorIndexH:$iop),
+  asm, "\t$Zda, $Zn, $Zm$iop",
+  "",
+  []>, Sched<[]> {
+  bits<5> Zda;
+  bits<5> Zn;
+  bits<3> Zm;
+  bits<3> iop;
+  let Inst{31-21} = 0b01100100101;
+  let Inst{20-19} = iop{2-1};
+  let Inst{18-16} = Zm;
+  let Inst{15-14} = 0b01;
+  let Inst{13}    = opc{1};
+  let Inst{12}    = 0b0;
+  let Inst{11}    = iop{0};
+  let Inst{10}    = opc{0};
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zda;
+
+  let Constraints = "$Zda = $_Zda";
+  let DestructiveInstType = Destructive;
+  let ElementSize = ElementSizeNone;
+}
+
+//===----------------------------------------------------------------------===//
+// SVE2 Floating Point Widening Multiply-Add Group
+//===----------------------------------------------------------------------===//
+
+class sve2_fp_mla_long<bits<2> opc, string asm>
+: I<(outs ZPR32:$Zda), (ins ZPR32:$_Zda, ZPR16:$Zn, ZPR16:$Zm),
+  asm, "\t$Zda, $Zn, $Zm",
+  "",
+  []>, Sched<[]> {
+  bits<5> Zda;
+  bits<5> Zn;
+  bits<5> Zm;
+  let Inst{31-21} = 0b01100100101;
+  let Inst{20-16} = Zm;
+  let Inst{15-14} = 0b10;
+  let Inst{13}    = opc{1};
+  let Inst{12-11} = 0b00;
+  let Inst{10}    = opc{0};
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zda;
+
+  let Constraints = "$Zda = $_Zda";
+  let DestructiveInstType = Destructive;
+  let ElementSize = ElementSizeNone;
+}
+
+//===----------------------------------------------------------------------===//
 // SVE Stack Allocation Group
 //===----------------------------------------------------------------------===//
 

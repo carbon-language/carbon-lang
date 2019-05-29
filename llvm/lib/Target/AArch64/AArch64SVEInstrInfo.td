@@ -1301,6 +1301,18 @@ let Predicates = [HasSVE2] in {
   defm FMAXP_ZPmZZ   : sve2_fp_pairwise_pred<0b110, "fmaxp">;
   defm FMINP_ZPmZZ   : sve2_fp_pairwise_pred<0b111, "fminp">;
 
+  // SVE2 floating-point multiply-add long (indexed)
+  def FMLALB_ZZZI_SHH : sve2_fp_mla_long_by_indexed_elem<0b00, "fmlalb">;
+  def FMLALT_ZZZI_SHH : sve2_fp_mla_long_by_indexed_elem<0b01, "fmlalt">;
+  def FMLSLB_ZZZI_SHH : sve2_fp_mla_long_by_indexed_elem<0b10, "fmlslb">;
+  def FMLSLT_ZZZI_SHH : sve2_fp_mla_long_by_indexed_elem<0b11, "fmlslt">;
+
+  // SVE2 floating-point multiply-add long
+  def FMLALB_ZZZ_SHH : sve2_fp_mla_long<0b00, "fmlalb">;
+  def FMLALT_ZZZ_SHH : sve2_fp_mla_long<0b01, "fmlalt">;
+  def FMLSLB_ZZZ_SHH : sve2_fp_mla_long<0b10, "fmlslb">;
+  def FMLSLT_ZZZ_SHH : sve2_fp_mla_long<0b11, "fmlslt">;
+
   // Predicated shifts
   defm SQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0110, "sqshl">;
   defm UQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0111, "uqshl">;
