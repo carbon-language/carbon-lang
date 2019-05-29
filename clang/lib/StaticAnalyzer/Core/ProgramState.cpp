@@ -458,7 +458,7 @@ void ProgramState::printJson(raw_ostream &Out, const LocationContext *LCtx,
   printDynamicTypeInfoJson(Out, this, NL, Space, IsDot);
 
   // Print checker-specific data.
-  Mgr.getOwningEngine().printState(Out, this, LCtx, NL, Space, IsDot);
+  Mgr.getOwningEngine().printJson(Out, this, LCtx, NL, Space, IsDot);
 }
 
 void ProgramState::printDOT(raw_ostream &Out, const LocationContext *LCtx,
