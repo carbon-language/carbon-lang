@@ -46,8 +46,8 @@ LLVM_DUMP_METHOD void ProgramPoint::dump() const {
   return printJson(llvm::errs());
 }
 
-static void printLocation(raw_ostream &Out, SourceLocation Loc,
-                          const SourceManager &SM) {
+static void printLocJson(raw_ostream &Out, SourceLocation Loc,
+                         const SourceManager &SM) {
   Out << "\"location\": ";
   if (!Loc.isFileID()) {
     Out << "null";
@@ -62,6 +62,8 @@ void ProgramPoint::printJson(llvm::raw_ostream &Out, const char *NL) const {
   const ASTContext &Context =
       getLocationContext()->getAnalysisDeclContext()->getASTContext();
   const SourceManager &SM = Context.getSourceManager();
+  const PrintingPolicy &PP = Context.getPrintingPolicy();
+  const bool AddQuotes = true;
 
   Out << "\"kind\": \"";
   switch (getKind()) {
@@ -78,9 +80,8 @@ void ProgramPoint::printJson(llvm::raw_ostream &Out, const char *NL) const {
         << ", \"stmt_id\": ";
 
     if (const ReturnStmt *RS = FEP->getStmt()) {
-      Out << RS->getID(Context) << ", \"stmt\": \"";
-      RS->printPretty(Out, /*Helper=*/nullptr, Context.getPrintingPolicy());
-      Out << '\"';
+      Out << RS->getID(Context) << ", \"stmt\": ";
+      RS->printJson(Out, nullptr, PP, AddQuotes);
     } else {
       Out << "null, \"stmt\": null";
     }
@@ -118,7 +119,7 @@ void ProgramPoint::printJson(llvm::raw_ostream &Out, const char *NL) const {
     Out << "PreCall\", \"stmt\": \"";
     PC.getDecl()->print(Out, Context.getLangOpts());
     Out << "\", ";
-    printLocation(Out, PC.getLocation(), SM);
+    printLocJson(Out, PC.getLocation(), SM);
     break;
   }
 
@@ -127,7 +128,7 @@ void ProgramPoint::printJson(llvm::raw_ostream &Out, const char *NL) const {
     Out << "PostCall\", \"stmt\": \"";
     PC.getDecl()->print(Out, Context.getLangOpts());
     Out << "\", ";
-    printLocation(Out, PC.getLocation(), SM);
+    printLocJson(Out, PC.getLocation(), SM);
     break;
   }
 
@@ -157,23 +158,26 @@ void ProgramPoint::printJson(llvm::raw_ostream &Out, const char *NL) const {
 
     E.getSrc()->printTerminator(Out, Context.getLangOpts());
     Out << "\", ";
-    printLocation(Out, T->getBeginLoc(), SM);
-    Out << ", \"term_kind\": \"";
+    printLocJson(Out, T->getBeginLoc(), SM);
 
+    Out << ", \"term_kind\": \"";
     if (isa<SwitchStmt>(T)) {
       Out << "SwitchStmt\", \"case\": ";
       if (const Stmt *Label = E.getDst()->getLabel()) {
         if (const auto *C = dyn_cast<CaseStmt>(Label)) {
           Out << "{ \"lhs\": ";
-          if (const Stmt *LHS = C->getLHS())
-            LHS->printPretty(Out, nullptr, Context.getPrintingPolicy());
-          else
+          if (const Stmt *LHS = C->getLHS()) {
+            LHS->printJson(Out, nullptr, PP, AddQuotes);
+          } else {
             Out << "null";
+	  }
+
           Out << ", \"rhs\": ";
-          if (const Stmt *RHS = C->getRHS())
-            RHS->printPretty(Out, nullptr, Context.getPrintingPolicy());
-          else
+          if (const Stmt *RHS = C->getRHS()) {
+            RHS->printJson(Out, nullptr, PP, AddQuotes);
+          } else {
             Out << "null";
+          }
           Out << " }";
         } else {
           assert(isa<DefaultStmt>(Label));
@@ -196,23 +200,14 @@ void ProgramPoint::printJson(llvm::raw_ostream &Out, const char *NL) const {
     const Stmt *S = castAs<StmtPoint>().getStmt();
     assert(S != nullptr && "Expecting non-null Stmt");
 
-    llvm::SmallString<256> TempBuf;
-    llvm::raw_svector_ostream TempOut(TempBuf);
-
     Out << "Statement\", \"stmt_kind\": \"" << S->getStmtClassName()
         << "\", \"stmt_id\": " << S->getID(Context)
         << ", \"pointer\": \"" << (const void *)S << "\", \"pretty\": ";
 
-    // See whether the current statement is pretty-printable.
-    S->printPretty(TempOut, /*Helper=*/nullptr, Context.getPrintingPolicy());
-    if (!TempBuf.empty()) {
-      Out << '\"' << TempBuf.str().trim() << "\", ";
-      TempBuf.clear();
-    } else {
-      Out << "null, ";
-    }
+    S->printJson(Out, nullptr, PP, AddQuotes);
 
-    printLocation(Out, S->getBeginLoc(), SM);
+    Out << ", ";
+    printLocJson(Out, S->getBeginLoc(), SM);
 
     Out << ", \"stmt_point_kind\": ";
     if (getAs<PreStmt>())

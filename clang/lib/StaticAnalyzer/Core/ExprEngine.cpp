@@ -170,17 +170,7 @@ public:
     Out << ", \"pretty\": ";
 
     if (S) {
-      llvm::SmallString<256> TempBuf;
-      llvm::raw_svector_ostream TempOut(TempBuf);
-
-      // See whether the current statement is pretty-printable.
-      S->printPretty(TempOut, Helper, PP);
-      if (!TempBuf.empty()) {
-        Out << '\"' << TempBuf.str().trim() << '\"';
-        TempBuf.clear();
-      } else {
-        Out << "null";
-      }
+      S->printJson(Out, Helper, PP, /*AddQuotes=*/true);
     } else {
       Out << '\"' << I->getAnyMember()->getNameAsString() << '\"';
     }
