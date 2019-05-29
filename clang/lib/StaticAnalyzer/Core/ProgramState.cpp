@@ -449,7 +449,7 @@ void ProgramState::printJson(raw_ostream &Out, const LocationContext *LCtx,
   Mgr.getStoreManager().printJson(Out, getStore(), NL, Space, IsDot);
 
   // Print out the environment.
-  Env.print(Out, NL, Sep, Context, LCtx);
+  Env.printJson(Out, Context, LCtx, NL, Space, IsDot);
 
   // Print out the constraints.
   Mgr.getConstraintManager().print(this, Out, NL, Sep);
@@ -458,7 +458,7 @@ void ProgramState::printJson(raw_ostream &Out, const LocationContext *LCtx,
   printDynamicTypeInfo(this, Out, NL, Sep);
 
   // Print checker-specific data.
-  Mgr.getOwningEngine().printState(Out, this, NL, Sep, LCtx);
+  Mgr.getOwningEngine().printState(Out, this, LCtx, NL, Space, IsDot);
 }
 
 void ProgramState::printDOT(raw_ostream &Out, const LocationContext *LCtx,

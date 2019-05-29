@@ -27,11 +27,12 @@ void foo(int x) {
 // CHECK-NEXT:   { "cluster": "y", "items": [
 // CHECK-NEXT:     { "kind": "Direct", "offset": 0, "value": "2 S32b" }
 // CHECK-NEXT:   ]}
-// CHECK-NEXT: ]
-
-// CHECK:      Expressions by stack frame:
-// CHECK-NEXT: #0 Calling foo
-// CHECK-NEXT: (LC1, S847) clang_analyzer_printState : &code{clang_analyzer_printState}
+// CHECK-NEXT: ],
+// CHECK-NEXT: "environment": [
+// CHECK-NEXT:   { "location_context": "#0 Call", "calling": "foo", "call_line": null, "items": [
+// CHECK-NEXT:     { "lctx_id": 1, "stmt_id": 847, "pretty": "clang_analyzer_printState", "value": "&code{clang_analyzer_printState}" }
+// CHECK-NEXT:   ]}
+// CHECK-NEXT: ],
 
 // CHECK:      Ranges of symbol values:
 // CHECK-NEXT:  reg_$0<int x> : { [-2147483648, 13] }
