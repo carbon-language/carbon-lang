@@ -1294,6 +1294,13 @@ let Predicates = [HasSVE2] in {
   defm FCVTNT_ZPmZ  : sve2_fp_convert_down_narrow<"fcvtnt">;
   defm FCVTLT_ZPmZ  : sve2_fp_convert_up_long<"fcvtlt">;
 
+  // SVE2 floating-point pairwise operations
+  defm FADDP_ZPmZZ   : sve2_fp_pairwise_pred<0b000, "faddp">;
+  defm FMAXNMP_ZPmZZ : sve2_fp_pairwise_pred<0b100, "fmaxnmp">;
+  defm FMINNMP_ZPmZZ : sve2_fp_pairwise_pred<0b101, "fminnmp">;
+  defm FMAXP_ZPmZZ   : sve2_fp_pairwise_pred<0b110, "fmaxp">;
+  defm FMINP_ZPmZZ   : sve2_fp_pairwise_pred<0b111, "fminp">;
+
   // Predicated shifts
   defm SQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0110, "sqshl">;
   defm UQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0111, "uqshl">;

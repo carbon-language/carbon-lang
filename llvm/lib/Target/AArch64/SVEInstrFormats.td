@@ -1473,6 +1473,39 @@ multiclass sve2_fp_convert_down_odd_rounding<string asm> {
 }
 
 //===----------------------------------------------------------------------===//
+// SVE2 Floating Point Pairwise Group
+//===----------------------------------------------------------------------===//
+
+class sve2_fp_pairwise_pred<bits<2> sz, bits<3> opc, string asm,
+                            ZPRRegOp zprty>
+: I<(outs zprty:$Zdn), (ins PPR3bAny:$Pg, zprty:$_Zdn, zprty:$Zm),
+  asm, "\t$Zdn, $Pg/m, $_Zdn, $Zm",
+  "",
+  []>, Sched<[]> {
+  bits<3> Pg;
+  bits<5> Zm;
+  bits<5> Zdn;
+  let Inst{31-24} = 0b01100100;
+  let Inst{23-22} = sz;
+  let Inst{21-19} = 0b010;
+  let Inst{18-16} = opc;
+  let Inst{15-13} = 0b100;
+  let Inst{12-10} = Pg;
+  let Inst{9-5}   = Zm;
+  let Inst{4-0}   = Zdn;
+
+  let Constraints = "$Zdn = $_Zdn";
+  let DestructiveInstType = Destructive;
+  let ElementSize = zprty.ElementSize;
+}
+
+multiclass sve2_fp_pairwise_pred<bits<3> opc, string asm> {
+  def _H : sve2_fp_pairwise_pred<0b01, opc, asm, ZPR16>;
+  def _S : sve2_fp_pairwise_pred<0b10, opc, asm, ZPR32>;
+  def _D : sve2_fp_pairwise_pred<0b11, opc, asm, ZPR64>;
+}
+
+//===----------------------------------------------------------------------===//
 // SVE Stack Allocation Group
 //===----------------------------------------------------------------------===//
 
