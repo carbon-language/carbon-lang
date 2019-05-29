@@ -2190,17 +2190,7 @@ std::shared_ptr<PathDiagnosticPiece> ConditionBRVisitor::VisitConditionVariable(
   llvm::raw_svector_ostream Out(buf);
   Out << "Assuming " << LhsString << " is ";
 
-  QualType Ty = CondVarExpr->getType();
-
-  if (Ty->isPointerType())
-    Out << (TookTrue ? "not null" : "null");
-  else if (Ty->isObjCObjectPointerType())
-    Out << (TookTrue ? "not nil" : "nil");
-  else if (Ty->isBooleanType())
-    Out << (TookTrue ? "true" : "false");
-  else if (Ty->isIntegralOrEnumerationType())
-    Out << (TookTrue ? "non-zero" : "zero");
-  else
+  if (!printValue(CondVarExpr, Out, N, TookTrue, /*IsAssuming=*/true))
     return nullptr;
 
   const LocationContext *LCtx = N->getLocationContext();
@@ -2232,22 +2222,7 @@ std::shared_ptr<PathDiagnosticPiece> ConditionBRVisitor::VisitTrueTest(
 
   Out << (IsAssuming ? "Assuming '" : "'") << VD->getDeclName() << "' is ";
 
-  QualType Ty = VD->getType();
-
-  if (Ty->isPointerType())
-    Out << (TookTrue ? "non-null" : "null");
-  else if (Ty->isObjCObjectPointerType())
-    Out << (TookTrue ? "non-nil" : "nil");
-  else if (Ty->isScalarType()) {
-    Optional<const llvm::APSInt *> IntValue;
-    if (!IsAssuming)
-      IntValue = getConcreteIntegerValue(DRE, N);
-
-    if (IsAssuming || !IntValue.hasValue())
-      Out << (TookTrue ? "not equal to 0" : "0");
-    else
-      Out << *IntValue.getValue();
-  } else
+  if (!printValue(DRE, Out, N, TookTrue, IsAssuming))
     return nullptr;
 
   const LocationContext *LCtx = N->getLocationContext();
@@ -2269,6 +2244,36 @@ std::shared_ptr<PathDiagnosticPiece> ConditionBRVisitor::VisitTrueTest(
     }
   }
   return std::move(event);
+}
+
+bool ConditionBRVisitor::printValue(const Expr *CondVarExpr, raw_ostream &Out,
+                                    const ExplodedNode *N, bool TookTrue,
+                                    bool IsAssuming) {
+  QualType Ty = CondVarExpr->getType();
+
+  if (Ty->isPointerType()) {
+    Out << (TookTrue ? "non-null" : "null");
+    return true;
+  }
+
+  if (Ty->isObjCObjectPointerType()) {
+    Out << (TookTrue ? "non-nil" : "nil");
+    return true;
+  }
+
+  if (!Ty->isIntegralOrEnumerationType())
+    return false;
+
+  Optional<const llvm::APSInt *> IntValue;
+  if (!IsAssuming)
+    IntValue = getConcreteIntegerValue(CondVarExpr, N);
+
+  if (IsAssuming || !IntValue.hasValue())
+    Out << (TookTrue ? "not equal to 0" : "0");
+  else
+    Out << *IntValue.getValue();
+
+  return true;
 }
 
 const char *const ConditionBRVisitor::GenericTrueMessage =
