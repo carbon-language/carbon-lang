@@ -500,8 +500,8 @@ public:
   CLASS_BOILERPLATE(ArrayConstructor)
   ArrayConstructor(Expr<SubscriptInteger> &&len, Base &&v)
     : Base{std::move(v)}, length_{std::move(len)} {}
-  template<typename T>
-  explicit ArrayConstructor(const Expr<T> &proto) : length_{proto.LEN()} {}
+  template<typename A>
+  explicit ArrayConstructor(const A &prototype) : length_{prototype.LEN()} {}
   bool operator==(const ArrayConstructor &) const;
   static constexpr Result result() { return Result{}; }
   static constexpr DynamicType GetType() { return Result::GetType(); }
@@ -519,11 +519,13 @@ public:
   using Result = SomeDerived;
   using Base = ArrayConstructorValues<Result>;
   CLASS_BOILERPLATE(ArrayConstructor)
+
   ArrayConstructor(const semantics::DerivedTypeSpec &spec, Base &&v)
     : Base{std::move(v)}, result_{spec} {}
-  template<typename T>
-  explicit ArrayConstructor(const Expr<T> &proto)
-    : result_{GetType(proto).GetDerivedTypeSpec()} {}
+  template<typename A>
+  explicit ArrayConstructor(const A &prototype)
+    : result_{prototype.GetType().value().GetDerivedTypeSpec()} {}
+
   bool operator==(const ArrayConstructor &) const;
   constexpr Result result() const { return result_; }
   constexpr DynamicType GetType() const { return result_.GetType(); }

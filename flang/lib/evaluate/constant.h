@@ -100,7 +100,7 @@ template<typename T> class Constant : public ConstantBase<T> {
 public:
   using Result = T;
   using Base = ConstantBase<T>;
-  using Element = typename Base::Element;
+  using Element = Scalar<T>;
 
   using Base::Base;
   CLASS_BOILERPLATE(Constant)
@@ -115,6 +115,7 @@ public:
 
   // Apply 1-based subscripts
   Element At(const ConstantSubscripts &) const;
+
   Constant Reshape(ConstantSubscripts &&) const;
 };
 
@@ -149,8 +150,8 @@ public:
 
   // Apply 1-based subscripts
   Scalar<Result> At(const ConstantSubscripts &) const;
-  Constant Reshape(ConstantSubscripts &&) const;
 
+  Constant Reshape(ConstantSubscripts &&) const;
   Constant<SubscriptInteger> SHAPE() const;
   std::ostream &AsFortran(std::ostream &) const;
   static constexpr DynamicType GetType() {
@@ -185,6 +186,7 @@ public:
 
   std::optional<StructureConstructor> GetScalarValue() const;
   StructureConstructor At(const ConstantSubscripts &) const;
+
   Constant Reshape(ConstantSubscripts &&) const;
 };
 

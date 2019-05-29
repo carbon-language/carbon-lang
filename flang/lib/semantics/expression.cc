@@ -1811,11 +1811,16 @@ static void FixMisparsedFunctionReference(
           std::get_if<common::Indirection<parser::FunctionReference>>(&u)}) {
     parser::FunctionReference &funcRef{func->value()};
     auto &proc{std::get<parser::ProcedureDesignator>(funcRef.v.t)};
-    if (auto *name{std::get_if<parser::Name>(&proc.u)}) {
-      if (name->symbol == nullptr) {
-        return;
-      }
-      Symbol &symbol{name->symbol->GetUltimate()};
+    if (Symbol *
+        origSymbol{std::visit(
+            common::visitors{
+                [&](parser::Name &name) { return name.symbol; },
+                [&](parser::ProcComponentRef &pcr) {
+                  return pcr.v.thing.component.symbol;
+                },
+            },
+            proc.u)}) {
+      Symbol &symbol{origSymbol->GetUltimate()};
       if (symbol.has<semantics::ObjectEntityDetails>()) {
         if constexpr (common::HasMember<common::Indirection<parser::Designator>,
                           uType>) {
@@ -1823,7 +1828,9 @@ static void FixMisparsedFunctionReference(
         } else {
           common::die("can't fix misparsed function as array reference");
         }
-      } else {
+      } else if (const auto *name{std::get_if<parser::Name>(&proc.u)}) {
+        // Don't convert a procedure component reference into a structure
+        // constructor, but do check for a misparsed bare name.
         const Symbol *derivedType{nullptr};
         if (symbol.has<semantics::DerivedTypeDetails>()) {
           derivedType = &symbol;

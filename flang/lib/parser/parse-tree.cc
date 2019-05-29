@@ -96,6 +96,17 @@ static Designator MakeArrayElementRef(
   return Designator{DataRef{common::Indirection{std::move(arrayElement)}}};
 }
 
+static Designator MakeArrayElementRef(
+    StructureComponent &&sc, std::list<Expr> &&subscripts) {
+  ArrayElement arrayElement{DataRef{common::Indirection{std::move(sc)}},
+      std::list<SectionSubscript>{}};
+  for (Expr &expr : subscripts) {
+    arrayElement.subscripts.push_back(
+        SectionSubscript{Integer{common::Indirection{std::move(expr)}}});
+  }
+  return Designator{DataRef{common::Indirection{std::move(arrayElement)}}};
+}
+
 // Set source in any type of node that has it.
 template<typename T> T WithSource(CharBlock source, T &&x) {
   x.source = source;
@@ -126,12 +137,22 @@ static Expr ActualArgToExpr(ActualArgSpec &arg) {
 }
 
 Designator FunctionReference::ConvertToArrayElementRef() {
-  auto &name{std::get<parser::Name>(std::get<ProcedureDesignator>(v.t).u)};
   std::list<Expr> args;
   for (auto &arg : std::get<std::list<ActualArgSpec>>(v.t)) {
     args.emplace_back(ActualArgToExpr(arg));
   }
-  return WithSource(v.source, MakeArrayElementRef(name, std::move(args)));
+  return std::visit(
+      common::visitors{
+          [&](const Name &name) {
+            return WithSource(
+                v.source, MakeArrayElementRef(name, std::move(args)));
+          },
+          [&](ProcComponentRef &pcr) {
+            return WithSource(v.source,
+                MakeArrayElementRef(std::move(pcr.v.thing), std::move(args)));
+          },
+      },
+      std::get<ProcedureDesignator>(v.t).u);
 }
 
 StructureConstructor FunctionReference::ConvertToStructureConstructor(

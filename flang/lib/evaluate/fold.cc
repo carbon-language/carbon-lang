@@ -1015,8 +1015,72 @@ std::optional<Constant<T>> ApplySubscripts(parser::ContextualMessages &messages,
   }
 }
 
+// GetConstantComponent() is mutually recursive with FoldArrayRef().
 template<typename T>
-std::optional<Constant<T>> ApplyConstantSubscripts(
+std::optional<Constant<T>> GetConstantComponent(FoldingContext &, Component &,
+    const std::vector<Constant<SubscriptInteger>> * = nullptr);
+
+template<typename T>
+std::optional<Constant<T>> ApplyComponent(FoldingContext &context,
+    Constant<SomeDerived> &&structures, const Symbol &component,
+    const std::vector<Constant<SubscriptInteger>> *subscripts = nullptr) {
+  if (auto scalar{structures.GetScalarValue()}) {
+    if (auto *expr{scalar->Find(&component)}) {
+      if (const Constant<T> *value{UnwrapConstantValue<T>(*expr)}) {
+        if (subscripts == nullptr) {
+          return std::move(*value);
+        } else {
+          return ApplySubscripts<T>(context.messages(), *value, *subscripts);
+        }
+      }
+    }
+  } else {
+    // A(:)%scalar_component & A(:)%array_component(subscripts)
+    std::unique_ptr<ArrayConstructor<T>> array;
+    if (structures.empty()) {
+      return std::nullopt;
+    }
+    ConstantSubscripts at{InitialSubscripts(structures.shape())};
+    do {
+      StructureConstructor scalar{structures.At(at)};
+      if (auto *expr{scalar.Find(&component)}) {
+        if (const Constant<T> *value{UnwrapConstantValue<T>(*expr)}) {
+          if (array.get() == nullptr) {
+            // This technique ensures that character length or derived type
+            // information is propagated to the array constructor.
+            auto *typedExpr{UnwrapExpr<Expr<T>>(*expr)};
+            CHECK(typedExpr != nullptr);
+            array = std::make_unique<ArrayConstructor<T>>(*typedExpr);
+          }
+          if (subscripts != nullptr) {
+            if (auto element{ApplySubscripts<T>(
+                    context.messages(), *value, *subscripts)}) {
+              CHECK(element->Rank() == 0);
+              array->Push(Expr<T>{std::move(*element)});
+            } else {
+              return std::nullopt;
+            }
+          } else {
+            CHECK(value->Rank() == 0);
+            array->Push(Expr<T>{*value});
+          }
+        } else {
+          return std::nullopt;
+        }
+      }
+    } while (IncrementSubscripts(at, structures.shape()));
+    // Fold the ArrayConstructor<> into a Constant<>.
+    CHECK(array);
+    Expr<T> result{Fold(context, Expr<T>{std::move(*array)})};
+    if (auto *constant{UnwrapConstantValue<T>(result)}) {
+      return constant->Reshape(common::Clone(structures.shape()));
+    }
+  }
+  return std::nullopt;
+}
+
+template<typename T>
+std::optional<Constant<T>> FoldArrayRef(
     FoldingContext &context, ArrayRef &aRef) {
   const Symbol &symbol{aRef.GetLastSymbol()};
   std::vector<Constant<SubscriptInteger>> subscripts;
@@ -1028,41 +1092,58 @@ std::optional<Constant<T>> ApplyConstantSubscripts(
       return std::nullopt;
     }
   }
-  // TODO pmk generalize to component base too
-  if (const Symbol *const *symbol{std::get_if<const Symbol *>(&aRef.base())}) {
-    if (auto value{GetParameterValue<T>(context, *symbol)}) {
-      Expr<T> folded{Fold(context, std::move(*value))};
-      if (const auto *array{UnwrapConstantValue<T>(folded)}) {
-        if (auto result{
-                ApplySubscripts(context.messages(), *array, subscripts)}) {
-          return result;
-        }
-      }
-    }
-  }
-  return std::nullopt;
+  return std::visit(
+      common::visitors{
+          [&](const Symbol *symbol) -> std::optional<Constant<T>> {
+            if (auto value{GetParameterValue<T>(context, symbol)}) {
+              Expr<T> folded{Fold(context, std::move(*value))};
+              if (const auto *array{UnwrapConstantValue<T>(folded)}) {
+                return ApplySubscripts(context.messages(), *array, subscripts);
+              }
+            }
+            return std::nullopt;
+          },
+          [&](Component &component) -> std::optional<Constant<T>> {
+            return GetConstantComponent<T>(context, component, &subscripts);
+          },
+      },
+      aRef.base());
 }
 
 template<typename T>
-std::optional<Constant<T>> GetConstantComponent(
-    FoldingContext &context, Component &component) {
-  // TODO pmk generalize to array ref and component bases too
-  if (const Symbol *const *symbol{
-          std::get_if<const Symbol *>(&component.base().u)}) {
-    if (auto value{GetParameterValue<SomeDerived>(context, *symbol)}) {
-      Expr<SomeDerived> folded{Fold(context, std::move(*value))};
-      if (const auto *structure{UnwrapConstantValue<SomeDerived>(folded)}) {
-        if (auto scalar{structure->GetScalarValue()}) {
-          if (auto *expr{scalar->Find(&component.GetLastSymbol())}) {
-            if (const auto *value{UnwrapConstantValue<T>(*expr)}) {
-              return *value;
-            }
-          }
-        }
-      }
-    }
+std::optional<Constant<T>> GetConstantComponent(FoldingContext &context,
+    Component &component,
+    const std::vector<Constant<SubscriptInteger>> *subscripts) {
+  if (std::optional<Constant<SomeDerived>> structures{std::visit(
+          common::visitors{
+              [&](const Symbol *symbol)
+                  -> std::optional<Constant<SomeDerived>> {
+                if (auto value{
+                        GetParameterValue<SomeDerived>(context, symbol)}) {
+                  Expr<SomeDerived> folded{Fold(context, std::move(*value))};
+                  if (const auto *structures{
+                          UnwrapConstantValue<SomeDerived>(folded)}) {
+                    return *structures;
+                  }
+                }
+                return std::nullopt;
+              },
+              [&](ArrayRef &aRef) {
+                return FoldArrayRef<SomeDerived>(context, aRef);
+              },
+              [&](Component &base) {
+                return GetConstantComponent<SomeDerived>(context, base);
+              },
+              [&](CoarrayRef &) -> std::optional<Constant<SomeDerived>> {
+                return std::nullopt;
+              },
+          },
+          component.base().u)}) {
+    return ApplyComponent<T>(
+        context, std::move(*structures), component.GetLastSymbol(), subscripts);
+  } else {
+    return std::nullopt;
   }
-  return std::nullopt;
 }
 
 template<typename T>
@@ -1092,7 +1173,7 @@ Expr<T> FoldOperation(FoldingContext &context, Designator<T> &&designator) {
           },
           [&](ArrayRef &&aRef) {
             aRef = FoldOperation(context, std::move(aRef));
-            if (auto c{ApplyConstantSubscripts<T>(context, aRef)}) {
+            if (auto c{FoldArrayRef<T>(context, aRef)}) {
               return Expr<T>{std::move(*c)};
             } else {
               return Expr<T>{Designator<T>{std::move(aRef)}};

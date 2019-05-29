@@ -358,7 +358,7 @@ int Component::Rank() const {
   if (int rank{symbol_->Rank()}; rank > 0) {
     return rank;
   }
-  return base_.value().Rank();
+  return base().Rank();
 }
 
 int Subscript::Rank() const {
@@ -383,7 +383,7 @@ int ArrayRef::Rank() const {
   return std::visit(
       common::visitors{
           [=](const Symbol *s) { return 0; },
-          [=](const Component &c) { return c.Rank(); },
+          [=](const Component &c) { return c.base().Rank(); },
       },
       base_);
 }
