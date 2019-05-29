@@ -3965,13 +3965,12 @@ void ResourceManager::reserveResources(const MCInstrDesc *MID) {
       continue;
     const MCProcResourceDesc *ProcResource =
         SM.getProcResource(PRE.ProcResourceIdx);
-    unsigned NumUnits = ProcResource->NumUnits;
     ++ProcResourceCount[PRE.ProcResourceIdx];
     LLVM_DEBUG({
       dbgs() << format(" %16s(%2d): Count: %2d, NumUnits:%2d, Cycles:%2d\n",
                        ProcResource->Name, PRE.ProcResourceIdx,
-                       ProcResourceCount[PRE.ProcResourceIdx], NumUnits,
-                       PRE.Cycles);
+                       ProcResourceCount[PRE.ProcResourceIdx],
+                       ProcResource->NumUnits, PRE.Cycles);
     });
   }
   LLVM_DEBUG({ dbgs() << "reserveResources: done!\n\n"; });
