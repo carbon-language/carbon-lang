@@ -2864,6 +2864,76 @@ multiclass sve_int_bin_cons_log<bits<2> opc, string asm> {
                   (!cast<Instruction>(NAME) ZPR32:$Zd, ZPR32:$Zn, ZPR32:$Zm), 1>;
 }
 
+class sve2_int_bitwise_ternary_op_d<bits<3> opc, string asm>
+: I<(outs ZPR64:$Zdn), (ins ZPR64:$_Zdn, ZPR64:$Zm, ZPR64:$Zk),
+  asm, "\t$Zdn, $_Zdn, $Zm, $Zk",
+  "",
+  []>, Sched<[]> {
+  bits<5> Zdn;
+  bits<5> Zk;
+  bits<5> Zm;
+  let Inst{31-24} = 0b00000100;
+  let Inst{23-22} = opc{2-1};
+  let Inst{21}    = 0b1;
+  let Inst{20-16} = Zm;
+  let Inst{15-11} = 0b00111;
+  let Inst{10}    = opc{0};
+  let Inst{9-5}   = Zk;
+  let Inst{4-0}   = Zdn;
+
+  let Constraints = "$Zdn = $_Zdn";
+  let DestructiveInstType = Destructive;
+  let ElementSize = ElementSizeNone;
+}
+
+multiclass sve2_int_bitwise_ternary_op<bits<3> opc, string asm> {
+  def NAME : sve2_int_bitwise_ternary_op_d<opc, asm>;
+
+  def : InstAlias<asm # "\t$Zdn, $Zdn, $Zm, $Zk",
+                  (!cast<Instruction>(NAME) ZPR8:$Zdn,  ZPR8:$Zm,  ZPR8:$Zk),  1>;
+  def : InstAlias<asm # "\t$Zdn, $Zdn, $Zm, $Zk",
+                  (!cast<Instruction>(NAME) ZPR16:$Zdn, ZPR16:$Zm, ZPR16:$Zk), 1>;
+  def : InstAlias<asm # "\t$Zdn, $Zdn, $Zm, $Zk",
+                  (!cast<Instruction>(NAME) ZPR32:$Zdn, ZPR32:$Zm, ZPR32:$Zk), 1>;
+}
+
+class sve2_int_rotate_right_imm<bits<4> tsz8_64, string asm,
+                                ZPRRegOp zprty, Operand immtype>
+: I<(outs zprty:$Zdn), (ins zprty:$_Zdn, zprty:$Zm, immtype:$imm),
+  asm, "\t$Zdn, $_Zdn, $Zm, $imm",
+  "",
+  []>, Sched<[]> {
+  bits<5> Zdn;
+  bits<5> Zm;
+  bits<6> imm;
+  let Inst{31-24} = 0b00000100;
+  let Inst{23-22} = tsz8_64{3-2};
+  let Inst{21}    = 0b1;
+  let Inst{20-19} = tsz8_64{1-0};
+  let Inst{18-16} = imm{2-0}; // imm3
+  let Inst{15-10} = 0b001101;
+  let Inst{9-5}   = Zm;
+  let Inst{4-0}   = Zdn;
+
+  let Constraints = "$Zdn = $_Zdn";
+  let DestructiveInstType = Destructive;
+  let ElementSize = ElementSizeNone;
+}
+
+multiclass sve2_int_rotate_right_imm<string asm> {
+  def _B : sve2_int_rotate_right_imm<{0,0,0,1}, asm, ZPR8, vecshiftR8>;
+  def _H : sve2_int_rotate_right_imm<{0,0,1,?}, asm, ZPR16, vecshiftR16> {
+    let Inst{19} = imm{3};
+  }
+  def _S : sve2_int_rotate_right_imm<{0,1,?,?}, asm, ZPR32, vecshiftR32> {
+    let Inst{20-19} = imm{4-3};
+  }
+  def _D : sve2_int_rotate_right_imm<{1,?,?,?}, asm, ZPR64, vecshiftR64> {
+    let Inst{22}    = imm{5};
+    let Inst{20-19} = imm{4-3};
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // SVE Integer Wide Immediate - Predicated Group
 //===----------------------------------------------------------------------===//

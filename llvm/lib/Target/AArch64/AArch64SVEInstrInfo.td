@@ -1313,6 +1313,17 @@ let Predicates = [HasSVE2] in {
   def FMLSLB_ZZZ_SHH : sve2_fp_mla_long<0b10, "fmlslb">;
   def FMLSLT_ZZZ_SHH : sve2_fp_mla_long<0b11, "fmlslt">;
 
+  // SVE2 bitwise ternary operations
+  defm EOR3_ZZZZ_D  : sve2_int_bitwise_ternary_op<0b000, "eor3">;
+  defm BCAX_ZZZZ_D  : sve2_int_bitwise_ternary_op<0b010, "bcax">;
+  def BSL_ZZZZ_D    : sve2_int_bitwise_ternary_op_d<0b001, "bsl">;
+  def BSL1N_ZZZZ_D  : sve2_int_bitwise_ternary_op_d<0b011, "bsl1n">;
+  def BSL2N_ZZZZ_D  : sve2_int_bitwise_ternary_op_d<0b101, "bsl2n">;
+  def NBSL_ZZZZ_D   : sve2_int_bitwise_ternary_op_d<0b111, "nbsl">;
+
+  // sve_int_rotate_imm
+  defm XAR_ZZZI : sve2_int_rotate_right_imm<"xar">;
+
   // Predicated shifts
   defm SQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0110, "sqshl">;
   defm UQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0111, "uqshl">;
