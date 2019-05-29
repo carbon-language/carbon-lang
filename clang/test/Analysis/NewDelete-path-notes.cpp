@@ -6,8 +6,8 @@
 void test() {
   int *p = new int;
   // expected-note@-1 {{Memory is allocated}}
-  if (p)
-    // expected-note@-1 {{Taking true branch}}
+  if (p) // expected-note {{'p' is non-null}}
+         // expected-note@-1 {{Taking true branch}}
     delete p;
     // expected-note@-1 {{Memory is released}}
 

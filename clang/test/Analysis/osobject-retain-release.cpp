@@ -498,7 +498,8 @@ unsigned int check_dynamic_cast_no_null_on_orig(OSObject *obj) {
 void check_dynamic_cast_null_branch(OSObject *obj) {
   OSArray *arr1 = OSArray::withCapacity(10); // expected-note{{Call to method 'OSArray::withCapacity' returns an OSObject}}
   OSArray *arr = OSDynamicCast(OSArray, obj); // expected-note{{Assuming dynamic cast returns null due to type mismatch}}
-  if (!arr) // expected-note{{Taking true branch}}
+  if (!arr) // expected-note{{'arr' is null}}
+            // expected-note@-1{{Taking true branch}}
     return; // expected-warning{{Potential leak of an object stored into 'arr1'}}
             // expected-note@-1{{Object leaked}}
   arr1->release();
