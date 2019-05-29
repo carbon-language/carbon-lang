@@ -192,9 +192,8 @@ void GlobalObject::setSection(StringRef S) {
 
   // Get or create a stable section name string and put it in the table in the
   // context.
-  if (!S.empty()) {
-    S = getContext().pImpl->SectionStrings.insert(S).first->first();
-  }
+  if (!S.empty())
+    S = getContext().pImpl->Saver.save(S);
   getContext().pImpl->GlobalObjectSections[this] = S;
 
   // Update the HasSectionHashEntryBit. Setting the section to the empty string
