@@ -1356,6 +1356,9 @@ public:
   /// Collection of per-GlobalObject sections used in this context.
   DenseMap<const GlobalObject *, StringRef> GlobalObjectSections;
 
+  /// Collection of per-GlobalValue partitions used in this context.
+  DenseMap<const GlobalValue *, StringRef> GlobalValuePartitions;
+
   /// DiscriminatorTable - This table maps file:line locations to an
   /// integer representing the next DWARF path discriminator to assign to
   /// instructions in different blocks at the same location.
