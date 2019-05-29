@@ -350,6 +350,10 @@ public:
   static constexpr Integer BIT_SIZE() { return {bits}; }
   static constexpr Integer HUGE() { return MASKR(bits - 1); }
 
+  static constexpr int Precision{// in the sense of SELECTED_INT_KIND
+      // This magic value is LOG10(2.)*1E12.
+      static_cast<int>(((bits - 1) * 301029995664) / 1000000000000)};
+
   // Returns the number of full decimal digits that can be represented.
   static constexpr int RANGE() {
     if (bits < 4) {

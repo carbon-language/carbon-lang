@@ -110,6 +110,7 @@ static constexpr TypePattern AnyInt{IntType, KindCode::any};
 static constexpr TypePattern AnyReal{RealType, KindCode::any};
 static constexpr TypePattern AnyIntOrReal{IntOrRealType, KindCode::any};
 static constexpr TypePattern AnyComplex{ComplexType, KindCode::any};
+static constexpr TypePattern AnyFloating{FloatingType, KindCode::any};
 static constexpr TypePattern AnyNumeric{NumericType, KindCode::any};
 static constexpr TypePattern AnyChar{CharType, KindCode::any};
 static constexpr TypePattern AnyLogical{LogicalType, KindCode::any};
@@ -507,7 +508,10 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"product",
         {{"array", SameNumeric, Rank::array}, OptionalDIM, OptionalMASK},
         SameNumeric, Rank::dimReduced},
+    {"precision", {{"x", AnyFloating, Rank::anyOrAssumedRank}}, DefaultInt},
     {"present", {{"a", Anything, Rank::anyOrAssumedRank}}, DefaultLogical},
+    {"radix", {{"x", AnyFloating, Rank::anyOrAssumedRank}}, DefaultInt},
+    {"range", {{"x", AnyFloating, Rank::anyOrAssumedRank}}, DefaultInt},
     {"rank", {{"a", Anything, Rank::anyOrAssumedRank}}, DefaultInt},
     {"real", {{"a", AnyNumeric, Rank::elementalOrBOZ}, DefaultingKIND},
         KINDReal},
@@ -617,7 +621,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
 //   SAME_TYPE, STORAGE_SIZE
 // TODO: Type inquiry intrinsic functions - these return constants
 //  BIT_SIZE, DIGITS, EPSILON, HUGE, KIND, MAXEXPONENT, MINEXPONENT,
-//  NEW_LINE, PRECISION, RADIX, RANGE, TINY
+//  NEW_LINE, TINY
 // TODO: Non-standard intrinsic functions
 //  AND, OR, XOR, LSHIFT, RSHIFT, SHIFT, ZEXT, IZEXT,
 //  COSD, SIND, TAND, ACOSD, ASIND, ATAND, ATAN2D, COMPL,

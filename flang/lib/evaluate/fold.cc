@@ -508,6 +508,36 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
       }
       return FoldElementalIntrinsic<T, T, T, T>(
           context, std::move(funcRef), &Scalar<T>::MERGE_BITS);
+    } else if (name == "precision") {
+      if (const auto *cx{UnwrapExpr<Expr<SomeReal>>(args[0])}) {
+        return Expr<T>{std::visit(
+            [](const auto &kx) {
+              return Scalar<ResultType<decltype(kx)>>::PRECISION;
+            },
+            cx->u)};
+      } else if (const auto *cx{UnwrapExpr<Expr<SomeComplex>>(args[0])}) {
+        return Expr<T>{std::visit(
+            [](const auto &kx) {
+              return Scalar<typename ResultType<decltype(kx)>::Part>::PRECISION;
+            },
+            cx->u)};
+      }
+    } else if (name == "radix") {
+      return Expr<T>{2};
+    } else if (name == "range") {
+      if (const auto *cx{UnwrapExpr<Expr<SomeReal>>(args[0])}) {
+        return Expr<T>{std::visit(
+            [](const auto &kx) {
+              return Scalar<ResultType<decltype(kx)>>::RANGE;
+            },
+            cx->u)};
+      } else if (const auto *cx{UnwrapExpr<Expr<SomeComplex>>(args[0])}) {
+        return Expr<T>{std::visit(
+            [](const auto &kx) {
+              return Scalar<typename ResultType<decltype(kx)>::Part>::RANGE;
+            },
+            cx->u)};
+      }
     } else if (name == "rank") {
       // TODO assumed-rank dummy argument
       return Expr<T>{args[0].value().Rank()};

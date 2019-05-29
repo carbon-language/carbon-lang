@@ -221,15 +221,13 @@ bool SomeKind<TypeCategory::Derived>::operator==(
   return PointeeComparison(derivedTypeSpec_, that.derivedTypeSpec_);
 }
 
-static constexpr double LogBaseTenOfTwo{0.301029995664};
-
 class SelectedIntKindVisitor {
 public:
   explicit SelectedIntKindVisitor(std::int64_t p) : precision_{p} {}
   using Result = std::optional<int>;
   using Types = IntegerTypes;
   template<typename T> Result Test() const {
-    if ((Scalar<T>::bits - 1) * LogBaseTenOfTwo > precision_) {
+    if (Scalar<T>::Precision >= precision_) {
       return T::kind;
     } else {
       return std::nullopt;
@@ -255,8 +253,7 @@ public:
   using Result = std::optional<int>;
   using Types = RealTypes;
   template<typename T> Result Test() const {
-    if ((Scalar<T>::precision - 1) * LogBaseTenOfTwo > precision_ &&
-        (Scalar<T>::exponentBias - 1) * LogBaseTenOfTwo > range_) {
+    if (Scalar<T>::PRECISION >= precision_ && Scalar<T>::RANGE >= range_) {
       return {T::kind};
     } else {
       return std::nullopt;

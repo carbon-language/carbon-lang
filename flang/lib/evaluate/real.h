@@ -37,11 +37,11 @@ namespace Fortran::evaluate::value {
 // the third, if true, indicates that the most significant position of the
 // fraction is an implicit bit whose value is assumed to be 1 in a finite
 // normal number.
-template<typename WORD, int PRECISION, bool IMPLICIT_MSB = true> class Real {
+template<typename WORD, int PREC, bool IMPLICIT_MSB = true> class Real {
 public:
   using Word = WORD;
   static constexpr int bits{Word::bits};
-  static constexpr int precision{PRECISION};
+  static constexpr int precision{PREC};
   using Fraction = Integer<precision>;  // all bits made explicit
   static constexpr bool implicitMSB{IMPLICIT_MSB};
   static constexpr int significandBits{precision - implicitMSB};
@@ -64,9 +64,9 @@ public:
     return word_ == that.word_;
   }
 
-  // TODO ANINT, CEILING, FLOOR, DIM, MAX, MIN, DPROD, FRACTION
-  // HUGE, INT/NINT, MAXEXPONENT, MINEXPONENT, NEAREST, OUT_OF_RANGE,
-  // PRECISION, HUGE, TINY, RRSPACING/SPACING, SCALE, SET_EXPONENT, SIGN
+  // TODO: ANINT, CEILING, FLOOR, DIM, MAX, MIN, DPROD, FRACTION,
+  // INT/NINT, MAXEXPONENT, MINEXPONENT, NEAREST, OUT_OF_RANGE,
+  // HUGE, TINY, RRSPACING/SPACING, SCALE, SET_EXPONENT, SIGN
 
   constexpr bool IsNegative() const {
     return !IsNotANumber() && word_.BTEST(bits - 1);
@@ -127,6 +127,17 @@ public:
     epsilon.Normalize(false, exponentBias - precision, Fraction::MASKL(1));
     return epsilon;
   }
+
+private:
+  // LOG10(2.)*1E12
+  static constexpr std::int64_t ScaledLogBaseTenOfTwo{301029995664};
+
+public:
+  static constexpr int PRECISION{static_cast<int>(
+      (precision - 1) * ScaledLogBaseTenOfTwo / 1000000000000)};
+
+  static constexpr int RANGE{static_cast<int>(
+      (exponentBias - 1) * ScaledLogBaseTenOfTwo / 1000000000000)};
 
   constexpr Real FlushSubnormalToZero() const {
     if (IsSubnormal()) {
