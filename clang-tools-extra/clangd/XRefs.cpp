@@ -9,6 +9,7 @@
 #include "AST.h"
 #include "CodeCompletionStrings.h"
 #include "FindSymbols.h"
+#include "FormattedString.h"
 #include "Logger.h"
 #include "Protocol.h"
 #include "SourceCode.h"
@@ -1155,32 +1156,26 @@ getTypeHierarchy(ParsedAST &AST, Position Pos, int ResolveLevels,
   return Result;
 }
 
-MarkupContent HoverInfo::render() const {
-  MarkupContent Content;
-  Content.kind = MarkupKind::PlainText;
-  std::vector<std::string> Output;
-
+FormattedString HoverInfo::present() const {
+  FormattedString Output;
   if (NamespaceScope) {
-    llvm::raw_string_ostream Out(Content.value);
-    Out << "Declared in ";
+    Output.appendText("Declared in");
     // Drop trailing "::".
     if (!LocalScope.empty())
-      Out << *NamespaceScope << llvm::StringRef(LocalScope).drop_back(2);
+      Output.appendInlineCode(llvm::StringRef(LocalScope).drop_back(2));
     else if (NamespaceScope->empty())
-      Out << "global namespace";
+      Output.appendInlineCode("global namespace");
     else
-      Out << llvm::StringRef(*NamespaceScope).drop_back(2);
-    Out << "\n\n";
+      Output.appendInlineCode(llvm::StringRef(*NamespaceScope).drop_back(2));
   }
 
   if (!Definition.empty()) {
-    Output.push_back(Definition);
+    Output.appendCodeBlock(Definition);
   } else {
     // Builtin types
-    Output.push_back(Name);
+    Output.appendCodeBlock(Name);
   }
-  Content.value += llvm::join(Output, " ");
-  return Content;
+  return Output;
 }
 
 llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
