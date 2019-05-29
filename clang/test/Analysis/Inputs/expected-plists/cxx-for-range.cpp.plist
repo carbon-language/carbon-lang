@@ -829,9 +829,9 @@
        </array>
      </array>
      <key>extended_message</key>
-     <string>&apos;fail&apos; is 1</string>
+     <string>&apos;fail&apos; is true</string>
      <key>message</key>
-     <string>&apos;fail&apos; is 1</string>
+     <string>&apos;fail&apos; is true</string>
     </dict>
     <dict>
      <key>kind</key><string>control</string>

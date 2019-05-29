@@ -102,7 +102,7 @@ struct C {
 
   C(int pX, int pY, bool Flag) {
     x = pX;
-    if (Flag) // expected-note{{Assuming 'Flag' is not equal to 0}}
+    if (Flag) // expected-note{{Assuming 'Flag' is true}}
               // expected-note@-1{{Taking true branch}}
       return; // expected-note{{Returning without writing to 'this->y'}}
     y = pY;

@@ -395,7 +395,7 @@ void uniqueTest(bool cond) {
   A b;
   b = std::move(a); // peaceful-note {{Object 'a' is moved}}
 
-  if (cond) { // peaceful-note {{Assuming 'cond' is not equal to 0}}
+  if (cond) { // peaceful-note {{Assuming 'cond' is true}}
               // peaceful-note@-1 {{Taking true branch}}
     a.foo(); // peaceful-warning {{Method called on moved-from object 'a'}}
              // peaceful-note@-1 {{Method called on moved-from object 'a'}}

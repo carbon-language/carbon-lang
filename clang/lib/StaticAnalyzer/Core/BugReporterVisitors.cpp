@@ -2323,10 +2323,17 @@ bool ConditionBRVisitor::printValue(const Expr *CondVarExpr, raw_ostream &Out,
   if (!IsAssuming)
     IntValue = getConcreteIntegerValue(CondVarExpr, N);
 
-  if (IsAssuming || !IntValue.hasValue())
-    Out << (TookTrue ? "not equal to 0" : "0");
-  else
-    Out << *IntValue.getValue();
+  if (IsAssuming || !IntValue.hasValue()) {
+    if (Ty->isBooleanType())
+      Out << (TookTrue ? "true" : "false");
+    else
+      Out << (TookTrue ? "not equal to 0" : "0");
+  } else {
+    if (Ty->isBooleanType())
+      Out << (IntValue.getValue()->getBoolValue() ? "true" : "false");
+    else
+      Out << *IntValue.getValue();
+  }
 
   return true;
 }
