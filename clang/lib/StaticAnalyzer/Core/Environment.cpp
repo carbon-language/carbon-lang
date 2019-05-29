@@ -263,10 +263,12 @@ void Environment::printJson(raw_ostream &Out, const ASTContext &Ctx,
       Indent(Out, InnerSpace, IsDot)
           << "{ \"lctx_id\": " << LC->getID()
           << ", \"stmt_id\": " << S->getID(Ctx) << ", \"pretty\": ";
-
       S->printJson(Out, nullptr, PP, /*AddQuotes=*/true);
 
-      Out << ", \"value\": \"" << I->second << "\" }";
+      Out << ", \"value\": ";
+      I->second.printJson(Out, /*AddQuotes=*/true);
+
+      Out << " }";
 
       if (I != LastI)
         Out << ',';
