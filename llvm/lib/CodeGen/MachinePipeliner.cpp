@@ -3963,10 +3963,10 @@ void ResourceManager::reserveResources(const MCInstrDesc *MID) {
                   STI->getWriteProcResEnd(SCDesc))) {
     if (!PRE.Cycles)
       continue;
-    const MCProcResourceDesc *ProcResource =
-        SM.getProcResource(PRE.ProcResourceIdx);
     ++ProcResourceCount[PRE.ProcResourceIdx];
     LLVM_DEBUG({
+      const MCProcResourceDesc *ProcResource =
+          SM.getProcResource(PRE.ProcResourceIdx);
       dbgs() << format(" %16s(%2d): Count: %2d, NumUnits:%2d, Cycles:%2d\n",
                        ProcResource->Name, PRE.ProcResourceIdx,
                        ProcResourceCount[PRE.ProcResourceIdx],
