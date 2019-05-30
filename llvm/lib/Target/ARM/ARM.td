@@ -498,6 +498,19 @@ def HasV8_5aOps   : SubtargetFeature<"v8.5a", "HasV8_5aOps", "true",
                                    "Support ARM v8.5a instructions",
                                    [HasV8_4aOps, FeatureSB]>;
 
+def HasV8_1MMainlineOps : SubtargetFeature<
+               "v8.1m.main", "HasV8_1MMainlineOps", "true",
+               "Support ARM v8-1M Mainline instructions",
+               [HasV8MMainlineOps]>;
+def HasMVEIntegerOps : SubtargetFeature<
+               "mve", "HasMVEIntegerOps", "true",
+               "Support M-Class Vector Extension with integer ops",
+               [HasV8_1MMainlineOps, FeatureDSP, FeatureFPRegs16, FeatureFPRegs64]>;
+def HasMVEFloatOps : SubtargetFeature<
+               "mve.fp", "HasMVEFloatOps", "true",
+               "Support M-Class Vector Extension with integer and floating ops",
+               [HasMVEIntegerOps, FeatureFPARMv8_D16_SP, FeatureFullFP16]>;
+
 //===----------------------------------------------------------------------===//
 // ARM Processor subtarget features.
 //
@@ -782,6 +795,17 @@ def ARMv8mMainline : Architecture<"armv8-m.main", "ARMv8mMainline",
                                                        Feature8MSecExt,
                                                        FeatureAcquireRelease,
                                                        FeatureMClass]>;
+
+def ARMv81mMainline : Architecture<"armv8.1-m.main", "ARMv81mMainline",
+                                                      [HasV8_1MMainlineOps,
+                                                       FeatureNoARM,
+                                                       ModeThumb,
+                                                       FeatureDB,
+                                                       FeatureHWDivThumb,
+                                                       Feature8MSecExt,
+                                                       FeatureAcquireRelease,
+                                                       FeatureMClass,
+                                                       FeatureRAS]>;
 
 // Aliases
 def IWMMXT   : Architecture<"iwmmxt",      "ARMv5te",  [ARMv5te]>;
