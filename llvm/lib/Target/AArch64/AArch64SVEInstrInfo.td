@@ -1348,6 +1348,9 @@ let Predicates = [HasSVE2] in {
   defm LDNT1W_ZZR_D  : sve2_mem_cldnt_vs<0b11010, "ldnt1w",  Z_d, ZPR64>;
   defm LDNT1D_ZZR_D  : sve2_mem_cldnt_vs<0b11110, "ldnt1d",  Z_d, ZPR64>;
 
+  // SVE2 vector splice (constructive)
+  defm SPLICE_ZPZZ : sve2_int_perm_splice_cons<"splice">;
+
   // Predicated shifts
   defm SQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0110, "sqshl">;
   defm UQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0111, "uqshl">;

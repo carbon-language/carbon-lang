@@ -4275,6 +4275,30 @@ multiclass sve_int_perm_splice<string asm> {
   def _D : sve_int_perm_splice<0b11, asm, ZPR64>;
 }
 
+class sve2_int_perm_splice_cons<bits<2> sz8_64, string asm,
+                               ZPRRegOp zprty, RegisterOperand VecList>
+: I<(outs zprty:$Zd), (ins PPR3bAny:$Pg, VecList:$Zn),
+  asm, "\t$Zd, $Pg, $Zn",
+  "",
+  []>, Sched<[]> {
+  bits<3> Pg;
+  bits<5> Zn;
+  bits<5> Zd;
+  let Inst{31-24} = 0b00000101;
+  let Inst{23-22} = sz8_64;
+  let Inst{21-13} = 0b101101100;
+  let Inst{12-10} = Pg;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zd;
+}
+
+multiclass sve2_int_perm_splice_cons<string asm> {
+  def _B : sve2_int_perm_splice_cons<0b00, asm, ZPR8,  ZZ_b>;
+  def _H : sve2_int_perm_splice_cons<0b01, asm, ZPR16, ZZ_h>;
+  def _S : sve2_int_perm_splice_cons<0b10, asm, ZPR32, ZZ_s>;
+  def _D : sve2_int_perm_splice_cons<0b11, asm, ZPR64, ZZ_d>;
+}
+
 class sve_int_perm_rev<bits<2> sz8_64, bits<2> opc, string asm,
                        ZPRRegOp zprty>
 : I<(outs zprty:$Zd), (ins zprty:$_Zd, PPR3bAny:$Pg, zprty:$Zn),
