@@ -344,10 +344,8 @@ define <4 x i32> @const_sub_add_const_nonsplat(<4 x i32> %arg) {
 define <4 x i32> @const_sub_sub_const(<4 x i32> %arg) {
 ; CHECK-LABEL: const_sub_sub_const:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    movi v1.4s, #8
+; CHECK-NEXT:    movi v1.4s, #6
 ; CHECK-NEXT:    sub v0.4s, v1.4s, v0.4s
-; CHECK-NEXT:    movi v1.4s, #2
-; CHECK-NEXT:    sub v0.4s, v0.4s, v1.4s
 ; CHECK-NEXT:    ret
   %t0 = sub <4 x i32> <i32 8, i32 8, i32 8, i32 8>, %arg
   %t1 = sub <4 x i32> %t0, <i32 2, i32 2, i32 2, i32 2>
@@ -362,13 +360,13 @@ define <4 x i32> @const_sub_sub_const_extrause(<4 x i32> %arg) {
 ; CHECK-NEXT:    .cfi_def_cfa_offset 32
 ; CHECK-NEXT:    .cfi_offset w30, -16
 ; CHECK-NEXT:    movi v1.4s, #8
-; CHECK-NEXT:    sub v0.4s, v1.4s, v0.4s
 ; CHECK-NEXT:    str q0, [sp] // 16-byte Folded Spill
+; CHECK-NEXT:    sub v0.4s, v1.4s, v0.4s
 ; CHECK-NEXT:    bl use
 ; CHECK-NEXT:    ldr q1, [sp] // 16-byte Folded Reload
 ; CHECK-NEXT:    ldr x30, [sp, #16] // 8-byte Folded Reload
-; CHECK-NEXT:    movi v0.4s, #2
-; CHECK-NEXT:    sub v0.4s, v1.4s, v0.4s
+; CHECK-NEXT:    movi v0.4s, #6
+; CHECK-NEXT:    sub v0.4s, v0.4s, v1.4s
 ; CHECK-NEXT:    add sp, sp, #32 // =32
 ; CHECK-NEXT:    ret
   %t0 = sub <4 x i32> <i32 8, i32 8, i32 8, i32 8>, %arg
@@ -382,10 +380,7 @@ define <4 x i32> @const_sub_sub_const_nonsplat(<4 x i32> %arg) {
 ; CHECK:       // %bb.0:
 ; CHECK-NEXT:    adrp x8, .LCPI23_0
 ; CHECK-NEXT:    ldr q1, [x8, :lo12:.LCPI23_0]
-; CHECK-NEXT:    adrp x8, .LCPI23_1
-; CHECK-NEXT:    ldr q2, [x8, :lo12:.LCPI23_1]
 ; CHECK-NEXT:    sub v0.4s, v1.4s, v0.4s
-; CHECK-NEXT:    sub v0.4s, v0.4s, v2.4s
 ; CHECK-NEXT:    ret
   %t0 = sub <4 x i32> <i32 21, i32 undef, i32 8, i32 8>, %arg
   %t1 = sub <4 x i32> %t0, <i32 2, i32 3, i32 undef, i32 2>
