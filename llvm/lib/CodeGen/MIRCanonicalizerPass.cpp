@@ -104,6 +104,8 @@ INITIALIZE_PASS_END(MIRCanonicalizer, "mir-canonicalizer",
                     "Rename Register Operands Canonically", false, false)
 
 static std::vector<MachineBasicBlock *> GetRPOList(MachineFunction &MF) {
+  if (MF.empty())
+    return {};
   ReversePostOrderTraversal<MachineBasicBlock *> RPOT(&*MF.begin());
   std::vector<MachineBasicBlock *> RPOList;
   for (auto MBB : RPOT) {
