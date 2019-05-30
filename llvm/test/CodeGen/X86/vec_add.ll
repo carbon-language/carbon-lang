@@ -36,14 +36,14 @@ define <4 x i32> @add_const_add_const(<4 x i32> %arg) {
 define <4 x i32> @add_const_sub_const(<4 x i32> %arg) {
 ; X86-LABEL: add_const_sub_const:
 ; X86:       # %bb.0:
-; X86-NEXT:    psubd {{\.LCPI.*}}, %xmm0
 ; X86-NEXT:    paddd {{\.LCPI.*}}, %xmm0
+; X86-NEXT:    psubd {{\.LCPI.*}}, %xmm0
 ; X86-NEXT:    retl
 ;
 ; X64-LABEL: add_const_sub_const:
 ; X64:       # %bb.0:
-; X64-NEXT:    psubd {{.*}}(%rip), %xmm0
 ; X64-NEXT:    paddd {{.*}}(%rip), %xmm0
+; X64-NEXT:    psubd {{.*}}(%rip), %xmm0
 ; X64-NEXT:    retq
   %t0 = add <4 x i32> %arg, <i32 8, i32 8, i32 8, i32 8>
   %t1 = sub <4 x i32> %t0, <i32 -2, i32 -2, i32 -2, i32 -2>
@@ -85,14 +85,14 @@ define <4 x i32> @add_const_sub_const_extrause(<4 x i32> %arg) {
 define <4 x i32> @add_const_sub_const_nonsplat(<4 x i32> %arg) {
 ; X86-LABEL: add_const_sub_const_nonsplat:
 ; X86:       # %bb.0:
-; X86-NEXT:    psubd {{\.LCPI.*}}, %xmm0
 ; X86-NEXT:    paddd {{\.LCPI.*}}, %xmm0
+; X86-NEXT:    psubd {{\.LCPI.*}}, %xmm0
 ; X86-NEXT:    retl
 ;
 ; X64-LABEL: add_const_sub_const_nonsplat:
 ; X64:       # %bb.0:
-; X64-NEXT:    psubd {{.*}}(%rip), %xmm0
 ; X64-NEXT:    paddd {{.*}}(%rip), %xmm0
+; X64-NEXT:    psubd {{.*}}(%rip), %xmm0
 ; X64-NEXT:    retq
   %t0 = add <4 x i32> %arg, <i32 21, i32 undef, i32 8, i32 8>
   %t1 = sub <4 x i32> %t0, <i32 -2, i32 -3, i32 undef, i32 -2>

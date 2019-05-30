@@ -26,10 +26,10 @@ define <4 x i32> @add_const_add_const(<4 x i32> %arg) {
 define <4 x i32> @add_const_sub_const(<4 x i32> %arg) {
 ; CHECK-LABEL: add_const_sub_const:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    mvni v2.4s, #1
 ; CHECK-NEXT:    movi v1.4s, #8
-; CHECK-NEXT:    sub v0.4s, v0.4s, v2.4s
 ; CHECK-NEXT:    add v0.4s, v0.4s, v1.4s
+; CHECK-NEXT:    mvni v1.4s, #1
+; CHECK-NEXT:    sub v0.4s, v0.4s, v1.4s
 ; CHECK-NEXT:    ret
   %t0 = add <4 x i32> %arg, <i32 8, i32 8, i32 8, i32 8>
   %t1 = sub <4 x i32> %t0, <i32 -2, i32 -2, i32 -2, i32 -2>
@@ -62,12 +62,12 @@ define <4 x i32> @add_const_sub_const_extrause(<4 x i32> %arg) {
 define <4 x i32> @add_const_sub_const_nonsplat(<4 x i32> %arg) {
 ; CHECK-LABEL: add_const_sub_const_nonsplat:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    adrp x9, .LCPI4_1
 ; CHECK-NEXT:    adrp x8, .LCPI4_0
-; CHECK-NEXT:    ldr q1, [x9, :lo12:.LCPI4_1]
-; CHECK-NEXT:    ldr q2, [x8, :lo12:.LCPI4_0]
-; CHECK-NEXT:    sub v0.4s, v0.4s, v1.4s
-; CHECK-NEXT:    add v0.4s, v0.4s, v2.4s
+; CHECK-NEXT:    ldr q1, [x8, :lo12:.LCPI4_0]
+; CHECK-NEXT:    adrp x8, .LCPI4_1
+; CHECK-NEXT:    ldr q2, [x8, :lo12:.LCPI4_1]
+; CHECK-NEXT:    add v0.4s, v0.4s, v1.4s
+; CHECK-NEXT:    sub v0.4s, v0.4s, v2.4s
 ; CHECK-NEXT:    ret
   %t0 = add <4 x i32> %arg, <i32 21, i32 undef, i32 8, i32 8>
   %t1 = sub <4 x i32> %t0, <i32 -2, i32 -3, i32 undef, i32 -2>
