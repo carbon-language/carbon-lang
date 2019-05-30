@@ -2470,10 +2470,11 @@ SDValue DAGCombiner::visitADDLikeCommutative(SDValue N0, SDValue N1,
   if (SDValue V = foldAddSubMasked1(true, N0, N1, DAG, DL))
     return V;
 
-  // Hoist one-use subtraction by constant:  (x - C) + y  ->  (x + y) - C
+  // Hoist one-use subtraction by non-opaque constant:
+  //   (x - C) + y  ->  (x + y) - C
   // This is necessary because SUB(X,C) -> ADD(X,-C) doesn't work for vectors.
   if (N0.hasOneUse() && N0.getOpcode() == ISD::SUB &&
-      isConstantOrConstantVector(N0.getOperand(1))) {
+      isConstantOrConstantVector(N0.getOperand(1), /*NoOpaques=*/true)) {
     SDValue Add = DAG.getNode(ISD::ADD, DL, VT, N0.getOperand(0), N1);
     return DAG.getNode(ISD::SUB, DL, VT, Add, N0.getOperand(1));
   }
@@ -2986,22 +2987,23 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
     return DAG.getNode(ISD::ADD, DL, VT, Xor, N0.getOperand(0));
   }
 
-  // Hoist one-use addition by constant:  (x + C) - y  ->  (x - y) + C
+  // Hoist one-use addition by non-opaque constant:
+  //   (x + C) - y  ->  (x - y) + C
   if (N0.hasOneUse() && N0.getOpcode() == ISD::ADD &&
-      isConstantOrConstantVector(N0.getOperand(1))) {
+      isConstantOrConstantVector(N0.getOperand(1), /*NoOpaques=*/true)) {
     SDValue Sub = DAG.getNode(ISD::SUB, DL, VT, N0.getOperand(0), N1);
     return DAG.getNode(ISD::ADD, DL, VT, Sub, N0.getOperand(1));
   }
   // y - (x + C)  ->  (y - x) - C
   if (N1.hasOneUse() && N1.getOpcode() == ISD::ADD &&
-      isConstantOrConstantVector(N1.getOperand(1))) {
+      isConstantOrConstantVector(N1.getOperand(1), /*NoOpaques=*/true)) {
     SDValue Sub = DAG.getNode(ISD::SUB, DL, VT, N0, N1.getOperand(0));
     return DAG.getNode(ISD::SUB, DL, VT, Sub, N1.getOperand(1));
   }
   // (x - C) - y  ->  (x - y) - C
   // This is necessary because SUB(X,C) -> ADD(X,-C) doesn't work for vectors.
   if (N0.hasOneUse() && N0.getOpcode() == ISD::SUB &&
-      isConstantOrConstantVector(N0.getOperand(1))) {
+      isConstantOrConstantVector(N0.getOperand(1), /*NoOpaques=*/true)) {
     SDValue Sub = DAG.getNode(ISD::SUB, DL, VT, N0.getOperand(0), N1);
     return DAG.getNode(ISD::SUB, DL, VT, Sub, N0.getOperand(1));
   }
