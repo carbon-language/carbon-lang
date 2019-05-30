@@ -5,14 +5,3 @@
 // RUN: FileCheck --input-file %t0 %s
 
 CHECK: Disassembly of section __TEXT,__text:
-
-// RUN: dsymutil %p/../../dsymutil/Inputs/fat-test.dylib -o fat-test.dylib.dSYM
-// RUN: llvm-objdump -m -d -g -dsym fat-test.dylib.dSYM/Contents/Resources/DWARF/fat-test.dylib %p/../../dsymutil/Inputs/fat-test.dylib | FileCheck -check-prefix MACHO_DSYM %s
-// RUN: dsymutil %p/../../dsymutil/Inputs/basic.macho.x86_64 -o basic.macho.x86_64.dSYM
-// RUN: llvm-objdump -m -d -g -dsym basic.macho.x86_64.dSYM/Contents/Resources/DWARF/basic.macho.x86_64 %p/../../dsymutil/Inputs/basic.macho.x86_64 | FileCheck -check-prefix MACHO_DSYM %s
-
-MACHO_DSYM: (__TEXT,__text) section
-
-// RUN: llvm-objdump -m -d -g -dsym %p/../Inputs/libbogus11.a %p/../../dsymutil/Inputs/basic.macho.x86_64 2>&1 | FileCheck -check-prefix BAD_INPUT %s
-
-BAD_INPUT: is not a Mach-O or Universal file type.
