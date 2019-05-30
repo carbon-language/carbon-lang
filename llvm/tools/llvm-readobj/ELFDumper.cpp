@@ -3491,18 +3491,7 @@ void GNUStyle<ELFT>::printVersionSymbolSection(const ELFFile<ELFT> *Obj,
   OS << '\n';
 }
 
-template <class ELFT>
-void GNUStyle<ELFT>::printVersionDefinitionSection(const ELFFile<ELFT> *Obj,
-                                                   const Elf_Shdr *Sec) {
-  if (!Sec)
-    return;
-
-  StringRef SecName = unwrapOrError(Obj->getSectionName(Sec));
-  OS << "Dumper for " << SecName << " is not implemented\n";
-  OS << '\n';
-}
-
-static std::string verNeedFlagToString(unsigned Flags) {
+static std::string versionFlagToString(unsigned Flags) {
   if (Flags == 0)
     return "none";
 
@@ -3521,6 +3510,48 @@ static std::string verNeedFlagToString(unsigned Flags) {
   AddFlag(VER_FLG_INFO, "INFO");
   AddFlag(~0, "<unknown>");
   return Ret;
+}
+
+template <class ELFT>
+void GNUStyle<ELFT>::printVersionDefinitionSection(const ELFFile<ELFT> *Obj,
+                                                   const Elf_Shdr *Sec) {
+  if (!Sec)
+    return;
+
+  unsigned VerDefsNum = Sec->sh_info;
+  printGNUVersionSectionProlog(OS, "Version definition", VerDefsNum, Obj, Sec);
+
+  const Elf_Shdr *StrTabSec = unwrapOrError(Obj->getSection(Sec->sh_link));
+  StringRef StringTable(
+      reinterpret_cast<const char *>(Obj->base() + StrTabSec->sh_offset),
+      StrTabSec->sh_size);
+
+  const uint8_t *VerdefBuf = unwrapOrError(Obj->getSectionContents(Sec)).data();
+  const uint8_t *Begin = VerdefBuf;
+
+  while (VerDefsNum--) {
+    const Elf_Verdef *Verdef = reinterpret_cast<const Elf_Verdef *>(VerdefBuf);
+    OS << format("  0x%04x: Rev: %u  Flags: %s  Index: %u  Cnt: %u",
+                 VerdefBuf - Begin, (unsigned)Verdef->vd_version,
+                 versionFlagToString(Verdef->vd_flags).c_str(),
+                 (unsigned)Verdef->vd_ndx, (unsigned)Verdef->vd_cnt);
+
+    const uint8_t *VerdauxBuf = VerdefBuf + Verdef->vd_aux;
+    const Elf_Verdaux *Verdaux =
+        reinterpret_cast<const Elf_Verdaux *>(VerdauxBuf);
+    OS << format("  Name: %s\n",
+                 StringTable.drop_front(Verdaux->vda_name).data());
+
+    for (unsigned I = 1; I < Verdef->vd_cnt; ++I) {
+      VerdauxBuf += Verdaux->vda_next;
+      Verdaux = reinterpret_cast<const Elf_Verdaux *>(VerdauxBuf);
+      OS << format("  0x%04x: Parent %u: %s\n", VerdauxBuf - Begin, I,
+                   StringTable.drop_front(Verdaux->vda_name).data());
+    }
+
+    VerdefBuf += Verdef->vd_next;
+  }
+  OS << '\n';
 }
 
 template <class ELFT>
@@ -3558,7 +3589,7 @@ void GNUStyle<ELFT>::printVersionDependencySection(const ELFFile<ELFT> *Obj,
       OS << format("  0x%04x:   Name: %s  Flags: %s  Version: %u\n",
                    reinterpret_cast<const uint8_t *>(Vernaux) - SecData.begin(),
                    StringTable.drop_front(Vernaux->vna_name).data(),
-                   verNeedFlagToString(Vernaux->vna_flags).c_str(),
+                   versionFlagToString(Vernaux->vna_flags).c_str(),
                    (unsigned)Vernaux->vna_other);
       VernauxBuf += Vernaux->vna_next;
     }
