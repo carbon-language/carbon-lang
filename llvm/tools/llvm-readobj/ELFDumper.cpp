@@ -3524,7 +3524,7 @@ void GNUStyle<ELFT>::printVersionDefinitionSection(const ELFFile<ELFT> *Obj,
   const Elf_Shdr *StrTabSec = unwrapOrError(Obj->getSection(Sec->sh_link));
   StringRef StringTable(
       reinterpret_cast<const char *>(Obj->base() + StrTabSec->sh_offset),
-      StrTabSec->sh_size);
+      (size_t)StrTabSec->sh_size);
 
   const uint8_t *VerdefBuf = unwrapOrError(Obj->getSectionContents(Sec)).data();
   const uint8_t *Begin = VerdefBuf;
@@ -3568,7 +3568,7 @@ void GNUStyle<ELFT>::printVersionDependencySection(const ELFFile<ELFT> *Obj,
   const Elf_Shdr *StrTabSec = unwrapOrError(Obj->getSection(Sec->sh_link));
   StringRef StringTable = {
       reinterpret_cast<const char *>(Obj->base() + StrTabSec->sh_offset),
-      StrTabSec->sh_size};
+      (size_t)StrTabSec->sh_size};
 
   const uint8_t *VerneedBuf = SecData.data();
   for (unsigned I = 0; I < VerneedNum; ++I) {
