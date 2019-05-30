@@ -4974,6 +4974,46 @@ multiclass sve_mem_p_fill<string asm> {
                   (!cast<Instruction>(NAME) PPRAny:$Pt, GPR64sp:$Rn, 0), 1>;
 }
 
+class sve2_mem_cldnt_vs_base<bits<5> opc, dag iops, string asm,
+                             RegisterOperand VecList>
+: I<(outs VecList:$Zt), iops,
+  asm, "\t$Zt, $Pg/z, [$Zn, $Rm]",
+  "",
+  []>, Sched<[]> {
+  bits<3> Pg;
+  bits<5> Rm;
+  bits<5> Zn;
+  bits<5> Zt;
+  let Inst{31}    = 0b1;
+  let Inst{30}    = opc{4};
+  let Inst{29-25} = 0b00010;
+  let Inst{24-23} = opc{3-2};
+  let Inst{22-21} = 0b00;
+  let Inst{20-16} = Rm;
+  let Inst{15}    = 0b1;
+  let Inst{14-13} = opc{1-0};
+  let Inst{12-10} = Pg;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zt;
+
+  let mayLoad = 1;
+}
+
+multiclass sve2_mem_cldnt_vs<bits<5> opc, string asm,
+                             RegisterOperand listty, ZPRRegOp zprty> {
+  def _REAL : sve2_mem_cldnt_vs_base<opc, (ins PPR3bAny:$Pg, zprty:$Zn, GPR64:$Rm),
+                                     asm, listty>;
+
+  def : InstAlias<asm # "\t$Zt, $Pg/z, [$Zn, $Rm]",
+                 (!cast<Instruction>(NAME # _REAL) zprty:$Zt, PPR3bAny:$Pg, zprty:$Zn, GPR64:$Rm), 0>;
+  def : InstAlias<asm # "\t$Zt, $Pg/z, [$Zn]",
+                 (!cast<Instruction>(NAME # _REAL) zprty:$Zt, PPR3bAny:$Pg, zprty:$Zn, XZR), 0>;
+  def : InstAlias<asm # "\t$Zt, $Pg/z, [$Zn, $Rm]",
+                 (!cast<Instruction>(NAME # _REAL) listty:$Zt, PPR3bAny:$Pg, zprty:$Zn, GPR64:$Rm), 0>;
+  def : InstAlias<asm # "\t$Zt, $Pg/z, [$Zn]",
+                 (!cast<Instruction>(NAME # _REAL) listty:$Zt, PPR3bAny:$Pg, zprty:$Zn, XZR), 1>;
+}
+
 //===----------------------------------------------------------------------===//
 // SVE Memory - 64-bit Gather Group
 //===----------------------------------------------------------------------===//
