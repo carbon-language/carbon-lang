@@ -304,8 +304,8 @@ common::IfNoLvalue<typename VISITOR::Result, VISITOR> SearchTypesHelper(
     if (auto result{visitor.template Test<std::tuple_element_t<J, Tuple>>()}) {
       return result;
     }
-    return SearchTypesHelper<J + 1, VISITOR>(std::move(visitor),
-        std::move(defaultResult));
+    return SearchTypesHelper<J + 1, VISITOR>(
+        std::move(visitor), std::move(defaultResult));
   } else {
     return std::move(defaultResult);
   }

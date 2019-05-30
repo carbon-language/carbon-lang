@@ -155,7 +155,7 @@ Scope &DerivedTypeSpec::Instantiate(
             }
           }
           TypeParamDetails instanceDetails{details.attr()};
-          if (const DeclTypeSpec *type{details.type()}) {
+          if (const DeclTypeSpec * type{details.type()}) {
             instanceDetails.set_type(*type);
           }
           instanceDetails.set_init(std::move(*expr));
