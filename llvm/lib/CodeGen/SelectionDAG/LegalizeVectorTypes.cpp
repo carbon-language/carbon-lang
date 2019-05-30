@@ -2968,7 +2968,7 @@ SDValue DAGTypeLegalizer::WidenVecRes_StrictFP(SDNode *N) {
 
   // No legal vector version so unroll the vector operation and then widen.
   if (NumElts == 1)
-    return UnrollVectorOp(N, WidenVT.getVectorNumElements());
+    return DAG.UnrollVectorOp(N, WidenVT.getVectorNumElements());
 
   // Since the operation can trap, apply operation on the original vector.
   EVT MaxVT = VT;
