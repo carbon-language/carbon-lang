@@ -314,8 +314,8 @@ define <4 x i32> @vec_sink_sub_of_const_to_sub(<4 x i32> %a, <4 x i32> %b, <4 x 
 ; CHECK-NEXT:    adrp x8, .LCPI20_0
 ; CHECK-NEXT:    ldr q3, [x8, :lo12:.LCPI20_0]
 ; CHECK-NEXT:    sub v0.4s, v0.4s, v1.4s
-; CHECK-NEXT:    sub v0.4s, v0.4s, v3.4s
 ; CHECK-NEXT:    sub v0.4s, v0.4s, v2.4s
+; CHECK-NEXT:    sub v0.4s, v0.4s, v3.4s
 ; CHECK-NEXT:    ret
   %t0 = sub <4 x i32> %a, %b
   %t1 = sub <4 x i32> %t0, <i32 42, i32 24, i32 undef, i32 46>

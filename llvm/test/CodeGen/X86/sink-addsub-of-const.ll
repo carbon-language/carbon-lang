@@ -460,15 +460,15 @@ define <4 x i32> @vec_sink_sub_of_const_to_sub(<4 x i32> %a, <4 x i32> %b, <4 x 
 ; X32-LABEL: vec_sink_sub_of_const_to_sub:
 ; X32:       # %bb.0:
 ; X32-NEXT:    psubd %xmm1, %xmm0
-; X32-NEXT:    psubd {{\.LCPI.*}}, %xmm0
 ; X32-NEXT:    psubd %xmm2, %xmm0
+; X32-NEXT:    psubd {{\.LCPI.*}}, %xmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: vec_sink_sub_of_const_to_sub:
 ; X64:       # %bb.0:
 ; X64-NEXT:    psubd %xmm1, %xmm0
-; X64-NEXT:    psubd {{.*}}(%rip), %xmm0
 ; X64-NEXT:    psubd %xmm2, %xmm0
+; X64-NEXT:    psubd {{.*}}(%rip), %xmm0
 ; X64-NEXT:    retq
   %t0 = sub <4 x i32> %a, %b
   %t1 = sub <4 x i32> %t0, <i32 42, i32 24, i32 undef, i32 46>
