@@ -2885,6 +2885,16 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
     }
   }
 
+  // fold (A-C1)-C2 -> A-(C1+C2)
+  if (N0.getOpcode() == ISD::SUB &&
+      isConstantOrConstantVector(N1, /* NoOpaques */ true) &&
+      isConstantOrConstantVector(N0.getOperand(1), /* NoOpaques */ true)) {
+    SDValue NewC = DAG.FoldConstantArithmetic(
+        ISD::ADD, DL, VT, N0.getOperand(1).getNode(), N1.getNode());
+    assert(NewC && "Constant folding failed");
+    return DAG.getNode(ISD::SUB, DL, VT, N0.getOperand(0), NewC);
+  }
+
   // fold ((A+(B+or-C))-B) -> A+or-C
   if (N0.getOpcode() == ISD::ADD &&
       (N0.getOperand(1).getOpcode() == ISD::SUB ||
