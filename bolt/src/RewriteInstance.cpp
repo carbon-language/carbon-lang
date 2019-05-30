@@ -452,7 +452,7 @@ bool shouldProcess(const BinaryFunction &Function) {
   if (!FunctionNames.empty()) {
     IsValid = false;
     for (auto &Name : FunctionNames) {
-      if (Function.hasName(Name)) {
+      if (Function.hasNameRegex(Name)) {
         IsValid = true;
         break;
       }
@@ -462,7 +462,7 @@ bool shouldProcess(const BinaryFunction &Function) {
     return false;
 
   for (auto &Name : SkipFunctionNames) {
-    if (Function.hasName(Name))
+    if (Function.hasNameRegex(Name))
       return false;
   }
 
@@ -486,7 +486,7 @@ size_t padFunction(const BinaryFunction &Function) {
   for (auto &FPI : FunctionPadding) {
     auto Name = FPI.first;
     auto Padding = FPI.second;
-    if (Function.hasName(Name)) {
+    if (Function.hasNameRegex(Name)) {
       return Padding;
     }
   }
@@ -1644,7 +1644,10 @@ void RewriteInstance::adjustFunctionBoundaries() {
     auto &Function = BFI->second;
 
     // Check if it's a fragment of a function.
-    if (auto *FragName = Function.hasNameRegex("\\.cold\\.")) {
+    const auto *FragName = Function.hasNameRegex(".*\\.cold\\..*");
+    if (!FragName)
+      FragName = Function.hasNameRegex(".*\\.cold");
+    if (FragName) {
       static bool PrintedWarning = false;
       if (BC->HasRelocations && !PrintedWarning) {
         errs() << "BOLT-WARNING: split function detected on input : "
@@ -2757,7 +2760,7 @@ void RewriteInstance::emitFunction(MCStreamer &Streamer,
   // Emit UD2 at the beginning if requested by user.
   if (!opts::BreakFunctionNames.empty()) {
     for (auto &Name : opts::BreakFunctionNames) {
-      if (Function.hasName(Name)) {
+      if (Function.hasNameRegex(Name)) {
         Streamer.EmitIntValue(0x0B0F, 2); // UD2: 0F 0B
         break;
       }

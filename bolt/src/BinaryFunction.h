@@ -921,7 +921,7 @@ public:
 
   /// Check if (possibly one out of many) function name matches the given
   /// regex.
-  const std::string *hasNameRegex(const std::string &NameRegex) const;
+  const std::string *hasNameRegex(const StringRef NameRegex) const;
 
   /// Return a vector of all possible names for the function.
   const std::vector<std::string> &getNames() const {

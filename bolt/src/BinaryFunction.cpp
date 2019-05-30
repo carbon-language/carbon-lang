@@ -138,14 +138,6 @@ PrintOnly("print-only",
   cl::Hidden,
   cl::cat(BoltCategory));
 
-static cl::list<std::string>
-PrintOnlyRegex("print-only-regex",
-  cl::CommaSeparated,
-  cl::desc("list of function regexes to print"),
-  cl::value_desc("func1,func2,func3,..."),
-  cl::Hidden,
-  cl::cat(BoltCategory));
-
 static cl::opt<bool>
 TimeBuild("time-build",
   cl::desc("print time spent constructing binary functions"),
@@ -163,16 +155,10 @@ TrapOnAVX512("trap-avx512",
   cl::cat(BoltCategory));
 
 bool shouldPrint(const BinaryFunction &Function) {
-  if (PrintOnly.empty() && PrintOnlyRegex.empty())
+  if (PrintOnly.empty())
     return true;
 
   for (auto &Name : opts::PrintOnly) {
-    if (Function.hasName(Name)) {
-      return true;
-    }
-  }
-
-  for (auto &Name : opts::PrintOnlyRegex) {
     if (Function.hasNameRegex(Name)) {
       return true;
     }
@@ -240,8 +226,9 @@ SMLoc findDebugLineInformationForInstructionAt(
 uint64_t BinaryFunction::Count = 0;
 
 const std::string *
-BinaryFunction::hasNameRegex(const std::string &NameRegex) const {
-  Regex MatchName(NameRegex);
+BinaryFunction::hasNameRegex(const StringRef Name) const {
+  const auto RegexName = (Twine("^") + StringRef(Name) + "$").str();
+  Regex MatchName(RegexName);
   for (auto &Name : Names)
     if (MatchName.match(Name))
       return &Name;

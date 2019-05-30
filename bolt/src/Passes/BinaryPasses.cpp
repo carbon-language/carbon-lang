@@ -1559,8 +1559,6 @@ bool SpecializeMemcpy1::shouldOptimize(const BinaryFunction &Function) const {
 
   for (auto &FunctionSpec : Spec) {
     auto FunctionName = StringRef(FunctionSpec).split(':').first;
-    if (Function.hasName(FunctionName))
-      return true;
     if (Function.hasNameRegex(FunctionName))
       return true;
   }
@@ -1574,8 +1572,6 @@ SpecializeMemcpy1::getCallSitesToOptimize(const BinaryFunction &Function) const{
   for (auto &FunctionSpec : Spec) {
     StringRef FunctionName;
     std::tie(FunctionName, SitesString) = StringRef(FunctionSpec).split(':');
-    if (Function.hasName(FunctionName))
-      break;
     if (Function.hasNameRegex(FunctionName))
       break;
     SitesString = "";
