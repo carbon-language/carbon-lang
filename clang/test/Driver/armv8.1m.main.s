@@ -1,3 +1,4 @@
+# REQUIRES: arm-registered-target
 # RUN: not %clang -c -target arm-none-none-eabi -march=armv8-m.main %s 2>%t
 # RUN:      FileCheck --check-prefix=ERROR-V8M < %t %s
 # RUN: not %clang -c -target arm-none-none-eabi -march=armv8.1-m.main %s 2>%t
