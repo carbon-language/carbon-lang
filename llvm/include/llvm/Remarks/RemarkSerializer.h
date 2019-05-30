@@ -56,7 +56,7 @@ struct YAMLSerializer : public Serializer {
   yaml::Output YAMLOutput;
 
   YAMLSerializer(raw_ostream &OS,
-                 UseStringTable UseStringTable = UseStringTable::No);
+                 UseStringTable UseStringTable = remarks::UseStringTable::No);
 
   /// Emit a remark to the stream.
   void emit(const Remark &Remark) override;

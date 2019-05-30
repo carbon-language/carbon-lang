@@ -154,7 +154,7 @@ LLVM_YAML_IS_SEQUENCE_VECTOR(Argument)
 
 YAMLSerializer::YAMLSerializer(raw_ostream &OS, UseStringTable UseStringTable)
     : Serializer(OS), YAMLOutput(OS, reinterpret_cast<void *>(this)) {
-  if (UseStringTable == UseStringTable::Yes || RemarksYAMLStringTable)
+  if (UseStringTable == remarks::UseStringTable::Yes || RemarksYAMLStringTable)
     StrTab.emplace();
 }
 
