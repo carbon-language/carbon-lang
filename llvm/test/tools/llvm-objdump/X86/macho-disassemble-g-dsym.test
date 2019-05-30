@@ -19,4 +19,4 @@ BAD_INPUT: is not a Mach-O or Universal file type.
 // RUN: not llvm-objdump -m -d -g -dsym %p/Inputs %p/Inputs/hello-macho-thin 2>&1 | FileCheck -check-prefix DIRECTORY %s
 
 // Windows will emit "Is a directory", whereas others emit "is a directory"
-DIRECTORY: {{[iI]}}s a directory
+DIRECTORY: {{[i|I]}}s a directory
