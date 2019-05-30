@@ -2312,6 +2312,13 @@ SDValue DAGCombiner::visitADDLike(SDNode *N) {
     }
   }
 
+  // (x - y) + -1  ->  add (xor y, -1), x
+  if (N0.hasOneUse() && N0.getOpcode() == ISD::SUB &&
+      isAllOnesOrAllOnesSplat(N1)) {
+    SDValue Xor = DAG.getNode(ISD::XOR, DL, VT, N0.getOperand(1), N1);
+    return DAG.getNode(ISD::ADD, DL, VT, Xor, N0.getOperand(0));
+  }
+
   if (SDValue Combined = visitADDLikeCommutative(N0, N1, N))
     return Combined;
 
@@ -2963,6 +2970,13 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
 
   if (SDValue V = foldAddSubMasked1(false, N0, N1, DAG, SDLoc(N)))
     return V;
+
+  // (x - y) - 1  ->  add (xor y, -1), x
+  if (N0.hasOneUse() && N0.getOpcode() == ISD::SUB && isOneOrOneSplat(N1)) {
+    SDValue Xor = DAG.getNode(ISD::XOR, DL, VT, N0.getOperand(1),
+                              DAG.getAllOnesConstant(DL, VT));
+    return DAG.getNode(ISD::ADD, DL, VT, Xor, N0.getOperand(0));
+  }
 
   // Hoist one-use addition by constant:  (x + C) - y  ->  (x - y) + C
   if (N0.hasOneUse() && N0.getOpcode() == ISD::ADD &&
