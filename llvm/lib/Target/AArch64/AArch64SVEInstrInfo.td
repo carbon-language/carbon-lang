@@ -1324,6 +1324,9 @@ let Predicates = [HasSVE2] in {
   // sve_int_rotate_imm
   defm XAR_ZZZI : sve2_int_rotate_right_imm<"xar">;
 
+  // SVE2 extract vector (immediate offset, constructive)
+  def EXT_ZZI_B : sve2_int_perm_extract_i_cons<"ext">;
+
   // Predicated shifts
   defm SQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0110, "sqshl">;
   defm UQSHL_ZPmI  : sve_int_bin_pred_shift_imm_left< 0b0111, "uqshl">;

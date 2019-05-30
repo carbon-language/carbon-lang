@@ -874,6 +874,21 @@ class sve_int_perm_extract_i<string asm>
   let ElementSize = ElementSizeNone;
 }
 
+class sve2_int_perm_extract_i_cons<string asm>
+: I<(outs ZPR8:$Zd), (ins ZZ_b:$Zn, imm0_255:$imm8),
+  asm, "\t$Zd, $Zn, $imm8",
+  "", []>, Sched<[]> {
+  bits<5> Zd;
+  bits<5> Zn;
+  bits<8> imm8;
+  let Inst{31-21} = 0b00000101011;
+  let Inst{20-16} = imm8{7-3};
+  let Inst{15-13} = 0b000;
+  let Inst{12-10} = imm8{2-0};
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zd;
+}
+
 //===----------------------------------------------------------------------===//
 // SVE Vector Select Group
 //===----------------------------------------------------------------------===//
