@@ -90,3 +90,4 @@ Extensions and legacy features deliberately not supported
 * `Z` prefix on unquoted hexadecimal constants (dangerous)
 * `T` and `F` as abbreviations for `.TRUE.` and `.FALSE.` (dangerous)
 * Use of host FORMAT labels in internal subprograms (PGI-only feature)
+* ALLOCATE(TYPE(derived)::...) as variant of correct ALLOCATE(derived::...) (PGI only)
