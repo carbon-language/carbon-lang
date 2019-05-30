@@ -6179,7 +6179,7 @@ def VGETLNi32 : NVGetLane<{1,1,1,0,0,0,?,1}, 0b1011, 0b00,
                           IIC_VMOVSI, "vmov", "32", "$R, $V$lane",
                           [(set GPR:$R, (extractelt (v2i32 DPR:$V),
                                            imm:$lane))]>,
-                Requires<[HasVFP2, HasFastVGETLNi32]> {
+                Requires<[HasFPRegs, HasFastVGETLNi32]> {
   let Inst{21} = lane{0};
 }
 // def VGETLNf32: see FMRDH and FMRDL in ARMInstrVFP.td
