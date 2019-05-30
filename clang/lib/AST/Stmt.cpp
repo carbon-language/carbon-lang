@@ -444,14 +444,6 @@ void GCCAsmStmt::setInputExpr(unsigned i, Expr *E) {
   Exprs[i + NumOutputs] = E;
 }
 
-AddrLabelExpr *GCCAsmStmt::getLabelExpr(unsigned i) const {
-  return cast<AddrLabelExpr>(Exprs[i + NumInputs]);
-}
-
-StringRef GCCAsmStmt::getLabelName(unsigned i) const {
-  return getLabelExpr(i)->getLabel()->getName();
-}
-
 /// getInputConstraint - Return the specified input constraint.  Unlike output
 /// constraints, these can be empty.
 StringRef GCCAsmStmt::getInputConstraint(unsigned i) const {
@@ -464,16 +456,13 @@ void GCCAsmStmt::setOutputsAndInputsAndClobbers(const ASTContext &C,
                                                 Stmt **Exprs,
                                                 unsigned NumOutputs,
                                                 unsigned NumInputs,
-                                                unsigned NumLabels,
                                                 StringLiteral **Clobbers,
                                                 unsigned NumClobbers) {
   this->NumOutputs = NumOutputs;
   this->NumInputs = NumInputs;
   this->NumClobbers = NumClobbers;
-  this->NumLabels = NumLabels;
-  assert(!(NumOutputs && NumLabels) && "asm goto cannot have outputs");
 
-  unsigned NumExprs = NumOutputs + NumInputs + NumLabels;
+  unsigned NumExprs = NumOutputs + NumInputs;
 
   C.Deallocate(this->Names);
   this->Names = new (C) IdentifierInfo*[NumExprs];
@@ -508,10 +497,6 @@ int GCCAsmStmt::getNamedOperand(StringRef SymbolicName) const {
   for (unsigned i = 0, e = getNumInputs(); i != e; ++i)
     if (getInputName(i) == SymbolicName)
       return getNumOutputs() + NumPlusOperands + i;
-
-  for (unsigned i = 0, e = getNumLabels(); i != e; ++i)
-    if (getLabelName(i) == SymbolicName)
-      return i + getNumInputs();
 
   // Not found.
   return -1;
@@ -630,8 +615,8 @@ unsigned GCCAsmStmt::AnalyzeAsmString(SmallVectorImpl<AsmStringPiece>&Pieces,
       while (CurPtr != StrEnd && isDigit(*CurPtr))
         N = N*10 + ((*CurPtr++)-'0');
 
-      unsigned NumOperands = getNumOutputs() + getNumPlusOperands() +
-                             getNumInputs() + getNumLabels();
+      unsigned NumOperands =
+        getNumOutputs() + getNumPlusOperands() + getNumInputs();
       if (N >= NumOperands) {
         DiagOffs = CurPtr-StrStart-1;
         return diag::err_asm_invalid_operand_number;
@@ -744,12 +729,10 @@ GCCAsmStmt::GCCAsmStmt(const ASTContext &C, SourceLocation asmloc,
                        unsigned numinputs, IdentifierInfo **names,
                        StringLiteral **constraints, Expr **exprs,
                        StringLiteral *asmstr, unsigned numclobbers,
-                       StringLiteral **clobbers, unsigned numlabels,
-                       SourceLocation rparenloc)
+                       StringLiteral **clobbers, SourceLocation rparenloc)
     : AsmStmt(GCCAsmStmtClass, asmloc, issimple, isvolatile, numoutputs,
-              numinputs, numclobbers),
-              RParenLoc(rparenloc), AsmStr(asmstr), NumLabels(numlabels) {
-  unsigned NumExprs = NumOutputs + NumInputs + NumLabels;
+              numinputs, numclobbers), RParenLoc(rparenloc), AsmStr(asmstr) {
+  unsigned NumExprs = NumOutputs + NumInputs;
 
   Names = new (C) IdentifierInfo*[NumExprs];
   std::copy(names, names + NumExprs, Names);
