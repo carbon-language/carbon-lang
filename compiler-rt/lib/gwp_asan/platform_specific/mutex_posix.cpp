@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "mutex.h"
+#include "gwp_asan/mutex.h"
 
 #include <assert.h>
 #include <pthread.h>
