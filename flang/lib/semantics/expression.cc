@@ -884,10 +884,10 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::StructureComponent &sc) {
                     IgnoreAnySubscripts(std::move(*designator)), *sym}));
           }
         }
-        Say(name, "type parameter is not INTEGER"_err_en_US);
+        Say(name, "Type parameter is not INTEGER"_err_en_US);
       } else {
         Say(name,
-            "type parameter inquiry must be applied to "
+            "A type parameter inquiry must be applied to "
             "a designator"_err_en_US);
       }
     } else if (dtSpec == nullptr || dtSpec->scope() == nullptr) {
@@ -899,12 +899,12 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::StructureComponent &sc) {
               CreateComponent(std::move(*dataRef), *sym, *dtSpec->scope())}) {
         return Designate(DataRef{std::move(*component)});
       } else {
-        Say(name, "component is not in scope of derived TYPE(%s)"_err_en_US,
+        Say(name, "Component is not in scope of derived TYPE(%s)"_err_en_US,
             dtSpec->typeSymbol().name());
       }
     } else {
       Say(name,
-          "base of component reference must be a data reference"_err_en_US);
+          "Base of component reference must be a data reference"_err_en_US);
     }
   } else if (auto *details{sym->detailsIf<semantics::MiscDetails>()}) {
     // special part-ref: %re, %im, %kind, %len

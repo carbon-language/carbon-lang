@@ -155,6 +155,9 @@ Scope &DerivedTypeSpec::Instantiate(
             }
           }
           TypeParamDetails instanceDetails{details.attr()};
+          if (const DeclTypeSpec *type{details.type()}) {
+            instanceDetails.set_type(*type);
+          }
           instanceDetails.set_init(std::move(*expr));
           Symbol *parameter{
               newScope.try_emplace(name, std::move(instanceDetails))

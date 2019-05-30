@@ -1036,7 +1036,7 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       case Rank::dimRemoved:
         CHECK(arrayArg != nullptr);
         if (hasDimArg) {
-          argOk = rank + 1 == arrayArg->Rank();
+          argOk = rank == 0 || rank + 1 == arrayArg->Rank();
         } else {
           argOk = rank == 0;
         }
