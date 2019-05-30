@@ -20,5 +20,5 @@ void foo() {
 
 // CHECK: \"constructing_objects\": [\l&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\{ \"location_context\": \"#0 Call\", \"calling\": \"T::T\", \"call_line\": \"16\", \"items\": [\l&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\{ \"lctx_id\": 2, \"init_id\": {{[0-9]+}}, \"kind\": \"construct into member variable\", \"argument_index\": null, \"pretty\": \"s\", \"value\": \"&t-\>s\"
 
-// CHECK: \"store\": [\l&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\{ \"cluster\": \"t\", \"items\": [\l&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\{ \"kind\": \"Default\", \"offset\": 0, \"value\": \"conj_$3\{int, LC3, no stmt, #1\}\"
+// CHECK: \"cluster\": \"t\", \"items\": [\l&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\{ \"kind\": \"Default\", \"offset\": 0, \"value\": \"conj_$3\{int, LC3, no stmt, #1\}\"
 
