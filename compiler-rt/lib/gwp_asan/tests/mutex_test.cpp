@@ -84,6 +84,6 @@ static void runSynchronisedTest(unsigned NumThreads, unsigned CounterMax) {
 }
 
 TEST(GwpAsanMutexTest, SynchronisedCounterTest) {
-  runSynchronisedTest(4, 100000);
-  runSynchronisedTest(1000, 1000000);
+  runSynchronisedTest(4, 1000000);
+  runSynchronisedTest(100, 1000000);
 }
