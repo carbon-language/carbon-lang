@@ -846,6 +846,7 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
       ExprResult Res =
           Actions.ActOnAddrLabel(Tok.getLocation(), Tok.getLocation(), LD);
       Exprs.push_back(Res.get());
+      Constraints.emplace_back();
       NumLabels++;
       ConsumeToken();
       if (!TryConsumeToken(tok::comma))
