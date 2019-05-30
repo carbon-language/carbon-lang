@@ -357,30 +357,51 @@ struct IntTypeVisitor {
   using Result = MaybeExpr;
   using Types = IntegerTypes;
   template<typename T> Result Test() {
-    if (T::kind == kind) {
+    if (T::kind >= kind) {
       const char *p{digits.begin()};
-      auto value{T::Scalar::Read(p, 10, true)};
+      auto value{T::Scalar::Read(p, 10, true /*signed*/)};
       if (!value.overflow) {
+        if (T::kind > kind) {
+          if (!isDefaultKind ||
+              !analyzer.context().IsEnabled(
+                  parser::LanguageFeature::BigIntLiterals)) {
+            return std::nullopt;
+          } else if (analyzer.context().ShouldWarn(
+                         parser::LanguageFeature::BigIntLiterals)) {
+            analyzer.Say(digits,
+                "Integer literal is too large for default INTEGER(KIND=%d); "
+                "assuming INTEGER(KIND=%d)"_en_US,
+                kind, T::kind);
+          }
+        }
         return Expr<SomeType>{
             Expr<SomeInteger>{Expr<T>{Constant<T>{std::move(value.value)}}}};
       }
     }
     return std::nullopt;
   }
+  ExpressionAnalyzer &analyzer;
   parser::CharBlock digits;
   int kind;
+  bool isDefaultKind;
 };
 
 template<typename PARSED>
 MaybeExpr ExpressionAnalyzer::IntLiteralConstant(const PARSED &x) {
-  int kind{AnalyzeKindParam(std::get<std::optional<parser::KindParam>>(x.t),
-      GetDefaultKind(TypeCategory::Integer))};
+  const auto &kindParam{std::get<std::optional<parser::KindParam>>(x.t)};
+  bool isDefaultKind{!kindParam.has_value()};
+  int kind{AnalyzeKindParam(kindParam, GetDefaultKind(TypeCategory::Integer))};
   if (CheckIntrinsicKind(TypeCategory::Integer, kind)) {
     auto digits{std::get<parser::CharBlock>(x.t)};
-    if (MaybeExpr result{common::SearchTypes(IntTypeVisitor{digits, kind})}) {
+    if (MaybeExpr result{common::SearchTypes(
+            IntTypeVisitor{*this, digits, kind, isDefaultKind})}) {
       return result;
+    } else if (isDefaultKind) {
+      Say(digits,
+          "Integer literal is too large for any allowable "
+          "kind of INTEGER"_err_en_US);
     } else {
-      Say(digits, "Integer literal too large for INTEGER(KIND=%d)"_err_en_US,
+      Say(digits, "Integer literal is too large for INTEGER(KIND=%d)"_err_en_US,
           kind);
     }
   }
