@@ -410,7 +410,7 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
       if (name == "ibclr") {  // done in fprt definition
       } else if (name == "ibset") {
         fptr = &Scalar<T>::IBSET;
-      } else if (name == "ibshft") {
+      } else if (name == "ishft") {
         fptr = &Scalar<T>::ISHFT;
       } else if (name == "shifta") {
         fptr = &Scalar<T>::SHIFTA;
