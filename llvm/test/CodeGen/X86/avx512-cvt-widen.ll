@@ -2533,3 +2533,109 @@ define <16 x i32> @test_16f32tosb(<16 x float> %a, <16 x i32> %passthru) {
   %select = select <16 x i1> %mask, <16 x i32> %passthru, <16 x i32> zeroinitializer
   ret <16 x i32> %select
 }
+
+define <2 x double> @test_sito2f64_mask_load(<2 x i32> *%a, <2 x i64> %c) {
+; SSE-LABEL: sitofp_load_2i32_to_2f64:
+; SSE:       # %bb.0:
+; SSE-NEXT:    cvtdq2pd (%rdi), %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: sitofp_load_2i32_to_2f64:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vcvtdq2pd (%rdi), %xmm0
+; AVX-NEXT:    retq
+; NOVLDQ-LABEL: test_sito2f64_mask_load:
+; NOVLDQ:       # %bb.0:
+; NOVLDQ-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
+; NOVLDQ-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; NOVLDQ-NEXT:    vpcmpgtq %zmm0, %zmm1, %k1
+; NOVLDQ-NEXT:    vcvtdq2pd (%rdi), %xmm0
+; NOVLDQ-NEXT:    vmovapd %zmm0, %zmm0 {%k1} {z}
+; NOVLDQ-NEXT:    # kill: def $xmm0 killed $xmm0 killed $zmm0
+; NOVLDQ-NEXT:    vzeroupper
+; NOVLDQ-NEXT:    retq
+;
+; VLDQ-LABEL: test_sito2f64_mask_load:
+; VLDQ:       # %bb.0:
+; VLDQ-NEXT:    vpmovq2m %xmm0, %k1
+; VLDQ-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; VLDQ-NEXT:    vcvtdq2pd %xmm0, %xmm0 {%k1} {z}
+; VLDQ-NEXT:    retq
+;
+; VLNODQ-LABEL: test_sito2f64_mask_load:
+; VLNODQ:       # %bb.0:
+; VLNODQ-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; VLNODQ-NEXT:    vpcmpgtq %xmm0, %xmm1, %k1
+; VLNODQ-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; VLNODQ-NEXT:    vcvtdq2pd %xmm0, %xmm0 {%k1} {z}
+; VLNODQ-NEXT:    retq
+;
+; DQNOVL-LABEL: test_sito2f64_mask_load:
+; DQNOVL:       # %bb.0:
+; DQNOVL-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
+; DQNOVL-NEXT:    vpmovq2m %zmm0, %k1
+; DQNOVL-NEXT:    vcvtdq2pd (%rdi), %xmm0
+; DQNOVL-NEXT:    vmovapd %zmm0, %zmm0 {%k1} {z}
+; DQNOVL-NEXT:    # kill: def $xmm0 killed $xmm0 killed $zmm0
+; DQNOVL-NEXT:    vzeroupper
+; DQNOVL-NEXT:    retq
+  %mask = icmp slt <2 x i64> %c, zeroinitializer
+  %ld = load <2 x i32>, <2 x i32> *%a
+  %cvt = sitofp <2 x i32> %ld to <2 x double>
+  %sel = select <2 x i1> %mask, <2 x double> %cvt, <2 x double> zeroinitializer
+  ret <2 x double> %sel
+}
+
+define <2 x double> @test_uito2f64_mask_load(<2 x i32> *%a, <2 x i64> %c) {
+; SSE-LABEL: sitofp_load_2i32_to_2f64:
+; SSE:       # %bb.0:
+; SSE-NEXT:    cvtdq2pd (%rdi), %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: sitofp_load_2i32_to_2f64:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vcvtdq2pd (%rdi), %xmm0
+; AVX-NEXT:    retq
+; NOVLDQ-LABEL: test_uito2f64_mask_load:
+; NOVLDQ:       # %bb.0:
+; NOVLDQ-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
+; NOVLDQ-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; NOVLDQ-NEXT:    vpcmpgtq %zmm0, %zmm1, %k1
+; NOVLDQ-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; NOVLDQ-NEXT:    vcvtudq2pd %ymm0, %zmm0
+; NOVLDQ-NEXT:    vmovapd %zmm0, %zmm0 {%k1} {z}
+; NOVLDQ-NEXT:    # kill: def $xmm0 killed $xmm0 killed $zmm0
+; NOVLDQ-NEXT:    vzeroupper
+; NOVLDQ-NEXT:    retq
+;
+; VLDQ-LABEL: test_uito2f64_mask_load:
+; VLDQ:       # %bb.0:
+; VLDQ-NEXT:    vpmovq2m %xmm0, %k1
+; VLDQ-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; VLDQ-NEXT:    vcvtudq2pd %xmm0, %xmm0 {%k1} {z}
+; VLDQ-NEXT:    retq
+;
+; VLNODQ-LABEL: test_uito2f64_mask_load:
+; VLNODQ:       # %bb.0:
+; VLNODQ-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; VLNODQ-NEXT:    vpcmpgtq %xmm0, %xmm1, %k1
+; VLNODQ-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; VLNODQ-NEXT:    vcvtudq2pd %xmm0, %xmm0 {%k1} {z}
+; VLNODQ-NEXT:    retq
+;
+; DQNOVL-LABEL: test_uito2f64_mask_load:
+; DQNOVL:       # %bb.0:
+; DQNOVL-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
+; DQNOVL-NEXT:    vpmovq2m %zmm0, %k1
+; DQNOVL-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; DQNOVL-NEXT:    vcvtudq2pd %ymm0, %zmm0
+; DQNOVL-NEXT:    vmovapd %zmm0, %zmm0 {%k1} {z}
+; DQNOVL-NEXT:    # kill: def $xmm0 killed $xmm0 killed $zmm0
+; DQNOVL-NEXT:    vzeroupper
+; DQNOVL-NEXT:    retq
+  %mask = icmp slt <2 x i64> %c, zeroinitializer
+  %ld = load <2 x i32>, <2 x i32> *%a
+  %cvt = uitofp <2 x i32> %ld to <2 x double>
+  %sel = select <2 x i1> %mask, <2 x double> %cvt, <2 x double> zeroinitializer
+  ret <2 x double> %sel
+}
