@@ -522,12 +522,8 @@ bool MipsCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   MachineInstrBuilder CallSeqStart =
       MIRBuilder.buildInstr(Mips::ADJCALLSTACKDOWN);
 
-  // FIXME: Add support for pic calling sequences, long call sequences for O32,
-  //       N32 and N64. First handle the case when Callee.isReg().
-  if (Callee.isReg())
-    return false;
-
-  MachineInstrBuilder MIB = MIRBuilder.buildInstrNoInsert(Mips::JAL);
+  MachineInstrBuilder MIB = MIRBuilder.buildInstrNoInsert(
+      Callee.isReg() ? Mips::JALRPseudo : Mips::JAL);
   MIB.addDef(Mips::SP, RegState::Implicit);
   MIB.add(Callee);
   const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
@@ -573,6 +569,12 @@ bool MipsCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   CallSeqStart.addImm(NextStackOffset).addImm(0);
 
   MIRBuilder.insertInstr(MIB);
+  if (MIB->getOpcode() == Mips::JALRPseudo) {
+    const MipsSubtarget &STI =
+        static_cast<const MipsSubtarget &>(MIRBuilder.getMF().getSubtarget());
+    MIB.constrainAllUses(MIRBuilder.getTII(), *STI.getRegisterInfo(),
+                         *STI.getRegBankInfo());
+  }
 
   if (OrigRet.Reg) {
 

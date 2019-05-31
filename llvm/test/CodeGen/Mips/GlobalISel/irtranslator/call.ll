@@ -25,3 +25,23 @@ entry:
   %doublez = add i32 %z, %z
   ret i32 %doublez
 }
+
+define i32 @call_reg(i32 (i32, i32)* %f_ptr, i32 %x, i32 %y) {
+  ; MIPS32-LABEL: name: call_reg
+  ; MIPS32: bb.1.entry:
+  ; MIPS32:   liveins: $a0, $a1, $a2
+  ; MIPS32:   [[COPY:%[0-9]+]]:gpr32(p0) = COPY $a0
+  ; MIPS32:   [[COPY1:%[0-9]+]]:_(s32) = COPY $a1
+  ; MIPS32:   [[COPY2:%[0-9]+]]:_(s32) = COPY $a2
+  ; MIPS32:   ADJCALLSTACKDOWN 16, 0, implicit-def $sp, implicit $sp
+  ; MIPS32:   $a0 = COPY [[COPY1]](s32)
+  ; MIPS32:   $a1 = COPY [[COPY2]](s32)
+  ; MIPS32:   JALRPseudo [[COPY]](p0), csr_o32, implicit-def $ra, implicit-def $sp, implicit $a0, implicit $a1, implicit-def $v0
+  ; MIPS32:   [[COPY3:%[0-9]+]]:_(s32) = COPY $v0
+  ; MIPS32:   ADJCALLSTACKUP 16, 0, implicit-def $sp, implicit $sp
+  ; MIPS32:   $v0 = COPY [[COPY3]](s32)
+  ; MIPS32:   RetRA implicit $v0
+entry:
+  %call = call i32 %f_ptr(i32 %x, i32 %y)
+  ret i32 %call
+}
