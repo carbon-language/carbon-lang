@@ -1371,6 +1371,21 @@ let Predicates = [HasSVE2] in {
   // SVE table lookup (three sources)
   defm TBL_ZZZZ : sve2_int_perm_tbl<"tbl">;
   defm TBX_ZZZ  : sve2_int_perm_tbx<"tbx">;
+
+  // SVE integer compare scalar count and limit
+  defm WHILEGE_PWW : sve_int_while4_rr<0b000, "whilege">;
+  defm WHILEGT_PWW : sve_int_while4_rr<0b001, "whilegt">;
+  defm WHILEHS_PWW : sve_int_while4_rr<0b100, "whilehs">;
+  defm WHILEHI_PWW : sve_int_while4_rr<0b101, "whilehi">;
+
+  defm WHILEGE_PXX : sve_int_while8_rr<0b000, "whilege">;
+  defm WHILEGT_PXX : sve_int_while8_rr<0b001, "whilegt">;
+  defm WHILEHS_PXX : sve_int_while8_rr<0b100, "whilehs">;
+  defm WHILEHI_PXX : sve_int_while8_rr<0b101, "whilehi">;
+
+  // SVE pointer conflict compare
+  defm WHILEWR_PXX : sve2_int_while_rr<0b0, "whilewr">;
+  defm WHILERW_PXX : sve2_int_while_rr<0b1, "whilerw">;
 }
 
 let Predicates = [HasSVE2AES] in {
