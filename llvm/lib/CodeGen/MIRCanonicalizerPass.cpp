@@ -343,15 +343,23 @@ static bool propagateLocalCopies(MachineBasicBlock *MBB) {
       continue;
     if (!TargetRegisterInfo::isVirtualRegister(Src))
       continue;
+    // Not folding COPY instructions if regbankselect has not set the RCs.
+    // Why are we only considering Register Classes? Because the verifier
+    // sometimes gets upset if the register classes don't match even if the
+    // types do. A future patch might add COPY folding for matching types in
+    // pre-registerbankselect code.
+    if (!MRI.getRegClassOrNull(Dst))
+      continue;
     if (MRI.getRegClass(Dst) != MRI.getRegClass(Src))
       continue;
 
-    for (auto UI = MRI.use_begin(Dst); UI != MRI.use_end(); ++UI) {
-      MachineOperand *MO = &*UI;
+    std::vector<MachineOperand *> Uses;
+    for (auto UI = MRI.use_begin(Dst); UI != MRI.use_end(); ++UI)
+      Uses.push_back(&*UI);
+    for (auto *MO : Uses)
       MO->setReg(Src);
-      Changed = true;
-    }
 
+    Changed = true;
     MI->eraseFromParent();
   }
 
