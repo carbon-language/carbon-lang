@@ -912,6 +912,77 @@ Value *llvm::emitBCmp(Value *Ptr1, Value *Ptr2, Value *Len, IRBuilder<> &B,
       {castToCStr(Ptr1, B), castToCStr(Ptr2, B), Len}, B, TLI);
 }
 
+Value *llvm::emitMemCCpy(Value *Ptr1, Value *Ptr2, Value *Val, Value *Len,
+                         IRBuilder<> &B, const TargetLibraryInfo *TLI) {
+  return emitLibCall(
+      LibFunc_memccpy, B.getInt8PtrTy(),
+      {B.getInt8PtrTy(), B.getInt8PtrTy(), B.getInt32Ty(), Len->getType()},
+      {Ptr1, Ptr2, Val, Len}, B, TLI);
+}
+
+Value *llvm::emitSNPrintf(Value *Dest, Value *Size, Value *Fmt,
+                          ArrayRef<Value *> VariadicArgs, IRBuilder<> &B,
+                          const TargetLibraryInfo *TLI) {
+  SmallVector<Value *, 8> Args{castToCStr(Dest, B), Size, castToCStr(Fmt, B)};
+  Args.insert(Args.end(), VariadicArgs.begin(), VariadicArgs.end());
+  return emitLibCall(LibFunc_snprintf, B.getInt32Ty(),
+                     {B.getInt8PtrTy(), Size->getType(), B.getInt8PtrTy()},
+                     Args, B, TLI, /*IsVaArgs=*/true);
+}
+
+Value *llvm::emitSPrintf(Value *Dest, Value *Fmt,
+                         ArrayRef<Value *> VariadicArgs, IRBuilder<> &B,
+                         const TargetLibraryInfo *TLI) {
+  SmallVector<Value *, 8> Args{castToCStr(Dest, B), castToCStr(Fmt, B)};
+  Args.insert(Args.end(), VariadicArgs.begin(), VariadicArgs.end());
+  return emitLibCall(LibFunc_sprintf, B.getInt32Ty(),
+                     {B.getInt8PtrTy(), B.getInt8PtrTy()}, Args, B, TLI,
+                     /*IsVaArgs=*/true);
+}
+
+Value *llvm::emitStrCat(Value *Dest, Value *Src, IRBuilder<> &B,
+                        const TargetLibraryInfo *TLI) {
+  return emitLibCall(LibFunc_strcat, B.getInt8PtrTy(),
+                     {B.getInt8PtrTy(), B.getInt8PtrTy()},
+                     {castToCStr(Dest, B), castToCStr(Src, B)}, B, TLI);
+}
+
+Value *llvm::emitStrLCpy(Value *Dest, Value *Src, Value *Size, IRBuilder<> &B,
+                         const TargetLibraryInfo *TLI) {
+  return emitLibCall(LibFunc_strlcpy, Size->getType(),
+                     {B.getInt8PtrTy(), B.getInt8PtrTy(), Size->getType()},
+                     {castToCStr(Dest, B), castToCStr(Src, B), Size}, B, TLI);
+}
+
+Value *llvm::emitStrLCat(Value *Dest, Value *Src, Value *Size, IRBuilder<> &B,
+                         const TargetLibraryInfo *TLI) {
+  return emitLibCall(LibFunc_strlcat, Size->getType(),
+                     {B.getInt8PtrTy(), B.getInt8PtrTy(), Size->getType()},
+                     {castToCStr(Dest, B), castToCStr(Src, B), Size}, B, TLI);
+}
+
+Value *llvm::emitStrNCat(Value *Dest, Value *Src, Value *Size, IRBuilder<> &B,
+                         const TargetLibraryInfo *TLI) {
+  return emitLibCall(LibFunc_strncat, B.getInt8PtrTy(),
+                     {B.getInt8PtrTy(), B.getInt8PtrTy(), Size->getType()},
+                     {castToCStr(Dest, B), castToCStr(Src, B), Size}, B, TLI);
+}
+
+Value *llvm::emitVSNPrintf(Value *Dest, Value *Size, Value *Fmt, Value *VAList,
+                           IRBuilder<> &B, const TargetLibraryInfo *TLI) {
+  return emitLibCall(
+      LibFunc_vsnprintf, B.getInt32Ty(),
+      {B.getInt8PtrTy(), Size->getType(), B.getInt8PtrTy(), VAList->getType()},
+      {castToCStr(Dest, B), Size, castToCStr(Fmt, B), VAList}, B, TLI);
+}
+
+Value *llvm::emitVSPrintf(Value *Dest, Value *Fmt, Value *VAList,
+                          IRBuilder<> &B, const TargetLibraryInfo *TLI) {
+  return emitLibCall(LibFunc_vsprintf, B.getInt32Ty(),
+                     {B.getInt8PtrTy(), B.getInt8PtrTy(), VAList->getType()},
+                     {castToCStr(Dest, B), castToCStr(Fmt, B), VAList}, B, TLI);
+}
+
 /// Append a suffix to the function name according to the type of 'Op'.
 static void appendTypeSuffix(Value *Op, StringRef &Name,
                              SmallString<20> &NameBuffer) {

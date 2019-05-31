@@ -106,6 +106,43 @@ namespace llvm {
   Value *emitBCmp(Value *Ptr1, Value *Ptr2, Value *Len, IRBuilder<> &B,
                   const DataLayout &DL, const TargetLibraryInfo *TLI);
 
+  /// Emit a call to the memccpy function.
+  Value *emitMemCCpy(Value *Ptr1, Value *Ptr2, Value *Val, Value *Len,
+                     IRBuilder<> &B, const TargetLibraryInfo *TLI);
+
+  /// Emit a call to the snprintf function.
+  Value *emitSNPrintf(Value *Dest, Value *Size, Value *Fmt,
+                      ArrayRef<Value *> Args, IRBuilder<> &B,
+                      const TargetLibraryInfo *TLI);
+
+  /// Emit a call to the sprintf function.
+  Value *emitSPrintf(Value *Dest, Value *Fmt, ArrayRef<Value *> VariadicArgs,
+                     IRBuilder<> &B, const TargetLibraryInfo *TLI);
+
+  /// Emit a call to the strcat function.
+  Value *emitStrCat(Value *Dest, Value *Src, IRBuilder<> &B,
+                    const TargetLibraryInfo *TLI);
+
+  /// Emit a call to the strlcpy function.
+  Value *emitStrLCpy(Value *Dest, Value *Src, Value *Size, IRBuilder<> &B,
+                     const TargetLibraryInfo *TLI);
+
+  /// Emit a call to the strlcat function.
+  Value *emitStrLCat(Value *Dest, Value *Src, Value *Size, IRBuilder<> &B,
+                     const TargetLibraryInfo *TLI);
+
+  /// Emit a call to the strncat function.
+  Value *emitStrNCat(Value *Dest, Value *Src, Value *Size, IRBuilder<> &B,
+                     const TargetLibraryInfo *TLI);
+
+  /// Emit a call to the vsnprintf function.
+  Value *emitVSNPrintf(Value *Dest, Value *Size, Value *Fmt, Value *VAList,
+                       IRBuilder<> &B, const TargetLibraryInfo *TLI);
+
+  /// Emit a call to the vsprintf function.
+  Value *emitVSPrintf(Value *Dest, Value *Fmt, Value *VAList, IRBuilder<> &B,
+                      const TargetLibraryInfo *TLI);
+
   /// Emit a call to the unary function named 'Name' (e.g.  'floor'). This
   /// function is known to take a single of type matching 'Op' and returns one
   /// value with the same type. If 'Op' is a long double, 'l' is added as the
