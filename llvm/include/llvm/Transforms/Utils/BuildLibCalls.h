@@ -70,12 +70,22 @@ namespace llvm {
   /// Emit a call to the strcpy function to the builder, for the specified
   /// pointer arguments.
   Value *emitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B,
-                    const TargetLibraryInfo *TLI, StringRef Name = "strcpy");
+                    const TargetLibraryInfo *TLI);
+
+  /// Emit a call to the stpcpy function to the builder, for the specified
+  /// pointer arguments.
+  Value *emitStpCpy(Value *Dst, Value *Src, IRBuilder<> &B,
+                    const TargetLibraryInfo *TLI);
 
   /// Emit a call to the strncpy function to the builder, for the specified
   /// pointer arguments and length.
   Value *emitStrNCpy(Value *Dst, Value *Src, Value *Len, IRBuilder<> &B,
-                     const TargetLibraryInfo *TLI, StringRef Name = "strncpy");
+                     const TargetLibraryInfo *TLI);
+
+  /// Emit a call to the stpncpy function to the builder, for the specified
+  /// pointer arguments and length.
+  Value *emitStpNCpy(Value *Dst, Value *Src, Value *Len, IRBuilder<> &B,
+                     const TargetLibraryInfo *TLI);
 
   /// Emit a call to the __memcpy_chk function to the builder. This expects that
   /// the Len and ObjSize have type 'intptr_t' and Dst/Src are pointers.
