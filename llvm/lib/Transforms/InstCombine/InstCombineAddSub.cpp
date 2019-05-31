@@ -872,7 +872,14 @@ Instruction *InstCombiner::foldAddWithConstant(BinaryOperator &Add) {
   if (Instruction *NV = foldBinOpIntoSelectOrPhi(Add))
     return NV;
 
-  Value *X, *Y;
+  Value *X;
+  Constant *Op00C;
+
+  // add (sub C1, X), C2 --> sub (add C1, C2), X
+  if (match(Op0, m_Sub(m_Constant(Op00C), m_Value(X))))
+    return BinaryOperator::CreateSub(ConstantExpr::getAdd(Op00C, Op1C), X);
+
+  Value *Y;
 
   // add (sub X, Y), -1 --> add (not Y), X
   if (match(Op0, m_OneUse(m_Sub(m_Value(X), m_Value(Y)))) &&
