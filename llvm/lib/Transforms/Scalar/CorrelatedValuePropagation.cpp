@@ -434,7 +434,7 @@ static bool processCallSite(CallSite CS, LazyValueInfo *LVI) {
   unsigned ArgNo = 0;
 
   if (auto *WO = dyn_cast<WithOverflowInst>(CS.getInstruction())) {
-    if (willNotOverflow(WO, LVI)) {
+    if (WO->getLHS()->getType()->isIntegerTy() && willNotOverflow(WO, LVI)) {
       processOverflowIntrinsic(WO);
       return true;
     }
