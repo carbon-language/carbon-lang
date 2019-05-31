@@ -136,9 +136,7 @@ uint64_t Symbol::getGotVA() const {
   return In.Got->getVA() + getGotOffset();
 }
 
-uint64_t Symbol::getGotOffset() const {
-  return GotIndex * Target->GotEntrySize;
-}
+uint64_t Symbol::getGotOffset() const { return GotIndex * Config->Wordsize; }
 
 uint64_t Symbol::getGotPltVA() const {
   if (IsInIplt)
@@ -148,13 +146,13 @@ uint64_t Symbol::getGotPltVA() const {
 
 uint64_t Symbol::getGotPltOffset() const {
   if (IsInIplt)
-    return PltIndex * Target->GotPltEntrySize;
-  return (PltIndex + Target->GotPltHeaderEntriesNum) * Target->GotPltEntrySize;
+    return PltIndex * Config->Wordsize;
+  return (PltIndex + Target->GotPltHeaderEntriesNum) * Config->Wordsize;
 }
 
 uint64_t Symbol::getPPC64LongBranchOffset() const {
   assert(PPC64BranchltIndex != 0xffff);
-  return PPC64BranchltIndex * Target->GotPltEntrySize;
+  return PPC64BranchltIndex * Config->Wordsize;
 }
 
 uint64_t Symbol::getPltVA() const {
@@ -172,7 +170,7 @@ uint64_t Symbol::getPltVA() const {
 uint64_t Symbol::getPPC64LongBranchTableVA() const {
   assert(PPC64BranchltIndex != 0xffff);
   return In.PPC64LongBranchTarget->getVA() +
-         PPC64BranchltIndex * Target->GotPltEntrySize;
+         PPC64BranchltIndex * Config->Wordsize;
 }
 
 uint64_t Symbol::getSize() const {
