@@ -1609,8 +1609,13 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       if (Instruction *R = foldOpIntoPhi(I, PN))
         return R;
 
-    // C-(X+C2) --> (C-C2)-X
     Constant *C2;
+
+    // C-(C2-X) --> X+(C-C2)
+    if (match(Op1, m_Sub(m_Constant(C2), m_Value(X))))
+      return BinaryOperator::CreateAdd(X, ConstantExpr::getSub(C, C2));
+
+    // C-(X+C2) --> (C-C2)-X
     if (match(Op1, m_Add(m_Value(X), m_Constant(C2))))
       return BinaryOperator::CreateSub(ConstantExpr::getSub(C, C2), X);
   }

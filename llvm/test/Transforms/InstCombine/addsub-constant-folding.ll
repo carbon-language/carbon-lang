@@ -485,7 +485,7 @@ define i32 @const_sub_const_sub_extrause(i32 %arg) {
 ; CHECK-LABEL: @const_sub_const_sub_extrause(
 ; CHECK-NEXT:    [[T0:%.*]] = sub i32 8, [[ARG:%.*]]
 ; CHECK-NEXT:    call void @use(i32 [[T0]])
-; CHECK-NEXT:    [[T1:%.*]] = sub i32 2, [[T0]]
+; CHECK-NEXT:    [[T1:%.*]] = add i32 [[ARG]], -6
 ; CHECK-NEXT:    ret i32 [[T1]]
 ;
   %t0 = sub i32 8, %arg
@@ -508,7 +508,7 @@ define <4 x i32> @vec_const_sub_const_sub_extrause(<4 x i32> %arg) {
 ; CHECK-LABEL: @vec_const_sub_const_sub_extrause(
 ; CHECK-NEXT:    [[T0:%.*]] = sub <4 x i32> <i32 8, i32 8, i32 8, i32 8>, [[ARG:%.*]]
 ; CHECK-NEXT:    call void @vec_use(<4 x i32> [[T0]])
-; CHECK-NEXT:    [[T1:%.*]] = sub <4 x i32> <i32 2, i32 2, i32 2, i32 2>, [[T0]]
+; CHECK-NEXT:    [[T1:%.*]] = add <4 x i32> [[ARG]], <i32 -6, i32 -6, i32 -6, i32 -6>
 ; CHECK-NEXT:    ret <4 x i32> [[T1]]
 ;
   %t0 = sub <4 x i32> <i32 8, i32 8, i32 8, i32 8>, %arg
