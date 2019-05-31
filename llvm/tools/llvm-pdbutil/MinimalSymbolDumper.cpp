@@ -689,6 +689,10 @@ Error MinimalSymbolDumper::visitKnownRecord(CVSymbol &CVR, InlineSiteSym &IS) {
       break;
     case BinaryAnnotationsOpCode::ChangeCodeLength:
       formatCodeLength(Annot.U1);
+      // Apparently this annotation updates the code offset. It's hard to make
+      // MSVC produce this opcode, but clang uses it, and debuggers seem to use
+      // this interpretation.
+      CodeOffset += Annot.U1;
       break;
     case BinaryAnnotationsOpCode::ChangeCodeOffsetAndLineOffset:
       formatCodeOffset(Annot.U1);
