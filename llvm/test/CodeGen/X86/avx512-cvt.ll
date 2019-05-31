@@ -791,9 +791,8 @@ define <4 x double> @f32to4f64_mask_load(<4 x float>* %p, <4 x double> %b1, <4 x
 ;
 ; VL-LABEL: f32to4f64_mask_load:
 ; VL:       # %bb.0:
-; VL-NEXT:    vcvtps2pd (%rdi), %ymm2
 ; VL-NEXT:    vcmpltpd %ymm1, %ymm0, %k1
-; VL-NEXT:    vmovapd %ymm2, %ymm0 {%k1} {z}
+; VL-NEXT:    vcvtps2pd (%rdi), %ymm0 {%k1} {z}
 ; VL-NEXT:    retq
   %b = load <4 x float>, <4 x float>* %p
   %a = fpext <4 x float> %b to <4 x double>

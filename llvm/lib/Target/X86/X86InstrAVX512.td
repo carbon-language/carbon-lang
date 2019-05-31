@@ -7677,19 +7677,73 @@ multiclass avx512_vcvt_fp_rc<bits<8> opc, string OpcodeStr, X86VectorVTInfo _,
                         EVEX, EVEX_B, EVEX_RC, Sched<[sched]>;
 }
 
+// Similar to avx512_vcvt_fp, but uses an extload for the memory form.
+multiclass avx512_vcvt_fpextend<bits<8> opc, string OpcodeStr, X86VectorVTInfo _,
+                                X86VectorVTInfo _Src, SDNode OpNode,
+                                X86FoldableSchedWrite sched,
+                                string Broadcast = _.BroadcastStr,
+                                string Alias = "", X86MemOperand MemOp = _Src.MemOp,
+                                RegisterClass MaskRC = _.KRCWM,
+                                PatFrag LdFrag = !cast<PatFrag>("extload"#_Src.VTName)> {
+
+  defm rr : AVX512_maskable_common<opc, MRMSrcReg, _, (outs _.RC:$dst),
+                         (ins _Src.RC:$src),
+                         (ins _.RC:$src0, MaskRC:$mask, _Src.RC:$src),
+                         (ins MaskRC:$mask, _Src.RC:$src),
+                          OpcodeStr, "$src", "$src",
+                         (_.VT (OpNode (_Src.VT _Src.RC:$src))),
+                         (vselect MaskRC:$mask,
+                                  (_.VT (OpNode (_Src.VT _Src.RC:$src))),
+                                  _.RC:$src0),
+                         vselect, "$src0 = $dst">,
+                         EVEX, Sched<[sched]>;
+
+  defm rm : AVX512_maskable_common<opc, MRMSrcMem, _, (outs _.RC:$dst),
+                         (ins MemOp:$src),
+                         (ins _.RC:$src0, MaskRC:$mask, MemOp:$src),
+                         (ins MaskRC:$mask, MemOp:$src),
+                         OpcodeStr#Alias, "$src", "$src",
+                         (_.VT (LdFrag addr:$src)),
+                         (vselect MaskRC:$mask,
+                                  (_.VT (OpNode (_Src.VT
+                                                 (_Src.LdFrag addr:$src)))),
+                                  _.RC:$src0),
+                         vselect, "$src0 = $dst">,
+                         EVEX, Sched<[sched.Folded]>;
+
+  defm rmb : AVX512_maskable_common<opc, MRMSrcMem, _, (outs _.RC:$dst),
+                         (ins _Src.ScalarMemOp:$src),
+                         (ins _.RC:$src0, MaskRC:$mask, _Src.ScalarMemOp:$src),
+                         (ins MaskRC:$mask, _Src.ScalarMemOp:$src),
+                         OpcodeStr,
+                         "${src}"##Broadcast, "${src}"##Broadcast,
+                         (_.VT (OpNode (_Src.VT
+                                  (X86VBroadcast (_Src.ScalarLdFrag addr:$src)))
+                            )),
+                         (vselect MaskRC:$mask,
+                                  (_.VT
+                                   (OpNode
+                                    (_Src.VT
+                                     (X86VBroadcast
+                                      (_Src.ScalarLdFrag addr:$src))))),
+                                  _.RC:$src0),
+                         vselect, "$src0 = $dst">,
+                         EVEX, EVEX_B, Sched<[sched.Folded]>;
+}
+
 // Extend Float to Double
 multiclass avx512_cvtps2pd<bits<8> opc, string OpcodeStr,
                            X86SchedWriteWidths sched> {
   let Predicates = [HasAVX512] in {
-    defm Z : avx512_vcvt_fp<opc, OpcodeStr, v8f64_info, v8f32x_info,
+    defm Z : avx512_vcvt_fpextend<opc, OpcodeStr, v8f64_info, v8f32x_info,
                             fpextend, sched.ZMM>,
              avx512_vcvt_fp_sae<opc, OpcodeStr, v8f64_info, v8f32x_info,
                                 X86vfpextSAE, sched.ZMM>, EVEX_V512;
   }
   let Predicates = [HasVLX] in {
-    defm Z128 : avx512_vcvt_fp<opc, OpcodeStr, v2f64x_info, v4f32x_info,
+    defm Z128 : avx512_vcvt_fpextend<opc, OpcodeStr, v2f64x_info, v4f32x_info,
                                X86vfpext, sched.XMM, "{1to2}", "", f64mem>, EVEX_V128;
-    defm Z256 : avx512_vcvt_fp<opc, OpcodeStr, v4f64x_info, v4f32x_info, fpextend,
+    defm Z256 : avx512_vcvt_fpextend<opc, OpcodeStr, v4f64x_info, v4f32x_info, fpextend,
                                sched.YMM>, EVEX_V256;
   }
 }
@@ -7784,9 +7838,6 @@ let Predicates = [HasAVX512] in {
                      (fpround (v8f64 (X86VBroadcast (loadf64 addr:$src)))),
                      v8f32x_info.ImmAllZerosV),
             (VCVTPD2PSZrmbkz VK8WM:$mask, addr:$src)>;
-
-  def : Pat<(v8f64 (extloadv8f32 addr:$src)),
-              (VCVTPS2PDZrm addr:$src)>;
 }
 
 let Predicates = [HasVLX] in {
@@ -7818,11 +7869,6 @@ let Predicates = [HasVLX] in {
                      (v4f32 (fpround (v4f64 (X86VBroadcast (loadf64 addr:$src))))),
                      v4f32x_info.ImmAllZerosV),
             (VCVTPD2PSZ256rmbkz VK4WM:$mask, addr:$src)>;
-
-  def : Pat<(v2f64 (extloadv2f32 addr:$src)),
-              (VCVTPS2PDZ128rm addr:$src)>;
-  def : Pat<(v4f64 (extloadv4f32 addr:$src)),
-              (VCVTPS2PDZ256rm addr:$src)>;
 
   // Special patterns to allow use of X86vmfpround for masking. Instruction
   // patterns have been disabled with null_frag.
