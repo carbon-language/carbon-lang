@@ -23,6 +23,7 @@
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/ThreadPool.h"
 
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt"
@@ -104,8 +105,19 @@ PerfDataA("p",
   cl::aliasopt(PerfData),
   cl::cat(AggregatorCategory));
 
-} // namespace opts
+cl::opt<int> 
+ThreadCount("thread-count",
+  cl::desc("number of threads"),
+  cl::init(hardware_concurrency()),
+  cl::cat(BoltCategory));
 
+cl::opt<bool> 
+NoThreads("no-threads",
+  cl::desc("disbale multithreading"),
+  cl::init(false),
+  cl::cat(BoltCategory));
+  
+} // namespace opts
 static StringRef ToolName;
 
 static void report_error(StringRef Message, std::error_code EC) {

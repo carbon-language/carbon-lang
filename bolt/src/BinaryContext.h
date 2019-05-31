@@ -43,6 +43,7 @@
 #include <functional>
 #include <map>
 #include <set>
+#include <shared_mutex>
 #include <string>
 #include <system_error>
 #include <unordered_map>
@@ -149,6 +150,9 @@ class BinaryContext {
   /// Store all functions in the binary, sorted by original address.
   std::map<uint64_t, BinaryFunction> BinaryFunctions;
 
+  /// A mutex that is used to control parallel accesses to BinaryFunctions
+  mutable std::shared_timed_mutex BinaryFunctionsMutex;
+
   /// Functions injected by BOLT
   std::vector<BinaryFunction *> InjectedBinaryFunctions;
 
@@ -228,6 +232,9 @@ public:
   /// to the same BinaryFunction.
   std::unordered_map<const MCSymbol *,
                      BinaryFunction *> SymbolToFunctionMap;
+
+  /// A mutex that is used to control parallel accesses to SymbolToFunctionMap
+  mutable std::shared_timed_mutex SymbolToFunctionMapMutex;
 
   /// Look up the symbol entry that contains the given \p Address (based on
   /// the start address and size for each symbol).  Returns a pointer to
@@ -331,6 +338,9 @@ public:
   std::set<std::pair<BinaryFunction *, uint64_t>> InterproceduralReferences;
 
   std::unique_ptr<MCContext> Ctx;
+
+  /// A mutex that is used to control parallel accesses to Ctx
+  mutable std::shared_timed_mutex CtxMutex;
 
   std::unique_ptr<DWARFContext> DwCtx;
 
@@ -815,7 +825,7 @@ public:
 
   /// Replaces all references to \p ChildBF with \p ParentBF. \p ChildBF is then
   /// removed from the list of functions \p BFs. The profile data of \p ChildBF
-  /// is merged into that of \p ParentBF.
+  /// is merged into that of \p ParentBF. This function is thread safe.
   void foldFunction(BinaryFunction &ChildBF, BinaryFunction &ParentBF);
 
   /// Add a Section relocation at a given \p Address.
@@ -829,12 +839,15 @@ public:
   /// is no relocation at such address.
   const Relocation *getRelocationAt(uint64_t Address);
 
+  /// This function is thread safe.
   const BinaryFunction *getFunctionForSymbol(const MCSymbol *Symbol) const {
+    std::shared_lock<std::shared_timed_mutex> Lock(SymbolToFunctionMapMutex);
     auto BFI = SymbolToFunctionMap.find(Symbol);
     return BFI == SymbolToFunctionMap.end() ? nullptr : BFI->second;
   }
 
   BinaryFunction *getFunctionForSymbol(const MCSymbol *Symbol) {
+    std::shared_lock<std::shared_timed_mutex> Lock(SymbolToFunctionMapMutex);
     auto BFI = SymbolToFunctionMap.find(Symbol);
     return BFI == SymbolToFunctionMap.end() ? nullptr : BFI->second;
   }

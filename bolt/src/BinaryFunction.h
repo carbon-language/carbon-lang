@@ -41,6 +41,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <algorithm>
 
 using namespace llvm::object;
 
@@ -1307,7 +1308,8 @@ public:
   /// Add new names this function is known under.
   template <class ContainterTy>
   void addNewNames(const ContainterTy &NewNames) {
-    Names.insert(Names.begin(),  NewNames.begin(), NewNames.end());
+    Names.insert(Names.begin(), NewNames.begin(), NewNames.end());
+    std::sort(Names.begin(), Names.end());
   }
 
   /// Create a basic block at a given \p Offset in the

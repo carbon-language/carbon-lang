@@ -810,18 +810,30 @@ void BinaryContext::postProcessSymbolTable() {
 }
 
 void BinaryContext::foldFunction(BinaryFunction &ChildBF,
-                                 BinaryFunction &ParentBF) {
+                                           BinaryFunction &ParentBF) {
+  std::shared_lock<std::shared_timed_mutex> ReadCtxLock(CtxMutex,
+                                                        std::defer_lock);
+  std::unique_lock<std::shared_timed_mutex> WriteCtxLock(CtxMutex,
+                                                         std::defer_lock);
+  std::unique_lock<std::shared_timed_mutex> WriteSymbolMapLock(
+      SymbolToFunctionMapMutex, std::defer_lock);
+
   // Copy name list.
   ParentBF.addNewNames(ChildBF.getNames());
 
   // Update internal bookkeeping info.
   for (auto &Name : ChildBF.getNames()) {
+    ReadCtxLock.lock();
     // Calls to functions are handled via symbols, and we keep the lookup table
     // that we need to update.
     auto *Symbol = Ctx->lookupSymbol(Name);
-    assert(Symbol && "symbol cannot be NULL at this point");
-    SymbolToFunctionMap[Symbol] = &ParentBF;
+    ReadCtxLock.unlock();
 
+    assert(Symbol && "symbol cannot be NULL at this point");
+
+    WriteSymbolMapLock.lock();
+    SymbolToFunctionMap[Symbol] = &ParentBF;
+    WriteSymbolMapLock.unlock();
     // NB: there's no need to update BinaryDataMap and GlobalSymbols.
   }
 
@@ -829,17 +841,32 @@ void BinaryContext::foldFunction(BinaryFunction &ChildBF,
   ChildBF.mergeProfileDataInto(ParentBF);
 
   if (HasRelocations) {
+    std::shared_lock<std::shared_timed_mutex> ReadBfsLock(BinaryFunctionsMutex,
+                                                          std::defer_lock);
+    std::unique_lock<std::shared_timed_mutex> WriteBfsLock(BinaryFunctionsMutex,
+                                                           std::defer_lock);
     // Remove ChildBF from the global set of functions in relocs mode.
+    ReadBfsLock.lock();
     auto FI = BinaryFunctions.find(ChildBF.getAddress());
+    ReadBfsLock.unlock();
+
     assert(FI != BinaryFunctions.end() && "function not found");
     assert(&ChildBF == &FI->second && "function mismatch");
+
+    WriteBfsLock.lock();
     FI = BinaryFunctions.erase(FI);
+    WriteBfsLock.unlock();
+
   } else {
     // In non-relocation mode we keep the function, but rename it.
-    std::string NewName = "__ICF_" + ChildBF.Names.back();
+    std::string NewName = "__ICF_" + ChildBF.getSymbol()->getName().str();
     ChildBF.Names.clear();
     ChildBF.Names.push_back(NewName);
+
+    WriteCtxLock.lock();
     ChildBF.OutputSymbol = Ctx->getOrCreateSymbol(NewName);
+    WriteCtxLock.unlock();
+
     ChildBF.setFolded();
   }
 }

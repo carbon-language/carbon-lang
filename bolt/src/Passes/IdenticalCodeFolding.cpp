@@ -9,9 +9,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "Passes/IdenticalCodeFolding.h"
 #include "llvm/Support/Options.h"
+#include "llvm/Support/ThreadPool.h"
+#include "llvm/Support/Timer.h"
+#include <atomic>
 #include <map>
 #include <set>
 #include <unordered_map>
@@ -24,6 +26,8 @@ using namespace bolt;
 namespace opts {
 
 extern cl::OptionCategory BoltOptCategory;
+extern cl::opt<int> ThreadCount;
+extern cl::opt<int> NoThreads;
 
 static cl::opt<bool>
 UseDFS("icf-dfs",
@@ -31,7 +35,13 @@ UseDFS("icf-dfs",
   cl::ReallyHidden,
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
-
+  
+static cl::opt<bool>
+TimeICF("time-icf",
+  cl::desc("time icf steps"),
+  cl::ReallyHidden,
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
 } // namespace opts
 
 namespace {
@@ -276,70 +286,133 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
 
   return true;
 }
-}
+
+// This hash table is used to identify identical functions. It maps
+// a function to a bucket of functions identical to it.
+struct KeyHash {
+  std::size_t operator()(const BinaryFunction *F) const {
+    return F->hash(/*Recompute=*/false);
+  }
+};
+
+struct KeyCongruent {
+  bool operator()(const BinaryFunction *A, const BinaryFunction *B) const {
+    if (A == B)
+      return true;
+    return isIdenticalWith(*A, *B, /*IgnoreSymbols=*/true, opts::UseDFS);
+  }
+};
+
+struct KeyEqual {
+  bool operator()(const BinaryFunction *A, const BinaryFunction *B) const {
+    if (A == B)
+      return true;
+    return isIdenticalWith(*A, *B, /*IgnoreSymbols=*/false, opts::UseDFS);
+  }
+};
+
+typedef std::unordered_map<BinaryFunction *, std::set<BinaryFunction *>,
+                           KeyHash, KeyCongruent>
+    CongruentBucketsMap;
+
+typedef std::unordered_map<BinaryFunction *, std::vector<BinaryFunction *>,
+                           KeyHash, KeyEqual>
+    IdenticalBucketsMap;
+
+} // namespace
 
 namespace llvm {
 namespace bolt {
 
 void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
   const auto OriginalFunctionCount = BC.getBinaryFunctions().size();
-  uint64_t NumFunctionsFolded = 0;
-  uint64_t NumJTFunctionsFolded = 0;
-  uint64_t BytesSavedEstimate = 0;
-  uint64_t CallsSavedEstimate = 0;
+  uint64_t NumFunctionsFolded{0};
+  std::atomic<uint64_t> NumJTFunctionsFolded{0};
+  std::atomic<uint64_t> BytesSavedEstimate{0};
+  std::atomic<uint64_t> CallsSavedEstimate{0};
+  std::atomic<uint64_t> NumFoldedLastIteration{0};
+  CongruentBucketsMap CongruentBuckets;
+  std::unique_ptr<ThreadPool> ThPool;
+  if (!opts::NoThreads)
+    ThPool = std::make_unique<ThreadPool>(opts::ThreadCount);
 
-  // This hash table is used to identify identical functions. It maps
-  // a function to a bucket of functions identical to it.
-  struct KeyHash {
-    std::size_t operator()(const BinaryFunction *F) const {
-      return F->hash(/*Recompute=*/false);
+  // Hash all the functions
+  auto hashFunctions = [&]() {
+    NamedRegionTimer HashFunctionsTimer("hashing", "hashing", "ICF breakdown",
+                                        "ICF breakdown", opts::TimeICF);
+
+    // Perform hashing for a block of functions
+    auto hashBlock =
+        [&](std::map<uint64_t, BinaryFunction>::iterator BlockBegin,
+            std::map<uint64_t, BinaryFunction>::iterator BlockEnd) {
+        Timer T("hash block", "hash block");
+        DEBUG(T.startTimer());
+
+        for (auto It = BlockBegin; It != BlockEnd; ++It) {
+          auto &BF = It->second;
+          if (!shouldOptimize(BF) || BF.isFolded() || BF.hasSDTMarker())
+            continue;
+          // Make sure indices are in-order.
+          BF.updateLayoutIndices();
+
+          // Pre-compute hash before pushing into hashtable. 
+          BF.hash(/*Recompute=*/true, opts::UseDFS);
+        }
+        DEBUG(T.stopTimer());
+    };
+
+    if (opts::NoThreads) {
+      hashBlock(BC.getBinaryFunctions().begin(), BC.getBinaryFunctions().end());
+      return;
     }
-  };
-  struct KeyCongruent {
-    bool operator()(const BinaryFunction *A, const BinaryFunction *B) const {
-      return isIdenticalWith(*A, *B, /*IgnoreSymbols=*/true, opts::UseDFS);
+
+    const unsigned BlockSize = OriginalFunctionCount / (2 * opts::ThreadCount);
+    unsigned Counter = 0;
+    auto BlockBegin = BC.getBinaryFunctions().begin();
+
+    for (auto It = BC.getBinaryFunctions().begin();
+         It != BC.getBinaryFunctions().end(); ++It, ++Counter) {
+      if (Counter >= BlockSize) {
+        ThPool->async(hashBlock, BlockBegin, std::next(It));
+        BlockBegin = std::next(It);
+        Counter = 0;
+      }
     }
-  };
-  struct KeyEqual {
-    bool operator()(const BinaryFunction *A, const BinaryFunction *B) const {
-      return isIdenticalWith(*A, *B, /*IgnoreSymbols=*/false, opts::UseDFS);
-    }
+    ThPool->async(hashBlock, BlockBegin, BC.getBinaryFunctions().end());
+
+    ThPool->wait();
   };
 
-  // Create buckets with congruent functions - functions that potentially could
-  // be folded.
-  std::unordered_map<BinaryFunction *, std::set<BinaryFunction *>,
-                     KeyHash, KeyCongruent> CongruentBuckets;
-  for (auto &BFI : BC.getBinaryFunctions()) {
-    auto &BF = BFI.second;
-    if (!shouldOptimize(BF) || BF.isFolded() || BF.hasSDTMarker())
-      continue;
-
-    // Make sure indices are in-order.
-    BF.updateLayoutIndices();
-
-    // Pre-compute hash before pushing into hashtable.
-    BF.hash(/*Recompute=*/true, opts::UseDFS);
-
-    CongruentBuckets[&BF].emplace(&BF);
-  }
-
-  // We repeat the pass until no new modifications happen.
-  unsigned Iteration = 1;
-  uint64_t NumFoldedLastIteration;
-  do {
-    NumFoldedLastIteration = 0;
-
-    DEBUG(dbgs() << "BOLT-DEBUG: ICF iteration " << Iteration << "...\n");
-
-    for (auto &CBI : CongruentBuckets) {
-      auto &Candidates = CBI.second;
-      if (Candidates.size() < 2)
+  // Creates buckets with congruent functions - functions that potentially
+  // could  be folded.
+  auto createCongruentBuckets = [&]() {
+    NamedRegionTimer CongruentBucketsTimer("congruent buckets",
+                                           "congruent buckets", "ICF breakdown",
+                                           "ICF breakdown", opts::TimeICF);
+    for (auto &BFI : BC.getBinaryFunctions()) {
+      auto &BF = BFI.second;
+      if (!shouldOptimize(BF) || BF.isFolded() || BF.hasSDTMarker())
         continue;
+      CongruentBuckets[&BF].emplace(&BF);
+    }
+  };
+
+  // Partition each set of congruent functions into sets of identical functions
+  // and fold them
+  auto performFoldingPass = [&]() {
+    NamedRegionTimer FoldingPassesTimer("folding passes", "folding passes",
+                                        "ICF breakdown", "ICF breakdown",
+                                        opts::TimeICF);
+    Timer SinglePass("single fold pass", "single fold pass");
+    DEBUG(SinglePass.startTimer());
+
+    // Perform the work for a single congruent list
+    auto performFoldingForItem = [&](std::set<BinaryFunction *> &Candidates) {
+      Timer T("folding single congruent list", "folding single congruent list");
+      DEBUG(T.startTimer());
 
       // Identical functions go into the same bucket.
-      std::unordered_map<BinaryFunction *, std::vector<BinaryFunction *>,
-                         KeyHash, KeyEqual> IdenticalBuckets;
+      IdenticalBucketsMap IdenticalBuckets;
       for (auto *BF : Candidates) {
         IdenticalBuckets[BF].emplace_back(BF);
       }
@@ -353,9 +426,9 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
         // Fold functions. Keep the order consistent across invocations with
         // different options.
         std::stable_sort(Twins.begin(), Twins.end(),
-            [](const BinaryFunction *A, const BinaryFunction *B) {
-              return A->getFunctionNumber() < B->getFunctionNumber();
-            });
+                         [](const BinaryFunction *A, const BinaryFunction *B) {
+                           return A->getFunctionNumber() < B->getFunctionNumber();
+                         });
 
         BinaryFunction *ParentBF = Twins[0];
         for (unsigned i = 1; i < Twins.size(); ++i) {
@@ -382,13 +455,44 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
         }
       }
 
+      DEBUG(T.stopTimer());
+    };
+
+    // Create a task for each congruent list
+    for (auto &Entry : CongruentBuckets) {
+      auto &Candidates = Entry.second;
+      if (Candidates.size() < 2)
+        continue;
+      
+      if (opts::NoThreads)
+        performFoldingForItem(Candidates);
+      else
+        ThPool->async(performFoldingForItem, std::ref(Candidates));
     }
+    if (opts::NoThreads)
+      return;
+
+    ThPool->wait();
+    DEBUG(SinglePass.stopTimer());
+  };
+
+  hashFunctions();
+  createCongruentBuckets();
+
+  unsigned Iteration = 1;
+  // We repeat the pass until no new modifications happen.
+  do {
+    NumFoldedLastIteration = 0;
+    DEBUG(dbgs() << "BOLT-DEBUG: ICF iteration " << Iteration << "...\n");
+
+    performFoldingPass();
+
     NumFunctionsFolded += NumFoldedLastIteration;
     ++Iteration;
 
   } while (NumFoldedLastIteration > 0);
 
-  DEBUG(
+   DEBUG(
     // Print functions that are congruent but not identical.
     for (auto &CBI : CongruentBuckets) {
       auto &Candidates = CBI.second;
