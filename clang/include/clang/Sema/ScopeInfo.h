@@ -487,6 +487,8 @@ public:
   /// Clear out the information in this function scope, making it
   /// suitable for reuse.
   void Clear();
+
+  bool isPlainFunction() const { return Kind == SK_Function; }
 };
 
 class Capture {
