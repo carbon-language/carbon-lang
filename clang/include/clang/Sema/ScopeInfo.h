@@ -557,8 +557,8 @@ class Capture {
 public:
   Capture(VarDecl *Var, bool Block, bool ByRef, bool IsNested,
           SourceLocation Loc, SourceLocation EllipsisLoc, QualType CaptureType,
-          Expr *Cpy, bool Invalid)
-      : CapturedVar(Var), InitExpr(Cpy), Loc(Loc), EllipsisLoc(EllipsisLoc),
+          bool Invalid)
+      : CapturedVar(Var), Loc(Loc), EllipsisLoc(EllipsisLoc),
         CaptureType(CaptureType),
         Kind(Block ? Cap_Block : ByRef ? Cap_ByRef : Cap_ByCopy),
         Nested(IsNested), CapturesThis(false), ODRUsed(false),
@@ -593,6 +593,9 @@ public:
 
   bool isInvalid() const { return Invalid; }
 
+  /// Determine whether this capture is an init-capture.
+  bool isInitCapture() const;
+
   bool isODRUsed() const { return ODRUsed; }
   bool isNonODRUsed() const { return NonODRUsed; }
   void markUsed(bool IsODRUse) {
@@ -624,8 +627,8 @@ public:
   /// that would store this capture.
   QualType getCaptureType() const { return CaptureType; }
 
-  Expr *getInitExpr() const {
-    assert(!isVLATypeCapture() && "no init expression for type capture");
+  Expr *getThisInitExpr() const {
+    assert(isThisCapture() && "no 'this' init expression for non-this capture");
     return InitExpr;
   }
 };
@@ -665,9 +668,9 @@ public:
 
   void addCapture(VarDecl *Var, bool isBlock, bool isByref, bool isNested,
                   SourceLocation Loc, SourceLocation EllipsisLoc,
-                  QualType CaptureType, Expr *Cpy, bool Invalid) {
+                  QualType CaptureType, bool Invalid) {
     Captures.push_back(Capture(Var, isBlock, isByref, isNested, Loc,
-                               EllipsisLoc, CaptureType, Cpy, Invalid));
+                               EllipsisLoc, CaptureType, Invalid));
     CaptureMap[Var] = Captures.size();
   }
 

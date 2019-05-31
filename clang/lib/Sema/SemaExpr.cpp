@@ -15326,7 +15326,7 @@ static bool captureInBlock(BlockScopeInfo *BSI, VarDecl *Var,
   // Actually capture the variable.
   if (BuildAndDiagnose)
     BSI->addCapture(Var, HasBlocksAttr, ByRef, Nested, Loc, SourceLocation(),
-                    CaptureType, nullptr, Invalid);
+                    CaptureType, Invalid);
 
   return !Invalid;
 }
@@ -15360,22 +15360,10 @@ static bool captureInCapturedRegion(CapturedRegionScopeInfo *RSI,
   else
     CaptureType = DeclRefType;
 
-  Expr *CopyExpr = nullptr;
-  if (BuildAndDiagnose) {
-    // The current implementation assumes that all variables are captured
-    // by references. Since there is no capture by copy, no expression
-    // evaluation will be needed.
-    CopyExpr = new (S.Context) DeclRefExpr(
-        S.Context, Var, RefersToCapturedVariable, DeclRefType, VK_LValue, Loc);
-    Var->setReferenced(true);
-    Var->markUsed(S.Context);
-  }
-
   // Actually capture the variable.
   if (BuildAndDiagnose)
     RSI->addCapture(Var, /*isBlock*/ false, ByRef, RefersToCapturedVariable,
-                    Loc, SourceLocation(), CaptureType, CopyExpr,
-                    Invalid);
+                    Loc, SourceLocation(), CaptureType, Invalid);
 
   return !Invalid;
 }
@@ -15474,8 +15462,7 @@ static bool captureInLambda(LambdaScopeInfo *LSI,
   // Add the capture.
   if (BuildAndDiagnose)
     LSI->addCapture(Var, /*IsBlock=*/false, ByRef, RefersToCapturedVariable,
-                    Loc, EllipsisLoc, CaptureType, /*CopyExpr=*/nullptr,
-                    Invalid);
+                    Loc, EllipsisLoc, CaptureType, Invalid);
 
   return !Invalid;
 }

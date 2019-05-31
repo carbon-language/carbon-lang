@@ -143,6 +143,7 @@ private:
     bool NowaitRegion = false;
     bool CancelRegion = false;
     bool LoopStart = false;
+    bool BodyComplete = false;
     SourceLocation InnerTeamsRegionLoc;
     /// Reference to the taskgroup task_reduction reference expression.
     Expr *TaskgroupReductionRef = nullptr;
@@ -172,19 +173,22 @@ private:
   /// captured by reference.
   bool ForceCaptureByReferenceInTargetExecutable = false;
   CriticalsWithHintsTy Criticals;
+  unsigned IgnoredStackElements = 0;
 
   /// Iterators over the stack iterate in order from innermost to outermost
   /// directive.
   using const_iterator = StackTy::const_reverse_iterator;
   const_iterator begin() const {
-    return Stack.empty() ? const_iterator() : Stack.back().first.rbegin();
+    return Stack.empty() ? const_iterator()
+                         : Stack.back().first.rbegin() + IgnoredStackElements;
   }
   const_iterator end() const {
     return Stack.empty() ? const_iterator() : Stack.back().first.rend();
   }
   using iterator = StackTy::reverse_iterator;
   iterator begin() {
-    return Stack.empty() ? iterator() : Stack.back().first.rbegin();
+    return Stack.empty() ? iterator()
+                         : Stack.back().first.rbegin() + IgnoredStackElements;
   }
   iterator end() {
     return Stack.empty() ? iterator() : Stack.back().first.rend();
@@ -195,16 +199,18 @@ private:
   bool isStackEmpty() const {
     return Stack.empty() ||
            Stack.back().second != CurrentNonCapturingFunctionScope ||
-           Stack.back().first.empty();
+           Stack.back().first.size() <= IgnoredStackElements;
   }
   size_t getStackSize() const {
-    return isStackEmpty() ? 0 : Stack.back().first.size();
+    return isStackEmpty() ? 0
+                          : Stack.back().first.size() - IgnoredStackElements;
   }
 
   SharingMapTy *getTopOfStackOrNull() {
-    if (isStackEmpty())
+    size_t Size = getStackSize();
+    if (Size == 0)
       return nullptr;
-    return &Stack.back().first.back();
+    return &Stack.back().first[Size - 1];
   }
   const SharingMapTy *getTopOfStackOrNull() const {
     return const_cast<DSAStackTy&>(*this).getTopOfStackOrNull();
@@ -280,6 +286,14 @@ public:
   }
   void setClauseParsingMode(OpenMPClauseKind K) { ClauseKindMode = K; }
 
+  bool isBodyComplete() const {
+    const SharingMapTy *Top = getTopOfStackOrNull();
+    return Top && Top->BodyComplete;
+  }
+  void setBodyComplete() {
+    getTopOfStack().BodyComplete = true;
+  }
+
   bool isForceVarCapturing() const { return ForceCapturing; }
   void setForceVarCapturing(bool V) { ForceCapturing = V; }
 
@@ -292,6 +306,8 @@ public:
 
   void push(OpenMPDirectiveKind DKind, const DeclarationNameInfo &DirName,
             Scope *CurScope, SourceLocation Loc) {
+    assert(!IgnoredStackElements &&
+           "cannot change stack while ignoring elements");
     if (Stack.empty() ||
         Stack.back().second != CurrentNonCapturingFunctionScope)
       Stack.emplace_back(StackTy(), CurrentNonCapturingFunctionScope);
@@ -300,10 +316,38 @@ public:
   }
 
   void pop() {
+    assert(!IgnoredStackElements &&
+           "cannot change stack while ignoring elements");
     assert(!Stack.back().first.empty() &&
            "Data-sharing attributes stack is empty!");
     Stack.back().first.pop_back();
   }
+
+  /// RAII object to temporarily leave the scope of a directive when we want to
+  /// logically operate in its parent.
+  class ParentDirectiveScope {
+    DSAStackTy &Self;
+    bool Active;
+  public:
+    ParentDirectiveScope(DSAStackTy &Self, bool Activate)
+        : Self(Self), Active(false) {
+      if (Activate)
+        enable();
+    }
+    ~ParentDirectiveScope() { disable(); }
+    void disable() {
+      if (Active) {
+        --Self.IgnoredStackElements;
+        Active = false;
+      }
+    }
+    void enable() {
+      if (!Active) {
+        ++Self.IgnoredStackElements;
+        Active = true;
+      }
+    }
+  };
 
   /// Marks that we're started loop parsing.
   void loopInit() {
@@ -334,12 +378,16 @@ public:
   }
   /// Start new OpenMP region stack in new non-capturing function.
   void pushFunction() {
+    assert(!IgnoredStackElements &&
+           "cannot change stack while ignoring elements");
     const FunctionScopeInfo *CurFnScope = SemaRef.getCurFunction();
     assert(!isa<CapturingScopeInfo>(CurFnScope));
     CurrentNonCapturingFunctionScope = CurFnScope;
   }
   /// Pop region stack for non-capturing function.
   void popFunction(const FunctionScopeInfo *OldFSI) {
+    assert(!IgnoredStackElements &&
+           "cannot change stack while ignoring elements");
     if (!Stack.empty() && Stack.back().second == OldFSI) {
       assert(Stack.back().first.empty());
       Stack.pop_back();
@@ -1711,13 +1759,20 @@ VarDecl *Sema::isOpenMPCapturedDecl(ValueDecl *D, bool CheckScopeInfo,
   assert(LangOpts.OpenMP && "OpenMP is not allowed");
   D = getCanonicalDecl(D);
 
+  // If we want to determine whether the variable should be captured from the
+  // perspective of the current capturing scope, and we've already left all the
+  // capturing scopes of the top directive on the stack, check from the
+  // perspective of its parent directive (if any) instead.
+  DSAStackTy::ParentDirectiveScope InParentDirectiveRAII(
+      *DSAStack, CheckScopeInfo && DSAStack->isBodyComplete());
+
   // If we are attempting to capture a global variable in a directive with
   // 'target' we return true so that this global is also mapped to the device.
   //
   auto *VD = dyn_cast<VarDecl>(D);
-  if (VD && !VD->hasLocalStorage()) {
-    if (isInOpenMPDeclareTargetContext() &&
-        (getCurCapturedRegion() || getCurBlock() || getCurLambda())) {
+  if (VD && !VD->hasLocalStorage() &&
+      (getCurCapturedRegion() || getCurBlock() || getCurLambda())) {
+    if (isInOpenMPDeclareTargetContext()) {
       // Try to mark variable as declare target if it is used in capturing
       // regions.
       if (!OMPDeclareTargetDeclAttr::isDeclareTargetDeclaration(VD))
@@ -1734,6 +1789,7 @@ VarDecl *Sema::isOpenMPCapturedDecl(ValueDecl *D, bool CheckScopeInfo,
   }
   // Capture variables captured by reference in lambdas for target-based
   // directives.
+  // FIXME: Triggering capture from here is completely inappropriate.
   if (VD && !DSAStack->isClauseParsingMode()) {
     if (const auto *RD = VD->getType()
                              .getCanonicalType()
@@ -1742,6 +1798,7 @@ VarDecl *Sema::isOpenMPCapturedDecl(ValueDecl *D, bool CheckScopeInfo,
       bool SavedForceCaptureByReferenceInTargetExecutable =
           DSAStack->isForceCaptureByReferenceInTargetExecutable();
       DSAStack->setForceCaptureByReferenceInTargetExecutable(/*V=*/true);
+      InParentDirectiveRAII.disable();
       if (RD->isLambda()) {
         llvm::DenseMap<const VarDecl *, FieldDecl *> Captures;
         FieldDecl *ThisCapture;
@@ -1771,6 +1828,8 @@ VarDecl *Sema::isOpenMPCapturedDecl(ValueDecl *D, bool CheckScopeInfo,
           }
         }
       }
+      if (CheckScopeInfo && DSAStack->isBodyComplete())
+        InParentDirectiveRAII.enable();
       DSAStack->setForceCaptureByReferenceInTargetExecutable(
           SavedForceCaptureByReferenceInTargetExecutable);
     }
@@ -3392,6 +3451,7 @@ StmtResult Sema::ActOnOpenMPRegionEnd(StmtResult S,
     return StmtError();
   }
   StmtResult SR = S;
+  unsigned CompletedRegions = 0;
   for (OpenMPDirectiveKind ThisCaptureRegion : llvm::reverse(CaptureRegions)) {
     // Mark all variables in private list clauses as used in inner region.
     // Required for proper codegen of combined directives.
@@ -3413,6 +3473,8 @@ StmtResult Sema::ActOnOpenMPRegionEnd(StmtResult S,
         }
       }
     }
+    if (++CompletedRegions == CaptureRegions.size())
+      DSAStack->setBodyComplete();
     SR = ActOnCapturedRegionEnd(SR.get());
   }
   return SR;
