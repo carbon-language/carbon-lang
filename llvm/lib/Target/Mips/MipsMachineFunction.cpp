@@ -51,6 +51,14 @@ unsigned MipsFunctionInfo::getGlobalBaseReg() {
   return GlobalBaseReg;
 }
 
+unsigned MipsFunctionInfo::getGlobalBaseRegForGlobalISel() {
+  if (!GlobalBaseReg) {
+    getGlobalBaseReg();
+    initGlobalBaseReg();
+  }
+  return GlobalBaseReg;
+}
+
 void MipsFunctionInfo::initGlobalBaseReg() {
   if (!GlobalBaseReg)
     return;

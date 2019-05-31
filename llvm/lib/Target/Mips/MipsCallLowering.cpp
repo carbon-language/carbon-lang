@@ -14,6 +14,7 @@
 
 #include "MipsCallLowering.h"
 #include "MipsCCState.h"
+#include "MipsMachineFunction.h"
 #include "MipsTargetMachine.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
@@ -522,10 +523,22 @@ bool MipsCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   MachineInstrBuilder CallSeqStart =
       MIRBuilder.buildInstr(Mips::ADJCALLSTACKDOWN);
 
+  const bool IsCalleeGlobalPIC =
+      Callee.isGlobal() && TM.isPositionIndependent();
+
   MachineInstrBuilder MIB = MIRBuilder.buildInstrNoInsert(
-      Callee.isReg() ? Mips::JALRPseudo : Mips::JAL);
+      Callee.isReg() || IsCalleeGlobalPIC ? Mips::JALRPseudo : Mips::JAL);
   MIB.addDef(Mips::SP, RegState::Implicit);
-  MIB.add(Callee);
+  if (IsCalleeGlobalPIC) {
+    unsigned CalleeReg =
+        MF.getRegInfo().createGenericVirtualRegister(LLT::pointer(0, 32));
+    MachineInstr *CalleeGlobalValue =
+        MIRBuilder.buildGlobalValue(CalleeReg, Callee.getGlobal());
+    if (!Callee.getGlobal()->hasLocalLinkage())
+      CalleeGlobalValue->getOperand(1).setTargetFlags(MipsII::MO_GOT_CALL);
+    MIB.addUse(CalleeReg);
+  } else
+    MIB.add(Callee);
   const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
   MIB.addRegMask(TRI->getCallPreservedMask(MF, F.getCallingConv()));
 
@@ -568,6 +581,12 @@ bool MipsCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   NextStackOffset = alignTo(NextStackOffset, StackAlignment);
   CallSeqStart.addImm(NextStackOffset).addImm(0);
 
+  if (IsCalleeGlobalPIC) {
+    MIRBuilder.buildCopy(
+        Mips::GP,
+        MF.getInfo<MipsFunctionInfo>()->getGlobalBaseRegForGlobalISel());
+    MIB.addDef(Mips::GP, RegState::Implicit);
+  }
   MIRBuilder.insertInstr(MIB);
   if (MIB->getOpcode() == Mips::JALRPseudo) {
     const MipsSubtarget &STI =

@@ -33,6 +33,7 @@ public:
 
   bool globalBaseRegSet() const;
   unsigned getGlobalBaseReg();
+  unsigned getGlobalBaseRegForGlobalISel();
 
   // Insert instructions to initialize the global base register in the
   // first MBB of the function.
