@@ -3778,20 +3778,6 @@ isl::set Scop::getNonHoistableCtx(MemoryAccess *Access, isl::union_map Writes) {
   return WrittenCtx;
 }
 
-void Scop::verifyInvariantLoads() {
-  auto &RIL = getRequiredInvariantLoads();
-  for (LoadInst *LI : RIL) {
-    assert(LI && contains(LI));
-    // If there exists a statement in the scop which has a memory access for
-    // @p LI, then mark this scop as infeasible for optimization.
-    for (ScopStmt &Stmt : Stmts)
-      if (Stmt.getArrayAccessOrNULLFor(LI)) {
-        invalidate(INVARIANTLOAD, LI->getDebugLoc(), LI->getParent());
-        return;
-      }
-  }
-}
-
 void Scop::hoistInvariantLoads() {
   if (!PollyInvariantLoadHoisting)
     return;
