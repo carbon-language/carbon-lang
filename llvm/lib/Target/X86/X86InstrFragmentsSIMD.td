@@ -505,6 +505,10 @@ def X86FnmsubRnd    : SDNode<"X86ISD::FNMSUB_RND",    SDTFmaRound, [SDNPCommutat
 def X86FmaddsubRnd  : SDNode<"X86ISD::FMADDSUB_RND",  SDTFmaRound, [SDNPCommutative]>;
 def X86FmsubaddRnd  : SDNode<"X86ISD::FMSUBADD_RND",  SDTFmaRound, [SDNPCommutative]>;
 
+def X86vp2intersect : SDNode<"X86ISD::VP2INTERSECT",
+                              SDTypeProfile<1, 2, [SDTCisVT<0, untyped>,
+                                                   SDTCisVec<1>, SDTCisSameAs<1, 2>]>>;
+
 def SDTIFma : SDTypeProfile<1, 3, [SDTCisInt<0>, SDTCisSameAs<0,1>,
                            SDTCisSameAs<1,2>, SDTCisSameAs<1,3>]>;
 def x86vpmadd52l     : SDNode<"X86ISD::VPMADD52L",     SDTIFma, [SDNPCommutative]>;

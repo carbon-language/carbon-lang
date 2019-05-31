@@ -22944,6 +22944,28 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     }
     return DAG.getCopyFromReg(DAG.getEntryNode(), dl, Reg, VT);
   }
+
+  case Intrinsic::x86_avx512_vp2intersect_q_512:
+  case Intrinsic::x86_avx512_vp2intersect_q_256:
+  case Intrinsic::x86_avx512_vp2intersect_q_128:
+  case Intrinsic::x86_avx512_vp2intersect_d_512:
+  case Intrinsic::x86_avx512_vp2intersect_d_256:
+  case Intrinsic::x86_avx512_vp2intersect_d_128: {
+    MVT MaskVT = Op.getSimpleValueType();
+
+    SDVTList VTs = DAG.getVTList(MVT::Untyped, MVT::Other);
+    SDLoc DL(Op);
+
+    SDValue Operation =
+        DAG.getNode(X86ISD::VP2INTERSECT, DL, VTs,
+                    Op->getOperand(1), Op->getOperand(2));
+
+    SDValue Result0 = DAG.getTargetExtractSubreg(X86::sub_mask_0, DL,
+                                                 MaskVT, Operation);
+    SDValue Result1 = DAG.getTargetExtractSubreg(X86::sub_mask_1, DL,
+                                                 MaskVT, Operation);
+    return DAG.getMergeValues({Result0, Result1}, DL);
+  }
   }
 }
 
@@ -28284,6 +28306,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::TPAUSE:             return "X86ISD::TPAUSE";
   case X86ISD::ENQCMD:             return "X86ISD:ENQCMD";
   case X86ISD::ENQCMDS:            return "X86ISD:ENQCMDS";
+  case X86ISD::VP2INTERSECT:       return "X86ISD::VP2INTERSECT";
   }
   return nullptr;
 }
