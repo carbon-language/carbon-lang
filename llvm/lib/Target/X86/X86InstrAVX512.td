@@ -12561,10 +12561,10 @@ defm VP4DPWSSDSrm : AVX512_maskable_3src_in_asm<0x53, MRMSrcMem, v16i32_info,
 }
 
 let hasSideEffects = 0 in {
-  def MASKPAIR16STORE : PseudoI<(outs), (ins VK16PAIR:$src, anymem:$dst),
-             [(store VK16PAIR:$src, addr:$dst)]>;
-  def MASKPAIR16LOAD : PseudoI<(outs VK16PAIR:$dst), (ins anymem:$src),
-             [(set VK16PAIR:$dst, (load addr:$src))]>;
+  let mayStore = 1 in
+  def MASKPAIR16STORE : PseudoI<(outs), (ins anymem:$dst, VK16PAIR:$src), []>;
+  let mayLoad = 1 in
+  def MASKPAIR16LOAD : PseudoI<(outs VK16PAIR:$dst), (ins anymem:$src), []>;
 }
 
 //===----------------------------------------------------------------------===//
