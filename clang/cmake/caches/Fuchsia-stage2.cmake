@@ -49,6 +49,7 @@ if(APPLE)
   set(LIBCXX_USE_COMPILER_RT ON CACHE BOOL "")
   set(LIBCXX_ENABLE_SHARED OFF CACHE BOOL "")
   set(LIBCXX_ENABLE_STATIC_ABI_LIBRARY ON CACHE BOOL "")
+  set(LIBCXX_ABI_VERSION 2 CACHE STRING "")
 endif()
 
 foreach(target aarch64-unknown-linux-gnu;armv7-unknown-linux-gnueabihf;i386-unknown-linux-gnu;x86_64-unknown-linux-gnu)
