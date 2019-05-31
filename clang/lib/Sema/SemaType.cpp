@@ -6976,7 +6976,10 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state, ParsedAttr &attr,
       case EST_BasicNoexcept:
       case EST_NoexceptTrue:
       case EST_NoThrow:
+      case EST_Unparsed:
         // Exception spec doesn't conflict with nothrow, so don't warn.
+        // Unparsed is included in this, since method signatures aren't parsed
+        // until after the fact.
         break;
 
       case EST_Dynamic:
@@ -6985,7 +6988,6 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state, ParsedAttr &attr,
       case EST_DependentNoexcept:
       case EST_Unevaluated:
       case EST_Uninstantiated:
-      case EST_Unparsed:
         S.Diag(attr.getLoc(), diag::warn_nothrow_attribute_ignored);
         break;
       }
