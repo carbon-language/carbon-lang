@@ -2975,11 +2975,6 @@ public:
   ///        that has name @p Name.
   ScopArrayInfo *getArrayInfoByName(const std::string BaseName);
 
-  /// Check whether @p Schedule contains extension nodes.
-  ///
-  /// @return true if @p Schedule contains extension nodes.
-  static bool containsExtensionNode(isl::schedule Schedule);
-
   /// Simplify the SCoP representation.
   ///
   /// @param AfterHoisting Whether it is called after invariant load hoisting.
