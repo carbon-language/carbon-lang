@@ -136,7 +136,7 @@ std::string DomainSocket::GetSocketName() const {
       return std::string(saddr_un.sun_path + GetNameOffset(),
                          sock_addr_len -
                              offsetof(struct sockaddr_un, sun_path) -
-                             GetNameOffset());
+                             GetNameOffset() - 1);
   }
   return "";
 }
