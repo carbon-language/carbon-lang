@@ -5291,6 +5291,11 @@ public:
       const unsigned *const FunctionScopeIndexToStopAt = nullptr,
       bool ByCopy = false);
 
+  /// Initialize the given 'this' capture with a suitable 'this' or '*this'
+  /// expression.
+  ExprResult performThisCaptureInitialization(const sema::Capture &Capture,
+                                              bool IsImplicit);
+
   /// Determine whether the given type is the type of *this that is used
   /// outside of the body of a member function for a type that is currently
   /// being defined.

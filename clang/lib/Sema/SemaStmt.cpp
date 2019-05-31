@@ -4235,9 +4235,11 @@ buildCapturedStmtCaptureList(Sema &S, CapturedRegionScopeInfo *RSI,
     FieldDecl *Field = S.BuildCaptureField(RSI->TheRecordDecl, Cap);
 
     if (Cap.isThisCapture()) {
+      ExprResult Init =
+          S.performThisCaptureInitialization(Cap, /*Implicit*/ true);
       Captures.push_back(CapturedStmt::Capture(Cap.getLocation(),
                                                CapturedStmt::VCK_This));
-      CaptureInits.push_back(Cap.getThisInitExpr());
+      CaptureInits.push_back(Init.get());
       continue;
     } else if (Cap.isVLATypeCapture()) {
       Captures.push_back(
@@ -4256,8 +4258,6 @@ buildCapturedStmtCaptureList(Sema &S, CapturedRegionScopeInfo *RSI,
     // perform a copy here!
     ExprResult Init = S.BuildDeclarationNameExpr(
         CXXScopeSpec(), DeclarationNameInfo(Var->getDeclName(), Loc), Var);
-    if (Init.isInvalid())
-      return true;
 
     Captures.push_back(CapturedStmt::Capture(Loc,
                                              Cap.isReferenceCapture()

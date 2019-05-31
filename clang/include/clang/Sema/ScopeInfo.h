@@ -517,11 +517,6 @@ class Capture {
     VarDecl *CapturedVar;
   };
 
-  /// Expression to initialize a field of the given type. This is only required
-  /// if we are capturing ByVal and the variable's type has a non-trivial copy
-  /// constructor.
-  Expr *InitExpr = nullptr;
-
   /// The source location at which the first capture occurred.
   SourceLocation Loc;
 
@@ -566,8 +561,8 @@ public:
 
   enum IsThisCapture { ThisCapture };
   Capture(IsThisCapture, bool IsNested, SourceLocation Loc,
-          QualType CaptureType, Expr *Cpy, const bool ByCopy, bool Invalid)
-      : InitExpr(Cpy), Loc(Loc), CaptureType(CaptureType),
+          QualType CaptureType, const bool ByCopy, bool Invalid)
+      : Loc(Loc), CaptureType(CaptureType),
         Kind(ByCopy ? Cap_ByCopy : Cap_ByRef), Nested(IsNested),
         CapturesThis(true), ODRUsed(false), NonODRUsed(false),
         Invalid(Invalid) {}
@@ -626,11 +621,6 @@ public:
   /// the type of the non-static data member in the lambda/block structure
   /// that would store this capture.
   QualType getCaptureType() const { return CaptureType; }
-
-  Expr *getThisInitExpr() const {
-    assert(isThisCapture() && "no 'this' init expression for non-this capture");
-    return InitExpr;
-  }
 };
 
 class CapturingScopeInfo : public FunctionScopeInfo {
@@ -681,7 +671,7 @@ public:
   }
 
   void addThisCapture(bool isNested, SourceLocation Loc, QualType CaptureType,
-                      Expr *Cpy, bool ByCopy);
+                      bool ByCopy);
 
   /// Determine whether the C++ 'this' is captured.
   bool isCXXThisCaptured() const { return CXXThisCaptureIndex != 0; }
@@ -1025,12 +1015,12 @@ void FunctionScopeInfo::recordUseOfWeak(const ExprT *E, bool IsRead) {
   Uses.push_back(WeakUseTy(E, IsRead));
 }
 
-inline void
-CapturingScopeInfo::addThisCapture(bool isNested, SourceLocation Loc,
-                                   QualType CaptureType, Expr *Cpy,
-                                   const bool ByCopy) {
+inline void CapturingScopeInfo::addThisCapture(bool isNested,
+                                               SourceLocation Loc,
+                                               QualType CaptureType,
+                                               bool ByCopy) {
   Captures.push_back(Capture(Capture::ThisCapture, isNested, Loc, CaptureType,
-                             Cpy, ByCopy, /*Invalid*/ false));
+                             ByCopy, /*Invalid*/ false));
   CXXThisCaptureIndex = Captures.size();
 }
 

@@ -1431,6 +1431,24 @@ static void addBlockPointerConversion(Sema &S,
   Class->addDecl(Conversion);
 }
 
+ExprResult Sema::performThisCaptureInitialization(const Capture &Cap,
+                                                  bool IsImplicit) {
+  QualType ThisTy = getCurrentThisType();
+  SourceLocation Loc = Cap.getLocation();
+  Expr *This = BuildCXXThisExpr(Loc, ThisTy, IsImplicit);
+  if (Cap.isReferenceCapture())
+    return This;
+
+  // Capture (by copy) of '*this'.
+  Expr *StarThis = CreateBuiltinUnaryOp(Loc, UO_Deref, This).get();
+  InitializedEntity Entity = InitializedEntity::InitializeLambdaCapture(
+      nullptr, Cap.getCaptureType(), Loc);
+  InitializationKind InitKind =
+      InitializationKind::CreateDirect(Loc, Loc, Loc);
+  InitializationSequence Init(*this, Entity, InitKind, StarThis);
+  return Init.Perform(*this, Entity, InitKind, StarThis);
+}
+
 static ExprResult performLambdaVarCaptureInitialization(
     Sema &S, const Capture &Capture, FieldDecl *Field,
     SourceLocation ImplicitCaptureLoc, bool IsImplicitCapture) {
@@ -1680,10 +1698,11 @@ ExprResult Sema::BuildLambdaExpr(SourceLocation StartLoc, SourceLocation EndLoc,
                      getLocForEndOfToken(CaptureDefaultLoc), ", this");
         }
 
+        ExprResult Init = performThisCaptureInitialization(From, IsImplicit);
         Captures.push_back(
             LambdaCapture(From.getLocation(), IsImplicit,
                           From.isCopyCapture() ? LCK_StarThis : LCK_This));
-        CaptureInits.push_back(From.getThisInitExpr());
+        CaptureInits.push_back(Init.get());
         continue;
       }
       if (From.isVLATypeCapture()) {
@@ -1703,8 +1722,6 @@ ExprResult Sema::BuildLambdaExpr(SourceLocation StartLoc, SourceLocation EndLoc,
               ? Var->getInit()
               : performLambdaVarCaptureInitialization(
                     *this, From, Field, CaptureDefaultLoc, IsImplicit);
-      if (Init.isInvalid())
-        return ExprError();
       CaptureInits.push_back(Init.get());
     }
 

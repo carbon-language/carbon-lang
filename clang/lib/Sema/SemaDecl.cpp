@@ -12943,7 +12943,7 @@ static void RebuildLambdaScopeInfo(CXXMethodDecl *CallOperator,
 
     } else if (C.capturesThis()) {
       LSI->addThisCapture(/*Nested*/ false, C.getLocation(), I->getType(),
-                          /*Expr*/ nullptr, C.getCaptureKind() == LCK_StarThis);
+                          C.getCaptureKind() == LCK_StarThis);
     } else {
       LSI->addVLATypeCapture(C.getLocation(), I->getCapturedVLAType(),
                              I->getType());
