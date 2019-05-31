@@ -6976,18 +6976,18 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state, ParsedAttr &attr,
       case EST_BasicNoexcept:
       case EST_NoexceptTrue:
       case EST_NoThrow:
-      case EST_Unparsed:
         // Exception spec doesn't conflict with nothrow, so don't warn.
-        // Unparsed is included in this, since method signatures aren't parsed
-        // until after the fact.
+        LLVM_FALLTHROUGH;
+      case EST_Unparsed:
+      case EST_Uninstantiated:
+      case EST_DependentNoexcept:
+      case EST_Unevaluated:
+        // We don't have enough information to properly determine if there is a
+        // conflict, so suppress the warning.
         break;
-
       case EST_Dynamic:
       case EST_MSAny:
       case EST_NoexceptFalse:
-      case EST_DependentNoexcept:
-      case EST_Unevaluated:
-      case EST_Uninstantiated:
         S.Diag(attr.getLoc(), diag::warn_nothrow_attribute_ignored);
         break;
       }

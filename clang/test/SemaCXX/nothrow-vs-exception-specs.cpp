@@ -54,6 +54,9 @@ __declspec(nothrow) void foo5() noexcept(noexcept(foo2()));
 // expected-warning@+1{{'nothrow' attribute conflicts with exception specification; attribute ignored}}
 __declspec(nothrow) void foo6() noexcept(noexcept(foo3()));
 
+template<typename F>
+__declspec(nothrow) void foo7() noexcept(noexcept(F()));
+
 // FIXME: It would be nice to be able to warn on these, however at the time we
 // evaluate the nothrow, these have yet to be parsed, so the data is not yet
 // there.
