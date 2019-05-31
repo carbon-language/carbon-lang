@@ -27,6 +27,7 @@ declare i8 @llvm.uadd.sat.i8(i8, i8)
 declare i8 @llvm.sadd.sat.i8(i8, i8)
 declare i8 @llvm.usub.sat.i8(i8, i8)
 declare i8 @llvm.ssub.sat.i8(i8, i8)
+declare <2 x i8> @llvm.uadd.sat.v2i8(<2 x i8>, <2 x i8>)
 
 declare void @llvm.trap()
 
@@ -833,4 +834,13 @@ trap:
 cont:
   %res = call i8 @llvm.ssub.sat.i8(i8 %x, i8 20)
   ret i8 %res
+}
+
+define <2 x i8> @uadd_sat_vec(<2 x i8> %a) {
+; CHECK-LABEL: @uadd_sat_vec(
+; CHECK-NEXT:    [[ADD:%.*]] = call <2 x i8> @llvm.uadd.sat.v2i8(<2 x i8> [[A:%.*]], <2 x i8> <i8 1, i8 1>)
+; CHECK-NEXT:    ret <2 x i8> [[ADD]]
+;
+  %add = call <2 x i8> @llvm.uadd.sat.v2i8(<2 x i8> %a, <2 x i8> <i8 1, i8 1>)
+  ret <2 x i8> %add
 }
