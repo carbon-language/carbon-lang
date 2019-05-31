@@ -20,6 +20,7 @@
 #include "../common/Fortran.h"
 #include "../common/idioms.h"
 #include "../parser/message.h"
+#include "../parser/provenance.h"
 #include <list>
 #include <map>
 #include <set>
@@ -34,8 +35,8 @@ class Scope {
   using mapType = std::map<SourceName, Symbol *>;
 
 public:
-  ENUM_CLASS(Kind, System, Global, Module, MainProgram, Subprogram, DerivedType,
-      Block, Forall, ImpliedDos)
+  ENUM_CLASS(Kind, Global, Module, MainProgram, Subprogram, DerivedType, Block,
+      Forall, ImpliedDos)
   using ImportKind = common::ImportKind;
 
   // Create the Global scope -- the root of the scope tree
@@ -52,11 +53,11 @@ public:
   bool operator!=(const Scope &that) const { return this != &that; }
 
   Scope &parent() {
-    CHECK(kind_ != Kind::System);
+    CHECK(&parent_ != this);
     return parent_;
   }
   const Scope &parent() const {
-    CHECK(kind_ != Kind::System);
+    CHECK(&parent_ != this);
     return parent_;
   }
   Kind kind() const { return kind_; }
@@ -154,7 +155,7 @@ public:
 
   // For modules read from module files, this is the stream of characters
   // that are referenced by SourceName objects.
-  void set_chars(std::string &&chars) { chars_ = std::move(chars); }
+  void set_chars(parser::CookedSource &);
 
   ImportKind GetImportKind() const;
   // Names appearing in IMPORT statements in this scope
@@ -192,6 +193,11 @@ public:
 
   const DeclTypeSpec &InstantiateIntrinsicType(
       const DeclTypeSpec &, SemanticsContext &);
+
+  bool IsModuleFile() const {
+    return kind_ == Kind::Module && symbol_ != nullptr &&
+        symbol_->test(Symbol::Flag::ModFile);
+  }
 
 private:
   Scope &parent_;  // this is enclosing scope, not extended derived type base

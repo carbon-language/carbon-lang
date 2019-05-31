@@ -25,9 +25,7 @@
 
 namespace Fortran::parser {
 
-Parsing::Parsing() {}
 Parsing::Parsing(AllSources &s) : cooked_{s} {}
-
 Parsing::~Parsing() {}
 
 void Parsing::Prescan(const std::string &path, Options options) {

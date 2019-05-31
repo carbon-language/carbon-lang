@@ -41,7 +41,8 @@ class Symbol;
 class SemanticsContext {
 public:
   SemanticsContext(const common::IntrinsicTypeDefaultKinds &,
-      const parser::LanguageFeatureControl &);
+      const parser::LanguageFeatureControl &, parser::AllSources &);
+  ~SemanticsContext();
 
   const common::IntrinsicTypeDefaultKinds &defaultKinds() const {
     return defaultKinds_;
@@ -60,6 +61,7 @@ public:
   Scope &globalScope() { return globalScope_; }
   parser::Messages &messages() { return messages_; }
   evaluate::FoldingContext &foldingContext() { return foldingContext_; }
+  parser::AllSources &allSources() { return allSources_; }
 
   SemanticsContext &set_location(const parser::CharBlock *location) {
     location_ = location;
@@ -115,6 +117,7 @@ public:
 private:
   const common::IntrinsicTypeDefaultKinds &defaultKinds_;
   const parser::LanguageFeatureControl &languageFeatures_;
+  parser::AllSources &allSources_;
   const parser::CharBlock *location_{nullptr};
   std::vector<std::string> searchDirectories_;
   std::string moduleDirectory_{"."s};

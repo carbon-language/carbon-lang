@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -312,8 +312,7 @@ const AllSources::Origin &AllSources::MapToOrigin(Provenance at) const {
   return origin_[low];
 }
 
-CookedSource::CookedSource() : allSources_{new AllSources} {}
-CookedSource::CookedSource(AllSources &s) : allSources_{&s} {}
+CookedSource::CookedSource(AllSources &s) : allSources_{s} {}
 CookedSource::~CookedSource() {}
 
 std::optional<ProvenanceRange> CookedSource::GetProvenanceRange(
@@ -331,8 +330,7 @@ std::optional<ProvenanceRange> CookedSource::GetProvenanceRange(
 
 void CookedSource::Marshal() {
   CHECK(provenanceMap_.size() == buffer_.size());
-  provenanceMap_.Put(
-      allSources_->AddCompilerInsertion("(after end of source)"));
+  provenanceMap_.Put(allSources_.AddCompilerInsertion("(after end of source)"));
   data_ = buffer_.Marshal();
   buffer_.clear();
 }
@@ -390,7 +388,7 @@ std::ostream &AllSources::Dump(std::ostream &o) const {
 
 std::ostream &CookedSource::Dump(std::ostream &o) const {
   o << "CookedSource:\n";
-  allSources_->Dump(o);
+  allSources_.Dump(o);
   o << "CookedSource::provenanceMap_:\n";
   provenanceMap_.Dump(o);
   return o;

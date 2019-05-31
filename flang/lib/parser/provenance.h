@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@
 #include "source.h"
 #include "../common/idioms.h"
 #include "../common/interval.h"
-#include "../common/reference-counted.h"
 #include <cstddef>
 #include <map>
 #include <memory>
@@ -109,9 +108,9 @@ private:
   std::vector<ContiguousProvenanceMapping> provenanceMap_;
 };
 
-// AllSources is reference-counted so that multiple instances of CookedSource
-// can share an AllSources instance.
-class AllSources : public common::ReferenceCounted<AllSources> {
+// A singleton AllSources instance for the whole compilation
+// is shared by reference.
+class AllSources {
 public:
   AllSources();
   ~AllSources();
@@ -186,12 +185,11 @@ private:
 
 class CookedSource {
 public:
-  CookedSource();
   explicit CookedSource(AllSources &);
   ~CookedSource();
 
-  AllSources &allSources() { return *allSources_; }
-  const AllSources &allSources() const { return *allSources_; }
+  AllSources &allSources() { return allSources_; }
+  const AllSources &allSources() const { return allSources_; }
   const std::string &data() const { return data_; }
 
   bool IsValid(const char *p) const {
@@ -200,7 +198,7 @@ public:
   bool IsValid(CharBlock range) const {
     return !range.empty() && IsValid(range.begin()) && IsValid(range.end() - 1);
   }
-  bool IsValid(ProvenanceRange r) const { return allSources_->IsValid(r); }
+  bool IsValid(ProvenanceRange r) const { return allSources_.IsValid(r); }
 
   std::optional<ProvenanceRange> GetProvenanceRange(CharBlock) const;
 
@@ -227,7 +225,7 @@ public:
   std::ostream &Dump(std::ostream &) const;
 
 private:
-  common::CountedReference<AllSources> allSources_;
+  AllSources &allSources_;
   CharBuffer buffer_;  // before Marshal()
   std::string data_;  // all of it, prescanned and preprocessed
   OffsetToProvenanceMappings provenanceMap_;

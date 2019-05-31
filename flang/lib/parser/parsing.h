@@ -46,9 +46,7 @@ struct Options {
 
 class Parsing {
 public:
-  Parsing();
-  explicit Parsing(AllSources &);  // to share an extant AllSources instance
-
+  explicit Parsing(AllSources &);
   ~Parsing();
 
   bool consumedWholeFile() const { return consumedWholeFile_; }

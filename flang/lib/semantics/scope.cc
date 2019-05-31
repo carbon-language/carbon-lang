@@ -133,6 +133,15 @@ DeclTypeSpec &Scope::MakeDerivedType(
       category, DerivedTypeSpec{std::move(spec)});
 }
 
+void Scope::set_chars(parser::CookedSource &cooked) {
+  CHECK(kind_ == Kind::Module);
+  CHECK(parent_.kind_ == Kind::Global || parent_.IsModuleFile());
+  CHECK(symbol_ != nullptr);
+  CHECK(symbol_->test(Symbol::Flag::ModFile));
+  // TODO: Preserve the CookedSource rather than acquiring its string.
+  chars_ = cooked.AcquireData();
+}
+
 Scope::ImportKind Scope::GetImportKind() const {
   if (importKind_) {
     return *importKind_;
@@ -190,7 +199,8 @@ const Scope *Scope::FindScope(parser::CharBlock source) const {
 }
 
 Scope *Scope::FindScope(parser::CharBlock source) {
-  if (!sourceRange_.Contains(source)) {
+  bool isContained{sourceRange_.Contains(source)};
+  if (!isContained && kind_ != Kind::Global && !IsModuleFile()) {
     return nullptr;
   }
   for (auto &child : children_) {
@@ -198,7 +208,7 @@ Scope *Scope::FindScope(parser::CharBlock source) {
       return scope;
     }
   }
-  return this;
+  return isContained ? this : nullptr;
 }
 
 void Scope::AddSourceRange(const parser::CharBlock &source) {

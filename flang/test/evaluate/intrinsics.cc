@@ -50,7 +50,8 @@ public:
   }
 
 private:
-  parser::CookedSource cooked_;
+  parser::AllSources allSources_;
+  parser::CookedSource cooked_{allSources_};
   std::map<std::string, std::size_t> offsets_;
 };
 

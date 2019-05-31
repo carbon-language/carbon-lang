@@ -172,7 +172,8 @@ std::string CompileFortran(
     }
   }
   options.searchDirectories = driver.searchDirectories;
-  Fortran::parser::Parsing parsing;
+  Fortran::parser::AllSources allSources;
+  Fortran::parser::Parsing parsing{allSources};
 
   auto start{CPUseconds()};
   parsing.Prescan(path, options);

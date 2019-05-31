@@ -683,8 +683,7 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
         "Module file for '%s' has invalid checksum: %s"_err_en_US, name, *path);
     return nullptr;
   }
-  // TODO: Construct parsing with an AllSources reference to share provenance
-  parser::Parsing parsing;
+  parser::Parsing parsing{context_.allSources()};
   parser::Options options;
   options.isModuleFile = true;
   parsing.Prescan(*path, options);
@@ -711,9 +710,8 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
     return nullptr;
   }
   auto &modSymbol{*it->second};
-  // TODO: Preserve the CookedSource rather than acquiring its string.
-  modSymbol.scope()->set_chars(std::string{parsing.cooked().AcquireData()});
   modSymbol.set(Symbol::Flag::ModFile);
+  modSymbol.scope()->set_chars(parsing.cooked());
   return modSymbol.scope();
 }
 

@@ -177,7 +177,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     }
   }
   options.searchDirectories = driver.searchDirectories;
-  Fortran::parser::Parsing parsing;
+  Fortran::parser::Parsing parsing{semanticsContext.allSources()};
   parsing.Prescan(path, options);
   if (!parsing.messages().empty() &&
       (driver.warningsAreErrors || parsing.messages().AnyFatalError())) {
@@ -338,6 +338,9 @@ int main(int argc, char *const argv[]) {
   options.predefinitions.emplace_back("__F18_MAJOR__", "1");
   options.predefinitions.emplace_back("__F18_MINOR__", "1");
   options.predefinitions.emplace_back("__F18_PATCHLEVEL__", "1");
+#if __x86_64__
+  options.predefinitions.emplace_back("__x86_64__", "1");
+#endif
 
   Fortran::common::IntrinsicTypeDefaultKinds defaultKinds;
 
@@ -521,8 +524,9 @@ int main(int argc, char *const argv[]) {
     driver.pgf90Args.push_back("-mp");
   }
 
+  Fortran::parser::AllSources allSources;
   Fortran::semantics::SemanticsContext semanticsContext{
-      defaultKinds, options.features};
+      defaultKinds, options.features, allSources};
   semanticsContext.set_moduleDirectory(driver.moduleDirectory)
       .set_moduleFileSuffix(driver.moduleFileSuffix)
       .set_searchDirectories(driver.searchDirectories)

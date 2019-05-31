@@ -96,11 +96,15 @@ static bool PerformStatementSemantics(
 
 SemanticsContext::SemanticsContext(
     const common::IntrinsicTypeDefaultKinds &defaultKinds,
-    const parser::LanguageFeatureControl &languageFeatures)
+    const parser::LanguageFeatureControl &languageFeatures,
+    parser::AllSources &allSources)
   : defaultKinds_{defaultKinds}, languageFeatures_{languageFeatures},
+    allSources_{allSources},
     intrinsics_{evaluate::IntrinsicProcTable::Configure(defaultKinds)},
     foldingContext_{evaluate::FoldingContext{
         parser::ContextualMessages{parser::CharBlock{}, &messages_}}} {}
+
+SemanticsContext::~SemanticsContext() {}
 
 bool SemanticsContext::IsEnabled(parser::LanguageFeature feature) const {
   return languageFeatures_.IsEnabled(feature);

@@ -55,8 +55,7 @@ const Scope *FindProgramUnitContaining(const Scope &start) {
     case Scope::Kind::Module:
     case Scope::Kind::MainProgram:
     case Scope::Kind::Subprogram: return scope;
-    case Scope::Kind::Global:
-    case Scope::Kind::System: return nullptr;
+    case Scope::Kind::Global: return nullptr;
     case Scope::Kind::DerivedType:
     case Scope::Kind::Block:
     case Scope::Kind::Forall:
