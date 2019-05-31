@@ -3158,12 +3158,14 @@ define <2 x double> @sitofp_load_2i32_to_2f64(<2 x i32> *%a) {
 define <2 x double> @sitofp_volatile_load_4i32_to_2f64(<4 x i32> *%a) {
 ; SSE-LABEL: sitofp_volatile_load_4i32_to_2f64:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    cvtdq2pd (%rdi), %xmm0
+; SSE-NEXT:    movaps (%rdi), %xmm0
+; SSE-NEXT:    cvtdq2pd %xmm0, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: sitofp_volatile_load_4i32_to_2f64:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vcvtdq2pd (%rdi), %xmm0
+; AVX-NEXT:    vmovaps (%rdi), %xmm0
+; AVX-NEXT:    vcvtdq2pd %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %ld = load volatile <4 x i32>, <4 x i32> *%a
   %b = shufflevector <4 x i32> %ld, <4 x i32> undef, <2 x i32> <i32 0, i32 1>

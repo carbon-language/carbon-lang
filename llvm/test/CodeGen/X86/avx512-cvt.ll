@@ -2533,16 +2533,14 @@ define <2 x double> @test_sito2f64_mask_load(<2 x i32> *%a, <2 x i64> %c) {
 ; VLDQ-LABEL: test_sito2f64_mask_load:
 ; VLDQ:       # %bb.0:
 ; VLDQ-NEXT:    vpmovq2m %xmm0, %k1
-; VLDQ-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; VLDQ-NEXT:    vcvtdq2pd %xmm0, %xmm0 {%k1} {z}
+; VLDQ-NEXT:    vcvtdq2pd (%rdi), %xmm0 {%k1} {z}
 ; VLDQ-NEXT:    retq
 ;
 ; VLNODQ-LABEL: test_sito2f64_mask_load:
 ; VLNODQ:       # %bb.0:
 ; VLNODQ-NEXT:    vpxor %xmm1, %xmm1, %xmm1
 ; VLNODQ-NEXT:    vpcmpgtq %xmm0, %xmm1, %k1
-; VLNODQ-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; VLNODQ-NEXT:    vcvtdq2pd %xmm0, %xmm0 {%k1} {z}
+; VLNODQ-NEXT:    vcvtdq2pd (%rdi), %xmm0 {%k1} {z}
 ; VLNODQ-NEXT:    retq
 ;
 ; DQNOVL-LABEL: test_sito2f64_mask_load:
@@ -2586,16 +2584,14 @@ define <2 x double> @test_uito2f64_mask_load(<2 x i32> *%a, <2 x i64> %c) {
 ; VLDQ-LABEL: test_uito2f64_mask_load:
 ; VLDQ:       # %bb.0:
 ; VLDQ-NEXT:    vpmovq2m %xmm0, %k1
-; VLDQ-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; VLDQ-NEXT:    vcvtudq2pd %xmm0, %xmm0 {%k1} {z}
+; VLDQ-NEXT:    vcvtudq2pd (%rdi), %xmm0 {%k1} {z}
 ; VLDQ-NEXT:    retq
 ;
 ; VLNODQ-LABEL: test_uito2f64_mask_load:
 ; VLNODQ:       # %bb.0:
 ; VLNODQ-NEXT:    vpxor %xmm1, %xmm1, %xmm1
 ; VLNODQ-NEXT:    vpcmpgtq %xmm0, %xmm1, %k1
-; VLNODQ-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; VLNODQ-NEXT:    vcvtudq2pd %xmm0, %xmm0 {%k1} {z}
+; VLNODQ-NEXT:    vcvtudq2pd (%rdi), %xmm0 {%k1} {z}
 ; VLNODQ-NEXT:    retq
 ;
 ; DQNOVL-LABEL: test_uito2f64_mask_load:

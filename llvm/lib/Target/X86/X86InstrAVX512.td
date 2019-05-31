@@ -7608,7 +7608,8 @@ multiclass avx512_vcvt_fp<bits<8> opc, string OpcodeStr, X86VectorVTInfo _,
                           X86FoldableSchedWrite sched,
                           string Broadcast = _.BroadcastStr,
                           string Alias = "", X86MemOperand MemOp = _Src.MemOp,
-                          RegisterClass MaskRC = _.KRCWM> {
+                          RegisterClass MaskRC = _.KRCWM,
+                          dag LdDAG = (_.VT (OpNode (_Src.VT (_Src.LdFrag addr:$src))))> {
 
   defm rr : AVX512_maskable_common<opc, MRMSrcReg, _, (outs _.RC:$dst),
                          (ins _Src.RC:$src),
@@ -7627,8 +7628,7 @@ multiclass avx512_vcvt_fp<bits<8> opc, string OpcodeStr, X86VectorVTInfo _,
                          (ins _.RC:$src0, MaskRC:$mask, MemOp:$src),
                          (ins MaskRC:$mask, MemOp:$src),
                          OpcodeStr#Alias, "$src", "$src",
-                         (_.VT (OpNode (_Src.VT
-                             (_Src.LdFrag addr:$src)))),
+                         LdDAG,
                          (vselect MaskRC:$mask,
                                   (_.VT (OpNode (_Src.VT
                                                  (_Src.LdFrag addr:$src)))),
@@ -7683,53 +7683,10 @@ multiclass avx512_vcvt_fpextend<bits<8> opc, string OpcodeStr, X86VectorVTInfo _
                                 X86FoldableSchedWrite sched,
                                 string Broadcast = _.BroadcastStr,
                                 string Alias = "", X86MemOperand MemOp = _Src.MemOp,
-                                RegisterClass MaskRC = _.KRCWM,
-                                PatFrag LdFrag = !cast<PatFrag>("extload"#_Src.VTName)> {
-
-  defm rr : AVX512_maskable_common<opc, MRMSrcReg, _, (outs _.RC:$dst),
-                         (ins _Src.RC:$src),
-                         (ins _.RC:$src0, MaskRC:$mask, _Src.RC:$src),
-                         (ins MaskRC:$mask, _Src.RC:$src),
-                          OpcodeStr, "$src", "$src",
-                         (_.VT (OpNode (_Src.VT _Src.RC:$src))),
-                         (vselect MaskRC:$mask,
-                                  (_.VT (OpNode (_Src.VT _Src.RC:$src))),
-                                  _.RC:$src0),
-                         vselect, "$src0 = $dst">,
-                         EVEX, Sched<[sched]>;
-
-  defm rm : AVX512_maskable_common<opc, MRMSrcMem, _, (outs _.RC:$dst),
-                         (ins MemOp:$src),
-                         (ins _.RC:$src0, MaskRC:$mask, MemOp:$src),
-                         (ins MaskRC:$mask, MemOp:$src),
-                         OpcodeStr#Alias, "$src", "$src",
-                         (_.VT (LdFrag addr:$src)),
-                         (vselect MaskRC:$mask,
-                                  (_.VT (OpNode (_Src.VT
-                                                 (_Src.LdFrag addr:$src)))),
-                                  _.RC:$src0),
-                         vselect, "$src0 = $dst">,
-                         EVEX, Sched<[sched.Folded]>;
-
-  defm rmb : AVX512_maskable_common<opc, MRMSrcMem, _, (outs _.RC:$dst),
-                         (ins _Src.ScalarMemOp:$src),
-                         (ins _.RC:$src0, MaskRC:$mask, _Src.ScalarMemOp:$src),
-                         (ins MaskRC:$mask, _Src.ScalarMemOp:$src),
-                         OpcodeStr,
-                         "${src}"##Broadcast, "${src}"##Broadcast,
-                         (_.VT (OpNode (_Src.VT
-                                  (X86VBroadcast (_Src.ScalarLdFrag addr:$src)))
-                            )),
-                         (vselect MaskRC:$mask,
-                                  (_.VT
-                                   (OpNode
-                                    (_Src.VT
-                                     (X86VBroadcast
-                                      (_Src.ScalarLdFrag addr:$src))))),
-                                  _.RC:$src0),
-                         vselect, "$src0 = $dst">,
-                         EVEX, EVEX_B, Sched<[sched.Folded]>;
-}
+                                RegisterClass MaskRC = _.KRCWM>
+  : avx512_vcvt_fp<opc, OpcodeStr, _, _Src, OpNode, sched, Broadcast, Alias,
+                   MemOp, MaskRC,
+                   (_.VT (!cast<PatFrag>("extload"#_Src.VTName) addr:$src))>;
 
 // Extend Float to Double
 multiclass avx512_cvtps2pd<bits<8> opc, string OpcodeStr,
@@ -7910,7 +7867,11 @@ multiclass avx512_cvtdq2pd<bits<8> opc, string OpcodeStr, SDNode OpNode,
 
   let Predicates = [HasVLX] in {
     defm Z128 : avx512_vcvt_fp<opc, OpcodeStr, v2f64x_info, v4i32x_info,
-                               OpNode128, sched.XMM, "{1to2}", "", i64mem>, EVEX_V128;
+                               OpNode128, sched.XMM, "{1to2}", "", i64mem, VK2WM,
+                               (v2f64 (OpNode128 (bc_v4i32
+                                (v2i64
+                                 (scalar_to_vector (loadi64 addr:$src))))))>,
+                               EVEX_V128;
     defm Z256 : avx512_vcvt_fp<opc, OpcodeStr, v4f64x_info, v4i32x_info, OpNode,
                                sched.YMM>, EVEX_V256;
   }
