@@ -1367,6 +1367,10 @@ let Predicates = [HasSVE2] in {
   defm STNT1H_ZZR_D : sve2_mem_cstnt_vs<0b010, "stnt1h", Z_d, ZPR64>;
   defm STNT1W_ZZR_D : sve2_mem_cstnt_vs<0b100, "stnt1w", Z_d, ZPR64>;
   defm STNT1D_ZZR_D : sve2_mem_cstnt_vs<0b110, "stnt1d", Z_d, ZPR64>;
+
+  // SVE table lookup (three sources)
+  defm TBL_ZZZZ : sve2_int_perm_tbl<"tbl">;
+  defm TBX_ZZZ  : sve2_int_perm_tbx<"tbx">;
 }
 
 let Predicates = [HasSVE2AES] in {
