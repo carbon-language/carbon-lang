@@ -778,6 +778,30 @@ define <4 x double> @f32to4f64_mask(<4 x float> %b, <4 x double> %b1, <4 x doubl
   ret <4 x double> %c
 }
 
+define <4 x double> @f32to4f64_mask_load(<4 x float>* %p, <4 x double> %b1, <4 x double> %a1) {
+; NOVL-LABEL: f32to4f64_mask_load:
+; NOVL:       # %bb.0:
+; NOVL-NEXT:    # kill: def $ymm1 killed $ymm1 def $zmm1
+; NOVL-NEXT:    # kill: def $ymm0 killed $ymm0 def $zmm0
+; NOVL-NEXT:    vcvtps2pd (%rdi), %ymm2
+; NOVL-NEXT:    vcmpltpd %zmm1, %zmm0, %k1
+; NOVL-NEXT:    vmovapd %zmm2, %zmm0 {%k1} {z}
+; NOVL-NEXT:    # kill: def $ymm0 killed $ymm0 killed $zmm0
+; NOVL-NEXT:    retq
+;
+; VL-LABEL: f32to4f64_mask_load:
+; VL:       # %bb.0:
+; VL-NEXT:    vcvtps2pd (%rdi), %ymm2
+; VL-NEXT:    vcmpltpd %ymm1, %ymm0, %k1
+; VL-NEXT:    vmovapd %ymm2, %ymm0 {%k1} {z}
+; VL-NEXT:    retq
+  %b = load <4 x float>, <4 x float>* %p
+  %a = fpext <4 x float> %b to <4 x double>
+  %mask = fcmp ogt <4 x double> %a1, %b1
+  %c = select <4 x i1> %mask, <4 x double> %a, <4 x double> zeroinitializer
+  ret <4 x double> %c
+}
+
 define <2 x double> @f32tof64_inreg(<2 x double> %a0, <4 x float> %a1) nounwind {
 ; ALL-LABEL: f32tof64_inreg:
 ; ALL:       # %bb.0:
