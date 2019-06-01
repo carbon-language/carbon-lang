@@ -248,7 +248,7 @@ static const X86MemoryFoldTableEntry MemoryFoldTable2Addr[] = {
   { X86::XOR64rr,     X86::XOR64mr,    0 },
   { X86::XOR8ri,      X86::XOR8mi,     0 },
   { X86::XOR8ri8,     X86::XOR8mi8,    0 },
-  { X86::XOR8rr,      X86::XOR8mr,     0 }
+  { X86::XOR8rr,      X86::XOR8mr,     0 },
 };
 
 static const X86MemoryFoldTableEntry MemoryFoldTable0[] = {
@@ -614,7 +614,6 @@ static const X86MemoryFoldTableEntry MemoryFoldTable1[] = {
   { X86::SQRTSSr,              X86::SQRTSSm,              0 },
   { X86::T1MSKC32rr,           X86::T1MSKC32rm,           0 },
   { X86::T1MSKC64rr,           X86::T1MSKC64rm,           0 },
-  // FIXME: TEST*rr EAX,EAX ---> CMP [mem], 0
   { X86::TZCNT16rr,            X86::TZCNT16rm,            0 },
   { X86::TZCNT32rr,            X86::TZCNT32rm,            0 },
   { X86::TZCNT64rr,            X86::TZCNT64rm,            0 },
@@ -649,7 +648,7 @@ static const X86MemoryFoldTableEntry MemoryFoldTable1[] = {
   { X86::VCOMISSrr_Int,        X86::VCOMISSrm_Int,        TB_NO_REVERSE },
   { X86::VCVTDQ2PDYrr,         X86::VCVTDQ2PDYrm,         0 },
   { X86::VCVTDQ2PDZ128rr,      X86::VCVTDQ2PDZ128rm,      TB_NO_REVERSE },
-  { X86::VCVTDQ2PDZ256rr,      X86::VCVTDQ2PDZ256rm,       0 },
+  { X86::VCVTDQ2PDZ256rr,      X86::VCVTDQ2PDZ256rm,      0 },
   { X86::VCVTDQ2PDZrr,         X86::VCVTDQ2PDZrm,         0 },
   { X86::VCVTDQ2PDrr,          X86::VCVTDQ2PDrm,          TB_NO_REVERSE },
   { X86::VCVTDQ2PSYrr,         X86::VCVTDQ2PSYrm,         0 },
@@ -1518,7 +1517,6 @@ static const X86MemoryFoldTableEntry MemoryFoldTable2[] = {
   { X86::SUBSDrr_Int,              X86::SUBSDrm_Int,              TB_NO_REVERSE },
   { X86::SUBSSrr,                  X86::SUBSSrm,                  0 },
   { X86::SUBSSrr_Int,              X86::SUBSSrm_Int,              TB_NO_REVERSE },
-  // FIXME: TEST*rr -> swapped      operand of TEST      *mr.
   { X86::UNPCKHPDrr,               X86::UNPCKHPDrm,               TB_ALIGN_16 },
   { X86::UNPCKHPSrr,               X86::UNPCKHPSrm,               TB_ALIGN_16 },
   { X86::UNPCKLPDrr,               X86::UNPCKLPDrm,               TB_ALIGN_16 },
