@@ -230,23 +230,23 @@ static cl::opt<bool> PredicateWidenableBranchGuards(
     cl::init(true));
 
 namespace {
-class LoopPredication {
-  /// Represents an induction variable check:
-  ///   icmp Pred, <induction variable>, <loop invariant limit>
-  struct LoopICmp {
-    ICmpInst::Predicate Pred;
-    const SCEVAddRecExpr *IV;
-    const SCEV *Limit;
-    LoopICmp(ICmpInst::Predicate Pred, const SCEVAddRecExpr *IV,
-             const SCEV *Limit)
-        : Pred(Pred), IV(IV), Limit(Limit) {}
-    LoopICmp() {}
-    void dump() {
-      dbgs() << "LoopICmp Pred = " << Pred << ", IV = " << *IV
-             << ", Limit = " << *Limit << "\n";
-    }
-  };
+/// Represents an induction variable check:
+///   icmp Pred, <induction variable>, <loop invariant limit>
+struct LoopICmp {
+  ICmpInst::Predicate Pred;
+  const SCEVAddRecExpr *IV;
+  const SCEV *Limit;
+  LoopICmp(ICmpInst::Predicate Pred, const SCEVAddRecExpr *IV,
+           const SCEV *Limit)
+    : Pred(Pred), IV(IV), Limit(Limit) {}
+  LoopICmp() {}
+  void dump() {
+    dbgs() << "LoopICmp Pred = " << Pred << ", IV = " << *IV
+           << ", Limit = " << *Limit << "\n";
+  }
+};
 
+class LoopPredication {
   AliasAnalysis *AA;
   ScalarEvolution *SE;
   BranchProbabilityInfo *BPI;
@@ -382,7 +382,7 @@ PreservedAnalyses LoopPredicationPass::run(Loop &L, LoopAnalysisManager &AM,
   return getLoopPassPreservedAnalyses();
 }
 
-Optional<LoopPredication::LoopICmp>
+Optional<LoopICmp>
 LoopPredication::parseLoopICmp(ICmpInst::Predicate Pred, Value *LHS,
                                Value *RHS) {
   const SCEV *LHSS = SE->getSCEV(LHS);
@@ -428,7 +428,7 @@ Value *LoopPredication::expandCheck(SCEVExpander &Expander,
   return Builder.CreateICmp(Pred, LHSV, RHSV);
 }
 
-Optional<LoopPredication::LoopICmp>
+Optional<LoopICmp>
 LoopPredication::generateLoopLatchCheck(Type *RangeCheckType) {
 
   auto *LatchType = LatchCheck.IV->getType();
@@ -518,7 +518,7 @@ bool LoopPredication::isLoopInvariantValue(const SCEV* S) {
 }
 
 Optional<Value *> LoopPredication::widenICmpRangeCheckIncrementingLoop(
-    LoopPredication::LoopICmp LatchCheck, LoopPredication::LoopICmp RangeCheck,
+    LoopICmp LatchCheck, LoopICmp RangeCheck,
     SCEVExpander &Expander, Instruction *Guard) {
   auto *Ty = RangeCheck.IV->getType();
   // Generate the widened condition for the forward loop:
@@ -567,7 +567,7 @@ Optional<Value *> LoopPredication::widenICmpRangeCheckIncrementingLoop(
 }
 
 Optional<Value *> LoopPredication::widenICmpRangeCheckDecrementingLoop(
-    LoopPredication::LoopICmp LatchCheck, LoopPredication::LoopICmp RangeCheck,
+    LoopICmp LatchCheck, LoopICmp RangeCheck,
     SCEVExpander &Expander, Instruction *Guard) {
   auto *Ty = RangeCheck.IV->getType();
   const SCEV *GuardStart = RangeCheck.IV->getStart();
@@ -613,6 +613,17 @@ Optional<Value *> LoopPredication::widenICmpRangeCheckDecrementingLoop(
   IRBuilder<> Builder(findInsertPt(Guard, {FirstIterationCheck, LimitCheck}));
   return Builder.CreateAnd(FirstIterationCheck, LimitCheck);
 }
+
+static void normalizePredicate(ScalarEvolution *SE, Loop *L,
+                               LoopICmp& RC) {
+  // LFTR canonicalizes checks to the ICMP_NE form instead of an ULT/SLT form.
+  // Normalize back to the ULT/SLT form for ease of handling.
+  if (RC.Pred == ICmpInst::ICMP_NE &&
+      RC.IV->getStepRecurrence(*SE)->isOne() &&
+      SE->isKnownPredicate(ICmpInst::ICMP_ULE, RC.IV->getStart(), RC.Limit))
+    RC.Pred = ICmpInst::ICMP_ULT;
+}
+
 
 /// If ICI can be widened to a loop invariant condition emits the loop
 /// invariant condition in the loop preheader and return it, otherwise
@@ -798,7 +809,7 @@ bool LoopPredication::widenWidenableBranchGuardConditions(
   return true;
 }
 
-Optional<LoopPredication::LoopICmp> LoopPredication::parseLoopLatchICmp() {
+Optional<LoopICmp> LoopPredication::parseLoopLatchICmp() {
   using namespace PatternMatch;
 
   BasicBlock *LoopLatch = L->getLoopLatch();
@@ -852,6 +863,7 @@ Optional<LoopPredication::LoopICmp> LoopPredication::parseLoopLatchICmp() {
     }
   };
 
+  normalizePredicate(SE, L, *Result);
   if (IsUnsupportedPredicate(Step, Result->Pred)) {
     LLVM_DEBUG(dbgs() << "Unsupported loop latch predicate(" << Result->Pred
                       << ")!\n");
