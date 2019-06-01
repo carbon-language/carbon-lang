@@ -1,4 +1,4 @@
-; RUN: llc < %s -filetype=obj | llvm-readobj --codeview - | FileCheck %s --check-prefix=OBJ
+; RUN: llc < %s -mtriple=arm64-windows -filetype=obj | llvm-readobj --codeview - | FileCheck %s --check-prefix=OBJ
 
 ; Generated from:
 ; volatile int x;
