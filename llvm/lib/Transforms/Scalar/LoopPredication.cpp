@@ -821,9 +821,9 @@ Optional<LoopICmp> LoopPredication::parseLoopLatchICmp() {
     return None;
   }
   BasicBlock *TrueDest = BI->getSuccessor(0);
-  BasicBlock *FalseDest = BI->getSuccessor(1);
-  assert((TrueDest == L->getHeader() || FalseDest == L->getHeader()) &&
-         "One of the latch's destinations must be the header");
+  assert(
+      (TrueDest == L->getHeader() || BI->getSuccessor(1) == L->getHeader()) &&
+      "One of the latch's destinations must be the header");
 
   auto *ICI = dyn_cast<ICmpInst>(BI->getCondition());
   if (!ICI || !BI->isConditional()) {
