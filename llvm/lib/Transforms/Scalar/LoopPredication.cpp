@@ -257,13 +257,7 @@ class LoopPredication {
   LoopICmp LatchCheck;
 
   bool isSupportedStep(const SCEV* Step);
-  Optional<LoopICmp> parseLoopICmp(ICmpInst *ICI) {
-    return parseLoopICmp(ICI->getPredicate(), ICI->getOperand(0),
-                         ICI->getOperand(1));
-  }
-  Optional<LoopICmp> parseLoopICmp(ICmpInst::Predicate Pred, Value *LHS,
-                                   Value *RHS);
-
+  Optional<LoopICmp> parseLoopICmp(ICmpInst *ICI);
   Optional<LoopICmp> parseLoopLatchICmp();
 
   /// Return an insertion point suitable for inserting a safe to speculate
@@ -383,8 +377,11 @@ PreservedAnalyses LoopPredicationPass::run(Loop &L, LoopAnalysisManager &AM,
 }
 
 Optional<LoopICmp>
-LoopPredication::parseLoopICmp(ICmpInst::Predicate Pred, Value *LHS,
-                               Value *RHS) {
+LoopPredication::parseLoopICmp(ICmpInst *ICI) {
+  auto Pred = ICI->getPredicate();
+  auto *LHS = ICI->getOperand(0);
+  auto *RHS = ICI->getOperand(1);
+
   const SCEV *LHSS = SE->getSCEV(LHS);
   if (isa<SCEVCouldNotCompute>(LHSS))
     return None;
@@ -818,26 +815,29 @@ Optional<LoopICmp> LoopPredication::parseLoopLatchICmp() {
     return None;
   }
 
-  ICmpInst::Predicate Pred;
-  Value *LHS, *RHS;
-  BasicBlock *TrueDest, *FalseDest;
-
-  if (!match(LoopLatch->getTerminator(),
-             m_Br(m_ICmp(Pred, m_Value(LHS), m_Value(RHS)), TrueDest,
-                  FalseDest))) {
+  auto *BI = dyn_cast<BranchInst>(LoopLatch->getTerminator());
+  if (!BI) {
     LLVM_DEBUG(dbgs() << "Failed to match the latch terminator!\n");
     return None;
   }
+  BasicBlock *TrueDest = BI->getSuccessor(0);
+  BasicBlock *FalseDest = BI->getSuccessor(1);
   assert((TrueDest == L->getHeader() || FalseDest == L->getHeader()) &&
          "One of the latch's destinations must be the header");
-  if (TrueDest != L->getHeader())
-    Pred = ICmpInst::getInversePredicate(Pred);
 
-  auto Result = parseLoopICmp(Pred, LHS, RHS);
+  auto *ICI = dyn_cast<ICmpInst>(BI->getCondition());
+  if (!ICI || !BI->isConditional()) {
+    LLVM_DEBUG(dbgs() << "Failed to match the latch condition!\n");
+    return None;
+  }
+  auto Result = parseLoopICmp(ICI);
   if (!Result) {
     LLVM_DEBUG(dbgs() << "Failed to parse the loop latch condition!\n");
     return None;
   }
+
+  if (TrueDest != L->getHeader())
+    Result->Pred = ICmpInst::getInversePredicate(Result->Pred);
 
   // Check affine first, so if it's not we don't try to compute the step
   // recurrence.
@@ -869,6 +869,7 @@ Optional<LoopICmp> LoopPredication::parseLoopLatchICmp() {
                       << ")!\n");
     return None;
   }
+
   return Result;
 }
 
