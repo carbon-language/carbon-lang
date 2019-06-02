@@ -8216,12 +8216,16 @@ SDValue DAGCombiner::visitMGATHER(SDNode *N) {
 }
 
 SDValue DAGCombiner::visitMLOAD(SDNode *N) {
-  if (Level >= AfterLegalizeTypes)
-    return SDValue();
-
   MaskedLoadSDNode *MLD = cast<MaskedLoadSDNode>(N);
   SDValue Mask = MLD->getMask();
   SDLoc DL(N);
+
+  // Zap masked loads with a zero mask.
+  if (ISD::isBuildVectorAllZeros(Mask.getNode()))
+    return CombineTo(N, MLD->getPassThru(), MLD->getChain());
+
+  if (Level >= AfterLegalizeTypes)
+    return SDValue();
 
   // If the MLOAD result requires splitting and the mask is provided by a
   // SETCC, then split both nodes and its operands before legalization. This
