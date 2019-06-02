@@ -39666,6 +39666,7 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, SelectionDAG &DAG,
          "Unsupported vector type for horizontal add/sub");
   unsigned NumElts = VT.getVectorNumElements();
 
+  // TODO - can we make a general helper method that does all of this for us?
   auto GetShuffle = [&](SDValue Op, SDValue &N0, SDValue &N1,
                         SmallVectorImpl<int> &ShuffleMask) {
     if (Op.getOpcode() == ISD::VECTOR_SHUFFLE) {
@@ -39677,17 +39678,33 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, SelectionDAG &DAG,
       ShuffleMask.append(Mask.begin(), Mask.end());
       return;
     }
+    bool UseSubVector = false;
+    if (Op.getOpcode() == ISD::EXTRACT_SUBVECTOR &&
+        Op.getOperand(0).getValueType().is256BitVector() &&
+        llvm::isNullConstant(Op.getOperand(1))) {
+      Op = Op.getOperand(0);
+      UseSubVector = true;
+    }
     bool IsUnary;
     SmallVector<SDValue, 2> SrcOps;
     SmallVector<int, 16> SrcShuffleMask;
     SDValue BC = peekThroughBitcasts(Op);
     if (isTargetShuffle(BC.getOpcode()) &&
         getTargetShuffleMask(BC.getNode(), BC.getSimpleValueType(), false,
-                             SrcOps, SrcShuffleMask, IsUnary) &&
-        SrcOps.size() <= 2 && SrcShuffleMask.size() == NumElts) {
-      N0 = SrcOps.size() > 0 ? SrcOps[0] : SDValue();
-      N1 = SrcOps.size() > 1 ? SrcOps[1] : SDValue();
-      ShuffleMask.append(SrcShuffleMask.begin(), SrcShuffleMask.end());
+                             SrcOps, SrcShuffleMask, IsUnary)) {
+      if (!UseSubVector && SrcShuffleMask.size() == NumElts &&
+          SrcOps.size() <= 2) {
+        N0 = SrcOps.size() > 0 ? SrcOps[0] : SDValue();
+        N1 = SrcOps.size() > 1 ? SrcOps[1] : SDValue();
+        ShuffleMask.append(SrcShuffleMask.begin(), SrcShuffleMask.end());
+      }
+      if (UseSubVector && (SrcShuffleMask.size() == (NumElts * 2)) &&
+          SrcOps.size() == 1) {
+        N0 = extract128BitVector(SrcOps[0], 0, DAG, SDLoc(Op));
+        N1 = extract128BitVector(SrcOps[0], NumElts, DAG, SDLoc(Op));
+        ArrayRef<int> Mask = ArrayRef<int>(SrcShuffleMask).slice(0, NumElts);
+        ShuffleMask.append(Mask.begin(), Mask.end());
+      }
     }
   };
 

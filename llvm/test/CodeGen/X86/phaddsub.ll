@@ -649,11 +649,8 @@ define i32 @PR39936_v8i32(<8 x i32>) {
 ;
 ; AVX2-SHUF-LABEL: PR39936_v8i32:
 ; AVX2-SHUF:       # %bb.0:
-; AVX2-SHUF-NEXT:    vmovdqa {{.*#+}} ymm1 = [0,2,4,6,4,6,6,7]
-; AVX2-SHUF-NEXT:    vpermd %ymm0, %ymm1, %ymm1
-; AVX2-SHUF-NEXT:    vmovdqa {{.*#+}} ymm2 = [1,3,5,7,5,7,6,7]
-; AVX2-SHUF-NEXT:    vpermd %ymm0, %ymm2, %ymm0
-; AVX2-SHUF-NEXT:    vpaddd %xmm0, %xmm1, %xmm0
+; AVX2-SHUF-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; AVX2-SHUF-NEXT:    vphaddd %xmm1, %xmm0, %xmm0
 ; AVX2-SHUF-NEXT:    vphaddd %xmm0, %xmm0, %xmm0
 ; AVX2-SHUF-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
 ; AVX2-SHUF-NEXT:    vpaddd %xmm0, %xmm1, %xmm0
