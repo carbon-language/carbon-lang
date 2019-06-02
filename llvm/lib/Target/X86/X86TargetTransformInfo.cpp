@@ -2390,9 +2390,9 @@ int X86TTIImpl::getMaskedMemoryOpCost(unsigned Opcode, Type *SrcTy,
     Cost += getShuffleCost(TTI::SK_InsertSubvector, NewMaskTy, 0, MaskTy);
   }
 
-  // Pre-AVX512 - each maskmov costs 4.
+  // Pre-AVX512 - each maskmov load costs 2 + store costs ~8.
   if (!ST->hasAVX512())
-    return Cost + LT.first * 4;
+    return Cost + LT.first * (IsLoad ? 2 : 8);
 
   // AVX-512 masked load/store is cheapper
   return Cost + LT.first;
