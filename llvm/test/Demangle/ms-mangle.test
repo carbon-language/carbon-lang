@@ -103,6 +103,12 @@
 ?funptr@@YAP6AHXZXZ
 ; CHECK: int (__cdecl * __cdecl funptr(void))(void)
 
+?m@@3PRfoo@@DR1@
+; CHECK: char const foo::*m
+
+?m@@3PERfoo@@DER1@
+; CHECK: char const foo::*m
+
 ?k@@3PTfoo@@DT1@
 ; CHECK: char const volatile foo::*k
 
@@ -393,5 +399,5 @@
 ??0?$L@V?$H@PAH@PR26029@@@PR26029@@QAE@XZ
 ; CHECK: __thiscall PR26029::L<class PR26029::H<int *>>::L<class PR26029::H<int *>>(void)
 
-; ??$emplace_back@ABH@?$vector@HV?$allocator@H@std@@@std@@QAE?A?<decltype-auto>@@ABH@Z
-<decltype-auto> __thiscall std::vector<int, class std::allocator<int>>::emplace_back<int const &>(int const &)
+??$emplace_back@ABH@?$vector@HV?$allocator@H@std@@@std@@QAE?A?<decltype-auto>@@ABH@Z
+; CHECK: <decltype-auto> __thiscall std::vector<int, class std::allocator<int>>::emplace_back<int const &>(int const &)
