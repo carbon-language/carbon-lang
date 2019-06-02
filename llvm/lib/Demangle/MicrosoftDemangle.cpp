@@ -1587,11 +1587,11 @@ FuncClass Demangler::demangleFunctionClass(StringView &MangledName) {
   case 'C':
     return FuncClass(FC_Private | FC_Static);
   case 'D':
-    return FuncClass(FC_Private | FC_Static);
+    return FuncClass(FC_Private | FC_Static | FC_Far);
   case 'E':
     return FuncClass(FC_Private | FC_Virtual);
   case 'F':
-    return FuncClass(FC_Private | FC_Virtual);
+    return FuncClass(FC_Private | FC_Virtual | FC_Far);
   case 'G':
     return FuncClass(FC_Private | FC_StaticThisAdjust);
   case 'H':
