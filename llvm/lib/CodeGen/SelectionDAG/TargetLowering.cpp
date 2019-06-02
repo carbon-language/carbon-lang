@@ -1801,11 +1801,11 @@ static APInt getKnownUndefForVectorBinop(SDValue BO, SelectionDAG &DAG,
 }
 
 bool TargetLowering::SimplifyDemandedVectorElts(
-    SDValue Op, const APInt &DemandedEltMask, APInt &KnownUndef,
+    SDValue Op, const APInt &OriginalDemandedElts, APInt &KnownUndef,
     APInt &KnownZero, TargetLoweringOpt &TLO, unsigned Depth,
     bool AssumeSingleUse) const {
   EVT VT = Op.getValueType();
-  APInt DemandedElts = DemandedEltMask;
+  APInt DemandedElts = OriginalDemandedElts;
   unsigned NumElts = DemandedElts.getBitWidth();
   assert(VT.isVector() && "Expected vector op");
   assert(VT.getVectorNumElements() == NumElts &&
@@ -2237,8 +2237,8 @@ bool TargetLowering::SimplifyDemandedVectorElts(
     } else {
       KnownBits Known;
       APInt DemandedBits = APInt::getAllOnesValue(EltSizeInBits);
-      if (SimplifyDemandedBits(Op, DemandedBits, DemandedEltMask, Known, TLO,
-                               Depth, AssumeSingleUse))
+      if (SimplifyDemandedBits(Op, DemandedBits, OriginalDemandedElts, Known,
+                               TLO, Depth, AssumeSingleUse))
         return true;
     }
     break;
