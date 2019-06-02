@@ -2966,38 +2966,9 @@ define <16 x float> @test_sext_cse(float* %base, <16 x i32> %ind, <16 x i32>* %f
 }
 
 define void @zero_mask(<2 x double>%a1, <2 x double*> %ptr) {
-; KNL_64-LABEL: zero_mask:
-; KNL_64:       # %bb.0:
-; KNL_64-NEXT:    # kill: def $xmm1 killed $xmm1 def $zmm1
-; KNL_64-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
-; KNL_64-NEXT:    kxorw %k0, %k0, %k1
-; KNL_64-NEXT:    vscatterqpd %zmm0, (,%zmm1) {%k1}
-; KNL_64-NEXT:    vzeroupper
-; KNL_64-NEXT:    retq
-;
-; KNL_32-LABEL: zero_mask:
-; KNL_32:       # %bb.0:
-; KNL_32-NEXT:    # kill: def $xmm0 killed $xmm0 def $zmm0
-; KNL_32-NEXT:    vpsllq $32, %xmm1, %xmm1
-; KNL_32-NEXT:    vpsraq $32, %zmm1, %zmm1
-; KNL_32-NEXT:    kxorw %k0, %k0, %k1
-; KNL_32-NEXT:    vscatterqpd %zmm0, (,%zmm1) {%k1}
-; KNL_32-NEXT:    vzeroupper
-; KNL_32-NEXT:    retl
-;
-; SKX-LABEL: zero_mask:
-; SKX:       # %bb.0:
-; SKX-NEXT:    kxorw %k0, %k0, %k1
-; SKX-NEXT:    vscatterqpd %xmm0, (,%xmm1) {%k1}
-; SKX-NEXT:    retq
-;
-; SKX_32-LABEL: zero_mask:
-; SKX_32:       # %bb.0:
-; SKX_32-NEXT:    vpsllq $32, %xmm1, %xmm1
-; SKX_32-NEXT:    vpsraq $32, %xmm1, %xmm1
-; SKX_32-NEXT:    kxorw %k0, %k0, %k1
-; SKX_32-NEXT:    vscatterqpd %xmm0, (,%xmm1) {%k1}
-; SKX_32-NEXT:    retl
+; ALL-LABEL: zero_mask:
+; ALL:       # %bb.0:
+; ALL-NEXT:    ret{{[l|q]}}
   call void @llvm.masked.scatter.v2f64.v2p0f64(<2 x double> %a1, <2 x double*> %ptr, i32 4, <2 x i1> zeroinitializer)
   ret void
 }
