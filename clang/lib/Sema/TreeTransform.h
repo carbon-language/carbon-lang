@@ -148,6 +148,11 @@ public:
   /// statement node appears at most once in its containing declaration.
   bool AlwaysRebuild() { return SemaRef.ArgumentPackSubstitutionIndex != -1; }
 
+  /// Whether the transformation is forming an expression or statement that
+  /// replaces the original. In this case, we'll reuse mangling numbers from
+  /// existing lambdas.
+  bool ReplacingOriginal() { return false; }
+
   /// Returns the location of the entity being transformed, if that
   /// information was not available elsewhere in the AST.
   ///
@@ -653,6 +658,9 @@ public:
                                           int indexAdjustment,
                                           Optional<unsigned> NumExpansions,
                                           bool ExpectParameterPack);
+
+  /// Transform the body of a lambda-expression.
+  StmtResult TransformLambdaBody(Stmt *Body);
 
   QualType TransformReferenceType(TypeLocBuilder &TLB, ReferenceTypeLoc TL);
 
@@ -11197,8 +11205,6 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
 
     auto SubstInitCapture = [&](SourceLocation EllipsisLoc,
                                 Optional<unsigned> NumExpansions) {
-      EnterExpressionEvaluationContext EEEC(
-          getSema(), Sema::ExpressionEvaluationContext::PotentiallyEvaluated);
       ExprResult NewExprInitResult = getDerived().TransformInitializer(
           OldVD->getInit(), OldVD->getInitStyle() == VarDecl::CallInit);
 
@@ -11289,19 +11295,25 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
   LSI->GLTemplateParameterList = TPL;
 
   // Create the local class that will describe the lambda.
+  CXXRecordDecl *OldClass = E->getLambdaClass();
   CXXRecordDecl *Class
     = getSema().createLambdaClosureType(E->getIntroducerRange(),
                                         NewCallOpTSI,
                                         /*KnownDependent=*/false,
                                         E->getCaptureDefault());
-  getDerived().transformedLocalDecl(E->getLambdaClass(), {Class});
+  getDerived().transformedLocalDecl(OldClass, {Class});
+
+  Optional<std::pair<unsigned, Decl*>> Mangling;
+  if (getDerived().ReplacingOriginal())
+    Mangling = std::make_pair(OldClass->getLambdaManglingNumber(),
+                              OldClass->getLambdaContextDecl());
 
   // Build the call operator.
   CXXMethodDecl *NewCallOperator = getSema().startLambdaDefinition(
       Class, E->getIntroducerRange(), NewCallOpTSI,
       E->getCallOperator()->getEndLoc(),
       NewCallOpTSI->getTypeLoc().castAs<FunctionProtoTypeLoc>().getParams(),
-      E->getCallOperator()->isConstexpr());
+      E->getCallOperator()->isConstexpr(), Mangling);
 
   LSI->CallOperator = NewCallOperator;
 
@@ -11465,7 +11477,7 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
 
   // Instantiate the body of the lambda expression.
   StmtResult Body =
-      Invalid ? StmtError() : getDerived().TransformStmt(E->getBody());
+      Invalid ? StmtError() : getDerived().TransformLambdaBody(E->getBody());
 
   // ActOnLambda* will pop the function scope for us.
   FuncScopeCleanup.disable();
@@ -11487,6 +11499,12 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
 
   return getSema().BuildLambdaExpr(E->getBeginLoc(), Body.get()->getEndLoc(),
                                    &LSICopy);
+}
+
+template<typename Derived>
+StmtResult
+TreeTransform<Derived>::TransformLambdaBody(Stmt *S) {
+  return TransformStmt(S);
 }
 
 template<typename Derived>
