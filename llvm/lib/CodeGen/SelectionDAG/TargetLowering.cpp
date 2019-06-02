@@ -676,27 +676,27 @@ bool TargetLowering::SimplifyDemandedBits(
 
     // If index isn't constant, assume we need all vector elements AND the
     // inserted element.
-    APInt DemandedVecElts(OriginalDemandedElts);
+    APInt DemandedVecElts(DemandedElts);
     if (CIdx && CIdx->getAPIntValue().ult(VecVT.getVectorNumElements())) {
       unsigned Idx = CIdx->getZExtValue();
       DemandedVecElts.clearBit(Idx);
 
       // Inserted element is not required.
-      if (!OriginalDemandedElts[Idx])
+      if (!DemandedElts[Idx])
         return TLO.CombineTo(Op, Vec);
     }
 
     KnownBits KnownScl;
     unsigned NumSclBits = Scl.getScalarValueSizeInBits();
-    APInt DemandedSclBits = OriginalDemandedBits.zextOrTrunc(NumSclBits);
+    APInt DemandedSclBits = DemandedBits.zextOrTrunc(NumSclBits);
     if (SimplifyDemandedBits(Scl, DemandedSclBits, KnownScl, TLO, Depth + 1))
       return true;
 
     Known = KnownScl.zextOrTrunc(BitWidth, false);
 
     KnownBits KnownVec;
-    if (SimplifyDemandedBits(Vec, OriginalDemandedBits, DemandedVecElts,
-                             KnownVec, TLO, Depth + 1))
+    if (SimplifyDemandedBits(Vec, DemandedBits, DemandedVecElts, KnownVec, TLO,
+                             Depth + 1))
       return true;
 
     if (!!DemandedVecElts) {
