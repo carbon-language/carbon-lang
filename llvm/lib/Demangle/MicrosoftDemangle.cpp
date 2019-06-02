@@ -1086,10 +1086,8 @@ static void writeHexDigit(char *Buffer, uint8_t Digit) {
 }
 
 static void outputHex(OutputStream &OS, unsigned C) {
-  if (C == 0) {
-    OS << "\\x00";
-    return;
-  }
+  assert (C != 0);
+
   // It's easier to do the math if we can work from right to left, but we need
   // to print the numbers from left to right.  So render this into a temporary
   // buffer first, then output the temporary buffer.  Each byte is of the form
