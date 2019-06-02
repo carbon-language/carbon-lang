@@ -1,0 +1,9 @@
+// RUN: %exploded_graph_rewriter %s | FileCheck %s
+
+digraph "Exploded Graph" {
+  label="Exploded Graph";
+}
+
+// CHECK:      digraph "ExplodedGraph" {
+// CHECK-NEXT:   label="";
+// CHECK-NEXT: }

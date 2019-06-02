@@ -1,0 +1,12 @@
+// RUN: %exploded_graph_rewriter %s | FileCheck %s
+
+Node0x1 [shape=record,label=
+ "{{ "node_id": 1, "pointer": "0x1",
+     "program_state": null, "program_points": []}\l}"];
+
+// CHECK: Node0x1 -> Node0x2;
+Node0x1 -> Node0x2;
+
+Node0x2 [shape=record,label=
+ "{{ "node_id": 2, "pointer": "0x2",
+     "program_state": null, "program_points": []}\l}"];
