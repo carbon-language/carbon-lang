@@ -5505,6 +5505,34 @@ define void @widen_masked_store(<3 x i32> %v, <3 x i32>* %p, <3 x i1> %mask) {
   ret void
 }
 
+define void @zero_mask(<2 x double>* %addr, <2 x double> %val) {
+; SSE-LABEL: zero_mask:
+; SSE:       ## %bb.0:
+; SSE-NEXT:    retq
+;
+; AVX1OR2-LABEL: zero_mask:
+; AVX1OR2:       ## %bb.0:
+; AVX1OR2-NEXT:    vxorpd %xmm1, %xmm1, %xmm1
+; AVX1OR2-NEXT:    vmaskmovpd %xmm0, %xmm1, (%rdi)
+; AVX1OR2-NEXT:    retq
+;
+; AVX512F-LABEL: zero_mask:
+; AVX512F:       ## %bb.0:
+; AVX512F-NEXT:    ## kill: def $xmm0 killed $xmm0 def $zmm0
+; AVX512F-NEXT:    kxorw %k0, %k0, %k1
+; AVX512F-NEXT:    vmovupd %zmm0, (%rdi) {%k1}
+; AVX512F-NEXT:    vzeroupper
+; AVX512F-NEXT:    retq
+;
+; AVX512VL-LABEL: zero_mask:
+; AVX512VL:       ## %bb.0:
+; AVX512VL-NEXT:    kxorw %k0, %k0, %k1
+; AVX512VL-NEXT:    vmovupd %xmm0, (%rdi) {%k1}
+; AVX512VL-NEXT:    retq
+  call void @llvm.masked.store.v2f64.p0v2f64(<2 x double> %val, <2 x double>* %addr, i32 4, <2 x i1> zeroinitializer)
+  ret void
+}
+
 declare void @llvm.masked.store.v8f64.p0v8f64(<8 x double>, <8 x double>*, i32, <8 x i1>)
 declare void @llvm.masked.store.v4f64.p0v4f64(<4 x double>, <4 x double>*, i32, <4 x i1>)
 declare void @llvm.masked.store.v2f64.p0v2f64(<2 x double>, <2 x double>*, i32, <2 x i1>)
