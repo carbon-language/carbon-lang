@@ -637,7 +637,7 @@ MaybeExpr ExpressionAnalyzer::Analyze(const parser::Name &n) {
       // derived type definition)
       return AsMaybeExpr(MakeBareTypeParamInquiry(&ultimate));
     } else {
-      return Designate(DataRef{*n.symbol});
+      return Designate(DataRef{ultimate});
     }
   }
   return std::nullopt;

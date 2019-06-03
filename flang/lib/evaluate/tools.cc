@@ -410,13 +410,13 @@ std::optional<Expr<LogicalResult>> Relate(parser::ContextualMessages &messages,
     RelationalOperator opr, Expr<SomeType> &&x, Expr<SomeType> &&y) {
   return std::visit(
       common::visitors{
-          [=](Expr<SomeInteger> &&ix, Expr<SomeInteger> &&iy) {
-            return std::make_optional(
-                PromoteAndRelate(opr, std::move(ix), std::move(iy)));
+          [=](Expr<SomeInteger> &&ix,
+              Expr<SomeInteger> &&iy) -> std::optional<Expr<LogicalResult>> {
+            return PromoteAndRelate(opr, std::move(ix), std::move(iy));
           },
-          [=](Expr<SomeReal> &&rx, Expr<SomeReal> &&ry) {
-            return std::make_optional(
-                PromoteAndRelate(opr, std::move(rx), std::move(ry)));
+          [=](Expr<SomeReal> &&rx,
+              Expr<SomeReal> &&ry) -> std::optional<Expr<LogicalResult>> {
+            return PromoteAndRelate(opr, std::move(rx), std::move(ry));
           },
           [&](Expr<SomeReal> &&rx, Expr<SomeInteger> &&iy) {
             return Relate(messages, opr, std::move(x),
@@ -426,12 +426,12 @@ std::optional<Expr<LogicalResult>> Relate(parser::ContextualMessages &messages,
             return Relate(messages, opr,
                 AsGenericExpr(ConvertTo(ry, std::move(ix))), std::move(y));
           },
-          [&](Expr<SomeComplex> &&zx, Expr<SomeComplex> &&zy) {
+          [&](Expr<SomeComplex> &&zx,
+              Expr<SomeComplex> &&zy) -> std::optional<Expr<LogicalResult>> {
             if (opr != RelationalOperator::EQ &&
                 opr != RelationalOperator::NE) {
               messages.Say(
                   "COMPLEX data may be compared only for equality"_err_en_US);
-              return std::optional<Expr<LogicalResult>>{};
             } else {
               auto rr{Relate(messages, opr,
                   AsGenericExpr(GetComplexPart(zx, false)),
@@ -446,14 +446,13 @@ std::optional<Expr<LogicalResult>> Relate(parser::ContextualMessages &messages,
                 LogicalOperator combine{opr == RelationalOperator::EQ
                         ? LogicalOperator::And
                         : LogicalOperator::Or};
-                return std::make_optional(
-                    Expr<LogicalResult>{LogicalOperation<LogicalResult::kind>{
-                        combine, std::move(std::get<0>(*parts)),
-                        std::move(std::get<1>(*parts))}});
-              } else {
-                return std::optional<Expr<LogicalResult>>{};
+                return Expr<LogicalResult>{
+                    LogicalOperation<LogicalResult::kind>{combine,
+                        std::move(std::get<0>(*parts)),
+                        std::move(std::get<1>(*parts))}};
               }
             }
+            return std::nullopt;
           },
           [&](Expr<SomeComplex> &&zx, Expr<SomeInteger> &&iy) {
             return Relate(messages, opr, std::move(x),
@@ -473,11 +472,11 @@ std::optional<Expr<LogicalResult>> Relate(parser::ContextualMessages &messages,
           },
           [&](Expr<SomeCharacter> &&cx, Expr<SomeCharacter> &&cy) {
             return std::visit(
-                [&](auto &&cxk, auto &&cyk) {
+                [&](auto &&cxk,
+                    auto &&cyk) -> std::optional<Expr<LogicalResult>> {
                   using Ty = ResultType<decltype(cxk)>;
                   if constexpr (std::is_same_v<Ty, ResultType<decltype(cyk)>>) {
-                    return std::make_optional(
-                        PackageRelation(opr, std::move(cxk), std::move(cyk)));
+                    return PackageRelation(opr, std::move(cxk), std::move(cyk));
                   } else {
                     messages.Say(
                         "CHARACTER operands do not have same KIND"_err_en_US);
@@ -487,11 +486,11 @@ std::optional<Expr<LogicalResult>> Relate(parser::ContextualMessages &messages,
                 std::move(cx.u), std::move(cy.u));
           },
           // Default case
-          [&](auto &&, auto &&) {
+          [&](auto &&, auto &&) -> std::optional<Expr<LogicalResult>> {
             // TODO: defined operator
             messages.Say(
                 "relational operands do not have comparable types"_err_en_US);
-            return std::optional<Expr<LogicalResult>>{};
+            return std::nullopt;
           },
       },
       std::move(x.u), std::move(y.u));
@@ -516,8 +515,7 @@ std::optional<Expr<SomeType>> ConvertToNumeric(int kind, Expr<SomeType> &&x) {
         using cxType = std::decay_t<decltype(cx)>;
         if constexpr (!common::HasMember<cxType, TypelessExpression>) {
           if constexpr (IsNumericTypeCategory(ResultType<cxType>::category)) {
-            return std::make_optional(
-                Expr<SomeType>{ConvertToKind<TO>(kind, std::move(cx))});
+            return Expr<SomeType>{ConvertToKind<TO>(kind, std::move(cx))};
           }
         }
         return std::nullopt;
@@ -529,6 +527,12 @@ std::optional<Expr<SomeType>> ConvertToType(
     const DynamicType &type, Expr<SomeType> &&x) {
   switch (type.category()) {
   case TypeCategory::Integer:
+    if (auto *boz{std::get_if<BOZLiteralConstant>(&x.u)}) {
+      // Extension to C7109: allow BOZ literals to appear in integer contexts
+      // when the type is unambiguous.
+      return Expr<SomeType>{
+          ConvertToKind<TypeCategory::Integer>(type.kind(), std::move(*boz))};
+    }
     return ConvertToNumeric<TypeCategory::Integer>(type.kind(), std::move(x));
   case TypeCategory::Real:
     return ConvertToNumeric<TypeCategory::Real>(type.kind(), std::move(x));
