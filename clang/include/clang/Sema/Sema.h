@@ -4179,7 +4179,6 @@ public:
   void MarkVariableReferenced(SourceLocation Loc, VarDecl *Var);
   void MarkDeclRefReferenced(DeclRefExpr *E, const Expr *Base = nullptr);
   void MarkMemberReferenced(MemberExpr *E);
-  void MarkFunctionParmPackReferenced(FunctionParmPackExpr *E);
   void MarkCaptureUsedInEnclosingContext(VarDecl *Capture, SourceLocation Loc,
                                          unsigned CapturingScopeIndex);
 
