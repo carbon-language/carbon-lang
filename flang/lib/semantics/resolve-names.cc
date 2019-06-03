@@ -891,7 +891,9 @@ public:
   bool Pre(const parser::WhereConstructStmt &x) { return CheckDef(x.t); }
   bool Pre(const parser::ForallConstructStmt &x) { return CheckDef(x.t); }
   bool Pre(const parser::CriticalStmt &x) { return CheckDef(x.t); }
-  bool Pre(const parser::LabelDoStmt &x) { common::die("should not happen"); }
+  bool Pre(const parser::LabelDoStmt &x) {
+    return false;  // error recovery
+  }
   bool Pre(const parser::NonLabelDoStmt &x) { return CheckDef(x.t); }
   bool Pre(const parser::IfThenStmt &x) { return CheckDef(x.t); }
   bool Pre(const parser::SelectCaseStmt &x) { return CheckDef(x.t); }
@@ -1567,6 +1569,7 @@ void ScopeHandler::PushScope(Scope &scope) {
 void ScopeHandler::PopScope() {
   // Entities that are not yet classified as objects or procedures are now
   // assumed to be objects.
+  // TODO: Statement functions
   for (auto &pair : currScope()) {
     ConvertToObjectEntity(*pair.second);
   }
@@ -2259,10 +2262,12 @@ void SubprogramVisitor::Post(const parser::SubroutineStmt &stmt) {
   const auto &name{std::get<parser::Name>(stmt.t)};
   auto &details{PostSubprogramStmt(name)};
   for (const auto &dummyArg : std::get<std::list<parser::DummyArg>>(stmt.t)) {
-    const parser::Name *dummyName = std::get_if<parser::Name>(&dummyArg.u);
-    CHECK(dummyName != nullptr && "TODO: alternate return indicator");
-    Symbol &dummy{MakeSymbol(*dummyName, EntityDetails(true))};
-    details.add_dummyArg(dummy);
+    if (const auto *dummyName{std::get_if<parser::Name>(&dummyArg.u)}) {
+      Symbol &dummy{MakeSymbol(*dummyName, EntityDetails(true))};
+      details.add_dummyArg(dummy);
+    } else {
+      details.add_alternateReturn();
+    }
   }
 }
 
