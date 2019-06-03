@@ -3311,9 +3311,11 @@ TYPE_PARSER(construct<ActualArgSpec>(
 //         expr | variable | procedure-name | proc-component-ref |
 //         alt-return-spec
 // N.B. the "procedure-name" and "proc-component-ref" alternatives can't
-// yet be distinguished from "variable".
-TYPE_PARSER(construct<ActualArg>(variable) / lookAhead(","_tok || ")"_tok) ||
-    construct<ActualArg>(expr) ||
+// yet be distinguished from "variable", many instances of which can't be
+// distinguished from "expr" anyway (to do so would misparse structure
+// constructors and function calls as array elements).
+// Semantics sorts it all out later.
+TYPE_PARSER(construct<ActualArg>(expr) ||
     construct<ActualArg>(Parser<AltReturnSpec>{}) ||
     extension<LanguageFeature::PercentRefAndVal>(construct<ActualArg>(
         construct<ActualArg::PercentRef>("%REF" >> parenthesized(variable)))) ||

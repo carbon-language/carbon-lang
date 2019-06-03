@@ -3100,9 +3100,7 @@ struct ActualArg {
   WRAPPER_CLASS(PercentVal, Expr);  // %VAL(x) extension
   UNION_CLASS_BOILERPLATE(ActualArg);
   ActualArg(Expr &&x) : u{common::Indirection<Expr>(std::move(x))} {}
-  ActualArg(Variable &&x) : u{common::Indirection<Variable>(std::move(x))} {}
-  std::variant<common::Indirection<Expr>, common::Indirection<Variable>, Name,
-      ProcComponentRef, AltReturnSpec, PercentRef, PercentVal>
+  std::variant<common::Indirection<Expr>, AltReturnSpec, PercentRef, PercentVal>
       u;
 };
 

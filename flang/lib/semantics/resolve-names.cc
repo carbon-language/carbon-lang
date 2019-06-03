@@ -2086,9 +2086,18 @@ void InterfaceVisitor::ResolveSpecificsInGeneric(Symbol &generic) {
       continue;
     }
     if (kind == ProcedureKind::ModuleProcedure) {
-      const auto *d{symbol->detailsIf<SubprogramNameDetails>()};
-      if (!d || d->kind() != SubprogramKind::Module) {
-        Say(*name, "'%s' is not a module procedure"_err_en_US);
+      if (const auto *nd{symbol->detailsIf<SubprogramNameDetails>()}) {
+        if (nd->kind() != SubprogramKind::Module) {
+          Say(*name, "'%s' is not a module procedure"_err_en_US);
+        }
+      } else {
+        // USE-associated procedure
+        const auto *sd{symbol->detailsIf<SubprogramDetails>()};
+        CHECK(sd != nullptr);
+        if (symbol->owner().kind() != Scope::Kind::Module ||
+            sd->isInterface()) {
+          Say(*name, "'%s' is not a module procedure"_err_en_US);
+        }
       }
     }
     if (!namesSeen.insert(name->source).second) {

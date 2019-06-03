@@ -568,9 +568,9 @@ Symbol &Symbol::Instantiate(
                 const DeclTypeSpec &newType{scope.InstantiateIntrinsicType(
                     *origType, semanticsContext)};
                 details.ReplaceType(newType);
-              } else {
+              } else if (origType->category() != DeclTypeSpec::ClassStar) {
                 common::die("instantiated component has type that is "
-                            "neither intrinsic nor derived");
+                            "neither intrinsic, derived, nor CLASS(*)");
               }
             }
             details.set_init(

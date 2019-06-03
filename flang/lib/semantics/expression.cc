@@ -1473,9 +1473,9 @@ auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
       pd.u);
 }
 
-static const Symbol *AssumedTypeDummy(const parser::Variable &v) {
+static const Symbol *AssumedTypeDummy(const parser::Expr &x) {
   if (const auto *designator{
-          std::get_if<common::Indirection<parser::Designator>>(&v.u)}) {
+          std::get_if<common::Indirection<parser::Designator>>(&x.u)}) {
     if (const auto *dataRef{
             std::get_if<parser::DataRef>(&designator->value().u)}) {
       if (const auto *name{std::get_if<parser::Name>(&dataRef->u)}) {
@@ -1508,19 +1508,12 @@ MaybeExpr ExpressionAnalyzer::Analyze(
     const Symbol *assumedTypeDummy{nullptr};
     std::visit(
         common::visitors{
-            [&](const common::Indirection<parser::Variable> &v) {
-              if (!(assumedTypeDummy = AssumedTypeDummy(v.value()))) {
-                actualArgExpr = Analyze(v.value());
-              }
-            },
             [&](const common::Indirection<parser::Expr> &x) {
-              actualArgExpr = Analyze(x.value());
-            },
-            [&](const parser::Name &n) {
-              Say("TODO: procedure name actual arg"_err_en_US);
-            },
-            [&](const parser::ProcComponentRef &) {
-              Say("TODO: proc component ref actual arg"_err_en_US);
+              // TODO: Distinguish & handle procedure name and
+              // proc-component-ref
+              if (!(assumedTypeDummy = AssumedTypeDummy(x.value()))) {
+                actualArgExpr = Analyze(x.value());
+              }
             },
             [&](const parser::AltReturnSpec &) {
               Say("alternate return specification may not appear on function reference"_err_en_US);
@@ -1850,8 +1843,8 @@ static void FixMisparsedFunctionReference(
           common::die("can't fix misparsed function as array reference");
         }
       } else if (const auto *name{std::get_if<parser::Name>(&proc.u)}) {
-        // Don't convert a procedure component reference into a structure
-        // constructor, but do check for a misparsed bare name.
+        // A procedure component reference can't be a structure
+        // constructor; only check calls to bare names.
         const Symbol *derivedType{nullptr};
         if (symbol.has<semantics::DerivedTypeDetails>()) {
           derivedType = &symbol;
