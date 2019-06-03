@@ -300,10 +300,6 @@ class LoopPredication {
   // within the loop. We identify such unprofitable loops through BPI.
   bool isLoopProfitableToPredicate();
 
-  // Return the loopLatchCheck corresponding to the RangeCheckType if safe to do
-  // so.
-  Optional<LoopICmp> generateLoopLatchCheck(Type *RangeCheckType);
-
 public:
   LoopPredication(AliasAnalysis *AA, ScalarEvolution *SE,
                   BranchProbabilityInfo *BPI)
@@ -426,9 +422,10 @@ Value *LoopPredication::expandCheck(SCEVExpander &Expander,
 // sext(x + y) is same as sext(x) + sext(y).
 // This function returns true if we can safely represent the IV type in
 // the RangeCheckType without loss of information.
-bool isSafeToTruncateWideIVType(const DataLayout &DL, ScalarEvolution &SE,
-                                const LoopICmp LatchCheck,
-                                Type *RangeCheckType) {
+static bool isSafeToTruncateWideIVType(const DataLayout &DL,
+                                       ScalarEvolution &SE,
+                                       const LoopICmp LatchCheck,
+                                       Type *RangeCheckType) {
   if (!EnableIVTruncation)
     return false;
   assert(DL.getTypeSizeInBits(LatchCheck.IV->getType()) >
@@ -458,26 +455,30 @@ bool isSafeToTruncateWideIVType(const DataLayout &DL, ScalarEvolution &SE,
 }
 
 
-Optional<LoopICmp>
-LoopPredication::generateLoopLatchCheck(Type *RangeCheckType) {
+// Return an LoopICmp describing a latch check equivlent to LatchCheck but with
+// the requested type if safe to do so.  May involve the use of a new IV.
+static Optional<LoopICmp> generateLoopLatchCheck(const DataLayout &DL,
+                                                 ScalarEvolution &SE,
+                                                 const LoopICmp LatchCheck,
+                                                 Type *RangeCheckType) {
 
   auto *LatchType = LatchCheck.IV->getType();
   if (RangeCheckType == LatchType)
     return LatchCheck;
   // For now, bail out if latch type is narrower than range type.
-  if (DL->getTypeSizeInBits(LatchType) < DL->getTypeSizeInBits(RangeCheckType))
+  if (DL.getTypeSizeInBits(LatchType) < DL.getTypeSizeInBits(RangeCheckType))
     return None;
-  if (!isSafeToTruncateWideIVType(*DL, *SE, LatchCheck, RangeCheckType))
+  if (!isSafeToTruncateWideIVType(DL, SE, LatchCheck, RangeCheckType))
     return None;
   // We can now safely identify the truncated version of the IV and limit for
   // RangeCheckType.
   LoopICmp NewLatchCheck;
   NewLatchCheck.Pred = LatchCheck.Pred;
   NewLatchCheck.IV = dyn_cast<SCEVAddRecExpr>(
-      SE->getTruncateExpr(LatchCheck.IV, RangeCheckType));
+      SE.getTruncateExpr(LatchCheck.IV, RangeCheckType));
   if (!NewLatchCheck.IV)
     return None;
-  NewLatchCheck.Limit = SE->getTruncateExpr(LatchCheck.Limit, RangeCheckType);
+  NewLatchCheck.Limit = SE.getTruncateExpr(LatchCheck.Limit, RangeCheckType);
   LLVM_DEBUG(dbgs() << "IV of type: " << *LatchType
                     << "can be represented as range check type:"
                     << *RangeCheckType << "\n");
@@ -693,7 +694,7 @@ Optional<Value *> LoopPredication::widenICmpRangeCheck(ICmpInst *ICI,
     return None;
   }
   auto *Ty = RangeCheckIV->getType();
-  auto CurrLatchCheckOpt = generateLoopLatchCheck(Ty);
+  auto CurrLatchCheckOpt = generateLoopLatchCheck(*DL, *SE, LatchCheck, Ty);
   if (!CurrLatchCheckOpt) {
     LLVM_DEBUG(dbgs() << "Failed to generate a loop latch check "
                          "corresponding to range type: "
