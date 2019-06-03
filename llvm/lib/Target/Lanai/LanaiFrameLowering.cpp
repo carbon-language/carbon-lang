@@ -12,6 +12,7 @@
 
 #include "LanaiFrameLowering.h"
 
+#include "LanaiAluCode.h"
 #include "LanaiInstrInfo.h"
 #include "LanaiSubtarget.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
