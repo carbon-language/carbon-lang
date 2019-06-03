@@ -555,6 +555,7 @@ template <typename CFLAA> class CFLGraphBuilder {
       }
 
       case Instruction::Add:
+      case Instruction::FAdd:
       case Instruction::Sub:
       case Instruction::FSub:
       case Instruction::Mul:
