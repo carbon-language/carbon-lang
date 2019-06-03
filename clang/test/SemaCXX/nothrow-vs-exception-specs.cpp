@@ -88,3 +88,17 @@ public:
   void foo() {}
 };
 }
+
+namespace FuncPointerReferenceConverts
+void FuncToBeRefed();
+
+#ifndef CPP17
+// expected-error@+6{{target exception specification is not superset of source}}
+// expected-error@+6{{target exception specification is not superset of source}}
+#else
+// expected-error@+3{{non-const lvalue reference to type 'void () __attribute__((nothrow))' cannot bind to a value of unrelated type 'void ()'}}
+// expected-error@+3{{cannot initialize a variable of type 'void (*)() __attribute__((nothrow))' with an lvalue of type 'void ()': different exception specifications}}
+#endif
+__declspec(nothrow) void (&FuncRef)() = FuncToBeRefed;
+__declspec(nothrow) void (*FuncPtr)() = FuncToBeRefed;
+}
