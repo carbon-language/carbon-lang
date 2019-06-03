@@ -33,7 +33,16 @@
 #   - test_x is not folded (it is neither .true. nor .false.). This means the
 #     compiler could not fold the expression.
 
-
+# Return ldd or similar tool to use to check for libpgmath
+function get_ldd() {
+  case $(uname -s) in
+    Linux) echo 'ldd' ;;
+    Darwin) echo 'otool -L' ;;
+    *)
+      >&2 echo "Warning: cannot detect libpgmath on $(uname -s)"
+      echo 'true' ;;
+  esac
+}
 
 PATH=/usr/bin:/bin
 srcdir=$(dirname $0)
@@ -41,7 +50,7 @@ F18CC=${F18:-../../tools/f18/f18}
 CMD="$F18CC -fdebug-dump-symbols -fparse-only"
 
 # Check if libpgmath has been linked
-lpgmath=$(ldd $F18CC | grep "pgmath")
+lpgmath=$($(get_ldd) $F18CC | grep "pgmath")
 if [ -z "$lpgmath" ]; then
   echo "Assuming no libpgmath support"
 else
@@ -115,9 +124,9 @@ if [ -s $src4 ] || [ -s $warning_diffs ]; then
   echo FAIL
   exit 1
 else
-  passed_results="$(wc -l $src3 | sed 's/ .*//')"
-  passed_warnings="$(wc -l $expected_warnings | sed 's/ .*//')"
-  passed=$((passed_warnings + $passed_results))
+  passed_results=$(wc -l < $src3)
+  passed_warnings=$(wc -l < $expected_warnings)
+  passed=$(($passed_warnings + $passed_results))
   echo all $passed tests passed
   echo PASS
 fi
