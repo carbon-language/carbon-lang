@@ -111,6 +111,10 @@ static cl::opt<bool>
   MaySplitLoadIndex("combiner-split-load-index", cl::Hidden, cl::init(true),
                     cl::desc("DAG combiner may split indexing from loads"));
 
+static cl::opt<unsigned> TokenFactorInlineLimit(
+    "combiner-tokenfactor-inline-limit", cl::Hidden, cl::init(2048),
+    cl::desc("Limit the number of operands to inline for Token Factors"));
+
 namespace {
 
   class DAGCombiner {
@@ -1801,8 +1805,19 @@ SDValue DAGCombiner::visitTokenFactor(SDNode *N) {
   // Iterate through token factors.  The TFs grows when new token factors are
   // encountered.
   for (unsigned i = 0; i < TFs.size(); ++i) {
-    SDNode *TF = TFs[i];
+    // Limit number of nodes to inline, to avoid quadratic compile times.
+    // We have to add the outstanding Token Factors to Ops, otherwise we might
+    // drop Ops from the resulting Token Factors.
+    if (Ops.size() > TokenFactorInlineLimit) {
+      for (unsigned j = i; j < TFs.size(); j++)
+        Ops.emplace_back(TFs[j], 0);
+      // Drop unprocessed Token Factors from TFs, so we do not add them to the
+      // combiner worklist later.
+      TFs.resize(i);
+      break;
+    }
 
+    SDNode *TF = TFs[i];
     // Check each of the operands.
     for (const SDValue &Op : TF->op_values()) {
       switch (Op.getOpcode()) {
@@ -1816,8 +1831,6 @@ SDValue DAGCombiner::visitTokenFactor(SDNode *N) {
         if (Op.hasOneUse() && !is_contained(TFs, Op.getNode())) {
           // Queue up for processing.
           TFs.push_back(Op.getNode());
-          // Clean up in case the token factor is removed.
-          AddToWorklist(Op.getNode());
           Changed = true;
           break;
         }
@@ -1833,6 +1846,11 @@ SDValue DAGCombiner::visitTokenFactor(SDNode *N) {
       }
     }
   }
+
+  // Re-visit inlined Token Factors, to clean them up in case they have been
+  // removed. Skip the first Token Factor, as this is the current node.
+  for (unsigned i = 1, e = TFs.size(); i < e; i++)
+    AddToWorklist(TFs[i]);
 
   // Remove Nodes that are chained to another node in the list. Do so
   // by walking up chains breath-first stopping when we've seen
