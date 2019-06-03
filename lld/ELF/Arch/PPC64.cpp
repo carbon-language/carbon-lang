@@ -445,10 +445,6 @@ void PPC64::relaxTlsLdToLe(uint8_t *Loc, RelType Type, uint64_t Val) const {
   case R_PPC64_DTPREL16_DS:
   case R_PPC64_DTPREL16_LO:
   case R_PPC64_DTPREL16_LO_DS:
-  case R_PPC64_GOT_DTPREL16_HA:
-  case R_PPC64_GOT_DTPREL16_LO_DS:
-  case R_PPC64_GOT_DTPREL16_DS:
-  case R_PPC64_GOT_DTPREL16_HI:
     relocateOne(Loc, Type, Val);
     break;
   default:

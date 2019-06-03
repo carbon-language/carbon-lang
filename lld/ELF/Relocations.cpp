@@ -257,13 +257,8 @@ handleTlsRelocation(RelType Type, Symbol &Sym, InputSectionBase &C,
   }
 
   // Local-Dynamic sequence where offset of tls variable relative to dynamic
-  // thread pointer is stored in the got.
+  // thread pointer is stored in the got. This cannot be relaxed to Local-Exec.
   if (Expr == R_TLSLD_GOT_OFF) {
-    // Local-Dynamic relocs can be relaxed to local-exec
-    if (!Config->Shared) {
-      C.Relocations.push_back({R_RELAX_TLS_LD_TO_LE, Type, Offset, Addend, &Sym});
-      return 1;
-    }
     if (!Sym.isInGot()) {
       In.Got->addEntry(Sym);
       uint64_t Off = Sym.getGotOffset();
