@@ -69,3 +69,22 @@ struct S {
   __declspec(nothrow) void f4() noexcept(true);
   __declspec(nothrow) void f5() noexcept(false);
 };
+
+namespace PR42100 {
+class Base {
+public:
+  // expected-note@+1{{overridden virtual function is here}}
+  virtual __declspec(nothrow) void foo() = 0;
+  // expected-note@+1{{previous declaration is here}}
+  __declspec(nothrow) void bar();
+};
+
+// expected-warning@+1{{'bar' is missing exception specification '__attribute__((nothrow))'}}
+void Base::bar() {}
+
+class Sub : public Base {
+public:
+  // expected-warning@+1{{exception specification of overriding function is more lax than base version}}
+  void foo() {}
+};
+}
