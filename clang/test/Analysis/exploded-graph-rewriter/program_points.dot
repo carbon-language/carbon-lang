@@ -1,5 +1,8 @@
 // RUN: %exploded_graph_rewriter %s | FileCheck %s
 
+// FIXME: Substitution doesn't seem to work on Windows.
+// UNSUPPORTED: system-windows
+
 // CHECK: <b>Program point:</b>
 // CHECK-SAME: <table border="0" align="left" width="0">
 // CHECK-SAME:   <tr>
