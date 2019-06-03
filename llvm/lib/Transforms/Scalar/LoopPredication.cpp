@@ -300,19 +300,6 @@ class LoopPredication {
   // within the loop. We identify such unprofitable loops through BPI.
   bool isLoopProfitableToPredicate();
 
-  // When the IV type is wider than the range operand type, we can still do loop
-  // predication, by generating SCEVs for the range and latch that are of the
-  // same type. We achieve this by generating a SCEV truncate expression for the
-  // latch IV. This is done iff truncation of the IV is a safe operation,
-  // without loss of information.
-  // Another way to achieve this is by generating a wider type SCEV for the
-  // range check operand, however, this needs a more involved check that
-  // operands do not overflow. This can lead to loss of information when the
-  // range operand is of the form: add i32 %offset, %iv. We need to prove that
-  // sext(x + y) is same as sext(x) + sext(y).
-  // This function returns true if we can safely represent the IV type in
-  // the RangeCheckType without loss of information.
-  bool isSafeToTruncateWideIVType(Type *RangeCheckType);
   // Return the loopLatchCheck corresponding to the RangeCheckType if safe to do
   // so.
   Optional<LoopICmp> generateLoopLatchCheck(Type *RangeCheckType);
@@ -425,6 +412,52 @@ Value *LoopPredication::expandCheck(SCEVExpander &Expander,
   return Builder.CreateICmp(Pred, LHSV, RHSV);
 }
 
+
+// Returns true if its safe to truncate the IV to RangeCheckType.
+// When the IV type is wider than the range operand type, we can still do loop
+// predication, by generating SCEVs for the range and latch that are of the
+// same type. We achieve this by generating a SCEV truncate expression for the
+// latch IV. This is done iff truncation of the IV is a safe operation,
+// without loss of information.
+// Another way to achieve this is by generating a wider type SCEV for the
+// range check operand, however, this needs a more involved check that
+// operands do not overflow. This can lead to loss of information when the
+// range operand is of the form: add i32 %offset, %iv. We need to prove that
+// sext(x + y) is same as sext(x) + sext(y).
+// This function returns true if we can safely represent the IV type in
+// the RangeCheckType without loss of information.
+bool isSafeToTruncateWideIVType(const DataLayout &DL, ScalarEvolution &SE,
+                                const LoopICmp LatchCheck,
+                                Type *RangeCheckType) {
+  if (!EnableIVTruncation)
+    return false;
+  assert(DL.getTypeSizeInBits(LatchCheck.IV->getType()) >
+             DL.getTypeSizeInBits(RangeCheckType) &&
+         "Expected latch check IV type to be larger than range check operand "
+         "type!");
+  // The start and end values of the IV should be known. This is to guarantee
+  // that truncating the wide type will not lose information.
+  auto *Limit = dyn_cast<SCEVConstant>(LatchCheck.Limit);
+  auto *Start = dyn_cast<SCEVConstant>(LatchCheck.IV->getStart());
+  if (!Limit || !Start)
+    return false;
+  // This check makes sure that the IV does not change sign during loop
+  // iterations. Consider latchType = i64, LatchStart = 5, Pred = ICMP_SGE,
+  // LatchEnd = 2, rangeCheckType = i32. If it's not a monotonic predicate, the
+  // IV wraps around, and the truncation of the IV would lose the range of
+  // iterations between 2^32 and 2^64.
+  bool Increasing;
+  if (!SE.isMonotonicPredicate(LatchCheck.IV, LatchCheck.Pred, Increasing))
+    return false;
+  // The active bits should be less than the bits in the RangeCheckType. This
+  // guarantees that truncating the latch check to RangeCheckType is a safe
+  // operation.
+  auto RangeCheckTypeBitSize = DL.getTypeSizeInBits(RangeCheckType);
+  return Start->getAPInt().getActiveBits() < RangeCheckTypeBitSize &&
+         Limit->getAPInt().getActiveBits() < RangeCheckTypeBitSize;
+}
+
+
 Optional<LoopICmp>
 LoopPredication::generateLoopLatchCheck(Type *RangeCheckType) {
 
@@ -434,7 +467,7 @@ LoopPredication::generateLoopLatchCheck(Type *RangeCheckType) {
   // For now, bail out if latch type is narrower than range type.
   if (DL->getTypeSizeInBits(LatchType) < DL->getTypeSizeInBits(RangeCheckType))
     return None;
-  if (!isSafeToTruncateWideIVType(RangeCheckType))
+  if (!isSafeToTruncateWideIVType(*DL, *SE, LatchCheck, RangeCheckType))
     return None;
   // We can now safely identify the truncated version of the IV and limit for
   // RangeCheckType.
@@ -873,35 +906,6 @@ Optional<LoopICmp> LoopPredication::parseLoopLatchICmp() {
   return Result;
 }
 
-// Returns true if its safe to truncate the IV to RangeCheckType.
-bool LoopPredication::isSafeToTruncateWideIVType(Type *RangeCheckType) {
-  if (!EnableIVTruncation)
-    return false;
-  assert(DL->getTypeSizeInBits(LatchCheck.IV->getType()) >
-             DL->getTypeSizeInBits(RangeCheckType) &&
-         "Expected latch check IV type to be larger than range check operand "
-         "type!");
-  // The start and end values of the IV should be known. This is to guarantee
-  // that truncating the wide type will not lose information.
-  auto *Limit = dyn_cast<SCEVConstant>(LatchCheck.Limit);
-  auto *Start = dyn_cast<SCEVConstant>(LatchCheck.IV->getStart());
-  if (!Limit || !Start)
-    return false;
-  // This check makes sure that the IV does not change sign during loop
-  // iterations. Consider latchType = i64, LatchStart = 5, Pred = ICMP_SGE,
-  // LatchEnd = 2, rangeCheckType = i32. If it's not a monotonic predicate, the
-  // IV wraps around, and the truncation of the IV would lose the range of
-  // iterations between 2^32 and 2^64.
-  bool Increasing;
-  if (!SE->isMonotonicPredicate(LatchCheck.IV, LatchCheck.Pred, Increasing))
-    return false;
-  // The active bits should be less than the bits in the RangeCheckType. This
-  // guarantees that truncating the latch check to RangeCheckType is a safe
-  // operation.
-  auto RangeCheckTypeBitSize = DL->getTypeSizeInBits(RangeCheckType);
-  return Start->getAPInt().getActiveBits() < RangeCheckTypeBitSize &&
-         Limit->getAPInt().getActiveBits() < RangeCheckTypeBitSize;
-}
 
 bool LoopPredication::isLoopProfitableToPredicate() {
   if (SkipProfitabilityChecks || !BPI)
