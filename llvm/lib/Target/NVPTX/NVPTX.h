@@ -14,7 +14,6 @@
 #ifndef LLVM_LIB_TARGET_NVPTX_NVPTX_H
 #define LLVM_LIB_TARGET_NVPTX_NVPTX_H
 
-#include "MCTargetDesc/NVPTXBaseInfo.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Value.h"
