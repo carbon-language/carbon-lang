@@ -89,7 +89,7 @@ public:
 };
 }
 
-namespace FuncPointerReferenceConverts
+namespace FuncPointerReferenceConverts {
 void FuncToBeRefed();
 
 #ifndef CPP17
