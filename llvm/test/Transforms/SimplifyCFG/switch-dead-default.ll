@@ -151,3 +151,6 @@ default:
   call void @foo(i32 2)
   ret void
 }
+
+declare void @llvm.assume(i1)
+
