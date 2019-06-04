@@ -249,3 +249,28 @@
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ?x@@3PEAY02$$CRHEA
 ; CHECK-NEXT: error: Invalid mangled name
+
+?foo@@3_
+; CHECK-EMPTY:
+; CHECK-NEXT: ?foo@@3_
+; CHECK-NEXT: error: Invalid mangled name
+
+?foo@@3_XA
+; CHECK-EMPTY:
+; CHECK-NEXT: ?foo@@3_XA
+; CHECK-NEXT: error: Invalid mangled name
+
+?foo@@3Vbar
+; CHECK-EMPTY:
+; CHECK-NEXT: ?foo@@3Vbar
+; CHECK-NEXT: error: Invalid mangled name
+
+?foo@@3Vbar@
+; CHECK-EMPTY:
+; CHECK-NEXT: ?foo@@3Vbar@
+; CHECK-NEXT: error: Invalid mangled name
+
+?foo@?A
+; CHECK-EMPTY:
+; CHECK-NEXT: ?foo@?A
+; CHECK-NEXT: error: Invalid mangled name

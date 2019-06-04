@@ -238,10 +238,10 @@ demanglePointerCVQualifiers(StringView &MangledName) {
   case 'S':
     return std::make_pair(Qualifiers(Q_Const | Q_Volatile),
                           PointerAffinity::Pointer);
-  default:
-    assert(false && "Ty is not a pointer type!");
   }
-  return std::make_pair(Q_None, PointerAffinity::Pointer);
+  // This function is only called if isPointerType() returns true,
+  // and it only returns true for the six cases listed above.
+  DEMANGLE_UNREACHABLE;
 }
 
 StringView Demangler::copyString(StringView Borrowed) {
@@ -1694,7 +1694,7 @@ CallingConv Demangler::demangleCallingConvention(StringView &MangledName) {
 }
 
 StorageClass Demangler::demangleVariableStorageClass(StringView &MangledName) {
-  assert(std::isdigit(MangledName.front()));
+  assert(MangledName.front() >= '0' && MangledName.front() <= '4');
 
   switch (MangledName.popFront()) {
   case '0':
@@ -1708,8 +1708,7 @@ StorageClass Demangler::demangleVariableStorageClass(StringView &MangledName) {
   case '4':
     return StorageClass::FunctionLocalStatic;
   }
-  Error = true;
-  return StorageClass::None;
+  DEMANGLE_UNREACHABLE;
 }
 
 std::pair<Qualifiers, bool>
