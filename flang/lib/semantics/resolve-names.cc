@@ -512,6 +512,8 @@ public:
     }
   }
 
+  void MakeExternal(Symbol &);
+
 protected:
   // Apply the implicit type rules to this symbol.
   void ApplyImplicitRules(Symbol &);
@@ -1743,6 +1745,17 @@ const DeclTypeSpec &ScopeHandler::MakeLogicalType(
   }
 }
 
+void ScopeHandler::MakeExternal(Symbol &symbol) {
+  if (!symbol.attrs().test(Attr::EXTERNAL)) {
+    symbol.attrs().set(Attr::EXTERNAL);
+    if (symbol.attrs().test(Attr::INTRINSIC)) {  // C840
+      Say(symbol.name(),
+          "Symbol '%s' cannot have both EXTERNAL and INTRINSIC attributes"_err_en_US,
+          symbol.name());
+    }
+  }
+}
+
 // ModuleVisitor implementation
 
 bool ModuleVisitor::Pre(const parser::Only &x) {
@@ -2352,7 +2365,7 @@ Symbol &SubprogramVisitor::PushSubprogramScope(
   if (inInterfaceBlock()) {
     details.set_isInterface();
     if (!isAbstract()) {
-      symbol->attrs().set(Attr::EXTERNAL);
+      MakeExternal(*symbol);
     }
     if (isGeneric()) {
       GetGenericDetails().add_specificProc(*symbol);
@@ -2552,7 +2565,19 @@ bool DeclarationVisitor::Pre(const parser::IntentStmt &x) {
       HandleAttributeStmt(IntentSpecToAttr(intentSpec), names);
 }
 bool DeclarationVisitor::Pre(const parser::IntrinsicStmt &x) {
-  return HandleAttributeStmt(Attr::INTRINSIC, x.v);
+  HandleAttributeStmt(Attr::INTRINSIC, x.v);
+  for (const auto &name : x.v) {
+    auto *symbol{FindSymbol(name)};
+    if (!ConvertToProcEntity(*symbol)) {
+      SayWithDecl(
+          name, *symbol, "INTRINSIC attribute not allowed on '%s'"_err_en_US);
+    } else if (symbol->attrs().test(Attr::EXTERNAL)) {  // C840
+      Say(symbol->name(),
+          "Symbol '%s' cannot have both EXTERNAL and INTRINSIC attributes"_err_en_US,
+          symbol->name());
+    }
+  }
+  return false;
 }
 bool DeclarationVisitor::Pre(const parser::OptionalStmt &x) {
   return CheckNotInBlock("OPTIONAL") &&
@@ -4383,7 +4408,7 @@ void ResolveNamesVisitor::HandleProcedureName(
           " attribute in a scope with IMPLICIT NONE(EXTERNAL)"_err_en_US);
       return;
     }
-    symbol->attrs().set(Attr::EXTERNAL);
+    MakeExternal(*symbol);
     if (!symbol->has<ProcEntityDetails>()) {
       ConvertToProcEntity(*symbol);
     }
