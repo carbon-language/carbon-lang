@@ -274,3 +274,38 @@
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ?foo@?A
 ; CHECK-NEXT: error: Invalid mangled name
+
+?foo@?
+; CHECK-EMPTY:
+; CHECK-NEXT: ?foo@?
+; CHECK-NEXT: error: Invalid mangled name
+
+?foo@??
+; CHECK-EMPTY:
+; CHECK-NEXT: ?foo@??
+; CHECK-NEXT: error: Invalid mangled name
+
+?foo@?XX?
+; CHECK-EMPTY:
+; CHECK-NEXT: ?foo@?XX?
+; CHECK-NEXT: error: Invalid mangled name
+
+?foo@?A@?
+; CHECK-EMPTY:
+; CHECK-NEXT: ?foo@?A@?
+; CHECK-NEXT: error: Invalid mangled name
+
+?foo@?Q@?
+; CHECK-EMPTY:
+; CHECK-NEXT: ?foo@?Q@?
+; CHECK-NEXT: error: Invalid mangled name
+
+?foo@?BQ@?
+; CHECK-EMPTY:
+; CHECK-NEXT: ?foo@?BQ@?
+; CHECK-NEXT: error: Invalid mangled name
+
+?foo@?0?
+; CHECK-EMPTY:
+; CHECK-NEXT: ?foo@?0?
+; CHECK-NEXT: error: Invalid mangled name
