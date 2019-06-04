@@ -465,9 +465,9 @@ SymbolNode *Demangler::demangleSpecialIntrinsic(StringView &MangledName) {
   case SpecialIntrinsicKind::RttiBaseClassDescriptor:
     return demangleRttiBaseClassDescriptorNode(Arena, MangledName);
   case SpecialIntrinsicKind::DynamicInitializer:
-    return demangleInitFiniStub(MangledName, false);
+    return demangleInitFiniStub(MangledName, /*IsDestructor=*/false);
   case SpecialIntrinsicKind::DynamicAtexitDestructor:
-    return demangleInitFiniStub(MangledName, true);
+    return demangleInitFiniStub(MangledName, /*IsDestructor=*/true);
   case SpecialIntrinsicKind::Typeof:
   case SpecialIntrinsicKind::UdtReturning:
     // It's unclear which tools produces these manglings, so demangling
