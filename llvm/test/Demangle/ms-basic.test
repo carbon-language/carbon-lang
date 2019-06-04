@@ -38,6 +38,10 @@
 ?x@@YAXMH@Z
 ; CHECK: void __cdecl x(float, int)
 
+?x@@YAXMHZZ
+; FIXME: This should be `(float, int, ...)`
+; CHECK: void __cdecl x(float, int)
+
 ?x@@3P6AHMNH@ZEA
 ; CHECK: int (__cdecl *x)(float, double, int)
 

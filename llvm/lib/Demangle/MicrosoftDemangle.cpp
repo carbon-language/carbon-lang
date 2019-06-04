@@ -2093,7 +2093,7 @@ ArrayTypeNode *Demangler::demangleArrayType(StringView &MangledName) {
   return ATy;
 }
 
-// Reads a function or a template parameters.
+// Reads a function's parameters.
 NodeArrayNode *
 Demangler::demangleFunctionParameterList(StringView &MangledName) {
   // Empty parameter list.
@@ -2157,8 +2157,7 @@ Demangler::demangleFunctionParameterList(StringView &MangledName) {
     return NA;
   }
 
-  Error = true;
-  return nullptr;
+  DEMANGLE_UNREACHABLE;
 }
 
 NodeArrayNode *
@@ -2167,7 +2166,7 @@ Demangler::demangleTemplateParameterList(StringView &MangledName) {
   NodeList **Current = &Head;
   size_t Count = 0;
 
-  while (!Error && !MangledName.startsWith('@')) {
+  while (!MangledName.startsWith('@')) {
     if (MangledName.consumeFront("$S") || MangledName.consumeFront("$$V") ||
         MangledName.consumeFront("$$$V") || MangledName.consumeFront("$$Z")) {
       // parameter pack separator
@@ -2278,15 +2277,14 @@ Demangler::demangleTemplateParameterList(StringView &MangledName) {
     Current = &TP.Next;
   }
 
-  if (Error)
-    return nullptr;
+  // The loop above returns nullptr on Error.
+  assert(!Error);
 
   // Template parameter lists cannot be variadic, so it can only be terminated
-  // by @.
-  if (MangledName.consumeFront('@'))
-    return nodeListToNodeArray(Arena, Head, Count);
-  Error = true;
-  return nullptr;
+  // by @ (as opposed to 'Z' in the function parameter case).
+  assert(MangledName.startsWith('@')); // The above loop exits only on '@'.
+  MangledName.consumeFront('@');
+  return nodeListToNodeArray(Arena, Head, Count);
 }
 
 void Demangler::dumpBackReferences() {
