@@ -1826,7 +1826,7 @@ FunctionSignatureNode *Demangler::demangleFunctionType(StringView &MangledName,
   if (!IsStructor)
     FTy->ReturnType = demangleType(MangledName, QualifierMangleMode::Result);
 
-  FTy->Params = demangleFunctionParameterList(MangledName);
+  FTy->Params = demangleFunctionParameterList(MangledName, FTy->IsVariadic);
 
   FTy->IsNoexcept = demangleThrowSpecification(MangledName);
 
@@ -2094,8 +2094,8 @@ ArrayTypeNode *Demangler::demangleArrayType(StringView &MangledName) {
 }
 
 // Reads a function's parameters.
-NodeArrayNode *
-Demangler::demangleFunctionParameterList(StringView &MangledName) {
+NodeArrayNode *Demangler::demangleFunctionParameterList(StringView &MangledName,
+                                                        bool &IsVariadic) {
   // Empty parameter list.
   if (MangledName.consumeFront('X'))
     return nullptr;
@@ -2152,8 +2152,7 @@ Demangler::demangleFunctionParameterList(StringView &MangledName) {
     return NA;
 
   if (MangledName.consumeFront('Z')) {
-    // This is a variadic parameter list.  We probably need a variadic node to
-    // append to the end.
+    IsVariadic = true;
     return NA;
   }
 
