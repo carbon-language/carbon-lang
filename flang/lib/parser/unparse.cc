@@ -32,10 +32,11 @@ namespace Fortran::parser {
 class UnparseVisitor {
 public:
   UnparseVisitor(std::ostream &out, int indentationAmount, Encoding encoding,
-      bool capitalize, bool backslashEscapes, preStatementType *preStatement)
+      bool capitalize, bool backslashEscapes, preStatementType *preStatement,
+      TypedExprAsFortran *expr)
     : out_{out}, indentationAmount_{indentationAmount}, encoding_{encoding},
       capitalizeKeywords_{capitalize}, backslashEscapes_{backslashEscapes},
-      preStatement_{preStatement} {}
+      preStatement_{preStatement}, typedExprAsFortran_{expr} {}
 
   // In nearly all cases, this code avoids defining Boolean-valued Pre()
   // callbacks for the parse tree walking framework in favor of two void
@@ -807,6 +808,15 @@ public:
   }
 
   // R1001 - R1022
+  bool Pre(const Expr &x) {
+    if (typedExprAsFortran_ != nullptr && x.typedExpr.get() != nullptr) {
+      // Format the expression representation from semantics
+      (*typedExprAsFortran_)(out_, *x.typedExpr);
+      return false;
+    } else {
+      return true;
+    }
+  }
   void Unparse(const Expr::Parentheses &x) { Put('('), Walk(x.v), Put(')'); }
   void Before(const Expr::UnaryPlus &x) { Put("+"); }
   void Before(const Expr::Negate &x) { Put("-"); }
@@ -2560,6 +2570,7 @@ private:
   bool openmpDirective_{false};
   bool backslashEscapes_{false};
   preStatementType *preStatement_{nullptr};
+  TypedExprAsFortran *typedExprAsFortran_{nullptr};
 };
 
 void UnparseVisitor::Put(char ch) {
@@ -2626,9 +2637,9 @@ void UnparseVisitor::Word(const std::string &str) { Word(str.c_str()); }
 
 void Unparse(std::ostream &out, const Program &program, Encoding encoding,
     bool capitalizeKeywords, bool backslashEscapes,
-    preStatementType *preStatement) {
-  UnparseVisitor visitor{
-      out, 1, encoding, capitalizeKeywords, backslashEscapes, preStatement};
+    preStatementType *preStatement, TypedExprAsFortran *expr) {
+  UnparseVisitor visitor{out, 1, encoding, capitalizeKeywords, backslashEscapes,
+      preStatement, expr};
   Walk(program, visitor);
   visitor.Done();
 }

@@ -19,6 +19,7 @@
 #include "../../lib/FIR/graph-writer.h"
 #endif
 #include "../../lib/common/default-kinds.h"
+#include "../../lib/evaluate/expression.h"
 #include "../../lib/parser/characters.h"
 #include "../../lib/parser/dump-parse-tree.h"
 #include "../../lib/parser/features.h"
@@ -256,9 +257,18 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     Fortran::parser::DumpTree(std::cout, parseTree);
   }
   if (driver.dumpUnparse) {
+    Fortran::parser::TypedExprAsFortran unparseExpression{
+        [](std::ostream &o, const Fortran::evaluate::GenericExprWrapper &x) {
+          if (x.v.has_value()) {
+            o << *x.v;
+          } else {
+            o << "(bad expression)";
+          }
+        }};
     Unparse(std::cout, parseTree, driver.encoding, true /*capitalize*/,
         options.features.IsEnabled(
-            Fortran::parser::LanguageFeature::BackslashEscapes));
+            Fortran::parser::LanguageFeature::BackslashEscapes),
+        nullptr /* action before each statement */, &unparseExpression);
     return {};
   }
   if (driver.parseOnly) {

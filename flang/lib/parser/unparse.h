@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,6 +20,10 @@
 #include <functional>
 #include <iosfwd>
 
+namespace Fortran::evaluate {
+struct GenericExprWrapper;
+}
+
 namespace Fortran::parser {
 
 struct Program;
@@ -28,10 +32,16 @@ struct Program;
 using preStatementType =
     std::function<void(const CharBlock &, std::ostream &, int)>;
 
+// A function to handle unparsing of evaluate::GenericExprWrapper
+// rather than original expression parse trees.
+using TypedExprAsFortran =
+    std::function<void(std::ostream &, const evaluate::GenericExprWrapper &)>;
+
 /// Convert parsed program to out as Fortran.
 void Unparse(std::ostream &out, const Program &program,
     Encoding encoding = Encoding::UTF8, bool capitalizeKeywords = true,
-    bool backslashEscapes = true, preStatementType *preStatement = nullptr);
+    bool backslashEscapes = true, preStatementType *preStatement = nullptr,
+    TypedExprAsFortran *expr = nullptr);
 }
 
 #endif
