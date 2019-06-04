@@ -3878,13 +3878,13 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, const APInt &DemandedElts,
     if (LoadSDNode *LD = dyn_cast<LoadSDNode>(Op)) {
       unsigned ExtType = LD->getExtensionType();
       switch (ExtType) {
-        default: break;
-        case ISD::SEXTLOAD:    // '17' bits known
-          Tmp = LD->getMemoryVT().getScalarSizeInBits();
-          return VTBits-Tmp+1;
-        case ISD::ZEXTLOAD:    // '16' bits known
-          Tmp = LD->getMemoryVT().getScalarSizeInBits();
-          return VTBits-Tmp;
+      default: break;
+      case ISD::SEXTLOAD: // e.g. i16->i32 = '17' bits known.
+        Tmp = LD->getMemoryVT().getScalarSizeInBits();
+        return VTBits - Tmp + 1;
+      case ISD::ZEXTLOAD: // e.g. i16->i32 = '16' bits known.
+        Tmp = LD->getMemoryVT().getScalarSizeInBits();
+        return VTBits - Tmp;
       }
     }
   }
