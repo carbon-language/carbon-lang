@@ -3913,8 +3913,9 @@ void SwitchInstProfUpdateWrapper::init() {
   if (ProfileData->getNumOperands() != SI.getNumSuccessors() + 1) {
     State = Invalid;
     if (SwitchInstProfUpdateWrapperStrict)
-      assert(!"number of prof branch_weights metadata operands corresponds to"
-              " number of succesors");
+      assert(false &&
+             "number of prof branch_weights metadata operands corresponds to"
+             " number of succesors");
     return;
   }
 
