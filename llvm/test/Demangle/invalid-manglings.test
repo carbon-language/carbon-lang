@@ -220,7 +220,32 @@
 ; CHECK-NEXT: ??_C@_0101234567@?$az
 ; CHECK-NEXT: error: Invalid mangled name
 
+??_C@_1201234567@a?$az
+; CHECK-EMPTY:
+; CHECK-NEXT: ??_C@_1201234567@a?$az
+; CHECK-NEXT: error: Invalid mangled name
+
 ??@foo
 ; CHECK-EMPTY:
 ; CHECK-NEXT: ??@foo
+; CHECK-NEXT: error: Invalid mangled name
+
+?foo@@3YA@A
+; CHECK-EMPTY:
+; CHECK-NEXT: ?foo@@3YA@A
+; CHECK-NEXT: error: Invalid mangled name
+
+?foo@@3Y~01KA
+; CHECK-EMPTY:
+; CHECK-NEXT: ?foo@@3Y~01KA
+; CHECK-NEXT: error: Invalid mangled name
+
+?foo@@3Y0~1KA
+; CHECK-EMPTY:
+; CHECK-NEXT: ?foo@@3Y0~1KA
+; CHECK-NEXT: error: Invalid mangled name
+
+?x@@3PEAY02$$CRHEA
+; CHECK-EMPTY:
+; CHECK-NEXT: ?x@@3PEAY02$$CRHEA
 ; CHECK-NEXT: error: Invalid mangled name

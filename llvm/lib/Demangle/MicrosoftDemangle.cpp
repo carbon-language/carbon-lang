@@ -58,8 +58,9 @@ static bool isMemberPointer(StringView MangledName, bool &Error) {
     // what.
     break;
   default:
-    Error = true;
-    return false;
+    // isMemberPointer() is called only if isPointerType() returns true,
+    // and it rejects other prefixes.
+    DEMANGLE_UNREACHABLE;
   }
 
   // If it starts with a number, then 6 indicates a non-member function
@@ -140,8 +141,6 @@ consumeSpecialIntrinsicKind(StringView &MangledName) {
 
 static bool startsWithLocalScopePattern(StringView S) {
   if (!S.consumeFront('?'))
-    return false;
-  if (S.size() < 2)
     return false;
 
   size_t End = S.find('?');
@@ -2197,7 +2196,7 @@ Demangler::demangleTemplateParameterList(StringView &MangledName) {
       MangledName = MangledName.dropFront();
       // 1 - single inheritance       <name>
       // H - multiple inheritance     <name> <number>
-      // I - virtual inheritance      <name> <number> <number> <number>
+      // I - virtual inheritance      <name> <number> <number>
       // J - unspecified inheritance  <name> <number> <number> <number>
       char InheritanceSpecifier = MangledName.popFront();
       SymbolNode *S = nullptr;
@@ -2226,8 +2225,7 @@ Demangler::demangleTemplateParameterList(StringView &MangledName) {
       case '1':
         break;
       default:
-        Error = true;
-        break;
+        DEMANGLE_UNREACHABLE;
       }
       TPRN->Affinity = PointerAffinity::Pointer;
       TPRN->Symbol = S;
@@ -2254,12 +2252,9 @@ Demangler::demangleTemplateParameterList(StringView &MangledName) {
             demangleSigned(MangledName);
         TPRN->ThunkOffsets[TPRN->ThunkOffsetCount++] =
             demangleSigned(MangledName);
-        DEMANGLE_FALLTHROUGH;
-      case '0':
         break;
       default:
-        Error = true;
-        break;
+        DEMANGLE_UNREACHABLE;
       }
       TPRN->IsMemberPointer = true;
 
