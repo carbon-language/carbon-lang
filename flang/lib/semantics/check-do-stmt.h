@@ -12,30 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_SEMANTICS_CHECK_DO_CONCURRENT_H_
-#define FORTRAN_SEMANTICS_CHECK_DO_CONCURRENT_H_
+#ifndef FORTRAN_SEMANTICS_CHECK_DO_STMT_H_
+#define FORTRAN_SEMANTICS_CHECK_DO_STMT_H_
 
 #include "semantics.h"
-#include "../common/indirection.h"
-
-namespace Fortran::parser {
-struct DoConstruct;
-}
-namespace Fortran::semantics {
-class DoConcurrentContext;
-}
-extern template class Fortran::common::Indirection<
-    Fortran::semantics::DoConcurrentContext>;
+#include "../parser/parse-tree.h"
 
 namespace Fortran::semantics {
-class DoConcurrentChecker : public virtual BaseChecker {
+
+class DoStmtChecker : public virtual BaseChecker {
 public:
-  explicit DoConcurrentChecker(SemanticsContext &);
-  ~DoConcurrentChecker();
+  explicit DoStmtChecker(SemanticsContext &context) : context_{context} {}
   void Leave(const parser::DoConstruct &);
 
 private:
-  common::Indirection<DoConcurrentContext> context_;
+  SemanticsContext &context_;
 };
 }
-#endif  // FORTRAN_SEMANTICS_CHECK_DO_CONCURRENT_H_
+#endif  // FORTRAN_SEMANTICS_CHECK_DO_STMT_H_

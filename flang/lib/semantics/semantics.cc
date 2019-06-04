@@ -19,7 +19,7 @@
 #include "check-arithmeticif.h"
 #include "check-coarray.h"
 #include "check-deallocate.h"
-#include "check-do-concurrent.h"
+#include "check-do-stmt.h"
 #include "check-if-stmt.h"
 #include "check-io.h"
 #include "check-nullify.h"
@@ -34,7 +34,6 @@
 #include "symbol.h"
 #include "../common/default-kinds.h"
 #include "../parser/parse-tree-visitor.h"
-#include <ostream>
 
 namespace Fortran::semantics {
 
@@ -83,7 +82,7 @@ private:
 using StatementSemanticsPass1 = ExprChecker;
 using StatementSemanticsPass2 = SemanticsVisitor<AllocateChecker,
     ArithmeticIfStmtChecker, AssignmentChecker, CoarrayChecker,
-    DeallocateChecker, DoConcurrentChecker, IfStmtChecker, IoChecker,
+    DeallocateChecker, DoStmtChecker, IfStmtChecker, IoChecker,
     NullifyChecker, ReturnStmtChecker, StopChecker>;
 
 static bool PerformStatementSemantics(

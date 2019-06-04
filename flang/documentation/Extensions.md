@@ -62,7 +62,7 @@ Extensions, deletions, and legacy features supported by default
   files are easier to write and use.
 * $ and \ edit descriptors are supported in FORMAT to suppress newline
   output on user prompts.
-* REAL variable and bounds in DO loops
+* REAL and DOUBLE PRECISION variable and bounds in DO loops
 * Integer literals without explicit kind specifiers that are out of range
   for the default kind of INTEGER are assumed to have the least larger kind
   that can hold them, if one exists.
