@@ -2076,8 +2076,8 @@ define void @store_merge_split(<8 x i32> %w1, <8 x i32> %w2, i64 %idx, <8 x i16>
 ; AVX2-NEXT:    vpshufb %ymm2, %ymm1, %ymm1
 ; AVX2-NEXT:    vpermq {{.*#+}} ymm1 = ymm1[0,2,2,3]
 ; AVX2-NEXT:    shlq $4, %rdi
-; AVX2-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
-; AVX2-NEXT:    vmovdqu %ymm0, (%rsi,%rdi)
+; AVX2-NEXT:    vmovdqu %xmm0, (%rsi,%rdi)
+; AVX2-NEXT:    vmovdqu %xmm1, 16(%rsi,%rdi)
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
 ;
