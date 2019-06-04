@@ -429,10 +429,10 @@ FunctionSymbolNode *Demangler::demangleInitFiniStub(StringView &MangledName,
 
 SymbolNode *Demangler::demangleSpecialIntrinsic(StringView &MangledName) {
   SpecialIntrinsicKind SIK = consumeSpecialIntrinsicKind(MangledName);
-  if (SIK == SpecialIntrinsicKind::None)
-    return nullptr;
 
   switch (SIK) {
+  case SpecialIntrinsicKind::None:
+    return nullptr;
   case SpecialIntrinsicKind::StringLiteralSymbol:
     return demangleStringLiteral(MangledName);
   case SpecialIntrinsicKind::Vftable:
@@ -468,8 +468,13 @@ SymbolNode *Demangler::demangleSpecialIntrinsic(StringView &MangledName) {
     return demangleInitFiniStub(MangledName, false);
   case SpecialIntrinsicKind::DynamicAtexitDestructor:
     return demangleInitFiniStub(MangledName, true);
-  default:
+  case SpecialIntrinsicKind::Typeof:
+  case SpecialIntrinsicKind::UdtReturning:
+    // It's unclear which tools produces these manglings, so demangling
+    // support is not (yet?) implemented.
     break;
+  case SpecialIntrinsicKind::Unknown:
+    DEMANGLE_UNREACHABLE; // Never returned by consumeSpecialIntrinsicKind.
   }
   Error = true;
   return nullptr;
