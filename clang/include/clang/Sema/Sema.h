@@ -4305,16 +4305,24 @@ public:
                                         bool isAddressOfOperand,
                                 const TemplateArgumentListInfo *TemplateArgs);
 
-  ExprResult BuildDeclRefExpr(ValueDecl *D, QualType Ty,
-                              ExprValueKind VK,
-                              SourceLocation Loc,
-                              const CXXScopeSpec *SS = nullptr);
-  ExprResult
+  DeclRefExpr *BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
+                                SourceLocation Loc,
+                                const CXXScopeSpec *SS = nullptr);
+  DeclRefExpr *
   BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
                    const DeclarationNameInfo &NameInfo,
                    const CXXScopeSpec *SS = nullptr,
                    NamedDecl *FoundD = nullptr,
+                   SourceLocation TemplateKWLoc = SourceLocation(),
                    const TemplateArgumentListInfo *TemplateArgs = nullptr);
+  DeclRefExpr *
+  BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
+                   const DeclarationNameInfo &NameInfo,
+                   NestedNameSpecifierLoc NNS,
+                   NamedDecl *FoundD = nullptr,
+                   SourceLocation TemplateKWLoc = SourceLocation(),
+                   const TemplateArgumentListInfo *TemplateArgs = nullptr);
+
   ExprResult
   BuildAnonymousStructUnionMemberReference(
       const CXXScopeSpec &SS,
