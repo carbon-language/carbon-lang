@@ -4440,6 +4440,11 @@ SDValue SelectionDAG::getNode(unsigned Opcode, const SDLoc &DL, EVT VT,
     if (Operand.isUndef())
       return getUNDEF(VT);
     break;
+  case ISD::FP_TO_SINT:
+  case ISD::FP_TO_UINT:
+    if (Operand.isUndef())
+      return getUNDEF(VT);
+    break;
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP:
     // [us]itofp(undef) = 0, because the result value is bounded.
