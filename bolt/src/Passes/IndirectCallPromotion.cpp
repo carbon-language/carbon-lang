@@ -449,9 +449,9 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
 
   uint64_t ArrayStart;
   if (DispExpr) {
-    auto *BD = BC.getBinaryDataByName(DispExpr->getSymbol().getName());
-    assert(BD && "global symbol needs a value");
-    ArrayStart = BD->getAddress();
+    auto DispValueOrError = BC.getSymbolValue(DispExpr->getSymbol());
+    assert(DispValueOrError && "global symbol needs a value");
+    ArrayStart = *DispValueOrError;
   } else {
     ArrayStart = static_cast<uint64_t>(DispValue);
   }

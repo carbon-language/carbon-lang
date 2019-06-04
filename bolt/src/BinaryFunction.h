@@ -1800,20 +1800,20 @@ public:
   /// separate symbols when emitting our constant island on behalf of this other
   /// function.
   MCSymbol *
-  getOrCreateProxyIslandAccess(uint64_t Address, BinaryFunction *Referrer) {
+  getOrCreateProxyIslandAccess(uint64_t Address, BinaryFunction &Referrer) {
     auto Symbol = getOrCreateIslandAccess(Address);
     if (!Symbol)
       return nullptr;
 
     MCSymbol *Proxy;
-    if (!IslandProxies[Referrer].count(Symbol)) {
+    if (!IslandProxies[&Referrer].count(Symbol)) {
       Proxy =
           BC.Ctx->getOrCreateSymbol(Symbol->getName() +
-                                    ".proxy.for." + Referrer->getPrintName());
-      IslandProxies[Referrer][Symbol] = Proxy;
-      IslandProxies[Referrer][Proxy] = Symbol;
+                                    ".proxy.for." + Referrer.getPrintName());
+      IslandProxies[&Referrer][Symbol] = Proxy;
+      IslandProxies[&Referrer][Proxy] = Symbol;
     }
-    Proxy = IslandProxies[Referrer][Symbol];
+    Proxy = IslandProxies[&Referrer][Symbol];
     return Proxy;
   }
 

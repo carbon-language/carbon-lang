@@ -224,6 +224,68 @@ BinaryContext::getSubBinaryData(BinaryData *BD) {
   return make_range(Start, End);
 }
 
+std::pair<MCSymbol *, uint64_t>
+BinaryContext::handleAddressRef(uint64_t Address, BinaryFunction &BF) {
+  uint64_t Addend{0};
+
+  if (isAArch64()) {
+    // Check if this is an access to a constant island and create bookkeeping
+    // to keep track of it and emit it later as part of this function.
+    if (MCSymbol *IslandSym = BF.getOrCreateIslandAccess(Address)) {
+      return std::make_pair(IslandSym, Addend);
+    } else {
+      // Detect custom code written in assembly that refers to arbitrary
+      // constant islands from other functions. Write this reference so we
+      // can pull this constant island and emit it as part of this function
+      // too.
+      auto IslandIter = AddressToConstantIslandMap.lower_bound(Address);
+      if (IslandIter != AddressToConstantIslandMap.end()) {
+        if (auto *IslandSym =
+                IslandIter->second->getOrCreateProxyIslandAccess(Address, BF)) {
+          /// Make this function depend on IslandIter->second because we have
+          /// a reference to its constant island. When emitting this function,
+          /// we will also emit IslandIter->second's constants. This only
+          /// happens in custom AArch64 assembly code.
+          BF.IslandDependency.insert(IslandIter->second);
+          BF.ProxyIslandSymbols[IslandSym] = IslandIter->second;
+          return std::make_pair(IslandSym, Addend);
+        }
+      }
+    }
+  }
+
+  // Note that the address does not necessarily have to reside inside
+  // a section, it could be an absolute address too.
+  auto Section = getSectionForAddress(Address);
+  if (Section && Section->isText()) {
+    if (BF.containsAddress(Address, /*UseMaxSize=*/ isAArch64())) {
+      if (Address != BF.getAddress()) {
+        // The address could potentially escape. Mark it as another entry
+        // point into the function.
+        if (opts::Verbosity >= 1) {
+          outs() << "BOLT-INFO: potentially escaped address 0x"
+                 << Twine::utohexstr(Address) << " in function "
+                 << BF << '\n';
+        }
+        return std::make_pair(
+                  BF.addEntryPointAtOffset(Address - BF.getAddress()),
+                  Addend);
+      }
+    } else {
+      InterproceduralReferences.insert(std::make_pair(&BF, Address));
+    }
+  }
+
+  if (auto *BD = getBinaryDataContainingAddress(Address)) {
+    return std::make_pair(BD->getSymbol(), Address - BD->getAddress());
+  }
+
+  // TODO: use DWARF info to get size/alignment here?
+  auto *TargetSymbol = getOrCreateGlobalSymbol(Address, "DATAat");
+  DEBUG(dbgs() << "Created symbol " << TargetSymbol->getName());
+  return std::make_pair(TargetSymbol, Addend);
+}
+
 MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
                                                  Twine Prefix,
                                                  uint64_t Size,

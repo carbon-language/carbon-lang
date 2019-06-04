@@ -481,6 +481,19 @@ public:
     BinaryDataMap.clear();
   }
 
+  /// Process \p Address reference from code in function \BF.
+  /// Return <Symbol, Addend> pair corresponding to the \p Address.
+  std::pair<MCSymbol *, uint64_t> handleAddressRef(uint64_t Address,
+                                                   BinaryFunction &BF);
+
+  /// Return a value of the global \p Symbol or an error if the value
+  /// was not set.
+  ErrorOr<uint64_t> getSymbolValue(const MCSymbol &Symbol) const {
+    const auto *BD = getBinaryDataByName(Symbol.getName());
+    if (!BD)
+      return std::make_error_code(std::errc::bad_address);
+    return BD->getAddress();
+  }
 
   /// Return a global symbol registered at a given \p Address and \p Size.
   /// If no symbol exists, create one with unique name using \p Prefix.

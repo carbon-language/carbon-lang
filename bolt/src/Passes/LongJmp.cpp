@@ -427,9 +427,9 @@ uint64_t LongJmpPass::getSymbolAddress(const BinaryContext &BC,
   if (Iter == HotAddresses.end()) {
     // Look at BinaryContext's resolution for this symbol - this is a symbol not
     // mapped to a BinaryFunction
-    auto *BD = BC.getBinaryDataByName(Target->getName());
-    assert(BD && "Unrecognized symbol");
-    return BD ? BD->getAddress() : 0;
+    auto ValueOrError = BC.getSymbolValue(*Target);
+    assert(ValueOrError && "Unrecognized symbol");
+    return *ValueOrError;
   }
   return Iter->second;
 }

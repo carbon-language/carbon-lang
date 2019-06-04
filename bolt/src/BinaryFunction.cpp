@@ -371,9 +371,9 @@ bool BinaryFunction::isForwardCall(const MCSymbol *CalleeSymbol) const {
     }
   } else {
     // Absolute symbol.
-    auto *CalleeSI = BC.getBinaryDataByName(CalleeSymbol->getName());
-    assert(CalleeSI && "unregistered symbol found");
-    return CalleeSI->getAddress() > getAddress();
+    auto CalleeAddressOrError = BC.getSymbolValue(*CalleeSymbol);
+    assert(CalleeAddressOrError && "unregistered symbol found");
+    return *CalleeAddressOrError > getAddress();
   }
 }
 
@@ -711,8 +711,9 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
   if (BC.isAArch64()) {
     const auto *Sym = BC.MIB->getTargetSymbol(*PCRelBaseInstr, 1);
     assert (Sym && "Symbol extraction failed");
-    if (auto *BD = BC.getBinaryDataByName(Sym->getName())) {
-      PCRelAddr = BD->getAddress();
+    auto SymValueOrError = BC.getSymbolValue(*Sym);
+    if (SymValueOrError) {
+      PCRelAddr = *SymValueOrError;
     } else {
       for (auto &Elmt : Labels) {
         if (Elmt.second == Sym) {
@@ -746,9 +747,9 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
     const MCSymbol *TargetSym;
     uint64_t TargetOffset;
     std::tie(TargetSym, TargetOffset) = BC.MIB->getTargetSymbolInfo(DispExpr);
-    auto *BD = BC.getBinaryDataByName(TargetSym->getName());
-    assert(BD && "global symbol needs a value");
-    ArrayStart = BD->getAddress() + TargetOffset;
+    auto SymValueOrError = BC.getSymbolValue(*TargetSym);
+    assert(SymValueOrError && "global symbol needs a value");
+    ArrayStart = *SymValueOrError + TargetOffset;
     BaseRegNum = 0;
     if (BC.isAArch64()) {
       ArrayStart &= ~0xFFFULL;
@@ -960,78 +961,9 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   Labels[0] = Ctx->createTempSymbol("BB0", false);
   addEntryPointAtOffset(0);
 
-  auto getOrCreateSymbolForAddress = [&](const MCInst &Instruction,
-                                         uint64_t TargetAddress,
-                                         uint64_t &SymbolAddend) {
-    if (BC.isAArch64()) {
-      // Check if this is an access to a constant island and create bookkeeping
-      // to keep track of it and emit it later as part of this function
-      if (MCSymbol *IslandSym = getOrCreateIslandAccess(TargetAddress)) {
-        return IslandSym;
-      } else {
-        // Detect custom code written in assembly that refers to arbitrary
-        // constant islands from other functions. Write this reference so we
-        // can pull this constant island and emit it as part of this function
-        // too.
-        auto IslandIter =
-            BC.AddressToConstantIslandMap.lower_bound(TargetAddress);
-        if (IslandIter != BC.AddressToConstantIslandMap.end()) {
-          if (MCSymbol *IslandSym =
-                  IslandIter->second->getOrCreateProxyIslandAccess(
-                      TargetAddress, this)) {
-            /// Make this function depend on IslandIter->second because we have
-            /// a reference to its constant island. When emitting this function,
-            /// we will also emit IslandIter->second's constants. This only
-            /// happens in custom AArch64 assembly code.
-            IslandDependency.insert(IslandIter->second);
-            ProxyIslandSymbols[IslandSym] = IslandIter->second;
-            return IslandSym;
-          }
-        }
-      }
-    }
-
-    // Note that the address does not necessarily have to reside inside
-    // a section, it could be an absolute address too.
-    auto Section = BC.getSectionForAddress(TargetAddress);
-    if (Section && Section->isText()) {
-      if (containsAddress(TargetAddress, /*UseMaxSize=*/ BC.isAArch64())) {
-        if (TargetAddress != getAddress()) {
-          // The address could potentially escape. Mark it as another entry
-          // point into the function.
-          DEBUG(dbgs() << "BOLT-DEBUG: potentially escaped address 0x"
-                       << Twine::utohexstr(TargetAddress) << " in function "
-                       << *this << '\n');
-          return addEntryPointAtOffset(TargetAddress - getAddress());
-        }
-      } else {
-        BC.InterproceduralReferences.insert(
-            std::make_pair(this, TargetAddress));
-      }
-    }
-
-    auto *BD = BC.getBinaryDataContainingAddress(TargetAddress);
-    if (BD) {
-      auto *TargetSymbol = BD->getSymbol();
-      SymbolAddend = TargetAddress - BD->getAddress();
-      return TargetSymbol;
-    }
-    // TODO: use DWARF info to get size/alignment here?
-    auto *TargetSymbol =
-        BC.getOrCreateGlobalSymbol(TargetAddress, "DATAat");
-    DEBUG(if (opts::Verbosity >= 2) {
-      auto SectionName = BD ? BD->getSectionName() : "<unknown>";
-      dbgs() << "Created DATAat sym: " << TargetSymbol->getName()
-             << " in section " << SectionName  << "\n";
-    });
-    return TargetSymbol;
-  };
-
   auto handlePCRelOperand =
       [&](MCInst &Instruction, uint64_t Address, uint64_t Size) {
     uint64_t TargetAddress{0};
-    uint64_t TargetOffset{0};
-    MCSymbol *TargetSymbol{nullptr};
     if (!MIB->evaluateMemOperandTarget(Instruction, TargetAddress, Address,
                                        Size)) {
       errs() << "BOLT-ERROR: PC-relative operand can't be evaluated:\n";
@@ -1048,9 +980,10 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       }
     }
 
-    TargetSymbol =
-        getOrCreateSymbolForAddress(Instruction, TargetAddress, TargetOffset);
-
+    MCSymbol *TargetSymbol;
+    uint64_t TargetOffset;
+    std::tie(TargetSymbol, TargetOffset) = BC.handleAddressRef(TargetAddress,
+                                                               *this);
     const MCExpr *Expr = MCSymbolRefExpr::create(TargetSymbol,
                                                  MCSymbolRefExpr::VK_None,
                                                  *BC.Ctx);
@@ -1070,14 +1003,15 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   // info
   auto fixStubTarget = [&](MCInst &LoadLowBits, MCInst &LoadHiBits,
                            uint64_t Target) {
-    uint64_t Addend{0};
-    int64_t Val;
     MCSymbol *TargetSymbol;
-    TargetSymbol = getOrCreateSymbolForAddress(LoadLowBits, Target, Addend);
-    MIB->replaceImmWithSymbol(LoadHiBits, TargetSymbol, Addend, Ctx.get(),
-                              Val, ELF::R_AARCH64_ADR_PREL_PG_HI21);
-    MIB->replaceImmWithSymbol(LoadLowBits, TargetSymbol, Addend, Ctx.get(), Val,
-                              ELF::R_AARCH64_ADD_ABS_LO12_NC);
+    uint64_t Addend{0};
+    std::tie(TargetSymbol, Addend) = BC.handleAddressRef(Target, *this);
+
+    int64_t Val;
+    MIB->replaceImmWithSymbolRef(LoadHiBits, TargetSymbol, Addend, Ctx.get(),
+                                 Val, ELF::R_AARCH64_ADR_PREL_PG_HI21);
+    MIB->replaceImmWithSymbolRef(LoadLowBits, TargetSymbol, Addend, Ctx.get(),
+                                 Val, ELF::R_AARCH64_ADD_ABS_LO12_NC);
   };
 
   uint64_t Size = 0;  // instruction size
@@ -1167,14 +1101,20 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             << " for instruction at offset 0x"
             << Twine::utohexstr(Offset) << '\n');
       int64_t Value = Relocation.Value;
-      const auto Result = BC.MIB->replaceImmWithSymbol(Instruction,
-                                                       Relocation.Symbol,
-                                                       Relocation.Addend,
-                                                       Ctx.get(),
-                                                       Value,
-                                                       Relocation.Type);
+
+      // Process reference to the primary symbol.
+      if (!Relocation.isPCRelative())
+        BC.handleAddressRef(Relocation.Value - Relocation.Addend, *this);
+
+      const auto Result = BC.MIB->replaceImmWithSymbolRef(Instruction,
+                                                          Relocation.Symbol,
+                                                          Relocation.Addend,
+                                                          Ctx.get(),
+                                                          Value,
+                                                          Relocation.Type);
       (void)Result;
       assert(Result && "cannot replace immediate with relocation");
+
       // For aarch, if we replaced an immediate with a symbol from a
       // relocation, we mark it so we do not try to further process a
       // pc-relative operand. All we need is the symbol.
@@ -1188,7 +1128,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                               Relocation::getSizeForType(Relocation.Type)) ==
                truncateToSize(Relocation.Value,
                               Relocation::getSizeForType(Relocation.Type)) &&
-             "immediate value mismatch in function");
+                                "immediate value mismatch in function");
       }
     }
 

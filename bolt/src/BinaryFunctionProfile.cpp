@@ -320,15 +320,14 @@ void BinaryFunction::postProcessProfile() {
     return;
   }
 
-  // Check if MCF post-processing was requested.
-  if (opts::DoMCF != MCF_DISABLE) {
-    removeTagsFromProfile();
-    solveMCF(*this, opts::DoMCF);
+  if (!(getProfileFlags() & PF_LBR)) {
+    // Check if MCF post-processing was requested.
+    if (opts::DoMCF != MCF_DISABLE) {
+      removeTagsFromProfile();
+      solveMCF(*this, opts::DoMCF);
+    }
     return;
   }
-
-  if (!(getProfileFlags() & PF_LBR))
-    return;
 
   // Pre-sort branch data.
   if (BranchData)
@@ -388,6 +387,12 @@ void BinaryFunction::postProcessProfile() {
 
   if (opts::InferFallThroughs)
     inferFallThroughCounts();
+
+  // Check if MCF post-processing was requested.
+  if (opts::DoMCF != MCF_DISABLE) {
+    removeTagsFromProfile();
+    solveMCF(*this, opts::DoMCF);
+  }
 
   // Update profile information for jump tables based on CFG branch data.
   for (auto *BB : BasicBlocks) {

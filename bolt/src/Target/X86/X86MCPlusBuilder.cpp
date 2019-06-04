@@ -2794,9 +2794,9 @@ public:
     return Code;
   }
 
-  bool replaceImmWithSymbol(MCInst &Inst, MCSymbol *Symbol, int64_t Addend,
-                            MCContext *Ctx, int64_t &Value,
-                            uint64_t RelType) const override {
+  bool replaceImmWithSymbolRef(MCInst &Inst, MCSymbol *Symbol, int64_t Addend,
+                               MCContext *Ctx, int64_t &Value,
+                               uint64_t RelType) const override {
     unsigned ImmOpNo = -1U;
 
     for (unsigned Index = 0;

@@ -896,9 +896,9 @@ public:
   /// of the passed \p Symbol plus \p Addend. If the instruction does not have
   /// an immediate operand or has more than one - then return false. Otherwise
   /// return true.
-  virtual bool replaceImmWithSymbol(MCInst &Inst, MCSymbol *Symbol,
-                                    int64_t Addend, MCContext *Ctx,
-                                    int64_t &Value, uint64_t RelType) const {
+  virtual bool replaceImmWithSymbolRef(MCInst &Inst, MCSymbol *Symbol,
+                                       int64_t Addend, MCContext *Ctx,
+                                       int64_t &Value, uint64_t RelType) const {
     llvm_unreachable("not implemented");
     return false;
   }
