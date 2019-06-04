@@ -3033,6 +3033,12 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
     SDValue Sub = DAG.getNode(ISD::SUB, DL, VT, N0.getOperand(0), N1);
     return DAG.getNode(ISD::SUB, DL, VT, Sub, N0.getOperand(1));
   }
+  // (C - x) - y  ->  C - (x + y)
+  if (N0.hasOneUse() && N0.getOpcode() == ISD::SUB &&
+      isConstantOrConstantVector(N0.getOperand(0), /*NoOpaques=*/true)) {
+    SDValue Add = DAG.getNode(ISD::ADD, DL, VT, N0.getOperand(1), N1);
+    return DAG.getNode(ISD::SUB, DL, VT, N0.getOperand(0), Add);
+  }
 
   // If the target's bool is represented as 0/-1, prefer to make this 'add 0/-1'
   // rather than 'sub 0/1' (the sext should get folded).

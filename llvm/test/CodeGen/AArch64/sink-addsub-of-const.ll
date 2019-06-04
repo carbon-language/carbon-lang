@@ -129,9 +129,9 @@ define i32 @sink_sub_of_const_to_sub2(i32 %a, i32 %b) {
 define i32 @sink_sub_from_const_to_sub(i32 %a, i32 %b) {
 ; CHECK-LABEL: sink_sub_from_const_to_sub:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    mov w8, #32
-; CHECK-NEXT:    sub w8, w8, w0
-; CHECK-NEXT:    sub w0, w8, w1
+; CHECK-NEXT:    add w8, w0, w1
+; CHECK-NEXT:    mov w9, #32
+; CHECK-NEXT:    sub w0, w9, w8
 ; CHECK-NEXT:    ret
   %t0 = sub i32 32, %a
   %r = sub i32 %t0, %b
@@ -300,8 +300,8 @@ define <4 x i32> @vec_sink_sub_from_const_to_sub(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK:       // %bb.0:
 ; CHECK-NEXT:    adrp x8, .LCPI22_0
 ; CHECK-NEXT:    ldr q2, [x8, :lo12:.LCPI22_0]
+; CHECK-NEXT:    add v0.4s, v0.4s, v1.4s
 ; CHECK-NEXT:    sub v0.4s, v2.4s, v0.4s
-; CHECK-NEXT:    sub v0.4s, v0.4s, v1.4s
 ; CHECK-NEXT:    ret
   %t0 = sub <4 x i32> <i32 42, i32 24, i32 undef, i32 46>, %a
   %r = sub <4 x i32> %t0, %b
