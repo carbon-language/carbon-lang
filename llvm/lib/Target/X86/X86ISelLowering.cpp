@@ -38133,8 +38133,8 @@ static SDValue combineLogicBlendIntoConditionalNegate(
     EVT VT, SDValue Mask, SDValue X, SDValue Y, const SDLoc &DL,
     SelectionDAG &DAG, const X86Subtarget &Subtarget) {
   EVT MaskVT = Mask.getValueType();
-  unsigned EltBits = MaskVT.getScalarSizeInBits();
-  assert(MaskVT.isInteger() && DAG.ComputeNumSignBits(Mask) == EltBits &&
+  assert(MaskVT.isInteger() &&
+         DAG.ComputeNumSignBits(Mask) == MaskVT.getScalarSizeInBits() &&
          "Mask must be zero/all-bits");
 
   if (X.getValueType() != MaskVT || Y.getValueType() != MaskVT)
