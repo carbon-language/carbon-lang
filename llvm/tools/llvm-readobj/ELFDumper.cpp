@@ -3840,8 +3840,10 @@ static std::string getGNUProperty(uint32_t Type, uint32_t DataSize,
     if (DataSize)
       OS << format(" <corrupt length: 0x%x>", DataSize);
     return OS.str();
+  case GNU_PROPERTY_AARCH64_FEATURE_1_AND:
   case GNU_PROPERTY_X86_FEATURE_1_AND:
-    OS << "x86 feature: ";
+    OS << ((Type == GNU_PROPERTY_AARCH64_FEATURE_1_AND) ? "aarch64 feature: "
+                                                        : "x86 feature: ");
     if (DataSize != 4) {
       OS << format("<corrupt length: 0x%x>", DataSize);
       return OS.str();
@@ -3851,8 +3853,13 @@ static std::string getGNUProperty(uint32_t Type, uint32_t DataSize,
       OS << "<None>";
       return OS.str();
     }
-    DumpBit(GNU_PROPERTY_X86_FEATURE_1_IBT, "IBT");
-    DumpBit(GNU_PROPERTY_X86_FEATURE_1_SHSTK, "SHSTK");
+    if (Type == GNU_PROPERTY_AARCH64_FEATURE_1_AND) {
+      DumpBit(GNU_PROPERTY_AARCH64_FEATURE_1_BTI, "BTI");
+      DumpBit(GNU_PROPERTY_AARCH64_FEATURE_1_PAC, "PAC");
+    } else {
+      DumpBit(GNU_PROPERTY_X86_FEATURE_1_IBT, "IBT");
+      DumpBit(GNU_PROPERTY_X86_FEATURE_1_SHSTK, "SHSTK");
+    }
     if (PrData)
       OS << format("<unknown flags: 0x%x>", PrData);
     return OS.str();
