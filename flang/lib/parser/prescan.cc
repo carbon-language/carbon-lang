@@ -545,7 +545,7 @@ void Prescanner::QuotedCharacterLiteral(
   bool escape{false};
   bool escapesEnabled{features_.IsEnabled(LanguageFeature::BackslashEscapes)};
   while (true) {
-    unsigned char ch{static_cast<unsigned char>(*at_)};
+    char32_t ch{static_cast<unsigned char>(*at_)};
     escape = !escape && ch == '\\' && escapesEnabled;
     EmitQuotedChar(ch, emit, insert, false, !escapesEnabled);
     while (PadOutCharacterLiteral(tokens)) {

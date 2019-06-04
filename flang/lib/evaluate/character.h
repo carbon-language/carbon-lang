@@ -44,7 +44,7 @@ public:
     } else if constexpr (KIND == 4) {
       return IsValidUCS4(code);
     } else {
-      static_assert(true, "bad character kind");
+      static_assert(KIND != KIND, "bad character kind");
     }
   }
 
@@ -87,8 +87,8 @@ private:
     std::uint16_t lo{static_cast<std::uint16_t>(code & 0xff)};
     return IsValidASCII(code) ||
         (code < 0xffff &&
-            ((0xa1 <= hi && hi <= 0Xfe && 0xa1 <= lo && lo <= 0Xfe) ||
-                (hi == 0X8e && 0xa1 <= lo && lo <= 0Xdf)));
+            ((0xa1 <= hi && hi <= 0xfe && 0xa1 <= lo && lo <= 0xfe) ||
+                (hi == 0x8e && 0xa1 <= lo && lo <= 0xdf)));
   }
   static constexpr bool IsValidUCS4(std::uint64_t code) {
     return code < 0xd800 || (0xdc00 < code && code <= 0x10ffff);
