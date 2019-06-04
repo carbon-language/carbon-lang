@@ -861,19 +861,17 @@ define i32 @reg32_lshr_by_add_to_negated(i32 %val, i32 %a, i32 %b) nounwind {
 ; X32-LABEL: reg32_lshr_by_add_to_negated:
 ; X32:       # %bb.0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movl $32, %ecx
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
 ; X32-NEXT:    subl {{[0-9]+}}(%esp), %ecx
-; X32-NEXT:    addl {{[0-9]+}}(%esp), %ecx
 ; X32-NEXT:    # kill: def $cl killed $cl killed $ecx
 ; X32-NEXT:    shrl %cl, %eax
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: reg32_lshr_by_add_to_negated:
 ; X64:       # %bb.0:
+; X64-NEXT:    movl %edx, %ecx
 ; X64-NEXT:    movl %edi, %eax
-; X64-NEXT:    movl $32, %ecx
 ; X64-NEXT:    subl %esi, %ecx
-; X64-NEXT:    addl %edx, %ecx
 ; X64-NEXT:    # kill: def $cl killed $cl killed $ecx
 ; X64-NEXT:    shrl %cl, %eax
 ; X64-NEXT:    retq
@@ -888,9 +886,9 @@ define i64 @reg64_lshr_by_add_to_negated(i64 %val, i64 %a, i64 %b) nounwind {
 ; X32-NEXT:    pushl %esi
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %esi
-; X32-NEXT:    movl $64, %ecx
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
 ; X32-NEXT:    subl {{[0-9]+}}(%esp), %ecx
-; X32-NEXT:    addl {{[0-9]+}}(%esp), %ecx
+; X32-NEXT:    addb $64, %cl
 ; X32-NEXT:    movl %esi, %edx
 ; X32-NEXT:    shrl %cl, %edx
 ; X32-NEXT:    shrdl %cl, %esi, %eax
@@ -905,11 +903,10 @@ define i64 @reg64_lshr_by_add_to_negated(i64 %val, i64 %a, i64 %b) nounwind {
 ;
 ; X64-LABEL: reg64_lshr_by_add_to_negated:
 ; X64:       # %bb.0:
+; X64-NEXT:    movq %rdx, %rcx
 ; X64-NEXT:    movq %rdi, %rax
-; X64-NEXT:    movl $64, %ecx
 ; X64-NEXT:    subl %esi, %ecx
-; X64-NEXT:    addl %edx, %ecx
-; X64-NEXT:    # kill: def $cl killed $cl killed $ecx
+; X64-NEXT:    # kill: def $cl killed $cl killed $rcx
 ; X64-NEXT:    shrq %cl, %rax
 ; X64-NEXT:    retq
   %nega = sub i64 64, %a
@@ -1278,11 +1275,10 @@ define i64 @reg64_lshr_by_negated_unfolded_add_b(i64 %val, i64 %a, i64 %b) nounw
 ;
 ; X64-LABEL: reg64_lshr_by_negated_unfolded_add_b:
 ; X64:       # %bb.0:
+; X64-NEXT:    movq %rdx, %rcx
 ; X64-NEXT:    movq %rdi, %rax
-; X64-NEXT:    movl $64, %ecx
 ; X64-NEXT:    subl %esi, %ecx
-; X64-NEXT:    addl %edx, %ecx
-; X64-NEXT:    # kill: def $cl killed $cl killed $ecx
+; X64-NEXT:    # kill: def $cl killed $cl killed $rcx
 ; X64-NEXT:    shrq %cl, %rax
 ; X64-NEXT:    retq
   %nega = sub i64 0, %a
