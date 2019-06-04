@@ -4675,8 +4675,7 @@ bool ResolveNamesVisitor::Pre(const parser::ProgramUnit &x) {
 // to be procedures, so that they don't get converted to objects by default.
 class ExecutionPartSkimmer {
 public:
-  ExecutionPartSkimmer(SemanticsContext &c, Scope &s)
-    : context_{c}, scope_{s} {}
+  explicit ExecutionPartSkimmer(Scope &s) : scope_{s} {}
 
   void Walk(const parser::ExecutionPart *exec) {
     if (exec != nullptr) {
@@ -4696,7 +4695,6 @@ public:
 private:
   void NoteCall(Symbol::Flag, const parser::Call &);
 
-  SemanticsContext &context_;
   Scope &scope_;
 };
 
@@ -4738,7 +4736,7 @@ void ResolveNamesVisitor::ResolveSpecificationParts(ProgramTree &node) {
       }
     }
   }
-  ExecutionPartSkimmer{context(), scope}.Walk(node.exec());
+  ExecutionPartSkimmer{scope}.Walk(node.exec());
   for (auto &child : node.children()) {
     ResolveSpecificationParts(child);
   }

@@ -97,3 +97,4 @@ Extensions and legacy features deliberately not supported
 * `T` and `F` as abbreviations for `.TRUE.` and `.FALSE.` in DATA (PGI/XLF)
 * Use of host FORMAT labels in internal subprograms (PGI-only feature)
 * ALLOCATE(TYPE(derived)::...) as variant of correct ALLOCATE(derived::...) (PGI only)
+* USE association of a procedure interface within that same procedure's definition
