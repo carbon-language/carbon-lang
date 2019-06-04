@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,12 +20,18 @@
 
 namespace Fortran::evaluate::value {
 
-template<int BITS> class Logical {
+template<int BITS, bool IS_LIKE_C = false> class Logical {
 public:
   static constexpr int bits{BITS};
+
+  // Module ISO_C_BINDING kind C_BOOL is LOGICAL(KIND=1) and must have
+  // C's bit representation (.TRUE. -> 1, .FALSE. -> 0).
+  static constexpr bool IsLikeC{BITS <= 8 || IS_LIKE_C};
+
   constexpr Logical() {}  // .FALSE.
   constexpr Logical(const Logical &that) = default;
-  constexpr Logical(bool truth) : word_{-std::uint64_t{truth}} {}
+  constexpr Logical(bool truth)
+    : word_{truth ? canonicalTrue : canonicalFalse} {}
   constexpr Logical &operator=(const Logical &) = default;
 
   template<int B> constexpr bool operator==(const Logical<B> &that) const {
@@ -33,9 +39,15 @@ public:
   }
 
   // For static expression evaluation, all the bits will have the same value.
-  constexpr bool IsTrue() const { return word_.BTEST(0); }
+  constexpr bool IsTrue() const {
+    if constexpr (IsLikeC) {
+      return !word_.IsZero();
+    } else {
+      return word_.BTEST(0);
+    }
+  }
 
-  constexpr Logical NOT() const { return {word_.NOT()}; }
+  constexpr Logical NOT() const { return {word_.IEOR(canonicalTrue)}; }
 
   constexpr Logical AND(const Logical &that) const {
     return {word_.IAND(that.word_)};
@@ -53,6 +65,8 @@ public:
 
 private:
   using Word = Integer<bits>;
+  static constexpr Word canonicalTrue{IsLikeC ? -std::uint64_t{1} : 1};
+  static constexpr Word canonicalFalse{0};
   constexpr Logical(const Word &w) : word_{w} {}
   Word word_;
 };
