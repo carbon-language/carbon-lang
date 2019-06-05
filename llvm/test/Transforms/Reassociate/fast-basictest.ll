@@ -541,20 +541,18 @@ define float @test17(float %a, float %b, float %z) {
   ret float %g
 }
 
-; FIXME: This reassociation is not working.
 define float @test17_unary_fneg(float %a, float %b, float %z) {
 ; CHECK-LABEL: @test17_unary_fneg(
-; CHECK-NEXT:    [[E:%.*]] = fmul fast float [[A:%.*]], -1.234500e+04
-; CHECK-NEXT:    [[F:%.*]] = fmul fast float [[E]], [[B:%.*]]
-; CHECK-NEXT:    [[TMP1:%.*]] = fmul fast float [[F]], [[Z:%.*]]
-; CHECK-NEXT:    [[G:%.*]] = fsub fast float -0.000000e+00, [[TMP1]]
-; CHECK-NEXT:    ret float [[G]]
+; CHECK-NEXT:    [[D:%.*]] = fmul fast float [[A:%.*]], 1.234500e+04
+; CHECK-NEXT:    [[E:%.*]] = fmul fast float [[D]], [[B:%.*]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fmul fast float [[E]], [[Z:%.*]]
+; CHECK-NEXT:    ret float [[TMP1]]
 ;
   %c = fneg fast float %z
   %d = fmul fast float %a, %b
   %e = fmul fast float %c, %d
   %f = fmul fast float %e, 1.234500e+04
-  %g = fsub fast float 0.000000e+00, %f
+  %g = fneg fast float %f
   ret float %g
 }
 
@@ -592,14 +590,14 @@ define float @test18(float %a, float %b, float %z) {
 define float @test18_unary_fneg(float %a, float %b, float %z) {
 ; CHECK-LABEL: @test18_unary_fneg(
 ; CHECK-NEXT:    [[C:%.*]] = fmul fast float [[Z:%.*]], -4.000000e+01
-; CHECK-NEXT:    [[TMP1:%.*]] = fmul fast float [[C]], [[A:%.*]]
-; CHECK-NEXT:    [[F:%.*]] = fsub fast float -0.000000e+00, [[TMP1]]
+; CHECK-NEXT:    [[E:%.*]] = fmul fast float [[C]], [[A:%.*]]
+; CHECK-NEXT:    [[F:%.*]] = fneg fast float [[E]]
 ; CHECK-NEXT:    ret float [[F]]
 ;
   %d = fmul fast float %z, 4.000000e+01
   %c = fneg fast float %d
   %e = fmul fast float %a, %c
-  %f = fsub fast float 0.000000e+00, %e
+  %f = fneg fast float %e
   ret float %f
 }
 
