@@ -14,8 +14,6 @@
 
 ! C1121 -- any procedure referenced in a concurrent header must be pure
 
-! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
-
 SUBROUTINE do_concurrent_c1121(i,n)
   IMPLICIT NONE
   INTEGER :: i, n, flag

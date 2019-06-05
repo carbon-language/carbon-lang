@@ -39,7 +39,8 @@ diffs=$temp/diffs
 options=$temp/options
 
 # See if there are additional options
-awk '/^ *!OPTIONS: / {gsub (/^! OPTIONS: /, " " ); print}' $src > $options
+sed -n 's/^ *! *OPTIONS: *//p' $src > $options
+cat $options
 
 cmd="$CMD `cat $options` $src"
 ( cd $temp; $cmd ) > $log 2>&1

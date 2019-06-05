@@ -16,7 +16,10 @@
 #define FORTRAN_SEMANTICS_CHECK_DO_STMT_H_
 
 #include "semantics.h"
-#include "../parser/parse-tree.h"
+
+namespace Fortran::parser {
+struct DoConstruct;
+}
 
 namespace Fortran::semantics {
 

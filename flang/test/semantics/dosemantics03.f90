@@ -24,7 +24,6 @@
 ! to produce error messages when using REAL and DOUBLE PRECISION DO
 ! loop controls.
 
-! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
 !OPTIONS: -Mstandard -Werror
 
 PROGRAM do_issue_458
