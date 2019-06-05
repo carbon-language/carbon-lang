@@ -306,11 +306,10 @@ void ObjFile::parse(bool IgnoreComdats) {
   TypeIsUsed.resize(getWasmObj()->types().size(), false);
 
   ArrayRef<StringRef> Comdats = WasmObj->linkingData().Comdats;
-  for (unsigned I = 0; I < Comdats.size(); ++I)
-    if (IgnoreComdats)
-      KeptComdats.push_back(true);
-    else
-      KeptComdats.push_back(Symtab->addComdat(Comdats[I]));
+  for (unsigned I = 0; I < Comdats.size(); ++I) {
+    bool IsNew = IgnoreComdats || Symtab->addComdat(Comdats[I]);
+    KeptComdats.push_back(IsNew);
+  }
 
   // Populate `Segments`.
   for (const WasmSegment &S : WasmObj->dataSegments())
@@ -535,10 +534,7 @@ void BitcodeFile::parse(bool IgnoreComdats) {
   }
   std::vector<bool> KeptComdats;
   for (StringRef S : Obj->getComdatTable())
-    if (IgnoreComdats)
-      KeptComdats.push_back(true);
-    else
-      KeptComdats.push_back(Symtab->addComdat(S));
+    KeptComdats.push_back(Symtab->addComdat(S));
 
   for (const lto::InputFile::Symbol &ObjSym : Obj->symbols())
     Symbols.push_back(createBitcodeSymbol(KeptComdats, ObjSym, *this));
