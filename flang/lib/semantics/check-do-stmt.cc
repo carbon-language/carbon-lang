@@ -398,10 +398,12 @@ private:
   }
 
   void CheckDoControl(parser::CharBlock sourceLocation, bool isReal) {
-    if ((isReal) && (!context_.warnOnNonstandardUsage())) {
+    bool warn = context_.warnOnNonstandardUsage() ||
+        context_.ShouldWarn(parser::LanguageFeature::RealDoControls);
+    bool enabled = context_.IsEnabled(parser::LanguageFeature::RealDoControls);
+    if (isReal && enabled && !(warn)) {
       // No messages for the default case
-    } else if (isReal && context_.warnOnNonstandardUsage() &&
-        (!context_.warningsAreErrors())) {
+    } else if (isReal && enabled && warn && !context_.warningsAreErrors()) {
       context_.Say(sourceLocation, "DO controls should be INTEGER"_en_US);
     } else {
       context_.Say(sourceLocation, "DO controls should be INTEGER"_err_en_US);
