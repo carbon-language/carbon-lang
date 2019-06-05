@@ -200,6 +200,18 @@ define float @test8(float %X, float %Y, float %Z) {
   ret float %C
 }
 
+define float @test8_unary_fneg(float %X, float %Y, float %Z) {
+; CHECK-LABEL: @test8_unary_fneg(
+; CHECK-NEXT:    [[TMP1:%.*]] = fmul fast float [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[C:%.*]] = fsub fast float [[Z:%.*]], [[TMP1]]
+; CHECK-NEXT:    ret float [[C]]
+;
+  %A = fneg fast float %X
+  %B = fmul fast float %A, %Y
+  %C = fadd fast float %B, %Z
+  ret float %C
+}
+
 define float @test8_reassoc(float %X, float %Y, float %Z) {
 ; CHECK-LABEL: @test8_reassoc(
 ; CHECK-NEXT:    [[A:%.*]] = fsub reassoc float 0.000000e+00, [[X:%.*]]
@@ -384,6 +396,19 @@ define float @test13(float %X1, float %X2, float %X3) {
   ret float %D
 }
 
+define float @test13_unary_fneg(float %X1, float %X2, float %X3) {
+; CHECK-LABEL: @test13_unary_fneg(
+; CHECK-NEXT:    [[TMP1:%.*]] = fsub fast float [[X3:%.*]], [[X2:%.*]]
+; CHECK-NEXT:    [[D:%.*]] = fmul fast float [[TMP1]], [[X1:%.*]]
+; CHECK-NEXT:    ret float [[D]]
+;
+  %A = fneg fast float %X1
+  %B = fmul fast float %A, %X2   ; -X1*X2
+  %C = fmul fast float %X1, %X3  ; X1*X3
+  %D = fadd fast float %B, %C    ; -X1*X2 + X1*X3 -> X1*(X3-X2)
+  ret float %D
+}
+
 define float @test13_reassoc(float %X1, float %X2, float %X3) {
 ; CHECK-LABEL: @test13_reassoc(
 ; CHECK-NEXT:    [[A:%.*]] = fsub reassoc float 0.000000e+00, [[X1:%.*]]
@@ -472,6 +497,18 @@ define float @test16(float %b, float %a) {
   ret float %4
 }
 
+define float @test16_unary_fneg(float %b, float %a) {
+; CHECK-LABEL: @test16_unary_fneg(
+; CHECK-NEXT:    [[TMP1:%.*]] = fadd fast float [[B:%.*]], 1.234000e+03
+; CHECK-NEXT:    ret float [[TMP1]]
+;
+  %1 = fadd fast float %a, 1234.0
+  %2 = fadd fast float %b, %1
+  %3 = fneg fast float %a
+  %4 = fadd fast float %2, %3
+  ret float %4
+}
+
 define float @test16_reassoc(float %b, float %a) {
 ; CHECK-LABEL: @test16_reassoc(
 ; CHECK-NEXT:    [[TMP1:%.*]] = fadd reassoc float [[A:%.*]], 1.234000e+03
@@ -504,6 +541,23 @@ define float @test17(float %a, float %b, float %z) {
   ret float %g
 }
 
+; FIXME: This reassociation is not working.
+define float @test17_unary_fneg(float %a, float %b, float %z) {
+; CHECK-LABEL: @test17_unary_fneg(
+; CHECK-NEXT:    [[E:%.*]] = fmul fast float [[A:%.*]], -1.234500e+04
+; CHECK-NEXT:    [[F:%.*]] = fmul fast float [[E]], [[B:%.*]]
+; CHECK-NEXT:    [[TMP1:%.*]] = fmul fast float [[F]], [[Z:%.*]]
+; CHECK-NEXT:    [[G:%.*]] = fsub fast float -0.000000e+00, [[TMP1]]
+; CHECK-NEXT:    ret float [[G]]
+;
+  %c = fneg fast float %z
+  %d = fmul fast float %a, %b
+  %e = fmul fast float %c, %d
+  %f = fmul fast float %e, 1.234500e+04
+  %g = fsub fast float 0.000000e+00, %f
+  ret float %g
+}
+
 define float @test17_reassoc(float %a, float %b, float %z) {
 ; CHECK-LABEL: @test17_reassoc(
 ; CHECK-NEXT:    [[C:%.*]] = fsub reassoc float 0.000000e+00, [[Z:%.*]]
@@ -529,6 +583,21 @@ define float @test18(float %a, float %b, float %z) {
 ;
   %d = fmul fast float %z, 4.000000e+01
   %c = fsub fast float 0.000000e+00, %d
+  %e = fmul fast float %a, %c
+  %f = fsub fast float 0.000000e+00, %e
+  ret float %f
+}
+
+; FIXME: This reassociation is not working.
+define float @test18_unary_fneg(float %a, float %b, float %z) {
+; CHECK-LABEL: @test18_unary_fneg(
+; CHECK-NEXT:    [[C:%.*]] = fmul fast float [[Z:%.*]], -4.000000e+01
+; CHECK-NEXT:    [[TMP1:%.*]] = fmul fast float [[C]], [[A:%.*]]
+; CHECK-NEXT:    [[F:%.*]] = fsub fast float -0.000000e+00, [[TMP1]]
+; CHECK-NEXT:    ret float [[F]]
+;
+  %d = fmul fast float %z, 4.000000e+01
+  %c = fneg fast float %d
   %e = fmul fast float %a, %c
   %f = fsub fast float 0.000000e+00, %e
   ret float %f
