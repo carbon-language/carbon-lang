@@ -18,16 +18,10 @@
 #include "type.h"
 #include <string>
 
-// character(1) is ISO/IEC 646:1991 (ASCII)
-//
-// character(2) is a variant of EUC-JP: The code points are the same as EUC-JP,
-// but the encoding has a two bytes fix-size (EUC-JP encoding has a variable
-// length). The one byte EUC-JP character representations are simply
-// zero-extended to two byte representations. The three bytes character
-// representation of EUC-JP (JIS X 0212) are not supported in this internal
-// encoding.
-//
-// character(4) is ISO/IEC 10646 UCS-4 (~ UTF-32)
+// Provides implementations of intrinsic functions operating on character
+// scalars. No assumption is made regarding character encodings other than they
+// must be compatible with ASCII (else, NEW_LINE, ACHAR and IACHAR need to be
+// adapted).
 
 namespace Fortran::evaluate {
 
@@ -36,27 +30,23 @@ template<int KIND> class CharacterUtils {
   using CharT = typename Character::value_type;
 
 public:
-  static constexpr bool IsValidCharacterCode(std::uint64_t code) {
-    if constexpr (KIND == 1) {
-      return IsValidASCII(code);
-    } else if constexpr (KIND == 2) {
-      return IsValidInternalEUC_JP(code);
-    } else if constexpr (KIND == 4) {
-      return IsValidUCS4(code);
-    } else {
-      static_assert(KIND != KIND, "bad character kind");
-    }
-  }
-
-  // CHAR also implements ACHAR
+  // CHAR also implements ACHAR under assumption that character encodings
+  // contain ASCII
   static Character CHAR(std::uint64_t code) {
     return Character{{static_cast<CharT>(code)}};
   }
 
-  // ICHAR also implements IACHAR
-  static int ICHAR(const Character &c) {
+  // ICHAR also implements IACHAR under assumption that character encodings
+  // contain ASCII
+  static std::int64_t ICHAR(const Character &c) {
     CHECK(c.length() == 1);
-    return c[0];
+    if constexpr (std::is_same_v<CharT, char>) {
+      // char may be signed, so cast it first to unsigned to avoid having
+      // ichar(char(128_4)) returning -128
+      return static_cast<unsigned char>(c[0]);
+    } else {
+      return c[0];
+    }
   }
 
   static Character NEW_LINE() { return Character{{NewLine()}}; }
@@ -81,18 +71,7 @@ public:
   }
 
 private:
-  static constexpr bool IsValidASCII(std::uint64_t code) { return code < 128; }
-  static constexpr bool IsValidInternalEUC_JP(std::uint64_t code) {
-    std::uint16_t hi{static_cast<std::uint16_t>(code >> 8)};
-    std::uint16_t lo{static_cast<std::uint16_t>(code & 0xff)};
-    return IsValidASCII(code) ||
-        (code < 0xffff &&
-            ((0xa1 <= hi && hi <= 0xfe && 0xa1 <= lo && lo <= 0xfe) ||
-                (hi == 0x8e && 0xa1 <= lo && lo <= 0xdf)));
-  }
-  static constexpr bool IsValidUCS4(std::uint64_t code) {
-    return code < 0xd800 || (0xdc00 < code && code <= 0x10ffff);
-  }
+  // Following helpers assume that character encodings contain ASCII
   static constexpr CharT Space() { return 0x20; }
   static constexpr CharT NewLine() { return 0x0a; }
 };

@@ -911,24 +911,14 @@ Expr<Type<TypeCategory::Character, KIND>> FoldOperation(FoldingContext &context,
   if (auto *intrinsic{std::get_if<SpecificIntrinsic>(&funcRef.proc().u)}) {
     std::string name{intrinsic->name};
     if (name == "achar" || name == "char") {
-      const auto validate{name == "achar"
-              ? &CharacterUtils<1>::IsValidCharacterCode
-              : &CharacterUtils<KIND>::IsValidCharacterCode};
       auto *sn{UnwrapArgument<SomeInteger>(args[0])};
       CHECK(sn != nullptr);
       return std::visit(
-          [&funcRef, &context, &name, &validate](const auto &n) -> Expr<T> {
+          [&funcRef, &context, &name](const auto &n) -> Expr<T> {
             using IntT = typename std::decay_t<decltype(n)>::Result;
             return FoldElementalIntrinsic<T, IntT>(context, std::move(funcRef),
-                ScalarFunc<T, IntT>([&context, &name, &validate](
-                                        const Scalar<IntT> &i) {
-                  std::uint64_t code{i.ToUInt64()};
-                  if (!validate(code)) {
-                    context.messages().Say(
-                        "Character code %lld is invalid for CHARACTER(%d) type in %s intrinsic function"_en_US,
-                        code, KIND, name);
-                  }
-                  return CharacterUtils<KIND>::CHAR(code);
+                ScalarFunc<T, IntT>([&context, &name](const Scalar<IntT> &i) {
+                  return CharacterUtils<KIND>::CHAR(i.ToUInt64());
                 }));
           },
           sn->u);
