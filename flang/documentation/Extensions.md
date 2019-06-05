@@ -98,3 +98,10 @@ Extensions and legacy features deliberately not supported
 * Use of host FORMAT labels in internal subprograms (PGI-only feature)
 * ALLOCATE(TYPE(derived)::...) as variant of correct ALLOCATE(derived::...) (PGI only)
 * USE association of a procedure interface within that same procedure's definition
+* After "TYPE,EXTENDS(T1)::T2;...", the nonstandard structure constructor
+  T2(T1(x)) is accepted by PGI/GNU/Intel.  Use T2(T1=T1(x)) or T2(x) instead.
+* NULL() as a structure constructor expression for an ALLOCATABLE component (PGI).
+* Conversion of LOGICAL to INTEGER.
+* IF (integer expression) THEN ... END IF  (PGI/Intel)
+* Comparsion of LOGICAL with ==/.EQ. rather than .EQV. (also .NEQV.) (PGI/Intel)
+* Procedure pointers in COMMON blocks (PGI/Intel)

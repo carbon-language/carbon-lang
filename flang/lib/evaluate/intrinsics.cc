@@ -641,6 +641,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
 struct SpecificIntrinsicInterface : public IntrinsicInterface {
   const char *generic{nullptr};
   bool isRestrictedSpecific{false};
+  bool forceResultType{false};
 };
 
 static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
@@ -654,22 +655,22 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
          {{"a1", DefaultInt}, {"a2", DefaultInt},
              {"a3", DefaultInt, Rank::elemental, Optionality::repeats}},
          DefaultReal},
-        "max", true},
+        "max", true, true},
     {{"amax1",
          {{"a1", DefaultReal}, {"a2", DefaultReal},
              {"a3", DefaultReal, Rank::elemental, Optionality::repeats}},
          DefaultReal},
-        "max", true},
+        "max", true, true},
     {{"amin0",
          {{"a1", DefaultInt}, {"a2", DefaultInt},
              {"a3", DefaultInt, Rank::elemental, Optionality::repeats}},
          DefaultReal},
-        "min", true},
+        "min", true, true},
     {{"amin1",
          {{"a1", DefaultReal}, {"a2", DefaultReal},
              {"a3", DefaultReal, Rank::elemental, Optionality::repeats}},
          DefaultReal},
-        "min", true},
+        "min", true, true},
     {{"amod", {{"a", DefaultReal}, {"p", DefaultReal}}, DefaultReal}, "mod"},
     {{"anint", {{"a", DefaultReal}}, DefaultReal}},
     {{"asin", {{"x", DefaultReal}}, DefaultReal}},
@@ -736,28 +737,36 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
     {{"isign", {{"a", DefaultInt}, {"b", DefaultInt}}, DefaultInt}, "sign"},
     {{"len", {{"string", DefaultChar, Rank::anyOrAssumedRank}}, DefaultInt,
         Rank::scalar}},
+    {{"lge", {{"string_a", DefaultChar}, {"string_b", DefaultChar}},
+        DefaultLogical}},
+    {{"lgt", {{"string_a", DefaultChar}, {"string_b", DefaultChar}},
+        DefaultLogical}},
+    {{"lle", {{"string_a", DefaultChar}, {"string_b", DefaultChar}},
+        DefaultLogical}},
+    {{"llt", {{"string_a", DefaultChar}, {"string_b", DefaultChar}},
+        DefaultLogical}},
     {{"log", {{"x", DefaultReal}}, DefaultReal}},
     {{"log10", {{"x", DefaultReal}}, DefaultReal}},
     {{"max0",
          {{"a1", DefaultInt}, {"a2", DefaultInt},
              {"a3", DefaultInt, Rank::elemental, Optionality::repeats}},
          DefaultInt},
-        "max", true},
+        "max", true, true},
     {{"max1",
          {{"a1", DefaultReal}, {"a2", DefaultReal},
              {"a3", DefaultReal, Rank::elemental, Optionality::repeats}},
          DefaultInt},
-        "max", true},
+        "max", true, true},
     {{"min0",
          {{"a1", DefaultInt}, {"a2", DefaultInt},
              {"a3", DefaultInt, Rank::elemental, Optionality::repeats}},
          DefaultInt},
-        "min", true},
+        "min", true, true},
     {{"min1",
          {{"a1", DefaultReal}, {"a2", DefaultReal},
              {"a3", DefaultReal, Rank::elemental, Optionality::repeats}},
          DefaultInt},
-        "min", true},
+        "min", true, true},
     {{"mod", {{"a", DefaultInt}, {"p", DefaultInt}}, DefaultInt}},
     {{"nint", {{"a", DefaultReal}}, DefaultInt}},
     {{"sign", {{"a", DefaultReal}, {"b", DefaultReal}}, DefaultReal}},
@@ -1396,31 +1405,12 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
     }
     return result;
   }
-  // Probe the specific intrinsic function table first.
-  parser::Messages localBuffer, specificBuffer;
+  // Probe the generic intrinsic function table first.
+  parser::Messages localBuffer;
   parser::ContextualMessages localMessages{
       call.name, finalBuffer ? &localBuffer : nullptr};
   FoldingContext localContext{context, localMessages};
   std::string name{call.name.ToString()};
-  auto specificRange{specificFuncs_.equal_range(name)};
-  for (auto iter{specificRange.first}; iter != specificRange.second; ++iter) {
-    CHECK(localBuffer.empty());
-    if (auto specificCall{
-            iter->second->Match(call, defaults_, arguments, localContext)}) {
-      if (const char *genericName{iter->second->generic}) {
-        specificCall->specificIntrinsic.name = genericName;
-      }
-      specificCall->specificIntrinsic.isRestrictedSpecific =
-          iter->second->isRestrictedSpecific;
-      if (finalBuffer != nullptr) {
-        finalBuffer->Annex(std::move(localBuffer));
-      }
-      return specificCall;
-    } else {
-      specificBuffer.Annex(std::move(localBuffer));
-    }
-  }
-  // Probe the generic intrinsic function table next.
   parser::Messages genericBuffer;
   auto genericRange{genericFuncs_.equal_range(name)};
   for (auto iter{genericRange.first}; iter != genericRange.second; ++iter) {
@@ -1450,12 +1440,54 @@ std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
       genericBuffer.Annex(std::move(localBuffer));
     }
   }
+  // Probe the specific intrinsic function table next.
+  // Each specific intrinsic maps to a generic intrinsic.
+  parser::Messages specificBuffer;
+  auto specificRange{specificFuncs_.equal_range(name)};
+  for (auto specIter{specificRange.first}; specIter != specificRange.second;
+       ++specIter) {
+    // We only need to check the cases with distinct generic names.
+    if (const char *genericName{specIter->second->generic}) {
+      auto genericRange{genericFuncs_.equal_range(genericName)};
+      for (auto genIter{genericRange.first}; genIter != genericRange.second;
+           ++genIter) {
+        CHECK(localBuffer.empty());
+        if (auto specificCall{genIter->second->Match(
+                call, defaults_, arguments, localContext)}) {
+          specificCall->specificIntrinsic.name = genericName;
+          specificCall->specificIntrinsic.isRestrictedSpecific =
+              specIter->second->isRestrictedSpecific;
+          if (finalBuffer != nullptr) {
+            finalBuffer->Annex(std::move(localBuffer));
+          }
+          if (specIter->second->forceResultType) {
+            // Force the result type on AMAX0/1, MIN0/1, &c.
+            TypeCategory category{TypeCategory::Integer};
+            switch (specIter->second->result.kindCode) {
+            case KindCode::defaultIntegerKind: break;
+            case KindCode::defaultRealKind:
+              category = TypeCategory::Real;
+              break;
+            default: CRASH_NO_CASE;
+            }
+            DynamicType newType{category, defaults_.GetDefaultKind(category)};
+            specificCall->specificIntrinsic.characteristics.value()
+                .functionResult.value()
+                .SetType(newType);
+          }
+          return specificCall;
+        } else {
+          specificBuffer.Annex(std::move(localBuffer));
+        }
+      }
+    }
+  }
   // No match; report the right errors, if any
   if (finalBuffer != nullptr) {
-    if (genericBuffer.empty()) {
-      finalBuffer->Annex(std::move(specificBuffer));
-    } else {
+    if (specificBuffer.empty()) {
       finalBuffer->Annex(std::move(genericBuffer));
+    } else {
+      finalBuffer->Annex(std::move(specificBuffer));
     }
   }
   return std::nullopt;

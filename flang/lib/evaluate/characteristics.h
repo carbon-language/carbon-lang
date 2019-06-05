@@ -52,6 +52,10 @@ public:
   DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(TypeAndShape)
 
   DynamicType type() const { return type_; }
+  TypeAndShape &set_type(DynamicType t) {
+    type_ = t;
+    return *this;
+  }
   const Shape &shape() const { return shape_; }
 
   bool operator==(const TypeAndShape &) const;
@@ -159,6 +163,7 @@ struct FunctionResult {
   const TypeAndShape *GetTypeAndShape() const {
     return std::get_if<TypeAndShape>(&u);
   }
+  void SetType(DynamicType t) { std::get<TypeAndShape>(u).set_type(t); }
 
   std::ostream &Dump(std::ostream &) const;
 
