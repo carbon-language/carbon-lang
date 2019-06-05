@@ -7401,6 +7401,9 @@ static void deduceOpenCLImplicitAddrSpace(TypeProcessingState &State,
       (D.getContext() == DeclaratorContext::MemberContext &&
        (!IsPointee &&
         D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_static)) ||
+      // Do not deduce addr space of non-pointee in type alias because it
+      // doesn't define any object.
+      (D.getContext() == DeclaratorContext::AliasDeclContext && !IsPointee) ||
       // Do not deduce addr space for types used to define a typedef and the
       // typedef itself, except the pointee type of a pointer type which is used
       // to define the typedef.
