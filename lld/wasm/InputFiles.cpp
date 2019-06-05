@@ -454,7 +454,7 @@ Symbol *ObjFile::createUndefined(const WasmSymbol &Sym, bool IsCalledDirectly) {
   llvm_unreachable("unknown symbol kind");
 }
 
-void ArchiveFile::parse(bool IgnoreComdats) {
+void ArchiveFile::parse() {
   // Parse a MemoryBufferRef as an archive file.
   LLVM_DEBUG(dbgs() << "Parsing library: " << toString(this) << "\n");
   File = CHECK(Archive::create(MB), toString(this));
@@ -524,7 +524,7 @@ static Symbol *createBitcodeSymbol(const std::vector<bool> &KeptComdats,
   return Symtab->addDefinedData(Name, Flags, &F, nullptr, 0, 0);
 }
 
-void BitcodeFile::parse(bool IgnoreComdats) {
+void BitcodeFile::parse() {
   Obj = check(lto::InputFile::create(MemoryBufferRef(
       MB.getBuffer(), Saver.save(ArchiveName + MB.getBufferIdentifier()))));
   Triple T(Obj->getTargetTriple());
