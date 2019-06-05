@@ -379,7 +379,7 @@ Expr<Type<TypeCategory::Integer, KIND>> FoldOperation(FoldingContext &context,
         common::die("exponent argument must be real");
       }
     } else if (name == "iachar" || name == "ichar") {
-      auto *someChar{UnwrapArgument<SomeCharacter>(args[0])};
+      auto *someChar{UnwrapExpr<Expr<SomeCharacter>>(args[0])};
       CHECK(someChar != nullptr);
       if (auto len{ToInt64(someChar->LEN())}) {
         if (len.value() != 1) {
@@ -900,18 +900,11 @@ template<int KIND>
 Expr<Type<TypeCategory::Character, KIND>> FoldOperation(FoldingContext &context,
     FunctionRef<Type<TypeCategory::Character, KIND>> &&funcRef) {
   using T = Type<TypeCategory::Character, KIND>;
-  ActualArguments &args{funcRef.arguments()};
-  for (std::optional<ActualArgument> &arg : args) {
-    if (arg.has_value()) {
-      if (auto *expr{arg->GetExpr()}) {
-        *expr = FoldOperation(context, std::move(*expr));
-      }
-    }
-  }
+  ActualArguments &args{FoldArguments(context, funcRef)};
   if (auto *intrinsic{std::get_if<SpecificIntrinsic>(&funcRef.proc().u)}) {
     std::string name{intrinsic->name};
     if (name == "achar" || name == "char") {
-      auto *sn{UnwrapArgument<SomeInteger>(args[0])};
+      auto *sn{UnwrapExpr<Expr<SomeInteger>>(args[0])};
       CHECK(sn != nullptr);
       return std::visit(
           [&funcRef, &context, &name](const auto &n) -> Expr<T> {
