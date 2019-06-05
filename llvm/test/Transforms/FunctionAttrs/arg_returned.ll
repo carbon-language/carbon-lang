@@ -1,4 +1,5 @@
-; RUN: opt -functionattrs -S < %s | FileCheck %s
+; RUN: opt -functionattrs -attributor -attributor-disable=false -S < %s | FileCheck %s
+; RUN: opt -functionattrs -attributor -attributor-disable=false -attributor-verify=true -S < %s | FileCheck %s
 ;
 ; Test cases specifically designed for the "returned" argument attribute.
 ; We use FIXME's to indicate problems and missing attributes.
