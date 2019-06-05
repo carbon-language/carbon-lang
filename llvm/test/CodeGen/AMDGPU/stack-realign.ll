@@ -9,7 +9,10 @@
 ; = 144 bytes with padding between them
 
 ; GCN-LABEL: {{^}}needs_align16_default_stack_align:
-; GCN: s_mov_b32 s5, s32
+; GCN: s_sub_u32 [[SUB:s[0-9]+]], s32, s4
+; GCN-NEXT: v_lshrrev_b32_e64 [[FRAMEDIFF:v[0-9]+]], 6, [[SUB]]
+; GCN: v_add_u32_e64 [[FI:v[0-9]+]], {{s\[[0-9]+:[0-9]+\]}}, 16, [[FRAMEDIFF]]
+
 ; GCN-NOT: s32
 
 ; GCN: buffer_store_dword v{{[0-9]+}}, v{{[0-9]+}}, s[0:3], s4 offen
@@ -135,9 +138,7 @@ define void @default_realign_align128(i32 %idx) #0 {
 
 ; GCN-LABEL: {{^}}disable_realign_align128:
 ; GCN-NOT: s32
-; GCN: s_mov_b32 s5, s32
-; GCN-NOT: s32
-; GCN: buffer_store_dword v0, off, s[0:3], s5 offset:16
+; GCN: buffer_store_dword v0, off, s[0:3], s32 offset:16
 ; GCN-NOT: s32
 define void @disable_realign_align128(i32 %idx) #3 {
   %alloca.align = alloca i32, align 128, addrspace(5)

@@ -4,15 +4,14 @@
 %struct.ByValStruct = type { [4 x i32] }
 
 ; GCN-LABEL: {{^}}void_func_byval_struct:
-; GCN: s_mov_b32 s5, s32
-; GCN: buffer_load_dword [[LOAD0:v[0-9]+]], off, s[0:3], s5 offset:4{{$}}
+; GCN: buffer_load_dword [[LOAD0:v[0-9]+]], off, s[0:3], s32 offset:4{{$}}
 ; GCN-NOT: s32
-; GCN: buffer_store_dword [[LOAD0]], off, s[0:3], s5 offset:4{{$}}
+; GCN: buffer_store_dword [[LOAD0]], off, s[0:3], s32 offset:4{{$}}
 ; GCN-NOT: s32
 
-; GCN: buffer_load_dword [[LOAD1:v[0-9]+]], off, s[0:3], s5 offset:20{{$}}
+; GCN: buffer_load_dword [[LOAD1:v[0-9]+]], off, s[0:3], s32 offset:20{{$}}
 ; GCN-NOT: s32
-; GCN: buffer_store_dword [[LOAD1]], off, s[0:3], s5 offset:20{{$}}
+; GCN: buffer_store_dword [[LOAD1]], off, s[0:3], s32 offset:20{{$}}
 ; GCN-NOT: s32
 define hidden void @void_func_byval_struct(%struct.ByValStruct addrspace(5)* byval noalias nocapture align 4 %arg0, %struct.ByValStruct addrspace(5)* byval noalias nocapture align 4 %arg1) #1 {
 entry:
@@ -183,15 +182,14 @@ entry:
 }
 
 ; GCN-LABEL: {{^}}void_func_byval_struct_align8:
-; GCN: s_mov_b32 s5, s32
-; GCN: buffer_load_dword [[LOAD0:v[0-9]+]], off, s[0:3], s5 offset:8{{$}}
+; GCN: buffer_load_dword [[LOAD0:v[0-9]+]], off, s[0:3], s32 offset:8{{$}}
 ; GCN-NOT: s32
-; GCN: buffer_store_dword [[LOAD0]], off, s[0:3], s5 offset:8{{$}}
+; GCN: buffer_store_dword [[LOAD0]], off, s[0:3], s32 offset:8{{$}}
 ; GCN-NOT: s32
 
-; GCN: buffer_load_dword [[LOAD1:v[0-9]+]], off, s[0:3], s5 offset:24{{$}}
+; GCN: buffer_load_dword [[LOAD1:v[0-9]+]], off, s[0:3], s32 offset:24{{$}}
 ; GCN-NOT: s32
-; GCN: buffer_store_dword [[LOAD1]], off, s[0:3], s5 offset:24{{$}}
+; GCN: buffer_store_dword [[LOAD1]], off, s[0:3], s32 offset:24{{$}}
 ; GCN-NOT: s32
 define hidden void @void_func_byval_struct_align8(%struct.ByValStruct addrspace(5)* byval noalias nocapture align 8 %arg0, %struct.ByValStruct addrspace(5)* byval noalias nocapture align 8 %arg1) #1 {
 entry:

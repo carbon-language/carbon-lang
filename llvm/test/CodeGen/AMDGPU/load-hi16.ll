@@ -494,13 +494,13 @@ entry:
 
 ; GCN-LABEL: {{^}}load_private_hi_v2i16_reglo_vreg:
 ; GCN: s_waitcnt
-; GFX900: buffer_load_short_d16_hi v0, off, s[0:3], s5 offset:4094{{$}}
+; GFX900: buffer_load_short_d16_hi v0, off, s[0:3], s32 offset:4094{{$}}
 ; GFX900-NEXT: s_waitcnt
 ; GFX900-NEXT: global_store_dword v{{\[[0-9]+:[0-9]+\]}}, v0
 ; GFX900-NEXT: s_waitcnt
 ; GFX900-NEXT: s_setpc_b64
 
-; NO-D16-HI: buffer_load_ushort v{{[0-9]+}}, off, s[0:3], s5 offset:4094{{$}}
+; NO-D16-HI: buffer_load_ushort v{{[0-9]+}}, off, s[0:3], s32 offset:4094{{$}}
 define void @load_private_hi_v2i16_reglo_vreg(i16 addrspace(5)* byval %in, i16 %reg) #0 {
 entry:
   %gep = getelementptr inbounds i16, i16 addrspace(5)* %in, i64 2045
@@ -513,13 +513,13 @@ entry:
 
 ; GCN-LABEL: {{^}}load_private_hi_v2f16_reglo_vreg:
 ; GCN: s_waitcnt
-; GFX900: buffer_load_short_d16_hi v0, off, s[0:3], s5 offset:4094{{$}}
+; GFX900: buffer_load_short_d16_hi v0, off, s[0:3], s32 offset:4094{{$}}
 ; GFX900-NEXT: s_waitcnt
 ; GFX900-NEXT: global_store_dword v{{\[[0-9]+:[0-9]+\]}}, v0
 ; GFX900-NEXT: s_waitcnt
 ; GFX900-NEXT: s_setpc_b64
 
-; NO-D16-HI: buffer_load_ushort v{{[0-9]+}}, off, s[0:3], s5 offset:4094{{$}}
+; NO-D16-HI: buffer_load_ushort v{{[0-9]+}}, off, s[0:3], s32 offset:4094{{$}}
 define void @load_private_hi_v2f16_reglo_vreg(half addrspace(5)* byval %in, half %reg) #0 {
 entry:
   %gep = getelementptr inbounds half, half addrspace(5)* %in, i64 2045
@@ -568,13 +568,13 @@ entry:
 
 ; GCN-LABEL: {{^}}load_private_hi_v2i16_reglo_vreg_zexti8:
 ; GCN: s_waitcnt
-; GFX900: buffer_load_ubyte_d16_hi v0, off, s[0:3], s5 offset:4095{{$}}
+; GFX900: buffer_load_ubyte_d16_hi v0, off, s[0:3], s32 offset:4095{{$}}
 ; GFX900-NEXT: s_waitcnt
 ; GFX900-NEXT: global_store_dword v{{\[[0-9]+:[0-9]+\]}}, v0
 ; GFX900-NEXT: s_waitcnt
 ; GFX900-NEXT: s_setpc_b64
 
-; NO-D16-HI: buffer_load_ubyte v{{[0-9]+}}, off, s[0:3], s5 offset:4095{{$}}
+; NO-D16-HI: buffer_load_ubyte v{{[0-9]+}}, off, s[0:3], s32 offset:4095{{$}}
 define void @load_private_hi_v2i16_reglo_vreg_zexti8(i8 addrspace(5)* byval %in, i16 %reg) #0 {
 entry:
   %gep = getelementptr inbounds i8, i8 addrspace(5)* %in, i64 4091
@@ -588,13 +588,13 @@ entry:
 
 ; GCN-LABEL: {{^}}load_private_hi_v2f16_reglo_vreg_zexti8:
 ; GCN: s_waitcnt
-; GFX900: buffer_load_ubyte_d16_hi v0, off, s[0:3], s5 offset:4095{{$}}
+; GFX900: buffer_load_ubyte_d16_hi v0, off, s[0:3], s32 offset:4095{{$}}
 ; GFX900-NEXT: s_waitcnt
 ; GFX900-NEXT: global_store_dword v{{\[[0-9]+:[0-9]+\]}}, v0
 ; GFX900-NEXT: s_waitcnt
 ; GFX900-NEXT: s_setpc_b64
 
-; NO-D16-HI: buffer_load_ubyte v{{[0-9]+}}, off, s[0:3], s5 offset:4095{{$}}
+; NO-D16-HI: buffer_load_ubyte v{{[0-9]+}}, off, s[0:3], s32 offset:4095{{$}}
 define void @load_private_hi_v2f16_reglo_vreg_zexti8(i8 addrspace(5)* byval %in, half %reg) #0 {
 entry:
   %gep = getelementptr inbounds i8, i8 addrspace(5)* %in, i64 4091
@@ -609,13 +609,13 @@ entry:
 
 ; GCN-LABEL: {{^}}load_private_hi_v2f16_reglo_vreg_sexti8:
 ; GCN: s_waitcnt
-; GFX900: buffer_load_sbyte_d16_hi v0, off, s[0:3], s5 offset:4095{{$}}
+; GFX900: buffer_load_sbyte_d16_hi v0, off, s[0:3], s32 offset:4095{{$}}
 ; GFX900-NEXT: s_waitcnt
 ; GFX900-NEXT: global_store_dword v{{\[[0-9]+:[0-9]+\]}}, v0
 ; GFX900-NEXT: s_waitcnt
 ; GFX900-NEXT: s_setpc_b64
 
-; NO-D16-HI: buffer_load_sbyte v{{[0-9]+}}, off, s[0:3], s5 offset:4095{{$}}
+; NO-D16-HI: buffer_load_sbyte v{{[0-9]+}}, off, s[0:3], s32 offset:4095{{$}}
 define void @load_private_hi_v2f16_reglo_vreg_sexti8(i8 addrspace(5)* byval %in, half %reg) #0 {
 entry:
   %gep = getelementptr inbounds i8, i8 addrspace(5)* %in, i64 4091
@@ -630,13 +630,13 @@ entry:
 
 ; GCN-LABEL: {{^}}load_private_hi_v2i16_reglo_vreg_sexti8:
 ; GCN: s_waitcnt
-; GFX900: buffer_load_sbyte_d16_hi v0, off, s[0:3], s5 offset:4095{{$}}
+; GFX900: buffer_load_sbyte_d16_hi v0, off, s[0:3], s32 offset:4095{{$}}
 ; GFX900-NEXT: s_waitcnt
 ; GFX900-NEXT: global_store_dword v{{\[[0-9]+:[0-9]+\]}}, v0
 ; GFX900-NEXT: s_waitcnt
 ; GFX900-NEXT: s_setpc_b64
 
-; NO-D16-HI: buffer_load_sbyte v{{[0-9]+}}, off, s[0:3], s5 offset:4095{{$}}
+; NO-D16-HI: buffer_load_sbyte v{{[0-9]+}}, off, s[0:3], s32 offset:4095{{$}}
 define void @load_private_hi_v2i16_reglo_vreg_sexti8(i8 addrspace(5)* byval %in, i16 %reg) #0 {
 entry:
   %gep = getelementptr inbounds i8, i8 addrspace(5)* %in, i64 4091
@@ -789,7 +789,7 @@ entry:
 
 ; GCN-LABEL: {{^}}load_private_hi_v2i16_reglo_vreg_to_offset:
 ; GFX900: buffer_store_dword
-; GFX900-NEXT: buffer_load_short_d16_hi v{{[0-9]+}}, off, s[0:3], s5 offset:4094
+; GFX900-NEXT: buffer_load_short_d16_hi v{{[0-9]+}}, off, s[0:3], s32 offset:4094
 define void @load_private_hi_v2i16_reglo_vreg_to_offset(i16 %reg) #0 {
 entry:
   %obj0 = alloca [10 x i32], align 4, addrspace(5)
@@ -806,7 +806,7 @@ entry:
 
 ; GCN-LABEL: {{^}}load_private_hi_v2i16_reglo_vreg_sexti8_to_offset:
 ; GFX900: buffer_store_dword
-; GFX900-NEXT: buffer_load_sbyte_d16_hi v{{[0-9]+}}, off, s[0:3], s5 offset:4095
+; GFX900-NEXT: buffer_load_sbyte_d16_hi v{{[0-9]+}}, off, s[0:3], s32 offset:4095
 define void @load_private_hi_v2i16_reglo_vreg_sexti8_to_offset(i16 %reg) #0 {
 entry:
   %obj0 = alloca [10 x i32], align 4, addrspace(5)
@@ -824,7 +824,7 @@ entry:
 
 ; GCN-LABEL: {{^}}load_private_hi_v2i16_reglo_vreg_zexti8_to_offset:
 ; GFX900: buffer_store_dword
-; GFX900-NEXT: buffer_load_ubyte_d16_hi v{{[0-9]+}}, off, s[0:3], s5 offset:4095
+; GFX900-NEXT: buffer_load_ubyte_d16_hi v{{[0-9]+}}, off, s[0:3], s32 offset:4095
 define void @load_private_hi_v2i16_reglo_vreg_zexti8_to_offset(i16 %reg) #0 {
 entry:
   %obj0 = alloca [10 x i32], align 4, addrspace(5)
@@ -975,9 +975,9 @@ entry:
 ; FIXME: Is there a cost to using the extload over not?
 ; GCN-LABEL: {{^}}load_private_v2i16_split:
 ; GCN: s_waitcnt
-; GFX900: buffer_load_ushort v0, off, s[0:3], s5 offset:4{{$}}
+; GFX900: buffer_load_ushort v0, off, s[0:3], s32 offset:4{{$}}
 ; GFX900-NEXT: s_waitcnt
-; GFX900-NEXT: buffer_load_short_d16_hi v0, off, s[0:3], s5 offset:6
+; GFX900-NEXT: buffer_load_short_d16_hi v0, off, s[0:3], s32 offset:6
 ; GFX900-NEXT: s_waitcnt
 ; GFX900-NEXT: s_setpc_b64
 define <2 x i16> @load_private_v2i16_split(i16 addrspace(5)* byval %in) #0 {

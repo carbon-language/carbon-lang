@@ -7,7 +7,7 @@
 ; Materialize into a mov. Make sure there isn't an unnecessary copy.
 ; GCN-LABEL: {{^}}func_mov_fi_i32:
 ; GCN: s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; GCN: s_sub_u32 s6, s5, s4
+; GCN: s_sub_u32 s6, s32, s4
 
 ; CI-NEXT: v_lshr_b32_e64 [[SCALED:v[0-9]+]], s6, 6
 ; CI-NEXT: v_add_i32_e64 v0, s[6:7], 4, [[SCALED]]
@@ -28,7 +28,7 @@ define void @func_mov_fi_i32() #0 {
 
 ; GCN-LABEL: {{^}}func_add_constant_to_fi_i32:
 ; GCN: s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; GCN: s_sub_u32 s6, s5, s4
+; GCN: s_sub_u32 s6, s32, s4
 
 ; CI-NEXT: v_lshr_b32_e64 [[SCALED:v[0-9]+]], s6, 6
 ; CI-NEXT: v_add_i32_e64 v0, s[6:7], 4, [[SCALED]]
@@ -52,7 +52,7 @@ define void @func_add_constant_to_fi_i32() #0 {
 ; into.
 
 ; GCN-LABEL: {{^}}func_other_fi_user_i32:
-; GCN: s_sub_u32 s6, s5, s4
+; GCN: s_sub_u32 s6, s32, s4
 
 ; CI-NEXT: v_lshr_b32_e64 [[SCALED:v[0-9]+]], s6, 6
 ; CI-NEXT: v_add_i32_e64 v0, s[6:7], 4, [[SCALED]]
@@ -89,8 +89,7 @@ define void @func_load_private_arg_i32_ptr(i32 addrspace(5)* %ptr) #0 {
 
 ; GCN-LABEL: {{^}}void_func_byval_struct_i8_i32_ptr:
 ; GCN: s_waitcnt
-; GCN-NEXT: s_mov_b32 s5, s32
-; GCN-NEXT: s_sub_u32 [[SUB_OFFSET:s[0-9]+]], s5, s4
+; GCN-NEXT: s_sub_u32 [[SUB_OFFSET:s[0-9]+]], s32, s4
 
 ; CI-NEXT: v_lshr_b32_e64 [[SHIFT:v[0-9]+]], [[SUB_OFFSET]], 6
 ; CI-NEXT: v_add_i32_e64 [[ADD:v[0-9]+]], {{s\[[0-9]+:[0-9]+\]}}, 4, [[SHIFT]]
@@ -112,9 +111,8 @@ define void @void_func_byval_struct_i8_i32_ptr({ i8, i32 } addrspace(5)* byval %
 
 ; GCN-LABEL: {{^}}void_func_byval_struct_i8_i32_ptr_value:
 ; GCN: s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; GCN-NEXT: s_mov_b32 s5, s32
-; GCN-NEXT: buffer_load_ubyte v0, off, s[0:3], s5
-; GCN_NEXT: buffer_load_dword v1, off, s[0:3], s5 offset:4
+; GCN-NEXT: buffer_load_ubyte v0, off, s[0:3], s32
+; GCN_NEXT: buffer_load_dword v1, off, s[0:3], s32 offset:4
 define void @void_func_byval_struct_i8_i32_ptr_value({ i8, i32 } addrspace(5)* byval %arg0) #0 {
   %gep0 = getelementptr inbounds { i8, i32 }, { i8, i32 } addrspace(5)* %arg0, i32 0, i32 0
   %gep1 = getelementptr inbounds { i8, i32 }, { i8, i32 } addrspace(5)* %arg0, i32 0, i32 1
@@ -129,7 +127,7 @@ define void @void_func_byval_struct_i8_i32_ptr_value({ i8, i32 } addrspace(5)* b
 ; FrameIndex is hidden behind a CopyFromReg in the second block.
 
 ; GCN-LABEL: {{^}}void_func_byval_struct_i8_i32_ptr_nonentry_block:
-; GCN: s_sub_u32 [[SUB_OFFSET:s[0-9]+]], s5, s4
+; GCN: s_sub_u32 [[SUB_OFFSET:s[0-9]+]], s32, s4
 
 ; CI: v_lshr_b32_e64 [[SHIFT:v[0-9]+]], [[SUB_OFFSET]], 6
 ; CI: v_add_i32_e64 [[ADD:v[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 4, [[SHIFT]]
@@ -163,7 +161,7 @@ ret:
 
 ; Added offset can't be used with VOP3 add
 ; GCN-LABEL: {{^}}func_other_fi_user_non_inline_imm_offset_i32:
-; GCN: s_sub_u32 s6, s5, s4
+; GCN: s_sub_u32 s6, s32, s4
 ; GCN-DAG: s_movk_i32 s6, 0x204
 
 ; CI-DAG: v_lshr_b32_e64 [[SCALED:v[0-9]+]], s6, 6
@@ -187,7 +185,7 @@ define void @func_other_fi_user_non_inline_imm_offset_i32() #0 {
 }
 
 ; GCN-LABEL: {{^}}func_other_fi_user_non_inline_imm_offset_i32_vcc_live:
-; GCN: s_sub_u32 [[DIFF:s[0-9]+]], s5, s4
+; GCN: s_sub_u32 [[DIFF:s[0-9]+]], s32, s4
 ; GCN-DAG: s_movk_i32 [[OFFSET:s[0-9]+]], 0x204
 
 ; CI-DAG: v_lshr_b32_e64 [[SCALED:v[0-9]+]], [[DIFF]], 6
@@ -243,7 +241,7 @@ bb5:
 
 ; GCN-LABEL: {{^}}alloca_ptr_nonentry_block:
 ; GCN: s_and_saveexec_b64
-; GCN: buffer_load_dword v{{[0-9]+}}, off, s[0:3], s5 offset:12
+; GCN: buffer_load_dword v{{[0-9]+}}, off, s[0:3], s32 offset:12
 define void @alloca_ptr_nonentry_block(i32 %arg0) #0 {
   %alloca0 = alloca { i8, i32 }, align 4, addrspace(5)
   %cmp = icmp eq i32 %arg0, 0

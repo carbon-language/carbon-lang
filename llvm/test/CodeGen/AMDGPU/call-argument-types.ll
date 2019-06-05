@@ -768,16 +768,17 @@ entry:
 }
 
 ; GCN-LABEL: {{^}}tail_call_byval_align16:
-; GCN: s_mov_b32 s5, s32
-; GCN: buffer_store_dword v32, off, s[0:3], s5 offset:28 ; 4-byte Folded Spill
-; GCN: buffer_store_dword v33, off, s[0:3], s5 offset:24 ; 4-byte Folded Spill
-; GCN: buffer_load_dword v32, off, s[0:3], s5 offset:32
-; GCN: buffer_load_dword v33, off, s[0:3], s5 offset:36
-; GCN: buffer_store_dword v33, off, s[0:3], s5 offset:20
-; GCN: buffer_store_dword v32, off, s[0:3], s5 offset:16
+; GCN-NOT: s32
+; GCN: buffer_store_dword v32, off, s[0:3], s32 offset:28 ; 4-byte Folded Spill
+; GCN: buffer_store_dword v33, off, s[0:3], s32 offset:24 ; 4-byte Folded Spill
+; GCN: buffer_load_dword v32, off, s[0:3], s32 offset:32
+; GCN: buffer_load_dword v33, off, s[0:3], s32 offset:36
+; GCN: buffer_store_dword v33, off, s[0:3], s32 offset:20
+; GCN: buffer_store_dword v32, off, s[0:3], s32 offset:16
 ; GCN: s_getpc_b64
-; GCN: buffer_load_dword v33, off, s[0:3], s5 offset:24 ; 4-byte Folded Reload
-; GCN: buffer_load_dword v32, off, s[0:3], s5 offset:28 ; 4-byte Folded Reload
+; GCN: buffer_load_dword v33, off, s[0:3], s32 offset:24 ; 4-byte Folded Reload
+; GCN: buffer_load_dword v32, off, s[0:3], s32 offset:28 ; 4-byte Folded Reload
+; GCN-NOT: s32
 ; GCN: s_setpc_b64
 define void @tail_call_byval_align16(<32 x i32> %val, double %tmp) #0 {
 entry:
@@ -787,16 +788,17 @@ entry:
 }
 
 ; GCN-LABEL: {{^}}tail_call_stack_passed_arg_alignment_v32i32_f64:
-; GCN: s_mov_b32 s5, s32
-; GCN: buffer_store_dword v32, off, s[0:3], s5 offset:16 ; 4-byte Folded Spill
-; GCN: buffer_store_dword v33, off, s[0:3], s5 offset:12 ; 4-byte Folded Spill
-; GCN: buffer_load_dword v32, off, s[0:3], s5 offset:4
-; GCN: buffer_load_dword v33, off, s[0:3], s5 offset:8
-; GCN: buffer_store_dword v32, off, s[0:3], s5 offset:4
-; GCN: buffer_store_dword v33, off, s[0:3], s5 offset:8
+; GCN-NOT: s32
+; GCN: buffer_store_dword v32, off, s[0:3], s32 offset:16 ; 4-byte Folded Spill
+; GCN: buffer_store_dword v33, off, s[0:3], s32 offset:12 ; 4-byte Folded Spill
+; GCN: buffer_load_dword v32, off, s[0:3], s32 offset:4
+; GCN: buffer_load_dword v33, off, s[0:3], s32 offset:8
+; GCN: buffer_store_dword v32, off, s[0:3], s32 offset:4
+; GCN: buffer_store_dword v33, off, s[0:3], s32 offset:8
 ; GCN: s_getpc_b64
-; GCN: buffer_load_dword v33, off, s[0:3], s5 offset:12 ; 4-byte Folded Reload
-; GCN: buffer_load_dword v32, off, s[0:3], s5 offset:16 ; 4-byte Folded Reload
+; GCN: buffer_load_dword v33, off, s[0:3], s32 offset:12 ; 4-byte Folded Reload
+; GCN: buffer_load_dword v32, off, s[0:3], s32 offset:16 ; 4-byte Folded Reload
+; GCN-NOT: s32
 ; GCN: s_setpc_b64
 define void @tail_call_stack_passed_arg_alignment_v32i32_f64(<32 x i32> %val, double %tmp) #0 {
 entry:
