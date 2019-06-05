@@ -21085,9 +21085,10 @@ static SDValue LowerStore(SDValue Op, const X86Subtarget &Subtarget,
   // halves anyway, so the concat (vinsertf128) is purely an extra op.
   MVT StoreVT = StoredVal.getSimpleValueType();
   if (StoreVT.is256BitVector()) {
-    if (StoredVal.getOpcode() != ISD::CONCAT_VECTORS || !StoredVal.hasOneUse())
-      return SDValue();
-    return splitVectorStore(St, DAG);
+    SmallVector<SDValue, 4> CatOps;
+    if (StoredVal.hasOneUse() && collectConcatOps(StoredVal.getNode(), CatOps))
+      return splitVectorStore(St, DAG);
+    return SDValue();
   }
 
   assert(StoreVT.isVector() && StoreVT.getSizeInBits() == 64 &&
