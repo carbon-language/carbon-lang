@@ -293,8 +293,7 @@ PHINode *Loop::getInductionVariable(ScalarEvolution &SE) const {
 
   BasicBlock *Header = getHeader();
   assert(Header && "Expected a valid loop header");
-  BasicBlock *Latch = getLoopLatch();
-  assert(Latch && "Expected a valid loop latch");
+  assert(getLoopLatch() && "Expected a valid loop latch");
   ICmpInst *CmpInst = getLatchCmpInst(*this);
   if (!CmpInst)
     return nullptr;
