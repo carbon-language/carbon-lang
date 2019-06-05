@@ -267,7 +267,7 @@ DataReader::readPerfData(StringRef Path, raw_ostream &Diag) {
     Diag << "cannot open " << Path << ": " << EC.message() << "\n";
     return EC;
   }
-  auto DR = make_unique<DataReader>(std::move(MB.get()), Diag);
+  auto DR = llvm::make_unique<DataReader>(std::move(MB.get()), Diag);
   if (auto EC = DR->parse()) {
     return EC;
   }

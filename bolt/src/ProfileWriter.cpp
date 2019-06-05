@@ -161,7 +161,7 @@ ProfileWriter::writeProfile(const RewriteInstance &RI) {
   const auto &Functions = RI.getBinaryContext().getBinaryFunctions();
 
   std::error_code EC;
-  OS = make_unique<raw_fd_ostream>(FileName, EC, sys::fs::F_None);
+  OS = llvm::make_unique<raw_fd_ostream>(FileName, EC, sys::fs::F_None);
   if (EC) {
     errs() << "BOLT-WARNING: " << EC.message() << " : unable to open "
            << FileName << " for output.\n";
