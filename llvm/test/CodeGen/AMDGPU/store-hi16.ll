@@ -492,7 +492,7 @@ define void @store_private_hi_v2i16_max_offset(i16 addrspace(5)* byval %out, i32
 entry:
   %value = bitcast i32 %arg to <2 x i16>
   %hi = extractelement <2 x i16> %value, i32 1
-  %gep = getelementptr inbounds i16, i16 addrspace(5)* %out, i64 2045
+  %gep = getelementptr inbounds i16, i16 addrspace(5)* %out, i64 2047
   store i16 %hi, i16 addrspace(5)* %gep
   ret void
 }
@@ -644,7 +644,7 @@ entry:
   store volatile i32 123, i32 addrspace(5)* %bc
   %value = bitcast i32 %arg to <2 x i16>
   %hi = extractelement <2 x i16> %value, i32 1
-  %gep = getelementptr inbounds [4096 x i16], [4096 x i16] addrspace(5)* %obj1, i32 0, i32 2025
+  %gep = getelementptr inbounds [4096 x i16], [4096 x i16] addrspace(5)* %obj1, i32 0, i32 2027
   store i16 %hi, i16 addrspace(5)* %gep
   ret void
 }
@@ -661,7 +661,7 @@ entry:
   store volatile i32 123, i32 addrspace(5)* %bc
   %value = bitcast i32 %arg to <2 x i16>
   %hi = extractelement <2 x i16> %value, i32 1
-  %gep = getelementptr inbounds [4096 x i8], [4096 x i8] addrspace(5)* %obj1, i32 0, i32 4051
+  %gep = getelementptr inbounds [4096 x i8], [4096 x i8] addrspace(5)* %obj1, i32 0, i32 4055
   %trunc = trunc i16 %hi to i8
   store i8 %trunc, i8 addrspace(5)* %gep
   ret void

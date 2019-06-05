@@ -10,8 +10,9 @@
 
 ; GCN-LABEL: {{^}}needs_align16_default_stack_align:
 ; GCN: s_sub_u32 [[SUB:s[0-9]+]], s32, s4
-; GCN-NEXT: v_lshrrev_b32_e64 [[FRAMEDIFF:v[0-9]+]], 6, [[SUB]]
-; GCN: v_add_u32_e64 [[FI:v[0-9]+]], {{s\[[0-9]+:[0-9]+\]}}, 16, [[FRAMEDIFF]]
+; GCN-DAG: v_lshlrev_b32_e32 [[SCALED_IDX:v[0-9]+]], 4, v0
+; GCN-DAG: v_lshrrev_b32_e64 [[FRAMEDIFF:v[0-9]+]], 6, [[SUB]]
+; GCN: v_add_u32_e32 [[FI:v[0-9]+]], vcc, [[FRAMEDIFF]], [[SCALED_IDX]]
 
 ; GCN-NOT: s32
 
@@ -126,10 +127,10 @@ define amdgpu_kernel void @kernel_call_align4_from_5() {
 ; GCN-LABEL: {{^}}default_realign_align128:
 ; GCN: s_add_u32 [[TMP:s[0-9]+]], s32, 0x1fc0
 ; GCN-NEXT: s_and_b32 s5, [[TMP]], 0xffffe000
-; GCN-NEXT: s_add_u32 s32, s32, 0x6000
+; GCN-NEXT: s_add_u32 s32, s32, 0x4000
 ; GCN-NOT: s5
-; GCN: buffer_store_dword v0, off, s[0:3], s5 offset:128
-; GCN: s_sub_u32 s32, s32, 0x6000
+; GCN: buffer_store_dword v0, off, s[0:3], s5{{$}}
+; GCN: s_sub_u32 s32, s32, 0x4000
 define void @default_realign_align128(i32 %idx) #0 {
   %alloca.align = alloca i32, align 128, addrspace(5)
   store volatile i32 9, i32 addrspace(5)* %alloca.align, align 128
@@ -138,7 +139,7 @@ define void @default_realign_align128(i32 %idx) #0 {
 
 ; GCN-LABEL: {{^}}disable_realign_align128:
 ; GCN-NOT: s32
-; GCN: buffer_store_dword v0, off, s[0:3], s32 offset:16
+; GCN: buffer_store_dword v0, off, s[0:3], s32{{$}}
 ; GCN-NOT: s32
 define void @disable_realign_align128(i32 %idx) #3 {
   %alloca.align = alloca i32, align 128, addrspace(5)

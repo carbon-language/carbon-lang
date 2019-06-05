@@ -1940,12 +1940,6 @@ SDValue SITargetLowering::LowerFormalArguments(
   bool IsKernel = AMDGPU::isKernel(CallConv);
   bool IsEntryFunc = AMDGPU::isEntryFunctionCC(CallConv);
 
-  if (!IsEntryFunc) {
-    // 4 bytes are reserved at offset 0 for the emergency stack slot. Skip over
-    // this when allocating argument fixed offsets.
-    CCInfo.AllocateStack(4, 4);
-  }
-
   if (IsShader) {
     processShaderInputArgs(Splits, CallConv, Ins, Skipped, FType, Info);
 
@@ -2551,7 +2545,6 @@ SDValue SITargetLowering::LowerCall(CallLoweringInfo &CLI,
                           "unsupported call from graphics shader of function ");
   }
 
-  // The first 4 bytes are reserved for the callee's emergency stack slot.
   if (IsTailCall) {
     IsTailCall = isEligibleForTailCallOptimization(
       Callee, CallConv, IsVarArg, Outs, OutVals, Ins, DAG);
@@ -2577,9 +2570,6 @@ SDValue SITargetLowering::LowerCall(CallLoweringInfo &CLI,
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
   CCAssignFn *AssignFn = CCAssignFnForCall(CallConv, IsVarArg);
-
-  // The first 4 bytes are reserved for the callee's emergency stack slot.
-  CCInfo.AllocateStack(4, 4);
 
   CCInfo.AnalyzeCallOperands(Outs, AssignFn);
 
