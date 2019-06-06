@@ -6852,8 +6852,6 @@ define <8 x float> @mload_constmask_v8f32_zero(<8 x float>* %addr, <8 x float> %
 ; AVX1OR2:       ## %bb.0:
 ; AVX1OR2-NEXT:    vmovaps {{.*#+}} ymm0 = [4294967295,4294967295,4294967295,0,0,0,0,0]
 ; AVX1OR2-NEXT:    vmaskmovps (%rdi), %ymm0, %ymm0
-; AVX1OR2-NEXT:    vxorps %xmm1, %xmm1, %xmm1
-; AVX1OR2-NEXT:    vblendps {{.*#+}} ymm0 = ymm0[0,1,2],ymm1[3,4,5,6,7]
 ; AVX1OR2-NEXT:    retq
 ;
 ; AVX512F-LABEL: mload_constmask_v8f32_zero:
