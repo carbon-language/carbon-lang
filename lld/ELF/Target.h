@@ -162,6 +162,8 @@ static inline std::string getErrorLocation(const uint8_t *Loc) {
   return getErrorPlace(Loc).Loc;
 }
 
+void writePPC32GlinkSection(uint8_t *Buf, size_t NumEntries);
+
 bool tryRelaxPPC64TocIndirection(RelType Type, const Relocation &Rel,
                                  uint8_t *BufLoc);
 

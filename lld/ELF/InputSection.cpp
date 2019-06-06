@@ -718,6 +718,8 @@ static uint64_t getRelocTargetVA(const InputFile *File, RelType Type, int64_t A,
         Dest = getARMUndefinedRelativeWeakVA(Type, A, P);
       else if (Config->EMachine == EM_AARCH64)
         Dest = getAArch64UndefinedRelativeWeakVA(Type, A, P);
+      else if (Config->EMachine == EM_PPC)
+        Dest = P;
       else
         Dest = Sym.getVA(A);
     } else {
@@ -730,6 +732,11 @@ static uint64_t getRelocTargetVA(const InputFile *File, RelType Type, int64_t A,
   case R_PLT_PC:
   case R_PPC64_CALL_PLT:
     return Sym.getPltVA() + A - P;
+  case R_PPC32_PLTREL:
+    // R_PPC_PLTREL24 uses the addend (usually 0 or 0x8000) to indicate r30
+    // stores _GLOBAL_OFFSET_TABLE_ or .got2+0x8000. The addend is ignored for
+    // target VA compuation.
+    return Sym.getPltVA() - P;
   case R_PPC64_CALL: {
     uint64_t SymVA = Sym.getVA(A);
     // If we have an undefined weak symbol, we might get here with a symbol
