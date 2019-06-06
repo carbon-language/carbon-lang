@@ -39,11 +39,26 @@ public:
   RelExpr getRelExpr(RelType Type, const Symbol &S,
                      const uint8_t *Loc) const override;
   void relocateOne(uint8_t *Loc, RelType Type, uint64_t Val) const override;
+  RelExpr adjustRelaxExpr(RelType Type, const uint8_t *Data,
+                          RelExpr Expr) const override;
+  int getTlsGdRelaxSkip(RelType Type) const override;
+  void relaxTlsGdToIe(uint8_t *Loc, RelType Type, uint64_t Val) const override;
+  void relaxTlsGdToLe(uint8_t *Loc, RelType Type, uint64_t Val) const override;
+  void relaxTlsLdToLe(uint8_t *Loc, RelType Type, uint64_t Val) const override;
+  void relaxTlsIeToLe(uint8_t *Loc, RelType Type, uint64_t Val) const override;
 };
 } // namespace
 
 static uint16_t lo(uint32_t V) { return V; }
 static uint16_t ha(uint32_t V) { return (V + 0x8000) >> 16; }
+
+static uint32_t readFromHalf16(const uint8_t *Loc) {
+  return read32(Loc - (Config->EKind == ELF32BEKind ? 2 : 0));
+}
+
+static void writeFromHalf16(uint8_t *Loc, uint32_t Insn) {
+  write32(Loc - (Config->EKind == ELF32BEKind ? 2 : 0), Insn);
+}
 
 void elf::writePPC32GlinkSection(uint8_t *Buf, size_t NumEntries) {
   // On PPC Secure PLT ABI, bl foo@plt jumps to a call stub, which loads an
@@ -128,6 +143,10 @@ PPC::PPC() {
 
   NeedsThunks = true;
 
+  TlsModuleIndexRel = R_PPC_DTPMOD32;
+  TlsOffsetRel = R_PPC_DTPREL32;
+  TlsGotRel = R_PPC_TPREL32;
+
   DefaultMaxPageSize = 65536;
   DefaultImageBase = 0x10000000;
 
@@ -169,6 +188,12 @@ bool PPC::inBranchRange(RelType Type, uint64_t Src, uint64_t Dst) const {
 RelExpr PPC::getRelExpr(RelType Type, const Symbol &S,
                         const uint8_t *Loc) const {
   switch (Type) {
+  case R_PPC_DTPREL16:
+  case R_PPC_DTPREL16_HA:
+  case R_PPC_DTPREL16_HI:
+  case R_PPC_DTPREL16_LO:
+  case R_PPC_DTPREL32:
+    return R_DTPREL;
   case R_PPC_REL14:
   case R_PPC_REL32:
   case R_PPC_LOCAL24PC:
@@ -182,28 +207,84 @@ RelExpr PPC::getRelExpr(RelType Type, const Symbol &S,
     return R_PLT_PC;
   case R_PPC_PLTREL24:
     return R_PPC32_PLTREL;
+  case R_PPC_GOT_TLSGD16:
+    return R_TLSGD_GOT;
+  case R_PPC_GOT_TLSLD16:
+    return R_TLSLD_GOT;
+  case R_PPC_GOT_TPREL16:
+    return R_GOT_OFF;
+  case R_PPC_TLS:
+    return R_TLSIE_HINT;
+  case R_PPC_TLSGD:
+    return R_TLSDESC_CALL;
+  case R_PPC_TLSLD:
+    return R_TLSLD_HINT;
+  case R_PPC_TPREL16:
+  case R_PPC_TPREL16_HA:
+  case R_PPC_TPREL16_LO:
+  case R_PPC_TPREL16_HI:
+    return R_TLS;
   default:
     return R_ABS;
   }
 }
 
-void PPC::relocateOne(uint8_t *Loc, RelType Type, uint64_t Val) const {
+static std::pair<RelType, uint64_t> fromDTPREL(RelType Type, uint64_t Val) {
+  uint64_t DTPBiasedVal = Val - 0x8000;
   switch (Type) {
+  case R_PPC_DTPREL16:
+    return {R_PPC64_ADDR16, DTPBiasedVal};
+  case R_PPC_DTPREL16_HA:
+    return {R_PPC_ADDR16_HA, DTPBiasedVal};
+  case R_PPC_DTPREL16_HI:
+    return {R_PPC_ADDR16_HI, DTPBiasedVal};
+  case R_PPC_DTPREL16_LO:
+    return {R_PPC_ADDR16_LO, DTPBiasedVal};
+  case R_PPC_DTPREL32:
+    return {R_PPC_ADDR32, DTPBiasedVal};
+  default:
+    return {Type, Val};
+  }
+}
+
+void PPC::relocateOne(uint8_t *Loc, RelType Type, uint64_t Val) const {
+  RelType NewType;
+  std::tie(NewType, Val) = fromDTPREL(Type, Val);
+  switch (NewType) {
   case R_PPC_ADDR16:
   case R_PPC_GOT16:
+  case R_PPC_GOT_TLSGD16:
+  case R_PPC_GOT_TLSLD16:
+  case R_PPC_GOT_TPREL16:
+  case R_PPC_TPREL16:
     checkInt(Loc, Val, 16, Type);
     write16(Loc, Val);
     break;
   case R_PPC_ADDR16_HA:
+  case R_PPC_DTPREL16_HA:
+  case R_PPC_GOT_TLSGD16_HA:
+  case R_PPC_GOT_TLSLD16_HA:
+  case R_PPC_GOT_TPREL16_HA:
   case R_PPC_REL16_HA:
+  case R_PPC_TPREL16_HA:
     write16(Loc, ha(Val));
     break;
   case R_PPC_ADDR16_HI:
+  case R_PPC_DTPREL16_HI:
+  case R_PPC_GOT_TLSGD16_HI:
+  case R_PPC_GOT_TLSLD16_HI:
+  case R_PPC_GOT_TPREL16_HI:
   case R_PPC_REL16_HI:
+  case R_PPC_TPREL16_HI:
     write16(Loc, Val >> 16);
     break;
   case R_PPC_ADDR16_LO:
+  case R_PPC_DTPREL16_LO:
+  case R_PPC_GOT_TLSGD16_LO:
+  case R_PPC_GOT_TLSLD16_LO:
+  case R_PPC_GOT_TPREL16_LO:
   case R_PPC_REL16_LO:
+  case R_PPC_TPREL16_LO:
     write16(Loc, Val);
     break;
   case R_PPC_ADDR32:
@@ -229,6 +310,109 @@ void PPC::relocateOne(uint8_t *Loc, RelType Type, uint64_t Val) const {
   }
   default:
     error(getErrorLocation(Loc) + "unrecognized relocation " + toString(Type));
+  }
+}
+
+RelExpr PPC::adjustRelaxExpr(RelType Type, const uint8_t *Data,
+                             RelExpr Expr) const {
+  if (Expr == R_RELAX_TLS_GD_TO_IE)
+    return R_RELAX_TLS_GD_TO_IE_GOT_OFF;
+  if (Expr == R_RELAX_TLS_LD_TO_LE)
+    return R_RELAX_TLS_LD_TO_LE_ABS;
+  return Expr;
+}
+
+int PPC::getTlsGdRelaxSkip(RelType Type) const {
+  // A __tls_get_addr call instruction is marked with 2 relocations:
+  //
+  //   R_PPC_TLSGD / R_PPC_TLSLD: marker relocation
+  //   R_PPC_REL24: __tls_get_addr
+  //
+  // After the relaxation we no longer call __tls_get_addr and should skip both
+  // relocations to not create a false dependence on __tls_get_addr being
+  // defined.
+  if (Type == R_PPC_TLSGD || Type == R_PPC_TLSLD)
+    return 2;
+  return 1;
+}
+
+void PPC::relaxTlsGdToIe(uint8_t *Loc, RelType Type, uint64_t Val) const {
+  switch (Type) {
+  case R_PPC_GOT_TLSGD16: {
+    // addi rT, rA, x@got@tlsgd --> lwz rT, x@got@tprel(rA)
+    uint32_t Insn = readFromHalf16(Loc);
+    writeFromHalf16(Loc, 0x80000000 | (Insn & 0x03ff0000));
+    relocateOne(Loc, R_PPC_GOT_TPREL16, Val);
+    break;
+  }
+  case R_PPC_TLSGD:
+    // bl __tls_get_addr(x@tldgd) --> add r3, r3, r2
+    write32(Loc, 0x7c631214);
+    break;
+  default:
+    llvm_unreachable("unsupported relocation for TLS GD to IE relaxation");
+  }
+}
+
+void PPC::relaxTlsGdToLe(uint8_t *Loc, RelType Type, uint64_t Val) const {
+  switch (Type) {
+  case R_PPC_GOT_TLSGD16:
+    // addi r3, r31, x@got@tlsgd --> addis r3, r2, x@tprel@ha
+    writeFromHalf16(Loc, 0x3c620000 | ha(Val));
+    break;
+  case R_PPC_TLSGD:
+    // bl __tls_get_addr(x@tldgd) --> add r3, r3, x@tprel@l
+    write32(Loc, 0x38630000 | lo(Val));
+    break;
+  default:
+    llvm_unreachable("unsupported relocation for TLS GD to LE relaxation");
+  }
+}
+
+void PPC::relaxTlsLdToLe(uint8_t *Loc, RelType Type, uint64_t Val) const {
+  switch (Type) {
+  case R_PPC_GOT_TLSLD16:
+    // addi r3, rA, x@got@tlsgd --> addis r3, r2, 0
+    writeFromHalf16(Loc, 0x3c620000);
+    break;
+  case R_PPC_TLSLD:
+    // r3+x@dtprel computes r3+x-0x8000, while we want it to compute r3+x@tprel
+    // = r3+x-0x7000, so add 4096 to r3.
+    // bl __tls_get_addr(x@tlsld) --> addi r3, r3, 4096
+    write32(Loc, 0x38631000);
+    break;
+  case R_PPC_DTPREL16:
+  case R_PPC_DTPREL16_HA:
+  case R_PPC_DTPREL16_HI:
+  case R_PPC_DTPREL16_LO:
+    relocateOne(Loc, Type, Val);
+    break;
+  default:
+    llvm_unreachable("unsupported relocation for TLS LD to LE relaxation");
+  }
+}
+
+void PPC::relaxTlsIeToLe(uint8_t *Loc, RelType Type, uint64_t Val) const {
+  switch (Type) {
+  case R_PPC_GOT_TPREL16: {
+    // lwz rT, x@got@tprel(rA) --> addis rT, r2, x@tprel@ha
+    uint32_t RT = readFromHalf16(Loc) & 0x03e00000;
+    writeFromHalf16(Loc, 0x3c020000 | RT | ha(Val));
+    break;
+  }
+  case R_PPC_TLS: {
+    uint32_t Insn = read32(Loc);
+    if (Insn >> 26 != 31)
+      error("unrecognized instruction for IE to LE R_PPC_TLS");
+    // addi rT, rT, x@tls --> addi rT, rT, x@tprel@l
+    uint32_t DFormOp = getPPCDFormOp((read32(Loc) & 0x000007fe) >> 1);
+    if (DFormOp == 0)
+      error("unrecognized instruction for IE to LE R_PPC_TLS");
+    write32(Loc, (DFormOp << 26) | (Insn & 0x03ff0000) | lo(Val));
+    break;
+  }
+  default:
+    llvm_unreachable("unsupported relocation for TLS IE to LE relaxation");
   }
 }
 
