@@ -135,6 +135,15 @@ add_test(RESHAPE reshape-test)
 add_test(ISO-binding ISO-Fortran-binding-test)
 add_test(folding folding-test)
 
+set(TEST_LIBPGMATH "-pgmath=false")
+if (LIBPGMATH_DIR)
+  find_library(LIBPGMATH pgmath PATHS ${LIBPGMATH_DIR})
+  if(LIBPGMATH)
+  set(TEST_LIBPGMATH "-pgmath=true")
+  endif()
+endif()
+
 foreach(test ${FOLDING_TESTS})
-  add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_folding.sh ${test})
+  add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_folding.sh
+    ${test} ${TEST_LIBPGMATH})
 endforeach()
