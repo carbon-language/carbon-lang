@@ -2303,6 +2303,7 @@ void SubprogramVisitor::Post(const parser::FunctionStmt &stmt) {
   funcInfo_.resultSymbol =
       &MakeSymbol(*funcResultName, std::move(funcResultDetails));
   details.set_result(*funcInfo_.resultSymbol);
+  name.symbol = currScope().symbol();  // must not be function result symbol
 }
 
 SubprogramDetails &SubprogramVisitor::PostSubprogramStmt(

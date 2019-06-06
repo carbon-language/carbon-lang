@@ -138,10 +138,10 @@ subroutine s5
   b = x%a
  end associate
 contains
- !DEF: /s5/f/f ObjectEntity TYPE(t)
+ !REF: /s5/f
  function f()
   !REF: /s5/t
-  !REF: /s5/f/f
+  !DEF: /s5/f/f ObjectEntity TYPE(t)
   type(t) :: f
  end function
 end subroutine
