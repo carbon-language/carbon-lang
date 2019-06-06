@@ -125,7 +125,6 @@ set(ERROR_TESTS
   dosemantics01.f90
   dosemantics02.f90
   dosemantics03.f90
-  dosemantics04.f90
   expr-errors01.f90
   null01.f90
 )

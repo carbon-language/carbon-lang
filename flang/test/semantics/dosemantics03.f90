@@ -19,10 +19,6 @@
 ! conformance and turning warnings into errors.  This produces error
 ! messages for the cases where REAL and DOUBLE PRECISION variables
 ! and expressions are used in the DO controls.
-!
-! This test is just like dosemantics04.f90 but with the options
-! to produce error messages when using REAL and DOUBLE PRECISION DO
-! loop controls.
 
 !OPTIONS: -Mstandard -Werror
 
@@ -52,13 +48,11 @@ PROGRAM do_issue_458
   END DO
 
 ! REAL DO variable
-!ERROR: DO controls should be INTEGER
   DO rvar = 1, 10, 3
     PRINT *, "rvar is: ", rvar
   END DO
 
 ! DOUBLE PRECISISON DO variable
-!ERROR: DO controls should be INTEGER
   DO dvar = 1, 10, 3
     PRINT *, "dvar is: ", dvar
   END DO
@@ -71,14 +65,12 @@ PROGRAM do_issue_458
 
 ! Pointer to REAL DO variable
   ALLOCATE(prvar)
-!ERROR: DO controls should be INTEGER
   DO prvar = 1, 10, 3
     PRINT *, "prvar is: ", prvar
   END DO
 
 ! Pointer to DOUBLE PRECISION DO variable
   ALLOCATE(pdvar)
-!ERROR: DO controls should be INTEGER
   DO pdvar = 1, 10, 3
     PRINT *, "pdvar is: ", pdvar
   END DO
@@ -116,13 +108,11 @@ PROGRAM do_issue_458
 
 ! Initial expressions
 ! REAL initial expression
-!ERROR: DO controls should be INTEGER
   DO ivar = rvar, 10, 3
     PRINT *, "ivar is: ", ivar
   END DO
 
 ! DOUBLE PRECISION initial expression
-!ERROR: DO controls should be INTEGER
   DO ivar = dvar, 10, 3
     PRINT *, "ivar is: ", ivar
   END DO
@@ -133,13 +123,11 @@ PROGRAM do_issue_458
   END DO
 
 ! Pointer to REAL initial expression
-!ERROR: DO controls should be INTEGER
   DO ivar = prvar, 10, 3
     PRINT *, "ivar is: ", ivar
   END DO
 
 ! Pointer to DOUBLE PRECISION initial expression
-!ERROR: DO controls should be INTEGER
   DO ivar = pdvar, 10, 3
     PRINT *, "ivar is: ", ivar
   END DO
@@ -170,13 +158,11 @@ PROGRAM do_issue_458
 
 ! Final expression
 ! REAL final expression
-!ERROR: DO controls should be INTEGER
   DO ivar = 1, rvar, 3
     PRINT *, "ivar is: ", ivar
   END DO
 
 ! DOUBLE PRECISION final expression
-!ERROR: DO controls should be INTEGER
   DO ivar = 1, dvar, 3
     PRINT *, "ivar is: ", ivar
   END DO
@@ -187,13 +173,11 @@ PROGRAM do_issue_458
   END DO
 
 ! Pointer to REAL final expression
-!ERROR: DO controls should be INTEGER
   DO ivar = 1, prvar, 3
     PRINT *, "ivar is: ", ivar
   END DO
 
 ! Pointer to DOUBLE PRECISION final expression
-!ERROR: DO controls should be INTEGER
   DO ivar = pdvar, 10, 3
     PRINT *, "ivar is: ", ivar
   END DO
@@ -206,13 +190,11 @@ PROGRAM do_issue_458
 
 ! Step expression
 ! REAL step expression
-!ERROR: DO controls should be INTEGER
   DO ivar = 1, 10, rvar
     PRINT *, "ivar is: ", ivar
   END DO
 
 ! DOUBLE PRECISION step expression
-!ERROR: DO controls should be INTEGER
   DO ivar = 1, 10, dvar
     PRINT *, "ivar is: ", ivar
   END DO
@@ -223,13 +205,11 @@ PROGRAM do_issue_458
   END DO
 
 ! Pointer to REAL step expression
-!ERROR: DO controls should be INTEGER
   DO ivar = 1, 10, prvar
     PRINT *, "ivar is: ", ivar
   END DO
 
 ! Pointer to DOUBLE PRECISION step expression
-!ERROR: DO controls should be INTEGER
   DO ivar = 1, 10, pdvar
     PRINT *, "ivar is: ", ivar
   END DO
