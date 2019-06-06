@@ -1773,6 +1773,7 @@ struct Designator {
 struct Variable {
   UNION_CLASS_BOILERPLATE(Variable);
   mutable Expr::TypedExpr typedExpr;
+  parser::CharBlock GetSource() const;
   std::variant<common::Indirection<Designator>,
       common::Indirection<FunctionReference>>
       u;

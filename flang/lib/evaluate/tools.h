@@ -72,8 +72,15 @@ template<typename A> bool IsVariable(const FunctionRef<A> &funcRef) {
     return false;
   }
 }
-template<typename A> bool IsVariable(const Expr<A> &expr) {
+template<typename T> bool IsVariable(const Expr<T> &expr) {
   return std::visit([](const auto &x) { return IsVariable(x); }, expr.u);
+}
+template<typename A> bool IsVariable(const std::optional<A> &x) {
+  if (x.has_value()) {
+    return IsVariable(*x);
+  } else {
+    return false;
+  }
 }
 
 // Predicate: true when an expression is assumed-rank
@@ -88,8 +95,15 @@ template<typename A> bool IsAssumedRank(const Designator<A> &designator) {
     return false;
   }
 }
-template<typename A> bool IsAssumedRank(const Expr<A> &expr) {
+template<typename T> bool IsAssumedRank(const Expr<T> &expr) {
   return std::visit([](const auto &x) { return IsAssumedRank(x); }, expr.u);
+}
+template<typename A> bool IsAssumedRank(const std::optional<A> &x) {
+  if (x.has_value()) {
+    return IsAssumedRank(*x);
+  } else {
+    return false;
+  }
 }
 
 // Generalizing packagers: these take operations and expressions of more
@@ -145,7 +159,7 @@ template<typename A> constexpr bool IsNumericCategoryExpr() {
 
 // Specializing extractor.  If an Expr wraps some type of object, perhaps
 // in several layers, return a pointer to it; otherwise null.  Also works
-// with ActualArgument.
+// with expressions contained in ActualArgument.
 template<typename A, typename B>
 auto UnwrapExpr(B &x) -> common::Constify<A, B> * {
   using Ty = std::decay_t<B>;
@@ -188,7 +202,6 @@ template<typename A>
 common::IfNoLvalue<std::optional<DataRef>, A> ExtractDataRef(const A &) {
   return std::nullopt;  // default base casec
 }
-
 template<typename T>
 std::optional<DataRef> ExtractDataRef(const Designator<T> &d) {
   return std::visit(
@@ -200,12 +213,10 @@ std::optional<DataRef> ExtractDataRef(const Designator<T> &d) {
       },
       d.u);
 }
-
 template<typename T>
 std::optional<DataRef> ExtractDataRef(const Expr<T> &expr) {
   return std::visit([](const auto &x) { return ExtractDataRef(x); }, expr.u);
 }
-
 template<typename A>
 std::optional<DataRef> ExtractDataRef(const std::optional<A> &x) {
   if (x.has_value()) {
@@ -217,7 +228,7 @@ std::optional<DataRef> ExtractDataRef(const std::optional<A> &x) {
 
 // If an expression is simply a whole symbol data designator,
 // extract and return that symbol, else null.
-template<typename A> const Symbol *IsWholeSymbolDataRef(const A &x) {
+template<typename A> const Symbol *UnwrapWholeSymbolDataRef(const A &x) {
   if (auto dataRef{ExtractDataRef(x)}) {
     if (const Symbol **p{std::get_if<const Symbol *>(&dataRef->u)}) {
       return *p;
@@ -603,27 +614,36 @@ struct TypeKindVisitor {
   VALUE value;
 };
 
+// GetLastSymbol() returns the rightmost symbol in an object or procedure
+// designator (possibly wrapped in an Expr<>), or a null pointer if
+// none is found.
 template<typename A> const semantics::Symbol *GetLastSymbol(const A &) {
   return nullptr;
 }
-
 template<typename T>
 const semantics::Symbol *GetLastSymbol(const Designator<T> &x) {
   return x.GetLastSymbol();
 }
-
 inline const semantics::Symbol *GetLastSymbol(const ProcedureDesignator &x) {
   return x.GetSymbol();
 }
-
 inline const semantics::Symbol *GetLastSymbol(const ProcedureRef &x) {
   return GetLastSymbol(x.proc());
 }
-
 template<typename T> const semantics::Symbol *GetLastSymbol(const Expr<T> &x) {
   return std::visit([](const auto &y) { return GetLastSymbol(y); }, x.u);
 }
+template<typename A>
+const semantics::Symbol *GetLastSymbol(const std::optional<A> &x) {
+  if (x.has_value()) {
+    return GetLastSymbol(*x);
+  } else {
+    return nullptr;
+  }
+}
 
+// Convenience: If GetLastSymbol() succeeds on the argument, return its
+// set of attributes, otherwise the empty set.
 template<typename A> semantics::Attrs GetAttrs(const A &x) {
   if (const semantics::Symbol * symbol{GetLastSymbol(x)}) {
     return symbol->attrs();
@@ -632,17 +652,26 @@ template<typename A> semantics::Attrs GetAttrs(const A &x) {
   }
 }
 
+// Predicate: IsAllocatableOrPointer()
 template<typename A> bool IsAllocatableOrPointer(const A &x) {
   return GetAttrs(x).HasAny(
       semantics::Attrs{semantics::Attr::POINTER, semantics::Attr::ALLOCATABLE});
 }
 
+// Predicate: IsProcedurePointer()
 template<typename A> bool IsProcedurePointer(const A &) { return false; }
 inline bool IsProcedurePointer(const ProcedureDesignator &) { return true; }
 inline bool IsProcedurePointer(const ProcedureRef &) { return true; }
 inline bool IsProcedurePointer(const Expr<SomeType> &expr) {
   return std::visit(
       [](const auto &x) { return IsProcedurePointer(x); }, expr.u);
+}
+template<typename A> bool IsProcedurePointer(const std::optional<A> &x) {
+  if (x.has_value()) {
+    return IsProcedurePointer(*x);
+  } else {
+    return false;
+  }
 }
 }
 #endif  // FORTRAN_EVALUATE_TOOLS_H_

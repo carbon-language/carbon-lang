@@ -928,13 +928,11 @@ private:
   // expr is set in either case unless there were errors
   struct Selector {
     Selector() {}
-    Selector(const parser::CharBlock &source, MaybeExpr &&expr,
-        const parser::Name *variable = nullptr)
-      : source{source}, expr{std::move(expr)}, variable{variable} {}
+    Selector(const parser::CharBlock &source, MaybeExpr &&expr)
+      : source{source}, expr{std::move(expr)} {}
     operator bool() const { return expr.has_value(); }
     parser::CharBlock source;
     MaybeExpr expr;
-    const parser::Name *variable{nullptr};
   };
   // association -> [associate-name =>] selector
   struct {
@@ -4017,7 +4015,8 @@ void ConstructVisitor::Post(const parser::CoarrayAssociation &x) {
   if (auto *symbol{FindInScope(currScope(), name)}) {
     const auto &selector{std::get<parser::Selector>(x.t)};
     if (auto sel{ResolveSelector(selector)}) {
-      if (!sel.variable || sel.variable->symbol->Corank() == 0) {
+      const Symbol *whole{UnwrapWholeSymbolDataRef(sel.expr)};
+      if (!whole || whole->Corank() == 0) {
         Say(sel.source,  // C1116
             "Selector in coarray association must name a coarray"_err_en_US);
       } else if (auto dynType{sel.expr->GetType()}) {
@@ -4040,8 +4039,8 @@ void ConstructVisitor::Post(const parser::SelectTypeStmt &x) {
     MakePlaceholder(*name, MiscDetails::Kind::SelectTypeAssociateName);
     association_.name = &*name;
   } else {
-    const auto *varName{association_.selector.variable};
-    if (!varName || !varName->symbol->has<ObjectEntityDetails>()) {
+    const Symbol *whole{UnwrapWholeSymbolDataRef(association_.selector.expr)};
+    if (!whole || !whole->has<ObjectEntityDetails>()) {
       Say(association_.selector.source,  // C1157
           "Selector is not a named variable: 'associate-name =>' is required"_err_en_US);
       association_ = {};
@@ -4094,55 +4093,55 @@ Symbol *ConstructVisitor::MakeAssocEntity() {
     return nullptr;
   }
   if (auto &expr{association_.selector.expr}) {
-    symbol.set_details(AssocEntityDetails{std::move(*expr)});
-    association_.selector.expr.reset();
+    symbol.set_details(AssocEntityDetails{common::Clone(*expr)});
   } else {
     symbol.set_details(AssocEntityDetails{});
   }
   return &symbol;
 }
 
-// Set the type of symbol based on the current association variable or expr.
+// Set the type of symbol based on the current association selector.
 void ConstructVisitor::SetTypeFromAssociation(Symbol &symbol) {
-  if (association_.selector.variable) {
-    const Symbol *varSymbol{association_.selector.variable->symbol};
-    CHECK(varSymbol);
-    if (const DeclTypeSpec * type{varSymbol->GetType()}) {
-      symbol.SetType(*type);
-    }
-  } else {
-    auto &details{symbol.get<AssocEntityDetails>()};
-    if (const MaybeExpr & expr{details.expr()}) {
-      if (std::optional<evaluate::DynamicType> type{expr->GetType()}) {
-        if (const auto *charExpr{
-                evaluate::UnwrapExpr<evaluate::Expr<evaluate::SomeCharacter>>(
-                    *expr)}) {
-          symbol.SetType(ToDeclTypeSpec(std::move(*type),
-              FoldExpr(std::visit(
-                  [](const auto &kindChar) { return kindChar.LEN(); },
-                  charExpr->u))));
-        } else {
-          symbol.SetType(ToDeclTypeSpec(std::move(*type)));
+  auto &details{symbol.get<AssocEntityDetails>()};
+  const MaybeExpr *pexpr{&details.expr()};
+  if (!pexpr->has_value()) {
+    pexpr = &association_.selector.expr;
+  }
+  if (pexpr->has_value()) {
+    const SomeExpr &expr{**pexpr};
+    if (evaluate::IsVariable(expr)) {
+      if (const Symbol * varSymbol{evaluate::GetLastSymbol(expr)}) {
+        if (const DeclTypeSpec * type{varSymbol->GetType()}) {
+          symbol.SetType(*type);
+          return;
         }
-      } else {
-        // BOZ literal not acceptable
-        Say(symbol.name(), "Associate name '%s' must have a type"_err_en_US);
       }
+    }
+    if (std::optional<evaluate::DynamicType> type{expr.GetType()}) {
+      if (const auto *charExpr{
+              evaluate::UnwrapExpr<evaluate::Expr<evaluate::SomeCharacter>>(
+                  expr)}) {
+        symbol.SetType(ToDeclTypeSpec(std::move(*type),
+            FoldExpr(
+                std::visit([](const auto &kindChar) { return kindChar.LEN(); },
+                    charExpr->u))));
+      } else {
+        symbol.SetType(ToDeclTypeSpec(std::move(*type)));
+      }
+    } else {
+      // BOZ literals, procedure designators, &c. are not acceptable
+      Say(symbol.name(), "Associate name '%s' must have a type"_err_en_US);
     }
   }
 }
 
 // If current selector is a variable, set some of its attributes on symbol.
 void ConstructVisitor::SetAttrsFromAssociation(Symbol &symbol) {
-  if (association_.selector.variable) {
-    if (const auto *varSymbol{association_.selector.variable->symbol}) {
-      symbol.attrs() |= varSymbol->attrs() &
-          Attrs{Attr::TARGET, Attr::ASYNCHRONOUS, Attr::VOLATILE,
-              Attr::CONTIGUOUS};
-      if (varSymbol->attrs().test(Attr::POINTER)) {
-        symbol.attrs().set(Attr::TARGET);
-      }
-    }
+  Attrs attrs{evaluate::GetAttrs(association_.selector.expr)};
+  symbol.attrs() |= attrs &
+      Attrs{Attr::TARGET, Attr::ASYNCHRONOUS, Attr::VOLATILE, Attr::CONTIGUOUS};
+  if (attrs.test(Attr::POINTER)) {
+    symbol.attrs().set(Attr::TARGET);
   }
 }
 
@@ -4150,15 +4149,11 @@ ConstructVisitor::Selector ConstructVisitor::ResolveSelector(
     const parser::Selector &x) {
   return std::visit(
       common::visitors{
-          [&](const parser::Expr &y) {
-            return Selector{y.source, EvaluateExpr(y)};
+          [&](const parser::Expr &expr) {
+            return Selector{expr.source, EvaluateExpr(expr)};
           },
-          [&](const parser::Variable &y) {
-            if (const auto *variable{ResolveVariable(y)}) {
-              return Selector{variable->source, EvaluateExpr(y), variable};
-            } else {
-              return Selector{};
-            }
+          [&](const parser::Variable &var) {
+            return Selector{var.GetSource(), EvaluateExpr(var)};
           },
       },
       x.u);
@@ -4174,8 +4169,10 @@ const DeclTypeSpec &ConstructVisitor::ToDeclTypeSpec(
   case common::TypeCategory::Logical:
     return context().MakeLogicalType(type.kind());
   case common::TypeCategory::Derived:
-    return currScope().MakeDerivedType(
-        DeclTypeSpec::TypeDerived, DerivedTypeSpec{type.GetDerivedTypeSpec()});
+    return currScope().MakeDerivedType(type.isPolymorphic()
+            ? DeclTypeSpec::ClassDerived
+            : DeclTypeSpec::TypeDerived,
+        DerivedTypeSpec{type.GetDerivedTypeSpec()});
   case common::TypeCategory::Character:
   default: CRASH_NO_CASE;
   }

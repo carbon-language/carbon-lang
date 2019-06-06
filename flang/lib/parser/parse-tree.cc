@@ -207,6 +207,19 @@ Statement<ActionStmt> StmtFunctionStmt::ConvertToAssignment() {
           AssignmentStmt{std::move(variable), std::move(funcExpr)}}}};
 }
 
+CharBlock Variable::GetSource() const {
+  return std::visit(
+      common::visitors{
+          [&](const common::Indirection<Designator> &des) {
+            return des.value().source;
+          },
+          [&](const common::Indirection<parser::FunctionReference> &call) {
+            return call.value().v.source;
+          },
+      },
+      u);
+}
+
 std::ostream &operator<<(std::ostream &os, const Name &x) {
   return os << x.ToString();
 }
