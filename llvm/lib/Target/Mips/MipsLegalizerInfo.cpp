@@ -104,6 +104,12 @@ MipsLegalizerInfo::MipsLegalizerInfo(const MipsSubtarget &ST) {
   getActionDefinitionsBuilder({G_FCEIL, G_FFLOOR})
       .libcallFor({s32, s64});
 
+  getActionDefinitionsBuilder(G_FPEXT)
+      .legalFor({{s64, s32}});
+
+  getActionDefinitionsBuilder(G_FPTRUNC)
+      .legalFor({{s32, s64}});
+
   computeTables();
   verify(*ST.getInstrInfo());
 }

@@ -160,6 +160,14 @@ MipsRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
                             FPRValueMapping, FPRValueMapping});
     break;
   }
+  case G_FPEXT:
+    OperandsMapping = getOperandsMapping({&Mips::ValueMappings[Mips::DPRIdx],
+                                          &Mips::ValueMappings[Mips::SPRIdx]});
+    break;
+  case G_FPTRUNC:
+    OperandsMapping = getOperandsMapping({&Mips::ValueMappings[Mips::SPRIdx],
+                                          &Mips::ValueMappings[Mips::DPRIdx]});
+    break;
   case G_CONSTANT:
   case G_FRAME_INDEX:
   case G_GLOBAL_VALUE:
