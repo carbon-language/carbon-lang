@@ -85,7 +85,8 @@ namespace {
 class FrameAccessAnalysis {
   /// We depend on Stack Pointer Tracking to figure out the current SP offset
   /// value at a given program point
-  StackPointerTracking SPT;
+  StackPointerTracking &SPT;
+
   /// Context vars
   const BinaryContext &BC;
   const BinaryFunction &BF;
@@ -150,10 +151,9 @@ class FrameAccessAnalysis {
   }
 
 public:
-  FrameAccessAnalysis(const BinaryContext &BC, BinaryFunction &BF)
-      : SPT(BC, BF), BC(BC), BF(BF) {
-    SPT.run();
-  }
+  FrameAccessAnalysis(const BinaryContext &BC, BinaryFunction &BF,
+                      StackPointerTracking &SPT)
+      : SPT(SPT), BC(BC), BF(BF) {}
 
   void enterNewBB() { Prev = nullptr; }
   const FrameIndexEntry &getFIE() const { return FIE; }
@@ -389,7 +389,7 @@ bool FrameAnalysis::computeArgsAccessed(BinaryFunction &BF) {
                << "\n");
   bool UpdatedArgsTouched = false;
   bool NoInfo = false;
-  FrameAccessAnalysis FAA(BC, BF);
+  FrameAccessAnalysis FAA(BC, BF, getSPT(BF));
 
   for (auto BB : BF.layout()) {
     FAA.enterNewBB();
@@ -448,7 +448,7 @@ bool FrameAnalysis::computeArgsAccessed(BinaryFunction &BF) {
 }
 
 bool FrameAnalysis::restoreFrameIndex(BinaryFunction &BF) {
-  FrameAccessAnalysis FAA(BC, BF);
+  FrameAccessAnalysis FAA(BC, BF, getSPT(BF));
 
   DEBUG(dbgs() << "Restoring frame indices for \"" << BF.getPrintName()
                << "\"\n");
@@ -528,6 +528,7 @@ FrameAnalysis::FrameAnalysis(BinaryContext &BC,
     }
     AnalyzedFunctions.insert(&I.second);
   }
+  clearSPTMap();
 }
 
 void FrameAnalysis::printStats() {

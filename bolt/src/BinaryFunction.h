@@ -874,7 +874,7 @@ public:
   /// Retrieve the landing pad BB associated with invoke instruction \p Invoke
   /// that is in \p BB. Return nullptr if none exists
   BinaryBasicBlock *getLandingPadBBFor(const BinaryBasicBlock &BB,
-                                       const MCInst &InvokeInst) {
+                                       const MCInst &InvokeInst) const {
     assert(BC.MIB->isInvoke(InvokeInst) && "must be invoke instruction");
     const auto LP = BC.MIB->getEHInfo(InvokeInst);
     if (LP && LP->first) {

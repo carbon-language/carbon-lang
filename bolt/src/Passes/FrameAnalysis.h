@@ -167,6 +167,9 @@ class FrameAnalysis {
   /// to analyze and this information can't be safely determined for \p BF.
   bool restoreFrameIndex(BinaryFunction &BF);
 
+  /// A store for SPT info per function
+  std::unordered_map<const BinaryFunction *, StackPointerTracking> SPTMap;
+
 public:
   explicit FrameAnalysis(BinaryContext &BC,
                          BinaryFunctionCallGraph &CG);
@@ -192,13 +195,33 @@ public:
   void cleanAnnotations();
 
   ~FrameAnalysis() {
+    clearSPTMap();
     cleanAnnotations();
   }
-
 
   /// Print to standard output statistics about the analysis performed by this
   /// pass
   void printStats();
+
+  /// Get or create an SPT object and run the analysis
+  StackPointerTracking &getSPT(BinaryFunction &BF) {
+    if (!SPTMap.count(&BF)) {
+      SPTMap.emplace(&BF, StackPointerTracking(BC, BF));
+      auto Iter = SPTMap.find(&BF);
+      assert(Iter != SPTMap.end() && "item should exist");
+      Iter->second.run();
+      return Iter->second;
+    }
+    
+    auto Iter = SPTMap.find(&BF);
+    assert(Iter != SPTMap.end() && "item should exist");
+    return Iter->second;
+  }
+
+  /// Clean and de-allocate all SPT objects
+  void clearSPTMap() {
+    SPTMap.clear();
+  }
 };
 
 } // namespace bolt
