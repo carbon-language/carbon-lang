@@ -291,7 +291,7 @@ static void transformSubToCanonicalAddExpr(BinaryOperatorKind &Opcode,
 }
 
 AST_MATCHER(Expr, isIntegerConstantExpr) {
-  if (Node.isInstantiationDependent())
+  if (Node.isInstantiationDependent() || Node.isValueDependent())
     return false;
   return Node.isIntegerConstantExpr(Finder->getASTContext());
 }
