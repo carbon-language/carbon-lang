@@ -134,7 +134,8 @@ MipsRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   case G_FSUB:
   case G_FMUL:
   case G_FDIV:
-  case G_FABS: {
+  case G_FABS:
+  case G_FSQRT:{
     unsigned Size = MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
     assert((Size == 32 || Size == 64) && "Unsupported floating point size");
     OperandsMapping = Size == 32 ? &Mips::ValueMappings[Mips::SPRIdx]
