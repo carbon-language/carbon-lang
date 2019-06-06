@@ -174,7 +174,7 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
     lower_ = AsExpr(Constant<SubscriptInteger>{1});
   }
   lower_.value() = evaluate::Fold(context, std::move(lower_.value().value()));
-  std::optional<ConstantSubscript> lbi{ToInt64(lower_.value().value())};
+  std::optional<std::int64_t> lbi{ToInt64(lower_.value().value())};
   if (lbi.has_value() && *lbi < 1) {
     context.messages().Say(
         "Lower bound (%jd) on substring is less than one"_en_US,
@@ -186,9 +186,9 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
     upper_ = upper();
   }
   upper_.value() = evaluate::Fold(context, std::move(upper_.value().value()));
-  if (std::optional<ConstantSubscript> ubi{ToInt64(upper_.value().value())}) {
+  if (std::optional<std::int64_t> ubi{ToInt64(upper_.value().value())}) {
     auto *literal{std::get_if<StaticDataObject::Pointer>(&parent_)};
-    std::optional<LengthCIntType> length;
+    std::optional<std::int64_t> length;
     if (literal != nullptr) {
       length = (*literal)->data().size();
     } else if (const Symbol * symbol{GetLastSymbol()}) {
@@ -206,8 +206,7 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
     } else if (length.has_value() && *ubi > *length) {
       context.messages().Say("Upper bound (%jd) on substring is greater "
                              "than character length (%jd)"_en_US,
-          static_cast<std::intmax_t>(*ubi),
-          static_cast<std::intmax_t>(*length));
+          static_cast<std::intmax_t>(*ubi), static_cast<std::int64_t>(*length));
       *ubi = *length;
     }
     if (lbi.has_value() && literal != nullptr) {
@@ -223,7 +222,7 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
       }
       parent_ = newStaticData;
       lower_ = AsExpr(Constant<SubscriptInteger>{1});
-      LengthCIntType length = newStaticData->data().size();
+      std::int64_t length = newStaticData->data().size();
       upper_ = AsExpr(Constant<SubscriptInteger>{length});
       switch (width) {
       case 1:

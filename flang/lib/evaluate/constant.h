@@ -17,7 +17,6 @@
 
 #include "formatting.h"
 #include "type.h"
-#include "../common/default-kinds.h"
 #include <map>
 #include <ostream>
 #include <vector>
@@ -36,13 +35,11 @@ template<typename> class Constant;
 
 // When describing shapes of constants or specifying 1-based subscript
 // values as indices into constants, use a vector of integers.
-using ConstantSubscript = common::SubscriptCIntType;
+using ConstantSubscript = std::int64_t;
 using ConstantSubscripts = std::vector<ConstantSubscript>;
 inline int GetRank(const ConstantSubscripts &s) {
   return static_cast<int>(s.size());
 }
-
-using LengthCIntType = common::SubscriptCIntType;
 
 std::size_t TotalElementCount(const ConstantSubscripts &);
 
@@ -130,7 +127,7 @@ public:
   CLASS_BOILERPLATE(Constant)
   explicit Constant(const Scalar<Result> &);
   explicit Constant(Scalar<Result> &&);
-  Constant(LengthCIntType, std::vector<Element> &&, ConstantSubscripts &&);
+  Constant(std::int64_t, std::vector<Element> &&, ConstantSubscripts &&);
   ~Constant();
 
   int Rank() const { return GetRank(shape_); }
@@ -141,7 +138,7 @@ public:
   std::size_t size() const;
   const ConstantSubscripts &shape() const { return shape_; }
 
-  LengthCIntType LEN() const { return length_; }
+  std::int64_t LEN() const { return length_; }
 
   std::optional<Scalar<Result>> GetScalarValue() const {
     if (shape_.empty()) {
@@ -163,7 +160,7 @@ public:
 
 private:
   Scalar<Result> values_;  // one contiguous string
-  LengthCIntType length_;
+  std::int64_t length_;
   ConstantSubscripts shape_;
 };
 

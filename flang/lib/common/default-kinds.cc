@@ -29,6 +29,12 @@ IntrinsicTypeDefaultKinds &IntrinsicTypeDefaultKinds::set_defaultIntegerKind(
   return *this;
 }
 
+IntrinsicTypeDefaultKinds &IntrinsicTypeDefaultKinds::set_subscriptIntegerKind(
+    int k) {
+  subscriptIntegerKind_ = k;
+  return *this;
+}
+
 IntrinsicTypeDefaultKinds &IntrinsicTypeDefaultKinds::set_defaultRealKind(
     int k) {
   defaultRealKind_ = k;
