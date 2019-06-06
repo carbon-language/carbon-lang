@@ -94,7 +94,7 @@ MipsLegalizerInfo::MipsLegalizerInfo(const MipsSubtarget &ST) {
   getActionDefinitionsBuilder(G_FCONSTANT)
       .legalFor({s32, s64});
 
-  getActionDefinitionsBuilder({G_FADD, G_FSUB, G_FMUL, G_FDIV})
+  getActionDefinitionsBuilder({G_FADD, G_FSUB, G_FMUL, G_FDIV, G_FABS})
       .legalFor({s32, s64});
 
   getActionDefinitionsBuilder(G_FCMP)
