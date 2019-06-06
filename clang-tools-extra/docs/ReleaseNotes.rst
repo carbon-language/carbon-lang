@@ -101,6 +101,11 @@ Improvements to clang-tidy
   Finds and fixes ``absl::Time`` subtraction expressions to do subtraction
   in the Time domain instead of the numeric domain.
 
+- New :doc:`android-cloexec-pipe
+  <clang-tidy/checks/android-cloexec-pipe>` check.
+
+  This check detects usage of ``pipe()``.
+
 - New :doc:`android-cloexec-pipe2
   <clang-tidy/checks/android-cloexec-pipe2>` check.
 

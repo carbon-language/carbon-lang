@@ -20,6 +20,7 @@
 #include "CloexecInotifyInitCheck.h"
 #include "CloexecMemfdCreateCheck.h"
 #include "CloexecOpenCheck.h"
+#include "CloexecPipeCheck.h"
 #include "CloexecPipe2Check.h"
 #include "CloexecSocketCheck.h"
 #include "ComparisonInTempFailureRetryCheck.h"
@@ -50,6 +51,7 @@ public:
     CheckFactories.registerCheck<CloexecMemfdCreateCheck>(
         "android-cloexec-memfd-create");
     CheckFactories.registerCheck<CloexecOpenCheck>("android-cloexec-open");
+    CheckFactories.registerCheck<CloexecPipeCheck>("android-cloexec-pipe");
     CheckFactories.registerCheck<CloexecPipe2Check>("android-cloexec-pipe2");
     CheckFactories.registerCheck<CloexecSocketCheck>("android-cloexec-socket");
     CheckFactories.registerCheck<ComparisonInTempFailureRetryCheck>(
