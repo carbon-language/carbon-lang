@@ -291,7 +291,7 @@ static void transformSubToCanonicalAddExpr(BinaryOperatorKind &Opcode,
 }
 
 AST_MATCHER(Expr, isIntegerConstantExpr) {
-  if (Node.isInstantiationDependent() || Node.isValueDependent())
+  if (Node.isInstantiationDependent())
     return false;
   return Node.isIntegerConstantExpr(Finder->getASTContext());
 }
@@ -523,10 +523,11 @@ static bool retrieveRelationalIntegerConstantExpr(
     if (canOverloadedOperatorArgsBeModified(OverloadedFunctionDecl, false))
       return false;
 
-    if (!OverloadedOperatorExpr->getArg(1)->isIntegerConstantExpr(
-            Value, *Result.Context))
-      return false;
-
+    if (const auto *Arg = OverloadedOperatorExpr->getArg(1)) {
+      if (!Arg->isValueDependent() &&
+          !Arg->isIntegerConstantExpr(Value, *Result.Context))
+        return false;
+    }
     Symbol = OverloadedOperatorExpr->getArg(0);
     OperandExpr = OverloadedOperatorExpr;
     Opcode = BinaryOperator::getOverloadedOpcode(OverloadedOperatorExpr->getOperator());
