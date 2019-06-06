@@ -555,6 +555,18 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
       setOperationAction(ISD::ADD, VT, Legal);
       setOperationAction(ISD::SUB, VT, Legal);
 
+      // For v2i64, these are only valid with P8Vector. This is corrected after
+      // the loop.
+      setOperationAction(ISD::SMAX, VT, Legal);
+      setOperationAction(ISD::SMIN, VT, Legal);
+      setOperationAction(ISD::UMAX, VT, Legal);
+      setOperationAction(ISD::UMIN, VT, Legal);
+
+      if (Subtarget.hasVSX()) {
+        setOperationAction(ISD::FMAXNUM, VT, Legal);
+        setOperationAction(ISD::FMINNUM, VT, Legal);
+      }
+
       // Vector instructions introduced in P8
       if (Subtarget.hasP8Altivec() && (VT.SimpleTy != MVT::v1i128)) {
         setOperationAction(ISD::CTPOP, VT, Legal);
@@ -637,6 +649,12 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
         setLoadExtAction(ISD::ZEXTLOAD, VT, InnerVT, Expand);
         setLoadExtAction(ISD::EXTLOAD, VT, InnerVT, Expand);
       }
+    }
+    if (!Subtarget.hasP8Vector()) {
+      setOperationAction(ISD::SMAX, MVT::v2i64, Expand);
+      setOperationAction(ISD::SMIN, MVT::v2i64, Expand);
+      setOperationAction(ISD::UMAX, MVT::v2i64, Expand);
+      setOperationAction(ISD::UMIN, MVT::v2i64, Expand);
     }
 
     for (auto VT : {MVT::v2i64, MVT::v4i32, MVT::v8i16, MVT::v16i8})
