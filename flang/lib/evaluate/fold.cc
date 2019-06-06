@@ -907,10 +907,10 @@ Expr<Type<TypeCategory::Character, KIND>> FoldOperation(FoldingContext &context,
       auto *sn{UnwrapExpr<Expr<SomeInteger>>(args[0])};
       CHECK(sn != nullptr);
       return std::visit(
-          [&funcRef, &context, &name](const auto &n) -> Expr<T> {
+          [&funcRef, &context](const auto &n) -> Expr<T> {
             using IntT = typename std::decay_t<decltype(n)>::Result;
             return FoldElementalIntrinsic<T, IntT>(context, std::move(funcRef),
-                ScalarFunc<T, IntT>([&context, &name](const Scalar<IntT> &i) {
+                ScalarFunc<T, IntT>([](const Scalar<IntT> &i) {
                   return CharacterUtils<KIND>::CHAR(i.ToUInt64());
                 }));
           },
