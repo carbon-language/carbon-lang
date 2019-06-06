@@ -7189,9 +7189,12 @@ ExprResult Sema::BuildCXXMemberCallExpr(Expr *E, NamedDecl *FoundDecl,
     }
   }
 
-  MemberExpr *ME = new (Context) MemberExpr(
-      Exp.get(), /*IsArrow=*/false, SourceLocation(), Method, SourceLocation(),
-      Context.BoundMemberTy, VK_RValue, OK_Ordinary);
+  MemberExpr *ME = MemberExpr::Create(
+      Context, Exp.get(), /*IsArrow=*/false, SourceLocation(),
+      NestedNameSpecifierLoc(), SourceLocation(), Method,
+      DeclAccessPair::make(FoundDecl, FoundDecl->getAccess()),
+      DeclarationNameInfo(), /*TemplateArgs=*/nullptr, Context.BoundMemberTy,
+      VK_RValue, OK_Ordinary);
   if (HadMultipleCandidates)
     ME->setHadMultipleCandidates(true);
   MarkMemberReferenced(ME);
