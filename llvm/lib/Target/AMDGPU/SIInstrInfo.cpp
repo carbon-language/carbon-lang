@@ -2479,6 +2479,10 @@ bool SIInstrInfo::hasUnwantedEffectsWhenEXECEmpty(const MachineInstr &MI) const 
   if (MI.mayStore() && isSMRD(MI))
     return true; // scalar store or atomic
 
+  // This will terminate the function when other lanes may need to continue.
+  if (MI.isReturn())
+    return true;
+
   // These instructions cause shader I/O that may cause hardware lockups
   // when executed with an empty EXEC mask.
   //
