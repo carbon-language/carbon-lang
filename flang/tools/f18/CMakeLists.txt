@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if(LINK_WITH_FIR)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLINK_WITH_FIR")
-  set(FORTRAN_FIR_LIB "FortranFIR")
-endif()
-
 add_executable(f18
   f18.cc
   dump.cc
@@ -26,8 +21,6 @@ target_link_libraries(f18
   FortranParser
   FortranEvaluate
   FortranSemantics
-  ${FORTRAN_FIR_LIB}
-  ${LLVM_COMMON_LIBS}
 )
 
 add_executable(f18-parse-demo

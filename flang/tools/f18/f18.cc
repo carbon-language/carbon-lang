@@ -14,10 +14,6 @@
 
 // Temporary Fortran front end driver main program for development scaffolding.
 
-#ifdef LINK_WITH_FIR
-#include "../../lib/FIR/afforestation.h"
-#include "../../lib/FIR/graph-writer.h"
-#endif
 #include "../../lib/common/default-kinds.h"
 #include "../../lib/evaluate/expression.h"
 #include "../../lib/parser/characters.h"
@@ -99,8 +95,6 @@ struct DriverOptions {
   bool dumpUnparseWithSymbols{false};
   bool dumpParseTree{false};
   bool dumpSymbols{false};
-  bool dumpGraph{false};
-  bool debugLinearFIR{false};
   bool debugResolveNames{false};
   bool debugSemantics{false};
   bool measureTree{false};
@@ -222,8 +216,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   }
   // TODO: Change this predicate to just "if (!driver.debugNoSemantics)"
   if (driver.debugSemantics || driver.debugResolveNames || driver.dumpSymbols ||
-      driver.dumpUnparseWithSymbols || driver.debugLinearFIR ||
-      driver.dumpGraph) {
+      driver.dumpUnparseWithSymbols) {
     Fortran::semantics::Semantics semantics{
         semanticsContext, parseTree, parsing.cooked()};
     semantics.Perform();
@@ -244,14 +237,6 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
           std::cout, parseTree, driver.encoding);
       return {};
     }
-  }
-  if (driver.dumpGraph) {
-#ifdef LINK_WITH_FIR
-    auto *fir{Fortran::FIR::CreateFortranIR(
-        parseTree, semanticsContext, driver.debugLinearFIR)};
-    Fortran::FIR::GraphWriter::print(*fir);
-#endif
-    return {};
   }
   if (driver.dumpParseTree) {
     Fortran::parser::DumpTree(std::cout, parseTree);
@@ -438,10 +423,6 @@ int main(int argc, char *const argv[]) {
       driver.dumpUnparse = true;
     } else if (arg == "-funparse-with-symbols") {
       driver.dumpUnparseWithSymbols = true;
-    } else if (arg == "-fdotty") {
-      driver.dumpGraph = true;
-    } else if (arg == "-fdebug-dump-linear-ir") {
-      driver.debugLinearFIR = true;
     } else if (arg == "-fparse-only") {
       driver.parseOnly = true;
     } else if (arg == "-c") {
@@ -495,8 +476,6 @@ int main(int argc, char *const argv[]) {
           << "  -fdebug-resolve-names\n"
           << "  -fdebug-instrumented-parse\n"
           << "  -fdebug-semantics    perform semantic checks\n"
-          << "  -fdotty              print FIR as a dotty graph\n"
-          << "  -fdebug-dump-linear-ir dump the flat linear FIR for debug\n"
           << "  -v -c -o -I -D -U    have their usual meanings\n"
           << "  -help                print this again\n"
           << "Other options are passed through to the compiler.\n";

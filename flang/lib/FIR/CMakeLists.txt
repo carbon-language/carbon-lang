@@ -14,7 +14,6 @@
 
 
 add_library(FortranFIR
-  afforestation.cc
   basicblock.cc
   builder.cc
   flattened.cc
