@@ -3168,6 +3168,14 @@ let Predicates = [HasFRInt3264] in {
   defm FRINT64X : FRIntNNT<0b11, "frint64x">;
 } // HasFRInt3264
 
+let Predicates = [HasFullFP16] in {
+  def : Pat<(i32 (lrint f16:$Rn)),
+            (FCVTZSUWHr (!cast<Instruction>(FRINTXHr) f16:$Rn))>;
+  def : Pat<(i64 (lrint f16:$Rn)),
+            (FCVTZSUXHr (!cast<Instruction>(FRINTXHr) f16:$Rn))>;
+  def : Pat<(i64 (llrint f16:$Rn)),
+            (FCVTZSUXHr (!cast<Instruction>(FRINTXHr) f16:$Rn))>;
+}
 def : Pat<(i32 (lrint f32:$Rn)),
           (FCVTZSUWSr (!cast<Instruction>(FRINTXSr) f32:$Rn))>;
 def : Pat<(i32 (lrint f64:$Rn)),
