@@ -464,8 +464,6 @@ int main(int argc, char *const argv[]) {
       defaultKinds.set_defaultRealKind(8);
     } else if (arg == "-i8" || arg == "-fdefault-integer-8") {
       defaultKinds.set_defaultIntegerKind(8);
-    } else if (arg == "-fno-large-arrays") {
-      defaultKinds.set_subscriptIntegerKind(4);
     } else if (arg == "-module") {
       driver.moduleDirectory = args.front();
       args.pop_front();

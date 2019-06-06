@@ -267,8 +267,8 @@ static inline Expr<TR> FoldElementalIntrinsicHelper(FoldingContext &context,
     }
     // Build and return constant result
     if constexpr (TR::category == TypeCategory::Character) {
-      std::int64_t len{
-          static_cast<std::int64_t>(results.size() ? results[0].length() : 0)};
+      auto len{static_cast<LengthCIntType>(
+          results.size() ? results[0].length() : 0)};
       return Expr<TR>{Constant<TR>{len, std::move(results), std::move(shape)}};
     } else {
       return Expr<TR>{Constant<TR>{std::move(results), std::move(shape)}};
@@ -966,8 +966,8 @@ static std::optional<Constant<SubscriptInteger>> GetConstantSubscript(
             }
           },
           [](Triplet &triplet) -> std::optional<Constant<SubscriptInteger>> {
-            std::optional<std::int64_t> lbi{1}, ubi;
-            std::optional<std::int64_t> stride{ToInt64(triplet.stride())};
+            std::optional<ConstantSubscript> lbi{1}, ubi;
+            std::optional<ConstantSubscript> stride{ToInt64(triplet.stride())};
             if (auto lower{triplet.lower()}) {
               lbi = ToInt64(*lower);
             }
@@ -1005,7 +1005,7 @@ std::optional<Constant<T>> ApplySubscripts(parser::ContextualMessages &messages,
   for (const auto &ss : subscripts) {
     CHECK(ss.Rank() <= 1);
     if (ss.Rank() == 1) {
-      resultShape.push_back(static_cast<std::int64_t>(ss.size()));
+      resultShape.push_back(static_cast<ConstantSubscript>(ss.size()));
       elements *= ss.size();
     }
   }
@@ -1234,7 +1234,8 @@ Expr<T> FoldOperation(FoldingContext &context, Designator<T> &&designator) {
 
 Expr<ImpliedDoIndex::Result> FoldOperation(
     FoldingContext &context, ImpliedDoIndex &&iDo) {
-  if (std::optional<std::int64_t> value{context.GetImpliedDo(iDo.name)}) {
+  if (std::optional<common::SubscriptCIntType> value{
+          context.GetImpliedDo(iDo.name)}) {
     return Expr<ImpliedDoIndex::Result>{*value};
   } else {
     return Expr<ImpliedDoIndex::Result>{std::move(iDo)};
@@ -1248,13 +1249,13 @@ public:
   Expr<T> FoldArray(ArrayConstructor<T> &&array) {
     // Calls FoldArray(const ArrayConstructorValues<T> &) below
     if (FoldArray(array)) {
-      auto n{static_cast<std::int64_t>(elements_.size())};
+      auto n{static_cast<ConstantSubscript>(elements_.size())};
       if constexpr (std::is_same_v<T, SomeDerived>) {
         return Expr<T>{Constant<T>{array.GetType().GetDerivedTypeSpec(),
             std::move(elements_), ConstantSubscripts{n}}};
       } else if constexpr (T::category == TypeCategory::Character) {
         auto length{Fold(context_, common::Clone(array.LEN()))};
-        if (std::optional<std::int64_t> lengthValue{ToInt64(length)}) {
+        if (std::optional<LengthCIntType> lengthValue{ToInt64(length)}) {
           return Expr<T>{Constant<T>{
               *lengthValue, std::move(elements_), ConstantSubscripts{n}}};
         }
@@ -1295,14 +1296,14 @@ private:
         Fold(context_, Expr<SubscriptInteger>{iDo.upper()})};
     Expr<SubscriptInteger> stride{
         Fold(context_, Expr<SubscriptInteger>{iDo.stride()})};
-    std::optional<std::int64_t> start{ToInt64(lower)}, end{ToInt64(upper)},
-        step{ToInt64(stride)};
+    std::optional<common::SubscriptCIntType> start{ToInt64(lower)},
+        end{ToInt64(upper)}, step{ToInt64(stride)};
     if (start.has_value() && end.has_value() && step.has_value()) {
       if (*step == 0) {
         return false;
       }
       bool result{true};
-      std::int64_t &j{context_.StartImpliedDo(iDo.name(), *start)};
+      common::SubscriptCIntType &j{context_.StartImpliedDo(iDo.name(), *start)};
       if (*step > 0) {
         for (; j <= *end; j += *step) {
           result &= FoldArray(iDo.values());
@@ -2066,14 +2067,14 @@ Expr<Type<TypeCategory::Character, KIND>> FoldOperation(
   }
   using Result = Type<TypeCategory::Character, KIND>;
   if (auto folded{OperandsAreConstants(x)}) {
-    auto oldLength{static_cast<std::int64_t>(folded->first.size())};
+    auto oldLength{static_cast<LengthCIntType>(folded->first.size())};
     auto newLength{folded->second.ToInt64()};
     if (newLength < oldLength) {
       folded->first.erase(newLength);
     } else {
       folded->first.append(newLength - oldLength, ' ');
     }
-    CHECK(static_cast<std::int64_t>(folded->first.size()) == newLength);
+    CHECK(static_cast<LengthCIntType>(folded->first.size()) == newLength);
     return Expr<Result>{Constant<Result>{std::move(folded->first)}};
   }
   return Expr<Result>{std::move(x)};
