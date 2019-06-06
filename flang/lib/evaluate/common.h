@@ -17,6 +17,7 @@
 
 #include "intrinsics-library.h"
 #include "../common/Fortran.h"
+#include "../common/default-kinds.h"
 #include "../common/enum-set.h"
 #include "../common/idioms.h"
 #include "../common/indirection.h"
@@ -228,11 +229,13 @@ public:
     return hostIntrinsicsLibrary_;
   }
 
-  std::int64_t &StartImpliedDo(parser::CharBlock, std::int64_t = 1);
-  std::optional<std::int64_t> GetImpliedDo(parser::CharBlock) const;
+  common::SubscriptCIntType &StartImpliedDo(
+      parser::CharBlock, common::SubscriptCIntType = 1);
+  std::optional<common::SubscriptCIntType> GetImpliedDo(
+      parser::CharBlock) const;
   void EndImpliedDo(parser::CharBlock);
 
-  std::map<parser::CharBlock, std::int64_t> &impliedDos() {
+  std::map<parser::CharBlock, common::SubscriptCIntType> &impliedDos() {
     return impliedDos_;
   }
 
@@ -247,7 +250,7 @@ private:
   bool flushSubnormalsToZero_{false};
   bool bigEndian_{false};
   const semantics::DerivedTypeSpec *pdtInstance_{nullptr};
-  std::map<parser::CharBlock, std::int64_t> impliedDos_;
+  std::map<parser::CharBlock, common::SubscriptCIntType> impliedDos_;
   HostIntrinsicProceduresLibrary hostIntrinsicsLibrary_;
 };
 

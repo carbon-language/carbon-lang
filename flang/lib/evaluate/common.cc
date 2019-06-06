@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,14 +35,14 @@ void RealFlagWarnings(
   }
 }
 
-std::int64_t &FoldingContext::StartImpliedDo(
-    parser::CharBlock name, std::int64_t n) {
+common::SubscriptCIntType &FoldingContext::StartImpliedDo(
+    parser::CharBlock name, common::SubscriptCIntType n) {
   auto pair{impliedDos_.insert(std::make_pair(name, n))};
   CHECK(pair.second);
   return pair.first->second;
 }
 
-std::optional<std::int64_t> FoldingContext::GetImpliedDo(
+std::optional<common::SubscriptCIntType> FoldingContext::GetImpliedDo(
     parser::CharBlock name) const {
   if (auto iter{impliedDos_.find(name)}; iter != impliedDos_.cend()) {
     return {iter->second};

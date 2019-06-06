@@ -16,21 +16,25 @@
 #define FORTRAN_COMMON_DEFAULT_KINDS_H_
 
 #include "Fortran.h"
+#include <cstdint>
 
 // Represent the default values of the kind parameters of the
-// various intrinsic types.  These can be configured by means of
-// the compiler command line.
+// various intrinsic types.  Most of these can be configured by
+// means of the compiler command line; subscriptIntegerKind,
+// however, is fixed at 8 because all address calculations are
+// 64-bit safe.
 namespace Fortran::common {
+
+using SubscriptCIntType = std::int64_t;
 
 class IntrinsicTypeDefaultKinds {
 public:
   IntrinsicTypeDefaultKinds();
-  int subscriptIntegerKind() const { return subscriptIntegerKind_; }
+  static constexpr int subscriptIntegerKind() { return 8; }
   int doublePrecisionKind() const { return doublePrecisionKind_; }
   int quadPrecisionKind() const { return quadPrecisionKind_; }
 
   IntrinsicTypeDefaultKinds &set_defaultIntegerKind(int);
-  IntrinsicTypeDefaultKinds &set_subscriptIntegerKind(int);
   IntrinsicTypeDefaultKinds &set_defaultRealKind(int);
   IntrinsicTypeDefaultKinds &set_doublePrecisionKind(int);
   IntrinsicTypeDefaultKinds &set_quadPrecisionKind(int);
@@ -46,7 +50,6 @@ private:
   // storage unit, so their kinds are also forced.  Default COMPLEX must always
   // comprise two default REAL components.
   int defaultIntegerKind_{4};
-  int subscriptIntegerKind_{8};  // for large arrays
   int defaultRealKind_{defaultIntegerKind_};
   int doublePrecisionKind_{2 * defaultRealKind_};
   int quadPrecisionKind_{2 * doublePrecisionKind_};
