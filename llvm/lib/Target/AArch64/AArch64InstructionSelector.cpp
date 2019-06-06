@@ -2854,6 +2854,11 @@ bool AArch64InstructionSelector::tryOptSelect(MachineInstr &I) const {
     if (Opc != TargetOpcode::COPY && Opc != TargetOpcode::G_TRUNC)
       break;
 
+    // Can't see past copies from physregs.
+    if (Opc == TargetOpcode::COPY &&
+        TargetRegisterInfo::isPhysicalRegister(CondDef->getOperand(1).getReg()))
+      return false;
+
     CondDef = MRI.getVRegDef(CondDef->getOperand(1).getReg());
   }
 
