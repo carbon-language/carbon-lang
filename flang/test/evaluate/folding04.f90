@@ -30,26 +30,23 @@ module real_tests
   !WARN: division by zero on division
   real(4), parameter :: r4_ninf = -1._4/0._4
 
-  !WARN: invalid argument on folding function with host runtime
+  !WARN: invalid argument on intrinsic function
   real(4), parameter :: nan_r4_acos1 = acos(1.1)
   TEST_ISNAN(nan_r4_acos1)
-  !WARN: invalid argument on folding function with host runtime
+  !WARN: invalid argument on intrinsic function
   real(4), parameter :: nan_r4_acos2 = acos(r4_pmax)
   TEST_ISNAN(nan_r4_acos2)
-  !WARN: invalid argument on folding function with host runtime
+  !WARN: invalid argument on intrinsic function
   real(4), parameter :: nan_r4_acos3 = acos(r4_nmax)
   TEST_ISNAN(nan_r4_acos3)
-  !WARN: invalid argument on folding function with host runtime
+  !WARN: invalid argument on intrinsic function
   real(4), parameter :: nan_r4_acos4 = acos(r4_ninf)
   TEST_ISNAN(nan_r4_acos4)
-  !WARN: invalid argument on folding function with host runtime
+  !WARN: invalid argument on intrinsic function
   real(4), parameter :: nan_r4_acos5 = acos(r4_pinf)
   TEST_ISNAN(nan_r4_acos5)
-  ! No warnings expected for NaN propagation (quiet)
-  real(4), parameter :: nan_r4_acos6 = acos(r4_nan)
-  TEST_ISNAN(nan_r4_acos6)
 
-  !WARN: overflow on folding function with host runtime
+  !WARN: overflow on intrinsic function
   logical, parameter :: test_exp_overflow = exp(256._4).EQ.r4_pinf
 end module
 

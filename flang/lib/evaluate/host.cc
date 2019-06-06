@@ -66,6 +66,15 @@ void HostFloatingPointEnvironment::SetUpHostFloatingPointEnvironment(
   // If F18 is not built on one of the above host architecture, software
   // flushing will be performed around host library calls if needed.
 #endif
+
+#ifdef __clang__
+  // clang does not ensure that floating point environment flags are meaningful.
+  // It may perform optimizations that will impact the floating point
+  // environment. For instance, libc++ complex float tan and tanh compilation
+  // with clang -O2 introduces a division by zero on X86 in unused slots of xmm
+  // registers. Therefore, fetestexcept should not be used.
+  hardwareFlagsAreReliable_ = false;
+#endif
   errno = 0;
   if (fesetenv(&currentFenv_) != 0) {
     common::die("Folding with host runtime: fesetenv() failed: %s",
@@ -83,41 +92,43 @@ void HostFloatingPointEnvironment::SetUpHostFloatingPointEnvironment(
         "TiesAwayFromZero rounding mode is not available not available when folding constants with host runtime. Using TiesToEven instead."_en_US);
     break;
   }
+  flags_.clear();
   errno = 0;
 }
 void HostFloatingPointEnvironment::CheckAndRestoreFloatingPointEnvironment(
     FoldingContext &context) {
   int errnoCapture{errno};
-  int exceptions{fetestexcept(FE_ALL_EXCEPT)};
-  RealFlags flags;
-  if (exceptions & FE_INVALID) {
-    flags.set(RealFlag::InvalidArgument);
-  }
-  if (exceptions & FE_DIVBYZERO) {
-    flags.set(RealFlag::DivideByZero);
-  }
-  if (exceptions & FE_OVERFLOW) {
-    flags.set(RealFlag::Overflow);
-  }
-  if (exceptions & FE_UNDERFLOW) {
-    flags.set(RealFlag::Underflow);
-  }
-  if (exceptions & FE_INEXACT) {
-    flags.set(RealFlag::Inexact);
+  if (hardwareFlagsAreReliable()) {
+    int exceptions{fetestexcept(FE_ALL_EXCEPT)};
+    if (exceptions & FE_INVALID) {
+      flags_.set(RealFlag::InvalidArgument);
+    }
+    if (exceptions & FE_DIVBYZERO) {
+      flags_.set(RealFlag::DivideByZero);
+    }
+    if (exceptions & FE_OVERFLOW) {
+      flags_.set(RealFlag::Overflow);
+    }
+    if (exceptions & FE_UNDERFLOW) {
+      flags_.set(RealFlag::Underflow);
+    }
+    if (exceptions & FE_INEXACT) {
+      flags_.set(RealFlag::Inexact);
+    }
   }
 
-  if (flags.empty()) {
+  if (flags_.empty()) {
     if (errnoCapture == EDOM) {
-      flags.set(RealFlag::InvalidArgument);
+      flags_.set(RealFlag::InvalidArgument);
     }
     if (errnoCapture == ERANGE) {
       // can't distinguish over/underflow from errno
-      flags.set(RealFlag::Overflow);
+      flags_.set(RealFlag::Overflow);
     }
   }
 
-  if (!flags.empty()) {
-    RealFlagWarnings(context, flags, "folding function with host runtime");
+  if (!flags_.empty()) {
+    RealFlagWarnings(context, flags_, "intrinsic function");
   }
   errno = 0;
   if (fesetenv(&originalFenv_) != 0) {

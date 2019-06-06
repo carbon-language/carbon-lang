@@ -88,24 +88,42 @@ template<typename TR, typename... ArgInfo> struct CallableHostWrapper {
     if constexpr (host::HostTypeExists<TR, typename ArgInfo::Type...>()) {
       host::HostFloatingPointEnvironment hostFPE;
       hostFPE.SetUpHostFloatingPointEnvironment(context);
-      host::HostType<TR> res{};
+      host::HostType<TR> hostResult{};
+      Scalar<TR> result{};
       if (context.flushSubnormalsToZero() &&
           !hostFPE.hasSubnormalFlushingHardwareControl()) {
-        res = func(host::CastFortranToHost<typename ArgInfo::Type>(
+        hostResult = func(host::CastFortranToHost<typename ArgInfo::Type>(
             Flusher<typename ArgInfo::Type>::FlushSubnormals(x))...);
-        hostFPE.CheckAndRestoreFloatingPointEnvironment(context);
-        return Flusher<TR>::FlushSubnormals(host::CastHostToFortran<TR>(res));
+        result = Flusher<TR>::FlushSubnormals(
+            host::CastHostToFortran<TR>(hostResult));
       } else {
-        res = func(host::CastFortranToHost<typename ArgInfo::Type>(x)...);
-        hostFPE.CheckAndRestoreFloatingPointEnvironment(context);
-        return host::CastHostToFortran<TR>(res);
+        hostResult =
+            func(host::CastFortranToHost<typename ArgInfo::Type>(x)...);
+        result = host::CastHostToFortran<TR>(hostResult);
       }
+      if (!hostFPE.hardwareFlagsAreReliable()) {
+        CheckFloatingPointIssues(hostFPE, result);
+      }
+      hostFPE.CheckAndRestoreFloatingPointEnvironment(context);
+      return result;
     } else {
       common::die("Internal error: Host does not supports this function type."
                   "This should not have been called for folding");
     }
   }
   static constexpr inline auto MakeScalarCallable() { return &scalarCallable; }
+
+  static void CheckFloatingPointIssues(
+      host::HostFloatingPointEnvironment &hostFPE, const Scalar<TR> &x) {
+    if constexpr (TR::category == TypeCategory::Complex ||
+        TR::category == TypeCategory::Real) {
+      if (x.IsNotANumber()) {
+        hostFPE.SetFlag(RealFlag::InvalidArgument);
+      } else if (x.IsInfinite()) {
+        hostFPE.SetFlag(RealFlag::Overflow);
+      }
+    }
+  }
 };
 
 template<typename TR, typename... ArgInfo>
