@@ -139,7 +139,7 @@ set(TEST_LIBPGMATH "-pgmath=false")
 if (LIBPGMATH_DIR)
   find_library(LIBPGMATH pgmath PATHS ${LIBPGMATH_DIR})
   if(LIBPGMATH)
-  set(TEST_LIBPGMATH "-pgmath=true")
+    set(TEST_LIBPGMATH "-pgmath=true")
   endif()
 endif()
 
