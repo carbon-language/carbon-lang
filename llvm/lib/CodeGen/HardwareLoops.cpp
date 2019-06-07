@@ -363,8 +363,7 @@ void HardwareLoop::InsertIterationSetup(Value *LoopCountInit,
   Type *Ty = LoopCountInit->getType();
   Function *LoopIter =
     Intrinsic::getDeclaration(M, Intrinsic::set_loop_iterations, Ty);
-  Value *Call = Builder.CreateCall(LoopIter, LoopCountInit);
-  LLVM_DEBUG(dbgs() << "HWLoops: Iteration set: " << *Call << "\n");
+  Builder.CreateCall(LoopIter, LoopCountInit);
 }
 
 void HardwareLoop::InsertLoopDec() {
