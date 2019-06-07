@@ -92,15 +92,13 @@ INITIALIZE_PASS(SIInsertSkips, DEBUG_TYPE,
 
 char &llvm::SIInsertSkipsPassID = SIInsertSkips::ID;
 
-static bool opcodeEmitsNoInsts(unsigned Opc) {
-  switch (Opc) {
-  case TargetOpcode::IMPLICIT_DEF:
-  case TargetOpcode::KILL:
-  case TargetOpcode::BUNDLE:
-  case TargetOpcode::CFI_INSTRUCTION:
-  case TargetOpcode::EH_LABEL:
-  case TargetOpcode::GC_LABEL:
-  case TargetOpcode::DBG_VALUE:
+static bool opcodeEmitsNoInsts(const MachineInstr &MI) {
+  if (MI.isMetaInstruction())
+    return true;
+
+  // Handle target specific opcodes.
+  switch (MI.getOpcode()) {
+  case AMDGPU::SI_MASK_BRANCH:
     return true;
   default:
     return false;
@@ -118,7 +116,7 @@ bool SIInsertSkips::shouldSkip(const MachineBasicBlock &From,
 
     for (MachineBasicBlock::const_iterator I = MBB.begin(), E = MBB.end();
          NumInstr < SkipThreshold && I != E; ++I) {
-      if (opcodeEmitsNoInsts(I->getOpcode()))
+      if (opcodeEmitsNoInsts(*I))
         continue;
 
       // FIXME: Since this is required for correctness, this should be inserted
