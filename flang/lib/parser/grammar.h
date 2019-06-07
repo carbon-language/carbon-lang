@@ -444,10 +444,9 @@ constexpr auto executableConstruct{
 constexpr auto obsoleteExecutionPartConstruct{recovery(ignoredStatementPrefix >>
         fail<ExecutionPartConstruct>(
             "obsolete legacy extension is not supported"_err_en_US),
-    construct<ExecutionPartConstruct>(
+    construct<ExecutionPartConstruct>(construct<ErrorRecovery>(ok /
         statement("REDIMENSION" >> name >>
-            parenthesized(nonemptyList(Parser<AllocateShapeSpec>{})) >> ok) >>
-        construct<ErrorRecovery>()))};
+            parenthesized(nonemptyList(Parser<AllocateShapeSpec>{}))))))};
 
 TYPE_PARSER(recovery(
     withMessage("expected execution part construct"_err_en_US,
@@ -461,8 +460,8 @@ TYPE_PARSER(recovery(
                     statement(indirect(dataStmt))),
                 extension<LanguageFeature::ExecutionPartNamelist>(
                     construct<ExecutionPartConstruct>(
-                        statement(indirect(Parser<NamelistStmt>{}))) ||
-                    obsoleteExecutionPartConstruct)))),
+                        statement(indirect(Parser<NamelistStmt>{})))),
+                obsoleteExecutionPartConstruct))),
     construct<ExecutionPartConstruct>(executionPartErrorRecovery)))
 
 // R509 execution-part -> executable-construct [execution-part-construct]...

@@ -49,7 +49,7 @@ namespace Fortran::parser {
 
 // fail<A>("..."_err_en_US) returns a parser that never succeeds.  It reports an
 // error message at the current position.  The result type is unused,
-// but might have to be specified at the point of call for satisfy
+// but might have to be specified at the point of call to satisfy
 // the type checker.  The state remains valid.
 template<typename A> class FailParser {
 public:
@@ -69,7 +69,7 @@ template<typename A = Success> inline constexpr auto fail(MessageFixedText t) {
   return FailParser<A>{t};
 }
 
-// pure(x) returns a parsers that always succeeds, does not advance the
+// pure(x) returns a parser that always succeeds, does not advance the
 // parse, and returns a captured value whose type must be copy-constructible.
 template<typename A> class PureParser {
 public:
@@ -306,7 +306,8 @@ public:
 
 private:
   template<int J>
-  void ParseRest(std::optional<resultType> &result, ParseState &state, ParseState &backtrack) const {
+  void ParseRest(std::optional<resultType> &result, ParseState &state,
+      ParseState &backtrack) const {
     ParseState prevState{std::move(state)};
     state = backtrack;
     result = std::get<J>(ps_).Parse(state);
@@ -695,6 +696,10 @@ inline constexpr auto applyMem(
 // instance of T constructed upon the values they returned.
 // With a single argument that is a parser with no usable value,
 // construct<T>(p) invokes T's default nullary constructor (T(){}).
+// (This means that "construct<T>(Foo >> Bar >> ok)" is functionally
+// equivalent to "Foo >> Bar >> construct<T>()", but I'd like to hold open
+// the opportunity to make construct<> capture source provenance all of the
+// time, and the first form will then lead to better error positioning.)
 
 template<typename RESULT, typename... PARSER, std::size_t... J>
 inline RESULT ApplyHelperConstructor(
@@ -793,10 +798,11 @@ template<bool pass> struct FixedParser {
   using resultType = Success;
   constexpr FixedParser() {}
   static constexpr std::optional<Success> Parse(ParseState &) {
-    if (pass) {
+    if constexpr (pass) {
       return Success{};
+    } else {
+      return std::nullopt;
     }
-    return std::nullopt;
   }
 };
 
