@@ -1345,6 +1345,8 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
 
   Opts.PassPlugins = Args.getAllArgValues(OPT_fpass_plugin_EQ);
 
+  Opts.SymbolPartition = Args.getLastArgValue(OPT_fsymbol_partition_EQ);
+
   return Success;
 }
 
