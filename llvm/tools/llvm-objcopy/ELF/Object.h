@@ -889,7 +889,7 @@ private:
 
   const ELFFile<ELFT> &ElfFile;
   Object &Obj;
-  uint64_t EhdrOffset = 0;
+  size_t EhdrOffset = 0;
   Optional<StringRef> ExtractPartition;
 
   void setParentSegment(Segment &Child);
