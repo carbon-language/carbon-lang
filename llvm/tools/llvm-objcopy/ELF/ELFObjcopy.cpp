@@ -508,7 +508,7 @@ static Error replaceAndRemoveSections(const CopyConfig &Config, Object &Obj) {
     };
 
   if (Config.ExtractPartition || Config.ExtractMainPartition) {
-    RemovePred = [RemovePred, &Obj](const SectionBase &Sec) {
+    RemovePred = [RemovePred](const SectionBase &Sec) {
       if (RemovePred(Sec))
         return true;
       if (Sec.Type == SHT_LLVM_PART_EHDR || Sec.Type == SHT_LLVM_PART_PHDR)
