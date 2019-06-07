@@ -135,7 +135,8 @@ bool SIInsertSkips::shouldSkip(const MachineBasicBlock &From,
         return true;
 
       // These instructions are potentially expensive even if EXEC = 0.
-      if (TII->isSMRD(*I) || TII->isVMEM(*I) || I->getOpcode() == AMDGPU::S_WAITCNT)
+      if (TII->isSMRD(*I) || TII->isVMEM(*I) || TII->isFLAT(*I) ||
+          I->getOpcode() == AMDGPU::S_WAITCNT)
         return true;
 
       ++NumInstr;
