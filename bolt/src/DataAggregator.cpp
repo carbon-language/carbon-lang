@@ -97,6 +97,13 @@ TimeAggregator("time-aggr",
   cl::cat(AggregatorCategory));
 
 static cl::opt<bool>
+UseEventPC("use-event-pc",
+  cl::desc("use event PC in combination with LBR sampling"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(AggregatorCategory));
+
+static cl::opt<bool>
 WriteAutoFDOData("autofdo",
   cl::desc("generate autofdo textual data instead of bolt data"),
   cl::init(false),
@@ -1168,14 +1175,14 @@ std::error_code DataAggregator::parseBranchEvents() {
 
     NumEntries += Sample.LBR.size();
 
-    // LBRs are stored in reverse execution order. NextLBR refers to the next
-    // executed branch record.
-    const LBREntry *NextLBR{nullptr};
+    // LBRs are stored in reverse execution order. NextPC refers to the next
+    // recorded executed PC.
+    uint64_t NextPC = opts::UseEventPC ? Sample.PC : 0;
     for (const auto &LBR : Sample.LBR) {
-      if (NextLBR) {
+      if (NextPC) {
         // Record fall-through trace.
         const auto TraceFrom = LBR.To;
-        const auto TraceTo = NextLBR->From;
+        const auto TraceTo = NextPC;
         const auto *TraceBF = getBinaryFunctionContainingAddress(TraceFrom);
         if (TraceBF && TraceBF->containsAddress(TraceTo)) {
             auto &Info = FallthroughLBRs[Trace(TraceFrom, TraceTo)];
@@ -1216,7 +1223,7 @@ std::error_code DataAggregator::parseBranchEvents() {
         }
         ++NumTraces;
       }
-      NextLBR = &LBR;
+      NextPC = LBR.From;
 
       auto From = LBR.From;
       if (!getBinaryFunctionContainingAddress(From))
