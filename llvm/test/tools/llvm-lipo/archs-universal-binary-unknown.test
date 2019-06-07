@@ -1,12 +1,7 @@
 # RUN: yaml2obj %s > %t
-
-# RUN: llvm-lipo %t -verify_arch i386
-# RUN: llvm-lipo %t -verify_arch i386 x86_64
-
-# RUN: not llvm-lipo %t -verify_arch aarch64
-# RUN: yaml2obj %s | not llvm-lipo - -verify_arch aarch64 i386
-# lipo does not support this (i.e. yaml2obj %s | not lipo -), included to test function with llvm-lipo
-# use the temporary %t when checking tests with lipo
+# Tests that the output for an unknown architecture is the same as cctools lipo
+# RUN: llvm-lipo %t -archs 2>&1 | FileCheck %s
+# CHECK: i386 unknown(16777367,3)
 
 --- !fat-mach-o
 FatHeader:
@@ -18,7 +13,7 @@ FatArchs:
     offset:          0x0000000000001000
     size:            28
     align:           12
-  - cputype:         0x01000007
+  - cputype:         0x01000097
     cpusubtype:      0x00000003
     offset:          0x0000000000002000
     size:            32
@@ -36,7 +31,7 @@ Slices:
   - !mach-o
     FileHeader:
       magic:           0xFEEDFACF
-      cputype:         0x01000007
+      cputype:         0x01000097
       cpusubtype:      0x00000003
       filetype:        0x00000001
       ncmds:           0
