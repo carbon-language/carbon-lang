@@ -207,12 +207,11 @@ static void printArchOrUnknown(const MachOObjectFile *ObjectFile) {
   // Prints trailing space and unknown in this format for compatibility with
   // cctools lipo.
   const std::string ObjectArch = ObjectFile->getArchTriple().getArchName();
-  if (ObjectArch.empty()) {
+  if (ObjectArch.empty())
     outs() << "unknown(" << ObjectFile->getHeader().cputype << ","
            << ObjectFile->getHeader().cpusubtype << ") ";
-  } else {
+  else
     outs() << ObjectArch + " ";
-  }
 }
 
 LLVM_ATTRIBUTE_NORETURN
