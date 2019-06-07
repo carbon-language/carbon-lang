@@ -35,6 +35,7 @@ Basic Commands
    llvm-dwarfdump
    dsymutil
    llvm-mca
+   llvm-readobj
 
 Debugging Tools
 ~~~~~~~~~~~~~~~
@@ -58,4 +59,3 @@ Developer Tools
    llvm-build
    llvm-exegesis
    llvm-pdbutil
-   llvm-readobj
