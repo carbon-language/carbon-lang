@@ -8,6 +8,16 @@ compact z23.d, p8, z13.d
 // CHECK-NEXT: compact z23.d, p8, z13.d
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
+compact z23.d, p7.b, z13.d
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid restricted predicate register, expected p0..p7 (without element suffix)
+// CHECK-NEXT: compact z23.d, p7.b, z13.d
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
+compact z23.d, p7.q, z13.d
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid restricted predicate register, expected p0..p7 (without element suffix)
+// CHECK-NEXT: compact z23.d, p7.q, z13.d
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
 
 // --------------------------------------------------------------------------//
 // Invalid element widths

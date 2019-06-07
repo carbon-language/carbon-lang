@@ -1081,8 +1081,7 @@ public:
     if (Kind != k_Register || Reg.Kind != RegKind::SVEPredicateVector)
       return DiagnosticPredicateTy::NoMatch;
 
-    if (isSVEVectorReg<Class>() &&
-           (ElementWidth == 0 || Reg.ElementWidth == ElementWidth))
+    if (isSVEVectorReg<Class>() && (Reg.ElementWidth == ElementWidth))
       return DiagnosticPredicateTy::Match;
 
     return DiagnosticPredicateTy::NearMatch;

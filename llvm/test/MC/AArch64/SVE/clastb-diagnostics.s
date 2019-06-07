@@ -9,6 +9,16 @@ clastb   w0, p8, w0, z31.b
 // CHECK-NEXT: clastb   w0, p8, w0, z31.b
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
+clastb   w0, p7.b, w0, z31.b
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid restricted predicate register, expected p0..p7 (without element suffix)
+// CHECK-NEXT: clastb   w0, p7.b, w0, z31.b
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
+clastb   w0, p7.q, w0, z31.b
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid restricted predicate register, expected p0..p7 (without element suffix)
+// CHECK-NEXT: clastb   w0, p7.q, w0, z31.b
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
 
 // ------------------------------------------------------------------------- //
 // Invalid element width

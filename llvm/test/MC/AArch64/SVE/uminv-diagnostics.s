@@ -33,6 +33,17 @@ uminv h0, p8, z31.h
 // CHECK-NEXT: uminv h0, p8, z31.h
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
+uminv h0, p7.b, z31.h
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid restricted predicate register, expected p0..p7 (without element suffix)
+// CHECK-NEXT: uminv h0, p7.b, z31.h
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
+uminv h0, p7.q, z31.h
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid restricted predicate register, expected p0..p7 (without element suffix)
+// CHECK-NEXT: uminv h0, p7.q, z31.h
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
+
 // --------------------------------------------------------------------------//
 // Negative tests for instructions that are incompatible with movprfx
 

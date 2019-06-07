@@ -26,6 +26,16 @@ splice  z0.b, p8, z0.b, z1.b
 // CHECK-NEXT: splice  z0.b, p8, z0.b, z1.b
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
+splice  z0.b, p7.b, z0.b, z1.b
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid restricted predicate register, expected p0..p7 (without element suffix)
+// CHECK-NEXT: splice  z0.b, p7.b, z0.b, z1.b
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
+splice  z0.b, p7.q, z0.b, z1.b
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid restricted predicate register, expected p0..p7 (without element suffix)
+// CHECK-NEXT: splice  z0.b, p7.q, z0.b, z1.b
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
 
 // --------------------------------------------------------------------------//
 // Negative tests for instructions that are incompatible with movprfx

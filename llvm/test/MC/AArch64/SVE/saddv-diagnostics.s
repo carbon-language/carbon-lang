@@ -33,6 +33,17 @@ saddv d0, p8, z31.b
 // CHECK-NEXT: saddv d0, p8, z31.b
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
+saddv d0, p7.b, z31.b
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid restricted predicate register, expected p0..p7 (without element suffix)
+// CHECK-NEXT: saddv d0, p7.b, z31.b
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
+saddv d0, p7.q, z31.b
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid restricted predicate register, expected p0..p7 (without element suffix)
+// CHECK-NEXT: saddv d0, p7.q, z31.b
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
+
 // --------------------------------------------------------------------------//
 // Negative tests for instructions that are incompatible with movprfx
 

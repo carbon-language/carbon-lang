@@ -54,11 +54,21 @@ st4b { z0.b, z1.b, z2.b, z3.b }, p0, [x0, w0, uxtw]
 
 
 // --------------------------------------------------------------------------//
-// error: invalid restricted predicate register, expected p0..p7 (without element suffix)
+// Invalid predicate
 
 st4b {z2.b, z3.b, z4.b, z5.b}, p8, [x15, #10, MUL VL]
 // CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid restricted predicate register, expected p0..p7 (without element suffix)
 // CHECK-NEXT: st4b {z2.b, z3.b, z4.b, z5.b}, p8, [x15, #10, MUL VL]
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
+st4b {z2.b, z3.b, z4.b, z5.b}, p7.b, [x15, #10, MUL VL]
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid restricted predicate register, expected p0..p7 (without element suffix)
+// CHECK-NEXT: st4b {z2.b, z3.b, z4.b, z5.b}, p7.b, [x15, #10, MUL VL]
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
+st4b {z2.b, z3.b, z4.b, z5.b}, p7.q, [x15, #10, MUL VL]
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid restricted predicate register, expected p0..p7 (without element suffix)
+// CHECK-NEXT: st4b {z2.b, z3.b, z4.b, z5.b}, p7.q, [x15, #10, MUL VL]
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 
