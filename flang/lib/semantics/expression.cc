@@ -1436,7 +1436,7 @@ auto ExpressionAnalyzer::Procedure(const parser::ProcedureDesignator &pd,
             if (context_.HasError(n.symbol)) {
               return std::nullopt;
             }
-            const Symbol &symbol{*n.symbol};
+            const Symbol &symbol{n.symbol->GetUltimate()};
             if (!symbol.HasExplicitInterface() ||
                 (symbol.has<semantics::MiscDetails>() &&
                     symbol.get<semantics::MiscDetails>().kind() ==

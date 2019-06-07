@@ -4726,20 +4726,24 @@ void ResolveNamesVisitor::ResolveSpecificationParts(ProgramTree &node) {
   if (node.IsModule()) {
     ApplyDefaultAccess();
   }
-  if (Symbol * symbol{currScope().symbol()}) {
-    if (auto *details{symbol->detailsIf<SubprogramDetails>()}) {
-      if (details->isFunction()) {
-        Symbol &result{const_cast<Symbol &>(details->result())};
-        ConvertToObjectEntity(result);
-      }
-    }
-  }
-  ExecutionPartSkimmer{scope}.Walk(node.exec());
   for (auto &child : node.children()) {
     ResolveSpecificationParts(child);
   }
+  ExecutionPartSkimmer{scope}.Walk(node.exec());
+  // Convert function results and dummy arguments to objects if we don't
+  // already known by now that they're procedures.
+  if (currScope().kind() == Scope::Kind::Subprogram) {
+    for (const auto &pair : currScope()) {
+      Symbol &symbol{*pair.second};
+      if (auto *details{symbol.detailsIf<EntityDetails>()}) {
+        if (details->isFuncResult() || details->isDummy()) {
+          ConvertToObjectEntity(symbol);
+        }
+      }
+    }
+  }
   // Subtlety: PopScope() is not called here because we want to defer
-  // conversions of uncategorized entities into objects until after
+  // conversions of other uncategorized entities into objects until after
   // we have traversed the executable part of the subprogram.
   SetScope(currScope().parent());
 }
