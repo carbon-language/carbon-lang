@@ -29,7 +29,7 @@ smaxv v0.2d, p7, z31.d
 // Invalid predicate
 
 smaxv h0, p8, z31.h
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: restricted predicate has range [0, 7].
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid restricted predicate register, expected p0..p7 (without element suffix)
 // CHECK-NEXT: smaxv h0, p8, z31.h
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 

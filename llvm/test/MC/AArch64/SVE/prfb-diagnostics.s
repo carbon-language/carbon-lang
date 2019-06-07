@@ -125,7 +125,7 @@ prfb #0, p0, [z0.d, #32]
 // invalid predicate
 
 prfb #0, p8, [x0]
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: restricted predicate has range [0, 7].
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid restricted predicate register, expected p0..p7 (without element suffix)
 // CHECK-NEXT: prfb #0, p8, [x0]
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
