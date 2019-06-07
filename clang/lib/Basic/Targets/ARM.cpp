@@ -400,6 +400,7 @@ bool ARMTargetInfo::initFeatureMap(
 bool ARMTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
                                          DiagnosticsEngine &Diags) {
   FPU = 0;
+  MVE = 0;
   CRC = 0;
   Crypto = 0;
   DSP = 0;
