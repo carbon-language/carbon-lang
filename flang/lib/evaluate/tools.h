@@ -76,11 +76,7 @@ template<typename T> bool IsVariable(const Expr<T> &expr) {
   return std::visit([](const auto &x) { return IsVariable(x); }, expr.u);
 }
 template<typename A> bool IsVariable(const std::optional<A> &x) {
-  if (x.has_value()) {
-    return IsVariable(*x);
-  } else {
-    return false;
-  }
+  return x.has_value() && IsVariable(*x);
 }
 
 // Predicate: true when an expression is assumed-rank
@@ -99,11 +95,7 @@ template<typename T> bool IsAssumedRank(const Expr<T> &expr) {
   return std::visit([](const auto &x) { return IsAssumedRank(x); }, expr.u);
 }
 template<typename A> bool IsAssumedRank(const std::optional<A> &x) {
-  if (x.has_value()) {
-    return IsAssumedRank(*x);
-  } else {
-    return false;
-  }
+  return x.has_value() && IsAssumedRank(*x);
 }
 
 // Generalizing packagers: these take operations and expressions of more
@@ -667,11 +659,7 @@ inline bool IsProcedurePointer(const Expr<SomeType> &expr) {
       [](const auto &x) { return IsProcedurePointer(x); }, expr.u);
 }
 template<typename A> bool IsProcedurePointer(const std::optional<A> &x) {
-  if (x.has_value()) {
-    return IsProcedurePointer(*x);
-  } else {
-    return false;
-  }
+  return x.has_value() && IsProcedurePointer(*x);
 }
 }
 #endif  // FORTRAN_EVALUATE_TOOLS_H_
