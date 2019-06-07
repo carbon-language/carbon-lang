@@ -408,18 +408,30 @@ bool ARMTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       SoftFloat = true;
     } else if (Feature == "+soft-float-abi") {
       SoftFloatABI = true;
-    } else if (Feature == "+vfp2") {
+    } else if (Feature == "+vfp2sp" || Feature == "+vfp2d16sp" ||
+               Feature == "+vfp2" || Feature == "+vfp2d16") {
       FPU |= VFP2FPU;
       HW_FP |= HW_FP_SP;
-    } else if (Feature == "+vfp3") {
+      if (Feature == "+vfp2" || Feature == "+vfp2d16")
+          HW_FP |= HW_FP_DP;
+    } else if (Feature == "+vfp3sp" || Feature == "+vfp3d16sp" ||
+               Feature == "+vfp3" || Feature == "+vfp3d16") {
       FPU |= VFP3FPU;
       HW_FP |= HW_FP_SP;
-    } else if (Feature == "+vfp4") {
+      if (Feature == "+vfp3" || Feature == "+vfp3d16")
+          HW_FP |= HW_FP_DP;
+    } else if (Feature == "+vfp4sp" || Feature == "+vfp4d16sp" ||
+               Feature == "+vfp4" || Feature == "+vfp4d16") {
       FPU |= VFP4FPU;
       HW_FP |= HW_FP_SP | HW_FP_HP;
-    } else if (Feature == "+fp-armv8") {
+      if (Feature == "+vfp4" || Feature == "+vfp4d16")
+          HW_FP |= HW_FP_DP;
+    } else if (Feature == "+fp-armv8sp" || Feature == "+fp-armv8d16sp" ||
+               Feature == "+fp-armv8" || Feature == "+fp-armv8d16") {
       FPU |= FPARMV8;
       HW_FP |= HW_FP_SP | HW_FP_HP;
+      if (Feature == "+fp-armv8" || Feature == "+fp-armv8d16")
+          HW_FP |= HW_FP_DP;
     } else if (Feature == "+neon") {
       FPU |= NeonFPU;
       HW_FP |= HW_FP_SP;
