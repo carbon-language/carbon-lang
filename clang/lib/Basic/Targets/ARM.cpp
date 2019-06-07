@@ -146,6 +146,14 @@ void ARMTargetInfo::setAtomic() {
   }
 }
 
+bool ARMTargetInfo::hasMVE() const {
+  return ArchKind == llvm::ARM::ArchKind::ARMV8_1MMainline && MVE != 0;
+}
+
+bool ARMTargetInfo::hasMVEFloat() const {
+  return hasMVE() && (MVE & MVE_FP);
+}
+
 bool ARMTargetInfo::isThumb() const {
   return ArchISA == llvm::ARM::ISAKind::THUMB;
 }
@@ -460,6 +468,15 @@ bool ARMTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       HasLegalHalfType = true;
     } else if (Feature == "+dotprod") {
       DotProd = true;
+    } else if (Feature == "+mve") {
+      DSP = 1;
+      MVE |= MVE_INT;
+    } else if (Feature == "+mve.fp") {
+      DSP = 1;
+      HasLegalHalfType = true;
+      FPU |= FPARMV8;
+      MVE |= MVE_INT | MVE_FP;
+      HW_FP |= HW_FP_SP | HW_FP_HP;
     }
   }
 
@@ -510,6 +527,7 @@ bool ARMTargetInfo::hasFeature(StringRef Feature) const {
       .Case("vfp", FPU && !SoftFloat)
       .Case("hwdiv", HWDiv & HWDivThumb)
       .Case("hwdiv-arm", HWDiv & HWDivARM)
+      .Case("mve", hasMVE())
       .Default(false);
 }
 
@@ -723,6 +741,10 @@ void ARMTargetInfo::getTargetDefines(const LangOptions &Opts,
     // floating-point even when it is present in VFP.
     Builder.defineMacro("__ARM_NEON_FP",
                         "0x" + Twine::utohexstr(HW_FP & ~HW_FP_DP));
+  }
+
+  if (hasMVE()) {
+    Builder.defineMacro("__ARM_FEATURE_MVE", hasMVEFloat() ? "3" : "1");
   }
 
   Builder.defineMacro("__ARM_SIZEOF_WCHAR_T",
