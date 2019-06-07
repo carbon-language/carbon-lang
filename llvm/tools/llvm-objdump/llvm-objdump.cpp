@@ -579,8 +579,9 @@ void SourcePrinter::printSourceLine(raw_ostream &OS,
   else
     LineInfo = *ExpectedLineInfo;
 
-  if ((LineInfo.FileName == "<invalid>") || OldLineInfo.Line == LineInfo.Line ||
-      LineInfo.Line == 0)
+  if ((LineInfo.FileName == "<invalid>") || LineInfo.Line == 0 ||
+      ((OldLineInfo.Line == LineInfo.Line) &&
+       (OldLineInfo.FileName == LineInfo.FileName)))
     return;
 
   if (PrintLines)
