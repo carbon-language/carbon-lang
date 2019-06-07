@@ -22,6 +22,7 @@ Basic Commands
    llvm-link
    llvm-ar
    llvm-lib
+   llvm-lipo
    llvm-nm
    llvm-objdump
    llvm-config
