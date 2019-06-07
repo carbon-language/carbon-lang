@@ -149,7 +149,7 @@ public:
   std::optional<Success> Parse(ParseState &state) const {
     ParseState forked{state};
     forked.set_deferMessages(true);
-    if (parser_.Parse(forked).has_value()) {
+    if (parser_.Parse(forked)) {
       return Success{};
     }
     return std::nullopt;
@@ -295,8 +295,10 @@ public:
     Messages messages{std::move(state.messages())};
     ParseState backtrack{state};
     std::optional<resultType> result{std::get<0>(ps_).Parse(state)};
-    if (!result.has_value()) {
-      ParseRest<1>(result, state, backtrack);
+    if constexpr (sizeof...(Ps) > 0) {
+      if (!result.has_value()) {
+        ParseRest<1>(result, state, backtrack);
+      }
     }
     state.messages().Restore(std::move(messages));
     return result;
@@ -304,17 +306,13 @@ public:
 
 private:
   template<int J>
-  void ParseRest(std::optional<resultType> &result, ParseState &state,
-      ParseState &backtrack) const {
-    if constexpr (J <= sizeof...(Ps)) {
-      ParseState prevState{std::move(state)};
-      state = backtrack;
-      const auto &parser{std::get<J>(ps_)};
-      static_assert(std::is_same_v<resultType,
-          typename std::decay_t<decltype(parser)>::resultType>);
-      result = parser.Parse(state);
-      if (!result.has_value()) {
-        state.CombineFailedParses(std::move(prevState));
+  void ParseRest(std::optional<resultType> &result, ParseState &state, ParseState &backtrack) const {
+    ParseState prevState{std::move(state)};
+    state = backtrack;
+    result = std::get<J>(ps_).Parse(state);
+    if (!result.has_value()) {
+      state.CombineFailedParses(std::move(prevState));
+      if constexpr (J < sizeof...(Ps)) {
         ParseRest<J + 1>(result, state, backtrack);
       }
     }

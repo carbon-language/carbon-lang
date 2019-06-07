@@ -498,7 +498,7 @@ struct DigitStringIgnoreSpaces {
     if (overflow) {
       state.Say(*firstDigit, "overflow in decimal literal"_err_en_US);
     }
-    return {value};
+    return value;
   }
 };
 
