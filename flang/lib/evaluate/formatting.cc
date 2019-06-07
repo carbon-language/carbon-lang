@@ -84,8 +84,8 @@ std::ostream &Constant<Type<TypeCategory::Character, KIND>>::AsFortran(
   if (Rank() > 0) {
     o << '[' << GetType().AsFortran(std::to_string(length_)) << "::";
   }
-  auto total{static_cast<LengthCIntType>(size())};
-  for (LengthCIntType j{0}; j < total; ++j) {
+  auto total{static_cast<ConstantSubscript>(size())};
+  for (ConstantSubscript j{0}; j < total; ++j) {
     Scalar<Result> value{values_.substr(j * length_, length_)};
     if (j > 0) {
       o << ',';

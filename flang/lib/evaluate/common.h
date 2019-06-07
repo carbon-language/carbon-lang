@@ -33,6 +33,7 @@ class DerivedTypeSpec;
 
 namespace Fortran::evaluate {
 
+using common::ConstantSubscript;
 using common::RelationalOperator;
 
 // Integers are always ordered; reals may not be.
@@ -229,13 +230,11 @@ public:
     return hostIntrinsicsLibrary_;
   }
 
-  common::SubscriptCIntType &StartImpliedDo(
-      parser::CharBlock, common::SubscriptCIntType = 1);
-  std::optional<common::SubscriptCIntType> GetImpliedDo(
-      parser::CharBlock) const;
+  ConstantSubscript &StartImpliedDo(parser::CharBlock, ConstantSubscript = 1);
+  std::optional<ConstantSubscript> GetImpliedDo(parser::CharBlock) const;
   void EndImpliedDo(parser::CharBlock);
 
-  std::map<parser::CharBlock, common::SubscriptCIntType> &impliedDos() {
+  std::map<parser::CharBlock, ConstantSubscript> &impliedDos() {
     return impliedDos_;
   }
 
@@ -250,7 +249,7 @@ private:
   bool flushSubnormalsToZero_{false};
   bool bigEndian_{false};
   const semantics::DerivedTypeSpec *pdtInstance_{nullptr};
-  std::map<parser::CharBlock, common::SubscriptCIntType> impliedDos_;
+  std::map<parser::CharBlock, ConstantSubscript> impliedDos_;
   HostIntrinsicProceduresLibrary hostIntrinsicsLibrary_;
 };
 

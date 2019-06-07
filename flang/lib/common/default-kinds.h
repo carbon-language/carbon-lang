@@ -18,15 +18,19 @@
 #include "Fortran.h"
 #include <cstdint>
 
+namespace Fortran::common {
+
+// All address calculations in generated code are 64-bit safe.
+// Compile-time folding of bounds, subscripts, and lengths
+// consequently uses 64-bit signed integers.  The name reflects
+// this usage as a subscript into a constant array.
+using ConstantSubscript = std::int64_t;
+
 // Represent the default values of the kind parameters of the
 // various intrinsic types.  Most of these can be configured by
 // means of the compiler command line; subscriptIntegerKind,
 // however, is fixed at 8 because all address calculations are
 // 64-bit safe.
-namespace Fortran::common {
-
-using SubscriptCIntType = std::int64_t;
-
 class IntrinsicTypeDefaultKinds {
 public:
   IntrinsicTypeDefaultKinds();

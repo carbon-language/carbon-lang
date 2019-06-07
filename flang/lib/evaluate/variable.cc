@@ -188,7 +188,7 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
   upper_.value() = evaluate::Fold(context, std::move(upper_.value().value()));
   if (std::optional<ConstantSubscript> ubi{ToInt64(upper_.value().value())}) {
     auto *literal{std::get_if<StaticDataObject::Pointer>(&parent_)};
-    std::optional<LengthCIntType> length;
+    std::optional<ConstantSubscript> length;
     if (literal != nullptr) {
       length = (*literal)->data().size();
     } else if (const Symbol * symbol{GetLastSymbol()}) {
@@ -223,7 +223,7 @@ std::optional<Expr<SomeCharacter>> Substring::Fold(FoldingContext &context) {
       }
       parent_ = newStaticData;
       lower_ = AsExpr(Constant<SubscriptInteger>{1});
-      LengthCIntType length = newStaticData->data().size();
+      ConstantSubscript length = newStaticData->data().size();
       upper_ = AsExpr(Constant<SubscriptInteger>{length});
       switch (width) {
       case 1:

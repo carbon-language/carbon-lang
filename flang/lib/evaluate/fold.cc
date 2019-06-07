@@ -267,7 +267,7 @@ static inline Expr<TR> FoldElementalIntrinsicHelper(FoldingContext &context,
     }
     // Build and return constant result
     if constexpr (TR::category == TypeCategory::Character) {
-      auto len{static_cast<LengthCIntType>(
+      auto len{static_cast<ConstantSubscript>(
           results.size() ? results[0].length() : 0)};
       return Expr<TR>{Constant<TR>{len, std::move(results), std::move(shape)}};
     } else {
@@ -1290,8 +1290,7 @@ Expr<T> FoldOperation(FoldingContext &context, Designator<T> &&designator) {
 
 Expr<ImpliedDoIndex::Result> FoldOperation(
     FoldingContext &context, ImpliedDoIndex &&iDo) {
-  if (std::optional<common::SubscriptCIntType> value{
-          context.GetImpliedDo(iDo.name)}) {
+  if (std::optional<ConstantSubscript> value{context.GetImpliedDo(iDo.name)}) {
     return Expr<ImpliedDoIndex::Result>{*value};
   } else {
     return Expr<ImpliedDoIndex::Result>{std::move(iDo)};
@@ -1311,7 +1310,7 @@ public:
             std::move(elements_), ConstantSubscripts{n}}};
       } else if constexpr (T::category == TypeCategory::Character) {
         auto length{Fold(context_, common::Clone(array.LEN()))};
-        if (std::optional<LengthCIntType> lengthValue{ToInt64(length)}) {
+        if (std::optional<ConstantSubscript> lengthValue{ToInt64(length)}) {
           return Expr<T>{Constant<T>{
               *lengthValue, std::move(elements_), ConstantSubscripts{n}}};
         }
@@ -1352,14 +1351,14 @@ private:
         Fold(context_, Expr<SubscriptInteger>{iDo.upper()})};
     Expr<SubscriptInteger> stride{
         Fold(context_, Expr<SubscriptInteger>{iDo.stride()})};
-    std::optional<common::SubscriptCIntType> start{ToInt64(lower)},
-        end{ToInt64(upper)}, step{ToInt64(stride)};
+    std::optional<ConstantSubscript> start{ToInt64(lower)}, end{ToInt64(upper)},
+        step{ToInt64(stride)};
     if (start.has_value() && end.has_value() && step.has_value()) {
       if (*step == 0) {
         return false;
       }
       bool result{true};
-      common::SubscriptCIntType &j{context_.StartImpliedDo(iDo.name(), *start)};
+      ConstantSubscript &j{context_.StartImpliedDo(iDo.name(), *start)};
       if (*step > 0) {
         for (; j <= *end; j += *step) {
           result &= FoldArray(iDo.values());
@@ -2123,14 +2122,14 @@ Expr<Type<TypeCategory::Character, KIND>> FoldOperation(
   }
   using Result = Type<TypeCategory::Character, KIND>;
   if (auto folded{OperandsAreConstants(x)}) {
-    auto oldLength{static_cast<LengthCIntType>(folded->first.size())};
+    auto oldLength{static_cast<ConstantSubscript>(folded->first.size())};
     auto newLength{folded->second.ToInt64()};
     if (newLength < oldLength) {
       folded->first.erase(newLength);
     } else {
       folded->first.append(newLength - oldLength, ' ');
     }
-    CHECK(static_cast<LengthCIntType>(folded->first.size()) == newLength);
+    CHECK(static_cast<ConstantSubscript>(folded->first.size()) == newLength);
     return Expr<Result>{Constant<Result>{std::move(folded->first)}};
   }
   return Expr<Result>{std::move(x)};

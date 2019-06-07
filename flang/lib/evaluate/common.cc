@@ -35,14 +35,14 @@ void RealFlagWarnings(
   }
 }
 
-common::SubscriptCIntType &FoldingContext::StartImpliedDo(
-    parser::CharBlock name, common::SubscriptCIntType n) {
+ConstantSubscript &FoldingContext::StartImpliedDo(
+    parser::CharBlock name, ConstantSubscript n) {
   auto pair{impliedDos_.insert(std::make_pair(name, n))};
   CHECK(pair.second);
   return pair.first->second;
 }
 
-std::optional<common::SubscriptCIntType> FoldingContext::GetImpliedDo(
+std::optional<ConstantSubscript> FoldingContext::GetImpliedDo(
     parser::CharBlock name) const {
   if (auto iter{impliedDos_.find(name)}; iter != impliedDos_.cend()) {
     return {iter->second};

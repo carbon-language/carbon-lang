@@ -109,23 +109,23 @@ auto Constant<T>::Reshape(ConstantSubscripts &&dims) const -> Constant {
 template<int KIND>
 Constant<Type<TypeCategory::Character, KIND>>::Constant(
     const Scalar<Result> &str)
-  : values_{str}, length_{static_cast<LengthCIntType>(values_.size())} {}
+  : values_{str}, length_{static_cast<ConstantSubscript>(values_.size())} {}
 
 template<int KIND>
 Constant<Type<TypeCategory::Character, KIND>>::Constant(Scalar<Result> &&str)
-  : values_{std::move(str)}, length_{
-                                 static_cast<LengthCIntType>(values_.size())} {}
+  : values_{std::move(str)}, length_{static_cast<ConstantSubscript>(
+                                 values_.size())} {}
 
 template<int KIND>
-Constant<Type<TypeCategory::Character, KIND>>::Constant(LengthCIntType len,
+Constant<Type<TypeCategory::Character, KIND>>::Constant(ConstantSubscript len,
     std::vector<Scalar<Result>> &&strings, ConstantSubscripts &&dims)
   : length_{len}, shape_{std::move(dims)} {
   CHECK(strings.size() == TotalElementCount(shape_));
   values_.assign(strings.size() * length_,
       static_cast<typename Scalar<Result>::value_type>(' '));
-  LengthCIntType at{0};
+  ConstantSubscript at{0};
   for (const auto &str : strings) {
-    auto strLen{static_cast<LengthCIntType>(str.size())};
+    auto strLen{static_cast<ConstantSubscript>(str.size())};
     if (strLen > length_) {
       values_.replace(at, length_, str.substr(0, length_));
     } else {
@@ -133,7 +133,7 @@ Constant<Type<TypeCategory::Character, KIND>>::Constant(LengthCIntType len,
     }
     at += length_;
   }
-  CHECK(at == static_cast<LengthCIntType>(values_.size()));
+  CHECK(at == static_cast<ConstantSubscript>(values_.size()));
 }
 
 template<int KIND> Constant<Type<TypeCategory::Character, KIND>>::~Constant() {}
@@ -148,7 +148,7 @@ std::size_t Constant<Type<TypeCategory::Character, KIND>>::size() const {
   if (length_ == 0) {
     return TotalElementCount(shape_);
   } else {
-    return static_cast<LengthCIntType>(values_.size()) / length_;
+    return static_cast<ConstantSubscript>(values_.size()) / length_;
   }
 }
 
@@ -165,7 +165,8 @@ auto Constant<Type<TypeCategory::Character, KIND>>::Reshape(
   std::size_t n{TotalElementCount(dims)};
   CHECK(!empty() || n == 0);
   std::vector<Element> elements;
-  LengthCIntType at{0}, limit{static_cast<LengthCIntType>(values_.size())};
+  ConstantSubscript at{0},
+      limit{static_cast<ConstantSubscript>(values_.size())};
   while (n-- > 0) {
     elements.push_back(values_.substr(at, length_));
     at += length_;
