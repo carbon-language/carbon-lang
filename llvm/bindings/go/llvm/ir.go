@@ -1228,6 +1228,10 @@ func (v Value) AddCallSiteAttribute(i int, a Attribute) {
 func (v Value) SetInstrParamAlignment(i int, align int) {
 	C.LLVMSetInstrParamAlignment(v.C, C.unsigned(i), C.unsigned(align))
 }
+func (v Value) CalledValue() (rv Value) {
+	rv.C = C.LLVMGetCalledValue(v.C)
+	return
+}
 
 // Operations on call instructions (only)
 func (v Value) IsTailCall() bool    { return C.LLVMIsTailCall(v.C) != 0 }
