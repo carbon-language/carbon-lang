@@ -1275,10 +1275,6 @@ func (v Value) Indices() []uint32 {
 	return indices
 }
 
-// Operations on comparisons
-func (v Value) IntPredicate() IntPredicate     { return IntPredicate(C.LLVMGetICmpPredicate(v.C)) }
-func (v Value) FloatPredicate() FloatPredicate { return FloatPredicate(C.LLVMGetFCmpPredicate(v.C)) }
-
 //-------------------------------------------------------------------------
 // llvm.Builder
 //-------------------------------------------------------------------------
