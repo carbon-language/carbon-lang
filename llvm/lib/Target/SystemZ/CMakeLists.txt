@@ -30,6 +30,7 @@ add_llvm_target(SystemZCodeGen
   SystemZMCInstLower.cpp
   SystemZRegisterInfo.cpp
   SystemZSelectionDAGInfo.cpp
+  SystemZPostRewrite.cpp
   SystemZShortenInst.cpp
   SystemZSubtarget.cpp
   SystemZTargetMachine.cpp
