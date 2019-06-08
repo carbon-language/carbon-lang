@@ -9259,39 +9259,15 @@ multiclass avx512_rndscale_scalar<bits<8> opc, string OpcodeStr,
   }
 
   let Predicates = [HasAVX512] in {
-    def : Pat<(ffloor _.FRC:$src),
+    def : Pat<(X86VRndScale _.FRC:$src1, imm:$src2),
               (_.EltVT (!cast<Instruction>(NAME##r) (_.EltVT (IMPLICIT_DEF)),
-               _.FRC:$src, (i32 0x9)))>;
-    def : Pat<(fceil _.FRC:$src),
-              (_.EltVT (!cast<Instruction>(NAME##r) (_.EltVT (IMPLICIT_DEF)),
-               _.FRC:$src, (i32 0xa)))>;
-    def : Pat<(ftrunc _.FRC:$src),
-              (_.EltVT (!cast<Instruction>(NAME##r) (_.EltVT (IMPLICIT_DEF)),
-               _.FRC:$src, (i32 0xb)))>;
-    def : Pat<(frint _.FRC:$src),
-              (_.EltVT (!cast<Instruction>(NAME##r) (_.EltVT (IMPLICIT_DEF)),
-               _.FRC:$src, (i32 0x4)))>;
-    def : Pat<(fnearbyint _.FRC:$src),
-              (_.EltVT (!cast<Instruction>(NAME##r) (_.EltVT (IMPLICIT_DEF)),
-               _.FRC:$src, (i32 0xc)))>;
+               _.FRC:$src1, imm:$src2))>;
   }
 
   let Predicates = [HasAVX512, OptForSize] in {
-    def : Pat<(ffloor (_.ScalarLdFrag addr:$src)),
+    def : Pat<(X86VRndScale (_.ScalarLdFrag addr:$src1), imm:$src2),
               (_.EltVT (!cast<Instruction>(NAME##m) (_.EltVT (IMPLICIT_DEF)),
-               addr:$src, (i32 0x9)))>;
-    def : Pat<(fceil (_.ScalarLdFrag addr:$src)),
-              (_.EltVT (!cast<Instruction>(NAME##m) (_.EltVT (IMPLICIT_DEF)),
-               addr:$src, (i32 0xa)))>;
-    def : Pat<(ftrunc (_.ScalarLdFrag addr:$src)),
-              (_.EltVT (!cast<Instruction>(NAME##m) (_.EltVT (IMPLICIT_DEF)),
-               addr:$src, (i32 0xb)))>;
-    def : Pat<(frint (_.ScalarLdFrag addr:$src)),
-              (_.EltVT (!cast<Instruction>(NAME##m) (_.EltVT (IMPLICIT_DEF)),
-               addr:$src, (i32 0x4)))>;
-    def : Pat<(fnearbyint (_.ScalarLdFrag addr:$src)),
-              (_.EltVT (!cast<Instruction>(NAME##m) (_.EltVT (IMPLICIT_DEF)),
-               addr:$src, (i32 0xc)))>;
+               addr:$src1, imm:$src2))>;
   }
 }
 
