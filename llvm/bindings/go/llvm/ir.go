@@ -1303,6 +1303,7 @@ type DebugLoc struct {
 func (b Builder) SetCurrentDebugLocation(line, col uint, scope, inlinedAt Metadata) {
 	C.LLVMGoSetCurrentDebugLocation(b.C, C.unsigned(line), C.unsigned(col), scope.C, inlinedAt.C)
 }
+
 // Get current debug location. Please do not call this function until setting debug location with SetCurrentDebugLocation()
 func (b Builder) GetCurrentDebugLocation() (loc DebugLoc) {
 	md := C.LLVMGoGetCurrentDebugLocation(b.C)
