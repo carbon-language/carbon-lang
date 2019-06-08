@@ -13289,7 +13289,10 @@ static bool isLegalT2AddressImmediate(int64_t V, EVT VT,
                                       const ARMSubtarget *Subtarget) {
   if (!VT.isInteger() && !VT.isFloatingPoint())
     return false;
-  if (Subtarget->hasNEON() && VT.isVector())
+  if (VT.isVector() && Subtarget->hasNEON())
+    return false;
+  if (VT.isVector() && VT.isFloatingPoint() && Subtarget->hasMVEIntegerOps() &&
+      !Subtarget->hasMVEFloatOps())
     return false;
 
   bool IsNeg = false;
@@ -13299,6 +13302,22 @@ static bool isLegalT2AddressImmediate(int64_t V, EVT VT,
   }
 
   unsigned NumBytes = std::max(VT.getSizeInBits() / 8, 1U);
+
+  // MVE: size * imm7
+  if (VT.isVector() && Subtarget->hasMVEIntegerOps()) {
+    switch (VT.getSimpleVT().getVectorElementType().SimpleTy) {
+    case MVT::i32:
+    case MVT::f32:
+      return isShiftedUInt<7,2>(V);
+    case MVT::i16:
+    case MVT::f16:
+      return isShiftedUInt<7,1>(V);
+    case MVT::i8:
+      return isUInt<7>(V);
+    default:
+      return false;
+    }
+  }
 
   // half VLDR: 2 * imm8
   if (VT.isFloatingPoint() && NumBytes == 2 && Subtarget->hasFPRegs16())
