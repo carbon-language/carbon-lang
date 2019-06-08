@@ -336,11 +336,11 @@ define void @testhalf(half* %a, i32 %i) {
 ; CHECK-MVE-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: %a1 = getelementptr inbounds half, half* %a, i32 1
 ; CHECK-MVE-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: %am1 = getelementptr inbounds half, half* %a, i32 -1
 ; CHECK-MVE-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: %a255 = getelementptr inbounds half, half* %a, i32 255
-; CHECK-MVE-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: %a256 = getelementptr inbounds half, half* %a, i32 256
-; CHECK-MVE-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %am255 = getelementptr inbounds half, half* %a, i32 -255
+; CHECK-MVE-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %a256 = getelementptr inbounds half, half* %a, i32 256
+; CHECK-MVE-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: %am255 = getelementptr inbounds half, half* %a, i32 -255
 ; CHECK-MVE-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %am256 = getelementptr inbounds half, half* %a, i32 -256
-; CHECK-MVE-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: %a1023 = getelementptr inbounds half, half* %a, i32 1023
-; CHECK-MVE-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: %a1024 = getelementptr inbounds half, half* %a, i32 1024
+; CHECK-MVE-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %a1023 = getelementptr inbounds half, half* %a, i32 1023
+; CHECK-MVE-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %a1024 = getelementptr inbounds half, half* %a, i32 1024
 ; CHECK-MVE-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: %am63 = getelementptr inbounds half, half* %a, i32 -63
 ; CHECK-MVE-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: %am64 = getelementptr inbounds half, half* %a, i32 -64
 ; CHECK-MVE-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %ai = getelementptr inbounds half, half* %a, i32 %i
@@ -348,15 +348,15 @@ define void @testhalf(half* %a, i32 %i) {
 ;
 ; CHECK-MVEFP-LABEL: 'testhalf'
 ; CHECK-MVEFP-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: %a0 = getelementptr inbounds half, half* %a, i32 0
-; CHECK-MVEFP-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %a1 = getelementptr inbounds half, half* %a, i32 1
-; CHECK-MVEFP-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %am1 = getelementptr inbounds half, half* %a, i32 -1
-; CHECK-MVEFP-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %a255 = getelementptr inbounds half, half* %a, i32 255
-; CHECK-MVEFP-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: %a256 = getelementptr inbounds half, half* %a, i32 256
-; CHECK-MVEFP-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %am255 = getelementptr inbounds half, half* %a, i32 -255
-; CHECK-MVEFP-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: %am256 = getelementptr inbounds half, half* %a, i32 -256
+; CHECK-MVEFP-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: %a1 = getelementptr inbounds half, half* %a, i32 1
+; CHECK-MVEFP-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: %am1 = getelementptr inbounds half, half* %a, i32 -1
+; CHECK-MVEFP-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: %a255 = getelementptr inbounds half, half* %a, i32 255
+; CHECK-MVEFP-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %a256 = getelementptr inbounds half, half* %a, i32 256
+; CHECK-MVEFP-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: %am255 = getelementptr inbounds half, half* %a, i32 -255
+; CHECK-MVEFP-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %am256 = getelementptr inbounds half, half* %a, i32 -256
 ; CHECK-MVEFP-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %a1023 = getelementptr inbounds half, half* %a, i32 1023
 ; CHECK-MVEFP-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %a1024 = getelementptr inbounds half, half* %a, i32 1024
-; CHECK-MVEFP-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %am63 = getelementptr inbounds half, half* %a, i32 -63
+; CHECK-MVEFP-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: %am63 = getelementptr inbounds half, half* %a, i32 -63
 ; CHECK-MVEFP-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: %am64 = getelementptr inbounds half, half* %a, i32 -64
 ; CHECK-MVEFP-NEXT:  Cost Model: Found an estimated cost of 1 for instruction: %ai = getelementptr inbounds half, half* %a, i32 %i
 ; CHECK-MVEFP-NEXT:  Cost Model: Found an estimated cost of 0 for instruction: ret void

@@ -13300,6 +13300,9 @@ static bool isLegalT2AddressImmediate(int64_t V, EVT VT,
 
   unsigned NumBytes = std::max(VT.getSizeInBits() / 8, 1U);
 
+  // half VLDR: 2 * imm8
+  if (VT.isFloatingPoint() && NumBytes == 2 && Subtarget->hasFPRegs16())
+    return isShiftedUInt<8, 1>(V);
   // VLDR and LDRD: 4 * imm8
   if ((VT.isFloatingPoint() && Subtarget->hasVFP2Base()) || NumBytes == 8)
     return isShiftedUInt<8, 2>(V);
