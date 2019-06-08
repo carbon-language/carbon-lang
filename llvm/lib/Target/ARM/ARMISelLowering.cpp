@@ -13265,7 +13265,6 @@ static bool isLegalT1AddressImmediate(int64_t V, EVT VT) {
 
   unsigned Scale = 1;
   switch (VT.getSimpleVT().SimpleTy) {
-  default: return false;
   case MVT::i1:
   case MVT::i8:
     // Scale == 1;
@@ -13274,7 +13273,8 @@ static bool isLegalT1AddressImmediate(int64_t V, EVT VT) {
     // Scale == 2;
     Scale = 2;
     break;
-  case MVT::i32:
+  default:
+    // On thumb1 we load most things (i32, i64, floats, etc) with a LDR
     // Scale == 4;
     Scale = 4;
     break;
