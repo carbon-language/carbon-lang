@@ -8,6 +8,7 @@
 ; Should be transformed into:
 ;   x s<= C
 ; Iff: isPowerOf2(C + 1)
+; C must not be -1, but may be 0.
 
 ; NOTE: this pattern is not commutative!
 
@@ -28,20 +29,6 @@ define i1 @p0() {
   %x = call i8 @gen8()
   %tmp0 = and i8 %x, 3
   %ret = icmp sle i8 %x, %tmp0
-  ret i1 %ret
-}
-
-define i1 @pv(i8 %y) {
-; CHECK-LABEL: @pv(
-; CHECK-NEXT:    [[X:%.*]] = call i8 @gen8()
-; CHECK-NEXT:    [[TMP0:%.*]] = lshr i8 -1, [[Y:%.*]]
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp sle i8 [[X]], [[TMP0]]
-; CHECK-NEXT:    ret i1 [[TMP1]]
-;
-  %x = call i8 @gen8()
-  %tmp0 = lshr i8 -1, %y
-  %tmp1 = and i8 %tmp0, %x
-  %ret = icmp sle i8 %x, %tmp1
   ret i1 %ret
 }
 
@@ -69,6 +56,19 @@ define <2 x i1> @p2_vec_nonsplat() {
 ;
   %x = call <2 x i8> @gen2x8()
   %tmp0 = and <2 x i8> %x, <i8 3, i8 15> ; doesn't have to be splat.
+  %ret = icmp sle <2 x i8> %x, %tmp0
+  ret <2 x i1> %ret
+}
+
+define <2 x i1> @p2_vec_nonsplat_edgecase() {
+; CHECK-LABEL: @p2_vec_nonsplat_edgecase(
+; CHECK-NEXT:    [[X:%.*]] = call <2 x i8> @gen2x8()
+; CHECK-NEXT:    [[TMP0:%.*]] = and <2 x i8> [[X]], <i8 3, i8 0>
+; CHECK-NEXT:    [[RET:%.*]] = icmp sle <2 x i8> [[X]], [[TMP0]]
+; CHECK-NEXT:    ret <2 x i1> [[RET]]
+;
+  %x = call <2 x i8> @gen2x8()
+  %tmp0 = and <2 x i8> %x, <i8 3, i8 0>
   %ret = icmp sle <2 x i8> %x, %tmp0
   ret <2 x i1> %ret
 }
@@ -110,9 +110,7 @@ define i1 @oneuse0() {
 ; Negative tests
 ; ============================================================================ ;
 
-; ============================================================================ ;
 ; Commutativity tests.
-; ============================================================================ ;
 
 define i1 @c0(i8 %x) {
 ; CHECK-LABEL: @c0(
@@ -126,10 +124,92 @@ define i1 @c0(i8 %x) {
 }
 
 ; ============================================================================ ;
-; Commutativity tests with variable
+; Rest of negative tests
 ; ============================================================================ ;
 
-; Ok, this one should fold. We only testing commutativity of 'and'.
+define i1 @n0() {
+; CHECK-LABEL: @n0(
+; CHECK-NEXT:    [[X:%.*]] = call i8 @gen8()
+; CHECK-NEXT:    [[TMP0:%.*]] = and i8 [[X]], 4
+; CHECK-NEXT:    [[RET:%.*]] = icmp sle i8 [[X]], [[TMP0]]
+; CHECK-NEXT:    ret i1 [[RET]]
+;
+  %x = call i8 @gen8()
+  %tmp0 = and i8 %x, 4 ; power-of-two, but invalid.
+  %ret = icmp sle i8 %x, %tmp0
+  ret i1 %ret
+}
+
+define i1 @n1(i8 %y, i8 %notx) {
+; CHECK-LABEL: @n1(
+; CHECK-NEXT:    [[X:%.*]] = call i8 @gen8()
+; CHECK-NEXT:    [[TMP0:%.*]] = and i8 [[X]], 3
+; CHECK-NEXT:    [[RET:%.*]] = icmp sle i8 [[TMP0]], [[NOTX:%.*]]
+; CHECK-NEXT:    ret i1 [[RET]]
+;
+  %x = call i8 @gen8()
+  %tmp0 = and i8 %x, 3
+  %ret = icmp sle i8 %tmp0, %notx ; not %x
+  ret i1 %ret
+}
+
+define <2 x i1> @n2() {
+; CHECK-LABEL: @n2(
+; CHECK-NEXT:    [[X:%.*]] = call <2 x i8> @gen2x8()
+; CHECK-NEXT:    [[TMP0:%.*]] = and <2 x i8> [[X]], <i8 3, i8 16>
+; CHECK-NEXT:    [[RET:%.*]] = icmp sle <2 x i8> [[X]], [[TMP0]]
+; CHECK-NEXT:    ret <2 x i1> [[RET]]
+;
+  %x = call <2 x i8> @gen2x8()
+  %tmp0 = and <2 x i8> %x, <i8 3, i8 16> ; only the first one is valid.
+  %ret = icmp sle <2 x i8> %x, %tmp0
+  ret <2 x i1> %ret
+}
+
+; ============================================================================ ;
+; Potential miscompiles.
+; ============================================================================ ;
+
+define i1 @pv(i8 %y) {
+; CHECK-LABEL: @pv(
+; CHECK-NEXT:    [[X:%.*]] = call i8 @gen8()
+; CHECK-NEXT:    [[TMP0:%.*]] = lshr i8 -1, [[Y:%.*]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp sle i8 [[X]], [[TMP0]]
+; CHECK-NEXT:    ret i1 [[TMP1]]
+;
+  %x = call i8 @gen8()
+  %tmp0 = lshr i8 -1, %y
+  %tmp1 = and i8 %tmp0, %x
+  %ret = icmp sle i8 %x, %tmp1
+  ret i1 %ret
+}
+
+define <2 x i1> @n3_vec() {
+; CHECK-LABEL: @n3_vec(
+; CHECK-NEXT:    [[X:%.*]] = call <2 x i8> @gen2x8()
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp slt <2 x i8> [[X]], <i8 4, i8 0>
+; CHECK-NEXT:    ret <2 x i1> [[TMP1]]
+;
+  %x = call <2 x i8> @gen2x8()
+  %tmp0 = and <2 x i8> %x, <i8 3, i8 -1>
+  %ret = icmp sle <2 x i8> %x, %tmp0
+  ret <2 x i1> %ret
+}
+
+define <3 x i1> @n4_vec() {
+; CHECK-LABEL: @n4_vec(
+; CHECK-NEXT:    [[X:%.*]] = call <3 x i8> @gen3x8()
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp slt <3 x i8> [[X]], <i8 4, i8 undef, i8 0>
+; CHECK-NEXT:    ret <3 x i1> [[TMP1]]
+;
+  %x = call <3 x i8> @gen3x8()
+  %tmp0 = and <3 x i8> %x, <i8 3, i8 undef, i8 -1>
+  %ret = icmp sle <3 x i8> %x, %tmp0
+  ret <3 x i1> %ret
+}
+
+; Commutativity tests with variable
+
 define i1 @cv0_GOOD(i8 %y) {
 ; CHECK-LABEL: @cv0_GOOD(
 ; CHECK-NEXT:    [[X:%.*]] = call i8 @gen8()
@@ -170,47 +250,4 @@ define i1 @cv2(i8 %x, i8 %y) {
   %tmp1 = and i8 %tmp0, %x ; swapped order
   %ret = icmp sle i8 %tmp1, %x ; swapped order
   ret i1 %ret
-}
-
-; ============================================================================ ;
-; Normal negative tests
-; ============================================================================ ;
-
-define i1 @n0() {
-; CHECK-LABEL: @n0(
-; CHECK-NEXT:    [[X:%.*]] = call i8 @gen8()
-; CHECK-NEXT:    [[TMP0:%.*]] = and i8 [[X]], 4
-; CHECK-NEXT:    [[RET:%.*]] = icmp sle i8 [[X]], [[TMP0]]
-; CHECK-NEXT:    ret i1 [[RET]]
-;
-  %x = call i8 @gen8()
-  %tmp0 = and i8 %x, 4 ; power-of-two, but invalid.
-  %ret = icmp sle i8 %x, %tmp0
-  ret i1 %ret
-}
-
-define i1 @n1(i8 %y, i8 %notx) {
-; CHECK-LABEL: @n1(
-; CHECK-NEXT:    [[X:%.*]] = call i8 @gen8()
-; CHECK-NEXT:    [[TMP0:%.*]] = and i8 [[X]], 3
-; CHECK-NEXT:    [[RET:%.*]] = icmp sle i8 [[TMP0]], [[NOTX:%.*]]
-; CHECK-NEXT:    ret i1 [[RET]]
-;
-  %x = call i8 @gen8()
-  %tmp0 = and i8 %x, 3
-  %ret = icmp sle i8 %tmp0, %notx ; not %x
-  ret i1 %ret
-}
-
-define <2 x i1> @n2() {
-; CHECK-LABEL: @n2(
-; CHECK-NEXT:    [[X:%.*]] = call <2 x i8> @gen2x8()
-; CHECK-NEXT:    [[TMP0:%.*]] = and <2 x i8> [[X]], <i8 3, i8 16>
-; CHECK-NEXT:    [[RET:%.*]] = icmp sle <2 x i8> [[X]], [[TMP0]]
-; CHECK-NEXT:    ret <2 x i1> [[RET]]
-;
-  %x = call <2 x i8> @gen2x8()
-  %tmp0 = and <2 x i8> %x, <i8 3, i8 16> ; only the first one is valid.
-  %ret = icmp sle <2 x i8> %x, %tmp0
-  ret <2 x i1> %ret
 }
