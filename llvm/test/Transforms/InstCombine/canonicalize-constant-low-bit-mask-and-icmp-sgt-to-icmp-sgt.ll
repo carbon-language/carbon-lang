@@ -174,8 +174,9 @@ define i1 @pv(i8 %y) {
 ; CHECK-LABEL: @pv(
 ; CHECK-NEXT:    [[X:%.*]] = call i8 @gen8()
 ; CHECK-NEXT:    [[TMP0:%.*]] = lshr i8 -1, [[Y:%.*]]
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt i8 [[X]], [[TMP0]]
-; CHECK-NEXT:    ret i1 [[TMP1]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i8 [[TMP0]], [[X]]
+; CHECK-NEXT:    [[RET:%.*]] = icmp sgt i8 [[X]], [[TMP1]]
+; CHECK-NEXT:    ret i1 [[RET]]
 ;
   %x = call i8 @gen8()
   %tmp0 = lshr i8 -1, %y
@@ -187,8 +188,9 @@ define i1 @pv(i8 %y) {
 define <2 x i1> @n3_vec() {
 ; CHECK-LABEL: @n3_vec(
 ; CHECK-NEXT:    [[X:%.*]] = call <2 x i8> @gen2x8()
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt <2 x i8> [[X]], <i8 3, i8 -1>
-; CHECK-NEXT:    ret <2 x i1> [[TMP1]]
+; CHECK-NEXT:    [[TMP0:%.*]] = and <2 x i8> [[X]], <i8 3, i8 -1>
+; CHECK-NEXT:    [[RET:%.*]] = icmp sgt <2 x i8> [[X]], [[TMP0]]
+; CHECK-NEXT:    ret <2 x i1> [[RET]]
 ;
   %x = call <2 x i8> @gen2x8()
   %tmp0 = and <2 x i8> %x, <i8 3, i8 -1>
@@ -199,8 +201,9 @@ define <2 x i1> @n3_vec() {
 define <3 x i1> @n4_vec() {
 ; CHECK-LABEL: @n4_vec(
 ; CHECK-NEXT:    [[X:%.*]] = call <3 x i8> @gen3x8()
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt <3 x i8> [[X]], <i8 3, i8 undef, i8 -1>
-; CHECK-NEXT:    ret <3 x i1> [[TMP1]]
+; CHECK-NEXT:    [[TMP0:%.*]] = and <3 x i8> [[X]], <i8 3, i8 undef, i8 -1>
+; CHECK-NEXT:    [[RET:%.*]] = icmp sgt <3 x i8> [[X]], [[TMP0]]
+; CHECK-NEXT:    ret <3 x i1> [[RET]]
 ;
   %x = call <3 x i8> @gen3x8()
   %tmp0 = and <3 x i8> %x, <i8 3, i8 undef, i8 -1>
@@ -215,8 +218,9 @@ define i1 @cv0_GOOD(i8 %y) {
 ; CHECK-LABEL: @cv0_GOOD(
 ; CHECK-NEXT:    [[X:%.*]] = call i8 @gen8()
 ; CHECK-NEXT:    [[TMP0:%.*]] = lshr i8 -1, [[Y:%.*]]
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt i8 [[X]], [[TMP0]]
-; CHECK-NEXT:    ret i1 [[TMP1]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i8 [[TMP0]], [[X]]
+; CHECK-NEXT:    [[RET:%.*]] = icmp sgt i8 [[X]], [[TMP1]]
+; CHECK-NEXT:    ret i1 [[RET]]
 ;
   %x = call i8 @gen8()
   %tmp0 = lshr i8 -1, %y
