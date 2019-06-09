@@ -281,11 +281,6 @@ let Predicates = [UseAVX] in {
             (SUBREG_TO_REG (i32 0), (VMOVSDrm addr:$src), sub_xmm)>;
   def : Pat<(v4f64 (X86vzload addr:$src)),
             (SUBREG_TO_REG (i32 0), (VMOVSDrm addr:$src), sub_xmm)>;
-
-  // Extract and store.
-  def : Pat<(store (f32 (extractelt (v4f32 VR128:$src), (iPTR 0))),
-                   addr:$dst),
-            (VMOVSSmr addr:$dst, (COPY_TO_REGCLASS (v4f32 VR128:$src), FR32))>;
 }
 
 let Predicates = [UseAVX, OptForSize] in {
@@ -335,11 +330,6 @@ let Predicates = [UseSSE1] in {
             (COPY_TO_REGCLASS (MOVSSrm addr:$src), VR128)>;
   def : Pat<(v4f32 (X86vzload addr:$src)),
             (COPY_TO_REGCLASS (MOVSSrm addr:$src), VR128)>;
-
-  // Extract and store.
-  def : Pat<(store (f32 (extractelt (v4f32 VR128:$src), (iPTR 0))),
-                   addr:$dst),
-            (MOVSSmr addr:$dst, (COPY_TO_REGCLASS VR128:$src, FR32))>;
 }
 
 let Predicates = [UseSSE2] in {
