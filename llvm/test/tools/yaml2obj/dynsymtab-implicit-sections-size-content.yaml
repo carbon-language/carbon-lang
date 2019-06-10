@@ -75,9 +75,9 @@ DynamicSymbols:
 # CASE4-NEXT:   SHF_ALLOC
 # CASE4-NEXT: ]
 # CASE4-NEXT: Address: 0x0
-# CASE4-NEXT: Offset: 0x1C0
+# CASE4-NEXT: Offset: 0x180
 # CASE4-NEXT: Size: 2
-# CASE4-NEXT: Link: 2
+# CASE4-NEXT: Link: 0
 # CASE4-NEXT: Info: 0
 # CASE4-NEXT: AddressAlignment: 0
 # CASE4-NEXT: EntrySize: 24
@@ -95,12 +95,6 @@ Sections:
   - Name: .dynsym
     Type: SHT_DYNSYM
     Content: "0123"
-## TODO: .dynstr here is needed to set a proper Link for .dynsym.
-## Without this, llvm-readobj reports an error.
-## See https://bugs.llvm.org/show_bug.cgi?id=42215.
-  - Name: .dynstr
-    Type: SHT_STRTAB
-    Content: "00"
 
 ## Check we can use just `Size` to emit custom data filled with zeroes
 ## in the symbol table section.
@@ -113,9 +107,9 @@ Sections:
 # CASE5-NEXT:   SHF_ALLOC
 # CASE5-NEXT: ]
 # CASE5-NEXT: Address: 0x0
-# CASE5-NEXT: Offset: 0x1C0
+# CASE5-NEXT: Offset: 0x180
 # CASE5-NEXT: Size: 5
-# CASE5-NEXT: Link: 2
+# CASE5-NEXT: Link: 0
 # CASE5-NEXT: Info: 0
 # CASE5-NEXT: AddressAlignment: 0
 # CASE5-NEXT: EntrySize: 24
@@ -133,12 +127,6 @@ Sections:
   - Name: .dynsym
     Type: SHT_DYNSYM
     Size: 5
-## TODO: .dynstr here is needed to set a proper Link for .dynsym.
-## Without this, llvm-readobj reports an error.
-## See https://bugs.llvm.org/show_bug.cgi?id=42215.
-  - Name: .dynstr
-    Type: SHT_STRTAB
-    Content: "00"
 
 ## Check we can specify both `Size` and `Content` when size is greater
 ## than content size. In this case zeroes are added as padding
@@ -153,9 +141,9 @@ Sections:
 # CASE6-NEXT:   SHF_ALLOC
 # CASE6-NEXT: ]
 # CASE6-NEXT: Address: 0x0
-# CASE6-NEXT: Offset: 0x1C0
+# CASE6-NEXT: Offset: 0x180
 # CASE6-NEXT: Size: 4
-# CASE6-NEXT: Link: 2
+# CASE6-NEXT: Link: 0
 # CASE6-NEXT: Info: 0
 # CASE6-NEXT: AddressAlignment: 0
 # CASE6-NEXT: EntrySize: 24
@@ -174,12 +162,6 @@ Sections:
     Type: SHT_DYNSYM
     Content: "0123"
     Size: 4
-## TODO: .dynstr here is needed to set a proper Link for .dynsym.
-## Without this, llvm-readobj reports an error.
-## See https://bugs.llvm.org/show_bug.cgi?id=42215.
-  - Name: .dynstr
-    Type: SHT_STRTAB
-    Content: "00"
 
 ## Check we can specify both `Size` and `Content` when size is
 ## equal to content size.
@@ -193,9 +175,9 @@ Sections:
 # CASE7-NEXT:    SHF_ALLOC
 # CASE7-NEXT:  ]
 # CASE7-NEXT:  Address: 0x0
-# CASE7-NEXT:  Offset: 0x1C0
+# CASE7-NEXT:  Offset: 0x180
 # CASE7-NEXT:  Size: 2
-# CASE7-NEXT:  Link: 2
+# CASE7-NEXT:  Link: 0
 # CASE7-NEXT:  Info: 0
 # CASE7-NEXT:  AddressAlignment: 0
 # CASE7-NEXT:  EntrySize: 24
@@ -214,9 +196,3 @@ Sections:
     Type: SHT_DYNSYM
     Content: "0123"
     Size: 2
-## TODO: .dynstr here is needed to set a proper Link for .dynsym.
-## Without this, llvm-readobj reports an error.
-## See https://bugs.llvm.org/show_bug.cgi?id=42215.
-  - Name: .dynstr
-    Type: SHT_STRTAB
-    Content: "00"
