@@ -102,8 +102,39 @@ exit:
   ret void
 }
 
-define void @dom_store(i8* %a) #0 {
-; CHECK-LABEL: @dom_store(
+define void @dom_store_preinc(i8* %a) #0 {
+; CHECK-LABEL: @dom_store_preinc(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    br label [[LOOP:%.*]]
+; CHECK:       loop:
+; CHECK-NEXT:    [[I_0:%.*]] = phi i8 [ 0, [[ENTRY:%.*]] ], [ [[TMP4:%.*]], [[LOOP]] ]
+; CHECK-NEXT:    [[P_0:%.*]] = phi i8* [ [[A:%.*]], [[ENTRY]] ], [ [[TMP3:%.*]], [[LOOP]] ]
+; CHECK-NEXT:    store volatile i8 0, i8* [[P_0]]
+; CHECK-NEXT:    [[TMP3]] = getelementptr inbounds i8, i8* [[P_0]], i64 1
+; CHECK-NEXT:    [[TMP4]] = add nuw i8 [[I_0]], 1
+; CHECK-NEXT:    [[EXITCOND:%.*]] = icmp ne i8 [[TMP4]], -10
+; CHECK-NEXT:    br i1 [[EXITCOND]], label [[LOOP]], label [[EXIT:%.*]]
+; CHECK:       exit:
+; CHECK-NEXT:    ret void
+;
+entry:
+  br label %loop
+
+loop:
+  %i.0 = phi i8 [ 0, %entry ], [ %tmp4, %loop ]
+  %p.0 = phi i8* [ %a, %entry ], [ %tmp3, %loop ]
+  store volatile i8 0, i8* %p.0
+  %tmp3 = getelementptr inbounds i8, i8* %p.0, i64 1
+  %tmp4 = add i8 %i.0, 1
+  %tmp5 = icmp ult i8 %tmp4, -10
+  br i1 %tmp5, label %loop, label %exit
+
+exit:
+  ret void
+}
+
+define void @dom_store_postinc(i8* %a) #0 {
+; CHECK-LABEL: @dom_store_postinc(
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    br label [[LOOP:%.*]]
 ; CHECK:       loop:
