@@ -30,7 +30,7 @@
 #include <optional>
 #include <set>
 
-#define DUMP_ON_FAILURE 1  // TODO pmk rm
+// #define DUMP_ON_FAILURE 1
 // #define CRASH_ON_FAILURE 1
 #if DUMP_ON_FAILURE
 #include "../parser/dump-parse-tree.h"
