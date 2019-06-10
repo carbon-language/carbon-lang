@@ -798,14 +798,11 @@ BasicBlock *FuncPGOInstrumentation<Edge, BBInfo>::getInstrBB(Edge *E) {
   if (DestBB == nullptr)
     return SrcBB;
 
-  auto canInstrument = [this](BasicBlock *BB) -> BasicBlock * {
+  auto canInstrument = [](BasicBlock *BB) -> BasicBlock * {
     // There are basic blocks (such as catchswitch) cannot be instrumented.
     // If the returned first insertion point is the end of BB, skip this BB.
-    if (BB->getFirstInsertionPt() == BB->end()) {
-      LLVM_DEBUG(dbgs() << "Cannot instrument BB index=" << getBBInfo(BB).Index
-                        << "\n");
+    if (BB->getFirstInsertionPt() == BB->end())
       return nullptr;
-    }
     return BB;
   };
 
