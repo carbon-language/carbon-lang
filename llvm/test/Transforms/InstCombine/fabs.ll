@@ -275,6 +275,21 @@ define double @select_fcmp_nnan_ole_zero(double %x) {
   ret double %fabs
 }
 
+; Repeat with unordered predicate - nnan allows us to treat ordered/unordered identically.
+
+define double @select_fcmp_nnan_ule_zero(double %x) {
+; CHECK-LABEL: @select_fcmp_nnan_ule_zero(
+; CHECK-NEXT:    [[LEZERO:%.*]] = fcmp ule double [[X:%.*]], 0.000000e+00
+; CHECK-NEXT:    [[NEGX:%.*]] = fsub nnan double 0.000000e+00, [[X]]
+; CHECK-NEXT:    [[FABS:%.*]] = select i1 [[LEZERO]], double [[NEGX]], double [[X]]
+; CHECK-NEXT:    ret double [[FABS]]
+;
+  %lezero = fcmp ule double %x, 0.0
+  %negx = fsub nnan double 0.0, %x
+  %fabs = select i1 %lezero, double %negx, double %x
+  ret double %fabs
+}
+
 ; Negative test - wrong predicate.
 
 define double @select_fcmp_nnan_olt_zero(double %x) {
@@ -324,6 +339,21 @@ define half @select_fcmp_nnan_ogt_negzero(half %x) {
 ; CHECK-NEXT:    ret half [[TMP1]]
 ;
   %gtzero = fcmp ogt half %x, -0.0
+  %negx = fsub nnan half 0.0, %x
+  %fabs = select i1 %gtzero, half %x, half %negx
+  ret half %fabs
+}
+
+; Repeat with unordered predicate - nnan allows us to treat ordered/unordered identically.
+
+define half @select_fcmp_nnan_ugt_negzero(half %x) {
+; CHECK-LABEL: @select_fcmp_nnan_ugt_negzero(
+; CHECK-NEXT:    [[GTZERO:%.*]] = fcmp ugt half [[X:%.*]], 0xH0000
+; CHECK-NEXT:    [[NEGX:%.*]] = fsub nnan half 0xH0000, [[X]]
+; CHECK-NEXT:    [[FABS:%.*]] = select i1 [[GTZERO]], half [[X]], half [[NEGX]]
+; CHECK-NEXT:    ret half [[FABS]]
+;
+  %gtzero = fcmp ugt half %x, -0.0
   %negx = fsub nnan half 0.0, %x
   %fabs = select i1 %gtzero, half %x, half %negx
   ret half %fabs
