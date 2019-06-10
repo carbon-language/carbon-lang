@@ -269,8 +269,8 @@ define double @select_fcmp_nnan_ole_zero(double %x) {
 ; CHECK-NEXT:    [[TMP1:%.*]] = call nnan double @llvm.fabs.f64(double [[X:%.*]])
 ; CHECK-NEXT:    ret double [[TMP1]]
 ;
-  %lezero = fcmp nnan ole double %x, 0.0
-  %negx = fsub double 0.0, %x
+  %lezero = fcmp ole double %x, 0.0
+  %negx = fsub nnan double 0.0, %x
   %fabs = select i1 %lezero, double %negx, double %x
   ret double %fabs
 }
@@ -282,8 +282,8 @@ define <2 x float> @select_fcmp_nnan_ole_negzero(<2 x float> %x) {
 ; CHECK-NEXT:    [[TMP1:%.*]] = call nnan <2 x float> @llvm.fabs.v2f32(<2 x float> [[X:%.*]])
 ; CHECK-NEXT:    ret <2 x float> [[TMP1]]
 ;
-  %lezero = fcmp nnan ole <2 x float> %x, <float -0.0, float -0.0>
-  %negx = fsub <2 x float> <float 0.0, float undef>, %x
+  %lezero = fcmp ole <2 x float> %x, <float -0.0, float -0.0>
+  %negx = fsub nnan <2 x float> <float 0.0, float undef>, %x
   %fabs = select <2 x i1> %lezero, <2 x float> %negx, <2 x float> %x
   ret <2 x float> %fabs
 }
@@ -295,8 +295,8 @@ define fp128 @select_fcmp_nnan_ogt_zero(fp128 %x) {
 ; CHECK-NEXT:    [[TMP1:%.*]] = call nnan fp128 @llvm.fabs.f128(fp128 [[X:%.*]])
 ; CHECK-NEXT:    ret fp128 [[TMP1]]
 ;
-  %gtzero = fcmp nnan ogt fp128 %x, zeroinitializer
-  %negx = fsub fp128 zeroinitializer, %x
+  %gtzero = fcmp ogt fp128 %x, zeroinitializer
+  %negx = fsub nnan fp128 zeroinitializer, %x
   %fabs = select i1 %gtzero, fp128 %x, fp128 %negx
   ret fp128 %fabs
 }
@@ -308,8 +308,8 @@ define half @select_fcmp_nnan_ogt_negzero(half %x) {
 ; CHECK-NEXT:    [[TMP1:%.*]] = call nnan half @llvm.fabs.f16(half [[X:%.*]])
 ; CHECK-NEXT:    ret half [[TMP1]]
 ;
-  %gtzero = fcmp nnan ogt half %x, -0.0
-  %negx = fsub half 0.0, %x
+  %gtzero = fcmp ogt half %x, -0.0
+  %negx = fsub nnan half 0.0, %x
   %fabs = select i1 %gtzero, half %x, half %negx
   ret half %fabs
 }

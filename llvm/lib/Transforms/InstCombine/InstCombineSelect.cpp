@@ -1866,27 +1866,29 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
 
       // NOTE: if we wanted to, this is where to detect MIN/MAX
     }
-
-    // Canonicalize select with fcmp to fabs(). -0.0 makes this tricky. We need
-    // fast-math-flags (nsz) or fsub with +0.0 (not fneg) for this to work. We
-    // also require nnan because we do not want to unintentionally change the
-    // sign of a NaN value.
-    Value *X = FCI->getOperand(0);
-    FCmpInst::Predicate Pred = FCI->getPredicate();
-    if (match(FCI->getOperand(1), m_AnyZeroFP()) && FCI->hasNoNaNs()) {
-      // (X <= +/-0.0) ? (0.0 - X) : X --> fabs(X)
-      // (X >  +/-0.0) ? X : (0.0 - X) --> fabs(X)
-      if ((X == FalseVal && Pred == FCmpInst::FCMP_OLE &&
-           match(TrueVal, m_FSub(m_PosZeroFP(), m_Specific(X)))) ||
-          (X == TrueVal && Pred == FCmpInst::FCMP_OGT &&
-           match(FalseVal, m_FSub(m_PosZeroFP(), m_Specific(X))))) {
-        Value *Fabs = Builder.CreateUnaryIntrinsic(Intrinsic::fabs, X, FCI);
-        return replaceInstUsesWith(SI, Fabs);
-      }
-    }
   }
 
-  // FIXME: These folds should test/propagate FMF from the select, not the fneg.
+  // Canonicalize select with fcmp to fabs(). -0.0 makes this tricky. We need
+  // fast-math-flags (nsz) or fsub with +0.0 (not fneg) for this to work. We
+  // also require nnan because we do not want to unintentionally change the
+  // sign of a NaN value.
+  // FIXME: These folds should test/propagate FMF from the select, not the
+  //        fsub or fneg.
+  // (X <= +/-0.0) ? (0.0 - X) : X --> fabs(X)
+  Instruction *FSub;
+  if (match(CondVal, m_FCmp(Pred, m_Specific(FalseVal), m_AnyZeroFP())) &&
+      match(TrueVal, m_FSub(m_PosZeroFP(), m_Specific(FalseVal))) &&
+      match(TrueVal, m_Instruction(FSub)) && FSub->hasNoNaNs()) {
+    Value *Fabs = Builder.CreateUnaryIntrinsic(Intrinsic::fabs, FalseVal, FSub);
+    return replaceInstUsesWith(SI, Fabs);
+  }
+  // (X >  +/-0.0) ? X : (0.0 - X) --> fabs(X)
+  if (match(CondVal, m_FCmp(Pred, m_Specific(TrueVal), m_AnyZeroFP())) &&
+      match(FalseVal, m_FSub(m_PosZeroFP(), m_Specific(TrueVal))) &&
+      match(FalseVal, m_Instruction(FSub)) && FSub->hasNoNaNs()) {
+    Value *Fabs = Builder.CreateUnaryIntrinsic(Intrinsic::fabs, TrueVal, FSub);
+    return replaceInstUsesWith(SI, Fabs);
+  }
   // With nnan and nsz:
   // (X <  +/-0.0) ? -X : X --> fabs(X)
   // (X <= +/-0.0) ? -X : X --> fabs(X)
