@@ -1895,7 +1895,8 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       match(TrueVal, m_FNeg(m_Specific(FalseVal))) &&
       match(TrueVal, m_Instruction(FNeg)) &&
       FNeg->hasNoNaNs() && FNeg->hasNoSignedZeros() &&
-      (Pred == FCmpInst::FCMP_OLT || Pred == FCmpInst::FCMP_OLE)) {
+      (Pred == FCmpInst::FCMP_OLT || Pred == FCmpInst::FCMP_OLE ||
+       Pred == FCmpInst::FCMP_ULT || Pred == FCmpInst::FCMP_ULE)) {
     Value *Fabs = Builder.CreateUnaryIntrinsic(Intrinsic::fabs, FalseVal, FNeg);
     return replaceInstUsesWith(SI, Fabs);
   }
@@ -1906,7 +1907,8 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       match(FalseVal, m_FNeg(m_Specific(TrueVal))) &&
       match(FalseVal, m_Instruction(FNeg)) &&
       FNeg->hasNoNaNs() && FNeg->hasNoSignedZeros() &&
-      (Pred == FCmpInst::FCMP_OGT || Pred == FCmpInst::FCMP_OGE)) {
+      (Pred == FCmpInst::FCMP_OGT || Pred == FCmpInst::FCMP_OGE ||
+       Pred == FCmpInst::FCMP_UGT || Pred == FCmpInst::FCMP_UGE)) {
     Value *Fabs = Builder.CreateUnaryIntrinsic(Intrinsic::fabs, TrueVal, FNeg);
     return replaceInstUsesWith(SI, Fabs);
   }
