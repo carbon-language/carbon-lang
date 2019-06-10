@@ -19,7 +19,7 @@
 #include "check-arithmeticif.h"
 #include "check-coarray.h"
 #include "check-deallocate.h"
-#include "check-do-stmt.h"
+#include "check-do.h"
 #include "check-if-stmt.h"
 #include "check-io.h"
 #include "check-nullify.h"
@@ -82,8 +82,8 @@ private:
 using StatementSemanticsPass1 = ExprChecker;
 using StatementSemanticsPass2 = SemanticsVisitor<AllocateChecker,
     ArithmeticIfStmtChecker, AssignmentChecker, CoarrayChecker,
-    DeallocateChecker, DoStmtChecker, IfStmtChecker, IoChecker,
-    NullifyChecker, ReturnStmtChecker, StopChecker>;
+    DeallocateChecker, DoChecker, IfStmtChecker, IoChecker, NullifyChecker,
+    ReturnStmtChecker, StopChecker>;
 
 static bool PerformStatementSemantics(
     SemanticsContext &context, parser::Program &program) {

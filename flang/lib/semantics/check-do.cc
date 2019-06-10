@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "check-do-stmt.h"
+#include "check-do.h"
 #include "attr.h"
 #include "scope.h"
 #include "semantics.h"
@@ -373,9 +373,9 @@ static CS GatherReferencesFromExpression(const parser::Expr &expression) {
 }
 
 // Find a DO statement and enforce semantics checks on its body
-class DoStmtContext {
+class DoContext {
 public:
-  DoStmtContext(SemanticsContext &context) : context_{context} {}
+  DoContext(SemanticsContext &context) : context_{context} {}
 
   void Check(const parser::DoConstruct &doConstruct) {
     if (doConstruct.IsDoConcurrent()) {
@@ -433,7 +433,7 @@ private:
                 sourceLocation, symType->IsNumeric(TypeCategory::Real));
           }
         }
-      } // No messages for INTEGER
+      }  // No messages for INTEGER
     }
   }
 
@@ -613,11 +613,11 @@ private:
 
   SemanticsContext &context_;
   parser::CharBlock currentStatementSourcePosition_;
-};  // class DoStmtContext
+};  // class DoContext
 
 // DO loops must be canonicalized prior to calling
-void DoStmtChecker::Leave(const parser::DoConstruct &x) {
-  DoStmtContext doContext{context_};
+void DoChecker::Leave(const parser::DoConstruct &x) {
+  DoContext doContext{context_};
   doContext.Check(x);
 }
 

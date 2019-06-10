@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_SEMANTICS_CHECK_DO_STMT_H_
-#define FORTRAN_SEMANTICS_CHECK_DO_STMT_H_
+#ifndef FORTRAN_SEMANTICS_CHECK_DO_H_
+#define FORTRAN_SEMANTICS_CHECK_DO_H_
 
 #include "semantics.h"
 
@@ -23,13 +23,13 @@ struct DoConstruct;
 
 namespace Fortran::semantics {
 
-class DoStmtChecker : public virtual BaseChecker {
+class DoChecker : public virtual BaseChecker {
 public:
-  explicit DoStmtChecker(SemanticsContext &context) : context_{context} {}
+  explicit DoChecker(SemanticsContext &context) : context_{context} {}
   void Leave(const parser::DoConstruct &);
 
 private:
   SemanticsContext &context_;
 };
 }
-#endif  // FORTRAN_SEMANTICS_CHECK_DO_STMT_H_
+#endif  // FORTRAN_SEMANTICS_CHECK_DO_H_

@@ -20,7 +20,7 @@ add_library(FortranSemantics
   check-arithmeticif.cc
   check-coarray.cc
   check-deallocate.cc
-  check-do-stmt.cc
+  check-do.cc
   check-if-stmt.cc
   check-io.cc
   check-nullify.cc
