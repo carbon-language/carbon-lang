@@ -417,9 +417,7 @@ private:
   void CheckDoVariable(const parser::ScalarName &scalarName) {
     const parser::CharBlock &sourceLocation{scalarName.thing.source};
     const Symbol *symbol{scalarName.thing.symbol};
-    if (!symbol) {
-      SayBadDoControl(sourceLocation);
-    } else {
+    if (symbol) {
       if (!IsVariableName(*symbol)) {
         context_.Say(
             sourceLocation, "DO control must be an INTEGER variable"_err_en_US);
@@ -441,9 +439,7 @@ private:
     const evaluate::Expr<evaluate::SomeType> *expr{GetExpr(scalarExpression)};
     const parser::CharBlock &sourceLocation{
         scalarExpression.thing.value().source};
-    if (!expr) {
-      SayBadDoControl(sourceLocation);
-    } else {
+    if (expr) {
       if (ExprHasTypeCategory(*expr, TypeCategory::Integer)) {
         return;  // No warnings or errors for INTEGER
       }

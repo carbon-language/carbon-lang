@@ -149,7 +149,6 @@ PROGRAM do_issue_458
 
 ! Undeclared DO variable
 !ERROR: No explicit type declared for 'undeclared'
-!ERROR: DO controls should be INTEGER
   DO undeclared = 1, 10, 3
     PRINT *, "plvar is: ", plvar
   END DO
@@ -220,7 +219,6 @@ PROGRAM do_issue_458
   END DO
 
 ! Invalid initial expression
-!ERROR: DO controls should be INTEGER
 !ERROR: Integer literal is too large for INTEGER(KIND=4)
   DO ivar = -2147483648_4, 10, 3
     PRINT *, "ivar is: ", ivar
@@ -259,7 +257,6 @@ PROGRAM do_issue_458
   END DO
 
 ! Invalid final expression
-!ERROR: DO controls should be INTEGER
 !ERROR: Integer literal is too large for INTEGER(KIND=4)
   DO ivar = 1, -2147483648_4, 3
     PRINT *, "ivar is: ", ivar
@@ -298,7 +295,6 @@ PROGRAM do_issue_458
   END DO
 
 ! Invalid step expression
-!ERROR: DO controls should be INTEGER
 !ERROR: Integer literal is too large for INTEGER(KIND=4)
   DO ivar = 1, 10, -2147483648_4
     PRINT *, "ivar is: ", ivar
