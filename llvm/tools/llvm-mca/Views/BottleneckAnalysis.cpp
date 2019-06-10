@@ -212,7 +212,7 @@ void DependencyGraph::addDependency(unsigned From, DependencyEdge &&Dep) {
 BottleneckAnalysis::BottleneckAnalysis(const MCSubtargetInfo &sti,
                                        MCInstPrinter &Printer,
                                        ArrayRef<MCInst> S)
-    : STI(sti), MCIP(Printer), Tracker(STI.getSchedModel()), DG(S.size() * 3),
+    : STI(sti), Tracker(STI.getSchedModel()), DG(S.size() * 3),
       Source(S), TotalCycles(0), PressureIncreasedBecauseOfResources(false),
       PressureIncreasedBecauseOfRegisterDependencies(false),
       PressureIncreasedBecauseOfMemoryDependencies(false),

@@ -164,7 +164,6 @@ public:
 /// A view that collects and prints a few performance numbers.
 class BottleneckAnalysis : public View {
   const MCSubtargetInfo &STI;
-  MCInstPrinter &MCIP;
   PressureTracker Tracker;
   DependencyGraph DG;
 
@@ -211,7 +210,7 @@ public:
   void printView(raw_ostream &OS) const override;
 
 #ifndef NDEBUG
-  void dump(raw_ostream &OS) const { DG.dump(OS, MCIP); }
+  void dump(raw_ostream &OS, MCInstPrinter &MCIP) const { DG.dump(OS, MCIP); }
 #endif
 };
 
