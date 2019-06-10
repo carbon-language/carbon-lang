@@ -5167,8 +5167,7 @@ def t2LE : t2LOL<(outs ), (ins lelabel_u11:$label), "le", "$label"> {
   let Inst{10-1} = label{10-1};
 }
 
-let Uses = [CPSR] in {
-class CS<string iname, list<dag> pattern=[]>
+class CS<string iname, bits<4> opcode, list<dag> pattern=[]>
   : V8_1MI<(outs rGPR:$Rd), (ins GPRwithZR:$Rn, GPRwithZR:$Rm, pred_noal:$fcond),
            AddrModeNone, NoItinerary, iname, "$Rd, $Rn, $Rm, $fcond", "", pattern> {
   bits<4> Rd;
@@ -5178,27 +5177,18 @@ class CS<string iname, list<dag> pattern=[]>
 
   let Inst{31-20} = 0b111010100101;
   let Inst{19-16} = Rn{3-0};
+  let Inst{15-12} = opcode;
   let Inst{11-8} = Rd{3-0};
   let Inst{7-4} = fcond{3-0};
   let Inst{3-0} = Rm{3-0};
-}
+
+  let Uses = [CPSR];
 }
 
-def t2CSEL : CS<"csel"> {
-  let Inst{15-12} = 0b1000;
-}
-
-def t2CSINC : CS<"csinc"> {
-  let Inst{15-12} = 0b1001;
-}
-
-def t2CSINV : CS<"csinv"> {
-  let Inst{15-12} = 0b1010;
-}
-
-def t2CSNEG : CS<"csneg"> {
-  let Inst{15-12} = 0b1011;
-}
+def t2CSEL  : CS<"csel",  0b1000>;
+def t2CSINC : CS<"csinc", 0b1001>;
+def t2CSINV : CS<"csinv", 0b1010>;
+def t2CSNEG : CS<"csneg", 0b1011>;
 
 
 // CS aliases.

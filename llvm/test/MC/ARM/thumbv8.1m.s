@@ -1096,3 +1096,19 @@ csinv   lr, r2, r2, mi
 # CHECK-FP: csel r0, r0, r1, eq @ encoding: [0x50,0xea,0x01,0x80]
 # CHECK-NOLOB: csel r0, r0, r1, eq @ encoding: [0x50,0xea,0x01,0x80]
 csel r0, r0, r1, eq
+
+// ERROR: :[[@LINE+2]]:{{[0-9]+}}: error: instructions in IT block must be predicable
+it eq
+csel r0, r0, r1, eq
+
+// ERROR: :[[@LINE+2]]:{{[0-9]+}}: error: instructions in IT block must be predicable
+it eq
+csinc r0, r0, r1, ne
+
+// ERROR: :[[@LINE+2]]:{{[0-9]+}}: error: instructions in IT block must be predicable
+it gt
+csinv r0, r0, r1, ge
+
+// ERROR: :[[@LINE+2]]:{{[0-9]+}}: error: instructions in IT block must be predicable
+it lt
+csneg r0, r0, r1, gt
