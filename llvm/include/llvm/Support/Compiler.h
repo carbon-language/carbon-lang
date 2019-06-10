@@ -110,7 +110,7 @@
 #define LLVM_EXTERNAL_VISIBILITY __attribute__ ((visibility("default")))
 #else
 #define LLVM_LIBRARY_VISIBILITY
-#define LLVM_EXTERNAL_VISIBLITY
+#define LLVM_EXTERNAL_VISIBILITY
 #endif
 
 #if defined(__GNUC__)
