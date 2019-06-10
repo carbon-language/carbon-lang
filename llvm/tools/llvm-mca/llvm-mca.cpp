@@ -237,6 +237,7 @@ static void processViewOptions() {
 
   if (EnableAllViews.getNumOccurrences()) {
     processOptionImpl(PrintSummaryView, EnableAllViews);
+    processOptionImpl(EnableBottleneckAnalysis, EnableAllViews);
     processOptionImpl(PrintResourcePressureView, EnableAllViews);
     processOptionImpl(PrintTimelineView, EnableAllViews);
     processOptionImpl(PrintInstructionInfoView, EnableAllViews);
