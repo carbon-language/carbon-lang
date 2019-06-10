@@ -367,7 +367,18 @@ void ELFState<ELFT>::initSymtabSectionHeader(Elf_Shdr &SHeader,
   bool IsStatic = STType == SymtabType::Static;
   SHeader.sh_name = DotShStrtab.getOffset(IsStatic ? ".symtab" : ".dynsym");
   SHeader.sh_type = IsStatic ? ELF::SHT_SYMTAB : ELF::SHT_DYNSYM;
-  SHeader.sh_link = IsStatic ? SN2I.get(".strtab") : SN2I.get(".dynstr");
+
+  // When we describe the .dynsym section in the document explicitly, it is
+  // allowed to omit the "DynamicSymbols" tag. In this case .dynstr is not added
+  // implicitly and we should be able to leave the Link zeroed if .dynstr is not
+  // defined.
+  unsigned Link = 0;
+  if (IsStatic)
+    Link = SN2I.get(".strtab");
+  else
+    SN2I.lookup(".dynstr", Link);
+  SHeader.sh_link = Link;
+
   if (!IsStatic)
     SHeader.sh_flags |= ELF::SHF_ALLOC;
 
