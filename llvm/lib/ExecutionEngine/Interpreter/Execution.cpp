@@ -50,8 +50,10 @@ static void executeFNegInst(GenericValue &Dest, GenericValue Src, Type *Ty) {
   switch (Ty->getTypeID()) {
   case Type::FloatTyID:
     Dest.FloatVal = -Src.FloatVal;
+    break;
   case Type::DoubleTyID:
     Dest.DoubleVal = -Src.DoubleVal;
+    break;
   default:
     llvm_unreachable("Unhandled type for FNeg instruction");
   }
