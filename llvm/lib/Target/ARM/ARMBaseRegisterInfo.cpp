@@ -203,8 +203,6 @@ getReservedRegs(const MachineFunction &MF) const {
     for (MCSubRegIterator SI(Reg, this); SI.isValid(); ++SI)
       if (Reserved.test(*SI))
         markSuperRegs(Reserved, Reg);
-  // For v8.1m architecture
-  markSuperRegs(Reserved, ARM::ZR);
 
   assert(checkAllSuperRegsMarked(Reserved));
   return Reserved;

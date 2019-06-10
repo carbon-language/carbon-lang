@@ -771,13 +771,11 @@ void ARMInstPrinter::printPKHASRShiftImm(const MCInst *MI, unsigned OpNum,
 void ARMInstPrinter::printRegisterList(const MCInst *MI, unsigned OpNum,
                                        const MCSubtargetInfo &STI,
                                        raw_ostream &O) {
-  if (MI->getOpcode() != ARM::t2CLRM) {
-    assert(std::is_sorted(MI->begin() + OpNum, MI->end(),
-                          [&](const MCOperand &LHS, const MCOperand &RHS) {
-                            return MRI.getEncodingValue(LHS.getReg()) <
-                                   MRI.getEncodingValue(RHS.getReg());
-                          }));
-  }
+  assert(std::is_sorted(MI->begin() + OpNum, MI->end(),
+                        [&](const MCOperand &LHS, const MCOperand &RHS) {
+                          return MRI.getEncodingValue(LHS.getReg()) <
+                                 MRI.getEncodingValue(RHS.getReg());
+                        }));
 
   O << "{";
   for (unsigned i = OpNum, e = MI->getNumOperands(); i != e; ++i) {
@@ -932,29 +930,12 @@ void ARMInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNum,
     O << ARMCondCodeToString(CC);
 }
 
-void ARMInstPrinter::printMandatoryRestrictedPredicateOperand(
-    const MCInst *MI, unsigned OpNum, const MCSubtargetInfo &STI,
-    raw_ostream &O) {
-  if ((ARMCC::CondCodes)MI->getOperand(OpNum).getImm() == ARMCC::HS)
-    O << "cs";
-  else
-    printMandatoryPredicateOperand(MI, OpNum, STI, O);
-}
-
 void ARMInstPrinter::printMandatoryPredicateOperand(const MCInst *MI,
                                                     unsigned OpNum,
                                                     const MCSubtargetInfo &STI,
                                                     raw_ostream &O) {
   ARMCC::CondCodes CC = (ARMCC::CondCodes)MI->getOperand(OpNum).getImm();
   O << ARMCondCodeToString(CC);
-}
-
-void ARMInstPrinter::printMandatoryInvertedPredicateOperand(const MCInst *MI,
-                                                            unsigned OpNum,
-                                                            const MCSubtargetInfo &STI,
-                                                            raw_ostream &O) {
-  ARMCC::CondCodes CC = (ARMCC::CondCodes)MI->getOperand(OpNum).getImm();
-  O << ARMCondCodeToString(ARMCC::getOppositeCondition(CC));
 }
 
 void ARMInstPrinter::printSBitModifierOperand(const MCInst *MI, unsigned OpNum,
