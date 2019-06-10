@@ -487,7 +487,7 @@ int main(int argc, char **argv) {
           llvm::make_unique<mca::SummaryView>(SM, Insts, DispatchWidth));
 
     if (EnableBottleneckAnalysis)
-      Printer.addView(llvm::make_unique<mca::BottleneckAnalysis>(*STI, Insts));
+      Printer.addView(llvm::make_unique<mca::BottleneckAnalysis>(*STI, *IP, Insts));
 
     if (PrintInstructionInfoView)
       Printer.addView(
