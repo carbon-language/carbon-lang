@@ -534,6 +534,12 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     addRegisterClass(MVT::f64, Subtarget.hasAVX512() ? &X86::FR64XRegClass
                                                      : &X86::FR64RegClass);
 
+    // Disable f32->f64 extload as we can only generate this in one instruction
+    // under optsize. So its easier to pattern match (fpext (load)) for that
+    // case instead of needing to emit 2 instructions for extload in the
+    // non-optsize case.
+    setLoadExtAction(ISD::EXTLOAD, MVT::f64, MVT::f32, Expand);
+
     for (auto VT : { MVT::f32, MVT::f64 }) {
       // Use ANDPD to simulate FABS.
       setOperationAction(ISD::FABS, VT, Custom);
