@@ -1879,7 +1879,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   if (match(CondVal, m_FCmp(Pred, m_Specific(FalseVal), m_AnyZeroFP())) &&
       match(TrueVal, m_FSub(m_PosZeroFP(), m_Specific(FalseVal))) &&
       match(TrueVal, m_Instruction(FSub)) && FSub->hasNoNaNs() &&
-      Pred == FCmpInst::FCMP_OLE) {
+      (Pred == FCmpInst::FCMP_OLE || Pred == FCmpInst::FCMP_ULE)) {
     Value *Fabs = Builder.CreateUnaryIntrinsic(Intrinsic::fabs, FalseVal, FSub);
     return replaceInstUsesWith(SI, Fabs);
   }
@@ -1887,7 +1887,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   if (match(CondVal, m_FCmp(Pred, m_Specific(TrueVal), m_AnyZeroFP())) &&
       match(FalseVal, m_FSub(m_PosZeroFP(), m_Specific(TrueVal))) &&
       match(FalseVal, m_Instruction(FSub)) && FSub->hasNoNaNs() &&
-      Pred == FCmpInst::FCMP_OGT) {
+      (Pred == FCmpInst::FCMP_OGT || Pred == FCmpInst::FCMP_UGT)) {
     Value *Fabs = Builder.CreateUnaryIntrinsic(Intrinsic::fabs, TrueVal, FSub);
     return replaceInstUsesWith(SI, Fabs);
   }
