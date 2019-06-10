@@ -2635,15 +2635,7 @@ bool IndVarSimplify::run(Loop *L) {
       if (!needsLFTR(L, ExitingBB))
         continue;
 
-      // Note: This block of code is here strictly to seperate an change into
-      // two parts: one NFC, one not.  What's happening here is that SCEV is
-      // returning a more expensive expression for the BackedgeTakenCount for
-      // the loop after widening in rare circumstances.  In review, we decided
-      // to accept that small difference - since it has minimal test suite
-      // impact - but for ease of attribution, the functional diff will be it's
-      // own change.  
-      const SCEV *BETakenCount = L->getExitingBlock() ?
-        BackedgeTakenCount : SE->getExitCount(L, ExitingBB);
+      const SCEV *BETakenCount = SE->getExitCount(L, ExitingBB);
       if (isa<SCEVCouldNotCompute>(BETakenCount))
         continue;
 
