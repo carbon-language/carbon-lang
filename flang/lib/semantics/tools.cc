@@ -130,12 +130,13 @@ bool IsPointerDummy(const Symbol &symbol) {
 
 // variable-name
 bool IsVariableName(const Symbol &symbol) {
-  return symbol.has<ObjectEntityDetails>() && !IsParameter(symbol);
+  const Symbol &ultimate{symbol.GetUltimate()};
+  return ultimate.has<ObjectEntityDetails>() && !IsParameter(ultimate);
 }
 
 // proc-name
 bool IsProcName(const Symbol &symbol) {
-  return symbol.has<ProcEntityDetails>();
+  return symbol.GetUltimate().has<ProcEntityDetails>();
 }
 
 bool IsFunction(const Symbol &symbol) {

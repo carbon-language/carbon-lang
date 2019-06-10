@@ -22,7 +22,23 @@
 
 !OPTIONS: -Mstandard -Werror
 
+! C1120 -- DO variable (and associated expressions) must be INTEGER.
+! This is extended by allowing REAL and DOUBLE PRECISION
+
+SUBROUTINE sub()
+END SUBROUTINE sub
+
+FUNCTION ifunc()
+END FUNCTION ifunc
+
+MODULE share
+  INTEGER :: intvarshare
+  REAL :: realvarshare
+  DOUBLE PRECISION :: dpvarshare
+END MODULE share
+
 PROGRAM do_issue_458
+  USE share
   IMPLICIT NONE
   INTEGER :: ivar
   REAL :: rvar
@@ -40,6 +56,7 @@ PROGRAM do_issue_458
   REAL, POINTER :: prvar
   DOUBLE PRECISION, POINTER :: pdvar
   LOGICAL, POINTER :: plvar
+  PROCEDURE(ifunc), POINTER :: pifunc => NULL()
 
 ! DO variables
 ! INTEGER DO variable
@@ -106,6 +123,52 @@ PROGRAM do_issue_458
     PRINT *, "plvar is: ", plvar
   END DO
 
+! SUBROUTINE DO variable
+!ERROR: DO control must be an INTEGER variable
+  DO sub = 1, 10, 3
+    PRINT *, "ivar is: ", ivar
+  END DO
+
+! FUNCTION DO variable
+!ERROR: DO control must be an INTEGER variable
+  DO ifunc = 1, 10, 3
+    PRINT *, "ivar is: ", ivar
+  END DO
+
+! POINTER to FUNCTION DO variable
+!ERROR: DO control must be an INTEGER variable
+  DO pifunc = 1, 10, 3
+    PRINT *, "ivar is: ", ivar
+  END DO
+
+! Array DO variable
+!ERROR: Must be a scalar value, but is a rank-1 array
+  DO avar = 1, 10, 3
+    PRINT *, "plvar is: ", plvar
+  END DO
+
+! Undeclared DO variable
+!ERROR: No explicit type declared for 'undeclared'
+!ERROR: DO controls should be INTEGER
+  DO undeclared = 1, 10, 3
+    PRINT *, "plvar is: ", plvar
+  END DO
+
+! Shared association INTEGER DO variable
+  DO intvarshare = 1, 10, 3
+    PRINT *, "ivar is: ", ivar
+  END DO
+
+! Shared association REAL DO variable
+  DO realvarshare = 1, 10, 3
+    PRINT *, "ivar is: ", ivar
+  END DO
+
+! Shared association DOUBLE PRECISION DO variable
+  DO dpvarshare = 1, 10, 3
+    PRINT *, "ivar is: ", ivar
+  END DO
+
 ! Initial expressions
 ! REAL initial expression
   DO ivar = rvar, 10, 3
@@ -156,6 +219,13 @@ PROGRAM do_issue_458
     PRINT *, "ivar is: ", ivar
   END DO
 
+! Invalid initial expression
+!ERROR: DO controls should be INTEGER
+!ERROR: Integer literal is too large for INTEGER(KIND=4)
+  DO ivar = -2147483648_4, 10, 3
+    PRINT *, "ivar is: ", ivar
+  END DO
+
 ! Final expression
 ! REAL final expression
   DO ivar = 1, rvar, 3
@@ -185,6 +255,13 @@ PROGRAM do_issue_458
 ! COMPLEX final expression
 !ERROR: DO controls should be INTEGER
   DO ivar = 1, cvar, 3
+    PRINT *, "ivar is: ", ivar
+  END DO
+
+! Invalid final expression
+!ERROR: DO controls should be INTEGER
+!ERROR: Integer literal is too large for INTEGER(KIND=4)
+  DO ivar = 1, -2147483648_4, 3
     PRINT *, "ivar is: ", ivar
   END DO
 
@@ -220,10 +297,11 @@ PROGRAM do_issue_458
     PRINT *, "ivar is: ", ivar
   END DO
 
-! Array DO variable
-!ERROR: Must be a scalar value, but is a rank-1 array
-  DO avar = 1, 10, 3
-    PRINT *, "plvar is: ", plvar
+! Invalid step expression
+!ERROR: DO controls should be INTEGER
+!ERROR: Integer literal is too large for INTEGER(KIND=4)
+  DO ivar = 1, 10, -2147483648_4
+    PRINT *, "ivar is: ", ivar
   END DO
 
 END PROGRAM do_issue_458

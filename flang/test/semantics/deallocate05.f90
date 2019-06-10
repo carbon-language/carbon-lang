@@ -14,6 +14,13 @@
 
 ! Check for semantic errors in DEALLOCATE statements
 
+Module share
+  Real, Pointer :: rp
+End Module share
+
+Program deallocatetest
+Use share
+
 INTEGER, PARAMETER :: maxvalue=1024
 
 Type dt
@@ -31,6 +38,9 @@ Integer :: e
 Integer :: pi
 Character(256) :: ee
 Procedure(Real) :: prp
+
+Allocate(rp)
+Deallocate(rp)
 
 Allocate(x(3))
 
@@ -66,4 +76,4 @@ Deallocate(x, stat=s, errmsg=ee, stat=s)
 !ERROR: ERRMSG may not be duplicated in a DEALLOCATE statement
 Deallocate(x, stat=s, errmsg=ee, errmsg=ee)
 
-End Program
+End Program deallocatetest

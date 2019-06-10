@@ -397,6 +397,10 @@ private:
     return std::get<Bounds>(loopControl.u);
   }
 
+  void SayBadDoControl(parser::CharBlock sourceLocation) {
+    context_.Say(sourceLocation, "DO controls should be INTEGER"_err_en_US);
+  }
+
   void CheckDoControl(parser::CharBlock sourceLocation, bool isReal) {
     bool warn{context_.warnOnNonstandardUsage() ||
         context_.ShouldWarn(parser::LanguageFeature::RealDoControls)};
@@ -406,31 +410,50 @@ private:
       // TODO: Mark the following message as a warning when we have warnings
       context_.Say(sourceLocation, "DO controls should be INTEGER"_en_US);
     } else {
-      context_.Say(sourceLocation, "DO controls should be INTEGER"_err_en_US);
+      SayBadDoControl(sourceLocation);
     }
   }
 
   void CheckDoVariable(const parser::ScalarName &scalarName) {
-    const DeclTypeSpec *symType{scalarName.thing.symbol->GetType()};
-    if (symType->IsNumeric(TypeCategory::Integer)) {
-      return;  // No warnings or errors for INTEGER
-    }
     const parser::CharBlock &sourceLocation{scalarName.thing.source};
-    CheckDoControl(sourceLocation, symType->IsNumeric(TypeCategory::Real));
+    const Symbol *symbol{scalarName.thing.symbol};
+    if (!symbol) {
+      SayBadDoControl(sourceLocation);
+    } else {
+      if (!IsVariableName(*symbol)) {
+        context_.Say(
+            sourceLocation, "DO control must be an INTEGER variable"_err_en_US);
+      } else {
+        const DeclTypeSpec *symType{symbol->GetType()};
+        if (!symType) {
+          SayBadDoControl(sourceLocation);
+        } else {
+          if (!symType->IsNumeric(TypeCategory::Integer)) {
+            CheckDoControl(
+                sourceLocation, symType->IsNumeric(TypeCategory::Real));
+          }
+        }
+      } // No messages for INTEGER
+    }
   }
 
   void CheckDoExpression(const parser::ScalarExpr &scalarExpression) {
     const evaluate::Expr<evaluate::SomeType> *expr{GetExpr(scalarExpression)};
-    if (ExprHasTypeCategory(*expr, TypeCategory::Integer)) {
-      return;  // No warnings or errors for INTEGER
-    }
     const parser::CharBlock &sourceLocation{
         scalarExpression.thing.value().source};
-    CheckDoControl(
-        sourceLocation, ExprHasTypeCategory(*expr, TypeCategory::Real));
+    if (!expr) {
+      SayBadDoControl(sourceLocation);
+    } else {
+      if (ExprHasTypeCategory(*expr, TypeCategory::Integer)) {
+        return;  // No warnings or errors for INTEGER
+      }
+      CheckDoControl(
+          sourceLocation, ExprHasTypeCategory(*expr, TypeCategory::Real));
+    }
   }
 
   void CheckDoNormal(const parser::DoConstruct &doConstruct) {
+    // C1120 extended by allowing REAL and DOUBLE PRECISION
     // Get the bounds, then check the variable, init, final, and step
     const Bounds &bounds{GetBounds(doConstruct)};
     CheckDoVariable(bounds.name);

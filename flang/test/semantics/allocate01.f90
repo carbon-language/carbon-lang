@@ -14,6 +14,11 @@
 
 ! Check for semantic errors in ALLOCATE statements
 
+! Creating a symbol that allocate should accept
+module share
+  real, pointer :: rp
+end module share
+
 module m
 ! Creating symbols that allocate should not accept
   type :: a_type
@@ -37,6 +42,7 @@ end module
 
 subroutine C932(ed1, ed5, ed7, edc9, edc10, okad1, okpd1, okacd5)
 ! Each allocate-object shall be a data pointer or an allocatable variable.
+  use :: share
   use :: m, only: a_type
   type TestType1
     integer, allocatable :: ok(:)
@@ -124,4 +130,5 @@ subroutine C932(ed1, ed5, ed7, edc9, edc10, okad1, okpd1, okacd5)
   allocate(e8%ok)
   allocate(edc9%ok(4))
   allocate(edc10%ok)
+  allocate(rp)
 end subroutine
