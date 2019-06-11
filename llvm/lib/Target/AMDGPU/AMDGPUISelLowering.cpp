@@ -524,6 +524,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(const TargetMachine &TM,
   setHasMultipleConditionRegisters(true);
 
   setMinCmpXchgSizeInBits(32);
+  setSupportsUnalignedAtomics(false);
 
   PredictableSelectIsExpensive = false;
 
