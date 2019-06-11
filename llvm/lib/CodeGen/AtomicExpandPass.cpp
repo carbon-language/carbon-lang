@@ -585,6 +585,10 @@ bool AtomicExpand::tryExpandAtomicRMW(AtomicRMWInst *AI) {
     unsigned MinCASSize = TLI->getMinCmpXchgSizeInBits() / 8;
     unsigned ValueSize = getAtomicOpSize(AI);
     if (ValueSize < MinCASSize) {
+      // TODO: Handle atomicrmw fadd/fsub
+      if (AI->getType()->isFloatingPointTy())
+        return false;
+
       expandPartwordAtomicRMW(AI,
                               TargetLoweringBase::AtomicExpansionKind::CmpXChg);
     } else {
