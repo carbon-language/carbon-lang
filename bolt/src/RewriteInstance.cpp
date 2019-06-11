@@ -70,6 +70,7 @@
 #include <fstream>
 #include <stack>
 #include <system_error>
+#include <thread>
 
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt"
@@ -784,8 +785,13 @@ bool RewriteInstance::shouldDisassemble(const BinaryFunction &BF) const {
     return false;
   }
 
-  // In strict mode we have to account for all functions.
-  if (!opts::StrictMode && opts::AggregateOnly && !BF.hasProfileAvailable())
+  // If we are running in profile conversion mode and there is no profile
+  // available for the function, we can skip the disassembly.
+  // However, in strict relocation mode we need to account for all
+  // functions. Also, when multi-threading is enabled, the profile may not be
+  // available yet, and we conservatively disassemble the function.
+  if (opts::AggregateOnly && opts::NoThreads && !opts::StrictMode &&
+      !BF.hasProfileAvailable())
     return false;
 
   return true;
@@ -1053,18 +1059,31 @@ void RewriteInstance::run() {
     readSpecialSections();
     adjustCommandLineOptions();
     discoverFileObjects();
-    preprocessProfileData();
-    if (opts::AggregateOnly && DA.usesBAT()) {
-      // Skip disassembling if we have a translation table and we running an
-      // aggregation job.
-      processProfileData();
-      return;
-    }
+
+    std::thread PreProcessProfileThread([&]() {
+      outs() << "BOLT-INFO: spawning thread to pre-process profile\n";
+      preprocessProfileData();
+    });
+
+    if (opts::NoThreads)
+      PreProcessProfileThread.join();
+
     readDebugInfo();
-    disassembleFunctions();
+
+    // Skip disassembling if we have a translation table and we are running an
+    // aggregation job.
+    if (!opts::AggregateOnly || !DA.usesBAT()) {
+      disassembleFunctions();
+    }
+
+    if (PreProcessProfileThread.joinable())
+      PreProcessProfileThread.join();
+
     processProfileData();
+
     if (opts::AggregateOnly)
       return;
+
     postProcessFunctions();
     for (uint64_t Address : NonSimpleFunctions) {
       auto *BF = BC->getBinaryFunctionAtAddress(Address);
@@ -1978,6 +1997,13 @@ void RewriteInstance::adjustCommandLineOptions() {
     errs() << "BOLT-WARNING: disabling strict mode (-strict) in non-relocation "
               "mode\n";
     opts::StrictMode = false;
+  }
+
+  if (BC->HasRelocations && opts::AggregateOnly &&
+      !opts::StrictMode.getNumOccurrences()) {
+    outs() << "BOLT-INFO: enabling strict relocation mode for aggregtion "
+              "purposes\n";
+    opts::StrictMode = true;
   }
 
   if (BC->isX86() && BC->HasRelocations &&
