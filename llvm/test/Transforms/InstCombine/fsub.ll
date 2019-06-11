@@ -38,11 +38,9 @@ define float @neg_sub_nsz(float %x, float %y) {
   ret float %t2
 }
 
-; FIXME: This combine isn't working.
 define float @unary_neg_sub_nsz(float %x, float %y) {
 ; CHECK-LABEL: @unary_neg_sub_nsz(
-; CHECK-NEXT:    [[T1:%.*]] = fsub float [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[T2:%.*]] = fneg nsz float [[T1]]
+; CHECK-NEXT:    [[T2:%.*]] = fsub nsz float [[Y:%.*]], [[X:%.*]]
 ; CHECK-NEXT:    ret float [[T2]]
 ;
   %t1 = fsub float %x, %y
