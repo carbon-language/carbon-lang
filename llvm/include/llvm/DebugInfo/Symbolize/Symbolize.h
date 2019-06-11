@@ -42,6 +42,7 @@ public:
     std::string DefaultArch;
     std::vector<std::string> DsymHints;
     std::string FallbackDebugPath;
+    std::string DWPName;
   };
 
   LLVMSymbolizer() = default;
@@ -52,12 +53,10 @@ public:
   }
 
   Expected<DILineInfo> symbolizeCode(const std::string &ModuleName,
-                                     object::SectionedAddress ModuleOffset,
-                                     StringRef DWPName = "");
+                                     object::SectionedAddress ModuleOffset);
   Expected<DIInliningInfo>
   symbolizeInlinedCode(const std::string &ModuleName,
-                       object::SectionedAddress ModuleOffset,
-                       StringRef DWPName = "");
+                       object::SectionedAddress ModuleOffset);
   Expected<DIGlobal> symbolizeData(const std::string &ModuleName,
                                    object::SectionedAddress ModuleOffset);
   void flush();
@@ -76,7 +75,7 @@ private:
   /// only reported once. Subsequent calls to get module info for a module that
   /// failed to load will return nullptr.
   Expected<SymbolizableModule *>
-  getOrCreateModuleInfo(const std::string &ModuleName, StringRef DWPName = "");
+  getOrCreateModuleInfo(const std::string &ModuleName);
 
   ObjectFile *lookUpDsymFile(const std::string &Path,
                              const MachOObjectFile *ExeObj,
