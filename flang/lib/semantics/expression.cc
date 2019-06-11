@@ -519,26 +519,37 @@ MaybeExpr ExpressionAnalyzer::AnalyzeString(std::string &&string, int kind) {
   if (!CheckIntrinsicKind(TypeCategory::Character, kind)) {
     return std::nullopt;
   }
+  std::u32string unicode{parser::DecodeUTF_8(string)};
   if (kind == 1) {
-    return {AsGenericExpr(
-        Constant<Type<TypeCategory::Character, 1>>{std::move(string)})};
-  } else if (std::optional<std::u32string> unicode{
-                 parser::DecodeUTF8(string)}) {
-    if (kind == 4) {
-      return {AsGenericExpr(
-          Constant<Type<TypeCategory::Character, 4>>{std::move(*unicode)})};
+    std::string result;
+    for (const char32_t &ch : unicode) {
+      if (ch <= 0xff) {
+        result += static_cast<char>(ch);
+      } else {
+        // Original literal in UTF-8 source contained a byte sequence
+        // that looked like UTF-8 and got decoded as such.  Reconstruct.
+        parser::EncodedCharacter encoded{parser::EncodeUTF_8(ch)};
+        result += std::string{
+            encoded.buffer, static_cast<std::size_t>(encoded.bytes)};
+      }
     }
-    CHECK(kind == 2);
-    // TODO: better Kanji support
+    return AsGenericExpr(
+        Constant<Type<TypeCategory::Character, 1>>{std::move(result)});
+  } else if (kind == 2) {
     std::u16string result;
-    for (const char32_t &ch : *unicode) {
+    for (const char32_t &ch : unicode) {
+      if (ch > 0xffff) {
+        Say("Bad character in CHARACTER(KIND=2) literal"_err_en_US);
+        return std::nullopt;
+      }
       result += static_cast<char16_t>(ch);
     }
-    return {AsGenericExpr(
-        Constant<Type<TypeCategory::Character, 2>>{std::move(result)})};
+    return AsGenericExpr(
+        Constant<Type<TypeCategory::Character, 2>>{std::move(result)});
   } else {
-    Say("bad UTF-8 encoding of CHARACTER(KIND=%d) literal"_err_en_US, kind);
-    return std::nullopt;
+    CHECK(kind == 4);
+    return AsGenericExpr(
+        Constant<Type<TypeCategory::Character, 4>>{std::move(unicode)});
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ struct Program;
 
 namespace Fortran::semantics {
 void UnparseWithSymbols(std::ostream &, const parser::Program &,
-    parser::Encoding encoding = parser::Encoding::UTF8);
+    parser::Encoding encoding = parser::Encoding::UTF_8);
 }
 
 #endif  // FORTRAN_SEMANTICS_UNPARSE_WITH_SYMBOLS_H_

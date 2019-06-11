@@ -185,17 +185,19 @@ public:
   }
 
   std::optional<const char *> GetNextChar() {
-    if (p_ >= limit_) {
+    if (p_ < limit_) {
+      return UncheckedAdvance();
+    } else {
       return std::nullopt;
     }
-    return {UncheckedAdvance()};
   }
 
   std::optional<const char *> PeekAtNextChar() const {
-    if (p_ >= limit_) {
+    if (p_ < limit_) {
+      return p_;
+    } else {
       return std::nullopt;
     }
-    return {p_};
   }
 
   std::size_t BytesRemaining() const {
@@ -229,7 +231,7 @@ private:
   UserState *userState_{nullptr};
 
   bool inFixedForm_{false};
-  Encoding encoding_{Encoding::UTF8};
+  Encoding encoding_{Encoding::UTF_8};
   bool anyErrorRecovery_{false};
   bool anyConformanceViolation_{false};
   bool deferMessages_{false};

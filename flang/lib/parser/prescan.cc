@@ -550,7 +550,14 @@ void Prescanner::QuotedCharacterLiteral(
   bool escape{false};
   bool escapesEnabled{features_.IsEnabled(LanguageFeature::BackslashEscapes)};
   while (true) {
-    char32_t ch{static_cast<unsigned char>(*at_)};
+    DecodedCharacter decoded{DecodeCharacter(
+        encoding_, at_, static_cast<std::size_t>(limit_ - at_))};
+    if (decoded.bytes <= 0) {
+      Say(GetProvenanceRange(start, end),
+          "Bad character in character literal"_err_en_US);
+      break;
+    }
+    char32_t ch{decoded.unicode};
     escape = !escape && ch == '\\' && escapesEnabled;
     EmitQuotedChar(ch, emit, insert, false, !escapesEnabled);
     while (PadOutCharacterLiteral(tokens)) {
@@ -562,6 +569,7 @@ void Prescanner::QuotedCharacterLiteral(
       }
       break;
     }
+    at_ += decoded.bytes - 1;
     end = at_ + 1;
     NextChar();
     if (*at_ == quote && !escape) {
@@ -592,24 +600,24 @@ void Prescanner::Hollerith(
     if (PadOutCharacterLiteral(tokens)) {
     } else if (*at_ == '\n') {
       Say(GetProvenanceRange(start, at_),
-          "possible truncated Hollerith literal"_en_US);
+          "Possible truncated Hollerith literal"_en_US);
       break;
     } else {
       NextChar();
-      EmitChar(tokens, *at_);
-      // Multi-byte character encodings should count as single characters.
-      int bytes{1};
-      if (encoding_ == Encoding::EUC_JP) {
-        if (std::optional<int> chBytes{EUC_JPCharacterBytes(at_)}) {
-          bytes = *chBytes;
+      // Multi-byte character encodings each count as single characters.
+      DecodedCharacter decoded{DecodeCharacter(
+          encoding_, at_, static_cast<std::size_t>(limit_ - at_))};
+      if (decoded.bytes > 0) {
+        // The cooked character stream we emit is always in UTF-8.
+        EncodedCharacter utf8{EncodeUTF_8(decoded.unicode)};
+        for (int j{0}; j < utf8.bytes; ++j) {
+          EmitChar(tokens, utf8.buffer[j]);
         }
-      } else if (encoding_ == Encoding::UTF8) {
-        if (std::optional<int> chBytes{UTF8CharacterBytes(at_)}) {
-          bytes = *chBytes;
-        }
-      }
-      while (bytes-- > 1) {
-        EmitChar(tokens, *++at_);
+        at_ += decoded.bytes;
+      } else {
+        Say(GetProvenanceRange(start, at_),
+            "Bad character in Hollerith literal"_err_en_US);
+        break;
       }
     }
   }

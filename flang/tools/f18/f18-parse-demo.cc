@@ -92,7 +92,7 @@ struct DriverOptions {
   bool forcedForm{false};  // -Mfixed or -Mfree appeared
   bool warnOnNonstandardUsage{false};  // -Mstandard
   bool warningsAreErrors{false};  // -Werror
-  Fortran::parser::Encoding encoding{Fortran::parser::Encoding::UTF8};
+  Fortran::parser::Encoding encoding{Fortran::parser::Encoding::UTF_8};
   bool parseOnly{false};
   bool dumpProvenance{false};
   bool dumpCookedChars{false};

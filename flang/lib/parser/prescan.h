@@ -186,7 +186,7 @@ private:
   LanguageFeatureControl features_;
   bool inFixedForm_{false};
   int fixedFormColumnLimit_{72};
-  Encoding encoding_{Encoding::UTF8};
+  Encoding encoding_{Encoding::UTF_8};
   int delimiterNesting_{0};
   int prescannerNesting_{0};
 

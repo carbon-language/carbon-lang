@@ -228,7 +228,7 @@ struct CharLiteralChar {
       return std::nullopt;
     }
     if (ch != '\\') {
-      return {Result::Bare(ch)};
+      return Result::Bare(ch);
     }
     if (!(och = nextCh.Parse(state)).has_value()) {
       return std::nullopt;
@@ -240,7 +240,7 @@ struct CharLiteralChar {
       return std::nullopt;
     }
     if (std::optional<char> escChar{BackslashEscapeValue(ch)}) {
-      return {Result::Escaped(*escChar)};
+      return Result::Escaped(*escChar);
     }
     if (IsOctalDigit(ch)) {
       ch -= '0';
@@ -283,7 +283,7 @@ template<char quote> struct CharLiteral {
       if (ch->ch == quote && !ch->wasEscaped) {
         static constexpr auto doubled{attempt(AnyOfChars{SetOfChars{quote}})};
         if (!doubled.Parse(state).has_value()) {
-          return {str};
+          return str;
         }
       }
       str += ch->ch;
@@ -543,39 +543,26 @@ struct HollerithLiteral {
     }
     std::string content;
     for (auto j{*charCount}; j-- > 0;) {
-      int bytes{1};
-      const char *p{state.GetLocation()};
-      if (state.encoding() == Encoding::EUC_JP) {
-        std::optional<int> chBytes{EUC_JPCharacterBytes(p)};
-        if (!chBytes.has_value()) {
-          state.Say(start, "bad EUC_JP characters in Hollerith"_err_en_US);
-          return std::nullopt;
+      if (std::optional<int> chBytes{
+              CharacterBytes(state.GetLocation(), state.encoding())}) {
+        for (int bytes{*chBytes}; bytes > 0; --bytes) {
+          if (std::optional<const char *> at{nextCh.Parse(state)}) {
+            if (*chBytes == 1 && !isprint(**at)) {
+              state.Say(start, "Bad character in Hollerith"_err_en_US);
+              return std::nullopt;
+            }
+            content += **at;
+          } else {
+            state.Say(start, "Insufficient characters in Hollerith"_err_en_US);
+            return std::nullopt;
+          }
         }
-        bytes = *chBytes;
-      } else if (state.encoding() == Encoding::UTF8) {
-        std::optional<int> chBytes{UTF8CharacterBytes(p)};
-        if (!chBytes.has_value()) {
-          state.Say(start, "bad UTF-8 characters in Hollerith"_err_en_US);
-          return std::nullopt;
-        }
-        bytes = *chBytes;
-      }
-      if (bytes == 1) {
-        std::optional<const char *> at{nextCh.Parse(state)};
-        if (!at.has_value() || !isprint(**at)) {
-          state.Say(
-              start, "insufficient or bad characters in Hollerith"_err_en_US);
-          return std::nullopt;
-        }
-        content += **at;
       } else {
-        // Multi-byte character
-        while (bytes-- > 0) {
-          content += *nextCh.Parse(state).value();
-        }
+        state.Say(start, "Bad multi-byte character in Hollerith"_err_en_US);
+        return std::nullopt;
       }
     }
-    return {content};
+    return content;
   }
 };
 

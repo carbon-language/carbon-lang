@@ -87,7 +87,7 @@ struct DriverOptions {
   bool forcedForm{false};  // -Mfixed or -Mfree appeared
   bool warnOnNonstandardUsage{false};  // -Mstandard
   bool warningsAreErrors{false};  // -Werror
-  Fortran::parser::Encoding encoding{Fortran::parser::Encoding::UTF8};
+  Fortran::parser::Encoding encoding{Fortran::parser::Encoding::UTF_8};
   bool parseOnly{false};
   bool dumpProvenance{false};
   bool dumpCookedChars{false};
@@ -451,6 +451,8 @@ int main(int argc, char *const argv[]) {
     } else if (arg == "-module-suffix") {
       driver.moduleFileSuffix = args.front();
       args.pop_front();
+    } else if (arg == "-fno-utf-8") {
+      options.encoding = Fortran::parser::Encoding::LATIN_1;
     } else if (arg == "-help" || arg == "--help" || arg == "-?") {
       std::cerr
           << "f18 options:\n"

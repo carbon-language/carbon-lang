@@ -1,4 +1,4 @@
-// Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,13 @@
 
 namespace Fortran::parser {
 
-enum class Encoding { UTF8, EUC_JP };
+// We can easily support Fortran program source in any character
+// set whose first 128 code points correspond to ASCII codes 0-127 (ISO/IEC646).
+// The specific encodings that we can handle include:
+//   LATIN_1: ISO 8859-1 Latin-1
+//   UTF_8: Multi-byte encoding of Unicode (ISO/IEC 10646)
+//   EUC_JP: 1-3 byte encoding of JIS X 0208 / 0212
+enum class Encoding { LATIN_1, UTF_8, EUC_JP };
 
 inline constexpr bool IsUpperCaseLetter(char ch) {
   return ch >= 'A' && ch <= 'Z';
@@ -133,9 +139,20 @@ inline constexpr std::optional<char> BackslashEscapeChar(char ch) {
   }
 }
 
+struct EncodedCharacter {
+  char buffer[4];
+  int bytes{0};
+};
+
+EncodedCharacter EncodeLATIN_1(char);
+EncodedCharacter EncodeUTF_8(char32_t);
+EncodedCharacter EncodeEUC_JP(char16_t);
+EncodedCharacter EncodeCharacter(Encoding, char32_t);
+
 template<typename NORMAL, typename INSERTED>
 void EmitQuotedChar(char32_t ch, const NORMAL &emit, const INSERTED &insert,
-    bool doubleDoubleQuotes = true, bool doubleBackslash = true) {
+    bool doubleDoubleQuotes = true, bool doubleBackslash = true,
+    Encoding encoding = Encoding::UTF_8) {
   if (ch == '"') {
     if (doubleDoubleQuotes) {
       insert('"');
@@ -146,7 +163,7 @@ void EmitQuotedChar(char32_t ch, const NORMAL &emit, const INSERTED &insert,
       insert('\\');
     }
     emit('\\');
-  } else if (ch < ' ' || (ch >= 0x80 && ch <= 0xff)) {
+  } else if (ch < ' ' || (encoding == Encoding::LATIN_1 && ch >= 0x7f)) {
     insert('\\');
     if (std::optional<char> escape{BackslashEscapeChar(ch)}) {
       emit(*escape);
@@ -156,34 +173,40 @@ void EmitQuotedChar(char32_t ch, const NORMAL &emit, const INSERTED &insert,
       insert('0' + ((ch >> 3) & 7));
       insert('0' + (ch & 7));
     }
-  } else if (ch <= 0x7f) {
-    emit(ch);
-  } else if (ch <= 0x7ff) {
-    emit(0xc0 | ((ch >> 6) & 0x1f));
-    emit(0x80 | (ch & 0x3f));
-  } else if (ch <= 0xffff) {
-    emit(0xe0 | ((ch >> 12) & 0x0f));
-    emit(0x80 | ((ch >> 6) & 0x3f));
-    emit(0x80 | (ch & 0x3f));
   } else {
-    emit(0xf0 | ((ch >> 18) & 0x07));
-    emit(0x80 | ((ch >> 12) & 0x3f));
-    emit(0x80 | ((ch >> 6) & 0x3f));
-    emit(0x80 | (ch & 0x3f));
+    EncodedCharacter encoded{EncodeCharacter(encoding, ch)};
+    for (int j{0}; j < encoded.bytes; ++j) {
+      emit(encoded.buffer[j]);
+    }
   }
 }
 
 std::string QuoteCharacterLiteral(const std::string &,
-    bool doubleDoubleQuotes = true, bool doubleBackslash = true);
+    bool doubleDoubleQuotes = true, bool doubleBackslash = true,
+    Encoding = Encoding::LATIN_1);
 std::string QuoteCharacterLiteral(const std::u16string &,
-    bool doubleDoubleQuotes = true, bool doubleBackslash = true);
+    bool doubleDoubleQuotes = true, bool doubleBackslash = true,
+    Encoding = Encoding::EUC_JP);
 std::string QuoteCharacterLiteral(const std::u32string &,
-    bool doubleDoubleQuotes = true, bool doubleBackslash = true);
+    bool doubleDoubleQuotes = true, bool doubleBackslash = true,
+    Encoding = Encoding::UTF_8);
 
-std::optional<int> UTF8CharacterBytes(const char *);
+std::optional<int> UTF_8CharacterBytes(const char *);
 std::optional<int> EUC_JPCharacterBytes(const char *);
-std::optional<std::size_t> CountCharacters(
-    const char *, std::size_t bytes, std::optional<int> (*)(const char *));
-std::optional<std::u32string> DecodeUTF8(const std::string &);
+std::optional<int> CharacterBytes(const char *, Encoding);
+std::optional<int> CountCharacters(const char *, std::size_t bytes, Encoding);
+
+struct DecodedCharacter {
+  char32_t unicode{0};
+  int bytes{0};  // signifying failure
+};
+
+DecodedCharacter DecodeUTF_8Character(const char *, std::size_t);
+DecodedCharacter DecodeEUC_JPCharacter(const char *, std::size_t);
+DecodedCharacter DecodeLATIN1Character(const char *);
+DecodedCharacter DecodeCharacter(Encoding, const char *, std::size_t);
+
+std::u32string DecodeUTF_8(const std::string &);
+std::u16string DecodeEUC_JP(const std::string &);
 }
 #endif  // FORTRAN_PARSER_CHARACTERS_H_

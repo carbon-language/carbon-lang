@@ -189,18 +189,21 @@ public:
     if (const auto &k{std::get<std::optional<KindParam>>(x.t)}) {
       if (std::holds_alternative<KindParam::Kanji>(k->u)) {
         Word("NC");
+        Put(QuoteCharacterLiteral(std::get<std::string>(x.t), true,
+            backslashEscapes_, Encoding::EUC_JP));
       } else {
         Walk(*k), Put('_');
+        Put(QuoteCharacterLiteral(
+            std::get<std::string>(x.t), true, backslashEscapes_));
       }
+    } else {
+      Put(QuoteCharacterLiteral(
+          std::get<std::string>(x.t), true, backslashEscapes_));
     }
-    Put(QuoteCharacterLiteral(
-        std::get<std::string>(x.t), true, backslashEscapes_));
   }
   void Before(const HollerithLiteralConstant &x) {
-    std::optional<std::size_t> chars{CountCharacters(x.v.data(), x.v.size(),
-        encoding_ == Encoding::EUC_JP ? EUC_JPCharacterBytes
-                                      : UTF8CharacterBytes)};
-    if (chars.has_value()) {
+    if (std::optional<std::size_t> chars{
+            CountCharacters(x.v.data(), x.v.size(), encoding_)}) {
       Unparse(*chars);
     } else {
       Unparse(x.v.size());
@@ -2575,7 +2578,7 @@ private:
   int column_{1};
   const int maxColumns_{80};
   std::set<CharBlock> structureComponents_;
-  Encoding encoding_{Encoding::UTF8};
+  Encoding encoding_{Encoding::UTF_8};
   bool capitalizeKeywords_{true};
   bool openmpDirective_{false};
   bool backslashEscapes_{false};
