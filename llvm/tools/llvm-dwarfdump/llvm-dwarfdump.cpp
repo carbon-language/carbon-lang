@@ -160,12 +160,11 @@ static opt<uint64_t>
                 "available file, function, block and line table details."),
            value_desc("address"), cat(DwarfDumpCategory));
 static opt<std::string>
-    OutputFilename("out-file", cl::init("-"),
+    OutputFilename("o", cl::init("-"),
                    cl::desc("Redirect output to the specified file."),
-                   cl::value_desc("filename"));
-static alias OutputFilenameAlias("o", desc("Alias for -out-file."),
-                                 aliasopt(OutputFilename),
-                                 cat(DwarfDumpCategory));
+                   cl::value_desc("filename"), cat(DwarfDumpCategory));
+static alias OutputFilenameAlias("out-file", desc("Alias for -o."),
+                                 aliasopt(OutputFilename));
 static opt<bool>
     UseRegex("regex",
              desc("Treat any <pattern> strings as regular expressions when "
