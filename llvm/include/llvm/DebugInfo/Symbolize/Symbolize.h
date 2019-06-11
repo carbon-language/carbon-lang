@@ -35,25 +35,17 @@ using FunctionNameKind = DILineInfoSpecifier::FunctionNameKind;
 class LLVMSymbolizer {
 public:
   struct Options {
-    FunctionNameKind PrintFunctions;
-    bool UseSymbolTable : 1;
-    bool Demangle : 1;
-    bool RelativeAddresses : 1;
+    FunctionNameKind PrintFunctions = FunctionNameKind::LinkageName;
+    bool UseSymbolTable = true;
+    bool Demangle = true;
+    bool RelativeAddresses = false;
     std::string DefaultArch;
     std::vector<std::string> DsymHints;
     std::string FallbackDebugPath;
-
-    Options(FunctionNameKind PrintFunctions = FunctionNameKind::LinkageName,
-            bool UseSymbolTable = true, bool Demangle = true,
-            bool RelativeAddresses = false, std::string DefaultArch = "",
-            std::string FallbackDebugPath = "")
-        : PrintFunctions(PrintFunctions), UseSymbolTable(UseSymbolTable),
-          Demangle(Demangle), RelativeAddresses(RelativeAddresses),
-          DefaultArch(std::move(DefaultArch)),
-          FallbackDebugPath(std::move(FallbackDebugPath)) {}
   };
 
-  LLVMSymbolizer(const Options &Opts = Options()) : Opts(Opts) {}
+  LLVMSymbolizer() = default;
+  LLVMSymbolizer(const Options &Opts) : Opts(Opts) {}
 
   ~LLVMSymbolizer() {
     flush();

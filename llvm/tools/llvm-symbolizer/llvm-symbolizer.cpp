@@ -268,9 +268,13 @@ int main(int argc, char **argv) {
   if (ClNoDemangle.getPosition() > ClDemangle.getPosition())
     ClDemangle = !ClNoDemangle;
 
-  LLVMSymbolizer::Options Opts(ClPrintFunctions, ClUseSymbolTable, ClDemangle,
-                               ClUseRelativeAddress, ClDefaultArch,
-                               ClFallbackDebugPath);
+  LLVMSymbolizer::Options Opts;
+  Opts.PrintFunctions = ClPrintFunctions;
+  Opts.UseSymbolTable = ClUseSymbolTable;
+  Opts.Demangle = ClDemangle;
+  Opts.RelativeAddresses = ClUseRelativeAddress;
+  Opts.DefaultArch = ClDefaultArch;
+  Opts.FallbackDebugPath = ClFallbackDebugPath;
 
   for (const auto &hint : ClDsymHint) {
     if (sys::path::extension(hint) == ".dSYM") {
