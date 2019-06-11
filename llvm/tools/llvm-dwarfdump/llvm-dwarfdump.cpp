@@ -141,10 +141,9 @@ static list<std::string>
               "-name option can be used instead."),
          value_desc("name"), cat(DwarfDumpCategory));
 static alias FindAlias("f", desc("Alias for -find."), aliasopt(Find));
-static opt<bool>
-    IgnoreCase("ignore-case",
-               desc("Ignore case distinctions in when searching by name."),
-               value_desc("i"), cat(DwarfDumpCategory));
+static opt<bool> IgnoreCase("ignore-case",
+                            desc("Ignore case distinctions when searching."),
+                            value_desc("i"), cat(DwarfDumpCategory));
 static alias IgnoreCaseAlias("i", desc("Alias for -ignore-case."),
                              aliasopt(IgnoreCase));
 static list<std::string> Name(

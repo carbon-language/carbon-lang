@@ -53,8 +53,7 @@ OPTIONS
 
 .. option:: -i, --ignore-case
 
-            Ignore case distinctions in when searching entries by name
-            or by regular expression.
+            Ignore case distinctions when searching.
 
 .. option:: -n <pattern>, --name=<pattern>
 
